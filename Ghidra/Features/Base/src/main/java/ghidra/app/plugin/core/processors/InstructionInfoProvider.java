@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,12 +15,14 @@
  */
 package ghidra.app.plugin.core.processors;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
-import docking.widgets.checkbox.GCheckBox;
+import docking.action.ToggleDockingAction;
+import docking.action.builder.ToggleActionBuilder;
 import generic.theme.Gui;
 import ghidra.app.plugin.processors.sleigh.SleighDebugLogger;
 import ghidra.app.plugin.processors.sleigh.SleighDebugLogger.SleighDebugMode;
@@ -33,6 +35,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.util.InstructionUtils;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.GhidraTable;
+import resources.Icons;
 
 /**
  * Component provider to show the instruction info.
@@ -48,7 +51,7 @@ class InstructionInfoProvider extends ComponentProviderAdapter implements Domain
 	private JTextArea instructionText;
 	private JTable opTable;
 
-	private JCheckBox dynamicUpdateCB;
+	private ToggleDockingAction dynamicUpdateAction;
 
 	private OperandModel operandModel;
 	private Address myAddr;
@@ -57,10 +60,11 @@ class InstructionInfoProvider extends ComponentProviderAdapter implements Domain
 		super(plugin.getTool(), "Instruction Info", plugin.getName());
 		this.plugin = plugin;
 
-		buildMainPanel(isDynamic);
+		buildMainPanel();
 		setTransient();
 		setWindowMenuGroup("Instruction Info");
 		addToTool();
+		createActions(isDynamic);
 	}
 
 	@Override
@@ -73,13 +77,23 @@ class InstructionInfoProvider extends ComponentProviderAdapter implements Domain
 		return new HelpLocation(plugin.getName(), "Show_Instruction_Info_Window");
 	}
 
+	private void createActions(boolean isDynamic) {
+		dynamicUpdateAction = new ToggleActionBuilder("Dynamic Update", plugin.getName())
+				.toolBarIcon(Icons.NAVIGATE_ON_INCOMING_EVENT_ICON)
+				.description("Update this panel with navigation")
+				.onAction(ctx -> dynamicStateChanged())
+				.selected(isDynamic)
+				.buildAndInstallLocal(this);
+		dynamicStateChanged();
+	}
+
 	boolean dynamicUpdateSelected() {
-		return dynamicUpdateCB.isSelected();
+		return dynamicUpdateAction.isSelected();
 	}
 
 	/**
-	* Set the status text on this dialog.
-	*/
+	 * Set the status text on this dialog.
+	 */
 	void setStatusText(String msg) {
 		tool.setStatusInfo(msg);
 	}
@@ -101,7 +115,7 @@ class InstructionInfoProvider extends ComponentProviderAdapter implements Domain
 	 *
 	 * @return JPanel the completed <CODE>Main Panel</CODE>
 	 */
-	protected JPanel buildMainPanel(boolean isDynamic) {
+	protected JPanel buildMainPanel() {
 
 		mainPanel = new JPanel(new BorderLayout());
 
@@ -120,11 +134,6 @@ class InstructionInfoProvider extends ComponentProviderAdapter implements Domain
 		pane.setResizeWeight(.25);
 		mainPanel.add(pane, BorderLayout.CENTER);
 
-		dynamicUpdateCB = new GCheckBox("Dynamic Update", isDynamic);
-		dynamicUpdateCB.setAlignmentX(Component.CENTER_ALIGNMENT);
-		dynamicUpdateCB.addItemListener(e -> dynamicStateChanged());
-
-		mainPanel.add(dynamicUpdateCB, BorderLayout.SOUTH);
 		mainPanel.validate();
 
 		return mainPanel;
@@ -194,8 +203,9 @@ class InstructionInfoProvider extends ComponentProviderAdapter implements Domain
 		setAddress(myAddr);
 	}
 
-	public void setNonDynamic() {
-		dynamicUpdateCB.setSelected(false);
+	public void setDynamic(boolean dynamic) {
+		dynamicUpdateAction.setSelected(dynamic);
+		dynamicStateChanged();
 	}
 
 	public Program getProgram() {
@@ -225,6 +235,7 @@ class InstructionInfoProvider extends ComponentProviderAdapter implements Domain
 
 		/**
 		 * Returns the number of columns in this data table.
+		 * 
 		 * @return the number of columns in the model
 		 */
 		@Override
@@ -234,10 +245,10 @@ class InstructionInfoProvider extends ComponentProviderAdapter implements Domain
 
 		/**
 		 * Returns the column name.
-		 * @return a name for this column using the string value of the
-		 * appropriate member in <I>columnIdentfiers</I>. If <I>columnIdentfiers</I>
-		 * is null or does not have and entry for this index return the default
-		 * name provided by the superclass.
+		 * 
+		 * @return a name for this column using the string value of the appropriate member in
+		 *         <I>columnIdentfiers</I>. If <I>columnIdentfiers</I> is null or does not have and
+		 *         entry for this index return the default name provided by the superclass.
 		 */
 		@Override
 		public String getColumnName(int column) {
@@ -249,6 +260,7 @@ class InstructionInfoProvider extends ComponentProviderAdapter implements Domain
 
 		/**
 		 * Returns the number of rows in this data table.
+		 * 
 		 * @return the number of rows in the model
 		 */
 		@Override
@@ -257,14 +269,12 @@ class InstructionInfoProvider extends ComponentProviderAdapter implements Domain
 		}
 
 		/**
-		 * Returns an attribute value for the cell at <I>row</I>
-		 * and <I>column</I>.
+		 * Returns an attribute value for the cell at <I>row</I> and <I>column</I>.
 		 *
-		 * @param   row             the row whose value is to be looked up
-		 * @param   column          the column whose value is to be looked up
-		 * @return                  the value Object at the specified cell
-		 * @exception  ArrayIndexOutOfBoundsException  if an invalid row or
-		 *               column was given.
+		 * @param row the row whose value is to be looked up
+		 * @param column the column whose value is to be looked up
+		 * @return the value Object at the specified cell
+		 * @exception ArrayIndexOutOfBoundsException if an invalid row or column was given.
 		 */
 		@Override
 		public Object getValueAt(int row, int column) {
@@ -272,56 +282,39 @@ class InstructionInfoProvider extends ComponentProviderAdapter implements Domain
 				return null;
 			}
 			if (column == 0) {
-				switch (row) {
-					case 0:
-						return "Operand";
-					case 1:
-						return "Labeled";
-					case 2:
-						return "Type";
-					case 3:
-						return "Scalar";
-					case 4:
-						return "Address";
-					case 5:
-						return "Register";
-					case 6:
-						return "Op-Objects";
-					case 7:
-						return "Operand Mask";
-					case 8:
-						return "Masked Value";
-				}
+				return switch (row) {
+					case 0 -> "Operand";
+					case 1 -> "Labeled";
+					case 2 -> "Type";
+					case 3 -> "Scalar";
+					case 4 -> "Address";
+					case 5 -> "Register";
+					case 6 -> "Op-Objects";
+					case 7 -> "Operand Mask";
+					case 8 -> "Masked Value";
+					default -> "";
+				};
 			}
 			int opIndex = column - 1;
 			if (opIndex >= instruction.getNumOperands()) {
 				return "";
 			}
-			switch (row) {
-				case 0:
-					return instruction.getDefaultOperandRepresentation(opIndex);
-				case 1:
-					return CodeUnitFormat.DEFAULT.getOperandRepresentationList(instruction,
-						opIndex);
-				case 2:
-					return OperandType.toString(instruction.getOperandType(opIndex));
-				case 3:
-					return instruction.getScalar(opIndex);
-				case 4:
+			return switch (row) {
+				case 0 -> instruction.getDefaultOperandRepresentation(opIndex);
+				case 1 -> CodeUnitFormat.DEFAULT.getOperandRepresentationList(instruction, opIndex);
+				case 2 -> OperandType.toString(instruction.getOperandType(opIndex));
+				case 3 -> instruction.getScalar(opIndex);
+				case 4 -> {
 					Address addr = instruction.getAddress(opIndex);
-					return addr != null ? addr.toString(true) : "";
-				case 5:
-					return instruction.getRegister(opIndex);
-				case 6:
-					return getString(
-						InstructionUtils.getFormatedOperandObjects(instruction, opIndex));
-				case 7:
-					return debug != null ? debug.getFormattedInstructionMask(opIndex) : null;
-				case 8:
-					return debug != null ? debug.getFormattedMaskedValue(opIndex) : null;
-			}
-
-			return "";
+					yield addr != null ? addr.toString(true) : "";
+				}
+				case 5 -> instruction.getRegister(opIndex);
+				case 6 -> getString(
+					InstructionUtils.getFormatedOperandObjects(instruction, opIndex));
+				case 7 -> debug != null ? debug.getFormattedInstructionMask(opIndex) : null;
+				case 8 -> debug != null ? debug.getFormattedMaskedValue(opIndex) : null;
+				default -> "";
+			};
 		}
 
 		@Override

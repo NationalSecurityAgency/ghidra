@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -164,6 +164,35 @@ TEST(double_encoding_infinity) {
     ASSERT_DOUBLE_ENCODING(std::numeric_limits<double>::infinity());
     ASSERT_DOUBLE_ENCODING(-std::numeric_limits<double>::infinity());
 }
+
+TEST(float_decimal_precision) {
+  FloatFormat ff(4);
+  float f0 = floatFromRawBits(0x34000001);
+  ASSERT_EQUALS(ff.printDecimal(f0, false), "1.192093e-07")
+  float f1 = floatFromRawBits(0x34800000);
+  ASSERT_EQUALS(ff.printDecimal(f1, false), "2.3841858e-07")
+  float f2 = floatFromRawBits(0x3eaaaaab);
+  ASSERT_EQUALS(ff.printDecimal(f2, false), "0.33333334")
+  float f3 = floatFromRawBits(0x3e800000);
+  ASSERT_EQUALS(ff.printDecimal(f3, false), "0.25");
+  float f4 = floatFromRawBits(0x3de3ee46);
+  ASSERT_EQUALS(ff.printDecimal(f4, false), "0.111294314")
+}
+
+TEST(double_decimal_precision) {
+  FloatFormat ff(8);
+  double f0 = doubleFromRawBits(0x3fc5555555555555);
+  ASSERT_EQUALS(ff.printDecimal(f0, false), "0.16666666666666666");
+  double f1 = doubleFromRawBits(0x7fefffffffffffff);
+  ASSERT_EQUALS(ff.printDecimal(f1, false), "1.79769313486232e+308");
+  double f2 = doubleFromRawBits(0x3fd555555c7dda4b);
+  ASSERT_EQUALS(ff.printDecimal(f2, false), "0.33333334");
+  double f3 = doubleFromRawBits(0x3fd0000000000000);
+  ASSERT_EQUALS(ff.printDecimal(f3, false), "0.25");
+  double f4 = doubleFromRawBits(0x3fb999999999999a);
+  ASSERT_EQUALS(ff.printDecimal(f4, false), "0.1");
+  double f5 = doubleFromRawBits(0x3fbf7ced916872b0);
+  ASSERT_EQUALS(ff.printDecimal(f5, true), "1.23000000000000e-01");}
 
 TEST(float_midpoint_rounding) {
     FloatFormat ff(4);

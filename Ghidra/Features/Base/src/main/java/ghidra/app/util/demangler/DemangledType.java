@@ -37,9 +37,9 @@ public class DemangledType implements Demangled {
 	private boolean isConst;
 	private boolean isVolatile;
 
-	public DemangledType(String mangled, String originaDemangled, String name) {
+	public DemangledType(String mangled, String originalDemangled, String name) {
 		this.mangled = mangled;
-		this.originalDemangled = originaDemangled;
+		this.originalDemangled = originalDemangled;
 		setName(name);
 	}
 

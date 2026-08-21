@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,10 +60,7 @@ public interface TraceBaseDefinedUnitsView<T extends TraceCodeUnit>
 	 * @param monitor a monitor for progress and cancellation
 	 * @throws CancelledException if the clear is cancelled
 	 */
-	default void clear(Lifespan span, Register register, TaskMonitor monitor)
-			throws CancelledException {
-		clear(span, TraceRegisterUtils.rangeForRegister(register), true, monitor);
-	}
+	void clear(Lifespan span, Register register, TaskMonitor monitor) throws CancelledException;
 
 	/**
 	 * Clear the units contained within the given span and platform register

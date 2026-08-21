@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -111,7 +110,8 @@ public class BitTree implements ShortKeySet, Serializable {
     /**
      * Removes all keys from the set.
      */
-    public void removeAll() {
+    @Override
+	public void removeAll() {
         Arrays.fill(bits,0);
         numKeys = 0;
     }
@@ -119,7 +119,8 @@ public class BitTree implements ShortKeySet, Serializable {
     /**
      * Returns the number of keys currently in the set.
      */
-    public int size() {
+    @Override
+	public int size() {
         return numKeys;
     }
 
@@ -129,7 +130,8 @@ public class BitTree implements ShortKeySet, Serializable {
      * @exception IndexOutOfBoundsException if the given key is not
      * in the range [0, size-1].
      */
-    public void put(short key) {
+    @Override
+	public void put(short key) {
 
         if ((key < 0) || (key >= size)) {
             throw new IndexOutOfBoundsException();
@@ -166,7 +168,8 @@ public class BitTree implements ShortKeySet, Serializable {
      * @exception IndexOutOfBoundsException if the given key is not
      * in the range [0, size-1].
      */
-    public boolean remove(short key) {
+    @Override
+	public boolean remove(short key) {
 
         if ((key < 0) || (key >= size)) {
             throw new IndexOutOfBoundsException();
@@ -205,7 +208,8 @@ public class BitTree implements ShortKeySet, Serializable {
      * @param key the key to check if it is in this set.
      * @return true if the key is in the set.
      */
-    public boolean containsKey(short key) {
+    @Override
+	public boolean containsKey(short key) {
         if ((key < 0) || (key >= size)) {
             return false;
         }
@@ -220,7 +224,8 @@ public class BitTree implements ShortKeySet, Serializable {
      * @exception IndexOutOfBoundsException if the given key is not
      * in the range [0, size-1].
      */
-    public short getNext(short key) {
+    @Override
+	public short getNext(short key) {
         if ((key < 0) || (key >= size)) {
             throw new IndexOutOfBoundsException();
         }
@@ -279,7 +284,8 @@ public class BitTree implements ShortKeySet, Serializable {
      * @exception IndexOutOfBoundsException if the given key is not
      * in the range [0, size-1].
      */
-    public short getPrevious(short key) {
+    @Override
+	public short getPrevious(short key) {
         if ((key < 0) || (key >= size)) {
             throw new IndexOutOfBoundsException();
         }
@@ -324,26 +330,29 @@ public class BitTree implements ShortKeySet, Serializable {
      *  Checks if the set is empty.
      * @return true if the set is empty.
      */
-    public boolean isEmpty() {
+    @Override
+	public boolean isEmpty() {
         return numKeys == 0;
     }
 
     /**
      * Returns the first (lowest) key in the set.
      */
-    public short getFirst() {
+    @Override
+	public short getFirst() {
         // if the 0 key is in the set, then return it.
         if(containsKey((short)0)) {
             return (short)0;
         }
-        // otherwise return the the next key after 0.
+        // otherwise return the next key after 0.
         return getNext((short)0);
     }
 
     /**
      * Returns the last (highest) key in the set.
      */
-    public short getLast() {
+    @Override
+	public short getLast() {
         // if the highest possible key is in the set, return it.
         if(containsKey((short)(size-1))) {
             return (short)(size-1);
@@ -373,7 +382,7 @@ public class BitTree implements ShortKeySet, Serializable {
     }
 
     /**
-     * Tests if the the nth bit is on.
+     * Tests if the nth bit is on.
      */
     private boolean isBitSet(int n) {
         int intIndex = n >> 5;

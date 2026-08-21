@@ -1,0 +1,187 @@
+<prototype name="__objc_msgSend_stub" extrapop="0" stackshift="0">
+  <!-- Used for "_objc_msgSend$methodName" stubs, which don't consider x1 a parameter register-->
+  <input>
+    <pentry minsize="8" maxsize="8" storage="hiddenret">
+      <register name="x8"/>
+    </pentry>
+    <pentry minsize="1" maxsize="16" storage="float">
+      <register name="q0"/>
+    </pentry>
+    <pentry minsize="1" maxsize="16" storage="float">
+      <register name="q1"/>
+    </pentry>
+    <pentry minsize="1" maxsize="16" storage="float">
+      <register name="q2"/>
+    </pentry>
+    <pentry minsize="1" maxsize="16" storage="float">
+      <register name="q3"/>
+    </pentry>
+    <pentry minsize="1" maxsize="16" storage="float">
+      <register name="q4"/>
+    </pentry>
+    <pentry minsize="1" maxsize="16" storage="float">
+      <register name="q5"/>
+    </pentry>
+    <pentry minsize="1" maxsize="16" storage="float">
+      <register name="q6"/>
+    </pentry>
+    <pentry minsize="1" maxsize="16" storage="float">
+      <register name="q7"/>
+    </pentry>
+    <pentry minsize="1" maxsize="8" extension="zero">
+      <register name="x0"/>
+    </pentry>
+    <pentry minsize="1" maxsize="8" extension="zero">
+      <register name="x2"/>
+    </pentry>
+    <pentry minsize="1" maxsize="8" extension="zero">
+      <register name="x3"/>
+    </pentry>
+    <pentry minsize="1" maxsize="8" extension="zero">
+      <register name="x4"/>
+    </pentry>
+    <pentry minsize="1" maxsize="8" extension="zero">
+      <register name="x5"/>
+    </pentry>
+    <pentry minsize="1" maxsize="8" extension="zero">
+      <register name="x6"/>
+    </pentry>
+    <pentry minsize="1" maxsize="8" extension="zero">
+      <register name="x7"/>
+    </pentry>
+    <pentry minsize="1" maxsize="500" align="8">
+      <addr offset="0" space="stack"/>
+    </pentry>
+    <rule>
+      <datatype name="homogeneous-float-aggregate"/>
+      <join_per_primitive storage="float"/>
+    </rule>
+     <rule>
+      <datatype name="homogeneous-float-aggregate"/>
+      <goto_stack/>					<!-- Don't consume general purpose registers -->
+      <consume_extra storage="float"/> <!-- Once the stack has been used, don't go back to registers -->
+    </rule>
+    <rule>
+      <datatype name="struct" minsize="17"/>
+      <convert_to_ptr/>
+    </rule>
+    <rule>
+      <datatype name="union" minsize="17"/>
+      <convert_to_ptr/>
+    </rule>
+    <!-- Variadic arguments are passed differently than in the AARCH64 standard -->
+    <!-- See "Writing ARM64 Code for Apple Platforms" -->
+    <rule>   
+      <datatype name="any"/>
+      <varargs first="0"/>
+      <goto_stack/>
+    </rule>
+    <rule>
+      <datatype name="float"/>
+      <consume storage="float"/>
+    </rule>
+    <rule>
+      <datatype name="float"/>
+      <goto_stack/>					<!-- Don't consume general purpose registers -->
+    </rule>
+    <rule>
+      <datatype name="any"/>
+      <join align="true"/>          <!-- Chunk from general purpose registers -->
+    </rule>
+  </input>
+  <output>
+    <pentry minsize="1" maxsize="16" storage="float">
+      <register name="q0"/>
+    </pentry>
+    <pentry minsize="1" maxsize="16" storage="float">
+      <register name="q1"/>
+    </pentry>
+    <pentry minsize="1" maxsize="16" storage="float">
+      <register name="q2"/>
+    </pentry>
+    <pentry minsize="1" maxsize="16" storage="float">
+      <register name="q3"/>
+    </pentry>
+    <pentry minsize="1" maxsize="8" extension="zero">
+      <register name="x0"/>
+    </pentry>
+    <pentry minsize="1" maxsize="8" extension="zero">
+      <register name="x1"/>
+    </pentry>
+    <rule>
+      <datatype name="homogeneous-float-aggregate"/>
+      <join_per_primitive storage="float"/>
+    </rule>
+    <rule>
+      <datatype name="float"/>
+      <consume storage="float"/>
+    </rule>
+    <rule>
+      <datatype name="any" minsize="17"/>
+      <hidden_return voidlock="true"/>
+    </rule>
+    <rule>
+      <datatype name="any"/>
+      <join/>
+    </rule>
+  </output>
+  <unaffected>
+    <register name="x19"/>
+    <register name="x20"/>
+    <register name="x21"/>
+    <register name="x22"/> 
+    <register name="x23"/> 
+    <register name="x24"/> 
+    <register name="x25"/> 
+    <register name="x26"/> 
+    <register name="x27"/> 
+    <register name="x28"/>
+    <register name="x29"/>
+    <register name="x30"/>
+    <register name="sp"/>
+    <!-- vectors -->
+    <register name="d8"/>
+    <register name="d9"/>
+    <register name="d10"/>
+    <register name="d11"/>
+    <register name="d12"/>
+    <register name="d13"/>
+    <register name="d14"/>
+    <register name="d15"/>
+  </unaffected>
+  <killedbycall>
+    <register name="x0"/>
+    <register name="x1"/>
+    <register name="q0"/>
+    <!-- x8: indirect result location register, which is not
+     reflected in the pentry list -->
+    <register name="x8"/>
+    <register name="x9"/>
+    <register name="x10"/>
+    <register name="x11"/>
+    <register name="x12"/>
+    <register name="x13"/>
+    <register name="x14"/>
+    <register name="x15"/>
+    <register name="x16"/>
+    <register name="x17"/>
+    <register name="x18"/>
+    <!-- vectors -->
+    <register name="d16"/>
+    <register name="d17"/>
+    <register name="d18"/>
+    <register name="d19"/>
+    <register name="d20"/>
+    <register name="d21"/>
+    <register name="d22"/>
+    <register name="d23"/>
+    <register name="d24"/>
+    <register name="d25"/>
+    <register name="d26"/>
+    <register name="d27"/>
+    <register name="d28"/>
+    <register name="d29"/>
+    <register name="d30"/>
+    <register name="d31"/>
+    </killedbycall>
+</prototype>

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,15 +41,16 @@ abstract public class SarifResultHandler implements ExtensionPoint {
 	protected Run run;
 	protected Result result;
 	protected SarifResultsTableProvider provider;
+	protected boolean isEnabled;
 
 	public abstract String getKey();
 
-	public boolean isEnabled() {
+	public boolean isEnabled(SarifDataFrame dframe) {
 		return true;
 	}
 	
-	public void handle(SarifDataFrame df, Run run, Result result, Map<String, Object> map) {
-		this.df = df;
+	public void handle(SarifDataFrame dframe, Run run, Result result, Map<String, Object> map) {
+		this.df = dframe;
 		this.controller = df.getController();
 		this.run = run;
 		this.result = result;
@@ -77,12 +78,14 @@ abstract public class SarifResultHandler implements ExtensionPoint {
 		return additionalProperties.get(key);
 	}
 	
-	public ProgramTask getTask(SarifResultsTableProvider provider) {
+	public ProgramTask getTask(SarifResultsTableProvider tableProvider) {
 		return null;
 	}
 	
-	public DockingAction createAction(SarifResultsTableProvider provider) {
-		this.provider = provider;
+	public DockingAction createAction(SarifResultsTableProvider tableProvider) {
+		this.provider = tableProvider;
+		this.isEnabled = isEnabled(provider.getDataFrame());
+				
 		DockingAction rightClick = new DockingAction(getActionName(), getKey()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
@@ -92,12 +95,12 @@ abstract public class SarifResultHandler implements ExtensionPoint {
 
 			@Override
 			public boolean isEnabledForContext(ActionContext context) {
-				return true;
+				return isEnabled;
 			}
 
 			@Override
 			public boolean isAddToPopup(ActionContext context) {
-				return true;
+				return isEnabled;
 			}
 		};
 		rightClick.setPopupMenuData(new MenuData(new String[] { getActionName() }));

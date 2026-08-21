@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -63,7 +63,6 @@ public interface JdiManager extends AutoCloseable {
 	/**
 	 * Add a listener for JDI's state
 	 * 
-	 * @see #getState()
 	 * @param vm the virtual machine
 	 * @param listener the listener to add
 	 */
@@ -72,7 +71,6 @@ public interface JdiManager extends AutoCloseable {
 	/**
 	 * Remove a listener for JDI's state
 	 * 
-	 * @see #getState()
 	 * @param vm the virtual machine
 	 * @param listener the listener to remove
 	 */
@@ -105,7 +103,7 @@ public interface JdiManager extends AutoCloseable {
 	 * Remove a listener for target output
 	 * 
 	 * @see #addTargetOutputListener(JdiTargetOutputListener)
-	 * @param listener
+	 * @param listener for output
 	 */
 	void removeTargetOutputListener(JdiTargetOutputListener listener);
 
@@ -119,7 +117,7 @@ public interface JdiManager extends AutoCloseable {
 	/**
 	 * Remove a listener for console output
 	 * 
-	 * @param listener
+	 * @param listener for output
 	 */
 	void removeConsoleOutputListener(JdiConsoleOutputListener listener);
 
@@ -127,9 +125,8 @@ public interface JdiManager extends AutoCloseable {
 	 * Get an inferior by its JDI-assigned ID
 	 * 
 	 * JDI numbers virtual machines incrementally. All vms and created and destroyed by the user.
-	 * See {@link #getVM()}.
 	 * 
-	 * @param iid the inferior ID
+	 * @param id the inferior ID
 	 * @return a handle to the inferior, if it exists
 	 */
 	VirtualMachine getVM(String id);
@@ -150,7 +147,6 @@ public interface JdiManager extends AutoCloseable {
 	 * This may be useful if the manager's command queue is stalled because an inferior is running.
 	 * 
 	 * @throws IOException if an I/O error occurs
-	 * @throws InterruptedException
 	 */
 	void sendInterruptNow() throws IOException;
 
@@ -162,9 +158,9 @@ public interface JdiManager extends AutoCloseable {
 	 * 
 	 * @return a future which completes with the handle to the new vm
 	 */
-	CompletableFuture<VirtualMachine> addVM(Connector cx, List<String> args);
+	VirtualMachine addVM(Connector cx, List<String> args);
 
-	CompletableFuture<VirtualMachine> addVM(Connector cx, Map<String, Argument> args);
+	VirtualMachine addVM(Connector cx, Map<String, Argument> args);
 
 	/**
 	 * Remove a vm
@@ -178,7 +174,6 @@ public interface JdiManager extends AutoCloseable {
 	 * Execute an arbitrary CLI command, printing output to the CLI console
 	 * 
 	 * Note: to ensure a certain thread or inferior has focus for a console command, see
-	 * {@link JdiThread#console(String)} and {@link JdiVM#console(String)}.
 	 * 
 	 * @param command the command to execute
 	 * @return a future that completes when JDI has executed the command
@@ -189,8 +184,7 @@ public interface JdiManager extends AutoCloseable {
 	 * Execute an arbitrary CLI command, capturing its console output
 	 * 
 	 * The output will not be printed to the CLI console. To ensure a certain thread or inferior has
-	 * focus for a console command, see {@link JdiThread#consoleCapture(String)} and
-	 * {@link JdiVM#consoleCapture(String)}.
+	 * focus for a console command
 	 * 
 	 * @param command the command to execute
 	 * @return a future that completes with the captured output when JDI has executed the command

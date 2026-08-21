@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,15 +15,15 @@
  */
 package ghidra.formats.gfilesystem;
 
-import java.util.*;
-import java.util.regex.Pattern;
-
 import java.io.*;
 import java.nio.file.*;
 import java.security.NoSuchAlgorithmException;
+import java.util.*;
+import java.util.regex.Pattern;
 
 import org.apache.commons.collections4.map.ReferenceMap;
 
+import generic.hash.HashUtilities;
 import ghidra.app.util.bin.*;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
@@ -73,24 +73,9 @@ public class FileCache {
 	private ReferenceMap<String, FileCacheEntry> memCache = new ReferenceMap<>();
 
 	/**
-	 * Backwards compatible with previous cache directories to age off the files located
-	 * therein.
-	 * 
-	 * @param oldCacheDir the old 2-level cache directory
-	 * @deprecated Marked as deprecated to ensure this is removed in a few versions after most
-	 * user's old-style cache dirs have been cleaned up.
-	 */
-	@Deprecated(forRemoval = true, since = "10.1")
-	public static void performCacheMaintOnOldDirIfNeeded(File oldCacheDir) {
-		if (oldCacheDir.isDirectory()) {
-			performCacheMaintIfNeeded(oldCacheDir, 2 /* old nesting level */);
-		}
-	}
-
-	/**
 	 * Creates a new {@link FileCache} instance where files are stored under the specified
 	 * {@code cacheDir}
-	 * <p>
+	 * 
 	 * @param cacheDir where to store the files
 	 * @throws IOException if there was a problem creating subdirectories under cacheDir or
 	 * when pruning expired files.
@@ -176,7 +161,7 @@ public class FileCache {
 
 	/**
 	 * Get a file (by md5) from the cache, returns NULL if not found.
-	 * <p>
+	 * 
 	 * @param md5 file md5 string.
 	 * @return File or null if not found.
 	 */
@@ -211,7 +196,7 @@ public class FileCache {
 
 	/**
 	 * Adds a plaintext file to this cache, consuming it.
-	 * <p>
+	 * 
 	 * @param file plaintext file
 	 * @param monitor {@link TaskMonitor}
 	 * @return a {@link FileCacheEntry} that controls the contents of the newly added file
@@ -243,7 +228,7 @@ public class FileCache {
 	 * process may remove a nested directory after it has been created.
 	 * 2) The source file is co-located with the cache directory to ensure its on the
 	 * same physical filesystem volume, and is already obfuscated.
-	 * <p>
+	 * 
 	 * @param tmpFile the File to add to the cache
 	 * @param md5 hex string md5 of the file
 	 * @return a new {@link FileCacheEntry} with the File's location and its md5
@@ -409,7 +394,6 @@ public class FileCache {
 
 	/**
 	 * Allows creating {@link FileCacheEntry file cache entries} at the caller's convenience.
-	 * <p>
 	 */
 	public class FileCacheEntryBuilder extends OutputStream {
 
@@ -491,7 +475,7 @@ public class FileCache {
 		/**
 		 * Finalizes this builder, pushing the bytes that have been written to it into
 		 * the FileCache.
-		 * <p>
+		 * 
 		 * @return new {@link FileCacheEntry}
 		 * @throws IOException if error
 		 */
@@ -544,7 +528,7 @@ public class FileCache {
 		/**
 		 * Returns the contents of this cache entry as a {@link ByteProvider}, using the specified
 		 * {@link FSRL}.
-		 * <p>
+		 * 
 		 * @param fsrl {@link FSRL} that the returned {@link ByteProvider} should have as its
 		 * identity
 		 * @return new {@link ByteProvider} containing the contents of this cache entry, caller is

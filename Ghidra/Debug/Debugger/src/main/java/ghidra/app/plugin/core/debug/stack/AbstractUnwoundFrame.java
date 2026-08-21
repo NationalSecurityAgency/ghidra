@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,8 @@ import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.opbehavior.BinaryOpBehavior;
 import ghidra.pcode.opbehavior.UnaryOpBehavior;
 import ghidra.pcode.utils.Utils;
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.Program;
@@ -117,31 +118,13 @@ public abstract class AbstractUnwoundFrame<T> implements UnwoundFrame<T> {
 	 * @param <U> the evaluation result type
 	 */
 	protected abstract class FrameVarnodeEvaluator<U> extends ArithmeticFrameVarnodeEvaluator<U> {
-		private final AddressSetView symbolStorage;
-
 		/**
-		 * Construct an evaluator with the given arithmetic and symbol storage
-		 * 
-		 * <p>
-		 * Varnodes contained completely in symbol storage are presumed to be the inputs of the
-		 * evaluation. All other varnodes are evaluated by examining their defining p-code op. It is
-		 * an error to include any unique space in symbol storage.
+		 * Construct an evaluator with the given arithmetic
 		 * 
 		 * @param arithmetic the arithmetic for evaluating p-code ops
-		 * @param symbolStorage the address ranges to regard as input, i.e., the leaves of evalution
 		 */
-		public FrameVarnodeEvaluator(PcodeArithmetic<U> arithmetic, AddressSetView symbolStorage) {
+		public FrameVarnodeEvaluator(PcodeArithmetic<U> arithmetic) {
 			super(arithmetic);
-			this.symbolStorage = symbolStorage;
-		}
-
-		@Override
-		protected boolean isLeaf(Varnode vn) {
-			if (vn.getDef() == null && (vn.isRegister() || vn.isAddress())) {
-				return true;
-			}
-			return vn.isConstant() ||
-				symbolStorage.contains(vn.getAddress(), vn.getAddress().add(vn.getSize() - 1));
 		}
 	}
 
@@ -297,26 +280,29 @@ public abstract class AbstractUnwoundFrame<T> implements UnwoundFrame<T> {
 			Reason.INSPECT);
 	}
 
-	@Override
-	public T evaluate(Program program, VariableStorage storage, AddressSetView symbolStorage) {
+	protected FrameVarnodeEvaluator<T> newEvaluator() {
 		SavedRegisterMap registerMap = computeRegisterMap();
-		return new FrameVarnodeEvaluator<T>(state.getArithmetic(), symbolStorage) {
+		return new FrameVarnodeEvaluator<>(state.getArithmetic()) {
 			@Override
 			protected T evaluateMemory(Address address, int size) {
 				return registerMap.getVar(state, address, size, Reason.INSPECT);
 			}
-		}.evaluateStorage(program, storage);
+		};
 	}
 
 	@Override
-	public T evaluate(Program program, PcodeOp op, AddressSetView symbolStorage) {
-		SavedRegisterMap registerMap = computeRegisterMap();
-		return new FrameVarnodeEvaluator<T>(state.getArithmetic(), symbolStorage) {
-			@Override
-			protected T evaluateMemory(Address address, int size) {
-				return registerMap.getVar(state, address, size, Reason.INSPECT);
-			}
-		}.evaluateOp(program, op);
+	public T evaluate(Program program, VariableStorage storage) {
+		return newEvaluator().evaluateStorage(program, storage);
+	}
+
+	@Override
+	public T evaluate(Program program, Varnode varnode) {
+		return newEvaluator().evaluateVarnode(program, varnode);
+	}
+
+	@Override
+	public T evaluate(Program program, PcodeOp op) {
+		return newEvaluator().evaluateOp(program, op);
 	}
 
 	@Override

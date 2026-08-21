@@ -1,0 +1,31 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+	Function makes two changes to the same global address but with different sized accesses.
+	One access is through an alias whose recovery is delayed, forcing the SSA form for the
+	address to be revisited.
+-->
+<bytechunk space="ram" offset="0x100000" readonly="true">
+488d1d6d00000048891d52000000488b
+0d4b0000008b0183c00a890166e84800
+668b054d000000660564006689054200
+0000c3
+</bytechunk>
+<symbol space="ram" offset="0x100000" name="revisit"/>
+</binaryimage>
+<script>
+  <com>lo fu revisit</com>
+  <com>decompile</com>
+  <com>print raw</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Revisit SSA #1" min="1" max="1">EAX\(0x00100017:.*\) = r0x00100074:4\(i\) \+ #0xa</stringmatch>
+<stringmatch name="Revisit SSA #2" min="1" max="1">r0x00100074:4\(0x0010001c:.*\) = EAX\(0x00100017:.*\) \[\] i0x0010001c:</stringmatch>
+<stringmatch name="Revisit SSA #3" min="1" max="1">r0x00100074:2\(0x0010001c:.*\) = SUB42\(r0x00100074:4\(0x0010001c:.*\),#0x0:4\)</stringmatch>
+<stringmatch name="Revisit SSA #4" min="1" max="1">AX\(0x00100027:.*\) = r0x00100074:2\(0x0010001c:.*\) \+ #0x64:2</stringmatch>
+<stringmatch name="Revisit SSA #5" min="1" max="1">r0x00100076:2\(0x0010002b:.*\) = SUB42\(r0x00100074:4\(0x0010001c:.*\),#0x2\)</stringmatch>
+<stringmatch name="Revisit SSA #6" min="1" max="1">r0x00100074:4\(0x0010002b:.*\) = CONCAT22\(r0x00100076:2\(0x0010002b:.*\),AX\(0x00100027:.*\)\)</stringmatch>
+<stringmatch name="Revisit SSA #7" min="1" max="1">r0x00100074:4\(0x00100032:.*\) = r0x00100074:4\(0x0010002b:.*\)</stringmatch>
+<stringmatch name="Revisit SSA #8" min="0" max="0">r0x00100074:2\(.*\) = .* \[\] i0x</stringmatch>
+<stringmatch name="Revisit SSA #9" min="0" max="0">r0x00100074:2\(0x00100032:.*\) = r0x00100074:2.*</stringmatch>
+</decompilertest>

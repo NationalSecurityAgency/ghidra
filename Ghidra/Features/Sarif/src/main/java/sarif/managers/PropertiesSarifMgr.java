@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -169,7 +169,7 @@ public class PropertiesSarifMgr extends SarifMgr {
 			bmMgr.setBookmark(addr, BookmarkType.NOTE, name, val);
 		}
 		else {
-			log.appendMsg("Unsupported PROPERTY usage");
+			log.appendMsg("Unsupported PROPERTY usage: type = " + type);
 		}
 	}
 
@@ -214,7 +214,7 @@ public class PropertiesSarifMgr extends SarifMgr {
 		}
 		Object val = result.get("value");
 		if (type == null || "void".equals(type)) {
-			log.appendMsg("Unsupported PROPERTY usage");
+			log.appendMsg("Unsupported PROPERTY usage: null type for " + name);
 		}
 		else if ("int".equals(type)) {
 			list.setInt(name, Integer.parseInt((String) val, 16));
@@ -285,7 +285,7 @@ public class PropertiesSarifMgr extends SarifMgr {
 			list.setByteArray(name, bytes);
 		}
 		else {
-			log.appendMsg("Unsupported PROPERTY usage");
+			log.appendMsg("Unsupported PROPERTY usage: type = " + type);
 		}
 	}
 

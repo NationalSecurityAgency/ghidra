@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,10 +27,13 @@ import ghidra.util.task.TaskMonitor;
  * Background task to artificially kick off Auto analysis by
  * calling anything that analyzes bytes.
  */
-public class OneShotAnalysisCommand extends BackgroundCommand<Program> {
+public class OneShotAnalysisCommand extends BackgroundCommand<Program>
+		implements AutoAnalysisManagerListener {
 	private Analyzer analyzer;
 	private AddressSetView set;
 	private MessageLog log;
+
+	private Program lastProgram;
 
 	public OneShotAnalysisCommand(Analyzer analyzer, AddressSetView set, MessageLog log) {
 		super(analyzer.getName() + " - One Time", true, true, false);
@@ -41,12 +44,20 @@ public class OneShotAnalysisCommand extends BackgroundCommand<Program> {
 
 	@Override
 	public boolean applyTo(Program program, TaskMonitor monitor) {
+		this.lastProgram = program;
 		try {
 			monitor.setMessage(analyzer.getName());
 			return analyzer.added(program, set, monitor, log);
 		}
 		catch (CancelledException e) {
 			return false;
+		}
+	}
+
+	@Override
+	public void analysisEnded(AutoAnalysisManager manager, boolean isCancelled) {
+		if (lastProgram != null) {
+			analyzer.analysisEnded(lastProgram);
 		}
 	}
 
@@ -60,4 +71,5 @@ public class OneShotAnalysisCommand extends BackgroundCommand<Program> {
 
 		return null;
 	}
+
 }

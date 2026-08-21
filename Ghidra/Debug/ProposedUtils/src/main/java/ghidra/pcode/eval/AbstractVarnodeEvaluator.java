@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -68,7 +68,9 @@ public abstract class AbstractVarnodeEvaluator<T> implements VarnodeEvaluator<T>
 	 * @return true to treat the varnode as a base case, or false to ascend to its defining p-code
 	 *         op
 	 */
-	protected abstract boolean isLeaf(Varnode vn);
+	protected boolean isLeaf(Varnode vn) {
+		return !vn.isUnique();
+	}
 
 	/**
 	 * Resolve a (static) stack offset to its physical (dynamic) address in the frame
@@ -163,7 +165,7 @@ public abstract class AbstractVarnodeEvaluator<T> implements VarnodeEvaluator<T>
 	 * @return the value
 	 */
 	protected T evaluateVarnode(Program program, Varnode vn, Map<Varnode, T> already) {
-		// computeIfAbsent does nto work because of the recursion. Will get CME.
+		// computeIfAbsent does not work because of the recursion. Will get CME.
 		if (already.containsKey(vn)) {
 			return already.get(vn);
 		}
@@ -223,7 +225,7 @@ public abstract class AbstractVarnodeEvaluator<T> implements VarnodeEvaluator<T>
 	 * 
 	 * @param value the constant value
 	 * @param size the size of the value in bytes
-	 * @return the value as a {@link T}
+	 * @return the value
 	 */
 	protected abstract T evaluateConstant(long value, int size);
 
@@ -271,7 +273,7 @@ public abstract class AbstractVarnodeEvaluator<T> implements VarnodeEvaluator<T>
 	 * This is only invoked when trying to evaluate a leaf, which should never occur for a unique
 	 * variable. Thus, by default, this throws a {@link PcodeExecutionException}.
 	 * 
-	 * @param long the offset of the variable
+	 * @param offset the offset of the variable
 	 * @param size the size of the variable in bytes
 	 * @return the value
 	 */
@@ -281,7 +283,7 @@ public abstract class AbstractVarnodeEvaluator<T> implements VarnodeEvaluator<T>
 	}
 
 	/**
-	 * Evaluate a variable whose offset is of type {@link T}
+	 * Evaluate a variable with an abstract offset
 	 * 
 	 * <p>
 	 * The three parameters {@code space}, {@code offset}, and {@code size} imitate the varnode

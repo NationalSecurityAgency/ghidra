@@ -12,10 +12,10 @@
   <BODY lang="EN-US">
     <H1><A name="Export"></A>Exporting Files</H1>
 
-    <P>Ghidra provides an <I>Exporter</I> that allows a user to output program information into a
-    file in various formats.&nbsp;</P>
+    <P>Ghidra provides an <I>Exporter</I> that allows a user to output Program information into a
+    file in various formats.</P>
 
-    <P>Some of the formats the <I>Exporter</I> supports are:</P>
+    <P>Some of the Program file formats the <I>Exporter</I> supports are:</P>
     <A name="Exporter_Formats">
 
 
@@ -25,8 +25,6 @@
       <LI><A href="#c_cpp">C/C++</A></LI>
       
       <LI><A href="#gzf">Ghidra Zip File (GZF)</A></LI>
-      
-      <LI><A href="#gdt">Ghidra Data Type Archive File (GDT)</a></LI>
 
       <LI><A href="#html">HTML</A></LI>
 
@@ -40,6 +38,12 @@
 
       <LI><A href="#sarif">SARIF Export Format</A></LI>
     </UL>
+	
+	<P><I><IMG src="help/shared/note.png"> Content types other than Program may support
+		export and will present those export formats which are supported. Example: A 
+		Debugger Trace may be exported as a Ghidra Zip Debugger Trace file (GZT). A data
+		type archive may be exported as a compressed Ghidra Data Type (GDT) archive file.
+  	</P>
 
     <H2>Export Action</H2>
 
@@ -105,10 +109,10 @@
         <BLOCKQUOTE>
           <UL>
             <LI><B>Format</B> - This field is a drop-down list containing all the valid <A href=
-            "#Exporter_Formats">export file formats</A> that could be used to to export the
+            "#Exporter_Formats">export file formats</A> that could be used to export the
             program. By default, the last used format will be auto-selected.</LI>
 
-            <LI><B>Output File</B> - This field specifies the the output file for the export. By
+            <LI><B>Output File</B> - This field specifies the output file for the export. By
             default, the output file's name will be the name of the program and the output folder
             will be the user's home folder or the last folder used for an export if an export has
             been performed in the current session. Use the "..." button to bring up a file chooser
@@ -275,6 +279,8 @@
             <LI><B>Use C++ Style Comments (//)</B> - Select to use // or /* style comments.</LI>
             
             <LI><B>Emit Data-type Definitions</B> - Select to export a C/C++ definition for each data-type.</LI>
+			
+			<LI><B>Emit Referenced Globals</B> - Select to export a C/C++ declaration for referended global variable.</LI>
             
             <LI><B>Function Tags to Filter</B> - Optional list of function tags to filter which 
             functions are exported. Multiple tags must be comma separated.   Any tags listed will

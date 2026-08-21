@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -61,6 +61,7 @@ SpacebaseSpace::SpacebaseSpace(AddrSpaceManager *m,const Translate *t,const stri
   contain = base;
   hasbaseregister = false;	// No base register assigned yet
   isNegativeStack = true;	// default stack growth
+  setFlags(allows_wrapped_range);
   if (isFormal)
     setFlags(formal_stackspace);
 }
@@ -73,9 +74,10 @@ SpacebaseSpace::SpacebaseSpace(AddrSpaceManager *m,const Translate *t,const stri
 SpacebaseSpace::SpacebaseSpace(AddrSpaceManager *m,const Translate *t)
   : AddrSpace(m,t,IPTR_SPACEBASE)
 {
+  contain = (AddrSpace *)0;
   hasbaseregister = false;
   isNegativeStack = true;
-  setFlags(programspecific);
+  setFlags(programspecific | allows_wrapped_range);
 }
 
 /// This routine sets the base register associated with this \b virtual space
@@ -188,6 +190,49 @@ bool JoinRecord::operator<(const JoinRecord &op2) const
   }
 }
 
+/// Assuming the given list of VarnodeData go from most significant to least significant,
+/// merge any contiguous elements in the list.  Varnodes that are not in the \e stack address space
+/// are only merged if the resulting byte range has a formal register name.
+/// \param seq is the given list of VarnodeData
+/// \param trans is the language to use for register names
+void JoinRecord::mergeSequence(vector<VarnodeData> &seq,const Translate *trans)
+
+{
+  int4 i=1;
+  while(i<seq.size()) {
+    VarnodeData &hi(seq[i-1]);
+    VarnodeData &lo(seq[i]);
+    if (hi.isContiguous(lo))
+      break;
+    i += 1;
+  }
+  if (i >= seq.size()) return;
+  vector<VarnodeData> res;
+  i = 1;
+  res.push_back(seq.front());
+  bool lastIsInformal = false;
+  while(i<seq.size()) {
+    VarnodeData &hi(res.back());
+    VarnodeData &lo(seq[i]);
+    if (hi.isContiguous(lo)) {
+      hi.offset = hi.space->isBigEndian() ? hi.offset : lo.offset;
+      hi.size += lo.size;
+      if (hi.space->getType() != IPTR_SPACEBASE) {
+	lastIsInformal = trans->getExactRegisterName(hi.space, hi.offset, hi.size).size() == 0;
+      }
+    }
+    else {
+      if (lastIsInformal)
+	break;
+      res.push_back(lo);
+    }
+    i += 1;
+  }
+  if (lastIsInformal)	// If the merge contains an informal register
+    return;		// throw it out and keep the original sequence
+  seq = res;
+}
+
 /// Initialize manager containing no address spaces. All the cached space slots are set to null
 AddrSpaceManager::AddrSpaceManager(void)
 
@@ -215,20 +260,22 @@ AddrSpace *AddrSpaceManager::decodeSpace(Decoder &decoder,const Translate *trans
 
 {
   uint4 elemId = decoder.peekElement();
-  AddrSpace *res;
+  unique_ptr<AddrSpace> res;
   if (elemId == ELEM_SPACE_BASE)
-    res = new SpacebaseSpace(this,trans);
+    res.reset(new SpacebaseSpace(this,trans));
   else if (elemId == ELEM_SPACE_UNIQUE)
-    res = new UniqueSpace(this,trans);
+    res.reset(new UniqueSpace(this,trans));
   else if (elemId == ELEM_SPACE_OTHER)
-    res = new OtherSpace(this,trans);
+    res.reset(new OtherSpace(this,trans));
   else if (elemId == ELEM_SPACE_OVERLAY)
-    res = new OverlaySpace(this,trans);
+    res.reset(new OverlaySpace(this,trans));
+  else if (elemId == ELEM_SPACE)
+    res.reset(new AddrSpace(this,trans,IPTR_PROCESSOR));
   else
-    res = new AddrSpace(this,trans,IPTR_PROCESSOR);
+    throw LowlevelError("Invalid address space element");
 
   res->decode(decoder);
-  return res;
+  return res.release();
 }
 
 /// This routine initializes (almost) all the address spaces used
@@ -309,49 +356,49 @@ void AddrSpaceManager::setReverseJustified(AddrSpace *spc)
 void AddrSpaceManager::insertSpace(AddrSpace *spc)
 
 {
-  bool nameTypeMismatch = false;
-  bool duplicateName = false;
-  bool duplicateId = false;
+  unique_ptr<AddrSpace> owner;
+  if (spc->refcount == 0)
+    owner.reset(spc);		// Take ownership if this is the first reference
   switch(spc->getType()) {
   case IPTR_CONSTANT:
     if (spc->getName() != ConstantSpace::NAME)
-      nameTypeMismatch = true;
+      throw LowlevelError("Space " + spc->getName() + " was initialized with wrong type");
     if (spc->index != ConstantSpace::INDEX)
       throw LowlevelError("const space must be assigned index 0");
     constantspace = spc;
     break;
   case IPTR_INTERNAL:
     if (spc->getName() != UniqueSpace::NAME)
-      nameTypeMismatch = true;
+      throw LowlevelError("Space " + spc->getName() + " was initialized with wrong type");
     if (uniqspace != (AddrSpace *)0)
-      duplicateName = true;
+      throw LowlevelError("Space " + spc->getName() + " was initialized more than once");
     uniqspace = spc;
     break;
   case IPTR_FSPEC:
     if (spc->getName() != "fspec")
-      nameTypeMismatch = true;
+      throw LowlevelError("Space " + spc->getName() + " was initialized with wrong type");
     if (fspecspace != (AddrSpace *)0)
-      duplicateName = true;
+      throw LowlevelError("Space " + spc->getName() + " was initialized more than once");
     fspecspace = spc;
     break;
   case IPTR_JOIN:
     if (spc->getName() != JoinSpace::NAME)
-      nameTypeMismatch = true;
+      throw LowlevelError("Space " + spc->getName() + " was initialized with wrong type");
     if (joinspace != (AddrSpace *)0)
-      duplicateName = true;
+      throw LowlevelError("Space " + spc->getName() + " was initialized more than once");
     joinspace = spc;
     break;
   case IPTR_IOP:
     if (spc->getName() != "iop")
-      nameTypeMismatch = true;
+      throw LowlevelError("Space " + spc->getName() + " was initialized with wrong type");
     if (iopspace != (AddrSpace *)0)
-      duplicateName = true;
+      throw LowlevelError("Space " + spc->getName() + " was initialized more than once");
     iopspace = spc;
     break;
   case IPTR_SPACEBASE:
     if (spc->getName() == "stack") {
       if (stackspace != (AddrSpace *)0)
-	duplicateName = true;
+	throw LowlevelError("Space " + spc->getName() + " was initialized more than once");
       stackspace = spc;
     }
     // fallthru
@@ -369,26 +416,14 @@ void AddrSpaceManager::insertSpace(AddrSpace *spc)
   if (baselist.size() <= spc->index)
     baselist.resize(spc->index+1, (AddrSpace *)0);
 
-  duplicateId = baselist[spc->index] != (AddrSpace *)0;
+  if (baselist[spc->index] != (AddrSpace *)0)
+    throw LowlevelError("Space " + spc->getName() + " was assigned id duplicating: "+baselist[spc->index]->getName());
 
-  if (!nameTypeMismatch && !duplicateName && !duplicateId) {
-    duplicateName = !name2Space.insert(pair<string,AddrSpace *>(spc->getName(),spc)).second;
-  }
+   if (!name2Space.insert(pair<string,AddrSpace *>(spc->getName(),spc)).second)
+     throw LowlevelError("Space " + spc->getName() + " was initialized more than once");
 
-  if (nameTypeMismatch || duplicateName || duplicateId) {
-    string errMsg = "Space " + spc->getName();
-    if (nameTypeMismatch)
-      errMsg = errMsg + " was initialized with wrong type";
-    if (duplicateName)
-      errMsg = errMsg + " was initialized more than once";
-    if (duplicateId)
-      errMsg = errMsg + " was assigned as id duplicating: "+baselist[spc->index]->getName();
-    if (spc->refcount == 0)
-      delete spc;
-    spc = (AddrSpace *)0;
-    throw LowlevelError(errMsg);
-  }
   baselist[spc->index] = spc;
+  owner.release();
   spc->refcount += 1;
   assignShortcut(spc);
 }
@@ -816,6 +851,38 @@ Address AddrSpaceManager::constructJoinAddress(const Translate *translate,
   return join->getUnified().getAddr();
 }
 
+/// Check if the address space allows wrapped ranges. If so, construct a \e joined address
+/// out of the high address piece of the range and the low address piece.
+/// \param addr is the initial address in the range
+/// \param size is the number of bytes in the range
+/// \return the address representing the wrapped range
+Address AddrSpaceManager::constructWrappingAddress(const Address &addr,int4 size)
+
+{
+  AddrSpace *spc = addr.getSpace();
+  if (!spc->isHeritaged())
+    return addr;		// Size is ignored
+  uintb dist = spc->getHighest() - addr.getOffset() + 1;
+  if (size <= dist)
+    return addr;
+  if (!spc->allowsWrappedRange())
+    throw LowlevelError("Trying to construct memory range beyond end of address space: "+spc->getName());
+  int4 sizehi = (int4)dist;
+  int4 sizelo = size - sizehi;
+  vector<VarnodeData> pieces;
+  pieces.emplace_back();
+  pieces.emplace_back();
+  int4 highIndex = spc->isBigEndian() ? 0 : 1;
+  pieces[highIndex].space = spc;
+  pieces[highIndex].offset = addr.getOffset();
+  pieces[highIndex].size = sizehi;
+  pieces[1-highIndex].space = spc;
+  pieces[1-highIndex].offset = 0;
+  pieces[1-highIndex].size = sizelo;
+  JoinRecord *join = findAddJoin(pieces,0);
+  return join->getUnified().getAddr();
+}
+
 /// If an Address in the \e join AddressSpace is shifted from its original offset, it may no
 /// longer have a valid JoinRecord.  The shift or size change may even make the address of
 /// one of the pieces a more natural representation.  Given a new Address and size, this method
@@ -870,6 +937,34 @@ void AddrSpaceManager::renormalizeJoinAddress(Address &addr,int4 size)
   }
   JoinRecord *newJoinRecord = findAddJoin(newPieces, 0);
   addr = Address(newJoinRecord->unified.space,newJoinRecord->unified.offset);
+}
+
+/// If only 1 piece remains, the VarnodeData of that piece is returned.
+/// Otherwise a new JoinRecord is created and its unified VarnodeData is returned.
+/// \param join is the JoinRecord to strip
+/// \param index is the index of the piece to strip, which must be at the front or back
+/// \return the VarnodeData corresponding to the remaining piece(s)
+const VarnodeData &AddrSpaceManager::stripJoinPiece(JoinRecord *join,int4 index)
+
+{
+  int4 start,end;
+  if (index == 0) {
+    start = 1;
+    end = join->numPieces()-1;
+  }
+  else if (index == join->numPieces() - 1) {
+    start = 0;
+    end = join->numPieces()-2;
+  }
+  else
+    throw LowlevelError("Stripping middle piece from JoinRecord");
+  if (start == end)
+    return join->getPiece(start);
+  vector<VarnodeData> newPieces;
+  for(int4 i=start;i<=end;++i)
+    newPieces.push_back(join->getPiece(i));
+  JoinRecord *newJoinRecord = findAddJoin(newPieces, 0);
+  return newJoinRecord->unified;
 }
 
 /// The string \e must contain a hexadecimal offset.  The offset may be optionally prepended with "0x".
@@ -953,7 +1048,7 @@ const FloatFormat *Translate::getFloatFormat(int4 size) const
 void PcodeEmit::decodeOp(const Address &addr,Decoder &decoder)
 
 {
-  int4 opcode;
+  OpCode opcode;
   int4 isize;
   VarnodeData outvar;
   VarnodeData invar[16];
@@ -962,14 +1057,19 @@ void PcodeEmit::decodeOp(const Address &addr,Decoder &decoder)
   uint4 elemId = decoder.openElement(ELEM_OP);
   isize = decoder.readSignedInteger(ATTRIB_SIZE);
   outptr = &outvar;
-  if (isize <= 16)
+  if (isize <= 16) {
+    if (isize < 0)
+      throw DecoderError("Bad <op> size attribute");
     opcode = PcodeOpRaw::decode(decoder, isize, invar, &outptr);
+    decoder.closeElement(elemId);
+    dump(addr,opcode,outptr,invar,isize);
+  }
   else {
     vector<VarnodeData> varStorage(isize,VarnodeData());
     opcode = PcodeOpRaw::decode(decoder, isize, varStorage.data(), &outptr);
+    decoder.closeElement(elemId);
+    dump(addr,opcode,outptr,varStorage.data(),isize);
   }
-  decoder.closeElement(elemId);
-  dump(addr,(OpCode)opcode,outptr,invar,isize);
 }
 
 } // End namespace ghidra

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,31 +31,17 @@
  * domain, see the {@link ghidra.taint.model} package.
  * 
  * <p>
- * Next, we implement the stand-alone emulator using
- * {@link ghidra.pcode.exec.debug.auxiliary.AuxDebuggerEmulatorPartsFactory}. Technically, that interface
- * requires more than necessary for a stand-alone emulator, but because a fully-integrated emulator
- * is the goal, you can start with it and leave its methods stubbed until you actually need them.
+ * Next, we implement the emulator using {@link ghidra.pcode.emu.auxiliary.AuxEmulatorPartsFactory}.
  * The implementation of each method will move our attention to each part necessary to construct the
- * emulator. See the {@link ghidra.pcode.emu.taint.plain} package. The emulator itself
- * {@link ghidra.pcode.emu.taint.plain.TaintPcodeEmulator} is trivially derived from
+ * emulator. See the {@link ghidra.pcode.emu.taint.state} package. The emulator itself
+ * {@link ghidra.pcode.emu.taint.TaintPcodeEmulator} is trivially derived from
  * {@link ghidra.pcode.emu.auxiliary.AuxPcodeEmulator} and our factory.
  * 
  * <p>
- * Next, we implement the trace-integrated emulator. For this, we just implement two more methods:
- * {@link ghidra.pcode.exec.debug.auxiliary.AuxDebuggerEmulatorPartsFactory#createTraceSharedState(ghidra.pcode.exec.trace.auxiliary.AuxTracePcodeEmulator, ghidra.pcode.exec.trace.BytesTracePcodeExecutorStatePiece)}
- * and
- * {@link ghidra.pcode.exec.debug.auxiliary.AuxDebuggerEmulatorPartsFactory#createTraceLocalState(ghidra.pcode.exec.trace.auxiliary.AuxTracePcodeEmulator, ghidra.pcode.emu.PcodeThread, ghidra.pcode.exec.trace.BytesTracePcodeExecutorStatePiece)}.
- * Then we derive {@link ghidra.pcode.emu.taint.trace.TaintTracePcodeEmulator} trivially from
- * {@link ghidra.pcode.exec.trace.auxiliary.AuxTracePcodeEmulator} and our factory. See the
- * {@link ghidra.pcode.emu.taint.trace} package.
- * 
- * <p>
- * Next, in like fashion, we implement and derive the Debugger-integrated emulator. See the
- * {@link ghidra.pcode.emu.taint.full} package.
- * 
- * <p>
- * Finally, we add some UI components to make the emulator's machine state visible to the user.
- * These are in the {@link ghidra.taint.gui.field} package.
+ * Next, we provide trace integration by implementing
+ * {@link ghidra.pcode.emu.taint.state.TaintPieceHandler}. Finally, we add some UI components to
+ * make the emulator's machine state visible to the user. These are in the
+ * {@link ghidra.taint.gui.field} package.
  * 
  * <p>
  * There is a not-yet-integrated user-op library for tainting file reads. See

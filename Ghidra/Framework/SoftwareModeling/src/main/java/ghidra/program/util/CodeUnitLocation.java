@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,8 +36,8 @@ public class CodeUnitLocation extends ProgramLocation {
 	 * @param componentPath if this is not null it is the path to a data
 	 * component inside of another data component
 	 * @param row the row within the field.
-	 * @param col - the display item index on the given row. (Note most fields only have one display item per row)
-	 * @param charOffset - the character offset within the display item.
+	 * @param col the display item index on the given row. (Note most fields only have one display item per row)
+	 * @param charOffset the character offset within the display item.
 	 *
 	 */
 	public CodeUnitLocation(Program program, Address addr, int[] componentPath, int row, int col,
@@ -53,8 +53,8 @@ public class CodeUnitLocation extends ProgramLocation {
 	 * @param componentPath if this is not null it is the path to a data
 	 * component inside of another data component
 	 * @param row the row within the field.
-	 * @param col - the display item index on the given row. (Note most fields only have one display item per row)
-	 * @param charOffset - the character offset within the display item.
+	 * @param col the display item index on the given row. (Note most fields only have one display item per row)
+	 * @param charOffset the character offset within the display item.
 	 *
 	 */
 	protected CodeUnitLocation(Program program, Address addr, Address byteAddr, int[] componentPath,
@@ -70,8 +70,8 @@ public class CodeUnitLocation extends ProgramLocation {
 	 * @param program the program for obtaining the code unit
 	 * @param addr address of the location; should not be null
 	 * @param row the row within the field.
-	 * @param col - the display item index on the given row. (Note most fields only have one display item per row)
-	 * @param charOffset - the character offset within the display item.
+	 * @param col the display item index on the given row. (Note most fields only have one display item per row)
+	 * @param charOffset the character offset within the display item.
 	 *
 	 */
 	public CodeUnitLocation(Program program, Address addr, int row, int col, int charOffset) {

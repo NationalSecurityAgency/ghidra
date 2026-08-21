@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,9 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
 
+import org.apache.commons.io.FilenameUtils;
+
 import ghidra.app.util.MemoryBlockUtils;
-import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.ne.*;
 import ghidra.app.util.importer.MessageLog;
@@ -39,8 +40,8 @@ import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.reloc.RelocationTable;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.util.Conv;
 import ghidra.util.Msg;
+import ghidra.util.NumericUtilities;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -84,8 +85,11 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 	}
 
 	@Override
-	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program prog,
-			TaskMonitor monitor, MessageLog log) throws IOException, CancelledException {
+	public void load(Program prog, ImporterSettings settings)
+			throws IOException, CancelledException {
+
+		MessageLog log = settings.log();
+		TaskMonitor monitor = settings.monitor();
 
 		if (monitor.isCancelled()) {
 			return;
@@ -94,10 +98,11 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 
 		initVars();
 
-		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(prog, provider, monitor);
+		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(prog, settings.provider(), monitor);
 		SegmentedAddressSpace space =
 			(SegmentedAddressSpace) prog.getAddressFactory().getDefaultAddressSpace();
-		NewExecutable ne = new NewExecutable(provider, space.getAddress(SEGMENT_START, 0));
+		NewExecutable ne =
+			new NewExecutable(settings.provider(), space.getAddress(SEGMENT_START, 0));
 		WindowsHeader wh = ne.getWindowsHeader();
 		InformationBlock ib = wh.getInformationBlock();
 		SegmentTable st = wh.getSegmentTable();
@@ -171,13 +176,9 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 	}
 
 	@Override
-	protected boolean isOptionalLibraryFilenameExtensions() {
-		return true;
-	}
-
-	@Override
-	protected boolean isCaseInsensitiveLibraryFilenames() {
-		return true;
+	protected Comparator<String> getLibraryNameComparator() {
+		return (s1, s2) -> String.CASE_INSENSITIVE_ORDER.compare(FilenameUtils.getBaseName(s1),
+			FilenameUtils.getBaseName(s2));
 	}
 
 	//////////////////////////////////////////////////////////////////
@@ -204,36 +205,36 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 
 		buffer.append("Title:  " + nrnt.getTitle() + "\n");
 		buffer.append("Format: " + "New Executable (NE) Windows" + "\n");
-		buffer.append("CRC:    " + Conv.toHexString(ib.getChecksum()) + "\n");
+		buffer.append("CRC:    " + NumericUtilities.toPaddedHexString(ib.getChecksum()) + "\n");
 		buffer.append("\n");
 		buffer.append(
-			"Program Entry Point (CS:IP):   " + Conv.toHexString(ib.getEntryPointSegment()) + ":" +
-				Conv.toHexString(ib.getEntryPointOffset()) + "\n");
+			"Program Entry Point (CS:IP):   " + NumericUtilities.toPaddedHexString(ib.getEntryPointSegment()) + ":" +
+				NumericUtilities.toPaddedHexString(ib.getEntryPointOffset()) + "\n");
 		buffer.append(
-			"Initial Stack Pointer (SS:SP): " + Conv.toHexString(ib.getStackPointerSegment()) +
-				":" + Conv.toHexString(ib.getStackPointerOffset()) + "\n");
+			"Initial Stack Pointer (SS:SP): " + NumericUtilities.toPaddedHexString(ib.getStackPointerSegment()) +
+				":" + NumericUtilities.toPaddedHexString(ib.getStackPointerOffset()) + "\n");
 		buffer.append("Auto Data Segment Index:       " +
-			Conv.toHexString(ib.getAutomaticDataSegment()) + "\n");
+			NumericUtilities.toPaddedHexString(ib.getAutomaticDataSegment()) + "\n");
 		buffer.append(
-			"Initial Heap Size:             " + Conv.toHexString(ib.getInitialHeapSize()) + "\n");
+			"Initial Heap Size:             " + NumericUtilities.toPaddedHexString(ib.getInitialHeapSize()) + "\n");
 		buffer.append(
-			"Initial Stack Size:            " + Conv.toHexString(ib.getInitialStackSize()) + "\n");
+			"Initial Stack Size:            " + NumericUtilities.toPaddedHexString(ib.getInitialStackSize()) + "\n");
 		buffer.append(
-			"Minimum Code Swap Size:        " + Conv.toHexString(ib.getMinCodeSwapSize()) + "\n");
+			"Minimum Code Swap Size:        " + NumericUtilities.toPaddedHexString(ib.getMinCodeSwapSize()) + "\n");
 		buffer.append("\n");
 		buffer.append("Linker Version:  " + ib.getVersion() + "." + ib.getRevision() + "\n");
 		buffer.append("Target OS:       " + ib.getTargetOpSysAsString() + "\n");
 		buffer.append("Windows Version: " + (ib.getExpectedWindowsVersion() >> 8) + "." +
 			(ib.getExpectedWindowsVersion() & 0xff) + "\n");
 		buffer.append("\n");
-		buffer.append("Program Flags:     " + Conv.toHexString(ib.getProgramFlags()) + "\n");
+		buffer.append("Program Flags:     " + NumericUtilities.toPaddedHexString(ib.getProgramFlags()) + "\n");
 		buffer.append(ib.getProgramFlagsAsString());
-		buffer.append("Application Flags: " + Conv.toHexString(ib.getApplicationFlags()) + "\n");
+		buffer.append("Application Flags: " + NumericUtilities.toPaddedHexString(ib.getApplicationFlags()) + "\n");
 		buffer.append(ib.getApplicationFlagsAsString());
-		buffer.append("Other Flags:       " + Conv.toHexString(ib.getOtherFlags()) + "\n");
+		buffer.append("Other Flags:       " + NumericUtilities.toPaddedHexString(ib.getOtherFlags()) + "\n");
 		buffer.append(ib.getOtherFlagsAsString());
 
-		firstCU.setComment(CodeUnit.PLATE_COMMENT, buffer.toString());
+		firstCU.setComment(CommentType.PLATE, buffer.toString());
 	}
 
 	private void processSegmentTable(MessageLog log, InformationBlock ib, SegmentTable st,
@@ -268,7 +269,7 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 						try {
 							block = program.getMemory().join(block, zeroBlock); // expand
 						}
-						catch (MemoryBlockException | LockException | NotFoundException e) {
+						catch (MemoryBlockException | LockException e) {
 							throw new IOException(e);
 						}
 					}
@@ -296,11 +297,11 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 				StringBuffer buff = new StringBuffer();
 				buff.append("Segment:    " + (i + 1) + "\n");
 				buff.append(
-					"Offset:     " + Conv.toHexString(segments[i].getOffsetShiftAligned()) + "\n");
-				buff.append("Length:     " + Conv.toHexString(segments[i].getLength()) + "\n");
+					"Offset:     " + NumericUtilities.toPaddedHexString(segments[i].getOffsetShiftAligned()) + "\n");
+				buff.append("Length:     " + NumericUtilities.toPaddedHexString(segments[i].getLength()) + "\n");
 				buff.append(
-					"Min Alloc:  " + Conv.toHexString(segments[i].getMinAllocSize()) + "\n");
-				buff.append("Flags:      " + Conv.toHexString(segments[i].getFlagword()) + "\n");
+					"Min Alloc:  " + NumericUtilities.toPaddedHexString(segments[i].getMinAllocSize()) + "\n");
+				buff.append("Flags:      " + NumericUtilities.toPaddedHexString(segments[i].getFlagword()) + "\n");
 				buff.append(TAB + (segments[i].isCode() ? "Code" : "Data") + "\n");
 				buff.append((segments[i].isDiscardable() ? TAB + "Discardable" + "\n" : ""));
 				buff.append((segments[i].isExecuteOnly() ? TAB + "Execute Only" + "\n" : ""));
@@ -314,7 +315,7 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 				buff.append((segments[i].isReadOnly() ? TAB + "Read Only" + "\n" : ""));
 				buff.append((segments[i].is32bit() ? TAB + "Use 32 Bit" + "\n" : ""));
 				CodeUnit cu = program.getListing().getCodeUnitAt(addr);
-				cu.setComment(CodeUnit.PRE_COMMENT, buff.toString());
+				cu.setComment(CommentType.PRE, buff.toString());
 			}
 
 			for (Segment segment : segments) {
@@ -350,8 +351,15 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 				Address addr = space.getAddress(segidx, 0);
 
 				try {
-					int offset = resource.getFileOffsetShifted();
-					int length = resource.getFileLengthShifted();
+					long offset = Integer.toUnsignedLong(resource.getFileOffsetShifted());
+					long length = Integer.toUnsignedLong(resource.getFileLengthShifted());
+					long extra = offset + length - fileBytes.getSize();
+					if (extra > 0) {
+						log.appendMsg(
+							"Resource at 0x%x exceeds file length by 0x%x bytes...truncating"
+									.formatted(offset, extra));
+						length -= extra;
+					}
 					if (length > 0) {
 						MemoryBlockUtils.createInitializedBlock(program, false, "Rsrc" + (id++),
 							addr, fileBytes, offset, length, "", "", true, false, false, log);
@@ -363,13 +371,13 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 
 				//create a comment to describe this resource...
 				StringBuilder buf = new StringBuilder();
-				buf.append("Resource Type:  " + Conv.toHexString(type.getTypeID()) + " (" + type +
+				buf.append("Resource Type:  " + NumericUtilities.toPaddedHexString(type.getTypeID()) + " (" + type +
 					")" + "\n");
 				buf.append(
-					"File Length:    " + Conv.toHexString(resource.getFileLengthShifted()) + "\n");
+					"File Length:    " + NumericUtilities.toPaddedHexString(resource.getFileLengthShifted()) + "\n");
 				buf.append(
-					"File Offset:    " + Conv.toHexString(resource.getFileOffsetShifted()) + "\n");
-				buf.append("Attributes:     " + Conv.toHexString(resource.getFlagword()) + " (");
+					"File Offset:    " + NumericUtilities.toPaddedHexString(resource.getFileOffsetShifted()) + "\n");
+				buf.append("Attributes:     " + NumericUtilities.toPaddedHexString(resource.getFlagword()) + " (");
 				if (resource.isMoveable()) {
 					buf.append("Moveable");
 				}
@@ -381,11 +389,11 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 				}
 				buf.append(")" + "\n");
 				buf.append("Resource ID:    " + resource + "\n");
-				buf.append("Handle:         " + Conv.toHexString(resource.getHandle()) + "\n");
-				buf.append("Usage:          " + Conv.toHexString(resource.getUsage()) + "\n");
+				buf.append("Handle:         " + NumericUtilities.toPaddedHexString(resource.getHandle()) + "\n");
+				buf.append("Usage:          " + NumericUtilities.toPaddedHexString(resource.getUsage()) + "\n");
 				CodeUnit cu = listing.getCodeUnitAt(addr);
 				if (cu != null) {
-					cu.setComment(CodeUnit.PRE_COMMENT, buf.toString());
+					cu.setComment(CommentType.PRE, buf.toString());
 				}
 
 				//if this resource is a string table,
@@ -819,6 +827,11 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 	@Override
 	public String getName() {
 		return NE_NAME;
+	}
+
+	@Override
+	public Collection<String> getAssociatedFileExtensions() {
+		return List.of("exe", "dll");
 	}
 
 }

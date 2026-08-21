@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Function;
 
-import generic.NestedIterator;
+import generic.util.FlattenedIterator;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.ContextChangeException;
@@ -110,7 +110,7 @@ public class DBTraceProgramViewProgramContext extends AbstractProgramContext {
 		setRegisterValue(start, end, new RegisterValue(register, value));
 	}
 
-	private static class NestedAddressRangeIterator<U> extends NestedIterator<U, AddressRange>
+	private static class NestedAddressRangeIterator<U> extends FlattenedIterator<U, AddressRange>
 			implements AddressRangeIterator {
 		protected NestedAddressRangeIterator(Iterator<U> it,
 				Function<U, Iterator<? extends AddressRange>> f) {

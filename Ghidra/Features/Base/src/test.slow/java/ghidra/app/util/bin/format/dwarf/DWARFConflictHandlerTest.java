@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import static org.junit.Assert.*;
 
 import org.junit.*;
 
-import ghidra.app.util.bin.format.dwarf.DWARFDataTypeConflictHandler;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.data.*;
@@ -99,7 +98,7 @@ public class DWARFConflictHandlerTest extends AbstractGhidraHeadedIntegrationTes
 	 * Create a copy of the "addingStruct" before adding it because the impl instance can be
 	 * modified during the conflict resolution by the DTM when it tries to DataType.clone()
 	 * it before renaming the clone().
-	 * <p>
+	 * 
 	 * @param existingStruct
 	 * @param addingStruct
 	 * @param expectedResult

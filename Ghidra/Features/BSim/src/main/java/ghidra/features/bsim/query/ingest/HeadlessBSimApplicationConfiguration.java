@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,9 @@ import java.util.List;
 
 import generic.jar.ResourceFile;
 import ghidra.framework.*;
-import ghidra.net.ApplicationTrustManagerFactory;
+import ghidra.framework.remote.GhidraObjectInputFilter;
+import ghidra.net.DefaultTrustManagerFactory;
+import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
 
 public class HeadlessBSimApplicationConfiguration extends ApplicationConfiguration {
@@ -29,11 +31,20 @@ public class HeadlessBSimApplicationConfiguration extends ApplicationConfigurati
 	protected void initializeApplication() {
 		super.initializeApplication();
 
-		// Locate certs if found (must be done before module initialization)
-		locateCACertsFile();
+		try {
+			// Install client-side deserialization filters (data/*.serial.filter)
+			GhidraObjectInputFilter.configureClientSerialFilter();
 
-		monitor.setMessage("Performing module initialization...");
-		performModuleInitialization();
+			// Locate certs if found (must be done before module initialization)
+			locateCACertsFile();
+
+			monitor.setMessage("Performing module initialization...");
+			performModuleInitialization();
+		}
+		catch (Throwable t) {
+			Msg.error(this, "Ghidra encountered a severe error during initialization", t);
+			System.exit(-1);
+		}
 
 		monitor.setMessage("Done initializing");
 	}
@@ -46,7 +57,7 @@ public class HeadlessBSimApplicationConfiguration extends ApplicationConfigurati
 		for (ResourceFile appRoot : Application.getApplicationRootDirectories()) {
 			File cacertsFile = new File(appRoot.getAbsolutePath(), "cacerts");
 			if (cacertsFile.isFile()) {
-				System.setProperty(ApplicationTrustManagerFactory.GHIDRA_CACERTS_PATH_PROPERTY,
+				System.setProperty(DefaultTrustManagerFactory.GHIDRA_CACERTS_PATH_PROPERTY,
 					cacertsFile.getAbsolutePath());
 				break;
 			}

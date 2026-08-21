@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,7 @@
  */
 package ghidra.framework.store.local;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.io.File;
 import java.net.URLDecoder;
@@ -39,7 +38,7 @@ public class IndexedPropertyFileTest extends AbstractGenericTest {
 
 		String storageName = NamingUtilities.mangle(NAME);
 
-		PropertyFile pf = new IndexedPropertyFile(parent, storageName, "/", NAME);
+		ItemPropertyFile pf = new IndexedPropertyFile(parent, storageName, "/", NAME);
 		assertEquals(storageName, pf.getStorageName());
 		assertEquals(NAME, pf.getName());
 		assertEquals("/", pf.getParentPath());
@@ -63,29 +62,44 @@ public class IndexedPropertyFileTest extends AbstractGenericTest {
 
 		pf.writeState();
 
-		PropertyFile pf2 = new IndexedPropertyFile(parent, storageName, "/", NAME);
-		pf2.readState();
+		pf = new IndexedPropertyFile(parent, storageName, "/X", "XXX");
+		// existing file ignores supplied name and parent path
+		assertEquals(storageName, pf.getStorageName());
+		assertEquals(NAME, pf.getName());
+		assertEquals("/", pf.getParentPath());
+		assertEquals("/" + NAME, pf.getPath());
+		assertTrue(pf.getBoolean("TestBooleanTrue", false));
+		assertTrue(!pf.getBoolean("TestBooleanFalse", true));
+		assertTrue(pf.getBoolean("TestBooleanBad", true));
+		assertEquals(1234, pf.getInt("TestInt", -1));
+		assertEquals(0x12345678, pf.getLong("TestLong", -1));
+		assertEquals(str, URLDecoder.decode(pf.getString("TestString", null), "UTF-8"));
 
-		assertTrue(pf2.getBoolean("TestBooleanTrue", false));
-		assertTrue(!pf2.getBoolean("TestBooleanFalse", true));
-		assertTrue(pf2.getBoolean("TestBooleanBad", true));
-		assertEquals(1234, pf2.getInt("TestInt", -1));
-		assertEquals(0x12345678, pf2.getLong("TestLong", -1));
-		assertEquals(str, URLDecoder.decode(pf2.getString("TestString", null), "UTF-8"));
+		pf = new IndexedPropertyFile(parent, storageName);
+		assertEquals(storageName, pf.getStorageName());
+		assertEquals(NAME, pf.getName());
+		assertEquals("/", pf.getParentPath());
+		assertEquals("/" + NAME, pf.getPath());
 
-		PropertyFile pf3 =
-			new IndexedPropertyFile(new File(parent, storageName + PropertyFile.PROPERTY_EXT));
-		assertEquals(storageName, pf3.getStorageName());
-		assertEquals(NAME, pf3.getName());
-		assertEquals("/", pf3.getParentPath());
-		assertEquals("/" + NAME, pf3.getPath());
+		assertTrue(pf.getBoolean("TestBooleanTrue", false));
+		assertTrue(!pf.getBoolean("TestBooleanFalse", true));
+		assertTrue(pf.getBoolean("TestBooleanBad", true));
+		assertEquals(1234, pf.getInt("TestInt", -1));
+		assertEquals(0x12345678, pf.getLong("TestLong", -1));
+		assertEquals(str, URLDecoder.decode(pf.getString("TestString", null), "UTF-8"));
 
-		assertTrue(pf3.getBoolean("TestBooleanTrue", false));
-		assertTrue(!pf3.getBoolean("TestBooleanFalse", true));
-		assertTrue(pf3.getBoolean("TestBooleanBad", true));
-		assertEquals(1234, pf3.getInt("TestInt", -1));
-		assertEquals(0x12345678, pf3.getLong("TestLong", -1));
-		assertEquals(str, URLDecoder.decode(pf3.getString("TestString", null), "UTF-8"));
+		pf = new IndexedPropertyFile(new File(parent, storageName + PropertyFile.PROPERTY_EXT));
+		assertEquals(storageName, pf.getStorageName());
+		assertEquals(NAME, pf.getName());
+		assertEquals("/", pf.getParentPath());
+		assertEquals("/" + NAME, pf.getPath());
+
+		assertTrue(pf.getBoolean("TestBooleanTrue", false));
+		assertTrue(!pf.getBoolean("TestBooleanFalse", true));
+		assertTrue(pf.getBoolean("TestBooleanBad", true));
+		assertEquals(1234, pf.getInt("TestInt", -1));
+		assertEquals(0x12345678, pf.getLong("TestLong", -1));
+		assertEquals(str, URLDecoder.decode(pf.getString("TestString", null), "UTF-8"));
 
 	}
 

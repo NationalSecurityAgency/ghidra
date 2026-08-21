@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Set;
 
-import ghidra.framework.data.FolderLinkContentHandler;
 import ghidra.framework.model.*;
+import ghidra.framework.protocol.ghidra.GhidraURLQuery.LinkFileControl;
 import ghidra.framework.protocol.ghidra.GhidraURLQueryTask;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
@@ -31,8 +31,9 @@ public class AcceptUrlContentTask extends GhidraURLQueryTask {
 
 	private FrontEndPlugin plugin;
 
-	public AcceptUrlContentTask(URL url, FrontEndPlugin plugin) {
-		super("Accepting URL", url);
+	public AcceptUrlContentTask(URL url, boolean followExternalLinks, FrontEndPlugin plugin) {
+		super("Accepting URL", url, null, followExternalLinks ? LinkFileControl.FOLLOW_EXTERNAL
+				: LinkFileControl.FOLLOW_INTERNAL);
 		this.plugin = plugin;
 	}
 
@@ -65,8 +66,8 @@ public class AcceptUrlContentTask extends GhidraURLQueryTask {
 		}
 
 		Swing.runNow(() -> {
-			if (FolderLinkContentHandler.FOLDER_LINK_CONTENT_TYPE
-					.equals(domainFile.getContentType())) {
+			LinkFileInfo linkInfo = domainFile.getLinkInfo();
+			if (linkInfo != null && linkInfo.isFolderLink()) {
 				// Simply select folder link-file within project - do not follow - let user do that.
 				if (isSameLocalProject(activeProject.getProjectLocator(),
 					domainFile.getProjectLocator())) {

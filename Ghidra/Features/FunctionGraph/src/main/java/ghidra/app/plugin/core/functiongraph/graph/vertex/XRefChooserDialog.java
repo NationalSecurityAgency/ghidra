@@ -87,8 +87,10 @@ public class XRefChooserDialog extends DialogComponentProvider {
 		});
 
 		filterPanel = new GhidraTableFilterPanel<>(table, model);
+		filterPanel.getAccessibleContext().setAccessibleName("Filter");
 		workPanel.add(new JScrollPane(table), BorderLayout.CENTER);
 		workPanel.add(filterPanel, BorderLayout.SOUTH);
+		workPanel.getAccessibleContext().setAccessibleName("External Reference Chooser");
 		return workPanel;
 	}
 

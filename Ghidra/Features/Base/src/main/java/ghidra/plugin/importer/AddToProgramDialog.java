@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,10 @@
  */
 package ghidra.plugin.importer;
 
+import java.awt.Component;
 import java.util.List;
+
+import javax.swing.JCheckBox;
 
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
@@ -24,6 +27,7 @@ import ghidra.formats.gfilesystem.FSRL;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.preferences.Preferences;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.task.TaskLauncher;
@@ -36,7 +40,12 @@ import ghidra.util.task.TaskLauncher;
  */
 public class AddToProgramDialog extends ImporterDialog {
 
+	/** Preference name for the last "Analyze" choice */
+	public final static String LAST_ADD_TO_PROGRAM_ANALYZE_CHOICE = "LastAddToProgramAnalyzeChoice";
+
 	private Program addToProgram;
+
+	protected JCheckBox analyzeCheckBox;
 
 	/**
 	 * Construct a new AddToProgramDialog.
@@ -61,6 +70,8 @@ public class AddToProgramDialog extends ImporterDialog {
 		folderButton.setEnabled(false);
 		languageButton.setEnabled(false);
 		nameTextField.setEnabled(false);
+		optionsPanel.remove(mirrorFsCheckBox);
+		optionsPanel.add(buildAnalyzeCheckbox(), 0);
 		validateFormInput();
 	}
 
@@ -78,8 +89,8 @@ public class AddToProgramDialog extends ImporterDialog {
 
 		LoadSpec loadSpec = getSelectedLoadSpec(loader);
 
-		String result =
-			loader.validateOptions(byteProvider, loadSpec, getOptions(loadSpec), addToProgram);
+		String result = loader.validateOptions(byteProvider, loadSpec, getOptions(loadSpec, false),
+			addToProgram);
 
 		if (result != null) {
 			setStatusText(result);
@@ -103,21 +114,28 @@ public class AddToProgramDialog extends ImporterDialog {
 		LoadSpec selectedLoadSpec = getSelectedLoadSpec(selectedLoader);
 
 		if (options == null) {
-			options = selectedLoader.getDefaultOptions(byteProvider, selectedLoadSpec, null, true);
+			options =
+				selectedLoader.getDefaultOptions(byteProvider, selectedLoadSpec, null, true, false);
 		}
+
+		boolean analyze = analyzeCheckBox.isSelected();
+		Preferences.setProperty(LAST_ADD_TO_PROGRAM_ANALYZE_CHOICE, String.valueOf(analyze));
+		Preferences.store();
+
 		TaskLauncher.launchNonModal("Import File", monitor -> {
 			ImporterUtilities.addContentToProgram(tool, addToProgram, fsrl, selectedLoadSpec,
-				options, monitor);
+				options, analyze, monitor);
 		});
 		close();
 	}
 
 	@Override
-	protected List<Option> getOptions(LoadSpec loadSpec) {
-		if (options != null) {
+	protected List<Option> getOptions(LoadSpec loadSpec, boolean forceRefresh) {
+		if (options != null && !forceRefresh) {
 			return options;
 		}
-		return loadSpec.getLoader().getDefaultOptions(byteProvider, loadSpec, addToProgram, true);
+		return loadSpec.getLoader()
+				.getDefaultOptions(byteProvider, loadSpec, addToProgram, true, false);
 	}
 
 	/**
@@ -128,6 +146,14 @@ public class AddToProgramDialog extends ImporterDialog {
 		LanguageID languageId = addToProgram.getLanguageID();
 		CompilerSpecID compilerSpecId = addToProgram.getCompilerSpec().getCompilerSpecID();
 		return new LanguageCompilerSpecPair(languageId, compilerSpecId);
+	}
+
+	private Component buildAnalyzeCheckbox() {
+		boolean lastChoice = Boolean.parseBoolean(
+			Preferences.getProperty(LAST_ADD_TO_PROGRAM_ANALYZE_CHOICE, Boolean.FALSE.toString()));
+		analyzeCheckBox = new JCheckBox("Analyze", lastChoice);
+		analyzeCheckBox.getAccessibleContext().setAccessibleName("Analyze");
+		return analyzeCheckBox;
 	}
 
 	private String getFolderName(Program program) {

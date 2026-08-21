@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,6 +58,7 @@ public class DmgHeaderV2 extends DmgHeader {
 	public byte [] getSignature() {
 		return signature;
 	}
+	@Override
 	public int getVersion() {
 		return version;
 	}
@@ -85,13 +86,16 @@ public class DmgHeaderV2 extends DmgHeader {
 	public int getBlockSize() {
 		return blockSize;
 	}
+	@Override
 	public long getDataOffset() {
 		return dataOffset;
 	}
+	@Override
 	public long getDataSize() {
 		return dataSize;
 	}
 
+	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		StructureDataType struct = (StructureDataType)StructConverterUtil.toDataType( this );
 		DataTypeComponent component0 = struct.getComponent(0);

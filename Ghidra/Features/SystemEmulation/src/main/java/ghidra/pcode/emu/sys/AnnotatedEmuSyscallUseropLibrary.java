@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -59,7 +59,8 @@ public abstract class AnnotatedEmuSyscallUseropLibrary<T> extends AnnotatedPcode
 	 * An annotation to export a method as a system call in the library.
 	 * 
 	 * <p>
-	 * The method must also be exported in the userop library, likely via {@link PcodeUserop}.
+	 * The method must also be exported in the userop library, likely via
+	 * {@link ghidra.pcode.exec.AnnotatedPcodeUseropLibrary.PcodeUserop @PcodeUserop}.
 	 */
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.METHOD)
@@ -120,12 +121,14 @@ public abstract class AnnotatedEmuSyscallUseropLibrary<T> extends AnnotatedPcode
 	/**
 	 * Export a userop as a system call
 	 * 
+	 * @param number the opIndex assigned to the userop
 	 * @param opdef the userop
+	 * @param convention the syscall calling convention for the emulated platform
 	 * @return the syscall definition
 	 */
-	public UseropEmuSyscallDefinition<T> newBoundSyscall(PcodeUseropDefinition<T> opdef,
-			PrototypeModel convention) {
-		return new UseropEmuSyscallDefinition<>(opdef, program, convention, dtMachineWord);
+	public UseropEmuSyscallDefinition<T> newBoundSyscall(long number,
+			PcodeUseropDefinition<T> opdef, PrototypeModel convention) {
+		return new UseropEmuSyscallDefinition<>(number, opdef, program, convention, dtMachineWord);
 	}
 
 	protected void mapAndBindSyscalls(Class<?> cls) {
@@ -149,7 +152,7 @@ public abstract class AnnotatedEmuSyscallUseropLibrary<T> extends AnnotatedPcode
 			}
 			PrototypeModel convention = mapConventions.get(number);
 			EmuSyscallDefinition<T> existed =
-				syscallMap.put(number, newBoundSyscall(opdef, convention));
+				syscallMap.put(number, newBoundSyscall(number, opdef, convention));
 			if (existed != null) {
 				throw new IllegalArgumentException("Duplicate @" +
 					EmuSyscall.class.getSimpleName() + " annotated methods with name " + name);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,7 @@
 package ghidra.program.database;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import javax.help.UnsupportedOperationException;
 
@@ -110,16 +109,16 @@ public class ProjectDataTypeManager extends StandAloneDataTypeManager
 	@Override
 	public void dataTypeChanged(DataType dt, boolean isAutoChange) {
 		super.dataTypeChanged(dt, isAutoChange);
-//		dataTypeArchive.getCodeManager().invalidateCache(false);
-		// TODO
-		dataTypeArchive.dataTypeChanged(getID(dt), ProgramEvent.DATA_TYPE_CHANGED, isAutoChange,
-			null, dt);
+		// NOTE: During upgrades at time of instantiation dataTypeArchive will be null
+		if (dataTypeArchive != null) {
+			dataTypeArchive.dataTypeChanged(getID(dt), ProgramEvent.DATA_TYPE_CHANGED, isAutoChange,
+				null, dt);
+		}
 	}
 
 	@Override
 	protected void dataTypeAdded(DataType newDt, DataType originalDataType) {
 		super.dataTypeAdded(newDt, originalDataType);
-//		saveArchiveName(originalDataType);
 		dataTypeArchive.dataTypeAdded(getID(newDt), ProgramEvent.DATA_TYPE_ADDED, null, newDt);
 	}
 
@@ -197,6 +196,11 @@ public class ProjectDataTypeManager extends StandAloneDataTypeManager
 	}
 
 	@Override
+	protected void initTransactionState() {
+		// do nothing - rely on DataTypeArchiveDB
+	}
+
+	@Override
 	public Transaction openTransaction(String description) throws IllegalStateException {
 		return dataTypeArchive.openTransaction(description);
 	}
@@ -208,14 +212,75 @@ public class ProjectDataTypeManager extends StandAloneDataTypeManager
 	}
 
 	@Override
-	public void flushEvents() {
-		dataTypeArchive.flushEvents();
+	public boolean endTransaction(int transactionID, boolean commit) {
+		return dataTypeArchive.endTransaction(transactionID, commit);
+	}
+
+	@Override
+	public void undo() {
+		try {
+			dataTypeArchive.undo();
+		}
+		catch (IOException e) {
+			dbError(e);
+		}
+	}
+
+	@Override
+	public void redo() {
+		try {
+			dataTypeArchive.redo();
+		}
+		catch (IOException e) {
+			dbError(e);
+		}
 	}
 
 	@SuppressWarnings("sync-override")
 	@Override
-	public void endTransaction(int transactionID, boolean commit) {
-		dataTypeArchive.endTransaction(transactionID, commit);
+	public void clearUndo() {
+		dataTypeArchive.clearUndo();
+	}
+
+	@SuppressWarnings("sync-override")
+	@Override
+	public boolean canRedo() {
+		return dataTypeArchive.canRedo();
+	}
+
+	@SuppressWarnings("sync-override")
+	@Override
+	public boolean canUndo() {
+		return dataTypeArchive.canUndo();
+	}
+
+	@SuppressWarnings("sync-override")
+	@Override
+	public String getRedoName() {
+		return dataTypeArchive.getRedoName();
+	}
+
+	@SuppressWarnings("sync-override")
+	@Override
+	public String getUndoName() {
+		return dataTypeArchive.getUndoName();
+	}
+
+	@SuppressWarnings("sync-override")
+	@Override
+	public List<String> getAllUndoNames() {
+		return dataTypeArchive.getAllUndoNames();
+	}
+
+	@SuppressWarnings("sync-override")
+	@Override
+	public List<String> getAllRedoNames() {
+		return dataTypeArchive.getAllRedoNames();
+	}
+
+	@Override
+	public void flushEvents() {
+		dataTypeArchive.flushEvents();
 	}
 
 	@Override
@@ -249,7 +314,7 @@ public class ProjectDataTypeManager extends StandAloneDataTypeManager
 	}
 
 	@Override
-	public void close() {
+	public synchronized void close() {
 		// do nothing - cannot close a project data type manager
 		// dispose should be invoked by the owner of the instance
 	}

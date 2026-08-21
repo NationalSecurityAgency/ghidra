@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,6 @@ import utilities.util.FileUtilities;
 
 /**
  * Common base class for tasks that need to extract files from a GFileSystem location.
- * <p>
  *
  */
 public abstract class AbstractFileExtractorTask extends Task {
@@ -90,13 +89,6 @@ public abstract class AbstractFileExtractorTask extends Task {
 			return;
 		}
 
-		if (!FileUtilities.isPathContainedWithin(rootOutputDirectory, destDirectory)) {
-			// This can happen with hostile relative paths supplied by the data in the src filesystem.
-			String srcPath = (srcGFileDirectory != null) ? srcGFileDirectory.getPath() : "/";
-			throw new IOException("Extracted directory " + srcPath + " [" + destDirectory +
-				"] would be outside of root destination directory: " + rootOutputDirectory);
-		}
-
 		if (!destDirectory.isDirectory() && !destDirectory.mkdirs()) {
 			throw new IOException("Failed to create destination directory " + destDirectory);
 		}
@@ -107,7 +99,7 @@ public abstract class AbstractFileExtractorTask extends Task {
 
 			String destFname = mapSourceFilenameToDest(srcFile);
 
-			File destFSFile = new File(destDirectory, destFname);
+			File destFSFile = FileUtilities.getSecureFile(destDirectory, destFname);
 			if (srcFile.isDirectory()) {
 				processDirectory(srcFile, destFSFile, monitor);
 			}
@@ -120,11 +112,6 @@ public abstract class AbstractFileExtractorTask extends Task {
 	protected void processFile(GFile srcFile, File destFSFile, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		try {
-			if (!FileUtilities.isPathContainedWithin(this.rootOutputDirectory, destFSFile)) {
-				throw new IOException("Extracted file " + srcFile.getPath() + " [" + destFSFile +
-					"] would be outside of root destination directory: " +
-					this.rootOutputDirectory);
-			}
 			extractFile(srcFile, destFSFile.getCanonicalFile(), monitor);
 		}
 		catch (CancelledException | IOCancelledException e) {
@@ -216,7 +203,7 @@ public abstract class AbstractFileExtractorTask extends Task {
 
 	/**
 	 * Return the number of files that were exported.
-	 * <p>
+	 * 
 	 * @return the number of files that were exported
 	 */
 	public int getTotalFilesExportedCount() {
@@ -225,7 +212,7 @@ public abstract class AbstractFileExtractorTask extends Task {
 
 	/**
 	 * Return the number of directories that were exported.
-	 * <p>
+	 * 
 	 * @return the number of directories that were exported
 	 */
 	public int getTotalDirsExportedCount() {
@@ -234,7 +221,7 @@ public abstract class AbstractFileExtractorTask extends Task {
 
 	/**
 	 * Return the number of bytes that were exported.
-	 * <p>
+	 * 
 	 * @return the number of bytes that were exported
 	 */
 	public long getTotalBytesExportedCount() {

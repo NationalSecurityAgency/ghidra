@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,7 @@ import java.util.List;
 import org.junit.Test;
 
 import ghidra.framework.store.DataFileItem;
+import utilities.util.FileUtilities;
 
 public class MangledLocalFileSystemTest extends AbstractLocalFileSystemTest {
 
@@ -34,6 +35,10 @@ public class MangledLocalFileSystemTest extends AbstractLocalFileSystemTest {
 
 	@Test
 	public void testMigration() throws Exception {
+
+		File tmpProjectDir = new File(projectDir.getParentFile(),
+			LocalFileSystem.HIDDEN_DIR_PREFIX + '.' + projectDir.getName());
+		FileUtilities.deleteDir(tmpProjectDir);
 
 		testFilePaths();
 

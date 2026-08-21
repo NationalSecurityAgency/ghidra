@@ -87,6 +87,7 @@ class SetFlowOverrideDialog extends DialogComponentProvider {
 		if (instruction != null && instruction.getFlowType().isConditional()) {
 			mainPanel.add(buildNotePanel("*Conditional flow will be preserved"));
 		}
+		mainPanel.getAccessibleContext().setAccessibleName("Set Flow Override");
 		return mainPanel;
 	}
 
@@ -102,7 +103,7 @@ class SetFlowOverrideDialog extends DialogComponentProvider {
 
 		panel.add(Box.createGlue());
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
+		panel.getAccessibleContext().setAccessibleName("Current Flow");
 		return panel;
 	}
 
@@ -114,7 +115,7 @@ class SetFlowOverrideDialog extends DialogComponentProvider {
 		panel.add(new GLabel(note));
 
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
+		panel.getAccessibleContext().setAccessibleName("Note");
 		return panel;
 	}
 
@@ -124,6 +125,7 @@ class SetFlowOverrideDialog extends DialogComponentProvider {
 		panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
 
 		flowOverrideComboBox = new GhidraComboBox<>();
+		flowOverrideComboBox.getAccessibleContext().setAccessibleName("Flow Override");
 		flowOverrideComboBox.addItem(DEFAULT_CHOICE);
 		for (FlowOverride element : FlowOverride.values()) {
 			if (element == FlowOverride.NONE) {
@@ -145,7 +147,7 @@ class SetFlowOverrideDialog extends DialogComponentProvider {
 
 		panel.add(Box.createGlue());
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
+		panel.getAccessibleContext().setAccessibleName("Flow Override");
 		return panel;
 	}
 

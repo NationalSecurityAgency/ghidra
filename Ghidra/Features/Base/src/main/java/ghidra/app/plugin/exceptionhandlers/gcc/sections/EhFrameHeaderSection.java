@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import ghidra.app.plugin.exceptionhandlers.gcc.structures.ehFrame.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOutOfBoundsException;
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.mem.MemoryBlock;
@@ -127,7 +127,7 @@ public class EhFrameHeaderSection {
 		dataCmd.applyTo(program);
 
 		SetCommentCmd commentCmd =
-			new SetCommentCmd(curAddress, CodeUnit.EOL_COMMENT, "Encoded FDE count");
+			new SetCommentCmd(curAddress, CommentType.EOL, "Encoded FDE count");
 		commentCmd.applyTo(program);
 
 		curAddress = curAddress.add(ctx.getEncodedLength());
@@ -160,8 +160,8 @@ public class EhFrameHeaderSection {
 		DwarfDecodeContext ctx = new DwarfDecodeContext(program, curAddress, curMemBlock);
 		Address frmPtrAddr = frmPtrDecoder.decodeAddress(ctx);
 
-		program.getReferenceManager().addMemoryReference(curAddress, frmPtrAddr, RefType.DATA,
-			SourceType.ANALYSIS, 0);
+		program.getReferenceManager()
+				.addMemoryReference(curAddress, frmPtrAddr, RefType.DATA, SourceType.ANALYSIS, 0);
 
 		DataType frmPtrDataType = frmPtrDecoder.getDataType(program);
 
@@ -169,7 +169,7 @@ public class EhFrameHeaderSection {
 		dataCmd.applyTo(program);
 
 		SetCommentCmd commentCmd =
-			new SetCommentCmd(curAddress, CodeUnit.EOL_COMMENT, "Encoded eh_frame_ptr");
+			new SetCommentCmd(curAddress, CommentType.EOL, "Encoded eh_frame_ptr");
 		commentCmd.applyTo(program);
 
 		curAddress = curAddress.add(ctx.getEncodedLength());
@@ -185,8 +185,8 @@ public class EhFrameHeaderSection {
 	}
 
 	private void createFdeTable(Address curAddress, ExceptionHandlerFrameHeader eh_frame_hdr,
-			int fdeTableCnt, TaskMonitor monitor) throws MemoryAccessException,
-			ExceptionHandlerFrameException {
+			int fdeTableCnt, TaskMonitor monitor)
+			throws MemoryAccessException, ExceptionHandlerFrameException {
 
 		/* Build the Frame Descriptor Entry Table */
 		int fdeTblEnc = eh_frame_hdr.getEh_FrameTableEncoding();
@@ -196,7 +196,7 @@ public class EhFrameHeaderSection {
 		fde_table.create(curAddress, fdeTblDecoder, fdeTableCnt);
 
 		SetCommentCmd commentCmd =
-			new SetCommentCmd(curAddress, CodeUnit.PLATE_COMMENT, "Frame Description Entry Table");
+			new SetCommentCmd(curAddress, CommentType.PLATE, "Frame Description Entry Table");
 		commentCmd.applyTo(program);
 	}
 

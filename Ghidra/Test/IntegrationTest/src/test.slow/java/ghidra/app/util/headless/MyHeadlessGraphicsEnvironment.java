@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,8 +17,10 @@ package ghidra.app.util.headless;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Locale;
 
+import ghidra.util.classfinder.ClassSearcher;
 import sun.java2d.HeadlessGraphicsEnvironment;
 
 public class MyHeadlessGraphicsEnvironment extends GraphicsEnvironment {
@@ -78,17 +79,23 @@ public class MyHeadlessGraphicsEnvironment extends GraphicsEnvironment {
 	
 	private void getRealGraphicsEnvironemnt() {
 		try {
-			localEnv = (GraphicsEnvironment) Class.forName(preferredGraphicsEnv).newInstance();
+			localEnv = ClassSearcher
+					.forNameSafe(preferredGraphicsEnv, GraphicsEnvironment.class,
+						getClass().getClassLoader())
+					.getConstructor()
+					.newInstance();
 			if (isHeadless()) {
 				localEnv = new HeadlessGraphicsEnvironment(localEnv);
 			}
-		} catch (ClassNotFoundException e) {
+		}
+		catch (ClassNotFoundException e) {
 			throw new Error("Could not find class: " + preferredGraphicsEnv);
-		} catch (InstantiationException e) {
+		}
+		catch (InstantiationException | NoSuchMethodException | InvocationTargetException e) {
 			throw new Error("Could not instantiate Graphics Environment: " + preferredGraphicsEnv);
-		} catch (IllegalAccessException e) {
+		}
+		catch (IllegalAccessException e) {
 			throw new Error("Could not access Graphics Environment: " + preferredGraphicsEnv);
 		}
 	}
-
 }

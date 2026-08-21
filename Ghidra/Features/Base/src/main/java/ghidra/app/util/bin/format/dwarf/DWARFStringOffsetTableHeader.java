@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,18 +18,18 @@ package ghidra.app.util.bin.format.dwarf;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute;
+import ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId;
 import ghidra.app.util.bin.format.dwarf.attribs.DWARFForm;
-import ghidra.app.util.bin.format.dwarf.sectionprovider.DWARFSectionNames;
+import ghidra.app.util.bin.format.dwarf.sectionprovider.DWARFSectionId;
 
 /**
  * Table of offsets that point into the string table.  These tables are stored sequentially in the
- * {@link DWARFSectionNames#DEBUG_STROFFSETS .debug_str_offsets} section.
+ * {@link DWARFSectionId#DEBUG_STROFFSETS .debug_str_offsets} section.
  * <p>
  * Elements in the table are referred to by index via {@link DWARFForm#DW_FORM_strx} and friends.
  * <p>
  * The table's {@link #getFirstElementOffset()} is referred to by a compUnit's 
- * {@link DWARFAttribute#DW_AT_str_offsets_base} value.
+ * {@link DWARFAttributeId#DW_AT_str_offsets_base} value.
  */
 public class DWARFStringOffsetTableHeader extends DWARFIndirectTableHeader {
 
@@ -37,6 +37,7 @@ public class DWARFStringOffsetTableHeader extends DWARFIndirectTableHeader {
 	 * Reads a string offset table header (found in the .debug_str_offsets section)
 	 * 
 	 * @param reader {@link BinaryReader}
+	 * @param defaultIntSize size in bytes of integers
 	 * @return new {@link DWARFStringOffsetTableHeader} instance
 	 * @throws IOException if error reading
 	 */
@@ -45,7 +46,7 @@ public class DWARFStringOffsetTableHeader extends DWARFIndirectTableHeader {
 		// length : dwarf_length
 		// version : 2 bytes
 		// padding : 2 bytes
-		// offsets : array of elements are are dwarf_format_int sized
+		// offsets : array of elements that are dwarf_format_int sized
 
 		long startOffset = reader.getPointerIndex();
 		DWARFLengthValue lengthInfo = DWARFLengthValue.read(reader, defaultIntSize);

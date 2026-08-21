@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import utilities.util.reflection.ReflectionUtilities;
  * An immutable label (the text can NOT be changed), with HTML rendering disabled.
  * <p>
  * See also:
- * <table border=1><caption></caption>
+ * <table border=1>
  * 	<tr><th>Class</th><th>Mutable text</th><th>HTML rendering</th><th>Description</th></tr>
  *  <tr><td>{@link GLabel}</td><td>Immutable</td><td>NO</td><td>Non-html unchangeable label</td></tr>
  *  <tr><td>{@link GDLabel}</td><td>Mutable</td><td>NO</td><td>Non-html changeable label</td></tr>
@@ -48,7 +48,6 @@ public class GLabel extends JLabel implements GComponent {
 	 * alignment, with HTML rendering disabled.
 	 * <p>
 	 * See {@link JLabel#JLabel()}.
-	 * <p>
 	 */
 	public GLabel() {
 		super();
@@ -60,7 +59,7 @@ public class GLabel extends JLabel implements GComponent {
 	 * alignment, with HTML rendering disabled.
 	 * <p>
 	 * See {@link JLabel#JLabel(String)}.
-	 * <p>
+	 * 
 	 * @param text non-html string to be displayed by the label
 	 */
 	public GLabel(String text) {
@@ -73,7 +72,7 @@ public class GLabel extends JLabel implements GComponent {
 	 * with HTML rendering disabled.
 	 * <p>
 	 * See {@link JLabel#JLabel(String, int)}.
-	 * <p>
+	 * 
 	 * @param text non-html string to be displayed by the label
 	 * @param horizontalAlignment One of
 	 *           {@link SwingConstants#LEFT},
@@ -92,7 +91,6 @@ public class GLabel extends JLabel implements GComponent {
 	 * with HTML rendering disabled.
 	 * <p>
 	 * See {@link JLabel#JLabel(String, Icon, int)}.
-	 * <p>
 	 *
 	 * @param text non-html string to be displayed by the label
 	 * @param icon image to be displayed by the label
@@ -142,7 +140,7 @@ public class GLabel extends JLabel implements GComponent {
 	 * <p>
 	 * If there are calls to setText() after the initial value has been set by the constructor, a
 	 * warning will be printed in the log.
-	 * <p>
+	 * 
 	 * @param text string this label will display 
 	 */
 	@Deprecated

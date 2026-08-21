@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
 
-import ghidra.app.util.bin.format.pdb2.pdbreader.msf.MsfStream;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 
@@ -170,43 +169,38 @@ public abstract class AbstractSymbolInformation {
 	void dump(Writer writer) throws IOException, CancelledException, PdbException {
 		StringBuilder builder = new StringBuilder();
 		builder.append("AbstractSymbolInformation-----------------------------------\n");
-		dumpHashHeader(builder);
-		dumpHashBasics(builder);
-		dumpHashRecords(builder);
+		dumpHashHeader(writer);
+		dumpHashBasics(writer);
+		dumpHashRecords(writer);
 		builder.append("\nEnd AbstractSymbolInformation-------------------------------\n");
 		writer.write(builder.toString());
 	}
 
 	/**
 	 * Debug method for dumping basic information from this {@link AbstractSymbolInformation}
-	 * @param builder {@link StringBuilder} to which to dump the information
+	 * @param writer the writer
+	 * @throws IOException upon issue with writing to the writer
 	 */
-	protected void dumpHashBasics(StringBuilder builder) {
-		builder.append("HashBasics--------------------------------------------------\n");
-		builder.append("hashRecordsBitMapLength: ");
-		builder.append(hashRecordsBitMapLength);
-		builder.append("\nnumExtraBytes: ");
-		builder.append(numExtraBytes);
-		builder.append("\nnumHashRecords: ");
-		builder.append(numHashRecords);
-		builder.append("\nEnd HashBasics----------------------------------------------\n");
+	protected void dumpHashBasics(Writer writer) throws IOException {
+		writer.write("HashBasics--------------------------------------------------\n");
+		writer.write("hashRecordsBitMapLength: " + hashRecordsBitMapLength);
+		writer.write("\nnumExtraBytes: " + numExtraBytes);
+		writer.write("\nnumHashRecords: " + numHashRecords);
+		writer.write("\nEnd HashBasics----------------------------------------------\n");
 	}
 
-	/**
+	/**builder.append
 	 * Debug method for dumping information from this {@link AbstractSymbolInformation} header
-	 * @param builder {@link StringBuilder} to which to dump the information
+	 * @param writer the writer
+	 * @throws IOException upon issue with writing to the writer
 	 */
-	protected void dumpHashHeader(StringBuilder builder) {
-		builder.append("HashHeader--------------------------------------------------\n");
-		builder.append("headerSignature: ");
-		builder.append(headerSignature);
-		builder.append("\nversionNumber: ");
-		builder.append(versionNumber);
-		builder.append("\nlengthHashRecords: ");
-		builder.append(hashRecordsLength);
-		builder.append("\nlengthBuckets: ");
-		builder.append(bucketsLength);
-		builder.append("\nEnd HashHeader----------------------------------------------\n");
+	protected void dumpHashHeader(Writer writer) throws IOException {
+		writer.write("HashHeader--------------------------------------------------\n");
+		writer.write("headerSignature: " + headerSignature);
+		writer.write("\nversionNumber: " + versionNumber);
+		writer.write("\nlengthHashRecords: " + hashRecordsLength);
+		writer.write("\nlengthBuckets: " + bucketsLength);
+		writer.write("\nEnd HashHeader----------------------------------------------\n");
 	}
 
 	/**
@@ -232,29 +226,28 @@ public abstract class AbstractSymbolInformation {
 
 	/**
 	 * Debug method for dumping hash records from this {@link AbstractSymbolInformation}
-	 * @param builder {@link StringBuilder} to which to dump the information
+	 * @param writer the writer
+	 * @throws IOException upon issue with writing to the writer
 	 * @throws PdbException upon not enough data left to parse
 	 * @throws CancelledException upon user cancellation
 	 */
-	protected void dumpHashRecords(StringBuilder builder)
-			throws CancelledException, PdbException {
+	protected void dumpHashRecords(Writer writer)
+			throws IOException, CancelledException, PdbException {
 		Set<SymbolHashRecord> hashRecords = getHashRecords();
-		builder.append("HashRecords-------------------------------------------------\n");
-		builder.append("numHashRecords: " + hashRecords.size() + "\n");
+		writer.write("HashRecords-------------------------------------------------\n");
+		writer.write("numHashRecords: " + hashRecords.size() + "\n");
 		for (SymbolHashRecord record : hashRecords) {
 			pdb.checkCancelled();
-			builder.append(
+			writer.write(
 				String.format("0X%08X  0X%04X\n", record.getOffset(), record.getReferenceCount()));
 		}
-		builder.append("\nEnd HashRecords---------------------------------------------\n");
+		writer.write("\nEnd HashRecords---------------------------------------------\n");
 	}
 
 	protected void deserializeHashHeader() throws PdbException, CancelledException, IOException {
-		MsfStream stream = pdb.getMsf().getStream(streamNumber);
-		PdbByteReader reader =
-			pdb.getReaderForStreamNumber(streamNumber, symbolHashOffset,
-				HASH_HEADER_MIN_READ_LENGTH);
-		deserializeHashHeader(reader, stream.getLength());
+		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, symbolHashOffset,
+			HASH_HEADER_MIN_READ_LENGTH);
+		deserializeHashHeader(reader);
 	}
 
 	/**
@@ -262,7 +255,7 @@ public abstract class AbstractSymbolInformation {
 	 * @param reader {@link PdbByteReader} containing the data buffer to process
 	 * @throws PdbException upon not enough data left to parse
 	 */
-	private void deserializeHashHeader(PdbByteReader reader, int streamLength) throws PdbException {
+	private void deserializeHashHeader(PdbByteReader reader) throws PdbException {
 		headerSignature = reader.parseInt();
 		if (headerSignature == HEADER_SIGNATURE) {
 			hashHeaderLength = HASH_70_HEADER_LENGTH;
@@ -277,10 +270,10 @@ public abstract class AbstractSymbolInformation {
 			reader.reset(); // There was no header
 			// Calculate the values
 			bucketsLength = 4 * (numHashRecords + 1);
-			if (streamLength < bucketsLength) {
+			if (symbolHashLength < bucketsLength) {
 				throw new PdbException("Not enough data for symbol hash buckets.");
 			}
-			hashRecordsLength = streamLength - bucketsLength;
+			hashRecordsLength = symbolHashLength - bucketsLength;
 			hashRecordsOffset = symbolHashOffset + 0;
 			bucketsOffset = hashRecordsOffset + hashRecordsLength;
 		}

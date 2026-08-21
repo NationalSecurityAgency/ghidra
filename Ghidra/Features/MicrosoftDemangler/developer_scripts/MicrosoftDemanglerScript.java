@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@
 //@category Symbol
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.demangler.DemangledObject;
+import ghidra.app.util.demangler.MangledContext;
 import ghidra.app.util.demangler.microsoft.MicrosoftDemangler;
 
 public class MicrosoftDemanglerScript extends GhidraScript {
@@ -33,7 +34,7 @@ public class MicrosoftDemanglerScript extends GhidraScript {
 		demangle("??$?0G@?$allocator@U_Container_proxy@std@@@std@@QAE@ABV?$allocator@G@1@@Z");
 
 		/*
-		
+
 		demangle("??0__non_rtti_object@@QAE@PBD@Z");
 		demangle("??0bad_cast@@AAE@PBQBD@Z");
 		demangle("??0bad_cast@@QAE@ABQBD@Z");
@@ -94,7 +95,11 @@ public class MicrosoftDemanglerScript extends GhidraScript {
 	}
 
 	private void demangle(String mangled) throws Exception {
-		DemangledObject demangled = demangler.demangle(mangled);
-		printf("magled %s\ndemangled %s", mangled, demangled);
+		// Using a null address instead of currentAddress because we are not demangling a symbol
+		// at the address... just a symbol to dump to the output
+		MangledContext mangledContext =
+			demangler.createMangledContext(mangled, null, currentProgram, null);
+		DemangledObject demangled = demangler.demangle(mangledContext);
+		printf("mangled %s\ndemangled %s", mangled, demangled);
 	}
 }

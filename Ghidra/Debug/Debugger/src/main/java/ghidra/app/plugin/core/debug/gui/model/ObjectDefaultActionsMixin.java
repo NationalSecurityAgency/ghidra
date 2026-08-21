@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,18 +24,21 @@ import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueProperty;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.PathTableModel.PathRow;
 import ghidra.app.services.DebuggerListingService;
-import ghidra.dbg.target.*;
 import ghidra.debug.api.model.DebuggerSingleObjectPathActionContext;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.target.Target.ActionEntry;
+import ghidra.debug.api.target.Target.ObjectArgumentPolicy;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
-import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.target.iface.*;
+import ghidra.trace.model.target.path.KeyPath;
 import ghidra.util.Msg;
 
 public interface ObjectDefaultActionsMixin {
@@ -44,7 +47,7 @@ public interface ObjectDefaultActionsMixin {
 
 	DebuggerCoordinates getCurrent();
 
-	void activatePath(TraceObjectKeyPath path);
+	void activatePath(KeyPath path);
 
 	default void toggleObject(TraceObject object) {
 		if (!getCurrent().isAliveAndPresent()) {
@@ -52,7 +55,8 @@ public interface ObjectDefaultActionsMixin {
 		}
 		Target target = getCurrent().getTarget();
 		Map<String, ActionEntry> actions = target.collectActions(ActionName.TOGGLE,
-			new DebuggerSingleObjectPathActionContext(object.getCanonicalPath()));
+			new DebuggerSingleObjectPathActionContext(object.getCanonicalPath()),
+			ObjectArgumentPolicy.CONTEXT_ONLY);
 		ActionEntry action = actions.values()
 				.stream()
 				.filter(e -> !e.requiresPrompt())
@@ -124,8 +128,9 @@ public interface ObjectDefaultActionsMixin {
 	}
 
 	default boolean performDefaultAction(TraceObject object) {
-		Set<Class<? extends TargetObject>> interfaces = object.getTargetSchema().getInterfaces();
-		if (interfaces.contains(TargetActivatable.class)) {
+		Set<Class<? extends TraceObjectInterface>> interfaces =
+			object.getSchema().getInterfaces();
+		if (interfaces.contains(TraceActivatable.class)) {
 			activatePath(object.getCanonicalPath());
 			return true;
 		}
@@ -133,7 +138,7 @@ public interface ObjectDefaultActionsMixin {
 		 * Should I check aliveAndPresent() here? If I do, behavior changes when target is dead,
 		 * which might be unexpected.
 		 */
-		if (interfaces.contains(TargetTogglable.class)) {
+		if (interfaces.contains(TraceTogglable.class)) {
 			toggleObject(object);
 			return true;
 		}

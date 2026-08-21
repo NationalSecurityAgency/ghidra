@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,7 +47,7 @@ public class ApplyFunctionDataTypesCmd extends BackgroundCommand<Program> {
 	/**
 	 * Constructs a new command to apply all function signature data types
 	 * in the given data type manager.
-	 * 
+	 *
 	 * @param managers list of data type managers containing the function signature data types
 	 * @param set set of addresses containing labels to match against function names.
 	 * 			  The addresses must not already be included in the body of any existing function.
@@ -71,7 +71,7 @@ public class ApplyFunctionDataTypesCmd extends BackgroundCommand<Program> {
 	/**
 	 * Constructs a new command to apply all function signature data types
 	 * in the given data type category (includes all subcategories).
-	 * 
+	 *
 	 * @param sourceCategory datatype category containing the function signature data types
 	 * @param set set of addresses containing labels to match against function names.
 	 * 			  The addresses must not already be included in the body of any existing function.
@@ -158,7 +158,7 @@ public class ApplyFunctionDataTypesCmd extends BackgroundCommand<Program> {
 
 	/**
 	 * Strip off the last name of the string
-	 * 
+	 *
 	 * @param name the original string
 	 * @return the last name in the string
 	 */
@@ -259,7 +259,8 @@ public class ApplyFunctionDataTypesCmd extends BackgroundCommand<Program> {
 			}
 
 			SourceType mostTrusted = getMostTrustedParameterSource(func);
-			if (alwaysReplace || !source.isLowerPriorityThan(mostTrusted)) {
+			// Do not replace function if one with same SourceType exists
+			if (alwaysReplace || source.isHigherPriorityThan(mostTrusted)) {
 				applyFunction(sym, fdef);
 			}
 			return;
@@ -308,7 +309,7 @@ public class ApplyFunctionDataTypesCmd extends BackgroundCommand<Program> {
 	/**
 	 * Check that the symbol looks like it is at the start of a function.
 	 * There can be internal symbols that may match a function name.
-	 * 
+	 *
 	 * @param monitor if need to cancel
 	 * @param address location of the potential symbol
 	 * @return true if the symbol is at the start of a function flow
@@ -342,7 +343,7 @@ public class ApplyFunctionDataTypesCmd extends BackgroundCommand<Program> {
 	/**
 	 * Get the instruction directly before this address, makeing sure it is the
 	 * head instruction in a delayslot
-	 * 
+	 *
 	 * @param address to get instruction before
 	 * @return instruction if found, null otherwise
 	 */
@@ -395,7 +396,7 @@ public class ApplyFunctionDataTypesCmd extends BackgroundCommand<Program> {
 	/**
 	 * Lookup any program symbol with the same name as the function signature.
 	 * Also allow for a single '_' in front of the symbol name.
-	 * 
+	 *
 	 * @param symbolMap map of symbol names to all matching symbols
 	 * @param prefix  optional prefix on symbol to lookup
 	 * @param functionName    function name

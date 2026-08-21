@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,7 +48,13 @@ public interface TraceInstructionsView extends TraceBaseDefinedUnitsView<TraceIn
 	/**
 	 * Create an instruction for the host platform
 	 * 
-	 * @see #create(Lifespan, Address, TracePlatform, InstructionPrototype, ProcessorContextView)
+	 * @param lifespan the lifespan for the instruction unit
+	 * @param address the starting address of the instruction
+	 * @param prototype the instruction prototype
+	 * @param context the input disassembly context for the instruction
+	 * @param forcedLengthOverride reduced instruction byte-length (1..7) or 0 to use default length
+	 * @return the new instruction
+	 * @throws CodeUnitInsertionException if the instruction cannot be created
 	 */
 	default TraceInstruction create(Lifespan lifespan, Address address,
 			InstructionPrototype prototype, ProcessorContextView context, int forcedLengthOverride)
@@ -76,7 +82,14 @@ public interface TraceInstructionsView extends TraceBaseDefinedUnitsView<TraceIn
 	/**
 	 * Create several instructions for the host platform
 	 * 
-	 * @see #addInstructionSet(Lifespan, TracePlatform, InstructionSet, boolean)
+	 * <p>
+	 * <b>NOTE:</b> This does not throw {@link CodeUnitInsertionException}. Conflicts are instead
+	 * recorded in the {@code instructionSet}.
+	 * 
+	 * @param lifespan the lifespan for all instruction units
+	 * @param instructionSet the set of instructions to add
+	 * @param overwrite true to replace conflicting instructions
+	 * @return the (host) address set of instructions actually added
 	 */
 	default AddressSetView addInstructionSet(Lifespan lifespan, InstructionSet instructionSet,
 			boolean overwrite) {

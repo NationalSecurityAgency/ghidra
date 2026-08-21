@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -109,10 +109,8 @@ public class SymbolTreeLocationReferencesTest extends AbstractLocationReferences
 	private Function addExternalFunctionReference(Address refAddr, String libraryName,
 			String extLabel, RefType refType) throws Exception {
 
-		List<ExternalLocation> locations =
-			program.getExternalManager().getExternalLocations(libraryName, extLabel);
-		assertEquals(1, locations.size());
-		ExternalLocation externalLocation = locations.get(0);
+		ExternalLocation externalLocation =
+			program.getExternalManager().getUniqueExternalLocation(libraryName, extLabel);
 
 		assertNotNull("External location not found: " + libraryName + "::" + extLabel,
 			externalLocation);

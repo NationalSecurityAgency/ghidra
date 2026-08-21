@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -153,6 +153,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		function(0x6000, 0x7000);
 		function(0x6100, 0x7100);
 		function(0x7000, 0x8000);
+
 		function(0x8000, 0x9000);
 		function(0x9000, 0x10000);
 
@@ -608,9 +609,9 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		setProviderFunction("0x5000");
 
-		ToggleDockingAction filterDuplicatesAction =
-			(ToggleDockingAction) getAction("Filter Duplicates");
-		setToggleActionSelected(filterDuplicatesAction, new DefaultActionContext(), true);
+		ToggleDockingAction unifyFunctions =
+			(ToggleDockingAction) getAction("Unify Functions");
+		setToggleActionSelected(unifyFunctions, new DefaultActionContext(), true);
 		waitForTree(outgoingTree);
 
 		GTreeNode rootNode = getRootNode(outgoingTree);
@@ -618,7 +619,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Map<String, List<GTreeNode>> nameCountMap = createNameCountMap(rootNode);
 		assertDuplicateChildStatus(nameCountMap, shouldHaveDuplicates);
 
-		performAction(filterDuplicatesAction, true);// deselect
+		performAction(unifyFunctions, true);// deselect
 
 		waitForTree(outgoingTree);
 
@@ -640,10 +641,10 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		setProviderFunction("0x5000");
 
-		ToggleDockingAction filterDuplicatesAction =
-			(ToggleDockingAction) getAction("Filter Duplicates");
+		ToggleDockingAction unifyFunctions =
+			(ToggleDockingAction) getAction("Unify Functions");
 
-		setToggleActionSelected(filterDuplicatesAction, new DefaultActionContext(), true);
+		setToggleActionSelected(unifyFunctions, new DefaultActionContext(), true);
 
 		waitForTree(outgoingTree);
 		GTreeNode rootNode = getRootNode(outgoingTree);
@@ -652,7 +653,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		// 1, not 2 entries (the exact duplicate and the duplicate destination are ignored)		
 		assertEquals(1, nameCountMap.get("Function_6000").size());
 
-		performAction(filterDuplicatesAction, true);// deselect
+		performAction(unifyFunctions, true);// deselect
 		waitForTree(outgoingTree);
 
 		rootNode = getRootNode(outgoingTree);
@@ -674,9 +675,9 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		setProviderFunction("0x5000");
 
-		ToggleDockingAction filterDuplicatesAction =
-			(ToggleDockingAction) getAction("Filter Duplicates");
-		setToggleActionSelected(filterDuplicatesAction, new DefaultActionContext(), true);
+		ToggleDockingAction unifyFunctions =
+			(ToggleDockingAction) getAction("Unify Functions");
+		setToggleActionSelected(unifyFunctions, new DefaultActionContext(), true);
 		waitForTree(outgoingTree);
 
 		GTreeNode rootNode = getRootNode(outgoingTree);
@@ -684,7 +685,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Map<String, List<GTreeNode>> nameCountMap = createNameCountMap(rootNode);
 		assertDuplicateChildStatus(nameCountMap, shouldHaveDuplicates);
 
-		performAction(filterDuplicatesAction, true);// deselect
+		performAction(unifyFunctions, true);// deselect
 
 		waitForTree(outgoingTree);
 
@@ -717,9 +718,9 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		setProviderFunction("0x0000");
 
-		ToggleDockingAction filterDuplicatesAction =
-			(ToggleDockingAction) getAction("Filter Duplicates");
-		setToggleActionSelected(filterDuplicatesAction, new DefaultActionContext(), true);
+		ToggleDockingAction unifyFunctions =
+			(ToggleDockingAction) getAction("Unify Functions");
+		setToggleActionSelected(unifyFunctions, new DefaultActionContext(), true);
 		waitForTree(incomingTree);
 
 		// copy the names of the children into a map so that we can verify no duplicates
@@ -1215,13 +1216,10 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void setProviderFunction(String address) {
-		final Address addr = addr(address);
+		Address addr = addr(address);
+		Function function = getFunction(addr);
 		goTo(addr);
-		runSwing(() -> {
-			ProgramLocation location = new ProgramLocation(program, addr);
-			invokeInstanceMethod("doSetLocation", provider, new Class[] { ProgramLocation.class },
-				new Object[] { location });
-		});
+		runSwing(() -> provider.doSetFunction(function));
 
 		waitForSwing();
 		waitForTree(incomingTree);
@@ -1261,7 +1259,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 
 		if (node instanceof GTreeSlowLoadingNode) {
-			boolean loaded = ((GTreeSlowLoadingNode) node).isLoaded();
+			boolean loaded = node.isLoaded();
 			if (!loaded) {
 				return null;// children not loaded--don't load
 			}
@@ -1286,7 +1284,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private int getMaxNodeDepth(GTreeNode node, int currentDepth) {
 		int maxDepth = currentDepth;
 		if (node instanceof GTreeSlowLoadingNode) {
-			boolean loaded = ((GTreeSlowLoadingNode) node).isLoaded();
+			boolean loaded = node.isLoaded();
 			if (!loaded) {
 				return maxDepth;// children not loaded--don't load
 			}
@@ -1383,7 +1381,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 
 		if (node instanceof GTreeSlowLoadingNode) {
-			boolean loaded = ((GTreeSlowLoadingNode) node).isLoaded();
+			boolean loaded = node.isLoaded();
 			if (!loaded) {
 				return;// children not loaded--don't load
 			}
@@ -1479,7 +1477,10 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		DockingAction action = callTreePlugin.getShowCallTreeFromMenuAction();
 		performAction(action);
 
-		return runSwing(() -> callTreePlugin.findTransientProviderForLocation(location));
+		CallTreeProvider newProvider =
+			runSwing(() -> callTreePlugin.findTransientProviderForLocation(location));
+		assertNotNull(newProvider);
+		return newProvider;
 	}
 
 	private Address addr(String address) {

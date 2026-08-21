@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package ghidra.framework.store.remote;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.remote.RepositoryItem;
@@ -35,6 +36,8 @@ public abstract class RemoteFolderItem implements FolderItem {
 	protected int version;
 	protected long versionTime;
 
+	protected String textData; // applies to TextDataItem only
+
 	protected RepositoryAdapter repository;
 
 	/**
@@ -46,20 +49,18 @@ public abstract class RemoteFolderItem implements FolderItem {
 		this.repository = repository;
 		parentPath = item.getParentPath();
 		itemName = item.getName();
-		contentType = item.getContentType();
+		String ct = item.getContentType();
+		if (ct == null) {
+			ct = UnknownFolderItem.UNKNOWN_CONTENT_TYPE;
+		}
+		contentType = ct;
 		fileID = item.getFileID();
 
 		version = item.getVersion();
 		versionTime = item.getVersionTime();
-	}
 
-	/**
-	 * Returns the item type as defined by RepositoryItem which corresponds to specific 
-	 * implementation of this class.
-	 * @return item type (Only {@link RepositoryItem#DATABASE} is supported).
-	 * @see ghidra.framework.remote.RepositoryItem
-	 */
-	abstract int getItemType();
+		textData = item.getTextData();
+	}
 
 	@Override
 	public String getName() {
@@ -69,11 +70,13 @@ public abstract class RemoteFolderItem implements FolderItem {
 	@Override
 	public RemoteFolderItem refresh() throws IOException {
 		RepositoryItem item = repository.getItem(parentPath, itemName);
-		if (item == null) {
+		if (item == null || !Objects.equals(fileID, item.getFileID()) ||
+			!contentType.equals(item.getContentType())) {
 			return null;
 		}
 		version = item.getVersion();
 		versionTime = item.getVersionTime();
+		textData = item.getTextData();
 		return this;
 	}
 

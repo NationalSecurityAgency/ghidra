@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
 import org.antlr.runtime.RecognitionException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jdom.JDOMException;
+import org.jdom2.JDOMException;
 import org.junit.*;
 import org.junit.experimental.categories.Category;
 
@@ -118,7 +118,7 @@ public class SleighCompileRegressionTest extends AbstractGenericTest {
 		String command = getCppSleighCompilerForArch();
 		ProcessBuilder processBuilder =
 			new ProcessBuilder(command, "-DMIPS=../../../../../../ghidra/Ghidra/Processors/MIPS",
-				"-D8051=../../../../../../ghidra/Ghidra/Processors/8051",
+				"-D8051=../../../../../../ghidra/Ghidra/Processors/8051", "-y",
 				inputFile.getAbsolutePath(), targetFile.getAbsolutePath());
 		processBuilder.directory(inputFile.getParentFile().getFile(false));
 		Process process = processBuilder.start();
@@ -168,7 +168,7 @@ public class SleighCompileRegressionTest extends AbstractGenericTest {
 	private int runActualCompiler(File inputFile, File actualFile)
 			throws JDOMException, IOException, RecognitionException {
 		return SleighCompileLauncher.runMain(new String[] { "-DBaseDir=../../../../../../",
-			"-DMIPS=ghidra/Ghidra/Processors/MIPS", "-D8051=ghidra/Ghidra/Processors/8051",
+			"-DMIPS=ghidra/Ghidra/Processors/MIPS", "-D8051=ghidra/Ghidra/Processors/8051", "-y",
 			inputFile.getAbsolutePath(), actualFile.getAbsolutePath() });
 	}
 

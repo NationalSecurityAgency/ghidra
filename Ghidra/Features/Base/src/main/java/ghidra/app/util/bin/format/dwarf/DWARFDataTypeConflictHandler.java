@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,19 +36,17 @@ import ghidra.util.SystemUtilities;
  * <p>
  * When a candidate data type is matched with an existing data type, this
  * conflict handler will specify that the new data type is:
- * <p>
  * <ul>
  * <li>discarded and replaced by the existing data type
- * ({@link ConflictResult#USE_EXISTING})
+ * ({@link ConflictResult#USE_EXISTING})</li>
  * <li>used to overwrite the existing data type
- * ({@link ConflictResult#REPLACE_EXISTING})
+ * ({@link ConflictResult#REPLACE_EXISTING})</li>
  * </ul>
  * or the candidate data type was <b>NOT</b> matched with an existing data type,
  * and the new data type is:
- * <p>
  * <ul>
  * <li>kept, but renamed with a .conflictNNNN suffix to make it unique
- * ({@link ConflictResult#RENAME_AND_ADD})
+ * ({@link ConflictResult#RENAME_AND_ADD})</li>
  * </ul>
  * <b>NOTE:</b> structures with alignment (instead of being statically laid out)
  * are not treated specially and will not match other aligned or non-aligned
@@ -64,11 +62,10 @@ public class DWARFDataTypeConflictHandler extends DataTypeConflictHandler {
 	}
 
 	/**
-	 * Returns true if src can overwrite the target composite based on size
+	 * {@return true if src can overwrite the target composite based on size}
 	 * 
-	 * @param src
-	 * @param target
-	 * @return
+	 * @param src {@link Composite} data type
+	 * @param target {@link Composite} data type
 	 */
 	private boolean isSizeCompatible(Composite src, Composite target) {
 		return target.isNotYetDefined() || (src.getLength() == target.getLength());
@@ -117,14 +114,14 @@ public class DWARFDataTypeConflictHandler extends DataTypeConflictHandler {
 		}
 
 		Map<String, DataTypeComponent> fullComponentsByName = new HashMap<>();
-		for (DataTypeComponent dtc : full.getComponents()) {
+		for (DataTypeComponent dtc : full.getDefinedComponents()) {
 			String name = dtc.getFieldName();
 			if (name == null) {
 				name = dtc.getDefaultFieldName();
 			}
 			fullComponentsByName.put(name, dtc);
 		}
-		for (DataTypeComponent dtc : part.getComponents()) {
+		for (DataTypeComponent dtc : part.getDefinedComponents()) {
 			String name = dtc.getFieldName();
 			if (name == null) {
 				name = dtc.getDefaultFieldName();
@@ -147,7 +144,7 @@ public class DWARFDataTypeConflictHandler extends DataTypeConflictHandler {
 	 * <p> Each defined component in the candidate partial structure must be present
 	 * in the 'full' structure and must be equiv. <p> The order and sparseness of
 	 * the candidate partial structure is not important, only that all of its
-	 * defined components are present in the full structure. <p>
+	 * defined components are present in the full structure.
 	 */
 	private boolean isStructurePart(Structure full, Structure part, Set<Long> visitedDataTypes) {
 		// Both structures should be equal in length

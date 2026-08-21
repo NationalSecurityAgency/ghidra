@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,6 +28,7 @@ import ghidra.app.plugin.assembler.*;
 import ghidra.app.plugin.core.debug.gui.action.SPLocationTrackingSpec;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
+import ghidra.app.plugin.core.debug.gui.stack.vars.VariableValueHoverPlugin;
 import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin;
 import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
@@ -40,9 +41,6 @@ import ghidra.app.services.*;
 import ghidra.app.services.DebuggerControlService.StateEditor;
 import ghidra.app.services.DebuggerEmulationService.EmulationResult;
 import ghidra.async.AsyncTestUtils;
-import ghidra.dbg.target.schema.SchemaContext;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
-import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.debug.api.control.ControlMode;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.DomainFolder;
@@ -63,9 +61,12 @@ import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.target.DBTraceObjectManager;
 import ghidra.trace.model.DefaultTraceLocation;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackFrame;
+import ghidra.trace.model.target.schema.SchemaContext;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.Scheduler;
 import ghidra.util.InvalidNameException;
@@ -125,11 +126,11 @@ public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator
 					.createInitializedBlock(".text", addr(program, 0x00400000), 0x10000, (byte) 0,
 						TaskMonitor.DUMMY, false);
 			FunctionManager fMan = program.getFunctionManager();
-			fMan.createFunction("FUN_00401000", addr(0x00401000),
+			fMan.createFunction("FUN_00401000", addr(program, 0x00401000),
 				set(program, 0x00401000, 0x00401100), SourceType.USER_DEFINED);
-			fMan.createFunction("FUN_00401200", addr(0x00401200),
+			fMan.createFunction("FUN_00401200", addr(program, 0x00401200),
 				set(program, 0x00401200, 0x00401300), SourceType.USER_DEFINED);
-			fMan.createFunction("FUN_00404300", addr(0x00404300),
+			fMan.createFunction("FUN_00404300", addr(program, 0x00404300),
 				set(program, 0x00404300, 0x00404400), SourceType.USER_DEFINED);
 		}
 
@@ -144,14 +145,14 @@ public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator
 
 			thread = tb.getOrAddThread("Processes[1].Threads[1]", snap);
 			TraceStack stack = tb.trace.getStackManager().getStack(thread, snap, true);
-			stack.setDepth(3, true);
+			stack.setDepth(snap, 3, true);
 
 			TraceStackFrame frame;
-			frame = stack.getFrame(0, false);
+			frame = stack.getFrame(snap, 0, false);
 			frame.setProgramCounter(Lifespan.ALL, tb.addr(0x00404321));
-			frame = stack.getFrame(1, false);
+			frame = stack.getFrame(snap, 1, false);
 			frame.setProgramCounter(Lifespan.ALL, tb.addr(0x00401234));
-			frame = stack.getFrame(2, false);
+			frame = stack.getFrame(snap, 2, false);
 			frame.setProgramCounter(Lifespan.ALL, tb.addr(0x00401001));
 		}
 		root.createFile("trace", tb.trace, TaskMonitor.DUMMY);
@@ -294,6 +295,7 @@ public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator
 
 		DebuggerControlService controlService = addPlugin(tool, DebuggerControlServicePlugin.class);
 		DebuggerEmulationService emuService = addPlugin(tool, DebuggerEmulationServicePlugin.class);
+		addPlugin(tool, VariableValueHoverPlugin.class);
 
 		Function function = createFibonacciProgramX86_32();
 		Address entry = function.getEntryPoint();
@@ -328,8 +330,7 @@ public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator
 		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr,
-						Set.of(),
-						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "unwind stack");
+						Set.of(), CommonSet.SWX.kinds(), true, "unwind stack");
 		}
 
 		EmulationResult result = emuService.run(atSetup.getPlatform(), atSetup.getTime(), monitor,

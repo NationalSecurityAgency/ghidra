@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,6 +28,8 @@ import ghidra.app.util.viewer.util.AddressIndexMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.MarkerLocation;
+import ghidra.program.util.ProgramLocation;
+import ghidra.util.UniversalID;
 
 /**
  * The provider which renders the marker margin, usually placed to the left of listing
@@ -37,7 +39,7 @@ import ghidra.program.util.MarkerLocation;
  * These are managed by a {@link MarkerManager}. Obtain one via
  * {@link MarkerService#createMarginProvider()}.
  */
-public class MarkerMarginProvider implements MarginProvider {
+public class MarkerMarginProvider implements ListingMarginProvider {
 	private final MarkerManager markerManager;
 	private final MarkerPanel markerPanel;
 
@@ -60,6 +62,22 @@ public class MarkerMarginProvider implements MarginProvider {
 				markerClickedListener.markerDoubleClicked(location);
 			}
 		});
+	}
+
+	@Override
+	public void setOwnerId(UniversalID ownerId) {
+		markerPanel.setOwnerId(ownerId);
+	}
+
+	@Override
+	public void setLocation(ProgramLocation location) {
+		// we don't use locations
+	}
+
+	@Override
+	public void dispose() {
+		markerManager.removeProvider(this);
+		markerPanel.dispose();
 	}
 
 	void repaintPanel() {
@@ -95,12 +113,11 @@ public class MarkerMarginProvider implements MarginProvider {
 	}
 
 	@Override
-	public void setProgram(Program program, AddressIndexMap addrMap,
-			VerticalPixelAddressMap pixmap) {
-		this.program = program;
-		this.pixmap = pixmap;
-
-		this.markerPanel.setProgram(program, addrMap, pixmap);
+	public void screenDataChanged(ListingPanel listing, AddressIndexMap addrMap,
+			VerticalPixelAddressMap pixMap) {
+		this.program = listing.getProgram();
+		this.pixmap = pixMap;
+		this.markerPanel.listingUpdated(listing, addrMap, pixMap);
 
 		markerManager.updateMarkerSets(program, true, false, true);
 	}

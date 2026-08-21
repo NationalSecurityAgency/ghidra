@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,13 +27,14 @@ import javax.accessibility.*;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.*;
+import ghidra.util.Msg;
 
 /**
  * Contains all the code for implementing the AccessibleFieldPanel which is an inner class in
  * the FieldPanel class. The AccessibleFieldPanel has to be declared as an inner class because
- * it needs to extends AccessibleJComponent which is a non-static inner class of JComponent. 
+ * it needs to extend AccessibleJComponent which is a non-static inner class of JComponent. 
  * However, we did not want to put all the logic in there as FieldPanel is already an
- * extremely large and complex class. Also, by delegating the the logic, testing is much
+ * extremely large and complex class. Also, by delegating the logic, testing is much
  * easier.
  * <P>
  * The model for accessibility for the FieldPanel is a bit complex because
@@ -104,6 +105,11 @@ public class AccessibleFieldPanelDelegate {
 	 * @param trigger the event trigger
 	 */
 	public void setCaret(FieldLocation newCursorLoc, EventTrigger trigger) {
+
+		if (!isFocused()) {
+			return;
+		}
+
 		if (cursorField == null || !isSameField(cursorLoc, newCursorLoc)) {
 			AccessibleTextSequence oldSequence = getAccessibleTextSequence(cursorField);
 			cursorLoc = newCursorLoc;
@@ -145,6 +151,11 @@ public class AccessibleFieldPanelDelegate {
 	public void setSelection(FieldSelection currentSelection, EventTrigger trigger) {
 		this.currentSelection = currentSelection;
 		updateCurrentFieldSelectedState(trigger);
+	}
+	
+	// broken out so it can be overridden in a test
+	protected boolean isFocused() {
+		return panel.hasFocus();
 	}
 
 	private void updateCurrentFieldSelectedState(EventTrigger trigger) {
@@ -217,8 +228,9 @@ public class AccessibleFieldPanelDelegate {
 	 */
 	public AccessibleField getAccessibleField(FieldLocation loc) {
 		AccessibleLayout accessibleLayout = getAccessibleLayout(loc.getIndex());
+		int fieldNum = loc.getFieldNum();
 		if (accessibleLayout != null) {
-			return getAccessibleField(accessibleLayout.getStartingFieldNum() + loc.getFieldNum());
+			return getAccessibleField(accessibleLayout.getStartingFieldNum() + fieldNum);
 		}
 
 		LayoutModel layoutModel = panel.getLayoutModel();
@@ -226,8 +238,12 @@ public class AccessibleFieldPanelDelegate {
 		if (layout == null) {
 			return null;
 		}
-		Field field = layout.getField(loc.getFieldNum());
-		return new AccessibleField(field, panel, loc.getFieldNum(), null);
+		Field field = layout.getField(fieldNum);
+		if (field == null) {
+			Msg.warn(this, "Can't find field for given FieldLocation, loc = " + loc);
+			return null;
+		}
+		return new AccessibleField(field, panel, fieldNum, null);
 	}
 
 	private AccessibleLayout getAccessibleLayout(BigInteger index) {

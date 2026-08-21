@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.tree.*;
 
 import docking.DockingUtils;
-import docking.action.DockingAction;
 import docking.actions.KeyBindingUtils;
 import docking.dnd.DropTgtAdapter;
 import docking.widgets.JTreeMouseListenerDelegate;
@@ -55,8 +54,8 @@ public class ProgramDnDTree extends DragNDropTree {
 	private Program program;
 	private Listing listing;
 
-	private ArrayList<ProgramNode> nodeList; // list of nodes from preorder enumeration
-	private ArrayList<TreePath> viewList; // list of tree paths that are being viewed.
+	private List<ProgramNode> nodeList; // list of nodes from preorder enumeration
+	private List<TreePath> viewList; // list of tree paths that are being viewed.
 
 	//keeps track of module/fragment names to come up with a default name, e.g., New Folder (2)
 	private StringKeyIndexer nameIndexer;
@@ -272,7 +271,7 @@ public class ProgramDnDTree extends DragNDropTree {
 	}
 
 	static DataFlavor[] getDataFlavors() {
-		return new DataFlavor[] { TreeTransferable.localTreeNodeFlavor,
+		return new DataFlavor[] { ProgramTreeTransferable.localTreeNodeFlavor,
 			GroupTransferable.localGroupFlavor, // a test data flavor
 			DataFlavor.stringFlavor, // a test data flavor
 			SelectionTransferable.localProgramSelectionFlavor };
@@ -317,7 +316,7 @@ public class ProgramDnDTree extends DragNDropTree {
 				return false;
 			}
 		}
-		else if (chosen.equals(TreeTransferable.localTreeNodeFlavor)) {
+		else if (chosen.equals(ProgramTreeTransferable.localTreeNodeFlavor)) {
 			// fromObject is null, so we know this is
 			// from another tree, so don't allow the drop
 			return false;
@@ -385,6 +384,8 @@ public class ProgramDnDTree extends DragNDropTree {
 	* that could potentially take a long time. The cursor is reset in the
 	* domain object change listener when the event comes in for the group
 	* that was last "pasted."
+	* 
+	* @param busy true to use the busy cursor
 	*/
 	void setBusyCursor(boolean busy) {
 		if (busy) {
@@ -406,19 +407,11 @@ public class ProgramDnDTree extends DragNDropTree {
 		treeListener = null;
 	}
 
-	/**
-	 * Get the view list.
-	 * 
-	 * @return ArrayList list of tree paths in the view
-	 */
-	ArrayList<TreePath> getViewList() {
+	List<TreePath> getViewList() {
 		return viewList;
 	}
 
-	/**
-	 * Get the node list.
-	 */
-	ArrayList<ProgramNode> getNodeList() {
+	List<ProgramNode> getNodeList() {
 		return nodeList;
 	}
 
@@ -435,10 +428,6 @@ public class ProgramDnDTree extends DragNDropTree {
 		}
 	}
 
-	/**
-	 * Adds path to the view.
-	 * @param path
-	 */
 	void addToView(TreePath path) {
 		if (path == null) {
 			return;
@@ -667,36 +656,6 @@ public class ProgramDnDTree extends DragNDropTree {
 	}
 
 	/**
-	 * Return whether the given action should be added to popup, based
-	 * on what is currently selected. Called by the ProgramTreeAction.
-	 */
-	boolean addActionToPopup(DockingAction action) {
-
-		if (!(action instanceof ProgramTreeAction)) {
-			return true;
-		}
-
-		ProgramTreeAction a = (ProgramTreeAction) action;
-
-		int selectionCount = getSelectionCount();
-		if (a.getSelectionType() == ProgramTreeAction.SINGLE_SELECTION) {
-
-			if (selectionCount == 1) {
-				return true;
-			}
-			else if (selectionCount == 0) {
-				return true;
-			}
-			return false;
-		}
-		// allow 1 or many in selection
-		if (selectionCount > 0) {
-			return true;
-		}
-		return false;
-	}
-
-	/**
 	 * Generate a unique name to be used as the default when
 	 * a Module or Fragment is created.
 	 */
@@ -730,25 +689,6 @@ public class ProgramDnDTree extends DragNDropTree {
 		}
 	}
 
-	/**
-	 * Build a list of selected ProgramNodes in postorder.
-	 */
-	// our data; we know it's good
-	ArrayList<ProgramNode> getSortedSelection() {
-		ArrayList<ProgramNode> list = new ArrayList<>();
-		Enumeration<? extends TreeNode> it = root.postorderEnumeration();
-		while (it.hasMoreElements()) {
-			ProgramNode node = (ProgramNode) it.nextElement();
-			if (isPathSelected(node.getTreePath())) {
-				list.add(node);
-			}
-		}
-		return list;
-	}
-
-	/**
-	 * Expand all descendants starting at node.
-	 */
 	void expandNode(ProgramNode node) {
 
 		expandPath(node.getTreePath());
@@ -837,7 +777,7 @@ public class ProgramDnDTree extends DragNDropTree {
 	 * @param sb string buffer to use if there was an error
 	 * @return true if group was removed
 	 */
-	boolean removeGroup(ProgramNode node, StringBuffer sb) {
+	boolean removeGroup(ProgramNode node, StringBuilder sb) {
 
 		boolean changesMade = false;
 
@@ -869,6 +809,7 @@ public class ProgramDnDTree extends DragNDropTree {
 	 * @param parent parent of the group to be inserted
 	 * @param group group to add
 	 * @param index index of new child
+	 * @return the new child node
 	 */
 	ProgramNode insertGroup(ProgramNode parent, Group group, int index) {
 
@@ -1087,63 +1028,44 @@ public class ProgramDnDTree extends DragNDropTree {
 	}
 
 	/**
-	 * Disable all actions.
-	 */
-	void disableActions() {
-		actionManager.disableActions();
-	}
-
-	/**
 	 * Adjust the selection based on the given popupPoint.
 	 * @param  event mouse event
 	 * @return node that is selected
 	 */
-	ProgramNode prepareSelectionForPopup(MouseEvent event) {
-		// adjust the selection based on the popup location
+	ProgramNode adjustSelectionForPopup(MouseEvent event) {
+
 		synchronized (root) {
 
 			if (event != null && event.getSource() != this) {
 				return null;
 			}
+
 			Point popupPoint = event != null ? event.getPoint() : null;
-			int nselected = getSelectionCount();
-			TreePath selPath = null;
 			if (popupPoint != null) {
-				selPath = getPathForLocation((int) popupPoint.getX(), (int) popupPoint.getY());
-			}
-			else {
-				selPath = getSelectionPath();
-			}
-			ProgramNode node = null;
-			if (selPath != null) {
-				node = (ProgramNode) selPath.getLastPathComponent();
+				return getMouseNode(popupPoint);
 			}
 
-			if (nselected <= 1) {
+			int nselected = getSelectionCount();
+			if (nselected < 1) {
+				return null; // nothing selected in the tree
+			}
 
-				if (selPath != null && !isPathSelected(selPath)) {
-					setSelectionPath(selPath);
-					actionManager.adjustSingleActions(node);
-					return node;
-				}
-				if (selPath != null) {
-					actionManager.adjustSingleActions(node);
-					return node;
-				}
-				actionManager.disableActions();
-				return null;
+			TreePath activePath = getSelectionPath();
+			return (ProgramNode) activePath.getLastPathComponent();
+		}
+	}
+
+	private ProgramNode getMouseNode(Point popupPoint) {
+
+		TreePath mousePath = getPathForLocation((int) popupPoint.getX(), (int) popupPoint.getY());
+		if (mousePath != null) {
+			ProgramNode node = (ProgramNode) mousePath.getLastPathComponent();
+			if (!isPathSelected(mousePath)) {
+				setSelectionPath(mousePath); // add the right-clicked node to the selection
 			}
-			// if the path at the mouse pointer is in the selection OR
-			// the path is null, then adjust the multi-popup menu.
-			if ((selPath != null && isPathSelected(selPath)) || selPath == null) {
-				actionManager.adjustMultiActions();
-				return node;
-			}
-			// force the selection to be where the mouse pointer is
-			setSelectionPath(selPath);
-			actionManager.adjustSingleActions(node);
 			return node;
 		}
+		return null;
 	}
 
 	/**
@@ -1171,9 +1093,7 @@ public class ProgramDnDTree extends DragNDropTree {
 
 		ArrayList<ProgramNode> list = new ArrayList<>();
 
-		for (int i = 0; i < nodeList.size(); i++) {
-			ProgramNode node = nodeList.get(i);
-
+		for (ProgramNode node : nodeList) {
 			if (node.getName().equals(groupName)) {
 				list.add(node);
 			}
@@ -1358,9 +1278,7 @@ public class ProgramDnDTree extends DragNDropTree {
 
 		ArrayList<ProgramNode> list = new ArrayList<>();
 
-		for (int i = 0; i < nodeList.size(); i++) {
-			ProgramNode node = nodeList.get(i);
-
+		for (ProgramNode node : nodeList) {
 			Group group = node.getGroup();
 			if (group != null && group.equals(g)) {
 				list.add(node);

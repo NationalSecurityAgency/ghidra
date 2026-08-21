@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,6 +50,8 @@ public class DecompileCallback {
 
 	public final static int MAX_SYMBOL_COUNT = 16;
 
+	public final static int MAX_FUNCTION_OFFCUT = 8;	// Maximum distance from function entry point where a query still returns the HighFunctionSymbol 
+
 	/**
 	 * Data returned for a query about strings
 	 */
@@ -79,7 +81,7 @@ public class DecompileCallback {
 	private AddressFactory addrfactory;
 	private ConstantPool cpool;
 	private PcodeDataTypeManager dtmanage;
-	private String nativeMessage;
+	private String errorMessage;
 
 	private InstructionBlock lastPseudoInstructionBlock;
 	private Disassembler pseudoDisassembler;
@@ -94,7 +96,7 @@ public class DecompileCallback {
 		dtmanage = dt;
 		default_extrapop = pcodecompilerspec.getDefaultCallingConvention().getExtrapop();
 		cpool = null;
-		nativeMessage = null;
+		errorMessage = "";
 		debug = null;
 	}
 
@@ -116,7 +118,7 @@ public class DecompileCallback {
 		if (debug != null) {
 			debug.setPcodeDataTypeManager(dtmanage);
 		}
-		nativeMessage = null; // Clear last message
+		errorMessage = ""; // Clear last message
 		lastPseudoInstructionBlock = null;
 		if (pseudoDisassembler != null) {
 			pseudoDisassembler.resetDisassemblerContext();
@@ -124,19 +126,19 @@ public class DecompileCallback {
 	}
 
 	/**
-	 * @return the last message from the decompiler
+	 * @return the last error message from the decompiler, or an empty string
 	 */
-	public String getNativeMessage() {
-		return nativeMessage;
+	public String getErrorMessage() {
+		return errorMessage;
 	}
 
 	/**
-	 * Cache a message returned by the decompiler process
+	 * Cache an error message returned by the decompiler process
 	 * 
 	 * @param msg is the message
 	 */
-	void setNativeMessage(String msg) {
-		nativeMessage = msg;
+	void setErrorMessage(String msg) {
+		errorMessage = msg;
 	}
 
 	/**
@@ -221,10 +223,7 @@ public class DecompileCallback {
 			}
 			if (debug != null) {
 				debug.getPcode(addr, instr);
-				FlowOverride fo = instr.getFlowOverride();
-				if (fo != FlowOverride.NONE) {
-					debug.addFlowOverride(addr, fo);
-				}
+				debug.handleOverrides(addr, instr);
 			}
 
 			instr.getPrototype()
@@ -548,7 +547,7 @@ public class DecompileCallback {
 
 	private void encodeHeaderComment(Encoder encoder, Function func) throws IOException {
 		Address addr = func.getEntryPoint();
-		String text = listing.getComment(CodeUnit.PLATE_COMMENT, addr);
+		String text = listing.getComment(CommentType.PLATE, addr);
 		if (text != null) {
 			encoder.openElement(ELEM_COMMENT);
 			encoder.writeString(ATTRIB_TYPE, "header");
@@ -574,19 +573,19 @@ public class DecompileCallback {
 	 * @throws IOException for errors in the underlying stream
 	 */
 	private void encodeCommentsType(Encoder encoder, AddressSetView addrset, Address addr,
-			int commenttype) throws IOException {
+			CommentType commenttype) throws IOException {
 		String typename;
 		switch (commenttype) {
-			case CodeUnit.EOL_COMMENT:
+			case EOL:
 				typename = "user1";
 				break;
-			case CodeUnit.PRE_COMMENT:
+			case PRE:
 				typename = "user2";
 				break;
-			case CodeUnit.POST_COMMENT:
+			case POST:
 				typename = "user3";
 				break;
-			case CodeUnit.PLATE_COMMENT:
+			case PLATE:
 				typename = "header";
 				break;
 			default:
@@ -598,7 +597,7 @@ public class DecompileCallback {
 			Address commaddr = iter.next();
 			String text = listing.getComment(commenttype, commaddr);
 			if (text != null) {
-				if (commenttype == CodeUnit.PLATE_COMMENT) {
+				if (commenttype == CommentType.PLATE) {
 					// Plate comments on the function entry
 					// address are considered part of the header
 					if (commaddr.equals(addr)) {
@@ -626,16 +625,16 @@ public class DecompileCallback {
 			encodeHeaderComment(encoder, func);
 		}
 		if ((flags & 1) != 0) {
-			encodeCommentsType(encoder, addrset, addr, CodeUnit.EOL_COMMENT);
+			encodeCommentsType(encoder, addrset, addr, CommentType.EOL);
 		}
 		if ((flags & 2) != 0) {
-			encodeCommentsType(encoder, addrset, addr, CodeUnit.PRE_COMMENT);
+			encodeCommentsType(encoder, addrset, addr, CommentType.PRE);
 		}
 		if ((flags & 4) != 0) {
-			encodeCommentsType(encoder, addrset, addr, CodeUnit.POST_COMMENT);
+			encodeCommentsType(encoder, addrset, addr, CommentType.POST);
 		}
 		if ((flags & 8) != 0) {
-			encodeCommentsType(encoder, addrset, addr, CodeUnit.PLATE_COMMENT);
+			encodeCommentsType(encoder, addrset, addr, CommentType.PLATE);
 		}
 		encoder.closeElement(ELEM_COMMENTDB);
 	}
@@ -893,9 +892,14 @@ public class DecompileCallback {
 	private void encodeFunction(Encoder encoder, Function func, Address addr,
 			boolean includeDefaultNames) throws IOException {
 		Address entry = func.getEntryPoint();
-		if (entry.getAddressSpace().equals(addr.getAddressSpace())) {
+		Address endHole = addr;						// If all else fails, return hole [addr,addr]
+		AddressRange range = func.getBody().getRangeContaining(addr);
+		if (range != null && range.contains(entry)) {
 			long diff = addr.getOffset() - entry.getOffset();
-			if ((diff >= 0) && (diff < 8)) {
+			if (diff < 0) {
+				endHole = entry.subtract(1);		// Return hole [addr,entry)
+			}
+			else if (diff < MAX_FUNCTION_OFFCUT) {
 				HighFunction hfunc =
 					new HighFunction(func, pcodelanguage, pcodecompilerspec, dtmanage);
 
@@ -903,7 +907,14 @@ public class DecompileCallback {
 				hfunc.grabFromFunction(extrapop, includeDefaultNames,
 					(extrapop != default_extrapop));
 
-				HighSymbol functionSymbol = new HighFunctionSymbol(entry, (int) (diff + 1), hfunc);
+				long size = range.getMaxAddress().getOffset() - entry.getOffset() + 1;
+				if (size <= 0) {
+					size = 1;
+				}
+				else if (size > MAX_FUNCTION_OFFCUT) {
+					size = MAX_FUNCTION_OFFCUT;
+				}
+				HighSymbol functionSymbol = new HighFunctionSymbol(entry, (int) size, hfunc);
 				Namespace namespc = functionSymbol.getNamespace();
 				if (debug != null) {
 					debug.getFNTypes(hfunc);
@@ -912,23 +923,15 @@ public class DecompileCallback {
 				encodeResult(encoder, functionSymbol, namespc);
 				return;
 			}
-		}
-
-		AddressRangeIterator iter = func.getBody().getAddressRanges();
-		while (iter.hasNext()) {
-			AddressRange range = iter.next();
-			if (range.contains(addr)) {
-				Address first = range.getMinAddress();
-				Address last = range.getMaxAddress();
-				encodeHole(encoder, first.getAddressSpace(), first.getUnsignedOffset(),
-					last.getUnsignedOffset(), MutabilitySettingsDefinition.CONSTANT);
-				return;
+			else {
+				endHole = range.getMaxAddress();
 			}
 		}
-		// There is probably some sort of error, just return a block
-		// containing the single queried address
+		else if (range != null) {
+			endHole = range.getMaxAddress();
+		}
 		encodeHole(encoder, addr.getAddressSpace(), addr.getUnsignedOffset(),
-			addr.getUnsignedOffset(), MutabilitySettingsDefinition.CONSTANT);
+			endHole.getUnsignedOffset(), MutabilitySettingsDefinition.CONSTANT);
 	}
 
 	private int getExtraPopOverride(Function func, Address addr) {

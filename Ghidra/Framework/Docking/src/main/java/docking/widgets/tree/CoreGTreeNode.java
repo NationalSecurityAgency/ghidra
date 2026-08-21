@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ import ghidra.util.SystemUtilities;
  * that this will allow direct thread-safe access to the children without having to worry about
  * {@link ConcurrentModificationException}s while iterating the children.  Also, the assumption
  * is that accessing the children will occur much more frequently than modifying the children.  
- * This should only be a problem if a direct descendent of GTreeNode creates its children by calling
+ * This should only be a problem if a direct descendant of GTreeNode creates its children by calling
  * addNode many times. But in that case, the tree should be using Lazy or 
  * SlowLoading nodes which always load into another list first and all the children will be set 
  * on a node in a single operation.
@@ -253,6 +253,10 @@ abstract class CoreGTreeNode implements Cloneable {
 	}
 
 	public void dispose() {
+		disconnect(true);
+	}
+
+	void disconnect(boolean dispose) {
 		List<GTreeNode> oldChildren;
 		synchronized (this) {
 			oldChildren = children;
@@ -262,7 +266,10 @@ abstract class CoreGTreeNode implements Cloneable {
 
 		if (oldChildren != null) {
 			for (GTreeNode node : oldChildren) {
-				node.dispose();
+				node.disconnect(dispose);
+				if (dispose) {
+					node.dispose();
+				}
 			}
 			oldChildren.clear();
 		}
@@ -270,23 +277,13 @@ abstract class CoreGTreeNode implements Cloneable {
 
 	/**
 	 * This is used to dispose filtered "clone" nodes. When a filter is applied to the tree,
-	 * the nodes that matched are "shallow" cloned, so when the filter is removed, we don't
-	 * want to do a full dispose on the nodes, just clean up the parent-child references.
+	 * the nodes that matched are "shallow" cloned.  This is effectively a shallow dispose that will
+	 * clean up any children and disconnect this node from the true, but will *not* call dispose(),
+	 * which would affect the original node from which this node was cloned.
 	 */
-	final void disposeClones() {
-		List<GTreeNode> oldChildren;
-		synchronized (this) {
-			oldChildren = children;
-			children = null;
-			parent = null;
-		}
-
-		if (oldChildren != null) {
-			for (GTreeNode node : oldChildren) {
-				node.disposeClones();
-			}
-			oldChildren.clear();
-		}
+	final void disposeClone() {
+		// Do not dispose, as that will affect the clone's source too
+		disconnect(false);
 	}
 
 	/**
@@ -330,7 +327,7 @@ abstract class CoreGTreeNode implements Cloneable {
 	/**
 	 * Returns true if the node is in the process of loading its children.  For nodes
 	 * that directly extend GTreeNode, this is always false.  See {@link GTreeSlowLoadingNode}
-	 * for information on nodes that that can be in the progress of loading.
+	 * for information on nodes that can be in the progress of loading.
 	 * @param childList the list to test.
 	 * @return true if the node is in the progress of loading its children.
 	 */

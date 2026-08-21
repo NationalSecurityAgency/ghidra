@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -358,6 +358,9 @@ public class PdbAddressManager {
 	private void determineMemoryBlocks() throws CancelledException {
 		AbstractPdb pdb = applicator.getPdb();
 		PdbDebugInfo debugInfo = pdb.getDebugInfo();
+		if (debugInfo == null) {
+			return;
+		}
 		segmentMapList = debugInfo.getSegmentMapList();
 		if (debugInfo instanceof PdbNewDebugInfo) {
 			DebugData debugData = ((PdbNewDebugInfo) debugInfo).getDebugData();
@@ -436,7 +439,7 @@ public class PdbAddressManager {
 	}
 
 	/**
-	 * Write the mapped address for a query address, where where the mapping is
+	 * Write the mapped address for a query address, where the mapping is
 	 *  derived by using a the address of a PDB symbol as the key and finding the address of
 	 *  a symbol in the program of the same "unique" name. This is accomplished using public
 	 *  mangled symbols.  If the program symbol came from the PDB, then it maps to itself.

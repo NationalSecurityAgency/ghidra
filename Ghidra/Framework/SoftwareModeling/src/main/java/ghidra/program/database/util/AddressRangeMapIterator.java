@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,7 @@ import ghidra.program.database.map.AddressKeyRecordIterator;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.*;
 import ghidra.util.Lock;
+import ghidra.util.Lock.Closeable;
 
 /**
  * An iterator over ranges that have a defined values in the AddressRangeMapDB
@@ -119,8 +120,7 @@ class AddressRangeMapIterator implements AddressRangeIterator {
 
 	@Override
 	public boolean hasNext() {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			if (expectedModCount != rangeMap.getModCount()) {
 				throw new ConcurrentModificationException();
 			}
@@ -140,15 +140,11 @@ class AddressRangeMapIterator implements AddressRangeIterator {
 			}
 			return false;
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public AddressRange next() {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			if (expectedModCount != rangeMap.getModCount()) {
 				throw new ConcurrentModificationException();
 			}
@@ -172,9 +168,6 @@ class AddressRangeMapIterator implements AddressRangeIterator {
 		catch (IOException e) {
 			rangeMap.dbError(e);
 			return null;
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -253,7 +246,7 @@ class AddressRangeMapIterator implements AddressRangeIterator {
 	/**
 	 * Make sure the range is within the iterator's given start and end range. This really only
 	 * matters for the first and last range returned by the iterator, but it hard to know when
-	 * the given range is the first or last, just just trim all returned ranges.
+	 * the given range is the first or last, just trim all returned ranges.
 	 * @param range the range to be trimmed
 	 * @return the trimmed address range
 	 */

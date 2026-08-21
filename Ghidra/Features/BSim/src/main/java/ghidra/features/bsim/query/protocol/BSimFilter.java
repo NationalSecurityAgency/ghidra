@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -165,14 +165,14 @@ public class BSimFilter {
 	/**
 	 * Returns true if all filters resolve correctly for the given function description. There are 
 	 * 4 main types of filters, each of which must be evaluated differently:
-	 * 
-	 * 1) Positive Filter: 	"<filter name> matches <filter value>". 
+	 * <pre>
+	 * 1) Positive Filter: 	{@code "<filter name> matches <filter value>"}. 
 	 *    	For these, filter out any result that does not contain all elements (at a minimum) of the 
 	 *    	filter value.
 	 *    	ie: FILTER = "SetA", 		RESULT = "SetA" => keep it
 	 * 		    FILTER = "SetA, SetB", 	RESULT = "SetA"	=> filter out
 	 * 
-	 * 2) Negative Filter: 	"<filter name> does not match <filter value>"
+	 * 2) Negative Filter: 	{@code "<filter name> does not match <filter value>"}
 	 * 		For these, filter out any result that does not contain EXACTLY the filter value.
 	 * 		ie: FILTER = "SetA", 		RESULT = "SetA, SetB"   => keep it
 	 * 		    FILTER = "SetA, SetB", 	RESULT = "SetA, SetB"	=> filter out
@@ -182,7 +182,7 @@ public class BSimFilter {
 	 * 
 	 * 4) Negative Exe Filter:	Same as #2, but custom exe filters are stored differently than
 	 * 		'normal' categories and must be processed separately.
-	 * 
+	 * </pre>
 	 * @param func the function description
 	 * @return true if all filters resolve to true
 	 */

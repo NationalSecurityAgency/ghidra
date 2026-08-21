@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import ghidra.framework.model.*;
+import ghidra.program.model.address.AddressSpace;
 
 public class TypedEventDispatcher {
 
@@ -28,21 +29,21 @@ public class TypedEventDispatcher {
 	}
 
 	public interface FullEventRecordHandler<T, U> extends EventRecordHandler<T, U> {
-		void handle(TraceAddressSpace space, T affectedObject, U oldValue, U newValue);
+		void handle(AddressSpace space, T affectedObject, U oldValue, U newValue);
 
 		@Override
 		default void handle(TraceChangeRecord<T, U> record) {
-			handle(record.getSpace(), record.getAffectedObject(), record.getOldValue(),
+			handle(record.getAddressSpace(), record.getAffectedObject(), record.getOldValue(),
 				record.getNewValue());
 		}
 	}
 
 	public interface AffectedObjectHandler<T> extends EventRecordHandler<T, Void> {
-		void handle(TraceAddressSpace space, T affectedObject);
+		void handle(AddressSpace space, T affectedObject);
 
 		@Override
 		default void handle(TraceChangeRecord<T, Void> record) {
-			handle(record.getSpace(), record.getAffectedObject());
+			handle(record.getAddressSpace(), record.getAffectedObject());
 		}
 	}
 
@@ -65,11 +66,11 @@ public class TypedEventDispatcher {
 	}
 
 	public interface SpaceValuesHandler<U> extends EventRecordHandler<Void, U> {
-		void handle(TraceAddressSpace space, U oldValue, U newValue);
+		void handle(AddressSpace space, U oldValue, U newValue);
 
 		@Override
 		default void handle(TraceChangeRecord<Void, U> record) {
-			handle(record.getSpace(), record.getOldValue(), record.getNewValue());
+			handle(record.getAddressSpace(), record.getOldValue(), record.getNewValue());
 		}
 	}
 
@@ -83,11 +84,11 @@ public class TypedEventDispatcher {
 	}
 
 	public interface IgnoreValuesHandler extends EventRecordHandler<Object, Object> {
-		void handle(TraceAddressSpace space);
+		void handle(AddressSpace space);
 
 		@Override
 		default void handle(TraceChangeRecord<Object, Object> record) {
-			handle(record.getSpace());
+			handle(record.getAddressSpace());
 		}
 	}
 

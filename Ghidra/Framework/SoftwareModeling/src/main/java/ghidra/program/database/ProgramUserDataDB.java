@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -119,6 +119,11 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 		return program.getName() + "_UserData";
 	}
 
+	/**
+	 * Create a new program user data store.
+	 * @param program related program
+	 * @throws IOException if an IO error occurs
+	 */
 	public ProgramUserDataDB(ProgramDB program) throws IOException {
 		super(new DBHandle(), getName(program), 500, program);
 		this.program = program;
@@ -157,8 +162,22 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 		}
 	}
 
+	/**
+	 * Open existing program user data store.
+	 * If a major language change is detected the instance will automatically attempt to upgrade
+	 * its internal address map.
+	 * @param dbh user data storage DB handle
+	 * @param program related program
+	 * @param monitor task monitor
+	 * @throws IOException if an IO error occurs
+	 * @throws VersionException if a DB version error occurs
+	 * @throws LanguageNotFoundException if language was not found
+	 * @throws CancelledException if instantiation was cancelled
+	 * @throws IllegalStateException if data store is bad or incmopatible with program
+	 */
 	public ProgramUserDataDB(DBHandle dbh, ProgramDB program, TaskMonitor monitor)
-			throws IOException, VersionException, LanguageNotFoundException, CancelledException {
+			throws IOException, VersionException, LanguageNotFoundException, CancelledException,
+			IllegalStateException {
 
 		super(dbh, getName(program), 500, program);
 		this.program = program;
@@ -200,6 +219,9 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 			upgradeDatabase();
 
 			if (languageVersionExc != null) {
+				if (languageUpgradeTranslator == null) {
+					throw new LanguageNotFoundException(languageID + ":" + languageVersion);
+				}
 				try {
 					setLanguage(languageUpgradeTranslator, monitor);
 					addressMap.memoryMapChanged(program.getMemory());
@@ -210,6 +232,16 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 					}
 					throw e;
 				}
+			}
+
+			if (!program.getLanguageID().equals(languageID)) {
+				throw new IllegalStateException(
+					"User data and program have inconsistent language ID");
+			}
+
+			if (program.getLanguage().getVersion() != languageVersion) {
+				throw new IllegalStateException(
+					"User data language version does not match program's");
 			}
 
 			endTransaction(id, true);
@@ -414,42 +446,40 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 	 * @param monitor task monitor
 	 */
 	private void setLanguage(LanguageTranslator translator, TaskMonitor monitor) {
-		lock.acquire();
+		//setEventsEnabled(false);
 		try {
-			//setEventsEnabled(false);
-			try {
 
-				language = translator.getNewLanguage();
-				languageID = language.getLanguageID();
-				languageVersion = language.getVersion();
+			language = translator.getNewLanguage();
+			languageID = language.getLanguageID();
+			languageVersion = language.getVersion();
 
-				// AddressFactory need not change since we are using the instance from the
-				// Program which would have already been subject to an upgrade
-				addressMap.setLanguage(language, addressFactory, translator);
+			// AddressFactory need not change since we are using the instance from the
+			// Program which would have already been subject to an upgrade
+			addressMap.setLanguage(language, addressFactory, translator);
 
-				clearCache(true);
+			clearCache(true);
 
-				DBRecord record = SCHEMA.createRecord(new StringField(LANGUAGE_ID));
-				record.setString(VALUE_COL, languageID.getIdAsString());
-				table.putRecord(record);
+			DBRecord record = SCHEMA.createRecord(new StringField(LANGUAGE_ID));
+			record.setString(VALUE_COL, languageID.getIdAsString());
+			table.putRecord(record);
 
-				setChanged(true);
-				clearCache(true);
+			record = SCHEMA.createRecord(new StringField(LANGUAGE_VERSION));
+			record.setString(VALUE_COL, Integer.toString(languageVersion));
+			table.putRecord(record);
 
-				//invalidate();
+			setChanged(true);
+			clearCache(true);
 
-			}
-			catch (Throwable t) {
-				throw new IllegalStateException(
-					"Set language aborted - program user data is now in an unusable state!", t);
-			}
+			//invalidate();
+
+		}
+		catch (Throwable t) {
+			throw new IllegalStateException(
+				"Set language aborted - program user data is now in an unusable state!", t);
+		}
 //			finally {
 //				setEventsEnabled(true);
 //			}
-		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
@@ -457,6 +487,11 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 		return dbh.canUpdate();
 	}
 
+	@Override
+	protected void setChanged(boolean b) {
+		super.setChanged(b);
+	}
+	
 	private PropertyMap<?> getPropertyMap(String owner, String propertyName, int propertyType,
 			Class<?> saveableClass, boolean create) throws PropertyTypeMismatchException {
 
@@ -676,24 +711,24 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 	}
 
 	@Override
-	public void setStringProperty(String propertyName, String value) {
+	public synchronized void setStringProperty(String propertyName, String value) {
 		metadata.put(propertyName, value);
 		changed = true;
 	}
 
 	@Override
-	public String getStringProperty(String propertyName, String defaultValue) {
+	public synchronized String getStringProperty(String propertyName, String defaultValue) {
 		String value = metadata.get(propertyName);
 		return value == null ? defaultValue : value;
 	}
 
 	@Override
-	public Set<String> getStringPropertyNames() {
-		return metadata.keySet();
+	public synchronized Set<String> getStringPropertyNames() {
+		return new HashSet<String>(metadata.keySet());
 	}
 
 	@Override
-	public String removeStringProperty(String propertyName) {
+	public synchronized String removeStringProperty(String propertyName) {
 		changed = true;
 		return metadata.remove(propertyName);
 	}

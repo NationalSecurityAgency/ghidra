@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,7 +54,7 @@ import ghidra.util.task.TaskMonitor;
  * but for the {@code __stdcall} convention prominent in 32-bit x86 binaries for Windows, the input
  * parameters must also be examined.
  */
-class SymPcodeExecutor extends PcodeExecutor<Sym> {
+public class SymPcodeExecutor extends PcodeExecutor<Sym> {
 
 	/**
 	 * Construct an executor for performing stack unwind analysis of a given program
@@ -62,7 +62,6 @@ class SymPcodeExecutor extends PcodeExecutor<Sym> {
 	 * @param program the program to analyze
 	 * @param state the symbolic state
 	 * @param reason a reason to give when reading state
-	 * @param warnings a place to emit warnings
 	 * @param monitor a monitor for analysis, usually decompilation
 	 * @return the executor
 	 */
@@ -121,7 +120,8 @@ class SymPcodeExecutor extends PcodeExecutor<Sym> {
 		}
 		int extrapop = convention.getExtrapop();
 		if (extrapop == PrototypeModel.UNKNOWN_EXTRAPOP) {
-			throw new PcodeExecutionException("Cannot get stack change for function " + function);
+			extrapop = convention.getStackshift();
+			//throw new PcodeExecutionException("Cannot get stack change for function " + function);
 		}
 		if (function.isStackPurgeSizeValid()) {
 			return extrapop + function.getStackPurgeSize();
@@ -326,7 +326,8 @@ class SymPcodeExecutor extends PcodeExecutor<Sym> {
 		for (int i = 0; i < arguments.length; i++) {
 			types[i + 1] = arguments[0].getDataType();
 		}
-		VariableStorage[] vsLocs = convention.getStorageLocations(program, types, false);
+		VariableStorage[] vsLocs =
+			convention.getStorageLocations(program, types, false, sig.hasVarArgs());
 		Address min = null;
 		Address max = null; // Exclusive
 		for (VariableStorage vs : vsLocs) {
@@ -404,8 +405,15 @@ class SymPcodeExecutor extends PcodeExecutor<Sym> {
 		// This should always end a basic block, so just do nothing
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * This could be a {@link PcodeOp#RETURN return} and the slaspec does not always set PC
+	 * explicitly, so do it here, but don't perform any actual control transfer.
+	 */
 	@Override
 	protected void doExecuteIndirectBranch(PcodeOp op, PcodeFrame frame) {
-		// This should always end a basic block, so just do nothing
+		Sym offset = state.getVar(getIndirectBranchTarget(op), reason);
+		branchToOffset(op, offset, frame);
 	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,11 +20,9 @@ import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.dwarf.attribs.*;
-import ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute.AttrDef;
+import ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.AttrDef;
 import ghidra.program.model.data.LEB128;
 import ghidra.util.Msg;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * This class represents the 'schema' for a DWARF DIE record.
@@ -45,14 +43,12 @@ public class DWARFAbbreviation {
 	 * Reads a {@link DWARFAbbreviation} from the stream.
 	 * 
 	 * @param reader {@link BinaryReader} stream
-	 * @param prog {@link DWARFProgram}
-	 * @param monitor {@link TaskMonitor}
+	 * @param dieContainer {@link DIEContainer}
 	 * @return {@link DWARFAbbreviation}, or null if the stream was at a end-of-list marker
 	 * @throws IOException if error reading
-	 * @throws CancelledException if canceled
 	 */
-	public static DWARFAbbreviation read(BinaryReader reader, DWARFProgram prog,
-			TaskMonitor monitor) throws IOException, CancelledException {
+	public static DWARFAbbreviation read(BinaryReader reader, DIEContainer dieContainer)
+			throws IOException {
 
 		int ac = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 		if (ac == EOL) {
@@ -65,8 +61,6 @@ public class DWARFAbbreviation {
 		List<AttrDef> tmpAttrSpecs = new ArrayList<>();
 		AttrDef attrSpec;
 		while ((attrSpec = AttrDef.read(reader)) != null) {
-			monitor.checkCancelled();
-			attrSpec = prog.internAttributeSpec(attrSpec);
 			tmpAttrSpecs.add(attrSpec);
 			warnIfMismatchedForms(attrSpec);
 		}
@@ -78,11 +72,11 @@ public class DWARFAbbreviation {
 		return result;
 	}
 
-	private static void warnIfMismatchedForms(DWARFAttribute.AttrDef attrSpec) {
+	private static void warnIfMismatchedForms(DWARFAttributeId.AttrDef attrSpec) {
 		DWARFForm form = attrSpec.getAttributeForm();
-		DWARFAttribute attribute = attrSpec.getAttributeId();
-		if (attribute != null && !form.getFormClasses().isEmpty() &&
-			!attribute.getAttributeClass().isEmpty()) {
+		DWARFAttributeId attrId = attrSpec.getAttributeId();
+		if (attrId != null && !form.getFormClasses().isEmpty() &&
+			!attrId.getAttributeClass().isEmpty()) {
 			EnumSet<DWARFAttributeClass> tmp =
 				EnumSet.copyOf(attrSpec.getAttributeForm().getFormClasses());
 			tmp.retainAll(attrSpec.getAttributeId().getAttributeClass());
@@ -99,20 +93,17 @@ public class DWARFAbbreviation {
 	 * encountered.
 	 * 
 	 * @param reader {@link BinaryReader} .debug_abbr stream
-	 * @param prog {@link DWARFProgram}
-	 * @param monitor {@link TaskMonitor}
+	 * @param dieContainer {@link DIEContainer}
 	 * @return map of abbrCode -> abbr instance
 	 * @throws IOException if error reading
-	 * @throws CancelledException if cancelled
 	 */
 	public static Map<Integer, DWARFAbbreviation> readAbbreviations(BinaryReader reader,
-			DWARFProgram prog, TaskMonitor monitor) throws IOException, CancelledException {
+			DIEContainer dieContainer) throws IOException {
 		Map<Integer, DWARFAbbreviation> result = new HashMap<>();
 
 		// Read a list of abbreviations, terminated by a marker value that returns null from read()
 		DWARFAbbreviation abbrev = null;
-		while ((abbrev = DWARFAbbreviation.read(reader, prog, monitor)) != null) {
-			monitor.checkCancelled();
+		while ((abbrev = DWARFAbbreviation.read(reader, dieContainer)) != null) {
 			result.put(abbrev.getAbbreviationCode(), abbrev);
 		}
 
@@ -192,7 +183,7 @@ public class DWARFAbbreviation {
 	 * @param attributeId attribute key
 	 * @return attribute specification
 	 */
-	public AttrDef findAttribute(DWARFAttribute attributeId) {
+	public AttrDef findAttribute(DWARFAttributeId attributeId) {
 		for (AttrDef spec : this.attributes) {
 			if (spec.getAttributeId() == attributeId) {
 				return spec;

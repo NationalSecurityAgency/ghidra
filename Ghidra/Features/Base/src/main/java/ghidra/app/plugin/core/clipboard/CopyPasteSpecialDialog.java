@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +15,6 @@
  */
 package ghidra.app.plugin.core.clipboard;
 
-import ghidra.app.util.ClipboardType;
-import ghidra.util.HelpLocation;
-
 import java.awt.BorderLayout;
 import java.awt.event.*;
 import java.util.List;
@@ -28,13 +24,14 @@ import javax.swing.border.TitledBorder;
 
 import docking.DialogComponentProvider;
 import docking.widgets.list.ListPanel;
-
+import ghidra.app.util.ClipboardType;
+import ghidra.util.HelpLocation;
 
 public class CopyPasteSpecialDialog extends DialogComponentProvider {
 
 	private ListPanel listPanel;
-	private JPanel mainPanel; 
-	
+	private JPanel mainPanel;
+
 	private List<?> availableTypes;
 	private Object selectedType;
 
@@ -50,7 +47,7 @@ public class CopyPasteSpecialDialog extends DialogComponentProvider {
 
 		setHelpLocation(new HelpLocation("ClipboardPlugin", "Copy_Special"));
 	}
-	
+
 	private JPanel createPanel() {
 		mainPanel = new JPanel(new BorderLayout());
 
@@ -62,7 +59,7 @@ public class CopyPasteSpecialDialog extends DialogComponentProvider {
 		list.setSelectedIndex(0);
 		list.addKeyListener(new KeyAdapter() {
 			@Override
-            public void keyPressed(KeyEvent evt) {
+			public void keyPressed(KeyEvent evt) {
 				if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
 					evt.consume();
 					okCallback();
@@ -71,34 +68,33 @@ public class CopyPasteSpecialDialog extends DialogComponentProvider {
 		});
 		list.addMouseListener(new MouseAdapter() {
 			@Override
-            public void mousePressed(MouseEvent evt) {
-				if (evt.getButton() == MouseEvent.BUTTON1  &&  evt.getClickCount() == 2) {
+			public void mousePressed(MouseEvent evt) {
+				if (evt.getButton() == MouseEvent.BUTTON1 && evt.getClickCount() == 2) {
 					evt.consume();
 					okCallback();
 				}
 			}
 		});
-
+		listPanel.getAccessibleContext().setAccessibleName("Available Types");
 		mainPanel.add(listPanel, BorderLayout.CENTER);
 		mainPanel.setBorder(new TitledBorder("Select Format"));
-
+		mainPanel.getAccessibleContext().setAccessibleName("Copy Paste Special");
 		return mainPanel;
 	}
 
-
 	@Override
-    protected void okCallback() {
+	protected void okCallback() {
 		close();
 		selectedType = listPanel.getSelectedValue();
 	}
 
 	@Override
-    protected void cancelCallback() {
+	protected void cancelCallback() {
 		close();
 	}
 
 	public ClipboardType getSelectedType() {
-	    return (ClipboardType) selectedType;
+		return (ClipboardType) selectedType;
 	}
 
 }

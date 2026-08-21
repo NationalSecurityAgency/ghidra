@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -94,7 +94,8 @@ public:
     truncated = 0x100,		///< Space is truncated from its original size, expect pointers larger than this size
     hasphysical = 0x200,	///< Has physical memory associated with it
     is_otherspace = 0x400,	///< Quick check for the OtherSpace derived class
-    has_nearpointers = 0x800	///< Does there exist near pointers into this space
+    has_nearpointers = 0x800,	///< Does there exist near pointers into this space
+    allows_wrapped_range = 0x1000	///< A memory range for \b this space can wrap from high addresses to low
   };
 private:
   spacetype type;		///< Type of space (PROCESSOR, CONSTANT, INTERNAL, ...)
@@ -150,6 +151,7 @@ public:
   bool isOtherSpace(void) const;	///< Return \b true if \b this is the \e other address space
   bool isTruncated(void) const; ///< Return \b true if this space is truncated from its original size
   bool hasNearPointers(void) const;	///< Return \b true if \e near (truncated) pointers into \b this space are possible
+  bool allowsWrappedRange(void) const;	///< Return \b true if memory range can span high to low addresses in \b this space
   void printOffset(ostream &s,uintb offset) const;  ///< Write an address offset to a stream
 
   virtual int4 numSpacebase(void) const;	///< Number of base registers associated with this space
@@ -465,6 +467,10 @@ inline bool AddrSpace::isTruncated(void) const {
 
 inline bool AddrSpace::hasNearPointers(void) const {
   return ((flags&has_nearpointers)!=0);
+}
+
+inline bool AddrSpace::allowsWrappedRange(void) const {
+  return ((flags & allows_wrapped_range)!=0);
 }
 
 /// Some spaces are "virtual", like the stack spaces, where addresses are really relative to a

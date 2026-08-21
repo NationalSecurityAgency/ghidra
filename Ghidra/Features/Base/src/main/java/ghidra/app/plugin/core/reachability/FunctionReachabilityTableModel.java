@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -136,12 +136,12 @@ public class FunctionReachabilityTableModel
 		CodeBlockModel model;
 		try {
 			model = blockModelService.getNewModelByName(
-				BlockModelService.ISOLATED_ENTRY_SUBROUTINE_MODEL_NAME);
+				BlockModelService.ISOLATED_ENTRY_SUBROUTINE_MODEL_NAME, program);
 		}
 		catch (NotFoundException e) {
 			Msg.error(this, "Code block model not found: " +
 				BlockModelService.ISOLATED_ENTRY_SUBROUTINE_MODEL_NAME);
-			model = blockModelService.getActiveSubroutineModel();
+			model = blockModelService.getActiveSubroutineModel(program);
 		}
 
 		return model.getCodeBlocks(monitor);
@@ -179,7 +179,7 @@ public class FunctionReachabilityTableModel
 
 		Address targetAddress = destination.getDestinationAddress();
 		BlockModelService blockModelService = serviceProvider.getService(BlockModelService.class);
-		CodeBlockModel codeBlockModel = blockModelService.getActiveSubroutineModel();
+		CodeBlockModel codeBlockModel = blockModelService.getActiveSubroutineModel(program);
 		CodeBlock targetBlock = codeBlockModel.getFirstCodeBlockContaining(targetAddress, monitor);
 		if (targetBlock == null) {
 			return null; // no code found for call; external?
@@ -200,14 +200,28 @@ public class FunctionReachabilityTableModel
 	}
 
 	@Override
-	public ProgramLocation getProgramLocation(int row, int column) {
-		FunctionReachabilityResult result = getRowObject(row);
-		if (column == FROM_FUNCTION_COLUMN) {
+	public Address getAddress(int modelRow, int modelColumn) {
+		FunctionReachabilityResult result = getRowObject(modelColumn);
+		if (modelColumn == FROM_FUNCTION_COLUMN) {
+			Function function = result.getFromFunction();
+			return function.getEntryPoint();
+		}
+		else if (modelColumn == TO_FUNCTION_COLUMN) {
+			Function function = result.getToFunction();
+			return function.getEntryPoint();
+		}
+		return null;
+	}
+
+	@Override
+	public ProgramLocation getProgramLocation(int modelRow, int modelColumn) {
+		FunctionReachabilityResult result = getRowObject(modelRow);
+		if (modelColumn == FROM_FUNCTION_COLUMN) {
 			Function function = result.getFromFunction();
 			Address address = function.getEntryPoint();
 			return new ProgramLocation(getProgram(), address);
 		}
-		else if (column == TO_FUNCTION_COLUMN) {
+		else if (modelColumn == TO_FUNCTION_COLUMN) {
 			Function function = result.getToFunction();
 			Address address = function.getEntryPoint();
 			return new ProgramLocation(getProgram(), address);
@@ -234,11 +248,6 @@ public class FunctionReachabilityTableModel
 		}
 
 		@Override
-		public Iterator<List<FRVertex>> iterator() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
 		public void add(List<FRVertex> t) {
 			accumulator.add(new FunctionReachabilityResult(fromFunction, toFunction, t));
 		}
@@ -251,18 +260,8 @@ public class FunctionReachabilityTableModel
 		}
 
 		@Override
-		public boolean contains(List<FRVertex> t) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Collection<List<FRVertex>> get() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public int size() {
-			return accumulator.size();
+		public int getProgress() {
+			return accumulator.getProgress();
 		}
 
 	}

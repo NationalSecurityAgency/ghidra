@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -61,7 +61,7 @@ public class LabelMgrPlugin extends Plugin {
 		// Setup list of actions
 		setupActions();
 
-		addEditDialog = new AddEditDialog("", tool);
+		addEditDialog = new AddEditDialog("Add/Edit Label", tool);
 		addEditDialog.setReusable(true);
 	}
 
@@ -102,10 +102,6 @@ public class LabelMgrPlugin extends Plugin {
 		return new EditFieldNameDialog("", tool);
 	}
 
-	OperandLabelDialog getOperandLabelDialog() {
-		return new OperandLabelDialog(this);
-	}
-
 	/**
 	 * Removes the label or alias that the cursor is over from the current label field. If an 
 	 * exception is caught during the removal of the label or alias, a message is written to the 
@@ -115,7 +111,8 @@ public class LabelMgrPlugin extends Plugin {
 	protected void removeLabelCallback(ListingActionContext context) {
 		Symbol s = getSymbol(context);
 		if (s != null) {
-			Command cmd = new DeleteLabelCmd(s.getAddress(), s.getName(), s.getParentNamespace());
+			Command<Program> cmd =
+				new DeleteLabelCmd(s.getAddress(), s.getName(), s.getParentNamespace());
 
 			if (!tool.execute(cmd, context.getProgram())) {
 				tool.setStatusInfo(cmd.getStatusMsg());
@@ -170,17 +167,18 @@ public class LabelMgrPlugin extends Plugin {
 	}
 
 	void setOperandLabelCallback(ListingActionContext context) {
-		getOperandLabelDialog().setOperandLabel(context);
+
+		SymbolChooserDialog dialog = new SymbolChooserDialog(this, context);
+		dialog.show();
 	}
 
 	Symbol getSymbol(ListingActionContext context) {
 		ProgramLocation location = context.getLocation();
-		if (location instanceof LabelFieldLocation) {
-			LabelFieldLocation lfl = (LabelFieldLocation) location;
+		if (location instanceof LabelFieldLocation lfl) {
 			return lfl.getSymbol();
 		}
-		else if (location instanceof OperandFieldLocation) {
-			VariableOffset variableOffset = ((OperandFieldLocation) location).getVariableOffset();
+		else if (location instanceof OperandFieldLocation ofl) {
+			VariableOffset variableOffset = ofl.getVariableOffset();
 			if (variableOffset != null) {
 				Variable var = variableOffset.getVariable();
 				if (var != null) {
@@ -278,7 +276,7 @@ public class LabelMgrPlugin extends Plugin {
 			addr = loc.getAddress();
 		}
 		else if (location instanceof OperandFieldLocation) {
-			Address a = ((OperandFieldLocation) location).getRefAddress();
+			Address a = location.getRefAddress();
 			addr = (a == null) ? addr : a;
 		}
 

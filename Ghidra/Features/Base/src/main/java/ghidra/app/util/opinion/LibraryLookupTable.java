@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,9 @@ package ghidra.app.util.opinion;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+
+import org.jdom2.IllegalDataException;
+import org.jdom2.IllegalNameException;
 
 import generic.jar.ResourceFile;
 import ghidra.app.util.bin.format.pe.ResourceDataDirectory;
@@ -173,7 +176,12 @@ public class LibraryLookupTable {
 			Msg.warn(LibraryLookupTable.class, "Can't write to installation directory");
 		}
 		else {
-			symTab.write(f, new File(program.getExecutablePath()), version);
+			try {
+				symTab.write(f, new File(program.getExecutablePath()), version);
+			}
+			catch (IllegalNameException | IllegalDataException e) {
+				throw new IOException(e);
+			}
 		}
 
 		return file;
@@ -204,9 +212,9 @@ public class LibraryLookupTable {
 	 * </pre>
 	 * Alternatively, a user specific resource directory may be used which 
 	 * is located at 
-	 * <pre>
-	 *   &lt;USER_HOME&gt;/.ghidra/&lt;.ghidraVersion&gt;/symbols/[win32|win64]
-	 * </pre>
+	 * <pre>{@code
+	 *   <user settings>/symbols/[win32|win64]
+	 * }</pre>
 	 * The cacheMap is a static cache which always returns the same
 	 * instance for a given DLL name.
 	 * 

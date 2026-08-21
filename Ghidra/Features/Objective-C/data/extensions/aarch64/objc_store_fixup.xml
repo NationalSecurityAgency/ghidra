@@ -1,0 +1,9 @@
+<callfixup name="_objc_store_fixup">
+    <target name="_objc_storeStrong"/>
+    <target name="_objc_storeWeak"/>
+    <pcode>
+        <body><![CDATA[
+            *x0 = x1;
+        ]]></body>
+    </pcode>
+</callfixup>

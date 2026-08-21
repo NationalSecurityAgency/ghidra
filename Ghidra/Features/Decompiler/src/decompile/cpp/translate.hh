@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -204,6 +204,7 @@ public:
   const VarnodeData &getUnified(void) const { return unified; }		///< Get the Varnode whole
   Address getEquivalentAddress(uintb offset,int4 &pos) const;	///< Given offset in \e join space, get equivalent address of piece
   bool operator<(const JoinRecord &op2) const; ///< Compare records lexigraphically by pieces
+  static void mergeSequence(vector<VarnodeData> &seq,const Translate *trans);	///< Merge any contiguous ranges in a sequence
 };
 
 /// \brief Comparator for JoinRecord objects
@@ -277,8 +278,14 @@ public:
   /// \brief Build a logical whole from register pairs
   Address constructJoinAddress(const Translate *translate,const Address &hiaddr,int4 hisz,const Address &loaddr,int4 losz);
 
+  /// \brief Build a logical whole representing a range that \e wraps from a high address to a low address
+  Address constructWrappingAddress(const Address &addr,int4 size);
+
   /// \brief Make sure a possibly offset \e join address has a proper JoinRecord
   void renormalizeJoinAddress(Address &addr,int4 size);
+
+  /// \brief Create an Address by stripping a piece from a JoinRecord
+  const VarnodeData &stripJoinPiece(JoinRecord *join,int4 index);
 
   /// \brief Parse a string with just an \e address \e space name and a hex offset
   Address parseAddressSimple(const string &val);
@@ -368,17 +375,25 @@ public:
   /// \return the VarnodeData for the register
   virtual const VarnodeData &getRegister(const string &nm) const=0;
 
-  /// \brief Get the name of a register given its location
+  /// \brief Get the name of the smallest containing register given a location and size
   ///
-  /// Generic references to locations in a \e register space can
-  /// be translated into the associated register \e name.  If the
-  /// location doesn't match a register \e exactly, an empty string
-  /// is returned.
+  /// Generic references to locations in a \e register space are translated into the
+  /// register \e name.  If a containing register isn't found, an empty string is returned.
   /// \param base is the address space containing the location
   /// \param off is the offset of the location
   /// \param size is the size of the location
   /// \return the name of the register, or an empty string
   virtual string getRegisterName(AddrSpace *base,uintb off,int4 size) const=0;
+
+  /// \brief Get the name of a register with an exact location and size
+  ///
+  /// If a register exists with the given location and size, return the name of the register.
+  /// Otherwise return the empty string.
+  /// \param base is the address space containing the location
+  /// \param off is the offset of the location
+  /// \param size is the size of the location
+  /// \return the name of the register, or an empty string
+  virtual string getExactRegisterName(AddrSpace *base,uintb off,int4 size) const=0;
 
   /// \brief Get a list of all register names and the corresponding location
   ///

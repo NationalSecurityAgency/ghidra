@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ import org.eclipse.ui.INewWizard;
 import org.eclipse.ui.IWorkbench;
 
 import ghidra.GhidraApplicationLayout;
-import ghidra.launch.JavaConfig;
+import ghidra.launch.AppConfig;
 import ghidradev.EclipseMessageUtils;
 import ghidradev.ghidraprojectcreator.utils.GhidraProjectUtils;
 import ghidradev.ghidraprojectcreator.wizards.pages.ChooseGhidraModuleProjectWizardPage;
@@ -123,7 +123,7 @@ public class ExportGhidraModuleWizard extends Wizard implements INewWizard {
 			// TODO: It's more correct to get this from the project's classpath, since Ghidra's
 			// saved Java home can change from launch to launch.  
 			GhidraApplicationLayout ghidraLayout = new GhidraApplicationLayout(new File(ghidraInstallDirPath));
-			File javaHomeDir = new JavaConfig(
+			File javaHomeDir = new AppConfig(
 				ghidraLayout.getApplicationInstallationDir().getFile(false)).getSavedJavaHome();
 			if(javaHomeDir == null) {
 				throw new IOException("Failed to get the Java home associated with the project.  " +

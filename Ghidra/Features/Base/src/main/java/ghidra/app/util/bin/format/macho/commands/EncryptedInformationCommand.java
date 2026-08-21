@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,8 +26,8 @@ import ghidra.util.exception.DuplicateNameException;
  * Represents an encryption_info_command structure
  */
 public class EncryptedInformationCommand extends LoadCommand {
-	private int cryptoff;
-	private int cryptsize;
+	private long cryptoff;
+	private long cryptsize;
 	private int cryptid;
 	
 	private boolean is32bit;
@@ -36,8 +36,8 @@ public class EncryptedInformationCommand extends LoadCommand {
 		super(reader);
 		this.is32bit = is32bit;
 
-		cryptoff = reader.readNextInt();
-		cryptsize = reader.readNextInt();
+		cryptoff = reader.readNextUnsignedInt();
+		cryptsize = reader.readNextUnsignedInt();
 		cryptid = reader.readNextInt();
 	}
 
@@ -45,11 +45,11 @@ public class EncryptedInformationCommand extends LoadCommand {
 		return cryptid;
 	}
 
-	public int getCryptOffset() {
+	public long getCryptOffset() {
 		return cryptoff;
 	}
 
-	public int getCryptSize() {
+	public long getCryptSize() {
 		return cryptsize;
 	}
 

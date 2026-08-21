@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,12 +36,15 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.type.PrimitiveMsType;
 import ghidra.app.util.bin.format.pe.cli.tables.CliAbstractTableRow;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.pdb.PdbCategories;
+import ghidra.app.util.pdb.classtype.ClassTypeManager;
+import ghidra.app.util.pdb.classtype.MsVxtManager;
 import ghidra.framework.options.Options;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.disassemble.DisassemblerContextImpl;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
@@ -49,6 +52,7 @@ import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.CancelOnlyWrappingTaskMonitor;
 import ghidra.util.task.TaskMonitor;
+import mdemangler.MDMangUtils;
 
 /**
  * The main engine for applying an AbstractPdb to Ghidra, whether a Program or DataTypeManager.
@@ -76,6 +80,9 @@ import ghidra.util.task.TaskMonitor;
 public class DefaultPdbApplicator implements PdbApplicator {
 
 	private static final String THUNK_NAME_PREFIX = "[thunk]:";
+
+	private static final boolean CREATE_FLATTENED_CLASSES =
+		Boolean.getBoolean("ghidra.pdb.createFlattenedClasses");
 
 	//==============================================================================================
 
@@ -175,17 +182,21 @@ public class DefaultPdbApplicator implements PdbApplicator {
 
 	private PdbApplicatorMetrics pdbApplicatorMetrics;
 
+	private boolean preWorkDone = false;
+
 	//==============================================================================================
 	private Program program;
 
 	private PdbApplicatorOptions applicatorOptions;
 	private MessageLog log;
+	private TaskMonitor monitor;
 	private CancelOnlyWrappingTaskMonitor cancelOnlyWrappingMonitor;
 
 	//==============================================================================================
 	private Address imageBase;
 	private int linkerModuleNumber = -1;
 	private DataTypeManager dataTypeManager;
+	private ClassTypeManager classTypeManager;
 	private PdbAddressManager pdbAddressManager;
 	private List<SymbolGroup> symbolGroups;
 
@@ -196,21 +207,25 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	private boolean processedLinkerModule = false;
 
 	//==============================================================================================
+	private PdbSourceLinesApplicator linesApplicator;
+
+	//==============================================================================================
 	// If we have symbols and memory with VBTs in them, then a better VbtManager is created.
-	VbtManager vbtManager;
-	PdbRegisterNameToProgramRegisterMapper registerNameToRegisterMapper;
+	private MsVxtManager vxtManager;
+	private PdbRegisterNameToProgramRegisterMapper registerNameToRegisterMapper;
 
 	//==============================================================================================
 	private MultiphaseDataTypeResolver multiphaseResolver;
 	private int resolveCount;
 	private int conflictCount;
-	private PdbCategories categoryUtils;
+	private PdbCategories pdbCategories;
 	private PdbPrimitiveTypeApplicator pdbPrimitiveTypeApplicator;
 	private TypeApplierFactory typeApplierParser;
 	// We may need to put the following map into the "analysis state" for access by
 	//  a second PDB analyzer to do the "deferred" processing of functions.  Then a mandatory
 	//  second PDB analyzer would, at a minimum, remove the map from the analysis state.
 	private Map<RecordNumber, DataType> dataTypeByMsTypeNum;
+	private Set<RecordNumber> filledInStructure;
 	private Map<RecordNumber, CppCompositeType> classTypeByMsTypeNum;
 	private ComplexTypeMapper complexTypeMapper;
 	/**
@@ -247,15 +262,18 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	 * @param imageBaseParam address bases from which symbol addresses are based. If null, uses
 	 * the image base of the program (both cannot be null)
 	 * @param applicatorOptionsParam {@link PdbApplicatorOptions} used for applying the PDB
+	 * @param monitor the task monitor to use
 	 * @param logParam the MessageLog to which to output messages
 	 * @throws PdbException if there was a problem processing the data
 	 */
 	public DefaultPdbApplicator(AbstractPdb pdb, Program programParam,
 			DataTypeManager dataTypeManagerParam, Address imageBaseParam,
-			PdbApplicatorOptions applicatorOptionsParam, MessageLog logParam) throws PdbException {
+			PdbApplicatorOptions applicatorOptionsParam, TaskMonitor monitor, MessageLog logParam)
+			throws PdbException {
 
 		Objects.requireNonNull(pdb, "pdb cannot be null");
 		this.pdb = pdb;
+		this.monitor = TaskMonitor.dummyIfNull(monitor);
 
 		// FIXME: should not support use of DataTypeManager-only since it will not have the correct
 		// data organization if it corresponds to a data type archive.  Need to evaluate archive
@@ -338,6 +356,14 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	}
 
 	//==============================================================================================
+	// For use by Function Symbol appliers, but might also get used during testing
+	void setFunctionLength(Address address, int length) {
+		if (linesApplicator != null) {
+			linesApplicator.setFunctionLength(address, length);
+		}
+	}
+
+	//==============================================================================================
 	private void doPdbTypesAndMainSymbolsWork() throws PdbException, CancelledException {
 		switch (applicatorOptions.getProcessingControl()) {
 			case DATA_TYPES_ONLY:
@@ -349,12 +375,28 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			case ALL:
 				processTypes();
 				processSymbols();
+				vxtManager.createTables(dataTypeManager, ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
+				doTempResearch();
 				break;
 			default:
 				throw new PdbException("PDB: Invalid Application Control: " +
 					applicatorOptions.getProcessingControl());
 		}
 		Msg.info(this, "PDB Types and Main Symbols Processing Terminated Normally");
+	}
+
+	private void doTempResearch() {
+		if (!CREATE_FLATTENED_CLASSES) {
+			return;
+		}
+		for (CppCompositeType cppType : classTypeByMsTypeNum.values()) {
+			if (cppType.getComposite() instanceof Structure s) {
+				Structure x = CppCompositeType.createFlattenedTemp(this, s);
+				if (x != null) {
+					resolve(x);
+				}
+			}
+		}
 	}
 
 	private void doDisassemblyWork() throws PdbException, CancelledException {
@@ -367,6 +409,12 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	private void doPdbFunctionInternalsWork() throws PdbException, CancelledException {
 		if (program != null) {
 			doDeferredFunctionProcessing();
+			// Processing is done here because we want function bodies to be processed,
+			// as that allows us to fetch the function start, given any address within
+			// the function
+			if (applicatorOptions.applySourceLineNumbers()) {
+				linesApplicator.process(monitor);
+			}
 //			Options options = program.getOptions(Program.PROGRAM_INFO);
 //			options.setBoolean(PdbParserConstants.PDB_LOADED, true);
 		}
@@ -395,7 +443,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 
 		AddressSet disassembleAddresses = gatherAddressesForDisassembly();
 
-		TaskMonitor monitor = getMonitor();
 		Listing listing = program.getListing();
 		DisassemblerContextImpl seedContext =
 			new DisassemblerContextImpl(program.getProgramContext());
@@ -447,7 +494,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 
 	//==============================================================================================
 	private void processTypes() throws CancelledException, PdbException {
-		TaskMonitor monitor = getMonitor();
 		monitor.setMessage("PDB: Applying to DTM " + dataTypeManager.getName() + "...");
 
 		PdbResearch.initBreakPointRecordNumbers(); // for developmental debug
@@ -469,9 +515,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 
 //		PdbResearch.developerDebugOrder(this, monitor);
 
-		Msg.info(this, "resolveCount: " + resolveCount);
-		Msg.info(this, "conflictCount: " + conflictCount);
-
 		// Currently, defining classes needs to have a program.  When this is no longer true,
 		//  then this call can be performed with the data types only work.
 		if (program != null) {
@@ -480,6 +523,9 @@ public class DefaultPdbApplicator implements PdbApplicator {
 
 		// Process typedefs, which are in the symbols.
 		processGlobalTypdefSymbols();
+
+		Msg.info(this, "resolveCount: " + resolveCount);
+		Msg.info(this, "conflictCount: " + conflictCount);
 	}
 
 	//==============================================================================================
@@ -562,11 +608,18 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		validateAndSetParameters(programParam, dataTypeManagerParam, imageBaseParam,
 			applicatorOptionsParam, logParam);
 
-		cancelOnlyWrappingMonitor = new CancelOnlyWrappingTaskMonitor(getMonitor());
+		cancelOnlyWrappingMonitor = new CancelOnlyWrappingTaskMonitor(monitor);
 
 		pdbPeHeaderInfoManager = new PdbPeHeaderInfoManager(this);
 
 		multiphaseResolver = new MultiphaseDataTypeResolver(this);
+
+		// Following should not need to be part of analysis state because types are filled in
+		// during first round of processing
+		filledInStructure = new HashSet<>();
+
+		classTypeManager = new ClassTypeManager(dataTypeManager);
+
 		pdbPrimitiveTypeApplicator = new PdbPrimitiveTypeApplicator(dataTypeManager);
 
 		typeApplierParser = new TypeApplierFactory(this);
@@ -579,6 +632,11 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		// Investigations into source/line info
 		recordNumbersByFileName = new HashMap<>();
 		recordNumbersByModuleNumber = new HashMap<>();
+
+		if (program != null && applicatorOptions.applySourceLineNumbers()) {
+			linesApplicator = new PdbSourceLinesApplicator(this);
+		}
+
 	}
 
 	/**
@@ -588,7 +646,9 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	 * @throws PdbException upon error in processing components
 	 */
 	private void doPdbPreWork() throws CancelledException, PdbException {
-
+		if (preWorkDone) {
+			return;
+		}
 		pdbApplicatorMetrics = pdbAnalysisLookupState.getPdbApplicatorMetrics();
 		pdbAddressManager = pdbAnalysisLookupState.getPdbAddressManager();
 		complexTypeMapper = pdbAnalysisLookupState.getComplexTypeMapper();
@@ -598,18 +658,22 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		if (!pdbAddressManager.isInitialized()) {
 			pdbAddressManager.initialize(this, imageBase);
 		}
-		categoryUtils = setPdbCatogoryUtils(pdb.getFilename());
+		pdbCategories = setPdbCatogoryUtils(pdb.getFilename());
 		symbolGroups = createSymbolGroups();
 		linkerModuleNumber = findLinkerModuleNumber();
 		if (program != null) {
 			// Currently, this must happen after symbolGroups are created.
-			PdbVbtManager pdbVbtManager = new PdbVbtManager(this);
-			vbtManager = pdbVbtManager;
+			MsVxtManager msftVxtManager = new MsVxtManager(getClassTypeManager(), program);
+			msftVxtManager.createVirtualTables(getRootPdbCategory(), findVirtualTableSymbols(), log,
+				monitor);
+			vxtManager = msftVxtManager;
+
 			registerNameToRegisterMapper = new PdbRegisterNameToProgramRegisterMapper(program);
 		}
-		else {
-			vbtManager = new VbtManager(getDataTypeManager());
-		}
+//		else {
+//			vxtManager = new VxtManager(getClassTypeManager());
+//		}
+		preWorkDone = true;
 	}
 
 	private void validateAndSetParameters(Program programParam,
@@ -659,6 +723,47 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		return mySymbolGroups;
 	}
 
+	private Map<String, Address> findVirtualTableSymbols() throws CancelledException, PdbException {
+
+		Map<String, Address> myAddressByVxtMangledName = new HashMap<>();
+
+		PdbDebugInfo debugInfo = pdb.getDebugInfo();
+		if (debugInfo == null) {
+			return myAddressByVxtMangledName;
+		}
+
+		SymbolGroup symbolGroup = getSymbolGroup();
+		if (symbolGroup == null) {
+			return myAddressByVxtMangledName;
+		}
+
+		PublicSymbolInformation publicSymbolInformation = debugInfo.getPublicSymbolInformation();
+		List<Long> offsets = publicSymbolInformation.getModifiedHashRecordSymbolOffsets();
+		monitor.setMessage("PDB: Searching for VxT symbols...");
+		monitor.initialize(offsets.size());
+
+		MsSymbolIterator iter = symbolGroup.getSymbolIterator();
+		for (long offset : offsets) {
+			monitor.checkCancelled();
+			iter.initGetByOffset(offset);
+			if (!iter.hasNext()) {
+				break;
+			}
+			AbstractMsSymbol symbol = iter.peek();
+			if (symbol instanceof AbstractPublicMsSymbol pubSymbol) {
+				String name = pubSymbol.getName();
+				if (name.startsWith("??_7") || name.startsWith("??_8")) {
+					Address address = getAddress(pubSymbol);
+					if (!isInvalidAddress(address, name)) {
+						myAddressByVxtMangledName.put(name, address);
+					}
+				}
+			}
+			monitor.incrementProgress(1);
+		}
+		return myAddressByVxtMangledName;
+	}
+
 	//==============================================================================================
 	// Basic utility methods.
 	//==============================================================================================
@@ -675,7 +780,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	 * @throws CancelledException if monitor has been cancelled
 	 */
 	void checkCancelled() throws CancelledException {
-		getMonitor().checkCancelled();
+		monitor.checkCancelled();
 	}
 
 	/**
@@ -727,7 +832,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	 */
 	@Override
 	public TaskMonitor getMonitor() {
-		return pdb.getMonitor();
+		return monitor;
 	}
 
 	/**
@@ -777,6 +882,10 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		return dataTypeManager;
 	}
 
+	ClassTypeManager getClassTypeManager() {
+		return classTypeManager;
+	}
+
 	// for PdbTypeApplicator (new)
 	DataOrganization getDataOrganization() {
 		return dataTypeManager.getDataOrganization();
@@ -790,6 +899,14 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	// CategoryPath-related methods.
 	//==============================================================================================
 	/**
+	 * Get root CategoryPath for the PDB
+	 * @return the root CategoryPath
+	 */
+	CategoryPath getRootPdbCategory() {
+		return pdbCategories.getRootCategoryPath();
+	}
+
+	/**
 	 * Get the {@link CategoryPath} associated with the {@link SymbolPath} specified, rooting
 	 * it either at the PDB Category
 	 * @param symbolPath symbol path to be used to create the CategoryPath. Null represents global
@@ -797,11 +914,11 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	 * @return {@link CategoryPath} created for the input
 	 */
 	CategoryPath getCategory(SymbolPath symbolPath) {
-		return categoryUtils.getCategory(symbolPath);
+		return pdbCategories.getCategory(symbolPath);
 	}
 
 	/**
-	 * Returns the {@link CategoryPath} for a typedef with with the give {@link SymbolPath} and
+	 * Returns the {@link CategoryPath} for a typedef with the given {@link SymbolPath} and
 	 * module number; 1 <= moduleNumber <= {@link PdbDebugInfo#getNumModules()}
 	 * except that modeleNumber of 0 represents publics/globals
 	 * @param moduleNumber module number
@@ -809,7 +926,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	 * @return the CategoryPath
 	 */
 	CategoryPath getTypedefsCategory(int moduleNumber, SymbolPath symbolPath) {
-		return categoryUtils.getTypedefsCategory(moduleNumber, symbolPath);
+		return pdbCategories.getTypedefsCategory(moduleNumber, symbolPath);
 	}
 
 	/**
@@ -817,7 +934,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	 * @return the {@link CategoryPath}
 	 */
 	CategoryPath getAnonymousFunctionsCategory() {
-		return categoryUtils.getAnonymousFunctionsCategory();
+		return pdbCategories.getAnonymousFunctionsCategory();
 	}
 
 	/**
@@ -825,7 +942,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	 * @return the {@link CategoryPath}
 	 */
 	CategoryPath getAnonymousTypesCategory() {
-		return categoryUtils.getAnonymousTypesCategory();
+		return pdbCategories.getAnonymousTypesCategory();
 	}
 
 //	/**
@@ -922,7 +1039,13 @@ public class DefaultPdbApplicator implements PdbApplicator {
 				throw new PdbException("Type not completed for record: " + recordNumber + "; " +
 					type.getClass().getSimpleName());
 			}
-			multiphaseResolver.process(recordNumber);
+
+			MsDataTypeApplier dataTypeApplier = (MsDataTypeApplier) getTypeApplier(recordNumber);
+			if (!dataTypeApplier.apply(type)) {
+				throw new PdbException(
+					"Problem creating Primitive data type for record: " + recordNumber);
+			}
+
 			dataType = getDataType(recordNumber);
 			if (dataType == null) {
 				throw new PdbException(
@@ -954,6 +1077,16 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	void putDataType(RecordNumber recordNumber, DataType dataType) {
 		RecordNumber mappedNumber = getMappedRecordNumber(recordNumber);
 		dataTypeByMsTypeNum.put(mappedNumber, dataType);
+	}
+
+	/**
+	 * Stores whether the structure referenced by the record number has been filled in such that
+	 * it can be used as a base class
+	 * @param recordNumber record number of type record
+	 */
+	void markFilledInForBase(RecordNumber recordNumber) {
+		RecordNumber mappedNumber = getMappedRecordNumber(recordNumber);
+		filledInStructure.add(mappedNumber);
 	}
 
 	/**
@@ -993,6 +1126,26 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		RecordNumber mappedNumber = getMappedRecordNumber(recordNumber);
 		DataType dt = dataTypeByMsTypeNum.get(mappedNumber);
 		if (dt != null) {
+			return dt;
+		}
+		multiphaseResolver.scheduleTodo(mappedNumber);
+		return null;
+	}
+
+	/**
+	 * Returns the Ghidra data type associated with the PDB record number for the base class
+	 * of another class.  In this case, we require the base class structure to be completed
+	 * in order for the child class to be constructed
+	 * This method is intended to be used by appliers that work on this specific type, not by
+	 *  appliers that need the data type
+	 * @param recordNumber the PDB type record number
+	 * @return the Ghidra DB data type of the base class
+	 */
+	DataType getBaseClassDataTypeOrSchedule(RecordNumber recordNumber) {
+		RecordNumber mappedNumber = getMappedRecordNumber(recordNumber);
+		boolean filledIn = filledInStructure.contains(mappedNumber);
+		DataType dt = dataTypeByMsTypeNum.get(mappedNumber);
+		if (dt != null && filledIn) {
 			return dt;
 		}
 		multiphaseResolver.scheduleTodo(mappedNumber);
@@ -1132,16 +1285,15 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			return;
 		}
 		int num = tpi.getTypeIndexMaxExclusive() - tpi.getTypeIndexMin();
-		TaskMonitor monitor = getMonitor();
-		monitor.initialize(num);
+		monitor.initialize(2 * num); // progress updated in MultiphaseResolver; 2x per record
 		monitor.setMessage("PDB: Processing " + num + " data type components...");
 		for (int indexNumber = tpi.getTypeIndexMin(); indexNumber < tpi
 				.getTypeIndexMaxExclusive(); indexNumber++) {
 			monitor.checkCancelled();
 			RecordNumber recordNumber = RecordNumber.typeRecordNumber(indexNumber);
 			RecordNumber mappedNumber = getMappedRecordNumber(recordNumber);
-			multiphaseResolver.process(mappedNumber);
-			monitor.incrementProgress(1);
+			multiphaseResolver.process(mappedNumber, monitor);
+			// Monitor progress is updated in the multiphasResolver
 		}
 
 		doCheck();
@@ -1213,7 +1365,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			return;
 		}
 		int num = ipi.getTypeIndexMaxExclusive() - ipi.getTypeIndexMin();
-		TaskMonitor monitor = getMonitor();
 		monitor.initialize(num);
 		monitor.setMessage("PDB: Processing " + num + " item type components...");
 		for (int indexNumber = ipi.getTypeIndexMin(); indexNumber < ipi
@@ -1244,8 +1395,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		if (!(dataType instanceof DataTypeImpl)) {
 			return dataType;
 		}
-		DataType resolved = getDataTypeManager().resolve(dataType,
-			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+		DataType resolved = getDataTypeManager().resolve(dataType, null);
 		resolveCount++;
 		if (DataTypeUtilities.isConflictDataType(resolved)) {
 			conflictCount++;
@@ -1363,7 +1513,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	 * @return the Address
 	 */
 	Address getAddress(int segment, long offset) {
-		return pdbAddressManager.getRawAddress(segment, offset);
+		return pdbAddressManager.getAddress(segment, offset);
 	}
 
 	/**
@@ -1449,10 +1599,10 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	}
 
 	//==============================================================================================
-	// Virtual-Base-Table-related methods.
+	// Virtual-Base/Function-Table-related methods.
 	//==============================================================================================
-	VbtManager getVbtManager() {
-		return vbtManager;
+	MsVxtManager getVxtManager() {
+		return vxtManager;
 	}
 
 	//==============================================================================================
@@ -1486,7 +1636,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			return;
 		}
 		int totalCount = symbolGroup.size();
-		TaskMonitor monitor = getMonitor();
 		monitor.setMessage("PDB: Applying " + totalCount + " main symbol components...");
 		monitor.initialize(totalCount);
 		MsSymbolIterator iter = symbolGroup.getSymbolIterator();
@@ -1499,7 +1648,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		}
 		PdbDebugInfo debugInfo = pdb.getDebugInfo();
 		int num = debugInfo.getNumModules();
-		TaskMonitor monitor = getMonitor();
 		monitor.setMessage("PDB: Deferred-applying module symbol components...");
 		monitor.initialize(num + 1); // add one because we doing 0 through num, inclusive
 		AddressSet addresses = new AddressSet();
@@ -1522,7 +1670,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	AddressSet getDisassembleAddressForModule(int moduleNumber, MsSymbolIterator iter)
 			throws CancelledException {
 		iter.initGet();
-		TaskMonitor monitor = getMonitor();
 		AddressSet addresses = new AddressSet();
 		while (iter.hasNext()) {
 			monitor.checkCancelled();
@@ -1550,7 +1697,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		if (debugInfo == null) {
 			return;
 		}
-		TaskMonitor monitor = getMonitor();
 		monitor.setMessage("PDB: Deferred-applying module symbol components...");
 		int num = debugInfo.getNumModules();
 		monitor.initialize(num);
@@ -1571,7 +1717,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	private void doDeferredModuleSymbolGroup(int moduleNumber, MsSymbolIterator iter)
 			throws CancelledException {
 		iter.initGet();
-		TaskMonitor monitor = getMonitor();
 		while (iter.hasNext()) {
 			monitor.checkCancelled();
 			AbstractMsSymbol symbol = iter.peek();
@@ -1593,7 +1738,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			return;
 		}
 		int num = debugInfo.getNumModules();
-		TaskMonitor monitor = getMonitor();
 		monitor.setMessage("PDB: Applying module symbol components...");
 		monitor.initialize(num);
 		// Process symbols list for each module
@@ -1613,11 +1757,9 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	private void processSymbolGroup(int moduleNumber, MsSymbolIterator iter)
 			throws CancelledException {
 		iter.initGet();
-		TaskMonitor monitor = getMonitor();
 		while (iter.hasNext()) {
 			monitor.checkCancelled();
 			procSymNew(iter);
-			monitor.incrementProgress(1);
 		}
 	}
 
@@ -1642,7 +1784,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		}
 
 		PublicSymbolInformation publicSymbolInformation = debugInfo.getPublicSymbolInformation();
-		TaskMonitor monitor = getMonitor();
 		monitor.setMessage("PDB: Applying public symbols...");
 		MsSymbolIterator iter = symbolGroup.getSymbolIterator();
 
@@ -1699,7 +1840,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 //			return;
 //		}
 //
-		TaskMonitor monitor = getMonitor();
 		monitor.setMessage("PDB: Applying global symbols...");
 		GlobalSymbolInformation globalSymbolInformation = debugInfo.getGlobalSymbolInformation();
 //		MsSymbolIterator iter = symbolGroup.getSymbolIterator();
@@ -1721,6 +1861,8 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			}
 			monitor.incrementProgress(1);
 		}
+		// TODO: need to create and update a count for only those really applied
+		//Msg.info(this, "GlobalSymbolComponentsCount: " + offsets.size());
 
 //		AbstractSymbolInformation.ModifiedOffsetIterator globalsIter =
 //			globalSymbolInformation.iterator();
@@ -1754,7 +1896,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		GlobalSymbolInformation globalSymbolInformation = debugInfo.getGlobalSymbolInformation();
 		MsSymbolIterator iter = debugInfo.getSymbolIterator();
 		List<Long> offsets = globalSymbolInformation.getModifiedHashRecordSymbolOffsets();
-		TaskMonitor monitor = getMonitor();
 		monitor.initialize(offsets.size(), "PDB: Performing deferred global symbols processing...");
 		for (long offset : offsets) {
 			monitor.checkCancelled();
@@ -1789,7 +1930,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			return;
 		}
 
-		TaskMonitor monitor = getMonitor();
 		monitor.setMessage("PDB: Applying typedefs...");
 		GlobalSymbolInformation globalSymbolInformation = debugInfo.getGlobalSymbolInformation();
 		MsSymbolIterator iter = symbolGroup.getSymbolIterator();
@@ -1808,6 +1948,8 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			}
 			monitor.incrementProgress(1);
 		}
+		// TODO: need to create and update a count for only those really applied
+		//Msg.info(this, "GlobalTypedefCount: " + offsets.size());
 
 //		AbstractSymbolInformation.ModifiedOffsetIterator globalsIter =
 //			globalSymbolInformation.iterator();
@@ -1851,7 +1993,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			return;
 		}
 
-		TaskMonitor monitor = getMonitor();
 		Set<Long> offsetsRemaining = symbolGroup.getOffsets();
 		for (long off : debugInfo.getPublicSymbolInformation()
 				.getModifiedHashRecordSymbolOffsets()) {
@@ -1913,7 +2054,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			return false;
 		}
 
-		TaskMonitor monitor = getMonitor();
 		monitor.setMessage("PDB: Applying " + symbolGroup.size() + " linker symbol components...");
 		monitor.initialize(symbolGroup.size());
 
@@ -1955,7 +2095,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		SymbolGroup symbolGroup = getSymbolGroupForModule(linkerModuleNumber);
 		if (symbolGroup != null) {
 
-			TaskMonitor monitor = getMonitor();
 			monitor.initialize(symbolGroup.size());
 			MsSymbolIterator iter = symbolGroup.getSymbolIterator();
 			int numCompileSymbols = 0;
@@ -2010,23 +2149,9 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			return;
 		}
 
-		int totalCount = 0;
 		int num = debugInfo.getNumModules();
-		TaskMonitor monitor = getMonitor();
-		for (int index = 1; index <= num; index++) {
-			monitor.checkCancelled();
-			if (index == linkerModuleNumber) {
-				continue;
-			}
-			SymbolGroup symbolGroup = getSymbolGroupForModule(index);
-			if (symbolGroup == null) {
-				continue; // should not happen
-			}
-			//totalCount += symbolGroup.size();
-			totalCount++;
-		}
 		monitor.setMessage("PDB: Processing module thunks...");
-		monitor.initialize(totalCount);
+		monitor.initialize(num);
 
 		// Process symbols list for each module
 		for (int index = 1; index <= num; index++) {
@@ -2048,7 +2173,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 				else {
 					iter.next();
 				}
-				//monitor.incrementProgress(1);
 			}
 			monitor.incrementProgress(1);
 		}
@@ -2120,9 +2244,12 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	}
 
 	//==============================================================================================
-	void predefineClass(SymbolPath classPath) {
-		isClassByNamespace.put(classPath, true);
-		for (SymbolPath path = classPath.getParent(); path != null; path = path.getParent()) {
+	void predefineClass(SymbolPath symbolPath) {
+		if (symbolPath == null) {
+			return;
+		}
+		isClassByNamespace.put(symbolPath, true);
+		for (SymbolPath path = symbolPath.getParent(); path != null; path = path.getParent()) {
 			if (!isClassByNamespace.containsKey(path)) {
 				isClassByNamespace.put(path, false); // path is simple namespace
 			}
@@ -2132,7 +2259,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	//==============================================================================================
 	private void defineClasses() throws CancelledException {
 		// create namespace and classes in an ordered fashion use tree map
-		TaskMonitor monitor = getMonitor();
 		monitor.initialize(isClassByNamespace.size());
 		monitor.setMessage("PDB: Defining classes...");
 		for (Map.Entry<SymbolPath, Boolean> entry : isClassByNamespace.entrySet()) {
@@ -2237,61 +2363,23 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	}
 
 	//==============================================================================================
-	boolean shouldForcePrimarySymbol(Address address, boolean forceIfMangled) {
-		Symbol primarySymbol = program.getSymbolTable().getPrimarySymbol(address);
-		if (primarySymbol != null) {
-
-			if (primarySymbol.getName().startsWith("?") && forceIfMangled &&
-				applicatorOptions.allowDemotePrimaryMangledSymbols()) {
-				return true;
-			}
-
-			SourceType primarySymbolSource = primarySymbol.getSource();
-
-			if (!SourceType.ANALYSIS.isHigherPriorityThan(primarySymbolSource)) {
-				return true;
-			}
+	boolean addToPlateUnique(Address address, String comment) {
+		if (StringUtils.isBlank(comment)) {
+			return false;
 		}
-		return false;
-	}
-
-	//==============================================================================================
-	@SuppressWarnings("unused") // For method not being called. In process of removing this version
-	boolean createSymbolOld(Address address, String symbolPathString, boolean forcePrimary) {
-
-//		storeLabelByAddress(address, symbolPathString);
-
-		try {
-			Namespace namespace = program.getGlobalNamespace();
-			if (symbolPathString.startsWith(THUNK_NAME_PREFIX)) {
-				symbolPathString = symbolPathString.substring(THUNK_NAME_PREFIX.length(),
-					symbolPathString.length());
-			}
-			SymbolPath symbolPath = new SymbolPath(symbolPathString);
-			symbolPath = symbolPath.replaceInvalidChars();
-			String name = symbolPath.getName();
-			String namespacePath = symbolPath.getParentPath();
-			if (namespacePath != null) {
-				namespace = NamespaceUtils.createNamespaceHierarchy(namespacePath, namespace,
-					program, address, SourceType.IMPORTED);
-			}
-
-			Symbol s = SymbolUtilities.createPreferredLabelOrFunctionSymbol(program, address,
-				namespace, name, SourceType.IMPORTED);
-			if (s != null && forcePrimary) {
-				// PDB contains both mangled, namespace names, and global names
-				// If mangled name does not remain primary it will not get demamgled
-				// and we may not get signature information applied
-				SetLabelPrimaryCmd cmd =
-					new SetLabelPrimaryCmd(address, s.getName(), s.getParentNamespace());
-				cmd.applyTo(program);
-			}
+		String plate = program.getListing().getComment(CommentType.PLATE, address);
+		if (plate == null) {
+			plate = "";
+		}
+		else if (plate.contains(comment)) {
 			return true;
 		}
-		catch (InvalidInputException e) {
-			log.appendMsg("PDB Warning: Unable to create symbol: " + e.getMessage());
+		else if (!comment.endsWith("\n")) {
+			comment += '\n';
 		}
-		return false;
+		plate = comment + plate; // putting new comment at top of existing plate
+		SetCommentCmd.createComment(program, address, plate, CommentType.PLATE);
+		return true;
 	}
 
 	//==============================================================================================
@@ -2299,48 +2387,83 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		return createSymbol(address, symbolPathString, isNewFunctionSignature, null);
 	}
 
+	Symbol createSymbol(Address address, SymbolPath symbolPath, boolean isNewFunctionSignature) {
+		symbolPath = MDMangUtils.standarizeSymbolPathUnderscores(symbolPath);
+		symbolPath = symbolPath.replaceInvalidChars();
+		return createSymbolInternal(address, symbolPath, isNewFunctionSignature, null);
+	}
+
 	Symbol createSymbol(Address address, String symbolPathString, boolean isNewFunctionSignature,
 			String plateAddition) {
+		SymbolPath symbolPath = getCleanSymbolPath(symbolPathString);
+		return createSymbolInternal(address, symbolPath, isNewFunctionSignature, plateAddition);
+	}
 
-		SymbolPath newSymbolPath = getCleanSymbolPath(symbolPathString);
+	private Symbol createSymbolInternal(Address address, SymbolPath symbolPath,
+			boolean isNewFunctionSignature, String plateAddition) {
 
 		Symbol existingSymbol = program.getSymbolTable().getPrimarySymbol(address);
 		if (existingSymbol == null || isNewFunctionSignature) {
-			return createSymbol(address, newSymbolPath, true, plateAddition);
+			return doCreateSymbol(address, symbolPath, true, plateAddition);
 		}
 		if (existingSymbol.getSymbolType() == SymbolType.FUNCTION &&
 			existingSymbol.getSource() == SourceType.DEFAULT) {
-			return createSymbol(address, newSymbolPath, true, plateAddition);
+			return doCreateSymbol(address, symbolPath, true, plateAddition);
 		}
 
 		Function existingFunction = program.getListing().getFunctionAt(address);
 		if (existingFunction != null) { // Maybe I should care if there is a data type there too.
-			if (existingFunction.getSignatureSource().isHigherPriorityThan(SourceType.ANALYSIS)) {
-				// Existing is USER or IMPORTED
-				return createSymbol(address, newSymbolPath, false, plateAddition);
+			if (existingFunction.getSignatureSource()
+					.isHigherOrEqualPriorityThan(SourceType.IMPORTED)) {
+				return doCreateSymbol(address, symbolPath, false, plateAddition);
 			}
 		}
 
 		if (!existingSymbol.getParentNamespace().equals(program.getGlobalNamespace())) {
-			// existing symbol has a non-global namespace
-			return createSymbol(address, newSymbolPath, false, plateAddition);
+			// Existing symbol has a non-global namespace
+			if (!preferNewSymbolOverExistingNamespacedSymbol(symbolPath)) {
+				return doCreateSymbol(address, symbolPath, false, plateAddition);
+			}
 		}
 
-		if (newSymbolPath.getParent() != null) {
+		boolean existingIsMangled = isMangled(existingSymbol.getName());
+		if (existingIsMangled && !isNewFunctionSignature) {
+			// we don't have a new signature, but the existing symbol is mangled, and thus can
+			// possibly provide it... so do not make new symbol primary
+			return doCreateSymbol(address, symbolPath, false, plateAddition);
+		}
+
+		if (symbolPath.getParent() != null) {
 			// new symbol has non-global namespace
-			return createSymbol(address, newSymbolPath, true, plateAddition);
+			return doCreateSymbol(address, symbolPath, true, plateAddition);
 		}
 
 		// Both existing and new symbols are in global namespace at this point
-		if (isMangled(symbolPathString) && !isMangled(existingSymbol.getName())) {
+		if (isMangled(symbolPath.getName()) && !existingIsMangled) {
 			// new symbol is mangled, but don't override existing one if it is mangled
-			return createSymbol(address, newSymbolPath, true, plateAddition);
+			return doCreateSymbol(address, symbolPath, true, plateAddition);
 		}
 
-		return createSymbol(address, newSymbolPath, false, plateAddition);
+		return doCreateSymbol(address, symbolPath, false, plateAddition);
 	}
 
-	private Symbol createSymbol(Address address, SymbolPath symbolPath, boolean makePrimary,
+	// We've found that a mangled version of vxtables can present more detailed information
+	//  than a non-mangled vxtable symbol that has a namespace (the information is not
+	//  as descriptive regarding vxtables owned by the child for a parent).  So do not
+	//  accept these existing symbol with namespace to maintain their primary status.
+	//
+	// Kludge... this mechanism might go away later if/when instead we evaluate all symbols at
+	// an address to do the right thing or if/when we process the tables in some place other
+	// than or besides the Demangler.
+	private boolean preferNewSymbolOverExistingNamespacedSymbol(SymbolPath symbolPath) {
+		String name = symbolPath.getName();
+		if (name.startsWith("??_7") || name.startsWith("??_8")) {
+			return true;
+		}
+		return false;
+	}
+
+	private Symbol doCreateSymbol(Address address, SymbolPath symbolPath, boolean makePrimary,
 			String plateAddition) {
 		Symbol symbol = null;
 		try {
@@ -2367,25 +2490,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		addToPlateUnique(address, plateAddition);
 
 		return symbol;
-	}
-
-	public boolean addToPlateUnique(Address address, String comment) {
-		if (StringUtils.isBlank(comment)) {
-			return false;
-		}
-		String plate = program.getListing().getComment(CodeUnit.PLATE_COMMENT, address);
-		if (plate == null) {
-			plate = "";
-		}
-		else if (plate.contains(comment)) {
-			return true;
-		}
-		else if (!comment.endsWith("\n")) {
-			comment += '\n';
-		}
-		plate = comment + plate; // putting new comment at top of existing plate
-		SetCommentCmd.createComment(program, address, plate, CodeUnit.PLATE_COMMENT);
-		return true;
 	}
 
 	private static boolean isMangled(String name) {

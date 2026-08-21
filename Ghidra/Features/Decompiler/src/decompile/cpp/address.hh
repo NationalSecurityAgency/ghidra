@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,7 @@
 /// \file address.hh
 /// \brief Classes for specifying addresses and other low-level constants
 ///
-///  All addresses are absolute and there are are no registers in CPUI. However,
+///  All addresses are absolute and there are no registers in CPUI. However,
 ///  all addresses are prefixed with an "immutable" pointer, which can
 ///  specify a separate RAM space, a register space, an i/o space etc. Thus
 ///  a translation from a real machine language will typically simulate registers
@@ -87,6 +87,7 @@ public:
   Address operator+(int8 off) const; ///< Increment address by a number of bytes
   Address operator-(int8 off) const; ///< Decrement address by a number of bytes
   friend ostream &operator<<(ostream &s,const Address &addr);  ///< Write out an address to stream
+  bool isValidRange(uint8 size) const;	///< Is the range properly contained in its address space
   bool containedBy(int4 sz,const Address &op2,int4 sz2) const;	///< Determine if \e op2 range contains \b this range
   int4 justifiedContain(int4 sz,const Address &op2,int4 sz2,bool forceleft) const; ///< Determine if \e op2 is the least significant part of \e this.
   int4 overlap(int4 skip,const Address &op,int4 size) const; ///< Determine how \b this address falls in a given address range
@@ -243,6 +244,7 @@ public:
   const Range *getLastRange(void) const;			///< Get the last Range
   const Range *getLastSignedRange(AddrSpace *spaceid) const;	///< Get the last Range viewing offsets as signed
   const Range *getRange(AddrSpace *spaceid,uintb offset) const;	///< Get Range containing the given byte
+  const Range *getNearestRange(AddrSpace *spaceid,uintb offset) const;	///< Get the nearest Range to the given byte
   void insertRange(AddrSpace *spc,uintb first,uintb last);	///< Insert a range of addresses
   void removeRange(AddrSpace *spc,uintb first,uintb last);	///< Remove a range of addresses
   void merge(const RangeList &op2);				///< Merge another RangeList into \b this
@@ -251,6 +253,37 @@ public:
   void printBounds(ostream &s) const;				///< Print a description of \b this RangeList to stream
   void encode(Encoder &encoder) const;				///< Encode \b this RangeList to a stream
   void decode(Decoder &decoder);				///< Decode \b this RangeList from a \<rangelist> element
+};
+
+/// \brief An endian aware range of bits contained in a contiguous set of bytes
+class BitRange {
+public:
+  int4 byteOffset;		///< Byte offset of the region containing the range
+  int4 byteSize;		///< Size of the region in bytes
+  int4 leastSigBit;		///< Least significant bit of the bit-range within its region
+  int4 numBits;			///< Number of bits in the range
+  bool isBigEndian;		///< Is the underlying encoding big endian
+  BitRange(void) { byteOffset = -1; byteSize = -1; leastSigBit = -1; numBits = -1; isBigEndian = false; }	///< Construct \e undefined range
+  BitRange(int4 bOff,int4 bSize,bool bigEndian) {
+    byteOffset = bOff; byteSize = bSize; leastSigBit = 0; numBits = bSize * 8; isBigEndian = bigEndian; }	///< Construct byte range
+  BitRange(const BitRange &op2,int4 off,int4 sz);	///< Constructor, copy range into new container
+  BitRange(int4 bOff,int4 bSize,int4 least,int4 num,bool bigEndian) { byteOffset = bOff; byteSize = bSize; leastSigBit = least;
+				  numBits = num; isBigEndian = bigEndian; }	///< Constructor
+  bool empty(void) const { return (numBits <= 0); }	///< Return \b true if \b this is an empty bit range (zero bits)
+  int4 compare(const BitRange &op2) const;	///< Compare \b this with another as containers
+  int4 translateLSB(const BitRange &op2) const;	///< Translate the \b leastSigBit of the given range into \b this reference frame
+  int4 overlapTest(const BitRange &op2) const;	///< Characterize the type of overlap between \b this and another range
+  void intersection(const BitRange &op2);	///< Replace \b this with the intersection of \b this with another BitRange
+  void intersectMask(uintb mask);		///< Restrict \b this with a mask that lines up with the container
+  void shift(int4 leftShiftAmount);		///< Replace \b this with the shifted range
+  void truncateMostSigBytes(int4 num);		///< Truncate the most significant bytes in the byte container
+  void truncateLeastSigBytes(int4 num);		///< Truncate the least significant bytes in the byte container
+  void extendBytes(int4 num);			///< Add most significant bytes to the container
+  uintb getMask(void) const;			///< Get mask representing \b this range
+  bool isByteRange(void) const;			///< Return \b true if \b this bit range is also a byte range
+  bool isMostSignificant(void) const;		///< Return \b true if the bit range occupies the most significant bits of the container
+  void minimizeContainer(void);			///< Shrink the container to fit the bit range
+  void expandToMost(void);			///< Expand the bitrange until it includes the most significant bits of the container
 };
 
 /// Precalculated masks indexed by size
@@ -434,6 +467,14 @@ inline Address Address::operator-(int8 off) const {
   return Address(base,base->wrapOffset(offset-off));
 }
 
+/// If the range starting at \b this address and extending for \b size bytes, encompasses bytes beyond
+/// the edge of the address space (or wraps), then return \b false.
+/// \param size is the number of bytes in the range (must be non-zero)
+/// \return \b true if the range is properly contained in the address space
+inline bool Address::isValidRange(uint8 size) const {
+  return (size-1) <= (base->getHighest() - offset);
+}
+
 /// This method is equivalent to Address::overlap, but a range in the \e join space can be
 /// considered overlapped with its constituent pieces.
 /// If \e this + \e skip falls in the range, \e op to \e op + \e size, then a non-negative integer is
@@ -498,6 +539,18 @@ inline bool Range::contains(const Address &addr) const {
 /// \return a value appropriate for masking off the first \e size bytes
 inline uintb calc_mask(int4 size) { return uintbmasks[((uint4)size) < 8  ? size : 8]; }
 
+/// \param size of the integer in bytes
+/// \return largest unsigned integer value for given size
+inline uintb calc_uint_max(int4 size) { return calc_mask(size); }
+
+/// \param size of the integer in bytes
+/// \return largest signed integer value for given size
+inline uintb calc_int_max(int4 size) { return calc_mask(size) >> 1; }
+
+/// \param size of the integer in bytes
+/// \return smallest signed integer value for given size
+inline uintb calc_int_min(int4 size) { return (uintb)1 << (size * 8 - 1); }
+
 /// Perform a CPUI_INT_RIGHT on the given val
 /// \param val is the value to shift
 /// \param sa is the number of bits to shift
@@ -558,13 +611,14 @@ inline intb zero_extend(intb val,int4 bit)
 
 {
   int4 sa = sizeof(intb)*8 - (bit+1);
-  return (intb)((uintb)(val << sa) >> sa);
+  return (intb)(((uintb)val << sa) >> sa);
 }
 
 extern bool signbit_negative(uintb val,int4 size);	///< Return true if the sign-bit is set
 extern uintb calc_mask(int4 size);			///< Calculate a mask for a given byte size
 extern uintb uintb_negate(uintb in,int4 size);		///< Negate the \e sized value
 extern uintb sign_extend(uintb in,int4 sizein,int4 sizeout);	///< Sign-extend a value between two byte sizes
+extern uintb extend_signbit(uintb val,int4 numbits,int4 size);	///< Extend a signed value of given number of bits to a full integer
 
 extern void byte_swap(intb &val,int4 size);		///< Swap bytes in the given value
 

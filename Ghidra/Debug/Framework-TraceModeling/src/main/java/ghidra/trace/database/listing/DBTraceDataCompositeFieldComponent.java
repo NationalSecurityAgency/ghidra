@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,6 @@ import ghidra.program.model.data.DataTypeComponent;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.model.ImmutableTraceAddressSnapRange;
 import ghidra.trace.model.TraceAddressSnapRange;
-import ghidra.trace.util.TraceAddressSpace;
 
 /**
  * The implementation of a field data component in a {@link DBTrace}
@@ -33,7 +32,6 @@ public class DBTraceDataCompositeFieldComponent extends AbstractDBTraceDataCompo
 	 * 
 	 * @param root the root data unit
 	 * @param parent the parent component, possibly the root
-	 * @param index the index of this component in its parent
 	 * @param address the minimum address of this component
 	 * @param dtc the data type component, giving the index, data type, and length
 	 */
@@ -41,11 +39,6 @@ public class DBTraceDataCompositeFieldComponent extends AbstractDBTraceDataCompo
 			Address address, DataTypeComponent dtc) {
 		super(root, parent, dtc.getOrdinal(), address, dtc.getDataType(), dtc.getLength());
 		this.dtc = dtc;
-	}
-
-	@Override
-	public TraceAddressSpace getTraceSpace() {
-		return parent.getTraceSpace();
 	}
 
 	@Override

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,14 +31,14 @@
 //
 // NOTE:  Adresses must be hex values -- without "0x" prefixes.
 //
-//@category CustomerSubmission.Analysis
+//@category Customer Submission.Analysis
 //@keybinding alt Z
 
 import java.util.List;
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Listing;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.symbol.*;
@@ -60,8 +60,9 @@ public class ZapBCTRScript extends GhidraScript {
 		}
 
 		// first try input as class and search for symbol "<class>::__vtbl"
-		List<Symbol> symbols = currentProgram.getSymbolTable().getSymbols("__vtbl",
-			getNamespace(null, classNameOrAddr));
+		List<Symbol> symbols = currentProgram.getSymbolTable()
+				.getSymbols("__vtbl", getNamespace(null, classNameOrAddr));
+		
 		// if symbol found, then vtblAddr is the symbol's address
 		if (symbols.size() == 1) {
 			vtblAddr = symbols.get(0).getAddress();
@@ -99,9 +100,9 @@ public class ZapBCTRScript extends GhidraScript {
 
 		// insert funcName as EOL comment and
 		// add a mnemonic ref from instAddr to funcAddr
-		listing.setComment(instAddr, CodeUnit.EOL_COMMENT, funcName);
-		listing.getInstructionAt(instAddr).addMnemonicReference(funcAddr, RefType.COMPUTED_CALL,
-			SourceType.USER_DEFINED);
+		listing.setComment(instAddr, CommentType.EOL, funcName);
+		listing.getInstructionAt(instAddr)
+				.addMnemonicReference(funcAddr, RefType.COMPUTED_CALL, SourceType.USER_DEFINED);
 
 		/*  old code that replaces the 'bctr' with a 'bl'
 		int code = 0x48000001 | ((int)displacement & 0x3ffffff);

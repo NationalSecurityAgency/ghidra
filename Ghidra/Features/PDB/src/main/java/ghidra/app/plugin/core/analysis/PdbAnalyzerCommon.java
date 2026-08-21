@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,9 +33,9 @@ import pdb.symbolserver.SymbolFileInfo;
  * Shared configuration values and pdb searching logic
  */
 public class PdbAnalyzerCommon {
-	static final String OPTION_DESCRIPTION_SEARCH_REMOTE_LOCATIONS =
-		"If checked, allow searching remote symbol servers for PDB files.";
-	static final String OPTION_NAME_SEARCH_REMOTE_LOCATIONS = "Search remote symbol servers";
+	static final String OPTION_DESCRIPTION_SEARCH_UNTRUSTED_LOCATIONS =
+		"If checked, allow searching untrusted symbol servers for PDB files.";
+	static final String OPTION_NAME_SEARCH_UNTRUSTED_LOCATIONS = "Search untrusted symbol servers";
 
 	static final String OPTION_DESCRIPTION_PDB_FILE = "Path to a manually chosen PDB file.";
 	static final String OPTION_NAME_PDB_FILE = "PDB File";
@@ -101,12 +101,13 @@ public class PdbAnalyzerCommon {
 	 * 
 	 * @param analyzerName name of analyzer
 	 * @param program {@link Program}
-	 * @param allowRemote boolean flag, true means the analyzer can search remote
+	 * @param allowUntrusted boolean flag, true means the analyzer can search remote
 	 * symbol servers
 	 */
-	static void setAllowRemoteOption(String analyzerName, Program program, boolean allowRemote) {
+	static void setAllowUntrustedOption(String analyzerName, Program program, boolean allowUntrusted) {
 		Options options = program.getOptions(Program.ANALYSIS_PROPERTIES);
-		options.setBoolean(analyzerName + "." + OPTION_NAME_SEARCH_REMOTE_LOCATIONS, allowRemote);
+		options.setBoolean(analyzerName + "." + OPTION_NAME_SEARCH_UNTRUSTED_LOCATIONS,
+			allowUntrusted);
 	}
 
 	/**
@@ -141,7 +142,7 @@ public class PdbAnalyzerCommon {
 				: null;
 		if (pdbFile == null) {
 			Set<FindOption> findOpts = allowRemote
-					? FindOption.of(FindOption.ALLOW_REMOTE)
+					? FindOption.of(FindOption.ALLOW_UNTRUSTED)
 					: FindOption.NO_OPTIONS;
 			pdbFile = PdbPlugin.findPdb(program, findOpts, monitor);
 		}

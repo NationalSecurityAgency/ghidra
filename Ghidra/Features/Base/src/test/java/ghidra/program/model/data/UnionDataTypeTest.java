@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,9 +23,6 @@ import com.google.common.collect.Sets;
 
 import generic.test.AbstractGenericTest;
 
-/**
- *
- */
 public class UnionDataTypeTest extends AbstractGenericTest {
 
 	private Union union;
@@ -283,6 +280,7 @@ public class UnionDataTypeTest extends AbstractGenericTest {
 		union.delete(Sets.newHashSet(2, 4));
 
 		assertEquals(2, union.getLength());
+
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" + 
 			"pack(disabled)\n" + 
@@ -293,6 +291,10 @@ public class UnionDataTypeTest extends AbstractGenericTest {
 			"}\n" + 
 			"Length: 2 Alignment: 1", union);
 		//@formatter:on
+
+		DataTypeComponent[] comps = union.getDefinedComponents();
+		assertEquals(ByteDataType.class, comps[2].getDataType().getClass());
+		assertEquals(2, comps[2].getOrdinal());
 	}
 
 	@Test
@@ -588,6 +590,61 @@ public class UnionDataTypeTest extends AbstractGenericTest {
 			Assert.fail(
 				"Should be able to insert a union typedef array pointer into the pointer's union.");
 		}
+	}
+
+	@Test
+	public void testFieldNameWhitespaceConvertedToUnderscores() {
+		UnionDataType newUnion = new UnionDataType("Test");
+		DataTypeComponent component = newUnion.add(new ByteDataType(), " name with spaces", null);
+		assertEquals("name_with_spaces", component.getFieldName());
+
+		component = newUnion.getComponent(0);
+		component.setFieldName(" name in db with spaces ");
+		assertEquals("name_in_db_with_spaces", component.getFieldName());
+
+		component = newUnion.add(new ByteDataType(), " another test ", null);
+		assertEquals("another_test", component.getFieldName());
+
+		newUnion.insert(0, new ByteDataType(), 1, " insert test ", "");
+		component = newUnion.getComponent(0);
+		assertEquals("insert_test", component.getFieldName());
+
+		newUnion.insert(1, new ByteDataType(), 1, " insert test ", "");
+		component = newUnion.getComponent(1);
+		assertEquals("insert_test", component.getFieldName());
+	}
+
+	@Test
+	public void testDefaultFieldNames() {
+		UnionDataType newUnion = new UnionDataType("Test");
+		DataTypeComponent component = newUnion.add(new ByteDataType(), " ", null);
+		assertNull(component.getFieldName());
+		assertEquals("field0", component.getDefaultFieldName());
+
+		component = newUnion.add(new ByteDataType(), null, null);
+		assertNull(component.getFieldName());
+		assertEquals("field1", component.getDefaultFieldName());
+
+		component = newUnion.getComponent(0);
+		assertNull(component.getFieldName());
+		assertEquals("field0", component.getDefaultFieldName());
+
+		component.setFieldName(" ");
+		assertNull(component.getFieldName());
+		assertEquals("field0", component.getDefaultFieldName());
+
+		component = newUnion.add(new ByteDataType(), null, null);
+		assertNull(component.getFieldName());
+		assertEquals("field2", component.getDefaultFieldName());
+
+		component = newUnion.add(new ByteDataType(), " ", null);
+		assertNull(component.getFieldName());
+		assertEquals("field3", component.getDefaultFieldName());
+
+		newUnion.insert(0, new ByteDataType(), 1, null, "");
+		component = newUnion.getComponent(0);
+		assertNull(component.getFieldName());
+		assertEquals("field0", component.getDefaultFieldName());
 	}
 
 	protected DataTypeManager createBigEndianDataTypeManager() {

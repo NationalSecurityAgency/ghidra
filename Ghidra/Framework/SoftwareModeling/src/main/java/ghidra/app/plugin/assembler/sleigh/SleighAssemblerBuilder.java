@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -187,8 +187,8 @@ import ghidra.program.model.listing.Program;
  * 
  * <ol>
  * <li>Resolve operands from right to left, descending into sub-table operands.</li>
- * <li>Solve context mutations, in reverse order.
- * <li>Apply the required patterns
+ * <li>Solve context mutations, in reverse order.</li>
+ * <li>Apply the required patterns</li>
  * </ol>
  * 
  * <p>

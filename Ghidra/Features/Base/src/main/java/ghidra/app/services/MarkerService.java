@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,6 @@ import ghidra.program.model.listing.Program;
  * Navigation Margin. The higher the priority, the more likely the marker/bar will be displayed on
  * the top. Areas will always be lower than marker priorities.
  * </p>
- * <a name="usage"></a> <u>Recommended Usage</u><br>
  * <u>Recommended Usage</u><br>
  * The service used to work independently of {@link Program}s. In order to work effectively this
  * service has been changed to associate created markers with individual programs. Thus, it is up to

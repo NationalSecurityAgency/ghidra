@@ -1,6 +1,10 @@
 <opinions>
     <constraint loader="Executable and Linking Format (ELF)" compilerSpecID="default">
-        <constraint primary="36"   processor="V850"                      size="32" />
-        <constraint primary="87"   processor="V850"                      size="32" />
+        
+        <constraint primary="36,87"   processor="V850"  size="32" variant="default"
+        secondary="0b.... .... .... .... .... .... .... ...."/>
+        <constraint primary="36,87"   processor="V850"  size="32" variant="v850e3v5"
+        secondary="0b1111 .... .... .... .... .... .... ...."/>
+
     </constraint>
 </opinions>

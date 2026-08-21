@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,6 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
-import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.AssertException;
 import utilities.util.FileUtilities;
@@ -107,10 +106,6 @@ public class TestApplicationUtils {
 		}
 
 		// Assumption - in an installation the current user dir is /.../<Ghidra Install Dir>/Ghidra
-
-		String currentDir = System.getProperty("user.dir");
-		Msg.debug(null, "user.dir: " + currentDir);
-
 		// Assume that core library files are bundled in a jar file.  Find the installation
 		// directory by using the distributed jar file.
 		File jarFile = SystemUtilities.getSourceLocationForClass(SystemUtilities.class);

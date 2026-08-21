@@ -1,0 +1,45 @@
+<decompilertest>
+<binaryimage arch="ARM:LE:32:v8:default">
+<!--
+      Examples of conditional constants being immediately passed to MULTIEQUAL after the branch
+-->
+<bytechunk space="ram" offset="0x4022871a">
+                    00b970478160
+6120fbe7
+</bytechunk>
+<bytechunk space="ram" offset="0x40228728">
+                0b4601b107330360
+7047
+</bytechunk>
+<bytechunk space="ram" offset="0x40228736">
+            087a613818bf01207047
+</bytechunk>
+<symbol space="ram" offset="0x4022871a" name="zeroprop"/>
+<symbol space="ram" offset="0x40228728" name="throughadd"/>
+<symbol space="ram" offset="0x40228736" name="condmove"/>
+<symbol space="ram" offset="0x40228758" name="myfunc"/>
+</binaryimage>
+<script>
+  <com>set context TMode 1 [ram,0x4022871a] [ram,0x40228800]</com>
+  <com>parse line extern char zeroprop(int4 *ptrint,int4 val);</com>
+  <com>parse line extern void throughadd(int4 *tadd,int4 tval);</com>
+  <com>parse line extern bool condmove(int4 cval,char *cptr);</com>
+  <com>lo fu zeroprop</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu throughadd</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu condmove</com>
+  <com>decompile</com>
+  <com>print C</com>
+</script>
+<stringmatch name="Immediate Conditional #1" min="0" max="0">\(char\)ptrint</stringmatch>
+<stringmatch name="Immediate Conditional #2" min="1" max="1">return cVar1;</stringmatch>
+<stringmatch name="Immediate Conditional #3" min="1" max="1">cVar1 = '\\0';</stringmatch>
+<stringmatch name="Immediate Conditional #4" min="1" max="1">cVar1 = 'a';</stringmatch>
+<stringmatch name="Immediate Conditional #5" min="1" max="1">\*tadd = tval;</stringmatch>
+<stringmatch name="Immediate Conditional #6" min="1" max="1">tval = tval \+ 7;</stringmatch>
+<stringmatch name="Immediate Conditional #7" min="1" max="1">return cptr\[8\] != 'a';</stringmatch>
+<stringmatch name="Immediate Conditional #8" min="0" max="0">SUB</stringmatch>
+</decompilertest>

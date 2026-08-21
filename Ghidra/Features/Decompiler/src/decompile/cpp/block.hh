@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,6 +30,9 @@ class BlockGoto;
 class BlockMultiGoto;
 class BlockCondition;
 class BlockIf;
+class BlockIfElse;
+class BlockIfNoExit;
+class BlockIfGoto;
 class BlockWhileDo;
 class BlockDoWhile;
 class BlockInfLoop;
@@ -76,7 +79,7 @@ public:
   /// \brief The possible block types
   enum block_type {
     t_plain, t_basic, t_graph, t_copy, t_goto, t_multigoto, t_ls,
-    t_condition, t_if, t_whiledo, t_dowhile, t_switch, t_infloop
+    t_condition, t_if, t_ifelse, t_ifnoexit, t_ifgoto, t_whiledo, t_dowhile, t_switch, t_infloop
   };
   /// \brief Boolean properties of blocks
   ///
@@ -102,7 +105,9 @@ public:
     f_whiledo_overflow = 0x8000,///< Set if the conditional block of a whiledo is too big to print as while(cond) { ...
     f_flip_path = 0x10000,      ///< If true, out edges have been flipped since last time path was traced
     f_joined_block = 0x20000,	///< Block is a merged form of original basic blocks
-    f_duplicate_block = 0x40000	///< Block is a duplicated version of an original basic block
+    f_duplicate_block = 0x40000,	///< Block is a duplicated version of an original basic block
+    f_delayed_donothing = 0x80000,	///< Potential \e do \e nothing block whose removal has been delayed
+    f_final_transform = 0x100000	///< Has the final transform been run
   };
   /// \brief Boolean properties on edges
   enum edge_flags {
@@ -114,22 +119,25 @@ public:
     f_forward_edge = 0x20,	///< An edge that jumps forward in the spanning tree
     f_cross_edge = 0x40,	///< An edge that crosses subtrees in the spanning tree
     f_back_edge = 0x80,		///< Within (reducible) graph, a back edge defining a loop
-    f_loop_exit_edge = 0x100	///< Edge exits the body of a loop
+    f_loop_exit_edge = 0x100,	///< Edge exits the body of a loop
+    f_immed_copy = 0x200	///< Copy propagation has happened across the edge
   };
 private:
-  uint4 flags;			///< Collection of block_flags
   FlowBlock *parent;		///< The parent block to which \b this belongs
   FlowBlock *immed_dom;		///< Immediate dominating block
   FlowBlock *copymap;		///< Back reference to a BlockCopy of \b this
-  int4 index;			///< Reference index for this block (reverse post order)
-  int4 visitcount;		///< A count of visits of this node for various algorithms
-  int4 numdesc;			///< Number of descendants of this block in spanning tree (+1)
   vector<BlockEdge> intothis;	///< Blocks which (can) fall into this block
   vector<BlockEdge> outofthis;	///< Blocks into which this block (can) fall
 				// If there are two possible outputs as the
 				// result of a conditional branch
 				// the first block in outofthis should be
 				// the result of the condition being false
+  uint4 flags;			///< Collection of block_flags
+  int4 index;			///< Reference index for this block (reverse post order)
+  int4 visitcount;		///< A count of visits of this node for various algorithms
+  int4 numdesc;			///< Number of descendants of this block in spanning tree (+1)
+  int4 leafCount;		///< Number of leaf blocks contained in \b this
+  int4 structureDepth;		///< Amount of nesting in structure rooted at \b this
   static void replaceEdgeMap(vector<BlockEdge> &vec);	///< Update block references in edges with copy map
   void addInEdge(FlowBlock *b,uint4 lab);	///< Add an edge coming into \b this
   void decodeNextInEdge(Decoder &decoder,BlockMap &resolver);	///< Decode the next input edge from stream
@@ -154,6 +162,7 @@ private:
 protected:
   void setFlag(uint4 fl) { flags |= fl; }	///< Set a boolean property
   void clearFlag(uint4 fl) { flags &= ~fl; }	///< Clear a boolean property
+  void clearAllFlags(void) { flags = 0; }	///< Clear all properties of \b this block
 public:
   FlowBlock(void);				///< Construct a block with no edges
   virtual ~FlowBlock(void) {}			///< Destructor
@@ -210,6 +219,14 @@ public:
   /// \param s is the given stream to write to
   virtual void printRaw(ostream &s) const {}
 
+  /// \brief If the \e out block of \b this is not the given next block, print an implied \b goto to the out block
+  ///
+  /// In order to see where \b this block is flowing to, if there is no explicit branch op, and if the next block
+  /// being printed is \e not the fallthru branch, print the destination block as an implied \b goto op.
+  /// \param s is the output stream
+  /// \param nextBlock is the given nextBlock being printed
+  virtual void printRawImpliedGoto(ostream &s,const FlowBlock *nextBlock) const {}
+
   virtual void emit(PrintLanguage *lng) const;	///<Emit the instructions in \b this FlowBlock as structured code
 
   /// \brief Get the leaf block from which \b this block exits
@@ -231,9 +248,9 @@ public:
   virtual PcodeOp *lastOp(void) const { return (PcodeOp *)0; }
 
   virtual bool negateCondition(bool toporbottom);	///< Flip the condition computed by \b this
-  virtual bool preferComplement(Funcdata &data);	///< Rearrange \b this hierarchy to simplify boolean expressions
+  virtual bool preferComplement(Funcdata &data,bool allowOpRemoval);	///< Rearrange \b this hierarchy to simplify boolean expressions
   virtual FlowBlock *getSplitPoint(void);		///< Get the leaf splitting block
-  virtual int4 flipInPlaceTest(vector<PcodeOp *> &fliplist) const;
+  virtual int4 flipInPlaceTest(vector<PcodeOp *> &fliplist,bool allowOpRemoval) const;
   virtual void flipInPlaceExecute(void);
 
   /// \brief Is \b this too complex to be a condition (BlockCondition)
@@ -246,7 +263,8 @@ public:
   /// \brief Do any structure driven final transforms
   ///
   /// \param data is the function to transform
-  virtual void finalTransform(Funcdata &data) {}
+  /// \param allowOpMoves is \b true if ops may be moved within their basic block
+  virtual void finalTransform(Funcdata &data,bool allowOpMoves) {}
 
   /// \brief Make any final configurations necessary to emit the block
   ///
@@ -286,6 +304,8 @@ public:
   void setLoopExit(int4 i) { setOutEdgeFlag(i,f_loop_exit_edge); }	///< Label the edge exiting \b this as a loop
   void clearLoopExit(int4 i) { clearOutEdgeFlag(i,f_loop_exit_edge); }	///< Clear the loop exit edge
   void setBackEdge(int4 i) { setOutEdgeFlag(i,f_back_edge); }		///< Label the \e back edge of a loop
+  void setImmedCopyEdge(int4 i) { setOutEdgeFlag(i,f_immed_copy); }	///< Mark that an immediate COPY has propagated across the edge
+  bool hasImmedCopyEdge(int4 i) const { return ((outofthis[i].label & f_immed_copy)!=0); }	///< Has an immediate COPY propagated across the edge
   bool getFlipPath(void) const { return ((flags & f_flip_path)!=0); }	///< Have out edges been flipped
   bool isJumpTarget(void) const;		///< Return \b true if non-fallthru jump flows into \b this
   FlowBlock *getFalseOut(void) const { return outofthis[0].point; }	///< Get the \b false output FlowBlock
@@ -338,12 +358,17 @@ public:
   bool isGotoIn(int4 i) const { return ((intothis[i].label & (f_irreducible|f_goto_edge))!=0); }	///< Is the i-th incoming edge unstructured
   bool isGotoOut(int4 i) const { return ((outofthis[i].label & (f_irreducible|f_goto_edge))!=0); }	///< Is the i-th outgoing edge unstructured
   JumpTable *getJumptable(void) const;	///< Get the JumpTable associated \b this block
+  int4 getBasicCount(void) const { return leafCount; }	///< Get the number of basic blocks under the structure at \b this point
+  int4 getStructureDepth(void) const { return structureDepth; }	///< Get the nesting depth of the structure rooted at \b this point
+  uint4 getHaltType(void) const;			///< Get the \e halt type of the last PcodeOp in \b this
+  void printShortHeader(ostream &s) const;		///< Print a short identifier for the block
   static block_type nameToType(const string &name);	///< Get the block_type associated with a name string
   static string typeToName(block_type bt);		///< Get the name string associated with a block_type
   static bool compareBlockIndex(const FlowBlock *bl1,const FlowBlock *bl2);	///< Compare FlowBlock by index
   static bool compareFinalOrder(const FlowBlock *bl1,const FlowBlock *bl2);	///< Final FlowBlock comparison
   static FlowBlock *findCommonBlock(FlowBlock *bl1,FlowBlock *bl2);	///< Find the common dominator of two FlowBlocks
   static FlowBlock *findCommonBlock(const vector<FlowBlock *> &blockSet);	///< Find common dominator of multiple FlowBlocks
+  static FlowBlock *findCondition(FlowBlock *bl1,int4 edge1,FlowBlock *bl2,int4 edge2,int4 &slot1);
 };
 
 /// \brief A control-flow block built out of sub-components
@@ -367,6 +392,7 @@ protected:
   void swapBlocks(int4 i,int4 j);	///< Swap the positions two component FlowBlocks
   static void markCopyBlock(FlowBlock *bl,uint4 fl);	///< Set properties on the first leaf FlowBlock
 public:
+  BlockGraph(void) { leafCount = 0; }			///< Construct empty structure
   void clear(void);					///< Clear all component FlowBlock objects
   virtual ~BlockGraph(void) { clear(); }		///< Destructor
   const vector<FlowBlock *> &getList(void) const { return list; }	///< Get the list of component FlowBlock objects
@@ -379,10 +405,11 @@ public:
   virtual void scopeBreak(int4 curexit,int4 curloopexit);
   virtual void printTree(ostream &s,int4 level) const;
   virtual void printRaw(ostream &s) const;
+  void printRawImpliedGoto(ostream &s,const FlowBlock *nextBlock) const;
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockGraph(this); }
   virtual PcodeOp *firstOp(void) const;
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
-  virtual void finalTransform(Funcdata &data);
+  virtual void finalTransform(Funcdata &data,bool allowOpMoves);
   virtual void finalizePrinting(Funcdata &data) const;
   virtual void encodeBody(Encoder &encoder) const;
   virtual void decodeBody(Decoder &decoder);
@@ -408,9 +435,10 @@ public:
   BlockMultiGoto *newBlockMultiGoto(FlowBlock *bl,int4 outedge);		///< Build a new BlockMultiGoto
   BlockList *newBlockList(const vector<FlowBlock *> &nodes);			///< Build a new BlockList
   BlockCondition *newBlockCondition(FlowBlock *b1,FlowBlock *b2);		///< Build a new BlockCondition
-  BlockIf *newBlockIfGoto(FlowBlock *cond);					///< Build a new BlockIfGoto
+  BlockIfGoto *newBlockIfGoto(FlowBlock *cond);					///< Build a new BlockIfGoto
   BlockIf *newBlockIf(FlowBlock *cond,FlowBlock *tc);				///< Build a new BlockIf
-  BlockIf *newBlockIfElse(FlowBlock *cond,FlowBlock *tc,FlowBlock *fc);		///< Build a new BlockIfElse
+  BlockIfElse *newBlockIfElse(FlowBlock *cond,FlowBlock *tc,FlowBlock *fc);	///< Build a new BlockIfElse
+  BlockIfNoExit *newBlockIfNoExit(FlowBlock *cond,FlowBlock *tc,FlowBlock *fc);	///< Build a new BlockIfNoExit
   BlockWhileDo *newBlockWhileDo(FlowBlock *cond,FlowBlock *cl);			///< Build a new BlockWhileDo
   BlockDoWhile *newBlockDoWhile(FlowBlock *condcl);				///< Build a new BlockDoWhile
   BlockInfLoop *newBlockInfLoop(FlowBlock *body);				///< Build a new BlockInfLoop
@@ -427,6 +455,7 @@ public:
   void calcLoop(void);								///< Calculate loop edges
   void collectReachable(vector<FlowBlock *> &res,FlowBlock *bl,bool un) const;	///< Collect reachable/unreachable FlowBlocks from a given start FlowBlock
   void structureLoops(vector<FlowBlock *> &rootlist);				///< Label loop edges
+  bool hasFinalTransform(void) const { return ((getFlags() & f_final_transform) != 0); }	///< Return \b true if finalTransform() has been run on \b this
 #ifdef BLOCKCONSISTENT_DEBUG
   bool isConsistent(void) const;						///< Check consistency of \b this BlockGraph
 #endif
@@ -472,16 +501,19 @@ public:
   virtual void decodeBody(Decoder &decoder);
   virtual void printHeader(ostream &s) const;
   virtual void printRaw(ostream &s) const;
+  virtual void printRawImpliedGoto(ostream &s,const FlowBlock *nextBlock) const;
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockBasic(this); }
   virtual const FlowBlock *getExitLeaf(void) const { return this; }
   virtual PcodeOp *firstOp(void) const;
   virtual PcodeOp *lastOp(void) const;
   virtual bool negateCondition(bool toporbottom);
   virtual FlowBlock *getSplitPoint(void);
-  virtual int4 flipInPlaceTest(vector<PcodeOp *> &fliplist) const;
+  virtual int4 flipInPlaceTest(vector<PcodeOp *> &fliplist,bool allowOpRemoval) const;
   virtual void flipInPlaceExecute(void);
   virtual bool isComplex(void) const;
-  bool unblockedMulti(int4 outslot) const;		///< Check if \b this block can be removed without introducing inconsistencies
+  virtual void finalTransform(Funcdata &data,bool allowOpMoves);
+  bool unblockedMulti(int4 outslot) const;	///< Check if \b this block can be removed without introducing inconsistencies
+  bool hasNoImmediateCopy(int4 outslot) const;	///< Check if there have been immediate COPYs out of \b this block
   bool hasOnlyMarkers(void) const;		///< Does \b this block contain only MULTIEQUAL and INDIRECT ops
   bool isDoNothing(void) const;			///< Should \b this block should be removed
   list<PcodeOp *>::iterator beginOp(void) { return op.begin(); }	///< Return an iterator to the beginning of the PcodeOps
@@ -491,6 +523,10 @@ public:
   bool emptyOp(void) const { return op.empty(); }		///< Return \b true if \b block contains no operations
   bool noInterveningStatement(void) const;
   PcodeOp *findMultiequal(const vector<Varnode *> &varArray);		///< Find MULTIEQUAL with given inputs
+  PcodeOp *earliestUse(Varnode *vn);
+  void setDelayedDonothing(void) { setFlag(f_delayed_donothing); }	///< Mark as \e do \e nothing block with delayed removal
+  void clearDelayedDonothing(void) { clearFlag(f_delayed_donothing); }	///< Clear mark for delayed removal
+  bool isDelayedDonothing(void) const { return ((getFlags() & f_delayed_donothing) != 0); }	///< Is block marked for delayed removal
   static bool liftVerifyUnroll(vector<Varnode *> &varArray,int4 slot);	///< Verify given Varnodes are defined with same PcodeOp
 };
 
@@ -513,6 +549,7 @@ public:
   virtual void printHeader(ostream &s) const;
   virtual void printTree(ostream &s,int4 level) const;
   virtual void printRaw(ostream &s) const { copy->printRaw(s); }
+  virtual void printRawImpliedGoto(ostream &s,const FlowBlock *nextBlock) const { copy->printRawImpliedGoto(s, nextBlock); }
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockCopy(this); }
   virtual const FlowBlock *getExitLeaf(void) const { return this; }
   virtual PcodeOp *firstOp(void) const { return copy->firstOp(); }
@@ -520,6 +557,7 @@ public:
   virtual bool negateCondition(bool toporbottom) { bool res = copy->negateCondition(true); FlowBlock::negateCondition(toporbottom); return res; }
   virtual FlowBlock *getSplitPoint(void) { return copy->getSplitPoint(); }
   virtual bool isComplex(void) const { return copy->isComplex(); }
+  virtual void finalTransform(Funcdata &data,bool allowOpMoves) { return copy->finalTransform(data,allowOpMoves); }
   virtual void encodeHeader(Encoder &encoder) const;
 };
 
@@ -615,7 +653,7 @@ public:
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockCondition(this); }
   virtual bool negateCondition(bool toporbottom);
   virtual FlowBlock *getSplitPoint(void) { return this; }
-  virtual int4 flipInPlaceTest(vector<PcodeOp *> &fliplist) const;
+  virtual int4 flipInPlaceTest(vector<PcodeOp *> &fliplist,bool allowOpRemoval) const;
   virtual void flipInPlaceExecute(void);
   virtual PcodeOp *lastOp(void) const;
   virtual bool isComplex(void) const { return getBlock(0)->isComplex(); }
@@ -631,10 +669,6 @@ public:
 /// the block of code executed when the condition is true.  If there is a third component, it
 /// is the "else" block, executed when the condition is false.
 ///
-/// If there is only one component, this represents the case where the conditionally executed
-/// branch is unstructured.  This is generally emitted where the conditionally executed body
-/// is the single \e goto statement.
-///
 /// A BlockIf will always have at most one (structured) exit edge. With one component, one of the edges of
 /// the conditional component is unstructured. With two components, one of the conditional block
 /// edges flows to the body block, and the body's out edge and the remaining conditional block out
@@ -642,22 +676,58 @@ public:
 /// \e true body block, the other conditional edge flows to the \e false body block, and outgoing
 /// edges from the body blocks, if they exist, flow to the same exit block.
 class BlockIf : public BlockGraph {
-  uint4 gototype;			///< The type of unstructured edge (if present)
-  FlowBlock *gototarget;		///< The target FlowBlock of the unstructured edge (if present)
 public:
-  BlockIf(void) { gototype = f_goto_goto; gototarget = (FlowBlock *)0; }	///< Constructor
-  void setGotoTarget(FlowBlock *bl) { gototarget = bl; }		///< Mark the target of the unstructured edge
-  FlowBlock *getGotoTarget(void) const { return gototarget; }		///< Get the target of the unstructured edge
-  uint4 getGotoType(void) const { return gototype; }			///< Get the type of unstructured edge
   virtual block_type getType(void) const { return t_if; }
-  virtual void markUnstructured(void);
   virtual void scopeBreak(int4 curexit,int4 curloopexit);
   virtual void printHeader(ostream &s) const;
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockIf(this); }
-  virtual bool preferComplement(Funcdata &data);
-  virtual const FlowBlock *getExitLeaf(void) const;
-  virtual PcodeOp *lastOp(void) const;
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
+};
+
+/// \brief An "if" with two bodies of conditionally executed code
+///
+/// The first component is the \e conditional block. The second component is executed if the condition is \b true.
+/// The third component is the "else" clause. Both bodies have at most one \e out edge.
+class BlockIfElse : public BlockIf {
+public:
+  virtual block_type getType(void) const { return t_ifelse; }
+  virtual void scopeBreak(int4 curexit,int4 curloopexit);
+  virtual void printHeader(ostream &s) const;
+  virtual bool preferComplement(Funcdata &data,bool allowOpRemoval);
+};
+
+/// \brief An "if" with two bodies of executed code, neither of which has an exit
+///
+/// This always has three components, the \e conditional block, and two bodies. If the condition is \b true,
+/// the first body is executed. The second "else" body is treated as if it were \e following the first body,
+/// and it is rendered without explicit "else" syntax.
+class BlockIfNoExit : public BlockIfElse {
+public:
+  virtual block_type getType(void) const { return t_ifnoexit; }
+  virtual void scopeBreak(int4 curexit,int4 curloopexit);
+  virtual void printHeader(ostream &s) const;
+  virtual bool preferComplement(Funcdata &data,bool allowOpRemoval);
+  virtual PcodeOp *lastOp(void) const { return getBlock(2)->lastOp(); }
+};
+
+/// \brief An "if" with one unstructured \e goto branch
+///
+/// This always has one component, the condition.  One of the two branches is executed as a \e goto statement,
+/// the target of which is stored internally.
+/// The other branch is the (structured) exit.
+class BlockIfGoto : public BlockIf {
+  uint4 gototype;			///< The type of unstructured edge (if present)
+  FlowBlock *gototarget;		///< The target FlowBlock of the unstructured edge (if present)
+public:
+  BlockIfGoto(FlowBlock *target) { gototype = f_goto_goto; gototarget = target; }	///< Constructor
+  FlowBlock *getGotoTarget(void) const { return gototarget; }		///< Get the target of the unstructured edge
+  uint4 getGotoType(void) const { return gototype; }			///< Get the type of unstructured edge
+  virtual block_type getType(void) const { return t_ifgoto; }
+  virtual void scopeBreak(int4 curexit,int4 curloopexit);
+  virtual void printHeader(ostream &s) const;
+  virtual void markUnstructured(void);
+  virtual const FlowBlock *getExitLeaf(void) const { return getBlock(0)->getExitLeaf(); }
+  virtual PcodeOp *lastOp(void) const { return getBlock(0)->lastOp(); }
   virtual void encodeBody(Encoder &encoder) const;
 };  
 
@@ -696,7 +766,7 @@ public:
   virtual void printHeader(ostream &s) const;
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockWhileDo(this); }
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
-  virtual void finalTransform(Funcdata &data);
+  virtual void finalTransform(Funcdata &data,bool allowOpMoves);
   virtual void finalizePrinting(Funcdata &data) const;
 };
 
@@ -776,6 +846,7 @@ public:
   uint4 getGotoType(int4 i) const { return caseblocks[i].gototype; }	///< Get the edge type for the i-th \e case block
   bool isExit(int4 i) const { return caseblocks[i].isexit; }		///< Does the i-th \e case block exit the switch?
   const Datatype *getSwitchType(void) const;				///< Get the data-type of the switch variable
+  uint4 getDisplayFormat(void) const { return jump->getDisplayFormat(); }	///< Get any integer display format for cases
   virtual block_type getType(void) const { return t_switch; }
   virtual void markUnstructured(void);
   virtual void scopeBreak(int4 curexit,int4 curloopexit);
@@ -816,8 +887,9 @@ inline void FlowBlock::emit(PrintLanguage *lng) const
 /// For the instructions in this block, decide if the control-flow structure
 /// can be rearranged so that boolean expressions come out more naturally.
 /// \param data is the function to analyze
+/// \param allowOpRemoval if \b true, changes can include removal of ops
 /// \return \b true if a change was made
-inline bool FlowBlock::preferComplement(Funcdata &data)
+inline bool FlowBlock::preferComplement(Funcdata &data,bool allowOpRemoval)
 
 {
   return false;
@@ -836,15 +908,17 @@ inline FlowBlock *FlowBlock::getSplitPoint(void)
 /// \brief Test normalizing the conditional branch in \b this
 ///
 /// Find the set of PcodeOp objects that need to be adjusted to flip
-/// the condition \b this FlowBlock calculates.
+/// the condition \b this FlowBlock calculates.  If \b allowOpRemoval is set,
+/// the adjustment can include the removal of (BOOL_NEGATE) ops.
 ///
 /// Return:
 ///   - 0 if the flip would normalize the condition
-///   - 1 if the flip doesn't affect normalization of the condition
-///   - 2 if the flip produces an unnormalized condition
+///   - 1 if the flip denormalizes (or doesn't affect normalization)
+///   - 2 if a flip is not possible
 /// \param fliplist will contain the PcodeOps that need to be adjusted
+/// \param allowOpRemoval if \b true adjustments can include removal of ops
 /// \return 0 if the condition will be normalized, 1 or 2 otherwise
-inline int4 FlowBlock::flipInPlaceTest(vector<PcodeOp *> &fliplist) const
+inline int4 FlowBlock::flipInPlaceTest(vector<PcodeOp *> &fliplist,bool allowOpRemoval) const
 
 {
   return 2;	// By default a block will not normalize
@@ -871,6 +945,16 @@ inline FlowBlock *FlowBlock::nextFlowAfter(const FlowBlock *bl) const
 
 {
   return (FlowBlock *)0;
+}
+
+/// If the last op is a halt of execution of some form, we return its code: \b halt, \b noreturn, \b badinstruction etc.
+/// If it is not a halt, or if there is no last op, 0 is returned.
+/// \return the \e halt code or 0
+inline uint4 FlowBlock::getHaltType(void) const
+
+{
+  PcodeOp *op = lastOp();
+  return (op != (PcodeOp *)0) ? op->getHaltType() : 0;
 }
 
 /// \param bl1 is the first FlowBlock to compare

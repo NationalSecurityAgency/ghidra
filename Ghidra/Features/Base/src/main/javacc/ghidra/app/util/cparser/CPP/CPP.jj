@@ -110,6 +110,7 @@ PARSER_BEGIN(PreProcessor)
 package ghidra.app.util.cparser.CPP;
 
 import ghidra.util.Msg;
+import ghidra.util.StringUtilities;
 import ghidra.util.task.TaskMonitor;
 
 import java.util.*;
@@ -281,6 +282,12 @@ public class PreProcessor {
 						BigInteger value = getLongValue(this.image);
 						comparison = value.compareTo(BigInteger.ZERO);
 						break;
+					case PreProcessor.CHAR_NUMERIC:
+					case PreProcessor.CHAR_LITERAL:
+						char ch = getCharacterValue(this.image);
+                        BigInteger charValue = BigInteger.valueOf(ch);
+                        comparison = charValue.compareTo(BigInteger.ZERO);
+                        break;    
 					case PreProcessor.ITEM:
 					case PreProcessor.MANIFEST:
 					case PreProcessor.VALUES:
@@ -314,6 +321,11 @@ public class PreProcessor {
 					case PreProcessor.INTEGER_LITERAL:
 						thisFP = new Double(getLongValue(this.image).doubleValue());
 						break;
+					case PreProcessor.CHAR_NUMERIC:
+					case PreProcessor.CHAR_LITERAL:
+						char ch = getCharacterValue(this.image);
+						thisFP = new Double((double)ch);
+                        break;						
 					default:
 						PPToken replVal = (PPToken) getDef(this); // not a PPToken
 						if (replVal == null) {
@@ -347,6 +359,11 @@ public class PreProcessor {
 					case PreProcessor.INTEGER_LITERAL:
 						thatFP = new Double(getLongValue(that.image).doubleValue());
 						break;
+					case PreProcessor.CHAR_NUMERIC:
+					case PreProcessor.CHAR_LITERAL:
+						char ch = getCharacterValue(this.image);
+						thisFP = new Double((double)ch);
+                        break;
 					default:
 						PPToken replVal = (PPToken) getDef(that); // not a PPToken
 						if (replVal == null) {
@@ -432,7 +449,7 @@ public class PreProcessor {
 			}
 			PPToken t = new PPToken(result.toString());
 			t.kind = NUMERIC;
-			t.setTruth(result != BigInteger.ZERO);
+			t.setTruth(!BigInteger.ZERO.equals(result));
 			return t;
         }
 
@@ -509,7 +526,7 @@ public class PreProcessor {
 				}
     		}
     		if (image.length() == 1 && image.startsWith("\n")) {
-               image = (!emitExecSwitch ? "////\n" : "\n");
+               image = (!emitExecSwitch ? "///-\n" : "\n");
             }
     		print(image);
         }
@@ -655,7 +672,7 @@ public class PreProcessor {
 		if (verboseLevel == 5 || verboseLevel == 6) {
 			println("\t" + curFileStackTop() + "'" + key.beginLine
 					+ ": Defining text: " + key.image + " (");
-			for (int i = 0; i < marg.size(); i++) {
+			for (int i = 0; marg!=null && i < marg.size(); i++) {
 				if (i == 0) {
 					print(((PPToken) marg.elementAt(i)).image);
 				} else if (i < marg.size() - 1) {
@@ -726,10 +743,22 @@ public class PreProcessor {
 	}
 
 	private void swapFileStreams(File incFile, FileInputStream fis) throws ParseException {
+	    String fullPath = incFile.getAbsolutePath();
 		if (verboseLevel == 2)
-			print(incFile.getAbsolutePath() + "\n");
+			print(fullPath + "\n");
 		else if (verboseLevel == 1)
-			println("Parsing stream " + incFile.getAbsolutePath() + " ... ");
+			println("Parsing stream " + fullPath + " ... ");
+
+		boolean alreadyIncluded = addFile(fullPath);
+		if (!alreadyIncluded)
+		{
+			StringBuffer pad = new StringBuffer();
+			for (String element : fileStack) {
+				pad.append("   ");
+			}
+            addParseMessage(null, "    " + pad + fullPath);
+		}
+		    
 		PreProcessor parser = null;
 		try {
 			//
@@ -738,19 +767,19 @@ public class PreProcessor {
 			int pos = -1;
 			int count = 0;
 			do {
-				pos = fileStack.indexOf(incFile.getAbsolutePath(), pos + 1);
+				pos = fileStack.indexOf(fullPath, pos + 1);
 				if (pos >= 0) {
 					count++;
 				}
 				if (count > 5) {
-					addParseMessage(incFile.getAbsolutePath(),
+					addParseMessage(fullPath,
 						"Error: Possible infinite inclusion recursion detected: \n" + fileStack);
 					return;
 				}
 			} while (pos != -1);
 
 			// check if this has already been done
-			Integer val = alreadyDone.get(incFile.getAbsolutePath());
+			Integer val = alreadyDone.get(fullPath);
 			if (val == null) {
 				val = Integer.valueOf(0);
 			}
@@ -758,9 +787,9 @@ public class PreProcessor {
 			// still useful for debugging
 				
 			val = val + 1;
-			alreadyDone.put(incFile.getAbsolutePath(), val);
+			alreadyDone.put(fullPath, val);
 
-			fileStack.push(incFile.getAbsolutePath());
+			fileStack.push(fullPath);
 			parser = new PreProcessor(this);
 			parser.ReInit(fis);
 			parser.Input();
@@ -829,11 +858,25 @@ public class PreProcessor {
 		return false;
 	}
 	
-	void bufAppendWithComment(PPToken buf, Token u) {
-	    if (emitExecSwitch==true)
-	        buf.append(u.image,true);
-	    else
-	        buf.append("//// " + u.image, false);
+//	void bufAppendWithComment(PPToken buf, Token u) {
+//	    if (emitExecSwitch==true)
+//	        buf.append(u.image,true);
+//	    else
+//	        buf.append("///- " + u.image, false);
+//	}
+	
+	void bufAppendWithComment(PPToken buf, Token u, Token previous, boolean commentNL) {
+		String str = u.image;
+		if (!emitExecSwitch) {
+			if (commentNL) {
+				// if not emmitting, replace any embedded \n with a \n-comment
+				str = str.replace("\n", "\n///- ");
+			}
+			if (previous == null || previous.image.length() == 0) {
+				str = "///- " + str;
+			}
+		}
+		buf.append(str, emitExecSwitch);
 	}
 
 	// Parse include file
@@ -857,7 +900,6 @@ public class PreProcessor {
 		File iFile = null;
 		int i;
 		
-		boolean alreadyIncluded = addFile(fn);
 		for (i = 0; i < pathList.size(); i++) {
 			iFile = getFile(pathList.elementAt(i), fn, xsym);
 			// don't include the same file name
@@ -886,13 +928,7 @@ public class PreProcessor {
 			if (verboseLevel == 2) {
 				print("Line " + inc.beginLine + ": " + curFileStackTop() + " => ");
 			}
-			StringBuffer pad = new StringBuffer();
-			for (String element : fileStack) {
-				pad.append("   ");
-			}
-			if (!alreadyIncluded) {
-                addParseMessage(null, "      " + pad + iFile);
-		    }
+
 			swapFileStreams(iFile, fis);
 			if (verboseLevel == 1) {
 				addParseMessage(null, "Include depth " + fileStack.size() + ": Done!");
@@ -1057,9 +1093,9 @@ public class PreProcessor {
 	
 	private void printCommentedLines(boolean emitSwitch, String line, String state) {
 		StringBuffer buf = new StringBuffer("///");
-		buf.append(emitSwitch ? " " : "/" );
+		buf.append(emitSwitch ? "+ " : "- " );
 		buf.append(line);
-		if (emitSwitch) {
+		if (emitSwitch && state != null) {
 			buf.append(" ===" + state);
 		}
 		buf.append("\n");
@@ -1225,6 +1261,7 @@ public class PreProcessor {
 		try {
 			if (str.endsWith("L") || str.endsWith("l") || str.endsWith("U")) {
 				str = str.substring(0, str.length() - 1);
+				return getLongValue(str);
 			}
 			
 			if (str.startsWith("--")) {
@@ -1238,6 +1275,17 @@ public class PreProcessor {
 		} catch (NumberFormatException exc) {
 		}
 		throw new NumberFormatException("Couldn't parse number: \'" + str + "\'");
+	}
+	
+	private char getCharacterValue(String str) {
+	    String charStr = str;
+		if (charStr.charAt(0) == 'L') {
+			charStr = charStr.substring(1);
+		}
+		// strip off "''"
+		charStr = charStr.substring(1, charStr.length()-1);
+		charStr = StringUtilities.convertEscapeSequences(charStr);
+		return charStr.charAt(0);
 	}
 
 	private void addParseMessage(String filename, String message) {
@@ -1326,6 +1374,7 @@ public class PreProcessor {
 		this.shift = parent.shift;
 		this.alreadyDone = parent.alreadyDone;
 		this.verboseLevel = parent.verboseLevel;
+		this.parseMessages = parent.parseMessages;
 	}
 
 	public PreProcessor(String[] args) throws ParseException {
@@ -1504,7 +1553,7 @@ PPToken IFGroup() : { PPToken t, e, olde; }
          }
          olde = (PPToken) execStack.pop();
          emitExecSwitch = olde.getEmitSave();
-         printCommentedLines(emitExecSwitch, "#else if " + t.image, "" + t.getTruth());
+         printCommentedLines(emitExecSwitch, "#elif " + t.image, "" + t.getTruth());
          e.setEmitSave(emitExecSwitch);
          if (!olde.getTruth() && emitExecSwitch==true)
              emitExecSwitch = e.getTruth();
@@ -1536,7 +1585,7 @@ PPToken IFGroup() : { PPToken t, e, olde; }
      } |
      t=Else(){
          if (execStack.size()==0) {
-             addParseMessage(null, curFileStackTop()+"'"+t.beginLine+"Unbalanced IF directive detected");
+             addParseMessage(null, curFileStackTop()+"'"+t.beginLine+"Unbalanced ELSE directive detected");
              throw new ParseException (curFileStackTop()+"'"+t.beginLine+"Unbalanced IF directive detected");
          }
          olde = (PPToken) execStack.pop();
@@ -1551,7 +1600,7 @@ PPToken IFGroup() : { PPToken t, e, olde; }
      } |
      t=EndIf(){
          if (execStack.size()==0) {
-            addParseMessage(null, curFileStackTop()+"'"+t.beginLine+"Unbalanced IF directive detected");
+            addParseMessage(null, curFileStackTop()+"'"+t.beginLine+"Unbalanced ENDIF directive detected");
             throw new ParseException(curFileStackTop()+"'"+t.beginLine+"Unbalanced IF directive detected");
          }
          olde = (PPToken) execStack.pop();
@@ -1584,6 +1633,8 @@ PPToken Include() : {Token t;PPToken pt;int conditionDepth=execStack.size();}
          if (emitExecSwitch==true) {
              localPlace(pt, true);
              println("\n#line "+t.beginLine+": \""+curFileStackTop()+"\"");
+         } else {
+             printCommentedLines(emitExecSwitch, "#include <"+t.beginLine+">", "");
          }
      }
      |t=<STANDARD>{
@@ -1591,6 +1642,8 @@ PPToken Include() : {Token t;PPToken pt;int conditionDepth=execStack.size();}
          if (emitExecSwitch==true) {
              standardPlace(pt, true);
              println("\n#line "+t.beginLine+": \""+curFileStackTop()+"\"");
+         } else {
+             printCommentedLines(emitExecSwitch, "#include \""+t.beginLine+"\"", "");
          }
      }
      |t=<MACEXPPATH>{
@@ -1704,6 +1757,7 @@ PPToken UnDef() : {Token t;}
         if (isDef(pt)==true) {
             UnDefine(pt);
         }
+        printCommentedLines(emitExecSwitch, "#undef " + pt.image, null);
         return pt;
     }
 }
@@ -1728,8 +1782,14 @@ PPToken MacroVals() : {Token s,t,u=new Token();u.image="";}
 PPToken Pragma() :
 {Token t,u=null; }
 {   (LOOKAHEAD(2)(t=<PRAGMA_EXPRN> { if (u==null) { u = t; } else { u.image += t.image; } } ))+ {
-       PPToken pt = new PPToken(u);
-       if (emitExecSwitch==true) println("#pragma " + defs.expand(u.image,true)); return pt;
+       PPToken pt = new PPToken("#pragma");
+       pt.append(u.image,emitExecSwitch);
+       if (emitExecSwitch==true) {
+    	   println("#pragma" + defs.expand(u.image,true));
+       } else {
+    	   printCommentedLines(emitExecSwitch, "#pragma" + u.image, null);
+       }
+       return pt;
     }
 }
 
@@ -1779,9 +1839,11 @@ PPToken IfNDefExpr() :
 PPToken Error() :
 {Token t;}
 {   t=<ERROR_EXPRN>{
+        printCommentedLines(emitExecSwitch, "#error " + t.image, "Error!");
         if (emitExecSwitch==true) {
-            addParseMessage(null, curFileStackTop()+"'"+t.beginLine+" Compiler Error:");
+            addParseMessage(null, curFileStackTop()+"'"+t.beginLine+" #error Error:");
             addParseMessage(null, t.image);
+			throw new ParseException("PreProcessor hit #error \"" + t.image + "\"");
         }
         return new PPToken(t);
     }
@@ -1790,6 +1852,7 @@ PPToken Error() :
 PPToken Warning() :
 {Token t;}
 {   t=<WARNING_EXPRN>{
+        printCommentedLines(emitExecSwitch, "#warning " + t.image, "Warning!");
         if (emitExecSwitch==true) {
             addParseMessage(null, curFileStackTop()+"'"+t.beginLine+" Warning: ");
             addParseMessage(null, t.image);
@@ -1867,31 +1930,34 @@ PPToken QuotedValue() :
 }
 
 PPToken Text() :
-{Token u, nl, t = new Token(); PPToken buf = new PPToken(""); t.image="";}
+{Token u, nl, lastToken = null; PPToken buf = new PPToken(""); }
 {
     ( LOOKAHEAD(3)
-      (LOOKAHEAD(2)(u=<OUTER_TEXT>{ bufAppendWithComment(buf,u); }
-                    (LOOKAHEAD(2)nl=NewLines() {if (emitExecSwitch==true) buf.append(nl.image,true); else buf.append((u.image.length() == 0 ? "//// " : "") + nl.image, false); } )* |
+      (LOOKAHEAD(2)(u=<OUTER_TEXT> { bufAppendWithComment(buf,u,lastToken,false); lastToken = u; }
+                    (LOOKAHEAD(2) nl=NewLines() { bufAppendWithComment(buf,nl,lastToken,false); lastToken = null; } )* |
 
-                    u=<OTHER_TEXT> {bufAppendWithComment(buf,u); } )
-       [LOOKAHEAD(2)u=NewLines() {bufAppendWithComment(buf,u); }]
-       [(LOOKAHEAD(2)(u=QuotedText() {bufAppendWithComment(buf,u); }
-                    [LOOKAHEAD(2)u=NewLines(){ bufAppendWithComment(buf,u); }] |
-                    u=<OTHER_TEXT> {bufAppendWithComment(buf,u); })
-           [LOOKAHEAD(2)t=NewLines() {if (emitExecSwitch==true) buf.append(t.image,true); else buf.append("//// " + u.image, false); }]
-           [LOOKAHEAD(2)u=<OTHER_TEXT> {bufAppendWithComment(buf,u); }]
-           [LOOKAHEAD(2)u=NewLines() {bufAppendWithComment(buf,u); }])+]
-       [LOOKAHEAD(2)u=<OTHER_TEXT> {bufAppendWithComment(buf,u); }
-        (LOOKAHEAD(2)u=NewLines(){ bufAppendWithComment(buf,u);})*])+|
+                    u=<OTHER_TEXT> { bufAppendWithComment(buf,u,lastToken,false); lastToken = u; } )
+       [LOOKAHEAD(2)nl=NewLines() { bufAppendWithComment(buf,nl,lastToken,false); lastToken = null; }]
+       [(LOOKAHEAD(2)(u=QuotedText() { bufAppendWithComment(buf,u,lastToken,true); lastToken = u; }
+                    [LOOKAHEAD(2) nl=NewLines(){ bufAppendWithComment(buf,nl,lastToken,false); lastToken = null; }] |
+                    u=<OTHER_TEXT> { bufAppendWithComment(buf,u,lastToken,false); lastToken = u; })
+           [LOOKAHEAD(2) nl=NewLines() { bufAppendWithComment(buf,nl,lastToken,false); lastToken = null; } ]
+           [LOOKAHEAD(2) u=<OTHER_TEXT> { bufAppendWithComment(buf,u,lastToken,false); lastToken = u; }]
+           [LOOKAHEAD(2) nl=NewLines() { bufAppendWithComment(buf,nl,lastToken,false); lastToken = null; }])+]
+       [LOOKAHEAD(2) u=<OTHER_TEXT> { bufAppendWithComment(buf,u,lastToken,false); lastToken = u; }
+        (LOOKAHEAD(2) nl=NewLines(){ bufAppendWithComment(buf,nl,lastToken,false); lastToken = null; })*])+|
                 
-      (LOOKAHEAD(2)(u=QuotedText() {bufAppendWithComment(buf,u); }
-                    [LOOKAHEAD(2)u=NewLines(){ bufAppendWithComment(buf,u); }] |
-                    u=<OTHER_TEXT> {bufAppendWithComment(buf,u); })
-       [LOOKAHEAD(2)t=NewLines() {if (emitExecSwitch==true) buf.append(t.image,true); else buf.append("//// " + u.image, false); }]
-       [LOOKAHEAD(2)u=<OTHER_TEXT> {bufAppendWithComment(buf,u); }]
-       [LOOKAHEAD(2)u=NewLines() {bufAppendWithComment(buf,u); }])+ |
+      (LOOKAHEAD(2)(u=QuotedText() { bufAppendWithComment(buf,u,lastToken,true); lastToken = u; }
+                    [LOOKAHEAD(2) nl=NewLines(){ bufAppendWithComment(buf,nl,lastToken,false); lastToken = null; }] |
+                    u=<OTHER_TEXT> { bufAppendWithComment(buf, u,lastToken,false); lastToken = u; })
+       [LOOKAHEAD(2) nl=NewLines() { bufAppendWithComment(buf,nl,lastToken,false); lastToken = null; }]
+       [LOOKAHEAD(2) u=<OTHER_TEXT> { bufAppendWithComment(buf, u,lastToken,false); lastToken = u; }]
+       [LOOKAHEAD(2) nl=NewLines() { bufAppendWithComment(buf, nl,lastToken,false); lastToken = null; }])+ |
        
-      u=NewLines() {bufAppendWithComment(buf,u); }
+      nl=NewLines() {
+          //bufAppendWithComment(buf,nl);
+          lastToken = null;
+      }
     ) { return buf;}
 }
 
@@ -2212,7 +2278,7 @@ PPToken Assertion() :
         pt=Expression()
     {
        pt = new PPToken(pt);
-       pt.setTruth(isDef(pt) || (pt.kind == FP_NUMERIC || pt.kind == NUMERIC));  // numbers are always defined
+       pt.setTruth(isDef(pt) || (pt.kind == FP_NUMERIC || pt.kind == NUMERIC || pt.kind == CHAR_NUMERIC));  // numbers are always defined
        return pt;
     })
     | 
@@ -2342,7 +2408,7 @@ PPToken ValueExpression() :
 
     (
     LOOKAHEAD(2)
-    (t=<NUMERIC> | t=<FP_NUMERIC> | t=<ELSE> | t=<IF> ) {
+    (t=<NUMERIC> | t=<FP_NUMERIC> | t=<CHAR_NUMERIC> | t=<ELSE> | t=<IF> ) {
         if (verboseLevel()==7) print(t.image);
         pt=new PPToken(t);
         if (pt.compareToZero()==0) pt.setTruth(false);
@@ -2517,7 +2583,10 @@ TOKEN:
     <#NOTWWSQLT: ~[" ","\t","\n","\r","<","\""]> |
     <#NOTWSQLT: ~["\t","\n","\r","<","\""]> |
     <#NOTVALCMT: ("/##/")> |
-    <INTEGER_LITERAL: <DECIMAL_LITERAL> (["u","l","L","U"])* | <HEX_LITERAL> (["u","l","L","U"])* | <OCTAL_LITERAL> (["u","l","L","U"])*> |
+    <INTEGER_LITERAL: <DECIMAL_LITERAL> (["u","l","L","U"])* |
+                      <HEX_LITERAL> (["u","l","L","U"])* |
+                      <OCTAL_LITERAL> (["u","l","L","U"])* > |
+    <#CHAR_LITERAL: ("L")? "\'" (~["\'"])+ "\'" > |
     <#DECIMAL_LITERAL: ["0"-"9"] (["0"-"9"])*> |
     <#HEX_LITERAL: "0" ["x","X"] (["0"-"9","a"-"f","A"-"F"])+> |
     <#HEX_DIGIT: (["0"-"9","a"-"f","A"-"F"])> |
@@ -2609,6 +2678,7 @@ TOKEN : {
 //    <INT_CAST: "-0" | "- 0" | "- 0L" | "+ 0" > |
     <NUMERIC:  (<INTEGER_LITERAL>)+ > |
     <FP_NUMERIC: (<FP_LITERAL>)+ > |
+    <CHAR_NUMERIC: (<CHAR_LITERAL>)+ > |
     <ITEM:  (["a"-"z","A"-"Z","_","$"] (["a"-"z","A"-"Z","_","$","0"-"9"])* | (["0"-"9"])+ | ["1"-"9"](["0"-"9"])* | ["0"](["0"-"9"])+ )> |
     <BEGITEM: <OP>> { parenNesting++; } : DIRECTIVE |
     <ENDITEM: <CP>> { parenNesting--; } : DIRECTIVE |
@@ -2657,7 +2727,7 @@ TOKEN : {
 <INCLUDE>
 TOKEN : {
     <INCLINE: <ENDL> > : INCLUDE |
-    <MACEXPPATH: <NOTWWSQLT>(<NOTWSQLT>)* > : DEFAULT
+    <MACEXPPATH: <NOTWWSQLT>(<NOTWWSQLT>)* > : DEFAULT
 }
 
 <INCLUDE>
@@ -2665,7 +2735,21 @@ SKIP : {
     <_COD: <COD> > : INCLUDE |
     <_WSP: <WSP> > : INCLUDE |
     <__LT: <_LT> > : STDPATH |
-    <_QTE: <ENDREL> > : RELPATH
+    <_QTE: <ENDREL> > : RELPATH |
+    <_ECMT_INC: <CMT><ECMT> > : INCLUDE_COMMENT
+}
+
+<INCLUDE_COMMENT>
+SKIP : {
+    <_ECMT_INCLUDE_ns: ~["*"] > : INCLUDE_COMMENT |
+    <_ECMT_INCLUDE_s:   "*" > : INCLUDE_COMMENT_END
+}
+
+<INCLUDE_COMMENT_END>
+SKIP : {
+    <_ECMT_INCLUDE_es: "*" > : INCLUDE_COMMENT_END |
+    <_ECMT_INCLUDE_eo: ~["*","/"] > : INCLUDE_COMMENT |
+    <_ECMT_INCLUDE_e:  "/" > : INCLUDE
 }
 
 <STDPATH>
@@ -2802,10 +2886,18 @@ TOKEN : {
     <LINEINFO: (<NOTENDL>)+>
 }
 
+
 <COMMENT>
 SKIP : {
-//TOKEN : {
-    <_ECMT3: (~["*"])* "*" ("*" | ~["*","/"] (~["*"])* "*")*  "/"> : DEFAULT
+    <_ECMT_COMMENT_ns: ~["*"] > : COMMENT |
+    <_ECMT_COMMENT_s: "*" > : COMMENT_END
+}
+
+<COMMENT_END>
+SKIP : {
+    <_ECMT_COMMENT_es: "*" > : COMMENT_END |
+    <_ECMT_COMMENT_eo: ~["*","/"] > : COMMENT |
+    <_ECMT_COMMENT_e: "/" > : DEFAULT
 }
 
 <LINECOMMENT>
@@ -2815,8 +2907,15 @@ SKIP : {
 
 <DIRECTIVECOMMENT>
 SKIP : {
-//TOKEN : {
-    <_ECMT10: (~["*"])* "*" ("*" | ~["*","/"] (~["*"])* "*")*  "/"> : DIRECTIVE
+    <_ECMT_DIRECTIVECOMMENT_ns: ~["*"] > : DIRECTIVECOMMENT |
+    <_ECMT_DIRECTIVECOMMENT_s: "*" > : DIRECTIVECOMMENT_END
+}
+
+<DIRECTIVECOMMENT_END>
+SKIP : {
+    <_ECMT_DIRECTIVECOMMENT_es: "*" > : DIRECTIVECOMMENT_END |
+    <_ECMT_DIRECTIVECOMMENT_eo: ~["*","/"] > : DIRECTIVECOMMENT |
+    <_ECMT_DIRECTIVECOMMENT_e: "/" > : DIRECTIVE
 }
 
 <RVALUES>
@@ -2841,11 +2940,20 @@ TOKEN : {
     <MOREVAL: <MANIFEST> >
 }
 
+
 <RVALUES_COMMENT>
 SKIP : {
-    <_ECMT7: ~["*"] | "*" ~["/"] > : RVALUES_COMMENT |
-    <_EECMT7: <ENDCMT> > : RVALUES
+    <_ECMT_RVALUES_ns: ~["*"] > : RVALUES_COMMENT |
+    <_ECMT_RVALUES_s:   "*" > : RVALUES_COMMENT_END
 }
+
+<RVALUES_COMMENT_END>
+SKIP : {
+    <_ECMT_RVALUES_es: "*" > : RVALUES_COMMENT_END |
+    <_ECMT_RVALUES_eo: ~["*","/"] > : RVALUES_COMMENT |
+    <_ECMT_RVALUES_e:  "/" > : RVALUES
+}
+
 
 <QUOTED_VAL>
 SKIP:
@@ -2868,12 +2976,25 @@ TOKEN : {
 
 <MACROARGS>
 SKIP : {
-    <_ECMT5: <CMT><ECMT>(~["*"])* "*" ("*" | ~["*","/"] (~["*"])* "*")*  "/"> : MACROARGS |
-    <_CMT5: <CMT><CMT>(~["\n","\r"])+ > : MACROARGS |
+    <_ECMT_MACROARGS: <CMT><ECMT> > : MACROARGSCOMMENT |
+    <_CMT_MACROARGS: <CMT><CMT>(~["\n","\r"])+ > : MACROARGS |
     <_MWSP: ","> : MACROARGS |
 
     <_COD3: <COD> > : MACROARGS |
     <_MACWSP: <WSP>> : MACROARGS
+}
+
+<MACROARGSCOMMENT>
+SKIP : {
+    <_ECMT_MACROARGSns: ~["*"] > : MACROARGSCOMMENT |
+    <_ECMT_MACROARGSs: "*" > : MACROARGSCOMMENT_END
+}
+
+<MACROARGSCOMMENT_END>
+SKIP : {
+    <_ECMT_MACROARGSes: "*" > : MACROARGSCOMMENT_END |
+    <_ECMT_MACROARGSeo: ~["*","/"] > : MACROARGSCOMMENT |
+    <_ECMT_MACROARGSe: "/" > : MACROARGS
 }
 
 <CONTARG>
@@ -2918,7 +3039,14 @@ TOKEN:
 
 <MACROVALS_COMMENT>
 SKIP : {
-    <_ECMT9: ~["*"] | "*" ~["/"] > : MACROVALS_COMMENT |
-    <_EEECMT9: <ENDCMT> > : MACROVALS |
-    <_EECMT9: <ENDCMT> (<WSP>)* <ENDL> > : DEFAULT
+    <_ECMT_MACROVALS_ns: ~["*"] > : MACROVALS_COMMENT |
+    <_ECMT_MACROVALS_s: "*" > : MACROVALS_COMMENT_END
+}
+
+<MACROVALS_COMMENT_END>
+SKIP : {
+    <_ECMT_MACROVALS_es: "*" > : MACROVALS_COMMENT_END |
+    <_ECMT_MACROVALS_eo: ~["*","/"] > : MACROVALS_COMMENT |
+    <_ECMT_MACROVALS_e:  "/" > : MACROVALS |
+    <_ECMT_MACROVALS_ew: "/" (<WSP>)* <ENDL> > : DEFAULT
 }

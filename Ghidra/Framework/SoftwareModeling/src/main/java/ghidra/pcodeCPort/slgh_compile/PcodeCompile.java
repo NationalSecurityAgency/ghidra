@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,13 +32,14 @@ import ghidra.pcodeCPort.semantics.ConstTpl.v_field;
 import ghidra.pcodeCPort.slghsymbol.*;
 import ghidra.pcodeCPort.space.AddrSpace;
 import ghidra.sleigh.grammar.Location;
+import ghidra.sleigh.grammar.RadixBigInteger;
 
 public abstract class PcodeCompile {
 
 	public final static Logger log = LogManager.getLogger(PcodeCompile.class);
 
-	public VectorSTL<String> noplist = new VectorSTL<String>();
-	private int local_labelcount;
+	public VectorSTL<String> noplist = new VectorSTL<>();
+	private int localLabelcount;
 
 	private int errors;
 	private int warnings;
@@ -55,18 +56,24 @@ public abstract class PcodeCompile {
 
 	public abstract AddrSpace getConstantSpace();
 
+	public abstract int getDefaultConstantSize();
+
 	public abstract AddrSpace getUniqueSpace();
 
 	public abstract long allocateTemp();
 
 	public abstract void addSymbol(SleighSymbol sym);
 
-	public abstract SleighSymbol findSymbol(String nm);
+	public abstract SleighSymbol findSymbol(Location loc, String nm);
+
+	public abstract RadixBigInteger parseIntegerLiteral(Location loc, String text);
 
 	public abstract SectionSymbol newSectionSymbol(Location where, String text);
 
 	public abstract VectorSTL<OpTpl> createCrossBuild(Location find, VarnodeTpl v,
 			SectionSymbol second);
+
+	public abstract ConstructTpl enterSection(Location where);
 
 	public abstract SectionVector standaloneSection(ConstructTpl c);
 
@@ -115,13 +122,11 @@ public abstract class PcodeCompile {
 	}
 
 	public void resetLabelCount() {
-		local_labelcount = 0;
+		localLabelcount = 0;
 	}
 
-	private void force_size(VarnodeTpl vt, ConstTpl size, VectorSTL<OpTpl> ops)
-
-	{
-//        entry("force_size", vt, size, ops);
+	private void forceSize(VarnodeTpl vt, ConstTpl size, VectorSTL<OpTpl> ops) {
+		// entry("forceSize", vt, size, ops);
 		if ((vt.getSize().getType() != ConstTpl.const_type.real) || (vt.getSize().getReal() != 0)) {
 			return; // Size already exists
 		}
@@ -180,7 +185,7 @@ public abstract class PcodeCompile {
 	// Create a label symbol
 	public LabelSymbol defineLabel(Location location, String name) {
 		entry("defineLabel", location, name);
-		LabelSymbol labsym = new LabelSymbol(location, name, local_labelcount++);
+		LabelSymbol labsym = new LabelSymbol(location, name, localLabelcount++);
 		addSymbol(labsym); // Add symbol to local scope
 		return labsym;
 	}
@@ -385,7 +390,7 @@ public abstract class PcodeCompile {
 		op.setOutput(outvn);
 		ptr.ops.push_back(op);
 		if (qual.getSize() > 0) {
-			force_size(outvn, new ConstTpl(ConstTpl.const_type.real, qual.getSize()), ptr.ops);
+			forceSize(outvn, new ConstTpl(ConstTpl.const_type.real, qual.getSize()), ptr.ops);
 		}
 		ptr.outvn = new VarnodeTpl(location, outvn);
 		return ptr;
@@ -405,7 +410,7 @@ public abstract class PcodeCompile {
 		op.addInput(ptr.outvn);
 		op.addInput(val.outvn);
 		res.push_back(op);
-		force_size(val.outvn, new ConstTpl(ConstTpl.const_type.real, qual.getSize()), res);
+		forceSize(val.outvn, new ConstTpl(ConstTpl.const_type.real, qual.getSize()), res);
 		ptr.outvn = null;
 		val.outvn = null;
 		return res;
@@ -467,10 +472,6 @@ public abstract class PcodeCompile {
 			return null;
 		}
 		if ((numbits % 8) != 0) {
-			return null;
-		}
-
-		if (basevn.getSpace().isUniqueSpace()) {
 			return null;
 		}
 
@@ -559,7 +560,7 @@ public abstract class PcodeCompile {
 		}
 
 		// We know what the size of the input has to be
-		force_size(rhs.outvn, new ConstTpl(ConstTpl.const_type.real, smallsize), rhs.ops);
+		forceSize(rhs.outvn, new ConstTpl(ConstTpl.const_type.real, smallsize), rhs.ops);
 
 		ExprTree res;
 		VarnodeTpl finalout = buildTruncatedVarnode(location, vn, bitoffset, numbits);
@@ -676,7 +677,7 @@ public abstract class PcodeCompile {
 		if (maskneeded) {
 			appendOp(location, OpCode.CPUI_INT_AND, res, mask, finalsize);
 		}
-		force_size(res.outvn, new ConstTpl(ConstTpl.const_type.real, finalsize), res.ops);
+		forceSize(res.outvn, new ConstTpl(ConstTpl.const_type.real, finalsize), res.ops);
 		return res;
 	}
 
@@ -735,7 +736,7 @@ public abstract class PcodeCompile {
 			match = op.getIn(i);
 		}
 		if (match != null) {
-			force_size(vt, match.getSize(), ops);
+			forceSize(vt, match.getSize(), ops);
 		}
 	}
 
@@ -745,12 +746,11 @@ public abstract class PcodeCompile {
 		// Right now this is written assuming operands for the constructor are
 		// are built before any other pcode in the constructor is generated
 
-//        entry("fillinZero", op, ops);
+		// entry("fillinZero", op, ops);
 		int inputsize, i;
 
 		switch (op.getOpcode()) {
-			case CPUI_COPY: // Instructions where all inputs and output are same
-				// size
+			case CPUI_COPY: // Instructions where all inputs and output are same size
 			case CPUI_INT_ADD:
 			case CPUI_INT_SUB:
 			case CPUI_INT_2COMP:
@@ -802,7 +802,7 @@ public abstract class PcodeCompile {
 			case CPUI_BOOL_AND:
 			case CPUI_BOOL_OR:
 				if (op.getOut().isZeroSize()) {
-					force_size(op.getOut(), new ConstTpl(ConstTpl.const_type.real, 1), ops);
+					forceSize(op.getOut(), new ConstTpl(ConstTpl.const_type.real, 1), ops);
 				}
 				inputsize = op.numInput();
 				for (i = 0; i < inputsize; ++i) {
@@ -818,27 +818,27 @@ public abstract class PcodeCompile {
 			case CPUI_INT_SRIGHT:
 				if (op.getOut().isZeroSize()) {
 					if (!op.getIn(0).isZeroSize()) {
-						force_size(op.getOut(), op.getIn(0).getSize(), ops);
+						forceSize(op.getOut(), op.getIn(0).getSize(), ops);
 					}
 				}
 				else if (op.getIn(0).isZeroSize()) {
-					force_size(op.getIn(0), op.getOut().getSize(), ops);
+					forceSize(op.getIn(0), op.getOut().getSize(), ops);
 				}
 				// fallthru to subpiece constant check
 			case CPUI_SUBPIECE:
 				if (op.getIn(1).isZeroSize()) {
-					force_size(op.getIn(1), new ConstTpl(ConstTpl.const_type.real, 4), ops);
+					forceSize(op.getIn(1), new ConstTpl(ConstTpl.const_type.real, 4), ops);
 				}
 				break;
 			case CPUI_CPOOLREF:
 				if (op.getOut().isZeroSize() && (!op.getIn(0).isZeroSize())) {
-					force_size(op.getOut(), op.getIn(0).getSize(), ops);
+					forceSize(op.getOut(), op.getIn(0).getSize(), ops);
 				}
 				if (op.getIn(0).isZeroSize() && (!op.getOut().isZeroSize())) {
-					force_size(op.getIn(0), op.getOut().getSize(), ops);
+					forceSize(op.getIn(0), op.getOut().getSize(), ops);
 				}
 				for (i = 1; i < op.numInput(); ++i) {
-					force_size(op.getIn(i), new ConstTpl(ConstTpl.const_type.real, 8), ops);
+					forceSize(op.getIn(i), new ConstTpl(ConstTpl.const_type.real, 8), ops);
 				}
 			default:
 				break;

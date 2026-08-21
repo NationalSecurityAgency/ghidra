@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,24 +23,24 @@ import ghidra.features.base.codecompare.panel.CodeComparisonActionContext;
  */
 public class ListingComparisonActionContext extends CodeComparisonActionContext {
 
-	private ListingCodeComparisonPanel codeComparisonPanel = null;
+	private ListingCodeComparisonView codeComparisonPanel = null;
 
 	/**
 	 * Constructor for a dual listing's action context.
 	 * @param provider the provider that uses this action context.
 	 * @param panel the ListingCodeComparisonPanel that generated this context
 	 */
-	public ListingComparisonActionContext(ComponentProvider provider, ListingCodeComparisonPanel panel) {
+	public ListingComparisonActionContext(ComponentProvider provider, ListingCodeComparisonView panel) {
 		super(provider, panel, panel.getActiveListingPanel().getFieldPanel());
 		this.codeComparisonPanel = panel;
 	}
 
 	/**
-	 * Returns the {@link ListingCodeComparisonPanel} that generated this context
+	 * Returns the {@link ListingCodeComparisonView} that generated this context
 	 * @return the listing comparison panel that generated this context
 	 */
 	@Override
-	public ListingCodeComparisonPanel getCodeComparisonPanel() {
+	public ListingCodeComparisonView getCodeComparisonView() {
 		return codeComparisonPanel;
 	}
 

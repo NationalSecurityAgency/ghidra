@@ -1,0 +1,43 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+  Switch in a loop and also depending on a variable set to a constant locally and
+  modified indirectly.
+-->
+<bytechunk space="ram" offset="0x100000" readonly="true">
+f30f1efa4883ec2848897c24084889e7
+488974241048c704240000000048c744
+241800000000e8d50f00004c8b14244c
+8b5c241031c9488d3583000000bf6500
+000041b9030000004d85d2745b4d8d04
+0b4883f90677574863048e4801f03eff
+e0498d480aeb39498d48f6eb33496bc8
+07eb2d4c89c0489949f7f94889c1eb20
+4c89c0489948f7ff4889d1eb134c89c1
+4881f1ba0a0000eb074c89c14883c920
+4883f9637ea2eb0d4983c8ffeb0749c7
+c0feffffff4c89c04883c428c3
+</bytechunk>
+<bytechunk space="ram" offset="0x1000c0" readonly="true">
+a1ffffffa7ffffffadffffffb3ffffff
+c0ffffffcdffffffd9ffffff
+</bytechunk>
+<symbol space="ram" offset="0x100000" name="switchmulti"/>
+</binaryimage>
+<script>
+  <com>option readonly on</com>
+  <com>lo fu switchmulti</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Switch Multi #1" min="7" max="7">case .*:</stringmatch>
+<stringmatch name="Switch Multi #2" min="1" max="1">uVar1 \+ 10;</stringmatch>
+<stringmatch name="Switch Multi #3" min="1" max="1">uVar1 \- 10;</stringmatch>
+<stringmatch name="Switch Multi #4" min="1" max="1">uVar1 \* 7;</stringmatch>
+<stringmatch name="Switch Multi #5" min="1" max="1">uVar1 / 3;</stringmatch>
+<stringmatch name="Switch Multi #6" min="1" max="1">uVar1 % 0x65;</stringmatch>
+<stringmatch name="Switch Multi #7" min="1" max="1">uVar1 \^ 0xaba;</stringmatch>
+<stringmatch name="Switch Multi #8" min="1" max="1">uVar1 \| 0x20;</stringmatch>
+<stringmatch name="Switch Multi #9" min="1" max="1">return 0xfffffffffffffffe;</stringmatch>
+</decompilertest>

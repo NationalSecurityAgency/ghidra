@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,7 +47,8 @@ public class DebugData {
 		X_DATA(7),
 		P_DATA(8),
 		NEW_FRAME_POINTER_OMISSION(9),
-		SECTION_HEADER_ORIG(10);
+		SECTION_HEADER_ORIG(10),
+		UNKNOWN_DEBUG_11(11); // should be renamed when identified
 
 		private final int value;
 
@@ -181,6 +182,20 @@ public class DebugData {
 	}
 
 	/**
+	 * Returns the New Frame Pointer Omission data (FrameDataRecord)
+	 * @return the frame data or null if does not exist or problem parsing
+	 * @throws CancelledException upon user cancellation
+	 */
+	public List<FrameDataRecord> getNewFramePointerOmissionData()
+			throws CancelledException {
+		int streamNum = getDebugStream(DebugType.NEW_FRAME_POINTER_OMISSION);
+		if (streamNum == MsfStream.NIL_STREAM_NUMBER) {
+			return null;
+		}
+		return deserializeNewFramePointerOmissionData(streamNum);
+	}
+
+	/**
 	 * Deserialize {@link DebugData} header from the {@link PdbByteReader} input.  This parses
 	 *  stream numbers for varying Debug Types--the order/location of the stream number is for
 	 *  each particular debug type (e.g., the first stream number read is for the stream containing
@@ -258,6 +273,9 @@ public class DebugData {
 					break;
 				case SECTION_HEADER_ORIG:
 					// imageSectionHeadersOrig = deserializeSectionHeaders(streamNum);
+					break;
+				case UNKNOWN_DEBUG_11:
+					// unknown
 					break;
 			}
 		}
@@ -426,6 +444,28 @@ public class DebugData {
 
 	}
 
+	private List<FrameDataRecord> deserializeNewFramePointerOmissionData(int streamNum)
+			throws CancelledException {
+		// TODO: check implementation for completeness.
+		try {
+			PdbByteReader reader = pdb.getReaderForStreamNumber(streamNum);
+			List<FrameDataRecord> frameData = new ArrayList<>();
+			while (reader.hasMore()) {
+				pdb.checkCancelled();
+				FrameDataRecord frameDataRecord = new FrameDataRecord();
+				frameDataRecord.parse(reader);
+				frameData.add(frameDataRecord);
+			}
+			return frameData;
+		}
+		catch (PdbException | IOException e) {
+			//catch (IOException e) {
+			PdbLog.message("Returning null Debug New Frame Pointer Omission Data due to" +
+				" problem during deserialization from stream" + streamNum + ": " + e.getMessage());
+			return null;
+		}
+	}
+
 	/**
 	 * Dumps the {@link DebugData}.  This package-protected method is for debugging only
 	 * @param writer {@link Writer} to which to write the debug dump
@@ -503,6 +543,16 @@ public class DebugData {
 			}
 		}
 		writer.write("End PData---------------------------------------------------\n");
+
+		writer.write("NewFramePointerOmissionData---------------------------------\n");
+		List<FrameDataRecord> frameData = getNewFramePointerOmissionData();
+		if (frameData != null) {
+			for (FrameDataRecord frameDataRecord : frameData) {
+				pdb.checkCancelled();
+				frameDataRecord.dump(writer);
+			}
+		}
+		writer.write("End NewFramePointerOmissionData-----------------------------\n");
 
 		writer.write("End DebugData-----------------------------------------------\n");
 	}

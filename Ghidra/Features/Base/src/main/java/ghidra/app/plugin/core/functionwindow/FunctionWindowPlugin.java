@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,7 @@ import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.services.FunctionComparisonService;
 import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.model.DomainObjectListenerBuilder;
+import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -33,6 +34,7 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.ProgramChangeRecord;
+import ghidra.program.util.ProgramLocation;
 import ghidra.util.task.SwingUpdateManager;
 
 //@formatter:off
@@ -98,6 +100,16 @@ public class FunctionWindowPlugin extends ProgramPlugin {
 		}
 	}
 
+	@Override
+	public void readConfigState(SaveState saveState) {
+		provider.readConfigState(saveState);
+	}
+
+	@Override
+	public void writeConfigState(SaveState saveState) {
+		provider.writeConfigState(saveState);
+	}
+
 	private DomainObjectListener createDomainObjectListener() {
 		// @formatter:off
 		return new DomainObjectListenerBuilder(this)
@@ -159,6 +171,11 @@ public class FunctionWindowPlugin extends ProgramPlugin {
 	protected void programDeactivated(Program program) {
 		program.removeListener(domainObjectListener);
 		provider.programClosed();
+	}
+
+	@Override
+	protected void locationChanged(ProgramLocation loc) {
+		provider.locationChanged(loc);
 	}
 
 	Program getProgram() {

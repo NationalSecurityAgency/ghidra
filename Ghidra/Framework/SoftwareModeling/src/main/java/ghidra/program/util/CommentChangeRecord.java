@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@ package ghidra.program.util;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 
 /**
  * Change record for comment changes
@@ -24,16 +25,17 @@ import ghidra.program.model.listing.CodeUnit;
 public class CommentChangeRecord extends ProgramChangeRecord {
 
 	// types defined in CodeUnit
-	private int commentType;
+	private CommentType commentType;
 
 	/**
 	 * Constructor
-	 * @param commentType the type of comment (as defined in {@link CodeUnit})
+	 * @param commentType {@link CommentType comment type}
 	 * @param address the address of the comment change
 	 * @param oldValue the old comment (may be null for a new comment)
 	 * @param newValue the new comment (may be null if the comment was deleted)
 	 */
-	public CommentChangeRecord(int commentType, Address address, String oldValue, String newValue) {
+	public CommentChangeRecord(CommentType commentType, Address address, String oldValue,
+			String newValue) {
 		super(ProgramEvent.COMMENT_CHANGED, address, address, null, oldValue, newValue);
 		this.commentType = commentType;
 	}
@@ -42,7 +44,7 @@ public class CommentChangeRecord extends ProgramChangeRecord {
 	 * Returns the comment type as defined in {@link CodeUnit}.
 	 * @return the comment type
 	 */
-	public int getCommentType() {
+	public CommentType getCommentType() {
 		return commentType;
 	}
 

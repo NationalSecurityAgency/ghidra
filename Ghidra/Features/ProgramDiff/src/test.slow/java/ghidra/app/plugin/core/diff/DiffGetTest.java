@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,7 +57,7 @@ public class DiffGetTest extends DiffTestAdapter {
 		assertTrue(!limitToSelectionCB.isSelected());
 		assertEquals("Entire Program", limitText.getText());
 
-		pressButtonByText(getDiffsDialog, "OK");
+		pressButtonByText(getDiffsDialog, "OK", false);
 		waitForDiff();
 
 		assertEquals(new ProgramSelection(), diffPlugin.getDiffHighlightSelection());
@@ -83,9 +83,10 @@ public class DiffGetTest extends DiffTestAdapter {
 		assertTrue(!limitToSelectionCB.isSelected());
 		assertEquals("Entire Program", limitText.getText());
 
-		pressButtonByText(getDiffsDialog, "OK");
+		pressButtonByText(getDiffsDialog, "OK", false);
 		getDiffsDialog = waitForDialogComponent(ExecuteDiffDialog.class);
 		assertNotNull(getDiffsDialog);
+		waitForSwing();
 		JLabel statusLabel = (JLabel) findComponentByName(getDiffsDialog, "statusLabel");
 		assertEquals("At least one difference type must be checked.", statusLabel.getText());
 		assertEquals(new ProgramSelection(), diffPlugin.getDiffHighlightSelection());
@@ -109,7 +110,7 @@ public class DiffGetTest extends DiffTestAdapter {
 		assertTrue(!limitToSelectionCB.isSelected());
 		assertEquals("Entire Program", limitText.getText());
 
-		pressButtonByText(getDiffsDialog, "OK");
+		pressButtonByText(getDiffsDialog, "OK", false);
 		waitForDiff();
 		waitForSwing();
 		assertEquals(getSetupAllDiffsSet(), diffPlugin.getDiffHighlightSelection());
@@ -131,7 +132,7 @@ public class DiffGetTest extends DiffTestAdapter {
 		assertTrue(!bookmarkCB.isSelected());
 		assertTrue(propertiesCB.isSelected());
 
-		pressButtonByText(getDiffsDialog, "OK");
+		pressButtonByText(getDiffsDialog, "OK", false);
 		waitForDiff();
 		AddressSet as = getSetupCommentDiffs().union(getSetupPropertyDiffs());
 		assertEquals(new ProgramSelection(as), diffPlugin.getDiffHighlightSelection());
@@ -151,7 +152,7 @@ public class DiffGetTest extends DiffTestAdapter {
 		setCheckBoxes(true, new JCheckBox[] { refCB });
 		as = as.union(getSetupReferenceDiffs());
 
-		pressButtonByText(getDiffsDialog, "OK");
+		pressButtonByText(getDiffsDialog, "OK", false);
 		waitForDiff();
 		assertEquals(new ProgramSelection(as), diffPlugin.getDiffHighlightSelection());
 	}
@@ -171,7 +172,7 @@ public class DiffGetTest extends DiffTestAdapter {
 		assertTrue(limitToSelectionCB.isSelected());
 		assertEquals("[01001708, 01003001]\n", limitText.getText());
 
-		pressButtonByText(getDiffsDialog, "OK");
+		pressButtonByText(getDiffsDialog, "OK", false);
 		waitForDiff();
 
 		assertEquals(getSetupAllDiffsSet().intersect(selectionSet),
@@ -215,7 +216,7 @@ public class DiffGetTest extends DiffTestAdapter {
 		assertEquals(false, propertiesCB.isSelected());
 		assertEquals(false, limitToSelectionCB.isSelected());
 
-		pressButtonByText(getDiffsDialog, "OK");
+		pressButtonByText(getDiffsDialog, "OK", false);
 		waitForDiff();
 		assertEquals("At least one difference type must be checked.",
 			getDiffsDialog.getStatusText());
@@ -234,7 +235,7 @@ public class DiffGetTest extends DiffTestAdapter {
 		assertEquals(true, propertiesCB.isSelected());
 		assertEquals(false, limitToSelectionCB.isSelected());
 
-		pressButtonByText(getDiffsDialog, "OK");
+		pressButtonByText(getDiffsDialog, "OK", false);
 		waitForDiff();
 		waitForSwing(); // Wait for Diff Highlight to get displayed.
 		assertEquals(getSetupAllDiffsSet(), diffPlugin.getDiffHighlightSelection());
@@ -261,7 +262,7 @@ public class DiffGetTest extends DiffTestAdapter {
 		assertTrue(!limitToSelectionCB.isSelected());
 		assertEquals("Entire Program", limitText.getText());
 
-		pressButtonByText(getDiffsDialog, "OK");
+		pressButtonByText(getDiffsDialog, "OK", false);
 		waitForDiff();
 		waitForSwing();
 
@@ -286,7 +287,7 @@ public class DiffGetTest extends DiffTestAdapter {
 		assertEquals("[01006202, 01006400]\n", limitText.getText());
 		waitForSwing();
 
-		pressButtonByText(getDiffsDialog, "OK");
+		pressButtonByText(getDiffsDialog, "OK", false);
 		waitForDiff();
 
 		assertEquals(getSetupLabelDiffs().intersect(selectionSet),
@@ -301,7 +302,7 @@ public class DiffGetTest extends DiffTestAdapter {
 		setAllTypes(false);
 		setToggleButtonSelected(refCB, true);
 		waitForSwing();
-		pressButtonByText(getDiffsDialog, "OK");
+		pressButtonByText(getDiffsDialog, "OK", false);
 		waitForDiff();
 		assertEquals(getSetupReferenceDiffs(), diffPlugin.getDiffHighlightSelection());
 	}
@@ -312,7 +313,7 @@ public class DiffGetTest extends DiffTestAdapter {
 		setAllTypes(false);
 		setToggleButtonSelected(labelCB, true);
 		waitForSwing();
-		pressButtonByText(getDiffsDialog, "OK");
+		pressButtonByText(getDiffsDialog, "OK", false);
 		waitForDiff();
 		assertEquals(getSetupLabelDiffs(), diffPlugin.getDiffHighlightSelection());
 	}
@@ -323,7 +324,7 @@ public class DiffGetTest extends DiffTestAdapter {
 		setAllTypes(false);
 		setToggleButtonSelected(functionCB, true);
 		waitForSwing();
-		pressButtonByText(getDiffsDialog, "OK");
+		pressButtonByText(getDiffsDialog, "OK", false);
 		waitForDiff();
 		assertEquals(getSetupFunctionDiffs(), diffPlugin.getDiffHighlightSelection());
 	}
@@ -337,7 +338,7 @@ public class DiffGetTest extends DiffTestAdapter {
 		setToggleButtonSelected(propertiesCB, true);
 		waitForSwing();
 
-		pressButtonByText(getDiffsDialog, "OK");
+		pressButtonByText(getDiffsDialog, "OK", false);
 		waitForDiff();
 
 		assertEquals(getSetupPropertyDiffs(), diffPlugin.getDiffHighlightSelection());

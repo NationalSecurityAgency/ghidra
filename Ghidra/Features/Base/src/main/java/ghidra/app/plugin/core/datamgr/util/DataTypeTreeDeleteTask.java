@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,8 @@ import ghidra.app.plugin.core.datamgr.DataTypesProvider;
 import ghidra.app.plugin.core.datamgr.archive.Archive;
 import ghidra.app.plugin.core.datamgr.tree.*;
 import ghidra.program.model.data.*;
+import ghidra.program.model.listing.Program;
+import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
@@ -38,6 +40,8 @@ public class DataTypeTreeDeleteTask extends Task {
 	private DataTypeManagerPlugin plugin;
 	private int nodeCount;
 
+	private boolean hasClosedCategories = false;
+
 	public DataTypeTreeDeleteTask(DataTypeManagerPlugin plugin, List<GTreeNode> nodes) {
 		super("Delete Nodes", true, true, true);
 		this.plugin = plugin;
@@ -48,15 +52,19 @@ public class DataTypeTreeDeleteTask extends Task {
 	}
 
 	private Map<ArchiveNode, List<GTreeNode>> groupNodeByArchive(List<GTreeNode> nodes) {
-		Map<ArchiveNode, List<GTreeNode>> archiveNodeMap = new HashMap<>();
 
+		Map<ArchiveNode, List<GTreeNode>> archiveNodeMap = new HashMap<>();
 		for (GTreeNode node : nodes) {
 			ArchiveNode archiveNode = ((DataTypeTreeNode) node).getArchiveNode();
-			List<GTreeNode> archiveNodeList = archiveNodeMap.get(archiveNode);
-			if (archiveNodeList == null) {
-				archiveNodeList = new ArrayList<>();
-				archiveNodeMap.put(archiveNode, archiveNodeList);
+			List<GTreeNode> archiveNodeList = archiveNodeMap.computeIfAbsent(archiveNode,
+				n -> new ArrayList<>());
+
+			if (node instanceof CategoryNode) {
+				if (!node.isLoaded()) {
+					hasClosedCategories = true;
+				}
 			}
+
 			archiveNodeList.add(node);
 		}
 		return archiveNodeMap;
@@ -95,6 +103,7 @@ public class DataTypeTreeDeleteTask extends Task {
 		for (List<GTreeNode> list : nodesByArchive.values()) {
 			total += list.size();
 		}
+
 		monitor.initialize(total);
 
 		//
@@ -108,8 +117,14 @@ public class DataTypeTreeDeleteTask extends Task {
 		DataTypesProvider provider = plugin.getProvider();
 		DataTypeArchiveGTree tree = provider.getGTree();
 		GTreeState treeState = tree.getTreeState();
+		boolean collapseTree = nodeCount > NODE_COUNT_FOR_COLLAPSING_TREE || hasClosedCategories;
+		Program program = plugin.getProgram();
+		boolean wereEventsEnabled = program.isSendingEvents();
 		try {
-			if (nodeCount > NODE_COUNT_FOR_COLLAPSING_TREE) {
+			program.setEventsEnabled(false);
+
+			if (collapseTree) {
+				monitor.setIndeterminate(true);
 				collapseArchives(tree);
 			}
 
@@ -124,7 +139,16 @@ public class DataTypeTreeDeleteTask extends Task {
 			// nothing to report
 		}
 		finally {
-			tree.restoreTreeState(treeState);
+
+			// Allow any events to go out before we restore the tree state so that the tree does 
+			// not have to process any events it is not concerned with.
+			program.flushEvents();
+			program.getDataTypeManager().flushEvents();
+			program.setEventsEnabled(wereEventsEnabled);
+			if (collapseTree) {
+				Swing.allowSwingToProcessEvents();
+				tree.restoreTreeState(treeState);
+			}
 		}
 	}
 
@@ -140,18 +164,14 @@ public class DataTypeTreeDeleteTask extends Task {
 			throws CancelledException {
 
 		Archive archive = archiveNode.getArchive();
-		DataTypeManager dataTypeManager = archive.getDataTypeManager();
-		int transactionID = dataTypeManager.startTransaction("Delete Category/DataType");
-		try {
+		DataTypeManager dtm = archive.getDataTypeManager();
+		dtm.withTransaction("Delete Category/DataType", () -> {
 			for (GTreeNode node : list) {
 				monitor.checkCancelled();
 				removeNode(node, monitor);
 				monitor.incrementProgress(1);
 			}
-		}
-		finally {
-			dataTypeManager.endTransaction(transactionID, true);
-		}
+		});
 	}
 
 	private void removeNode(GTreeNode node, TaskMonitor monitor) {
@@ -159,7 +179,7 @@ public class DataTypeTreeDeleteTask extends Task {
 			DataTypeNode dataTypeNode = (DataTypeNode) node;
 			DataType dataType = dataTypeNode.getDataType();
 			DataTypeManager dataTypeManager = dataType.getDataTypeManager();
-			dataTypeManager.remove(dataType, monitor);
+			dataTypeManager.remove(dataType);
 		}
 		else {
 			CategoryNode categoryNode = (CategoryNode) node;

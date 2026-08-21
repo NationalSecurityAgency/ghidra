@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ import ghidra.app.util.viewer.field.*;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
-import ghidra.app.util.viewer.listingpanel.MarginProvider;
+import ghidra.app.util.viewer.listingpanel.ListingMarginProvider;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.program.model.address.Address;
@@ -138,11 +138,11 @@ public class BlockModelScreenShots extends GhidraScreenShotGenerator {
 		final ListingPanel lp = cb.getListingPanel();
 
 		@SuppressWarnings("unchecked")
-		final List<MarginProvider> list =
-			new ArrayList<>((List<MarginProvider>) getInstanceField("marginProviders", lp));
+		final List<ListingMarginProvider> list =
+			new ArrayList<>((List<ListingMarginProvider>) getInstanceField("marginProviders", lp));
 		runSwing(() -> {
 			invokeInstanceMethod("buildPanels", lp);
-			for (MarginProvider marginProvider : list) {
+			for (ListingMarginProvider marginProvider : list) {
 				lp.removeMarginProvider(marginProvider);
 			}
 		});

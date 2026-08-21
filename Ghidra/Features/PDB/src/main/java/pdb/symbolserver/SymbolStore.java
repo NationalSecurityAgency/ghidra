@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,6 @@ public interface SymbolStore extends SymbolServer {
 	 * Returns the 'admin' directory of this SymbolStore, which allows files created here
 	 * to be efficiently {@link #giveFile(SymbolFileInfo, File, String, TaskMonitor) given}
 	 * to the store.
-	 * <p>
 	 * 
 	 * @return directory 
 	 */
@@ -38,7 +37,6 @@ public interface SymbolStore extends SymbolServer {
 	/**
 	 * Returns an absolute {@link File} instance based on the specified relative path
 	 * to a file inside the symbol store.
-	 * <p>
 	 * 
 	 * @param path relative local path
 	 * @return absolute {@link File} based on the specified relative path
@@ -65,7 +63,6 @@ public interface SymbolStore extends SymbolServer {
 
 	/**
 	 * Places the contents of the stream into a file in this SymbolStore.
-	 * <p>
 	 * 
 	 * @param symbolFileInfo {@link SymbolFileInfo} bag of information about the file
 	 * @param symbolServerInputStream the stream to ingest

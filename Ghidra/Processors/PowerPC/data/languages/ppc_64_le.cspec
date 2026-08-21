@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This cspec is based upon the PowerPC 64-bit ELF ABI specification -->
+<!-- Very similar to the PowerPC 64-bit big-endian cspec, but does not reverse justification when
+     assigning odd datatype sizes -->
+<compiler_spec>
+  <data_organization>
+     <machine_alignment value="8" />
+     <default_alignment value="1" />
+     <default_pointer_alignment value="8" />
+     <pointer_size value="8" />
+     <wchar_size value="4" />
+     <short_size value="2" />
+     <integer_size value="4" />
+     <long_size value="8" />
+     <long_long_size value="8" />
+     <float_size value="4" />
+     <double_size value="8" />
+     <long_double_size value="16" />
+     <size_alignment_map>
+          <entry size="1" alignment="1" />
+          <entry size="2" alignment="2" />
+          <entry size="4" alignment="4" />
+          <entry size="8" alignment="8" />
+          <entry size="16" alignment="16" />
+     </size_alignment_map>
+  </data_organization>
+  <global>
+    <range space="ram"/>
+  </global>
+  <stackpointer register="r1" space="ram"/>
+  <default_proto>
+    <prototype name="__stdcall" extrapop="0" stackshift="0">
+      <input>
+        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
+          <register name="f1"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
+          <register name="f2"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
+          <register name="f3"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
+          <register name="f4"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
+          <register name="f5"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
+          <register name="f6"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
+          <register name="f7"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
+          <register name="f8"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
+          <register name="f9"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
+          <register name="f10"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
+          <register name="f11"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
+          <register name="f12"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
+          <register name="f13"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="inttype">
+          <register name="r3"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="inttype">
+          <register name="r4"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="inttype">
+          <register name="r5"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="inttype">
+          <register name="r6"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="inttype">
+          <register name="r7"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="inttype">
+          <register name="r8"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="inttype">
+          <register name="r9"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="inttype">
+          <register name="r10"/>
+        </pentry>
+        <pentry minsize="1" maxsize="500" align="8">
+          <addr offset="112" space="stack"/>
+        </pentry>
+        <rule>
+          <datatype name="homogeneous-float-aggregate" maxprimitives="1"/>
+          <join storage="float"/>
+          <extra_stack afterstorage="general" afterbytes="64"/>
+          <consume_extra storage="general"/>
+        </rule>
+        <rule>
+          <datatype name="float"/>
+          <join storage="float"/>    <!-- The join is NOT aligned -->
+          <extra_stack afterstorage="general" afterbytes="64"/>
+          <consume_extra storage="general"/>
+        </rule>
+        <rule>
+          <datatype name="any"/>
+          <join align="true"/>        <!-- The join IS aligned -->
+        </rule>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="8" metatype="float" extension="float">
+          <register name="f1"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="inttype">
+          <register name="r3"/>
+        </pentry>
+        <rule>
+          <datatype name="struct"/>
+          <convert_to_ptr/>
+        </rule>
+        <rule>
+          <datatype name="union"/>
+          <convert_to_ptr/>
+        </rule>
+      </output>
+      <unaffected>
+        <register name="r14"/>
+        <register name="r15"/>
+        <register name="r16"/>
+        <register name="r17"/>
+        <register name="r18"/>
+        <register name="r19"/>
+        <register name="r20"/>
+        <register name="r21"/>
+        <register name="r22"/>
+        <register name="r23"/>
+        <register name="r24"/>
+        <register name="r25"/>
+        <register name="r26"/>
+        <register name="r27"/>
+        <register name="r28"/>
+        <register name="r29"/>
+        <register name="r30"/>
+        <register name="r31"/>
+        <register name="r1"/>
+        <!-- In cases where r2 does change, we assume it will get restored -->
+        <register name="r2"/>
+        <register name="r2Save"/>
+        <register name="f14"/>
+        <register name="f15"/>
+        <register name="f16"/>
+        <register name="f17"/>
+        <register name="f18"/>
+        <register name="f19"/>
+        <register name="f20"/>
+        <register name="f21"/>
+        <register name="f22"/>
+        <register name="f23"/>
+        <register name="f24"/>
+        <register name="f25"/>
+        <register name="f26"/>
+        <register name="f27"/>
+        <register name="f28"/>
+        <register name="f29"/>
+        <register name="f30"/>
+        <register name="f31"/>
+        <register name="cr2"/>
+        <register name="cr3"/>
+        <register name="cr4"/>
+      </unaffected>
+      <killedbycall>
+        <register name="r3"/>
+        <register name="f1"/>
+      </killedbycall>
+      <pcode inject="uponreturn">
+      	<body>
+      		# Inject pcode when returning from a function call to place the r2Save
+      		# value into 0x28(r1) which should be restored by the "ld r2,0x28(r1)" 
+      		# which immediately follows calls which comply with the PPC64 ABI spec.
+      		local saveR2ptr = r1 + 0x28;
+      		*:8 saveR2ptr = r2Save; 
+      	</body>
+      </pcode>
+    </prototype>
+  </default_proto>
+</compiler_spec>

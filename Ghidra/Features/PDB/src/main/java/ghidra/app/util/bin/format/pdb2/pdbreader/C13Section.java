@@ -24,10 +24,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Abstract class for C13 section types.
  */
-abstract class C13Section {
-	protected static final String dashes =
-		"------------------------------------------------------------\n";
-
+public abstract class C13Section {
 	private boolean ignore;
 
 	protected C13Section(boolean ignore) {
@@ -39,11 +36,13 @@ abstract class C13Section {
 	}
 
 	void dump(Writer writer, TaskMonitor monitor) throws IOException, CancelledException {
-		String n = getClass().getSimpleName();
-		int len = n.length();
-		writer.write(n + dashes.substring(len));
-		writer.write("End " + n + dashes.substring(len + 4));
+		PdbReaderUtils.dumpHead(writer, this);
+		dumpInternal(writer, monitor);
+		PdbReaderUtils.dumpTail(writer, this);
 	}
+
+	abstract protected void dumpInternal(Writer writer, TaskMonitor monitor)
+			throws IOException, CancelledException;
 
 	/**
 	 * Parse and return a {@link C13Section} of a specific type pointed to by a section record.
@@ -63,31 +62,31 @@ abstract class C13Section {
 
 		switch (type) {
 			case SYMBOLS:
-				return C13Symbols.parse(recordReader, ignore, monitor);
+				return SymbolsC13Section.parse(recordReader, ignore, monitor);
 			case LINES:
-				return C13Lines.parse(recordReader, ignore, monitor);
+				return LinesC13Section.parse(recordReader, ignore, monitor);
 			case STRING_TABLE:
-				return C13StringTable.parse(recordReader, ignore, monitor);
+				return StringTableC13Section.parse(recordReader, ignore, monitor);
 			case FILE_CHECKSUMS:
-				return C13FileChecksums.parse(recordReader, ignore, monitor);
+				return FileChecksumsC13Section.parse(recordReader, ignore, monitor);
 			case FRAMEDATA:
-				return C13FrameData.parse(recordReader, ignore, monitor);
+				return FrameDataC13Section.parse(recordReader, ignore, monitor);
 			case INLINEE_LINES:
-				return C13InlineeLines.parse(recordReader, ignore, monitor);
+				return InlineeLinesC13Section.parse(recordReader, ignore, monitor);
 			case CROSS_SCOPE_IMPORTS:
-				return C13CrossScopeImports.parse(recordReader, ignore, monitor);
+				return CrossScopeImportsC13Section.parse(recordReader, ignore, monitor);
 			case CROSS_SCOPE_EXPORTS:
-				return C13CrossScopeExports.parse(recordReader, ignore, monitor);
+				return CrossScopeExportsC13Section.parse(recordReader, ignore, monitor);
 			case IL_LINES:
-				return C13IlLines.parse(recordReader, ignore, monitor);
+				return IlLinesC13Section.parse(recordReader, ignore, monitor);
 			case FUNC_MDTOKEN_MAP:
-				return C13FuncMdTokenMap.parse(recordReader, ignore, monitor);
+				return FuncMdTokenMapC13Section.parse(recordReader, ignore, monitor);
 			case TYPE_MDTOKEN_MAP:
-				return C13TypeMdTokenMap.parse(recordReader, ignore, monitor);
+				return TypeMdTokenMapC13Section.parse(recordReader, ignore, monitor);
 			case MERGED_ASSEMBLY_INPUT:
-				return C13MergedAssemblyInput.parse(recordReader, ignore, monitor);
+				return MergedAssemblyInputC13Section.parse(recordReader, ignore, monitor);
 			case COFF_SYMBOL_RVA: // Relative Virtual Address
-				return C13CoffSymbolRva.parse(recordReader, ignore, monitor);
+				return CoffSymbolRvaC13Section.parse(recordReader, ignore, monitor);
 			default:
 				return UnknownC13Section.parse(recordReader, ignore, monitor);
 		}

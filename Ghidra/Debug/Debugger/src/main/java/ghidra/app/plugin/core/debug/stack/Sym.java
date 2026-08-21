@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,14 +22,12 @@ import ghidra.program.model.lang.Register;
 
 /**
  * A symbolic value tailored for stack unwind analysis
- * 
  * <p>
  * The goals of stack unwind analysis are 1) to figure the stack depth at a particular instruction,
  * 2) to figure the locations of saved registers on the stack, 3) to figure the location of the
  * return address, whether in a register or on the stack, and 4) to figure the change in stack depth
  * from calling the function. Not surprisingly, these are the fields of {@link UnwindInfo}. To these
  * ends, symbols may have only one of the following forms:
- * 
  * <ul>
  * <li>An opaque value: {@link OpaqueSym}, to represent expressions too complex.</li>
  * <li>A constant: {@link ConstSym}, to fold constants and use as offsets.</li>
@@ -39,10 +37,8 @@ import ghidra.program.model.lang.Register;
  * <li>A dereference of a stack offset, i.e., *(SP + c): {@link StackDerefSym}, to detect restored
  * registers and return address location</li>
  * </ul>
- * 
  * <p>
  * The rules are fairly straightforward:
- * 
  * <ul>
  * <li>a:Opaque + b:Any => Opaque()</li>
  * <li>a:Const + b:Const => Const(val=a.val + b.val)</li>
@@ -51,7 +47,6 @@ import ghidra.program.model.lang.Register;
  * <li>*a:Offset => Deref(offset=a.offset)</li>
  * <li>*a:Register(reg==SP) => Deref(offset=0)</li>
  * </ul>
- * 
  * <p>
  * Some minute operations are omitted for clarity. Any other operation results in Opaque(). There is
  * a small fault in that Register(reg=SP) and Offset(offset=0) represent the same thing, but with
@@ -97,6 +92,15 @@ sealed interface Sym {
 	Sym twosComp();
 
 	/**
+	 * Logical bitwise and this and another symbol with the given compiler context
+	 * 
+	 * @param cSpec the compiler specification
+	 * @param in2 the second symbol
+	 * @return the resulting symbol
+	 */
+	Sym and(CompilerSpec cSpec, Sym in2);
+
+	/**
 	 * Get the size of this symbol with the given compiler for context
 	 * 
 	 * @param cSpec the compiler specification
@@ -117,7 +121,6 @@ sealed interface Sym {
 	/**
 	 * When this symbol is used as the offset in a given address space, translate it to the address
 	 * if possible
-	 * 
 	 * <p>
 	 * The address will be used by the state to retrieve the appropriate (symbolic) value, possibly
 	 * generating a fresh symbol. If the address is {@link Address#NO_ADDRESS}, then the state will
@@ -145,6 +148,11 @@ sealed interface Sym {
 		}
 
 		@Override
+		public Sym and(CompilerSpec cSpec, Sym in2) {
+			return this;
+		}
+
+		@Override
 		public Sym twosComp() {
 			return this;
 		}
@@ -162,23 +170,30 @@ sealed interface Sym {
 
 	/**
 	 * A constant symbol
+	 * 
+	 * @param value the constant value
+	 * @param size the size in bytes
 	 */
 	public record ConstSym(long value, int size) implements Sym {
 		@Override
 		public Sym add(CompilerSpec cSpec, Sym in2) {
-			if (in2 instanceof ConstSym const2) {
-				return new ConstSym(value + const2.value, size);
-			}
-			if (in2 instanceof RegisterSym reg2) {
-				if (reg2.register() == cSpec.getStackPointer()) {
-					return new StackOffsetSym(value);
-				}
-				return Sym.opaque();
-			}
-			if (in2 instanceof StackOffsetSym off2) {
-				return new StackOffsetSym(value + off2.offset);
-			}
-			return Sym.opaque();
+			return switch (in2) {
+				case ConstSym const2 -> new ConstSym(value + const2.value, size);
+				case RegisterSym reg2 when reg2.register() == cSpec
+						.getStackPointer() -> new StackOffsetSym(value);
+				case StackOffsetSym off2 -> new StackOffsetSym(value + off2.offset);
+				default -> Sym.opaque();
+			};
+		}
+
+		@Override
+		public Sym and(CompilerSpec cSpec, Sym in2) {
+			return switch (in2) {
+				case ConstSym const2 -> new ConstSym(value & const2.value, size);
+				case RegisterSym reg2 -> reg2.withAppliedMask(value);
+				case StackDerefSym deref2 -> deref2.withAppliedMask(value);
+				default -> Sym.opaque();
+			};
 		}
 
 		@Override
@@ -202,14 +217,29 @@ sealed interface Sym {
 
 	/**
 	 * A register symbol
+	 * 
+	 * @param register the register
+	 * @param mask a mask that has been applied (bitwise and) to the register
 	 */
-	public record RegisterSym(Register register) implements Sym {
+	public record RegisterSym(Register register, long mask) implements Sym {
 		@Override
 		public Sym add(CompilerSpec cSpec, Sym in2) {
-			if (in2 instanceof ConstSym const2) {
-				return const2.add(cSpec, this);
-			}
-			return Sym.opaque();
+			return switch (in2) {
+				case ConstSym const2 -> const2.add(cSpec, this);
+				default -> Sym.opaque();
+			};
+		}
+
+		@Override
+		public Sym and(CompilerSpec cSpec, Sym in2) {
+			return switch (in2) {
+				case ConstSym const2 -> const2.and(cSpec, this);
+				default -> Sym.opaque();
+			};
+		}
+
+		public RegisterSym withAppliedMask(long mask) {
+			return new RegisterSym(register, this.mask & mask);
 		}
 
 		@Override
@@ -236,18 +266,27 @@ sealed interface Sym {
 
 	/**
 	 * A stack offset symbol
-	 * 
 	 * <p>
 	 * This represents a value in the form SP + c, where SP is the stack pointer register and c is a
 	 * constant.
+	 * 
+	 * @param offset the offset from SP (at entry)
 	 */
 	public record StackOffsetSym(long offset) implements Sym {
 		@Override
 		public Sym add(CompilerSpec cSpec, Sym in2) {
-			if (in2 instanceof ConstSym const2) {
-				return new StackOffsetSym(offset + const2.value());
-			}
-			return Sym.opaque();
+			return switch (in2) {
+				case ConstSym const2 -> const2.add(cSpec, this);
+				default -> Sym.opaque();
+			};
+		}
+
+		@Override
+		public Sym and(CompilerSpec cSpec, Sym in2) {
+			return switch (in2) {
+				case ConstSym const2 -> const2.and(cSpec, this);
+				default -> Sym.opaque();
+			};
 		}
 
 		@Override
@@ -271,15 +310,33 @@ sealed interface Sym {
 
 	/**
 	 * A stack dereference symbol
-	 * 
 	 * <p>
 	 * This represents a dereferenced {@link StackOffsetSym} (or the dereferenced stack pointer
 	 * register, in which is treated as a stack offset of 0).
+	 * 
+	 * @param offset the offset from SP (at entry)
+	 * @param mask a mask that has been applied (bitwise and) to the stack variable
+	 * @param size the size of the variable in bytes
 	 */
-	public record StackDerefSym(long offset, int size) implements Sym {
+	public record StackDerefSym(long offset, long mask, int size) implements Sym {
 		@Override
 		public Sym add(CompilerSpec cSpec, Sym in2) {
-			return Sym.opaque();
+			return switch (in2) {
+				case ConstSym const2 -> const2.add(cSpec, this);
+				default -> Sym.opaque();
+			};
+		}
+
+		@Override
+		public Sym and(CompilerSpec cSpec, Sym in2) {
+			return switch (in2) {
+				case ConstSym const2 -> const2.and(cSpec, this);
+				default -> Sym.opaque();
+			};
+		}
+
+		public StackDerefSym withAppliedMask(long mask) {
+			return new StackDerefSym(offset, this.mask & mask, size);
 		}
 
 		@Override

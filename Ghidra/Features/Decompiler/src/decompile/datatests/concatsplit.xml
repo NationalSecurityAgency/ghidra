@@ -1,0 +1,32 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+  Example where field assignments are packed into registers before begin written to the structure.
+-->
+<bytechunk space="ram" offset="0x100000" readonly="true">
+660f6ec266410f6ec8660f6ed94883ec
+2866410f6ed1660f62c348897c240866
+0f62ca660f6cc10f29442410e82f0000
+00488b442408660f6f4424108b542430
+0f1140148950244883c428c3
+</bytechunk>
+<symbol space="ram" offset="0x100000" name="test_split"/>
+<symbol space="ram" offset="0x100060" name="create"/>
+</binaryimage>
+<script>
+  <com>parse line struct mystruct { int4 base; int4 unused1; int4 unused2; int4 unused3; int4 unused4; int4 a; int4 b; int4 c; int4 d; int4 e; };</com>
+  <com>parse line extern void create(int4 *out,int4 *in);</com>
+  <com>parse line extern mystruct *test_split(mystruct *out,mystruct *in,int4 A,int4 B,int4 C,int4 D,int4 E);</com>
+  <com>lo fu test_split</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Concat split #1" min="1" max="1">create\(&amp;out-&gt;base,&amp;in-&gt;base\);</stringmatch>
+<stringmatch name="Concat split #2" min="1" max="1">out-&gt;a = A;</stringmatch>
+<stringmatch name="Concat split #3" min="1" max="1">out-&gt;b = B;</stringmatch>
+<stringmatch name="Concat split #4" min="1" max="1">out-&gt;c = C;</stringmatch>
+<stringmatch name="Concat split #5" min="1" max="1">out-&gt;d = D;</stringmatch>
+<stringmatch name="Concat split #6" min="1" max="1">out-&gt;e = E;</stringmatch>
+<stringmatch name="Concat split #7" min="0" max="0">CONCAT</stringmatch>
+</decompilertest>

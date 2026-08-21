@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -151,6 +151,19 @@ public abstract class AbstractStackEditorTest extends AbstractEditorTest {
 		waitForSwing();// some editing notifications are in an invokeLater
 	}
 
+	protected void cleanup() {
+		clearActions();
+
+		Object editorPanel = getInstanceField("editorPanel", provider);
+		JTable table = (JTable) getInstanceField("table", editorPanel);
+		runSwing(() -> table.editingCanceled(new ChangeEvent(table)));
+		waitForSwing();// some editing notifications are in an invokeLater
+
+		runSwing(() -> {
+			provider.dispose();
+		}, true);
+	}
+
 	@Override
 	protected void setUpPlugins() throws PluginException {
 		super.setUpPlugins();
@@ -244,17 +257,6 @@ public abstract class AbstractStackEditorTest extends AbstractEditorTest {
 		for (Variable element : vars) {
 			stackFrame.clearVariable(element.getStackOffset());
 		}
-	}
-
-	protected void cleanup() {
-		clearActions();
-
-		Object editorPanel = getInstanceField("editorPanel", provider);
-		JTable table = (JTable) getInstanceField("table", editorPanel);
-		runSwing(() -> table.editingCanceled(new ChangeEvent(table)));
-		waitForSwing();// some editing notifications are in an invokeLater
-
-		runSwing(() -> provider.dispose(), true);
 	}
 
 	void clearActions() {
@@ -362,10 +364,10 @@ public abstract class AbstractStackEditorTest extends AbstractEditorTest {
 		waitForBusyTool(tool);
 
 		Function f = program.getFunctionManager().getFunctionAt(addr(address));
-		String funcName = f.getName();
-		assertTrue(isProviderShown(tool.getToolFrame(), "Stack Editor",
-			StackEditorProvider.getProviderSubTitle(f)));
-		installProvider(stackEditorMgr.getProvider(program, funcName));
+		stackEditorMgr.edit(f);
+		CompositeEditorProvider<?, ?> p = getComponentProvider(CompositeEditorProvider.class);
+		assertNotNull(p);
+		installProvider(p);
 
 		model = ((StackEditorProvider) provider).getModel();
 		stackModel = (StackEditorModel) model;

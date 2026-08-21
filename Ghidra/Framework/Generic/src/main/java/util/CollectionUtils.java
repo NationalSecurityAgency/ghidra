@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -485,4 +485,21 @@ public class CollectionUtils {
 		}
 		return null;
 	}
+
+	/**
+	 * Returns the only element from the given collection; null if the collection is null or empty
+	 * or size is greater than 1. This is meant to clients to get the one and only element in 
+	 * a collection of size 1.
+	 *
+	 * @param c the collection
+	 * @return the item
+	 * @see #any(Collection)
+	 */
+	public static <T> T get(Collection<T> c) {
+		if (c == null || c.size() > 1) {
+			return null;
+		}
+		return any((Iterable<T>) c);
+	}
+
 }

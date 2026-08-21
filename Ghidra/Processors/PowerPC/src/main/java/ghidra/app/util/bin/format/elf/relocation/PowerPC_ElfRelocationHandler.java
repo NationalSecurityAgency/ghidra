@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -71,6 +71,33 @@ public class PowerPC_ElfRelocationHandler extends
 
 		// NOTE: Based upon glibc source it appears that PowerPC only uses RELA relocations
 		int addend = (int) relocation.getAddend();
+		
+		long relocbase = elfRelocationContext.getImageBaseWordAdjustmentOffset();
+		
+		int newValue = 0;
+		int byteLength = 4; // most relocations affect 4-bytes (change if different)
+		
+		// Handle relative relocations that do not require symbolAddr or symbolValue 
+		switch (type) {
+
+			case R_PPC_RELATIVE:
+				newValue = (int) relocbase + addend;
+				memory.setInt(relocationAddress, newValue);
+				return new RelocationResult(Status.APPLIED, byteLength);
+				
+			case R_PPC_COPY:
+				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
+					sym.getSize(), elfRelocationContext.getLog());
+				return RelocationResult.UNSUPPORTED;
+			
+			default:
+				break;
+		}
+		
+		// Check for unresolved symbolAddr and symbolValue required by remaining relocation types handled below
+		if (handleUnresolvedSymbol(elfRelocationContext, relocation, relocationAddress)) {
+			return RelocationResult.FAILURE;
+		}	
 
 //		if (sym.isLocal() && sym.getSectionHeaderIndex() != ElfSectionHeaderConstants.SHN_UNDEF) {
 //
@@ -83,18 +110,11 @@ public class PowerPC_ElfRelocationHandler extends
 //			symbolValue = elfRelocationContext.getImageBaseWordAdjustmentOffset();
 //		}
 
-		long relocbase = elfRelocationContext.getImageBaseWordAdjustmentOffset();
-
 		int offset = (int) relocationAddress.getOffset();
 		int oldValue = memory.getInt(relocationAddress);
-		int newValue = 0;
-		int byteLength = 4; // most relocations affect 4-bytes (change if different)
 
 		switch (type) {
-			case R_PPC_COPY:
-				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
-					sym.getSize(), elfRelocationContext.getLog());
-				return RelocationResult.UNSUPPORTED;
+			
 			case R_PPC_ADDR32:
 			case R_PPC_UADDR32:
 			case R_PPC_GLOB_DAT:
@@ -118,7 +138,8 @@ public class PowerPC_ElfRelocationHandler extends
 				byteLength = 2;
 				break;
 			case R_PPC_ADDR16_LO:
-				if (Long.compareUnsigned(symbolValue, relocbase) > 0 &&
+				if (sym.isSection() && sym.getValue() != 0 &&
+					Long.compareUnsigned(symbolValue, relocbase) > 0 &&
 					Long.compareUnsigned(symbolValue, relocbase + addend) <= 0) {
 					/**
 					 * (freebsd) Addend values are sometimes relative to sections in rela,
@@ -136,7 +157,8 @@ public class PowerPC_ElfRelocationHandler extends
 				byteLength = 2;
 				break;
 			case R_PPC_ADDR16_HA:
-				if (Long.compareUnsigned(symbolValue, relocbase) > 0 &&
+				if (sym.isSection() && sym.getValue() != 0 &&
+					Long.compareUnsigned(symbolValue, relocbase) > 0 &&
 					Long.compareUnsigned(symbolValue, relocbase + addend) <= 0) {
 					/**
 					 * (freebsd) Addend values are sometimes relative to sections in rela,
@@ -160,10 +182,6 @@ public class PowerPC_ElfRelocationHandler extends
 				newValue = ((int) symbolValue + addend - offset) >> 2;
 				newValue = ((newValue << 2) & PPC_LOW24);
 				newValue = (oldValue & ~PPC_LOW24) | newValue;
-				memory.setInt(relocationAddress, newValue);
-				break;
-			case R_PPC_RELATIVE:
-				newValue = (int) elfRelocationContext.getImageBaseWordAdjustmentOffset() + addend;
 				memory.setInt(relocationAddress, newValue);
 				break;
 			case R_PPC_REL32:
@@ -216,8 +234,7 @@ public class PowerPC_ElfRelocationHandler extends
 
 				oldValue = memory.getInt(relocationAddress);
 
-				Address symAddr = elfRelocationContext.getSymbolAddress(sym);
-				MemoryBlock block = memory.getBlock(symAddr);
+				MemoryBlock block = memory.getBlock(symbolAddr);
 				Integer sdaBase = null;
 				Integer gprID = null;
 

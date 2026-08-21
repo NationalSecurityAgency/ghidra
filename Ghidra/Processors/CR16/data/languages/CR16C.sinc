@@ -1240,20 +1240,14 @@ macro do_lshb(count, dest) {
     *:2 tmp = val | mask;           # clear bit, store
 }
 
-# TBIT - test bit
+# TBIT - test bit in register
 :TBIT imm4a, src1       is hi=0x06 & imm4a & src1 {
-    tmp:4 = zext(src1);
-    val:2 = *:2 tmp;                # load dst operand
     mask:2 = 1 << imm4a;
-    bit:2 = (val & mask) >> imm4a;
-    $(F) = bit:1;                   # save bit
+    $(F) = (src1 & mask) != 0;
 }
 :TBIT src, src1         is hi=0x07 & src & src1 {
-    tmp:4 = zext(src1);
-    val:2 = *:2 tmp;                # load dst operand
     mask:2 = 1 << src;
-    bit:2 = (val & mask) >> src;
-    $(F) = bit:1;                   # save bit
+    $(F) = (src1 & mask) != 0;
 }
 
 # TBITB - test bit in low-order byte

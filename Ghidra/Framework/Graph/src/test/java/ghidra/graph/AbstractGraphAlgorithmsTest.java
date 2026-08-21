@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -77,10 +77,10 @@ public abstract class AbstractGraphAlgorithmsTest extends AbstractGenericTest {
 	protected TestV[] generateSimplyConnectedGraph(int nVertices) {
 		TestV[] vertices = new TestV[nVertices];
 		for (int i = 0; i < nVertices; i++) {
-			vertices[i] = vertex(i);
+			vertices[i] = v(i);
 		}
 		for (int i = 0; i < nVertices - 1; i++) {
-			edge(vertices[i], vertices[i + 1]);
+			e(vertices[i], vertices[i + 1]);
 		}
 		return vertices;
 	}
@@ -88,12 +88,12 @@ public abstract class AbstractGraphAlgorithmsTest extends AbstractGenericTest {
 	protected TestV[] generateCompletelyConnectedGraph(int nVertices) {
 		TestV[] vertices = new TestV[nVertices];
 		for (int i = 0; i < nVertices; i++) {
-			vertices[i] = vertex(i);
+			vertices[i] = v(i);
 		}
 		for (int i = 0; i < nVertices; i++) {
 			for (int j = 0; j < nVertices; j++) {
 				if (i != j) {
-					edge(vertices[i], vertices[j]);
+					e(vertices[i], vertices[j]);
 				}
 			}
 		}
@@ -103,12 +103,12 @@ public abstract class AbstractGraphAlgorithmsTest extends AbstractGenericTest {
 	protected TestV[] generateHalflyConnectedGraph(int nVertices) {
 		TestV[] vertices = new TestV[nVertices];
 		for (int i = 0; i < nVertices; i++) {
-			vertices[i] = vertex(i);
+			vertices[i] = v(i);
 		}
 
 		// at least one straight line through the graph
 		for (int i = 0; i < nVertices - 1; i++) {
-			edge(vertices[i], vertices[i + 1]);
+			e(vertices[i], vertices[i + 1]);
 		}
 
 		// extra connections
@@ -116,7 +116,7 @@ public abstract class AbstractGraphAlgorithmsTest extends AbstractGenericTest {
 		for (int i = 0; i < nVertices; i++) {
 			for (int j = 0; j < n; j++) {
 				if (i != j) {
-					edge(vertices[i], vertices[j]);
+					e(vertices[i], vertices[j]);
 				}
 			}
 		}
@@ -126,12 +126,12 @@ public abstract class AbstractGraphAlgorithmsTest extends AbstractGenericTest {
 	protected TestV[] generateHalflyConnectedGraphNoBacktracking(int nVertices) {
 		TestV[] vertices = new TestV[nVertices];
 		for (int i = 0; i < nVertices; i++) {
-			vertices[i] = vertex(i);
+			vertices[i] = v(i);
 		}
 
 		// at least one straight line through the graph
 		for (int i = 0; i < nVertices - 1; i++) {
-			edge(vertices[i], vertices[i + 1]);
+			e(vertices[i], vertices[i + 1]);
 		}
 
 		// extra connections
@@ -139,7 +139,7 @@ public abstract class AbstractGraphAlgorithmsTest extends AbstractGenericTest {
 		for (int i = 0; i < nVertices; i++) {
 			for (int j = i; j < n; j++) {
 				if (i != j) {
-					edge(vertices[i], vertices[j]);
+					e(vertices[i], vertices[j]);
 				}
 			}
 		}
@@ -165,15 +165,15 @@ public abstract class AbstractGraphAlgorithmsTest extends AbstractGenericTest {
 		Assert.fail("Unexpected set size");
 	}
 
-	protected TestV vertex(int id) {
+	protected TestV v(int id) {
 		return new TestV(id);
 	}
 
-	protected TestV vertex(String id) {
+	protected TestV v(String id) {
 		return new TestV(id);
 	}
 
-	protected TestE edge(TestV start, TestV end) {
+	protected TestE e(TestV start, TestV end) {
 		TestE e = new TestE(start, end);
 		g.addEdge(e);
 		return e;

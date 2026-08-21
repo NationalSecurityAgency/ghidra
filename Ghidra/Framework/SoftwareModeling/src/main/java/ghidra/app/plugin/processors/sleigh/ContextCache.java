@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,19 +15,19 @@
  */
 package ghidra.app.plugin.processors.sleigh;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.lang.*;
-
 import java.math.BigInteger;
 import java.util.Arrays;
+
+import generic.stl.Pair;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.lang.*;
 
 public class ContextCache {
 	private int context_size = 0;
 	private Register contextBaseRegister = null;
 
-	private BigInteger lastContextValue;
-	private int[] lastContextWords;
-
+	Pair <BigInteger, int []> lastValue = null;
+	
 	public ContextCache() {
 	}
 
@@ -57,12 +56,15 @@ public class ContextCache {
 		}
 	}
 
-	private synchronized int[] getWords(BigInteger value) {
-		if (value.equals(lastContextValue)) {
-			return lastContextWords;
-		}
+	private int[] getWords(BigInteger value) {
 
+		Pair <BigInteger, int []> lastValueTmp = lastValue;
+		if (lastValueTmp != null && value.equals(lastValueTmp.first)) {
+			return lastValueTmp.second;
+		}
+		
 		int[] words = new int[context_size];
+
 		byte[] bytes = value.toByteArray();
 		int byteIndexDiff = context_size * 4 - bytes.length;
 		for (int i = 0; i < context_size; i++) {
@@ -73,8 +75,10 @@ public class ContextCache {
 			}
 			words[i] = word;
 		}
-		lastContextValue = value;
-		lastContextWords = words;
+		
+		lastValueTmp = new Pair<BigInteger, int[]>(value, words);
+		lastValue = lastValueTmp;
+		
 		return words;
 	}
 
@@ -107,8 +111,7 @@ public class ContextCache {
 //		ctx.setValue(contextBaseRegister, addr, new BigInteger(bytes));
 //	}
 	public void setContext(ProcessorContext ctx, Address addr, int num, int mask, int value) {
-		if (ctx instanceof DisassemblerContext) {
-			DisassemblerContext context = (DisassemblerContext) ctx;
+		if (ctx instanceof DisassemblerContext context) {
 			int byteSize = context_size * 4;
 			byte[] bytes = new byte[2 * byteSize];
 			putInt(bytes, byteSize + num * 4, value);

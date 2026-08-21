@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -86,8 +86,7 @@ public class ManagedProcedureSymbolApplier extends AbstractBlockContextApplier
 
 	// TODO.  Investigate more.  This is not working for at least one CLI dll in that we are
 	// not getting correct addresses.  There is no omap and the one section is unnamed.
-	private void processSymbol(MsSymbolIterator iter)
-			throws CancelledException, PdbException {
+	private void processSymbol(MsSymbolIterator iter) throws CancelledException, PdbException {
 
 		Address address = applicator.getAddress(symbol);
 		String name = symbol.getName();
@@ -124,8 +123,7 @@ public class ManagedProcedureSymbolApplier extends AbstractBlockContextApplier
 	}
 
 	@Override
-	public void deferredApply(MsSymbolIterator iter)
-			throws PdbException, CancelledException {
+	public void deferredApply(MsSymbolIterator iter) throws PdbException, CancelledException {
 		// Pealing the symbol off again, as the iterator is coming in fresh, and we need the symbol
 		getValidatedSymbol(iter, true);
 
@@ -260,9 +258,8 @@ public class ManagedProcedureSymbolApplier extends AbstractBlockContextApplier
 			return; // silently return.
 		}
 		// Currently just placing a comment.
-		String comment =
-			context.getIndent(symbolBlockNestingLevel + 1) + "static local (stored at " +
-				address + ") " + dataType.getName() + " " + name;
+		String comment = context.getIndent(symbolBlockNestingLevel + 1) +
+			"static local (stored at " + address + ") " + dataType.getName() + " " + name;
 		context.getComments().addPreComment(currentBlockAddress, comment);
 	}
 
@@ -300,8 +297,7 @@ public class ManagedProcedureSymbolApplier extends AbstractBlockContextApplier
 	private boolean setFunctionDefinition(Function function, Address address,
 			AbstractManagedProcedureMsSymbol symbol) throws CancelledException, PdbException {
 
-		if (function.getSignatureSource().isHigherPriorityThan(SourceType.ANALYSIS)) {
-			// return if IMPORTED or USER_DEFINED
+		if (function.getSignatureSource().isHigherOrEqualPriorityThan(SourceType.IMPORTED)) {
 			return false;
 		}
 

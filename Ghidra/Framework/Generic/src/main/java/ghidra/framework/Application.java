@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,7 +44,7 @@ import utility.module.ModuleUtilities;
  * <pre>
  *   ApplicationLayout layout = new GhidraApplicationLayout();
  *   ApplicationConfiguration configuration = new GhidraApplicationConfiguration();
- *   Application.initalizeApplication(layout, configuration);
+ *   Application.initializeApplication(layout, configuration);
  * </pre>
  */
 public class Application {
@@ -252,7 +252,7 @@ public class Application {
 
 	private ResourceFile getModuleForClass(String className) {
 		try {
-			Class<?> callersClass = Class.forName(className);
+			Class<?> callersClass = Class.forName(className, false, getClass().getClassLoader());
 			return getModuleForClass(callersClass);
 		}
 		catch (ClassNotFoundException e) {
@@ -474,13 +474,13 @@ public class Application {
 				exactFilename);
 		}
 
-		// Allow win_x86_32 to be used for win_x86_64 as fallback
-		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_X86_64) {
-			file = getModuleFile(module, "build/os/" + Platform.WIN_X86_32.getDirectoryName(),
+		// Allow win_x86_64 to be used for win_arm_64 as fallback (requires Windows emulation)
+		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_ARM_64) {
+			file = getModuleFile(module, "build/os/" + Platform.WIN_X86_64.getDirectoryName(),
 				exactFilename);
 		}
-		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_X86_64) {
-			file = getModuleFile(module, "os/" + Platform.WIN_X86_32.getDirectoryName(),
+		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_ARM_64) {
+			file = getModuleFile(module, "os/" + Platform.WIN_X86_64.getDirectoryName(),
 				exactFilename);
 		}
 
@@ -520,12 +520,12 @@ public class Application {
 			file = findModuleFile("os/" + Platform.CURRENT_PLATFORM.getDirectoryName(), path);
 		}
 
-		// Allow win_x86_32 to be used for win_x86_64 as fallback
-		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_X86_64) {
-			file = findModuleFile("build/os/" + Platform.WIN_X86_32.getDirectoryName(), path);
+		// Allow win_x86_64 to be used for win_arm_64 as fallback (requires Windows emulation)
+		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_ARM_64) {
+			file = findModuleFile("build/os/" + Platform.WIN_X86_64.getDirectoryName(), path);
 		}
-		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_X86_64) {
-			file = findModuleFile("os/" + Platform.WIN_X86_32.getDirectoryName(), path);
+		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_ARM_64) {
+			file = findModuleFile("os/" + Platform.WIN_X86_64.getDirectoryName(), path);
 		}
 
 		// Allow mac_x86_64 to be used for mac_arm_64 as fallback (requires macOS Rosetta 2)
@@ -830,6 +830,7 @@ public class Application {
 	/**
 	 * Returns a collection of module library directories. Library directories are optional for a module.
 	 * @return a collection of module library directories.
+	 * @see ModuleUtilities#getModuleLibDirectories(Collection)
 	 */
 	public static Collection<ResourceFile> getLibraryDirectories() {
 		checkAppInitialized();
@@ -916,7 +917,7 @@ public class Application {
 	}
 
 	/**
-	 * Return the directory relative the the name module's data directory. (i.e. "/data" will
+	 * Return the directory relative to the name module's data directory. (i.e. "/data" will
 	 * be prepended to the given path)
 	 * @param moduleName the name of the module.
 	 * @param relativePath the path relative to the module's data directory.
@@ -931,7 +932,7 @@ public class Application {
 	}
 
 	/**
-	 * Return the directory relative the the name module's directory.
+	 * Return the directory relative to the name module's directory.
 	 * @param moduleName the name of the module.
 	 * @param relativePath the path relative to the module's root directory.
 	 * @return the directory

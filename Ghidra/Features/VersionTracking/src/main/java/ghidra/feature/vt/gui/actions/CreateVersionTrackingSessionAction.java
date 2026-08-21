@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,11 +21,11 @@ import docking.ActionContext;
 import docking.action.*;
 import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
-import docking.wizard.WizardManager;
+import docking.wizard.WizardDialog;
 import generic.theme.GIcon;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.plugin.VTPlugin;
-import ghidra.feature.vt.gui.wizard.VTNewSessionWizardManager;
+import ghidra.feature.vt.gui.wizard.session.VTNewSessionWizardModel;
 import ghidra.util.HelpLocation;
 
 public class CreateVersionTrackingSessionAction extends DockingAction {
@@ -49,7 +49,7 @@ public class CreateVersionTrackingSessionAction extends DockingAction {
 			int result =
 				OptionDialog.showYesNoDialog(controller.getTool().getToolFrame(),
 					"Create New Session",
-					"This will close the the current session.  Do you want to continue?");
+					"This will close the current session.  Do you want to continue?");
 
 			if (result != OptionDialog.YES_OPTION) {
 				return;
@@ -58,10 +58,9 @@ public class CreateVersionTrackingSessionAction extends DockingAction {
 		if (!controller.closeVersionTrackingSession()) {
 			return; // user cancelled  during save dialog
 		}
-		VTNewSessionWizardManager vtWizardManager = new VTNewSessionWizardManager(controller);
-		WizardManager wizardManager =
-			new WizardManager("Version Tracking Wizard", true, vtWizardManager);
-		wizardManager.showWizard(controller.getParentComponent());
+		VTNewSessionWizardModel model = new VTNewSessionWizardModel(controller);
+		WizardDialog wizardDialog = new WizardDialog(model);
+		wizardDialog.show(controller.getParentComponent());
 	}
 
 }

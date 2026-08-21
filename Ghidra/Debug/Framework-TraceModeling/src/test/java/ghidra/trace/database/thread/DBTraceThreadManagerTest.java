@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,7 @@
  */
 package ghidra.trace.database.thread;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.*;
 
 import java.util.Set;
@@ -27,10 +28,28 @@ import db.Transaction;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.exception.DuplicateNameException;
 
 public class DBTraceThreadManagerTest extends AbstractGhidraHeadlessIntegrationTest {
+
+	public static final String XML_CTX = """
+			<context>
+			    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
+			        <attribute name='Threads' schema='ThreadContainer' />
+			    </schema>
+			    <schema name='ThreadContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <element schema='Thread' />
+			    </schema>
+			    <schema name='Thread' elementResync='NEVER' attributeResync='ONCE'>
+			        <interface name='Aggregate' />
+			        <interface name='Thread' />
+			    </schema>
+			</context>
+			""";
 
 	ToyDBTraceBuilder b;
 	DBTraceThreadManager threadManager;
@@ -48,6 +67,12 @@ public class DBTraceThreadManagerTest extends AbstractGhidraHeadlessIntegrationT
 	@Before
 	public void setUpThreadManagerTest() throws Exception {
 		b = new ToyDBTraceBuilder("Testing", "Toy:BE:64:default");
+
+		try (Transaction tx = b.startTransaction()) {
+			XmlSchemaContext ctx = XmlSchemaContext.deserialize(XML_CTX);
+			b.trace.getObjectManager().createRootObject(ctx.getSchema(new SchemaName("Session")));
+		}
+
 		threadManager = b.trace.getThreadManager();
 	}
 
@@ -140,7 +165,8 @@ public class DBTraceThreadManagerTest extends AbstractGhidraHeadlessIntegrationT
 		assertEquals(Set.of(), threadManager.getLiveThreads(-1));
 		assertEquals(Set.of(thread1, thread2), threadManager.getLiveThreads(0));
 		assertEquals(Set.of(thread1, thread2), threadManager.getLiveThreads(9));
-		// NB. Destruction is excluded
-		assertEquals(Set.of(thread1), threadManager.getLiveThreads(10));
+		// NB. Destruction is included
+		assertEquals(Set.of(thread1, thread2), threadManager.getLiveThreads(10));
+		assertEquals(Set.of(thread1), threadManager.getLiveThreads(11));
 	}
 }

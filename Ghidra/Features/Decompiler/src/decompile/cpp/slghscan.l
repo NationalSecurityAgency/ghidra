@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -456,26 +456,15 @@ int4 find_symbol(void) {
   return -1;   // Should never reach here
 }
 
-int4 scan_number(char *numtext,SLEIGHSTYPE *lval,bool signednum)
+int4 scan_number(char *numtext,SLEIGHSTYPE *lval,int4 radix,bool signednum)
 
 {
   uintb val;
-  if (numtext[0] == '0' && numtext[1] == 'b') {
-    val = 0;
-    numtext += 2;
-    while ((*numtext) != 0) {
-      val <<= 1;
-      if (*numtext == '1') {
-        val |= 1;
-      }
-      ++numtext;
-    }
-  } else {
-    istringstream s(numtext);
-    s.unsetf(ios::dec | ios::hex | ios::oct);
-    s >> val;
-    if (!s)
-      return BADINTEGER;
+  try {
+    val = std::stoul(numtext,(size_t *)0,radix);
+  }
+  catch(...) {
+    return BADINTEGER;
   }
   if (signednum) {
     lval->big = new intb(val);
@@ -552,9 +541,9 @@ with   { BEGIN(pattern); withsection = 1; slgh->calcContextLayout(); return WITH
 <defblock>pcodeop   { return PCODEOP_KEY; }
 <defblock>#.*
 <defblock>[a-zA-Z_.][a-zA-Z0-9_.]* {  return find_symbol();  }
-<defblock>[0-9]|[1-9][0-9]+	{ return scan_number(sleightext,&sleighlval,false); }
-<defblock>0x[0-9a-fA-F]+	{ return scan_number(sleightext,&sleighlval,false); }
-<defblock>0b[01]+		{ return scan_number(sleightext,&sleighlval,false); }
+<defblock>[0-9]+	{ return scan_number(sleightext,&sleighlval,10,false); }
+<defblock>0x[0-9a-fA-F]+	{ return scan_number(sleightext+2,&sleighlval,16,false); }
+<defblock>0b[01]+		{ return scan_number(sleightext+2,&sleighlval,2,false); }
 <defblock>\"([^\"[:cntrl:]]|\"\")*\"	{ sleighlval.str = new string(sleightext+1,strlen(sleightext)-2); return STRING; }
 <defblock>[\r\ \t\v]+
 <defblock>\n        { slgh->nextLine(); }
@@ -594,9 +583,9 @@ with   { BEGIN(pattern); withsection = 1; slgh->calcContextLayout(); return WITH
 <pattern>[=(),:;+\-*/~<>]   { sleighlval.ch = sleightext[0]; return sleightext[0]; }
 <pattern>#.*
 <pattern>[a-zA-Z_.][a-zA-Z0-9_.]*   { return find_symbol();   }
-<pattern>[0-9]|[1-9][0-9]+ { return scan_number(sleightext,&sleighlval,true); }
-<pattern>0x[0-9a-fA-F]+  { return scan_number(sleightext,&sleighlval,true); }
-<pattern>0b[01]+         { return scan_number(sleightext,&sleighlval,true); }
+<pattern>[0-9]+ { return scan_number(sleightext,&sleighlval,10,true); }
+<pattern>0x[0-9a-fA-F]+  { return scan_number(sleightext+2,&sleighlval,16,true); }
+<pattern>0b[01]+         { return scan_number(sleightext+2,&sleighlval,2,true); }
 <pattern>[\r\ \t\v]+
 <pattern>\n        { slgh->nextLine(); }
 <pattern>.         { return sleightext[0]; }
@@ -661,9 +650,9 @@ with   { BEGIN(pattern); withsection = 1; slgh->calcContextLayout(); return WITH
 <sem>[=(),:\[\];!&|^+\-*/%~<>]   { sleighlval.ch = sleightext[0]; return sleightext[0]; }
 <sem>#.*
 <sem>[a-zA-Z_.][a-zA-Z0-9_.]*   { return find_symbol();   }
-<sem>[0-9]|[1-9][0-9]+ { return scan_number(sleightext,&sleighlval,false); }
-<sem>0x[0-9a-fA-F]+  { return scan_number(sleightext,&sleighlval,false); }
-<sem>0b[01]+         { return scan_number(sleightext,&sleighlval,false); }
+<sem>[0-9]+ { return scan_number(sleightext,&sleighlval,10,false); }
+<sem>0x[0-9a-fA-F]+  { return scan_number(sleightext+2,&sleighlval,16,false); }
+<sem>0b[01]+         { return scan_number(sleightext+2,&sleighlval,2,false); }
 <sem>[\r\ \t\v]+
 <sem>\n         { slgh->nextLine(); }
 <sem>.          { return sleightext[0]; }

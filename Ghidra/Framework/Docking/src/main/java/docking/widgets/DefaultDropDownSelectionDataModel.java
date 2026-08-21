@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,13 @@
 package docking.widgets;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import javax.help.UnsupportedOperationException;
 import javax.swing.ListCellRenderer;
+
+import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.list.GListCellRenderer;
 import ghidra.util.datastruct.CaseInsensitiveDuplicateStringComparator;
@@ -31,7 +36,7 @@ public class DefaultDropDownSelectionDataModel<T> implements DropDownTextFieldDa
 	private DataToStringConverter<T> searchConverter;
 	private DataToStringConverter<T> descriptionConverter;
 	private ListCellRenderer<T> renderer =
-		GListCellRenderer.createDefaultCellTextRenderer(value -> searchConverter.getString(value));
+		GListCellRenderer.createDefaultTextRenderer(value -> searchConverter.getString(value));
 
 	public static DefaultDropDownSelectionDataModel<String> getStringModel(List<String> strings) {
 		return new DefaultDropDownSelectionDataModel<>(strings,
@@ -54,7 +59,47 @@ public class DefaultDropDownSelectionDataModel<T> implements DropDownTextFieldDa
 	}
 
 	@Override
+	public List<SearchMode> getSupportedSearchModes() {
+		return List.of(SearchMode.STARTS_WITH, SearchMode.CONTAINS, SearchMode.WILDCARD);
+	}
+
+	@Override
 	public List<T> getMatchingData(String searchText) {
+		throw new UnsupportedOperationException(
+			"Method no longer supported.  Instead, call getMatchingData(String, SearchMode)");
+	}
+
+	@Override
+	public List<T> getMatchingData(String searchText, SearchMode mode) {
+		if (StringUtils.isBlank(searchText)) {
+			return new ArrayList<>(data);
+		}
+
+		if (!getSupportedSearchModes().contains(mode)) {
+			throw new IllegalArgumentException("Unsupported SearchMode: " + mode);
+		}
+
+		if (mode == SearchMode.STARTS_WITH) {
+			return getMatchingDataStartsWith(searchText);
+		}
+
+		Pattern p = mode.createPattern(searchText);
+		return getMatchingDataRegex(p);
+	}
+
+	private List<T> getMatchingDataRegex(Pattern p) {
+		List<T> results = new ArrayList<>();
+		for (T t : data) {
+			String string = searchConverter.getString(t);
+			Matcher m = p.matcher(string);
+			if (m.matches()) {
+				results.add(t);
+			}
+		}
+		return results;
+	}
+
+	private List<T> getMatchingDataStartsWith(String searchText) {
 		List<?> l = data;
 		int startIndex = Collections.binarySearch(l, (Object) searchText, comparator);
 		int endIndex = Collections.binarySearch(l, (Object) (searchText + END_CHAR), comparator);

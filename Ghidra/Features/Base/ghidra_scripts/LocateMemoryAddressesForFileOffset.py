@@ -19,6 +19,7 @@
 #Print the file offset as a Ghidra comment at the memory address in the Ghidra Listing
 #If multiple addresses are located, then print the addresses to the console (do not set a Ghidra comment)
 # @category Examples   
+# @runtime Jython
 
 import sys
 from ghidra.program.model.address import Address

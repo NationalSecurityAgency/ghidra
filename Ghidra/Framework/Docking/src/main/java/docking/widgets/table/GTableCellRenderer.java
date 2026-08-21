@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,6 +70,9 @@ public class GTableCellRenderer extends AbstractGCellRenderer implements TableCe
 		if (e.isLookAndFeelChanged()) {
 			updateUI();
 		}
+		else if (e.hasGlobalFontChanged()) {
+			updateUI();
+		}
 	};
 
 	/**
@@ -99,6 +102,20 @@ public class GTableCellRenderer extends AbstractGCellRenderer implements TableCe
 	 */
 	protected String getText(Object value) {
 		return value == null ? "" : value.toString();
+	}
+
+	/**
+	 * Return the cell renderer text for the given rendering data.
+	 * @param data the GTableCellRenderingData object that contains the object to render
+	 * @return cell renderer text for the given rendering data. 
+	 */
+	protected String getText(GTableCellRenderingData data) {
+		Object value = data.getValue();
+		if (value instanceof Number n) {
+			Settings settings = data.getColumnSettings();
+			return formatNumber(n, settings);
+		}
+		return getText(value);
 	}
 
 	/**
@@ -159,16 +176,12 @@ public class GTableCellRenderer extends AbstractGCellRenderer implements TableCe
 		int row = data.getRowViewIndex();
 		boolean isSelected = data.isSelected();
 		boolean hasFocus = data.hasFocus();
-		Settings settings = data.getColumnSettings();
 
-		if (value instanceof Number) {
-			setHorizontalAlignment(SwingConstants.RIGHT);
-			setText(formatNumber((Number) value, settings));
-		}
-		else {
-			setText(getText(value));
-			setHorizontalAlignment(SwingConstants.LEFT);
-		}
+		String text = getText(data);
+		setText(text);
+
+		int alignment = (value instanceof Number) ? SwingConstants.RIGHT : SwingConstants.LEFT;
+		setHorizontalAlignment(alignment);
 
 		TableModel model = table.getModel();
 		setFont(getDefaultFont());
@@ -190,7 +203,52 @@ public class GTableCellRenderer extends AbstractGCellRenderer implements TableCe
 		}
 
 		setBorder(hasFocus ? focusBorder : noFocusBorder);
+
+		/*
+		  	Before the following code changes, the default screen reader behavior was as follows
+		  	when tabbing or arrowing through a table.
+		  
+		  		PE Header  selected  row 1  column 2			(a typical string column with text)
+		  		PE Header  selected  row 1 Category column 2    (a string column with a truncated table header)
+		  		selected  row 2  column 2						(an empty icon column)
+		  		selected  false  row 1  column 1				(a boolean column)
+		
+			By default, the screen reader will read the cell's contents before describing the row, 
+			column location.
+			To make it more natural, we wanted to first read a description of the cell's column
+			followed by the cell's contents.
+		
+		 */
+		String accessibleValue = getAccessibleCellValue(data, text);
+		getAccessibleContext().setAccessibleDescription(accessibleValue);
+		String description = getAccessibleCellDescription(model, data.getColumnModelIndex());
+		getAccessibleContext().setAccessibleName(description);
+
 		return this;
+	}
+
+	/**
+	 * Returns a string representation of the cell's value to be read by a screen reader. This
+	 * does not have to exactly match the text in the table's cell.
+	 * @param data the rendering data for the cell
+	 * @param text the default text as it appears in the cell
+	 * @return a string representation of the cell's value to be read by a screen reader
+	 */
+	protected String getAccessibleCellValue(GTableCellRenderingData data, String text) {
+		return text;
+	}
+
+	/**
+	 * Returns a description of the table's column to be read by a screen reader. By default it is
+	 * the name of the column. The screen reader will read this string before reading the cell's 
+	 * contents.
+	 * @param model the table model
+	 * @param columnModelIndex the column index
+	 * @return a description of the table's column to be read by a screen reader
+	 */
+	protected String getAccessibleCellDescription(TableModel model, int columnModelIndex) {
+		String columnName = model.getColumnName(columnModelIndex);
+		return "Column: " + columnName;
 	}
 
 	protected void setForegroundColor(JTable table, TableModel model, Object value) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package ghidra.pcode.struct.sub;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
@@ -25,8 +26,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import ghidra.app.plugin.processors.sleigh.SleighException;
-import ghidra.pcode.exec.PcodeUseropLibrary;
-import ghidra.pcode.exec.SleighPcodeUseropDefinition;
+import ghidra.pcode.exec.*;
 import ghidra.pcode.struct.StructuredSleigh;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.pcode.Varnode;
@@ -82,7 +82,7 @@ public class StructuredSleighTest extends AbstractGhidraHeadlessIntegrationTest 
 	@Test
 	public void testUseRegister() throws Exception {
 		StructuredSleigh ss = new TestStructuredSleigh() {
-			final Var vR0 = reg(r0, type("int"));;
+			final Var vR0 = reg(r0, type("int"));
 
 			@StructuredUserop(type = "int")
 			public void my_userop() {
@@ -108,7 +108,7 @@ public class StructuredSleighTest extends AbstractGhidraHeadlessIntegrationTest 
 				__op_output = (my_var * 0x2:4);
 				""", myUserop.getBody());
 		// Verify the source compiles
-		myUserop.programFor(new Varnode(r0.getAddress(), r0.getNumBytes()), List.of(),
+		myUserop.programFor(List.of(new Varnode(r0.getAddress(), r0.getNumBytes())),
 			PcodeUseropLibrary.NIL);
 	}
 
@@ -237,5 +237,18 @@ public class StructuredSleighTest extends AbstractGhidraHeadlessIntegrationTest 
 		assertEquals("return [0xdeadbeef:8];\n", myUserop.getBody());
 		// TODO: Test that the generated code compiles in a slaspec file.
 		// It's rejected for injects because "return" is not valid there.
+	}
+
+	@Test
+	public void testEmpty() throws Exception {
+		StructuredSleigh ss = new TestStructuredSleigh() {
+			@StructuredUserop
+			public void my_userop() {
+			}
+		};
+		SleighPcodeUseropDefinition<Object> myUserop = ss.generate().get("my_userop");
+		PcodeProgram program =
+			myUserop.programFor(SleighPcodeUseropDefinition.EMPTY_ARGS, PcodeUseropLibrary.nil());
+		assertTrue(program.getCode().isEmpty());
 	}
 }

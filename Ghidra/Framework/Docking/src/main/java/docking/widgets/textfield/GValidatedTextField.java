@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -172,8 +172,9 @@ public class GValidatedTextField extends JTextField {
 			@Override
 			public void validate(String oldText, String newText) throws ValidationFailedException {
 				try {
-					long oldLong = NumericUtilities.parseLong(oldText);
-					long newLong = NumericUtilities.parseLong(newText);
+
+					long oldLong = sanitizeInput(oldText);
+					long newLong = sanitizeInput(newText);
 					validateLong(oldLong, newLong);
 				}
 				catch (NumberFormatException e) {
@@ -181,7 +182,52 @@ public class GValidatedTextField extends JTextField {
 				}
 			}
 
+			@SuppressWarnings("unused")
 			public void validateLong(long oldLong, long newLong) throws ValidationFailedException {
+				// do nothing
+			}
+
+			/**
+			 * Similar to {@link NumericUtilities#parseLong(String)}, but we return 0 if the string
+			 * is null, empty, or looks like a partially entered value (such as "-", "0x", etc)
+			 * 
+			 * @param s the string to parse
+			 * @return the parsed {@code long} value, or 0 if the string is null, empty, or looks
+			 *   like a partially entered value (such as "-", "0x", etc)
+			 * @throws NumberFormatException if the string does not represent a valid {@code long} 
+			 *   value 
+			 */
+			private long sanitizeInput(String s) throws NumberFormatException {
+				// Trim the string and return 0 if it's empty. This could be a partial input.
+				s = (s == null ? "" : s.trim());
+				if (s.isEmpty()) {
+					return 0;
+				}
+
+				// Chop off the optional sign character of the string, we'll add it back later
+				long sign = 1;
+				if (s.startsWith("-")) {
+					sign = -1;
+					s = s.substring(1);
+				}
+				else if (s.startsWith("+")) {
+					s = s.substring(1);
+				}
+
+				// Chop off the optional hex prefix...we'll decide to do hex later
+				boolean hexPrefix = s.startsWith("0x") || s.startsWith("0X");
+				if (hexPrefix) {
+					s = s.substring(2);
+				}
+
+				// Since we might have chopped off prefixes, check again and return 0 if it's empty.
+				// This could be a partial input.
+				if (s.isEmpty()) {
+					return 0;
+				}
+
+				return sign *
+					(hexPrefix ? NumericUtilities.parseHexLong(s) : NumericUtilities.parseLong(s));
 			}
 		}
 	}

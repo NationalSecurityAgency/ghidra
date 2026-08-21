@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,15 +15,13 @@
  */
 package ghidra.app.util.bin.format.pe;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.pe.debug.DebugDirectoryParser;
-import ghidra.util.Conv;
 import ghidra.util.Msg;
 
 /**
@@ -72,7 +70,6 @@ public class SeparateDebugHeader implements OffsetValidator {
 	private int[] reserved = new int[2];
 
 	private SectionHeader[] sections;
-	private String[] exportedNames;
 	private DebugDirectoryParser parser;
 
 	/**
@@ -113,7 +110,7 @@ public class SeparateDebugHeader implements OffsetValidator {
 
 		sections = new SectionHeader[numberOfSections];
 		for (int i = 0; i < numberOfSections; ++i) {
-			sections[i] = SectionHeader.readSectionHeader(reader, ptr, -1);
+			sections[i] = new SectionHeader(reader, ptr, -1, i);
 			ptr += SectionHeader.IMAGE_SIZEOF_SECTION_HEADER;
 		}
 
@@ -126,11 +123,11 @@ public class SeparateDebugHeader implements OffsetValidator {
 			}
 			exportedNameslist.add(str);
 		}
-		exportedNames = exportedNameslist.toArray(String[]::new);
 
 		ptr += exportedNamesSize;
 
-		parser = new DebugDirectoryParser(reader, ptr, debugDirectorySize, sizeOfImage);
+		parser = new DebugDirectoryParser(reader, ptr, debugDirectorySize, sizeOfImage,
+			sectionAlignment, 0);
 	}
 
 	/**
@@ -217,8 +214,14 @@ public class SeparateDebugHeader implements OffsetValidator {
 	 * Returns the section alignment value.
 	 * @return the section alignment value
 	 */
+	@Override
 	public int getSectionAlignment() {
 		return sectionAlignment;
+	}
+	
+	@Override
+	public int getFileAlignment() {
+		return 0;
 	}
 
 	/**
@@ -256,8 +259,8 @@ public class SeparateDebugHeader implements OffsetValidator {
 	@Override
 	public boolean checkPointer(long ptr) {
 		for (int i = 0; i < sections.length; ++i) {
-			long rawSize = sections[i].getSizeOfRawData() & Conv.INT_MASK;
-			long rawPtr = sections[i].getPointerToRawData() & Conv.INT_MASK;
+			long rawSize = Integer.toUnsignedLong(sections[i].getSizeOfRawData());
+			long rawPtr = Integer.toUnsignedLong(sections[i].getPointerToRawData());
 
 			if (ptr >= rawPtr && ptr <= rawPtr + rawSize) { // <= allows data after the last section, which is OK
 				return true;
@@ -270,5 +273,4 @@ public class SeparateDebugHeader implements OffsetValidator {
 	public boolean checkRVA(long rva) {
 		return (0 <= rva) && (rva <= sizeOfImage);
 	}
-
 }

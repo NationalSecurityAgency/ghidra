@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,8 +33,7 @@ import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Listing;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
@@ -96,7 +95,7 @@ public class EolCommentsTest extends AbstractGenericTest {
 	@Test
 	public void testReferenceToStringData() throws Exception {
 
-		Command cmd = new AddMemRefCmd(addr("0x1001000"), addr("0x1001234"),
+		Command<Program> cmd = new AddMemRefCmd(addr("0x1001000"), addr("0x1001234"),
 			SourceType.USER_DEFINED, 0, true);
 		applyCmd(cmd);
 
@@ -115,7 +114,7 @@ public class EolCommentsTest extends AbstractGenericTest {
 
 		Address dataStartAddress = addr("0x1001234");
 		Address offcutAddress = dataStartAddress.add(2);
-		Command cmd =
+		Command<Program> cmd =
 			new AddMemRefCmd(addr("0x1001000"), offcutAddress, SourceType.USER_DEFINED, 0, true);
 		applyCmd(cmd);
 
@@ -138,7 +137,7 @@ public class EolCommentsTest extends AbstractGenericTest {
 
 		Address dataStartAddress = addr("0x1001234");
 		Address offcutAddress = dataStartAddress.add(2);
-		Command cmd =
+		Command<Program> cmd =
 			new AddMemRefCmd(addr("0x1001000"), offcutAddress, SourceType.USER_DEFINED, 0, true);
 		applyCmd(cmd);
 
@@ -165,7 +164,7 @@ public class EolCommentsTest extends AbstractGenericTest {
 		//
 		Address dataStartAddress = addr("0x1001234");
 		Address offcutAddress = dataStartAddress.add(4);
-		Command cmd =
+		Command<Program> cmd =
 			new AddMemRefCmd(addr("0x1001000"), offcutAddress, SourceType.USER_DEFINED, 0, true);
 		applyCmd(cmd);
 
@@ -226,7 +225,7 @@ public class EolCommentsTest extends AbstractGenericTest {
 		assertEquals(0, comments.size());
 	}
 
-	public boolean applyCmd(Command cmd) throws RollbackException {
+	public boolean applyCmd(Command<Program> cmd) throws RollbackException {
 		return AbstractGhidraHeadlessIntegrationTest.applyCmd(program, cmd);
 	}
 

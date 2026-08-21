@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,7 @@
  */
 package ghidra.program.database;
 
+import java.io.ByteArrayInputStream;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -36,6 +37,7 @@ import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.database.function.OverlappingFunctionException;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
@@ -49,6 +51,7 @@ import ghidra.program.model.util.*;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.program.util.GhidraProgramUtilities;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
+import ghidra.test.TestEnv;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -56,6 +59,8 @@ import utility.function.ExceptionalCallback;
 
 // TODO: Move this class into a different package (i.e., ghidra.test.program)
 public class ProgramBuilder {
+
+	private static Set<ProgramBuilder> allBuilders = new HashSet<>();
 
 	public static final String _ARM = "ARM:LE:32:v7";
 	public static final String _AARCH64 = "AARCH64:LE:64:v8A";
@@ -136,6 +141,9 @@ public class ProgramBuilder {
 		CompilerSpec compilerSpec = compilerSpecID == null ? language.getDefaultCompilerSpec()
 				: language.getCompilerSpecByID(new CompilerSpecID(compilerSpecID));
 		program = new ProgramDB(name, language, compilerSpec, consumer == null ? this : consumer);
+
+		allBuilders.add(this);
+
 		setAnalyzed();
 		program.setTemporary(true); // ignore changes
 	}
@@ -149,6 +157,9 @@ public class ProgramBuilder {
 	public ProgramBuilder(String name, Language language) throws Exception {
 		CompilerSpec compilerSpec = language.getDefaultCompilerSpec();
 		program = new ProgramDB(name, language, compilerSpec, this);
+
+		allBuilders.add(this);
+
 		setAnalyzed();
 		program.setTemporary(true); // ignore changes
 	}
@@ -212,7 +223,19 @@ public class ProgramBuilder {
 		return addr;
 	}
 
+	/**
+	 * A methods called by {@link TestEnv} to cleanup all resources.
+	 */
+	public static void disposeAllBuilders() {
+		HashSet<ProgramBuilder> set = new HashSet<>(allBuilders);
+		allBuilders.clear();
+		for (ProgramBuilder builder : set) {
+			builder.dispose();
+		}
+	}
+
 	public void dispose() {
+		allBuilders.remove(this);
 		if (program.isUsedBy(this)) {
 
 			// Make sure any buffered events are processed before we release.  This fixes a timing
@@ -293,6 +316,14 @@ public class ProgramBuilder {
 		return createMemory(name, address, size, comment, (byte) 0);
 	}
 
+	public MemoryBlock createMemory(String name, String address, FileBytes fileBytes, int size) {
+		return tx(() -> {
+			Address startAddress = addr(address);
+			Memory memory = program.getMemory();
+			return memory.createInitializedBlock(name, startAddress, fileBytes, 0, size, false);
+		});
+	}
+
 	public MemoryBlock createMemory(String name, String address, int size, String comment,
 			byte initialValue) {
 
@@ -304,6 +335,19 @@ public class ProgramBuilder {
 			block.setComment(comment);
 			return block;
 		});
+	}
+
+	public MemoryBlock createMappedMemory(String name, String address, int size,
+			String mappedAddress) {
+		return tx(() -> {
+			Address blockAddress = addr(address);
+			Address mapAddress = addr(mappedAddress);
+			Memory memory = program.getMemory();
+			MemoryBlock block =
+				memory.createByteMappedBlock(name, blockAddress, mapAddress, size, false);
+			return block;
+		});
+
 	}
 
 	public MemoryBlock createUninitializedMemory(String name, String address, int size) {
@@ -328,7 +372,7 @@ public class ProgramBuilder {
 	 * Sets the bytes starting at {@code address} to the values encoded in {@code byteString}.
 	 * <p>
 	 * See {@link #setBytes(String, byte[], boolean)}.
-	 * <p>
+	 * 
 	 * @param address String containing numeric value, preferably hex encoded: "0x1004000"
 	 * @param byteString String containing 2 digit hex values, separated by ' ' space chars
 	 * or by comma ',' chars: "12 05 ff".  See {@link NumericUtilities#parseHexLong(String)}.
@@ -344,7 +388,7 @@ public class ProgramBuilder {
 	 * and then optionally disassembling.
 	 * <p>
 	 * See {@link #setBytes(String, byte[], boolean)}.
-	 * <p>
+	 * 
 	 * @param address String containing numeric value, preferably hex encoded: "0x1004000"
 	 * @param byteString String containing 2 digit hex values, separated by ' ' space chars
 	 * or by comma ',' chars: "12 05 ff".  See {@link NumericUtilities#parseHexLong(String)}.
@@ -363,7 +407,7 @@ public class ProgramBuilder {
 	/**
 	 * Sets the bytes starting at {@code stringAddress} to the byte values in {@code bytes}
 	 * and then optionally disassembling.
-	 * <p>
+	 * 
 	 * @param stringAddress String containing numeric value, preferably hex encoded: "0x1004000"
 	 * @param bytes array of bytes to copy into the memory buffer at the addresss.
 	 * @param disassemble boolean flag.  See {@link #disassemble(String, int)}
@@ -385,6 +429,50 @@ public class ProgramBuilder {
 		if (disassemble) {
 			disassemble(stringAddress, bytes.length);
 		}
+	}
+
+	public void setString(String address, String string) throws Exception {
+		byte[] bytes = string.getBytes();
+		setBytes(address, bytes);
+	}
+
+	public void setShort(String address, short value) throws Exception {
+		DataConverter converter = getDataConverter();
+		byte[] bytes = converter.getBytes(value);
+		setBytes(address, bytes);
+	}
+
+	public void setInt(String address, int value) throws Exception {
+		DataConverter converter = getDataConverter();
+		byte[] bytes = converter.getBytes(value);
+		setBytes(address, bytes);
+	}
+
+	public void setLong(String address, long value) throws Exception {
+		DataConverter converter = getDataConverter();
+		byte[] bytes = converter.getBytes(value);
+		setBytes(address, bytes);
+	}
+
+	public void putAddress(String address, String pointerAddress) throws Exception {
+		Address pointer = addr(pointerAddress);
+		long offset = pointer.getOffset();
+		int pointerSize = pointer.getAddressSpace().getPointerSize();
+		switch (pointerSize) {
+			case 2:
+				setShort(address, (short) offset);
+				break;
+			case 4:
+				setInt(address, (int) offset);
+				break;
+			default:
+				setLong(address, offset);
+		}
+	}
+
+	private DataConverter getDataConverter() {
+		boolean bigEndian = program.getMemory().isBigEndian();
+		return bigEndian ? BigEndianDataConverter.INSTANCE : LittleEndianDataConverter.INSTANCE;
 	}
 
 	public void setRead(MemoryBlock block, boolean r) {
@@ -629,7 +717,7 @@ public class ProgramBuilder {
 		});
 	}
 
-	public Namespace createClassNamespace(String name, String parentNamespace, SourceType type)
+	public GhidraClass createClassNamespace(String name, String parentNamespace, SourceType type)
 			throws Exception {
 		return tx(() -> {
 			Namespace ns = getNamespace(parentNamespace);
@@ -812,6 +900,18 @@ public class ProgramBuilder {
 		}
 	}
 
+	/**
+	 * Creates a non-null-terminated ascii string at the given address 
+	 * @param address the address
+	 * @param string the string 
+	 * @return the new data
+	 * @throws Exception if there is an exception
+	 */
+	public Data createString(String address, String string) throws Exception {
+		return createString(address, string, StandardCharsets.US_ASCII, false,
+			StringDataType.dataType);
+	}
+
 	public Data createString(String address, String string, Charset charset, boolean nullTerminate,
 			DataType dataType) throws Exception {
 		if (nullTerminate) {
@@ -923,7 +1023,12 @@ public class ProgramBuilder {
 		});
 	}
 
+	@Deprecated(forRemoval = true, since = "11.4")
 	public void createComment(String address, String comment, int commentType) {
+		createComment(address, comment, CommentType.valueOf(commentType));
+	}
+
+	public void createComment(String address, String comment, CommentType commentType) {
 		tx(() -> {
 			Listing listing = program.getListing();
 			listing.setComment(addr(address), commentType, comment);
@@ -1087,7 +1192,22 @@ public class ProgramBuilder {
 		program.setChanged(changed);
 	}
 
-	private <E extends Exception> void tx(ExceptionalCallback<E> c) {
+	public FileBytes createFileBytes(int size) throws Exception {
+		byte[] bytes = new byte[size];
+		for (int i = 0; i < size; i++) {
+			bytes[i] = (byte) i;
+		}
+
+		return tx(() -> {
+			FileBytes fileBytes = program.getMemory()
+					.createFileBytes("test", 0, size, new ByteArrayInputStream(bytes),
+						TaskMonitor.DUMMY);
+
+			return fileBytes;
+		});
+	}
+
+	public <E extends Exception> void tx(ExceptionalCallback<E> c) {
 		startTransaction();
 		boolean commit = true;
 		try {
@@ -1102,7 +1222,7 @@ public class ProgramBuilder {
 		}
 	}
 
-	private <R, E extends Exception> R tx(ExceptionalSupplier<R, E> s) {
+	public <R, E extends Exception> R tx(ExceptionalSupplier<R, E> s) {
 		startTransaction();
 		boolean commit = true;
 		try {
@@ -1117,7 +1237,7 @@ public class ProgramBuilder {
 		}
 	}
 
-	private interface ExceptionalSupplier<R, E extends Exception> {
+	public interface ExceptionalSupplier<R, E extends Exception> {
 		public R get() throws E;
 	}
 }

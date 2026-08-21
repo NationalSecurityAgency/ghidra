@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,6 @@
 package docking.widgets.table.constraint.dialog;
 
 import java.util.*;
-
-import org.apache.commons.collections4.CollectionUtils;
 
 import docking.widgets.table.*;
 import docking.widgets.table.constraint.ColumnConstraint;
@@ -168,15 +166,7 @@ public class ColumnFilterData<T> implements Comparable<ColumnFilterData<T>> {
 
 	@Override
 	public String toString() {
-		//@formatter:off
-		return "{\n" +
-			"\tname: " + name + ",\n" +
-			"\tmodelColumn" + modelIndex + ",\n" +
-			"\tviewColumn: " + viewIndex + ",\n" +
-			"\tconstraints: " + 
-				CollectionUtils.collect(applicableConstraints, c -> c.asString()) +"\n" +
-		"}";
-		//@formatter:on
+		return "[name=%s, model col=%s, view col=%s]".formatted(name, modelIndex, viewIndex);
 	}
 
 	/**

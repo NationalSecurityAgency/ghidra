@@ -155,6 +155,7 @@ public class ImageDialogProvider extends DialogComponentProvider {
 
 	private JComponent buildWorkPanel() {
 		shapeCombo = new GComboBox<>();
+		shapeCombo.getAccessibleContext().setAccessibleName("Shapes");
 		shapeCombo.addItem("Rectangle");
 		shapeCombo.addItem("Oval");
 		shapeCombo.addItem("Arrow");
@@ -163,19 +164,22 @@ public class ImageDialogProvider extends DialogComponentProvider {
 		jPanel.add(shapeCombo, BorderLayout.NORTH);
 
 		JPanel imagePanel = new JPanel(new BorderLayout());
-
+		imagePanel.getAccessibleContext().setAccessibleName("Image");
 		newImageLabel = new GIconLabel(new ImageIcon(newImage));
 		newImageLabel.setOpaque(true);
 		newImageLabel.setBackground(Palette.BLACK);
+		newImageLabel.getAccessibleContext().setAccessibleName("New Image");
 		JPanel newLabelPanel = new JPanel(new BorderLayout());
-
+		newLabelPanel.getAccessibleContext().setAccessibleName("New Label");
 		if (oldImage != null) {
 			oldImageLabel = new GIconLabel(new ImageIcon(oldImage));
 			oldImageLabel.setOpaque(true);
 			oldImageLabel.setBackground(Palette.BLACK);
+			oldImageLabel.getAccessibleContext().setAccessibleName("Old Image");
 		}
 		else {
 			oldImageLabel = new GLabel("     Old image not found     ");
+			oldImageLabel.getAccessibleContext().setAccessibleName("Old Image");
 		}
 
 		newLabelPanel.add(createImageLabelComponent("New Image"), BorderLayout.NORTH);
@@ -186,7 +190,7 @@ public class ImageDialogProvider extends DialogComponentProvider {
 		oldLabelPanel.add(createImageLabelComponent("Old Image"), BorderLayout.NORTH);
 		oldLabelPanel.setBorder(BorderFactory.createLineBorder(Colors.BORDER, 20));
 		oldLabelPanel.add(oldImageLabel, BorderLayout.CENTER);
-
+		oldLabelPanel.getAccessibleContext().setAccessibleName("Old Label");
 		imagePanel.add(oldLabelPanel, BorderLayout.WEST);
 		imagePanel.add(newLabelPanel, BorderLayout.EAST);
 
@@ -194,7 +198,7 @@ public class ImageDialogProvider extends DialogComponentProvider {
 
 		textField = new JTextField();
 		jPanel.add(textField, BorderLayout.SOUTH);
-
+		jPanel.getAccessibleContext().setAccessibleName("Image Provider");
 		return jPanel;
 	}
 
@@ -203,6 +207,7 @@ public class ImageDialogProvider extends DialogComponentProvider {
 		JLabel label = createNameLabel(name);
 		panel.add(label);
 		panel.setBackground(label.getBackground());
+		panel.getAccessibleContext().setAccessibleName("Image Label");
 		return panel;
 	}
 
@@ -212,6 +217,7 @@ public class ImageDialogProvider extends DialogComponentProvider {
 		label.setOpaque(true);
 		label.setBackground(Palette.BLACK);
 		label.setHorizontalTextPosition(SwingConstants.CENTER);
+		label.getAccessibleContext().setAccessibleName(name);
 		return label;
 	}
 

@@ -65,6 +65,8 @@ class DataTypeSyncPanel extends JPanel {
 			TableModel model = table.getModel();
 
 			cb.setEnabled(model.isCellEditable(row, column));
+
+			c.getAccessibleContext().setAccessibleName("Sync Boolean Reader");
 			return c;
 		}
 	}
@@ -80,12 +82,15 @@ class DataTypeSyncPanel extends JPanel {
 
 		syncTable = new GhidraTable(tableModel);
 		syncTable.setDefaultRenderer(Boolean.class, new DataTypeSyncBooleanRenderer());
+		syncTable.getAccessibleContext().setAccessibleName("Sync");
 		JScrollPane sp = new JScrollPane(syncTable);
+		sp.getAccessibleContext().setAccessibleName("Sync Scroll");
 
 		Dimension d = new Dimension(940, 200);
 		syncTable.setPreferredScrollableViewportSize(d);
 		syncTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		tableFilterPanel = new GhidraTableFilterPanel<>(syncTable, tableModel);
+		tableFilterPanel.getAccessibleContext().setAccessibleName("Table Filter");
 		add(sp, BorderLayout.CENTER);
 		add(tableFilterPanel, BorderLayout.SOUTH);
 		tableModel.fireTableDataChanged();

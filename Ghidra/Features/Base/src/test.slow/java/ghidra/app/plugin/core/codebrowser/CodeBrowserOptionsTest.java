@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -197,6 +197,7 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals("Pre-comments Field", groups[idx++]);
 		assertEquals("Register Field", groups[idx++]);
 		assertEquals("Selection Colors", groups[idx++]);
+		assertEquals("Source Map", groups[idx++]);
 		assertEquals("Templates", groups[idx++]);
 		assertEquals("XREFs Field", groups[idx++]);
 	}
@@ -254,6 +255,23 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		btf = (ListingTextField) cb.getCurrentField();
 		s = btf.getText();
 		assertEquals("01001000", s);
+
+		// Test displayUpperCase - navigate to an address whose hex offset contains A-F
+		cb.goToField(addr("0x100100a"), "Address", 0, 0);
+		btf = (ListingTextField) cb.getCurrentField();
+		assertEquals("0100100a", btf.getText());
+
+		afowo.setDisplayUpperCase(true);
+		options.setCustomOption(names.get(0), afowo);
+		cb.updateNow();
+		btf = (ListingTextField) cb.getCurrentField();
+		assertEquals("0100100A", btf.getText());
+
+		afowo.setDisplayUpperCase(false);
+		options.setCustomOption(names.get(0), afowo);
+		cb.updateNow();
+		btf = (ListingTextField) cb.getCurrentField();
+		assertEquals("0100100a", btf.getText());
 
 	}
 
@@ -594,7 +612,7 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 
 		cb.goToField(callAddress, "Bytes", 0, 0);
 
-		SetCommentCmd eolCmd = new SetCommentCmd(callAddress, CodeUnit.EOL_COMMENT,
+		SetCommentCmd eolCmd = new SetCommentCmd(callAddress, CommentType.EOL,
 			"a bb ccc dddd eeeee ffff ggg hhh ii j k ll mmm nnn oooo " +
 				"ppppp qqqq rrrr ssss tttt uuuuu vvvvvv wwwww\n\n\n\n" +
 				"AAA BBB CCC DDD EEE FFF GGG HHH III JJJ KKK LLL MMM NNN OOO PPP QQQ " +
@@ -603,7 +621,7 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 				"4444 55555 666666 7777777 88888888 999999999 0000000000 1 22 333 4444 55555");
 		tool.execute(eolCmd, program);
 
-		SetCommentCmd repeatCmd = new SetCommentCmd(callAddress, CodeUnit.REPEATABLE_COMMENT,
+		SetCommentCmd repeatCmd = new SetCommentCmd(callAddress, CommentType.REPEATABLE,
 			"Local repeatable line1.\n" + "\n" + "Line3 of repeatable.");
 		tool.execute(repeatCmd, program);
 
@@ -612,7 +630,7 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 			new CreateFunctionCmd(null, callRefAddress, body, SourceType.USER_DEFINED);
 		tool.execute(createFunctionCmd, program);
 
-		SetCommentCmd callRepeatCmd = new SetCommentCmd(callRefAddress, CodeUnit.REPEATABLE_COMMENT,
+		SetCommentCmd callRepeatCmd = new SetCommentCmd(callRefAddress, CommentType.REPEATABLE,
 			"\n" + "Function Repeatable line2");
 		tool.execute(callRepeatCmd, program);
 
@@ -620,8 +638,8 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 			SourceType.USER_DEFINED, 0, false);
 		tool.execute(addRefCmd, program);
 
-		SetCommentCmd commentRefCmd = new SetCommentCmd(otherRefAddress,
-			CodeUnit.REPEATABLE_COMMENT, "Mem ref line1.\n" + "");
+		SetCommentCmd commentRefCmd =
+			new SetCommentCmd(otherRefAddress, CommentType.REPEATABLE, "Mem ref line1.\n" + "");
 		tool.execute(commentRefCmd, program);
 
 		// these values are all DEFAULT, by default; set them in case that changes in the future
@@ -691,16 +709,16 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		options.setBoolean(WORD_WRAP, false);
 		cb.updateNow();
 		btf = (ListingTextField) cb.getCurrentField();
-		assertEquals(12, getNumberOfLines(btf));
+		assertEquals(11, getNumberOfLines(btf));
 		assertTrue("; ".equals(btf.getFieldElement(5, 0).getText()));
 
 		options.setBoolean(SHOW_SEMICOLON, false);
 		cb.updateNow();
 		btf = (ListingTextField) cb.getCurrentField();
-		assertEquals(12, getNumberOfLines(btf));
-		assertFalse("; ".equals(btf.getFieldElement(1, 0).getText()));
-		assertEquals("01003fa1", btf.getFieldElement(11, 4).getText());
-		assertEquals("Mem ref line1.", btf.getFieldElement(11, 11).getText());
+		assertEquals(11, getNumberOfLines(btf));
+		assertTrue("".equals(btf.getFieldElement(1, 0).getText())); // blank line - leading ';' not present
+		assertEquals("01003fa1", btf.getFieldElement(9, 4).getText());
+		assertEquals("Mem ref line1.", btf.getFieldElement(9, 11).getText());
 
 		options.setBoolean(SHOW_REF_ADDR, false);
 		cb.updateNow();
@@ -763,9 +781,8 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals("Operands Field.Underline References", names.get(14));
 		assertEquals("Operands Field.Wrap on Semicolons", names.get(15));
 
-		NamespaceWrappedOption namespaceOption =
-			(NamespaceWrappedOption) options.getCustomOption(names.get(3),
-				new NamespaceWrappedOption());
+		NamespaceWrappedOption namespaceOption = (NamespaceWrappedOption) options
+				.getCustomOption(names.get(3), new NamespaceWrappedOption());
 
 		assertTrue(cb.goToField(addr("0x100eee0"), "Address", 0, 0));
 		ListingTextField btf = (ListingTextField) cb.getCurrentField();
@@ -789,8 +806,8 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 
 		//--- Verify register variable markup options
 
-		Command cmd = new AddRegisterRefCmd(addr("0x1002d0b"), 0, program.getRegister("EDI"),
-			SourceType.USER_DEFINED);
+		Command<Program> cmd = new AddRegisterRefCmd(addr("0x1002d0b"), 0,
+			program.getRegister("EDI"), SourceType.USER_DEFINED);
 		applyCmd(program, cmd);
 		cb.updateNow();
 
@@ -1007,13 +1024,15 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 				List<HelpLocation> nestedHelp = getParentHelpLocations(options, name);
 				for (HelpLocation help : nestedHelp) {
 					if (help != null && !isValidHelpLocation(help)) {
-						missing.add("Bad help location: " + help.toString());
+						missing.add("Bad parent help for path: " + options.getName() + "." + name +
+							"; help: " + help.toString() + "\nMake sure your options parent node " +
+							"has a help location set, in addition to the individual options " +
+							"node");
 					}
 				}
 
 				// it has a help location; is it valid?
 				if (hl != null && !isValidHelpLocation(hl)) {
-					isValidHelpLocation(hl);
 					missing.add(options.getName() + "." + name);
 				}
 			}

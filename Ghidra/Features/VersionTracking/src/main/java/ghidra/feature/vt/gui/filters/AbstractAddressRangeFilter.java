@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,9 @@ import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GHtmlLabel;
-import docking.widgets.textfield.HexIntegerFormatter;
+import docking.widgets.numberformat.HexIntegerFormatter;
+import docking.widgets.numberformat.IntegerFormatterFactory;
+import docking.widgets.textfield.*;
 import generic.theme.GColor;
 import ghidra.feature.vt.api.main.VTAssociation;
 import ghidra.feature.vt.gui.provider.matchtable.NumberRangeProducer;
@@ -59,8 +61,8 @@ public abstract class AbstractAddressRangeFilter<T> extends AncillaryFilter<T>
 	private static final Long MAX_ADDRESS_VALUE = Long.MAX_VALUE;
 
 	private JComponent component;
-	private FilterFormattedTextField lowerAddressRangeTextField;
-	private FilterFormattedTextField upperAddressRangeTextField;
+	private GFormattedTextField lowerAddressRangeTextField;
+	private GFormattedTextField upperAddressRangeTextField;
 	private JComboBox<String> lowerRangeComboBox;
 	private JComboBox<String> upperRangeComboBox;
 
@@ -90,14 +92,14 @@ public abstract class AbstractAddressRangeFilter<T> extends AncillaryFilter<T>
 		enablePanel.add(enableCheckBox, BorderLayout.NORTH);
 
 		// begin address field (long input field with hex)
-		lowerAddressRangeTextField = new FilterFormattedTextField(
+		lowerAddressRangeTextField = new GFormattedTextField(
 			new IntegerFormatterFactory(new HexIntegerFormatter(), false), MIN_ADDRESS_VALUE);
 		lowerAddressRangeTextField.setName("Lower Address Range Text Field"); // for tracking state
 		lowerAddressRangeTextField.setColumns(15);
 		lowerAddressRangeTextField.setMinimumSize(lowerAddressRangeTextField.getPreferredSize());
 
 		// end address field (long input field with hex)
-		upperAddressRangeTextField = new FilterFormattedTextField(
+		upperAddressRangeTextField = new GFormattedTextField(
 			new IntegerFormatterFactory(new HexIntegerFormatter(), false), MAX_ADDRESS_VALUE);
 		upperAddressRangeTextField.setName("Upper Address Range Text Field"); // for tracking state
 		upperAddressRangeTextField.setColumns(15);
@@ -169,17 +171,20 @@ public abstract class AbstractAddressRangeFilter<T> extends AncillaryFilter<T>
 			}
 		};
 
-		FilterStatusListener notificationListener = status -> fireStatusChanged(status);
+		TextEntryStatusListener notificationListener = s -> {
+			FilterEditingStatus status = FilterEditingStatus.getFilterStatus(s);
+			fireStatusChanged(status);
+		};
 
 		StatusLabel lowerScoreStatusLabel =
 			new StatusLabel(lowerAddressRangeTextField, MIN_ADDRESS_VALUE);
-		lowerAddressRangeTextField.addFilterStatusListener(lowerScoreStatusLabel);
-		lowerAddressRangeTextField.addFilterStatusListener(notificationListener);
+		lowerAddressRangeTextField.addTextEntryStatusListener(lowerScoreStatusLabel);
+		lowerAddressRangeTextField.addTextEntryStatusListener(notificationListener);
 
 		StatusLabel upperScoreStatusLabel =
 			new StatusLabel(upperAddressRangeTextField, MAX_ADDRESS_VALUE);
-		upperAddressRangeTextField.addFilterStatusListener(upperScoreStatusLabel);
-		upperAddressRangeTextField.addFilterStatusListener(notificationListener);
+		upperAddressRangeTextField.addTextEntryStatusListener(upperScoreStatusLabel);
+		upperAddressRangeTextField.addTextEntryStatusListener(notificationListener);
 
 		disabledScreen = createDisabledScreen(layeredPane);
 
@@ -246,7 +251,7 @@ public abstract class AbstractAddressRangeFilter<T> extends AncillaryFilter<T>
 		component.validate();
 	}
 
-	private JComboBox<String> createComboBox(FilterFormattedTextField field, Long defaultValue,
+	private JComboBox<String> createComboBox(GFormattedTextField field, Long defaultValue,
 			String prototypeString) {
 		GhidraComboBox<String> comboBox = new GhidraComboBox<>(new LimitedHistoryComboBoxModel()) {
 			// overridden to paint seamlessly with out color changing text field
@@ -283,14 +288,16 @@ public abstract class AbstractAddressRangeFilter<T> extends AncillaryFilter<T>
 	}
 
 	@Override
-	public void clearFilter() {
-		lowerAddressRangeTextField.setText(MIN_ADDRESS_VALUE.toString());
-		upperAddressRangeTextField.setText(MAX_ADDRESS_VALUE.toString());
-	}
-
-	@Override
 	public JComponent getComponent() {
 		return component;
+	}
+
+	private FilterEditingStatus getLowerAddressRangeStatus() {
+		return FilterEditingStatus.getFilterStatus(lowerAddressRangeTextField);
+	}
+
+	private FilterEditingStatus getUpperAddressRangeStatus() {
+		return FilterEditingStatus.getFilterStatus(upperAddressRangeTextField);
 	}
 
 	@Override
@@ -299,8 +306,8 @@ public abstract class AbstractAddressRangeFilter<T> extends AncillaryFilter<T>
 			return FilterEditingStatus.NONE;
 		}
 
-		FilterEditingStatus lowerStatus = lowerAddressRangeTextField.getFilterStatus();
-		FilterEditingStatus upperStatus = upperAddressRangeTextField.getFilterStatus();
+		FilterEditingStatus lowerStatus = getLowerAddressRangeStatus();
+		FilterEditingStatus upperStatus = getUpperAddressRangeStatus();
 
 		if (lowerStatus == FilterEditingStatus.ERROR || upperStatus == FilterEditingStatus.ERROR) {
 			return FilterEditingStatus.ERROR;
@@ -345,8 +352,8 @@ public abstract class AbstractAddressRangeFilter<T> extends AncillaryFilter<T>
 			return true;
 		}
 
-		if (lowerAddressRangeTextField.getFilterStatus() == FilterEditingStatus.ERROR ||
-			upperAddressRangeTextField.getFilterStatus() == FilterEditingStatus.ERROR) {
+		if (getLowerAddressRangeStatus() == FilterEditingStatus.ERROR ||
+			getUpperAddressRangeStatus() == FilterEditingStatus.ERROR) {
 			return true; // for an invalid filter state, we let all values through
 		}
 
@@ -578,10 +585,10 @@ public abstract class AbstractAddressRangeFilter<T> extends AncillaryFilter<T>
 	private class FormattedFieldComboBoxEditor implements ComboBoxEditor {
 
 		private EventListenerList listeners = new EventListenerList();
-		private final FilterFormattedTextField textField;
+		private final GFormattedTextField textField;
 		private final Object defaultValue;
 
-		FormattedFieldComboBoxEditor(FilterFormattedTextField textField) {
+		FormattedFieldComboBoxEditor(GFormattedTextField textField) {
 			this.textField = textField;
 			defaultValue = textField.getValue();
 		}

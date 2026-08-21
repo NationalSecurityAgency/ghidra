@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -188,36 +188,6 @@ public interface ProgramManager {
 	 * @param program the program
 	 */
 	public void saveProgramAs(Program program);
-
-	/**
-	 * Establish a persistent owner on an open program. This will cause the program manager to imply
-	 * make a program hidden if it is closed.
-	 *
-	 * @param program the program
-	 * @param owner the owner
-	 * @return true if program is open and another object is not already the owner, or the specified
-	 *         owner is already the owner.
-	 * @see #releaseProgram(Program, Object)
-	 * @deprecated this method is no longer used by the system
-	 */
-	@Deprecated(forRemoval = true, since = "10.2")
-	public boolean setPersistentOwner(Program program, Object owner);
-
-	/**
-	 * Release the persistent ownership of a program.
-	 * <p>
-	 * The program will automatically be closed if it is hidden or was marked as temporary. If any
-	 * of these closures corresponds to a program with changes the user will be given an opportunity
-	 * to save or keep the program open.
-	 * <p>
-	 * If persistentOwner is not the correct owner, the method will have no affect.
-	 *
-	 * @param program the program
-	 * @param persistentOwner the owner defined by {@link #setPersistentOwner(Program, Object)}
-	 * @deprecated this method is no longer used by the system
-	 */
-	@Deprecated(forRemoval = true, since = "10.2")
-	public void releaseProgram(Program program, Object persistentOwner);
 
 	/**
 	 * Closes the given program with the option of saving any changes. The exact behavior of this

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,7 @@
 package ghidra.app.plugin.core.progmgr;
 
 import java.beans.PropertyEditor;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.*;
 import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -38,12 +37,12 @@ import ghidra.app.util.HelpTopics;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.task.OpenProgramRequest;
 import ghidra.app.util.task.OpenProgramTask;
-import ghidra.framework.client.ClientUtil;
 import ghidra.framework.main.OpenVersionedFileDialog;
 import ghidra.framework.model.*;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
@@ -187,11 +186,10 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 
 	@Override
 	public Program openProgram(URL ghidraURL, int state) {
-		String location = ghidraURL.getRef();
 		Program program = openProgram(new ProgramLocator(ghidraURL), state);
-
+		String location = GhidraURL.getDecodedReference(ghidraURL);
 		if (program != null && location != null && state == OPEN_CURRENT) {
-			gotoProgramRef(program, ghidraURL.getRef());
+			gotoProgramRef(program, location);
 			programMgr.saveLocation();
 		}
 		return program;
@@ -485,8 +483,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 		}
 
 		Runnable r = () -> {
-			programMgr.addProgram(p, locator, state);
-			if (state == ProgramManager.OPEN_CURRENT) {
+			if (programMgr.addProgram(p, locator, state)) {
 				programMgr.saveLocation();
 			}
 			contextChanged();
@@ -635,6 +632,13 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 
 		OpenVersionedFileDialog<Program> openDialog =
 			new OpenVersionedFileDialog<>(tool, "Open Program", Program.class);
+
+		DomainFile startFile = null;
+		Program p = getCurrentProgram();
+		if (p != null) {
+			startFile = p.getDomainFile();
+		}
+		openDialog.selectDomainFile(startFile);
 		openDialog.setHelpLocation(new HelpLocation(HelpTopics.PROGRAM, "Open_File_Dialog"));
 
 		openDialog.addOkActionListener(e -> {
@@ -897,9 +901,9 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 			return null;
 		}
 		try {
-			return new URL(url);
+			return new URI(url).toURL();
 		}
-		catch (MalformedURLException e) {
+		catch (MalformedURLException | URISyntaxException e) {
 			return null;
 		}
 	}
@@ -1074,20 +1078,6 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 	@Override
 	public boolean isVisible(Program program) {
 		return programMgr.isVisible(program);
-	}
-
-	@Override
-	public void releaseProgram(Program program, Object owner) {
-		if (programMgr.contains(program)) {
-			programMgr.releaseProgram(program, owner);
-			Msg.info(ClientUtil.class,
-				"Released program from " + tool.getName() + " tool: " + program.getDomainFile());
-		}
-	}
-
-	@Override
-	public boolean setPersistentOwner(Program program, Object owner) {
-		return programMgr.setPersistentOwner(program, owner);
 	}
 
 	public boolean isManaged(Program program) {

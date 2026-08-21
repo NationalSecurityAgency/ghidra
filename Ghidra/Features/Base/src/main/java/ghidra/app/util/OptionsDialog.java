@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import docking.DialogComponentProvider;
  */
 public class OptionsDialog extends DialogComponentProvider implements OptionListener {
 
-	private OptionsEditorPanel optionRenderer;
+	private OptionsEditorPanel optionEditor;
 	private List<Option> options = new ArrayList<>();
 	private boolean cancelled = false;
 	private OptionValidator validator;
@@ -41,8 +41,8 @@ public class OptionsDialog extends DialogComponentProvider implements OptionList
 	 * require that a language be loaded or a program be opened and not all options require an
 	 * AddressFactory.  If null, address based options will not be available.
 	 */
-	public OptionsDialog(List<Option> originalOptions,
-			OptionValidator validator, AddressFactoryService addressFactoryService) {
+	public OptionsDialog(List<Option> originalOptions, OptionValidator validator,
+			AddressFactoryService addressFactoryService) {
 		super("Options");
 
 		this.validator = validator;
@@ -56,11 +56,11 @@ public class OptionsDialog extends DialogComponentProvider implements OptionList
 			options.add(option);
 		}
 
-		optionRenderer = new OptionsEditorPanel(options, addressFactoryService);
-
+		optionEditor = new OptionsEditorPanel(options, addressFactoryService);
+		optionEditor.getAccessibleContext().setAccessibleName("Options");
 		addOKButton();
 		addCancelButton();
-		addWorkPanel(optionRenderer);
+		addWorkPanel(optionEditor);
 		setRememberSize(false);
 	}
 

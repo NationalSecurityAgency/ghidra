@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.TraceCodeManager;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -52,15 +53,16 @@ public class DBTraceDefinedDataMemoryView
 	}
 
 	@Override
-	public DBTraceDataAdapter create(Lifespan lifespan, Address address, DataType dataType,
-			int length) throws CodeUnitInsertionException {
+	public DBTraceDataAdapter create(Lifespan lifespan, Address address, TracePlatform platform,
+			DataType dataType, int length) throws CodeUnitInsertionException {
 		return delegateWrite(address.getAddressSpace(),
-			m -> m.create(lifespan, address, dataType, length));
+			m -> m.create(lifespan, address, platform, dataType, length));
 	}
 
 	@Override
-	public DBTraceDataAdapter create(Lifespan lifespan, Address address, DataType dataType)
-			throws CodeUnitInsertionException {
-		return delegateWrite(address.getAddressSpace(), m -> m.create(lifespan, address, dataType));
+	public DBTraceDataAdapter create(Lifespan lifespan, Address address, TracePlatform platform,
+			DataType dataType) throws CodeUnitInsertionException {
+		return delegateWrite(address.getAddressSpace(),
+			m -> m.create(lifespan, address, platform, dataType));
 	}
 }

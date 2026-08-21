@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -133,10 +133,16 @@ final class ParameterDefinitionDB implements ParameterDefinition {
 
 	@Override
 	public void setComment(String comment) {
+		doSetComment(comment, true);
+	}
+
+	void doSetComment(String comment, boolean notify) {
 		record.setString(FunctionParameterAdapter.PARAMETER_COMMENT_COL, comment);
 		try {
 			adapter.updateRecord(record);
-			dataMgr.dataTypeChanged(parent, false);
+			if (notify) {
+				dataMgr.dataTypeChanged(parent, false);
+			}
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);

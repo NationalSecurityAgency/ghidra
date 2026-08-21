@@ -70,4 +70,9 @@ public class SliceHighlightColorProvider implements ColorProvider {
 		}
 		return c;
 	}
+
+	@Override
+	public String toString() {
+		return "Slice Color Provider " + hlColor;
+	}
 }

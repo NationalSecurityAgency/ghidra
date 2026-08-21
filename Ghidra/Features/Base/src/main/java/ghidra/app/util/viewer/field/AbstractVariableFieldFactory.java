@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -81,9 +81,9 @@ public abstract class AbstractVariableFieldFactory extends FieldFactory {
 
 		parameterFieldOptions = new ParameterFieldOptions[2];
 		parameterFieldOptions[CUSTOM_PARAM_INDEX] =
-			new ParameterFieldOptions(OptionsGui.PARAMETER_CUSTOM);
+			new ParameterFieldOptions(OptionsGui.FUN_PARAM_CUSTOM);
 		parameterFieldOptions[DYNAMIC_PARAM_INDEX] =
-			new ParameterFieldOptions(OptionsGui.PARAMETER_DYNAMIC);
+			new ParameterFieldOptions(OptionsGui.FUN_PARAM_DYNAMIC);
 
 		for (int i = 0; i < 2; i++) {
 			parameterFieldOptions[i].style =
@@ -122,11 +122,16 @@ public abstract class AbstractVariableFieldFactory extends FieldFactory {
 	}
 
 	protected Color getColor(Variable var) {
-		if (var instanceof Parameter) {
+		if (var instanceof Parameter param) {
+
+			if (param.isAutoParameter()) {
+				return FunctionColors.PARAM_AUTO;
+			}
+
 			return var.getFunction().hasCustomVariableStorage() ? FunctionColors.PARAM_CUSTOM
 					: FunctionColors.PARAM_DYNAMIC;
 		}
-		return FunctionColors.PARAM;
+		return FunctionColors.VARIABLE;
 	}
 
 	protected FontMetrics getMetrics(Variable var) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,9 @@
 package ghidra.app.util.viewer.format;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.RowLayout;
@@ -83,7 +84,7 @@ public class FieldFormatModel {
 	}
 
 	/**
-	 * Returns the formatMgr that is managing this model.
+	 * {@return the FormatManager managing this format.}
 	 */
 	public FormatManager getFormatManager() {
 		return formatMgr;
@@ -109,6 +110,7 @@ public class FieldFormatModel {
 	/**
 	 * Adds new empty row at the given position.  The position must be in the
 	 * interval [0,numRows].
+	 * @param index the index to add a new row
 	 * @exception IllegalArgumentException thrown if the position is outside the
 	 * interval [0,numRows].
 	 */
@@ -186,21 +188,23 @@ public class FieldFormatModel {
 	}
 
 	/**
-	 * Returns the number of rows in the model.
+	 * {@return the number of rows in this format}
 	 */
 	public int getNumRows() {
 		return rows.size();
 	}
 
 	/**
-	 * Returns the name of this format model.
+	 * {@return the name of this format model.}
 	 */
 	public String getName() {
 		return name;
 	}
 
 	/**
-	 * Returns the number of FieldFactorys on any given row.
+	 * Returns the number of factories on the given row.
+	 * @param row the row to get the number of factories for
+	 * @return the number of factories on the given row
 	 */
 	public int getNumFactorys(int row) {
 		if ((row < 0) || (row >= rows.size())) {
@@ -210,14 +214,16 @@ public class FieldFormatModel {
 	}
 
 	/**
-	 * Returns the FieldFactorys on a given row.
+	 * Returns the factories on the given row.
+	 * @param row the row to factories for
+	 * @return the FieldFactorys for a given row
 	 */
 	public FieldFactory[] getFactorys(int row) {
 		return (rows.get(row)).getFactorys();
 	}
 
 	/**
-	 * Returns the list factories valid for this format.
+	 * {@return the list of factories used in this format.}
 	 */
 	public FieldFactory[] getFactorys() {
 		return factories.clone();
@@ -251,7 +257,7 @@ public class FieldFormatModel {
 	}
 
 	/**
-	 * Returns the width of this model
+	 * {@return the width of this format.}
 	 */
 	public int getWidth() {
 		return width;
@@ -278,8 +284,16 @@ public class FieldFormatModel {
 		}
 	}
 
+	@Override
+	public String toString() {
+		return name + ":\n" + Arrays.stream(factories)
+				.map(f -> f.getClass().getSimpleName())
+				.collect(Collectors.joining(",\n"));
+	}
+
 	/**
 	 * Saves this format to XML.
+	 * @return the XML element for the saved format
 	 */
 	public Element saveToXml() {
 		Element root = new Element("FORMAT");
@@ -318,10 +332,11 @@ public class FieldFormatModel {
 	 */
 	public void restoreFromXml(Element root) {
 		List<?> list = root.getChildren("ROW");
-		Iterator<?> rowIter = list.iterator();
-		rows = new ArrayList<>(list.size());
-		while (rowIter.hasNext()) {
-			Row row = createRow((Element) rowIter.next());
+		Iterator<?> it = list.iterator();
+		rows = new ArrayList<>();
+		while (it.hasNext()) {
+			Element element = (Element) it.next();
+			Row row = createRow(element);
 			rows.add(row);
 		}
 		findWidth();
@@ -456,6 +471,7 @@ public class FieldFormatModel {
 			row.fieldOptionsChanged(options, optionName, oldValue, newValue);
 		}
 	}
+
 //==================================================================================================
 //Inner Classes 
 //==================================================================================================
@@ -558,6 +574,8 @@ class Row {
 
 	@Override
 	public String toString() {
-		return fields.toString();
+		return fields.stream()
+				.map(f -> f.getClass().getSimpleName())
+				.collect(Collectors.joining(","));
 	}
 }

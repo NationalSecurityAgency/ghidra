@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,6 +62,8 @@ public class MIPS_ElfRelocationHandler
 			ElfSymbol elfSymbol, Address symbolAddr, long symbolValue, String symbolName)
 			throws MemoryAccessException {
 
+		// TODO: May need to add support for when symbol is not resolved, see handleUnresolvedSymbol
+		
 		// Determine if result value should be saved as addend for next relocation
 		final boolean saveValue = elfRelocationContext.saveValueForNextReloc;
 
@@ -355,9 +357,14 @@ public class MIPS_ElfRelocationHandler
 				}
 				value = symbolValue;
 				if (elfRelocationContext.extractAddend()) {
-					// extract addend based upon pointer size
-					addend = elf.is64Bit() ? (int) memory.getLong(relocationAddress)
-							: memory.getInt(relocationAddress);
+					// Extract addend based upon pointer size when saving 64-bit addend
+					// for packed relocation type
+					if (saveValue && program.getDefaultPointerSize() == 8) {
+						addend = memory.getLong(relocationAddress);
+					}
+					else {
+						addend = memory.getInt(relocationAddress);
+					}
 				}
 
 				newValue = value + addend;
@@ -633,20 +640,19 @@ public class MIPS_ElfRelocationHandler
 			case R_MICROMIPS_JALR:
 
 				boolean success = false;
-				Address symAddr = elfRelocationContext.getSymbolAddress(elfSymbol);
-				if (symAddr != null) {
-					MemoryBlock block = memory.getBlock(symAddr);
+				if (symbolAddr != null) {
+					MemoryBlock block = memory.getBlock(symbolAddr);
 					if (block != null) {
 						if (MemoryBlock.EXTERNAL_BLOCK_NAME.equals(block.getName())) {
 
 							success = elfRelocationContext.getLoadHelper()
-									.createExternalFunctionLinkage(symbolName, symAddr,
+									.createExternalFunctionLinkage(symbolName, symbolAddr,
 										null) != null;
 
 							if (success) {
 								// Inject appropriate JAL instruction
 								if (type == MIPS_ElfRelocationType.R_MICROMIPS_JALR) {
-									int offsetBits = (int) (symAddr.getOffset() >> 1) & 0x3ffffff;
+									int offsetBits = (int) (symbolValue >> 1) & 0x3ffffff;
 									// TODO: upper bits should really come from delay slot
 									int microJalrBits = 0xf4000000 | offsetBits;
 									memory.setShort(relocationAddress,
@@ -655,7 +661,7 @@ public class MIPS_ElfRelocationHandler
 										(short) microJalrBits);
 								}
 								else {
-									int offsetBits = (int) (symAddr.getOffset() >> 2) & 0x3ffffff;
+									int offsetBits = (int) (symbolValue >> 2) & 0x3ffffff;
 									// TODO: upper bits should really come from delay slot
 									int jalrBits = 0x0c000000 | offsetBits;
 									memory.setInt(relocationAddress, jalrBits);

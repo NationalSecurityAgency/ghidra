@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +16,10 @@
 package ghidra.pcode.emulate.callother;
 
 import ghidra.pcode.emulate.Emulate;
+import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 
+@Deprecated(since = "12.1", forRemoval = true)
 public interface OpBehaviorOther {
 
 	/**
@@ -28,10 +29,10 @@ public interface OpBehaviorOther {
 	 * made.  Implementation is responsible for updating memory 
 	 * state appropriately.
 	 * @param inputs input varnodes passed as parameters to this
-	 * pcodeop.  The inputs[0] value corresponds to the index value of this 
-	 * pcodeop and can generally be ignored.  The inputs[1] value
-	 * corresponds to the first (leftmost) parameter passed to 
-	 * this pcodeop within the language implementation.
+	 * pcodeop.  The original {@link PcodeOp#CALLOTHER} first input 
+	 * has been stripped (i.e., CALLOTHER index value), leaving only 
+	 * the inputs that were were specified as arguments to the named
+	 * pcodeop within the language spec. 
 	 */
 	public void evaluate(Emulate emu, Varnode out, Varnode[] inputs);
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,6 +38,7 @@ public class ListingColors {
 	public static final GColor EXT_REF_RESOLVED = new GColor("color.fg.listing.ext.ref.resolved");
 	public static final GColor REGISTER = new GColor("color.fg.listing.register");
 	public static final GColor PARALLEL_INSTRUCTION = new GColor("color.fg.listing.instruction.parallel");
+	public static final GColor COLLAPSED_CODE = new GColor("color.fg.listing.collapsed");
 
 	
 	public static class XrefColors {
@@ -69,6 +70,7 @@ public class ListingColors {
 		public static final GColor PRE= new GColor("color.fg.listing.comment.pre");
 		public static final GColor REPEATABLE = new GColor("color.fg.listing.comment.repeatable");
 		public static final GColor REF_REPEATABLE = new GColor("color.fg.listing.comment.ref.repeatable");
+		public static final GColor OFFCUT = new GColor("color.fg.listing.comment.offcut");
 	}
 	
 	public static class LabelColors {

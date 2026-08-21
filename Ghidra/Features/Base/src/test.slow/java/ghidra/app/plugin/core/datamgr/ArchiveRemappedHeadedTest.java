@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,8 @@ import docking.action.DockingActionIf;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.datamgr.actions.UpdateSourceArchiveNamesAction;
-import ghidra.app.plugin.core.datamgr.archive.*;
+import ghidra.app.plugin.core.datamgr.archive.Archive;
+import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.plugin.core.datamgr.tree.*;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.services.ProgramManager;
@@ -35,8 +36,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.data.*;
-import ghidra.test.AbstractGhidraHeadedIntegrationTest;
-import ghidra.test.TestEnv;
+import ghidra.test.*;
 import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
 
@@ -111,7 +111,7 @@ public class ArchiveRemappedHeadedTest extends AbstractGhidraHeadedIntegrationTe
 	}
 
 	private ProgramDB buildProgram() throws Exception {
-		ProgramBuilder builder = new ProgramBuilder("notepad", ProgramBuilder._TOY, this);
+		ProgramBuilder builder = new ToyProgramBuilder();
 		return builder.getProgram();
 	}
 

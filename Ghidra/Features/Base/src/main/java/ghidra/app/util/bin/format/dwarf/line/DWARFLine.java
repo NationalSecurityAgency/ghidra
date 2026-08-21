@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package ghidra.app.util.bin.format.dwarf.line;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -106,19 +107,21 @@ public class DWARFLine {
 		}
 		result.directories.add(new DWARFFile(defaultCompDir));
 
+		Charset charset = cu.getProgram().getCharset();
+
 		// Read all include directories, which are only a list of names in v4
-		String dirName = reader.readNextAsciiString();
+		String dirName = reader.readNextString(charset, 1);
 		while (dirName.length() != 0) {
 			DWARFFile dir = new DWARFFile(dirName);
 			dir = fixupDir(dir, defaultCompDir);
 
 			result.directories.add(dir);
-			dirName = reader.readNextAsciiString();
+			dirName = reader.readNextString(charset, 1);
 		}
 
 		// Read all files, ending when null (hit empty filename)
 		DWARFFile file;
-		while ((file = DWARFFile.readV4(reader)) != null) {
+		while ((file = DWARFFile.readV4(reader, cu)) != null) {
 			result.files.add(file);
 		}
 	}
@@ -165,7 +168,7 @@ public class DWARFLine {
 		// read the directories, which are defined the same way files are
 		int directories_count = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 		for (int i = 0; i < directories_count; i++) {
-			DWARFFile dir = DWARFFile.readV5(reader, dirFormatDefs, cu);
+			DWARFFile dir = DWARFFile.readV5(reader, dirFormatDefs, result.intSize, cu);
 			dir = fixupDir(dir, defaultCompDir);
 			result.directories.add(dir);
 		}
@@ -179,7 +182,7 @@ public class DWARFLine {
 
 		int file_names_count = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 		for (int i = 0; i < file_names_count; i++) {
-			DWARFFile dir = DWARFFile.readV5(reader, fileFormatDefs, cu);
+			DWARFFile dir = DWARFFile.readV5(reader, fileFormatDefs, result.intSize, cu);
 			result.files.add(dir);
 		}
 	}
@@ -247,7 +250,7 @@ public class DWARFLine {
 	private int address_size;
 	private int segment_selector_size;
 
-	private long opcodes_start = -1; // offset where line number program opcodes start
+	private long opcodes_start; // offset where line number program opcodes start
 
 	private DWARFLine() {
 		// empty, use #read()
@@ -261,27 +264,55 @@ public class DWARFLine {
 		return endOffset;
 	}
 
-	public DWARFLineProgramExecutor getLineProgramexecutor(DWARFCompilationUnit cu,
-			BinaryReader reader) {
-		DWARFLineProgramExecutor lpe = new DWARFLineProgramExecutor(reader.clone(opcodes_start),
-			endOffset, cu.getPointerSize(), opcode_base, line_base, line_range,
-			minimum_instruction_length, default_is_stmt);
+	public DWARFLineProgramExecutor getLineProgramExecutor(DWARFCompilationUnit cu) {
+		DWARFLineProgramExecutor lpe = new DWARFLineProgramExecutor(
+			cu.getDIEContainer().getDebugLineReader().clone(opcodes_start), endOffset,
+			cu.getPointerSize(), opcode_base, line_base, line_range, minimum_instruction_length,
+			default_is_stmt, cu.getProgram().isAddr0Tombstone());
 
 		return lpe;
 	}
 
-	public record SourceFileAddr(long address, String fileName, int lineNum) {}
+	public record SourceFileInfo(String filePath, byte[] md5) {}
 
-	public List<SourceFileAddr> getAllSourceFileAddrInfo(DWARFCompilationUnit cu,
-			BinaryReader reader) throws IOException {
-		try (DWARFLineProgramExecutor lpe = getLineProgramexecutor(cu, reader)) {
+	public record SourceFileAddr(long address, String fileName, byte[] md5, int lineNum,
+			boolean isEndSequence) {}
+
+	public List<SourceFileAddr> getAllSourceFileAddrInfo(DWARFCompilationUnit cu)
+			throws IOException {
+		if (cu.getDIEContainer().getDebugLineReader() == null) {
+			return List.of();
+		}
+		try (DWARFLineProgramExecutor lpe = getLineProgramExecutor(cu)) {
 			List<SourceFileAddr> results = new ArrayList<>();
 			for (DWARFLineProgramState row : lpe.allRows()) {
-				results.add(new SourceFileAddr(row.address, getFilePath(row.file, true), row.line));
+				if (row.tombstone) {
+					// skips elements that were based on tombstoned/dead code that wasn't included
+					// in final binary
+					cu.getProgram().getImportSummary().tombstonedSourceLineEntrySkippedCount++;
+					continue;
+				}
+				try {
+					DWARFFile file = getFile(row.file);
+					results.add(new SourceFileAddr(row.address, file.getPathName(this),
+						file.getMD5(), row.line, row.isEndSequence));
+				}
+				catch (IOException e) {
+					cu.getProgram().getImportSummary().badSourceFileCount++;
+				}
 			}
 
 			return results;
 		}
+	}
+
+	public List<SourceFileInfo> getAllSourceFileInfos() {
+		List<SourceFileInfo> result = new ArrayList<>();
+		files.forEach(df -> {
+			// TODO: last_mod info not included yet
+			result.add(new SourceFileInfo(df.getPathName(this), df.getMD5()));
+		});
+		return result;
 	}
 
 	public DWARFFile getDir(int index) throws IOException {
@@ -295,7 +326,7 @@ public class DWARFLine {
 	/**
 	 * Get a file name given a file index.
 	 * 
-	 * @param index index of the file
+	 * @param index index of the file, where index may not be zero based depending on dwarf version
 	 * @return file {@link DWARFFile}
 	 * @throws IOException if invalid index
 	 */
@@ -313,24 +344,6 @@ public class DWARFLine {
 		}
 		throw new IOException(
 			"Invalid file index %d for line table at 0x%x: ".formatted(index, startOffset));
-	}
-
-	public String getFilePath(int index, boolean includePath) {
-		try {
-			DWARFFile f = getFile(index);
-			if (!includePath) {
-				return f.getName();
-			}
-
-			String dir = f.getDirectoryIndex() >= 0
-					? getDir(f.getDirectoryIndex()).getName()
-					: "";
-
-			return FSUtilities.appendPath(dir, f.getName());
-		}
-		catch (IOException e) {
-			return null;
-		}
 	}
 
 	@Override

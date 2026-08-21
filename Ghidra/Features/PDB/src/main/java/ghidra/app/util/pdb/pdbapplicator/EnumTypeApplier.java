@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -122,6 +122,14 @@ public class EnumTypeApplier extends AbstractComplexTypeApplier {
 
 		FieldListTypeApplier.FieldLists lists =
 			fieldListApplier.getFieldLists(fieldListRecordNumber);
+
+		if (!lists.methods().isEmpty()) {
+			// See applyCpp where we store sp in CppCompositeType so we don't have to determine
+			//  this again (including possible demangling)... can we store this symbol path
+			//  somewhere as well so we do not need to re-create it?
+			SymbolPath sp = getFixedSymbolPath(type);
+			applicator.predefineClass(sp);
+		}
 
 		// Note: not doing anything with getNamespaceList() or getMethodsList() at this time.
 		List<AbstractEnumerateMsType> enumerates = lists.enumerates();

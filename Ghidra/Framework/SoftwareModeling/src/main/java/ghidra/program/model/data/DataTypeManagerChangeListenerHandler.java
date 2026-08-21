@@ -57,7 +57,7 @@ public class DataTypeManagerChangeListenerHandler implements DataTypeManagerChan
 		if (listenerList.isEmpty()) {
 			return;
 		}
-		invokeRunnable(() -> {
+		invokeLater(() -> {
 			for (DataTypeManagerChangeListener listener : listenerList) {
 				listener.categoryAdded(dtm, path);
 			}
@@ -65,12 +65,11 @@ public class DataTypeManagerChangeListenerHandler implements DataTypeManagerChan
 	}
 
 	@Override
-	public void categoryMoved(DataTypeManager dtm, CategoryPath oldPath,
-			CategoryPath newPath) {
+	public void categoryMoved(DataTypeManager dtm, CategoryPath oldPath, CategoryPath newPath) {
 		if (listenerList.isEmpty()) {
 			return;
 		}
-		invokeRunnable(() -> {
+		invokeLater(() -> {
 			for (DataTypeManagerChangeListener listener : listenerList) {
 				listener.categoryMoved(dtm, oldPath, newPath);
 			}
@@ -82,7 +81,7 @@ public class DataTypeManagerChangeListenerHandler implements DataTypeManagerChan
 		if (listenerList.isEmpty()) {
 			return;
 		}
-		invokeRunnable(() -> {
+		invokeLater(() -> {
 			for (DataTypeManagerChangeListener listener : listenerList) {
 				listener.categoryRemoved(dtm, path);
 			}
@@ -90,13 +89,12 @@ public class DataTypeManagerChangeListenerHandler implements DataTypeManagerChan
 	}
 
 	@Override
-	public void categoryRenamed(DataTypeManager dtm, CategoryPath oldPath,
-			CategoryPath newPath) {
+	public void categoryRenamed(DataTypeManager dtm, CategoryPath oldPath, CategoryPath newPath) {
 
 		if (listenerList.isEmpty()) {
 			return;
 		}
-		invokeRunnable(() -> {
+		invokeLater(() -> {
 			for (DataTypeManagerChangeListener listener : listenerList) {
 				listener.categoryRenamed(dtm, oldPath, newPath);
 			}
@@ -109,7 +107,7 @@ public class DataTypeManagerChangeListenerHandler implements DataTypeManagerChan
 		if (listenerList.isEmpty()) {
 			return;
 		}
-		invokeRunnable(() -> {
+		invokeLater(() -> {
 			for (DataTypeManagerChangeListener listener : listenerList) {
 				listener.dataTypeAdded(dtm, path);
 			}
@@ -122,7 +120,7 @@ public class DataTypeManagerChangeListenerHandler implements DataTypeManagerChan
 		if (listenerList.isEmpty()) {
 			return;
 		}
-		invokeRunnable(() -> {
+		invokeLater(() -> {
 			for (DataTypeManagerChangeListener listener : listenerList) {
 				listener.dataTypeChanged(dtm, path);
 			}
@@ -130,13 +128,12 @@ public class DataTypeManagerChangeListenerHandler implements DataTypeManagerChan
 	}
 
 	@Override
-	public void dataTypeMoved(DataTypeManager dtm, DataTypePath oldPath,
-			DataTypePath newPath) {
+	public void dataTypeMoved(DataTypeManager dtm, DataTypePath oldPath, DataTypePath newPath) {
 
 		if (listenerList.isEmpty()) {
 			return;
 		}
-		invokeRunnable(() -> {
+		invokeLater(() -> {
 			for (DataTypeManagerChangeListener listener : listenerList) {
 				listener.dataTypeMoved(dtm, oldPath, newPath);
 			}
@@ -149,7 +146,7 @@ public class DataTypeManagerChangeListenerHandler implements DataTypeManagerChan
 		if (listenerList.isEmpty()) {
 			return;
 		}
-		invokeRunnable(() -> {
+		invokeLater(() -> {
 			for (DataTypeManagerChangeListener listener : listenerList) {
 				listener.dataTypeRemoved(dtm, path);
 			}
@@ -157,13 +154,12 @@ public class DataTypeManagerChangeListenerHandler implements DataTypeManagerChan
 	}
 
 	@Override
-	public void dataTypeRenamed(DataTypeManager dtm, DataTypePath oldPath,
-			DataTypePath newPath) {
+	public void dataTypeRenamed(DataTypeManager dtm, DataTypePath oldPath, DataTypePath newPath) {
 
 		if (listenerList.isEmpty()) {
 			return;
 		}
-		invokeRunnable(() -> {
+		invokeLater(() -> {
 			for (DataTypeManagerChangeListener listener : listenerList) {
 				listener.dataTypeRenamed(dtm, oldPath, newPath);
 				listener.favoritesChanged(dtm, oldPath, false);
@@ -176,23 +172,20 @@ public class DataTypeManagerChangeListenerHandler implements DataTypeManagerChan
 		listenerList = WeakDataStructureFactory.createCopyOnReadWeakSet();
 	}
 
-	private void invokeRunnable(Runnable r) {
-//		if (SwingUtilities.isEventDispatchThread()) {
-//			r.run();
-//		}
-//		else {
+	private void invokeLater(Runnable r) {
+		// Since this method may be invoked from within a synchronized block it is important that 
+		// the runnable be executed later in a non-blocking fashion.
 		SwingUtilities.invokeLater(r);
-//		}
 	}
 
 	@Override
-	public void dataTypeReplaced(DataTypeManager dtm, DataTypePath oldPath,
-			DataTypePath newPath, DataType newDataType) {
+	public void dataTypeReplaced(DataTypeManager dtm, DataTypePath oldPath, DataTypePath newPath,
+			DataType newDataType) {
 
 		if (listenerList.isEmpty()) {
 			return;
 		}
-		invokeRunnable(() -> {
+		invokeLater(() -> {
 			for (DataTypeManagerChangeListener listener : listenerList) {
 				listener.dataTypeReplaced(dtm, oldPath, newPath, newDataType);
 			}
@@ -204,7 +197,7 @@ public class DataTypeManagerChangeListenerHandler implements DataTypeManagerChan
 		if (listenerList.isEmpty()) {
 			return;
 		}
-		invokeRunnable(() -> {
+		invokeLater(() -> {
 			for (DataTypeManagerChangeListener listener : listenerList) {
 				listener.favoritesChanged(dtm, path, isFavorite);
 			}
@@ -218,7 +211,7 @@ public class DataTypeManagerChangeListenerHandler implements DataTypeManagerChan
 		if (listenerList.isEmpty()) {
 			return;
 		}
-		invokeRunnable(() -> {
+		invokeLater(() -> {
 			for (DataTypeManagerChangeListener listener : listenerList) {
 				listener.sourceArchiveChanged(dataTypeManager, dataTypeSource);
 			}
@@ -226,26 +219,38 @@ public class DataTypeManagerChangeListenerHandler implements DataTypeManagerChan
 	}
 
 	@Override
-	public void sourceArchiveAdded(DataTypeManager dataTypeManager,
-			SourceArchive dataTypeSource) {
+	public void sourceArchiveAdded(DataTypeManager dataTypeManager, SourceArchive dataTypeSource) {
 
 		if (listenerList.isEmpty()) {
 			return;
 		}
-		invokeRunnable(() -> {
+		invokeLater(() -> {
 			for (DataTypeManagerChangeListener listener : listenerList) {
 				listener.sourceArchiveAdded(dataTypeManager, dataTypeSource);
 			}
 		});
 	}
 
+	@Override
 	public void programArchitectureChanged(DataTypeManager dataTypeManager) {
 		if (listenerList.isEmpty()) {
 			return;
 		}
-		invokeRunnable(() -> {
+		invokeLater(() -> {
 			for (DataTypeManagerChangeListener listener : listenerList) {
 				listener.programArchitectureChanged(dataTypeManager);
+			}
+		});
+	}
+
+	@Override
+	public void restored(DataTypeManager dtm) {
+		if (listenerList.isEmpty()) {
+			return;
+		}
+		invokeLater(() -> {
+			for (DataTypeManagerChangeListener listener : listenerList) {
+				listener.restored(dtm);
 			}
 		});
 	}

@@ -41,7 +41,6 @@ public class RemoveMatchAction extends DockingAction {
 		super("Remove", VTPlugin.OWNER);
 		this.controller = controller;
 
-//		setToolBarData(new ToolBarData(ICON, MENU_GROUP));
 		setPopupMenuData(new MenuData(new String[] { "Remove Match" }, ICON, MENU_GROUP));
 		setEnabled(false);
 		setHelpLocation(new HelpLocation("VersionTrackingPlugin", "Remove_Match"));
@@ -64,17 +63,7 @@ public class RemoveMatchAction extends DockingAction {
 		}
 		VTMatchContext matchContext = (VTMatchContext) context;
 		List<VTMatch> matches = matchContext.getSelectedMatches();
-		if (matches.size() == 0) {
-			return false;
-		}
-		if (!isRemovableMatch(matches.get(0))) {
-			return false; // It must be a single manual match.
-		}
-		return true;
-	}
-
-	private boolean isRemovableMatch(VTMatch vtMatch) {
-		return vtMatch.getMatchSet().hasRemovableMatches();
+		return !matches.isEmpty();
 	}
 
 	@Override

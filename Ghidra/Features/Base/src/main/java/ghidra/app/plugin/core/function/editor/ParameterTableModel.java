@@ -291,6 +291,11 @@ class ParameterTableModel extends AbstractGTableModel<FunctionVariableData> {
 		public void setStorage(VariableStorage storage) {
 			functionModel.setParameterStorage(param, storage);
 		}
+
+		@Override
+		public boolean hasStorageConflict() {
+			return param.hasStorageConflict();
+		}
 	}
 
 	private class ReturnRowData implements FunctionVariableData {
@@ -335,6 +340,11 @@ class ParameterTableModel extends AbstractGTableModel<FunctionVariableData> {
 		@Override
 		public void setName(String name) {
 			// no name for return type
+		}
+
+		@Override
+		public boolean hasStorageConflict() {
+			return false;
 		}
 	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,9 +15,9 @@
  */
 package ghidra.app.plugin.core.highlight;
 
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
+import docking.DockingUtils;
 import docking.action.*;
 import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
@@ -66,6 +66,7 @@ public class SetHighlightPlugin extends Plugin {
 
 	/**
 	 * Constructor
+	 * 
 	 * @param tool
 	 */
 	public SetHighlightPlugin(PluginTool tool) {
@@ -100,7 +101,7 @@ public class SetHighlightPlugin extends Plugin {
 		setHighlightFromSelectionAction.setPopupMenuData(new MenuData(SET_HIGHLIGHT_POPUPPATH,
 			HIGHLIGHT_GROUP));
 		setHighlightFromSelectionAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_H,
-			InputEvent.CTRL_DOWN_MASK));
+			DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 		setHighlightFromSelectionAction
 				.addToWindowWhen(NavigatableActionContext.class);
 		tool.addAction(setHighlightFromSelectionAction);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,18 +47,24 @@ public class eBPF_ElfRelocationHandler
 		Program program = elfRelocationContext.getProgram();
 		Memory memory = program.getMemory();
 
-		String section_name =
-			elfRelocationContext.relocationTable.getSectionToBeRelocated().getNameAsString();
-		if (section_name.toString().contains("debug")) {
+		ElfSectionHeader sectionToBeRelocated =
+		elfRelocationContext.relocationTable.getSectionToBeRelocated();
+		if (sectionToBeRelocated != null &&
+				sectionToBeRelocated.getNameAsString().startsWith(".debug")) {
 			return RelocationResult.SKIPPED;
 		}
 
-		int symbolIndex = relocation.getSymbolIndex();
-		long new_value = 0;
-		int byteLength = 8;
+		// Check for unresolved symbolAddr and symbolValue required by remaining relocation types handled below
+		if (handleUnresolvedSymbol(elfRelocationContext, relocation, relocationAddress)) {
+			return RelocationResult.FAILURE;
+		}
+
+		long new_value;
+		int byteLength;
 
 		switch (type) {
 			case R_BPF_64_64: {
+				byteLength = 12;
 				new_value = symbolAddr.getAddressableWordOffset();
 				Byte dst = memory.getByte(relocationAddress.add(0x1));
 				memory.setLong(relocationAddress.add(0x4), new_value);
@@ -66,13 +72,14 @@ public class eBPF_ElfRelocationHandler
 				break;
 			}
 			case R_BPF_64_32: {
+				byteLength = 8;
 
 				// if we have, e.g, non-static function, it will be marked in the relocation table
 				// and indexed in the symbol table and it's easy to calculate the pc-relative offset
 				long instr_next = relocationAddress.add(0x8).getAddressableWordOffset();
 				if (symbol.isFunction()) {
 					new_value = symbolAddr.getAddressableWordOffset();
-					int offset = (int) (new_value - instr_next);
+					int offset = (int) ((new_value - instr_next) / 8);
 					memory.setInt(relocationAddress.add(0x4), offset);
 				}
 				else if (symbol.isSection()) {
@@ -89,17 +96,27 @@ public class eBPF_ElfRelocationHandler
 						// according to formula in "kernel.org" docs: https://www.kernel.org/doc/html/latest/bpf/llvm_reloc.html
 						int func_sec_offset = (current_imm + 1) * 8;
 						long func_addr = section_start + func_sec_offset;
-						int offset = (int) (func_addr - instr_next);
+						int offset = (int) ((func_addr - instr_next) / 8);
 						memory.setInt(relocationAddress.add(0x4), offset);
 					}
+//					else {
+//						markAsUnhandled(program, relocationAddress, type, relocation.getSymbolIndex(), 
+//							symbolName, elfRelocationContext.getLog());
+//						return RelocationResult.UNSUPPORTED;
+//					}
 				}
+//				else {
+//					markAsUnhandled(program, relocationAddress, type, relocation.getSymbolIndex(), 
+//						symbolName, elfRelocationContext.getLog());
+//					return RelocationResult.UNSUPPORTED;
+//				}
 				break;
 			}
 			default: {
-				if (symbolIndex == 0) {
-					markAsWarning(program, relocationAddress, type, symbolName, symbolIndex,
-						"applied relocation with symbol-index of 0", elfRelocationContext.getLog());
-				}
+// TODO: it may be appropriate to bookmark unsupported relocations
+// Relocation treatment for .BTF sections may differ
+//    			markAsUnhandled(program, relocationAddress, type, relocation.getSymbolIndex(), 
+//	    		symbolName, elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 			}
 		}

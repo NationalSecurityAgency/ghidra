@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -90,7 +90,7 @@ class DnDTreeCellRenderer extends DefaultTreeCellRenderer {
 	/**
 	 * Enables and disables the rendering of HTML content in this renderer.  If enabled, this
 	 * renderer will interpret HTML content when the text this renderer is showing begins with
-	 * <tt>&lt;html&gt;</tt>
+	 * {@code <html>}
 	 *
 	 * @param enable true to enable HTML rendering; false to disable it
 	 */

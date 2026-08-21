@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,6 @@ import ghidra.program.model.symbol.Reference;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.datastruct.Accumulator;
-import ghidra.util.datastruct.SizeLimitedAccumulatorWrapper;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.table.AddressBasedTableModel;
 import ghidra.util.table.column.AbstractGColumnRenderer;
@@ -50,7 +49,7 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 	static final int PREVIEW_COLUMN = 1;
 	static final int HEX_COLUMN = 2;
 
-	static final int TEMP_MAX_RESULTS = 1_000_000;
+	static final int MAX_RESULTS = 100_000;
 
 	private Listing listing;
 
@@ -58,7 +57,7 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 	private long minValue;
 	private long maxValue;
 
-	private SizeLimitedAccumulatorWrapper<ScalarRowObject> sizedAccumulator;
+	private Accumulator<ScalarRowObject> currentAccumulator;
 
 	ScalarSearchModel(ScalarSearchPlugin plugin, ProgramSelection currentSelection) {
 		super("Scalars", plugin.getTool(), null, null);
@@ -92,7 +91,7 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 			return;
 		}
 
-		sizedAccumulator = new SizeLimitedAccumulatorWrapper<>(accumulator, TEMP_MAX_RESULTS);
+		currentAccumulator = accumulator;
 
 		if (currentSelection != null) {
 			loadTableFromSelection(monitor);
@@ -106,11 +105,7 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 		iterateOverInstructions(monitor, instructions);
 		iterateOverData(monitor, dataIterator);
 
-		sizedAccumulator = null;
-	}
-
-	private boolean tooManyResults() {
-		return sizedAccumulator.hasReachedSizeLimit();
+		currentAccumulator = null;
 	}
 
 	void initialize(Program p, long newMinValue, long newMaxValue) {
@@ -153,12 +148,11 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 
-			if (tooManyResults()) {
+			if (currentAccumulator.getProgress() > MAX_RESULTS) {
 				return;
 			}
 
 			int numOperands = instruction.getNumOperands();
-
 			for (int opIndex = 0; opIndex <= numOperands; opIndex++) {
 
 				monitor.checkCancelled();
@@ -181,14 +175,12 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 
-			if (tooManyResults()) {
+			if (currentAccumulator.getProgress() > MAX_RESULTS) {
 				return;
 			}
 
 			Data data = dataIterator.next();
-
 			int numComponents = data.getNumComponents();
-
 			if (numComponents > 0) {
 				findScalarsInCompositeData(data, numComponents, monitor);
 			}
@@ -223,7 +215,7 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 			return;
 		}
 
-		sizedAccumulator.add(rowObject);
+		currentAccumulator.add(rowObject);
 	}
 
 	private void findScalarsInCompositeData(Data data, int numComponents, TaskMonitor monitor)

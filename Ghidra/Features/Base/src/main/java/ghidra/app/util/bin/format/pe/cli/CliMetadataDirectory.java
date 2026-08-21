@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.app.util.bin.format.pe.cli;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.pe.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
@@ -31,7 +32,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * The Metadata directory pointed found in {@link ImageCor20Header}.
  */
-public class CliMetadataDirectory extends DataDirectory {
+public class CliMetadataDirectory extends DataDirectory implements StructConverter {
 
 	private final static String NAME = "CLI_METADATA_DIRECTORY";
 
@@ -76,7 +77,7 @@ public class CliMetadataDirectory extends DataDirectory {
 
 	@Override
 	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
-			NTHeader ntHeader) throws DuplicateNameException, CodeUnitInsertionException,
+			NTHeader nt) throws DuplicateNameException, CodeUnitInsertionException,
 			IOException, MemoryAccessException {
 
 		if (metadataRoot == null) {
@@ -86,7 +87,7 @@ public class CliMetadataDirectory extends DataDirectory {
 		monitor.setMessage("[" + program.getName() + "]: CLI metadata...");
 
 		// Get our program address
-		Address addr = PeUtils.getMarkupAddress(program, isBinary, ntHeader, virtualAddress);
+		Address addr = PeUtils.getMarkupAddress(program, isBinary, nt, virtualAddress);
 		if (!program.getMemory().contains(addr)) {
 			return;
 		}
@@ -100,7 +101,7 @@ public class CliMetadataDirectory extends DataDirectory {
 		PeUtils.createData(program, addr, dt, log);
 
 		// Markup metadata header
-		metadataRoot.markup(program, isBinary, monitor, log, ntHeader);
+		metadataRoot.markup(program, isBinary, monitor, log, nt);
 	}
 
 	@Override

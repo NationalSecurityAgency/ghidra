@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,11 +27,11 @@ import ghidra.util.exception.AssertException;
  * <p>
  * This type of node has the following layout within a single DataBuffer 
  * (field size in bytes):
- * <pre>
+ * <pre>{@code
  *   | NodeType(1) | KeyCount(4) | PrevLeafId(4) | NextLeafId(4) | Key0(8) | RecOffset0(4) | IndFlag0(1) |...  
  *     
  *   | KeyN(8) | RecOffsetN(4) | IndFlagN(1) |...<FreeSpace>... | RecN |... | Rec0 |
- * </pre>
+ * }</pre>
  * IndFlag - if not zero the record has been stored within a chained DBBuffer 
  * whose 4-byte integer buffer ID has been stored within this leaf at the record offset.
  */

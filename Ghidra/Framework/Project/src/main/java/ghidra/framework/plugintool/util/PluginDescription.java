@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,8 @@
 package ghidra.framework.plugintool.util;
 
 import java.lang.reflect.Method;
-import java.net.URL;
+import java.net.*;
+import java.nio.file.Path;
 import java.util.*;
 
 import generic.jar.ResourceFile;
@@ -25,6 +26,8 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.framework.Application;
 import ghidra.framework.plugintool.*;
 import ghidra.util.Msg;
+import utilities.util.FileUtilities;
+import utility.application.ApplicationLayout;
 
 /**
  * Class to hold meta information about a plugin, derived from meta-data attached to
@@ -43,7 +46,7 @@ public class PluginDescription implements Comparable<PluginDescription> {
 	 * @return {@link PluginDescription}
 	 */
 	public static PluginDescription getPluginDescription(Class<? extends Plugin> c) {
-		// TODO: sync the hashmap?
+		// Note: the cache is not synchronized
 		PluginDescription cachedPD =
 			CACHE.computeIfAbsent(c, PluginDescription::createPluginDescription);
 		return cachedPD;
@@ -114,21 +117,39 @@ public class PluginDescription implements Comparable<PluginDescription> {
 	 * @return path to the source file
 	 */
 	public String getSourceLocation() {
-		String path = url.getFile();
-		if ("jar".equals(url.getProtocol())) {
-			int i = path.indexOf('!');
-			if (i >= 0) {
-				path = path.substring(0, i);
-			}
-			String fileProtoPrefix = "file:";
-			if (path.startsWith(fileProtoPrefix)) {
-				path = path.substring(fileProtoPrefix.length() + 1);
-			}
-			return path;
+		try {
+			return convertToSourceLocation(url);
+		} catch (URISyntaxException e) {
+			Msg.error(this, "Unexpected bad url: " + url);
+			return "<bad source location>";
 		}
-		String classpath = pluginClass.getName();
-		path = path.substring(0, path.length() - classpath.length() - DOTCLASS_EXT.length() - 1);
-		return path;
+	}
+
+	private static String convertToSourceLocation(URL url) throws URISyntaxException {
+		
+		URI uri;
+		if ("jar".equals(url.getProtocol())) {
+
+			// strip off the jar protocol
+			String file = url.getFile();
+			uri = URI.create(file);
+		}
+		else {
+			uri = url.toURI();
+		}
+
+		String parent = Path.of(uri).getParent().toString();
+		
+		// Check for a file:/ path pointing to a class inside of a jar file
+		String jarSeparator = ".jar!";
+		int index = parent.indexOf(jarSeparator);
+		if (index != -1) {
+			// we want to return just the path to the jar file without the package path
+			int bangIndex = index + jarSeparator.length() -1;
+			parent = parent.substring(0, bangIndex);
+		}
+				
+		return parent;
 	}
 
 	/**
@@ -149,7 +170,7 @@ public class PluginDescription implements Comparable<PluginDescription> {
 	}
 
 	/**
-	 * Return the name of the module that contains the plugin.
+	 * Returns the name of the module that contains the plugin.
 	 * @return the module name
 	 */
 	public String getModuleName() {
@@ -159,6 +180,25 @@ public class PluginDescription implements Comparable<PluginDescription> {
 		}
 
 		return moduleName;
+	}
+
+	/**
+	 * {@return true if this plugin is provided by an extension}
+	 */
+	public boolean isInExtension() {
+		
+		Path myPath = null;
+		try {
+			myPath = Path.of(url.toURI());
+		} 
+		catch (URISyntaxException e) {
+			Msg.error(this, "Invalid URL for PluginDescription: " + url, e);
+			return false;
+		}
+		
+		ApplicationLayout layout = Application.getApplicationLayout();
+		List<ResourceFile> extDirs = layout.getExtensionInstallationDirs();
+		return FileUtilities.startsWith(extDirs, myPath.toString());
 	}
 
 	/**
@@ -285,7 +325,7 @@ public class PluginDescription implements Comparable<PluginDescription> {
 
 	/**
 	 * Constructs a new PluginDescription for the given plugin class.
-	 * <p>
+	 * 
 	 * @deprecated, use {@link PluginInfo &#64;PluginInfo} instead.
 	 *
 	 * @param pluginClassParam the class of the plugin

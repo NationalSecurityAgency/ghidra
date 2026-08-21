@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,14 +18,12 @@ package ghidra.app.plugin.core.debug.stack;
 import java.math.BigInteger;
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.app.decompiler.ClangLine;
-import ghidra.app.plugin.core.debug.gui.stack.vars.VariableValueUtils;
 import ghidra.app.services.DebuggerControlService.StateEditor;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.PcodeOp;
+import ghidra.program.model.pcode.Varnode;
 
 /**
  * A frame that has been unwound through analysis or annotated in the listing
@@ -74,6 +72,16 @@ public interface UnwoundFrame<T> {
 	Address getProgramCounter();
 
 	/**
+	 * Get the frame's program counter in the static program
+	 * <p>
+	 * To get the corresponding static program, use {@link #getFunction()}.
+	 * 
+	 * @see #getProgramCounter()
+	 * @return the frame's static program counter
+	 */
+	Address getStaticCounter();
+
+	/**
 	 * Get the function that allocated this frame
 	 * 
 	 * <p>
@@ -114,7 +122,7 @@ public interface UnwoundFrame<T> {
 	 * assuming the callee has not saved that register to the stack.</li>
 	 * <li>The return address cannot be recovered. This happens when the function appears to be non
 	 * returning, or the analysis otherwise fails to recover the return address. In this case, this
-	 * method will throw an exception.
+	 * method will throw an exception.</li>
 	 * </ol>
 	 * 
 	 * @return the return address
@@ -153,8 +161,7 @@ public interface UnwoundFrame<T> {
 	 * 
 	 * <p>
 	 * Each varnode's value is simply retrieved from the state, in contrast to
-	 * {@link #evaluate(VariableStorage, AddressSetView)}, which ascends to varnodes' defining
-	 * p-code ops.
+	 * {@link #evaluate(Program, VariableStorage)}, which ascends to varnodes' defining p-code ops.
 	 * 
 	 * <p>
 	 * <b>WARNING:</b> Never invoke this method from the Swing thread. The state could be associated
@@ -173,7 +180,7 @@ public interface UnwoundFrame<T> {
 	 * <b>WARNING:</b> Never invoke this method from the Swing thread. The state could be associated
 	 * with a live session, and this may block to retrieve live state.
 	 * 
-	 * @see #getValue(VariableStorage)
+	 * @see #getValue(Program, VariableStorage)
 	 * @param variable the variable
 	 * @return the value
 	 */
@@ -194,43 +201,44 @@ public interface UnwoundFrame<T> {
 	T getValue(Register register);
 
 	/**
-	 * Evaluate the given storage, following defining p-code ops until symbol storage is reached
-	 * 
+	 * Evaluate the given storage, following defining p-code ops of unique varnodes
 	 * <p>
-	 * This behaves similarly to {@link #getValue(VariableStorage)}, except this one will ascend
-	 * recursively to each varnode's defining p-code op. The recursion terminates when a varnode is
-	 * contained in the given symbol storage. The symbol storage is usually collected by examining
-	 * the tokens on the same line, searching for ones that represent "high symbols." This ensures
-	 * that any temporary storage used by the original program in the evaluation of, e.g., a field
-	 * access, are not read from the current state but re-evaluated in terms of the symbols' current
-	 * values.
-	 * 
+	 * This behaves similarly to {@link #getValue(Program, VariableStorage)}, except this one will
+	 * ascend recursively to each unique varnode's defining p-code op.
 	 * <p>
 	 * <b>WARNING:</b> Never invoke this method from the Swing thread. The state could be associated
 	 * with a live session, and this may block to retrieve live state.
 	 * 
-	 * @see VariableValueUtils#collectSymbolStorage(ClangLine)
 	 * @param program the program containing the variable storage
 	 * @param storage the storage to evaluate
-	 * @param symbolStorage the terminal storage, usually that of symbols
 	 * @return the value
 	 */
-	T evaluate(Program program, VariableStorage storage, AddressSetView symbolStorage);
+	T evaluate(Program program, VariableStorage storage);
 
 	/**
-	 * Evaluate the output for the given p-code op, ascending until symbol storage is reached
-	 * 
+	 * Evaluate the given varnode, following defining p-code ops of unique varnodes
 	 * <p>
 	 * <b>WARNING:</b> Never invoke this method from the Swing thread. The state could be associated
 	 * with a live session, and this may block to retrieve live state.
 	 * 
-	 * @see #evaluate(VariableStorage, AddressSetView)
-	 * @param program the program containing the op
-	 * @param op the op
-	 * @param symbolStorage the terminal storage, usually that of symbols
+	 * @param program the program containing the varnode
+	 * @param varnode the varnode
 	 * @return the value
 	 */
-	T evaluate(Program program, PcodeOp op, AddressSetView symbolStorage);
+	T evaluate(Program program, Varnode varnode);
+
+	/**
+	 * Evaluate the output for the given p-code op, following defining p-code ops of unique varnodes
+	 * <p>
+	 * <b>WARNING:</b> Never invoke this method from the Swing thread. The state could be associated
+	 * with a live session, and this may block to retrieve live state.
+	 * 
+	 * @see #evaluate(Program, VariableStorage)
+	 * @param program the program containing the op
+	 * @param op the op
+	 * @return the value
+	 */
+	T evaluate(Program program, PcodeOp op);
 
 	/**
 	 * Set the value of the given storage
@@ -251,7 +259,7 @@ public interface UnwoundFrame<T> {
 	/**
 	 * Set the value of the given variable
 	 * 
-	 * @see #setValue(StateEditor, VariableStorage, BigInteger)
+	 * @see #setValue(StateEditor, Program, VariableStorage, BigInteger)
 	 * @param editor the editor for setting values
 	 * @param variable the variable to modify
 	 * @param value the desired value

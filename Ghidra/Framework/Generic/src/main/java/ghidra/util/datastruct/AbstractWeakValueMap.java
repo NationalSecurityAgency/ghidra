@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -308,17 +308,20 @@ public abstract class AbstractWeakValueMap<K, V> implements Map<K, V> {
 
 	/**
 	 * Class that provides a {@link Set} view of the entry set of this map that is backed live
-	 * by this map. Its main job is to translate from Map.Entry<K, WeakValueRef<V>> to 
-	 * Map.Entry<K,V>. The heavy lifting is done by the EntryIterator. The super class implements
-	 * all the rest of the methods by leveraging the iterator. We implement
+	 * by this map. Its main job is to translate from {@code Map.Entry<K, WeakValueRef<V>>} to 
+	 * {@code Map.Entry<K,V>}. The heavy lifting is done by the {@link EntryIterator}. The super 
+	 * class implements all the rest of the methods by leveraging the iterator. We implement
 	 * contains, remove, and clear as they can be implemented much more efficiently than the 
 	 * default implementation which iterates over all the values to do those operations.
 	 */
 	private class EntrySet extends AbstractSet<Map.Entry<K, V>> {
+
+		@Override
 		public Iterator<Map.Entry<K, V>> iterator() {
 			return new EntryIterator();
 		}
 
+		@Override
 		public boolean contains(Object o) {
 			if (o instanceof Map.Entry<?, ?> e) {
 				Object key = e.getKey();
@@ -328,6 +331,7 @@ public abstract class AbstractWeakValueMap<K, V> implements Map<K, V> {
 			return false;
 		}
 
+		@Override
 		public boolean remove(Object o) {
 			if (o instanceof Map.Entry<?, ?> e) {
 				Object key = e.getKey();
@@ -341,10 +345,12 @@ public abstract class AbstractWeakValueMap<K, V> implements Map<K, V> {
 
 		}
 
+		@Override
 		public int size() {
 			return AbstractWeakValueMap.this.size();
 		}
 
+		@Override
 		public void clear() {
 			AbstractWeakValueMap.this.clear();
 		}

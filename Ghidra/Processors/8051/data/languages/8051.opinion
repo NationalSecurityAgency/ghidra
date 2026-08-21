@@ -1,0 +1,7 @@
+<opinions>
+    <constraint loader="Object Module Format (OMF-51)">
+      <constraint compilerSpecID="default">
+        <constraint primary="8051" processor="8051" endian="big" size="16" />
+      </constraint>
+    </constraint>
+</opinions>

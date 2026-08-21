@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,8 @@
 package ghidra.app.plugin.core.debug.gui.model;
 
 import java.awt.Color;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
@@ -27,12 +28,13 @@ import ghidra.framework.plugintool.Plugin;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.path.KeyPath;
 
 public class PathTableModel extends AbstractQueryTableModel<PathRow> {
-	record Seen(List<String> path, long minSnap) {
-		static Seen forPath(TraceObjectValPath path) {
-			TraceObjectValue last = path.getLastEntry();
-			return new Seen(path.getKeyList(), last == null ? 0 : last.getMinSnap());
+	record Seen(KeyPath path, long minSnap) {
+		static Seen forPath(TraceObjectValPath valPath) {
+			TraceObjectValue last = valPath.getLastEntry();
+			return new Seen(valPath.getPath(), last == null ? 0 : last.getMinSnap());
 		}
 	}
 
@@ -120,8 +122,9 @@ public class PathTableModel extends AbstractQueryTableModel<PathRow> {
 	}
 
 	protected void updateTimelineMax() {
-		Long max = getTrace() == null ? null : getTrace().getTimeManager().getMaxSnap();
-		Lifespan fullRange = Lifespan.span(0L, max == null ? 1 : max + 1);
+		Long maxBoxed = getTrace() == null ? null : getTrace().getTimeManager().getMaxSnap();
+		long max = maxBoxed == null ? 0 : maxBoxed;
+		Lifespan fullRange = Lifespan.span(0L, max == Lifespan.DOMAIN.lmax() ? max : (max + 1));
 		lifespanPlotColumn.setFullRange(fullRange);
 	}
 

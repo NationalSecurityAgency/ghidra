@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,32 +15,47 @@
  */
 package ghidra.framework.main;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.net.URL;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import docking.DialogComponentProvider;
 import docking.test.AbstractDockingTest;
 import ghidra.app.services.CodeViewerService;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.data.DomainFileProxy;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainFolder;
+import ghidra.framework.model.Project;
+import ghidra.framework.model.ProjectLocator;
+import ghidra.framework.model.ToolAssociationInfo;
+import ghidra.framework.model.ToolServices;
+import ghidra.framework.model.ToolTemplate;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.framework.protocol.ghidra.Handler;
-import ghidra.program.database.*;
+import ghidra.program.database.ProgramContentHandler;
+import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.symbol.*;
+import ghidra.program.model.symbol.Namespace;
+import ghidra.program.model.symbol.SourceType;
+import ghidra.program.model.symbol.SymbolTable;
 import ghidra.program.util.ProgramLocation;
 import ghidra.server.remote.ServerTestUtil;
-import ghidra.test.*;
+import ghidra.test.AbstractGhidraHeadedIntegrationTest;
+import ghidra.test.TestEnv;
+import ghidra.test.ToyProgramBuilder;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
@@ -72,6 +87,7 @@ public class LaunchUrlInToolTest extends AbstractGhidraHeadedIntegrationTest {
 		env.getFrontEndTool();
 
 		program = (ProgramDB) buildProgram();
+		
 		Project project = env.getProject();
 		DomainFolder rootFolder = project.getProjectData().getRootFolder();
 		rootFolder.createFile("Test", program, TaskMonitor.DUMMY);
@@ -84,7 +100,7 @@ public class LaunchUrlInToolTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private Program buildProgram() throws Exception {
-		ToyProgramBuilder builder = new ToyProgramBuilder(FILENAME, true, ProgramBuilder._TOY);
+		ToyProgramBuilder builder = new ToyProgramBuilder(FILENAME, true);
 		builder.createMemory("test1", "0x1001000", 0xb000);
 		builder.addBytesFallthrough("0x1001010");
 		builder.addBytesFallthrough("0x1001020");
@@ -237,7 +253,7 @@ public class LaunchUrlInToolTest extends AbstractGhidraHeadedIntegrationTest {
 		setupDefaultTestTool(project);
 
 		URL badUrl = GhidraURL.makeURL(ServerTestUtil.LOCALHOST,
-			ServerTestUtil.GHIDRA_TEST_SERVER_PORT, REPO_NAME, FOLDER, null, null);
+			ServerTestUtil.GHIDRA_TEST_SERVER_PORT, REPO_NAME, FOLDER);
 
 		ToolServices toolServices = project.getToolServices();
 		PluginTool tool = toolServices.launchDefaultToolWithURL(badUrl);

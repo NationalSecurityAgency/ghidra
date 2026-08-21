@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import javax.swing.*;
 import org.junit.After;
 import org.junit.Test;
 
-import docking.DockingDialog;
+import docking.DockingWindowManager;
 import docking.options.editor.OptionsDialog;
 import docking.options.editor.StringWithChoicesEditor;
 import docking.widgets.tree.GTree;
@@ -34,26 +34,22 @@ import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 
 public class PropertyEditorTest extends AbstractGhidraHeadedIntegrationTest {
 
-	private DockingDialog dialog;
+	private OptionsDialog dialog;
 
 	@After
 	public void tearDown() throws Exception {
 		if (dialog != null) {
-			dialog.setVisible(false);
-			dialog.dispose();
+			close(dialog);
 		}
 		waitForSwing();
 	}
 
-	private DockingDialog showEditor(Options options) {
+	private OptionsDialog showEditor(Options options) {
 		OptionsDialog dialogComponent =
 			new OptionsDialog("Test Properties", "Properties", new Options[] { options }, null);
-		final DockingDialog editorDialog =
-			runSwing(() -> DockingDialog.createDialog(null, dialogComponent, null));
-		SwingUtilities.invokeLater(() -> editorDialog.setVisible(true));
+		runSwing(() -> DockingWindowManager.showDialog(dialogComponent), false);
 
-		waitForJDialog("Test Properties");
-		assertNotNull("Dialog failed to launch", editorDialog);
+		OptionsDialog editorDialog = waitForDialogComponent(OptionsDialog.class);
 		waitForSwing();
 		waitForOptionsTree(dialogComponent);
 		return editorDialog;
@@ -65,10 +61,9 @@ public class PropertyEditorTest extends AbstractGhidraHeadedIntegrationTest {
 		waitForTree(tree);
 	}
 
-	private Component findPairedComponent(final Container container, final String labelText) {
-		final Component[] box = new Component[1];
-		runSwing(() -> box[0] = doFindPairedComponent(container, labelText));
-		return box[0];
+	private Component findPairedComponent(final String labelText) {
+		JComponent component = dialog.getComponent();
+		return runSwing(() -> doFindPairedComponent(component, labelText));
 	}
 
 	private Component doFindPairedComponent(Container container, String labelText) {
@@ -102,7 +97,7 @@ public class PropertyEditorTest extends AbstractGhidraHeadedIntegrationTest {
 
 		dialog = showEditor(options);
 
-		Component editor = findPairedComponent(dialog, "TestInt");
+		Component editor = findPairedComponent("TestInt");
 		assertNotNull("Could not find editor component", editor);
 		assertEquals(PropertyText.class, editor.getClass());
 		final PropertyText textField = (PropertyText) editor;
@@ -125,7 +120,7 @@ public class PropertyEditorTest extends AbstractGhidraHeadedIntegrationTest {
 
 		dialog = showEditor(options);
 
-		Component editor = findPairedComponent(dialog, "TestLong");
+		Component editor = findPairedComponent("TestLong");
 		assertNotNull("Could not find editor component", editor);
 		assertEquals(PropertyText.class, editor.getClass());
 		final PropertyText textField = (PropertyText) editor;
@@ -148,7 +143,7 @@ public class PropertyEditorTest extends AbstractGhidraHeadedIntegrationTest {
 
 		dialog = showEditor(options);
 
-		Component editor = findPairedComponent(dialog, "TestFloat");
+		Component editor = findPairedComponent("TestFloat");
 		assertNotNull("Could not find editor component", editor);
 		assertEquals(PropertyText.class, editor.getClass());
 		final PropertyText textField = (PropertyText) editor;
@@ -173,7 +168,7 @@ public class PropertyEditorTest extends AbstractGhidraHeadedIntegrationTest {
 
 		dialog = showEditor(options);
 
-		Component editor = findPairedComponent(dialog, "TestDouble");
+		Component editor = findPairedComponent("TestDouble");
 		assertNotNull("Could not find editor component", editor);
 		assertEquals(PropertyText.class, editor.getClass());
 		final PropertyText textField = (PropertyText) editor;
@@ -197,7 +192,7 @@ public class PropertyEditorTest extends AbstractGhidraHeadedIntegrationTest {
 
 		dialog = showEditor(options);
 
-		Component editor = findPairedComponent(dialog, "TestString");
+		Component editor = findPairedComponent("TestString");
 		assertNotNull("Could not find editor component", editor);
 		assertEquals(PropertyText.class, editor.getClass());
 		final PropertyText textField = (PropertyText) editor;
@@ -222,7 +217,7 @@ public class PropertyEditorTest extends AbstractGhidraHeadedIntegrationTest {
 
 		dialog = showEditor(options);
 
-		Component editor = findPairedComponent(dialog, "TestStringWithChoices");
+		Component editor = findPairedComponent("TestStringWithChoices");
 		assertNotNull("Could not find editor component", editor);
 		assertEquals(PropertySelector.class, editor.getClass());
 		final PropertySelector textSelector = (PropertySelector) editor;

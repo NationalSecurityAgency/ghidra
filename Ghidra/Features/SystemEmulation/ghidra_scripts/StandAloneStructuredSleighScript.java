@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,9 @@ import java.util.stream.Collectors;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.script.GhidraScript;
+import ghidra.pcode.exec.FixedSleighPcodeUseropDefinition;
 import ghidra.pcode.exec.SleighPcodeUseropDefinition;
+import ghidra.pcode.exec.SleighPcodeUseropDefinition.SignatureDef;
 import ghidra.pcode.struct.StructuredSleigh;
 import ghidra.program.model.lang.LanguageID;
 
@@ -100,10 +102,15 @@ public class StandAloneStructuredSleighScript extends GhidraScript {
 		 * Now, dump the generated Sleigh source
 		 */
 		for (SleighPcodeUseropDefinition<?> userop : ops.values()) {
+			if (!(userop instanceof FixedSleighPcodeUseropDefinition<?> fixed)) {
+				println("WARN: Unexpected userop type for " + userop.getName());
+				continue;
+			}
 			print(userop.getName() + "(");
-			print(userop.getInputs().stream().collect(Collectors.joining(",")));
+			SignatureDef definition = fixed.getSignatureDef();
+			print(definition.signature().stream().collect(Collectors.joining(",")));
 			print(") {\n");
-			print(userop.getBody());
+			print(definition.generateBody());
 			print("}\n\n");
 		}
 	}

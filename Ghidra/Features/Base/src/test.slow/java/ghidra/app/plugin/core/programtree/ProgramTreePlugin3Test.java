@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -428,8 +428,7 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		waitForSwing();
 
 		Component comp = getCellRendererComponentForLeaf(n, row);
-		assertEquals(new GIcon(DnDTreeCellRenderer.VIEWED_FRAGMENT),
-			((JLabel) comp).getIcon());
+		assertEquals(new GIcon(DnDTreeCellRenderer.VIEWED_FRAGMENT), ((JLabel) comp).getIcon());
 	}
 
 	@Test
@@ -1380,7 +1379,7 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		AtomicReference<Exception> ref = new AtomicReference<>();
 		runSwing(() -> {
 			try {
-				tree.processDropRequest(node, list, TreeTransferable.localTreeNodeFlavor,
+				tree.processDropRequest(node, list, ProgramTreeTransferable.localTreeNodeFlavor,
 					dropAction);
 			}
 			catch (NotFoundException | CircularDependencyException | DuplicateGroupException e) {
@@ -1443,12 +1442,12 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 
 		setSelectionPath(node);
 		setViewPaths(node);
-		performAction(copyAction);
+		performTreeAction(copyAction);
 		ProgramNode everythingNode = root.getChild(dst);
 
 		setSelectionPath(everythingNode);
 		assertTrue(pasteAction.isEnabled());
-		performAction(pasteAction);
+		performTreeAction(pasteAction);
 	}
 
 }

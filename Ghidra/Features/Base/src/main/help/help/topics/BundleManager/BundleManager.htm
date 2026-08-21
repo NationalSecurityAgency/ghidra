@@ -57,11 +57,15 @@
     <em>source bundle</em>. When enabled, its Java contents are compiled to
     </p>
     <pre>
-        &lt;user home&gt;/.ghidra/.ghidra-&lt;version&gt;/osgi/compiled-bundles/&lt;hash&gt;/
+        &lt;user settings&gt;/osgi/compiled-bundles/&lt;hash&gt;/
     </pre>
     <p>
     where <code>&lt;hash&gt;</code> is a hash of the source bundle path.  These compiled artifacts are then loaded
     by the OSGi framework.
+    </p>
+    <p><b>NOTE: </b> The <code>&lt;user settings&gt;</code> directory is platform/configuration
+    specific. Its value can be found in the Ghidra Front End GUI, under <code>Help -> 
+    Runtime Information -> Application Layout -> Settings Directory</code>
     </p>
     
     
@@ -71,7 +75,7 @@
     Each such subdirectory of <code>compiled-bundles/</code> is an <em>exploded
       jar</em> --  by compressing it, we get a standard OSGi Jar bundle:</p>
     <pre>
-            jar cMf mybundle.jar -C $HOME/.ghidra/.ghidra_&lt;version&gt;/osgi/compiled-bundles/&lt;hash&gt;  .
+            jar cMf mybundle.jar -C &lt;user settings&gt;/osgi/compiled-bundles/&lt;hash&gt;  .
     </pre>
     </blockquote>
 
@@ -195,12 +199,12 @@
       in the `Import-Package` line of the manifest generated for <code>my_ghidra_scripts</code>:
     </p>
     <pre>
-    &lt;user home&gt;/.ghidra/.ghidra-&lt;version&gt;/osgi/compiled-bundles/ab12cd89/META-INF/MANIFEST.MF:
+     &lt;user settings&gt;/osgi/compiled-bundles/ab12cd89/META-INF/MANIFEST.MF:
         Manifest-Version: 1.0
         Bundle-ManifestVersion: 2
         Export-Package: mylib
         Import-Package: ghidra.app.script,yourlib,ghidra.app.plugin.core.osgi
-        Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=11))"
+        Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=21))"
         Bundle-SymbolicName: ab12cd89
         Bundle-Version: 1.0
         Bundle-Name: ab12cd89
@@ -211,12 +215,12 @@
     The manifest generated for <code>your_ghidra_scripts</code> is as follows:
     </p>
     <pre>
-    &lt;user home&gt;/.ghidra/.ghidra-&lt;version&gt;/osgi/compiled-bundles/ef34ab56/META-INF/MANIFEST.MF:
+     &lt;user settings&gt;/osgi/compiled-bundles/ef34ab56/META-INF/MANIFEST.MF:
         Manifest-Version: 1.0
         Bundle-ManifestVersion: 2
         Export-Package: yourlib
         Import-Package: ghidra.app.plugin.core.osgi
-        Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=11))"
+        Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=21))"
         Bundle-SymbolicName: ef34ab56
         Bundle-Version: 1.0
         Bundle-Name: ef34ab56
@@ -284,7 +288,7 @@
     <blockquote>
     <p>When Ghidra builds a source bundle, the results are written to the
     directory <br>
-    &nbsp;&nbsp;&nbsp;&nbsp;<code>&lt;user home&gt;/.ghidra/.ghidra-&lt;version&gt;/osgi/compiled-bundles/&lt;hash&gt;</code>. <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<code>&lt;user settings&gt;/osgi/compiled-bundles/&lt;hash&gt;</code>. <br>
     These files can then be loaded by the OSGi framework.</p>
 
     <p>A <em>clean</em> deactivates then wipes this subdirectory for each selected bundle and

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -95,36 +95,45 @@ public class SourceArchiveUpgradeMap {
 			archiveName = "";
 		}
 
+		@Override
 		public ArchiveType getArchiveType() {
 			return ArchiveType.FILE;
 		}
 
+		@Override
 		public String getDomainFileID() {
 			return null;
 		}
 
+		@Override
 		public long getLastSyncTime() {
 			return 0;
 		}
 
+		@Override
 		public String getName() {
 			return archiveName;
 		}
 
+		@Override
 		public UniversalID getSourceArchiveID() {
 			return id;
 		}
 
+		@Override
 		public boolean isDirty() {
 			return false;
 		}
 
+		@Override
 		public void setDirtyFlag(boolean dirty) {
 		}
 
+		@Override
 		public void setLastSyncTime(long time) {
 		}
 
+		@Override
 		public void setName(String name) {
 		}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -71,27 +71,21 @@ public class BookmarkDBAdapterV3 extends BookmarkDBAdapter {
 				throw new VersionException(true);
 			}
 			else if (typeIDs.length != 0) {
+				int version = -1;
 				for (int i = 0; i < typeIDs.length; i++) {
 					int id = typeIDs[i];
-					tables[id] = handle.getTable(BOOKMARK_TABLE_NAME + id);
-				}
-				boolean noTables = (tables[typeIDs[0]] == null);
-				int version = noTables ? -1 : tables[typeIDs[0]].getSchema().getVersion();
-				for (int i = 1; i < typeIDs.length; i++) {
-					int id = typeIDs[i];
-					if (noTables) {
-						if (tables[id] != null) {
-							throw new IOException("Missing bookmark table");
+					String tableName = BOOKMARK_TABLE_NAME + id;
+					Table table = handle.getTable(tableName);
+					if (table != null) {
+						int schemaVersion = table.getSchema().getVersion();
+						if (version >= 0 && schemaVersion != version) {
+							throw new IOException("Inconsistent bookmark table versions");
 						}
+						version = schemaVersion;
 					}
-					else if (tables[id].getSchema().getVersion() != version) {
-						throw new IOException("Inconsistent bookmark table versions");
-					}
+					tables[id] = table;
 				}
-				if (noTables) {
-					throw new VersionException(true);
-				}
-				else if (version != VERSION) {
+				if (version >= 0 && version != VERSION) {
 					throw new VersionException(false);
 				}
 			}
@@ -205,6 +199,11 @@ public class BookmarkDBAdapterV3 extends BookmarkDBAdapter {
 		if (!hasTable(typeID)) {
 			return null;
 		}
+
+		if (category == null)
+			category = "";
+		if (comment == null)
+			comment = "";
 
 		Table table = tables[typeID];
 		long nextId = table.getKey() + 1;

@@ -76,6 +76,7 @@ public class SelectedFunctionsTableDialog extends DialogComponentProvider {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		panel.add(buildFunctionsTable(getProgram(), goToService), BorderLayout.CENTER);
+		panel.getAccessibleContext().setAccessibleName("Selected Functions Table");
 		return panel;
 	}
 
@@ -84,6 +85,7 @@ public class SelectedFunctionsTableDialog extends DialogComponentProvider {
 		GhidraFilterTable<FunctionSymbol> table = new GhidraFilterTable<>(model);
 		table.setNavigateOnSelectionEnabled(true);
 		table.installNavigation(goToService);
+		table.getAccessibleContext().setAccessibleName("Functions");
 		return table;
 	}
 

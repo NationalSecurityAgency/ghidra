@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,8 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.DebuggerPlatformPluginEvent;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
-import ghidra.app.plugin.core.debug.mapping.*;
+import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformOffer;
+import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformOpinion;
 import ghidra.app.services.DebuggerPlatformService;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.debug.api.platform.DebuggerPlatformMapper;
@@ -29,6 +30,7 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.target.TraceObject;
 
 @PluginInfo(
@@ -85,7 +87,6 @@ public class DebuggerPlatformServicePlugin extends Plugin implements DebuggerPla
 			}
 			mappersByTrace.put(trace, mapper);
 		}
-		mapper.addToTrace(snap);
 		firePluginEvent(new DebuggerPlatformPluginEvent(getName(), trace, mapper));
 		return mapper;
 	}
@@ -103,7 +104,7 @@ public class DebuggerPlatformServicePlugin extends Plugin implements DebuggerPla
 	}
 
 	@Override
-	public void setCurrentMapperFor(Trace trace, DebuggerPlatformMapper mapper, long snap) {
+	public void setCurrentMapperFor(Trace trace, TraceObject focus, DebuggerPlatformMapper mapper, long snap) {
 		Objects.requireNonNull(trace);
 		Objects.requireNonNull(mapper);
 		if (!traceManager.getOpenTraces().contains(trace)) {
@@ -112,8 +113,11 @@ public class DebuggerPlatformServicePlugin extends Plugin implements DebuggerPla
 		synchronized (mappersByTrace) {
 			mappersByTrace.put(trace, mapper);
 		}
-		mapper.addToTrace(snap);
+		TracePlatform platform = mapper.addToTrace(focus, snap);
 		firePluginEvent(new DebuggerPlatformPluginEvent(getName(), trace, mapper));
+		if (traceManager.getCurrentTrace() == trace) {
+			traceManager.activatePlatform(platform);
+		}
 	}
 
 	@Override

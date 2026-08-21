@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.clipboard;
 
 import java.awt.Window;
 import java.awt.datatransfer.*;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.*;
@@ -65,7 +64,7 @@ public class ClipboardPlugin extends ProgramPlugin
 
 	public static final String GROUP_NAME = "Clipboard";
 	public static final String TOOLBAR_GROUP_NAME = "ZClipboard";
-	private static final String REMOVE_QUOTES_OPTION = "Copy Strings Without Quotes";
+	static final String REMOVE_QUOTES_OPTION = "Copy Strings Without Quotes";
 
 	//The provider that owns the clipboard content
 	private ClipboardContentProviderService clipboardOwnerProvider;
@@ -402,7 +401,8 @@ public class ClipboardPlugin extends ProgramPlugin
 			setPopupMenuData(new MenuData(new String[] { "Copy" }, "Clipboard"));
 			setToolBarData(new ToolBarData(new GIcon("icon.plugin.clipboard.copy"),
 				"Clipboard"));
-			setKeyBindingData(new KeyBindingData(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK));
+			setKeyBindingData(
+				new KeyBindingData(KeyEvent.VK_C, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 			setHelpLocation(new HelpLocation("ClipboardPlugin", "Copy"));
 			clipboardService.customizeClipboardAction(this);
 		}
@@ -436,7 +436,8 @@ public class ClipboardPlugin extends ProgramPlugin
 			setPopupMenuData(new MenuData(new String[] { "Paste" }, "Clipboard"));
 			setToolBarData(
 				new ToolBarData(new GIcon("icon.plugin.clipboard.paste"), "Clipboard"));
-			setKeyBindingData(new KeyBindingData(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK));
+			setKeyBindingData(
+				new KeyBindingData(KeyEvent.VK_V, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 			setHelpLocation(new HelpLocation("ClipboardPlugin", "Paste"));
 			clipboardService.customizeClipboardAction(this);
 		}

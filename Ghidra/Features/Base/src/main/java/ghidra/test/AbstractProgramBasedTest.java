@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,13 +39,13 @@ import utility.function.ExceptionalFunction;
 
 /**
  * A convenience base class for creating tests that use the default tool and open a program.
- * This class will create for you a tool, a {@link TestEnv} and will open the program 
+ * This class will create for you a tool, a {@link TestEnv} and will open the program
  * specified by {@link #getProgramName()}.
- * 
- * <P>To use this class, you must call {@link #initialize()} from your test or <code>setUp</code> 
+ *
+ * <P>To use this class, you must call {@link #initialize()} from your test or <code>setUp</code>
  * method.
- * 
- * <P>Note: if you are loading a pre-existing program, then simply override 
+ *
+ * <P>Note: if you are loading a pre-existing program, then simply override
  * {@link #getProgramName()}.  Alternatively, if you are building a program, then override
  * {@link #getProgram()} and return it there.
  */
@@ -72,7 +72,7 @@ public abstract class AbstractProgramBasedTest extends AbstractGhidraHeadedInteg
 
 	/**
 	 * Override this method if you need to build your own program.
-	 * 
+	 *
 	 * @return the program to use for this test.
 	 * @throws Exception if an exception is thrown opening the program
 	 */
@@ -102,7 +102,7 @@ public abstract class AbstractProgramBasedTest extends AbstractGhidraHeadedInteg
 	}
 
 	public Address addr(Program p, long offset) {
-		AddressFactory addrMap = program.getAddressFactory();
+		AddressFactory addrMap = p.getAddressFactory();
 		AddressSpace space = addrMap.getDefaultAddressSpace();
 		return space.getAddress(offset);
 	}
@@ -165,8 +165,8 @@ public abstract class AbstractProgramBasedTest extends AbstractGhidraHeadedInteg
 
 	/**
 	 * Provides a convenient method for modifying the current program, handling the transaction
-	 * logic. 
-	 * 
+	 * logic.
+	 *
 	 * @param callback the code to execute
 	 */
 	public <E extends Exception> void modifyProgram(ExceptionalConsumer<Program, E> callback) {
@@ -176,6 +176,8 @@ public abstract class AbstractProgramBasedTest extends AbstractGhidraHeadedInteg
 		int tx = program.startTransaction("Test");
 		try {
 			callback.accept(program);
+			program.flushEvents();
+			waitForSwing();
 			commit = true;
 		}
 		catch (Exception e) {
@@ -189,7 +191,7 @@ public abstract class AbstractProgramBasedTest extends AbstractGhidraHeadedInteg
 	/**
 	 * Provides a convenient method for modifying the current program, handling the transaction
 	 * logic and returning a new item as a result.
-	 * 
+	 *
 	 * @param f the function for modifying the program and creating the desired result
 	 * @return the result
 	 */
@@ -201,6 +203,8 @@ public abstract class AbstractProgramBasedTest extends AbstractGhidraHeadedInteg
 		int tx = program.startTransaction("Test");
 		try {
 			result = f.apply(program);
+			program.flushEvents();
+			waitForSwing();
 			commit = true;
 		}
 		catch (Exception e) {
@@ -213,12 +217,12 @@ public abstract class AbstractProgramBasedTest extends AbstractGhidraHeadedInteg
 	}
 
 	/**
-	 * Returns a field by the given name at the given address.   Clients can use the convention 
+	 * Returns a field by the given name at the given address.   Clients can use the convention
 	 * that field factory classes specify a public static field named 'FIELD_NAME' to choose the
 	 * desired field name.
 	 * <p>
 	 * Note: you will have to perform a {@code goTo()} to trigger the view to load the given field.
-	 * 
+	 *
 	 * @param a the address
 	 * @param fieldName the field name
 	 * @return the field

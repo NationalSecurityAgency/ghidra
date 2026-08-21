@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,6 +23,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import ghidra.app.merge.MergeConstants;
+import ghidra.app.merge.MergeManager;
 import ghidra.app.merge.tool.ListingMergePanel;
 import ghidra.app.merge.util.ConflictUtility;
 import ghidra.app.merge.util.MergeUtilities;
@@ -182,19 +183,19 @@ class ReferenceMerger extends AbstractListingMerger {
 		totalChanges = 7;
 
 		if (mergeManager != null) {
-			latestResolvedSymbols =
-				(LongLongHashtable) mergeManager.getResolveInformation(MergeConstants.RESOLVED_LATEST_SYMBOLS);
-			myResolvedSymbols =
-				(LongLongHashtable) mergeManager.getResolveInformation(MergeConstants.RESOLVED_MY_SYMBOLS);
-			origResolvedSymbols =
-				(LongLongHashtable) mergeManager.getResolveInformation(MergeConstants.RESOLVED_ORIGINAL_SYMBOLS);
+			latestResolvedSymbols = (LongLongHashtable) mergeManager
+					.getResolveInformation(MergeConstants.RESOLVED_LATEST_SYMBOLS);
+			myResolvedSymbols = (LongLongHashtable) mergeManager
+					.getResolveInformation(MergeConstants.RESOLVED_MY_SYMBOLS);
+			origResolvedSymbols = (LongLongHashtable) mergeManager
+					.getResolveInformation(MergeConstants.RESOLVED_ORIGINAL_SYMBOLS);
 
-			pickedLatestCodeUnits =
-				(AddressSetView) mergeManager.getResolveInformation(MergeConstants.PICKED_LATEST_CODE_UNITS);
-			pickedMyCodeUnits =
-				(AddressSetView) mergeManager.getResolveInformation(MergeConstants.PICKED_MY_CODE_UNITS);
-			pickedOriginalCodeUnits =
-				(AddressSetView) mergeManager.getResolveInformation(MergeConstants.PICKED_ORIGINAL_CODE_UNITS);
+			pickedLatestCodeUnits = (AddressSetView) mergeManager
+					.getResolveInformation(MergeConstants.PICKED_LATEST_CODE_UNITS);
+			pickedMyCodeUnits = (AddressSetView) mergeManager
+					.getResolveInformation(MergeConstants.PICKED_MY_CODE_UNITS);
+			pickedOriginalCodeUnits = (AddressSetView) mergeManager
+					.getResolveInformation(MergeConstants.PICKED_ORIGINAL_CODE_UNITS);
 		}
 		updateProgressMessage("Setting references where code units were merged...");
 		autoMergeWhereCodeUnitsMerged(monitor);
@@ -363,8 +364,7 @@ class ReferenceMerger extends AbstractListingMerger {
 	}
 
 	private void processOriginalRefs(Reference[] originalRefs) {
-		for (int origIndex = 0; origIndex < originalRefs.length; origIndex++) {
-			Reference originalRef = originalRefs[origIndex];
+		for (Reference originalRef : originalRefs) {
 			Reference myRef = DiffUtility.getReference(originalPgm, originalRef, myPgm);
 			Reference latestRef = DiffUtility.getReference(originalPgm, originalRef, latestPgm);
 			if (myRef == null) {
@@ -406,8 +406,7 @@ class ReferenceMerger extends AbstractListingMerger {
 
 	private void processMyRefsAdded(Reference[] myRefs) {
 		// Check Adds which could result in an AddConflict or a type conflict.
-		for (int myIndex = 0; myIndex < myRefs.length; myIndex++) {
-			Reference myRef = myRefs[myIndex];
+		for (Reference myRef : myRefs) {
 			Reference originalRef = DiffUtility.getReference(myPgm, myRef, originalPgm);
 			if (originalRef == null) {
 				Reference latestRef = DiffUtility.getReference(myPgm, myRef, latestPgm);
@@ -432,7 +431,8 @@ class ReferenceMerger extends AbstractListingMerger {
 	 * @param operandIndex
 	 * @return
 	 */
-	private Reference getFallThroughReference(Program program, Address fromAddress, int operandIndex) {
+	private Reference getFallThroughReference(Program program, Address fromAddress,
+			int operandIndex) {
 		Reference[] otherRefs =
 			program.getReferenceManager().getReferencesFrom(fromAddress, operandIndex);
 		for (Reference reference : otherRefs) {
@@ -450,7 +450,8 @@ class ReferenceMerger extends AbstractListingMerger {
 			// If both refs changed from original then conflict.
 			Reference origForLatest =
 				DiffUtility.getReference(latestPgm, latestPrimary, originalPgm);
-			if (origForLatest != null && diffOriginalLatest.equalRefs(origForLatest, latestPrimary)) {
+			if (origForLatest != null &&
+				diffOriginalLatest.equalRefs(origForLatest, latestPrimary)) {
 				return;
 			}
 			Reference origForMy = DiffUtility.getReference(myPgm, myPrimary, originalPgm);
@@ -490,8 +491,8 @@ class ReferenceMerger extends AbstractListingMerger {
 	private boolean hasRefTypeConflict(Reference[] latestRefs, Reference[] myRefs,
 			Reference[] originalRefs) {
 		if (originalRefs.length > 0) {
-			return (compatibleRefs(originalRefs[0], latestRefs) && compatibleRefs(originalRefs[0],
-				myRefs));
+			return (compatibleRefs(originalRefs[0], latestRefs) &&
+				compatibleRefs(originalRefs[0], myRefs));
 		}
 		else if (latestRefs.length > 0) {
 			return (compatibleRefs(latestRefs[0], myRefs));
@@ -531,32 +532,32 @@ class ReferenceMerger extends AbstractListingMerger {
 	private boolean compatibleRefs(Reference ref1, Reference[] refs) {
 		Address toAddr = ref1.getToAddress();
 		if (toAddr.isMemoryAddress()) {
-			for (int i = 0; i < refs.length; i++) {
-				if (!refs[i].getToAddress().isMemoryAddress()) {
+			for (Reference ref : refs) {
+				if (!ref.getToAddress().isMemoryAddress()) {
 					return false;
 				}
 			}
 			return true;
 		}
 		else if (toAddr.isExternalAddress()) {
-			for (int i = 0; i < refs.length; i++) {
-				if (!refs[i].getToAddress().isExternalAddress()) {
+			for (Reference ref : refs) {
+				if (!ref.getToAddress().isExternalAddress()) {
 					return false;
 				}
 			}
 			return true;
 		}
 		if (toAddr.isRegisterAddress()) {
-			for (int i = 0; i < refs.length; i++) {
-				if (!refs[i].getToAddress().isRegisterAddress()) {
+			for (Reference ref : refs) {
+				if (!ref.getToAddress().isRegisterAddress()) {
 					return false;
 				}
 			}
 			return true;
 		}
 		if (toAddr.isStackAddress()) {
-			for (int i = 0; i < refs.length; i++) {
-				if (!refs[i].getToAddress().isStackAddress()) {
+			for (Reference ref : refs) {
+				if (!ref.getToAddress().isStackAddress()) {
 					return false;
 				}
 			}
@@ -703,8 +704,8 @@ class ReferenceMerger extends AbstractListingMerger {
 	 */
 	@Override
 	public void mergeConflicts(ListingMergePanel listingPanel, Address addr,
-			int chosenConflictOption, TaskMonitor monitor) throws CancelledException,
-			MemoryAccessException {
+			int chosenConflictOption, TaskMonitor monitor)
+			throws CancelledException, MemoryAccessException {
 		if (!hasConflict(addr)) {
 			return;
 		}
@@ -768,8 +769,7 @@ class ReferenceMerger extends AbstractListingMerger {
 		currentOpIndex = opIndex;
 		currentBackgroundSet = new AddressSet(addr, addr);
 		currentConflictType = REMOVE_CONFLICT;
-		for (Iterator<Reference> iter = removeList.iterator(); iter.hasNext();) {
-			Reference removeRef = iter.next();
+		for (Reference removeRef : removeList) {
 			currentReference = removeRef;
 			if (currentReference.getOperandIndex() == opIndex) {
 				// If we have a reference choice then a "Use For All" has already occurred.
@@ -800,8 +800,7 @@ class ReferenceMerger extends AbstractListingMerger {
 		currentOpIndex = opIndex;
 		currentBackgroundSet = new AddressSet(addr, addr);
 		currentConflictType = CHANGE_CONFLICT;
-		for (Iterator<Reference> iter = changeList.iterator(); iter.hasNext();) {
-			Reference changeRef = iter.next();
+		for (Reference changeRef : changeList) {
 			currentReference = changeRef;
 			if (currentReference.getOperandIndex() == opIndex) {
 				// If we have a reference choice then a "Use For All" has already occurred.
@@ -832,8 +831,7 @@ class ReferenceMerger extends AbstractListingMerger {
 		currentOpIndex = opIndex;
 		currentBackgroundSet = new AddressSet(addr, addr);
 		currentConflictType = ADD_CONFLICT;
-		for (Iterator<Reference> iter = addList.iterator(); iter.hasNext();) {
-			Reference changeRef = iter.next();
+		for (Reference changeRef : addList) {
 			currentReference = changeRef;
 			if (currentReference.getReferenceType().isFallthrough()) {
 				continue; // Ignore fallthrough references.
@@ -957,7 +955,7 @@ class ReferenceMerger extends AbstractListingMerger {
 						listingPanel.setBottomComponent(conflictPanel);
 					}
 					catch (Exception e) {
-						Msg.showError(this, listingPanel, "Error Merging References",
+						MergeManager.showBlockingError("Error Merging References",
 							"Error Getting Conflict Panel", e);
 					}
 				}
@@ -1060,20 +1058,19 @@ class ReferenceMerger extends AbstractListingMerger {
 		Reference[] myRefs = myRefMgr.getReferencesFrom(fromAddress, opIndex);
 		panel.setTitle("Reference");
 		String fromAddrStr = ConflictUtility.getAddressString(fromAddress);
-		String text =
-			" Conflicting reference types, " + getRefGroup(latestRefs[0]) + " & " +
-				getRefGroup(myRefs[0]) + ", at '" + fromAddrStr + "' " +
-				getOperandIndexString(opIndex) + ".";
+		String text = " Conflicting reference types, " + getRefGroup(latestRefs[0]) + " & " +
+			getRefGroup(myRefs[0]) + ", at '" + fromAddrStr + "' " +
+			getOperandIndexString(opIndex) + ".";
 		panel.setHeader(text);
 		panel.setRowHeader(getReferenceInfo(null, null, null, null));
 		String suffix = "' version";
 		panel.addRadioButtonRow(
 			getReferenceInfo(latestPgm, ((latestRefs.length == 1) ? latestRefs[0] : null),
-				((latestRefs.length == 1) ? "Use '" : "Use all in '"), suffix), LATEST_BUTTON_NAME,
-			KEEP_LATEST, listener);
+				((latestRefs.length == 1) ? "Use '" : "Use all in '"), suffix),
+			LATEST_BUTTON_NAME, KEEP_LATEST, listener);
 		if (latestRefs.length > 1) {
-			for (int i = 0; i < latestRefs.length; i++) {
-				panel.addInfoRow(getReferenceInfo(latestPgm, latestRefs[i], "'", suffix));
+			for (Reference latestRef : latestRefs) {
+				panel.addInfoRow(getReferenceInfo(latestPgm, latestRef, "'", suffix));
 			}
 		}
 		panel.addRadioButtonRow(
@@ -1081,12 +1078,12 @@ class ReferenceMerger extends AbstractListingMerger {
 				((myRefs.length == 1) ? "Use '" : "Use all in '"), suffix),
 			CHECKED_OUT_BUTTON_NAME, KEEP_MY, listener);
 		if (myRefs.length > 1) {
-			for (int i = 0; i < myRefs.length; i++) {
-				panel.addInfoRow(getReferenceInfo(myPgm, myRefs[i], "'", suffix));
+			for (Reference myRef : myRefs) {
+				panel.addInfoRow(getReferenceInfo(myPgm, myRef, "'", suffix));
 			}
 		}
-		panel.addInfoRow(getReferenceInfo(originalPgm, ((originalRefs.length > 0) ? originalRefs[0]
-				: null), "'", suffix));
+		panel.addInfoRow(getReferenceInfo(originalPgm,
+			((originalRefs.length > 0) ? originalRefs[0] : null), "'", suffix));
 		for (int i = 1; i < originalRefs.length; i++) {
 			panel.addInfoRow(getReferenceInfo(originalPgm, originalRefs[i], "'", suffix));
 		}
@@ -1109,13 +1106,11 @@ class ReferenceMerger extends AbstractListingMerger {
 		}
 		panel.setTitle("Reference");
 		String fromAddrStr = ConflictUtility.getAddressString(ref.getFromAddress());
-		String toAddrStr =
-			ConflictUtility.colorString(ConflictUtility.ADDRESS_COLOR,
-				DiffUtility.getUserToAddressString(resultPgm, ref.getToAddress()));
-		String text =
-			getRefGroup(ref) + " Reference from '" + fromAddrStr + "' " +
-				getOperandIndexString(ref) + " to '" + toAddrStr +
-				"' was removed in one version and changed in other.";
+		String toAddrStr = ConflictUtility.colorString(ConflictUtility.ADDRESS_COLOR,
+			DiffUtility.getUserToAddressString(resultPgm, ref.getToAddress()));
+		String text = getRefGroup(ref) + " Reference from '" + fromAddrStr + "' " +
+			getOperandIndexString(ref) + " to '" + toAddrStr +
+			"' was removed in one version and changed in other.";
 		panel.setHeader(text);
 		panel.setRowHeader(getReferenceInfo(null, null, null, null));
 		String latestPrefix = (latestRef == null) ? "Remove as in '" : "Change as in '";
@@ -1130,15 +1125,15 @@ class ReferenceMerger extends AbstractListingMerger {
 		return panel;
 	}
 
-	protected VerticalChoicesPanel getChangeConflictPanel(Reference myRef, ChangeListener listener) {
+	protected VerticalChoicesPanel getChangeConflictPanel(Reference myRef,
+			ChangeListener listener) {
 		VerticalChoicesPanel panel = getVerticalConflictPanel();
 		panel.setTitle("Reference");
 		Address fromAddr = myRef.getFromAddress();
 		int opIndex = myRef.getOperandIndex();
 		String fromAddrStr = ConflictUtility.getAddressString(myRef.getFromAddress());
-		String toAddrStr =
-			ConflictUtility.colorString(ConflictUtility.ADDRESS_COLOR,
-				DiffUtility.getUserToAddressString(resultPgm, myRef.getToAddress()));
+		String toAddrStr = ConflictUtility.colorString(ConflictUtility.ADDRESS_COLOR,
+			DiffUtility.getUserToAddressString(resultPgm, myRef.getToAddress()));
 		Reference latestRef;
 		Reference originalRef;
 		if (myRef.isMemoryReference()) {
@@ -1153,15 +1148,13 @@ class ReferenceMerger extends AbstractListingMerger {
 		}
 		String text;
 		if (myRef.isExternalReference()) {
-			text =
-				getRefGroup(myRef) + " Reference from '" + fromAddrStr + "' " +
-					getOperandIndexString(myRef) + " was changed in both versions.";
+			text = getRefGroup(myRef) + " Reference from '" + fromAddrStr + "' " +
+				getOperandIndexString(myRef) + " was changed in both versions.";
 		}
 		else {
-			text =
-				getRefGroup(myRef) + " Reference from '" + fromAddrStr + "' " +
-					getOperandIndexString(myRef) + " to '" + toAddrStr +
-					"' was changed in both versions.";
+			text = getRefGroup(myRef) + " Reference from '" + fromAddrStr + "' " +
+				getOperandIndexString(myRef) + " to '" + toAddrStr +
+				"' was changed in both versions.";
 		}
 		panel.setHeader(text);
 		panel.setRowHeader(getReferenceInfo(null, null, null, null));
@@ -1195,9 +1188,8 @@ class ReferenceMerger extends AbstractListingMerger {
 		}
 		panel.setTitle("Reference");
 		String fromAddrStr = ConflictUtility.getAddressString(myRef.getFromAddress());
-		String text =
-			getRefGroup(myRef) + " Reference from '" + fromAddrStr + "' " +
-				getOperandIndexString(myRef) + " was added in both versions.";
+		String text = getRefGroup(myRef) + " Reference from '" + fromAddrStr + "' " +
+			getOperandIndexString(myRef) + " was added in both versions.";
 		panel.setHeader(text);
 		panel.setRowHeader(getReferenceInfo(null, null, null, null));
 		String latestPrefix = "Use '";
@@ -1219,9 +1211,8 @@ class ReferenceMerger extends AbstractListingMerger {
 		Reference myPrimary = myRefMgr.getPrimaryReferenceFrom(fromAddress, opIndex);
 		panel.setTitle("Reference");
 		String fromAddrStr = ConflictUtility.getAddressString(fromAddress);
-		String text =
-			" Conflicting primary references at '" + fromAddrStr + "' " +
-				getOperandIndexString(opIndex) + ".";
+		String text = " Conflicting primary references at '" + fromAddrStr + "' " +
+			getOperandIndexString(opIndex) + ".";
 		panel.setHeader(text);
 		panel.setRowHeader(getReferenceInfo(null, null, null, null));
 		String prefix = "Set '";
@@ -1485,7 +1476,8 @@ class ReferenceMerger extends AbstractListingMerger {
 		return resultRef;
 	}
 
-	private void resolvePrimaryConflict(Address fromAddress, int opIndex, int chosenConflictOption) {
+	private void resolvePrimaryConflict(Address fromAddress, int opIndex,
+			int chosenConflictOption) {
 		if ((chosenConflictOption & KEEP_LATEST) != 0) {
 			Reference latest = latestRefMgr.getPrimaryReferenceFrom(fromAddress, opIndex);
 			Reference result = DiffUtility.getReference(latestPgm, latest, resultPgm);
@@ -1536,7 +1528,7 @@ class ReferenceMerger extends AbstractListingMerger {
 				referenceChoice = choiceForConflictType;
 				break;
 			default:
-				Msg.showError(this, listingMergePanel, "Unrecognized Reference Conflict Type",
+				MergeManager.showBlockingError("Unrecognized Reference Conflict Type",
 					"Unrecognized indicator (" + programMergeConflictType +
 						") for reference conflict type to merge.");
 		}
@@ -1552,8 +1544,7 @@ class ReferenceMerger extends AbstractListingMerger {
 			}
 			Symbol latestSymbol = latestPgm.getSymbolTable().getSymbol(latestSymbolID);
 			if (latestSymbol != null) {
-				Symbol resultSymbol =
-					SimpleDiffUtility.getSymbol(latestSymbol, resultPgm);
+				Symbol resultSymbol = SimpleDiffUtility.getSymbol(latestSymbol, resultPgm);
 				if (resultSymbol != null) {
 					return resultSymbol.getID();
 				}

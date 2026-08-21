@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,12 +15,12 @@
  */
 package pdb.symbolserver;
 
-import static org.junit.Assert.assertEquals;
-
-import java.util.List;
+import static org.junit.Assert.*;
+import static org.junit.Assume.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import org.apache.commons.io.FilenameUtils;
 import org.junit.Before;
@@ -28,6 +28,7 @@ import org.junit.Test;
 
 import com.google.common.io.BaseEncoding;
 
+import ghidra.file.formats.sevenzip.SevenZipCliToolWrapper;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -57,11 +58,16 @@ public class SymbolServerService2Test extends AbstractGhidraHeadedIntegrationTes
 
 	@Before
 	public void setup() throws IOException {
+		// Don't cause test failure if 7z cli tool isn't installed on test env
+		assumeTrue("Missing 7z cli tool in testing env PATH, skipping",
+			SevenZipCliToolWrapper.findTool(TaskMonitor.DUMMY) != null);
+
 		temporaryDir = createTempDirectory("symbolservers");
 		localSymbolStore1Root = new File(temporaryDir, "symbols1");
 		LocalSymbolStore.create(localSymbolStore1Root, 1);
 
 		localSymbolStore1 = new LocalSymbolStore(localSymbolStore1Root);
+
 	}
 
 	@Test
@@ -99,7 +105,7 @@ public class SymbolServerService2Test extends AbstractGhidraHeadedIntegrationTes
 
 		List<SymbolFileLocation> results =
 			symbolServerService.find(SymbolFileInfo.fromValues("test.pdb", "11223344", 1),
-				FindOption.of(FindOption.ALLOW_REMOTE), TaskMonitor.DUMMY);
+				FindOption.of(FindOption.ALLOW_UNTRUSTED), TaskMonitor.DUMMY);
 
 		assertEquals(1, results.size());
 		System.out.println(results.get(0).getLocationStr());
@@ -118,7 +124,7 @@ public class SymbolServerService2Test extends AbstractGhidraHeadedIntegrationTes
 
 		List<SymbolFileLocation> results =
 			symbolServerService.find(SymbolFileInfo.fromValues("test.pdb", "11223344", 1),
-				FindOption.of(FindOption.ALLOW_REMOTE), TaskMonitor.DUMMY);
+				FindOption.of(FindOption.ALLOW_UNTRUSTED), TaskMonitor.DUMMY);
 
 		assertEquals(1, results.size());
 		System.out.println(results.get(0).getLocationStr());

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,7 +45,7 @@ public class ProjectDataTablePanel extends JPanel {
 
 	private static final String MAX_FILE_COUNT_PROPERTY = "ProjectDataTable.maxFileCount";
 	private static final int MAX_FILE_COUNT_DEFAULT = 2000;
-	private static int maxFileCount = loadMaxFileCount();
+	public static final int MAX_FILE_COUNT = loadMaxFileCount();
 
 	private FrontEndPlugin plugin;
 	private PluginTool tool;
@@ -103,6 +103,7 @@ public class ProjectDataTablePanel extends JPanel {
 				.addListSelectionListener(e -> plugin.getTool().contextChanged(null));
 		gTable.setDefaultRenderer(Date.class, new DateCellRenderer());
 		gTable.setDefaultRenderer(DomainFileType.class, new TypeCellRenderer());
+		gTable.getColumn("Name").setCellRenderer(new NameCellRenderer());
 
 		// self-registering drag provider
 		new ProjectDataTableDragProvider();
@@ -123,6 +124,10 @@ public class ProjectDataTablePanel extends JPanel {
 	public void setHelpLocation(HelpLocation helpLocation) {
 		HelpService help = Help.getHelpService();
 		help.registerHelp(table, helpLocation);
+	}
+
+	public void setFilter(String filterText) {
+		table.setFiterText(filterText);
 	}
 
 	public void setSelectedDomainFiles(Set<DomainFile> files) {
@@ -190,7 +195,7 @@ public class ProjectDataTablePanel extends JPanel {
 
 		int fileCount = projectData.getFileCount();
 
-		if (fileCount < 0 || fileCount > maxFileCount) {
+		if (fileCount < 0 || fileCount > MAX_FILE_COUNT) {
 			capacityExceeded = true;
 			this.projectData.removeDomainFolderChangeListener(changeListener);
 			model.setProjectData(null);
@@ -208,7 +213,7 @@ public class ProjectDataTablePanel extends JPanel {
 	public ActionContext getActionContext(ComponentProvider provider, MouseEvent e) {
 		int[] selectedRows = gTable.getSelectedRows();
 		if (selectedRows.length == 0) {
-			return null;
+			return new ProjectDataContext(provider, projectData, gTable, null, null, gTable, true);
 		}
 
 		List<DomainFile> list = new ArrayList<>();
@@ -368,7 +373,8 @@ public class ProjectDataTablePanel extends JPanel {
 			}
 			checkCapacity();
 			if (!capacityExceeded) {
-				model.addObject(new DomainFileInfo(file));
+				model.addObject(new DomainFileInfo(file, model));
+				model.refresh();
 			}
 		}
 
@@ -377,7 +383,7 @@ public class ProjectDataTablePanel extends JPanel {
 			if (ignoreChanges()) {
 				return;
 			}
-			model.refresh();
+			reload();
 		}
 
 		@Override
@@ -394,6 +400,7 @@ public class ProjectDataTablePanel extends JPanel {
 					break;
 				}
 			}
+			model.refresh();
 		}
 
 		@Override
@@ -534,15 +541,41 @@ public class ProjectDataTablePanel extends JPanel {
 
 			JLabel renderer = (JLabel) super.getTableCellRendererComponent(data);
 
-			Object value = data.getValue();
-
-			renderer.setText("");
-			if (value != null) {
-				DomainFileType type = (DomainFileType) value;
-				setToolTipText(type.getContentType());
-				setText("");
-				setIcon(type.getIcon());
+			DomainFileInfo info = (DomainFileInfo) data.getRowObject();
+			if (info != null) {
+				DomainFileType type = (DomainFileType) data.getValue();
+				renderer.setText(type.toString());
+				renderer.setIcon(type.getIcon());
+				String toolTipText = HTMLUtilities.toLiteralHTMLForTooltip(info.getToolTip());
+				renderer.setToolTipText(toolTipText);
 			}
+			else {
+				renderer.setText("");
+				renderer.setToolTipText(null);
+			}
+
+			return renderer;
+		}
+	}
+
+	private class NameCellRenderer extends GTableCellRenderer {
+
+		@Override
+		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+
+			JLabel renderer = (JLabel) super.getTableCellRendererComponent(data);
+
+			DomainFileInfo info = (DomainFileInfo) data.getRowObject();
+			if (info != null) {
+				renderer.setText((String) data.getValue());
+				String toolTipText = HTMLUtilities.toLiteralHTMLForTooltip(info.getToolTip());
+				renderer.setToolTipText(toolTipText);
+			}
+			else {
+				renderer.setText("");
+				renderer.setToolTipText(null);
+			}
+
 			return renderer;
 		}
 	}

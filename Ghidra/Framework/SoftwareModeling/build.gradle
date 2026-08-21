@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,6 +60,8 @@ generateGrammarSource {
 	include "ghidra/sleigh/grammar/BaseLexer.g"
 	include "ghidra/sleigh/grammar/DisplayLexer.g"
 	include "ghidra/sleigh/grammar/SemanticLexer.g"
+	include "ghidra/sleigh/grammar/SemanticLexerHex.g"
+	include "ghidra/sleigh/grammar/SemanticLexerIdHex.g"
 	
 	// This is the root parser, it will import its children without building them individually.
 	include "ghidra/sleigh/grammar/SleighParser.g"
@@ -72,15 +74,13 @@ generateGrammarSource {
 	// README: See src/main/antlr/ghidra/sleigh/grammar/README.txt for an explanation of this.
 	
 	doFirst {
-		// Ensure that SleighLexar.tokens is rebuilt by removing it if any of the
-		// contributing grammar files have changed.  Antlr plugin does not know
-		// about the SleighLexar.tokens dependency on changes to BaseLexer.g, 
-		// DisplayLexer.g or SemanticLexer.g
-		delete file("$buildDir/${genSrcDir}/ghidra/sleigh/grammar/SleighLexer.tokens")
+		// The ANTLR plugin's incremental compilation seems to cause issues, so clean out token
+		// files before any attempted compilation.
+		delete file("$buildDir/${genSrcDir}/ghidra/sleigh/grammar/*.tokens")
 	}
 
 	doLast {
-		// SleighLexar.g is only needed to produce SleighLexar.tokens.
+		// SleighLexer.g is only needed to produce SleighLexer.tokens.
 		// Remove its generated java artifacts which may conflict
 		delete fileTree("$buildDir/${genSrcDir}/ghidra/sleigh/grammar") {
 			include "SleighLexer*.java"

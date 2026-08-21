@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@
 //
 // Script may be constrained by a selection.
 //
-//@category ELF Relocations
+//@category DWARF
 import java.util.Iterator;
 
 import ghidra.app.script.GhidraScript;
@@ -82,18 +82,19 @@ public class FixElfExternalOffsetDataRelocationScript extends GhidraScript {
 		}
 	}
 
-	private boolean updateExternalDataRelocation(Bookmark relocErrorBookmark, MessageLog log) throws Exception {
-		
+	private boolean updateExternalDataRelocation(Bookmark relocErrorBookmark, MessageLog log)
+			throws Exception {
+
 		Address address = relocErrorBookmark.getAddress();
 		String bookmarkComment = relocErrorBookmark.getComment();
-		
+
 		int byteSize = address.getAddressSpace().getPointerSize();
-		
+
 		int index = bookmarkComment.lastIndexOf("0x");
 		if (index < 0) {
 			return false;
 		}
-		
+
 		char signChar = bookmarkComment.charAt(index - 1);
 		int offset;
 		try {
@@ -108,16 +109,18 @@ public class FixElfExternalOffsetDataRelocationScript extends GhidraScript {
 		else if (signChar != '+') {
 			return false;
 		}
-		
+
 		Memory memory = currentProgram.getMemory();
 		DumbMemBufferImpl buf = new DumbMemBufferImpl(memory, address);
-		
-		Address symbolAddr = PointerDataType.getAddressValue(buf, byteSize, address.getAddressSpace());
+
+		Address symbolAddr =
+			PointerDataType.getAddressValue(buf, byteSize, address.getAddressSpace());
 		if (symbolAddr == null) {
 			return false; // invalid pointer data
 		}
-		
-		String symbolName = bookmarkComment.substring(EXT_RELO_BOOKMARK_TEXT_PREFIX.length(), index - 1).trim();
+
+		String symbolName =
+			bookmarkComment.substring(EXT_RELO_BOOKMARK_TEXT_PREFIX.length(), index - 1).trim();
 		if (currentProgram.getSymbolTable().getSymbol(symbolName, symbolAddr, null) == null) {
 			return false; // EXTERNAL block symbol not found at stored address
 		}
@@ -136,23 +139,24 @@ public class FixElfExternalOffsetDataRelocationScript extends GhidraScript {
 			!canFixupStructure(dt, componentOffset, address.getPointerSize())) {
 			return false; // unsupported datatype applied
 		}
-		
+
 		long newValue = symbolAddr.getOffset() + offset;
-		
+
 		GhidraDataConverter converter = GhidraDataConverter.getInstance(buf.isBigEndian());
 		byte[] bytes = new byte[byteSize];
 		converter.putValue(newValue, byteSize, bytes, 0);
 		memory.setBytes(address, bytes);
 
 		currentProgram.getBookmarkManager().removeBookmark(relocErrorBookmark);
-		
-		ElfRelocationHandler.warnExternalOffsetRelocation(currentProgram, address, symbolAddr, symbolName, offset, log);
-		
+
+		ElfRelocationHandler.warnExternalOffsetRelocation(currentProgram, address, symbolAddr,
+			symbolName, offset, log);
+
 		DataType offsetPtrDt =
 			currentProgram.getDataTypeManager()
 					.resolve(new PointerTypedef(null, null, -1, currentProgram.getDataTypeManager(),
 						offset), null);
-		
+
 		if (isDefaultTypeApplied) {
 			// Replace undefined/default data with offset-pointer
 			DataUtilities.createData(currentProgram, address, offsetPtrDt, -1,

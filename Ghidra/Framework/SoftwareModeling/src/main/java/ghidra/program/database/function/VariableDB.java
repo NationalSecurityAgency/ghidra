@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,7 @@
 package ghidra.program.database.function;
 
 import java.util.List;
-
-import org.apache.commons.lang3.StringUtils;
+import java.util.Objects;
 
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.database.symbol.SymbolDB;
@@ -30,6 +29,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.Symbol;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
@@ -83,8 +83,7 @@ public abstract class VariableDB implements Variable {
 	@Override
 	public void setDataType(DataType type, VariableStorage newStorage, boolean force,
 			SourceType source) throws InvalidInputException, VariableSizeException {
-		functionMgr.lock.acquire();
-		try {
+		try (Closeable c = functionMgr.lock.write()) {
 			function.startUpdate();
 			function.checkDeleted();
 			if ((this instanceof Parameter) && !function.hasCustomVariableStorage()) {
@@ -109,15 +108,13 @@ public abstract class VariableDB implements Variable {
 		}
 		finally {
 			function.endUpdate();
-			functionMgr.lock.release();
 		}
 	}
 
 	@Override
 	public void setDataType(DataType type, boolean alignStack, boolean force, SourceType source)
 			throws InvalidInputException {
-		functionMgr.lock.acquire();
-		try {
+		try (Closeable c = functionMgr.lock.write()) {
 			function.startUpdate();
 			function.checkDeleted();
 			// VARDO: Is there concern about variable no longer be contained within function?
@@ -149,7 +146,6 @@ public abstract class VariableDB implements Variable {
 		}
 		finally {
 			function.endUpdate();
-			functionMgr.lock.release();
 		}
 	}
 
@@ -176,12 +172,12 @@ public abstract class VariableDB implements Variable {
 
 	@Override
 	public String getComment() {
-		return symbol.getSymbolStringData();
+		return symbol.getSymbolComment();
 	}
 
 	@Override
 	public void setComment(String comment) {
-		symbol.setSymbolStringData(comment);
+		symbol.setSymbolComment(comment);
 		functionMgr.functionChanged(function, null);
 	}
 
@@ -356,14 +352,13 @@ public abstract class VariableDB implements Variable {
 		}
 
 		Variable otherVar = (Variable) obj;
-
 		if (!isEquivalent(otherVar)) {
 			return false;
 		}
-		if (!StringUtils.equals(getName(), otherVar.getName())) {
+		if (!Objects.equals(getName(), otherVar.getName())) {
 			return false;
 		}
-		return StringUtils.equals(getComment(), otherVar.getComment());
+		return Objects.equals(getComment(), otherVar.getComment());
 	}
 
 	@Override
@@ -409,8 +404,11 @@ public abstract class VariableDB implements Variable {
 	 * Update variable storage and data-type associated with the underlying variable symbol.
 	 * If function does not use custom storage, the specified storage will be ignored and set
 	 * to UNASSIGNED.
-	 * @param newStorage
-	 * @param dt
+	 * <P>
+	 * NOTE: Method will trigger a symbol changed event.
+	 * 
+	 * @param newStorage variable storage
+	 * @param dt variable datatype
 	 */
 	void setStorageAndDataType(VariableStorage newStorage, DataType dt) {
 		if (this instanceof Parameter && !function.hasCustomVariableStorage()) {

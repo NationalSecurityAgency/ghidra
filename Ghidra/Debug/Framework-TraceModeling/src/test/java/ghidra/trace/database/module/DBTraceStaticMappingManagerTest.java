@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 import java.util.Collection;
 
@@ -47,11 +48,15 @@ public class DBTraceStaticMappingManagerTest extends AbstractGhidraHeadlessInteg
 		tb.close();
 	}
 
+	public static URL url(String spec) throws Exception {
+		return new URI(spec).toURL();
+	}
+
 	@Test
 	public void testAddAndGet() throws Exception {
 		try (Transaction tx = tb.startTransaction()) {
 			staticMappingManager.add(tb.range(0xdeadbeef, 0xdeadbeef + 99), Lifespan.span(2, 5),
-				new URL("ghidra://static"), "DEADBEEF");
+				url("ghidra://static"), "DEADBEEF");
 		}
 
 		DBTraceStaticMapping found = staticMappingManager.findContaining(tb.addr(0xdeadbeef), 2);
@@ -59,7 +64,7 @@ public class DBTraceStaticMappingManagerTest extends AbstractGhidraHeadlessInteg
 		assertEquals(100, found.getLength());
 		assertEquals(2, found.getStartSnap());
 		assertEquals(5, found.getEndSnap());
-		assertEquals(new URL("ghidra://static"), found.getStaticProgramURL());
+		assertEquals(url("ghidra://static"), found.getStaticProgramURL());
 		assertEquals("DEADBEEF", found.getStaticAddress());
 
 		assertEquals(found, staticMappingManager.findContaining(tb.addr(0xdeadbeef + 99), 2));
@@ -76,8 +81,7 @@ public class DBTraceStaticMappingManagerTest extends AbstractGhidraHeadlessInteg
 	public void testAddAndEnumerate() throws Exception {
 		try (Transaction tx = tb.startTransaction()) {
 			staticMappingManager.add(tb.range(0xdeadbeef, 0xdeadbeef + 99),
-				Lifespan.span(2, 4),
-				new URL("ghidra://static"), "DEADBEEF");
+				Lifespan.span(2, 4), url("ghidra://static"), "DEADBEEF");
 		}
 
 		Collection<? extends TraceStaticMapping> all = staticMappingManager.getAllEntries();
@@ -88,11 +92,9 @@ public class DBTraceStaticMappingManagerTest extends AbstractGhidraHeadlessInteg
 	public void testAddRemoveAndEnumerate() throws Exception {
 		try (Transaction tx = tb.startTransaction()) {
 			staticMappingManager.add(tb.range(0xdeadbeef, 0xdeadbeef + 99),
-				Lifespan.span(2, 4),
-				new URL("ghidra://static"), "DEADBEEF");
+				Lifespan.span(2, 4), url("ghidra://static"), "DEADBEEF");
 			staticMappingManager.add(tb.range(0xdeadbeef, 0xdeadbeef + 99),
-				Lifespan.span(7, 9),
-				new URL("ghidra://static"), "DEADBEEF");
+				Lifespan.span(7, 9), url("ghidra://static"), "DEADBEEF");
 
 			assertEquals(2, staticMappingManager.getAllEntries().size());
 
@@ -108,10 +110,9 @@ public class DBTraceStaticMappingManagerTest extends AbstractGhidraHeadlessInteg
 	public void testOverlapCausesException() throws Exception {
 		try (Transaction tx = tb.startTransaction()) {
 			staticMappingManager.add(tb.range(0xdeadbeef, 0xdeadbeef + 99),
-				Lifespan.span(2, 4),
-				new URL("ghidra://static"), "DEADBEEF");
+				Lifespan.span(2, 4), url("ghidra://static"), "DEADBEEF");
 			staticMappingManager.add(tb.range(0xdeadbeef + 80, 0xdeadbeef + 179),
-				Lifespan.span(2, 4), new URL("ghidra://static"), "DEADBEEF");
+				Lifespan.span(2, 4), url("ghidra://static"), "DEADBEEF");
 			fail();
 		}
 		catch (TraceConflictedMappingException e) {
@@ -123,10 +124,9 @@ public class DBTraceStaticMappingManagerTest extends AbstractGhidraHeadlessInteg
 	public void testOverlapAgreeingAccepted() throws Exception {
 		try (Transaction tx = tb.startTransaction()) {
 			staticMappingManager.add(tb.range(0xdeadbeef, 0xdeadbeef + 99),
-				Lifespan.span(2, 4),
-				new URL("ghidra://static"), "DEADBEEF");
+				Lifespan.span(2, 4), url("ghidra://static"), "DEADBEEF");
 			staticMappingManager.add(tb.range(0xdeadbeef + 80, 0xdeadbeef + 179),
-				Lifespan.span(2, 4), new URL("ghidra://static"), "DEADBF3F");
+				Lifespan.span(2, 4), url("ghidra://static"), "DEADBF3F");
 		}
 	}
 
@@ -134,10 +134,9 @@ public class DBTraceStaticMappingManagerTest extends AbstractGhidraHeadlessInteg
 	public void testTouchingProceedingIsNotOverlapping() throws Exception {
 		try (Transaction tx = tb.startTransaction()) {
 			staticMappingManager.add(tb.range(0xdeadbeef, 0xdeadbeef + 99),
-				Lifespan.span(2, 4),
-				new URL("ghidra://static"), "DEADBEEF");
+				Lifespan.span(2, 4), url("ghidra://static"), "DEADBEEF");
 			staticMappingManager.add(tb.range(0xdeadbeef + 100, 0xdeadbeef + 199),
-				Lifespan.span(2, 4), new URL("ghidra://static"), "DEADBEEF");
+				Lifespan.span(2, 4), url("ghidra://static"), "DEADBEEF");
 		}
 	}
 
@@ -146,7 +145,7 @@ public class DBTraceStaticMappingManagerTest extends AbstractGhidraHeadlessInteg
 	public void testSaveAndLoad() throws Exception {
 		try (Transaction tx = tb.startTransaction()) {
 			staticMappingManager.add(tb.range(0xdeadbeef, 0xdeadbeef + 99), Lifespan.span(2, 5),
-				new URL("ghidra://static"), "DEADBEEF");
+				url("ghidra://static"), "DEADBEEF");
 		}
 
 		File tmp = tb.save();
@@ -158,7 +157,7 @@ public class DBTraceStaticMappingManagerTest extends AbstractGhidraHeadlessInteg
 			assertEquals(100, found.getLength());
 			assertEquals(2, found.getStartSnap());
 			assertEquals(5, found.getEndSnap());
-			assertEquals(new URL("ghidra://static"), found.getStaticProgramURL());
+			assertEquals(url("ghidra://static"), found.getStaticProgramURL());
 			assertEquals("DEADBEEF", found.getStaticAddress());
 		}
 	}
@@ -167,8 +166,7 @@ public class DBTraceStaticMappingManagerTest extends AbstractGhidraHeadlessInteg
 	public void testAddButAbortedStillEmpty() throws Exception {
 		try (Transaction tx = tb.startTransaction()) {
 			staticMappingManager.add(tb.range(0xdeadbeef, 0xdeadbeef + 99),
-				Lifespan.span(2, 4),
-				new URL("ghidra://static"), "DEADBEEF");
+				Lifespan.span(2, 4), url("ghidra://static"), "DEADBEEF");
 			tx.abort();
 		}
 
@@ -179,8 +177,7 @@ public class DBTraceStaticMappingManagerTest extends AbstractGhidraHeadlessInteg
 	public void testAddThenUndo() throws Exception {
 		try (Transaction tx = tb.startTransaction()) {
 			staticMappingManager.add(tb.range(0xdeadbeef, 0xdeadbeef + 99),
-				Lifespan.span(2, 4),
-				new URL("ghidra://static"), "DEADBEEF");
+				Lifespan.span(2, 4), url("ghidra://static"), "DEADBEEF");
 		}
 		tb.trace.undo();
 
@@ -191,8 +188,7 @@ public class DBTraceStaticMappingManagerTest extends AbstractGhidraHeadlessInteg
 	public void testAddThenRemoveThenUndo() throws Exception {
 		try (Transaction tx = tb.startTransaction()) {
 			staticMappingManager.add(tb.range(0xdeadbeef, 0xdeadbeef + 99),
-				Lifespan.span(2, 4),
-				new URL("ghidra://static"), "DEADBEEF");
+				Lifespan.span(2, 4), url("ghidra://static"), "DEADBEEF");
 		}
 		assertEquals(1, staticMappingManager.getAllEntries().size());
 		try (Transaction tx = tb.startTransaction()) {

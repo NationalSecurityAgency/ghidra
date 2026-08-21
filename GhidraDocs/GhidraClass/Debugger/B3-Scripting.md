@@ -24,10 +24,10 @@ public class DemoDebuggerScript extends GhidraScript implements FlatDebuggerAPI 
 }
 ```
 
-**NOTE**: The scripting API has been refactored a little since the transition from Recorder-based to TraceRmi-based targets.
+**NOTE**: The scripting API has been refactored since the transition from Recorder-based to TraceRmi-based targets.
 Parts of the API that are back-end agnostic are accessible from the `FlatDebuggerAPI` interface.
-Parts of the API that require a specific back end are in `FlatDebuggerRmiAPI` and `FlatDebuggerRecorderAPI`, the latter of which is deprecated.
-If a script written for version 11.0.2 or prior is not compiling, it can most likely be patched up by changing `implements FlatDebuggerAPI` to `implements FlatDebuggerRecorderAPI`, but we recommend porting it to use `implements FlatDebuggerRmiAPI`.
+Parts of the API that require a specific back end are in `FlatDebuggerRmiAPI`.
+The old `FlatDebuggerRecorderAPI` was removed in Ghidra 11.3, and scripts needing it should be ported to `FlatDebuggerRmiAPI`.
 
 Technically, the Debugger's "deep" API is accessible to scripts; however, the flat API is preferred for scripting.
 Also, the flat API is usually more stable than the deep API.
@@ -210,7 +210,7 @@ if (!"termmines".equals(currentProgram.getName())) {
 	throw new AssertionError("The current program must be termmines");
 }
 
-if (getExecutionState(trace).isRunning()) {
+if (getExecutionState(trace) != TraceExecutionState.STOPPED) {
 	monitor.setMessage("Interrupting target and waiting for STOPPED");
 	interrupt();
 	waitForBreak(3, TimeUnit.SECONDS);
@@ -293,26 +293,19 @@ We do not need to be precise in this check; it suffices to check the program cou
 while (true) {
 	monitor.checkCancelled();
 
-	TargetExecutionState execState = getExecutionState(trace);
+	TraceExecutionState execState = getExecutionState(trace);
 	switch (execState) {
-		case STOPPED:
-			resume();
-			break;
-		case TERMINATED:
-		case INACTIVE:
-			throw new AssertionError("Target terminated");
-		case ALIVE:
-			println(
-				"I don't know whether or not the target is running. Please make it RUNNING.");
-			break;
-		case RUNNING:
+		case STOPPED -> resume();
+		case TERMINATED, INACTIVE -> throw new AssertionError("Target terminated");
+		case ALIVE -> println(
+			"I don't know whether or not the target is running. Please make it RUNNING.");
+		case RUNNING -> {
 			/**
 			 * Probably timed out waiting for break. That's fine. Give the player time to
 			 * win.
 			 */
-			break;
-		default:
-			throw new AssertionError("Unrecognized state: " + execState);
+		}
+		default -> throw new AssertionError("Unrecognized state: " + execState);
 	}
 	try {
 		monitor.setMessage("Waiting for player to win");
@@ -338,7 +331,6 @@ Using a timeout of 1 second ensures we can terminate promptly should the user ca
 
 Before waiting, we need to make sure the target is running.
 Because we could repeat the loop while the target is already running, we should only call `resume()` if the target is stopped.
-There are utility methods on `TargetExecutionState` like `isRunning()`, which you might prefer to use.
 Here, we exhaustively handle every kind of state using a switch statement, which does make the code a bit verbose.
 
 When the target does break, we first allow the UI to finish interrogating the target.

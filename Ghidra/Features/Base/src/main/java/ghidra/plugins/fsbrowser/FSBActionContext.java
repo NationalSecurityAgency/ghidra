@@ -16,19 +16,17 @@
 package ghidra.plugins.fsbrowser;
 
 import java.awt.event.MouseEvent;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.tree.TreePath;
-
 import docking.DefaultActionContext;
 import docking.widgets.tree.GTree;
-import docking.widgets.tree.GTreeNode;
-import ghidra.formats.gfilesystem.*;
+import ghidra.formats.gfilesystem.FSRL;
+import ghidra.framework.model.DomainFile;
+import ghidra.plugin.importer.ProjectIndexService;
 
 /**
- * {@link FileSystemBrowserPlugin}-specific action.
+ * {@link FSBComponentProvider} context for actions
  */
 public class FSBActionContext extends DefaultActionContext {
 
@@ -42,10 +40,25 @@ public class FSBActionContext extends DefaultActionContext {
 	 * @param event MouseEvent that caused the update, or null
 	 * @param gTree {@link FileSystemBrowserPlugin} provider tree.
 	 */
-	public FSBActionContext(FileSystemBrowserComponentProvider provider, FSBNode[] selectedNodes,
-			MouseEvent event, GTree gTree) {
+	public FSBActionContext(FSBComponentProvider provider,
+			List<FSBNode> selectedNodes, MouseEvent event, GTree gTree) {
 		super(provider, selectedNodes, gTree);
 		this.gTree = gTree;
+	}
+
+	@Override
+	public FSBComponentProvider getComponentProvider() {
+		return (FSBComponentProvider) super.getComponentProvider();
+	}
+
+	@Override
+	public List<FSBNode> getContextObject() {
+		return getSelectedNodes();
+	}
+
+	@Override
+	public GTree getSourceComponent() {
+		return gTree;
 	}
 
 	/**
@@ -79,9 +92,7 @@ public class FSBActionContext extends DefaultActionContext {
 	 * @return boolean true if there are selected nodes in the browser tree
 	 */
 	public boolean hasSelectedNodes() {
-		FSBNode[] selectedNodes = (FSBNode[]) getContextObject();
-
-		return selectedNodes.length > 0;
+		return !getSelectedNodes().isEmpty();
 	}
 
 	/**
@@ -90,7 +101,7 @@ public class FSBActionContext extends DefaultActionContext {
 	 * @return list of currently selected tree nodes
 	 */
 	public List<FSBNode> getSelectedNodes() {
-		return List.of((FSBNode[]) getContextObject());
+		return (List<FSBNode>) super.getContextObject();
 	}
 
 	/**
@@ -104,27 +115,19 @@ public class FSBActionContext extends DefaultActionContext {
 	 * selected
 	 */
 	public FSRL getFSRL(boolean dirsOk) {
-		FSBNode[] selectedNodes = (FSBNode[]) getContextObject();
-		if (selectedNodes.length != 1) {
+		List<FSBNode> selectedNodes = getSelectedNodes();
+		if (selectedNodes.size() != 1) {
 			return null;
 		}
-		FSBNode node = selectedNodes[0];
+		FSBNode node = selectedNodes.get(0);
 		FSRL fsrl = node.getFSRL();
-		if (!dirsOk && node instanceof FSBRootNode && fsrlHasContainer(fsrl.getFS())) {
+		if (!dirsOk && node instanceof FSBRootNode fsRootNode &&
+			fsRootNode.getContainer() != null) {
 			// 'convert' a file system root node back into its container file
-			return fsrl.getFS().getContainer();
+			return fsRootNode.getContainer();
 		}
 
-		boolean isDir = (node instanceof FSBDirNode) || (node instanceof FSBRootNode);
-		if (isDir && !dirsOk) {
-			return null;
-		}
-
-		return fsrl;
-	}
-
-	private boolean fsrlHasContainer(FSRLRoot fsFSRL) {
-		return fsFSRL.hasContainer() && !fsFSRL.getProtocol().equals(LocalFileSystem.FSTYPE);
+		return node.isLeaf() || dirsOk ? fsrl : null;
 	}
 
 	/**
@@ -132,10 +135,9 @@ public class FSBActionContext extends DefaultActionContext {
 	 * @return boolean true if the currently selected items are all directory items
 	 */
 	public boolean isSelectedAllDirs() {
-		FSBNode[] selectedNodes = (FSBNode[]) getContextObject();
+		List<FSBNode> selectedNodes = getSelectedNodes();
 		for (FSBNode node : selectedNodes) {
-			boolean isDir = (node instanceof FSBDirNode) || (node instanceof FSBRootNode);
-			if (!isDir) {
+			if (node.isLeaf()) {
 				return false;
 			}
 		}
@@ -148,25 +150,8 @@ public class FSBActionContext extends DefaultActionContext {
 	 * @return the currently selected tree node, or null if no nodes or more than 1 node is selected
 	 */
 	public FSBNode getSelectedNode() {
-		FSBNode[] selectedNodes = (FSBNode[]) getContextObject();
-		return selectedNodes.length == 1 ? selectedNodes[0] : null;
-	}
-
-	/**
-	 * Returns the FSBRootNode that contains the currently selected tree node.
-	 * 
-	 * @return FSBRootNode that contains the currently selected tree node, or null nothing
-	 * selected
-	 */
-	public FSBRootNode getRootOfSelectedNode() {
-		return getRootOfNode(getSelectedNode());
-	}
-
-	private FSBRootNode getRootOfNode(GTreeNode tmp) {
-		while (tmp != null && !(tmp instanceof FSBRootNode)) {
-			tmp = tmp.getParent();
-		}
-		return (tmp instanceof FSBRootNode) ? (FSBRootNode) tmp : null;
+		List<FSBNode> selectedNodes = getSelectedNodes();
+		return selectedNodes.size() == 1 ? selectedNodes.get(0) : null;
 	}
 
 	/**
@@ -175,11 +160,10 @@ public class FSBActionContext extends DefaultActionContext {
 	 * @return returns the number of selected nodes in the tree.
 	 */
 	public int getSelectedCount() {
-		FSBNode[] selectedNodes = (FSBNode[]) getContextObject();
-		return selectedNodes.length;
+		return getSelectedNodes().size();
 	}
 
-	private List<FSRL> getFSRLsFromNodes(FSBNode[] nodes, boolean dirsOk) {
+	private List<FSRL> getFSRLsFromNodes(List<FSBNode> nodes, boolean dirsOk) {
 		List<FSRL> fsrls = new ArrayList<>();
 		for (FSBNode node : nodes) {
 			FSRL fsrl = node.getFSRL();
@@ -206,7 +190,7 @@ public class FSBActionContext extends DefaultActionContext {
 	 * @return list of FSRLs of the currently selected items, maybe empty but never null
 	 */
 	public List<FSRL> getFSRLs(boolean dirsOk) {
-		FSBNode[] selectedNodes = (FSBNode[]) getContextObject();
+		List<FSBNode> selectedNodes = getSelectedNodes();
 		return getFSRLsFromNodes(selectedNodes, dirsOk);
 	}
 
@@ -229,41 +213,6 @@ public class FSBActionContext extends DefaultActionContext {
 	}
 
 	/**
-	 * Converts the tree-node hierarchy of the currently selected item into a string path using
-	 * "/" separators.
-	 * 
-	 * @return string path of the currently selected tree item
-	 */
-	public String getFormattedTreePath() {
-		FSBNode[] selectedNodes = (FSBNode[]) getContextObject();
-		if (selectedNodes.length != 1) {
-			return null;
-		}
-		TreePath treePath = selectedNodes[0].getTreePath();
-		StringBuilder path = new StringBuilder();
-		for (Object pathElement : treePath.getPath()) {
-			if (pathElement instanceof FSBNode) {
-				FSBNode node = (FSBNode) pathElement;
-				FSRL fsrl = node.getFSRL();
-				if (path.length() != 0) {
-					path.append("/");
-				}
-				String s;
-				if (fsrl instanceof FSRLRoot) {
-					s = fsrl.getFS().hasContainer() ? fsrl.getFS().getContainer().getName()
-							: "/";
-				}
-				else {
-					s = fsrl.getName();
-				}
-				path.append(s);
-			}
-		}
-
-		return path.toString();
-	}
-
-	/**
 	 * Returns the FSRL of the currently selected item, if it is a 'loadable' item.
 	 * 
 	 * @return FSRL of the currently selected loadable item, or null if nothing selected or
@@ -271,82 +220,18 @@ public class FSBActionContext extends DefaultActionContext {
 	 */
 	public FSRL getLoadableFSRL() {
 		FSBNode node = getSelectedNode();
-		if (node == null) {
-			return null;
-		}
-		FSRL fsrl = node.getFSRL();
-		if ((node instanceof FSBDirNode) || (node instanceof FSBRootNode)) {
-			FSBRootNode rootNode = getRootOfSelectedNode();
-			GFileSystem fs = rootNode.getFSRef().getFilesystem();
-			if (fs instanceof GFileSystemProgramProvider) {
-				GFile gfile;
-				try {
-					gfile = fs.lookup(node.getFSRL().getPath());
-					if (gfile != null &&
-						((GFileSystemProgramProvider) fs).canProvideProgram(gfile)) {
-						return fsrl;
-					}
-				}
-				catch (IOException e) {
-					// ignore error and fall thru to normal file handling
-				}
-			}
-		}
-		if (node instanceof FSBRootNode && fsrl.getFS().hasContainer()) {
-			// 'convert' a file system root node back into its container file
-			return fsrl.getFS().getContainer();
-		}
-		return (node instanceof FSBFileNode) ? fsrl : null;
+		return node != null ? node.getLoadableFSRL() : null;
 	}
 
-	/**
-	 * Returns a list of FSRLs of the currently selected loadable items.
-	 * 
-	 * @return list of FSRLs of currently selected loadable items, maybe empty but never null
-	 */
-	public List<FSRL> getLoadableFSRLs() {
-		FSBNode[] selectedNodes = (FSBNode[]) getContextObject();
-
-		List<FSRL> fsrls = new ArrayList<>();
-		for (FSBNode node : selectedNodes) {
-			FSRL fsrl = node.getFSRL();
-
-			FSRL validated = vaildateFsrl(fsrl, node);
-			if (validated != null) {
-				fsrls.add(validated);
-				continue;
-			}
-			else if (node instanceof FSBRootNode && fsrl.getFS().hasContainer()) {
-				// 'convert' a file system root node back into its container file
-				fsrls.add(fsrl.getFS().getContainer());
-			}
-			else if (node instanceof FSBFileNode) {
-				fsrls.add(fsrl);
+	public boolean hasSelectedLinkedNodes() {
+		ProjectIndexService projectIndex = getComponentProvider().getProjectIndex();
+		for (FSBNode node : getSelectedNodes()) {
+			DomainFile df = projectIndex.findFirstByFSRL(node.getFSRL());
+			if (df != null) {
+				return true;
 			}
 		}
-		return fsrls;
-	}
-
-	private FSRL vaildateFsrl(FSRL fsrl, FSBNode node) {
-		if ((node instanceof FSBDirNode) || (node instanceof FSBRootNode)) {
-			FSBRootNode rootNode = getRootOfNode(node);
-			GFileSystem fs = rootNode.getFSRef().getFilesystem();
-			if (fs instanceof GFileSystemProgramProvider) {
-				GFile gfile;
-				try {
-					gfile = fs.lookup(node.getFSRL().getPath());
-					if (gfile != null &&
-						((GFileSystemProgramProvider) fs).canProvideProgram(gfile)) {
-						return fsrl;
-					}
-				}
-				catch (IOException e) {
-					// ignore error and return null
-				}
-			}
-		}
-
-		return null;
+		return false;
 	}
 
 }

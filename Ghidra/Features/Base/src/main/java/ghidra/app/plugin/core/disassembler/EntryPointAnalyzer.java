@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -217,7 +217,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 			}
 			if (!foundNonJumpRef) {
 				// check if we have been thunked
-				Address[] functionThunkAddresses = function.getFunctionThunkAddresses();
+				Address[] functionThunkAddresses = function.getFunctionThunkAddresses(false);
 				foundNonJumpRef =
 					functionThunkAddresses != null && functionThunkAddresses.length != 0;
 			}
@@ -297,7 +297,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 		Listing listing = program.getListing();
 		SymbolTable symbolTable = program.getSymbolTable();
 
-		Set<Address> indirectSet = new HashSet();
+		Set<Address> indirectSet = new HashSet<>();
 
 		Iterator<Address> iter = doNowSet.iterator();
 		while (iter.hasNext()) {
@@ -404,7 +404,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 	}
 
 	private void disassembleCodeMapMarkers(Program program, TaskMonitor monitor) {
-		AddressSetPropertyMap codeProp = program.getAddressSetPropertyMap("CodeMap");
+		AddressSetPropertyMap codeProp = program.getAddressSetPropertyMap(Program.CODE_MAP_NAME);
 		if (codeProp != null) {
 			Set<Address> codeSet = new HashSet<>();
 			AddressIterator aiter = codeProp.getAddresses();

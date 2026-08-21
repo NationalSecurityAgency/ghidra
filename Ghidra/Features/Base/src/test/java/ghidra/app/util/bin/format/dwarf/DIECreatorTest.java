@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,14 +16,13 @@
 package ghidra.app.util.bin.format.dwarf;
 
 import static ghidra.app.util.bin.format.dwarf.DWARFTag.*;
-import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute.*;
+import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.*;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
 
 import org.junit.Test;
 
-import ghidra.app.util.bin.format.dwarf.*;
 import ghidra.util.exception.CancelledException;
 
 /**
@@ -64,7 +63,7 @@ public class DIECreatorTest extends DWARFTestBase {
 
 		buildMockDIEIndexes();
 
-		DIEAggregate struct_via_ao = dwarfProg.getAggregate(aoStruct);
+		DIEAggregate struct_via_ao = dwarfProg.getDIEContainer().getAggregate(aoStruct);
 
 		assertEquals("MyStruct aggregate should have 3 fragments", 3,
 			struct_via_ao.getOffsets().length);
@@ -74,10 +73,9 @@ public class DIECreatorTest extends DWARFTestBase {
 			struct_via_ao.getString(DW_AT_description, null));
 	}
 
-	/**
+	/*
 	 * Tests the creation of DIEAggregates when there is a many-to-one layout of
 	 * abstractorigin -> spec -> decl links.
-	 * <p>
 	 * <pre>
 	 *                                                   mystruct ao1
 	 *                                                 /
@@ -85,9 +83,6 @@ public class DIECreatorTest extends DWARFTestBase {
 	 *                                                 \
 	 *                                                   mystruct ao2
 	 * </pre>
-	 * @throws DWARFException
-	 * @throws IOException
-	 * @throws CancelledException
 	 */
 	@Test
 	public void testDIEAggregateMulti() throws DWARFException, CancelledException, IOException {
@@ -128,8 +123,8 @@ public class DIECreatorTest extends DWARFTestBase {
 
 		buildMockDIEIndexes();
 
-		DIEAggregate ao1 = dwarfProg.getAggregate(ao1Struct);
-		DIEAggregate ao2 = dwarfProg.getAggregate(ao2Struct);
+		DIEAggregate ao1 = dwarfProg.getDIEContainer().getAggregate(ao1Struct);
+		DIEAggregate ao2 = dwarfProg.getDIEContainer().getAggregate(ao2Struct);
 
 		assertEquals("Should have 3 fragments", 3, ao1.getOffsets().length);
 		assertEquals("Should have 3 fragments", 3, ao2.getOffsets().length);

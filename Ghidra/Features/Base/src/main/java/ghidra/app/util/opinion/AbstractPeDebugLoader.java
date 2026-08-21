@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,8 +33,8 @@ import ghidra.program.model.data.StringDataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.util.Conv;
 import ghidra.util.Msg;
+import ghidra.util.NumericUtilities;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
@@ -51,11 +51,13 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
-			DomainObject domainObject, boolean loadIntoProgram) {
-		List<Option> list =
-			super.getDefaultOptions(provider, loadSpec, domainObject, loadIntoProgram);
-		list.add(new Option(SHOW_LINE_NUMBERS_OPTION_NAME, SHOW_LINE_NUMBERS_OPTION_DEFAULT,
-			Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-showDebugLineNumbers"));
+			DomainObject domainObject, boolean loadIntoProgram, boolean mirrorFsLayout) {
+		List<Option> list = super.getDefaultOptions(provider, loadSpec, domainObject,
+			loadIntoProgram, mirrorFsLayout);
+		list.add(Option.newBoolean(SHOW_LINE_NUMBERS_OPTION_NAME)
+				.value(SHOW_LINE_NUMBERS_OPTION_DEFAULT)
+				.commandLineArgument(createArg("-showDebugLineNumbers"))
+				.build());
 		return list;
 	}
 
@@ -94,8 +96,8 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 		maps.add(postCommentMap);
 		maps.add(eolCommentMap);
 
-		int[] types = new int[] { CodeUnit.PLATE_COMMENT, CodeUnit.PRE_COMMENT,
-			CodeUnit.POST_COMMENT, CodeUnit.EOL_COMMENT };
+		CommentType[] types = new CommentType[] { CommentType.PLATE, CommentType.PRE,
+			CommentType.POST, CommentType.EOL };
 		String[] typeNames = new String[] { "PLATE", "PRE", "POST", "EOL" };
 		int index = 0;
 		for (HashMap<Address, StringBuffer> map : maps) {
@@ -234,7 +236,7 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 
 				Address address = sectionToAddress.get(fileHeader.getSectionHeader(segVal - 1));
 				if (address != null) {
-					address = address.add(Conv.intToLong(offVal));
+					address = address.add(Integer.toUnsignedLong(offVal));
 
 					try {
 						symTable.createLabel(address, name, SourceType.IMPORTED);
@@ -259,15 +261,21 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 	}
 
 	private void demangle(Address address, String name, Program program) {
-		DemangledObject demangledObj = null;
+		StringBuilder builder = new StringBuilder();
 		try {
-			demangledObj = DemanglerUtil.demangle(program, name);
+			List<DemangledObject> demangledObjects = DemanglerUtil.demangle(program, name, address);
+			for (DemangledObject demangledObj : demangledObjects) {
+				if (builder.length() > 0) {
+					builder.append("\t");
+				}
+				builder.append(demangledObj.getSignature(true));
+			}
 		}
 		catch (Exception e) {
 			//log.appendMsg("Unable to demangle: "+name);
 		}
-		if (demangledObj != null) {
-			setComment(CodeUnit.PLATE_COMMENT, address, demangledObj.getSignature(true));
+		if (builder.length() > 0) {
+			setComment(CommentType.PLATE, address, builder.toString());
 		}
 	}
 
@@ -287,13 +295,13 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 				continue;
 			}
 
-			Address startAddr = addr.add(Conv.intToLong(starts[k]));
+			Address startAddr = addr.add(Integer.toUnsignedLong(starts[k]));
 			String cmt = "START-> " + file.getName() + ": " + "?";
-			setComment(CodeUnit.PRE_COMMENT, startAddr, cmt);
+			setComment(CommentType.PRE, startAddr, cmt);
 
-			Address endAddr = addr.add(Conv.intToLong(ends[k]));
+			Address endAddr = addr.add(Integer.toUnsignedLong(ends[k]));
 			cmt = "END-> " + file.getName() + ": " + "?";
-			setComment(CodeUnit.PRE_COMMENT, endAddr, cmt);
+			setComment(CommentType.PRE, endAddr, cmt);
 
 			if (monitor.isCancelled()) {
 				return;
@@ -321,8 +329,8 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 						return;
 					}
 					if (offsets[j] > 0) {
-						addLineComment(addr.add(Conv.intToLong(offsets[j])),
-							Conv.shortToInt(lineNumbers[j]));
+						addLineComment(addr.add(Integer.toUnsignedLong(offsets[j])),
+							Short.toUnsignedInt(lineNumbers[j]));
 					}
 				}
 			}
@@ -339,9 +347,8 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 		if (dcst == null) {
 			return;
 		}
-		DebugCOFFSymbol[] symbols = dcst.getSymbols();
 		int errorCount = 0;
-		for (DebugCOFFSymbol symbol : symbols) {
+		for (DebugCOFFSymbol symbol : dcst.getSymbols()) {
 			if (monitor.isCancelled()) {
 				return;
 			}
@@ -367,7 +374,8 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 				}
 				else {
 					addLineComment(
-						program.getImageBase().add(Conv.intToLong(lineNumber.getVirtualAddress())),
+						program.getImageBase()
+								.add(Integer.toUnsignedLong(lineNumber.getVirtualAddress())),
 						lineNumber.getLineNumber());
 				}
 			}
@@ -375,8 +383,7 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 	}
 
 	protected boolean processDebugCoffSymbol(DebugCOFFSymbol symbol, NTHeader ntHeader,
-			Map<SectionHeader, Address> sectionToAddress, Program program,
-			TaskMonitor monitor) {
+			Map<SectionHeader, Address> sectionToAddress, Program program, TaskMonitor monitor) {
 
 		if (symbol.getSectionNumber() == 0) {
 			return true;
@@ -426,7 +433,7 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 			Symbol newSymbol =
 				program.getSymbolTable().createLabel(address, sym, SourceType.IMPORTED);
 
-			// Force non-section symbols to be primary.  We never want section symbols (.text, 
+			// Force non-section symbols to be primary.  We never want section symbols (.text,
 			// .text$func_name) to be primary because we don't want to use them for function names
 			// or demangling.
 			if (!sym.equals(section.getName()) && !sym.startsWith(section.getName() + "$")) {
@@ -448,7 +455,7 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 			if (aux == null) {
 				continue;
 			}
-			setComment(CodeUnit.PRE_COMMENT, address, aux.toString());
+			setComment(CommentType.PRE, address, aux.toString());
 		}
 
 		return true;
@@ -469,6 +476,10 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 		}
 
 		String actualData = dm.getActualData();
+		if (actualData == null) {
+			return;
+		}
+
 		int datatype = dm.getDataType();
 
 		DebugDirectory dd = dm.getDebugDirectory();
@@ -477,7 +488,7 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 			Address address = program.getImageBase().add(dd.getAddressOfRawData());
 			try {
 				program.getListing().createData(address, new StringDataType(), actualData.length());
-				program.getListing().setComment(address, CodeUnit.PLATE_COMMENT, "Debug Misc");
+				program.getListing().setComment(address, CommentType.PLATE, "Debug Misc");
 				address = address.add(actualData.length());
 				program.getListing().createData(address, new DWordDataType());
 			}
@@ -489,65 +500,63 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 		Options proplist = program.getOptions(Program.PROGRAM_INFO);
 
 		proplist.setString("Debug Misc", actualData);
-		proplist.setString("Debug Misc Datatype", "0x" + Conv.toHexString(datatype));
+		proplist.setString("Debug Misc Datatype",
+			"0x" + NumericUtilities.toPaddedHexString(datatype));
 	}
 
 	private void addLineComment(Address addr, int line) {
 		String cmt = addr + " -> " + "Line #" + line;
-		setComment(CodeUnit.PRE_COMMENT, addr, cmt);
+		setComment(CommentType.PRE, addr, cmt);
 	}
 
-	protected boolean hasComment(int type, Address address) {
-		switch (type) {
-			case CodeUnit.PLATE_COMMENT:
-				return plateCommentMap.get(address) != null;
-			case CodeUnit.PRE_COMMENT:
-				return preCommentMap.get(address) != null;
-			case CodeUnit.POST_COMMENT:
-				return postCommentMap.get(address) != null;
-			case CodeUnit.EOL_COMMENT:
-				return eolCommentMap.get(address) != null;
-		}
-		return false;
+	protected boolean hasComment(CommentType type, Address address) {
+		return switch (type) {
+			case PLATE -> plateCommentMap.get(address) != null;
+			case PRE -> preCommentMap.get(address) != null;
+			case POST -> postCommentMap.get(address) != null;
+			case EOL -> eolCommentMap.get(address) != null;
+			default -> throw new IllegalArgumentException(
+				"Unsupported comment type: " + type.name());
+		};
 	}
 
-	protected void setComment(int type, Address address, String comment) {
+	protected void setComment(CommentType type, Address address, String comment) {
 		StringBuffer buffer = null;
 		switch (type) {
-			case CodeUnit.PLATE_COMMENT:
+			case CommentType.PLATE:
 				buffer = plateCommentMap.get(address);
 				if (buffer == null) {
 					buffer = new StringBuffer();
 					plateCommentMap.put(address, buffer);
 				}
 				break;
-			case CodeUnit.PRE_COMMENT:
+			case CommentType.PRE:
 				buffer = preCommentMap.get(address);
 				if (buffer == null) {
 					buffer = new StringBuffer();
 					preCommentMap.put(address, buffer);
 				}
 				break;
-			case CodeUnit.POST_COMMENT:
+			case CommentType.POST:
 				buffer = postCommentMap.get(address);
 				if (buffer == null) {
 					buffer = new StringBuffer();
 					postCommentMap.put(address, buffer);
 				}
 				break;
-			case CodeUnit.EOL_COMMENT:
+			case CommentType.EOL:
 				buffer = eolCommentMap.get(address);
 				if (buffer == null) {
 					buffer = new StringBuffer();
 					eolCommentMap.put(address, buffer);
 				}
 				break;
+			default:
+				throw new IllegalArgumentException("Unsupported comment type: " + type.name());
 		}
-		if (buffer != null) {
-			if (buffer.length() > 0) {
-				buffer.append('\n');
-			}
-			buffer.append(comment);
+		if (buffer.length() > 0) {
+			buffer.append('\n');
 		}
+		buffer.append(comment);
 	}
 }

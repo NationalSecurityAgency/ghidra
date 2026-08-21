@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,12 @@
  */
 package pdb.symbolserver.ui;
 
+import static pdb.symbolserver.ui.SymbolServerRow.LocationStatus.*;
+
+import ghidra.util.task.TaskMonitor;
 import pdb.symbolserver.DisabledSymbolServer;
 import pdb.symbolserver.SymbolServer;
+import pdb.symbolserver.SymbolServer.MutableTrust;
 
 /**
  * Represents a row in the {@link SymbolServerTableModel}
@@ -59,12 +63,28 @@ class SymbolServerRow {
 		}
 	}
 
+	boolean isTrusted() {
+		return symbolServer.isTrusted();
+	}
+
+	void setTrusted(boolean isTrusted) {
+		if (symbolServer instanceof MutableTrust sswt) {
+			sswt.setTrusted(isTrusted);
+		}
+	}
+
 	LocationStatus getStatus() {
 		return status;
 	}
 
 	void setStatus(LocationStatus status) {
 		this.status = status;
+	}
+
+	void updateStatus(TaskMonitor monitor) {
+		if (!(symbolServer instanceof SymbolServer.StatusRequiresContext)) {
+			this.status = symbolServer.isValid(monitor) ? VALID : INVALID;
+		}
 	}
 
 	@Override

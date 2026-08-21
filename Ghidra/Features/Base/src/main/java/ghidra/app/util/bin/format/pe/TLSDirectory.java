@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,6 @@ import java.io.IOException;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.*;
-import ghidra.util.Conv;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -76,13 +75,13 @@ public class TLSDirectory implements StructConverter {
 			index += BinaryReader.SIZEOF_LONG;
 		}
 		else {
-			startAddressOfRawData = reader.readInt(index) & Conv.INT_MASK;
+			startAddressOfRawData = reader.readUnsignedInt(index);
 			index += BinaryReader.SIZEOF_INT;
-			endAddressOfRawData = reader.readInt(index) & Conv.INT_MASK;
+			endAddressOfRawData = reader.readUnsignedInt(index);
 			index += BinaryReader.SIZEOF_INT;
-			addressOfIndex = reader.readInt(index) & Conv.INT_MASK;
+			addressOfIndex = reader.readUnsignedInt(index);
 			index += BinaryReader.SIZEOF_INT;
-			addressOfCallBacks = reader.readInt(index) & Conv.INT_MASK;
+			addressOfCallBacks = reader.readUnsignedInt(index);
 			index += BinaryReader.SIZEOF_INT;
 		}
 		Msg.info(this, "TLS callbacks at " + Long.toHexString(addressOfCallBacks));
@@ -137,9 +136,7 @@ public class TLSDirectory implements StructConverter {
         return characteristics;
     }
 
-    /**
-     * @see ghidra.app.util.bin.StructConverter#toDataType()
-     */
+	@Override
     public DataType toDataType() throws DuplicateNameException {
         StructureDataType struct = new StructureDataType(getName(), 0);
 

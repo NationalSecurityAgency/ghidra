@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,13 +25,11 @@ import db.DBRecord;
 import ghidra.feature.fid.hash.FidHashQuad;
 import ghidra.framework.store.db.PackedDBHandle;
 import ghidra.framework.store.db.PackedDatabase;
-import ghidra.program.model.lang.CompilerSpecID;
 import ghidra.program.model.lang.LanguageID;
 import ghidra.util.Msg;
 import ghidra.util.ReadOnlyException;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 public class FidDB implements Closeable {
 	private static final String FID_CONTENT_TYPE = "Function ID Database";
@@ -183,7 +181,7 @@ public class FidDB implements Closeable {
 	}
 
 	/**
-	 * Indicates the the user of this FidDB no longer needs it open.  This will decrement the
+	 * Indicates that the user of this FidDB no longer needs it open.  This will decrement the
 	 * "open count" and if the "open count is 0, the database will be closed.
 	 */
 	@Override
@@ -464,18 +462,19 @@ public class FidDB implements Closeable {
 	 * @param languageID the language id
 	 * @param languageVersion the language version
 	 * @param languageMinorVersion the language minor version
-	 * @param compilerSpecID the compiler spec id
+	 * @param compilerSpecs the allowed compiler specs, as a comma separated list of names
+	 * @param sourceLanguages the allowed source languages, as a comma separated list of names
 	 * @return the newly created library record
 	 */
 	public LibraryRecord createNewLibrary(String libraryFamilyName, String libraryVersion,
 			String libraryVariant, String ghidraVersion, LanguageID languageID, int languageVersion,
-			int languageMinorVersion, CompilerSpecID compilerSpecID) {
+			int languageMinorVersion, String compilerSpecs, String sourceLanguages) {
 
 		try {
 			checkUpdateAllowed();
 			DBRecord record = librariesTable.createLibrary(libraryFamilyName, libraryVersion,
 				libraryVariant, ghidraVersion, languageID, languageVersion, languageMinorVersion,
-				compilerSpecID);
+				compilerSpecs, sourceLanguages);
 			return new LibraryRecord(record);
 		}
 		catch (ReadOnlyException e) {

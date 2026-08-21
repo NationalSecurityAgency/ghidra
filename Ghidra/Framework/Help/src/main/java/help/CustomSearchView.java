@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,6 @@
  */
 package help;
 
-import ghidra.util.Msg;
-
 import java.awt.*;
 import java.util.*;
 
@@ -24,6 +22,11 @@ import javax.help.*;
 import javax.help.plaf.HelpNavigatorUI;
 import javax.help.plaf.basic.BasicSearchNavigatorUI;
 import javax.help.search.SearchEvent;
+import javax.swing.*;
+import javax.swing.tree.DefaultTreeModel;
+
+import ghidra.util.Msg;
+import resources.Icons;
 
 public class CustomSearchView extends SearchView {
 
@@ -59,6 +62,63 @@ public class CustomSearchView extends SearchView {
 
 		public CustomSearchNavigatorUI(JHelpSearchNavigator navigator) {
 			super(navigator);
+		}
+
+		@Override
+		public void installUI(JComponent c) {
+
+			super.installUI(c);
+
+			/*
+			 	 Add a button that allows the user to clear the current search.  We need to remove
+			 	 the search text, clear the highlights and clear the files from the tree.
+			 */
+
+			Container tfParent = searchparams.getParent();
+			Icon icon = Icons.DELETE_ICON;
+			JButton deleteButton = new JButton(icon);
+			deleteButton.addActionListener(e -> {
+				clearSearchResults();
+			});
+			tfParent.add(deleteButton);
+
+			/*
+			// This code clears out the search when the window is closed.  We probably don't need 
+			// this now that the user has the ability to manually clear the results using the 
+			// button. As it is written now, the user's search will persist after being closed, 
+			// which may be useful.
+			deleteButton.addHierarchyListener(new HierarchyListener() {
+			
+				@Override
+				public void hierarchyChanged(HierarchyEvent e) {
+					int showingChanged = HierarchyEvent.SHOWING_CHANGED;
+					long flags = e.getChangeFlags();
+					if ((flags & showingChanged) == showingChanged) {
+			
+						Window w = WindowUtilities.windowForComponent(deleteButton);
+						if (w != null && !w.isVisible()) {
+							// Clear the current search so that it is not there when the window is
+							// re-opened, as seeing old search results may seem strange to the user.
+							clearSearchResults();
+						}
+					}
+				}
+			});
+			*/
+
+		}
+
+		private void clearSearchResults() {
+			searchparams.setText("");
+
+			JHelpNavigator navigator = getHelpNavigator();
+			HelpModel helpmodel = navigator.getModel();
+			((TextHelpModel) helpmodel).removeAllHighlights();
+
+			topNode.removeAllChildren();
+			((DefaultTreeModel) tree.getModel()).reload();
+			tree.invalidate();
+			tree.repaint();
 		}
 
 		@Override

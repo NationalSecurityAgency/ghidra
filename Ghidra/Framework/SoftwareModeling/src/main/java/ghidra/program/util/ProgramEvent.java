@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,9 +37,6 @@ public enum ProgramEvent implements EventType {
 	CODE_REMOVED,						// instructions or data cleared at an address
 	CODE_REPLACED,						// the instruction or data type at an address was changed
 
-	COMPOSITE_ADDED,					// a non-primitive data type was added
-	COMPOSITE_REMOVED,					// a non-primitive data type was removed
-
 	CODE_UNIT_PROPERTY_CHANGED,			// a property map value changed
 	CODE_UNIT_PROPERTY_ALL_REMOVED,		// a property map was removed
 	CODE_UNIT_PROPERTY_RANGE_REMOVED,	// a ranges of values was removed
@@ -56,9 +53,12 @@ public enum ProgramEvent implements EventType {
 	SYMBOL_DATA_CHANGED,				// some symbol property was changed 
 	SYMBOL_ADDRESS_CHANGED,				// the symbol's address changed (only applies to param and variables)
 
-	EXTERNAL_ENTRY_ADDED,				// an external entry point was added
-	EXTERNAL_ENTRY_REMOVED,				// an external entry point was removed
-	EXTERNAL_PATH_CHANGED,				// the external path name changed for an external program
+	EXTERNAL_ENTRY_ADDED,				// an external entry point was added (i.e., Export)
+	EXTERNAL_ENTRY_REMOVED,				// an external entry point was removed (i.e., Export)
+
+	//
+	// Events related to Library symbols and associated External Location
+	//
 	EXTERNAL_NAME_ADDED,				// an external program name was added
 	EXTERNAL_NAME_REMOVED,				// an external program name was removed
 	EXTERNAL_NAME_CHANGED,				// the name of an external program was changed
@@ -147,7 +147,11 @@ public enum ProgramEvent implements EventType {
 	CODE_UNIT_USER_DATA_CHANGED,		// user data has changed for some code unit
 	USER_DATA_CHANGED,					// general user data has changed at some address
 
-	RELOCATION_ADDED;					// a relocation entry was added
+	RELOCATION_ADDED,					// a relocation entry was added
+
+	SOURCE_FILE_ADDED,                  // a source file was added
+	SOURCE_FILE_REMOVED,                // a source file was removed
+	SOURCE_MAP_CHANGED;                 // source map information was changed
 
 	private final int id = DomainObjectEventIdGenerator.next();
 

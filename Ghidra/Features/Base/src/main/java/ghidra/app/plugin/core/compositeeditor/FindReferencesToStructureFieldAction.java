@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.compositeeditor;
 import docking.ActionContext;
 import docking.action.MenuData;
 import ghidra.app.plugin.core.navigation.FindAppliedDataTypesService;
+import ghidra.app.services.FieldMatcher;
 import ghidra.app.util.HelpTopics;
 import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.DataTypeComponent;
@@ -31,16 +32,14 @@ public class FindReferencesToStructureFieldAction extends CompositeEditorTableAc
 	private final static String ACTION_NAME = "Find Uses of";
 	private final static String DESCRIPTION = "Find uses of field in the selected row";
 
-	public FindReferencesToStructureFieldAction(CompositeEditorProvider provider) {
+	public FindReferencesToStructureFieldAction(CompositeEditorProvider<?, ?> provider) {
 		super(provider, ACTION_NAME, BASIC_ACTION_GROUP, new String[] { ACTION_NAME }, null, null);
 		setDescription(DESCRIPTION);
-		adjustEnablement();
 		setHelpLocation(new HelpLocation(HelpTopics.FIND_REFERENCES, "Data_Types"));
 	}
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-
 		FindAppliedDataTypesService service = tool.getService(FindAppliedDataTypesService.class);
 		if (service == null) {
 			Msg.showError(this, null, "Missing Plugin",
@@ -49,42 +48,52 @@ public class FindReferencesToStructureFieldAction extends CompositeEditorTableAc
 			return;
 		}
 
-		String fieldName = getFieldName();
+		FieldMatcher fieldMatcher = getFieldMatcher();
 		Composite composite = model.getOriginalComposite();
-		Swing.runLater(() -> service.findAndDisplayAppliedDataTypeAddresses(composite, fieldName));
+		Swing.runLater(
+			() -> service.findAndDisplayAppliedDataTypeAddresses(composite, fieldMatcher));
 	}
 
-	private String getFieldName() {
+	private FieldMatcher getFieldMatcher() {
 		int[] rows = model.getSelectedComponentRows();
 		if (rows.length == 0) {
 			return null;
 		}
 
 		int row = rows[0];
-		DataTypeComponent dtComponet = model.getComponent(row);
-		String fieldName = dtComponet.getFieldName();
-		return fieldName;
+		DataTypeComponent dtComponent = model.getComponent(row);
+		String fieldName = dtComponent.getFieldName();
+		Composite composite = model.getOriginalComposite();
+		if (fieldName != null) {
+			return new FieldMatcher(composite, fieldName);
+		}
+
+		int offset = dtComponent.getOffset();
+		return new FieldMatcher(composite, offset);
 	}
 
 	@Override
-	public void adjustEnablement() {
-		setEnabled(false);
+	public boolean isEnabledForContext(ActionContext context) {
+
+		if (hasIncompleteFieldEntry()) {
+			return false;
+		}
 		if (model.getSelectedComponentRows().length != 1) {
-			return;
+			return false;
 		}
 
 		Composite composite = model.getOriginalComposite();
 		if (composite == null) {
-			return; // not sure if this can happen
+			return false; // not sure if this can happen
 		}
 
-		String fieldName = getFieldName();
-		if (fieldName == null) {
-			return;
+		FieldMatcher fieldMatcher = getFieldMatcher();
+		if (fieldMatcher == null) {
+			return false;
 		}
 
-		setEnabled(true);
-		updateMenuName(fieldName);
+		updateMenuName(fieldMatcher.getFieldName());
+		return true;
 	}
 
 	private void updateMenuName(String name) {

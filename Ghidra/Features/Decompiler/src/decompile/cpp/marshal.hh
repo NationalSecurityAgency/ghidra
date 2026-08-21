@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -536,7 +536,7 @@ private:
   uint1 getByte(Position &pos) { return *pos.current; }	///< Get the byte at the current position, do not advance
   uint1 getBytePlus1(Position &pos);	///< Get the byte following the current byte, do not advance position
   uint1 getNextByte(Position &pos);	///< Get the byte at the current position and advance to the next byte
-  void advancePosition(Position &pos,int4 skip);	///< Advance the position by the given number of bytes
+  void advancePosition(Position &pos,uint4 skip);	///< Advance the position by the given number of bytes
   uint8 readInteger(int4 len);		///< Read an integer from the \e current position given its length in bytes
   uint4 readLengthCode(uint1 typeByte) { return ((uint4)typeByte & PackedFormat::LENGTHCODE_MASK); }	///< Extract length code from type byte
   void findMatchingAttribute(const AttributeId &attribId);	///< Find attribute matching the given id in open element
@@ -631,7 +631,7 @@ inline uint1 PackedDecode::getNextByte(Position &pos)
 /// An exception is thrown of position is advanced past the end of the stream
 /// \param pos is the position being advanced
 /// \param skip is the number of bytes to advance
-inline void PackedDecode::advancePosition(Position &pos,int4 skip)
+inline void PackedDecode::advancePosition(Position &pos,uint4 skip)
 
 {
   while(pos.end - pos.current <= skip) {
@@ -736,6 +736,7 @@ extern AttributeId ATTRIB_VAL;		///< Marshaling attribute "val"
 extern AttributeId ATTRIB_VALUE;	///< Marshaling attribute "value"
 extern AttributeId ATTRIB_WORDSIZE;	///< Marshaling attribute "wordsize"
 extern AttributeId ATTRIB_STORAGE;	///< Marshaling attribute "storage"
+extern AttributeId ATTRIB_STACKSPILL;	///< Marshaling attribute "stackspill"
 
 extern ElementId ELEM_DATA;		///< Marshaling element \<data>
 extern ElementId ELEM_INPUT;		///< Marshaling element \<input>

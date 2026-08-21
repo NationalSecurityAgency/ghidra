@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -104,8 +104,12 @@ public class TableChooserDialog extends DialogComponentProvider
 		JPanel panel = new JPanel(new BorderLayout());
 		createTableModel();
 		TableChooserDialogPanel tablePanel = new TableChooserDialogPanel(model);
+		tablePanel.getAccessibleContext().setAccessibleName("Table Dialog");
 
 		table = tablePanel.getTable();
+		table.setAccessibleNamePrefix("Chooser");
+		table.setToolTipText("Table of choices for " + getTitle());
+
 		GoToService goToService = tool.getService(GoToService.class);
 		if (goToService != null) {
 			navigatable = navigatable == null ? goToService.getDefaultNavigatable() : navigatable;
@@ -117,8 +121,10 @@ public class TableChooserDialog extends DialogComponentProvider
 
 		GhidraTableFilterPanel<AddressableRowObject> filterPanel =
 			new GhidraTableFilterPanel<>(table, model);
+		filterPanel.getAccessibleContext().setAccessibleName("Dialog");
 		panel.add(tablePanel, BorderLayout.CENTER);
 		panel.add(filterPanel, BorderLayout.SOUTH);
+		panel.getAccessibleContext().setAccessibleName("Table Chooser");
 		return panel;
 	}
 
@@ -351,6 +357,10 @@ public class TableChooserDialog extends DialogComponentProvider
 
 	public void setMessage(String message) {
 		setStatusText(message);
+	}
+
+	public GhidraTable getTable() {
+		return table;
 	}
 
 	public int getRowCount() {

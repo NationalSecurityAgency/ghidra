@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,7 +50,27 @@ public class TestDoubleDataTypeManagerService implements DataTypeManagerService 
 	}
 
 	@Override
-	public DataType getDataType(String filterText) {
+	public List<CategoryPath> getSortedCategoryPathList() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public DataType promptForDataType(String filterText) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public List<DataType> getDataTypesByPath(DataTypePath path) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public DataType getProgramDataTypeByPath(DataTypePath path) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public List<DataType> findDataTypes(String name, TaskMonitor monitor) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -100,6 +120,11 @@ public class TestDoubleDataTypeManagerService implements DataTypeManagerService 
 	}
 
 	@Override
+	public void edit(Composite composite, String fieldName) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public void closeArchive(DataTypeManager dtm) {
 		throw new UnsupportedOperationException();
 	}
@@ -127,12 +152,27 @@ public class TestDoubleDataTypeManagerService implements DataTypeManagerService 
 	}
 
 	@Override
+	public void setCategorySelected(Category category) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public List<DataType> getSelectedDatatypes() {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
+	public DataType getDataType(String filterText) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public DataType getDataType(TreePath selectedPath) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public CategoryPath getCategoryPath(TreePath selectedPath) {
 		throw new UnsupportedOperationException();
 	}
 

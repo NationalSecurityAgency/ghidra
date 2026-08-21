@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -191,7 +191,7 @@ public class LoadCommandFactory {
 			for (int i = 0; i < splitDyldCache.size(); i++) {
 				DyldCacheHeader dyldCacheHeader = splitDyldCache.getDyldCacheHeader(i);
 				for (DyldCacheMappingInfo mappingInfo : dyldCacheHeader.getMappingInfos()) {
-					if (mappingInfo.contains(linkEdit.getVMaddress())) {
+					if (mappingInfo.contains(linkEdit.getVMaddress(), true)) {
 						return new BinaryReader(splitDyldCache.getProvider(i), true);
 					}
 				}

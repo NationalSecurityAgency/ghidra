@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,8 +34,10 @@ import docking.dnd.GClipboard;
 import docking.dnd.StringTransferable;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
+import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Messages;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.util.ColorUtils;
 import ghidra.util.WebColors;
 import ghidra.util.layout.HorizontalLayout;
@@ -351,10 +353,18 @@ public class SettableColorSwatchChooserPanel extends AbstractColorChooserPanel {
 
 		String text = colorNameField.getText();
 		String colorText = text.replaceAll("\s", "");
+
 		Color color = WebColors.getColor(colorText);
 
 		if (color == null) {
 			color = WebColors.getColor('#' + colorText);
+		}
+
+		if (color == null) {
+			GColor gColor = Palette.getColor(colorText);
+			if (!gColor.isUnresolved()) {
+				color = gColor;
+			}
 		}
 
 		if (color != null) {

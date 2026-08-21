@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -75,8 +75,8 @@ public class LocationReferencesPlugin2Test extends AbstractLocationReferencesTes
 		Address address = addr(0x01004350);
 		goTo(address, "Mnemonic", 1);
 
-		assertTrue(!showReferencesAction.isEnabledForContext(
-			getCodeViewerProvider().getActionContext(null)));
+		ActionContext context = createActionContext(getCodeViewerProvider());
+		assertTrue(!showReferencesAction.isEnabledForContext(context));
 
 		LocationReferencesProvider provider = getResultsProvider();
 		assertNull("Found a provider for showing references to an undefined mnemonic field.",
@@ -128,8 +128,8 @@ public class LocationReferencesPlugin2Test extends AbstractLocationReferencesTes
 
 		// test that the current provider contains the correct location descriptor for a
 		// given location
-		assertTrue(!showReferencesAction.isEnabledForContext(
-			getCodeViewerProvider().getActionContext(null)));
+		ActionContext context = createActionContext(getCodeViewerProvider());
+		assertTrue(!showReferencesAction.isEnabledForContext(context));
 
 		assertNoResults("Found a provider for showing references to an undefined mnemonic field.");
 	}
@@ -214,7 +214,7 @@ public class LocationReferencesPlugin2Test extends AbstractLocationReferencesTes
 		int parameterColumn = 5;
 		goTo(address, "Variable XRef Header", parameterColumn);
 
-		ActionContext context = getCodeViewerProvider().getActionContext(null);
+		ActionContext context = createActionContext(getCodeViewerProvider());
 		assertFalse(showReferencesAction.isEnabledForContext(context));
 	}
 

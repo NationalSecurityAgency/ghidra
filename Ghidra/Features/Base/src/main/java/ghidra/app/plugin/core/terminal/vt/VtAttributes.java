@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.terminal.vt;
 
 import java.awt.Color;
 
+import ghidra.app.plugin.core.terminal.vt.AnsiColorResolver.ReverseVideo;
 import ghidra.app.plugin.core.terminal.vt.AnsiColorResolver.WhichGround;
 import ghidra.app.plugin.core.terminal.vt.VtHandler.*;
 
@@ -30,7 +31,7 @@ import ghidra.app.plugin.core.terminal.vt.VtHandler.*;
  * in the buffer.
  */
 public record VtAttributes(AnsiColor fg, AnsiColor bg, Intensity intensity,
-		AnsiFont font, Underline underline, Blink blink, boolean reverseVideo, boolean hidden,
+		AnsiFont font, Underline underline, Blink blink, ReverseVideo reverse, boolean hidden,
 		boolean strikeThrough, boolean proportionalSpacing) {
 
 	/**
@@ -38,8 +39,8 @@ public record VtAttributes(AnsiColor fg, AnsiColor bg, Intensity intensity,
 	 */
 	public static final VtAttributes DEFAULTS =
 		new VtAttributes(AnsiDefaultColor.INSTANCE, AnsiDefaultColor.INSTANCE,
-			Intensity.NORMAL, AnsiFont.NORMAL, Underline.NONE, Blink.NONE, false, false, false,
-			false);
+			Intensity.NORMAL, AnsiFont.NORMAL, Underline.NONE, Blink.NONE, ReverseVideo.NORMAL,
+			false, false, false);
 
 	/**
 	 * Create a copy of this record with the foreground color replaced
@@ -48,8 +49,8 @@ public record VtAttributes(AnsiColor fg, AnsiColor bg, Intensity intensity,
 	 * @return the new record
 	 */
 	public VtAttributes fg(AnsiColor fg) {
-		return new VtAttributes(fg, bg, intensity, font, underline, blink, reverseVideo,
-			hidden, strikeThrough, proportionalSpacing);
+		return new VtAttributes(fg, bg, intensity, font, underline, blink, reverse, hidden,
+			strikeThrough, proportionalSpacing);
 	}
 
 	/**
@@ -59,8 +60,8 @@ public record VtAttributes(AnsiColor fg, AnsiColor bg, Intensity intensity,
 	 * @return the new record
 	 */
 	public VtAttributes bg(AnsiColor bg) {
-		return new VtAttributes(fg, bg, intensity, font, underline, blink, reverseVideo,
-			hidden, strikeThrough, proportionalSpacing);
+		return new VtAttributes(fg, bg, intensity, font, underline, blink, reverse, hidden,
+			strikeThrough, proportionalSpacing);
 	}
 
 	/**
@@ -70,8 +71,8 @@ public record VtAttributes(AnsiColor fg, AnsiColor bg, Intensity intensity,
 	 * @return the new record
 	 */
 	public VtAttributes intensity(Intensity intensity) {
-		return new VtAttributes(fg, bg, intensity, font, underline, blink, reverseVideo,
-			hidden, strikeThrough, proportionalSpacing);
+		return new VtAttributes(fg, bg, intensity, font, underline, blink, reverse, hidden,
+			strikeThrough, proportionalSpacing);
 	}
 
 	/**
@@ -81,8 +82,8 @@ public record VtAttributes(AnsiColor fg, AnsiColor bg, Intensity intensity,
 	 * @return the new record
 	 */
 	public VtAttributes font(AnsiFont font) {
-		return new VtAttributes(fg, bg, intensity, font, underline, blink, reverseVideo,
-			hidden, strikeThrough, proportionalSpacing);
+		return new VtAttributes(fg, bg, intensity, font, underline, blink, reverse, hidden,
+			strikeThrough, proportionalSpacing);
 	}
 
 	/**
@@ -92,8 +93,8 @@ public record VtAttributes(AnsiColor fg, AnsiColor bg, Intensity intensity,
 	 * @return the new record
 	 */
 	public VtAttributes underline(Underline underline) {
-		return new VtAttributes(fg, bg, intensity, font, underline, blink, reverseVideo,
-			hidden, strikeThrough, proportionalSpacing);
+		return new VtAttributes(fg, bg, intensity, font, underline, blink, reverse, hidden,
+			strikeThrough, proportionalSpacing);
 	}
 
 	/**
@@ -103,19 +104,19 @@ public record VtAttributes(AnsiColor fg, AnsiColor bg, Intensity intensity,
 	 * @return the new record
 	 */
 	public VtAttributes blink(Blink blink) {
-		return new VtAttributes(fg, bg, intensity, font, underline, blink, reverseVideo,
-			hidden, strikeThrough, proportionalSpacing);
+		return new VtAttributes(fg, bg, intensity, font, underline, blink, reverse, hidden,
+			strikeThrough, proportionalSpacing);
 	}
 
 	/**
 	 * Create a copy of this record with the reverse-video replaced
 	 * 
-	 * @param reverseVideo the new reverse-video
+	 * @param reverse the new reverse-video
 	 * @return the new record
 	 */
-	public VtAttributes reverseVideo(boolean reverseVideo) {
-		return new VtAttributes(fg, bg, intensity, font, underline, blink, reverseVideo,
-			hidden, strikeThrough, proportionalSpacing);
+	public VtAttributes reverseVideo(ReverseVideo reverse) {
+		return new VtAttributes(fg, bg, intensity, font, underline, blink, reverse, hidden,
+			strikeThrough, proportionalSpacing);
 	}
 
 	/**
@@ -125,8 +126,8 @@ public record VtAttributes(AnsiColor fg, AnsiColor bg, Intensity intensity,
 	 * @return the new record
 	 */
 	public VtAttributes hidden(boolean hidden) {
-		return new VtAttributes(fg, bg, intensity, font, underline, blink, reverseVideo,
-			hidden, strikeThrough, proportionalSpacing);
+		return new VtAttributes(fg, bg, intensity, font, underline, blink, reverse, hidden,
+			strikeThrough, proportionalSpacing);
 	}
 
 	/**
@@ -136,8 +137,8 @@ public record VtAttributes(AnsiColor fg, AnsiColor bg, Intensity intensity,
 	 * @return the new record
 	 */
 	public VtAttributes strikeThrough(boolean strikeThrough) {
-		return new VtAttributes(fg, bg, intensity, font, underline, blink, reverseVideo,
-			hidden, strikeThrough, proportionalSpacing);
+		return new VtAttributes(fg, bg, intensity, font, underline, blink, reverse, hidden,
+			strikeThrough, proportionalSpacing);
 	}
 
 	/**
@@ -147,8 +148,8 @@ public record VtAttributes(AnsiColor fg, AnsiColor bg, Intensity intensity,
 	 * @return the new record
 	 */
 	public VtAttributes proportionalSpacing(boolean proportionalSpacing) {
-		return new VtAttributes(fg, bg, intensity, font, underline, blink, reverseVideo,
-			hidden, strikeThrough, proportionalSpacing);
+		return new VtAttributes(fg, bg, intensity, font, underline, blink, reverse, hidden,
+			strikeThrough, proportionalSpacing);
 	}
 
 	/**
@@ -158,8 +159,7 @@ public record VtAttributes(AnsiColor fg, AnsiColor bg, Intensity intensity,
 	 * @return the color
 	 */
 	public Color resolveForeground(AnsiColorResolver colors) {
-		return colors.resolveColor(reverseVideo ? bg : fg, WhichGround.FOREGROUND, intensity,
-			reverseVideo);
+		return colors.resolveColor(reverse.fg(fg, bg), WhichGround.FOREGROUND, intensity, reverse);
 	}
 
 	/**
@@ -169,7 +169,7 @@ public record VtAttributes(AnsiColor fg, AnsiColor bg, Intensity intensity,
 	 * @return the color, or null to not paint the background
 	 */
 	public Color resolveBackground(AnsiColorResolver colors) {
-		return colors.resolveColor(reverseVideo ? fg : bg, WhichGround.BACKGROUND, Intensity.NORMAL,
-			reverseVideo);
+		return colors.resolveColor(reverse.bg(fg, bg), WhichGround.BACKGROUND, Intensity.NORMAL,
+			reverse);
 	}
 }

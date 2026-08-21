@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,6 +83,9 @@ import util.CollectionUtils;
  * @see GraphViewer
  */
 public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G extends VisualGraph<V, E>> {
+	public enum SatellitePosition {
+		UPPER_LEFT, UPPER_RIGHT, LOWER_LEFT, LOWER_RIGHT
+	}
 
 	private static final double PARENT_TO_SATELLITE_RATIO = 4;// 2.5 smaller view seems better
 	private static final int MINIMUM_SATELLITE_WIDTH = 150;
@@ -130,6 +133,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 	private Dimension lastSize;
 
 	protected VisualGraphOptions vgOptions = new VisualGraphOptions();
+	private SatellitePosition dockedSatellitePosition = SatellitePosition.UPPER_RIGHT;
 
 	public GraphComponent(G graph) {
 
@@ -289,7 +293,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 
 		// the layout defines the shape of the edge (this gives the layout flexibility in how
 		// to render its shape)
-		Function<E, Shape> edgeTransformer = layout.getEdgeShapeTransformer();
+		Function<E, Shape> edgeTransformer = layout.getEdgeShapeTransformer(renderContext);
 		renderContext.setEdgeShapeTransformer(edgeTransformer);
 
 		renderContext.setArrowPlacementTolerance(5.0f);
@@ -357,7 +361,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 		visualEdgeRenderer.setHoveredColorTransformer(
 			e -> new GColor("color.visualgraph.view.satellite.edge.hovered"));
 
-		Function<E, Shape> edgeTransformer = layout.getEdgeShapeTransformer();
+		Function<E, Shape> edgeTransformer = layout.getEdgeShapeTransformer(renderContext);
 		renderContext.setEdgeShapeTransformer(edgeTransformer);
 
 		renderContext.setVertexShapeTransformer(new VisualGraphVertexShapeTransformer<>());
@@ -467,14 +471,9 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 		button.setOpaque(false);
 		button.setToolTipText(tooltip);
 
-		/*
-		 
-		 TODO fix when the Generic Visual Graph help module is created
-		 
 		HelpService helpService = DockingWindowManager.getHelpService();
 		helpService.registerHelp(button,
-			new HelpLocation("GraphTopic", "Satellite_View_Dock"));
-		*/
+			new HelpLocation("VisualGraph", "Satellite_View_Dock"));
 
 		return button;
 	}
@@ -627,7 +626,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 		return satelliteViewer;
 	}
 
-	protected VisualGraphViewUpdater<V, E> getViewUpdater() {
+	public VisualGraphViewUpdater<V, E> getViewUpdater() {
 		return primaryViewer.getViewUpdater();
 	}
 
@@ -782,6 +781,15 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 		updateSatellite(docked, true);
 	}
 
+	public SatellitePosition getSatellitePosition() {
+		return dockedSatellitePosition;
+	}
+
+	public void setSatellitePosition(SatellitePosition position) {
+		dockedSatellitePosition = position;
+		updateSatellite(satelliteViewer.isDocked(), isSatelliteShowing());
+	}
+
 	public void setSatelliteVisible(boolean visible) {
 
 		if (isSatelliteShowing() == visible) {
@@ -823,9 +831,8 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 		staleGraphViewPanel.setBounds(x, y, stalePanelSize.width, stalePanelSize.height);
 
 		Dimension buttonSize = showUndockedSatelliteButton.getPreferredSize();
-		x = parentSize.width - buttonSize.width;
-		y = parentSize.height - buttonSize.height;
-		showUndockedSatelliteButton.setBounds(x, y, buttonSize.width, buttonSize.height);
+		Point p = getSatellitePosition(parentSize, buttonSize);
+		showUndockedSatelliteButton.setBounds(p.x, p.y, buttonSize.width, buttonSize.height);
 
 		lastSize = new Dimension(parentSize.width, parentSize.height);
 	}
@@ -843,13 +850,28 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 			int newWidth = getNewBoundsSize(parentSize, satelliteSize);
 			satelliteSize.width = newWidth;
 			satelliteSize.height = newWidth;
-			int x = parentSize.width - satelliteSize.width;
-			int y = parentSize.height - satelliteSize.height;
-			satelliteViewer.setBounds(x, y, satelliteSize.width, satelliteSize.height);
+			Point p = getSatellitePosition(parentSize, satelliteSize);
+			satelliteViewer.setBounds(p.x, p.y, satelliteSize.width, satelliteSize.height);
 		}
 
 		VisualGraphViewUpdater<V, E> viewUpdater = getViewUpdater();
 		viewUpdater.fitGraphToViewerNow(satelliteViewer);
+	}
+
+	private Point getSatellitePosition(Dimension parentSize, Dimension satelliteSize) {
+		int x = parentSize.width - satelliteSize.width;
+		int y = parentSize.height - satelliteSize.height;
+		switch (dockedSatellitePosition) {
+			case LOWER_LEFT:
+				return new Point(0, y);
+			case UPPER_LEFT:
+				return new Point(0, 0);
+			case UPPER_RIGHT:
+				return new Point(x, 0);
+			case LOWER_RIGHT:
+			default:
+				return new Point(x, y);
+		}
 	}
 
 	private int getNewBoundsSize(Dimension parentBounds, Dimension satelliteBounds) {
@@ -984,7 +1006,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 
 			v.setLocation(newLocation);
 
-			if (changeType == ChangeType.RESTORE) {
+			if (changeType.isTransitional()) {
 				// ignore these events, as they are a bulk operation and will be handled later
 				return;
 			}
@@ -1156,6 +1178,12 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 		@Override
 		public void verticesRemoved(Iterable<V> vertices) {
 			getPathHighlighter().clearEdgeCache();
+
+			// clear any deleted nodes from the pick state
+			PickedState<V> pickedState = primaryViewer.getPickedVertexState();
+			for (V v : vertices) {
+				pickedState.pick(v, false);
+			}
 		}
 
 		@Override
@@ -1259,4 +1287,5 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 			// stub
 		}
 	}
+
 }

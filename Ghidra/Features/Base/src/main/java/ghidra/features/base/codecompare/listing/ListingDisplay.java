@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.features.base.codecompare.listing;
 import static ghidra.GhidraOptions.*;
 
 import java.awt.Color;
+import java.util.List;
 
 import javax.swing.Icon;
 
@@ -85,7 +86,7 @@ public class ListingDisplay implements ListingDiffChangeListener {
 		listingPanel.addHoverService(new ReferenceListingHover(tool, () -> formatManager));
 		listingPanel.addHoverService(new DataTypeListingHover(tool));
 		listingPanel.addHoverService(new TruncatedTextListingHover(tool));
-		listingPanel.addHoverService(new FunctionNameListingHover(tool));
+		listingPanel.addHoverService(new LabelListingHover(tool));
 
 		listingDiff.addListingDiffChangeListener(this);
 		setHoverMode(true);
@@ -94,9 +95,12 @@ public class ListingDisplay implements ListingDiffChangeListener {
 	private void createMarkerManager(String owner) {
 		markerManager = new ListingDisplayMarkerManager(tool, owner);
 		markerManager.addChangeListener(e -> listingPanel.repaint());
-		MarginProvider marginProvider = markerManager.getMarginProvider();
+
+		// Manually install our custom margin provider.  We are not calling setMarginService(), 
+		// which means that many of the listing markers will not work in the compare view.
+		ListingMarginProvider marginProvider = markerManager.createMarginProvider();
 		listingPanel.addMarginProvider(marginProvider);
-		OverviewProvider overviewProvider = markerManager.getOverviewProvider();
+		ListingOverviewProvider overviewProvider = markerManager.createOverviewProvider();
 		listingPanel.addOverviewProvider(overviewProvider);
 	}
 
@@ -171,17 +175,19 @@ public class ListingDisplay implements ListingDiffChangeListener {
 		markerManager.clearAll();
 		listingPanel.setView(view);
 		AddressIndexMap indexMap = listingPanel.getAddressIndexMap();
-		markerManager.getOverviewProvider().setProgram(program, indexMap);
+
+		List<ListingOverviewProvider> providers = listingPanel.getOverviewProviders();
+		for (ListingOverviewProvider provider : providers) {
+			provider.screenDataChanged(program, indexMap);
+		}
+
 		listingPanel.setBackgroundColorModel(
 			new MarkerServiceBackgroundColorModel(markerManager, program, indexMap));
 		setUpAreaMarkerSets(program, name);
-		if (!view.isEmpty()) {
-			goTo(new ProgramLocation(program, view.getMinAddress()));
-		}
 		repaint();
 	}
 
-	void setUpAreaMarkerSets(Program program, String name) {
+	private void setUpAreaMarkerSets(Program program, String name) {
 		if (program == null) {
 			return;
 		}
@@ -189,8 +195,9 @@ public class ListingDisplay implements ListingDiffChangeListener {
 		Color unmatchedColor = comparisonOptions.getUnmatchedCodeUnitsBackgroundColor();
 
 		AddressIndexMap indexMap = listingPanel.getAddressIndexMap();
-		listingPanel.getFieldPanel().setBackgroundColorModel(new MarkerServiceBackgroundColorModel(
-			markerManager, program, indexMap));
+		listingPanel.getFieldPanel()
+				.setBackgroundColorModel(new MarkerServiceBackgroundColorModel(
+					markerManager, program, indexMap));
 
 		unmatchedMarkers = markerManager.createAreaMarker(name + " Unmatched Code",
 			"Instructions that are not matched to an instruction in the other function.",
@@ -307,8 +314,9 @@ public class ListingDisplay implements ListingDiffChangeListener {
 	}
 
 	public void setViewerPosition(ViewerPosition position) {
-		listingPanel.getFieldPanel().setViewerPosition(position.getIndex(), position.getXOffset(),
-			position.getYOffset());
+		listingPanel.getFieldPanel()
+				.setViewerPosition(position.getIndex(), position.getXOffset(),
+					position.getYOffset());
 	}
 
 	public void setMouseNavigationEnabled(boolean enabled) {

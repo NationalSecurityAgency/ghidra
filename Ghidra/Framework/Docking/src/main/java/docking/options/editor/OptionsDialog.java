@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,10 +17,12 @@ package docking.options.editor;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.List;
 
 import javax.swing.tree.TreePath;
 
 import docking.ReusableDialogComponentProvider;
+import docking.action.DockingAction;
 import docking.widgets.OptionDialog;
 import ghidra.framework.options.Options;
 
@@ -28,6 +30,10 @@ import ghidra.framework.options.Options;
  * Dialog for editing options within a tool.
  */
 public class OptionsDialog extends ReusableDialogComponentProvider {
+
+	public static final String OPTIONS_OWNER = "Tool Options";
+	public static final String TOGGLE_EDITOR_ACTION_NAME = "Toggle Editor";
+
 	private OptionsPanel panel;
 	private boolean hasChanges;
 
@@ -48,13 +54,13 @@ public class OptionsDialog extends ReusableDialogComponentProvider {
 
 	public OptionsDialog(String title, String rootNodeName, Options[] options,
 			OptionsEditorListener listener, boolean showRestoreDefaultsButton) {
-		super("OptionsDialog.Foofoo", true, false, true, false);
+		super("Options Dialog", true, false, true, false);
 		this.listener = listener;
 		panel = new OptionsPanel(rootNodeName, options, showRestoreDefaultsButton,
 			new OptionsPropertyChangeListener());
 
 		setTitle(title);
-
+		panel.getAccessibleContext().setAccessibleName("Options");
 		addWorkPanel(panel);
 		addOKButton();
 		addCancelButton();
@@ -63,6 +69,11 @@ public class OptionsDialog extends ReusableDialogComponentProvider {
 		setMinimumSize(1000, 600);
 
 		setFocusComponent(panel.getFocusComponent());
+
+		List<DockingAction> actions = panel.getActions();
+		for (DockingAction action : actions) {
+			addAction(action);
+		}
 	}
 
 	@Override
@@ -90,12 +101,15 @@ public class OptionsDialog extends ReusableDialogComponentProvider {
 		panel.cancel();
 
 		if (hasChanges) {
-			int result = OptionDialog.showYesNoCancelDialog(panel, "Save Changes?",
-				"These options have changed.  Do you want to save them?");
+
+			int result = OptionDialog.showOptionDialog(panel, "Save Options Changes?",
+				"These options have changed.  Do you want to save them?",
+				"Save", "Don't Save", OptionDialog.QUESTION_MESSAGE);
 			if (result == OptionDialog.CANCEL_OPTION) {
 				return;
 			}
-			if (result == OptionDialog.YES_OPTION) {
+
+			if (result == OptionDialog.OPTION_ONE) { // Save
 				if (!applyChanges()) {
 					return;
 				}

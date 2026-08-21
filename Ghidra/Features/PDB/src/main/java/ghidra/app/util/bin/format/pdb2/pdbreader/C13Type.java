@@ -39,19 +39,19 @@ import ghidra.util.Msg;
 enum C13Type {
 	UNKNOWN(0x80000000, UnknownC13Section.class), // We created; fix/eliminate if causes problems
 	ALL(0x00000000, C13Section.class), // We created; fix if causes problems
-	SYMBOLS(0xf1, C13Symbols.class),
-	LINES(0xf2, C13Lines.class),
-	STRING_TABLE(0xf3, C13StringTable.class),
-	FILE_CHECKSUMS(0xf4, C13FileChecksums.class),
-	FRAMEDATA(0xf5, C13FrameData.class),
-	INLINEE_LINES(0xf6, C13InlineeLines.class),
-	CROSS_SCOPE_IMPORTS(0xf7, C13CrossScopeImports.class),
-	CROSS_SCOPE_EXPORTS(0xf8, C13CrossScopeExports.class),
-	IL_LINES(0xf9, C13IlLines.class),
-	FUNC_MDTOKEN_MAP(0xfa, C13FuncMdTokenMap.class),
-	TYPE_MDTOKEN_MAP(0xfb, C13TypeMdTokenMap.class),
-	MERGED_ASSEMBLY_INPUT(0xfc, C13MergedAssemblyInput.class),
-	COFF_SYMBOL_RVA(0xfd, C13CoffSymbolRva.class);
+	SYMBOLS(0xf1, SymbolsC13Section.class),
+	LINES(0xf2, LinesC13Section.class),
+	STRING_TABLE(0xf3, StringTableC13Section.class),
+	FILE_CHECKSUMS(0xf4, FileChecksumsC13Section.class),
+	FRAMEDATA(0xf5, FrameDataC13Section.class),
+	INLINEE_LINES(0xf6, InlineeLinesC13Section.class),
+	CROSS_SCOPE_IMPORTS(0xf7, CrossScopeImportsC13Section.class),
+	CROSS_SCOPE_EXPORTS(0xf8, CrossScopeExportsC13Section.class),
+	IL_LINES(0xf9, IlLinesC13Section.class),
+	FUNC_MDTOKEN_MAP(0xfa, FuncMdTokenMapC13Section.class),
+	TYPE_MDTOKEN_MAP(0xfb, TypeMdTokenMapC13Section.class),
+	MERGED_ASSEMBLY_INPUT(0xfc, MergedAssemblyInputC13Section.class),
+	COFF_SYMBOL_RVA(0xfd, CoffSymbolRvaC13Section.class);
 
 	private static final int IGNORE_BIT = 0x80000000;
 	private static final int IGNORE_BIT_MASK = ~IGNORE_BIT;
@@ -96,11 +96,11 @@ enum C13Type {
 		return t;
 	}
 
-	public static boolean ignore(int val) {
+	static boolean ignore(int val) {
 		return ((val & IGNORE_BIT) != 0);
 	}
 
-	public static int maskIgnore(int val) {
+	static int maskIgnore(int val) {
 		return val & IGNORE_BIT_MASK;
 	}
 

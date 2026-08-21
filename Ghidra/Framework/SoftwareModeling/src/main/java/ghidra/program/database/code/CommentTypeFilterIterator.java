@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,17 +15,16 @@
  */
 package ghidra.program.database.code;
 
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.CodeUnitIterator;
-
 import java.util.Iterator;
+
+import ghidra.program.model.listing.*;
 
 /**
  * Filters the given codeUnit iterator to only return codeUnits that have a comment of the given type
  */
 public class CommentTypeFilterIterator implements CodeUnitIterator {
 	private CodeUnitIterator it;
-	private int commentType;
+	private CommentType commentType;
 	private CodeUnit nextCu;
 
 	/**
@@ -34,7 +32,7 @@ public class CommentTypeFilterIterator implements CodeUnitIterator {
 	 * @param it a codeunit iterator whose items are tested for the comment type.
 	 * @param commentType the type of comment to search for.
 	 */
-	public CommentTypeFilterIterator(CodeUnitIterator it, int commentType) {
+	public CommentTypeFilterIterator(CodeUnitIterator it, CommentType commentType) {
 		this.it = it;
 		this.commentType = commentType;
 	}

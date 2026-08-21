@@ -17,10 +17,11 @@ package ghidra.file.formats.omf;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.format.omf.OmfFileHeader;
-import ghidra.app.util.bin.format.omf.OmfLibraryRecord;
+import ghidra.app.util.bin.format.omf.AbstractOmfRecordFactory;
+import ghidra.app.util.bin.format.omf.OmfException;
+import ghidra.app.util.bin.format.omf.omf.OmfLibraryRecord;
+import ghidra.app.util.bin.format.omf.omf.OmfRecordFactory;
 import ghidra.app.util.opinion.OmfLoader;
 import ghidra.formats.gfilesystem.FSRLRoot;
 import ghidra.formats.gfilesystem.FileSystemService;
@@ -38,7 +39,12 @@ public class OmfArchiveFileSystemFactory implements
 			throws IOException, CancelledException {
 
 		OmfArchiveFileSystem fs = new OmfArchiveFileSystem(targetFSRL, byteProvider);
-		fs.mount(monitor);
+		try {
+			fs.mount(monitor);
+		}
+		catch (OmfException e) {
+			throw new IOException(e);
+		}
 		return fs;
 	}
 
@@ -51,8 +57,8 @@ public class OmfArchiveFileSystemFactory implements
 		}
 
 		try {
-			BinaryReader reader = OmfFileHeader.createReader(byteProvider);
-			return OmfLibraryRecord.checkMagicNumber(reader);
+			AbstractOmfRecordFactory factory = new OmfRecordFactory(byteProvider);
+			return OmfLibraryRecord.checkMagicNumber(factory.getReader());
 		}
 		catch (IOException e) {
 			return false;

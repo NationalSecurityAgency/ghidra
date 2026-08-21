@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -231,7 +231,7 @@ public class PcodeParserTest extends AbstractGhidraHeadlessIntegrationTest {
 
 		assertEquals(vec[1].getOpcode(), PcodeOp.INT_EQUAL);
 		assertTrue(
-			testVarnode(vec[1].getOutput(), SpaceNames.UNIQUE_SPACE_NAME, uniqueBase + 0x80, 1));
+			testVarnode(vec[1].getOutput(), SpaceNames.UNIQUE_SPACE_NAME, uniqueBase + 0x100, 1));
 		assertEquals(vec[1].getInput().length, 2);
 		assertTrue(testVarnode(vec[1].getInput()[0], "register", 0, 2));
 		assertTrue(testVarnode(vec[1].getInput()[1], SpaceNames.CONSTANT_SPACE_NAME, 0, 2));
@@ -241,18 +241,18 @@ public class PcodeParserTest extends AbstractGhidraHeadlessIntegrationTest {
 		assertEquals(vec[2].getInput().length, 2);
 		assertTrue(testInstNext(vec[2].getInput()[0]));
 		assertTrue(
-			testVarnode(vec[2].getInput()[1], SpaceNames.UNIQUE_SPACE_NAME, uniqueBase + 0x80, 1));
+			testVarnode(vec[2].getInput()[1], SpaceNames.UNIQUE_SPACE_NAME, uniqueBase + 0x100, 1));
 
 		// inst_next2
 		assertEquals(vec[3].getOpcode(), PcodeOp.COPY);
 		assertTrue(
-			testVarnode(vec[3].getOutput(), SpaceNames.UNIQUE_SPACE_NAME, uniqueBase + 0x100, 1));
+			testVarnode(vec[3].getOutput(), SpaceNames.UNIQUE_SPACE_NAME, uniqueBase + 0x200, 1));
 		assertEquals(vec[3].getInput().length, 1);
 		assertTrue(testInstNext2Constant(vec[3].getInput()[0], 1));
 
 		assertEquals(vec[4].getOpcode(), PcodeOp.INT_EQUAL);
 		assertTrue(
-			testVarnode(vec[4].getOutput(), SpaceNames.UNIQUE_SPACE_NAME, uniqueBase + 0x180, 1));
+			testVarnode(vec[4].getOutput(), SpaceNames.UNIQUE_SPACE_NAME, uniqueBase + 0x300, 1));
 		assertEquals(vec[4].getInput().length, 2);
 		assertTrue(testVarnode(vec[4].getInput()[0], "register", 0xc, 2));
 		assertTrue(testVarnode(vec[4].getInput()[1], SpaceNames.CONSTANT_SPACE_NAME, 0, 2));
@@ -262,7 +262,7 @@ public class PcodeParserTest extends AbstractGhidraHeadlessIntegrationTest {
 		assertEquals(vec[5].getInput().length, 2);
 		assertTrue(testInstNext2(vec[5].getInput()[0]));
 		assertTrue(
-			testVarnode(vec[5].getInput()[1], SpaceNames.UNIQUE_SPACE_NAME, uniqueBase + 0x180, 1));
+			testVarnode(vec[5].getInput()[1], SpaceNames.UNIQUE_SPACE_NAME, uniqueBase + 0x300, 1));
 
 		// call
 		assertEquals(vec[6].getOpcode(), PcodeOp.CALLIND);
@@ -272,7 +272,7 @@ public class PcodeParserTest extends AbstractGhidraHeadlessIntegrationTest {
 
 		assertEquals(vec[7].getOpcode(), PcodeOp.INT_NOTEQUAL);
 		assertTrue(
-			testVarnode(vec[7].getOutput(), SpaceNames.UNIQUE_SPACE_NAME, uniqueBase + 0x200, 1));
+			testVarnode(vec[7].getOutput(), SpaceNames.UNIQUE_SPACE_NAME, uniqueBase + 0x400, 1));
 		assertEquals(vec[7].getInput().length, 2);
 		assertTrue(testVarnode(vec[7].getInput()[0], "register", 0xc, 2));
 		assertTrue(testVarnode(vec[7].getInput()[1], SpaceNames.CONSTANT_SPACE_NAME, 1, 2));
@@ -282,7 +282,7 @@ public class PcodeParserTest extends AbstractGhidraHeadlessIntegrationTest {
 		assertEquals(vec[8].getInput().length, 2);
 		assertTrue(testRelative(vec[8].getInput()[0], 0, 4));
 		assertTrue(
-			testVarnode(vec[8].getInput()[1], SpaceNames.UNIQUE_SPACE_NAME, uniqueBase + 0x200, 1));
+			testVarnode(vec[8].getInput()[1], SpaceNames.UNIQUE_SPACE_NAME, uniqueBase + 0x400, 1));
 
 		assertEquals(vec[9].getOpcode(), PcodeOp.COPY);
 		assertTrue(testVarnode(vec[9].getOutput(), "register", 4, 2));

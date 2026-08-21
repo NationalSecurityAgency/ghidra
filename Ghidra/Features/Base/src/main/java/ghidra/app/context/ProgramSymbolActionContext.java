@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,8 +21,10 @@ import java.util.*;
 import docking.ComponentProvider;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
+import ghidra.program.util.ProgramLocation;
 
-public class ProgramSymbolActionContext extends ProgramActionContext {
+public class ProgramSymbolActionContext extends ProgramActionContext
+		implements ProgramLocationSupplierContext {
 
 	private List<Symbol> symbols = new ArrayList<Symbol>();
 
@@ -45,5 +47,14 @@ public class ProgramSymbolActionContext extends ProgramActionContext {
 
 	public Iterable<Symbol> getSymbols() {
 		return symbols;
+	}
+
+	@Override
+	public ProgramLocation getLocation() {
+		if (symbols.isEmpty()) {
+			return null;
+		}
+		Symbol s = symbols.get(0);
+		return s.getProgramLocation();
 	}
 }

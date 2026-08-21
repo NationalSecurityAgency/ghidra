@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@ package ghidra.app.util.demangler;
 
 import static org.junit.Assert.*;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.junit.Before;
@@ -108,6 +109,26 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testParse_CastInTemplates_ToPointer() throws Exception {
+
+		String mangled =
+			"_ZN3ndk4impl15ScopedAResourceIP7AStatusXadL_Z14AStatus_deleteEELS3_0EEaSEOS4_";
+		String demangled = process.demangle(mangled);
+		assertEquals(
+			"ndk::impl::ScopedAResource<AStatus*, &AStatus_delete, (AStatus*)0>::operator=(ndk::impl::ScopedAResource<AStatus*, &AStatus_delete, (AStatus*)0>&&)",
+			demangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertType(object, DemangledFunction.class);
+		assertName(object, "operator=", "ndk", "impl",
+			"ScopedAResource<AStatus*,&AStatus_delete,(AStatus*)0>");
+
+		assertEquals(
+			"undefined ndk::impl::ScopedAResource<AStatus*,&AStatus_delete,(AStatus*)0>::operator=(ndk::impl::ScopedAResource<AStatus *,&AStatus_delete,(AStatus*)0> &&)",
+			object.getSignature(false));
+	}
+
+	@Test
 	public void testParse_MultiDimensionalArray() throws Exception {
 
 		DemangledObject object = parser.parse("fake", "Layout::graphNew(short[][][][], char*)");
@@ -159,6 +180,63 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		assertEquals("unsigned long", parameters.get(1).getType().getSignature());
 		assertEquals("unsigned long", parameters.get(2).getType().getSignature());
 		assertEquals("float", parameters.get(3).getType().getSignature());
+	}
+
+	@Test
+	public void testLegacy_DemangledFunctionCharacter() throws Exception {
+
+		// This is only supported in the older v24 demangler.  The 'F' character was not being 
+		// correctly demangled.  The native demangler was updated to fix this.
+		String mangled = "foo__03FooCFUcT1";
+		process = GnuDemanglerNativeProcess
+				.getDemanglerNativeProcess(GnuDemanglerOptions.GNU_DEMANGLER_V2_24);
+		String demangled = process.demangle(mangled);
+		assertEquals("Foo::foo(unsigned char, unsigned char) const", demangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertType(object, DemangledFunction.class);
+		assertName(object, "foo", "Foo");
+		assertEquals("undefined Foo::foo(unsigned char,unsigned char)", object.getSignature());
+	}
+
+	@Test
+	public void testLegacy_DemangedFunctionCharacter_Qualifiers() throws Exception {
+
+		// This is only supported in the older v24 demangler.  The 'F' character was not being 
+		// correctly demangled along with some qualifier characters.  The native demangler was 
+		// updated to fix this.
+		process = GnuDemanglerNativeProcess
+				.getDemanglerNativeProcess(GnuDemanglerOptions.GNU_DEMANGLER_V2_24);
+
+		//@formatter:off
+		assertLegacyDemangled("foo__03FooCF", 
+							  "Foo::foo(void) const",
+							  "undefined Foo::foo(void)");
+		
+		assertLegacyDemangled("foo__03FooSF", 
+							  "Foo::foo(void) static",
+							  "undefined Foo::foo(void)");
+		
+		assertLegacyDemangled("foo__03FooSFUcT1", 
+							  "Foo::foo(unsigned char, unsigned char) static",
+							  "undefined Foo::foo(unsigned char,unsigned char)");
+		
+		assertLegacyDemangled("foo__03FooSCFUcT1", 
+							  "Foo::foo(unsigned char, unsigned char) static const",
+							  "undefined Foo::foo(unsigned char,unsigned char)");
+		
+		//@formatter:on
+	}
+
+	private void assertLegacyDemangled(String mangled, String demangledExpected,
+			String signatureExpected) throws Exception {
+
+		String demangledActual = process.demangle(mangled);
+		assertEquals(demangledExpected, demangledActual);
+
+		DemangledObject object = parser.parse(mangled, demangledExpected);
+		assertType(object, DemangledFunction.class);
+		assertEquals(signatureExpected, object.getSignature());
 	}
 
 	@Test
@@ -283,11 +361,10 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		DemangledObject object = parser.parse(mangled, demangled);
 		assertType(object, DemangledThunk.class);
-		assertName(object, "~basic_ostringstream", "std",
-			"basic_ostringstream<char,std::char_traits<char>,pool_allocator<char>>");
+		assertName(object, "~ostringstream", "std", "ostringstream");
 
 		assertEquals(
-			"virtual thunk to undefined __thiscall std::basic_ostringstream<char,std::char_traits<char>,pool_allocator<char>>::~basic_ostringstream(void)",
+			"virtual thunk to undefined __thiscall std::ostringstream::~ostringstream(void)",
 			object.getSignature(false));
 	}
 
@@ -616,6 +693,24 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testTlsInitFunctionFor() throws Exception {
+
+		String mangled = "_ZTH8SomeName";
+		String demangled = process.demangle(mangled);
+
+		assertEquals("TLS init function for SomeName", demangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertType(object, DemangledFunction.class);
+		assertName(object, "__tls_init", "SomeName");
+
+		DemangledFunction function = (DemangledFunction) object;
+		String plate = function.generatePlateComment();
+		assertEquals("TLS init function for SomeName", plate);
+		assertEquals("SomeName::__tls_init(void)", object.getSignature(false));
+	}
+
+	@Test
 	public void testGuardVariable_WithGuardVariableText() throws Exception {
 
 		String mangled = "_ZGVZN10KDirLister11emitChangesEvE3dot";
@@ -652,6 +747,26 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		DemangledVariable variable = (DemangledVariable) object;
 		assertEquals("__gthread_active_ptr", variable.getName());
 		assertEquals("__gthread_active_p()", variable.getNamespace().getNamespaceName());
+		assertNull(variable.getDataType()); // no type information provided
+	}
+
+	@Test
+	public void testGuardVariable_GlobalVariable() throws Exception {
+
+		String mangled = "_ZGV17globalVariableFoo";
+
+		String demangled = process.demangle(mangled);
+
+		assertEquals("guard variable for globalVariableFoo", demangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertType(object, DemangledVariable.class);
+		assertName(object, "globalVariableFoo");
+
+		assertEquals("globalVariableFoo", object.getSignature(false));
+
+		DemangledVariable variable = (DemangledVariable) object;
+		assertEquals("globalVariableFoo", variable.getName());
 		assertNull(variable.getDataType()); // no type information provided
 	}
 
@@ -915,8 +1030,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		assertName(object, "Image", "Magick", "Image");
 
 		assertEquals(
-			"undefined Magick::Image::Image(" +
-				"std::basic_string<char,std::char_traits<char>,std::allocator<char>> const &)",
+			"undefined Magick::Image::Image(std::string const &)",
 			object.getSignature(false));
 	}
 
@@ -977,9 +1091,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		String name = object.getName();
 		assertEquals("operator>>", name);
 		assertEquals(
-			"std::basic_istream<char,std::char_traits<char>> & " +
-				"std::operator>><char,std::char_traits<char>>" +
-				"(std::basic_istream<char,std::char_traits<char>> &,char &)",
+			"std::istream & std::operator>><char,std::char_traits<char>>(std::istream &,char &)",
 			object.getSignature());
 	}
 
@@ -989,9 +1101,8 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		String raw = "std::basic_ostream<char, std::char_traits<char> >& " +
 			"std::operator<< <std::char_traits<char> >" +
 			"(std::basic_ostream<char, std::char_traits<char> >&, char const*)";
-		String formatted = "std::basic_ostream<char,std::char_traits<char>> & " +
-			"std::operator<<<std::char_traits<char>>" +
-			"(std::basic_ostream<char,std::char_traits<char>> &,char const *)";
+		String formatted =
+			"std::ostream & std::operator<<<std::char_traits<char>>(std::ostream &,char const *)";
 		DemangledObject object =
 			parser.parse("_ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_PKc", raw);
 		String name = object.getName();
@@ -1010,9 +1121,8 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 				"(*)(std::basic_ostream<char, std::char_traits<char> >&))");
 		String name = object.getName();
 		assertEquals("operator<<", name);
-		assertName(object, "operator<<", "std", "basic_ostream<char,std::char_traits<char>>");
-		assertEquals("undefined std::basic_ostream<char,std::char_traits<char>>" + "::operator<<(" +
-			"std::basic_ostream<char,std::char_traits<char>> & (*)(std::basic_ostream<char,std::char_traits<char>> &))",
+		assertName(object, "operator<<", "std", "ostream");
+		assertEquals("undefined std::ostream::operator<<(std::ostream & (*)(std::ostream &))",
 			object.getSignature());
 	}
 
@@ -1025,7 +1135,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		String demangled = process.demangle(mangled);
 
 		/*
-			typeinfo for 
+			typeinfo for
 				std::__ndk1::__function::__func<
 					dummy::it::other::Namespace::function(float)::$_2::operator()(dummy::it::other::Namespace*) const::{lambda(dummy::it::other::Namespace*)#1},
 					std::__ndk1::allocator<dummy::it::other::Namespace::function(float)::$_2::operator()(dummy::it::other::Namespace*) const::{lambda(dummy::it::other::Namespace*)#1}>,
@@ -1118,7 +1228,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		String signature = object.getSignature(false);
 		assertEquals(
-			"std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>> std::_Bind<std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>(EduAppConfigs::*(EduAppConfigs_const*))()const>::operator()<missing_argument,std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>>(void)",
+			"std::__cxx11::string std::_Bind<std::__cxx11::string(EduAppConfigs::*(EduAppConfigs_const*))()const>::operator()<missing_argument,std::__cxx11::string>(void)",
 			signature);
 	}
 
@@ -1151,7 +1261,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		String signature = object.getSignature(false);
 		assertEquals(
-			"std::__cxx11::basic_string<std::remove_const<char_const>::type,std::char_traits<std::remove_const<char_const>::type>,std::allocator<std::remove_const<char_const>::type>> gsl::to_string<char_const,-1l>(gsl::basic_string_span<char const,long>)",
+			"std::__cxx11::string gsl::to_string<char_const,-1l>(gsl::basic_string_span<char const,long>)",
 			signature);
 	}
 
@@ -1289,10 +1399,10 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		DemangledObject object = parser.parse(mangled, demangled);
 		assertType(object, DemangledFunction.class);
-		assertName(object, "operator.cast.to.basic_string", "Magick", "Color");
+		assertName(object, "operator.cast.to.string", "Magick", "Color");
 
-		assertEquals("std::basic_string<char,std::char_traits<char>,std::allocator<char>> " +
-			"Magick::Color::operator.cast.to.basic_string(void)", object.getSignature(false));
+		assertEquals("std::string Magick::Color::operator.cast.to.string(void)",
+			object.getSignature(false));
 	}
 
 	@Test
@@ -1665,7 +1775,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		String signature = object.getSignature(false);
 		assertEquals(
-			"undefined WebCore::ContentFilterUnblockHandler::ContentFilterUnblockHandler(WTF::String,std::__1::function<void (std::__1::function<void (bool)>)>)",
+			"undefined WebCore::ContentFilterUnblockHandler::ContentFilterUnblockHandler(WTF::String,std::function<void (std::function<void (bool)>)>)",
 			signature);
 	}
 
@@ -1775,9 +1885,9 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		assertType(object, DemangledFunction.class);
 
 		String signature = object.getSignature(false);
-		assertEquals("undefined __gnu_cxx" + "::" +
-			"__stoa<long,int,char,int>(long(*)(char_const*,char**,int),char_const*,char_const*,unsigned_long*,int)" +
-			"::" + "_Save_errno::_Save_errno(void)", signature);
+		assertEquals("undefined " +
+			"__gnu_cxx::__stoa<long,int,char,int>(long(*)(char_const*,char**,int),char_const*,char_const*,unsigned_long*,int)" +
+			"::_Save_errno::_Save_errno(void)", signature);
 	}
 
 	@Test
@@ -1814,12 +1924,12 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		assertType(object, DemangledFunction.class);
 
 		String name =
-			"for_each_args<WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1},brigand::type_<std::__1::integral_constant<long,0l>>,WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1}<std::__1<long,1l>>,WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1}<std::__1<long,2l>>>";
+			"for_each_args<WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1},brigand::type_<std::integral_constant<long,0l>>,WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1}<std<long,1l>>,WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1}<std<long,2l>>>";
 		assertName(object, name, "brigand");
 
 		String signature = object.getSignature(false);
 		assertEquals(
-			"WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1} brigand::for_each_args<WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1},brigand::type_<std::__1::integral_constant<long,0l>>,WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1}<std::__1<long,1l>>,WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1}<std::__1<long,2l>>>(WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1},brigand::type_<std::__1::integral_constant<long,long>> &&,WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1}<std::__1<long,long>> &&,WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1}<std::__1<long,long>> &&)",
+			"WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1} brigand::for_each_args<WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1},brigand::type_<std::integral_constant<long,0l>>,WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1}<std<long,1l>>,WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1}<std<long,2l>>>(WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1},brigand::type_<std::integral_constant<long,long>> &&,WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1}<std<long,long>> &&,WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1}<std<long,long>> &&)",
 			signature);
 	}
 
@@ -1928,7 +2038,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		String signature = object.getSignature(false);
 
 		assertEquals(
-			"undefined WebCore::TextCodecICU::registerCodecs(void (*)(char const *,WTF::Function<std::__1::unique_ptr<WebCore::TextCodec,std::__1::default_delete<WebCore::TextCodec>> ()> &&))",
+			"undefined WebCore::TextCodecICU::registerCodecs(void (*)(char const *,WTF::Function<std::unique_ptr<WebCore::TextCodec,std::default_delete<WebCore::TextCodec>> ()> &&))",
 			signature);
 	}
 
@@ -2215,14 +2325,92 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		assertType(object, DemangledFunction.class);
 
 		assertName(object,
-			"__allocate_at_least[abi:v160006]<std::__1::allocator<std::__1::unique_ptr<void,applesauce::raii::v1::detail::opaque_deletion_functor<void*,&VPTimeFreqConverter_Dispose>>>>",
-			"std",
-			"__1");
-
+			"__allocate_at_least[abi:v160006]<std::allocator<std::unique_ptr<void,applesauce::raii::v1::detail::opaque_deletion_functor<void*,&VPTimeFreqConverter_Dispose>>>>",
+			"std");
 		String signature = object.getSignature(false);
 		assertEquals(
-			"std::__1::__allocation_result<std::__1::allocator_traits<std::__1::allocator<std::__1::unique_ptr<void,applesauce::raii::v1::detail::opaque_deletion_functor<void*,&VPTimeFreqConverter_Dispose>>>>::pointer> std::__1::__allocate_at_least[abi:v160006]<std::__1::allocator<std::__1::unique_ptr<void,applesauce::raii::v1::detail::opaque_deletion_functor<void*,&VPTimeFreqConverter_Dispose>>>>(std::__1::allocator<std::__1::unique_ptr<void,applesauce::raii::v1::detail::opaque_deletion_functor<void *,&VPTimeFreqConverter_Dispose>>> &,unsigned long)",
+			"std::__allocation_result<std::allocator_traits<std::allocator<std::unique_ptr<void,applesauce::raii::v1::detail::opaque_deletion_functor<void*,&VPTimeFreqConverter_Dispose>>>>::pointer> std::__allocate_at_least[abi:v160006]<std::allocator<std::unique_ptr<void,applesauce::raii::v1::detail::opaque_deletion_functor<void*,&VPTimeFreqConverter_Dispose>>>>(std::allocator<std::unique_ptr<void,applesauce::raii::v1::detail::opaque_deletion_functor<void *,&VPTimeFreqConverter_Dispose>>> &,unsigned long)",
 			signature);
+	}
+
+	@Test
+	public void testGlobalConstructor() throws Exception {
+
+		//
+		// mangled: _GLOBAL__I_cyg_libc_stdio_altout
+		//
+		// demangled: global constructors keyed to cyg_libc_stdio_altout
+		//
+		// updated name: global.constructors.keyed.to.cyg_libc_stdio_altout
+		//
+
+		String mangled = "_GLOBAL__I_cyg_libc_stdio_altout";
+		String demangled = process.demangle(mangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertNotNull(object);
+		assertType(object, DemangledFunction.class);
+
+		assertEquals("global constructors keyed to cyg_libc_stdio_altout",
+			object.getOriginalDemangled());
+		assertName(object, "global.constructors.keyed.to.cyg_libc_stdio_altout");
+
+		String signature = object.getSignature(false);
+		assertEquals("undefined global.constructors.keyed.to.cyg_libc_stdio_altout(void)",
+			signature);
+	}
+
+	@Test
+	public void testGlobalDestructor() throws Exception {
+
+		//
+		// mangled: _GLOBAL__D_cyg_libc_stdio_altout
+		//
+		// demangled: global destructors keyed to cyg_libc_stdio_altout
+		//
+		// updated name: global.destructors.keyed.to.cyg_libc_stdio_altout
+		//
+
+		String mangled = "_GLOBAL__D_cyg_libc_stdio_altout";
+		String demangled = process.demangle(mangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertNotNull(object);
+		assertType(object, DemangledFunction.class);
+
+		assertEquals("global destructors keyed to cyg_libc_stdio_altout",
+			object.getOriginalDemangled());
+		assertName(object, "global.destructors.keyed.to.cyg_libc_stdio_altout");
+
+		String signature = object.getSignature(false);
+		assertEquals("undefined global.destructors.keyed.to.cyg_libc_stdio_altout(void)",
+			signature);
+	}
+
+	@Test
+	public void testColdLabel1() throws IOException {
+		String mangled = "_Z6calleei.cold";
+		String demangled = process.demangle(mangled);
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertNotNull(object);
+		assertType(object, DemangledLabel.class);
+		assertEquals("callee(int) [clone .cold]", object.getRawDemangled());
+		assertEquals("callee(int)_[clone_.cold]", object.getName());
+	}
+
+	@Test
+	public void testColdLabel2() throws IOException {
+		String mangled = "_ZN6ghidra15ContextInternal9FreeArrayaSERKS1_.cold";
+		String demangled = process.demangle(mangled);
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertNotNull(object);
+		assertType(object, DemangledLabel.class);
+		assertEquals(
+			"ghidra::ContextInternal::FreeArray::operator=(ghidra::ContextInternal::FreeArray const&) [clone .cold]",
+			object.getRawDemangled());
+		assertEquals(
+			"ghidra::ContextInternal::FreeArray::operator=(ghidra::ContextInternal::FreeArray_const&)_[clone_.cold]",
+			object.getName());
 	}
 
 	private void assertType(Demangled o, Class<?> c) {

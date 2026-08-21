@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -86,15 +86,13 @@ public abstract class TagListPanel extends JPanel {
 		table.setAccessibleNamePrefix(name);
 		filterPanel.setAccessibleNamePrefix(name);
 
-		table.addMouseListener(new MouseAdapter() {
-
-			@Override
-			public void mousePressed(MouseEvent e) {
-				// Click events aren't reliably captured for some reason,
-				// but presses are, so this is the best way to ensure that
-				// user selections are handled
+		table.getSelectionModel().addListSelectionListener(e -> {
+			if (!e.getValueIsAdjusting()) {
 				provider.selectionChanged(TagListPanel.this);
 			}
+		});
+
+		table.addMouseListener(new MouseAdapter() {
 
 			// Handles the double-click event on table rows, which will bring up
 			// a dialog for editing the tag name and/or comment.
@@ -173,14 +171,14 @@ public abstract class TagListPanel extends JPanel {
 
 		// Only process the name edit if the name actually changed.
 		if (!newName.equals(tagName)) {
-			Command cmd =
+			Command<Program> cmd =
 				new ChangeFunctionTagCmd(tagName, newName, ChangeFunctionTagCmd.TAG_NAME_CHANGED);
 			tool.execute(cmd, program);
 		}
 
 		// Only process the comment edit if the comment actually changed.
 		if (!newComment.equals(comment)) {
-			Command cmd = new ChangeFunctionTagCmd(tagName, newComment,
+			Command<Program> cmd = new ChangeFunctionTagCmd(tagName, newComment,
 				ChangeFunctionTagCmd.TAG_COMMENT_CHANGED);
 			tool.execute(cmd, program);
 		}
@@ -259,7 +257,7 @@ public abstract class TagListPanel extends JPanel {
 
 		if (option == OptionDialog.OPTION_ONE) {
 			for (FunctionTag tag : selectedTags) {
-				Command cmd = new DeleteFunctionTagCmd(tag.getName());
+				Command<Program> cmd = new DeleteFunctionTagCmd(tag.getName());
 				tool.execute(cmd, program);
 			}
 		}

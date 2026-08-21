@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -94,6 +94,13 @@ public class LaunchFailureDialog extends OptionDialog {
 			result.trace() != null;
 	}
 
+	protected static String shorten(String title) {
+		if (title.length() > 80) {
+			return title.substring(0, 77) + "...";
+		}
+		return title;
+	}
+
 	protected static String htmlContent(TerminalSession session) {
 		String content = session.content().trim();
 		List<String> lines = Arrays.asList(content.split("\n"));
@@ -108,7 +115,7 @@ public class LaunchFailureDialog extends OptionDialog {
 				<div style="font:bold;">Title: %s</div>%s
 				<div style="background:black;color:white;">
 				<pre>%s</pre>""".formatted(
-			session.title(),
+			HTMLUtilities.escapeHTML(shorten(session.title())),
 			note,
 			content);
 	}

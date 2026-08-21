@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -156,6 +156,7 @@ private:
   bool hasCopyIn1(void) const { return ((highflags&copy_in1)!=0); }	///< Is there at least one COPY into \b this
   bool hasCopyIn2(void) const { return ((highflags&copy_in2)!=0); }	///< Is there at least two COPYs into \b this
   void remove(Varnode *vn);				///< Remove a member Varnode from \b this
+  void insert(Varnode *newvn,int2 mergeGroup);		///< Directly insert a Varnode into \b this
   void mergeInternal(HighVariable *tv2,bool isspeculative);	///< Merge another HighVariable into \b this
   void merge(HighVariable *tv2,HighIntersectTest *testCache,bool isspeculative);	///< Merge with another HighVariable taking into account groups
   void setSymbol(Varnode *vn) const;		///< Update Symbol information for \b this from the given member Varnode
@@ -167,6 +168,7 @@ private:
   void symbolDirty(void) const { highflags |= symboldirty; }	///< Mark the symbol as \e dirty
   void setUnmerged(void) const { highflags |= unmerged; }	///< Mark \b this as having merge problems
   bool isCoverDirty(void) const;	///< Is the cover returned by getCover() up-to-date
+  void stripType(void) const;		///< Take the stripped form of the current data-type.
 public:
   HighVariable(Varnode *vn);		///< Construct a HighVariable with a single member Varnode
   ~HighVariable(void);			///< Destructor
@@ -177,7 +179,7 @@ public:
   int4 getSymbolOffset(void) const { return symboloffset; }	///< Get the Symbol offset associated with \b this
   int4 numInstances(void) const { return inst.size(); }		///< Get the number of member Varnodes \b this has
   Varnode *getInstance(int4 i) const { return inst[i]; }	///< Get the i-th member Varnode
-  void finalizeDatatype(Datatype *tp);		///< Set a final datatype for \b this variable
+  void finalizeDatatype(TypeFactory *typeFactory);		///< Set a final data-type matching the associated Symbol
   void groupWith(int4 off,HighVariable *hi2);		///< Put \b this and another HighVariable in the same intersection group
   void establishGroupSymbolOffset(void);	///< Transfer \b symbol offset of \b this to the VariableGroup
 

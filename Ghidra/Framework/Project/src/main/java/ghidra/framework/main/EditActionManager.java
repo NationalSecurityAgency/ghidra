@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,8 +24,8 @@ import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
-import ghidra.net.ApplicationKeyManagerFactory;
-import ghidra.net.ApplicationKeyManagerUtils;
+import ghidra.net.DefaultKeyManagerFactory;
+import ghidra.net.PKIUtils;
 import ghidra.util.HelpLocation;
 import ghidra.util.filechooser.ExtensionFileFilter;
 import ghidra.util.filechooser.GhidraFileFilter;
@@ -38,7 +38,7 @@ class EditActionManager {
 	 * PKCS Private Key/Certificate File Filter
 	 */
 	public static final GhidraFileFilter CERTIFICATE_FILE_FILTER =
-		new ExtensionFileFilter(ApplicationKeyManagerUtils.PKCS_FILE_EXTENSIONS, "PKCS Key File");
+		new ExtensionFileFilter(PKIUtils.PKCS_FILE_EXTENSIONS, "PKCS Key File");
 
 	private FrontEndPlugin plugin;
 	private FrontEndTool tool;
@@ -68,8 +68,8 @@ class EditActionManager {
 // ACTIONS - auto generated
 		editPluginPathAction.setEnabled(true);
 
-		editPluginPathAction.setMenuBarData(new MenuData(new String[] { ToolConstants.MENU_EDIT,
-			"Plugin Path..." }, "GEdit"));
+		editPluginPathAction.setMenuBarData(
+			new MenuData(new String[] { ToolConstants.MENU_EDIT, "Plugin Path..." }, "GEdit"));
 
 		editCertPathAction = new DockingAction("Set PKI Certificate", plugin.getName()) {
 			@Override
@@ -80,8 +80,8 @@ class EditActionManager {
 // ACTIONS - auto generated
 		editCertPathAction.setEnabled(true);
 
-		editCertPathAction.setMenuBarData(new MenuData(new String[] { ToolConstants.MENU_EDIT,
-			"Set PKI Certificate..." }, "PKI"));
+		editCertPathAction.setMenuBarData(new MenuData(
+			new String[] { ToolConstants.MENU_EDIT, "Set PKI Certificate..." }, "PKI"));
 
 		clearCertPathAction = new DockingAction("Clear PKI Certificate", plugin.getName()) {
 			@Override
@@ -90,13 +90,13 @@ class EditActionManager {
 			}
 		};
 // ACTIONS - auto generated
-		clearCertPathAction.setEnabled(ApplicationKeyManagerFactory.getKeyStore() != null);
+		clearCertPathAction.setEnabled(DefaultKeyManagerFactory.getKeyStore() != null);
 
-		clearCertPathAction.setMenuBarData(new MenuData(new String[] { ToolConstants.MENU_EDIT,
-			"Clear PKI Certificate..." }, "PKI"));
+		clearCertPathAction.setMenuBarData(new MenuData(
+			new String[] { ToolConstants.MENU_EDIT, "Clear PKI Certificate..." }, "PKI"));
 
-		clearCertPathAction.setHelpLocation(new HelpLocation("FrontEndPlugin",
-			"Set_PKI_Certificate"));
+		clearCertPathAction
+				.setHelpLocation(new HelpLocation("FrontEndPlugin", "Set_PKI_Certificate"));
 		tool.addAction(editCertPathAction);
 		tool.addAction(clearCertPathAction);
 		tool.addAction(editPluginPathAction);
@@ -112,7 +112,7 @@ class EditActionManager {
 
 	private void clearCertPath() {
 
-		String path = ApplicationKeyManagerFactory.getKeyStore();
+		String path = DefaultKeyManagerFactory.getKeyStore();
 		if (path == null) {
 			// unexpected
 			clearCertPathAction.setEnabled(false);
@@ -124,7 +124,7 @@ class EditActionManager {
 			return;
 		}
 
-		ApplicationKeyManagerFactory.setKeyStore(null, true);
+		DefaultKeyManagerFactory.setDefaultKeyStore(null, true);
 		clearCertPathAction.setEnabled(false);
 	}
 
@@ -134,7 +134,7 @@ class EditActionManager {
 
 		File dir = null;
 		File oldFile = null;
-		String path = ApplicationKeyManagerFactory.getKeyStore();
+		String path = DefaultKeyManagerFactory.getKeyStore();
 		if (path != null) {
 			oldFile = new File(path);
 			dir = oldFile.getParentFile();
@@ -163,7 +163,7 @@ class EditActionManager {
 			if (file == null) {
 				return; // cancelled
 			}
-			ApplicationKeyManagerFactory.setKeyStore(file.getAbsolutePath(), true);
+			DefaultKeyManagerFactory.setDefaultKeyStore(file.getAbsolutePath(), true);
 			clearCertPathAction.setEnabled(true);
 			validInput = true;
 		}

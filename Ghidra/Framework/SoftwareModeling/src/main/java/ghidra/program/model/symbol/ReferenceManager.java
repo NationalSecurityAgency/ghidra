@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -72,7 +72,7 @@ public interface ReferenceManager {
 	 * an operand will be made primary by default.  All non-memory references 
 	 * will be removed from the specified operand.  Certain reference {@link RefType types}
 	 * may not be specified (e.g., {@link RefType#FALL_THROUGH}).
-	 * @param fromAddr address of the codeunit where the reference occurs
+	 * @param fromAddr address of the code unit where the reference occurs
 	 * @param toAddr address of the location being referenced.  
 	 * Memory, stack, and register addresses are all permitted.
 	 * @param type reference type - how the location is being referenced.
@@ -189,7 +189,7 @@ public interface ReferenceManager {
 	 * @param source the source of this reference
 	 * @param type reference type - how the location is being referenced
 	 * @return external reference
-	 * @throws InvalidInputException
+	 * @throws InvalidInputException if the input is invalid
 	 */
 	public Reference addExternalReference(Address fromAddr, int opIndex, ExternalLocation location,
 			SourceType source, RefType type) throws InvalidInputException;
@@ -204,7 +204,7 @@ public interface ReferenceManager {
 	/**
 	 * Remove all stack, external, and memory references for the given
 	 * from address.
-	 * @param fromAddr the address of the codeunit from which to remove all references.
+	 * @param fromAddr the address of the code unit from which to remove all references.
 	 */
 	public void removeAllReferencesFrom(Address fromAddr);
 
@@ -247,7 +247,7 @@ public interface ReferenceManager {
 
 	/**
 	 * Get all flow references from the given address.
-	 * @param addr the address of the codeunit to get all flows from.
+	 * @param addr the address of the code unit to get all flows from.
 	 * @return get all flow references from the given address.
 	 * 
 	 */
@@ -279,7 +279,7 @@ public interface ReferenceManager {
 	/**
 	 * Get the reference that has the given from and to address, and
 	 * operand index.
-	 * @param fromAddr the address of the codeunit making the reference.
+	 * @param fromAddr the address of the code unit making the reference.
 	 * @param toAddr the address being referred to.
 	 * @param opIndex the operand index.
 	 * @return reference which satisfies the specified criteria or null
@@ -306,7 +306,7 @@ public interface ReferenceManager {
 	 * address/opIndex.  Keep in mind this is a rather inefficient 
 	 * method as it must examine all references from the specified 
 	 * fromAddr.
-	 * @param fromAddr the address of the codeunit being tested
+	 * @param fromAddr the address of the code unit being tested
 	 * @param opIndex the index of the operand being tested.
 	 * @return true if one or more reference from the specified address
 	 * and opindex are defined, else false
@@ -316,7 +316,7 @@ public interface ReferenceManager {
 	/**
 	 * Returns true if there are any memory references at the given
 	 * address. 
-	 * @param fromAddr the address of the codeunit being tested
+	 * @param fromAddr the address of the code unit being tested
 	 * @return true if one or more reference from the specified address
 	 * are defined, else false
 	 */
@@ -378,18 +378,20 @@ public interface ReferenceManager {
 
 	/**
 	 * Returns the number of references from the specified <code>fromAddr</code>.
-	 * @param fromAddr the address of the codeunit making the reference.
+	 * @param fromAddr the address of the code unit making the reference.
 	 * @return the number of references from the specified <code>fromAddr</code>.
 	 */
 	public int getReferenceCountFrom(Address fromAddr);
 
 	/**
 	 * Return the number of references for "to" addresses.
+	 * @return the number of references for "to" addresses.
 	 */
 	public int getReferenceDestinationCount();
 
 	/**
 	 * Return the number of references for "from" addresses.
+	 * @return the number of references for "from" addresses.
 	 */
 	public int getReferenceSourceCount();
 
@@ -401,7 +403,7 @@ public interface ReferenceManager {
 	public boolean hasReferencesTo(Address toAddr);
 
 	/**
-	 * Uodate the reference type on a memory reference.
+	 * Update the reference type on a memory reference.
 	 * @param ref reference to be updated
 	 * @param refType new reference type
 	 * @return updated reference

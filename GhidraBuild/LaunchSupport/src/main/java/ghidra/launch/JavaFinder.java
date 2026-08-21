@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ public abstract class JavaFinder {
 	 * The different supported platforms (operating systems).
 	 */
 	public enum Platform {
-		WINDOWS, MACOS, LINUX;
+		WINDOWS, MACOS, LINUX, OPEN_BSD;
 	}
 
 	/**
@@ -54,6 +54,9 @@ public abstract class JavaFinder {
 			if (os.contains("mac")) {
 				return Platform.MACOS;
 			}
+			if (os.contains("openbsd")) {
+				return Platform.OPEN_BSD;
+			}
 		}
 		return Platform.LINUX;
 	}
@@ -69,6 +72,8 @@ public abstract class JavaFinder {
 				return new WindowsJavaFinder();
 			case MACOS:
 				return new MacJavaFinder();
+			case OPEN_BSD:
+				return new OpenBSDJavaFinder();
 			case LINUX:
 			default:
 				return new LinuxJavaFinder();
@@ -79,11 +84,11 @@ public abstract class JavaFinder {
 	 * Returns a list of supported Java home directories from discovered Java installations.
 	 * The list is sorted from newest Java version to oldest.
 	 * 
-	 * @param javaConfig The Java configuration that defines what we support.
+	 * @param appConfig The appConfig configuration that defines what we support.
 	 * @param javaFilter A filter used to restrict what kind of Java installations we search for.
 	 * @return A sorted list of supported Java home directories from discovered Java installations.
 	 */
-	public List<File> findSupportedJavaHomeFromInstallations(JavaConfig javaConfig,
+	public List<File> findSupportedJavaHomeFromInstallations(AppConfig appConfig,
 			JavaFilter javaFilter) {
 		Set<File> potentialJavaHomeSet = new TreeSet<>();
 		for (File javaRootInstallDir : getJavaRootInstallDirs()) {
@@ -107,8 +112,8 @@ public abstract class JavaFinder {
 		for (File potentialJavaHomeDir : potentialJavaHomeSet) {
 			try {
 				JavaVersion javaVersion =
-					javaConfig.getJavaVersion(potentialJavaHomeDir, javaFilter);
-				if (javaConfig.isJavaVersionSupported(javaVersion)) {
+					appConfig.getJavaVersion(potentialJavaHomeDir, javaFilter);
+				if (appConfig.isJavaVersionSupported(javaVersion)) {
 					javaHomeToVersionMap.put(potentialJavaHomeDir, javaVersion);
 				}
 			}
@@ -130,12 +135,12 @@ public abstract class JavaFinder {
 	 * Returns the Java home directory corresponding to the current "java.home" system
 	 * property (if it supported).
 	 * 
-	 * @param javaConfig The Java configuration that defines what we support.
+	 * @param appConfig The appConfig configuration that defines what we support.
 	 * @param javaFilter A filter used to restrict what kind of Java installations we search for.
 	 * @return The Java home directory corresponding to the current "java.home" system property.
 	 *   Could be null if the current "java.home" is not supported.
 	 */
-	public File findSupportedJavaHomeFromCurrentJavaHome(JavaConfig javaConfig,
+	public File findSupportedJavaHomeFromCurrentJavaHome(AppConfig appConfig,
 			JavaFilter javaFilter) {
 		Set<File> potentialJavaHomeSet = new HashSet<>();
 		String javaHomeProperty = System.getProperty("java.home");
@@ -149,8 +154,8 @@ public abstract class JavaFinder {
 			}
 			for (File potentialJavaHomeDir : potentialJavaHomeSet) {
 				try {
-					if (javaConfig.isJavaVersionSupported(
-						javaConfig.getJavaVersion(potentialJavaHomeDir, javaFilter))) {
+					if (appConfig.isJavaVersionSupported(
+						appConfig.getJavaVersion(potentialJavaHomeDir, javaFilter))) {
 						return potentialJavaHomeDir;
 					}
 				}

@@ -17,13 +17,17 @@ package ghidra.app.plugin.core.analysis;
 
 import ghidra.app.plugin.core.clear.ClearFlowAndRepairCmd;
 import ghidra.app.services.AnalysisPriority;
+import ghidra.framework.options.Options;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Processor;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.pcode.PcodeOp;
+import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.FlowType;
 import ghidra.program.model.symbol.Reference;
-import ghidra.program.util.*;
+import ghidra.program.util.SymbolicPropogator;
+import ghidra.program.util.VarnodeContext;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -35,6 +39,14 @@ import ghidra.util.task.TaskMonitor;
 public class SparcAnalyzer extends ConstantPropagationAnalyzer {
 
 	private final static String PROCESSOR_NAME = "Sparc";
+	
+
+	// option to turn off o7 call return  analysis
+	protected static final String O7_CALLRETURN_NAME = "Call/Return o7 check";
+	protected static final String O7_CALLRETURN_DESCRIPTION =
+		"Turn on check for setting of o7 return link register in delay slot of all calls";
+	protected static final boolean EO7_CALLRETURN_DEFAULT_VALUE = true;
+	protected boolean o7CallReturnAnalysis = EO7_CALLRETURN_DEFAULT_VALUE;
 
 	public SparcAnalyzer() {
 		super(PROCESSOR_NAME);
@@ -43,36 +55,16 @@ public class SparcAnalyzer extends ConstantPropagationAnalyzer {
 
 	@Override
 	public boolean canAnalyze(Program program) {
-		return program.getLanguage().getProcessor().equals(
-			Processor.findOrPossiblyCreateProcessor(PROCESSOR_NAME));
+		Processor processor = program.getLanguage().getProcessor();
+		
+		return processor.equals(Processor.findOrPossiblyCreateProcessor(PROCESSOR_NAME));
 	}
 
 	@Override
 	public AddressSetView flowConstants(final Program program, Address flowStart, AddressSetView flowSet, final SymbolicPropogator symEval, final TaskMonitor monitor)
 			throws CancelledException {
-		
-		// get the function body
-		Function func = program.getFunctionManager().getFunctionContaining(flowStart);
-		if (func != null) {
-			flowSet = func.getBody();
-			flowStart = func.getEntryPoint();
 
-			Instruction instr = program.getListing().getInstructionAt(flowStart);
-			// special case for leaf PIC call
-			if (instr.getMnemonicString().equals("retl")) {
-				Instruction dInstr =
-					program.getListing().getInstructionAfter(instr.getMinAddress());
-				if (dInstr.getMnemonicString().equals("_add")) {
-					Register r0 = dInstr.getRegister(0);
-					Register r1 = dInstr.getRegister(1);
-					Register r2 = dInstr.getRegister(2);
-					// add some register to the o7 register.  This is just getting offset of current location
-					if (r0 != null && r0.getName().equals("o7") && r1 != null && r1.equals(r2)) {
-						func.setInline(true);
-					}
-				}
-			}
-		}
+		Register linkReg = program.getRegister("o7");
 
 		// follow all flows building up context
 		// use context to fill out addresses on certain instructions 
@@ -83,7 +75,7 @@ public class SparcAnalyzer extends ConstantPropagationAnalyzer {
 				FlowType ftype = instr.getFlowType();
 				// Check for a call with a restore in the delay slot
 				//    Then it is a non-returning call (share the called function return
-				if (ftype.isCall()) {
+				if (o7CallReturnAnalysis && ftype.isCall()) {
 					Address fallAddr = instr.getFallThrough();
 					if (fallAddr == null) {
 						return false;
@@ -93,7 +85,16 @@ public class SparcAnalyzer extends ConstantPropagationAnalyzer {
 					if (delayInstr == null) {
 						return false;
 					}
-					if (delayInstr.getMnemonicString().compareToIgnoreCase("_restore") == 0) {
+					PcodeOp[] pcode = delayInstr.getPcode();
+					for (PcodeOp pcodeOp : pcode) {
+						Varnode output = pcodeOp.getOutput();
+						if (output == null || !output.equals(context.getRegisterVarnode(linkReg))) {
+							continue;
+						}
+						Varnode input = pcodeOp.getInput(0);
+						if (input.isConstant()) {
+							continue; // this is just assigning the return value after the call
+						}
 						instr.setFallThrough(null);
 						Instruction fallInstr =
 							instr.getProgram().getListing().getInstructionAt(fallAddr);
@@ -106,6 +107,8 @@ public class SparcAnalyzer extends ConstantPropagationAnalyzer {
 						ClearFlowAndRepairCmd cmd =
 							new ClearFlowAndRepairCmd(fallAddr, false, false, true);
 						cmd.applyTo(instr.getProgram(), monitor);
+						
+						break;
 					}
 				}
 				return false;
@@ -136,5 +139,18 @@ public class SparcAnalyzer extends ConstantPropagationAnalyzer {
 		AddressSet resultSet = symEval.flowConstants(flowStart, flowSet, eval, true, monitor);
 
 		return resultSet;
+	}
+	
+	
+	@Override
+	public void registerOptions(Options options, Program program) {
+		super.registerOptions(options, program);
+		options.registerOption(O7_CALLRETURN_NAME, o7CallReturnAnalysis, null, O7_CALLRETURN_DESCRIPTION);
+	}
+
+	@Override
+	public void optionsChanged(Options options, Program program) {
+		super.optionsChanged(options, program);
+		o7CallReturnAnalysis = options.getBoolean(O7_CALLRETURN_NAME, o7CallReturnAnalysis);
 	}
 }

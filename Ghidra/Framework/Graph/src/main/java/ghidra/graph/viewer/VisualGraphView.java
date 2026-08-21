@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.graph.viewer;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
@@ -29,6 +30,7 @@ import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.control.ScalingControl;
 import generic.theme.Gui;
 import ghidra.graph.VisualGraph;
+import ghidra.graph.viewer.GraphComponent.SatellitePosition;
 import ghidra.graph.viewer.event.mouse.VertexTooltipProvider;
 import ghidra.graph.viewer.event.mouse.VisualGraphMousePlugin;
 import ghidra.graph.viewer.layout.LayoutProvider;
@@ -100,7 +102,7 @@ public class VisualGraphView<V extends VisualVertex,
 		return result.get();
 	};
 
-	private Optional<GraphSatelliteListener> clientSatelliteListener = Optional.empty();
+	private List<GraphSatelliteListener> satelliteListeners = new ArrayList<>();
 
 	// this internal listener is the way we manage keeping our state in sync with the
 	// graph component, as well as how we notify the client listener
@@ -109,7 +111,7 @@ public class VisualGraphView<V extends VisualVertex,
 		// keep our internal state in-sync
 		showSatellite = visible;
 		satelliteDocked = docked;
-		clientSatelliteListener.ifPresent(l -> l.satelliteVisibilityChanged(docked, visible));
+		satelliteListeners.forEach(l -> l.satelliteVisibilityChanged(docked, visible));
 	};
 
 	private boolean satelliteDocked = true;
@@ -124,6 +126,7 @@ public class VisualGraphView<V extends VisualVertex,
 
 	protected LayoutProvider<V, E, G> layoutProvider;
 	private final ScalingControl scaler = new VisualGraphScalingControl();
+	private SatellitePosition satellitePosition = SatellitePosition.LOWER_RIGHT;
 
 	public VisualGraphView() {
 		build();
@@ -184,8 +187,10 @@ public class VisualGraphView<V extends VisualVertex,
 		installGraphViewer();
 	}
 
-	public void setSatelliteListener(GraphSatelliteListener l) {
-		clientSatelliteListener = Optional.ofNullable(l);
+	public void addSatelliteListener(GraphSatelliteListener l) {
+		if (l != null) {
+			satelliteListeners.add(l);
+		}
 	}
 
 	public void setVertexFocusListener(VertexFocusListener<V> l) {
@@ -263,6 +268,7 @@ public class VisualGraphView<V extends VisualVertex,
 			undockedSatelliteContentPanel.add(graphComponent.getSatelliteContentComponent());
 			undockedSatelliteContentPanel.validate();
 		}
+		graphComponent.setSatellitePosition(satellitePosition);
 	}
 
 	/*
@@ -421,6 +427,17 @@ public class VisualGraphView<V extends VisualVertex,
 		}
 	}
 
+	public void setSatellitePosition(SatellitePosition position) {
+		satellitePosition = position;
+		if (graphComponent != null) {
+			graphComponent.setSatellitePosition(position);
+		}
+	}
+
+	public SatellitePosition getSatellitePosition() {
+		return satellitePosition;
+	}
+
 	/**
 	 * Returns whether the satellite intended to be docked.  If this component is built, then
 	 * a result of true means that the satellite is docked.  If the component is not yet
@@ -440,8 +457,12 @@ public class VisualGraphView<V extends VisualVertex,
 		}
 	}
 
-	public boolean arePopupsEnabled() {
+	public boolean arePopupsVisible() {
 		return showPopups;
+	}
+
+	public boolean arePopupsEnabled() {
+		return arePopupsVisible();
 	}
 
 	public JComponent getUndockedSatelliteComponent() {

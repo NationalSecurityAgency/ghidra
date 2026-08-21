@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,8 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
-import ghidra.util.exception.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -174,12 +175,6 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 	}
 
 	@Override
-	protected void renameObjMsgSendRtpSymbol()
-			throws DuplicateNameException, InvalidInputException {
-		// Do nothing.  This is not applicable for a PRELINK Mach-O.
-	}
-
-	@Override
 	protected void markupChainedFixups(MachHeader header, List<Address> fixups)
 			throws CancelledException {
 		// Just save the list.  
@@ -234,7 +229,7 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 			MachoPrelinkProgramBuilder.this.markupHeaders(header, headerAddr);
 
 			if (!name.isEmpty()) {
-				listing.setComment(headerAddr, CodeUnit.PLATE_COMMENT, name);
+				listing.setComment(headerAddr, CommentType.PLATE, name);
 			}
 		}
 

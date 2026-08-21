@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package ghidra.framework.options;
 
 import java.beans.PropertyEditor;
+import java.time.LocalDate;
 import java.util.Objects;
 
 import ghidra.util.HelpLocation;
@@ -23,9 +24,15 @@ import ghidra.util.SystemUtilities;
 import utilities.util.reflection.ReflectionUtilities;
 
 public abstract class Option {
+
+	public static final String UNREGISTERED_OPTION = "Unregistered Option";
+
+	private static final LocalDate ONE_YEAR_AGO = LocalDate.now().minusYears(1);
+
 	private final String name;
 	private Object defaultValue;
 	private boolean isRegistered;
+	private LocalDate lastRegisteredDate;
 	private String description;
 	private HelpLocation helpLocation;
 	private OptionType optionType;
@@ -43,7 +50,10 @@ public abstract class Option {
 		this.defaultValue = defaultValue;
 		this.isRegistered = isRegistered;
 		this.propertyEditor = editor;
-		if (!isRegistered) {
+		if (isRegistered) {
+			lastRegisteredDate = LocalDate.now();
+		}
+		else {
 			recordInception();
 		}
 	}
@@ -65,6 +75,7 @@ public abstract class Option {
 		defaultValue = defaultValue != null ? defaultValue : updatedDefaultValue;
 		propertyEditor = propertyEditor != null ? propertyEditor : updatedEditor;
 		isRegistered = true;
+		lastRegisteredDate = LocalDate.now();
 	}
 
 	public abstract Object getCurrentValue();
@@ -72,7 +83,8 @@ public abstract class Option {
 	public abstract void doSetCurrentValue(Object value);
 
 	public void setCurrentValue(Object value) {
-		this.isRegistered = true;
+		isRegistered = true;
+		lastRegisteredDate = LocalDate.now();
 		doSetCurrentValue(value);
 	}
 
@@ -89,7 +101,11 @@ public abstract class Option {
 	}
 
 	public String getDescription() {
-		return description == null ? "Unregistered Option" : description;
+		// 'Unregistered Option' is returned when an option was never registered.  It can also be
+		// returned when an option value was set, but the option itself was never registered.  In 
+		// that case, the isRegistered value is set to true, which means that a client has accessed
+		// the option.  
+		return description == null ? UNREGISTERED_OPTION : description;
 	}
 
 	public Object getValue(Object passedInDefaultValue) {
@@ -103,8 +119,42 @@ public abstract class Option {
 		return value;
 	}
 
+	public boolean wasRegisteredInPreviousSession() {
+		return lastRegisteredDate != null;
+	}
+
 	public boolean isRegistered() {
 		return isRegistered;
+	}
+
+	public void setLastRegisteredDate(LocalDate date) {
+		lastRegisteredDate = date;
+	}
+
+	public LocalDate getLastRegisteredDate() {
+		LocalDate date = lastRegisteredDate;
+		if (date == null) {
+			// This implies a new option that has not been registered and was not in a saved tool.
+			// Pick an old date so the option will not linger.
+			date = ONE_YEAR_AGO;
+		}
+		return date;
+	}
+
+	/**
+	 * Returns true if the last registered date for this option is older than 1 year ago.  That 
+	 * means that the option has not been registered and is likely no longer valid. This may not be
+	 * true, if the given option still exists, but is only active on-demand by the user.   If the
+	 * option has expired, it will be removed.  If it is still an existing on-demand option, it can
+	 * again be saved when the user loads the owning provider and changes the option.  In this case, 
+	 * it will remain in the tool for at least another year.
+	 * @return true if expired
+	 */
+	public boolean hasExpired() {
+		if (lastRegisteredDate == null) {
+			return false;
+		}
+		return lastRegisteredDate.isBefore(ONE_YEAR_AGO);
 	}
 
 	public void restoreDefault() {
@@ -145,4 +195,5 @@ public abstract class Option {
 	public OptionType getOptionType() {
 		return optionType;
 	}
+
 }

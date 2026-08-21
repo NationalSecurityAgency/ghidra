@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,6 +43,11 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 		"Only demangle symbols that follow known compiler mangling patterns. " +
 			"Leaving this option off may cause non-mangled symbols to get demangled.";
 
+	private static final String OPTION_NAME_DEMANGLE_USE_STANDARD_REPLACEMENTS =
+		"Use Standard Text Replacements";
+	private static final String OPTION_DESCRIPTION_STANDARD_REPLACEMENTS =
+		"Use text simplifications in demangled output, for example to use standard c++ typedefs.";
+
 	private static final String OPTION_NAME_APPLY_SIGNATURE = "Apply Function Signatures";
 	private static final String OPTION_DESCRIPTION_APPLY_SIGNATURE =
 		"Apply any recovered function signature, in addition to the function name";
@@ -61,16 +66,21 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 	private static final String OPTION_DESCRIPTION_DEMANGLER_FORMAT =
 		"The demangling format to use";
 
+	static final String OPTION_NAME_TIMEOUT_SECONDS = "Timeout (seconds)";
+	private static final String OPTION_DESCRIPTION_TIMEOUT_SECONDS =
+		"The maximum amount of seconds to spend demangling a string";
+
 	private boolean applyFunctionSignature = true;
 	private boolean applyCallingConvention = true;
 	private boolean demangleOnlyKnownPatterns = false;
+	private boolean useStandardReplacements = true;
+	private long timeoutSeconds = GnuDemanglerOptions.DEFAULT_TIMEOUT_SECONDS;
 	private GnuDemanglerFormat demanglerFormat = GnuDemanglerFormat.AUTO;
 	private boolean useDeprecatedDemangler = false;
 
-	private GnuDemangler demangler = new GnuDemangler();
-
 	public GnuDemanglerAnalyzer() {
 		super(NAME, DESCRIPTION);
+		demangler = new GnuDemangler();
 		setDefaultEnablement(true);
 	}
 
@@ -92,6 +102,9 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 		options.registerOption(OPTION_NAME_DEMANGLE_USE_KNOWN_PATTERNS, demangleOnlyKnownPatterns,
 			help, OPTION_DESCRIPTION_USE_KNOWN_PATTERNS);
 
+		options.registerOption(OPTION_NAME_DEMANGLE_USE_STANDARD_REPLACEMENTS,
+			useStandardReplacements, help, OPTION_DESCRIPTION_STANDARD_REPLACEMENTS);
+
 		GnuOptionsEditor optionsEditor = new GnuOptionsEditor();
 
 		options.registerOption(OPTION_NAME_USE_DEPRECATED_DEMANGLER, OptionType.BOOLEAN_TYPE,
@@ -102,6 +115,8 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 			demanglerFormat, help, OPTION_DESCRIPTION_DEMANGLER_FORMAT,
 			() -> optionsEditor.getFormatEditor());
 
+		options.registerOption(OPTION_NAME_TIMEOUT_SECONDS, timeoutSeconds, help,
+			OPTION_DESCRIPTION_TIMEOUT_SECONDS);
 	}
 
 	@Override
@@ -112,6 +127,11 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 			options.getBoolean(OPTION_NAME_APPLY_CALLING_CONVENTION, applyCallingConvention);
 		demangleOnlyKnownPatterns =
 			options.getBoolean(OPTION_NAME_DEMANGLE_USE_KNOWN_PATTERNS, demangleOnlyKnownPatterns);
+		useStandardReplacements =
+			options.getBoolean(OPTION_NAME_DEMANGLE_USE_STANDARD_REPLACEMENTS,
+				useStandardReplacements);
+		timeoutSeconds = options.getLong(OPTION_NAME_TIMEOUT_SECONDS,
+			GnuDemanglerOptions.DEFAULT_TIMEOUT_SECONDS);
 		demanglerFormat = options.getEnum(OPTION_NAME_DEMANGLER_FORMAT, GnuDemanglerFormat.AUTO);
 		useDeprecatedDemangler =
 			options.getBoolean(OPTION_NAME_USE_DEPRECATED_DEMANGLER, useDeprecatedDemangler);
@@ -120,18 +140,19 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 	@Override
 	protected DemanglerOptions getOptions() {
 		GnuDemanglerOptions options =
-			new GnuDemanglerOptions(demanglerFormat, useDeprecatedDemangler);
+			new GnuDemanglerOptions(demanglerFormat, useDeprecatedDemangler, timeoutSeconds);
 		options.setDoDisassembly(true);
 		options.setApplySignature(applyFunctionSignature);
 		options.setApplyCallingConvention(applyCallingConvention);
 		options.setDemangleOnlyKnownPatterns(demangleOnlyKnownPatterns);
+		options.setUseStandardReplacements(useStandardReplacements);
 		return options;
 	}
 
 	@Override
-	protected DemangledObject doDemangle(String mangled, DemanglerOptions demanglerOtions,
-			MessageLog log) throws DemangledException {
-		return demangler.demangle(mangled, demanglerOtions);
+	protected DemangledObject doDemangle(MangledContext mangledContext, MessageLog log)
+			throws DemangledException {
+		return demangler.demangle(mangledContext);
 	}
 
 //==================================================================================================

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,7 +45,7 @@ public class VtShapeMsType extends AbstractMsType {
 		int byteVal = 0;
 		int value;
 		VtShapeDescriptorMsProperty descriptor;
-		// It seems that the upper nibble of the the byte is first and the lower nibble is
+		// It seems that the upper nibble of the byte is first and the lower nibble is
 		//  second; that is why we process as we do below (shifting for the first and masking
 		//  for the second).
 		for (int i = 0; i < count / 2; i++) {
@@ -88,7 +88,7 @@ public class VtShapeMsType extends AbstractMsType {
 	}
 
 	/**
-	 * Tells whether the the {@link VtShapeDescriptorMsProperty} is present.
+	 * Tells whether the {@link VtShapeDescriptorMsProperty} is present.
 	 * @param descriptor the {@link VtShapeDescriptorMsProperty} to check.
 	 * @return True if the {@link VtShapeDescriptorMsProperty} is present.
 	 */

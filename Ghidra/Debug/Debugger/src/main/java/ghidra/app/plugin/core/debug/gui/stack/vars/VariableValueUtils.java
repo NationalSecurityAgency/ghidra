@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,10 +15,10 @@
  */
 package ghidra.app.plugin.core.debug.gui.stack.vars;
 
-import java.util.*;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
-import ghidra.app.decompiler.ClangLine;
-import ghidra.app.decompiler.ClangToken;
 import ghidra.app.plugin.core.debug.stack.*;
 import ghidra.app.plugin.core.debug.stack.StackUnwindWarning.CustomStackUnwindWarning;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
@@ -46,7 +46,6 @@ import ghidra.trace.model.memory.*;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceAddressSpace;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.MathUtilities;
 import ghidra.util.Msg;
@@ -64,21 +63,6 @@ public enum VariableValueUtils {
 	 * context
 	 */
 	private static final class RequiresFrameEvaluator extends AbstractVarnodeEvaluator<Boolean> {
-		private final AddressSetView symbolStorage;
-
-		private RequiresFrameEvaluator(AddressSetView symbolStorage) {
-			this.symbolStorage = symbolStorage;
-		}
-
-		@Override
-		protected boolean isLeaf(Varnode vn) {
-			if (vn.getDef() == null && (vn.isRegister() || vn.isAddress())) {
-				return true;
-			}
-			return vn.isConstant() ||
-				symbolStorage.contains(vn.getAddress(), vn.getAddress().add(vn.getSize() - 1));
-		}
-
 		@Override
 		protected Address applyBase(long offset) {
 			throw new AssertionError();
@@ -139,8 +123,7 @@ public enum VariableValueUtils {
 		}
 
 		@Override
-		protected Boolean evaluateLoad(Program program, PcodeOp op,
-				Map<Varnode, Boolean> already) {
+		protected Boolean evaluateLoad(Program program, PcodeOp op, Map<Varnode, Boolean> already) {
 			return evaluateVarnode(program, op.getInput(1), already);
 		}
 
@@ -181,8 +164,13 @@ public enum VariableValueUtils {
 		}
 
 		@Override
+		public boolean isImmutableSettings() {
+			return true;
+		}
+
+		@Override
 		public boolean isChangeAllowed(SettingsDefinition settingsDefinition) {
-			return delegate.isChangeAllowed(settingsDefinition);
+			return false;
 		}
 
 		@Override
@@ -269,9 +257,10 @@ public enum VariableValueUtils {
 		RegisterValue spRV = regs.getValue(platform, viewSnap, sp);
 		Address spVal = cSpec.getStackBaseSpace().getAddress(spRV.getUnsignedValue().longValue());
 		Address max;
-		TraceMemoryRegion stackRegion = mem.getRegionContaining(coordinates.getSnap(), spVal);
+		long snap = coordinates.getSnap();
+		TraceMemoryRegion stackRegion = mem.getRegionContaining(snap, spVal);
 		if (stackRegion != null) {
-			max = stackRegion.getMaxAddress();
+			max = stackRegion.getMaxAddress(snap);
 		}
 		else {
 			long toMax = spVal.getAddressSpace().getMaxAddress().subtract(spVal);
@@ -353,25 +342,32 @@ public enum VariableValueUtils {
 	 * 
 	 * @param program the program containing the variable storage
 	 * @param storage the storage to evaluate
-	 * @param symbolStorage the leaves of evaluation, usually storage used by symbols in scope. See
-	 *            {@link #collectSymbolStorage(ClangLine)}
 	 * @return true if a frame is required, false otherwise
 	 */
-	public static boolean requiresFrame(Program program, VariableStorage storage,
-			AddressSetView symbolStorage) {
-		return new RequiresFrameEvaluator(symbolStorage).evaluateStorage(program, storage);
+	public static boolean requiresFrame(Program program, VariableStorage storage) {
+		return new RequiresFrameEvaluator().evaluateStorage(program, storage);
+	}
+
+	/**
+	 * Check if evaluation of the given varnode will require a frame
+	 * 
+	 * @param program the program containing the variable storage
+	 * @param varnode the varnode to evaluate
+	 * @return true if a frame is required, false otherwise
+	 */
+	public static boolean requiresFrame(Program program, Varnode varnode) {
+		return new RequiresFrameEvaluator().evaluateVarnode(program, varnode);
 	}
 
 	/**
 	 * Check if evaluation of the given p-code op will require a frame
 	 * 
+	 * @param program the program containing the variable storage
 	 * @param op the op whose output to evaluation
-	 * @param symbolStorage the leaves of evaluation, usually storage used by symbols in scope. See
-	 *            {@link #collectSymbolStorage(ClangLine)}
 	 * @return true if a frame is required, false otherwise
 	 */
-	public static boolean requiresFrame(PcodeOp op, AddressSetView symbolStorage) {
-		return new RequiresFrameEvaluator(symbolStorage).evaluateOp(null, op);
+	public static boolean requiresFrame(Program program, PcodeOp op) {
+		return new RequiresFrameEvaluator().evaluateOp(program, op);
 	}
 
 	/**
@@ -393,7 +389,7 @@ public enum VariableValueUtils {
 		if (stack == null) {
 			return null;
 		}
-		TraceStackFrame frame = stack.getFrame(0, false);
+		TraceStackFrame frame = stack.getFrame(snap, 0, false);
 		if (frame == null) {
 			return null;
 		}
@@ -445,6 +441,77 @@ public enum VariableValueUtils {
 	}
 
 	/**
+	 * Get the stack pointer for the given thread's innermost frame using its {@link TraceStack}
+	 * 
+	 * <p>
+	 * This will prefer the stack pointer in the {@link TraceStackFrame}. If that's not available,
+	 * it will use the value of the stack pointer register from the thread's register bank for frame
+	 * 0.
+	 * 
+	 * @param platform the platform
+	 * @param thread the thread
+	 * @param snap the snapshot key
+	 * @return the address
+	 */
+	public static Address getStackPointerFromStack(TracePlatform platform, TraceThread thread,
+			long snap) {
+		TraceStack stack = thread.getTrace().getStackManager().getStack(thread, snap, false);
+		if (stack == null) {
+			return null;
+		}
+		TraceStackFrame frame = stack.getFrame(snap, 0, false);
+		if (frame == null) {
+			return null;
+		}
+		return frame.getStackPointer(snap);
+	}
+
+	/**
+	 * Get the program counter for the given thread's innermost frame using its
+	 * {@link TraceMemorySpace}, i.e., registers
+	 * 
+	 * @param platform the platform
+	 * @param thread the thread
+	 * @param snap the snapshot key
+	 * @return the address
+	 */
+	public static Address getStackPointerFromRegisters(TracePlatform platform, TraceThread thread,
+			long snap) {
+		TraceMemorySpace regs =
+			thread.getTrace().getMemoryManager().getMemoryRegisterSpace(thread, false);
+		if (regs == null) {
+			return null;
+		}
+		CompilerSpec compiler = platform.getCompilerSpec();
+		RegisterValue value =
+			regs.getValue(platform, snap, compiler.getStackPointer());
+		return platform.getLanguage()
+				.getDefaultSpace()
+				.getAddress(value.getUnsignedValue().longValue());
+	}
+
+	/**
+	 * Get the stack pointer from the innermost frame of the given thread's stack
+	 * 
+	 * <p>
+	 * This will prefer the stack pointer in the {@link TraceStackFrame}. If that's not available,
+	 * it will use the value of the stack pointer register from the thread's register bank for frame
+	 * 0.
+	 * 
+	 * @param platform the platform
+	 * @param thread the thread
+	 * @param snap the snapshot key
+	 * @return the address
+	 */
+	public static Address getStackPointer(TracePlatform platform, TraceThread thread, long snap) {
+		Address spFromStack = getStackPointerFromStack(platform, thread, snap);
+		if (spFromStack != null) {
+			return spFromStack;
+		}
+		return getStackPointerFromRegisters(platform, thread, snap);
+	}
+
+	/**
 	 * Check if the unwound frames annotated in the listing are "fresh"
 	 * 
 	 * <p>
@@ -457,9 +524,8 @@ public enum VariableValueUtils {
 	 */
 	public static boolean hasFreshUnwind(PluginTool tool, DebuggerCoordinates coordinates) {
 		ListingUnwoundFrame innermost = locateInnermost(tool, coordinates);
-		if (innermost == null || !Objects.equals(innermost.getProgramCounter(),
-			getProgramCounter(coordinates.getPlatform(), coordinates.getThread(),
-				coordinates.getViewSnap()))) {
+		if (innermost == null || !Objects.equals(innermost.getProgramCounter(), getProgramCounter(
+			coordinates.getPlatform(), coordinates.getThread(), coordinates.getViewSnap()))) {
 			return false;
 		}
 		return true;
@@ -482,7 +548,7 @@ public enum VariableValueUtils {
 	}
 
 	/**
-	 * Find the fuction's variable whose storage contains the given stack offset
+	 * Find the function's variable whose storage contains the given stack offset
 	 * 
 	 * @param function the function
 	 * @param stackAddress the stack offset
@@ -517,46 +583,7 @@ public enum VariableValueUtils {
 	}
 
 	/**
-	 * Collect the addresses used for storage by any symbol in the given line of decompiled C code
-	 * 
-	 * <p>
-	 * It's not the greatest, but any variable to be evaluated should only be expressed in terms of
-	 * symbols on the same line (at least by the decompiler's definition, wrapping shouldn't count
-	 * against us). This can be used to determine where evaluation should cease descending into
-	 * defining p-code ops. See {@link #requiresFrame(PcodeOp, AddressSetView)}, and
-	 * {@link UnwoundFrame#evaluate(Program, PcodeOp, AddressSetView)}.
-	 * 
-	 * @param line the line
-	 * @return the address set
-	 */
-	public static AddressSet collectSymbolStorage(ClangLine line) {
-		AddressSet storage = new AddressSet();
-		for (ClangToken tok : line.getAllTokens()) {
-			Varnode vn = tok.getVarnode();
-			if (vn != null) {
-				storage.add(rangeFromVarnode(vn));
-			}
-			HighVariable hVar = tok.getHighVariable();
-			if (hVar == null) {
-				continue;
-			}
-			Varnode rep = hVar.getRepresentative();
-			if (rep != null) {
-				storage.add(rangeFromVarnode(rep));
-			}
-			HighSymbol hSym = hVar.getSymbol();
-			if (hSym == null) {
-				continue;
-			}
-			for (Varnode stVn : hSym.getStorage().getVarnodes()) {
-				storage.add(rangeFromVarnode(stVn));
-			}
-		}
-		return storage;
-	}
-
-	/**
-	 * Find the descendent that dereferences this given varnode
+	 * Find the descendant that dereferences this given varnode
 	 * 
 	 * <p>
 	 * This searches only one hop for a {@link PcodeOp#LOAD} or {@link PcodeOp#STORE}. If it find a
@@ -653,10 +680,9 @@ public enum VariableValueUtils {
 				listenFor(TraceEvents.BYTES_CHANGED, this::bytesChanged);
 			}
 
-			private void bytesChanged(TraceAddressSpace space, TraceAddressSnapRange range) {
-				TraceThread thread = space.getThread();
+			private void bytesChanged(AddressSpace space, TraceAddressSnapRange range) {
 				// TODO: Consider the lifespan, too? Would have to use viewport....
-				if (thread == null || thread == coordinates.getThread()) {
+				if (space.isMemorySpace() || coordinates.isRegisterSpace(space)) {
 					invalidateCache();
 				}
 			}
@@ -668,8 +694,8 @@ public enum VariableValueUtils {
 		private final Language language;
 		private final ListenerForChanges listenerForChanges = new ListenerForChanges();
 
-		private List<UnwoundFrame<WatchValue>> unwound;
 		private FakeUnwoundFrame<WatchValue> fakeFrame;
+		private StackUnwinder unwinder;
 
 		/**
 		 * Construct an evaluator for the given tool and coordinates
@@ -681,6 +707,7 @@ public enum VariableValueUtils {
 			this.tool = tool;
 			this.coordinates = coordinates;
 			this.language = coordinates.getPlatform().getLanguage();
+			this.unwinder = new StackUnwinder(tool, coordinates.getPlatform());
 
 			coordinates.getTrace().addListener(listenerForChanges);
 		}
@@ -697,7 +724,7 @@ public enum VariableValueUtils {
 		 */
 		public void invalidateCache() {
 			synchronized (lock) {
-				unwound = null;
+				unwinder.invalidateCache();
 			}
 		}
 
@@ -717,21 +744,6 @@ public enum VariableValueUtils {
 		}
 
 		/**
-		 * Refresh the stack unwind
-		 * 
-		 * @param monitor a monitor for cancellation
-		 */
-		protected void doUnwind(TaskMonitor monitor) {
-			monitor.setMessage("Unwinding Stack");
-			StackUnwinder unwinder = new StackUnwinder(tool, coordinates.getPlatform());
-			unwound = new ArrayList<>();
-			for (AnalysisUnwoundFrame<WatchValue> frame : unwinder.frames(coordinates.frame(0),
-				monitor)) {
-				unwound.add(frame);
-			}
-		}
-
-		/**
 		 * Get the stack frame for the given function at or beyond the coordinates' frame level
 		 * 
 		 * @param function the desired function
@@ -743,48 +755,30 @@ public enum VariableValueUtils {
 		public UnwoundFrame<WatchValue> getStackFrame(Function function,
 				StackUnwindWarningSet warnings, TaskMonitor monitor, boolean required) {
 			synchronized (lock) {
-				if (unwound == null) {
-					try {
-						doUnwind(monitor);
-					}
-					catch (Exception e) {
-						/**
-						 * Most exceptions should be caught and wrapped by the unwind analysis. If
-						 * one gets here, something bad has happened, and for debugging purposes, we
-						 * should invalidate, so that the error will repeat next time the frame is
-						 * requested.
-						 */
-						unwound = null;
-						throw e;
-					}
+				// We unwind first from the current frame, because we want the closest function
+				//  match above the current frame.
+				// NB: Unwinding from 0 may provide better info
+				AnalysisUnwoundFrame<WatchValue> currentFrame =
+					unwinder.findMatchForFunction(function, coordinates, warnings, monitor);
+				if (currentFrame != null) {
+					return currentFrame;
 				}
 
-				for (UnwoundFrame<WatchValue> frame : unwound.subList(coordinates.getFrame(),
-					unwound.size())) {
-					if (frame.getFunction() == function) {
-						StackUnwindWarningSet unwindWarnings = frame.getWarnings();
-						if (unwindWarnings != null) {
-							warnings.addAll(unwindWarnings);
-						}
-						return frame;
-					}
+				// Unwind from 0 for functions below the current frame
+				currentFrame = unwinder.findMatchForFunction(function, coordinates.frame(0),
+					warnings, monitor);
+				if (currentFrame != null) {
+					warnings.add(new CustomStackUnwindWarning("Unwinding from frame 0"));
+					return currentFrame;
 				}
-				String message;
-				if (unwound.isEmpty()) {
-					message = "Could not recover the innermost frame!";
-				}
-				else {
-					message = "There is no frame for %s among the %d frames unwound."
-							.formatted(function, unwound.size());
-					Exception error = unwound.get(unwound.size() - 1).getError();
-					if (error != null) {
-						message += "\nTerminating error: %s".formatted(error.getMessage());
-					}
-				}
+
+				warnings.add(
+					new CustomStackUnwindWarning("Failed to find match for %s among the %d frames."
+							.formatted(function, unwinder.getRecoveredFrameCount())));
 				if (required) {
-					throw new UnwindException(message);
+					throw new UnwindException(
+						warnings.stream().map(w -> w.toString()).collect(Collectors.joining("\n")));
 				}
-				warnings.add(new CustomStackUnwindWarning(message));
 				return null;
 			}
 		}
@@ -850,13 +844,12 @@ public enum VariableValueUtils {
 				address.isRegisterAddress()) {
 				settings = new DefaultSpaceSettings(settings, language.getDefaultSpace());
 			}
-			ByteMemBufferImpl buf =
-				new ByteMemBufferImpl(address, bytes, language.isBigEndian()) {
-					@Override
-					public Memory getMemory() {
-						return coordinates.getView().getMemory();
-					}
-				};
+			ByteMemBufferImpl buf = new ByteMemBufferImpl(address, bytes, language.isBigEndian()) {
+				@Override
+				public Memory getMemory() {
+					return coordinates.getView().getMemory();
+				}
+			};
 			return type.getRepresentation(buf, settings, bytes.length);
 		}
 
@@ -879,7 +872,11 @@ public enum VariableValueUtils {
 			}
 			Settings settings = type.getDefaultSettings();
 			if (address.isStackAddress()) {
-				address = frame.getBasePointer().add(address.getOffset());
+				Address base = frame.getBasePointer();
+				if (base == null) {
+					return null;
+				}
+				address = base.add(address.getOffset());
 				if (frame instanceof ListingUnwoundFrame listingFrame) {
 					settings = listingFrame.getComponentContaining(address);
 				}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,6 +30,7 @@ import javax.swing.tree.TreePath;
 
 import org.junit.*;
 
+import docking.KeyEntryPanel;
 import docking.action.DockingActionIf;
 import docking.actions.KeyBindingUtils;
 import docking.options.editor.OptionsDialog;
@@ -132,6 +133,9 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@After
 	public void tearDown() throws Exception {
+
+		closeAllWindows();
+
 		debug("tearDown()");
 		env.dispose();
 		debug("a");
@@ -242,7 +246,7 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 		ToolOptions originalOptions = importOptions(saveFile);
 
 		assertOptionsMatch(
-			"The Options objects do not contain different data after changes have been made.",
+			"Options do not contain different data after changes have been made.",
 			toolKeyBindingOptions, originalOptions);
 
 		debug("c");
@@ -254,7 +258,7 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// verify the changes are different than the original values
 		assertOptionsDontMatch(
-			"The Options objects do not contain different data after changes have been made.",
+			"Options does not contain different data after changes have been made.",
 			toolKeyBindingOptions, originalOptions);
 
 		debug("e");
@@ -268,7 +272,7 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// verify the data is the same as it was before the changes
 		boolean same = compareOptionsWithKeyStrokeMap(originalOptions, keyStrokeMap);
-		assertTrue("The Options object contains different data than was imported.", same);
+		assertTrue("The exported options contains different data than were imported.", same);
 
 		debug("g");
 
@@ -429,7 +433,11 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 		panel = (KeyBindingsPanel) getEditorPanel(keyBindingsNode, optionsDialog);
 		table = findComponent(panel, JTable.class);
 		Object actionBindingPanel = getInstanceField("actionBindingPanel", panel);
-		keyField = (JTextField) getInstanceField("keyEntryField", actionBindingPanel);
+
+		KeyEntryPanel keyEntryPanel =
+			(KeyEntryPanel) getInstanceField("keyEntryPanel", actionBindingPanel);
+		keyField = keyEntryPanel.getTextField();
+
 		model = table.getModel();
 
 		debug("ff");
@@ -621,23 +629,23 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 	// keystrokes (the map is obtained from the key bindings panel after an
 	// import is done).
 	private boolean compareOptionsWithKeyStrokeMap(Options oldOptions,
-			Map<String, KeyStroke> panelKeyStrokeMap) {
-		List<String> propertyNames = oldOptions.getOptionNames();
-		for (String name : propertyNames) {
+			Map<String, KeyStroke> currentKsMap) {
+		List<String> oldNames = oldOptions.getOptionNames();
+		for (String oldName : oldNames) {
 
-			boolean match = panelKeyStrokeMap.containsKey(name);
-			ActionTrigger actionTrigger = oldOptions.getActionTrigger(name, null);
-			KeyStroke optionsKs = null;
-			if (actionTrigger != null) {
-				optionsKs = actionTrigger.getKeyStroke();
+			boolean match = currentKsMap.containsKey(oldName);
+			ActionTrigger oldTrigger = oldOptions.getActionTrigger(oldName, null);
+			KeyStroke oldKs = null;
+			if (oldTrigger != null) {
+				oldKs = oldTrigger.getKeyStroke();
 			}
 
-			KeyStroke panelKs = panelKeyStrokeMap.get(name);
+			KeyStroke currentKs = currentKsMap.get(oldName);
 
 			// if the value is null, then it would not have been placed into the options map 
 			// in the key bindings panel, so we only care about non-null values
-			if (optionsKs != null) {
-				match &= (optionsKs.equals(panelKs));
+			if (oldKs != null) {
+				match &= (oldKs.equals(currentKs));
 			}
 			else {
 				match = true;
@@ -645,6 +653,18 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 
 			// short-circuit if there are any data that don't match
 			if (!match) {
+
+				boolean containsOption = currentKsMap.containsKey(oldName);
+
+				String message = """
+						Old key stroke does not match new key stroke.
+							Option: %s
+							Old: %s
+							New: %s
+							Option name in new options?: %s
+						""".formatted(oldName, oldKs, currentKs, containsOption);
+				Msg.debug(this, message);
+
 				return false;
 			}
 		}

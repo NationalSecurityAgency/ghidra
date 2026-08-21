@@ -79,6 +79,8 @@ public class ContextRegisterFilterInputDialog extends InputDialogComponentProvid
 			currentRegPanel.setLayout(pairLayout);
 			JTextField currentTextField = new JTextField(currentRegister, TEXT_FIELD_COLUMNS);
 			currentTextField.setEditable(false);
+			currentTextField.getAccessibleContext()
+					.setAccessibleName(currentRegister + " Register");
 			currentRegPanel.add(currentTextField);
 			List<BigInteger> regValues = extent.getValuesForRegister(currentRegister);
 			RegisterValueWrapper[] valueArray = new RegisterValueWrapper[regValues.size() + 1];
@@ -89,9 +91,11 @@ public class ContextRegisterFilterInputDialog extends InputDialogComponentProvid
 			GhidraComboBox<RegisterValueWrapper> currentCombo =
 				new GhidraComboBox<RegisterValueWrapper>(valueArray);
 			currentRegPanel.add(currentCombo);
+			currentRegPanel.getAccessibleContext().setAccessibleName(currentRegister + " Values");
 			panel.add(currentRegPanel);
 			regsToBoxes.put(currentRegister, currentCombo);
 		}
+		panel.getAccessibleContext().setAccessibleName("Context Register Filter");
 		return panel;
 	}
 
@@ -105,8 +109,9 @@ public class ContextRegisterFilterInputDialog extends InputDialogComponentProvid
 		}
 		ContextRegisterFilter registerFilter = new ContextRegisterFilter();
 		for (String currentRegister : regsToBoxes.keySet()) {
-			BigInteger value = ((RegisterValueWrapper) regsToBoxes.get(
-				currentRegister).getSelectedItem()).getValue();
+			BigInteger value =
+				((RegisterValueWrapper) regsToBoxes.get(currentRegister).getSelectedItem())
+						.getValue();
 			if (value != null) {
 				registerFilter.addRegAndValueToFilter(currentRegister, value);
 			}

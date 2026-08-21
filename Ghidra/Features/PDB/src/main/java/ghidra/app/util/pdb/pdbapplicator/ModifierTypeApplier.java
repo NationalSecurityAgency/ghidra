@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,7 +57,7 @@ public class ModifierTypeApplier extends MsDataTypeApplier {
 
 		// If ghidra has modified types in the future, we will likely not perform a pass-through
 		//  of the underlying type.  We might actually need to do a fixup or be able to pass the
-		//  cycle-break information to a pointer or handle cycle-break information information
+		//  cycle-break information to a pointer or handle cycle-break information
 		//  in this modifier type.  Lots of things to consider.  Would we want to create a typedef
 		//  for modifier type as a short-gap solution??? Not sure.
 

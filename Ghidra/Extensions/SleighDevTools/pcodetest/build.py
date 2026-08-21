@@ -1,25 +1,27 @@
 ## ###
-#  IP: GHIDRA
-# 
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#  
-#       http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+# IP: GHIDRA
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 ##
 import os
+import shlex
 import shutil
 import subprocess
 import sys
 import pwd
 import grp
 import re
+from types import SimpleNamespace
 
 class BuildUtil:
 
@@ -31,32 +33,28 @@ class BuildUtil:
 
     def run(self, cmd, stdout=False, stderr=False, verbose=True):
         if isinstance(cmd, str):
-            if stdout and stderr:
-                cmd += ' 1>%s 2>%s' % (stdout, stderr)
-            elif stdout and not stderr:
-                cmd += ' 1>%s 2>&1' % (stdout)
-            elif not stdout and stderr:
-                cmd += ' 2>%s' % (stderr)
-            if verbose: self.log_info(cmd)
-            os.system(cmd)
+            proc = shlex.split(cmd)
+            string = cmd
         else:
-            string = ' '.join(cmd)
+            proc = cmd
+            string = " ".join(cmd)
+        if verbose: self.log_info(string)
+        try:
             if stdout:
-                f = open(stdout, 'w+')
-                string += ' 1>%s 2>&1' % (stdout)
+                stdout_f = open(stdout,'w')
+                stderr_f = open(stderr,'w') if stderr else subprocess.STDOUT
+                result = subprocess.run(proc, stdout=stdout_f, stderr=stderr_f)
+            elif stderr:
+                stdout_f = None
+                stderr_f = open(stderr,'w')
+                result = subprocess.run(proc, stdout=stdout_f, stderr=stderr_f)
             else:
-                f = subprocess.PIPE
-            if verbose: self.log_info(string)
-            try:
-                sp = subprocess.Popen(cmd, stdout=f, stderr=subprocess.PIPE)
-            except OSError as e:
-                self.log_err("Command: " + string)
-                self.log_err(e.strerror)
-                return 0, e.strerror
-            if stdout: f.close()
-            out, err = sp.communicate()
-            # print 'run returned %d bytes stdout and %d bytes stderr' % (len(out) if out else 0, len(err) if err else 0)
-            return out, err
+                result = subprocess.run(proc,capture_output=True)
+        except OSError as e:
+            self.log_err("Command: " + string)
+            self.log_err(e.strerror)
+            return 0, e.strerror
+        return result.stdout, result.stderr
 
     def isdir(self, dname):
         return os.path.isdir(dname)
@@ -286,7 +284,10 @@ class Config:
 
     def format(self, val):
         if isinstance(val, str) and '%' in val:
-            return val % self.__dict__
+            try:
+                return val % self.__dict__
+            except KeyError:
+                return val
         elif isinstance(val, dict):
             return {k: self.format(v) for k, v in val.items()}
         else: return val

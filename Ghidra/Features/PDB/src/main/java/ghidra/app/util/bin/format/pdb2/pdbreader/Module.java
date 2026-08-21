@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -336,7 +336,7 @@ public class Module {
 			writer.append(String.format("Offset: 0X%08X\n", symbolIter.getCurrentOffset()));
 			writer.append(symbol.toString());
 		}
-		writer.write("End Symbols-------------------------------------------------\n");
+		writer.write("\nEnd Symbols-------------------------------------------------\n");
 	}
 
 	private void dumpC11Lines(Writer writer) throws IOException, CancelledException, PdbException {
@@ -345,7 +345,7 @@ public class Module {
 		writer.write("C11Lines----------------------------------------------------\n");
 		C11Lines c11lines = getLineInformation();
 		if (c11lines != null) {
-			writer.write(c11lines.dump());
+			c11lines.dump(writer, pdb.getMonitor());
 		}
 		writer.write("End C11Lines------------------------------------------------\n");
 	}

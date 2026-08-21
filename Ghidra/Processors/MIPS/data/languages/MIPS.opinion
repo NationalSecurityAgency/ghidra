@@ -86,32 +86,40 @@ Elf e_flags are used for the secondary attribute, the following are pulled from 
 -->
 
   <!-- MIPS32 Pre-Release 6 -->
-	<!-- MIPS I,II,III,IV, don't cares: MDMX, MIPS16e, EABI, FPU -->
+	    <!-- MIPS I,II,III,IV, don't cares: MDMX, MIPS16e, EABI, FPU -->
         <constraint primary="8,10" processor="MIPS" size="32" variant="default"
-		secondary= "0b 00.. ..00 .... .... 00.1 0.0. 0000 ...."/>
+		        secondary= "0b 00.. ..00 .... .... 00.1 0.0. 0000 ...."/>
 
         <!-- MIPS I,II,III,IV, with microMIPS, don't cares: MDMX, EABI, FPU -->
         <constraint primary="8,10" processor="MIPS" size="32" variant="micro"
                 secondary= "0b 00.. .010 .... .... 00.1 0.0. 0000 ...."/>
-
-	<!-- MIPS32-R1 and -R2, don't cares: MDMX, MIPS16e, EABI, FPU -->
-	<constraint primary="8,10" processor="MIPS" size="32" variant="default"
+        
+	    <!-- MIPS32-R1 and -R2, don't cares: MDMX, MIPS16e, EABI, FPU -->
+	    <constraint primary="8,10" processor="MIPS" size="32" variant="default"
                 secondary= "0b 01.1 ..00 .... .... 00.1 0.0. 0000 ...."/>
 
-    <!-- MIPS32-R1 and -R2, don't cares: MDMX, MIPS16e, FPU -->                
-	<constraint primary="8,10" processor="MIPS" size="32" variant="default" compilerSpecID="eabi"
+        <!-- MIPS32-R1 and -R2, don't cares: MDMX, MIPS16e, FPU -->                
+	    <constraint primary="8,10" processor="MIPS" size="32" variant="default" compilerSpecID="eabi"
                 secondary= "0b 01.1 ..00 .... .... 0011 0.0. 0000 ...."/>
 
-
-    <!-- MIPS32-R1 and -R2, with microMIPS, don't cares: MDMX, EABI, FPU -->
+        <!-- MIPS32-R1 and -R2, with microMIPS, don't cares: MDMX, EABI, FPU -->
         <constraint primary="8,10" processor="MIPS" size="32" variant="micro"
                 secondary= "0b 0111 .010 .... .... 00.1 0.0. 0000 ...."/>
 
-    <!-- MIPS32-R1 and -R2, with microMIPS, don't cares: MDMX, FPU -->
+        <!-- MIPS32-R1 and -R2, with microMIPS, don't cares: MDMX, FPU -->
         <constraint primary="8,10" processor="MIPS" size="32" variant="micro" compilerSpecID="eabi"
                 secondary= "0b 0111 .010 .... .... 0011 0.0. 0000 ...."/>
 
   <!-- MIPS64 Pre-Release 6 -->
+  
+        <!-- MIPS III,IV with 32-bit addresses, ABI2 don't cares: MDMX, MIPS16e, EABI, FPU -->
+        <constraint primary="8,10" processor="MIPS" size="32" variant="64-32addr" compilerSpecID="n32"
+                secondary= "0b 001. ..00 .... .... 0... 0.0. 0010 ...."/>
+                 
+        <!-- MIPS III,IV with 32-bit addresses, ABI2 don't cares: MDMX, MIPS16e, EABI, FPU -->
+        <constraint primary="8,10" processor="MIPS" size="32" variant="64-32addr-micro" compilerSpecID="n32"
+                secondary= "0b 001. .010 .... .... 0... 0.0. 0010 ...."/>
+                
         <!-- MIPS64-R1 with 32-bit addresses, don't cares: MDMX, MIPS16e, EABI, FPU -->
         <constraint primary="8,10" processor="MIPS" size="32" variant="64-32addr"
                 secondary= "0b 0110 ..00 .... .... 0... 0.0. 00.0 ...."/>

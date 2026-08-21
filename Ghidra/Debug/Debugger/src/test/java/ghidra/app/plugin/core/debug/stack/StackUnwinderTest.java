@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import db.Transaction;
@@ -34,11 +35,12 @@ import docking.widgets.fieldpanel.listener.IndexMapper;
 import docking.widgets.fieldpanel.listener.LayoutModelListener;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import generic.Unique;
-import generic.test.rule.Repeated;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.*;
+import ghidra.app.decompiler.location.DefaultDecompilerLocation;
 import ghidra.app.plugin.assembler.*;
 import ghidra.app.plugin.assembler.sleigh.sem.*;
+import ghidra.app.plugin.core.analysis.*;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.debug.disassemble.TraceDisassembleCommand;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
@@ -79,9 +81,10 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.*;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.TraceLocation;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 import ghidra.trace.model.listing.TraceData;
+import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.Scheduler;
 import ghidra.util.Msg;
@@ -125,6 +128,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 	CodeBrowserPlugin codeBrowserPlugin;
 	ListingPanel staticListing;
 	DebuggerListingPlugin listingPlugin;
+	VariableValueHoverPlugin valuesPlugin;
 	ListingPanel dynamicListing;
 	DebuggerControlService editingService;
 	DebuggerEmulationService emuService;
@@ -512,6 +516,54 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		}
 	}
 
+	protected Function createFillStackStructProgramX86_64() throws Throwable {
+		createProgram("x86:LE:64:default", "gcc");
+		intoProject(program);
+
+		try (Transaction tx = program.openTransaction("Assemble")) {
+			ProgramBasedDataTypeManager dtm = program.getDataTypeManager();
+			Structure structure = new StructureDataType("MyStruct", 0, dtm);
+			structure.add(DWordDataType.dataType, "f1", "");
+			structure.add(DWordDataType.dataType, "f2", "");
+			structure.add(QWordDataType.dataType, "f3", "");
+			structure =
+				(Structure) dtm.addDataType(structure, DataTypeConflictHandler.DEFAULT_HANDLER);
+
+			Address entry = addr(program, 0x00400000);
+			program.getMemory()
+					.createInitializedBlock(".text", entry, 0x1000, (byte) 0, monitor, false);
+
+			Assembler asm = Assemblers.getAssembler(program.getLanguage(), NO_16BIT_CALLS);
+			AssemblyBuffer buf = new AssemblyBuffer(asm, entry);
+
+			buf.assemble("PUSH RBP");
+			buf.assemble("MOV RBP, RSP");
+			buf.assemble("SUB RSP, 0x20");
+			buf.assemble("MOV dword ptr [RBP + -0x10], 0x4");
+			buf.assemble("MOV dword ptr [RBP + -0xc], 0xdeadbeef");
+			buf.assemble("MOV qword ptr [RBP + -0x8], 0xcafebab");
+			buf.assemble("LEA RDI, [RBP + -0x10]");
+			buf.assemble("CALL 0x00400040");
+			buf.assemble("MOV RSP, RBP");
+			buf.assemble("POP RBP");
+			buf.assemble("RET");
+			Address end = buf.getNext();
+
+			program.getMemory().setBytes(entry, buf.getBytes());
+
+			Disassembler dis = Disassembler.getDisassembler(program, monitor, null);
+			dis.disassemble(entry, null);
+
+			Function funFillStruct = program.getFunctionManager()
+					.createFunction("fillStruct", entry, new AddressSet(entry, end.previous()),
+						SourceType.ANALYSIS);
+			funFillStruct.addLocalVariable(new LocalVariableImpl("s", structure, -0x18, program),
+				SourceType.ANALYSIS);
+
+			return funFillStruct;
+		}
+	}
+
 	protected Function createFillStructArrayProgramX86_32() throws Throwable {
 		createProgram("x86:LE:32:default", "gcc");
 		intoProject(program);
@@ -588,6 +640,58 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		}
 	}
 
+	protected Function createInfiniteRecursionProgramArm() throws Throwable {
+		createProgram("ARM:LE:32:v8", "default");
+		intoProject(program);
+		try (Transaction _ = program.openTransaction("Assemble")) {
+			Address entry = addr(program, 0x00400000);
+			program.getMemory()
+					.createInitializedBlock(".text", entry, 0x1000, (byte) 0, monitor, false);
+
+			Assembler asm = Assemblers.getAssembler(program.getLanguage());
+			AssemblyBuffer buf = new AssemblyBuffer(asm, entry);
+
+			Language language = asm.getLanguage();
+			Register regCtx = language.getContextBaseRegister();
+			Register regT = language.getRegister("T");
+			RegisterValue rvDefault = asm.getContextAt(entry).toRegisterValue(regCtx);
+			RegisterValue rvThumb = rvDefault.assign(regT, BigInteger.ONE);
+			AssemblyPatternBlock ctxThumb = AssemblyPatternBlock.fromRegisterValue(rvThumb);
+
+			buf.emit(NumericUtilities.convertStringToBytes("00 b5")); // push {lr}
+			buf.emit(NumericUtilities.convertStringToBytes("00 04")); // lsl  r0,r0,#0x10
+			buf.emit(NumericUtilities.convertStringToBytes("00 0c")); // lsr  r0,r0,#0x10
+			buf.assemble("bl   0x%s".formatted(entry), ctxThumb);
+			bodyInstr = buf.getNext();
+			buf.assemble("pop  {r0}", ctxThumb);
+			buf.assemble("bx   r0", ctxThumb);
+
+			byte[] bytes = buf.getBytes();
+			program.getMemory().setBytes(entry, bytes);
+
+			Disassembler dis = Disassembler.getDisassembler(program, monitor, null);
+			dis.disassemble(entry, null, rvThumb, false);
+
+			Function func = program.getFunctionManager()
+					.createFunction("recurseInfinitely", entry,
+						new AddressSet(entry, entry.add(bytes.length - 1)),
+						SourceType.USER_DEFINED);
+			return func;
+		}
+	}
+
+	protected void openAndAnalyze(Function function) {
+		GhidraProgramUtilities.markProgramNotToAskToAnalyze(program);
+		programManager.openProgram(program);
+		waitForSwing();
+
+		AutoAnalysisManager analysisManager = AutoAnalysisManager.getAnalysisManager(program);
+		tool.executeBackgroundCommand(new AnalysisBackgroundCommand(analysisManager, true),
+			program);
+		analysisManager.reAnalyzeAll(function.getBody());
+		waitForTasks();
+	}
+
 	@Test
 	public void testComputeUnwindInfoX86_32() throws Throwable {
 		addPlugin(tool, CodeBrowserPlugin.class);
@@ -600,13 +704,14 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		UnwindAnalysis ua = new UnwindAnalysis(program);
 
 		UnwindInfo infoAtEntry = ua.computeUnwindInfo(entry, monitor);
-		assertEquals(
-			new UnwindInfo(function, 0L, 4L, stack(0), Map.of(), new StackUnwindWarningSet(), null),
+		assertEquals(new UnwindInfo(function, 0L, 4L, stack(0), -1,
+			Map.of(), new StackUnwindWarningSet(), null),
 			infoAtEntry);
 
 		UnwindInfo infoAtBody = ua.computeUnwindInfo(bodyInstr, monitor);
-		assertEquals(new UnwindInfo(function, -20L, 4L, stack(0),
-			Map.of(register("EBP"), stack(-4)), new StackUnwindWarningSet(), null), infoAtBody);
+		assertEquals(new UnwindInfo(function, -20L, 4L, stack(0), -1,
+			Map.of(register("EBP"), stack(-4)), new StackUnwindWarningSet(), null),
+			infoAtBody);
 	}
 
 	@Test
@@ -624,16 +729,17 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		UnwindAnalysis ua = new UnwindAnalysis(program);
 
 		UnwindInfo infoAtEntry = ua.computeUnwindInfo(entry, monitor);
-		assertEquals(
-			new UnwindInfo(function, 0L, 4L, stack(0), Map.of(), new StackUnwindWarningSet(), null),
+		assertEquals(new UnwindInfo(function, 0L, 4L, stack(0), -1,
+			Map.of(), new StackUnwindWarningSet(), null),
 			infoAtEntry);
 
 		UnwindInfo infoAtBody = ua.computeUnwindInfo(bodyInstr, monitor);
-		assertEquals(
-			new UnwindInfo(function, -20L, 4L, stack(0), Map.of(register("EBP"), stack(-4)),
-				new StackUnwindWarningSet(new UnspecifiedConventionStackUnwindWarning(myExtern),
-					new UnknownPurgeStackUnwindWarning(myExtern)),
-				null),
+		assertEquals(new UnwindInfo(function, -20L, 4L, stack(0), -1,
+			Map.of(register("EBP"), stack(-4)),
+			new StackUnwindWarningSet(
+				new UnspecifiedConventionStackUnwindWarning(myExtern),
+				new UnknownPurgeStackUnwindWarning(myExtern)),
+			null),
 			infoAtBody);
 	}
 
@@ -650,15 +756,44 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		UnwindAnalysis ua = new UnwindAnalysis(program);
 
 		UnwindInfo infoAtEntry = ua.computeUnwindInfo(entry, monitor);
-		assertEquals(
-			new UnwindInfo(function, 0L, 4L, stack(0), Map.of(), new StackUnwindWarningSet(), null),
+		assertEquals(new UnwindInfo(function, 0L, 4L, stack(0), -1,
+			Map.of(), new StackUnwindWarningSet(), null),
 			infoAtEntry);
 
 		UnwindInfo infoAtBody = ua.computeUnwindInfo(bodyInstr, monitor);
 		DataType ptr2Undef = new PointerDataType(DataType.DEFAULT, program.getDataTypeManager());
-		assertEquals(new UnwindInfo(function, -20L, 4L, stack(0),
+		assertEquals(new UnwindInfo(function, -20L, 4L, stack(0), -1,
 			Map.of(register("EBP"), stack(-4)),
 			new StackUnwindWarningSet(new UnexpectedTargetTypeStackUnwindWarning(ptr2Undef)), null),
+			infoAtBody);
+	}
+
+	@Test
+	public void testComputeUnwindInfoWithArmBx() throws Throwable {
+		addPlugin(tool, CodeBrowserPlugin.class);
+		addPlugin(tool, AutoAnalysisPlugin.class);
+		addPlugin(tool, DecompilePlugin.class);
+
+		Function function = createInfiniteRecursionProgramArm();
+		openAndAnalyze(function);
+		Address entry = function.getEntryPoint();
+
+		UnwindAnalysis ua = new UnwindAnalysis(program);
+
+		UnwindInfo infoAtEntry = ua.computeUnwindInfo(entry, monitor);
+		assertEquals(new UnwindInfo(function, 0L, 0L, register("lr").getAddress(), 0xfffffffeL,
+			Map.of(), new StackUnwindWarningSet(
+				new UnspecifiedConventionStackUnwindWarning(function),
+				new UnknownPurgeStackUnwindWarning(function)),
+			null),
+			infoAtEntry);
+
+		UnwindInfo infoAtBody = ua.computeUnwindInfo(bodyInstr, monitor);
+		assertEquals(new UnwindInfo(function, -4L, 0L, stack(-4), 0xfffffffeL,
+			Map.of(), new StackUnwindWarningSet(
+				new UnspecifiedConventionStackUnwindWarning(function),
+				new UnknownPurgeStackUnwindWarning(function)),
+			null),
 			infoAtBody);
 	}
 
@@ -670,6 +805,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		addPlugin(tool, DecompilePlugin.class);
 		DebuggerControlService editingService = addPlugin(tool, DebuggerControlServicePlugin.class);
 		DebuggerEmulationService emuService = addPlugin(tool, DebuggerEmulationServicePlugin.class);
+		valuesPlugin = addPlugin(tool, VariableValueHoverPlugin.class);
 
 		Function function = createSumSquaresProgramX86_32();
 		Address entry = function.getEntryPoint();
@@ -697,7 +833,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr, Set.of(),
-						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "capture return value");
+						CommonSet.SWX.kinds(), true, "capture return value");
 		}
 
 		EmulationResult result = emuService.run(atSetup.getPlatform(), atSetup.getTime(), monitor,
@@ -729,6 +865,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		addPlugin(tool, DecompilePlugin.class);
 		DebuggerControlService editingService = addPlugin(tool, DebuggerControlServicePlugin.class);
 		DebuggerEmulationService emuService = addPlugin(tool, DebuggerEmulationServicePlugin.class);
+		valuesPlugin = addPlugin(tool, VariableValueHoverPlugin.class);
 
 		Function function = createFibonacciProgramX86_32();
 		Address entry = function.getEntryPoint();
@@ -754,14 +891,14 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		waitOn(frameAtSetup.setReturnAddress(editor, tb.addr(0xdeadbeef)));
 		waitForTasks();
 
-		TraceBreakpoint bptUnwind;
+		TraceBreakpointLocation bptUnwind;
 		try (Transaction tx = tb.startTransaction()) {
 			bptUnwind = tb.trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr, Set.of(),
-						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "unwind stack");
+						CommonSet.SWX.kinds(), true, "unwind stack");
 			tb.trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[1]", Lifespan.nowOn(0), tb.addr(0xdeadbeef),
-						Set.of(), Set.of(TraceBreakpointKind.SW_EXECUTE), true,
+						Set.of(), CommonSet.SWX.kinds(), true,
 						"capture return value");
 		}
 
@@ -816,11 +953,102 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 	}
 
 	@Test
+	public void testUnwindRecursiveArmThumb() throws Throwable {
+		addPlugin(tool, CodeBrowserPlugin.class);
+		addPlugin(tool, DebuggerListingPlugin.class);
+		addPlugin(tool, DisassemblerPlugin.class);
+		addPlugin(tool, AutoAnalysisPlugin.class);
+		addPlugin(tool, DecompilePlugin.class);
+		DebuggerEmulationService emuService = addPlugin(tool, DebuggerEmulationServicePlugin.class);
+		valuesPlugin = addPlugin(tool, VariableValueHoverPlugin.class);
+
+		Function function = createInfiniteRecursionProgramArm();
+		openAndAnalyze(function);
+		Address entry = function.getEntryPoint();
+
+		useTrace(ProgramEmulationUtils.launchEmulationTrace(program, entry, this));
+		tb.trace.release(this);
+		TraceThread thread = Unique.assertOne(tb.trace.getThreadManager().getAllThreads());
+		traceManager.openTrace(tb.trace);
+		traceManager.activateThread(thread);
+		waitForSwing();
+
+		DebuggerCoordinates atSetup = traceManager.getCurrent();
+		StackUnwinder unwinder = new StackUnwinder(tool, atSetup.getPlatform());
+
+		TraceMemorySpace regs = tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
+		Register sp = program.getCompilerSpec().getStackPointer();
+		long spAtSetup = regs.getValue(0, sp).getUnsignedValue().longValueExact();
+
+		TraceBreakpointLocation bptUnwind;
+		try (Transaction tx = tb.startTransaction()) {
+			bptUnwind = tb.trace.getBreakpointManager()
+					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), entry, Set.of(),
+						CommonSet.SWX.kinds(), true, "unwind stack");
+			bptUnwind.setEmuSleigh(0, """
+					if (%s >= 0x%x) goto <skip>;
+					  emu_swi();
+					<skip>
+					emu_exec_decoded();
+					""".formatted(sp, spAtSetup - 0xc));
+		}
+
+		EmulationResult result = emuService.run(atSetup.getPlatform(), atSetup.getTime(), monitor,
+			Scheduler.oneThread(thread));
+		Msg.debug(this, "Broke after " + result.schedule());
+
+		traceManager.activateTime(result.schedule());
+		waitForTasks();
+		DebuggerCoordinates broke = traceManager.getCurrent();
+
+		AnalysisUnwoundFrame<WatchValue> frameBroke = unwinder.start(broke, monitor);
+		assertEquals(tb.addr(0x00004ff0), frameBroke.getStackPointer());
+		assertEquals(tb.addr(0x00004ff0), frameBroke.getBasePointer());
+		assertEquals(tb.addr(0x00400000), frameBroke.getProgramCounter());
+
+		frameBroke = frameBroke.unwindNext(monitor); // Innermost hadn't pushed anything, yet
+		assertEquals(tb.addr(0x00004ff0), frameBroke.getStackPointer());
+		assertEquals(tb.addr(0x00004ff4), frameBroke.getBasePointer());
+		assertEquals(tb.addr(0x0040000a), frameBroke.getProgramCounter());
+
+		frameBroke = frameBroke.unwindNext(monitor);
+		assertEquals(tb.addr(0x00004ff4), frameBroke.getStackPointer());
+		assertEquals(tb.addr(0x00004ff8), frameBroke.getBasePointer());
+		assertEquals(tb.addr(0x0040000a), frameBroke.getProgramCounter());
+
+		frameBroke = frameBroke.unwindNext(monitor);
+		assertEquals(tb.addr(0x00004ff8), frameBroke.getStackPointer());
+		assertEquals(tb.addr(0x00004ffc), frameBroke.getBasePointer());
+		assertEquals(tb.addr(0x0040000a), frameBroke.getProgramCounter());
+
+		frameBroke = frameBroke.unwindNext(monitor);
+		assertEquals(tb.addr(0x00004ffc), frameBroke.getStackPointer());
+		assertEquals(tb.addr(0x00005000), frameBroke.getBasePointer());
+		assertEquals(tb.addr(0x0040000a), frameBroke.getProgramCounter());
+
+		frameBroke = frameBroke.unwindNext(monitor);
+		assertEquals(tb.addr(0x00005000), frameBroke.getStackPointer());
+		assertNull(frameBroke.getBasePointer());
+		assertEquals(tb.addr(0x00000000), frameBroke.getProgramCounter());
+
+		assertEquals(5, frameBroke.getLevel());
+
+		try {
+			frameBroke.unwindNext(monitor);
+			fail();
+		}
+		catch (NoSuchElementException e) {
+			// pass
+		}
+	}
+
+	@Test
 	public void testCreateFramesAtEntryX86_32() throws Throwable {
 		addPlugin(tool, CodeBrowserPlugin.class);
 		addPlugin(tool, DebuggerListingPlugin.class);
 		addPlugin(tool, DisassemblerPlugin.class);
 		addPlugin(tool, DecompilePlugin.class);
+		valuesPlugin = addPlugin(tool, VariableValueHoverPlugin.class);
 
 		Function function = createFibonacciProgramX86_32();
 		Address entry = function.getEntryPoint();
@@ -859,6 +1087,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		codeBrowserPlugin = addPlugin(tool, CodeBrowserPlugin.class);
 		staticListing = codeBrowserPlugin.getProvider().getListingPanel();
 		listingPlugin = addPlugin(tool, DebuggerListingPlugin.class);
+		valuesPlugin = addPlugin(tool, VariableValueHoverPlugin.class);
 		dynamicListing = listingPlugin.getProvider().getListingPanel();
 		addPlugin(tool, DisassemblerPlugin.class);
 		addPlugin(tool, DecompilePlugin.class);
@@ -898,7 +1127,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr, Set.of(),
-						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "unwind stack");
+						CommonSet.SWX.kinds(), true, "unwind stack");
 		}
 
 		EmulationResult result = emuService.run(atSetup.getPlatform(), atSetup.getTime(), monitor,
@@ -938,7 +1167,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr, Set.of(),
-						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "unwind stack");
+						CommonSet.SWX.kinds(), true, "unwind stack");
 		}
 
 		DebuggerCoordinates atSetup = traceManager.getCurrent();
@@ -979,7 +1208,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr, Set.of(),
-						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "unwind stack");
+						CommonSet.SWX.kinds(), true, "unwind stack");
 		}
 
 		DebuggerCoordinates atSetup = traceManager.getCurrent();
@@ -1020,7 +1249,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr, Set.of(),
-						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "unwind stack");
+						CommonSet.SWX.kinds(), true, "unwind stack");
 		}
 
 		DebuggerCoordinates atSetup = traceManager.getCurrent();
@@ -1073,8 +1302,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 	}
 
 	public record HoverLocation(ProgramLocation pLoc, FieldLocation fLoc, Field field,
-			ClangToken token) {
-	}
+			ClangToken token) {}
 
 	public static <T extends ProgramLocation> HoverLocation findLocation(ListingPanel panel,
 			Address address, Class<T> locType, Predicate<T> predicate) {
@@ -1138,13 +1366,14 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		assertEquals(texts.size(), table.getNumRows());
 	}
 
-	protected VariableValueTable getVariableValueTable(VariableValueHoverService valuesService,
-			ProgramLocation programLocation, DebuggerCoordinates current,
-			FieldLocation fieldLocation, Field field) throws Throwable {
+	protected VariableValueTable getVariableValueTable(ProgramLocation programLocation,
+			DebuggerCoordinates current, FieldLocation fieldLocation, Field field)
+			throws Throwable {
 		VariableValueTable table = new VariableValueTable();
 		StackUnwindWarningSet warnings = new StackUnwindWarningSet();
-		waitOn(valuesService.fillVariableValueTable(table, programLocation, current, fieldLocation,
-			field, warnings));
+		waitOn(valuesPlugin.getHoverService()
+				.fillVariableValueTable(table, programLocation, current, fieldLocation, field,
+					warnings));
 		table.add(new WarningsRow(warnings));
 		return table;
 	}
@@ -1152,12 +1381,10 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 	@Test
 	public void testStackVariableHover() throws Throwable {
 		addPlugins();
-		VariableValueHoverPlugin valuesPlugin = addPlugin(tool, VariableValueHoverPlugin.class);
-		VariableValueHoverService valuesService = valuesPlugin.getHoverService();
 		Function function = runToTallestRecursionAndCreateFrames(2);
 		HoverLocation loc = findVariableLocation(staticListing, function, "n");
-		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
-			traceManager.getCurrent(), loc.fLoc, loc.field);
+		VariableValueTable table =
+			getVariableValueTable(loc.pLoc, traceManager.getCurrent(), loc.fLoc, loc.field);
 
 		assertTable(Map.of(RowKey.NAME, "Name: n", RowKey.FRAME,
 			"Frame: 0 fib pc=0040002c sp=00004ff4 base=00004ff4", RowKey.STORAGE,
@@ -1170,12 +1397,10 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 	@Test
 	public void testRegisterVariableHover() throws Throwable {
 		addPlugins();
-		VariableValueHoverPlugin valuesPlugin = addPlugin(tool, VariableValueHoverPlugin.class);
-		VariableValueHoverService valuesService = valuesPlugin.getHoverService();
 		Function function = runToTallestRecursionAndCreateFrames(2);
 		HoverLocation loc = findVariableLocation(staticListing, function, "sum");
-		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
-			traceManager.getCurrent(), loc.fLoc, loc.field);
+		VariableValueTable table =
+			getVariableValueTable(loc.pLoc, traceManager.getCurrent(), loc.fLoc, loc.field);
 
 		assertTable(Map.of(RowKey.NAME, "Name: sum", RowKey.FRAME,
 			"Frame: 0 fib pc=0040002c sp=00004ff4 base=00004ff4", RowKey.STORAGE, "Storage: EDX:4",
@@ -1187,12 +1412,10 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 	@Test
 	public void testReturnParameterHover() throws Throwable {
 		addPlugins();
-		VariableValueHoverPlugin valuesPlugin = addPlugin(tool, VariableValueHoverPlugin.class);
-		VariableValueHoverService valuesService = valuesPlugin.getHoverService();
 		Function function = runToTallestRecursionAndCreateFrames(2);
 		HoverLocation loc = findVariableLocation(staticListing, function, "<RETURN>");
-		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
-			traceManager.getCurrent(), loc.fLoc, loc.field);
+		VariableValueTable table =
+			getVariableValueTable(loc.pLoc, traceManager.getCurrent(), loc.fLoc, loc.field);
 
 		assertTable(Map.of(RowKey.NAME, "Name: <RETURN>", RowKey.FRAME,
 			"Frame: 0 fib pc=0040002c sp=00004ff4 base=00004ff4", RowKey.STORAGE, "Storage: EAX:4",
@@ -1204,13 +1427,11 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 	@Test
 	public void testGlobalOperandHover() throws Throwable {
 		addPlugins();
-		VariableValueHoverPlugin valuesPlugin = addPlugin(tool, VariableValueHoverPlugin.class);
-		VariableValueHoverService valuesService = valuesPlugin.getHoverService();
 		runToRetSetGlobalAndCreateFrames();
 		Instruction ins = program.getListing().getInstructionAt(globalRefInstr);
 		HoverLocation loc = findOperandLocation(staticListing, ins, addr(program, 0x00600000));
-		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
-			traceManager.getCurrent(), loc.fLoc, loc.field);
+		VariableValueTable table =
+			getVariableValueTable(loc.pLoc, traceManager.getCurrent(), loc.fLoc, loc.field);
 
 		assertTable(Map.of(RowKey.NAME, "Name: myGlobal", RowKey.STORAGE, "Storage: 00600000:4",
 			RowKey.TYPE, "Type: int", RowKey.LOCATION, "Location: 00600000:4", RowKey.BYTES,
@@ -1245,15 +1466,13 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 	@Test
 	public void testGlobalOperandInTraceHover() throws Throwable {
 		addPlugins();
-		VariableValueHoverPlugin valuesPlugin = addPlugin(tool, VariableValueHoverPlugin.class);
-		VariableValueHoverService valuesService = valuesPlugin.getHoverService();
 		runToRetSetGlobalAndCreateFrames();
 		Instruction ins = copyToDynamic(program.getListing().getInstructionAt(globalRefInstr));
 		// I guess the listing needs a moment???
 		HoverLocation loc =
 			waitForValue(() -> findOperandLocation(dynamicListing, ins, addr(program, 0x00600000)));
-		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
-			traceManager.getCurrent(), loc.fLoc, loc.field);
+		VariableValueTable table =
+			getVariableValueTable(loc.pLoc, traceManager.getCurrent(), loc.fLoc, loc.field);
 
 		assertTable(Map.of(RowKey.NAME, "Name: myGlobal", RowKey.STORAGE, "Storage: 00600000:4",
 			RowKey.TYPE, "Type: int", RowKey.LOCATION, "Location: 00600000:4", RowKey.BYTES,
@@ -1266,13 +1485,11 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 	@Test
 	public void testStackReferenceHover() throws Throwable {
 		addPlugins();
-		VariableValueHoverPlugin valuesPlugin = addPlugin(tool, VariableValueHoverPlugin.class);
-		VariableValueHoverService valuesService = valuesPlugin.getHoverService();
 		runToTallestRecursionAndCreateFrames(2);
 		Instruction ins = program.getListing().getInstructionAt(stackRefInstr);
 		HoverLocation loc = findOperandLocation(staticListing, ins, new Scalar(32, 8));
-		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
-			traceManager.getCurrent(), loc.fLoc, loc.field);
+		VariableValueTable table =
+			getVariableValueTable(loc.pLoc, traceManager.getCurrent(), loc.fLoc, loc.field);
 
 		assertTable(Map.of(RowKey.NAME, "Name: n", RowKey.FRAME,
 			"Frame: 0 fib pc=0040002c sp=00004ff4 base=00004ff4", RowKey.STORAGE,
@@ -1285,13 +1502,11 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 	@Test
 	public void testRegisterReferenceHover() throws Throwable {
 		addPlugins();
-		VariableValueHoverPlugin valuesPlugin = addPlugin(tool, VariableValueHoverPlugin.class);
-		VariableValueHoverService valuesService = valuesPlugin.getHoverService();
 		runToTallestRecursionAndCreateFrames(2);
 		Instruction ins = program.getListing().getInstructionAt(registerRefInstr);
 		HoverLocation loc = findOperandLocation(staticListing, ins, register("EDX"));
-		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
-			traceManager.getCurrent(), loc.fLoc, loc.field);
+		VariableValueTable table = getVariableValueTable(
+			loc.pLoc, traceManager.getCurrent(), loc.fLoc, loc.field);
 
 		assertTable(Map.of(RowKey.NAME, "Name: sum", RowKey.FRAME,
 			"Frame: 0 fib pc=0040002c sp=00004ff4 base=00004ff4", RowKey.STORAGE, "Storage: EDX:4",
@@ -1301,18 +1516,17 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 	}
 
 	@Test
+	@Ignore("Worked because reg requests for frames>0 defaulted to frame 0. NO LONGER TRUE.")
 	public void testSavedRegisterReferenceHover() throws Throwable {
 		addPlugins();
-		VariableValueHoverPlugin valuesPlugin = addPlugin(tool, VariableValueHoverPlugin.class);
-		VariableValueHoverService valuesService = valuesPlugin.getHoverService();
 		// need 3 frames. 0 has already popped EBP, so not saved. 1 will save on behalf of 2.
 		Function function = runToTallestRecursionAndCreateFrames(3);
 		traceManager.activateFrame(2);
 
 		Instruction ins = program.getListing().getInstructionAt(function.getEntryPoint());
 		HoverLocation loc = findOperandLocation(staticListing, ins, register("EBP"));
-		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
-			traceManager.getCurrent(), loc.fLoc, loc.field);
+		VariableValueTable table =
+			getVariableValueTable(loc.pLoc, traceManager.getCurrent(), loc.fLoc, loc.field);
 
 		assertTable(Map.of(RowKey.NAME, "Name: EBP", RowKey.FRAME,
 			"Frame: 2 fib pc=00400013 sp=00004ff8 base=00005000", RowKey.LOCATION,
@@ -1323,15 +1537,13 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 	@Test
 	public void testRegisterReferenceInTraceHover() throws Throwable {
 		addPlugins();
-		VariableValueHoverPlugin valuesPlugin = addPlugin(tool, VariableValueHoverPlugin.class);
-		VariableValueHoverService valuesService = valuesPlugin.getHoverService();
 		runToTallestRecursionAndCreateFrames(2);
 		Instruction ins = copyToDynamic(program.getListing().getInstructionAt(registerRefInstr));
 		// I guess the listing needs a moment???
 		HoverLocation loc =
 			waitForValue(() -> findOperandLocation(dynamicListing, ins, register("EDX")));
-		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
-			traceManager.getCurrent(), loc.fLoc, loc.field);
+		VariableValueTable table =
+			getVariableValueTable(loc.pLoc, traceManager.getCurrent(), loc.fLoc, loc.field);
 
 		assertTable(Map.of(RowKey.NAME, "Name: EDX", RowKey.INTEGER, "Integer: (UNKNOWN) 0",
 			RowKey.WARNINGS, "IGNORED"), table);
@@ -1379,7 +1591,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 					if (!(field instanceof ClangTextField clangField)) {
 						continue;
 					}
-					if (!fieldText.equals(field.getText())) {
+					if (!fieldText.equals(field.getText().trim())) {
 						continue;
 					}
 					int numRows = field.getNumRows();
@@ -1389,10 +1601,14 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 							FieldLocation fLoc = new FieldLocation(i, j, r, c);
 							ClangToken token = clangField.getToken(fLoc);
 							if (token != null && tokText.equals(token.getText())) {
-								DecompilerLocation loc = token.getMinAddress() == null ? null
-										: new DecompilerLocation(program, token.getMinAddress(),
-											function.getEntryPoint(), results, token, i.intValue(),
-											0);
+
+								Address entryPoint = function.getEntryPoint();
+								DecompilerLocationInfo info =
+									new DecompilerLocationInfo(entryPoint, results, token,
+										i.intValue(), 0);
+								DefaultDecompilerLocation loc = token.getMinAddress() == null ? null
+										: new DefaultDecompilerLocation(program,
+											token.getMinAddress(), info);
 								return new HoverLocation(loc, fLoc, field, token);
 							}
 						}
@@ -1431,12 +1647,10 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 	@Test
 	public void testGlobalHighVarHover() throws Throwable {
 		addPlugins();
-		VariableValueHoverPlugin valuesPlugin = addPlugin(tool, VariableValueHoverPlugin.class);
-		VariableValueHoverService valuesService = valuesPlugin.getHoverService();
 		Function function = runToRetSetGlobalAndCreateFrames();
 		HoverLocation loc = findTokenLocation(function, "myGlobal", "myGlobal = -0x21524111;");
-		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
-			traceManager.getCurrent(), loc.fLoc, loc.field);
+		VariableValueTable table =
+			getVariableValueTable(loc.pLoc, traceManager.getCurrent(), loc.fLoc, loc.field);
 
 		assertTable(Map.of(RowKey.NAME, "Name: myGlobal", RowKey.STORAGE, "Storage: 00600000:4",
 			RowKey.TYPE, "Type: int", RowKey.LOCATION, "Location: 00600000:4", RowKey.BYTES,
@@ -1449,12 +1663,10 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 	@Test
 	public void testStackHighVarHover() throws Throwable {
 		addPlugins();
-		VariableValueHoverPlugin valuesPlugin = addPlugin(tool, VariableValueHoverPlugin.class);
-		VariableValueHoverService valuesService = valuesPlugin.getHoverService();
 		Function function = runToTallestRecursionAndCreateFrames(2);
 		HoverLocation loc = findTokenLocation(function, "n", "if (1 < n) {");
-		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
-			traceManager.getCurrent(), loc.fLoc, loc.field);
+		VariableValueTable table =
+			getVariableValueTable(loc.pLoc, traceManager.getCurrent(), loc.fLoc, loc.field);
 
 		assertTable(Map.of(RowKey.NAME, "Name: n", RowKey.FRAME,
 			"Frame: 0 fib pc=0040002c sp=00004ff4 base=00004ff4", RowKey.STORAGE,
@@ -1467,13 +1679,11 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 	@Test
 	public void testRegisterHighVarHover() throws Throwable {
 		addPlugins();
-		VariableValueHoverPlugin valuesPlugin = addPlugin(tool, VariableValueHoverPlugin.class);
-		VariableValueHoverService valuesService = valuesPlugin.getHoverService();
 		Function function = runToTallestRecursionAndCreateFrames(2);
 		// TODO: Line matching seems fragile
 		HoverLocation loc = findTokenLocation(function, "uVar1", "uVar1 = fib(n - 1);");
-		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
-			traceManager.getCurrent(), loc.fLoc, loc.field);
+		VariableValueTable table =
+			getVariableValueTable(loc.pLoc, traceManager.getCurrent(), loc.fLoc, loc.field);
 
 		assertTable(Map.of(RowKey.NAME, "Name: uVar1", RowKey.FRAME,
 			"Frame: 0 fib pc=0040002c sp=00004ff4 base=00004ff4", RowKey.STORAGE, "Storage: EAX:4",
@@ -1487,14 +1697,12 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		addPlugins();
 		// PC Tracking interferes with goTo
 		listingPlugin.setTrackingSpec(NoneLocationTrackingSpec.INSTANCE);
-		VariableValueHoverPlugin valuesPlugin = addPlugin(tool, VariableValueHoverPlugin.class);
-		VariableValueHoverService valuesService = valuesPlugin.getHoverService();
 		Function function = runToRetFillStructAndCreateFrames();
 		goTo(staticListing, new ProgramLocation(program, function.getEntryPoint()));
 		HoverLocation loc =
 			findTokenLocation(function, "myGlobal", "return (uint)myStack.y + (uint)myGlobal.m;");
-		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
-			traceManager.getCurrent(), loc.fLoc, loc.field);
+		VariableValueTable table =
+			getVariableValueTable(loc.pLoc, traceManager.getCurrent(), loc.fLoc, loc.field);
 
 		assertTable(Map.of(RowKey.NAME, "Name: myGlobal", RowKey.STORAGE, "Storage: 00600000:4",
 			RowKey.TYPE, "Type: MyStruct", RowKey.LOCATION, "Location: 00600000:4", RowKey.BYTES,
@@ -1507,14 +1715,12 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		addPlugins();
 		// PC Tracking interferes with goTo
 		listingPlugin.setTrackingSpec(NoneLocationTrackingSpec.INSTANCE);
-		VariableValueHoverPlugin valuesPlugin = addPlugin(tool, VariableValueHoverPlugin.class);
-		VariableValueHoverService valuesService = valuesPlugin.getHoverService();
 		Function function = runToRetFillStructAndCreateFrames();
 		goTo(staticListing, new ProgramLocation(program, function.getEntryPoint()));
 		HoverLocation loc =
 			findTokenLocation(function, "m", "return (uint)myStack.y + (uint)myGlobal.m;");
-		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
-			traceManager.getCurrent(), loc.fLoc, loc.field);
+		VariableValueTable table =
+			getVariableValueTable(loc.pLoc, traceManager.getCurrent(), loc.fLoc, loc.field);
 
 		assertTable(Map.of(RowKey.NAME, "Name: m", RowKey.TYPE, "Type: byte", RowKey.LOCATION,
 			"Location: 00600002:1", RowKey.BYTES, "Bytes: (KNOWN) 0c", RowKey.INTEGER,
@@ -1527,14 +1733,12 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		addPlugins();
 		// PC Tracking interferes with goTo
 		listingPlugin.setTrackingSpec(NoneLocationTrackingSpec.INSTANCE);
-		VariableValueHoverPlugin valuesPlugin = addPlugin(tool, VariableValueHoverPlugin.class);
-		VariableValueHoverService valuesService = valuesPlugin.getHoverService();
 		Function function = runToRetFillStructAndCreateFrames();
 		goTo(staticListing, new ProgramLocation(program, function.getEntryPoint()));
 		HoverLocation loc =
 			findTokenLocation(function, "myStack", "return (uint)myStack.y + (uint)myGlobal.m;");
-		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
-			traceManager.getCurrent(), loc.fLoc, loc.field);
+		VariableValueTable table =
+			getVariableValueTable(loc.pLoc, traceManager.getCurrent(), loc.fLoc, loc.field);
 
 		assertTable(Map.of(RowKey.NAME, "Name: myStack", RowKey.FRAME,
 			"Frame: 1 main pc=00400012 sp=00004fe4 base=00004ff0", RowKey.STORAGE,
@@ -1549,14 +1753,12 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		addPlugins();
 		// PC Tracking interferes with goTo
 		listingPlugin.setTrackingSpec(NoneLocationTrackingSpec.INSTANCE);
-		VariableValueHoverPlugin valuesPlugin = addPlugin(tool, VariableValueHoverPlugin.class);
-		VariableValueHoverService valuesService = valuesPlugin.getHoverService();
 		Function function = runToRetFillStructAndCreateFrames();
 		goTo(staticListing, new ProgramLocation(program, function.getEntryPoint()));
 		HoverLocation loc =
 			findTokenLocation(function, "y", "return (uint)myStack.y + (uint)myGlobal.m;");
-		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
-			traceManager.getCurrent(), loc.fLoc, loc.field);
+		VariableValueTable table =
+			getVariableValueTable(loc.pLoc, traceManager.getCurrent(), loc.fLoc, loc.field);
 
 		assertTable(Map.of(RowKey.NAME, "Name: y", RowKey.FRAME,
 			"Frame: 1 main pc=00400012 sp=00004fe4 base=00004ff0", RowKey.TYPE, "Type: word",
@@ -1566,18 +1768,51 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 	}
 
 	@Test
+	public void testStructureSetInStackHighVarStructField() throws Throwable {
+		addPlugins();
+		// PC Tracking interferes with goTo
+		listingPlugin.setTrackingSpec(NoneLocationTrackingSpec.INSTANCE);
+		Function function = createFillStackStructProgramX86_64();
+		Address entry = function.getEntryPoint();
+
+		programManager.openProgram(program);
+
+		// Not necessary to actually run. Just examine values at entry.
+		useTrace(ProgramEmulationUtils.launchEmulationTrace(program, entry, this));
+		tb.trace.release(this);
+		TraceThread thread = Unique.assertOne(tb.trace.getThreadManager().getAllThreads());
+		traceManager.openTrace(tb.trace);
+		traceManager.activateThread(thread);
+		waitForSwing();
+
+		goTo(staticListing, new ProgramLocation(program, entry));
+		HoverLocation loc = findTokenLocation(function, "f1", "s.f1 = 4;");
+		VariableValueTable table =
+			getVariableValueTable(loc.pLoc, traceManager.getCurrent(), loc.fLoc, loc.field);
+
+		assertTable(Map.ofEntries(
+			Map.entry(RowKey.NAME, "Name: f1"),
+			Map.entry(RowKey.FRAME, "Frame: 0 fillStruct pc=00400000 sp=00005000 base=00005000"),
+			Map.entry(RowKey.TYPE, "Type: dword"),
+			Map.entry(RowKey.LOCATION, "Location: 00004fe8:4"),
+			Map.entry(RowKey.BYTES, "Bytes: (UNKNOWN) 00 00 00 00"),
+			Map.entry(RowKey.INTEGER, "Integer: (UNKNOWN) 0"),
+			Map.entry(RowKey.VALUE, "Value: (UNKNOWN) 0h"),
+			Map.entry(RowKey.WARNINGS, "IGNORED")),
+			table);
+	}
+
+	@Test
 	public void testStructurePointerRegisterHighVarStruct() throws Throwable {
 		addPlugins();
 		// PC Tracking interferes with goTo
 		listingPlugin.setTrackingSpec(NoneLocationTrackingSpec.INSTANCE);
-		VariableValueHoverPlugin valuesPlugin = addPlugin(tool, VariableValueHoverPlugin.class);
-		VariableValueHoverService valuesService = valuesPlugin.getHoverService();
 		runToRetFillStructAndCreateFrames();
 		Function function = program.getFunctionManager().getFunctionContaining(retInstr);
 		goTo(staticListing, new ProgramLocation(program, retInstr));
 		HoverLocation loc = findTokenLocation(function, "s", "s->y = 0x7e6;");
-		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
-			traceManager.getCurrent(), loc.fLoc, loc.field);
+		VariableValueTable table =
+			getVariableValueTable(loc.pLoc, traceManager.getCurrent(), loc.fLoc, loc.field);
 
 		assertTable(Map.of(RowKey.NAME, "Name: s", RowKey.FRAME,
 			"Frame: 0 fillStruct pc=00400041 sp=00004fe0 base=00004fe0", RowKey.STORAGE,
@@ -1594,14 +1829,12 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		addPlugins();
 		// PC Tracking interferes with goTo
 		listingPlugin.setTrackingSpec(NoneLocationTrackingSpec.INSTANCE);
-		VariableValueHoverPlugin valuesPlugin = addPlugin(tool, VariableValueHoverPlugin.class);
-		VariableValueHoverService valuesService = valuesPlugin.getHoverService();
 		runToRetFillStructAndCreateFrames();
 		Function function = program.getFunctionManager().getFunctionContaining(retInstr);
 		goTo(staticListing, new ProgramLocation(program, retInstr));
 		HoverLocation loc = findTokenLocation(function, "y", "s->y = 0x7e6;");
-		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
-			traceManager.getCurrent(), loc.fLoc, loc.field);
+		VariableValueTable table =
+			getVariableValueTable(loc.pLoc, traceManager.getCurrent(), loc.fLoc, loc.field);
 
 		assertTable(Map.of(RowKey.NAME, "Name: y", RowKey.FRAME,
 			"Frame: 0 fillStruct pc=00400041 sp=00004fe0 base=00004fe0", RowKey.TYPE, "Type: word",
@@ -1615,14 +1848,12 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		addPlugins();
 		// PC Tracking interferes with goTo
 		listingPlugin.setTrackingSpec(NoneLocationTrackingSpec.INSTANCE);
-		VariableValueHoverPlugin valuesPlugin = addPlugin(tool, VariableValueHoverPlugin.class);
-		VariableValueHoverService valuesService = valuesPlugin.getHoverService();
 		runToRetFillStructArrayAndCreateFrames();
 		Function function = program.getFunctionManager().getFunctionContaining(retInstr);
 		goTo(staticListing, new ProgramLocation(program, retInstr));
 		HoverLocation loc = findTokenLocation(function, "m", "s[i].m = 0xc;");
-		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
-			traceManager.getCurrent(), loc.fLoc, loc.field);
+		VariableValueTable table =
+			getVariableValueTable(loc.pLoc, traceManager.getCurrent(), loc.fLoc, loc.field);
 
 		assertTable(Map.of(RowKey.NAME, "Name: m", RowKey.FRAME,
 			"Frame: 0 fillStruct pc=0040002e sp=00004fe0 base=00004fe0", RowKey.TYPE, "Type: byte",

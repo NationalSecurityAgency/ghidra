@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,10 +49,10 @@ public class WindowsHeader {
 	 * @throws IOException for problems reading the header bytes
 	 */
 	public WindowsHeader(BinaryReader reader, SegmentedAddress baseAddr,
-			short index) throws InvalidWindowsHeaderException, IOException {
+			int index) throws InvalidWindowsHeaderException, IOException {
         this.infoBlock = new InformationBlock(reader, index);
 
-        short segTableIndex = (short)(infoBlock.getSegmentTableOffset() + index);
+        int segTableIndex = infoBlock.getSegmentTableOffset() + index;
         this.segTable = new SegmentTable(reader,
 			baseAddr, segTableIndex, infoBlock.getSegmentCount(),
 			infoBlock.getSegmentAlignmentShiftCount());
@@ -60,22 +60,22 @@ public class WindowsHeader {
         //if resource table offset == resident name table offset, then
         //we do not have any resources...
         if (infoBlock.getResourceTableOffset() != infoBlock.getResidentNameTableOffset()) {
-            short rsrcTableIndex = (short)(infoBlock.getResourceTableOffset() + index);
+            int rsrcTableIndex = infoBlock.getResourceTableOffset() + index;
             this.rsrcTable = new ResourceTable(reader, rsrcTableIndex);
         }
 
-        short resNameTableIndex = (short)(infoBlock.getResidentNameTableOffset() + index);
+        int resNameTableIndex = infoBlock.getResidentNameTableOffset() + index;
         this.resNameTable = new ResidentNameTable(reader, resNameTableIndex);
 
-        short impNameTableIndex = (short)(infoBlock.getImportedNamesTableOffset() + index);
+        int impNameTableIndex = infoBlock.getImportedNamesTableOffset() + index;
         this.impNameTable = new ImportedNameTable(reader, impNameTableIndex);
 
-        short modRefTableIndex = (short)(infoBlock.getModuleReferenceTableOffset() + index);
+        int modRefTableIndex = infoBlock.getModuleReferenceTableOffset() + index;
         this.modRefTable = new ModuleReferenceTable(reader, modRefTableIndex,
                                         infoBlock.getModuleReferenceTableCount(),
                                         impNameTable);
 
-        short entryTableIndex = (short)(infoBlock.getEntryTableOffset() + index);
+        int entryTableIndex = infoBlock.getEntryTableOffset() + index;
         this.entryTable = new EntryTable(reader, entryTableIndex, infoBlock.getEntryTableSize());
 
         this.nonResNameTable = new NonResidentNameTable(reader,

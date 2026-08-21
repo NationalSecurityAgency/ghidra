@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -163,6 +163,67 @@ public class RISCV_ElfRelocationHandler
 
 		int byteLength = 4; // most relocations affect 4-bytes (change if different)
 
+		// Handle relative relocations that do not require symbolAddr or symbolValue 
+		switch (type) {
+
+			case R_RISCV_RELATIVE:
+				// Runtime relocation word32,64 = B + A
+				if (elf.is32Bit()) {
+					value32 = (int) (base + addend);
+					memory.setInt(relocationAddress, value32);
+				}
+				else {
+					value64 = base + addend;
+					memory.setLong(relocationAddress, value64);
+					byteLength = 8;
+				}
+				return new RelocationResult(Status.APPLIED, byteLength);
+
+			case R_RISCV_PCREL_LO12_S:
+				// PC-relative reference %pcrel_lo(symbol) (S-Type)
+				//    S-type immediates split the 12 bit value into separate 7 bit and 5 bit fields.
+				// Warning: untested!
+				target = getSymbolValueIndirect(elfRelocationContext, sym,
+					relocationAddress.getOffset() - relocation.getOffset());
+				if (target == 0) {
+					markAsError(program, relocationAddress, type, symbolName, symbolIndex,
+						"Failed to locate HI20 relocation", elfRelocationContext.getLog());
+					return RelocationResult.FAILURE;
+				}
+				value32 = ((target & 0x000007f) << 25) | (target & 0x00000f80) |
+					(memory.getInt(relocationAddress) & 0x1fff07f);
+				memory.setInt(relocationAddress, value32);
+				return new RelocationResult(Status.APPLIED, byteLength);
+
+			case R_RISCV_PCREL_LO12_I:
+				// PC-relative reference %pcrel_lo(symbol) (I-Type), relative to the cited pc_rel_hi20
+				target = getSymbolValueIndirect(elfRelocationContext, sym,
+					relocationAddress.getOffset() - relocation.getOffset());
+				if (target == 0) {
+					markAsError(program, relocationAddress, type, symbolName, symbolIndex,
+						"Failed to locate HI20 relocation", elfRelocationContext.getLog());
+					return RelocationResult.FAILURE;
+				}
+				value32 =
+					((target & 0x00000fff) << 20) | (memory.getInt(relocationAddress) & 0xfffff);
+				memory.setInt(relocationAddress, value32);
+				return new RelocationResult(Status.APPLIED, byteLength);
+
+			case R_RISCV_COPY:
+				// Runtime relocation must be in executable. not allowed in shared library
+				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
+					sym.getSize(), elfRelocationContext.getLog());
+				return RelocationResult.UNSUPPORTED;
+
+			default:
+				break;
+		}
+
+		// Check for unresolved symbolAddr and symbolValue required by remaining relocation types handled below
+		if (handleUnresolvedSymbol(elfRelocationContext, relocation, relocationAddress)) {
+			return RelocationResult.FAILURE;
+		}
+
 		switch (type) {
 			case R_RISCV_32:
 				// Runtime relocation word32 = S + A
@@ -190,25 +251,6 @@ public class RISCV_ElfRelocationHandler
 					}
 				}
 				break;
-
-			case R_RISCV_RELATIVE:
-				// Runtime relocation word32,64 = B + A
-				if (elf.is32Bit()) {
-					value32 = (int) (base + addend);
-					memory.setInt(relocationAddress, value32);
-				}
-				else {
-					value64 = base + addend;
-					memory.setLong(relocationAddress, value64);
-					byteLength = 8;
-				}
-				break;
-
-			case R_RISCV_COPY:
-				// Runtime relocation must be in executable. not allowed in shared library
-				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
-					sym.getSize(), elfRelocationContext.getLog());
-				return RelocationResult.UNSUPPORTED;
 
 			case R_RISCV_JUMP_SLOT:
 				// Runtime relocation word32,64 = S ;handled by PLT unless LD_BIND_NOW
@@ -278,53 +320,23 @@ public class RISCV_ElfRelocationHandler
 					getHi20(target) | (memory.getInt(relocationAddress) & 0xfff));
 				break;
 
-			case R_RISCV_PCREL_LO12_I:
-				// PC-relative reference %pcrel_lo(symbol) (I-Type), relative to the cited pc_rel_hi20
-				target = getSymbolValueIndirect(elfRelocationContext, sym,
-					relocationAddress.getOffset() - relocation.getOffset());
-				if (target == 0) {
-					markAsError(program, relocationAddress, type, symbolName, symbolIndex,
-						"Failed to locate HI20 relocation", elfRelocationContext.getLog());
-					return RelocationResult.FAILURE;
-				}
-				value32 =
-					((target & 0x00000fff) << 20) | (memory.getInt(relocationAddress) & 0xfffff);
-				memory.setInt(relocationAddress, value32);
-				break;
-
-			case R_RISCV_PCREL_LO12_S:
-				// PC-relative reference %pcrel_lo(symbol) (S-Type)
-				//    S-type immediates split the 12 bit value into separate 7 bit and 5 bit fields.
-				// Warning: untested!
-				target = getSymbolValueIndirect(elfRelocationContext, sym,
-					relocationAddress.getOffset() - relocation.getOffset());
-				if (target == 0) {
-					markAsError(program, relocationAddress, type, symbolName, symbolIndex,
-						"Failed to locate HI20 relocation", elfRelocationContext.getLog());
-					return RelocationResult.FAILURE;
-				}
-				value32 = ((target & 0x000007f) << 25) | (target & 0x00000f80) |
-					(memory.getInt(relocationAddress) & 0x1fff07f);
-				memory.setInt(relocationAddress, value32);
-				break;
-
 			case R_RISCV_HI20:
 				// Absolute address %hi(symbol) (U-Type)
-				value32 = (int) ((symbolValue + 0x800) & 0xfffff000) |
+				value32 = (int) ((addend + symbolValue + 0x800) & 0xfffff000) |
 					(memory.getInt(relocationAddress) & 0xfff);
 				memory.setInt(relocationAddress, value32);
 				break;
 
 			case R_RISCV_LO12_I:
 				// Absolute address %lo(symbol) (I-Type)
-				value32 = ((int) (symbolValue & 0x00000fff) << 20) |
+				value32 = ((int) ((addend + symbolValue) & 0x00000fff) << 20) |
 					(memory.getInt(relocationAddress) & 0xfffff);
 				memory.setInt(relocationAddress, value32);
 				break;
 
 			case R_RISCV_LO12_S:
 				// Absolute address %lo(symbol) (S-Type)
-				value32 = (int) (symbolValue & 0x00000fff);
+				value32 = (int) ((addend + symbolValue) & 0x00000fff);
 				value32 = ((value32 & 0x1f) << 7) | ((value32 & 0xfe0) << 20) |
 					(memory.getInt(relocationAddress) & 0x1fff07f);
 				memory.setInt(relocationAddress, value32);

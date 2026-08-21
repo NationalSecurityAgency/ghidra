@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,7 @@
  */
 package agent.lldb.rmi;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.*;
 
@@ -32,14 +33,12 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.output.TeeOutputStream;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hamcrest.Matchers;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import org.junit.*;
 
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.service.tracermi.TraceRmiPlugin;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
 import ghidra.app.services.TraceRmiService;
-import ghidra.dbg.testutil.DummyProc;
 import ghidra.debug.api.tracermi.*;
 import ghidra.framework.*;
 import ghidra.framework.main.ApplicationLevelOnlyPlugin;
@@ -50,25 +49,33 @@ import ghidra.framework.plugintool.util.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRangeImpl;
 import ghidra.pty.*;
+import ghidra.pty.testutil.DummyProc;
+import ghidra.pty.windows.AnsiBufferedInputStream;
 import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
-import ghidra.util.Msg;
-import ghidra.util.NumericUtilities;
+import ghidra.util.*;
 
 public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebuggerTest {
+
+	public static final boolean IS_WINDOWS =
+		OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS;
 
 	record PlatDep(String name, String endian, String lang, String cSpec, String callMne,
 			String intReg, String floatReg) {
 		static final PlatDep ARM64 =
 			new PlatDep("arm64", "little", "AARCH64:LE:64:v8A", "default", "bl", "x0", "s0");
 		static final PlatDep X8664 = // Note AT&T callq
-			new PlatDep("x86_64", "little", "x86:LE:64:default", "gcc", "callq", "rax", "st0");
+			new PlatDep("x86_64", "little", "x86:LE:64:default", IS_WINDOWS ? "windows" : "gcc",
+				"callq", "rax", "st0");
 	}
 
 	public static final PlatDep PLAT = computePlat();
+
+	protected static boolean didSetupPython = false;
 
 	static PlatDep computePlat() {
 		return switch (System.getProperty("os.arch")) {
@@ -80,16 +87,27 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 		};
 	}
 
-	static String getSpecimenClone() {
-		return DummyProc.which("expCloneExit");
+	static String getSpecimenNewThreadAndExit() {
+		return IS_WINDOWS ? which("expCreateThreadExit") : which("expCloneExit");
+	}
+
+	static int getSleepThreadCount() {
+		// The targets above use different sleep methods:
+		//   Linux spawns clock_nanosleep
+		//   Windows spawns ZwDelayExecution and multiple ZwWaitForWork threads
+		return IS_WINDOWS ? 2 : 1;
 	}
 
 	static String getSpecimenPrint() {
-		return DummyProc.which("expPrint");
+		return which("expPrint");
+	}
+
+	static String getSpecimenSpin() {
+		return which("expSpin");
 	}
 
 	static String getSpecimenRead() {
-		return DummyProc.which("expRead");
+		return which("expRead");
 	}
 
 	/**
@@ -105,21 +123,35 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 			""";
 	// Connecting should be the first thing the script does, so use a tight timeout.
 	protected static final int CONNECT_TIMEOUT_MS = 3000;
-	protected static final int TIMEOUT_SECONDS = 300;
+	protected static final int TIMEOUT_SECONDS = SystemUtilities.isInTestingBatchMode() ? 10 : 300;
 	protected static final int QUIT_TIMEOUT_MS = 1000;
+
+	/** Some snapshot likely to exceed the latest */
+	protected static final long SNAP = 100;
 
 	protected TraceRmiService traceRmi;
 	private Path lldbPath;
 
-	// @BeforeClass
+	@BeforeClass
 	public static void setupPython() throws Throwable {
-		new ProcessBuilder("gradle",
-			"Debugger-rmi-trace:assemblePyPackage",
-			"Debugger-agent-lldb:assemblePyPackage")
-					.directory(TestApplicationUtils.getInstallationDirectory())
-					.inheritIO()
-					.start()
-					.waitFor();
+		if (didSetupPython) {
+			// Only do this once when running the full suite.
+			return;
+		}
+		if (SystemUtilities.isInTestingBatchMode()) {
+			// Don't run gradle in gradle. It already did this task.
+			return;
+		}
+		String gradleCmd =
+			OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS ? "gradle.bat"
+					: "gradle";
+		String gradle = DummyProc.which(gradleCmd);
+		new ProcessBuilder(gradle, "assemblePyPackage")
+				.directory(TestApplicationUtils.getInstallationDirectory())
+				.inheritIO()
+				.start()
+				.waitFor();
+		didSetupPython = true;
 	}
 
 	protected void setPythonPath(Map<String, String> env) throws IOException {
@@ -137,11 +169,20 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 	public void setupTraceRmi() throws Throwable {
 		traceRmi = addPlugin(tool, TraceRmiPlugin.class);
 
+		traceManager.setSaveTracesByDefault(false);
+
 		try {
-			lldbPath = Paths.get(DummyProc.which("lldb-16"));
+			lldbPath = Paths.get(DummyProc.which("lldb-20"));
 		}
 		catch (RuntimeException e) {
 			lldbPath = Paths.get(DummyProc.which("lldb"));
+		}
+	}
+
+	@After
+	public void tearDownTraceRmi() throws IOException {
+		for (TraceRmiConnection cx : traceRmi.getAllConnections()) {
+			cx.close();
 		}
 	}
 
@@ -183,18 +224,29 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 	}
 
 	protected record ExecInLldb(Pty pty, PtySession lldb, CompletableFuture<LldbResult> future,
-			Thread pumper) {}
+			Thread pumper, ByteArrayOutputStream capture) {}
 
 	@SuppressWarnings("resource") // Do not close stdin 
 	protected ExecInLldb execInLldb(String script) throws IOException {
+		script = lfIfWindows(script);
 		Pty pty = PtyFactory.local().openpty();
 		Map<String, String> env = new HashMap<>(System.getenv());
 		setPythonPath(env);
 		env.put("TERM", "xterm-256color");
 		ByteArrayOutputStream capture = new ByteArrayOutputStream();
-		OutputStream tee = new TeeOutputStream(System.out, capture);
-		Thread pumper = new StreamPumper(pty.getParent().getInputStream(), tee);
+		OutputStream out;
+		if (SystemUtilities.isInTestingBatchMode()) {
+			out = capture;
+		}
+		else {
+			out = new TeeOutputStream(System.out, capture);
+		}
+		InputStream inputStream = pty.getParent().getInputStream();
+		inputStream = new AnsiBufferedInputStream(inputStream);
+		Thread pumper = new StreamPumper(inputStream, out);
 		pumper.start();
+		// NB: you have to do this because the AnsiBufferedInputStream requires a single line
+		pty.getChild().setWindowSize((short) 400, (short) 1);
 		PtySession lldbSession = pty.getChild().session(new String[] { lldbPath.toString() }, env);
 
 		OutputStream stdin = pty.getParent().getOutputStream();
@@ -207,7 +259,7 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 				return new LldbResult(false, exitVal, capture.toString());
 			}
 			catch (TimeoutException e) {
-				return new LldbResult(true, -1, capture.toString());
+				return new LldbResult(true, 0, capture.toString());
 			}
 			catch (Exception e) {
 				return ExceptionUtils.rethrow(e);
@@ -222,7 +274,7 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 				lldbSession.destroyForcibly();
 				pumper.interrupt();
 			}
-		}), pumper);
+		}), pumper, capture);
 	}
 
 	public static class LldbError extends RuntimeException {
@@ -245,28 +297,44 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 		return result.get(TIMEOUT_SECONDS, TimeUnit.SECONDS).handle();
 	}
 
-	protected record LldbAndConnection(ExecInLldb exec, TraceRmiConnection connection)
-			implements AutoCloseable {
+	protected class LldbAndConnection implements AutoCloseable {
+		private final ExecInLldb exec;
+		private final TraceRmiConnection connection;
+		private boolean success = false;
+
+		public LldbAndConnection(ExecInLldb exec, TraceRmiConnection connection) {
+			this.exec = exec;
+			this.connection = connection;
+		}
+
+		public TraceRmiConnection connection() {
+			return connection;
+		}
+
 		protected RemoteMethod getMethod(String name) {
 			return Objects.requireNonNull(connection.getMethods().get(name));
 		}
 
 		public void execute(String cmd) {
+			cmd = lfIfWindows(cmd);
 			RemoteMethod execute = getMethod("execute");
 			execute.invoke(Map.of("cmd", cmd));
 		}
 
 		public RemoteAsyncResult executeAsync(String cmd) {
+			cmd = lfIfWindows(cmd);
 			RemoteMethod execute = getMethod("execute");
 			return execute.invokeAsync(Map.of("cmd", cmd));
 		}
 
 		public String executeCapture(String cmd) {
+			cmd = lfIfWindows(cmd);
 			RemoteMethod execute = getMethod("execute");
 			return (String) execute.invoke(Map.of("cmd", cmd, "to_string", true));
 		}
 
 		public Object evaluate(String expr) {
+			expr = lfIfWindows(expr);
 			RemoteMethod evaluate = getMethod("evaluate");
 			return evaluate.invoke(Map.of("expr", expr));
 		}
@@ -276,19 +344,35 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 			return pyeval.invoke(Map.of("expr", expr));
 		}
 
+		public void success() {
+			success = true;
+		}
+
 		@Override
 		public void close() throws Exception {
 			Msg.info(this, "Cleaning up lldb");
 			execute("settings set auto-confirm true");
-			exec.pty.getParent().getOutputStream().write("""
+			String cmd = """
 					quit
-					""".getBytes());
+					""";
+			cmd = lfIfWindows(cmd);
+			exec.pty.getParent().getOutputStream().write(cmd.getBytes());
 			try {
-				LldbResult r = exec.future.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-				r.handle();
-				waitForPass(() -> assertTrue(connection.isClosed()));
+				try {
+					LldbResult r = exec.future.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+					r.handle();
+				}
+				catch (Exception e) {
+					Msg.error(this, e);
+				}
+				waitForPass(this, () -> assertTrue(connection.isClosed()), TIMEOUT_SECONDS,
+					TimeUnit.SECONDS);
 			}
 			finally {
+				if (!success) {
+					Msg.info(this, "LLDB output:\n" + exec.capture.toString());
+				}
+
 				exec.pty.close();
 				exec.lldb.destroyForcibly();
 				exec.pumper.interrupt();
@@ -376,6 +460,18 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 		return xout.split(head)[1].split("---")[0].replace("(lldb)", "").trim();
 	}
 
+	// OK, Windows versions just behave differently re prompt
+	protected String extractOutSectionWithPrompt(String out, String head) {
+		String[] split = out.replace("\r", "").split("\n");
+		String xout = "";
+		for (String s : split) {
+			if (!s.contains("script print(") && !s.equals("")) {
+				xout += s + "\n";
+			}
+		}
+		return xout.split(head)[1].split("---")[0].trim();
+	}
+
 	record MemDump(long address, byte[] data) {}
 
 	protected MemDump parseHexDump(String dump) throws IOException {
@@ -401,19 +497,25 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 		return new MemDump(address, buf.toByteArray());
 	}
 
-	protected ManagedDomainObject openDomainObject(String path) throws Exception {
+	protected void waitDomainObjectClosed(String path) {
 		DomainFile df = env.getProject().getProjectData().getFile(path);
 		assertNotNull(df);
-		return new ManagedDomainObject(df, false, false, monitor);
+		waitForPass(() -> assertFalse(df.isOpen()));
 	}
 
-	protected ManagedDomainObject waitDomainObject(String path) throws Exception {
+	protected ManagedDomainObject<Trace> openTrace(String path) throws Exception {
+		DomainFile df = env.getProject().getProjectData().getFile(path);
+		assertNotNull(df);
+		return new ManagedDomainObject<>(df, Trace.class, monitor);
+	}
+
+	protected ManagedDomainObject<Trace> waitTrace(String path) throws Exception {
 		DomainFile df;
 		long start = System.currentTimeMillis();
 		while (true) {
 			df = env.getProject().getProjectData().getFile(path);
 			if (df != null) {
-				return new ManagedDomainObject(df, false, false, monitor);
+				return new ManagedDomainObject<>(df, Trace.class, monitor);
 			}
 			Thread.sleep(1000);
 			if (System.currentTimeMillis() - start > 30000) {
@@ -425,6 +527,7 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 	protected void assertLocalOs(String actual) {
 		assertThat(actual, Matchers.startsWith(switch (OperatingSystem.CURRENT_OPERATING_SYSTEM) {
 			case LINUX -> "linux";
+			case WINDOWS -> "windows";
 			case MAC_OS_X -> "macos";
 			default -> throw new AssertionError("What OS?");
 		}));
@@ -567,5 +670,21 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 			throw new AssertionError("Timed out before first try?");
 		}
 		throw lastError;
+	}
+
+	public static String which(String cmd) {
+		return DummyProc.which(cmd).replace('\\', '/');
+	}
+
+	public static String projectName(String cmd) {
+		String ext = IS_WINDOWS ? ".exe" : "";
+		return "/New Traces/lldb/" + cmd + ext;
+	}
+
+	private String lfIfWindows(String cmd) {
+		if (IS_WINDOWS) {
+			cmd = cmd.replace("\n", "\r\n");
+		}
+		return cmd;
 	}
 }

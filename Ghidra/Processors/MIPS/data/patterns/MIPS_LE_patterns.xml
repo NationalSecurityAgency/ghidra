@@ -1,32 +1,32 @@
 <patternlist>
   <patternpairs totalbits="32" postbits="16">
     <prepatterns>
-      <data>0x0800e003 0x........</data> <!-- RETN : delayslot -->
-      <data>0x0800e003 0x........ 0x00000000 </data> <!-- RETN :  delayslot filler -->
-      <data>0x0800e003 0x........ 0x00000000 0x00000000 </data> <!-- RETN :  delayslot filler -->
+      <data>0x0800e003 0x........</data>                                   <!-- RETN : delayslot -->
+      <data>0x0800e003 0x........ 0x00000000 </data>                       <!-- RETN :  delayslot filler -->
+      <data>0x0800e003 0x........ 0x00000000 0x00000000 </data>            <!-- RETN :  delayslot filler -->
       <data>0x0800e003 0x........ 0x00000000 0x00000000 0x00000000 </data> <!-- RETN :  delayslot filler -->
-      <data>0x...... 000010.. ......00 0....... 0xbd 0x27 </data> <!-- J xyz : _ADDIU   This is probably a shared return-->
-      <data>0x....0010 ......00 0....... 0xbd 0x27</data> <!-- B xyz : _ADDIU   This is probably a shared return-->
-      <data>..001000 00000... 0x20 0x03  0x0. 0x.. 0xbd 0x27 </data>  <!-- JR t9   : _ADDIU -->
+      <data>0x...... 000010.. ......00 0....... 0xbd 0.100111 </data>      <!-- J xyz : _ADDIU   This is probably a shared return-->
+      <data>0x....0010 ......00 0....... 0xbd 0.100111</data>              <!-- B xyz : _ADDIU   This is probably a shared return-->
+      <data>..001000 00000... 0x20 0x03  0x0. 0x.. 0xbd 0.100111 </data>   <!-- JR t9   : _ADDIU -->
     </prepatterns>
     <postpatterns>
-      <data>......00  1....... 10111101 00100111</data>             <!-- ADDIU SP,SP,-xxxx -->
-      <data>0x......3c                   ......00 1....... 0xbd 0x27</data>  <!-- LUI - ADDIU SP,SP,-xxxx -->
-      <data>0x......   100011..          ......00 1....... 0xbd 0x27</data>  <!-- LW - ADDIU SP,SP,-xxxx -->
-      <data>0x......3c 0x...... 100011.. ......00 1....... 0xbd 0x27</data>  <!-- LUI - LW - ADDIU SP,SP,-xxxx -->
-      <data>0x....1c3c 0x....9c27 </data>                   <!-- LUI gp,xxxx  ADDIU GP,GP,xxxx -->
+      <data>......00  1....... 10111101 00100111</data>                           <!-- ADDIU SP,SP,-xxxx -->
+      <data>0x......3c                   ......00 1....... 0xbd 0.100111 </data>  <!-- LUI - ADDIU SP,SP,-xxxx -->
+      <data>0x......   100011..          ......00 1....... 0xbd 0.100111 </data>  <!-- LW - ADDIU SP,SP,-xxxx -->
+      <data>0x......3c 0x...... 100011.. ......00 1....... 0xbd 0.100111 </data>  <!-- LUI - LW - ADDIU SP,SP,-xxxx -->
+      <data>0x....1c3c 0x....9c 0.100111 </data>                                  <!-- LUI gp,xxxx  ADDIU GP,GP,xxxx -->
       <funcstart/>
     </postpatterns>
   </patternpairs>
   <patternpairs totalbits="32" postbits="16">
     <prepatterns>
-      <data>0x0800e003 0x........</data> <!-- RETN : delayslot -->
-      <data>0x0800e003 0x........ 0x00000000 </data> <!-- RETN :  delayslot filler -->
-      <data>0x0800e003 0x........ 0x00000000 0x00000000 </data> <!-- RETN :  delayslot filler -->
-      <data>0x0800e003 0x........ 0x00000000 0x00000000 0x00000000 </data> <!-- RETN :  delayslot filler -->
-      <data>0x...... 000010.. ......00 0....... 0xbd 0x27 </data> <!-- J xyz : _ADDIU   This is probably a shared return-->
-      <data>0x....0010 ......00 0....... 0xbd 0x27</data> <!-- B xyz : _ADDIU   This is probably a shared return-->
-      <data>..001000 00000... 0x20 0x03  0x0. 0x.. 0xbd 0x27 </data>  <!-- JR t9   : _ADDIU -->
+      <data>0x0800e003 0x........</data>                                         <!-- RETN : delayslot -->
+      <data>0x0800e003 0x........ 0x00000000 </data>                             <!-- RETN :  delayslot filler -->
+      <data>0x0800e003 0x........ 0x00000000 0x00000000 </data>                  <!-- RETN :  delayslot filler -->
+      <data>0x0800e003 0x........ 0x00000000 0x00000000 0x00000000 </data>       <!-- RETN :  delayslot filler -->
+      <data>0x...... 000010.. ......00 0....... 0xbd 0.100111 </data>            <!-- J xyz : _ADDIU   This is probably a shared return-->
+      <data>0x....0010 ......00 0....... 0xbd 0.100111 </data>                   <!-- B xyz : _ADDIU   This is probably a shared return-->
+      <data>..001000 00000... 0x20 0x03  0x0. 0x.. 0xbd 0.100111 </data>         <!-- JR t9   : _ADDIU -->
     </prepatterns>
     <postpatterns>
       <data>0x....063c </data>                                     <!-- lui a2,xxx -->
@@ -34,6 +34,21 @@
     </postpatterns>
   </patternpairs>
 
+  <pattern> <!-- MIPS64 -->
+      <data> ......00 1....... 10111101 01100111       ......00 0....... 0xbc 0xff </data>
+      <!-- daddiu sp, sp, -xxxx
+           sd     gp, (0x...)sp
+       -->
+      <funcstart validcode="6" contiguous="true"/>
+  </pattern>
+
+  <pattern> <!-- MIPS32 -->
+      <data> ......00 1....... 10111101 00100111       ......00 0....... 0xbc 0xaf </data>
+      <!-- addiu sp, sp, -xxxx
+           sw     gp, (0x...)sp
+       -->
+      <funcstart validcode="6" contiguous="true"/>
+  </pattern>
 
   <pattern> <!-- MIPS32 Thunk -->
       <data> 0x.. 0x.. 0x0f 0x3c 0x.. 0x.. 0xf9 0x8d 0x08 00000... 0x20 0x03 0x.. 0x.. 0xf8 0x25  </data>

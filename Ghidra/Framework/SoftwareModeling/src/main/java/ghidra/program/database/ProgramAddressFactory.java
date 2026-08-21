@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ public class ProgramAddressFactory extends DefaultAddressFactory {
 	 * <li>A stack space (see {@link AddressSpace#TYPE_STACK})</li>
 	 * <li>{@link AddressSpace#HASH_SPACE}</li>
 	 * <li>A join space (see {@link AddressSpace#TYPE_JOIN})</li>
-	 * </ol>
+	 * </ul>
 	 * In addition, support is provided for {@link ProgramOverlayAddressSpace}.
 	 * @param language language specification
 	 * @param compilerSpec compiler specification
@@ -205,14 +205,15 @@ public class ProgramAddressFactory extends DefaultAddressFactory {
 	@Override
 	public Address getAddress(String addrString) {
 		Address addr = null;
-		if (addrString.startsWith("Stack[") && addrString.endsWith("]")) {
+		if (addrString.startsWith(GenericAddress.STACK_ADDRESS_PREFIX) &&
+			addrString.endsWith(GenericAddress.STACK_ADDRESS_SUFFIX)) {
 			try {
 				long stackOffset =
 					NumericUtilities.parseHexLong(addrString.substring(6, addrString.length() - 1));
 				addr = stackSpace.getAddress(stackOffset);
 			}
-			catch (NumberFormatException e) {
-				// bad string
+			catch (AddressOutOfBoundsException | NumberFormatException e) {
+				// bad stack address string
 			}
 		}
 		else {

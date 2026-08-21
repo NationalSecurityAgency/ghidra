@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,10 +16,14 @@
 package ghidra.app.plugin.core.compositeeditor;
 
 import java.math.BigInteger;
-import java.util.NoSuchElementException;
+import java.util.*;
+
+import javax.help.UnsupportedOperationException;
+import javax.swing.table.TableColumn;
 
 import docking.widgets.fieldpanel.support.FieldRange;
 import docking.widgets.fieldpanel.support.FieldSelection;
+import docking.widgets.table.GTableHeaderRenderer;
 
 /**
  * Data union editor model for maintaining information about the edits being
@@ -44,7 +48,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.UsrException;
 import ghidra.util.task.TaskMonitor;
 
-class UnionEditorModel extends CompEditorModel {
+class UnionEditorModel extends CompEditorModel<Union> {
 
 	private static final long serialVersionUID = 1L;
 	private static final int LENGTH = 0;
@@ -52,6 +56,9 @@ class UnionEditorModel extends CompEditorModel {
 	private static final int DATATYPE = 2;
 	private static final int FIELDNAME = 3;
 	private static final int COMMENT = 4;
+	private static final int ORDINAL = 5;
+
+	private List<TableColumn> hiddenColumns;
 
 	UnionEditorModel(UnionEditorProvider provider, boolean showInHex) {
 		super(provider);
@@ -61,6 +68,22 @@ class UnionEditorModel extends CompEditorModel {
 		adjustOffsets();
 		this.showHexNumbers = showInHex;
 
+		List<TableColumn> additionalColumns = new ArrayList<>();
+		TableColumn ordinalColumn = new TableColumn(ORDINAL, 75);
+		ordinalColumn.setHeaderRenderer(new GTableHeaderRenderer());
+		ordinalColumn.setHeaderValue("Ordinal");
+		additionalColumns.add(ordinalColumn);
+		hiddenColumns = Collections.unmodifiableList(additionalColumns);
+	}
+
+	@Override
+	public String getTypeName() {
+		return "Union";
+	}
+
+	@Override
+	protected List<TableColumn> getHiddenColumns() {
+		return hiddenColumns;
 	}
 
 	@Override
@@ -91,6 +114,29 @@ class UnionEditorModel extends CompEditorModel {
 	@Override
 	public int getCommentColumn() {
 		return COMMENT;
+	}
+
+	@Override
+	public Object getValueAt(int rowIndex, int columnIndex) {
+
+		if ((viewComposite == null) || (rowIndex < 0) || (columnIndex < 0)) {
+			return "";
+		}
+
+		DataTypeComponent dtc = getComponent(rowIndex);
+		if (dtc == null) {
+			if (columnIndex == getDataTypeColumn()) {
+				return null;
+			}
+			return "";
+		}
+
+		if (columnIndex == ORDINAL) {
+			int ordinal = dtc.getOrdinal();
+			return showHexNumbers ? getHexString(ordinal, true) : Integer.toString(ordinal);
+		}
+
+		return super.getValueAt(rowIndex, columnIndex);
 	}
 
 	/**
@@ -169,11 +215,6 @@ class UnionEditorModel extends CompEditorModel {
 		finally {
 			applyingFieldEdit = false;
 		}
-	}
-
-	@Override
-	public void clearComponent(int rowIndex) {
-		// clearing not supported
 	}
 
 	/**
@@ -345,8 +386,9 @@ class UnionEditorModel extends CompEditorModel {
 		if (range != null) {
 			// Determine the number of bytes.
 			// Get the size of the range.
-			for (int i =
-				range.getStart().getIndex().intValue(); i < range.getEnd().getIndex().intValue(); i++) {
+			for (int i = range.getStart().getIndex().intValue(); i < range.getEnd()
+					.getIndex()
+					.intValue(); i++) {
 				DataTypeComponent comp = getComponent(i);
 				numBytesInRange = Math.max(numBytesInRange, comp.getLength());
 			}
@@ -378,10 +420,10 @@ class UnionEditorModel extends CompEditorModel {
 			String comment) throws InvalidDataTypeException {
 		checkIsAllowableDataType(dataType);
 		try {
-			DataTypeComponent dtc =
-				((Union) viewComposite).insert(rowIndex, dataType, length, name, comment);
-			if (rowIndex <= row) {
-				row++;
+			DataTypeComponent dtc = viewDTM.withTransaction("Add Component",
+				() -> viewComposite.insert(rowIndex, dataType, length, name, comment));
+			if (rowIndex <= currentEditRow) {
+				currentEditRow++;
 			}
 			adjustSelection(rowIndex, 1);
 			notifyCompositeChanged();
@@ -395,12 +437,17 @@ class UnionEditorModel extends CompEditorModel {
 	@Override
 	public void insert(int rowIndex, DataType dataType, int length, int numCopies,
 			TaskMonitor monitor) throws InvalidDataTypeException, CancelledException {
-
-		monitor.initialize(numCopies);
-		for (int i = 0; i < numCopies; i++) {
-			monitor.checkCancelled();
-			insert(rowIndex + i, dataType, length, null, null);
-			monitor.incrementProgress(1);
+		int txId = viewDTM.startTransaction("Insert Multiple");
+		try {
+			monitor.initialize(numCopies);
+			for (int i = 0; i < numCopies; i++) {
+				monitor.checkCancelled();
+				insert(rowIndex + i, dataType, length, null, null);
+				monitor.incrementProgress(1);
+			}
+		}
+		finally {
+			viewDTM.endTransaction(txId, true);
 		}
 	}
 
@@ -410,14 +457,14 @@ class UnionEditorModel extends CompEditorModel {
 		checkIsAllowableDataType(dataType);
 		try {
 			boolean isSelected = selection.containsEntirely(BigInteger.valueOf(rowIndex));
-			((Union) viewComposite).delete(rowIndex);
-			DataTypeComponent dtc =
-				((Union) viewComposite).insert(rowIndex, dataType, length, name, comment);
+			DataTypeComponent dtc = viewDTM.withTransaction("Replace Component", () -> {
+				viewComposite.delete(rowIndex);
+				return viewComposite.insert(rowIndex, dataType, length, name, comment);
+			});
 			if (isSelected) {
 				selection.addRange(rowIndex, rowIndex + 1);
 				fixSelection();
 			}
-			componentEdited();
 			return dtc;
 		}
 		catch (IllegalArgumentException exc) {
@@ -456,12 +503,20 @@ class UnionEditorModel extends CompEditorModel {
 		FieldSelection overlap = new FieldSelection();
 		overlap.addRange(startRowIndex, endRowIndex + 1);
 		overlap.intersect(selection);
-
-		// Union just replaces entire selection range with single instance of new component.
-		deleteComponentRange(startRowIndex, endRowIndex, monitor);
-
 		boolean replacedSelected = (overlap.getNumRanges() > 0);
-		insert(startRowIndex, datatype, length, null, null);
+
+		int txId = viewDTM.startTransaction("Insert Multiple");
+		try {
+
+			// Union just replaces entire selection range with single instance of new component.
+			deleteComponentRange(startRowIndex, endRowIndex, monitor);
+
+			insert(startRowIndex, datatype, length, null, null);
+		}
+		finally {
+			viewDTM.endTransaction(txId, true);
+		}
+
 		if (replacedSelected) {
 			selection.addRange(startRowIndex, startRowIndex + 1);
 			fixSelection();
@@ -471,86 +526,34 @@ class UnionEditorModel extends CompEditorModel {
 
 	@Override
 	public void replaceOriginalComponents() {
-		((Union) getOriginalComposite()).replaceWith(viewComposite);
+		getOriginalComposite().replaceWith(viewComposite);
 	}
 
 	@Override
-	public void clearComponents(int[] rows) throws UsrException {
-		throw new UsrException("Can't clear components in a union.");
+	protected void clearComponent(int rowIndex) {
+		throw new UnsupportedOperationException("Can't clear components in a union.");
 	}
 
 	@Override
-	void removeDtFromComponents(Composite comp) {
-		DataType newDt = viewDTM.getDataType(comp.getDataTypePath());
-		if (newDt == null) {
-			return;
-		}
-		int num = getNumComponents();
-		for (int i = num - 1; i >= 0; i--) {
-			DataTypeComponent dtc = getComponent(i);
-			DataType dt = dtc.getDataType();
-			if (dt instanceof Composite) {
-				Composite dtcComp = (Composite) dt;
-				if (dtcComp.isPartOf(newDt)) {
-					deleteComponent(i);
-					String msg =
-						"Components containing " + comp.getDisplayName() + " were removed.";
-					setStatus(msg, true);
-				}
-			}
-		}
+	public void clearComponents(int[] rows) {
+		throw new UnsupportedOperationException("Can't clear components in a union.");
 	}
 
-	/**
-	 * Returns the number of undefined bytes that are available in the structure
-	 * beginning at the specified row index.
-	 *
-	 * @param rowIndex the index of the row
-	 */
-	@Override
-	protected int getNumUndefinedBytesAt(int rowIndex) {
-		return 0;
-	}
-
-	/**
-	 * ?????
-	 *
-	 * @param rowIndex the index of the row
-	 */
 	@Override
 	protected boolean isAtEnd(int rowIndex) {
+		// Not applicable to union
 		return false;
 	}
 
-	/**
-	 * Cause the component at the specified index to consume undefined bytes
-	 * that follow it.
-	 * Note: this method adjusts the selection.
-	 * @return the number of Undefined bytes consumed.
-	 */
 	@Override
 	protected int consumeByComponent(int rowIndex) {
-		return 0;
-	}
-
-	/**
-	 *  Consumes the number of undefined bytes requested if they are available.
-	 *
-	 * @param rowIndex index of the row (component).
-	 * @param numDesired the number of Undefined bytes desired.
-	 * @return the number of components removed from the structure when the
-	 * bytes were consumed.
-	 * @throws java.util.NoSuchElementException if the index is invalid.
-	 * @throws InvalidDataTypeException if there aren't enough bytes.
-	 */
-	@Override
-	protected int consumeUndefinedBytes(int rowIndex, int numDesired)
-			throws NoSuchElementException, InvalidDataTypeException {
+		// Not applicable to union
 		return 0;
 	}
 
 	@Override
 	public boolean isShowingUndefinedBytes() {
+		// Not applicable to union
 		return false;
 	}
 

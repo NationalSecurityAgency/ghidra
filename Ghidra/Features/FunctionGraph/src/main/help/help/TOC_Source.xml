@@ -54,7 +54,7 @@
 	
 		<tocdef id="Function Graph" text="Function Graph" target="help/topics/FunctionGraphPlugin/Function_Graph.html" >
 	        <tocdef id="Primary View" sortgroup="a" text="Primary View" target="help/topics/FunctionGraphPlugin/Function_Graph.html#Primary_View" />
-	        <tocdef id="Satellite View" sortgroup="b" text="Satellite View" target="help/topics/FunctionGraphPlugin/Function_Graph.html#Satellite_View" />
+	        <tocdef id="Satellite View" sortgroup="b" text="Satellite View" target="help/topics/VisualGraph/Visual_Graph.html#Satellite_View" />
 	        
 	        <tocdef id="Vertices" sortgroup="c" text="Vertices" target="help/topics/FunctionGraphPlugin/Function_Graph.html#Vertices">
 	        	<tocdef id="Vertex Grouping" sortgroup="a" text="Vertex Grouping" target="help/topics/FunctionGraphPlugin/Function_Graph.html#Vertex_Grouping" />

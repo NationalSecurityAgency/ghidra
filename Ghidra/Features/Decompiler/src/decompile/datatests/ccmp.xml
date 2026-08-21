@@ -1,0 +1,26 @@
+<decompilertest>
+<!--
+  Example of AARCH64 ccmp instruction. The boolean expression needs to be pulled
+  out of the conditional block.
+-->
+<binaryimage arch="AARCH64:LE:64:v8A:default">
+<bytechunk space="ram" offset="0x42caec" readonly="true">
+                        f403012a
+f30300aa600640391ff00071800a497a
+4c000054a1320394c0035fd6
+</bytechunk>
+<symbol space="ram" offset="0x42caec" name="ccmp"/>
+<symbol space="ram" offset="0x4f9588" name="otherfunc"/>
+</binaryimage>
+<script>
+  <com>parse line extern void ccmp(uint1 *ptr,int4 val);</com>
+  <com>lo fu ccmp</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Ccmp test #1" min="1" max="1">if \(ptr\[1\] == 0x3c &amp;&amp; val &lt; 10\)</stringmatch>
+<stringmatch name="Ccmp test #2" min="1" max="1">if</stringmatch>
+<stringmatch name="Ccmp test #3" min="0" max="0">SBORROW</stringmatch>
+<stringmatch name="Ccmp test #4" min="0" max="0">false</stringmatch>
+</decompilertest>

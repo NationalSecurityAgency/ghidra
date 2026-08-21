@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="Hexagon"
+            endian="little"
+            size="32"
+            variant="default"
+            version="2.4"
+            slafile="hexagon.sla"
+            processorspec="hexagon.pspec"
+            id="Hexagon:LE:32:default">
+    <description>Qualcomm Hexagon V69 processor (QDSP6) 32-bit little-endian</description>
+    <compiler name="default" spec="hexagon.cspec" id="default"/>
+    <external_name tool="gnu" name="0x18:0x5"/>
+    <external_name tool="DWARF.register.mapping.file" name="hexagon.dwarf"/>
+  </language>
+</language_definitions>

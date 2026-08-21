@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,39 +34,48 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 
 /**
- * Service provided by a plugin that shows the listing from a Program, i.e., a
- * Code Viewer. The service allows other plugins to add components and 
- * actions local to the Code Viewer.
- *  
- * 
+ * Service provided by a plugin that shows the Code Viewer listing for a Program.  The service 
+ * allows other plugins to add components and actions local to the Code Viewer.
  */
 @ServiceInfo(defaultProvider = CodeBrowserPlugin.class)
 public interface CodeViewerService {
 	/**
 	 * Add a provider that shows an overview of the program.
+	 * <p>
+	 * Note: the provider passed here will only appear in the primary code viewer, not in any of the
+	 * snapshot windows.  to have an overview provider appear in all windows, you must create a
+	 * {@link ListingOverviewProviderService} implementation instead of using this method.
+	 * 
 	 * @param overviewProvider provider to add
 	 */
-	public void addOverviewProvider(OverviewProvider overviewProvider);
+	public void addOverviewProvider(ListingOverviewProvider overviewProvider);
 
 	/**
 	 * Remove a provider that shows an overview of the program.
 	 * @param overviewProvider provider to remove
+	 * @see CodeViewerService#addOverviewProvider(ListingOverviewProvider)
 	 */
-	public void removeOverviewProvider(OverviewProvider overviewProvider);
+	public void removeOverviewProvider(ListingOverviewProvider overviewProvider);
 
 	/**
 	 * Add a provider that shows markers in a program for the portion 
 	 * that is visible.
 	 * @param marginProvider provider to add
+	 * @deprecated clients that wish to be margin providers should now create a 
+	 * {@link ListingMarginProviderService}.
 	 */
-	public void addMarginProvider(MarginProvider marginProvider);
+	@Deprecated(since = "12.1", forRemoval = true)
+	public void addMarginProvider(ListingMarginProvider marginProvider);
 
 	/**
 	 * Remove a provider that shows markers in a program for the portion 
 	 * that is visible.
 	 * @param marginProvider provider to remove
+	 * @deprecated clients that wish to be margin providers should now create a 
+	 * {@link ListingMarginProviderService}.
 	 */
-	public void removeMarginProvider(MarginProvider marginProvider);
+	@Deprecated(since = "12.1", forRemoval = true)
+	public void removeMarginProvider(ListingMarginProvider marginProvider);
 
 	/**
 	 * Add an action that is local to the Code Viewer.
@@ -88,13 +97,13 @@ public interface CodeViewerService {
 
 	/**
 	 * Add a listener that is notified when a mouse button is pressed.
-	 * @param listener
+	 * @param listener the listener
 	 */
 	public void addButtonPressedListener(ButtonPressedListener listener);
 
 	/**
 	 * Remove the button pressed listener.
-	 * @param listener
+	 * @param listener the listener
 	 */
 	public void removeButtonPressedListener(ButtonPressedListener listener);
 
@@ -114,7 +123,8 @@ public interface CodeViewerService {
 	public void removeHighlightProvider(ListingHighlightProvider provider, Program program);
 
 	/**
-	 * Set a listing panel on the code viewer.
+	 * Set a listing panel on the code viewer.  The given listing panel is a secondary listing panel
+	 * to be displayed along with the primary listing panel.
 	 * @param listingPanel the panel to add.
 	 */
 	public void setListingPanel(ListingPanel listingPanel);
@@ -127,11 +137,12 @@ public interface CodeViewerService {
 
 	/**
 	 * Remove the given listing panel from the code viewer.
+	 * @param listingPanel the listing panel
 	 */
 	public void removeListingPanel(ListingPanel listingPanel);
 
 	/**
-	 * Get Current view that the CodeViewer is showing. 
+	 * @return the current set of addresses that the CodeViewer is showing.} 
 	 */
 	public AddressSetView getView();
 
@@ -145,15 +156,21 @@ public interface CodeViewerService {
 	public boolean goTo(ProgramLocation loc, boolean centerOnScreen);
 
 	/**
-	 * Return the fieldPanel.
+	 * Returns the current field panel.
+	 * @return the current field panel.
+	 * @deprecated use {@link #getListingPanel()} to get the field panel
 	 */
+	@Deprecated(since = "12.1", forRemoval = true)
 	public FieldPanel getFieldPanel();
 
 	/**
-	 * Returns the current address-index-map
+	 * {@return the current address index map.}
 	 */
 	public AddressIndexMap getAddressIndexMap();
 
+	/**
+	 * {@return the format manager.}
+	 */
 	public FormatManager getFormatManager();
 
 	/**

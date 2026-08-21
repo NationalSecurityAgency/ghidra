@@ -15,6 +15,9 @@
  */
 package ghidra.app.util.bin.format.pdb2.pdbreader;
 
+import java.io.IOException;
+import java.io.Writer;
+
 /**
  * This class is the version of {@link SectionContribution} for Microsoft v14.00 PDB.
  */
@@ -38,24 +41,16 @@ public class SectionContribution1400 extends SectionContribution {
 	}
 
 	@Override
-	String dumpInternals() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("isect: ");
-		builder.append(isect);
-		builder.append("\noffset: ");
-		builder.append(offset);
-		builder.append("\nlength: ");
-		builder.append(length);
-		builder.append(String.format("\ncharacteristics: 0X%08X", characteristics));
-		builder.append("\nimod: ");
-		builder.append(imod);
-		builder.append("\ndataCrc: ");
-		builder.append(dataCrc);
-		builder.append("\nrelocationCrc: ");
-		builder.append(relocationCrc);
-		builder.append("\nunknownSectionContributionField: ");
-		builder.append(unknownSectionContributionField);
-		return builder.toString();
+	void dumpInternals(Writer writer) throws IOException {
+		writer.write("isect: " + isect);
+		writer.write("\noffset: " + offset);
+		writer.write("\nlength: " + length);
+		writer.write(String.format("\ncharacteristics: 0X%08X", characteristics));
+		writer.write("\nimod: " + imod);
+		writer.write("\ndataCrc: " + dataCrc);
+		writer.write("\nrelocationCrc: " + relocationCrc);
+		writer.write("\nunknownSectionContributionField: " + unknownSectionContributionField);
+		writer.write("\n");
 	}
 
 }

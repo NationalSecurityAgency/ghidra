@@ -28,10 +28,9 @@ ghidra.xtext.sleigh.ui/src/ghidra/xtext/sleigh/ui/outline/SleighOutlineTreeProvi
 ghidra.xtext.sleigh.ui/src/ghidra/xtext/sleigh/ui/quickfix/SleighQuickfixProvider.xtend||GHIDRA||||END|
 ghidra.xtext.sleigh/.launch/Generate Sleigh (sleigh) Language Infrastructure.launch||GHIDRA||||END|
 ghidra.xtext.sleigh/.launch/Launch Runtime Eclipse.launch||GHIDRA||||END|
-ghidra.xtext.sleigh/GhidraSleighEditor_README.html||GHIDRA||||END|
 ghidra.xtext.sleigh/META-INF/MANIFEST.MF||GHIDRA||||END|
+ghidra.xtext.sleigh/README.md||GHIDRA||||END|
 ghidra.xtext.sleigh/build.properties||GHIDRA||||END|
-ghidra.xtext.sleigh/build_README.txt||GHIDRA||||END|
 ghidra.xtext.sleigh/plugin.xml||GHIDRA||||END|
 ghidra.xtext.sleigh/src/ghidra/xtext/sleigh/GenerateSleigh.mwe2||GHIDRA||||END|
 ghidra.xtext.sleigh/src/ghidra/xtext/sleigh/Sleigh.xtext||GHIDRA||||END|

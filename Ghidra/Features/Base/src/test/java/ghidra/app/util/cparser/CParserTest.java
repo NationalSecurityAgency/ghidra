@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,64 +36,175 @@ public class CParserTest extends AbstractGhidraHeadlessIntegrationTest {
 		super();
 	}
 
-	/**
-	 * This method just tries to parse a bunch o'
-	 * data types just checking for stack traces.
-	 */
 	@Test
 	public void testSimple() throws Exception {
 		CParser parser = new CParser();
 
 		DataType pdt = parser.parse("typedef long int32_t;");
 		assertTrue(pdt != null);
-		assertTrue(pdt instanceof TypeDef);
+		assertTrue(pdt instanceof Int32TDataType);
 		assertTrue(pdt.getName().equals("int32_t"));
 		DataType dt = parser.getDataTypeManager().getDataType("/int32_t");
 		assertTrue(dt != null);
-		assertTrue(dt instanceof TypeDef);
+		assertTrue(dt instanceof Int32TDataType);
 		
 		dt = parser.parse("struct mystruct {" +
-                     "    int field1;" +
-                     "    char field2;" +
-                     " };");
+			"    int32_t field1;" +
+			"    char field2;" +
+			" };");
 		
 		assertTrue(dt != null);
 		assertTrue(dt instanceof Structure);
 		Structure sdt = (Structure) dt;
 		DataTypeComponent comp = sdt.getComponent(0);
 		assertEquals("field1", comp.getFieldName());
-		assertEquals(comp.getDataType().getName(),"int");
+		assertEquals("int32_t", comp.getDataType().getName());
 		comp = sdt.getComponent(1);
 		assertEquals("field2", comp.getFieldName());
 		assertEquals(comp.getDataType().getName(),"char");
 	}
 
-	/**
-	 * This method just tries to parse a bunch o'
-	 * data types just checking for stack traces.
-	 */
+	@Test
+	public void testReplacement1() throws Exception {
+		CParser parser = new CParser();
+
+		DataType pdt = parser.parse("typedef long __int32_t;");
+		assertTrue(pdt instanceof TypeDef);
+		assertEquals("typedef __int32_t int32_t", pdt.toString());
+
+		pdt = parser.parse("typedef __int32_t int32_t;");
+		assertTrue(pdt instanceof Int32TDataType);
+		assertTrue(pdt.getName().equals("int32_t"));
+		assertEquals("int32_t", pdt.toString());
+
+		DataType dt = parser.getDataTypeManager().getDataType("/int32_t");
+		assertTrue(dt != null);
+		assertTrue(dt instanceof Int32TDataType);
+
+		dt = parser.parse("struct mystruct {" +
+			"    int32_t field1;" +
+			"    char field2;" +
+			" };");
+
+		assertTrue(dt != null);
+		assertTrue(dt instanceof Structure);
+		Structure sdt = (Structure) dt;
+		DataTypeComponent comp = sdt.getComponent(0);
+		assertEquals("field1", comp.getFieldName());
+		assertEquals("int32_t", comp.getDataType().getName());
+		comp = sdt.getComponent(1);
+		assertEquals("field2", comp.getFieldName());
+		assertEquals(comp.getDataType().getName(), "char");
+	}
+
+	@Test
+	public void testReplacement2() throws Exception {
+		CParser parser = new CParser();
+
+		DataType pdt = parser.parse("typedef long int32_t;");
+		assertTrue(pdt instanceof Int32TDataType);
+		assertTrue(pdt.getName().equals("int32_t"));
+		assertEquals("int32_t", pdt.toString());
+
+		pdt = parser.parse("typedef int32_t __int32_t;");
+		assertTrue(pdt instanceof TypeDef);
+		assertEquals("typedef __int32_t int32_t", pdt.toString());
+		assertTrue(pdt.getName().equals("__int32_t"));
+		DataType dt = parser.getDataTypeManager().getDataType("/__int32_t");
+		assertTrue(dt != null);
+		assertTrue(dt instanceof TypeDef);
+
+		dt = parser.parse("struct mystruct {" +
+			"    __int32_t field1;" +
+			"    char field2;" +
+			" };");
+
+		assertTrue(dt != null);
+		assertTrue(dt instanceof Structure);
+		Structure sdt = (Structure) dt;
+		DataTypeComponent comp = sdt.getComponent(0);
+		assertEquals("field1", comp.getFieldName());
+		assertEquals("__int32_t", comp.getDataType().getName());
+		comp = sdt.getComponent(1);
+		assertEquals("field2", comp.getFieldName());
+		assertEquals(comp.getDataType().getName(), "char");
+	}
+
+	@Test
+	public void testLongInt() throws Exception {
+		CParser parser;
+
+		parser = new CParser(); // uses default data organization (i.e., x86-32)
+		DataType pdt32 = parser.parse("typedef unsigned long int u_int32_t;");
+
+		assertTrue(pdt32 instanceof TypeDef);
+		assertTrue(pdt32.getName().equals("u_int32_t"));
+		assertEquals(4, pdt32.getLength());
+
+		// replaced with `typedef uint32_t u_int32_t`
+		DataType dt = ((TypeDef) pdt32).getBaseDataType();
+		assertTrue(dt instanceof UInt32TDataType);
+
+		dt = parser.getDataTypeManager().getDataType("/u_int32_t");
+		assertTrue(dt instanceof TypeDef);
+		assertEquals(4, dt.getLength());
+		dt = parser.getDataTypeManager().getDataType("/uint32_t");
+		assertTrue(dt instanceof UInt32TDataType);
+		assertEquals(4, dt.getLength());
+
+		parser = new CParser();
+		pdt32 = parser.parse("typedef unsigned long int foo_t;");
+		assertTrue(pdt32 instanceof TypeDef);
+		assertTrue(pdt32.getName().equals("foo_t"));
+		assertEquals(4, pdt32.getLength());
+
+		dt = parser.getDataTypeManager().getDataType("/foo_t");
+		assertTrue(dt instanceof TypeDef);
+		assertEquals(4, dt.getLength());
+	}
+
 	@Test
 	public void testLongLong() throws Exception {
 		CParser parser;
 
-		parser = new CParser();
-		DataType pdt64 = parser.parse("typedef unsigned long int uint64_t;");
+		parser = new CParser(); // uses default data organization (i.e., x86-32)
+		DataType pdt64 = parser.parse("typedef unsigned long long uint64_t;");
 
-		assertTrue(pdt64 != null);
-		assertTrue(pdt64 instanceof TypeDef);
+		assertTrue(pdt64 instanceof UInt64TDataType);
 		assertTrue(pdt64.getName().equals("uint64_t"));
-		assertEquals(4, pdt64.getLength());
+		assertEquals(8, pdt64.getLength());
 
 		DataType dt = parser.getDataTypeManager().getDataType("/uint64_t");
+		assertTrue(dt instanceof UInt64TDataType);
+		assertEquals(8, dt.getLength());
+
+		parser = new CParser();
+		pdt64 = parser.parse("typedef unsigned long long int uint64_t;");
+		assertTrue(pdt64 instanceof UInt64TDataType);
+		assertTrue(pdt64.getName().equals("uint64_t"));
+		assertEquals(8, pdt64.getLength());
+
+	}
+	
+	@Test
+	public void testTypedef() throws Exception {
+		CParser parser;
+
+		parser = new CParser();
+		DataType tdDt = parser.parse("typedef struct foo * foo;");
+
+		assertTrue(tdDt != null);
+		assertTrue(tdDt instanceof TypeDef);
+		System.out.println(tdDt.getPathName());
+		System.out.println(((TypeDef)tdDt).getDataType().getPathName());
+		assertEquals("foo", tdDt.getName());
+		assertEquals("foo.conflict *", ((TypeDef)tdDt).getDataType().getName());
+		assertEquals(4, tdDt.getLength());
+
+		DataType dt = parser.getDataTypeManager().getDataType("/foo");
 		assertTrue(dt != null);
 		assertTrue(dt instanceof TypeDef);
 
-		parser = new CParser();
-		DataType pdt32 = parser.parse("typedef unsigned long long int uint64_t;");
-		assertTrue(pdt32 != null);
-		assertTrue(pdt32 instanceof TypeDef);
-		assertTrue(pdt32.getName().equals("uint64_t"));
-		assertEquals(8, pdt32.getLength());
 	}
 	
 	@Test
@@ -105,8 +216,8 @@ public class CParserTest extends AbstractGhidraHeadlessIntegrationTest {
 		
 		CParser parser;
 		
-		parser = new CParser();
-		dt = parser.parse("typedef int wchar_t;");
+		parser = new CParser(); // uses default data organization (i.e., x86-32)
+		dt = parser.parse("typedef short wchar_t;");
 		
 		assertTrue(dt instanceof WideCharDataType);
 
@@ -233,9 +344,9 @@ public class CParserTest extends AbstractGhidraHeadlessIntegrationTest {
 		
 		assertTrue("Duplicate ENUM message missing", parseMessages.contains("duplicate enum value: options_enum : PLUS_SET : 16"));
 		
-		assertTrue("Duplicate ENUM message missing", parseMessages.contains("Static_Asssert has failed  \"\"math fail!\"\""));
+		assertTrue("Static assert fail missing", parseMessages.contains("Static_Assert possibly failed  \"\"math fail!\"\""));
 		
-		assertTrue("Duplicate ENUM message missing", parseMessages.contains("Static_Asssert has failed  \"\"1 + 1 == 3, fail!\"\""));
+		assertTrue("Static assert fail missing", parseMessages.contains("Static_Assert possibly failed  \"\"1 + 1 == 3, fail!\"\""));
 		
 		dt = dtMgr.getDataType(new CategoryPath("/"), "_IO_FILE_complete");
 		Structure sldt = (Structure) dt;
@@ -381,7 +492,7 @@ public class CParserTest extends AbstractGhidraHeadlessIntegrationTest {
 
 		dt = dtMgr.getDataType("/int32_t");
 		assertTrue(dt != null);
-		assertTrue(dt instanceof TypeDef);
+		assertTrue(dt instanceof Int32TDataType);
 
 		// typedef long unsigned int LUI_size_t;
 		dt = dtMgr.getDataType("/LUI_size_t");
@@ -466,6 +577,69 @@ public class CParserTest extends AbstractGhidraHeadlessIntegrationTest {
 			((Enum) dt).getValue("SHIFTED3"));
 		assertEquals("enum options_enum not correct", 15 >> 3 << 3,
 			((Enum) dt).getValue("SHIFTED4"));
+			
+		dt = dtMgr.getDataType(new CategoryPath("/"), "_C23_enum_char");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum _C23_enum_char size not correct", 1, dt.getLength());
+		dt = dtMgr.getDataType(new CategoryPath("/"), "_C23_enum_short");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum _C23_enum_short size not correct", 2, dt.getLength());
+		dt = dtMgr.getDataType(new CategoryPath("/"), "_C23_enum_int");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum _C23_enum_int size not correct", 4, dt.getLength());
+		dt = dtMgr.getDataType(new CategoryPath("/"), "_C23_enum_long");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum _C23_enum_long size not correct", 4, dt.getLength());
+		dt = dtMgr.getDataType(new CategoryPath("/"), "_C23_enum_longlong");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum _C23_enum_longlong size not correct", 8, dt.getLength());
+		dt = dtMgr.getDataType(new CategoryPath("/"), "_C23_enum_DWORD");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum _C23_enum_DWORD size not correct", 4, dt.getLength());
+		
+		dt = dtMgr.getDataType(new CategoryPath("/"), "packed_enum_style_1");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum packed_enum_style_1 size not correct", 1, dt.getLength());
+		
+		dt = dtMgr.getDataType(new CategoryPath("/"), "packed_enum_style_2");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum packed_enum_style_2 size not correct", 1, dt.getLength());
+		
+		dt = dtMgr.getDataType(new CategoryPath("/"), "packed_enum_cpp_style_1");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum packed_enum_cpp_style_1 size not correct", 1, dt.getLength());
+		
+		dt = dtMgr.getDataType(new CategoryPath("/"), "packed_enum_cpp_style_2");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum packed_enum_cpp_style_2 size not correct", 1, dt.getLength());
+		
+		dt = dtMgr.getDataType(new CategoryPath("/"), "packed_enum_cpp_style_gnu");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum packed_enum_cpp_style_gnu size not correct", 1, dt.getLength());
+		
+		dt = dtMgr.getDataType(new CategoryPath("/"), "non_packed_enum");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum non_packed_enum size not correct", 4, dt.getLength());
+		
+		dt = dtMgr.getDataType(new CategoryPath("/"), "packed_negative_enum");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum packed_negative_enum size not correct", 1, dt.getLength());
+		assertEquals("enum packed_negative_enum value not correct", -1,
+			((Enum) dt).getValue("A"));
+		assertEquals("enum packed_negative_enum value not correct", -2,
+			((Enum) dt).getValue("B"));
+		assertEquals("enum packed_negative_enum value not correct", -3,
+			((Enum) dt).getValue("C"));
+			
+		dt = dtMgr.getDataType(new CategoryPath("/"), "normal_negative_enum");
+		assertTrue(dt instanceof Enum);
+		assertEquals("enum normal_negative_enum size not correct", 4, dt.getLength());
+		assertEquals("enum normal_negative_enum value not correct", -1,
+			((Enum) dt).getValue("A"));
+		assertEquals("enum normal_negative_enum value not correct", -2,
+			((Enum) dt).getValue("B"));
+		assertEquals("enum normal_negative_enum value not correct", -3,
+			((Enum) dt).getValue("C"));
 
 		dt = dtMgr.getDataType(new CategoryPath("/functions"), "__checkint");
 		assertTrue("not a function", dt instanceof FunctionDefinition);

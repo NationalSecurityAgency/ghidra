@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -200,16 +200,31 @@ public abstract class MDModifierType extends MDDataType {
 
 	protected void insertCVMod(StringBuilder builder) {
 		cvMod.insert(builder);
-		// Following to to clean the Based5 "bug" if seen.  See comments in MDBasedAttribute.
+		// Following is to clean the Based5 "bug" if seen.  See comments in MDBasedAttribute.
 		dmang.cleanOutput(builder); // 20170714
 	}
 
-	protected void insertReferredType(StringBuilder builder) {
-		refType.insert(builder);
+	protected void insertReferredType(StringBuilder builder, boolean asArg) {
+		// LATER: Investigate weather we can change refType definition from MDType to MDDataType
+		if (refType instanceof MDDataType mdt && asArg) {
+			mdt.insertAsArg(builder);
+		}
+		else {
+			refType.insert(builder);
+		}
 	}
 
 	@Override
 	public void insert(StringBuilder builder) {
+		insertInternal(builder, false);
+	}
+
+	@Override
+	public void insertAsArg(StringBuilder builder) {
+		insertInternal(builder, true);
+	}
+
+	private void insertInternal(StringBuilder builder, boolean asArg) {
 		// Added 20170412 to try have available to get MSFT affect on this
 		// "invalid" condition.
 		// if (cvMod.isBasedPtrBased()) {
@@ -266,7 +281,7 @@ public abstract class MDModifierType extends MDDataType {
 		// if (!isArray()) { //20170523
 		insertCVMod(builder);
 		// }
-		// Following to to clean the Based5 "bug" if seen.  See comments in MDBasedAttribute.
+		// Following is to clean the Based5 "bug" if seen.  See comments in MDBasedAttribute.
 		// 20170714 dmang.cleanOutput(builder);
 		// 20170605 insertArrayString(builder); //only available for "data"
 		// refType
@@ -274,12 +289,12 @@ public abstract class MDModifierType extends MDDataType {
 		// builder.insertString(" "); //20160701
 		if (refType instanceof MDArrayReferencedType) {
 			// 20170714 refType.insert(builder);
-			insertReferredType(builder);// 20170714
+			insertReferredType(builder, asArg);// 20170714
 		}
 		else if (cvMod.isPinPointer()) {
 			StringBuilder refBuilder = new StringBuilder();
 			// 20170714 refType.insert(refBuilder);
-			insertReferredType(refBuilder);// 20170714
+			insertReferredType(refBuilder, asArg);// 20170714
 			dmang.appendString(refBuilder, " ");
 			if (!(cvMod.isQuestionType() ||
 				(cvMod.isPointerType() && (refType instanceof MDVoidDataType)))) {
@@ -296,7 +311,7 @@ public abstract class MDModifierType extends MDDataType {
 		else if (cvMod.isCLIArray()) {
 			StringBuilder refBuilder = new StringBuilder();
 			// 20170714 refType.insert(refBuilder);
-			insertReferredType(refBuilder);// 20170714
+			insertReferredType(refBuilder, asArg);// 20170714
 			if (!(refType instanceof MDVoidDataType)) {
 				cvMod.insertManagedPropertiesPrefix(refBuilder);
 				// cvMod.insertManagedProperties(refBuilder);
@@ -319,7 +334,7 @@ public abstract class MDModifierType extends MDDataType {
 			// }
 			// //Could be function (function pointer or function) or data.
 			// 20170714 refType.insert(builder);
-			insertReferredType(builder);// 20170714
+			insertReferredType(builder, asArg);// 20170714
 		}
 	}
 }

@@ -29,7 +29,7 @@ import ghidra.util.task.TaskMonitor;
 public class StubPdbApplicator implements PdbApplicator {
 
 	private AbstractPdb pdb = null;
-	private long originalImageBase = 0L;
+	private long originalImageBase = 0x400000L;
 
 	private Program program = null;
 

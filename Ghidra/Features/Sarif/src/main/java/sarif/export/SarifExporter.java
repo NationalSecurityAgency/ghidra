@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,11 +19,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import ghidra.app.util.DomainObjectService;
-import ghidra.app.util.Option;
-import ghidra.app.util.OptionException;
-import ghidra.app.util.exporter.Exporter;
+import ghidra.app.util.*;
 import ghidra.app.util.exporter.ExporterException;
+import ghidra.app.util.exporter.ProgramExporter;
+import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
@@ -37,7 +36,7 @@ import sarif.managers.ProgramSarifMgr;
  * An implementation of exporter that creates
  * an SARIF representation of the program.
  */
-public class SarifExporter extends Exporter {
+public class SarifExporter extends ProgramExporter {
 	private SarifProgramOptions options = new SarifProgramOptions();
 
 	/**
@@ -60,23 +59,27 @@ public class SarifExporter extends Exporter {
 		this.options.setOptions(options);
 	}
 
+
 	@Override
 	public boolean export(File file, DomainObject domainObj, AddressSetView addrSet, TaskMonitor monitor)
 			throws IOException, ExporterException {
 
 		log.clear();
 
-		if (!(domainObj instanceof Program)) {
-			log.appendMsg("Unsupported type: "+domainObj.getClass().getName());
+		Program program;
+		try {
+			program = getProgram(domainObj);
+		}
+		catch (ClassCastException e) {
+			log.appendMsg("Unsupported type: " + domainObj.getClass().getName());
 			return false;
 		}
-		Program program = (Program)domainObj;
 
 		if (addrSet == null) {
 			addrSet = program.getMemory();
 		}
 
-		ProgramSarifMgr mgr = new ProgramSarifMgr(program, file);
+		ProgramSarifMgr mgr = new ProgramSarifMgr(program, file, new MessageLog());
 
 		try {
 			log = mgr.write(program, addrSet, monitor, options);

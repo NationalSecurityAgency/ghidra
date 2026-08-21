@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ import javax.swing.KeyStroke;
 import docking.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.SystemUtilities;
+import help.HelpDescriptor;
 import help.HelpService;
 
 /**
@@ -56,6 +57,7 @@ public abstract class AbstractHelpAction extends DockingAction {
 
 	@Override
 	public void actionPerformed(ActionContext context) {
+
 		DockingActionIf mouseOverAction = DockingWindowManager.getMouseOverAction();
 		if (mouseOverAction != null) {
 			showHelp(mouseOverAction);
@@ -126,7 +128,12 @@ public abstract class AbstractHelpAction extends DockingAction {
 			return startingHelpObject;
 		}
 
-		// Second, with no help registered for the starting component, start looking for a suitable
+		// Second, see if we are showing help info and this object knows how to do that
+		if (isInfo() && startingHelpObject instanceof HelpDescriptor) {
+			return startingHelpObject;
+		}
+
+		// Finally, with no help registered for the starting component, start looking for a suitable
 		// help proxy.
 		//
 		// For Components, we can walk their containment hierarchy to find a potential help object

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,12 +20,14 @@ import java.util.*;
 
 import javax.security.auth.x500.X500Principal;
 
+import generic.hash.HashUtilities;
 import generic.jar.ResourceFile;
 import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraLaunchable;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationConfiguration;
-import ghidra.util.*;
+import ghidra.util.Msg;
+import ghidra.util.NamingUtilities;
 
 public class ServerAdmin implements GhidraLaunchable {
 
@@ -109,11 +111,7 @@ public class ServerAdmin implements GhidraLaunchable {
 			System.exit(-1);
 		}
 
-		File cmdDir = CommandProcessor.getCommandDir(serverRootDir);
-		if (!cmdDir.isDirectory() || !cmdDir.canWrite()) {
-			System.err.println("Insufficient privilege or server not started!");
-			System.exit(-1);
-		}
+		File cmdDir = CommandProcessor.getOrCreateCommandDir(serverRootDir);
 
 		// Process command line
 		boolean listRepositories = false;
@@ -237,11 +235,18 @@ public class ServerAdmin implements GhidraLaunchable {
 			UserManager.listUsers(serverRootDir);
 		}
 		if (listRepositories) {
-			if (listUsernameSet.isEmpty()) {
-				RepositoryManager.listRepositories(serverRootDir, listAllUserPermissions);
+			try {
+				Set<String> users = UserManager.getUsers(serverRootDir);
+				if (listUsernameSet.isEmpty()) {
+					RepositoryManager.listRepositories(serverRootDir, listAllUserPermissions,
+						users);
+				}
+				else {
+					RepositoryManager.listRepositories(serverRootDir, listUsernameSet, users);
+				}
 			}
-			else {
-				RepositoryManager.listRepositories(serverRootDir, listUsernameSet);
+			catch (IOException e) {
+				System.err.println("\nFailed to read user file: " + e.getMessage());
 			}
 		}
 		System.out.println();
@@ -476,7 +481,7 @@ public class ServerAdmin implements GhidraLaunchable {
 
 		File configFile = new File(configFilePath);
 		if (!configFile.exists()) {
-			System.out.println("Config file not found: " + configFile.getAbsolutePath());
+			System.err.println("Config file not found: " + configFile.getAbsolutePath());
 			return null;
 		}
 
@@ -494,7 +499,7 @@ public class ServerAdmin implements GhidraLaunchable {
 			config.load(in);
 		}
 		catch (IOException e) {
-			System.out.println("Failed to read " + configFile.getName() + ": " + e.getMessage());
+			System.err.println("Failed to read " + configFile.getName() + ": " + e.getMessage());
 		}
 		finally {
 			if (in != null) {
@@ -509,7 +514,7 @@ public class ServerAdmin implements GhidraLaunchable {
 
 		String p = config.getProperty(SERVER_DIR_CONFIG_PROPERTY);
 		if (p == null) {
-			System.out.println("Failed to find property: " + SERVER_DIR_CONFIG_PROPERTY);
+			System.err.println("Failed to find property: " + SERVER_DIR_CONFIG_PROPERTY);
 			return null;
 		}
 		File dir = new File(p);
@@ -517,7 +522,7 @@ public class ServerAdmin implements GhidraLaunchable {
 			// Make relative repositories dir relative to installation root
 			ResourceFile installRoot = Application.getInstallationDirectory();
 			if (installRoot == null || installRoot.getFile(false) == null) {
-				System.out.println("Failed to resolve installation root directory!");
+				System.err.println("Failed to resolve installation root directory!");
 				return null;
 			}
 			dir = new File(installRoot.getFile(false), p);

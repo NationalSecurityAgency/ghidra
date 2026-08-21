@@ -1,0 +1,22 @@
+python
+def try_import():
+	try:
+		import ghidragdb
+	except Exception as e:
+		gdb.execute("exit(253)")
+end
+
+
+set pagination off
+set confirm off
+show version
+python try_import()
+set architecture $OPT_ARCH
+set endian $OPT_ENDIAN
+file '$OPT_TARGET_IMG'
+set args $OPT_TARGET_ARGS
+ghidra trace connect 'localhost:$OPT_REMOTE_PORT'
+ghidra trace start
+ghidra trace sync-enable
+$OPT_START_CMD
+set confirm on

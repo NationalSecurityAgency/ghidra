@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package ghidra.program.database.properties;
 
 import java.io.IOException;
+import java.util.function.Function;
 
 import db.*;
 import db.util.ErrorHandler;
@@ -24,8 +25,10 @@ import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.util.ObjectPropertyMap;
 import ghidra.program.util.ChangeManager;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.Msg;
 import ghidra.util.Saveable;
+import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.classfinder.ClassTranslator;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -41,6 +44,44 @@ public class ObjectPropertyMapDB<T extends Saveable> extends PropertyMapDB<T>
 	private Class<T> saveableObjectClass;
 	private int saveableObjectVersion;
 	private boolean supportsPrivate;
+
+	/**
+	 * A single non-capturing lambda record reader function is used to avoid the possibility of 
+	 * multiple synthetic class instantiations.
+	 */
+	@SuppressWarnings("unchecked")
+	private Function<Long, T> valueReader = addrKey -> {
+		Table table = propertyTable;
+		DBRecord rec = null;
+		try {
+			if (table != null) {
+				rec = table.getRecord(addrKey);
+			}
+			if (rec == null) {
+				return null;
+			}
+			ObjectStorageAdapterDB objStorage = new ObjectStorageAdapterDB(rec);
+			if (saveableObjectClass == GenericSaveable.class) {
+				return (T) new GenericSaveable(rec, propertyTable.getSchema());
+			}
+			T obj = saveableObjectClass.getDeclaredConstructor().newInstance();
+			obj.restore(objStorage);
+			return obj;
+		}
+		catch (IOException e) {
+			errHandler.dbError(e);
+		}
+		catch (RuntimeException e) {
+			throw e;
+		}
+		catch (InstantiationException e) {
+			errHandler.dbError(new IOException("Could not instantiate " + e.getMessage()));
+		}
+		catch (Exception e) {
+			errHandler.dbError(new IOException(e.getMessage()));
+		}
+		return null;
+	};
 
 	/**
 	 * Construct an Saveable object property map.
@@ -93,9 +134,10 @@ public class ObjectPropertyMapDB<T extends Saveable> extends PropertyMapDB<T>
 	 */
 	@SuppressWarnings("unchecked")
 	public static Class<? extends Saveable> getSaveableClassForName(String classPath) {
-		Class<?> c = null;
+		Class<? extends Saveable> c = null;
 		try {
-			c = Class.forName(classPath);
+			c = ClassSearcher.forNameSafe(classPath, Saveable.class,
+				ObjectPropertyMapDB.class.getClassLoader());
 		}
 		catch (ClassNotFoundException e) {
 			// Check the classNameMap.
@@ -103,10 +145,10 @@ public class ObjectPropertyMapDB<T extends Saveable> extends PropertyMapDB<T>
 			if (newClassPath != null) {
 				classPath = newClassPath;
 				try {
-					c = Class.forName(newClassPath);
+					c = ClassSearcher.forNameSafe(newClassPath, Saveable.class,
+						ObjectPropertyMapDB.class.getClassLoader());
 				}
 				catch (ClassNotFoundException e1) {
-
 					// Since we can't get the class, at least handle it generically.
 				}
 			}
@@ -119,7 +161,7 @@ public class ObjectPropertyMapDB<T extends Saveable> extends PropertyMapDB<T>
 				"Object property class does not implement Saveable interface: " + classPath);
 		}
 		// If unable to get valid Saveable class use generic implementation
-		return (c != null) ? (Class<? extends Saveable>) c : GenericSaveable.class;
+		return (c != null) ? c : GenericSaveable.class;
 	}
 
 	/**
@@ -254,13 +296,20 @@ public class ObjectPropertyMapDB<T extends Saveable> extends PropertyMapDB<T>
 
 	@Override
 	public void add(Address addr, T value) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
+			checkDeleted();
 			if (!saveableObjectClass.isAssignableFrom(value.getClass())) {
 				throw new IllegalArgumentException("value is not " + saveableObjectClass.getName());
 			}
-			long key = addrMap.getKey(addr, true);
-			T oldValue = get(addr);
+			long addrKey = addrMap.getKey(addr, true);
+
+			T oldValue = null;
+			if (propertyTable != null) {
+				oldValue = cache.get(addrKey);
+				if (oldValue == null) {
+					oldValue = valueReader.apply(addrKey);
+				}
+			}
 
 			String tableName = getTableName();
 			Schema s;
@@ -271,7 +320,7 @@ public class ObjectPropertyMapDB<T extends Saveable> extends PropertyMapDB<T>
 				s = objStorage.getSchema(value.getSchemaVersion());
 				checkSchema(s);
 				createPropertyTable(tableName, s);
-				rec = schema.createRecord(key);
+				rec = schema.createRecord(addrKey);
 				objStorage.save(rec);
 			}
 			else { // GenericSaveable
@@ -281,11 +330,11 @@ public class ObjectPropertyMapDB<T extends Saveable> extends PropertyMapDB<T>
 				checkSchema(s);
 				createPropertyTable(tableName, s);
 				rec = originalRec.copy();
-				rec.setKey(key);
+				rec.setKey(addrKey);
 			}
 
 			propertyTable.putRecord(rec);
-			cache.put(key, value);
+			cache.put(addrKey, value);
 
 			if (!isPrivate(value)) {
 				changeMgr.setPropertyChanged(name, addr, oldValue, value);
@@ -294,10 +343,6 @@ public class ObjectPropertyMapDB<T extends Saveable> extends PropertyMapDB<T>
 		catch (IOException e) {
 			errHandler.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
-
 	}
 
 	private boolean isPrivate(Saveable value) {
@@ -326,57 +371,18 @@ public class ObjectPropertyMapDB<T extends Saveable> extends PropertyMapDB<T>
 		return saveableObjectClass;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public T get(Address addr) {
-		if (propertyTable == null) {
+		validate(lock);
+		Table table = propertyTable;
+		if (table == null) {
 			return null;
 		}
-
-		T obj = null;
-
-		lock.acquire();
-		try {
-			long key = addrMap.getKey(addr, false);
-			if (key == AddressMap.INVALID_ADDRESS_KEY) {
-				return null;
-			}
-			obj = (T) cache.get(key);
-			if (obj != null) {
-				return obj;
-			}
-
-			DBRecord rec = propertyTable.getRecord(key);
-			if (rec == null) {
-				return null;
-			}
-			ObjectStorageAdapterDB objStorage = new ObjectStorageAdapterDB(rec);
-			if (saveableObjectClass == GenericSaveable.class) {
-				obj = (T) new GenericSaveable(rec, propertyTable.getSchema());
-			}
-			else {
-				obj = saveableObjectClass.getDeclaredConstructor().newInstance();
-				obj.restore(objStorage);
-			}
+		long addrKey = addrMap.getKey(addr, false);
+		if (addrKey == AddressMap.INVALID_ADDRESS_KEY) {
+			return null;
 		}
-		catch (IOException e) {
-			errHandler.dbError(e);
-		}
-		catch (RuntimeException e) {
-			throw e;
-		}
-		catch (InstantiationException e) {
-			errHandler.dbError(new IOException("Could not instantiate " + e.getMessage()));
-		}
-		catch (Exception e) {
-			errHandler.dbError(new IOException(e.getMessage()));
-
-		}
-		finally {
-			lock.release();
-		}
-
-		return obj;
+		return cache.computeIfAbsent(addrKey, valueReader);
 	}
 
 	/**

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ import ghidra.util.exception.DuplicateNameException;
  * The RuntimeInvisibleParameterAnnotations attribute is similar to the
  * RuntimeVisibleParameterAnnotations attribute, except that the annotations
  * represented by a RuntimeInvisibleParameterAnnotations attribute must not
- * be made available for return by reflective APIs, unless the the Java virtual
+ * be made available for return by reflective APIs, unless the Java virtual
  * machine has specifically been instructed to retain these annotations via some
  * implementation-specific mechanism such as a command line flag. In the absence
  * of such instructions, the Java virtual machine ignores this attribute.

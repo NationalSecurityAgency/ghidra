@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +14,6 @@
  * limitations under the License.
  */
 package ghidra.program.model.mem;
-
 
 /**
  * Exception thrown for memory block-related problems.
@@ -29,11 +27,21 @@ public class MemoryBlockException extends MemoryAccessException {
 	public MemoryBlockException() {
 		super();
 	}
+
 	/**
 	 * Constructs a new MemoryBlockException with a detailed message.
 	 * @param msg detailed message
 	 */
-    public MemoryBlockException(String msg) {
-        super(msg);
-    }
-} 
+	public MemoryBlockException(String msg) {
+		super(msg);
+	}
+
+	/**
+	 * Constructs a new MemoryBlockException with a detailed message.
+	 * @param msg detailed message
+	 * @param cause original cause of this exception
+	 */
+	public MemoryBlockException(String msg, Throwable cause) {
+		super(msg, cause);
+	}
+}

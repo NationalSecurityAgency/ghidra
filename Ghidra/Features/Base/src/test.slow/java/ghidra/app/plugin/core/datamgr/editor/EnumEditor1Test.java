@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,7 +60,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		tool.addPlugin(DataTypeManagerPlugin.class.getName());
 		plugin = getPlugin(tool, DataTypeManagerPlugin.class);
 
-		ToyProgramBuilder builder = new ToyProgramBuilder("notepad", true);
+		ToyProgramBuilder builder = new ToyProgramBuilder();
 		builder.addCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		program = builder.getProgram();
 
@@ -95,10 +95,10 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("", descField.getText());
 		assertTrue(descField.isEditable());
 
-		// category should be notepad.xml/Category1
+		// category should be TestProgram/Category1
 		JTextField catField = getTextField(panel, "Category");
 		assertNotNull(catField);
-		assertEquals("notepad/Category1", catField.getText());
+		assertEquals("TestProgram/Category1", catField.getText());
 		assertFalse(catField.isEditable());
 
 		// size should be "1"
@@ -607,7 +607,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		DataTypeManager dtm = program.getDataTypeManager();
 		int transactionID = program.startTransaction("Test");
-		dtm.remove(enummDt, TaskMonitor.DUMMY);
+		dtm.remove(enummDt);
 		program.endTransaction(transactionID, true);
 		program.flushEvents();
 		waitForSwing();
@@ -620,7 +620,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		Enum enummDt = createRedGreenBlueEnum();
 
 		DataTypeManager dtm = program.getListing().getDataTypeManager();
-		enummDt = (Enum) enummDt.clone(dtm);
+		enummDt = enummDt.clone(dtm);
 
 		edit(enummDt);
 
@@ -641,7 +641,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		Enum enummDt = createRedGreenBlueEnum();
 
 		DataTypeManager dtm = program.getListing().getDataTypeManager();
-		enummDt = (Enum) enummDt.clone(dtm);
+		enummDt = enummDt.clone(dtm);
 
 		edit(enummDt);
 
@@ -695,7 +695,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		Enum enummDt = createRedGreenBlueEnum();
 
 		DataTypeManager dtm = program.getListing().getDataTypeManager();
-		enummDt = (Enum) enummDt.clone(dtm);
+		enummDt = enummDt.clone(dtm);
 
 		edit(enummDt);
 
@@ -1204,7 +1204,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 	private JTextField getTextField(Container container, String name) {
 		Component[] c = container.getComponents();
 		for (Component element : c) {
-			if ((element instanceof JTextField) && ((JTextField) element).getName().equals(name)) {
+			if ((element instanceof JTextField) && element.getName().equals(name)) {
 				return (JTextField) element;
 			}
 			if (element instanceof Container) {

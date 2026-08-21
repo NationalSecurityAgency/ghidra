@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -91,9 +91,8 @@ interface BTreeNode {
 	 * @return true if consistency check passed, else false
 	 * @param tableName name of table containing this node
 	 * @param monitor task monitor
-	 * @throws IOException if IO error occured
+	 * @throws IOException if IO error occurred
 	 * @throws CancelledException if task cancelled
-	 * @{@link ThrowsTag} CancelledException
 	 */
 	public boolean isConsistent(String tableName, TaskMonitor monitor)
 			throws IOException, CancelledException;

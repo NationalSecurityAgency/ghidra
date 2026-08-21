@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,7 @@ package docking.widgets;
 
 import javax.swing.JComponent;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import docking.widgets.label.GLabel;
 import ghidra.util.Msg;
@@ -52,12 +52,12 @@ public interface GComponent {
 	 * Helper function that logs a warning about a string text that looks like it has HTML text.
 	 * <p>
 	 * Use this when working with a string in a label that has already disabled HTML rendering.
-	 * <p>
+	 * 
 	 * @param text string to test for HTML and warn about
 	 */
 	public static void warnAboutHtmlText(String text) {
 		// #ifdef still_finding_html_labels_in_our_huge_codebase
-		if (StringUtils.startsWithIgnoreCase(text, "<html>")) {
+		if (Strings.CI.startsWith(text, "<html>")) {
 			Msg.warn(GLabel.class, "HTML text detected in non-HTML component: " + text,
 				ReflectionUtilities.createJavaFilteredThrowable());
 		}

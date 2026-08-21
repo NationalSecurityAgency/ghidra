@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,17 +19,17 @@ import java.util.List;
 
 import docking.DefaultActionContext;
 import ghidra.feature.vt.api.main.VTMarkupItem;
-import ghidra.features.base.codecompare.panel.CodeComparisonPanel;
-import ghidra.features.base.codecompare.panel.CodeComparisonPanelActionContext;
+import ghidra.features.base.codecompare.panel.CodeComparisonView;
+import ghidra.features.base.codecompare.panel.CodeComparisonViewActionContext;
 
 /**
  * Action context for the version tracking markup item provider.
  */
 public class VTMarkupItemContext extends DefaultActionContext
-		implements CodeComparisonPanelActionContext {
+		implements CodeComparisonViewActionContext {
 
 	private final List<VTMarkupItem> selectedItems;
-	private CodeComparisonPanel codeComparisonPanel = null;
+	private CodeComparisonView codeComparisonView;
 
 	/**
 	 * Creates an action context for the VT markup item provider.
@@ -50,16 +50,15 @@ public class VTMarkupItemContext extends DefaultActionContext
 	}
 
 	/**
-	 * Sets the CodeComparisonPanel associated with this context.
-	 * @param codeComparisonPanel the code comparison panel.
+	 * Sets the comparison provider associated with this context.
+	 * @param codeComparisonView the code comparison view.
 	 */
-	public void setCodeComparisonPanel(
-			CodeComparisonPanel codeComparisonPanel) {
-		this.codeComparisonPanel = codeComparisonPanel;
+	public void setCodeComparisonView(CodeComparisonView codeComparisonView) {
+		this.codeComparisonView = codeComparisonView;
 	}
 
 	@Override
-	public CodeComparisonPanel getCodeComparisonPanel() {
-		return codeComparisonPanel;
+	public CodeComparisonView getCodeComparisonView() {
+		return codeComparisonView;
 	}
 }

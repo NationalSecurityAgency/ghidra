@@ -33,6 +33,7 @@ public class SelectLanguageDialog extends DialogComponentProvider {
 		languagePanel = new NewLanguagePanel();
 
 		setTransient(true);
+		languagePanel.getAccessibleContext().setAccessibleName("Select Language");
 		addWorkPanel(languagePanel);
 		addOKButton();
 		addCancelButton();

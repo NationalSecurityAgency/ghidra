@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,6 +52,7 @@ public class OverlayHelpTree {
 	}
 
 	private void addExternalTOCItem(TOCItem item) {
+
 		TOCItem parent = item.getParent();
 		String parentID = parent == null ? null : parent.getIDAttribute();
 		if (parentID == null) {
@@ -129,6 +130,20 @@ public class OverlayHelpTree {
 		// printTreeForID(writer, sourceFileID);
 	}
 
+	public void validateAllTOCs() {
+
+		initializeTree();
+		doValidateAllTOCs(rootNode);
+	}
+
+	private void doValidateAllTOCs(OverlayNode node) {
+		node.validateChildrenSortGroups();
+		Set<OverlayNode> children = node.children;
+		for (OverlayNode child : children) {
+			doValidateAllTOCs(child);
+		}
+	}
+
 	void printTreeForID(PrintWriter writer, String sourceFileID) {
 		initializeTree();
 
@@ -149,7 +164,7 @@ public class OverlayHelpTree {
 
 	private void printContents(String sourceFileID, PrintWriter writer) {
 		if (rootNode == null) {
-			// assume not TOC contents; empty TOC file
+			// assume no TOC contents; empty TOC file
 			return;
 		}
 
@@ -172,7 +187,7 @@ public class OverlayHelpTree {
 		//
 		// The parent to children map is cleared as nodes are created.   The map is populated by
 		// adding any references to the 'parent' key as they are loaded from the help files.
-		// As we build nodes, starting at the root, will will create child nodes for those that
+		// As we build nodes, starting at the root, we will create child nodes for those that
 		// reference the 'parent' key.   If the map is empty, then it means we never built a
 		// node for the 'parent' key, which means we never found a help file containing the
 		// definition for that key.
@@ -185,6 +200,7 @@ public class OverlayHelpTree {
 	}
 
 	private void buildChildren(OverlayNode node) {
+
 		String definitionID = node.getDefinitionID();
 		Set<TOCItem> children = parentToChildrenMap.remove(definitionID);
 		if (children == null) {
@@ -224,10 +240,41 @@ public class OverlayHelpTree {
 			writer.println(item.generateTOCItemTag(linkDatabase, children.isEmpty(), indentLevel));
 			if (!children.isEmpty()) {
 
+				validateChildrenSortGroups();
+
 				for (OverlayNode node : children) {
 					node.print(sourceFileID, writer, indentLevel + 1);
 				}
 				writer.println(item.generateEndTag(indentLevel));
+			}
+		}
+
+		// Note: this method will validate all TOC files for a given module, including its 
+		// dependencies.  If module A has a dependent B, A and B will be checked for re-used sort
+		// groups.  This will not get sibling TOC issues that are found at runtime.  In this case,
+		// considering module A with dependents B1 and B2, in separate unrelated modules, then if
+		// B1 and B2 share a sort group, this method will not detected that.  This is because when
+		// building either B1 or B2, the other module is not available, since it is not a dependent
+		// module.
+		private void validateChildrenSortGroups() {
+			Map<String, OverlayNode> sortPreferences = new HashMap<>();
+			for (OverlayNode child : children) {
+				String sortPreference = child.item.getSortPreference();
+				OverlayNode existingNode = sortPreferences.get(sortPreference);
+				if (existingNode != null) {
+
+					String message = """
+								Found multiple child nodes with the same 'sortgroup' value.
+								Sort values must be unique.  Duplicated value: '%s'
+								Parent: %s
+								First child: %s
+								Second child: %s
+							""".formatted(sortPreference, toString(), existingNode.toString(),
+						child.toString());
+					throw new RuntimeException(message);
+				}
+
+				sortPreferences.put(sortPreference, child);
 			}
 		}
 
@@ -256,7 +303,6 @@ public class OverlayHelpTree {
 		}
 	}
 
-	// TODO LOOKIE
 	private static final Comparator<OverlayNode> CHILD_SORT_COMPARATOR =
 		new Comparator<OverlayNode>() {
 			@Override

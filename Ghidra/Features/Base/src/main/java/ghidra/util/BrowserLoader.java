@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,12 @@
  */
 package ghidra.util;
 
+import static ghidra.util.ManualViewerCommandWrappedOption.*;
+
 import java.io.File;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -96,7 +100,7 @@ public class BrowserLoader {
 			ManualViewerCommandWrappedOption.getDefaultBrowserLoaderOptions();
 		ManualViewerCommandWrappedOption customOption =
 			(ManualViewerCommandWrappedOption) options.getCustomOption(
-				ManualViewerCommandWrappedOption.MANUAL_VIEWER_OPTIONS, defaultOption);
+				MANUAL_VIEWER_OPTIONS, defaultOption);
 
 		boolean success = tryToDisplayBrowser(url, fileURL, customOption);
 		while (!success) {
@@ -109,8 +113,8 @@ public class BrowserLoader {
 			}
 
 			// -if not cancelled, then show the options dialog
-			service.showOptionsDialog(ManualViewerCommandWrappedOption.OPTIONS_CATEGORY_NAME,
-				ManualViewerCommandWrappedOption.OPTIONS_CATEGORY_NAME);
+			service.showOptionsDialog(OPTIONS_CATEGORY_NAME,
+				OPTIONS_CATEGORY_NAME);
 			if (!listener.hasChanged()) {
 				return;  // the user didn't change the options, so we can't do anything
 			}
@@ -147,30 +151,115 @@ public class BrowserLoader {
 		return true;
 	}
 
+	/*	 
+	 	 See the help page for example output.
+	 */
 	private static String[] generateCommandArguments(URL url, URL fileURL,
 			ManualViewerCommandWrappedOption option) {
 
-		List<String> argumentList = new ArrayList<String>();
-		argumentList.add(option.getCommandString());
+		List<String> resultArgs = new ArrayList<String>();
+		resultArgs.add(option.getCommandString());
 
-		String[] commandArguments = option.getCommandArguments();
-		for (String string : commandArguments) {
-			argumentList.add(string);
+		// Substitute ${PAGE} (the manual page, carried as a "#page=N" fragment on the file URL)
+		// and ${FILENAME} (the local file path) tokens into the user-supplied arguments.  
+		// If the user places ${FILENAME} themselves, the file is not also appended at the end below.
+		String pageNumber = getManualPageNumber(fileURL);
+		String fileName = getManualFilePath(fileURL);
+		boolean fileNameInArgs = false;
+		String[] rawArgs = option.getCommandArguments();
+		for (String string : rawArgs) {
+			if (string.contains(FILENAME_REPLACEMENT_STRING)) {
+				fileNameInArgs = true;
+			}
+
+			string = string.replace(PAGE_REPLACEMENT_STRING, pageNumber);
+			if (fileName != null) {
+				string = string.replace(FILENAME_REPLACEMENT_STRING, fileName);
+			}
+			resultArgs.add(string);
 		}
 
-		String urlString = option.getUrlReplacementString();
-		if (urlString.equals(ManualViewerCommandWrappedOption.HTTP_URL_REPLACEMENT_STRING) ||
-			fileURL == null) {
-			argumentList.add(url.toExternalForm());
+		// The user already positioned the file via the ${FILENAME} token; don't append it again.
+		if (fileNameInArgs) {
+			return resultArgs.toArray(new String[resultArgs.size()]);
 		}
-		else if (urlString.equals(ManualViewerCommandWrappedOption.FILE_URL_REPLACEMENT_STRING)) {
-			argumentList.add(fileURL.toExternalForm());
+
+		String urlString = option.getFileFormat();
+		String urlArg;
+		if (urlString.equals(HTTP_URL_REPLACEMENT_STRING) || fileURL == null) {
+			urlArg = url.toExternalForm();
+		}
+		else if (urlString.equals(FILE_URL_REPLACEMENT_STRING)) {
+			urlArg = fileURL.toExternalForm();
 		}
 		else {
-			argumentList.add(new File(fileURL.getFile()).getAbsolutePath());
+			urlArg = fileName;
 		}
 
-		return argumentList.toArray(new String[argumentList.size()]);
+		List<String> cmdExeArgs = fixupCmdExeCall(rawArgs, urlArg);
+		if (!cmdExeArgs.isEmpty()) {
+			resultArgs.addAll(cmdExeArgs);
+		}
+		else {
+			resultArgs.add(urlArg);
+		}
+
+		return resultArgs.toArray(new String[resultArgs.size()]);
+	}
+
+	private static List<String> fixupCmdExeCall(String[] rawArgs, String urlArg) {
+		// If launching "cmd.exe /c start URL", surround the URL with double quotes to protect
+		// against special characters being misinterpreted by the shell.
+		// NOTE: If not already present, a double-quoted title must be inserted since the URL
+		// argument that follows will start with a double quote.
+		List<String> result = new ArrayList<>();
+		if (rawArgs.length < 2) {
+			return result;
+		}
+
+		if (!(rawArgs[0].equalsIgnoreCase("/c") && rawArgs[1].equalsIgnoreCase("start"))) {
+			return result;
+		}
+
+		if (rawArgs.length == 2) {
+			result.add("\"Title\"");
+		}
+
+		result.add('"' + urlArg + '"');
+		return result;
+	}
+
+	/**
+	 * Returns the decoded local file path for the given file URL (without the {@code #page=N}
+	 * fragment, which {@link URL#getPath()} already excludes), so viewers receive a real path
+	 * rather than a percent-encoded one.
+	 * @param fileURL the file URL (may be null)
+	 * @return the absolute local file path, or null if {@code fileURL} is null
+	 */
+	private static String getManualFilePath(URL fileURL) {
+		if (fileURL == null) {
+			return null;
+		}
+		String path = URLDecoder.decode(fileURL.getPath(), StandardCharsets.UTF_8);
+		return new File(path).getAbsolutePath();
+	}
+
+	/**
+	 * Extracts the manual page number from the {@code #page=N} fragment of the given file URL.
+	 * @param fileURL the file URL (may be null)
+	 * @return the page number, or {@code "1"} if none is present
+	 */
+	private static String getManualPageNumber(URL fileURL) {
+		if (fileURL != null) {
+			String ref = fileURL.getRef();
+			if (ref != null && ref.startsWith("page=")) {
+				String page = ref.substring("page=".length());
+				if (!page.isBlank()) {
+					return page;
+				}
+			}
+		}
+		return "1";
 	}
 
 //==================================================================================================
@@ -181,7 +270,8 @@ public class BrowserLoader {
 		private boolean hasChanged = false;
 
 		@Override
-		public void optionsChanged(ToolOptions theOptions, String name, Object oldValue, Object newValue) {
+		public void optionsChanged(ToolOptions theOptions, String name, Object oldValue,
+				Object newValue) {
 			hasChanged = true;
 		}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,8 @@ import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
 import ghidra.app.util.datatype.NavigationDirection;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.AbstractFloatDataType;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.util.HelpLocation;
@@ -125,18 +126,19 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(buildInfoPanel(service), BorderLayout.NORTH);
 		panel.add(buildTablePanel(), BorderLayout.CENTER);
+		panel.getAccessibleContext().setAccessibleName("Storage Address Editor");
 		return panel;
 	}
 
 	private void setDataType(DataType dt) {
 		currentDataType = dt;
 		size = dt.getLength();
-		boolean unconstrained = (dt instanceof AbstractFloatDataType) || Undefined.isUndefined(dt);
+		boolean unconstrained = (dt instanceof AbstractFloatDataType) || (dt == DataType.DEFAULT);
 		model.setRequiredSize(size, unconstrained);
 		if (sizeLabel != null) {
 			sizeLabel.setText(Integer.toString(size));
-			dataChanged();
 		}
+		model.notifyDataChanged();
 	}
 
 	private void maybeHandleTabNavigation() {
@@ -172,7 +174,8 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 
 		panel.add(new GLabel("Datatype: "));
 
-		dataTypeEditor = new ParameterDataTypeCellEditor(this, service);
+		dataTypeEditor =
+			new ParameterDataTypeCellEditor(this, service, model.getProgram().getDataTypeManager());
 
 		dataTypeEditor.addCellEditorListener(new CellEditorListener() {
 
@@ -189,17 +192,10 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 			}
 		});
 
-		final Component dataTypeEditComponent = dataTypeEditor.getTableCellEditorComponent(null,
+		Component dataTypeEditComponent = dataTypeEditor.getTableCellEditorComponent(null,
 			variableData.getFormalDataType(), false, 0, 0);
 
-		final DropDownSelectionTextField<DataType> textField = dataTypeEditor.getTextField();
-		textField.setBorder((new JTextField()).getBorder()); // restore default border
-
-		JButton chooserButton = dataTypeEditor.getChooserButton();
-		JButton defaultButton = new JButton(); // restore default border/background
-		chooserButton.setBorder(defaultButton.getBorder());
-		chooserButton.setBackground(defaultButton.getBackground());
-
+		DropDownSelectionTextField<DataType> textField = dataTypeEditor.getTextField();
 		textField.addFocusListener(new FocusListener() {
 
 			@Override
@@ -222,13 +218,15 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 		panel.add(dataTypeEditComponent);
 		panel.add(new GLabel("Datatype Size: "));
 		sizeLabel = new GDLabel(Integer.toString(size));
+		sizeLabel.getAccessibleContext().setAccessibleName("Size");
 		panel.add(sizeLabel);
 		panel.add(new GLabel("Allocated Size:"));
 		currentSizeLabel = new GDLabel("");
+		currentSizeLabel.getAccessibleContext().setAccessibleName("Current Size");
 		panel.add(currentSizeLabel);
 
 		setFocusComponent(textField);
-
+		panel.getAccessibleContext().setAccessibleName("Info");
 		return panel;
 	}
 
@@ -237,6 +235,7 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 		panel.setBorder(BorderFactory.createTitledBorder("Storage Locations"));
 		varnodeTableModel = new VarnodeTableModel(model);
 		varnodeTable = new GTable(varnodeTableModel);
+		varnodeTable.getAccessibleContext().setAccessibleName("Varnode");
 		selectionListener = new ListSelectionListener() {
 			@Override
 			public void valueChanged(ListSelectionEvent e) {
@@ -257,8 +256,10 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 		varnodeTable.setSurrendersFocusOnKeystroke(true);
 
 		JScrollPane scroll = new JScrollPane(varnodeTable);
+		scroll.getAccessibleContext().setAccessibleName("Varnode");
 		panel.add(scroll, BorderLayout.CENTER);
 		panel.add(buildButtonPanel(), BorderLayout.EAST);
+		panel.getAccessibleContext().setAccessibleName("Table");
 		return panel;
 	}
 
@@ -266,9 +267,13 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 		JPanel panel = new JPanel(new VerticalLayout(5));
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		addButton = new JButton("Add");
+		addButton.getAccessibleContext().setAccessibleName("Add");
 		removeButton = new JButton("Remove");
+		removeButton.getAccessibleContext().setAccessibleName("Remove");
 		upButton = new JButton("Up");
+		upButton.getAccessibleContext().setAccessibleName("Up");
 		downButton = new JButton("Down");
+		downButton.getAccessibleContext().setAccessibleName("Down");
 
 		addButton.addActionListener(new ActionListener() {
 			@Override
@@ -300,6 +305,7 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 		panel.add(new JSeparator());
 		panel.add(upButton);
 		panel.add(downButton);
+		panel.getAccessibleContext().setAccessibleName("Button");
 		return panel;
 	}
 
@@ -387,6 +393,11 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 		@Override
 		public DataType getFormalDataType() {
 			return variable.getDataType();
+		}
+
+		@Override
+		public boolean hasStorageConflict() {
+			return false;
 		}
 	}
 

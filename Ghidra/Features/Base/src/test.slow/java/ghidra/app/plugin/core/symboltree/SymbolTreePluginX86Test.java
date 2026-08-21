@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,6 +28,7 @@ import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.marker.MarkerManagerPlugin;
 import ghidra.app.plugin.core.programtree.ProgramTreePlugin;
+import ghidra.app.plugin.core.symboltree.actions.NavigateOnIncomingAction;
 import ghidra.app.plugin.core.symboltree.nodes.SymbolNode;
 import ghidra.app.util.viewer.field.LabelFieldFactory;
 import ghidra.app.util.viewer.field.OperandFieldFactory;
@@ -52,7 +53,7 @@ public class SymbolTreePluginX86Test extends AbstractGhidraHeadedIntegrationTest
 	private DockingActionIf selectionAction;
 	private DockingActionIf createNamespaceAction;
 	private DockingActionIf createClassAction;
-	private ToggleDockingAction goToToggleAction;
+	private ToggleDockingAction navigateIncomingAction;
 	private SymbolTreeTestUtils util;
 	private SymbolGTree tree;
 
@@ -76,7 +77,7 @@ public class SymbolTreePluginX86Test extends AbstractGhidraHeadedIntegrationTest
 		getActions();
 		rootNode = util.getRootNode();
 		tree = util.getTree();
-		runSwing(() -> goToToggleAction.setSelected(true));
+		runSwing(() -> navigateIncomingAction.setSelected(true));
 	}
 
 	@After
@@ -107,8 +108,8 @@ public class SymbolTreePluginX86Test extends AbstractGhidraHeadedIntegrationTest
 	@Test
 	public void testGoToNotSelected() throws Exception {
 
-		goToToggleAction.setSelected(false);
-		performAction(goToToggleAction, getContext(), true);
+		navigateIncomingAction.setSelected(false);
+		performAction(navigateIncomingAction, getContext(), true);
 
 		GTreeNode node = rootNode.getChild(0);
 		util.selectNode(node);
@@ -209,8 +210,8 @@ public class SymbolTreePluginX86Test extends AbstractGhidraHeadedIntegrationTest
 		createNamespaceAction = getAction(plugin, "Create Namespace");
 		assertNotNull(createNamespaceAction);
 
-		goToToggleAction = (ToggleDockingAction) getAction(plugin, "Navigation");
-		assertNotNull(goToToggleAction);
+		navigateIncomingAction = (ToggleDockingAction) getAction(plugin, NavigateOnIncomingAction.NAME);
+		assertNotNull(navigateIncomingAction);
 	}
 
 	private ActionContext getContext() {

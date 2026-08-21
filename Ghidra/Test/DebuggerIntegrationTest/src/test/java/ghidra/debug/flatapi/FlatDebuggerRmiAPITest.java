@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,13 +31,13 @@ import ghidra.app.plugin.core.debug.gui.tracermi.launcher.TestTraceRmiLaunchOpin
 import ghidra.app.plugin.core.debug.gui.tracermi.launcher.TraceRmiLauncherServicePlugin;
 import ghidra.app.plugin.core.debug.service.tracermi.TestTraceRmiConnection.TestRemoteMethod;
 import ghidra.app.plugin.core.debug.service.tracermi.TraceRmiTarget;
+import ghidra.debug.api.ValStr;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer.LaunchResult;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.database.target.DBTraceObjectManager;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 
 public class FlatDebuggerRmiAPITest extends AbstractLiveFlatDebuggerAPITest<FlatDebuggerRmiAPI> {
@@ -73,7 +73,7 @@ public class FlatDebuggerRmiAPITest extends AbstractLiveFlatDebuggerAPITest<Flat
 			objs.createRootObject(SCHEMA_SESSION);
 			tb.createObjectsProcessAndThreads();
 			tb.createObjectsFramesAndRegs(
-				tb.obj("Processes[1].Threads[1]").queryInterface(TraceObjectThread.class),
+				tb.obj("Processes[1].Threads[1]").queryInterface(TraceThread.class),
 				Lifespan.nowOn(0), tb.host, 2);
 			addMemoryRegion(objs, Lifespan.nowOn(0), tb.range(0x00400000, 0x00400fff), ".text",
 				"rx");
@@ -182,7 +182,7 @@ public class FlatDebuggerRmiAPITest extends AbstractLiveFlatDebuggerAPITest<Flat
 
 		TestTraceRmiLaunchOffer offer =
 			Unique.assertOne(filter(api.getLaunchOffers(), TestTraceRmiLaunchOffer.class));
-		offer.saveLauncherArgs(Map.of("image", "/test/image"));
+		offer.saveLauncherArgs(Map.of("image", ValStr.str("/test/image")));
 
 		assertEquals(List.of(offer), api.getSavedLaunchOffers());
 	}
@@ -191,7 +191,7 @@ public class FlatDebuggerRmiAPITest extends AbstractLiveFlatDebuggerAPITest<Flat
 	public void testLaunchCustomCommandLine() throws Throwable {
 		TestTraceRmiLaunchOffer offer =
 			Unique.assertOne(filter(api.getLaunchOffers(), TestTraceRmiLaunchOffer.class));
-		offer.saveLauncherArgs(Map.of("image", "/test/image"));
+		offer.saveLauncherArgs(Map.of("image", ValStr.str("/test/image")));
 
 		LaunchResult result = api.launch(monitor);
 		assertEquals("Test launcher cannot launch /test/image", result.exception().getMessage());
@@ -200,8 +200,7 @@ public class FlatDebuggerRmiAPITest extends AbstractLiveFlatDebuggerAPITest<Flat
 	protected void runTestStep(Predicate<TraceThread> step, Supplier<TestRemoteMethod> method)
 			throws Throwable {
 		createTarget();
-		TraceObjectThread thread =
-			tb.obj("Processes[1].Threads[1]").queryInterface(TraceObjectThread.class);
+		TraceThread thread = tb.obj("Processes[1].Threads[1]").queryInterface(TraceThread.class);
 		traceManager.activateThread(thread);
 		waitForSwing();
 

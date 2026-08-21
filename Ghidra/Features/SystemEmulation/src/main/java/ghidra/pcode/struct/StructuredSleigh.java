@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.lifecycle.Internal;
 import ghidra.pcode.emu.unix.AbstractEmuUnixSyscallUseropLibrary;
 import ghidra.pcode.exec.*;
-import ghidra.pcode.exec.SleighPcodeUseropDefinition.Builder;
+import ghidra.pcode.exec.SleighPcodeUseropDefinition.BuilderStage1;
 import ghidra.pcode.exec.SleighPcodeUseropDefinition.Factory;
 import ghidra.pcode.floatformat.FloatFormatFactory;
 import ghidra.pcode.struct.DefaultVar.Check;
@@ -1691,7 +1691,7 @@ public class StructuredSleigh {
 			throw new IllegalArgumentException("Cannot access " + method + " having @" +
 				StructuredUserop.class.getSimpleName() + " annotation. Override getMethodLookup()");
 		}
-		Builder builder = factory.define(method.getName());
+		BuilderStage1 builder = factory.define(method.getName());
 
 		DataType retType = type(annot.type());
 
@@ -1733,7 +1733,7 @@ public class StructuredSleigh {
 			}
 		});
 		StringTree source = root.generate(FALL, FALL);
-		builder.body(source.toString());
+		builder.body(args -> source.toString());
 		return builder.build();
 	}
 

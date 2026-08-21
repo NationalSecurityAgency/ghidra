@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 package ghidra.app.plugin.core.symtable;
-
-import java.util.Iterator;
 
 import docking.widgets.table.DiscoverableTableUtils;
 import docking.widgets.table.TableColumnDescriptor;
@@ -43,7 +41,6 @@ public class SymbolReferenceModel extends AddressBasedTableModel<Reference> {
 	static final int ACCESS_COL = 3;
 	static final int PREVIEW_COL = 4;
 
-	static final String ADDR_COL_NAME = "Address";
 	static final String LABEL_COL_NAME = "Label";
 	static final String SUBROUTINE_COL_NAME = "Subroutine";
 	static final String ACCESS_COL_NAME = "Access";
@@ -53,11 +50,10 @@ public class SymbolReferenceModel extends AddressBasedTableModel<Reference> {
 	static final int INSTR_REFS_FROM = 1;
 	static final int DATA_REFS_FROM = 2;
 
-	private Symbol currentSymbol;
+	private volatile Symbol currentSymbol;
 	private ReferenceManager refManager;
 	private int showRefMode = REFS_TO;
 	private BlockModelService blockModelService;
-	private boolean isDisposed;
 
 	SymbolReferenceModel(BlockModelService bms, PluginTool tool) {
 		super("Symbol References", tool, null, null);
@@ -93,15 +89,9 @@ public class SymbolReferenceModel extends AddressBasedTableModel<Reference> {
 		int count = filteredData.size();
 		description += count + " Reference";
 		if (count != 1) {
-			description += "s";//make plural...
+			description += "s"; // make plural...
 		}
 		return description;
-	}
-
-	@Override
-	public void dispose() {
-		isDisposed = true;
-		super.dispose();
 	}
 
 	@Override
@@ -145,9 +135,7 @@ public class SymbolReferenceModel extends AddressBasedTableModel<Reference> {
 	}
 
 	private void checkRefs(Symbol symbol) {
-		Iterator<Reference> iter = filteredData.iterator();
-		while (iter.hasNext()) {
-			Reference ref = iter.next();
+		for (Reference ref : filteredData) {
 			if (ref.getFromAddress().equals(symbol.getAddress())) {
 				reload();
 				return;
@@ -173,6 +161,7 @@ public class SymbolReferenceModel extends AddressBasedTableModel<Reference> {
 	@Override
 	protected void doLoad(Accumulator<Reference> accumulator, TaskMonitor monitor)
 			throws CancelledException {
+
 		if (currentSymbol == null || getProgram() == null) {
 			return;
 		}

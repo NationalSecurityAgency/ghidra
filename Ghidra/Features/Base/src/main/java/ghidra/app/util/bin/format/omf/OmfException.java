@@ -15,8 +15,16 @@
  */
 package ghidra.app.util.bin.format.omf;
 
+/**
+ * An {@link Exception} used to indicate there was a problem parsing an OMF record
+ */
 public class OmfException extends Exception {
 
+	/**
+	 * Creates a new {@link OmfException}
+	 * 
+	 * @param message The exception message
+	 */
 	public OmfException(String message) {
 		super(message);
 	}

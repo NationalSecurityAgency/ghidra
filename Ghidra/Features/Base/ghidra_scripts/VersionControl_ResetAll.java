@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,6 @@ public class VersionControl_ResetAll extends GhidraScript {
 
 	public VersionControl_ResetAll() {
 	}
-
 
 	@Override
 	public void run() throws Exception {
@@ -54,7 +53,8 @@ public class VersionControl_ResetAll extends GhidraScript {
 			if (monitor.isCancelled()) {
 				break;
 			}
-
+			// Do not follow folder-links or consider program links.  Checking the content type
+			// is the best way to restrict this.
 			if (!ProgramContentHandler.PROGRAM_CONTENT_TYPE.equals(file.getContentType()) ||
 				!file.isVersioned() || file.getLatestVersion() < 2) {
 				continue;// skip

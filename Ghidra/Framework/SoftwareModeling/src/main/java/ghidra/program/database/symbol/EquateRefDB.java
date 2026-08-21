@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,39 +16,35 @@
 package ghidra.program.database.symbol;
 
 import db.DBRecord;
-import ghidra.program.database.DBObjectCache;
-import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.DbObject;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.symbol.EquateReference;
+import ghidra.util.Lock.Closeable;
 
 /**
  * Database object for the equate references.
  * 
  * 
  */
-class EquateRefDB extends DatabaseObject implements EquateReference {
+class EquateRefDB extends DbObject implements EquateReference {
 
 	private DBRecord record;
 	private EquateManager equateMgr;
 	private AddressMap addrMap;
 
-	/**
-	 * Constructor
-	 * @param equateMgr
-	 * @param cache
-	 * @param record
-	 */
-	EquateRefDB(EquateManager equateMgr, DBObjectCache<EquateRefDB> cache, DBRecord record) {
-		super(cache, record.getKey());
+	EquateRefDB(EquateManager equateMgr, DBRecord record) {
+		super(record.getKey());
 		addrMap = equateMgr.getAddressMap();
 		this.equateMgr = equateMgr;
 		this.record = record;
 	}
 
 	@Override
-	protected boolean refresh() {
-		DBRecord rec = equateMgr.getEquateRefRecord(key);
+	protected boolean refresh(DBRecord rec) {
+		if (rec == null) {
+			rec = equateMgr.getEquateRefRecord(key);
+		}
 		if (rec == null) {
 			return false;
 		}
@@ -60,20 +56,29 @@ class EquateRefDB extends DatabaseObject implements EquateReference {
 		return record.getLongValue(EquateRefDBAdapter.EQUATE_ID_COL);
 	}
 
+	@Override
 	public Address getAddress() {
-		checkIsValid();
-		long addr = record.getLongValue(EquateRefDBAdapter.ADDR_COL);
-		return addrMap.decodeAddress(addr);
+		try (Closeable c = equateMgr.getLock().read()) {
+			refreshIfNeeded();
+			long addr = record.getLongValue(EquateRefDBAdapter.ADDR_COL);
+			return addrMap.decodeAddress(addr);
+		}
 	}
 
+	@Override
 	public short getOpIndex() {
-		checkIsValid();
-		return record.getShortValue(EquateRefDBAdapter.OP_INDEX_COL);
+		try (Closeable c = equateMgr.getLock().read()) {
+			refreshIfNeeded();
+			return record.getShortValue(EquateRefDBAdapter.OP_INDEX_COL);
+		}
 	}
 
+	@Override
 	public long getDynamicHashValue() {
-		checkIsValid();
-		return record.getLongValue(EquateRefDBAdapter.HASH_COL);
+		try (Closeable c = equateMgr.getLock().read()) {
+			refreshIfNeeded();
+			return record.getLongValue(EquateRefDBAdapter.HASH_COL);
+		}
 	}
 
 	DBRecord getRecord() {

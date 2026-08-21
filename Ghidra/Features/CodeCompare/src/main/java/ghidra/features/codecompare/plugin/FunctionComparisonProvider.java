@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,11 +35,9 @@ import ghidra.app.plugin.core.functionwindow.FunctionRowObject;
 import ghidra.app.plugin.core.functionwindow.FunctionTableModel;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
-import ghidra.features.base.codecompare.listing.ListingCodeComparisonPanel;
+import ghidra.features.base.codecompare.listing.ListingCodeComparisonView;
 import ghidra.features.base.codecompare.model.*;
-import ghidra.features.base.codecompare.panel.CodeComparisonPanel;
-import ghidra.features.base.codecompare.panel.FunctionComparisonPanel;
-import ghidra.framework.options.SaveState;
+import ghidra.features.base.codecompare.panel.*;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
@@ -50,9 +48,9 @@ import util.CollectionUtils;
 import utility.function.Callback;
 
 /**
- * Dockable provider that displays function comparisons  Clients create/modify
- * these comparisons using the {@link FunctionComparisonService}, which in turn 
- * creates instances of this provider as-needed. 
+ * Dockable provider that displays function comparisons.  Clients create/modify these comparisons 
+ * using the {@link FunctionComparisonService}, which in turn creates instances of this provider 
+ * as-needed. 
  */
 public class FunctionComparisonProvider extends ComponentProviderAdapter
 		implements PopupActionProvider, FunctionComparisonModelListener {
@@ -80,13 +78,13 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	private ToggleDockingAction navigateToAction;
 
 	public FunctionComparisonProvider(FunctionComparisonPlugin plugin,
-			FunctionComparisonModel model, Callback closeListener) {
+			FunctionComparisonModel model, Callback closeListener, FunctionComparisonState state) {
 		super(plugin.getTool(), "Function Comparison Provider", plugin.getName());
 		this.plugin = plugin;
 		this.model = model;
 		this.closeListener = Callback.dummyIfNull(closeListener);
 
-		functionComparisonPanel = new MultiFunctionComparisonPanel(this, tool, model);
+		functionComparisonPanel = new MultiFunctionComparisonPanel(this, tool, model, state);
 		model.addFunctionComparisonModelListener(this);
 
 		setTabText(functionComparisonPanel.getDescription());
@@ -120,8 +118,8 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		CodeComparisonPanel currentComponent =
-			functionComparisonPanel.getCurrentComponent();
+		CodeComparisonView currentComponent =
+			functionComparisonPanel.getCurrentView();
 		return currentComponent.getActionContext(this, event);
 	}
 
@@ -153,11 +151,11 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	@Override
 	public List<DockingActionIf> getPopupActions(Tool t, ActionContext context) {
 		if (context.getComponentProvider() == this) {
-			ListingCodeComparisonPanel dualListingPanel =
-				functionComparisonPanel.getDualListingPanel();
-			if (dualListingPanel != null) {
-				ListingPanel leftPanel = dualListingPanel.getListingPanel(LEFT);
-				return leftPanel.getHeaderActions(getName());
+			ListingCodeComparisonView dualListingView =
+				functionComparisonPanel.getDualListingView();
+			if (dualListingView != null) {
+				ListingPanel leftPanel = dualListingView.getListingPanel(LEFT);
+				return leftPanel.getHeaderActions(getOwner());
 			}
 		}
 		return new ArrayList<>();
@@ -213,29 +211,8 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	 * @param program the program that was restored (undo/redo)
 	 */
 	public void programRestored(Program program) {
-		CodeComparisonPanel comparePanel =
-			functionComparisonPanel.getCurrentComponent();
-		comparePanel.programRestored(program);
-	}
-
-	/**
-	 * Restores the function comparison providers components to the indicated 
-	 * saved configuration state
-	 * 
-	 * @param saveState the configuration state to restore
-	 */
-	public void readConfigState(SaveState saveState) {
-		functionComparisonPanel.readConfigState(getName(), saveState);
-	}
-
-	/**
-	 * Saves the current configuration state of the components that compose 
-	 * the function comparison provider
-	 * 
-	 * @param saveState the new configuration state
-	 */
-	public void writeConfigState(SaveState saveState) {
-		functionComparisonPanel.writeConfigState(getName(), saveState);
+		CodeComparisonView view = functionComparisonPanel.getCurrentView();
+		view.programRestored(program);
 	}
 
 	@Override
@@ -291,15 +268,15 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 
 		navigateToAction = new ToggleActionBuilder("Navigate to Selected Function",
 			plugin.getName())
-				.description(HTMLUtilities.toHTML("Toggle <b>On</b> means to navigate to " +
-					"whatever function is selected in the comparison panel, when focus changes" +
-					" or a new function is selected."))
-				.helpLocation(new HelpLocation(HELP_TOPIC, "Navigate_To_Function"))
-				.toolBarIcon(NAV_FUNCTION_ICON)
-				.onAction(c -> maybeGoToActiveFunction())
-				.buildAndInstallLocal(this);
+					.description(HTMLUtilities.toWrappedHTML("Toggle <b>On</b> to navigate the " +
+						"tool to the selected function in the comparison panel when focus changes" +
+						" or a new function is selected."))
+					.helpLocation(new HelpLocation(HELP_TOPIC, "Navigate_To_Function"))
+					.toolBarIcon(NAV_FUNCTION_ICON)
+					.onAction(c -> maybeGoToActiveFunction())
+					.buildAndInstallLocal(this);
 
-		if (model instanceof DefaultFunctionComparisonModel) {
+		if (model instanceof AnyToAnyFunctionComparisonModel) {
 			createDefaultModelActions();
 		}
 	}
@@ -313,7 +290,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 				.popupMenuGroup(ADD_COMPARISON_GROUP)
 				.toolBarIcon(ADD_TO_COMPARISON_ICON)
 				.toolBarGroup(ADD_COMPARISON_GROUP)
-				.enabledWhen(c -> model instanceof DefaultFunctionComparisonModel)
+				.enabledWhen(c -> model instanceof AnyToAnyFunctionComparisonModel)
 				.onAction(c -> addFunctions())
 				.buildAndInstallLocal(this);
 
@@ -335,7 +312,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 		List<Function> functions =
 			rows.stream().map(row -> row.getFunction()).collect(Collectors.toList());
 
-		if (model instanceof DefaultFunctionComparisonModel defaultModel) {
+		if (model instanceof AnyToAnyFunctionComparisonModel defaultModel) {
 			defaultModel.addFunctions(functions);
 		}
 
@@ -368,8 +345,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	}
 
 	/**
-	 * Gets actions specific to the code comparison panel and adds them to this
-	 * provider
+	 * Gets actions specific to the code comparison panel and adds them to this provider
 	 */
 	private void addSpecificCodeComparisonActions() {
 		DockingAction[] actions = functionComparisonPanel.getCodeComparisonActions();
@@ -378,8 +354,12 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 		}
 	}
 
-	public CodeComparisonPanel getCodeComparisonPanelByName(String name) {
-		return functionComparisonPanel.getCodeComparisonPanelByName(name);
+	public CodeComparisonView getView(String name) {
+		return functionComparisonPanel.getView(name);
+	}
+
+	public void setActiveView(String name) {
+		functionComparisonPanel.setActiveView(name);
 	}
 
 	private void dispose() {
@@ -387,5 +367,30 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 		closeListener.call();
 		closeListener = Callback.dummy();
 		functionComparisonPanel.dispose();
+	}
+
+	@Override
+	public void componentActivated() {
+		plugin.providerActivated(this);
+	}
+
+	/**
+	 * Returns true if this provider is using the {@link AnyToAnyFunctionComparisonModel} which
+	 * allows adding functions. The other model ({@link MatchedFunctionComparisonModel} ) only 
+	 * allows functions to be added in matched pairs.
+	 * @return true if this provider supports adding functions to the comparison
+	 */
+	public boolean supportsAddingFunctions() {
+		return model instanceof AnyToAnyFunctionComparisonModel;
+	}
+
+	/**
+	 * Adds functions to the comparison model if the model supports it.
+	 * @param functions the functions to add to the comparison
+	 */
+	public void addFunctions(Collection<Function> functions) {
+		if (model instanceof AnyToAnyFunctionComparisonModel anyToAnyModel) {
+			anyToAnyModel.addFunctions(functions);
+		}
 	}
 }

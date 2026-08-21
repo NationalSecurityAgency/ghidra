@@ -1,0 +1,439 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+
+  <properties>
+    <property key="parallelInstructionHelperClass" value="ghidra.app.util.viewer.field.HexagonParallelInstructionHelper"/>
+    <property key="emulateInstructionStateModifierClass" value="ghidra.program.emulation.HexagonEmulateInstructionStateModifier"/>
+    <property key="useropLibs" value="hexagon"/>
+    <property key="resetContextOnUpgrade" value="true" />
+  </properties>
+
+  <programcounter register="PC"/>
+  
+  <volatile outputop="writeSReg" inputop="readSReg">
+    <range space="register" first="0x238" last="0x23f"/> <!-- Register: UPCYCLE -->
+    <range space="register" first="0x800" last="0x8ff"/> <!-- Registers: S0-S63 -->
+  </volatile>
+
+  <context_data>
+  	<context_set space="ram">
+  	  <set name="packetOffset" val="0"/>
+    </context_set>
+    <tracked_set space="ram">
+      <set name="USR" val="0"/>
+      <set name="FRAMEKEY" val="0"/>
+    </tracked_set>
+  </context_data>
+  
+  <register_data>
+  
+  	<register name="R1R0_" group="SHADOW" hidden="true"/>
+  	<register name="R3R2_" group="SHADOW" hidden="true"/>
+  	<register name="R5R4_" group="SHADOW" hidden="true"/>
+  	<register name="R7R6_" group="SHADOW" hidden="true"/>
+  	<register name="R9R8_" group="SHADOW" hidden="true"/>
+  	<register name="R11R10_" group="SHADOW" hidden="true"/>
+  	<register name="R13R12_" group="SHADOW" hidden="true"/>
+  	<register name="R15R14_" group="SHADOW" hidden="true"/>
+  	<register name="R17R16_" group="SHADOW" hidden="true"/>
+  	<register name="R19R18_" group="SHADOW" hidden="true"/>
+ 	<register name="R21R20_" group="SHADOW" hidden="true"/>
+  	<register name="R23R22_" group="SHADOW" hidden="true"/>
+   	<register name="R25R24_" group="SHADOW" hidden="true"/>
+    <register name="R27R26_" group="SHADOW" hidden="true"/>
+    <register name="R29R28_" group="SHADOW" hidden="true"/>
+    <register name="R31R30_" group="SHADOW" hidden="true"/>
+    
+    <register name="R0.new" group="SHADOW" hidden="true"/>  
+    <register name="R1.new" group="SHADOW" hidden="true"/>  
+    <register name="R2.new" group="SHADOW" hidden="true"/>  
+    <register name="R3.new" group="SHADOW" hidden="true"/>  
+    <register name="R4.new" group="SHADOW" hidden="true"/>  
+    <register name="R5.new" group="SHADOW" hidden="true"/>  
+    <register name="R6.new" group="SHADOW" hidden="true"/>  
+    <register name="R7.new" group="SHADOW" hidden="true"/>  
+	<register name="R8.new" group="SHADOW" hidden="true"/>  
+	<register name="R9.new" group="SHADOW" hidden="true"/>  
+	<register name="R10.new" group="SHADOW" hidden="true"/> 
+	<register name="R11.new" group="SHADOW" hidden="true"/> 
+	<register name="R12.new" group="SHADOW" hidden="true"/> 
+	<register name="R13.new" group="SHADOW" hidden="true"/> 
+	<register name="R14.new" group="SHADOW" hidden="true"/> 
+	<register name="R15.new" group="SHADOW" hidden="true"/>
+	<register name="R16.new" group="SHADOW" hidden="true"/> 
+	<register name="R17.new" group="SHADOW" hidden="true"/> 
+	<register name="R18.new" group="SHADOW" hidden="true"/> 
+	<register name="R19.new" group="SHADOW" hidden="true"/> 
+	<register name="R20.new" group="SHADOW" hidden="true"/> 
+	<register name="R21.new" group="SHADOW" hidden="true"/> 
+	<register name="R22.new" group="SHADOW" hidden="true"/> 
+	<register name="R23.new" group="SHADOW" hidden="true"/> 
+	<register name="R24.new" group="SHADOW" hidden="true"/> 
+	<register name="R25.new" group="SHADOW" hidden="true"/> 
+	<register name="R26.new" group="SHADOW" hidden="true"/> 
+	<register name="R27.new" group="SHADOW" hidden="true"/> 
+	<register name="R28.new" group="SHADOW" hidden="true"/> 
+	<register name="SP.new" group="SHADOW" hidden="true"/>  
+	<register name="FP.new" group="SHADOW" hidden="true"/>  
+	<register name="LR.new" group="SHADOW" hidden="true"/>
+    
+    <register name="R0.L_" group="SHADOW" hidden="true"/>  
+    <register name="R0.H_" group="SHADOW" hidden="true"/>  
+    <register name="R1.L_" group="SHADOW" hidden="true"/>  
+    <register name="R1.H_" group="SHADOW" hidden="true"/>  
+    <register name="R2.L_" group="SHADOW" hidden="true"/>  
+    <register name="R2.H_" group="SHADOW" hidden="true"/>  
+    <register name="R3.L_" group="SHADOW" hidden="true"/>  
+    <register name="R3.H_" group="SHADOW" hidden="true"/>  
+	<register name="R4.L_" group="SHADOW" hidden="true"/>  
+	<register name="R4.H_" group="SHADOW" hidden="true"/>  
+	<register name="R5.L_" group="SHADOW" hidden="true"/>  
+	<register name="R5.H_" group="SHADOW" hidden="true"/>  
+	<register name="R6.L_" group="SHADOW" hidden="true"/>  
+	<register name="R6.H_" group="SHADOW" hidden="true"/>  
+	<register name="R7.L_" group="SHADOW" hidden="true"/>  
+	<register name="R7.H_" group="SHADOW" hidden="true"/>    
+	<register name="R8.L_" group="SHADOW" hidden="true"/>  
+	<register name="R8.H_" group="SHADOW" hidden="true"/>  
+	<register name="R9.L_" group="SHADOW" hidden="true"/>  
+	<register name="R9.H_" group="SHADOW" hidden="true"/>  
+	<register name="R10.L_" group="SHADOW" hidden="true"/> 
+	<register name="R10.H_" group="SHADOW" hidden="true"/> 
+	<register name="R11.L_" group="SHADOW" hidden="true"/> 
+	<register name="R11.H_" group="SHADOW" hidden="true"/> 
+	<register name="R12.L_" group="SHADOW" hidden="true"/> 
+	<register name="R12.H_" group="SHADOW" hidden="true"/> 
+	<register name="R13.L_" group="SHADOW" hidden="true"/> 
+	<register name="R13.H_" group="SHADOW" hidden="true"/> 
+	<register name="R14.L_" group="SHADOW" hidden="true"/> 
+	<register name="R14.H_" group="SHADOW" hidden="true"/> 
+	<register name="R15.L_" group="SHADOW" hidden="true"/> 
+	<register name="R15.H_" group="SHADOW" hidden="true"/>
+	<register name="R16.L_" group="SHADOW" hidden="true"/> 
+	<register name="R16.H_" group="SHADOW" hidden="true"/> 
+	<register name="R17.L_" group="SHADOW" hidden="true"/> 
+	<register name="R17.H_" group="SHADOW" hidden="true"/> 
+	<register name="R18.L_" group="SHADOW" hidden="true"/> 
+	<register name="R18.H_" group="SHADOW" hidden="true"/> 
+	<register name="R19.L_" group="SHADOW" hidden="true"/> 
+	<register name="R19.H_" group="SHADOW" hidden="true"/> 
+	<register name="R20.L_" group="SHADOW" hidden="true"/> 
+	<register name="R20.H_" group="SHADOW" hidden="true"/> 
+	<register name="R21.L_" group="SHADOW" hidden="true"/> 
+	<register name="R21.H_" group="SHADOW" hidden="true"/> 
+	<register name="R22.L_" group="SHADOW" hidden="true"/> 
+	<register name="R22.H_" group="SHADOW" hidden="true"/> 
+	<register name="R23.L_" group="SHADOW" hidden="true"/> 
+	<register name="R23.H_" group="SHADOW" hidden="true"/> 
+	<register name="R24.L_" group="SHADOW" hidden="true"/> 
+	<register name="R24.H_" group="SHADOW" hidden="true"/> 
+	<register name="R25.L_" group="SHADOW" hidden="true"/> 
+	<register name="R25.H_" group="SHADOW" hidden="true"/> 
+	<register name="R26.L_" group="SHADOW" hidden="true"/> 
+	<register name="R26.H_" group="SHADOW" hidden="true"/> 
+	<register name="R27.L_" group="SHADOW" hidden="true"/> 
+	<register name="R27.H_" group="SHADOW" hidden="true"/>
+	<register name="R28.L_" group="SHADOW" hidden="true"/> 
+	<register name="R28.H_" group="SHADOW" hidden="true"/> 
+	<register name="R29.L_" group="SHADOW" hidden="true"/> 
+	<register name="R29.H_" group="SHADOW" hidden="true"/> 
+	<register name="R30.L_" group="SHADOW" hidden="true"/> 
+	<register name="R30.H_" group="SHADOW" hidden="true"/> 
+	<register name="R31.L_" group="SHADOW" hidden="true"/> 
+	<register name="R31.H_" group="SHADOW" hidden="true"/>
+    
+    <register name="C1C0" group="Control" hidden="true"/>
+    <register name="C3C2" group="Control" hidden="true"/> 
+    <register name="C5C4" group="Control" hidden="true"/> 
+    <register name="C7C6" group="Control" hidden="true"/> 
+    <register name="C9C8" group="Control" hidden="true"/> 
+    <register name="C11C10" group="Control" hidden="true"/> 
+    <register name="C13C12" group="Control" hidden="true"/>
+    <register name="UPCYCLE" group="Control"/>
+    <register name="C17C16" group="Control" hidden="true"/>
+    <register name="PKTCOUNT" group="Control"/>
+    <register name="C21C20" group="Control" hidden="true"/>
+    <register name="C23C22" group="Control" hidden="true"/>
+    <register name="C25C24" group="Control" hidden="true"/>
+    <register name="C27C26" group="Control" hidden="true"/>
+    <register name="C29C28" group="Control" hidden="true"/>
+    <register name="UTIMER" group="Control"/>
+ 
+ 	<register name="C1C0_" group="SHADOW" hidden="true"/>
+    <register name="C3C2_" group="SHADOW" hidden="true"/> 
+    <register name="C5C4_" group="SHADOW" hidden="true"/> 
+    <register name="C7C6_" group="SHADOW" hidden="true"/> 
+    <register name="C9C8_" group="SHADOW" hidden="true"/> 
+    <register name="C11C10_" group="SHADOW" hidden="true"/> 
+    <register name="C13C12_" group="SHADOW" hidden="true"/>
+    <register name="UPCYCLE_" group="SHADOW" hidden="true"/>
+    <register name="C17C16_" group="SHADOW" hidden="true"/>
+    <register name="PKTCOUNT_" group="SHADOW" hidden="true"/>
+    <register name="C21C20_" group="SHADOW" hidden="true"/>
+    <register name="C23C22_" group="SHADOW" hidden="true"/>
+    <register name="C25C24_" group="SHADOW" hidden="true"/>
+    <register name="C27C26_" group="SHADOW" hidden="true"/>
+    <register name="C29C28_" group="SHADOW" hidden="true"/>
+    <register name="UTIMER_" group="SHADOW" hidden="true"/>
+ 
+    <register name="ReturnAddr" group="SHADOW" hidden="true"/>					  
+    
+    <register name="SA0" group="Control"/>
+ 	<register name="LC0" group="Control"/>
+ 	<register name="SA1" group="Control"/>
+ 	<register name="LC1" group="Control"/>
+ 	<register name="P3P0" group="Control"/>
+ 	<register name="C5" group="Control" hidden="true"/>
+ 	<register name="M0" group="Control"/>
+ 	<register name="M1" group="Control"/>
+ 	<register name="USR" group="Control"/>
+ 	<register name="PC" group="Control"/>
+ 	<register name="UGP" group="Control"/>
+ 	<register name="GP" group="Control"/>
+ 	<register name="CS0" group="Control"/> 
+ 	<register name="CS1" group="Control"/>
+	<register name="UPCYCLELO" group="Control"/> 
+	<register name="UPCYCLEHI" group="Control"/> 
+ 	<register name="FRAMELIMIT" group="Control"/> 
+ 	<register name="FRAMEKEY" group="Control"/> 
+ 	<register name="PKTCOUNTLO" group="Control"/> 
+ 	<register name="PKTCOUNTHI" group="Control"/> 
+ 	<register name="C20" group="Control" hidden="true"/> 
+ 	<register name="C21" group="Control" hidden="true"/> 
+ 	<register name="C22" group="Control" hidden="true"/> 
+ 	<register name="C23" group="Control" hidden="true"/> 
+ 	<register name="C24" group="Control" hidden="true"/> 
+ 	<register name="C25" group="Control" hidden="true"/> 
+ 	<register name="C26" group="Control" hidden="true"/> 
+ 	<register name="C27" group="Control" hidden="true"/> 
+ 	<register name="C28" group="Control" hidden="true"/> 
+ 	<register name="C29" group="Control" hidden="true"/> 
+ 	<register name="UTIMERLO" group="Control"/> 
+ 	<register name="UTIMERHI" group="Control"/>
+ 	
+ 	<register name="SA0_" group="SHADOW" hidden="true"/> 
+ 	<register name="LC0_" group="SHADOW" hidden="true"/> 
+ 	<register name="SA1_" group="SHADOW" hidden="true"/> 
+ 	<register name="LC1_" group="SHADOW" hidden="true"/> 
+ 	<register name="P3P0_" group="SHADOW" hidden="true"/> 
+	<register name="M0_" group="SHADOW" hidden="true"/> 
+	<register name="M1_" group="SHADOW" hidden="true"/> 
+	<register name="USR_" group="SHADOW" hidden="true"/> 
+	<register name="PC_" group="SHADOW" hidden="true"/> 
+	<register name="UGP_" group="SHADOW" hidden="true"/> 
+	<register name="GP_" group="SHADOW" hidden="true"/>
+	<register name="CS0_" group="SHADOW" hidden="true"/> 
+ 	<register name="CS1_" group="SHADOW" hidden="true"/>
+	<register name="UPCYCLELO_" group="SHADOW" hidden="true"/> 
+	<register name="UPCYCLEHI_" group="SHADOW" hidden="true"/> 
+ 	<register name="FRAMELIMIT_" group="SHADOW" hidden="true"/> 
+ 	<register name="FRAMEKEY_" group="SHADOW" hidden="true"/> 
+ 	<register name="PKTCOUNTLO_" group="SHADOW" hidden="true"/> 
+ 	<register name="PKTCOUNTHI_" group="SHADOW" hidden="true"/> 
+ 	<register name="C20_" group="SHADOW" hidden="true"/> 
+ 	<register name="C21_" group="SHADOW" hidden="true"/> 
+ 	<register name="C22_" group="SHADOW" hidden="true"/> 
+ 	<register name="C23_" group="SHADOW" hidden="true"/> 
+ 	<register name="C24_" group="SHADOW" hidden="true"/> 
+ 	<register name="C25_" group="SHADOW" hidden="true"/> 
+ 	<register name="C26_" group="SHADOW" hidden="true"/> 
+ 	<register name="C27_" group="SHADOW" hidden="true"/> 
+ 	<register name="C28_" group="SHADOW" hidden="true"/> 
+ 	<register name="C29_" group="SHADOW" hidden="true"/> 
+ 	<register name="UTIMERLO_" group="SHADOW" hidden="true"/> 
+ 	<register name="UTIMERHI_" group="SHADOW" hidden="true"/>
+ 	
+	<register name="P3.new" group="SHADOW" hidden="true"/> 
+	<register name="P2.new" group="SHADOW" hidden="true"/> 
+	<register name="P1.new" group="SHADOW" hidden="true"/> 
+	<register name="P0.new" group="SHADOW" hidden="true"/>
+	
+	<register name="G1G0" group="Guest" hidden="true"/>
+	<register name="G3G2" group="Guest" hidden="true"/> 
+	<register name="G5G4" group="Guest" hidden="true"/> 
+	<register name="G7G6" group="Guest" hidden="true"/> 
+	<register name="G9G8" group="Guest" hidden="true"/> 
+	<register name="G11G10" group="Guest" hidden="true"/> 
+	<register name="G13G12" group="Guest" hidden="true"/> 
+	<register name="G15G14" group="Guest" hidden="true"/> 
+	<register name="G17G16" group="Guest" hidden="true"/> 
+	<register name="G19G18" group="Guest" hidden="true"/>
+	<register name="G21G20" group="Guest" hidden="true"/> 
+	<register name="G23G22" group="Guest" hidden="true"/> 
+	<register name="G25G24" group="Guest" hidden="true"/> 
+	<register name="G27G26" group="Guest" hidden="true"/> 
+	<register name="G29G28" group="Guest" hidden="true"/>
+	<register name="G31G30" group="Guest" hidden="true"/>
+	
+	<register name="G0" group="Guest"/> 
+	<register name="G1" group="Guest"/> 
+	<register name="G2" group="Guest"/> 
+	<register name="G3" group="Guest"/>
+	<register name="G4" group="Guest" hidden="true"/> 
+	<register name="G5" group="Guest" hidden="true"/> 
+	<register name="G6" group="Guest" hidden="true"/> 
+	<register name="G7" group="Guest" hidden="true"/> 
+	<register name="G8" group="Guest" hidden="true"/> 
+	<register name="G9" group="Guest" hidden="true"/> 
+	<register name="G10" group="Guest" hidden="true"/> 
+	<register name="G11" group="Guest" hidden="true"/> 
+	<register name="G12" group="Guest" hidden="true"/> 
+	<register name="G13" group="Guest" hidden="true"/> 
+	<register name="G14" group="Guest" hidden="true"/> 
+	<register name="G15" group="Guest" hidden="true"/>
+	<!-- naming of G16-G19 inconsistent between LLVM and V62 ref manual --> 
+	<register name="G16" rename="GPMUCNT4" group="Guest"/> 
+	<register name="G17" rename="GPMUCNT5" group="Guest"/> 
+	<register name="G18" rename="GPMUCNT6" group="Guest"/> 
+	<register name="G19" rename="GPMUCNT7" group="Guest"/>
+	<register name="G20" group="Guest" hidden="true"/> 
+	<register name="G21" group="Guest" hidden="true"/> 
+	<register name="G22" group="Guest" hidden="true"/> 
+	<register name="G23" group="Guest" hidden="true"/>   
+	<register name="G24" rename="GPCYCLELO" group="Guest"/> 
+	<register name="G25" rename="GPCYCLEHI" group="Guest"/> 
+	<register name="G26" rename="GPMUCNT0" group="Guest"/> 
+	<register name="G27" rename="GPMUCNT1" group="Guest"/> 
+	<register name="G28" rename="GPMUCNT2" group="Guest"/> 
+	<register name="G29" rename="GPMUCNT3" group="Guest"/>
+ 	<register name="G30" group="Guest" hidden="true"/> 
+	<register name="G31" group="Guest" hidden="true"/> 
+	
+ 	<register name="S1S0" group="Supervisor" hidden="true"/>   
+ 	<register name="S3S2" group="Supervisor" hidden="true"/>   
+ 	<register name="S5S4" group="Supervisor" hidden="true"/>   
+ 	<register name="S7S6" group="Supervisor" hidden="true"/>
+	<register name="S9S8" group="Supervisor" hidden="true"/>   
+	<register name="S11S10" group="Supervisor" hidden="true"/> 
+	<register name="S13S12" group="Supervisor" hidden="true"/> 
+	<register name="S15S14" group="Supervisor" hidden="true"/>
+	<register name="S17S16" group="Supervisor" hidden="true"/> 
+	<register name="S19S18" group="Supervisor" hidden="true"/> 
+	<register name="S21S20" group="Supervisor" hidden="true"/> 
+	<register name="S23S22" group="Supervisor" hidden="true"/>
+	<register name="S25S24" group="Supervisor" hidden="true"/> 
+	<register name="S27S26" group="Supervisor" hidden="true"/> 
+	<register name="S29S28" group="Supervisor" hidden="true"/> 
+	<register name="S31S30" group="Supervisor" hidden="true"/>
+	<register name="S33S32" group="Supervisor" hidden="true"/> 
+	<register name="S35S34" group="Supervisor" hidden="true"/> 
+	<register name="S37S36" group="Supervisor" hidden="true"/> 
+	<register name="S39S38" group="Supervisor" hidden="true"/>
+	<register name="S41S40" group="Supervisor" hidden="true"/> 
+	<register name="S43S42" group="Supervisor" hidden="true"/> 
+	<register name="S45S44" group="Supervisor" hidden="true"/> 
+	<register name="S47S46" group="Supervisor" hidden="true"/>
+	<register name="S49S48" group="Supervisor" hidden="true"/> 
+	<register name="S51S50" group="Supervisor" hidden="true"/> 
+	<register name="S53S52" group="Supervisor" hidden="true"/> 
+	<register name="S55S54" group="Supervisor" hidden="true"/>
+	<register name="S57S56" group="Supervisor" hidden="true"/> 
+	<register name="S59S58" group="Supervisor" hidden="true"/> 
+	<register name="S61S60" group="Supervisor" hidden="true"/> 
+	<register name="S63S62" group="Supervisor" hidden="true"/>
+									  	
+ 	<register name="S0"  rename="SGP0" group="Supervisor"/>
+ 	<register name="S1"  rename="SGP1" group="Supervisor"/>
+ 	<register name="S2"  rename="STID" group="Supervisor"/>
+ 	<register name="S3"  rename="ELR" group="Supervisor"/>
+ 	<register name="S4"  rename="BADVA0" group="Supervisor"/>
+ 	<register name="S5"  rename="BADVA1" group="Supervisor"/>
+ 	<register name="S6"  rename="SSR" group="Supervisor"/>
+ 	<register name="S7"  rename="CCR" group="Supervisor"/>
+ 	<register name="S8"  rename="HTID" group="Supervisor"/>
+ 	<register name="S9"  rename="BADVA" group="Supervisor"/>
+ 	<register name="S10" rename="IMASK" group="Supervisor"/>
+ 	<register name="S11" group="Supervisor" hidden="true"/>
+ 	<register name="S12" group="Supervisor" hidden="true"/>
+ 	<register name="S13" group="Supervisor" hidden="true"/>
+ 	<register name="S14" group="Supervisor" hidden="true"/>
+ 	<register name="S15" group="Supervisor" hidden="true"/>
+ 	<register name="S16" rename="EVB" group="Supervisor"/>
+ 	<register name="S17" rename="MODECTL" group="Supervisor"/>
+ 	<register name="S18" rename="SYSCFG" group="Supervisor"/>
+ 	<register name="S19" group="Supervisor"/>
+ 	<register name="S20" rename="IPEND" group="Supervisor"/>
+ 	<register name="S21" rename="VID" group="Supervisor"/>
+ 	<register name="S22" rename="IAD" group="Supervisor"/>
+ 	<register name="S23" group="Supervisor"/>
+ 	<register name="S24" rename="IEL" group="Supervisor"/>
+ 	<register name="S25" group="Supervisor"/>
+ 	<register name="S26" rename="IAHL" group="Supervisor"/>
+ 	<register name="S27" rename="CFGBASE" group="Supervisor"/>
+ 	<register name="S28" rename="DIAG" group="Supervisor"/>
+ 	<register name="S29" rename="REV" group="Supervisor"/>
+ 	<register name="S30" rename="PCYCLELO" group="Supervisor"/>
+ 	<register name="S31" rename="PCYCLEHI" group="Supervisor"/>
+ 	<register name="S32" rename="ISDBST" group="Supervisor"/>
+ 	<register name="S33" rename="ISDBCFG0" group="Supervisor"/>
+ 	<register name="S34" rename="ISDBCFG1" group="Supervisor"/>
+ 	<register name="S35" group="Supervisor" hidden="true"/>
+ 	<register name="S36" rename="BRKPTPC0" group="Supervisor"/>
+ 	<register name="S37" rename="BRKPTCFG0" group="Supervisor"/>
+ 	<register name="S38" rename="BRKPTPC1" group="Supervisor"/>
+ 	<register name="S39" rename="BRKPTCFG1" group="Supervisor"/>
+ 	<register name="S40" rename="ISDBMBXIN" group="Supervisor"/>
+ 	<register name="S41" rename="ISDBMBXOUT" group="Supervisor"/>
+ 	<register name="S42" rename="ISDBEN" group="Supervisor"/>
+ 	<register name="S43" rename="ISDBGPR" group="Supervisor"/>
+ 	<register name="S44" group="Supervisor" hidden="true"/>
+ 	<register name="S45" group="Supervisor"/>
+ 	<register name="S46" group="Supervisor" hidden="true"/>
+ 	<register name="S47" group="Supervisor" hidden="true"/>
+ 	<register name="S48" rename="PMUCNT0" group="Supervisor"/>
+ 	<register name="S49" rename="PMUCNT1" group="Supervisor"/>
+ 	<register name="S50" rename="PMUCNT2" group="Supervisor"/>
+ 	<register name="S51" rename="PMUCNT3" group="Supervisor"/>
+ 	<register name="S52" rename="PMUEVTCFG" group="Supervisor"/>
+ 	<register name="S53" rename="PMUCFG" group="Supervisor"/>
+ 	<register name="S54" group="Supervisor" hidden="true"/>
+ 	<register name="S55" group="Supervisor" hidden="true"/>
+ 	<register name="S56" group="Supervisor" hidden="true"/>
+ 	<register name="S57" group="Supervisor" hidden="true"/>
+ 	<register name="S58" group="Supervisor" hidden="true"/>
+ 	<register name="S59" group="Supervisor" hidden="true"/>
+ 	<register name="S60" group="Supervisor" hidden="true"/>
+ 	<!-- uncertain where the naming of S61-S63 originated -->
+ 	<register name="S61" rename="ACC0" group="Supervisor"/>
+ 	<register name="S62" rename="ACC1" group="Supervisor"/>
+ 	<register name="S63" rename="CHICKEN" group="Supervisor"/>
+ 	
+ 	<!-- HVX Vector Registers - Lane sizes .b .h .w -->
+ 	
+ 	<register name="V1V0" group="SVE" vector_lane_sizes="1,2,4"/> 
+    <register name="V3V2" group="SVE" vector_lane_sizes="1,2,4"/> 
+    <register name="V5V4" group="SVE" vector_lane_sizes="1,2,4"/> 
+    <register name="V7V6" group="SVE" vector_lane_sizes="1,2,4"/> 
+    <register name="V9V8" group="SVE" vector_lane_sizes="1,2,4"/> 
+    <register name="V11V10" group="SVE" vector_lane_sizes="1,2,4"/> 
+    <register name="V13V12" group="SVE" vector_lane_sizes="1,2,4"/> 
+    <register name="V15V14" group="SVE" vector_lane_sizes="1,2,4"/> 
+    <register name="V17V16" group="SVE" vector_lane_sizes="1,2,4"/> 
+    <register name="V19V18" group="SVE" vector_lane_sizes="1,2,4"/> 
+    <register name="V21V20" group="SVE" vector_lane_sizes="1,2,4"/> 
+    <register name="V23V22" group="SVE" vector_lane_sizes="1,2,4"/> 
+    <register name="V25V24" group="SVE" vector_lane_sizes="1,2,4"/> 
+    <register name="V27V26" group="SVE" vector_lane_sizes="1,2,4"/> 
+    <register name="V29V28" group="SVE" vector_lane_sizes="1,2,4"/> 
+    <register name="V31V30" group="SVE" vector_lane_sizes="1,2,4"/> 
+    
+    <register name="V1V0_" group="SVE" vector_lane_sizes="1,2,4"/> 
+    <register name="V3V2_" group="SVE" vector_lane_sizes="1,2,4"/> 
+    <register name="V5V4_" group="SVE" vector_lane_sizes="1,2,4"/> 
+    <register name="V7V6_" group="SVE" vector_lane_sizes="1,2,4"/> 
+    <register name="V9V8_" group="SVE" vector_lane_sizes="1,2,4"/> 
+    <register name="V11V10_" group="SVE" vector_lane_sizes="1,2,4"/> 
+    <register name="V13V12_" group="SVE" vector_lane_sizes="1,2,4"/> 
+    <register name="V15V14_" group="SVE" vector_lane_sizes="1,2,4"/> 
+    <register name="V17V16_" group="SVE" vector_lane_sizes="1,2,4"/> 
+    <register name="V19V18_" group="SVE" vector_lane_sizes="1,2,4"/> 
+    <register name="V21V20_" group="SVE" vector_lane_sizes="1,2,4"/> 
+    <register name="V23V22_" group="SVE" vector_lane_sizes="1,2,4"/> 
+    <register name="V25V24_" group="SVE" vector_lane_sizes="1,2,4"/> 
+    <register name="V27V26_" group="SVE" vector_lane_sizes="1,2,4"/> 
+    <register name="V29V28_" group="SVE" vector_lane_sizes="1,2,4"/> 
+    <register name="V31V30_" group="SVE" vector_lane_sizes="1,2,4"/> 
+ 
+  </register_data>
+</processor_spec>

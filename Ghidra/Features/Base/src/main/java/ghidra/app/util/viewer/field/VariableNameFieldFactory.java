@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,7 +45,7 @@ public class VariableNameFieldFactory extends AbstractVariableFieldFactory {
 	/**
 	 * Constructor
 	 * @param model the model that the field belongs to.
-	 * @param hsProvider the HightLightStringProvider.
+	 * @param hlProvider the HightLightStringProvider.
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
@@ -72,9 +72,6 @@ public class VariableNameFieldFactory extends AbstractVariableFieldFactory {
 			width, hlProvider);
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getProgramLocation(int, int, ghidra.app.util.viewer.field.ListingField)
-	 */
 	@Override
 	public ProgramLocation getProgramLocation(int row, int col, ListingField bf) {
 		ProxyObj<?> proxy = bf.getProxy();
@@ -88,9 +85,6 @@ public class VariableNameFieldFactory extends AbstractVariableFieldFactory {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getFieldLocation(ghidra.app.util.viewer.field.ListingField, BigInteger, int, ghidra.program.util.ProgramLocation)
-	 */
 	@Override
 	public FieldLocation getFieldLocation(ListingField bf, BigInteger index, int fieldNum,
 			ProgramLocation loc) {
@@ -111,9 +105,6 @@ public class VariableNameFieldFactory extends AbstractVariableFieldFactory {
 		return null;
 	}
 
-	/**
-	* @see ghidra.app.util.viewer.field.FieldFactory#acceptsType(int, java.lang.Class)
-	*/
 	@Override
 	public boolean acceptsType(int category, Class<?> proxyObjectClass) {
 		if (!Variable.class.isAssignableFrom(proxyObjectClass)) {

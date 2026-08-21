@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,11 +58,10 @@ public class TLSDataDirectory extends DataDirectory {
 
 	@Override
 	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
-			NTHeader ntHeader)
-			throws DuplicateNameException, CodeUnitInsertionException, IOException {
+			NTHeader nt) throws DuplicateNameException, CodeUnitInsertionException, IOException {
 
 		monitor.setMessage(program.getName()+": TLS...");
-		Address addr = PeUtils.getMarkupAddress(program, isBinary, ntHeader, virtualAddress);
+		Address addr = PeUtils.getMarkupAddress(program, isBinary, nt, virtualAddress);
 		if (!program.getMemory().contains(addr)) {
 			return;
 		}
@@ -114,13 +113,5 @@ public class TLSDataDirectory extends DataDirectory {
 
 		tls = new TLSDirectory(reader, ptr, ntHeader.getOptionalHeader().is64bit());
         return true;
-    }
-
-    /**
-     * @see ghidra.app.util.bin.StructConverter#toDataType()
-     */
-    @Override
-    public DataType toDataType() throws DuplicateNameException {
-		return tls.toDataType();
     }
 }

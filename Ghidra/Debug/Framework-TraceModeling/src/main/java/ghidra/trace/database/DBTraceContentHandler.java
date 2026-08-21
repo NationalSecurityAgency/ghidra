@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,16 +41,16 @@ public class DBTraceContentHandler extends DBWithUserDataContentHandler<DBTrace>
 	static final Class<DBTrace> TRACE_DOMAIN_OBJECT_CLASS = DBTrace.class;
 	static final String TRACE_CONTENT_DEFAULT_TOOL = "Debugger";
 
-	private static final DBTraceLinkContentHandler linkHandler = new DBTraceLinkContentHandler();
+	private static final DBTraceLinkContentHandler LINK_HANDLER = new DBTraceLinkContentHandler();
 
 	@Override
 	public long createFile(FileSystem fs, FileSystem userfs, String path, String name,
 			DomainObject obj, TaskMonitor monitor)
 			throws IOException, InvalidNameException, CancelledException {
-		if (!(obj instanceof DBTrace)) {
+		if (!(obj instanceof DBTrace trace)) {
 			throw new IOException("Unsupported domain object: " + obj.getClass().getName());
 		}
-		return createFile((DBTrace) obj, TRACE_CONTENT_TYPE, fs, path, name, monitor);
+		return createFile(trace, TRACE_CONTENT_TYPE, fs, path, name, monitor);
 	}
 
 	@Override
@@ -313,7 +313,7 @@ public class DBTraceContentHandler extends DBWithUserDataContentHandler<DBTrace>
 
 	@Override
 	public String getContentTypeDisplayString() {
-		return "Trace";
+		return TRACE_CONTENT_TYPE;
 	}
 
 	@Override
@@ -340,6 +340,6 @@ public class DBTraceContentHandler extends DBWithUserDataContentHandler<DBTrace>
 
 	@Override
 	public DBTraceLinkContentHandler getLinkHandler() {
-		return linkHandler;
+		return LINK_HANDLER;
 	}
 }

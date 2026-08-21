@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryFlag;
-import ghidra.trace.model.thread.TraceObjectThread;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import help.screenshot.GhidraScreenShotGenerator;
 
@@ -66,7 +66,7 @@ public class DebuggerPcodeStepperPluginScreenShots extends GhidraScreenShotGener
 						tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ,
 						TraceMemoryFlag.EXECUTE);
 
-			TraceObjectThread thread = (TraceObjectThread) tb.getOrAddThread("Threads[1]", snap0);
+			TraceThread thread = tb.getOrAddThread("Threads[1]", snap0);
 			tb.trace.getObjectManager()
 					.createObject(thread.getObject().getCanonicalPath().key("Registers"));
 

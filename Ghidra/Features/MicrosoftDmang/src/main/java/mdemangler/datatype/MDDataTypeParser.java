@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@ package mdemangler.datatype;
 
 import mdemangler.MDException;
 import mdemangler.MDMang;
+import mdemangler.MDMang.ProcessingMode;
 import mdemangler.datatype.complex.*;
 import mdemangler.datatype.extended.*;
 import mdemangler.datatype.modifier.*;
@@ -31,6 +32,51 @@ import mdemangler.object.MDObjectCPP;
  *  by calling the appropriate parser at the appropriate place in the code.
  */
 public class MDDataTypeParser {
+	/**
+	 * This method is only to be used by MDMang itself for the highest level type parsing where
+	 * there is not already a multi-retry. This method checks for the '.' starting character,
+	 * determines the type by calling the {@link #parseDataType(MDMang, boolean)}, parses the type,
+	 * and does the multi-mode retry if there is an exception on the first pass as
+	 * MDMangObjectParser does for generic mangled objects
+	 * @param dmang - the MDMang driver
+	 * @param isHighest - boolean indicating whether something else modifies or names the data
+	 *  type to be parsed, which impacts when certain overloaded CV modifiers can be applied.
+	 * @return - a type derived from MDDataType
+	 * @throws MDException on parsing error
+	 */
+	public static MDDataType determineAndParseDataType(MDMang dmang, boolean isHighest)
+			throws MDException {
+
+		MDDataType dt = null;
+
+		dmang.setProcessingMode(ProcessingMode.DEFAULT_STANDARD);
+		try {
+			dmang.pushContext();
+			if (dmang.peek() == '.') {
+				dmang.increment(); // skip the now-optional '.'
+			}
+			dt = parseDataType(dmang, isHighest);
+			dt.parse();
+			dmang.popContext();
+		}
+		catch (MDException e1) {
+			dmang.resetState();
+			dmang.setProcessingMode(ProcessingMode.LLVM);
+			try {
+				dmang.pushContext();
+				dmang.increment(); // skip the '.'
+				dt = parseDataType(dmang, isHighest);
+				dt.parse();
+				dmang.popContext();
+			}
+			catch (MDException e2) {
+				throw new MDException(
+					"Reason1: " + e1.getMessage().trim() + "; Reason2: " + e2.getMessage().trim());
+			}
+		}
+		return dt;
+	}
+
 	/**
 	 * This method parses all data types.  Specifically, it parses void, data indirect types,
 	 * function indirect types, and all types parsed by parsePrimaryDataType().
@@ -306,19 +352,19 @@ public class MDDataTypeParser {
 						dt = new MDArrayBasicType(dmang);
 						break;
 					case 'P':
-						dt = new MDUnknownPExtendedDataType(dmang);
+						dt = new MDAutoDataType(dmang);
 						break;
 					case 'Q':
 						dt = new MDChar8DataType(dmang);
 						break;
 					case 'R':
-						dt = new MDUnknownRExtendedDataType(dmang);
+						dt = new MDAngleUnknownDataType(dmang);
 						break;
 					case 'S':
 						dt = new MDChar16DataType(dmang);
 						break;
 					case 'T':
-						dt = new MDUnknownTExtendedDataType(dmang);
+						dt = new MDDecltypeAutoDataType(dmang);
 						break;
 					case 'U':
 						dt = new MDChar32DataType(dmang);

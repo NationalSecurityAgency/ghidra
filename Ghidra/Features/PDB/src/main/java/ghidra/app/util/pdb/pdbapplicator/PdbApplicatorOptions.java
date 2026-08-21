@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,6 +40,15 @@ public class PdbApplicatorOptions {
 		"Applicator processing control.";
 	private static final PdbApplicatorControl DEFAULT_CONTROL = PdbApplicatorControl.ALL;
 	private PdbApplicatorControl control;
+
+	// Apply Source Line Numbers.
+	private static final String OPTION_NAME_APPLY_SOURCE_LINE_NUMBERS =
+		"Import Source Line Info";
+	private static final String OPTION_DESCRIPTION_APPLY_SOURCE_LINE_NUMBERS =
+		"Create source map entries containing the source code filename, line number, address, and" +
+			" length at each location provided in the PDB data.";
+	private static final boolean DEFAULT_APPLY_SOURCE_LINE_NUMBERS = true;
+	private boolean applySourceLineNumbers;
 
 	// Apply Code Block Comments.
 	private static final String OPTION_NAME_APPLY_CODE_SCOPE_BLOCK_COMMENTS =
@@ -181,6 +190,10 @@ public class PdbApplicatorOptions {
 	private void registerOptions(Options options, boolean enableControl) {
 		HelpLocation help = null;
 
+		options.registerOption(OPTION_NAME_APPLY_SOURCE_LINE_NUMBERS,
+			applySourceLineNumbers, help,
+			OPTION_DESCRIPTION_APPLY_SOURCE_LINE_NUMBERS);
+
 		if (DEVELOPER_MODE || enableControl) {
 			options.registerOption(OPTION_NAME_PROCESSING_CONTROL, PdbApplicatorControl.ALL, help,
 				OPTION_DESCRIPTION_PROCESSING_CONTROL);
@@ -231,6 +244,9 @@ public class PdbApplicatorOptions {
 	}
 
 	private void loadOptions(Options options, boolean enableControl) {
+
+		applySourceLineNumbers = options.getBoolean(
+			OPTION_NAME_APPLY_SOURCE_LINE_NUMBERS, applySourceLineNumbers);
 
 		if (DEVELOPER_MODE || enableControl) {
 			control = options.getEnum(OPTION_NAME_PROCESSING_CONTROL, PdbApplicatorControl.ALL);
@@ -288,6 +304,7 @@ public class PdbApplicatorOptions {
 	 * Set the options to their default values
 	 */
 	public void setDefaults() {
+		applySourceLineNumbers = DEFAULT_APPLY_SOURCE_LINE_NUMBERS;
 		applyCodeScopeBlockComments = DEFAULT_APPLY_CODE_SCOPE_BLOCK_COMMENTS;
 		applyInstructionLabels = DEFAULT_APPLY_INSTRUCTION_LABELS;
 		excludeInstructionLabels = DEFAULT_EXCLUDE_INSTRUCTION_LABELS;
@@ -298,6 +315,22 @@ public class PdbApplicatorOptions {
 		allowDemotePrimaryMangledSymbols = DEFAULT_ALLOW_DEMOTE_PRIMARY_MANGLED_SYMBOLS;
 		applyFunctionVariables = DEFAULT_APPLY_FUNCTION_VARIABLES;
 		compositeLayout = DEFAULT_CLASS_LAYOUT;
+	}
+
+	/**
+	 * Enable/disable developmental debug of applying source line numbers.
+	 * @param applySourceLineNumbers {@code true} to turn on applySourceLineNumbers
+	 */
+	public void setApplySourceLineNumbers(boolean applySourceLineNumbers) {
+		this.applySourceLineNumbers = applySourceLineNumbers;
+	}
+
+	/**
+	 * Returns {@code true} if applySourceLineNumbers is "on."
+	 * @return {@code true} if applySourceLineNumbers is "on."
+	 */
+	public boolean applySourceLineNumbers() {
+		return applySourceLineNumbers;
 	}
 
 	/**

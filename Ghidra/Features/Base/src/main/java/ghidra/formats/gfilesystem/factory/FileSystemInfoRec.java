@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,19 +15,18 @@
  */
 package ghidra.formats.gfilesystem.factory;
 
-import ghidra.formats.gfilesystem.GFileSystem;
-import ghidra.formats.gfilesystem.GFileSystemBase;
-import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
-import ghidra.util.Msg;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Comparator;
 import java.util.regex.Pattern;
 
+import ghidra.formats.gfilesystem.GFileSystem;
+import ghidra.formats.gfilesystem.GFileSystemBase;
+import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
+import ghidra.util.Msg;
+
 /**
  * Holds information read from a {@link FileSystemInfo} annotation.
- * <p>
  */
 public class FileSystemInfoRec {
 	private static final Pattern FSTYPE_VALID_REGEX = Pattern.compile("[a-z0-9]+");
@@ -37,6 +36,7 @@ public class FileSystemInfoRec {
 	private final int priority;
 	private final Class<? extends GFileSystem> fsClass;
 	private final GFileSystemFactory<?> factory;
+	private final String[] extensions;
 
 	/**
 	 * A static {@link Comparator} that will order {@link FileSystemInfoRec} by their
@@ -55,6 +55,7 @@ public class FileSystemInfoRec {
 	 * @return new {@link FileSystemInfoRec}, or null if the class doesn't have
 	 * valid file system meta data.
 	 */
+	@SuppressWarnings("unchecked")
 	public static FileSystemInfoRec fromClass(Class<? extends GFileSystem> fsClazz) {
 		FileSystemInfo fsi = fsClazz.getAnnotation(FileSystemInfo.class);
 		if (fsi == null) {
@@ -82,24 +83,26 @@ public class FileSystemInfoRec {
 
 		// Hack to allow GFileSystemBaseFactory to know which fsclass is using it
 		// so instances can be created by the single GFileSystemBaseFactory impl.
-		if (factory instanceof GFileSystemBaseFactory) {
-			((GFileSystemBaseFactory) factory).setFileSystemClass(
-				(Class<? extends GFileSystemBase>) fsClazz);
+		if (factory instanceof GFileSystemBaseFactory base) {
+			base.setFileSystemClass((Class<? extends GFileSystemBase>) fsClazz);
 		}
 
 		FileSystemInfoRec fsir =
-			new FileSystemInfoRec(fsType, fsi.description(), fsi.priority(), fsClazz, factory);
+			new FileSystemInfoRec(fsType, fsi.description(), fsi.priority(), fsClazz, factory,
+				fsi.extensions());
 
 		return fsir;
 	}
 
 	private FileSystemInfoRec(String type, String description, int priority,
-			Class<? extends GFileSystem> fsClass, GFileSystemFactory<?> factory) {
+			Class<? extends GFileSystem> fsClass, GFileSystemFactory<?> factory,
+			String[] extensions) {
 		this.type = type;
 		this.description = description;
 		this.priority = priority;
 		this.fsClass = fsClass;
 		this.factory = factory;
+		this.extensions = extensions;
 	}
 
 	/**
@@ -148,5 +151,12 @@ public class FileSystemInfoRec {
 	 */
 	public GFileSystemFactory<?> getFactory() {
 		return factory;
+	}
+
+	/**
+	 * {@return the associated file extensions for this filesystem}
+	 */
+	public String[] getExtensions() {
+		return extensions;
 	}
 }

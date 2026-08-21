@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,6 @@ package ghidra.app.decompiler;
 
 import static ghidra.program.model.pcode.ElementId.*;
 
-import java.awt.Color;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -98,13 +97,6 @@ public class ClangTokenGroup implements ClangNode, Iterable<ClangNode> {
 	}
 
 	@Override
-	public void setHighlight(Color val) {
-		for (ClangNode element : tokgroup) {
-			element.setHighlight(val);
-		}
-	}
-
-	@Override
 	public void flatten(List<ClangNode> list) {
 		for (ClangNode element : tokgroup) {
 			element.flatten(list);
@@ -168,9 +160,7 @@ public class ClangTokenGroup implements ClangNode, Iterable<ClangNode> {
 	public String toString() {
 		String lastTokenStr = null;
 		StringBuffer buffer = new StringBuffer();
-		Iterator<ClangNode> iter = tokgroup.iterator();
-		while (iter.hasNext()) {
-			ClangNode node = iter.next();
+		for (ClangNode node : tokgroup) {
 			String tokenStr = node.toString();
 			if (tokenStr.length() == 0) {
 				continue;

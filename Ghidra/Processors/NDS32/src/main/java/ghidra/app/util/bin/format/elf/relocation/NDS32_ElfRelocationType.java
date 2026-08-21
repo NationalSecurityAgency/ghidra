@@ -1,0 +1,195 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package ghidra.app.util.bin.format.elf.relocation;
+
+public enum NDS32_ElfRelocationType implements ElfRelocationType {
+	/* REL relocations.	*/
+	R_NDS32_16(1),
+	R_NDS32_32(2),
+	R_NDS32_20(3),
+	R_NDS32_9_PCREL(4),
+	R_NDS32_15_PCREL(5),
+	R_NDS32_17_PCREL(6),
+	R_NDS32_25_PCREL(7),
+	R_NDS32_HI20(8),
+	R_NDS32_LO12S3(9),
+	R_NDS32_LO12S2(10),
+	R_NDS32_LO12S1(11),
+	R_NDS32_LO12S0(12),
+	R_NDS32_SDA15S3(13),
+	R_NDS32_SDA15S2(14),
+	R_NDS32_SDA15S1(15),
+	R_NDS32_SDA15S0(16),
+	R_NDS32_GNU_VTINHERIT(17),
+	R_NDS32_GNU_VTENTRY(18),
+	/* RELA relocations.	*/
+	R_NDS32_16_RELA(19),
+	R_NDS32_32_RELA(20),
+	R_NDS32_20_RELA(21),
+	R_NDS32_9_PCREL_RELA(22),
+	R_NDS32_15_PCREL_RELA(23),
+	R_NDS32_17_PCREL_RELA(24),
+	R_NDS32_25_PCREL_RELA(25),
+	R_NDS32_HI20_RELA(26),
+	R_NDS32_LO12S3_RELA(27),
+	R_NDS32_LO12S2_RELA(28),
+	R_NDS32_LO12S1_RELA(29),
+	R_NDS32_LO12S0_RELA(30),
+	R_NDS32_SDA15S3_RELA(31),
+	R_NDS32_SDA15S2_RELA(32),
+	R_NDS32_SDA15S1_RELA(33),
+	R_NDS32_SDA15S0_RELA(34),
+	R_NDS32_RELA_GNU_VTINHERIT(35),
+	R_NDS32_RELA_GNU_VTENTRY(36),
+	/* GOT and PLT.	*/
+	R_NDS32_GOT20(37),
+	R_NDS32_25_PLTREL(38),
+	R_NDS32_COPY(39),
+	R_NDS32_GLOB_DAT(40),
+	R_NDS32_JMP_SLOT(41),
+	R_NDS32_RELATIVE(42),
+	R_NDS32_GOTOFF(43),
+	R_NDS32_GOTPC20(44),
+	R_NDS32_GOT_HI20(45),
+	R_NDS32_GOT_LO12(46),
+	R_NDS32_GOTPC_HI20(47),
+	R_NDS32_GOTPC_LO12(48),
+	R_NDS32_GOTOFF_HI20(49),
+	R_NDS32_GOTOFF_LO12(50),
+	/* 32_to_16 relaxations.	*/
+	R_NDS32_INSN16(51),
+	/* Alignment tag.	*/
+	R_NDS32_LABEL(52),
+	R_NDS32_LONGCALL1(53),		/* This is obsoleted.	*/
+	R_NDS32_LONGCALL2(54),		/* This is obsoleted.	*/
+	R_NDS32_LONGCALL3(55),		/* This is obsoleted.	*/
+	R_NDS32_LONGJUMP1(56),		/* This is obsoleted.	*/
+	R_NDS32_LONGJUMP2(57),		/* This is obsoleted.	*/
+	R_NDS32_LONGJUMP3(58),		/* This is obsoleted.	*/
+	R_NDS32_LOADSTORE(59),		/* This is obsoleted.	*/
+	R_NDS32_9_FIXED_RELA(60),
+	R_NDS32_15_FIXED_RELA(61),
+	R_NDS32_17_FIXED_RELA(62),
+	R_NDS32_25_FIXED_RELA(63),
+	R_NDS32_PLTREL_HI20(64),	/* This is obsoleted.	*/
+	R_NDS32_PLTREL_LO12(65),	/* This is obsoleted.	*/
+	R_NDS32_PLT_GOTREL_HI20(66),
+	R_NDS32_PLT_GOTREL_LO12(67),
+	R_NDS32_SDA12S2_DP_RELA(68),
+	R_NDS32_SDA12S2_SP_RELA(69),
+	R_NDS32_LO12S2_DP_RELA(70),
+	R_NDS32_LO12S2_SP_RELA(71),
+	R_NDS32_LO12S0_ORI_RELA(72),
+	R_NDS32_SDA16S3_RELA(73),
+	R_NDS32_SDA17S2_RELA(74),
+	R_NDS32_SDA18S1_RELA(75),
+	R_NDS32_SDA19S0_RELA(76),
+	R_NDS32_DWARF2_OP1_RELA(77),	/* This is obsoleted.	*/
+	R_NDS32_DWARF2_OP2_RELA(78),	/* This is obsoleted.	*/
+	R_NDS32_DWARF2_LEB_RELA(79),	/* This is obsoleted.	*/
+	R_NDS32_UPDATE_TA_RELA(80),	/* This is obsoleted.	*/
+	R_NDS32_9_PLTREL(81),
+	R_NDS32_PLT_GOTREL_LO20(82),
+	R_NDS32_PLT_GOTREL_LO15(83),
+	R_NDS32_PLT_GOTREL_LO19(84),
+	R_NDS32_GOT_LO15(85),
+	R_NDS32_GOT_LO19(86),
+	R_NDS32_GOTOFF_LO15(87),
+	R_NDS32_GOTOFF_LO19(88),
+	R_NDS32_GOT15S2_RELA(89),
+	R_NDS32_GOT17S2_RELA(90),
+	R_NDS32_5_RELA(91),
+	R_NDS32_10_UPCREL_RELA(92),	/* This is obsoleted.	*/
+	R_NDS32_SDA_FP7U2_RELA(93),
+	R_NDS32_WORD_9_PCREL_RELA(94),
+	R_NDS32_25_ABS_RELA(95),
+	R_NDS32_17IFC_PCREL_RELA(96),	/* This is obsoleted.	*/
+	R_NDS32_10IFCU_PCREL_RELA(97),	/* This is obsoleted.	*/
+	/* TLS support.	*/
+	R_NDS32_TLS_LE_HI20(98),
+	R_NDS32_TLS_LE_LO12(99),
+	R_NDS32_TLS_IE_HI20(100),
+	R_NDS32_TLS_IE_LO12S2(101),
+	R_NDS32_TLS_TPOFF(102),
+	R_NDS32_TLS_LE_20(103),
+	R_NDS32_TLS_LE_15S0(104),
+	R_NDS32_TLS_LE_15S1(105),
+	R_NDS32_TLS_LE_15S2(106),
+	R_NDS32_LONGCALL4(107),
+	R_NDS32_LONGCALL5(108),
+	R_NDS32_LONGCALL6(109),
+	R_NDS32_LONGJUMP4(110),
+	R_NDS32_LONGJUMP5(111),
+	R_NDS32_LONGJUMP6(112),
+	R_NDS32_LONGJUMP7(113),
+	/* Reserved numbers: 114.	*/
+	/* TLS support */
+	R_NDS32_TLS_IE_LO12(115),
+	R_NDS32_TLS_IEGP_HI20(116),
+	R_NDS32_TLS_IEGP_LO12(117),
+	R_NDS32_TLS_IEGP_LO12S2(118),
+	R_NDS32_TLS_DESC(119),
+	R_NDS32_TLS_DESC_HI20(120),
+	R_NDS32_TLS_DESC_LO12(121),
+	R_NDS32_TLS_DESC_20(122),
+	R_NDS32_TLS_DESC_SDA17S2(123),
+	/* Reserved numbers: 124-191.	*/
+
+	/* These used only for relaxations	*/
+	R_NDS32_RELAX_ENTRY(192),
+	R_NDS32_GOT_SUFF(193),
+	R_NDS32_GOTOFF_SUFF(194),
+	R_NDS32_PLT_GOT_SUFF(195),
+	R_NDS32_MULCALL_SUFF(196),	/* This is obsoleted.	*/
+	R_NDS32_PTR(197),
+	R_NDS32_PTR_COUNT(198),
+	R_NDS32_PTR_RESOLVED(199),
+	R_NDS32_PLTBLOCK(200),		/* This is obsoleted.	*/
+	R_NDS32_RELAX_REGION_BEGIN(201),
+	R_NDS32_RELAX_REGION_END(202),
+	R_NDS32_MINUEND(203),
+	R_NDS32_SUBTRAHEND(204),
+	R_NDS32_DIFF8(205),
+	R_NDS32_DIFF16(206),
+	R_NDS32_DIFF32(207),
+	R_NDS32_DIFF_ULEB128(208),
+	R_NDS32_DATA(209),
+	R_NDS32_TRAN(210),
+	/* TLS support */
+	R_NDS32_TLS_LE_ADD(211),
+	R_NDS32_TLS_LE_LS(212),
+	R_NDS32_EMPTY(213),
+	R_NDS32_TLS_DESC_ADD(214),
+	R_NDS32_TLS_DESC_FUNC(215),
+	R_NDS32_TLS_DESC_CALL(216),
+	R_NDS32_TLS_DESC_MEM(217),
+	R_NDS32_RELAX_REMOVE(218),
+	R_NDS32_RELAX_GROUP(219),
+	R_NDS32_TLS_IEGP_LW(220),
+	R_NDS32_LSI(221),
+	R_NDS32_RELA_NOP_MAX(255);
+
+	public final int typeId;
+
+	private NDS32_ElfRelocationType(int typeId) {
+		this.typeId = typeId;
+	}
+
+	@Override
+	public int typeId() {
+		return typeId;
+	}
+}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,7 @@
  */
 package ghidra.program.database;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -22,14 +23,17 @@ import db.*;
 import ghidra.framework.Application;
 import ghidra.framework.data.DomainObjectAdapterDB;
 import ghidra.framework.data.OpenMode;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainFile;
+import ghidra.framework.model.DomainFolder;
 import ghidra.framework.options.Options;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.PointerDataType;
+import ghidra.program.model.data.StandAloneDataTypeManager;
 import ghidra.program.model.listing.DataTypeArchive;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramChangeRecord;
 import ghidra.program.util.ProgramEvent;
 import ghidra.util.InvalidNameException;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -253,26 +257,17 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 		return pointerSize > 0 && pointerSize <= PointerDataType.MAX_POINTER_SIZE_BYTES;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getDataTypeManager()
-	 */
 	@Override
-	public DataTypeManager getDataTypeManager() {
+	public ProjectDataTypeManager getDataTypeManager() {
 		return dataTypeManager;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getCreationDate()
-	 */
 	@Override
 	public Date getCreationDate() {
 		Options pl = getOptions(ARCHIVE_INFO);
 		return pl.getDate(DATE_CREATED, new Date(0));
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getDefaultPointerSize()
-	 */
 	@Override
 	public int getDefaultPointerSize() {
 		// Not sure what size this should be so use 4 for now.
@@ -281,9 +276,6 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 		return pl.getInt(DEFAULT_POINTER_SIZE, 4);
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#getChanges()
-	 */
 	@Override
 	public DataTypeArchiveDBChangeSet getChanges() {
 		return (DataTypeArchiveDBChangeSet) changeSet;
@@ -505,20 +497,10 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 
 	@Override
 	protected void clearCache(boolean all) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			super.clearCache(all);
 			dataTypeManager.invalidateCache();
 		}
-		finally {
-			lock.release();
-		}
-	}
-
-	@Override
-	public void invalidate() {
-		clearCache(false);
-		fireEvent(new DomainObjectChangeRecord(DomainObjectEvent.RESTORED));
 	}
 
 	@Override
@@ -533,6 +515,27 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 
 	void setChangeSet(DataTypeArchiveDBChangeSet changeSet) {
 		this.changeSet = changeSet;
+	}
+
+	@Override
+	public void save(String comment, TaskMonitor monitor) throws IOException, CancelledException {
+		try {
+			super.save(comment, monitor);
+		}
+		finally {
+			dataTypeManager.clearUndo();
+		}
+	}
+
+	@Override
+	public void saveToPackedFile(File outputFile, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		try {
+			super.saveToPackedFile(outputFile, monitor);
+		}
+		finally {
+			dataTypeManager.clearUndo();
+		}
 	}
 
 	@Override
@@ -565,7 +568,8 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 	}
 
 	@Override
-	public void updateID() {
-		dataTypeManager.updateID();
+	protected void domainObjectRestored() {
+		super.domainObjectRestored();
+		dataTypeManager.notifyRestored();
 	}
 }

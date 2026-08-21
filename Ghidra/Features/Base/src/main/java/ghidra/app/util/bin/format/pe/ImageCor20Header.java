@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,7 @@ import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.pe.cli.CliMetadataDirectory;
+import ghidra.app.util.bin.format.pe.cli.*;
 import ghidra.app.util.bin.format.pe.cli.streams.CliStreamMetadata;
 import ghidra.app.util.bin.format.pe.cli.tables.CliTableMethodDef.CliMethodDefRow;
 import ghidra.app.util.importer.MessageLog;
@@ -32,6 +32,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
+ * <pre>
  * typedef struct IMAGE_COR20_HEADER
  * {
  *     // Header versioning
@@ -61,7 +62,6 @@ import ghidra.util.task.TaskMonitor;
  *
  *};
  *</pre>
- *
  */
 public class ImageCor20Header implements StructConverter, PeMarkupable {
 	private static final String NAME = "IMAGE_COR20_HEADER";
@@ -142,18 +142,20 @@ public class ImageCor20Header implements StructConverter, PeMarkupable {
 				}
 				else {
 					// Add a new symbol for the .NET entry point
-					CliStreamMetadata stream = (CliStreamMetadata) metadata.getMetadataRoot()
-							.getStreamHeader(CliStreamMetadata.getName())
-							.getStream();
+					CliMetadataRoot metadataRoot = metadata.getMetadataRoot();
+					CliStreamHeader streamHeader =
+						metadataRoot.getStreamHeader(CliStreamMetadata.getName());
+					if (streamHeader != null) {
+						CliStreamMetadata stream = (CliStreamMetadata) streamHeader.getStream();
+						CliMethodDefRow row =
+							(CliMethodDefRow) stream.getTable((entryPointToken & 0xff000000) >> 24)
+									.getRow(entryPointToken & 0x00ffffff);
 
-					CliMethodDefRow row =
-						(CliMethodDefRow) stream.getTable((entryPointToken & 0xff000000) >> 24)
-								.getRow(entryPointToken & 0x00ffffff);
+						program.getSymbolTable()
+								.addExternalEntryPoint(program.getImageBase().add(row.RVA));
 
-					program.getSymbolTable()
-							.addExternalEntryPoint(program.getImageBase().add(row.RVA));
-
-					entryPointVA = program.getImageBase().add(row.RVA);
+						entryPointVA = program.getImageBase().add(row.RVA);
+					}
 				}
 			}
 			catch (Exception e) {

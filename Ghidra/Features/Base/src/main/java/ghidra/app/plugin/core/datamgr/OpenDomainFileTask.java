@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -92,8 +92,7 @@ class OpenDomainFileTask extends Task {
 
 	private boolean isFileOpen() {
 		List<Archive> dtArchiveList = dtmHandler.getAllArchives();
-		for (int i = 0; i < dtArchiveList.size(); i++) {
-			Archive archive = dtArchiveList.get(i);
+		for (Archive archive : dtArchiveList) {
 			if (archive instanceof ProjectArchive) {
 				ProjectArchive projectArchive = (ProjectArchive) archive;
 				DomainFile archiveDomainFile = projectArchive.getDomainFile();
@@ -156,7 +155,7 @@ class OpenDomainFileTask extends Task {
 		}
 		catch (VersionException e) {
 			VersionExceptionHandler.showVersionError(tool.getToolFrame(), domainFile.getName(),
-				contentType, "Open", e);
+				contentType, "Open", false, e);
 		}
 	}
 
@@ -179,7 +178,7 @@ class OpenDomainFileTask extends Task {
 		}
 		catch (VersionException e) {
 			VersionExceptionHandler.showVersionError(null, domainFile.getName(), contentType,
-				"Open", e);
+				"Open", false, e);
 		}
 		catch (CancelledException e) {
 			// we don't care, the task has been canceled

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -158,7 +158,7 @@ public interface DomainObject {
 	 * Saves (i.e., serializes) the current content to a packed file.
 	 * @param outputFile packed output file
 	 * @param monitor progress monitor
-	 * @throws IOException if an exception occurs
+	 * @throws IOException if an error occurs during operation
 	 * @throws CancelledException if the user cancels
 	 * @throws UnsupportedOperationException if not supported by object implementation
 	 */
@@ -400,7 +400,7 @@ public interface DomainObject {
 	 * </pre>
 	 * 
 	 * @param description a short description of the changes to be made.
-	 * @return transaction object
+	 * @return {@link AutoCloseable} transaction object
 	 * @throws IllegalStateException if this {@link DomainObject} has already been closed.
 	 */
 	public Transaction openTransaction(String description) throws IllegalStateException;
@@ -408,7 +408,6 @@ public interface DomainObject {
 	/**
 	 * Performs the given callback inside of a transaction.  Use this method in place of the more
 	 * verbose try/catch/finally semantics.
-	 * <p>
 	 * <pre>
 	 * program.withTransaction("My Description", () -> {
 	 * 	// ... Do something
@@ -438,7 +437,6 @@ public interface DomainObject {
 	/**
 	 * Calls the given supplier inside of a transaction.  Use this method in place of the more
 	 * verbose try/catch/finally semantics.
-	 * <p>
 	 * <pre>
 	 * program.withTransaction("My Description", () -> {
 	 * 	// ... Do something
@@ -500,11 +498,21 @@ public interface DomainObject {
 
 	/**
 	 * Terminate the specified transaction for this domain object.
+	 * <P>
+	 * NOTE: If multiple transactions are outstanding the full transaction will not be ended
+	 * until all transactions have been ended.  If any of the transactions indicate a 
+	 * false for {@code commit} the transaction will ultimately be rolled-back when the final
+	 * transaction is ended.
+	 * <P>
+	 * NOTE: Use of rollback ({@code commit=false} should be avoided unless absolutely
+	 * neccessary since it will incur overhead to revert changes and may rollback multiple
+	 * concurrent transactions if they exist.
 	 * @param transactionID transaction ID obtained from startTransaction method
 	 * @param commit if true the changes made in this transaction will be marked for commit,
 	 * if false this and any concurrent transaction will be rolled-back.
+	 * @return true if this invocation was the final transaction and all changes were comitted.
 	 */
-	public void endTransaction(int transactionID, boolean commit);
+	public boolean endTransaction(int transactionID, boolean commit);
 
 	/**
 	 * Returns the current transaction info
@@ -546,12 +554,12 @@ public interface DomainObject {
 	public void releaseSynchronizedDomainObject() throws LockException;
 
 	/**
-	 * Returns true if there is a previous state to "undo" to.
+	 * {@return true if there is a previous state to "undo" to.}
 	 */
 	boolean canUndo();
 
 	/**
-	 * Returns true if there is a later state to "redo" to.
+	 * {@return true if there is a later state to "redo" to.}
 	 */
 	boolean canRedo();
 

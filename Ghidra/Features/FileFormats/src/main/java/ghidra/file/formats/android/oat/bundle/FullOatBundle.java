@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,9 +15,8 @@
  */
 package ghidra.file.formats.android.oat.bundle;
 
-import java.util.*;
-
 import java.io.IOException;
+import java.util.*;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -30,6 +29,7 @@ import ghidra.file.formats.android.oat.OatHeader;
 import ghidra.file.formats.android.vdex.*;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
+import ghidra.program.database.ProgramContentHandler;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -45,8 +45,7 @@ public class FullOatBundle implements OatBundle {
 
 	private boolean isLittleEndian;
 
-	FullOatBundle(Program oatProgram, OatHeader oatHeader, TaskMonitor monitor,
-			MessageLog log) {
+	FullOatBundle(Program oatProgram, OatHeader oatHeader, TaskMonitor monitor, MessageLog log) {
 
 		this.oatProgram = oatProgram;
 		this.oatHeader = oatHeader;
@@ -120,12 +119,11 @@ public class FullOatBundle implements OatBundle {
 		DomainFolder parentFolder = domainFile.getParent();
 
 		//first, look in current project for VDEX file....
-		if (lookInProjectFolder(HeaderType.VDEX, parentFolder, 
-			vdexProgramName, monitor, log)) {
+		if (lookInProjectFolder(HeaderType.VDEX, parentFolder, vdexProgramName, monitor, log)) {
 			return;
 		}
-		if (lookInProjectFolder(HeaderType.VDEX, parentFolder.getParent(), 
-			vdexProgramName, monitor, log)) {
+		if (lookInProjectFolder(HeaderType.VDEX, parentFolder.getParent(), vdexProgramName, monitor,
+			log)) {
 			return;
 		}
 	}
@@ -140,8 +138,8 @@ public class FullOatBundle implements OatBundle {
 					break;
 				}
 				if (file.getName().startsWith(CLASSES) && file.getName().endsWith(DEX)) {
-					lookInProjectFolder(HeaderType.DEX, odexApkFolder, file.getName(),
-						monitor, log);
+					lookInProjectFolder(HeaderType.DEX, odexApkFolder, file.getName(), monitor,
+						log);
 				}
 			}
 		}
@@ -153,8 +151,8 @@ public class FullOatBundle implements OatBundle {
 					break;
 				}
 				if (file.getName().startsWith(CLASSES) && file.getName().endsWith(DEX)) {
-					lookInProjectFolder(HeaderType.DEX, apkOrJarFolder, file.getName(),
-						monitor, log);
+					lookInProjectFolder(HeaderType.DEX, apkOrJarFolder, file.getName(), monitor,
+						log);
 				}
 			}
 		}
@@ -166,8 +164,8 @@ public class FullOatBundle implements OatBundle {
 					break;
 				}
 				if (file.getName().startsWith(CDEX)) {
-					lookInProjectFolder(HeaderType.CDEX, appVdexFolder, file.getName(),
-						monitor, log);
+					lookInProjectFolder(HeaderType.CDEX, appVdexFolder, file.getName(), monitor,
+						log);
 				}
 			}
 		}
@@ -183,12 +181,11 @@ public class FullOatBundle implements OatBundle {
 		DomainFolder parentFolder = domainFile.getParent();
 
 		//first, look in current project for ART file....
-		if (lookInProjectFolder(HeaderType.ART, parentFolder,
-			artProgramName, monitor, log)) {
+		if (lookInProjectFolder(HeaderType.ART, parentFolder, artProgramName, monitor, log)) {
 			return;
 		}
-		if (lookInProjectFolder(HeaderType.ART, parentFolder.getParent(),
-			artProgramName, monitor, log)) {
+		if (lookInProjectFolder(HeaderType.ART, parentFolder.getParent(), artProgramName, monitor,
+			log)) {
 			return;
 		}
 	}
@@ -203,14 +200,15 @@ public class FullOatBundle implements OatBundle {
 	 * @param log the message log
 	 */
 	private boolean lookInProjectFolder(HeaderType type, DomainFolder parentFolder,
-			String programName,
-			TaskMonitor monitor, MessageLog log) {
+			String programName, TaskMonitor monitor, MessageLog log) {
 
-		DomainFile child = parentFolder.getFile(programName);
-		if (child != null) {
+		DomainFile file = parentFolder.getFile(programName);
+		// Constrain to Program files only and not program link-files
+		if (file != null &&
+			ProgramContentHandler.PROGRAM_CONTENT_TYPE.equals(file.getContentType())) {
 			Program program = null;
 			try {
-				program = (Program) child.getDomainObject(this, true, true, monitor);
+				program = (Program) file.getDomainObject(this, true, true, monitor);
 				ByteProvider provider =
 					MemoryByteProvider.createProgramHeaderByteProvider(program, false);
 				return makeHeader(type, programName, provider, monitor);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,9 +40,8 @@ public class ConvertOctAction extends ConvertConstantAction {
 	}
 
 	@Override
-	public String getMenuDisplay(long value, int size, boolean isSigned, Program program) {
-		Scalar scalar = new Scalar(size * 8, value);
-		if (isSigned) {
+	public String getMenuDisplay(Scalar scalar, Program program) {
+		if (scalar.isSigned()) {
 			long v = scalar.getSignedValue();
 			String valueStr = Long.toString(v, 8);
 			if (v < 0) {
@@ -56,8 +55,7 @@ public class ConvertOctAction extends ConvertConstantAction {
 	}
 
 	@Override
-	public String getEquateName(long value, int size, boolean isSigned, Program program) {
-		Scalar scalar = new Scalar(size * 8, value);
+	public String getEquateName(Scalar scalar, Program program) {
 		return Long.toOctalString(scalar.getUnsignedValue()) + "o";
 	}
 }

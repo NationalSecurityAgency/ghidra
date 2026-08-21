@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,8 +18,8 @@ package ghidra.app.decompiler.component;
 import java.util.List;
 
 import docking.widgets.fieldpanel.field.*;
-import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.FieldHighlightFactory;
+import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.app.decompiler.ClangToken;
 
 public class ClangTextField extends WrappingVerticalLayoutTextField {
@@ -33,7 +33,7 @@ public class ClangTextField extends WrappingVerticalLayoutTextField {
 
 	public ClangTextField(List<ClangToken> tokenList, FieldElement[] fieldElements, int x,
 			int lineNumber, int width, FieldHighlightFactory hlFactory) {
-		super(createSingleLineElement(fieldElements), x, width - x, 30, hlFactory, false);
+		super(createSingleLineElement(fieldElements), x, width - x, 30, hlFactory, false, "");
 		this.tokenList = tokenList;
 		this.lineNumber = lineNumber;
 	}
@@ -122,5 +122,13 @@ public class ClangTextField extends WrappingVerticalLayoutTextField {
 
 	public int getLineNumber() {
 		return lineNumber;
+	}
+
+	public ClangToken getFirstToken() {
+		return tokenList.get(0);
+	}
+
+	public ClangToken getLastToken() {
+		return tokenList.get(tokenList.size() - 1);
 	}
 }

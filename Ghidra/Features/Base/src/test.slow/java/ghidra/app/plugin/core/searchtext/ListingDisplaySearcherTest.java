@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -100,7 +100,7 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		builder.disassemble("0x10029bd", 0xe, true);
 
 		builder.createLabel("0x01001068", "CreateDCW");
-		builder.createComment("0x01001068", "CreateDCW", CodeUnit.EOL_COMMENT);
+		builder.createComment("0x01001068", "CreateDCW", CommentType.EOL);
 		builder.createLabel("0x010010b4", "CreateFileW");
 		builder.createLabel("0x010012bc", "CreateWindowExW");
 
@@ -119,8 +119,8 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 //		dt.add(new BooleanDataType(), "likesCheese", null);
 //		dt.add(new PointerDataType(dt), "next", null);
 
-		builder.createComment("0x01006642", "EOL comment", CodeUnit.EOL_COMMENT);
-		builder.createComment("0x01006648", "EOL comment", CodeUnit.EOL_COMMENT);
+		builder.createComment("0x01006642", "EOL comment", CommentType.EOL);
+		builder.createComment("0x01006648", "EOL comment", CommentType.EOL);
 
 		return builder.getProgram();
 	}
@@ -142,7 +142,7 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 
 		// example
 		// dword ptr param, EAX
-		String searchText = "param";
+		String searchText = "local_";
 		SearchOptions options = new SearchOptions(searchText, false, true, false);
 		searcher =
 			new ListingDisplaySearcher(tool, program, startLoc, null, options, TaskMonitor.DUMMY);
@@ -163,7 +163,7 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 
 		// example
 		// dword ptr param, EAX
-		String searchText = "param";
+		String searchText = "local_";
 		SearchOptions options = new SearchOptions(searchText, false, false, false);
 
 		searcher =
@@ -187,17 +187,21 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 
 		// example
 		// dword ptr param, EAX
-		SearchOptions options = new SearchOptions("param", false, false, false, false, true, true,
+		SearchOptions options = new SearchOptions("local_", false, false, false, false, true, true,
 			false, false, false, true, false, false);
 		searcher =
 			new ListingDisplaySearcher(tool, program, startLoc, null, options, TaskMonitor.DUMMY);
 
 		//set up list of answers
 		ArrayList<Address> startList = new ArrayList<>();
-		startList.add(addr(0x0100416c));
-		startList.add(addr(0x01004186));
-		startList.add(addr(0x01004189));
-		startList.add(addr(0x0100419c));
+		startList.add(addr(0x01004162));
+		startList.add(addr(0x01004169));
+		startList.add(addr(0x0100416f));
+		startList.add(addr(0x01004178));
+		startList.add(addr(0x0100417c));
+		startList.add(addr(0x01004180));
+		startList.add(addr(0x01004196));
+		startList.add(addr(0x010041a1));
 
 		//check that the text is found there in the correct field
 		checkTextFound(startList, OperandFieldLocation.class);
@@ -268,19 +272,17 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		int transactionID = program.startTransaction("test");
 		try {
 			DataType dt = program.getDataTypeManager()
-					.addDataType(struct,
-						DataTypeConflictHandler.DEFAULT_HANDLER);
+					.addDataType(struct, DataTypeConflictHandler.DEFAULT_HANDLER);
 			floatDt = program.getDataTypeManager()
-					.addDataType(new FloatDataType(),
-						DataTypeConflictHandler.DEFAULT_HANDLER);
+					.addDataType(new FloatDataType(), DataTypeConflictHandler.DEFAULT_HANDLER);
 			listing.createData(addr(0x0100689b), dt);
 			listing.createData(addr(0x0100688c), floatDt);
 			listing.createData(addr(0x01006890), floatDt);
 
 			Data data = listing.getDataAt(addr(0x0100688c));
-			data.setComment(CodeUnit.EOL_COMMENT, "this is a float data type");
+			data.setComment(CommentType.EOL, "this is a float data type");
 			data = listing.getDataAt(addr(0x01006890));
-			data.setComment(CodeUnit.EOL_COMMENT, "this is another float data type");
+			data.setComment(CommentType.EOL, "this is another float data type");
 
 		}
 		finally {
@@ -347,19 +349,17 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		int transactionID = program.startTransaction("test");
 		try {
 			DataType dt = program.getDataTypeManager()
-					.addDataType(struct,
-						DataTypeConflictHandler.DEFAULT_HANDLER);
+					.addDataType(struct, DataTypeConflictHandler.DEFAULT_HANDLER);
 			floatDt = program.getDataTypeManager()
-					.addDataType(new FloatDataType(),
-						DataTypeConflictHandler.DEFAULT_HANDLER);
+					.addDataType(new FloatDataType(), DataTypeConflictHandler.DEFAULT_HANDLER);
 			listing.createData(addr(0x0100689b), dt);
 			listing.createData(addr(0x0100688c), floatDt);
 			listing.createData(addr(0x01006890), floatDt);
 
 			Data data = listing.getDataAt(addr(0x0100688c));
-			data.setComment(CodeUnit.EOL_COMMENT, "this is a float data type");
+			data.setComment(CommentType.EOL, "this is a float data type");
 			data = listing.getDataAt(addr(0x01006890));
-			data.setComment(CodeUnit.EOL_COMMENT, "this is another float data type");
+			data.setComment(CommentType.EOL, "this is another float data type");
 
 		}
 		finally {
@@ -387,6 +387,7 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		assertEquals(addr(0x0100688c), loc.getByteAddress());
 		assertTrue(loc instanceof CommentFieldLocation);
 		//
+		assertTrue("Search result not found: " + addr(0x01006890), searcher.hasNext());
 		loc = searcher.next().programLocation();
 		assertNotNull(loc);
 		assertEquals(addr(0x01006890), loc.getByteAddress());
@@ -394,11 +395,13 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		MnemonicFieldLocation mloc = (MnemonicFieldLocation) loc;
 		assertEquals("float", mloc.getMnemonic());
 		//
+		assertTrue("Search result not found: " + addr(0x01006890), searcher.hasNext());
 		loc = searcher.next().programLocation();
 		assertNotNull(loc);
 		assertEquals(addr(0x01006890), loc.getByteAddress());
 		assertTrue(loc instanceof CommentFieldLocation);
 		//
+		assertTrue("Search result not found: " + addr(0x0100689b), searcher.hasNext());
 		loc = searcher.next().programLocation();
 		assertNotNull(loc);
 		assertEquals(addr(0x0100689b), loc.getByteAddress());
@@ -406,6 +409,7 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		mloc = (MnemonicFieldLocation) loc;
 		assertEquals("float", mloc.getMnemonic());
 		//
+		assertTrue("Search result not found: " + addr(0x0100689f), searcher.hasNext());
 		loc = searcher.next().programLocation();
 		assertNotNull(loc);
 		assertEquals(addr(0x0100689f), loc.getByteAddress());
@@ -413,6 +417,7 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		mloc = (MnemonicFieldLocation) loc;
 		assertEquals("float", mloc.getMnemonic());
 		//
+		assertTrue("Search result not found: " + addr(0x0100689f), searcher.hasNext());
 		loc = searcher.next().programLocation();
 		assertNotNull(loc);
 		assertEquals(addr(0x0100689f), loc.getByteAddress());
@@ -437,19 +442,17 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		int transactionID = program.startTransaction("test");
 		try {
 			DataType dt = program.getDataTypeManager()
-					.addDataType(struct,
-						DataTypeConflictHandler.DEFAULT_HANDLER);
+					.addDataType(struct, DataTypeConflictHandler.DEFAULT_HANDLER);
 			floatDt = program.getDataTypeManager()
-					.addDataType(new FloatDataType(),
-						DataTypeConflictHandler.DEFAULT_HANDLER);
+					.addDataType(new FloatDataType(), DataTypeConflictHandler.DEFAULT_HANDLER);
 			listing.createData(addr(0x0100689b), dt);
 			listing.createData(addr(0x0100688c), floatDt);
 			listing.createData(addr(0x01006890), floatDt);
 
 			Data data = listing.getDataAt(addr(0x0100688c));
-			data.setComment(CodeUnit.EOL_COMMENT, "this is a float data type");
+			data.setComment(CommentType.EOL, "this is a float data type");
 			data = listing.getDataAt(addr(0x01006890));
-			data.setComment(CodeUnit.EOL_COMMENT, "this is another float data type");
+			data.setComment(CommentType.EOL, "this is another float data type");
 
 		}
 		finally {
@@ -480,6 +483,7 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		assertEquals(addr(0x0100688c), loc.getByteAddress());
 		assertTrue(loc instanceof CommentFieldLocation);
 		//
+		assertTrue("Search result not found: " + addr(0x0100689b), searcher.hasNext());
 		loc = searcher.next().programLocation();
 		assertNotNull(loc);
 		assertEquals(addr(0x0100689b), loc.getByteAddress());
@@ -487,6 +491,7 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		MnemonicFieldLocation mloc = (MnemonicFieldLocation) loc;
 		assertEquals("float", mloc.getMnemonic());
 		//
+		assertTrue("Search result not found: " + addr(0x0100689f), searcher.hasNext());
 		loc = searcher.next().programLocation();
 		assertNotNull(loc);
 		assertEquals(addr(0x0100689f), loc.getByteAddress());
@@ -494,6 +499,7 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		mloc = (MnemonicFieldLocation) loc;
 		assertEquals("float", mloc.getMnemonic());
 		//
+		assertTrue("Search result not found: " + addr(0x0100689f), searcher.hasNext());
 		loc = searcher.next().programLocation();
 		assertNotNull(loc);
 		assertEquals(addr(0x0100689f), loc.getByteAddress());
@@ -791,7 +797,7 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		}
 		else if (location instanceof EolCommentFieldLocation) {
 			EolCommentFieldLocation eLoc = (EolCommentFieldLocation) location;
-			assertEquals(CodeUnit.EOL_COMMENT, eLoc.getCommentType());
+			assertEquals(CommentType.EOL, eLoc.getCommentType());
 			String[] comment = eLoc.getComment();
 			for (String element : comment) {
 				if (element.indexOf(text) >= 0) {
@@ -803,7 +809,7 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		}
 		else if (location instanceof AutomaticCommentFieldLocation) {
 			AutomaticCommentFieldLocation eLoc = (AutomaticCommentFieldLocation) location;
-			assertEquals(CodeUnit.EOL_COMMENT, eLoc.getCommentType());
+			assertEquals(CommentType.EOL, eLoc.getCommentType());
 			String[] comment = eLoc.getComment();
 			for (String element : comment) {
 				if (element.indexOf(text) >= 0) {
@@ -821,6 +827,7 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 	private void checkTextFound(ArrayList<Address> startList, Class<?> fieldClass) {
 
 		for (Address start : startList) {
+			assertTrue("Search result not found: " + start, searcher.hasNext());
 			ProgramLocation loc = searcher.next().programLocation();
 			assertNotNull(loc);
 			assertTrue(fieldClass.isAssignableFrom(loc.getClass()));

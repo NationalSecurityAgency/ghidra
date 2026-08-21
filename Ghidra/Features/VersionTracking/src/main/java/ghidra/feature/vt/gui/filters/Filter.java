@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ import java.util.Set;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 
+import docking.widgets.textfield.GFormattedTextField;
 import generic.theme.GIcon;
 import ghidra.framework.options.SaveState;
 import ghidra.util.exception.AssertException;
@@ -45,8 +46,6 @@ public abstract class Filter<T> {
 	public abstract boolean passesFilter(T t);
 
 	public abstract FilterEditingStatus getFilterStatus();
-
-	public abstract void clearFilter();
 
 	public abstract JComponent getComponent();
 
@@ -74,8 +73,6 @@ public abstract class Filter<T> {
 
 	public enum FilterEditingStatus {
 		NONE("", null),
-		DIRTY("Filter contents have changed, but are not yet applied", new GIcon(
-			"icon.version.tracking.filter.status.changed")),
 		ERROR("Filter contents are not valid", new GIcon(
 			"icon.version.tracking.filter.status.invalid")),
 		APPLIED("Filter applied", new GIcon("icon.version.tracking.filter.status.applied"));
@@ -94,6 +91,17 @@ public abstract class Filter<T> {
 
 		Icon getIcon() {
 			return icon;
+		}
+
+		public static FilterEditingStatus getFilterStatus(GFormattedTextField textEntryField) {
+			switch (textEntryField.getTextEntryStatus()) {
+				case INVALID:
+					return FilterEditingStatus.ERROR;
+				case CHANGED:
+					return FilterEditingStatus.APPLIED;
+				default:
+					return FilterEditingStatus.NONE;
+			}
 		}
 	}
 

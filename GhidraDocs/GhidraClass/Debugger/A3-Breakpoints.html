@@ -99,7 +99,8 @@
  class="advanced" href="B1-RemoteTargets.html">Remote Targets</a><a
  class="advanced" href="B2-Emulation.html">Emulation</a><a
  class="advanced" href="B3-Scripting.html">Scripting</a><a
- class="advanced" href="B4-Modeling.html">Modeling</a>
+ class="advanced" href="B4-Modeling.html">Modeling</a><a
+ class="advanced" href="B5-AddingDebuggers.html">Adding Debuggers</a>
 </header>
 <header id="title-block-header">
 <h1 class="title">Ghidra Debugger</h1>
@@ -160,22 +161,25 @@ Memory/Hex, and the Decompiler, right-click and select <img
 src="images/breakpoint-enable.png" alt="set breakpoint" /> Set
 Breakpoint, press <strong><code>K</code></strong> on the keyboard, or
 double-click the margin.</li>
+<li>From the Breakpoints window, use the <strong>Set Breakpoint</strong>
+dropdown to access the various breakpoint actions defined by GDB.</li>
 <li>From the Terminal window, use the GDB command, e.g.,
 <code>break main</code>.</li>
 </ol>
 <p>The advantage of using the listings is that you can quickly set a
-breakpoint at any address. The advantage of using the Terminal window is
-that you can specify something other than an address. Often, those
-specifications still resolve to addresses, and Ghidra will display them.
-Ghidra will memorize breakpoints by recording them as special bookmarks
-in the program database. There is some iconography to communicate the
-various states of a breakpoint. When all is well and normal, you should
-only see enabled <img src="images/breakpoint-enable.png"
-alt="enabled breakpoint" /> and disabled <img
-src="images/breakpoint-disable.png" alt="disabled breakpoint" />
-breakpoints. If the target is terminated (or not launched yet), you may
-also see ineffective <img src="images/breakpoint-enable-ineff.png"
-alt="ineffective breakpoint" /> breakpoints.</p>
+breakpoint at any address. The advantage of using the dropdown action or
+Terminal window is that you can specify something other than an address.
+Often, those specifications still resolve to addresses, and Ghidra will
+display them. Ghidra will memorize breakpoints by recording them as
+special bookmarks in the program database. There is some iconography to
+communicate the various states of a breakpoint. When all is well and
+normal, you should only see enabled <img
+src="images/breakpoint-enable.png" alt="enabled breakpoint" /> and
+disabled <img src="images/breakpoint-disable.png"
+alt="disabled breakpoint" /> breakpoints. If the target is terminated
+(or not launched yet), you may also see ineffective <img
+src="images/breakpoint-enable-ineff.png" alt="ineffective breakpoint" />
+breakpoints.</p>
 </section>
 <section id="examining-minesweeper-board-setup" class="level2">
 <h2>Examining Minesweeper Board Setup</h2>
@@ -228,17 +232,18 @@ database containing the breakpoint. Again, because the module has not
 been imported yet, this column is blank.</li>
 <li>The next column <strong>Length</strong> gives the length of the
 breakpoint. In GDB, this generally applies to watchpoints only.</li>
-<li>The next column <strong>Kinds</strong> gives the kinds of
+<li>The next column <strong>Kind</strong> gives the kind(s) of
 breakpoint. Most breakpoints are software execution breakpoints,
-indicated by “SW_EXECUTE.” That is, they are implemented by patching the
-target’s memory with a special instruction that traps execution —
-<code>INT3</code> on x86. There are also hardware execution breakpoints
-indicated by “HW_EXECUTE,” and access breakpoints indicated by “HW_READ”
-and/or “HW_WRITE”. <strong>NOTE</strong>: GDB would call access
-breakpoints <em>watchpoints</em>. An advantage to software breakpoints
-is that you can have a practically unlimited number of them. Some
-disadvantages are they can be detected easily, and they are limited to
-execution breakpoints.</li>
+indicated by (lower case) <code>x</code>. That is, they are implemented
+by patching the target’s memory with a special instruction that traps
+execution — <code>INT3</code> on x86. There are also hardware execution
+breakpoints indicated by (upper case) <code>X</code> and access
+breakpoints indicated by <code>R</code> and/or <code>W</code>.
+<strong>NOTE</strong>: GDB would call access breakpoints
+<em>watchpoints</em>. An advantage to software breakpoints is that you
+can have a practically unlimited number of them. Some disadvantages are
+they can be detected easily, and they are limited to execution
+breakpoints.</li>
 <li>The next column <strong>Locations</strong> counts the number of
 locations for the breakpoint. For a single-target session, this is most
 likely 1.</li>
@@ -257,9 +262,9 @@ back-end.</li>
 <li>The <strong>Trace</strong> column indicates which target contains
 the location. The text here should match one of the tabs from the
 Dynamic Listing panel.</li>
-<li>The <strong>Comment</strong> column is a user-defined comment. Its
-default value is the specification that generated it, e.g.,
-<code>srand</code>.</li>
+<li>The <strong>Comment</strong> column is a user-defined comment.</li>
+<li>The <strong>Expression</strong> column is the expression given when
+specifying the breakpoint, e.g., <code>srand</code>.</li>
 </ul>
 </section>
 <section id="toggling-the-breakpoints" class="level3">
@@ -273,7 +278,9 @@ toggle action, press <strong><code>K</code></strong> on the keyboard, or
 double-click its icon in the margin.</li>
 <li>From the Model window, expand the <em>Breakpoints</em> node and
 double-click a breakpoint, or select one with the keyboard and press
-<strong><code>ENTER</code></strong>.</li>
+<strong><code>ENTER</code></strong>. For GDB, this must be done from the
+top-level <em>Breakpoints</em> node, not the one subordinate to the
+<em>inferior</em>.</li>
 <li>From the Breakpoints window, single-click the breakpoint’s status
 icon, right-click an entry and select a toggle action, or create a
 selection and use a toggling action from the local toolbar. Either panel
@@ -340,7 +347,8 @@ synchronized after importing libc</figcaption>
 <section id="troubleshooting" class="level4">
 <h4>Troubleshooting</h4>
 <p>If it seems nothing has changed, except now you have a second program
-database open, then the new module may not be successfully mapped.</p>
+database open, then the new module may not be successfully mapped. Try
+one or more of the following:</p>
 <ol type="1">
 <li>Re-check the Debug Console window and verify the note has been
 removed.</li>
@@ -349,6 +357,9 @@ system, so the name of the module and the name of the program database
 do not match.</li>
 <li>Ensure that <code>libc</code> is the current program (tab) in the
 Static Listing.</li>
+<li>Wait for auto-analysis of <code>libc</code> to complete. Yeah, it
+may take a moment, but auto-mapping is queued as a background task, and
+so it cannot map things until auto-analysis is done.</li>
 <li>In the Modules window, right-click on <code>libc</code>, and select
 <strong>Map Module to libc</strong>. (Names and titles will likely
 differ.)</li>
@@ -412,7 +423,7 @@ course.</p>
 </section>
 <section id="exercise-diagram-the-mines" class="level3">
 <h3>Exercise: Diagram the Mines</h3>
-<p>You goal is to capture the location of all the mines. You will
+<p>Your goal is to capture the location of all the mines. You will
 probably want to disable the breakpoints on <code>rand</code> and
 <code>srand</code> for now. Devise a strategy using breakpoints and the
 control buttons (Step, Resume, etc.) so that you can observe the
@@ -446,7 +457,7 @@ boards for any <code>termmines</code> session.</p>
 <p>Write a program that takes a seed from the user and prints a diagram
 of the first game board with the mines indicated. Optionally, have it
 print each subsequent game board when the user presses
-<strong>ENTER</strong>. Check your work by re-launching
+<strong><code>ENTER</code></strong>. Check your work by re-launching
 <code>termmines</code>, capturing its seed, inputting it into your
 program, and then winning the game. Optionally, win 2 more games in the
 same session.</p>

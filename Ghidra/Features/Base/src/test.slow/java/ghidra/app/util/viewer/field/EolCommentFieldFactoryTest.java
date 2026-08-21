@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.viewer.field;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.StringContains.*;
 import static org.hamcrest.core.StringStartsWith.*;
 import static org.junit.Assert.*;
 
@@ -29,9 +31,16 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.RefType;
+import ghidra.program.model.symbol.SourceType;
 import ghidra.test.*;
 
 public class EolCommentFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
+
+	private static final String STRING_ADDRESS_WITH_ANNOTATION = "0x01002c98";
+	private static final String ADDRESS_CALLING_STRING_WITH_ANNOTATION = "0X01002d37";
+	private static final String AUTO_COMMENT_TEXT_WITH_ANNOTATION =
+		"Annotation: {@address 12345678 foo}";
 
 	private TestEnv env;
 	private CodeBrowserPlugin cb;
@@ -75,19 +84,43 @@ public class EolCommentFieldFactoryTest extends AbstractGhidraHeadedIntegrationT
 	public void testRepeatableComment_FunctionCall() throws Exception {
 
 		// check existing auto comment
-		ListingTextField tf = getFieldText(addr("0x010022e6"));
+		String from = "0x010022e6";
+		ListingTextField tf = getFieldText(addr(from));
 		assertEquals(1, tf.getNumRows());
 		assertThat(tf.getText(), startsWith("undefined ghidra(undefined4 param_1,"));
 
-		// set repeatable comment at destination
-		Address destination = addr("0x01002cf5");
+		// set repeatable comment at source
+		String to = "0x01002cf5";
 		String repeatableComment = "My repeatable comment";
-		setRepeatableComment(destination, repeatableComment);
+		setRepeatableComment(addr(to), repeatableComment);
 
-		// check that the auto comment now matches the updated comment
-		tf = getFieldText(addr("0x010022e6"));
+		// check that the repeatable comment now matches the updated comment
+		tf = getFieldText(addr(from));
 		assertEquals(1, tf.getNumRows());
 		assertEquals(tf.getText(), repeatableComment);
+	}
+
+	@Test
+	public void testRepeatableComment_FunctionCall_PrependRefAddress() throws Exception {
+
+		setBooleanOption(EolCommentFieldFactory.ENABLE_PREPEND_REF_ADDRESS_KEY, true);
+
+		// check existing auto comment
+		String from = "0x010022e6";
+		ListingTextField tf = getFieldText(addr(from));
+		assertEquals(1, tf.getNumRows());
+		assertThat(tf.getText(), startsWith("undefined ghidra(undefined4 param_1,"));
+
+		// set repeatable comment at source
+		String to = "0x01002cf5";
+		String repeatableComment = "My repeatable comment";
+		setRepeatableComment(addr(to), repeatableComment);
+
+		// check that the repeatable comment now matches the updated comment and has the ref address
+		// prepended
+		tf = getFieldText(addr(from));
+		assertEquals(1, tf.getNumRows());
+		assertEquals("01002cf5 " + repeatableComment, tf.getText());
 	}
 
 	@Test
@@ -106,7 +139,21 @@ public class EolCommentFieldFactoryTest extends AbstractGhidraHeadedIntegrationT
 		// check that the auto comment now matches the updated comment
 		tf = getFieldText(addr("0x01002265"));
 		assertEquals(1, tf.getNumRows());
-		assertEquals(tf.getText(), repeatableComment);
+		assertEquals(repeatableComment, tf.getText());
+	}
+
+	@Test
+	public void testAutoCommentDoesNotRenderAnnotation() {
+
+		/*
+		 	Creates a data reference to a string containing an annotation.  Tests that the 
+		 	annotation is not rendered, but is shown in its raw form.
+		 */
+
+		goTo(env.getTool(), program, STRING_ADDRESS_WITH_ANNOTATION);
+		ListingTextField tf = getFieldText(addr(ADDRESS_CALLING_STRING_WITH_ANNOTATION));
+		assertEquals(1, tf.getNumRows());
+		assertThat(tf.getText(), containsString(AUTO_COMMENT_TEXT_WITH_ANNOTATION));
 	}
 
 //==================================================================================================
@@ -115,6 +162,13 @@ public class EolCommentFieldFactoryTest extends AbstractGhidraHeadedIntegrationT
 
 	private ProgramDB buildProgram() throws Exception {
 		ClassicSampleX86ProgramBuilder builder = new ClassicSampleX86ProgramBuilder();
+
+		builder.createString(STRING_ADDRESS_WITH_ANNOTATION, AUTO_COMMENT_TEXT_WITH_ANNOTATION);
+
+		builder.createMemoryReference(ADDRESS_CALLING_STRING_WITH_ANNOTATION,
+			STRING_ADDRESS_WITH_ANNOTATION,
+			RefType.DATA, SourceType.ANALYSIS);
+
 		return builder.getProgram();
 	}
 
@@ -122,7 +176,7 @@ public class EolCommentFieldFactoryTest extends AbstractGhidraHeadedIntegrationT
 		CodeUnit cu = program.getListing().getCodeUnitAt(function.getEntryPoint());
 		int transactionID = program.startTransaction("test");
 		try {
-			cu.setComment(CodeUnit.EOL_COMMENT, comment);
+			cu.setComment(CommentType.EOL, comment);
 		}
 		finally {
 			program.endTransaction(transactionID, true);
@@ -172,10 +226,10 @@ public class EolCommentFieldFactoryTest extends AbstractGhidraHeadedIntegrationT
 	}
 
 	private void setRepeatableComment(Address a, String comment) {
-		setComment(a, CodeUnit.REPEATABLE_COMMENT, comment);
+		setComment(a, CommentType.REPEATABLE, comment);
 	}
 
-	private void setComment(Address a, int commentType, String comment) {
+	private void setComment(Address a, CommentType commentType, String comment) {
 		CodeUnit cu = program.getListing().getCodeUnitAt(a);
 		tx(program, () -> {
 			cu.setComment(commentType, comment);

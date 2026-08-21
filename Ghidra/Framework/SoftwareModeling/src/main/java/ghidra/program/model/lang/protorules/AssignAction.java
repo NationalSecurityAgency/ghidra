@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,11 +18,14 @@ package ghidra.program.model.lang.protorules;
 import static ghidra.program.model.pcode.ElementId.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
+import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.pcode.Encoder;
+import ghidra.program.model.pcode.Varnode;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.xml.*;
 
@@ -124,8 +127,7 @@ public abstract class AssignAction {
 			action = new HiddenReturnAssign(res, HIDDENRET_SPECIALREG);
 		}
 		else if (nm.equals(ELEM_JOIN_PER_PRIMITIVE.name())) {
-			boolean consumeMostSig = res.getEntry(0).isBigEndian();
-			action = new MultiMemberAssign(StorageClass.GENERAL, false, consumeMostSig, res);
+			action = new MultiMemberAssign(StorageClass.GENERAL, false, res.isBigEndian(), res);
 		}
 		else if (nm.equals(ELEM_JOIN_DUAL_CLASS.name())) {
 			action = new MultiSlotDualAssign(res);
@@ -154,6 +156,12 @@ public abstract class AssignAction {
 		if (nm.equals(ELEM_CONSUME_EXTRA.name())) {
 			action = new ConsumeExtra(res);
 		}
+		else if (nm.equals(ELEM_EXTRA_STACK.name())) {
+			action = new ExtraStack(res, 0);
+		}
+		else if (nm.equals(ELEM_CONSUME_REMAINING.name())) {
+			action = new ConsumeRemaining(res);
+		}
 		else {
 			throw new XmlParseException("Unknown model rule sideeffect: " + nm);
 		}
@@ -161,4 +169,44 @@ public abstract class AssignAction {
 		return action;
 	}
 
+	/**
+	 * Read the next precondition element from the stream, if it exists. Return the new configured
+	 * AssignAction object. If the next element is not a precondition, return null.
+	 * @param parser is the stream parser
+	 * @param res is the resource set for the new precondition
+	 * @return the new precondition, or null if no more preconditions are in the stream
+	 * @throws XmlParseException if the precondition XML is malformed
+	 */
+	static public AssignAction restorePreconditionXml(XmlPullParser parser, ParamListStandard res)
+			throws XmlParseException {
+		AssignAction action;
+		XmlElement elemId = parser.peek();
+		String nm = elemId.getName();
+
+		if (nm.equals(ELEM_CONSUME_EXTRA.name())) {
+			action = new ConsumeExtra(res);
+		}
+		else {
+			return null;
+		}
+
+		action.restoreXml(parser);
+		return action;
+	}
+
+	public static void justifyPieces(ArrayList<Varnode> pieces, int offset, boolean isBigEndian,
+			boolean consumeMostSig,
+			boolean justifyRight) {
+		boolean addOffset = isBigEndian ^ consumeMostSig ^ justifyRight;
+		int pos = justifyRight ? 0 : pieces.size() - 1;
+
+		Varnode vn = pieces.get(pos);
+		Address addr = vn.getAddress();
+		if (addOffset) {
+			addr = addr.add(offset);
+		}
+		int sz = vn.getSize() - offset;
+		vn = new Varnode(addr, sz);
+		pieces.set(pos, vn);
+	}
 }

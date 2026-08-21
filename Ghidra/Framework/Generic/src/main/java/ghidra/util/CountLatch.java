@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -105,15 +104,15 @@ public class CountLatch {
 	 * dormant until one of two things happen:
 	 * <ul>
 	 * <li>The count reaches zero due to invocations of the
-	 * {@link #decrement} method; or
+	 * {@link #decrement} method; or</li>
 	 * <li>Some other thread {@linkplain Thread#interrupt interrupts}
-	 * the current thread.
+	 * the current thread.</li>
 	 * </ul>
 	 *
 	 * <p>If the current thread:
 	 * <ul>
-	 * <li>has its interrupted status set on entry to this method; or
-	 * <li>is {@linkplain Thread#interrupt interrupted} while waiting,
+	 * <li>has its interrupted status set on entry to this method; or</li>
+	 * <li>is {@linkplain Thread#interrupt interrupted} while waiting,</li>
 	 * </ul>
 	 * then {@link InterruptedException} is thrown and the current thread's
 	 * interrupted status is cleared.
@@ -138,10 +137,10 @@ public class CountLatch {
 	 * dormant until one of three things happen:
 	 * <ul>
 	 * <li>The count reaches zero due to invocations of the
-	 * {@link #decrement} method; or
+	 * {@link #decrement} method; or</li>
 	 * <li>Some other thread {@linkplain Thread#interrupt interrupts}
-	 * the current thread; or
-	 * <li>The specified waiting time elapses.
+	 * the current thread; or</li>
+	 * <li>The specified waiting time elapses.</li>
 	 * </ul>
 	 *
 	 * <p>If the count reaches zero then the method returns with the
@@ -149,8 +148,8 @@ public class CountLatch {
 	 *
 	 * <p>If the current thread:
 	 * <ul>
-	 * <li>has its interrupted status set on entry to this method; or
-	 * <li>is {@linkplain Thread#interrupt interrupted} while waiting,
+	 * <li>has its interrupted status set on entry to this method; or</li>
+	 * <li>is {@linkplain Thread#interrupt interrupted} while waiting,</li>
 	 * </ul>
 	 * then {@link InterruptedException} is thrown and the current thread's
 	 * interrupted status is cleared.

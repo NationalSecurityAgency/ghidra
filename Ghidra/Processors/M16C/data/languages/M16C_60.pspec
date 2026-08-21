@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <programcounter register="PC"/>
+  <default_symbols>
+    <symbol name="PM0" address="RAM:0004"/>
+    <symbol name="PM1" address="RAM:0005"/>
+    <symbol name="CM0" address="RAM:0006"/>
+    <symbol name="CM1" address="RAM:0007"/>
+    <symbol name="CSR" address="RAM:0008"/>
+    <symbol name="AIER" address="RAM:0009"/>
+    <symbol name="PRCR" address="RAM:000A"/>
+    <symbol name="WDTS" address="RAM:000E"/>
+    <symbol name="WDC" address="RAM:000F"/>
+    <symbol name="RMAD0" address="RAM:0010"/>
+    <symbol name="RMAD0" address="RAM:0011"/>
+    <symbol name="RMAD0" address="RAM:0012"/>
+    <symbol name="RMAD1" address="RAM:0014"/>
+    <symbol name="RMAD1" address="RAM:0015"/>
+    <symbol name="RMAD1" address="RAM:0016"/>
+    <symbol name="SAR0" address="RAM:0020"/>
+    <symbol name="SAR0" address="RAM:0021"/>
+    <symbol name="SAR0" address="RAM:0022"/>
+    <symbol name="DAR0" address="RAM:0024"/>
+    <symbol name="DAR0" address="RAM:0025"/>
+    <symbol name="DAR0" address="RAM:0026"/>
+    <symbol name="TCR0" address="RAM:0028"/>
+    <symbol name="TCR0" address="RAM:0029"/>
+    <symbol name="DM0CON" address="RAM:002C"/>
+    <symbol name="SAR1" address="RAM:0030"/>
+    <symbol name="SAR1" address="RAM:0031"/>
+    <symbol name="SAR1" address="RAM:0032"/>
+    <symbol name="DAR1" address="RAM:0034"/>
+    <symbol name="DAR1" address="RAM:0035"/>
+    <symbol name="DAR1" address="RAM:0036"/>
+    <symbol name="TCR1" address="RAM:0038"/>
+    <symbol name="TCR1" address="RAM:0039"/>
+    <symbol name="DM1CON" address="RAM:003C"/>
+    <symbol name="DM0IC" address="RAM:004B"/>
+    <symbol name="DM1IC" address="RAM:004C"/>
+    <symbol name="KUPIC" address="RAM:004D"/>
+    <symbol name="ADIC" address="RAM:004E"/>
+    <symbol name="S0TIC" address="RAM:0051"/>
+    <symbol name="S0RIC" address="RAM:0052"/>
+    <symbol name="S1TIC" address="RAM:0053"/>
+    <symbol name="S1RIC" address="RAM:0054"/>
+    <symbol name="TA0IC" address="RAM:0055"/>
+    <symbol name="TA1IC" address="RAM:0056"/>
+    <symbol name="TA2IC" address="RAM:0057"/>
+    <symbol name="TA3IC" address="RAM:0058"/>
+    <symbol name="TA4IC" address="RAM:0059"/>
+    <symbol name="TB0IC" address="RAM:005A"/>
+    <symbol name="TB1IC" address="RAM:005B"/>
+    <symbol name="TB2IC" address="RAM:005C"/>
+    <symbol name="INT0IC" address="RAM:005D"/>
+    <symbol name="INT1IC" address="RAM:005E"/>
+    <symbol name="INT2IC" address="RAM:005F"/>
+    <symbol name="TABSR" address="RAM:0380"/>
+    <symbol name="CPSRF" address="RAM:0381"/>
+    <symbol name="ONSF" address="RAM:0382"/>
+    <symbol name="TRGSR" address="RAM:0383"/>
+    <symbol name="UDF" address="RAM:0384"/>
+    <symbol name="TA0" address="RAM:0386"/>
+    <symbol name="TA0" address="RAM:0387"/>
+    <symbol name="TA1" address="RAM:0388"/>
+    <symbol name="TA1" address="RAM:0389"/>
+    <symbol name="TA2" address="RAM:038A"/>
+    <symbol name="TA2" address="RAM:038B"/>
+    <symbol name="TA3" address="RAM:038C"/>
+    <symbol name="TA3" address="RAM:038D"/>
+    <symbol name="TA4" address="RAM:038E"/>
+    <symbol name="TA4" address="RAM:038F"/>
+    <symbol name="TB0" address="RAM:0390"/>
+    <symbol name="TB0" address="RAM:0391"/>
+    <symbol name="TB1" address="RAM:0392"/>
+    <symbol name="TB1" address="RAM:0393"/>
+    <symbol name="TB2" address="RAM:0394"/>
+    <symbol name="TB2" address="RAM:0395"/>
+    <symbol name="TA0MR" address="RAM:0396"/>
+    <symbol name="TA1MR" address="RAM:0397"/>
+    <symbol name="TA2MR" address="RAM:0398"/>
+    <symbol name="TA3MR" address="RAM:0399"/>
+    <symbol name="TA4MR" address="RAM:039A"/>
+    <symbol name="TB0MR" address="RAM:039B"/>
+    <symbol name="TB1MR" address="RAM:039C"/>
+    <symbol name="TB2MR" address="RAM:039D"/>
+    <symbol name="U0MR" address="RAM:03A0"/>
+    <symbol name="U0BRG" address="RAM:03A1"/>
+    <symbol name="U0TB" address="RAM:03A2"/>
+    <symbol name="U0TB" address="RAM:03A3"/>
+    <symbol name="U0C0" address="RAM:03A4"/>
+    <symbol name="U0C1" address="RAM:03A5"/>
+    <symbol name="U0RB" address="RAM:03A6"/>
+    <symbol name="U0RB" address="RAM:03A7"/>
+    <symbol name="U1MR" address="RAM:03A8"/>
+    <symbol name="U1BRG" address="RAM:03A9"/>
+    <symbol name="U1TB" address="RAM:03AA"/>
+    <symbol name="U1TB" address="RAM:03AB"/>
+    <symbol name="U1C0" address="RAM:03AC"/>
+    <symbol name="U1C1" address="RAM:03AD"/>
+    <symbol name="U1RB" address="RAM:03AE"/>
+    <symbol name="U1RB" address="RAM:03AF"/>
+    <symbol name="UCON" address="RAM:03B0"/>
+    <symbol name="DM0SL" address="RAM:03B8"/>
+    <symbol name="DM1SL" address="RAM:03BA"/>
+    <symbol name="CRCD" address="RAM:03BC"/>
+    <symbol name="CRCD" address="RAM:03BD"/>
+    <symbol name="CRCIN" address="RAM:03BE"/>
+    <symbol name="AD0" address="RAM:03C0"/>
+    <symbol name="AD0" address="RAM:03C1"/>
+    <symbol name="AD1" address="RAM:03C2"/>
+    <symbol name="AD1" address="RAM:03C3"/>
+    <symbol name="AD2" address="RAM:03C4"/>
+    <symbol name="AD2" address="RAM:03C5"/>
+    <symbol name="AD3" address="RAM:03C6"/>
+    <symbol name="AD3" address="RAM:03C7"/>
+    <symbol name="AD4" address="RAM:03C8"/>
+    <symbol name="AD4" address="RAM:03C9"/>
+    <symbol name="AD5" address="RAM:03CA"/>
+    <symbol name="AD5" address="RAM:03CB"/>
+    <symbol name="AD6" address="RAM:03CC"/>
+    <symbol name="AD6" address="RAM:03CD"/>
+    <symbol name="AD7" address="RAM:03CE"/>
+    <symbol name="AD7" address="RAM:03CF"/>
+    <symbol name="ADCON2" address="RAM:03D4"/>
+    <symbol name="ADCON0" address="RAM:03D6"/>
+    <symbol name="ADCON1" address="RAM:03D7"/>
+    <symbol name="DA0" address="RAM:03D8"/>
+    <symbol name="DA1" address="RAM:03DA"/>
+    <symbol name="DACON" address="RAM:03DC"/>
+    <symbol name="P0" address="RAM:03E0"/>
+    <symbol name="P1" address="RAM:03E1"/>
+    <symbol name="PD0" address="RAM:03E2"/>
+    <symbol name="PD1" address="RAM:03E3"/>
+    <symbol name="P2" address="RAM:03E4"/>
+    <symbol name="P3" address="RAM:03E5"/>
+    <symbol name="PD2" address="RAM:03E6"/>
+    <symbol name="PD3" address="RAM:03E7"/>
+    <symbol name="P4" address="RAM:03E8"/>
+    <symbol name="P5" address="RAM:03E9"/>
+    <symbol name="PD4" address="RAM:03EA"/>
+    <symbol name="PD5" address="RAM:03EB"/>
+    <symbol name="P6" address="RAM:03EC"/>
+    <symbol name="P7" address="RAM:03ED"/>
+    <symbol name="PD6" address="RAM:03EE"/>
+    <symbol name="PD7" address="RAM:03EF"/>
+    <symbol name="P8" address="RAM:03F0"/>
+    <symbol name="P9" address="RAM:03F1"/>
+    <symbol name="PD8" address="RAM:03F2"/>
+    <symbol name="PD9" address="RAM:03F3"/>
+    <symbol name="P10" address="RAM:03F4"/>
+    <symbol name="PD10" address="RAM:03F6"/>
+    <symbol name="PUR0" address="RAM:03FC"/>
+    <symbol name="PUR1" address="RAM:03FD"/>
+    <symbol name="PUR2" address="RAM:03FE"/>
+    <symbol name="UNDEFINED_INSTRUCTION_INT_VECTOR" address="RAM:FFFDC" entry="true" type="code_ptr"/>
+    <symbol name="OVERFLOW_INT_VECTOR" address="RAM:FFFE0" entry="true" type="code_ptr"/>
+    <symbol name="BRK_INSTRUCTION_INT_VECTOR" address="RAM:FFFE4" entry="true" type="code_ptr"/>
+    <symbol name="ADDRESS_MATCH_INT_VECTOR" address="RAM:FFFE8" entry="true" type="code_ptr"/>
+    <symbol name="SINGLE_STEP_INT_VECTOR" address="RAM:FFFEC" entry="true" type="code_ptr"/>
+    <symbol name="WATCHDOG_TIMER_INT_VECTOR" address="RAM:FFFF0" entry="true" type="code_ptr"/>
+    <symbol name="NOT_DBC_INT_VECTOR" address="RAM:FFFF4" entry="true" type="code_ptr"/>
+    <symbol name="NOT_NMI_INT_VECTOR" address="RAM:FFFF8" entry="true" type="code_ptr"/>
+    <symbol name="RESET_INT_VECTOR" address="RAM:FFFFC" entry="true" type="code_ptr"/>
+  </default_symbols>
+  <default_memory_blocks>
+    <memory_block name="SFR" start_address="RAM:0000" mode="rw" length="0x03FF" initialized="false"/>
+  </default_memory_blocks>
+</processor_spec>

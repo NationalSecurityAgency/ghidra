@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package generic;
 
 import java.util.Comparator;
+import java.util.function.Function;
 
 import generic.Span.Domain;
 
@@ -107,12 +108,12 @@ public interface End<T> {
 			}
 
 			@Override
-			public String toMinString() {
+			public String toMinString(Function<? super End<Void>, String> nToString) {
 				return "(-inf";
 			}
 
 			@Override
-			public String toMaxString() {
+			public String toMaxString(Function<? super End<Void>, String> nToString) {
 				return "#ERROR-inf)";
 			}
 
@@ -138,12 +139,12 @@ public interface End<T> {
 			}
 
 			@Override
-			public String toMinString() {
+			public String toMinString(Function<? super End<Void>, String> nToString) {
 				return "(#ERROR+inf";
 			}
 
 			@Override
-			public String toMaxString() {
+			public String toMaxString(Function<? super End<Void>, String> nToString) {
 				return "+inf)";
 			}
 
@@ -235,31 +236,33 @@ public interface End<T> {
 	/**
 	 * An endpoint representing a bound
 	 *
+	 * @param val the value of the endpoint
+	 * @param epsilon determines whether the endpoint is included
 	 * @param <T> the type of values
 	 */
-	record Point<T> (T val, Epsilon epsilon) implements End<T> {
+	record Point<T>(T val, Epsilon epsilon) implements End<T> {
 		@Override
-		public String toMinString() {
+		public String toMinString(Function<? super End<T>, String> nToString) {
 			switch (epsilon) {
 				case NEGATIVE:
-					return "(#ERROR" + val;
+					return "(#ERROR" + nToString.apply(this);
 				case ZERO:
-					return "[" + val;
+					return "[" + nToString.apply(this);
 				case POSITIVE:
-					return "(" + val;
+					return "(" + nToString.apply(this);
 			}
 			throw new AssertionError();
 		}
 
 		@Override
-		public String toMaxString() {
+		public String toMaxString(Function<? super End<T>, String> nToString) {
 			switch (epsilon) {
 				case NEGATIVE:
-					return val + ")";
+					return nToString.apply(this) + ")";
 				case ZERO:
-					return val + "]";
+					return nToString.apply(this) + "]";
 				case POSITIVE:
-					return "#ERROR" + val + ")";
+					return "#ERROR" + nToString.apply(this) + ")";
 			}
 			throw new AssertionError();
 		}
@@ -358,13 +361,13 @@ public interface End<T> {
 		}
 
 		@Override
-		public String toMinString(End<N> min) {
-			return min.toMinString();
+		public String toMinString(End<N> min, Function<? super End<N>, String> nToString) {
+			return min.toMinString(nToString);
 		}
 
 		@Override
-		public String toMaxString(End<N> max) {
-			return max.toMaxString();
+		public String toMaxString(End<N> max, Function<? super End<N>, String> nToString) {
+			return max.toMaxString(nToString);
 		}
 
 		@Override
@@ -394,16 +397,18 @@ public interface End<T> {
 	}
 
 	/**
-	 * @see Domain#toMinString(Object)
+	 * @see Domain#toMinString(Object, Function)
+	 * @param nToString the endpoint-to-string function
 	 * @return the string
 	 */
-	String toMinString();
+	String toMinString(Function<? super End<T>, String> nToString);
 
 	/**
-	 * @see Domain#toMaxString(Object)
+	 * @see Domain#toMaxString(Object, Function)
+	 * @param nToString the endpoint-to-string function
 	 * @return the string
 	 */
-	String toMaxString();
+	String toMaxString(Function<? super End<T>, String> nToString);
 
 	/**
 	 * Increment this endpoint, only by changing the coefficient of epsilon

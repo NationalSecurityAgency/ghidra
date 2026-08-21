@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -210,7 +210,7 @@ public class VarnodeBank {
 	}
 	
 	public Iterator<VarnodeAST> locRange(AddressSpace spaceid) {
-		VarnodeAST searchvn1 = new VarnodeAST(spaceid.getAddress(0),0,0);
+		VarnodeAST searchvn1 = new VarnodeAST(spaceid.getMinAddress(),0,0);
 		searchvn1.setInput(true);
 		VarnodeAST searchvn2 = new VarnodeAST(spaceid.getMaxAddress(), Integer.MAX_VALUE, 0);
 		return locTree.subSet(searchvn1, searchvn2).iterator();
@@ -221,6 +221,13 @@ public class VarnodeBank {
 		searchvn1.setInput(true);
 		VarnodeAST searchvn2 = new VarnodeAST(addr.add(1),0,0);
 		searchvn2.setInput(true);
+		return locTree.subSet(searchvn1,searchvn2).iterator();
+	}
+
+	public Iterator<VarnodeAST> locRange(Address min, Address max) {
+		VarnodeAST searchvn1 = new VarnodeAST(min,0,0);
+		searchvn1.setInput(true);
+		VarnodeAST searchvn2 = new VarnodeAST(max, Integer.MAX_VALUE,0);
 		return locTree.subSet(searchvn1,searchvn2).iterator();
 	}
 	

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,12 +27,15 @@ import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.plugin.core.instructionsearch.InstructionSearchPlugin;
 import ghidra.app.plugin.core.instructionsearch.model.*;
 import ghidra.app.services.GoToService;
+import ghidra.app.util.HelpTopics;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.OperandType;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.*;
+import help.Help;
+import help.HelpService;
 import resources.Icons;
 import resources.ResourceManager;
 
@@ -85,10 +88,47 @@ public class InstructionTable extends AbstractInstructionTable {
 		// The data model will want to know when items in this table change...so have it register.
 		// This will trigger the model to be updated as the user is toggling mask settings.
 		dialog.getSearchData().registerForGuiUpdates(this);
+
+		addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				maybePopup(e);
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				maybePopup(e);
+			}
+
+			private void maybePopup(MouseEvent e) {
+				if (e.isPopupTrigger()) {
+					showPopup(e);
+				}
+			}
+
+			private void showPopup(MouseEvent e) {
+
+				int row = rowAtPoint(e.getPoint());
+				if (row < 0) {
+					return;
+				}
+
+				JPopupMenu popup = new JPopupMenu();
+				JMenuItem menuCopy = new JMenuItem("Delete Instruction");
+				menuCopy.addActionListener(event -> {
+					dialog.deleteInstruction(row);
+				});
+				popup.add(menuCopy);
+
+				popup.show(e.getComponent(), e.getX(), e.getY());
+			}
+
+		});
 	}
 
 	@Override
 	protected boolean supportsPopupActions() {
+		// this controls the built-in actions, such as copy
 		return false;
 	}
 
@@ -128,25 +168,27 @@ public class InstructionTable extends AbstractInstructionTable {
 	@Override
 	protected JToolBar createToolbar() {
 
-		JToolBar toolbar1 = new JToolBar();
-		toolbar1.add(Box.createHorizontalGlue());
+		JToolBar newToolBar = new JToolBar();
+		newToolBar.add(Box.createHorizontalGlue());
 
-		createMaskClearAllBtn(toolbar1);
-		toolbar1.addSeparator();
-		createMaskDataBtn(toolbar1);
-		createMaskOperandsBtn(toolbar1);
-		createMaskScalarsBtn(toolbar1);
-		createMaskAddressesBtn(toolbar1);
-		toolbar1.addSeparator();
-		createReloadBtn(toolbar1);
-		toolbar1.addSeparator();
-		createManualEditBtn(toolbar1);
-		toolbar1.addSeparator();
-		createGoToAddressBtn(toolbar1);
+		createDeleteAllBtn(newToolBar);
+		createMaskClearAllBtn(newToolBar);
+		newToolBar.addSeparator();
+		createMaskDataBtn(newToolBar);
+		createMaskOperandsBtn(newToolBar);
+		createMaskScalarsBtn(newToolBar);
+		createMaskAddressesBtn(newToolBar);
+		newToolBar.addSeparator();
+		createReloadBtn(newToolBar);
+		createAddBtn(newToolBar);
+		newToolBar.addSeparator();
+		createManualEditBtn(newToolBar);
+		newToolBar.addSeparator();
+		createGoToAddressBtn(newToolBar);
 
-		toolbar1.setFloatable(false);
+		newToolBar.setFloatable(false);
 
-		return toolbar1;
+		return newToolBar;
 	}
 
 	/**
@@ -286,6 +328,13 @@ public class InstructionTable extends AbstractInstructionTable {
 		createToolbarButton(buttonToolbar, icon, action, "nav button");
 	}
 
+	private void createDeleteAllBtn(JToolBar buttonToolbar) {
+		Icon icon = Icons.DELETE_ICON;
+		Icon scaledIcon = ResourceManager.getScaledIcon(icon, ICON_SIZE, ICON_SIZE);
+		Action action = new DeleteAllAction("undefined", scaledIcon, "Delete all");
+		createToolbarButton(buttonToolbar, icon, action, "delete all button");
+	}
+
 	private void createMaskClearAllBtn(JToolBar buttonToolbar) {
 		Icon icon = Icons.CLEAR_ICON;
 		Icon scaledIcon = ResourceManager.getScaledIcon(icon, ICON_SIZE, ICON_SIZE);
@@ -297,8 +346,17 @@ public class InstructionTable extends AbstractInstructionTable {
 		Icon icon = Icons.REFRESH_ICON;
 		Icon scaledIcon = ResourceManager.getScaledIcon(icon, ICON_SIZE, ICON_SIZE);
 		Action action =
-			new ReloadAction("undefined", scaledIcon, "Load selected instructions from listing");
+			new ReloadAction("undefined", scaledIcon,
+				"Reload using selected instructions from listing");
 		createToolbarButton(buttonToolbar, icon, action, "reload");
+	}
+
+	private void createAddBtn(JToolBar buttonToolbar) {
+		Icon icon = Icons.ADD_ICON;
+		Icon scaledIcon = ResourceManager.getScaledIcon(icon, ICON_SIZE, ICON_SIZE);
+		Action action =
+			new AddAction("undefined", scaledIcon, "Append selected instructions from listing");
+		createToolbarButton(buttonToolbar, icon, action, "append");
 	}
 
 	private void createManualEditBtn(JToolBar buttonToolbar) {
@@ -348,6 +406,11 @@ public class InstructionTable extends AbstractInstructionTable {
 		button.setName(name);
 		button.setHideActionText(true);
 		toolbar1.add(button);
+
+		//Instruction_Pattern_Actions
+		HelpLocation loc = new HelpLocation(HelpTopics.SEARCH, "Instruction_Pattern_Actions");
+		HelpService help = Help.getHelpService();
+		help.registerHelp(button, loc);
 	}
 
 	private void processInstruction(InstructionTableDataObject[][] dataObjects,
@@ -379,6 +442,19 @@ public class InstructionTable extends AbstractInstructionTable {
 
 	}
 
+	private class DeleteAllAction extends AbstractAction {
+
+		public DeleteAllAction(String text, Icon icon, String desc) {
+			super(text, icon);
+			putValue(SHORT_DESCRIPTION, desc);
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			dialog.clear();
+		}
+	}
+
 	private class ClearMasksAction extends AbstractAction {
 
 		public ClearMasksAction(String text, Icon icon, String desc) {
@@ -402,11 +478,24 @@ public class InstructionTable extends AbstractInstructionTable {
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			try {
-				dialog.loadInstructions(plugin);
+				dialog.loadInstructions();
 			}
 			catch (InvalidInputException e1) {
 				Msg.error(this, "Error loading instructions: " + e);
 			}
+		}
+	}
+
+	private class AddAction extends AbstractAction {
+
+		public AddAction(String text, Icon icon, String desc) {
+			super(text, icon);
+			putValue(SHORT_DESCRIPTION, desc);
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			dialog.addToInstructions(plugin.getProgramSelection());
 		}
 	}
 
@@ -420,7 +509,8 @@ public class InstructionTable extends AbstractInstructionTable {
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			insertBytesWidget = getInsertBytesWidget();
-			plugin.getTool().showDialog(insertBytesWidget, plugin.getSearchDialog().getComponent());
+			JComponent dialogComponent = dialog.getComponent();
+			plugin.getTool().showDialog(insertBytesWidget, dialogComponent);
 		}
 	}
 
@@ -490,12 +580,12 @@ public class InstructionTable extends AbstractInstructionTable {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			GoToService gs = plugin.getTool().getService(GoToService.class);
 
 			// Only go somewhere if something is actually in the table.  If it's empty this makes
 			// no sense.  Note that the plugin.getInstructions() call can never be null, so no 
 			// need to check that here.
-			if (dialog.getSearchData().getInstructions().size() <= 0) {
+			List<InstructionMetadata> instructions = searchData.getInstructions();
+			if (instructions.size() <= 0) {
 				return;
 			}
 
@@ -504,19 +594,25 @@ public class InstructionTable extends AbstractInstructionTable {
 			// manually (hence no actual location in the listing).  In this case, just search
 			// for the first instance of this instruction and navigate there.  If search returns
 			// no results, display a message to the user.
-			Address firstAddr = dialog.getSearchData().getInstructions().get(0).getAddr();
-
-			if (firstAddr != null) {
-				gs.goTo(firstAddr);
-			}
-			else {
-				if (dialog.getMessagePanel() != null) {
-					dialog.getMessagePanel()
-							.setMessageText(
-								"Instruction was loaded manually, no address in the listing to navigate to.",
-								Messages.NORMAL);
+			Address firstAddr = instructions.get(0).getAddr();
+			if (firstAddr == null) {
+				MessagePanel messagePanel = dialog.getMessagePanel();
+				if (messagePanel != null) {
+					messagePanel.setMessageText(
+						"Instruction was loaded manually, no address in the listing to navigate to.",
+						Messages.NORMAL);
 				}
+				return;
 			}
+
+			GoToService service = plugin.getTool().getService(GoToService.class);
+			if (service == null) {
+				Msg.showError(this, null, "Missing GoToSerivce",
+					"Cannot navigate without the GoToService installed");
+				return;
+			}
+
+			service.goTo(firstAddr);
 		}
 	}
 
@@ -531,9 +627,11 @@ public class InstructionTable extends AbstractInstructionTable {
 	 */
 	private InstructionTableDataObject[][] processMnemonic(int row, int col,
 			InstructionTableDataObject[][] dataObjects) {
+
+		List<InstructionMetadata> instructions = searchData.getInstructions();
 		dataObjects[row][col] = new InstructionTableDataObject(
-			dialog.getSearchData().getInstructions().get(row).getTextRep(),
-			dialog.getSearchData().getInstructions().get(row).isInstruction(),
+			instructions.get(row).getTextRep(),
+			instructions.get(row).isInstruction(),
 			OperandState.NOT_MASKED);
 
 		return dataObjects;
@@ -558,19 +656,18 @@ public class InstructionTable extends AbstractInstructionTable {
 
 		// First get the operand information (if any exist) for this instruction.
 		// Note, the getOperands() call will never return null so we're safe here.
-		List<OperandMetadata> operands =
-			dialog.getSearchData().getInstructions().get(row).getOperands();
+		List<InstructionMetadata> instructions = searchData.getInstructions();
+		InstructionMetadata metadata = instructions.get(row);
+		List<OperandMetadata> operands = metadata.getOperands();
 		if (operands.size() > col - 1) {
-			operandMetadata =
-				dialog.getSearchData().getInstructions().get(row).getOperands().get(col - 1);
+			operandMetadata = metadata.getOperands().get(col - 1);
 		}
 
 		// If here then we have a valid operand, so store it.
 		if (operandMetadata != null) {
 			InstructionTableDataObject obj =
 				new InstructionTableDataObject(operandMetadata.getTextRep(),
-					dialog.getSearchData().getInstructions().get(row).isInstruction(),
-					OperandState.NOT_MASKED);
+					metadata.isInstruction(), OperandState.NOT_MASKED);
 			obj.setOperandCase(operandMetadata);
 			dataObjects[row][col] = obj;
 		}
@@ -580,7 +677,7 @@ public class InstructionTable extends AbstractInstructionTable {
 		// NA will cause it to not be able to be toggled on/off by the user.
 		else {
 			dataObjects[row][col] = new InstructionTableDataObject("",
-				dialog.getSearchData().getInstructions().get(row).isInstruction(), OperandState.NA);
+				metadata.isInstruction(), OperandState.NA);
 		}
 
 		return dataObjects;

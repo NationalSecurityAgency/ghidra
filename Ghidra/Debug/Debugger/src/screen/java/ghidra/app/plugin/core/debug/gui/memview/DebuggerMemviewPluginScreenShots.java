@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.debug.gui.memview;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import org.junit.*;
@@ -29,7 +28,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.thread.TraceThread;
 import help.screenshot.GhidraScreenShotGenerator;
@@ -109,13 +108,9 @@ public class DebuggerMemviewPluginScreenShots extends GhidraScreenShotGenerator 
 		}
 
 		try (Transaction tx = tb.startTransaction()) {
-			Set<TraceThread> threads = new HashSet<TraceThread>();
-			Set<TraceBreakpointKind> kinds = new HashSet<TraceBreakpointKind>();
-			threads.add(thread1);
-			kinds.add(TraceBreakpointKind.HW_EXECUTE);
 			tb.trace.getBreakpointManager()
 					.addBreakpoint("bpt1", Lifespan.span(17, 25), tb.range(0x7fac1234, 0x7fc1238),
-						threads, kinds, true, "break here");
+						Set.of(thread1), CommonSet.HWX.kinds(), true, "break here");
 		}
 
 		/*

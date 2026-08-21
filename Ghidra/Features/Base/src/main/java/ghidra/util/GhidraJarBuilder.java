@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -582,7 +582,9 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 		for (GModule module : layout.getModules().values()) {
 			File moduleDir = module.getModuleRoot().getFile(false).getCanonicalFile();
 			File rootDir = getModuleRootDir(moduleDir);
-			modules.add(new ApplicationModule(rootDir, moduleDir));
+			if (rootDir != null) {
+				modules.add(new ApplicationModule(rootDir, moduleDir));
+			}
 		}
 
 		return modules;
@@ -601,7 +603,8 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 				return rootDir;
 			}
 		}
-		throw new AssertException("Module root directory could not be determined: " + moduleDir);
+		System.out.println("Skipping external module: " + moduleDir);
+		return null;
 	}
 
 	private String getPathFromRoot(String rootPath, File file) {
@@ -621,7 +624,7 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 			if (clazz == null) {
 				System.out.println("Couldn't load " + path);
 			}
-			else if (ClassSearcher.isClassOfInterest(clazz)) {
+			else {
 				extensionPointClasses.add(clazz.getName());
 			}
 		}

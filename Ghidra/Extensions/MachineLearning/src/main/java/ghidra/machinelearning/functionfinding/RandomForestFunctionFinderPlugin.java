@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -205,16 +205,16 @@ public class RandomForestFunctionFinderPlugin extends ProgramPlugin
 	private void createActions() {
 
 		new ActionBuilder(ACTION_NAME, getName())
-			.menuPath(ToolConstants.MENU_SEARCH, MENU_PATH_ENTRY)
-			.menuGroup("search for", null)
-			.description("Train models to search for function starts")
-			.helpLocation(new HelpLocation(getName(), getName()))
-			.withContext(NavigatableActionContext.class, true)
-			.validContextWhen(c -> !(c instanceof RestrictedAddressSetContext))
-			.onAction(c -> {
-				displayDialog(c);
-			})
-			.buildAndInstall(tool);
+				.menuPath(ToolConstants.MENU_SEARCH, MENU_PATH_ENTRY)
+				.menuGroup("search for", null)
+				.description("Train models to search for function starts")
+				.helpLocation(new HelpLocation(getName(), getName()))
+				.withContext(NavigatableActionContext.class, true)
+				.validWhen(c -> !(c instanceof RestrictedAddressSetContext))
+				.onAction(c -> {
+					displayDialog(c);
+				})
+				.buildAndInstall(tool);
 	}
 
 	private void displayDialog(NavigatableActionContext c) {

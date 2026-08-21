@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 
 import java.awt.Component;
 import java.awt.Container;
+import java.util.List;
 
 import javax.swing.*;
 
@@ -32,7 +33,6 @@ import ghidra.app.plugin.core.table.TableServicePlugin;
 import ghidra.app.services.GoToService;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.options.Options;
-import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.Address;
@@ -83,7 +83,7 @@ public class SearchTextPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		builder.createMemory(".rsrc", Long.toHexString(0x100A000), 0x5400);
 		builder.createMemory(".bound_import_table", Long.toHexString(0xF0000248), 0xA8);
 		builder.createMemory(".debug_data", Long.toHexString(0xF0001300), 0x1C);
-		builder.createComment("0x100415a", "scanf, fscanf, sscanf ...", CodeUnit.PRE_COMMENT);
+		builder.createComment("0x100415a", "scanf, fscanf, sscanf ...", CommentType.PRE);
 		//create and disassemble a function
 
 		builder.setBytes("0x0100415a",
@@ -306,60 +306,44 @@ public class SearchTextPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 	public void testWilcardEntry2() throws Exception {
 
 		Address addr = getAddr(0x1002d6d);
-		int transactionID = program.startTransaction("test");
-		CodeUnit cu = program.getListing().getCodeUnitAt(addr);
-		try {
-			cu.setComment(CodeUnit.POST_COMMENT, "********** my entry Exit **********");
-		}
-		finally {
-			program.endTransaction(transactionID, true);
-		}
+		tx(program, () -> {
+			CodeUnit cu = program.getListing().getCodeUnitAt(addr);
+			cu.setComment(CommentType.POST, "** my entry Exit **");
+		});
 
 		JTextField tf = findComponent(container, JTextField.class);
 		assertNotNull(tf);
 
-		setTextAndPressEnter(tf, "********** entry Exit **********");
+		setTextAndPressEnter(tf, "** entry Exit **");
 
 		waitForSearchTasks(dialog);
 
-		waitForSwing();
-		cbPlugin.updateNow();
 		ProgramLocation loc = cbPlugin.getCurrentLocation();
-		assertEquals(addr, loc.getAddress());
+
+		assertEquals(addr, loc.getAddress()); // ** my entry Exit **
+
+		pressSearchButton();
+		assertEquals(addr, loc.getAddress()); // * my entry Exit **
+
+		pressSearchButton();
+		assertEquals(addr, loc.getAddress()); //  my entry Exit **
+
+		pressSearchButton();
+		assertEquals(addr, loc.getAddress()); // my entry Exit **
+
+		pressSearchButton();
+		assertEquals(addr, loc.getAddress()); // y entry Exit **
+
+		pressSearchButton();
+		assertEquals(addr, loc.getAddress()); //  entry Exit **
+
+		pressSearchButton();
+		assertEquals(addr, loc.getAddress()); // entry Exit **
 
 		pressSearchButton();
 
 		assertEquals("Not found", dialog.getStatusText());
 
-	}
-
-	@Test
-	public void testWilcardEntry3() throws Exception {
-
-		Address addr = getAddr(0x1002d6d);
-		int transactionID = program.startTransaction("test");
-		CodeUnit cu = program.getListing().getCodeUnitAt(addr);
-		try {
-			cu.setComment(CodeUnit.POST_COMMENT, "********** ___sbh_find_block Exit **********");
-		}
-		finally {
-			program.endTransaction(transactionID, true);
-		}
-
-		JTextField tf = findComponent(container, JTextField.class);
-		assertNotNull(tf);
-		setTextAndPressEnter(tf, "********** Exit **********");
-
-		waitForSearchTasks(dialog);
-
-		waitForSwing();
-		cbPlugin.updateNow();
-		ProgramLocation loc = cbPlugin.getCurrentLocation();
-		assertEquals(addr, loc.getAddress());
-
-		pressSearchButton();
-
-		assertEquals("Not found", dialog.getStatusText());
 	}
 
 	@Test
@@ -369,7 +353,7 @@ public class SearchTextPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		int transactionID = program.startTransaction("test");
 		CodeUnit cu = program.getListing().getCodeUnitAt(addr);
 		try {
-			cu.setComment(CodeUnit.POST_COMMENT, "********** ___sbh_find_block Exit **********");
+			cu.setComment(CommentType.POST, "********** ___sbh_find_block Exit **********");
 		}
 		finally {
 			program.endTransaction(transactionID, true);
@@ -395,7 +379,7 @@ public class SearchTextPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		int transactionID = program.startTransaction("test");
 		CodeUnit cu = program.getListing().getCodeUnitAt(addr);
 		try {
-			cu.setComment(CodeUnit.POST_COMMENT, "Comment test * with an asterisk");
+			cu.setComment(CommentType.POST, "Comment test * with an asterisk");
 		}
 		finally {
 			program.endTransaction(transactionID, true);
@@ -554,7 +538,7 @@ public class SearchTextPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		setTextAndPressEnter(tf, "hello");
 
-		runSwing(() -> tool.removePlugins(new Plugin[] { plugin }));
+		runSwing(() -> tool.removePlugins(List.of(plugin)));
 		assertFalse(tempDialog.isVisible());
 	}
 
@@ -650,6 +634,7 @@ public class SearchTextPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			t = dialog1.getTaskScheduler().getCurrentThread();
 		}
 		waitForSwing();
+		cbPlugin.updateNow();
 	}
 
 	private void selectRadioButton(Container guiContainer, String buttonText) throws Exception {

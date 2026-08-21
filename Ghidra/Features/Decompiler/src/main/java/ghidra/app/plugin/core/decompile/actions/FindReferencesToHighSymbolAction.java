@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,9 @@ import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.plugin.core.decompile.DecompilerProvider;
 import ghidra.app.plugin.core.navigation.locationreferences.LocationReferencesService;
 import ghidra.app.util.HelpTopics;
-import ghidra.program.model.listing.Function;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.pcode.HighSymbol;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.LabelFieldLocation;
@@ -61,16 +63,27 @@ public class FindReferencesToHighSymbolAction extends AbstractDecompilerAction {
 			updateMenuName(function.getName());
 			return true;
 		}
+
 		ClangToken token = context.getTokenAtCursor();
 		if (token == null) {
 			return false;
 		}
-		HighSymbol highSymbol = token.getHighSymbol(context.getHighFunction());
 
-		if (highSymbol == null || highSymbol.getStorage().isBadStorage() ||
-			!highSymbol.isGlobal()) {
+		HighSymbol highSymbol = token.getHighSymbol(context.getHighFunction());
+		if (highSymbol == null) {
 			return false;
 		}
+
+		if (highSymbol.getStorage().isBadStorage() || !highSymbol.isGlobal()) {
+			return false;
+		}
+
+		VariableStorage storage = highSymbol.getStorage();
+		Address addr = storage.getMinAddress();
+		if (addr == null) {
+			return false;
+		}
+
 		updateMenuName(highSymbol.getName());
 		return true;
 	}
@@ -85,17 +98,23 @@ public class FindReferencesToHighSymbolAction extends AbstractDecompilerAction {
 					"Please add the plugin implementing this service.");
 			return;
 		}
+
 		LabelFieldLocation location = null;
 		Function function = getFunction(context);
 		if (function != null && !(function instanceof UndefinedFunction)) {
 			location = new LabelFieldLocation(function.getSymbol());
 		}
 		else {
-			HighSymbol highSymbol =
-				context.getTokenAtCursor().getHighSymbol(context.getHighFunction());
-			location = new LabelFieldLocation(context.getProgram(),
-				highSymbol.getStorage().getMinAddress(), highSymbol.getName());
+			ClangToken token = context.getTokenAtCursor();
+			HighFunction highFunction = context.getHighFunction();
+			HighSymbol highSymbol = token.getHighSymbol(highFunction);
+			Program program = context.getProgram();
+			VariableStorage storage = highSymbol.getStorage();
+			Address minAddress = storage.getMinAddress();
+			String symbolName = highSymbol.getName();
+			location = new LabelFieldLocation(program, minAddress, symbolName);
 		}
+
 		DecompilerProvider provider = context.getComponentProvider();
 		service.showReferencesToLocation(location, provider);
 	}

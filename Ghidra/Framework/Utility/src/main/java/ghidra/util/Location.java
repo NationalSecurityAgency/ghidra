@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +37,7 @@ public interface Location {
 
 	/**
 	 * Will attempt to navigate to the location as appropriate.  For example, it may use the goto service
-	 * to navigate the code browser to a progam and and address.  Or it could launch a browser and
+	 * to navigate the code browser to a progam and an address.  Or it could launch a browser and
 	 * display a web page.
 	 * @param provider a service provider that this location can use to find a service to help with
 	 * navigation.

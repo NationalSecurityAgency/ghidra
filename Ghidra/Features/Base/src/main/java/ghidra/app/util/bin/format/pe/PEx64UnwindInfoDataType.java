@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -110,6 +110,22 @@ public class PEx64UnwindInfoDataType extends DynamicDataType {
 				if (hasUnwindHandler(flags)) {
 					struct.add(new ArrayDataType(UnsignedLongDataType.dataType, 0, -1),
 						"ExceptionData", null);
+					// TODO: somehow check for __C_specific_handler and markup:
+					/*-----------------------------------------------------------------------------
+						// C Scope table entry
+						typedef struct _C_SCOPE_TABLE_ENTRY {
+						  ULONG Begin;        // +0x00 - Begin of guarded code block
+						  ULONG End;          // +0x04 - End of target code block
+						  ULONG Handler;      // +0x08 - Exception filter function (or “__finally” handler)
+						  ULONG Target;       // +0x0C - Exception handler pointer (the code inside __except block)
+						} C_SCOPE_TABLE_ENTRY, *PC_SCOPE_TABLE_ENTRY;
+						
+						// C Scope table
+						typedef struct _C_SCOPE_TABLE {
+						  ULONG NumEntries;               // +0x00 - Number of entries
+						  C_SCOPE_TABLE_ENTRY Table[1];   // +0x04 - Scope table array
+						} C_SCOPE_TABLE, *PC_SCOPE_TABLE;
+					 ----------------------------------------------------------------------------*/
 				}
 			}
 			else if (hasChainedUnwindInfo(flags)) {
@@ -164,7 +180,7 @@ public class PEx64UnwindInfoDataType extends DynamicDataType {
 
 	private static EnumDataType unwindInfoFlagsEnum;
 
-	private EnumDataType defineUnwindInfoFlags() {
+	private synchronized EnumDataType defineUnwindInfoFlags() {
 		if (unwindInfoFlagsEnum == null) {
 			unwindInfoFlagsEnum = new EnumDataType("UNW_FLAGS", 1);
 			unwindInfoFlagsEnum.add("UNW_FLAG_NHANDLER", PEx64UnwindInfo.UNW_FLAG_NHANDLER);

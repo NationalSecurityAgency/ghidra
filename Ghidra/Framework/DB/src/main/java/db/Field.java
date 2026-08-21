@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -343,7 +343,7 @@ public abstract class Field implements Comparable<Field> {
 
 	/**
 	 * Write the field to buf at the specified offset.  When writing variable length 
-	 * fields, the length preceeds the actual data. 
+	 * fields, the length precedes the actual data. 
 	 * @param buf data buffer
 	 * @param offset data offset
 	 * @return next available Field offset within buffer, or -1 if end of buffer reached.
@@ -354,7 +354,7 @@ public abstract class Field implements Comparable<Field> {
 
 	/**
 	 * Read the field value from buf at the specified offset. When reading variable length 
-	 * fields, the length preceeds the actual data. 
+	 * fields, the length precedes the actual data. 
 	 * @param buf data buffer
 	 * @param offset data offset
 	 * @return next Field offset within buffer, or -1 if end of buffer reached.
@@ -440,7 +440,7 @@ public abstract class Field implements Comparable<Field> {
 
 	/**
 	 * Performs a fast in-place comparison of this field value with another
-	 * field value stored within the specified buffer at the the specified offset.
+	 * field value stored within the specified buffer at the specified offset.
 	 * NOTE: This method will treat all null primitives as 0 although is not intended
 	 * to support such use.
 	 * @param buffer data buffer

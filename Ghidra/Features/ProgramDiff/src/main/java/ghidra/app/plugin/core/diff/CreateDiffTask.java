@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,16 +44,10 @@ class CreateDiffTask extends Task {
 	private DiffApplySettingsProvider diffApplySettingsProvider;
 	private boolean isLimitedToSelection;
 
-	/**
-	 * Construct new LoadDiffTask that loads the dialog with the two 
-	 * programs and indicates their differences. The differences should be 
-	 * restricted to the limitedAddressSet. 
-	 * 
-	 */
 	CreateDiffTask(ProgramDiffPlugin plugin, Program program1, Program program2,
 			AddressSetView limitedAddressSet, boolean isLimitedToSelection,
 			ProgramDiffFilter diffFilter, ProgramMergeFilter applyFilter) {
-		super("Checking Program Differences", true, false, false);
+		super("Checking Program Differences", true, false, true);
 		this.plugin = plugin;
 		this.program1 = program1;
 		this.program2 = program2;
@@ -82,11 +76,11 @@ class CreateDiffTask extends Task {
 			monitor.setMessage("Checking Program Differences");
 			try {
 				dc = new DiffController(program1, program2, limitedAddressSet, this.diffFilter,
-					this.applyFilter, monitor);
+					this.applyFilter);
 				AddressSetView filteredDifferences = dc.getFilteredDifferences(monitor);
 				boolean noFilteredDifferencesFound = filteredDifferences.isEmpty();
 				plugin.setDiffController(dc);
-				dc.differencesChanged(monitor);
+				dc.differencesChanged();
 				dc.setLocation(plugin.getCurrentAddress());
 				monitor.setMessage("Done");
 				Runnable r = () -> displayDifferencesMessageIfNecessary(noFilteredDifferencesFound);
@@ -197,7 +191,7 @@ class CreateDiffTask extends Task {
 			return;
 		}
 
-		if (plugin.getCurrentProgram() == null) {
+		if (plugin.getCurrentProgram() == null || plugin.getSecondProgram() == null) {
 			// the program was closed while this task was running
 			return;
 		}

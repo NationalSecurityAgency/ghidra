@@ -67,10 +67,13 @@ public class ByteSequenceLengthFilterInputDialog extends InputDialogComponentPro
 		mainPanel.setLayout(pairLayout);
 		mainPanel.add(new GLabel(INDEX_BOX_TITLE_TEXT));
 		indexBox = new IntegerTextField();
+		indexBox.getComponent().getAccessibleContext().setAccessibleName("Index");
 		mainPanel.add(indexBox.getComponent());
 		mainPanel.add(new GLabel(LENGTH_BOX_TITLE_TEXT));
 		minLengthBox = new IntegerTextField();
+		minLengthBox.getComponent().getAccessibleContext().setAccessibleName("Minimum Length");
 		mainPanel.add(minLengthBox.getComponent());
+		mainPanel.getAccessibleContext().setAccessibleName("Byte Sequence Length Filter");
 		return mainPanel;
 	}
 

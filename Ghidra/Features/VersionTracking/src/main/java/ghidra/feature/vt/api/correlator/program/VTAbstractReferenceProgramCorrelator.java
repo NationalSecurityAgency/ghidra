@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -308,7 +308,7 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 		FunctionManager functionManager = program.getFunctionManager();
 		Function addressFunction = functionManager.getFunctionAt(address);
 		if (addressFunction != null) {
-			Address[] thunkAddresses = addressFunction.getFunctionThunkAddresses();
+			Address[] thunkAddresses = addressFunction.getFunctionThunkAddresses(false);
 			if (thunkAddresses != null) {
 				for (Address thunkAddress : thunkAddresses) {
 					accumulateFunctionReferences(depth + 1, list, program, thunkAddress);

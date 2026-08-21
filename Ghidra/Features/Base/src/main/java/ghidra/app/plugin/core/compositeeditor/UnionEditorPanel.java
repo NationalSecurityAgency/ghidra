@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,9 +17,15 @@ package ghidra.app.plugin.core.compositeeditor;
 
 import javax.swing.JPanel;
 
-public class UnionEditorPanel extends CompEditorPanel {
+import ghidra.program.model.data.Union;
 
-	public UnionEditorPanel(UnionEditorModel model, CompositeEditorProvider provider) {
+/**
+ * Editor panel for Union datatype
+ */
+public class UnionEditorPanel extends CompEditorPanel<Union, UnionEditorModel> {
+
+	public UnionEditorPanel(UnionEditorModel model,
+			CompositeEditorProvider<Union, UnionEditorModel> provider) {
 		super(model, provider);
 	}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,11 +15,9 @@
  */
 package ghidra.program.model.data;
 
-import static ghidra.program.model.data.CharsetSettingsDefinition.CHARSET;
-import static ghidra.program.model.data.RenderUnicodeSettingsDefinition.RENDER;
-import static ghidra.program.model.data.TranslationSettingsDefinition.TRANSLATION;
-
-import java.nio.charset.CoderResult;
+import static ghidra.program.model.data.CharsetSettingsDefinition.*;
+import static ghidra.program.model.data.RenderUnicodeSettingsDefinition.*;
+import static ghidra.program.model.data.TranslationSettingsDefinition.*;
 
 import ghidra.docking.settings.*;
 import ghidra.program.model.mem.MemBuffer;
@@ -33,8 +31,6 @@ import ghidra.program.model.mem.MemBuffer;
  * {@link #AbstractStringDataType(String, String, String, String, String, String, String, DataType, StringLayoutEnum, DataTypeManager)
  * AbstractStringDataType.AbstractStringDataType(lots,of,params)} and the
  * {@link DataType#clone(DataTypeManager) } method.
- * <p>
- *
  */
 abstract public class AbstractStringDataType extends BuiltIn
 		implements Dynamic, DataTypeWithCharset {
@@ -113,7 +109,6 @@ abstract public class AbstractStringDataType extends BuiltIn
 
 	/**
 	 * Protected constructor used by derived types to provide all their datatype details.
-	 * <p>
 	 * 
 	 * @param name Name of this datatype
 	 * @param mnemonic Mnemonic of this datatype
@@ -175,7 +170,6 @@ abstract public class AbstractStringDataType extends BuiltIn
 	/**
 	 * Creates a new {@link StringDataInstance} using the bytes in the supplied MemBuffer and
 	 * options provided by this DataType.
-	 * <p>
 	 * 
 	 * @param buf the data.
 	 * @param settings the settings to use for the representation.

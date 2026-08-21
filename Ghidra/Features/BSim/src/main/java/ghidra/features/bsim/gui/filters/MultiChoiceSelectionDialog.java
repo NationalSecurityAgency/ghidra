@@ -43,7 +43,7 @@ public class MultiChoiceSelectionDialog<T> extends DialogComponentProvider {
 	}
 
 	public MultiChoiceSelectionDialog(String dataTitle, List<T> choices, Set<T> selected,
-		DataToStringConverter<T> dataConverter) {
+			DataToStringConverter<T> dataConverter) {
 		super(dataTitle + " Chooser");
 		addWorkPanel(buildMainPanel(choices, selected, dataConverter, dataTitle));
 		addOKButton();
@@ -51,12 +51,13 @@ public class MultiChoiceSelectionDialog<T> extends DialogComponentProvider {
 	}
 
 	private JComponent buildMainPanel(List<T> choices, Set<T> selected,
-		DataToStringConverter<T> dataConverter, String dataTitle) {
+			DataToStringConverter<T> dataConverter, String dataTitle) {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		model = new ChoiceTableModel(choices, selected, dataConverter, dataTitle);
 		filterTable = new GFilterTable<ChoiceRowObject>(model);
 		panel.add(filterTable);
+		panel.getAccessibleContext().setAccessibleName("Multi Choice Selection");
 		return panel;
 	}
 
@@ -103,7 +104,7 @@ public class MultiChoiceSelectionDialog<T> extends DialogComponentProvider {
 		private String dataColumnTitle;
 
 		ChoiceTableModel(List<T> data, Set<T> selected, DataToStringConverter<T> stringConverter,
-			String dataColumnTitle) {
+				String dataColumnTitle) {
 			super(new ServiceProviderStub());
 			this.stringConverter = stringConverter;
 			this.dataColumnTitle = dataColumnTitle;
@@ -157,7 +158,7 @@ public class MultiChoiceSelectionDialog<T> extends DialogComponentProvider {
 		}
 
 		private class SelectedColumn
-			extends AbstractDynamicTableColumn<ChoiceRowObject, Boolean, Object> {
+				extends AbstractDynamicTableColumn<ChoiceRowObject, Boolean, Object> {
 
 			@Override
 			public String getColumnName() {
@@ -166,7 +167,7 @@ public class MultiChoiceSelectionDialog<T> extends DialogComponentProvider {
 
 			@Override
 			public Boolean getValue(ChoiceRowObject rowObject, Settings settings, Object data,
-				ServiceProvider provider) throws IllegalArgumentException {
+					ServiceProvider provider) throws IllegalArgumentException {
 
 				return rowObject.isSelected();
 			}
@@ -178,7 +179,7 @@ public class MultiChoiceSelectionDialog<T> extends DialogComponentProvider {
 		}
 
 		private class DataColumn
-			extends AbstractDynamicTableColumn<ChoiceRowObject, String, Object> {
+				extends AbstractDynamicTableColumn<ChoiceRowObject, String, Object> {
 
 			@Override
 			public String getColumnName() {
@@ -187,7 +188,7 @@ public class MultiChoiceSelectionDialog<T> extends DialogComponentProvider {
 
 			@Override
 			public String getValue(ChoiceRowObject rowObject, Settings settings, Object data,
-				ServiceProvider provider) throws IllegalArgumentException {
+					ServiceProvider provider) throws IllegalArgumentException {
 
 				return stringConverter.getString(rowObject.getData());
 			}

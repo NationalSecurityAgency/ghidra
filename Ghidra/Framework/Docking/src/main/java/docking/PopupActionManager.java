@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,8 @@ import javax.swing.JPopupMenu;
 
 import org.apache.commons.collections4.IteratorUtils;
 
-import docking.action.*;
+import docking.action.DockingActionIf;
+import docking.action.MenuData;
 import docking.menu.*;
 
 public class PopupActionManager implements PropertyChangeListener {
@@ -77,6 +78,7 @@ public class PopupActionManager implements PropertyChangeListener {
 			actionContext = new DefaultActionContext();
 		}
 
+		actionContext.setContextProvider(popupProvider);
 		actionContext.setSourceObject(popupContext.getSource());
 		actionContext.setMouseEvent(event);
 
@@ -115,9 +117,6 @@ public class PopupActionManager implements PropertyChangeListener {
 	void populatePopupMenuActions(Iterator<DockingActionIf> localActions,
 			ActionContext actionContext, MenuManager menuMgr) {
 
-		// Unregistered actions are those used by special-needs components, on-the-fly
-		addUnregisteredActions(actionContext, menuMgr);
-
 		// Include temporary actions
 		List<DockingActionIf> tempActions = windowManager.getTemporaryPopupActions(actionContext);
 		if (tempActions != null) {
@@ -131,11 +130,7 @@ public class PopupActionManager implements PropertyChangeListener {
 			}
 		}
 
-		// Include global actions
-		Iterator<DockingActionIf> iter = popupActions.iterator();
-		while (iter.hasNext()) {
-			DockingActionIf action = iter.next();
-
+		for (DockingActionIf action : popupActions) {
 			MenuData popupMenuData = action.getPopupMenuData();
 			if (popupMenuData != null && action.isValidContext(actionContext) &&
 				action.isAddToPopup(actionContext)) {
@@ -153,25 +148,6 @@ public class PopupActionManager implements PropertyChangeListener {
 				action.isAddToPopup(actionContext)) {
 				action.setEnabled(action.isEnabledForContext(actionContext));
 				menuMgr.addAction(action);
-			}
-		}
-	}
-
-	private void addUnregisteredActions(ActionContext actionContext, MenuManager menuMgr) {
-
-		Object source = actionContext.getSourceObject();
-
-		// this interface is deprecated in favor the code that calls this method; this will be deleted
-		if (source instanceof DockingActionProviderIf) {
-			DockingActionProviderIf actionProvider = (DockingActionProviderIf) source;
-			List<DockingActionIf> dockingActions = actionProvider.getDockingActions();
-			for (DockingActionIf action : dockingActions) {
-				MenuData popupMenuData = action.getPopupMenuData();
-				if (popupMenuData != null && action.isValidContext(actionContext) &&
-					action.isAddToPopup(actionContext)) {
-					action.setEnabled(action.isEnabledForContext(actionContext));
-					menuMgr.addAction(action);
-				}
 			}
 		}
 	}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,9 +29,6 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 
-/**
- * 
- */
 public class CreateDataInStructureCmdTest extends AbstractGenericTest {
 
 	private static final long UNDEFINED_AREA = 0x0100;
@@ -72,7 +69,7 @@ public class CreateDataInStructureCmdTest extends AbstractGenericTest {
 
 		int structLen = defaultPtrLen + 1;
 
-		Command cmd = new CreateStructureCmd(addr(startOffset), structLen);
+		Command<Program> cmd = new CreateStructureCmd(addr(startOffset), structLen);
 		cmd.applyTo(program);
 
 		cmd = new CreateDataInStructureCmd(addr(startOffset), new int[] { 0 }, new ByteDataType());
@@ -119,7 +116,7 @@ public class CreateDataInStructureCmdTest extends AbstractGenericTest {
 
 		int structLen = defaultPtrLen + structA.getLength();
 
-		Command cmd = new CreateStructureCmd(addr(startOffset), structLen);
+		Command<Program> cmd = new CreateStructureCmd(addr(startOffset), structLen);
 		cmd.applyTo(program);
 
 		cmd = new CreateDataInStructureCmd(addr(startOffset), new int[] { 0 }, structA);
@@ -158,7 +155,7 @@ public class CreateDataInStructureCmdTest extends AbstractGenericTest {
 		long startOffset = UNDEFINED_AREA;
 
 		int structLen = 1;
-		Command cmd = new CreateStructureCmd(addr(startOffset), structLen);
+		Command<Program> cmd = new CreateStructureCmd(addr(startOffset), structLen);
 		cmd.applyTo(program);
 
 		cmd = new CreateDataInStructureCmd(addr(startOffset), new int[] { 0 }, new ByteDataType());
@@ -206,7 +203,7 @@ public class CreateDataInStructureCmdTest extends AbstractGenericTest {
 		struct1.add(adt);
 		struct1.add(new WordDataType());
 
-		Command cmd = new CreateDataCmd(addr(startOffset + 1000), struct1);
+		Command<Program> cmd = new CreateDataCmd(addr(startOffset + 1000), struct1);
 		cmd.applyTo(program);
 		Data dataAt = program.getListing().getDataAt(addr(startOffset + 1000));
 		struct1 = (Structure) dataAt.getDataType();

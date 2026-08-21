@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,14 +15,14 @@
  */
 package ghidra.file.formats.ios.png;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 public class PNGChunk implements StructConverter {
 
@@ -35,11 +35,14 @@ public class PNGChunk implements StructConverter {
 	/**
 	 * Reads in the bytes of a PNG chunk from a given
 	 * BinaryReader
-	 * @param reader
-	 * @throws IOException
+	 * @param reader A {@link BinaryReader} positioned at the start of the PNG chunk
+	 * @throws IOException if an IO-related error occurred
 	 */
 	public PNGChunk(BinaryReader reader) throws IOException {
 		length = reader.readNextInt();
+		if (length < 0 || length > 8 * 1024 * 1024) {
+			throw new IllegalArgumentException("Unreasonable PNG chunk length: " + length);
+		}
 		chunkID = reader.readNextInt();
 		data = reader.readNextByteArray(length);
 		crc32 = reader.readNextInt();
@@ -127,7 +130,7 @@ public class PNGChunk implements StructConverter {
 		buff.append("Length: 0x" + Integer.toHexString(length) + "\n");
 		buff.append("Chunk ID: " + getIDString() + "\n");
 		buff.append("Chunk Data:" + new String(data) + "\n");
-		buff.append("CRC32: 0x" + crc32 + "\n");
+		buff.append("CRC32: 0x" + Integer.toHexString(crc32) + "\n");
 
 		return buff.toString();
 	}

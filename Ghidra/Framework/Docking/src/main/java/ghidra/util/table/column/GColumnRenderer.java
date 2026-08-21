@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ import ghidra.util.exception.AssertException;
  *      
  *      <P>The default transformer turns items to strings by, in order,:
  *      <OL>
- *      	<LI>checking the the <b>column</b> renderer's 
+ *      	<LI>checking the <b>column</b> renderer's 
  *      		{@link #getFilterString(Object, Settings)},if a column renderer is installed
  *      	</LI>
  *      	<LI>checking to see if the column value is an instance of {@link DisplayStringProvider}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.searchtext.quicksearch;
 
+import static ghidra.program.model.listing.CommentType.*;
 import static org.junit.Assert.*;
 
 import java.util.ArrayList;
@@ -54,6 +55,7 @@ public class ProgramDatabaseSearchIteratorTest extends AbstractGhidraHeadedInteg
 	private Address currentAddress;
 	private ToyProgramBuilder builder;
 	private TaskMonitor monitor = TaskMonitor.DUMMY;
+	private CommentAddressSupplier commentSupplier;
 
 	private void createIMM(long address) throws MemoryAccessException {
 		builder.addBytesMoveImmediate(address, (short) 5);
@@ -97,7 +99,7 @@ public class ProgramDatabaseSearchIteratorTest extends AbstractGhidraHeadedInteg
 		p2.setComment("cause a hit! -- imm xxx");
 		Parameter p3 = new ParameterImpl(null, new DoubleDataType(), program);
 		builder.createEmptyFunction("MyFunc", "0", 26, new WordDataType(), p1, p2, p3);
-		builder.createComment("0", "Blah Blah Blah -- imm", CodeUnit.PLATE_COMMENT);
+		builder.createComment("0", "Blah Blah Blah -- imm", CommentType.PLATE);
 
 		ProgramManager pm = tool.getService(ProgramManager.class);
 		pm.openProgram(program.getDomainFile());
@@ -118,6 +120,13 @@ public class ProgramDatabaseSearchIteratorTest extends AbstractGhidraHeadedInteg
 			if (searcher.hasMatch(currentAddress)) {
 				return searcher.getMatch().programLocation();
 			}
+
+			// for tests that search comments, we have to advance the comment supplier explicitly
+			// just like the searcher algorithm does
+			if (commentSupplier != null) {
+				commentSupplier.advance(currentAddress);
+			}
+
 			currentAddress = searcher.getNextSignificantAddress(currentAddress);
 		}
 		return null;
@@ -127,23 +136,20 @@ public class ProgramDatabaseSearchIteratorTest extends AbstractGhidraHeadedInteg
 	public void testEOLCommentIterator() {
 
 		Pattern pattern = UserSearchUtils.createSearchPattern("XXZ*", false);
-		ProgramLocation startLocation = new ProgramLocation(program, program.getMinAddress());
-		CommentFieldSearcher searcher = new CommentFieldSearcher(program, startLocation, null, true,
-			pattern, CodeUnit.EOL_COMMENT);
+		ProgramLocation start = new ProgramLocation(program, program.getMinAddress());
+		CommentFieldSearcher searcher = createCommentSearcher(pattern, start, CommentType.EOL);
 		currentAddress = searcher.getNextSignificantAddress(null);
 		assertNull(getNextMatch(searcher));
 
 		// add a comment with no match
 		addEolComment(0x1005146L, "Test EOL comments...");
-		searcher = new CommentFieldSearcher(program, startLocation, null, true, pattern,
-			CodeUnit.EOL_COMMENT);
+		searcher = createCommentSearcher(pattern, start, CommentType.EOL);
 		currentAddress = searcher.getNextSignificantAddress(null);
 		assertNull(getNextMatch(searcher));
 
 		// add a comment that has one match
 		addEolComment(0x1005d4bL, "Test something with eXXZabc");
-		searcher = new CommentFieldSearcher(program, startLocation, null, true, pattern,
-			CodeUnit.EOL_COMMENT);
+		searcher = createCommentSearcher(pattern, start, CommentType.EOL);
 		currentAddress = searcher.getNextSignificantAddress(null);
 		ProgramLocation loc = getNextMatch(searcher);
 		assertNotNull(loc);
@@ -151,8 +157,7 @@ public class ProgramDatabaseSearchIteratorTest extends AbstractGhidraHeadedInteg
 
 		// add a comment with two matches for a total of 3 matches
 		addEolComment(0x100595f, "Hit found: eXXZabc followed by XXZabc");
-		searcher = new CommentFieldSearcher(program, startLocation, null, true, pattern,
-			CodeUnit.EOL_COMMENT);
+		searcher = createCommentSearcher(pattern, start, CommentType.EOL);
 		currentAddress = searcher.getNextSignificantAddress(null);
 
 		loc = getNextMatch(searcher);
@@ -168,20 +173,27 @@ public class ProgramDatabaseSearchIteratorTest extends AbstractGhidraHeadedInteg
 
 	}
 
+	private CommentFieldSearcher createCommentSearcher(Pattern pattern, ProgramLocation start,
+			CommentType type) {
+		AddressSetView set = program.getMemory().getAllInitializedAddressSet();
+		commentSupplier = new CommentAddressSupplier(program, set, true);
+		return new CommentFieldSearcher(commentSupplier, program, start, null, true, pattern, type);
+	}
+
 	@Test
 	public void testSingleWildcard() {
-		addEolComment(0x100101cL, "Test EOL comments...");
-		addEolComment(0x100101dL, "Test something with eXXZabc");
-		addEolComment(0x100101fL, "Hit found: eXXZabc followed by XXZabc");
+		addEolComment(0x100101cL, "Hi");
+		addEolComment(0x100101dL, "Jo");
 
 		Pattern pattern = UserSearchUtils.createSearchPattern("*", false);
 		ProgramLocation startLocation = new ProgramLocation(program, program.getMinAddress());
-		CommentFieldSearcher searcher = new CommentFieldSearcher(program, startLocation, null, true,
-			pattern, CodeUnit.EOL_COMMENT);
-		currentAddress = searcher.getNextSignificantAddress(null);
+
+		CommentFieldSearcher searcher = createCommentSearcher(pattern, startLocation, EOL);
 		int count = 0;
-		Address[] addrs =
-			new Address[] { getAddr(0x100101cL), getAddr(0x100101dL), getAddr(0x100101fL) };
+		// '*' will find a match of the full comment starting at the current char being searched 
+		// (meaning we get a hit starting at every character)
+		Address[] addrs = new Address[] { getAddr(0x100101cL), getAddr(0x100101cL),
+			getAddr(0x100101dL), getAddr(0x100101dL) };
 
 		ProgramLocation loc = null;
 		while ((loc = getNextMatch(searcher)) != null) {
@@ -197,9 +209,8 @@ public class ProgramDatabaseSearchIteratorTest extends AbstractGhidraHeadedInteg
 		addEolComment(0x100101fL, "Hit found: ABCxyzvvXXZ123 followed by ABCxqa123");
 
 		Pattern pattern = UserSearchUtils.createSearchPattern("ABC*123", false);
-		ProgramLocation startLocation = new ProgramLocation(program, program.getMinAddress());
-		CommentFieldSearcher searcher = new CommentFieldSearcher(program, startLocation, null, true,
-			pattern, CodeUnit.EOL_COMMENT);
+		ProgramLocation start = new ProgramLocation(program, program.getMinAddress());
+		CommentFieldSearcher searcher = createCommentSearcher(pattern, start, CommentType.EOL);
 		currentAddress = searcher.getNextSignificantAddress(null);
 
 		ProgramLocation loc = getNextMatch(searcher);
@@ -382,17 +393,17 @@ public class ProgramDatabaseSearchIteratorTest extends AbstractGhidraHeadedInteg
 	}
 
 	void addEolComment(long longAddr, String comment) {
-		SetCommentCmd cmd = new SetCommentCmd(getAddr(longAddr), CodeUnit.EOL_COMMENT, comment);
+		SetCommentCmd cmd = new SetCommentCmd(getAddr(longAddr), CommentType.EOL, comment);
 		tool.execute(cmd, program);
 	}
 
 	void addPreComment(long longAddr, String comment) {
-		SetCommentCmd cmd = new SetCommentCmd(getAddr(longAddr), CodeUnit.PRE_COMMENT, comment);
+		SetCommentCmd cmd = new SetCommentCmd(getAddr(longAddr), CommentType.PRE, comment);
 		tool.execute(cmd, program);
 	}
 
 	void addPostComment(long longAddr, String comment) {
-		SetCommentCmd cmd = new SetCommentCmd(getAddr(longAddr), CodeUnit.POST_COMMENT, comment);
+		SetCommentCmd cmd = new SetCommentCmd(getAddr(longAddr), CommentType.POST, comment);
 		tool.execute(cmd, program);
 	}
 
@@ -479,7 +490,7 @@ public class ProgramDatabaseSearchIteratorTest extends AbstractGhidraHeadedInteg
 		loc = ts.search().programLocation();
 		assertTrue("Expected CommentFieldLocation, got " + loc.getClass() + " instead!",
 			(loc instanceof CommentFieldLocation));
-		assertEquals(CodeUnit.POST_COMMENT, ((CommentFieldLocation) loc).getCommentType());
+		assertEquals(CommentType.POST, ((CommentFieldLocation) loc).getCommentType());
 
 	}
 

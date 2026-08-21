@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,7 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.widgets.OkDialog;
 import docking.widgets.button.BrowseButton;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.filechooser.GhidraFileChooser;
@@ -62,6 +63,8 @@ public class PopulateFidDialog extends DialogComponentProvider {
 	private JTextField variantTextField;
 	private FidService fidService;
 	private JTextField languageIdField;
+	private JTextField compilerSpecField;
+	private JTextField sourceLanguageField;
 	private JTextField symbolsFileTextField;
 
 	protected PopulateFidDialog(PluginTool tool, FidService fidService) {
@@ -85,12 +88,23 @@ public class PopulateFidDialog extends DialogComponentProvider {
 		String libraryVersion = versionTextField.getText().trim();
 		String libraryVariant = variantTextField.getText().trim();
 		DomainFolder folder = getDomainFolder();
-		String languageFilter = languageIdField.getText().trim();
+		String languageID = languageIdField.getText().trim();
+		String compilerSpecs = compilerSpecField.getText().trim();
+		String sourceLanguages = sourceLanguageField.getText().trim();
 		File commonSymbolsFile = getCommonSymbolsFile();
 
-		Task task = new IngestTask("Populate Library Task", fidFile, libraryRecord, folder,
-			libraryFamilyName, libraryVersion, libraryVariant, languageFilter, commonSymbolsFile,
-			fidService, new DefaultFidPopulateResultReporter());
+		Task task;
+		try {
+			FidFilter programFilter = new FidFilter(languageID, compilerSpecs, sourceLanguages);
+
+			task = new IngestTask("Populate Library Task", fidFile, libraryRecord, folder,
+				libraryFamilyName, libraryVersion, libraryVariant, programFilter, commonSymbolsFile,
+				fidService, new DefaultFidPopulateResultReporter());
+		}
+		catch (Exception ex) {
+			OkDialog.showError("Illegal Argument", ex.getMessage());
+			return;		// Let the user continue editing the parameters
+		}
 		close();
 		tool.execute(task);
 	}
@@ -114,22 +128,26 @@ public class PopulateFidDialog extends DialogComponentProvider {
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		JLabel jLabel = new GDLabel("Fid Database: ", SwingConstants.RIGHT);
 		jLabel.setToolTipText("Choose the Fid Database to populate");
+		jLabel.getAccessibleContext().setAccessibleName("Fid Database");
 		panel.add(jLabel);
 		panel.add(buildFidCombo());
 
 		panel.add(new GLabel("Library Family Name: ", SwingConstants.RIGHT));
 		libraryFamilyNameTextField = new JTextField(20);
 		libraryFamilyNameTextField.getDocument().addUndoableEditListener(e -> updateOkEnablement());
+		libraryFamilyNameTextField.getAccessibleContext().setAccessibleName("Library Family Name");
 		panel.add(libraryFamilyNameTextField);
 
 		panel.add(new GLabel("Library Version: ", SwingConstants.RIGHT));
 		versionTextField = new JTextField();
 		versionTextField.getDocument().addUndoableEditListener(e -> updateOkEnablement());
+		versionTextField.getAccessibleContext().setAccessibleName("Version");
 		panel.add(versionTextField);
 
 		panel.add(new GLabel("Library Variant: ", SwingConstants.RIGHT));
 		variantTextField = new JTextField();
 		variantTextField.getDocument().addUndoableEditListener(e -> updateOkEnablement());
+		variantTextField.getAccessibleContext().setAccessibleName("Variant");
 		panel.add(variantTextField);
 
 		panel.add(new GLabel("Base Library: ", SwingConstants.RIGHT));
@@ -141,17 +159,29 @@ public class PopulateFidDialog extends DialogComponentProvider {
 		panel.add(new GLabel("Language: ", SwingConstants.RIGHT));
 		panel.add(buildLanguageField());
 
+		panel.add(new GLabel("Compiler Specs: ", SwingConstants.RIGHT));
+		compilerSpecField = new JTextField();
+		compilerSpecField.getDocument().addUndoableEditListener(e -> updateOkEnablement());
+		panel.add(compilerSpecField);
+
+		panel.add(new GLabel("Source Languages: ", SwingConstants.RIGHT));
+		sourceLanguageField = new JTextField();
+		sourceLanguageField.getDocument().addUndoableEditListener(e -> updateOkEnablement());
+		panel.add(sourceLanguageField);
+
 		panel.add(new GLabel("Common Symbols File: ", SwingConstants.RIGHT));
 		panel.add(buildSymbolsFileField(), jLabel);
-
+		panel.getAccessibleContext().setAccessibleName("Populate Fid");
 		return panel;
 	}
 
 	private JComponent buildSymbolsFileField() {
 		JPanel panel = new JPanel(new BorderLayout());
 		symbolsFileTextField = new JTextField();
+		symbolsFileTextField.getAccessibleContext().setAccessibleName("Symbols File");
 		panel.add(symbolsFileTextField, BorderLayout.CENTER);
 		JButton browseButton = new BrowseButton();
+		browseButton.getAccessibleContext().setAccessibleName("Browse");
 		browseButton.addActionListener(e -> {
 			GhidraFileChooser chooser = new GhidraFileChooser(tool.getToolFrame());
 			chooser.setTitle("Choose Common Symbols File");
@@ -165,14 +195,17 @@ public class PopulateFidDialog extends DialogComponentProvider {
 		});
 		symbolsFileTextField.getDocument().addUndoableEditListener(e -> updateOkEnablement());
 		panel.add(browseButton, BorderLayout.EAST);
+		panel.getAccessibleContext().setAccessibleName("Symbols File");
 		return panel;
 	}
 
 	private Component buildLanguageField() {
 		JPanel panel = new JPanel(new BorderLayout());
 		languageIdField = new JTextField();
+		languageIdField.getAccessibleContext().setAccessibleName("Language Id");
 		panel.add(languageIdField, BorderLayout.CENTER);
 		JButton browseButton = new BrowseButton();
+		browseButton.getAccessibleContext().setAccessibleName("Browse");
 		browseButton.addActionListener(e -> {
 			SelectLanguageDialog selectLanguageDialog =
 				new SelectLanguageDialog("Select Language", "Ok");
@@ -184,6 +217,7 @@ public class PopulateFidDialog extends DialogComponentProvider {
 		});
 		languageIdField.getDocument().addUndoableEditListener(e -> updateOkEnablement());
 		panel.add(browseButton, BorderLayout.EAST);
+		panel.getAccessibleContext().setAccessibleName("Language");
 		return panel;
 
 	}
@@ -191,6 +225,7 @@ public class PopulateFidDialog extends DialogComponentProvider {
 	private Component buildLibraryCombo() {
 		LibraryChoice[] choices = getChoicesForLibraryCombo();
 		libraryComboBox = new GComboBox<>(choices);
+		libraryComboBox.getAccessibleContext().setAccessibleName("Library");
 		return libraryComboBox;
 	}
 
@@ -222,9 +257,11 @@ public class PopulateFidDialog extends DialogComponentProvider {
 	private Component buildDomainFolderChooserField() {
 		JPanel panel = new JPanel(new BorderLayout());
 		domainFolderField = new JTextField();
+		domainFolderField.getAccessibleContext().setAccessibleName("Domain Folder");
 		domainFolderField.setEditable(false);
 		panel.add(domainFolderField, BorderLayout.CENTER);
 		JButton browseButton = new BrowseButton();
+		browseButton.getAccessibleContext().setAccessibleName("Browse");
 		browseButton.addActionListener(e -> {
 			final DataTreeDialog dialog = new DataTreeDialog(tool.getToolFrame(),
 				"Choose Root Folder", CHOOSE_FOLDER);
@@ -236,6 +273,7 @@ public class PopulateFidDialog extends DialogComponentProvider {
 			updateOkEnablement();
 		});
 		panel.add(browseButton, BorderLayout.EAST);
+		panel.getAccessibleContext().setAccessibleName("Domain Folder Chooser");
 		return panel;
 	}
 
@@ -243,7 +281,8 @@ public class PopulateFidDialog extends DialogComponentProvider {
 		List<FidFile> fidFileList = FidFileManager.getInstance().getUserAddedFiles();
 		FidFile[] files = fidFileList.toArray(new FidFile[fidFileList.size()]);
 		fidFileComboBox = new GComboBox<>(files);
-		fidFileComboBox.addActionListener(e -> updateLibraryChoices());
+		fidFileComboBox.addItemListener(e -> updateLibraryChoices());
+		fidFileComboBox.getAccessibleContext().setAccessibleName("Fid File");
 		return fidFileComboBox;
 	}
 
@@ -277,7 +316,7 @@ public class PopulateFidDialog extends DialogComponentProvider {
 			return false;
 		}
 		String symbolsFilePath = symbolsFileTextField.getText().trim();
-		if (!symbolsFilePath.isEmpty() && !(new File(symbolsFilePath).exists())) {
+		if (!symbolsFilePath.isEmpty() && !(new File(symbolsFilePath).isFile())) {
 			return false;
 		}
 		return true;

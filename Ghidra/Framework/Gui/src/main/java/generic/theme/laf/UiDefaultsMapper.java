@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,6 +23,7 @@ import java.util.*;
 import java.util.Map.Entry;
 
 import javax.swing.*;
+import javax.swing.UIDefaults.LazyValue;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicLookAndFeel;
@@ -47,16 +48,16 @@ import ghidra.util.Msg;
  * Some basic concepts:
  *  <UL>
  *  	<LI>UI Defaults - key-value pairs defined by the Java LaF; there are 2 key types, widget
- *                        keys and Java group/reusable keys (e.g., Button.background; control)
+ *                        keys and Java group/reusable keys (e.g., Button.background; control)</LI>
  *      <LI>UI Indirection - UI Defaults values are changed to point to custom terms we created to
- *                        allow for indirection (e.g., Button.background -> laf.color.Button.background)
+ *                        allow for indirection (e.g., Button.background -> laf.color.Button.background)</LI>
  *      <LI>Normalized Keys - keys we created to facilitate the UI Indirection, based upon the Java
- *                        keys (e.g., laf.color.Button.background)
+ *                        keys (e.g., laf.color.Button.background)</LI>
  *  	<LI>System Color/Font Keys - user facing terms for common color or font concepts into an
- *  					easy-to-change setting (e.g., system.color.fg.text)
+ *  					easy-to-change setting (e.g., system.color.fg.text)</LI>
  *      <LI>Palette Keys - dynamically generated color palette keys based on the LaF for any colors
  *      				  and fonts that were not mapped into an system color or font (e.g.,
- *      				  laf.palette.color.01)
+ *      				  laf.palette.color.01)</LI>
  *  </UL>
  *
  * <P>
@@ -65,7 +66,7 @@ import ghidra.util.Msg;
  * <LI>Extracts all color, font, and icon values from the UI Defaults.</LI>
  * <LI>Use the current LaF values to populate the pre-defined system colors and fonts.</LI>
  * <LI>Any UI Defaults values not assigned in the previous step will be assigned to a dynamic shared
- *     palette color or font.
+ *     palette color or font.</LI>
  * <LI>Update Java UI Defaults to use our indirection and system values.</LI>
  * </OL>
  *
@@ -674,6 +675,32 @@ public class UiDefaultsMapper {
 	 */
 	private List<String> getLookAndFeelIdsForType(Class<?> clazz) {
 		List<String> ids = new ArrayList<>();
+
+		/*
+		 	Note: the act of calling defaults.get(key) will cause LazyValues to get loaded and 
+		 	installed. This is a problem for any complex object that holds Color state. After this
+		 	method is called we will install our GColor indirection mechanism.  But, if the 
+		 	LazyValue gets created during this method, then that value may be holding Color objects
+		 	that are not using our indirection, thus making them not responsive to theme changes.
+		 	An example of this is a custom Border object with saved Color fields.
+		 	
+		 	To work around this issue, we save off all LazyValues and then restore them after we get
+		 	the value. By doing this, the LazyValue will get called again later after we have 
+		 	installed our indirection.
+		 */
+
+		// 1) save all LazyValues so we can restore them later
+		Map<Object, Object> lazyRestores = new HashMap<>();
+		Set<Entry<Object, Object>> entries = defaults.entrySet();
+		for (Entry<Object, Object> entry : entries) {
+			Object key = entry.getKey();
+			Object value = entry.getValue();
+			if (value instanceof LazyValue) {
+				lazyRestores.put(key, value);
+			}
+		}
+
+		// 2) find all keys that map to the given 'clazz' passed to this method
 		List<Object> keyList = IteratorUtils.toList(defaults.keys().asIterator());
 		for (Object key : keyList) {
 			if (key instanceof String) {
@@ -681,8 +708,18 @@ public class UiDefaultsMapper {
 				if (clazz.isInstance(value)) {
 					ids.add((String) key);
 				}
+
 			}
 		}
+
+		// 3_ put the LazyValues back so we undo any items created while we were getting values
+		Set<Entry<Object, Object>> restoreEntries = lazyRestores.entrySet();
+		for (Entry<Object, Object> entry : restoreEntries) {
+			Object key = entry.getKey();
+			Object value = entry.getValue();
+			defaults.put(key, value);
+		}
+
 		return ids;
 	}
 

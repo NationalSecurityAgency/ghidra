@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,6 @@ import java.util.stream.Stream;
 
 import ghidra.app.plugin.assembler.sleigh.expr.MaskedLong;
 import ghidra.app.plugin.assembler.sleigh.expr.RecursiveDescentSolver;
-import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
 import ghidra.app.plugin.languages.sleigh.SleighLanguages;
 import ghidra.app.plugin.languages.sleigh.SubtableEntryVisitor;
 import ghidra.app.plugin.processors.sleigh.*;
@@ -36,7 +35,6 @@ import ghidra.app.plugin.processors.sleigh.symbol.SubtableSymbol;
  */
 public class AssemblyConstructorSemantic implements Comparable<AssemblyConstructorSemantic> {
 	protected static final RecursiveDescentSolver SOLVER = RecursiveDescentSolver.getSolver();
-	protected static final DbgTimer DBG = AbstractAssemblyTreeResolver.DBG;
 
 	protected final Set<AssemblyResolvedPatterns> patterns = new HashSet<>();
 	protected final AbstractAssemblyResolutionFactory<?, ?> factory;
@@ -304,28 +302,22 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 			Map<String, Long> vals) {
 		for (ContextChange chg : reversedChanges) {
 			if (chg instanceof ContextOp) {
-				DBG.println("Current: " + res.lineToString());
 				// This seems backwards. That's because we're going backwards.
 				// This is the "write" location for disassembly.
 				ContextOp cop = (ContextOp) chg;
-				DBG.println("Handling context change: " + cop);
 
 				// TODO: Is this res or subres?
 				MaskedLong reqval = res.readContextOp(cop);
 				if (reqval.equals(MaskedLong.UNKS)) {
-					DBG.println("Doesn't affect a current requirement");
 					continue; // this context change does not satisfy any requirement
 				}
-				DBG.println("'read' " + reqval);
 
 				// Remove the requirement that we just read before trying to solve
 				res = res.maskOut(cop);
-				DBG.println("Masked out: " + res.lineToString());
 
 				// Now, solve
 				AssemblyResolution sol = factory.solveOrBackfill(cop.getPatternExpression(), reqval,
 					vals, res, "Solution to " + cop);
-				DBG.println("Solution: " + sol.lineToString());
 				if (sol.isError()) {
 					AssemblyResolvedError err = (AssemblyResolvedError) sol;
 					return factory.error(err.getError(), res);
@@ -344,7 +336,6 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 					AssemblyResolvedBackfill solbf = (AssemblyResolvedBackfill) sol;
 					res = res.combine(solbf);
 				}
-				DBG.println("Combined: " + res.lineToString());
 			}
 		}
 		return res;
@@ -381,14 +372,10 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 	 * 
 	 * @param shift the (right) shift in bytes to apply to the patterns before combining
 	 * @param fromLeft the accumulated patterns from the left sibling or parent
-	 * @return
+	 * @return the stream of results
 	 */
 	public Stream<AssemblyResolvedPatterns> applyPatternsForward(int shift,
 			AssemblyResolvedPatterns fromLeft) {
-		if (patterns.isEmpty()) {
-			DBG.println("No patterns for " + getLocation() + "?" + "(hash=" +
-				System.identityHashCode(this) + ")");
-		}
 		return patterns.stream().map(pat -> fromLeft.combine(pat.shift(shift)));
 	}
 

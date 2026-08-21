@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,10 +20,9 @@ import java.util.List;
 
 import javax.swing.JTable;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.DockingWindowManager;
-import docking.widgets.table.GTableFilterPanel;
 import docking.widgets.table.RowObjectTableModel;
 import ghidra.framework.options.PreferenceState;
 import ghidra.framework.options.SaveState;
@@ -35,7 +34,7 @@ import ghidra.util.Msg;
  * @param <R> the row type of the table.
  */
 public class ColumnFilterSaveManager<R> {
-	private static final String COLUMN_FILTER_EXTENSION = ".ColumnFilterExtension";
+
 	private static final String COLUMN_FILTER_STATE = "COLUMN_FILTER_STATE";
 
 	private List<ColumnBasedTableFilter<R>> filters = new ArrayList<>();
@@ -46,14 +45,15 @@ public class ColumnFilterSaveManager<R> {
 	/**
 	 * Constructor
 	 *
-	 * @param panel The GTableFilterPanel for the table.
+	 * @param tablePreferenceKey the key used to save table settings.   This is used to make a 
+	 * preference key for saving the column filters.
 	 * @param table The JTable that is filterable.
 	 * @param model the TableModel that supports filtering.
 	 * @param dataSource the table's DataSource object.
 	 */
-	public ColumnFilterSaveManager(GTableFilterPanel<R> panel, JTable table,
+	public ColumnFilterSaveManager(String tablePreferenceKey, JTable table,
 			RowObjectTableModel<R> model, Object dataSource) {
-		preferenceKey = panel.getPreferenceKey() + COLUMN_FILTER_EXTENSION;
+		preferenceKey = tablePreferenceKey + ColumnFilterManager.FILTER_EXTENSION;
 		loadFromPreferences(table, model, dataSource);
 	}
 

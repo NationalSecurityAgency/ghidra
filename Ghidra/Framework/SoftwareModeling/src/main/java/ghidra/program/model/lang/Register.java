@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -64,8 +64,8 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 	private Register baseRegister;
 	private String group;
 
-	/** Set of valid lane sizes **/
-	private TreeSet<Integer> laneSizes;
+	/** Bit vector of valid lane sizes **/
+	private long laneSizes;
 
 	/**
 	 * Constructs a new Register object.
@@ -101,6 +101,7 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 		this.typeFlags = typeFlags;
 		this.bigEndian = bigEndian;
 		this.bitLength = bitLength;
+		this.laneSizes = 0;
 
 		int leastSigByte = leastSignificantBit / 8;
 		int mostSigByte = (leastSignificantBit + bitLength - 1) / 8;
@@ -509,10 +510,10 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 		if (!isVectorRegister()) {
 			return false;
 		}
-		if (laneSizes == null) {
+		if (laneSizeInBytes > 64 || laneSizeInBytes < 1) {
 			return false;
 		}
-		return laneSizes.contains(laneSizeInBytes);
+		return (((1L << (laneSizeInBytes - 1)) & laneSizes) != 0);
 	}
 
 	/**
@@ -522,13 +523,19 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 	 *         lane sizes have been set.
 	 */
 	public int[] getLaneSizes() {
-		if (laneSizes == null) {
+		if (laneSizes == 0) {
 			return null;
 		}
-		int[] sizes = new int[laneSizes.size()];
+		int[] sizes = new int[Long.bitCount(laneSizes)];
 		int index = 0;
-		for (int size : laneSizes) {
-			sizes[index++] = size;
+		int size = 1;
+		long tmp = laneSizes;
+		while (tmp != 0) {
+			if ((tmp & 1) != 0) {
+				sizes[index++] = size;
+			}
+			tmp >>= 1;
+			size += 1;
 		}
 		return sizes;
 	}
@@ -546,16 +553,13 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 			throw new UnsupportedOperationException(
 				"Register " + getName() + " does not support lanes");
 		}
-		if (laneSizeInBytes <= 0 || laneSizeInBytes >= numBytes ||
+		if (laneSizeInBytes <= 0 || laneSizeInBytes >= numBytes || laneSizeInBytes > 64 ||
 			(numBytes % laneSizeInBytes) != 0) {
 			throw new IllegalArgumentException(
 				"Invalid lane size: " + laneSizeInBytes + " for register " + getName());
 		}
-		if (laneSizes == null) {
-			laneSizes = new TreeSet<>();
-		}
 		typeFlags |= TYPE_VECTOR;
-		laneSizes.add(laneSizeInBytes);
+		laneSizes |= (1L << (laneSizeInBytes - 1));
 	}
 
 }

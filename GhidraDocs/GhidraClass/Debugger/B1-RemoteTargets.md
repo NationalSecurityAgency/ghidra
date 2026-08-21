@@ -126,7 +126,7 @@ If that doesn't work, then in the worst case, copy the Python source over and ad
 
 Double-check that you have installed all the required packages and their dependencies.
 A common forgotten or incorrectly-versioned dependency is `protobuf`.
-We developed using `protobuf==3.20.3`.
+We developed using `protobuf==3.20.3`, newer versions generally work fine.
 Its "sdist" package is distributed with Ghidra under `Debugger-rmi-trace/pypkg/dist` for your convenience.
 
 It is also possible that `gdb` has embedded a different version of the interpreter than the one that `python3` provides.
@@ -145,8 +145,8 @@ Or, inside `gdb`:
 >>> sys.version
 ```
 
-Suppose this identifies version 3.7.
-Retry the installation commands using `python3.7 -m pip ...`.
+Suppose this identifies version 3.9.
+Retry the installation commands using `python3.9 -m pip ...`.
 If you have multiple copies of the same version in different locations, you may need to invoke `python3` using its complete path.
 
 In the worst case, copy the Python source over and add it to your `PYTHONPATH`.

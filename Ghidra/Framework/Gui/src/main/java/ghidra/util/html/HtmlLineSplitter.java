@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -101,10 +101,9 @@ public class HtmlLineSplitter {
 	 * 
 	 * <P>Once the maximum provided length is passed, the algorithm attempts to split on a word
 	 * boundary by first looking backwards in the given line (since the last split value) to
-	 * find a space.  If no space is found in that direction, then the the algorithm will
-	 * keep walking forward until either a space is found or {@link #MAX_WORD_LENGTH} is
-	 * passed, at which point the line will be ended, splitting any word that surrounds 
-	 * that index.
+	 * find a space.  If no space is found in that direction, then the algorithm will keep
+	 * walking forward until either a space is found or {@link #MAX_WORD_LENGTH} is passed,
+	 * at which point the line will be ended, splitting any word that surrounds that index.
 	 * 
 	 * @param text the text to wrap
 	 * @param maxLineLength the max desired length of each output line

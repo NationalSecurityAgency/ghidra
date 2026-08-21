@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,12 +23,7 @@ import java.util.List;
 import com.google.gson.JsonArray;
 
 import ghidra.program.model.address.Address;
-import ghidra.program.model.symbol.ExternalLocation;
-import ghidra.program.model.symbol.ExternalReference;
-import ghidra.program.model.symbol.Reference;
-import ghidra.program.model.symbol.ReferenceManager;
-import ghidra.program.model.symbol.ShiftedReference;
-import ghidra.program.model.symbol.StackReference;
+import ghidra.program.model.symbol.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import sarif.export.AbstractExtWriter;
@@ -63,9 +58,7 @@ public class SarifReferenceWriter extends AbstractExtWriter {
 		for (Address addr : references) {
 			Reference[] refs = referenceManager.getReferencesFrom(addr);
 			for (int i = 0; i < refs.length; i++) {
-				if (monitor.isCancelled()) {
-					throw new CancelledException();
-				}
+				monitor.checkCancelled();
 				Reference ref = refs[i];
 				if (ref.isRegisterReference()) {
 					ExtRegisterReference mref = new ExtRegisterReference(ref);
@@ -107,6 +100,7 @@ public class SarifReferenceWriter extends AbstractExtWriter {
 		}
 	}
 	
+	@Override
 	public JsonArray getResults() {
 		return objects;
 	}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,6 +23,7 @@ import ghidra.GhidraOptions;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.*;
 import ghidra.app.util.ListingHighlightProvider;
+import ghidra.app.util.SearchConstants;
 import ghidra.app.util.viewer.field.ListingField;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.OptionsChangeListener;
@@ -39,7 +40,7 @@ class LocationReferencesHighlighter {
 	private static final String MARKER_SET_DESCRIPTION = "Shows the location of references " +
 		"currently displayed in the Location References window.";
 
-	private static final String OPTIONS_TITLE = GhidraOptions.OPTION_SEARCH_TITLE;
+	private static final String OPTIONS_TITLE = SearchConstants.SEARCH_OPTION_NAME;
 	private static final String HIGHLIGHT_COLOR_KEY =
 		"Reference Search" + GhidraOptions.DELIMITER + "Highlight Match Color";
 	private static final String HIGHLIGHT_COLOR_DESCRIPTION =

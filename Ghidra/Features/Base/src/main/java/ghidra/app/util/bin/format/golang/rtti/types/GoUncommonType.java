@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,9 +50,7 @@ public class GoUncommonType {
 	long moff;
 
 	/**
-	 * Returns the package path of the type.
-	 * 
-	 * @return package path of the type
+	 * {@return  the package path of the type}
 	 * @throws IOException if error reading data
 	 */
 	@Markup
@@ -61,8 +59,7 @@ public class GoUncommonType {
 	}
 
 	/**
-	 * Returns the package path of the type.
-	 * @return package path of the type, as a string
+	 * {@return the package path of the type}
 	 * @throws IOException if error reading data
 	 */
 	public String getPackagePathString() throws IOException {
@@ -71,18 +68,14 @@ public class GoUncommonType {
 	}
 
 	/**
-	 * Returns a slice containing the methods defined by the type.
-	 * 
-	 * @return slice containing the methods defined by the type
+	 * {@return a slice containing the methods defined by the type}
 	 */
 	public GoSlice getMethodsSlice() {
 		return new GoSlice(context.getFieldLocation(moff), mcount, mcount, programContext);
 	}
 
 	/**
-	 * Returns a list of the methods defined by the type.
-	 * 
-	 * @return list of the methods defined by the type
+	 * {@return a list of the methods defined by the type}
 	 * @throws IOException if error reading data
 	 */
 	public List<GoMethod> getMethods() throws IOException {
@@ -96,17 +89,17 @@ public class GoUncommonType {
 	}
 
 	/**
-	 * Returns the location of where this object, and any known associated optional
-	 * structures ends.
-	 * 
-	 * @return index location of end of this type object
+	 * {@return the location of where this object, and any known associated optional
+	 * structures ends}
 	 */
 	public long getEndOfTypeInfo() {
 		if (mcount == 0) {
 			return context.getStructureEnd();
 		}
-		GoSlice slice = getMethodsSlice();
-		return slice.getArrayEnd(GoMethod.class);
+		// calc end of method array manually since getMethodsSlice() is an artificial slice
+		long methodArrayStart = context.getFieldLocation(moff);
+		return methodArrayStart +
+			mcount * programContext.getStructureMappingInfo(GoMethod.class).getStructureLength();
 	}
 
 }

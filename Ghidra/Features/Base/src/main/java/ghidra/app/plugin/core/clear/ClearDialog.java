@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,9 +25,9 @@ import javax.swing.*;
 
 import docking.DialogComponentProvider;
 import docking.widgets.checkbox.GCheckBox;
-import docking.widgets.checkbox.GHtmlCheckBox;
 import docking.widgets.label.GLabel;
 import ghidra.app.context.ListingActionContext;
+import ghidra.app.plugin.core.clear.ClearOptions.ClearType;
 import ghidra.util.HelpLocation;
 
 /**
@@ -41,7 +41,8 @@ public class ClearDialog extends DialogComponentProvider {
 	private JCheckBox symbolsCb;
 	private JCheckBox commentsCb;
 	private JCheckBox propertiesCb;
-	private JCheckBox codeCb;
+	private JCheckBox instructionsCb;
+	private JCheckBox dataCb;
 	private JCheckBox functionsCb;
 	private JCheckBox registersCb;
 	private JCheckBox equatesCb;
@@ -72,22 +73,23 @@ public class ClearDialog extends DialogComponentProvider {
 	public void okCallback() {
 		close();
 
-		ClearOptions opts = new ClearOptions();
+		ClearOptions options = new ClearOptions();
 
-		opts.setClearCode(codeCb.isSelected());
-		opts.setClearSymbols(symbolsCb.isSelected());
-		opts.setClearComments(commentsCb.isSelected());
-		opts.setClearProperties(propertiesCb.isSelected());
-		opts.setClearFunctions(functionsCb.isSelected());
-		opts.setClearRegisters(registersCb.isSelected());
-		opts.setClearEquates(equatesCb.isSelected());
-		opts.setClearUserReferences(userReferencesCb.isSelected());
-		opts.setClearAnalysisReferences(analysisReferencesCb.isSelected());
-		opts.setClearImportReferences(importReferencesCb.isSelected());
-		opts.setClearDefaultReferences(systemReferencesCb.isSelected());
-		opts.setClearBookmarks(bookmarksCb.isSelected());
+		options.setShouldClear(ClearType.INSTRUCTIONS, instructionsCb.isSelected());
+		options.setShouldClear(ClearType.DATA, dataCb.isSelected());
+		options.setShouldClear(ClearType.SYMBOLS, symbolsCb.isSelected());
+		options.setShouldClear(ClearType.COMMENTS, commentsCb.isSelected());
+		options.setShouldClear(ClearType.PROPERTIES, propertiesCb.isSelected());
+		options.setShouldClear(ClearType.FUNCTIONS, functionsCb.isSelected());
+		options.setShouldClear(ClearType.REGISTERS, registersCb.isSelected());
+		options.setShouldClear(ClearType.EQUATES, equatesCb.isSelected());
+		options.setShouldClear(ClearType.USER_REFERENCES, userReferencesCb.isSelected());
+		options.setShouldClear(ClearType.ANALYSIS_REFERENCES, analysisReferencesCb.isSelected());
+		options.setShouldClear(ClearType.IMPORT_REFERENCES, importReferencesCb.isSelected());
+		options.setShouldClear(ClearType.DEFAULT_REFERENCES, systemReferencesCb.isSelected());
+		options.setShouldClear(ClearType.BOOKMARKS, bookmarksCb.isSelected());
 
-		plugin.clear(opts, context);
+		plugin.clear(options, context);
 	}
 
 	/**
@@ -123,11 +125,12 @@ public class ClearDialog extends DialogComponentProvider {
 		cbPanel.setLayout(bl);
 
 		symbolsCb = new GCheckBox("Symbols");
-		commentsCb = new GHtmlCheckBox(
-			"<html>Comments <FONT SIZE=\"2\">(does not affect automatic comments)</FONT>");
+		commentsCb = new GCheckBox("Comments");
+		commentsCb.setToolTipText("Does not clear automatic comments.");
 		commentsCb.setVerticalTextPosition(SwingConstants.TOP);
 		propertiesCb = new GCheckBox("Properties");
-		codeCb = new GCheckBox("Code");
+		instructionsCb = new GCheckBox("Instructions");
+		dataCb = new GCheckBox("Data");
 		functionsCb = new GCheckBox("Functions");
 		registersCb = new GCheckBox("Registers");
 		equatesCb = new GCheckBox("Equates");
@@ -143,8 +146,10 @@ public class ClearDialog extends DialogComponentProvider {
 		commentsCb.addKeyListener(listener);
 		propertiesCb.setSelected(true);
 		propertiesCb.addKeyListener(listener);
-		codeCb.setSelected(true);
-		codeCb.addKeyListener(listener);
+		instructionsCb.setSelected(true);
+		instructionsCb.addKeyListener(listener);
+		dataCb.setSelected(true);
+		dataCb.addKeyListener(listener);
 		functionsCb.setSelected(true);
 		functionsCb.addKeyListener(listener);
 		registersCb.setSelected(true);
@@ -165,7 +170,8 @@ public class ClearDialog extends DialogComponentProvider {
 		cbPanel.add(symbolsCb);
 		cbPanel.add(commentsCb);
 		cbPanel.add(propertiesCb);
-		cbPanel.add(codeCb);
+		cbPanel.add(instructionsCb);
+		cbPanel.add(dataCb);
 		cbPanel.add(userReferencesCb);
 		cbPanel.add(analysisReferencesCb);
 		cbPanel.add(importReferencesCb);
@@ -175,12 +181,12 @@ public class ClearDialog extends DialogComponentProvider {
 		cbPanel.add(equatesCb);
 		cbPanel.add(bookmarksCb);
 
-		// if a user clears the code, then we will force them
+		// if a user clears instructions and data, then we will force them
 		// to clear all user references...
-		codeCb.addItemListener(new ItemListener() {
+		ItemListener itemListener = new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
-				if (codeCb.isSelected()) {
+				if (instructionsCb.isSelected() && dataCb.isSelected()) {
 					userReferencesCb.setSelected(true);
 					userReferencesCb.setEnabled(false);
 					analysisReferencesCb.setSelected(true);
@@ -197,7 +203,9 @@ public class ClearDialog extends DialogComponentProvider {
 					systemReferencesCb.setEnabled(true);
 				}
 			}
-		});
+		};
+		instructionsCb.addItemListener(itemListener);
+		dataCb.addItemListener(itemListener);
 
 		userReferencesCb.setEnabled(false);
 		analysisReferencesCb.setEnabled(false);
@@ -209,7 +217,8 @@ public class ClearDialog extends DialogComponentProvider {
 		checkBoxList.add(symbolsCb);
 		checkBoxList.add(commentsCb);
 		checkBoxList.add(propertiesCb);
-		checkBoxList.add(codeCb);
+		checkBoxList.add(instructionsCb);
+		checkBoxList.add(dataCb);
 		checkBoxList.add(userReferencesCb);
 		checkBoxList.add(analysisReferencesCb);
 		checkBoxList.add(importReferencesCb);

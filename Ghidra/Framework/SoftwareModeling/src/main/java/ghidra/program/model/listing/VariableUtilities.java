@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -614,7 +614,7 @@ public class VariableUtilities {
 		}
 
 		if (conflicts != null) {
-			generateConflictException(newStorage, conflicts, 4);
+			generateConflictException(var, newStorage, conflicts, 4);
 		}
 	}
 
@@ -622,8 +622,8 @@ public class VariableUtilities {
 	 * Check for variable storage conflict and optionally remove conflicting variables.
 	 * @param existingVariables variables to check (may contain null entries)
 	 * @param var function variable
-	 * @param conflictHandler variable conflict handler
 	 * @param newStorage variable storage
+	 * @param conflictHandler variable conflict handler
 	 * @throws VariableSizeException if another variable conflicts
 	 */
 	public static void checkVariableConflict(List<? extends Variable> existingVariables,
@@ -653,7 +653,7 @@ public class VariableUtilities {
 
 		if (conflicts != null) {
 			if (conflictHandler == null || !conflictHandler.resolveConflicts(conflicts)) {
-				generateConflictException(newStorage, conflicts, 4);
+				generateConflictException(var, newStorage, conflicts, 4);
 			}
 		}
 	}
@@ -667,18 +667,33 @@ public class VariableUtilities {
 		boolean resolveConflicts(List<Variable> conflicts);
 	}
 
-	private static void generateConflictException(VariableStorage newStorage,
+	private static void appendVariableStorageDetails(Variable var, VariableStorage storage,
+			StringBuilder msg) {
+		if (var != null) {
+			msg.append(var.getName());
+			msg.append("{");
+			msg.append(storage);
+			msg.append("}");
+		}
+		else {
+			msg.append(storage);
+		}
+	}
+
+	private static void generateConflictException(Variable var, VariableStorage newStorage,
 			List<Variable> conflicts, int maxConflictVarDetails) throws VariableSizeException {
 
 		maxConflictVarDetails = Math.min(conflicts.size(), maxConflictVarDetails);
 
-		StringBuffer msg = new StringBuffer();
-		msg.append("Variable storage conflict between " + newStorage + " and: ");
+		StringBuilder msg = new StringBuilder("Variable storage conflict between ");
+		appendVariableStorageDetails(var, newStorage, msg);
+		msg.append(" and ");
 		for (int i = 0; i < maxConflictVarDetails; i++) {
 			if (i != 0) {
 				msg.append(", ");
 			}
-			msg.append(conflicts.get(i).getVariableStorage().toString());
+			Variable v = conflicts.get(i);
+			appendVariableStorageDetails(v, v.getVariableStorage(), msg);
 		}
 		if (maxConflictVarDetails < conflicts.size()) {
 			msg.append(" ... {");
@@ -730,14 +745,15 @@ public class VariableUtilities {
 
 			DataType dt = findOrCreateClassStruct(function);
 			if (dt == null) {
-				dt = DataType.VOID;
+				dt = VoidDataType.dataType;
 			}
 			dt = new PointerDataType(dt);
 			DataType[] arr = new DataType[2];
-			arr[0] = DataType.VOID;
+			arr[0] = VoidDataType.dataType;
 			arr[1] = dt;
 			VariableStorage thisStorage =
-				convention.getStorageLocations(function.getProgram(), arr, true)[1];
+				convention.getStorageLocations(function.getProgram(), arr, true,
+					function.hasVarArgs())[1];
 			try {
 				return new ParameterImpl("this", 0, dt, thisStorage, false, function.getProgram(),
 					SourceType.ANALYSIS);

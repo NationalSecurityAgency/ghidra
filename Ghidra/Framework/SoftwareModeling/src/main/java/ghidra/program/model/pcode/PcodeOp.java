@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,7 +62,7 @@ public class PcodeOp {
 	public static final int INT_SLESS = 13;         	// Return TRUE if signed op1 < signed op2
 	public static final int INT_SLESSEQUAL = 14;	// Return TRUE if signed op1 <= signed op2
 	public static final int INT_LESS = 15;		// Return TRUE if unsigned op1 < unsigned op2
-	// Also indicates borrow on unsigned substraction
+	// Also indicates borrow on unsigned subtraction
 	public static final int INT_LESSEQUAL = 16;	// Return TRUE if unsigned op1 <= unsigned op2
 	public static final int INT_ZEXT = 17;		// Zero extend operand 
 	public static final int INT_SEXT = 18;		// Sign extend operand 
@@ -130,11 +130,12 @@ public class PcodeOp {
 	public static final int CPOOLREF = 68;
 	public static final int NEW = 69;
 	public static final int INSERT = 70;
-	public static final int EXTRACT = 71;
+	public static final int ZPULL = 71;
 	public static final int POPCOUNT = 72;
 	public static final int LZCOUNT = 73;
+	public static final int SPULL = 74;
 
-	public static final int PCODE_MAX = 74;
+	public static final int PCODE_MAX = 75;
 
 	private static Hashtable<String, Integer> opcodeTable;
 
@@ -431,14 +432,14 @@ public class PcodeOp {
 
 	/**
 	 * Encode just the opcode and input/output Varnode data for this PcodeOp to a stream
-	 * as an \<op> element
+	 * as an {@code <op>} element
 	 * @param encoder is the stream encoder
 	 * @param addrFactory is a factory for looking up encoded address spaces
 	 * @throws IOException for errors in the underlying stream
 	 */
 	public void encodeRaw(Encoder encoder, AddressFactory addrFactory) throws IOException {
 		encoder.openElement(ELEM_OP);
-		encoder.writeSignedInteger(ATTRIB_CODE, opcode);
+		encoder.writeOpcode(ATTRIB_CODE, opcode);
 		encoder.writeSignedInteger(ATTRIB_SIZE, input.length);
 		if (output == null) {
 			encoder.openElement(ELEM_VOID);
@@ -689,19 +690,22 @@ public class PcodeOp {
 				return "PTRADD";
 			case PTRSUB:
 				return "PTRSUB";
+			case SEGMENTOP:
+				return "SEGMENTOP";
 			case CPOOLREF:
 				return "CPOOLREF";
 			case NEW:
 				return "NEW";
 			case INSERT:
 				return "INSERT";
-			case EXTRACT:
-				return "EXTRACT";
+			case ZPULL:
+				return "ZPULL";
 			case POPCOUNT:
 				return "POPCOUNT";
 			case LZCOUNT:
 				return "LZCOUNT";
-
+			case SPULL:
+				return "SPULL";
 			default:
 				return "INVALID_OP";
 		}

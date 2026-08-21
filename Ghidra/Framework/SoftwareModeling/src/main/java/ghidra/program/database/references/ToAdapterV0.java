@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,6 @@ import java.io.IOException;
 
 import db.*;
 import db.util.ErrorHandler;
-import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.*;
 import ghidra.program.model.address.*;
@@ -58,17 +57,15 @@ class ToAdapterV0 extends ToAdapter {
 	}
 
 	@Override
-	public RefList createRefList(ProgramDB program, DBObjectCache<RefList> cache, Address to)
-			throws IOException {
+	public RefList createRefList(ProgramDB program, Address to) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public RefList getRefList(ProgramDB program, DBObjectCache<RefList> cache, Address to,
-			long toAddr) throws IOException {
+	public RefList getRefList(ProgramDB program, Address to, long toAddr) throws IOException {
 		DBRecord rec = translateRecord(table.getRecord(toAddr));
 		if (rec != null) {
-			return new RefListV0(rec, this, addrMap, program, cache, false);
+			return RefListV0.instantiateExisting(rec, this, addrMap, program, false);
 		}
 		return null;
 	}
@@ -140,7 +137,7 @@ class ToAdapterV0 extends ToAdapter {
 
 	private byte getRefLevel(DBRecord newRec) {
 		try {
-			RefList refList = new RefListV0(newRec, this, addrMap, null, null, false);
+			RefList refList = RefListV0.instantiateExisting(newRec, this, addrMap, null, false);
 			Reference[] refs = refList.getAllRefs();
 			byte refLevel = (byte) -1;
 			for (Reference ref : refs) {

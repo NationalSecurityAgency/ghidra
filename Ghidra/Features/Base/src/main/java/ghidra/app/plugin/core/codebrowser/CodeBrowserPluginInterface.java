@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,22 +22,21 @@ import ghidra.program.util.ProgramSelection;
 
 public interface CodeBrowserPluginInterface {
 
-	PluginTool getTool();
+	public PluginTool getTool();
 
-	String getName();
+	public String getName();
 
-	void providerClosed(CodeViewerProvider codeViewerProvider);
+	public boolean isDisposed();
 
-	boolean isDisposed();
+	public void providerClosed(CodeViewerProvider provider);
 
-	void locationChanged(CodeViewerProvider codeViewerProvider, ProgramLocation loc);
+	public void broadcastLocationChanged(CodeViewerProvider provider, ProgramLocation loc);
 
-	void selectionChanged(CodeViewerProvider codeViewerProvider, ProgramSelection currentSelection);
+	public void broadcastSelectionChanged(CodeViewerProvider provider, ProgramSelection selection);
 
-	void highlightChanged(CodeViewerProvider codeViewerProvider, ProgramSelection highlight);
+	public void broadcastHighlightChanged(CodeViewerProvider provider, ProgramSelection highlight);
 
-	ViewManagerService getViewManager(CodeViewerProvider codeViewerProvider);
+	public ViewManagerService getViewManager(CodeViewerProvider provider);
 
-	CodeViewerProvider createNewDisconnectedProvider();
-
+	public CodeViewerProvider createNewDisconnectedProvider();
 }

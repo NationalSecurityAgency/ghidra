@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -68,7 +68,7 @@ import ghidra.util.task.TaskMonitorComponent;
 //@formatter:on
 public class InstructionSearchPlugin extends ProgramPlugin {
 
-	final static String SEARCH_ACTION_NAME = "Search Instruction Patterns";
+	public static final String SEARCH_ACTION_NAME = "Search Instruction Patterns";
 
 	private TaskMonitor taskMonitor;
 
@@ -144,7 +144,7 @@ public class InstructionSearchPlugin extends ProgramPlugin {
 		// immediately return and display an error message if they do.
 		if (selection.getNumAddresses() == 0) {
 			dialog.displayMessage(
-				"Select instructions from the listing (and hit reload) to populate the table.",
+				"Select instructions from the listing (and hit reload/add) to populate the table.",
 				Messages.NORMAL);
 			return false;
 		}
@@ -201,8 +201,7 @@ public class InstructionSearchPlugin extends ProgramPlugin {
 	}
 
 	/**
-	 * Returns true if the number of instructions selected is less or equal to
-	 * MAX_SELECTION_SIZE.
+	 * Returns true if the number of instructions selected is less or equal to MAX_SELECTION_SIZE.
 	 * 
 	 * @param selection the program selection
 	 * @return true if the selection size is valid
@@ -217,7 +216,7 @@ public class InstructionSearchPlugin extends ProgramPlugin {
 	/**
 	 * Returns true if the user has selected one and only one range of
 	 * instructions.
-	 * 
+	 * <p>
 	 * If there are multiple ranges, this could be for two reasons: 1) the user
 	 * has (via the mouse) selected more than one set of address ranges, or 2)
 	 * the user selects a single region but that region spans memory blocks;
@@ -227,7 +226,7 @@ public class InstructionSearchPlugin extends ProgramPlugin {
 	 * 
 	 * @param selection the program selection
 	 * @return true if the selection range is valid
-	 * @throws InvalidInputException
+	 * @throws InvalidInputException if the given selection is invalid
 	 */
 	private boolean isSelectionRangeValid(ProgramSelection selection) throws InvalidInputException {
 		Set<String> blockNames = new HashSet<>();

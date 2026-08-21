@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ import java.awt.Component;
  * {@link #TaskLauncher(Task, Component, int, int)}.  Alternatively, for simpler uses,
  * see one of the many static convenience methods.
  * 
- * <p><b><a id="modal_usage">Modal Usage</a></b><br>
+ * <p><a id="modal_usage"><b>Modal Usage</b></a></p>
  * Most clients of this class should not be concerned with where 
  * the dialog used by this class will appear.  By default, it will be shown over 
  * the active window, which is the desired
@@ -63,13 +63,12 @@ public class TaskLauncher {
 	/**
 	 * A convenience method to directly run a {@link MonitoredRunnable} in a separate
 	 * thread as a {@link Task}, displaying a non-modal progress dialog.
-	 * <p>
-	 * <code>
-	 * TaskLauncher.launchNonModal( "My task", <br>
-	 *  &nbsp;&nbsp;null, // parent<br>
-	 * 	&nbsp;&nbsp;monitor -&gt; { while ( !monitor.isCanceled() ) { longRunningWork(); } }<br>
+	 * <pre>{@code
+	 * TaskLauncher.launchNonModal("My task",
+	 *   null, // parent
+	 *   monitor -> { while (!monitor.isCanceled()) { longRunningWork(); } }
 	 * );
-	 * </code>
+	 * }</pre>
 	 *
 	 * <p>Note: the task created by this call will be both cancellable and have progress.  If
 	 * you task cannot be cancelled or does not have progress, then do not use this
@@ -93,13 +92,12 @@ public class TaskLauncher {
 	/**
 	 * A convenience method to directly run a {@link MonitoredRunnable} in a separate
 	 * thread as a {@link Task}, displaying a <b>modal</b> progress dialog.
-	 * <p>
-	 * <code>
-	 * TaskLauncher.launchModal( "My task", <br>
-	 *  &nbsp;&nbsp;null, // parent<br>
-	 * 	&nbsp;&nbsp;monitor -&gt; { while ( !monitor.isCanceled() ) { longRunningWork(); } }<br>
+	 * <pre>{@code
+	 * TaskLauncher.launchModal("My task",
+	 *    null, // parent
+	 *    monitor -> { while (!monitor.isCanceled()) { longRunningWork(); } }
 	 * );
-	 * </code>
+	 * }</pre>
 	 *
 	 * <p>Note: the task created by this call will be both cancellable and have progress.  If
 	 * you task cannot be cancelled or does not have progress, then do not use this
@@ -128,11 +126,11 @@ public class TaskLauncher {
 	 * to have it immediately go away.  If you desire this default behavior, then do not use
 	 * this convenience method.
 	 *
-	 * <p><code>
-	 * TaskLauncher.launchModal( "My task", <br>
-	 * 	&nbsp;&nbsp;monitor -&gt; { { foo(); }<br>
+	 * <pre>{@code
+	 * TaskLauncher.launchModal("My task",
+	 *   monitor -> { foo(); }
 	 * );
-	 * </code>
+	 * }</pre>
 	 *
 	 * <p>Note: the task created by this call will not be cancellable nor have progress.  If
 	 * you need either of these behaviors, the do not use this

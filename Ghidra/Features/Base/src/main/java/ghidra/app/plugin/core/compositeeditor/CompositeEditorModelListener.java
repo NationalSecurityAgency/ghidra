@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,16 +51,6 @@ public interface CompositeEditorModelListener extends CompositeViewerModelListen
      * COMPOSITE_LOADED, NO_COMPOSITE_LOADED, EDIT_STARTED, EDIT_ENDED.
      */
 	public abstract void compositeEditStateChanged(int type);
-
-//    /**
-//     * Called when the data type for one of our components changes.
-//     * This means that any component that has this data type may have consumed
-//     * undefined bytes which followed it. Therefore any change that has been
-//     * started, but not finished yet, may not be allowable and should be
-//     * cancelled.
-//     * @param dt the data type that has changed.
-//     */
-//    public abstract void componentDataTypeChanged(DataType dt);
     
     /**
      * Called when the model wants to end cell editing that is in progress.

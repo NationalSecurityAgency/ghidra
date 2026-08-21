@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,5 +40,28 @@ public interface TypeDefSettingsDefinition extends SettingsDefinition {
 	 * @return attribute specification or null if not currently set.
 	 */
 	String getAttributeSpecification(Settings settings);
+
+	/**
+	 * Create a new list of {@link TypeDefSettingsDefinition}s by concat'ing a base list with
+	 * a var-arg'ish additional list of setting defs.  Any additional duplicates are discarded.
+	 * @param settings List of settings defs.
+	 * @param additional More settings defs to add
+	 * @return new array with all the settings defs joined together.
+	 */
+	public static TypeDefSettingsDefinition[] concat(TypeDefSettingsDefinition[] settings,
+			TypeDefSettingsDefinition... additional) {
+		if (additional == null) {
+			return settings;
+		}
+		if (settings == null) {
+			return additional;
+		}
+
+		TypeDefSettingsDefinition[] newArray =
+			new TypeDefSettingsDefinition[settings.length + additional.length];
+		System.arraycopy(settings, 0, newArray, 0, settings.length);
+		System.arraycopy(additional, 0, newArray, settings.length, additional.length);
+		return newArray;
+	}
 
 }

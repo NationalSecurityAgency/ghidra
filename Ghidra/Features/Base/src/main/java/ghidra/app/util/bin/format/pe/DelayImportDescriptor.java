@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,6 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.*;
 import ghidra.program.model.symbol.SymbolUtilities;
-import ghidra.util.Conv;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -30,7 +29,6 @@ import ghidra.util.exception.DuplicateNameException;
  * A class to represent the 
  * <code>ImgDelayDescr</code>
  * data structure defined in <b><code>DELAYIMP.H</code></b>.
- * <p>
  * <pre>
  * typedef struct ImgDelayDescr {
  *     DWORD           grAttrs;        // attributes
@@ -86,6 +84,18 @@ public class DelayImportDescriptor implements StructConverter {
 		if (thunksINT == null) {
 			return;
 		}
+		
+		// Warn if the INT and IAT declare different numbers of entries. These are parallel arrays 
+		// so a length mismatch is malformed. The thunk lists include the trailing null terminator, 
+		// so the import count is size() - 1. This only surfaces the discrepancy; it does not change
+		// import enumeration.
+		if (pIAT != 0 && pINT != 0 && thunksIAT.size() != thunksINT.size()) {
+			int intCount = Math.max(0, thunksINT.size() - 1);
+			int iatCount = Math.max(0, thunksIAT.size() - 1);
+			Msg.warn(this, "Delay-load INT/IAT import count mismatch for '%s': INT=%d IAT=%d"
+					.formatted(dllName != null ? dllName : "unknown DLL", intCount, iatCount));
+		}
+		
 		thunksBoundIAT = readThunks(ntHeader, reader, pBoundIAT, false);
 		if (thunksBoundIAT == null) {
 			return;
@@ -176,17 +186,17 @@ public class DelayImportDescriptor implements StructConverter {
 	private void readFields(BinaryReader reader, int index) throws IOException {
 		grAttrs = reader.readInt(index);
 		index += BinaryReader.SIZEOF_INT;
-		szName = reader.readInt(index) & Conv.INT_MASK;
+		szName = reader.readUnsignedInt(index);
 		index += BinaryReader.SIZEOF_INT;
-		phmod = reader.readInt(index) & Conv.INT_MASK;
+		phmod = reader.readUnsignedInt(index);
 		index += BinaryReader.SIZEOF_INT;
-		pIAT = reader.readInt(index) & Conv.INT_MASK;
+		pIAT = reader.readUnsignedInt(index);
 		index += BinaryReader.SIZEOF_INT;
-		pINT = reader.readInt(index) & Conv.INT_MASK;
+		pINT = reader.readUnsignedInt(index);
 		index += BinaryReader.SIZEOF_INT;
-		pBoundIAT = reader.readInt(index) & Conv.INT_MASK;
+		pBoundIAT = reader.readUnsignedInt(index);
 		index += BinaryReader.SIZEOF_INT;
-		pUnloadIAT = reader.readInt(index) & Conv.INT_MASK;
+		pUnloadIAT = reader.readUnsignedInt(index);
 		index += BinaryReader.SIZEOF_INT;
 		dwTimeStamp = reader.readInt(index);
 		index += BinaryReader.SIZEOF_INT;

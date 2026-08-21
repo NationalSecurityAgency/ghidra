@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -180,6 +180,7 @@ public abstract class AbstractEditFunctionSignatureDialog extends DialogComponen
 		mainPanel.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 2));
 		mainPanel.add(buildSignaturePanel());
 		mainPanel.add(buildAttributePanel());
+		mainPanel.getAccessibleContext().setAccessibleName("Edit Function Signature");
 		if (allowCallFixup) {
 			JPanel callFixupPanel = buildCallFixupPanel();
 			mainPanel.add(callFixupPanel != null ? callFixupPanel : buildSpacerPanel());
@@ -197,6 +198,8 @@ public abstract class AbstractEditFunctionSignatureDialog extends DialogComponen
 		signaturePanel.add(signatureField);
 
 		signaturePanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+		signaturePanel.getAccessibleContext().setAccessibleName("Signature");
 
 		return signaturePanel;
 	}
@@ -224,6 +227,8 @@ public abstract class AbstractEditFunctionSignatureDialog extends DialogComponen
 		}
 		attributePanel.add(Box.createGlue());
 
+		attributePanel.getAccessibleContext().setAccessibleName("Attribute");
+
 		return attributePanel;
 	}
 
@@ -235,7 +240,7 @@ public abstract class AbstractEditFunctionSignatureDialog extends DialogComponen
 
 	private void installInlineWidget(JPanel parentPanel) {
 		inlineCheckBox = new GCheckBox("Inline");
-		inlineCheckBox.addChangeListener(e -> {
+		inlineCheckBox.addItemListener(e -> {
 			if (inlineCheckBox.isSelected() && callFixupComboBox != null) {
 				callFixupComboBox.setSelectedItem(NONE_CHOICE);
 			}
@@ -394,8 +399,8 @@ public abstract class AbstractEditFunctionSignatureDialog extends DialogComponen
 	 */
 	protected final FunctionDefinitionDataType parseSignature() throws CancelledException {
 		setFunctionInfo(); // needed for testing which never shows dialog
-		FunctionSignatureParser parser = new FunctionSignatureParser(
-			getDataTypeManager(), tool.getService(DataTypeManagerService.class));
+		FunctionSignatureParser parser = new FunctionSignatureParser(getDataTypeManager(),
+			tool.getService(DataTypeManagerService.class));
 		try {
 			return parser.parse(getFunctionSignature(), getSignature());
 		}

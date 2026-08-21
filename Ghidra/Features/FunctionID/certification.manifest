@@ -1,6 +1,7 @@
 ##VERSION: 2.0
 ##MODULE IP: Nuvola Icons - LGPL 2.1
 Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
 data/building_fid.txt||GHIDRA||||END|
 data/common_symbols_win32.txt||GHIDRA|||Symbols used to generate fiddb files distributed with Ghidra|END|
 data/common_symbols_win64.txt||GHIDRA|||Symbols used to generate fiddb files distributed with Ghidra|END|

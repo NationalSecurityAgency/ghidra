@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,8 @@
  */
 package ghidra.app.util.exporter;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.app.util.Option;
 import ghidra.app.util.OptionException;
@@ -57,13 +58,13 @@ class ProgramTextOptions {
 	private final static int DEFAULT_OPERAND_WIDTH = 40;
 	private final static int DEFAULT_EOL_WIDTH = 40;
 	private final static int DEFAULT_REF_HEADER_WIDTH = 13;
-	private final static int DEFAULT_REF_WIDTH = 40;
+	private final static int DEFAULT_REF_WIDTH = 50; // about 4 refs per line
 	private final static int DEFAULT_STACK_VAR_PRENAME_WIDTH = 10;
 	private final static int DEFAULT_STACK_VAR_NAME_WIDTH = 15;
 	private final static int DEFAULT_STACK_VAR_DATATYPE_WIDTH = 15;
 	private final static int DEFAULT_STACK_VAR_OFFSET_WIDTH = 8;
 	private final static int DEFAULT_STACK_VAR_COMMENT_WIDTH = 20;
-	private final static int DEFAULT_STACK_VAR_XREF_WIDTH = 50;
+	private final static int DEFAULT_STACK_VAR_XREF_WIDTH = 60; // about 5 refs per line
 	private final static int DEFAULT_DATA_FIELD_NAME_WIDTH = 12;
 
 	private final static String DEFAULT_LABEL_SUFFIX = ":";
@@ -105,42 +106,88 @@ class ProgramTextOptions {
 	}
 
 	List<Option> getOptions() {//TODO add right into list
-		Option[] options = new Option[] {
-			new Option(OPTION_INCLUDED_TYPES, OPTION_SHOW_COMMENTS, Boolean.valueOf(showComments)),
-			new Option(OPTION_INCLUDED_TYPES, OPTION_SHOW_PROPERTIES,
-				Boolean.valueOf(showProperties)),
-			new Option(OPTION_INCLUDED_TYPES, OPTION_SHOW_STRUCTURES,
-				Boolean.valueOf(showStructures)),
-			new Option(OPTION_INCLUDED_TYPES, OPTION_SHOW_UNDEFINED,
-				Boolean.valueOf(showUndefinedData)),
-			new Option(OPTION_INCLUDED_TYPES, OPTION_SHOW_REF_HEADER,
-				Boolean.valueOf(showReferenceHeaders)),
-			new Option(OPTION_INCLUDED_TYPES, OPTION_SHOW_BACK_REFS,
-				Boolean.valueOf(showBackReferences)),
-			new Option(OPTION_INCLUDED_TYPES, OPTION_SHOW_FORWARD_REFS,
-				Boolean.valueOf(showForwardReferences)),
-			new Option(OPTION_INCLUDED_TYPES, OPTION_SHOW_FUNCTIONS,
-				Boolean.valueOf(showFunctions)),
-			new Option(OPTION_INCLUDED_TYPES, OPTION_SHOW_BLOCK_NAMES,
-				Boolean.valueOf(showBlockNameInOperands)),
-
-			new Option(OPTION_FIELD_WIDTHS, OPTION_WIDTH_LABEL, Integer.valueOf(labelWidth)),
-			new Option(OPTION_FIELD_WIDTHS, OPTION_WIDTH_ADDR, Integer.valueOf(addrWidth)),
-			new Option(OPTION_FIELD_WIDTHS, OPTION_WIDTH_BYTES, Integer.valueOf(bytesWidth)),
-			new Option(OPTION_FIELD_WIDTHS, OPTION_WIDTH_PREMNEMONIC,
-				Integer.valueOf(preMnemonicWidth)),
-			new Option(OPTION_FIELD_WIDTHS, OPTION_WIDTH_MNEMONIC, Integer.valueOf(mnemonicWidth)),
-			new Option(OPTION_FIELD_WIDTHS, OPTION_WIDTH_OPERAND, Integer.valueOf(operandWidth)),
-			new Option(OPTION_FIELD_WIDTHS, OPTION_WIDTH_EOL, Integer.valueOf(eolWidth)),
-			new Option(OPTION_FIELD_WIDTHS, OPTION_WIDTH_REF, Integer.valueOf(refWidth)),
-			new Option(OPTION_FIELD_WIDTHS, OPTION_WIDTH_DATA_FIELD,
-				Integer.valueOf(dataFieldNameWidth)),
-
-			new Option(OPTION_PREFIXES, OPTION_ADV_LABEL_SUFFIX, labelSuffix),
-			new Option(OPTION_PREFIXES, OPTION_ADV_COMMENT_SUFFIX, commentPrefix), };
-		List<Option> optionsList = new ArrayList<Option>();
-		Collections.addAll(optionsList, options);
-		return optionsList;
+		List<Option> optionList = new ArrayList<>();
+		optionList.add(Option.newBoolean(OPTION_SHOW_COMMENTS)
+				.group(OPTION_INCLUDED_TYPES)
+				.value(showComments)
+				.build());
+		optionList.add(Option.newBoolean(OPTION_SHOW_PROPERTIES)
+				.group(OPTION_INCLUDED_TYPES)
+				.value(showProperties)
+				.build());
+		optionList.add(Option.newBoolean(OPTION_SHOW_STRUCTURES)
+				.group(OPTION_INCLUDED_TYPES)
+				.value(showStructures)
+				.build());
+		optionList.add(Option.newBoolean(OPTION_SHOW_UNDEFINED)
+				.group(OPTION_INCLUDED_TYPES)
+				.value(showUndefinedData)
+				.build());
+		optionList.add(Option.newBoolean(OPTION_SHOW_REF_HEADER)
+				.group(OPTION_INCLUDED_TYPES)
+				.value(showReferenceHeaders)
+				.build());
+		optionList.add(Option.newBoolean(OPTION_SHOW_BACK_REFS)
+				.group(OPTION_INCLUDED_TYPES)
+				.value(showBackReferences)
+				.build());
+		optionList.add(Option.newBoolean(OPTION_SHOW_FORWARD_REFS)
+				.group(OPTION_INCLUDED_TYPES)
+				.value(showForwardReferences)
+				.build());
+		optionList.add(Option.newBoolean(OPTION_SHOW_FUNCTIONS)
+				.group(OPTION_INCLUDED_TYPES)
+				.value(showFunctions)
+				.build());
+		optionList.add(Option.newBoolean(OPTION_SHOW_BLOCK_NAMES)
+				.group(OPTION_INCLUDED_TYPES)
+				.value(showBlockNameInOperands)
+				.build());
+		optionList.add(Option.newInteger(OPTION_WIDTH_LABEL)
+				.group(OPTION_FIELD_WIDTHS)
+				.value(labelWidth)
+				.build());
+		optionList.add(Option.newInteger(OPTION_WIDTH_ADDR)
+				.group(OPTION_FIELD_WIDTHS)
+				.value(addrWidth)
+				.build());
+		optionList.add(Option.newInteger(OPTION_WIDTH_BYTES)
+				.group(OPTION_FIELD_WIDTHS)
+				.value(bytesWidth)
+				.build());
+		optionList.add(Option.newInteger(OPTION_WIDTH_PREMNEMONIC)
+				.group(OPTION_FIELD_WIDTHS)
+				.value(preMnemonicWidth)
+				.build());
+		optionList.add(Option.newInteger(OPTION_WIDTH_MNEMONIC)
+				.group(OPTION_FIELD_WIDTHS)
+				.value(mnemonicWidth)
+				.build());
+		optionList.add(Option.newInteger(OPTION_WIDTH_OPERAND)
+				.group(OPTION_FIELD_WIDTHS)
+				.value(operandWidth)
+				.build());
+		optionList.add(Option.newInteger(OPTION_WIDTH_EOL)
+				.group(OPTION_FIELD_WIDTHS)
+				.value(eolWidth)
+				.build());
+		optionList.add(Option.newInteger(OPTION_WIDTH_REF)
+				.group(OPTION_FIELD_WIDTHS)
+				.value(refWidth)
+				.build());
+		optionList.add(Option.newInteger(OPTION_WIDTH_DATA_FIELD)
+				.group(OPTION_FIELD_WIDTHS)
+				.value(dataFieldNameWidth)
+				.build());
+		optionList.add(Option.newString(OPTION_ADV_LABEL_SUFFIX)
+				.group(OPTION_PREFIXES)
+				.value(labelSuffix)
+				.build());
+		optionList.add(Option.newString(OPTION_ADV_COMMENT_SUFFIX)
+				.group(OPTION_PREFIXES)
+				.value(commentPrefix)
+				.build());
+		return optionList;
 	}
 
 	void setOptions(List<Option> options) throws OptionException {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,13 +83,17 @@ class RegisterValuesPanel extends JPanel {
 
 	}
 
+	boolean hasSelectedRows() {
+		return table.getSelectedRowCount() > 0;
+	}
+
 	private void editRow(int row) {
 		RegisterValueRange range = model.values.get(row);
 		Address start = range.getStartAddress();
 		Address end = range.getEndAddress();
 		BigInteger value = range.getValue();
 		EditRegisterValueDialog dialog = new EditRegisterValueDialog(selectedRegister, start, end,
-			value, currentProgram.getAddressFactory());
+			value, currentProgram);
 		tool.showDialog(dialog, this);
 
 		if (!dialog.wasCancelled()) {
@@ -102,9 +106,9 @@ class RegisterValuesPanel extends JPanel {
 
 	private void updateValue(Address start, Address end, Address newStart, Address newEnd,
 			BigInteger newValue) {
-		CompoundCmd cmd = new CompoundCmd("Update Register Range");
-		Command cmd1 = new SetRegisterCmd(selectedRegister, start, end, null);
-		Command cmd2 = new SetRegisterCmd(selectedRegister, newStart, newEnd, newValue);
+		CompoundCmd<Program> cmd = new CompoundCmd<>("Update Register Range");
+		Command<Program> cmd1 = new SetRegisterCmd(selectedRegister, start, end, null);
+		Command<Program> cmd2 = new SetRegisterCmd(selectedRegister, newStart, newEnd, newValue);
 		cmd.add(cmd1);
 		cmd.add(cmd2);
 		tool.execute(cmd, currentProgram);
@@ -250,7 +254,7 @@ class RegisterValuesPanel extends JPanel {
 	}
 
 	void deleteSelectedRanges() {
-		CompoundCmd cmd = new CompoundCmd("Delete Register Value Ranges");
+		CompoundCmd<Program> cmd = new CompoundCmd<>("Delete Register Value Ranges");
 		int[] rows = table.getSelectedRows();
 		boolean containsDefaultValues = false;
 		for (int row : rows) {
@@ -275,7 +279,7 @@ class RegisterValuesPanel extends JPanel {
 		}
 	}
 
-	void selectedRanges() {
+	void selectRanges() {
 		int[] rows = table.getSelectedRows();
 		AddressSet set = new AddressSet();
 		for (int element : rows) {

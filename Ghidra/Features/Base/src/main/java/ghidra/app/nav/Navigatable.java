@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,8 @@ package ghidra.app.nav;
 import javax.swing.Icon;
 
 import ghidra.app.util.ListingHighlightProvider;
+import ghidra.features.base.memsearch.bytesource.AddressableByteSource;
+import ghidra.features.base.memsearch.bytesource.ProgramByteSource;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
@@ -37,11 +39,20 @@ public interface Navigatable {
 	 * Commands this navigatable to goto (display) the given program and location
 	 *
 	 * @param program the program
-	 *
 	 * @param location the location in that program to display
 	 * @return true if the goto was successful
 	 */
 	public boolean goTo(Program program, ProgramLocation location);
+
+	/**
+	 * Commands this navigatable to goto (display) the given location, using the program 
+	 * in the location.
+	 * @param location the location in that program to display
+	 * @return true if the goto was successful
+	 */
+	public default boolean goTo(ProgramLocation location) {
+		return goTo(location.getProgram(), location);
+	}
 
 	/**
 	 * Returns the current location of this Navigatable
@@ -79,8 +90,9 @@ public interface Navigatable {
 	public Icon getNavigatableIcon();
 
 	/**
-	 * Returns true if this Navigatable is "connected". Navigatables are connected if they produce
-	 * and consume location and selection events.
+	 * Returns true if this Navigatable is "connected".
+	 * <p>
+	 * Navigatables are connected if they produce and consume location and selection events.
 	 *
 	 * @return true if this Navigatable is "connected"
 	 */
@@ -193,5 +205,18 @@ public interface Navigatable {
 	 * @param highlightProvider the provider
 	 * @param program the program
 	 */
-	public void removeHighlightProvider(ListingHighlightProvider highlightProvider, Program program);
+	public void removeHighlightProvider(ListingHighlightProvider highlightProvider,
+			Program program);
+
+	/**
+	 * Returns a source for providing byte values of the program associated with this navigatable.
+	 * <p>
+	 * For a static program, this is just a wrapper for a program's memory. But dynamic programs
+	 * require special handling for reading bytes.
+	 * 
+	 * @return a source of bytes for the navigatable's program
+	 */
+	public default AddressableByteSource getByteSource() {
+		return new ProgramByteSource(getProgram());
+	}
 }

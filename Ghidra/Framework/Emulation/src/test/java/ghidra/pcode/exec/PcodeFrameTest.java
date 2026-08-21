@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  */
 package ghidra.pcode.exec;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.io.File;
 
@@ -128,8 +128,8 @@ public class PcodeFrameTest extends AbstractGTest {
 				<PcodeProgram:
 				<0>
 				  r0 = INT_ADD r0, 1:8
-				  $U280:1 = INT_EQUAL r0, r1
-				  CBRANCH <0>, $U280:1
+				  $U300:1 = INT_EQUAL r0, r1
+				  CBRANCH <0>, $U300:1
 				>""",
 			program.toString());
 	}
@@ -215,8 +215,8 @@ public class PcodeFrameTest extends AbstractGTest {
 				<p-code frame: index=0 {
 				  <0>
 				 -> r0 = INT_ADD r0, 1:8
-				    $U280:1 = INT_EQUAL r0, r1
-				    CBRANCH <0>, $U280:1
+				    $U300:1 = INT_EQUAL r0, r1
+				    CBRANCH <0>, $U300:1
 				}>""",
 			frame.toString());
 	}
@@ -226,7 +226,7 @@ public class PcodeFrameTest extends AbstractGTest {
 		PcodeFrame frame = frame(SAMPLE_BRANCH);
 		assertEquals("""
 				<p-code frame: index=0 {
-				 -> BRANCH *[ram]0x1234:8
+				 -> BRANCH *[NO ADDRESS]0x1234
 				}>""",
 			frame.toString());
 
@@ -234,7 +234,7 @@ public class PcodeFrameTest extends AbstractGTest {
 		frame.finishAsBranch();
 		assertEquals("""
 				<p-code frame: index=-1 branched=0 {
-				 *> BRANCH *[ram]0x1234:8
+				 *> BRANCH *[NO ADDRESS]0x1234
 				}>""",
 			frame.toString());
 	}
@@ -244,7 +244,7 @@ public class PcodeFrameTest extends AbstractGTest {
 		PcodeFrame frame = frame(SAMPLE_LANG_USEROP);
 		assertEquals("""
 				<p-code frame: index=0 {
-				 -> CALLOTHER \"pcodeop_one\", r0
+				 -> CALLOTHER "pcodeop_one", r0
 				}>""",
 			frame.toString());
 	}
@@ -254,7 +254,7 @@ public class PcodeFrameTest extends AbstractGTest {
 		PcodeFrame frame = frame(SAMPLE_LIB_USEROP);
 		assertEquals("""
 				<p-code frame: index=0 {
-				 -> CALLOTHER \"__lib_userop\", r0
+				 -> CALLOTHER "__lib_userop", r0
 				}>""",
 			frame.toString());
 	}

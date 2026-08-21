@@ -60,6 +60,7 @@ class InstalledProcessorsProvider extends ReusableDialogComponentProvider {
 			}
 		};
 		mainPanel.add(tabbedPane, BorderLayout.CENTER);
+		mainPanel.getAccessibleContext().setAccessibleName("Installed Processors");
 		return mainPanel;
 	}
 

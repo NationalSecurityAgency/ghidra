@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ import utilities.util.reflection.ReflectionUtilities;
  * class to keep pushing off internal updates until: 1) the flurry of events has settled down, or
  * 2) some specified amount of time has expired.
  * <p>
- * The various methods dictate when the client will get a callback:<p>
+ * The various methods dictate when the client will get a callback:
  * <ul>
  * 	<li>{@link #update()} - if this is the first call to <code>update</code>, then do the work
  *                          immediately; otherwise, buffer the update request until the
@@ -319,13 +319,13 @@ public abstract class AbstractSwingUpdateManager {
 
 		// if past maximum delay, always do work
 		long timeSinceBufferingStart = now - bufferingStartTime;
-		if (timeSinceBufferingStart > maxDelay) {
+		if (timeSinceBufferingStart >= maxDelay) {
 			return true;
 		}
 
 		// if no new requests have come in since the last time we checked, do work
 		long timeSinceLastRequest = now - requestTime;
-		if (timeSinceLastRequest > minDelay) {
+		if (timeSinceLastRequest >= minDelay) {
 			return true;
 		}
 

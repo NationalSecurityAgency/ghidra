@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,8 @@ import ghidra.app.util.PseudoInstruction;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.*;
+import ghidra.program.model.mem.DumbMemBufferImpl;
+import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.util.ProgramContextImpl;
 import ghidra.util.Msg;
@@ -85,8 +86,7 @@ public class ReDisassembler {
 
 	protected class ReDisState {
 		protected final TaskMonitor monitor;
-		protected final MemBuffer progMemBuffer =
-			new DumbMemBufferImpl(program.getMemory(), program.getMemory().getMinAddress());
+		protected final Map<AddressSpace, DumbMemBufferImpl> progMemBuffers = new HashMap<>();
 		protected final ProgramContext tempContext = new ProgramContextImpl(language);
 		protected final AddressSet visited = new AddressSet();
 		protected final Deque<Flow> queue = new LinkedList<>();
@@ -121,8 +121,10 @@ public class ReDisassembler {
 		}
 
 		protected MemBuffer createBuffer(Address at) {
-			return new WrappedMemBuffer(progMemBuffer, 20,
-				(int) at.subtract(progMemBuffer.getAddress()));
+			DumbMemBufferImpl buffer = progMemBuffers.computeIfAbsent(at.getAddressSpace(),
+				space -> new DumbMemBufferImpl(program.getMemory(), space.getMinAddress()));
+			buffer.setPosition(at);
+			return buffer;
 		}
 
 		/**
@@ -134,17 +136,16 @@ public class ReDisassembler {
 		 * instruction and context matches what's already there, or it encounters an unconditional
 		 * branch.
 		 * 
-		 * @return true if the queue is non-empty after completing this block, false if we're done.
 		 * @throws CancelledException
 		 */
-		protected boolean nextBlock() throws CancelledException {
+		protected void nextBlock() throws CancelledException {
 			monitor.checkCancelled();
-			instructionSet.addBlock(new ReDisBlock(this, queue.pop()).disassembleBlock());
-			return !queue.isEmpty();
+			instructionSet.addBlock(new ReDisBlock(this, queue.pollFirst()).disassembleBlock());
 		}
 
 		protected InstructionSet disassemble() throws CancelledException {
-			while (nextBlock()) {
+			while (!queue.isEmpty()) {
+				nextBlock();
 			}
 			return instructionSet;
 		}
@@ -252,6 +253,11 @@ public class ReDisassembler {
 			ReDisassemblerContext ctx = new ReDisassemblerContext(state, flow);
 			try {
 				InstructionPrototype prototype = language.parse(buffer, ctx, false);
+				Instruction exists = program.getListing().getInstructionAt(flow.to);
+				if (exists != null && exists.getPrototype().equals(prototype) &&
+					flow.type != FlowType.SEED) {
+					return null;
+				}
 				return createInstruction(flow.to, prototype, buffer, ctx);
 			}
 			catch (UnknownInstructionException e) {
@@ -354,10 +360,8 @@ public class ReDisassembler {
 		}
 	}
 
-	public AddressSetView disasemble(Address seed, TaskMonitor monitor) throws CancelledException {
-		ReDisState state = new ReDisState(monitor);
-		state.addSeed(seed);
-		InstructionSet set = state.disassemble();
+	protected AddressSetView placeInstructions(ReDisState state, InstructionSet set,
+			TaskMonitor monitor) throws CancelledException {
 		for (AddressRange range : set.getAddressSet()) {
 			listing.clearCodeUnits(range.getMinAddress(), range.getMaxAddress(), true, monitor);
 		}
@@ -369,5 +373,22 @@ public class ReDisassembler {
 			Msg.error(this, "Could not overwrite with re-disassembly", e);
 		}
 		return set.getAddressSet();
+	}
+
+	public AddressSetView disassemble(AddressSetView seeds, TaskMonitor monitor)
+			throws CancelledException {
+		ReDisState state = new ReDisState(monitor);
+		for (Address seed : seeds.getAddresses(true)) {
+			state.addSeed(seed);
+		}
+		InstructionSet set = state.disassemble();
+		return placeInstructions(state, set, monitor);
+	}
+
+	public AddressSetView disassemble(Address seed, TaskMonitor monitor) throws CancelledException {
+		ReDisState state = new ReDisState(monitor);
+		state.addSeed(seed);
+		InstructionSet set = state.disassemble();
+		return placeInstructions(state, set, monitor);
 	}
 }

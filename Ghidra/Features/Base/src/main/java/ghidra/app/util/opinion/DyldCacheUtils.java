@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,12 +21,15 @@ import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.format.macho.MachException;
+import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.bin.format.macho.dyld.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.formats.gfilesystem.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.util.NumericUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -80,6 +83,43 @@ public class DyldCacheUtils {
 	}
 
 	/**
+	 * A {@link DyldCacheImage} and its corresponding metadata
+	 * 
+	 * @param image The {@link DyldCacheImage}
+	 * @param splitCacheIndex The image's index in the {@link SplitDyldCache}
+	 */
+	public record DyldCacheImageRecord(DyldCacheImage image, int splitCacheIndex) {}
+
+	/**
+	 * Gets all the {@link DyldCacheImageRecord}s for the given {@link List} of 
+	 * {@link DyldCacheHeader}s
+	 * 
+	 * @param headers The {@link List} of {@link DyldCacheHeader}s
+	 * @return A {@link List} of {@link DyldCacheImageRecord}s
+	 */
+	public final static List<DyldCacheImageRecord> getImageRecords(List<DyldCacheHeader> headers) {
+		Set<Long> addrs = new HashSet<>();
+		List<DyldCacheImageRecord> imageRecords = new ArrayList<>();
+		for (DyldCacheHeader header : headers) {
+			for (DyldCacheImage image : header.getImageInfos()) {
+				if (addrs.contains(image.getAddress())) {
+					continue;
+				}
+				for (int i = 0; i < headers.size(); i++) {
+					for (DyldCacheMappingInfo mappingInfo : headers.get(i).getMappingInfos()) {
+						if (mappingInfo.contains(image.getAddress(), true)) {
+							imageRecords.add(new DyldCacheImageRecord(image, i));
+							addrs.add(image.getAddress());
+							break;
+						}
+					}
+				}
+			}
+		}
+		return imageRecords;
+	}
+
+	/**
 	 * Determines if the given signature represents a DYLD cache signature with an architecture we
 	 * support.
 	 * 
@@ -105,7 +145,7 @@ public class DyldCacheUtils {
 		private List<ByteProvider> providers = new ArrayList<>();
 		private List<DyldCacheHeader> headers = new ArrayList<>();
 		private List<String> names = new ArrayList<>();
-		private FileSystemService fsService;
+		private FileSystemService fsService = FileSystemService.getInstance();
 
 		/**
 		 * Creates a new {@link SplitDyldCache}
@@ -134,7 +174,6 @@ public class DyldCacheUtils {
 				baseHeader.getSymbolFileUUID() == null) {
 				return;
 			}
-			fsService = FileSystemService.getInstance();
 			Map<String, FSRL> uuidToFileMap = new HashMap<>();
 			for (FSRL splitFSRL : findSplitDyldCacheFiles(baseProvider.getFSRL(), monitor)) {
 				monitor.setMessage("Parsing " + splitFSRL.getName() + " headers...");
@@ -149,7 +188,8 @@ public class DyldCacheUtils {
 				splitHeader.parseFromFile(shouldProcessLocalSymbols, log, monitor);
 				headers.add(splitHeader);
 				names.add(splitFSRL.getName());
-				uuidToFileMap.put(splitHeader.getUUID(), splitFSRL);
+				uuidToFileMap.put(NumericUtilities.convertBytesToString(splitHeader.getUUID()),
+					splitFSRL);
 			}
 
 			// Validate the subcaches
@@ -157,27 +197,40 @@ public class DyldCacheUtils {
 				String uuid = subcacheEntry.getUuid();
 				String extension = subcacheEntry.getCacheExtension();
 				FSRL fsrl = uuidToFileMap.get(uuid);
-				if (fsrl != null) {
-					log.appendMsg("Including subcache: " + fsrl.getName() + " - " + uuid);
-				}
-				else {
-					log.appendMsg(String.format("Missing subcache: %s%s",
+				if (fsrl == null) {
+					throw new IOException("Missing subcache: %s%s".formatted(
 						extension != null ? (baseProvider.getName() + extension + " - ") : "",
 						uuid));
 				}
+				log.appendMsg("Including subcache: " + fsrl.getName() + " - " + uuid);
 			}
-			String symbolUUID = baseHeader.getSymbolFileUUID();
+			String symbolUUID =
+				NumericUtilities.convertBytesToString(baseHeader.getSymbolFileUUID());
 			if (symbolUUID != null) {
 				FSRL symbolFSRL = uuidToFileMap.get(symbolUUID);
-				if (symbolFSRL != null) {
-					log.appendMsg(
-						"Including symbols subcache: " + symbolFSRL.getName() + " - " + symbolUUID);
+				if (symbolFSRL == null) {
+					throw new IOException("Missing symbols subcache: %s.symbols - %s"
+							.formatted(baseProvider.getName(), symbolUUID));
 				}
-				else {
-					log.appendMsg(String.format("Missing symbols subcache: %s.symbols - %s",
-						baseProvider.getName(), symbolUUID));
-				}
+				log.appendMsg(
+					"Including symbols subcache: " + symbolFSRL.getName() + " - " + symbolUUID);
 			}
+		}
+
+		/**
+		 * Creates a new {@link SplitDyldCache}
+		 * 
+		 * @param providers The cache's ordered {@link ByteProvider}s
+		 * @param headers The cache's ordered {@link DyldCacheHeader}s
+		 * @param names The cache's ordered names
+		 * @param log The log
+		 * @param monitor A cancelable task monitor
+		 */
+		public SplitDyldCache(List<ByteProvider> providers, List<DyldCacheHeader> headers,
+				List<String> names, MessageLog log, TaskMonitor monitor) {
+			this.providers = new ArrayList<>(providers);
+			this.headers = new ArrayList<>(headers);
+			this.names = new ArrayList<>(names);
 		}
 
 		/**
@@ -241,6 +294,33 @@ public class DyldCacheUtils {
 					.filter(info -> info != null)
 					.findAny()
 					.orElse(null);
+		}
+
+		/**
+		 * Gets all the {@link DyldCacheImageRecord}s from the entire cache
+		 * 
+		 * @return A {@link List} of {@link DyldCacheImageRecord}s from the entire cache
+		 */
+		public List<DyldCacheImageRecord> getImageRecords() {
+			return DyldCacheUtils.getImageRecords(headers);
+		}
+
+		/**
+		 * Gets the Mach-O of the given {@link DyldCacheImageRecord}.
+		 * <p>
+		 * NOTE: The returned Mach-O is not yet {@link MachHeader#parse(SplitDyldCache) parsed}.
+		 * 
+		 * @param imageRecord The desired Mach-O's {@link DyldCacheImageRecord} 
+		 * @return The {@link DyldCacheImageRecord}'s Mach-O
+		 * @throws MachException If there was a problem creating the {@link MachHeader}
+		 * @throws IOException If there was an IO-related error
+		 */
+		public MachHeader getMacho(DyldCacheImageRecord imageRecord)
+				throws MachException, IOException {
+			int i = imageRecord.splitCacheIndex();
+			DyldCacheImage image = imageRecord.image();
+			return new MachHeader(providers.get(i),
+				image.getAddress() - headers.get(i).getBaseAddress(), false);
 		}
 
 		@Override

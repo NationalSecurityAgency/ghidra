@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,17 +19,12 @@ import static org.junit.Assert.*;
 
 import org.junit.*;
 
-import ghidra.app.plugin.core.analysis.AnalysisBackgroundCommand;
-import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
-import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.data.DWordDataType;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.listing.*;
-import ghidra.program.model.symbol.SourceType;
+import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.listing.Program;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 
@@ -67,7 +62,7 @@ public class ArmBranchReturnDetectionTest extends AbstractGhidraHeadedIntegratio
 		AutoAnalysisManager analysisMgr = AutoAnalysisManager.getAnalysisManager(program);
 		analysisMgr.reAnalyzeAll(null);
 
-		Command cmd = new AnalysisBackgroundCommand(analysisMgr, false);
+		Command<Program> cmd = new AnalysisBackgroundCommand(analysisMgr, false);
 		tool.execute(cmd, program);
 		waitForBusyTool(tool);
 	}
@@ -96,7 +91,7 @@ public class ArmBranchReturnDetectionTest extends AbstractGhidraHeadedIntegratio
 		builder.disassemble("0x00015d9c", 27, true);
 		
 		builder.createFunction("0x00015d9c");
-		builder.createLabel("0x00015d9c", "func1");;
+		builder.createLabel("0x00015d9c", "func1");
 
 		program = builder.getProgram();
 

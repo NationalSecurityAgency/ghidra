@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,12 +16,15 @@
 package ghidra.graph.viewer.shape;
 
 import java.awt.Shape;
-import java.awt.geom.*;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.Point2D;
 import java.util.List;
 
 import com.google.common.base.Function;
 
+import edu.uci.ics.jung.visualization.RenderContext;
 import ghidra.graph.viewer.*;
+import ghidra.graph.viewer.vertex.VisualGraphVertexShapeTransformer;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 
@@ -32,6 +35,12 @@ import ghidra.util.SystemUtilities;
  */
 public class ArticulatedEdgeTransformer<V extends VisualVertex, E extends VisualEdge<V>>
 		implements Function<E, Shape> {
+
+	private RenderContext<V, E> renderContext;
+
+	public void setRenderContext(RenderContext<V, E> context) {
+		this.renderContext = context;
+	}
 
 	/**
 	 * Get the shape for this edge
@@ -45,6 +54,21 @@ public class ArticulatedEdgeTransformer<V extends VisualVertex, E extends Visual
 		V end = e.getEnd();
 
 		boolean isLoop = start.equals(end);
+		if (isLoop) {
+			//
+			// Our edge loops are sized and positioned according to the shared
+			// code in the utils class.  We do this so that our hit detection matches our rendering.
+			//
+			Function<? super V, Shape> vertexShapeTransformer =
+				renderContext.getVertexShapeTransformer();
+			Shape vertexShape = getVertexShapeForEdge(end, vertexShapeTransformer);
+			Shape hollowEgdeLoop = GraphViewerUtils.createHollowEgdeLoop();
+
+			// we are not actually creating this in graph space, but by passing in 0,0, we are in
+			// unit space
+			return GraphViewerUtils.createEgdeLoopInGraphSpace(hollowEgdeLoop, vertexShape, 0, 0);
+		}
+
 		if (isLoop) {
 			return GraphViewerUtils.createHollowEgdeLoop();
 		}
@@ -82,43 +106,23 @@ public class ArticulatedEdgeTransformer<V extends VisualVertex, E extends Visual
 		path.lineTo(p2x, p2y);
 		path.moveTo(p2x, p2y);
 		path.closePath();
+		return path;
+	}
 
-		AffineTransform transform = new AffineTransform();
-		final double deltaY = p2.getY() - originY;
-		final double deltaX = p2.getX() - originX;
-		if (deltaX == 0 && deltaY == 0) {
-			// this implies the source and destination node are at the same location, which
-			// is possible if the user drags it there or during animations
-			return transform.createTransformedShape(path);
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private static <V> Shape getVertexShapeForEdge(V v, Function<? super V, Shape> vertexShaper) {
+		if (vertexShaper instanceof VisualGraphVertexShapeTransformer) {
+			if (v instanceof VisualVertex) {
+				VisualVertex vv = (VisualVertex) v;
+
+				// Note: it is a bit odd that we 'know' to use the compact shape here for 
+				//		 hit detection, but this is how the edge is painted, so we want the 
+				//		 view to match the mouse.
+				return ((VisualGraphVertexShapeTransformer) vertexShaper).transformToCompactShape(
+					vv);
+			}
 		}
-
-		double theta = StrictMath.atan2(deltaY, deltaX);
-		transform.rotate(theta);
-		double scale = StrictMath.sqrt(deltaY * deltaY + deltaX * deltaX);
-		transform.scale(scale, 1.0f);
-
-		//
-		// TODO
-		// The current design and use of this transformer is a bit odd.   We currently have code
-		// to create the edge shape here and in the ArticulatedEdgeRenderer.  Ideally, this 
-		// class would be the only one that creates the edge shape.  Then, any clients of the
-		// edge transformer would have to take the shape and then transform it to the desired 
-		// space (the view or graph space).  The transformations could be done using the 
-		// GraphViewerUtils.
-		//
-
-		try {
-			// TODO it is not clear why this is using an inverse transform; why not just create
-			// the transform that we want?
-			AffineTransform inverse = transform.createInverse();
-			Shape transformedShape = inverse.createTransformedShape(path);
-			return transformedShape;
-		}
-		catch (NoninvertibleTransformException e1) {
-			Msg.error(this, "Unexpected exception transforming an edge", e1);
-		}
-
-		return null;
+		return vertexShaper.apply(v);
 	}
 
 	private void logMissingLocation(E e, V v) {
@@ -151,4 +155,5 @@ public class ArticulatedEdgeTransformer<V extends VisualVertex, E extends Visual
 			throw new IllegalStateException("Edge vertex is missing a location");
 		}
 	}
+
 }

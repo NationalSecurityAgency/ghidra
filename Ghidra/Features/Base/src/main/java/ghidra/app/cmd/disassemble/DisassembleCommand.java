@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -310,7 +310,7 @@ public class DisassembleCommand extends BackgroundCommand<Program> {
 			doDisassemblySeeds(disassembler, seedSet, mgr);
 		}
 
-		return disassemblyPerformed || (!nonExecutableStart & !unalignedStart);
+		return disassemblyPerformed || (!nonExecutableStart && !unalignedStart);
 	}
 
 	/**
@@ -343,7 +343,7 @@ public class DisassembleCommand extends BackgroundCommand<Program> {
 	/**
 	 * Determine if intermediate analysis is required to reduce the risk of disassembling data
 	 * regions when performing static disassembly over a contiguous range if addresses. This method
-	 * attemps to identify this situation by checking the first range of disassembledSet against the
+	 * attempts to identify this situation by checking the first range of disassembledSet against the
 	 * startSet. Analysis will be triggered if startSet contains both the max address of the first
 	 * range of disassembledSet (M where M=disassembledSet.firstRange().getMaxAddress()) and the
 	 * next address (M.next()) which will be the next seed point.

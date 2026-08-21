@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ using std::sqrt;
 vector<ArchitectureCapability *> ArchitectureCapability::thelist;
 
 const uint4 ArchitectureCapability::majorversion = 6;
-const uint4 ArchitectureCapability::minorversion = 0;
+const uint4 ArchitectureCapability::minorversion = 1;
 
 AttributeId ATTRIB_ADDRESS = AttributeId("address",148);
 AttributeId ATTRIB_ADJUSTVMA = AttributeId("adjustvma",103);
@@ -342,8 +342,7 @@ void Architecture::clearAnalysis(Funcdata *fd)
 
 /// Symbols do not necessarily need to be available for the decompiler.
 /// This routine loads all the \e load \e image knows about into the symbol table
-/// \param delim is the delimiter separating namespaces from symbol base names
-void Architecture::readLoaderSymbols(const string &delim)
+void Architecture::readLoaderSymbols(void)
 
 {
   if (loadersymbols_parsed) return; // already read
@@ -352,7 +351,7 @@ void Architecture::readLoaderSymbols(const string &delim)
   LoadImageFunc record;
   while(loader->getNextSymbol(record)) {
     string basename;
-    Scope *scope = symboltab->findCreateScopeFromSymbolName(record.name, delim, basename, (Scope *)0);
+    Scope *scope = symboltab->findCreateScopeFromSymbolName(record.name, basename, (Scope *)0);
     scope->addFunction(record.address,basename);
   }
   loader->closeSymbols();
@@ -393,7 +392,7 @@ void Architecture::setPrototype(const PrototypePieces &pieces)
 
 {
   string basename;
-  Scope *scope = symboltab->resolveScopeFromSymbolName(pieces.name, "::", basename, (Scope *)0);
+  Scope *scope = symboltab->resolveScopeFromSymbolName(pieces.name, basename, (Scope *)0);
   if (scope == (Scope *)0)
     throw ParseError("Unknown namespace: " + pieces.name);
   Funcdata *fd = scope->queryFunction( basename );
@@ -456,14 +455,27 @@ void Architecture::decodeFlowOverride(Decoder &decoder)
   uint4 elemId = decoder.openElement(ELEM_FLOWOVERRIDELIST);
   for(;;) {
     uint4 subId = decoder.openElement();
-    if (subId != ELEM_FLOW) break;
-    string flowType = decoder.readString(ATTRIB_TYPE);
-    Address funcaddr = Address::decode(decoder);
-    Address overaddr = Address::decode(decoder);
-    Funcdata *fd = symboltab->getGlobalScope()->queryFunction(funcaddr);
-    if (fd != (Funcdata *)0)
-      fd->getOverride().insertFlowOverride(overaddr,Override::stringToType(flowType));
-    decoder.closeElement(subId);
+    if (subId == ELEM_FLOW) {
+      string flowType = decoder.readString(ATTRIB_TYPE);
+      Address funcaddr = Address::decode(decoder);
+      Address overaddr = Address::decode(decoder);
+      Funcdata *fd = symboltab->getGlobalScope()->queryFunction(funcaddr);
+      if (fd != (Funcdata *)0)
+	fd->getOverride().insertFlowOverride(overaddr,flowType);
+      decoder.closeElement(subId);
+    }
+    else if (subId == ELEM_CALLDEST) {
+      string flowType = decoder.readString(ATTRIB_TYPE);
+      Address funcaddr = Address::decode(decoder);
+      Address overaddr = Address::decode(decoder);
+      Address destaddr = Address::decode(decoder);
+      Funcdata *fd = symboltab->getGlobalScope()->queryFunction(funcaddr);
+      if (fd != (Funcdata *)0)
+	fd->getOverride().insertDestinationOverride(overaddr, destaddr, flowType);
+      decoder.closeElement(subId);
+    }
+    else
+      break;
   }
   decoder.closeElement(elemId);
 }
@@ -624,8 +636,9 @@ void Architecture::postSpecFile(void)
 void Architecture::restoreFromSpec(DocumentStorage &store)
 
 {
-  Translate *newtrans = buildTranslator(store); // Once language is described we can build translator
-  newtrans->initialize(store);
+  unique_ptr<Translate> utrans(buildTranslator(store)); // Once language is described we can build translator
+  utrans->initialize(store);
+  Translate *newtrans = utrans.release();
   translate = newtrans;
   modifySpaces(newtrans);	// Give architecture chance to modify spaces, before copying
   copySpaces(newtrans);
@@ -741,23 +754,21 @@ void Architecture::decodeDynamicRule(Decoder &decoder)
 ProtoModel *Architecture::decodeProto(Decoder &decoder)
 
 {
-  ProtoModel *res;
+  unique_ptr<ProtoModel> model;
   uint4 elemId = decoder.peekElement();
   if (elemId == ELEM_PROTOTYPE)
-    res = new ProtoModel(this);
+    model.reset(new ProtoModel(this));
   else if (elemId == ELEM_RESOLVEPROTOTYPE)
-    res = new ProtoModelMerged(this);
+    model.reset(new ProtoModelMerged(this));
   else
     throw LowlevelError("Expecting <prototype> or <resolveprototype> tag");
 
-  res->decode(decoder);
+  model->decode(decoder);
   
-  ProtoModel *other = getModel(res->getName());
-  if (other != (ProtoModel *)0) {
-    string errMsg = "Duplicate ProtoModel name: " + res->getName();
-    delete res;
-    throw LowlevelError(errMsg);
-  }
+  ProtoModel *other = getModel(model->getName());
+  if (other != (ProtoModel *)0)
+    throw LowlevelError("Duplicate ProtoModel name: " + model->getName());
+  ProtoModel *res = model.release();
   protoModels[res->getName()] = res;
   return res;
 }
@@ -924,23 +935,47 @@ void Architecture::decodeIncidentalCopy(Decoder &decoder)
   decoder.closeElement(elemId);
 }
 
-/// Look for \<register> elements that have a \e vector_lane_size attribute.
-/// Record these so that the decompiler can split large registers into appropriate lane size pieces.
+/// Read \<register> elements to collect specific properties associated with the register storage.
 /// \param decoder is the stream decoder
-void Architecture::decodeLaneSizes(Decoder &decoder)
+void Architecture::decodeRegisterData(Decoder &decoder)
 
 {
   vector<uint4> maskList;
-  LanedRegister lanedRegister;		// Only allocate once
 
   uint4 elemId = decoder.openElement(ELEM_REGISTER_DATA);
   while(decoder.peekElement() != 0) {
-    if (lanedRegister.decode(decoder)) {
-      int4 sizeIndex = lanedRegister.getWholeSize();
-      while (maskList.size() <= sizeIndex)
-	maskList.push_back(0);
-      maskList[sizeIndex] |= lanedRegister.getSizeBitMask();
+    uint4 subId = decoder.openElement(ELEM_REGISTER);
+    bool isVolatile = false;
+    string laneSizes;
+    for(;;) {
+      uint4 attribId = decoder.getNextAttributeId();
+      if (attribId == 0) break;
+      if (attribId == ATTRIB_VECTOR_LANE_SIZES) {
+        laneSizes = decoder.readString();
+      }
+      else if (attribId == ATTRIB_VOLATILE) {
+	isVolatile = decoder.readBool();
+      }
     }
+    if (!laneSizes.empty() || isVolatile) {
+      decoder.rewindAttributes();
+      VarnodeData storage;
+      storage.space = (AddrSpace *)0;
+      storage.decodeFromAttributes(decoder);
+      if (!laneSizes.empty()) {
+	LanedRegister lanedRegister;
+	lanedRegister.parseSizes(storage.size,laneSizes);
+	int4 sizeIndex = lanedRegister.getWholeSize();
+	while (maskList.size() <= sizeIndex)
+	  maskList.push_back(0);
+	maskList[sizeIndex] |= lanedRegister.getSizeBitMask();
+      }
+      if (isVolatile) {
+	Range range( storage.space, storage.offset, storage.offset+storage.size-1);
+	symboltab->setPropertyRange(Varnode::volatil,range);
+      }
+    }
+    decoder.closeElement(subId);
   }
   decoder.closeElement(elemId);
   lanerecords.clear();
@@ -1142,7 +1177,7 @@ ProtoModel *Architecture::createUnknownModel(const string &modelName)
   return model;
 }
 
-/// This looks for the \<processor_spec> tag and and sets configuration
+/// This looks for the \<processor_spec> tag and sets configuration
 /// parameters based on it.
 /// \param store is the document store holding the tag
 void Architecture::parseProcessorConfig(DocumentStorage &store)
@@ -1172,7 +1207,7 @@ void Architecture::parseProcessorConfig(DocumentStorage &store)
     else if (subId == ELEM_SEGMENTOP)
       userops.decodeSegmentOp(decoder,this);
     else if (subId == ELEM_REGISTER_DATA) {
-      decodeLaneSizes(decoder);
+      decodeRegisterData(decoder);
     }
     else if (subId == ELEM_DATA_SPACE) {
       uint4 elemId = decoder.openElement();
@@ -1321,7 +1356,6 @@ void Architecture::parseCompilerConfig(DocumentStorage &store)
   if (miter == protoModels.end()) { // If __thiscall doesn't exist we clone it off of the default
     createModelAlias("__thiscall",defaultfp->getName());
   }
-  userops.setDefaults(this);
   initializeSegments();
   PreferSplitManager::initialize(splitrecords);
   types->setupSizes();		// If no data_organization was registered, set up default values
@@ -1399,6 +1433,7 @@ void Architecture::resetDefaultsInternal(void)
   max_basetype_size = 10;	// Needs to be 8 or bigger
   flowoptions = FlowInfo::error_toomanyinstructions;
   max_instructions = 100000;
+  max_baddata = 4;
   infer_pointers = true;
   analyze_for_loops = true;
   readonlypropagate = false;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 package ghidra.app.plugin.core.symboltree.actions;
-
-import static ghidra.framework.main.DataTreeDialogType.*;
 
 import javax.swing.Icon;
 import javax.swing.SwingUtilities;
@@ -29,7 +27,7 @@ import ghidra.app.plugin.core.symboltree.*;
 import ghidra.app.plugin.core.symboltree.nodes.LibrarySymbolNode;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.main.AppInfo;
-import ghidra.framework.main.DataTreeDialog;
+import ghidra.framework.main.ProgramFileChooser;
 import ghidra.framework.model.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.ExternalManager;
@@ -82,8 +80,8 @@ public class SetExternalProgramAction extends SymbolTreeContextAction {
 		ExternalManager externalManager = program.getExternalManager();
 		final String externalLibraryPath = externalManager.getExternalLibraryPath(externalName);
 
-		final DataTreeDialog dialog = new DataTreeDialog(provider.getComponent(),
-			"Choose External Program (" + externalName + ")", OPEN);
+		ProgramFileChooser dialog = new ProgramFileChooser(provider.getComponent(),
+			"Choose External Program (" + externalName + ")");
 
 		dialog.setSearchText(externalName);
 
@@ -95,7 +93,8 @@ public class SetExternalProgramAction extends SymbolTreeContextAction {
 			String pathName = domainFile.toString();
 			dialog.close();
 			if (!pathName.equals(externalLibraryPath)) {
-				Command cmd = new SetExternalNameCmd(externalName, domainFile.getPathname());
+				Command<Program> cmd =
+					new SetExternalNameCmd(externalName, domainFile.getPathname());
 				plugin.getTool().execute(cmd, plugin.getProgram());
 			}
 		});

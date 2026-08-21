@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -89,11 +89,12 @@ public class FindReferencesToFieldByNameOrOffsetAction extends AbstractFindRefer
 			return null; // cancelled
 		}
 
-		Long longChoice = parseInt(userChoice);
-		if (longChoice != null) {
-			return new FieldMatcher(dt, longChoice.intValue());
+		try {
+			return new FieldMatcher(dt, NumericUtilities.parseInt(userChoice));
 		}
-		return new FieldMatcher(dt, userChoice);
+		catch (NumberFormatException e) {
+			return new FieldMatcher(dt, userChoice);
+		}
 	}
 
 	private String[] getCompositeFieldNames(Composite composite) {
@@ -111,9 +112,5 @@ public class FindReferencesToFieldByNameOrOffsetAction extends AbstractFindRefer
 		}
 
 		return names.toArray(String[]::new);
-	}
-
-	private Long parseInt(String s) {
-		return NumericUtilities.parseNumber(s, null);
 	}
 }

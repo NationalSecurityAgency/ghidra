@@ -60,9 +60,7 @@ public class Pdb200 extends AbstractPdb {
 
 	@Override
 	public void dumpDirectory(Writer writer) throws IOException {
-		StringBuilder builder = new StringBuilder();
-		builder.append(dumpVersionSignatureAge());
-		writer.write(builder.toString());
+		dumpVersionSignatureAge(writer);
 	}
 
 }

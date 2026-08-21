@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,6 +52,17 @@ public interface ByteBlock {
 	public byte getByte(BigInteger index) throws ByteBlockAccessException;
 
 	/**
+	 * Get bytes from given index.
+	 * 
+	 * @param bytes destination
+	 * @param index byte index
+	 * @param count number of bytes to get
+	 * @return actual number of bytes copied into destination
+	 * @throws ByteBlockAccessException if error
+	 */
+	public int getBytes(byte[] bytes, BigInteger index, int count) throws ByteBlockAccessException;
+
+	/**
 	 * Returns true if this ByteBlock has byte values at the specified index.
 	 *
 	 * @param index byte index
@@ -60,6 +71,15 @@ public interface ByteBlock {
 	default public boolean hasValue(BigInteger index) {
 		return true;
 	}
+
+	/**
+	 * Get the short value at the given index.
+	 * @param index byte index
+	 * @throws ByteBlockAccessException if the block cannot be read
+	 * @throws IndexOutOfBoundsException if the given index is not in this
+	 * block.
+	 */
+	public short getShort(BigInteger index) throws ByteBlockAccessException;
 
 	/**
 	 * Get the int value at the given index.
@@ -88,6 +108,16 @@ public interface ByteBlock {
 	 * block.
 	 */
 	public void setByte(BigInteger index, byte value) throws ByteBlockAccessException;
+
+	/**
+	 * Set the short at the given index.
+	 * @param index byte index
+	 * @param value value to set
+	 * @throws ByteBlockAccessException if the block cannot be updated
+	 * @throws IndexOutOfBoundsException if the given index is not in this
+	 * block.
+	 */
+	public void setShort(BigInteger index, short value) throws ByteBlockAccessException;
 
 	/**
 	 * Set the int at the given index.
@@ -132,7 +162,7 @@ public interface ByteBlock {
 	 * there is some underlying indexing structure that isn't based at 0.  For example,
 	 * if the underlying structure is address based and the starting address is not 0,
 	 * then the natural alignment is the address offset mod the radix (if the starting
-	 * address is 10 and the radix is 4, then then the alignment is 2)).
+	 * address is 10 and the radix is 4, then the alignment is 2)).
 	 */
 	public int getAlignment(int radix);
 }

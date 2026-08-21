@@ -222,7 +222,7 @@ public abstract class TypeProgramInterface implements TPI {
 	 * {@link TypeProgramInterface}.
 	 * <p>
 	 * Note: not all values of this class get initialized by this method.
-	 * @param pdb {@link AbstractPdb} that owns this this class
+	 * @param pdb {@link AbstractPdb} that owns this class
 	 * @param typeIndexMin the IndexMin to set/use
 	 * @param typeIndexMaxExclusive one greater than the MaxIndex to set/use
 	 */
@@ -480,32 +480,23 @@ public abstract class TypeProgramInterface implements TPI {
 
 		/**
 		 * Dumps the this {@link TypeProgramInterfaceHash}.  This method is for debugging only
-		 * @return {@link String} of pretty output
+		 * @param writer the writer
+		 * @throws IOException upon issue with writing to the writer
 		 */
-		protected String dump() {
-			StringBuilder builder = new StringBuilder();
-			builder.append("Hash--------------------------------------------------------");
-			builder.append("\nhashStreamNumber: ");
-			builder.append(hashStreamNumber);
-			builder.append("\nhashStreamNumberAuxiliary: ");
-			builder.append(hashStreamNumberAuxiliary);
-			builder.append("\nhashKeySize: ");
-			builder.append(hashKeySize);
-			builder.append("\nnumHashBins: ");
-			builder.append(numHashBins);
-			builder.append("\noffsetHashVals: ");
-			builder.append(offsetHashVals);
-			builder.append("\nlengthHashVals: ");
-			builder.append(lengthHashVals);
-			builder.append("\noffsetTypeIndexOffsetPairs: ");
-			builder.append(offsetTypeIndexOffsetPairs);
-			builder.append("\nlengthTypeIndexOffsetPairs: ");
-			builder.append(lengthTypeIndexOffsetPairs);
-			builder.append("\noffsetHashAdjustment: ");
-			builder.append(offsetHashAdjustment);
-			builder.append("\nlengthHashAdjustment: ");
-			builder.append(lengthHashAdjustment);
-			return builder.toString();
+		void dump(Writer writer) throws IOException {
+			PdbReaderUtils.dumpHead(writer, this);
+			writer.write("\nhashStreamNumber: " + hashStreamNumber);
+			writer.write("\nhashStreamNumberAuxiliary: " + hashStreamNumberAuxiliary);
+			writer.write("\nhashKeySize: " + hashKeySize);
+			writer.write("\nnumHashBins: " + numHashBins);
+			writer.write("\noffsetHashVals: " + offsetHashVals);
+			writer.write("\nlengthHashVals: " + lengthHashVals);
+			writer.write("\noffsetTypeIndexOffsetPairs: " + offsetTypeIndexOffsetPairs);
+			writer.write("\nlengthTypeIndexOffsetPairs: " + lengthTypeIndexOffsetPairs);
+			writer.write("\noffsetHashAdjustment: " + offsetHashAdjustment);
+			writer.write("\nlengthHashAdjustment: " + lengthHashAdjustment);
+			writer.write("\n");
+			PdbReaderUtils.dumpTail(writer, this);
 		}
 	}
 

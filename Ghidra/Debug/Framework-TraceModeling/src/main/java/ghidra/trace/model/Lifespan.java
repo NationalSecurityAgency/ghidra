@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,13 +57,14 @@ public sealed interface Lifespan extends Span<Long, Lifespan>, Iterable<Long> {
 	 * Get the lifespan from 0 to the given snap.
 	 * 
 	 * <p>
-	 * The lower bound is 0 to exclude scratch space.
+	 * If the snapshot is in scratch space, then the span will have a lower endpoint of
+	 * {@link Long#MIN_VALUE}. Otherwise, the lower endpoint is 0 to exclude scratch space.
 	 * 
 	 * @param snap the snapshot key
 	 * @return the lifespan
 	 */
 	static Lifespan since(long snap) {
-		return new Impl(0, snap);
+		return new Impl(isScratch(snap) ? Long.MIN_VALUE : 0, snap);
 	}
 
 	/**
@@ -84,13 +85,10 @@ public sealed interface Lifespan extends Span<Long, Lifespan>, Iterable<Long> {
 	 * last scratch snapshot. Otherwise, this is the same as {@link #nowOn(long)}.
 	 * 
 	 * @param snap
-	 * @return
+	 * @return the lifespan
 	 */
 	static Lifespan nowOnMaybeScratch(long snap) {
-		if (isScratch(snap)) {
-			return new Impl(snap, -1);
-		}
-		return new Impl(snap, Long.MAX_VALUE);
+		return new Impl(snap, isScratch(snap) ? -1 : Long.MAX_VALUE);
 	}
 
 	/**
@@ -281,7 +279,7 @@ public sealed interface Lifespan extends Span<Long, Lifespan>, Iterable<Long> {
 
 		@Override
 		public String toString() {
-			return doToString();
+			return toString(DOMAIN::toString);
 		}
 
 		@Override
@@ -322,11 +320,14 @@ public sealed interface Lifespan extends Span<Long, Lifespan>, Iterable<Long> {
 
 	/**
 	 * A non-empty lifespan of snapshot keys
+	 * 
+	 * @param lmin the minimum snap
+	 * @param lmax the maximum snap
 	 */
 	public record Impl(long lmin, long lmax) implements Lifespan {
 		@Override
 		public String toString() {
-			return doToString();
+			return toString(DOMAIN::toString);
 		}
 
 		@Override

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -33,6 +34,7 @@ import docking.widgets.fieldpanel.support.*;
 import ghidra.app.plugin.core.clipboard.ClipboardPlugin;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.services.*;
+import ghidra.framework.Application;
 import ghidra.framework.OperatingSystem;
 import ghidra.pty.*;
 import ghidra.util.SystemUtilities;
@@ -55,6 +57,48 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 	ClipboardService clipboardService;
 
 	@Test
+	public void testDecodeUnicode() throws Exception {
+		// Two non-supplemental characters
+		char[] c = new char[] {
+			0x274c,
+			0x277c
+		};
+		byte[] b = new String(c).getBytes("utf8");
+
+		terminalService = addPlugin(tool, TerminalPlugin.class);
+		clipboardService = addPlugin(tool, ClipboardPlugin.class);
+		env.showFrontEndTool();
+
+		try (Terminal term = terminalService.createNullTerminal(Charset.forName("utf8"), out -> {
+			out.reset();
+		})) {
+			term.injectDisplayOutput(b);
+			term.injectDisplayOutput("\u001b[1D".getBytes("utf8"));
+
+			assertEquals(1, term.getCursorColumn());
+		}
+	}
+
+	@Test
+	public void testDecodeUnicode24Bit() throws Exception {
+		byte[] b = bytes(0xf0, 0x93, 0x90, 0xb3); // A supplemental character
+
+		terminalService = addPlugin(tool, TerminalPlugin.class);
+		clipboardService = addPlugin(tool, ClipboardPlugin.class);
+		env.showFrontEndTool();
+
+		try (Terminal term = terminalService.createNullTerminal(Charset.forName("utf8"), out -> {
+			out.reset();
+		})) {
+			term.injectDisplayOutput(b);
+			term.injectDisplayOutput(b);
+			term.injectDisplayOutput("\u001b[1D".getBytes("utf8"));
+
+			assertEquals(1, term.getCursorColumn());
+		}
+	}
+
+	@Test
 	@SuppressWarnings("resource")
 	public void testBash() throws Exception {
 		assumeFalse(SystemUtilities.isInTestingBatchMode());
@@ -62,6 +106,8 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 
 		terminalService = addPlugin(tool, TerminalPlugin.class);
 		clipboardService = addPlugin(tool, ClipboardPlugin.class);
+
+		env.showFrontEndTool();
 
 		PtyFactory factory = PtyFactory.local();
 		try (Pty pty = factory.openpty()) {
@@ -76,7 +122,42 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 				term.addTerminalListener(new TerminalListener() {
 					@Override
 					public void resized(short cols, short rows) {
-						System.err.println("resized: " + cols + "x" + rows);
+						// System.err.println("resized: " + cols + "x" + rows);
+						child.setWindowSize(cols, rows);
+					}
+				});
+				session.waitExited();
+				pty.close();
+			}
+		}
+	}
+
+	@Test
+	public void testTermmines() throws Exception {
+		assumeFalse(SystemUtilities.isInTestingBatchMode());
+		assumeFalse(OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS);
+
+		terminalService = addPlugin(tool, TerminalPlugin.class);
+		clipboardService = addPlugin(tool, ClipboardPlugin.class);
+
+		env.showFrontEndTool();
+
+		PtyFactory factory = PtyFactory.local();
+		File termmines = Application.getModuleDataFile("TestResources", "termmines").getFile(false);
+		try (Pty pty = factory.openpty()) {
+			Map<String, String> env = new HashMap<>(System.getenv());
+			env.put("TERM", "xterm-256color");
+			PtySession session =
+				pty.getChild().session(new String[] { termmines.getAbsolutePath() }, env);
+
+			PtyParent parent = pty.getParent();
+			PtyChild child = pty.getChild();
+			try (Terminal term = terminalService.createWithStreams(Charset.forName("UTF-8"),
+				parent.getInputStream(), parent.getOutputStream())) {
+				term.addTerminalListener(new TerminalListener() {
+					@Override
+					public void resized(short cols, short rows) {
+						// System.err.println("resized: " + cols + "x" + rows);
 						child.setWindowSize(cols, rows);
 					}
 				});
@@ -108,7 +189,7 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 				term.addTerminalListener(new TerminalListener() {
 					@Override
 					public void resized(short cols, short rows) {
-						System.err.println("resized: " + cols + "x" + rows);
+						// System.err.println("resized: " + cols + "x" + rows);
 						child.setWindowSize(cols, rows);
 					}
 				});

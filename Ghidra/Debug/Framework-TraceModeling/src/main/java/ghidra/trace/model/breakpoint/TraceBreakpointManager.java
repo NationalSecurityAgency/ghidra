@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,7 @@ public interface TraceBreakpointManager {
 	 * @throws DuplicateNameException if a breakpoint with the same path already exists within an
 	 *             overlapping snap
 	 */
-	TraceBreakpoint addBreakpoint(String path, Lifespan lifespan, AddressRange range,
+	TraceBreakpointLocation addBreakpoint(String path, Lifespan lifespan, AddressRange range,
 			Collection<TraceThread> threads, Collection<TraceBreakpointKind> kinds, boolean enabled,
 			String comment) throws DuplicateNameException;
 
@@ -51,7 +51,7 @@ public interface TraceBreakpointManager {
 	 * 
 	 * @see #addBreakpoint(String, Lifespan, AddressRange, Collection, Collection, boolean, String)
 	 */
-	default TraceBreakpoint addBreakpoint(String path, Lifespan lifespan, Address address,
+	default TraceBreakpointLocation addBreakpoint(String path, Lifespan lifespan, Address address,
 			Collection<TraceThread> threads, Collection<TraceBreakpointKind> kinds, boolean enabled,
 			String comment) throws DuplicateNameException {
 		return addBreakpoint(path, lifespan, new AddressRangeImpl(address, address), threads, kinds,
@@ -63,7 +63,7 @@ public interface TraceBreakpointManager {
 	 * 
 	 * @see #addBreakpoint(String, Lifespan, AddressRange, Collection, Collection, boolean, String)
 	 */
-	default TraceBreakpoint placeBreakpoint(String path, long snap, AddressRange range,
+	default TraceBreakpointLocation placeBreakpoint(String path, long snap, AddressRange range,
 			Collection<TraceThread> threads, Collection<TraceBreakpointKind> kinds, boolean enabled,
 			String comment) throws DuplicateNameException {
 		return addBreakpoint(path, Lifespan.nowOn(snap), range, threads, kinds, enabled,
@@ -75,7 +75,7 @@ public interface TraceBreakpointManager {
 	 * 
 	 * @see #addBreakpoint(String, Lifespan, AddressRange, Collection, Collection, boolean, String)
 	 */
-	default TraceBreakpoint placeBreakpoint(String path, long snap, Address address,
+	default TraceBreakpointLocation placeBreakpoint(String path, long snap, Address address,
 			Collection<TraceThread> threads, Collection<TraceBreakpointKind> kinds, boolean enabled,
 			String comment) throws DuplicateNameException {
 		return addBreakpoint(path, Lifespan.nowOn(snap), new AddressRangeImpl(address, address),
@@ -83,19 +83,34 @@ public interface TraceBreakpointManager {
 	}
 
 	/**
-	 * Collect all breakpoints in the trace
+	 * Collect all breakpoint specifications in the trace
 	 * 
-	 * @return the collection of all breakpoints
+	 * @return the specifications
 	 */
-	Collection<? extends TraceBreakpoint> getAllBreakpoints();
+	Collection<? extends TraceBreakpointSpec> getAllBreakpointSpecifications();
 
 	/**
-	 * Collect breakpoints having the given "full name"
+	 * Collect all breakpoint locations in the trace
+	 * 
+	 * @return the locations
+	 */
+	Collection<? extends TraceBreakpointLocation> getAllBreakpointLocations();
+
+	/**
+	 * Collect breakpoints specifications having the given "full name"
 	 * 
 	 * @param path the path
-	 * @return the collection of breakpoints
+	 * @return the specifications
 	 */
-	Collection<? extends TraceBreakpoint> getBreakpointsByPath(String path);
+	Collection<? extends TraceBreakpointSpec> getBreakpointSpecificationsByPath(String path);
+
+	/**
+	 * Collect breakpoints locations having the given "full name"
+	 * 
+	 * @param path the path
+	 * @return the locations
+	 */
+	Collection<? extends TraceBreakpointLocation> getBreakpointLocationsByPath(String path);
 
 	/**
 	 * Get the placed breakpoint at the given snap by the given path
@@ -104,7 +119,7 @@ public interface TraceBreakpointManager {
 	 * @param path the path of the breakpoint
 	 * @return the breakpoint, or {@code null} if no breakpoint matches
 	 */
-	TraceBreakpoint getPlacedBreakpointByPath(long snap, String path);
+	TraceBreakpointLocation getPlacedBreakpointByPath(long snap, String path);
 
 	/**
 	 * Collect breakpoints containing the given snap and address
@@ -113,7 +128,7 @@ public interface TraceBreakpointManager {
 	 * @param address the location
 	 * @return the collection of breakpoints
 	 */
-	Collection<? extends TraceBreakpoint> getBreakpointsAt(long snap, Address address);
+	Collection<? extends TraceBreakpointLocation> getBreakpointsAt(long snap, Address address);
 
 	/**
 	 * Collect breakpoints intersecting the given span and address range
@@ -122,6 +137,6 @@ public interface TraceBreakpointManager {
 	 * @param range the address range
 	 * @return the collection of breakpoints
 	 */
-	Collection<? extends TraceBreakpoint> getBreakpointsIntersecting(Lifespan span,
+	Collection<? extends TraceBreakpointLocation> getBreakpointsIntersecting(Lifespan span,
 			AddressRange range);
 }

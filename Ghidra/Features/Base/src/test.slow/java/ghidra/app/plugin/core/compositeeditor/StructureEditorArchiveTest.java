@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -71,8 +71,8 @@ public class StructureEditorArchiveTest extends AbstractStructureEditorTest {
 		createStruct = getAction(plugin, "Structure");
 		performAction(createStruct, plugin.getProvider(), true);
 		waitForSwing();
-		CompEditorPanel editorPanel =
-			findComponent(tool.getToolFrame(), CompEditorPanel.class, true);
+		StructureEditorPanel editorPanel =
+			findComponent(tool.getToolFrame(), StructureEditorPanel.class, true);
 		model = editorPanel.model;
 		installProvider(model.getProvider());
 		archiveDTM = model.getOriginalDataTypeManager();
@@ -82,7 +82,7 @@ public class StructureEditorArchiveTest extends AbstractStructureEditorTest {
 		waitForSwing();
 
 		// Answer "No" to "Save Structure Editor Changes?".
-		JDialog dialog = waitForJDialog(null, "Save Structure Editor Changes?", 2000);
+		JDialog dialog = waitForJDialog("Save Structure Editor Changes?");
 		assertNotNull(dialog);
 		pressButtonByText(dialog.getContentPane(), "No");
 		waitForSwing();
@@ -112,8 +112,7 @@ public class StructureEditorArchiveTest extends AbstractStructureEditorTest {
 
 		DataTypeTestUtils.performAction(action, dtTree, false);
 
-		GhidraFileChooser chooser =
-			waitForDialogComponent(tool.getToolFrame(), GhidraFileChooser.class, 10000);
+		GhidraFileChooser chooser = waitForDialogComponent(GhidraFileChooser.class);
 		assertNotNull("Never found chooser!", chooser);
 		selectFileInChooser(chooser, archiveFile);
 
@@ -162,8 +161,8 @@ public class StructureEditorArchiveTest extends AbstractStructureEditorTest {
 		createStruct = getAction(plugin, "Structure");
 		performAction(createStruct, plugin.getProvider(), true);
 		waitForSwing();
-		CompEditorPanel editorPanel =
-			findComponent(tool.getToolFrame(), CompEditorPanel.class, true);
+		StructureEditorPanel editorPanel =
+			findComponent(tool.getToolFrame(), StructureEditorPanel.class, true);
 
 		model = editorPanel.model;
 		installProvider(model.getProvider());
@@ -199,7 +198,7 @@ public class StructureEditorArchiveTest extends AbstractStructureEditorTest {
 		selectNode(child);
 
 		performAction(closeArchive, plugin.getProvider(), false);
-		OptionDialog dialog = waitForDialogComponent(tool.getToolFrame(), OptionDialog.class, 2000);
+		OptionDialog dialog = waitForDialogComponent(OptionDialog.class);
 		JButton button = findButtonByText(dialog, "No");
 		pressButton(button);
 	}

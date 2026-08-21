@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.util.*;
 
 import ghidra.feature.fid.hash.FidHashQuad;
-import ghidra.program.model.lang.Language;
 import ghidra.util.exception.VersionException;
 
 /**
@@ -32,10 +31,20 @@ public class FidQueryService implements Closeable {
 	List<FidDB> fidDbList = new ArrayList<>();
 	List<FidQueryCloseListener> listeners = new ArrayList<>();
 
-	FidQueryService(Set<FidFile> fidFiles, Language language, boolean openForUpdate)
+	/**
+	 * Construct a FID query service.  A set of FID files is provided for the
+	 * service to query against, but any file that doesn't match the given
+	 * program properties is filtered out.
+	 * @param fidFiles is the set of files the service could query against
+	 * @param programID is the program properties to filter on
+	 * @param openForUpdate is true to indicate that FID files should be opened for later updates
+	 * @throws VersionException if a database schema version of one of the files isn't current
+	 * @throws IOException for an I/O error accessing the FID files
+	 */
+	FidQueryService(Set<FidFile> fidFiles, FidProgramID programID, boolean openForUpdate)
 			throws VersionException, IOException {
 		for (FidFile fidFile : fidFiles) {
-			if (fidFile.isActive() && (language == null || fidFile.canProcessLanguage(language))) {
+			if (fidFile.isActive() && fidFile.canProcess(programID)) {
 				// NOTE: assumes fidFiles have been pre-checked for version compatibility
 				fidDbList.add(fidFile.getFidDB(openForUpdate));
 			}

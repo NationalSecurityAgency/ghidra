@@ -71,6 +71,15 @@
 
     <P>The register window provides the following actions:</P>
 
+    <H3><A name="go_to"></A>Go To [address]</H3>
+
+    <P>Right-clicking a registers' value will display a <B>Go-To</B> action for each address space
+    in which the value is a valid offset. Selecting one will navigate the <A href=
+    "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html">Dynamic Listing</A> to the given
+    address. The action will be disabled if the address is not in the trace's address map, i.e., it
+    is not contained in a region of memory known to the debugger. To prevent this behavior, enable
+    <A href="help/topics/DebuggerRegionsPlugin/DebuggerRegionsPlugin.html">Force Full View</A>.</P>
+
     <H3><A name="select_registers"></A><A name="add"></A><A name="remove"></A><IMG alt="" src=
     "icon.debugger.select.registers"> Select Registers</H3>
 

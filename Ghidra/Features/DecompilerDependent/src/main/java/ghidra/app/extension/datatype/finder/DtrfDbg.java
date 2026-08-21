@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,16 +18,22 @@ package ghidra.app.extension.datatype.finder;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
 import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
 
 import generic.io.NullPrintWriter;
+import ghidra.program.model.listing.Function;
 import ghidra.util.Msg;
 
 /**
  * A package utility class to allow for tests to selectively enable debug output.  This class is
  * used instead of generic logging with the intent that this class will be removed when the bug(s)
  * are fixed.
+ * <p>
+ * Until {@link #enable()} is called, no data is recorded.  Once enabled, all messages are buffered
+ * until a call to {@link #disable(boolean)} is made.
  */
 class DtrfDbg {
 
@@ -36,18 +42,26 @@ class DtrfDbg {
 
 	private static List<String> clientFilters = new ArrayList<>();
 
-	DtrfDbg() {
+	private static Map<Function, List<String>> linesByFunction = new ConcurrentHashMap<>();
+
+	private static volatile boolean isEnabled = false;
+
+	private DtrfDbg() {
 		// static class
 	}
 
 	static void enable() {
 		debugBytes = new ByteArrayOutputStream();
 		debugWriter = new PrintWriter(debugBytes);
+		linesByFunction = new ConcurrentHashMap<>();
+		isEnabled = true;
 	}
 
 	private static void close() {
+		isEnabled = false;
 		debugWriter.close();
 		debugWriter = new NullPrintWriter();
+		linesByFunction.clear();
 	}
 
 	static void disable(boolean write) {
@@ -55,6 +69,16 @@ class DtrfDbg {
 		if (!write) {
 			close();
 			return;
+		}
+
+		Set<Entry<Function, List<String>>> entries = linesByFunction.entrySet();
+		for (Entry<Function, List<String>> entry : entries) {
+			Function function = entry.getKey();
+			List<String> lines = entry.getValue();
+			debugWriter.println("\n\nFunction Debug: " + function.getName());
+			for (String line : lines) {
+				debugWriter.println(line);
+			}
 		}
 
 		debugWriter.flush();
@@ -76,16 +100,36 @@ class DtrfDbg {
 		clientFilters.addAll(Arrays.asList(filters));
 	}
 
-	static void println(String s) {
-		debugWriter.println(s);
+	/**
+	 * Stores a message to later be printed. 
+	 * 
+	 * @param f the function
+	 * @param s the message
+	 */
+	static void println(Function f, String s) {
+		if (isEnabled) {
+			linesByFunction.computeIfAbsent(f, ff -> new ArrayList<>()).add(s);
+		}
 	}
 
-	static void println(Object client, String s) {
+	/**
+	 * Stores a message to later be printed, filtering messages based on the 'client' parameter.
+	 * 
+	 * @param f the function
+	 * @param client the client
+	 * @param s the message
+	 * @see #setClientToStringFilters(String...)
+	 */
+	static void println(Function f, Object client, String s) {
+		if (!isEnabled) {
+			return;
+		}
+
 		if (!passesFilter(client)) {
 			return;
 		}
 
-		debugWriter.println(s);
+		linesByFunction.computeIfAbsent(f, ff -> new ArrayList<>()).add(s);
 	}
 
 	private static boolean passesFilter(Object client) {

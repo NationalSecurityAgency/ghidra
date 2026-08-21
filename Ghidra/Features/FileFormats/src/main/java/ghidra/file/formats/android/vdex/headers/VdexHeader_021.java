@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,8 @@ import ghidra.file.formats.android.dex.DexHeaderFactory;
 import ghidra.file.formats.android.dex.format.DexHeader;
 import ghidra.file.formats.android.vdex.*;
 import ghidra.file.formats.android.vdex.sections.DexSectionHeader_002;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.Structure;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
@@ -79,6 +80,9 @@ public class VdexHeader_021 extends VdexHeader {
 				DexHeader cdexHeader = DexHeaderFactory.getDexHeader(wrappedReader);
 				dexHeaderList.add(cdexHeader);
 
+				if (cdexHeader.getFileSize() <= 0) {
+					throw new IOException("Bad cdex header length: " + cdexHeader.getFileSize());
+				}
 				reader.setPointerIndex(index + cdexHeader.getFileSize());
 			}
 		}
@@ -96,6 +100,7 @@ public class VdexHeader_021 extends VdexHeader {
 		return verifier_deps_version_;
 	}
 
+	@Override
 	public void parse(BinaryReader reader, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		//do nothing

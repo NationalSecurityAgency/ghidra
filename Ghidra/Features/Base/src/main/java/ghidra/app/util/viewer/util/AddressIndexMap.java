@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -207,7 +207,7 @@ public class AddressIndexMap {
 	 * Returns the index for the given address.  If the address is not mapped, the result is
 	 * defined as follows:
 	 *    if the address is less than the smallest address in the map, then null is returned
-	 *    if the address is greater the the largest address in the map, then a value one bigger than
+	 *    if the address is greater than the largest address in the map, then a value one bigger than
 	 *         the index of the largest address in the map.
 	 *    if the address is in a "gap", then the index of the next largest address that is in the
 	 *    		map is returned.
@@ -299,10 +299,10 @@ public class AddressIndexMap {
 	}
 
 	/**
-	 * Returns the the maximum address for the range containing the given address.
+	 * Returns the maximum address for the range containing the given address.
 	 *
 	 * @param addr the address to find its containing range's max address.
-	 * @return  the the maximum address for the range containing the given address.
+	 * @return  the maximum address for the range containing the given address.
 	 */
 	public BigInteger getMaxIndex(Address addr) {
 		int rangeIndex = Arrays.binarySearch(addressList, addr);
@@ -317,10 +317,10 @@ public class AddressIndexMap {
 	}
 
 	/**
-	 * Returns the the minimum address for the range containing the given address.
+	 * Returns the minimum address for the range containing the given address.
 	 *
 	 * @param addr the address to find its containing range's min address.
-	 * @return  the the minimum address for the range containing the given address.
+	 * @return  the minimum address for the range containing the given address.
 	 */
 	public BigInteger getMinIndex(Address addr) {
 		int rangeIndex = Arrays.binarySearch(addressList, addr);

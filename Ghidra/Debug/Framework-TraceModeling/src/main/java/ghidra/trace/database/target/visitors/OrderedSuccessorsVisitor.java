@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,24 +15,22 @@
  */
 package ghidra.trace.database.target.visitors;
 
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import ghidra.dbg.util.PathPattern;
-import ghidra.dbg.util.PathPredicates;
 import ghidra.trace.database.target.visitors.TreeTraversal.SpanIntersectingVisitor;
 import ghidra.trace.database.target.visitors.TreeTraversal.VisitResult;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.path.*;
 
 public class OrderedSuccessorsVisitor implements SpanIntersectingVisitor {
 
-	protected final PathPredicates predicates;
+	protected final PathFilter filter;
 	protected final boolean forward;
 
-	public OrderedSuccessorsVisitor(TraceObjectKeyPath path, boolean forward) {
-		this.predicates = new PathPattern(path.getKeyList());
+	public OrderedSuccessorsVisitor(KeyPath path, boolean forward) {
+		this.filter = new PathPattern(path);
 		this.forward = forward;
 	}
 
@@ -43,13 +41,13 @@ public class OrderedSuccessorsVisitor implements SpanIntersectingVisitor {
 	}
 
 	@Override
-	public VisitResult visitValue(TraceObjectValue value, TraceObjectValPath path) {
-		List<String> keyList = path.getKeyList();
-		if (predicates.matches(keyList)) {
+	public VisitResult visitValue(TraceObjectValue value, TraceObjectValPath valPath) {
+		KeyPath path = valPath.getPath();
+		if (filter.matches(path)) {
 			// Singleton path, so if I match, no successor can
 			return VisitResult.INCLUDE_PRUNE;
 		}
-		if (!value.isObject() || !predicates.successorCouldMatch(keyList, true)) {
+		if (!value.isObject() || !filter.successorCouldMatch(path, true)) {
 			return VisitResult.EXCLUDE_PRUNE;
 		}
 		return VisitResult.EXCLUDE_DESCEND;
@@ -62,8 +60,8 @@ public class OrderedSuccessorsVisitor implements SpanIntersectingVisitor {
 
 	@Override
 	public Stream<? extends TraceObjectValue> continueValues(TraceObject object,
-			Lifespan span, TraceObjectValPath path) {
-		Set<String> nextKeys = predicates.getNextKeys(path.getKeyList());
+			Lifespan span, TraceObjectValPath valPath) {
+		Set<String> nextKeys = filter.getNextKeys(valPath.getPath());
 		if (nextKeys.isEmpty()) {
 			return Stream.empty();
 		}

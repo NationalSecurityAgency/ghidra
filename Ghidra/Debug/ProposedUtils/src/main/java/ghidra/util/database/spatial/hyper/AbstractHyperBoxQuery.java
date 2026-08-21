@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,47 +20,48 @@ import java.util.Comparator;
 import ghidra.util.database.spatial.BoundedShape;
 import ghidra.util.database.spatial.Query;
 
-public abstract class AbstractHyperBoxQuery< //
-		P extends HyperPoint, //
-		DS extends BoundedShape<NS>, //
-		NS extends HyperBox<P, NS>, //
-		Q extends AbstractHyperBoxQuery<P, DS, NS, Q>> //
+public abstract class AbstractHyperBoxQuery<
+	P extends HyperPoint,
+	DS extends BoundedShape<NS>,
+	NS extends HyperBox<P, NS>,
+	Q extends AbstractHyperBoxQuery<P, DS, NS, Q>>
 		implements Query<DS, NS> {
 
-	public interface QueryFactory<NS extends HyperBox<?, NS>, Q extends AbstractHyperBoxQuery<?, ?, NS, Q>> {
+	public interface QueryFactory<NS extends HyperBox<?, NS>,
+		Q extends AbstractHyperBoxQuery<?, ?, NS, Q>> {
 		Q create(NS ls, NS us, HyperDirection direction);
 	}
 
-	protected static <P extends HyperPoint, NS extends HyperBox<P, NS>, //
-			Q extends AbstractHyperBoxQuery<P, ?, NS, Q>> Q intersecting(NS shape,
-					HyperDirection direction, QueryFactory<NS, Q> factory) {
+	protected static <P extends HyperPoint, NS extends HyperBox<P, NS>,
+		Q extends AbstractHyperBoxQuery<P, ?, NS, Q>> Q intersecting(NS shape,
+				HyperDirection direction, QueryFactory<NS, Q> factory) {
 		HyperBox<P, ?> full = shape.space().getFull();
 		NS ls = shape.immutable(full.lCorner(), shape.uCorner());
 		NS us = shape.immutable(shape.lCorner(), full.uCorner());
 		return factory.create(ls, us, direction);
 	}
 
-	protected static <P extends HyperPoint, NS extends HyperBox<P, NS>, //
-			Q extends AbstractHyperBoxQuery<P, ?, NS, Q>> Q enclosing(NS shape,
-					HyperDirection direction, QueryFactory<NS, Q> factory) {
+	protected static <P extends HyperPoint, NS extends HyperBox<P, NS>,
+		Q extends AbstractHyperBoxQuery<P, ?, NS, Q>> Q enclosing(NS shape,
+				HyperDirection direction, QueryFactory<NS, Q> factory) {
 		HyperBox<P, ?> full = shape.space().getFull();
 		NS ls = shape.immutable(full.lCorner(), shape.lCorner());
 		NS us = shape.immutable(shape.uCorner(), full.uCorner());
 		return factory.create(ls, us, direction);
 	}
 
-	protected static <P extends HyperPoint, NS extends HyperBox<P, NS>, //
-			Q extends AbstractHyperBoxQuery<P, ?, NS, Q>> Q enclosed(NS shape,
-					HyperDirection direction, QueryFactory<NS, Q> factory) {
+	protected static <P extends HyperPoint, NS extends HyperBox<P, NS>,
+		Q extends AbstractHyperBoxQuery<P, ?, NS, Q>> Q enclosed(NS shape,
+				HyperDirection direction, QueryFactory<NS, Q> factory) {
 		HyperBox<P, ?> full = shape.space().getFull();
 		NS ls = shape.immutable(shape.lCorner(), full.uCorner());
 		NS us = shape.immutable(full.lCorner(), shape.uCorner());
 		return factory.create(ls, us, direction);
 	}
 
-	protected static <P extends HyperPoint, NS extends HyperBox<P, NS>, //
-			Q extends AbstractHyperBoxQuery<P, ?, NS, Q>> Q equalTo(NS shape,
-					HyperDirection direction, QueryFactory<NS, Q> factory) {
+	protected static <P extends HyperPoint, NS extends HyperBox<P, NS>,
+		Q extends AbstractHyperBoxQuery<P, ?, NS, Q>> Q equalTo(NS shape,
+				HyperDirection direction, QueryFactory<NS, Q> factory) {
 		NS ls = shape.immutable(shape.lCorner(), shape.lCorner());
 		NS us = shape.immutable(shape.uCorner(), shape.uCorner());
 		return factory.create(ls, us, direction);

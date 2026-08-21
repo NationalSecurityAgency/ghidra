@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,39 +18,26 @@ package ghidra.util;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
-import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang3.StringUtils;
-
-import util.CollectionUtils;
 
 public final class NumericUtilities {
 	public static final BigInteger MAX_UNSIGNED_LONG = new BigInteger("ffffffffffffffff", 16);
 	public static final BigInteger MAX_SIGNED_LONG = new BigInteger("7fffffffffffffff", 16);
+	public static final BigInteger MAX_UNSIGNED_INT = new BigInteger("ffffffff", 16);
 	public static final long MAX_UNSIGNED_INT32_AS_LONG = 0xffffffffL;
 
 	private final static String HEX_PREFIX_X = "0X";
 	private final static String HEX_PREFIX_x = "0x";
-
-	private final static Set<Class<? extends Number>> INTEGER_TYPES = new HashSet<>();
-	static {
-		INTEGER_TYPES.add(Byte.class);
-		INTEGER_TYPES.add(Short.class);
-		INTEGER_TYPES.add(Integer.class);
-		INTEGER_TYPES.add(Long.class);
-	}
-	private static final Set<Class<? extends Number>> FLOATINGPOINT_TYPES = new HashSet<>();
-	static {
-		FLOATINGPOINT_TYPES.add(Float.class);
-		FLOATINGPOINT_TYPES.add(Double.class);
-	}
+	private final static String BIN_PREFIX = "0B";
+	private final static String OCT_PREFIX = "0";
 
 	// @formatter:off
-	private static IntegerRadixRenderer SIGNED_INTEGER_RENDERER = new SignedIntegerRadixRenderer();
-	private static IntegerRadixRenderer UNSIGNED_INTEGER_RENDERER = new UnsignedIntegerRadixRenderer();
-	private static IntegerRadixRenderer DEFAULT_INTEGER_RENDERER = new DefaultIntegerRadixRenderer();
+	private final static Set<Class<? extends Number>> INTEGER_TYPES = Set.of(Byte.class, Short.class, Integer.class, Long.class);
+	private static final Set<Class<? extends Number>> FLOATINGPOINT_TYPES = Set.of(Float.class, Double.class);
 	// @formatter:on
 
 	private NumericUtilities() {
@@ -62,7 +49,9 @@ public final class NumericUtilities {
 	 * 
 	 * @param numStr the number string
 	 * @return the long value or 0
+	 * @deprecated use {@link #parseLong(String)} instead
 	 */
+	@Deprecated(since = "11.3", forRemoval = true)
 	public static long parseNumber(String numStr) {
 		return parseNumber(numStr, Long.valueOf(0));
 	}
@@ -73,7 +62,9 @@ public final class NumericUtilities {
 	 * @param s the string to parse
 	 * @param defaultValue the default value to use if the string cannot be parsed
 	 * @return the long value
+	 * @deprecated use {@link #parseLong(String, long)} instead
 	 */
+	@Deprecated(since = "11.3", forRemoval = true)
 	public static Long parseNumber(String s, Long defaultValue) {
 		s = (s == null ? "" : s.trim());
 		if (s.length() == 0) {
@@ -98,45 +89,153 @@ public final class NumericUtilities {
 	}
 
 	/**
-	 * Parses the given string as a numeric value, detecting whether or not it begins with a hex
-	 * prefix, and if not, parses as a long int value.
+	 * Parses the given decimal/hex string as an {@code int} value. This method allows values with
+	 * the top bit set to be implicitly parsed as negative values.
+	 * 
 	 * @param s the string to parse
-	 * @return the long value
-	 * @throws NumberFormatException if the string is blank or has too many digits 
+	 * @return the parsed {@code int} value
+	 * @throws NumberFormatException if the string does not represent a valid {@code int} value 
 	 */
-	public static long parseLong(String s) {
-		String origStr = s;
-		long value = 0;
-		long sign = 1;
+	public static int parseInt(String s) throws NumberFormatException {
+		return parseHelper(s, false, BigInteger::intValue, MAX_UNSIGNED_INT);
+	}
 
-		s = (s == null ? "" : s.trim());
-		if (s.length() == 0) {
-			return value;
+	/**
+	 * Parses the given decimal/hex string as an {@code int} value. This method allows values with
+	 * the top bit set to be implicitly parsed as negative values.
+	 * 
+	 * @param s the string to parse
+	 * @param defaultValue the default value to return if the string does not represent a valid
+	 *   {@code int} value
+	 * @return the parsed {@code int} value or the {@code defaultValue} if the string does not 
+	 *   represent a valid {@code int} value
+	 */
+	public static int parseInt(String s, int defaultValue) {
+		try {
+			return parseInt(s);
 		}
-		if (s.startsWith("-")) {
-			sign = -1;
+		catch (NumberFormatException e) {
+			return defaultValue;
+		}
+	}
+
+	/**
+	 * Parses the given decimal/hex string as an {@code long} value. This method allows values with
+	 * the top bit set to be implicitly parsed as negative values.
+	 * 
+	 * @param s the string to parse
+	 * @return the parsed {@code long} value
+	 * @throws NumberFormatException if the string does not represent a valid {@code long} value 
+	 */
+	public static long parseLong(String s) throws NumberFormatException {
+		return parseHelper(s, false, BigInteger::longValue, MAX_UNSIGNED_LONG);
+	}
+
+	/**
+	 * Parses the given decimal/hex string as an {@code long} value. This method allows values with
+	 * the top bit set to be implicitly parsed as negative values.
+	 * 
+	 * @param s the string to parse
+	 * @param defaultValue the default value to return if the string does not represent a valid
+	 *   {@code long} value
+	 * @return the parsed {@code long} value or the {@code defaultValue} if the string does not
+	 *   represent a valid {@code long} value
+	 */
+	public static long parseLong(String s, long defaultValue) {
+		try {
+			return parseLong(s);
+		}
+		catch (NumberFormatException e) {
+			return defaultValue;
+		}
+	}
+
+	/**
+	 * Parses the given hex string as a {@code long} value.
+	 * <p>
+	 * Note: The string is treated as hex regardless of whether or not it contains the {@code 0x}
+	 * prefix.
+	 * 
+	 * @param s the string to parse
+	 * @return the parsed {@code long} value
+	 * @throws NumberFormatException if the string does not represent a valid value
+	 */
+	public static long parseHexLong(String s) throws NumberFormatException {
+		return parseHelper(s, true, BigInteger::longValue, MAX_UNSIGNED_LONG);
+	}
+
+	/**
+	 * Parses the given hex string as a {@link BigInteger} value.
+	 * <p>
+	 * Note: The string is treated as hex regardless of whether or not it contains the {@code 0x}
+	 * prefix.
+	 * 
+	 * @param s the string to parse
+	 * @return the parsed {@link BigInteger} value
+	 * @throws NumberFormatException if the string does not represent a valid value
+	 * @deprecated use {@link #parseHexLong(String)} instead
+	 */
+	@Deprecated(since = "11.3", forRemoval = true)
+	public static BigInteger parseHexBigInteger(String s) throws NumberFormatException {
+		return parseHelper(s, true, Function.identity(), MAX_UNSIGNED_LONG);
+	}
+
+	/**
+	 * Parses the given decimal/hex string as a custom type. This method allows values with the top 
+	 * bit set to be implicitly parsed as negative values.
+	 * 
+	 * @param s the string to parse
+	 * @param forceHex true if the string to parse should be treated as hex, even if it doesn't 
+	 *   start with {@code 0x}; otherwise, false;
+	 * @param func a {@link Function} used to convert the parsed {@link BigInteger} to a custom type
+	 * @param max the maximum value that can be used to represent the type of value being parsed if
+	 *   it were treated as unsigned
+	 * @param <T> The type of value being parsed
+	 * @return the parsed value
+	 * @throws NumberFormatException if the string does not represent a valid value
+	 */
+	private static <T> T parseHelper(String s, boolean forceHex, Function<BigInteger, T> func,
+			BigInteger max) throws NumberFormatException {
+		String origStr = s;
+
+		// Trim the string, and throw exception if it's null/empty
+		s = (s == null ? "" : s.trim());
+		if (s.isEmpty()) {
+			throw new NumberFormatException("String to parse is empty");
+		}
+
+		// Chop off the optional sign character of the string, we'll add it back later
+		String sign = "";
+		if (s.startsWith("-") || s.startsWith("+")) {
+			sign = s.substring(0, 1);
 			s = s.substring(1);
 		}
-		int radix = 10;
 
-		if (s.startsWith(HEX_PREFIX_x) || s.startsWith(HEX_PREFIX_X)) {
-			if (s.length() > 18) {
-				throw new NumberFormatException(s + " has too many digits.");
-			}
+		// Process the radix
+		boolean hexPrefix = s.startsWith(HEX_PREFIX_x) || s.startsWith(HEX_PREFIX_X);
+		int radix = forceHex || hexPrefix ? 16 : 10;
+		if (hexPrefix) {
 			s = s.substring(2);
-			radix = 16;
 		}
-		if (s.length() == 0) {
-			return 0;
+
+		// Make sure next character is not + or - (protects against things like "0x-ffff")
+		if (!s.isEmpty() && (s.charAt(0) == '-' || s.charAt(0) == '+')) {
+			throw new NumberFormatException("Cannot parse " + origStr);
 		}
+
+		// Try to convert the string to the desired type
 		try {
-			BigInteger bi = new BigInteger(s, radix);
-			return bi.longValue() * sign;
+
+			// Check size
+			if (new BigInteger(s, radix).compareTo(max) > 0) {
+				throw new NumberFormatException(s + " exceeds maximum data type size.");
+			}
+
+			return func.apply(new BigInteger(sign + s, radix));
 		}
 		catch (NumberFormatException e) {
 			// A little hacky, but the message should be complete and report the original string
-			NumberFormatException e2 =
-				new NumberFormatException("Cannot parse long from " + origStr);
+			NumberFormatException e2 = new NumberFormatException("Cannot parse " + origStr);
 			e2.setStackTrace(e.getStackTrace());
 			throw e2;
 		}
@@ -145,45 +244,47 @@ public final class NumericUtilities {
 		}
 	}
 
-	/**
-	 * Parses the given string as a hex long value, detecting whether or not it begins with a hex
-	 * prefix, and if not, parses as a long int value.
-	 * @param s the string to parse
-	 * @return the long value
-	 * @throws NumberFormatException if the string is blank
-	 */
-	public static long parseHexLong(String s) {
-		return parseHexBigInteger(s).longValue();
+	private static BigInteger decodeMagnitude(int p, String s) {
+		// Special case, so it doesn't get chewed by octal parser
+		if ("0".equals(s)) {
+			return BigInteger.ZERO;
+		}
+		if (s.regionMatches(true, p, HEX_PREFIX_X, 0, HEX_PREFIX_X.length())) {
+			return new BigInteger(s.substring(p + HEX_PREFIX_X.length()), 16);
+		}
+		if (s.regionMatches(true, p, BIN_PREFIX, 0, BIN_PREFIX.length())) {
+			return new BigInteger(s.substring(p + BIN_PREFIX.length()), 2);
+		}
+		// Check last, because prefix is shortest.
+		if (s.regionMatches(true, p, OCT_PREFIX, 0, OCT_PREFIX.length())) {
+			return new BigInteger(s.substring(p + OCT_PREFIX.length()), 8);
+		}
+		return new BigInteger(s.substring(p), 10);
 	}
 
 	/**
-	 * Parses the given hex string as a BigIntge value, detecting whether or not it begins with a 
-	 * hex prefix, and if not, parses as a long int value.
+	 * Decode a big integer in hex, binary, octal, or decimal, based on the prefix 0x, 0b, or 0.
+	 * 
+	 * <p>
+	 * This checks for the presence of a case-insensitive prefix. 0x denotes hex, 0b denotes binary,
+	 * 0 denotes octal. If no prefix is given, decimal is assumed. A sign +/- may immediately
+	 * precede the prefix. If no sign is given, a positive value is assumed.
+	 * 
 	 * @param s the string to parse
-	 * @return the long value
-	 * @throws NumberFormatException if the string is blank
+	 * @return the decoded value
 	 */
-	public static BigInteger parseHexBigInteger(String s) {
-
-		s = (s == null ? "" : s.trim());
-		if (s.length() == 0) {
-			throw new NumberFormatException(s + " no digits.");
-		}
-
+	public static BigInteger decodeBigInteger(String s) {
+		int p = 0;
 		boolean negative = false;
-		if (s.startsWith("-")) {
+		if (s.startsWith("+")) {
+			p = 1;
+		}
+		else if (s.startsWith("-")) {
+			p = 1;
 			negative = true;
-			s = s.substring(1);
 		}
-
-		if (s.startsWith(HEX_PREFIX_x) || s.startsWith(HEX_PREFIX_X)) {
-			s = s.substring(2);
-		}
-
-		if (negative) {
-			s = "-" + s;
-		}
-		return new BigInteger(s, 16);
+		BigInteger mag = decodeMagnitude(p, s);
+		return negative ? mag.negate() : mag;
 	}
 
 	/**
@@ -220,13 +321,49 @@ public final class NumericUtilities {
 	 * @return the string
 	 */
 	public final static String toSignedHexString(long value) {
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		if (value < 0) {
 			buf.append("-");
 		}
 		buf.append(HEX_PREFIX_x);
 		buf.append(Long.toHexString(Math.abs(value)));
 		return buf.toString();
+	}
+
+	/**
+	 * {@return a byte converted into a padded hex string}
+	 * 
+	 * @param b the byte
+	 */
+	public static String toPaddedHexString(byte b) {
+		return "%02x".formatted(b);
+	}
+
+	/**
+	 * {@return a short converted into a padded hex string}
+	 * 
+	 * @param s the short
+	 */
+	public static String toPaddedHexString(short s) {
+		return "%04x".formatted(s);
+	}
+
+	/**
+	 * {@return an int converted into a padded hex string}
+	 * 
+	 * @param i the int
+	 */
+	public static String toPaddedHexString(int i) {
+		return "%08x".formatted(i);
+	}
+
+	/**
+	 * {@return a long converted into a padded hex string}
+	 * 
+	 * @param l the long
+	 */
+	public static String toPaddedHexString(long l) {
+		return "%016x".formatted(l);
 	}
 
 	/**
@@ -302,7 +439,6 @@ public final class NumericUtilities {
 	 * For example, consider the mask 00001111:01011100, and the value 00001001:00011000. This will
 	 * display as {@code X8:[x0x1][10xx]}. To see the correlation, consider the table:
 	 * <table>
-	 * <caption></caption>
 	 * <tr>
 	 * <th>Display</th>
 	 * <th>{@code X}</th>
@@ -561,7 +697,7 @@ public final class NumericUtilities {
 	/**
 	 * Provide renderings of <code>number</code> in different bases:
 	 * <ul>
-	 * <li><code>0</code> - renders <code>number</code> as an escaped character sequence</li>
+	 * <li><code>0</code> - renders <code>number</code> as a big endian escaped character sequence</li>
 	 * <li><code>2</code> - renders <code>number</code> as a <code>base-2</code> integer</li>
 	 * <li><code>8</code> - renders <code>number</code> as a <code>base-8</code> integer</li>
 	 * <li><code>10</code> - renders <code>number</code> as a <code>base-10</code> integer</li>
@@ -569,7 +705,6 @@ public final class NumericUtilities {
 	 * integer</li>
 	 * </ul>
 	 * <table>
-	 * <caption></caption>
 	 * <tr>
 	 * <th>Number</th>
 	 * <th>Radix</th>
@@ -580,7 +715,7 @@ public final class NumericUtilities {
 	 * <tr>
 	 * <td>&nbsp;</td>
 	 * <td></td>
-	 * <td><i></i></td>
+	 * <td></td>
 	 * <td></td>
 	 * <td></td>
 	 * </tr>
@@ -615,7 +750,7 @@ public final class NumericUtilities {
 	 * <tr>
 	 * <td>&nbsp;</td>
 	 * <td></td>
-	 * <td><i></i></td>
+	 * <td></td>
 	 * <td></td>
 	 * <td></td>
 	 * </tr>
@@ -650,7 +785,7 @@ public final class NumericUtilities {
 	 * <tr>
 	 * <td>&nbsp;</td>
 	 * <td></td>
-	 * <td><i></i></td>
+	 * <td></td>
 	 * <td></td>
 	 * <td></td>
 	 * </tr>
@@ -691,32 +826,16 @@ public final class NumericUtilities {
 	 */
 	public static String formatNumber(long number, int radix, SignednessFormatMode mode) {
 		if (radix == 0) {
-			byte[] bytes = new byte[8];
-			bytes[0] = (byte) (number >> 56);
-			bytes[1] = (byte) (number >> 48);
-			bytes[2] = (byte) (number >> 40);
-			bytes[3] = (byte) (number >> 32);
-			bytes[4] = (byte) (number >> 24);
-			bytes[5] = (byte) (number >> 16);
-			bytes[6] = (byte) (number >> 8);
-			bytes[7] = (byte) (number >> 0);
+			byte[] bytes = BigEndianDataConverter.INSTANCE.getBytes(number);
 			return StringUtilities.toQuotedString(bytes);
 		}
 
-		IntegerRadixRenderer renderer = null;
-		switch (mode) {
-			case SIGNED:
-				renderer = SIGNED_INTEGER_RENDERER;
-				break;
-			case UNSIGNED:
-				renderer = UNSIGNED_INTEGER_RENDERER;
-				break;
-			case DEFAULT:
-				renderer = DEFAULT_INTEGER_RENDERER;
-				break;
-		}
-		return renderer.toString(number, radix);
-
+		BiFunction<Long, Integer, String> renderer = switch (mode) {
+			case SIGNED -> NumericUtilities::signedIntegerRadixToString;
+			case UNSIGNED -> NumericUtilities::unsignedIntegerRadixToString;
+			case DEFAULT -> NumericUtilities::defaultIntegerRadixToString;
+		};
+		return renderer.apply(number, radix);
 	}
 
 	/**
@@ -773,41 +892,24 @@ public final class NumericUtilities {
 	}
 
 	/**
-	 * Convert the given byte into a two character String, padding with a leading 0 if needed.
-	 *
-	 * @param b the byte
-	 * @return the byte string
-	 */
-	public static String toString(byte b) {
-		String bs = Integer.toHexString(b & 0xff);
-		if (bs.length() == 1) {
-			return "0" + bs;
-		}
-		return bs;
-	}
-
-	/**
 	 * Convert a byte array into a hexadecimal string.
 	 *
 	 * @param bytes byte array
 	 * @return hex string representation
 	 */
 	public static String convertBytesToString(byte[] bytes) {
-		return convertBytesToString(bytes, null);
+		return bytes != null ? convertBytesToString(bytes, 0, bytes.length, null) : null;
 	}
 
 	/**
 	 * Convert a byte array into a hexadecimal string.
 	 *
 	 * @param bytes byte array
-	 * @param delimeter the text between byte strings
+	 * @param delimiter the text between byte strings, {@code null} ok
 	 * @return hex string representation
 	 */
-	public static String convertBytesToString(byte[] bytes, String delimeter) {
-		if (bytes == null) {
-			return null;
-		}
-		return convertBytesToString(bytes, 0, bytes.length, delimeter);
+	public static String convertBytesToString(byte[] bytes, String delimiter) {
+		return bytes != null ? convertBytesToString(bytes, 0, bytes.length, delimiter) : null;
 	}
 
 	/**
@@ -816,49 +918,77 @@ public final class NumericUtilities {
 	 * @param bytes byte array
 	 * @param start start index
 	 * @param len number of bytes to convert
-	 * @param delimeter the text between byte strings
+	 * @param delimiter the text between byte strings, {@code null} ok
 	 * @return hex string representation
 	 */
-	public static String convertBytesToString(byte[] bytes, int start, int len, String delimeter) {
+	public static String convertBytesToString(byte[] bytes, int start, int len, String delimiter) {
+		if (bytes == null) {
+			return null;
+		}
+		delimiter = Objects.requireNonNullElse(delimiter, "");
 
-		Iterator<Byte> iterator = IteratorUtils.arrayIterator(bytes, start, start + len);
-		return convertBytesToString(iterator, delimeter);
+		int end = start + len;
+		Objects.checkFromToIndex(start, end, bytes.length);
+
+		StringBuilder sb = new StringBuilder(len * (2 + delimiter.length()));
+		for (int i = start; i < end; i++) {
+			if (!sb.isEmpty()) {
+				sb.append(delimiter);
+			}
+			String s = Integer.toHexString(Byte.toUnsignedInt(bytes[i]));
+			if (s.length() < 2) {
+				sb.append('0');
+			}
+			sb.append(s);
+		}
+		return sb.toString();
 	}
 
 	/**
-	 * Convert a bytes into a hexadecimal string.
+	 * Convert bytes into a hexadecimal string.
 	 *
 	 * @param bytes an iterator of bytes
-	 * @param delimiter the text between byte strings; null is allowed
+	 * @param delimiter the text between byte strings, {@code null} ok
 	 * @return hex string representation
 	 */
 	public static String convertBytesToString(Iterator<Byte> bytes, String delimiter) {
+		delimiter = Objects.requireNonNullElse(delimiter, "");
 
-		return convertBytesToString(() -> bytes, delimiter);
+		StringBuilder sb = new StringBuilder();
+		while (bytes.hasNext()) {
+			Byte b = bytes.next();
+			if (!sb.isEmpty()) {
+				sb.append(delimiter);
+			}
+			String s = Integer.toHexString(Byte.toUnsignedInt(b));
+			if (s.length() < 2) {
+				sb.append('0');
+			}
+			sb.append(s);
+		}
+		return sb.toString();
 	}
 
 	/**
-	 * Convert a bytes into a hexadecimal string.
+	 * Convert bytes into a hexadecimal string.
 	 *
 	 * @param bytes an iterable of bytes
-	 * @param delimiter the text between byte strings; null is allowed
+	 * @param delimiter the text between byte strings, {@code null} ok
 	 * @return hex string representation
 	 */
 	public static String convertBytesToString(Iterable<Byte> bytes, String delimiter) {
-		return convertBytesToString(CollectionUtils.asStream(bytes), delimiter);
+		return convertBytesToString(bytes.iterator(), delimiter);
 	}
 
 	/**
-	 * Convert a bytes into a hexadecimal string.
+	 * Convert bytes into a hexadecimal string.
 	 *
 	 * @param bytes an stream of bytes
-	 * @param delimiter the text between byte strings; null is allowed
+	 * @param delimiter the text between byte strings, {@code null} ok
 	 * @return hex string representation
 	 */
 	public static String convertBytesToString(Stream<Byte> bytes, String delimiter) {
-
-		delimiter = (delimiter == null) ? "" : delimiter;
-		return bytes.map(NumericUtilities::toString).collect(Collectors.joining(delimiter));
+		return convertBytesToString(bytes.iterator(), delimiter);
 	}
 
 	/**
@@ -904,94 +1034,53 @@ public final class NumericUtilities {
 	}
 
 	/**
-	 * Provides the protocol for rendering integer-type numbers in different signed-ness modes.
+	 * Renders provided numbers as signed values.
+	 * 
+	 * @param number value
+	 * @param radix 2,8,10,16
+	 * @return formatted string
 	 */
-	private static interface IntegerRadixRenderer {
-		/**
-		 * Format the given number in the provided radix base.
-		 *
-		 * @param number the number to render
-		 * @param radix the base in which to render
-		 * @return a string representing the provided number in the given base
-		 */
-		public String toString(long number, int radix);
-
+	private static String signedIntegerRadixToString(long number, int radix) {
+		return switch (radix) {
+			case 2 -> Long.toString(number, radix) + "b";
+			case 8 -> Long.toString(number, radix) + "o";
+			case 10 -> Long.toString(number, radix);
+			case 16 -> Long.toString(number, radix) + "h";
+			default -> throw new IllegalArgumentException("Unsupported radix " + radix);
+		};
 	}
 
 	/**
-	 * Renders provided numbers as signed values
+	 * Renders provided numbers as unsigned values.
+	 * 
+	 * @param number value
+	 * @param radix 2,8,10,16
+	 * @return formatted string
 	 */
-	private final static class SignedIntegerRadixRenderer implements IntegerRadixRenderer {
-		/**
-		 * {@inheritDoc}
-		 * <p>
-		 * All values are rendered in their <i>signed</i> form
-		 **/
-		@Override
-		public String toString(long number, int radix) {
-			switch (radix) {
-				case 2:
-					return Long.toString(number, radix) + "b";
-				case 8:
-					return Long.toString(number, radix) + "o";
-				case 10:
-					return Long.toString(number, radix);
-				case 16:
-					return Long.toString(number, radix) + "h";
-			}
-			throw new IllegalArgumentException("Unsupported radix");
-		}
-	}
-
-	/**
-	 * Renders provided numbers as unsigned values
-	 */
-	private final static class UnsignedIntegerRadixRenderer implements IntegerRadixRenderer {
-		/**
-		 * {@inheritDoc}
-		 * <p>
-		 * All values are rendered in their <i>unsigned</i> form
-		 **/
-		@Override
-		public String toString(long number, int radix) {
-			switch (radix) {
-				case 2:
-					return Long.toBinaryString(number) + "b";
-				case 8:
-					return Long.toOctalString(number) + "o";
-				case 10:
-					return Long.toUnsignedString(number);
-				case 16:
-					return Long.toHexString(number) + "h";
-			}
-			throw new IllegalArgumentException("Unsupported radix");
-		}
+	private static String unsignedIntegerRadixToString(long number, int radix) {
+		return switch (radix) {
+			case 2 -> Long.toBinaryString(number) + "b";
+			case 8 -> Long.toOctalString(number) + "o";
+			case 10 -> Long.toUnsignedString(number);
+			case 16 -> Long.toHexString(number) + "h";
+			default -> throw new IllegalArgumentException("Unsupported radix " + radix);
+		};
 	}
 
 	/**
 	 * Renders provided numbers in a more human-friendly manner
+	 * 
+	 * @param number value
+	 * @param radix 2,8,10,16
+	 * @return formatted string
 	 */
-	private final static class DefaultIntegerRadixRenderer implements IntegerRadixRenderer {
-		/**
-		 * {@inheritDoc}
-		 * <p>
-		 * Values to be rendered in binary, octal, or hexadecimal bases are rendered as unsigned,
-		 * numbers rendered in decimal are rendered as signed.
-		 */
-		@Override
-		public String toString(long number, int radix) {
-			switch (radix) {
-				case 2:
-					return new UnsignedIntegerRadixRenderer().toString(number, radix);
-				case 8:
-					return new UnsignedIntegerRadixRenderer().toString(number, radix);
-				case 10:
-					return new SignedIntegerRadixRenderer().toString(number, radix);
-				case 16:
-					return new UnsignedIntegerRadixRenderer().toString(number, radix);
-			}
-			throw new IllegalArgumentException("Unsupported radix");
-		}
+	private static String defaultIntegerRadixToString(long number, int radix) {
+		return switch (radix) {
+			case 2 -> unsignedIntegerRadixToString(number, radix);
+			case 8 -> unsignedIntegerRadixToString(number, radix);
+			case 10 -> signedIntegerRadixToString(number, radix);
+			case 16 -> unsignedIntegerRadixToString(number, radix);
+			default -> throw new IllegalArgumentException("Unsupported radix " + radix);
+		};
 	}
-
 }

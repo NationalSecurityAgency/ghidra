@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.ui.dialogs.PreferencesUtil;
 
-import ghidra.launch.JavaConfig;
+import ghidra.launch.AppConfig;
 import ghidra.launch.JavaFinder.JavaFilter;
 import ghidradev.ghidraprojectcreator.preferences.GhidraProjectCreatorPreferencePage;
 import ghidradev.ghidraprojectcreator.preferences.GhidraProjectCreatorPreferences;
@@ -108,8 +108,8 @@ public class ChooseGhidraInstallationWizardPage extends WizardPage {
 				File ghidraInstallDir = new File(ghidraInstallDirCombo.getText());
 				GhidraProjectCreatorPreferencePage.validateGhidraInstallation(ghidraInstallDir);
 				try {
-					JavaConfig javaConfig = new JavaConfig(ghidraInstallDir);
-					if (!javaConfig.isSupportedJavaHomeDir(javaConfig.getSavedJavaHome(),
+					AppConfig appConfig = new AppConfig(ghidraInstallDir);
+					if (!appConfig.isSupportedJavaHomeDir(appConfig.getSavedJavaHome(),
 						JavaFilter.JDK_ONLY)) {
 						message = "A supported JDK is not associated with this Ghidra " +
 							"installation. Please run this Ghidra and try again.";

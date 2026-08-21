@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,8 +22,7 @@ import java.util.regex.Pattern;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
@@ -44,40 +43,48 @@ public abstract class DemangledObject implements Demangled {
 	/*
 	 	The following names probably need to be refactored.   Until then, this is how the following
 	 	fields are used.
-	 	
-	 		mangled - 
+	
+			mangled -
 	 			Source: The original mangled string as seen in the program
 	 		    Usage: Can be used to see if a program symbol has already been demangled
-	 		          
-	 		originalDemangled - 
+	
+			rawDemangled -
 	 			Source: The raw demangled string returned from the demangler
+	 		    Usage: for debugging
+	
+			originalDemangled -
+	 			Source: The starting demangled string.  This will usually be the same as the raw
+	 			        demangled string.  This may have simplifications applied.
 	 		    Usage: for display
-	 		    
-	 		demangledName - 
-	 			Source: The name as created by the parser which may transform or even replace the 
+	
+			demangledName -
+	 			Source: The name as created by the parser which may transform or even replace the
 	 			        string returned from the demangler
 	 		    Usage: for display
-	 		                
-	 		name - 
-	 			Source: This is derived from the 'demangledName' This is updated to be suitable 
-	 		            for use as a symbol name.  This may be null while building, but is 
-	 		            expected to be non-null when applyTo() is called	 		 		       
-	 		    Usage: The name that will be applied when applyTo() is called.  
-	 		    
-	 		    
-	 		    
-	 	Future: These variables should be refactored and renamed to be clearer and more cohesive, 
-	 	        something like: 
-	 	        
+	
+			name -
+	 			Source: This is derived from the 'demangledName' This is updated to be suitable
+	 		            for use as a symbol name.  This may be null while building, but is
+	 		            expected to be non-null when applyTo() is called
+	 		    Usage: The name that will be applied when applyTo() is called.
+	
+	
+	
+	 	Future: These variables should be refactored and renamed to be clearer and more cohesive,
+	 	        something like:
+	
 	 	        mangled
 	 	        rawDemangled
-	 	        escapedDemangled
-	 	        symbolName 
-	 	
+	 	        simplifiedDemangled --|   These two could be combined into 'transformedDemangled'
+	 	        escapedDemangled    --|
+	 	        symbolName
+	
 	 */
+	protected MangledContext mangledContext; // the mangled context, which includes mangled string
 	protected final String mangled; // original mangled string
-	protected final String originalDemangled; // raw demangled string
-	private String demangledName; // updated demangled string
+	protected String rawDemangled; // demangled string from the demangler without any simplifications
+	protected String originalDemangled; // starting demangled string that may have been simplified
+	private String demangledName; // updated demangled string, possibly with changes made while building
 	private String name; // version of demangled name suitable for symbols
 
 	protected String specialPrefix;
@@ -109,10 +116,31 @@ public abstract class DemangledObject implements Demangled {
 	// Status of mangled String converted successfully to demangled String
 	private boolean demangledNameSucceeded = false;
 	private String errorMessage = null;
+	protected boolean isPrimary = true; // default to true for backward compatibility
 
+	/**
+	 * Constructor.  This is the older constructor that does not take a mangled context
+	 * @param mangled the mangled string
+	 * @param originalDemangled the raw demangled string; usually what comes from the upstream
+	 * demangler process, if there is one
+	 */
 	DemangledObject(String mangled, String originalDemangled) {
 		this.mangled = mangled;
 		this.originalDemangled = originalDemangled;
+		this.rawDemangled = originalDemangled;
+	}
+
+	/**
+	 * Constructor.
+	 * @param mangledContext the context, which includes the mangled string
+	 * @param originalDemangled the raw demangled string; usually what comes from the upstream
+	 * demangler process, if there is one
+	 */
+	DemangledObject(MangledContext mangledContext, String originalDemangled) {
+		this.mangledContext = mangledContext;
+		this.mangled = mangledContext.getMangled();
+		this.originalDemangled = originalDemangled;
+		this.rawDemangled = originalDemangled;
 	}
 
 	@Override
@@ -223,11 +251,30 @@ public abstract class DemangledObject implements Demangled {
 	}
 
 	/**
+	 * Sets whether the symbol from which this demangle object was created is the primary symbol at
+	 * the given address.  If true, then the demangled symbol will be made the primary symbol.
+	 * @param isPrimary true if primary
+	 */
+	public void setPrimary(boolean isPrimary) {
+		this.isPrimary = isPrimary;
+	}
+
+	/**
 	 * Returns the success state of converting a mangled String into a demangled String
 	 * @return true succeeded creating demangled String
 	 */
 	public boolean demangledNameSuccessfully() {
 		return demangledNameSucceeded;
+	}
+
+	@Override
+	public void setMangledContext(MangledContext mangledContextArg) {
+		mangledContext = mangledContextArg;
+	}
+
+	@Override
+	public MangledContext getMangledContext() {
+		return mangledContext;
 	}
 
 	@Override
@@ -238,6 +285,35 @@ public abstract class DemangledObject implements Demangled {
 	@Override
 	public String getOriginalDemangled() {
 		return originalDemangled;
+	}
+
+	/**
+	 * Sets the original demangled string.  This is useful for clients that reuse constructed
+	 * demangled objects for special case constructs.
+	 * <p>
+	 * Note: this method is not on the interface
+	 * @param originalDemangled the new original demangled string
+	 */
+	public void setOriginalDemangled(String originalDemangled) {
+		this.originalDemangled = originalDemangled;
+	}
+
+	/**
+	 * Returns the raw demangled string.  This is the value returned from the demangler before any 
+	 * simplifications or transformations have been made.
+	 * @return the string
+	 */
+	public String getRawDemangled() {
+		return rawDemangled;
+	}
+
+	/**
+	 * Sets the raw demangled string.  This is the value returned from the demangler before any 
+	 * simplifications or transformations have been made.
+	 * @param s the string
+	 */
+	public void setRawDemangledString(String s) {
+		this.rawDemangled = s;
 	}
 
 	@Override
@@ -364,20 +440,42 @@ public abstract class DemangledObject implements Demangled {
 	}
 
 	/**
-	 * Apply this demangled object detail to the specified program.  
+	 * Apply this demangled object detail to the specified program.
 	 * <br>
 	 * NOTE: An open Program transaction must be established prior to invoking this method.
-	 * 
+	 *
 	 * @param program program to which demangled data should be applied.
 	 * @param address address which corresponds to this demangled object
 	 * @param options options which control how demangled data is applied
 	 * @param monitor task monitor
-	 * @return true if successfully applied, else false
+	 * @return false if there is an issue applying
 	 * @throws Exception if an error occurs during the apply operation
 	 */
 	public boolean applyTo(Program program, Address address, DemanglerOptions options,
 			TaskMonitor monitor) throws Exception {
+		if (!isPrimary) {
+			return true;
+		}
 		return applyPlateCommentOnly(program, address);
+	}
+
+	/**
+	 * Apply this demangled object detail to the specified program.  This method only works
+	 * if the {@link MangledContext} was set with the appropriate constructor or with the
+	 * {@link #setMangledContext(MangledContext)} method
+	 * <br>
+	 * NOTE: An open Program transaction must be established prior to invoking this method.
+	 *
+	 * @param monitor task monitor
+	 * @return true if successfully applied, else false
+	 * @throws Exception if an error occurs during the apply operation or if the context is null
+	 */
+	public boolean applyUsingContext(TaskMonitor monitor) throws Exception {
+		if (mangledContext == null) {
+			throw new DemangledException("Null context found for: " + mangled);
+		}
+		return applyTo(mangledContext.getProgram(), mangledContext.getAddress(),
+			mangledContext.getOptions(), monitor);
 	}
 
 	/**
@@ -394,7 +492,8 @@ public abstract class DemangledObject implements Demangled {
 			return true; // skip this symbol
 		}
 
-		String comment = program.getListing().getComment(CodeUnit.PLATE_COMMENT, address);
+		Listing listing = program.getListing();
+		String comment = listing.getComment(CommentType.PLATE, address);
 		String newComment = generatePlateComment();
 		if (comment == null || comment.indexOf(newComment) < 0) {
 			if (comment == null) {
@@ -403,7 +502,7 @@ public abstract class DemangledObject implements Demangled {
 			else {
 				comment = comment + '\n' + newComment;
 			}
-			program.getListing().setComment(address, CodeUnit.PLATE_COMMENT, comment);
+			listing.setComment(address, CommentType.PLATE, comment);
 		}
 		return true;
 	}

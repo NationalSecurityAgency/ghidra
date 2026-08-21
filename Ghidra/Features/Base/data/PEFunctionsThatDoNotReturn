@@ -18,3 +18,11 @@ longjmp
 quick_exit
 RpcRaiseException
 terminate
+___raise_securityfailure
+___report_rangecheckfailure
+?_Xregex_error@std@@YAXW4error_type@regex_constant@1@@Z
+?_Xbad_alloc@std@@YAXXZ
+?_Xlength_error@std@@YAXPBD@Z
+?_Xout_of_range@std@@YAXPBD@Z
+?_Xbad_function_call@std@@YAXXZ
+?terminate@@YAXXZ

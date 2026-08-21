@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -90,6 +90,17 @@ public:
   /// \return the output value
   uintb evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb in2) const {
     return behave->evaluateBinary(sizeout,sizein,in1,in2); }
+
+  /// \brief Emulate the ternary op-code on an input value
+  ///
+  /// \param sizeout is the size of the output in bytes
+  /// \param sizein is the size of the inputs in bytes
+  /// \param in1 is the first input value
+  /// \param in2 is the second input value
+  /// \param in3 is the third input value
+  /// \return the output value
+  uintb evaluateTernary(int4 sizeout,int4 sizein,uintb in1,uintb in2,uintb in3) const {
+    return behave->evaluateTernary(sizeout,sizein,in1,in2,in3); }
 
   /// \brief Reverse the binary op-code operation, recovering a constant input value
   ///
@@ -177,6 +188,11 @@ public:
 
   /// \brief Toggle Java specific aspects of the op-code information
   static void selectJavaOperators(vector<TypeOp *> &inst,bool val);
+
+  /// \brief Return the floating-point operation associated with the \e sign bit manipulation by the given PcodeOp
+  static OpCode floatSignManipulation(PcodeOp *op);
+  static Datatype *propagateToPointer(TypeFactory *t,Datatype *dt,int4 sz,int4 wordsz);
+  static Datatype *propagateFromPointer(TypeFactory *t,Datatype *dt,int4 sz);
 };
 
 // Major classes of operations
@@ -362,6 +378,7 @@ public:
 class TypeOpIntSless : public TypeOpBinary {
 public:
   TypeOpIntSless(TypeFactory *t);			///< Constructor
+  virtual void printRaw(ostream &s,const PcodeOp *op);
   virtual Datatype *getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const;
   virtual Datatype *propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
 				  int4 inslot,int4 outslot);
@@ -372,6 +389,7 @@ public:
 class TypeOpIntSlessEqual : public TypeOpBinary {
 public:
   TypeOpIntSlessEqual(TypeFactory *t);			///< Constructor
+  virtual void printRaw(ostream &s,const PcodeOp *op);
   virtual Datatype *getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const;
   virtual Datatype *propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
 				  int4 inslot,int4 outslot);
@@ -556,6 +574,7 @@ public:
 class TypeOpIntSdiv : public TypeOpBinary {
 public:
   TypeOpIntSdiv(TypeFactory *t);			///< Constructor
+  virtual void printRaw(ostream &s,const PcodeOp *op);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opIntSdiv(op); }
   virtual Datatype *getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const;
 };
@@ -572,6 +591,7 @@ public:
 class TypeOpIntSrem : public TypeOpBinary {
 public:
   TypeOpIntSrem(TypeFactory *t);			///< Constructor
+  virtual void printRaw(ostream &s,const PcodeOp *op);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opIntSrem(op); }
   virtual Datatype *getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const;
 };
@@ -608,6 +628,7 @@ public:
 class TypeOpFloatEqual : public TypeOpBinary {
 public:
   TypeOpFloatEqual(TypeFactory *t,const Translate *trans);			///< Constructor
+  virtual void printRaw(ostream &s,const PcodeOp *op);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opFloatEqual(op); }
 };
   
@@ -615,6 +636,7 @@ public:
 class TypeOpFloatNotEqual : public TypeOpBinary {
 public:
   TypeOpFloatNotEqual(TypeFactory *t,const Translate *trans);			///< Constructor
+  virtual void printRaw(ostream &s,const PcodeOp *op);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opFloatNotEqual(op); }
 };
   
@@ -622,6 +644,7 @@ public:
 class TypeOpFloatLess : public TypeOpBinary {
 public:
   TypeOpFloatLess(TypeFactory *t,const Translate *trans);			///< Constructor
+  virtual void printRaw(ostream &s,const PcodeOp *op);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opFloatLess(op); }
 };
   
@@ -629,6 +652,7 @@ public:
 class TypeOpFloatLessEqual : public TypeOpBinary {
 public:
   TypeOpFloatLessEqual(TypeFactory *t,const Translate *trans);			///< Constructor
+  virtual void printRaw(ostream &s,const PcodeOp *op);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opFloatLessEqual(op); }
 };
   
@@ -643,6 +667,7 @@ public:
 class TypeOpFloatAdd : public TypeOpBinary {
 public:
   TypeOpFloatAdd(TypeFactory *t,const Translate *trans);			///< Constructor
+  virtual void printRaw(ostream &s,const PcodeOp *op);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opFloatAdd(op); }
 };
   
@@ -650,6 +675,7 @@ public:
 class TypeOpFloatDiv : public TypeOpBinary {
 public:
   TypeOpFloatDiv(TypeFactory *t,const Translate *trans);			///< Constructor
+  virtual void printRaw(ostream &s,const PcodeOp *op);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opFloatDiv(op); }
 };
 
@@ -657,6 +683,7 @@ public:
 class TypeOpFloatMult : public TypeOpBinary {
 public:
   TypeOpFloatMult(TypeFactory *t,const Translate *trans);			///< Constructor
+  virtual void printRaw(ostream &s,const PcodeOp *op);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opFloatMult(op); }
 };
   
@@ -664,6 +691,7 @@ public:
 class TypeOpFloatSub : public TypeOpBinary {
 public:
   TypeOpFloatSub(TypeFactory *t,const Translate *trans);			///< Constructor
+  virtual void printRaw(ostream &s,const PcodeOp *op);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opFloatSub(op); }
 };
   
@@ -671,6 +699,7 @@ public:
 class TypeOpFloatNeg : public TypeOpUnary {
 public:
   TypeOpFloatNeg(TypeFactory *t,const Translate *trans);			///< Constructor
+  virtual void printRaw(ostream &s,const PcodeOp *op);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opFloatNeg(op); }
 };
 
@@ -692,7 +721,10 @@ public:
 class TypeOpFloatInt2Float : public TypeOpFunc {
 public:
   TypeOpFloatInt2Float(TypeFactory *t,const Translate *trans);			///< Constructor
+  virtual Datatype *getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const;
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opFloatInt2Float(op); }
+  static const PcodeOp *absorbZext(const PcodeOp *op);
+  static int4 preferredZextSize(int4 inSize);
 };
 
 /// \brief Information about the FLOAT_FLOAT2FLOAT op-code
@@ -868,15 +900,29 @@ class TypeOpInsert : public TypeOpFunc {
 public:
   TypeOpInsert(TypeFactory *t);			///< Constructor
   virtual Datatype *getInputLocal(const PcodeOp *op,int4 slot) const;
+  virtual Datatype *getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const;
+  virtual Datatype *getOutputToken(const PcodeOp *op,CastStrategy *castStrategy) const;
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opInsertOp(op); }
 };
 
-/// \brief Information about the EXTRACT op-code
-class TypeOpExtract : public TypeOpFunc {
+/// \brief Information about the ZPULL op-code
+class TypeOpZpull : public TypeOpFunc {
 public:
-  TypeOpExtract(TypeFactory *t);			///< Constructor
+  TypeOpZpull(TypeFactory *t);			///< Constructor
   virtual Datatype *getInputLocal(const PcodeOp *op,int4 slot) const;
-  virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opExtractOp(op); }
+  virtual Datatype *getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const;
+  virtual Datatype *getOutputToken(const PcodeOp *op,CastStrategy *castStrategy) const;
+  virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opZpullOp(op); }
+};
+
+/// \brief Information about the SPULL op-code
+class TypeOpSpull : public TypeOpFunc {
+public:
+  TypeOpSpull(TypeFactory *t);			///< Constructor
+  virtual Datatype *getInputLocal(const PcodeOp *op,int4 slot) const;
+  virtual Datatype *getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const;
+  virtual Datatype *getOutputToken(const PcodeOp *op,CastStrategy *castStrategy) const;
+  virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opSpullOp(op); }
 };
 
 /// \brief Information about the POPCOUNT op-code

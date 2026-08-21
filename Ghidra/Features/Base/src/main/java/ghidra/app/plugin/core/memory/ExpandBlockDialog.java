@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.memory;
 import java.awt.BorderLayout;
 import java.awt.Cursor;
 import java.awt.event.ActionListener;
+import java.util.function.Consumer;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -30,7 +31,7 @@ import ghidra.app.util.AddressInput;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressFactory;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.util.HelpLocation;
 import ghidra.util.layout.PairLayout;
@@ -49,7 +50,6 @@ class ExpandBlockDialog extends DialogComponentProvider implements ChangeListene
 	private final static String EXPAND_UP_TITLE = "Expand Block Up";
 	private final static String EXPAND_DOWN_TITLE = "Expand Block Down";
 	private int dialogType;
-	private AddressFactory addrFactory;
 	private AddressInput startAddressInput;
 	private AddressInput endAddressInput;
 	private JTextField startField;
@@ -66,7 +66,7 @@ class ExpandBlockDialog extends DialogComponentProvider implements ChangeListene
 	 * @param af
 	 * @param dialogType
 	 */
-	ExpandBlockDialog(PluginTool tool, ExpandBlockModel model, MemoryBlock block, AddressFactory af,
+	ExpandBlockDialog(PluginTool tool, ExpandBlockModel model, MemoryBlock block, Program program,
 			int dialogType) {
 		super(dialogType == EXPAND_UP ? EXPAND_UP_TITLE : EXPAND_DOWN_TITLE, true);
 		this.tool = tool;
@@ -74,9 +74,8 @@ class ExpandBlockDialog extends DialogComponentProvider implements ChangeListene
 		this.dialogType = dialogType;
 		setHelpLocation(new HelpLocation(HelpTopics.MEMORY_MAP,
 			dialogType == EXPAND_UP ? EXPAND_UP_TITLE : EXPAND_DOWN_TITLE));
-		addrFactory = af;
 		model.setChangeListener(this);
-		addWorkPanel(create(block));
+		addWorkPanel(create(block, program));
 		addOKButton();
 		addCancelButton();
 		setOkEnabled(false);
@@ -109,16 +108,16 @@ class ExpandBlockDialog extends DialogComponentProvider implements ChangeListene
 	 * Create the main work panel.
 	 * @return JPanel
 	 */
-	private JPanel create(MemoryBlock block) {
+	private JPanel create(MemoryBlock block, Program program) {
 		JPanel panel = new JPanel(new PairLayout(5, 5, 150));
-		startAddressInput = new AddressInput();
+		AddressChangeListener listener = new AddressChangeListener();
+
+		startAddressInput = new AddressInput(program, listener);
 		startAddressInput.setName("NewStartAddress");
-		startAddressInput.setAddressFactory(addrFactory);
 		startAddressInput.setAccessibleName("New Start Address");
 
-		endAddressInput = new AddressInput();
+		endAddressInput = new AddressInput(program, listener);
 		endAddressInput.setName("EndAddress");
-		endAddressInput.setAddressFactory(addrFactory);
 		endAddressInput.setAccessibleName("New End Address");
 
 		Address start = block.getStart();
@@ -161,9 +160,6 @@ class ExpandBlockDialog extends DialogComponentProvider implements ChangeListene
 	}
 
 	private void addListeners() {
-
-		startAddressInput.addChangeListener(new AddressChangeListener());
-		endAddressInput.addChangeListener(new AddressChangeListener());
 		lengthField.setChangeListener(new LengthChangeListener());
 
 		ActionListener al = e -> setStatusText("");
@@ -206,10 +202,10 @@ class ExpandBlockDialog extends DialogComponentProvider implements ChangeListene
 	 * Listener on the AddressInput field; update length field when the 
 	 * address input field changes.
 	 */
-	private class AddressChangeListener implements ChangeListener {
+	private class AddressChangeListener implements Consumer<Address> {
 
 		@Override
-		public void stateChanged(ChangeEvent event) {
+		public void accept(Address address) {
 			if (isChanging) {
 				return;
 			}

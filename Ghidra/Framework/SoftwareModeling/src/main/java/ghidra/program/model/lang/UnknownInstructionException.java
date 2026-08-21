@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +25,7 @@ import ghidra.util.exception.UsrException;
  */
 public class UnknownInstructionException extends UsrException {
 	/**
-	 * <p>Constructs an InsufficientBytesException with a default message.<p>
+	 * <p>Constructs an InsufficientBytesException with a default message.
 	 */
 	public UnknownInstructionException() {
 		super("Bytes do not form a legal instruction.");
@@ -34,7 +33,7 @@ public class UnknownInstructionException extends UsrException {
 
 	/**
 	 * <p>Constructs an InsufficientBytesException with the specified
-	 * detail message.<p>
+	 * detail message.
 	 *
 	 * @param message The message.
 	 */

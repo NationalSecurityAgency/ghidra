@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
@@ -38,7 +38,7 @@ import ghidra.util.task.TaskMonitor;
 public class CodeSignatureGenericBlob implements StructConverter {
 
 	protected int magic;
-	protected int length;
+	protected long length;
 
 	protected long base;
 
@@ -51,7 +51,7 @@ public class CodeSignatureGenericBlob implements StructConverter {
 	public CodeSignatureGenericBlob(BinaryReader reader) throws IOException {
 		base = reader.getPointerIndex();
 		magic = reader.readNextInt();
-		length = reader.readNextInt();
+		length = reader.readNextUnsignedInt();
 	}
 
 	/**
@@ -64,7 +64,7 @@ public class CodeSignatureGenericBlob implements StructConverter {
 	/**
 	 * {@return the length}
 	 */
-	public int getLength() {
+	public long getLength() {
 		return length;
 	}
 
@@ -84,11 +84,11 @@ public class CodeSignatureGenericBlob implements StructConverter {
 			return;
 		}
 		try {
-			DataType dt = new ArrayDataType(BYTE, length - 8, 1);
+			DataType dt = new ArrayDataType(BYTE, (int) length - 8, 1);
 			Address hashAddr = address.add(toDataType().getLength());
 			DataUtilities.createData(program, hashAddr, dt, -1,
 				DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
-			program.getListing().setComment(hashAddr, CodeUnit.PRE_COMMENT, "CS_GenericBlob hash");
+			program.getListing().setComment(hashAddr, CommentType.PRE, "CS_GenericBlob hash");
 		}
 		catch (Exception e) {
 			log.appendMsg(CodeSignatureGenericBlob.class.getSimpleName(),

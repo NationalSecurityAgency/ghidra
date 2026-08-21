@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,6 @@
 package ghidra.app.plugin.runtimeinfo;
 
 import java.awt.*;
-import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -47,7 +46,6 @@ class RuntimeInfoProvider extends ReusableDialogComponentProvider {
 		super("Runtime Information", false, false, true, false);
 		this.plugin = plugin;
 
-
 		setHelpLocation(plugin.getRuntimeInfoHelpLocation());
 		addWorkPanel(createWorkPanel());
 	}
@@ -72,7 +70,6 @@ class RuntimeInfoProvider extends ReusableDialogComponentProvider {
 		memoryUsagePanel.hidden();
 	}
 
-
 	private JComponent createWorkPanel() {
 		tabbedPane = new JTabbedPane();
 
@@ -93,6 +90,7 @@ class RuntimeInfoProvider extends ReusableDialogComponentProvider {
 			}
 		};
 		mainPanel.add(tabbedPane, BorderLayout.CENTER);
+		mainPanel.getAccessibleContext().setAccessibleName("Runtime Info Provider");
 		return mainPanel;
 	}
 
@@ -114,13 +112,14 @@ class RuntimeInfoProvider extends ReusableDialogComponentProvider {
 	 */
 	private void addMemory() {
 		memoryUsagePanel = new MemoryUsagePanel();
+		memoryUsagePanel.getAccessibleContext().setAccessibleName("Memory Usage");
 		tabbedPane.add(memoryUsagePanel, "Memory");
 	}
 
 	/**
 	 * Adds an "application layout" panel to the tabbed pane.
 	 * <p>
-	 * The goal of this panel is to display information information about the application such as
+	 * The goal of this panel is to display information about the application such as
 	 * what directories it is using on disk, what its PID is, etc.
 	 */
 	private void addApplicationLayout() {
@@ -197,7 +196,7 @@ class RuntimeInfoProvider extends ReusableDialogComponentProvider {
 		String name = "Extension Point Info (%d)".formatted(map.size());
 		epTabbedPane.add(
 			new MapTablePanel<String, String>(name, map, "Name", "Path", 400, true, plugin), name);
-		
+
 		// Loaded Extension Points
 		map = ClassSearcher.getLoaded()
 				.stream()
@@ -205,7 +204,7 @@ class RuntimeInfoProvider extends ReusableDialogComponentProvider {
 		name = "Loaded (%d)".formatted(map.size());
 		epTabbedPane.add(
 			new MapTablePanel<String, String>(name, map, "Name", "Type", 400, true, plugin), name);
-		
+
 		// False Positive Extension Points
 		map = ClassSearcher.getFalsePositives()
 				.stream()
@@ -249,11 +248,9 @@ class RuntimeInfoProvider extends ReusableDialogComponentProvider {
 	 */
 	private Map<Integer, String> getClasspathMap(String propertyName) {
 		Map<Integer, String> map = new HashMap<>();
-		StringTokenizer st =
-			new StringTokenizer(System.getProperty(propertyName, ""), File.pathSeparator);
 		int i = 0;
-		while (st.hasMoreTokens()) {
-			map.put(i++, st.nextToken());
+		for (String entry : GhidraClassLoader.getClasspath(propertyName)) {
+			map.put(i++, entry);
 		}
 		return map;
 	}

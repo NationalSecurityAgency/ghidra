@@ -1,0 +1,68 @@
+<context>
+	<schema name="LldbSession" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="EventScope" />
+		<interface name="FocusScope" />
+		<interface name="Aggregate" />
+		<element schema="VOID" />
+		<attribute name="Processes" schema="ProcessContainer" required="yes" fixed="yes" />
+		<attribute name="Available" schema="AvailableContainer" required="yes" fixed="yes" />
+		<attribute name="_event_thread" schema="OBJECT" hidden="yes" />
+		<attribute name="_focus" schema="Selectable" required="yes" hidden="yes" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="Process" elementResync="NEVER" attributeResync="NEVER">
+		<attribute name="Breakpoints" schema="BreakpointContainer" required="yes" fixed="yes" />
+		<attribute name="Watchpoints" schema="WatchpointContainer" required="yes" fixed="yes" />
+	</schema>
+	<schema name="Environment" elementResync="NEVER" attributeResync="NEVER">
+		<attribute name="os" schema="STRING" />
+	</schema>
+	<schema name="Thread" elementResync="NEVER" attributeResync="NEVER">
+		<attribute name="Name" schema="STRING" />
+	</schema>
+	<schema name="WatchpointContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<element schema="WatchpointSpec" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="WatchpointSpec" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="BreakpointSpec" />
+		<interface name="BreakpointLocation" />
+		<interface name="Togglable" />
+		<attribute name="Expression" schema="STRING" required="yes" hidden="yes" />
+		<attribute-alias from="_expression" to="Expression" />
+		<attribute name="Kinds" schema="STRING" required="yes" hidden="yes" />
+		<attribute-alias from="_kinds" to="Kinds" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="Enabled" schema="BOOL" />
+		<attribute-alias from="_enabled" to="Enabled" />
+		<attribute name="Range" schema="RANGE" />
+		<attribute-alias from="_range" to="Range" />
+		<attribute name="Condition" schema="STRING" />
+		<attribute name="Hit Count" schema="INT" />
+		<attribute name="Ignore Count" schema="INT" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="StackFrame" elementResync="NEVER" attributeResync="NEVER">
+		<attribute name="Registers" schema="RegisterValueContainer" required="yes" fixed="yes" />
+		<attribute name="PC" schema="ADDRESS" required="yes"  />
+		<attribute-alias from="_pc" to="PC" />
+	</schema>
+	<schema name="RegisterValueContainer" attributeResync="ONCE">
+		<attribute name="General Purpose Registers" schema="RegisterBank" />
+		<attribute name="Floating Point Registers" schema="RegisterBank" />
+		<attribute name="Advanced Vector Extensions" schema="RegisterBank" />
+		<attribute name="Memory Protection Extensions" schema="RegisterBank" />
+		<attribute name="float" schema="RegisterBank" />
+		<attribute name="general" schema="RegisterBank" />
+		<attribute name="system" schema="RegisterBank" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="RegisterBank" canonical="yes" elementResync="ONCE" attributeResync="NEVER">
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute schema="Register" />
+	</schema>
+</context>

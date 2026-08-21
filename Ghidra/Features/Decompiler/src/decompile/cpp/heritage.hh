@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,12 +28,6 @@ namespace ghidra {
 /// range (indexed by its initial address) maps to its own Varnode stack.
 typedef map<Address,vector<Varnode *> > VariableStack;
 
-/// \brief Label for describing extent of address range that has been heritaged
-struct SizePass {
-  int4 size;			///< Size of the range (in bytes)
-  int4 pass;			///< Pass when the range was heritaged
-};
-
 /// \brief Map object for keeping track of which address ranges have been heritaged
 ///
 /// We keep track of a fairly fine grained description of when each address range
@@ -43,6 +37,11 @@ struct SizePass {
 /// that informs the caller whether the address has been heritaged and if so in which pass.
 class LocationMap {
 public:
+  /// \brief Label for describing extent of address range that has been heritaged
+  struct SizePass {
+    int4 size;			///< Size of the range (in bytes)
+    int4 pass;			///< Pass when the range was heritaged
+  };
   /// Iterator into the main map
   typedef map<Address,SizePass>::iterator iterator;
 private:
@@ -51,10 +50,46 @@ public:
   iterator add(Address addr,int4 size,int4 pass,int4 &intersect); ///< Mark new address as \b heritaged
   iterator find(const Address &addr);			///< Look up if/how given address was heritaged
   int4 findPass(const Address &addr) const;		///< Look up if/how given address was heritaged
-  void erase(iterator iter) { themap.erase(iter); }	///< Remove a particular entry from the map
+  iterator erase(iterator iter) { return themap.erase(iter); }	///< Remove a particular entry from the map
   iterator begin(void) { return themap.begin(); }	///< Get starting iterator over heritaged ranges
   iterator end(void) { return themap.end(); }		///< Get ending iterator over heritaged ranges
   void clear(void) { themap.clear(); }			///< Clear the map of heritaged ranges
+};
+
+/// \brief An address range to be processed
+struct MemRange {
+  /// Properties of a single address range
+  enum {
+    new_addresses = 1,	///< The range covers addresses that have not been seen in previous passes
+    old_addresses = 2	///< The range covers addresses that were seen in previous passes
+  };
+  Address addr;		///< Starting address of the range
+  int4 size;		///< Number of bytes in the range
+  uint4 flags;		///< Property flags
+  MemRange(const Address &ad,int4 sz,uint4 fl) : addr(ad) { size = sz; flags = fl; }	///< Constructor
+  bool newAddresses(void) const { return ((flags & new_addresses)!=0); }	///< Does \b this range cover new addresses?
+  bool oldAddresses(void) const { return ((flags & old_addresses)!=0); }	///< Does \b this range cover old addresses?
+  void clearProperty(uint4 val) { flags &= ~val; }	///< Clear specific properties from the memory range
+};
+
+/// \brief A list of address ranges that need to be converted to SSA form
+///
+/// The disjoint list of ranges are built up and processed in a single pass.  The container is fed a list
+/// of ranges that may be overlapping but are already in address order. It constructs a disjoint list by taking
+/// the union of overlapping ranges.
+class TaskList {
+public:
+  /// Iterator in the list
+  typedef list<MemRange>::iterator iterator;
+private:
+  list<MemRange> tasklist;		///< List of address ranges that needs to be processed
+public:
+  void add(Address addr,int4 size,uint4 fl);				///< Add a range to the list
+  iterator insert(iterator pos,Address addr,int4 size,uint4 fl);	///< Insert a disjoint range in the list
+  iterator erase(iterator iter) { return tasklist.erase(iter); }	///< Remove a particular range
+  iterator begin(void) { return tasklist.begin(); }			///< Get iterator to beginning of \b this list
+  iterator end(void) { return tasklist.end(); }				///< Get iterator to end of \b this list
+  void clear(void) { tasklist.clear(); }				///< Clear all ranges in the list
 };
 
 /// \brief Priority queue for the phi-node (MULTIEQUAL) placement algorithm
@@ -202,7 +237,7 @@ class Heritage {
 
   Funcdata *fd;		        ///< The function \b this is controlling SSA construction 
   LocationMap globaldisjoint;	///< Disjoint cover of every heritaged memory location
-  LocationMap disjoint;		///< Disjoint cover of memory locations currently being heritaged
+  TaskList disjoint;	///< Disjoint cover of memory locations currently being heritaged
   vector<vector<FlowBlock *> > domchild; ///< Parent->child edges in dominator tree
   vector<vector<FlowBlock *> > augment; ///< Augmented edges
   vector<uint4> flags;		///< Block properties for phi-node placement algorithm
@@ -233,7 +268,7 @@ class Heritage {
   void processJoins(void);
   void buildADT(void);		///< Build the augmented dominator tree
   void removeRevisitedMarkers(const vector<Varnode *> &remove,const Address &addr,int4 size);
-  int4 collect(Address addr,int4 size,vector<Varnode *> &read,vector<Varnode *> &write,vector<Varnode *> &input,vector<Varnode *> &remove) const;
+  int4 collect(MemRange &memrange,vector<Varnode *> &read,vector<Varnode *> &write,vector<Varnode *> &input,vector<Varnode *> &remove) const;
   bool callOpIndirectEffect(const Address &addr,int4 size,PcodeOp *op) const;
   Varnode *normalizeReadSize(Varnode *vn,PcodeOp *op,const Address &addr,int4 size);
   Varnode *normalizeWriteSize(Varnode *vn,const Address &addr,int4 size);
@@ -264,13 +299,14 @@ class Heritage {
   void guardLoads(uint4 fl,const Address &addr,int4 size,vector<Varnode *> &write);
   void guardReturnsOverlapping(const Address &addr,int4 size);
   void guardReturns(uint4 fl,const Address &addr,int4 size,vector<Varnode *> &write);
-  static void buildRefinement(vector<int4> &refine,const Address &addr,int4 size,const vector<Varnode *> &vnlist);
+  static void buildRefinement(vector<int4> &refine,const Address &addr,const vector<Varnode *> &vnlist);
   void splitByRefinement(Varnode *vn,const Address &addr,const vector<int4> &refine,vector<Varnode *> &split);
   void refineRead(Varnode *vn,const Address &addr,const vector<int4> &refine,vector<Varnode *> &newvn);
   void refineWrite(Varnode *vn,const Address &addr,const vector<int4> &refine,vector<Varnode *> &newvn);
   void refineInput(Varnode *vn,const Address &addr,const vector<int4> &refine,vector<Varnode *> &newvn);
   void remove13Refinement(vector<int4> &refine);
-  bool refinement(const Address &addr,int4 size,const vector<Varnode *> &readvars,const vector<Varnode *> &writevars,const vector<Varnode *> &inputvars);
+  TaskList::iterator refinement(TaskList::iterator memiter,const vector<Varnode *> &readvars,
+				const vector<Varnode *> &writevars,const vector<Varnode *> &inputvars);
   void visitIncr(FlowBlock *qnode,FlowBlock *vnode);
   void calcMultiequals(const vector<Varnode *> &write);
   void renameRecurse(BlockBasic *bl,VariableStack &varstack);

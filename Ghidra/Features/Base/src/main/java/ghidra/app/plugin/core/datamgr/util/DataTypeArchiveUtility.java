@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,11 +18,9 @@ package ghidra.app.plugin.core.datamgr.util;
 import java.util.*;
 
 import generic.jar.ResourceFile;
-import ghidra.app.plugin.core.analysis.rust.RustConstants;
 import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.util.opinion.*;
 import ghidra.framework.Application;
-import ghidra.framework.options.Options;
 import ghidra.program.model.data.FileDataTypeManager;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
@@ -116,13 +114,12 @@ public class DataTypeArchiveUtility {
 	public static List<String> getArchiveList(Program program) {
 		List<String> list = new ArrayList<String>();
 
-		Options props = program.getOptions(Program.PROGRAM_INFO);
-		String format = props.getString("Executable Format", "");
+		String format = program.getExecutableFormat();
 
 		int size = program.getAddressFactory().getDefaultAddressSpace().getSize();
 
-		if (format.equals(PeLoader.PE_NAME) ||
-			(format.equals(CoffLoader.COFF_NAME) && isVisualStudio(program))) {
+		if (PeLoader.PE_NAME.equals(format) ||
+			(CoffLoader.COFF_NAME.equals(format) && isVisualStudio(program))) {
 			// TODO: add in win7/win10
 			if (size == 64) {
 				list.add("windows_vs12_64");
@@ -131,7 +128,7 @@ public class DataTypeArchiveUtility {
 				list.add("windows_vs12_32");
 			}
 		}
-		else if (format.equals(MachoLoader.MACH_O_NAME)) {
+		else if (MachoLoader.MACH_O_NAME.equals(format)) {
 			// list.add("Cocoa");  // no more cocoa puffs for you
 			// TODO: should we have a 64/32 version?
 			// TODO: multiple OSX versions
@@ -143,10 +140,6 @@ public class DataTypeArchiveUtility {
 		// everyone else gets generic clib that was parsed as 32 bit wordsize
 		else {
 			list.add("generic_clib");
-		}
-
-		if (program.getCompiler().contains(RustConstants.RUST_COMPILER)) {
-			list.add("rust-common");
 		}
 
 		return list;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,11 +26,13 @@ import java.util.Hashtable;
 import javax.security.auth.callback.*;
 import javax.security.auth.login.LoginException;
 
+import generic.hash.HashUtilities;
 import ghidra.framework.model.ServerInfo;
 import ghidra.framework.remote.*;
 import ghidra.framework.remote.security.SSHKeyManager;
 import ghidra.net.*;
-import ghidra.util.*;
+import ghidra.util.Msg;
+import ghidra.util.SystemUtilities;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskLauncher;
 import ghidra.util.task.TaskMonitor;
@@ -206,6 +208,9 @@ public class ClientUtil {
 			Msg.showError(ClientUtil.class, parent, title,
 				"Access denied: " + repository + "\n" + exc.getMessage());
 		}
+		// FIXME: Verify presence and source of ServerException and ServerError which
+		// both originate from UnicastServerRef.dispatch method and are both forms
+		// of RemoteException
 		else if ((exc instanceof ServerException) || (exc instanceof ServerError)) {
 			Msg.showError(ClientUtil.class, parent, title,
 				"Exception occurred on the Ghidra Server.", exc.getCause());
@@ -425,7 +430,8 @@ public class ClientUtil {
 				"Unsupported authentication callback: " + callbacks[0].getClass().getName());
 		}
 		if (!clientAuthenticator.processPasswordCallbacks("Repository Server Authentication",
-			"Repository Server", serverName, nameCb, passCb, choiceCb, anonymousCb, loginError)) {
+			"Repository Server", serverName, nameCb != null, nameCb, passCb, choiceCb, anonymousCb,
+			loginError)) {
 			return false;
 		}
 		String name = defaultUserID;
@@ -443,7 +449,7 @@ public class ClientUtil {
 	static void processSignatureCallback(String serverName, SignatureCallback sigCb)
 			throws IOException {
 		try {
-			SignedToken signedToken = ApplicationKeyManagerUtils
+			SignedToken signedToken = DefaultKeyManagerFactory
 					.getSignedToken(sigCb.getRecognizedAuthorities(), sigCb.getToken());
 			sigCb.sign(signedToken.certChain, signedToken.signature);
 			Msg.info(ClientUtil.class, "PKI Authenticating to " + serverName + " as user '" +

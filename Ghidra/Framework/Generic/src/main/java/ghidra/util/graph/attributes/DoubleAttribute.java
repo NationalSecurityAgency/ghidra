@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -150,7 +149,7 @@ public class DoubleAttribute<T extends KeyedObject> extends Attribute<T> {
 			catch (ghidra.util.exception.NoValueException exc) {
 				try {
 					value2 = getValue(ko2);
-					return 1; //ko2 is ok so it preceeds ko1
+					return 1; //ko2 is ok so it precedes ko1
 				}
 				catch (ghidra.util.exception.NoValueException exc2) {
 					if ((ko1.key() - ko2.key()) < 0) {

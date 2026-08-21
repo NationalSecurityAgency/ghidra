@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,13 +21,10 @@ import java.util.Map.Entry;
 import java.util.function.Function;
 
 import javax.swing.*;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
 
 import docking.ReusableDialogComponentProvider;
 import docking.widgets.table.*;
 import docking.widgets.table.ColumnSortState.SortDirection;
-import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
@@ -37,6 +34,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.TraceSection;
 import ghidra.util.table.GhidraTableFilterPanel;
+import ghidra.util.table.column.GColumnRenderer;
 
 public class DebuggerBlockChooserDialog extends ReusableDialogComponentProvider {
 	public static class MemoryBlockRow {
@@ -81,18 +79,19 @@ public class DebuggerBlockChooserDialog extends ReusableDialogComponentProvider 
 			return score;
 		}
 
-		public double score(TraceSection section, DebuggerStaticMappingService service) {
+		public double score(TraceSection section, long snap, DebuggerStaticMappingService service) {
 			if (section == null) {
 				return score = 0;
 			}
-			return score = service.proposeSectionMap(section, program, block).computeScore();
+			return score = service.proposeSectionMap(section, snap, program, block).computeScore();
 		}
 
-		public double score(TraceMemoryRegion region, DebuggerStaticMappingService service) {
+		public double score(TraceMemoryRegion region, long snap,
+				DebuggerStaticMappingService service) {
 			if (region == null) {
 				return score = 0;
 			}
-			return score = service.proposeRegionMap(region, program, block).computeScore();
+			return score = service.proposeRegionMap(region, snap, program, block).computeScore();
 		}
 
 		public ProgramLocation getProgramLocation() {
@@ -102,12 +101,29 @@ public class DebuggerBlockChooserDialog extends ReusableDialogComponentProvider 
 
 	enum MemoryBlockTableColumns
 		implements EnumeratedTableColumn<MemoryBlockTableColumns, MemoryBlockRow> {
+		// LATER: Adjust column widths?
 		SCORE("Score", Double.class, MemoryBlockRow::getScore, SortDirection.DESCENDING),
 		PROGRAM("Program", String.class, MemoryBlockRow::getProgramName, SortDirection.ASCENDING),
 		BLOCK("Block", String.class, MemoryBlockRow::getBlockName, SortDirection.ASCENDING),
-		START("Start Address", Address.class, MemoryBlockRow::getMinAddress, SortDirection.ASCENDING),
-		END("End Address", Address.class, MemoryBlockRow::getMaxAddress, SortDirection.ASCENDING),
-		LENGTH("Length", Long.class, MemoryBlockRow::getLength, SortDirection.ASCENDING);
+		START("Start Address", Address.class, MemoryBlockRow::getMinAddress,
+				SortDirection.ASCENDING) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return CustomToStringCellRenderer.MONO_OBJECT;
+			}
+		},
+		END("End Address", Address.class, MemoryBlockRow::getMaxAddress, SortDirection.ASCENDING) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return CustomToStringCellRenderer.MONO_OBJECT;
+			}
+		},
+		LENGTH("Length", Long.class, MemoryBlockRow::getLength, SortDirection.ASCENDING) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return CustomToStringCellRenderer.MONO_ULONG_HEX;
+			}
+		};
 
 		<T> MemoryBlockTableColumns(String header, Class<T> cls, Function<MemoryBlockRow, T> getter,
 				SortDirection dir) {
@@ -175,8 +191,9 @@ public class DebuggerBlockChooserDialog extends ReusableDialogComponentProvider 
 		panel.add(new JScrollPane(table));
 
 		filterPanel = new GhidraTableFilterPanel<>(table, tableModel);
+		filterPanel.getAccessibleContext().setAccessibleName("Filter");
 		panel.add(filterPanel, BorderLayout.SOUTH);
-
+		panel.getAccessibleContext().setAccessibleName("Debugger Block Chooser");
 		addWorkPanel(panel);
 
 		addOKButton();
@@ -186,30 +203,18 @@ public class DebuggerBlockChooserDialog extends ReusableDialogComponentProvider 
 			okButton.setEnabled(filterPanel.getSelectedItems().size() == 1);
 			// Prevent empty selection
 		});
-
-		// TODO: Adjust column widths?
-		TableColumnModel columnModel = table.getColumnModel();
-
-		TableColumn startCol = columnModel.getColumn(MemoryBlockTableColumns.START.ordinal());
-		startCol.setCellRenderer(CustomToStringCellRenderer.MONO_OBJECT);
-
-		TableColumn endCol = columnModel.getColumn(MemoryBlockTableColumns.END.ordinal());
-		endCol.setCellRenderer(CustomToStringCellRenderer.MONO_OBJECT);
-
-		TableColumn lenCol = columnModel.getColumn(MemoryBlockTableColumns.LENGTH.ordinal());
-		lenCol.setCellRenderer(CustomToStringCellRenderer.MONO_ULONG_HEX);
 	}
 
 	public Map.Entry<Program, MemoryBlock> chooseBlock(PluginTool tool, TraceSection section,
-			Collection<Program> programs) {
+			long snap, Collection<Program> programs) {
 		DebuggerStaticMappingService service = tool.getService(DebuggerStaticMappingService.class);
-		return chooseBlock(tool, programs, rec -> rec.score(section, service));
+		return chooseBlock(tool, programs, rec -> rec.score(section, snap, service));
 	}
 
 	public Map.Entry<Program, MemoryBlock> chooseBlock(PluginTool tool, TraceMemoryRegion region,
-			Collection<Program> programs) {
+			long snap, Collection<Program> programs) {
 		DebuggerStaticMappingService service = tool.getService(DebuggerStaticMappingService.class);
-		return chooseBlock(tool, programs, rec -> rec.score(region, service));
+		return chooseBlock(tool, programs, rec -> rec.score(region, snap, service));
 	}
 
 	protected Map.Entry<Program, MemoryBlock> chooseBlock(PluginTool tool,

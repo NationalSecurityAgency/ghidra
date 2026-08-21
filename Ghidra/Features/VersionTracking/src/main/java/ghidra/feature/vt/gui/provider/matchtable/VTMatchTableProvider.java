@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,6 +34,8 @@ import javax.swing.table.*;
 import docking.*;
 import docking.action.builder.ActionBuilder;
 import docking.widgets.table.*;
+import docking.widgets.table.columnfilter.ColumnBasedTableFilter;
+import docking.widgets.table.columnfilter.ColumnFilterManager;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import generic.theme.GIcon;
 import ghidra.app.services.FunctionComparisonService;
@@ -80,6 +82,8 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 
 	private AncillaryFilterDialogComponentProvider<VTMatch> ancillaryFilterDialog;
 	private JButton ancillaryFilterButton;
+	private ColumnFilterManager<VTMatch> columnFilterManager;
+	private VTColumnFilter vtColumnFilter;
 
 	private FilterIconFlashTimer<VTMatch> iconTimer;
 	private Set<Filter<VTMatch>> filters = new HashSet<>();
@@ -136,7 +140,8 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		tableSelectionStateAction = new MatchTableSelectionAction(this);
 		addLocalAction(tableSelectionStateAction);
 
-		new ActionBuilder("Compare Functions", getName()).popupMenuPath("Compare Functions")
+		new ActionBuilder("Compare Functions", getOwner())
+				.popupMenuPath("Compare Functions")
 				.popupMenuGroup("Selection")
 				.popupMenuIcon(COMPARISON_ICON)
 				.keyBinding("shift c")
@@ -368,15 +373,9 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		TableColumn statusColumn = columnModel.getColumn(statusColumnIndex);
 		statusColumn.setCellRenderer(new MatchStatusRenderer());
 
-		// override the default behavior so we see our columns in their preferred size
-		Dimension size = table.getPreferredScrollableViewportSize();
-		Dimension preferredSize = table.getPreferredSize();
+		// a reasonable starting size picked by trial-and-error
+		table.setPreferredScrollableViewportSize(new Dimension(1100, 600));
 
-		// ...account for the scroll bar width
-		JScrollBar scrollBar = new JScrollBar(Adjustable.VERTICAL);
-		Dimension scrollBarSize = scrollBar.getMinimumSize();
-		size.width = preferredSize.width + scrollBarSize.width;
-		table.setPreferredScrollableViewportSize(size);
 		return table;
 	}
 
@@ -386,8 +385,8 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		JPanel innerPanel = new JPanel(new HorizontalLayout(4));
 		innerPanel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
 
-		JComponent nameFilterPanel = createTextFilterPanel();
-		parentPanel.add(nameFilterPanel, BorderLayout.CENTER);
+		JComponent textFilterPanel = createTextFilterPanel();
+		parentPanel.add(textFilterPanel, BorderLayout.CENTER);
 		parentPanel.add(innerPanel, BorderLayout.EAST);
 
 		JComponent scoreFilterPanel = createScoreFilterPanel();
@@ -409,13 +408,33 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		helpService.registerHelp(parentPanel, filterHelpLocation);
 		helpService.registerHelp(ancillaryFilterButton, filterHelpLocation);
 
+		JButton columnFilterButton = createColumnFilterButton();
+		innerPanel.add(columnFilterButton);
+
 		innerPanel.add(ancillaryFilterButton);
 
 		return parentPanel;
 	}
 
+	private JButton createColumnFilterButton() {
+
+		String preferenceKey =
+			matchesTable.getPreferenceKey() + ColumnFilterManager.FILTER_EXTENSION;
+		columnFilterManager = new ColumnFilterManager<VTMatch>(matchesTable, matchesTableModel,
+			preferenceKey, this::updateColumnFilter);
+
+		vtColumnFilter = new VTColumnFilter(columnFilterManager.getCurrentFilter());
+		addFilter(vtColumnFilter);
+
+		return columnFilterManager.getConfigureButton();
+	}
+
+	private void updateColumnFilter() {
+		vtColumnFilter.setFilter(columnFilterManager.getCurrentFilter());
+		refilter();
+	}
+
 	private JComponent createTextFilterPanel() {
-//		MatchNameFilter nameFilterPanel = new MatchNameFilter(controller, matchesTable);
 		AllTextFilter<VTMatch> allTextFilter =
 			new AllTextFilter<>(controller, matchesTable, matchesTableModel);
 		allTextFilter.setName(TEXT_FILTER_NAME);
@@ -506,6 +525,8 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		}
 
 		ancillaryFilterDialog.dispose();
+
+		columnFilterManager.dispose();
 	}
 
 	@Override
@@ -745,6 +766,11 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 			"Markup items that are incomplete (for example, no destination address is specified) " +
 				"should become ignored by applying a match.");
 
+		vtOptions.registerOption(USE_NAMESPACE_FUNCTIONS, DEFAULT_OPTION_FOR_NAMESPACE_FUNCTIONS,
+			null, USE_NAMESPACE_TOOLTIP);
+		vtOptions.registerOption(USE_EMPTY_COMPOSITES, DEFAULT_OPTION_FOR_USE_EMPTY_STRUCTURES,
+			null, USE_EMPTY_COMPOSITES_TOOLTIP);
+
 		vtOptions.getOptions(APPLY_MARKUP_OPTIONS_NAME)
 				.registerOptionsEditor(() -> new ApplyMarkupPropertyEditor(controller));
 		vtOptions.getOptions(DISPLAY_APPLY_MARKUP_OPTIONS)
@@ -821,7 +847,7 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 				.setOptionsHelpLocation(
 					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
 
-		vtOptions.registerOption(DUPE_FUNCTION_CORRELATOR_MIN_LEN_OPTION, 10, null,
+		vtOptions.registerOption(DUPE_FUNCTION_CORRELATOR_MIN_LEN_OPTION, 25, null,
 			"Minimum Function Length of Auto Version Tracking Duplicate Function Correlator");
 		vtOptions.getOptions(DUPE_FUNCTION_CORRELATOR_MIN_LEN_OPTION)
 				.setOptionsHelpLocation(
@@ -948,7 +974,7 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 	 * location, even if the item is moved or removed.
 	 * <p>
 	 * Creating this object will cancel the default behavior. Calling
-	 * <tt>restoreSelection</tt> will set the new selection, depending upon the
+	 * {@code restoreSelection} will set the new selection, depending upon the
 	 * conditions described above.
 	 */
 	private class SelectionOverrideMemento {
@@ -1069,4 +1095,78 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 			return list;
 		}
 	}
+
+	private class VTColumnFilter extends Filter<VTMatch> {
+
+		private ColumnBasedTableFilter<VTMatch> columnFilter;
+
+		VTColumnFilter(ColumnBasedTableFilter<VTMatch> columnFilter) {
+			this.columnFilter = columnFilter;
+		}
+
+		void setFilter(ColumnBasedTableFilter<VTMatch> columnFilter) {
+			this.columnFilter = columnFilter;
+		}
+
+		@Override
+		public boolean passesFilter(VTMatch t) {
+			if (columnFilter == null) {
+				return true;
+			}
+			return columnFilter.acceptsRow(t);
+		}
+
+		@Override
+		public FilterEditingStatus getFilterStatus() {
+			if (columnFilter == null || columnFilter.isEmpty()) {
+				return FilterEditingStatus.NONE;
+			}
+
+			return FilterEditingStatus.APPLIED;
+		}
+
+		@Override
+		public JComponent getComponent() {
+			// This filter is configured outside of the VT filter API
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public FilterShortcutState getFilterShortcutState() {
+			return FilterShortcutState.REQUIRES_CHECK;
+		}
+
+		@Override
+		public Filter<VTMatch> createCopy() {
+			return this; // does not currently support copying; should not be needed
+		}
+
+		@Override
+		public void readConfigState(SaveState saveState) {
+			// handled by the column filter manager
+		}
+
+		@Override
+		public void writeConfigState(SaveState saveState) {
+			// handled by the column filter manager
+		}
+
+		@Override
+		public boolean isSubFilterOf(Filter<VTMatch> otherFilter) {
+
+			Class<?> clazz = getClass();
+			Class<?> otherClazz = otherFilter.getClass();
+			if (!clazz.equals(otherClazz)) {
+				return false; // must be the same class
+			}
+
+			VTColumnFilter otherColumnFilter = (VTColumnFilter) otherFilter;
+			if (columnFilter == null && otherColumnFilter.columnFilter == null) {
+				return true;
+			}
+			return columnFilter.isSubFilterOf(otherColumnFilter.columnFilter);
+		}
+
+	}
+
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -130,6 +130,7 @@ public class BoundedBufferedReader extends Reader {
 	 * @exception IOException
 	 *                If an I/O error occurs
 	 */
+	@Override
 	public int read() throws IOException {
 		synchronized (lock) {
 			ensureOpen();
@@ -200,13 +201,13 @@ public class BoundedBufferedReader extends Reader {
 	 * true:
 	 * <ul>
 	 * 
-	 * <li>The specified number of characters have been read,
+	 * <li>The specified number of characters have been read,</li>
 	 * 
 	 * <li>The <code>read</code> method of the underlying stream returns
-	 * <code>-1</code>, indicating end-of-file, or
+	 * <code>-1</code>, indicating end-of-file, or</li>
 	 * 
 	 * <li>The <code>ready</code> method of the underlying stream returns
-	 * <code>false</code>, indicating that further input requests would block.
+	 * <code>false</code>, indicating that further input requests would block.</li>
 	 * 
 	 * </ul>
 	 * If the first <code>read</code> on the underlying stream returns
@@ -239,6 +240,7 @@ public class BoundedBufferedReader extends Reader {
 	 * @exception IOException
 	 *                If an I/O error occurs
 	 */
+	@Override
 	public int read(char cbuf[], int off, int len) throws IOException {
 		synchronized (lock) {
 			ensureOpen();
@@ -373,6 +375,7 @@ public class BoundedBufferedReader extends Reader {
 	 * @exception IOException
 	 *                If an I/O error occurs
 	 */
+	@Override
 	public long skip(long n) throws IOException {
 		if (n < 0L) {
 			throw new IllegalArgumentException("skip value is negative");
@@ -412,6 +415,7 @@ public class BoundedBufferedReader extends Reader {
 	 * @exception IOException
 	 *                If an I/O error occurs
 	 */
+	@Override
 	public boolean ready() throws IOException {
 		synchronized (lock) {
 			ensureOpen();
@@ -441,6 +445,7 @@ public class BoundedBufferedReader extends Reader {
 	/**
 	 * Tells whether this stream supports the mark() operation, which it does.
 	 */
+	@Override
 	public boolean markSupported() {
 		return true;
 	}
@@ -462,6 +467,7 @@ public class BoundedBufferedReader extends Reader {
 	 * @exception IOException
 	 *                If an I/O error occurs
 	 */
+	@Override
 	public void mark(int readAheadLimit) throws IOException {
 		if (readAheadLimit < 0) {
 			throw new IllegalArgumentException("Read-ahead limit < 0");
@@ -481,6 +487,7 @@ public class BoundedBufferedReader extends Reader {
 	 *                If the stream has never been marked, or if the mark has
 	 *                been invalidated
 	 */
+	@Override
 	public void reset() throws IOException {
 		synchronized (lock) {
 			ensureOpen();
@@ -493,6 +500,7 @@ public class BoundedBufferedReader extends Reader {
 		}
 	}
 
+	@Override
 	public void close() throws IOException {
 		synchronized (lock) {
 			if (in == null)

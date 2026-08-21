@@ -7,6 +7,7 @@
     <property key="useNewFunctionStackAnalysis" value="true"/>
     <property key="enableContiguousFunctionsOnly" value="false"/>
     <property key="emulateInstructionStateModifierClass" value="ghidra.program.emulation.ARMEmulateInstructionStateModifier"/>
+    <property key="useropLibs" value="arm"/>
     <property key="assemblyRating:ARM:BE:32:v7" value="PLATINUM"/>
     <property key="assemblyRating:ARM:LE:32:v7" value="PLATINUM"/>
   </properties>
@@ -20,7 +21,11 @@
       <set name="spsr" val="0"/>
     </tracked_set>
   </context_data>
-  
+
+  <register_data>
+    <register name="TB" alias="ISAModeSwitch"/>
+  </register_data>
+
   <default_symbols>
     <symbol name="Reset" address="ram:0x0" entry="true"/>
     <symbol name="UndefinedInstruction" address="ram:0x4" entry="true"/>

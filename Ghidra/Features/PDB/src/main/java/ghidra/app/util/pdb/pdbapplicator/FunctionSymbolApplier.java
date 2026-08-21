@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,19 +15,22 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
+import java.util.List;
+
 import ghidra.app.cmd.function.ApplyFunctionSignatureCmd;
 import ghidra.app.cmd.function.CallDepthChangeInfo;
+import ghidra.app.util.SymbolPath;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.*;
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.FunctionDefinition;
+import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.InvalidNameException;
+import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -75,8 +78,7 @@ public class FunctionSymbolApplier extends AbstractBlockContextApplier
 		return applicator.getAddress(symbol);
 	}
 
-	private void processSymbol(MsSymbolIterator iter)
-			throws CancelledException, PdbException {
+	private void processSymbol(MsSymbolIterator iter) throws CancelledException, PdbException {
 
 		Address address = applicator.getAddress(symbol);
 		String name = symbol.getName();
@@ -103,7 +105,94 @@ public class FunctionSymbolApplier extends AbstractBlockContextApplier
 		// If signature was set, then override existing primary mangled symbol with
 		// the global symbol that provided this signature so that Demangler does not overwrite
 		// the richer data type we get with global symbols.
-		applicator.createSymbol(address, name, succeededSetFunctionSignature);
+		applicator.createSymbol(address, getReconciledSymbolPath(), succeededSetFunctionSignature);
+	}
+
+	private SymbolPath getReconciledSymbolPath() {
+
+		String name = symbol.getName();
+		SymbolPath symbolPath = new SymbolPath(name);
+		RecordNumber typeRecordNumber = symbol.getTypeRecordNumber();
+		AbstractMsType fType = applicator.getTypeRecord(typeRecordNumber);
+		if (!(fType instanceof AbstractMemberFunctionMsType memberFunction)) {
+			return symbolPath;
+		}
+
+		// For Future investigation
+		//String modName = getConstructorName(symbolPath);
+
+		// Get containing type, and while we are at it, ensure that it is defined as a class
+		//  namespace.
+		// This has likely already been done, but we want to be sure that it has.
+		RecordNumber rc = memberFunction.getContainingClassRecordNumber();
+		SymbolPath containerSymbolPath = AbstractComplexTypeApplier.getSymbolPath(applicator, rc);
+		applicator.predefineClass(containerSymbolPath);
+
+		// Make sure that the symbol path of the underlying type of the this pointer is also
+		//  defined as a class namespace.
+		// Probably does not need to be done, as it likely was done for the underlying data type.
+		AbstractMsType p = memberFunction.getThisPointerType();
+		if (p instanceof AbstractPointerMsType ptr) {
+			RecordNumber rpt = ptr.getUnderlyingRecordNumber();
+			if (!rpt.equals(rc)) {
+				SymbolPath underlyingSymbolPath =
+					AbstractComplexTypeApplier.getSymbolPath(applicator, rc);
+				applicator.predefineClass(underlyingSymbolPath);
+			}
+		}
+
+		// Only trying to fix up anonymous namespaces
+		if (!name.startsWith("`anonymous namespace'") && !name.startsWith("anonymous-namespace")) {
+			return symbolPath;
+		}
+
+		// Reconcile path of function with path of container type.
+		//  Logic is a little different from what is in MDMangUtils.
+		// Want all namespace nodes to match except possibly the first one, which should be
+		//  the anonymous namespace one.
+		List<String> containerParts = containerSymbolPath.asList();
+		List<String> parts = symbolPath.asList();
+		if (containerParts.size() != parts.size() - 1) {
+			Msg.info(this, "Unmatched symbol path size during fn name reconcilation");
+			return symbolPath;
+		}
+		for (int i = 0; i < containerParts.size(); i++) {
+			String containerPart = containerParts.get(i);
+			String part = parts.get(i);
+			if (!containerPart.equals(part)) {
+				if (i == 0) {
+					parts.set(i, containerPart);
+				}
+				else {
+					Msg.info(this, "Mismatch symbol path nodes during fn name reconcilation");
+					return symbolPath;
+				}
+			}
+		}
+		return new SymbolPath(parts);
+	}
+
+	// For Future investigation
+	@SuppressWarnings("unused")
+	private String getConstructorName(SymbolPath symbolPath) {
+		if (isConstructor() && function != null) {
+			DataType ret = function.getReturnType();
+			if (ret != null) {
+				if (ret instanceof Pointer p) {
+					DataType u = p.getDataType();
+					if (u instanceof Composite c) {
+						String s = c.getName();
+						String x = symbolPath.getName();
+						if (!s.equals(x)) {
+							// Future investigation?  In what cases does this hit?
+							// For example, triggers on x:=DName<1> and s:=DName
+							// (standard embedded msft demangler stuff found in most binaries)
+						}
+					}
+				}
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -121,8 +210,7 @@ public class FunctionSymbolApplier extends AbstractBlockContextApplier
 		}
 		// Remaining are non-thunks
 
-		if (function.getSignatureSource().isHigherPriorityThan(SourceType.ANALYSIS)) {
-			// return if IMPORTED or USER_DEFINED
+		if (function.getSignatureSource().isHigherOrEqualPriorityThan(SourceType.IMPORTED)) {
 			return false;
 		}
 
@@ -169,6 +257,22 @@ public class FunctionSymbolApplier extends AbstractBlockContextApplier
 		return true;
 	}
 
+	/**
+	 * Returns true if we can tell that we have a constructor type; false if not or we cannot tell
+	 * @return true if we know that we have a constructor type
+	 */
+	private boolean isConstructor() {
+		RecordNumber typeRecordNumber = symbol.getTypeRecordNumber();
+		AbstractMsType fType = applicator.getTypeRecord(typeRecordNumber);
+		if (fType instanceof AbstractMemberFunctionMsType memFn) {
+			return memFn.getFunctionAttributes().isConstructor();
+		}
+		else if (fType instanceof AbstractProcedureMsType fn) {
+			return fn.getFunctionAttributes().isConstructor();
+		}
+		return false;
+	}
+
 	//==============================================================================================
 	@Override
 	public void deferredApply(MsSymbolIterator iter) throws PdbException, CancelledException {
@@ -177,6 +281,10 @@ public class FunctionSymbolApplier extends AbstractBlockContextApplier
 
 		String name = symbol.getName();
 		Address address = applicator.getAddress(symbol);
+
+		// Save off the function length for lines processing
+		Long functionLength = symbol.getProcedureLength();
+		applicator.setFunctionLength(address, functionLength.intValue());
 
 		function = applicator.getExistingFunction(address);
 		if (function == null) {

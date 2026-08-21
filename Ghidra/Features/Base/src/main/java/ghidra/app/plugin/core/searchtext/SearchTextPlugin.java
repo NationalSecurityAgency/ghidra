@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,10 @@
 package ghidra.app.plugin.core.searchtext;
 
 import java.awt.*;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,10 +30,11 @@ import org.apache.commons.lang3.StringUtils;
 import docking.*;
 import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
-import docking.widgets.fieldpanel.support.Highlight;
+import docking.widgets.fieldpanel.field.TextField;
+import docking.widgets.fieldpanel.support.*;
 import docking.widgets.table.threaded.*;
+import generic.json.Json;
 import generic.theme.GIcon;
-import ghidra.GhidraOptions;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.*;
 import ghidra.app.nav.Navigatable;
@@ -103,6 +106,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 	private int searchLimit;
 	private SearchTask currentTask;
 	private String lastSearchedText;
+	private LastSearchHit lastSearchHit;
 	private boolean doHighlight;
 	private Navigatable navigatable;
 
@@ -139,7 +143,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 
 		searchDialog.setStatusText("");
 		SearchTask searchTask = (SearchTask) task;
-		Navigatable searchNavigatable = ((SearchTask) task).getNavigatable();
+		Navigatable searchNavigatable = searchTask.getNavigatable();
 		Program program = ((SearchTask) task).getProgram();
 		if (searchNavigatable.getProgram() == null || searchNavigatable.isDisposed()) {
 			return;
@@ -148,26 +152,38 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 		TextSearchResult result = searchTask.getSearchLocation();
 		Searcher textSearcher = searchTask.getTextSearcher();
 		SearchOptions searchOptions = textSearcher.getSearchOptions();
-		if (result == null) {
-			searchDialog.setStatusText("Not found");
-		}
-		else if (result.programLocation()
-				.equals(currentLocation)) {
-			searchNext(searchTask.getProgram(), searchNavigatable, textSearcher);
-		}
-		else {
-			searchDialog.setStatusText("");
-			ProgramLocation loc = result.programLocation();
-			if (goToService.goTo(searchNavigatable, loc, program)) {
-				new SearchTextHighlightProvider(searchNavigatable, searchOptions, null, program,
-					result);
-			}
-		}
 
 		lastSearchedText = searchOptions.getText();
 		if (task == currentTask) {
+			// The current task is used to prevent the program from closing and for cancelling. If
+			// they do not match, then a new search task has been started before this one finished.
 			currentTask = null;
 		}
+
+		if (result == null) {
+			searchDialog.setStatusText("Not found");
+			return;
+		}
+
+		ProgramLocation loc = result.programLocation();
+		if (lastSearchHit != null && lastSearchHit.shouldSkipHiddenMatch(loc)) {
+			searchAgainFromHiddenLocation(loc);
+			return;
+		}
+
+		searchDialog.setStatusText("");
+		if (!goToService.goTo(searchNavigatable, loc, program)) {
+			return;
+		}
+
+		// The navigatable may change its location if it does not have the search result
+		// location visible.  We store that here so we can later detect that case in order
+		// to keep the search from getting stuck.
+		ProgramLocation navigatableLoc = navigatable.getLocation();
+		String searchText = searchOptions.getText();
+		lastSearchHit = new LastSearchHit(searchText, loc, navigatableLoc);
+
+		new SearchTextHighlightProvider(searchNavigatable, searchOptions, null, program, result);
 	}
 
 	String getLastSearchText() {
@@ -244,31 +260,49 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 		searchDialog.setHasSelection(selection != null && !selection.isEmpty());
 	}
 
-	void next() {
-		Program program = navigatable.getProgram();
-		ProgramLocation location = getStartLocation();
-		Searcher textSearcher = null;
-		SearchOptions searchOptions = searchDialog.getSearchOptions();
-		AddressSetView addressSet = getAddressSet(navigatable, searchOptions);
+	private void searchAgainFromHiddenLocation(ProgramLocation loc) {
+		lastSearchHit = lastSearchHit.createHiddenSearchHit(loc);
+		next();
+	}
 
-		if (searchOptions.isProgramDatabaseSearch()) {
-			textSearcher = new ProgramDatabaseSearcher(tool, program, location, addressSet,
-				searchOptions,
-				searchDialog.showTaskMonitorComponent(AbstractSearchTableModel.TITLE, true, true));
+	void next() {
+
+		ProgramLocation loc = getSearchStartLocation();
+		SearchOptions options = searchDialog.getSearchOptions();
+		AddressSetView addrs = getAddressSet(navigatable, options);
+		String title = AbstractSearchTableModel.TITLE;
+		TaskMonitor monitor = searchDialog.showTaskMonitorComponent(title, true, true);
+		Program p = navigatable.getProgram();
+		Searcher searcher = null;
+		if (options.isProgramDatabaseSearch()) {
+			searcher = new ProgramDatabaseSearcher(tool, p, loc, addrs, options, monitor);
 		}
 		else {
-			textSearcher = new ListingDisplaySearcher(tool, program, location, addressSet,
-				searchDialog.getSearchOptions(),
-				searchDialog.showTaskMonitorComponent(AbstractSearchTableModel.TITLE, true, true));
+			searcher = new ListingDisplaySearcher(tool, p, loc, addrs, options, monitor);
 		}
-		searchNext(navigatable.getProgram(), navigatable, textSearcher);
+		doSearchNext(navigatable.getProgram(), navigatable, searcher);
 	}
 
-	private ProgramLocation getStartLocation() {
-		return currentLocation = navigatable.getLocation();
+	private ProgramLocation getSearchStartLocation() {
+
+		ProgramLocation currentNavLoc = navigatable.getLocation();
+		if (lastSearchHit != null) {
+			ProgramLocation lastNavLoc = lastSearchHit.getNavigatableLocation();
+
+			// The navigatable's location has not changed since the last search. Use the last search
+			// location as the start point for the next search.  This ensures the searching does not
+			// get stuck when the navigatable cannot display the last search hit.
+			if (lastNavLoc.equals(currentNavLoc)) {
+				return lastSearchHit.getSearchLocation();
+			}
+			lastSearchHit = null;
+		}
+
+		return currentNavLoc;
 	}
 
-	private void searchNext(Program program, Navigatable searchNavigatable, Searcher textSearcher) {
+	private void doSearchNext(Program program, Navigatable searchNavigatable,
+			Searcher textSearcher) {
 		SearchTask task = new SearchTask(searchNavigatable, program, textSearcher);
 		task.addTaskListener(this);
 		currentTask = task;
@@ -337,13 +371,15 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 	private TableComponentProvider<ProgramLocation> getTableResultsProvider(
 			GhidraProgramTableModel<ProgramLocation> model, Program searchProgram,
 			TableService query, String matchType, String searchString) {
+		String tableType = "Search Results";
 		if (navigatable.supportsMarkers()) {
 			return query.showTableWithMarkers(
-				"Search Text - \"" + searchString + "\"  [" + matchType + "]", "Search", model,
+				"Search Text - \"" + searchString + "\"  [" + matchType + "]", tableType,
+				model,
 				SearchConstants.SEARCH_HIGHLIGHT_COLOR, SEARCH_MARKER_ICON, "Search", navigatable);
 		}
 		return query.showTable("Search Text - \"" + searchString + "\"  [" + matchType + "]",
-			"Search", model, "Search", navigatable);
+			tableType, model, "Search", navigatable);
 	}
 
 	@Override
@@ -377,16 +413,17 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 	 * Create the action for to pop up the search dialog.
 	 */
 	private void createActions() {
-		String subGroup = getClass().getName();
+		String subGroup = "d"; // Memory Search uses groups 'a', 'b', and 'c'
 
+		//@formatter:off
 		new ActionBuilder("Search Text", getName())
 				.menuPath("&Search", "Program &Text...")
 				.menuGroup("search", subGroup)
-				.keyBinding("ctrl shift E")
+				.keyBinding("ctrl F")
 				.description(DESCRIPTION)
 				.helpLocation(new HelpLocation(HelpTopics.SEARCH, "Search Text"))
 				.withContext(NavigatableActionContext.class, true)
-				.validContextWhen(c -> !(c instanceof RestrictedAddressSetContext))
+				.validWhen(c -> !(c instanceof RestrictedAddressSetContext))
 				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
 				.onAction(c -> {
 					setNavigatable(c.getNavigatable());
@@ -407,6 +444,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 					searchDialog.repeatSearch();
 				})
 				.buildAndInstall(tool);
+		//@formatter:on
 	}
 
 	protected void updateNavigatable(ActionContext context) {
@@ -423,7 +461,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 	@Override
 	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
 			Object newValue) {
-		if (optionName.equals(GhidraOptions.OPTION_SEARCH_LIMIT)) {
+		if (optionName.equals(SearchConstants.SEARCH_LIMIT_NAME)) {
 			int newSearchLimit = ((Integer) newValue).intValue();
 			if (newSearchLimit <= 0) {
 				throw new OptionsVetoException("Search limit must be greater than 0");
@@ -450,7 +488,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 			"The search result highlight color for the currently selected match");
 
 		searchLimit =
-			opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, SearchConstants.DEFAULT_SEARCH_LIMIT);
+			opt.getInt(SearchConstants.SEARCH_LIMIT_NAME, SearchConstants.DEFAULT_SEARCH_LIMIT);
 
 		doHighlight = opt.getBoolean(SearchConstants.SEARCH_HIGHLIGHT_NAME, true);
 
@@ -468,8 +506,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 		String textSelection = navigatable.getTextSelection();
 		ProgramLocation location = navigatable.getLocation();
 		Address address = location.getAddress();
-		Listing listing = context.getProgram()
-				.getListing();
+		Listing listing = context.getProgram().getListing();
 		CodeUnit codeUnit = listing.getCodeUnitAt(address);
 		boolean isInstruction = false;
 		if (textSelection != null) {
@@ -534,7 +571,106 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 // Inner Classes
 //==================================================================================================
 
-	class TableLoadingListener implements ThreadedTableModelListener {
+	private class LastSearchHit {
+
+		private String searchText;
+		private ProgramLocation searchLocation;
+		private ProgramLocation navigatableLocation;
+
+		private boolean isHidden;
+		private int ellipsisStart;
+
+		LastSearchHit(String searchText, ProgramLocation searchLocation,
+				ProgramLocation navigatableLocation) {
+			this.searchText = searchText;
+			this.searchLocation = searchLocation;
+			this.navigatableLocation = navigatableLocation;
+		}
+
+		LastSearchHit createHiddenSearchHit(ProgramLocation loc) {
+
+			LastSearchHit newSearchHit = new LastSearchHit(searchText, loc, navigatableLocation);
+			newSearchHit.isHidden = true;
+			newSearchHit.ellipsisStart = ellipsisStart;
+			return newSearchHit;
+		}
+
+		/**
+		 * Returns true if this search location is hidden and the given location is also in the 
+		 * clipped text area.
+		 * @param loc the current search result location
+		 * @return true to skip a hidden location
+		 */
+		boolean shouldSkipHiddenMatch(ProgramLocation loc) {
+			if (!isHidden) {
+				return false;
+			}
+
+			Class<? extends ProgramLocation> myClass = searchLocation.getClass();
+			Class<? extends ProgramLocation> otherClass = loc.getClass();
+			if (myClass != otherClass) {
+				return false;
+			}
+
+			Address myAddress = searchLocation.getAddress();
+			Address otherAddress = loc.getAddress();
+			if (!myAddress.equals(otherAddress)) {
+				return false;
+			}
+
+			// assume text is clipped per row
+			int myRow = searchLocation.getRow();
+			int otherRow = loc.getRow();
+			if (myRow != otherRow) {
+				return false;
+			}
+
+			// skip all text past the ellipsis, as it is not being rendered
+			int matchStart = loc.getCharOffset();
+			return matchStart > ellipsisStart;
+		}
+
+		ProgramLocation getSearchLocation() {
+			return searchLocation;
+		}
+
+		ProgramLocation getNavigatableLocation() {
+			return navigatableLocation;
+		}
+
+		/**
+		 * Signals that this search result cannot be seen in the UI, such as when the content is
+		 * in a field that has been clipped.  This is called after the search when highlighting is
+		 * taking place.  We need to do this at that point because the highlighter is passed all the
+		 * info it needs to see if the search result is hidden.  
+		 * @param hlSearchText the current highlight search text; used to know if the highlighter
+		 * 	      is working on the active search
+		 * @param ellipsisOffset the offset of the ellipsis text
+		 */
+		void markHidden(String hlSearchText, int ellipsisOffset) {
+
+			if (!Objects.equals(searchText, hlSearchText)) {
+				return; // highlighting an older search hit
+			}
+
+			if (isHidden) {
+				return;
+			}
+
+			isHidden = true;
+			this.ellipsisStart = ellipsisOffset;
+			if (searchDialog != null) {
+				searchDialog.setStatusText("Search result hidden", MessageType.WARNING);
+			}
+		}
+
+		@Override
+		public String toString() {
+			return Json.toString(this);
+		}
+	}
+
+	private class TableLoadingListener implements ThreadedTableModelListener {
 
 		private ThreadedTableModel<?, ?> model;
 		private TableComponentProvider<ProgramLocation> provider;
@@ -572,8 +708,9 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 					"Stopped search after finding " + matchCount + " matches.\n" +
 						"The search limit can be changed at Edit->Tool Options, under Search.");
 			}
+
 			// there was a suggestion that the dialog should not go way after a search all
-//			searchDialog.close();
+			// searchDialog.close();
 		}
 
 		private Component getParentComponent() {
@@ -583,8 +720,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 
 			// must have completed too fast for the provider to be set; try something cute
 			Component focusOwner =
-				KeyboardFocusManager.getCurrentKeyboardFocusManager()
-						.getFocusOwner();
+				KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
 			return focusOwner; // assume this IS the provider
 		}
 
@@ -601,6 +737,9 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 
 	private class SearchTextHighlightProvider
 			implements ListingHighlightProvider, ComponentProviderActivationListener {
+
+		private static final String ELLIPSIS = "...";
+
 		private SearchOptions searchOptions;
 		private TableComponentProvider<?> provider;
 		private Program highlightProgram;
@@ -629,12 +768,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 		@Override
 		public Highlight[] createHighlights(String text, ListingField field, int cursorTextOffset) {
 
-			Class<? extends FieldFactory> fieldFactoryClass = field.getFieldFactory()
-					.getClass();
-
-			if (!doHighlight) {
-				return NO_HIGHLIGHTS;
-			}
+			Class<? extends FieldFactory> fieldFactoryClass = field.getFieldFactory().getClass();
 
 			if (checkRemoveHighlights()) {
 				return NO_HIGHLIGHTS;
@@ -653,8 +787,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 				return getAllHighlights(text, cursorTextOffset);
 			}
 
-			Address address = searchResult.programLocation()
-					.getAddress();
+			Address address = searchResult.programLocation().getAddress();
 			ProxyObj<?> proxy = field.getProxy();
 			if (proxy.contains(address)) {
 				return getSingleSearchHighlight(text, field, cursorTextOffset);
@@ -664,6 +797,10 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 		}
 
 		private Highlight[] getAllHighlights(String text, int cursorTextOffset) {
+
+			if (!doHighlight) {
+				return NO_HIGHLIGHTS;
+			}
 
 			String searchText = searchOptions.getText();
 			if (StringUtils.isBlank(searchText) || StringUtils.isBlank(text)) {
@@ -705,32 +842,133 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 				return NO_HIGHLIGHTS;
 			}
 
-			int charOffset = searchResult.offset();
-			int searchStart = charOffset;
+			/*
+			 	Find the highlight start and end using the ProgramLocation.  The location is in 
+			 	model space, but the Highlights are in view space.  The field factory already knows
+			 	how to convert between these 2 spaces by providing a FieldLocation for the view 
+			 	space.
+			 */
+			BigInteger dummyIndex = BigInteger.ZERO;
+			int dummyFieldNumber = 0;
+			FieldLocation fieldLocation =
+				fieldFactory.getFieldLocation(field, dummyIndex, dummyFieldNumber, loc);
+
+			/*
+			 	We now need to handle the case where the view values have multiple rows.  The 
+			 	Highlight uses character offsets that treat multiple rows as one single line string.
+			 	Here we use the ListingField to convert from rows to a character offset. 
+			 */
+			int row = fieldLocation.getRow();
+			int col = fieldLocation.getCol();
+			int fullTextOffset = field.screenLocationToTextOffset(row, col);
+
+			int searchStart = fullTextOffset;
 			int searchEnd = searchStart + searchText.length();
 
-			Pattern regexp =
-				UserSearchUtils.createSearchPattern(searchText, searchOptions.isCaseSensitive());
-			Matcher matcher = regexp.matcher(text);
-			while (matcher.find()) {
-				int start = matcher.start();
-				int end = matcher.end();
-
-				// ensure the particular regex match is the actual search result
-				if (start == searchStart && end == searchEnd) {
-
-					Color hlColor = SearchConstants.SEARCH_HIGHLIGHT_COLOR;
-					if (start <= cursorTextOffset && end >= cursorTextOffset) {
-						// change the highlight color when in the field so it stands out
-						hlColor = SearchConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR;
-					}
-
-					// this is the matching search hit for a single search
-					int endEx = end - 1;
-					return new Highlight[] { new Highlight(start, endEx, hlColor) };
-				}
+			Color hlColor = SearchConstants.SEARCH_HIGHLIGHT_COLOR;
+			if (searchStart <= cursorTextOffset && searchEnd >= cursorTextOffset) {
+				// change the highlight color when in the field so it stands out
+				hlColor = SearchConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR;
 			}
-			return NO_HIGHLIGHTS;
+
+			// Note: we still want to call these methods that handle clipped text, even when not 
+			// highlighting (see the method notes).
+
+			// this handles fields that do their own clipping internally, like ClippingTextField
+			Highlight ellipsisHl =
+				createClippedDisplayHighlight(field, searchText, row, col, fullTextOffset);
+
+			if (ellipsisHl == null) {
+				// this handled fields that are clipped by the field factory, like PlateFieldFactory
+				ellipsisHl =
+					createClippedModelHighlight(field, text, searchText, fullTextOffset);
+			}
+
+			if (!doHighlight) {
+				return NO_HIGHLIGHTS;
+			}
+
+			if (ellipsisHl != null) {
+				return new Highlight[] { ellipsisHl };
+			}
+
+			// this is the matching search hit for a single search
+			int endInc = searchEnd - 1; // highlights are inclusive
+			return new Highlight[] { new Highlight(searchStart, endInc, hlColor) };
+		}
+
+		// Note: this method performs double-duty: it not only creates a highlight for text that
+		// is replaced with an ellipsis, it also updates the state of the plugin to track that the
+		// last search hit is a hidden search hit. Thus, even if highlighting is off, we still need
+		// to perform this work for the searching to perform optimally when ignoring hidden results.
+		private Highlight createClippedDisplayHighlight(ListingField field,
+				String searchText, int row, int col, int fullTextOffset) {
+
+			if (!(field instanceof TextField tf)) {
+				return null;
+			}
+
+			boolean isClipped = tf.isClipped();
+			if (!isClipped) {
+				return null;
+			}
+
+			int numCols = tf.getNumCols(row);
+			int fieldEnd = numCols - 1; // -1 for zero based indexing
+			int clippedCol = col;
+			if (clippedCol != fieldEnd) {
+				// Assume the hit landing at the end is required for a hidden result. Search results
+				// are normally placed at the beginning of the text.
+				return null;
+			}
+
+			// signal to have the next search skip any more hidden text hits
+			lastSearchHit.markHidden(searchText, clippedCol);
+
+			// A normal highlight will work for fields that can paint their own clipping. These
+			// fields will paint the '...' and a highlight on the ellipsis.
+			int start = fullTextOffset;
+			int end = fullTextOffset + ELLIPSIS.length();
+			Color hlColor = SearchConstants.SEARCH_HIGHLIGHT_COLOR;
+			return new Highlight(start, end, hlColor);
+		}
+
+		// Note: this method performs double-duty: it not only creates a highlight for text that
+		// is replaced with an ellipsis, it also updates the state of the plugin to track that the
+		// last search hit is a hidden search hit. Thus, even if highlighting is off, we still need
+		// to perform this work for the searching to perform optimally when ignoring hidden results.
+		private Highlight createClippedModelHighlight(ListingField field, String fieldText,
+				String searchText, int screenOffset) {
+
+			int len = ELLIPSIS.length();
+			int contextStart = screenOffset - len;
+			int contextEnd = contextStart + (len * 2);
+
+			if (contextStart < 0) {
+				return null;
+			}
+
+			String context = fieldText.substring(contextStart, contextEnd);
+			int relativeIndex = context.indexOf(ELLIPSIS);
+			if (relativeIndex < 0) {
+				return null;
+			}
+
+			if (searchText.contains(ELLIPSIS)) {
+				return null;
+			}
+
+			Color hlColor = SearchConstants.SEARCH_HIGHLIGHT_COLOR;
+			int absoluteIndex = contextStart + relativeIndex;
+			Highlight ellipsisHl = new Highlight(absoluteIndex, absoluteIndex + len, hlColor);
+
+			// this fields search result is hidden behind truncated text
+			int screenEllipsisOffset = ellipsisHl.getStart();
+			RowColLocation modelLoc = field.textOffsetToScreenLocation(screenEllipsisOffset);
+			int modelEllipsisOffset = modelLoc.col();
+			lastSearchHit.markHidden(searchText, modelEllipsisOffset);
+
+			return ellipsisHl;
 		}
 
 		private boolean shouldHighlight(ListingField field) {
@@ -746,8 +984,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 				return true;
 			}
 
-			Class<? extends FieldFactory> factoryClass = field.getFieldFactory()
-					.getClass();
+			Class<? extends FieldFactory> factoryClass = field.getFieldFactory().getClass();
 			if (searchOptions.searchComments()) {
 				if (factoryClass == PreCommentFieldFactory.class ||
 					factoryClass == PlateFieldFactory.class ||

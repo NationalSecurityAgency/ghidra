@@ -61,13 +61,16 @@ public class SelectChangedToolDialog extends DialogComponentProvider {
 		JLabel descriptionLabel = new GHtmlLabel(HTMLUtilities.toHTML(
 			"There are multiple changed instances of " + HTMLUtilities.escapeHTML(toolName) +
 				" running.<p>Which one would like to save to your tool chest?"));
+		descriptionLabel.getAccessibleContext().setAccessibleName("Description");
 		descriptionLabel.setIconTextGap(15);
 		descriptionLabel.setIcon(OptionDialog.getIconForMessageType(OptionDialog.WARNING_MESSAGE));
 		descriptionLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		panel.add(descriptionLabel, BorderLayout.NORTH);
 		JScrollPane scrollPane = new JScrollPane(buildRadioButtonPanel());
 		scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		scrollPane.getAccessibleContext().setAccessibleName("Radio Button");
 		panel.add(scrollPane);
+		panel.getAccessibleContext().setAccessibleName("Select Changed Tool");
 		return panel;
 	}
 
@@ -77,6 +80,7 @@ public class SelectChangedToolDialog extends DialogComponentProvider {
 		ButtonGroup buttonGroup = new ButtonGroup();
 
 		GRadioButton noneButton = new GRadioButton("None");
+		noneButton.getAccessibleContext().setAccessibleName("None");
 		ItemListener listener = new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
@@ -89,6 +93,7 @@ public class SelectChangedToolDialog extends DialogComponentProvider {
 
 		for (final PluginTool tool : toolList) {
 			GRadioButton radioButton = new GRadioButton(tool.getName());
+			radioButton.getAccessibleContext().setAccessibleName(tool.getToolName());
 			radioButton.addItemListener(new ItemListener() {
 				@Override
 				public void itemStateChanged(ItemEvent e) {
@@ -100,7 +105,7 @@ public class SelectChangedToolDialog extends DialogComponentProvider {
 		}
 
 		buttonGroup.setSelected(noneButton.getModel(), true);
-
+		panel.getAccessibleContext().setAccessibleName("Tool Selection Button");
 		return panel;
 	}
 

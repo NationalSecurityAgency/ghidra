@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,7 @@
 package ghidra.app.util.bin.format.coff.archive;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.coff.CoffException;
@@ -41,14 +40,15 @@ public final class CoffArchiveHeader implements StructConverter {
 	/**
 	 * Returns true if the data contained in the {@link ByteProvider provider} contains
 	 * a COFF Archive file.
-	 * <p>
-	 * @param provider
-	 * @return
-	 * @throws IOException
+	 * 
+	 * @param provider {@link ByteProvider} stream
+	 * @return boolean true if stream contains a CoffArchiveHeader at position 0
+	 * @throws IOException if error reading
 	 */
 	public static boolean isMatch(ByteProvider provider) throws IOException {
-		return (provider.length() > CoffArchiveConstants.MAGIC_LEN) && CoffArchiveConstants.MAGIC
-				.equals(new String(provider.readBytes(0, CoffArchiveConstants.MAGIC_LEN)));
+		return (provider.length() >= CoffArchiveConstants.MAGIC_LEN) &&
+			Arrays.equals(CoffArchiveConstants.MAGIC_BYTES,
+				provider.readBytes(0, CoffArchiveConstants.MAGIC_LEN));
 	}
 
 	/**
@@ -56,7 +56,7 @@ public final class CoffArchiveHeader implements StructConverter {
 	 * <p>
 	 * Returns a {@link CoffArchiveHeader} that has a list of the 
 	 * {@link CoffArchiveMemberHeader members} in the archive.
-	 * <p>
+	 * 
 	 * @param provider
 	 * @param monitor
 	 * @return
@@ -75,9 +75,7 @@ public final class CoffArchiveHeader implements StructConverter {
 
 		CoffArchiveHeader cah = new CoffArchiveHeader();
 
-		long eofPos = reader.length() - CoffArchiveMemberHeader.CAMH_MIN_SIZE;
-
-		while (reader.getPointerIndex() < eofPos) {
+		while (reader.hasNext(CoffArchiveMemberHeader.CAMH_MIN_SIZE)) {
 			if (monitor.isCancelled()) {
 				break;
 			}

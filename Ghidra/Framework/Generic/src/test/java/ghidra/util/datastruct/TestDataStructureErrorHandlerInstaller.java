@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import generic.test.ConcurrentTestExceptionHandler;
  * A utility that allows tests to set the error handling behavior for all data structures that
  * want flexible error handling.  This class, in this package, allows us to override the factory
  * that is used to create the error handlers for framework listener data structures.  The standard
- * behavior is to report errors to the the application log.  Some clients wish to change this
+ * behavior is to report errors to the application log.  Some clients wish to change this
  * behavior in testing mode so that any errors will fail tests.  Without overriding this behavior,
  * unexpected errors during listener notification may be lost in the noise of the application log.
  * <p>

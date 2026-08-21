@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,7 +46,7 @@ public class DBTraceDataTypeManagerTest extends AbstractGhidraHeadlessIntegratio
 				.getLanguage(
 					new LanguageID("Toy:BE:64:default"));
 		trace = new DBTrace("Testing", toyLanguage.getDefaultCompilerSpec(), this);
-		dtm = trace.getDataTypeManager();
+		dtm = trace.getBaseDataTypeManager();
 	}
 
 	@After
@@ -132,7 +132,7 @@ public class DBTraceDataTypeManagerTest extends AbstractGhidraHeadlessIntegratio
 		assertEquals(mine.toString(), got.toString()); // TODO: Eww
 
 		try (Transaction tx = trace.openTransaction("To Undo")) {
-			dtm.remove(got, new ConsoleTaskMonitor());
+			dtm.remove(got);
 		}
 
 		assertNull(got = dtm.getDataType(minePath));

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -112,6 +112,8 @@ public class PdbApplicatorMetrics {
 	private Set<Class<? extends AbstractMsSymbol>> unexpectedGlobalSymbols = new HashSet<>();
 	private Set<Class<? extends AbstractMsSymbol>> unexpectedPublicSymbols = new HashSet<>();
 	private boolean witnessEnumerateNarrowing = false;
+	private boolean witnessC11Lines = false;
+	private boolean witnessC13InlineeLines = false;
 
 	/**
 	 * Method to capture data/item type that cannot be applied.
@@ -215,6 +217,22 @@ public class PdbApplicatorMetrics {
 		unexpectedMemberFunctionContainerTypes.add(type.getClass());
 	}
 
+	/**
+	 * Method to capture witnessing of C11Lines.
+	 */
+	void witnessC11Lines() {
+		witnessC11Lines = true;
+	}
+
+	/**
+	 * Method to capture witnessing of C13InlineeLines.
+	 */
+	void witnessC13InlineeLines() {
+		// C13InlineeLines are prevalent, but we want to be able to inform the user that
+		//  we haven't processed them
+		witnessC13InlineeLines = true;
+	}
+
 	//==============================================================================================
 
 	/**
@@ -233,6 +251,7 @@ public class PdbApplicatorMetrics {
 		builder.append(reportUnexpectedPublicSymbols());
 		builder.append(reportUnexpectedGlobalSymbols());
 		builder.append(reportEnumerateNarrowing());
+		builder.append(reportSourceLineProcessing()); // can be removed once we can process
 
 		if (builder.length() == 0) {
 			return; // nothing reported
@@ -322,6 +341,19 @@ public class PdbApplicatorMetrics {
 			return "Enumerate narrowing was witnessed\n";
 		}
 		return "";
+	}
+
+	// Routine can be modified to remove each as we can process each.  Routine can be removed once
+	//  we can process both.
+	private String reportSourceLineProcessing() {
+		String result = "";
+		if (witnessC11Lines) {
+			result = "Could not process C11Lines\n";
+		}
+		if (witnessC13InlineeLines) {
+			result += "Could not process C13InlineeLines\n";
+		}
+		return result;
 	}
 
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ import ghidra.util.exception.CancelledException;
  * Common abstract base class for GoType classes
  */
 @PlateComment()
-public abstract class GoType implements StructureMarkup<GoType> {
+public abstract class GoType implements StructureMarkup<GoType>, StructureVerifier {
 	//@formatter:off
 	private static final Map<GoKind, Class<? extends GoType>> specializedTypeClasses =
 		Map.ofEntries(
@@ -45,21 +45,19 @@ public abstract class GoType implements StructureMarkup<GoType> {
 	//@formatter:on
 
 	/**
-	 * Returns the specific GoType derived class that will handle the go type located at the
+	 * Returns the specific GoType derived class that will handle the Go type located at the
 	 * specified offset.
 	 * 
 	 * @param programContext program-level mapper context
-	 * @param offset absolute location of go type struct
+	 * @param offset absolute location of Go type struct
 	 * @return GoType class that will best handle the type struct
 	 * @throws IOException if error reading
 	 */
 	public static Class<? extends GoType> getSpecializedTypeClass(GoRttiMapper programContext,
 			long offset) throws IOException {
 		GoTypeDetector typeDetector = programContext.readStructure(GoTypeDetector.class, offset);
-		Class<? extends GoType> result = specializedTypeClasses.get(typeDetector.getKind());
-		if (result == null) {
-			result = GoPlainType.class;
-		}
+		Class<? extends GoType> result =
+			specializedTypeClasses.getOrDefault(typeDetector.getKind(), GoPlainType.class);
 		return result;
 	}
 
@@ -90,24 +88,22 @@ public abstract class GoType implements StructureMarkup<GoType> {
 	}
 
 	/**
-	 * Returns the name of this type.
-	 * 
-	 * @return name of this type
+	 * {@return the name of this type}
 	 */
 	public String getName() {
 		return typ.getName();
 	}
 
-	public String getNameWithPackageString() {
-		GoSymbolName parsedPackagePath = GoSymbolName.fromPackagePath(getPackagePathString());
-		String tpp = Objects.requireNonNullElse(parsedPackagePath.getTruncatedPackagePath(), "");
-		return tpp + getName();
+	public GoSymbolName getSymbolName() {
+		return GoSymbolName.parseTypeName(getName(), getPackagePathString());
+	}
+	
+	public String getFullyQualifiedName() {
+		return getSymbolName().asString();
 	}
 
 	/**
-	 * Returns the package path of this type.
-	 * 
-	 * @return package path of this type
+	 * {@return the package path of this type}
 	 */
 	public String getPackagePathString() {
 		try {
@@ -176,8 +172,13 @@ public abstract class GoType implements StructureMarkup<GoType> {
 	}
 
 	@Override
+	public String getStructureLabel() throws IOException {
+		return "%s___%s_type".formatted(getFullyQualifiedName(), typ.getKind().toString());
+	}
+
+	@Override
 	public String getStructureName() throws IOException {
-		return getNameWithPackageString();
+		return getFullyQualifiedName();
 	}
 
 	@Override
@@ -190,27 +191,23 @@ public abstract class GoType implements StructureMarkup<GoType> {
 		GoUncommonType ut = getUncommonType();
 		if (ut != null) {
 			GoSlice slice = ut.getMethodsSlice();
-			slice.markupArray(getStructureName() + "_methods", getStructureNamespace(),
+			slice.markupArray(getStructureLabel() + "_methods", getStructureNamespace(),
 				GoMethod.class, false, session);
 			slice.markupArrayElements(GoMethod.class, session);
-
-			session.labelStructure(ut,
-				typ.getName() + "_" +
-					programContext.getStructureDataTypeName(GoUncommonType.class),
-				getStructureNamespace());
+			session.labelStructure(ut, getStructureLabel() + "_uncommon", getStructureNamespace());
 		}
 	}
 
 	protected String getImplementsInterfaceString() {
 		StringBuilder sb = new StringBuilder();
-		for (GoItab goItab : programContext.getInterfacesImplementedByType(this)) {
+		for (GoItab goItab : programContext.getGoTypes().getInterfacesImplementedByType(this)) {
 			if (!sb.isEmpty()) {
 				sb.append("\n");
 			}
 			try {
 				sb.append(AddressAnnotatedStringHandler.createAddressAnnotationString(
 					goItab.getInterfaceType().getStructureContext().getStructureAddress(),
-					goItab.getInterfaceType().getNameWithPackageString()));
+					goItab.getInterfaceType().getFullyQualifiedName()));
 				sb.append(" ");
 				sb.append(AddressAnnotatedStringHandler.createAddressAnnotationString(
 					goItab.getStructureContext().getStructureAddress(), "[itab]"));
@@ -227,55 +224,42 @@ public abstract class GoType implements StructureMarkup<GoType> {
 		if (ut == null || uncommonType.mcount == 0) {
 			return "";
 		}
-		String typeName = getName();
+		GoType ptrType = typ.getPtrToThis();
+		GoSymbolName ptrSymbolName = ptrType != null ? ptrType.getSymbolName() : null;
+		String ptrTypeName = ptrSymbolName != null ? ptrSymbolName.getBaseTypeName() : null;
+		
 		StringBuilder sb = new StringBuilder();
 		for (GoMethod method : ut.getMethods()) {
-			GoType ptrType = typ.getPtrToThis();
-			String tfnStr = makeMethodStr(method.getType(), method.getName(), typeName);
-			String ifnStr = ptrType != null
-					? makeMethodStr(method.getType(), method.getName(), ptrType.getName())
-					: null;
+			GoFuncType methodFuncDef = method.getType() instanceof GoFuncType funcType ? funcType : null;
 			Address tfnAddr = method.getTfn();
 			if (tfnAddr != null) {
+				String tfnStr = getMethodPrototypeString(method.getName(),methodFuncDef );
 				sb.append(!sb.isEmpty() ? "\n" : "")
 						.append(AddressAnnotatedStringHandler.createAddressAnnotationString(tfnAddr,
 							tfnStr));
 			}
 			Address ifnAddr = method.getIfn();
-			if (ifnAddr != null && ifnStr != null) {
+			if (ifnAddr != null && ptrTypeName != null) {
+				String ifnStr = getMethodPrototypeString(ptrTypeName, method.getName(), methodFuncDef);
 				sb.append(!sb.isEmpty() ? "\n" : "")
-						.append(AddressAnnotatedStringHandler.createAddressAnnotationString(ifnAddr,
-							ifnStr));
+						.append(AddressAnnotatedStringHandler.createAddressAnnotationString(ifnAddr, ifnStr));
 			}
 			if (tfnAddr == null && ifnAddr == null) {
-				String methodStr = makeMethodStr(method.getType(), method.getName(), typeName);
+				String methodStr = getMethodPrototypeString(method.getName(), methodFuncDef);
 				sb.append(!sb.isEmpty() ? "\n" : "").append(methodStr);
 			}
 		}
 		return sb.toString();
 	}
-
-	private String makeMethodStr(GoType methodFuncType, String methodName,
-			String containingTypeName) throws IOException {
-		return methodFuncType instanceof GoFuncType funcdefType
-				? funcdefType.getFuncPrototypeString(methodName, containingTypeName)
-				: "func (%s) %s(???)".formatted(containingTypeName, methodName);
+	
+	public String getMethodPrototypeString(String methodName, GoFuncType funcdefType) {
+		return getMethodPrototypeString(getSymbolName().getBaseTypeName(), methodName, funcdefType);
 	}
 
-	/**
-	 * Return a funcdef signature for a method that is attached to this type.
-	 * 
-	 * @param method {@link GoMethod}
-	 * @param allowPartial boolean flag, if true, allow returning a partially defined signature
-	 * when the method's funcdef type is not specified
-	 * @return {@link FunctionDefinition} (that contains a receiver parameter), or null if
-	 * the method's funcdef type was not specified and allowPartial was not true
-	 * @throws IOException if error reading type info
-	 */
-	public FunctionDefinition getMethodSignature(GoMethod method, boolean allowPartial)
-			throws IOException {
-		return programContext.getSpecializedMethodSignature(method.getName(),
-			method.getType(), programContext.getRecoveredType(this), allowPartial);
+	public String getMethodPrototypeString(String recvStr, String methodName,
+			GoFuncType funcdefType) {
+		return "func (%s) %s%s".formatted(recvStr, methodName,
+			funcdefType != null ? funcdefType.getParamListString() : "(???) ???");
 	}
 
 	/**
@@ -313,27 +297,18 @@ public abstract class GoType implements StructureMarkup<GoType> {
 	}
 
 	/**
-	 * Returns the name of this type, after being uniqified against all other types defined in the
-	 * program.
+	 * Converts a Go RTTI type structure into a Ghidra data type.
 	 * <p>
-	 * See {@link GoRttiMapper#getUniqueGoTypename(GoType)}.
-	 *  
-	 * @return name of this type
-	 */
-	public String getUniqueTypename() {
-		return programContext.getUniqueGoTypename(this);
-	}
-
-	/**
-	 * Converts a golang RTTI type structure into a Ghidra data type.
+	 * This default implementation just creates an opaque blob of the appropriate size
 	 * 
-	 * @return {@link DataType} that represents the golang type
+	 * @return {@link DataType} that represents the Go type
 	 * @throws IOException if error getting name of the type
 	 */
 	public DataType recoverDataType() throws IOException {
+		GoTypeManager goTypes = programContext.getGoTypes();
 		DataType dt = Undefined.getUndefinedDataType((int) typ.getSize());
-		return new TypedefDataType(programContext.getRecoveredTypesCp(getPackagePathString()),
-			getUniqueTypename(), dt, programContext.getDTM());
+		return new TypedefDataType(goTypes.getCP(this), goTypes.getTypeName(this), dt,
+			goTypes.getDTM());
 	}
 
 	/**
@@ -362,6 +337,11 @@ public abstract class GoType implements StructureMarkup<GoType> {
 			}
 		}
 		return true;
+	}
+
+	@Override
+	public boolean isValid() {
+		return typ.isValid();
 	}
 
 }

@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,14 +15,14 @@
  */
 package ghidra.app.plugin.core.format;
 
-import ghidra.util.HelpLocation;
-
 import java.math.BigInteger;
+
+import ghidra.util.HelpLocation;
 
 /**
  * Converts byte values to binary representation.
  */
-public class BinaryFormatModel implements UniversalDataFormatModel {
+public class BinaryFormatModel implements UniversalDataFormatModel, MutableDataFormatModel {
 
 	private int symbolSize;
 	private static final String GOOD_CHARS = "01";
@@ -36,6 +35,7 @@ public class BinaryFormatModel implements UniversalDataFormatModel {
 	/**
 	 * Get the name of this formatter.
 	 */
+	@Override
 	public String getName() {
 		return "Binary";
 	}
@@ -44,6 +44,7 @@ public class BinaryFormatModel implements UniversalDataFormatModel {
 	 * Get the number of bytes to make a unit; in this case, 
 	 * returns 1.
 	 */
+	@Override
 	public int getUnitByteSize() {
 		return 1;
 	}
@@ -53,6 +54,7 @@ public class BinaryFormatModel implements UniversalDataFormatModel {
 	 * it returns a number from 0 to unit byte size - 1 indicating which
 	 * byte the character position was obtained from.
 	 */
+	@Override
 	public int getByteOffset(ByteBlock block, int position) {
 		return 0;
 	}
@@ -60,6 +62,7 @@ public class BinaryFormatModel implements UniversalDataFormatModel {
 	/**
 	 * Given the byte offset into a unit, get the column position.
 	 */
+	@Override
 	public int getColumnPosition(ByteBlock block, int byteOffset) {
 		return 0;
 	}
@@ -69,6 +72,7 @@ public class BinaryFormatModel implements UniversalDataFormatModel {
 	 * unit. 
 	 * @return 8 for number of characters in the binary representation.
 	 */
+	@Override
 	public int getDataUnitSymbolSize() {
 		return symbolSize;
 	}
@@ -81,6 +85,7 @@ public class BinaryFormatModel implements UniversalDataFormatModel {
 	 * @throws IndexOutOfBoundsException if index is not valid for the
 	 * block
 	 */
+	@Override
 	public String getDataRepresentation(ByteBlock block, BigInteger index)
 			throws ByteBlockAccessException {
 
@@ -94,15 +99,8 @@ public class BinaryFormatModel implements UniversalDataFormatModel {
 			str = str.substring(str.length() - symbolSize);
 		}
 
-		return pad(str);
+		return DataFormatModel.pad(str, symbolSize);
 
-	}
-
-	/**
-	 * Returns true to allow values to be changed.
-	 */
-	public boolean isEditable() {
-		return (true);
 	}
 
 	/**
@@ -119,6 +117,7 @@ public class BinaryFormatModel implements UniversalDataFormatModel {
 	 * @throws IndexOutOfBoundsException if index is not valid for the
 	 * block
 	 */
+	@Override
 	public boolean replaceValue(ByteBlock block, BigInteger index, int charPosition, char c)
 			throws ByteBlockAccessException {
 
@@ -148,59 +147,15 @@ public class BinaryFormatModel implements UniversalDataFormatModel {
 	}
 
 	/**
-	 * Get number of units in a group. A group may represent
-	 * multiple units shown as one entity. This format does not
-	 * support groups.
-	 */
-	public int getGroupSize() {
-		return 1;
-	}
-
-	/**
-	 * Set the number of units in a group. This format does not
-	 * support groups.
-	 * @throws UnsupportedOperationException 
-	 */
-	public void setGroupSize(int groupSize) {
-		throw new UnsupportedOperationException("groups are not supported");
-	}
-
-	/**
 	 * Get the number of characters separating units.
 	 */
+	@Override
 	public int getUnitDelimiterSize() {
 		return 1;
 	}
 
-	/**
-	 * @see ghidra.app.plugin.core.format.DataFormatModel#validateBytesPerLine(int)
-	 */
-	public boolean validateBytesPerLine(int bytesPerLine) {
-		return true;
-	}
-
-	/////////////////////////////////////////////////////////////////
-	// *** private methods ***
-	/////////////////////////////////////////////////////////////////
-	private String pad(String value) {
-		StringBuffer sb = new StringBuffer();
-		int len = symbolSize - value.length();
-
-		for (int i = 0; i < len; i++) {
-			sb.append("0");
-		}
-		sb.append(value);
-		return (sb.toString());
-	}
-
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.format.DataFormatModel#getHelpLocation()
-	 */
+	@Override
 	public HelpLocation getHelpLocation() {
 		return new HelpLocation("ByteViewerPlugin", "Binary");
-	}
-
-	public void dispose() {
-		// nothing to do
 	}
 }

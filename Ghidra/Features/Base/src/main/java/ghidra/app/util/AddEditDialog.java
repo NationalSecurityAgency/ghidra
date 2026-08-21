@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 import docking.ComponentProvider;
 import docking.ReusableDialogComponentProvider;
 import docking.widgets.OptionDialog;
+import docking.widgets.button.BrowseButton;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import ghidra.app.cmd.label.*;
@@ -39,6 +40,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.Swing;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.layout.VerticalLayout;
 
 /**
@@ -46,6 +48,7 @@ import ghidra.util.layout.VerticalLayout;
  */
 public class AddEditDialog extends ReusableDialogComponentProvider {
 	private static final int MAX_RETENTION = 10;
+
 	private PluginTool tool;
 	private TitledBorder nameBorder;
 	private GhidraComboBox<String> labelNameChoices;
@@ -190,7 +193,7 @@ public class AddEditDialog extends ReusableDialogComponentProvider {
 
 		boolean isCurrentlyEntryPoint = false;
 		boolean isCurrentlyPinned = false;
-		CompoundCmd cmd = new CompoundCmd(symbol == null ? "Add Label" : "Edit Label");
+		CompoundCmd<Program> cmd = new CompoundCmd<>(symbol == null ? "Add Label" : "Edit Label");
 		if (symbol == null) {
 			cmd.add(new AddLabelCmd(addr, symbolName, parent, SourceType.USER_DEFINED));
 		}
@@ -205,7 +208,7 @@ public class AddEditDialog extends ReusableDialogComponentProvider {
 			return;
 		}
 
-		cmd = new CompoundCmd(symbol == null ? "Add Label" : "Edit Label");
+		cmd = new CompoundCmd<>(symbol == null ? "Add Label" : "Edit Label");
 		if (primaryCheckBox.isEnabled() && primaryCheckBox.isSelected()) {
 			cmd.add(new SetLabelPrimaryCmd(addr, symbolName, parent));
 		}
@@ -245,7 +248,8 @@ public class AddEditDialog extends ReusableDialogComponentProvider {
 			"You have removed the label text--would you like to remove the existing label?");
 		if (choice == OptionDialog.YES_OPTION) {
 
-			Command cmd = new DeleteLabelCmd(addr, symbol.getName(), symbol.getParentNamespace());
+			Command<Program> cmd =
+				new DeleteLabelCmd(addr, symbol.getName(), symbol.getParentNamespace());
 			if (!tool.execute(cmd, program)) {
 				setStatusText(cmd.getStatusMsg());
 			}
@@ -328,64 +332,73 @@ public class AddEditDialog extends ReusableDialogComponentProvider {
 
 	private void initRecentChoices() {
 		labelNameChoices.removeAllItems();
-		Iterator<String> it = recentLabels.iterator();
-		while (it.hasNext()) {
-			labelNameChoices.addItem(it.next());
+		for (String recentLabel : recentLabels) {
+			labelNameChoices.addItem(recentLabel);
 		}
 		if (recentLabels.size() > 0) {
 			labelNameChoices.setSelectedIndex(-1);
 		}
 	}
 
-// This method only gets the namespace associated with the current address
-// and it's tree of namespaces.  It does not walk the namespace tree of
-// the symbol, which can be different than that of the address.
 	private void initNamespaces() {
 		namespaceChoices.removeAllItems();
 
+		for (Namespace namespace : getSelectableNamespaces()) {
+			namespaceChoices.addItem(new NamespaceWrapper(namespace));
+		}
+	}
+
+	private Collection<Namespace> getSelectableNamespaces() {
 		if (!namespaceChoices.isEnabled()) {
-			namespaceChoices.addItem(new NamespaceWrapper(symbol.getParentNamespace()));
-			selectNamespace();
+			return List.of(symbol.getParentNamespace());
+		}
+
+		SequencedSet<Namespace> namespaces = new LinkedHashSet<>();
+		addGlobalNamespace(namespaces);
+		addCurrentNamespace(namespaces);
+		addSuggestedNamespace(namespaces);
+		addRecentNamespaces(namespaces);
+
+		return namespaces;
+	}
+
+	private void addRecentNamespaces(SequencedSet<Namespace> namespaces) {
+		List<Namespace> recentNamespaces = NamespaceCache.get(program);
+		if (recentNamespaces == null) {
 			return;
 		}
+		for (Namespace namespace : recentNamespaces) {
+			if (!namespaces.contains(namespace)) {
+				namespaces.add(namespace);
+			}
+		}
+	}
 
-		Collection<NamespaceWrapper> collection = new HashSet<>();
+	private void addSuggestedNamespace(SequencedSet<Namespace> namespaces) {
+		Namespace namespace = program.getSymbolTable().getNamespace(addr);
+		if (namespace == null) {
+			return;
+		}
+		// Don't include the currently edited symbol as a possible choice
+		if (symbol != null && namespace.equals(symbol.getObject())) {
+			return;
+		}
+		if (!namespaces.contains(namespace)) {
+			namespaces.add(namespace);
+		}
+	}
 
-		// we always add the global namespace
+	private void addGlobalNamespace(SequencedSet<Namespace> namespaces) {
 		Namespace globalNamespace = program.getGlobalNamespace();
-
-		NamespaceWrapper composite = new NamespaceWrapper(globalNamespace);
-		namespaceChoices.addItem(composite);
-		collection.add(composite);
-
-		Namespace currentNamespace = program.getSymbolTable().getNamespace(addr);
-
-		// no symbol or not editing a function symbol
-		if ((symbol == null) || (symbol != null && symbol.getSymbolType() != SymbolType.FUNCTION)) {
-			// walk the tree of namespaces and collect all of the items
-			for (; (currentNamespace != globalNamespace); currentNamespace =
-				currentNamespace.getParentNamespace()) {
-				composite = new NamespaceWrapper(currentNamespace);
-
-				if (!collection.contains(composite)) {
-					collection.add(composite);
-					namespaceChoices.addItem(composite);
-				}
-			}
+		if (!namespaces.contains(globalNamespace)) {
+			namespaces.add(globalNamespace);
 		}
+	}
 
+	private void addCurrentNamespace(SequencedSet<Namespace> namespaces) {
 		if (symbol != null) {
-			// we are adding the current namespace of the symbol if it is not in
-			// the namespace tree that belongs to the address
-			Namespace symbolNamespace = symbol.getParentNamespace();
-			composite = new NamespaceWrapper(symbolNamespace);
-			if (!collection.contains(composite)) {
-				collection.add(composite);
-				namespaceChoices.insertItemAt(composite, 1);
-			}
+			namespaces.add(symbol.getParentNamespace());
 		}
-
-		selectNamespace();
 	}
 
 	/**
@@ -478,6 +491,7 @@ public class AddEditDialog extends ReusableDialogComponentProvider {
 
 		namespaceChoices.setEnabled(true);
 		initNamespaces();
+		selectNamespace();
 		clearStatusText();
 
 	}
@@ -538,6 +552,7 @@ public class AddEditDialog extends ReusableDialogComponentProvider {
 			namespaceChoices.setEnabled(true);
 		}
 		initNamespaces();
+		selectNamespace();
 		clearStatusText();
 
 	}
@@ -550,21 +565,18 @@ public class AddEditDialog extends ReusableDialogComponentProvider {
 			@Override
 			public Dimension getPreferredSize() {
 				Dimension size = super.getPreferredSize();
-				// change the preferred size to use the width determined by the # of columns in
-				// combo box editor instead of the largest item in the combo box data model to
-				// prevent the dialog from growing huge when a large label gets added to its recent
-				// items
-				Dimension editorSize = getEditor().getEditorComponent().getPreferredSize();
-				size.width = editorSize.width;
+				// Change the preferred size to use a standard starting width. Previously, it
+				// was sized on the first label edited, but then it just remembered that size.
+				// A width of 500 is a good starting width that will fit most reasonable 
+				// namespace names.
+				size.width = 500;
 				return size;
 			}
 		};
 		// the  number of columns determines the default width of the add/edit label dialog
-		labelNameChoices.setColumnCount(20);
+		labelNameChoices.setColumns(20);
 		labelNameChoices.setName("label.name.choices");
-		GhidraComboBox<NamespaceWrapper> comboBox = new GhidraComboBox<>();
-		comboBox.setEnterKeyForwarding(true);
-		namespaceChoices = comboBox;
+		namespaceChoices = new GhidraComboBox<>();
 
 		primaryCheckBox = new GCheckBox("Primary");
 		primaryCheckBox.setMnemonic('P');
@@ -599,7 +611,8 @@ public class AddEditDialog extends ReusableDialogComponentProvider {
 		mainPanel.add(bottomPanel);
 
 		topPanel.add(labelNameChoices, BorderLayout.NORTH);
-		midPanel.add(namespaceChoices, BorderLayout.NORTH);
+		midPanel.add(namespaceChoices, BorderLayout.CENTER);
+		midPanel.add(buildBrowsePanel(), BorderLayout.EAST);
 		bottomPanel.add(entryPointCheckBox);
 		bottomPanel.add(primaryCheckBox);
 		bottomPanel.add(pinnedCheckBox);
@@ -609,6 +622,54 @@ public class AddEditDialog extends ReusableDialogComponentProvider {
 		mainPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
 		return mainPanel;
+	}
+
+	private Component buildBrowsePanel() {
+		JPanel panel = new JPanel(new BorderLayout());
+		JButton browseButton = new BrowseButton();
+		browseButton.setToolTipText("Choose Namespace");
+		browseButton.addActionListener(e -> showNamespaceChooser());
+		panel.add(browseButton, BorderLayout.CENTER);
+		panel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
+		return panel;
+	}
+
+	private void showNamespaceChooser() {
+		NamespaceChooserDialog dialog = new NamespaceChooserDialog();
+		Namespace namespace = dialog.getNamespace(program);
+		if (namespace != null) {
+			NamespaceCache.add(program, namespace);
+			initNamespaces();
+			namespaceChoices.setSelectedItem(new NamespaceWrapper(namespace));
+		}
+
+		String nsText = dialog.getNamespaceText();
+		if (StringUtils.isBlank(nsText)) {
+			return;
+		}
+
+		Namespace newNamespace = createNamespace(nsText);
+		if (newNamespace != null) {
+			NamespaceCache.add(program, newNamespace);
+			initNamespaces();
+			namespaceChoices.setSelectedItem(new NamespaceWrapper(newNamespace));
+		}
+	}
+
+	private Namespace createNamespace(String nsText) {
+
+		return program.withTransaction("Create Namespace", () -> {
+			Namespace globalNs = program.getGlobalNamespace();
+			try {
+				return NamespaceUtils.createNamespaceHierarchy(nsText, globalNs, program,
+					SourceType.USER_DEFINED);
+
+			}
+			catch (InvalidInputException e) {
+				setStatusText("Invalid Namespace name: " + nsText);
+				return null;
+			}
+		});
 	}
 
 	private void addListeners() {
@@ -635,6 +696,11 @@ public class AddEditDialog extends ReusableDialogComponentProvider {
 			text = text.trim();
 		}
 		return text;
+	}
+
+	// for testing
+	public JComboBox<?> getNamespaceComboBox() {
+		return namespaceChoices;
 	}
 
 	public class NamespaceWrapper {
@@ -673,4 +739,5 @@ public class AddEditDialog extends ReusableDialogComponentProvider {
 			return namespace.hashCode();
 		}
 	}
+
 }

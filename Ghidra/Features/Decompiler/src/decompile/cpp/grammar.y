@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ static CParse *parse;
 
 // Grammar taken from ISO/IEC 9899
 
-%token DOTDOTDOT BADTOKEN STRUCT UNION ENUM DECLARATION_RESULT PARAM_RESULT
+%token DOTDOTDOT BADTOKEN STRUCT UNION ENUM DECLARATION_RESULT PARAM_RESULT SCOPERES
 %token <i> NUMBER
 %token <str> IDENTIFIER
 %token <str> STORAGE_CLASS_SPECIFIER TYPE_QUALIFIER FUNCTION_SPECIFIER
@@ -56,6 +56,7 @@ static CParse *parse;
 %type <type> type_specifier struct_or_union_specifier enum_specifier
 %type <enumer> enumerator
 %type <vecenum> enumerator_list
+%type <str> var_identifier
 %%
 
 document:
@@ -127,7 +128,7 @@ struct_declarator_list:
 
 struct_declarator:
   declarator { $$ = $1; }
-// declarator ':' NUMBER
+  | declarator ':' NUMBER { $$ = $1; $1->setNumBits((int4)*$3); }
 ;
 
 enum_specifier:
@@ -153,8 +154,13 @@ declarator:
   | pointer direct_declarator { $$ = parse->mergePointer($1,$2); }
 ;
 
+var_identifier:
+  IDENTIFIER { $$ = $1; }
+  | var_identifier SCOPERES IDENTIFIER { $$ = $1; $$->append("::"); $$->append(*$3); }
+;
+
 direct_declarator:
-  IDENTIFIER { $$ = parse->newDeclarator($1); }
+  var_identifier { $$ = parse->newDeclarator($1); }
   | '(' declarator ')' { $$ = $2; }
   | direct_declarator '[' type_qualifier_list assignment_expression ']' { $$ = parse->newArray($1,$3,$4); }
   | direct_declarator '[' assignment_expression ']' { $$ = parse->newArray($1,0,$3); }
@@ -361,6 +367,9 @@ uint4 GrammarLexer::moveState(char lookahead)
       state = punctuation;
       bufstart = bufend-1;
       break;
+    case ':':
+      state = scoperes1;
+      break;
     case '-':
     case '0':
     case '1':
@@ -469,6 +478,19 @@ uint4 GrammarLexer::moveState(char lookahead)
     state = start;
     res = GrammarToken::dotdotdot;
     break;
+  case scoperes1:
+    if (lookahead == ':') {
+      state = scoperes2;
+    }
+    else {
+      state = start;
+      res = ':';
+    }
+    break;
+  case scoperes2:
+    state = start;
+    res = GrammarToken::scoperes;
+    break;
   case punctuation:
     state = start;
     res = (uint4)buffer[bufstart];
@@ -529,7 +551,7 @@ uint4 GrammarLexer::moveState(char lookahead)
     }
     else if ((lookahead>='a')&&(lookahead<='z')) {
     }
-    else if (lookahead == '_' || lookahead == ':') {
+    else if (lookahead == '_') {
     }
     else {
       state = start;
@@ -1035,6 +1057,8 @@ Datatype *CParse::newStruct(const string &ident,vector<TypeDeclarator *> *declis
 { // Build a new structure
   TypeStruct *res = glb->types->getTypeStruct(ident); // Create stub (for recursion)
   vector<TypeField> sublist;
+  vector<TypeBitField> bitlist;
+  bool isBigEndian = glb->getDefaultDataSpace()->isBigEndian();
 
   for(uint4 i=0;i<declist->size();++i) {
     TypeDeclarator *decl = (*declist)[i];
@@ -1043,12 +1067,14 @@ Datatype *CParse::newStruct(const string &ident,vector<TypeDeclarator *> *declis
       glb->types->destroyType(res);
       return (Datatype *)0;
     }
-    sublist.emplace_back(0,-1,decl->getIdentifier(),decl->buildType(glb));
+    if (decl->getNumBits() != 0)
+      bitlist.emplace_back(sublist.size(),decl->getNumBits(),isBigEndian,decl->getIdentifier(),decl->buildType(glb));
+    else
+      sublist.emplace_back(0,-1,decl->getIdentifier(),decl->buildType(glb));
   }
 
-  TypeStruct::assignFieldOffsets(sublist);
   try {
-    glb->types->setFields(sublist,res,-1,-1,0);
+    glb->types->assignRawFields(res,sublist,bitlist);
   }
   catch (LowlevelError &err) {
     setError(err.explain);
@@ -1084,7 +1110,7 @@ Datatype *CParse::newUnion(const string &ident,vector<TypeDeclarator *> *declist
   }
 
   try {
-    glb->types->setFields(sublist,res,-1,-1,0);
+    glb->types->assignRawFields(res,sublist);
   }
   catch (LowlevelError &err) {
     setError(err.explain);
@@ -1140,8 +1166,13 @@ Datatype *CParse::newEnum(const string &ident,vector<Enumerator *> *vecenum)
     vallist.push_back(enumer->value);
     assignlist.push_back(enumer->constantassigned);
   }
-  if (!glb->types->setEnumValues(namelist,vallist,assignlist,res)) {
-    setError("Bad enumeration values");
+  try {
+    map<uintb,string> namemap;
+    TypeEnum::assignValues(namemap,namelist,vallist,assignlist,res);
+    glb->types->setEnumValues(namemap, res);
+  }
+  catch (LowlevelError &err) {
+    setError(err.explain);
     glb->types->destroyType(res);
     return (Datatype *)0;
   }
@@ -1272,6 +1303,8 @@ int4 CParse::lex(void)
     return BADTOKEN;
   case GrammarToken::dotdotdot:
     return DOTDOTDOT;
+  case GrammarToken::scoperes:
+    return SCOPERES;
   case GrammarToken::badtoken:
     setError(lexer.getError());	// Error from lexer
     return BADTOKEN;
@@ -1356,7 +1389,7 @@ int grammarerror(const char *str)
 Datatype *parse_type(istream &s,string &name,Architecture *glb)
 
 {
-  CParse parser(glb,1000);
+  CParse parser(glb,4096);
 
   if (!parser.parseStream(s,CParse::doc_parameter_declaration))
     throw ParseError(parser.getError());
@@ -1375,7 +1408,7 @@ Datatype *parse_type(istream &s,string &name,Architecture *glb)
 void parse_protopieces(PrototypePieces &pieces,
 		       istream &s,Architecture *glb)
 {
-  CParse parser(glb,1000);
+  CParse parser(glb,4096);
 
   if (!parser.parseStream(s,CParse::doc_declaration))
     throw ParseError(parser.getError());
@@ -1395,7 +1428,7 @@ void parse_protopieces(PrototypePieces &pieces,
 void parse_C(Architecture *glb,istream &s)
 
 { // Load type data straight into datastructures
-  CParse parser(glb,1000);
+  CParse parser(glb,4096);
 
   if (!parser.parseStream(s,CParse::doc_declaration))
     throw ParseError(parser.getError());

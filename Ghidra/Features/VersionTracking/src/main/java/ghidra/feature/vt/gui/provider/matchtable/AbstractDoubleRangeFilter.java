@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.label.GDLabel;
 import docking.widgets.numberformat.BoundedRangeDecimalFormatterFactory;
+import docking.widgets.textfield.GFormattedTextField;
+import docking.widgets.textfield.TextEntryStatusListener;
 import ghidra.feature.vt.gui.filters.*;
 import ghidra.framework.options.SaveState;
 import ghidra.util.layout.HorizontalLayout;
@@ -41,8 +43,8 @@ public abstract class AbstractDoubleRangeFilter<T> extends Filter<T>
 	private final Double minValue;
 
 	private JComponent component;
-	private FilterFormattedTextField upperBoundField;
-	private FilterFormattedTextField lowerBoundField;
+	private GFormattedTextField upperBoundField;
+	private GFormattedTextField lowerBoundField;
 	private String filterName;
 
 	AbstractDoubleRangeFilter(String filterName, Double minValue, Double maxValue) {
@@ -54,7 +56,7 @@ public abstract class AbstractDoubleRangeFilter<T> extends Filter<T>
 	}
 
 	private void createLowerBoundField() {
-		lowerBoundField = new FilterFormattedTextField(
+		lowerBoundField = new GFormattedTextField(
 			new BoundedRangeDecimalFormatterFactory(maxValue, minValue, FORMAT), minValue);
 		lowerBoundField.setName("Lower " + filterName + " Filter Field"); // for debugging
 		lowerBoundField.setColumns(4);
@@ -63,7 +65,7 @@ public abstract class AbstractDoubleRangeFilter<T> extends Filter<T>
 	}
 
 	private void createUpperBoundField() {
-		upperBoundField = new FilterFormattedTextField(
+		upperBoundField = new GFormattedTextField(
 			new BoundedRangeDecimalFormatterFactory(maxValue, minValue, FORMAT), maxValue);
 		upperBoundField.setName("Upper " + filterName + " Filter Field"); // for debugging
 		upperBoundField.setColumns(4);
@@ -93,15 +95,18 @@ public abstract class AbstractDoubleRangeFilter<T> extends Filter<T>
 		panel.add(middleLabel);
 		panel.add(upperBoundField);
 
-		FilterStatusListener notificationListener = status -> fireStatusChanged(status);
+		TextEntryStatusListener notificationListener = s -> {
+			FilterEditingStatus status = FilterEditingStatus.getFilterStatus(s);
+			fireStatusChanged(status);
+		};
 
 		StatusLabel lowerBoundStatusLabel = new StatusLabel(lowerBoundField, minValue);
-		lowerBoundField.addFilterStatusListener(lowerBoundStatusLabel);
-		lowerBoundField.addFilterStatusListener(notificationListener);
+		lowerBoundField.addTextEntryStatusListener(lowerBoundStatusLabel);
+		lowerBoundField.addTextEntryStatusListener(notificationListener);
 
 		StatusLabel upperBoundStatusLabel = new StatusLabel(upperBoundField, maxValue);
-		upperBoundField.addFilterStatusListener(upperBoundStatusLabel);
-		upperBoundField.addFilterStatusListener(notificationListener);
+		upperBoundField.addTextEntryStatusListener(upperBoundStatusLabel);
+		upperBoundField.addTextEntryStatusListener(notificationListener);
 
 		JLayeredPane layeredPane = new JLayeredPane();
 		layeredPane.add(panel, BASE_COMPONENT_LAYER);
@@ -127,16 +132,18 @@ public abstract class AbstractDoubleRangeFilter<T> extends Filter<T>
 		return component;
 	}
 
-	@Override
-	public void clearFilter() {
-		lowerBoundField.setText(minValue.toString());
-		upperBoundField.setText(maxValue.toString());
+	private FilterEditingStatus getLowerBoundStatus() {
+		return FilterEditingStatus.getFilterStatus(lowerBoundField);
+	}
+
+	private FilterEditingStatus getUpperBoundStatus() {
+		return FilterEditingStatus.getFilterStatus(upperBoundField);
 	}
 
 	@Override
 	public FilterEditingStatus getFilterStatus() {
-		FilterEditingStatus lowerStatus = lowerBoundField.getFilterStatus();
-		FilterEditingStatus upperStatus = upperBoundField.getFilterStatus();
+		FilterEditingStatus lowerStatus = getLowerBoundStatus();
+		FilterEditingStatus upperStatus = getUpperBoundStatus();
 
 		if (lowerStatus == FilterEditingStatus.ERROR || upperStatus == FilterEditingStatus.ERROR) {
 			return FilterEditingStatus.ERROR;
@@ -152,8 +159,8 @@ public abstract class AbstractDoubleRangeFilter<T> extends Filter<T>
 
 	@Override
 	public boolean passesFilter(T t) {
-		if (lowerBoundField.getFilterStatus() == FilterEditingStatus.ERROR ||
-			upperBoundField.getFilterStatus() == FilterEditingStatus.ERROR) {
+		if (getLowerBoundStatus() == FilterEditingStatus.ERROR ||
+			getUpperBoundStatus() == FilterEditingStatus.ERROR) {
 			return true; // for an invalid filter state, we let all values through
 		}
 

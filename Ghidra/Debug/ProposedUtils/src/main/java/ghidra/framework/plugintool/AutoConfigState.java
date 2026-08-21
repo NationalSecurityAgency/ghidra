@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
+import ghidra.async.AsyncReference;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField.DefaultConfigFieldCodec;
@@ -371,6 +372,36 @@ public interface AutoConfigState {
 			state.putEnum(name, value);
 		}
 	}
+
+	static class GenericAsyncConfigFieldCodec<T>
+			implements ConfigFieldCodec<AsyncReference<T, ?>> {
+		private ConfigFieldCodec<T> codec;
+
+		public GenericAsyncConfigFieldCodec(ConfigFieldCodec<T> codec) {
+			this.codec = codec;
+		}
+
+		@Override
+		public AsyncReference<T, ?> read(SaveState state, String name,
+				AsyncReference<T, ?> current) {
+			current.set(codec.read(state, name, current.get()), null);
+			return current;
+		}
+
+		@Override
+		public void write(SaveState state, String name, AsyncReference<T, ?> value) {
+			codec.write(state, name, value.get());
+		}
+	}
+
+	static class BooleanAsyncConfigFieldCodec
+			extends GenericAsyncConfigFieldCodec<Boolean> {
+		public BooleanAsyncConfigFieldCodec() {
+			super(BooleanConfigFieldCodec.INSTANCE);
+		}
+	}
+
+	// TODO: Other async types as needed
 
 	class ConfigStateField<T> {
 		private static final Map<Class<?>, ConfigFieldCodec<?>> CODECS_BY_TYPE = new HashMap<>();

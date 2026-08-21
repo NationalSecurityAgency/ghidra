@@ -1,0 +1,37 @@
+<callfixup name="_objc_release_fixup">
+    <target name="_objc_release"/>
+    <target name="_objc_release_x0"/>
+    <target name="_objc_release_x1"/>
+    <target name="_objc_release_x2"/>
+    <target name="_objc_release_x3"/>
+    <target name="_objc_release_x4"/>
+    <target name="_objc_release_x5"/>
+    <target name="_objc_release_x6"/>
+    <target name="_objc_release_x7"/>
+    <target name="_objc_release_x8"/>
+    <target name="_objc_release_x9"/>
+    <target name="_objc_release_x10"/>
+    <target name="_objc_release_x11"/>
+    <target name="_objc_release_x12"/>
+    <target name="_objc_release_x13"/>
+    <target name="_objc_release_x14"/>
+    <target name="_objc_release_x15"/>
+    <target name="_objc_release_x16"/>
+    <target name="_objc_release_x17"/>
+    <target name="_objc_release_x18"/>
+    <target name="_objc_release_x19"/>
+    <target name="_objc_release_x20"/>
+    <target name="_objc_release_x21"/>
+    <target name="_objc_release_x22"/>
+    <target name="_objc_release_x23"/>
+    <target name="_objc_release_x24"/>
+    <target name="_objc_release_x25"/>
+    <target name="_objc_release_x26"/>
+    <target name="_objc_release_x27"/>
+    <target name="_objc_release_x28"/>
+    <pcode>
+        <body><![CDATA[
+            x0 = 0;
+        ]]></body>
+    </pcode>
+</callfixup>

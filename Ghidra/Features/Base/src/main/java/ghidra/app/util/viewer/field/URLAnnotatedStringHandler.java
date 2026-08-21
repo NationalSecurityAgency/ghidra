@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,7 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.*;
 
 import docking.widgets.fieldpanel.field.AttributedString;
 import generic.theme.GThemeDefaults.Colors.Messages;
@@ -78,15 +77,12 @@ public class URLAnnotatedStringHandler implements AnnotatedStringHandler {
 	}
 
 	private URL getURLForString(String urlString) {
-		URL url = null;
 		try {
-			url = new URL(urlString);
+			return new URI(urlString).toURL();
 		}
-		catch (MalformedURLException exc) {
-			// we return null
+		catch (MalformedURLException | URISyntaxException e) {
+			return null;
 		}
-
-		return url;
 	}
 
 	@Override

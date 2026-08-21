@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,9 +19,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.MemoryByteProvider;
+import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.elf.ElfSectionHeaderConstants;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.ElfLoader;
@@ -63,8 +61,7 @@ public final class OatUtilities {
 	 */
 	public static boolean isOAT(Program program) {
 		if (program != null) {
-			String executableFormat = program.getExecutableFormat();
-			if (ElfLoader.ELF_NAME.equals(executableFormat)) {
+			if (ElfLoader.isElf(program)) {
 				MemoryBlock roDataBlock =
 					program.getMemory().getBlock(ElfSectionHeaderConstants.dot_rodata);
 				if (roDataBlock != null) {
@@ -77,12 +74,8 @@ public final class OatUtilities {
 		return false;
 	}
 
-	public static boolean isELF(Program program) {
-		return ElfLoader.ELF_NAME.equals(program.getExecutableFormat());
-	}
-
 	public static Symbol getOatDataSymbol(Program program) {
-		if (isELF(program)) {
+		if (ElfLoader.isElf(program)) {
 			MemoryBlock block = program.getMemory().getBlock(ElfSectionHeaderConstants.dot_rodata);
 			if (block != null) {
 				SymbolTable symbolTable = program.getSymbolTable();
@@ -97,7 +90,7 @@ public final class OatUtilities {
 	}
 
 	public static Symbol getOatExecSymbol(Program program) {
-		if (isELF(program)) {
+		if (ElfLoader.isElf(program)) {
 			MemoryBlock block = program.getMemory().getBlock(ElfSectionHeaderConstants.dot_text);
 			if (block != null) {
 				SymbolTable symbolTable = program.getSymbolTable();
@@ -112,7 +105,7 @@ public final class OatUtilities {
 	}
 
 	public static Symbol getOatLastWordSymbol(Program program) {
-		if (isELF(program)) {
+		if (ElfLoader.isElf(program)) {
 			MemoryBlock block = program.getMemory().getBlock(ElfSectionHeaderConstants.dot_text);
 			if (block != null) {
 				SymbolTable symbolTable = program.getSymbolTable();

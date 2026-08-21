@@ -4,6 +4,7 @@
   <properties>
     <property key="emulateInstructionStateModifierClass"
 			value="ghidra.program.emulation.TRICOREEmulateInstructionStateModifier"/>
+    <property key="useropLibs" value="tricore"/>
   </properties>
   
   <programcounter register="PC"/> 

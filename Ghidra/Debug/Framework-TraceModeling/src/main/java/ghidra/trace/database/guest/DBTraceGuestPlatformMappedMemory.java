@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  */
 package ghidra.trace.database.guest;
 
-import static ghidra.lifecycle.Unfinished.TODO;
+import static ghidra.lifecycle.Unfinished.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,7 +34,6 @@ import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.util.MathUtilities;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -211,11 +210,6 @@ public class DBTraceGuestPlatformMappedMemory implements Memory {
 	}
 
 	@Override
-	public AddressSetView getInitializedAddressSet() {
-		return TODO();
-	}
-
-	@Override
 	public AddressSetView getExecuteSet() {
 		return TODO();
 	}
@@ -223,16 +217,6 @@ public class DBTraceGuestPlatformMappedMemory implements Memory {
 	@Override
 	public boolean isBigEndian() {
 		return guest.getLanguage().isBigEndian();
-	}
-
-	@Override
-	public void setLiveMemoryHandler(LiveMemoryHandler handler) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public LiveMemoryHandler getLiveMemoryHandler() {
-		return null;
 	}
 
 	@Override
@@ -315,31 +299,31 @@ public class DBTraceGuestPlatformMappedMemory implements Memory {
 	@Override
 	public void moveBlock(MemoryBlock block, Address newStartAddr, TaskMonitor monitor)
 			throws LockException, MemoryBlockException, MemoryConflictException,
-			AddressOverflowException, NotFoundException {
+			AddressOverflowException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void split(MemoryBlock block, Address addr)
-			throws MemoryBlockException, LockException, NotFoundException {
+			throws MemoryBlockException, LockException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public MemoryBlock join(MemoryBlock blockOne, MemoryBlock blockTwo)
-			throws LockException, MemoryBlockException, NotFoundException {
+			throws LockException, MemoryBlockException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public MemoryBlock convertToInitialized(MemoryBlock uninitializedBlock, byte initialValue)
-			throws LockException, MemoryBlockException, NotFoundException {
+			throws LockException, MemoryBlockException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public MemoryBlock convertToUninitialized(MemoryBlock itializedBlock)
-			throws MemoryBlockException, NotFoundException, LockException {
+			throws MemoryBlockException, LockException {
 		throw new UnsupportedOperationException();
 	}
 

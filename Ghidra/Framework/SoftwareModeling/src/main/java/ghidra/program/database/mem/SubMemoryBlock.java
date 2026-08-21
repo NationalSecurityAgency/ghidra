@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -97,7 +97,7 @@ abstract class SubMemoryBlock implements Comparable<SubMemoryBlock> {
 			throws IndexOutOfBoundsException, MemoryAccessException, IOException;
 
 	/**
-	 * Tries to get len bytes from this block at the given offset (relative to the containing
+	 * Tries to get {@code len} bytes from this block at the given offset (relative to the containing
 	 * {@link MemoryBlockDB} and put them into the given byte array at the specified offset.  
 	 * May return fewer bytes if the requested length is beyond the end of the block.
 	 * @param memBlockOffset the offset relative to the containing {@link MemoryBlockDB}
@@ -130,7 +130,7 @@ abstract class SubMemoryBlock implements Comparable<SubMemoryBlock> {
 			throws IndexOutOfBoundsException, MemoryAccessException, IOException;
 
 	/**
-	 * Tries to write len bytes to this block at the given offset (relative to the containing
+	 * Tries to write {@code len} bytes to this block at the given offset (relative to the containing
 	 * {@link MemoryBlockDB} using the bytes contained in the given byte array at the specified byte
 	 * array offset.  
 	 * May write fewer bytes if the requested length is beyond the end of the block.
@@ -157,7 +157,7 @@ abstract class SubMemoryBlock implements Comparable<SubMemoryBlock> {
 	}
 
 	/**
-	 * Sets the length of a subblock (Used by the split command)
+	 * Sets the length of a sub-block (Used by the split command)
 	 * @param length the new length of the block
 	 * @throws IOException if a database error occurs
 	 */

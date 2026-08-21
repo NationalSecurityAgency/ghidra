@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,6 +30,58 @@ public class MDReusableName extends MDParsableItem {
 
 	public MDReusableName(MDMang dmang) {
 		super(dmang);
+	}
+
+	/**
+	 * Return whether the name is a fragment name.  Note that there can still be a special name
+	 * interpretation of a fragment, so both can be true
+	 * @return {@code true} if is a fragment name
+	 */
+	public boolean isFragment() {
+		return fragment != null;
+	}
+
+	/**
+	 * Returns whether the name is a template name with arguments.  This is exclusive; if
+	 * {@code true} the other two tests on name will be {@code false}
+	 * @return {@code true} if is a template with arguments
+	 */
+	public boolean isTemplate() {
+		return templateName != null;
+	}
+
+	/**
+	 * Returns whether the name has a special name representation.  This is the interpretation
+	 * of a fragment name, so if {@code true} then {@code isFragment} is also {@code true}
+	 * @return {@code true} if the name is a fragment with a special interpretation
+	 */
+	public boolean isSpecialName() {
+		return specialName != null;
+	}
+
+	/**
+	 * Returns the MDFragmentName
+	 * @return the fragment name or {@code null} if the name is not a fragment name
+	 */
+	public MDFragmentName getFragmentName() {
+		return fragment;
+	}
+
+	/**
+	 * Returns the Template Name And Arguments
+	 * @return the template information or {@code null} if the name is not a template with arguments
+	 */
+	public MDTemplateNameAndArguments getTemplateName() {
+		return templateName;
+	}
+
+	/**
+	 * Returns the special name interpretation of a fragment name
+	 * @return the special name or {@code null} if there is no fragment name or no special
+	 * interpretation of it
+	 */
+	public String getSpecialName() {
+		return specialName;
 	}
 
 	public String getName() {
@@ -57,9 +109,10 @@ public class MDReusableName extends MDParsableItem {
 //		else if (qualifiedName != null) { //TODO: do we need this 20140520
 //			qualifiedName.setName(name);
 //		}
-		else if (templateName != null) {
-			templateName.setName(name);
-		}
+//		else if (templateName != null) {
+//			// eliminating this call... think it existed for ctor/dtor reason; refactoring
+//			templateName.setName(name);
+//		}
 		return;
 	}
 

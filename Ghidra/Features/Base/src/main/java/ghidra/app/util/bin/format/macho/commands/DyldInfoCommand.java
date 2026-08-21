@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,16 +35,16 @@ import ghidra.util.task.TaskMonitor;
  * Represents a dyld_info_command structure
  */
 public class DyldInfoCommand extends LoadCommand {
-	private int rebaseOff;
-	private int rebaseSize;
-	private int bindOff;
-	private int bindSize;
-	private int weakBindOff;
-	private int weakBindSize;
-	private int lazyBindOff;
-	private int lazyBindSize;
-	private int exportOff;
-	private int exportSize;
+	private long rebaseOff;
+	private long rebaseSize;
+	private long bindOff;
+	private long bindSize;
+	private long weakBindOff;
+	private long weakBindSize;
+	private long lazyBindOff;
+	private long lazyBindSize;
+	private long exportOff;
+	private long exportSize;
 	
 	private RebaseTable rebaseTable;
 	private BindingTable bindingTable;
@@ -66,16 +66,16 @@ public class DyldInfoCommand extends LoadCommand {
 			throws IOException {
 		super(loadCommandReader);
 
-		rebaseOff = loadCommandReader.readNextInt();
-		rebaseSize = loadCommandReader.readNextInt();
-		bindOff = loadCommandReader.readNextInt();
-		bindSize = loadCommandReader.readNextInt();
-		weakBindOff = loadCommandReader.readNextInt();
-		weakBindSize = loadCommandReader.readNextInt();
-		lazyBindOff = loadCommandReader.readNextInt();
-		lazyBindSize = loadCommandReader.readNextInt();
-		exportOff = loadCommandReader.readNextInt();
-		exportSize = loadCommandReader.readNextInt();
+		rebaseOff = loadCommandReader.readNextUnsignedInt();
+		rebaseSize = loadCommandReader.readNextUnsignedInt();
+		bindOff = loadCommandReader.readNextUnsignedInt();
+		bindSize = loadCommandReader.readNextUnsignedInt();
+		weakBindOff = loadCommandReader.readNextUnsignedInt();
+		weakBindSize = loadCommandReader.readNextUnsignedInt();
+		lazyBindOff = loadCommandReader.readNextUnsignedInt();
+		lazyBindSize = loadCommandReader.readNextUnsignedInt();
+		exportOff = loadCommandReader.readNextUnsignedInt();
+		exportSize = loadCommandReader.readNextUnsignedInt();
 		
 		if (rebaseOff > 0 && rebaseSize > 0) {
 			dataReader.setPointerIndex(header.getStartIndex() + rebaseOff);
@@ -121,70 +121,70 @@ public class DyldInfoCommand extends LoadCommand {
 	/**
 	 * {@return The rebase info offset}
 	 */
-	public int getRebaseOffset() {
+	public long getRebaseOffset() {
 		return rebaseOff;
 	}
 
 	/**
 	 * {@return The rebase info size}
 	 */
-	public int getRebaseSize() {
+	public long getRebaseSize() {
 		return rebaseSize;
 	}
 
 	/**
 	 * {@return The bind info offset}
 	 */
-	public int getBindOffset() {
+	public long getBindOffset() {
 		return bindOff;
 	}
 
 	/**
 	 * {@return The bind info size}
 	 */
-	public int getBindSize() {
+	public long getBindSize() {
 		return bindSize;
 	}
 
 	/**
 	 * {@return The weak bind info offset}
 	 */
-	public int getWeakBindOffset() {
+	public long getWeakBindOffset() {
 		return weakBindOff;
 	}
 
 	/**
 	 * {@return The weak bind info size}
 	 */
-	public int getWeakBindSize() {
+	public long getWeakBindSize() {
 		return weakBindSize;
 	}
 
 	/**
 	 * {@return The lazy bind info offset}
 	 */
-	public int getLazyBindOffset() {
+	public long getLazyBindOffset() {
 		return lazyBindOff;
 	}
 
 	/**
 	 * {@return The lazy bind info size}
 	 */
-	public int getLazyBindSize() {
+	public long getLazyBindSize() {
 		return lazyBindSize;
 	}
 
 	/**
 	 * {@return The export info offset}
 	 */
-	public int getExportOffset() {
+	public long getExportOffset() {
 		return exportOff;
 	}
 
 	/**
 	 * {@return The export info size}
 	 */
-	public int getExportSize() {
+	public long getExportSize() {
 		return exportSize;
 	}
 	

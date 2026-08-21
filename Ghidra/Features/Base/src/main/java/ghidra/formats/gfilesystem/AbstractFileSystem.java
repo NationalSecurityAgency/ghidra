@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,7 @@
  */
 package ghidra.formats.gfilesystem;
 
+import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
 
@@ -66,6 +67,16 @@ public abstract class AbstractFileSystem<METADATATYPE> implements GFileSystem {
 	}
 
 	@Override
+	public GFile lookup(String path, Comparator<String> nameComp) throws IOException {
+		return fsIndex.lookup(null, path, nameComp);
+	}
+
+	@Override
+	public GFile getRootDir() {
+		return fsIndex.getRootDir();
+	}
+
+	@Override
 	public List<GFile> getListing(GFile directory) {
 		return fsIndex.getListing(directory);
 	}
@@ -75,4 +86,13 @@ public abstract class AbstractFileSystem<METADATATYPE> implements GFileSystem {
 		return fsIndex.getFileCount();
 	}
 
+	@Override
+	public GFile resolveSymlinks(GFile file) throws IOException {
+		return fsIndex.resolveSymlinks(file);
+	}
+
+	@Override
+	public String toString() {
+		return getName();
+	}
 }

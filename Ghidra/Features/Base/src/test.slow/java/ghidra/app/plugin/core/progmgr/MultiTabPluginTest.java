@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,8 +40,9 @@ import ghidra.app.services.*;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
+import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.SymbolTable;
@@ -383,10 +384,10 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		String newName = "myNewLogin";
 		renameProgramFile(p, newName);
 		ArrayList<DomainObjectChangeRecord> changeRecs = new ArrayList<>();
-		changeRecs.add(
-			new DomainObjectChangeRecord(DomainObjectEvent.RENAMED, oldName, p.getName()));
+		changeRecs
+				.add(new DomainObjectChangeRecord(DomainObjectEvent.RENAMED, oldName, p.getName()));
 		DomainObjectChangedEvent ev = new DomainObjectChangedEvent(p, changeRecs);
-		runSwing(() -> env.getPlugin(MultiTabPlugin.class).domainObjectChanged(ev));
+		runSwing(() -> env.getPlugin(MultiTabPlugin.class).transactionEnded((ProgramDB) p));
 
 		// Check the name on the tab and in the tooltip.
 		JPanel tabPanel = getTabPanel(p);
@@ -553,7 +554,7 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void selectTab(Program p) {
-		JPanel tab = runSwing(() -> panel.getTab(p));
+		GTab<Program> tab = runSwing(() -> panel.getTab(p));
 		Point point = runSwing(() -> tab.getLocationOnScreen());
 		clickMouse(tab, MouseEvent.BUTTON1, point.x + 1, point.y + 1, 1, 0);
 		assertEquals(p, getSelectedTabValue());
@@ -589,7 +590,7 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			p.getListing()
 					.setComment(p.getAddressFactory().getAddress("01000000"),
-						CodeUnit.REPEATABLE_COMMENT, "This is a simple comment change.");
+						CommentType.REPEATABLE, "This is a simple comment change.");
 		}
 		finally {
 			p.endTransaction(transactionID, true);

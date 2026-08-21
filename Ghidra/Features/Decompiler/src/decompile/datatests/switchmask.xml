@@ -1,0 +1,114 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+  2 switches with no guards and inferred bounds
+-->
+<bytechunk space="ram" offset="0xffd00" readonly="true">
+89f88d0c068d3c1141b8cdcccccc4c0f
+afc749c1e8234501c0478d0480412bf8
+4c8d052d00000049633cb84903f8ffe7
+b801000000c389c8c3b80a000000c383
+c20c89d0c383c00ac383c60b89f0c301
+f289d0c3dcffffffeafffffff8ffffff
+eeffffffe2fffffff1fffffff5ffffff
+ebfffffffbffffffe5ffffff00000000
+</bytechunk>
+<bytechunk space="ram" offset="0x100000" readonly="true">
+4154555389fd89f34189d483ff097f24
+83fe01741389f7e8e40f000083e00f89
+c0ff24c5e000100089d7e8d10f000083
+e00febeb83ff137f1f83fe01740d8d3c
+37e8ba0f000083e00febd48d3c17e8ad
+0f000083e00febc783ff1d7f0d8d7e0a
+e89b0f000083e00febb58d7a0ae88e0f
+000083e00feba889e85b5d415cc389d8
+ebf74489e0ebf28d441d00ebec8d450a
+ebe78d430bebe2418d44240cebdb418d
+041cebd5b80a000000ebce89e831d8eb
+c84489e031d8ebc189e84431e0ebba8d
+5cad008d041bebb16bc564ebac69c3e8
+030000eba4b801000000eb9d
+</bytechunk>
+<bytechunk space="ram" offset="0x1000e0" readonly="true">
+d5001000000000007700100000000000
+7e001000000000008200100000000000
+87001000000000008d00100000000000
+92001000000000009700100000000000
+9e00100000000000a400100000000000
+ab00100000000000b100100000000000
+b800100000000000bf00100000000000
+c800100000000000cd00100000000000
+</bytechunk>
+<symbol space="ram" offset="0xffd00" name="switchrem"/>
+<symbol space="ram" offset="0x100000" name="switchmask"/>
+<symbol space="ram" offset="0x101000" name="getvalue"/>
+</binaryimage>
+<script>
+  <com>option readonly on</com>
+  <com>lo fu switchrem</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu switchmask</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Switch Mask #1" min="1" max="1">switch\(.*\(param_. \+ param_. \+ param_.\) % 10\)</stringmatch>
+
+<stringmatch name="Switch Mask #2" min="1" max="1">case 0:
+                                                   return 1;</stringmatch>
+<stringmatch name="Switch Mask #3" min="1" max="1">case 1:
+                                                   return param_1;</stringmatch>
+<stringmatch name="Switch Mask #4" min="1" max="1">case 2:
+                                                   return param_2;</stringmatch>
+<stringmatch name="Switch Mask #5" min="1" max="1">case 3:
+                                                   return param_3;</stringmatch>
+<stringmatch name="Switch Mask #6" min="1" max="1">case 4:
+                                                   return param_. \+ param_.;</stringmatch>
+<stringmatch name="Switch Mask #7" min="1" max="1">case 5:
+                                                   return param_1 \+ 10;</stringmatch>
+<stringmatch name="Switch Mask #8" min="1" max="1">case 6:
+                                                   return param_2 \+ 0xb;</stringmatch>
+<stringmatch name="Switch Mask #9" min="1" max="1">case 7:
+                                                   return param_3 \+ 0xc;</stringmatch>
+<stringmatch name="Switch Mask #10" min="1" max="1">case 8:
+                                                    return param_. \+ param_.;</stringmatch>
+<stringmatch name="Switch Mask #11" min="1" max="1">case 9:
+                                                    return 10;</stringmatch>
+<stringmatch name="Switch Mask #12" min="1" max="1">switch\(uVar.\)</stringmatch>
+
+<stringmatch name="Switch Mask #13" min="1" max="1">case 0:
+                                                    .* = 1;</stringmatch>
+<stringmatch name="Switch Mask #14" min="1" max="1">case 1:
+                                                    break;</stringmatch>
+<stringmatch name="Switch Mask #15" min="1" max="1">case 2:
+                                                    .* = param_2;</stringmatch>
+<stringmatch name="Switch Mask #16" min="1" max="1">case 3:
+                                                    .* = param_3;</stringmatch>
+<stringmatch name="Switch Mask #17" min="1" max="1">case 4:
+                                                    .* = param_. \+ param_.;</stringmatch>
+<stringmatch name="Switch Mask #18" min="1" max="1">case 5:
+                                                    .* = param_1 \+ 10;</stringmatch>
+<stringmatch name="Switch Mask #19" min="1" max="1">case 6:
+                                                    .* = param_2 \+ 0xb;</stringmatch>
+<stringmatch name="Switch Mask #20" min="1" max="1">case 7:
+                                                    .* = param_3 \+ 0xc;</stringmatch>
+<stringmatch name="Switch Mask #21" min="1" max="1">case 8:
+                                                    .* = param_. \+ param_.;</stringmatch>
+<stringmatch name="Switch Mask #22" min="1" max="1">case 9:
+                                                    .* = 10;</stringmatch>
+<stringmatch name="Switch Mask #23" min="1" max="1">case 10:
+                                                    .* = param_. \^ param_.;</stringmatch>
+<stringmatch name="Switch Mask #24" min="1" max="1">case 0xb:
+                                                    .* = param_. \^ param_.;</stringmatch>
+<stringmatch name="Switch Mask #25" min="1" max="1">case 0xc:
+                                                    .* = param_. \^ param_.;</stringmatch>
+<stringmatch name="Switch Mask #26" min="1" max="1">case 0xd:
+                                                    .* = param_1 \* 10;</stringmatch>
+<stringmatch name="Switch Mask #27" min="1" max="1">case 0xe:
+                                                    .* = param_1 \* 100;</stringmatch>
+<stringmatch name="Switch Mask #28" min="1" max="1">case 0xf:
+                                                    .* = param_2 \* 1000;</stringmatch>
+<stringmatch name="Switch Mask #29" min="26" max="26">case</stringmatch>
+<stringmatch name="Switch Mask #30" min="0" max="0">default</stringmatch>
+</decompilertest>

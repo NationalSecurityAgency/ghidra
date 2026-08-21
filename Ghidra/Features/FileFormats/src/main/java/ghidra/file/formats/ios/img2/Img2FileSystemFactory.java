@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,18 +15,19 @@
  */
 package ghidra.file.formats.ios.img2;
 
+import java.io.IOException;
 import java.util.Arrays;
 
-import java.io.IOException;
-
 import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.ByteProviderWrapper;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.factory.GFileSystemFactoryByteProvider;
 import ghidra.formats.gfilesystem.factory.GFileSystemProbeBytesOnly;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-public class Img2FileSystemFactory implements GFileSystemFactoryByteProvider<Img2FileSystem>, GFileSystemProbeBytesOnly {
+public class Img2FileSystemFactory
+		implements GFileSystemFactoryByteProvider<Img2FileSystem>, GFileSystemProbeBytesOnly {
 
 	@Override
 	public int getBytesRequired() {
@@ -40,10 +41,19 @@ public class Img2FileSystemFactory implements GFileSystemFactoryByteProvider<Img
 	}
 
 	@Override
-	public Img2FileSystem create(FSRLRoot targetFSRL, ByteProvider byteProvider,
+	public Img2FileSystem create(FSRLRoot targetFSRL, ByteProvider provider,
 			FileSystemService fsService, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		return new Img2FileSystem(targetFSRL, byteProvider, monitor);
+
+		Img2 img2 = new Img2(provider);
+		if (!img2.isValid()) {
+			FSUtilities.uncheckedClose(provider, null);
+			throw new IOException("Invalid IMG2 file!");
+		}
+
+		ByteProviderWrapper payloadProvider =
+			new ByteProviderWrapper(provider, Img2Constants.IMG2_LENGTH, img2.getDataLen(), null);
+		return new Img2FileSystem(targetFSRL, payloadProvider, img2.getImageType(), null, provider);
 	}
 
 }

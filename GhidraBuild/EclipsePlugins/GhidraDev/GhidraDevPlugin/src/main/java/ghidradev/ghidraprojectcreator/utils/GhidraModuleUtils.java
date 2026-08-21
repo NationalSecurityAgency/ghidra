@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,6 +30,7 @@ import org.eclipse.ltk.core.refactoring.*;
 
 import ghidra.GhidraApplicationLayout;
 import ghidra.util.exception.CancelledException;
+import ghidradev.ghidraprojectcreator.utils.PyDevUtils.ProjectPythonInterpreter;
 import utilities.util.FileUtilities;
 
 /**
@@ -62,6 +63,15 @@ public class GhidraModuleUtils {
 		}
 	}
 
+	private static String defaultOutputPath = "bin/main";
+
+	private static Map<String, String> sourceToOutputMap =
+		Map.ofEntries(Map.entry("src/main/java", defaultOutputPath),
+			Map.entry("src/main/help", defaultOutputPath),
+			Map.entry("src/main/resources", defaultOutputPath),
+			Map.entry("src/test/java", "bin/test"),
+			Map.entry("ghidra_scripts", "bin/scripts"));
+
 	/**
 	 * Creates a new Ghidra module project with the given name.
 	 * 
@@ -80,7 +90,7 @@ public class GhidraModuleUtils {
 	 */
 	public static IJavaProject createGhidraModuleProject(String projectName, File projectDir,
 			boolean createRunConfig, String runConfigMemory, GhidraApplicationLayout ghidraLayout,
-			String jythonInterpreterName, IProgressMonitor monitor)
+			ProjectPythonInterpreter jythonInterpreterName, IProgressMonitor monitor)
 			throws IOException, ParseException, CoreException {
 
 		// Create empty Ghidra project
@@ -89,21 +99,17 @@ public class GhidraModuleUtils {
 				runConfigMemory, ghidraLayout, jythonInterpreterName, monitor);
 		IProject project = javaProject.getProject();
 
-		// Create source directories
-		List<IFolder> sourceFolders = new ArrayList<>();
-		sourceFolders.add(project.getFolder("src/main/java"));
-		sourceFolders.add(project.getFolder("src/main/help"));
-		sourceFolders.add(project.getFolder("src/main/resources"));
-		sourceFolders.add(project.getFolder("src/test/java"));
-		sourceFolders.add(project.getFolder("ghidra_scripts"));
-		for (IFolder sourceFolder : sourceFolders) {
-			GhidraProjectUtils.createFolder(sourceFolder, monitor);
-		}
-
-		// Put the source directories in the project's classpath
+		// Set default output location
+		javaProject.setOutputLocation(project.getFolder(defaultOutputPath).getFullPath(), monitor);
+		
+		// Create source directories and add them to the project's classpath
 		List<IClasspathEntry> classpathEntries = new LinkedList<>();
-		for (IFolder sourceFolder : sourceFolders) {
-			classpathEntries.add(JavaCore.newSourceEntry(sourceFolder.getFullPath()));
+		for (String sourcePath : sourceToOutputMap.keySet()) {
+			IFolder sourceFolder = project.getFolder(sourcePath);
+			IFolder outputFolder = project.getFolder(sourceToOutputMap.get(sourcePath));
+			GhidraProjectUtils.createFolder(sourceFolder, monitor);
+			classpathEntries.add(JavaCore.newSourceEntry(sourceFolder.getFullPath(), new IPath[0],
+				outputFolder.getFullPath()));
 		}
 		GhidraProjectUtils.addToClasspath(javaProject, classpathEntries, monitor);
 
@@ -162,6 +168,16 @@ public class GhidraModuleUtils {
 				return excludeRegexes.stream().map(r -> Pattern.compile(r)).noneMatch(
 					p -> p.matcher(f.getName()).matches());
 			}, null);
+			File buildTemplateGradleFile = new File(projectDir, "buildTemplate.gradle");
+			File buildGradleFile = new File(projectDir, "build.gradle");
+			if (!buildTemplateGradleFile.renameTo(buildGradleFile)) {
+				throw new IOException("Failed to rename: " + buildTemplateGradleFile);
+			}
+			File gitIgnoreFile = new File(projectDir, "gitignore");
+			File dotGitIgnoreFile = new File(projectDir, ".gitignore");
+			if (gitIgnoreFile.exists() && !gitIgnoreFile.renameTo(dotGitIgnoreFile)) {
+				throw new IOException("Failed to rename: " + gitIgnoreFile);
+			}
 		}
 		catch (CancelledException | IOException e) {
 			throw new IOException("Failed to copy skeleton directory: " + projectDir);
@@ -172,6 +188,11 @@ public class GhidraModuleUtils {
 
 		// Update language ant properties file
 		GhidraModuleUtils.writeAntProperties(project, ghidraLayout);
+
+		// Create a README
+		try (PrintWriter out = new PrintWriter(new File(projectDir, "README.md"))) {
+			out.println("# " + project.getName());
+		}
 
 		// Refactor/rename the source files, package, and help files
 		String packageName = project.getName().toLowerCase();
@@ -212,8 +233,7 @@ public class GhidraModuleUtils {
 	 * @param createRunConfig Whether or not to create a new run configuration for the project.
 	 * @param runConfigMemory The run configuration's desired memory.  Could be null.
 	 * @param ghidraLayout The Ghidra layout to link the project to.
-	 * @param jythonInterpreterName The name of the Jython interpreter to use for Python support.
-	 *   Could be null if Python support is not wanted.
+	 * @param pythonInterpreter The Python interpreter to use.
 	 * @param monitor The progress monitor to use during project creation.
 	 * @return The imported project.
 	 * @throws IOException If there was a file-related problem with creating the project.
@@ -222,51 +242,39 @@ public class GhidraModuleUtils {
 	 */
 	public static IJavaProject importGhidraModuleSource(String projectName, File moduleSourceDir,
 			boolean createRunConfig, String runConfigMemory, GhidraApplicationLayout ghidraLayout,
-			String jythonInterpreterName, IProgressMonitor monitor)
+			ProjectPythonInterpreter pythonInterpreter, IProgressMonitor monitor)
 			throws IOException, ParseException, CoreException {
 
 		// Create empty Ghidra project
 		IJavaProject javaProject =
 			GhidraProjectUtils.createEmptyGhidraProject(projectName, moduleSourceDir,
-				createRunConfig, runConfigMemory, ghidraLayout, jythonInterpreterName, monitor);
+				createRunConfig, runConfigMemory, ghidraLayout, pythonInterpreter, monitor);
 		IProject project = javaProject.getProject();
 
-		// Find source directory paths
-		List<IPath> sourcePaths = new ArrayList<>();
-		IFolder srcFolder = project.getFolder("src");
-		List<IFolder> srcSubFolders = getSubFolders(srcFolder);
-		if (!srcSubFolders.isEmpty()) {
-			for (IFolder srcSubFolder : srcSubFolders) {
-				List<IFolder> subSubFolders = getSubFolders(srcSubFolder);
-				if (!subSubFolders.isEmpty()) {
-					sourcePaths.addAll(subSubFolders.stream().map(e -> e.getFullPath()).toList());
-				}
-				else {
-					sourcePaths.add(srcSubFolder.getFullPath());
-				}
-			}
-		}
-		else {
-			sourcePaths.add(srcFolder.getFullPath());
-		}
+		// Set default output location
+		IFolder defaultOutputFolder = project.getFolder(defaultOutputPath);
+		javaProject.setOutputLocation(defaultOutputFolder.getFullPath(), monitor);
 
-		// Find jar file paths
-		List<IPath> jarPaths = new ArrayList<>();
+		// Put the source and jar paths in the project's classpath
+		List<IClasspathEntry> classpathEntries = new LinkedList<>();
+		for (String sourcePath : sourceToOutputMap.keySet()) {
+			IFolder sourceFolder = project.getFolder(sourcePath);
+			IFolder outputFolder = project.getFolder(sourceToOutputMap.get(sourcePath));
+			GhidraProjectUtils.createFolder(sourceFolder, monitor);
+			classpathEntries.add(JavaCore.newSourceEntry(sourceFolder.getFullPath(), new IPath[0],
+				outputFolder.getFullPath()));
+		}
 		IFolder libFolder = project.getFolder("lib");
 		if (libFolder.exists()) {
 			for (IResource resource : libFolder.members()) {
 				if (resource.getType() == IResource.FILE &&
 					resource.getFileExtension().equals("jar")) {
-					jarPaths.add(resource.getFullPath());
+					classpathEntries
+							.add(JavaCore.newLibraryEntry(resource.getFullPath(), null, null));
 				}
 			}
 		}
-
-		// Put the source and jar paths in the project's classpath
-		List<IClasspathEntry> cp = new ArrayList<>();
-		cp.addAll(sourcePaths.stream().map(e -> JavaCore.newSourceEntry(e)).toList());
-		cp.addAll(jarPaths.stream().map(e -> JavaCore.newLibraryEntry(e, null, null)).toList());
-		GhidraProjectUtils.addToClasspath(javaProject, cp, monitor);
+		GhidraProjectUtils.addToClasspath(javaProject, classpathEntries, monitor);
 
 		// Update language ant properties file
 		GhidraModuleUtils.writeAntProperties(project, ghidraLayout);

@@ -206,7 +206,7 @@ define pcodeop pcodeop_three;
 :br^COND Rel82   is $(INSTR_PHASE) op1215=0xe & op0303=0x0 & COND & Rel82           { build COND; goto Rel82; }
 :brds^COND Rel82 is $(INSTR_PHASE) op1215=0xe & op0303=0x1 & COND & Rel82           { build COND; delayslot(1); goto Rel82; }
 :br^COND rs      is $(INSTR_PHASE) op1215=0xf & op0811=0x0 & COND & rs & op0303=0x0 { build COND; goto [rs]; }
-:brds^COND rs    is $(INSTR_PHASE) op1215=0xf & op0811=0x1 & COND & rs & op0303=0x0 { build COND; delayslot(1); goto [rs]; }
+:brds^COND rs    is $(INSTR_PHASE) op1215=0xf & op0811=0x1 & COND & rs & op0303=0x0 { build COND; temp:$(SIZE) = rs; delayslot(1); goto [temp]; }
 @ifdef POS_STACK
 :push rs      is $(INSTR_PHASE) op1215=0xf & op0811=0x2 & rs & op0003=0x0        { *[ram]:$(SIZE) sp = rs; sp = sp + $(SIZE); logicflags(); resultflags(rs); }
 :pop rs       is $(INSTR_PHASE) op1215=0xf & op0811=0x3 & rs & op0003=0x0        { sp = sp - $(SIZE); rs = *[ram]:$(SIZE) sp; logicflags(); resultflags(rs); }

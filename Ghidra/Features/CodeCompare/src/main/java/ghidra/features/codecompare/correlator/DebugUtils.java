@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,7 +60,7 @@ class DebugUtils {
 				transactionID = program.startTransaction("Colorize CodeCompare");
 				Set<Entry<CodeUnit, TreeSet<AddressRange>>> entrySet = map.entrySet();
 				for (Entry<CodeUnit, TreeSet<AddressRange>> entry : entrySet) {
-					entry.getKey().setComment(CodeUnit.EOL_COMMENT, entry.getValue().toString());
+					entry.getKey().setComment(CommentType.EOL, entry.getValue().toString());
 				}
 			}
 			finally {
@@ -153,8 +153,8 @@ class DebugUtils {
 			program.getIntRangeMap(PropertyBasedBackgroundColorModel.COLOR_PROPERTY_NAME);
 		if (map == null && create) {
 			try {
-				map = program.createIntRangeMap(
-					PropertyBasedBackgroundColorModel.COLOR_PROPERTY_NAME);
+				map = program
+						.createIntRangeMap(PropertyBasedBackgroundColorModel.COLOR_PROPERTY_NAME);
 			}
 			catch (DuplicateNameException e) {
 				// can't happen since we just checked for it!

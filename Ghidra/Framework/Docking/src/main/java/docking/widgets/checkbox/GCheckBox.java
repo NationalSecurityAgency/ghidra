@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import docking.widgets.GComponent;
  * A {@link JCheckBox} that has HTML rendering disabled.
  * <p>
  * See also:
- * <table border=1><caption></caption>
+ * <table border=1>
  * 	<tr><th>Class</th><th>HTML rendering</th><th>Description</th></tr>
  *  <tr><td>{@link GCheckBox}</td><td>NO</td><td>HTML disabled JCheckBox</td></tr>
  *  <tr><td>{@link GHtmlCheckBox}</td><td>YES</td><td>HTML allowed JCheckBox</td></tr>
@@ -35,7 +35,6 @@ public class GCheckBox extends JCheckBox implements GComponent {
 	 * Creates a check box with no text or icon, with HTML rendering disabled.
 	 * <p>
 	 * See {@link JCheckBox#JCheckBox()}
-	 * <p>
 	 */
 	public GCheckBox() {
 		super();
@@ -46,7 +45,6 @@ public class GCheckBox extends JCheckBox implements GComponent {
 	 * Creates a check box with an icon, with HTML rendering disabled.
 	 * <p>
 	 * See {@link JCheckBox#JCheckBox(Icon)}
-	 * <p>
 	 *
 	 * @param icon image to display
 	 */
@@ -59,7 +57,6 @@ public class GCheckBox extends JCheckBox implements GComponent {
 	 * Creates a check box with an icon and initial selected state, with HTML rendering disabled.
 	 * <p>
 	 * See {@link JCheckBox#JCheckBox(Icon, boolean)}
-	 * <p>
 	 *
 	 * @param icon image to display
 	 * @param selected initial selection state, true means selected
@@ -73,7 +70,6 @@ public class GCheckBox extends JCheckBox implements GComponent {
 	 * Creates a check box with the specified text, with HTML rendering disabled.
 	 * <p>
 	 * See {@link JCheckBox#JCheckBox(String)}
-	 * <p>
 	 *
 	 * @param text text of the check box
 	 */
@@ -87,7 +83,6 @@ public class GCheckBox extends JCheckBox implements GComponent {
 	 * Action supplied, with HTML rendering disabled.
 	 * <p>
 	 * See {@link JCheckBox#JCheckBox(Action)}
-	 * <p>
 	 *
 	 * @param a {@code Action} used to specify the new check box
 	 */

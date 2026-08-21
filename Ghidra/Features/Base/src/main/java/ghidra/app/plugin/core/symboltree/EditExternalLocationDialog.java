@@ -117,10 +117,11 @@ public class EditExternalLocationDialog extends DialogComponentProvider {
 		int panelHeight = (externalLocation != null) ? PREFERRED_EDIT_PANEL_HEIGHT
 				: PREFERRED_CREATE_PANEL_HEIGHT;
 		extLocPanel.setPreferredSize(new Dimension(PREFERRED_PANEL_WIDTH, panelHeight));
+		extLocPanel.getAccessibleContext().setAccessibleName("External Location");
 
 		JPanel workPanel = new JPanel(new BorderLayout());
 		workPanel.add(extLocPanel, BorderLayout.CENTER);
-
+		workPanel.getAccessibleContext().setAccessibleName("Edit External Location");
 		return workPanel;
 	}
 

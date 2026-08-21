@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,6 +52,15 @@ public class MetaTypeFilter extends SizeRestrictedFilter {
 		metaType = meta;
 	}
 
+	/**
+	 * Copy constructor
+	 * @param op2 is the filter to copy
+	 */
+	public MetaTypeFilter(MetaTypeFilter op2) {
+		super(op2);
+		metaType = op2.metaType;
+	}
+
 	@Override
 	public boolean isEquivalent(DatatypeFilter op) {
 		if (!super.isEquivalent(op)) {
@@ -69,7 +78,7 @@ public class MetaTypeFilter extends SizeRestrictedFilter {
 
 	@Override
 	public DatatypeFilter clone() {
-		return new MetaTypeFilter(metaType, minSize, maxSize);
+		return new MetaTypeFilter(this);
 	}
 
 	@Override

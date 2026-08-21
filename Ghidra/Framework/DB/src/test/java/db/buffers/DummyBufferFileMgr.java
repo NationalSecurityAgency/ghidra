@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,30 +37,37 @@ public class DummyBufferFileMgr implements BufferFileManager {
 		this.enableChangeFiles = enableChangeFiles;
 	}
 	
+	@Override
 	public int getCurrentVersion() {
 		return cur;
 	}
+	@Override
 	public File getBufferFile(int version) {
 		return new File(dir, name + version + ".bf" );
 	}
+	@Override
 	public File getVersionFile(int version) {
 		if (enableVersionFiles) {
 			return new File(dir, name + version + ".vf" );
 		}
 		return null;
 	}
+	@Override
 	public File getChangeDataFile(int version) {
 		if (enableChangeFiles) {
 			return new File(dir, name + version + ".cf" );
 		}
 		return null;
 	}
+	@Override
 	public File getChangeMapFile() {
 		return null;
 	}
+	@Override
 	public void versionCreated(int version, String comment, long checkinId) {
 		cur = version;
 	}
+	@Override
 	public void updateEnded(long checkinId) {
 	}
 }

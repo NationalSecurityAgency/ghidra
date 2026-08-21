@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,10 @@
  */
 package ghidra.framework.main;
 
+import java.awt.Color;
 import java.awt.Font;
 import java.util.LinkedList;
+import java.util.Objects;
 
 import javax.swing.JTextPane;
 import javax.swing.text.*;
@@ -32,8 +34,6 @@ import ghidra.util.task.SwingUpdateManager;
 
 /**
  * A generic text pane that is used as a console to which text can be written.
- *
- * There is not test for this class, but it is indirectly tested by FrontEndGuiTest.
  */
 public class ConsoleTextPane extends JTextPane implements OptionsChangeListener {
 
@@ -83,6 +83,10 @@ public class ConsoleTextPane extends JTextPane implements OptionsChangeListener 
 
 	public void addPartialMessage(String message) {
 		doAddMessage(new MessageWrapper(message));
+	}
+
+	public void addPartialMessage(String message, Color c) {
+		doAddMessage(new MessageWrapper(message, getFont(), c));
 	}
 
 	public void addErrorMessage(String message) {
@@ -211,7 +215,7 @@ public class ConsoleTextPane extends JTextPane implements OptionsChangeListener 
 		outputAttributes = new GAttributes(font, new GColor("color.fg.consoletextpane"));
 		outputAttributes.addAttribute(CUSTOM_ATTRIBUTE_KEY, OUTPUT_ATTRIBUTE_VALUE);
 
-		errorAttributes = new GAttributes(font, new GColor("color.fg.error.consoletextpane"));
+		errorAttributes = new GAttributes(font, new GColor("color.fg.consoletextpane.error"));
 		errorAttributes.addAttribute(CUSTOM_ATTRIBUTE_KEY, ERROR_ATTRIBUTE_VALUE);
 	}
 
@@ -282,13 +286,19 @@ public class ConsoleTextPane extends JTextPane implements OptionsChangeListener 
 //==================================================================================================
 
 	private static class MessageWrapper {
-		private final StringBuilder message;
+		protected final StringBuilder message;
+		private Color color;
+		private Font font;
 
 		private MessageWrapper(String message) {
-			if (message == null) {
-				throw new AssertException("Attempted to log a null message.");
-			}
+			Objects.requireNonNull(message, "Attempted to log a null message");
 			this.message = new StringBuilder(message);
+		}
+
+		public MessageWrapper(String message, Font font, Color color) {
+			this(message);
+			this.font = Objects.requireNonNull(font);
+			this.color = Objects.requireNonNull(color);
 		}
 
 		CharSequence getMessage() {
@@ -299,12 +309,30 @@ public class ConsoleTextPane extends JTextPane implements OptionsChangeListener 
 			if (getClass() != other.getClass()) {
 				return false;
 			}
+
+			if (!Objects.equals(color, other.color)) {
+				return false;
+			}
+
 			message.append(other.message);
 			return true;
 		}
 
 		AttributeSet getAttributes() {
+			if (color != null) {
+				GAttributes attrs = new GAttributes(font, color);
+				attrs.addAttribute(CUSTOM_ATTRIBUTE_KEY, OUTPUT_ATTRIBUTE_VALUE);
+				return attrs;
+			}
 			return outputAttributes;
+		}
+
+		@Override
+		public String toString() {
+			if (color == null) {
+				return message.toString();
+			}
+			return "[color=" + color + "] " + message.toString();
 		}
 	}
 
@@ -317,6 +345,10 @@ public class ConsoleTextPane extends JTextPane implements OptionsChangeListener 
 		AttributeSet getAttributes() {
 			return errorAttributes;
 		}
-	}
 
+		@Override
+		public String toString() {
+			return "[error] " + message.toString();
+		}
+	}
 }

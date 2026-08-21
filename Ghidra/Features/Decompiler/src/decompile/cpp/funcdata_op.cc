@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -218,6 +218,31 @@ void Funcdata::opDestroy(PcodeOp *op)
   if (op->getParent() != (BlockBasic *)0) {
     obank.markDead(op);
     op->getParent()->removeOp(op);
+  }
+}
+
+/// The given PcodeOp is always removed.  PcodeOps are recursively removed, if the only data-flow
+/// path of their output is to the given op, and they are not a CALL or are otherwise special.
+/// \param op is the given PcodeOp to remove
+/// \param scratch is scratch space for holding PcodeOps being examined
+void Funcdata::opDestroyRecursive(PcodeOp *op,vector<PcodeOp *> &scratch)
+
+{
+  scratch.clear();
+  scratch.push_back(op);
+  int4 pos = 0;
+  while(pos < scratch.size()) {
+    op = scratch[pos];
+    pos += 1;
+    for(int4 i=0;i<op->numInput();++i) {
+      Varnode *vn = op->getIn(i);
+      if (!vn->isWritten() || vn->isAutoLive()) continue;
+      if (vn->loneDescend() == (PcodeOp *)0) continue;
+      PcodeOp *defOp = vn->getDef();
+      if (defOp->isCall() || defOp->isIndirectSource()) continue;
+      scratch.push_back(defOp);
+    }
+    opDestroy(op);
   }
 }
 
@@ -526,6 +551,26 @@ Varnode *Funcdata::opStackLoad(AddrSpace *spc,uintb off,uint4 sz,PcodeOp *op,Var
     return res;
 }
 
+/// \brief Construct the boolean negation of a given boolean Varnode into a temporary register
+///
+/// \param vn is the given Varnode
+/// \param op is the point at which to insert the BOOL_NEGATE op
+/// \param insertafter is \b true if the BOOL_NEGATE is inserted after, otherwise its inserted before
+/// \return the result Varnode
+Varnode *Funcdata::opBoolNegate(Varnode *vn,PcodeOp *op,bool insertafter)
+
+{
+  PcodeOp *negateop = newOp(1,op->getAddr());
+  opSetOpcode(negateop,CPUI_BOOL_NEGATE);
+  Varnode *resvn = newUniqueOut(1,negateop);
+  opSetInput(negateop,vn,0);
+  if (insertafter)
+    opInsertAfter(negateop,op);
+  else
+    opInsertBefore(negateop,op);
+  return resvn;
+}
+
 /// Convert the given CPUI_PTRADD into the equivalent CPUI_INT_ADD.  This may involve inserting a
 /// CPUI_INT_MULT PcodeOp. If finalization is requested and a new PcodeOp is needed, the output
 /// Varnode is marked as \e implicit and has its data-type set
@@ -546,7 +591,7 @@ void Funcdata::opUndoPtradd(PcodeOp *op,bool finalize)
     newVal &= calc_mask(offVn->getSize());
     Varnode *newOffVn = newConstant(offVn->getSize(), newVal);
     if (finalize)
-      newOffVn->updateType(offVn->getTypeReadFacing(op), false, false);
+      newOffVn->updateType(offVn->getTypeReadFacing(op));
     opSetInput(op,newOffVn,1);
     return;
   }
@@ -554,7 +599,7 @@ void Funcdata::opUndoPtradd(PcodeOp *op,bool finalize)
   opSetOpcode(multOp,CPUI_INT_MULT);
   Varnode *addVn = newUniqueOut(offVn->getSize(),multOp);
   if (finalize) {
-    addVn->updateType(multVn->getType(), false, false);
+    addVn->updateType(multVn->getType());
     addVn->setImplied();
   }
   opSetInput(multOp,offVn,0);
@@ -804,8 +849,8 @@ void Funcdata::truncatedFlow(const Funcdata *fd,const FlowInfo *flow)
 /// \param inlinefd is the function to in-line
 /// \param flow is the flow object being injected
 /// \param callop is the site of the injection
-/// \return \b true if the injection was successful
-bool Funcdata::inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop)
+/// \return 0 for a successful inlining with the easy model, 1 for the hard model, -1 if inlining was not successful
+int4 Funcdata::inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop)
 
 {
   inlinefd->getArch()->clearAnalysis(inlinefd);
@@ -817,11 +862,13 @@ bool Funcdata::inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop)
   Address eaddr(baseaddr.getSpace(),~((uintb)0));
   inlineflow.setRange(baddr,eaddr);
   inlineflow.setFlags(FlowInfo::error_outofbounds|FlowInfo::error_unimplemented|
-		      FlowInfo::error_reinterpreted|FlowInfo::flow_forinline);
+		      FlowInfo::error_baddata|FlowInfo::error_reinterpreted|FlowInfo::flow_forinline);
   inlineflow.forwardRecursion(flow);
   inlineflow.generateOps();
 
+  int4 res;
   if (inlineflow.checkEZModel()) {
+    res = 0;
     // With an EZ clone there are no jumptables to clone
     list<PcodeOp *>::const_iterator oiter = obank.endDead();
     --oiter;			// There is at least one op
@@ -833,8 +880,10 @@ bool Funcdata::inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop)
       --oiter;
       PcodeOp *lastop = *oiter;
       obank.moveSequenceDead(firstop,lastop,callop); // Move cloned sequence to right after callop
-      if (callop->isBlockStart())
+      if (callop->isBlockStart()) {
 	firstop->setFlag(PcodeOp::startbasic); // First op of inline inherits callop's startbasic flag
+	flow.updateTarget(callop, firstop);
+      }
       else
 	firstop->clearFlag(PcodeOp::startbasic);
     }
@@ -843,7 +892,8 @@ bool Funcdata::inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop)
   else {
     Address retaddr;
     if (!flow.testHardInlineRestrictions(inlinefd,callop,retaddr))
-      return false;
+      return -1;
+    res = 1;
     vector<JumpTable *>::const_iterator jiter; // Clone any jumptables from inline piece
     for(jiter=inlinefd->jumpvec.begin();jiter!=inlinefd->jumpvec.end();++jiter) {
       JumpTable *jtclone = new JumpTable(*jiter);
@@ -862,112 +912,43 @@ bool Funcdata::inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop)
 
   obank.setUniqId( inlinefd->obank.getUniqId() );
   
-  return true;
+  return res;
 }
 
 /// \brief Find the primary branch operation for an instruction
 ///
-/// For machine instructions that branch, this finds the \e primary PcodeOp that performs
-/// the branch.  The instruction is provided as a list of p-code ops, and the caller can
-/// specify whether they expect to see a \e branch, \e call, or \e return operation.
-/// \param iter is the start of the operations for the instruction
-/// \param enditer is the end of the operations for the instruction
-/// \param findbranch is \b true if the caller expects to see a BRANCH, CBRANCH, or BRANCHIND
-/// \param findcall is \b true if the caller expects to see CALL or CALLIND
-/// \param findreturn is \b true if the caller expects to see RETURN
+/// For instructions that branch, this finds the \e primary PcodeOp that performs the branch.
+/// The caller can specify whether they expect to see a \e branch, \e call, \e callother, or \e return operation.
+/// \param addr is the address of the instruction
+/// \param findBranch is \b true if the caller expects to see a BRANCH, CBRANCH, or BRANCHIND
+/// \param findCall is \b true if the caller expects to see CALL or CALLIND
+/// \param findCallother is \b true if the caller expects to see CALLOTHER
+/// \param findReturn is \b true if the caller expects to see RETURN
 /// \return the first branching PcodeOp that matches the criteria or NULL
-PcodeOp *Funcdata::findPrimaryBranch(PcodeOpTree::const_iterator iter,PcodeOpTree::const_iterator enditer,
-				     bool findbranch,bool findcall,bool findreturn)
+PcodeOp *Funcdata::findPrimaryBranch(const Address &addr,bool findBranch,bool findCall,bool findCallother,bool findReturn)
 {
+  PcodeOpTree::const_iterator iter = beginOp(addr);
+  PcodeOpTree::const_iterator enditer = endOp(addr);
   while(iter != enditer) {
     PcodeOp *op = (*iter).second;
-    switch(op->code()) {
-    case CPUI_BRANCH:
-    case CPUI_CBRANCH:
-      if (findbranch) {
+    if (op->isCallOrBranch() || op->isFlowBreak()) {
+      OpCode opc = op->code();
+      if (findBranch && (opc == CPUI_BRANCH || opc == CPUI_CBRANCH)) {
 	if (!op->getIn(0)->isConstant()) // Make sure this is not an internal branch
 	  return op;
       }
-      break;
-    case CPUI_BRANCHIND:
-      if (findbranch)
+      if (findBranch && opc == CPUI_BRANCHIND)
 	return op;
-      break;
-    case CPUI_CALL:
-    case CPUI_CALLIND:
-      if (findcall)
+      if (findCall && (opc == CPUI_CALL || opc == CPUI_CALLIND))
 	return op;
-      break;
-    case CPUI_RETURN:
-      if (findreturn)
+      if (findReturn && opc == CPUI_RETURN)
 	return op;
-      break;
-    default:
-      break;
+      if (findCallother && opc == CPUI_CALLOTHER)
+	return op;
     }
     ++iter;
   }
   return (PcodeOp *)0;
-}
-
-/// \brief Override the control-flow p-code for a particular instruction
-///
-/// P-code in \b this function is modified to change the control-flow of
-/// the instruction at the given address, based on the Override type.
-/// \param addr is the given address of the instruction to modify
-/// \param type is the Override type
-void Funcdata::overrideFlow(const Address &addr,uint4 type)
-
-{
-  PcodeOpTree::const_iterator iter = beginOp(addr);
-  PcodeOpTree::const_iterator enditer = endOp(addr);
-
-  PcodeOp *op = (PcodeOp *)0;
-  if (type == Override::BRANCH)
-    op = findPrimaryBranch(iter,enditer,false,true,true);
-  else if (type == Override::CALL)
-    op = findPrimaryBranch(iter,enditer,true,false,true);
-  else if (type == Override::CALL_RETURN)
-    op = findPrimaryBranch(iter,enditer,true,true,true);
-  else if (type == Override::RETURN)
-    op = findPrimaryBranch(iter,enditer,true,true,false);
-
-  if ((op == (PcodeOp *)0)||(!op->isDead()))
-    throw LowlevelError("Could not apply flowoverride");
-
-  OpCode opc = op->code();
-  if (type == Override::BRANCH) {
-    if (opc == CPUI_CALL)
-      opSetOpcode(op,CPUI_BRANCH);
-    else if (opc == CPUI_CALLIND)
-      opSetOpcode(op,CPUI_BRANCHIND);
-    else if (opc == CPUI_RETURN)
-      opSetOpcode(op,CPUI_BRANCHIND);
-  }
-  else if ((type == Override::CALL)||(type == Override::CALL_RETURN)) {
-    if (opc == CPUI_BRANCH)
-      opSetOpcode(op,CPUI_CALL);
-    else if (opc == CPUI_BRANCHIND)
-      opSetOpcode(op,CPUI_CALLIND);
-    else if (opc == CPUI_CBRANCH)
-      throw LowlevelError("Do not currently support CBRANCH overrides");
-    else if (opc == CPUI_RETURN)
-      opSetOpcode(op,CPUI_CALLIND);
-    if (type == Override::CALL_RETURN) { // Insert a new return op after call
-      PcodeOp *newReturn = newOp(1,addr);
-      opSetOpcode(newReturn,CPUI_RETURN);
-      opSetInput(newReturn,newConstant(1,0),0);
-      opDeadInsertAfter(newReturn,op);
-    }
-  }
-  else if (type == Override::RETURN) {
-    if ((opc == CPUI_BRANCH)||(opc == CPUI_CBRANCH)||(opc == CPUI_CALL))
-      throw LowlevelError("Do not currently support complex overrides");
-    else if (opc == CPUI_BRANCHIND)
-      opSetOpcode(op,CPUI_RETURN);
-    else if (opc == CPUI_CALLIND)
-      opSetOpcode(op,CPUI_RETURN);
-  }
 }
 
 /// Do in-place replacement of
@@ -981,7 +962,8 @@ bool Funcdata::replaceLessequal(PcodeOp *op)
 {
   Varnode *vn;
   int4 i;
-  intb val,diff;
+  uintb val;
+  intb diff;
   
   if ((vn=op->getIn(0))->isConstant()) {
     diff = -1;
@@ -994,15 +976,16 @@ bool Funcdata::replaceLessequal(PcodeOp *op)
   else
     return false;
 
-  val = sign_extend(vn->getOffset(),8*vn->getSize()-1);
+  val = vn->getOffset();
   if (op->code() == CPUI_INT_SLESSEQUAL) {
-    if ((val<0)&&(val+diff>0)) return false; // Check for sign overflow
-    if ((val>0)&&(val+diff<0)) return false;
+    // Check for signed overflow
+    if ((diff == -1) && (val == calc_int_min(vn->getSize()))) return false;
+    if ((diff ==  1) && (val == calc_int_max(vn->getSize()))) return false;
     opSetOpcode(op,CPUI_INT_SLESS);
   }
   else {			// Check for unsigned overflow
-    if ((diff==-1)&&(val==0)) return false;
-    if ((diff==1)&&(val==-1)) return false;
+    if ((diff == -1) && (val == 0)) return false;
+    if ((diff ==  1) && (val == calc_uint_max(vn->getSize()))) return false;
     opSetOpcode(op,CPUI_INT_LESS);
   }
   uintb res = (val+diff) & calc_mask(vn->getSize());
@@ -1100,15 +1083,76 @@ bool Funcdata::collapseIntMultMult(Varnode *vn)
   return true;
 }
 
+/// Return a Varnode in the \e unique space that is defined by a COPY op taking the given Varnode as input.
+/// If a COPY op to a \e unique already exists, it may be returned. If the preexisting COPY is not usable
+/// at the specified \b point, it is redefined at an earlier point in the control-flow so that it can be used.
+/// \param vn is the given Varnode to COPY
+/// \param point is the PcodeOp where the copy needs to be available
+/// \return the \e unique Varnode COPY
+Varnode *Funcdata::buildCopyTemp(Varnode *vn,PcodeOp *point)
+
+{
+  PcodeOp *otherOp = (PcodeOp *)0;
+  PcodeOp *usedCopy = (PcodeOp *)0;
+  list<PcodeOp *>::const_iterator iter;
+  for(iter=vn->beginDescend();iter!=vn->endDescend();++iter) {
+    PcodeOp *op = *iter;
+    if (op->code() != CPUI_COPY) continue;
+    Varnode *outvn = op->getOut();
+    if (outvn->getSpace()->getType() == IPTR_INTERNAL) {
+      if (outvn->isTypeLock())
+	continue;
+      otherOp = op;
+      break;
+    }
+  }
+  if (otherOp != (PcodeOp *)0) {
+    if (point->getParent() == otherOp->getParent()) {
+      if (point->getSeqNum().getOrder() < otherOp->getSeqNum().getOrder())
+	usedCopy = (PcodeOp *)0;
+      else
+	usedCopy = otherOp;
+    }
+    else {
+      BlockBasic *common;
+      common = (BlockBasic *)FlowBlock::findCommonBlock(point->getParent(),otherOp->getParent());
+      if (common == point->getParent())
+	usedCopy = (PcodeOp *)0;
+      else if (common == otherOp->getParent())
+	usedCopy = otherOp;
+      else {			// Neither op is ancestor of the other
+	usedCopy = newOp(1,common->getStop());
+	opSetOpcode(usedCopy,CPUI_COPY);
+	newUniqueOut(vn->getSize(),usedCopy);
+	opSetInput(usedCopy,vn,0);
+	opInsertEnd(usedCopy,common);
+      }
+    }
+  }
+  if (usedCopy == (PcodeOp *)0) {
+    usedCopy = newOp(1,point->getAddr());
+    opSetOpcode(usedCopy, CPUI_COPY);
+    newUniqueOut(vn->getSize(), usedCopy);
+    opSetInput(usedCopy, vn, 0);
+    opInsertBefore(usedCopy, point);
+  }
+  if (otherOp != (PcodeOp *)0 && otherOp != usedCopy) {
+    totalReplace(otherOp->getOut(),usedCopy->getOut());
+    opDestroy(otherOp);
+  }
+  return usedCopy->getOut();
+}
+
 /// \brief Trace a boolean value to a set of PcodeOps that can be changed to flip the boolean value
 ///
 /// The boolean Varnode is either the output of the given PcodeOp or the
 /// first input if the PcodeOp is a CBRANCH. The list of ops that need flipping is
-/// returned in an array
+/// returned in an array.
 /// \param op is the given PcodeOp
 /// \param fliplist is the array that will hold the ops to flip
-/// \return 0 if the change normalizes, 1 if the change is ambivalent, 2 if the change does not normalize
-int4 opFlipInPlaceTest(PcodeOp *op,vector<PcodeOp *> &fliplist)
+/// \param allowOpRemoval if \b true allow for removal of BOOL_NEGATE ops to achieve flip
+/// \return 0 if the change normalizes, 1 if the change denormalizes or is ambivalent, 2 if flip in place is not possible
+int4 Funcdata::opFlipInPlaceTest(PcodeOp *op,vector<PcodeOp *> &fliplist,bool allowOpRemoval)
 
 {
   Varnode *vn;
@@ -1118,12 +1162,19 @@ int4 opFlipInPlaceTest(PcodeOp *op,vector<PcodeOp *> &fliplist)
     vn = op->getIn(1);
     if (vn->loneDescend() != op) return 2;
     if (!vn->isWritten()) return 2;
-    return opFlipInPlaceTest(vn->getDef(),fliplist);
+    subtest1 = opFlipInPlaceTest(vn->getDef(),fliplist,allowOpRemoval);
+    if (subtest1 != 2 && op->isBooleanFlip())
+      subtest1 = 1-subtest1;
+    return subtest1;
   case CPUI_INT_EQUAL:
   case CPUI_FLOAT_EQUAL:
     fliplist.push_back(op);
     return 1;
   case CPUI_BOOL_NEGATE:
+    if (!allowOpRemoval)
+      return 2;
+    fliplist.push_back(op);
+    return 0;
   case CPUI_INT_NOTEQUAL:
   case CPUI_FLOAT_NOTEQUAL:
     fliplist.push_back(op);
@@ -1145,13 +1196,13 @@ int4 opFlipInPlaceTest(PcodeOp *op,vector<PcodeOp *> &fliplist)
     vn = op->getIn(0);
     if (vn->loneDescend() != op) return 2;
     if (!vn->isWritten()) return 2;
-    subtest1 = opFlipInPlaceTest(vn->getDef(),fliplist);
+    subtest1 = opFlipInPlaceTest(vn->getDef(),fliplist,allowOpRemoval);
     if (subtest1 == 2)
       return 2;
     vn = op->getIn(1);
     if (vn->loneDescend() != op) return 2;
     if (!vn->isWritten()) return 2;
-    subtest2 = opFlipInPlaceTest(vn->getDef(),fliplist);
+    subtest2 = opFlipInPlaceTest(vn->getDef(),fliplist,allowOpRemoval);
     if (subtest2 == 2)
       return 2;
     fliplist.push_back(op);
@@ -1166,9 +1217,8 @@ int4 opFlipInPlaceTest(PcodeOp *op,vector<PcodeOp *> &fliplist)
 ///
 /// The precomputed list of PcodeOps have their op-codes modified to
 /// facilitate the flip.
-/// \param data is the function being modified
 /// \param fliplist is the list of PcodeOps to modify
-void opFlipInPlaceExecute(Funcdata &data,vector<PcodeOp *> &fliplist)
+void Funcdata::opFlipInPlaceExecute(vector<PcodeOp *> &fliplist)
 
 {
   Varnode *vn;
@@ -1180,51 +1230,52 @@ void opFlipInPlaceExecute(Funcdata &data,vector<PcodeOp *> &fliplist)
       vn = op->getIn(0);
       PcodeOp *otherop = op->getOut()->loneDescend(); // Must be a lone descendant
       int4 slot = otherop->getSlot(op->getOut());
-      data.opSetInput(otherop,vn,slot);	// Propagate -vn- into otherop
-      data.opDestroy(op);
+      opSetInput(otherop,vn,slot);	// Propagate -vn- into otherop
+      opDestroy(op);
     }
     else if (opc == CPUI_MAX) {
       if (op->code() == CPUI_BOOL_AND)
-	data.opSetOpcode(op,CPUI_BOOL_OR);
+	opSetOpcode(op,CPUI_BOOL_OR);
       else if (op->code() == CPUI_BOOL_OR)
-	data.opSetOpcode(op,CPUI_BOOL_AND);
+	opSetOpcode(op,CPUI_BOOL_AND);
       else
 	throw LowlevelError("Bad flipInPlace op");
     }
     else {
-      data.opSetOpcode(op,opc);
+      opSetOpcode(op,opc);
       if (flipyes) {
-	data.opSwapInput(op,0,1);
+	opSwapInput(op,0,1);
 
 	if ((opc == CPUI_INT_LESSEQUAL)||(opc == CPUI_INT_SLESSEQUAL))
-	  data.replaceLessequal(op);
+	  replaceLessequal(op);
       }
     }
   }
 }
 
-/// \brief Get the earliest use/read of a Varnode in a specified basic block
+/// \brief Remove the \b boolean_flip flag on a CBRANCH op, without changing behavior
 ///
-/// \param vn is the Varnode to search for
-/// \param bl is the specified basic block in which to search
-/// \return the earliest PcodeOp reading the Varnode or NULL
-PcodeOp *earliestUseInBlock(Varnode *vn,BlockBasic *bl)
+/// Try to flip the true/false meaning of the CBRANCH and negate the meaning of the comparison op feeding the CBRANCH.
+/// Only the \b boolean_flip flag and the comparison op's opcode are affected.
+/// \param cbranch is CBRANCH to modify
+/// \return \b true if the ops were successfully modified
+bool Funcdata::opNormalizeFlip(PcodeOp *cbranch)
 
 {
-  list<PcodeOp *>::const_iterator iter;
-  PcodeOp *res = (PcodeOp *)0;
-
-  for(iter=vn->beginDescend();iter!=vn->endDescend();++iter) {
-    PcodeOp *op = *iter;
-    if (op->getParent() != bl) continue;
-    if (res == (PcodeOp *)0)
-      res = op;
-    else {
-      if (op->getSeqNum().getOrder() < res->getSeqNum().getOrder())
-	res = op;
-    }
-  }
-  return res;
+  Varnode *boolVn = cbranch->getIn(1);
+  if (!boolVn->isWritten()) return false;
+  if (boolVn->loneDescend() != cbranch) return false;
+  PcodeOp *condOp = boolVn->getDef();
+  bool flipyes;
+  OpCode opc = get_booleanflip(condOp->code(), flipyes);
+  if (opc == CPUI_MAX) return false;
+  opSetOpcode(condOp,opc); // Set the negated opcode
+  if (flipyes)			// Do we need to reverse the two operands
+    opSwapInput(condOp,0,1);
+  cbranch->flipFlag(PcodeOp::boolean_flip);
+  if (opc == CPUI_INT_LESSEQUAL || opc == CPUI_INT_SLESSEQUAL)
+    replaceLessequal(condOp);
+  return true;
 }
 
 /// \brief Find a duplicate calculation of a given PcodeOp reading a specific Varnode
@@ -1236,7 +1287,7 @@ PcodeOp *earliestUseInBlock(Varnode *vn,BlockBasic *bl)
 /// \param bl is the indicated basic block
 /// \param earliest is the specified op to be earlier than
 /// \return the discovered duplicate PcodeOp or NULL
-PcodeOp *cseFindInBlock(PcodeOp *op,Varnode *vn,BlockBasic *bl,PcodeOp *earliest)
+PcodeOp *Funcdata::cseFindInBlock(PcodeOp *op,Varnode *vn,BlockBasic *bl,PcodeOp *earliest)
 
 {
   list<PcodeOp *>::const_iterator iter;
@@ -1265,11 +1316,10 @@ PcodeOp *cseFindInBlock(PcodeOp *op,Varnode *vn,BlockBasic *bl,PcodeOp *earliest
 /// (depth 1 functional equivalence) eliminate the redundancy.  Return the remaining (dominating)
 /// PcodeOp. If neither op dominates the other, both are eliminated, and a new PcodeOp
 /// is built at a commonly accessible point.
-/// \param data is the function being modified
 /// \param op1 is the first of the given PcodeOps
 /// \param op2 is the second given PcodeOp
 /// \return the dominating PcodeOp
-PcodeOp *cseElimination(Funcdata &data,PcodeOp *op1,PcodeOp *op2)
+PcodeOp *Funcdata::cseElimination(PcodeOp *op1,PcodeOp *op2)
 
 {
   PcodeOp *replace;
@@ -1288,25 +1338,25 @@ PcodeOp *cseElimination(Funcdata &data,PcodeOp *op1,PcodeOp *op2)
     else if (common == op2->getParent())
       replace = op2;
     else {			// Neither op is ancestor of the other
-      replace = data.newOp(op1->numInput(),common->getStop());
-      data.opSetOpcode(replace,op1->code());
-      data.newVarnodeOut(op1->getOut()->getSize(),op1->getOut()->getAddr(),replace);
+      replace = newOp(op1->numInput(),common->getStop());
+      opSetOpcode(replace,op1->code());
+      newVarnodeOut(op1->getOut()->getSize(),op1->getOut()->getAddr(),replace);
       for(int4 i=0;i<op1->numInput();++i) {
 	if (op1->getIn(i)->isConstant())
-	  data.opSetInput(replace,data.newConstant(op1->getIn(i)->getSize(),op1->getIn(i)->getOffset()),i);
+	  opSetInput(replace,newConstant(op1->getIn(i)->getSize(),op1->getIn(i)->getOffset()),i);
 	else
-	  data.opSetInput(replace,op1->getIn(i),i);
+	  opSetInput(replace,op1->getIn(i),i);
       }
-      data.opInsertEnd(replace,common);
+      opInsertEnd(replace,common);
     }
   }
   if (replace != op1) {
-    data.totalReplace(op1->getOut(),replace->getOut());
-    data.opDestroy(op1);
+    totalReplace(op1->getOut(),replace->getOut());
+    opDestroy(op1);
   }
   if (replace != op2) {
-    data.totalReplace(op2->getOut(),replace->getOut());
-    data.opDestroy(op2);
+    totalReplace(op2->getOut(),replace->getOut());
+    opDestroy(op2);
   }
   return replace;
 }
@@ -1329,10 +1379,9 @@ static bool compareCseHash(const pair<uintm,PcodeOp *> &a,const pair<uintm,Pcode
 /// The hash serves as a primary test for duplicate calculations; if it doesn't match
 /// the PcodeOps aren't common subexpressions.  This method searches for hash matches
 /// then does secondary testing and eliminates any redundancy it finds.
-/// \param data is the function being modified
 /// \param list is the list of (hash, PcodeOp) pairs
 /// \param outlist will hold Varnodes produced by duplicate calculations
-void cseEliminateList(Funcdata &data,vector< pair<uintm,PcodeOp *> > &list,vector<Varnode *> &outlist)
+void Funcdata::cseEliminateList(vector< pair<uintm,PcodeOp *> > &list,vector<Varnode *> &outlist)
 
 {
   PcodeOp *op1,*op2,*resop;
@@ -1350,9 +1399,9 @@ void cseEliminateList(Funcdata &data,vector< pair<uintm,PcodeOp *> > &list,vecto
       if ((!op1->isDead())&&(!op2->isDead())&&op1->isCseMatch(op2)) {
 	Varnode *outvn1 = op1->getOut();
 	Varnode *outvn2 = op2->getOut();
-	if ((outvn1 == (Varnode *)0)||data.isHeritaged(outvn1)) {
-	  if ((outvn2 == (Varnode *)0)||data.isHeritaged(outvn2)) {
-	    resop = cseElimination(data,op1,op2);
+	if ((outvn1 == (Varnode *)0)||isHeritaged(outvn1)) {
+	  if ((outvn2 == (Varnode *)0)||isHeritaged(outvn2)) {
+	    resop = cseElimination(op1,op2);
 	    outlist.push_back(resop->getOut());
 	  }
 	}

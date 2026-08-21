@@ -25,7 +25,7 @@ import generic.theme.Gui;
  */
 public class TokenHighlightColors {
 
-	private Map<String, Color> colorsByName = new HashMap<>();
+	private Map<String, Color> colorsByText = new HashMap<>();
 	private List<Color> recentColors = new ArrayList<>();
 
 	private Color generateColor() {
@@ -42,15 +42,27 @@ public class TokenHighlightColors {
 	}
 
 	public Color getColor(String text) {
-		return colorsByName.computeIfAbsent(text, t -> generateColor());
+		return colorsByText.computeIfAbsent(text, t -> generateColor());
 	}
 
 	public void setColor(String text, Color color) {
-		colorsByName.put(text, color);
+		colorsByText.put(text, color);
 		recentColors.add(color);
 	}
 
 	public List<Color> getRecentColors() {
 		return recentColors;
+	}
+
+	public String getAppliedColorsString() {
+		if (colorsByText.isEmpty()) {
+			return "No tokens highlighted";
+		}
+		return colorsByText.toString();
+	}
+
+	@Override
+	public String toString() {
+		return getAppliedColorsString();
 	}
 }

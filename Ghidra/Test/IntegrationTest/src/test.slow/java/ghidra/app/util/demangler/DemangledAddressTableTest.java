@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 
 import org.junit.*;
 
+import ghidra.app.util.demangler.gnu.GnuDemangler;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
@@ -74,9 +75,10 @@ public class DemangledAddressTableTest extends AbstractGhidraHeadlessIntegration
 	}
 
 	/**
-	 * Test that the DemangledAddressTable will properly create a sequence of data 
+	 * Test that the DemangledAddressTable will properly create a sequence of data
 	 * pointers.  This test deals with the simple case where no existing data
 	 * is present. End of block considered end of address table.
+	 * @throws Exception upon error
 	 */
 	@Test
 	public void testApply_NoNextSymbol_NoData() throws Exception {
@@ -88,10 +90,13 @@ public class DemangledAddressTableTest extends AbstractGhidraHeadlessIntegration
 		SymbolTable symbolTable = program.getSymbolTable();
 		symbolTable.createLabel(addr, mangled, SourceType.IMPORTED);
 
-		DemangledObject demangled = DemanglerUtil.demangle(mangled);
+		GnuDemangler demangler = new GnuDemangler();
+		MangledContext mangledContext =
+			demangler.createMangledContext(mangled, null, program, addr);
+		DemangledObject demangled = demangler.demangle(mangledContext);
 		assertTrue(demangled instanceof DemangledAddressTable);
-
-		assertTrue(demangled.applyTo(program, addr, new DemanglerOptions(), TaskMonitor.DUMMY));
+		assertTrue(demangled.getMangledContext() != null);
+		assertTrue(demangled.applyUsingContext(TaskMonitor.DUMMY));
 
 		// expected: UniqueSpace::vtable
 		Symbol[] symbols = symbolTable.getSymbols(addr);
@@ -107,9 +112,10 @@ public class DemangledAddressTableTest extends AbstractGhidraHeadlessIntegration
 	}
 
 	/**
-	 * Test that the DemangledAddressTable will not create a sequence of data 
-	 * pointers due to a data collision.  This test deals with the case where primitive types have been 
+	 * Test that the DemangledAddressTable will not create a sequence of data
+	 * pointers due to a data collision.  This test deals with the case where primitive types have been
 	 * previously created. End of block considered end of address table.
+	 * @throws Exception upon error
 	 */
 	@Test
 	public void testApply_NoNextSymbol_DataCollision() throws Exception {
@@ -126,10 +132,13 @@ public class DemangledAddressTableTest extends AbstractGhidraHeadlessIntegration
 		listing.createData(addr("0x118"), Undefined4DataType.dataType);
 		listing.createData(addr("0x120"), DWordDataType.dataType);
 
-		DemangledObject demangled = DemanglerUtil.demangle(mangled);
+		GnuDemangler demangler = new GnuDemangler();
+		MangledContext mangledContext =
+			demangler.createMangledContext(mangled, null, program, addr);
+		DemangledObject demangled = demangler.demangle(mangledContext);
 		assertTrue(demangled instanceof DemangledAddressTable);
-
-		assertTrue(demangled.applyTo(program, addr, new DemanglerOptions(), TaskMonitor.DUMMY));
+		assertTrue(demangled.getMangledContext() != null);
+		assertTrue(demangled.applyUsingContext(TaskMonitor.DUMMY));
 
 		// expected: UniqueSpace::vtable
 		Symbol[] symbols = symbolTable.getSymbols(addr);
@@ -146,9 +155,10 @@ public class DemangledAddressTableTest extends AbstractGhidraHeadlessIntegration
 	}
 
 	/**
-	 * Test that the DemangledAddressTable will properly create a sequence of data 
-	 * pointers.  This test deals with the case where primitive types have been 
+	 * Test that the DemangledAddressTable will properly create a sequence of data
+	 * pointers.  This test deals with the case where primitive types have been
 	 * previously created. Next label considered end of address table.
+	 * @throws Exception upon error
 	 */
 	@Test
 	public void testApply_WithNextSymbol_UndefinedData() throws Exception {
@@ -167,10 +177,13 @@ public class DemangledAddressTableTest extends AbstractGhidraHeadlessIntegration
 
 		symbolTable.createLabel(addr("0x120"), "NextLabel", SourceType.IMPORTED);
 
-		DemangledObject demangled = DemanglerUtil.demangle(mangled);
+		GnuDemangler demangler = new GnuDemangler();
+		MangledContext mangledContext =
+			demangler.createMangledContext(mangled, null, program, addr);
+		DemangledObject demangled = demangler.demangle(mangledContext);
 		assertTrue(demangled instanceof DemangledAddressTable);
-
-		assertTrue(demangled.applyTo(program, addr, new DemanglerOptions(), TaskMonitor.DUMMY));
+		assertTrue(demangled.getMangledContext() != null);
+		assertTrue(demangled.applyUsingContext(TaskMonitor.DUMMY));
 
 		// expected: UniqueSpace::vtable
 		Symbol[] symbols = symbolTable.getSymbols(addr);
@@ -185,10 +198,11 @@ public class DemangledAddressTableTest extends AbstractGhidraHeadlessIntegration
 	}
 
 	/**
-	 * Test that the DemangledAddressTable will properly create a sequence of data 
-	 * pointers.  This test deals with the case where primitive types have been 
-	 * previously created where the first is an undefined array which dictates the 
+	 * Test that the DemangledAddressTable will properly create a sequence of data
+	 * pointers.  This test deals with the case where primitive types have been
+	 * previously created where the first is an undefined array which dictates the
 	 * extent of the address table. Next label beyond end of address table.
+	 * @throws Exception upon error
 	 */
 	@Test
 	public void testApply_WithUndefinedArray() throws Exception {
@@ -207,10 +221,13 @@ public class DemangledAddressTableTest extends AbstractGhidraHeadlessIntegration
 
 		symbolTable.createLabel(addr("0x120"), "NextLabel", SourceType.IMPORTED);
 
-		DemangledObject demangled = DemanglerUtil.demangle(mangled);
+		GnuDemangler demangler = new GnuDemangler();
+		MangledContext mangledContext =
+			demangler.createMangledContext(mangled, null, program, addr);
+		DemangledObject demangled = demangler.demangle(mangledContext);
 		assertTrue(demangled instanceof DemangledAddressTable);
-
-		assertTrue(demangled.applyTo(program, addr, new DemanglerOptions(), TaskMonitor.DUMMY));
+		assertTrue(demangled.getMangledContext() != null);
+		assertTrue(demangled.applyUsingContext(TaskMonitor.DUMMY));
 
 		// expected: UniqueSpace::vtable
 		Symbol[] symbols = symbolTable.getSymbols(addr);

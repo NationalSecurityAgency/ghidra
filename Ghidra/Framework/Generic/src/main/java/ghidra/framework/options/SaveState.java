@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,9 @@ package ghidra.framework.options;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 /**
  * Class for saving name/value pairs as XML or Json.  Classes that want to be
@@ -51,7 +52,10 @@ import org.jdom.Element;
  */
 
 public class SaveState extends XmlProperties {
-	private static final String SAVE_STATE = "SAVE_STATE";
+
+	private static final String XML_TYPE = "SaveState";
+	static final String SAVE_STATE_TAG_NAME = "SAVE_STATE";
+	static final String DEFAULT_NAME = "UNNAMED";
 
 	/**
 	 * Creates a new SaveState object with a non-default name.  The name serves no real purpose
@@ -64,12 +68,11 @@ public class SaveState extends XmlProperties {
 	}
 
 	/**
-	 * Default Constructor for SaveState; uses "SAVE_STATE" as the
-	 * name of the state.
+	 * Default Constructor for SaveState; uses {@value #DEFAULT_NAME} as the name of the state.
 	 * @see java.lang.Object#Object()
 	 */
 	public SaveState() {
-		this(SAVE_STATE);
+		this(SAVE_STATE_TAG_NAME);
 	}
 
 	/**
@@ -114,30 +117,150 @@ public class SaveState extends XmlProperties {
 		return getAsType(name, null, SaveState.class);
 	}
 
+	@SuppressWarnings("unchecked")
+	@Override
 	protected void processElement(Element element) {
 		String tag = element.getName();
-
-		if (tag.equals("SAVE_STATE")) {
-			Element child = (Element) element.getChildren().get(0);
-			if (child != null) {
-				String name = element.getAttributeValue(NAME);
-				map.put(name, new SaveState(child));
-				return;
-			}
+		if (!tag.equals(SAVE_STATE_TAG_NAME)) {
+			super.processElement(element);
+			return;
 		}
-		super.processElement(element);
+
+		if (isOldStyleSaveState(element)) {
+			restoreSaveStateWithoutKeyAttribute(element);
+			return;
+		}
+
+		/*
+		 	We are restoring a child SaveState from xml.
+		 	
+		 	When using a SaveState inside of a SaveState, we produce xml that looks like this: 
+		 	
+		    <SAVE_STATE>
+				<SAVE_STATE KEY="Property Key" NAME="Client Name" TYPE="SaveState">
+				    <STATE NAME="a" TYPE="int" VALUE="5" />
+				</SAVE_STATE>
+			</SAVE_STATE>
+		 */
+
+		String key = element.getAttributeValue(ATTRIBUTE_KEY);
+		String name = element.getAttributeValue(ATTRIBUTE_NAME);
+		SaveState saveState = createSaveState(name);
+
+		List<Element> children = element.getChildren();
+		for (Element e : children) {
+			saveState.processElement(e);
+		}
+
+		map.put(key, saveState);
 	}
 
+	@SuppressWarnings("unchecked")
+	private void restoreSaveStateWithoutKeyAttribute(Element element) {
+
+		String key = element.getAttributeValue(ATTRIBUTE_NAME);
+		SaveState saveState = createSaveState(null);
+		List<Element> children = element.getChildren();
+		if (children.isEmpty()) {
+			map.put(key, saveState);
+			return;
+		}
+
+		Element child = (Element) element.getChildren().get(0);
+		if (child == null) {
+			return; //  not sure if this can happen
+		}
+
+		/*
+			Old style tag, with one level of extra nesting
+			
+			<SAVE_STATE NAME="Bar" TYPE="SaveState">
+			    <SAVE_STATE>   <-- This is an intermediate 'child' tag
+			        <STATE NAME="DATED_OPTION" TYPE="int" VALUE="3" />
+			    </SAVE_STATE>
+			</SAVE_STATE>
+			
+			and another old style:
+			
+			<SAVE_STATE NAME="Bar" TYPE="SaveState">  (this has no intermediate 'child' tag)
+			    <STATE NAME="DATED_OPTION" TYPE="int" VALUE="3" />
+			</SAVE_STATE>		
+		*/
+
+		String childTag = child.getName();
+		if (!childTag.equals(STATE)) {
+			// this is the case where we have an intermediate node; we want that child's children
+			children = child.getChildren();
+		}
+
+		for (Element e : children) {
+			saveState.processElement(e);
+		}
+
+		map.put(key, saveState);
+	}
+
+	private boolean isOldStyleSaveState(Element element) {
+		/*
+		 	Older style save states looked like this:
+		 	
+		 		<SAVE_STATE NAME="Foo" TYPE="SaveState">
+		 	
+		 	where there is no 'KEY' attribute.  The new style looks like this (note that the value
+		 	of 'KEY' used to be the value stored in 'NAME'):
+		 	
+		 		<SAVE_STATE KEY="Foo" NAME="Client Name" TYPE="SaveState">
+		 */
+		return element.getAttribute(ATTRIBUTE_KEY) == null;
+	}
+
+	@SuppressWarnings("unchecked")
 	@Override
 	protected Element createElement(String key, Object value) {
-		if (value instanceof SaveState saveState) {
-			Element savedElement = saveState.saveToXml();
-			Element element = new Element("SAVE_STATE");
-			element.setAttribute(NAME, key);
-			element.setAttribute(TYPE, "SaveState");
-			element.addContent(savedElement);
-			return element;
+		if (!(value instanceof SaveState saveState)) {
+			return super.createElement(key, value);
 		}
-		return super.createElement(key, value);
+
+		/*
+		 	We are saving a child SaveState to xml.
+		 	
+		 	When using a SaveState inside of a SaveState, we produce xml that looks like this: 
+		 	
+		    <SAVE_STATE>
+				<SAVE_STATE KEY="Property Key" NAME="Client Name" TYPE="SaveState">
+				    <STATE NAME="a" TYPE="int" VALUE="5" />
+				</SAVE_STATE>
+			</SAVE_STATE>
+		 */
+
+		Element savedElement = saveState.saveToXml();
+		Element element = new Element(SAVE_STATE_TAG_NAME);
+
+		String name = saveState.getName();
+		if (SAVE_STATE_TAG_NAME.equals(name)) {
+			name = DEFAULT_NAME;
+		}
+
+		element.setAttribute(ATTRIBUTE_NAME, name);
+		element.setAttribute(ATTRIBUTE_KEY, key);
+		element.setAttribute(ATTRIBUTE_TYPE, XML_TYPE);
+
+		// do not write an extra <SAVE_STATE> intermediate node
+		List<Element> children = savedElement.getChildren();
+		for (Element e : children) {
+			Element newElement = (Element) e.clone();
+			element.addContent(newElement);
+		}
+
+		return element;
+	}
+
+	// allows subclasses to override how sub-save states are created
+	protected SaveState createSaveState(String name) {
+		if (name == null) {
+			// null implies an old style xml where a name was not specified
+			return new SaveState();
+		}
+		return new SaveState(name);
 	}
 }

@@ -83,18 +83,6 @@
     or "stop." If successful, the target enters the "stopped" state. This is available when the
     target is currently running.</P>
 
-    <H3><A name="target_kill"></A><IMG alt="" src="icon.debugger.kill"> Kill</H3>
-
-    <P>Kill the current target. Other debuggers may call this "terminate" or "stop." This may
-    consequently close the current trace. If successful, the target enters the "terminated" state.
-    This is always available for a live target.</P>
-
-    <H3><A name="target_disconnect"></A><IMG alt="" src="icon.debugger.disconnect"> Disconnect</H3>
-
-    <P>Disconnect from the current target's debugger. This usually causes the connected debugger to
-    terminate and likely kill its targets. This may consequently close the current trace (and
-    perhaps others). This is always available for a live target.</P>
-
     <H3><A name="target_step_into"></A><IMG alt="" src="icon.debugger.step.into"> Step Into</H3>
 
     <P>Step the current target to the next instruction. This is available when the target is
@@ -118,6 +106,18 @@
     <P>Perform a target-defined step, perhaps the last (possibly custom) step. This is available
     when the target is currently stopped. If successful the target may briefly enter the "running"
     state.</P>
+
+    <H3><A name="target_kill"></A><IMG alt="" src="icon.debugger.kill"> Kill</H3>
+
+    <P>Kill the current target. Other debuggers may call this "terminate" or "stop." This may
+    consequently close the current trace. If successful, the target enters the "terminated" state.
+    This is always available for a live target.</P>
+
+    <H3><A name="target_disconnect"></A><IMG alt="" src="icon.debugger.disconnect"> Disconnect</H3>
+
+    <P>Disconnect from the current target's debugger. This usually causes the connected debugger to
+    terminate and likely kill its targets. This may consequently close the current trace (and
+    perhaps others). This is always available for a live target.</P>
 
     <H2>Trace Navigation Actions</H2>
 

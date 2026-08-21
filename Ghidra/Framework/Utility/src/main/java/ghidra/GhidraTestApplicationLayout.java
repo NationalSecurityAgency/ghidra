@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -84,8 +84,37 @@ public class GhidraTestApplicationLayout extends GhidraApplicationLayout {
 
 		Collection<ResourceFile> roots =
 			ModuleUtilities.findModuleRootDirectories(applicationRootDirs);
-		return ModuleUtilities.findModules(applicationRootDirs, roots,
+		Map<String, GModule> knownModules = ModuleUtilities.findModules(applicationRootDirs, roots,
 			new ClasspathFilter(additionalPaths));
+
+		Map<String, GModule> allModules = new HashMap<>(knownModules);
+		ensureMyModuleIsFound(allModules);
+		return allModules;
+	}
+
+	/**
+	 * When running tests in hybrid mode from Eclipse, the module containing the test is not found,
+	 * since it does not live in the associated Ghidra installation.  This code will work around 
+	 * that case by adding the test's module to the collection of known modules.
+	 *  
+	 * @param allModules all system modules
+	 */
+	private void ensureMyModuleIsFound(Map<String, GModule> allModules) {
+		String projectDir = System.getProperty("user.dir");
+		File manifestFile = new File(projectDir, "Module.manifest");
+		if (!manifestFile.exists()) {
+			// The working dir is not a module.  We are either running from a non-module location
+			// or the current test does not live in a module.
+			return;
+		}
+
+		ResourceFile myModuleDir = new ResourceFile(projectDir);
+		String moduleName = myModuleDir.getName();
+		GModule module = allModules.get(moduleName);
+		if (module == null) {
+			GModule myModule = new GModule(applicationRootDirs, myModuleDir);
+			allModules.put(moduleName, myModule);
+		}
 	}
 
 	/**

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,6 +45,8 @@ public class ProgramNode extends DefaultMutableTreeNode {
 
 	/**
 	 * Construct a new ProgramNode with the given Group.
+	 * @param program the program
+	 * @param g the group
 	 */
 	ProgramNode(Program program, Group g) {
 		this(program, g, g.getName());
@@ -52,6 +54,8 @@ public class ProgramNode extends DefaultMutableTreeNode {
 
 	/**
 	 * Construct a new ProgramNode with the given name.
+	 * @param program the program
+	 * @param name the name
 	 */
 	ProgramNode(Program program, String name) {
 		this(program, null, name);
@@ -60,6 +64,9 @@ public class ProgramNode extends DefaultMutableTreeNode {
 	/**
 	 * Create a new ProgramNode with the given group and name;
 	 * use name for the displayed name of this node.
+	 * @param program the program
+	 * @param g the group
+	 * @param name the name
 	 */
 	ProgramNode(Program program, Group g, String name) {
 		super(name);
@@ -148,6 +155,7 @@ public class ProgramNode extends DefaultMutableTreeNode {
 
 	/**
 	 * Get the name for this node.
+	 * @return he name for this node.
 	 */
 	public String getName() {
 		return name;
@@ -155,6 +163,7 @@ public class ProgramNode extends DefaultMutableTreeNode {
 
 	/**
 	 * Get the group for this node.
+	 * @return the group for this node.
 	 */
 	public Group getGroup() {
 		return group;
@@ -162,6 +171,7 @@ public class ProgramNode extends DefaultMutableTreeNode {
 
 	/**
 	 * Returns true if this node represents a Fragment.
+	 * @return true if this node represents a Fragment.
 	 */
 	public boolean isFragment() {
 		return fragment != null;
@@ -169,6 +179,7 @@ public class ProgramNode extends DefaultMutableTreeNode {
 
 	/**
 	* Returns true if this node represents a Module.
+	 * @return true if this node represents a Module.
 	 */
 	public boolean isModule() {
 		return module != null;
@@ -192,6 +203,7 @@ public class ProgramNode extends DefaultMutableTreeNode {
 
 	/**
 	 * Get the program for this node.
+	 * @return the program for this node.
 	 */
 	public Program getProgram() {
 		return program;
@@ -199,6 +211,7 @@ public class ProgramNode extends DefaultMutableTreeNode {
 
 	/**
 	 * Return true if the node is in the view.
+	 * @return true if the node is in the view.
 	 */
 	public boolean isInView() {
 		return isInView;
@@ -206,14 +219,12 @@ public class ProgramNode extends DefaultMutableTreeNode {
 
 	/**
 	 * Get the group path for this node.
+	 * @return the group path for this node.
 	 */
 	public GroupPath getGroupPath() {
 		return groupPath;
 	}
 
-	/////////////////////////////////////////////////////////////
-	// package-level methods
-	/////////////////////////////////////////////////////////////
 	/**
 	 * Mark this node as having been populated (visited).
 	 */
@@ -227,6 +238,7 @@ public class ProgramNode extends DefaultMutableTreeNode {
 
 	/**
 	 * Return true if this node was visited.
+	 * @return true if this node was visited.
 	 */
 	boolean wasVisited() {
 		return visited;
@@ -238,6 +250,7 @@ public class ProgramNode extends DefaultMutableTreeNode {
 
 	/**
 	 * Get the tree path for this node.
+	 * @return the tree path for this node.
 	 */
 	TreePath getTreePath() {
 		return path;
@@ -245,6 +258,7 @@ public class ProgramNode extends DefaultMutableTreeNode {
 
 	/**
 	 * Set the tree path for this node.
+	 * @param path the tree path for this node.
 	 */
 	void setTreePath(TreePath path) {
 		this.path = path;
@@ -252,6 +266,7 @@ public class ProgramNode extends DefaultMutableTreeNode {
 
 	/**
 	 * Get the parent module for this node.
+	 * @return the parent module for this node.
 	 */
 	ProgramModule getParentModule() {
 		return parentModule;
@@ -259,6 +274,7 @@ public class ProgramNode extends DefaultMutableTreeNode {
 
 	/**
 	 * Set the parent module for this node.
+	 * @param parent the parents
 	 */
 	void setParentModule(ProgramModule parent) {
 		parentModule = parent;
@@ -266,6 +282,7 @@ public class ProgramNode extends DefaultMutableTreeNode {
 
 	/**
 	 * Set the name for this node.
+	 * @param name the name
 	 */
 	void setName(String name) {
 		this.name = name;
@@ -273,8 +290,8 @@ public class ProgramNode extends DefaultMutableTreeNode {
 	}
 
 	/**
-	 * Set this node to be deleted so that it can be
-	 * rendered as such.
+	 * Set this node to be deleted so that it can be rendered as such.
+	 * @param deleted true if deleted
 	 */
 	void setDeleted(boolean deleted) {
 		this.deleted = deleted;
@@ -282,6 +299,7 @@ public class ProgramNode extends DefaultMutableTreeNode {
 
 	/**
 	 * Returns whether this node is marked as deleted.
+	 * @return whether this node is marked as deleted.
 	 */
 	boolean isDeleted() {
 		return deleted;
@@ -289,6 +307,7 @@ public class ProgramNode extends DefaultMutableTreeNode {
 
 	/**
 	 * Set the group path for this node.
+	 * @param groupPath the path
 	 */
 	void setGroupPath(GroupPath groupPath) {
 		this.groupPath = groupPath;
@@ -296,6 +315,7 @@ public class ProgramNode extends DefaultMutableTreeNode {
 
 	/**
 	 * Mark this node as being in some view.
+	 * @param isInView true if in some view.
 	 */
 	void setInView(boolean isInView) {
 		this.isInView = isInView;
@@ -326,6 +346,7 @@ public class ProgramNode extends DefaultMutableTreeNode {
 
 	/**
 	 * Set the tree; this method is only called on the root node.
+	 * @param tree the tree
 	 */
 	void setTree(ProgramDnDTree tree) {
 		this.tree = tree;
@@ -358,7 +379,7 @@ public class ProgramNode extends DefaultMutableTreeNode {
 
 	/**
 	 * Get the node named childName.
-	 * @param childName
+	 * @param childName the name
 	 * @return null if the node does not allow children, or the name was
 	 * not found.
 	 */

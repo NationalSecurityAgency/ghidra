@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,10 +15,12 @@
  */
 package ghidra.features.bsim.query.description;
 
-import java.io.*;
-import java.net.MalformedURLException;
+import java.io.IOException;
+import java.io.Writer;
 import java.net.URL;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import generic.hash.SimpleCRC32;
 import ghidra.features.bsim.query.LSHException;
@@ -53,6 +55,9 @@ public class ExecutableRecord implements Comparable<ExecutableRecord> {
 	public static final int METADATA_PATH = 32;
 	public static final int METADATA_LIBR = 64;
 
+	private static final String md5Regex = "[a-fA-F0-9]{32}";
+	private static final Pattern md5Matcher = Pattern.compile(md5Regex);
+
 	private final String md5sum;		// The MD5 hash of the executable 
 	private final String executableName;		// The name of the executable
 	private final String architecture;	// The architecture on which the executable runs
@@ -75,6 +80,13 @@ public class ExecutableRecord implements Comparable<ExecutableRecord> {
 		public boolean date;
 		public boolean categories; // True if there are either insertions or deletions
 		public List<CategoryRecord> catinsert; // Non-null, if there are only insertions
+	}
+
+	private static void checkValidMD5(String md5) {
+		Matcher matcher = md5Matcher.matcher(md5);
+		if (!matcher.matches()) {
+			throw new IllegalArgumentException("Invalid MD5 hash string: " + md5);
+		}
 	}
 
 	/**
@@ -125,8 +137,10 @@ public class ExecutableRecord implements Comparable<ExecutableRecord> {
 	/**
 	 * Constructor for searching within a DescriptionManager
 	 * @param md5 is hash of executable being searched for
+	 * @throws IllegalArgumentException if {@code md5} is not a valid md5 hash string
 	 */
 	protected ExecutableRecord(String md5) {
+		checkValidMD5(md5);
 		md5sum = md5;
 		executableName = "";
 		architecture = "";
@@ -151,9 +165,11 @@ public class ExecutableRecord implements Comparable<ExecutableRecord> {
 	 * @param id is the row id of the record
 	 * @param repo is the repository containing the executable (may be null)
 	 * @param path is the path to the executable (may be null)
+	 * @throws IllegalArgumentException if {@code md5} is not a valid MD5 hash string
 	 */
 	public ExecutableRecord(String md5, String execName, String compilerName, String architecture,
 			Date date, RowKey id, String repo, String path) {
+		checkValidMD5(md5);
 		this.md5sum = md5;
 		this.executableName = execName;
 		this.architecture = architecture;
@@ -177,9 +193,11 @@ public class ExecutableRecord implements Comparable<ExecutableRecord> {
 	 * @param id is the row id of the record
 	 * @param repo is the repository containing the executable (may be null)
 	 * @param pth is the path to the executable (may be null)
+	 * @throws IllegalArgumentException if {@code md5} is not a valid MD5 hash string.
 	 */
 	public ExecutableRecord(String md5, String enm, String cnm, String arc, Date dt,
 			List<CategoryRecord> uc, RowKey id, String repo, String pth) {
+		checkValidMD5(md5);
 		md5sum = md5;
 		executableName = enm;
 		architecture = arc;
@@ -222,16 +240,10 @@ public class ExecutableRecord implements Comparable<ExecutableRecord> {
 	protected void setRepository(String repo, String newpath) {
 		repository = null;
 		if (repo != null) {
-			URL ghidraURL;
-			try {
-				ghidraURL = new URL(repo);
-				if (!GhidraURL.isGhidraURL(repo) || (!GhidraURL.isServerRepositoryURL(ghidraURL) &&
-					!GhidraURL.isLocalProjectURL(ghidraURL))) {
-					throw new IllegalArgumentException("Unsupported repository URL: " + repo);
-				}
-			}
-			catch (MalformedURLException e) {
-				throw new IllegalArgumentException("Unsupported repository URL: " + repo, e);
+			URL ghidraURL = GhidraURL.toURL(repo);
+			if (!GhidraURL.isServerRepositoryURL(ghidraURL) &&
+				!GhidraURL.isLocalURL(ghidraURL)) {
+				throw new IllegalArgumentException("Unsupported repository URL: " + repo);
 			}
 			URL projectURL = GhidraURL.getProjectURL(ghidraURL);
 			repository = projectURL.toExternalForm();
@@ -473,7 +485,7 @@ public class ExecutableRecord implements Comparable<ExecutableRecord> {
 		}
 		final StringBuffer buf = new StringBuffer();
 		buf.append(repository);
-		if (GhidraURL.isLocalGhidraURL(repository)) {
+		if (GhidraURL.isLocalURL(repository)) {
 			if (!repository.endsWith("?")) {
 				// local URLs add path as a query string
 				buf.append("?");

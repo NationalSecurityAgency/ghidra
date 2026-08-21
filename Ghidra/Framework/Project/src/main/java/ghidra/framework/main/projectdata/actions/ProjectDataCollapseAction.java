@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import docking.action.ContextSpecificAction;
 import docking.action.MenuData;
 import docking.widgets.tree.GTreeNode;
 import ghidra.framework.main.datatable.ProjectTreeContext;
-import ghidra.framework.main.datatree.DataTree;
+import ghidra.framework.main.datatree.*;
 
 public class ProjectDataCollapseAction<T extends ProjectTreeContext>
 		extends ContextSpecificAction<T> {
@@ -40,13 +40,19 @@ public class ProjectDataCollapseAction<T extends ProjectTreeContext>
 	}
 
 	@Override
-	public boolean isAddToPopup(T context) {
-		return context.getFolderCount() == 1 && context.getFileCount() == 0;
-	}
-
-	@Override
 	protected boolean isEnabledForContext(T context) {
-		return context.getFolderCount() == 1 && context.getFileCount() == 0;
+		if (!context.hasExactlyOneFileOrFolder()) {
+			return false;
+		}
+		TreePath[] paths = context.getSelectionPaths();
+		GTreeNode node = (GTreeNode) paths[0].getLastPathComponent();
+		if (node instanceof DomainFolderNode folderNode) {
+			return folderNode.isLoaded();
+		}
+		if (node instanceof DomainFileNode fileNode) {
+			return fileNode.isFolderLink() && !fileNode.isLeaf() && fileNode.isLoaded();
+		}
+		return false;
 	}
 
 	/**

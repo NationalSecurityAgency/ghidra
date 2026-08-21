@@ -76,6 +76,7 @@ public class LabelHistoryInputDialog extends DialogComponentProvider {
 		panel.setBorder(BorderFactory.createTitledBorder("Enter Symbol Name"));
 
 		inputField = new JTextField(25);
+		inputField.getAccessibleContext().setAccessibleName("Input");
 		setFocusComponent(inputField);
 		inputField.addActionListener(new ActionListener() {
 			@Override
@@ -101,9 +102,11 @@ public class LabelHistoryInputDialog extends DialogComponentProvider {
 		});
 
 		panel.add(inputField, BorderLayout.CENTER);
+		panel.getAccessibleContext().setAccessibleName("Name Entry");
 		JPanel outerPanel = new JPanel(new BorderLayout());
 		outerPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 5));
 		outerPanel.add(panel, BorderLayout.CENTER);
+		outerPanel.getAccessibleContext().setAccessibleName("Label History Input");
 		return outerPanel;
 	}
 

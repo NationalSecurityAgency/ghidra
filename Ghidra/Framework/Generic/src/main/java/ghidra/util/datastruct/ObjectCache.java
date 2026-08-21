@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.util.datastruct;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * <code>ObjectClass</code> provides a fixed-size long-key-based object cache.
@@ -27,12 +28,14 @@ import java.util.*;
  * <p>
  * The weak cache is keyed, while the hard cache simply maintains the presence of
  * an object in the weak cache.
+ * 
+ * @param <T> Object type held by cache
  */
-public class ObjectCache {
+public class ObjectCache<T> {
 
-	private Map<Long, KeyedSoftReference<?>> hashTable;
-	private ReferenceQueue<Object> refQueue;
-	private LinkedList<Object> hardCache;
+	private Map<Long, KeyedSoftReference<T>> hashTable;
+	private ReferenceQueue<T> refQueue;
+	private LinkedList<T> hardCache;
 	private int hardCacheSize;
 
 	/**
@@ -61,10 +64,10 @@ public class ObjectCache {
 	 * @param key object key
 	 * @return cached object
 	 */
-	public synchronized Object get(long key) {
-		WeakReference<?> ref = hashTable.get(key);
+	public synchronized T get(long key) {
+		WeakReference<T> ref = hashTable.get(key);
 		if (ref != null) {
-			Object obj = ref.get();
+			T obj = ref.get();
 			if (obj == null) {
 				hashTable.remove(key);
 			}
@@ -72,6 +75,30 @@ public class ObjectCache {
 			return obj;
 		}
 		return null;
+	}
+
+	/**
+	 * Get the current cached object which corresponds to specified {@code key} if contained in
+	 * cache, otherwise the {@code mappingFunction} will be invoked to instantiate a new object
+	 * where that object will be added to the cache and returned.  If the {@code mappingFunction}
+	 * returns null nothing will be added to the cache and null will be returned by this method.
+	 * 
+	 * @param key object key
+	 * @param mappingFunction function used to obtain a new object if not currently present
+	 * in cache.
+	 * @return cached object
+	 */
+	public synchronized T computeIfAbsent(long key, Function<Long, T> mappingFunction) {
+		Objects.requireNonNull(mappingFunction);
+		T oldValue = get(key);
+		if (oldValue != null) {
+			return oldValue;
+		}
+		T newValue = mappingFunction.apply(key);
+		if (newValue != null) {
+			put(key, newValue);
+		}
+		return newValue;
 	}
 
 	/**
@@ -98,9 +125,9 @@ public class ObjectCache {
 	 * @param key object key
 	 * @param obj the object
 	 */
-	public synchronized void put(long key, Object obj) {
+	public synchronized void put(long key, T obj) {
 		processQueue();
-		KeyedSoftReference<?> ref = new KeyedSoftReference<>(key, obj, refQueue);
+		KeyedSoftReference<T> ref = new KeyedSoftReference<>(key, obj, refQueue);
 		hashTable.put(key, ref);
 		addToHardCache(obj);
 	}
@@ -112,7 +139,7 @@ public class ObjectCache {
 	 */
 	public synchronized void remove(long key) {
 		processQueue();
-		KeyedSoftReference<?> ref = hashTable.get(key);
+		KeyedSoftReference<T> ref = hashTable.get(key);
 		if (ref != null) {
 			ref.clear();
 			hashTable.remove(key);
@@ -123,7 +150,7 @@ public class ObjectCache {
 	 * Add the specified object to the hard cache.
 	 * @param obj object
 	 */
-	private void addToHardCache(Object obj) {
+	private void addToHardCache(T obj) {
 		hardCache.addLast(obj);
 		if (hardCache.size() > hardCacheSize) {
 			hardCache.removeFirst();
@@ -134,8 +161,8 @@ public class ObjectCache {
 	 * Cleanup weak cache
 	 */
 	private void processQueue() {
-		KeyedSoftReference<?> ref;
-		while ((ref = (KeyedSoftReference<?>) refQueue.poll()) != null) {
+		KeyedSoftReference<? extends T> ref;
+		while ((ref = (KeyedSoftReference<? extends T>) refQueue.poll()) != null) {
 			hashTable.remove(ref.getKey());
 		}
 	}

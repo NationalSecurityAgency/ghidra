@@ -1,0 +1,3213 @@
+{
+  "comments": [
+    "Information about character encodings used by Ghidra.",
+    "Generated on Thu Dec 18 21:18:49 UTC 2025 by CharsetInfoManagerTest.generateCharsetInfoFile"
+  ],
+  "charsets": [
+    {
+      "name": "Big5",
+      "comment": "A traditional Chinese encoding used mainly in Taiwan and Hong Kong for Traditional Chinese characters. It supports a large repertoire but does not cover all Unicode characters.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 13830,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "BOPOMOFO",
+        "HAN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "Big5-HKSCS",
+      "comment": "An extension of Big5 used in Hong Kong that adds Cantonese-specific and government-required characters. It improves compatibility with local applications and legacy data.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 18578,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "BOPOMOFO",
+        "HAN"
+      ],
+      "contains": [
+        "Big5",
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "x-Big5-HKSCS-2001",
+      "comment": "An older version of the Hong Kong Supplementary Character Set based on Big5. It includes Cantonese-specific and government-required characters.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 18384,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "BOPOMOFO",
+        "HAN"
+      ],
+      "contains": [
+        "Big5",
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "x-Big5-Solaris",
+      "comment": "A Solaris-specific variant of Big5. It includes vendor extensions used on Sun systems.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 13837,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "BOPOMOFO",
+        "HAN"
+      ],
+      "contains": [
+        "Big5",
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "CESU-8",
+      "comment": "A variant of UTF-8 designed for internal processing that preserves UTF-16 surrogate pairs. It is not intended for data interchange and is rarely used outside specific systems.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 6,
+      "alignment": 1,
+      "codePointCount": 149249,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "ARMENIAN",
+        "HEBREW",
+        "ARABIC",
+        "SYRIAC",
+        "THAANA",
+        "DEVANAGARI",
+        "BENGALI",
+        "GURMUKHI",
+        "GUJARATI",
+        "ORIYA",
+        "TAMIL",
+        "TELUGU",
+        "KANNADA",
+        "MALAYALAM",
+        "SINHALA",
+        "THAI",
+        "LAO",
+        "TIBETAN",
+        "MYANMAR",
+        "GEORGIAN",
+        "HANGUL",
+        "ETHIOPIC",
+        "CHEROKEE",
+        "CANADIAN_ABORIGINAL",
+        "OGHAM",
+        "RUNIC",
+        "KHMER",
+        "MONGOLIAN",
+        "HIRAGANA",
+        "KATAKANA",
+        "BOPOMOFO",
+        "HAN",
+        "YI",
+        "OLD_ITALIC",
+        "GOTHIC",
+        "DESERET",
+        "INHERITED",
+        "TAGALOG",
+        "HANUNOO",
+        "BUHID",
+        "TAGBANWA",
+        "LIMBU",
+        "TAI_LE",
+        "LINEAR_B",
+        "UGARITIC",
+        "SHAVIAN",
+        "OSMANYA",
+        "CYPRIOT",
+        "BRAILLE",
+        "BUGINESE",
+        "COPTIC",
+        "NEW_TAI_LUE",
+        "GLAGOLITIC",
+        "TIFINAGH",
+        "SYLOTI_NAGRI",
+        "OLD_PERSIAN",
+        "KHAROSHTHI",
+        "BALINESE",
+        "CUNEIFORM",
+        "PHOENICIAN",
+        "PHAGS_PA",
+        "NKO",
+        "SUNDANESE",
+        "BATAK",
+        "LEPCHA",
+        "OL_CHIKI",
+        "VAI",
+        "SAURASHTRA",
+        "KAYAH_LI",
+        "REJANG",
+        "LYCIAN",
+        "CARIAN",
+        "LYDIAN",
+        "CHAM",
+        "TAI_THAM",
+        "TAI_VIET",
+        "AVESTAN",
+        "EGYPTIAN_HIEROGLYPHS",
+        "SAMARITAN",
+        "MANDAIC",
+        "LISU",
+        "BAMUM",
+        "JAVANESE",
+        "MEETEI_MAYEK",
+        "IMPERIAL_ARAMAIC",
+        "OLD_SOUTH_ARABIAN",
+        "INSCRIPTIONAL_PARTHIAN",
+        "INSCRIPTIONAL_PAHLAVI",
+        "OLD_TURKIC",
+        "BRAHMI",
+        "KAITHI",
+        "MEROITIC_HIEROGLYPHS",
+        "MEROITIC_CURSIVE",
+        "SORA_SOMPENG",
+        "CHAKMA",
+        "SHARADA",
+        "TAKRI",
+        "MIAO",
+        "CAUCASIAN_ALBANIAN",
+        "BASSA_VAH",
+        "DUPLOYAN",
+        "ELBASAN",
+        "GRANTHA",
+        "PAHAWH_HMONG",
+        "KHOJKI",
+        "LINEAR_A",
+        "MAHAJANI",
+        "MANICHAEAN",
+        "MENDE_KIKAKUI",
+        "MODI",
+        "MRO",
+        "OLD_NORTH_ARABIAN",
+        "NABATAEAN",
+        "PALMYRENE",
+        "PAU_CIN_HAU",
+        "OLD_PERMIC",
+        "PSALTER_PAHLAVI",
+        "SIDDHAM",
+        "KHUDAWADI",
+        "TIRHUTA",
+        "WARANG_CITI",
+        "AHOM",
+        "ANATOLIAN_HIEROGLYPHS",
+        "HATRAN",
+        "MULTANI",
+        "OLD_HUNGARIAN",
+        "SIGNWRITING",
+        "ADLAM",
+        "BHAIKSUKI",
+        "MARCHEN",
+        "NEWA",
+        "OSAGE",
+        "TANGUT",
+        "MASARAM_GONDI",
+        "NUSHU",
+        "SOYOMBO",
+        "ZANABAZAR_SQUARE",
+        "HANIFI_ROHINGYA",
+        "OLD_SOGDIAN",
+        "SOGDIAN",
+        "DOGRA",
+        "GUNJALA_GONDI",
+        "MAKASAR",
+        "MEDEFAIDRIN",
+        "ELYMAIC",
+        "NANDINAGARI",
+        "NYIAKENG_PUACHUE_HMONG",
+        "WANCHO",
+        "YEZIDI",
+        "CHORASMIAN",
+        "DIVES_AKURU",
+        "KHITAN_SMALL_SCRIPT",
+        "VITHKUQI",
+        "OLD_UYGHUR",
+        "CYPRO_MINOAN",
+        "TANGSA",
+        "TOTO",
+        "KAWI",
+        "NAG_MUNDARI"
+      ],
+      "contains": [
+        "Big5-HKSCS",
+        "x-ISO-2022-CN-CNS",
+        "KOI8-R",
+        "JIS_X0212-1990",
+        "x-Johab",
+        "windows-31j",
+        "GB2312",
+        "Shift_JIS",
+        "x-ISO-2022-CN-GB",
+        "windows-1251",
+        "UTF-8",
+        "ISO-8859-13",
+        "windows-1253",
+        "windows-1252",
+        "windows-1255",
+        "windows-1254",
+        "windows-1257",
+        "ISO-8859-16",
+        "windows-1256",
+        "ISO-8859-15",
+        "US-ASCII",
+        "windows-1258",
+        "x-UTF-16LE-BOM",
+        "UTF-16LE",
+        "x-MS950-HKSCS",
+        "Big5",
+        "x-windows-950",
+        "EUC-JP",
+        "x-mswin-936",
+        "GB18030",
+        "x-euc-jp-linux",
+        "GBK",
+        "x-JIS0208",
+        "ISO-2022-KR",
+        "ISO-8859-4",
+        "x-windows-949",
+        "ISO-8859-3",
+        "TIS-620",
+        "ISO-8859-2",
+        "x-EUC-TW",
+        "ISO-8859-1",
+        "ISO-8859-8",
+        "ISO-8859-7",
+        "ISO-8859-6",
+        "ISO-8859-5",
+        "UTF-16",
+        "EUC-KR",
+        "ISO-8859-9",
+        "x-ISCII91",
+        "ISO-2022-JP",
+        "UTF-16BE",
+        "JIS_X0201"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "EUC-JP",
+      "comment": "A multibyte encoding for Japanese that includes ASCII, JIS X 0208, and half-width kana. It was widely used on Unix systems before UTF-8 became dominant.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 3,
+      "alignment": 1,
+      "codePointCount": 13138,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [
+        "x-JIS0208",
+        "JIS_X0201",
+        "JIS_X0212-1990",
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "x-euc-jp-linux",
+      "comment": "A Linux-specific variant of EUC-JP. It includes additional mappings used by Japanese Linux distributions.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 7071,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [
+        "JIS_X0201",
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "EUC-KR",
+      "comment": "A Korean encoding based on KS X 1001 combined with ASCII. It supports modern Hangul syllables and was common on Unix platforms.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 8354,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HANGUL",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "x-EUC-TW",
+      "comment": "A Taiwanese encoding supporting Traditional Chinese and additional plane mappings. It includes characters from CNS 11643.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 4,
+      "alignment": 1,
+      "codePointCount": 55567,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "BOPOMOFO",
+        "HAN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "x-eucJP-Open",
+      "comment": "An extended EUC-JP variant used in some open-source systems. It includes additional Kanji beyond standard EUC-JP.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 3,
+      "alignment": 1,
+      "codePointCount": 13304,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [
+        "EUC-JP",
+        "JIS_X0201",
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "GB18030",
+      "comment": "China\u0027s mandatory national encoding standard that covers all Unicode characters using 1, 2, or 4 bytes. It supersedes GBK and GB2312 and ensures compatibility with rare and historical characters.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 4,
+      "alignment": 1,
+      "codePointCount": 149249,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "ARMENIAN",
+        "HEBREW",
+        "ARABIC",
+        "SYRIAC",
+        "THAANA",
+        "DEVANAGARI",
+        "BENGALI",
+        "GURMUKHI",
+        "GUJARATI",
+        "ORIYA",
+        "TAMIL",
+        "TELUGU",
+        "KANNADA",
+        "MALAYALAM",
+        "SINHALA",
+        "THAI",
+        "LAO",
+        "TIBETAN",
+        "MYANMAR",
+        "GEORGIAN",
+        "HANGUL",
+        "ETHIOPIC",
+        "CHEROKEE",
+        "CANADIAN_ABORIGINAL",
+        "OGHAM",
+        "RUNIC",
+        "KHMER",
+        "MONGOLIAN",
+        "HIRAGANA",
+        "KATAKANA",
+        "BOPOMOFO",
+        "HAN",
+        "YI",
+        "OLD_ITALIC",
+        "GOTHIC",
+        "DESERET",
+        "INHERITED",
+        "TAGALOG",
+        "HANUNOO",
+        "BUHID",
+        "TAGBANWA",
+        "LIMBU",
+        "TAI_LE",
+        "LINEAR_B",
+        "UGARITIC",
+        "SHAVIAN",
+        "OSMANYA",
+        "CYPRIOT",
+        "BRAILLE",
+        "BUGINESE",
+        "COPTIC",
+        "NEW_TAI_LUE",
+        "GLAGOLITIC",
+        "TIFINAGH",
+        "SYLOTI_NAGRI",
+        "OLD_PERSIAN",
+        "KHAROSHTHI",
+        "BALINESE",
+        "CUNEIFORM",
+        "PHOENICIAN",
+        "PHAGS_PA",
+        "NKO",
+        "SUNDANESE",
+        "BATAK",
+        "LEPCHA",
+        "OL_CHIKI",
+        "VAI",
+        "SAURASHTRA",
+        "KAYAH_LI",
+        "REJANG",
+        "LYCIAN",
+        "CARIAN",
+        "LYDIAN",
+        "CHAM",
+        "TAI_THAM",
+        "TAI_VIET",
+        "AVESTAN",
+        "EGYPTIAN_HIEROGLYPHS",
+        "SAMARITAN",
+        "MANDAIC",
+        "LISU",
+        "BAMUM",
+        "JAVANESE",
+        "MEETEI_MAYEK",
+        "IMPERIAL_ARAMAIC",
+        "OLD_SOUTH_ARABIAN",
+        "INSCRIPTIONAL_PARTHIAN",
+        "INSCRIPTIONAL_PAHLAVI",
+        "OLD_TURKIC",
+        "BRAHMI",
+        "KAITHI",
+        "MEROITIC_HIEROGLYPHS",
+        "MEROITIC_CURSIVE",
+        "SORA_SOMPENG",
+        "CHAKMA",
+        "SHARADA",
+        "TAKRI",
+        "MIAO",
+        "CAUCASIAN_ALBANIAN",
+        "BASSA_VAH",
+        "DUPLOYAN",
+        "ELBASAN",
+        "GRANTHA",
+        "PAHAWH_HMONG",
+        "KHOJKI",
+        "LINEAR_A",
+        "MAHAJANI",
+        "MANICHAEAN",
+        "MENDE_KIKAKUI",
+        "MODI",
+        "MRO",
+        "OLD_NORTH_ARABIAN",
+        "NABATAEAN",
+        "PALMYRENE",
+        "PAU_CIN_HAU",
+        "OLD_PERMIC",
+        "PSALTER_PAHLAVI",
+        "SIDDHAM",
+        "KHUDAWADI",
+        "TIRHUTA",
+        "WARANG_CITI",
+        "AHOM",
+        "ANATOLIAN_HIEROGLYPHS",
+        "HATRAN",
+        "MULTANI",
+        "OLD_HUNGARIAN",
+        "SIGNWRITING",
+        "ADLAM",
+        "BHAIKSUKI",
+        "MARCHEN",
+        "NEWA",
+        "OSAGE",
+        "TANGUT",
+        "MASARAM_GONDI",
+        "NUSHU",
+        "SOYOMBO",
+        "ZANABAZAR_SQUARE",
+        "HANIFI_ROHINGYA",
+        "OLD_SOGDIAN",
+        "SOGDIAN",
+        "DOGRA",
+        "GUNJALA_GONDI",
+        "MAKASAR",
+        "MEDEFAIDRIN",
+        "ELYMAIC",
+        "NANDINAGARI",
+        "NYIAKENG_PUACHUE_HMONG",
+        "WANCHO",
+        "YEZIDI",
+        "CHORASMIAN",
+        "DIVES_AKURU",
+        "KHITAN_SMALL_SCRIPT",
+        "VITHKUQI",
+        "OLD_UYGHUR",
+        "CYPRO_MINOAN",
+        "TANGSA",
+        "TOTO",
+        "KAWI",
+        "NAG_MUNDARI"
+      ],
+      "contains": [
+        "Big5-HKSCS",
+        "x-MS950-HKSCS",
+        "x-ISO-2022-CN-CNS",
+        "Big5",
+        "x-windows-950",
+        "EUC-JP",
+        "x-mswin-936",
+        "KOI8-R",
+        "GBK",
+        "x-Johab",
+        "windows-31j",
+        "GB2312",
+        "ISO-2022-KR",
+        "ISO-8859-4",
+        "x-windows-949",
+        "ISO-8859-3",
+        "TIS-620",
+        "ISO-8859-2",
+        "Shift_JIS",
+        "x-EUC-TW",
+        "ISO-8859-1",
+        "ISO-8859-8",
+        "ISO-8859-7",
+        "x-ISO-2022-CN-GB",
+        "ISO-8859-6",
+        "windows-1251",
+        "ISO-8859-5",
+        "UTF-16",
+        "UTF-8",
+        "ISO-8859-13",
+        "windows-1253",
+        "windows-1252",
+        "EUC-KR",
+        "windows-1255",
+        "ISO-8859-9",
+        "windows-1254",
+        "windows-1257",
+        "ISO-8859-16",
+        "windows-1256",
+        "ISO-8859-15",
+        "US-ASCII",
+        "windows-1258",
+        "UTF-16LE",
+        "x-ISCII91",
+        "ISO-2022-JP",
+        "UTF-16BE",
+        "JIS_X0201"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "GB2312",
+      "comment": "An early Simplified Chinese encoding standard covering the most common characters used in mainland China. It served as the foundation for GBK and GB18030.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 7572,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "BOPOMOFO",
+        "HAN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "GBK",
+      "comment": "An extension of GB2312 that adds thousands of Simplified and Traditional Chinese characters. It is widely used in Windows systems and is backward-compatible with GB2312.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 21919,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "BOPOMOFO",
+        "HAN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "IBM-Thai",
+      "comment": "An IBM code page for Thai script based on TIS-620. It supports Thai characters and punctuation for legacy IBM systems.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 250,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "THAI"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "IBM00858",
+      "comment": "A DOS-era IBM code page similar to CP850 but with the Euro symbol added. It supports Western European languages in legacy environments.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "IBM01140",
+      "comment": "An EBCDIC code page based on IBM037 with Euro support. It is used on IBM mainframes for Western European languages.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "IBM01141",
+      "comment": "An EBCDIC code page similar to IBM273 with Euro support. It supports German-language environments on IBM systems.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "IBM01142",
+      "comment": "An EBCDIC code page derived from IBM277 with Euro support. It is used for Danish and Norwegian text on IBM mainframes.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "IBM01143",
+      "comment": "An EBCDIC code page based on IBM278 with Euro support. It is designed for Finnish and Swedish environments.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "IBM01144",
+      "comment": "An EBCDIC code page derived from IBM280 with Euro support. It supports Italian-language mainframe systems.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "IBM01145",
+      "comment": "An EBCDIC code page based on IBM284 with Euro support. It is used for Spanish-language environments on IBM mainframes.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "IBM01146",
+      "comment": "An EBCDIC code page derived from IBM285 with Euro support. It supports UK English on IBM systems.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "IBM01147",
+      "comment": "An EBCDIC code page based on IBM297 with Euro support. It is used for French-language mainframe environments.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "IBM01148",
+      "comment": "An EBCDIC code page derived from IBM500 with Euro support. It supports multiple Western European languages on IBM mainframes.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "IBM01149",
+      "comment": "An EBCDIC code page based on IBM871 with Euro support. It is used for Icelandic-language environments on IBM systems.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "IBM037",
+      "comment": "A core EBCDIC code page used in the United States and some Western countries. It supports basic Latin characters and control codes for IBM mainframes.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "x-IBM1006",
+      "comment": "An IBM code page for Urdu written in Arabic script (IBM EBCDIC). It supports contextual shaping for proper display.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 254,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "ARABIC"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-IBM1025",
+      "comment": "An IBM Cyrillic code page used in Eastern Europe (IBM EBCDIC). It supports Russian, Bulgarian, and Serbian Cyrillic.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "CYRILLIC"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "IBM1026",
+      "comment": "An EBCDIC code page used for Turkish language support. It includes Latin characters with Turkish-specific letters.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "x-IBM1046",
+      "comment": "An IBM Arabic code page supporting contextual shaping (IBM EBCDIC). It is used in Middle Eastern IBM environments.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 245,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "ARABIC"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "IBM1047",
+      "comment": "An EBCDIC code page designed to better align with ASCII for easier interoperability. It is used in Unix-like environments on IBM mainframes.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "x-IBM1097",
+      "comment": "An IBM Farsi code page (IBM EBCDIC). It supports Arabic-derived Persian script with contextual shaping.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 252,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "ARABIC",
+        "INHERITED"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-IBM1098",
+      "comment": "An IBM code page for Farsi with alternative mappings (IBM EBCDIC). It supports Persian letters and punctuation.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 249,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "ARABIC",
+        "INHERITED"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-IBM1112",
+      "comment": "An IBM code page for Estonian (IBM EBCDIC). It includes diacritics and letters used in Estonian orthography.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "x-IBM1122",
+      "comment": "An IBM code page for Latvian (IBM EBCDIC). It supports Latvian diacritics and punctuation.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "x-IBM1123",
+      "comment": "An IBM code page for Ukrainian (IBM EBCDIC). It includes Ukrainian Cyrillic letters not found in KOI8-R.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "CYRILLIC"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "x-IBM1124",
+      "comment": "An IBM code page for Lithuanian (IBM EBCDIC). It supports Lithuanian diacritics and special characters.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "CYRILLIC"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "x-IBM1129",
+      "comment": "An IBM code page for Vietnamese (IBM EBCDIC). It uses combining diacritics to represent Vietnamese tones.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 349,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "INHERITED"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-IBM1166",
+      "comment": "An IBM code page for Belarusian (IBM EBCDIC). It includes Belarusian Cyrillic letters and punctuation.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "CYRILLIC"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "x-IBM1364",
+      "comment": "An IBM code page for Korean (IBM EBCDIC). It supports Hangul syllables and Hanja characters.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 4,
+      "alignment": 1,
+      "codePointCount": 17847,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HANGUL",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-IBM1381",
+      "comment": "An IBM code page for Simplified Chinese (IBM EBCDIC). It includes GB2312 characters and IBM extensions.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 7609,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "BOPOMOFO",
+        "HAN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "x-IBM1383",
+      "comment": "An IBM code page for Traditional Chinese (IBM EBCDIC). It includes Big5 characters and IBM-specific additions.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 7634,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "BOPOMOFO",
+        "HAN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "IBM273",
+      "comment": "An EBCDIC code page used for German-language systems. It includes German umlauts and standard Latin characters.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "IBM277",
+      "comment": "An EBCDIC code page for Danish and Norwegian languages. It supports regional letters and punctuation used in Scandinavia.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "IBM278",
+      "comment": "An EBCDIC code page used for Finnish and Swedish languages. It includes Nordic characters and standard Latin letters.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "IBM280",
+      "comment": "An EBCDIC code page for Italian-language environments. It supports accented Italian characters and punctuation.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "IBM284",
+      "comment": "An EBCDIC code page used for Spanish-language systems. It includes Spanish accented letters and punctuation.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "IBM285",
+      "comment": "An EBCDIC code page for UK English. It supports British punctuation and currency symbols.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "IBM290",
+      "comment": "An EBCDIC code page for Japanese Katakana. It was used on IBM mainframes before multibyte encodings became common.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 321,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "KATAKANA"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-IBM29626C",
+      "comment": "An IBM code page for Chinese used in AIX systems (IBM EBCDIC). It supports CNS 11643 planes and extended characters.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 3,
+      "alignment": 1,
+      "codePointCount": 7595,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "IBM297",
+      "comment": "An EBCDIC code page for French-language systems. It includes accented French characters and punctuation.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "x-IBM300",
+      "comment": "A double-byte IBM code page for Japanese (IBM EBCDIC). It supports Kanji, Hiragana, Katakana, and symbols.",
+      "minBytesPerChar": 2,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 7309,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-IBM33722",
+      "comment": "An IBM code page for Korean used in AIX (IBM EBCDIC). It supports KS X 1001 and extended Hangul.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 3,
+      "alignment": 1,
+      "codePointCount": 7540,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "IBM420",
+      "comment": "An EBCDIC code page for Arabic script. It supports contextual shaping required for Arabic text.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 427,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "ARABIC",
+        "INHERITED"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "IBM424",
+      "comment": "An EBCDIC code page for Hebrew script. It supports Hebrew letters and right-to-left text direction.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 217,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "HEBREW"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "IBM437",
+      "comment": "The original IBM PC code page used in DOS. It includes box-drawing characters and basic Latin letters.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "IBM500",
+      "comment": "An EBCDIC code page supporting multiple Western European languages. It includes accented characters and punctuation for multilingual environments.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "x-IBM737",
+      "comment": "A DOS code page for Greek. It includes Greek letters and basic punctuation.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "IBM775",
+      "comment": "A code page used for Baltic languages such as Latvian and Lithuanian. It supports diacritics and regional characters.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "x-IBM833",
+      "comment": "An IBM code page for Korean (IBM EBCDIC). It supports early Hangul encodings and Hanja.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 310,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "HANGUL"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-IBM834",
+      "comment": "An IBM code page for Korean similar to x-IBM833 but with additional characters (IBM EBCDIC). It supports extended Hangul and Hanja.",
+      "minBytesPerChar": 2,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 8839,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HANGUL",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "IBM850",
+      "comment": "A DOS code page for Western European languages. It expands on CP437 by adding more accented characters.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "IBM852",
+      "comment": "A DOS code page for Central and Eastern European languages. It supports diacritics used in Polish, Czech, Slovak, and related languages.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "IBM855",
+      "comment": "A DOS code page for Cyrillic languages. It includes Russian, Bulgarian, and Serbian Cyrillic characters.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "CYRILLIC"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "x-IBM856",
+      "comment": "A DOS code page for Hebrew. It supports Hebrew letters but lacks right-to-left control characters.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 214,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "HEBREW"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "IBM857",
+      "comment": "A DOS code page for Turkish. It includes Turkish-specific letters and punctuation.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 252,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "IBM860",
+      "comment": "A DOS code page for Portuguese as used in Portugal. It includes accented characters and symbols.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "IBM861",
+      "comment": "A DOS code page for Icelandic. It includes Icelandic letters and diacritics.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "IBM862",
+      "comment": "A DOS code page for Hebrew. It supports Hebrew letters and right-to-left text.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "HEBREW"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "IBM863",
+      "comment": "A DOS code page for Canadian French. It includes accented French characters used in Canada.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "IBM864",
+      "comment": "A DOS code page for Arabic. It supports Arabic letters and contextual forms.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 250,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "ARABIC",
+        "INHERITED"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "IBM865",
+      "comment": "A DOS code page for Nordic languages. It includes characters used in Danish, Norwegian, and Icelandic.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "IBM866",
+      "comment": "A DOS code page for Russian and other Cyrillic languages. It became widely used in Eastern Europe and the former Soviet Union.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "CYRILLIC"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "IBM868",
+      "comment": "A DOS code page for Arabic used in some regions. It supports Arabic letters and basic punctuation.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 253,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "ARABIC"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "IBM869",
+      "comment": "A DOS code page for Greek. It includes Greek letters and diacritics.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 246,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "IBM870",
+      "comment": "An EBCDIC code page for multilingual Latin scripts including Eastern European languages. It supports accented characters and punctuation.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "IBM871",
+      "comment": "An EBCDIC code page for Icelandic. It includes Icelandic letters and special characters.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "x-IBM874",
+      "comment": "A Windows and DOS code page for Thai. It supports Thai script without contextual shaping.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 219,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "THAI"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-IBM875",
+      "comment": "An EBCDIC code page for Greek. It includes Greek letters and punctuation for IBM mainframes.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 249,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "IBM918",
+      "comment": "An EBCDIC code page for Urdu. It supports Arabic-derived Urdu script with contextual shaping.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 254,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "ARABIC"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-IBM921",
+      "comment": "A Baltic code page supporting Latvian, Lithuanian, and Estonian. It includes regional diacritics and symbols.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "x-IBM922",
+      "comment": "A Baltic code page similar to x-IBM921 but with alternative mappings. It supports additional regional characters.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "x-IBM930",
+      "comment": "A Japanese EBCDIC mixed single-byte and double-byte code page. It supports Kanji and Katakana for IBM mainframes.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 4,
+      "alignment": 1,
+      "codePointCount": 7541,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-IBM933",
+      "comment": "A Korean EBCDIC mixed-byte code page. It supports Hangul and Hanja for IBM mainframes.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 4,
+      "alignment": 1,
+      "codePointCount": 9047,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HANGUL",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-IBM935",
+      "comment": "A Simplified Chinese EBCDIC mixed-byte code page. It supports GB2312 characters for IBM mainframes.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 4,
+      "alignment": 1,
+      "codePointCount": 7636,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "BOPOMOFO",
+        "HAN"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-IBM937",
+      "comment": "A Traditional Chinese EBCDIC mixed-byte code page. It supports Big5 characters for IBM mainframes.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 4,
+      "alignment": 1,
+      "codePointCount": 14026,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "BOPOMOFO",
+        "HAN"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-IBM939",
+      "comment": "A Japanese EBCDIC mixed-byte code page similar to x-IBM930 but with extended characters. It supports Kanji and Katakana.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 4,
+      "alignment": 1,
+      "codePointCount": 7542,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-IBM942",
+      "comment": "A Shift_JIS-based IBM code page for Japanese. It includes IBM extensions and vendor-specific characters.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 7511,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-IBM942C",
+      "comment": "A variant of x-IBM942 with corrected mappings. It improves compatibility with standard Shift_JIS.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 7511,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "x-IBM943",
+      "comment": "An IBM code page combining Shift_JIS with additional Kanji. It supports a wide range of Japanese characters.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 7560,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-IBM943C",
+      "comment": "A corrected version of x-IBM943 with improved character mappings. It enhances compatibility with Windows-31J.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 7562,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "x-IBM948",
+      "comment": "An IBM code page for Simplified Chinese based on GBK. It includes IBM extensions for additional characters.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 13996,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "BOPOMOFO",
+        "HAN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "x-IBM949",
+      "comment": "An IBM code page for Korean based on EUC-KR. It includes extended Hangul syllables.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 8965,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HANGUL",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-IBM949C",
+      "comment": "A corrected version of x-IBM949 with improved mappings. It enhances compatibility with Windows Korean encodings.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 8965,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HANGUL",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "x-IBM950",
+      "comment": "An IBM code page for Traditional Chinese based on Big5. It includes IBM extensions for additional characters.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 13993,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "BOPOMOFO",
+        "HAN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "x-IBM964",
+      "comment": "An IBM code page for Traditional Chinese used in Taiwan. It supports CNS 11643 plane mappings.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 4,
+      "alignment": 1,
+      "codePointCount": 14023,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "BOPOMOFO",
+        "HAN"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-IBM970",
+      "comment": "An IBM code page for Korean supporting Hangul and Hanja. It is used in IBM mainframe environments.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 8388,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HANGUL",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "x-ISCII91",
+      "comment": "An Indian encoding standard supporting multiple Indic scripts through a shared code structure. It uses shift codes to switch between scripts.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 233,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "DEVANAGARI",
+        "INHERITED"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "x-ISO-2022-CN-CNS",
+      "comment": "A variant of ISO-2022-CN supporting CNS 11643 character planes. It enables Traditional Chinese encoding in 7-bit environments.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 8,
+      "alignment": 1,
+      "codePointCount": 19966,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "BOPOMOFO",
+        "HAN"
+      ],
+      "contains": [
+        "x-EUC-TW",
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "x-ISO-2022-CN-GB",
+      "comment": "A variant of ISO-2022-CN supporting GB2312. It enables Simplified Chinese encoding in 7-bit environments.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 7,
+      "alignment": 1,
+      "codePointCount": 7572,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "BOPOMOFO",
+        "HAN"
+      ],
+      "contains": [
+        "GB2312",
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "ISO-2022-JP",
+      "comment": "A Japanese encoding that switches between ASCII, JIS X 0201, and JIS X 0208 using escape sequences. It was widely used for email and early web content in Japan.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 8,
+      "alignment": 1,
+      "codePointCount": 7071,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [
+        "x-windows-iso2022jp",
+        "x-windows-50220",
+        "x-windows-50221",
+        "x-JIS0208",
+        "ISO-2022-JP-2",
+        "JIS_X0201",
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "ISO-2022-JP-2",
+      "comment": "An extension of ISO-2022-JP that adds additional character sets including Chinese and Korean. It was intended for multilingual communication but saw limited adoption.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 9,
+      "alignment": 1,
+      "codePointCount": 13138,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [
+        "x-windows-iso2022jp",
+        "x-windows-50220",
+        "x-windows-50221",
+        "x-JIS0208",
+        "ISO-2022-JP",
+        "JIS_X0201",
+        "JIS_X0212-1990",
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "ISO-2022-KR",
+      "comment": "A Korean encoding that switches between ASCII and KS X 1001 using escape sequences. It was used in email systems that required 7-bit compatibility.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 7,
+      "alignment": 1,
+      "codePointCount": 8354,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HANGUL",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [
+        "EUC-KR",
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "ISO-8859-1",
+      "comment": "A widely used Western European encoding also known as Latin-1. It supports major Western European languages but lacks the Euro symbol.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": false
+    },
+    {
+      "name": "x-iso-8859-11",
+      "comment": "A Thai encoding similar to TIS-620 but with additional control characters. It supports Thai script without shaping.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 247,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "THAI"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "ISO-8859-13",
+      "comment": "A Baltic language encoding supporting Latvian, Lithuanian, and Estonian. It includes diacritics needed for regional languages.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": false
+    },
+    {
+      "name": "ISO-8859-15",
+      "comment": "A revision of Latin-1 that adds the Euro symbol and replaces some rarely used characters. It was intended as a modernized Western European encoding.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": false
+    },
+    {
+      "name": "ISO-8859-16",
+      "comment": "A South-Eastern European encoding supporting Romanian, Albanian, and related languages. It includes characters missing from earlier ISO-8859 sets.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": false
+    },
+    {
+      "name": "ISO-8859-2",
+      "comment": "A Central European encoding supporting Polish, Czech, Slovak, and Hungarian. It includes diacritics used in Slavic and Finno-Ugric languages.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": false
+    },
+    {
+      "name": "ISO-8859-3",
+      "comment": "A South European encoding supporting Maltese, Esperanto, and Turkish. It was less widely adopted than other ISO-8859 variants.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 248,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "ISO-8859-4",
+      "comment": "A Baltic encoding supporting Estonian, Latvian, and Lithuanian. It was later superseded by ISO-8859-13.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": false
+    },
+    {
+      "name": "ISO-8859-5",
+      "comment": "A Cyrillic encoding supporting Russian, Bulgarian, and Serbian. It was used before Unicode and Windows-1251 became dominant.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "CYRILLIC"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": false
+    },
+    {
+      "name": "ISO-8859-6",
+      "comment": "An Arabic encoding supporting basic Arabic letters. It does not include contextual shaping, making it unsuitable for display without additional processing.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 210,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "ARABIC",
+        "INHERITED"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "ISO-8859-7",
+      "comment": "A Greek encoding supporting modern Greek characters. It was widely used before Unicode adoption.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 252,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "ISO-8859-8",
+      "comment": "A Hebrew encoding supporting Hebrew letters. It does not include vowel points or right-to-left control characters.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 219,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "HEBREW"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "ISO-8859-9",
+      "comment": "A Turkish encoding based on Latin-1 but replacing Icelandic letters with Turkish ones. It supports modern Turkish orthography.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": false
+    },
+    {
+      "name": "x-JIS0208",
+      "comment": "A Japanese character set containing thousands of Kanji and kana. It forms the basis of many Japanese encodings including Shift_JIS and EUC-JP.",
+      "minBytesPerChar": 2,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 6879,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "JIS_X0201",
+      "comment": "A Japanese encoding containing ASCII and half-width Katakana. It is often used as part of larger Japanese encoding schemes.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 192,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "KATAKANA"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "JIS_X0212-1990",
+      "comment": "A supplementary Japanese character set containing additional Kanji. It is used in extended Japanese encodings such as ISO-2022-JP-2.",
+      "minBytesPerChar": 2,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 6067,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HAN"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-Johab",
+      "comment": "A Korean encoding supporting full Hangul composition. It provides complete coverage of modern Hangul syllables.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 17175,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HANGUL",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "KOI8-R",
+      "comment": "A Cyrillic encoding widely used in Russia and the former Soviet Union. It supports Russian, Bulgarian, and other Cyrillic languages.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "CYRILLIC"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": false
+    },
+    {
+      "name": "KOI8-U",
+      "comment": "A Cyrillic encoding designed for Ukrainian. It extends KOI8-R with additional Ukrainian letters.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "CYRILLIC"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": false
+    },
+    {
+      "name": "x-MacArabic",
+      "comment": "A legacy Mac OS encoding for Arabic. It includes contextual forms for proper Arabic rendering.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 229,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "ARABIC",
+        "INHERITED"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-MacCentralEurope",
+      "comment": "A Mac OS encoding for Central European languages. It supports diacritics used in Polish, Czech, Slovak, and Hungarian.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "x-MacCroatian",
+      "comment": "A Mac OS encoding for Croatian. It includes accented characters used in Croatian orthography.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 254,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-MacCyrillic",
+      "comment": "A Mac OS encoding for Cyrillic languages. It supports Russian, Bulgarian, and Serbian Cyrillic.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "CYRILLIC"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "x-MacDingbat",
+      "comment": "A Mac OS symbol encoding containing decorative and typographic symbols. It includes ornaments, arrows, and shapes.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 220,
+      "scripts": [
+        "COMMON"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-MacGreek",
+      "comment": "A Mac OS encoding for Greek. It includes Greek letters and diacritics used in modern Greek.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 254,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-MacHebrew",
+      "comment": "A Mac OS encoding for Hebrew. It supports Hebrew letters and right-to-left text.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 213,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "HEBREW"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-MacIceland",
+      "comment": "A Mac OS encoding for Icelandic. It includes Icelandic letters and diacritics.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 254,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-MacRoman",
+      "comment": "The primary Mac OS Roman encoding for Western European languages. It includes accented letters and typographic symbols.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 254,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-MacRomania",
+      "comment": "A Mac OS encoding for Romanian. It includes Romanian diacritics and punctuation.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 254,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-MacSymbol",
+      "comment": "A Mac OS symbol encoding containing mathematical and typographic symbols. It includes arrows, operators, and Greek letters.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 195,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-MacThai",
+      "comment": "A Mac OS encoding for Thai. It supports Thai script without contextual shaping.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 227,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "THAI"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-MacTurkish",
+      "comment": "A Mac OS encoding for Turkish. It includes Turkish-specific letters and punctuation.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 253,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK"
+      ],
+      "contains": [],
+      "canProduceError": true
+    },
+    {
+      "name": "x-MacUkraine",
+      "comment": "A Mac OS encoding for Ukrainian. It includes Ukrainian Cyrillic letters and diacritics.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "CYRILLIC"
+      ],
+      "contains": [],
+      "canProduceError": false
+    },
+    {
+      "name": "x-MS932_0213",
+      "comment": "A Microsoft variant of Shift_JIS that includes JIS X 0213 characters. It expands the available Kanji set beyond standard Shift_JIS.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 11491,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN",
+        "INHERITED"
+      ],
+      "contains": [
+        "windows-31j",
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "x-MS950-HKSCS",
+      "comment": "A Microsoft Big5 variant including Hong Kong Supplementary Character Set mappings. It supports Cantonese-specific and government-required characters.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 18585,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "BOPOMOFO",
+        "HAN"
+      ],
+      "contains": [
+        "x-windows-950",
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "x-MS950-HKSCS-XP",
+      "comment": "A Windows XP version of the HKSCS Big5 extension. It includes older mappings that differ from later HKSCS releases.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 16633,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "BOPOMOFO",
+        "HAN"
+      ],
+      "contains": [
+        "x-windows-950",
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "x-mswin-936",
+      "comment": "A Microsoft implementation of GBK for Simplified Chinese. It supports a wide range of Chinese characters used on Windows systems.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 21919,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "BOPOMOFO",
+        "HAN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "x-PCK",
+      "comment": "A variant of Shift_JIS used on Solaris systems. It includes vendor-specific extensions for Japanese text.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 7518,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "Shift_JIS",
+      "comment": "A major Japanese encoding combining single-byte and double-byte sequences. It supports Kanji, Hiragana, Katakana, and ASCII.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 7071,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "x-SJIS_0213",
+      "comment": "A Shift_JIS variant supporting JIS X 0213 characters. It expands the Kanji repertoire for modern Japanese usage.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 11398,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN",
+        "INHERITED"
+      ],
+      "contains": [
+        "Shift_JIS",
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "TIS-620",
+      "comment": "The standard Thai character encoding used in Thailand. It supports Thai script without contextual shaping.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 215,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "THAI"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "windows-1250",
+      "comment": "A Central European Windows encoding supporting Polish, Czech, Slovak, and Hungarian. It includes diacritics used in Slavic languages.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 250,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "windows-1251",
+      "comment": "A Cyrillic Windows encoding supporting Russian, Bulgarian, and Serbian. It became the de facto standard for Cyrillic text on Windows.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 254,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "CYRILLIC"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "windows-1252",
+      "comment": "A Western European Windows encoding often mistaken for ISO-8859-1. It includes additional printable characters such as smart quotes.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 250,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "windows-1253",
+      "comment": "A Greek Windows encoding supporting modern Greek. It includes accented Greek letters and punctuation.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 238,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "windows-1254",
+      "comment": "A Turkish Windows encoding similar to ISO-8859-9. It supports Turkish-specific letters and symbols.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 248,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "windows-1255",
+      "comment": "A Hebrew Windows encoding supporting Hebrew letters and vowel points. It includes right-to-left control characters.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 232,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "HEBREW"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "windows-1256",
+      "comment": "An Arabic Windows encoding supporting Arabic letters and contextual forms. It includes characters for Persian and Urdu as well.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 255,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "ARABIC",
+        "INHERITED"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": false
+    },
+    {
+      "name": "windows-1257",
+      "comment": "A Baltic Windows encoding supporting Latvian, Lithuanian, and Estonian. It includes regional diacritics and punctuation.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 243,
+      "scripts": [
+        "COMMON",
+        "LATIN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "windows-1258",
+      "comment": "A Vietnamese Windows encoding supporting tone marks and diacritics. It uses combining characters to represent Vietnamese vowels.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 246,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "INHERITED"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "windows-31j",
+      "comment": "A Microsoft extension of Shift_JIS adding vendor-specific characters. It is widely used in Japanese Windows environments.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 7528,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [
+        "JIS_X0201",
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "x-windows-50220",
+      "comment": "A Windows variant of ISO-2022-JP using escape sequences for Japanese text. It supports 7-bit transport environments such as email.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 9,
+      "alignment": 1,
+      "codePointCount": 13308,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [
+        "x-windows-iso2022jp",
+        "x-windows-50221",
+        "x-JIS0208",
+        "ISO-2022-JP",
+        "ISO-2022-JP-2",
+        "JIS_X0201",
+        "JIS_X0212-1990",
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "x-windows-50221",
+      "comment": "A Windows version of ISO-2022-JP that allows 8-bit bytes. It improves compatibility with applications that do not enforce strict 7-bit paths.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 9,
+      "alignment": 1,
+      "codePointCount": 13308,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [
+        "x-windows-iso2022jp",
+        "x-windows-50220",
+        "x-JIS0208",
+        "ISO-2022-JP",
+        "ISO-2022-JP-2",
+        "JIS_X0201",
+        "JIS_X0212-1990",
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "x-windows-874",
+      "comment": "A Windows encoding for Thai similar to TIS-620. It includes additional symbols used in Windows applications.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 1,
+      "alignment": 1,
+      "codePointCount": 224,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "THAI"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "x-windows-949",
+      "comment": "A Windows encoding for Korean based on EUC-KR. It includes extended Hangul syllables and vendor-specific characters.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 17175,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HANGUL",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "x-windows-950",
+      "comment": "A Windows encoding for Traditional Chinese based on Big5. It includes additional characters used in Taiwanese and Hong Kong systems.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 2,
+      "alignment": 1,
+      "codePointCount": 13620,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "BOPOMOFO",
+        "HAN"
+      ],
+      "contains": [
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    },
+    {
+      "name": "x-windows-iso2022jp",
+      "comment": "A Windows variant of ISO-2022-JP with modified escape sequences. It improves compatibility with Japanese email and legacy applications.",
+      "minBytesPerChar": 1,
+      "maxBytesPerChar": 8,
+      "alignment": 1,
+      "codePointCount": 7525,
+      "scripts": [
+        "COMMON",
+        "LATIN",
+        "GREEK",
+        "CYRILLIC",
+        "HIRAGANA",
+        "KATAKANA",
+        "HAN"
+      ],
+      "contains": [
+        "x-windows-50220",
+        "x-windows-50221",
+        "x-JIS0208",
+        "ISO-2022-JP",
+        "ISO-2022-JP-2",
+        "JIS_X0201",
+        "US-ASCII"
+      ],
+      "canProduceError": true
+    }
+  ]
+}

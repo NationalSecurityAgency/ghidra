@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,6 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.util.NumericUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
@@ -35,9 +34,8 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Represents a dyld_cache_header structure.
  * 
- * @see <a href="https://github.com/apple-oss-distributions/dyld/blob/main/cache-builder/dyld_cache_format.h">dyld_cache_format.h</a> 
+ * @see <a href="https://github.com/apple-oss-distributions/dyld/blob/main/include/mach-o/dyld_cache_format.h">dyld_cache_format.h</a> 
  */
-@SuppressWarnings("unused")
 public class DyldCacheHeader implements StructConverter {
 
 	private byte[] magic;
@@ -69,13 +67,12 @@ public class DyldCacheHeader implements StructConverter {
 	private long progClosuresTrieAddr;
 	private long progClosuresTrieSize;
 	private int platform;
-	private int dyld_info;
+	private int dyldInfo;
 	private int formatVersion;
 	private boolean dylibsExpectedOnDisk;
 	private boolean simulator;
 	private boolean locallyBuiltCache;
 	private boolean builtFromChainedFixups;
-	private int padding;
 	private long sharedRegionStart;
 	private long sharedRegionSize;
 	private long maxSlide;
@@ -116,6 +113,12 @@ public class DyldCacheHeader implements StructConverter {
 	private long cacheAtlasSize;
 	private long dynamicDataOffset;
 	private long dynamicDataMaxSize;
+	private int tproMappingsOffset;
+	private int tproMappingsCount;
+	private long functionVariantInfoAddr;
+	private long functionVariantInfoSize;
+	private long prewarmingDataOffset;
+	private long prewarmingDataSize;
 
 	private int headerSize;
 	private BinaryReader reader;
@@ -131,6 +134,9 @@ public class DyldCacheHeader implements StructConverter {
 	private DyldArchitecture architecture;
 	private List<DyldCacheMappingAndSlideInfo> cacheMappingAndSlideInfoList;
 	private MemoryBlock fileBlock;
+
+	@SuppressWarnings("unused")
+	private int padding;
 
 	/**
 	 * Create a new {@link DyldCacheHeader}.
@@ -212,13 +218,13 @@ public class DyldCacheHeader implements StructConverter {
 			platform = reader.readNextInt();
 		}
 		if (reader.getPointerIndex() < mappingOffset) {
-			dyld_info = reader.readNextInt();
-			formatVersion = dyld_info & 0xff;
-			dylibsExpectedOnDisk = (dyld_info >>> 8 & 1) == 1;
-			simulator = (dyld_info >>> 9 & 1) == 1;
-			locallyBuiltCache = (dyld_info >> 10 & 1) == 1;
-			builtFromChainedFixups = (dyld_info >> 11 & 1) == 1;
-			padding = (dyld_info >> 12) & 0xfffff;
+			dyldInfo = reader.readNextInt();
+			formatVersion = dyldInfo & 0xff;
+			dylibsExpectedOnDisk = (dyldInfo >>> 8 & 1) == 1;
+			simulator = (dyldInfo >>> 9 & 1) == 1;
+			locallyBuiltCache = (dyldInfo >> 10 & 1) == 1;
+			builtFromChainedFixups = (dyldInfo >> 11 & 1) == 1;
+			padding = (dyldInfo >> 12) & 0xfffff;
 		}
 		if (reader.getPointerIndex() < mappingOffset) {
 			sharedRegionStart = reader.readNextLong();
@@ -350,17 +356,35 @@ public class DyldCacheHeader implements StructConverter {
 		if (reader.getPointerIndex() < mappingOffset) {
 			dynamicDataMaxSize = reader.readNextLong();
 		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			tproMappingsOffset = reader.readNextInt();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			tproMappingsCount = reader.readNextInt();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			functionVariantInfoAddr = reader.readNextLong();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			functionVariantInfoSize = reader.readNextLong();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			prewarmingDataOffset = reader.readNextLong();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			prewarmingDataSize = reader.readNextLong();
+		}
 
 		headerSize = (int) (reader.getPointerIndex() - startIndex);
 
 		baseAddress = reader.readLong(mappingOffset);
 		architecture = DyldArchitecture.getArchitecture(new String(magic).trim());
 
-		mappingInfoList = new ArrayList<>(mappingCount);
-		cacheMappingAndSlideInfoList = new ArrayList<>(mappingWithSlideCount);
+		mappingInfoList = new ArrayList<>();
+		cacheMappingAndSlideInfoList = new ArrayList<>();
 		slideInfoList = new ArrayList<>();
-		imageInfoList = new ArrayList<>(imagesCountOld);
-		branchPoolList = new ArrayList<>(branchPoolsCount);
+		imageInfoList = new ArrayList<>();
+		branchPoolList = new ArrayList<>();
 		imageTextInfoList = new ArrayList<>();
 		subcacheEntryList = new ArrayList<>();
 	}
@@ -385,7 +409,7 @@ public class DyldCacheHeader implements StructConverter {
 		parseSlideInfos(log, monitor);
 	}
 
-	private void parseSlideInfos(MessageLog log, TaskMonitor monitor) throws CancelledException {
+	private void parseSlideInfos(MessageLog log, TaskMonitor monitor) {
 		if (!hasSlideInfo()) {
 			return;
 		}
@@ -394,20 +418,19 @@ public class DyldCacheHeader implements StructConverter {
 			DyldCacheMappingInfo mappingInfo =
 				mappingInfoList.get(DyldCacheSlideInfoCommon.DATA_PAGE_MAP_ENTRY);
 			DyldCacheSlideInfoCommon info = DyldCacheSlideInfoCommon.parseSlideInfo(reader,
-				slideInfoOffset, mappingInfo.getAddress(), mappingInfo.getSize(),
-				mappingInfo.getFileOffset(), log, monitor);
+				slideInfoOffset, mappingInfo, log, monitor);
 			if (info != null) {
 				slideInfoList.add(info);
 			}
 		}
 		else if (cacheMappingAndSlideInfoList.size() > 0) {
-			for (DyldCacheMappingAndSlideInfo info : cacheMappingAndSlideInfoList) {
+			for (int i = 0; i < cacheMappingAndSlideInfoList.size(); i++) {
+				DyldCacheMappingAndSlideInfo info = cacheMappingAndSlideInfoList.get(i);
 				if (info.getSlideInfoFileOffset() == 0) {
 					continue;
 				}
 				DyldCacheSlideInfoCommon slideInfo = DyldCacheSlideInfoCommon.parseSlideInfo(reader,
-					info.getSlideInfoFileOffset(), info.getAddress(), info.getSize(),
-					info.getFileOffset(), log, monitor);
+					info.getSlideInfoFileOffset(), mappingInfoList.get(i), log, monitor);
 				if (slideInfo != null) {
 					slideInfoList.add(slideInfo);
 				}
@@ -425,9 +448,8 @@ public class DyldCacheHeader implements StructConverter {
 			}
 			reader.setPointerIndex(mappingWithSlideOffset);
 			for (int i = 0; i < mappingWithSlideCount; ++i) {
+				monitor.increment();
 				cacheMappingAndSlideInfoList.add(new DyldCacheMappingAndSlideInfo(reader));
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
 			}
 		}
 		catch (IOException e) {
@@ -476,161 +498,654 @@ public class DyldCacheHeader implements StructConverter {
 	}
 
 	/**
-	 * Gets the base address of the DYLD cache.  This is where the cache should be loaded in
-	 * memory.
-	 * 
-	 * @return The base address of the DYLD cache
-	 */
-	public long getBaseAddress() {
-		return baseAddress;
-	}
-
-	/**
-	 * Gets the magic bytes, which contain version information.
-	 * 
-	 * @return The magic bytes
+	 * {@return the magic bytes, which contain version information}
 	 */
 	public byte[] getMagic() {
 		return magic;
 	}
 
 	/**
-	 * Gets the UUID in {@link String} form
-	 * 
-	 * @return The UUID in {@link String} form, or null if a UUID is not defined
+	 * {@return the mapping offset}
 	 */
-	public String getUUID() {
-		return NumericUtilities.convertBytesToString(uuid);
+	public int getMappingOffset() {
+		return mappingOffset;
 	}
 
 	/**
-	 * Gets the DYLD entry point address (if known)
-	 * 
-	 * @return The DYLD entry point address, or null if it is not known
+	 * {@return the mapping count}
 	 */
-	public Long getEntryPoint() {
-		if (!hasAccelerateInfo()) {
-			return accelerateInfoSize_dyldInCacheEntry;
-		}
-		return null;
+	public int getMappingCount() {
+		return mappingCount;
 	}
 
 	/**
-	 * Gets the {@link List} of {@link DyldCacheMappingInfo}s.  Requires header to have been parsed.
+	 * {@return the old images offset}
+	 */
+	public int getImagesOffsetOld() {
+		return imagesOffsetOld;
+	}
+
+	/**
+	 * {@return the old images count}
+	 */
+	public int getImagesCountOld() {
+		return imagesCountOld;
+	}
+
+	/**
+	 * {@return the dyld base address}
+	 */
+	public long getDyldBaseAddress() {
+		return dyldBaseAddress;
+	}
+
+	/**
+	 * {@return the code signature offset}
+	 */
+	public long getCodeSignatureOffset() {
+		return codeSignatureOffset;
+	}
+
+	/**
+	 * {@return the code signature size}
+	 */
+	public long getCodeSignatureSize() {
+		return codeSignatureSize;
+	}
+
+	/**
+	 * {@return the slide info offset}
+	 */
+	public long getSlideInfoOffset() {
+		return slideInfoOffset;
+	}
+
+	/**
+	 * {@return the slide info size}
+	 */
+	public long getSlideInfoSize() {
+		return slideInfoSize;
+	}
+
+	/**
+	 * {@return the local symbols offset}
+	 */
+	public long getLocalSymbolsOffset() {
+		return localSymbolsOffset;
+	}
+
+	/**
+	 * {@return the local symbols size}
+	 */
+	public long getLocalSymbolsSize() {
+		return localSymbolsSize;
+	}
+
+	/**
+	 * {@return the UUID, or {@code null} if it is not defined}
+	 */
+	public byte[] getUUID() {
+		return uuid;
+	}
+
+	/**
+	 * {@return the cache type}
+	 */
+	public long getCacheType() {
+		return cacheType;
+	}
+
+	/**
+	 * {@return the branch pools offset}
+	 */
+	public int getBranchPoolsOffset() {
+		return branchPoolsOffset;
+	}
+
+	/**
+	 * {@return the branch pools count}
+	 */
+	public int getBranchPoolsCount() {
+		return branchPoolsCount;
+	}
+
+	/**
+	 * {@return the old accelerate info address or new address of mach header in dyld cache, or 
+	 * {@code null} if it is not defined}
+	 */
+	public long getAccelerateInfoAddrOrDyldInCacheMH() {
+		return accelerateInfoAddr_dyldInCacheMH;
+	}
+
+	/**
+	 * {@return the old accelerate info size or new address of entry point in dyld cache, or 
+	 * {@code null} if it is not defined}
+	 */
+	public long getAccelerateInfoSizeOrDyldInCacheEntry() {
+		return accelerateInfoSize_dyldInCacheEntry;
+	}
+
+	/**
+	 * {@return the images text offset}
+	 */
+	public long getImagesTextOffset() {
+		return imagesTextOffset;
+	}
+
+	/**
+	 * {@return the images text count}
+	 */
+	public long getImagesTextCount() {
+		return imagesTextCount;
+	}
+
+	/**
+	 * {@return the patch info address}
+	 */
+	public long getPatchInfoAddr() {
+		return patchInfoAddr;
+	}
+
+	/**
+	 * {@return the patch info size}
+	 */
+	public long getPatchInfoSize() {
+		return patchInfoSize;
+	}
+
+	/**
+	 * {@return the other image group address (unused)}
+	 */
+	public long getOtherImageGroupAddrUnused() {
+		return otherImageGroupAddrUnused;
+	}
+
+	/**
+	 * {@return the other image group size (unused)}
+	 */
+	public long getOtherImageGroupSizeUnused() {
+		return otherImageGroupSizeUnused;
+	}
+	
+	/**
+	 * {@return the program launch closures address}
+	 */
+	public long getProgClosuresAddr() {
+		return progClosuresAddr;
+	}
+
+	/**
+	 * {@return the program launch closures size}
+	 */
+	public long getProgClosuresSize() {
+		return progClosuresSize;
+	}
+
+	/**
+	 * {@return the program launch closures trie address}
+	 */
+	public long getProgClosuresTrieAddr() {
+		return progClosuresTrieAddr;
+	}
+
+	/**
+	 * {@return the program launch closures trie size}
+	 */
+	public long getProgClosuresTrieSize() {
+		return progClosuresTrieSize;
+	}
+
+	/**
+	 * {@return the platform}
+	 */
+	public int getPlatform() {
+		return platform;
+	}
+
+	/**
+	 * {@return the dyld info}
+	 */
+	public int getDyldInfo() {
+		return dyldInfo;
+	}
+
+	/**
+	 * {@return the format version}
+	 */
+	public int getFormatVersion() {
+		return formatVersion;
+	}
+
+	/**
+	 * {@return the dylibs expected on disk value}
+	 */
+	public boolean getDylibsExpectedOnDisk() {
+		return dylibsExpectedOnDisk;
+	}
+
+	/**
+	 * {@return the simulator value}
+	 */
+	public boolean getSimulator() {
+		return simulator;
+	}
+
+	/**
+	 * {@return the locally built cache value}
+	 */
+	public boolean getLocallyBuildCache() {
+		return locallyBuiltCache;
+	}
+
+	/**
+	 * {@return the built from chained fixups value}
+	 */
+	public boolean getBuiltFromChainedFixups() {
+		return builtFromChainedFixups;
+	}
+
+	/**
+	 * {@return the shared region start}
+	 */
+	public long getSharedRegionStart() {
+		return sharedRegionStart;
+	}
+
+	/**
+	 * {@return the shared region size}
+	 */
+	public long getSharedRegionSize() {
+		return sharedRegionSize;
+	}
+
+	/**
+	 * {@return the max slide}
+	 */
+	public long getMaxSlide() {
+		return maxSlide;
+	}
+
+	/**
+	 * {@return the dylibs image array address}
+	 */
+	public long getDylibsImageArrayAddr() {
+		return dylibsImageArrayAddr;
+	}
+
+	/**
+	 * {@return the dylibs image array size}
+	 */
+	public long getDylibsImageArraySize() {
+		return dylibsImageArraySize;
+	}
+
+	/**
+	 * {@return the dylibs trie address}
+	 */
+	public long getDylibsTriAddr() {
+		return dylibsTrieAddr;
+	}
+
+	/**
+	 * {@return the dylibs trie size}
+	 */
+	public long getDylibsTrieSize() {
+		return dylibsTrieSize;
+	}
+
+	/**
+	 * {@return the other image array address}
+	 */
+	public long getOtherImageArrayAddr() {
+		return otherImageArrayAddr;
+	}
+
+	/**
+	 * {@return the other image array size}
+	 */
+	public long getOtherImageArraySize() {
+		return otherImageArraySize;
+	}
+
+	/**
+	 * {@return the other trie address}
+	 */
+	public long getOtherTriAddr() {
+		return otherTrieAddr;
+	}
+
+	/**
+	 * {@return the other trie size}
+	 */
+	public long getOtherTrieSize() {
+		return otherTrieSize;
+	}
+
+	/**
+	 * {@return the mapping with slide offset}
+	 */
+	public int getMappingWithSlideOffset() {
+		return mappingWithSlideOffset;
+	}
+
+	/**
+	 * {@return the mapping with slide count}
+	 */
+	public int getMappingWithSlideCount() {
+		return mappingWithSlideCount;
+	}
+
+	/**
+	 * {@return the dylibs PrebuildLoaderSet state array address (unused), or {@code null} if it is
+	 * not defined}
+	 */
+	public long getDylibsPBLStateArrayAddrUnused() {
+		return dylibsPBLStateArrayAddrUnused;
+	}
+
+	/**
+	 * {@return the dylibs PrebuildLoaderSet set address}
+	 */
+	public long getDylibsPBLSetAddr() {
+		return dylibsPBLSetAddr;
+	}
+
+	/**
+	 * {@return the programs PrebuildLoaderSet set pool address, or {@code null} if it is not
+	 * defined}
+	 */
+	public long getProgramsPBLSetPoolAddr() {
+		return programsPBLSetPoolAddr;
+	}
+
+	/**
+	 * {@return the programs PrebuildLoaderSet set pool size}
+	 */
+	public long getProgramsPBLSetPoolSize() {
+		return programsPBLSetPoolSize;
+	}
+
+	/**
+	 * {@return the program trie address}
+	 */
+	public long getProgramTrieAddr() {
+		return programTrieAddr;
+	}
+
+	/**
+	 * {@return the program trie size}
+	 */
+	public int getProgramTrieSize() {
+		return programTrieSize;
+	}
+
+	/**
+	 * {@return the OS version}
+	 */
+	public int getOsVersion() {
+		return osVersion;
+	}
+
+	/**
+	 * {@return the alt platform}
+	 */
+	public int getAltPlatform() {
+		return altPlatform;
+	}
+
+	/**
+	 * {@return the alt OS version}
+	 */
+	public int getAltOsVersion() {
+		return altOsVersion;
+	}
+
+	/**
+	 * {@return the swift opts offset}
+	 */
+	public long getSwiftOptsOffset() {
+		return swiftOptsOffset;
+	}
+
+	/**
+	 * {@return the swift opts size}
+	 */
+	public long getSwiftOptsSize() {
+		return swiftOptsSize;
+	}
+
+	/**
+	 * {@return the subcache array offset}
+	 */
+	public int getSubCacheArrayOffset() {
+		return subCacheArrayOffset;
+	}
+
+	/**
+	 * {@return the subcache array count, or {@code null} if it is not defined}
+	 */
+	public Integer getSubCacheArrayCount() {
+		return subCacheArrayCount;
+	}
+
+	/**
+	 * {@return the symbol file UUID, or {@code null} if it is not defined}
+	 */
+	public byte[] getSymbolFileUUID() {
+		return symbolFileUUID;
+	}
+
+	/**
+	 * {@return the rosetta read-only address}
+	 */
+	public long getRosettaReadOnlyAddr() {
+		return rosettaReadOnlyAddr;
+	}
+
+	/**
+	 * {@return the rosetta read-only size}
+	 */
+	public long getRosettaReadOnlySize() {
+		return rosettaReadOnlySize;
+	}
+
+	/**
+	 * {@return the rosetta read-write address}
+	 */
+	public long getRosettaReadWriteAddr() {
+		return rosettaReadWriteAddr;
+	}
+
+	/**
+	 * {@return the rosetta read-write size}
+	 */
+	public long getRosettaReadWriteSize() {
+		return rosettaReadWriteSize;
+	}
+
+	/**
+	 * {@return the images offset}
+	 */
+	public int getImagesOffset() {
+		return imagesOffset;
+	}
+
+	/**
+	 * {@return the images count}
+	 */
+	public int getImagesCount() {
+		return imagesCount;
+	}
+
+	/**
+	 * {@return the cache subtype, or {@code null} if it is not defined}
+	 */
+	public Integer getCacheSubType() {
+		return cacheSubType;
+	}
+
+	/**
+	 * {@return the ObjC opts offset}
+	 */
+	public long getObjcOptsOffset() {
+		return objcOptsOffset;
+	}
+
+	/**
+	 * {@return the ObjC opts size}
+	 */
+	public long getObjcOptsSize() {
+		return objcOptsSize;
+	}
+
+	/**
+	 * {@return the cache atlas offset}
+	 */
+	public long getCacheAtlasOffset() {
+		return cacheAtlasOffset;
+	}
+
+	/**
+	 * {@return the cache atlas size}
+	 */
+	public long getCacheAtlasSize() {
+		return cacheAtlasSize;
+	}
+
+	/**
+	 * {@return the dynamic data offset}
+	 */
+	public long getDynamicDataOffset() {
+		return dynamicDataOffset;
+	}
+
+	/**
+	 * {@return the dynamic data max size}
+	 */
+	public long getDynamicDataMaxSize() {
+		return dynamicDataMaxSize;
+	}
+
+	/**
+	 * {@return the tpro mappings offset}
+	 */
+	public int getTproMappingsOffset() {
+		return tproMappingsOffset;
+	}
+
+	/**
+	 * {@return the tpro mappings count}
+	 */
+	public int getTproMappingsCount() {
+		return tproMappingsCount;
+	}
+
+	/**
+	 * {@return the function variant info address}
+	 */
+	public long getFunctionVariantInfoAddr() {
+		return functionVariantInfoAddr;
+	}
+
+	/**
+	 * {@return the function variant info size}
+	 */
+	public long getFunctionVariantInfoSize() {
+		return functionVariantInfoSize;
+	}
+
+	/**
+	 * {@return the pre-warming data offset}
+	 */
+	public long getPreWarmingDataOffset() {
+		return prewarmingDataOffset;
+	}
+
+	/**
+	 * {@return the pre-warming data size}
+	 */
+	public long getPreWarmingDataSize() {
+		return prewarmingDataSize;
+	}
+
+	/**
+	 * {@return the reader associated with the header}
 	 * 
-	 * @return The {@link List} of {@link DyldCacheMappingInfo}s
+	 */
+	public BinaryReader getReader() {
+		return reader;
+	}
+
+	/**
+	 * {@return the base address of the DYLD cache}
+	 * <p>
+	 * This is where the cache should be loaded in memory.
+	 */
+	public long getBaseAddress() {
+		return baseAddress;
+	}
+
+	/**
+	 * {@return the {@link List} of {@link DyldCacheMappingInfo}s}
+	 * <p>
+	 * Requires header to have been parsed. 
 	 */
 	public List<DyldCacheMappingInfo> getMappingInfos() {
 		return mappingInfoList;
 	}
 
 	/**
-	 * Gets the file offset to first {@link DyldCacheImageInfo}.
-	 * 
-	 * @return The file offset to first {@link DyldCacheImageInfo}
-	 */
-	public int getImagesOffset() {
-		if (imagesOffset != 0) {
-			return imagesOffset;
-		}
-		return imagesOffsetOld;
-	}
-
-	/**
-	 * Gets the number of {@link DyldCacheImageInfo}s.
-	 * 
-	 * @return The number of {@link DyldCacheImageInfo}s
-	 */
-	public int getImagesCount() {
-		if (imagesOffset != 0) {
-			return imagesCount;
-		}
-		return imagesCountOld;
-	}
-
-	/**
-	 * Generates a {@link List} of {@link DyldCacheImage}s that are mapped in by this 
-	 * {@link DyldCacheHeader}.  Requires header to have been parsed.
+	 * {@return the {@link List} of {@link DyldCacheImageInfo}s}
 	 * <p>
-	 * NOTE: A DYLD subcache header may declare an image, but that image may get loaded at an
-	 * address defined by the memory map of a different subcache header.  This method will only 
-	 * return the images that are mapped by "this" header's memory map.
-	 * 
-	 * @return A {@link List} of {@link DyldCacheImage}s mapped by this {@link DyldCacheHeader}
+	 * Requires header to have been parsed.
 	 */
-	public List<DyldCacheImage> getMappedImages() {
-		// NOTE: A subcache will have an entry for every image, but not every image will be mapped
-		List<DyldCacheImage> images = new ArrayList<>();
-		for (DyldCacheImage imageInfo : imageInfoList) {
-			for (DyldCacheMappingInfo mappingInfo : mappingInfoList) {
-				if (mappingInfo.contains(imageInfo.getAddress())) {
-					images.add(imageInfo);
-					break;
-				}
-			}
-		}
-		return images;
+	public List<DyldCacheImageInfo> getImageInfos() {
+		return imageInfoList;
 	}
 
 	/**
-	 * Gets the {@link List} of {@link DyldSubcacheEntry}s.  Requires header to have been parsed.
-	 * 
-	 * @return The {@link List} of {@link DyldSubcacheEntry}s
+	 * {@return the {@link List} of {@link DyldSubcacheEntry}s}
+	 * <p>
+	 * Requires header to have been parsed.
 	 */
 	public List<DyldSubcacheEntry> getSubcacheEntries() {
 		return subcacheEntryList;
 	}
 
 	/**
-	 * Gets the symbol file UUID in {@link String} form
-	 * 
-	 * @return The symbol file UUID in {@link String} form, or null if a symbol file UUID is not 
-	 *    defined or is all zeros
-	 */
-	public String getSymbolFileUUID() {
-		return NumericUtilities.convertBytesToString(symbolFileUUID);
-	}
-
-	/**
-	 * Gets the {@link List} of {@link DyldCacheMappingAndSlideInfo}s.  Requires header to have been parsed.
-	 * 
-	 * @return The {@link List} of {@link DyldCacheMappingAndSlideInfo}s
+	 * {@return the {@link List} of {@link DyldCacheMappingAndSlideInfo}s}
+	 * <p>
+	 * Requires header to have been parsed.
 	 */
 	public List<DyldCacheMappingAndSlideInfo> getCacheMappingAndSlideInfos() {
 		return cacheMappingAndSlideInfoList;
 	}
 
 	/**
-	 * Gets the {@link DyldCacheLocalSymbolsInfo}.
-	 * 
-	 * @return The {@link DyldCacheLocalSymbolsInfo}.  Could be be null if it didn't parse. 
+	 * {@return the {@link DyldCacheLocalSymbolsInfo}, or {@code null} if it didn't parse}
 	 */
 	public DyldCacheLocalSymbolsInfo getLocalSymbolsInfo() {
 		return localSymbolsInfo;
 	}
 
 	/**
-	 * Gets the {@link List} of {@link DyldCacheSlideInfoCommon}s.
-	 * 
-	 * @return the {@link List} of {@link DyldCacheSlideInfoCommon}s.
+	 * {@return the {@link List} of {@link DyldCacheSlideInfoCommon}s}
 	 */
 	public List<DyldCacheSlideInfoCommon> getSlideInfos() {
 		return slideInfoList;
 	}
 
 	/**
-	 * Gets the {@link List} of branch pool address.  Requires header to have been parsed.
-	 * 
-	 * @return The {@link List} of branch pool address
+	 * {@return the {@link List} of branch pool address}
+	 * <p>
+	 * Requires header to have been parsed.
 	 */
 	public List<Long> getBranchPoolAddresses() {
 		return branchPoolList;
 	}
 
 	/**
-	 * Gets architecture information.
-	 * 
-	 * @return architecture information
+	 * {@return architecture information}
 	 */
 	public DyldArchitecture getArchitecture() {
 		return architecture;
@@ -718,6 +1233,12 @@ public class DyldCacheHeader implements StructConverter {
 		addHeaderField(struct, QWORD, "cacheAtlasSize", "size of embedded cache atlas");
 		addHeaderField(struct, QWORD, "dynamicDataOffset", "VM offset from cache_header* to the location of dyld_cache_dynamic_data_header");
 		addHeaderField(struct, QWORD, "dynamicDataMaxSize", "maximum size of space reserved from dynamic data");
+		addHeaderField(struct, DWORD, "tproMappingsOffset", "file offset to first dyld_cache_tpro_mapping_info");
+		addHeaderField(struct, DWORD, "tproMappingsCount", "number of dyld_cache_tpro_mapping_info entries");
+		addHeaderField(struct, QWORD, "functionVariantInfoAddr", "(unslid) address of dyld_cache_function_variant_info");
+		addHeaderField(struct, QWORD, "functionVariantInfoSize", "Size of all of the variant information pointed to via the dyld_cache_function_variant_info");
+		addHeaderField(struct, QWORD, "prewarmingDataOffset", "file offset to dyld_prewarming_header");
+		addHeaderField(struct, QWORD, "prewarmingDataSize", "byte size of prewarming data");
 		// @formatter:on
 
 		struct.setCategoryPath(new CategoryPath(MachConstants.DATA_TYPE_CATEGORY));
@@ -738,8 +1259,7 @@ public class DyldCacheHeader implements StructConverter {
 			reader.setPointerIndex(mappingOffset);
 			for (int i = 0; i < mappingCount; ++i) {
 				mappingInfoList.add(new DyldCacheMappingInfo(reader));
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
+				monitor.increment();
 			}
 		}
 		catch (IOException e) {
@@ -760,8 +1280,7 @@ public class DyldCacheHeader implements StructConverter {
 			reader.setPointerIndex(offset);
 			for (int i = 0; i < count; ++i) {
 				imageInfoList.add(new DyldCacheImageInfo(reader));
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
+				monitor.increment();
 			}
 		}
 		catch (IOException e) {
@@ -800,8 +1319,7 @@ public class DyldCacheHeader implements StructConverter {
 			reader.setPointerIndex(branchPoolsOffset);
 			for (int i = 0; i < branchPoolsCount; ++i) {
 				branchPoolList.add(reader.readNextLong());
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
+				monitor.increment();
 			}
 		}
 		catch (IOException e) {
@@ -819,8 +1337,7 @@ public class DyldCacheHeader implements StructConverter {
 			reader.setPointerIndex(imagesTextOffset);
 			for (int i = 0; i < imagesTextCount; ++i) {
 				imageTextInfoList.add(new DyldCacheImageTextInfo(reader));
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
+				monitor.increment();
 			}
 		}
 		catch (IOException e) {
@@ -839,8 +1356,7 @@ public class DyldCacheHeader implements StructConverter {
 			reader.setPointerIndex(subCacheArrayOffset);
 			for (int i = 0; i < subCacheArrayCount; ++i) {
 				subcacheEntryList.add(new DyldSubcacheEntry(reader));
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
+				monitor.increment();
 			}
 		}
 		catch (IOException e) {
@@ -871,7 +1387,7 @@ public class DyldCacheHeader implements StructConverter {
 	}
 
 	private void markupHeader(Program program, AddressSpace space, TaskMonitor monitor,
-			MessageLog log) throws CancelledException {
+			MessageLog log) {
 		monitor.setMessage("Marking up DYLD header...");
 		monitor.initialize(1);
 		try {
@@ -892,11 +1408,10 @@ public class DyldCacheHeader implements StructConverter {
 		try {
 			Address addr = fileOffsetToAddr(mappingOffset, program, space);
 			for (DyldCacheMappingInfo mappingInfo : mappingInfoList) {
+				monitor.increment();
 				Data d = DataUtilities.createData(program, addr, mappingInfo.toDataType(), -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				addr = addr.add(d.getLength());
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
 			}
 		}
 		catch (CodeUnitInsertionException | DuplicateNameException | IOException e) {
@@ -912,11 +1427,10 @@ public class DyldCacheHeader implements StructConverter {
 		try {
 			Address addr = fileOffsetToAddr(mappingWithSlideOffset, program, space);
 			for (DyldCacheMappingAndSlideInfo mappingInfo : cacheMappingAndSlideInfoList) {
+				monitor.increment();
 				Data d = DataUtilities.createData(program, addr, mappingInfo.toDataType(), -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				addr = addr.add(d.getLength());
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
 			}
 		}
 		catch (CodeUnitInsertionException | DuplicateNameException | IOException e) {
@@ -933,12 +1447,11 @@ public class DyldCacheHeader implements StructConverter {
 			Address addr = fileOffsetToAddr(imagesOffset != 0 ? imagesOffset : imagesOffsetOld,
 				program, space);
 			for (DyldCacheImageInfo imageInfo : imageInfoList) {
+				monitor.increment();
 				Data d = DataUtilities.createData(program, addr, imageInfo.toDataType(), -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
-				program.getListing().setComment(addr, CodeUnit.EOL_COMMENT, imageInfo.getPath());
+				program.getListing().setComment(addr, CommentType.EOL, imageInfo.getPath());
 				addr = addr.add(d.getLength());
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
 			}
 		}
 		catch (CodeUnitInsertionException | DuplicateNameException | IOException e) {
@@ -948,14 +1461,14 @@ public class DyldCacheHeader implements StructConverter {
 	}
 
 	private void markupCodeSignature(Program program, AddressSpace space, TaskMonitor monitor,
-			MessageLog log) throws CancelledException {
+			MessageLog log) {
 		monitor.setMessage("Marking up DYLD code signature...");
 		monitor.initialize(1);
 		try {
 			String size = "0x" + Long.toHexString(codeSignatureSize);
 			program.getListing()
 					.setComment(fileOffsetToAddr(codeSignatureOffset, program, space),
-						CodeUnit.PLATE_COMMENT, "Code Signature (" + size + " bytes)");
+						CommentType.PLATE, "Code Signature (" + size + " bytes)");
 			monitor.incrementProgress(1);
 		}
 		catch (IllegalArgumentException e) {
@@ -965,7 +1478,7 @@ public class DyldCacheHeader implements StructConverter {
 	}
 
 	private void markupSlideInfo(Program program, AddressSpace space, TaskMonitor monitor,
-			MessageLog log) throws CancelledException {
+			MessageLog log) {
 		monitor.setMessage("Marking up DYLD slide info...");
 		monitor.initialize(1);
 		try {
@@ -1012,13 +1525,12 @@ public class DyldCacheHeader implements StructConverter {
 		monitor.initialize(branchPoolList.size());
 		try {
 			Address addr = fileOffsetToAddr(branchPoolsOffset, program, space);
-			for (Long element : branchPoolList) {
+			for (int i = 0; i < branchPoolList.size(); i++) {
+				monitor.increment();
 				Data d = DataUtilities.createData(program, addr, Pointer64DataType.dataType,
 					Pointer64DataType.dataType.getLength(),
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				addr = addr.add(d.getLength());
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
 			}
 		}
 		catch (CodeUnitInsertionException e) {
@@ -1053,13 +1565,11 @@ public class DyldCacheHeader implements StructConverter {
 		try {
 			Address addr = fileOffsetToAddr(imagesTextOffset, program, space);
 			for (DyldCacheImageTextInfo imageTextInfo : imageTextInfoList) {
+				monitor.increment();
 				Data d = DataUtilities.createData(program, addr, imageTextInfo.toDataType(), -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
-				program.getListing()
-						.setComment(addr, CodeUnit.EOL_COMMENT, imageTextInfo.getPath());
+				program.getListing().setComment(addr, CommentType.EOL, imageTextInfo.getPath());
 				addr = addr.add(d.getLength());
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
 			}
 		}
 		catch (CodeUnitInsertionException | DuplicateNameException | IOException e) {
@@ -1075,11 +1585,10 @@ public class DyldCacheHeader implements StructConverter {
 		try {
 			Address addr = fileOffsetToAddr(subCacheArrayOffset, program, space);
 			for (DyldSubcacheEntry subcacheEntry : subcacheEntryList) {
+				monitor.increment();
 				Data d = DataUtilities.createData(program, addr, subcacheEntry.toDataType(), -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				addr = addr.add(d.getLength());
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
 			}
 		}
 		catch (CodeUnitInsertionException | DuplicateNameException | IOException e) {
@@ -1098,13 +1607,12 @@ public class DyldCacheHeader implements StructConverter {
 	}
 
 	/**
-	 * Gets the given file offset's corresponding memory address.
+	 * {@return the given file offset's corresponding memory address, or {@code null} if it doesn't
+	 * have one}
 	 *  
 	 * @param offset The file offset
 	 * @param program The {@link Program}
 	 * @param space The {@link AddressSpace}
-	 * @return The given file offset's corresponding memory address.  Could be null if it doesn't
-	 *   have one.
 	 */
 	private Address fileOffsetToAddr(long offset, Program program, AddressSpace space) {
 
@@ -1133,9 +1641,7 @@ public class DyldCacheHeader implements StructConverter {
 	}
 
 	/**
-	 * Checks to see if any slide info exists
-	 * 
-	 * @return True if any slide info exists; otherwise, false
+	 * {@return whether or not any slide info exists}
 	 */
 	public boolean hasSlideInfo() {
 		if (slideInfoSize != 0) {
@@ -1151,28 +1657,25 @@ public class DyldCacheHeader implements StructConverter {
 	}
 
 	/**
-	 * Get the original unslid load address.  This is found in the first mapping infos.
-	 * 
-	 * @return the original unslid load address
+	 * {@return the original unslid load address}
+	 * <p>
+	 * This is found in the first mapping infos.
 	 */
 	public long unslidLoadAddress() {
 		return mappingInfoList.get(0).getAddress();
 	}
 
 	/**
-	 * Checks to see whether or not this is a subcache
-	 * 
-	 * @return True if this is a subcache; otherwise, false if it's a base cache
+	 * {@return whether or not this is a subcache}
 	 */
 	public boolean isSubcache() {
 		return subCacheArrayCount != null && subCacheArrayCount == 0 && symbolFileUUID == null;
 	}
 
 	/**
-	 * Checks to see whether or not the old accelerate info fields are being used
-	 * 
-	 * @return True if the old accelerate info fields are being used; otherwise, false if the new
-	 *   dyldInCache fields are being used
+	 * {@return whether or not the old accelerate info fields are being used}
+	 * <p>
+	 * If they aren't being used, then the new {@code dyldInCache} fields are being used.
 	 */
 	public boolean hasAccelerateInfo() {
 		return cacheSubType == null;

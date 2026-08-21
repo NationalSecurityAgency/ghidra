@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,9 +27,8 @@ import docking.widgets.checkbox.GHtmlCheckBox;
  * Clients do not need to prefix label text with "&lt;html&gt;", as is required for a standard
  * JLabel.
  * <p>
- *
  * See also:
- * <table border=1><caption></caption>
+ * <table border=1>
  * 	<tr><th>Class</th><th>Mutable text</th><th>HTML rendering</th><th>Description</th></tr>
  *  <tr><td>{@link GLabel}</td><td>Immutable</td><td>NO</td><td>Non-html unchangeable label</td></tr>
  *  <tr><td>{@link GDLabel}</td><td>Mutable</td><td>NO</td><td>Non-html changeable label</td></tr>
@@ -48,7 +47,6 @@ public class GDHtmlLabel extends AbstractHtmlLabel {
 	 * alignment, with HTML rendering allowed.
 	 * <p>
 	 * See {@link JLabel#JLabel()}.
-	 * <p>
 	 */
 	public GDHtmlLabel() {
 	}
@@ -58,7 +56,7 @@ public class GDHtmlLabel extends AbstractHtmlLabel {
 	 * alignment, with HTML rendering allowed.
 	 * <p>
 	 * See {@link JLabel#JLabel(String)}.
-	 * <p>
+	 * 
 	 * @param text string to be displayed by the label
 	 */
 	public GDHtmlLabel(String text) {

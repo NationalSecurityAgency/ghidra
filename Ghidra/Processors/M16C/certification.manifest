@@ -1,0 +1,13 @@
+##VERSION: 2.0
+Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
+data/languages/M16C_60.cspec||GHIDRA||||END|
+data/languages/M16C_60.ldefs||GHIDRA||||END|
+data/languages/M16C_60.pspec||GHIDRA||||END|
+data/languages/M16C_60.slaspec||GHIDRA||||END|
+data/languages/M16C_80.cspec||GHIDRA||||END|
+data/languages/M16C_80.ldefs||GHIDRA||||END|
+data/languages/M16C_80.pspec||GHIDRA||||END|
+data/languages/M16C_80.slaspec||GHIDRA||||END|
+data/manuals/M16C_60.idx||GHIDRA||||END|
+data/manuals/M16C_80.idx||GHIDRA||||END|

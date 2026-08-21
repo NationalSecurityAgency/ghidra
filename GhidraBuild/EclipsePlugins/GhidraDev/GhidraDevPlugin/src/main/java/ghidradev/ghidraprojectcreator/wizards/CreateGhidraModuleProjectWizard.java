@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,6 +36,7 @@ import ghidra.GhidraApplicationLayout;
 import ghidradev.EclipseMessageUtils;
 import ghidradev.ghidraprojectcreator.utils.GhidraModuleUtils;
 import ghidradev.ghidraprojectcreator.utils.GhidraModuleUtils.ModuleTemplateType;
+import ghidradev.ghidraprojectcreator.utils.PyDevUtils.ProjectPythonInterpreter;
 import ghidradev.ghidraprojectcreator.wizards.pages.*;
 import utilities.util.FileUtilities;
 
@@ -87,12 +88,12 @@ public class CreateGhidraModuleProjectWizard extends Wizard implements INewWizar
 		boolean createRunConfig = projectPage.shouldCreateRunConfig();
 		String runConfigMemory = projectPage.getRunConfigMemory();
 		File projectDir = projectPage.getProjectDir();
-		String jythonInterpreterName = pythonPage.getJythonInterpreterName();
+		ProjectPythonInterpreter pythonInterpreter = pythonPage.getProjectPythonInterpreter();
 		Set<ModuleTemplateType> moduleTemplateTypes = projectConfigPage.getModuleTemplateTypes();
 		try {
 			getContainer().run(true, false,
 				monitor -> create(ghidraInstallDir, projectName, projectDir, createRunConfig,
-					runConfigMemory, moduleTemplateTypes, jythonInterpreterName, monitor));
+					runConfigMemory, moduleTemplateTypes, pythonInterpreter, monitor));
 		}
 		catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
@@ -115,14 +116,13 @@ public class CreateGhidraModuleProjectWizard extends Wizard implements INewWizar
 	 * @param createRunConfig Whether or not to create a new run configuration for the project.
 	 * @param runConfigMemory The run configuration's desired memory.  Could be null.
 	 * @param moduleTemplateTypes The desired module template types.
-	 * @param jythonInterpreterName The name of the Jython interpreter to use for Python support.
-	 *   Could be null if Python support is not wanted.
+	 * @param pythonInterpreter The Python interpreter to use.	
 	 * @param monitor The monitor to use during project creation.
 	 * @throws InvocationTargetException if an error occurred during project creation.
 	 */
 	private void create(File ghidraInstallDir, String projectName, File projectDir,
 			boolean createRunConfig, String runConfigMemory,
-			Set<ModuleTemplateType> moduleTemplateTypes, String jythonInterpreterName,
+			Set<ModuleTemplateType> moduleTemplateTypes, ProjectPythonInterpreter pythonInterpreter,
 			IProgressMonitor monitor) throws InvocationTargetException {
 		try {
 			info("Creating " + projectName + " at " + projectDir);
@@ -133,7 +133,7 @@ public class CreateGhidraModuleProjectWizard extends Wizard implements INewWizar
 
 			IJavaProject javaProject =
 				GhidraModuleUtils.createGhidraModuleProject(projectName, projectDir,
-					createRunConfig, runConfigMemory, ghidraLayout, jythonInterpreterName, monitor);
+					createRunConfig, runConfigMemory, ghidraLayout, pythonInterpreter, monitor);
 			monitor.worked(1);
 
 			IFile sourceFile = GhidraModuleUtils.configureModuleSource(javaProject,

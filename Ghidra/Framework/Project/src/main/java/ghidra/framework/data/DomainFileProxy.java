@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,6 @@ package ghidra.framework.data;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
@@ -27,7 +26,8 @@ import ghidra.framework.client.*;
 import ghidra.framework.model.*;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.framework.remote.RepositoryItem;
-import ghidra.framework.store.*;
+import ghidra.framework.store.ItemCheckoutStatus;
+import ghidra.framework.store.Version;
 import ghidra.framework.store.db.PackedDatabase;
 import ghidra.util.InvalidNameException;
 import ghidra.util.ReadOnlyException;
@@ -115,22 +115,6 @@ public class DomainFileProxy implements DomainFile {
 		return parentPath + DomainFolder.SEPARATOR + getName();
 	}
 
-	private URL getSharedFileURL(URL sharedProjectURL, String ref) {
-		try {
-			// Direct URL construction done so that ghidra protocol extension may be supported
-			String urlStr = sharedProjectURL.toExternalForm();
-			if (urlStr.endsWith(FileSystem.SEPARATOR)) {
-				urlStr = urlStr.substring(0, urlStr.length() - 1);
-			}
-			urlStr += getPathname();
-			return new URL(urlStr);
-		}
-		catch (MalformedURLException e) {
-			// ignore
-		}
-		return null;
-	}
-
 	private URL getSharedFileURL(Properties properties, String ref) {
 		if (properties == null) {
 			return null;
@@ -183,7 +167,7 @@ public class DomainFileProxy implements DomainFile {
 		if (projectLocation != null && version == DomainFile.DEFAULT_VERSION) {
 			URL projectURL = projectLocation.getURL();
 			if (GhidraURL.isServerRepositoryURL(projectURL)) {
-				return getSharedFileURL(projectURL, ref);
+				return GhidraURL.resolve(projectURL, getPathname(), ref);
 			}
 			Properties properties =
 				DefaultProjectData.readProjectProperties(projectLocation.getProjectDir());
@@ -247,24 +231,13 @@ public class DomainFileProxy implements DomainFile {
 	}
 
 	@Override
-	public boolean isLinkFile() {
-		DomainObjectAdapter dobj = getDomainObject();
-		if (dobj != null) {
-			ContentHandler<?> ch;
-			try {
-				ch = DomainObjectAdapter.getContentHandler(dobj);
-				return LinkHandler.class.isAssignableFrom(ch.getClass());
-			}
-			catch (IOException e) {
-				// ignore
-			}
-		}
+	public boolean isLink() {
 		return false;
 	}
 
 	@Override
-	public DomainFolder followLink() {
-		throw new UnsupportedOperationException();
+	public LinkFileInfo getLinkInfo() {
+		return null;
 	}
 
 	@Override
@@ -414,8 +387,8 @@ public class DomainFileProxy implements DomainFile {
 	}
 
 	@Override
-	public DomainFile copyToAsLink(DomainFolder newParent) throws IOException {
-		return null; // not supported by proxy file
+	public DomainFile copyToAsLink(DomainFolder newParent, boolean relative) throws IOException {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

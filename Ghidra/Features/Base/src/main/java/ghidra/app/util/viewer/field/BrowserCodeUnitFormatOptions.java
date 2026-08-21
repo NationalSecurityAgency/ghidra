@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -105,41 +105,46 @@ public class BrowserCodeUnitFormatOptions extends CodeUnitFormatOptions
 		this.fieldOptions = fieldOptions;
 		this.displayOptions = new OptionsBasedDataTypeDisplayOptions(fieldOptions);
 		templateSimplifier = new TemplateSimplifier(fieldOptions);
+
 		boolean exists = fieldOptions.isRegistered(NAMESPACE_OPTIONS);
-
 		if (!exists) {
-			fieldOptions.registerOption(NAMESPACE_OPTIONS, OptionType.CUSTOM_TYPE,
-				new NamespaceWrappedOption(), null, NAMESPACE_OPTIONS_DESCRIPTIONS,
-				() -> new NamespacePropertyEditor());
-
-			HelpLocation hl = new HelpLocation("CodeBrowserPlugin", "Operands_Field");
-			fieldOptions.getOptions(GhidraOptions.OPERAND_GROUP_TITLE).setOptionsHelpLocation(hl);
-
-			fieldOptions.registerOption(GhidraOptions.SHOW_BLOCK_NAME_OPTION, false, hl,
-				"Prepends memory block names to labels in the operands field.");
-			fieldOptions.registerOption(REGISTER_VARIABLE_MARKUP_OPTION, true, hl,
-				"Markup function register variable references");
-			fieldOptions.registerOption(STACK_VARIABLE_MARKUP_OPTION, true, hl,
-				"Markup function stack variable references");
-			fieldOptions.registerOption(INFERRED_VARIABLE_MARKUP_OPTION, true, hl,
-				"Include INFERRED variable references in markup");
-			fieldOptions.registerOption(ALWAYS_SHOW_PRIMARY_REFERENCE_MARKUP_OPTION, true, hl,
-				"Forces the primary reference to be rendered with the operand, using the => separator if necessary");
-			fieldOptions.registerOption(FOLLOW_POINTER_REFERENCE_MARKUP_OPTION, true, hl,
-				"Markup pointer READ/INDIRECT reference with symbol referenced by pointer.  " +
-					"An indirectly referenced symbol name will be prefixed with -> .");
-			fieldOptions.registerOption(SCALAR_ADJUSTMENT_OPTION, false, hl,
-				"Include scalar adjustment of certain reference offsets to maintain replaced scalar value");
-			fieldOptions.registerOption(SHOW_MUTABILITY_OPTION, false, hl,
-				"Include data mnemonic prefix of 'const' or 'volatile' based upon data setting");
-			fieldOptions.registerOption(SHOW_OFFCUT_INFO_OPTION, true, hl,
-				"Include trailing offcut address + offset data when showing offcut data");
+			registerOptions();
 		}
-		updateFormat();
+
+		loadOptions();
 
 		if (autoUpdate) {
 			fieldOptions.addOptionsChangeListener(this);
 		}
+	}
+
+	private void registerOptions() {
+		fieldOptions.registerOption(NAMESPACE_OPTIONS, OptionType.CUSTOM_TYPE,
+			new NamespaceWrappedOption(), null, NAMESPACE_OPTIONS_DESCRIPTIONS,
+			() -> new NamespacePropertyEditor());
+
+		HelpLocation hl = new HelpLocation("CodeBrowserPlugin", "Operands_Field");
+		fieldOptions.getOptions(GhidraOptions.OPERAND_GROUP_TITLE).setOptionsHelpLocation(hl);
+
+		fieldOptions.registerOption(GhidraOptions.SHOW_BLOCK_NAME_OPTION, false, hl,
+			"Prepends memory block names to labels in the operands field.");
+		fieldOptions.registerOption(REGISTER_VARIABLE_MARKUP_OPTION, true, hl,
+			"Markup function register variable references");
+		fieldOptions.registerOption(STACK_VARIABLE_MARKUP_OPTION, true, hl,
+			"Markup function stack variable references");
+		fieldOptions.registerOption(INFERRED_VARIABLE_MARKUP_OPTION, true, hl,
+			"Include INFERRED variable references in markup");
+		fieldOptions.registerOption(ALWAYS_SHOW_PRIMARY_REFERENCE_MARKUP_OPTION, true, hl,
+			"Forces the primary reference to be rendered with the operand, using the => separator if necessary");
+		fieldOptions.registerOption(FOLLOW_POINTER_REFERENCE_MARKUP_OPTION, true, hl,
+			"Markup pointer READ/INDIRECT reference with symbol referenced by pointer.  " +
+				"An indirectly referenced symbol name will be prefixed with -> .");
+		fieldOptions.registerOption(SCALAR_ADJUSTMENT_OPTION, false, hl,
+			"Include scalar adjustment of certain reference offsets to maintain replaced scalar value");
+		fieldOptions.registerOption(SHOW_MUTABILITY_OPTION, false, hl,
+			"Include data mnemonic prefix of 'const' or 'volatile' based upon data setting");
+		fieldOptions.registerOption(SHOW_OFFCUT_INFO_OPTION, true, hl,
+			"Include trailing offcut address + offset data when showing offcut data");
 	}
 
 	@Override
@@ -148,24 +153,26 @@ public class BrowserCodeUnitFormatOptions extends CodeUnitFormatOptions
 		if (templateSimplifier.fieldOptionsChanged(options, optionName, oldValue, newValue)) {
 			notifyListeners();
 		}
-		else if (optionName.equals(GhidraOptions.SHOW_BLOCK_NAME_OPTION) ||
-			optionName.equals(REGISTER_VARIABLE_MARKUP_OPTION) ||
-			optionName.equals(STACK_VARIABLE_MARKUP_OPTION) ||
-			optionName.equals(INFERRED_VARIABLE_MARKUP_OPTION) ||
-			optionName.equals(ALWAYS_SHOW_PRIMARY_REFERENCE_MARKUP_OPTION) ||
-			optionName.equals(FOLLOW_POINTER_REFERENCE_MARKUP_OPTION) ||
-			optionName.equals(SCALAR_ADJUSTMENT_OPTION) || optionName.equals(NAMESPACE_OPTIONS) ||
-			optionName.equals(SHOW_MUTABILITY_OPTION) ||
-			optionName.equals(SHOW_OFFCUT_INFO_OPTION)) {
-			updateFormat();
-			notifyListeners();
+
+		switch (optionName) {
+			case GhidraOptions.SHOW_BLOCK_NAME_OPTION:
+			case REGISTER_VARIABLE_MARKUP_OPTION:
+			case STACK_VARIABLE_MARKUP_OPTION:
+			case INFERRED_VARIABLE_MARKUP_OPTION:
+			case ALWAYS_SHOW_PRIMARY_REFERENCE_MARKUP_OPTION:
+			case FOLLOW_POINTER_REFERENCE_MARKUP_OPTION:
+			case SCALAR_ADJUSTMENT_OPTION:
+			case NAMESPACE_OPTIONS:
+			case SHOW_MUTABILITY_OPTION:
+			case SHOW_OFFCUT_INFO_OPTION:
+				loadOptions();
+				notifyListeners();
+				break;
 		}
 	}
 
-	private void updateFormat() {
-		fieldOptions.registerOption(NAMESPACE_OPTIONS, OptionType.CUSTOM_TYPE,
-			new NamespaceWrappedOption(), null, NAMESPACE_OPTIONS_DESCRIPTIONS,
-			() -> new NamespacePropertyEditor());
+	private void loadOptions() {
+
 		CustomOption customOption =
 			fieldOptions.getCustomOption(NAMESPACE_OPTIONS, new NamespaceWrappedOption());
 		if (!(customOption instanceof NamespaceWrappedOption)) {
@@ -173,8 +180,8 @@ public class BrowserCodeUnitFormatOptions extends CodeUnitFormatOptions
 				"Someone set an option for " + NAMESPACE_OPTIONS + " that is not the expected " +
 					"ghidra.app.util.viewer.field.NamespaceWrappedOption type.");
 		}
-		NamespaceWrappedOption namespaceOption = (NamespaceWrappedOption) customOption;
 
+		NamespaceWrappedOption namespaceOption = (NamespaceWrappedOption) customOption;
 		showBlockName = fieldOptions.getBoolean(GhidraOptions.SHOW_BLOCK_NAME_OPTION, false)
 				? CodeUnitFormatOptions.ShowBlockName.NON_LOCAL
 				: CodeUnitFormatOptions.ShowBlockName.NEVER;
@@ -198,8 +205,8 @@ public class BrowserCodeUnitFormatOptions extends CodeUnitFormatOptions
 		else if (namespaceOption.isShowNonLocalNamespace()) {
 			showNamespace = CodeUnitFormatOptions.ShowNamespace.NON_LOCAL;
 		}
-		showLibraryInNamespace = namespaceOption.isShowLibraryInNamespace();
 
+		showLibraryInNamespace = namespaceOption.isShowLibraryInNamespace();
 		doRegVariableMarkup = fieldOptions.getBoolean(REGISTER_VARIABLE_MARKUP_OPTION, true);
 		doStackVariableMarkup = fieldOptions.getBoolean(STACK_VARIABLE_MARKUP_OPTION, true);
 		includeInferredVariableMarkup =

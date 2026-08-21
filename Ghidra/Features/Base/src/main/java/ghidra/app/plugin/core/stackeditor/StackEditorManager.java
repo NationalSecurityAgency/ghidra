@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,12 +15,13 @@
  */
 package ghidra.app.plugin.core.stackeditor;
 
+import java.util.*;
+
 import ghidra.app.plugin.core.compositeeditor.EditorListener;
 import ghidra.app.plugin.core.compositeeditor.EditorProvider;
 import ghidra.framework.model.DomainObject;
-import ghidra.program.model.listing.*;
-
-import java.util.*;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Program;
 
 /**
  * Manages edit sessions of function stack frames for multiple open programs.
@@ -33,7 +34,6 @@ public class StackEditorManager implements EditorListener {
 	/**
 	 * Constructor
 	 * @param plugin the plugin that owns this manager.
-	 * @param program the active program
 	 */
 	public StackEditorManager(StackEditorManagerPlugin plugin) {
 		this.plugin = plugin;
@@ -51,6 +51,7 @@ public class StackEditorManager implements EditorListener {
 
 	/**
 	 * Pop up the editor dialog for the given stack frame.
+	 * @param function function whose stack frame is to be edited
 	 */
 	public void edit(Function function) {
 		StackEditorProvider editor = editorMap.get(function);
@@ -67,26 +68,10 @@ public class StackEditorManager implements EditorListener {
 	/**
 	 * Subclass should override this method if it is interested in
 	 * close program events.
+	 * @param closedProgram program which was closed
 	 */
 	protected void programClosed(Program closedProgram) {
 		dismissEditors(closedProgram);
-	}
-
-	/**
-	 * Get the stack editor provider that is currently editing the stack frame 
-	 * of the named function.
-	 * @param functionName the name of the function
-	 * @return the stack frame editor provider or null if it isn't being edited.
-	 */
-	StackEditorProvider getProvider(Program program, String functionName) {
-		Iterator<Function> iter = editorMap.keySet().iterator();
-		while (iter.hasNext()) {
-			Function function = iter.next();
-			if (program == function.getProgram() && function.getName().equals(functionName)) {
-				return editorMap.get(function);
-			}
-		}
-		return null;
 	}
 
 	/**
@@ -99,6 +84,7 @@ public class StackEditorManager implements EditorListener {
 
 	/**
 	 * Dismiss all open stack frame editors for the indicated program.
+	 * @param program program whose editors should close
 	 */
 	void dismissEditors(Program program) {
 		List<Function> list = new ArrayList<Function>(editorMap.keySet());
@@ -138,14 +124,12 @@ public class StackEditorManager implements EditorListener {
 		return true;
 	}
 
+	@Override
 	public void closed(EditorProvider editor) {
 		StackEditorProvider stackEditorProvider = (StackEditorProvider) editor;
 		editorMap.remove(stackEditorProvider.getFunction());
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.framework.plugintool.Plugin#canCloseDomainObject(DomainObject)
-	 */
 	protected boolean canCloseDomainObject(DomainObject dObj) {
 		if (!(dObj instanceof Program)) {
 			return true;
@@ -153,9 +137,6 @@ public class StackEditorManager implements EditorListener {
 		return checkEditors((Program) dObj);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.framework.plugintool.Plugin#canClose()
-	 */
 	protected boolean canClose() {
 		return checkEditors(null);
 	}
@@ -165,16 +146,6 @@ public class StackEditorManager implements EditorListener {
 			editor.dispose();
 		}
 		editorMap.clear();
-	}
-
-	/**
-	 * Gets the current editor for the specified function
-	 * @param function the function
-	 * @return the stack editor if the function's stack is being edited.
-	 * Otherwise, returns null if not being edited. 
-	 */
-	public StackEditorProvider getProvider(Function function) {
-		return editorMap.get(function.getStackFrame());
 	}
 
 }

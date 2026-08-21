@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ import utilities.util.FileUtilities;
 /**
  * <code>PackedDatabase</code> provides a packed form of Database
  * which compresses a single version into a file.  
- * <br>
+ * <P>
  * When opening a packed database, a PackedDBHandle is returned 
  * after first expanding the file into a temporary Database.
  */
@@ -114,7 +114,7 @@ public class PackedDatabase extends Database {
 	 * @throws CancelledException is unpack is cancelled
 	 * @throws IOException if IO error occurs
 	 */
-	PackedDatabase(CachedDB cachedDb, ResourceFile packedDbFile, LockFile packedDbLock, 
+	PackedDatabase(CachedDB cachedDb, ResourceFile packedDbFile, LockFile packedDbLock,
 			TaskMonitor monitor) throws CancelledException, IOException {
 		super(cachedDb.dbDir, null, false);
 		this.packedDbFile = packedDbFile;
@@ -276,8 +276,8 @@ public class PackedDatabase extends Database {
 	 * @throws IOException if IO error occurs
 	 * @throws CancelledException if unpack/open is cancelled
 	 */
-	public static synchronized PackedDatabase getPackedDatabase(ResourceFile packedDbFile, boolean neverCache,
-			TaskMonitor monitor) throws IOException, CancelledException {
+	public static synchronized PackedDatabase getPackedDatabase(ResourceFile packedDbFile,
+			boolean neverCache, TaskMonitor monitor) throws IOException, CancelledException {
 		if (!neverCache && PackedDatabaseCache.isEnabled()) {
 			try {
 				return PackedDatabaseCache.getCache().getCachedDB(packedDbFile, monitor);
@@ -633,7 +633,7 @@ public class PackedDatabase extends Database {
 				tmpFile = Application.createTempFile("pack", ".tmp");
 				tmpFile.delete();
 				dbh.saveAs(tmpFile, false, monitor);
-				try (InputStream itemIn = new BufferedInputStream(new FileInputStream(tmpFile))){
+				try (InputStream itemIn = new BufferedInputStream(new FileInputStream(tmpFile))) {
 					ItemSerializer.outputItem(itemName, contentType, FolderItem.DATABASE_FILE_TYPE,
 						tmpFile.length(), itemIn, outputFile, monitor);
 				}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,6 +31,8 @@ import javax.swing.table.TableColumn;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
 
+import docking.action.DockingAction;
+import docking.action.builder.ActionBuilder;
 import docking.options.editor.GenericOptionsComponent;
 import docking.widgets.OptionDialog;
 import docking.widgets.combobox.GhidraComboBox;
@@ -44,8 +46,7 @@ import ghidra.framework.GenericRunInfo;
 import ghidra.framework.options.*;
 import ghidra.framework.preferences.Preferences;
 import ghidra.program.model.listing.Program;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.layout.VerticalLayout;
 import help.Help;
@@ -139,9 +140,68 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		loadCurrentOptionsIntoEditors();
 	}
 
+	public Component getFocusComponent() {
+		return table;
+	}
+
+	List<DockingAction> getActions() {
+
+		DockingAction action = new ActionBuilder("Toggle Editor", "Analysis Panel")
+				.description("Toggles focus from the category view to the editable options")
+				.keyBinding("Control E")
+				.sharedKeyBinding()
+				.enabledWhen(c -> {
+					Component source = c.getSourceComponent();
+					return SwingUtilities.isDescendingFrom(source, AnalysisPanel.this);
+				})
+				.onAction(c -> {
+					if (isTableActive()) {
+						activateOptionsEditor();
+					}
+					else {
+						activateTable();
+					}
+				})
+				.build();
+
+		return List.of(action);
+	}
+
+	private boolean isTableActive() {
+		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+		Component focusOwner = kfm.getFocusOwner();
+		return table == focusOwner;
+	}
+
+	private void activateTable() {
+		table.requestFocus();
+		Swing.runLater(() -> {
+			int row = table.getSelectedRow();
+			if (row < 0) {
+				table.getSelectionModel().setSelectionInterval(0, 0);
+			}
+		});
+	}
+
+	private void activateOptionsEditor() {
+
+		descriptionComponent.requestFocusInWindow();
+
+		/*
+		 	// This allows us to focus the first option 
+		 
+			Container focusCycleRoot = getFocusCycleRootAncestor();
+			FocusTraversalPolicy policy = focusCycleRoot.getFocusTraversalPolicy();
+			Component firstComponent = policy.getComponentAfter(focusCycleRoot, component);
+			if (firstComponent != null) {
+				firstComponent.requestFocusInWindow();
+			}
+		*/
+	}
+
 	/**
-	 * Copies the the non-default options from the program analysis options into a new options object
-	 * @return the the non-default options from the program analysis options into a new options object
+	 * Copies the non-default options from the program analysis options into a new options object
+	 * @return the non-default options from the program analysis options into a new options object
 	 */
 	private Options getNonDefaultProgramOptions() {
 		FileOptions options = new FileOptions("Current Program Options");
@@ -453,6 +513,8 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 						boolean enabledState = (Boolean) model.getValueAt(row, column);
 						model.setValueAt(!enabledState, row, column);
 					}
+
+					e.consume();
 				}
 			}
 		});
@@ -498,9 +560,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	void setAnalyzerEnabled(String analyzerName, boolean enabled, boolean fireEvent) {
 		List<Component> list = analyzerManagedComponentsMap.get(analyzerName);
 		if (list != null) {
-			Iterator<Component> iterator = list.iterator();
-			while (iterator.hasNext()) {
-				Component next = iterator.next();
+			for (Component next : list) {
 				next.setEnabled(enabled);
 			}
 		}
@@ -914,7 +974,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 				optionsComboBox.addItemListener(optionsComboBoxListener);
 				return;
 			}
-			selectedOptions = (FileOptions) optionsComboBox.getSelectedItem();
+			selectedOptions = optionsComboBox.getSelectedItem();
 			updateDeleteButton();
 			loadCurrentOptionsIntoEditors();
 			propertyChangeListener.propertyChange(

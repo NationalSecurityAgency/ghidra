@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,7 @@
  */
 package ghidra.features.bsim.query;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.*;
 
 import ghidra.features.bsim.query.client.PostgresFunctionDatabase;
 import ghidra.features.bsim.query.elastic.ElasticDatabase;
@@ -34,9 +33,10 @@ public class BSimClientFactory {
 	 * @param urlString the URL to build
 	 * @return the parsed URL object
 	 * @throws MalformedURLException if the URL string cannot be parsed
+	 * @throws URISyntaxException if the URL string cannot be parsed
 	 */
-	public static URL buildURL(String urlString) throws MalformedURLException {
-		URL url = new URL(urlString);
+	public static URL buildURL(String urlString) throws MalformedURLException, URISyntaxException {
+		URL url = new URI(urlString).toURL();
 		checkBSimServerURL(url);
 		return url;
 	}
@@ -73,11 +73,12 @@ public class BSimClientFactory {
 	 * @param urlString is the "related" URL
 	 * @return the root BSim URL
 	 * @throws MalformedURLException if the given URL string cannot be parsed
+	 * @throws URISyntaxException if the given URL string cannot be parsed
 	 * @throws IllegalArgumentException if local ghidra URL is specified
 	 */
 	public static URL deriveBSimURL(String urlString)
-			throws IllegalArgumentException, MalformedURLException {
-		URL url = new URL(urlString);	// URL used only for parsing purposes
+			throws IllegalArgumentException, MalformedURLException, URISyntaxException {
+		URL url = new URI(urlString).toURL();	// URL used only for parsing purposes
 		String protocol = url.getProtocol();
 		if ("postgresql".equals(protocol) || "https".equals(protocol) ||
 			"elastic".equals(protocol) || "file".equals(protocol)) {
@@ -98,7 +99,7 @@ public class BSimClientFactory {
 			// "ghidra://host/repo?service=bsim"
 			// String repositoryURL = "ghidra://" + ghidraURL.getAuthority() + "?service=bsim";
 
-			// Currenly all we do is assume that the BSim server is a PostgreSQL server
+			// Currently, all we do is assume that the BSim server is a PostgreSQL server
 			// on the same host and with the same repo name as the ghidra server
 			repositoryURL = "postgresql://" + url.getHost();		// Just use the hostname
 		}
@@ -118,7 +119,10 @@ public class BSimClientFactory {
 	}
 
 	/**
-	 * Given the URL for a BSim server construct the appropriate BSim client object (implementing FunctionDatabase)
+	 * Given the URL for a BSim server construct the appropriate BSim client object 
+	 * (implementing FunctionDatabase).  Returned instance must be 
+	 * {@link FunctionDatabase#close() closed} when done using it to prevent depletion
+	 * of database connections.
 	 * @param bsimServerInfo  BSim server details
 	 * @param async true if database commits should be asynchronous
 	 * @return the database client
@@ -127,7 +131,7 @@ public class BSimClientFactory {
 		try {
 			return buildClient(bsimServerInfo.toURL(), async);
 		}
-		catch (MalformedURLException e) {
+		catch (MalformedURLException | URISyntaxException e) {
 			throw new RuntimeException(e);  // unexpected
 		}
 	}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -234,7 +234,7 @@ void PrintJava::opLoad(const PcodeOp *op)
     pushOp(&subscript,op);
   pushVn(op->getIn(1),op,m);
   if (printArrayRef)
-    push_integer(0,4,false,syntax,(Varnode *)0,op);
+    push_integer(0,4,false,syntax,(Varnode *)0,op,0);
 }
 
 void PrintJava::opStore(const PcodeOp *op)
@@ -245,7 +245,7 @@ void PrintJava::opStore(const PcodeOp *op)
   if (needZeroArray(op->getIn(1))) {
     pushOp(&subscript,op);
     pushVn(op->getIn(1),op,m);
-    push_integer(0,4,false,syntax,(Varnode *)0,op);
+    push_integer(0,4,false,syntax,(Varnode *)0,op,0);
     pushVn(op->getIn(2),op,mods);
   }
   else {

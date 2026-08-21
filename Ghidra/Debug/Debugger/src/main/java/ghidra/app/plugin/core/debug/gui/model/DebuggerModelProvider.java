@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,6 +55,7 @@ import ghidra.debug.api.model.DebuggerObjectActionContext;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.target.Target.ActionEntry;
+import ghidra.debug.api.target.Target.ObjectArgumentPolicy;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
@@ -63,6 +64,7 @@ import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.path.KeyPath;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 
@@ -229,7 +231,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 	protected PathsTablePanel attributesTablePanel;
 
 	/*testing*/ DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
-	/*testing*/ TraceObjectKeyPath path = TraceObjectKeyPath.of();
+	/*testing*/ KeyPath path = KeyPath.of();
 
 	@AutoServiceConsumed
 	protected DebuggerTraceManagerService traceManager;
@@ -433,7 +435,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		mainPanel.revalidate();
 	}
 
-	protected void activatePath(TraceObjectKeyPath path) {
+	protected void activatePath(KeyPath path) {
 		if (current.getTrace() == null) {
 			return;
 		}
@@ -457,7 +459,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		}
 
 		@Override
-		public void activatePath(TraceObjectKeyPath path) {
+		public void activatePath(KeyPath path) {
 			DebuggerModelProvider.this.activatePath(path);
 		}
 	}
@@ -510,7 +512,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 			List<AbstractNode> sel = objectsTreePanel.getSelectedItems();
 			if (sel.size() == 1) {
 				TraceObjectValue value = sel.get(0).getValue();
-				setPath(value == null ? TraceObjectKeyPath.of() : value.getCanonicalPath(),
+				setPath(value == null ? KeyPath.of() : value.getCanonicalPath(),
 					objectsTreePanel, EventOrigin.INTERNAL_GENERATED);
 			}
 		}
@@ -540,7 +542,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 					.map(n -> n.getValue())
 					.filter(o -> o != null) // Root for no trace would return null
 					.collect(Collectors.toList()),
-				DebuggerModelProvider.this, objectsTreePanel);
+				DebuggerModelProvider.this, objectsTreePanel, current.getSnap());
 		}
 	}
 
@@ -609,7 +611,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 			return new DebuggerObjectActionContext(sel.stream()
 					.map(r -> r.getValue())
 					.collect(Collectors.toList()),
-				DebuggerModelProvider.this, elementsTablePanel);
+				DebuggerModelProvider.this, elementsTablePanel, current.getSnap());
 		}
 	}
 
@@ -663,7 +665,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 			return new DebuggerObjectActionContext(sel.stream()
 					.map(r -> Objects.requireNonNull(r.getPath().getLastEntry()))
 					.collect(Collectors.toList()),
-				DebuggerModelProvider.this, attributesTablePanel);
+				DebuggerModelProvider.this, attributesTablePanel, current.getSnap());
 		}
 	}
 
@@ -674,7 +676,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 			@Override
 			public boolean verify(JComponent input) {
 				try {
-					TraceObjectKeyPath path = TraceObjectKeyPath.parse(pathField.getText());
+					KeyPath path = KeyPath.parse(pathField.getText());
 					setPath(path, null, EventOrigin.USER_GENERATED);
 					return true;
 				}
@@ -687,7 +689,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		goButton = new JButton("Go");
 		ActionListener gotoPath = evt -> {
 			try {
-				TraceObjectKeyPath path = TraceObjectKeyPath.parse(pathField.getText());
+				KeyPath path = KeyPath.parse(pathField.getText());
 				activatePath(path);
 				KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner();
 			}
@@ -766,29 +768,34 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		if (target == null) {
 			return;
 		}
-		Map<String, ActionEntry> actions = target.collectActions(ActionName.REFRESH,
-			new DebuggerObjectActionContext(List.of(value), this, objectsTreePanel));
-		for (ActionEntry ent : actions.values()) {
-			if (ent.requiresPrompt()) {
-				continue;
-			}
-			if (path.getLastPathComponent() instanceof AbstractNode node) {
-				/**
-				 * This pending node does not duplicate what the lazy node already does. For all
-				 * it's concerned, once it has loaded the entries from the database, it is done.
-				 * This task asks the target to update that database, so it needs its own indicator.
-				 */
-				PendingNode pending = new PendingNode();
-				node.addNode(0, pending);
-				CompletableFuture<Void> future =
-					TargetActionTask.runAction(plugin.getTool(), ent.display(), ent);
-				future.handle((__, ex) -> {
-					node.removeNode(pending);
-					return null;
-				});
-				return;
-			}
+		ActionEntry ent = target.collectActions(ActionName.REFRESH,
+			new DebuggerObjectActionContext(List.of(value), this, objectsTreePanel,
+				current.getSnap()),
+			ObjectArgumentPolicy.CONTEXT_ONLY)
+				.values()
+				.stream()
+				.filter(e -> !e.requiresPrompt())
+				.sorted(Comparator.comparing(e -> -e.specificity()))
+				.findFirst()
+				.orElse(null);
+		if (ent == null) {
+			// Fail silently. It's common for nodes to not have a refresh action.
+			return;
 		}
+		AbstractNode node = (AbstractNode) path.getLastPathComponent();
+		/**
+		 * This pending node does not duplicate what the lazy node already does. For all it's
+		 * concerned, once it has loaded the entries from the database, it is done. This task asks
+		 * the target to update that database, so it needs its own indicator.
+		 */
+		PendingNode pending = new PendingNode();
+		node.addNode(0, pending);
+		CompletableFuture<Void> future =
+			TargetActionTask.runAction(plugin.getTool(), ent.display(), ent);
+		future.handle((__, ex) -> {
+			node.removeNode(pending);
+			return null;
+		});
 	}
 
 	@Override
@@ -854,7 +861,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		SaveState dataState = new SaveState();
 		this.writeDataState(dataState);
 		// Selection is not saved to the tool state
-		Set<TraceObjectKeyPath> selection = this.objectsTreePanel.getSelectedKeyPaths();
+		Set<KeyPath> selection = this.objectsTreePanel.getSelectedKeyPaths();
 		// coords are omitted by main window
 		// also, cannot save unless trace is in a project
 		clone.coordinatesActivated(current);
@@ -908,7 +915,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		if (values.size() != 1) {
 			return;
 		}
-		TraceObjectKeyPath canonicalPath = values.get(0).getChild().getCanonicalPath();
+		KeyPath canonicalPath = values.get(0).getChild().getCanonicalPath();
 		setPath(canonicalPath);
 	}
 
@@ -917,12 +924,12 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		return mainPanel;
 	}
 
-	protected TraceObjectKeyPath findAsSibling(TraceObject object) {
+	protected KeyPath findAsSibling(TraceObject object) {
 		Trace trace = current.getTrace();
 		if (trace == null) {
 			return null;
 		}
-		TraceObjectKeyPath parentPath = path.parent();
+		KeyPath parentPath = path.parent();
 		if (parentPath == null) {
 			return null;
 		}
@@ -940,7 +947,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		return null;
 	}
 
-	protected TraceObjectKeyPath findAsParent(TraceObject object) {
+	protected KeyPath findAsParent(TraceObject object) {
 		Trace trace = current.getTrace();
 		if (trace == null) {
 			return null;
@@ -953,7 +960,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		if (sel == null) {
 			return null;
 		}
-		for (TraceObjectKeyPath p = sel.getCanonicalPath(); p != null; p = p.parent()) {
+		for (KeyPath p = sel.getCanonicalPath(); p != null; p = p.parent()) {
 			if (objectManager.getObjectByCanonicalPath(p) == object) {
 				return p;
 			}
@@ -985,7 +992,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		if (findAsParent(object) != null) {
 			return;
 		}
-		TraceObjectKeyPath sibling = findAsSibling(object);
+		KeyPath sibling = findAsSibling(object);
 		if (sibling != null) {
 			objectsTreePanel.setSelectedKeyPaths(List.of(sibling));
 			setPath(sibling);
@@ -1002,7 +1009,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		}
 	}
 
-	protected void setPath(TraceObjectKeyPath path, JComponent source, EventOrigin origin) {
+	protected void setPath(KeyPath path, JComponent source, EventOrigin origin) {
 		if (Objects.equals(this.path, path) && getTreeSelection() != null) {
 			return;
 		}
@@ -1018,11 +1025,11 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		attributesTablePanel.setQuery(ModelQuery.attributesOf(path));
 	}
 
-	public void setPath(TraceObjectKeyPath path) {
+	public void setPath(KeyPath path) {
 		setPath(path, null, EventOrigin.API_GENERATED);
 	}
 
-	public TraceObjectKeyPath getPath() {
+	public KeyPath getPath() {
 		return path;
 	}
 
@@ -1137,11 +1144,11 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		return showMethodsInTree;
 	}
 
-	protected void setTreeSelection(TraceObjectKeyPath path, EventOrigin origin) {
+	protected void setTreeSelection(KeyPath path, EventOrigin origin) {
 		objectsTreePanel.setSelectedKeyPaths(List.of(path), origin);
 	}
 
-	protected void setTreeSelection(TraceObjectKeyPath path) {
+	protected void setTreeSelection(KeyPath path) {
 		setTreeSelection(path, EventOrigin.API_GENERATED);
 	}
 
@@ -1189,6 +1196,6 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 				coordinatesActivated(coords);
 			}
 		}
-		setPath(TraceObjectKeyPath.parse(saveState.getString(KEY_PATH, "")));
+		setPath(KeyPath.parse(saveState.getString(KEY_PATH, "")));
 	}
 }

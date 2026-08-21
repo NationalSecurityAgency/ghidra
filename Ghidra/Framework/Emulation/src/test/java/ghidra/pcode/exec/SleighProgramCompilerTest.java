@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,6 +32,8 @@ import ghidra.framework.Application;
 import ghidra.framework.ApplicationConfiguration;
 import ghidra.pcode.exec.SleighProgramCompiler.DetailedSleighException;
 import ghidra.pcode.exec.SleighProgramCompiler.PcodeLogEntry;
+import ghidra.program.model.pcode.PcodeOp;
+import ghidra.program.model.pcode.Varnode;
 import ghidra.sleigh.grammar.Location;
 import utility.function.ExceptionalCallback;
 
@@ -62,6 +64,21 @@ public class SleighProgramCompilerTest extends AbstractGTest {
 				new GhidraTestApplicationLayout(new File(getTestDirectoryPath())),
 				new ApplicationConfiguration());
 		}
+	}
+
+	@Test
+	public void testGoto64BitOffset() throws Throwable {
+		SleighLanguage language = SleighLanguageHelper.getMockBE64Language();
+		PcodeProgram program = SleighProgramCompiler.compileProgram(language, "test",
+			"goto 0x140000000;", PcodeUseropLibrary.NIL);
+
+		assertEquals(1, program.getCode().size());
+		PcodeOp branchOp = program.getCode().getFirst();
+		assertEquals(PcodeOp.BRANCH, branchOp.getOpcode());
+		assertNull(branchOp.getOutput());
+		assertEquals(1, branchOp.getNumInputs());
+		Varnode target = branchOp.getInput(0);
+		assertEquals(0x140000000L, target.getOffset());
 	}
 
 	@Test

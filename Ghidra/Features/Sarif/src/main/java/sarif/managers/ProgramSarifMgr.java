@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,41 +15,26 @@
  */
 package sarif.managers;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.*;
+import java.lang.Exception;
+import java.util.*;
 
-import com.contrastsecurity.sarif.Artifact;
-import com.contrastsecurity.sarif.Run;
-import com.contrastsecurity.sarif.SarifSchema210;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import org.xml.sax.SAXException;
+
+import com.contrastsecurity.sarif.*;
+import com.google.gson.*;
 import com.google.gson.stream.JsonWriter;
 
+import ghidra.app.util.Option;
+import ghidra.app.util.OptionException;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.opinion.ElfLoader;
-import ghidra.app.util.opinion.MzLoader;
-import ghidra.app.util.opinion.NeLoader;
-import ghidra.app.util.opinion.PeLoader;
+import ghidra.app.util.opinion.*;
 import ghidra.framework.Application;
 import ghidra.program.database.module.TreeManager;
 import ghidra.program.model.address.AddressFormatException;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.lang.CompilerSpec;
-import ghidra.program.model.lang.CompilerSpecID;
-import ghidra.program.model.lang.Language;
-import ghidra.program.model.lang.LanguageID;
+import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Listing;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.GhidraProgramUtilities;
@@ -84,6 +69,7 @@ public class ProgramSarifMgr {
 	private SarifMgr[] mgrs;
 	private Boolean[] opts;
 	private Program program;
+	private MessageLog log;
 	private SarifProgramOptions options;
 	private Map<String, Boolean> keys = new HashMap<>();
 	private Writer baseWriter;
@@ -92,8 +78,9 @@ public class ProgramSarifMgr {
 	 * Constructs a new program SARIF manager for applying results to an existing
 	 * program - used by the SarifPlugin
 	 */
-	public ProgramSarifMgr(Program program) {
+	public ProgramSarifMgr(Program program, MessageLog log) {
 		this.program = program;
+		this.log = log;
 		options = new SarifProgramOptions();
 		addManagers();
 	}
@@ -104,8 +91,8 @@ public class ProgramSarifMgr {
 	 * 
 	 * @param file the SARIF file
 	 */
-	public ProgramSarifMgr(Program program, File file) {
-		this(program);
+	public ProgramSarifMgr(Program program, File file, MessageLog log) {
+		this(program, log);
 		this.file = file;
 	}
 
@@ -115,10 +102,11 @@ public class ProgramSarifMgr {
 	 *
 	 * @param bp byte provider
 	 */
-	public ProgramSarifMgr(ByteProvider bp) {
+	public ProgramSarifMgr(ByteProvider bp, MessageLog log) {
 		options = new SarifProgramOptions();
 		this.file = (bp.getFSRL() != null && bp.getFSRL().getNestingDepth() == 1) ? new File(bp.getFSRL().getPath())
 				: bp.getFile();
+		this.log = log;
 	}
 
 	/**
@@ -173,10 +161,8 @@ public class ProgramSarifMgr {
 		return file != null ? new FileWriter(file) : new StringWriter(1000);
 	}
 
-
 	public void addManagers() {
 		int mgrCount = 0;
-		MessageLog log = new MessageLog();
 		mgrs = new SarifMgr[N_MANAGERS+1];
 		opts = new Boolean[N_MANAGERS+1];
 		mgrs[mgrCount] = new DataTypesSarifMgr(program, log);
@@ -219,6 +205,32 @@ public class ProgramSarifMgr {
 		for (String k : columnKeys.keySet()) {
 			keys.put(k, columnKeys.get(k));
 		}
+	}
+
+	public void setOptions(List<Option> optionList, boolean isAddToProgram) throws OptionException {
+		options.setOptions(optionList);
+		options.setAddToProgram(isAddToProgram);
+
+		int mgrCount = 0;
+		opts = new Boolean[N_MANAGERS + 1];
+		opts[mgrCount++] = options.isData();
+		opts[mgrCount++] = options.isMemoryBlocks();
+		opts[mgrCount++] = options.isRegisters();
+		opts[mgrCount++] = options.isInstructions();
+		opts[mgrCount++] = options.isData();
+		opts[mgrCount++] = options.isEquates();
+		opts[mgrCount++] = options.isComments();
+		opts[mgrCount++] = options.isProperties();
+		opts[mgrCount++] = options.isBookmarks();
+		opts[mgrCount++] = options.isTrees();
+		opts[mgrCount++] = options.isEntryPoints();
+		opts[mgrCount++] = options.isRelocationTable();
+		opts[mgrCount++] = options.isSymbols();
+		opts[mgrCount++] = options.isExternalLibraries();
+		opts[mgrCount++] = options.isFunctions();
+		opts[mgrCount++] = options.isSymbols();
+		opts[mgrCount++] = options.isReferences();
+		assert (mgrCount == N_MANAGERS + 1);
 	}
 
 	public Map<String, Boolean> getKeys() {
@@ -633,6 +645,5 @@ public class ProgramSarifMgr {
 		tempFile = File.createTempFile(filename, suffixName, dir);
 		tempFile.deleteOnExit();	
 	}
-
 
 }

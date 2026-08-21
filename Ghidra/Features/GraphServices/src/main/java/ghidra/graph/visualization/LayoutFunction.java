@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,7 @@ import org.jungrapht.visualization.layout.algorithms.sugiyama.Layering;
 
 import com.google.common.base.Objects;
 
+import ghidra.graph.visualization.layout.JgtTidierTreeLayoutAlgorithm;
 import ghidra.service.graph.AttributedEdge;
 import ghidra.service.graph.AttributedVertex;
 
@@ -49,11 +50,9 @@ class LayoutFunction
 			edge -> Objects.equal(edge.getEdgeType(), renderer.getFavoredEdgeType());
 	}
 
-
-
 	@Override
 	public LayoutAlgorithm.Builder<AttributedVertex, ?, ?> apply(String name) {
-		switch(name) {
+		switch (name) {
 			case GEM:
 				return GEMLayoutAlgorithm.edgeAwareBuilder();
 			case FORCED_BALANCED:
@@ -61,10 +60,10 @@ class LayoutFunction
 						.preRelaxDuration(1000);
 			case FORCE_DIRECTED:
 				return FRLayoutAlgorithm.<AttributedVertex> builder()
-					.repulsionContractBuilder(BarnesHutFRRepulsion.builder());
+						.repulsionContractBuilder(BarnesHutFRRepulsion.builder());
 			case CIRCLE:
 				return CircleLayoutAlgorithm.<AttributedVertex> builder()
-					.reduceEdgeCrossing(false);
+						.reduceEdgeCrossing(false);
 			case COMPACT_RADIAL:
 				return TidierRadialTreeLayoutAlgorithm
 						.<AttributedVertex, AttributedEdge> edgeAwareBuilder()
@@ -116,20 +115,19 @@ class LayoutFunction
 			case RADIAL:
 				return RadialTreeLayoutAlgorithm
 						.<AttributedVertex> builder()
-					.verticalVertexSpacing(300);
+						.verticalVertexSpacing(300);
 			case BALLOON:
 				return BalloonLayoutAlgorithm
 						.<AttributedVertex> builder()
 						.verticalVertexSpacing(300);
 			case HIERACHICAL:
 				return EdgeAwareTreeLayoutAlgorithm
-						.<AttributedVertex, AttributedEdge>edgeAwareBuilder();
+						.<AttributedVertex, AttributedEdge> edgeAwareBuilder();
 			case COMPACT_HIERARCHICAL:
 			default:
-				return TidierTreeLayoutAlgorithm
-						.<AttributedVertex, AttributedEdge> edgeAwareBuilder()
+				return JgtTidierTreeLayoutAlgorithm
+						.edgeAwareBuilder()
 						.edgeComparator(edgeTypeComparator);
-
 		}
 	}
 }

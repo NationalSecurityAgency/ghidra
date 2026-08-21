@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -53,7 +53,7 @@ import ghidra.util.Swing;
  * This also provides UI actions for searching the terminal's contents.
  */
 public class TerminalProvider extends ComponentProviderAdapter {
-	// TODO: A separate color?
+	// Should I use a separate color id?
 	private static final Color COLOR_TERMINATED = new GColor("color.border.provider.disconnected");
 
 	protected class FindDialog extends DialogComponentProvider {
@@ -167,6 +167,9 @@ public class TerminalProvider extends ComponentProviderAdapter {
 	protected DockingAction actionFindPrevious;
 	protected DockingAction actionSelectAll;
 	protected DockingAction actionTerminate;
+	protected DockingAction actionIncreaseSize;
+	protected DockingAction actionDecreaseSize;
+	protected DockingAction actionResetSize;
 
 	private boolean terminated = false;
 
@@ -232,7 +235,7 @@ public class TerminalProvider extends ComponentProviderAdapter {
 				.menuPath("Find")
 				.menuGroup("Find")
 				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_F,
-					InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK))
+					DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.SHIFT_DOWN_MASK))
 				.helpLocation(new HelpLocation(helpPlugin.getName(), "find"))
 				.onAction(this::activatedFind)
 				.buildAndInstallLocal(this);
@@ -240,7 +243,7 @@ public class TerminalProvider extends ComponentProviderAdapter {
 				.menuPath("Find Next")
 				.menuGroup("Find")
 				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_H,
-					InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK))
+					DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.SHIFT_DOWN_MASK))
 				.helpLocation(new HelpLocation(helpPlugin.getName(), "find_next"))
 				.enabledWhen(this::isEnabledFindStep)
 				.onAction(this::activatedFindNext)
@@ -249,7 +252,7 @@ public class TerminalProvider extends ComponentProviderAdapter {
 				.menuPath("Find Previous")
 				.menuGroup("Find")
 				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_G,
-					InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK))
+					DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.SHIFT_DOWN_MASK))
 				.helpLocation(new HelpLocation(helpPlugin.getName(), "find_previous"))
 				.enabledWhen(this::isEnabledFindStep)
 				.onAction(this::activatedFindPrevious)
@@ -258,9 +261,33 @@ public class TerminalProvider extends ComponentProviderAdapter {
 				.menuPath("Select All")
 				.menuGroup("Select")
 				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_A,
-					InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK))
+					DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.SHIFT_DOWN_MASK))
 				.helpLocation(new HelpLocation(helpPlugin.getName(), "select_all"))
 				.onAction(this::activatedSelectAll)
+				.buildAndInstallLocal(this);
+		actionIncreaseSize = new ActionBuilder("Increase Font Size", plugin.getName())
+				.menuPath("Increase Font Size")
+				.menuGroup("View")
+				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS,
+					DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.SHIFT_DOWN_MASK))
+				.helpLocation(new HelpLocation(helpPlugin.getName(), "increase_font_size"))
+				.onAction(this::activatedIncreaseFontSize)
+				.buildAndInstallLocal(this);
+		actionDecreaseSize = new ActionBuilder("Decrease Font Size", plugin.getName())
+				.menuPath("Decrease Font Size")
+				.menuGroup("View")
+				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_MINUS,
+					DockingUtils.CONTROL_KEY_MODIFIER_MASK))
+				.helpLocation(new HelpLocation(helpPlugin.getName(), "decrease_font_size"))
+				.onAction(this::activatedDecreaseFontSize)
+				.buildAndInstallLocal(this);
+		actionResetSize = new ActionBuilder("Reset Font Size", plugin.getName())
+				.menuPath("Reset Font Size")
+				.menuGroup("View")
+				.keyBinding(
+					KeyStroke.getKeyStroke(KeyEvent.VK_0, DockingUtils.CONTROL_KEY_MODIFIER_MASK))
+				.helpLocation(new HelpLocation(helpPlugin.getName(), "decrease_font_size"))
+				.onAction(this::activatedResetFontSize)
 				.buildAndInstallLocal(this);
 	}
 
@@ -327,6 +354,18 @@ public class TerminalProvider extends ComponentProviderAdapter {
 			sel.clear();
 		}
 		panel.getFieldPanel().setSelection(sel, EventTrigger.GUI_ACTION);
+	}
+
+	protected void activatedIncreaseFontSize(ActionContext ctx) {
+		panel.increaseFontSize();
+	}
+
+	protected void activatedDecreaseFontSize(ActionContext ctx) {
+		panel.decreaseFontSize();
+	}
+
+	protected void activatedResetFontSize(ActionContext ctx) {
+		panel.resetFontSize();
 	}
 
 	/**
@@ -396,11 +435,16 @@ public class TerminalProvider extends ComponentProviderAdapter {
 	 * <p>
 	 * The title and sub title are adjusted and all terminal listeners are removed. If/when the
 	 * window is closed, it is removed from the tool.
+	 * 
+	 * @param exitcode the exit code of the session leader, or -1 if not applicable
 	 */
-	public void terminated() {
+	public void terminated(int exitcode) {
 		Swing.runIfSwingOrRunLater(() -> {
 			terminated = true;
-			removeLocalAction(actionTerminate);
+			panel.terminalListeners.invoke().terminated(exitcode);
+			if (actionTerminate != null) {
+				removeLocalAction(actionTerminate);
+			}
 			panel.terminalListeners.clear();
 			panel.setOutputCallback(buf -> {
 			});

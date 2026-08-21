@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -63,6 +63,21 @@ public class GnuDemanglerAnalyzerTest extends AbstractGhidraHeadedIntegrationTes
 	@Override
 	protected void testFailed(Throwable e) {
 		Msg.error(this, "Test failed - analysis log:\n" + log);
+	}
+
+	@Test
+	public void testDemangleMultipleSymbolsAtAnAddress() {
+
+		Address addr = addr("0x110");
+		createSymbol(addr, "_ZGV17globalVariableFoo");
+		createSymbol(addr, "_ZZ18__gthread_active_pvE20__gthread_active_ptr");
+		createSymbol(addr, "_ZGVZN10KDirLister11emitChangesEvE3dot");
+
+		analyze();
+
+		assertDemangled(addr, "globalVariableFoo");
+		assertDemangled(addr, "__gthread_active_ptr");
+		assertDemangled(addr, "dot");
 	}
 
 	@Test

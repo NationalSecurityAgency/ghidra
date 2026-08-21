@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,6 +31,9 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class CodeCompareAddressCorrelation implements AddressCorrelation {
+
+	public static final String NAME = "CodeCompareAddressCorrelator";
+
 	static enum CorrelationKind {
 		CODE_COMPARE, LCS, PARAMETERS;
 	}
@@ -65,15 +68,16 @@ public class CodeCompareAddressCorrelation implements AddressCorrelation {
 	}
 
 	@Override
-	public AddressRange getCorrelatedDestinationRange(Address sourceAddress, TaskMonitor monitor)
-			throws CancelledException {
+	public AddressCorrelationRange getCorrelatedDestinationRange(Address sourceAddress,
+			TaskMonitor monitor) throws CancelledException {
 		initialize(monitor);
 
 		CorrelationContainer container = cachedForwardAddressMap.get(sourceAddress);
 		if (container == null) {
 			return null;
 		}
-		return container.range;
+
+		return new AddressCorrelationRange(container.range, getName());
 	}
 
 	private static final Comparator<CodeUnit> CUCOMPARATOR = new Comparator<CodeUnit>() {
@@ -446,6 +450,6 @@ public class CodeCompareAddressCorrelation implements AddressCorrelation {
 
 	@Override
 	public String getName() {
-		return "CodeCompareAddressCorrelator";
+		return NAME;
 	}
 }

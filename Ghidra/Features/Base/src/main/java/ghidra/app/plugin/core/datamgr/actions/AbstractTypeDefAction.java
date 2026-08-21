@@ -74,7 +74,7 @@ abstract class AbstractTypeDefAction extends DockingAction {
 	private DataType createNewTypeDef(Component parentComponent, TypeDef typedef,
 			CategoryPath categoryPath, DataTypeManager dataTypeManager) {
 		DataType newdt = null;
-		int transactionID = dataTypeManager.startTransaction("Create Typedef");
+		int transactionID = dataTypeManager.startTransaction("Create Typedef " + typedef.getName());
 		try {
 			newdt = dataTypeManager.addDataType(typedef, plugin.getConflictHandler());
 		}

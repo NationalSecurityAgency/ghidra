@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -130,7 +130,7 @@ class TaskRunner {
 
 	private void taskFinished() {
 
-		// This will release the the task dialog.  We passed this latch to the dialog at
+		// This will release the task dialog.  We passed this latch to the dialog at
 		// construction so that does not block until we notify it in the Swing.runLater() below.
 		// If we only rely on that notification, then the notification will be blocked when the
 		// dialog is waiting in the Swing thread.

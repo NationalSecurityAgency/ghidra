@@ -67,8 +67,7 @@ import utility.function.Callback;
 
 public class SetEquateDialog extends DialogComponentProvider {
 
-	private Color FG_EQUATE_SELECED_COLOR =
-		new GColor("color.fg.dialog.equates.equate.selected");
+	private Color FG_EQUATE_SELECED_COLOR = new GColor("color.fg.dialog.equates.equate.selected");
 	private Color FG_BAD_EQUATE_COLOR = new GColor("color.fg.dialog.equates.equate.bad");
 	private Color FG_EQUATE_COLOR = new GColor("color.fg.dialog.equates.equate");
 	private Color FG_SUGGESTION_COLOR = new GColor("color.fg.dialog.equates.suggestion");
@@ -160,14 +159,12 @@ public class SetEquateDialog extends DialogComponentProvider {
 				int refCount = eqRowObject.getRefCount();
 				if (refCount > 0) {
 					if (eqRowObject.getEntryName().contains(EquateManager.ERROR_TAG)) {
-						c.setForeground(
-							isSelected ? FG_EQUATE_SELECED_COLOR : FG_BAD_EQUATE_COLOR);
+						c.setForeground(isSelected ? FG_EQUATE_SELECED_COLOR : FG_BAD_EQUATE_COLOR);
 					}
 					else {
 						Equate e = eqRowObject.getEquate();
 						if (e != null && !e.isEnumBased()) {
-							c.setForeground(
-								isSelected ? FG_EQUATE_SELECED_COLOR : FG_EQUATE_COLOR);
+							c.setForeground(isSelected ? FG_EQUATE_SELECED_COLOR : FG_EQUATE_COLOR);
 						}
 					}
 				}
@@ -243,20 +240,24 @@ public class SetEquateDialog extends DialogComponentProvider {
 	protected JPanel buildMainPanel() {
 
 		titleLabel = new GDLabel("Possible Matches");
+		titleLabel.getAccessibleContext().setAccessibleName("Title");
 		titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
 
 		//long value = scalar.getSignedValue();
 		applyToCurrent = new GRadioButton("Current location", true);
 		applyToCurrent.setName("applyToCurrent");
+		applyToCurrent.getAccessibleContext().setAccessibleName("Apply to Location");
 		applyToCurrent.setToolTipText("Apply to current scalar operand only");
 
 		applyToSelection = new GRadioButton("Current selection", false);
 		applyToSelection.setName("applyToSelection");
+		applyToSelection.getAccessibleContext().setAccessibleName("Apply to Selection");
 		applyToSelection.setToolTipText(
 			"Apply to all matching, defined scalar code " + "units in current selection.");
 
 		applyToAll = new GRadioButton("Entire program", false);
 		applyToAll.setName("applyToAll");
+		applyToAll.getAccessibleContext().setAccessibleName("Apply to All");
 		applyToAll.setToolTipText(
 			"Apply to all matching, defined scalar code units " + "in entire program.");
 
@@ -267,6 +268,7 @@ public class SetEquateDialog extends DialogComponentProvider {
 
 		overwriteExistingEquates = new GCheckBox("Overwrite existing equates", false);
 		overwriteExistingEquates.setName("Overwrite");
+		overwriteExistingEquates.getAccessibleContext().setAccessibleName("Overwrite");
 		overwriteExistingEquates.setEnabled(false);
 		overwriteExistingEquates.setToolTipText("If checked, apply equates to all unmarked " +
 			"scalars and overwrite any existing equates of the same value in the " +
@@ -316,12 +318,15 @@ public class SetEquateDialog extends DialogComponentProvider {
 		});
 
 		JPanel tablePanel = new JPanel(new BorderLayout());
+		tablePanel.getAccessibleContext().setAccessibleName("Table Panel");
 		JScrollPane scrollPane = new JScrollPane(suggestedEquatesTable);
+		scrollPane.getAccessibleContext().setAccessibleName("Suggested Equates");
 		tablePanel.add(scrollPane);
 		tablePanel.setBorder(BorderFactory.createEmptyBorder(2, 5, 5, 5));
 
 		filterPanel =
 			new GhidraTableFilterPanel<>(suggestedEquatesTable, model, " Equate String: ");
+		filterPanel.getAccessibleContext().setAccessibleName("Suggested Equates");
 		model.addTableModelListener(evt -> updateFilter());
 
 		GhidraTableCellRenderer renderer = getRenderer();
@@ -334,10 +339,12 @@ public class SetEquateDialog extends DialogComponentProvider {
 		filterPanel.addEnterListener(enterListener);
 
 		JPanel northPanel = new JPanel(new VerticalLayout(2));
+		northPanel.getAccessibleContext().setAccessibleName("Equate Field");
 		String labelText = "Scalar Value:  " + scalar.toString(16, false, true, "0x", "") + " (" +
 			scalar.toString(10, false, true, "", "") + ")";
 		JLabel label = new GLabel(labelText);
 		label.setName("EquateField");
+		label.getAccessibleContext().setAccessibleName("Equate Field");
 		label.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
 		northPanel.add(label);
 		northPanel.add(titleLabel);
@@ -345,6 +352,7 @@ public class SetEquateDialog extends DialogComponentProvider {
 		northPanel.setBorder(BorderFactory.createEmptyBorder(10, 5, 0, 5));
 
 		JPanel scopePanel = new JPanel(new HorizontalLayout(2));
+		scopePanel.getAccessibleContext().setAccessibleName("Application Scope");
 		scopePanel.setBorder(BorderFactory.createEmptyBorder(10, 5, 0, 5));
 
 		scopePanel.add(new GLabel("Apply To: "));
@@ -354,11 +362,12 @@ public class SetEquateDialog extends DialogComponentProvider {
 
 		JPanel optionsPanel = new JPanel(new HorizontalLayout(2));
 		optionsPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
-
+		optionsPanel.getAccessibleContext().setAccessibleName("Options");
 		optionsPanel.add(new GLabel("Options: "));
 		optionsPanel.add(overwriteExistingEquates);
 
 		JPanel southPanel = new JPanel(new VerticalLayout(0));
+		southPanel.getAccessibleContext().setAccessibleName("Application Scope and Options");
 		southPanel.add(scopePanel);
 		southPanel.add(optionsPanel);
 
@@ -373,7 +382,7 @@ public class SetEquateDialog extends DialogComponentProvider {
 		mainPanel.add(northPanel, BorderLayout.NORTH);
 		mainPanel.add(tablePanel, BorderLayout.CENTER);
 		mainPanel.add(southPanel, BorderLayout.SOUTH);
-
+		mainPanel.getAccessibleContext().setAccessibleName("Set Equate");
 		return mainPanel;
 	}
 

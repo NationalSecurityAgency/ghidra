@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,6 +40,7 @@ public class KeyEntryDialogTest extends AbstractGhidraHeadedIntegrationTest {
 	private KeyEntryDialog keyEntryDialog;
 	private JTextPane collisionPane;
 	private KeyEntryTextField keyEntryField;
+	private JButton clearButton;
 
 	@Before
 	public void setUp() throws Exception {
@@ -71,7 +72,7 @@ public class KeyEntryDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// clear the action
 		showDialog(unboundAction);
-		triggerBackspaceKey(keyEntryField);
+		pressButton(clearButton);
 
 		pressDialogOK();
 		acceleratorKey = unboundAction.getKeyBinding();
@@ -98,7 +99,7 @@ public class KeyEntryDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		showDialog(boundAction);
 
 		assertEquals("OPEN_BRACKET", keyEntryField.getText());
-		triggerBackspaceKey(keyEntryField);
+		pressButton(clearButton);
 
 		pressDialogOK();
 		KeyStroke ks = boundAction.getKeyBinding();
@@ -113,7 +114,7 @@ public class KeyEntryDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 		KeyStroke oldKs = boundAction.getKeyBinding();
 		assertEquals("OPEN_BRACKET", keyEntryField.getText());
-		triggerBackspaceKey(keyEntryField);
+		pressButton(clearButton);
 
 		pressDialogOK();
 		KeyStroke ks = boundAction.getKeyBinding();
@@ -175,7 +176,7 @@ public class KeyEntryDialogTest extends AbstractGhidraHeadedIntegrationTest {
 			keyBindingKeyStroke.getKeyCode());
 		assertEquals(keyEntryDialog.getStatusText().trim(), "");
 
-		triggerBackspaceKey(keyEntryField);
+		pressButton(clearButton);
 		triggerText(keyEntryField, "g");
 		pressDialogOK();
 
@@ -259,6 +260,8 @@ public class KeyEntryDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(keyEntryDialog);
 
 		collisionPane = (JTextPane) getInstanceField("collisionPane", keyEntryDialog);
-		keyEntryField = (KeyEntryTextField) getInstanceField("keyEntryField", keyEntryDialog);
+		KeyEntryPanel keyPanel = (KeyEntryPanel) getInstanceField("keyEntryPanel", keyEntryDialog);
+		keyEntryField = (KeyEntryTextField) getInstanceField("keyEntryField", keyPanel);
+		clearButton = (JButton) getInstanceField("clearButton", keyPanel);
 	}
 }

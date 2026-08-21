@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,8 +25,8 @@ import db.Transaction;
 import ghidra.async.AsyncReference;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.target.TraceObjectInterface;
-import ghidra.trace.model.target.TraceObjectKeyPath;
+import ghidra.trace.model.target.iface.TraceObjectInterface;
+import ghidra.trace.model.target.path.KeyPath;
 import ghidra.util.*;
 
 class DBTraceObjectValueWriteBehindCache {
@@ -40,8 +40,9 @@ class DBTraceObjectValueWriteBehindCache {
 	private final AsyncReference<Boolean, Void> busy = new AsyncReference<>(false);
 	private volatile boolean flushing = false;
 
-	private final Map<DBTraceObject, Map<String, NavigableMap<Long, DBTraceObjectValueBehind>>> cachedValues =
-		new HashMap<>();
+	private final Map<DBTraceObject,
+		Map<String, NavigableMap<Long, DBTraceObjectValueBehind>>> cachedValues =
+			new HashMap<>();
 
 	public DBTraceObjectValueWriteBehindCache(DBTraceObjectManager manager) {
 		this.manager = manager;
@@ -51,7 +52,7 @@ class DBTraceObjectValueWriteBehindCache {
 	}
 
 	private void workLoop() {
-		while (!manager.trace.isClosed()) {
+		while (!manager.trace.isClosing()) {
 			try {
 				synchronized (cachedValues) {
 					if (cachedValues.isEmpty()) {
@@ -69,7 +70,7 @@ class DBTraceObjectValueWriteBehindCache {
 						cachedValues.wait(left);
 					}
 				}
-				if (manager.trace.isClosed()) {
+				if (manager.trace.isClosing()) {
 					break;
 				}
 				writeBatch();
@@ -228,8 +229,8 @@ class DBTraceObjectValueWriteBehindCache {
 
 	public Stream<DBTraceObjectValueBehind> streamCanonicalParents(DBTraceObject child,
 			Lifespan lifespan) {
-		TraceObjectKeyPath path = child.getCanonicalPath();
-		TraceObjectKeyPath parentPath = path.parent();
+		KeyPath path = child.getCanonicalPath();
+		KeyPath parentPath = path.parent();
 		if (parentPath == null) { // child is the root
 			return Stream.of();
 		}

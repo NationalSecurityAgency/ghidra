@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.DataTypeNamingUtil;
+import ghidra.app.util.SymbolPath;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
@@ -79,8 +80,9 @@ public abstract class AbstractFunctionTypeApplier extends MsDataTypeApplier {
 	/**
 	 * Processes containing class if one exists
 	 * @param type the PDB type being inspected
+	 * @return symbol path of containing type; {@code null} if does not exist
 	 */
-	protected abstract void processContainingType(AbstractMsType type);
+	protected abstract SymbolPath processContainingType(AbstractMsType type);
 
 	/**
 	 * Returns if known to be a constructor.
@@ -106,14 +108,17 @@ public abstract class AbstractFunctionTypeApplier extends MsDataTypeApplier {
 	protected abstract RecordNumber getArgListRecordNumber(AbstractMsType type);
 
 	private boolean setReturnType(FunctionDefinitionDataType functionDefinition,
-			AbstractMsType type) {
+			AbstractMsType type) throws CancelledException, PdbException {
+		DataType returnType;
 		if (isConstructor(type)) {
-			return true;
+			returnType = getThisPointer(type);
 		}
-		RecordNumber returnRecord = getReturnRecordNumber(type);
-		DataType returnType = applicator.getDataType(returnRecord);
-		if (returnType == null) {
-			return false;
+		else {
+			RecordNumber returnRecord = getReturnRecordNumber(type);
+			returnType = applicator.getDataType(returnRecord);
+			if (returnType == null) {
+				return false;
+			}
 		}
 		functionDefinition.setReturnType(returnType);
 		return true;
@@ -211,17 +216,18 @@ public abstract class AbstractFunctionTypeApplier extends MsDataTypeApplier {
 	}
 
 	@Override
-	boolean apply(AbstractMsType type)
-			throws CancelledException, PdbException {
+	boolean apply(AbstractMsType type) throws CancelledException, PdbException {
 
 		if (!precheckOrScheduleDependencies(type)) {
 			return false;
 		}
 
-		FunctionDefinitionDataType functionDefinition = new FunctionDefinitionDataType(
-			applicator.getAnonymousFunctionsCategory(), "_func", applicator.getDataTypeManager());
+		SymbolPath spContainer = processContainingType(type);
 
-		processContainingType(type);
+		CategoryPath cpFunction = getFunctionCategoryPath(spContainer);
+		FunctionDefinitionDataType functionDefinition = new FunctionDefinitionDataType(
+			cpFunction, "_func", applicator.getDataTypeManager());
+
 		setReturnType(functionDefinition, type);
 		setArguments(functionDefinition, type);
 		Pointer thisPointer = getThisPointer(type);
@@ -234,6 +240,16 @@ public abstract class AbstractFunctionTypeApplier extends MsDataTypeApplier {
 
 		applicator.putDataType(type, dataType);
 		return true;
+	}
+
+	private CategoryPath getFunctionCategoryPath(SymbolPath spContainer) {
+		CategoryPath cpStandard = applicator.getAnonymousFunctionsCategory();
+		if (spContainer == null) {
+			return cpStandard;
+		}
+		CategoryPath cpContainer = applicator.getCategory(spContainer);
+		// Add the "standard" name to the container path
+		return cpContainer.extend(cpStandard.getName());
 	}
 
 	/**
@@ -285,6 +301,9 @@ public abstract class AbstractFunctionTypeApplier extends MsDataTypeApplier {
 		RecordNumber argsRecord = getArgListRecordNumber(type);
 		AbstractMsType aType = applicator.getTypeRecord(argsRecord);
 		if (!(aType instanceof AbstractArgumentsListMsType argsList)) {
+			if (aType instanceof PrimitiveMsType pt && pt.isNoType()) {
+				return new ArrayList<>();
+			}
 			throw new PdbException(
 				"Expecting arguments list but got: " + aType.getClass().getSimpleName());
 		}

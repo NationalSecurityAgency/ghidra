@@ -1,0 +1,44 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+  Switch variable also a loop variable with increments in cases
+-->
+<bytechunk space="ram" offset="0x100000" readonly="true">
+f30f1efa4189f831c9488d35c0000000
+41b908000000bf0a00000041ba050000
+0041bb0300000083f90a0f849c000000
+8d41ff83f808770a486304864801f03e
+ffe0418d4001b901000000eb77418d40
+02b902000000eb6c438d040083f80b41
+0f4dcbeb5f418d4064b904000000eb54
+4489c099f7ff4181f895000000410f4e
+caeb41418d80e8030000b906000000eb
+33418d8010270000b907000000eb2544
+89c04489c9348789c283e20129d1eb14
+418d4008b909000000eb09418d4010b9
+0a0000004189c0e95bffffff4489c0c3
+7dffffff88ffffff95ffffffa0ffffff
+b3ffffffc1ffffffcfffffffe0ffffff
+ebffffff
+</bytechunk>
+<symbol space="ram" offset="0x100000" name="switchloop"/>
+</binaryimage>
+<script>
+  <com>option readonly on</com>
+  <com>parse line extern uint4 switchloop(uint4 startval);</com>
+  <com>lo fu switchloop</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Switch Loop #1" min="9" max="9">case .*:</stringmatch>
+<stringmatch name="Switch Loop #2" min="1" max="1">startval = startval \+ 2;</stringmatch>
+<stringmatch name="Switch Loop #3" min="1" max="1">startval = startval \* 2;</stringmatch>
+<stringmatch name="Switch Loop #4" min="1" max="1">startval = startval \+ 100;</stringmatch>
+<stringmatch name="Switch Loop #5" min="1" max="1">startval / 10;</stringmatch>
+<stringmatch name="Switch Loop #6" min="1" max="1">startval = startval \+ 1000;</stringmatch>
+<stringmatch name="Switch Loop #7" min="1" max="1">startval = startval \+ 10000;</stringmatch>
+<stringmatch name="Switch Loop #8" min="1" max="1">startval = startval \^ 0x87;</stringmatch>
+<stringmatch name="Switch Loop #9" min="1" max="1">startval = startval \+ 8;</stringmatch>
+<stringmatch name="Switch Loop #10" min="1" max="1">startval = startval \+ 1;</stringmatch>
+</decompilertest>

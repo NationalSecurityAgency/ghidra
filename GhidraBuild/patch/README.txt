@@ -1,4 +1,4 @@
-This directory exits so that Ghidra releases can be patched, or overridden. 
+This directory exists so that Ghidra releases can be patched, or overridden. 
 Classes or jar files placed in this directory will found and loaded 
 *before* the classes that exist in the release jar files. One exception 
 is that classes in the Utility module can not be patched in this way.

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,13 +15,12 @@
  */
 package generic.io;
 
-import ghidra.util.Msg;
-import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
-
 import java.io.*;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
+
+import ghidra.util.Msg;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * JarWriter is a class for writing to a jar output stream.
@@ -32,7 +31,7 @@ public class JarWriter {
 	private String[] excludedExtensions;
 
 	/**
-	 * @param jarOut the the jar file output stream the zip entries are
+	 * @param jarOut the jar file output stream the zip entries are
 	 * to be written to.
 	 */
 	public JarWriter(JarOutputStream jarOut) {

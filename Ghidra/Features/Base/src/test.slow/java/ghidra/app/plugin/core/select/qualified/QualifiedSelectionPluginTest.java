@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,7 @@ import javax.swing.tree.TreePath;
 
 import org.junit.*;
 
+import docking.ComponentProvider;
 import docking.action.DockingActionIf;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
@@ -32,7 +33,6 @@ import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.marker.MarkerManagerPlugin;
 import ghidra.app.plugin.core.navigation.GoToAddressLabelPlugin;
 import ghidra.app.plugin.core.programtree.ProgramTreePlugin;
-import ghidra.app.plugin.core.programtree.ViewManagerComponentProvider;
 import ghidra.app.plugin.core.select.programtree.ProgramTreeSelectionPlugin;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.plugintool.PluginTool;
@@ -57,8 +57,7 @@ public class QualifiedSelectionPluginTest extends AbstractGhidraHeadedIntegratio
 	private DockingActionIf selectInstructionAction;
 	private DockingActionIf selectUndefinedAction;
 	private ProgramTreePlugin pt;
-	private ViewManagerComponentProvider programTreeProvider;
-	private DockingActionIf replaceView;
+	private DockingActionIf setView;
 	private ToyProgramBuilder builder;
 
 	@Before
@@ -88,15 +87,8 @@ public class QualifiedSelectionPluginTest extends AbstractGhidraHeadedIntegratio
 	private void setUpProgramTree(PluginTool tool) throws Exception {
 		tool.addPlugin(ProgramTreePlugin.class.getName());
 		pt = env.getPlugin(ProgramTreePlugin.class);
-		replaceView = getAction(pt, "Replace View");
-		showProgramTree();
+		setView = getAction(pt, "Set View");
 		tool.addPlugin(ProgramTreeSelectionPlugin.class.getName());
-	}
-
-	private void showProgramTree() {
-		programTreeProvider = (ViewManagerComponentProvider) getInstanceField("viewProvider", pt);
-		tool.showComponentProvider(programTreeProvider, true);
-		waitForComponentProvider(ViewManagerComponentProvider.class);
 	}
 
 	protected void setUpQualifiedSelection(PluginTool tool) throws Exception {
@@ -219,11 +211,12 @@ public class QualifiedSelectionPluginTest extends AbstractGhidraHeadedIntegratio
 	public void testSelectWithView() throws Exception {
 		AddressSet rsrcSet = new AddressSet(addr("0100a000"), addr("0100f3ff"));
 
+		ComponentProvider programTree = showProvider(tool, "Program Tree");
 		JTree tree = waitFor(() -> findComponent(tool.getToolFrame(), JTree.class));
 
 		// Replace view with .rsrc
 		selectTreeNodeByText(tree, ".rsrc", true);
-		performAction(replaceView, provider, true);
+		performAction(setView, programTree, true);
 
 		ProgramSelection rsrcInstructionSet = getCurrentSelection();
 		assertTrue(rsrcInstructionSet.isEmpty());
@@ -236,7 +229,7 @@ public class QualifiedSelectionPluginTest extends AbstractGhidraHeadedIntegratio
 		// Change to program view and make sure the previously selected (but not visible in
 		// the current view) instructions are selected in the new view.
 		selectTreeNodeByText(tree, "Test", true);
-		performAction(replaceView, provider, true);
+		performAction(setView, programTree, true);
 		ProgramSelection instructionSet = getCurrentSelection();
 		assertFalse("Instructions selection should have been restored when the view changed",
 			instructionSet.isEmpty());
@@ -248,7 +241,7 @@ public class QualifiedSelectionPluginTest extends AbstractGhidraHeadedIntegratio
 
 		// Replace view with .rsrc
 		selectTreeNodeByText(tree, ".rsrc", true);
-		performAction(replaceView, provider, true);
+		performAction(setView, programTree, true);
 		assertTrue(getCurrentSelection().isEmpty());
 		// Select All Data.
 		performAction(selectDataAction, provider, true);
@@ -257,7 +250,7 @@ public class QualifiedSelectionPluginTest extends AbstractGhidraHeadedIntegratio
 		assertFalse(rsrcDataSet.isEmpty());
 		// Change to program view
 		selectTreeNodeByText(tree, "Test", true);
-		performAction(replaceView, provider, true);
+		performAction(setView, programTree, true);
 		ProgramSelection dataSet = getCurrentSelection();
 		assertFalse(dataSet.isEmpty());
 
@@ -268,7 +261,7 @@ public class QualifiedSelectionPluginTest extends AbstractGhidraHeadedIntegratio
 
 		// Replace view with .rsrc
 		selectTreeNodeByText(tree, ".rsrc", true);
-		performAction(replaceView, provider, true);
+		performAction(setView, programTree, true);
 		assertTrue(getCurrentSelection().isEmpty());
 		// Select All Undefined.
 		performAction(selectUndefinedAction, provider, true);
@@ -277,7 +270,8 @@ public class QualifiedSelectionPluginTest extends AbstractGhidraHeadedIntegratio
 		assertFalse(rsrcUndefinedSet.isEmpty());
 		// Change to program view
 		selectTreeNodeByText(tree, "Test", true);
-		performAction(replaceView, provider, true);
+		performAction(setView, programTree, true);
+
 		ProgramSelection undefinedSet = getCurrentSelection();
 		assertFalse(undefinedSet.isEmpty());
 

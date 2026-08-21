@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,13 +20,13 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.*;
 
-import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.opinion.Loader;
 import ghidra.formats.gfilesystem.*;
 import ghidra.framework.Platform;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.Project;
 import ghidra.framework.options.SaveState;
+import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -52,13 +52,13 @@ public class LibrarySearchPathManager {
 	/**
 	 * Returns a {@link List} of {@link FSRL}s to search for libraries
 	 * 
-	 * @param provider The {@link ByteProvider} of the program being loaded
+	 * @param program The {@link Program} being loaded
 	 * @param log The log
 	 * @param monitor A cancellable monitor
 	 * @return a {@link List} of {@link FSRL}s to search for libraries
 	 * @throws CancelledException if the user cancelled the operation
 	 */
-	public static synchronized List<FSRL> getLibraryFsrlList(ByteProvider provider, MessageLog log,
+	public static synchronized List<FSRL> getLibraryFsrlList(Program program, MessageLog log,
 			TaskMonitor monitor) throws CancelledException {
 		FileSystemService fsService = FileSystemService.getInstance();
 		List<FSRL> fsrlList = new ArrayList<>();
@@ -68,11 +68,15 @@ public class LibrarySearchPathManager {
 			FSRL fsrl = null;
 			try {
 				if (path.equals(".")) {
-					FSRL providerFsrl = provider.getFSRL();
+					FSRL providerFsrl = FSRL.fromProgram(program);
 					if (providerFsrl != null) {
 						try (RefdFile fileRef = fsService.getRefdFile(providerFsrl, monitor)) {
 							GFile parentFile = fileRef.file.getParentFile();
 							fsrl = parentFile.getFSRL();
+						}
+						catch (IOException e) {
+							log.appendMsg("Skipping '.' search path: ", e.getMessage());
+							continue;
 						}
 					}
 				}
@@ -81,18 +85,10 @@ public class LibrarySearchPathManager {
 				}
 			}
 			catch (MalformedURLException e) {
-				try {
-					File f = new File(path);
-					if (f.exists() && f.isAbsolute()) {
-						fsrl = fsService.getLocalFSRL(f.getCanonicalFile());
-					}
+				File f = new File(path);
+				if (f.exists() && f.isAbsolute()) {
+					fsrl = fsService.getLocalFSRL(f);
 				}
-				catch (IOException e2) {
-					log.appendException(e2);
-				}
-			}
-			catch (IOException e) {
-				log.appendException(e);
 			}
 			if (fsrl != null) {
 				fsrlList.add(fsrl);
@@ -113,7 +109,7 @@ public class LibrarySearchPathManager {
 	}
 
 	/**
-	 * Adds the specified library search path path to the end of the path search list
+	 * Adds the specified library search path {@code path} to the end of the path search list
 	 * 
 	 * @param path the library search path to add
 	 * @return true if the path was appended, false if the path was a duplicate

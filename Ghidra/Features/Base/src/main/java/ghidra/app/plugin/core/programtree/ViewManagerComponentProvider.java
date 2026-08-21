@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,7 @@
 package ghidra.app.plugin.core.programtree;
 
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 
 import javax.swing.JComponent;
 
@@ -40,7 +39,7 @@ public class ViewManagerComponentProvider extends ComponentProviderAdapter
 	public static final String CURRENT_VIEW = "Current Viewname";
 
 	private ViewPanel viewPanel;
-	private ArrayList<ViewChangeListener> listeners;
+	private List<ViewChangeListener> listeners;
 	private Program currentProgram;
 	private String restoredViewName;
 
@@ -72,6 +71,8 @@ public class ViewManagerComponentProvider extends ComponentProviderAdapter
 		String currentName = NAME;
 		ComponentProvider.registerProviderNameOwnerChange(intermediateName, currentOwner,
 			currentName, currentOwner);
+
+		addToTool();
 	}
 
 	void serviceAdded(ViewProviderService service) {
@@ -186,11 +187,14 @@ public class ViewManagerComponentProvider extends ComponentProviderAdapter
 		}
 
 		if (event != null) {
-			return new ProgramActionContext(this, currentProgram, viewPanel,
-				getActivePopupObject(event));
+			// this should be a ProgramNode or a tab
+			Object clickedObject = getActivePopupObject(event);
+			return new ProgramTreeActionContext(this, currentProgram, viewPanel, clickedObject);
 		}
 
-		return new ProgramActionContext(this, currentProgram, viewPanel, getFocusedContext());
+		// this should be a ProgramNode
+		Object focusedObject = getFocusedContext();
+		return new ProgramTreeActionContext(this, currentProgram, viewPanel, focusedObject);
 	}
 
 	private Object getFocusedContext() {

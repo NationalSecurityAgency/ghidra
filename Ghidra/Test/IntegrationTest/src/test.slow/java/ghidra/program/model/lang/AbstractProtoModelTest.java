@@ -87,6 +87,7 @@ public class AbstractProtoModelTest extends AbstractGenericTest {
 			dtManager.addDataType(new CharDataType(), null);
 			dtManager.addDataType(new UnsignedIntegerDataType(), null);
 			dtManager.addDataType(new LongDataType(), null);
+			dtManager.addDataType(new LongLongDataType(), null);
 			dtManager.addDataType(new FloatDataType(), null);
 			dtManager.addDataType(new DoubleDataType(), null);
 			dtManager.addDataType(new Float16DataType(), null);
@@ -245,7 +246,9 @@ public class AbstractProtoModelTest extends AbstractGenericTest {
 		parseStores(storeData, stores);
 		Assert.assertEquals(storeData.size(), res.size());
 		for (int i = 0; i < res.size(); ++i) {
-			boolean compare = comparePiece(storeData.get(i), res.get(i));
+			ParameterPieces resPiece = res.get(i);
+			ArrayList<Varnode> storePiece = storeData.get(i);
+			boolean compare = comparePiece(storePiece, resPiece);
 			String message = null;
 			if (!compare) {
 				StringBuilder buffer = new StringBuilder();
@@ -253,16 +256,49 @@ public class AbstractProtoModelTest extends AbstractGenericTest {
 				buffer.append(cspec.getCompilerSpecID());
 				buffer.append(' ').append(model.getName()).append(' ');
 				if (i == 0) {
-					buffer.append("Output does not match for ");
+					buffer.append("Output ").append("@"+toString(resPiece)).append(" does not match for ");
 				}
 				else {
-					buffer.append("Parameter ").append(i - 1).append(" does not match for: ");
+					buffer.append("Parameter ").append(i - 1).append(" @"+toString(resPiece)+" ").append(" does not match for: ");
 				}
 				buffer.append(signature);
 				message = buffer.toString();
 			}
 			Assert.assertTrue(message, compare);
 		}
+	}
+
+	private String toString(ParameterPieces resPiece) {
+		Varnode[] joinPieces = resPiece.joinPieces;
+		if (joinPieces != null) {
+			StringBuilder buffer = new StringBuilder("join ");
+			
+			for (Varnode varnode : joinPieces) {
+				buffer.append(toString(varnode)).append(" ");
+			}
+			return buffer.toString();
+		}
+		
+		Address addr = resPiece.address;
+		resPiece.type.getLength();
+		if (addr != null) {
+			if (addr.isRegisterAddress()) {
+				return language.getRegister(addr, resPiece.type.getLength()).getName();
+			}
+			return addr.toString();
+		}
+
+		return "UNKNOWN";
+	}
+
+	private String toString(Varnode varnode) {
+		if (varnode == null) {
+			return "@null";
+		}
+		if (varnode.isRegister()) {
+			return language.getRegister(varnode.getAddress(), varnode.getSize()).getName();
+		}
+		return varnode.toString();
 	}
 
 }

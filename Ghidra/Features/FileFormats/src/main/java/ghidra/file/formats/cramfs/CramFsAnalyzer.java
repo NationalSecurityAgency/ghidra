@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,13 +20,12 @@ import ghidra.app.services.AnalyzerType;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.BinaryLoader;
-import ghidra.framework.options.Options;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Processor;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.exception.CancelledException;
@@ -48,9 +47,7 @@ public class CramFsAnalyzer extends AbstractAnalyzer {
 	@Override
 	public boolean canAnalyze(Program program) {
 		try {
-			Options options = program.getOptions(Program.PROGRAM_INFO);
-			String format = options.getString("Executable Format", null);
-			if (!BinaryLoader.BINARY_NAME.equals(format)) {
+			if (!BinaryLoader.BINARY_NAME.equals(program.getExecutableFormat())) {
 				return false;
 			}
 			Language language = program.getLanguage();
@@ -79,8 +76,7 @@ public class CramFsAnalyzer extends AbstractAnalyzer {
 			DataType dataType = cramFsSuper.toDataType();
 			program.getListing().createData(minAddress, dataType);
 			program.getListing()
-					.setComment(minAddress, CodeUnit.PLATE_COMMENT,
-						cramFsSuper.getRoot().toString());
+					.setComment(minAddress, CommentType.PLATE, cramFsSuper.getRoot().toString());
 			int offset = cramFsSuper.getRoot().getOffsetAdjusted();
 
 			for (int i = 0; i < cramFsSuper.getFsid().getFiles() - 1; i++) {
@@ -93,7 +89,7 @@ public class CramFsAnalyzer extends AbstractAnalyzer {
 				if (newInode.isFile()) {
 					Address inodeDataAddress = minAddress.add(newInode.getOffsetAdjusted());
 					program.getListing()
-							.setComment(inodeDataAddress, CodeUnit.PLATE_COMMENT,
+							.setComment(inodeDataAddress, CommentType.PLATE,
 								newInode.getName() + " Data/Bytes\n");
 				}
 
@@ -101,7 +97,7 @@ public class CramFsAnalyzer extends AbstractAnalyzer {
 				program.getListing().createData(inodeAddress, inodeDataType);
 
 				program.getListing()
-						.setComment(inodeAddress, CodeUnit.PLATE_COMMENT,
+						.setComment(inodeAddress, CommentType.PLATE,
 							newInode.getName() + "\n" + newInode.toString());
 
 				offset += inodeDataType.getLength();

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ public class MenuManager implements ManagedMenuItem {
 
 	private String name;
 	private final String[] menuPath;
-	private char mnemonicKey = '\0';
+	private int mnemonicKey = MenuData.NO_MNEMONIC;
 	private int level;
 	private boolean usePopupPath;
 	private MenuHandler menuHandler;
@@ -53,7 +53,7 @@ public class MenuManager implements ManagedMenuItem {
 	 * @param menuHandler Listener to be notified of menu behavior.
 	 * @param menuGroupMap maps menu groups to menu paths
 	 */
-	public MenuManager(String name, char mnemonicKey, String group, boolean usePopupPath,
+	public MenuManager(String name, int mnemonicKey, String group, boolean usePopupPath,
 			MenuHandler menuHandler, MenuGroupMap menuGroupMap) {
 		this(name, new String[] { name }, mnemonicKey, 0, group, usePopupPath, menuHandler,
 			menuGroupMap);
@@ -71,7 +71,7 @@ public class MenuManager implements ManagedMenuItem {
 	 * @param menuHandler Listener to be notified of menu behavior.
 	 * @param menuGroupMap maps menu groups to menu paths
 	 */
-	MenuManager(String name, String[] menuPath, char mnemonicKey, int level, String group,
+	MenuManager(String name, String[] menuPath, int mnemonicKey, int level, String group,
 			boolean usePopupPath, MenuHandler menuHandler, MenuGroupMap menuGroupMap) {
 		this.name = name;
 		this.menuPath = menuPath;
@@ -120,8 +120,8 @@ public class MenuManager implements ManagedMenuItem {
 
 		String[] fullPath = menuData.getMenuPath();
 		String displayName = fullPath[level];
-		char mnemonic = getMnemonicKey(displayName);
-		String realName = stripMnemonicAmp(displayName);
+		int mnemonic = MenuData.getMnemonic(displayName);
+		String realName = MenuData.stripMnemonicAmp(displayName);
 		MenuManager subMenu = subMenus.get(realName);
 		if (subMenu != null) {
 			return subMenu;
@@ -188,37 +188,6 @@ public class MenuManager implements ManagedMenuItem {
 	}
 
 	/**
-	 * Parses the mnemonic key from the menu items text.
-	 * @param str the menu item text
-	 * @return the mnemonic key for encoded in the actions menu text. Returns 0 if there is none.
-	 */
-	public static char getMnemonicKey(String str) {
-		int ampLoc = str.indexOf('&');
-		char mk = '\0';
-		if (ampLoc >= 0 && ampLoc < str.length() - 1) {
-			mk = str.charAt(ampLoc + 1);
-		}
-		return mk;
-	}
-
-	/***
-	 * Removes the Mnemonic indicator character (&amp;) from the text
-	 * @param text the text to strip
-	 * @return the stripped mnemonic
-	 */
-	public static String stripMnemonicAmp(String text) {
-		int ampLoc = text.indexOf('&');
-		if (ampLoc < 0) {
-			return text;
-		}
-		String s = text.substring(0, ampLoc);
-		if (ampLoc < (text.length() - 1)) {
-			s += text.substring(++ampLoc);
-		}
-		return s;
-	}
-
-	/**
 	 * Tests if this menu is empty.
 	 */
 	@Override
@@ -233,7 +202,7 @@ public class MenuManager implements ManagedMenuItem {
 	public JMenu getMenu() {
 		if (menu == null) {
 			menu = new JMenu(name);
-			if (mnemonicKey != '\0') {
+			if (mnemonicKey != MenuData.NO_MNEMONIC) {
 				menu.setMnemonic(mnemonicKey);
 			}
 			if (menuHandler != null) {
@@ -261,7 +230,7 @@ public class MenuManager implements ManagedMenuItem {
 	@Override
 	public JMenuItem getMenuItem() {
 		JMenu localMenu = getMenu();
-		localMenu.setUI((DockingMenuUI) DockingMenuUI.createUI(localMenu));
+		localMenu.setUI(DockingMenuUI.createUI(localMenu));
 		return localMenu;
 	}
 

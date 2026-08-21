@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -97,6 +97,12 @@ public:
     open = 1,		///< An array with a (possibly unknown) number of elements
     endpoint = 2	///< An (artificial) boundary to the range of bytes getting analyzed
   };
+  /// \brief Boolean properties for the range
+  enum {
+    typelock = 1,	///< Data-type for the range is locked
+    copy_constant = 2,	///< Only a constant is COPYed into the range
+    backfill = 4	///< Reference is at end of the array, try to backfill
+  };
 private:
   uintb start;		///< Starting offset of \b this range of bytes
   int4 size;		///< Number of bytes in a single element of this range
@@ -105,14 +111,20 @@ private:
   uint4 flags;		///< Additional boolean properties of this range
   RangeType rangeType;	///< The type of range
   int4 highind;		///< Minimum upper bound on the array index (if \b this is \e open)
+  void backfillToPoint(intb point);	///< Move \b start backward as close as possible to point
 public:
   RangeHint(void) {}	///< Uninitialized constructor
   RangeHint(uintb st,int4 sz,intb sst,Datatype *ct,uint4 fl,RangeType rt,int4 hi) {
     start=st; size=sz; sstart=sst; type=ct; flags=fl; rangeType = rt; highind=hi; }	///< Initialized constructor
+  bool isTypeLock(void) const { return ((flags & typelock)!=0); }	///< Is the data-type for \b this range locked
+  bool isBackfill(void) const { return ((flags & backfill)!=0); }	///< Does \b this hint want to back fill its data-type
+  bool isConstAbsorbable(const RangeHint *b) const;	///< Can another range by absorbed into \b this as a constant
   bool reconcile(const RangeHint *b) const;
   bool contain(const RangeHint *b) const;
   bool preferred(const RangeHint *b,bool reconcile) const;
   bool attemptJoin(RangeHint *b);	///< Try to concatenate another RangeHint onto \b this
+  bool attemptBackfill(RangeHint *b);	///< Backfill another hint into space after \b this
+  void backfillOpen(const Range &range,int4 maxElements);	///< Backfill \b this into given range up to a maximum
   void absorb(RangeHint *b);	///< Absorb the other RangeHint into \b this
   bool merge(RangeHint *b,AddrSpace *space,TypeFactory *typeFactory);	///< Try to form the union of \b this with another RangeHint
   int4 compare(const RangeHint &op2) const;		///< Order \b this with another RangeHint
@@ -167,13 +179,18 @@ public:
 class MapState {
   AddrSpace *spaceid;			///< The address space being analyzed
   RangeList range;			///< The subset of ranges, within the whole address space to analyze
+  RangeList paramRange;			///< Part of address space dedicated to parameters
   vector<RangeHint *> maplist;		///< The list of collected RangeHints
   vector<RangeHint *>::iterator iter;	///< The current iterator into the RangeHints
   Datatype *defaultType;		///< The default data-type to use for RangeHints
   AliasChecker checker;			///< A collection of pointer Varnodes into our address space
+  bool paramRangeHit;			///< \b true if we see open reference to stack region reserved for parameters
   void addGuard(const LoadGuard &guard,OpCode opc,TypeFactory *typeFactory);	///< Add LoadGuard record as a hint to the collection
+  bool adjustOutOfRange(uintb &st,Datatype *&ct,uint4 &fl);	///< Try to adjust a hint that is out of range
   void addRange(uintb st,Datatype *ct,uint4 fl,RangeHint::RangeType rt,int4 hi);	///< Add a hint to the collection
+  void addFixedType(uintb start,Datatype *ct,uint4 flags,TypeFactory *types);	///< Add a fixed reference to a specific data-type
   void reconcileDatatypes(void);	///< Decide on data-type for RangeHints at the same address
+  static bool isReadActive(Varnode *vn);	///< Is the given Varnode read by an active operation
 public:
 #ifdef OPACTION_DEBUG
   mutable bool debugon;
@@ -184,11 +201,11 @@ public:
   MapState(AddrSpace *spc,const RangeList &rn,const RangeList &pm,Datatype *dt);	///< Constructor
   ~MapState(void);		///< Destructor
   bool initialize(void);	///< Initialize the hint collection for iteration
+  bool hasParamRangeHit(void) const { return paramRangeHit; }	///< Return \b true if reference into parameter stack region has been seen
   void sortAlias(void) { checker.sortAlias(); }		///< Sort the alias starting offsets
   const vector<uintb> &getAlias(void) { return checker.getAlias(); }	///< Get the list of alias starting offsets
   void gatherSymbols(const EntryMap *rangemap);		///< Add Symbol information as hints to the collection
   void gatherVarnodes(const Funcdata &fd);		///< Add stack Varnodes as hints to the collection
-  void gatherHighs(const Funcdata &fd);			///< Add HighVariables as hints to the collection
   void gatherOpen(const Funcdata &fd);			///< Add pointer references as hints to the collection
   RangeHint *next(void) { return *iter; }		///< Get the current RangeHint in the collection
   bool getNext(void) { ++iter; if (iter==maplist.end()) return false; return true; }	///< Advance the iterator, return \b true if another hint is available
@@ -210,6 +227,8 @@ class ScopeLocal : public ScopeInternal {
   uintb maxParamOffset;		///< Maximum offset of parameter passed (to a called function) on the stack
   bool stackGrowsNegative;	///< Marked \b true if the stack is considered to \e grow towards smaller offsets
   bool rangeLocked;		///< True if the subset of addresses \e mapped to \b this scope has been locked
+  bool overlapProblems;		///< True if the last \b restructure had overlapping variable problems
+  bool openParamRefs;		///< True if we have seen references into the stack region reserved for parameters
   bool adjustFit(RangeHint &a) const;	///< Make the given RangeHint fit in the current Symbol map
   void createEntry(const RangeHint &a);	///< Create a Symbol entry corresponding to the given (fitted) RangeHint
   bool restructure(MapState &state);	///< Merge hints into a formal Symbol layout of the address space
@@ -225,6 +244,9 @@ public:
 
   AddrSpace *getSpaceId(void) const { return space; }		///< Get the associated (stack) address space
 
+  /// \brief Return \b true if \b restructure analysis discovered overlapping variables
+  bool hasOverlapProbems(void) const { return overlapProblems; }
+
   /// \brief Is this a storage location for \e unaffected registers
   ///
   /// \param vn is the Varnode storing an \e unaffected register
@@ -232,6 +254,8 @@ public:
   bool isUnaffectedStorage(Varnode *vn) const { return (vn->getSpace() == space); }
 
   bool isUnmappedUnaliased(Varnode *vn) const;	///< Check if a given unmapped Varnode should be treated as unaliased.
+
+  bool hasOpenParamRefs(void) const { return openParamRefs; }	///< Return \b true if we have seen refs into parameter region
 
   void markNotMapped(AddrSpace *spc,uintb first,int4 sz,bool param);	///< Mark a specific address range is not mapped
 
@@ -245,7 +269,6 @@ public:
 				   int4 &index,uint4 flags) const;
   void resetLocalWindow(void);	///< Reset the set of addresses that are considered mapped by the scope to the default
   void restructureVarnode(bool aliasyes);	///< Layout mapped symbols based on Varnode information
-  void restructureHigh(void);			///< Layout mapped symbols based on HighVariable information
   SymbolEntry *remapSymbol(Symbol *sym,const Address &addr,const Address &usepoint);
   SymbolEntry *remapSymbolDynamic(Symbol *sym,uint8 hash,const Address &usepoint);
   void recoverNameRecommendationsForSymbols(void);

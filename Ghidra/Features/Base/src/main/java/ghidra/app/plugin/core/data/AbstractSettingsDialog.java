@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.data;
 
 import java.awt.*;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.math.BigInteger;
 import java.util.*;
@@ -23,6 +24,7 @@ import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableCellEditor;
 
 import docking.DialogComponentProvider;
@@ -31,6 +33,7 @@ import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.dialogs.StringChoices;
 import docking.widgets.table.*;
 import docking.widgets.textfield.IntegerTextField;
+import docking.widgets.textfield.integer.IntegerFormat;
 import ghidra.docking.settings.*;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.BigEndianDataConverter;
@@ -66,7 +69,7 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 	 */
 	protected AbstractSettingsDialog(String title, SettingsDefinition[] settingDefinitions,
 			Settings originalSettings) {
-		super(title, true, false, true, false);
+		super(title, true, true, true, false);
 		this.settingsDefinitions = settingDefinitions;
 		settings = new SettingsImpl(originalSettings) {
 			@Override
@@ -143,6 +146,21 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 		addButton(newApplyButton);
 
 		addCancelButton();
+
+		MouseAdapter listener = new MouseAdapter() {
+
+			@Override
+			public void mousePressed(MouseEvent e) {
+
+				if (settingsTable.isEditing()) {
+					settingsTable.editingStopped(new ChangeEvent(this));
+				}
+			}
+		};
+
+		okButton.addMouseListener(listener);
+		newApplyButton.addMouseListener(listener);
+		cancelButton.addMouseListener(listener);
 	}
 
 	private String getHexModePropertyName(SettingsDefinition settingsDef) {
@@ -155,8 +173,7 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 			if (settingsDefinition instanceof NumberSettingsDefinition) {
 				String propertyName = getHexModePropertyName(settingsDefinition);
 				boolean hexMode = Boolean
-						.valueOf(
-							Preferences.getProperty(propertyName, Boolean.FALSE.toString()));
+						.valueOf(Preferences.getProperty(propertyName, Boolean.FALSE.toString()));
 				intHexModeMap.put(settingsDefinition.getName(), hexMode);
 			}
 		}
@@ -198,7 +215,7 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 		settingsTable.setColumnSelectionAllowed(false);
 
 		// make the rows a bit taller to allow the integer text field editor to render correctly
-		settingsTable.setRowHeight(22);
+		settingsTable.setRowPadding(4);
 
 		// disable user sorting and column adding (we don't expect enough data to require sorting)
 		settingsTable.getTableHeader().setReorderingAllowed(false);
@@ -207,6 +224,21 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 
 		settingsTable.setDefaultRenderer(Settings.class, new SettingsRenderer());
 		settingsTable.setDefaultEditor(Settings.class, new SettingsEditor());
+
+		settingsTable.addMouseListener(new MouseAdapter() {
+
+			@Override
+			public void mousePressed(MouseEvent e) {
+
+				if (clickedUseDefaultWhileSelected(e)) {
+					setStatusText("'Use Default' can only be selected, not de-selected");
+					return;
+				}
+
+				clearStatusText();
+			}
+
+		});
 
 		JScrollPane scrollpane = new JScrollPane(settingsTable);
 		scrollpane.setPreferredSize(new Dimension(WIDTH, HEIGHT));
@@ -223,8 +255,21 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 		if (hasImmutableSettings) {
 			workPanel.add(new JLabel("* Immutable setting"), BorderLayout.SOUTH);
 		}
-
+		workPanel.getAccessibleContext().setAccessibleName("Settings");
 		return workPanel;
+	}
+
+	private boolean clickedUseDefaultWhileSelected(MouseEvent e) {
+
+		Point p = e.getPoint();
+		int col = settingsTable.columnAtPoint(p);
+		if (!settingsTableModel.isUseDefaultColumn(col)) {
+			return false;
+		}
+
+		int row = settingsTable.rowAtPoint(p);
+		Object value = settingsTable.getValueAt(row, col);
+		return (Boolean) value;
 	}
 
 	@Override
@@ -236,7 +281,13 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 
 	@Override
 	protected void okCallback() {
-		settingsTable.editingStopped(null);
+
+		// prevent users from closing the dialog when pressing Enter to confirm an edit
+		if (settingsTable.isEditing()) {
+			settingsTable.editingStopped(null);
+			return;
+		}
+
 		apply();
 		close();
 		dispose();
@@ -508,6 +559,10 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 			return defaultSettings != null ? 3 : 2;
 		}
 
+		boolean isUseDefaultColumn(int col) {
+			return col == 2;
+		}
+
 		@Override
 		public String getColumnName(int col) {
 			switch (col) {
@@ -675,7 +730,6 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 
 	class StringSettingsComboBox extends GComboBox<String> {
 		StringSettingsComboBox() {
-			super();
 		}
 	}
 
@@ -695,8 +749,6 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 		private SettingsRowObject rowobject;
 
 		SettingsEditor() {
-			comboBox.setEnterKeyForwarding(false);
-			comboBox.addActionListener(e -> fireEditingStopped());
 			intTextField.addChangeListener(e -> updateHexMode());
 		}
 
@@ -731,7 +783,8 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 		}
 
 		private void updateHexMode() {
-			intHexModeMap.put(rowobject.definition.getName(), intTextField.isHexMode());
+			intHexModeMap.put(rowobject.definition.getName(),
+				intTextField.getFormat() == IntegerFormat.HEX);
 		}
 
 		private Number getNumber() {
@@ -802,14 +855,14 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 			mode = NUMBER;
 			NumberSettingsDefinition def = (NumberSettingsDefinition) rowobject.definition;
 			if (def.isHexModePreferred() || isHexModeEnabled(def)) {
-				intTextField.setHexMode();
+				intTextField.setFormat(IntegerFormat.HEX);
 			}
 			else {
-				intTextField.setDecimalMode();
+				intTextField.setFormat(IntegerFormat.DEC);
 			}
 
 			intTextField.setMaxValue(def.getMaxValue());
-			intTextField.setAllowNegativeValues(def.allowNegativeValue());
+			intTextField.setMinValue(def.allowNegativeValue() ? null : BigInteger.ZERO);
 
 			if (value == null) {
 				intTextField.setValue(null);

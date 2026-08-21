@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -233,22 +233,6 @@ class ListingDB implements Listing {
 	@Override
 	public Data getUndefinedDataBefore(Address addr, TaskMonitor monitor) {
 		return codeMgr.getFirstUndefinedDataBefore(addr, monitor);
-	}
-
-	@Override
-	public DataIterator getCompositeData(boolean forward) {
-		return codeMgr.getCompositeData(forward ? program.getMinAddress() : program.getMaxAddress(),
-			forward);
-	}
-
-	@Override
-	public DataIterator getCompositeData(Address start, boolean forward) {
-		return codeMgr.getCompositeData(start, forward);
-	}
-
-	@Override
-	public DataIterator getCompositeData(AddressSetView addrSet, boolean forward) {
-		return codeMgr.getCompositeData(addrSet, forward);
 	}
 
 	@Override
@@ -480,19 +464,25 @@ class ListingDB implements Listing {
 	}
 
 	@Override
-	public CommentHistory[] getCommentHistory(Address addr, int commentType) {
+	public CommentHistory[] getCommentHistory(Address addr, CommentType commentType) {
 		return codeMgr.getCommentHistory(addr, commentType);
 	}
 
 	@Override
-	public CodeUnitIterator getCommentCodeUnitIterator(int commentType, AddressSetView addrSet) {
+	public CodeUnitIterator getCommentCodeUnitIterator(CommentType commentType,
+			AddressSetView addrSet) {
 		return codeMgr.getCommentCodeUnitIterator(commentType, addrSet);
 	}
 
 	@Override
-	public AddressIterator getCommentAddressIterator(int commentType, AddressSetView addrSet,
-			boolean forward) {
+	public AddressIterator getCommentAddressIterator(CommentType commentType,
+			AddressSetView addrSet, boolean forward) {
 		return codeMgr.getCommentAddressIterator(commentType, addrSet, forward);
+	}
+
+	@Override
+	public long getCommentAddressCount() {
+		return codeMgr.getCommentAddressCount();
 	}
 
 	@Override
@@ -501,12 +491,17 @@ class ListingDB implements Listing {
 	}
 
 	@Override
-	public String getComment(int commentType, Address address) {
+	public String getComment(CommentType commentType, Address address) {
 		return codeMgr.getComment(commentType, address);
 	}
 
 	@Override
-	public void setComment(Address address, int commentType, String comment) {
+	public CodeUnitComments getAllComments(Address address) {
+		return codeMgr.getAllComments(address);
+	}
+
+	@Override
+	public void setComment(Address address, CommentType commentType, String comment) {
 		codeMgr.setComment(address, commentType, comment);
 	}
 

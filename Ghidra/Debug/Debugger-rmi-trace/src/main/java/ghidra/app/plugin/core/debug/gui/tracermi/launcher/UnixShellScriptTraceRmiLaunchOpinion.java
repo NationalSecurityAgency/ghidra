@@ -16,11 +16,13 @@
 package ghidra.app.plugin.core.debug.gui.tracermi.launcher;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import generic.jar.ResourceFile;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer;
+import ghidra.framework.OperatingSystem;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 
@@ -29,10 +31,13 @@ public class UnixShellScriptTraceRmiLaunchOpinion extends AbstractTraceRmiLaunch
 	@Override
 	public Collection<TraceRmiLaunchOffer> getOffers(TraceRmiLauncherServicePlugin plugin,
 			Program program) {
-		return getScriptPaths(plugin.getTool())
-				.flatMap(rf -> Stream.of(rf.listFiles(crf -> crf.getName().endsWith(".sh"))))
-				.flatMap(sf -> createOffer(plugin, program, sf))
-				.collect(Collectors.toList());
+		if (OperatingSystem.CURRENT_OPERATING_SYSTEM != OperatingSystem.WINDOWS) {
+			return getScriptPaths(plugin.getTool())
+					.flatMap(rf -> Stream.of(rf.listFiles(crf -> crf.getName().endsWith(".sh"))))
+					.flatMap(sf -> createOffer(plugin, program, sf))
+					.collect(Collectors.toList());
+		}
+		return List.of();
 	}
 
 	protected Stream<TraceRmiLaunchOffer> createOffer(TraceRmiLauncherServicePlugin plugin,

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,6 @@ import ghidra.framework.store.*;
 import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.framework.store.local.LocalFolderItem;
 import ghidra.server.Repository;
-import ghidra.server.RepositoryManager;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.DuplicateFileException;
 import ghidra.util.exception.FileInUseException;
@@ -94,20 +93,20 @@ public class RepositoryFolder {
 	private void init() throws IOException {
 		String path = getPathname();
 		String[] names = fileSystem.getFolderNames(path);
-		for (String name2 : names) {
-			RepositoryFolder subfolder = new RepositoryFolder(repository, fileSystem, this, name2);
-			folderMap.put(name2, subfolder);
+		for (String folderName : names) {
+			RepositoryFolder subfolder =
+				new RepositoryFolder(repository, fileSystem, this, folderName);
+			folderMap.put(folderName, subfolder);
 		}
 		names = fileSystem.getItemNames(path);
 		int badItemCount = 0;
-		for (String name2 : names) {
-			LocalFolderItem item = fileSystem.getItem(path, name2);
-			if (item == null || !(item instanceof DatabaseItem)) {
+		for (String itemName : names) {
+			LocalFolderItem item = fileSystem.getItem(path, itemName);
+			if (item == null || (item instanceof UnknownFolderItem)) {
 				++badItemCount;
-				continue;
 			}
-			RepositoryFile rf = new RepositoryFile(repository, fileSystem, this, name2);
-			fileMap.put(name2, rf);
+			RepositoryFile rf = new RepositoryFile(repository, fileSystem, this, itemName);
+			fileMap.put(itemName, rf);
 		}
 		if (badItemCount != 0) {
 			log.error("Repository '" + repository.getName() + "' contains " + badItemCount +
@@ -217,7 +216,7 @@ public class RepositoryFolder {
 			if (fileSystem.fileExists(getPathname(), fileName)) {
 				try {
 					LocalFolderItem item = fileSystem.getItem(getPathname(), fileName);
-					if (item == null || !(item instanceof DatabaseItem)) {
+					if (item == null) {
 						log.error("Repository '" + repository.getName() + "' contains bad item: " +
 							makePathname(getPathname(), fileName));
 						return null;
@@ -257,8 +256,40 @@ public class RepositoryFolder {
 			// Folder created notification causes RepositoryFolder instance to be added
 
 			RepositoryFolder rf = getFolder(folderName);
-			RepositoryManager.log(repository.getName(), rf.getPathname(), "folder created", user);
+			repository.log(rf.getPathname(), "folder created", user);
 			return rf;
+		}
+	}
+
+	/**
+	 * Creates a new text data file within the specified parent folder.
+	 * @param itemName new data file name
+	 * @param fileID file ID to be associated with new file or null
+	 * @param contentType application defined content type
+	 * @param textData text data (required)
+	 * @param comment file comment (may be null)
+	 * @param user user who is initiating request
+	 * @throws DuplicateFileException Thrown if a folderItem with that name already exists.
+	 * @throws InvalidNameException if the name has illegal characters.
+	 * @throws IOException if an IO error occurs.
+	 */
+	public void createTextDataFile(String itemName, String fileID, String contentType,
+			String textData, String comment, String user) throws InvalidNameException, IOException {
+		synchronized (fileSystem) {
+			repository.validate();
+			repository.validateWritePrivilege(user);
+			if (getFile(itemName) != null) {
+				throw new DuplicateFileException(itemName + " already exists");
+			}
+
+			fileSystem.createTextDataItem(getPathname(), itemName, fileID, contentType, textData,
+				comment, user);
+
+			RepositoryFile rf = new RepositoryFile(repository, fileSystem, this, itemName);
+			fileMap.put(itemName, rf);
+
+			repository.log(makePathname(getPathname(), itemName),
+				"file created", user);
 		}
 	}
 
@@ -288,7 +319,7 @@ public class RepositoryFolder {
 			// Buffer file does not yet exist - too early to get folder item needed for RepositoryFile
 			LocalManagedBufferFile bf = fileSystem.createDatabase(getPathname(), itemName, fileID,
 				contentType, bufferSize, user, projectPath);
-			RepositoryManager.log(repository.getName(), makePathname(getPathname(), itemName),
+			repository.log(makePathname(getPathname(), itemName),
 				"file created", user);
 			return bf;
 		}
@@ -313,7 +344,7 @@ public class RepositoryFolder {
 
 	/**
 	 * Returns true if any file/item contained within this folder
-	 * or its descendents is checked-out.
+	 * or its descendants is checked-out.
 	 */
 	private boolean containsCheckout() throws IOException {
 
@@ -376,8 +407,8 @@ public class RepositoryFolder {
 				if (parent == null) {
 					throw new IOException("Root folder may not be moved");
 				}
-				if (newParent.isDescendentOf(this)) {
-					throw new IOException("New folder must not be decendent");
+				if (newParent.isDescendantOf(this)) {
+					throw new IOException("New folder must not be descendant");
 				}
 				if (containsCheckout()) {
 					throw new FileInUseException(
@@ -402,8 +433,7 @@ public class RepositoryFolder {
 					throw new IOException("Folder can not be renamed and moved");
 				}
 				pathChanged();
-				RepositoryManager.log(repository.getName(), oldPath,
-					"folder moved to " + getPathname(), user);
+				repository.log(oldPath, "folder moved to " + getPathname(), user);
 			}
 			finally {
 				repository.flushChangeEvents();
@@ -426,9 +456,9 @@ public class RepositoryFolder {
 	}
 
 	/**
-	 * Returns true if this folder is a descendent of the specified folder
+	 * Returns true if this folder is a descendant of the specified folder
 	 */
-	private boolean isDescendentOf(RepositoryFolder folder) {
+	private boolean isDescendantOf(RepositoryFolder folder) {
 		RepositoryFolder rf = parent;
 		while (rf != null) {
 			if (rf == folder) {
@@ -445,4 +475,5 @@ public class RepositoryFolder {
 				: parentPath;
 		return path + FileSystem.SEPARATOR + childName;
 	}
+
 }

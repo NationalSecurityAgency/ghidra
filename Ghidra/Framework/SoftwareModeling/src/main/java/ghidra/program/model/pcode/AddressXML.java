@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,15 +34,16 @@ import ghidra.xml.XmlParseException;
 /**
  * Utility class for the myriad ways of marshaling/unmarshaling an address and an optional size,
  * to/from XML for the various configuration files.
- * 
+ * <p>
  * An object of the class itself is the most general form, where the specified address
- *   - MAY have an associated size given in bytes
- *   - MAY be in the JOIN address space, with physical pieces making up the logical value explicitly provided.
- * 
- * The static buildXML methods write out an \<addr> tag given component elements without allocating an object.
+ * <ul>
+ *   <li>MAY have an associated size given in bytes</li>
+ *   <li>MAY be in the JOIN address space, with physical pieces making up the logical value explicitly provided</li>
+ * </ul>
+ * The static buildXML methods write out an {@code <addr>} tag given component elements without allocating an object.
  * The static readXML methods read XML tags (presented in different forms) and returns an Address object.
  * The static appendAttributes methods write out attributes of an address to an arbitrary XML tag.
- * The static restoreXML methods read an \<addr> tag and produce a general AddressXML object.
+ * The static restoreXML methods read an {@code <addr>} tag and produce a general AddressXML object.
  */
 public class AddressXML {
 
@@ -136,7 +137,7 @@ public class AddressXML {
 	}
 
 	/**
-	 * Encode this sized address as an \<addr> element to the stream
+	 * Encode this sized address as an {@code <addr>} element to the stream
 	 * @param encoder is the stream encoder
 	 * @throws IOException for errors in the underlying stream
 	 */
@@ -433,12 +434,14 @@ public class AddressXML {
 
 	/**
 	 * Create an address from a stream encoding. This recognizes elements
-	 *   - \<addr>
-	 *   - \<spaceid>
-	 *   - \<iop> or
-	 *   - any element with "space" and "offset" attributes
-	 * 
-	 * An empty \<addr> element, with no attributes, results in Address.NO_ADDRESS being returned.
+	 * <ul>
+	 *   <li>{@code <addr>}</li>
+	 *   <li>{@code <spaceid>}</li>
+	 *   <li>{@code <iop>} or</li>
+	 *   <li>any element with "space" and "offset" attributes</li>
+	 * </ul>
+	 * An empty {@code <addr>} element, with no attributes, results in {@link Address#NO_ADDRESS}
+	 * being returned.
 	 * @param decoder is the stream decoder
 	 * @return Address created from decode info
 	 * @throws DecoderException for any problems decoding the stream
@@ -545,7 +548,7 @@ public class AddressXML {
 	}
 
 	/**
-	 * Encode the given Address as an \<addr> element to the stream
+	 * Encode the given Address as an {@code <addr>} element to the stream
 	 * 
 	 * @param encoder is the stream encoder
 	 * @param addr -- Address to encode
@@ -563,7 +566,7 @@ public class AddressXML {
 	}
 
 	/**
-	 * Encode the given Address and a size as an \<addr> element to the stream
+	 * Encode the given Address and a size as an {@code <addr>} element to the stream
 	 * 
 	 * @param encoder is the stream encoder
 	 * @param addr is the given Address
@@ -577,9 +580,9 @@ public class AddressXML {
 	}
 
 	/**
-	 * Encode a sequence of Varnodes as a single \<addr> element to the stream.
+	 * Encode a sequence of Varnodes as a single {@code <addr>} element to the stream.
 	 * If there is more than one Varnode, or if the logical size is non-zero,
-	 * the \<addr> element will specify the address space as "join" and will have
+	 * the {@code <addr>} element will specify the address space as "join" and will have
 	 * additional "piece" attributes.
 	 * 
 	 * @param encoder is the stream encoder

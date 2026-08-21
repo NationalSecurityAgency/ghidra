@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,7 +70,16 @@ public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent
 		GTreeNode node = (GTreeNode) value;
 		String text = node.getDisplayText();
 		setText(text);
-		setToolTipText(node.getToolTip());
+
+		String toolTip = node.getToolTip();
+		setToolTipText(toolTip);
+
+		// Note: attempting to use the tooltip text here by removing the html formatting can be 
+		// too slow for large functions.  Also, the full preview text for larger symbol tool tips
+		// can be overwhelming for screen readers.   The text of the node is a reasonable value 
+		// to provide for screen readers.
+		// String fromHTML = HTMLUtilities.fromHTML(toolTip);
+		getAccessibleContext().setAccessibleDescription(node.getDisplayText());
 
 		Icon icon = getNodeIcon(node, expanded);
 		if (icon == null) {

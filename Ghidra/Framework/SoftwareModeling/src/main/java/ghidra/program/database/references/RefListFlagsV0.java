@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,12 +19,22 @@ import ghidra.program.model.symbol.SourceType;
 
 class RefListFlagsV0 {
 
-	private static final int SOURCE_LOBIT = 0x01;
+	// NOTE: Storage for SourceType has been expanded into upper zero-initialized bits 
+	// with simple ProgramDB version change. 
+
+	private static final int SOURCE_LOBIT = 0x01; // SourceType LO 1-bit
 	private static final int IS_PRIMARY = 0x02;
 	private static final int IS_OFFSET = 0x04;
 	private static final int HAS_SYMBOL_ID = 0x08;
 	private static final int IS_SHIFT = 0x10;
+	private static final int SOURCE_HIBITS = 0x60; // SourceType HI 2-bits
+
 	private static final int SOURCE_HIBIT = 0x20;
+
+	private static final int SOURCE_LOBIT_SHIFT = 0;
+	private static final int SOURCE_HIBITS_SHIFT = 5;
+
+	private static final int MAX_SOURCE_VALUE = 7; // value limit based upon 3-bit storage capacity
 
 	private int flags;
 
@@ -36,12 +45,23 @@ class RefListFlagsV0 {
 	public RefListFlagsV0(boolean isPrimary, boolean isOffsetRef, boolean hasSymbolID,
 			boolean isShiftRef, SourceType source) {
 		flags = 0;
-		if (source == SourceType.USER_DEFINED || source == SourceType.IMPORTED) {
-			flags |= SOURCE_LOBIT;
+
+		// Get the storage ID to be used to encode source type
+		// NOTE: RefListV0 uses a storage ID in some cases that differs from SourceType storage ID
+		int sourceId = switch (source) {
+			case DEFAULT -> 0;
+			case ANALYSIS -> 2;
+			default -> source.getStorageId();
+		};
+
+		// Encode SourceType value into split storage flags
+		if (sourceId > MAX_SOURCE_VALUE) {
+			throw new RuntimeException("Unsupported SourceType storage ID: " + sourceId);
 		}
-		if (source == SourceType.ANALYSIS || source == SourceType.IMPORTED) {
-			flags |= SOURCE_HIBIT;
-		}
+		int sourceTypeLoBit = (sourceId & 1) << SOURCE_LOBIT_SHIFT; // 1-bit
+		int sourceTypeHiBits = (sourceId >>> 1) << SOURCE_HIBITS_SHIFT; // remaining hi-bits
+		flags |= sourceTypeHiBits | sourceTypeLoBit;
+
 		if (isPrimary)
 			flags |= IS_PRIMARY;
 		if (isOffsetRef)
@@ -57,12 +77,18 @@ class RefListFlagsV0 {
 	}
 
 	SourceType getSource() {
-		boolean isLoBit = (flags & SOURCE_LOBIT) != 0;
-		boolean isHiBit = (flags & SOURCE_HIBIT) != 0;
-		if (isHiBit) {
-			return isLoBit ? SourceType.IMPORTED : SourceType.ANALYSIS;
-		}
-		return isLoBit ? SourceType.USER_DEFINED : SourceType.DEFAULT;
+
+		// Decode storage ID from flags bits
+		int sourceTypeLoBit = (flags & SOURCE_LOBIT) >>> SOURCE_LOBIT_SHIFT; // 1-bit
+		int sourceTypeHiBits = (flags & SOURCE_HIBITS) >>> (SOURCE_HIBITS_SHIFT - 1); // remaining HI-bits
+		int sourceTypeId = sourceTypeHiBits | sourceTypeLoBit;
+
+		// NOTE: RefListV0 uses a storage ID in some cases that differs from SourceType storage ID
+		return switch (sourceTypeId) {
+			case 0 -> SourceType.DEFAULT;
+			case 2 -> SourceType.ANALYSIS;
+			default -> SourceType.getSourceType(sourceTypeId);
+		};
 	}
 
 	public boolean hasSymbolID() {

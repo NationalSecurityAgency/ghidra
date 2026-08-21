@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -102,9 +102,10 @@ public class OpBehaviorFactory {
 		opBehaviorMap.put(PcodeOp.CPOOLREF, new SpecialOpBehavior(PcodeOp.CPOOLREF));
 		opBehaviorMap.put(PcodeOp.NEW, new SpecialOpBehavior(PcodeOp.NEW));
 		opBehaviorMap.put(PcodeOp.INSERT, new SpecialOpBehavior(PcodeOp.INSERT));
-		opBehaviorMap.put(PcodeOp.EXTRACT, new SpecialOpBehavior(PcodeOp.EXTRACT));
+		opBehaviorMap.put(PcodeOp.ZPULL, new SpecialOpBehavior(PcodeOp.ZPULL));
 		opBehaviorMap.put(PcodeOp.POPCOUNT, new OpBehaviorPopcount());
 		opBehaviorMap.put(PcodeOp.LZCOUNT, new OpBehaviorLzcount());
+		opBehaviorMap.put(PcodeOp.SPULL, new SpecialOpBehavior(PcodeOp.SPULL));
 	}
 
 	private OpBehaviorFactory() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,10 +83,6 @@ public class BitmapResource {
 	BI_CMYKRLE4 = 0x000D	   
 */
 
-	/**
-	 * @throws IOException 
-	 * 
-	 */
 	public BitmapResource(MemBuffer buf) throws IOException {
 		initialize(buf);
 	}
@@ -275,9 +271,6 @@ public class BitmapResource {
 		return null;
 	}
 
-	/**
-	 * @return int
-	 */
 	public int getColorMapLength() {
 		if (bitCount == 32 || bitCount == 24) {
 			return 0;
@@ -285,9 +278,6 @@ public class BitmapResource {
 		return getClrUsed() * 4;
 	}
 
-	/**
-	 * @return DataImage
-	 */
 	public DataImage getDataImage(MemBuffer buf) {
 		if (bitCount == 1) {
 			return getOnePlaneImage(buf);
@@ -326,15 +316,11 @@ public class BitmapResource {
 		}
 	}
 
-	/**
-	 * @param buf
-	 * @return DataImage
-	 */
 	protected DataImage get32PlaneImage(MemBuffer buf) {
 		// create the color model
 		ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
 		int[] nBits = { 8, 8, 8, 8 };
-		int[] bOffs = { 0, 1, 2, 3 };
+		int[] bOffs = { 2, 1, 0, 3 };
 		ColorModel colorModel =
 			new ComponentColorModel(cs, nBits, true, false, Transparency.TRANSLUCENT,
 				DataBuffer.TYPE_BYTE);
@@ -353,10 +339,6 @@ public class BitmapResource {
 		return new BitmapDataImage(image);
 	}
 
-	/**
-	 * @param buf
-	 * @return DataImage
-	 */
 	protected DataImage get18PlaneImage(MemBuffer buf) {
 		// create the color model
 		ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
@@ -380,10 +362,6 @@ public class BitmapResource {
 		return new BitmapDataImage(image);
 	}
 
-	/**
-	 * @param buf
-	 * @return DataImage
-	 */
 	protected DataImage getEightPlaneImage(MemBuffer buf) {
 		// create the color model
 		IndexColorModel model =
@@ -398,10 +376,6 @@ public class BitmapResource {
 		return new BitmapDataImage(image);
 	}
 
-	/**
-	 * @param buf
-	 * @return DataImage
-	 */
 	protected DataImage getFourPlaneImage(MemBuffer buf) {
 		// create the color model
 		int[] colormapData = getRGBData(buf);
@@ -416,26 +390,21 @@ public class BitmapResource {
 		return new BitmapDataImage(image);
 	}
 
-	/**
-	 * @param buf
-	 * @return DataImage
-	 */
 	protected DataImage getOnePlaneImage(MemBuffer buf) {
 		// create the color model
+		int[] colormapData = getRGBData(buf);
+		IndexColorModel model =
+			new IndexColorModel(1, getClrUsed(), colormapData, 0, false, -1, DataBuffer.TYPE_BYTE);
 
 		// create the image
 
 		BufferedImage image =
-			new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_BYTE_BINARY);
+			new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_BYTE_BINARY, model);
 		byte[] dbuf = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
 		getPixelData(buf, dbuf);
 		return new BitmapDataImage(image);
 	}
 
-	/**
-	 * @param buf
-	 * @param dbuf
-	 */
 	protected void getPixelData(MemBuffer buf, byte[] dbuf) {
 //		int height = getHeight();
 
@@ -490,6 +459,7 @@ public class BitmapResource {
 
 	private static class BitmapDecompressResult {
 		final int rawDataSize;
+		@SuppressWarnings("unused")
 		final int decompressedDataSize;
 		final byte[] decompressedImageData; // may be null if not decompressed
 
@@ -503,8 +473,8 @@ public class BitmapResource {
 
 	/**
 	 * Process compressed image data contained within the specified memory buffer.
-	 * @param mem memory buffer positioned to start of compressed image data
-	 * @param out optional decompressed image data output stream
+	 * @param buf memory buffer positioned to start of compressed image data
+	 * @param offset the buffer offset
 	 * @return BitmapDecompressResult result of decompression processing where decompressedImageData
 	 * will only be filled-in if returnDecompressedData is true;
 	 * @throws MemoryAccessException if decompression fails due to memory constraint

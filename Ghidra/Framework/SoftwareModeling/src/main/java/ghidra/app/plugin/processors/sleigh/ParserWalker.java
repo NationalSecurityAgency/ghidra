@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,9 +26,9 @@ import ghidra.util.exception.AssertException;
  * Class for walking the Sleigh Parser tree.  The nodes of the tree are the Sleigh Constructors arranged for a particular
  * instruction.  This tree is walked for various purposes:
  * <ul>
- *     <li>SleighInstructionPrototype.resolve        - initial parsing of instruction and building the tree
- *     <li>SleighInstructionPrototype.resolveHandles - filling in Varnode values for all the Constructor exports
- *     <li>PcodeEmit                                 - for weaving together p-code for an instruction
+ *     <li>SleighInstructionPrototype.resolve        - initial parsing of instruction and building the tree</li>
+ *     <li>SleighInstructionPrototype.resolveHandles - filling in Varnode values for all the Constructor exports</li>
+ *     <li>PcodeEmit                                 - for weaving together p-code for an instruction</li>
  * </ul>
  *
  */

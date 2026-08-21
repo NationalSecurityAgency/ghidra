@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,11 +15,12 @@
  */
 package ghidra.app.plugin.core.byteviewer;
 
+import java.math.BigInteger;
+
 import ghidra.app.plugin.core.format.ByteBlock;
 import ghidra.app.plugin.core.format.ByteBlockAccessException;
-import ghidra.util.*;
-
-import java.math.BigInteger;
+import ghidra.util.DataConverter;
+import ghidra.util.LittleEndianDataConverter;
 
 /**
  * ByteBlock for a byte buffer read from a file.
@@ -41,14 +42,13 @@ class FileByteBlock implements ByteBlock {
 	/* (non-Javadoc)
 	 * @see ghidra.app.plugin.core.format.ByteBlock#getLocationRepresentation(int)
 	 */
+	@Override
 	public String getLocationRepresentation(BigInteger bigIndex) {
 		int index = bigIndex.intValue();
-		if (index < buf.length) {
-			return pad(Integer.toString(index), 8);
-		}
-		return null;
+		return index < buf.length ? "%08d".formatted(index) : null;
 	}
 
+	@Override
 	public int getMaxLocationRepresentationSize() {
 		return 8;
 	}
@@ -56,6 +56,7 @@ class FileByteBlock implements ByteBlock {
 	/* (non-Javadoc)
 	 * @see ghidra.app.plugin.core.format.ByteBlock#getIndexName()
 	 */
+	@Override
 	public String getIndexName() {
 		return "Bytes";
 	}
@@ -63,6 +64,7 @@ class FileByteBlock implements ByteBlock {
 	/* (non-Javadoc)
 	 * @see ghidra.app.plugin.core.format.ByteBlock#getLength()
 	 */
+	@Override
 	public BigInteger getLength() {
 		return BigInteger.valueOf(buf.length);
 	}
@@ -70,6 +72,7 @@ class FileByteBlock implements ByteBlock {
 	/* (non-Javadoc)
 	 * @see ghidra.app.plugin.core.format.ByteBlock#getByte(int)
 	 */
+	@Override
 	public byte getByte(BigInteger bigIndex) throws ByteBlockAccessException {
 		int index = bigIndex.intValue();
 		if (index < buf.length) {
@@ -78,9 +81,36 @@ class FileByteBlock implements ByteBlock {
 		return 0;
 	}
 
+	@Override
+	public int getBytes(byte[] bytes, BigInteger bigIndex, int count)
+			throws ByteBlockAccessException {
+		int index = bigIndex.intValue();
+		if (index < buf.length) {
+			count = Math.min(count, buf.length - index);
+			System.arraycopy(buf, index, bytes, 0, count);
+			return count;
+		}
+		return 0;
+	}
+
+	/* (non-Javadoc)
+	 * @see ghidra.app.plugin.core.format.ByteBlock#getShort(int)
+	 */
+	@Override
+	public short getShort(BigInteger bigIndex) throws ByteBlockAccessException {
+		int index = bigIndex.intValue();
+		if (index < buf.length) {
+			byte[] b = new byte[2];
+			System.arraycopy(buf, index, b, 0, b.length);
+			return converter.getShort(b);
+		}
+		return 0;
+	}
+
 	/* (non-Javadoc)
 	 * @see ghidra.app.plugin.core.format.ByteBlock#getInt(int)
 	 */
+	@Override
 	public int getInt(BigInteger bigIndex) throws ByteBlockAccessException {
 		int index = bigIndex.intValue();
 		if (index < buf.length) {
@@ -94,6 +124,7 @@ class FileByteBlock implements ByteBlock {
 	/* (non-Javadoc)
 	 * @see ghidra.app.plugin.core.format.ByteBlock#getLong(int)
 	 */
+	@Override
 	public long getLong(BigInteger bigIndex) throws ByteBlockAccessException {
 		int index = bigIndex.intValue();
 		if (index < buf.length) {
@@ -107,6 +138,7 @@ class FileByteBlock implements ByteBlock {
 	/* (non-Javadoc)
 	 * @see ghidra.app.plugin.core.format.ByteBlock#setByte(int, byte)
 	 */
+	@Override
 	public void setByte(BigInteger bigIndex, byte value) throws ByteBlockAccessException {
 		int index = bigIndex.intValue();
 		if (index < buf.length) {
@@ -115,8 +147,22 @@ class FileByteBlock implements ByteBlock {
 	}
 
 	/* (non-Javadoc)
+	 * @see ghidra.app.plugin.core.format.ByteBlock#setShort(int, short)
+	 */
+	@Override
+	public void setShort(BigInteger bigIndex, short value) throws ByteBlockAccessException {
+		int index = bigIndex.intValue();
+		if (index < buf.length) {
+			byte[] b = new byte[2];
+			converter.putShort(b, 0, value);
+			System.arraycopy(b, 0, buf, index, b.length);
+		}
+	}
+
+	/* (non-Javadoc)
 	 * @see ghidra.app.plugin.core.format.ByteBlock#setInt(int, int)
 	 */
+	@Override
 	public void setInt(BigInteger bigIndex, int value) throws ByteBlockAccessException {
 		int index = bigIndex.intValue();
 		if (index < buf.length) {
@@ -129,6 +175,7 @@ class FileByteBlock implements ByteBlock {
 	/* (non-Javadoc)
 	 * @see ghidra.app.plugin.core.format.ByteBlock#setLong(int, long)
 	 */
+	@Override
 	public void setLong(BigInteger bigIndex, long value) throws ByteBlockAccessException {
 		int index = bigIndex.intValue();
 		if (index < buf.length) {
@@ -142,6 +189,7 @@ class FileByteBlock implements ByteBlock {
 	/* (non-Javadoc)
 	 * @see ghidra.app.plugin.core.format.ByteBlock#isEditable()
 	 */
+	@Override
 	public boolean isEditable() {
 		return false;
 	}
@@ -149,6 +197,7 @@ class FileByteBlock implements ByteBlock {
 	/* (non-Javadoc)
 	 * @see ghidra.app.plugin.core.format.ByteBlock#setBigEndian(boolean)
 	 */
+	@Override
 	public void setBigEndian(boolean bigEndian) {
 		if (this.bigEndian != bigEndian) {
 			this.bigEndian = bigEndian;
@@ -159,6 +208,7 @@ class FileByteBlock implements ByteBlock {
 	/* (non-Javadoc)
 	 * @see ghidra.app.plugin.core.format.ByteBlock#isBigEndian()
 	 */
+	@Override
 	public boolean isBigEndian() {
 		return bigEndian;
 	}
@@ -166,21 +216,12 @@ class FileByteBlock implements ByteBlock {
 	/* (non-Javadoc)
 	 * @see ghidra.app.plugin.core.format.ByteBlock#getAlignment(int)
 	 */
+	@Override
 	public int getAlignment(int radix) {
 		return 0;
 	}
 
 	byte[] getBytes() {
 		return buf;
-	}
-
-	private String pad(String str, int length) {
-		StringBuffer sb = new StringBuffer();
-		int nspaces = length - str.length();
-		for (int i = 0; i < nspaces; i++) {
-			sb.append(" ");
-		}
-		sb.append(str);
-		return sb.toString();
 	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,8 @@ import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.Gui;
 import ghidra.framework.Application;
-import ghidra.util.HelpLocation;
+import ghidra.util.*;
+import help.validator.JavaHelpValidator;
 import help.validator.location.*;
 import resources.IconProvider;
 import resources.Icons;
@@ -162,6 +163,76 @@ public class HelpBuildUtils {
 			if (sp.startsWith(parent)) {
 				return sp;
 			}
+		}
+		return null;
+	}
+
+	/**
+	 * Finds the actual module file for the given relative path when in development mode.  For 
+	 * example, given: 
+	 * <pre>
+	 * 	help/shared/DefaultStyle.css
+	 * </pre>
+	 * This method will find: 
+	 * <pre>
+	 * 	{repo}/Ghidra/Framework/Help/src/main/resources/help/shared/DefaultStyle.css
+	 * </pre>
+	 * @param relativePath the path
+	 * @return the file
+	 */
+	public static ResourceFile findModuleFile(String relativePath) {
+		Collection<ResourceFile> moduleDirs = Application.getModuleRootDirectories();
+		for (ResourceFile dir : moduleDirs) {
+			ResourceFile file = new ResourceFile(dir, relativePath);
+			if (file.exists()) {
+				return file;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Searches the application classpath (for a module file) and directory structure (for a release
+	 * file), depending on whether in release mode or development mode, to find the URL for the 
+	 * given relative path.
+	 * @param relativePath the path
+	 * @return the URL or null if not found
+	 */
+	public static URL findApplicationUrl(String relativePath) {
+
+		String updatedPath = relativePath;
+		if (relativePath.startsWith(JavaHelpValidator.EXTERNAL_PREFIX)) {
+			updatedPath = relativePath.substring(JavaHelpValidator.EXTERNAL_PREFIX.length());
+		}
+
+		ResourceFile file = null;
+		if (SystemUtilities.isInDevelopmentMode()) {
+			// Look for HTML files that live in global docs dir, such as 'docs/README_PDB.html'.
+			file = findModuleFile("src/global/" + updatedPath);
+			if (file == null) {
+				// Look for HTML files that get built to the global docs dir (such as 
+				// 'docs/WhatsNew.md' -> 'WhatsNew.html')
+				file = findModuleFile("build/src/global/" + updatedPath);
+			}
+		}
+		else {
+			// 
+			// In release mode, some of the help content is relative to the root of the application,
+			// such as 'docs/WhatsNew.html'.
+			//
+			ResourceFile installDir = Application.getInstallationDirectory();
+			file = new ResourceFile(installDir, updatedPath);
+		}
+
+		if (file == null || !file.exists()) {
+			return null;
+		}
+
+		try {
+			return file.toURL();
+		}
+		catch (MalformedURLException e) {
+			Msg.trace(HelpBuildUtils.class, "Unexpected error parsing file to URL: " + file);
 		}
 		return null;
 	}
@@ -357,10 +428,10 @@ public class HelpBuildUtils {
 		return false;
 	}
 
-	private static final Path DEFAULT_FS_ROOT;
+	private static final Path DEFAULT_ROOT_DIR;
 	static {
 		try {
-			DEFAULT_FS_ROOT = Paths.get(".").toRealPath().getRoot();
+			DEFAULT_ROOT_DIR = Paths.get(".").toRealPath().getRoot();
 		}
 		catch (IOException e) {
 			throw new RuntimeException(
@@ -368,7 +439,7 @@ public class HelpBuildUtils {
 		}
 	}
 
-	private static Path toFSGivenRoot(Path root, Path path) {
+	private static Path relativeToRoot(Path root, Path path) {
 		if (path.getNameCount() == 0) {
 			if (path.isAbsolute()) {
 				return root;
@@ -388,12 +459,12 @@ public class HelpBuildUtils {
 		return temp;
 	}
 
-	public static Path toDefaultFS(Path path) {
-		return toFSGivenRoot(DEFAULT_FS_ROOT, path);
+	public static Path relativeToWorkingDir(Path path) {
+		return relativeToRoot(DEFAULT_ROOT_DIR, path);
 	}
 
-	public static Path toFS(Path targetFS, Path path) {
-		return toFSGivenRoot(targetFS.toAbsolutePath().getRoot(), path);
+	public static Path relativeTo(Path targetFS, Path path) {
+		return relativeToRoot(targetFS.toAbsolutePath().getRoot(), path);
 	}
 
 	public static Path createReferencePath(URI fileURI) {

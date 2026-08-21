@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,8 +70,7 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		"<li><b>Block Model Changes Only</b> - relayout the graph when the block model changes " +
 		"(like when a label has been added to the program in the currently graphed function)</li>" +
 		"<li><b>Vertex Grouping Changes Only</b> - when vertices are grouped or ungrouped</li>" +
-		"<li><b>Never</b> - do not automatically relayout the graph</li></ul><br><br>" +
-		"<b><i>See help for more</i></b>";
+		"<li><b>Never</b> - do not automatically relayout the graph</li></ul>";
 
 	private static final String DEFAULT_VERTEX_BACKGROUND_COLOR_KEY = "Default Vertex Color";
 	private static final String DEFAULT_VERTEX_BACKGROUND_COLOR_DESCRPTION =
@@ -81,11 +80,15 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 	private static final String DEFAULT_GROUP_BACKGROUND_COLOR_DESCRPTION =
 		"The default background color applied to newly created group vertices";
 
-	private static final String UPDATE_GROUP_AND_UNGROUP_COLORS =
+	private static final String UPDATE_GROUP_AND_UNGROUP_COLORS_KEY =
 		"Update Vertex Colors When Grouping";
 	private static final String UPDATE_GROUP_AND_UNGROUP_COLORS_DESCRIPTION =
 		"Signals that any user color changes to a group vertex will apply that same color to " +
 			"all grouped vertices as well.";
+
+	private static final String MAX_NODES_KEY = "Max Nodes";
+	private static final String MAX_NODES_DESCRIPTION =
+		"The maximum number of nodes to process before cancelling graph loading.";
 
 	private boolean updateGroupColorsAutomatically = true;
 
@@ -103,6 +106,7 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 	private GColor unconditionalJumpEdgeHighlightColor = new GColor("color.bg.plugin.functiongraph.edge.jump.unconditional.highlight");
 	//@formatter:on
 
+	private int maxNodes = 1000;
 	private boolean useFullSizeTooltip = false;
 
 	private RelayoutOption relayoutOption = RelayoutOption.VERTEX_GROUPING_CHANGES;
@@ -121,6 +125,10 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 
 	public boolean getUpdateGroupColorsAutomatically() {
 		return updateGroupColorsAutomatically;
+	}
+
+	public int getMaxNodes() {
+		return maxNodes;
 	}
 
 	public Color getFallthroughEdgeColor() {
@@ -179,11 +187,13 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		options.registerThemeColorBinding(DEFAULT_GROUP_BACKGROUND_COLOR_KEY,
 			defaultGroupBackgroundColor.getId(), help, DEFAULT_GROUP_BACKGROUND_COLOR_DESCRPTION);
 
-		options.registerOption(UPDATE_GROUP_AND_UNGROUP_COLORS, updateGroupColorsAutomatically,
+		options.registerOption(UPDATE_GROUP_AND_UNGROUP_COLORS_KEY, updateGroupColorsAutomatically,
 			help, UPDATE_GROUP_AND_UNGROUP_COLORS_DESCRIPTION);
 
 		options.registerOption(USE_FULL_SIZE_TOOLTIP_KEY, useFullSizeTooltip, help,
 			USE_FULL_SIZE_TOOLTIP_DESCRIPTION);
+
+		options.registerOption(MAX_NODES_KEY, maxNodes, help, MAX_NODES_DESCRIPTION);
 
 		options.registerThemeColorBinding(EDGE_COLOR_CONDITIONAL_JUMP_KEY,
 			conditionalJumpEdgeColor.getId(), help, "Conditional jump edge color");
@@ -221,7 +231,9 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		useFullSizeTooltip = options.getBoolean(USE_FULL_SIZE_TOOLTIP_KEY, useFullSizeTooltip);
 
 		updateGroupColorsAutomatically =
-			options.getBoolean(UPDATE_GROUP_AND_UNGROUP_COLORS, updateGroupColorsAutomatically);
+			options.getBoolean(UPDATE_GROUP_AND_UNGROUP_COLORS_KEY, updateGroupColorsAutomatically);
+
+		maxNodes = options.getInt(MAX_NODES_KEY, maxNodes);
 
 		Set<Entry<String, FGLayoutOptions>> entries = layoutOptionsByName.entrySet();
 		for (Entry<String, FGLayoutOptions> entry : entries) {

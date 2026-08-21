@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,78 +20,83 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ghidra.app.plugin.core.searchtext.Searcher.TextSearchResult;
-import ghidra.program.model.address.*;
+import ghidra.app.util.viewer.field.CommentUtils;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
 import ghidra.util.StringUtilities;
 
+/**
+ * Field searcher for comments. Since all comments types for an address are stored in the same
+ * database record, comment searchers share a common {@link CommentAddressSupplier} which the
+ * overall searcher will manually advance. The advance here will just assume the the comment
+ * supplier has been advanced and it will just return the suppliers current address.
+ */
 public class CommentFieldSearcher extends ProgramDatabaseFieldSearcher {
-	private AddressIterator iterator;
-	private final int commentType;
+	private CommentType commentType;
+	private CommentAddressSupplier supplier;
 	private Program program;
 
-	public CommentFieldSearcher(Program program, ProgramLocation startLoc, AddressSetView set,
-			boolean forward, Pattern pattern, int commentType) {
+	public CommentFieldSearcher(CommentAddressSupplier supplier, Program program,
+			ProgramLocation startLoc,
+			AddressSetView set, boolean forward, Pattern pattern, CommentType commentType) {
 
 		super(pattern, forward, startLoc, set);
-		this.commentType = commentType;
+		this.supplier = supplier;
 		this.program = program;
-		if (set != null) {
-			iterator = program.getListing().getCommentAddressIterator(commentType, set, forward);
-		}
-		else {
-			AddressSetView addressSet = program.getMemory();
-			if (forward) {
-				addressSet.intersectRange(startLoc.getAddress(), addressSet.getMaxAddress());
-			}
-			else {
-				addressSet.intersectRange(addressSet.getMinAddress(), startLoc.getAddress());
-			}
-			iterator =
-				program.getListing().getCommentAddressIterator(commentType, addressSet, forward);
-		}
+		this.commentType = commentType;
 	}
 
 	@Override
 	protected Address advance(List<TextSearchResult> currentMatches) {
-		Address nextAddress = iterator.next();
-		if (nextAddress != null) {
-			findMatchesForCurrentAddress(nextAddress, currentMatches);
+		Address address = supplier.getCurrentAddress();
+		if (address == null) {
+			return null;	// we are at the end of the iterator
 		}
-		return nextAddress;
+		findMatchesForCurrentAddress(address, currentMatches);
+		return address;
 	}
 
 	private void findMatchesForCurrentAddress(Address address,
 			List<TextSearchResult> currentMatches) {
-		String comment = program.getListing().getComment(commentType, address);
+		String comment = supplier.getCurrentComment(commentType);
 		if (comment == null) {
 			return;
 		}
-		String cleanedUpComment = comment.replace('\n', ' ');
-		Matcher matcher = pattern.matcher(cleanedUpComment);
-		while (matcher.find()) {
+
+		// Remove newlines; turn any annotations into the display version so the screen positions
+		// of the program locations work correctly.
+		String cleanedUpComment = comment.replaceAll("\n", "");
+		String updatedLine = CommentUtils.getDisplayString(cleanedUpComment, program);
+
+		Matcher matcher = pattern.matcher(updatedLine);
+		int pos = 0;
+		while (matcher.find(pos)) {
 			int index = matcher.start();
-			currentMatches
-					.add(new TextSearchResult(getCommentLocation(comment, index, address), index));
+			ProgramLocation commentLocation = getCommentLocation(comment, index, address);
+			currentMatches.add(new TextSearchResult(commentLocation, index));
+			pos = index + 1;
 		}
 	}
 
 	private ProgramLocation getCommentLocation(String commentStr, int index, Address address) {
 		String[] comments = StringUtilities.toLines(commentStr);
+
 		int rowIndex = findRowIndex(comments, index);
 		int charOffset = getRelativeCharOffset(index, rowIndex, comments);
 		int[] dataPath = getDataComponentPath(address);
 		switch (commentType) {
-			case CodeUnit.EOL_COMMENT:
+			case EOL:
 				return new EolCommentFieldLocation(program, address, dataPath, comments, rowIndex,
 					charOffset, rowIndex);
-			case CodeUnit.PLATE_COMMENT:
+			case PLATE:
 				return new PlateFieldLocation(program, address, dataPath, rowIndex, charOffset,
 					comments, rowIndex);
-			case CodeUnit.REPEATABLE_COMMENT:
+			case REPEATABLE:
 				return new RepeatableCommentFieldLocation(program, address, dataPath, comments,
-					rowIndex, charOffset, rowIndex); // TODO One of searchStrIndex parameters is wrong.
-			case CodeUnit.POST_COMMENT:
+					rowIndex, charOffset, rowIndex);
+			case POST:
 				return new PostCommentFieldLocation(program, address, dataPath, comments, rowIndex,
 					charOffset);
 			default:

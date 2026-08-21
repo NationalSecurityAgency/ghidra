@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,21 +15,31 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+import java.util.function.Function;
+import java.util.regex.*;
 
-import docking.widgets.*;
+import docking.widgets.CursorPosition;
+import docking.widgets.SearchLocation;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import docking.widgets.fieldpanel.support.RowColLocation;
+import docking.widgets.search.*;
 import ghidra.app.decompiler.component.ClangTextField;
 import ghidra.app.decompiler.component.DecompilerPanel;
+import ghidra.util.Msg;
+import ghidra.util.UserSearchUtils;
+import ghidra.util.worker.Worker;
 
 /**
  * A {@link FindDialogSearcher} for searching the text of the decompiler window.
  */
 public class DecompilerSearcher implements FindDialogSearcher {
 
+	private Worker worker = Worker.createGuiWorker();
 	private DecompilerPanel decompilerPanel;
+	private DecompilerSearchResults searchResults;
 
 	/**
 	 * Constructor
@@ -71,72 +81,255 @@ public class DecompilerSearcher implements FindDialogSearcher {
 	}
 
 	@Override
-	public void setCursorPosition(CursorPosition position) {
-		decompilerPanel.setCursorPosition(((DecompilerCursorPosition) position).getFieldLocation());
+	public void dispose() {
+		decompilerPanel.setSearchResults(null);
+
+		if (searchResults != null) {
+			searchResults.dispose();
+		}
 	}
 
-	@Override
-	public void highlightSearchResults(SearchLocation location) {
-		decompilerPanel.setSearchResults(location);
+	private void updateSearchResults(String text, boolean useRegex) {
+		if (searchResults != null) {
+			if (!searchResults.isInvalid(text)) {
+
+				// the current results are still valid; ensure the highlights are still active
+				searchResults.activate();
+				return;
+			}
+
+			searchResults.dispose();
+			searchResults = null;
+		}
+
+		searchResults = doSearch(text, useRegex);
 	}
 
+	private DecompilerSearchResults doSearch(String searchText, boolean isRegex) {
+
+		Pattern pattern = createPattern(searchText, isRegex);
+		Function<String, SearchMatch> forwardMatcher = createForwardMatchFunction(pattern);
+		FieldLocation start = new FieldLocation();
+
+		List<SearchLocation> results = new ArrayList<>();
+		DecompilerSearchLocation searchLocation = findNext(forwardMatcher, searchText, start);
+		while (searchLocation != null) {
+			results.add(searchLocation);
+
+			FieldLocation last = searchLocation.getFieldLocation();
+			int line = last.getIndex().intValue();
+			int field = 0; // there is only 1 field
+			int row = last.getRow(); // more than 1 row when the line wraps 
+			int col = last.getCol() + 1; // move over one char to handle sub-matches
+			start = new FieldLocation(line, field, row, col);
+			searchLocation = findNext(forwardMatcher, searchText, start);
+		}
+
+		DecompilerSearchResults newResults =
+			new DecompilerSearchResults(worker, decompilerPanel, searchText, results);
+		newResults.activate();
+		return newResults;
+	}
+
+//=================================================================================================
+// Search Methods
+//=================================================================================================	
+
 	@Override
-	public SearchLocation search(String text, CursorPosition position, boolean searchForward,
+	public SearchResults search(String text, CursorPosition position, boolean searchForward,
 			boolean useRegex) {
-		DecompilerCursorPosition decompilerCursorPosition = (DecompilerCursorPosition) position;
-		FieldLocation startLocation =
-			getNextSearchStartLocation(decompilerCursorPosition, searchForward);
-		return useRegex ? decompilerPanel.searchTextRegex(text, startLocation, searchForward)
-				: decompilerPanel.searchText(text, startLocation, searchForward);
+
+		updateSearchResults(text, useRegex);
+
+		DecompilerCursorPosition cursorPosition = (DecompilerCursorPosition) position;
+		FieldLocation startLocation = getNextSearchStartLocation(cursorPosition, searchForward);
+		DecompilerSearchLocation location =
+			searchResults.getNextLocation(startLocation, searchForward);
+		if (location == null) {
+			return null;
+		}
+
+		searchResults.setActiveLocation(location);
+		return searchResults;
 	}
 
 	private FieldLocation getNextSearchStartLocation(
 			DecompilerCursorPosition decompilerCursorPosition, boolean searchForward) {
 
-		FieldLocation startLocation = decompilerCursorPosition.getFieldLocation();
-		FieldBasedSearchLocation currentSearchLocation = decompilerPanel.getSearchResults();
-		if (currentSearchLocation == null) {
-			return startLocation; // nothing to do; no prior search hit
+		FieldLocation cursor = decompilerCursorPosition.getFieldLocation();
+		DecompilerSearchLocation containingLocation =
+			searchResults.getContainingLocation(cursor, searchForward);
+
+		if (containingLocation == null) {
+			return cursor; // nothing to do; not on a search hit
 		}
 
-		//
-		// Special Case Handling:  Start the search at the cursor location by default.
-		// However, if the cursor location is at the beginning of previous search hit, then
-		// move the cursor forward by one character to ensure the previous search hit is not
-		// found.
-		//
-		// Note: for a forward or backward search the cursor is placed at the beginning of the
-		// match.
-		//
-		if (Objects.equals(startLocation, currentSearchLocation.getFieldLocation())) {
-
-			if (searchForward) {
-				// Given:
-				// -search text: 'fox'
-				// -search domain: 'What the |fox say'
-				// -a previous search hit just before 'fox'
-				//
-				// Move the cursor just past the 'f' so the next forward search will not
-				// find the current 'fox' hit.  Thus the new search domain for this line
-				// will be: "ox say"
-				//
-				startLocation.col += 1;
-			}
-			else {
-				// Given:
-				// -search text: 'fox'
-				// -search domain: 'What the |fox say'
-				// -a previous search hit just before 'fox'
-				//
-				// Move the cursor just past the 'o' so the next backward search will not
-				// find the current 'fox' hit.  Thus the new search domain for this line
-				// will be: "What the fo"
-				//
-				int length = currentSearchLocation.getMatchLength();
-				startLocation.col += length - 1;
-			}
+		// the given cursor position is inside of an existing match
+		if (searchForward) {
+			cursor.col += 1;
+		}
+		else {
+			cursor.col = containingLocation.getStartIndexInclusive() - 1;
 		}
 
-		return startLocation;
+		return cursor;
 	}
+
+	@Override
+	public SearchResults searchAll(String searchString, boolean isRegex) {
+		return doSearch(searchString, isRegex);
+	}
+
+	private Pattern createPattern(String searchString, boolean isRegex) {
+
+		int options = Pattern.CASE_INSENSITIVE | Pattern.DOTALL;
+		if (isRegex) {
+			try {
+				return Pattern.compile(searchString, options);
+			}
+			catch (PatternSyntaxException e) {
+				Msg.showError(this, decompilerPanel, "Regular Expression Syntax Error",
+					e.getMessage());
+				return null;
+			}
+		}
+
+		return UserSearchUtils.createPattern(searchString, false, options);
+	}
+
+	private Function<String, SearchMatch> createForwardMatchFunction(Pattern pattern) {
+
+		return textLine -> {
+
+			Matcher matcher = pattern.matcher(textLine);
+			if (matcher.find()) {
+				int start = matcher.start();
+				int end = matcher.end();
+				return new SearchMatch(start, end, textLine);
+			}
+
+			return SearchMatch.NO_MATCH;
+		};
+
+	}
+
+	private DecompilerSearchLocation findNext(Function<String, SearchMatch> matcher,
+			String searchString, FieldLocation currentLocation) {
+		List<Field> fields = decompilerPanel.getFields();
+		int line = currentLocation.getIndex().intValue();
+		for (int i = line; i < fields.size(); i++) {
+			ClangTextField field = (ClangTextField) fields.get(i);
+			String partialLine = substring(field, (i == line) ? currentLocation : null, true);
+			SearchMatch match = matcher.apply(partialLine);
+			if (match == SearchMatch.NO_MATCH) {
+				continue;
+			}
+
+			String fullLine = field.getText();
+			if (i == line) { // cursor is on this line
+				//
+				// The match start for all lines without the cursor will be relative to the start
+				// of the line, which is 0.  However, when searching on the row with the cursor,
+				// the match start is relative to the cursor position.  Update the start to
+				// compensate for the difference between the start of the line and the cursor.
+				//				
+				// The match start/end for a partial line will be relative to that line's text.  We
+				// want the start/end to be based on a full line.
+				int cursorOffset = fullLine.length() - partialLine.length();
+				match.start += cursorOffset;
+				match.end += cursorOffset;
+			}
+
+			FieldLineLocation lineInfo = getFieldIndexFromOffset(match.start, field);
+			FieldLocation fieldLocation =
+				new FieldLocation(i, lineInfo.fieldNumber(), lineInfo.row(), lineInfo.column());
+			int lineNumber = lineInfo.lineNumber();
+			SearchLocationContext context = createContext(fullLine, lineNumber, match);
+			return new DecompilerSearchLocation(fieldLocation, match.start, match.end - 1,
+				searchString, true, field.getText(), lineNumber, context);
+		}
+		return null;
+	}
+
+	private SearchLocationContext createContext(String line, int lineNumber, SearchMatch match) {
+		SearchLocationContextBuilder builder = new SearchLocationContextBuilder();
+		int start = match.start;
+		int end = match.end;
+		builder.append(line.substring(0, start));
+		builder.appendMatch(line.substring(start, end));
+		if (end < line.length()) {
+			builder.append(line.substring(end));
+		}
+
+		builder.lineNumber(lineNumber);
+		return builder.build();
+	}
+
+	private String substring(ClangTextField textField, FieldLocation location,
+			boolean forwardSearch) {
+
+		// Note: full text may include multiple wrapped UI lines that are then put back into one
+		// line here for searching.
+		String fullText = textField.getText();
+		if (location == null) { // the cursor location is not on this line; use all of the text
+			return fullText;
+		}
+
+		if (fullText.isEmpty()) { // the cursor is on blank line
+			return "";
+		}
+
+		int row = location.getRow();
+		int nextCol = location.getCol();
+		int screenCol = textField.screenLocationToTextOffset(row, nextCol);
+
+		if (forwardSearch) {
+
+			// protects against the location column being out of range (this can happen if we're
+			// searching forward and the cursor is past the last token)
+			if (screenCol >= fullText.length()) {
+				return "";
+			}
+
+			// skip a character to start the next search; this prevents matching the previous match
+			return fullText.substring(screenCol);
+		}
+
+		// backwards search
+		return fullText.substring(0, screenCol);
+	}
+
+	private FieldLineLocation getFieldIndexFromOffset(int screenOffset, ClangTextField textField) {
+
+		RowColLocation rowColLocation = textField.textOffsetToScreenLocation(screenOffset);
+		int lineNumber = textField.getLineNumber();
+
+		int fieldNumber = 0; // We use 0 here because there is only one field, which is the entire line
+		int row = rowColLocation.row();
+		int col = rowColLocation.col();
+		return new FieldLineLocation(fieldNumber, lineNumber, row, col);
+	}
+
+	private static class SearchMatch {
+		private static SearchMatch NO_MATCH = new SearchMatch(-1, -1, null);
+		private int start;
+		private int end;
+		private String textLine;
+
+		SearchMatch(int start, int end, String textLine) {
+			this.start = start;
+			this.end = end;
+			this.textLine = textLine;
+		}
+
+		@Override
+		public String toString() {
+			if (this == NO_MATCH) {
+				return "NO MATCH";
+			}
+			return "[start=" + start + ",end=" + end + "]: " + textLine;
+		}
+	}
+
+	private record FieldLineLocation(int fieldNumber, int lineNumber, int row, int column) {}
 }

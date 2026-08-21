@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 
 import docking.DialogComponentProvider;
+import docking.action.DockingAction;
 import docking.widgets.OptionDialog;
 import ghidra.GhidraOptions;
 import ghidra.framework.options.EditorStateFactory;
@@ -57,16 +58,25 @@ public class AnalysisOptionsDialog extends DialogComponentProvider
 		setHelpLocation(new HelpLocation("AutoAnalysisPlugin", "AnalysisOptions"));
 		panel = new AnalysisPanel(programs, editorStateFactory, this);
 		panel.setToLastUsedAnalysisOptionsIfProgramNotAnalyzed();
+		panel.getAccessibleContext().setAccessibleName("Analysis Options");
 		addWorkPanel(panel);
 		addOKButton();
 		addCancelButton();
 		addApplyButton();
+
 		setOkButtonText("Analyze");
-		okButton.setMnemonic('A');
-		setOkEnabled(true);
+		okButton.setMnemonic('N'); // 'N' to avoid conflict with the 'A' in Apply
+
 		setPreferredSize(1000, 600);
 		setRememberSize(true);
 		setHasChanges(panel.hasChangedValues());
+
+		setFocusComponent(panel.getFocusComponent());
+
+		List<DockingAction> actions = panel.getActions();
+		for (DockingAction action : actions) {
+			addAction(action);
+		}
 	}
 
 	@Override

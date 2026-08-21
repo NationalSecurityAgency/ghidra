@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,6 +28,7 @@ import ghidra.features.bsim.query.*;
 import ghidra.features.bsim.query.BSimServerInfo.DBType;
 import ghidra.features.bsim.query.FunctionDatabase.ConnectionType;
 import ghidra.features.bsim.query.FunctionDatabase.Status;
+import ghidra.util.Msg;
 
 public class BSimH2FileDBConnectionManager {
 
@@ -39,12 +40,13 @@ public class BSimH2FileDBConnectionManager {
 	 * Data source map keyed by absolute DB file path
 	 */
 	private static HashMap<BSimServerInfo, BSimH2FileDataSource> dataSourceMap = new HashMap<>();
+	private static boolean shutdownHookInstalled = false;
 
 	/**
-	 * Get all H2 File DB data sorces which exist in the JVM.
-	 * @return all H2 File DB data sorces
+	 * Get all H2 File DB data sources which exist in the JVM.
+	 * @return all H2 File DB data sources
 	 */
-	public static Collection<BSimH2FileDataSource> getAllDataSources() {
+	public static synchronized Collection<BSimH2FileDataSource> getAllDataSources() {
 		// Create copy to avoid potential concurrent modification
 		return Collections.unmodifiableCollection(new ArrayList<>(dataSourceMap.values()));
 	}
@@ -57,10 +59,11 @@ public class BSimH2FileDBConnectionManager {
 	 * @throws IllegalArgumentException if {@code fileServerInfo} does not specify an
 	 * H2 File DB type.
 	 */
-	public static BSimH2FileDataSource getDataSource(BSimServerInfo fileServerInfo) {
+	public static synchronized BSimH2FileDataSource getDataSource(BSimServerInfo fileServerInfo) {
 		if (fileServerInfo.getDBType() != DBType.file) {
 			throw new IllegalArgumentException("expected file info");
 		}
+		enableShutdownHook();
 		return dataSourceMap.computeIfAbsent(fileServerInfo,
 			info -> new BSimH2FileDataSource(info));
 	}
@@ -79,26 +82,50 @@ public class BSimH2FileDBConnectionManager {
 	 * @return existing H2 File data source or null if server info does not correspond to an
 	 * H2 File or has not be established as an H2 File data source.  
 	 */
-	public static BSimH2FileDataSource getDataSourceIfExists(BSimServerInfo serverInfo) {
+	public static synchronized BSimH2FileDataSource getDataSourceIfExists(
+			BSimServerInfo serverInfo) {
 		return dataSourceMap.get(serverInfo);
 	}
 
-	private static synchronized void remove(BSimServerInfo serverInfo, boolean force) {
+	private static synchronized boolean remove(BSimServerInfo serverInfo, boolean force) {
 		BSimH2FileDataSource ds = dataSourceMap.get(serverInfo);
 		if (ds == null) {
-			return;
+			return true;
 		}
 		int n = ds.bds.getNumActive();
-		if (n != 0) {
-			System.out
-					.println("Unable to remove data source which has " + n + " active connections");
-			if (!force) {
-				return;
-			}
+		if (n != 0 && !force) {
+			Msg.error(BSimH2FileDBConnectionManager.class,
+				"Unable to remove data source which has " + n + " active connections");
+			return false;
 		}
 		ds.close();
 		dataSourceMap.remove(serverInfo);
 		BSimVectorStoreManager.remove(serverInfo);
+		return true;
+	}
+
+	private static synchronized void enableShutdownHook() {
+		if (shutdownHookInstalled) {
+			return;
+		}
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			@Override
+			public void run() {
+				Collection<BSimH2FileDataSource> dataSources = dataSourceMap.values();
+				for (BSimH2FileDataSource ds : dataSources) {
+					int activeConnections = ds.getActiveConnections();
+					if (activeConnections != 0) {
+						Msg.error(BSimH2FileDBConnectionManager.class,
+							activeConnections +
+								" BSim active H2 File connections were not properly closed: " +
+								ds.serverInfo);
+					}
+					ds.close();
+				}
+				dataSourceMap.clear();
+			}
+		});
+		shutdownHookInstalled = true;
 	}
 
 	/**
@@ -111,11 +138,11 @@ public class BSimH2FileDBConnectionManager {
 		private boolean successfulConnection = false;
 
 		private BasicDataSource bds = new BasicDataSource();
-		private BSimDBConnectTaskCoordinator taskCoordinator;
+		private BSimDBConnectTaskManager taskManager;
 
 		private BSimH2FileDataSource(BSimServerInfo serverInfo) {
 			this.serverInfo = serverInfo;
-			this.taskCoordinator = new BSimDBConnectTaskCoordinator(serverInfo);
+			this.taskManager = new BSimDBConnectTaskManager(serverInfo);
 		}
 
 		@Override
@@ -123,20 +150,31 @@ public class BSimH2FileDBConnectionManager {
 			return serverInfo;
 		}
 
+		@Override
 		public void dispose() {
 			BSimH2FileDBConnectionManager.remove(serverInfo, true);
 		}
 
 		/**
-		 * Delete the database files associated with this H2 File DB.  When complete
-		 * this data source will no longer be valid and should no tbe used.
+		 * Delete the database files associated with this H2 File DB.  This will fail immediately 
+		 * if active connections exist.  Otherwise removal will be attempted and this data source 
+		 * will no longer be valid.
+		 * @return true if DB successfully removed
 		 */
-		public void delete() {
-			dispose();
+		public synchronized boolean delete() {
 
 			File dbf = new File(serverInfo.getDBName());
 
-			// TODO: Should we check for lock on database - could be another process
+			if (getActiveConnections() != 0) {
+				Msg.error(this, "Failed to delete active database: " + dbf);
+				return false;
+			}
+
+			dispose();
+
+			if (!dbf.isFile()) {
+				return true;
+			}
 
 			String name = dbf.getName();
 			int ix = name.lastIndexOf(BSimServerInfo.H2_FILE_EXTENSION);
@@ -145,6 +183,13 @@ public class BSimH2FileDBConnectionManager {
 			}
 
 			DeleteDbFiles.execute(dbf.getParent(), name, true);
+
+			if (!dbf.isFile()) {
+				return true;
+			}
+
+			Msg.error(this, "Failed to delete database: " + dbf);
+			return false;
 		}
 
 		/**
@@ -181,6 +226,11 @@ public class BSimH2FileDBConnectionManager {
 			return bds.getNumActive();
 		}
 
+		@Override
+		public int getIdleConnections() {
+			return bds.getNumIdle();
+		}
+
 		private String getH2FileUrl() {
 
 			// Remove H2 db file extension if present
@@ -196,7 +246,6 @@ public class BSimH2FileDBConnectionManager {
 				// Remove leading '/' before drive letter
 				dbName = dbName.substring(1);
 			}
-
 			return "jdbc:h2:" + dbName;
 		}
 
@@ -207,6 +256,7 @@ public class BSimH2FileDBConnectionManager {
 
 			// Set database URL
 			// NOTE: keywords 'key' and 'value' are used by KeyValueTable as column names
+
 			bds.setUrl(getH2FileUrl() +
 				";MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;NON_KEYWORDS=key,value");
 
@@ -226,9 +276,9 @@ public class BSimH2FileDBConnectionManager {
 
 		/**
 		 * Get a connection to the H2 file database.
-		 * It is important to note that if the database does not exist and empty one will
+		 * It is important to note that if the database does not exist an empty one will
 		 * be created.  The {@link #exists()} method should be used to check for the database
-		 * existance prior to connecting the first time.
+		 * existence prior to connecting the first time.
 		 * @return database connection
 		 * @throws SQLException if a database error occurs
 		 */
@@ -236,12 +286,15 @@ public class BSimH2FileDBConnectionManager {
 		public synchronized Connection getConnection() throws SQLException {
 
 			if (successfulConnection) {
+				if (bds.isClosed()) {
+					bds.restart();
+				}
 				return bds.getConnection();
 			}
 
 			setDefaultProperties();
 
-			return taskCoordinator.getConnection(() -> connect());
+			return taskManager.getConnection(() -> connect());
 		}
 
 		@Override
@@ -267,6 +320,9 @@ public class BSimH2FileDBConnectionManager {
 		 * @throws SQLException if connection or authentication error occurs 
 		 */
 		private Connection connect() throws SQLException {
+			if (bds.isClosed()) {
+				bds.restart();
+			}
 			Connection c = bds.getConnection();
 			successfulConnection = true;
 			return c;

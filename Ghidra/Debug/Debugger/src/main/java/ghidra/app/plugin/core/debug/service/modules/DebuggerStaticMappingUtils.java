@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.program.TraceProgramView;
-import ghidra.util.ComparatorMath;
+import ghidra.util.MathUtilities;
 import ghidra.util.Msg;
 
 public enum DebuggerStaticMappingUtils {
@@ -163,8 +163,8 @@ public enum DebuggerStaticMappingUtils {
 		private Address max = null;
 
 		public void consider(Address min, Address max) {
-			this.min = this.min == null ? min : ComparatorMath.cmin(this.min, min);
-			this.max = this.max == null ? max : ComparatorMath.cmax(this.max, max);
+			this.min = this.min == null ? min : MathUtilities.cmin(this.min, min);
+			this.max = this.max == null ? max : MathUtilities.cmax(this.max, max);
 		}
 
 		public void consider(AddressRange range) {
@@ -316,6 +316,11 @@ public enum DebuggerStaticMappingUtils {
 
 	public static Function getFunction(Address pc, DebuggerCoordinates coordinates,
 			ServiceProvider serviceProvider) {
+		return getFunction(pc, coordinates.getTrace(), coordinates.getSnap(), serviceProvider);
+	}
+
+	public static Function getFunction(Address pc, Trace trace, long snap,
+			ServiceProvider serviceProvider) {
 		if (pc == null) {
 			return null;
 		}
@@ -324,8 +329,7 @@ public enum DebuggerStaticMappingUtils {
 		if (mappingService == null) {
 			return null;
 		}
-		TraceLocation dloc = new DefaultTraceLocation(coordinates.getTrace(),
-			null, Lifespan.at(coordinates.getSnap()), pc);
+		TraceLocation dloc = new DefaultTraceLocation(trace, null, Lifespan.at(snap), pc);
 		ProgramLocation sloc = mappingService.getOpenMappedLocation(dloc);
 		if (sloc == null) {
 			return null;
@@ -346,17 +350,16 @@ public enum DebuggerStaticMappingUtils {
 	}
 
 	public static String getModuleName(Address pc, DebuggerCoordinates coordinates) {
-		if (pc == null) {
+		return getModuleName(pc, coordinates.getTrace(), coordinates.getSnap());
+	}
+
+	public static String getModuleName(Address pc, Trace trace, long snap) {
+		if (pc == null || trace == null) {
 			return null;
 		}
-		Trace trace = coordinates.getTrace();
-		if (trace == null) {
-			return null;
-		}
-		for (TraceModule module : trace.getModuleManager()
-				.getModulesAt(coordinates.getSnap(), pc)) {
+		for (TraceModule module : trace.getModuleManager().getModulesAt(snap, pc)) {
 			// Just take the first
-			return computeModuleShortName(module.getName());
+			return computeModuleShortName(module.getName(snap));
 		}
 		return null;
 	}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import java.util.List;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.*;
 import docking.action.*;
@@ -33,6 +33,8 @@ import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
+import ghidra.util.Msg;
+import ghidra.util.xml.XmlUtilities;
 
 public class SetFormatDialogComponentProvider extends DialogComponentProvider {
 
@@ -79,7 +81,7 @@ public class SetFormatDialogComponentProvider extends DialogComponentProvider {
 		listingPanel.showHeader(true);
 
 		container.add(listingPanel);
-
+		container.getAccessibleContext().setAccessibleName("Set Format");
 		return container;
 	}
 
@@ -87,6 +89,7 @@ public class SetFormatDialogComponentProvider extends DialogComponentProvider {
 		FormatManager formatManagerCopy = currentFormatManager.createClone();
 		ListingPanel panel = new ListingPanel(formatManagerCopy, program);
 		panel.setView(view);
+		panel.getAccessibleContext().setAccessibleName("Listing");
 		return panel;
 	}
 
@@ -126,7 +129,7 @@ public class SetFormatDialogComponentProvider extends DialogComponentProvider {
 		return null;
 	}
 
-	/*testing*/ FieldHeader getFieldHeader() {
+	public FieldHeader getFieldHeader() {
 		return listingPanel.getFieldHeader();
 	}
 //==================================================================================================
@@ -163,7 +166,7 @@ public class SetFormatDialogComponentProvider extends DialogComponentProvider {
 
 			// update the dialog's GUI (which will later be used as the new format if the
 			// user presses OK)
-			listingFormatManager.readState(saveState);
+			listingFormatManager.readState(saveState, false);
 		}
 	}
 
@@ -187,6 +190,8 @@ public class SetFormatDialogComponentProvider extends DialogComponentProvider {
 			int index = fieldHeader.getSelectedIndex();
 			FieldFormatModel originalModel = defaultFormatManager.getModel(index);
 			Element originalXML = originalModel.saveToXml();
+
+			Msg.debug(this, XmlUtilities.toString(originalXML));
 
 			// update the dialog's GUI (which will later be used as the new format if the
 			// user presses OK)

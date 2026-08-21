@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package docking.widgets.tree.tasks;
 
 import java.util.Objects;
+import java.util.function.Predicate;
 
 import javax.swing.CellEditor;
 import javax.swing.JTree;
@@ -30,12 +31,12 @@ import ghidra.util.task.TaskMonitor;
 public class GTreeStartEditingTask extends GTreeTask {
 
 	private final GTreeNode modelParent;
-	private final GTreeNode editNode;
+	private final GTreeNode modelEditNode;
 
 	public GTreeStartEditingTask(GTree gTree, JTree jTree, GTreeNode editNode) {
 		super(gTree);
 		this.modelParent = tree.getModelNode(editNode.getParent());
-		this.editNode = editNode;
+		this.modelEditNode = tree.getModelNode(editNode);
 	}
 
 	@Override
@@ -54,13 +55,16 @@ public class GTreeStartEditingTask extends GTreeTask {
 	}
 
 	private void edit() {
-		TreePath path = editNode.getTreePath();
+
+		GTreeNode viewEditNode = tree.getViewNode(modelEditNode);
+
+		TreePath path = viewEditNode.getTreePath();
 		CellEditor cellEditor = tree.getCellEditor();
 		cellEditor.addCellEditorListener(new CellEditorListener() {
 			@Override
 			public void editingCanceled(ChangeEvent e) {
 				cellEditor.removeCellEditorListener(this);
-				reselectNode();
+				tree.setSelectedNode(viewEditNode); // reselect the node on cancel
 			}
 
 			@Override
@@ -68,19 +72,20 @@ public class GTreeStartEditingTask extends GTreeTask {
 				String newName = Objects.toString(cellEditor.getCellEditorValue());
 				cellEditor.removeCellEditorListener(this);
 
-				tree.forceNewNodeIntoView(modelParent, newName, newViewChild -> {
-					tree.setSelectedNode(newViewChild);
+				// NOTE: there may be cases where this node search fails to correctly
+				// identify the renamed node when name and node class is insufficient to match.
+				Class<?> nodeClass = viewEditNode.getClass();
+				Predicate<GTreeNode> nodeMatches = n -> {
+					return nodeClass == n.getClass() && n.getName().equals(newName);
+				};
+				tree.whenNodeIsReady(modelParent, nodeMatches, newNode -> {
+					tree.setSelectedNode(newNode);
 				});
-			}
 
-			private void reselectNode() {
-				String name = editNode.getName();
-				GTreeNode newModelChild = modelParent.getChild(name);
-				tree.setSelectedNode(newModelChild);
 			}
 		});
 
-		tree.setNodeEditable(editNode);
+		tree.setNodeEditable(viewEditNode);
 		jTree.startEditingAtPath(path);
 
 	}

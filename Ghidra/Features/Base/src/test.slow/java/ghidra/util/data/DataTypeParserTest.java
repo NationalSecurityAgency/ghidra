@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,6 +67,22 @@ public class DataTypeParserTest extends AbstractEditorTest {
 		runSwing(() -> provider.dispose());
 
 		super.tearDown();
+	}
+
+	@Test
+	public void testParse_SizedString() throws Exception {
+
+		String typeName = "string{10}";
+
+		// TODO: It's unclear why we let the parser swallow sizing for dynamic types when the
+		// information is discard and cannot be conveyed via the resulting DataType object.
+		// Example: structure editor which excepts such an entry will prompt user to specify
+		// the string length since the length is discarded by the parser.
+
+		DataTypeParser parser = new DataTypeParser(dtmService, AllowedDataTypes.ALL);
+		DataType dt = parser.parse(typeName);
+		assertNotNull(dt);
+		assertTrue(StringDataType.dataType.isEquivalent(dt));
 	}
 
 	@Test
@@ -179,6 +195,7 @@ public class DataTypeParserTest extends AbstractEditorTest {
 		checkValidDt("pointer*8[4]");
 		checkValidDt("pointer*16*8[13][5]");
 		checkValidDt("byte*32*[6][3]*16[4]*");
+		checkValidDt("String{10}");
 	}
 
 	@Test
@@ -193,6 +210,8 @@ public class DataTypeParserTest extends AbstractEditorTest {
 		checkInvalidDt("*[2]");
 		checkInvalidDt("byte][2]");
 		checkInvalidDt("byte[123");
+		checkValidDt("byte{10}");
+		checkValidDt("String*{10}");
 	}
 
 	@Test
@@ -221,31 +240,43 @@ public class DataTypeParserTest extends AbstractEditorTest {
 		checkValidDt("string", AllowedDataTypes.ALL);
 		checkValidDt("string", AllowedDataTypes.DYNAMIC);
 		checkValidDt("string", AllowedDataTypes.SIZABLE_DYNAMIC);
+		checkValidDt("string", AllowedDataTypes.STRINGS_AND_FIXED_LENGTH);
 		checkInvalidDt("string", AllowedDataTypes.FIXED_LENGTH);
+
+		checkValidDt("string{10}", AllowedDataTypes.ALL);
+		checkValidDt("string{10}", AllowedDataTypes.DYNAMIC);
+		checkValidDt("string{10}", AllowedDataTypes.SIZABLE_DYNAMIC);
+		checkValidDt("string{10}", AllowedDataTypes.STRINGS_AND_FIXED_LENGTH);
+		checkInvalidDt("string{10}", AllowedDataTypes.FIXED_LENGTH);
 
 		checkValidDt("string*", AllowedDataTypes.ALL);
 		checkValidDt("string*", AllowedDataTypes.DYNAMIC);
 		checkValidDt("string*", AllowedDataTypes.SIZABLE_DYNAMIC);
+		checkValidDt("string*", AllowedDataTypes.STRINGS_AND_FIXED_LENGTH);
 		checkValidDt("string*", AllowedDataTypes.FIXED_LENGTH);
 
 		checkValidDt("string*[2]", AllowedDataTypes.ALL);
 		checkValidDt("string*[2]", AllowedDataTypes.DYNAMIC);
 		checkValidDt("string*[2]", AllowedDataTypes.SIZABLE_DYNAMIC);
+		checkValidDt("string*[2]", AllowedDataTypes.STRINGS_AND_FIXED_LENGTH);
 		checkValidDt("string*[2]", AllowedDataTypes.FIXED_LENGTH);
 
 		checkValidDt("GIF-Image", AllowedDataTypes.ALL);
 		checkValidDt("GIF-Image", AllowedDataTypes.DYNAMIC);
 		checkInvalidDt("GIF-Image", AllowedDataTypes.SIZABLE_DYNAMIC);
+		checkInvalidDt("GIF-Image", AllowedDataTypes.STRINGS_AND_FIXED_LENGTH);
 		checkInvalidDt("GIF-Image", AllowedDataTypes.FIXED_LENGTH);
 
 		checkValidDt("GIF-Image*", AllowedDataTypes.ALL);
 		checkValidDt("GIF-Image*", AllowedDataTypes.DYNAMIC);
 		checkValidDt("GIF-Image*", AllowedDataTypes.SIZABLE_DYNAMIC);
+		checkValidDt("GIF-Image*", AllowedDataTypes.STRINGS_AND_FIXED_LENGTH);
 		checkValidDt("GIF-Image*", AllowedDataTypes.FIXED_LENGTH);
 
 		checkValidDt("GIF-Image*[2]", AllowedDataTypes.ALL);
 		checkValidDt("GIF-Image*[2]", AllowedDataTypes.DYNAMIC);
 		checkValidDt("GIF-Image*[2]", AllowedDataTypes.SIZABLE_DYNAMIC);
+		checkValidDt("GIF-Image*[2]", AllowedDataTypes.STRINGS_AND_FIXED_LENGTH);
 		checkValidDt("GIF-Image*[2]", AllowedDataTypes.FIXED_LENGTH);
 
 	}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -95,7 +95,7 @@ public class CreateExternalFunctionAction extends ProgramContextAction {
 
 	@Override
 	protected void actionPerformed(ProgramActionContext context) {
-		CompoundCmd compoundCmd = null;
+		CompoundCmd<Program> compoundCmd = null;
 		CreateExternalFunctionCmd cmd = null;
 		if (context instanceof ListingActionContext) {
 			ListingActionContext listingContext = (ListingActionContext) context;
@@ -107,7 +107,7 @@ public class CreateExternalFunctionAction extends ProgramContextAction {
 				CreateExternalFunctionCmd extFuncCmd = new CreateExternalFunctionCmd(s);
 				if (cmd != null) {
 					if (compoundCmd == null) {
-						compoundCmd = new CompoundCmd("Create External Functions");
+						compoundCmd = new CompoundCmd<>("Create External Functions");
 						compoundCmd.add(cmd);
 					}
 					compoundCmd.add(extFuncCmd);

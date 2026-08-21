@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,19 +60,19 @@ public interface StringDimension<P extends HyperPoint, B extends HyperBox<P, B>>
 	}
 
 	@Override
-	default double distance(String a, String b) {
-		if (Objects.equals(a, b)) {
+	default double distance(String upper, String lower) {
+		if (Objects.equals(upper, lower)) {
 			return 0;
 		}
 		// TODO: May revisit the starting place value, to scale this dimension down in importance.
 		double result = 0;
 		double placeVal = Double.MAX_VALUE / 128;
-		int len = lenStrings(a, b);
+		int len = lenStrings(upper, lower);
 		for (int i = 0; i < len; i++) {
-			int ca = charAt(a, i);
-			int cb = charAt(b, i);
+			int cu = charAt(upper, i);
+			int cl = charAt(lower, i);
 			double oldResult = result;
-			result += placeVal * (cb - ca);
+			result += placeVal * (cu - cl);
 			if (oldResult == result) {
 				// Can't capture any more precision, so we're done
 				return result;

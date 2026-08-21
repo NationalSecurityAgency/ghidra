@@ -66,6 +66,8 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 		descriptor.addVisibleColumn(new CategoryColumn());
 		descriptor.addHiddenColumn(new CreatedColumn());
 		descriptor.addVisibleColumn(new ModifiedColumn());
+		descriptor.addHiddenColumn(new RuntimeColumn());
+		descriptor.addHiddenColumn(new ProviderColumn());
 
 		return descriptor;
 	}
@@ -298,7 +300,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 		public Icon getValue(ResourceFile rowObject, Settings settings, Object data,
 				ServiceProvider sp) throws IllegalArgumentException {
 			ScriptInfo info = infoManager.getExistingScriptInfo(rowObject);
-			if (info.isCompileErrors() || info.isDuplicate()) {
+			if (info.hasErrors()) {
 				return ERROR_IMG;
 			}
 			return info.getToolBarImage(true);
@@ -533,6 +535,61 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 		public Date getValue(ResourceFile rowObject, Settings settings, Object data,
 				ServiceProvider sp) throws IllegalArgumentException {
 			return new Date(rowObject.lastModified());
+		}
+
+		@Override
+		public int getColumnPreferredWidth() {
+			return 100;
+		}
+	}
+
+	private class RuntimeColumn extends AbstractDynamicTableColumn<ResourceFile, String, Object> {
+
+		private Comparator<String> comparator = new CaseInsensitiveDuplicateStringComparator();
+
+		@Override
+		public Comparator<String> getComparator() {
+			return comparator;
+		}
+
+		@Override
+		public String getColumnName() {
+			return "Runtime";
+		}
+
+		@Override
+		public String getValue(ResourceFile rowObject, Settings settings, Object data,
+				ServiceProvider sp) throws IllegalArgumentException {
+			return infoManager.getExistingScriptInfo(rowObject).getRuntimeEnvironmentName();
+		}
+
+		@Override
+		public int getColumnPreferredWidth() {
+			return 100;
+		}
+	}
+	
+	private class ProviderColumn extends AbstractDynamicTableColumn<ResourceFile, String, Object> {
+
+		private Comparator<String> comparator = new CaseInsensitiveDuplicateStringComparator();
+
+		@Override
+		public Comparator<String> getComparator() {
+			return comparator;
+		}
+
+		@Override
+		public String getColumnName() {
+			return "Runtime Provider";
+		}
+
+		@Override
+		public String getValue(ResourceFile rowObject, Settings settings, Object data,
+				ServiceProvider sp) throws IllegalArgumentException {
+			return infoManager.getExistingScriptInfo(rowObject)
+					.getProvider()
+					.getClass()
+					.getSimpleName();
 		}
 
 		@Override

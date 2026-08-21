@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,18 +27,18 @@ package ghidra.pcodeCPort.slgh_compile;
  */
 public class ParseException extends Exception {
 
-  /**
-   * This constructor is used by the method "generateParseException"
-   * in the generated parser.  Calling this constructor generates
-   * a new object of this type with the fields "currentToken",
-   * "expectedTokenSequences", and "tokenImage" set.  The boolean
-   * flag "specialConstructor" is also set to true to indicate that
-   * this constructor was used to create this object.
-   * This constructor calls its super class with the empty string
-   * to force the "toString" method of parent class "Throwable" to
-   * print the error message in the form:
-   *     ParseException: <result of getMessage>
-   */
+  	/**
+	 * This constructor is used by the method "generateParseException"
+	 * in the generated parser.  Calling this constructor generates
+	 * a new object of this type with the fields "currentToken",
+	 * "expectedTokenSequences", and "tokenImage" set.  The boolean
+	 * flag "specialConstructor" is also set to true to indicate that
+	 * this constructor was used to create this object.
+	 * This constructor calls its super class with the empty string
+	 * to force the "toString" method of parent class "Throwable" to
+	 * print the error message in the form:
+	 *     {@code ParseException: <result of getMessage>}
+	 */
   public ParseException(Token currentTokenVal,
                         int[][] expectedTokenSequencesVal,
                         String[] tokenImageVal

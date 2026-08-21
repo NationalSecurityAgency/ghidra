@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,7 @@ package ghidra.app.plugin.core.programtree;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.*;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -43,7 +42,7 @@ class ViewPanel extends JPanel implements ChangeListener {
 
 	private JTabbedPane tabbedPane;
 	private ViewManagerComponentProvider provider;
-	private HashMap<String, ViewProviderService> map;
+	private Map<String, ViewProviderService> map;
 	private DockingAction closeAction;
 	private DockingAction deleteAction;
 	private DockingAction renameAction;
@@ -71,10 +70,6 @@ class ViewPanel extends JPanel implements ChangeListener {
 	 */
 	void addView(ViewProviderService vp) {
 
-		if (!provider.isInTool()) {
-			provider.addToTool();
-		}
-
 		String name = vp.getViewName();
 		if (map.remove(name) != null) {
 			map.put(name, vp);
@@ -93,8 +88,10 @@ class ViewPanel extends JPanel implements ChangeListener {
 				int insertIndex = tabbedPane.getTabCount();
 				final JComponent viewComponent = vp.getViewComponent();
 				tabbedPane.insertTab(name, null, viewComponent, null, insertIndex);
+
 				tabbedPane.setTabComponentAt(insertIndex, new DockingTabRenderer(tabbedPane, name,
 					name, e -> closeView(getViewProviderForComponent(viewComponent), true)));
+				tabbedPane.setTitleAt(insertIndex, name);
 			}
 			finally {
 				tabbedPane.addChangeListener(this);
@@ -126,10 +123,6 @@ class ViewPanel extends JPanel implements ChangeListener {
 		finally {
 			tabbedPane.addChangeListener(this);
 		}
-
-		/*if (isEmpty()) {
-			provider.removeFromTool();
-		}*/
 
 		return true;
 	}
@@ -261,6 +254,7 @@ class ViewPanel extends JPanel implements ChangeListener {
 			if (c == vps.getViewComponent()) {
 				DockingTabRenderer renderer = (DockingTabRenderer) tabbedPane.getTabComponentAt(i);
 				renderer.setTitle(viewName, viewName);
+				tabbedPane.setTitleAt(i, viewName);
 				break;
 			}
 		}
@@ -342,7 +336,16 @@ class ViewPanel extends JPanel implements ChangeListener {
 	 * Create the tabbed pane.
 	 */
 	private void create() {
-		tabbedPane = new JTabbedPane(SwingConstants.BOTTOM, JTabbedPane.SCROLL_TAB_LAYOUT);
+		tabbedPane = new JTabbedPane(SwingConstants.BOTTOM, JTabbedPane.SCROLL_TAB_LAYOUT) {
+
+			@Override
+			public String getTitleAt(int index) {
+				if (index < 0) {
+					return "No Title";
+				}
+				return super.getTitleAt(index);
+			}
+		};
 
 		tabbedPane.addChangeListener(this);
 		setLayout(new BorderLayout());
@@ -474,6 +477,7 @@ class ViewPanel extends JPanel implements ChangeListener {
 				DockingTabRenderer renderer =
 					(DockingTabRenderer) tabbedPane.getTabComponentAt(selectedIndex);
 				renderer.setTitle(newName, newName);
+				tabbedPane.setTitleAt(selectedIndex, newName);
 				map.remove(oldName);
 				map.put(newName, vps);
 			}

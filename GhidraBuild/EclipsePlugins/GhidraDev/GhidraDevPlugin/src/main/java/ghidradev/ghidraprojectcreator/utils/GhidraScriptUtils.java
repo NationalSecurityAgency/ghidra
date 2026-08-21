@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,7 @@ import org.eclipse.jdt.core.*;
 import ghidra.GhidraApplicationLayout;
 import ghidra.framework.GModule;
 import ghidradev.Activator;
+import ghidradev.ghidraprojectcreator.utils.PyDevUtils.ProjectPythonInterpreter;
 
 /**
  * Utility methods for working with Ghidra scripts in Eclipse.
@@ -45,8 +46,7 @@ public class GhidraScriptUtils {
 	 * @param linkUserScripts Whether or not to link in the user scripts directory.
 	 * @param linkSystemScripts Whether or not to link in the system scripts directories.
 	 * @param ghidraLayout The Ghidra layout to link the project to.
-	 * @param jythonInterpreterName The name of the Jython interpreter to use for Python support.
-	 *   Could be null if Python support is not wanted.
+	 * @param pythonInterpreter The Python interpreter to use.
 	 * @param monitor The progress monitor to use during project creation.
 	 * @return The created project.
 	 * @throws IOException If there was a file-related problem with creating the project.
@@ -56,15 +56,14 @@ public class GhidraScriptUtils {
 	public static IJavaProject createGhidraScriptProject(String projectName, File projectDir,
 			boolean createRunConfig, String runConfigMemory, boolean linkUserScripts,
 			boolean linkSystemScripts, GhidraApplicationLayout ghidraLayout,
-			String jythonInterpreterName, IProgressMonitor monitor)
+			ProjectPythonInterpreter pythonInterpreter, IProgressMonitor monitor)
 			throws IOException, ParseException, CoreException {
 
 		List<IClasspathEntry> classpathEntries = new ArrayList<>();
 
 		// Create empty Ghidra project
 		IJavaProject javaProject = GhidraProjectUtils.createEmptyGhidraProject(projectName,
-			projectDir, createRunConfig, runConfigMemory, ghidraLayout, jythonInterpreterName,
-			monitor);
+			projectDir, createRunConfig, runConfigMemory, ghidraLayout, pythonInterpreter, monitor);
 
 		// Link each module's ghidra_scripts directory to the project
 		if (linkSystemScripts) {

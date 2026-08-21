@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import java.util.function.Function;
 
 import javax.swing.*;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.*;
 import docking.action.*;
@@ -55,7 +55,7 @@ import ghidra.framework.plugintool.dialog.ManagePluginsDialog;
 import ghidra.framework.plugintool.mgr.*;
 import ghidra.framework.plugintool.util.*;
 import ghidra.framework.project.ProjectDataService;
-import ghidra.framework.project.extensions.ExtensionTableProvider;
+import ghidra.framework.project.extensions.ExtensionTableDialog;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
@@ -339,7 +339,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * Displays the extensions installation dialog.
 	 */
 	public void showExtensions() {
-		showDialog(new ExtensionTableProvider(this));
+		showDialog(new ExtensionTableDialog(this));
 	}
 
 	/**
@@ -894,19 +894,6 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 	/**
 	 * Add plugins to the tool.
-	 * @param classNames array of plugin class names
-	 * @throws PluginException if a plugin could not be constructed, or
-	 * there was problem executing its init() method, or if a plugin of this
-	 * class already exists in the tool
-	 * @deprecated use {@link #addPlugins(Collection)}
-	 */
-	@Deprecated(since = "10.2", forRemoval = true)
-	public void addPlugins(String[] classNames) throws PluginException {
-		addPlugins(Arrays.asList(classNames));
-	}
-
-	/**
-	 * Add plugins to the tool.
 	 * @param classNames collection of plugin class names
 	 * @throws PluginException if a plugin could not be constructed, or
 	 * there was problem executing its init() method, or if a plugin of this
@@ -928,16 +915,6 @@ public abstract class PluginTool extends AbstractDockingTool {
 			pluginMgr.addPlugin(p);
 			setConfigChanged(true);
 		}, PluginException.class);
-	}
-
-	/**
-	 * Remove the array of plugins from the tool.
-	 * @param plugins array of plugins to remove
-	 * @deprecated use {@link #removePlugins(List)}
-	 */
-	@Deprecated(since = "10.2", forRemoval = true)
-	public void removePlugins(Plugin[] plugins) {
-		removePlugins(Arrays.asList(plugins));
 	}
 
 	/**
@@ -1197,13 +1174,13 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * Closes this tool, possibly with input from the user. The following conditions are checked
 	 * and can prompt the user for more info and allow them to cancel the close.
 	 * <OL>
-	 * 	<LI>Running tasks. Closing with running tasks could lead to data loss.
+	 * 	<LI>Running tasks. Closing with running tasks could lead to data loss.</LI>
 	 *  <LI>Plugins get asked if they can be closed. They may prompt the user to resolve
-	 *  some plugin specific state.
-	 * 	<LI>The user is prompted to save any data changes.
+	 *  some plugin specific state.</LI>
+	 * 	<LI>The user is prompted to save any data changes.</LI>
 	 * 	<LI>Tools are saved, possibly asking the user to resolve any conflicts caused by
-	 *  changing multiple instances of the same tool in different ways.
-	 * 	<LI>If all the above conditions passed, the tool is closed and disposed.
+	 *  changing multiple instances of the same tool in different ways.</LI>
+	 * 	<LI>If all the above conditions passed, the tool is closed and disposed.</LI>
 	 * </OL>
 	 */
 	@Override
@@ -1544,6 +1521,13 @@ public abstract class PluginTool extends AbstractDockingTool {
 		return isConfigurable;
 	}
 
+	/**
+	 * This method will be deleted.  Preference state should be managed with the 
+	 * {@link DockingWindowManager}.
+	 * @param name the name
+	 * @deprecated use the {@link DockingWindowManager}
+	 */
+	@Deprecated(since = "11.3", forRemoval = true)
 	public void removePreferenceState(String name) {
 		winMgr.removePreferenceState(name);
 	}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -330,9 +330,7 @@ public class ListingModelAdapter implements LayoutModel, ListingModelListener {
 	}
 
 	public ProgramSelection getAllProgramSelection() {
-		Program program = model.getProgram();
-		AddressFactory factory = program == null ? null : program.getAddressFactory();
-		return new ProgramSelection(factory, model.getAddressSet());
+		return new ProgramSelection(model.getAddressSet());
 	}
 
 	// This method works for structures inside unions, but doesn't handle data
@@ -345,10 +343,8 @@ public class ListingModelAdapter implements LayoutModel, ListingModelListener {
 				return ps;
 			}
 		}
-		Program program = model.getProgram();
 		addrSet = model.adjustAddressSetToCodeUnitBoundaries(addrSet);
-		AddressFactory factory = program == null ? null : program.getAddressFactory();
-		return new ProgramSelection(factory, addrSet);
+		return new ProgramSelection(addrSet);
 	}
 
 	// this methods does NOT work for structures inside of unions, but handles structures
@@ -521,9 +517,14 @@ public class ListingModelAdapter implements LayoutModel, ListingModelListener {
 	 * associated with this model.
 	 */
 	public void setAddressSet(AddressSetView view) {
+		view = ImmutableAddressSet.asImmutable(view);
 		addressToIndexMap = new AddressIndexMap(view);
 		removeUnviewableAddressRanges();
 		modelSizeChanged();
 	}
 
+	public void viewUpdated() {
+		removeUnviewableAddressRanges();
+		modelSizeChanged();
+	}
 }

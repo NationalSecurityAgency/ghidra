@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,19 +17,22 @@ package ghidra.features.bsim.gui.search.dialog;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.math.BigInteger;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
 import docking.widgets.EmptyBorderButton;
-import docking.widgets.textfield.IntegerTextField;
+import docking.widgets.numberformat.IntegerFormatter;
+import docking.widgets.numberformat.IntegerFormatterFactory;
+import docking.widgets.textfield.GFormattedTextField;
 import generic.theme.GIcon;
 import ghidra.app.services.GoToService;
 import ghidra.features.bsim.gui.BSimSearchPlugin;
+import ghidra.features.bsim.gui.BSimServerManager;
 import ghidra.features.bsim.gui.filters.BSimFilterType;
 import ghidra.features.bsim.query.description.DatabaseInformation;
 import ghidra.framework.plugintool.PluginTool;
@@ -48,7 +51,7 @@ public class BSimSearchDialog extends AbstractBSimSearchDialog {
 	private BSimFilterPanel filterPanel;
 
 	// Query Settings
-	private IntegerTextField maxResultsField;
+	private GFormattedTextField maxResultsField;
 
 	public BSimSearchDialog(PluginTool tool, BSimSearchService service,
 			BSimServerManager serverManager, Set<FunctionSymbol> functions) {
@@ -92,6 +95,7 @@ public class BSimSearchDialog extends AbstractBSimSearchDialog {
 		}
 	}
 
+	@Override
 	protected JPanel buildServerPanel() {
 		JPanel panel = super.buildServerPanel();
 		panel.add(new JLabel("Function(s): "));
@@ -99,6 +103,7 @@ public class BSimSearchDialog extends AbstractBSimSearchDialog {
 		return panel;
 	}
 
+	@Override
 	protected JPanel buildCenterPanel() {
 		filterPanel = new BSimFilterPanel(this::filterPanelChanged);
 		return createTitledPanel("Filters:", filterPanel, true);
@@ -121,27 +126,34 @@ public class BSimSearchDialog extends AbstractBSimSearchDialog {
 	protected JPanel buildOptionsPanel() {
 		JPanel panel = super.buildOptionsPanel();
 
-		maxResultsField = new IntegerTextField(10);
-		maxResultsField.setValue(100);
-		maxResultsField.setMinValue(BigInteger.ONE);
-		maxResultsField.setAllowNegativeValues(false);
-		maxResultsField.setAllowsHexPrefix(false);
-		maxResultsField.setShowNumberMode(false);
-
-		JComponent maxResultsComponent = maxResultsField.getComponent();
+		IntegerFormatter formatter = new OneOrMoreIntegerFormatter();
+		IntegerFormatterFactory factory = new IntegerFormatterFactory(formatter, false);
+		maxResultsField = new GFormattedTextField(factory, 100);
 
 		JLabel maxLabel = new JLabel("Max Matches Per Function:");
-		maxLabel.setLabelFor(maxResultsComponent);
+		maxLabel.setLabelFor(maxResultsField);
 
 		panel.add(maxLabel);
-		panel.add(maxResultsComponent);
+		panel.add(maxResultsField);
 		return panel;
+	}
+
+	private class OneOrMoreIntegerFormatter extends IntegerFormatter {
+
+		@Override
+		protected Predicate<Number> createIsValidNumberPredicate() {
+			return n -> {
+				int i = n.intValue();
+				return i > 0;
+			};
+		}
+
 	}
 
 	protected BSimSearchSettings getSearchSettings() {
 		double similarity = similarityField.getValue();
 		double confidence = confidenceField.getValue();
-		int maxResults = maxResultsField.getIntValue();
+		int maxResults = (Integer) maxResultsField.getValue();
 		BSimFilterSet set = filterPanel.getFilterSet();
 		return new BSimSearchSettings(similarity, confidence, maxResults, set);
 	}

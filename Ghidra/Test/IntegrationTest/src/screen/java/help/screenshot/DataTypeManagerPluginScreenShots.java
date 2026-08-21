@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,7 @@ import org.junit.Test;
 
 import docking.*;
 import docking.action.DockingActionIf;
+import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.table.GTable;
 import docking.widgets.table.GTableCellRenderer;
 import docking.widgets.tree.GTree;
@@ -35,6 +36,7 @@ import ghidra.app.plugin.core.datamgr.actions.FindStructuresBySizeAction;
 import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.plugin.core.datamgr.archive.InvalidFileArchive;
 import ghidra.framework.preferences.Preferences;
+import ghidra.program.database.data.merge.StructureBuilder;
 import ghidra.program.model.data.*;
 import ghidra.util.UniversalID;
 import ghidra.util.table.GhidraTable;
@@ -75,17 +77,6 @@ public class DataTypeManagerPluginScreenShots extends GhidraScreenShotGenerator 
 
 	@Test
 	public void testDataTypeManager() {
-		captureIsolatedProvider(DataTypesProvider.class, 500, 400);
-	}
-
-	@Test
-	public void testDataTypeTreeWithAssociations() {
-		DataTypesProvider provider = getProvider(DataTypesProvider.class);
-		GTree tree = (GTree) getInstanceField("archiveGTree", provider);
-		GTreeNode rootNode = tree.getViewRoot();
-		GTreeNode child = rootNode.getChild("WinHelloCPP.exe");
-		child = child.getChild("basetsd.h");
-		tree.expandPath(child);
 		captureIsolatedProvider(DataTypesProvider.class, 500, 400);
 	}
 
@@ -141,9 +132,96 @@ public class DataTypeManagerPluginScreenShots extends GhidraScreenShotGenerator 
 	}
 
 	@Test
+	public void testStructureMergeDialog() {
+		Structure structure1 = new StructureBuilder("foo", 8)
+				.add(0, new IntegerDataType(), "aaa")
+				.add(4, new IntegerDataType(), "bbb")
+				.build();
+		Structure structure2 = new StructureBuilder("bar", 8)
+				.add(0, new DWordDataType(), "aaa")
+				.add(6, new WordDataType(), "ccc")
+				.build();
+		addDataType(structure1);
+		addDataType(structure2);
+
+		DataTypesProvider provider = getProvider(DataTypesProvider.class);
+		GTree tree = (GTree) getInstanceField("archiveGTree", provider);
+		GTreeNode rootNode = tree.getViewRoot();
+		GTreeNode child = rootNode.getChild("WinHelloCPP.exe");
+		tree.expandPath(child);
+		GTreeNode dtNode = child.getChild("foo");
+		tree.addSelectionPath(dtNode.getTreePath());
+		performAction("Merge Data Types", "DataTypeManagerPlugin", provider, false);
+		DialogComponentProvider dialog = getDialog();
+		DropDownSelectionTextField<?> textField =
+			findComponent(dialog, DropDownSelectionTextField.class);
+		runSwing(() -> textField.setText("bar"));
+		pressOkOnDialog();
+		captureDialog();
+		pressButtonOnDialog("Cancel");
+	}
+
+	@Test
+	public void testMergeConfirmationDialog() {
+		createEnum("foo", "AAAA", 6);
+		createEnum("bar", "BBBB", 2);
+
+		DataTypesProvider provider = getProvider(DataTypesProvider.class);
+		GTree tree = (GTree) getInstanceField("archiveGTree", provider);
+		GTreeNode rootNode = tree.getViewRoot();
+		GTreeNode child = rootNode.getChild("WinHelloCPP.exe");
+		tree.expandPath(child);
+		GTreeNode dtNode = child.getChild("foo");
+		tree.addSelectionPath(dtNode.getTreePath());
+		performAction("Merge Data Types", "DataTypeManagerPlugin", provider, false);
+		DialogComponentProvider dialog = getDialog();
+		DropDownSelectionTextField<?> textField =
+			findComponent(dialog, DropDownSelectionTextField.class);
+		runSwing(() -> textField.setText("bar"));
+		pressOkOnDialog();
+		captureDialog();
+		pressButtonOnDialog("Cancel");
+	}
+
+	@Test
+	public void testMergeErrorDialog() {
+		createEnum("foo", "AAAA", 6);
+		createEnum("bar", "AAAA", 4);
+
+		DataTypesProvider provider = getProvider(DataTypesProvider.class);
+		GTree tree = (GTree) getInstanceField("archiveGTree", provider);
+		GTreeNode rootNode = tree.getViewRoot();
+		GTreeNode child = rootNode.getChild("WinHelloCPP.exe");
+		tree.expandPath(child);
+		GTreeNode dtNode = child.getChild("foo");
+		tree.addSelectionPath(dtNode.getTreePath());
+		performAction("Merge Data Types", "DataTypeManagerPlugin", provider, false);
+		DialogComponentProvider dialog = getDialog();
+		DropDownSelectionTextField<?> textField =
+			findComponent(dialog, DropDownSelectionTextField.class);
+		runSwing(() -> textField.setText("bar"));
+		pressOkOnDialog();
+		captureDialog();
+		pressButtonOnDialog("OK");
+	}
+
+	private void createEnum(String name, String valueName, int value) {
+		EnumDataType enumm = new EnumDataType(name, 4);
+		enumm.add(valueName, value);
+		addDataType(enumm);
+	}
+
+	private void addDataType(DataType dt) {
+		ProgramBasedDataTypeManager dtm = program.getDataTypeManager();
+		program.withTransaction("test", () -> {
+			dtm.addDataType(dt, null);
+		});
+	}
+
+	@Test
 	public void testFindDataTypes() {
-		performAction("Find Data Types", "DataTypeManagerPlugin", false);
-		JDialog d = waitForJDialog("Find Data Types");
+		performAction("Find Data Types by Name", "DataTypeManagerPlugin", false);
+		JDialog d = waitForJDialog("Find Data Types by Name");
 		captureDialog();
 		pressButtonByText(d, "Cancel");
 	}
@@ -206,7 +284,8 @@ public class DataTypeManagerPluginScreenShots extends GhidraScreenShotGenerator 
 
 		closeNonProgramArchives();
 		closeProvider(DataTypesProvider.class);
-		runSwing(() -> performAction("Find Data Types", "DataTypeManagerPlugin", false), false);
+		runSwing(() -> performAction("Find Data Types by Name", "DataTypeManagerPlugin", false),
+			false);
 
 		final DialogComponentProvider dialog = getDialog();
 		runSwing(() -> {
@@ -227,41 +306,26 @@ public class DataTypeManagerPluginScreenShots extends GhidraScreenShotGenerator 
 		DataTypeManagerPlugin plugin = getPlugin(tool, DataTypeManagerPlugin.class);
 		List<DataTypeSyncInfo> list = new ArrayList<>();
 		Set<DataTypeSyncInfo> set = new HashSet<>();
-		createChangedDatatypesFromArchive(list, set);
+		StandAloneDataTypeManager sourceDtm = createChangedDatatypesFromArchive(list, set);
 
-		DataTypeManager dtm = program.getDataTypeManager();
+		DataType dt1 = sourceDtm.getDataType("/MyDataType1");
 
-		StandAloneDataTypeManager sourceDTM = new StandAloneDataTypeManager("MyArhcive");
-		StructureDataType sdt1 = new StructureDataType("MyDataType1", 0);
-		sdt1.add(new PointerDataType(new StringDataType()), "name", null);
-		sdt1.add(new IntegerDataType(), "age", null);
-		sdt1.add(new PointerDataType(new VoidDataType()), "data", null);
+		Structure struct = tx(program, () -> {
+			DataTypeManager dtm = program.getDataTypeManager();
+			return (Structure) dtm.addDataType(dt1, null);
+		});
 
-		StructureDataType sdt2 = new StructureDataType("MyDataType2", 0);
-		sdt2.add(new PointerDataType(new IntegerDataType()));
-		sdt2.add(new IntegerDataType());
-		sdt2.add(new WordDataType());
+		tx(sourceDtm, () -> {
+			((Structure) dt1).add(new IntegerDataType(), "id", null);
+		});
 
-		int id = sourceDTM.startTransaction("Test");
-		DataType dt1 = sourceDTM.addDataType(sdt1, null);
-		sourceDTM.endTransaction(id, true);
-
-		int txID = program.startTransaction("Test");
-		Structure struct = (Structure) dtm.addDataType(dt1, null);
-		program.endTransaction(txID, true);
-
-		id = sourceDTM.startTransaction("Test2");
-		((Structure) dt1).add(new IntegerDataType(), "id", null);
-		sourceDTM.endTransaction(id, true);
-
-		DataTypeSyncInfo sync1 = new DataTypeSyncInfo(struct, sourceDTM);
+		DataTypeSyncInfo sync1 = new DataTypeSyncInfo(struct, sourceDtm);
 		list.add(sync1);
 		set.add(sync1);
 
-		final DataTypeSyncDialog dialog =
+		DataTypeSyncDialog dialog =
 			new DataTypeSyncDialog(plugin, "WinHelloCPP.exe", "MyArchive", list, set, "Update",
 				"Update DataType Changes From Archive \"MyArchive\" To \"WinHelloCpp.exe\" ");
-
 		showModalDialogInTool(dialog);
 
 		runSwing(() -> {
@@ -306,11 +370,18 @@ public class DataTypeManagerPluginScreenShots extends GhidraScreenShotGenerator 
 		return null;// cannot get here
 	}
 
-	private void createChangedDatatypesFromArchive(List<DataTypeSyncInfo> list,
+	private StandAloneDataTypeManager createChangedDatatypesFromArchive(List<DataTypeSyncInfo> list,
 			Set<DataTypeSyncInfo> set) {
 		DataTypeManager dtm = program.getDataTypeManager();
 
-		StandAloneDataTypeManager sourceDTM = new StandAloneDataTypeManager("MyArhcive");
+		StandAloneDataTypeManager sourceDtm = new StandAloneDataTypeManager("MyArhcive") {
+			@Override
+			public ArchiveType getType() {
+				// Need to not be the default TEMPORARY type so that the universal ID of our data 
+				// types will be maintained.  This is needed to associate the types.
+				return ArchiveType.FILE;
+			}
+		};
 		StructureDataType sdt1 = new StructureDataType("MyDataType1", 0);
 		sdt1.add(new PointerDataType(new StringDataType()), "name", null);
 		sdt1.add(new IntegerDataType(), "age", null);
@@ -321,27 +392,26 @@ public class DataTypeManagerPluginScreenShots extends GhidraScreenShotGenerator 
 		sdt2.add(new IntegerDataType());
 		sdt2.add(new WordDataType());
 
-		int id = sourceDTM.startTransaction("Test");
-		DataType dt1 = sourceDTM.addDataType(sdt1, null);
-		DataType dt2 = sourceDTM.addDataType(sdt2, null);
-		sourceDTM.endTransaction(id, true);
+		int id = sourceDtm.startTransaction("Test");
+		DataType dt1 = sourceDtm.addDataType(sdt1, null);
+		DataType dt2 = sourceDtm.addDataType(sdt2, null);
+		sourceDtm.endTransaction(id, true);
 
-		int txID = program.startTransaction("Test");
-		try {
+		tx(program, () -> {
+
 			Structure struct = (Structure) dtm.addDataType(dt1, null);
 			struct.add(new IntegerDataType(), "id", null);
 			Structure struct2 = (Structure) dtm.addDataType(dt2, null);
 			struct2.add(new IntegerDataType());
 
-			DataTypeSyncInfo sync1 = new DataTypeSyncInfo(struct, sourceDTM);
-			DataTypeSyncInfo sync2 = new DataTypeSyncInfo(struct2, sourceDTM);
+			DataTypeSyncInfo sync1 = new DataTypeSyncInfo(struct, sourceDtm);
+			DataTypeSyncInfo sync2 = new DataTypeSyncInfo(struct2, sourceDtm);
 			list.add(sync1);
 			list.add(sync2);
 			set.add(sync1);
-		}
-		finally {
-			program.endTransaction(txID, true);
-		}
+		});
+
+		return sourceDtm;
 	}
 
 	private void showModalDialogInTool(final DialogComponentProvider dialog) {

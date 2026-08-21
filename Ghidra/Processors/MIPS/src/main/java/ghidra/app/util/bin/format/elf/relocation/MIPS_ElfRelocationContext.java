@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,16 +23,14 @@ import ghidra.app.util.bin.format.elf.extend.MIPS_ElfExtension;
 import ghidra.app.util.bin.format.elf.relocation.MIPS_ElfRelocationHandler.MIPS_DeferredRelocation;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.PointerDataType;
-import ghidra.program.model.listing.BookmarkType;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.model.reloc.RelocationResult;
 import ghidra.program.model.reloc.Relocation.Status;
+import ghidra.program.model.reloc.RelocationResult;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
-import ghidra.util.exception.NotFoundException;
 
 /**
  * {@link MIPS_ElfRelocationContext} provides extended relocation context with the ability
@@ -74,20 +72,24 @@ class MIPS_ElfRelocationContext extends ElfRelocationContext<MIPS_ElfRelocationH
 		int typeId = relocation.getType();
 		int symbolIndex = relocation.getSymbolIndex();
 
-		saveValueForNextReloc = nextRelocationHasSameOffset(relocation);
-
 		RelocationResult lastResult = RelocationResult.FAILURE;
 		if (getElfHeader().is64Bit()) {
 
 			MIPS_Elf64Relocation mips64Relocation = (MIPS_Elf64Relocation) relocation;
 
-			// Each relocation can pack upto 3 relocations for 64-bit
+			// Each relocation can pack up to 3 relocations for 64-bit
 			for (int n = 0; n < 3; n++) {
 
 				if (n == 1) {
+					// The symbol used by the second pack slot is encoded in the info
+					// field of the relocation.  This could be any symbol and
+					// does not need to match the first packed entry.
 					symbolIndex = mips64Relocation.getSpecialSymbolIndex();
 				}
-				else {
+				else if (n == 2) {
+					// The third pack slot should not be referring to any symbol.
+					// Clear out symbol index to catch any errors in relocations
+					// using symbolIndex.
 					symbolIndex = 0;
 				}
 
@@ -95,7 +97,10 @@ class MIPS_ElfRelocationContext extends ElfRelocationContext<MIPS_ElfRelocationH
 				typeId >>= 8;
 				int nextRelocType = (n < 2) ? (typeId & 0xff) : 0;
 				if (nextRelocType == MIPS_ElfRelocationType.R_MIPS_NONE.typeId) {
-					saveValueForNextReloc = false;
+					saveValueForNextReloc = nextRelocationHasSameOffset(relocation);
+				}
+				else {
+					saveValueForNextReloc = true;
 				}
 
 				RelocationResult result =
@@ -113,6 +118,8 @@ class MIPS_ElfRelocationContext extends ElfRelocationContext<MIPS_ElfRelocationH
 			return lastResult;
 		}
 
+		// 32-bit ELF
+		saveValueForNextReloc = nextRelocationHasSameOffset(relocation);
 		return doRelocate(relocation, relocationAddress, typeId, symbolIndex);
 	}
 

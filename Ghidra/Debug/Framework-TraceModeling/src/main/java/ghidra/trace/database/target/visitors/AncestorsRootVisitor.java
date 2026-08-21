@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,18 +17,18 @@ package ghidra.trace.database.target.visitors;
 
 import java.util.stream.Stream;
 
-import ghidra.dbg.util.PathPredicates;
 import ghidra.trace.database.target.visitors.TreeTraversal.SpanIntersectingVisitor;
 import ghidra.trace.database.target.visitors.TreeTraversal.VisitResult;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.path.PathFilter;
 
 public class AncestorsRootVisitor implements SpanIntersectingVisitor {
 
-	protected final PathPredicates predicates;
+	protected final PathFilter filter;
 
-	public AncestorsRootVisitor(PathPredicates predicates) {
-		this.predicates = predicates;
+	public AncestorsRootVisitor(PathFilter filter) {
+		this.filter = filter;
 	}
 
 	@Override
@@ -39,8 +39,7 @@ public class AncestorsRootVisitor implements SpanIntersectingVisitor {
 
 	@Override
 	public VisitResult visitValue(TraceObjectValue value, TraceObjectValPath path) {
-		return VisitResult.result(
-			predicates.matches(value.getParent().getCanonicalPath().getKeyList()), true);
+		return VisitResult.result(filter.matches(value.getParent().getCanonicalPath()), true);
 	}
 
 	@Override
@@ -55,8 +54,8 @@ public class AncestorsRootVisitor implements SpanIntersectingVisitor {
 			return Stream.empty();
 		}
 		/**
-		 * Can't really filter the parent values by predicates here, since the predicates are not
-		 * matching relative paths, but canonical paths.
+		 * Can't really use filter for parent values here. The filter does not match relative paths,
+		 * but canonical paths.
 		 */
 		return object.getParents(span).stream().filter(v -> !path.contains(v));
 	}

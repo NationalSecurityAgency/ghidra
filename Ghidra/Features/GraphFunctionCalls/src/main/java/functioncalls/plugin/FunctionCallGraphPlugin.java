@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 package functioncalls.plugin;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
@@ -26,11 +29,10 @@ import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.graph.viewer.options.VisualGraphOptions;
 import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
-import ghidra.util.SystemUtilities;
+import ghidra.util.Swing;
 import ghidra.util.bean.opteditor.OptionsVetoException;
 import ghidra.util.task.SwingUpdateManager;
 
@@ -54,8 +56,9 @@ public class FunctionCallGraphPlugin extends ProgramPlugin implements OptionsCha
 		new HelpLocation(FunctionCallGraphPlugin.class.getSimpleName(),
 			FunctionCallGraphPlugin.class.getSimpleName());
 
-	private FcgProvider provider;
-	private VisualGraphOptions vgOptions = new VisualGraphOptions();
+	private FcgProvider connectedProvider;
+	private List<FcgProvider> disconnectedProviders = new ArrayList<>();
+	private FcgOptions fcgOptions = new FcgOptions();
 
 	// enough time for users to click around without the graph starting its work
 	private static final int MIN_UPDATE_DELAY = 750;
@@ -70,7 +73,7 @@ public class FunctionCallGraphPlugin extends ProgramPlugin implements OptionsCha
 	@Override
 	protected void init() {
 
-		provider = new FcgProvider(tool, this);
+		connectedProvider = new FcgProvider(this, true);
 		createActions();
 
 		initializeOptions();
@@ -83,9 +86,9 @@ public class FunctionCallGraphPlugin extends ProgramPlugin implements OptionsCha
 		HelpLocation help = new HelpLocation(getName(), "Options");
 
 		Options callGraphOptions = options.getOptions(NAME);
-		vgOptions.registerOptions(callGraphOptions, help);
-		vgOptions.loadOptions(callGraphOptions);
-		provider.optionsChanged();
+		fcgOptions.registerOptions(callGraphOptions, help);
+		fcgOptions.loadOptions(callGraphOptions);
+		connectedProvider.optionsChanged();
 	}
 
 	@Override
@@ -93,18 +96,18 @@ public class FunctionCallGraphPlugin extends ProgramPlugin implements OptionsCha
 			Object newValue) throws OptionsVetoException {
 
 		Options callGraphOptions = options.getOptions(NAME);
-		vgOptions.loadOptions(callGraphOptions);
-		provider.optionsChanged();
+		fcgOptions.loadOptions(callGraphOptions);
+		connectedProvider.optionsChanged();
 	}
 
 	@Override
 	public void writeConfigState(SaveState state) {
-		provider.writeConfigState(state);
+		connectedProvider.writeConfigState(state);
 	}
 
 	@Override
 	public void readConfigState(SaveState state) {
-		provider.readConfigState(state);
+		connectedProvider.readConfigState(state);
 	}
 
 	@Override
@@ -113,14 +116,13 @@ public class FunctionCallGraphPlugin extends ProgramPlugin implements OptionsCha
 	}
 
 	private void doLocationChanged() {
-		provider.locationChanged(getCurrentLocation());
+		connectedProvider.locationChanged(getCurrentLocation());
 	}
 
-	void handleProviderLocationChanged(ProgramLocation location) {
-//		For snapshots
-//		if (provider != connectedProvider) {
-//			return;
-//		}
+	void handleProviderLocationChanged(FcgProvider provider, ProgramLocation location) {
+		if (provider != connectedProvider) {
+			return;
+		}
 
 		GoToService goTo = tool.getService(GoToService.class);
 		if (goTo == null) {
@@ -128,21 +130,26 @@ public class FunctionCallGraphPlugin extends ProgramPlugin implements OptionsCha
 		}
 
 		// do later so the current event processing can finish
-		SystemUtilities.runSwingLater(() -> {
+		Swing.runLater(() -> {
 			goTo.goTo(location);
 		});
 	}
 
 	@Override
 	protected void dispose() {
-		provider.dispose();
+		removeProvider(connectedProvider);
+		for (FcgProvider provider : disconnectedProviders) {
+			removeProvider(provider);
+		}
+
+		currentProgram = null;
 	}
 
 	private void createActions() {
 		DockingAction showProviderAction = new DockingAction(SHOW_PROVIDER_ACTION_NAME, getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				provider.setVisible(true);
+				connectedProvider.setVisible(true);
 			}
 		};
 
@@ -150,11 +157,11 @@ public class FunctionCallGraphPlugin extends ProgramPlugin implements OptionsCha
 	}
 
 	void showProvider() {
-		provider.setVisible(true);
+		connectedProvider.setVisible(true);
 	}
 
 	FcgProvider getProvider() {
-		return provider;
+		return connectedProvider;
 	}
 
 	Address getCurrentAddress() {
@@ -168,7 +175,28 @@ public class FunctionCallGraphPlugin extends ProgramPlugin implements OptionsCha
 		return currentLocation;
 	}
 
-	VisualGraphOptions getOptions() {
-		return vgOptions;
+	FcgOptions getOptions() {
+		return fcgOptions;
 	}
+
+	FcgProvider createNewDisconnecedProvider() {
+		FcgProvider provider = new FcgProvider(this, false);
+		disconnectedProviders.add(provider);
+		tool.showComponentProvider(provider, true);
+		return provider;
+	}
+
+	void closeProvider(FcgProvider fcgProvider) {
+		disconnectedProviders.remove(fcgProvider);
+		removeProvider(fcgProvider);
+	}
+
+	private void removeProvider(FcgProvider provider) {
+		if (provider == null) {
+			return;
+		}
+		provider.dispose();
+		tool.removeComponentProvider(provider);
+	}
+
 }

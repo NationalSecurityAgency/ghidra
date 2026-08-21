@@ -89,4 +89,17 @@
     <data>0xcccc * 0x4c8b 11...100 01001.01 0x89</data> <!-- CC filler : MOV -,RSP : MOV [- + #], -->
     <funcstart/>
   </pattern>
+  
+  <pattern> <!-- This can most likely be removed when VS2022 FID files are added __security_check_cookie -->
+    <data>  01001... 0x3b 0x0d ........ ........ ........ ........
+            0x75 0x10
+            01001... 0xc1 0xc1 0x10
+            0x66 0xf7 0xc1 0xff 0xff
+            0x75 0x01
+            0xc3
+            01001... 0xc1 0xc9 0x10
+            0xe9 </data>
+     <align mark="0" bits="3"/>
+     <funcstart label="__security_check_cookie" validcode="function"/>
+   </pattern>
 </patternlist>

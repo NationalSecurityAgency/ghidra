@@ -51,6 +51,7 @@ public class ExportPatternFileActionListener implements ActionListener {
 	 */
 	public ExportPatternFileActionListener(ClipboardPanel clipboardPanel, Component comp) {
 		this.clipboardPanel = clipboardPanel;
+		this.clipboardPanel.getAccessibleContext().setAccessibleName("Clipboard");
 		component = comp;
 	}
 

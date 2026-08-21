@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,9 @@ import java.util.regex.Pattern;
 
 import db.*;
 import ghidra.feature.fid.hash.FidHashQuad;
-import ghidra.program.database.DBObjectCache;
+import ghidra.program.database.DbFactory;
+import ghidra.program.database.DbCache;
+import ghidra.util.Lock;
 import ghidra.util.UniversalIdGenerator;
 
 /**
@@ -62,20 +64,19 @@ public class FunctionsTable {
 	Table table;
 	FidDB fidDb;
 	StringsTable stringsTable;
-	DBObjectCache<FunctionRecord> functionCache;
+	DbCache<FunctionRecord> functionCache;
 
 	/**
 	 * Creates or attaches a functions table.
+	 * @param fid the fid database
 	 * @param handle database handle
-	 * @param stringsTable strings table (must be created first!)
-	 * @param create whether to create or just attach
 	 * @throws IOException if create fails
 	 */
 	public FunctionsTable(FidDB fid, DBHandle handle) throws IOException {
 		table = handle.getTable(FUNCTIONS_TABLE);
 		this.fidDb = fid;
 		this.stringsTable = fid.getStringsTable();
-		functionCache = new DBObjectCache<>(CACHE_SIZE);
+		functionCache = new DbCache<>(new FunctionRecordFactory(), new Lock("Fid"), CACHE_SIZE);
 	}
 
 	public static void createTable(DBHandle handle) throws IOException {
@@ -116,11 +117,7 @@ public class FunctionsTable {
 			if (record.getLongValue(SPECIFIC_HASH_COL) != hash) {
 				continue;
 			}
-			FunctionRecord functionRecord = functionCache.get(record);
-			if (functionRecord == null) {
-				functionRecord = new FunctionRecord(fidDb, functionCache, record);
-			}
-			list.add(functionRecord);
+			list.add(functionCache.getCachedInstance(record));
 		}
 		return list;
 	}
@@ -141,12 +138,10 @@ public class FunctionsTable {
 		List<FunctionRecord> list = new ArrayList<>();
 		while (iterator.hasNext()) {
 			Field key = iterator.next();
-			FunctionRecord functionRecord = functionCache.get(key.getLongValue());
-			if (functionRecord == null) {
-				DBRecord record = table.getRecord(key);
-				functionRecord = new FunctionRecord(fidDb, functionCache, record);
+			FunctionRecord functionRecord = functionCache.getCachedInstance(key.getLongValue());
+			if (functionRecord != null) {
+				list.add(functionRecord);
 			}
-			list.add(functionRecord);
 		}
 		return list;
 	}
@@ -179,7 +174,8 @@ public class FunctionsTable {
 		byte flags = (byte) (hasTerminator ? FunctionRecord.HAS_TERMINATOR_FLAG : 0);
 		record.setByteValue(FLAGS_COL, flags);
 		table.putRecord(record);
-		FunctionRecord functionRecord = new FunctionRecord(fidDb, functionCache, record);
+		FunctionRecord functionRecord = new FunctionRecord(fidDb, record);
+		functionCache.add(functionRecord);
 		return functionRecord;
 	}
 
@@ -188,7 +184,7 @@ public class FunctionsTable {
 	 * @param functionID is the id of the function record to modify
 	 * @param flagMask is the bit to modify
 	 * @param value is true to set, false to clear
-	 * @throws IOException
+	 * @throws IOException if error occurs while reading database
 	 */
 	void modifyFlags(long functionID, int flagMask, boolean value) throws IOException {
 		DBRecord record = table.getRecord(functionID);
@@ -217,30 +213,12 @@ public class FunctionsTable {
 	 */
 	public List<FunctionRecord> getFunctionRecordsByNameSubstring(String nameSearch)
 			throws IOException {
-		DBFieldIterator iterator = table.indexKeyIterator(NAME_ID_COL);
-
-		if (!iterator.hasNext()) {
-			return Collections.emptyList();
-		}
 		List<FunctionRecord> list = new ArrayList<>();
+		RecordIterator iterator = table.iterator();
 		while (iterator.hasNext()) {
-			Field key = iterator.next();
-			FunctionRecord functionRecord = functionCache.get(key.getLongValue());
-			if (functionRecord == null) {
-				DBRecord record = table.getRecord(key);
-				long nameID = record.getLongValue(NAME_ID_COL);
-				StringRecord nameRecord = stringsTable.lookupString(nameID);
-				String name = nameRecord.getValue();
-				if (name.contains(nameSearch)) {
-					functionRecord = new FunctionRecord(fidDb, functionCache, record);
-				}
-			}
-			else {
-				if (!functionRecord.getName().contains(nameSearch)) {
-					functionRecord = null;
-				}
-			}
-			if (functionRecord != null) {
+			DBRecord record = iterator.next();
+			FunctionRecord functionRecord = functionCache.getCachedInstance(record);
+			if (functionRecord.getName().contains(nameSearch)) {
 				list.add(functionRecord);
 			}
 		}
@@ -256,32 +234,14 @@ public class FunctionsTable {
 	 */
 	public List<FunctionRecord> getFunctionRecordsByNameRegex(String regex) throws IOException {
 		Matcher matcher = Pattern.compile(regex).matcher("");
-		DBFieldIterator iterator = table.indexKeyIterator(NAME_ID_COL);
 
-		if (!iterator.hasNext()) {
-			return Collections.emptyList();
-		}
 		List<FunctionRecord> list = new ArrayList<>();
+		RecordIterator iterator = table.iterator();
 		while (iterator.hasNext()) {
-			Field key = iterator.next();
-			FunctionRecord functionRecord = functionCache.get(key.getLongValue());
-			if (functionRecord == null) {
-				DBRecord record = table.getRecord(key);
-				long nameID = record.getLongValue(NAME_ID_COL);
-				StringRecord nameRecord = stringsTable.lookupString(nameID);
-				String name = nameRecord.getValue();
-				matcher.reset(name);
-				if (matcher.matches()) {
-					functionRecord = new FunctionRecord(fidDb, functionCache, record);
-				}
-			}
-			else {
-				matcher.reset(functionRecord.getName());
-				if (!matcher.matches()) {
-					functionRecord = null;
-				}
-			}
-			if (functionRecord != null) {
+			DBRecord record = iterator.next();
+			FunctionRecord functionRecord = functionCache.getCachedInstance(record);
+			matcher.reset(functionRecord.getName());
+			if (matcher.matches()) {
 				list.add(functionRecord);
 			}
 		}
@@ -295,14 +255,7 @@ public class FunctionsTable {
 	 * @throws IOException if database seek encounters an error
 	 */
 	public FunctionRecord getFunctionByID(long functionID) throws IOException {
-		FunctionRecord functionRecord = functionCache.get(functionID);
-		if (functionRecord == null) {
-			DBRecord record = table.getRecord(functionID);
-			if (record != null) {
-				functionRecord = new FunctionRecord(fidDb, functionCache, record);
-			}
-		}
-		return functionRecord;
+		return functionCache.getCachedInstance(functionID);
 	}
 
 	/**
@@ -323,11 +276,7 @@ public class FunctionsTable {
 			StringRecord domainPathRecord = stringsTable.lookupString(domainPathID);
 			String domainPath = domainPathRecord.getValue();
 			if (domainPath.contains(domainPathSearch)) {
-				FunctionRecord functionRecord = functionCache.get(record);
-				if (functionRecord == null) {
-					functionRecord = new FunctionRecord(fidDb, functionCache, record);
-				}
-				list.add(functionRecord);
+				list.add(functionCache.getCachedInstance(record));
 			}
 		}
 		return list;
@@ -356,20 +305,31 @@ public class FunctionsTable {
 		List<FunctionRecord> list = new ArrayList<>();
 		while (iterator.hasNext()) {
 			Field key = iterator.next();
-			FunctionRecord functionRecord = functionCache.get(key.getLongValue());
-			if (functionRecord == null) {
-				DBRecord record = table.getRecord(key);
-				if (record.getLongValue(LIBRARY_ID_COL) == libraryKey) {
-					functionRecord = new FunctionRecord(fidDb, functionCache, record);
-					list.add(functionRecord);
-				}
-			}
-			else {
-				if (functionRecord.getLibraryID() == libraryKey) {
-					list.add(functionRecord);
-				}
+			FunctionRecord functionRecord = functionCache.getCachedInstance(key.getLongValue());
+			if (functionRecord.getLibraryID() == libraryKey) {
+				list.add(functionRecord);
 			}
 		}
 		return list;
 	}
+
+	class FunctionRecordFactory implements DbFactory<FunctionRecord> {
+
+		@Override
+		public FunctionRecord instantiate(long key) {
+			try {
+				DBRecord record = table.getRecord(key);
+				return record == null ? null : instantiate(record);
+			}
+			catch (IOException e) {
+				throw new RuntimeException("serious delayed database access error", e);
+			}
+		}
+
+		@Override
+		public FunctionRecord instantiate(DBRecord record) {
+			return new FunctionRecord(fidDb, record);
+		}
+	}
+
 }

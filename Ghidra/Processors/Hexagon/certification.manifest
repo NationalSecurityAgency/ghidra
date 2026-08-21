@@ -1,0 +1,16 @@
+##VERSION: 2.0
+Module.manifest||GHIDRA||||END|
+data/languages/Hexagon.opinion||GHIDRA||||END|
+data/languages/hexagon.cspec||GHIDRA||||END|
+data/languages/hexagon.dwarf||GHIDRA||||END|
+data/languages/hexagon.ldefs||GHIDRA||||END|
+data/languages/hexagon.pspec||GHIDRA||||END|
+data/languages/hexagon.sinc||GHIDRA||||END|
+data/languages/hexagon.slaspec||GHIDRA||||END|
+data/languages/hexagon_float.sinc||GHIDRA||||END|
+data/languages/hexagon_hvx.sinc||GHIDRA||||END|
+data/languages/hexagon_hvx.txt||GHIDRA|exclude|||END|
+data/languages/hexagon_left.sinc||GHIDRA||||END|
+data/languages/hexagon_right.sinc||GHIDRA||||END|
+data/patterns/Hexagon_patterns.xml||GHIDRA||||END|
+data/patterns/patternconstraints.xml||GHIDRA||||END|

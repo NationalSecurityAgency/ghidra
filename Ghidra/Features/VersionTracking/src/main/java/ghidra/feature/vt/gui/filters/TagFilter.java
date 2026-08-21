@@ -244,12 +244,6 @@ public class TagFilter extends AncillaryFilter<VTMatch> {
 	}
 
 	@Override
-	public void clearFilter() {
-		excludedTags.clear();
-		excludedTagsLabel.setText(ALL_TAGS_INCLUDED);
-	}
-
-	@Override
 	public JComponent getComponent() {
 		return component;
 	}

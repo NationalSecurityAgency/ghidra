@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 package ghidra.app.util.bin.format.pdb2.pdbreader;
+
+import java.io.*;
+
+import ghidra.app.util.bin.format.pe.SectionFlags;
 
 /**
  * This class represents Section Contribution component of a PDB file.  This class is only
@@ -60,9 +64,26 @@ public abstract class SectionContribution {
 		return imod;
 	}
 
+	/**
+	 * Returns the characteristics.  Believe these to be documented at:
+	 * https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-image_section_header
+	 * User can likely get interpretation from {@link SectionFlags#resolveFlags(int value)}
+	 * @return the characteristics
+	 */
+	public long getCharacteristics() {
+		return characteristics;
+	}
+
 	@Override
 	public String toString() {
-		return dump();
+		StringWriter writer = new StringWriter();
+		try {
+			dump(writer);
+			return writer.toString();
+		}
+		catch (IOException e) {
+			return "Issue in " + getClass().getSimpleName() + " toString(): " + e.getMessage();
+		}
 	}
 
 	//==============================================================================================
@@ -77,23 +98,23 @@ public abstract class SectionContribution {
 
 	/**
 	 * Dumps the SectionContribution.  This method is for debugging only
-	 * @return {@link String} of pretty output
+	 * @param writer the writer
+	 * @throws IOException upon issue with writing to the writer
 	 */
-	abstract String dumpInternals();
+	abstract void dumpInternals(Writer writer) throws IOException;
 
 	//==============================================================================================
 	// Package-Protected Internals
 	//==============================================================================================
 	/**
 	 * Dumps the Section Contribution.  This method is for debugging only
-	 * @return {@link String} of pretty output
+	 * @param writer the writer
+	 * @throws IOException upon issue with writing to the writer
 	 */
-	String dump() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("SectionContribution-----------------------------------------\n");
-		builder.append(dumpInternals());
-		builder.append("\nEnd SectionContribution-------------------------------------\n");
-		return builder.toString();
+	void dump(Writer writer) throws IOException {
+		PdbReaderUtils.dumpHead(writer, this);
+		dumpInternals(writer);
+		PdbReaderUtils.dumpTail(writer, this);
 	}
 
 }

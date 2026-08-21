@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ import ghidra.file.analyzers.FileFormatAnalyzer;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.database.ProgramContentHandler;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.lang.Processor;
@@ -295,6 +296,7 @@ public class iOS_KextStubFixupAnalyzer extends FileFormatAnalyzer {
 
 	private DestinationProgramInfo recurseFolder(DomainFolder folder, Address destinationAddress,
 			ProgramManager programManager, TaskMonitor monitor) {
+		// NOTE: All folder-links and file-links are ignored
 		DomainFolder[] folders = folder.getFolders();
 		for (DomainFolder child : folders) {
 			if (monitor.isCancelled()) {
@@ -311,30 +313,31 @@ public class iOS_KextStubFixupAnalyzer extends FileFormatAnalyzer {
 			if (monitor.isCancelled()) {
 				break;
 			}
-			DomainObject domainObject = null;
+			if (!file.getContentType().equals(ProgramContentHandler.PROGRAM_CONTENT_TYPE)) {
+				continue;
+			}
+			Program program = null;
 			try {
-				domainObject = file.getDomainObject(this, true /* upgrade */,
+				program = (Program) file.getDomainObject(this, true /* upgrade */,
 					false /* do not recover */, monitor);
-				if (domainObject instanceof Program) {
-					Program program = (Program) domainObject;
-					if (program.getMemory().contains(destinationAddress)) {
-						if (programManager != null) {
-							programManager.openProgram(program, ProgramManager.OPEN_VISIBLE);//once program is located, open it, so lookup is faster next time!
-						}
-						SymbolTable symbolTable = program.getSymbolTable();
-						Symbol symbol = symbolTable.getPrimarySymbol(destinationAddress);
-						String symbolName = symbol == null ? null : symbol.getName();
-						return new DestinationProgramInfo(program.getName(), file.getPathname(),
-							symbolName);
+				if (program.getMemory().contains(destinationAddress)) {
+					if (programManager != null) {
+						//once program is located, open it, so lookup is faster next time!
+						programManager.openProgram(program, ProgramManager.OPEN_VISIBLE);
 					}
+					SymbolTable symbolTable = program.getSymbolTable();
+					Symbol symbol = symbolTable.getPrimarySymbol(destinationAddress);
+					String symbolName = symbol == null ? null : symbol.getName();
+					return new DestinationProgramInfo(program.getName(), file.getPathname(),
+						symbolName);
 				}
 			}
 			catch (Exception e) {
 				Msg.warn(this, e);
 			}
 			finally {
-				if (domainObject != null) {
-					domainObject.release(this);
+				if (program != null) {
+					program.release(this);
 				}
 			}
 		}

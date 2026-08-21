@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+
+  <language processor="RISCV"
+            deprecated="true"
+            endian="little"
+            size="64"
+            variant="RV64I"
+            version="1.4"
+            slafile="riscv.lp64d.sla"
+            processorspec="RV64.pspec"
+            id="RISCV:LE:64:RV64I">
+    <description>RISC-V 64 little base</description>
+    <compiler name="gcc" spec="riscv64.cspec" id="gcc"/>
+    <external_name tool="DWARF.register.mapping.file" name="riscv64.dwarf"/>
+    <external_name tool="gnu" name="riscv:rv64"/>
+    <external_name tool="qemu" name="qemu-riscv64"/>
+    <external_name tool="qemu_system" name="qemu-system-riscv64"/>
+  </language>
+  <language processor="RISCV"
+            deprecated="true"
+            endian="little"
+            size="64"
+            variant="RV64IC"
+            version="1.4"
+            slafile="riscv.lp64d.sla"
+            processorspec="RV64.pspec"
+            id="RISCV:LE:64:RV64IC">
+    <description>RISC-V 64 little base compressed</description>
+    <compiler name="gcc" spec="riscv64.cspec" id="gcc"/>
+    <external_name tool="DWARF.register.mapping.file" name="riscv64.dwarf"/>
+    <external_name tool="gnu" name="riscv:rv64"/>
+    <external_name tool="qemu" name="qemu-riscv64"/>
+    <external_name tool="qemu_system" name="qemu-system-riscv64"/>
+  </language>
+  <language processor="RISCV"
+            deprecated="true"
+            endian="little"
+            size="64"
+            variant="RV64G"
+            version="1.4"
+            slafile="riscv.lp64d.sla"
+            processorspec="RV64.pspec"
+            id="RISCV:LE:64:RV64G">
+    <description>RISC-V 64 little general purpose</description>
+    <compiler name="gcc" spec="riscv64-fp.cspec" id="gcc"/>
+    <external_name tool="DWARF.register.mapping.file" name="riscv64.dwarf"/>
+    <external_name tool="gnu" name="riscv:rv64"/>
+    <external_name tool="qemu" name="qemu-riscv64"/>
+    <external_name tool="qemu_system" name="qemu-system-riscv64"/>
+  </language>
+  <language processor="RISCV"
+            deprecated="true"
+            endian="little"
+            size="64"
+            variant="RV64GC"
+            version="1.4"
+            slafile="riscv.lp64d.sla"
+            processorspec="RV64.pspec"
+            id="RISCV:LE:64:RV64GC">
+    <description>RISC-V 64 little general purpose compressed</description>
+    <compiler name="gcc" spec="riscv64-fp.cspec" id="gcc"/>
+    <external_name tool="gnu" name="riscv:rv64"/>
+    <external_name tool="DWARF.register.mapping.file" name="riscv64.dwarf"/>
+    <external_name tool="qemu" name="qemu-riscv64"/>
+    <external_name tool="qemu_system" name="qemu-system-riscv64"/>
+  </language>
+  <language processor="RISCV"
+            deprecated="true"
+            endian="little"
+            size="32"
+            variant="RV32I"
+            version="1.4"
+            slafile="riscv.ilp32d.sla"
+            processorspec="RV32.pspec"
+            id="RISCV:LE:32:RV32I">
+    <description>RISC-V 32 little base</description>
+    <compiler name="gcc" spec="riscv32.cspec" id="gcc"/>
+    <external_name tool="DWARF.register.mapping.file" name="riscv32.dwarf"/>
+    <external_name tool="gnu" name="riscv:rv32"/>
+    <external_name tool="qemu" name="qemu-riscv32"/>
+    <external_name tool="qemu_system" name="qemu-system-riscv32"/>
+  </language>
+  <language processor="RISCV"
+            deprecated="true"
+            endian="little"
+            size="32"
+            variant="RV32IC"
+            version="1.4"
+            slafile="riscv.ilp32d.sla"
+            processorspec="RV32.pspec"
+            id="RISCV:LE:32:RV32IC">
+    <description>RISC-V 32 little base compressed</description>
+    <compiler name="gcc" spec="riscv32.cspec" id="gcc"/>
+    <external_name tool="DWARF.register.mapping.file" name="riscv32.dwarf"/>
+    <external_name tool="gnu" name="riscv:rv32"/>
+    <external_name tool="qemu" name="qemu-riscv32"/>
+    <external_name tool="qemu_system" name="qemu-system-riscv32"/>
+  </language>
+    <language processor="RISCV"
+            deprecated="true"
+            endian="little"
+            size="32"
+            variant="RV32IMC"
+            version="1.4"
+            slafile="riscv.ilp32d.sla"
+            processorspec="RV32.pspec"
+            id="RISCV:LE:32:RV32IMC">
+    <description>RISC-V 32 little base compressed</description>
+    <compiler name="gcc" spec="riscv32.cspec" id="gcc"/>
+    <external_name tool="DWARF.register.mapping.file" name="riscv32.dwarf"/>
+    <external_name tool="gnu" name="riscv:rv32"/>
+    <external_name tool="qemu" name="qemu-riscv32"/>
+    <external_name tool="qemu_system" name="qemu-system-riscv32"/>
+  </language>
+  <language processor="RISCV"
+            deprecated="true"
+            endian="little"
+            size="32"
+            variant="RV32G"
+            version="1.4"
+            slafile="riscv.ilp32d.sla"
+            processorspec="RV32.pspec"
+            id="RISCV:LE:32:RV32G">
+    <description>RISC-V 32 little general purpose</description>
+    <compiler name="gcc" spec="riscv32-fp.cspec" id="gcc"/>
+    <external_name tool="gnu" name="riscv:rv32"/>
+    <external_name tool="DWARF.register.mapping.file" name="riscv32.dwarf"/>
+    <external_name tool="qemu" name="qemu-riscv32"/>
+    <external_name tool="qemu_system" name="qemu-system-riscv32"/>
+  </language>
+  <language processor="RISCV"
+            deprecated="true"
+            endian="little"
+            size="32"
+            variant="RV32GC"
+            version="1.4"
+            slafile="riscv.ilp32d.sla"
+            processorspec="RV32.pspec"
+            id="RISCV:LE:32:RV32GC">
+    <description>RISC-V 32 little general purpose compressed</description>
+    <compiler name="gcc" spec="riscv32-fp.cspec" id="gcc"/>
+    <external_name tool="gnu" name="riscv:rv32"/>
+    <external_name tool="DWARF.register.mapping.file" name="riscv32.dwarf"/>
+    <external_name tool="qemu" name="qemu-riscv32"/>
+    <external_name tool="qemu_system" name="qemu-system-riscv32"/>
+  </language> 
+  
+</language_definitions>

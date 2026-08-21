@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,6 +83,7 @@ public class GraphExporterDialog extends DialogComponentProvider {
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		panel.add(buildMainPanel());
 		panel.add(buildButtonPanel());
+		panel.getAccessibleContext().setAccessibleName("Graph Exporter");
 		return panel;
 	}
 
@@ -99,6 +100,7 @@ public class GraphExporterDialog extends DialogComponentProvider {
 		panel.add(buildFormatChooser());
 		panel.add(new GLabel("Output File: ", SwingConstants.RIGHT));
 		panel.add(buildFilePanel());
+		panel.getAccessibleContext().setAccessibleName("Graph Exporter");
 		return panel;
 	}
 
@@ -109,6 +111,7 @@ public class GraphExporterDialog extends DialogComponentProvider {
 	private Component buildFilePanel() {
 		filePathTextField = new JTextField();
 		filePathTextField.setName("OUTPUT_FILE_TEXTFIELD");
+		filePathTextField.getAccessibleContext().setAccessibleName("Output File");
 		filePathTextField.setText(getFileName());
 		filePathTextField.getDocument().addDocumentListener(new DocumentListener() {
 			@Override
@@ -130,10 +133,12 @@ public class GraphExporterDialog extends DialogComponentProvider {
 
 		fileChooserButton = new BrowseButton();
 		fileChooserButton.addActionListener(e -> chooseDestinationFile());
+		fileChooserButton.getAccessibleContext().setAccessibleName("File Chooser");
 
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(filePathTextField, BorderLayout.CENTER);
 		panel.add(fileChooserButton, BorderLayout.EAST);
+		panel.getAccessibleContext().setAccessibleName("Output File");
 		return panel;
 	}
 
@@ -190,6 +195,7 @@ public class GraphExporterDialog extends DialogComponentProvider {
 		if (defaultExporter != null) {
 			comboBox.setSelectedItem(defaultExporter);
 		}
+		comboBox.getAccessibleContext().setAccessibleName("Format Choice");
 		return comboBox;
 	}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,17 +28,20 @@ import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.SleighUtils.LitIdMode;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.*;
-import ghidra.program.model.lang.Language;
 import ghidra.trace.model.guest.TracePlatform;
 
 public abstract class DebuggerGoToTrait {
 	/**
-	 * @see DebuggerGoToTrait#goTo(String, String)
+	 * The result of a Go-To call.
+	 * 
+	 * @see DebuggerGoToTrait#goTo(String, String, LitIdMode)
+	 * @param address the target address, perhaps computed
+	 * @param success whether or not it was successful
 	 */
-	public record GoToResult(Address address, Boolean success) {
-	}
+	public record GoToResult(Address address, Boolean success) {}
 
 	protected DockingAction action;
 
@@ -58,6 +61,8 @@ public abstract class DebuggerGoToTrait {
 
 	protected abstract boolean goToAddress(Address address);
 
+	protected abstract Address getCurrentAddress();
+
 	public void goToCoordinates(DebuggerCoordinates coordinates) {
 		current = coordinates;
 	}
@@ -74,7 +79,50 @@ public abstract class DebuggerGoToTrait {
 	private void activatedGoTo(ActionContext context) {
 		DebuggerGoToDialog goToDialog = new DebuggerGoToDialog(this);
 		TracePlatform platform = current.getPlatform();
-		goToDialog.show((SleighLanguage) platform.getLanguage(), getDefaultInput());
+		goToDialog.show(platform.getAddressFactory(), getDefaultInput());
+	}
+
+	protected String adjustOffset(String offset) {
+		offset = offset.strip();
+		if (offset.startsWith("+")) {
+			return ".+(%s)".formatted(offset.substring(1));
+		}
+		if (offset.startsWith("-")) {
+			return ".-(%s)".formatted(offset.substring(1));
+		}
+		return offset;
+	}
+
+	protected Address tryAddress(AddressFactory factory, String spaceName, String offset) {
+		AddressSpace space = factory.getAddressSpace(spaceName);
+		if (space == null) {
+			throw new IllegalArgumentException("No such address space: " + spaceName);
+		}
+
+		try {
+			Address address = space.getAddress(offset);
+			if (address == null) {
+				address = factory.getAddress(offset);
+			}
+			return address;
+		}
+		catch (AddressFormatException e) {
+			return null;
+		}
+	}
+
+	public void validate(AddressFactory factory, String spaceName, String offset, LitIdMode mode) {
+		offset = adjustOffset(offset);
+		/**
+		 * NOTE: Even though the SleighParser can how handle bare addresses, we still want to
+		 * support the case where the user types (or quickly pastes) an address with an explicit
+		 * space given.
+		 */
+		Address address = tryAddress(factory, spaceName, offset);
+		if (address != null) {
+			return;
+		}
+		SleighUtils.parseSleighExpression(offset, mode);
 	}
 
 	/**
@@ -89,42 +137,33 @@ public abstract class DebuggerGoToTrait {
 	 * 
 	 * @param spaceName the name of the address space
 	 * @param offset a simple offset or Sleigh expression
+	 * @param mode the mode for parsing integer literals and ids
 	 * @return the result
 	 */
-	public CompletableFuture<GoToResult> goTo(String spaceName, String offset) {
+	public CompletableFuture<GoToResult> goTo(String spaceName, String offset, LitIdMode mode) {
 		TracePlatform platform = current.getPlatform();
-		Language language = platform.getLanguage();
-		AddressSpace space = language.getAddressFactory().getAddressSpace(spaceName);
-		if (space == null) {
-			throw new IllegalArgumentException("No such address space: " + spaceName);
+		offset = adjustOffset(offset);
+
+		Address address = tryAddress(platform.getAddressFactory(), spaceName, offset);
+		if (address != null) {
+			return CompletableFuture
+					.completedFuture(new GoToResult(address, goToAddress(address)));
 		}
-		try {
-			Address address = space.getAddress(offset);
-			if (address == null) {
-				address = language.getAddressFactory().getAddress(offset);
-			}
-			if (address != null) {
-				return CompletableFuture
-						.completedFuture(new GoToResult(address, goToAddress(address)));
-			}
-		}
-		catch (AddressFormatException e) {
-			// Fall-through to try Sleigh
-		}
-		return goToSleigh(spaceName, offset);
+		return goToSleigh(spaceName, offset, mode);
 	}
 
-	protected CompletableFuture<GoToResult> goToSleigh(String spaceName, String expression) {
+	protected CompletableFuture<GoToResult> goToSleigh(String spaceName, String expression,
+			LitIdMode mode) {
 		TracePlatform platform = current.getPlatform();
-		Language language = platform.getLanguage();
-		if (!(language instanceof SleighLanguage)) {
+		if (!(platform.getLanguage() instanceof SleighLanguage)) {
 			throw new IllegalStateException("Current trace does not use Sleigh");
 		}
-		AddressSpace space = language.getAddressFactory().getAddressSpace(spaceName);
+		AddressSpace space = platform.getAddressFactory().getAddressSpace(spaceName);
 		if (space == null) {
 			throw new IllegalArgumentException("No such address space: " + spaceName);
 		}
-		PcodeExpression expr = DebuggerPcodeUtils.compileExpression(tool, current, expression);
+		PcodeExpression expr = DebuggerPcodeUtils.compileExpression(tool, current,
+			getCurrentAddress(), expression, mode);
 		return goToSleigh(platform, space, expr);
 	}
 

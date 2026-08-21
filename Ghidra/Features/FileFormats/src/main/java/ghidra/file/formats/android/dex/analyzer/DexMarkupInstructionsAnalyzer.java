@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -255,8 +255,7 @@ public class DexMarkupInstructionsAnalyzer extends FileFormatAnalyzer {
 		String className = stringItem.getStringDataItem().getString();
 
 		setEquate(program, instruction.getMinAddress(), operand, className, classTypeIndex);
-		program.getListing()
-				.setComment(instruction.getMinAddress(), CodeUnit.EOL_COMMENT, className);
+		program.getListing().setComment(instruction.getMinAddress(), CommentType.EOL, className);
 	}
 
 	private void processString(Program program, Instruction instruction, int operand,
@@ -300,7 +299,6 @@ public class DexMarkupInstructionsAnalyzer extends FileFormatAnalyzer {
 		String valueName = format(className, fieldName);
 
 		setEquate(program, instruction.getMinAddress(), operand, fieldName, fieldIndex);
-		program.getListing()
-				.setComment(instruction.getMinAddress(), CodeUnit.EOL_COMMENT, valueName);
+		program.getListing().setComment(instruction.getMinAddress(), CommentType.EOL, valueName);
 	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.app.util.bin.format.golang.structmapping;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.*;
+import java.util.stream.StreamSupport;
 
 import ghidra.app.util.bin.format.dwarf.DWARFDataInstanceHelper;
 import ghidra.app.util.bin.format.dwarf.DWARFUtil;
@@ -241,14 +242,13 @@ public class MarkupSession {
 	 * the operation is skipped.
 	 * 
 	 * @param fieldContext the field
-	 * @param commentType {@link CodeUnit#EOL_COMMENT}, {@link CodeUnit#PLATE_COMMENT},
-	 * {@link CodeUnit#POST_COMMENT}, {@link CodeUnit#PRE_COMMENT} 
+	 * @param commentType {@link CommentType} enum 
 	 * @param prefix String prefix to place in front of the comment string
 	 * @param comment String value to append
 	 * @param sep separator to use between existing comments (for example, "\n")
 	 * @throws IOException if error adding comment
 	 */
-	public void appendComment(FieldContext<?> fieldContext, int commentType, String prefix,
+	public void appendComment(FieldContext<?> fieldContext, CommentType commentType, String prefix,
 			String comment, String sep) throws IOException {
 		DWARFUtil.appendComment(program, fieldContext.getAddress(), commentType, prefix, comment,
 			sep);
@@ -260,22 +260,21 @@ public class MarkupSession {
 	 * the operation is skipped.
 	 * 
 	 * @param structureContext the structure
-	 * @param commentType {@link CodeUnit#EOL_COMMENT}, {@link CodeUnit#PLATE_COMMENT},
-	 * {@link CodeUnit#POST_COMMENT}, {@link CodeUnit#PRE_COMMENT} 
+	 * @param commentType {@link CommentType} enum 
 	 * @param prefix String prefix to place in front of the comment string
 	 * @param comment String value to append
 	 * @param sep separator to use between existing comments (for example, "\n")
 	 * @throws IOException if error adding comment
 	 */
-	public void appendComment(StructureContext<?> structureContext, int commentType, String prefix,
-			String comment, String sep) throws IOException {
+	public void appendComment(StructureContext<?> structureContext, CommentType commentType,
+			String prefix, String comment, String sep) throws IOException {
 		DWARFUtil.appendComment(program, structureContext.getStructureAddress(), commentType,
 			prefix, comment, sep);
 	}
 
 	public void appendComment(Function func, String prefix, String comment) {
 		if (func != null) {
-			DWARFUtil.appendComment(program, func.getEntryPoint(), CodeUnit.PLATE_COMMENT, prefix,
+			DWARFUtil.appendComment(program, func.getEntryPoint(), CommentType.PLATE, prefix,
 				comment, "\n");
 		}
 	}
@@ -403,7 +402,9 @@ public class MarkupSession {
 		}
 		else {
 			try {
-				function.setName(name, SourceType.IMPORTED);
+				if (!containsSymbolName(addr, name)) {
+					function.setName(name, SourceType.IMPORTED);
+				}
 				function.setParentNamespace(ns);
 			}
 			catch (InvalidInputException | DuplicateNameException | CircularDependencyException e) {
@@ -411,6 +412,12 @@ public class MarkupSession {
 			}
 		}
 		return function;
+	}
+
+	private boolean containsSymbolName(Address addr, String symbolName) {
+		return StreamSupport
+				.stream(program.getSymbolTable().getSymbolsAsIterator(addr).spliterator(), false)
+				.anyMatch(sym -> symbolName.equals(sym.getName()));
 	}
 
 	/**

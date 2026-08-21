@@ -69,10 +69,14 @@
       <P align="center"><A name="Processor_Manual_Options"></A> <IMG src=
       "images/ProcessorManualOptions.png" border="0"></P>
 
+	  
+	  <BR>
+	  <BR>
+	  
       <TABLE border="1">
         <TBODY>
           <TR>
-            <TH width="20%">Options Name</TH>
+            <TH width="25%">Options Name</TH>
 
             <TH>Description</TH>
           </TR>
@@ -89,20 +93,190 @@
           <TR>
             <TD valign="top">Command Arguments</TD>
 
-            <TD>A space separated list of arguments that Ghidra will pass to the process listed
+            <TD>
+			
+			A space separated list of arguments that Ghidra will pass to the process listed
             above. If you need to include spaces as part of one of the arguments, then enclose the
-            argument in double quotes (e.g., "arg with space").</TD>
+            argument in double quotes (e.g., "arg with space").
+			<BR><BR>
+			The arguments will be passed to the process with the url as the last argument.  The 
+			exception to this is if you use the ${FILENAME} variable.  In that case, the file path
+			will be passed where you placed it in the list of arguments.
+			<BR><BR>
+			Ghidra will process the following variables, if present:
+				<UL>
+					<LI>
+						${FILENAME} - this will be replaced with the file path.
+					</LI>
+					<LI>
+						${PAGE} - this will be replaced with the page number for the current 
+						instruction.
+					</LI>
+				</UL>
+			</TD>
           </TR>
 
           <TR>
             <TD valign="top">File Format</TD>
 
             <TD>Ghidra will pass, by default, a URL to the given process. You may change this value
-            to signal to Ghidra that it should pass a filename instead.</TD>
+            to signal to Ghidra that it should pass a filename instead.
+			
+				<UL>
+					<LI>
+						${HTTP_URL} - an http url suitable for a web browser.  This will be a url 
+						that points to temp page that itself points to a file and page number of the
+						instruction.
+					</LI>
+					<LI>
+						${FILE_URL} - a file url that includes the page number of the instruction.
+					</LI>
+					<LI>
+						${FILENAME} - the file path without the leading 'file:' protocol.
+					</LI>
+				</UL>
+			
+			</TD>
           </TR>
         </TBODY>
-      </TABLE><BR>
+      </TABLE>
+	  <BR>
       <BR>
+		
+	  <H3>Examples</H3>
+	  <BLOCKQUOTE>
+		<TABLE border="1" width="90%">
+        <TBODY>
+          <TR>
+            <TH width="25%">Options Name</TH> 
+			<TH>Value</TH>
+          </TR>
+
+          <TR>
+            <TD valign="top" align="right">Command String</TD>
+
+            <TD>
+				google-chrome
+			</TD>
+          </TR>
+
+          <TR>
+            <TD valign="top" align="right">Command Arguments</TD>
+
+            <TD>
+
+			</TD>
+          </TR>
+
+          <TR>
+            <TD valign="top" align="right">File Format</TD>
+
+            <TD>
+				${FILE_URL}
+			</TD>
+          </TR>
+		  <TR>
+		    <TD valign="top" align="right"><I>Result</I></TD>
+
+		    <TD>
+				<CODE>
+					google-chrome file:/usr/local/manuals/processor.pdf#page=717
+				  </CODE>
+		  </TD>
+		  </TR>
+		    </TBODY>
+		  </TABLE>
+		  
+		  <BR>
+		  <BR>
+		  <TABLE border="1" width="90%">
+          <TBODY>
+            <TR>
+              <TH width="25%">Options Name</TH> 
+  			  <TH>Value</TH>
+            </TR>
+
+            <TR>
+              <TD valign="top" align="right">Command String</TD>
+
+              <TD>
+  				cmd.exe
+  			</TD>
+            </TR>
+
+            <TR>
+              <TD valign="top" align="right">Command Arguments</TD>
+              <TD>
+				/c start
+  			</TD>
+            </TR>
+
+            <TR>
+              <TD valign="top" align="right">File Format</TD>
+
+              <TD>
+  				${HTTP_URL}
+  			</TD>
+            </TR>
+  		  <TR>
+  		    <TD valign="top" align="right"><I>Result</I></TD>
+
+  		    <TD>
+  				<CODE>
+  					cmd.exe /c start file:/tmp/user-ghidra/pdfView5915851125268369591.html
+  				  </CODE>
+  		  </TD>
+  		  </TR>
+	    </TBODY>
+	  </TABLE>
+
+	  
+	  <BR>
+  	  <BR>
+  	  <TABLE border="1" width="90%">
+           <TBODY>
+             <TR>
+               <TH width="25%">Options Name</TH> 
+   			  <TH>Value</TH>
+             </TR>
+
+             <TR>
+               <TD valign="top" align="right">Command String</TD>
+
+               <TD>
+   				C:\SumatraPDF.exe
+   			</TD>
+             </TR>
+
+             <TR>
+               <TD valign="top" align="right">Command Arguments</TD>
+               <TD>
+				-resuse-instance -page ${PAGE} 
+   			</TD>
+             </TR>
+
+             <TR>
+               <TD valign="top" align="right">File Format</TD>
+
+               <TD>
+   				${FILENAME}
+   			</TD>
+             </TR>
+   		  <TR>
+   		    <TD valign="top" align="right"><I>Result</I></TD>
+
+   		    <TD>
+   				<CODE>
+   					C:\SumatraPDF.exe -resuse-instance -page 67 processor.pdf
+   				  </CODE>
+   		  </TD>
+   		  </TR>
+      </TBODY>
+    </TABLE>
+	  
+	  <BR>
+	  <BR>
+		</BLOCKQUOTE>
     </BLOCKQUOTE>
 
     <H2><A name="Show_Instruction_Info_Window"></A><B>Instruction Info Window</B></H2>
@@ -115,7 +289,7 @@
       (Mnemonic, Number of Operands, Address, Flow Type, Delay Slot Depth, Prototype Hash, Input
       Objects, Result Objects, Constructor line numbers, Instruction Bytes, etc.).</P>
 
-      <P>The Operand columns (<I>Op1</I>, <I>Op2</I>, etc.) display information about a particular
+      <P>The Operand columns (<I>Op0</I>, <I>Op1</I>, etc.) display information about a particular
       operand.&nbsp; Each operand has a number of rows.&nbsp; At the end of the row is a
       descriptive name for the information displayed on that row.</P>
 
@@ -197,13 +371,13 @@
       <P align="center">&nbsp;</P>
 
       <BLOCKQUOTE>
-        <P>The <I>Dynamic Update</I> checkbox indicates whether the window should update when you
-        change the location in the Code Browser.&nbsp; By default, the checkbox is selected. As you
-        change your <A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm#Location">location</A>
-        in the Code Browser, the window will be updated to show the info for the new
-        location.&nbsp; If you turn off the checkbox, the window does not update; the next time you
-        choose <I>Instruction Info</I>, a new tab is displayed in the <I>Instruction Info</I>
-        window.</P>
+        <P>The <img src="icon.navigate.in"> <I>Dynamic Update</I> toggle indicates whether the
+        window should update when you change the location in the Code Browser.&nbsp; By default, the
+        toggle is selected. As you change your
+        <A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm#Location">location</A> in the Code
+        Browser, the window will be updated to show the info for the new location.&nbsp; If you turn
+        off the toggle, the window does not update; the next time you choose <I>Instruction
+        Info</I>, a new tab is displayed in the <I>Instruction Info</I> window.</P>
       </BLOCKQUOTE>
 
       <P class="providedbyplugin">&nbsp;</P>

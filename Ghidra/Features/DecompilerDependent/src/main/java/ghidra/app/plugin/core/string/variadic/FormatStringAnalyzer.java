@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.HighFunctionDBUtil;
 import ghidra.program.model.pcode.PcodeOpAST;
-import ghidra.program.util.DefinedDataIterator;
+import ghidra.program.util.DefinedStringIterator;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.InvalidInputException;
@@ -101,9 +101,8 @@ public class FormatStringAnalyzer extends AbstractAnalyzer {
 
 	private void run(AddressSetView selection, TaskMonitor monitor) throws CancelledException {
 
-		DefinedDataIterator dataIterator = DefinedDataIterator.definedStrings(currentProgram);
 		Map<Address, Data> stringsByAddress = new HashMap<>();
-		for (Data data : dataIterator) {
+		for (Data data : DefinedStringIterator.forProgram(currentProgram)) {
 			String s = data.getDefaultValueRepresentation();
 			if (s.contains("%")) {
 				stringsByAddress.put(data.getAddress(), data);

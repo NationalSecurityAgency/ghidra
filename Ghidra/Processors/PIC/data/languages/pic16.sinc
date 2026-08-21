@@ -2,28 +2,6 @@
 # PIC-16 Main Section
 #   includes constants, memory space and common register space definitions
 #
-
-# STATUS bit definitions
-@define STATUS_IRP_BIT	7
-@define STATUS_RP0_BIT	5
-@define STATUS_Z_BIT	2
-@define STATUS_DC_BIT	1
-@define STATUS_C_BIT	0
-
-# STATUS bit masks used for setting
-@define STATUS_IRP_MASK 0x80
-@define STATUS_RP_MASK	0x60
-@define STATUS_Z_MASK	0x04
-@define STATUS_DC_MASK	0x02
-@define STATUS_C_MASK	0x01
-
-# STATUS bit masks used for clearing
-@define STATUS_IRP_CLEARMASK 0x7F
-@define STATUS_RP_CLEARMASK	0x9F
-@define STATUS_Z_CLEARMASK	0xFB
-@define STATUS_DC_CLEARMASK	0xFD
-@define STATUS_C_CLEARMASK	0xFE
-
 define endian=little;
 define alignment=2;
 
@@ -50,18 +28,37 @@ define register offset=0x0002 size=1 [ STKPTR ];
 define register offset=0x0003 size=1 [ W SkipNext ];
 
 # Status bit registers (these do not really exist and must get reflected into the STATUS byte register)
-@if PROCESSOR == "PIC_16"
 define register offset=0x0007 size=1 [ IRP RP ];
-@elif PROCESSOR == "PIC_16F"
-define register offset=0x0007 size=1 [ IRP RP ];
-@endif
 
 @define C  "STATUS[0,1]"
 @define DC "STATUS[1,1]"
 @define Z  "STATUS[2,1]"
 @define PD "STATUS[3,1]"
 @define TO "STATUS[4,1]"
-@define PA0 "STATUS[5,1]"
+@define RP "STATUS[5,2]"
+@define IRP "STATUS[7,1]"
+
+# STATUS bit definitions
+@define STATUS_IRP_BIT	7
+@define STATUS_RP_BIT	5
+@define STATUS_Z_BIT	2
+@define STATUS_DC_BIT	1
+@define STATUS_C_BIT	0
+
+# STATUS bit masks used for setting
+@define STATUS_IRP_MASK 0x80
+@define STATUS_RP_MASK	0x60
+@define STATUS_Z_MASK	0x04
+@define STATUS_DC_MASK	0x02
+@define STATUS_C_MASK	0x01
+
+# STATUS bit masks used for clearing
+@define STATUS_IRP_CLEARMASK 0x7F
+@define STATUS_RP_CLEARMASK	0x9F
+@define STATUS_Z_CLEARMASK	0xFB
+@define STATUS_DC_CLEARMASK	0xFD
+@define STATUS_C_CLEARMASK	0xFE
+
 
 #
 # WARNING! - Reflection of these DATA-based registers with the corresponding register
@@ -80,16 +77,13 @@ define register offset=0x0007 size=1 [ IRP RP ];
 #
 @if PROCESSOR == "PIC_16"
 define DATA offset=0x0000 size=1 [
-	INDF	TMR0	PCL		STATUS	FSR		PORTA	PORTB	PORTC	PORTD	PORTE	PCLATH	INTCON	PIR1	PIR2	TMR1L	TMR1H
+				INDF	_       PCL		STATUS  FSR		_       _       _       _       _       PCLATH  INTCON	_		_       _       _
 ];
-
 @elif PROCESSOR == "PIC_16F"
 define DATA offset=0x0000 size=1 [
-	INDF0	INDF1	PCL	STATUS	FSR0L	FSR0H	FSR1L	FSR1H	BSR	WREG	PCLATH	INTCON	_	_	_	_
+				INDF0	INDF1	PCL		STATUS	FSR0L	FSR0H	FSR1L	FSR1H	BSR		WREG	PCLATH	INTCON	_		_		_		_
 ];
-
 define DATA offset=0x0004 size=2 [ FSR0  FSR1 ];
-
 @endif
 
 # Additional Data Bank data registers are defined in the .PSPEC file.

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,8 +25,6 @@ import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
-import ghidra.app.plugin.core.analysis.rust.RustConstants;
-import ghidra.app.plugin.core.analysis.rust.RustUtilities;
 import ghidra.app.util.*;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.MemoryLoadable;
@@ -52,9 +50,7 @@ import ghidra.program.model.reloc.*;
 import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
-import ghidra.program.model.util.AddressSetPropertyMap;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.program.util.ExternalSymbolResolver;
 import ghidra.util.*;
 import ghidra.util.datastruct.*;
 import ghidra.util.exception.*;
@@ -188,8 +184,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			adjustReadOnlyMemoryRegions(monitor);
 
 			markupElfInfoProducers(monitor);
-
-			setCompiler(monitor);
 
 			success = true;
 		}
@@ -458,7 +452,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			String[] neededLibs = elf.getDynamicLibraryNames();
 			for (String neededLib : neededLibs) {
 				monitor.checkCancelled();
-				props.setString(ExternalSymbolResolver.getRequiredLibraryProperty(libraryIndex++),
+				props.setString(
+					AbstractLibrarySupportLoader.getRequiredLibraryProperty(libraryIndex++),
 					neededLib);
 			}
 		}
@@ -545,18 +540,18 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					comment = Long.toHexString(symbols[index].getValue());
 				}
 
-				cu.setComment(CodeUnit.EOL_COMMENT, comment);
+				cu.setComment(CommentType.EOL, comment);
 
 //            Scalar scalar = (Scalar)data.getValue();
 //            switch ((int)scalar.getValue()) {
 //                case GNU_Constants.VER_NDX_LOCAL:
-//                    data.setComment(Data.EOL_COMMENT, symbols[index].getNameAsString()+ " - local version");
+//                    data.setComment(Data.EOL, symbols[index].getNameAsString()+ " - local version");
 //                    break;
 //                case GNU_Constants.VER_NDX_GLOBAL:
-//                    data.setComment(Data.EOL_COMMENT, symbols[index].getNameAsString()+ " - global version");
+//                    data.setComment(Data.EOL, symbols[index].getNameAsString()+ " - global version");
 //                    break;
 //                default:
-//                    data.setComment(Data.EOL_COMMENT, symbols[index].getNameAsString()+ " - ??");
+//                    data.setComment(Data.EOL, symbols[index].getNameAsString()+ " - ??");
 //                  break;
 //            }
 			}
@@ -617,13 +612,13 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				set.delete(startAddr, block.getEnd());
 			}
 		}
-		catch (MemoryBlockException | LockException | NotFoundException e) {
+		catch (MemoryBlockException | LockException e) {
 			throw new AssertException(e); // unexpected
 		}
 	}
 
 	private MemoryBlock setReadOnlyBlockRange(MemoryBlock block, AddressRange range)
-			throws MemoryBlockException, LockException, NotFoundException {
+			throws MemoryBlockException, LockException {
 		if (!block.isWrite()) {
 			return block;
 		}
@@ -837,7 +832,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 
 		createData(interpStrAddr, TerminatedStringDataType.dataType);
-		listing.setComment(interpStrAddr, CodeUnit.EOL_COMMENT, "Initial Elf program interpreter");
+		listing.setComment(interpStrAddr, CommentType.EOL, "Initial Elf program interpreter");
 	}
 
 	private void processImports(TaskMonitor monitor) throws CancelledException {
@@ -879,7 +874,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 		monitor.initialize(totalCount);
 
-		ElfRelocationContext context = ElfRelocationContext.getRelocationContext(this, symbolMap);
+		ElfRelocationContext<?> context =
+			ElfRelocationContext.getRelocationContext(this, symbolMap);
 		try {
 			for (ElfRelocationTable relocationTable : relocationTables) {
 				monitor.checkCancelled();
@@ -887,14 +883,12 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			}
 		}
 		finally {
-			if (context != null) {
-				context.dispose();
-			}
+			context.dispose();
 		}
 	}
 
 	private void processRelocationTable(ElfRelocationTable relocationTable,
-			ElfRelocationContext context, TaskMonitor monitor) throws CancelledException {
+			ElfRelocationContext<?> context, TaskMonitor monitor) throws CancelledException {
 
 		Address defaultBase = getDefaultAddress(elf.adjustAddressForPrelink(0));
 		AddressSpace defaultSpace = defaultBase.getAddressSpace();
@@ -953,12 +947,12 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	}
 
 	private void processRelocationTableEntries(ElfRelocationTable relocationTable,
-			ElfRelocationContext context, AddressSpace relocationSpace, long baseWordOffset,
+			ElfRelocationContext<?> context, AddressSpace relocationSpace, long baseWordOffset,
 			TaskMonitor monitor) throws CancelledException {
 
-		if (context != null) {
-			context.startRelocationTableProcessing(relocationTable);
-		}
+		boolean processRelocations = ElfLoaderOptionsFactory.performRelocations(options);
+
+		context.startRelocationTableProcessing(relocationTable);
 
 		ElfSymbolTable symbolTable = relocationTable.getAssociatedSymbolTable();
 		ElfRelocation[] relocs = relocationTable.getRelocations();
@@ -977,7 +971,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 		boolean relrTypeUnknown = false;
 		int relrRelocationType = 0;
-		if (relocationTable.isRelrTable() && context != null) {
+		if (relocationTable.isRelrTable()) {
 			relrRelocationType = context.getRelrRelocationType();
 			if (relrRelocationType == 0) {
 				relrTypeUnknown = true;
@@ -991,22 +985,18 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			monitor.incrementProgress(1);
 
 			int type = reloc.getType();
-			if (type == 0) {
-				continue; // ignore relocation type 0 (i.e., ..._NONE)
+			if (type == 0 && !relocationTable.isRelrTable()) {
+				continue; // ignore relocation type 0 if not a RELR table (i.e., ..._NONE)
 			}
 
 			int symbolIndex = reloc.getSymbolIndex();
 			String symbolName = symbolTable != null ? symbolTable.getSymbolName(symbolIndex) : "";
-			if (symbolName != null && SymbolUtilities.containsInvalidChars(symbolName)) {
-				symbolName = getEscapedSymbolName(symbolName);
-			}
+			symbolName = ElfSymbolNameUtils.replaceInvalidChars(symbolName);
 
 			Address baseAddress = relocationSpace.getTruncatedAddress(baseWordOffset, true);
 
 			// relocation offset (r_offset) is defined to be a byte offset (assume byte size is 1)
-			Address relocAddr =
-				context != null ? context.getRelocationAddress(baseAddress, reloc.getOffset())
-						: baseAddress.addWrap(reloc.getOffset());
+			Address relocAddr = context.getRelocationAddress(baseAddress, reloc.getOffset());
 
 			long[] values = new long[] { reloc.getSymbolIndex() };
 
@@ -1018,6 +1008,11 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			Status status = Status.SKIPPED;
 			int byteLength = 0;
 			try {
+
+				if (!processRelocations) {
+					continue; // skip and record relocation
+				}
+
 				if (unableToApplyRelocs) {
 					status = Status.FAILURE;
 					context.markRelocationError(relocAddr, type, symbolIndex, symbolName,
@@ -1044,17 +1039,15 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					}
 				}
 
-				if (context != null) {
-					if (relrTypeUnknown) {
-						status = Status.UNSUPPORTED;
-						ElfRelocationHandler.bookmarkUnsupportedRelr(program, relocAddr,
-							symbolIndex, symbolName);
-					}
-					else {
-						RelocationResult result = context.processRelocation(reloc, relocAddr);
-						byteLength = result.byteLength();
-						status = result.status();
-					}
+				if (relrTypeUnknown) {
+					status = Status.UNSUPPORTED;
+					ElfRelocationHandler.bookmarkUnsupportedRelr(program, relocAddr, symbolIndex,
+						symbolName);
+				}
+				else {
+					RelocationResult result = context.processRelocation(reloc, relocAddr);
+					byteLength = result.byteLength();
+					status = result.status();
 				}
 			}
 			catch (MemoryAccessException e) {
@@ -1072,9 +1065,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			}
 		}
 
-		if (context != null) {
-			context.endRelocationTableProcessing();
-		}
+		context.endRelocationTableProcessing();
 	}
 
 	@Override
@@ -1232,7 +1223,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				monitor.incrementProgress(1);
 
 				Data d = array.getComponent(i);
-				d.setComment(CodeUnit.EOL_COMMENT, programHeaders[i].getComment());
+				d.setComment(CommentType.EOL, programHeaders[i].getComment());
 				if (programHeaders[i].getType() == ElfProgramHeaderConstants.PT_NULL) {
 					continue;
 				}
@@ -1303,7 +1294,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				if (type != null) {
 					comment = comment + " - " + type;
 				}
-				d.setComment(CodeUnit.EOL_COMMENT, comment);
+				d.setComment(CommentType.EOL, comment);
 
 				Address sectionAddr = findLoadAddress(sections[i], 0);
 				if (sectionAddr != null) {
@@ -1342,7 +1333,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				listing.createData(relocTableAddr, dataType);
 			}
 			else {
-				listing.setComment(relocTableAddr, CodeUnit.PRE_COMMENT,
+				listing.setComment(relocTableAddr, CommentType.PRE,
 					"ELF Relocation Table (markup not yet supported)");
 			}
 		}
@@ -2023,14 +2014,14 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 		// Add versioned symbol as comment only
 		Address address = s.getAddress();
-		String comment = listing.getComment(CodeUnit.PRE_COMMENT, address);
+		String comment = listing.getComment(CommentType.PRE, address);
 		if (comment == null || comment.length() == 0) {
 			comment = symName;
 		}
 		else {
 			comment += "\n" + symName;
 		}
-		listing.setComment(address, CodeUnit.PRE_COMMENT, comment);
+		listing.setComment(address, CommentType.PRE, comment);
 		setElfSymbolAddress(elfSymbol, address);
 		return true;
 	}
@@ -2110,7 +2101,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			}
 
 			try {
-				boolean isPrimary = (elfSymbol.getType() == ElfSymbol.STT_FUNC) ||
+				boolean isPrimary = elfSymbol.isFunction() ||
 					(elfSymbol.getType() == ElfSymbol.STT_OBJECT) || (elfSymbol.getSize() != 0);
 				// don't displace existing primary unless symbol is a function or object symbol
 				if (name.contains("@")) {
@@ -2121,10 +2112,10 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					isPrimary = (existingSym == null);
 				}
 
-				if (SymbolUtilities.containsInvalidChars(name)) {
-					String escapedName = getEscapedSymbolName(name);
-					log("Unsupported symbol name has been escaped: \"" + escapedName + "\"");
-					name = escapedName;
+				String validatedName = ElfSymbolNameUtils.replaceInvalidChars(name);
+				if (name != validatedName) {
+					log("Unsupported symbol name has been escaped: \"" + validatedName + "\"");
+					name = validatedName;
 				}
 
 				createSymbol(address, name, isPrimary, elfSymbol.isAbsolute(), null);
@@ -2135,8 +2126,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					program.getSymbolTable().addExternalEntryPoint(address);
 				}
 
-				if (elfSymbol.getType() == ElfSymbol.STT_FUNC) {
-					Function existingFunction = program.getFunctionManager().getFunctionAt(address);
+				Function existingFunction = program.getFunctionManager().getFunctionAt(address);
+				if (elfSymbol.isFunction(true)) {
 					if (existingFunction == null) {
 						Function f = createOneByteFunction(null, address, false);
 						if (f != null) {
@@ -2154,33 +2145,16 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 						}
 					}
 				}
+				else if (elfSymbol.isFunction(false) && existingFunction == null) {
+					AbstractProgramLoader.markProperty(program, address, Program.CODE_MAP_NAME);
+					AbstractProgramLoader.markProperty(program, address,
+						Program.COLD_ENTRY_MAP_NAME);
+				}
 			}
 			catch (DuplicateNameException e) {
 				throw new RuntimeException("Unexpected Exception", e);
 			}
 		}
-	}
-
-	private String getEscapedSymbolName(String name) {
-		// Do not preclude use of UTF8 strings
-		StringBuilder escapedBuf = new StringBuilder();
-		name.codePoints().forEach(cp -> {
-			if (cp < 0x20) {
-				// Format as ^Control character for consistency with readelf
-				cp += 0x40; // get ASCII control character, starts with ^@
-				escapedBuf.append('^');
-				escapedBuf.appendCodePoint(cp);
-			}
-			else if (cp == 0x7F) {
-				// Format as ^? character for consistency with readelf
-				escapedBuf.append("^?");
-			}
-			else {
-				// Assume valid code point
-				escapedBuf.appendCodePoint(cp);
-			}
-		});
-		return escapedBuf.toString();
 	}
 
 	@Override
@@ -2191,25 +2165,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	@Override
 	public Address getElfSymbolAddress(ElfSymbol elfSymbol) {
 		return symbolMap.get(elfSymbol);
-	}
-
-	@Override
-	public void markAsCode(Address address) {
-		// TODO: this should be in a common place, so all importers can communicate that something
-		// is code or data.
-		AddressSetPropertyMap codeProp = program.getAddressSetPropertyMap("CodeMap");
-		if (codeProp == null) {
-			try {
-				codeProp = program.createAddressSetPropertyMap("CodeMap");
-			}
-			catch (DuplicateNameException e) {
-				codeProp = program.getAddressSetPropertyMap("CodeMap");
-			}
-		}
-
-		if (codeProp != null) {
-			codeProp.add(address, address);
-		}
 	}
 
 	@Override
@@ -2466,21 +2421,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 	}
 
-	private void setCompiler(TaskMonitor monitor) {
-		// Check for Rust
-		try {
-			if (RustUtilities.isRust(memory.getBlock(ElfSectionHeaderConstants.dot_rodata))) {
-				program.setCompiler(RustConstants.RUST_COMPILER);
-				int extensionCount = RustUtilities.addExtensions(program, monitor,
-					RustConstants.RUST_EXTENSIONS_UNIX);
-				log.appendMsg("Installed " + extensionCount + " Rust cspec extensions");
-			}
-		}
-		catch (IOException e) {
-			log.appendMsg("Rust error: " + e.getMessage());
-		}
-	}
-
 	private void markupHashTable(TaskMonitor monitor) {
 
 		ElfDynamicTable dynamicTable = elf.getDynamicTable();
@@ -2500,21 +2440,21 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 			Address addr = hashTableAddr;
 			Data d = listing.createData(addr, dt);
-			d.setComment(CodeUnit.EOL_COMMENT, "Hash Table - nbucket");
+			d.setComment(CommentType.EOL, "Hash Table - nbucket");
 			long nbucket = d.getScalar(0).getUnsignedValue();
 
 			addr = addr.add(d.getLength());
 			d = listing.createData(addr, dt);
-			d.setComment(CodeUnit.EOL_COMMENT, "Hash Table - nchain");
+			d.setComment(CommentType.EOL, "Hash Table - nchain");
 			long nchain = d.getScalar(0).getUnsignedValue();
 
 			addr = addr.add(d.getLength());
 			d = listing.createData(addr, new ArrayDataType(dt, (int) nbucket, dt.getLength()));
-			d.setComment(CodeUnit.EOL_COMMENT, "Hash Table - buckets");
+			d.setComment(CommentType.EOL, "Hash Table - buckets");
 
 			addr = addr.add(d.getLength());
 			d = listing.createData(addr, new ArrayDataType(dt, (int) nchain, dt.getLength()));
-			d.setComment(CodeUnit.EOL_COMMENT, "Hash Table - chains");
+			d.setComment(CommentType.EOL, "Hash Table - chains");
 		}
 		catch (Exception e) {
 			log("Failed to properly markup Hash table at " + hashTableAddr + ": " + getMessage(e));
@@ -2543,36 +2483,36 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 			Address addr = hashTableAddr;
 			Data d = listing.createData(addr, dt);
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU Hash Table - nbucket");
+			d.setComment(CommentType.EOL, "GNU Hash Table - nbucket");
 			long nbucket = d.getScalar(0).getUnsignedValue();
 
 			addr = addr.add(d.getLength());
 			d = listing.createData(addr, dt);
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU Hash Table - symbase");
+			d.setComment(CommentType.EOL, "GNU Hash Table - symbase");
 			long symbolBase = d.getScalar(0).getUnsignedValue();
 
 			addr = addr.add(d.getLength());
 			d = listing.createData(addr, dt);
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU Hash Table - bloom_size");
+			d.setComment(CommentType.EOL, "GNU Hash Table - bloom_size");
 			long bloomSize = d.getScalar(0).getUnsignedValue();
 
 			addr = addr.add(d.getLength());
 			d = listing.createData(addr, dt);
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU Hash Table - bloom_shift");
+			d.setComment(CommentType.EOL, "GNU Hash Table - bloom_shift");
 
 			addr = addr.add(d.getLength());
 			DataType bloomDataType =
 				elf.is64Bit() ? QWordDataType.dataType : DWordDataType.dataType;
 			d = listing.createData(addr,
 				new ArrayDataType(bloomDataType, (int) bloomSize, bloomDataType.getLength()));
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU Hash Table - bloom");
+			d.setComment(CommentType.EOL, "GNU Hash Table - bloom");
 
 			addr = addr.add(d.getLength());
 			d = listing.createData(addr, new ArrayDataType(dt, (int) nbucket, dt.getLength()));
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU Hash Table - buckets");
+			d.setComment(CommentType.EOL, "GNU Hash Table - buckets");
 
 			addr = addr.add(d.getLength());
-			listing.setComment(addr, CodeUnit.EOL_COMMENT, "GNU Hash Table - chain");
+			listing.setComment(addr, CommentType.EOL, "GNU Hash Table - chain");
 
 			// Rely on dynamic symbol table for number of symbols
 			ElfSymbolTable dynamicSymbolTable = elf.getDynamicSymbolTable();
@@ -2613,30 +2553,30 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			// Elf32_Word  ngnusyms;  // number of entries in chains (and xlat); dynsymcount=symndx+ngnusyms
 			Address addr = hashTableAddr;
 			Data d = listing.createData(addr, dt);
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU XHash Table - ngnusyms");
+			d.setComment(CommentType.EOL, "GNU XHash Table - ngnusyms");
 			long ngnusyms = d.getScalar(0).getUnsignedValue();
 
 			// Elf32_Word  nbuckets;  // number of hash table buckets
 			addr = addr.add(d.getLength());
 			d = listing.createData(addr, dt);
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU XHash Table - nbuckets");
+			d.setComment(CommentType.EOL, "GNU XHash Table - nbuckets");
 			long nbuckets = d.getScalar(0).getUnsignedValue();
 
 			// Elf32_Word  symndx;  // number of initial .dynsym entires skipped in chains[] (and xlat[])
 			addr = addr.add(d.getLength());
 			d = listing.createData(addr, dt);
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU XHash Table - symndx");
+			d.setComment(CommentType.EOL, "GNU XHash Table - symndx");
 
 			// Elf32_Word  maskwords; // number of ElfW(Addr) words in bitmask
 			addr = addr.add(d.getLength());
 			d = listing.createData(addr, dt);
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU XHash Table - maskwords");
+			d.setComment(CommentType.EOL, "GNU XHash Table - maskwords");
 			long maskwords = d.getScalar(0).getUnsignedValue();
 
 			// Elf32_Word  shift2;  // bit shift of hashval for second Bloom filter bit
 			addr = addr.add(d.getLength());
 			d = listing.createData(addr, dt);
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU XHash Table - shift2");
+			d.setComment(CommentType.EOL, "GNU XHash Table - shift2");
 
 			// ElfW(Addr)  bitmask[maskwords];  // 2 bit Bloom filter on hashval
 			addr = addr.add(d.getLength());
@@ -2644,22 +2584,22 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				elf.is64Bit() ? QWordDataType.dataType : DWordDataType.dataType;
 			d = listing.createData(addr,
 				new ArrayDataType(bloomDataType, (int) maskwords, bloomDataType.getLength()));
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU XHash Table - bitmask");
+			d.setComment(CommentType.EOL, "GNU XHash Table - bitmask");
 
 			// Elf32_Word  buckets[nbuckets];  // indices into chains[]
 			addr = addr.add(d.getLength());
 			d = listing.createData(addr, new ArrayDataType(dt, (int) nbuckets, dt.getLength()));
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU XHash Table - buckets");
+			d.setComment(CommentType.EOL, "GNU XHash Table - buckets");
 
 			// Elf32_Word  chains[ngnusyms];  // consecutive hashvals in a given bucket; last entry in chain has LSB set
 			addr = addr.add(d.getLength());
 			d = listing.createData(addr, new ArrayDataType(dt, (int) ngnusyms, dt.getLength()));
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU XHash Table - chains");
+			d.setComment(CommentType.EOL, "GNU XHash Table - chains");
 
 			// Elf32_Word  xlat[ngnusyms];  // parallel to chains[]; index into .dynsym
 			addr = addr.add(d.getLength());
 			d = listing.createData(addr, new ArrayDataType(dt, (int) ngnusyms, dt.getLength()));
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU XHash Table - xlat");
+			d.setComment(CommentType.EOL, "GNU XHash Table - xlat");
 		}
 		catch (Exception e) {
 			log("Failed to properly markup GNU Hash table at " + hashTableAddr + ": " +
@@ -2689,7 +2629,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			}
 			Data structData = array.getComponent(i);
 			if (structData != null) {
-				structData.setComment(CodeUnit.EOL_COMMENT, name);
+				structData.setComment(CommentType.EOL, name);
 			}
 		}
 	}
@@ -2737,7 +2677,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				String comment =
 					dynamicType != null ? (dynamicType.name + " - " + dynamicType.description)
 							: ("DT_0x" + StringUtilities.pad(Integer.toHexString(tagType), '0', 8));
-				dynamicData.setComment(CodeUnit.EOL_COMMENT, comment);
+				dynamicData.setComment(CommentType.EOL, comment);
 
 				Data valueData = dynamicData.getComponent(1);
 
@@ -2750,7 +2690,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 						if (dynamicStringTable != null) {
 							String str = dynamicStringTable.readString(elf.getReader(), value);
 							if (str != null && str.length() != 0) {
-								valueData.setComment(CodeUnit.EOL_COMMENT, str);
+								valueData.setComment(CommentType.EOL, str);
 							}
 						}
 					}
@@ -3583,7 +3523,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		SymbolTable symbolTable = program.getSymbolTable();
 		Symbol sym = symbolTable.createLabel(addr, name, namespace, SourceType.IMPORTED);
 		if (isPrimary) {
-			checkPrimary(sym);
+			sym = checkPrimary(sym);
 		}
 		if (pinAbsolute && !sym.isPinned()) {
 			sym.setPinned(true);

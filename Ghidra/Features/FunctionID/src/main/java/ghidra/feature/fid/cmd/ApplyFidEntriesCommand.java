@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import java.util.*;
 
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.util.demangler.DemangledObject;
+import ghidra.feature.fid.db.FidProgramID;
 import ghidra.feature.fid.db.FidQueryService;
 import ghidra.feature.fid.service.*;
 import ghidra.framework.cmd.BackgroundCommand;
@@ -46,25 +47,29 @@ public class ApplyFidEntriesCommand extends BackgroundCommand<Program> {
 	private float scoreThreshold;
 	private float multiNameScoreThreshold;
 	private boolean createBookmarksEnabled;
+	private boolean ignoreCompilerSpec;
 
 	public ApplyFidEntriesCommand(AddressSetView set, float scoreThreshold, float multiThreshold,
-			boolean alwaysApplyFidLabels, boolean createBookmarksEnabled) {
+			boolean alwaysApplyFidLabels, boolean createBookmarksEnabled,
+			boolean ignoreCompilerSpec) {
 		super("ApplyFidEntriesCommand", true, true, false);
 		this.scoreThreshold = scoreThreshold;
 		this.multiNameScoreThreshold = multiThreshold;
 		this.alwaysApplyFidLabels = alwaysApplyFidLabels;
 		this.createBookmarksEnabled = createBookmarksEnabled;
+		this.ignoreCompilerSpec = ignoreCompilerSpec;
 	}
 
 	@Override
 	public boolean applyTo(Program program, TaskMonitor monitor) {
 		FidService service = new FidService();
-		if (!service.canProcess(program.getLanguage())) {
+		FidProgramID programID = new FidProgramID(program, ignoreCompilerSpec);
+		if (!service.canProcess(programID)) {
 			return false;
 		}
 
 		try (FidQueryService fidQueryService =
-			service.openFidQueryService(program.getLanguage(), false)) {
+			service.openFidQueryService(programID, false)) {
 
 			monitor.setMessage("FID Analysis");
 			List<FidSearchResult> processProgram =
@@ -273,9 +278,8 @@ public class ApplyFidEntriesCommand extends BackgroundCommand<Program> {
 		SymbolTable symbolTable = program.getSymbolTable();
 		SymbolIterator symbols = symbolTable.getSymbolsAsIterator(function.getEntryPoint());
 		for (Symbol symbol : symbols) {
-			SourceType sourceType = symbol.getSource();
-			if (sourceType == SourceType.USER_DEFINED || sourceType == SourceType.IMPORTED) {
-				return true;
+			if (symbol.getSource().isHigherOrEqualPriorityThan(SourceType.IMPORTED)) {
+				return true; // symbol has trusted source
 			}
 		}
 		return false;

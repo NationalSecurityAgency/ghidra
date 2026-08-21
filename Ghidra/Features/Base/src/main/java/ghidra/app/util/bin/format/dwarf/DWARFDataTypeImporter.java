@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,7 @@
 package ghidra.app.util.bin.format.dwarf;
 
 import static ghidra.app.util.bin.format.dwarf.DWARFTag.*;
-import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute.*;
+import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.*;
 
 import java.io.IOException;
 import java.util.*;
@@ -28,7 +28,7 @@ import ghidra.app.util.DataTypeNamingUtil;
 import ghidra.app.util.bin.format.dwarf.attribs.DWARFNumericAttribute;
 import ghidra.app.util.bin.format.dwarf.expression.DWARFExpressionException;
 import ghidra.app.util.bin.format.golang.rtti.types.GoKind;
-import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.DbObject;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
@@ -42,7 +42,6 @@ import ghidra.util.exception.InvalidInputException;
  * <p>
  * Create a new instance of this class for each {@link DIEAggregate} datatype that you wish
  * to convert into a DataType.
- * <p>
  */
 public class DWARFDataTypeImporter {
 	private DWARFProgram prog;
@@ -52,8 +51,8 @@ public class DWARFDataTypeImporter {
 	private DWARFDataType voidDDT;
 
 	/**
-	 * Tracks which {@link DIEAggregate DIEAs} have been visited by {@link #getDataTypeWorker(DIEAggregate, DataType)}
-	 * during the current {@link #getDataType(DIEAggregate, DWARFDataType)} session.
+	 * Tracks which {@link DIEAggregate DIEAs} have already been visited by
+	 * {@link #getDataType(DIEAggregate, DWARFDataType)} during the current session.
 	 * <p>
 	 * Some recursive calls are permitted to handle loops in the data types, but are limited
 	 * to 2 recursions.
@@ -121,8 +120,8 @@ public class DWARFDataTypeImporter {
 	 * @param defaultValue value to return if the specified DIEA is null or there is a problem
 	 * with the DWARF debug data.
 	 * @return a {@link DWARFDataType} wrapper around the new Ghidra {@link DataType}.
-	 * @throws IOException
-	 * @throws DWARFExpressionException
+	 * @throws IOException if error
+	 * @throws DWARFExpressionException if error with dwarf expression
 	 */
 	public DWARFDataType getDataType(DIEAggregate diea, DWARFDataType defaultValue)
 			throws IOException, DWARFExpressionException {
@@ -174,6 +173,7 @@ public class DWARFDataTypeImporter {
 			case DW_TAG_restrict_type:
 			case DW_TAG_shared_type:
 			case DW_TAG_APPLE_ptrauth_type:
+			case DW_TAG_atomic_type:
 				result = makeDataTypeForConst(diea);
 				break;
 			case DW_TAG_enumeration_type:
@@ -247,7 +247,7 @@ public class DWARFDataTypeImporter {
 	 * 						offset -> ddt
 	 */
 	private void recordTempDataType(DWARFDataType ddt) {
-		if (ddt.dataType instanceof DatabaseObject) {
+		if (ddt.dataType instanceof DbObject) {
 			// don't store info about types that are already in the database
 			return;
 		}
@@ -342,12 +342,8 @@ public class DWARFDataTypeImporter {
 		return result;
 	}
 
-	/**
+	/*
 	 * Gets the corresponding Ghidra base type.
-	 * <p>
-	 * @param diea
-	 * @throws IOException
-	 * @throws DWARFExpressionException
 	 */
 	private DWARFDataType makeDataTypeForBaseType(DIEAggregate diea)
 			throws IOException, DWARFExpressionException {
@@ -401,10 +397,10 @@ public class DWARFDataTypeImporter {
 
 	/**
 	 * Simple passthru, returns whatever type this "const" modifier applies to.
-	 * <p>
-	 * @param diea
-	 * @throws IOException
-	 * @throws DWARFExpressionException
+	 * 
+	 * @param diea {@link DIEAggregate}
+	 * @throws IOException if error
+	 * @throws DWARFExpressionException if error with dwarf expression
 	 */
 	private DWARFDataType makeDataTypeForConst(DIEAggregate diea)
 			throws IOException, DWARFExpressionException {
@@ -424,10 +420,9 @@ public class DWARFDataTypeImporter {
 	 * <p>
 	 * This method takes liberties with the normal{@literal DWARF->Ghidra Impl DataType->Ghidra DB DataType}
 	 * workflow to be able to merge values into previous db enum datatypes.
-	 * <p>
 	 *
-	 * @param diea
-	 * @return
+	 * @param diea {@link DIEAggregate}
+	 * @return {@link DWARFDataType} with enum data type
 	 */
 	private DWARFDataType makeDataTypeForEnum(DIEAggregate diea) {
 
@@ -472,11 +467,11 @@ public class DWARFDataTypeImporter {
 		// NOTE: gcc tends to emit values without an explicit signedness.  The caller
 		// can specify a default signedness, but this should probably always be unsigned.
 		for (DebugInfoEntry childEntry : diea.getChildren(DW_TAG_enumerator)) {
-			DIEAggregate childDIEA = prog.getAggregate(childEntry);
+			DIEAggregate childDIEA = prog.getDIEContainer().getAggregate(childEntry);
 			String valueName = childDIEA.getName();
 
 			DWARFNumericAttribute enumValAttr = childDIEA
-					.getAttribute(DW_AT_const_value, DWARFNumericAttribute.class);
+					.findValue(DW_AT_const_value, DWARFNumericAttribute.class);
 			if (enumValAttr != null) {
 				long enumVal = enumValAttr.getValueWithSignednessHint(defaultSignedness);
 
@@ -526,11 +521,10 @@ public class DWARFDataTypeImporter {
 	}
 
 	/**
-	 * Returns true if there are no values in destEnum that conflict with srcEnum.
+	 * {@return true if there are no values in destEnum that conflict with srcEnum }
 	 *
-	 * @param srcEnum
-	 * @param destEnum
-	 * @return
+	 * @param srcEnum {@link Enum} 
+	 * @param destEnum {@link Enum} 
 	 */
 	private boolean isCompatEnumValues(Enum srcEnum, Enum destEnum) {
 		for (String srcKey : srcEnum.getNames()) {
@@ -552,16 +546,16 @@ public class DWARFDataTypeImporter {
 	/**
 	 * Creates an empty stub structure/union for the DIEA.
 	 * <p>
-	 * Use {@link #finishStruct(DIEAggregate, DataType)} (which calls
-	 * {@link #populateStubStruct(StructureDataType, DIEAggregate)} and
-	 * {@link #populateStubEnum(Enum, DIEAggregate)}) to fill in the fields of the structure.
+	 * Use {@link #finishStruct(DIEAggregate, DWARFDataType)} (which calls
+	 * {@link #populateStubStruct(DWARFDataType, DIEAggregate)} and
+	 * {@link #populateStubEnum(Enum, DIEAggregate, boolean)}) to fill in the fields of the structure.
 	 * <p>
 	 * This is done in two steps to enable ending recursive loops by publishing the empty
 	 * struct in the {@link #dieOffsetToDataTypeMap} map, where it will be found and returned by
-	 * {@link #getDataTypeWorker(DIEAggregate, DataType)}, instead of calling back
-	 * into this method.
-	 * @param diea
-	 * @return
+	 * any recursive calls back into {@link #getDataType(DIEAggregate, DWARFDataType)}.
+	 * 
+	 * @param diea {@link DIEAggregate}
+	 * @return {@link DWARFDataType} with empty composite that needs to be populated
 	 */
 	private DWARFDataType makeDataTypeForStruct(DIEAggregate diea) {
 
@@ -648,7 +642,7 @@ public class DWARFDataTypeImporter {
 
 		UnionDataType union = (UnionDataType) ddt.dataType;
 		for (DebugInfoEntry childEntry : diea.getChildren(DW_TAG_member)) {
-			DIEAggregate childDIEA = prog.getAggregate(childEntry);
+			DIEAggregate childDIEA = prog.getDIEContainer().getAggregate(childEntry);
 
 			// skip static member vars as they do not have storage in the structure
 			// C does not allow static member vars in unions
@@ -842,7 +836,7 @@ public class DWARFDataTypeImporter {
 
 		for (DebugInfoEntry childEntry : diea.getChildren(childTagType)) {
 
-			DIEAggregate childDIEA = prog.getAggregate(childEntry);
+			DIEAggregate childDIEA = prog.getDIEContainer().getAggregate(childEntry);
 			// skip static member vars as they do not have storage in the structure
 			if (childDIEA.hasAttribute(DW_AT_external)) {
 				continue;
@@ -1085,10 +1079,15 @@ public class DWARFDataTypeImporter {
 		if (self != null) {
 			return self;
 		}
-		DataType elementDT = fixupDataTypeInconsistencies(elementType);
 
+		if (elementType == voidDDT) {
+			// there was no info about the array's element, cheese something else
+			return new DWARFDataType(dwarfDTM.getUnspecifiedArrayType(), null, diea.getOffset());
+		}
+
+		DataType elementDT = fixupDataTypeInconsistencies(elementType);
 		long explictArraySize = diea.getUnsignedLong(DW_AT_byte_size, -1);
-		if (elementType.dataType.isZeroLength() || explictArraySize == 0) {
+		if (DWARFUtil.isZeroByteDataType(elementType.dataType) || explictArraySize == 0) {
 			// don't bother checking range info, we are going to force a zero-element array
 			DataType zeroLenArray = new ArrayDataType(elementDT, 0, -1, dataTypeManager);
 			return new DWARFDataType(zeroLenArray, null, diea.getOffset());
@@ -1100,7 +1099,8 @@ public class DWARFDataTypeImporter {
 		List<Integer> dimensions = new ArrayList<>();
 		List<DebugInfoEntry> subrangeDIEs = diea.getChildren(DW_TAG_subrange_type);
 		for (int subRangeDIEIndex = 0; subRangeDIEIndex < subrangeDIEs.size(); subRangeDIEIndex++) {
-			DIEAggregate subrangeAggr = prog.getAggregate(subrangeDIEs.get(subRangeDIEIndex));
+			DIEAggregate subrangeAggr =
+				prog.getDIEContainer().getAggregate(subrangeDIEs.get(subRangeDIEIndex));
 			long numElements = -1;
 			try {
 				if (subrangeAggr.hasAttribute(DW_AT_count)) {
@@ -1236,12 +1236,13 @@ public class DWARFDataTypeImporter {
 	 * pointing to the destination and omit creating a Ghidra typedef.
 	 * <p>
 	 * If the typedef points (via a pointer) to a function definition type that doesn't
-	 * have a name yet, update the function defintion with the name from this typedef
+	 * have a name yet, update the function definition with the name from this typedef
 	 * and elide this typedef.
 	 * <p>
 	 * If the typedef points to a base type (eg int, float, etc), let the base type factory
 	 * create the typedef as it can do it better if there are size specifiers in the typedef name
-	 * (eg. int64_t).
+	 * (eg. int64_t).  Standard typedefs may be replaced by a Ghidra BuiltIn or alternative
+	 * typedef that leverage a BuiltIn for well-known cases.
 	 * 
 	 */
 	private DWARFDataType makeDataTypeForTypedef(DIEAggregate diea)
@@ -1294,9 +1295,14 @@ public class DWARFDataTypeImporter {
 
 		TypedefDataType typedefDT = new TypedefDataType(typedefDNI.getParentCP(),
 			typedefDNI.getName(), refdDT.dataType, dataTypeManager);
-		updateMapping(refdDT.dataType, typedefDT.getDataType());
+		DataType resultDT = DataTypeUtilities.getTypedefReplacement(typedefDT, true);
 
-		return new DWARFDataType(typedefDT, typedefDNI, diea.getOffset());
+// TODO: Original code appeared to update mapping with no real impact
+// TODO: Re-examine what should be done for updateMapping if anything.
+//		updateMapping(refdDT.dataType, 
+//			resultDT instanceof TypeDef tdResult ? tdResult.getDataType() : resultDT);
+
+		return new DWARFDataType(resultDT, typedefDNI, diea.getOffset());
 	}
 
 	/*

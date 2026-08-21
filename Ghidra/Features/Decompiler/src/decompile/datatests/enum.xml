@@ -1,0 +1,108 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+   Functions that read enum values and compare with constant values that should be printed by name.
+-->
+<bytechunk space="ram" offset="0x100000" readonly="true">
+4883ec184889e7e8f40f0000f6442408
+4175054883c418c3bf00000000e8e60f
+0000ebef4883ec184889e7e8d00f0000
+f744240c0003000075054883c418c3bf
+00000000e8bf0f0000ebef
+</bytechunk>
+<bytechunk space="ram" offset="0x100065" readonly="true">
+          f647082c7501c34883ec08
+bf02000000e88e0f00004883c408c3f7
+470c571300007501c34883ec08bf0300
+0000e8710f00004883c408c3
+</bytechunk>
+<bytechunk space="ram" offset="0x1000d3" readonly="true">
+      48817f08000810007401c34883
+ec08bf06000000e81c0f00004883c408
+c3
+</bytechunk>
+<symbol space="ram" offset="0x100000" name="stackenumlow"/>
+<symbol space="ram" offset="0x100024" name="stackenumhigh"/>
+<symbol space="ram" offset="0x100065" name="ptrenumlow"/>
+<symbol space="ram" offset="0x10007f" name="ptrenumhigh"/>
+<symbol space="ram" offset="0x1000d3" name="ptrenumequal"/>
+<symbol space="ram" offset="0x101000" name="setStruct"/>
+</binaryimage>
+<script>
+  <com>parse line enum flags {
+  FLAG_1=1,
+  FLAG_2 = 2,
+  FLAG_4 = 4,
+  FLAG_8 = 8,
+  FLAG_10 = 0x10,
+  FLAG_20 = 0x20,
+  FLAG_40 = 0x40,
+  FLAG_80 = 0x80,
+  FLAG_100 = 0x100,
+  FLAG_200 = 0x200,
+  FLAG_400 = 0x400,
+  FLAG_800 = 0x800,
+  FLAG_1000 = 0x1000,
+  FLAG_2000 = 0x2000,
+  FLAG_4000 = 0x4000,
+  FLAG_8000 = 0x8000,
+  FLAG_10000 = 0x10000,
+  FLAG_20000 = 0x20000,
+  FLAG_40000 = 0x40000,
+  FLAG_80000 = 0x80000,
+  FLAG_100000 = 0x100000,
+  FLAG_200000 = 0x200000,
+  FLAG_400000 = 0x400000,
+  FLAG_800000 = 0x800000,
+  HIGH_1 = 0x100000000,
+  HIGH_2 = 0x200000000,
+  HIGH_4 = 0x400000000,
+  HIGH_8 = 0x800000000,
+  HIGH_10 = 0x1000000000,
+  HIGH_20 = 0x2000000000,
+  HIGH_40 = 0x4000000000,
+  HIGH_80 = 0x8000000000,
+  HIGH_100 = 0x10000000000,
+  HIGH_200 = 0x20000000000,
+  HIGH_400 = 0x40000000000,
+  HIGH_800 = 0x80000000000,
+  HIGH_1000 = 0x100000000000,
+  HIGH_2000 = 0x200000000000,
+  HIGH_4000 = 0x400000000000,
+  HIGH_8000 = 0x800000000000,
+  HIGH_10000 = 0x1000000000000,
+  HIGH_20000 = 0x2000000000000,
+  HIGH_40000 = 0x4000000000000,
+  HIGH_80000 = 0x8000000000000,
+  HIGH_100000 = 0x10000000000000,
+  HIGH_200000 = 0x20000000000000,
+  HIGH_400000 = 0x40000000000000,
+  HIGH_800000 = 0x80000000000000 };</com>
+  <com>parse line struct enumstruct { int4 a; int4 b; flags flagfield; };</com>
+  <com>parse line extern void setStruct(enumstruct *ptr);</com>
+  <com>parse line extern void ptrenumlow(enumstruct *ptr);</com>
+  <com>parse line extern void ptrenumhigh(enumstruct *ptrhigh);</com>
+  <com>parse line extern void ptrenumequal(enumstruct *ptrequal);</com>
+  <com>lo fu stackenumlow</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu stackenumhigh</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu ptrenumlow</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu ptrenumhigh</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu ptrenumequal</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Enum Reading #1" min="1" max="1">Stack_18\.flagfield &amp; \(FLAG_40\|FLAG_1\)\) .= 0\)</stringmatch>
+<stringmatch name="Enum Reading #2" min="1" max="1">Stack_18\.flagfield\._4_4_ &amp; \(HIGH_200\|HIGH_100\) &gt;&gt; 0x20\) .= 0\)</stringmatch>
+<stringmatch name="Enum Reading #3" min="1" max="1">ptr-&gt;flagfield &amp; \(FLAG_20\|FLAG_8\|FLAG_4\)\) .= 0\)</stringmatch>
+<stringmatch name="Enum Reading #4" min="1" max="1">if \(\(ptrhigh-&gt;flagfield &amp; \(HIGH_1000\|HIGH_200\|HIGH_100\|HIGH_40\|HIGH_10\|HIGH_4\|HIGH_2\|HIGH_1\)\) .= 0</stringmatch>
+<stringmatch name="Enum Reading #5" min="1" max="1">if \(ptrequal-&gt;flagfield .= \(FLAG_100000\|FLAG_800\)\)</stringmatch>
+</decompilertest>

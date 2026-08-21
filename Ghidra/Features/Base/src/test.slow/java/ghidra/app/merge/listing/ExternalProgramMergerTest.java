@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,10 +34,6 @@ import ghidra.util.exception.InvalidInputException;
  */
 public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 
-	/**
-	 *
-	 * @param arg0
-	 */
 	public ExternalProgramMergerTest() {
 		super();
 	}
@@ -46,14 +42,14 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 	public void testChangePathNoConflicts() throws Exception {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-			
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				try {
-					program.getExternalManager().setExternalPath("COMDLG32.DLL", "//comdlg32.dll",
-						true);
-					program.getExternalManager().setExternalPath("KERNEL32.DLL", "//kernel32.dll",
-						true);
+					program.getExternalManager()
+							.setExternalPath("COMDLG32.DLL", "//comdlg32.dll", true);
+					program.getExternalManager()
+							.setExternalPath("KERNEL32.DLL", "//kernel32.dll", true);
 				}
 				catch (InvalidInputException e) {
 					// TODO Auto-generated catch block
@@ -65,8 +61,8 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 			public void modifyPrivate(ProgramDB program) {
 				try {
 					program.getExternalManager().setExternalPath("GDI32.DLL", "//gdi32.dll", true);
-					program.getExternalManager().setExternalPath("KERNEL32.DLL", "//kernel32.dll",
-						true);
+					program.getExternalManager()
+							.setExternalPath("KERNEL32.DLL", "//kernel32.dll", true);
 				}
 				catch (InvalidInputException e) {
 					// TODO Auto-generated catch block
@@ -104,8 +100,8 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 			public void modifyLatest(ProgramDB program) {
 				try {
 					program.getExternalManager().setExternalPath("ADVAPI32.DLL", "//foo.dll", true);
-					program.getExternalManager().setExternalPath("KERNEL32.DLL", "//latest.dll",
-						true);
+					program.getExternalManager()
+							.setExternalPath("KERNEL32.DLL", "//latest.dll", true);
 				}
 				catch (InvalidInputException e) {
 					// TODO Auto-generated catch block
@@ -191,8 +187,8 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 			public void modifyLatest(ProgramDB program) {
 				try {
 					removeExternalLibrary(program, "ADVAPI32.DLL");
-					program.getExternalManager().setExternalPath("USER32.DLL", "//latest.dll",
-						true);
+					program.getExternalManager()
+							.setExternalPath("USER32.DLL", "//latest.dll", true);
 				}
 				catch (InvalidInputException e) {
 					// TODO Auto-generated catch block
@@ -251,8 +247,8 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 			public void modifyLatest(ProgramDB program) {
 				try {
 					removeExternalLibrary(program, "ADVAPI32.DLL");
-					program.getExternalManager().setExternalPath("USER32.DLL", "//latest.dll",
-						true);
+					program.getExternalManager()
+							.setExternalPath("USER32.DLL", "//latest.dll", true);
 				}
 				catch (InvalidInputException e) {
 					// TODO Auto-generated catch block
@@ -311,8 +307,8 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 			public void modifyLatest(ProgramDB program) {
 				try {
 					removeExternalLibrary(program, "ADVAPI32.DLL");
-					program.getExternalManager().setExternalPath("USER32.DLL", "//latest.dll",
-						true);
+					program.getExternalManager()
+							.setExternalPath("USER32.DLL", "//latest.dll", true);
 				}
 				catch (InvalidInputException e) {
 					// TODO Auto-generated catch block
@@ -421,7 +417,6 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 			public void modifyLatest(ProgramDB program) {
 				try {
 					removeExternalLibrary(program, "ADVAPI32.DLL");
-					String[] names = program.getExternalManager().getExternalLibraryNames();
 					Reference[] refs =
 						program.getReferenceManager().getReferencesFrom(addr(program, "0x10011e4")); // SetCursor
 					SymbolTable symTab = program.getSymbolTable();
@@ -487,7 +482,7 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 				try {
 					removeExternalLibrary(program, "ADVAPI32.DLL");
 					Reference[] refs =
-						program.getReferenceManager().getReferencesFrom(addr(program, "0x10011e4")); // SetCursor
+						program.getReferenceManager().getReferencesFrom(addr(program, "0x10011e4")); // setCursor
 					SymbolTable symTab = program.getSymbolTable();
 					Symbol s = symTab.getSymbol(refs[0]);
 					s.setName("SetCursor99", SourceType.USER_DEFINED);
@@ -538,13 +533,24 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 		// Check that the 2 renames happened.
 		ExternalLocation extLoc =
 			resultExtMgr.getUniqueExternalLocation("ADVAPI32.DLL", "RegCreateKeyW");
-		assertNull(extLoc);
+		assertNotNull(extLoc);
+		assertEquals("RegCreateKeyW", extLoc.getOriginalImportedName());
+		assertEquals("RegCreateKeyW99", extLoc.getLabel());
+
 		extLoc = resultExtMgr.getUniqueExternalLocation("ADVAPI32.DLL", "RegCreateKeyW99");
 		assertNotNull(extLoc);
-		extLoc = resultExtMgr.getUniqueExternalLocation("USER32.DLL", "SetCursor");
-		assertNull(extLoc);
+		assertEquals("RegCreateKeyW", extLoc.getOriginalImportedName());
+		assertEquals("RegCreateKeyW99", extLoc.getLabel());
+
+		extLoc = resultExtMgr.getUniqueExternalLocation("USER32.DLL", "setCursor");
+		assertNotNull(extLoc);
+		assertEquals("setCursor", extLoc.getOriginalImportedName());
+		assertEquals("SetCursor99", extLoc.getLabel());
+
 		extLoc = resultExtMgr.getUniqueExternalLocation("USER32.DLL", "SetCursor99");
 		assertNotNull(extLoc);
+		assertEquals("setCursor", extLoc.getOriginalImportedName());
+		assertEquals("SetCursor99", extLoc.getLabel());
 
 	}
 
@@ -614,8 +620,8 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 		ExternalLocationIterator iter = extMgr.getExternalLocations(libName);
 		while (iter.hasNext()) {
 			ExternalLocation loc = iter.next();
-			if (!((ExternalManagerDB) extMgr).removeExternalLocation(
-				loc.getExternalSpaceAddress())) {
+			if (!((ExternalManagerDB) extMgr)
+					.removeExternalLocation(loc.getExternalSpaceAddress())) {
 				Assert.fail("Couldn't remove external location for library " + libName);
 			}
 		}

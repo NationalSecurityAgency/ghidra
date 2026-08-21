@@ -1,43 +1,75 @@
 <!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
 
 <HTML>
-  <HEAD>
-    <TITLE>DWARF External Debug Files</TITLE>
-    <META http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
-  </HEAD>
+	<HEAD>
+		<TITLE>DWARF External Debug Files</TITLE>
+		<META http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+	</HEAD>
 
-  <BODY lang="EN-US">
-    <H1>DWARF External Debug Files</H1>
+<BODY lang="EN-US">
+	<H1><a name="Summary"></a>DWARF External Debug Files</H1>
 
-    <P>These files contain DWARF debug information that has been stripped from the original binary and
-    placed into a separate file (typically to save space).  These external files can be found using
-    information embedded in the original binary's ".gnu_debuglink" section (a filename and crc32) and/or
-    ".note.gnu.build-id" section (a hash value).</P>
-    
-    <P>Use the ExtractELFDebugFilesScript to pull external debug files from pre-packaged install
-    files, typically provided by Linux / BSD distributions, for later consumption by Ghidra.</P>
-    
-    <H2>Menu Actions</H2>
-    
-    <BLOCKQUOTE>
-      <H3 align="left"><A name="DWARF_External_Debug_Config"></A>DWARF External Debug Config</H3>
+	<P>These files contain DWARF debug information that has been stripped from the original binary and
+	placed into a separate file (typically to save space).  These external files can be found using
+	information embedded in the original binary's <b>".gnu_debuglink"</b> section (a filename and
+	crc32) and/or <b>".note.gnu.build-id"</b> section (a hash value).</P>
 
-      <BLOCKQUOTE>
-        <P align="left">Allows the user to pick a directory where Ghidra will search for DWARF external debug files.</P>
-        <P align="left">Ghidra will search for external debug files under the selected directory
-        as ".build-id/NN/hexhash.debug" if build-id information is available, falling back to trying
-        the debuglink filename in any subdirectory, and lastly in the original binary's import location.</P>
-      </BLOCKQUOTE>
-    </BLOCKQUOTE>
+	<P>Use the <code>ExtractELFDebugFilesScript</code> to pull external debug files from
+	pre-packaged install files, typically provided by Linux / BSD distributions, for later
+	consumption by Ghidra.</P>
+	
+	<P>The DWARF analyzer will use the configured external debug file locations to search for
+	debug files when it encounters a binary that has external debug information and is missing its
+	<b>.debug_info</b> sections.</P>
 
+	<h2><a name="Configuration"></a>Configuration</h2>
+	<P>See <b>Edit <IMG src="help/shared/arrow.gif" alt="-&gt;" border="0"> DWARF External Debug Config</b></P>
+	<P align="center"><IMG border="0" src="images/ExternalDebugFilesConfigDialog.png"></P>
 
-    <P class="providedbyplugin"><BR>
-     Provided by: <I>DWARF External Debug Files Plugin</I></P>
+	<UL>
+		<LI><a name="LocalStorage"></a><b>Local Storage</b> - the location where files downloaded
+		from remote debuginfod servers will be stored.  This defaults to a Ghidra specific cache
+		directory, but can be changed to debuginfod's cache directory, or any other location.</LI>
+		<LI><b>Additional Locations</b> - a list of locations to search when trying to find
+		a debug file.
+		<h3><a name="ButtonActions"></a>Button actions:</h3>
+		<UL>
+			<LI><A name="Add"></A><img border="0" src="images/Plus2.png">&nbsp;(Add) Adds a location.  See <a href="#LocationTypes">Debug location types</a></LI>
+			<LI><A name="Delete"></A><img border="0" src="images/error.png">&nbsp;(Delete) Deletes the highlighted row</LI>
+			<LI><A name="UpDown"></A><img border="0" src="images/up.png"><img border="0" src="images/down.png">&nbsp;(Up/Down) Moves the highlighted row up or down</LI>
+			<LI><A name="Refresh"></A><img border="0" src="images/reload3.png">&nbsp;(Refresh) Updates the status of all rows</LI>
+			<LI><A name="Save"></A><img border="0" src="images/disk.png">&nbsp;(Save) Saves the current information</LI>
+		</UL>
+		</LI>
+	</UL>
 
-    <P>&nbsp;</P>
-    <BR>
-    <BR>
-    <BR>
-  </BODY>
+	<h3><a name="LocationTypes"></a>Debug location types:</h3>
+	<UL>
+		<LI><b>Program's Import Location</b> - searchs the directory from which the program was
+		imported for any debug-link specified files, and for build-id specified files named
+		<code>aabbcc...zz.debug</code>, where <code>aa..zz</codE> is the build-id hash in hex.</LI>
+		<LI><b>Build-id Directory</b> - directory where debug files that are identified by a
+		build-id hash are stored.<br>
+		Debug files are named <code>aa/bbccdd...zz.debug</code> under the base directory<br>
+		This storage scheme for build-id debug files is distinct from debuginfod's scheme.<br><br>
+		Example: <code>/usr/lib/debug/.build-id</code></LI>
+		<LI><b>Debug Link Directory</b> - directory where debug files that are identified by a
+		debug filename and crc hash (found in the binary's .gnu_debuglink section).<br>
+		<b>NOTE</b>: This directory is searched recursively for a matching file.</LI>
+		<LI><b>Debuginfod Directory</b> - directory where debuginfod has stored files.  This
+		typically will be something like <code>/home/user/.cache/debuginfod_client</code>.</LI>
+		<LI><b>Debuginfod URL</b> - HTTP(s) URL that points to a debuginfod server.</LI>
+		<LI><b>Import DEBUGINFOD_URLS Env Var</b> - Helper action that adds any HTTP(s) URLs found
+		in debuginfod's environment variable.</LI>
+	</UL>
+
+	<P class="providedbyplugin"><BR>
+	Provided by: <I>DWARF External Debug Files Plugin</I></P>
+
+	<P>&nbsp;</P>
+	<BR>
+	<BR>
+	<BR>
+</BODY>
 </HTML>

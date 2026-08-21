@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,9 +32,9 @@ public class CategoryNode extends DataTypeTreeNode {
 	private String name;
 
 	private boolean isCut;
-	private ArrayPointerFilterState filterState;
+	private DtFilterState filterState;
 
-	public CategoryNode(Category category, ArrayPointerFilterState filterState) {
+	public CategoryNode(Category category, DtFilterState filterState) {
 		this.filterState = filterState;
 		setCategory(category);
 	}
@@ -51,6 +51,7 @@ public class CategoryNode extends DataTypeTreeNode {
 		if (category == null) {
 			return Collections.emptyList();
 		}
+
 		Category[] subCategories = category.getCategories();
 		DataType[] dataTypes = category.getDataTypes();
 		List<GTreeNode> list = new ArrayList<>(subCategories.length + dataTypes.length);
@@ -59,7 +60,7 @@ public class CategoryNode extends DataTypeTreeNode {
 		}
 
 		for (DataType dataType : dataTypes) {
-			if (!isFilteredType(dataType)) {
+			if (passesFilters(dataType)) {
 				list.add(new DataTypeNode(dataType));
 			}
 		}
@@ -69,17 +70,8 @@ public class CategoryNode extends DataTypeTreeNode {
 		return list;
 	}
 
-	private boolean isFilteredType(DataType dataType) {
-		if (filterState.filterArrays() && dataType instanceof Array) {
-			return true;
-		}
-
-		if (filterState.filterPointers() && (dataType instanceof Pointer) &&
-			!(dataType.getDataTypeManager() instanceof BuiltInDataTypeManager)) {
-			return true;
-		}
-
-		return false;
+	private boolean passesFilters(DataType dataType) {
+		return filterState.passesFilters(dataType);
 	}
 
 	@Override
@@ -194,7 +186,7 @@ public class CategoryNode extends DataTypeTreeNode {
 			return;
 		}
 
-		if (isFilteredType(dataType)) {
+		if (!passesFilters(dataType)) {
 			return;
 		}
 
@@ -253,18 +245,20 @@ public class CategoryNode extends DataTypeTreeNode {
 
 	@Override
 	public void valueChanged(Object newValue) {
-		int transactionID = category.getDataTypeManager().startTransaction("rename");
+		String newName = newValue.toString();
+		int transactionID =
+			category.getDataTypeManager().startTransaction("Rename Category " + newName);
 		try {
-			category.setName(newValue.toString());
+			category.setName(newName);
 		}
 		catch (DuplicateNameException e) {
 			Msg.showError(getClass(), null, "Rename Failed",
-				"Category by the name " + newValue + " already exists in this category.");
+				"Category by the name " + newName + " already exists in this category.");
 		}
 		catch (InvalidNameException exc) {
 			String msg = exc.getMessage();
 			if (msg == null) {
-				msg = "Invalid name specified: " + newValue;
+				msg = "Invalid name specified: " + newName;
 			}
 			Msg.showError(getClass(), null, "Invalid name specified", exc.getMessage());
 		}

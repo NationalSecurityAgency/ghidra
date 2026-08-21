@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -127,65 +127,6 @@ public class DisassembledFormatModel implements ProgramDataFormatModel {
 		return str;
 	}
 
-	/**
-	 * Returns true if the formatter allows values to be changed.
-	 */
-	@Override
-	public boolean isEditable() {
-		return false;
-	}
-
-	/**
-	 * Overwrite a value in a ByteBlock.
-	 * @param block block to change
-	 * @param index byte index into the block
-	 * @param pos The position within the unit where c will be the
-	 * new character.
-	 * @param c new character to put at pos param
-	 * @return true if the replacement is legal, false if the
-	 * replacement value would not make sense for this format, e.g.
-	 * attempt to put a 'z' in a hex unit.
-	 * @throws ByteBlockAccessException if the block cannot be updated
-	 * @throws IndexOutOfBoundsException if index is not valid for the
-	 * block
-	 */
-	@Override
-	public boolean replaceValue(ByteBlock block, BigInteger index, int charPosition, char c)
-			throws ByteBlockAccessException {
-
-		if (charPosition != 0) {
-			return false;
-		}
-
-		byte cb = (byte) c;
-
-		if (cb < 0x20 || cb == 0x7f) {
-			return (false);
-		}
-
-		block.setByte(index, cb);
-		return true;
-	}
-
-	/**
-	 * Get number of units in a group. A group may represent
-	 * multiple units shown as one entity. This format does not
-	 * support groups.
-	 */
-	@Override
-	public int getGroupSize() {
-		return 0;
-	}
-
-	/**
-	 * Set the number of units in a group. This format does not
-	 * support groups.
-	 * @throws UnsupportedOperationException 
-	 */
-	@Override
-	public void setGroupSize(int groupSize) {
-		throw new UnsupportedOperationException("groups are not supported");
-	}
 
 	/**
 	 * Get the number of characters separating units.
@@ -193,14 +134,6 @@ public class DisassembledFormatModel implements ProgramDataFormatModel {
 	@Override
 	public int getUnitDelimiterSize() {
 		return 0; // no space between units
-	}
-
-	/**
-	 * @see ghidra.app.plugin.core.format.DataFormatModel#validateBytesPerLine(int)
-	 */
-	@Override
-	public boolean validateBytesPerLine(int bytesPerLine) {
-		return true;
 	}
 
 	/**

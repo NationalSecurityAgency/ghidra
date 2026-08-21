@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -725,18 +725,29 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 		f = f.createFolder("A");
 		f = f.createFolder("B");
 		f = f.createFolder("C");
-		waitForSwing();
+		waitForTree();
 
 		setSelectionPath(rootNode.getTreePath());
 		DockingActionIf selectAction = getAction("Select All");
 		performAction(selectAction, getTreeActionContext(), true);
 		waitForTree();
 
+		// NOTE: All nodes except the root node should be selected.
+		// Root is not selected to allow for most popup actions to
+		// be enabled and work as expected
+
 		BreadthFirstIterator it = new BreadthFirstIterator(rootNode);
+		int count = 0;
 		while (it.hasNext()) {
 			GTreeNode node = it.next();
-			assertTrue(tree.isPathSelected(node.getTreePath()));
+			if (tree.isPathSelected(node.getTreePath())) {
+				++count;
+			}
+			else {
+				assertTrue(node.isRoot());
+			}
 		}
+		assertEquals(7, count);
 	}
 
 	@Test
@@ -772,7 +783,7 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 	private void clearText(Component c, String text) {
 		int n = text.length();
 		for (int i = 0; i < n; i++) {
-			triggerBackspaceKey(c);
+			triggerBackspace(c);
 		}
 	}
 
@@ -954,11 +965,12 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 		for (TreePath path : paths) {
 
 			GTreeNode node = (GTreeNode) path.getLastPathComponent();
-			if (node instanceof DomainFileNode) {
-				fileList.add(((DomainFileNode) node).getDomainFile());
+			if (node instanceof DomainFileNode fileNode) {
+				// NOTE: File may be a linked-folder.  Treatment as folder or file depends on action
+				fileList.add(fileNode.getDomainFile());
 			}
-			else if (node instanceof DomainFolderNode) {
-				folderList.add(((DomainFolderNode) node).getDomainFolder());
+			else if (node instanceof DomainFolderNode folderNode) {
+				folderList.add(folderNode.getDomainFolder());
 			}
 		}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -347,6 +347,25 @@ void Varnode::destroyDescend(void)
   descend.clear();
 }
 
+/// We assume the replacement Varnode is initially a singleton in its own HighVariable.
+/// We swap \b this and the replacement between their respective HighVariables.
+/// \param replacevn is the replacement Varnode
+void Varnode::replaceInHigh(Varnode *replacevn)
+
+{
+#ifdef CPUI_DEBUG
+  if (replacevn->high->inst.size() != 1)
+    throw LowlevelError("Attempting to replace with merged Varnode");
+#endif
+  high->remove(this);
+  HighVariable *replaceHigh = replacevn->high;
+  replacevn->high = (HighVariable *)0;
+  replaceHigh->inst[0] = this;
+  high->insert(replacevn,mergegroup);
+  high = replaceHigh;
+  mergegroup = 0;
+}
+
 /// Set desired boolean attributes on this Varnode and then set dirty bits if appropriate
 /// \param fl is the mask containing the list of attributes to set
 void Varnode::setFlags(uint4 fl) const
@@ -378,6 +397,11 @@ void Varnode::clearFlags(uint4 fl) const
 void Varnode::clearSymbolLinks(void)
 
 {
+  if (high == (HighVariable *)0) {
+    mapentry = (SymbolEntry *)0;
+    clearFlags(Varnode::namelock | Varnode::typelock | Varnode::mapped);
+    return;
+  }
   bool foundEntry = false;
   for(int4 i=0;i<high->numInstances();++i) {
     Varnode *vn = high->getInstance(i);
@@ -449,6 +473,18 @@ void Varnode::setSymbolReference(SymbolEntry *entry,int4 off)
   if (high != (HighVariable *)0) {
     high->setSymbolReference(entry->getSymbol(), off);
   }
+}
+
+/// \param ct is the Datatype to change to
+/// \return \b true if the Datatype changed
+bool Varnode::updateType(Datatype *ct)
+
+{
+  if (type == ct || isTypeLock()) return false;
+  type = ct;
+  if (high != (HighVariable *)0)
+    high->typeDirty();
+  return true;
 }
 
 /// Change the Datatype and lock state associated with this Varnode if various conditions are met
@@ -940,6 +976,22 @@ bool Varnode::isBooleanValue(bool useAnnotation) const
   return false;
 }
 
+/// If we can prove that the upper bits of \b this are zero, return \b true.
+/// \param baseSize is the maximum number of least significant bytes that are allowed to be non-zero
+/// \return \b true if all the most significant bytes are zero
+bool Varnode::isZeroExtended(int4 baseSize) const
+
+{
+  if (baseSize >= size) return false;
+  if (size > sizeof(uintb)) {
+    if (!isWritten()) return false;
+    if (def->code() != CPUI_INT_ZEXT) return false;
+    if (def->getIn(0)->getSize() > baseSize) return false;
+    return true;
+  }
+  uintb mask = nzm >> 8*baseSize;
+  return (mask == 0);
+}
 
 /// Make a local determination if \b this and \b op2 hold the same value. We check if
 /// there is a common ancester for which both \b this and \b op2 are created from a direct
@@ -1502,6 +1554,29 @@ Varnode *VarnodeBank::findCoveringInput(int4 s,const Address &loc) const
   return (Varnode *)0;
 }
 
+/// \param s is the number of bytes in the given range
+/// \param loc is the starting address of the given range
+/// \return \b true if there is an input Varnode that overlaps the range
+bool VarnodeBank::hasInputIntersection(int4 s,const Address &loc) const
+
+{
+  VarnodeDefSet::const_iterator iter;
+  Varnode *vn;
+  iter = beginDef(Varnode::input,loc);
+  if (iter != def_tree.end()) {
+    vn = *iter;
+    if (vn->isInput() && vn->intersects(loc, s))
+      return true;
+  }
+  if (iter != def_tree.begin()) {
+    --iter;
+    vn = *iter;
+    if (vn->isInput() && vn->intersects(loc,s))
+      return true;
+  }
+  return false;
+}
+
 /// \brief Beginning of Varnodes in given address space sorted by location
 ///
 /// \param spaceid is the given address space
@@ -1954,30 +2029,6 @@ void VarnodeBank::verifyIntegrity(void) const
   }
 }
 #endif
-
-/// \brief Return \b true if the alternate path looks more valid than the main path.
-///
-/// Two different paths from a common Varnode each terminate at a CALL, CALLIND, or RETURN.
-/// Evaluate which path most likely represents actual parameter/return value passing,
-/// based on traversal information about each path.
-/// \param vn is the Varnode terminating the \e alternate path
-/// \param flags indicates traversals for both paths
-/// \return \b true if the alternate path is preferred
-bool TraverseNode::isAlternatePathValid(const Varnode *vn,uint4 flags)
-
-{
-  if ((flags & (indirect | indirectalt)) == indirect)
-    // If main path traversed an INDIRECT but the alternate did not
-    return true;	// Main path traversed INDIRECT, alternate did not
-  if ((flags & (indirect | indirectalt)) == indirectalt)
-    return false;	// Alternate path traversed INDIRECT, main did not
-  if ((flags & actionalt) != 0)
-    return true;	// Alternate path traversed a dedicated COPY
-  if (vn->loneDescend() == (PcodeOp*)0) return false;
-  const PcodeOp *op = vn->getDef();
-  if (op == (PcodeOp*)0) return true;
-  return !op->isMarker();	// MULTIEQUAL or INDIRECT indicates multiple values
-}
 
 /// Return true if \b vn1 contains the high part and \b vn2 the low part
 /// of what was(is) a single value.

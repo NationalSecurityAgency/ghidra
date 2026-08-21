@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,8 +18,8 @@ package ghidra.framework.main.datatree;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.dnd.DropTargetDropEvent;
 import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -38,9 +38,8 @@ public final class LinuxFileUrlHandler extends AbstractFileListFlavorHandler {
 	 * Linux URL-based file list {@link DataFlavor} to be used during handler registration
 	 * using {@link DataTreeDragNDropHandler#addActiveDataFlavorHandler}.
 	 */
-	public static final DataFlavor linuxFileUrlFlavor =
-		new DataFlavor("application/x-java-serialized-object;class=java.lang.String",
-			"String file URL");
+	public static final DataFlavor linuxFileUrlFlavor = new DataFlavor(
+		"application/x-java-serialized-object;class=java.lang.String", "String file URL");
 
 	@Override
 	// This is for the FileOpenDataFlavorHandler for handling file drops from Linux to a Tool
@@ -57,7 +56,7 @@ public final class LinuxFileUrlHandler extends AbstractFileListFlavorHandler {
 		if (files.isEmpty()) {
 			return false;
 		}
-		doImport(getDomainFolder(destinationNode), files, tool, dataTree);
+		doImport(DataTree.getRealInternalFolderForNode(destinationNode), files, tool, dataTree);
 		return true;
 	}
 
@@ -65,12 +64,12 @@ public final class LinuxFileUrlHandler extends AbstractFileListFlavorHandler {
 
 		return toFiles(transferData, s -> {
 			try {
-				return new File(new URL(s.replaceAll(" ", "%20")).toURI()); // fixup spaces
+				return new File(new URI(s));
 			}
-			catch (MalformedURLException e) {
+			catch (URISyntaxException e) {
 				// this could be the case that this handler is attempting to process an arbitrary
 				// String that is not actually a URL
-				Msg.trace(this, "Not a URL: '" + s + "'", e);
+				Msg.trace(this, "Not a valid URL: '" + s + "'", e);
 				return null;
 			}
 			catch (Exception e) {

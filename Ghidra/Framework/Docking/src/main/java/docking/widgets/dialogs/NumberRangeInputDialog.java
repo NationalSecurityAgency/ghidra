@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,8 +49,7 @@ public class NumberRangeInputDialog extends DialogComponentProvider {
 	private KeyListener keyListener;
 
 	public NumberRangeInputDialog(String title, String label) {
-		super(title, true, true/* status */, true /* buttons */,
-			false /* no tasks */);
+		super(title, true, true/* status */, true /* buttons */, false /* no tasks */);
 
 		keyListener = new KeyAdapter() {
 			@Override
@@ -95,10 +94,12 @@ public class NumberRangeInputDialog extends DialogComponentProvider {
 		textField.setText(initialValue);
 		textField.addKeyListener(keyListener);
 		textField.setName("number.range.input.dialog.text.field");
+		textField.getAccessibleContext().setAccessibleName("Number Range Input");
 		panel.add(new GLabel(inputLabel, SwingConstants.RIGHT));
 		panel.add(textField);
 
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+		panel.getAccessibleContext().setAccessibleName("Number Range Input");
 		this.addWorkPanel(panel);
 	}
 
@@ -151,8 +152,7 @@ public class NumberRangeInputDialog extends DialogComponentProvider {
 		String trimmed = rangeText.trim();
 		if (!trimmed.contains(RANGE_DELIMITER)) {
 			try {
-				long parsedLong = NumericUtilities.parseLong(trimmed);
-				int intValue = (int) parsedLong;
+				int intValue = NumericUtilities.parseInt(trimmed);
 				rangeList.addRange(intValue, intValue);
 			}
 			catch (NumberFormatException e) {
@@ -165,12 +165,8 @@ public class NumberRangeInputDialog extends DialogComponentProvider {
 		// this must be a range
 		String[] startAndEnd = trimmed.split(RANGE_DELIMITER);
 		try {
-			long parsedLong = NumericUtilities.parseLong(startAndEnd[0]);
-			int startInt = (int) parsedLong;
-
-			parsedLong = NumericUtilities.parseLong(startAndEnd[1]);
-			int endInt = (int) parsedLong;
-
+			int startInt = NumericUtilities.parseInt(startAndEnd[0]);
+			int endInt = NumericUtilities.parseInt(startAndEnd[1]);
 			rangeList.addRange(startInt, endInt);
 		}
 		catch (NumberFormatException e) {

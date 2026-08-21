@@ -62,7 +62,6 @@ public class ARM_ElfRelocationHandler
 
 		boolean instructionBigEndian =
 			program.getLanguage().getLanguageDescription().getInstructionEndian().isBigEndian();
-		boolean isThumb = isThumb(sym);
 
 		long addend = relocation.getAddend(); // will be 0 for REL case
 
@@ -71,6 +70,32 @@ public class ARM_ElfRelocationHandler
 		int newValue = 0;
 		int byteLength = 4; // most relocations affect 4-bytes (change if different)
 
+		
+		// Handle relative relocations that do not require symbolAddr or symbolValue  
+		switch (type) {
+			case R_ARM_RELATIVE: // Target class: Data
+				if (elfRelocationContext.extractAddend()) {
+					addend = memory.getInt(relocationAddress);
+				}
+				newValue =
+					(int) elfRelocationContext.getImageBaseWordAdjustmentOffset() + (int) addend;
+				memory.setInt(relocationAddress, newValue);
+				return new RelocationResult(Status.APPLIED, byteLength);
+			case R_ARM_COPY:
+				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
+					sym.getSize(), elfRelocationContext.getLog());
+				return RelocationResult.UNSUPPORTED;
+			default:
+				break;
+		}
+		
+		// Check for unresolved symbolAddr and symbolValue required by remaining relocation types handled below
+		if (handleUnresolvedSymbol(elfRelocationContext, relocation, relocationAddress)) {
+			return RelocationResult.FAILURE;
+		}
+		
+		boolean isThumb = isThumb(sym);
+				
 		switch (type) {
 			case R_ARM_PC24: { // Target class: ARM Instruction
 				int oldValue = memory.getInt(relocationAddress, instructionBigEndian);
@@ -260,20 +285,19 @@ public class ARM_ElfRelocationHandler
 			case R_ARM_JUMP_SLOT: { // Target class: Data
 				// Corresponds to lazy dynamically linked external symbols within
 				// GOT/PLT symbolValue corresponds to PLT entry for which we need to
-				// create and external function location. Don't bother changing
+				// create an external function location. Don't bother changing
 				// GOT entry bytes if it refers to .plt block
-				Address symAddress = elfRelocationContext.getSymbolAddress(sym);
-				MemoryBlock block = memory.getBlock(symAddress);
+				MemoryBlock block = memory.getBlock(symbolAddr);
 				// TODO: jump slots are always in GOT - not sure why PLT check is done
 				boolean isPltSym = block != null && block.getName().startsWith(".plt");
 				boolean isExternalSym =
 					block != null && MemoryBlock.EXTERNAL_BLOCK_NAME.equals(block.getName());
 				if (!isPltSym) {
-					memory.setInt(relocationAddress, (int) symAddress.getOffset());
+					memory.setInt(relocationAddress, (int) symbolValue);
 				}
 				if (isPltSym || isExternalSym) {
 					Function extFunction = elfRelocationContext.getLoadHelper()
-							.createExternalFunctionLinkage(symbolName, symAddress, null);
+							.createExternalFunctionLinkage(symbolName, symbolAddr, null);
 					if (extFunction == null) {
 						markAsError(program, relocationAddress, type, symbolName, symbolIndex,
 							"Failed to create external function", elfRelocationContext.getLog());
@@ -282,16 +306,7 @@ public class ARM_ElfRelocationHandler
 				}
 				break;
 			}
-
-			case R_ARM_RELATIVE: { // Target class: Data
-				if (elfRelocationContext.extractAddend()) {
-					addend = memory.getInt(relocationAddress);
-				}
-				newValue =
-					(int) elfRelocationContext.getImageBaseWordAdjustmentOffset() + (int) addend;
-				memory.setInt(relocationAddress, newValue);
-				break;
-			}
+			
 			/*
 			case R_ARM_GOTOFF32: {
 				break;
@@ -679,12 +694,6 @@ public class ARM_ElfRelocationHandler
 				break;
 			}
 			*/
-
-			case R_ARM_COPY: {
-				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
-					sym.getSize(), elfRelocationContext.getLog());
-				return RelocationResult.UNSUPPORTED;
-			}
 
 			default: {
 				markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName,

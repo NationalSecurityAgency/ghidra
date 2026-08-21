@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,52 +16,21 @@
 //DO NOT RUN. THIS IS NOT A SCRIPT! THIS IS A CLASS THAT IS USED BY SCRIPTS. 
 package classrecovery;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.app.plugin.core.analysis.ReferenceAddressPair;
 import ghidra.app.util.PseudoDisassembler;
 import ghidra.program.flatapi.FlatProgramAPI;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressOutOfBoundsException;
-import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.*;
 import ghidra.program.model.block.CodeBlock;
 import ghidra.program.model.block.IsolatedEntrySubModel;
-import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.IBO32DataType;
-import ghidra.program.model.data.LongDataType;
-import ghidra.program.model.data.Pointer;
-import ghidra.program.model.data.PointerDataType;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.Undefined4DataType;
-import ghidra.program.model.data.Undefined8DataType;
+import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Instruction;
-import ghidra.program.model.listing.InstructionIterator;
-import ghidra.program.model.listing.Listing;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.DumbMemBufferImpl;
-import ghidra.program.model.mem.MemBuffer;
-import ghidra.program.model.mem.Memory;
-import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.mem.*;
 import ghidra.program.model.scalar.Scalar;
-import ghidra.program.model.symbol.FlowType;
-import ghidra.program.model.symbol.Namespace;
-import ghidra.program.model.symbol.Reference;
-import ghidra.program.model.symbol.ReferenceIterator;
-import ghidra.program.model.symbol.SourceType;
-import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolIterator;
-import ghidra.program.model.symbol.SymbolTable;
-import ghidra.program.model.symbol.SymbolType;
+import ghidra.program.model.symbol.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -134,11 +103,102 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 	}
 
 	/**
+	 * Method to determine if the given address contains a possible function pointer
+	 * @param program the given program
+	 * 
+	 * @param address the given address
+	 * @return true if the given address contains a possible function pointer or
+	 *         false otherwise
+	 * @throws CancelledException if cancelled
+	 */
+	public boolean isPossibleFunctionPointer(Program program, Address address)
+			throws CancelledException {
+
+		Address referencedAddress = getPointer(address);
+
+		if (referencedAddress == null) {
+			return false;
+		}
+
+		Address normalizedReferencedAddress =
+			PseudoDisassembler.getNormalizedDisassemblyAddress(program, referencedAddress);
+
+		if (normalizedReferencedAddress == null) {
+			return false;
+		}
+
+		Function function = getFunctionAt(normalizedReferencedAddress);
+		if (function != null) {
+			return true;
+		}
+
+		AddressSetView executeSet = program.getMemory().getExecuteSet();
+
+		if (!executeSet.contains(normalizedReferencedAddress)) {
+			return false;
+		}
+
+		Instruction instruction = getInstructionAt(normalizedReferencedAddress);
+		if (instruction != null) {
+			createFunction(normalizedReferencedAddress, null);
+			return true;
+
+		}
+
+		boolean disassemble = disassemble(normalizedReferencedAddress);
+		if (disassemble) {
+
+			Listing listing = program.getListing();
+
+			// check for the case where there is conflicting data at the thumb offset function
+			// pointer and if so clear the data and redisassemble and remove the bad bookmark
+			//	long originalLongValue = extendedFlatAPI.getLongValueAt(address);
+			if (!referencedAddress.equals(normalizedReferencedAddress)) {
+
+				Data dataAt = listing.getDataAt(referencedAddress);
+				if (dataAt != null && dataAt.isDefined()) {
+					clearListing(referencedAddress);
+					disassemble = disassemble(address);
+
+					Bookmark bookmark =
+						getBookmarkAt(program, normalizedReferencedAddress, BookmarkType.ERROR,
+							"Bad Instruction", "conflicting data");
+					if (bookmark != null) {
+						removeBookmark(bookmark);
+					}
+				}
+			}
+
+			createFunction(normalizedReferencedAddress, null);
+			return true;
+		}
+		return false;
+	}
+
+	public Bookmark getBookmarkAt(Program program, Address address, String bookmarkType,
+			String category,
+			String commentContains) throws CancelledException {
+
+		Bookmark[] bookmarks = program.getBookmarkManager().getBookmarks(address);
+
+		for (Bookmark bookmark : bookmarks) {
+			monitor.checkCancelled();
+
+			if (bookmark.getType().getTypeString().equals(bookmarkType) &&
+				bookmark.getCategory().equals(category) &&
+				bookmark.getComment().contains(commentContains)) {
+				return bookmark;
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Method to check to see if there is a valid function pointer at the given address. If it is 
 	 * valid but not created, create it
 	 * @param address the given address
 	 * @param allowNullFunctionPointer if true, allow null pointers as a valid function pointer
-	 * @return true if it is a functin pointer, else returns false
+	 * @return true if it is a function pointer, else returns false
 	 * @throws CancelledException if cancelled
 	 */
 	public boolean isFunctionPointer(Address address, boolean allowNullFunctionPointer)
@@ -254,18 +314,22 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		if (referencesFrom.size() != 1) {
 			return null;
 		}
-		
-		
 
 		Address functionAddress = referencesFrom.get(0);
-		
+
 		Register lowBitCodeMode = currentProgram.getRegister("LowBitCodeMode");
-		if(lowBitCodeMode != null) {
+		if (lowBitCodeMode != null) {
 			long longValue = functionAddress.getOffset();
 			longValue = longValue & ~0x1;
 			functionAddress = functionAddress.getNewAddress(longValue);
 		}
-		
+
+		// skip anything that is data - this could get passed in if it is an external ptr to a function 
+		Data data = getDataAt(functionAddress);
+		if (data != null) {
+			return null;
+		}
+
 		Function function = getFunctionAt(functionAddress);
 		if (function == null) {
 			// try to create function
@@ -581,7 +645,6 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		return subroutineAddresses;
 	}
 
-
 	/**
 	 * Method to get a list of symbols either matching exactly (if exact flag is true) or containing (if exact flag is false) the given symbol name
 	 * @param addressSet the address set to find matching symbols in
@@ -641,7 +704,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 			if (addressSize == 32) {
 				long offset32 = getInt(address);
 				Address newAddr = address.getNewAddress(offset32);
-				if(currentProgram.getMemory().contains(newAddr)) {
+				if (currentProgram.getMemory().contains(newAddr)) {
 					return newAddr;
 				}
 				return null;
@@ -651,7 +714,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 
 				long offset64 = getLong(address);
 				Address newAddr = address.getNewAddress(offset64);
-				if(currentProgram.getMemory().contains(newAddr)) {
+				if (currentProgram.getMemory().contains(newAddr)) {
 					return newAddr;
 				}
 				return null;
@@ -666,11 +729,11 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		}
 
 	}
-	
+
 	public long getLongValueAt(Address address) {
-		
+
 		MemBuffer buf = new DumbMemBufferImpl(currentProgram.getMemory(), address);
-		
+
 		LongDataType longDT = new LongDataType();
 
 		Scalar value =
@@ -856,7 +919,6 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		return false;
 	}
 
-
 	/**
 	 * Method to retrieve a single referenced address from the given address
 	 * @param address the given address to look for a single referenced address
@@ -946,6 +1008,9 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 	 * @return the referenced function or null if no function is referenced
 	 * @throws CancelledException if cancelled
 	 */
+	//TODO: this is same as getReferencedFunction at line 313 except for the thunked function 
+	// argument but is missing the lowBit code stuff - combine both and replace uses to use the
+	// one merged version - this one has loop and the other just works if one ref 
 	public Function getReferencedFunction(Address address, boolean getThunkedFunction)
 			throws CancelledException {
 
@@ -961,6 +1026,19 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 
 			Address referencedAddress = referenceFrom.getToAddress();
 			if (referencedAddress == null) {
+				continue;
+			}
+
+			Register lowBitCodeMode = currentProgram.getRegister("LowBitCodeMode");
+			if (lowBitCodeMode != null) {
+				long longValue = referencedAddress.getOffset();
+				longValue = longValue & ~0x1;
+				referencedAddress = referencedAddress.getNewAddress(longValue);
+			}
+
+			// skip anything that is data - this could get passed in if it is an external ptr to a function 
+			Data data = getDataAt(referencedAddress);
+			if (data != null) {
 				continue;
 			}
 
@@ -1141,21 +1219,166 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 	}
 
 	/**
-	 * Method to generate unique shorted names for classes with templates
+	 * Method to generate unique shortened names for classes with templates
 	 * @param recoveredClasses the list of classes in the program
 	 * @throws CancelledException if cancelled
 	 */
 	public void createShortenedTemplateNamesForClasses(List<RecoveredClass> recoveredClasses)
 			throws CancelledException {
 
+		// update recovered classes variable that stores shortened names such that all templated
+		// class names get generic classname<...> shortened name to start with 
+		// also create a map of all same classname<> templates separated into unique parent namespaces
+		// and the list of recovered class objects in that namespace with the same generic 
+		// classname<...> shortened name
+		Map<String, Map<Namespace, List<RecoveredClass>>> templateClassesMap =
+			mapTemplateClasses(recoveredClasses);
+
+		// now loop through them to make sure all in a particular namespace have unique shortened
+		// names or if unable to do that, remove the shortened name and use the full template name
+		Set<String> shortenedNames = templateClassesMap.keySet();
+		for (String shortenedName : shortenedNames) {
+
+			monitor.checkCancelled();
+
+			Map<Namespace, List<RecoveredClass>> namespaceMap =
+				templateClassesMap.get(shortenedName);
+			for (Namespace parentNamespace : namespaceMap.keySet()) {
+
+				monitor.checkCancelled();
+
+				// if only one, keep empty template
+				List<RecoveredClass> sameNameClassesInNamespace = namespaceMap.get(parentNamespace);
+				if (sameNameClassesInNamespace.size() == 1) {
+					continue;
+				}
+				processDuplicateTemplates(sameNameClassesInNamespace, shortenedName,
+					parentNamespace);
+			}
+		}
+
+	}
+
+	/**
+	 * Method to create unique shortened names for those blank templates that are dupes in a 
+	 * particular namespace
+	 * @param sameNameClassesInNamespace the list of same name dupes in the given namespace
+	 * @param shortenedName the duplicated shortened name
+	 * @throws CancelledException if cancelled
+	 */
+	private void processDuplicateTemplates(List<RecoveredClass> sameNameClassesInNamespace,
+			String shortenedName, Namespace parentNamespace) throws CancelledException {
+
+		// first verify that all are in the same parent namespace
+		for (RecoveredClass recoveredClass : sameNameClassesInNamespace) {
+			if (!recoveredClass.getClassNamespace().getParentNamespace().equals(parentNamespace)) {
+				throw new IllegalArgumentException(
+					"This method is meant to dedupe shortened class names in the same parent namespace");
+			}
+		}
+
+		List<RecoveredClass> classesToProcess =
+			new ArrayList<RecoveredClass>(sameNameClassesInNamespace);
+
+		// First, check for a simple internal to the template (ie just one item in it
+		// if that is the case then just keep the original name 
+		for (RecoveredClass classWithSameShortName : sameNameClassesInNamespace) {
+			monitor.checkCancelled();
+
+			if (containsSimpleTemplate(classWithSameShortName.getName())) {
+				//reset shortened name variable to empty to indicate no shortened name
+				classWithSameShortName.addShortenedTemplatedName(new String());
+				classesToProcess.remove(classWithSameShortName);
+			}
+		}
+
+		// if none left after removing simple ones then continue processing next namespace 
+		if (classesToProcess.isEmpty()) {
+			return;
+		}
+
+		// if only one left after removing the simple templates then use it with first part of 
+		// template internal (ie up to the first comma)
+		if (classesToProcess.size() == 1) {
+			RecoveredClass classWithSameShortName = classesToProcess.get(0);
+			String newName = getNewShortenedTemplateName(classWithSameShortName, 1);
+			classWithSameShortName.addShortenedTemplatedName(newName);
+			return;
+		}
+
+		// if more than one complex left over after all the removals above, then keep trying to
+		// get unique name
+		int commaIndex = 1;
+		while (!classesToProcess.isEmpty()) {
+
+			List<RecoveredClass> leftoversWithSameShortName =
+				new ArrayList<RecoveredClass>(classesToProcess);
+
+			// update these classes so their short names include up to the n'th comma
+			for (RecoveredClass currentClass : leftoversWithSameShortName) {
+				monitor.checkCancelled();
+				String newShortenedTemplateName =
+					getNewShortenedTemplateName(currentClass, commaIndex);
+
+				// check to see if the new name is equal to the original class name
+				// if so, remove the shortened name and just use full name for that class
+				// also remove from list to process
+				if (newShortenedTemplateName.equals(currentClass.getName())) {
+					currentClass.addShortenedTemplatedName(new String());
+					classesToProcess.remove(currentClass);
+					continue;
+				}
+				// else update with new shortened name
+				currentClass.addShortenedTemplatedName(newShortenedTemplateName);
+			}
+
+			// if only one left then we are done
+			if (classesToProcess.size() == 1) {
+				classesToProcess.remove(0);
+				continue;
+			}
+
+			// otherwise see if any are unique and if so remove from list
+			List<RecoveredClass> classesWithUpdatedNames =
+				new ArrayList<RecoveredClass>(classesToProcess);
+
+			for (RecoveredClass currentClass : classesWithUpdatedNames) {
+				monitor.checkCancelled();
+
+				String shortenedTemplateName = currentClass.getShortenedTemplateName();
+
+				List<RecoveredClass> classesWithSameShortName = getClassesWithSameShortenedName(
+					classesWithUpdatedNames, shortenedTemplateName);
+
+				if (classesWithSameShortName.size() == 1) {
+					classesToProcess.remove(classesWithSameShortName.get(0));
+				}
+			}
+
+			// at this point either the classesToProcess will be empty and we are done 
+			// OR there are still some with same (now with more of the template internal included)
+			// name so update commaIndex so that on next pass the internal will add more text up
+			// to this new comma index and so on until all are unique or back to their original
+			// full template name
+			commaIndex++;
+		}
+
+	}
+
+	private List<RecoveredClass> getClassesWithTemplateNames(List<RecoveredClass> recoveredClasses)
+			throws CancelledException {
+
 		List<RecoveredClass> classesWithTemplates = new ArrayList<RecoveredClass>();
 
 		// create list with only classes that have templates in name and add completely stripped
 		// template name to class var
-		Iterator<RecoveredClass> recoveredClassesIterator = recoveredClasses.iterator();
-		while (recoveredClassesIterator.hasNext()) {
+		for (RecoveredClass recoveredClass : recoveredClasses) {
 			monitor.checkCancelled();
-			RecoveredClass recoveredClass = recoveredClassesIterator.next();
+
+			if (!recoveredClass.getShortenedTemplateName().isEmpty()) {
+				classesWithTemplates.add(recoveredClass);
+				continue;
+			}
 
 			String className = recoveredClass.getName();
 
@@ -1165,115 +1388,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 				classesWithTemplates.add(recoveredClass);
 			}
 		}
-
-		// iterate over map and remove entries that already have unique shortened names on map and 
-		// add those unique names to class as shorted name
-		// for those with non-unique names, process them as a group of matched names
-		List<RecoveredClass> classesToProcess = new ArrayList<RecoveredClass>(classesWithTemplates);
-
-		Iterator<RecoveredClass> classWithTemplatesIterator = classesWithTemplates.iterator();
-
-		while (classWithTemplatesIterator.hasNext()) {
-			monitor.checkCancelled();
-			RecoveredClass currentClass = classWithTemplatesIterator.next();
-
-			// skip if already processed
-			if (!classesToProcess.contains(currentClass)) {
-				continue;
-			}
-
-			String currentShortenedName = currentClass.getShortenedTemplateName();
-
-			// if removing the middle of template results in unique name then keep that name and
-			// remove class from list to process
-			List<RecoveredClass> classesWithSameShortenedName =
-				getClassesWithSameShortenedName(classesToProcess, currentShortenedName);
-
-			if (classesWithSameShortenedName.size() == 1) {
-				classesToProcess.remove(currentClass);
-				continue;
-			}
-
-			Iterator<RecoveredClass> classesWithSameShortnameIterator =
-				classesWithSameShortenedName.iterator();
-			while (classesWithSameShortnameIterator.hasNext()) {
-				monitor.checkCancelled();
-
-				RecoveredClass classWithSameShortName = classesWithSameShortnameIterator.next();
-
-				// if removing the middle of template results in duplicate names then
-				// check for a simple internal to the template (ie just one item in it
-				// if that is the case then just keep the original name 
-				if (containsSimpleTemplate(classWithSameShortName.getName())) {
-					classWithSameShortName.addShortenedTemplatedName(new String());
-					classesWithSameShortnameIterator.remove();
-					classesToProcess.remove(classWithSameShortName);
-				}
-			}
-
-			// if none left after removing simple ones then continue processing next class
-			if (classesWithSameShortenedName.isEmpty()) {
-				continue;
-			}
-
-			// if only one left after removing the simple templates then use it with first part of 
-			// template internal
-			if (classesWithSameShortenedName.size() == 1) {
-				RecoveredClass classWithSameShortName = classesWithSameShortenedName.get(0);
-				String newName = getNewShortenedTemplateName(classWithSameShortName, 1);
-				classWithSameShortName.addShortenedTemplatedName(newName);
-				classesToProcess.remove(classWithSameShortName);
-				continue;
-			}
-
-			// if more than one complex left over after all the removals above, then keep trying to
-			// get unique name
-			int commaIndex = 1;
-			while (!classesWithSameShortenedName.isEmpty()) {
-
-				List<RecoveredClass> leftoversWithSameShortName =
-					new ArrayList<RecoveredClass>(classesWithSameShortenedName);
-
-				// update all their shorted names to include up to the n'th comma
-				Iterator<RecoveredClass> leftoversIterator = leftoversWithSameShortName.iterator();
-
-				while (leftoversIterator.hasNext()) {
-
-					monitor.checkCancelled();
-					RecoveredClass currentClassWithSameShortName = leftoversIterator.next();
-					currentClassWithSameShortName.addShortenedTemplatedName(
-						getNewShortenedTemplateName(currentClassWithSameShortName, commaIndex));
-				}
-
-				// now iterate and see if any are unique and if so remove from list
-				// if not, add up to next comma and so on until all are unique
-				List<RecoveredClass> leftovers2WithSameShortName =
-					new ArrayList<RecoveredClass>(classesWithSameShortenedName);
-				Iterator<RecoveredClass> leftovers2Iterator =
-					leftovers2WithSameShortName.iterator();
-
-				while (leftovers2Iterator.hasNext()) {
-
-					monitor.checkCancelled();
-					RecoveredClass currentClassWithSameShortName = leftovers2Iterator.next();
-
-					String shortenedTemplateName =
-						currentClassWithSameShortName.getShortenedTemplateName();
-
-					List<RecoveredClass> classesWithSameShortName =
-						getClassesWithSameShortenedName(classesToProcess, shortenedTemplateName);
-
-					if (classesWithSameShortName.size() == 1) {
-						classesToProcess.remove(classesWithSameShortName.get(0));
-						classesWithSameShortenedName.remove(classesWithSameShortName.get(0));
-					}
-				}
-
-				commaIndex++;
-			}
-
-		}
-
+		return classesWithTemplates;
 	}
 
 	/**
@@ -1294,7 +1409,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		return nameWithoutTemplates;
 	}
 
-	public String getNewShortenedTemplateName(RecoveredClass recoveredClass, int commaIndex) {
+	private String getNewShortenedTemplateName(RecoveredClass recoveredClass, int commaIndex) {
 
 		String className = recoveredClass.getName();
 
@@ -1315,21 +1430,62 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		return shortenedName;
 	}
 
-	public List<RecoveredClass> getClassesWithSameShortenedName(
+	private Map<Namespace, List<RecoveredClass>> mapClassesWithSameShortenedName(
 			List<RecoveredClass> templateClasses, String shortenedName) throws CancelledException {
 
-		List<RecoveredClass> classesWithSameShortenedName = new ArrayList<RecoveredClass>();
+		Map<Namespace, List<RecoveredClass>> sameNamespaceMap = new HashMap<>();
 
-		Iterator<RecoveredClass> classIterator = templateClasses.iterator();
-		while (classIterator.hasNext()) {
+		for (RecoveredClass currentClass : templateClasses) {
 			monitor.checkCancelled();
-			RecoveredClass currentClass = classIterator.next();
-
 			if (currentClass.getShortenedTemplateName().equals(shortenedName)) {
-				classesWithSameShortenedName.add(currentClass);
+				Namespace parentNamespace = currentClass.getClassNamespace().getParentNamespace();
+				List<RecoveredClass> sameShortNameClasses = sameNamespaceMap.get(parentNamespace);
+				if (sameShortNameClasses == null) {
+					sameShortNameClasses = new ArrayList<>();
+				}
+				sameShortNameClasses.add(currentClass);
+				sameNamespaceMap.put(parentNamespace, sameShortNameClasses);
 			}
 		}
-		return classesWithSameShortenedName;
+		return sameNamespaceMap;
+
+	}
+
+	private List<RecoveredClass> getClassesWithSameShortenedName(
+			List<RecoveredClass> templateClasses, String shortenedName) throws CancelledException {
+
+		List<RecoveredClass> sameShortNameClasses = new ArrayList<>();
+
+		for (RecoveredClass currentClass : templateClasses) {
+			monitor.checkCancelled();
+			if (currentClass.getShortenedTemplateName().equals(shortenedName)) {
+
+				sameShortNameClasses.add(currentClass);
+
+			}
+		}
+		return sameShortNameClasses;
+
+	}
+
+	private Map<String, Map<Namespace, List<RecoveredClass>>> mapTemplateClasses(
+			List<RecoveredClass> recoveredClasses) throws CancelledException {
+
+		List<RecoveredClass> templateClasses = getClassesWithTemplateNames(recoveredClasses);
+
+		Map<String, Map<Namespace, List<RecoveredClass>>> sameNameMap = new HashMap<>();
+
+		for (RecoveredClass currentClass : templateClasses) {
+			monitor.checkCancelled();
+
+			String shortenedName = currentClass.getShortenedTemplateName();
+			Map<Namespace, List<RecoveredClass>> sameShortNamesMap = sameNameMap.get(shortenedName);
+			if (sameShortNamesMap == null) {
+				sameNameMap.put(shortenedName,
+					mapClassesWithSameShortenedName(templateClasses, shortenedName));
+			}
+		}
+		return sameNameMap;
 
 	}
 
@@ -1362,6 +1518,5 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		}
 		return buffer.toString();
 	}
-
 
 }

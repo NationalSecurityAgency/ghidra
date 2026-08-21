@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -142,13 +142,14 @@ public class DebuggerLocationLabel extends JLabel {
 		if (sections.isEmpty()) {
 			return null;
 		}
+		long snap = current.getSnap();
 		/**
 		 * TODO: DB's R-Tree could probably do this natively. Not sure it's an optimization, though,
 		 * since few, if any, overlapping sections are expected.
 		 */
 		sections.sort(ComparatorUtils.chainedComparator(List.of(
-			Comparator.comparing(s -> s.getRange().getMinAddress()),
-			Comparator.comparing(s -> -s.getRange().getLength()))));
+			Comparator.comparing(s -> s.getRange(snap).getMinAddress()),
+			Comparator.comparing(s -> -s.getRange(snap).getLength()))));
 		return sections.get(sections.size() - 1);
 	}
 
@@ -162,10 +163,11 @@ public class DebuggerLocationLabel extends JLabel {
 		if (modules.isEmpty()) {
 			return null;
 		}
+		long snap = current.getSnap();
 		// TODO: DB's R-Tree could probably do this natively
 		modules.sort(ComparatorUtils.chainedComparator(List.of(
-			Comparator.comparing(m -> m.getRange().getMinAddress()),
-			Comparator.comparing(m -> -m.getRange().getLength()))));
+			Comparator.comparing(m -> m.getRange(snap).getMinAddress()),
+			Comparator.comparing(m -> -m.getRange(snap).getLength()))));
 		return modules.get(modules.size() - 1);
 	}
 
@@ -185,18 +187,19 @@ public class DebuggerLocationLabel extends JLabel {
 		if (address == null) {
 			return "(nowhere)";
 		}
+		long snap = current.getSnap();
 		try {
 			TraceSection section = getNearestSectionContaining();
 			if (section != null) {
-				return section.getModule().getName() + ":" + section.getName();
+				return section.getModule().getName(snap) + ":" + section.getName(snap);
 			}
 			TraceModule module = getNearestModuleContaining();
 			if (module != null) {
-				return module.getName();
+				return module.getName(snap);
 			}
 			TraceMemoryRegion region = getRegionContaining();
 			if (region != null) {
-				return region.getName();
+				return region.getName(snap);
 			}
 			return "(unknown)";
 		}

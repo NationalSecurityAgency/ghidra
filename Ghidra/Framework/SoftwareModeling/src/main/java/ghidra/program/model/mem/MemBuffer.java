@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,11 @@ package ghidra.program.model.mem;
 
 import java.io.InputStream;
 import java.math.BigInteger;
+import java.util.Optional;
 
 import ghidra.program.model.address.Address;
+import ghidra.program.model.lang.Language;
+import ghidra.program.model.listing.Program;
 
 /**
  * MemBuffer provides an array like interface into memory at a
@@ -118,6 +121,17 @@ public interface MemBuffer {
 	 * @return the Memory used by this MemBuffer or null if not available.
 	 */
 	public Memory getMemory();
+
+	/**
+	 * {@return the Language defining the addresses in this buffer. This may be null, and the
+	 * default implementation returns null if the memory or its program is null.}
+	 */
+	public default Language getLanguage() {
+		return Optional.ofNullable(getMemory())
+				.map(Memory::getProgram)
+				.map(Program::getLanguage)
+				.orElse(null);
+	}
 
 	/**
 	 * Returns true if the underlying bytes are in big-endian order, false if they are little endian.
@@ -228,7 +242,7 @@ public interface MemBuffer {
 	 * Returns a stream that supplies the bytes of this buffer, starting at offset 0.
 	 * <p>
 	 * Note: the default implementation will produce invalid results if the underlying
-	 * MemBuffer instance is is mutated to point to different memory.
+	 * MemBuffer instance is mutated to point to different memory.
 	 * 
 	 * @return an InputStream that returns the bytes of this mem buffer
 	 */
@@ -240,7 +254,7 @@ public interface MemBuffer {
 	 * Returns a stream that supplies the bytes of this buffer, starting at the specified offset.
 	 * <p>
 	 * Note: the default implementation will produce invalid results if the underlying
-	 * MemBuffer instance is is mutated to point to different memory.
+	 * MemBuffer instance is mutated to point to different memory.
 	 * 
 	 * @param initialPosition location in membuffer where the stream should start
 	 * @param length number of bytes to limit the stream to 

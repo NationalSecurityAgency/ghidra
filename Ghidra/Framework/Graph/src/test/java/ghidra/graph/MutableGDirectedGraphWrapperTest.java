@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,25 +58,25 @@ public class MutableGDirectedGraphWrapperTest extends AbstractGraphAlgorithmsTes
 				 	    v6		 	   
 		 */
 
-		TestV v1 = vertex(1);  // Root
-		TestV v2 = vertex(2);  // Root
-		TestV v3 = vertex(3);
-		TestV v4 = vertex(4);
-		TestV v5 = vertex(5);
-		TestV v6 = vertex(6);
+		TestV v1 = v(1);  // Root
+		TestV v2 = v(2);  // Root
+		TestV v3 = v(3);
+		TestV v4 = v(4);
+		TestV v5 = v(5);
+		TestV v6 = v(6);
 
-		TestE e1 = edge(v1, v3);
-		TestE e2 = edge(v3, v5);
-		TestE e3 = edge(v5, v6);
+		TestE e1 = e(v1, v3);
+		TestE e2 = e(v3, v5);
+		TestE e3 = e(v5, v6);
 
-		TestE e4 = edge(v2, v4);
-		TestE e5 = edge(v4, v6);
+		TestE e4 = e(v2, v4);
+		TestE e5 = e(v4, v6);
 
 		//
 		// Now create the second graph above using a mutable wrapper
 		//
 		MutableGDirectedGraphWrapper<TestV, TestE> wrapper = new MutableGDirectedGraphWrapper<>(g);
-		TestV fakeRoot = vertex("Fake Root");
+		TestV fakeRoot = v("Fake Root");
 		TestE fakeEdge1 = new TestE(fakeRoot, v1);
 		TestE fakeEdge2 = new TestE(fakeRoot, v2);
 

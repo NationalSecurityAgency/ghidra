@@ -53,17 +53,20 @@ public class PasswordChangeDialog extends DialogComponentProvider {
 			wp.add(new GLabel("User ID:"));
 			JLabel nameLabel = new GLabel(userID);
 			nameLabel.setName("NAME-COMPONENT");
+			nameLabel.getAccessibleContext().setAccessibleName("Name");
 			wp.add(nameLabel);
 		}
 
 		wp.add(new GLabel("New Password:"));
 		passwordField1 = new JPasswordField(16);
 		passwordField1.setName("PASSWORD-ENTRY1-COMPONENT");
+		passwordField1.getAccessibleContext().setAccessibleName("Password Entry 1");
 		wp.add(passwordField1);
 
 		wp.add(new GLabel("Repeat Password:"));
 		passwordField2 = new JPasswordField(16);
 		passwordField2.setName("PASSWORD-ENTRY2-COMPONENT");
+		passwordField2.getAccessibleContext().setAccessibleName("Password Entry 2");
 		passwordField2.addActionListener(e -> okCallback());
 		wp.add(passwordField2);
 
@@ -104,7 +107,7 @@ public class PasswordChangeDialog extends DialogComponentProvider {
 		};
 		passwordField1.addKeyListener(keyListener);
 		passwordField2.addKeyListener(keyListener);
-
+		wp.getAccessibleContext().setAccessibleName("Password Change");
 		addWorkPanel(wp);
 		addOKButton();
 		addCancelButton();

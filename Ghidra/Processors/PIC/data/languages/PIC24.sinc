@@ -3456,8 +3456,8 @@ define pcodeop contextswap;
   local div:2 = sext(TOK_10_7_Wreg) s/ sext(TOK_3_0_Wreg);
   local rem:2 = sext(TOK_10_7_Wreg) s% sext(TOK_3_0_Wreg);
 
-  W0 = div:1;
-  W1 = rem:1;
+  W0 = zext(div:1);
+  W1 = zext(rem:1);
   
   testSRL_N     ( W1 );
 
@@ -3545,8 +3545,8 @@ define pcodeop isDivideOverflow;
   local div:2 = zext(TOK_10_7_Wreg) / zext(TOK_3_0_Wreg);
   local rem:2 = zext(TOK_10_7_Wreg) % zext(TOK_3_0_Wreg);
 
-  W0 = div:1;
-  W1 = rem:1;
+  W0 = zext(div:1);
+  W1 = zext(rem:1);
 
   testSRL_N     ( W1 );
 
@@ -7204,13 +7204,13 @@ define pcodeop pwrsavOp;
 :sac.d ACCA_t^r4_t,Wsnd_t is OP_23_16=0xDC & OP_14=0x0 & OP_7_4=0x0 & ACCA_t & r4_t & Wsnd_t {
 
   local tmp:6 	= ACCA s>> (16 + r4_t);
-  Wsnd_t 	= tmp:2;
+  Wsnd_t 	= tmp:4;
 } 
 
 :sac.d ACCB_t^r4_t,Wsnd_t is OP_23_16=0xDC & OP_14=0x0 & OP_7_4=0x0 & ACCB_t & r4_t & Wsnd_t {
 
   local tmp:6 	= ACCB s>> (16 + r4_t);
-  Wsnd_t 	= tmp:2;
+  Wsnd_t 	= tmp:4;
 }
 @endif
 

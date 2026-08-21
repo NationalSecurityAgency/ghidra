@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,39 @@
 
 namespace ghidra {
 
+ConstructState::ConstructState(void)
+
+{
+  ct = (Constructor *)0;
+  resolve = (ConstructState **)0;
+  parent = (ConstructState *)0;
+  length = 0;
+  offset = 0;
+}
+
+/// The array holding pointers to child nodes is preallocated.
+/// \param numOperands is maximum number of children this node can have
+ConstructState::ConstructState(int4 numOperands)
+
+{
+  ct = (Constructor *)0;
+  parent = (ConstructState *)0;
+  length = 0;
+  offset = 0;
+  resolve = new ConstructState *[numOperands];
+  for(int4 i=0;i<numOperands;++i)
+    resolve[i] = (ConstructState *)0;
+}
+
+ConstructState::~ConstructState(void)
+
+{
+  if (resolve != (ConstructState **)0)
+    delete [] resolve;
+}
+
+/// \param ccache is the cache to use for formal context changes
+/// \param trans is the parent parser
 ParserContext::ParserContext(ContextCache *ccache,Translate *trans)
 
 {
@@ -35,15 +68,25 @@ ParserContext::ParserContext(ContextCache *ccache,Translate *trans)
   }
 }
 
-void ParserContext::initialize(int4 maxstate,int4 maxparam,AddrSpace *spc)
+ParserContext::~ParserContext(void)
+
+{
+  if (context != (uintm *)0)
+    delete [] context;
+  for(int4 i=0;i<state.size();++i)
+    delete state[i];
+}
+
+/// \param spc is the address space used for constants
+/// \param maxstate is the number of nodes to allocate (initially)
+void ParserContext::initialize(AddrSpace *spc,int4 maxstate)
 
 {
   const_space = spc;
   state.resize(maxstate);
-  state[0].parent = (ConstructState *)0;
   for(int4 i=0;i<maxstate;++i)
-    state[i].resolve.resize(maxparam);
-  base_state = &state[0];
+    state[i] = new ConstructState(MAX_OPERAND);
+  base_state = state[maxstate-1];
 }
 
 const Address &ParserContext::getN2addr(void) const
@@ -58,13 +101,17 @@ const Address &ParserContext::getN2addr(void) const
   return n2addr;
 }
 
+/// Get bytes from the instruction stream into a packed value assuming a big endian encoding.
+/// \param bytestart is the number of bytes to skip
+/// \param size is the number of bytes to pack
+/// \param off is the number of bytes in the instruction already read
+/// \return the packed bytes from the instruction
 uintm ParserContext::getInstructionBytes(int4 bytestart,int4 size,uint4 off) const
 
-{				// Get bytes from the instruction stream into a intm
-				// (assuming big endian format)
+{
   off += bytestart;
-  if (off >=16)
-    throw BadDataError("Instruction is using more than 16 bytes"); 
+  if (off >= MAX_INSTRUCTION_LEN)
+    throw BadDataError("Instruction is using more than " + to_string(MAX_INSTRUCTION_LEN) + " bytes");
   const uint1 *ptr = buf + off;
   uintm res = 0;
   for(int4 i=0;i<size;++i) {
@@ -74,12 +121,17 @@ uintm ParserContext::getInstructionBytes(int4 bytestart,int4 size,uint4 off) con
   return res;
 }
 
+/// Get bits from the instruction stream assuming big endian encoding.
+/// \param startbit is the offset of the first bit (within the instruction stream)
+/// \param size is the number of bits to grab
+/// \param off is the number of bytes in the instruction already read
+/// \return the requested range of bits (in the least significant positions and padded out with zero bits)
 uintm ParserContext::getInstructionBits(int4 startbit,int4 size,uint4 off) const
 
 {
   off += (startbit/8);
-  if (off >= 16)
-    throw BadDataError("Instruction is using more than 16 bytes");
+  if (off >= MAX_INSTRUCTION_LEN)
+    throw BadDataError("Instruction is using more than " + to_string(MAX_INSTRUCTION_LEN) + " bytes");
   const uint1 *ptr = buf + off;
   startbit = startbit % 8;
   int4 bytesize = (startbit+size-1)/8 + 1;
@@ -93,9 +145,12 @@ uintm ParserContext::getInstructionBits(int4 startbit,int4 size,uint4 off) const
   return res;
 }
 
+/// \param bytestart is the offset of the first byte to grab
+/// \param size is the number of bytes to grab
+/// \return the context bytes in a packed value
 uintm ParserContext::getContextBytes(int4 bytestart,int4 size) const
 
-{				// Get bytes from context into a uintm
+{
   int4 intstart = bytestart / sizeof(uintm);
   uintm res = context[ intstart ];
   int4 byteOffset = bytestart % sizeof(uintm);
@@ -112,6 +167,9 @@ uintm ParserContext::getContextBytes(int4 bytestart,int4 size) const
   return res;
 }
 
+/// \param startbit is the offset of the first bit
+/// \param size is the number of bits to return
+/// \return the requested range of bits (in the least significant positions and padded out with zero bits)
 uintm ParserContext::getContextBits(int4 startbit,int4 size) const
 
 {
@@ -131,6 +189,11 @@ uintm ParserContext::getContextBits(int4 startbit,int4 size) const
   return res;
 }
 
+/// \param sym is a symbol that resolves to the address where the setting takes effect
+/// \param num is the index of the context word being affected
+/// \param mask indicates the bits within the context word that are affected
+/// \param flow is \b true if the context change \e flows forward from the point where it is set
+/// \param point is the parse point where the change was made
 void ParserContext::addCommit(TripleSymbol *sym,int4 num,uintm mask,bool flow,ConstructState *point)
 
 {
@@ -191,9 +254,29 @@ void ParserContext::applyCommits(void)
   }
 }
 
+/// This can be called in the middle of a parse to accommodate larger constructor trees.
+/// \param amount is the number of additional nodes to add
+void ParserContext::expandState(int4 amount)
+
+{
+  state.insert(state.begin(),amount,(ConstructState *)0);
+  for(int4 i=0;i<amount;++i)
+    state[i] = new ConstructState(MAX_OPERAND);
+
+  alloc += amount;
+}
+
+/// \brief Initialize \b this from another walker assuming a given constructor and operand is the current position in the walk
+///
+/// The constructor tree state is simulated using only a single provided node.
+/// This allows TokenField to behave as if it were just parsed so its getValue() will return the correct value.
+/// \param ct is the given constructor
+/// \param index is the index of the operand
+/// \param tempstate is provided storage used to simulate the mid-walk tree node
+/// \param otherwalker is the walker with the complete parse state
 void ParserWalker::setOutOfBandState(Constructor *ct,int4 index,ConstructState *tempstate,const ParserWalker &otherwalker)
 
-{ // Initialize walker for future calls into getInstructionBytes assuming -ct- is the current position in the walk
+{
   const ConstructState *pt = otherwalker.point;
   int4 curdepth = otherwalker.depth;
   while(pt->ct != ct) {
@@ -220,17 +303,18 @@ void ParserWalker::setOutOfBandState(Constructor *ct,int4 index,ConstructState *
   breadcrumb[0] = 0;
 }
 
+/// This assumes all the current nodes operands have been parsed into the tree.
+/// \param length is the minimum length of the current constructor
+/// \param numopers is the number of operands
 void ParserWalkerChange::calcCurrentLength(int4 length,int4 numopers)
 
-{				// Calculate the length of the current constructor
-				// state assuming all its operands are constructed
+{
   length += point->offset;	// Convert relative length to absolute length
   for(int4 i=0;i<numopers;++i) {
     ConstructState *subpoint = point->resolve[i];
     int4 sublength = subpoint->length + subpoint->offset;
-				// Since subpoint->offset is an absolute offset
-				// (relative to beginning of instruction) sublength
-    if (sublength > length)	// is absolute and must be compared to absolute length
+				// Since subpoint->offset is an absolutee (relative to beginning of instruction)
+    if (sublength > length)	// sublength is absolute and must be compared to absolute length
       length = sublength;
   }
   point->length = length - point->offset; // Convert back to relative length

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -167,6 +167,7 @@ public:
     optoken,			///< Emit atom as operator
     typetoken,			///< Emit atom as operator
     fieldtoken,			///< Emit atom as structure field
+    bitfieldtoken,		///< Emit atom as structure bitfield
     casetoken,			///< Emit atom as a \e case label
     blanktoken			///< For anonymous types
   };
@@ -324,10 +325,11 @@ protected:
   /// \param val is the value of the constant
   /// \param ct is the data-type of the constant
   /// \param tag is the type of token associated with the constant
-  /// \param vn is the Varnode holding the constant (optional)
-  /// \param op is the PcodeOp using the constant (optional)
+  /// \param vn is the Varnode holding the constant (may be null)
+  /// \param op is the PcodeOp using the constant (may be null)
+  /// \param displayFormat is the default display format to use (may be 0)
   virtual void pushConstant(uintb val,const Datatype *ct,tagtype tag,
-			    const Varnode *vn,const PcodeOp *op)=0;
+			    const Varnode *vn,const PcodeOp *op,uint4 displayFormat)=0;
 
   /// \brief Push a constant marked up by and EquateSymbol onto the RPN stack
   ///
@@ -335,8 +337,8 @@ protected:
   /// \param val is the value of the constant
   /// \param sz is the number of bytes to use for the encoding
   /// \param sym is the EquateSymbol that marks up the constant
-  /// \param vn is the Varnode holding the constant (optional)
-  /// \param op is the PcodeOp using the constant (optional)
+  /// \param vn is the Varnode holding the constant (may be null)
+  /// \param op is the PcodeOp using the constant (may be null)
   virtual bool pushEquate(uintb val,int4 sz,const EquateSymbol *sym,const Varnode *vn,const PcodeOp *op)=0;
 
   /// \brief Push an address which is not in the normal data-flow.
@@ -365,14 +367,20 @@ protected:
   /// \brief Push a variable that represents only part of a symbol onto the RPN stack
   ///
   /// Generally \e member syntax specifying a field within a structure gets emitted.
+  /// Nested structures may result in multiple fields being emitted to get to the final size.
+  /// If the final size requires truncating a data-type that is not a structure, this method
+  /// can optionally emit a final cast to represent the truncation, otherwise an artificial
+  /// field representing the truncation is emitted. Any \e union encountered is resolved using
+  /// the given PcodeOp and slot.
   /// \param sym is the root Symbol
   /// \param off is the byte offset, within the Symbol, of the partial variable
   /// \param sz is the number of bytes in the partial variable
   /// \param vn is the Varnode holding the partial value
   /// \param op is a PcodeOp associate with the Varnode
-  /// \param inslot is the input slot of \b vn with \b op, or -1 if \b op writes \b vn
+  /// \param slot is the slot to use (relative to \b op) for any data-type requiring resolution
+  /// \param allowCast is \b true if a final truncation should be printed as a cast
   virtual void pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
-				 const Varnode *vn,const PcodeOp *op,int4 inslot)=0;
+				 const Varnode *vn,const PcodeOp *op,int4 slot,bool allowCast)=0;
 
   /// \brief Push an identifier for a variable that mismatches with its Symbol
   ///
@@ -422,6 +430,24 @@ protected:
   /// or it can be a statement with no left-hand side.
   /// \param op is the given PcodeOp performing the final operation of the expression
   virtual void emitExpression(const PcodeOp *op)=0;
+
+  /// \brief Emit a call as a \e constructor expression
+  ///
+  /// Use language specific constructor syntax to represent the CALL.
+  /// \param op is the CALL op
+  virtual void emitConstructor(const PcodeOp *op)=0;
+
+  /// \brief Emit STORE to a bit field
+  ///
+  /// Printing for the sequence: `STORE( ptr, INSERT( LOAD(ptr), val, #pos, #sz ) )`
+  /// \param op is the STORE
+  virtual void emitBitFieldStore(const PcodeOp *op)=0;
+
+  /// \brief Emit expression writing to a bitfield
+  ///
+  /// Printing for an expression rooted at INSERT
+  /// \param op is the INSERT
+  virtual void emitBitFieldExpression(const PcodeOp *op)=0;
 
   /// \brief Emit a function declaration
   ///
@@ -571,10 +597,12 @@ public:
   virtual void opCpoolRefOp(const PcodeOp *op)=0;			///< Emit a CPOOLREF operator
   virtual void opNewOp(const PcodeOp *op)=0;				///< Emit a NEW operator
   virtual void opInsertOp(const PcodeOp *op)=0;				///< Emit an INSERT operator
-  virtual void opExtractOp(const PcodeOp *op)=0;			///< Emit an EXTRACT operator
+  virtual void opZpullOp(const PcodeOp *op)=0;				///< Emit a ZPULL operator
   virtual void opPopcountOp(const PcodeOp *op)=0;			///< Emit a POPCOUNT operator
   virtual void opLzcountOp(const PcodeOp *op)=0;			///< Emit a LZCOUNT operator
+  virtual void opSpullOp(const PcodeOp *op)=0;				///< Emit an SPULL operator
   virtual string unnamedField(int4 off,int4 size);			///< Generate an artificial field name
+  virtual string getScopeDelimiter(void) const=0;			///< Return the character string used to separate scope names
 
   static int4 mostNaturalBase(uintb val); 			///< Determine the most natural base for an integer
   static void formatBinary(ostream &s,uintb val);		///< Print a number in binary form

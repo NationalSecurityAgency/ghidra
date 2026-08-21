@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,7 @@
 package ghidra.util.datastruct;
 
 import java.util.Collection;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
+import java.util.function.Consumer;
 
 /**
  * The interface provides a mechanism for clients to pass around an object that is effectively
@@ -29,25 +28,26 @@ import java.util.stream.StreamSupport;
  * to be returned by it) so that the client can make use of data as it is discovered.   This 
  * allows for long searching processes to report data as they work. 
  *
+ * <P>
+ * Using this class implies that data will be added asynchronously.   Implementations of this 
+ * interface should properly synchronize storage so that the data written is visible to the client
+ * thread.
+ * 
  * @param <T> the type
  */
-public interface Accumulator<T> extends Iterable<T> {
+public interface Accumulator<T> extends Consumer<T> {
 
 	public void add(T t);
 
 	public void addAll(Collection<T> collection);
 
-	public boolean contains(T t);
+	/**
+	 * {@return the number of items that have been added to this accumulator}
+	 */
+	public int getProgress();
 
-	public Collection<T> get();
-
-	public int size();
-
-	default boolean isEmpty() {
-		return size() == 0;
-	}
-
-	default Stream<T> stream() {
-		return StreamSupport.stream(spliterator(), false);
+	@Override
+	default void accept(T t) {
+		add(t);
 	}
 }

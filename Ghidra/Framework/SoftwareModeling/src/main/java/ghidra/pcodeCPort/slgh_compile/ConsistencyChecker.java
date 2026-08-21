@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,9 +15,11 @@
  */
 package ghidra.pcodeCPort.slgh_compile;
 
-import java.util.Iterator;
+import java.util.*;
+import java.util.Map.Entry;
 
-import generic.stl.*;
+import generic.stl.IteratorSTL;
+import generic.stl.VectorSTL;
 import ghidra.pcodeCPort.context.SleighError;
 import ghidra.pcodeCPort.opcodes.OpCode;
 import ghidra.pcodeCPort.semantics.*;
@@ -33,16 +35,14 @@ class ConsistencyChecker {
 	private int readnowrite;
 	private int writenoread;
 
-	private int largetemp;			// number of constructors using a temporary varnode larger than SleighBase.MAX_UNIQUE_SIZE
 	private boolean printextwarning;
 	private boolean printdeadwarning;
-	private boolean printlargetempwarning;	// if true, warning about temporary varnodes larger than SleighBase.MAX_UNIQUE_SIZE 
 	private SleighCompile compiler;
 	private SubtableSymbol root_symbol;
-	private VectorSTL<SubtableSymbol> postorder = new VectorSTL<>();
+	private List<SubtableSymbol> postorder = new ArrayList<>();
 
 	// Sizes associated with tables
-	private MapSTL<SubtableSymbol, Integer> sizemap = new MapSTL<>((s1, s2) -> s1.compareTo(s2));
+	private Map<SubtableSymbol, Integer> sizemap = new HashMap<>();
 
 	private OperandSymbol getOperandSymbol(int slot, OpTpl op, Constructor ct) {
 		VarnodeTpl vn;
@@ -519,37 +519,30 @@ class ConsistencyChecker {
 	}
 
 	private int recoverSize(ConstTpl sizeconst, Constructor ct) {
-		int size = 0, handindex;
-		OperandSymbol opsym;
-		SubtableSymbol tabsym;
-		IteratorSTL<Pair<SubtableSymbol, Integer>> iter;
-
-		switch (sizeconst.getType()) {
-			case real:
-				size = (int) sizeconst.getReal();
-				break;
-			case handle:
-				handindex = sizeconst.getHandleIndex();
-				opsym = ct.getOperand(handindex);
-				size = opsym.getSize();
-				if (size == -1) {
-					TripleSymbol definingSymbol = opsym.getDefiningSymbol();
-					if (!(definingSymbol instanceof SubtableSymbol)) {
-						throw new SleighError("Could not recover varnode template size",
-							ct.location);
-					}
-					tabsym = (SubtableSymbol) definingSymbol;
-					iter = sizemap.find(tabsym);
-					if (iter.isEnd()) {
-						throw new SleighError("Subtable out of order", ct.location);
-					}
-					size = iter.get().second;
+		return switch (sizeconst.getType()) {
+			case real -> (int) sizeconst.getReal();
+			case handle -> {
+				int handindex = sizeconst.getHandleIndex();
+				OperandSymbol opsym = ct.getOperand(handindex);
+				int size = opsym.getSize();
+				if (size != -1) {
+					yield size;
 				}
-				break;
-			default:
-				throw new SleighError("Bad constant type as varnode template size", ct.location);
-		}
-		return size;
+
+				TripleSymbol definingSymbol = opsym.getDefiningSymbol();
+				if (!(definingSymbol instanceof SubtableSymbol tabsym)) {
+					throw new SleighError("Could not recover varnode template size",
+						ct.location);
+				}
+				Integer symsize = sizemap.get(tabsym);
+				if (symsize == null) {
+					throw new SleighError("Subtable out of order", ct.location);
+				}
+				yield symsize;
+			}
+			default -> throw new SleighError("Bad constant type as varnode template size",
+				ct.location);
+		};
 	}
 
 	private void handle(String msg, Constructor ct) {
@@ -571,7 +564,7 @@ class ConsistencyChecker {
 
 	private boolean checkOpMisuse(OpTpl op, Constructor ct) {
 		switch (op.getOpcode()) {
-			case CPUI_INT_LESS: {
+			case CPUI_INT_LESS -> {
 				VarnodeTpl vn0 = op.getIn(0);
 				VarnodeTpl vn1 = op.getIn(1);
 				if (vn1.getSpace().isConstSpace()) {
@@ -591,8 +584,7 @@ class ConsistencyChecker {
 					handleBetter("!= 0", ct);
 				}
 			}
-				break;
-			case CPUI_INT_LESSEQUAL: {
+			case CPUI_INT_LESSEQUAL -> {
 				VarnodeTpl vn0 = op.getIn(0);
 				VarnodeTpl vn1 = op.getIn(1);
 				if (vn0.getSpace().isConstSpace()) {
@@ -612,9 +604,8 @@ class ConsistencyChecker {
 					handleBetter("== 0", ct);
 				}
 			}
-				break;
-			default:
-				break;
+			default -> {
+			}
 		}
 		return true;
 	}
@@ -640,9 +631,10 @@ class ConsistencyChecker {
 	}
 
 	/**
-	 * Returns true precisely when {@code opTpl} uses a {@link VarnodeTpl} in 
-	 * the unique space whose size is larger than {@link SleighBase#MAX_UNIQUE_SIZE}.  
-	 * Note that this method returns as soon as one large {@link VarnodeTpl} is found.
+	 * Returns true precisely when {@code opTpl} uses a {@link VarnodeTpl} in the unique space whose
+	 * size is larger than {@link SleighBase#MAX_UNIQUE_SIZE}. Note that this method returns as soon
+	 * as one large {@link VarnodeTpl} is found.
+	 * 
 	 * @param opTpl the op to check
 	 * @return true if {@code opTpl} uses a large temporary varnode
 	 */
@@ -661,8 +653,9 @@ class ConsistencyChecker {
 	}
 
 	/**
-	 * Returns true precisely when {@code vn} is in the unique space
-	 * and has a size larger than {@link SleighBase#MAX_UNIQUE_SIZE}.
+	 * Returns true precisely when {@code vn} is in the unique space and has a size larger than
+	 * {@link SleighBase#MAX_UNIQUE_SIZE}.
+	 * 
 	 * @param vn varnode template to check
 	 * @return true if it uses a large temporary
 	 */
@@ -836,7 +829,7 @@ class ConsistencyChecker {
 				path.pop_back(); // Table is fully traversed
 				state.pop_back();
 				ctstate.pop_back();
-				postorder.push_back(cur); // Post the traversed table
+				postorder.add(cur); // Post the traversed table
 			}
 			else {
 				Constructor ct = cur.getConstructor(ctind);
@@ -849,11 +842,9 @@ class ConsistencyChecker {
 					ctstate.setBack(oper + 1);
 					OperandSymbol opsym = ct.getOperand(oper);
 					TripleSymbol definingSymbol = opsym.getDefiningSymbol();
-					if (definingSymbol instanceof SubtableSymbol) {
-						SubtableSymbol subsym = (SubtableSymbol) definingSymbol;
-						IteratorSTL<Pair<SubtableSymbol, Integer>> iter;
-						iter = sizemap.find(subsym);
-						if (iter.isEnd()) { // Not traversed yet
+					if (definingSymbol instanceof SubtableSymbol subsym) {
+						Integer symsize = sizemap.get(subsym);
+						if (symsize == null) { // Not traversed yet
 							sizemap.put(subsym, -1); // Mark table as
 							// traversed
 							path.push_back(subsym); // Recurse
@@ -866,8 +857,97 @@ class ConsistencyChecker {
 		}
 	}
 
+	static class UniqueState {
+		NavigableMap<Long, OptimizeRecord> recs = new TreeMap<>();
+
+		private static long endOf(Entry<Long, OptimizeRecord> entry) {
+			return entry.getKey() + entry.getValue().size;
+		}
+
+		public void clear() {
+			recs.clear();
+		}
+
+		/**
+		 * Combine all the given entries into one, where the varnode is the union of all the given
+		 * varnodes.
+		 * 
+		 * <p>
+		 * NOTE: There may be a weird case where two neighboring varnodes are read, then later they
+		 * get coalesced in a write. This would indicate the combined varnode is read twice, which
+		 * is not exactly correct. However, the optimizer would exclude that case, anyway.
+		 * 
+		 * @param records the entries
+		 * @return the coalesced entry
+		 */
+		private OptimizeRecord coalesce(List<OptimizeRecord> records) {
+			long minOff = -1;
+			long maxOff = -1;
+			for (OptimizeRecord rec : records) {
+				if (minOff == -1 || rec.offset < minOff) {
+					minOff = rec.offset;
+				}
+				if (maxOff == -1 || rec.offset + rec.size > maxOff) {
+					maxOff = rec.offset + rec.size;
+				}
+			}
+			OptimizeRecord result = new OptimizeRecord(minOff, (int) (maxOff - minOff));
+			for (OptimizeRecord rec : records) {
+				result.updateCombine(rec);
+			}
+			return result;
+		}
+
+		private void set(long offset, int size, OptimizeRecord rec) {
+			List<OptimizeRecord> records = getDefinitions(offset, size);
+			records.add(rec);
+			OptimizeRecord coalesced = coalesce(records);
+			recs.subMap(coalesced.offset, coalesced.offset + coalesced.size).clear();
+			recs.put(coalesced.offset, coalesced);
+		}
+
+		private List<OptimizeRecord> getDefinitions(long offset, int size) {
+			if (size == 0) {
+				size = 1;
+			}
+			List<OptimizeRecord> result = new ArrayList<>();
+			Entry<Long, OptimizeRecord> preEntry = recs.lowerEntry(offset);
+			long cursor = offset;
+			if (preEntry != null && endOf(preEntry) > offset) {
+				OptimizeRecord preRec = preEntry.getValue();
+				// No need to truncate, as we're just counting a read
+				// Do not overwrite in map for reads
+				cursor = endOf(preEntry);
+				// Make an immutable copy of the entry.
+				result.add(preRec);
+			}
+			long end = offset + size;
+			Map<Long, OptimizeRecord> toPut = new HashMap<>();
+			for (Entry<Long, OptimizeRecord> entry : recs.subMap(offset, end).entrySet()) {
+				if (entry.getKey() > cursor) {
+					// This will certainly cause an error report. Good.
+					OptimizeRecord missing =
+						new OptimizeRecord(cursor, (int) (entry.getKey() - cursor));
+					toPut.put(cursor, missing);
+					result.add(missing);
+				}
+				// No need to truncate, as we're just counting a read
+				result.add(entry.getValue());
+				cursor = endOf(entry);
+			}
+			if (end > cursor) {
+				OptimizeRecord missing = new OptimizeRecord(cursor, (int) (end - cursor));
+				toPut.put(cursor, missing);
+				result.add(missing);
+			}
+			recs.putAll(toPut);
+			assert !result.isEmpty();
+			return result;
+		}
+	}
+
 	// Optimization routines
-	private static void examineVn(MapSTL<Long, OptimizeRecord> recs, VarnodeTpl vn, int i,
+	private static void examineVn(UniqueState state, VarnodeTpl vn, int i,
 			int inslot, int secnum) {
 		if (vn == null) {
 			return;
@@ -879,22 +959,17 @@ class ConsistencyChecker {
 			return;
 		}
 
-		IteratorSTL<Pair<Long, OptimizeRecord>> iter;
-		iter = recs.find(vn.getOffset().getReal());
-		if (iter.isEnd()) {
-			recs.put(vn.getOffset().getReal(), new OptimizeRecord());
-			iter = recs.find(vn.getOffset().getReal());
-		}
+		long offset = vn.getOffset().getReal();
+		int size = (int) vn.getSize().getReal();
 		if (inslot >= 0) {
-			iter.get().second.readop = i;
-			iter.get().second.readcount += 1;
-			iter.get().second.inslot = inslot;
-			iter.get().second.readsection = secnum;
+			for (OptimizeRecord rec : state.getDefinitions(offset, size)) {
+				rec.updateRead(i, inslot, secnum);
+			}
 		}
 		else {
-			iter.get().second.writeop = i;
-			iter.get().second.writecount += 1;
-			iter.get().second.writesection = secnum;
+			OptimizeRecord rec = new OptimizeRecord(offset, size);
+			rec.updateWrite(i, secnum);
+			state.set(offset, size, rec);
 		}
 	}
 
@@ -997,7 +1072,7 @@ class ConsistencyChecker {
 	}
 
 	// Look for reads and writes to temporaries
-	private void optimizeGather1(Constructor ct, MapSTL<Long, OptimizeRecord> recs, int secnum) {
+	private void optimizeGather1(Constructor ct, UniqueState state, int secnum) {
 		ConstructTpl tpl;
 		if (secnum < 0) {
 			tpl = ct.getTempl();
@@ -1013,15 +1088,15 @@ class ConsistencyChecker {
 			OpTpl op = ops.get(i);
 			for (int j = 0; j < op.numInput(); ++j) {
 				VarnodeTpl vnin = op.getIn(j);
-				examineVn(recs, vnin, i, j, secnum);
+				examineVn(state, vnin, i, j, secnum);
 			}
 			VarnodeTpl vn = op.getOut();
-			examineVn(recs, vn, i, -1, secnum);
+			examineVn(state, vn, i, -1, secnum);
 		}
 	}
 
 	// Make sure any temp used by the export is not optimized away
-	private void optimizeGather2(Constructor ct, MapSTL<Long, OptimizeRecord> recs, int secnum) {
+	private void optimizeGather2(Constructor ct, UniqueState state, int secnum) {
 		ConstructTpl tpl;
 		if (secnum < 0) {
 			tpl = ct.getTempl();
@@ -1039,39 +1114,31 @@ class ConsistencyChecker {
 		if (hand.getPtrSpace().isUniqueSpace()) {
 			if (hand.getPtrOffset().getType() == ConstTpl.const_type.real) {
 				long offset = hand.getPtrOffset().getReal();
-				recs.put(offset, new OptimizeRecord());
-				IteratorSTL<Pair<Long, OptimizeRecord>> res = recs.find(offset);
-				res.get().second.writeop = 0;
-				res.get().second.readop = 0;
-				res.get().second.writecount = 2;
-				res.get().second.readcount = 2;
-				res.get().second.readsection = -2;
-				res.get().second.writesection = -2;
+				int size = (int) hand.getPtrSize().getReal();
+				for (OptimizeRecord rec : state.getDefinitions(offset, size)) {
+					rec.updateExport();
+					// NOTE: Could this just be updateRead?
+					// Technically, an exported handle could be written by the parent....
+				}
 			}
 		}
 		if (hand.getSpace().isUniqueSpace()) {
 			if ((hand.getPtrSpace().getType() == ConstTpl.const_type.real) &&
 				(hand.getPtrOffset().getType() == ConstTpl.const_type.real)) {
 				long offset = hand.getPtrOffset().getReal();
-				recs.put(offset, new OptimizeRecord());
-				IteratorSTL<Pair<Long, OptimizeRecord>> res = recs.find(offset);
-				res.get().second.writeop = 0;
-				res.get().second.readop = 0;
-				res.get().second.writecount = 2;
-				res.get().second.readcount = 2;
-				res.get().second.readsection = -2;
-				res.get().second.writesection = -2;
+				int size = (int) hand.getPtrSize().getReal();
+				for (OptimizeRecord rec : state.getDefinitions(offset, size)) {
+					rec.updateExport();
+					// NOTE: Could this just be updateRead?
+					// Technically, an exported handle could be written by the parent....
+				}
 			}
 		}
 	}
 
-	private OptimizeRecord findValidRule(Constructor ct, MapSTL<Long, OptimizeRecord> recs) {
-		IteratorSTL<Pair<Long, OptimizeRecord>> iter;
-		iter = recs.begin();
-		while (!iter.isEnd()) {
-			OptimizeRecord currec = iter.get().second;
-			iter.increment();
-
+	private OptimizeRecord findValidRule(Constructor ct, UniqueState state) {
+		for (Entry<Long, OptimizeRecord> ent : state.recs.entrySet()) {
+			OptimizeRecord currec = ent.getValue();
 			if ((currec.writecount == 1) && (currec.readcount == 1) &&
 				(currec.readsection == currec.writesection)) {
 				// Temporary must be read and written exactly once
@@ -1083,14 +1150,33 @@ class ConsistencyChecker {
 					tpl = ct.getNamedTempl(currec.readsection);
 				}
 				VectorSTL<OpTpl> ops = tpl.getOpvec();
-				OpTpl op = ops.get(currec.readop);
+				OpTpl writeop = ops.get(currec.writeop);
+				OpTpl readop = ops.get(currec.readop);
 				if (currec.writeop >= currec.readop) {
 					throw new SleighError("Read of temporary before write", ct.location);
 				}
-				if (op.getOpcode() == OpCode.CPUI_COPY) {
+
+				VarnodeTpl writevn = writeop.getOut();
+				VarnodeTpl readvn = readop.getIn(currec.inslot);
+
+				/**
+				 * Because the record can change size and position, we have to check if the varnode
+				 * "connecting" the write and read ops is actually the same varnode. If not, then we
+				 * can't optimize it out.
+				 * 
+				 * There may be an opportunity here to re-write the size/offset when either the
+				 * write or read op is a COPY, but I'll leave that for later discussion.
+				 * 
+				 * Actually, maybe not. If the truncation would be of a handle, we can't.
+				 */
+				if (!Objects.equals(writevn, readvn)) {
+					continue;
+				}
+
+				if (readop.getOpcode() == OpCode.CPUI_COPY) {
 					boolean saverecord = true;
 					currec.opttype = 0;
-					VarnodeTpl vn = op.getOut();
+					VarnodeTpl vn = readop.getOut();
 					for (int i = currec.writeop + 1; i < currec.readop; ++i) {
 						if (readWriteInterference(vn, ops.get(i), true)) {
 							saverecord = false;
@@ -1101,11 +1187,10 @@ class ConsistencyChecker {
 						return currec;
 					}
 				}
-				op = ops.get(currec.writeop);
-				if (op.getOpcode() == OpCode.CPUI_COPY) {
+				if (writeop.getOpcode() == OpCode.CPUI_COPY) {
 					boolean saverecord = true;
 					currec.opttype = 1;
-					VarnodeTpl vn = op.getIn(0);
+					VarnodeTpl vn = writeop.getIn(0);
 					for (int i = currec.writeop + 1; i < currec.readop; ++i) {
 						if (readWriteInterference(vn, ops.get(i), false)) {
 							saverecord = false;
@@ -1148,11 +1233,8 @@ class ConsistencyChecker {
 		ctempl.deleteOps(deleteops);
 	}
 
-	private void checkUnusedTemps(Constructor ct, MapSTL<Long, OptimizeRecord> recs) {
-		IteratorSTL<Pair<Long, OptimizeRecord>> iter = recs.begin();
-		while (!iter.isEnd()) {
-			Pair<Long, OptimizeRecord> pair = iter.get();
-			OptimizeRecord currec = pair.second;
+	private void checkUnusedTemps(Constructor ct, UniqueState state) {
+		for (OptimizeRecord currec : state.recs.values()) {
 			if (currec.readcount == 0) {
 				if (printdeadwarning) {
 					compiler.reportWarning(ct.location, "Temporary is written but not read");
@@ -1163,13 +1245,13 @@ class ConsistencyChecker {
 				compiler.reportError(ct.location, "Temporary is read but not written");
 				readnowrite += 1;
 			}
-			iter.increment();
 		}
 	}
 
 	/**
-	 * Checks {@code ct} to see whether p-code section contains an {@link OpTpl} which
-	 * uses a varnode in the unique space which is larger than {@link SleighBase#MAX_UNIQUE_SIZE}.
+	 * Checks {@code ct} to see whether p-code section contains an {@link OpTpl} which uses a
+	 * varnode in the unique space which is larger than {@link SleighBase#MAX_UNIQUE_SIZE}.
+	 * 
 	 * @param ct constructor to check
 	 * @param ctpl is the specific p-code section
 	 */
@@ -1177,12 +1259,9 @@ class ConsistencyChecker {
 		VectorSTL<OpTpl> ops = ctpl.getOpvec();
 		for (IteratorSTL<OpTpl> iter = ops.begin(); !iter.isEnd(); iter.increment()) {
 			if (hasLargeTemporary(iter.get())) {
-				if (printlargetempwarning) {
-					compiler.reportWarning(ct.location,
-						"Constructor uses temporary varnode larger than " +
-							SleighBase.MAX_UNIQUE_SIZE + " bytes.");
-				}
-				largetemp++;
+				compiler.reportError(ct.location,
+					"Constructor uses temporary varnode larger than " +
+						SleighBase.MAX_UNIQUE_SIZE + " bytes.");
 				return;
 			}
 		}
@@ -1190,21 +1269,21 @@ class ConsistencyChecker {
 
 	private void optimize(Constructor ct) {
 		OptimizeRecord currec;
-		MapSTL<Long, OptimizeRecord> recs = new ComparableMapSTL<>();
+		UniqueState state = new UniqueState();
 		int numsections = ct.getNumSections();
 		do {
-			recs.clear();
+			state.clear();
 			for (int i = -1; i < numsections; ++i) {
-				optimizeGather1(ct, recs, i);
-				optimizeGather2(ct, recs, i);
+				optimizeGather1(ct, state, i);
+				optimizeGather2(ct, state, i);
 			}
-			currec = findValidRule(ct, recs);
+			currec = findValidRule(ct, state);
 			if (currec != null) {
 				applyOptimization(ct, currec);
 			}
 		}
 		while (currec != null);
-		checkUnusedTemps(ct, recs);
+		checkUnusedTemps(ct, state);
 	}
 
 	public ConsistencyChecker(SleighCompile cp, SubtableSymbol rt, boolean unnecessary,
@@ -1214,12 +1293,8 @@ class ConsistencyChecker {
 		unnecessarypcode = 0;
 		readnowrite = 0;
 		writenoread = 0;
-		//number of constructors which reference a temporary varnode larger than SleighBase.MAX_UNIQUE_SIZE
-		largetemp = 0;
 		printextwarning = unnecessary;
 		printdeadwarning = warndead;
-		//whether to print information about constructors which reference large temporary varnodes
-		printlargetempwarning = warnlargetemp;
 	}
 
 	// Main entry point for size consistency check
@@ -1316,14 +1391,5 @@ class ConsistencyChecker {
 
 	public int getNumWriteNoRead() {
 		return writenoread;
-	}
-
-	/**
-	 * Returns the number of constructors which reference a varnode in the
-	 * unique space with size larger than {@link SleighBase#MAX_UNIQUE_SIZE}.
-	 * @return num constructors with large temp varnodes
-	 */
-	public int getNumLargeTemporaries() {
-		return largetemp;
 	}
 }

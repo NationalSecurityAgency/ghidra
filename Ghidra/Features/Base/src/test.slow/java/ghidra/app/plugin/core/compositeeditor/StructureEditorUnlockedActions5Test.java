@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 import java.awt.Component;
 import java.awt.Window;
 import java.awt.event.KeyEvent;
+import java.util.List;
 
 import javax.swing.JTextField;
 
@@ -31,8 +32,7 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.UsrException;
 
-public class StructureEditorUnlockedActions5Test
-		extends AbstractStructureEditorTest {
+public class StructureEditorUnlockedActions5Test extends AbstractStructureEditorTest {
 
 	@Test
 	public void testApplyDuplicateName() throws Exception {
@@ -95,31 +95,84 @@ public class StructureEditorUnlockedActions5Test
 		//			model.getStatus());
 	}
 
-	//  Ignoring test for now.  Don't know how to make the name invalid
+	@Test
 	public void testApplyWithInvalidName() throws Exception {
 		init(complexStructure, pgmTestCat);
 
-		CompEditorPanel panel = (CompEditorPanel) getPanel();
-		JTextField nameField = panel.nameTextField;
 		assertTrue(model.isValidName());
-		triggerActionKey(nameField, 0, KeyEvent.VK_END);
-		triggerText(nameField, "#$/");
-		DataType viewCopy = model.viewComposite.clone(null);
 
-		assertTrue(!model.isValidName());
-		assertEquals("complexStructure#$/", nameField.getText());
-		assertEquals("complexStructure#$/", model.getCompositeName());
-		assertEquals("complexStructure", complexStructure.getName());
-		assertTrue(complexStructure.isEquivalent(model.viewComposite));
-		assertTrue(viewCopy.isEquivalent(model.viewComposite));
-		assertEquals(model.getStatus(), "complexStructure#$/ is not a valid name.");
-		invoke(applyAction);
-		assertEquals(model.getStatus(), "Name is not valid.");
-		assertTrue(complexStructure.isEquivalent(model.viewComposite));
-		assertTrue(viewCopy.isEquivalent(model.viewComposite));
-		assertTrue(model.getStatus().length() > 0);
-		assertEquals("complexStructure#$/", model.getCompositeName());
-		assertEquals("complexStructure", complexStructure.getName());
+		StructureEditorPanel panel = (StructureEditorPanel) getPanel();
+		assertFalse(panel.hasInvalidEntry());
+		assertFalse(panel.hasUncomittedEntry());
+
+		JTextField nameField = panel.nameTextField;
+		nameField.setText(null);
+		triggerActionKey(nameField, 0, KeyEvent.VK_END);
+		triggerText(nameField, " ");
+
+		assertTrue(panel.hasInvalidEntry());
+		assertFalse(applyAction.isEnabled());
+		assertFalse(applyAction.isEnabled());
+
+		assertEquals("complexStructure", model.getCompositeName()); // no change yet
+
+		triggerActionKey(nameField, 0, KeyEvent.VK_DELETE);
+		triggerText(nameField, "xyz");
+
+		assertFalse(panel.hasInvalidEntry());
+		assertTrue(panel.hasUncomittedEntry());
+		assertFalse(applyAction.isEnabled());
+		assertFalse(applyAction.isEnabled());
+
+		assertEquals("complexStructure", model.getCompositeName()); // no change yet
+
+		triggerActionKey(nameField, 0, KeyEvent.VK_ENTER);
+
+		assertFalse(panel.hasInvalidEntry());
+		assertFalse(panel.hasUncomittedEntry());
+		assertTrue(applyAction.isEnabled());
+		assertTrue(applyAction.isEnabled());
+
+		assertTrue(model.isValidName());
+
+		assertEquals("xyz", model.getCompositeName()); // no change yet
+	}
+
+	@Test
+	public void testUncomittedNameRevert() throws Exception {
+		init(complexStructure, pgmTestCat);
+
+		assertTrue(model.isValidName());
+
+		StructureEditorPanel panel = (StructureEditorPanel) getPanel();
+		assertFalse(panel.hasInvalidEntry());
+		assertFalse(panel.hasUncomittedEntry());
+
+		JTextField nameField = panel.nameTextField;
+		nameField.setText(null);
+		triggerActionKey(nameField, 0, KeyEvent.VK_END);
+		triggerText(nameField, "xyz");
+		assertEquals("xyz", nameField.getText());
+
+		assertFalse(panel.hasInvalidEntry());
+		assertTrue(panel.hasUncomittedEntry());
+		assertFalse(applyAction.isEnabled());
+		assertFalse(applyAction.isEnabled());
+
+		assertEquals("complexStructure", model.getCompositeName()); // no change yet
+
+		triggerActionKey(nameField, 0, KeyEvent.VK_ESCAPE);
+
+		assertEquals("complexStructure", nameField.getText());
+
+		assertFalse(panel.hasInvalidEntry());
+		assertFalse(panel.hasUncomittedEntry());
+		assertFalse(applyAction.isEnabled());
+		assertFalse(applyAction.isEnabled());
+
+		assertTrue(model.isValidName());
+
+		assertEquals("complexStructure", model.getCompositeName()); // no change yet
 	}
 
 	@Test
@@ -360,7 +413,7 @@ public class StructureEditorUnlockedActions5Test
 		assertTrue(getDataType(2).isEquivalent(new WordDataType()));
 		invoke(pointerAction);
 
-		assertEquals("pointer doesn't fit.", model.getStatus());
+		assertTrue(model.getStatus().contains("requires 2 additional"));
 		assertEquals(num, model.getNumComponents());
 		assertEquals("word", getDataType(2).getDisplayName());
 		assertTrue(getDataType(2).isEquivalent(new WordDataType()));
@@ -605,31 +658,79 @@ public class StructureEditorUnlockedActions5Test
 	public void testUndoRename() throws Exception {
 		init(complexStructure, pgmTestCat);
 
-		CompEditorPanel panel = (CompEditorPanel) getPanel();
+		StructureEditorPanel panel = (StructureEditorPanel) getPanel();
 		JTextField nameField = panel.nameTextField;
-		runSwing(() -> nameField.setText("myStruct"));
+
+		setText(nameField, "myStruct");
+		triggerEnter(nameField);
+
+		assertEquals("myStruct", nameField.getText());
+		assertEquals("myStruct", model.getCompositeName());
+
 		invoke(applyAction);
-		runSwing(() -> nameField.setText("myStruct2"));
-		invoke(applyAction);
-		undo(program, false);
-		program.flushEvents();
-		waitForSwing();
-		runSwing(() -> provider.domainObjectRestored(program), true);
+
 		waitForSwing();
 
+		assertEquals("myStruct", nameField.getText());
 		assertEquals("myStruct", model.getCompositeName());
-		redo(program, false);
-		program.flushEvents();
-		waitForSwing();
-		runSwing(() -> provider.domainObjectRestored(program), true);
-		waitForSwing();
+
+		setText(nameField, "myStruct2");
+		triggerEnter(nameField);
+
+		assertEquals("myStruct2", nameField.getText());
 		assertEquals("myStruct2", model.getCompositeName());
+
+		invoke(applyAction);
+
+		waitForSwing();
+
+		assertEquals("myStruct2", nameField.getText());
+		assertEquals("myStruct2", model.getCompositeName());
+
+		undo(program, true);
+
+		Window dialog = waitForWindow("Reload Structure Editor?");
+		assertNotNull(dialog);
+		pressButton(dialog, "Yes");
+		waitForSwing();
+
+		assertEquals("myStruct", nameField.getText());
+		assertEquals("myStruct", model.getCompositeName());
+
+		redo(program, true);
+
+		dialog = waitForWindow("Reload Structure Editor?");
+		assertNotNull(dialog);
+		pressButton(dialog, "No");
+		waitForSwing();
+
+		assertEquals("myStruct", nameField.getText());
+		assertEquals("myStruct", model.getCompositeName());
 
 	}
 
 	@Test
 	public void testUnpackageComponentArray() throws Exception {
+
+		program.withTransaction("Modify structures", () -> {
+
+			// Add zero-length component after component to be unpacked
+			complexStructure.insertAtOffset(92, new ArrayDataType(CharDataType.dataType, 0), 0,
+				"z1", null);
+			complexStructure.insertAtOffset(92, new ArrayDataType(CharDataType.dataType, 0), 0,
+				"z2", null);
+		});
+
 		init(complexStructure, pgmTestCat);
+
+		Structure viewStruct =
+			(Structure) model.getViewDataTypeManager().getResolvedViewComposite();
+
+		List<DataTypeComponent> componentsAt92 = viewStruct.getComponentsContaining(92);
+		assertEquals(3, componentsAt92.size());
+		assertEquals("z1", componentsAt92.get(0).getFieldName());
+		assertEquals("z2", componentsAt92.get(1).getFieldName());
+		assertEquals("simpleStructure[3]", componentsAt92.get(2).getDataType().getName());
 
 		int num = model.getNumComponents();
 		int len = model.getLength();
@@ -640,6 +741,9 @@ public class StructureEditorUnlockedActions5Test
 		setSelection(new int[] { 15 });
 		assertEquals("string[5]", getDataType(15).getDisplayName());
 		invoke(unpackageAction);
+
+		waitForSwing();
+
 		assertEquals(len, model.getLength());
 		assertEquals(num + 4, model.getNumComponents());
 		assertTrue(!getDataType(15).isEquivalent(simpleStructure));
@@ -650,11 +754,46 @@ public class StructureEditorUnlockedActions5Test
 			assertEquals("string", sdt.getDisplayName());
 			assertEquals(elementLen, dtc.getLength());
 		}
+
+		componentsAt92 = viewStruct.getComponentsContaining(92);
+		assertEquals(3, componentsAt92.size());
+		assertEquals("z1", componentsAt92.get(0).getFieldName());
+		assertEquals("z2", componentsAt92.get(1).getFieldName());
+		assertEquals("simpleStructure[3]", componentsAt92.get(2).getDataType().getName());
 	}
 
 	@Test
 	public void testUnpackageComponentStructure() throws Exception {
+
+		program.withTransaction("Modify structures", () -> {
+			simpleStructure.setPackingEnabled(true); // simplifies adding bitfields
+			simpleStructure.delete(1); // remove word component where bitfields will be inserted
+			simpleStructure.insertBitField(1, 2, 0, WordDataType.dataType, 3, "bf012", null);
+			simpleStructure.insertBitField(1, 2, 3, WordDataType.dataType, 2, "bf34", null);
+			simpleStructure.insertBitField(1, 2, 7, WordDataType.dataType, 1, "bf7", null);
+			simpleStructure.setPackingEnabled(false);
+			simpleStructure.setLength(29); // prune aligned length
+
+			// Add zero-length component after component to be unpacked
+			complexStructure.insertAtOffset(321, new ArrayDataType(CharDataType.dataType, 0), 0,
+				"z1", null);
+			complexStructure.insertAtOffset(321, new ArrayDataType(CharDataType.dataType, 0), 0,
+				"z2", null);
+
+		});
+
+		waitForSwing();
+
 		init(complexStructure, pgmTestCat);
+
+		Structure viewStruct =
+			(Structure) model.getViewDataTypeManager().getResolvedViewComposite();
+
+		List<DataTypeComponent> componentsAt321 = viewStruct.getComponentsContaining(321);
+		assertEquals(3, componentsAt321.size());
+		assertEquals("z1", componentsAt321.get(0).getFieldName());
+		assertEquals("z2", componentsAt321.get(1).getFieldName());
+		assertEquals("refStructure *32", componentsAt321.get(2).getDataType().getName());
 
 		int num = model.getNumComponents();
 		int len = model.getLength();
@@ -662,13 +801,24 @@ public class StructureEditorUnlockedActions5Test
 		setSelection(new int[] { 21 });
 		assertEquals("simpleStructure", getDataType(21).getDisplayName());
 		invoke(unpackageAction);
+
 		assertEquals(len, model.getLength());
 		assertEquals(num + numComps - 1, model.getNumComponents());
 		assertTrue(!getDataType(21).isEquivalent(simpleStructure));
 		for (int i = 0; i < numComps; i++) {
+			DataTypeComponent dtc = getComponent(21 + i);
 			DataType sdt = simpleStructure.getComponent(i).getDataType();
-			assertTrue(getDataType(21 + i).isEquivalent(sdt));
-			assertEquals(sdt.getDisplayName(), getDataType(21 + i).getDisplayName());
+			assertTrue("type mismatch: " + sdt.getDisplayName() + " at " + dtc.getOffset(),
+				dtc.getDataType().isEquivalent(sdt));
+			assertEquals("name mismatch: " + sdt.getDisplayName() + " at " + dtc.getOffset(),
+				sdt.getDisplayName(), dtc.getDataType().getDisplayName());
 		}
+
+		componentsAt321 = viewStruct.getComponentsContaining(321);
+		assertEquals(3, componentsAt321.size());
+		assertEquals("z1", componentsAt321.get(0).getFieldName());
+		assertEquals("z2", componentsAt321.get(1).getFieldName());
+		assertEquals("refStructure *32", componentsAt321.get(2).getDataType().getName());
+
 	}
 }

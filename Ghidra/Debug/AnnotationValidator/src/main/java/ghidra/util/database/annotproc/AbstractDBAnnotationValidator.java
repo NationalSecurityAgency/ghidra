@@ -20,13 +20,33 @@ import java.lang.annotation.Annotation;
 import javax.lang.model.element.*;
 import javax.tools.Diagnostic.Kind;
 
+import ghidra.util.database.DBAnnotatedObject;
+
+/**
+ * An abstract class for validating annotations on {@link DBAnnotatedObject}.
+ * 
+ * <p>
+ * Performs validation checks on annotated fields and their enclosing types.
+ */
 public class AbstractDBAnnotationValidator {
 	protected final ValidationContext ctx;
 
+	/**
+	 * Construct a new {@code AbstractDBAnnotationValidator} with the specified validation context.
+	 * 
+	 * @param ctx the validation context
+	 */
 	public AbstractDBAnnotationValidator(ValidationContext ctx) {
 		this.ctx = ctx;
 	}
 
+	/**
+	 * Check the enclosing type of the annotated field.
+	 * 
+	 * @param annotType the type of the annotation being validated
+	 * @param field the field being validated
+	 * @param type the enclosing type of the field
+	 */
 	protected void checkEnclosingType(Class<? extends Annotation> annotType, VariableElement field,
 			TypeElement type) {
 		if (type.getKind() != ElementKind.CLASS) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,7 @@ import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.target.Target.ActionEntry;
+import ghidra.debug.api.target.Target.ObjectArgumentPolicy;
 import ghidra.framework.plugintool.PluginTool;
 
 class TargetDockingAction extends DockingAction {
@@ -51,7 +52,7 @@ class TargetDockingAction extends DockingAction {
 		if (target == null) {
 			return null;
 		}
-		return target.collectActions(action, context)
+		return target.collectActions(action, context, ObjectArgumentPolicy.CURRENT_AND_RELATED)
 				.values()
 				.stream()
 				.filter(e -> !e.requiresPrompt())
@@ -65,9 +66,11 @@ class TargetDockingAction extends DockingAction {
 	protected void updateFromContext(ActionContext context) {
 		entry = findEntry(context);
 		if (entry == null) {
+			getToolBarData().setIcon(action.icon());
 			setDescription(defaultDescription);
 		}
 		else {
+			getToolBarData().setIcon(entry.icon());
 			setDescription(entry.details());
 		}
 	}

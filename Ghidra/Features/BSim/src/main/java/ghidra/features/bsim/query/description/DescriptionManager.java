@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -225,9 +225,6 @@ public class DescriptionManager {
 	 */
 	public ExecutableRecord newExecutableRecord(String md5, String enm, String cnm, String arc,
 			Date dt, String repo, String path, RowKey id) throws LSHException {
-		if (md5.length() != 32) {
-			throw new LSHException("MD5 field must be exactly 32 hex characters");
-		}
 		ExecutableRecord newexe = new ExecutableRecord(md5, enm, cnm, arc, dt, id, repo, path);
 		if (!exerec.add(newexe)) {
 			ExecutableRecord oldexe = exerec.floor(newexe);

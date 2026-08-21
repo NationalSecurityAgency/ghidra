@@ -16,15 +16,6 @@
 package ghidra.feature.vt.gui.editors;
 
 import static ghidra.feature.vt.gui.editors.TagEditorDialog.TagState.Action.*;
-import ghidra.feature.vt.api.db.VTSessionDB;
-import ghidra.feature.vt.api.main.VTMatchTag;
-import ghidra.feature.vt.api.main.VTSession;
-import ghidra.feature.vt.gui.editors.TagEditorDialog.TagState.Action;
-import ghidra.framework.model.TransactionInfo;
-import ghidra.program.model.listing.Program;
-import ghidra.util.Msg;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.*;
 
 import java.awt.BorderLayout;
 import java.awt.event.*;
@@ -37,6 +28,15 @@ import javax.swing.event.ListSelectionListener;
 import docking.DialogComponentProvider;
 import docking.widgets.OptionDialog;
 import docking.widgets.list.ListRendererMouseEventForwarder;
+import ghidra.feature.vt.api.db.VTSessionDB;
+import ghidra.feature.vt.api.main.VTMatchTag;
+import ghidra.feature.vt.api.main.VTSession;
+import ghidra.feature.vt.gui.editors.TagEditorDialog.TagState.Action;
+import ghidra.framework.model.TransactionInfo;
+import ghidra.program.model.listing.Program;
+import ghidra.util.Msg;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.*;
 
 public class TagEditorDialog extends DialogComponentProvider {
 
@@ -60,8 +60,10 @@ public class TagEditorDialog extends DialogComponentProvider {
 		JPanel mainPanel = new JPanel(new BorderLayout());
 
 		JScrollPane scrollPane = new JScrollPane();
+		scrollPane.getAccessibleContext().setAccessibleName("Tag List");
 		listModel = new TagStateListModel(getTags());
 		list = new JList<>(listModel);
+		list.getAccessibleContext().setAccessibleName("Tag");
 		list.setBackground(scrollPane.getBackground());
 		list.setCellRenderer(new TagEditorRenderer(list, listModel));
 		list.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -75,6 +77,7 @@ public class TagEditorDialog extends DialogComponentProvider {
 		mainPanel.add(scrollPane, BorderLayout.CENTER);
 
 		JButton addButton = new JButton("Add");
+		addButton.getAccessibleContext().setAccessibleName("Add");
 		addButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -87,9 +90,8 @@ public class TagEditorDialog extends DialogComponentProvider {
 			}
 
 			private TagState createNewTag() {
-				String tagName =
-					OptionDialog.showInputSingleLineDialog(getComponent(), "Create Tag",
-						"Enter tag name: ", "");
+				String tagName = OptionDialog.showInputSingleLineDialog(getComponent(),
+					"Create Tag", "Enter tag name: ", "");
 				if (tagName == null || "".equals(tagName.trim())) {
 					return null;
 				}
@@ -98,6 +100,7 @@ public class TagEditorDialog extends DialogComponentProvider {
 		});
 
 		final JButton deleteButton = new JButton("Delete");
+		deleteButton.getAccessibleContext().setAccessibleName("Delete");
 		deleteButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -136,12 +139,13 @@ public class TagEditorDialog extends DialogComponentProvider {
 		});
 
 		JPanel editPanel = new JPanel();
+		editPanel.getAccessibleContext().setAccessibleName("Edit");
 		editPanel.add(addButton);
 		editPanel.add(Box.createHorizontalStrut(5));
 		editPanel.add(deleteButton);
 
 		mainPanel.add(editPanel, BorderLayout.SOUTH);
-
+		mainPanel.getAccessibleContext().setAccessibleName("Tag Editor");
 		return mainPanel;
 	}
 

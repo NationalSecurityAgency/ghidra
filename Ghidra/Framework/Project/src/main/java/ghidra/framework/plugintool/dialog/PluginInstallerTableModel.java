@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,10 @@
 package ghidra.framework.plugintool.dialog;
 
 import java.net.URL;
-import java.util.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.swing.Icon;
@@ -27,7 +30,10 @@ import docking.widgets.table.AbstractDynamicTableColumn;
 import docking.widgets.table.TableColumnDescriptor;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import ghidra.docking.settings.Settings;
-import ghidra.framework.plugintool.*;
+import ghidra.framework.plugintool.Plugin;
+import ghidra.framework.plugintool.PluginConfigurationModel;
+import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.framework.plugintool.util.PluginDescription;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.util.HTMLUtilities;
@@ -50,13 +56,12 @@ class PluginInstallerTableModel
 
 	public static final Icon EXPERIMENTAL_ICON = Icons.WARNING_ICON;
 	public static final Icon DEV_ICON = Icons.STRONG_WARNING_ICON;
+	public static final Icon DEPRECATED_ICON = Icons.WARNING_ICON;
 
-	private static Map<PluginStatus, Icon> statusIconMap = new HashMap<>();
-
-	static {
-		statusIconMap.put(PluginStatus.UNSTABLE, DEV_ICON);
-		statusIconMap.put(PluginStatus.STABLE, EXPERIMENTAL_ICON);
-	}
+	private static Map<PluginStatus, Icon> statusIconMap = Map.ofEntries(
+		Map.entry(PluginStatus.UNSTABLE, DEV_ICON),
+		Map.entry(PluginStatus.STABLE, EXPERIMENTAL_ICON),
+		Map.entry(PluginStatus.DEPRECATED, DEPRECATED_ICON));
 
 	private PluginConfigurationModel model;
 	private List<PluginDescription> pluginDescriptions;
@@ -66,8 +71,8 @@ class PluginInstallerTableModel
 	 * Constructs a new data model.
 	 * 
 	 * @param tool the current tool
-	 * @param parentComponent the ui component that should be forced to refresh if a plugin's
-	 * state changes.
+	 * @param parentComponent the ui component that should be forced to refresh if a plugin's state
+	 *            changes.
 	 * @param pluginDescriptions the list of plugin descriptions to display
 	 * @param model the main plugin configuration model
 	 */
@@ -90,8 +95,8 @@ class PluginInstallerTableModel
 		TableColumnDescriptor<PluginDescription> descriptor = new TableColumnDescriptor<>();
 
 		descriptor.addVisibleColumn(new PluginInstalledColumn(), -1, false);
-		descriptor.addVisibleColumn(new PluginStatusColumn());
-		descriptor.addVisibleColumn(new PluginNameColumn(), 1, true);
+		descriptor.addVisibleColumn(new PluginWarningColumn());
+		descriptor.addVisibleColumn(new PluginNameColumn());
 		descriptor.addVisibleColumn(new PluginDescriptionColumn());
 		descriptor.addVisibleColumn(new PluginCategoryColumn());
 		descriptor.addHiddenColumn(new PluginModuleColumn());
@@ -116,8 +121,7 @@ class PluginInstallerTableModel
 	}
 
 	/**
-	 * Overridden to handle the case where a user has toggled the installation column
-	 * checkbox.
+	 * Overridden to handle the case where a user has toggled the installation column checkbox.
 	 */
 	@Override
 	public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
@@ -177,8 +181,8 @@ class PluginInstallerTableModel
 	}
 
 	/**
-	 * Column for displaying the interactive checkbox, allowing the user to install
-	 * or uninstall the plugin.
+	 * Column for displaying the interactive checkbox, allowing the user to install or uninstall the
+	 * plugin.
 	 */
 	private class PluginInstalledColumn extends
 			AbstractDynamicTableColumn<PluginDescription, Boolean, List<PluginDescription>> {
@@ -203,12 +207,12 @@ class PluginInstallerTableModel
 	/**
 	 * Column for displaying the status of the plugin.
 	 */
-	private class PluginStatusColumn
+	private class PluginWarningColumn
 			extends AbstractDynamicTableColumn<PluginDescription, Icon, List<PluginDescription>> {
 
 		@Override
 		public String getColumnName() {
-			return "Status";
+			return "Warning";
 		}
 
 		@Override
@@ -228,7 +232,6 @@ class PluginInstallerTableModel
 	 */
 	private class PluginNameColumn
 			extends AbstractDynamicTableColumn<PluginDescription, String, List<PluginDescription>> {
-
 		@Override
 		public String getColumnName() {
 			return "Name";
@@ -305,11 +308,7 @@ class PluginInstallerTableModel
 		@Override
 		public String getValue(PluginDescription rowObject, Settings settings,
 				List<PluginDescription> data, ServiceProvider sp) throws IllegalArgumentException {
-			Class<? extends Plugin> clazz = rowObject.getPluginClass();
-			String name = clazz.getName();
-			String path = '/' + name.replace('.', '/') + ".class";
-			URL url = clazz.getResource(path);
-			return url.getFile();
+			return rowObject.getSourceLocation();
 		}
 	}
 

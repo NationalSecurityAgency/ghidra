@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -97,17 +97,8 @@ public class DataTypeEditorManager implements EditorListener {
 	 */
 	public void edit(DataType dataType) {
 
-		DataTypeManager dataTypeManager = dataType.getDataTypeManager();
-		if (dataTypeManager == null) {
-			throw new IllegalArgumentException(
-				"Datatype " + dataType.getName() + " doesn't have a data type manager specified.");
-		}
-
-		EditorProvider editor = getEditor(dataType);
+		EditorProvider editor = reuseExistingEditor(dataType);
 		if (editor != null) {
-			ComponentProvider componentProvider = editor.getComponentProvider();
-			plugin.getTool().showComponentProvider(componentProvider, true);
-			componentProvider.toFront();
 			return;
 		}
 
@@ -124,11 +115,63 @@ public class DataTypeEditorManager implements EditorListener {
 		else if (dataType instanceof FunctionDefinition) {
 			editFunctionSignature((FunctionDefinition) dataType);
 		}
-		if (editor == null) {
+
+		if (editor != null) {
+			editor.addEditorListener(this);
+			editorList.add(editor);
+		}
+	}
+
+	/**
+	 * Displays a data type editor for editing the given Structure. If the structure is already 
+	 * being edited then it is brought to the front. Otherwise, a new editor is created and 
+	 * displayed.
+	 * @param composite the structure.
+	 * @param fieldName the optional name of the field to select in the editor.
+	 */
+	@SuppressWarnings("rawtypes") // ignore on CompositeEditorProvider
+	public void edit(Composite composite, String fieldName) {
+
+		CompositeEditorProvider editor = (CompositeEditorProvider) getEditor(composite);
+		if (editor != null) {
+			reuseExistingEditor(composite);
+			editor.selectField(fieldName);
 			return;
 		}
+		if (composite instanceof Union) {
+			editor = new UnionEditorProvider(plugin, (Union) composite, showUnionNumbersInHex());
+		}
+		else if (composite instanceof Structure) {
+			editor = new StructureEditorProvider(plugin, (Structure) composite,
+				showStructureNumbersInHex());
+		}
+
 		editor.addEditorListener(this);
 		editorList.add(editor);
+
+		editor.selectField(fieldName);
+	}
+
+	private EditorProvider reuseExistingEditor(DataType dataType) {
+		DataTypeManager dataTypeManager = dataType.getDataTypeManager();
+		if (dataTypeManager == null) {
+			throw new IllegalArgumentException(
+				"Datatype " + dataType.getName() + " doesn't have a data type manager specified.");
+		}
+
+		CategoryPath categoryPath = dataType.getCategoryPath();
+		if (categoryPath == null) {
+			throw new IllegalArgumentException(
+				"DataType " + dataType.getName() + " has no category path!");
+		}
+
+		EditorProvider editor = getEditor(dataType);
+		if (editor != null) {
+			ComponentProvider componentProvider = editor.getComponentProvider();
+			plugin.getTool().showComponentProvider(componentProvider, true);
+			componentProvider.toFront();
+		}
+		return editor;
 	}
 
 	private void installEditorActions() {
@@ -352,34 +395,6 @@ public class DataTypeEditorManager implements EditorListener {
 			}
 		}
 		return false;
-	}
-
-	public void domainObjectRestored(DataTypeManagerDomainObject domainObject) {
-		// Create a copy of the list since restore may remove an editor from the original list.
-		ArrayList<EditorProvider> list = new ArrayList<>(editorList);
-		// notify the editors
-		for (EditorProvider editor : list) {
-			DataTypeManager dataTypeManager = editor.getDataTypeManager();
-			DataTypeManager programDataTypeManager = domainObject.getDataTypeManager();
-			if (dataTypeManager == programDataTypeManager) {
-				/*
-				
-				 It is not clear why this check was added.  It seem reasonable to always let the
-				 editor know about the event.  With this code enabled, editors with new, unsaved
-				 types will be closed.
-				
-					DataTypePath dtPath = editor.getDtPath();
-					CategoryPath categoryPath = dtPath.getCategoryPath();
-					String name = dtPath.getDataTypeName();
-					DataType dataType = programDataTypeManager.getDataType(categoryPath, name);
-					if (dataType == null || dataType.isDeleted()) {
-						dismissEditor(editor);
-						continue;
-					}
-				*/
-				editor.domainObjectRestored(domainObject);
-			}
-		}
 	}
 
 	/**
@@ -614,14 +629,14 @@ public class DataTypeEditorManager implements EditorListener {
 		@Override
 		protected List<String> getCallingConventionNames() {
 			// can't rely on functionDefinition which may be null for new definition
-			DataTypeManager dtMgr = getDataTypeManager();
-			if (dtMgr instanceof CompositeViewerDataTypeManager) {
-				dtMgr = ((CompositeViewerDataTypeManager) dtMgr).getOriginalDataTypeManager();
+			DataTypeManager dtm = getDataTypeManager();
+			if (dtm instanceof CompositeViewerDataTypeManager cvdtm) {
+				dtm = cvdtm.getOriginalDataTypeManager();
 			}
 			ArrayList<String> list = new ArrayList<>();
 			list.add(Function.UNKNOWN_CALLING_CONVENTION_STRING);
 			list.add(Function.DEFAULT_CALLING_CONVENTION_STRING);
-			list.addAll(dtMgr.getDefinedCallingConventionNames());
+			list.addAll(dtm.getDefinedCallingConventionNames());
 			return list;
 		}
 

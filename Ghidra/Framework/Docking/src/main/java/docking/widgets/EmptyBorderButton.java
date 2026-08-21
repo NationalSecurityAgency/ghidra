@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -128,6 +128,16 @@ public class EmptyBorderButton extends JButton {
 		super.setIcon(newIcon);
 	}
 
+	@Override
+	public void setBorder(Border border) {
+		// To keep UI from installing an incorrect border (such as when switching themes),
+		// only allow borders created by this class to be set.
+		if (border == RAISED_BUTTON_BORDER || border == LOWERED_BUTTON_BORDER ||
+			border == FOCUSED_BUTTON_BORDER || border == NO_BUTTON_BORDER) {
+			super.setBorder(border);
+		}
+	}
+
 	private void installLookAndFeelFix() {
 		// We want our custom buttons to paint themselves blended with the background.  Several 
 		// LookAndFeels do not do this (WinXP and Metal), so we override that behavior here.
@@ -159,6 +169,12 @@ public class EmptyBorderButton extends JButton {
 
 	public void clearBorder() {
 		setBorder(NO_BUTTON_BORDER);
+	}
+
+	@Override
+	public void setEnabled(boolean b) {
+		setBorder(NO_BUTTON_BORDER);
+		super.setEnabled(b);
 	}
 
 	protected void updateBorderBasedOnState() {

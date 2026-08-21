@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,8 @@
  */
 package ghidra.app.plugin.assembler.sleigh;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import org.junit.Test;
 
@@ -279,6 +280,11 @@ public class x64AssemblyTest extends AbstractAssemblyTest {
 	public void testAssembly_AND_mRBP_n0x8m_0xffff0000() {
 		assertOneCompatRestExact("AND qword ptr [RBP + -0x8],-0x10000",
 			"48:81:65:f8:00:00:ff:ff");
+	}
+
+	@Test
+	public void testAssemble_PUSH_R8() {
+		assertOneCompatRestExact("PUSH R8", "41:50");
 	}
 
 	//@Ignore("This is a demonstration of an issue with signedness and scalar print pieces.")

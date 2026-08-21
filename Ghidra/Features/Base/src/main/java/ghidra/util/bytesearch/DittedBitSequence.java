@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ import ghidra.xml.XmlPullParser;
  *  where 0x starts a hex number and '.' is a don't care nibble (hex) or bit (binary)
  */
 
-public class DittedBitSequence {
+public class DittedBitSequence implements BytePattern {
 
 	//Given a byte 0-255 (NOT a signed byte), retrieves its popcount.
 	public static int[] popcount = { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, //0-15
@@ -214,6 +214,7 @@ public class DittedBitSequence {
 	 * 
 	 * @return true if the byte matches the sequence mask/value
 	 */
+	@Override
 	public boolean isMatch(int pos, int val) {
 		if (pos >= bits.length) {
 			return false;
@@ -244,6 +245,7 @@ public class DittedBitSequence {
 	 * 
 	 * @return size in bytes
 	 */
+	@Override
 	public int getSize() {
 		return bits.length;
 	}
@@ -329,12 +331,12 @@ public class DittedBitSequence {
 
 	/**
 	 * restore ditted string from XML stream with hex/binary ditted sequences in the form:
-	 *    <data> 0x..d.4de2 ....0000 .1...... 00101101 11101001 </data>
+	 *    {@code <data> 0x..d.4de2 ....0000 .1...... 00101101 11101001 </data>}
 	 * where 0x starts a hex number and '.' is a don't care nibble (hex) or bit (binary)
 	 * 
 	 * @param parser XML pull parser stream
 	 * 
-	 * @return number of bytes read from XML <data> tag
+	 * @return number of bytes read from XML {@code <data>} tag
 	 * 
 	 * @throws IOException if XML read has an error
 	 */
@@ -479,5 +481,10 @@ public class DittedBitSequence {
 			popcnt += popcount[0xff & dits[i]];
 		}
 		return popcnt;
+	}
+
+	@Override
+	public int getPreSequenceLength() {
+		return 0;
 	}
 }

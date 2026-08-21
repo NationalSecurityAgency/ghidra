@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,10 +15,12 @@
  */
 package ghidra.program.util;
 
-import static org.junit.Assert.*;
 import static ghidra.program.util.ProgramDiffFilter.*;
+import static org.junit.Assert.*;
 
 import java.util.Arrays;
+
+import org.junit.*;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.Pointer16DataType;
@@ -29,8 +31,6 @@ import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import org.junit.*;
 
 public class ProgramDiffMergeTest extends AbstractGhidraHeadlessIntegrationTest {
 
@@ -388,7 +388,8 @@ public class ProgramDiffMergeTest extends AbstractGhidraHeadlessIntegrationTest 
 	}
 
 	@Test
-	public void testMergeDestFallthroughOverrideWithNonDefaultRefs_CodeUnitsOnly() throws Exception {
+	public void testMergeDestFallthroughOverrideWithNonDefaultRefs_CodeUnitsOnly()
+			throws Exception {
 
 		Address p1CallFromAddr = addr1(0x01001018);
 		ReferenceManager refMgr1 = program1.getReferenceManager();
@@ -588,11 +589,11 @@ public class ProgramDiffMergeTest extends AbstractGhidraHeadlessIntegrationTest 
 
 	private ProgramMergeManager mergeCodeUnitsOnly(AddressSet mergeSet)
 			throws ProgramConflictException, MemoryAccessException, CancelledException {
-		ProgramMergeFilter programMergeFilter = 
+		ProgramMergeFilter programMergeFilter =
 			new ProgramMergeFilter(ProgramMergeFilter.CODE_UNITS, ProgramMergeFilter.REPLACE);
 		return mergeUsingFilter(mergeSet, programMergeFilter);
 	}
-	
+
 	private ProgramMergeManager mergeCodeUnitsAndRefs(AddressSet mergeSet)
 			throws ProgramConflictException, MemoryAccessException, CancelledException {
 		ProgramMergeFilter programMergeFilter =
@@ -600,7 +601,7 @@ public class ProgramDiffMergeTest extends AbstractGhidraHeadlessIntegrationTest 
 				ProgramMergeFilter.REPLACE);
 		return mergeUsingFilter(mergeSet, programMergeFilter);
 	}
-	
+
 	private ProgramMergeManager mergeRefsOnly(AddressSet mergeSet) throws ProgramConflictException,
 			MemoryAccessException, CancelledException {
 		ProgramMergeFilter programMergeFilter =
@@ -608,10 +609,11 @@ public class ProgramDiffMergeTest extends AbstractGhidraHeadlessIntegrationTest 
 		return mergeUsingFilter(mergeSet, programMergeFilter);
 	}
 
-	private ProgramMergeManager mergeUsingFilter(AddressSet mergeSet, ProgramMergeFilter programMergeFilter)
+	private ProgramMergeManager mergeUsingFilter(AddressSet mergeSet,
+			ProgramMergeFilter programMergeFilter)
 			throws ProgramConflictException, MemoryAccessException, CancelledException {
 		ProgramMergeManager programMerge =
-			new ProgramMergeManager(program1, program2, null, TaskMonitor.DUMMY); // null means entire program
+			new ProgramMergeManager(program1, program2);
 		int txId = program1.startTransaction("Merge into Program 1");
 		boolean commit = false;
 		try {

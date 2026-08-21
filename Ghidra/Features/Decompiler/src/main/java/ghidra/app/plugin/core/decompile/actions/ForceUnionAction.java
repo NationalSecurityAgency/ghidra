@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,6 +55,48 @@ public class ForceUnionAction extends AbstractDecompilerAction {
 //		setKeyBindingData(new KeyBindingData(KeyEvent.VK_L, 0));
 	}
 
+	/**
+	 * Find any union data-type associated with the token and return it. Otherwise return null.
+	 * @param tokenAtCursor is the decompiler token
+	 * @return the union data-type or null
+	 */
+	private static Union findUnion(ClangToken tokenAtCursor) {
+		if (tokenAtCursor instanceof ClangFieldToken) {
+			Composite composite = getCompositeDataType(tokenAtCursor);
+			if (composite instanceof Union) {
+				return (Union) composite;
+			}
+		}
+		Varnode vn = tokenAtCursor.getVarnode();
+		if (vn != null) {
+			// Some Varnodes -- volatile-memory loads in particular -- never get
+			// a HighVariable assigned during decompile, so getHigh() can be null.
+			// Same guard pattern as typeIsUnionRelated below.
+			HighVariable high = vn.getHigh();
+			if (high == null) {
+				return null;
+			}
+			DataType dt = high.getDataType();
+			if (dt instanceof TypeDef) {
+				dt = ((TypeDef) dt).getBaseDataType();
+			}
+			if (dt instanceof Pointer) {
+				dt = ((Pointer) dt).getDataType();
+			}
+			else if (dt instanceof PartialUnion) {
+				dt = ((PartialUnion) dt).getParent();
+			}
+			if (dt instanceof TypeDef) {
+				dt = ((TypeDef) dt).getBaseDataType();
+			}
+			if (dt instanceof Union) {
+				return (Union) dt;
+			}
+		}
+		return null;
+
+	}
+
 	@Override
 	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
 		Function function = context.getFunction();
@@ -63,11 +105,10 @@ public class ForceUnionAction extends AbstractDecompilerAction {
 		}
 
 		ClangToken tokenAtCursor = context.getTokenAtCursor();
-		if (!(tokenAtCursor instanceof ClangFieldToken)) {
+		if (tokenAtCursor == null) {
 			return false;
 		}
-		Composite composite = getCompositeDataType(tokenAtCursor);
-		return (composite instanceof Union);
+		return findUnion(tokenAtCursor) != null;
 	}
 
 	/**
@@ -128,51 +169,68 @@ public class ForceUnionAction extends AbstractDecompilerAction {
 		int opcode = accessOp.getOpcode();
 		if (opcode == PcodeOp.PTRSUB) {
 			parentDt = typeIsUnionRelated(accessOp.getInput(0));
-			if (parentDt == null) {
-				accessOp = null;
+			if (parentDt != null) {
+				accessVn = accessOp.getInput(0);
+				accessSlot = 0;
+				if (accessOp.getInput(1).getOffset() == 0) {	// Artificial op
+					do {
+						Varnode tmpVn = accessOp.getOutput();
+						PcodeOp tmpOp = tmpVn.getLoneDescend();
+						if (tmpOp == null) {
+							break;
+						}
+						accessOp = tmpOp;
+						accessVn = tmpVn;
+						accessSlot = accessOp.getSlot(accessVn);
+					}
+					while (accessOp.getOpcode() == PcodeOp.PTRSUB &&
+						accessOp.getInput(1).getOffset() == 0);
+				}
 				return;
 			}
-			accessVn = accessOp.getInput(0);
-			accessSlot = 0;
-			if (accessOp.getInput(1).getOffset() == 0) {	// Artificial op
-				do {
-					Varnode tmpVn = accessOp.getOutput();
-					PcodeOp tmpOp = tmpVn.getLoneDescend();
-					if (tmpOp == null) {
-						break;
-					}
-					accessOp = tmpOp;
-					accessVn = tmpVn;
-					accessSlot = accessOp.getSlot(accessVn);
+			parentDt = typeIsUnionRelated(accessOp.getOutput());	// Its possible the output of PTRSUB is the union
+			if (parentDt != null) {
+				accessVn = accessOp.getOutput();
+				accessSlot = -1;
+				PcodeOp readOp = accessVn.getLoneDescend();
+				if (readOp != null && readOp.getOpcode() != PcodeOp.MULTIEQUAL &&
+					readOp.getOpcode() != PcodeOp.INDIRECT) {
+					accessOp = readOp;
+					accessSlot = accessOp.getSlot(accessVn);		// Transfer to lone reading Op
+					return;
 				}
-				while (accessOp.getOpcode() == PcodeOp.PTRSUB &&
-					accessOp.getInput(1).getOffset() == 0);
+				return;
+			}
+			accessOp = null;		// Give up. Could not find union type.
+			return;
+		}
+		parentDt = null;
+		for (accessSlot = 0; accessSlot < accessOp.getNumInputs(); ++accessSlot) {
+			accessVn = accessOp.getInput(accessSlot);
+			parentDt = typeIsUnionRelated(accessVn);
+			if (parentDt != null) {
+				break;
 			}
 		}
-		else {
-			for (accessSlot = 0; accessSlot < accessOp.getNumInputs(); ++accessSlot) {
-				accessVn = accessOp.getInput(accessSlot);
-				parentDt = typeIsUnionRelated(accessVn);
-				if (parentDt != null) {
-					break;
-				}
-			}
-			if (accessSlot >= accessOp.getNumInputs()) {
-				accessSlot = -1;
-				accessVn = accessOp.getOutput();
-				parentDt = typeIsUnionRelated(accessVn);
-				if (parentDt == null) {
-					accessOp = null;
-					return;		// Give up, could not find type associated with field
-				}
-			}
-			if (opcode == PcodeOp.SUBPIECE && accessSlot == 0 && !(parentDt instanceof Pointer)) {
+		if (parentDt != null) {
+			if (opcode == PcodeOp.SUBPIECE && accessSlot == 0 &&
+				!(parentDt instanceof Pointer)) {
 				// SUBPIECE acts directly as resolution operator
 				// Choose field based on output varnode, even though it isn't the union data-type
 				accessSlot = -1;
 				accessVn = accessOp.getOutput();
 			}
+			return;
 		}
+		accessSlot = -1;
+		accessVn = accessOp.getOutput();
+		if (accessVn != null) {
+			parentDt = typeIsUnionRelated(accessVn);
+			if (parentDt != null) {
+				return;
+			}
+		}
+		accessOp = null;		// Give up, could not find type associated with field
 	}
 
 	/**
@@ -258,7 +316,7 @@ public class ForceUnionAction extends AbstractDecompilerAction {
 		Program program = context.getProgram();
 		ClangToken tokenAtCursor = context.getTokenAtCursor();
 		HighFunction highFunction = context.getHighFunction();
-		unionDt = (Union) getCompositeDataType(tokenAtCursor);
+		unionDt = findUnion(tokenAtCursor);
 		determineFacet(tokenAtCursor);
 		if (accessOp == null || accessVn == null) {
 			Msg.showError(this, null, "Force Union failed", "Could not recover p-code op");
@@ -276,7 +334,7 @@ public class ForceUnionAction extends AbstractDecompilerAction {
 		int transaction = program.startTransaction("Force Union");
 		try {
 			HighFunctionDBUtil.writeUnionFacet(function, parentDt, fieldNumber, pcAddr,
-				dhash.getHash(), SourceType.USER_DEFINED);
+				dhash.getHash(), true, SourceType.USER_DEFINED);
 		}
 		catch (DuplicateNameException e) {
 			Msg.showError(this, null, "Force Union failed", e.getMessage());

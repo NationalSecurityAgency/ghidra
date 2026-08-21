@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,16 +31,19 @@ public class SetIterator<T> implements IteratorSTL<T> {
 		this.node = node;
 		this.erased = erased;
 	}
+	@Override
 	public void assign( IteratorSTL<T> otherIterator ) {
 		SetIterator<T> other = (SetIterator<T>) otherIterator;
 		this.tree = other.tree;
 		this.node = other.node;
 		this.erased = other.erased;
 	}
+	@Override
 	public IteratorSTL<T> copy() {
 		return new SetIterator<T>( tree, node, erased);
 	}
 	
+	@Override
 	public IteratorSTL<T> decrement() {
 		if (node == null && tree.isEmpty()) {
 			throw new IndexOutOfBoundsException();
@@ -56,6 +58,7 @@ public class SetIterator<T> implements IteratorSTL<T> {
 		return this;
 	}
 
+	@Override
 	public T get() {
 		if (erased) {
 			throw new IndexOutOfBoundsException("element erased");
@@ -66,6 +69,7 @@ public class SetIterator<T> implements IteratorSTL<T> {
 		return node.getKey();
 	}
 
+	@Override
 	public IteratorSTL<T> increment() {
 		if (!erased && node == null) {
 			throw new IndexOutOfBoundsException();
@@ -77,10 +81,12 @@ public class SetIterator<T> implements IteratorSTL<T> {
 		return this;
 	}
 
+	@Override
 	public void insert(T value) {
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public boolean isBegin() {
 		if (erased) {
 			throw new RuntimeException("Iterater in invalid state");
@@ -88,6 +94,7 @@ public class SetIterator<T> implements IteratorSTL<T> {
 		return node == tree.getFirst();
 	}
 
+	@Override
 	public boolean isEnd() {
 		if (erased) {
 			throw new RuntimeException("Iterater in invalid state");
@@ -95,6 +102,7 @@ public class SetIterator<T> implements IteratorSTL<T> {
 		return node == null;
 	}
 
+	@Override
 	public void set(T value) {
 		throw new UnsupportedOperationException();
 	}
@@ -117,9 +125,11 @@ public class SetIterator<T> implements IteratorSTL<T> {
 	public int hashCode() {
 		return tree.hashCode();
 	}
+	@Override
 	public IteratorSTL<T> decrement( int n ) {
 		throw new UnsupportedOperationException();
 	}
+	@Override
 	public IteratorSTL<T> increment( int n ) {
 		throw new UnsupportedOperationException();
 	}

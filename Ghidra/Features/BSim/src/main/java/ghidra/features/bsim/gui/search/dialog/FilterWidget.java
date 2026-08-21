@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,7 @@ import utility.function.Callback;
  * it will consist of a combobox containing the available filters. It may optionally
  * contain a secondary widget for specifying filter values. This secondary widget
  * is filter-specific; for most filter types it will be a text entry field but as long
- * as it implements the {@link FilterContent} interface it is valid.
+ * as it implements the proper interface it is valid.
  * 
  */
 public class FilterWidget extends JPanel {
@@ -55,7 +55,7 @@ public class FilterWidget extends JPanel {
 	 * Constructs a new filter widget.
 	 * @param filterTypes The list of filter types that can be chosen
 	 * @param removeConsumer the container to be notified that it should delete this object
-	 * @param renameListener listener to be notified when filter value changes
+	 * @param changeListener listener to be notified when filter value changes
 	 */
 	public FilterWidget(List<BSimFilterType> filterTypes, Consumer<FilterWidget> removeConsumer,
 			Callback changeListener) {

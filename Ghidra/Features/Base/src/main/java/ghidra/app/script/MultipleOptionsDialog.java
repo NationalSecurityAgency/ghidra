@@ -78,6 +78,7 @@ public class MultipleOptionsDialog<T> extends DialogComponentProvider {
 
 			GCheckBox selectAllCheckBox = new GCheckBox("[ Select All ]", false);
 			selectAllCheckBox.setName("select.all.check.box");
+			selectAllCheckBox.getAccessibleContext().setAccessibleName("Select All");
 			panel.add(selectAllCheckBox);
 			panel.add(new JSeparator());
 
@@ -91,7 +92,7 @@ public class MultipleOptionsDialog<T> extends DialogComponentProvider {
 			newCheckBox.setActionCommand(Integer.toString(i));
 			newCheckBox.setName("choice.check.box." + (i + 1));
 			newCheckBox.setSelected(false);
-
+			newCheckBox.getAccessibleContext().setAccessibleName(stringChoices.get(i).toString());
 			selectOptions[i] = newCheckBox;
 			panel.add(selectOptions[i]);
 
@@ -99,7 +100,7 @@ public class MultipleOptionsDialog<T> extends DialogComponentProvider {
 				selectAllGroup.addCheckBox(newCheckBox);
 			}
 		}
-
+		panel.getAccessibleContext().setAccessibleName("Multiple Options");
 		addWorkPanel(panel);
 		addOKButton();
 		addCancelButton();

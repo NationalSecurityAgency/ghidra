@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,6 @@ import ghidra.framework.main.*;
 import ghidra.program.database.OriginalProgramModifierListener;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.data.*;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * More data type merge tests.
@@ -90,7 +89,7 @@ public class DataTypeMerge8Test extends AbstractDataTypeMergeTest {
 				abc.replace(0, new CharDataType(), 1);
 
 				// Remove the XYZ data type.
-				dtm.remove(xyz, TaskMonitor.DUMMY);
+				dtm.remove(xyz);
 			}
 
 			@Override
@@ -116,6 +115,8 @@ public class DataTypeMerge8Test extends AbstractDataTypeMergeTest {
 		// choose MY for Bar conflict
 		chooseOption(DataTypeMergeManager.OPTION_MY);
 
+		pressButtonByName(waitForWindow("Structure Update Failed"), "OK"); // expected dependency error on ABC
+
 		waitForCompletion();
 
 		FrontEndPlugin frontEndPlugin = getPlugin(frontEndTool, FrontEndPlugin.class);
@@ -123,8 +124,9 @@ public class DataTypeMerge8Test extends AbstractDataTypeMergeTest {
 		JLabel label = (JLabel) TestUtils.getInstanceField("label", logPanel);
 		String statusText = label.getText();
 		String expectedText =
-			"Structure Merge: Not enough undefined bytes to fit /XYZ in structure " +
-				"/MISC/ABC at offset 0x4. It needs 3 more byte(s) to be able to fit.";
+			"Structure Update Failed: Some of your changes to ABC cannot be merged. " +
+				"Problem: Not enough undefined bytes to fit /XYZ in structure /MISC/ABC at " +
+				"offset 0x4. It needs 3 more byte(s) to be  able to fit.";
 		assertTrue("Wrong status text: " + statusText, statusText.contains(expectedText));
 	}
 }

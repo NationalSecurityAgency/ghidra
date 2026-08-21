@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -75,7 +75,7 @@ class AddressMapDBAdapterV1 extends AddressMapDBAdapter {
 				if (segment != 0) {
 					spaceName += "_" + segment;
 				}
-				GenericAddressSpace sp = new GenericAddressSpace(deletedName, 32,
+				GenericAddressSpace sp = new GenericAddressSpace(deletedName, 64,
 					AddressSpace.TYPE_DELETED, (int) rec.getKey());
 				sp.setShowSpaceName(true);
 				space = sp;
@@ -156,8 +156,8 @@ class AddressMapDBAdapterV1 extends AddressMapDBAdapter {
 
 		Address[] newAddrs = new Address[addresses.length + 1];
 		System.arraycopy(addresses, 0, newAddrs, 0, addresses.length);
-		newAddrs[addresses.length] = addr.getAddressSpace().getAddressInThisSpaceOnly(
-			normalizedOffset & ~AddressMapDB.ADDR_OFFSET_MASK);
+		newAddrs[addresses.length] = addr.getAddressSpace()
+				.getAddressInThisSpaceOnly(normalizedOffset & ~AddressMapDB.ADDR_OFFSET_MASK);
 		addresses = newAddrs;
 
 		return addresses;

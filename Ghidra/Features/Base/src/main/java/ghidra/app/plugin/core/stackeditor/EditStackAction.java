@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -53,32 +53,23 @@ public class EditStackAction extends ListingContextAction {
 	@Override
 	public void actionPerformed(ListingActionContext context) {
 		Function function = getFunction(context);
-		if (function == null) {
-			return;
-		}
 		plugin.edit(function);
 	}
 
 	private Function getFunction(ListingActionContext context) {
 		ProgramLocation loc = context.getLocation();
-		Address entry;
-		if (loc instanceof FunctionLocation) {
-			entry = ((FunctionLocation) loc).getFunctionAddress();
+		Address address = context.getAddress();
+		if (loc instanceof FunctionLocation functionLocation) {
+			address = functionLocation.getFunctionAddress();
 		}
-		else {
-			entry = context.getAddress();
-		}
-		if (entry == null) {
+		if (address == null) {
 			return null;
 		}
-		return context.getProgram().getListing().getFunctionAt(entry);
+		return context.getProgram().getListing().getFunctionContaining(address);
 	}
 
 	@Override
 	protected boolean isEnabledForContext(ListingActionContext context) {
-		if (context.hasSelection()) {
-			return true;
-		}
 		Function func = getFunction(context);
 		if (func != null) {
 			return !func.isExternal();

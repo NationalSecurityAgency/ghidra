@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -87,12 +87,12 @@ public abstract class GhidraScriptProvider
 	 * Returns a GhidraScript instance for the specified source file.
 	 * 
 	 * @param sourceFile the source file
-	 * @param writer the print writer to write warning/error messages. If the error prevents
+	 * @param errorWriter the print writer to write warning/error messages. If the error prevents
 	 *            success, throw an exception instead. The caller will print the error.
 	 * @return a GhidraScript instance for the specified source file
 	 * @throws GhidraScriptLoadException when the script instance cannot be created
 	 */
-	public abstract GhidraScript getScriptInstance(ResourceFile sourceFile, PrintWriter writer)
+	public abstract GhidraScript getScriptInstance(ResourceFile sourceFile, PrintWriter errorWriter)
 			throws GhidraScriptLoadException;
 
 	/**
@@ -104,6 +104,19 @@ public abstract class GhidraScriptProvider
 	 */
 	public abstract void createNewScript(ResourceFile newScript, String category)
 			throws IOException;
+
+	/**
+	 * Returns an optional runtime environment name of a {@link GhidraScriptProvider} that scripts
+	 * can specify they require to run under. Useful for when more than one
+	 * {@link GhidraScriptProvider} uses the same file extension.
+	 * 
+	 * @return an optional runtime environment name of a {@link GhidraScriptProvider} that scripts
+	 * can specify they require to run under (could be null if there is no requirement)
+	 * @see ScriptInfo#AT_RUNTIME
+	 */
+	public String getRuntimeEnvironmentName() {
+		return null;
+	}
 
 	/**
 	 * Returns a Pattern that matches block comment openings.
@@ -160,6 +173,9 @@ public abstract class GhidraScriptProvider
 
 			if (metadataItem.equals(ScriptInfo.AT_CATEGORY)) {
 				writer.print(category);
+			}
+			else if (metadataItem.equals(ScriptInfo.AT_RUNTIME)) {
+				writer.print(getRuntimeEnvironmentName());
 			}
 
 			writer.println("");

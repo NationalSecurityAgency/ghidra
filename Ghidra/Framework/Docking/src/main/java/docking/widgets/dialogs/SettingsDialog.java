@@ -86,6 +86,7 @@ public class SettingsDialog extends DialogComponentProvider {
 
 		settingsTableModel = new SettingsTableModel();
 		settingsTable = new GTable(settingsTableModel);
+		settingsTable.getAccessibleContext().setAccessibleName("Settings");
 		settingsTable.setAutoscrolls(true);
 		settingsTable.setRowSelectionAllowed(false);
 		settingsTable.setColumnSelectionAllowed(false);
@@ -99,10 +100,11 @@ public class SettingsDialog extends DialogComponentProvider {
 		settingsTable.setDefaultEditor(Settings.class, new SettingsEditor());
 
 		JScrollPane scrollpane = new JScrollPane(settingsTable);
+		scrollpane.getAccessibleContext().setAccessibleName("Settings Table");
 		scrollpane.setPreferredSize(new Dimension(WIDTH, HEIGHT));
 
 		workPanel.add(scrollpane, BorderLayout.CENTER);
-
+		workPanel.getAccessibleContext().setAccessibleName("Settings");
 		return workPanel;
 	}
 

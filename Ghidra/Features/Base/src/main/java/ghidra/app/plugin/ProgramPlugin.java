@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,11 +34,11 @@ import ghidra.program.util.ProgramSelection;
  * Subclasses should override the following methods if they are interested in the corresponding
  * events:
  * <ul>
- *	<LI> {@link #programOpened(Program)}
- * 	<LI> {@link #programClosed(Program)}
- * 	<LI> {@link #locationChanged(ProgramLocation)}
- * 	<LI> {@link #selectionChanged(ProgramSelection)}
- * 	<LI> {@link #highlightChanged(ProgramSelection)}
+ *	<LI> {@link #programOpened(Program)}</LI>
+ * 	<LI> {@link #programClosed(Program)}</LI>
+ * 	<LI> {@link #locationChanged(ProgramLocation)}</LI>
+ * 	<LI> {@link #selectionChanged(ProgramSelection)}</LI>
+ * 	<LI> {@link #highlightChanged(ProgramSelection)}</LI>
  * </ul>
  */
 public abstract class ProgramPlugin extends Plugin {
@@ -61,35 +61,6 @@ public abstract class ProgramPlugin extends Plugin {
 		internalRegisterEventConsumed(ProgramHighlightPluginEvent.class);
 		internalRegisterEventConsumed(ProgramOpenedPluginEvent.class);
 		internalRegisterEventConsumed(ProgramClosedPluginEvent.class);
-	}
-
-	/**
-	 * Calling this constructor is works the same as calling {@link ProgramPlugin}.
-	 *
-	 * @deprecated call {@link #ProgramPlugin(PluginTool)} instead
-	 * @param plugintool the tool
-	 * @param consumeLocationChange not used
-	 * @param consumeSelectionChange not used
-	 */
-	@Deprecated(forRemoval = true, since = "10.2")
-	public ProgramPlugin(PluginTool plugintool, boolean consumeLocationChange,
-			boolean consumeSelectionChange) {
-		this(plugintool);
-	}
-
-	/**
-	 * Calling this constructor is works the same as calling {@link ProgramPlugin}.
-	 *
-	 * @deprecated call {@link #ProgramPlugin(PluginTool)} instead
-	 * @param plugintool the tool
-	 * @param consumeLocationChange not used
-	 * @param consumeSelectionChange not used
-	 * @param consumeHighlightChange not used
-	 */
-	@Deprecated(forRemoval = true, since = "10.2")
-	public ProgramPlugin(PluginTool plugintool, boolean consumeLocationChange,
-			boolean consumeSelectionChange, boolean consumeHighlightChange) {
-		this(plugintool);
 	}
 
 	/**

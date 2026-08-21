@@ -2307,8 +2307,7 @@ define pcodeop Sleep_Standby;
 :bclr   "#"imm3_00_02, rn_04_07
     is opcode_08_15=0b10000110 & rn_04_07 & opcode_03_03=0b0 & imm3_00_02
 {
-    local b = *:1 (rn_04_07);
-    *:1 (rn_04_07) = b & (~(1 << imm3_00_02));
+    rn_04_07 = rn_04_07 & (~(1 << imm3_00_02));
 }
 
 # BLD.B       #imm3, @(disp12,Rn)      0011nnnn0iii1001 0011dddddddddddd        (imm of (disp+Rn)) → T 

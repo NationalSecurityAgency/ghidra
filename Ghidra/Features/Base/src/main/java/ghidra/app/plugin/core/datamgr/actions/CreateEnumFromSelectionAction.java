@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,7 +57,7 @@ public class CreateEnumFromSelectionAction extends DockingAction {
 			return false;
 		}
 
-		return !containsInvalidNodes(selectionPaths);
+		return hasAnyEnumTypes(selectionPaths);
 	}
 
 	@Override
@@ -77,7 +77,7 @@ public class CreateEnumFromSelectionAction extends DockingAction {
 	}
 
 	private void selectNewEnum(GTree gTree, String parentName, String name) {
-		// Select new node in tree; run later to give the tree a chance to add the the new node
+		// Select new node in tree; run later to give the tree a chance to add the new node
 		Swing.runLater(() -> {
 			GTreeNode rootNode = gTree.getViewRoot();
 			gTree.setSelectedNodeByNamePath(
@@ -90,8 +90,13 @@ public class CreateEnumFromSelectionAction extends DockingAction {
 		TreePath[] paths = gTree.getSelectionPaths();
 		List<Enum> enums = new ArrayList<>();
 		for (TreePath path : paths) {
-			DataTypeNode dtNode = (DataTypeNode) path.getLastPathComponent();
-			enums.add((Enum) dtNode.getDataType());
+			GTreeNode node = (GTreeNode) path.getLastPathComponent();
+			if (node instanceof DataTypeNode dtNode) {
+				DataType dt = dtNode.getDataType();
+				if (dt instanceof Enum e) {
+					enums.add(e);
+				}
+			}
 		}
 		return enums;
 	}
@@ -135,20 +140,18 @@ public class CreateEnumFromSelectionAction extends DockingAction {
 			return false;
 		}
 
-		return !containsInvalidNodes(selectionPaths);
+		return hasAnyEnumTypes(selectionPaths);
 	}
 
-	private boolean containsInvalidNodes(TreePath[] selectionPaths) {
-
+	private boolean hasAnyEnumTypes(TreePath[] selectionPaths) {
 		// determine if all selected nodes are Enums
 		for (TreePath path : selectionPaths) {
 			GTreeNode node = (GTreeNode) path.getLastPathComponent();
-			if (!(node instanceof DataTypeNode)) {
-				return true;
+			if (!(node instanceof DataTypeNode dtNode)) {
+				continue; // ignore folders and other non-data type nodes
 			}
-			DataTypeNode dataTypeNode = (DataTypeNode) node;
-			DataType dataType = dataTypeNode.getDataType();
-			if (!(dataType instanceof Enum)) {
+			DataType dataType = dtNode.getDataType();
+			if (dataType instanceof Enum) {
 				return true;
 			}
 		}

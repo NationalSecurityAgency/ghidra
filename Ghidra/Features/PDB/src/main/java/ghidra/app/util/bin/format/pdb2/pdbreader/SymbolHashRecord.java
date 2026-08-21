@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ public class SymbolHashRecord implements Comparable<SymbolHashRecord> {
 	public static int RECORD_SIZE = 8;
 
 	/**
-	 * Parses the contents of of this record.
+	 * Parses the contents of this record.
 	 * @param reader {@link PdbByteReader} from which to deserialize the data.
 	 * @throws PdbException Upon not enough data left to parse.
 	 */

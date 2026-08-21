@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,17 +17,25 @@ package ghidra.app.util.datatype;
 
 import java.awt.Component;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import javax.help.UnsupportedOperationException;
 import javax.swing.*;
+
+import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.DropDownTextFieldDataModel;
 import docking.widgets.list.GListCellRenderer;
+import ghidra.app.plugin.core.compositeeditor.CompositeViewerDataTypeManager;
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.framework.plugintool.ServiceProvider;
+import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
+import ghidra.util.UniversalID;
 import ghidra.util.exception.AssertException;
 
 /**
@@ -36,13 +44,25 @@ import ghidra.util.exception.AssertException;
  */
 public class DataTypeDropDownSelectionDataModel implements DropDownTextFieldDataModel<DataType> {
 
+	private final DataTypeManager preferredDtm;	// preferred data type manager; may be null
 	private final DataTypeManagerService dataTypeService;
 
 	public DataTypeDropDownSelectionDataModel(ServiceProvider serviceProvider) {
+		this.preferredDtm = null;
 		this.dataTypeService = getDataTypeService(serviceProvider);
 	}
 
-	public DataTypeDropDownSelectionDataModel(DataTypeManagerService dataTypeService) {
+	/**
+	 * Creates a new instance.
+	 * 
+	 * @param preferredDtm the preferred {@link DataTypeManager}.  Data types that are found in 
+	 * multiple data type managers will be pruned to just the ones already in the preferred data 
+	 * type manager.
+	 * @param dataTypeService {@link DataTypeManagerService}
+	 */
+	public DataTypeDropDownSelectionDataModel(DataTypeManager preferredDtm,
+			DataTypeManagerService dataTypeService) {
+		this.preferredDtm = preferredDtm;
 		this.dataTypeService = dataTypeService;
 	}
 
@@ -52,6 +72,11 @@ public class DataTypeDropDownSelectionDataModel implements DropDownTextFieldData
 			throw new AssertException("Unable to find required DataTypeManagerService.");
 		}
 		return service;
+	}
+
+	@Override
+	public List<SearchMode> getSupportedSearchModes() {
+		return List.of(SearchMode.STARTS_WITH, SearchMode.CONTAINS, SearchMode.WILDCARD);
 	}
 
 	@Override
@@ -71,27 +96,122 @@ public class DataTypeDropDownSelectionDataModel implements DropDownTextFieldData
 
 	@Override
 	public List<DataType> getMatchingData(String searchText) {
-		if (searchText == null || searchText.length() == 0) {
+		throw new UnsupportedOperationException(
+			"Method no longer supported.  Instead, call getMatchingData(String, SearchMode)");
+	}
+
+	@Override
+	public List<DataType> getMatchingData(String searchText, SearchMode mode) {
+		if (StringUtils.isBlank(searchText)) {
+			// full list results not supported since the data may be too large for user interaction
 			return Collections.emptyList();
 		}
 
-		List<DataType> dataTypeList =
+		if (!getSupportedSearchModes().contains(mode)) {
+			throw new IllegalArgumentException("Unsupported SearchMode: " + mode);
+		}
+
+		if (mode == SearchMode.STARTS_WITH) {
+			return getMatchDataStartsWith(searchText);
+		}
+
+		Pattern p = mode.createPattern(searchText);
+		return getMatchingDataRegex(p);
+	}
+
+	private List<DataType> getMatchDataStartsWith(String searchText) {
+		List<DataType> results =
 			DataTypeUtils.getStartsWithMatchingDataTypes(searchText, dataTypeService);
-		return filterDataTypeList(dataTypeList);
+		return filterDataTypeList(results);
+	}
+
+	private List<DataType> getMatchingDataRegex(Pattern p) {
+
+		List<DataType> results = new ArrayList<>();
+		List<DataType> allTypes = dataTypeService.getSortedDataTypeList();
+		for (DataType dt : allTypes) {
+			String name = dt.getName().toLowerCase();
+			Matcher m = p.matcher(name);
+			if (m.matches()) {
+				results.add(dt);
+			}
+		}
+		return filterDataTypeList(results);
 	}
 
 	/**
 	 * Remove any unwanted data type items, like arrays.
 	 */
-	private List<DataType> filterDataTypeList(List<DataType> dataTypeList) {
-		List<DataType> matchingList = new ArrayList<>(dataTypeList.size());
-		for (DataType dataType : dataTypeList) {
-			if (!(dataType instanceof Array)) {
-				matchingList.add(dataType);
+	private List<DataType> filterDataTypeList(List<DataType> dtList) {
+		// Build lookups for data types that are in the preferred dtm, but may have come from
+		// another dtm.  In the second step, duplicate data types will be omitted from the
+		// final results, in favor of the data type that is already in the preferred dtm.
+		Set<UniversalID> preferredUids = new HashSet<>();
+		Set<String> preferredBuiltinNames = new HashSet<>();
+		for (DataType dt : dtList) {
+			// only look at data types that are already in the preferred DTM
+			DataType baseDt = Objects.requireNonNullElse(DataTypeUtilities.getBaseDataType(dt), dt);
+			if (!isFromPreferredDtm(baseDt)) {
+				continue;
+			}
+
+			if (isBuiltinDataType(baseDt)) {
+				// add any builtin data types that are already in the pref DTM to this exclude list
+				preferredBuiltinNames.add(baseDt.getName());
+			}
+			else if (baseDt.getUniversalID() != null) {
+				preferredUids.add(baseDt.getUniversalID());
 			}
 		}
 
+		List<DataType> matchingList = new ArrayList<>(dtList.size());
+		for (DataType dt : dtList) {
+			if (dt instanceof Array) {
+				continue;
+			}
+			DataType baseDt =
+				Objects.requireNonNullElse(DataTypeUtilities.getBaseDataType(dt), dt);
+			if (baseDt == null) {
+				continue;
+			}
+
+			if (preferredDtm != null && !isFromPreferredDtm(baseDt)) {
+				if (isBuiltinDataType(baseDt) && preferredBuiltinNames.contains(baseDt.getName())) {
+					continue;
+				}
+				if (baseDt.getUniversalID() != null &&
+					preferredUids.contains(baseDt.getUniversalID())) {
+					continue;
+				}
+			}
+
+			matchingList.add(dt);
+		}
+
 		return matchingList;
+	}
+
+	private boolean isFromPreferredDtm(DataType dt) {
+		if (dt == null) {
+			return false;
+		}
+
+		if (preferredDtm != null) {
+			DataTypeManager altDtm = preferredDtm instanceof CompositeViewerDataTypeManager compDtm
+					? compDtm.getOriginalDataTypeManager()
+					: null;
+			DataTypeManager dtDtm = dt.getDataTypeManager();
+			return dtDtm == preferredDtm || dtDtm == altDtm;
+		}
+		return false;
+	}
+
+	private boolean isBuiltinDataType(DataType dt) {
+		// check for normal builtin data types, as well as any pointer (which will probably be a
+		// DataTypeDB that does not derive from Builtin) that does not point to anything.
+		// This ptr data type is equiv to the "pointer" built-in data type.  
+		return dt instanceof BuiltInDataType ||
+			(dt instanceof Pointer ptrDT && ptrDT.getDataType() == null);
 	}
 
 	@Override

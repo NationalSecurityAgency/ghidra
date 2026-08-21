@@ -15,8 +15,6 @@
  */
 package ghidra.app.plugin.core.diff;
 
-import javax.swing.JComponent;
-
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
@@ -53,9 +51,7 @@ class SaveApplySettingsAction extends DockingAction {
 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
-		Object contextObject = context.getContextObject();
-		JComponent applySettingsComponent = settingsProvider.getComponent();
-		return contextObject == applySettingsComponent;
+		return true;
 	}
 
 	@Override

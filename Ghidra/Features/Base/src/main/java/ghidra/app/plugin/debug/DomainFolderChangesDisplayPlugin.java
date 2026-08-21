@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,6 +45,20 @@ public class DomainFolderChangesDisplayPlugin extends Plugin
 	}
 
 	@Override
+	public void serviceRemoved(Class<?> interfaceClass, Object service) {
+		if (interfaceClass == FrontEndService.class) {
+			((FrontEndService) service).removeProjectListener(this);
+		}
+	}
+
+	@Override
+	public void serviceAdded(Class<?> interfaceClass, Object service) {
+		if (interfaceClass == FrontEndService.class) {
+			((FrontEndService) service).addProjectListener(this);
+		}
+	}
+
+	@Override
 	protected void init() {
 
 		Project activeProject = tool.getProjectManager().getActiveProject();
@@ -52,15 +66,19 @@ public class DomainFolderChangesDisplayPlugin extends Plugin
 			projectOpened(activeProject);
 		}
 
-		FrontEndService frontEnd = tool.getService(FrontEndService.class);
-		frontEnd.addProjectListener(this);
 		super.init();
 	}
 
 	@Override
 	protected void dispose() {
+
+		// Normal shutdown will have removed the FrontEndService at the point dispose() is called.
+		// In this case, the listener is removed in a call to serviceRemoved().  If this plugin is 
+		// removed by the user, then dispose() is called and we need to remove the listener.
 		FrontEndService frontEnd = tool.getService(FrontEndService.class);
-		frontEnd.addProjectListener(this);
+		if (frontEnd != null) {
+			frontEnd.removeProjectListener(this);
+		}
 
 		Project activeProject = tool.getProjectManager().getActiveProject();
 		if (activeProject != null) {
@@ -89,14 +107,15 @@ public class DomainFolderChangesDisplayPlugin extends Plugin
 	}
 
 	@Override
-	public void domainFolderRemoved(DomainFolder parent, String name) {
-		provider.addText("domainFolderRemoved: parent=" + parent.getPathname() + ", name=" + name);
+	public void domainFolderRemoved(DomainFolder parent, String folderName) {
+		provider.addText(
+			"domainFolderRemoved: parent=" + parent.getPathname() + ", name=" + folderName);
 	}
 
 	@Override
-	public void domainFileRemoved(DomainFolder parent, String name, String fileID) {
-		provider.addText("domainFileRemoved: parent=" + parent.getPathname() + ", name=" + name +
-			", fileID=" + fileID);
+	public void domainFileRemoved(DomainFolder parent, String folderName, String fileID) {
+		provider.addText("domainFileRemoved: parent=" + parent.getPathname() + ", name=" +
+			folderName + ", fileID=" + fileID);
 	}
 
 	@Override

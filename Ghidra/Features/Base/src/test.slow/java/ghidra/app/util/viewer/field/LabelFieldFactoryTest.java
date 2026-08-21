@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,7 @@
  */
 package ghidra.app.util.viewer.field;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.nio.charset.StandardCharsets;
 
@@ -45,10 +44,6 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 	private CodeBrowserPlugin cb;
 	private Program program;
 
-	public LabelFieldFactoryTest() {
-		super();
-	}
-
 	@Before
 	public void setUp() throws Exception {
 
@@ -61,7 +56,7 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private ProgramDB buildProgram() throws Exception {
-		ToyProgramBuilder builder = new ToyProgramBuilder("notepad", true);
+		ToyProgramBuilder builder = new ToyProgramBuilder();
 
 		builder.createMemory(".text", "1001000", 0x4000);
 		builder.addBytesNOP("1002000", 6);
@@ -131,7 +126,7 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// expecting: u_artika and u_rtika
 		// the rest is the text of the real label below the offcut label
-		assertEquals("u_artika_01003002 u_rtika_01003004 u_Kartika", tf.getText());
+		assertEquals("u_Kartika+2 u_Kartika+4 u_Kartika", tf.getText());
 	}
 
 	@Test
@@ -151,7 +146,7 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// expecting: u_artika__+1
 		// the rest is the text of the real label below the offcut label
-		assertEquals("u_artika_01003002 u_Kartika", tf.getText());
+		assertEquals("u_Kartika+2 u_Kartika", tf.getText());
 	}
 
 	@Test
@@ -170,8 +165,9 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 		ListingTextField tf = (ListingTextField) cb.getCurrentField();
 
 		// 4 offcut labels and one dynamic label
+		String actual = tf.getText();
 		assertEquals("LAB_01002000+1 LAB_01002000+2 LAB_01002000+3 LAB_01002000+4 LAB_01002000",
-			tf.getText()); // bad offcut put on instruction
+			actual); // bad offcut put on instruction
 
 		assertEquals(5, tf.getNumRows());
 	}
@@ -190,6 +186,22 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// the rest is the text of the real label below the offcut label
 		assertEquals("Bob (01002000+2)", tf.getText());
+	}
+
+	@Test
+	public void testOffcutLabelNonDynamicWithLabelAtMinAddress() {
+		createLabel("1002000", "Joe");
+		String offcutAddress = "1002002";
+		String name = "Bob";
+		createLabel(offcutAddress, name);
+
+		String minAddress = "1002000";
+		Address address = addr(minAddress);
+		assertTrue(cb.goToField(address, LabelFieldFactory.FIELD_NAME, 0, 1));
+		ListingTextField tf = (ListingTextField) cb.getCurrentField();
+
+		// the rest is the text of the real label below the offcut label
+		assertEquals("Bob (Joe+2) Joe", tf.getText());
 	}
 
 	@Test
@@ -235,7 +247,7 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(cb.goToField(address, LabelFieldFactory.FIELD_NAME, 0, 1));
 		ListingTextField tf = (ListingTextField) cb.getCurrentField();
 
-		assertEquals("u__0100310c", tf.getText());
+		assertEquals("u__01003100+0xc", tf.getText());
 	}
 
 	@Test
@@ -251,7 +263,7 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(cb.goToField(address, LabelFieldFactory.FIELD_NAME, 0, 1));
 		ListingTextField tf = (ListingTextField) cb.getCurrentField();
 
-		assertEquals("s_bcdef_01003201 s_abcdef_01003200", tf.getText());
+		assertEquals("s_bcdef_01003200+1 s_abcdef_01003200", tf.getText());
 	}
 
 	@Test
@@ -311,14 +323,14 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(cb.goToField(address, LabelFieldFactory.FIELD_NAME, 0, 1));
 		ListingTextField tf = (ListingTextField) cb.getCurrentField();
 
-		assertEquals("s_ijklmnopqrstuvwxyz_132c_0026", tf.getText());
+		assertEquals("s_ijklmnopqrstuvwxyz_132c_0004+0x22", tf.getText());
 	}
 
 	@Test
 	public void testOffcutStringWhenOffcutIsOnTheNullTerminatingCharacter() throws Exception {
 		//
 		// We can have a scenario where there is an offcut into a string where the offcut index
-		// is the the last byte, which is the null terminator, which we do not render
+		// is the last byte, which is the null terminator, which we do not render
 		//
 		env.close(program);
 		program = buildSegmentedProgram();
@@ -331,7 +343,7 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(cb.goToField(address, LabelFieldFactory.FIELD_NAME, 0, 1));
 		ListingTextField tf = (ListingTextField) cb.getCurrentField();
 
-		assertEquals("s__132c_0038", tf.getText());
+		assertEquals("s__132c_0004+0x34", tf.getText());
 	}
 
 	@Test

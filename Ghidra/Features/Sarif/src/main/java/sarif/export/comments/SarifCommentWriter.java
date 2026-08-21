@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,6 +56,7 @@ public class SarifCommentWriter extends AbstractExtWriter {
 		}
 		monitor.initialize(comments0.size());
 		for (Pair<CodeUnit, Pair<String, String>> pair : comments0) {
+			monitor.checkCancelled();
 			CodeUnit cu = pair.first;
 			ExtComment isf = new ExtComment(pair.second, true);
 			SarifObject sarif = new SarifObject(CommentsSarifMgr.SUBKEY, CommentsSarifMgr.KEY, getTree(isf), cu.getMinAddress(),

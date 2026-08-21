@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -65,6 +65,7 @@ public class QueryFilterTest extends AbstractBSimPluginTest {
 		assertEquals(SQL_TRUTH, sql);
 	}
 
+	@Override
 	protected void initializeTool() throws Exception {
 		super.initializeTool();
 		goTo(FUN1_ADDR);
@@ -80,7 +81,6 @@ public class QueryFilterTest extends AbstractBSimPluginTest {
 	 * 
 	 * @param ids resolution IDs
 	 * @return the query string
-	 * @throws SQLException if there is a problem creating the filter
 	 */
 	private String generateSQL(IDSQLResolution[] ids) {
 		try {
@@ -88,7 +88,8 @@ public class QueryFilterTest extends AbstractBSimPluginTest {
 			BSimFilter filter = filterSet.getBSimFilter();
 			BSimSqlClause sql = SQLEffects.createFilter(filter, ids, null);
 			return sql.whereClause().trim();
-		} catch (SQLException e) {
+		}
+		catch (SQLException e) {
 			throw new AssertException(e);
 		}
 	}

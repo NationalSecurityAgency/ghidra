@@ -78,7 +78,12 @@
       </group>
       <pentry minsize="1" maxsize="500" align="8">
         <addr offset="40" space="stack"/>
-      </pentry>  
+      </pentry>
+      <!-- only structs of size 8,16,32,64 bits can be packed to register -->  
+      <rule>
+      	<datatype name="struct" sizes="3,5,6,7"/>
+      	<convert_to_ptr/>
+      </rule>
     </input> 
       <output>
         <pentry minsize="4" maxsize="8" metatype="float">
@@ -87,6 +92,11 @@
         <pentry minsize="1" maxsize="8">
           <register name="RAX"/>
         </pentry>
+        <!-- only structs of size 8,16,32,64 bits can be returned via register -->
+        <rule>
+      	  <datatype name="struct" sizes="3,5,6,7"/>
+      	  <hidden_return/>
+        </rule>
       </output>
       <unaffected>
         <varnode space="ram" offset="0" size="8"/>
@@ -220,6 +230,15 @@
     <pcode>
       <body><![CDATA[
         call [RAX];
+      ]]></body>
+    </pcode>
+  </callfixup>
+  
+  <callfixup name="security_check_cookie">
+    <target name="__security_check_cookie"/>
+    <pcode>
+      <body><![CDATA[
+        tmpzero:4 = 0;
       ]]></body>
     </pcode>
   </callfixup>

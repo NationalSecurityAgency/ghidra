@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,6 @@ import utilities.util.FileUtilities;
  * Example file contents, where each line is divided into fields by a tab
  * character where the first field is the password and the second optional field
  * is the file's identifying information (name, path, etc):
- * <p>
  * <pre>
  * <code>password1   [tab]   myfirstzipfile.zip</code> <b>&larr; supplies a password for the named file located in any directory</b>
  * <code>someOtherPassword   [tab]   /full/path/tozipfile.zip</code> <b>&larr; supplies password for file at specified location</b> 

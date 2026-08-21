@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,28 +29,33 @@ class ClassPackage implements ClassLocation {
 		pathname -> pathname.getName().endsWith(CLASS_EXT);
 
 	private Set<ClassPackage> children = new HashSet<>();
-	private File rootDir;
+	private ClassDir classDir;
 	private File packageDir;
 	private String packageName;
 	private Set<ClassFileInfo> classes = new HashSet<>();
 
-	ClassPackage(File rootDir, String packageName, TaskMonitor monitor) throws CancelledException {
+	ClassPackage(ClassDir classDir, String packageName, TaskMonitor monitor)
+			throws CancelledException {
 		monitor.checkCancelled();
-		this.rootDir = rootDir;
+
+		this.classDir = classDir;
+
+		File rootDir = classDir.getDir();
 		this.packageName = packageName;
-		this.packageDir = getPackageDir(rootDir, packageName);
-		scanClasses();
+		this.packageDir = new File(rootDir, packageName.replace('.', File.separatorChar));
+		scanClasses(rootDir);
 		scanSubPackages(monitor);
 	}
 
-	private void scanClasses() {
+	private void scanClasses(File rootDir) {
 
 		String path = rootDir.getAbsolutePath();
 		Set<String> allClassNames = getAllClassNames();
 		for (String className : allClassNames) {
 			String epName = ClassSearcher.getExtensionPointSuffix(className);
 			if (epName != null) {
-				classes.add(new ClassFileInfo(path, className, epName));
+				String module = classDir.getModulePath();
+				classes.add(new ClassFileInfo(path, className, epName, module));
 			}
 		}
 	}
@@ -80,12 +85,8 @@ class ClassPackage implements ClassLocation {
 			}
 
 			monitor.setMessage("Scanning package: " + pkg);
-			children.add(new ClassPackage(rootDir, pkg, monitor));
+			children.add(new ClassPackage(classDir, pkg, monitor));
 		}
-	}
-
-	private File getPackageDir(File lRootDir, String lPackageName) {
-		return new File(lRootDir, lPackageName.replace('.', File.separatorChar));
 	}
 
 	@Override
@@ -94,10 +95,8 @@ class ClassPackage implements ClassLocation {
 
 		list.addAll(classes);
 
-		Iterator<ClassPackage> it = children.iterator();
-		while (it.hasNext()) {
+		for (ClassPackage subPkg : children) {
 			monitor.checkCancelled();
-			ClassPackage subPkg = it.next();
 			subPkg.getClasses(list, monitor);
 		}
 	}

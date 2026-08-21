@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,7 @@ package docking.widgets.tree;
 
 import static org.junit.Assert.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import javax.swing.*;
 
@@ -151,7 +150,27 @@ public class GTreeSlowLoadingNodeTest extends AbstractDockingTest {
 		waitForTree();
 		Swing.runNow(() -> children = nonLeaf1.getChildren());
 		assertTrue("Did not find children for: " + nonLeaf1, nonLeaf1.getChildCount() > 1);
+	}
 
+	@Test
+	public void testIterator() {
+
+		gTree.setRootNode(new TestRootNode(5000));
+		waitForTree();
+
+		GTreeNode rootNode = gTree.getModelRoot();
+		GTreeNode slowChild = rootNode.getChild(0); // slow; threaded
+		assertNotNull(slowChild);
+
+		Swing.runNow(() -> children = slowChild.getChildren());
+		assertEquals(1, children.size());
+		assertTrue(children.get(0) instanceof InProgressGTreeNode);
+
+		Iterator<GTreeNode> it = runSwing(() -> slowChild.iterator(true));
+		assertFalse(it.hasNext()); // empty when called on the Swing thread
+
+		it = slowChild.iterator(true);
+		assertTrue(it.hasNext()); // not empty on non-Swing thread
 	}
 
 //==================================================================================================
@@ -235,11 +254,11 @@ public class GTreeSlowLoadingNodeTest extends AbstractDockingTest {
 	private class TestRootNode extends GTreeNode {
 
 		TestRootNode(int loadDelayMillis) {
-			List<GTreeNode> children = new ArrayList<>();
-			children.add(new TestSlowLoadingNode(loadDelayMillis, 1));
-			children.add(new TestLeafNode());
-			children.add(new TestSlowLoadingNode(loadDelayMillis, 1));
-			setChildren(children);
+			List<GTreeNode> newChildren = new ArrayList<>();
+			newChildren.add(new TestSlowLoadingNode(loadDelayMillis, 1));
+			newChildren.add(new TestLeafNode());
+			newChildren.add(new TestSlowLoadingNode(loadDelayMillis, 1));
+			setChildren(newChildren);
 		}
 
 		@Override
@@ -289,18 +308,18 @@ public class GTreeSlowLoadingNodeTest extends AbstractDockingTest {
 			}
 
 			int childCount = getRandomInt(MIN_CHILD_COUNT, MAX_CHILD_COUNT);
-			List<GTreeNode> children = new ArrayList<>();
+			List<GTreeNode> newChildren = new ArrayList<>();
 			for (int i = 0; i < childCount; i++) {
 				monitor.checkCancelled();
 				int value = getRandomInt(0, 1);
 				if (value == 0) {
-					children.add(new TestSlowLoadingNode(loadDelayMillis, depth + 1));
+					newChildren.add(new TestSlowLoadingNode(loadDelayMillis, depth + 1));
 				}
 				else {
-					children.add(new TestLeafNode());
+					newChildren.add(new TestLeafNode());
 				}
 			}
-			return children;
+			return newChildren;
 		}
 
 		@Override

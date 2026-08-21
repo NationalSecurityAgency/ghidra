@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -179,9 +179,8 @@ public class CommandProcessor {
 				int permission = parsePermission(args[2]);
 				String repName = args[3];
 				if (!userMgr.isValidUser(sid)) {
-					log.error(
-						"Failed to grant access for '" + sid +
-							"', user has not been added to server.");
+					log.error("Failed to grant access for '" + sid +
+						"', user has not been added to server.");
 					return;
 				}
 				if (permission < 0) {
@@ -225,12 +224,12 @@ public class CommandProcessor {
 		return -1;
 	}
 
-	static File getCommandDir(File serverRootDir) {
-		return new File(serverRootDir, ADMIN_CMD_DIR);
-	}
-
-	static File getOrCreateCommandDir(RepositoryManager repositoryMgr) {
-		File cmdDir = getCommandDir(repositoryMgr.getRootDir());
+	static File getOrCreateCommandDir(File serverRootDir) {
+		if (!serverRootDir.isDirectory() || !serverRootDir.canWrite()) {
+			System.err.println("Insufficient privilege or server not started!");
+			System.exit(-1);
+		}
+		File cmdDir = new File(serverRootDir, ADMIN_CMD_DIR);
 		if (!cmdDir.exists()) {
 			// ensure process owner creates queued command directory
 			cmdDir.mkdir();
@@ -244,7 +243,7 @@ public class CommandProcessor {
 	 * @throws IOException
 	 */
 	static void processCommands(RepositoryManager repositoryMgr) throws IOException {
-		File cmdDir = getOrCreateCommandDir(repositoryMgr);
+		File cmdDir = getOrCreateCommandDir(repositoryMgr.getRootDir());
 		File[] files = cmdDir.listFiles(CMD_FILE_FILTER);
 		if (files == null) {
 			log.error("Failed to access command queue " + cmdDir.getAbsolutePath() +

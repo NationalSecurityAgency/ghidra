@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,8 @@
  */
 package ghidra.feature.vt.api.markupitem;
 
-import static ghidra.feature.vt.db.VTTestUtils.addr;
-import static org.junit.Assert.assertTrue;
+import static ghidra.feature.vt.db.VTTestUtils.*;
+import static org.junit.Assert.*;
 
 import java.util.List;
 
@@ -29,7 +29,7 @@ import ghidra.feature.vt.api.main.VTMatch;
 import ghidra.feature.vt.api.markuptype.EolCommentMarkupType;
 import ghidra.feature.vt.api.util.VTOptions;
 import ghidra.feature.vt.gui.task.ApplyMarkupItemTask;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.util.task.TaskMonitor;
 
 public class ApplyMultipleMarkupItemsTest extends AbstractVTMarkupItemTest {
@@ -38,8 +38,8 @@ public class ApplyMultipleMarkupItemsTest extends AbstractVTMarkupItemTest {
 	@Before
 	public void setUp() throws Exception {
 		super.setUp();
-		sourceBuilder.createComment("1002248", "Comment 1", CodeUnit.EOL_COMMENT);
-		sourceBuilder.createComment("100224b", "Comment 2", CodeUnit.EOL_COMMENT);
+		sourceBuilder.createComment("1002248", "Comment 1", CommentType.EOL);
+		sourceBuilder.createComment("100224b", "Comment 2", CommentType.EOL);
 		sourceProgram = sourceBuilder.getProgram();
 
 	}

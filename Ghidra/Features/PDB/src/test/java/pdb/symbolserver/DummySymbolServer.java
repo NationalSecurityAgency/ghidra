@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,14 +21,16 @@ import java.util.List;
 import java.util.Set;
 
 import ghidra.util.task.TaskMonitor;
+import pdb.symbolserver.SymbolServer.MutableTrust;
 
 /**
  * A "remote" symbol server that answers affirmatively for any query.
  */
-public class DummySymbolServer implements SymbolServer {
+public class DummySymbolServer implements SymbolServer, MutableTrust {
 
 	private final byte[] dummyPayload;
 	private final boolean returnCompressedFilenames;
+	private boolean trusted;
 
 	public DummySymbolServer(String dummyPayload) {
 		this(dummyPayload.getBytes(), false);
@@ -78,8 +80,13 @@ public class DummySymbolServer implements SymbolServer {
 	}
 
 	@Override
-	public boolean isLocal() {
-		return false;
+	public boolean isTrusted() {
+		return trusted;
+	}
+
+	@Override
+	public void setTrusted(boolean isTrusted) {
+		this.trusted = isTrusted;
 	}
 
 }

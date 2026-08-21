@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GIconLabel;
 import docking.widgets.label.GLabel;
-import docking.widgets.list.GListCellRenderer;
+import docking.widgets.list.GComboBoxCellRenderer;
 import ghidra.util.HelpLocation;
 import ghidra.util.layout.*;
 
@@ -268,8 +268,8 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 			}
 
 			globbingCheckbox = new GCheckBox("Allow Globbing");
-			globbingCheckbox.setToolTipText(
-				"Toggles whether globbing chars (?*) are literal or wildcards");
+			globbingCheckbox
+					.setToolTipText("Toggles whether globbing chars (?*) are literal or wildcards");
 			if (initialFilterOptions.isGlobbingAllowed()) {
 				globbingCheckbox.setSelected(true);
 			}
@@ -331,9 +331,9 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 			setBorder(BorderFactory.createEmptyBorder(5, 4, 10, 4));
 
 			pathCheckbox = new GCheckBox("Use Path");
-			pathCheckbox.setToolTipText("<html>" +
-				"Allows filtering on node paths, for example '*/folder/node' or " +
-				"'*folder1*folder2*node'");
+			pathCheckbox.setToolTipText(
+				"<html>" + "Allows filtering on node paths, for example '*/folder/node' or " +
+					"'*folder1*folder2*node'");
 			if (initialFilterOptions.shouldUsePath()) {
 				pathCheckbox.setSelected(true);
 			}
@@ -456,8 +456,8 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 
 			// Delimiter Row
 			JLabel delimiterCharacterFieldName = new GLabel("Delimiter:");
-			delimiterCharacterFieldName.setToolTipText(
-				"Set the character used to separate filter terms.");
+			delimiterCharacterFieldName
+					.setToolTipText("Set the character used to separate filter terms.");
 
 			delimiterCharacterCB = new GComboBox<>(FilterOptions.VALID_MULTITERM_DELIMITERS_ARRAY);
 			delimiterCharacterCB.setRenderer(new DelimiterListCellRenderer());
@@ -499,7 +499,7 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 			add(optionsPaneDisableLayer);
 		}
 
-		private class DelimiterListCellRenderer extends GListCellRenderer<String> {
+		private class DelimiterListCellRenderer extends GComboBoxCellRenderer<String> {
 
 			public DelimiterListCellRenderer() {
 				setHTMLRenderingEnabled(true);

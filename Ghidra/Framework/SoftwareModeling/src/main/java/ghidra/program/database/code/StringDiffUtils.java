@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -219,9 +219,11 @@ class StringDiffUtils {
 	}
 
 	/**
-	 * Applies the array of StringObjects to the string s to produce a new string. Warning - the
-	 * diff objects cannot be applied to an arbitrary string, the Strings must be the original
-	 * String used to compute the diffs.
+	 * Applies the array of StringDiffs to the string s to produce a new string.
+	 *  
+	 * <p>Warning: the diff objects cannot be applied to an arbitrary string, the Strings must be 
+	 * the original String used to compute the diffs.
+	 * 
 	 * @param s the original string
 	 * @param diffs the array of StringDiff object to apply
 	 * @return a new String resulting from applying the diffs to s.

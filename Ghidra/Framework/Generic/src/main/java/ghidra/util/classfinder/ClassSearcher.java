@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,13 +24,11 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.regex.*;
 import java.util.stream.Collectors;
 
 import javax.swing.event.ChangeListener;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -170,13 +168,15 @@ public class ClassSearcher {
 				"Cannot call the getClasses() while the ClassSearcher is searching!");
 		}
 
-		String suffix = getExtensionPointSuffix(ancestorClass.getName());
+		String className = ancestorClass.getName();
+		String suffix = getExtensionPointSuffix(className);
 		if (suffix == null) {
+			Msg.error(ClassSearcher.class, "Class is not a known extension point: " + className);
 			return List.of();
 		}
 
 		List<Class<? extends T>> list = new ArrayList<>();
-		for (ClassFileInfo info : extensionPointSuffixToInfoMap.get(suffix)) {
+		for (ClassFileInfo info : extensionPointSuffixToInfoMap.getOrDefault(suffix, Set.of())) {
 
 			if (falsePositiveCache.contains(info)) {
 				continue;
@@ -272,6 +272,42 @@ public class ClassSearcher {
 
 		return instances;
 
+	}
+
+	/**
+	 * Get the named class in a safe(r) manner.
+	 * <p>
+	 * This addresses the concern that many tools and database entries can refer to custom types,
+	 * e.g., options and properties, that may permit an attacker to construct instances of arbitrary
+	 * class, those constructors perhaps implementing gadgets that could be used in an exploit
+	 * chain.
+	 * <p>
+	 * The pattern to "mitigate" this is to ensure the found class implements a given interface or
+	 * extends from a given class, <em>before</em> invoking a constructor. Ideally, this check can
+	 * be applied before <em>class initialization</em>. While much narrower, static initializers may
+	 * also provide gadgets. This method implements the pattern which avoids class initialization
+	 * until the type has been checked.
+	 * <p>
+	 * <b>WARNING:</b> Do not pass {@link Object}, a standard JDK interface, or any interface from a
+	 * dependency like apache-commons. The purpose of the super type is to narrow the set of
+	 * acceptable classes to those we control or that a user has intentionally installed/loaded as a
+	 * Ghidra extension. Thus, the static initializers and constructors of all subclasses should be
+	 * reviewed carefully.
+	 * 
+	 * @param <T> the super type
+	 * @param name the class binary name, as in {@link Class#forName(String, boolean, ClassLoader)}.
+	 * @param sup the super type
+	 * @param loader the class loader, or {@code null} to use the bootstrap loader.
+	 * @return the found class as a subclass of the given type
+	 * @throws ClassNotFoundException if the class cannot be found
+	 * @throws ClassCastException if the found class is not a sub type of the given type
+	 */
+	public static <T> Class<? extends T> forNameSafe(String name, Class<T> sup, ClassLoader loader)
+			throws ClassNotFoundException {
+		Class<?> cls = Class.forName(name, false, loader);
+		Class<? extends T> sub = cls.asSubclass(sup);
+		Class.forName(name, true, loader); // Initialize it this time
+		return sub;
 	}
 
 	/**
@@ -416,8 +452,11 @@ public class ClassSearcher {
 		for (String searchPath : gatherSearchPaths()) {
 			String lcSearchPath = searchPath.toLowerCase();
 			File searchFile = new File(searchPath);
-			if ((lcSearchPath.endsWith(".jar") || lcSearchPath.endsWith(".zip")) &&
-				searchFile.exists()) {
+			if (!searchFile.exists()) {
+				continue;
+			}
+
+			if (lcSearchPath.endsWith(".jar") || lcSearchPath.endsWith(".zip")) {
 
 				if (ClassJar.ignoreJar(searchPath)) {
 					log.trace("Ignoring jar file: {}", searchPath);
@@ -425,11 +464,11 @@ public class ClassSearcher {
 				}
 
 				log.trace("Searching jar file: {}", searchPath);
-				classJars.add(new ClassJar(searchPath, monitor));
+				classJars.add(new ClassJar(searchFile, monitor));
 			}
 			else if (searchFile.isDirectory()) {
 				log.trace("Searching classpath directory: {}", searchPath);
-				classDirs.add(new ClassDir(searchPath, monitor));
+				classDirs.add(new ClassDir(searchFile, monitor));
 			}
 		}
 
@@ -491,22 +530,9 @@ public class ClassSearcher {
 		// jar files will *not* be on the standard classpath, but instead will be on CP_EXT.
 		//
 		List<String> rawPaths = new ArrayList<>();
-		getPropertyPaths(GhidraClassLoader.CP, rawPaths);
-		getPropertyPaths(GhidraClassLoader.CP_EXT, rawPaths);
+		rawPaths.addAll(GhidraClassLoader.getClasspath(GhidraClassLoader.CP));
+		rawPaths.addAll(GhidraClassLoader.getClasspath(GhidraClassLoader.CP_EXT));
 		return canonicalizePaths(rawPaths);
-	}
-
-	private static void getPropertyPaths(String property, List<String> results) {
-		String paths = System.getProperty(property);
-		log.trace("Paths in {}: {}", property, paths);
-		if (StringUtils.isBlank(paths)) {
-			return;
-		}
-
-		StringTokenizer st = new StringTokenizer(paths, File.pathSeparator);
-		while (st.hasMoreTokens()) {
-			results.add(st.nextToken());
-		}
 	}
 
 	private static List<String> canonicalizePaths(Collection<String> paths) {
@@ -548,8 +574,8 @@ public class ClassSearcher {
 			for (String className : classNames) {
 				String epName = getExtensionPointSuffix(className);
 				if (epName != null) {
-					extensionClasses
-							.add(new ClassFileInfo(appRoot.getAbsolutePath(), className, epName));
+					String path = appRoot.getAbsolutePath();
+					extensionClasses.add(new ClassFileInfo(path, className, epName, ""));
 				}
 			}
 			return extensionClasses.stream()
@@ -575,7 +601,18 @@ public class ClassSearcher {
 		for (ResourceFile moduleRoot : moduleRootDirectories) {
 			ResourceFile file = new ResourceFile(moduleRoot, "data/ExtensionPoint.manifest");
 			if (file.exists()) {
-				extensionPointSuffixes.addAll(FileUtilities.getLinesQuietly(file));
+				for (String line : FileUtilities.getLinesQuietly(file)) {
+					line = line.trim();
+					try {
+						Pattern.compile(line);
+						extensionPointSuffixes.add(line);
+					}
+					catch (PatternSyntaxException e) {
+						throw new AssertException(
+							"Error parsing extension point suffix '%s' found in '%s'"
+									.formatted(line, file));
+					}
+				}
 			}
 		}
 
@@ -630,11 +667,11 @@ public class ClassSearcher {
 
 	/**
 	 * If the given class name matches the known extension name patterns, then this method will try
-	 * to load that class using the provided path.   Extensions may be loaded using their own 
-	 * class loader, depending on the system property 
+	 * to load that class using the provided path.  Extensions may be loaded using their own
+	 * class loader, depending on the system property
 	 * {@link GhidraClassLoader#ENABLE_RESTRICTED_EXTENSIONS_PROPERTY}.
 	 * <p>
-	 * Examples: 
+	 * Examples:
 	 * <pre>
 	 * /foo/bar/baz/file.jar fully.qualified.ClassName
 	 * /foo/bar/baz/bin fully.qualified.ClassName

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,8 +22,7 @@ import ghidra.feature.vt.gui.util.VTMatchApplyChoices.CommentChoices;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.util.EolCommentFieldLocation;
 import ghidra.program.util.ProgramLocation;
 
@@ -44,8 +43,8 @@ public class EolCommentMarkupType extends CommentMarkupType {
 	}
 
 	@Override
-	protected int getCodeUnitCommentType() {
-		return CodeUnit.EOL_COMMENT;
+	protected CommentType getCodeUnitCommentType() {
+		return CommentType.EOL;
 	}
 
 	@Override
@@ -92,8 +91,8 @@ public class EolCommentMarkupType extends CommentMarkupType {
 					CommentChoices.APPEND_TO_EXISTING);
 				break;
 			case ADD_AS_PRIMARY:
-				throw new IllegalArgumentException(getDisplayName() +
-					" markup items cannot perform an Add As Primary action.");
+				throw new IllegalArgumentException(
+					getDisplayName() + " markup items cannot perform an Add As Primary action.");
 			case REPLACE_DEFAULT_ONLY:
 				throw new IllegalArgumentException(getDisplayName() +
 					" markup items cannot perform a Replace Default Only action.");

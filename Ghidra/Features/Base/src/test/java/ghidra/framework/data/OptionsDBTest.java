@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import static org.junit.Assert.*;
 
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyEditorSupport;
@@ -31,6 +30,7 @@ import javax.swing.KeyStroke;
 
 import org.junit.*;
 
+import docking.DockingUtils;
 import docking.test.AbstractDockingTest;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import generic.theme.ThemeManager;
@@ -239,7 +239,7 @@ public class OptionsDBTest extends AbstractDockingTest {
 
 	@Test
 	public void testSaveActionTrigger_MouseBinding() {
-		MouseBinding mb = new MouseBinding(1, InputEvent.CTRL_DOWN_MASK);
+		MouseBinding mb = new MouseBinding(1, DockingUtils.CONTROL_KEY_MODIFIER_MASK);
 		ActionTrigger trigger = new ActionTrigger(mb);
 		options.setActionTrigger("Foo", trigger);
 		saveAndRestoreOptions();
@@ -249,7 +249,7 @@ public class OptionsDBTest extends AbstractDockingTest {
 	@Test
 	public void testSaveActionTrigger_KeyStrokeAndMouseBinding() {
 		KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_A, 0);
-		MouseBinding mb = new MouseBinding(1, InputEvent.CTRL_DOWN_MASK);
+		MouseBinding mb = new MouseBinding(1, DockingUtils.CONTROL_KEY_MODIFIER_MASK);
 		ActionTrigger trigger = new ActionTrigger(ks, mb);
 		options.setActionTrigger("Foo", trigger);
 		saveAndRestoreOptions();

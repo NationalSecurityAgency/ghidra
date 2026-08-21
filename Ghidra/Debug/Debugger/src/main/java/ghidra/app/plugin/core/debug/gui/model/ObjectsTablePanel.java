@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,10 +26,10 @@ import javax.swing.table.TableColumn;
 import docking.widgets.table.GTableColumnModel;
 import docking.widgets.table.GTableTextCellEditor;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.*;
-import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
 
 public class ObjectsTablePanel extends AbstractQueryTablePanel<ValueRow, ObjectTableModel> {
 
@@ -91,11 +91,11 @@ public class ObjectsTablePanel extends AbstractQueryTablePanel<ValueRow, ObjectT
 		if (query == null) {
 			return DEFAULT_PREF_KEY;
 		}
-		List<TargetObjectSchema> schemas = query.computeSchemas(trace);
+		List<TraceObjectSchema> schemas = query.computeSchemas(trace);
 		if (schemas.isEmpty()) {
 			return DEFAULT_PREF_KEY;
 		}
-		TargetObjectSchema rootSchema = trace.getObjectManager().getRootSchema();
+		TraceObjectSchema rootSchema = trace.getObjectManager().getRootSchema();
 		if (rootSchema == null) {
 			return DEFAULT_PREF_KEY;
 		}

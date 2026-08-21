@@ -18,7 +18,7 @@ public class CrushedPNGUtil {
 	 * the structure and formatting of a normal non-crushed PNG.
 	 * @param png the CrushedPNG object
 	 * @return An InputStream of the correctly formated bytes of a png
-	 * @throws Exception 
+	 * @throws Exception an a problem occurred
 	 */
 	public static byte[] getUncrushedPNGBytes(ProcessedPNG png) throws Exception {
 		boolean foundIHDR = false;
@@ -190,7 +190,7 @@ public class CrushedPNGUtil {
 	 * Does the processing to uncrushify the PNG IDAT chunks
 	 * @param ihdrChunk the IHDR chunk to pull meta deta from
 	 * @param decompressedResult result of the zlib decompression
-	 * @throws PNGFormatException
+	 * @throws PNGFormatException if  problem occurred
 	 */
 	private static void processIDATChunks(IHDRChunk ihdrChunk, byte[] decompressedResult)
 			throws PNGFormatException {
@@ -547,25 +547,6 @@ public class CrushedPNGUtil {
 			srcPtr += 4 * width;
 		}
 
-	}
-
-	/**
-	 * Prepends the needed Zlib header to the set of idatChunks 
-	 * in order to inflate the bytes
-	 * @param idatChunks the set of idat chunks
-	 * @return idat chunks with the new header
-	 */
-	private static byte[] getFixedIdatDataBytes(ByteArrayOutputStream idatChunks) {
-
-		//Prepend the needed Zlib header info to the IDAT chunk data
-		byte[] idatData = idatChunks.toByteArray();
-		byte[] fixedIdatData = new byte[idatData.length + 2];
-		fixedIdatData[0] = ZLIB.ZLIB_COMPRESSION_DEFAULT[0];
-		fixedIdatData[1] = ZLIB.ZLIB_COMPRESSION_DEFAULT[1];
-		for (int i = 0; i < idatData.length; i++) {
-			fixedIdatData[i + 2] = idatData[i];
-		}
-		return fixedIdatData;
 	}
 
 	/**

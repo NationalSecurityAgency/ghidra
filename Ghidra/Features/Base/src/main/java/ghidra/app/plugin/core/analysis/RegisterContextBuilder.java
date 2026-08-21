@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -109,8 +108,8 @@ class RegisterContextBuilder {
 	 * @param instr first instruction of range
 	 * @param valueFrom point from which existing register value should
 	 * be read from program context.
-	 * @param overwrite this method will take not action and return false if 
-	 * this parameter is false and and a context value has previously been set,
+	 * @param overwrite this method will take no action and return false if 
+	 * this parameter is false and a context value has previously been set,
 	 * otherwise an attempt will be made to overwrite the current value state.
 	 * @return true if value was set, otherwise false.
 	 */

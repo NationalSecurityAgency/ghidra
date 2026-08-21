@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,102 +15,157 @@
  */
 package ghidra.app.plugin.core.script;
 
-import java.awt.BorderLayout;
+import java.awt.*;
 import java.util.List;
+import java.util.function.BiPredicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
+import javax.swing.*;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
+import javax.swing.text.html.HTMLEditorKit;
+
+import org.apache.commons.lang3.StringUtils;
 
 import docking.DialogComponentProvider;
+import docking.widgets.list.GListCellRenderer;
+import docking.widgets.searchlist.SearchList;
+import docking.widgets.searchlist.SearchListEntry;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.script.ScriptInfo;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.util.HelpLocation;
-import ghidra.util.Swing;
+import ghidra.util.*;
 
 /**
- * A dialog that prompts the user to select a script.
+ * A dialog that prompts the user to select a script from a searchable list
+ * organized into "Recent Scripts" and "All Scripts" categories.
  */
 public class ScriptSelectionDialog extends DialogComponentProvider {
 
-	private ScriptSelectionEditor editor;
 	private PluginTool tool;
 	private List<ScriptInfo> scriptInfos;
+	private List<String> recentScripts;
+	private String initialScript;
 	private ScriptInfo userChoice;
+	private SearchList<ScriptInfo> searchList;
+	private JTextPane detailPane;
 
-	ScriptSelectionDialog(GhidraScriptMgrPlugin plugin, List<ScriptInfo> scriptInfos) {
+	ScriptSelectionDialog(GhidraScriptMgrPlugin plugin, List<ScriptInfo> scriptInfos,
+			List<String> recentScripts, String initialScript) {
 		super("Run Script", true, true, true, false);
 		this.tool = plugin.getTool();
 		this.scriptInfos = scriptInfos;
+		this.recentScripts = recentScripts;
+		this.initialScript = initialScript;
 
-		init();
+		addWorkPanel(buildMainPanel());
+		addOKButton();
+		addCancelButton();
 
 		setHelpLocation(new HelpLocation(plugin.getName(), "Script Quick Launch"));
 	}
 
-	private void init() {
-		buildEditor();
-
-		addOKButton();
-		addCancelButton();
-	}
-
-	private void buildEditor() {
-		removeWorkPanel();
-
-		editor = new ScriptSelectionEditor(scriptInfos);
-
-		editor.setConsumeEnterKeyPress(false); // we want to handle Enter key presses
-
-		editor.addEditorListener(new ScriptEditorListener() {
+	private JComponent buildMainPanel() {
+		ScriptsModel model = new ScriptsModel(scriptInfos, recentScripts);
+		searchList = new SearchList<>(model, (script, category) -> scriptChosen(script)) {
 			@Override
-			public void editingCancelled() {
-				if (isVisible()) {
-					cancelCallback();
-				}
+			protected BiPredicate<ScriptInfo, String> createFilter(String text) {
+				return new ScriptFilter(text);
+			}
+		};
+		searchList.setItemRenderer(new ScriptRenderer());
+		searchList.setDisplayNameFunction((script, category) -> script.getName());
+
+		searchList.setSelectionCallback(this::updateDetailPane);
+
+		// Add model listener to reset selection when filter changes
+		model.addListDataListener(new ListDataListener() {
+			@Override
+			public void intervalAdded(ListDataEvent e) {
+				resetSelectionToFirst();
 			}
 
 			@Override
-			public void editingStopped() {
-				if (isVisible()) {
-					okCallback();
+			public void intervalRemoved(ListDataEvent e) {
+				resetSelectionToFirst();
+			}
+
+			@Override
+			public void contentsChanged(ListDataEvent e) {
+				resetSelectionToFirst();
+			}
+		});
+
+		selectInitialScript();
+
+		JComponent detailPaneComponent = buildDetailPane();
+
+		// Create split pane with list on left, detail on right
+		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+		splitPane.setLeftComponent(searchList);
+		splitPane.setRightComponent(detailPaneComponent);
+		splitPane.setResizeWeight(0.67);  // 2/3 for list, 1/3 for detail pane
+		splitPane.setDividerLocation(533);  // Initial divider: 2/3 of 800px
+
+		JPanel panel = new JPanel(new BorderLayout());
+		panel.add(splitPane, BorderLayout.CENTER);
+		panel.setPreferredSize(new Dimension(800, 500));
+
+		return panel;
+	}
+
+	private void selectInitialScript() {
+		if (StringUtils.isBlank(initialScript)) {
+			return;
+		}
+
+		Swing.runLater(() -> {
+			for (ScriptInfo info : scriptInfos) {
+				if (info.getName().equals(initialScript)) {
+					searchList.setSelectedItem(info);
+					break;
 				}
 			}
 		});
-		editor.addDocumentListener(new DocumentListener() {
-
-			@Override
-			public void changedUpdate(DocumentEvent e) {
-				textUpdated();
-			}
-
-			@Override
-			public void insertUpdate(DocumentEvent e) {
-				textUpdated();
-			}
-
-			@Override
-			public void removeUpdate(DocumentEvent e) {
-				textUpdated();
-			}
-
-			private void textUpdated() {
-				clearStatusText();
-			}
-
-		});
-
-		JComponent mainPanel = createEditorPanel();
-		addWorkPanel(mainPanel);
-
-		rootPanel.validate();
 	}
 
-	private JComponent createEditorPanel() {
-		JPanel mainPanel = new JPanel(new BorderLayout());
-		mainPanel.add(editor.getEditorComponent(), BorderLayout.NORTH);
-		return mainPanel;
+	private JComponent buildDetailPane() {
+		detailPane = new JTextPane();
+		detailPane.setEditable(false);
+		detailPane.setEditorKit(new HTMLEditorKit());
+		detailPane.setName("Script Details");
+
+		JScrollPane scrollPane = new JScrollPane(detailPane);
+		// Adjust scroll increments for better HTML rendering
+		scrollPane.getVerticalScrollBar().setUnitIncrement(5);
+		scrollPane.getHorizontalScrollBar().setUnitIncrement(5);
+
+		return scrollPane;
+	}
+
+	private void updateDetailPane(ScriptInfo script) {
+		String text = (script != null) ? script.getToolTipText() : "";
+		Swing.runLater(() -> {
+			detailPane.setText(text);
+			detailPane.setCaretPosition(0);
+		});
+	}
+
+	private void resetSelectionToFirst() {
+		Swing.runLater(() -> {
+			ScriptsModel model = (ScriptsModel) searchList.getModel();
+			if (model.getSize() > 0) {
+				ScriptInfo firstScript = model.getElementAt(0).value();
+				searchList.setSelectedItem(firstScript);
+			}
+		});
+	}
+
+	private void scriptChosen(ScriptInfo script) {
+		userChoice = script;
+		close();
 	}
 
 	public void show() {
@@ -123,38 +178,111 @@ public class ScriptSelectionDialog extends DialogComponentProvider {
 
 	@Override
 	protected void dialogShown() {
-		Swing.runLater(() -> editor.requestFocus());
+		Swing.runLater(() -> searchList.getFilterField().requestFocus());
 	}
 
-	// overridden to set the user choice to null
 	@Override
 	protected void cancelCallback() {
 		userChoice = null;
 		super.cancelCallback();
 	}
 
-	// overridden to perform validation and to get the user's choice
 	@Override
 	protected void okCallback() {
+		ScriptInfo selectedScript = searchList.getSelectedItem();
 
-		if (!editor.validateUserSelection()) {
-			setStatusText("Invalid script name");
+		if (selectedScript == null) {
+			setStatusText("Please select a script");
 			return;
 		}
 
-		userChoice = editor.getEditorValue();
-
+		userChoice = selectedScript;
 		clearStatusText();
 		close();
 	}
 
-	// overridden to re-create the editor each time we are closed so that the editor's windows
-	// are properly parented for each new dialog
-	@Override
-	public void close() {
-		buildEditor();
-		setStatusText("");
-		super.close();
+//=================================================================================================
+// Inner Classes
+//=================================================================================================
+
+	private class ScriptFilter implements BiPredicate<ScriptInfo, String> {
+
+		private Pattern pattern;
+
+		ScriptFilter(String filterText) {
+			pattern =
+				UserSearchUtils.createContainsPattern(filterText, true, Pattern.CASE_INSENSITIVE);
+		}
+
+		@Override
+		public boolean test(ScriptInfo info, String category) {
+
+			Matcher matcher = pattern.matcher(info.getName());
+			if (matcher.matches()) {
+				return true;
+			}
+
+			matcher = pattern.matcher(info.getDescription());
+			return matcher.matches();
+		}
 	}
 
+	private class ScriptRenderer extends GListCellRenderer<SearchListEntry<ScriptInfo>> {
+		{
+			setHTMLRenderingEnabled(true);
+		}
+
+		@Override
+		public Component getListCellRendererComponent(
+				JList<? extends SearchListEntry<ScriptInfo>> list,
+				SearchListEntry<ScriptInfo> entry, int index, boolean isSelected,
+				boolean cellHasFocus) {
+
+			super.getListCellRendererComponent(list, entry, index, isSelected, cellHasFocus);
+
+			ScriptInfo script = entry.value();
+
+			StringBuilder html = new StringBuilder("<html>");
+			html.append("<b>").append(HTMLUtilities.escapeHTML(script.getName())).append("</b>");
+
+			GColor altColor = isSelected ? (GColor) getForeground() : Palette.GRAY;
+
+			KeyStroke keyBinding = script.getKeyBinding();
+			if (keyBinding != null) {
+				html.append(" <font color=\"")
+						.append(altColor.toHexString())
+						.append("\"><i>(")
+						.append(keyBinding.toString())
+						.append(")</i></font>");
+			}
+
+			String description = script.getDescription();
+			if (!StringUtils.isBlank(description)) {
+				html.append("<br><font color=\"")
+						.append(altColor.toHexString())
+						.append("\">")
+						.append(HTMLUtilities.escapeHTML(truncateDescription(description)))
+						.append("</font>");
+			}
+
+			html.append("</html>");
+
+			setText(html.toString());
+			setIcon(script.getToolBarImage(false));
+
+			return this;
+		}
+
+		private String truncateDescription(String description) {
+			// Remove newlines and normalize whitespace
+			String clean = description.replaceAll("\\s+", " ").trim();
+
+			// Allow up to ~120 characters total (roughly 2 lines at ~60 chars per line)
+			int maxLength = 120;
+			if (clean.length() > maxLength) {
+				return clean.substring(0, maxLength - 3) + "...";
+			}
+			return clean;
+		}
+	}
 }
