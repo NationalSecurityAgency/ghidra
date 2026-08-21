@@ -194,12 +194,19 @@ public class ExecutableComparison {
 		Iterator<FunctionDescription> iter = response.manage.listAllFunctions();
 		if (histogram == null) {
 			while (iter.hasNext()) {
-				baseIds.add(iter.next().getVectorId());
+				Long id = iter.next().getVectorId();
+				if (id == 0) {
+					continue;
+				}
+				baseIds.add(id);
 			}
 		}
 		else {
 			while (iter.hasNext()) {
 				Long id = iter.next().getVectorId();
+				if (id == 0) {
+					continue;
+				}
 				Count count = histogram.computeIfAbsent(id, key -> new Count());
 				count.value += 1;
 			}
