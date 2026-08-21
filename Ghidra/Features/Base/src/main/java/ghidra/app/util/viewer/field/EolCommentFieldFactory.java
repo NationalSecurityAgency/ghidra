@@ -534,12 +534,22 @@ public class EolCommentFieldFactory extends FieldFactory {
 			codeUnitFormatOptions.followReferencedPointers(), maxDisplayLines, extraCommentsOption);
 
 		ListingTextField btf = (ListingTextField) bf;
-		RowColLocation eolRowCol = displayableEol.getRowCol((CommentFieldLocation) loc);
-		RowColLocation rcl = btf.dataToScreenLocation(eolRowCol.row(), eolRowCol.col());
 		if (!hasSamePath(bf, loc)) {
 			return null;
 		}
-		return new FieldLocation(index, fieldNum, rcl.row(), rcl.col());
+
+		RowColLocation eolRowCol = displayableEol.getRowCol((CommentFieldLocation) loc);
+		int row = eolRowCol.row();
+		int col = eolRowCol.col();
+		RowColLocation screenRowCol = btf.dataToScreenLocation(row, col);
+
+		int screenRow = screenRowCol.row();
+		int screenCol = screenRowCol.col();
+		if (screenRowCol.isHidden()) { // clipped location
+			screenCol = btf.getNumCols(screenRow) - 1; // -1 for zero based indexing
+		}
+
+		return new FieldLocation(index, fieldNum, screenRow, screenCol);
 	}
 
 	@Override
@@ -571,8 +581,8 @@ public class EolCommentFieldFactory extends FieldFactory {
 		if (comments.length == 0) {
 			return null;
 		}
-		StringBuffer buf = new StringBuffer(comments[0]);
 
+		StringBuilder buf = new StringBuilder(comments[0]);
 		for (int i = 1; i < comments.length; i++) {
 			buf.append(separatorChar + comments[i]);
 		}

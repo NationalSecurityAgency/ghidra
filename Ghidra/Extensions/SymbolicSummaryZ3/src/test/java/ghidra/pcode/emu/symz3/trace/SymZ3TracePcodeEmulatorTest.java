@@ -18,6 +18,7 @@ package ghidra.pcode.emu.symz3.trace;
 import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.junit.Before;
 import org.junit.Test;
 
 import com.microsoft.z3.BitVecExpr;
@@ -26,6 +27,7 @@ import com.microsoft.z3.Context;
 import db.Transaction;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.emu.symz3.SymZ3EmulatorFactory;
+import ghidra.pcode.emu.symz3.SymZ3TestUtils;
 import ghidra.pcode.emu.symz3.state.SymZ3PcodeEmulator;
 import ghidra.pcode.emu.symz3.state.SymZ3PieceHandler;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
@@ -54,6 +56,11 @@ public class SymZ3TracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 
 	SymZ3PcodeEmulator createEmulator(TracePlatform platform, Writer writer) {
 		return new SymZ3PcodeEmulator(platform.getLanguage(), writer.callbacks());
+	}
+
+	@Before
+	public void setUpSymTest() throws Throwable {
+		SymZ3TestUtils.skipTestIfUnsupportedPlatform();
 	}
 
 	/**

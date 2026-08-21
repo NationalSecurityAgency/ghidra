@@ -70,17 +70,11 @@
         <pentry minsize="1" maxsize="4">
           <register name="R1"/>
         </pentry>
-        <pentry minsize="5" maxsize="8">
-          <register name="R1R0"/>
-        </pentry>
         <pentry minsize="1" maxsize="4">
           <register name="R2"/>
         </pentry>
         <pentry minsize="1" maxsize="4">
           <register name="R3"/>
-        </pentry>
-        <pentry minsize="5" maxsize="8">
-          <register name="R3R2"/>
         </pentry>
         <pentry minsize="1" maxsize="4">
           <register name="R4"/>
@@ -88,12 +82,22 @@
         <pentry minsize="1" maxsize="4">
           <register name="R5"/>
         </pentry>
-        <pentry minsize="5" maxsize="8">
-          <register name="R5R4"/>
-        </pentry>
         <pentry minsize="1" maxsize="500" align="1"> <!-- unable to stipulate alignment properly - see ABI spec -->
           <addr offset="0" space="stack"/>
         </pentry>
+        <rule>   
+          <datatype name="any"/>
+          <varargs first="0"/>
+          <goto_stack/>
+        </rule>
+        <rule>
+          <datatype name="any" minsize="9"/>
+          <goto_stack/>
+        </rule>
+        <rule>
+          <datatype name="any" maxsize="8"/>
+          <join align="true" stackspill="false"/>
+        </rule>
       </input>
       <output>
         <pentry minsize="1" maxsize="8">

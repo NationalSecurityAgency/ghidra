@@ -589,6 +589,29 @@ bool Datatype::testForArraySlack(int8 off)
   return nearestArrayedComponentBackward(off, comp);
 }
 
+/// Return the component data-type, which may be \b this if there is no smaller component, and pass back
+/// the relative offset of the start of the range into the returned component.
+/// \param off is the starting byte offset of the given range, within \b this
+/// \param sz is the number of bytes in the range
+/// \param newoff is used to pass back the relative offset into the returned component
+/// \return the component data-type contain the range
+Datatype *Datatype::findSmallestContainer(int8 off,int8 sz,int8 *newoff)
+
+{
+  Datatype *res = this;
+  Datatype *next = res;
+  int8 curOff = off;
+  for(;;) {
+    next = next->getSubType(curOff, &curOff);
+    if (next == (Datatype *)0) break;		// No smaller component
+    if (curOff + sz > next->getSize()) break;	// Next component down does not contain
+    res = next;
+    off = curOff;
+  }
+  *newoff = off;
+  return res;
+}
+
 /// Called only if the \b typedefImm field is non-null.  Encode the data-type to the
 /// stream as a simple \<typedef> element including only the names and ids of \b this and
 /// the data-type it typedefs.

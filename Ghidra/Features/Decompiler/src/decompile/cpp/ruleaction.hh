@@ -1259,6 +1259,17 @@ public:
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
 
+class RuleAndStructure : public Rule {
+public:
+  RuleAndStructure(const string &g) : Rule( g, 0, "andstructure") {}		///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleAndStructure(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+
 class RuleSubNormal : public Rule {
 public:
   RuleSubNormal(const string &g) : Rule( g, 0, "subnormal") {}	///< Constructor

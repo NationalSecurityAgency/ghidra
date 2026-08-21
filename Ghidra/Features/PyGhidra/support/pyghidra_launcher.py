@@ -125,9 +125,9 @@ def is_externally_managed() -> bool:
     return marker.is_file()
 
 def get_venv_exe(venv_dir: Path) -> List[str]:
-    win_python_cmd: str = str(venv_dir / 'Scripts' / 'python.exe')
-    linux_python_cmd: str = str(venv_dir / 'bin' / 'python3')
-    return [win_python_cmd] if platform.system() == 'Windows' else [linux_python_cmd]
+    win_python_path: Path = venv_dir / 'Scripts' / 'python.exe'
+    linux_python_path: Path = venv_dir / 'bin' / 'python3' # also used by MSYS2 on Windows
+    return [str(win_python_path)] if win_python_path.exists() else [str(linux_python_path)]
 
 def get_ghidra_venv(install_dir: Path, dev: bool) -> Path:
     return (install_dir / 'build' if dev else get_user_settings_dir(install_dir, dev)) / 'venv'
