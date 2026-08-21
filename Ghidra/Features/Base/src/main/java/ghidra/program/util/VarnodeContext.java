@@ -53,6 +53,8 @@ public class VarnodeContext implements ProcessorContext {
 			new Stack<Stack<HashMap<Address, Varnode>>>();
 	protected Stack<HashMap<Varnode, Address>> lastSetSaves =
 		new Stack<HashMap<Varnode, Address>>();
+	protected Stack<HashMap<Varnode, Address>> lastSetFromConstantSaves =
+		new Stack<HashMap<Varnode, Address>>();
 
 	HashMap<Address, ArrayList<Address>> flowToFromLists = new HashMap<>();
 	
@@ -96,6 +98,14 @@ public class VarnodeContext implements ProcessorContext {
 
 	// all locations where a register was last explicitly set to a value, not just has the value
 	protected HashMap<Varnode, AddressSet> allLastSet = new HashMap<>();
+
+	// locations where a register was last set from a true constant compute
+	// (i.e. NOT via a LOAD whose memory-tracked value happens to be constant).
+	// Cleared when the register is rewritten by any other source.  Used by
+	// {@link #getLastSetLocationFromConstant} so callers can distinguish "the
+	// register was set to constant K by instruction I" from "the register was
+	// reloaded by I and the symbolic stack tracking returned a constant".
+	protected HashMap<Varnode, Address> lastSetFromConstant = new HashMap<>();
 
 	protected Program program;
 	protected VarnodeTranslator trans;  // translator for varnodes<-->registers
@@ -920,12 +930,34 @@ public class VarnodeContext implements ProcessorContext {
 	}
 
 	public void putValue(Varnode out, Varnode result, boolean mustClear) {
+		putValueInternal(out, result, mustClear, false);
+	}
+
+	/**
+	 * Variant of {@link #putValue} for register writes whose value originated
+	 * from a memory LOAD.  Behaves identically to {@code putValue} except that
+	 * it does NOT mark the destination register as last-set-from-a-constant
+	 * (see {@link #lastSetFromConstant}).  The symbolic stack tracking can
+	 * return a constant-typed varnode for a load that pulls a stale value out
+	 * of a colliding symbolic stack slot - those constants must not be
+	 * attributed back to the LOAD instruction as if it had computed them.
+	 *
+	 * <p>Use this from a pcode-op handler that just executed a memory load
+	 * into the destination, regardless of what value the load happened to
+	 * return.  All other write paths should keep calling {@link #putValue}.
+	 */
+	public void putLoadedValue(Varnode out, Varnode result, boolean mustClear) {
+		putValueInternal(out, result, mustClear, true);
+	}
+
+	private void putValueInternal(Varnode out, Varnode result, boolean mustClear,
+			boolean fromLoad) {
 		if (out == null) {
 			return;
 		}
 
 		if (result == null) {
-			putValue(out, BAD_VARNODE, false);
+			putValueInternal(out, BAD_VARNODE, false, fromLoad);
 			return;
 		}
 
@@ -978,6 +1010,11 @@ public class VarnodeContext implements ProcessorContext {
 				}
 				addSetVarnodeToLastSetLocations(out, currentAddress);
 			}
+			// Maintain the from-constant tracking: a non-LOAD write of a true
+			// constant varnode marks this address; any other write (LOAD,
+			// non-constant, BAD, null) clears the prior tracking so a stale
+			// address can't survive across a re-write.
+			updateLastSetFromConstant(out, result, fromLoad);
 			putMemoryValue(tempVals, out, result);
 		}
 
@@ -988,6 +1025,68 @@ public class VarnodeContext implements ProcessorContext {
 		if (mustClear) {
 			clearVals.add(out);
 		}
+	}
+
+	private void updateLastSetFromConstant(Varnode out, Varnode result, boolean fromLoad) {
+		boolean trackable = !fromLoad && result != null && result.isConstant();
+		if (trackable) {
+			lastSetFromConstant.put(out, currentAddress);
+		}
+		else {
+			lastSetFromConstant.remove(out);
+		}
+		// Mirror the parent-register propagation done by
+		// addSetVarnodeToLastSetLocations so a query against a parent
+		// register sees the same set/clear semantics.
+		if (out.isRegister() && out.getSize() <= 8) {
+			Register reg = trans.getRegister(out);
+			if (reg == null) {
+				return;
+			}
+			Register parent = reg.getParentRegister();
+			if (parent != null && parent.getBitLength() <= 64) {
+				Varnode parentVnode = trans.getVarnode(parent);
+				if (trackable) {
+					lastSetFromConstant.put(parentVnode, currentAddress);
+				}
+				else {
+					lastSetFromConstant.remove(parentVnode);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Seed a register's value as the entry-state default for the current
+	 * flow.  Unlike {@link #putValue}, the current address is NOT recorded
+	 * as the register's last-set location: the value originates from
+	 * program context rather than from an instruction-level write, so
+	 * {@link #getLastSetLocation} should not attribute it to whatever
+	 * instruction happens to live at the flow's start address.
+	 *
+	 * @param out register varnode to seed
+	 * @param value value to assign
+	 */
+	public void putInitialValue(Varnode out, Varnode value) {
+		if (out == null) {
+			return;
+		}
+		if (value == null) {
+			putValue(out, BAD_VARNODE, false);
+			return;
+		}
+		// Only meaningful for plain register varnodes - entry-state seeds
+		// don't make sense for unique varnodes or symbolic memory.  Note
+		// {@link Varnode#isAddress} returns false for register varnodes
+		// (they live in TYPE_REGISTER space, not TYPE_RAM), so the
+		// register check stands on its own.
+		if (out.isUnique() || !isRegister(out)) {
+			return;
+		}
+		if (value.isUnique()) {
+			value = null;
+		}
+		putMemoryValue(tempVals, out, value);
 	}
 
 	/**
@@ -1155,11 +1254,48 @@ public class VarnodeContext implements ProcessorContext {
 		return lastSetAddr;
 	}
 
+	/**
+	 * Return the address of the most recent instruction that wrote
+	 * {@code reg} from a true constant compute - i.e. not from a memory
+	 * LOAD whose backing symbolic-stack value happened to be constant.
+	 *
+	 * <p>Use this in place of {@link #getLastSetLocation} when the caller
+	 * needs to attribute a constant register value to an instruction that
+	 * actually computed it (e.g. for emitting a reference at the writing
+	 * instruction).  Plain {@code getLastSetLocation} can return a LOAD
+	 * instruction whose loaded value is a stale symbolic-stack constant;
+	 * this method ignores that case.
+	 *
+	 * <p>If a {@code bval} is supplied, the returned address is filtered to
+	 * only match when the register's current tracked value equals
+	 * {@code bval}.  Pass {@code null} to skip the value check.
+	 *
+	 * @param reg register to find the last constant set location for
+	 * @param bval value to filter on, or {@code null} to skip the filter
+	 * @return address that set the register from a constant, or {@code null}
+	 *         if no such set has been recorded for the current flow
+	 */
+	public Address getLastSetLocationFromConstant(Register reg, BigInteger bval) {
+		Varnode rvar = trans.getVarnode(reg);
+		if (rvar == null) {
+			return null;
+		}
+		Address addr = lastSetFromConstant.get(rvar);
+		if (addr == null || bval == null) {
+			return addr;
+		}
+		RegisterValue rval = getRegisterValue(reg, Address.NO_ADDRESS, addr);
+		if (rval == null || !bval.equals(rval.getUnsignedValue())) {
+			return null;
+		}
+		return addr;
+	}
+
 	// TODO unused parameter bval
 	/**
 	 * return the location that this varnode was last set
 	 * This is a transient thing, so it should only be used as a particular flow is being processed...
-	 * 
+	 *
 	 * @param rvar the register varnode
 	 * @param bval this parameter is unused.
 	 * @return address that the register was set.
@@ -2029,6 +2165,7 @@ public class VarnodeContext implements ProcessorContext {
 		memoryVals.push(new HashMap<Address, Varnode>());
 
 		lastSetSaves.push((HashMap<Varnode, Address>) lastSet.clone());
+		lastSetFromConstantSaves.push((HashMap<Varnode, Address>) lastSetFromConstant.clone());
 	}
 
 	/**
@@ -2047,6 +2184,7 @@ public class VarnodeContext implements ProcessorContext {
 		}
 		
 		lastSet = lastSetSaves.pop();
+		lastSetFromConstant = lastSetFromConstantSaves.pop();
 
 		tempVals = new HashMap<>();
 		clearVals = new HashSet<>();
