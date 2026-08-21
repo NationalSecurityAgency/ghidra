@@ -2115,10 +2115,13 @@ void Heritage::splitJoinLevel(vector<Varnode *> &lastcombo,vector<Varnode *> &ne
 /// the Varnode out of the specified Varnode pieces.
 /// \param vn is the \e join-space Varnode to split
 /// \param joinrec is the splitting specification
+/// \note The \c splitJoinRead assumes the Varnode has a descendant (i.e.
+/// the code expects a non-null \c loneDescend() result). Check with
+/// \c !vn->hasNoDescend() before calling.
 void Heritage::splitJoinRead(Varnode *vn,JoinRecord *joinrec)
 
 {
-  PcodeOp *op = vn->loneDescend(); // vn isFree, so loneDescend must be non-null
+  PcodeOp *op = vn->loneDescend(); // Non-null: processJoins checked !hasNoDescend(), and addDescend caps free non-spacebase varnodes at 1
   bool isPrimitive = true;
   if (vn->isTypeLock()) {
     isPrimitive = vn->getType()->isPrimitiveWhole();
@@ -2232,10 +2235,13 @@ void Heritage::splitJoinWrite(Varnode *vn,JoinRecord *joinrec)
 /// and define the lower precision Varnode as a truncation (FLOAT2FLOAT)
 /// \param vn is the lower precision \e join-space input Varnode
 /// \param joinrec is the float extension record
+/// \note The \c floatExtensionRead assumes the Varnode has a descendant (i.e.
+/// the code expects a non-null \c loneDescend() result). Check with
+/// \c !vn->hasNoDescend() before calling.
 void Heritage::floatExtensionRead(Varnode *vn,JoinRecord *joinrec)
 
 {
-  PcodeOp *op = vn->loneDescend(); // vn isFree, so loneDescend must be non-null
+  PcodeOp *op = vn->loneDescend(); // Non-null: processJoins checked !hasNoDescend(), and addDescend caps free non-spacebase varnodes at 1
   PcodeOp *trunc = fd->newOp(1,op->getAddr());
   const VarnodeData &vdata( joinrec->getPiece(0) ); // Float extensions have exactly 1 piece
   Varnode *bigvn = fd->newVarnode(vdata.size,vdata.space,vdata.offset);
@@ -2296,6 +2302,7 @@ void Heritage::processJoins(void)
     if (joinrec->getUnified().size != vn->getSize())
       throw LowlevelError("Joined varnode does not match size of record");
     if (vn->isFree()) {
+      if (vn->hasNoDescend()) continue;	// Dead join-space varnode: nothing reads it
       if (joinrec->isFloatExtension())
 	floatExtensionRead(vn,joinrec);
       else

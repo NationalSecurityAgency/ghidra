@@ -1,0 +1,23 @@
+<decompilertest>
+    <!-- the comment in Heritage::splitJoinRead (and floatExtensionRead)
+    said:  // vn isFree, so loneDescend must be non-null
+    However, this conclusion does not follow from the premise.
+    The test case below provides a counterexample:
+
+    31 c0       xor eax, eax
+    7f 01       jg  L1
+    c3          ret
+L1:
+    56          push rsi
+    58          pop rax
+    5a          pop rdx
+    c3          ret
+    -->
+    <binaryimage arch="x86:LE:64:default:gcc">
+        <bytechunk space="ram" offset="0x100000" readonly="true">
+            31c07f01c356585ac3</bytechunk>
+        <symbol space="ram" offset="0x100000" name="f" />
+    </binaryimage>
+    <script><com>lo fu f</com><com>decompile</com><com>print C</com></script>
+    <stringmatch name="varnode null descend - fail case is segfault" min="5" max="1000">.</stringmatch>
+</decompilertest>
