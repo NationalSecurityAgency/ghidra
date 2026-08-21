@@ -16,6 +16,8 @@
 package ghidra.app.util.bin.format.pe;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
@@ -158,6 +160,15 @@ class PEx64UnwindInfo implements StructConverter {
 
 	static PEx64UnwindInfo readUnwindInfo(BinaryReader reader, long offset, NTHeader ntHeader)
 			throws IOException {
+		return readUnwindInfo(reader, offset, ntHeader, new HashSet<>());
+	}
+
+	private static PEx64UnwindInfo readUnwindInfo(BinaryReader reader, long offset,
+			NTHeader ntHeader, Set<Long> visitedOffsets) throws IOException {
+		if (!visitedOffsets.add(offset)) {
+			throw new IOException("Cyclic unwind info chain");
+		}
+
 		long origIndex = reader.getPointerIndex();
 
 		long pointer = ntHeader.rvaToPointer(offset);
@@ -205,7 +216,8 @@ class PEx64UnwindInfo implements StructConverter {
 
 			// Follow the chain to the referenced UNWIND_INFO structure until we
 			// get to the end
-			PEx64UnwindInfo info = readUnwindInfo(reader, unwindInfoAddressOrData, ntHeader);
+			PEx64UnwindInfo info =
+				readUnwindInfo(reader, unwindInfoAddressOrData, ntHeader, visitedOffsets);
 			unwindInfo.unwindHandlerChainInfo = new ImageRuntimeFunctionEntry_X86(beginAddress,
 				endAddress, unwindInfoAddressOrData, info);
 		}
