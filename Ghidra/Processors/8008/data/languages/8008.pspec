@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+
+  <programcounter register="PC"/>
+
+  <register_data>
+    <register name="CY_flag" group="Flags"/>
+    <register name="Z_flag" group="Flags"/>
+    <register name="P_flag" group="Flags"/>
+    <register name="S_flag" group="Flags"/>
+  </register_data>
+
+  <default_symbols>
+    <symbol name="RST0" address="mem:0000" entry="true"/>
+    <symbol name="RST1" address="mem:0008" entry="false"/>
+    <symbol name="RST2" address="mem:0010" entry="false"/>
+    <symbol name="RST3" address="mem:0018" entry="false"/>
+    <symbol name="RST4" address="mem:0020" entry="false"/>
+    <symbol name="RST5" address="mem:0028" entry="false"/>
+    <symbol name="RST6" address="mem:0030" entry="false"/>
+    <symbol name="RST7" address="mem:0038" entry="false"/>
+
+    <symbol name="RAM" address="mem:0800" entry="false"/>
+
+    <symbol name="ROM_BANK0" address="mem:0000"/>
+    <symbol name="ROM_BANK1" address="mem:0400"/>
+
+    <symbol name="IN0" address="io:00" volatile="true" />
+    <symbol name="IN1" address="io:01" volatile="true" />
+    <symbol name="IN2" address="io:02" volatile="true" />
+    <symbol name="IN3" address="io:03" volatile="true" />
+    <symbol name="IN4" address="io:04" volatile="true" />
+    <symbol name="IN5" address="io:05" volatile="true" />
+    <symbol name="IN6" address="io:06" volatile="true" />
+    <symbol name="IN7" address="io:07" volatile="true" />
+
+    <symbol name="OUT8" address="io:08" volatile="true" />
+    <symbol name="OUT9" address="io:09" volatile="true" />
+    <symbol name="OUT10" address="io:0a" volatile="true" />
+    <symbol name="OUT11" address="io:0b" volatile="true" />
+    <symbol name="OUT12" address="io:0c" volatile="true" />
+    <symbol name="OUT13" address="io:0d" volatile="true" />
+    <symbol name="OUT14" address="io:0e" volatile="true" />
+    <symbol name="OUT15" address="io:0f" volatile="true" />
+
+    <symbol name="OUT16" address="io:10" volatile="true" />
+    <symbol name="OUT17" address="io:11" volatile="true" />
+    <symbol name="OUT18" address="io:12" volatile="true" />
+    <symbol name="OUT19" address="io:13" volatile="true" />
+    <symbol name="OUT20" address="io:14" volatile="true" />
+    <symbol name="OUT21" address="io:15" volatile="true" />
+    <symbol name="OUT22" address="io:16" volatile="true" />
+    <symbol name="OUT23" address="io:17" volatile="true" />
+
+    <symbol name="OUT24" address="io:18" volatile="true" />
+    <symbol name="OUT25" address="io:19" volatile="true" />
+    <symbol name="OUT26" address="io:1a" volatile="true" />
+    <symbol name="OUT27" address="io:1b" volatile="true" />
+    <symbol name="OUT28" address="io:1c" volatile="true" />
+    <symbol name="OUT29" address="io:1d" volatile="true" />
+    <symbol name="OUT30" address="io:1e" volatile="true" />
+    <symbol name="OUT31" address="io:1f" volatile="true" />
+  </default_symbols>
+
+  <default_memory_blocks>
+    <memory_block name="ram" start_address="mem:0800" length="0x100" initialized="false"/>
+    <memory_block name="IN_PORT" start_address="io:0" length="0x8" initialized="false"/>
+    <memory_block name="OUT_PORT" start_address="io:8" length="0x17" initialized="false"/>
+  </default_memory_blocks>
+
+</processor_spec>
