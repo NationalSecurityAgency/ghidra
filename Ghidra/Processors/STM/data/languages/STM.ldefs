@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+
+    <language processor="ST7"
+              endian="big"
+              size="16"
+              variant="default"
+              version="1.0"
+              slafile="ST70.sla"
+              processorspec="ST7.pspec"
+              id="ST7:BE:16:default">
+        <description>ST Microelectronics ST7 microcontroller family</description>
+        <compiler name="default" spec="ST7.cspec" id="default"/>
+    </language>
+
+    <language processor="ST72"
+              endian="big"
+              size="16"
+              variant="default"
+              version="1.0"
+              slafile="ST72.sla"
+              processorspec="ST7.pspec"
+              id="ST72:BE:16:default">
+        <description>ST Microelectronics ST72 microcontroller family</description>
+        <compiler name="default" spec="ST7.cspec" id="default"/>
+    </language>
+
+</language_definitions>
