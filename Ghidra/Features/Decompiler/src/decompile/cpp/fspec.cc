@@ -620,6 +620,20 @@ ParamListStandard::~ParamListStandard(void)
   }
 }
 
+/// A \e direct stack assignment means a ModelRule (such as \<goto_stack>) can place a
+/// parameter at the stack resource even though earlier register resources are unconsumed.
+/// \return \b true if the model contains such a rule
+bool ParamListStandard::hasDirectStackAssignment(void) const
+
+{
+  list<ModelRule>::const_iterator iter;
+  for(iter=modelRules.begin();iter!=modelRules.end();++iter) {
+    if ((*iter).assignsStackDirectly())
+      return true;
+  }
+  return false;
+}
+
 /// \param tiles will contain the set of matching entries
 /// \param type is the storage class
 /// \return the first matching iterator
@@ -1299,9 +1313,35 @@ void ParamListStandard::fillinMap(ParamActive *active) const
     // Definitely not used -- overrides active
     forceNoUse(active,trialStart[i],trialStart[i+1]);
   }
+  // The model may be able to assign a parameter to the stack without consuming register
+  // resources (e.g. a <goto_stack> rule for data-types the ABI passes in memory).  A chain of
+  // unused register entries then implies nothing about trials in the stack region, so the chain
+  // and hole rules are enforced separately on the register and stack portions of a section.
+  // This is restricted to recovering the active function's own parameters:  for a sub-function
+  // call site, a caller-side spill that happens to sit in the outgoing argument area is
+  // indistinguishable from a stack argument, and the chain rule is kept as a filter.
+  bool directStack = hasDirectStackAssignment() && !active->isRecoverSubcall();
   for(int4 i=0;i<numSection;++i) {
     // Chains of inactivity override later actives
-    forceInactiveChain(active,2,trialStart[i],trialStart[i+1],resourceStart[i]);
+    int4 sectionStart = trialStart[i];
+    int4 sectionStop = trialStart[i+1];
+    int4 stackStart = sectionStop;
+    if (directStack) {
+      for(int4 j=sectionStart;j<sectionStop;++j) {
+	const ParamEntry *curEntry = active->getTrial(j).getEntry();
+	if (curEntry == (const ParamEntry *)0) continue;
+	if (!curEntry->isExclusion() && curEntry->getSpace()->getType() == IPTR_SPACEBASE) {
+	  stackStart = j;
+	  break;
+	}
+      }
+    }
+    if (sectionStart < stackStart && stackStart < sectionStop) {
+      forceInactiveChain(active,2,sectionStart,stackStart,resourceStart[i]);
+      forceInactiveChain(active,2,stackStart,sectionStop,active->getTrial(stackStart).getEntry()->getGroup());
+    }
+    else
+      forceInactiveChain(active,2,sectionStart,sectionStop,resourceStart[i]);
   }
 
   // Mark every active trial as used

@@ -312,6 +312,15 @@ public:
   /// \return \b true if the trials could form a valid return value
   virtual bool fillinOutputMap(ParamActive *active) const;
 
+  /// \brief Return \b true if \b this action can assign a parameter to the stack resource
+  /// without consuming any register resources
+  ///
+  /// By default, an input parameter is assigned to the stack only after all register resources
+  /// (in its resource section) are consumed.  An action returning \b true here (GotoStack) can
+  /// assign a parameter to the stack while skipping unused register resources entirely.
+  /// \return \b true if the action can assign stack storage while registers remain unconsumed
+  virtual bool assignsStackDirectly(void) const { return false; }
+
   /// \brief Configure any details of how \b this action should behave from the stream
   ///
   /// \param decoder is the given stream decoder
@@ -333,6 +342,7 @@ public:
   virtual uint4 assignAddress(Datatype *dt,const PrototypePieces &proto,int4 pos,TypeFactory &tlist,
 			      vector<int4> &status,ParameterPieces &res) const;
   virtual bool fillinOutputMap(ParamActive *active) const;
+  virtual bool assignsStackDirectly(void) const { return true; }
   virtual void decode(Decoder &decoder);
 };
 
@@ -550,6 +560,7 @@ public:
 		      vector<int4> &status,ParameterPieces &res) const;
   bool fillinOutputMap(ParamActive *active) const;	///< Test and mark the trial(s) that can be valid return value
   bool canAffectFillinOutput(void) const;		///< Return \b true if fillinOutputMap is active for \b this rule
+  bool assignsStackDirectly(void) const;	///< Return \b true if \b this rule can assign stack storage while skipping registers
   void decode(Decoder &decoder,const ParamListStandard *res);		///< Decode \b this rule from stream
 };
 
@@ -567,6 +578,13 @@ inline bool ModelRule::canAffectFillinOutput(void) const
 
 {
   return assign->canAffectFillinOutput();
+}
+
+/// \return \b true if the assign action can place a parameter on the stack while registers remain unconsumed
+inline bool ModelRule::assignsStackDirectly(void) const
+
+{
+  return (assign != (AssignAction *)0) && assign->assignsStackDirectly();
 }
 
 } // End namespace ghidra
