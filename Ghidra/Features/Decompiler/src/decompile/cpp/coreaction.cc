@@ -5743,6 +5743,8 @@ void ActionInferTypes::propagateAcrossReturns(Funcdata &data)
   }
 }
 
+#define MAX_ITERS_TYPE_RECOVERY 16       // This constant arrived at empirically
+
 int4 ActionInferTypes::apply(Funcdata &data)
 
 {
@@ -5759,8 +5761,8 @@ int4 ActionInferTypes::apply(Funcdata &data)
     data.getArch()->printDebug(s.str());
   }
 #endif
-  if (localcount >= 7) {       // This constant arrived at empirically
-    if (localcount == 7) {
+  if (localcount >= MAX_ITERS_TYPE_RECOVERY) {
+    if (localcount == MAX_ITERS_TYPE_RECOVERY) {
       data.warningHeader("Type propagation algorithm not settling");
       data.setTypeRecoveryExceeded();
       localcount += 1;
