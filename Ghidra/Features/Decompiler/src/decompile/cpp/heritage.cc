@@ -205,10 +205,11 @@ HeritageInfo::HeritageInfo(AddrSpace *spc)
 void HeritageInfo::reset(void)
 
 {
-  // Leave any override intact: deadcodedelay = delay;
   deadremoved = 0;
-  if (space != (AddrSpace *)0)
+  if (space != (AddrSpace *)0) {
+    deadcodedelay = space->getDeadcodeDelay();	// Restore any augmented delay (overrides are reapplied when processing restarts)
     hasCallPlaceholders = (space->getType() == IPTR_SPACEBASE);
+  }
   warningissued = false;
   loadGuardSearch = false;
 }
@@ -2577,7 +2578,10 @@ void Heritage::bumpDeadcodeDelay(AddrSpace *spc)
     return;			// there is already a global delay
   if (fd->getOverride().hasDeadcodeDelay(spc))
     return;			// A delay has already been installed
-  fd->getOverride().insertDeadcodeDelay(spc,spc->getDeadcodeDelay()+1);
+  int4 newDelay = getInfo(spc)->deadcodedelay + 1;
+  if (newDelay < pass)
+    newDelay = pass;	// Delay dead code past the pass that discovered the new Varnodes
+  fd->getOverride().insertDeadcodeDelay(spc,newDelay);
   fd->setRestartPending(true);
 }
 
@@ -2696,6 +2700,7 @@ void Heritage::heritage(void)
       }
     }
     needwarning = false;
+    bool latediscovery = false;
     iter = fd->beginLoc(info->space);
     enditer = fd->endLoc(info->space);
 
@@ -2706,11 +2711,16 @@ void Heritage::heritage(void)
       if (vn->isWriteMask()) continue;
       int4 prev = 0;
       LocationMap::iterator liter = globaldisjoint.add(vn->getAddr(),vn->getSize(),pass,prev);
-      if (prev == 0)		// All new location being heritaged, or intersecting with something new
+      if (prev == 0) {		// All new location being heritaged, or intersecting with something new
+	if (pass > info->delay)
+	  latediscovery = true;	// New range discovered after the space's first heritage pass
 	disjoint.add((*liter).first,(*liter).second.size,MemRange::new_addresses);
+      }
       else if (prev==2) { // If completely contained in range from previous pass
 	if (vn->isHeritageKnown()) continue; // Don't heritage if we don't have to 
 	if (vn->hasNoDescend()) continue;
+	if (pass > info->delay)
+	  latediscovery = true;	// New Varnode in an old range, after the space's first heritage pass
 	if ((!needwarning)&&(info->deadremoved>0)&&!fd->isJumptableRecoveryOn()) {
 	  needwarning = true;
 	  bumpDeadcodeDelay(vn->getSpace());
@@ -2719,6 +2729,8 @@ void Heritage::heritage(void)
 	disjoint.add((*liter).first,(*liter).second.size,MemRange::old_addresses);
       }
       else {	// Partially contained in old range, but may contain new stuff
+	if (pass > info->delay)
+	  latediscovery = true;	// New range discovered after the space's first heritage pass
 	disjoint.add((*liter).first,(*liter).second.size,MemRange::old_addresses | MemRange::new_addresses);
 	if ((!needwarning)&&(info->deadremoved>0)&&!fd->isJumptableRecoveryOn()) {
 	  // TODO: We should check if this varnode is tiled by previously heritaged ranges
@@ -2729,6 +2741,14 @@ void Heritage::heritage(void)
 	  warnvn = vn;
 	}
       }
+    }
+
+    if (latediscovery && info->delay > 0 && info->deadremoved == 0 && info->deadcodedelay <= pass &&
+	!fd->isJumptableRecoveryOn()) {
+      // Late discoveries are still being made for this space, but dead code removal has not
+      // yet occurred.  Delay dead code removal further, as data-flow that will reach the new
+      // Varnodes (through simplification of indirect pointers) may still be uncovered.
+      info->deadcodedelay = pass + 1;
     }
 
     if (needwarning) {
