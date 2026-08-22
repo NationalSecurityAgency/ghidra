@@ -69,4 +69,16 @@ public class DBTraceProgramViewListing extends AbstractDBTraceProgramViewListing
 			throw new AssertionError(e);
 		}
 	}
+
+	@Override
+	public int anonymizeCommentHistory(String anonymousName) {
+		// Trace programs don't support comment history anonymization
+		return 0;
+	}
+
+	@Override
+	public int anonymizeCommentHistory(String anonymousName, Address addr) {
+		// Trace programs don't support comment history anonymization
+		return 0;
+	}
 }

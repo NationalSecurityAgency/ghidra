@@ -100,4 +100,26 @@ class CommentHistoryAdapterV0 extends CommentHistoryAdapter {
 	int getRecordCount() {
 		return table.getRecordCount();
 	}
+
+	@Override
+	void anonymizeAllRecords(String anonymousName) throws IOException {
+		// Use table.iterator() instead of getAllRecords() to avoid issues
+		// with AddressKeyRecordIterator when modifying records during iteration
+		RecordIterator iter = table.iterator();
+		while (iter.hasNext()) {
+			DBRecord rec = iter.next();
+			rec.setString(HISTORY_USER_COL, anonymousName);
+			table.putRecord(rec);
+		}
+	}
+
+	@Override
+	void anonymizeRecordsByAddress(String anonymousName, Address addr) throws IOException {
+		RecordIterator iter = getRecordsByAddress(addr);
+		while (iter.hasNext()) {
+			DBRecord rec = iter.next();
+			rec.setString(HISTORY_USER_COL, anonymousName);
+			table.putRecord(rec);
+		}
+	}
 }
