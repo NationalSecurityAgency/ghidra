@@ -5117,12 +5117,11 @@ sbfiz_lsb64: "#"^imm is ImmR [ imm = 64 - ImmR; ] { export *[const]:4 imm; }
 :sbfiz Rd_GPR32, Rn_GPR32, sbfiz_lsb, sbfiz_width
 is sbfiz_lsb & sbfiz_width & ImmS_LT_ImmR=1 & ImmS_EQ_ImmR=0 & sf=0 & opc=0 & b_2428=0x13 & b_2323=0 & n=0 & b_21=0 & b_15=0 & ImmRConst32 & ImmSConst32 & DecodeWMask32 & DecodeTMask32 & Rn_GPR32 & Rd_GPR32 & Rd_GPR64
 {
-	local wmask:4 = DecodeWMask32;
-	local tmask:4 = DecodeTMask32;
+	local shift_up:4 = 31 - ImmSConst32;
+	local shift_left:4 = 32 - ImmRConst32;
 	local src:4 = Rn_GPR32;
-	local bot:4 = ((src>>ImmRConst32)|(src<<(32-ImmRConst32))) & wmask;
-	local top:4 = (((src>>ImmSConst32)&0x1)*(-1))&0xffffffff;
-	Rd_GPR64 = zext((top & ~(tmask)) | (bot & tmask));
+	local sign_extended:4 = (src << shift_up) s>> shift_up;
+	Rd_GPR64 = zext(sign_extended << shift_left);
 }
 
 # C6.2.267 SBFIZ page C6-1751 line 103178 MATCH x13000000/mask=x7f800000
@@ -5139,12 +5138,11 @@ is sbfiz_lsb & sbfiz_width & ImmS_LT_ImmR=1 & ImmS_EQ_ImmR=0 & sf=0 & opc=0 & b_
 :sbfiz Rd_GPR64, Rn_GPR64, sbfiz_lsb64, sbfiz_width
 is sbfiz_lsb64 & sbfiz_width & ImmS_LT_ImmR=1 & ImmS_EQ_ImmR=0 & sf=1 & opc=0 & b_2428=0x13 & b_2323=0 & n=1 & ImmRConst64 & ImmSConst64 & DecodeWMask64 & DecodeTMask64 & Rn_GPR64 & Rd_GPR64
 {
-	local wmask:8 = DecodeWMask64;
-	local tmask:8 = DecodeTMask64;
+	local shift_up:8 = 63 - ImmSConst64;
+	local shift_left:8 = 64 - ImmRConst64;
 	local src:8 = Rn_GPR64;
-	local bot:8 = ((src>>ImmRConst64)|(src<<(64-ImmRConst64))) & wmask;
-	local top:8 = ((src>>ImmSConst64)&0x1)*(-1);
-	Rd_GPR64 = (top & ~(tmask)) | (bot & tmask);
+	local sign_extended:8 = (src << shift_up) s>> shift_up;
+	Rd_GPR64 = sign_extended << shift_left;
 }
 
 # C6.2.268 SBFM page C6-1753 line 103272 MATCH x13000000/mask=x7f800000
