@@ -19,6 +19,8 @@ define pcodeop storeVectorElementHalfWordIndexed;
 define pcodeop storeVectorElementWordIndexed;
 define pcodeop storeVectorIndexed;
 define pcodeop storeVectorIndexedLRU;
+define pcodeop storeVectorLeftIndexed;
+define pcodeop storeVectorRightIndexed;
 define pcodeop vectorAddCarryoutUnsignedWord;
 define pcodeop vectorAddFloatingPoint;
 define pcodeop vectorAddSignedByteSaturate;
@@ -281,10 +283,90 @@ define pcodeop vectorUnpackLowSignedHalfWord;
 }
 
 :stvxl vrS,RA_OR_ZERO,B		is OP=31 & vrS & B & RA_OR_ZERO & XOP_1_10=487 & Rc=0
-{   # TODO definition 
+{   # TODO definition
 	tmp:$(REGISTER_SIZE) = (RA_OR_ZERO + B) & 0xfffffffffffffff0;
 	*[ram]:16 tmp = vrS;
 	# mark_as_not_likely_to_be_needed_again_anytime_soon(tmp);
+}
+
+# Cell BE / Xenon unaligned 128-bit vector load/store: lvlx, lvrx, stvlx, stvrx.
+# Each works on the 16-byte-aligned block holding EA = (RA|0) + RB, moving the
+# bytes between EA and the block edge into (or out of) one end of the register.
+
+# lvlx grabs [EA, top of block) and left-justifies it in vrD, zeros elsewhere.
+# The 128-bit load is big-endian, so a left shift by (EA & 15)*8 lifts the byte
+# at EA up to the top.
+:lvlx vrD,RA_OR_ZERO,B		is OP=31 & vrD & RA_OR_ZERO & B & XOP_1_10=519 & Rc=0
+{
+	build RA_OR_ZERO;
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	sh:$(REGISTER_SIZE) = (ea & 0xf) * 8;
+	tmp:$(REGISTER_SIZE) = ea & 0xfffffffffffffff0;
+	data:16 = *[ram]:16 tmp;
+	vrD = data << sh;
+}
+
+# lvrx grabs [bottom of block, EA) and right-justifies it in vrD, zeros elsewhere.
+# Shift right by (16 - (EA & 15))*8 bits, split into two shifts so an aligned EA
+# (a full 128-bit shift) still yields 0 instead of hitting the >= width case.
+:lvrx vrD,RA_OR_ZERO,B		is OP=31 & vrD & RA_OR_ZERO & B & XOP_1_10=551 & Rc=0
+{
+	build RA_OR_ZERO;
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	sh:$(REGISTER_SIZE) = (~ea & 0xf) * 8;
+	tmp:$(REGISTER_SIZE) = ea & 0xfffffffffffffff0;
+	data:16 = *[ram]:16 tmp;
+	vrD = (data >> sh) >> 8;
+}
+
+# stvlx / stvrx write a variable byte count (EA out to the block edge). No
+# fixed-width store fits that, so they stay as pcodeops.
+:stvlx vrS,RA_OR_ZERO,B		is OP=31 & vrS & RA_OR_ZERO & B & XOP_1_10=647 & Rc=0
+{
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	storeVectorLeftIndexed(ea, vrS);
+}
+
+:stvrx vrS,RA_OR_ZERO,B		is OP=31 & vrS & RA_OR_ZERO & B & XOP_1_10=679 & Rc=0
+{
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	storeVectorRightIndexed(ea, vrS);
+}
+
+# Same four with an LRU cache hint. The hint changes nothing we model, so the
+# pcode matches the base forms. Watch out: lvlxl (775) and lvrxl (807) reuse the
+# encodings embedded PowerISA hands to stvepxl / stvepx. ppc_isa.sinc drops those
+# when AltiVec is on (INCLUDE_ALTIVEC) so these win.
+:lvlxl vrD,RA_OR_ZERO,B		is OP=31 & vrD & RA_OR_ZERO & B & XOP_1_10=775 & Rc=0
+{
+	build RA_OR_ZERO;
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	sh:$(REGISTER_SIZE) = (ea & 0xf) * 8;
+	tmp:$(REGISTER_SIZE) = ea & 0xfffffffffffffff0;
+	data:16 = *[ram]:16 tmp;
+	vrD = data << sh;
+}
+
+:lvrxl vrD,RA_OR_ZERO,B		is OP=31 & vrD & RA_OR_ZERO & B & XOP_1_10=807 & Rc=0
+{
+	build RA_OR_ZERO;
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	sh:$(REGISTER_SIZE) = (~ea & 0xf) * 8;
+	tmp:$(REGISTER_SIZE) = ea & 0xfffffffffffffff0;
+	data:16 = *[ram]:16 tmp;
+	vrD = (data >> sh) >> 8;
+}
+
+:stvlxl vrS,RA_OR_ZERO,B	is OP=31 & vrS & RA_OR_ZERO & B & XOP_1_10=903 & Rc=0
+{
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	storeVectorLeftIndexed(ea, vrS);
+}
+
+:stvrxl vrS,RA_OR_ZERO,B	is OP=31 & vrS & RA_OR_ZERO & B & XOP_1_10=935 & Rc=0
+{
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	storeVectorRightIndexed(ea, vrS);
 }
 
 :vaddcuw vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & XOP_0_10=384

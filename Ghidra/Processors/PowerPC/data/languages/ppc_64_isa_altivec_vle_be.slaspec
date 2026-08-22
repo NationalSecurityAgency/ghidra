@@ -13,6 +13,10 @@
 
 @define CTR_OFFSET "32"
 
+# Pick the AltiVec meaning for the encodings embedded PowerISA also claims
+# (the stvepx/stvepxl guard in ppc_isa.sinc).
+@define INCLUDE_ALTIVEC "1"
+
 @include "ppc_common.sinc"
 @include "ppc_isa.sinc"
 
