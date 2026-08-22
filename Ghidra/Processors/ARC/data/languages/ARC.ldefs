@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<language_definitions>
+  <language processor="ARC32"
+            endian="big"
+            size="32"
+            variant="default"
+            version="1.0"
+            slafile="ARC32_be.sla"
+            processorspec="ARC32.pspec"
+            id="ARC32:BE:32:default">
+    <description>ARC 32-bit (Legacy ARC), big endian</description>
+    <compiler name="default" spec="ARC32.cspec" id="default"/>
+    <external_name tool="DWARF.register.mapping.file" name="ARC32.dwarf"/>
+  </language>
+  <language processor="ARC32"
+            endian="little"
+            size="32"
+            variant="default"
+            version="1.0"
+            slafile="ARC32_le.sla"
+            processorspec="ARC32.pspec"
+            id="ARC32:LE:32:default">
+    <description>ARC 32-bit (Legacy ARC), little endian</description>
+    <compiler name="default" spec="ARC32.cspec" id="default"/>
+    <external_name tool="DWARF.register.mapping.file" name="ARC32.dwarf"/>
+  </language>
+</language_definitions>
