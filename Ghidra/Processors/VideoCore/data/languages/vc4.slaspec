@@ -1,0 +1,1964 @@
+# sleigh specification file for Broadcom VideoCore IV
+
+## TODO:
+## - vector registers and instructions
+
+define endian=little;
+define alignment=2;
+
+define space ram type=ram_space size=4 default;
+define space register type=register_space size=4;
+
+# General registers
+define register offset=0 size=4 [
+	r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15
+	r16 r17 r18 r19 r20 r21 r22 r23 gp sp lr r27 r28 r29 sr pc ];
+
+# Status register fields
+@define SR_U  "sr[31,1]"
+@define SR_I  "sr[30,1]"
+@define SR_S  "sr[29,1]"
+@define SR_CB "sr[ 4,2]"
+@define SR_Z  "sr[ 3,1]"
+@define SR_N  "sr[ 2,1]"
+@define SR_C  "sr[ 1,1]"
+@define SR_V  "sr[ 0,1]"
+
+# Flags as registers to improve decompiler output
+define register offset=0x100 size=1 [ Z N C V ];
+
+# Processor control registers
+@define PCTL_REG_BASE "0x200"
+define register offset=$(PCTL_REG_BASE) size=4 [
+	p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15
+	p16 p17 p18 p19 p20 p21 p22 p23 p24 p25 p26 p27 p28 p29 p30 p31 ];
+
+
+################################################################
+# Context
+################################################################
+
+define register offset=0x2000 size=4 contextreg;
+
+define context contextreg
+  # common fields
+  chkcc    = (28,31)	# condition code to be checked
+
+  # load/store
+  ldstop   = ( 0, 2)	# load/store operation
+
+  # ALU
+  aluop    = ( 0, 5)	# ALU operation (full)
+
+  # ldm/stm
+  storesp  = (21,21)	# stm: save resulting sp?
+  loadsp   = (20,20)	# ldm: restore sp at end?
+  loadpc   = (19,19)	# ldm: make a jump?
+  mspoff   = (11,18)	# ldm/stm: memory offset of the sp register
+  mregidx  = ( 6,10)	# ldm/stm: current register
+  mcount   = ( 0, 5)	# ldm/stm: remaining number of registers
+;
+
+################################################################
+# Tokens
+################################################################
+
+define token opword(16)
+  Op16    = ( 0,15)
+  op11    = ( 5,15)
+  Op8     = ( 8,15)
+  Op7     = ( 9,15)
+  Rr      = ( 5, 9)
+  Sbit6   = (10,10)
+  Uoff5   = ( 4, 8)
+  OpAux   = ( 5, 7)
+  Rbase2  = ( 8, 9)
+  Pd      = ( 0, 4)
+  Rd      = ( 0, 4)
+
+  # conditional branches
+  Cc      = ( 7,10)
+  Off7    = ( 0, 6) signed
+
+  # ldm/stm
+  Op9     = ( 7,15)
+  Rmbase  = ( 5, 6)
+  Count   = ( 0, 4)
+  Rd6     = ( 0, 4)
+  Rd16    = ( 0, 4)
+  Rd24    = ( 0, 4)
+
+  # sp-relative addressing
+  Off6    = ( 5,10) signed
+
+  # load/store
+  LdStOp    = ( 5, 7)
+  # load/store with 12-bit offset
+  Off12Sign = ( 8, 8)
+  LdStOpLo  = ( 8,10)
+
+  # instruction using RdLo and RrLo
+  RrLo  = ( 4, 7)
+  RdLo  = ( 0, 3)
+    # 32-bit load/store with base and aligned offset
+    Op4     = (12,15)
+    Uoff4   = ( 8,11)
+    # 16-bit ALU instructions
+    Op3     = (13,15)
+      # ALU with register
+      AluLo = ( 8,12)
+      # ALU with 5-bit unsigned immediate
+      Alu4  = ( 9,12)
+      Imm5  = ( 4, 8)
+
+  # ALU with immediate
+  Op6     = (10,15)
+  Alu5    = ( 5, 9)
+
+  # triadic ALU
+  Op5     = (11,15)
+  Alu6    = ( 5,10)
+    # scaled addition/subtraction
+    ScAdd = ( 5, 6)
+    ScSub = ( 5, 8)
+;
+
+define token argword (16)
+  # common fields
+  Ra        = (11,15)
+
+  # all conditional instructions
+  CcSfx     = ( 7,10)
+
+  # argument B
+  argHasImm = ( 6, 6)
+  argBit5   = ( 5, 5)
+  Rb        = ( 0, 4)
+  argImm6   = ( 0, 5) signed
+
+  # load/store with 12-bit offset
+  argOff11  = ( 0,10) signed
+  argUoff11 = ( 0,10)
+
+  # move to/from control registers
+  argOp11   = ( 5,15)
+  Pb        = ( 0, 4)
+;
+
+define token opdword(32)
+  # common fields
+  dwOp4    = (12,15)
+
+  # all conditional instructions
+  dwCc     = ( 8,11)
+
+  # branches
+  dwLink    = ( 7, 7)
+
+  # conditional branches
+  dwOff23Hi = ( 0, 6) signed
+  dwOff23Lo = (16,31)
+
+  # branch and link
+  dwOff27Hi  = ( 8,11) signed
+  dwOff27Mid = ( 0, 6)
+  dwOff27Lo  = (16,31)
+
+  # loop instructions
+  dwImmA    = ( 4, 7) signed
+  dwRa      = ( 4, 7)
+  dwRd      = ( 0, 3)
+  dwHasImmB = (31,31)
+  dwHasImmA = (30,30)
+  # with register B
+  dwRb      = (26,29)
+  dwOff10   = (16,25) signed
+  # with immediate B
+  dwImmB    = (24,29)
+  dwOff8    = (16,23) signed
+;
+
+define token arg16(16)
+  Imm16   = ( 0,15) signed
+  Sbit16  = (15,15)
+;
+
+define token arg32(32)
+  Imm32   = ( 0,31)
+  Imm27   = ( 0,26) signed
+  Sbit27  = (26,26)
+  Rbase   = (27,31)
+;
+
+define token vec48(48)
+  # common fields
+  Vop      = (10,15)
+  Vopsize  = (11,11) # 48-bit or 80-bit instructions
+  VRoff    = ( 0, 2)
+  Vbased   = (29,31)
+  Vseld    = (29,31)
+  VseldHi  = (30,31)
+  Vdir     = (28,28)
+  Vd       = (22,27)
+  VdHi     = (26,27)
+  VdLo     = (22,25)
+  Vbasea   = (19,21)
+  Vsela    = (19,21)
+  VselaHi  = (20,21)
+  Vhasoffa = (18,18)
+  VaHi     = (16,17)
+  VaLo     = (44,47)
+  Vhasoffd = (43,43)
+  Vhasimm  = (42,42)
+  Vbaseb   = (39,41)
+  Vselb    = (39,41)
+  VselbHi  = (40,41)
+  Vpred48  = (39,41)
+  Vhasoffb = (38,38)
+  Vsetf48  = (38,38)
+  Vb       = (32,37)
+  VbHi     = (36,37)
+  VbLo     = (32,35)
+  Vimm6    = (32,37) signed
+  VRm      = (32,36)	# doc says 6 bits, but there are only 32 regs?
+
+  # memory operations
+  Vmop     = ( 5, 9)
+  Vmwidth  = ( 3, 4)
+
+  # ALU operations
+  Vawidth  = ( 9, 9)
+  Vaop     = ( 3, 8)
+
+  # 80-bit instructions
+  Vsetf80  = (43,43)
+  Vimm16Lo = (32,41)
+  Vdird    = (28,28)
+  Vdira    = (18,18)
+  Vdirb    = (38,38)
+  Vrep     = ( 0, 2)
+  VmoffLo  = (32,38)
+;
+
+define token vecaux(32)
+  # common fields
+  VRoffd   = (12,15)
+  Vincd    = (11,11)
+  Vcboffd  = (10,10)
+  VRoffa   = ( 6, 9)
+  Vinca    = ( 5, 5)
+  Vcboffa  = ( 4, 4)
+  Vrowa    = ( 0, 3)
+  Vpred80  = (29,31)
+  Vsru     = (22,28)
+
+  # vector addressing
+  VRoffb   = (18,21)
+  Vincb    = (17,17)
+  Vcboffb  = (16,16)
+
+  # immediate value
+  Vimm16Hi = (16,21) signed
+
+  # register-relative addressing
+  VmoffHi  = (22,28) signed
+  VRmbase  = (18,21)
+  VmoffMid = (16,17)
+;
+
+attach variables [ Rd Ra Rb Rr Rbase VRm ] [
+	r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15
+	r16 r17 r18 r19 r20 r21 r22 r23 gp sp lr r27 r28 r29 sr pc ];
+
+attach variables [ RdLo RrLo dwRa dwRb dwRd VRoffd VRoffa VRoffb VRmbase ] [
+	r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 ];
+
+attach variables [ VRoff ] [
+	r0 r1 r2 r3 r4 r5 r6 r7 ];
+
+# Base register for ldm/stm
+attach variables [ Rmbase ] [ r0 r6 r16 gp ];
+
+# Base register for ld/st with 16-bit offset
+attach variables [ Rbase2 ] [ gp sp pc r0 ];
+
+# last register for ldm/stm depends on first register
+attach variables [ Rd6 ] [
+	r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 r16 r17 r18 r19 r20 r21
+	r22 r23 gp sp lr r27 r28 r29 sr pc r0 r1 r2 r3 r4 r5 ];
+attach variables [ Rd16 ] [
+	r16 r17 r18 r19 r20 r21 r22 r23 gp sp lr r27 r28 r29 sr pc
+	r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 ];
+attach variables [ Rd24 ] [
+	gp sp lr r27 r28 r29 sr pc r0 r1 r2 r3 r4 r5 r6 r7
+	r8 r9 r10 r11 r12 r13 r14 r15 r16 r17 r18 r19 r20 r21 r22 r23 ];
+
+attach variables [ Pd Pb ] [
+	p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15
+	p16 p17 p18 p19 p20 p21 p22 p23 p24 p25 p26 p27 p28 p29 p30 p31 ];
+
+attach names [ Cc CcSfx dwCc ] [
+  "eq" "ne" "cs" "cc" "mi" "pl" "vs" "vc"
+  "hi" "ls" "ge" "lt" "gt" "le" ""   "f" ];
+
+attach names [ Vmwidth ] [
+  "8" "16" "32" "unk"
+];
+
+attach names [ Vawidth ] [ "16" "32" ];
+
+attach names [ Vdir Vdird Vdira Vdirb ] [ "H" "V" ];
+attach names [ Vincd Vinca Vincb ] [ "" "++" ];
+attach names [ Vcboffd Vcboffa Vcboffb ] [ "" "*" ];
+
+attach names [ Vrep ] [
+  "" " REP2" " REP4" " REP8" " REP16" " REP32" " REP64" " REP r0"
+];
+
+attach names [ Vsetf48 Vsetf80 ] [
+  "" " SETF"
+];
+
+attach names [ Vpred48 Vpred80 ] [
+  "" " NV" " IFZ" " IFNZ" " IFN" " IFNN" " IFC" " IFNC"
+];
+
+attach names [ Vsru ] [
+  "" " sru001" " sru002" " sru003"
+  " sru004" " sru005" " (clra)" " sru007"
+  " sru008" " sru009" " sru010" " sru011"
+  " sru012" " sru013" " sru014" " sru015"
+  " sru016" " sru017" " sru018" " sru019"
+  " sru020" " sru021" " sru022" " sru023"
+  " sru024" " sru025" " sru026" " sru027"
+  " sru028" " sru029" " sru030" " sru031"
+  " UADD" " USUB" " UACC" " UDEC"
+  " CLRA" " CLRA USUB" " CLRA UACC" " CLRA UDEC"
+  " SADD" " SSUB" " SACC" " SDEC"
+  " CLRA SADD" " CLRA SSUB" " CLRA SACC" " CLR SDEC"
+  " UADDH" " USUBH" " UACCH" " UDECH"
+  " CLRA UADDH" " CLRA USUBH" " CLRA UACCH" " CLR UDECH"
+  " SADDH" " SSUBH" " SACCH" " SDECH"
+  " CLRA SADDH" " CLRA SSUBH" " CLRA SACCH" " CLRA SDECH"
+  " SUMU r0" " SUMU r1" " SUMU r2" " SUMU r3"
+  " SUMU r4" " SUMU r5" " SUMU r6" " SUMU r7"
+  " SUMS r0" " SUMS r1" " SUMS r2" " SUMS r3"
+  " SUMS r4" " SUMS r5" " SUMS r6" " SUMS r7"
+  " MAX2 r0" " MAX2 r1" " MAX2 r2" " MAX2 r3"
+  " MAX2 r4" " MAX2 r5" " MAX2 r6" " MAX2 r7"
+  " IMIN r0" " IMIN r1" " IMIN r2" " IMIN r3"
+  " IMIN r4" " IMIN r5" " IMIN r6" " IMIN r7"
+  " MAX4 r0" " MAX4 r1" " MAX4 r2" " MAX4 r3"
+  " MAX4 r4" " MAX4 r5" " MAX4 r6" " MAX4 r7"
+  " IMAX r0" " IMAX r1" " IMAX r2" " IMAX r3"
+  " IMAX r4" " IMAX r5" " IMAX r6" " IMAX r7"
+  " MAX6 r0" " MAX6 r1" " MAX6 r2" " MAX6 r3"
+  " MAX6 r4" " MAX6 r5" " MAX6 r6" " MAX6 r7"
+  " MAX r0" " MAX r1" " MAX r2" " MAX r3"
+  " MAX r4" " MAX r5" " MAX r6" " MAX r7"
+];
+
+attach values [ Vbased Vbasea Vbaseb ] [ 0 16 32 48 0 32 0 _ ];
+
+################################################################
+# Macros
+################################################################
+
+macro pack_sr()
+{
+  $(SR_Z) = Z;
+  $(SR_N) = N;
+  $(SR_C) = C;
+  $(SR_V) = V;
+}
+
+macro unpack_sr()
+{
+  Z = $(SR_Z);
+  N = $(SR_N);
+  C = $(SR_C);
+  V = $(SR_V);
+}
+
+macro push(val) {
+  sp = sp - 4;
+  *[ram]:4 sp = val;
+}
+
+macro pop(val) {
+  val = *[ram]:4 sp;
+  sp = sp + 4;
+}
+
+macro pop_pc() {
+  local tmp:4;
+  pop(tmp);
+  return [tmp];
+}
+
+################################################################
+# Memory Offset
+################################################################
+
+with memoff12: {
+  : +argUoff11 is Off12Sign=0 ; argUoff11
+	{ local tmp:4 = argUoff11; export tmp; }
+  :  argOff11  is Off12Sign=1 ; argOff11
+	{ local tmp:4 = argOff11; export tmp; }
+  :           is Off12Sign=0 ; argOff11=0
+	{ local tmp:4 = 0; export tmp; }
+}
+
+with memoff16: {
+  : +Imm16 is Sbit16=0 & Imm16
+	{ local tmp:4 = Imm16; export tmp; }
+  :  Imm16 is Sbit16=1 & Imm16
+	{ local tmp:4 = Imm16; export tmp; }
+  :        is Sbit16=0 & Imm16=0
+	{ local tmp:4 = 0; export tmp; }
+}
+
+with memoff27: {
+  : +Imm27 is Sbit27=0 & Imm27
+	{ local tmp:4 = Imm27; export tmp; }
+  :  Imm27 is Sbit27=1 & Imm27
+	{ local tmp:4 = Imm27; export tmp; }
+  :        is Sbit27=0 & Imm27=0
+	{ local tmp:4 = 0; export tmp; }
+}
+
+with spoff5: {
+  : sp+off is Uoff5 & sp [ off = Uoff5 << 2; ]
+	{ local tmp:4 = sp + off; export tmp; }
+  : sp is Uoff5=0 & sp
+	{ export sp; }
+}
+
+with spoff6: {
+  : sp+off is Sbit6=0 & Off6 & sp [ off = Off6 << 2; ]
+	{ local tmp:4 = sp + off; export tmp; }
+  : sp^off is Sbit6=1 & Off6 & sp [ off = Off6 << 2; ]
+	{ local tmp:4 = sp + off; export tmp; }
+  : sp     is Sbit6=0 & Off6=0 & sp
+	{ export sp; }
+}
+
+################################################################
+# Memory Locations
+################################################################
+
+rel7: reloc is Off7 [ reloc = inst_start + (Off7 << 1); ]
+	{ export *:4 reloc; }
+rel8: reloc is dwOff8 [ reloc = inst_start + (dwOff8 << 1); ]
+	{ export *:4 reloc; }
+rel10: reloc is dwOff10 [ reloc = inst_start + (dwOff10 << 1); ]
+	{ export *:4 reloc; }
+rel16: reloc is Imm16 [ reloc = inst_start + Imm16; ]
+	{ export *:4 reloc; }
+rel23: reloc is dwOff23Hi & dwOff23Lo
+	[ reloc = inst_start + (dwOff23Hi << 17 | dwOff23Lo << 1); ]
+	{ export *:4 reloc; }
+rel27: reloc is dwOff27Hi & dwOff27Mid & dwOff27Lo
+	[ reloc = inst_start +
+		(dwOff27Hi << 24 | dwOff27Mid << 17 | dwOff27Lo << 1); ]
+	{ export *:4 reloc; }
+rel32: reloc is Imm32 [ reloc = inst_start + Imm32; ]
+	{ export *:4 reloc; }
+
+abs32: Imm32 is Imm32 { export *:4 Imm32; }
+
+################################################################
+# Condition codes
+################################################################
+
+with chkcond: {
+  : is chkcc=0  { local tmp:1 = Z; export tmp; }	# eq
+  : is chkcc=1  { local tmp:1 = !Z; export tmp; }	# ne
+  : is chkcc=2  { local tmp:1 = C; export tmp; }	# cs / lo
+  : is chkcc=3  { local tmp:1 = !C; export tmp; }	# cc / hs
+  : is chkcc=4  { local tmp:1 = N; export tmp; }	# mi
+  : is chkcc=5  { local tmp:1 = !N; export tmp; }	# pl
+  : is chkcc=6  { local tmp:1 = V; export tmp; }	# vs
+  : is chkcc=7  { local tmp:1 = !V; export tmp; }	# vc
+  : is chkcc=8  { local tmp:1 = !C && !Z; export tmp; }	# hi
+  : is chkcc=9  { local tmp:1 =  C ||  Z; export tmp; }	# ls
+  : is chkcc=10 { local tmp:1 = (N == V); export tmp; }	# ge
+  : is chkcc=11 { local tmp:1 = (N != V); export tmp; }	# lt
+  : is chkcc=12 { local tmp:1 = (N == V) && !Z; export tmp; }	# gt
+  : is chkcc=13 { local tmp:1 = (N != V) ||  Z; export tmp; }	# le
+  : is chkcc=14 { local tmp:1 = 1; export tmp; }
+  : is chkcc=15 { local tmp:1 = 0; export tmp; }
+}
+
+# Conditional instructions
+ccsfx: is epsilon ... {}
+cond: is epsilon ... {}
+with : (Op5=0x18 | Op7=0x50 | Op7=0x52 | Op6=0x32) ... {
+  ccsfx: "."^CcSfx is (Op16 ; CcSfx) {}
+  cond:  "."^CcSfx is (Op16 ; CcSfx) & chkcond [ chkcc = CcSfx; ]
+	{ if (!chkcond) goto inst_next; }
+
+  ccsfx: is Op16 ; CcSfx=14 {}
+  cond:  is Op16 ; CcSfx=14 {}
+}
+
+################################################################
+# System instructions
+################################################################
+
+define pcodeop swi;
+macro exception(num) {
+  local tmp:1 = num;
+  local intloc:4 = swi(tmp);
+  call [intloc];
+}
+
+:bkpt is Op16=0x0000
+	{ exception(0x0e); }
+:nop is Op16=0x0001 {}
+
+define pcodeop version;
+:version Rd is op11=0x007 & Rd
+	{ Rd = version(); }
+
+:sleep is Op16=0x0002
+	{ }	# provisional
+
+:mov Pd, Rb is Op8=0xcc & OpAux=0 & Pd ; argOp11=0 & Rb
+	{ Pd = Rb; }
+:mov Rd, Pb is Op8=0xcc & OpAux=1 & Rd ; argOp11=0 & Pb
+	{ Rd = Pb; }
+
+:user is Op16=0x0003 {
+  $(SR_U) = 1;
+}
+
+define pcodeop irq_enable;
+:ei is Op16=0x0004 {
+  $(SR_I) = 1;
+  irq_enable();
+}
+
+define pcodeop irq_disable;
+:di is Op16=0x0005 {
+  $(SR_I) = 0;
+  irq_disable();
+}
+
+:cbclr is Op16=0x0006 {
+  $(SR_CB) = 0;
+}
+:cbadd1 is Op16=0x0007 {
+  $(SR_CB) = $(SR_CB) + 1;
+}
+:cbadd2 is Op16=0x0008 {
+  $(SR_CB) = $(SR_CB) + 2;
+}
+:cbadd3 is Op16=0x0009 {
+  $(SR_CB) = $(SR_CB) + 3;
+}
+
+:rti is Op16=0x000a {
+  local new_sr:4;
+  local new_pc:4;
+  pop(new_sr);
+  pop(new_pc);
+  sr = new_sr;
+  unpack_sr();
+  return [new_pc];
+}
+
+:swi Rd is op11=0x001 & Rd {
+  exception(0x20 + (Rd:1 & 0x1f));
+}
+
+:swi Count is op11=0x00e & Count
+	{ exception(0x20 + Count); }
+# FIXME: is this merely an alias for the previous instruction ???
+:swi num is op11=0x00f & Count [ num = Count + 32; ]
+	{ exception(0x20 + Count); }
+
+# 0000 0000 110d dddd ".short 0x%04x{0x00c0+d} ; mov unknown_reg, r%i{d}"
+
+# 0000 0001 010d dddd ".short 0x%04x{0x0140+d} ; r%i{d}"
+# 0000 0001 011d dddd ".short 0x%04x{0x0160+d} ; r%i{d}"
+# 0000 0001 10dd dddd ".short 0x%04x{0x0180+d} ; r%i{d}"
+
+################################################################
+# Branch Instructions
+################################################################
+
+:b rel32 is Op16=0xe100 ; rel32
+	{ goto rel32; }
+
+:j abs32 is Op16=0xe000 ; abs32
+	{ goto abs32; }
+
+with : op11=0x002 {
+  :b Rd is Rd {
+    goto [Rd];
+  }
+  :rts is Rd=26 {
+    return [lr];
+  }
+}
+
+:bl Rd is op11=0x003 & Rd {
+  lr = inst_next;
+  call [Rd];
+}
+
+:bl rel27 is dwOp4=0x9 & dwLink=1 & rel27 {
+  lr = inst_next;
+  call rel27;
+}
+
+:bl rel32 is Op16=0xe300 ; rel32 {
+  lr = inst_next;
+  call rel32;
+}
+
+:jl abs32 is Op16=0xe200 ; abs32 {
+  lr = inst_next;
+  call abs32;
+}
+
+# Table/Switch instructions
+
+# branch using indirect byte displacement  b *(pc+rd)
+:switch.b Rd is op11=0x004 & Rd {
+  local tbl:4 = inst_next;
+  local val:1 = *(tbl + Rd);
+  local target:4 = inst_next + (sext(val) << 1);
+  goto [target];
+}
+
+:switch Rd is op11=0x005 & Rd {
+  local tbl:4 = inst_next;
+  local val:2 = *(tbl + (Rd << 1));
+  local target:4 = inst_next + (sext(val) << 1);
+  goto [target];
+}
+
+# Conditional Branches
+# Make a separate constructor for unconditional branches using the
+# "true" condition to mark these instructions as UNCONDITIONAL_JUMP.
+with : Op5=0x03 {
+  :b^Cc rel7 is Cc & rel7 & chkcond [ chkcc = Cc; ]
+	{ if (chkcond) goto rel7; }
+  :b rel7 is Cc=14 & rel7
+	{ goto rel7; }
+}
+with : dwOp4=0x9 & dwLink=0 {
+  :b^dwCc rel23 is dwCc & rel23 & chkcond [ chkcc = dwCc; ]
+	{ if (chkcond) goto rel23; }
+  :b rel23 is dwCc=14 & rel23
+	{ goto rel23; }
+}
+
+################################################################
+# Loop Instructions
+################################################################
+
+loopinc: dwRa   is dwHasImmA=0 & dwRa   { export dwRa; }
+loopinc: dwImmA is dwHasImmA=1 & dwImmA
+	{ local tmp:4 = dwImmA; export tmp; }
+
+loopend: dwRb   is dwHasImmB=0 & dwRb    { export dwRb; }
+loopend: dwImmB is dwHasImmB=1 & dwImmB
+	{ local tmp:4 = dwImmB; export tmp; }
+
+disploopend: dwRb   is dwHasImmB=0 & dwRb    {}
+disploopend: dwImmB is dwHasImmB=1 & dwImmB  {}
+
+looprel: rel10 is dwHasImmB=0 & rel10 { export rel10; }
+looprel: rel8  is dwHasImmB=1 & rel8  { export rel8; }
+
+with loopchkcond: {
+  : is dwCc=0 & dwRd & loopend		# eq
+	{ local tmp:1 = (dwRd == loopend); export tmp; }
+  : is dwCc=1 & dwRd & loopend		# ne
+	{ local tmp:1 = (dwRd != loopend); export tmp; }
+  : is dwCc=2 & dwRd & loopend		# cs / lo
+	{ local tmp:1 = (dwRd < loopend); export tmp; }
+  : is dwCc=3 & dwRd & loopend		# cc / hs
+	{ local tmp:1 = (dwRd >= loopend); export tmp; }
+  : is dwCc=4 & dwRd & loopend		# mi
+	{ local tmp:1 = (dwRd - loopend) s< 0; export tmp; }
+  : is dwCc=5 & dwRd & loopend		# pl
+	{ local tmp:1 = (dwRd - loopend) s>= 0; export tmp; }
+  : is dwCc=6 & dwRd & loopend		# vs
+	{ local tmp:1 = sborrow(dwRd, loopend); export tmp; }
+  : is dwCc=7 & dwRd & loopend		# vc
+	{ local tmp:1 = !sborrow(dwRd, loopend); export tmp; }
+  : is dwCc=8 & dwRd & loopend		# hi
+	{ local tmp:1 = (dwRd > loopend); export tmp; }
+  : is dwCc=9 & dwRd & loopend		# ls
+	{ local tmp:1 = (dwRd <= loopend); export tmp; }
+  : is dwCc=10 & dwRd & loopend		# ge
+	{ local tmp:1 = (dwRd s>= loopend); export tmp; }
+  : is dwCc=11 & dwRd & loopend		# lt
+	{ local tmp:1 = (dwRd s< loopend); export tmp; }
+  : is dwCc=12 & dwRd & loopend		# gt
+	{ local tmp:1 = (dwRd s> loopend); export tmp; }
+  : is dwCc=13 & dwRd & loopend		# le
+	{ local tmp:1 = (dwRd s<= loopend); export tmp; }
+  : is dwCc=14				# t
+	{ local tmp:1 = 1; export tmp; }
+  : is dwCc=15				# f
+	{ local tmp:1 = 0; export tmp; }
+}
+
+loopcond: dwCc is dwCc & loopchkcond { export loopchkcond; }
+
+with : dwOp4=0x8 {
+  :addcmpb^loopcond dwRd, loopinc, disploopend, looprel
+	is loopcond & dwRd & loopinc & disploopend & looprel {
+    dwRd = dwRd + loopinc;
+    build loopcond;
+    if (loopcond)
+      goto looprel;
+  }
+  :b^loopcond dwRd, disploopend, looprel
+	is loopcond & dwRd & dwHasImmA=1 & dwImmA=0 & disploopend & looprel {
+    if (loopcond)
+      goto looprel;
+  }
+}
+
+################################################################
+# Stack-relative and PC-relative Addressing
+################################################################
+
+:lea Rd, rel16 is op11=0x5ff & Rd ; rel16
+	{ Rd = &rel16; }
+
+:lea Rd, rel32 is op11=0x728 & Rd ; rel32
+	{ Rd = &rel32; }
+
+with : Op5=0x02 {
+  :lea Rd, (spoff6) is Rd & spoff6
+	{ Rd = spoff6; }
+  :add sp, off is Rd=25 & sp & Off6
+	[ off = Off6 << 2; ]
+	{ sp = sp + off; }
+}
+
+################################################################
+# Stack Manipulation Instructions
+################################################################
+
+# Register index to register mapping
+with mreg: {
+  : r0  is r0  & mregidx=0  { export r0; }
+  : r1  is r1  & mregidx=1  { export r1; }
+  : r2  is r2  & mregidx=2  { export r2; }
+  : r3  is r3  & mregidx=3  { export r3; }
+  : r4  is r4  & mregidx=4  { export r4; }
+  : r5  is r5  & mregidx=5  { export r5; }
+  : r6  is r6  & mregidx=6  { export r6; }
+  : r7  is r7  & mregidx=7  { export r7; }
+  : r8  is r8  & mregidx=8  { export r8; }
+  : r9  is r9  & mregidx=9  { export r9; }
+  : r10 is r10 & mregidx=10 { export r10; }
+  : r11 is r11 & mregidx=11 { export r11; }
+  : r12 is r12 & mregidx=12 { export r12; }
+  : r13 is r13 & mregidx=13 { export r13; }
+  : r14 is r14 & mregidx=14 { export r14; }
+  : r15 is r15 & mregidx=15 { export r15; }
+  : r16 is r16 & mregidx=16 { export r16; }
+  : r17 is r17 & mregidx=17 { export r17; }
+  : r18 is r18 & mregidx=18 { export r18; }
+  : r19 is r19 & mregidx=19 { export r19; }
+  : r20 is r20 & mregidx=20 { export r20; }
+  : r21 is r21 & mregidx=21 { export r21; }
+  : r22 is r22 & mregidx=22 { export r22; }
+  : r23 is r23 & mregidx=23 { export r23; }
+  : gp  is gp  & mregidx=24 { export gp; }
+  : sp  is sp  & mregidx=25 { export sp; }
+  : lr  is lr  & mregidx=26 { export lr; }
+  : r27 is r27 & mregidx=27 { export r27; }
+  : r28 is r28 & mregidx=28 { export r28; }
+  : r29 is r29 & mregidx=29 { export r29; }
+  : sr  is sr  & mregidx=30 { export sr; }
+  : pc  is pc  & mregidx=31 { export pc; }
+}
+
+with mendreg: {
+  : Rd   is Rmbase=0 & Rd   { export Rd; }
+  : Rd6  is Rmbase=1 & Rd6  { export Rd6; }
+  : Rd16 is Rmbase=2 & Rd16 { export Rd16; }
+  : Rd24 is Rmbase=3 & Rd24 { export Rd24; }
+}
+
+with stm_tail: {
+  : is storesp=0          {}
+  : is storesp=1 & mspoff { *(sp + mspoff) = sp; }
+}
+
+with stm_body: {
+  : is mcount=0 & stm_tail { build stm_tail; }
+  with : mcount!=0
+  {
+    : is mregidx!=24 & mreg & stm_body
+	[ mregidx = mregidx + 1; mcount = mcount - 1; ]
+	{ push(mreg); build stm_body; }
+    : is mregidx=24 & stm_body
+	[ mregidx = 25; mcount = mcount - 1;
+	  mspoff = mcount * 4; storesp = 1; ]
+	{ sp = sp - 4; build stm_body; }
+  }
+}
+
+with stm_start: {
+  : is Rmbase=0 & Count & stm_body
+	[ mcount = Count + 1; mregidx =  0 - 1; ] {}
+  : is Rmbase=1 & Count & stm_body
+	[ mcount = Count + 1; mregidx =  6 - 1; ] {}
+  : is Rmbase=2 & Count & stm_body
+	[ mcount = Count + 1; mregidx = 16 - 1; ] {}
+  : is Rmbase=3 & Count & stm_body
+	[ mcount = Count + 1; mregidx = 24 - 1; ] {}
+}
+
+with ldm_tail: {
+  : is loadsp=0 & loadpc=0
+	{}
+  : is loadsp=0 & loadpc=1
+	{ pop_pc(); }
+  : is loadsp=1 & loadpc=0 & mspoff
+	{ sp = *(sp - mspoff); }
+  : is loadsp=1 & loadpc=1 & mspoff
+	{ pop(pc); sp = *(sp - mspoff); return [pc]; }
+}
+
+with ldm_body: {
+  : is mcount=0 & ldm_tail { build ldm_tail; }
+  with : mcount!=0
+  {
+    : is mregidx!=26 & mregidx!=31 & mreg & ldm_body
+	[ mregidx = mregidx - 1; mcount = mcount - 1; ]
+	{ pop(mreg); build ldm_body; }
+    : is mregidx=26 & ldm_body
+	[ mspoff = (mcount + loadpc) * 4; loadsp = 1;
+	  mregidx = 25; mcount = mcount - 1; ]
+	{ sp = sp + 4; build ldm_body; }
+    : is mregidx=31 & ldm_body
+	[ mregidx = 30; mcount = mcount - 1; ]
+	{ pop(sr); unpack_sr(); build ldm_body; }
+  }
+}
+
+with ldm_start: {
+  : is Rmbase=0 & Count & ldm_body
+	[ mcount = Count + 1; mregidx =  0 + mcount; ] {}
+  : is Rmbase=1 & Count & ldm_body
+	[ mcount = Count + 1; mregidx =  6 + mcount; ] {}
+  : is Rmbase=2 & Count & ldm_body
+	[ mcount = Count + 1; mregidx = 16 + mcount; ] {}
+  : is Rmbase=3 & Count & ldm_body
+	[ mcount = Count + 1; mregidx = 24 + mcount; ] {}
+}
+
+stm_lr:      is Op9=0x05      & stm_start
+	{ build stm_start; }
+stm_lr: , lr is Op9=0x07 & lr & stm_start
+	{ push(lr); build stm_start; }
+
+ldm_pc:      is Op9=0x04      & ldm_start [ loadpc = 0; ]
+	{ build ldm_start; }
+ldm_pc: , pc is Op9=0x06 & pc & ldm_start [ loadpc = 1; ]
+	{ build ldm_start; }
+
+:stm Rmbase-mendreg^stm_lr, ("--sp") is Rmbase & mendreg & stm_lr
+	{ build stm_lr; }
+:ldm Rmbase-mendreg^ldm_pc, ("sp++") is Rmbase & mendreg & ldm_pc
+	{ build ldm_pc; }
+
+# Omit range if only one register is stored
+:stm Rmbase^stm_lr, ("--sp") is Rmbase & Count=0 & stm_lr
+	{ build stm_lr; }
+:ldm Rmbase^ldm_pc, ("sp++") is Rmbase & Count=0 & ldm_pc
+	{ build ldm_pc; }
+
+# If count is 31 and lr/pc is stored/loaded, then no registers
+# but lr/pc are stored/loaded
+:stm lr, ("--sp") is Op9=0x07 & Count=31 & lr
+	{ push(lr); }
+:ldm pc, ("sp++") is Op9=0x06 & Count=31 & pc
+	{ pop_pc(); }
+
+# The same applies at least to "stm r24-r7, lr, (--sp)"
+:stm lr, ("--sp") is Op9=0x07 & Rmbase=3 & Count=15 & lr
+	{ push(lr); }
+:ldm pc, ("sp++") is Op9=0x06 & Rmbase=3 & Count=15 & pc {
+  pop_pc();
+}
+
+################################################################
+# Load and Store Instructions
+################################################################
+
+with ldstreg: {
+  : Rd is Rd ... { export Rd; }
+  : RdLo is (Op5=0x1 & RdLo) ... { export RdLo; }
+}
+
+with basereg: {
+  : Rbase  is Op8=0xe6 ; Rbase
+	{ export Rbase; }
+  : Rbase2 is (Op6=0x2a & Rbase2) ...
+	{ export Rbase2; }
+  : pc     is (Op6=0x2a & Rbase2=2 & pc) ...
+	{ local tmp:4 = inst_start; export tmp; }
+}
+
+with memoffset: {
+  : memoff16 is Op6=0x2a ; memoff16 { export memoff16; }
+  : memoff27 is Op8=0xe6 ; memoff27 { export memoff27; }
+}
+
+with ldstmem32: {
+  : (RrLo) is (Op5=0x1 & RrLo) ... { export *:4 RrLo; }
+  : (Ra^memoff12) is (Op7=0x51 ; Ra) & memoff12
+	{ local tmp:4 = Ra + memoff12; export *:4 tmp; }
+  : (basereg^memoffset) is (Op6=0x2a | Op8=0xe6) ... & basereg & memoffset
+	{ local tmp:4 = basereg + memoffset; export *:4 tmp; }
+  : reloc is Op8=0xe7 ; Rbase=31 & Imm27
+	[ reloc = inst_start + Imm27; ]
+	{ export *:4 reloc; }
+  with : ldstop=0 | ldstop=1 {
+    : (Ra+Rb<<2) is Op8=0xa0 ; Ra & Rb
+	{ local tmp:4 = Ra + (Rb << 2); export *:4 tmp; }
+    : (--Ra) is Op8=0xa4 ; Ra
+	{ Ra = Ra - 4; export *:4 Ra; }
+    : (Ra++) is Op8=0xa5 ; Ra
+	{ local tmp = Ra; Ra = Ra + 4; export *:4 tmp; }
+  }
+}
+with ldstmem16: {
+  : (RrLo) is (Op5=0x1 & RrLo) ... { export *:2 RrLo; }
+  : (Ra^memoff12) is (Op7=0x51 ; Ra) & memoff12
+	{ local tmp:4 = Ra + memoff12; export *:2 tmp; }
+  : (basereg^memoffset) is (Op6=0x2a | Op8=0xe6) ... & basereg & memoffset
+	{ local tmp:4 = basereg + memoffset; export *:2 tmp; }
+  : reloc is Op8=0xe7 ; Rbase=31 & Imm27
+	[ reloc = inst_start + Imm27; ]
+	{ export *:2 reloc; }
+  with : ldstop=2 | ldstop=3 | ldstop=6 {
+    : (Ra+Rb<<1) is Op8=0xa0 ; Ra & Rb
+	{ local tmp:4 = Ra + (Rb << 1); export *:2 tmp; }
+    : (--Ra) is Op8=0xa4 ; Ra
+	{ Ra = Ra - 2; export *:2 Ra; }
+    : (Ra++) is Op8=0xa5 ; Ra
+	{ local tmp = Ra; Ra = Ra + 2; export *:2 tmp; }
+  }
+}
+with ldstmem8: {
+  : (RrLo) is (Op5=0x1 & RrLo) ... { export *:1 RrLo; }
+  : (Ra^memoff12) is (Op7=0x51 ; Ra) & memoff12
+	{ local tmp:4 = Ra + memoff12; export *:1 tmp; }
+  : (basereg^memoffset) is (Op6=0x2a | Op8=0xe6) ... & basereg & memoffset
+	{ local tmp:4 = basereg + memoffset; export *:1 tmp; }
+  : reloc is Op8=0xe7 ; Rbase=31 & Imm27
+	[ reloc = inst_start + Imm27; ]
+	{ export *:1 reloc; }
+  with : ldstop=4 | ldstop=5 | ldstop=7 {
+    : (Ra+Rb) is Op8=0xa0 ; Ra & Rb
+	{ local tmp:4 = Ra + Rb; export *:1 tmp; }
+    : (--Ra) is Op8=0xa4 ; Ra
+	{ Ra = Ra - 1; export *:1 Ra; }
+    : (Ra++) is Op8=0xa5 ; Ra
+	{ local tmp = Ra; Ra = Ra + 1; export *:1 tmp; }
+  }
+}
+
+with ldstinst: {
+  :"ld"^ccsfx ldstreg, ldstmem32 is ldstop=0 & ccsfx & ldstreg & ldstmem32 {
+    ldstreg = ldstmem32;
+  }
+  :"st"^ccsfx ldstreg, ldstmem32 is ldstop=1 & ccsfx & ldstreg & ldstmem32 {
+    ldstmem32 = ldstreg;
+  }
+  :"ldh"^ccsfx ldstreg, ldstmem16 is ldstop=2 & ccsfx & ldstreg & ldstmem16 {
+    ldstreg = zext(ldstmem16);
+  }
+  :"sth"^ccsfx ldstreg, ldstmem16 is ldstop=3 & ccsfx & ldstreg & ldstmem16 {
+    ldstmem16 = ldstreg:2;
+  }
+  :"ldb"^ccsfx ldstreg, ldstmem8 is ldstop=4 & ccsfx & ldstreg & ldstmem8 {
+    ldstreg = zext(ldstmem8);
+  }
+  :"stb"^ccsfx ldstreg, ldstmem8 is ldstop=5 & ccsfx & ldstreg & ldstmem8 {
+    ldstmem8 = ldstreg:1;
+  }
+  :"ldsh"^ccsfx ldstreg, ldstmem16 is ldstop=6 & ccsfx & ldstreg & ldstmem16 {
+    ldstreg = sext(ldstmem16);
+  }
+  :"ldsb"^ccsfx ldstreg, ldstmem8 is ldstop=7 & ccsfx & ldstreg & ldstmem8 {
+    ldstreg = sext(ldstmem8);
+  }
+}
+
+ldstcond: ldstinst is ldstinst & cond
+	{ build cond; build ldstinst; }
+
+:^ldstcond is ldstcond & (Op5=0x1 & LdStOpLo) ...
+	[ ldstop=LdStOpLo; ] {}
+:^ldstcond is ldstcond & (Op8=0xa0 & LdStOp ; argBit5=0 & argHasImm=0)
+	[ ldstop=LdStOp; ] {}
+:^ldstcond is ldstcond & (Op7=0x51 & LdStOp) ...
+	[ ldstop=LdStOp; ] {}
+:^ldstcond is ldstcond & (Op8=0xa4 & LdStOp) ...
+	[ ldstop=LdStOp; ] {}
+:^ldstcond is ldstcond & (Op8=0xa5 & LdStOp) ...
+	[ ldstop=LdStOp; ] {}
+:^ldstcond is ldstcond & (Op6=0x2a & OpAux) ...
+	[ ldstop=OpAux; ] {}
+:^ldstcond is ldstcond & (Op8=0xe6 & OpAux) ...
+	[ ldstop=OpAux; ] {}
+:^ldstcond is ldstcond & (Op8=0xe7 & OpAux ; Rbase=31)
+	[ ldstop=OpAux; ] {}
+
+# Aligned stack addressing
+:ld RdLo, (spoff5) is Op7=0x02 & RdLo & spoff5 {
+  RdLo = *:4 spoff5;
+}
+:st RdLo, (spoff5) is Op7=0x03 & RdLo & spoff5 {
+  *:4 spoff5 = RdLo;
+}
+
+# Small offsets
+:ld RdLo, (RrLo+off) is Op4=0x2 & RdLo & RrLo & Uoff4
+	[ off = Uoff4 << 2; ] {
+  RdLo = *:4 (RrLo + off);
+}
+:st RdLo, (RrLo+off) is Op4=0x3 & RdLo & RrLo & Uoff4
+	[ off = Uoff4 << 2; ] {
+  *:4 (RrLo + off) = RdLo;
+}
+
+################################################################
+# Arithmetic and Logical Operations
+################################################################
+
+define pcodeop bitrev;
+define pcodeop adds;
+define pcodeop subs;
+define pcodeop shls;
+define pcodeop clipsh;
+define pcodeop bitcount;
+
+# Argument defaults
+argd: Rd is Rd ... { export Rd; }
+arga: argd is argd { export argd; }
+argb: Rb is Op16 ; Rb { export Rb; }
+
+# Display defaults
+dispargd: argd is argd {}
+disparga: arga is arga {}
+dispargb: argb is argb {}
+args: dispargd, dispargb is dispargd & dispargb {}
+
+# ALU with r0-r15
+@define ALU_RLO	"Op3=0x02"
+
+# ALU with 5-bit unsigned immediate
+@define ALU_IMM5 "Op3=0x03"
+
+# ALU with 16-bit immediate
+@define ALU_IMM16 "Op6=0x2c"
+
+# ALU with 32-bit immediate
+@define ALU_IMM32 "Op6=0x3a"
+
+# Triadic ALU
+@define ALU_TRIADIC "Op5=0x18"
+
+with : $(ALU_RLO) {
+  argd: RdLo is RdLo { export RdLo; }
+  argb: RrLo is RrLo { export RrLo; }
+}
+with : $(ALU_IMM5) {
+  argd: RdLo is RdLo { export RdLo; }
+  argb: Imm5 is Imm5 { local tmp:4 = Imm5; export tmp; }
+  dispargb: Imm5 is Imm5 {}
+}
+with : $(ALU_IMM16) ... {
+  argb: Imm16 is Op6 ; Imm16 { local tmp:4 = Imm16; export tmp; }
+  dispargb: Imm16 is Op6 ; Imm16 {}
+}
+with : $(ALU_IMM32) ... {
+  argb: Imm32 is Op6 ; Imm32 { local tmp:4 = Imm32; export tmp; }
+  dispargb: Imm32 is Op6 ; Imm32 {}
+}
+
+with : $(ALU_TRIADIC) ... {
+  arga: Ra is Op5 ; Ra { export Ra; }
+  with : ... argHasImm=1 {
+    argb: argImm6 is Op5 ; argImm6 { local tmp:4 = argImm6; export tmp; }
+    dispargb: argImm6 is Op5 ; argImm6 {}
+  }
+  args: dispargd, disparga, dispargb is dispargd & disparga & dispargb {}
+}
+
+with aluinst: {
+  :"mov"^ccsfx argd, argb is ccsfx & aluop=0 & argd & argb {
+    argd = argb;
+  }
+  :"cmn"^ccsfx arga, argb is ccsfx & aluop=1 & arga & argb {
+    Z = arga == argb;
+    N = (arga + argb) s< 0;
+    C = carry(arga, argb);
+    V = scarry(arga, argb);
+    pack_sr();
+  }
+  :"add"^ccsfx args is ccsfx & aluop=2 & args & argd & arga & argb {
+    argd = arga + argb;
+  }
+  :"bic"^ccsfx args is ccsfx & aluop=3 & args & argd & arga & argb {
+    argd = arga & ~argb;
+  }
+  :"mul"^ccsfx args is ccsfx & aluop=4 & args & argd & arga & argb {
+    argd = arga * argb;
+  }
+  :"eor"^ccsfx args is ccsfx & aluop=5 & args & argd & arga & argb {
+    argd = arga ^ argb;
+  }
+  :"sub"^ccsfx args is ccsfx & aluop=6 & args & argd & arga & argb {
+    argd = arga - argb;
+  }
+  :"and"^ccsfx args is ccsfx & aluop=7 & args & argd & arga & argb {
+    argd = arga & argb;
+  }
+  :"not"^ccsfx argd, argb is ccsfx & aluop=8 & argd & argb {
+    argd = ~argb;
+  }
+  :"ror"^ccsfx args is ccsfx & aluop=9 & args & argd & arga & argb {
+    argd = (arga >> argb) | (arga << (32 - argb));
+  }
+  :"cmp"^ccsfx arga, argb is ccsfx & aluop=10 & arga & argb {
+    Z = arga == argb;
+    N = (arga - argb) s< 0;
+    C = arga < argb;
+    V = sborrow(arga, argb);
+    pack_sr();
+  }
+  :"rsub"^ccsfx args is ccsfx & aluop=11 & args & argd & arga & argb {
+    argd = argb - arga;
+  }
+  :"btest"^ccsfx arga, argb is ccsfx & aluop=12 & arga & argb {
+    Z = (arga & (1 << argb)) == 0;
+    N = 0;
+    C = (arga & (1 << argb)) == 0;
+    V = 0;
+  }
+  :"or"^ccsfx args is ccsfx & aluop=13 & args & argd & arga & argb {
+    argd = arga | argb;
+  }
+  :"bmask"^ccsfx args is ccsfx & aluop=14 & args & argd & arga & argb {
+    argd = arga & ((1 << argb) - 1);
+  }
+  :"max"^ccsfx args is ccsfx & aluop=15 & args & argd & arga & argb {
+    local tmp:4 = arga;
+    if (tmp s>= argb)
+      goto <end>;
+    tmp = argb;
+  <end>
+    argd = tmp;
+  }
+  :"bitset"^ccsfx args is ccsfx & aluop=16 & args & argd & arga & argb {
+    argd = arga | (1 << argb);
+  }
+  :"min"^ccsfx args is ccsfx & aluop=17 & args & argd & arga & argb {
+    local tmp:4 = arga;
+    if (tmp s<= argb)
+      goto <end>;
+    tmp = argb;
+  <end>
+    argd = tmp;
+  }
+  :"bitclear"^ccsfx args is ccsfx & aluop=18 & args & argd & arga & argb {
+    argd = arga & ~(1 << argb);
+  }
+  :"addscale"^ccsfx args<<1 is ccsfx & aluop=19 & args & argd & arga & argb {
+    argd = arga + (argb << 1);
+  }
+  :"bitflip"^ccsfx args is ccsfx & aluop=20 & args & argd & arga & argb {
+    argd = arga ^ (1 << argb);
+  }
+  :"addscale"^ccsfx args<<2 is ccsfx & aluop=21 & args & argd & arga & argb {
+    argd = arga + (argb << 2);
+  }
+  :"addscale"^ccsfx args<<3 is ccsfx & aluop=22 & args & argd & arga & argb {
+    argd = arga + (argb << 3);
+  }
+  :"addscale"^ccsfx args<<4 is ccsfx & aluop=23 & args & argd & arga & argb {
+    argd = arga + (argb << 4);
+  }
+  :"signext"^ccsfx args is ccsfx & aluop=24 & args & argd & arga & argb {
+    local shift:4 = 32 - argb;
+    argd = (arga << shift) s>> shift;
+  }
+  :"neg"^ccsfx argd, argb is ccsfx & aluop=25 & args & argd & argb {
+    argd = -argb;
+  }
+  :"lsr"^ccsfx args is ccsfx & aluop=26 & args & argd & arga & argb {
+    argd = arga >> argb;
+  }
+  :"msb"^ccsfx argd, argb is ccsfx & aluop=27 & args & argd & argb {
+    local tmp:4 = argb;
+    local idx:4 = 32;
+    <while>
+      if (tmp == 0)
+	goto <done>;
+      tmp = tmp >> 1;
+      idx = idx - 1;
+    goto <while>;
+  <done>
+    argd = idx;
+  }
+  :"shl"^ccsfx args is ccsfx & aluop=28 & args & argd & arga & argb {
+    argd = arga << argb;
+  }
+  :"brev"^ccsfx argd, argb is ccsfx & aluop=29 & args & argd & argb {
+    argd = bitrev(argb);
+  }
+  :"asr"^ccsfx args is ccsfx & aluop=30 & args & argd & arga & argb {
+    argd = arga s>> argb;
+  }
+  :"abs"^ccsfx argd, argb is ccsfx & aluop=31 & argd & argb {
+    local tmp:4 = argb;
+    if (tmp s>= 0)
+      goto <end>;
+    tmp = -argb;
+  <end>
+    argd = tmp;
+  }
+  :"mulhd.ss"^ccsfx args is ccsfx & aluop=32 & args & argd & arga & argb {
+    local tmp:8 = sext(arga) * sext(argb);
+    argd = tmp(4);
+  }
+  :"mulhd.su"^ccsfx args is ccsfx & aluop=33 & args & argd & arga & argb {
+    local tmp:8 = sext(arga) * zext(argb);
+    argd = tmp(4);
+  }
+  :"mulhd.us"^ccsfx args is ccsfx & aluop=34 & args & argd & arga & argb {
+    local tmp:8 = zext(arga) * sext(argb);
+    argd = tmp(4);
+  }
+  :"mulhd.uu"^ccsfx args is ccsfx & aluop=35 & args & argd & arga & argb {
+    local tmp:8 = zext(arga) * zext(argb);
+    argd = tmp(4);
+  }
+  :"div.ss"^ccsfx args is ccsfx & aluop=36 & args & argd & arga & argb {
+    argd = arga s/ argb;
+  }
+  :"div.su"^ccsfx args is ccsfx & aluop=37 & args & argd & arga & argb {
+    local tmp:8 = sext(arga) s/ zext(argb);
+    argd = tmp:4;
+  }
+  :"div.us"^ccsfx args is ccsfx & aluop=38 & args & argd & arga & argb {
+    local tmp:8 = zext(arga) s/ sext(argb);
+    argd = tmp:4;
+  }
+  :"div.uu"^ccsfx args is ccsfx & aluop=39 & args & argd & arga & argb {
+    argd = arga / argb;
+  }
+  :"adds"^ccsfx args is ccsfx & aluop=40 & args & argd & arga & argb {
+    argd = adds(arga, argb);
+  }
+  :"subs"^ccsfx args is ccsfx & aluop=41 & args & argd & arga & argb {
+    argd = subs(arga, argb);
+  }
+  :"shls"^ccsfx args is ccsfx & aluop=42 & args & argd & arga & argb {
+    argd = shls(arga, argb);
+  }
+  :"clipsh"^ccsfx args is ccsfx & aluop=43 & args & argd & argb {
+    argd = clipsh(argb);
+  }
+
+  with : (aluop>=44 & aluop<=47) ... {
+    :"addscale"^ccsfx args<<shift
+	is ccsfx & args & argd & arga & argb & ScAdd ...
+	[ shift = ScAdd + 5; ] {
+      argd = arga + (argb << shift);
+    }
+    :"add"^ccsfx argd, arga, imm
+	is ccsfx & argd & arga & (ScAdd ; argHasImm=1 & argImm6)
+	[ imm = argImm6 << (ScAdd + 5); ] {
+      argd = arga + imm;
+    }
+  }
+
+  :"count"^ccsfx args is ccsfx & aluop=48 & args & argd & argb {
+    argd = bitcount(argb);
+  }
+
+  with : (aluop>=49 & aluop<=56) ... {
+    :"subscale"^ccsfx args<<ScSub
+	is ccsfx & args & argd & arga & argb & ScSub ... {
+      argd = arga + (argb << ScSub);
+    }
+
+    :"sub"^ccsfx argd, arga, imm
+	is ccsfx & argd & arga & (ScSub ; argHasImm=1 & argImm6)
+	[ imm = argImm6 << ScSub; ] {
+      argd = arga + imm;
+    }
+  }
+}
+
+# Special cases for addscale immediate
+with aluinst: $(ALU_IMM5) ... {
+  :"add"^ccsfx argd, imm is ccsfx & aluop=22 & argd & Imm5 ...
+	[ imm = Imm5 << 3; ]   { argd = argd + imm; }
+}
+with aluinst: $(ALU_IMM16) ... {
+  :"add"^ccsfx argd, imm is ccsfx & aluop=19 & argd & (Op16 ; Imm16)
+	[ imm = Imm16 << 1; ]  { argd = argd + imm; }
+  :"add"^ccsfx argd, imm is ccsfx & aluop=21 & argd & (Op16 ; Imm16)
+	[ imm = Imm16 << 2; ]  { argd = argd + imm; }
+  :"add"^ccsfx argd, imm is ccsfx & aluop=22 & argd & (Op16 ; Imm16)
+	[ imm = Imm16 << 3; ]  { argd = argd + imm; }
+  :"add"^ccsfx argd, imm is ccsfx & aluop=23 & argd & (Op16 ; Imm16)
+	[ imm = Imm16 << 4; ]  { argd = argd + imm; }
+}
+with aluinst: $(ALU_IMM32) ... {
+  :"add"^ccsfx argd, imm is ccsfx & aluop=19 & argd & (Op16 ; Imm32)
+	[ imm = Imm32 << 1; ]  { argd = argd + imm; }
+  :"add"^ccsfx argd, imm is ccsfx & aluop=21 & argd & (Op16 ; Imm32)
+	[ imm = Imm32 << 2; ]  { argd = argd + imm; }
+  :"add"^ccsfx argd, imm is ccsfx & aluop=22 & argd & (Op16 ; Imm32)
+	[ imm = Imm32 << 3; ]  { argd = argd + imm; }
+  :"add"^ccsfx argd, imm is ccsfx & aluop=23 & argd & (Op16 ; Imm32)
+	[ imm = Imm32 << 4; ]  { argd = argd + imm; }
+}
+with aluinst: $(ALU_TRIADIC) ; argHasImm=1 {
+  :"add"^ccsfx argd, arga, imm
+	is ccsfx & aluop=19 & argd & arga & (Op16 ; argImm6)
+	[ imm = argImm6 << 1; ]
+	{ argd = arga + imm; }
+  :"add"^ccsfx argd, arga, imm
+	is ccsfx & aluop=21 & argd & arga & (Op16 ; argImm6)
+	[ imm = argImm6 << 2; ]
+	{ argd = arga + imm; }
+  :"add"^ccsfx argd, arga, imm
+	is ccsfx & aluop=22 & argd & arga & (Op16 ; argImm6)
+	[ imm = argImm6 << 3; ]
+	{ argd = arga + imm; }
+  :"add"^ccsfx argd, arga, imm
+	is ccsfx & aluop=23 & argd & arga & (Op16 ; argImm6)
+	[ imm = argImm6 << 4; ]
+	{ argd = arga + imm; }
+}
+
+alucond: aluinst is aluinst & cond
+	{ build cond; build aluinst; }
+
+:^alucond is alucond & ($(ALU_RLO)  & AluLo) ... [ aluop = AluLo; ] {}
+:^alucond is alucond & ($(ALU_IMM5) & Alu4) ... [ aluop = Alu4 << 1; ] {}
+:^alucond is alucond & ($(ALU_IMM16) & Alu5) ... [ aluop = Alu5; ] {}
+:^alucond is alucond & ($(ALU_IMM32) & Alu5) ... [ aluop = Alu5; ] {}
+:^alucond is alucond & ($(ALU_TRIADIC) & Alu6) ... [ aluop = Alu6; ] {}
+
+# Triadic add immediate
+:add Rd, Rr, Imm16 is Op6=0x2d & Rr & Rd ; Imm16 {
+  Rd = Rr + Imm16;
+}
+:add Rd, Rr, Imm32 is Op6=0x3b & Rr & Rd ; Imm32 {
+  Rd = Rr + Imm32;
+}
+
+################################################################
+# Floating Poing Operations
+################################################################
+
+define pcodeop flog2;
+define pcodeop fexp2;
+
+# Argument B for floating point instructions
+fargb: Rb      is argHasImm=0 & argBit5=0 & Rb { export Rb; }
+fargb: argImm6 is argHasImm=1 & argImm6 {
+  local tmp:4 = argImm6;
+  tmp = int2float(tmp);
+  export tmp;
+}
+
+with finst: {
+  :"fadd"^ccsfx Rd, Ra, fargb is ccsfx & (Alu5=0 & Rd ; Ra & fargb) {
+    Rd = Ra f+ fargb;
+  }
+  :"fsub"^ccsfx Rd, Ra, fargb is ccsfx & (Alu5=1 & Rd ; Ra & fargb) {
+    Rd = Ra f- fargb;
+  }
+  :"fmul"^ccsfx Rd, Ra, fargb is ccsfx & (Alu5=2 & Rd ; Ra & fargb) {
+    Rd = Ra f* fargb;
+  }
+  :"fdiv"^ccsfx Rd, Ra, fargb is ccsfx & (Alu5=3 & Rd ; Ra & fargb) {
+    Rd = Ra f/ fargb;
+  }
+  :"fcmp"^ccsfx Ra, fargb is ccsfx & (Alu5=4 ; Ra & fargb) {
+    Z = Ra f== fargb;
+    N = Ra f< fargb;	# TODO: is this right?
+    C = Ra f< fargb;
+    V = 0;		# TODO: what should be here?
+    pack_sr();
+  }
+  :"fabs"^ccsfx Rd, fargb is ccsfx & (Alu5=5 & Rd ; fargb) {
+    local tmp:4 = fargb;
+    if (tmp f>= 0)
+      goto <end>;
+    tmp = f- fargb;
+  <end>
+    Rd = tmp;
+  }
+  :"frsub"^ccsfx Rd, Ra, fargb is ccsfx & (Alu5=6 & Rd ; Ra & fargb) {
+    Rd = fargb f- Ra;
+  }
+  :"fmax"^ccsfx Rd, Ra, fargb is ccsfx & (Alu5=7 & Rd ; Ra & fargb) {
+    local tmp:4 = Ra;
+    if (tmp f>= fargb)
+      goto <end>;
+    tmp = fargb;
+  <end>
+    Rd = tmp;
+  }
+  :"frcp"^ccsfx Rd, fargb is ccsfx & (Alu5=8 & Rd ; fargb) {
+    Rd = 0x3f800000 f/ fargb;
+  }
+  :"frsqrt"^ccsfx Rd, fargb is ccsfx & (Alu5=9 & Rd ; fargb) {
+    Rd = 0x3f800000 f/ sqrt(fargb);
+  }
+  :"fnmul"^ccsfx Rd, Ra, fargb is ccsfx & (Alu5=10 & Rd ; Ra & fargb) {
+    Rd = f- (Ra f* fargb);
+  }
+  :"fmin"^ccsfx Rd, Ra, fargb is ccsfx & (Alu5=11 & Rd ; Ra & fargb) {
+    local tmp:4 = Ra;
+    if (tmp f<= fargb)
+      goto <end>;
+    tmp = fargb;
+  <end>
+    Rd = tmp;
+  }
+  :"fceil"^ccsfx Rd, fargb is ccsfx & (Alu5=12 & Rd ; fargb) {
+    Rd = ceil(fargb);
+  }
+  :"ffloor"^ccsfx Rd, fargb is ccsfx & (Alu5=13 & Rd ; fargb) {
+    Rd = floor(fargb);
+  }
+  :"flog2"^ccsfx Rd, fargb is ccsfx & (Alu5=14 & Rd ; fargb) {
+    Rd = flog2(fargb);
+  }
+  :"fexp2"^ccsfx Rd, fargb is ccsfx & (Alu5=15 & Rd ; fargb) {
+    Rd = fexp2(fargb);
+  }
+  with : Alu5=16 ... {
+    :"ftrunc"^ccsfx Rd, Ra, "sasl" fargb is ccsfx & (Rd ; Ra & fargb) {
+      Rd = trunc(Ra f* fexp2(fargb));
+    }
+    :"ftrunc"^ccsfx Rd, Ra is ccsfx & (Rd ; Ra & argHasImm=1 & argImm6=0) {
+      Rd = trunc(Ra);
+    }
+  }
+  with : Alu5=17 ... {
+    :"floor"^ccsfx Rd, Ra, "sasl" fargb is ccsfx & (Rd ; Ra & fargb) {
+      Rd = trunc(floor(Ra f* fexp2(fargb)));
+    }
+    :"floor"^ccsfx Rd, Ra is ccsfx & (Rd ; Ra & argHasImm=1 & argImm6=0) {
+      Rd = trunc(floor(Ra));
+    }
+  }
+  with : Alu5=18 ... {
+    :"flts"^ccsfx Rd, Ra, "sasr" fargb is ccsfx & (Rd ; Ra & fargb) {
+      Rd = int2float(Ra) f/ fexp2(fargb);
+    }
+    :"flts"^ccsfx Rd, Ra is ccsfx & (Rd ; Ra & argHasImm=1 & argImm6=0) {
+      Rd = int2float(Ra);
+    }
+  }
+  with : Alu5=19 ... {
+    :"fltu"^ccsfx Rd, Ra, "sasr" fargb is ccsfx & (Rd ; Ra & fargb) {
+      local tmp:8 = zext(Ra);
+      tmp = int2float(tmp);
+      Rd = float2float(tmp) f/ fexp2(fargb);
+    }
+    :"fltu"^ccsfx Rd, Ra is ccsfx & (Rd ; Ra & argHasImm=1 & argImm6=0) {
+      Rd = int2float(Ra);
+    }
+  }
+}
+
+:^finst is finst & cond & Op6=0x32 ...
+	{ build cond; build finst; }
+
+################################################################
+# Vector Instructions
+################################################################
+
+# Va must be synthesized from VaHi and VaLo, because the
+# field is not contiguous.
+Va: num is VaHi & VaLo [ num = (VaHi << 4) | VaLo; ] {
+  local tmp:1 = num;
+  export tmp;
+}
+
+# Vector increments
+vincd: is epsilon { local tmp:1 = 0; export tmp; }
+vinca: is epsilon { local tmp:1 = 0; export tmp; }
+vincb: is epsilon { local tmp:1 = 0; export tmp; }
+with : Vopsize=1 ... {
+  vincd: Vincd is Vop ; Vincd { local tmp:1 = Vincd; export tmp; }
+  vinca: Vinca is Vop ; Vinca { local tmp:1 = Vinca; export tmp; }
+  vincb: Vincb is Vop ; Vincb { local tmp:1 = Vincb; export tmp; }
+}
+
+# Vector co-ordinate helpers
+vdhi: num is VdHi [ num = VdHi << 4; ] { local tmp:1 = num; export tmp; }
+vahi: num is VaHi [ num = VaHi << 4; ] { local tmp:1 = num; export tmp; }
+vbhi: num is VbHi [ num = VbHi << 4; ] { local tmp:1 = num; export tmp; }
+
+with vbasedx: {
+  :VdLo is (Vbased=0 | Vbased=4 | Vbased=6) & VdLo
+	{ local tmp:1 = VdLo; export tmp; }
+  : x is Vbased=1 & VdLo [ x = 16 + VdLo; ]
+	{ local tmp:1 = x; export tmp; }
+  : x is (Vbased=2 | Vbased=5) & VdLo [ x = 32 + VdLo; ]
+	{ local tmp:1 = x; export tmp; }
+  : x is Vbased=3 & VdLo [ x = 48 + VdLo; ]
+	{ local tmp:1 = x; export tmp; }
+}
+
+with vbaseax: {
+  :VaLo is (Vbasea=0 | Vbasea=4 | Vbasea=6) & VaLo
+	{ local tmp:1 = VaLo; export tmp; }
+  : x is Vbasea=1 & VaLo
+	[ x = 16 + VaLo; ]
+	{ local tmp:1 = x; export tmp; }
+  : x is (Vbasea=2 | Vbasea=5) & VaLo
+	[ x = 32 + VaLo; ]
+	{ local tmp:1 = x; export tmp; }
+  : x is Vbasea=3 & VaLo
+	[ x = 48 + VaLo; ]
+	{ local tmp:1 = x; export tmp; }
+}
+
+with vbasebx: {
+  :VbLo is (Vbaseb=0 | Vbaseb=4 | Vbaseb=6) & VbLo
+	{ local tmp:1 = VbLo; export tmp; }
+  : x is Vbaseb=1 & VbLo
+	[ x = 16 + VbLo; ]
+	{ local tmp:1 = x; export tmp; }
+  : x is (Vbaseb=2 | Vbaseb=5) & VbLo
+	[ x = 32 + VbLo; ]
+	{ local tmp:1 = x; export tmp; }
+  : x is Vbaseb=3 & VbLo
+	[ x = 48 + VbLo; ]
+	{ local tmp:1 = x; export tmp; }
+}
+
+# Vector co-ordinates
+with : (Vopsize=0 & Vdir=0) ... {
+  vdy: Vd^vincd is Vd ... & vincd { local tmp:1 = Vd; export tmp; }
+  vdx: Vbased is Vbased ... { local tmp:1 = Vbased; export tmp; }
+
+  vay: Va^vinca is Va ... & vinca { local tmp:1 = Va; export tmp; }
+  vax: Vbasea is Vbasea ... { local tmp:1 = Vbasea; export tmp; }
+
+  vby: Vb^vincb is Vb ... & vincb { local tmp:1 = Vb; export tmp; }
+  vbx: Vbaseb is Vbaseb ... { local tmp:1 = Vbaseb; export tmp; }
+}
+with : (Vopsize=0 & Vdir=1) ... {
+  vdy: vdhi is vdhi ... { export vdhi; }
+  vdx: vbasedx^vincd is vbasedx ... & vincd { export vbasedx; }
+
+  vay: vahi is vahi ... { export vahi; }
+  vax: vbaseax^vinca is vbaseax ... & vinca { export vbaseax; }
+
+  vby: vbhi    is vbhi ... { export vbhi; }
+  vbx: vbasebx^vincb is vbasebx ... & vincb { export vbasebx; }
+}
+with : Vopsize=1 ... {
+  with : Vdird=0 ... {
+    vdy: Vd^vincd is Vd ... & vincd { local tmp:1 = Vd; export tmp; }
+    vdx: Vbased is Vbased ... { local tmp:1 = Vbased; export tmp; }
+  }
+  with : Vdira=0 ... {
+    vay: Va^vinca is Va ... & vinca { local tmp:1 = Va; export tmp; }
+    vax: Vbasea is Vbasea ... { local tmp:1 = Vbasea; export tmp; }
+  }
+  with : Vdirb=0 ... {
+    vby: Vb^vincb is Vb ... & vincb { local tmp:1 = Vb; export tmp; }
+    vbx: Vbaseb is Vbaseb ... { local tmp:1 = Vbaseb; export tmp; }
+  }
+  with : Vdird=1 ... {
+    vdy: vdhi is vdhi ... { export vdhi; }
+    vdx: vbasedx^vincd is vbasedx ... & vincd { export vbasedx; }
+  }
+  with : Vdira=1 ... {
+    vay: vahi is vahi ... { local tmp:1 = vahi; export tmp; }
+    vax: vbaseax^vinca is vbaseax ... & vinca { export vbaseax; }
+  }
+  with : Vdirb=1 ... {
+    vby: vbhi is vbhi ... { local tmp:1 = vbhi; export tmp; }
+    vbx: vbasebx^vincb is vbasebx ... & vincb { export vbasebx; }
+  }
+}
+
+# Vector row/column size
+vsized: 8 is epsilon { local tmp:1 = 8; export tmp; }
+vsized: 16 is VseldHi=2 { local tmp:1 = 16; export tmp; }
+vsized: 32 is Vseld=6 { local tmp:1 = 32; export tmp;}
+
+vsizea: 8 is epsilon { local tmp:1 = 8; export tmp; }
+vsizea: 16 is VselaHi=2 { local tmp:1 = 16; export tmp; }
+vsizea: 32 is Vsela=6 { local tmp:1 = 32; export tmp;}
+
+vsizeb: 8 is epsilon { local tmp:1 = 8; export tmp; }
+vsizeb: 16 is VselbHi=2 { local tmp:1 = 16; export tmp; }
+vsizeb: 32 is Vselb=6 { local tmp:1 = 32; export tmp;}
+
+# Vector row/column address
+vrowd: Vdir^vsized(vdy,vdx) is Vdir ... & vsized & vdy & vdx {}
+vrowd: "-" is Vseld=7 {}
+
+vrowa: Vdir^vsizea(vay,vax) is Vdir ... & vsizea & vay & vax {}
+vrowa: "-" is Vsela=7 {}
+
+vrowb: Vdir^vsizeb(vby,vbx) is Vdir ... & vsizeb & vby & vbx {}
+vrowb: "-" is Vselb=7 {}
+
+# Vector offsets
+vroffd:    is epsilon { local tmp:4 = 0; export tmp; }
+vroffa:    is epsilon { local tmp:4 = 0; export tmp; }
+vroffb:    is epsilon { local tmp:4 = 0; export tmp; }
+with : Vopsize=0 & Vhasoffd=1 {
+  vroffd: +VRoff is VRoff & Vhasoffd=1 { export VRoff; }
+  vroffa: +VRoff is VRoff & Vhasoffa=1 { export VRoff; }
+  vroffb: +VRoff is VRoff & Vhasoffb=1 { export VRoff; }
+}
+with : Vopsize=1 ... {
+  vroffd: +VRoffd is Vop ; VRoffd    { export VRoffd; }
+  vroffd:         is Vop ; VRoffd=15 { local tmp:4 = 0; export tmp; }
+
+  vroffa: +VRoffa is Vop ; VRoffa    { export VRoffa; }
+  vroffa:         is Vop ; VRoffa=15 { local tmp:4 = 0; export tmp; }
+
+  vroffb: +VRoffb is Vop ; VRoffb    { export VRoffb; }
+  vroffb:         is Vop ; VRoffb=15 { local tmp:4 = 0; export tmp; }
+}
+
+# Vector CB flag indicator
+vcboffd:    is epsilon {}
+vcboffa:    is epsilon {}
+vcboffb:    is epsilon {}
+with : Vopsize=1 ... {
+  vcboffd: Vcboffd is Vop ; Vcboffd {}
+  vcboffa: Vcboffa is Vop ; Vcboffa {}
+  vcboffb: Vcboffb is Vop ; Vcboffb {}
+}
+
+# Vector SETF
+vsetf: Vsetf48 is (Vopsize=0 & Vsetf48) ...
+	{ local tmp:1 = Vsetf48; export tmp; }
+vsetf: Vsetf80 is (Vopsize=1 & Vsetf80) ...
+	{ local tmp:1 = Vsetf80; export tmp; }
+
+# Vector predication
+vpred: Vpred48 is (Vopsize=0 & Vpred48) ...
+	{ local tmp:1 = Vpred48; export tmp; }
+vpred: Vpred80 is Vopsize=1 ; Vpred80
+	{ local tmp:1 = Vpred80; export tmp; }
+
+# Vector SRU
+vsru: Vsru is Vopsize=1 ; Vsru {}
+vsru:      is (Vop=0x3e & Vhasimm=0 & Vselb=7) ... {}
+
+# Vector register addressing
+vregbase: VRmbase is Vhasimm=0 & Vselb=7 ; VRmbase
+	{ export VRmbase; }
+
+vregoff: +off is VmoffLo ; VmoffMid & VmoffHi
+	[ off = (VmoffHi << 9) | (VmoffMid << 7) | VmoffLo; ]
+	{ local tmp:4 = off; export tmp; }
+vregoff:      is VmoffLo=0 ; VmoffMid=0 & VmoffHi=0
+	{ local tmp:4 = 0; export tmp; }
+
+with vreginc: {
+  :          is epsilon ... { local tmp:4 = 0; export tmp; }
+  : +=VRoffd is Vseld=7 ; VRoffd { export VRoffd; }
+  :          is Vseld=7 ; VRoffd=15 { local tmp:4 = 0; export tmp; }
+  : +=VRoffa is Vsela=7 ; VRoffa { export VRoffa; }
+  :          is Vsela=7 ; VRoffa=15 { local tmp:4 = 0; export tmp; }
+}
+
+# Immediate values
+Vimm16: imm is Vhasimm=1 & Vimm16Lo ; Vimm16Hi
+	[ imm = (Vimm16Hi << 10) | Vimm16Lo; ]
+	{ local tmp:2 = imm; export tmp; }
+
+# Arguments for vector operations
+vargd: vrowd^vroffd^vcboffd is vrowd & vroffd & vcboffd {}
+varga: vrowa^vroffa^vcboffa is vrowa & vroffa & vcboffa {}
+vargb: vrowb^vroffb^vcboffb is vrowb & vroffb & vcboffb {}
+with : Vopsize=0 {
+  vargb: VRm is Vhasimm=0 & Vselb=7 & VRm {}
+  vargb: Vimm6 is Vhasimm=1 & Vimm6 {}
+}
+with : Vopsize=1 ... {
+  vargb: vregbase^vregoff^vreginc is vregbase & vregoff & vreginc {}
+  vargb: Vimm16 is Vhasimm=1 ... & Vimm16 {}
+}
+
+# Argument 3 for vector memory operations
+vmemargb: vrowb^vroffb^vcboffb is vrowb & vroffb & vcboffb {}
+with : Vopsize=0 {
+  vmemargb: (VRm) is Vhasimm=0 & Vselb=7 & VRm {}
+  vmemargb: Vimm6 is Vhasimm=1 & Vimm6 {}
+}
+with : Vopsize=1 ... {
+  vmemargb: (vregbase^vregoff^vreginc) is vregbase & vregoff & vreginc {}
+  vmemargb: Vimm16 is Vhasimm=1 ... & Vimm16 {}
+}
+
+vflags:    is epsilon {}
+with : Vopsize=0 ... {
+  vflags: vsetf       is (Vhasimm=0 & Vselb=7) ... & vsetf {}
+  vflags: vsetf^vpred is  Vhasimm=1            ... & vsetf & vpred {}
+}
+vflags: Vrep^vsetf^vpred^vsru
+	is (Vopsize=1 & Vrep) ... & vsetf & vpred & vsru {}
+
+# Vector memory ops
+with : (Vop=0x3c | Vop=0x3e) ... {
+  :v^Vmwidth^"ld" vargd, vmemargb^vflags
+	is (Vmop=0 & Vmwidth) ... & vargd & vmemargb & vflags unimpl
+  :v^Vmwidth^"lookupm" vargd, vmemargb^vflags
+	is (Vmop=1 & Vmwidth) ... & vargd & vmemargb & vflags unimpl
+  :v^Vmwidth^"lookupml" vargd, vmemargb^vflags
+	is (Vmop=2 & Vmwidth) ... & vargd & vmemargb & vflags unimpl
+  :v^Vmwidth^"mem03" vargd, varga, vmemargb^vflags
+	is (Vmop=3 & Vmwidth) ... & vargd & varga & vmemargb & vflags unimpl
+  :v^Vmwidth^"st" varga, vmemargb^vflags
+	is (Vmop=4 & Vmwidth) ... & varga & vmemargb & vflags unimpl
+  :v^Vmwidth^"indexwritem" varga, vmemargb^vflags
+	is (Vmop=5 & Vmwidth) ... & varga & vmemargb & vflags unimpl
+  :v^Vmwidth^"indexwriteml" varga, vmemargb^vflags
+	is (Vmop=6 & Vmwidth) ... & varga & vmemargb & vflags unimpl
+  :v^Vmwidth^"mem07" vargd, varga, vmemargb^vflags
+	is (Vmop=7 & Vmwidth) ... & vargd & varga & vmemargb & vflags unimpl
+  :v^Vmwidth^"memread" vargd, varga, vmemargb^vflags
+	is (Vmop=8 & Vmwidth) ... & vargd & varga & vmemargb & vflags unimpl
+  :v^Vmwidth^"memwrite" vargd, varga, vmemargb^vflags
+	is (Vmop=9 & Vmwidth) ... & vargd & varga & vmemargb & vflags unimpl
+  :v^Vmwidth^"mem10" vargd, varga, vmemargb^vflags
+	is (Vmop=10 & Vmwidth) ... & vargd & varga & vmemargb & vflags unimpl
+  :v^Vmwidth^"mem11" vargd, varga, vmemargb^vflags
+	is (Vmop=11 & Vmwidth) ... & vargd & varga & vmemargb & vflags unimpl
+  :v^Vmwidth^"mem12" vargd, varga, vmemargb^vflags
+	is (Vmop=12 & Vmwidth) ... & vargd & varga & vmemargb & vflags unimpl
+  :v^Vmwidth^"mem13" vargd, varga, vmemargb^vflags
+	is (Vmop=13 & Vmwidth) ... & vargd & varga & vmemargb & vflags unimpl
+  :v^Vmwidth^"mem14" vargd, varga, vmemargb^vflags
+	is (Vmop=14 & Vmwidth) ... & vargd & varga & vmemargb & vflags unimpl
+  :v^Vmwidth^"mem15" vargd, varga, vmemargb^vflags
+	is (Vmop=15 & Vmwidth) ... & vargd & varga & vmemargb & vflags unimpl
+  :v^Vmwidth^"mem16" vargd, varga, vmemargb^vflags
+	is (Vmop=16 & Vmwidth) ... & vargd & varga & vmemargb & vflags unimpl
+  :v^Vmwidth^"mem17" vargd, varga, vmemargb^vflags
+	is (Vmop=17 & Vmwidth) ... & vargd & varga & vmemargb & vflags unimpl
+  :v^Vmwidth^"mem18" vargd, varga, vmemargb^vflags
+	is (Vmop=18 & Vmwidth) ... & vargd & varga & vmemargb & vflags unimpl
+  :v^Vmwidth^"mem19" vargd, varga, vmemargb^vflags
+	is (Vmop=19 & Vmwidth) ... & vargd & varga & vmemargb & vflags unimpl
+  :v^Vmwidth^"mem20" vargd, varga, vmemargb^vflags
+	is (Vmop=20 & Vmwidth) ... & vargd & varga & vmemargb & vflags unimpl
+  :v^Vmwidth^"mem21" vargd, varga, vmemargb^vflags
+	is (Vmop=21 & Vmwidth) ... & vargd & varga & vmemargb & vflags unimpl
+  :v^Vmwidth^"mem22" vargd, varga, vmemargb^vflags
+	is (Vmop=22 & Vmwidth) ... & vargd & varga & vmemargb & vflags unimpl
+  :v^Vmwidth^"mem23" vargd, varga, vmemargb^vflags
+	is (Vmop=23 & Vmwidth) ... & vargd & varga & vmemargb & vflags unimpl
+  :vgetacc vargd, varga, vmemargb^vflags is (Vmop=24 & Vmwidth=0) ...
+	& vargd & varga & vmemargb & vflags unimpl
+  :vgetaccs32 vargd, varga, vmemargb^vflags
+	is (Vmop=24 & Vmwidth=1) ... & vargd & varga & vmemargb & vflags unimpl
+  :vgetaccunk vargd, varga, vmemargb^vflags
+	is (Vmop=24 & Vmwidth=2) ... & vargd & varga & vmemargb & vflags unimpl
+  :vgetaccs16 vargd, varga, vmemargb^vflags
+	is (Vmop=24 & Vmwidth=3) ... & vargd & varga & vmemargb & vflags unimpl
+  :v^Vmwidth^"mem25" vargd, varga, vmemargb^vflags
+	is (Vmop=25 & Vmwidth) ... & vargd & varga & vmemargb & vflags unimpl
+  :v^Vmwidth^"mem26" vargd, varga, vmemargb^vflags
+	is (Vmop=26 & Vmwidth) ... & vargd & varga & vmemargb & vflags unimpl
+  :v^Vmwidth^"mem27" vargd, varga, vmemargb^vflags
+	is (Vmop=27 & Vmwidth) ... & vargd & varga & vmemargb & vflags unimpl
+  :v^Vmwidth^"mem28" vargd, varga, vmemargb^vflags
+	is (Vmop=28 & Vmwidth) ... & vargd & varga & vmemargb & vflags unimpl
+  :v^Vmwidth^"mem29" vargd, varga, vmemargb^vflags
+	is (Vmop=29 & Vmwidth) ... & vargd & varga & vmemargb & vflags unimpl
+  :v^Vmwidth^"mem30" vargd, varga, vmemargb^vflags
+	is (Vmop=30 & Vmwidth) ... & vargd & varga & vmemargb & vflags unimpl
+  :v^Vmwidth^"mem31" vargd, varga, vmemargb^vflags
+	is (Vmop=31 & Vmwidth) ... & vargd & varga & vmemargb & vflags unimpl
+}
+
+# Vector ALU ops
+with : (Vop=0x3d | Vop=0x3f) ... {
+  :v^Vawidth^"mov" vargd, vargb^vflags
+	is (Vaop=0 & Vawidth) ... & vargd & vargb & vflags unimpl
+  :v^Vawidth^"bitplanes" vargd, vargb^vflags
+	is (Vaop=1 & Vawidth) ... & vargd & vargb & vflags unimpl
+  :v^Vawidth^"even" vargd, varga, vargb^vflags
+	is (Vaop=2 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"odd" vargd, varga, vargb^vflags
+	is (Vaop=3 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"interl" vargd, varga, vargb^vflags
+	is (Vaop=4 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"interh" vargd, varga, vargb^vflags
+	is (Vaop=5 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"brev" vargd, varga, vargb^vflags
+	is (Vaop=6 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"ror" vargd, varga, vargb^vflags
+	is (Vaop=7 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"shl" vargd, varga, vargb^vflags
+	is (Vaop=8 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"shls" vargd, varga, vargb^vflags
+	is (Vaop=9 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"lsr" vargd, varga, vargb^vflags
+	is (Vaop=10 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"asr" vargd, varga, vargb^vflags
+	is (Vaop=11 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"signshl" vargd, varga, vargb^vflags
+	is (Vaop=12 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"op13" vargd, varga, vargb^vflags
+	is (Vaop=13 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"signasl" vargd, varga, vargb^vflags
+	is (Vaop=14 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"signasls" vargd, varga, vargb^vflags
+	is (Vaop=15 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"and" vargd, varga, vargb^vflags
+	is (Vaop=16 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"or" vargd, varga, vargb^vflags
+	is (Vaop=17 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"eor" vargd, varga, vargb^vflags
+	is (Vaop=18 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"bic" vargd, varga, vargb^vflags
+	is (Vaop=19 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"count" vargd, varga, vargb^vflags
+	is (Vaop=20 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"msb" vargd, varga, vargb^vflags
+	is (Vaop=21 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"op22" vargd, varga, vargb^vflags
+	is (Vaop=22 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"op23" vargd, varga, vargb^vflags
+	is (Vaop=23 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"min" vargd, varga, vargb^vflags
+	is (Vaop=24 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"max" vargd, varga, vargb^vflags
+	is (Vaop=25 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"dist" vargd, varga, vargb^vflags
+	is (Vaop=26 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"dists" vargd, varga, vargb^vflags
+	is (Vaop=27 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"clip" vargd, varga, vargb^vflags
+	is (Vaop=28 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"sign" vargd, varga, vargb^vflags
+	is (Vaop=29 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"clips" vargd, varga, vargb^vflags
+	is (Vaop=30 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"testmag" vargd, varga, vargb^vflags
+	is (Vaop=31 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"add" vargd, varga, vargb^vflags
+	is (Vaop=32 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"adds" vargd, varga, vargb^vflags
+	is (Vaop=33 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"addc" vargd, varga, vargb^vflags
+	is (Vaop=34 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"addsc" vargd, varga, vargb^vflags
+	is (Vaop=35 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"sub" vargd, varga, vargb^vflags
+	is (Vaop=36 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"subs" vargd, varga, vargb^vflags
+	is (Vaop=37 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"subc" vargd, varga, vargb^vflags
+	is (Vaop=38 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"subsc" vargd, varga, vargb^vflags
+	is (Vaop=39 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"rsub" vargd, varga, vargb^vflags
+	is (Vaop=40 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"rsubs" vargd, varga, vargb^vflags
+	is (Vaop=41 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"rsubc" vargd, varga, vargb^vflags
+	is (Vaop=42 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"rsubsc" vargd, varga, vargb^vflags
+	is (Vaop=43 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"op44" vargd, varga, vargb^vflags
+	is (Vaop=44 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"op45" vargd, varga, vargb^vflags
+	is (Vaop=45 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"op46" vargd, varga, vargb^vflags
+	is (Vaop=46 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"op47" vargd, varga, vargb^vflags
+	is (Vaop=47 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :vmull.ss vargd, varga, vargb^vflags
+	is (Vaop=48 & Vawidth=0) ... & vargd & varga & vargb & vflags unimpl
+  :vop48.1 vargd, varga, vargb^vflags
+	is (Vaop=48 & Vawidth=1) ... & vargd & varga & vargb & vflags unimpl
+  :vmulls.ss vargd, varga, vargb^vflags
+	is (Vaop=49 & Vawidth=0) ... & vargd & varga & vargb & vflags unimpl
+  :vop49.1 vargd, varga, vargb^vflags
+	is (Vaop=49 & Vawidth=1) ... & vargd & varga & vargb & vflags unimpl
+  :vmulm.ss vargd, varga, vargb^vflags
+	is (Vaop=50 & Vawidth=0) ... & vargd & varga & vargb & vflags unimpl
+  :vop50.1 vargd, varga, vargb^vflags
+	is (Vaop=50 & Vawidth=1) ... & vargd & varga & vargb & vflags unimpl
+  :vmulms.ss vargd, varga, vargb^vflags
+	is (Vaop=51 & Vawidth=0) ... & vargd & varga & vargb & vflags unimpl
+  :vop51.1 vargd, varga, vargb^vflags
+	is (Vaop=51 & Vawidth=1) ... & vargd & varga & vargb & vflags unimpl
+  :vmulhd.ss vargd, varga, vargb^vflags
+	is (Vaop=52 & Vawidth=0) ... & vargd & varga & vargb & vflags unimpl
+  :vmul32.ss vargd, varga, vargb^vflags
+	is (Vaop=52 & Vawidth=1) ... & vargd & varga & vargb & vflags unimpl
+  :vmulhd.su vargd, varga, vargb^vflags
+	is (Vaop=53 & Vawidth=0) ... & vargd & varga & vargb & vflags unimpl
+  :vmul32.su vargd, varga, vargb^vflags
+	is (Vaop=53 & Vawidth=1) ... & vargd & varga & vargb & vflags unimpl
+  :vmulhd.us vargd, varga, vargb^vflags
+	is (Vaop=54 & Vawidth=0) ... & vargd & varga & vargb & vflags unimpl
+  :vmul32.us vargd, varga, vargb^vflags
+	is (Vaop=54 & Vawidth=1) ... & vargd & varga & vargb & vflags unimpl
+  :vmulhd.uu vargd, varga, vargb^vflags
+	is (Vaop=55 & Vawidth=0) ... & vargd & varga & vargb & vflags unimpl
+  :vmul32.uu vargd, varga, vargb^vflags
+	is (Vaop=55 & Vawidth=1) ... & vargd & varga & vargb & vflags unimpl
+  :vmulhn.ss vargd, varga, vargb^vflags
+	is (Vaop=56 & Vawidth=0) ... & vargd & varga & vargb & vflags unimpl
+  :vop56.1 vargd, varga, vargb^vflags
+	is (Vaop=56 & Vawidth=1) ... & vargd & varga & vargb & vflags unimpl
+  :vmulhn.su vargd, varga, vargb^vflags
+	is (Vaop=57 & Vawidth=0) ... & vargd & varga & vargb & vflags unimpl
+  :vop57.1 vargd, varga, vargb^vflags
+	is (Vaop=57 & Vawidth=1) ... & vargd & varga & vargb & vflags unimpl
+  :vmulhn.us vargd, varga, vargb^vflags
+	is (Vaop=58 & Vawidth=0) ... & vargd & varga & vargb & vflags unimpl
+  :vop58.1 vargd, varga, vargb^vflags
+	is (Vaop=58 & Vawidth=1) ... & vargd & varga & vargb & vflags unimpl
+  :vmulhn.uu vargd, varga, vargb^vflags
+	is (Vaop=59 & Vawidth=0) ... & vargd & varga & vargb & vflags unimpl
+  :vop59.1 vargd, varga, vargb^vflags
+	is (Vaop=59 & Vawidth=1) ... & vargd & varga & vargb & vflags unimpl
+  :vmulht.ss vargd, varga, vargb^vflags
+	is (Vaop=60 & Vawidth=0) ... & vargd & varga & vargb & vflags unimpl
+  :vop60.1 vargd, varga, vargb^vflags
+	is (Vaop=60 & Vawidth=1) ... & vargd & varga & vargb & vflags unimpl
+  :vmulht.su vargd, varga, vargb^vflags
+	is (Vaop=61 & Vawidth=0) ... & vargd & varga & vargb & vflags unimpl
+  :vop61.1 vargd, varga, vargb^vflags
+	is (Vaop=61 & Vawidth=1) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"op62" vargd, varga, vargb^vflags
+	is (Vaop=62 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+  :v^Vawidth^"op63" vargd, varga, vargb^vflags
+	is (Vaop=63 & Vawidth) ... & vargd & varga & vargb & vflags unimpl
+}
