@@ -1317,12 +1317,12 @@ define pcodeop fnmsubs;
 }
 
 define pcodeop fmuls;
-:fmuls Fst, Fsa, Fsb is $(I32) & $(COP) & fop4=0xa & Fst & Fsa & Fsb  & cop4=0x0 {
+:fmuls Fst, Fsa, Fsb is $(I32) & $(COP) & fop4=0xc & Fst & Fsa & Fsb  & cop4=0x0 {
 	Fst = fmuls(Fsa, Fsb);
 }
 
 define pcodeop fdivs;
-:fdivs Fst, Fsa, Fsb is $(I32) & $(COP) & fop4=0xb & Fst & Fsa & Fsb  & cop4=0x0 {
+:fdivs Fst, Fsa, Fsb is $(I32) & $(COP) & fop4=0xd & Fst & Fsa & Fsb  & cop4=0x0 {
 	Fst = fdivs(Fsa, Fsb);
 }
 
@@ -1439,12 +1439,12 @@ define pcodeop fnmsubd;
 }
 
 define pcodeop fmuld;
-:fmuld Fdt, Fda, Fdb is $(I32) & $(COP) & fop4=0xa & Fdt & Fda & Fdb  & cop4=0x8 {
+:fmuld Fdt, Fda, Fdb is $(I32) & $(COP) & fop4=0xc & Fdt & Fda & Fdb  & cop4=0x8 {
 	Fdt = fmuld(Fda, Fdb);
 }
 
 define pcodeop fdivd;
-:fdivd Fdt, Fda, Fdb is $(I32) & $(COP) & fop4=0xb & Fdt & Fda & Fdb  & cop4=0x8 {
+:fdivd Fdt, Fda, Fdb is $(I32) & $(COP) & fop4=0xd & Fdt & Fda & Fdb  & cop4=0x8 {
 	Fdt = fdivd(Fda, Fdb);
 }
 
