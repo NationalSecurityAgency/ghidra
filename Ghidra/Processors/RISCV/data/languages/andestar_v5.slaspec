@@ -8,18 +8,25 @@ define endian=little;
 @define ADDRSIZE "32"
 @define FPSIZE "64"
 
+# Included shared RISCV sinc files need to use XANDES_V5 to avoid overlapping
+# constructors of standardized instructions with Andes extensions.
+@define XANDES_V5 ""
+
 @include "riscv.reg.sinc"
 
 define context CONTEXT
     isExecInstr=(32,32)
     phase=(33,33)
     ecdv=(34,34)
+    pp16=(35,35)
 ;
 
 @include "riscv.table.sinc"
 
 
 # artificial return register
+# TODO Once CoDense is seen in real binaries, support should be implemented using
+# same machinery NDS32 uses for ex9.it
 
 define register offset=0x6000 size=4 [ ExecRetAddr ];
 
