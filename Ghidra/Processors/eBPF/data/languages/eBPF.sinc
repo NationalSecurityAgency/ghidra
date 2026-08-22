@@ -207,20 +207,22 @@ DST4: dst is dst { local tmp:4 = dst:4; export tmp; }
 #Memory instructions - Load and Store
 ###############################################################################
 
-#LDDW is the only 16-byte eBPF instruction which consists of two consecutive 8-byte blocks ('struct bpf_insn') 
+#LDDW is the only 16-byte eBPF instruction which consists of two consecutive 8-byte blocks ('struct bpf_insn')
 #and interpreted as single instruction which loads 64-bit imm value into dst. Encoding of LDDW:
 #LSR                                                                                                MSR
 #           opcode      src     dst     offset      Low 8-byte imm      zero-block      High 8-byte imm
 #bits          8         4       4        16               32               32                 32
-# So, imm64 consists of concatination of high 8-byte imm and low 8-byte imm.
+# So, imm64 consists of concatenation of high 8-byte imm and low 8-byte imm.
+#As src is used to encode special instructions (BPF_PSEUDO_MAP_FD=1, BPF_PSEUDO_MAP_VALUE=2, BPF_PSEUDO_BTF_ID=3 or BPF_PSEUDO_FUNC=4), ensure it is zero for the base instruction.
 
-:LDDW dst, concat  is imm & dst &  op_ld_st_mode=0x0 & op_ld_st_size=0x3 & op_insn_class=0x0; imm2 [ concat= (imm2 << 32) | ((imm) & 0xFFFFFFFF); ] { dst = concat; }
+:LDDW dst, concat  is imm & src=0 & dst & op_ld_st_mode=0x0 & op_ld_st_size=0x3 & op_insn_class=0x0; imm2 [ concat= (imm2 << 32) | ((imm) & 0xFFFFFFFF); ] { dst = concat; }
 
-#BPF_LD_MAP_FD(DST, MAP_FD) -> second LDDW = pseudo LDDW insn used to refer to process-local map_fd 
-#For each instruction which needs relocation, it inject corresponding file descriptor to imm field. 
+#BPF_LD_MAP_FD(DST, MAP_FD) -> second LDDW = pseudo LDDW insn used to refer to process-local map_fd
+#For each instruction which needs relocation, it injects corresponding file descriptor to imm field.
 #As a part of protocol, src_reg is set to BPF_PSEUDO_MAP_FD (which defined as 1) to notify kernel this is a map loading instruction.
+#llvm-objdump decodes this instruction as "ld_pseudo dst, src, imm"
 
-:LDDW dst, imm  is imm & src=1 & dst & op_ld_st_mode=0x0 & op_ld_st_size=0x3 & op_insn_class=0x0; imm2 { dst = *:8 imm:8; }
+:LD_MAP_FD dst, imm  is imm & src=1 & dst & op_ld_st_mode=0x0 & op_ld_st_size=0x3 & op_insn_class=0x0; imm2 { dst = *:8 imm:8; }
 
 :LDABSW dst, imm  is imm & dst & op_ld_st_mode=0x1 & op_ld_st_size=0x0 & op_insn_class=0x0 { dst = zext(*:4 imm:8); }
 
