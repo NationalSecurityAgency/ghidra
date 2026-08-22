@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="V830"
+            endian="little"
+            size="32"
+            variant="default"
+            version="1.0"
+            slafile="V830.sla"
+            processorspec="V830.pspec"
+            manualindexfile="../manuals/v830.idx"
+            id="V830:LE:32:default">
+    <description>Renesas V830 family</description>
+    <compiler name="default" spec="V830.cspec" id="default"/>
+  </language>
+
+  <language processor="V810"
+            endian="little"
+            size="32"
+            variant="default"
+            version="1.0"
+            slafile="V810.sla"
+            processorspec="V810.pspec"
+            manualindexfile="../manuals/v810.idx"
+            id="V810:LE:32:default">
+    <description>Renesas V810 family</description>
+    <compiler name="default" spec="V810.cspec" id="default"/>
+  </language>
+</language_definitions>
