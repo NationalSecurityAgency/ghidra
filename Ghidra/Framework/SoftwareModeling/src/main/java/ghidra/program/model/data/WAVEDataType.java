@@ -23,11 +23,11 @@ import ghidra.util.Msg;
 public class WAVEDataType extends BuiltIn implements Dynamic {
 	public static byte[] MAGIC = new byte[] { (byte) 'R', (byte) 'I', (byte) 'F', (byte) 'F',
 		(byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 'W', (byte) 'A', (byte) 'V',
-		(byte) 'E', (byte) 'f', (byte) 'm', (byte) 't' };
+		(byte) 'E' };
 
 	public static byte[] MAGIC_MASK = new byte[] { (byte) 0xff, (byte) 0xff, (byte) 0xff,
 		(byte) 0xff, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0xff, (byte) 0xff,
-		(byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff };
+		(byte) 0xff, (byte) 0xff };
 
 	public WAVEDataType() {
 		this(null);
