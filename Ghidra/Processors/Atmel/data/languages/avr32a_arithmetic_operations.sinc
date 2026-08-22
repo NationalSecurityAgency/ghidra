@@ -38,7 +38,8 @@ macro cpcflags0(OP1, RES) {
         #    (OP2[31,1] && RES[31,1]) ||
         #    (!(OP1[31,1]) && RES[31,1]);
 
-        C = 0;
+        C = !(OP1[31,1]) && RES[31,1];
+        #C = 0;
         CZNVTOSR();
 }
 
