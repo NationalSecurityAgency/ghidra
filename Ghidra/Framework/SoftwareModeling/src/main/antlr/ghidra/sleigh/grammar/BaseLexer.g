@@ -132,6 +132,9 @@ tokens {
 	OP_WITH;
 	OP_WORDSIZE;
 	OP_XOR;
+	SPEC_AND;
+	SPEC_OR;
+	SPEC_XOR;
 }
 
 /**
@@ -239,10 +242,17 @@ ASTERISK		:	'*';
 SLASH			:	'/';
 PERCENT			:	'%';
 
-// Explicitly named boolean operations
-SPEC_OR			:	'$or';
-SPEC_AND		:	'$and';
-SPEC_XOR		:	'$xor';
+// A single rule prevents boolean operators from claiming an identifier prefix. DOLLARPREFIX is a
+// dispatch rule; every branch emits a more specific token type.
+DOLLARPREFIX
+	:	'$'
+		(
+			('o' 'r' (~('a'..'z'|'A'..'Z'|'0'..'9'|'_'|'.') | EOF)) => 'o' 'r' { $type = SPEC_OR; }
+		|	('a' 'n' 'd' (~('a'..'z'|'A'..'Z'|'0'..'9'|'_'|'.') | EOF)) => 'a' 'n' 'd' { $type = SPEC_AND; }
+		|	('x' 'o' 'r' (~('a'..'z'|'A'..'Z'|'0'..'9'|'_'|'.') | EOF)) => 'x' 'o' 'r' { $type = SPEC_XOR; }
+		|	{ $type = DISPCHAR; }
+		)
+	;
 
 
 // IDs, Literals
