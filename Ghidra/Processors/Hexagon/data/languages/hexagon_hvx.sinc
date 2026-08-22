@@ -1,9 +1,10 @@
-# Qualcomm Hexagon HVX Instruction Set (V69)
+# Qualcomm Hexagon HVX Instruction Set (V60-V81)
 
 # NOTES:
-# - HVX implemntation based upon V69
-# - HVX hardware supports either 64-byte or 128-byte vector lengths 
-# - Vector register write are comitted immediately - we assume assembler enforces read-after-write 
+# - HVX decode covers V60-V81; V68 IEEE-FP, V73 BF16, V79 FP8/qfext, V81 qfloat,
+#   and V66 ZReg matrix families are decode-only stubs (unimpl pcode).
+# - HVX hardware supports either 64-byte or 128-byte vector lengths
+# - Vector register write are comitted immediately - we assume assembler enforces read-after-write
 #   hazzards for vector registers so we do not shadow writes.
 
 # UNDERSTANDING / ASSUMPTIONS:
@@ -40,6 +41,7 @@ VddUW_0004: Vdd5^".uw"  is Vdd5 { export Vdd5; }
 VddUH_0004: Vdd5^".uh"  is Vdd5 { export Vdd5; }
 VddUB_0004: Vdd5^".ub"	is Vdd5 { export Vdd5; }
 VddQF32_0004: Vdd5^".qf32"  is Vdd5 { export Vdd5; }
+VddSF_0004: Vdd5^".sf"  is Vdd5 { export Vdd5; }
 
 # source vector pair (0,4) - read-only use
 Vss_0004:vdd5  is vdd5 {
@@ -121,6 +123,9 @@ VdHF_0004: Vd5^".hf"	is Vd5 { export Vd5; }
 VdSF_0004: Vd5^".sf"	is Vd5 { export Vd5; }
 VdQF16_0004: Vd5^".qf16"  is Vd5 { export Vd5; }
 VdQF32_0004: Vd5^".qf32"  is Vd5 { export Vd5; }
+VdF8_0004: Vd5^".f8"  is Vd5 { export Vd5; }
+VdBF_0004: Vd5^".bf"  is Vd5 { export Vd5; }
+VdX_0004: Vd5^".x"  is Vd5 { export Vd5; }
 
 # source vector (0,4) - read-only use
 Vs_0004: vs5  is vs5 {
@@ -150,6 +155,9 @@ VuSF_0812: Vu_0812^".sf"	is Vu_0812 { export Vu_0812; }
 VuHF_0812: Vu_0812^".hf"	is Vu_0812 { export Vu_0812; }
 VuQF16_0812: Vu_0812^".qf16"  is Vu_0812 { export Vu_0812; }
 VuQF32_0812: Vu_0812^".qf32"  is Vu_0812 { export Vu_0812; }
+VuF8_0812: Vu_0812^".f8"  is Vu_0812 { export Vu_0812; }
+VuBF_0812: Vu_0812^".bf"  is Vu_0812 { export Vu_0812; }
+VuX_0812: Vu_0812^".x"  is Vu_0812 { export Vu_0812; }
 
 # source vector (16,20) - read-only use
 Vv_1620: vv5  is vv5 {
@@ -168,6 +176,8 @@ VvSF_1620: Vv_1620^".sf"  is Vv_1620 { export Vv_1620; }
 VvHF_1620: Vv_1620^".hf"  is Vv_1620 { export Vv_1620; }
 VvQF16_1620: Vv_1620^".qf16"  is Vv_1620 { export Vv_1620; }
 VvQF32_1620: Vv_1620^".qf32"  is Vv_1620 { export Vv_1620; }
+VvF8_1620: Vv_1620^".f8"  is Vv_1620 { export Vv_1620; }
+VvBF_1620: Vv_1620^".bf"  is Vv_1620 { export Vv_1620; }
 
 # source vector (19,23) - read-only use
 Vz_1923: vz5  is vz5 {
@@ -188,7 +198,8 @@ VzUH_1923: Vz_1923^".uh"  is Vz_1923 { export Vz_1923; }
 
 # source scalar register pair - read-only use - see rxx5 (used for lane naming only)
 RttH_1620: rxx5^".h"  	is rxx5 { tmp:8 = rxx5; export tmp; } 
-RttUH_1620: rxx5^".uh"  is rxx5 { tmp:8 = rxx5; export tmp; } 
+RttUH_1620: rxx5^".uh"  is rxx5 { tmp:8 = rxx5; export tmp; }
+RttUB_1620: rxx5^".ub"  is rxx5 { tmp:8 = rxx5; export tmp; }
 
 # source scalar register - read-only use - see rx5 (used for lane naming only)
 RtH_1620: rx5^".h"  	is rx5 { tmp:4 = rx5; export tmp; }
@@ -197,7 +208,42 @@ RtUH_1620: rx5^".uh"	is rx5 { tmp:4 = rx5; export tmp; }
 RtUB_1620: rx5^".ub"	is rx5 { tmp:4 = rx5; export tmp; }
 
 #
-# Vector Predicate operands 
+# V66 ZReg quad-vector operands (Vdddd / Vyyyy)
+#
+
+Zdddd_0004: "v3:0"		is op0004=0x00 { }
+Zdddd_0004: "v7:4"		is op0004=0x04 { }
+Zdddd_0004: "v11:8"		is op0004=0x08 { }
+Zdddd_0004: "v15:12"	is op0004=0x0c { }
+Zdddd_0004: "v19:16"	is op0004=0x10 { }
+Zdddd_0004: "v23:20"	is op0004=0x14 { }
+Zdddd_0004: "v27:24"	is op0004=0x18 { }
+Zdddd_0004: "v31:28"	is op0004=0x1c { }
+
+ZddddW_0004: Zdddd_0004^".w"	is Zdddd_0004 { }
+
+Zyyyy_0004: "v3:0"		is op0004=0x00 { }
+Zyyyy_0004: "v7:4"		is op0004=0x04 { }
+Zyyyy_0004: "v11:8"		is op0004=0x08 { }
+Zyyyy_0004: "v15:12"	is op0004=0x0c { }
+Zyyyy_0004: "v19:16"	is op0004=0x10 { }
+Zyyyy_0004: "v23:20"	is op0004=0x14 { }
+Zyyyy_0004: "v27:24"	is op0004=0x18 { }
+Zyyyy_0004: "v31:28"	is op0004=0x1c { }
+
+ZyyyyW_0004: Zyyyy_0004^".w"	is Zyyyy_0004 { }
+
+#
+# Rt8/Rx8 byte-subregister operands (18,16) - read-only use
+#
+
+Rt8B_1618: rt1618^".b"		is rt1618 { tmp:4 = rt1618; export tmp; }
+Rt8UB_1618: rt1618^".ub"	is rt1618 { tmp:4 = rt1618; export tmp; }
+Rx8B_pp_1618: rt1618^".b++"		is rt1618 { tmp:4 = rt1618; export tmp; }
+Rx8UB_pp_1618: rt1618^".ub++"	is rt1618 { tmp:4 = rt1618; export tmp; }
+
+#
+# Vector Predicate operands
 #
 
 # Corresponds to Qd4 in documentation (vector predicate destination Q0..Q3, handles unconditional commit)
@@ -1476,8 +1522,8 @@ define pcodeop vsub_VwVw_carryResult;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    0  0  0  1  1  1  1  0  -  -  0  -  -  0  1  1  P  P  1  u  u  u  u  u  1  1  1  d  d  d  d  d
 
-:assign Vd5,Vu_0812 EndPacket  is iclass=0x1 & op2427=0xe & op21=0x0 & op18=0x0 & op1617=0x3 & op13=0x1 & op0507=0x7 & Vd5 & Vu_0812 & $(END_PACKET) [ cond=0; ] {
-	Vd5 = Vu_0812; # Vd5 handles unconditional commit 
+:assign Vd5,Vu_0812 EndPacket  is iclass=0x1 & op2427=0xe & op2123=0x0 & op1620=0x3 & op13=0x1 & op0507=0x7 & Vd5 & Vu_0812 & $(END_PACKET) [ cond=0; ] {
+	Vd5 = Vu_0812; # Vd5 handles unconditional commit
 	build EndPacket;
 }
 
@@ -1486,7 +1532,7 @@ define pcodeop vsub_VwVw_carryResult;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    0  0  0  1  1  1  1  0  -  -  0  -  -  -  0  1  P  P  0  u  u  u  u  u  1  1  0  d  d  d  d  d
 
-:assign Vd5tmp,Vu_0812 EndPacket  is iclass=0x1 & op2427=0xe & op21=0x0 & op1617=0x1 & op13=0x0 & op0507=0x6 & Vd5tmp & Vu_0812 & $(END_PACKET) {
+:assign Vd5tmp,Vu_0812 EndPacket  is iclass=0x1 & op2427=0xe & op2123=0x0 & op1620=0x1 & op13=0x0 & op0507=0x6 & Vd5tmp & Vu_0812 & $(END_PACKET) {
    Vd5tmp = Vu_0812;
    build EndPacket;
 }
@@ -1808,7 +1854,7 @@ define pcodeop vcmp_gt_VuwVuw;
 
 define pcodeop vcmp_eqand_QVbVb;
 
-:vcmp.eq Qd2,VuB_0812,VvB_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x0 & Qd2 & VuB_0812 & VvB_1620 & $(END_PACKET) {
+:vcmp.eq^"&=" Qd2,VuB_0812,VvB_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x0 & Qd2 & VuB_0812 & VvB_1620 & $(END_PACKET) {
    Qd2 = vcmp_eqand_QVbVb(Qd2,VuB_0812,VvB_1620);
    build EndPacket;
 }
@@ -1820,7 +1866,7 @@ define pcodeop vcmp_eqand_QVbVb;
 
 define pcodeop vcmp_eqand_QVhVh;
 
-:vcmp.eq Qd2,VuH_0812,VvH_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x1 & Qd2 & VuH_0812 & VvH_1620 & $(END_PACKET) {
+:vcmp.eq^"&=" Qd2,VuH_0812,VvH_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x1 & Qd2 & VuH_0812 & VvH_1620 & $(END_PACKET) {
    Qd2 = vcmp_eqand_QVhVh(Qd2,VuH_0812,VvH_1620);
    build EndPacket;
 }
@@ -1832,7 +1878,7 @@ define pcodeop vcmp_eqand_QVhVh;
 
 define pcodeop vcmp_eqand_QVwVw;
 
-:vcmp.eq Qd2,VuW_0812,VvW_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x2 & Qd2 & VuW_0812 & VvW_1620 & $(END_PACKET) {
+:vcmp.eq^"&=" Qd2,VuW_0812,VvW_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x2 & Qd2 & VuW_0812 & VvW_1620 & $(END_PACKET) {
    Qd2 = vcmp_eqand_QVwVw(Qd2,VuW_0812,VvW_1620);
    build EndPacket;
 }
@@ -1844,7 +1890,7 @@ define pcodeop vcmp_eqand_QVwVw;
 
 define pcodeop vcmp_gtand_QVbVb;
 
-:vcmp.gt Qd2,VuB_0812,VvB_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x4 & Qd2 & VuB_0812 & VvB_1620 & $(END_PACKET) {
+:vcmp.gt^"&=" Qd2,VuB_0812,VvB_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x4 & Qd2 & VuB_0812 & VvB_1620 & $(END_PACKET) {
    Qd2 = vcmp_gtand_QVbVb(Qd2,VuB_0812,VvB_1620);
    build EndPacket;
 }
@@ -1856,7 +1902,7 @@ define pcodeop vcmp_gtand_QVbVb;
 
 define pcodeop vcmp_gtand_QVhVh;
 
-:vcmp.gt Qd2,VuH_0812,VvH_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x5 & Qd2 & VuH_0812 & VvH_1620 & $(END_PACKET) {
+:vcmp.gt^"&=" Qd2,VuH_0812,VvH_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x5 & Qd2 & VuH_0812 & VvH_1620 & $(END_PACKET) {
    Qd2 = vcmp_gtand_QVhVh(Qd2,VuH_0812,VvH_1620);
    build EndPacket;
 }
@@ -1868,7 +1914,7 @@ define pcodeop vcmp_gtand_QVhVh;
 
 define pcodeop vcmp_gtand_QVwVw;
 
-:vcmp.gt Qd2,VuW_0812,VvW_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x6 & Qd2 & VuW_0812 & VvW_1620 & $(END_PACKET) {
+:vcmp.gt^"&=" Qd2,VuW_0812,VvW_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x6 & Qd2 & VuW_0812 & VvW_1620 & $(END_PACKET) {
    Qd2 = vcmp_gtand_QVwVw(Qd2,VuW_0812,VvW_1620);
    build EndPacket;
 }
@@ -1880,7 +1926,7 @@ define pcodeop vcmp_gtand_QVwVw;
 
 define pcodeop vcmp_gtand_QVubVub;
 
-:vcmp.gt Qd2,VuUB_0812,VvUB_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x8 & Qd2 & VuUB_0812 & VvUB_1620 & $(END_PACKET) {
+:vcmp.gt^"&=" Qd2,VuUB_0812,VvUB_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x8 & Qd2 & VuUB_0812 & VvUB_1620 & $(END_PACKET) {
    Qd2 = vcmp_gtand_QVubVub(Qd2,VuUB_0812,VvUB_1620);
    build EndPacket;
 }
@@ -1892,7 +1938,7 @@ define pcodeop vcmp_gtand_QVubVub;
 
 define pcodeop vcmp_gtand_QVuhVuh;
 
-:vcmp.gt Qd2,VuUH_0812,VvUH_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x9 & Qd2 & VuUH_0812 & VvUH_1620 & $(END_PACKET) {
+:vcmp.gt^"&=" Qd2,VuUH_0812,VvUH_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x9 & Qd2 & VuUH_0812 & VvUH_1620 & $(END_PACKET) {
    Qd2 = vcmp_gtand_QVuhVuh(Qd2,VuUH_0812,VvUH_1620);
    build EndPacket;
 }
@@ -1904,7 +1950,7 @@ define pcodeop vcmp_gtand_QVuhVuh;
 
 define pcodeop vcmp_gtand_QVuwVuw;
 
-:vcmp.gt Qd2,VuUW_0812,VvUW_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0xa & Qd2 & VuUW_0812 & VvUW_1620 & $(END_PACKET) {
+:vcmp.gt^"&=" Qd2,VuUW_0812,VvUW_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0xa & Qd2 & VuUW_0812 & VvUW_1620 & $(END_PACKET) {
    Qd2 = vcmp_gtand_QVuwVuw(Qd2,VuUW_0812,VvUW_1620);
    build EndPacket;
 }
@@ -5773,7 +5819,7 @@ define pcodeop Vub_vasr_WuhVub_rnd_sat;
 
 define pcodeop Vsf_equals_Vqf32;
 
-:assign VdSF_0004,VuQF32_0812 EndPacket  is iclass=0x1 & op2427=0xe & op21=0x0 & op18=0x1 & op1617=0x0 & op13=0x1 & op0507=0x0 & VdSF_0004 & VuQF32_0812 & $(END_PACKET) {
+:assign VdSF_0004,VuQF32_0812 EndPacket  is iclass=0x1 & op2427=0xe & op2123=0x0 & op1620=0x4 & op13=0x1 & op0507=0x0 & VdSF_0004 & VuQF32_0812 & $(END_PACKET) {
    VdSF_0004 = Vsf_equals_Vqf32(VuQF32_0812);
    build EndPacket;
 }
@@ -5785,7 +5831,7 @@ define pcodeop Vsf_equals_Vqf32;
 
 define pcodeop Vhf_equals_Vqf16;
 
-:assign VdHF_0004,VuQF16_0812 EndPacket  is iclass=0x1 & op2427=0xe & op21=0x0 & op18=0x1 & op1617=0x0 & op13=0x1 & op0507=0x3 & VdHF_0004 & VuQF16_0812 & $(END_PACKET) {
+:assign VdHF_0004,VuQF16_0812 EndPacket  is iclass=0x1 & op2427=0xe & op2123=0x0 & op1620=0x4 & op13=0x1 & op0507=0x3 & VdHF_0004 & VuQF16_0812 & $(END_PACKET) {
    VdHF_0004 = Vhf_equals_Vqf16(VuQF16_0812);
    build EndPacket;
 }
@@ -5797,7 +5843,7 @@ define pcodeop Vhf_equals_Vqf16;
 
 define pcodeop Vhf_equals_Wqf32;
 
-:assign VdHF_0004,VuuQF32_0812 EndPacket  is iclass=0x1 & op2427=0xe & op21=0x0 & op18=0x1 & op1617=0x0 & op13=0x1 & op0507=0x6 & VdHF_0004 & VuuQF32_0812 & $(END_PACKET) {
+:assign VdHF_0004,VuuQF32_0812 EndPacket  is iclass=0x1 & op2427=0xe & op2123=0x0 & op1620=0x4 & op13=0x1 & op0507=0x6 & VdHF_0004 & VuuQF32_0812 & $(END_PACKET) {
    VdHF_0004 = Vhf_equals_Wqf32(VuuQF32_0812);
    build EndPacket;
 }
@@ -6534,4 +6580,528 @@ define pcodeop scatter_release;
    scatter_release(VAlignMemAddrRxAIMu);
 }
 
+# (hvx,1) "vhist"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  0  0  0  0  P  P  1  0  0  0  0  0  1  0  0  0  0  0  0  0
+
+:vhist EndPacket  is iclass=0x1 & op2427=0xe & op2123=0x0 & op1620=0x0 & op13=0x1 & op0812=0x0 & op0007=0x80 & $(END_PACKET) unimpl
+
+# (hvx,1) vhist  --  "vhist(Qv4)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  0  0  1  0  P  P  1  0  0  0  0  0  1  0  0  0  0  0  0  0
+
+:vhist qv2223 EndPacket  is iclass=0x1 & op2427=0xe & op2123=0x0 & op1620=0x2 & op13=0x1 & op0812=0x0 & op0007=0x80 & qv2223 & $(END_PACKET) unimpl
+
+# (hvx,1) vmpy  --  "Vdd.w = vmpy(Vu.h, Vv.uh)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  0  0  1  v  v  v  v  v  P  P  0  u  u  u  u  u  0  1  0  d  d  d  d  d
+
+:vmpy VddW_0004,VuH_0812,VvUH_1620 EndPacket  is iclass=0x1 & op2127=0x61 & op13=0x0 & op0507=0x2 & VddW_0004 & VuH_0812 & VvUH_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vmpy  --  "Vxx.w += vmpy(Vu.h, Vv.uh)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  0  0  1  v  v  v  v  v  P  P  1  u  u  u  u  u  0  0  1  x  x  x  x  x
+
+:vmpy+= VddW_0004,VuH_0812,VvUH_1620 EndPacket  is iclass=0x1 & op2127=0x61 & op13=0x1 & op0507=0x1 & vss5 & VddW_0004 & VuH_0812 & VvUH_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vmpy  --  "Vdd.w = vmpy(Vu.h, Vv.h)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  0  0  0  v  v  v  v  v  P  P  0  u  u  u  u  u  1  1  1  d  d  d  d  d
+
+:vmpy VddW_0004,VuH_0812,VvH_1620 EndPacket  is iclass=0x1 & op2127=0x60 & op13=0x0 & op0507=0x7 & VddW_0004 & VuH_0812 & VvH_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vmpy  --  "Vxx.w += vmpy(Vu.h, Vv.h)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  0  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  1  1  1  x  x  x  x  x
+
+:vmpy+= VddW_0004,VuH_0812,VvH_1620 EndPacket  is iclass=0x1 & op2127=0x60 & op13=0x1 & op0507=0x7 & vss5 & VddW_0004 & VuH_0812 & VvH_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vmpy  --  "Vd.h = vmpy(Vu.h, Vv.h):<<1:rnd:sat"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  0  0  1  v  v  v  v  v  P  P  0  u  u  u  u  u  0  0  1  d  d  d  d  d
+
+:vmpy^":<<1:rnd:sat" VdH_0004,VuH_0812,VvH_1620 EndPacket  is iclass=0x1 & op2127=0x61 & op13=0x0 & op0507=0x1 & VdH_0004 & VuH_0812 & VvH_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vrmpy  --  "Vdd.w = vrmpy(Vu.b, Rtt.ub)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  0  t  t  t  t  t  P  P  0  u  u  u  u  u  1  0  1  d  d  d  d  d
+
+:vrmpy VddW_0004,VuB_0812,RttUB_1620 EndPacket  is iclass=0x1 & op2127=0x4e & op13=0x0 & op0507=0x5 & VddW_0004 & VuB_0812 & RttUB_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vrmpy  --  "Vxx.w += vrmpy(Vu.b, Rtt.ub)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  0  1  t  t  t  t  t  P  P  1  u  u  u  u  u  0  0  0  x  x  x  x  x
+
+:vrmpy+= VddW_0004,VuB_0812,RttUB_1620 EndPacket  is iclass=0x1 & op2127=0x4d & op13=0x1 & op0507=0x0 & vss5 & VddW_0004 & VuB_0812 & RttUB_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vrmpy  --  "Vdd.uw = vrmpy(Vu.ub, Rtt.ub)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  0  t  t  t  t  t  P  P  0  u  u  u  u  u  1  0  0  d  d  d  d  d
+
+:vrmpy VddUW_0004,VuUB_0812,RttUB_1620 EndPacket  is iclass=0x1 & op2127=0x4e & op13=0x0 & op0507=0x4 & VddUW_0004 & VuUB_0812 & RttUB_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vrmpy  --  "Vxx.uw += vrmpy(Vu.ub, Rtt.ub)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  0  1  t  t  t  t  t  P  P  1  u  u  u  u  u  1  1  1  x  x  x  x  x
+
+:vrmpy+= VddUW_0004,VuUB_0812,RttUB_1620 EndPacket  is iclass=0x1 & op2127=0x4d & op13=0x1 & op0507=0x7 & vss5 & VddUW_0004 & VuUB_0812 & RttUB_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vdmpy  --  "Vx.sf += vdmpy(Vu.hf, Vv.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  0  1  0  v  v  v  v  v  P  P  1  u  u  u  u  u  0  1  1  x  x  x  x  x
+
+:vdmpy+= VdSF_0004,VuHF_0812,VvHF_1620 EndPacket  is iclass=0x1 & op2127=0x62 & op13=0x1 & op0507=0x3 & vs5 & VdSF_0004 & VuHF_0812 & VvHF_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vfmax  --  "Vd.hf = vfmax(Vu.hf, Vv.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  0  1  1  v  v  v  v  v  P  P  1  u  u  u  u  u  0  1  0  d  d  d  d  d
+
+:vfmax VdHF_0004,VuHF_0812,VvHF_1620 EndPacket  is iclass=0x1 & op2127=0x63 & op13=0x1 & op0507=0x2 & VdHF_0004 & VuHF_0812 & VvHF_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vfmax  --  "Vd.sf = vfmax(Vu.sf, Vv.sf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  0  1  1  v  v  v  v  v  P  P  1  u  u  u  u  u  0  1  1  d  d  d  d  d
+
+:vfmax VdSF_0004,VuSF_0812,VvSF_1620 EndPacket  is iclass=0x1 & op2127=0x63 & op13=0x1 & op0507=0x3 & VdSF_0004 & VuSF_0812 & VvSF_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vfmin  --  "Vd.hf = vfmin(Vu.hf, Vv.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  0  1  1  v  v  v  v  v  P  P  1  u  u  u  u  u  0  0  0  d  d  d  d  d
+
+:vfmin VdHF_0004,VuHF_0812,VvHF_1620 EndPacket  is iclass=0x1 & op2127=0x63 & op13=0x1 & op0507=0x0 & VdHF_0004 & VuHF_0812 & VvHF_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vfmin  --  "Vd.sf = vfmin(Vu.sf, Vv.sf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  0  1  1  v  v  v  v  v  P  P  1  u  u  u  u  u  0  0  1  d  d  d  d  d
+
+:vfmin VdSF_0004,VuSF_0812,VvSF_1620 EndPacket  is iclass=0x1 & op2127=0x63 & op13=0x1 & op0507=0x1 & VdSF_0004 & VuSF_0812 & VvSF_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vmpy  --  "Vx.hf += vmpy(Vu.hf, Vv.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  0  1  0  v  v  v  v  v  P  P  1  u  u  u  u  u  0  1  0  x  x  x  x  x
+
+:vmpy+= VdHF_0004,VuHF_0812,VvHF_1620 EndPacket  is iclass=0x1 & op2127=0x62 & op13=0x1 & op0507=0x2 & vs5 & VdHF_0004 & VuHF_0812 & VvHF_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vmpy  --  "Vxx.sf += vmpy(Vu.hf, Vv.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  0  1  0  v  v  v  v  v  P  P  1  u  u  u  u  u  0  0  1  x  x  x  x  x
+
+:vmpy+= VddSF_0004,VuHF_0812,VvHF_1620 EndPacket  is iclass=0x1 & op2127=0x62 & op13=0x1 & op0507=0x1 & vss5 & VddSF_0004 & VuHF_0812 & VvHF_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vabs  --  "Vd.hf = vabs(Vu.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  0  1  1  0  P  P  1  u  u  u  u  u  1  0  0  d  d  d  d  d
+
+:vabs VdHF_0004,VuHF_0812 EndPacket  is iclass=0x1 & op2427=0xe & op2123=0x0 & op1620=0x6 & op13=0x1 & op0507=0x4 & VdHF_0004 & VuHF_0812 & $(END_PACKET) unimpl
+
+# (hvx,1) vadd  --  "Vd.hf = vadd(Vu.hf, Vv.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  1  1  0  1  v  v  v  v  v  P  P  1  u  u  u  u  u  1  1  1  d  d  d  d  d
+
+:vadd VdHF_0004,VuHF_0812,VvHF_1620 EndPacket  is iclass=0x1 & op2127=0x7d & op13=0x1 & op0507=0x7 & VdHF_0004 & VuHF_0812 & VvHF_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vmpy  --  "Vd.hf = vmpy(Vu.hf, Vv.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  1  1  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  0  1  1  d  d  d  d  d
+
+:vmpy VdHF_0004,VuHF_0812,VvHF_1620 EndPacket  is iclass=0x1 & op2127=0x7c & op13=0x1 & op0507=0x3 & VdHF_0004 & VuHF_0812 & VvHF_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vadd  --  "Vdd.sf = vadd(Vu.bf, Vv.bf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  1  0  1  0  v  v  v  v  v  P  P  1  u  u  u  u  u  1  1  0  d  d  d  d  d
+
+:vadd VddSF_0004,VuBF_0812,VvBF_1620 EndPacket  is iclass=0x1 & op2127=0x6a & op13=0x1 & op0507=0x6 & VddSF_0004 & VuBF_0812 & VvBF_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vcvt  --  "Vd.bf = vcvt(Vu.sf, Vv.sf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  1  0  1  0  v  v  v  v  v  P  P  1  u  u  u  u  u  0  1  1  d  d  d  d  d
+
+:vcvt VdBF_0004,VuSF_0812,VvSF_1620 EndPacket  is iclass=0x1 & op2127=0x6a & op13=0x1 & op0507=0x3 & VdBF_0004 & VuSF_0812 & VvSF_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vmax  --  "Vd.bf = vmax(Vu.bf, Vv.bf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  1  0  1  0  v  v  v  v  v  P  P  1  u  u  u  u  u  1  1  1  d  d  d  d  d
+
+:vmax VdBF_0004,VuBF_0812,VvBF_1620 EndPacket  is iclass=0x1 & op2127=0x6a & op13=0x1 & op0507=0x7 & VdBF_0004 & VuBF_0812 & VvBF_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vmin  --  "Vd.bf = vmin(Vu.bf, Vv.bf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  1  0  1  0  v  v  v  v  v  P  P  1  u  u  u  u  u  0  0  0  d  d  d  d  d
+
+:vmin VdBF_0004,VuBF_0812,VvBF_1620 EndPacket  is iclass=0x1 & op2127=0x6a & op13=0x1 & op0507=0x0 & VdBF_0004 & VuBF_0812 & VvBF_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vmpy  --  "Vdd.sf = vmpy(Vu.bf, Vv.bf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  1  0  1  0  v  v  v  v  v  P  P  1  u  u  u  u  u  1  0  0  d  d  d  d  d
+
+:vmpy VddSF_0004,VuBF_0812,VvBF_1620 EndPacket  is iclass=0x1 & op2127=0x6a & op13=0x1 & op0507=0x4 & VddSF_0004 & VuBF_0812 & VvBF_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vmpy  --  "Vxx.sf += vmpy(Vu.bf, Vv.bf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  1  0  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  0  0  0  x  x  x  x  x
+
+:vmpy+= VddSF_0004,VuBF_0812,VvBF_1620 EndPacket  is iclass=0x1 & op2127=0x68 & op13=0x1 & op0507=0x0 & vss5 & VddSF_0004 & VuBF_0812 & VvBF_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vsub  --  "Vdd.sf = vsub(Vu.bf, Vv.bf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  1  0  1  0  v  v  v  v  v  P  P  1  u  u  u  u  u  1  0  1  d  d  d  d  d
+
+:vsub VddSF_0004,VuBF_0812,VvBF_1620 EndPacket  is iclass=0x1 & op2127=0x6a & op13=0x1 & op0507=0x5 & VddSF_0004 & VuBF_0812 & VvBF_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vcmp.gt  --  "Qd4 = vcmp.gt(Vu.bf, Vv.bf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  1  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  0  1  1  1  1  0  d  d
+
+:vcmp.gt Qd2,VuBF_0812,VvBF_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x1e & Qd2 & VuBF_0812 & VvBF_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vcmp.gt  --  "Qx4 &= vcmp.gt(Vu.bf, Vv.bf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  1  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  1  1  0  1  0  0  x  x
+
+:vcmp.gt^"&=" Qd2,VuBF_0812,VvBF_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x34 & Qd2 & VuBF_0812 & VvBF_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vcmp.gt  --  "Qx4 |= vcmp.gt(Vu.bf, Vv.bf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  1  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  0  0  1  1  1  0  x  x
+
+:vcmp.gt^"|=" Qd2,VuBF_0812,VvBF_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x0e & Qd2 & VuBF_0812 & VvBF_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vcmp.gt  --  "Qx4 ^= vcmp.gt(Vu.bf, Vv.bf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  1  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  1  1  1  1  0  0  x  x
+
+:vcmp.gt^"^=" Qd2,VuBF_0812,VvBF_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x3c & Qd2 & VuBF_0812 & VvBF_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vabs  --  "Vd.f8 = vabs(Vu.f8)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  0  1  1  0  0  1  1  0  P  P  1  u  u  u  u  u  1  1  0  d  d  d  d  d
+
+:vabs VdF8_0004,VuF8_0812 EndPacket  is iclass=0x1 & op2427=0xc & op2123=0x3 & op1620=0x6 & op13=0x1 & op0507=0x6 & VdF8_0004 & VuF8_0812 & $(END_PACKET) unimpl
+
+# (hvx,1) vcvt2  --  "Vd.b = vcvt2(Vu.hf, Vv.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  1  0  1  1  0  v  v  v  v  v  P  P  1  u  u  u  u  u  1  1  0  d  d  d  d  d
+
+:vcvt2 VdB_0004,VuHF_0812,VvHF_1620 EndPacket  is iclass=0x1 & op2127=0x56 & op13=0x1 & op0507=0x6 & VdB_0004 & VuHF_0812 & VvHF_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vcvt2  --  "Vd.ub = vcvt2(Vu.hf, Vv.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  1  0  1  1  0  v  v  v  v  v  P  P  1  u  u  u  u  u  1  1  1  d  d  d  d  d
+
+:vcvt2 VdUB_0004,VuHF_0812,VvHF_1620 EndPacket  is iclass=0x1 & op2127=0x56 & op13=0x1 & op0507=0x7 & VdUB_0004 & VuHF_0812 & VvHF_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vfmax  --  "Vd.f8 = vfmax(Vu.f8, Vv.f8)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  0  1  1  v  v  v  v  v  P  P  1  u  u  u  u  u  1  0  1  d  d  d  d  d
+
+:vfmax VdF8_0004,VuF8_0812,VvF8_1620 EndPacket  is iclass=0x1 & op2127=0x63 & op13=0x1 & op0507=0x5 & VdF8_0004 & VuF8_0812 & VvF8_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vfmin  --  "Vd.f8 = vfmin(Vu.f8, Vv.f8)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  0  1  1  v  v  v  v  v  P  P  1  u  u  u  u  u  1  0  0  d  d  d  d  d
+
+:vfmin VdF8_0004,VuF8_0812,VvF8_1620 EndPacket  is iclass=0x1 & op2127=0x63 & op13=0x1 & op0507=0x4 & VdF8_0004 & VuF8_0812 & VvF8_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vfneg  --  "Vd.f8 = vfneg(Vu.f8)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  0  1  1  0  0  1  1  0  P  P  1  u  u  u  u  u  1  1  1  d  d  d  d  d
+
+:vfneg VdF8_0004,VuF8_0812 EndPacket  is iclass=0x1 & op2427=0xc & op2123=0x3 & op1620=0x6 & op13=0x1 & op0507=0x7 & VdF8_0004 & VuF8_0812 & $(END_PACKET) unimpl
+
+# (hvx,1) vgetqfext  --  "Vd = vgetqfext(Vu.x, Rt32)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  0  t  t  t  t  t  P  P  0  u  u  u  u  u  1  1  1  d  d  d  d  d
+
+:vgetqfext Vd5,VuX_0812,rx5 EndPacket  is iclass=0x1 & op2127=0x4e & op13=0x0 & op0507=0x7 & Vd5 & VuX_0812 & rx5 & $(END_PACKET) unimpl
+
+# (hvx,1) vgetqfext  --  "Vx |= vgetqfext(Vu.x, Rt32)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  0  t  t  t  t  t  P  P  0  u  u  u  u  u  1  1  0  x  x  x  x  x
+
+:vgetqfext^"|=" Vd5,VuX_0812,rx5 EndPacket  is iclass=0x1 & op2127=0x4e & op13=0x0 & op0507=0x6 & vs5 & Vd5 & VuX_0812 & rx5 & $(END_PACKET) unimpl
+
+# (hvx,1) vsetqfext  --  "Vd.x = vsetqfext(Vu, Rt32)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  0  t  t  t  t  t  P  P  0  u  u  u  u  u  0  1  1  d  d  d  d  d
+
+:vsetqfext VdX_0004,Vu_0812,rx5 EndPacket  is iclass=0x1 & op2127=0x4e & op13=0x0 & op0507=0x3 & VdX_0004 & Vu_0812 & rx5 & $(END_PACKET) unimpl
+
+# (hvx,1) vcmp.eq  --  "Qx4 &= vcmp.eq(Vu.hf, Vv.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  1  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  0  0  0  1  1  1  x  x
+
+:vcmp.eq^"&=" Qd2,VuHF_0812,VvHF_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x07 & Qd2 & VuHF_0812 & VvHF_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vcmp.eq  --  "Qx4 |= vcmp.eq(Vu.hf, Vv.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  1  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  0  1  0  1  1  1  x  x
+
+:vcmp.eq^"|=" Qd2,VuHF_0812,VvHF_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x17 & Qd2 & VuHF_0812 & VvHF_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vcmp.eq  --  "Qx4 ^= vcmp.eq(Vu.hf, Vv.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  1  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  1  0  0  1  1  1  x  x
+
+:vcmp.eq^"^=" Qd2,VuHF_0812,VvHF_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x27 & Qd2 & VuHF_0812 & VvHF_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vcmp.eq  --  "Qx4 &= vcmp.eq(Vu.sf, Vv.sf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  1  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  0  0  0  0  1  1  x  x
+
+:vcmp.eq^"&=" Qd2,VuSF_0812,VvSF_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x03 & Qd2 & VuSF_0812 & VvSF_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vcmp.eq  --  "Qx4 |= vcmp.eq(Vu.sf, Vv.sf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  1  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  0  1  0  0  1  1  x  x
+
+:vcmp.eq^"|=" Qd2,VuSF_0812,VvSF_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x13 & Qd2 & VuSF_0812 & VvSF_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) vcmp.eq  --  "Qx4 ^= vcmp.eq(Vu.sf, Vv.sf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  1  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  1  0  0  0  1  1  x  x
+
+:vcmp.eq^"^=" Qd2,VuSF_0812,VvSF_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x23 & Qd2 & VuSF_0812 & VvSF_1620 & $(END_PACKET) unimpl
+
+# (hvx,1) valign4  --  "Vd = valign4(Vu, Vv, Rt8)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  0  0  0  0  z  z  t  t  t  P  P  0  u  u  u  u  u  1  0  1  d  d  d  d  d
+
+:valign4 Vd5,Vu_0812,Vz_1923,rt1618 EndPacket  is iclass=0x1 & op2427=0x8 & op2123=0x0 & op13=0x0 & op0507=0x5 & Vd5 & Vu_0812 & Vz_1923 & rt1618 & $(END_PACKET) unimpl
+
+# (hvx,1) vrmpyz  --  "Vdddd.w = vrmpyz(Vu.b, Rt8.b)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  1  0  1  t  t  t  P  P  0  u  u  u  u  u  0  0  0  d  d  d  0  0
+
+:vrmpyz ZddddW_0004,VuB_0812,Rt8B_1618 EndPacket  is iclass=0x1 & op2427=0x9 & i1923=0x1d & op13=0x0 & op0507=0x0 & ZddddW_0004 & VuB_0812 & Rt8B_1618 & $(END_PACKET) unimpl
+
+# (hvx,1) vrmpyz  --  "Vyyyy.w += vrmpyz(Vu.b, Rt8.b)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  0  0  0  t  t  t  P  P  1  u  u  u  u  u  0  1  0  y  y  y  0  0
+
+:vrmpyz^"+=" ZyyyyW_0004,VuB_0812,Rt8B_1618 EndPacket  is iclass=0x1 & op2427=0x9 & i1923=0x18 & op13=0x1 & op0507=0x2 & ZyyyyW_0004 & VuB_0812 & Rt8B_1618 & $(END_PACKET) unimpl
+
+# (hvx,1) vrmpyz  --  "Vdddd.w = vrmpyz(Vu.b, Rx8.b++)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  1  0  0  t  t  t  P  P  0  u  u  u  u  u  0  0  0  d  d  d  0  0
+
+:vrmpyz ZddddW_0004,VuB_0812,Rx8B_pp_1618 EndPacket  is iclass=0x1 & op2427=0x9 & i1923=0x1c & op13=0x0 & op0507=0x0 & ZddddW_0004 & VuB_0812 & Rx8B_pp_1618 & $(END_PACKET) unimpl
+
+# (hvx,1) vrmpyz  --  "Vyyyy.w += vrmpyz(Vu.b, Rx8.b++)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  0  0  1  t  t  t  P  P  1  u  u  u  u  u  0  1  0  y  y  y  0  0
+
+:vrmpyz^"+=" ZyyyyW_0004,VuB_0812,Rx8B_pp_1618 EndPacket  is iclass=0x1 & op2427=0x9 & i1923=0x19 & op13=0x1 & op0507=0x2 & ZyyyyW_0004 & VuB_0812 & Rx8B_pp_1618 & $(END_PACKET) unimpl
+
+# (hvx,1) vrmpyz  --  "Vdddd.w = vrmpyz(Vu.b, Rt8.ub)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  1  1  1  t  t  t  P  P  0  u  u  u  u  u  0  1  0  d  d  d  0  0
+
+:vrmpyz ZddddW_0004,VuB_0812,Rt8UB_1618 EndPacket  is iclass=0x1 & op2427=0x9 & i1923=0x1f & op13=0x0 & op0507=0x2 & ZddddW_0004 & VuB_0812 & Rt8UB_1618 & $(END_PACKET) unimpl
+
+# (hvx,1) vrmpyz  --  "Vyyyy.w += vrmpyz(Vu.b, Rt8.ub)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  0  1  0  t  t  t  P  P  1  u  u  u  u  u  0  0  1  y  y  y  0  0
+
+:vrmpyz^"+=" ZyyyyW_0004,VuB_0812,Rt8UB_1618 EndPacket  is iclass=0x1 & op2427=0x9 & i1923=0x1a & op13=0x1 & op0507=0x1 & ZyyyyW_0004 & VuB_0812 & Rt8UB_1618 & $(END_PACKET) unimpl
+
+# (hvx,1) vrmpyz  --  "Vdddd.w = vrmpyz(Vu.b, Rx8.ub++)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  1  1  0  t  t  t  P  P  0  u  u  u  u  u  0  1  0  d  d  d  0  0
+
+:vrmpyz ZddddW_0004,VuB_0812,Rx8UB_pp_1618 EndPacket  is iclass=0x1 & op2427=0x9 & i1923=0x1e & op13=0x0 & op0507=0x2 & ZddddW_0004 & VuB_0812 & Rx8UB_pp_1618 & $(END_PACKET) unimpl
+
+# (hvx,1) vrmpyz  --  "Vyyyy.w += vrmpyz(Vu.b, Rx8.ub++)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  0  1  1  t  t  t  P  P  1  u  u  u  u  u  0  0  1  y  y  y  0  0
+
+:vrmpyz^"+=" ZyyyyW_0004,VuB_0812,Rx8UB_pp_1618 EndPacket  is iclass=0x1 & op2427=0x9 & i1923=0x1b & op13=0x1 & op0507=0x1 & ZyyyyW_0004 & VuB_0812 & Rx8UB_pp_1618 & $(END_PACKET) unimpl
+
+# (hvx,1) vr16mpyz  --  "Vdddd.w = vr16mpyz(Vu.c, Rt8.b)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  1  0  1  t  t  t  P  P  0  u  u  u  u  u  0  0  1  d  d  d  0  0
+
+:vr16mpyz ZddddW_0004,Vu_0812^".c",Rt8B_1618 EndPacket  is iclass=0x1 & op2427=0x9 & i1923=0x1d & op13=0x0 & op0507=0x1 & ZddddW_0004 & Vu_0812 & Rt8B_1618 & $(END_PACKET) unimpl
+
+# (hvx,1) vr16mpyz  --  "Vyyyy.w += vr16mpyz(Vu.c, Rt8.b)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  0  0  0  t  t  t  P  P  1  u  u  u  u  u  0  1  1  y  y  y  0  0
+
+:vr16mpyz^"+=" ZyyyyW_0004,Vu_0812^".c",Rt8B_1618 EndPacket  is iclass=0x1 & op2427=0x9 & i1923=0x18 & op13=0x1 & op0507=0x3 & ZyyyyW_0004 & Vu_0812 & Rt8B_1618 & $(END_PACKET) unimpl
+
+# (hvx,1) vr16mpyz  --  "Vdddd.w = vr16mpyz(Vu.c, Rx8.b++)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  1  0  0  t  t  t  P  P  0  u  u  u  u  u  0  0  1  d  d  d  0  0
+
+:vr16mpyz ZddddW_0004,Vu_0812^".c",Rx8B_pp_1618 EndPacket  is iclass=0x1 & op2427=0x9 & i1923=0x1c & op13=0x0 & op0507=0x1 & ZddddW_0004 & Vu_0812 & Rx8B_pp_1618 & $(END_PACKET) unimpl
+
+# (hvx,1) vr16mpyz  --  "Vyyyy.w += vr16mpyz(Vu.c, Rx8.b++)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  0  0  1  t  t  t  P  P  1  u  u  u  u  u  0  1  1  y  y  y  0  0
+
+:vr16mpyz^"+=" ZyyyyW_0004,Vu_0812^".c",Rx8B_pp_1618 EndPacket  is iclass=0x1 & op2427=0x9 & i1923=0x19 & op13=0x1 & op0507=0x3 & ZyyyyW_0004 & Vu_0812 & Rx8B_pp_1618 & $(END_PACKET) unimpl
+
+# (hvx,1) vr16mpyzs  --  "Vdddd.w = vr16mpyzs(Vu.c, Rt8.b)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  1  0  1  t  t  t  P  P  0  u  u  u  u  u  0  1  0  d  d  d  0  0
+
+:vr16mpyzs ZddddW_0004,Vu_0812^".c",Rt8B_1618 EndPacket  is iclass=0x1 & op2427=0x9 & i1923=0x1d & op13=0x0 & op0507=0x2 & ZddddW_0004 & Vu_0812 & Rt8B_1618 & $(END_PACKET) unimpl
+
+# (hvx,1) vr16mpyzs  --  "Vyyyy.w += vr16mpyzs(Vu.c, Rt8.b)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  0  0  0  t  t  t  P  P  1  u  u  u  u  u  0  0  1  y  y  y  0  0
+
+:vr16mpyzs^"+=" ZyyyyW_0004,Vu_0812^".c",Rt8B_1618 EndPacket  is iclass=0x1 & op2427=0x9 & i1923=0x18 & op13=0x1 & op0507=0x1 & ZyyyyW_0004 & Vu_0812 & Rt8B_1618 & $(END_PACKET) unimpl
+
+# (hvx,1) vr16mpyzs  --  "Vdddd.w = vr16mpyzs(Vu.c, Rx8.b++)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  1  0  0  t  t  t  P  P  0  u  u  u  u  u  0  1  0  d  d  d  0  0
+
+:vr16mpyzs ZddddW_0004,Vu_0812^".c",Rx8B_pp_1618 EndPacket  is iclass=0x1 & op2427=0x9 & i1923=0x1c & op13=0x0 & op0507=0x2 & ZddddW_0004 & Vu_0812 & Rx8B_pp_1618 & $(END_PACKET) unimpl
+
+# (hvx,1) vr16mpyzs  --  "Vyyyy.w += vr16mpyzs(Vu.c, Rx8.b++)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  0  0  1  t  t  t  P  P  1  u  u  u  u  u  0  0  1  y  y  y  0  0
+
+:vr16mpyzs^"+=" ZyyyyW_0004,Vu_0812^".c",Rx8B_pp_1618 EndPacket  is iclass=0x1 & op2427=0x9 & i1923=0x19 & op13=0x1 & op0507=0x1 & ZyyyyW_0004 & Vu_0812 & Rx8B_pp_1618 & $(END_PACKET) unimpl
+
+# (hvx,1) vr8mpyz  --  "Vdddd.w = vr8mpyz(Vu.n, Rt8.b)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  1  1  1  t  t  t  P  P  0  u  u  u  u  u  0  0  0  d  d  d  0  0
+
+:vr8mpyz ZddddW_0004,Vu_0812^".n",Rt8B_1618 EndPacket  is iclass=0x1 & op2427=0x9 & i1923=0x1f & op13=0x0 & op0507=0x0 & ZddddW_0004 & Vu_0812 & Rt8B_1618 & $(END_PACKET) unimpl
+
+# (hvx,1) vr8mpyz  --  "Vyyyy.w += vr8mpyz(Vu.n, Rt8.b)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  0  1  0  t  t  t  P  P  1  u  u  u  u  u  0  1  0  y  y  y  0  0
+
+:vr8mpyz^"+=" ZyyyyW_0004,Vu_0812^".n",Rt8B_1618 EndPacket  is iclass=0x1 & op2427=0x9 & i1923=0x1a & op13=0x1 & op0507=0x2 & ZyyyyW_0004 & Vu_0812 & Rt8B_1618 & $(END_PACKET) unimpl
+
+# (hvx,1) vr8mpyz  --  "Vdddd.w = vr8mpyz(Vu.n, Rx8.b++)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  1  1  0  t  t  t  P  P  0  u  u  u  u  u  0  0  0  d  d  d  0  0
+
+:vr8mpyz ZddddW_0004,Vu_0812^".n",Rx8B_pp_1618 EndPacket  is iclass=0x1 & op2427=0x9 & i1923=0x1e & op13=0x0 & op0507=0x0 & ZddddW_0004 & Vu_0812 & Rx8B_pp_1618 & $(END_PACKET) unimpl
+
+# (hvx,1) vr8mpyz  --  "Vyyyy.w += vr8mpyz(Vu.n, Rx8.b++)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  0  1  1  t  t  t  P  P  1  u  u  u  u  u  0  1  0  y  y  y  0  0
+
+:vr8mpyz^"+=" ZyyyyW_0004,Vu_0812^".n",Rx8B_pp_1618 EndPacket  is iclass=0x1 & op2427=0x9 & i1923=0x1b & op13=0x1 & op0507=0x2 & ZyyyyW_0004 & Vu_0812 & Rx8B_pp_1618 & $(END_PACKET) unimpl
+
+# (hvx,1) zextract  --  "Vd = zextract(Rt32)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  0  1  s  s  s  s  s  P  P  0  0  0  0  0  1  0  0  1  d  d  d  d  d
+
+:zextract Vd5,rs5 EndPacket  is iclass=0x1 & op2127=0x4d & op0513=0x009 & Vd5 & rs5 & $(END_PACKET) unimpl
+
+# (hvx,2) zLd_ai  --  "z = vmem(Rt32+#s4)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  1  0  1  1  0  0  0  0  0  s  s  s  s  s  P  P  i  0  0  i  i  i  0  0  0  0  0  0  0  0
+
+:vmem^".z" VAlignMemAddrRxS4 EndPacket  is iclass=0x2 & op2127=0x60 & op1112=0x0 & op0007=0x00 & VAlignMemAddrRxS4 & $(END_PACKET) [ cond=0; ] unimpl
+
+# (hvx,2) zLd_pi  --  "z = vmem(Rx32++#s3)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  1  0  1  1  0  1  0  0  0  s  s  s  s  s  P  P  0  0  0  i  i  i  0  0  0  0  0  0  0  0
+
+:vmem^".z" VAlignMemAddrRxAIS3 EndPacket  is iclass=0x2 & op2127=0x68 & op1113=0x0 & op0007=0x00 & VAlignMemAddrRxAIS3 & $(END_PACKET) [ cond=0; ] unimpl
+
+# (hvx,2) zLd_ppu  --  "z = vmem(Rx32++Mu2)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  1  0  1  1  0  1  0  0  0  s  s  s  s  s  P  P  M  0  0  0  0  0  0  0  0  0  0  0  0  1
+
+:vmem^".z" VAlignMemAddrRxAIMu EndPacket  is iclass=0x2 & op2127=0x68 & op1112=0x0 & op0810=0x0 & op0007=0x01 & VAlignMemAddrRxAIMu & $(END_PACKET) [ cond=0; ] unimpl
+
+# (hvx,2) zLd_pred_ai  --  "if (Pv4) z = vmem(Rt32+#s4)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  1  0  1  1  0  0  1  0  0  s  s  s  s  s  P  P  i  p  p  i  i  i  0  0  0  0  0  0  0  0
+
+:vmem^".if("^pu1112^")"^".z" VAlignMemAddrRxS4 EndPacket  is iclass=0x2 & op2127=0x64 & op0007=0x00 & pu1112 & VAlignMemAddrRxS4 & $(END_PACKET) [ cond=1; ] unimpl
+
+# (hvx,2) zLd_pred_pi  --  "if (Pv4) z = vmem(Rx32++#s3)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  1  0  1  1  0  1  1  0  0  s  s  s  s  s  P  P  0  p  p  i  i  i  0  0  0  0  0  0  0  0
+
+:vmem^".if("^pu1112^")"^".z" VAlignMemAddrRxAIS3 EndPacket  is iclass=0x2 & op2127=0x6c & op13=0x0 & op0007=0x00 & pu1112 & VAlignMemAddrRxAIS3 & $(END_PACKET) [ cond=1; ] unimpl
+
+# (hvx,2) zLd_pred_ppu  --  "if (Pv4) z = vmem(Rx32++Mu2)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  1  0  1  1  0  1  1  0  0  s  s  s  s  s  P  P  M  p  p  0  0  0  0  0  0  0  0  0  0  1
+
+:vmem^".if("^pu1112^")"^".z" VAlignMemAddrRxAIMu EndPacket  is iclass=0x2 & op2127=0x6c & op0810=0x0 & op0007=0x01 & pu1112 & VAlignMemAddrRxAIMu & $(END_PACKET) [ cond=1; ] unimpl
 

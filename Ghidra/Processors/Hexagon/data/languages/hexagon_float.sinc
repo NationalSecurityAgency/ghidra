@@ -422,7 +422,7 @@ define pcodeop sffixupr;
 #    1  1  0  1  0  1  1  0  0  1  i  +  +  +  +  +  P  P  i  i  i  i  i  i  i  i  i  d  d  d  d  d
 
 :sfmake^":neg" Rd5,Uimm16_21_0513 EndPacket	is iclass=13 & op2227=0x19 & op1620=0 & Uimm16_21_0513 & Rd5 & $(END_PACKET) {
-	Rd5 = int2float(-Uimm16_21_0513); # TODO: assumed functionality
+	Rd5 = (1 << 31) | (((127 - 6) << 23) + (zext(Uimm16_21_0513) << 17));
 	build EndPacket;
 }
 
@@ -432,7 +432,7 @@ define pcodeop sffixupr;
 #    1  1  0  1  0  1  1  0  0  0  i  +  +  +  +  +  P  P  i  i  i  i  i  i  i  i  i  d  d  d  d  d
 
 :sfmake^":pos" Rd5,Uimm16_21_0513 EndPacket	is iclass=13 & op2227=0x18 & op1620=0 & Uimm16_21_0513 & Rd5 & $(END_PACKET) {
-	Rd5 = int2float(Uimm16_21_0513); # TODO: assumed functionality
+	Rd5 = ((127 - 6) << 23) + (zext(Uimm16_21_0513) << 17);
 	build EndPacket;
 }
 
@@ -602,7 +602,7 @@ define pcodeop sffixupr;
 #    1  1  0  1  1  0  0  1  0  1  i  +  +  +  +  +  P  P  i  i  i  i  i  i  i  i  i  d  d  d  d  d
 
 :dfmake^":neg" Rdd5,Uimm16_21_0513 EndPacket	is iclass=13 & op2227=0x25 & op1620=0 & Uimm16_21_0513 & Rdd5 & $(END_PACKET) {
-	Rdd5 = int2float(-Uimm16_21_0513); # TODO: assumed functionality
+	Rdd5 = (1:8 << 63) | (((1023:8 - 6) << 52) + (zext(Uimm16_21_0513) << 46));
 	build EndPacket;
 }
 
@@ -612,7 +612,7 @@ define pcodeop sffixupr;
 #    1  1  0  1  1  0  0  1  0  0  i  +  +  +  +  +  P  P  i  i  i  i  i  i  i  i  i  d  d  d  d  d
 
 :dfmake^":pos" Rdd5,Uimm16_21_0513 EndPacket	is iclass=13 & op2227=0x24 & op1620=0 & Uimm16_21_0513 & Rdd5 & $(END_PACKET) {
-	Rdd5 = int2float(Uimm16_21_0513); # TODO: assumed functionality
+	Rdd5 = ((1023:8 - 6) << 52) + (zext(Uimm16_21_0513) << 46);
 	build EndPacket;
 }
 

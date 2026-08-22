@@ -1,12 +1,11 @@
-# Qualcomm Hexagon (V73) and HVX (V69)
+# Qualcomm Hexagon (V60-V81) and HVX (V60-V81)
 
 ## KNOWN ISSUES
-# 1. Shift amounts may be positive or negative, however in some cases no special handling 
-#    is provided for negative shift amounts.
-# 2. There are many complex instructions with unimplemented pcode or simple custom pcodeops
+# 1. Many V70+ scalar/HVX additions (V73 BF16, V79 FP8/qfext, V81 qfloat, V66 ZReg
+#    matrix, V68 IEEE-FP, etc.) are decode-only stubs with unimpl pcode.
 #
 ## NOTES
-# 1. Implementation includes V73 system registers, instruction set may be incomplete
+# 1. Decode covers V60-V81 scalar and HVX; V73 system registers included.
 # 2. HVX vector register size is 128-bytes (see defines below), paired size is 256-bytes
 #
 ## VERSIONS
