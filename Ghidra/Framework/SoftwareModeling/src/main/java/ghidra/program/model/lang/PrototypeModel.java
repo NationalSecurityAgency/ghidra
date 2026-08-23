@@ -257,7 +257,7 @@ public class PrototypeModel {
 	 * @return return location or {@link VariableStorage#UNASSIGNED_STORAGE} if
 	 * unable to determine suitable location
 	 */
-	@Deprecated
+	@Deprecated(since = "12.2")
 	public VariableStorage getReturnLocation(DataType dataType, Program program) {
 		DataType clone = dataType.clone(program.getDataTypeManager());
 		PrototypePieces proto = new PrototypePieces(this, clone);
@@ -311,7 +311,7 @@ public class PrototypeModel {
 	 * @deprecated This method does not apply any storage rules specific to varags functions.
 	 * Use {@link #getStorageLocations(Program,DataType[],boolean,boolean)} instead.
 	 */
-	@Deprecated
+	@Deprecated(since = "12.2")
 	public VariableStorage getNextArgLocation(Parameter[] params, DataType dataType,
 			Program program) {
 		return getArgLocation(params != null ? params.length : 0, params, dataType, program);
@@ -347,7 +347,7 @@ public class PrototypeModel {
 	 * @deprecated This method does not apply any storage rules specific to varags functions. 
 	 * Use {@link #getStorageLocations(Program,DataType[],boolean,boolean)} instead.
 	 */
-	@Deprecated
+	@Deprecated(since = "12.2")
 	public VariableStorage getArgLocation(int argIndex, Parameter[] params, DataType dataType,
 			Program program) {
 		if (dataType != null) {

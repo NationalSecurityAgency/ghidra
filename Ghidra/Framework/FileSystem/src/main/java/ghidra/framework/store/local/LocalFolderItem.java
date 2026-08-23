@@ -250,7 +250,7 @@ public abstract class LocalFolderItem implements FolderItem {
 				throw new FileInUseException("Another checkin is in progress" + byMsg);
 			}
 			checkinId = checkoutId;
-//Log.put("Check-in started: " + checkinId);
+			//log.info("Check-in started: " + checkinId);
 		}
 	}
 
@@ -262,7 +262,7 @@ public abstract class LocalFolderItem implements FolderItem {
 		synchronized (fileSystem) {
 			if (this.checkinId == itemCheckinId) {
 				this.checkinId = DEFAULT_CHECKOUT_ID;
-//Log.put("Check-in ended: " + checkinId);
+				//log.info("Check-in ended: " + itemCheckinId);
 			}
 		}
 	}

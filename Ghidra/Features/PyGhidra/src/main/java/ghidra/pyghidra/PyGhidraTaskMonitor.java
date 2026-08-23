@@ -131,14 +131,14 @@ public class PyGhidraTaskMonitor implements TaskMonitor {
 	}
 
 	@Override
-	public void checkCanceled() throws CancelledException {
+	public void checkCancelled() throws CancelledException {
 		if (isCancelled()) {
 			throw new CancelledException();
 		}
 	}
 
 	@Override
-	public void clearCanceled() {
+	public void clearCancelled() {
 		isCancelled = false;
 	}
 

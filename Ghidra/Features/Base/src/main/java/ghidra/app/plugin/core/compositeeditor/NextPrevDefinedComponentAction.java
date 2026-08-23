@@ -27,13 +27,14 @@ public class NextPrevDefinedComponentAction extends CompositeEditorTableAction {
 
 	private boolean forward;
 
-	public NextPrevDefinedComponentAction(CompositeEditorProvider<?, ?> provider, boolean forward) {
+	public NextPrevDefinedComponentAction(StructureEditorProvider provider, boolean forward) {
 		super(provider, getName(forward));
 
 		this.forward = forward;
 
 		MenuData data = new MenuData(new String[] { getName(forward) });
-		data.setMenuGroup(BASIC_ACTION_GROUP + "_2"); // put below the basic action group
+		data.setMenuGroup(BASIC_ACTION_GROUP + "_Jump"); // put below the basic action group
+		data.setMenuSubGroup("1");
 		setPopupMenuData(data);
 
 		setKeyBindingData(new KeyBindingData(forward ? "Control Down" : "Control Up"));
@@ -44,7 +45,7 @@ public class NextPrevDefinedComponentAction extends CompositeEditorTableAction {
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		provider.goToNextDefinedRow(forward);
+		((StructureEditorProvider) provider).goToNextDefinedRow(forward);
 	}
 
 	private static String getName(boolean forward) {

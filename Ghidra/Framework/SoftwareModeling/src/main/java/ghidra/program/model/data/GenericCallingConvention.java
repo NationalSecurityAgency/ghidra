@@ -26,6 +26,7 @@ import ghidra.program.model.lang.CompilerSpec;
  * {@link CompilerSpec} provides constants for those included in this enumeration and other
  * setter/getter methods exist for using the string form.
  */
+@Deprecated(since = "10.3")
 public enum GenericCallingConvention {
 
 	/**

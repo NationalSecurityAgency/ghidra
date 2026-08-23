@@ -27,6 +27,7 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.jdom2.*;
 import org.jdom2.input.SAXBuilder;
+import org.jdom2.input.sax.XMLReaderSAX2Factory;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 import org.xml.sax.*;
@@ -667,8 +668,7 @@ public class XmlUtilities {
 	 */
 	public static SAXBuilder createSecureSAXBuilder(boolean validate, boolean needsDTD) {
 		final String IMPLNAME = "com.sun.org.apache.xerces.internal.parsers.SAXParser";
-		SAXBuilder sax = new SAXBuilder(IMPLNAME, validate);
-		sax.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+		SAXBuilder sax = new SAXBuilder(new XMLReaderSAX2Factory(validate, IMPLNAME));
 		// XML Program Import uses DTD
 		if (!needsDTD) {
 			sax.setFeature(FEATURE_DISALLOW_DTD, true);

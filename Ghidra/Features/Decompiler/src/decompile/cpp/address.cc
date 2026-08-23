@@ -481,7 +481,10 @@ bool RangeList::inRange(const Address &addr,int4 size) const
   //  if (iter == tree.end())   // iter can't be end if non-empty
   //    return false;
   if ((*iter).spc != addr.getSpace()) return false;
-  if ((*iter).last >= addr.getOffset()+size-1)
+  uintb end = addr.getOffset()+size-1;
+  if (end < addr.getOffset())
+    return false;	// size causes overflow
+  if ((*iter).last >= end)
     return true;
   return false;
 }
@@ -502,6 +505,37 @@ const Range *RangeList::getRange(AddrSpace *spaceid,uintb offset) const
   if ((*iter).last >= offset)
     return &(*iter);
   return (const Range *)0;
+}
+
+/// If \b this contains no Range in the given address space, null is returned.
+/// If a range contains \b offset, it is returned.
+/// Otherwise the range with a boundary point closest to \b offset is returned.
+/// If two ranges are equidistant to \b offset, the earlier Range is returned.
+/// \param spaceid is the given address space
+/// \param offset is the given offset
+/// \return the nearest Range in the same address space or null
+const Range *RangeList::getNearestRange(AddrSpace *spaceid,uintb offset) const
+
+{
+  if (tree.empty()) return (const Range *)0;
+
+  set<Range>::const_iterator iter = tree.upper_bound(Range(spaceid,offset,offset));
+  const Range *after = (const Range *)0;
+  if (iter != tree.end()) {
+    after = &(*iter);
+    if (after->spc != spaceid)
+      after = (const Range *)0;
+  }
+
+  if (iter == tree.begin()) return after;	// nothing earlier, after is closest
+  --iter;
+  const Range *before = &(*iter);
+  if (before->spc != spaceid) return after;
+  if (after == (const Range *)0) return before;
+  if (before->last >= offset) return before;		// Range contains offset, it is closest
+  uint8 distafter = after->first - offset;
+  uint8 distbefore = offset - before->last;
+  return (distafter < distbefore) ? after : before;
 }
 
 /// Return the size of the biggest contiguous sequence of addresses in

@@ -52,6 +52,11 @@ public class ComLoader extends AbstractLibrarySupportLoader {
 	}
 
 	@Override
+	public Collection<String> getAssociatedFileExtensions() {
+		return List.of("com");
+	}
+
+	@Override
 	public boolean isFallback() {
 		return true;
 	}

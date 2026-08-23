@@ -64,8 +64,12 @@ FlowBlock::FlowBlock(void)
   flags = 0;
   index = 0;
   visitcount = 0;
+  numdesc = 0;
+  leafCount = 1;
+  structureDepth = 0;
   parent = (FlowBlock *)0;
   immed_dom = (FlowBlock *)0;
+  copymap = (FlowBlock *)0;
 }
 
 /// \param b is the FlowBlock coming in
@@ -690,6 +694,11 @@ string FlowBlock::typeToName(FlowBlock::block_type bt)
     return "condition";
   case t_if:
     return "properif";
+  case t_ifelse:
+  case t_ifnoexit:
+    return "ifelse";
+  case t_ifgoto:
+    return "ifgoto";
   case t_whiledo:
     return "whiledo";
   case t_dowhile:
@@ -872,6 +881,10 @@ void BlockGraph::addBlock(FlowBlock *bl)
   }
   bl->parent = this;
   list.push_back(bl);
+  leafCount += bl->getBasicCount();
+  int4 depth = bl->getStructureDepth() + 1;
+  if (depth > structureDepth)
+    structureDepth = depth;
 }
 
 /// Force \b this FlowBlock to have the indicated number of outputs.
@@ -1383,18 +1396,7 @@ void BlockGraph::encodeBody(Encoder &encoder) const
     encoder.openElement(ELEM_BHEAD);
     encoder.writeSignedInteger(ATTRIB_INDEX, bl->getIndex());
     FlowBlock::block_type bt = bl->getType();
-    string nm;
-    if (bt == FlowBlock::t_if) {
-      int4 sz = ((BlockGraph *)bl)->getSize();
-      if (sz == 1)
-	nm = "ifgoto";
-      else if (sz == 2)
-	nm = "properif";
-      else
-	nm = "ifelse";
-    }
-    else
-      nm = FlowBlock::typeToName(bt);
+    string nm = FlowBlock::typeToName(bt);
     encoder.writeString(ATTRIB_TYPE, nm);
     encoder.closeElement(ELEM_BHEAD);
   }
@@ -1799,7 +1801,7 @@ BlockCondition *BlockGraph::newBlockCondition(FlowBlock *b1,FlowBlock *b2)
 /// Add the new BlockIfGoto to \b this, collapsing the given condition FlowBlock into it.
 /// \param cond is the given condition FlowBlock
 /// \return the new BlockIfGoto
-BlockIf *BlockGraph::newBlockIfGoto(FlowBlock *cond)
+BlockIfGoto *BlockGraph::newBlockIfGoto(FlowBlock *cond)
 
 {
   if (!cond->isGotoOut(1))	// True branch must be a goto branch
@@ -1807,8 +1809,7 @@ BlockIf *BlockGraph::newBlockIfGoto(FlowBlock *cond)
 
   const FlowBlock *out0 = cond->getOut(0);
   vector<FlowBlock *> nodes;
-  BlockIf *ret = new BlockIf();
-  ret->setGotoTarget(cond->getOut(1)); // Store the target
+  BlockIfGoto *ret = new BlockIfGoto(cond->getOut(1));	// Goto block with specific target
   nodes.push_back(cond);
   identifyInternal(ret,nodes);
   addBlock(ret);
@@ -1839,18 +1840,31 @@ BlockIf *BlockGraph::newBlockIf(FlowBlock *cond,FlowBlock *tc)
 /// \param cond is the condition FlowBlock
 /// \param tc is the true clause FlowBlock
 /// \param fc is the false clause FlowBlock
-/// \return the new BlockIf
-BlockIf *BlockGraph::newBlockIfElse(FlowBlock *cond,FlowBlock *tc,FlowBlock *fc)
+/// \return the new BlockIfElse
+BlockIfElse *BlockGraph::newBlockIfElse(FlowBlock *cond,FlowBlock *tc,FlowBlock *fc)
 
 {
   vector<FlowBlock *> nodes;
-  BlockIf *ret = new BlockIf();
+  BlockIfElse *ret = new BlockIfElse();
   nodes.push_back(cond);
   nodes.push_back(tc);
   nodes.push_back(fc);
   identifyInternal(ret,nodes);
   addBlock(ret);
   ret->forceOutputNum(1);
+  return ret;
+}
+
+BlockIfNoExit *BlockGraph::newBlockIfNoExit(FlowBlock *cond,FlowBlock *tc,FlowBlock *fc)
+
+{
+  vector<FlowBlock *> nodes;
+  BlockIfNoExit *ret = new BlockIfNoExit();
+  nodes.push_back(cond);
+  nodes.push_back(tc);
+  nodes.push_back(fc);
+  identifyInternal(ret,nodes);
+  addBlock(ret);
   return ret;
 }
 
@@ -3112,23 +3126,11 @@ void BlockCondition::encodeHeader(Encoder &encoder) const
   encoder.writeString(ATTRIB_OPCODE, nm);
 }
 
-void BlockIf::markUnstructured(void)
-
-{
-  BlockGraph::markUnstructured(); // Recurse
-  if ((gototarget != (FlowBlock *)0)&&(gototype==f_goto_goto))
-    markCopyBlock(gototarget,f_unstructured_targ);
-}
-
 void BlockIf::scopeBreak(int4 curexit,int4 curloopexit)
 
 {
   getBlock(0)->scopeBreak(-1,curloopexit); // Condition block has multiple exits
-  // Blocks don't flow into one another, but share same exit block
-  for(int4 i=1;i<getSize();++i)
-    getBlock(i)->scopeBreak(curexit,curloopexit);
-  if ((gototarget != (FlowBlock *)0)&&(gototarget->getIndex() == curloopexit))
-    gototype = f_break_goto;
+  getBlock(1)->scopeBreak(curexit,curloopexit);
 }
 
 void BlockIf::printHeader(ostream &s) const
@@ -3136,40 +3138,6 @@ void BlockIf::printHeader(ostream &s) const
 {
   s << "If block ";
   FlowBlock::printHeader(s);
-}
-
-bool BlockIf::preferComplement(Funcdata &data,bool allowOpRemoval)
-
-{
-  if (getSize()!=3)		// If we are an if/else
-    return false;
-
-  FlowBlock *split = getBlock(0)->getSplitPoint();
-  if (split == (FlowBlock *)0)
-    return false;
-  vector<PcodeOp *> fliplist;
-  if (0 != split->flipInPlaceTest(fliplist,allowOpRemoval))
-    return false;
-  split->flipInPlaceExecute();
-  data.opFlipInPlaceExecute(fliplist);
-  swapBlocks(1,2);
-  return true;
-}
-
-const FlowBlock *BlockIf::getExitLeaf(void) const
-
-{ // In the special case of an ifgoto block, we do have an exit leaf
-  if (getSize() == 1)
-    return getBlock(0)->getExitLeaf();
-  return (FlowBlock *)0;
-}
-
-PcodeOp *BlockIf::lastOp(void) const
-
-{ // In the special case of an ifgoto block, we do have a last op, otherwise we don't
-  if (getSize() == 1)
-    return getBlock(0)->lastOp();
-  return (PcodeOp *)0;
 }
 
 FlowBlock *BlockIf::nextFlowAfter(const FlowBlock *bl) const
@@ -3182,19 +3150,123 @@ FlowBlock *BlockIf::nextFlowAfter(const FlowBlock *bl) const
   return getParent()->nextFlowAfter(this);
 }
 
-void BlockIf::encodeBody(Encoder &encoder) const
+void BlockIfElse::scopeBreak(int4 curexit,int4 curloopexit)
+
+{
+  getBlock(0)->scopeBreak(-1,curloopexit); // Condition block has multiple exits
+  // Blocks don't flow into one another, but share same exit block
+  getBlock(1)->scopeBreak(curexit,curloopexit);
+  getBlock(2)->scopeBreak(curexit,curloopexit);
+}
+
+void BlockIfElse::printHeader(ostream &s) const
+
+{
+  s << "If/else block ";
+  FlowBlock::printHeader(s);
+}
+
+bool BlockIfElse::preferComplement(Funcdata &data,bool allowOpRemoval)
+
+{
+  FlowBlock *split = getBlock(0)->getSplitPoint();
+  if (split == (FlowBlock *)0)
+    return false;
+  vector<PcodeOp *> fliplist;
+  if (0 != split->flipInPlaceTest(fliplist,allowOpRemoval))
+    return false;
+  split->flipInPlaceExecute();
+  data.opFlipInPlaceExecute(fliplist);
+  swapBlocks(1,2);
+  return true;
+}
+
+void BlockIfNoExit::scopeBreak(int4 curexit,int4 curloopexit)
+
+{
+  getBlock(0)->scopeBreak(-1,curloopexit);	// No fixed exit for condition block
+  FlowBlock *followBlock = getBlock(2);
+  getBlock(1)->scopeBreak(followBlock->getIndex(),curloopexit);	// First body: followBlock acts as "exit"
+  followBlock->scopeBreak(curexit,curloopexit);
+}
+
+void BlockIfNoExit::printHeader(ostream &s) const
+
+{
+  s << "If (no exit) block ";
+  FlowBlock::printHeader(s);
+}
+
+bool BlockIfNoExit::preferComplement(Funcdata &data,bool allowOpRemoval)
+
+{
+  FlowBlock *body1 = getBlock(1);
+  FlowBlock *body2 = getBlock(2);
+  int4 diff = body1->getStructureDepth() - body2->getStructureDepth();
+  if (diff < 0) return false;
+  if (diff == 0) {
+    diff = body1->getBasicCount() - body2->getBasicCount();
+    if (diff < 0) return false;
+    if (diff == 0) {
+      uint4 halt1 = body1->getHaltType();
+      uint4 halt2 = body2->getHaltType();
+      if (halt1 > halt2)
+	return false;
+      if (halt1 < halt2)
+	diff = 1;
+    }
+  }
+  FlowBlock *split = getBlock(0)->getSplitPoint();
+  if (split == (FlowBlock *)0)
+    return false;
+  vector<PcodeOp *> fliplist;
+  int4 testResult = split->flipInPlaceTest(fliplist,allowOpRemoval);
+  if (2 == testResult)
+    return false;
+
+  if (diff == 0 && testResult != 0)
+    return false;
+
+  split->flipInPlaceExecute();
+  data.opFlipInPlaceExecute(fliplist);
+  swapBlocks(1,2);
+  return true;
+}
+
+void BlockIfGoto::scopeBreak(int4 curexit,int4 curloopexit)
+
+{
+  getBlock(0)->scopeBreak(-1,curloopexit);	// Condition has multiple exits
+  if ((gototarget != (FlowBlock *)0)&&(gototarget->getIndex() == curloopexit))
+    gototype = f_break_goto;
+}
+
+void BlockIfGoto::printHeader(ostream &s) const
+
+{
+  s << "If goto block ";
+  FlowBlock::printHeader(s);
+}
+
+void BlockIfGoto::markUnstructured(void)
+
+{
+  BlockGraph::markUnstructured(); // Recurse
+  if ((gototarget != (FlowBlock *)0)&&(gototype==f_goto_goto))
+    markCopyBlock(gototarget,f_unstructured_targ);
+}
+
+void BlockIfGoto::encodeBody(Encoder &encoder) const
 
 {
   BlockGraph::encodeBody(encoder);
-  if (getSize() == 1) {		// If this is a if GOTO block
-    const FlowBlock *leaf = gototarget->getFrontLeaf();
-    int4 depth = gototarget->calcDepth(leaf);
-    encoder.openElement(ELEM_TARGET);
-    encoder.writeSignedInteger(ATTRIB_INDEX, leaf->getIndex());
-    encoder.writeSignedInteger(ATTRIB_DEPTH, depth);
-    encoder.writeUnsignedInteger(ATTRIB_TYPE, gototype);
-    encoder.closeElement(ELEM_TARGET);
-  }
+  const FlowBlock *leaf = gototarget->getFrontLeaf();
+  int4 depth = gototarget->calcDepth(leaf);
+  encoder.openElement(ELEM_TARGET);
+  encoder.writeSignedInteger(ATTRIB_INDEX, leaf->getIndex());
+  encoder.writeSignedInteger(ATTRIB_DEPTH, depth);
+  encoder.writeUnsignedInteger(ATTRIB_TYPE, gototype);
+  encoder.closeElement(ELEM_TARGET);
 }
 
 /// Try to find a Varnode that represents the controlling \e loop \e variable for \b this loop.

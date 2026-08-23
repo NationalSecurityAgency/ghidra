@@ -15,7 +15,7 @@
  */
 package ghidra.trace.database.guest;
 
-import static ghidra.lifecycle.Unfinished.TODO;
+import static ghidra.lifecycle.Unfinished.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -206,11 +206,6 @@ public class DBTraceGuestPlatformMappedMemory implements Memory {
 
 	@Override
 	public AddressSetView getAllInitializedAddressSet() {
-		return TODO();
-	}
-
-	@Override
-	public AddressSetView getInitializedAddressSet() {
 		return TODO();
 	}
 

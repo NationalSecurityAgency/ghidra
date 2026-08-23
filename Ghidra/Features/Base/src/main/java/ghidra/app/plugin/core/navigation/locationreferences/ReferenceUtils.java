@@ -171,64 +171,6 @@ public final class ReferenceUtils {
 	 *
 	 * @param accumulator the results storage.
 	 * @param dataType The datatype for which to find references.
-	 * @param fieldName optional field name for which to search; the {@code dataType} must be a
-	 * {@link Composite} to search for a field.
-	 * @param program The program from within which to find references.
-	 * @param monitor A task monitor to be updated as data is searched; if this is null, then a
-	 * dummy monitor will be used.
-	 * @throws CancelledException if the monitor is cancelled.
-	 * @deprecated use {@link #findDataTypeFieldReferences(Accumulator, FieldMatcher, Program,
-	 * boolean, TaskMonitor)}.
-	 */
-	@Deprecated(since = "10.2")
-	public static void findDataTypeReferences(Accumulator<LocationReference> accumulator,
-			DataType dataType, String fieldName, Program program, TaskMonitor monitor)
-			throws CancelledException {
-		findDataTypeReferences(accumulator, dataType, fieldName, program, true, monitor);
-	}
-
-	/**
-	 * Returns all references (locations) that use the given datatype.
-	 * <p>
-	 * <b>Note: </b> This method call may take a long time, as it must search all of the data
-	 * within the program and may also perform long running tasks, like decompiling every function
-	 * in the program.
-	 *
-	 * @param accumulator the results storage.
-	 * @param dataType The datatype for which to find references.
-	 * @param fieldName optional field name for which to search; the {@code dataType} must be a
-	 * {@link Composite} to search for a field.
-	 * @param program The program from within which to find references.
-	 * @param discoverTypes if true, the {@link DataTypeReferenceFinder} service will be used to
-	 * search for data types that are not applied in memory.  Using the service will be slower, but
-	 * will recover type usage that could not be found by examining the Listing.
-	 * @param monitor A task monitor to be updated as data is searched; if this is null, then a
-	 * dummy monitor will be used.
-	 * @throws CancelledException if the monitor is cancelled.
-	 * @deprecated use {@link #findDataTypeFieldReferences(Accumulator, FieldMatcher, Program,
-	 * boolean, TaskMonitor)}.
-	 */
-	@Deprecated(since = "10.2")
-	public static void findDataTypeReferences(Accumulator<LocationReference> accumulator,
-			DataType dataType, String fieldName, Program program, boolean discoverTypes,
-			TaskMonitor monitor) throws CancelledException {
-
-		// Note: none of the params can be null, but this one gets used much later, so check now
-		Objects.requireNonNull(dataType, () -> "Data Type cannot be null");
-
-		FieldMatcher fieldMatcher = new FieldMatcher(dataType, fieldName);
-		doFindDataTypeReferences(accumulator, fieldMatcher, program, discoverTypes, monitor);
-	}
-
-	/**
-	 * Returns all references (locations) that use the given datatype.
-	 * <p>
-	 * <b>Note: </b> This method call may take a long time, as it must search all of the data
-	 * within the program and may also perform long running tasks, like decompiling every function
-	 * in the program.
-	 *
-	 * @param accumulator the results storage.
-	 * @param dataType The datatype for which to find references.
 	 * @param program The program from within which to find references.
 	 * @param discoverTypes if true, the {@link DataTypeReferenceFinder} service will be used to
 	 * search for data types that are not applied in memory.  Using the service will be slower, but

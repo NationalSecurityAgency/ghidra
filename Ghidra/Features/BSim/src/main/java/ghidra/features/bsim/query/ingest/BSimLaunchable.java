@@ -244,10 +244,11 @@ public class BSimLaunchable implements GhidraLaunchable {
 	 * @param ghidraURLString is the URL string for the ghidra server
 	 * @param bsimURLString is the URL string for the bsim server
 	 * @throws MalformedURLException if there is a problem parsing the given URLs
+	 * @throws URISyntaxException if there is a problem parsing the given URLs
 	 * @throws IllegalArgumentException if unsupported URL use occurs
 	 */
 	private void setupURLs(String ghidraURLString, String bsimURLString)
-			throws MalformedURLException {
+			throws MalformedURLException, URISyntaxException {
 
 		if (ghidraURLString != null) {
 			setupGhidraURL(ghidraURLString);
@@ -493,7 +494,7 @@ public class BSimLaunchable implements GhidraLaunchable {
 	}
 
 	private void processSigAndUpdateOptions(String urlstring)
-			throws IllegalArgumentException, MalformedURLException {
+			throws IllegalArgumentException, MalformedURLException, URISyntaxException {
 		String bsimURLOption = optionValueMap.get(BSIM_URL_OPTION);
 		String configOption = optionValueMap.get(CONFIG_OPTION);
 		if (configOption != null) {

@@ -33,10 +33,16 @@ import ghidra.util.task.TaskMonitor;
 /**
  * TAR file system implementation.
  * <p>
- * The factory supports detecting both compressed (gz) and uncompressed tar files,
+ * The factory supports detecting both compressed (gz/bz2/xz) and uncompressed tar files,
  * and keys both on the tar filename extension as well as the data in the file.
  */
-@FileSystemInfo(type = "tar", description = "TAR", priority = FileSystemInfo.PRIORITY_HIGH, factory = TarFileSystemFactory.class)
+@FileSystemInfo(
+	type = "tar",
+	description = "TAR",
+	priority = FileSystemInfo.PRIORITY_HIGH,
+	factory = TarFileSystemFactory.class,
+	extensions = { "tar", "tgz", "tbz2" }
+)
 public class TarFileSystem extends AbstractFileSystem<TarMetadata> {
 
 	private ByteProvider provider;

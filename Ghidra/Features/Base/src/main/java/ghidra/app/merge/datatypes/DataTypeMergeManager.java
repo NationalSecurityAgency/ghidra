@@ -21,6 +21,7 @@ import java.util.*;
 import javax.swing.SwingUtilities;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import ghidra.app.merge.*;
 import ghidra.app.util.HelpTopics;
@@ -3075,9 +3076,9 @@ public class DataTypeMergeManager implements MergeResolver {
 				String latestName = latestSourceArchive.getName();
 				String myName = mySourceArchive.getName();
 
-				boolean sameName = StringUtils.equals(myName, latestName);
-				boolean latestChangedName = !StringUtils.equals(origName, latestName);
-				boolean myChangedName = !StringUtils.equals(origName, myName);
+				boolean sameName = Strings.CS.equals(myName, latestName);
+				boolean latestChangedName = !Strings.CS.equals(origName, latestName);
+				boolean myChangedName = !Strings.CS.equals(origName, myName);
 				// Neither removed the source archive so see what changed.
 				if (!sameName && latestChangedName && myChangedName) {
 					archiveConflictList.add(myChangeIDObject);
@@ -3104,7 +3105,7 @@ public class DataTypeMergeManager implements MergeResolver {
 				if (myAddID == latestAddID) {
 					SourceArchive latestSourceArchive =
 						dtms[LATEST].getSourceArchive(new UniversalID(latestAddID));
-					if (!StringUtils.equals(mySourceArchive.getName(),
+					if (!Strings.CS.equals(mySourceArchive.getName(),
 						latestSourceArchive.getName())) {
 						archiveConflictList.add(Long.valueOf(myAddID));
 						foundConflict = true;

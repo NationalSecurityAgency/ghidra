@@ -16,8 +16,7 @@
 package ghidra.features.bsim.query.elastic;
 
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.*;
 
 import com.google.gson.*;
 
@@ -188,7 +187,7 @@ public class ElasticConnection {
 			throws ElasticException {
 		HttpURLConnection connection = null;
 		try {
-			URL httpURL = new URL(hostURL + path);
+			URL httpURL = new URI(hostURL + path).toURL();
 			connection = (HttpURLConnection) httpURL.openConnection();
 			connection.setRequestMethod(command);
 			connection.setRequestProperty("Content-Type", "application/json");
@@ -202,6 +201,9 @@ public class ElasticConnection {
 				throw new ElasticException(parseErrorJSON(resp));
 			}
 			return resp;
+		}
+		catch (URISyntaxException e) {
+			throw new ElasticException("Error parsing URL: " + e.getMessage());
 		}
 		catch (IOException e) {
 			throw new ElasticException("Error sending request: " + e.getMessage());
@@ -228,7 +230,7 @@ public class ElasticConnection {
 			throws ElasticException {
 		HttpURLConnection connection = null;
 		try {
-			URL httpURL = new URL(httpURLbase + path);
+			URL httpURL = new URI(httpURLbase + path).toURL();
 			connection = (HttpURLConnection) httpURL.openConnection();
 			connection.setRequestMethod(command);
 			connection.setRequestProperty("Content-Type", "application/json");
@@ -241,6 +243,9 @@ public class ElasticConnection {
 			if (!lastRequestSuccessful()) {
 				throw new ElasticException(parseErrorJSON(resp));
 			}
+		}
+		catch (URISyntaxException e) {
+			throw new ElasticException("Error parsing URL: " + e.getMessage());
 		}
 		catch (IOException e) {
 			throw new ElasticException("Error sending request: " + e.getMessage());
@@ -267,7 +272,7 @@ public class ElasticConnection {
 			throws ElasticException {
 		HttpURLConnection connection = null;
 		try {
-			URL httpURL = new URL(httpURLbase + path);
+			URL httpURL = new URI(httpURLbase + path).toURL();
 			connection = (HttpURLConnection) httpURL.openConnection();
 			connection.setRequestMethod(command);
 			connection.setRequestProperty("Content-Type", "application/json");
@@ -281,6 +286,9 @@ public class ElasticConnection {
 				throw new ElasticException(parseErrorJSON(resp));
 			}
 			return resp;
+		}
+		catch (URISyntaxException e) {
+			throw new ElasticException("Error parsing URL: " + e.getMessage());
 		}
 		catch (IOException e) {
 			throw new ElasticException("Error sending request: " + e.getMessage());
@@ -308,7 +316,7 @@ public class ElasticConnection {
 			throws ElasticException {
 		HttpURLConnection connection = null;
 		try {
-			URL httpURL = new URL(httpURLbase + path);
+			URL httpURL = new URI(httpURLbase + path).toURL();
 			connection = (HttpURLConnection) httpURL.openConnection();
 			connection.setRequestMethod(command);
 			connection.setRequestProperty("Content-Type", "application/json");
@@ -319,6 +327,9 @@ public class ElasticConnection {
 			lastResponseCode = connection.getResponseCode();
 			JsonObject resp = grabResponse(connection);
 			return resp;
+		}
+		catch (URISyntaxException e) {
+			throw new ElasticException("Error parsing URL: " + e.getMessage());
 		}
 		catch (IOException e) {
 			throw new ElasticException("Error sending request: " + e.getMessage());
@@ -344,7 +355,7 @@ public class ElasticConnection {
 	public JsonObject executeBulk(String path, String body) throws ElasticException {
 		HttpURLConnection connection = null;
 		try {
-			URL httpURL = new URL(hostURL + path);
+			URL httpURL = new URI(hostURL + path).toURL();
 			connection = (HttpURLConnection) httpURL.openConnection();
 			connection.setRequestMethod(POST);
 			connection.setRequestProperty("Content-Type", "application/x-ndjson");
@@ -358,6 +369,9 @@ public class ElasticConnection {
 				throw new ElasticException(parseErrorJSON(resp));
 			}
 			return resp;
+		}
+		catch (URISyntaxException e) {
+			throw new ElasticException("Error parsing URL: " + e.getMessage());
 		}
 		catch (IOException e) {
 			throw new ElasticException("Error sending request: " + e.getMessage());
@@ -375,7 +389,7 @@ public class ElasticConnection {
 	public JsonObject executeURIOnly(String command, String path) throws ElasticException {
 		HttpURLConnection connection = null;
 		try {
-			URL httpURL = new URL(httpURLbase + path);
+			URL httpURL = new URI(httpURLbase + path).toURL();
 			connection = (HttpURLConnection) httpURL.openConnection();
 			connection.setRequestMethod(command);
 			connection.setDoOutput(true);
@@ -385,6 +399,9 @@ public class ElasticConnection {
 				throw new ElasticException(parseErrorJSON(resp));
 			}
 			return resp;
+		}
+		catch (URISyntaxException e) {
+			throw new ElasticException("Error parsing URL: " + e.getMessage());
 		}
 		catch (IOException e) {
 			throw new ElasticException("Error sending request: " + e.getMessage());

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,23 +55,6 @@ public class SetExternalRefCmd implements Command<Program> {
 		this.extAddr = extAddr;
 		this.refType = refType;
 		this.source = source;
-	}
-
-	/**
-	 * Constructs a new command for adding an external reference from data using {@link RefType#DATA}.
-	 * @param fromAddr from address (source of the reference)
-	 * @param opIndex operand index
-	 * @param extName name of external program
-	 * @param extLabel label within the external program, may be null if extAddr is not null
-	 * @param extAddr address within the external program, may be null
-	 * @param source the source of this reference
-	 * @deprecated the other constructor form should be used with an appropriate RefType specified.
-	 * {@link RefType#DATA} should be used for address table pointer references.
-	 */
-	@Deprecated
-	public SetExternalRefCmd(Address fromAddr, int opIndex, String extName, String extLabel,
-			Address extAddr, SourceType source) {
-		this(fromAddr, opIndex, extName, extLabel, extAddr, RefType.DATA, source);
 	}
 
 	/**

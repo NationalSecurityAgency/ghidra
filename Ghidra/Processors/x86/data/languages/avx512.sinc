@@ -3146,30 +3146,27 @@ define pcodeop vpcmpgtq_avx512f ;
 }
 
 # PEXTRB/PEXTRD/PEXTRQ 4-274 PAGE 1394 LINE 72334
-@ifdef IA64
-:VPEXTRB Reg32, XmmReg1, imm8  is $(LONGMODE_ON) & $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG); byte=0x14; XmmReg1 & mod=3 & Reg32 & Reg64; imm8
+:VPEXTRB Reg32, XmmReg1, imm8  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG); byte=0x14; XmmReg1 & mod=3 & Reg32 & check_Reg32_dest; imm8
 {
-	local tmp = XmmReg1 >> (imm8*8);
-	Reg64 = zext(tmp[0,8]);
-}
-@endif
-
-:VPEXTRB Reg32, XmmReg1, imm8  is $(LONGMODE_OFF) & $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG); byte=0x14; XmmReg1 & mod=3 & Reg32; imm8
-{
-	local tmp = XmmReg1 >> (imm8*8);
+	local tmp8:1 = imm8 & 0xf;
+	local tmp = XmmReg1 >> (tmp8*8);
 	Reg32 = zext(tmp[0,8]);
+	build check_Reg32_dest;
 }
+
 
 :VPEXTRB m8, XmmReg1, imm8  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG); byte=0x14; XmmReg1 ... & m8; imm8
 {
-	local tmp = XmmReg1 >> (imm8*8);
+	local tmp8:1 = imm8 & 0xf;
+	local tmp = XmmReg1 >> (tmp8*8);
 	m8 = tmp[0,8];
 }
 
 # PEXTRB/PEXTRD/PEXTRQ 4-274 PAGE 1394 LINE 72339
 :VPEXTRD rm32, XmmReg1, imm8  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0); byte=0x16; XmmReg1 ... & rm32; imm8
 {
-	local tmp = XmmReg1 >> (imm8*32);
+	local tmp8:1 = imm8 & 0x3;
+	local tmp = XmmReg1 >> (tmp8*32);
 	rm32 = tmp[0,32];
 }
 
@@ -3177,41 +3174,28 @@ define pcodeop vpcmpgtq_avx512f ;
 @ifdef IA64
 :VPEXTRQ rm64, XmmReg1, imm8  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1); byte=0x16; XmmReg1 ... & rm64; imm8
 {
-	local tmp = XmmReg1 >> (imm8*64);
+	local tmp8:1 = imm8 & 0x1;
+	local tmp = XmmReg1 >> (tmp8*64);
 	rm64 = tmp[0,64];
 }
 @endif
 
 # PEXTRW 4-277 PAGE 1397 LINE 72488
-@ifdef IA64
-:VPEXTRW Reg32, XmmReg2, imm8  is $(LONGMODE_ON) & $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG); byte=0xC5; Reg32 & Reg64 & (mod=0x3 & XmmReg2); imm8
-{
-	local tmp = XmmReg2 >> (imm8*16);
-	Reg64 = zext(tmp[0,16]);
-}
-@endif
-
-:VPEXTRW Reg32, XmmReg2, imm8  is $(LONGMODE_OFF) & $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG); byte=0xC5; Reg32 & (mod=0x3 & XmmReg2); imm8
+:VPEXTRW Reg32, XmmReg2, imm8  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG); byte=0xC5; Reg32 & check_Reg32_dest & (mod=0x3 & XmmReg2); imm8
 {
 	local tmp = XmmReg2 >> (imm8*16);
 	Reg32 = zext(tmp[0,16]);
+	build check_Reg32_dest;
 }
+
 
 # PEXTRW 4-277 PAGE 1397 LINE 72494
-@ifdef IA64
-:VPEXTRW Reg32, XmmReg1, imm8  is $(LONGMODE_ON) & $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG); byte=0x15; XmmReg1 & mod=3 & Reg32 & Reg64; imm8
-{
-	local tmp = XmmReg1 >> (imm8*16);
-	Reg64 = zext(tmp[0,16]);
-}
-@endif
-
-:VPEXTRW Reg32, XmmReg1, imm8  is $(LONGMODE_OFF) & $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG); byte=0x15; XmmReg1 & mod=3 & Reg32; imm8
+:VPEXTRW Reg32, XmmReg1, imm8  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG); byte=0x15; XmmReg1 & mod=3 & Reg32 & check_Reg32_dest; imm8
 {
 	local tmp = XmmReg1 >> (imm8*16);
 	Reg32 = zext(tmp[0,16]);
+	build check_Reg32_dest;
 }
-
 
 :VPEXTRW m16, XmmReg1, imm8  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG); byte=0x15; XmmReg1 ... & m16; imm8
 {
@@ -13678,102 +13662,6 @@ define pcodeop vaesenclast_vaes ;
 [ evexD8Type = 1; evexTType = 0; ] # (TupleType Full Mem)
 {
 	ZmmReg1 = vaesenclast_vaes( evexV5_ZmmReg, ZmmReg2_m512 );
-}
-
-# GF2P8AFFINEINVQB 3-476 PAGE 1046 LINE 56498
-define pcodeop vgf2p8affineinvqb_avx512vl ;
-:VGF2P8AFFINEINVQB XmmReg1 XmmOpMask8, evexV5_XmmReg, XmmReg2_m128_m64bcst, imm8 is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1) & XmmOpMask8 & evexV5_XmmReg; byte=0xCF; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128_m64bcst; imm8
-[ evexD8Type = 0; evexTType = 0; ] # (TupleType Full)
-{
-	XmmResult = vgf2p8affineinvqb_avx512vl( evexV5_XmmReg, XmmReg2_m128_m64bcst, imm8:1 );
-	XmmMask = XmmReg1;
-	build XmmOpMask8;
-	ZmmReg1 = zext(XmmResult);
-}
-
-# GF2P8AFFINEINVQB 3-476 PAGE 1046 LINE 56501
-:VGF2P8AFFINEINVQB YmmReg1 YmmOpMask8, evexV5_YmmReg, YmmReg2_m256_m64bcst, imm8 is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1) & YmmOpMask8 & evexV5_YmmReg; byte=0xCF; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256_m64bcst; imm8
-[ evexD8Type = 0; evexTType = 0; ] # (TupleType Full)
-{
-	YmmResult = vgf2p8affineinvqb_avx512vl( evexV5_YmmReg, YmmReg2_m256_m64bcst, imm8:1 );
-	YmmMask = YmmReg1;
-	build YmmOpMask8;
-	ZmmReg1 = zext(YmmResult);
-}
-
-# GF2P8AFFINEINVQB 3-476 PAGE 1046 LINE 56504
-define pcodeop vgf2p8affineinvqb_avx512f ;
-:VGF2P8AFFINEINVQB ZmmReg1 ZmmOpMask8, evexV5_ZmmReg, ZmmReg2_m512_m64bcst, imm8 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1) & ZmmOpMask8 & evexV5_ZmmReg; byte=0xCF; ZmmReg1 ... & ZmmReg2_m512_m64bcst; imm8
-[ evexD8Type = 0; evexTType = 0; ] # (TupleType Full)
-{
-	ZmmResult = vgf2p8affineinvqb_avx512f( evexV5_ZmmReg, ZmmReg2_m512_m64bcst, imm8:1 );
-	ZmmMask = ZmmReg1;
-	build ZmmOpMask8;
-	ZmmReg1 = ZmmResult;
-}
-
-# GF2P8AFFINEQB 3-479 PAGE 1049 LINE 56642
-define pcodeop vgf2p8affineqb_avx512vl ;
-:VGF2P8AFFINEQB XmmReg1 XmmOpMask8, evexV5_XmmReg, XmmReg2_m128_m64bcst, imm8 is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1) & XmmOpMask8 & evexV5_XmmReg; byte=0xCE; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128_m64bcst; imm8
-[ evexD8Type = 0; evexTType = 0; ] # (TupleType Full)
-{
-	XmmResult = vgf2p8affineqb_avx512vl( evexV5_XmmReg, XmmReg2_m128_m64bcst, imm8:1 );
-	XmmMask = XmmReg1;
-	build XmmOpMask8;
-	ZmmReg1 = zext(XmmResult);
-}
-
-# GF2P8AFFINEQB 3-479 PAGE 1049 LINE 56645
-:VGF2P8AFFINEQB YmmReg1 YmmOpMask8, evexV5_YmmReg, YmmReg2_m256_m64bcst, imm8 is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1) & YmmOpMask8 & evexV5_YmmReg; byte=0xCE; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256_m64bcst; imm8
-[ evexD8Type = 0; evexTType = 0; ] # (TupleType Full)
-{
-	YmmResult = vgf2p8affineqb_avx512vl( evexV5_YmmReg, YmmReg2_m256_m64bcst, imm8:1 );
-	YmmMask = YmmReg1;
-	build YmmOpMask8;
-	ZmmReg1 = zext(YmmResult);
-}
-
-# GF2P8AFFINEQB 3-479 PAGE 1049 LINE 56648
-define pcodeop vgf2p8affineqb_avx512f ;
-:VGF2P8AFFINEQB ZmmReg1 ZmmOpMask8, evexV5_ZmmReg, ZmmReg2_m512_m64bcst, imm8 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1) & ZmmOpMask8 & evexV5_ZmmReg; byte=0xCE; ZmmReg1 ... & ZmmReg2_m512_m64bcst; imm8
-[ evexD8Type = 0; evexTType = 0; ] # (TupleType Full)
-{
-	ZmmResult = vgf2p8affineqb_avx512f( evexV5_ZmmReg, ZmmReg2_m512_m64bcst, imm8:1 );
-	ZmmMask = ZmmReg1;
-	build ZmmOpMask8;
-	ZmmReg1 = ZmmResult;
-}
-
-# GF2P8MULB 3-481 PAGE 1051 LINE 56754
-define pcodeop vgf2p8mulb_avx512vl ;
-:VGF2P8MULB XmmReg1 XmmOpMask8, evexV5_XmmReg, XmmReg2_m128 is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & XmmOpMask8 & evexV5_XmmReg; byte=0xCF; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128
-[ evexD8Type = 1; evexTType = 0; ] # (TupleType Full Mem)
-{
-	XmmResult = vgf2p8mulb_avx512vl( evexV5_XmmReg, XmmReg2_m128 );
-	XmmMask = XmmReg1;
-	build XmmOpMask8;
-	ZmmReg1 = zext(XmmResult);
-}
-
-# GF2P8MULB 3-481 PAGE 1051 LINE 56757
-:VGF2P8MULB YmmReg1 YmmOpMask8, evexV5_YmmReg, YmmReg2_m256 is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & YmmOpMask8 & evexV5_YmmReg; byte=0xCF; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256
-[ evexD8Type = 1; evexTType = 0; ] # (TupleType Full Mem)
-{
-	YmmResult = vgf2p8mulb_avx512vl( evexV5_YmmReg, YmmReg2_m256 );
-	YmmMask = YmmReg1;
-	build YmmOpMask8;
-	ZmmReg1 = zext(YmmResult);
-}
-
-# GF2P8MULB 3-481 PAGE 1051 LINE 56760
-define pcodeop vgf2p8mulb_avx512f ;
-:VGF2P8MULB ZmmReg1 ZmmOpMask8, evexV5_ZmmReg, ZmmReg2_m512 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & ZmmOpMask8 & evexV5_ZmmReg; byte=0xCF; ZmmReg1 ... & ZmmReg2_m512
-[ evexD8Type = 1; evexTType = 0; ] # (TupleType Full Mem)
-{
-	ZmmResult = vgf2p8mulb_avx512f( evexV5_ZmmReg, ZmmReg2_m512 );
-	ZmmMask = ZmmReg1;
-	build ZmmOpMask8;
-	ZmmReg1 = ZmmResult;
 }
 
 # PCLMULQDQ 4-242 PAGE 1362 LINE 76037

@@ -148,7 +148,11 @@ public class OmfIteratedData extends OmfData {
 					length += block.getLength();
 				}
 			}
-			return length * repeatCount;
+			long total = (long) length * (long) repeatCount;
+			if (total < 0 || total > OmfIteratedData.MAX_ITERATED_FILL) {
+				throw new IllegalArgumentException("Iterated block length out of range: " + total);
+			}
+			return (int) total;
 		}
 
 		/**

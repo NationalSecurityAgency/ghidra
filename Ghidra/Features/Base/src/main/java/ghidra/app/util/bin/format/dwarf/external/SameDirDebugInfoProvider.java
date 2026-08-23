@@ -23,6 +23,7 @@ import org.apache.commons.io.FilenameUtils;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
+import utilities.util.FileUtilities;
 
 /**
  * A {@link DebugFileProvider} that only looks in the program's original import directory for
@@ -119,7 +120,7 @@ public class SameDirDebugInfoProvider implements DebugFileProvider {
 	}
 
 	private File ensureSafeFilename(String filename) throws IOException {
-		File testFile = new File(progDir, filename);
+		File testFile = FileUtilities.getSecureFile(progDir, filename);
 		if (!progDir.equals(testFile.getParentFile())) {
 			throw new IOException("Unsupported path specified in debug file: " + filename);
 		}

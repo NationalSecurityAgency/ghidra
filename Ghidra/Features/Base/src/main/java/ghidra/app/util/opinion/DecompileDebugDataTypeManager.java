@@ -226,14 +226,33 @@ public class DecompileDebugDataTypeManager {
 			return unionDT;
 		}
 
-		while (parser.peek().getName().equals("field")) {
-			XmlElement fieldElement = parser.start("field");
-			DataType fieldDT = parseDataTypeTag(parser, log);
-			unionDT.add(fieldDT, fieldDT.getLength(), key.name(), "");
-			parser.end(fieldElement);
+		while (parser.peek().getName().contains("field")) {
+			String fieldType = parser.peek().getName();
+			if (fieldType.equals("field")) {
+				XmlElement fieldElement = parser.start("field");
+				DataType fieldDT = parseDataTypeTag(parser, log);
+				unionDT.add(fieldDT, fieldDT.getLength(), key.name(), "");
+				parser.end(fieldElement);
+			}
+			else if (fieldType.equals("bitfield")) {
+				XmlElement bitFieldElement = parser.start("bitfield");
+				int bitFieldSize =
+					SpecXmlUtils.decodeInt(bitFieldElement.getAttribute(ATTRIB_SIZE.name()));
+				String componentName = bitFieldElement.getAttribute(ATTRIB_NAME.name());
+				DataType fieldDT = parseDataTypeTag(parser, log);
+
+				try {
+					unionDT.addBitField(fieldDT, bitFieldSize, componentName, null);
+				}
+				catch (InvalidDataTypeException e) {
+					log.appendException(e);
+				}
+				parser.end(bitFieldElement);
+			}
 		}
 		parser.end(unionElement);
 		return unionDT;
+
 	}
 
 	/**
@@ -295,8 +314,9 @@ public class DecompileDebugDataTypeManager {
 		DataType baseType = parseDataTypeTag(parser, log);
 		PointerTypedef relPointerDT =
 			new PointerTypedef(baseType.getName(), baseType, size, programDataManager, offset);
-		
-		DataType resolved = resolveAndMapDataType(new DataTypeKey(baseType.getName()+"relptr", idHolder), relPointerDT);
+
+		DataType resolved = resolveAndMapDataType(
+			new DataTypeKey(baseType.getName() + "relptr", idHolder), relPointerDT);
 		parser.end(pointerRelElement);
 
 		return resolved;
@@ -331,7 +351,25 @@ public class DecompileDebugDataTypeManager {
 			return createdStruct;
 		}
 
-		while (parser.peek().getName().equals("field")) {
+		while (parser.peek().getName().contains("field")) {
+			handleStructFieldType(parser, createdStruct, log);
+		}
+		parser.end(structElement);
+
+		return createdStruct;
+
+	}
+
+	/**
+	 * Parse and populate field and bit field types for created structs.
+	 * 
+	 * @param parser XmlPullParser
+	 * @param createdStruct Structure
+	 * @param log XmlMessageLog
+	 */
+	private void handleStructFieldType(XmlPullParser parser, Structure createdStruct,
+			XmlMessageLog log) {
+		if (parser.peek().getName().equals("field")) {
 			XmlElement fieldElement = parser.start("field");
 			int fieldOffset =
 				SpecXmlUtils.decodeInt(fieldElement.getAttribute(ATTRIB_OFFSET.name()));
@@ -341,10 +379,27 @@ public class DecompileDebugDataTypeManager {
 				fieldElement.getAttribute(ATTRIB_NAME.name()), "");
 			parser.end(fieldElement);
 		}
-		parser.end(structElement);
+		else if (parser.peek().getName().equals("bitfield")) {
+			XmlElement bitFieldElement = parser.start("bitfield");
+			int bitFieldSize =
+				SpecXmlUtils.decodeInt(bitFieldElement.getAttribute(ATTRIB_SIZE.name()));
+			String componentName = bitFieldElement.getAttribute(ATTRIB_NAME.name());
+			int byteOffset =
+				SpecXmlUtils.decodeInt(bitFieldElement.getAttribute(ATTRIB_OFFSET.name()));
+			int bitOffset =
+				SpecXmlUtils.decodeInt(bitFieldElement.getAttribute(ATTRIB_FIRST.name()));
+			int byteWidth = Math.ceilDiv((bitOffset + bitFieldSize), 8);
+			DataType fieldDT = parseDataTypeTag(parser, log);
 
-		return createdStruct;
-
+			try {
+				createdStruct.insertBitFieldAt(byteOffset, byteWidth, bitOffset, fieldDT,
+					bitFieldSize, componentName, null);
+			}
+			catch (InvalidDataTypeException e) {
+				log.appendException(e);
+			}
+			parser.end(bitFieldElement);
+		}
 	}
 
 	/**

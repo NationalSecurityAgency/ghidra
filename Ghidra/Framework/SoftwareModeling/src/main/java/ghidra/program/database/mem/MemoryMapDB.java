@@ -261,11 +261,6 @@ public class MemoryMapDB implements Memory, ManagerDB {
 	}
 
 	@Override
-	public AddressSetView getInitializedAddressSet() {
-		return getLoadedAndInitializedAddressSet();
-	}
-
-	@Override
 	public AddressSetView getAllInitializedAddressSet() {
 		MemoryAddressSetViews localAddrSetViews = getMemoryAddressSetViews();
 		return new AddressSetViewAdapter(localAddrSetViews.initialized);

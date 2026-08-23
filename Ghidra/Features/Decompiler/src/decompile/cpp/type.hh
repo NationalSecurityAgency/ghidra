@@ -154,6 +154,7 @@ extern type_class string2typeclass(const string &classstring);
 extern type_class metatype2typeclass(type_metatype meta);
 
 class Architecture;		// Forward declarations
+class Datatype;
 class PcodeOp;
 class Scope;
 class TypeStruct;
@@ -165,6 +166,14 @@ struct DatatypeCompare;
 ///
 /// Used for symbols, function prototypes, type propagation etc.
 class Datatype {
+public:
+  /// \brief Response to a sub-component query
+  class Nearest {
+  public:
+    int8 distance;	///< Distance in bytes of the sub-component to the query point
+    int8 offset;	///< Offset from query point to sub-component start
+    int4 elSize;	///< Element size responsive to query
+  };
 protected:
   static sub_metatype base2sub[18];
   /// Boolean properties of datatypes
@@ -207,7 +216,6 @@ protected:
   virtual Datatype *clone(void) const=0;	///< Clone the data-type
   static uint8 hashName(const string &nm);	///< Produce a data-type id by hashing the type name
   static uint8 hashSize(uint8 id,int4 size);	///< Reversibly hash size into id
-protected:
   static int4 calcAlignSize(int4 sz,int4 align);	///< Calculate aligned size, given size and alignment of data-type
 public:
   /// \brief Construct the base data-type copying low-level properties of another
@@ -248,8 +256,8 @@ public:
   virtual void printRaw(ostream &s) const;			///< Print a description of the type to stream
   virtual const TypeField *findTruncation(int8 off,int4 sz,const PcodeOp *op,int4 slot,int8 &newoff) const;
   virtual Datatype *getSubType(int8 off,int8 *newoff) const; ///< Recover component data-type one-level down
-  virtual int8 nearestArrayedComponentForward(int8 off,int8 max,int8 *newoff,int8 *elSize) const;
-  virtual int8 nearestArrayedComponentBackward(int8 off,int8 max,int8 *newoff,int8 *elSize) const;
+  virtual bool nearestArrayedComponentForward(int8 off,Nearest &res) const;
+  virtual bool nearestArrayedComponentBackward(int8 off,Nearest &res) const;
 
   /// \brief Get number of bytes at the given offset that are padding
   ///
@@ -285,7 +293,8 @@ public:
   virtual int4 compare(const Datatype &op,int4 level) const; ///< Order types for propagation
   virtual int4 compareDependency(const Datatype &op) const; ///< Compare for storage in tree structure
   virtual void encode(Encoder &encoder) const;	///< Encode the data-type to a stream
-  virtual bool isPtrsubMatching(int8 off,int8 extra,int8 multiplier) const;	///< Is this data-type suitable as input to a CPUI_PTRSUB op
+  virtual bool isPtrsubMatching(int8 off,int8 extra,int8 multiplier) const;
+  virtual bool isOffsetValid(int8 off,int8 extra,int8 multiplier) const;	///< Is a given offset into \b this valid, given sub-offset info
   virtual Datatype *getStripped(void) const;		///< Get a stripped version of \b this for formal use in formal declarations
   virtual Datatype *resolveInFlow(PcodeOp *op,int4 slot);	///< Tailor data-type propagation based on Varnode use
   virtual Datatype* findResolve(const PcodeOp *op,int4 slot);	///< Find a previously resolved sub-type
@@ -301,6 +310,10 @@ public:
   void encodeRef(Encoder &encoder) const;	///< Encode a reference of \b this to a stream
   bool isPieceStructured(void) const;		///< Does \b this data-type consist of separate pieces?
   bool isPrimitiveWhole(void) const;		///< Is \b this made up of a single primitive
+  bool nearestArrayedComponent(int8 off,uint4 arrayHint,int8 *newoff) const;
+  bool testForArraySlack(int8 off);	///< Test if an \e out-of-bounds offset makes sense as array slack
+  Datatype *findSmallestContainer(int8 off,int8 sz,int8 *newoff);	///< Find the smallest component containing the given range
+
   static uint4 encodeIntegerFormat(const string &val);
   static string decodeIntegerFormat(uint4 val);
 };
@@ -448,10 +461,9 @@ class TypePointer : public Datatype {
 protected:
   friend class TypeFactory;
   Datatype *ptrto;		///< Type being pointed to
-  AddrSpace *spaceid;		///< If non-null, the address space \b this is intented to point into
+  AddrSpace *spaceid;		///< If non-null, the address space \b this is intended to point into
   TypePointer *truncate;	///< Truncated form of the pointer (if not null)
   uint4 wordsize;               ///< What size unit does the pointer address
-  static bool testForArraySlack(Datatype *dt,int8 off);	///< Test if an \e out-of-bounds offset makes sense as array slack
   void decode(Decoder &decoder,TypeFactory &typegrp);	///< Restore \b this pointer data-type from a stream
   void calcSubmeta(void);	///< Calculate specific submeta for \b this pointer
   void calcTruncate(TypeFactory &typegrp);	// Assign a truncated pointer subcomponent if necessary
@@ -505,8 +517,8 @@ public:
   Datatype *getSubEntry(int4 off,int4 sz,int4 *newoff,int4 *el) const;	///< Figure out what a byte range overlaps
   virtual void printRaw(ostream &s) const;
   virtual Datatype *getSubType(int8 off,int8 *newoff) const;
-  virtual int8 nearestArrayedComponentForward(int8 off,int8 max,int8 *newoff,int8 *elSize) const;
-  virtual int8 nearestArrayedComponentBackward(int8 off,int8 max,int8 *newoff,int8 *elSize) const;
+  virtual bool nearestArrayedComponentForward(int8 off,Nearest &res) const;
+  virtual bool nearestArrayedComponentBackward(int8 off,Nearest &res) const;
   virtual int4 getHoleSize(int4 off) const;
   virtual int4 numDepend(void) const { return 1; }
   virtual Datatype *getDepend(int4 index) const { return arrayof; }
@@ -515,6 +527,7 @@ public:
   virtual int4 compareDependency(const Datatype &op) const; // For tree structure
   virtual Datatype *clone(void) const { return new TypeArray(*this); }
   virtual void encode(Encoder &encoder) const;
+  virtual bool isOffsetValid(int8 off,int8 extra,int8 multiplier) const;
   virtual Datatype *resolveInFlow(PcodeOp *op,int4 slot);
   virtual Datatype* findResolve(const PcodeOp *op,int4 slot);
   virtual int4 findCompatibleResolve(Datatype *ct) const;
@@ -592,8 +605,8 @@ public:
   bool hasBitFieldsInRange(int4 offset,int4 sz) const;	///< Return \b true if \b this structure has 1 or more bitfields in the given byte range
   virtual const TypeField *findTruncation(int8 off,int4 sz,const PcodeOp *op,int4 slot,int8 &newoff) const;
   virtual Datatype *getSubType(int8 off,int8 *newoff) const;
-  virtual int8 nearestArrayedComponentForward(int8 off,int8 max,int8 *newoff,int8 *elSize) const;
-  virtual int8 nearestArrayedComponentBackward(int8 off,int8 max,int8 *newoff,int8 *elSize) const;
+  virtual bool nearestArrayedComponentForward(int8 off,Nearest &res) const;
+  virtual bool nearestArrayedComponentBackward(int8 off,Nearest &res) const;
   virtual int4 getHoleSize(int4 off) const;
   virtual int4 numDepend(void) const { return field.size(); }
   virtual Datatype *getDepend(int4 index) const { return field[index].type; }
@@ -601,10 +614,12 @@ public:
   virtual int4 compareDependency(const Datatype &op) const; // For tree structure
   virtual Datatype *clone(void) const { return new TypeStruct(*this); }
   virtual void encode(Encoder &encoder) const;
+  virtual bool isOffsetValid(int8 off,int8 extra,int8 multiplier) const;
   virtual Datatype *resolveInFlow(PcodeOp *op,int4 slot);
   virtual Datatype* findResolve(const PcodeOp *op,int4 slot);
   virtual int4 findCompatibleResolve(Datatype *ct) const;
-  static void assignFieldOffsets(vector<TypeField> &list,vector<TypeBitField> &bitlist,int4 &newSize,int4 &newAlign,uint4 &flags);
+  static void assignFieldOffsets(vector<TypeField> &list,vector<TypeBitField> &bitlist,int4 &newSize,int4 &newAlign,
+				 uint4 &flags,const TypeStruct *st);
   static int4 scoreSingleComponent(Datatype *parent,PcodeOp *op,int4 slot);	///< Determine best type fit for given PcodeOp use
 };
 
@@ -624,6 +639,8 @@ public:
   const TypeField *getField(int4 i) const { return &field[i]; }	///< Get the i-th field of the union
   virtual const TypeField *findTruncation(int8 offset,int4 sz,const PcodeOp *op,int4 slot,int8 &newoff) const;
   //  virtual Datatype *getSubType(int8 off,int8 *newoff) const;
+  virtual bool nearestArrayedComponentForward(int8 off,Nearest &res) const;
+  virtual bool nearestArrayedComponentBackward(int8 off,Nearest &res) const;
   virtual int4 numDepend(void) const { return field.size(); }
   virtual Datatype *getDepend(int4 index) const { return field[index].type; }
   virtual int4 compare(const Datatype &op,int4 level) const; // For tree structure
@@ -634,7 +651,8 @@ public:
   virtual Datatype* findResolve(const PcodeOp *op,int4 slot);
   virtual int4 findCompatibleResolve(Datatype *ct) const;
   virtual const TypeField *resolveTruncation(int8 offset,PcodeOp *op,int4 slot,int8 &newoff);
-  static void assignFieldOffsets(vector<TypeField> &list,int4 &newSize,int4 &newAlign,TypeUnion *tu);	///< Assign field offsets
+  static void assignFieldOffsets(vector<TypeField> &list,int4 &newSize,int4 &newAlign,uint4 &flags,
+				 const TypeUnion *tu);	///< Assign field offsets
 };
 
 /// \brief A data-type thats holds part of a TypeEnum and possible additional padding
@@ -787,6 +805,7 @@ public:
   virtual int4 compareDependency(const Datatype &op) const;
   virtual Datatype *clone(void) const { return new TypeCode(*this); }
   virtual void encode(Encoder &encoder) const;
+  virtual bool isOffsetValid(int8 off,int8 extra,int8 multiplier) const;
 };
 
 /// \brief Special Datatype object used to describe pointers that index into the symbol table
@@ -795,28 +814,31 @@ public:
 /// This facilitates type propagation from local symbols into the stack space and
 /// from global symbols into the RAM space.
 class TypeSpacebase : public Datatype {
+  static constexpr int4 MAX_ARRAY_SLACK_FORWARD = 128;	///< Maximum bytes to search forward for an array
+  static constexpr int4 MAX_ARRAY_SLACK_BACKWARD = 8;	///< Maximum bytes to search backward for an array
   friend class TypeFactory;
   AddrSpace *spaceid;		///< The address space we are treating as a structure
-  Address localframe;		///< Address of function whose symbol table is indexed (or INVALID for "global")
+  uint8 scopeId;		///< Id of the Scope \b this data-type is associated with
   Architecture *glb;		///< Architecture for accessing symbol table
   void decode(Decoder &decoder,TypeFactory &typegrp);	///< Restore \b this spacebase data-type from a stream
 public:
   /// Construct from another TypeSpacebase
   TypeSpacebase(const TypeSpacebase &op) : Datatype(op) {
-    spaceid = op.spaceid; localframe=op.localframe; glb=op.glb;
+    spaceid = op.spaceid; scopeId = op.scopeId; glb=op.glb;
   }
   /// Constructor for use with decode
-  TypeSpacebase(Architecture *g) : Datatype(0,1,TYPE_SPACEBASE) { spaceid = (AddrSpace *)0; glb = g; }
+  TypeSpacebase(Architecture *g) : Datatype(0,1,TYPE_SPACEBASE) { spaceid = (AddrSpace *)0; glb = g; scopeId = 0; }
   /// Construct given an address space, scope, and architecture
-  TypeSpacebase(AddrSpace *id,const Address &frame,Architecture *g)
-    : Datatype(0,1,TYPE_SPACEBASE), localframe(frame) { spaceid = id; glb = g; }
+  TypeSpacebase(AddrSpace *id,uint8 scope,Architecture *g)
+    : Datatype(0,1,TYPE_SPACEBASE) { spaceid = id; glb = g; scopeId = scope; }
   Scope *getMap(void) const;	///< Get the symbol table indexed by \b this
   Address getAddress(uintb off,int4 sz,const Address &point) const;	///< Construct an Address given an offset
   virtual Datatype *getSubType(int8 off,int8 *newoff) const;
-  virtual int8 nearestArrayedComponentForward(int8 off,int8 max,int8 *newoff,int8 *elSize) const;
-  virtual int8 nearestArrayedComponentBackward(int8 off,int8 max,int8 *newoff,int8 *elSize) const;
+  virtual bool nearestArrayedComponentForward(int8 off,Nearest &res) const;
+  virtual bool nearestArrayedComponentBackward(int8 off,Nearest &res) const;
   virtual int4 compare(const Datatype &op,int4 level) const;
   virtual int4 compareDependency(const Datatype &op) const; // For tree structure
+  virtual bool isOffsetValid(int8 off,int8 extra,int8 multiplier) const;
   virtual Datatype *clone(void) const { return new TypeSpacebase(*this); }
   virtual void encode(Encoder &encoder) const;
 };
@@ -905,7 +927,7 @@ public:
   TypePartialUnion *getTypePartialUnion(TypeUnion *contain,int4 off,int4 sz);	///< Create a partial union
   TypeEnum *getTypeEnum(const string &n);			///< Create an (empty) enumeration
   TypePartialEnum *getTypePartialEnum(TypeEnum *contain,int4 off,int4 sz);	///< Create a partial enumeration
-  TypeSpacebase *getTypeSpacebase(AddrSpace *id,const Address &addr);	///< Create a "spacebase" type
+  TypeSpacebase *getTypeSpacebase(AddrSpace *spc,uint8 scope);	///< Create a "spacebase" type
   TypeCode *getTypeCode(const PrototypePieces &proto);			///< Create a "function" datatype
   Datatype *getTypedef(Datatype *ct,const string &name,uint8 id,uint4 format);	///< Create a new \e typedef data-type
   TypePointerRel *getTypePointerRel(TypePointer *parentPtr,Datatype *ptrTo,int4 off);	///< Get pointer offset relative to a container

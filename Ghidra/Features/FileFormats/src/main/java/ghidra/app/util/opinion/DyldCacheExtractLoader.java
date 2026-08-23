@@ -134,6 +134,11 @@ public class DyldCacheExtractLoader extends MachoLoader {
 	}
 
 	@Override
+	public Collection<String> getAssociatedFileExtensions() {
+		return List.of();
+	}
+
+	@Override
 	public int getTierPriority() {
 		return 49; // Higher priority than MachoLoader
 	}

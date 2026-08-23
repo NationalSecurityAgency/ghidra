@@ -223,10 +223,4 @@ public interface GoToService {
 	 * @return the navigatable
 	 */
 	public Navigatable getDefaultNavigatable();
-
-	@Deprecated(forRemoval = true, since = "10.2")
-	public GoToOverrideService getOverrideService();
-
-	@Deprecated(forRemoval = true, since = "10.2")
-	public void setOverrideService(GoToOverrideService override);
 }

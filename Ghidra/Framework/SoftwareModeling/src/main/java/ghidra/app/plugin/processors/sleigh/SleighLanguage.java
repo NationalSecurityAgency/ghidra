@@ -1099,7 +1099,7 @@ public class SleighLanguage implements Language {
 	 * @deprecated Will be removed once we have better way to attach address spaces to pointer data-types
 	 * @return the default wordsize to use when analyzing pointer offsets
 	 */
-	@Deprecated
+	@Deprecated(since = "9.0")
 	public int getDefaultPointerWordSize() {
 		return defaultPointerWordSize;
 	}

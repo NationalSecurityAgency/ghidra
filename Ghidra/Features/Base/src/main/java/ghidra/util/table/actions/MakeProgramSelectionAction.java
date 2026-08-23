@@ -53,27 +53,6 @@ public class MakeProgramSelectionAction extends DockingAction {
 	 * Clients using this constructor must override
 	 * {@link #makeProgramSelection(ProgramSelection, ActionContext)}.
 	 * 
-	 * <p>
-	 * Update: the preferred constructor for clients without a plugin is
-	 * {@link #MakeProgramSelectionAction(Navigatable, String, GhidraTable)}.
-	 * 
-	 * @param owner the action's owner
-	 * @param table the table needed for this action
-	 * @deprecated use either of the other constructors
-	 */
-	@Deprecated(forRemoval = true, since = "10.2")
-	public MakeProgramSelectionAction(String owner, GhidraTable table) {
-		super("Make Selection", owner, KeyBindingType.SHARED);
-		this.table = Objects.requireNonNull(table);
-		init(null);
-	}
-
-	/**
-	 * Special constructor for clients that do not have a plugin.
-	 * <p>
-	 * Clients using this constructor must override
-	 * {@link #makeProgramSelection(ProgramSelection, ActionContext)}.
-	 * 
 	 * @param navigatable the navigatable that will be used to make selections; may not be null
 	 * @param owner the action's owner
 	 * @param table the table needed for this action

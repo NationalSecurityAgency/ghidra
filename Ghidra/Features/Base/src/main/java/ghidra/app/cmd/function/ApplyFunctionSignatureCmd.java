@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,29 +67,6 @@ public class ApplyFunctionSignatureCmd extends BackgroundCommand<Program> {
 			SourceType source) {
 		this(entry, signature, source, false, false, DataTypeConflictHandler.DEFAULT_HANDLER,
 			FunctionRenameOption.RENAME_IF_DEFAULT);
-	}
-
-	/**
-	 * Constructs a new command for applying a signature to an existing function.
-	 * <br>
-	 * All datatypes will be resolved using the 
-	 * {@link DataTypeConflictHandler#DEFAULT_HANDLER default conflict handler}.
-	 * 
-	 * @param entry     entry point address for the function to be created.
-	 * @param signature function signature to apply
-	 * @param source    the source of this function signature
-	 * @param preserveCallingConvention if true the function calling convention will not be changed
-	 * @param forceSetName true if name of the function should be set to the name, otherwise name
-	 *                     will only be set name if currently default (e.g., FUN_1234). A value of 
-	 *                     true is equivalent to {@link FunctionRenameOption#RENAME}, while a value
-	 *                     of false is equivalent to {@link FunctionRenameOption#RENAME_IF_DEFAULT}.
-	 */
-	@Deprecated(since = "10.3", forRemoval = true)
-	public ApplyFunctionSignatureCmd(Address entry, FunctionSignature signature, SourceType source,
-			boolean preserveCallingConvention, boolean forceSetName) {
-		this(entry, signature, source, preserveCallingConvention, false,
-			DataTypeConflictHandler.DEFAULT_HANDLER,
-			forceSetName ? FunctionRenameOption.RENAME : FunctionRenameOption.RENAME_IF_DEFAULT);
 	}
 
 	/**

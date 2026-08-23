@@ -108,6 +108,11 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 	}
 
 	@Override
+	public Collection<String> getAssociatedFileExtensions() {
+		return List.of("obj");
+	}
+
+	@Override
 	protected void load(Program program, ImporterSettings settings)
 			throws IOException, CancelledException {
 		MessageLog log = settings.log();

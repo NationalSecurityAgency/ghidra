@@ -876,11 +876,36 @@ public final class FileUtilities {
 	}
 
 	/**
+	 * {@return a new {@link File} object from the given {@code secureBaseDir} and 
+	 * {@code untrustedPathname} that is safe from 
+	 * <a href="https://en.wikipedia.org/wiki/Directory_traversal_attack"> path traversal 
+	 * attacks</a>}
+	 * 
+	 * @param secureBaseDir The trusted base directory from which to create the {@link File}
+	 * @param untrustedPathname A pathname relative to the {@code baseDir} used to form the new {@link File},
+	 *   possibly supplied or controlled by an attacker
+	 * @throws IOException if a path traversal attack is detected
+	 */
+	public static File getSecureFile(File secureBaseDir, String untrustedPathname)
+			throws IOException {
+		File f = new File(secureBaseDir, untrustedPathname);
+		if (!startsWith(secureBaseDir.getPath(), f.getPath())) {
+			throw new IOException("Path traversal detected! '%s' escapes '%s'"
+					.formatted(untrustedPathname, secureBaseDir));
+		}
+		return f;
+	}
+
+	/**
 	 * Returns true if the given {@code potentialParentFile} is the parent path of
 	 * the given {@code otherFile}, or if the two file paths point to the same path.
 	 * <p>
 	 * NOTE: Both files are converted to their {@link File#getCanonicalPath() canonical form} prior
 	 * to comparing their paths, which may have performance implications, particularly on Windows.
+	 * <p>
+	 * WARNING: The canonical form of a pathname may change depending on whether or not 
+	 * the file or directory exists (particularly on Windows). If any of the given {@link File} 
+	 * parameters do not exist, this method may not behave as expected.
 	 *
 	 * @param potentialParentFile The file that may be the parent
 	 * @param otherFile The file that may be the child
@@ -912,7 +937,11 @@ public final class FileUtilities {
 	 * <p>
 	 * NOTE: All files are converted to their {@link File#getCanonicalPath() canonical form} prior
 	 * to comparing their paths, which may have performance implications, particularly on Windows.
-	 *
+	 * <p>
+	 * WARNING: The canonical form of a pathname may change depending on whether or not 
+	 * the file or directory exists (particularly on Windows). If any of the given {@link File} 
+	 * parameters do not exist, this method may not behave as expected.
+	 * 
 	 * @param potentialParents The files that may be the parent
 	 * @param otherFile The file that may be the child
 	 * @return boolean true if {@code otherFile}'s canonical path is within any of the 

@@ -575,6 +575,7 @@ __3.2.0__
 * PyGhidra now depends on `JPype >=1.5.2, != 1.6.0, != 1.7.0`.
 * Using `typing_extensions` to properly deprecate [`pyghidra.open_program()`](#pyghidraopen_program)
   and [`pyghidra.run_script()`](#pyghidrarun_script).
+* Fixed the PyGhidra WM_CLASS/application name on Linux (requires Ghidra 12.2 or later).
 
 __3.1.0__
 * PyGhidra will now, by default, restore `sys.modules` to its prior state after a PyGhidra script is

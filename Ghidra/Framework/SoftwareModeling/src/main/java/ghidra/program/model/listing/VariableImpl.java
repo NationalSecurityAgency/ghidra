@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,7 @@ package ghidra.program.model.listing;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.address.Address;
@@ -485,10 +485,10 @@ abstract class VariableImpl implements Variable {
 		if (!isEquivalent(otherVar)) {
 			return false;
 		}
-		if (!StringUtils.equals(name, otherVar.getName())) {
+		if (!Strings.CS.equals(name, otherVar.getName())) {
 			return false;
 		}
-		return StringUtils.equals(comment, otherVar.getComment());
+		return Strings.CS.equals(comment, otherVar.getComment());
 	}
 
 	@Override

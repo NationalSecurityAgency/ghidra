@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,6 +28,7 @@ import docking.widgets.tree.GTreeNode;
 import generic.theme.GIcon;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.Program;
+import ghidra.util.datastruct.AlphaNumericComparator;
 import resources.Icons;
 
 public class RegisterTree extends GTree {
@@ -81,9 +82,8 @@ public class RegisterTree extends GTree {
 				list.add(reg);
 			}
 		}
-		Collections.sort(list);
-		Register[] registers = new Register[list.size()];
-		return list.toArray(registers);
+
+		return list.toArray(Register[]::new);
 	}
 
 	void setFiltered(boolean b) {
@@ -111,13 +111,6 @@ public class RegisterTree extends GTree {
 			Register[] registers = program.getProgramContext().getRegistersWithValues();
 			root.setRegisters(registers);
 			selectRegister(currentRegister);
-
-// TODO: old school	- delete me?
-//			runWhenTreeIsDone(new Runnable() {
-//				public void run() {
-//					selectRegister(currentRegister);
-//				}
-//			});
 		}
 	}
 
@@ -133,181 +126,196 @@ public class RegisterTree extends GTree {
 		}
 		return null;
 	}
-}
 
-abstract class SearchableRegisterTreeNode extends GTreeNode {
-	public GTreeNode findNode(Register register) {
-		List<GTreeNode> allChildren = getChildren();
-		for (GTreeNode child : allChildren) {
-			if (!(child instanceof RegisterTreeNode)) {
-				continue;
-			}
-			RegisterTreeNode node = (RegisterTreeNode) child;
-			if (node.getRegister().equals(register)) {
-				return node;
-			}
+	private static class RegisterNodeComparator implements Comparator<GTreeNode> {
 
-			GTreeNode foundNode = ((SearchableRegisterTreeNode) child).findNode(register);
-			if (foundNode != null) {
-				return foundNode;
+		private AlphaNumericComparator alphaNumericComparator =
+			new AlphaNumericComparator();
+
+		@Override
+		public int compare(GTreeNode n1, GTreeNode n2) {
+			String s1 = n1.getName().toLowerCase();
+			String s2 = n2.getName().toLowerCase();
+			return alphaNumericComparator.compare(s1, s2);
+		}
+	}
+
+	private static abstract class SearchableRegisterTreeNode extends GTreeNode {
+
+		private RegisterNodeComparator comparator = new RegisterNodeComparator();
+
+		void sortChildren() {
+			List<GTreeNode> children = new ArrayList<>(children());
+			Collections.sort(children, comparator);
+			setChildren(children);
+
+			for (GTreeNode child : children) {
+				SearchableRegisterTreeNode regNode = (SearchableRegisterTreeNode) child;
+				regNode.sortChildren();
 			}
 		}
 
-		return null;
-	}
-}
-
-class RegisterTreeRootNode extends SearchableRegisterTreeNode {
-	private Register[] lastRegisters;
-
-	@Override
-	public Icon getIcon(boolean expanded) {
-		return null;
-	}
-
-	@Override
-	public String getName() {
-		return "Registers";
-	}
-
-	@Override
-	public String getToolTip() {
-		return null;
-	}
-
-	@Override
-	public boolean isLeaf() {
-		return false;
-	}
-
-	public void setRegisters(Register[] registers) {
-		if (registers == lastRegisters) {
-			return;
-		}
-		removeAll(); // remove all current children before repopulating
-
-		lastRegisters = registers;
-		HashMap<String, RegisterTreeGroupNode> groups =
-			new HashMap<>();
-
-		List<GTreeNode> nodes = new ArrayList<>();
-
-		for (Register register : registers) {
-			if (register.getBaseRegister() != register &&
-				!register.getParentRegister().isHidden()) {
-				continue;
-			}
-			String groupName = register.getGroup();
-			if (groupName != null) {
-				RegisterTreeGroupNode group = groups.get(groupName);
-				if (group == null) {
-					group = new RegisterTreeGroupNode(groupName);
-					groups.put(groupName, group);
-					nodes.add(group);
+		public GTreeNode findNode(Register register) {
+			List<GTreeNode> allChildren = getChildren();
+			for (GTreeNode child : allChildren) {
+				if (!(child instanceof RegisterTreeNode)) {
+					continue;
 				}
-				group.addRegister(register);
+				RegisterTreeNode node = (RegisterTreeNode) child;
+				if (node.getRegister().equals(register)) {
+					return node;
+				}
+
+				GTreeNode foundNode = ((SearchableRegisterTreeNode) child).findNode(register);
+				if (foundNode != null) {
+					return foundNode;
+				}
 			}
-			else {
-				nodes.add(new RegisterTreeNode(register));
+
+			return null;
+		}
+	}
+
+	private static class RegisterTreeNode extends SearchableRegisterTreeNode {
+		private static Icon REG_ICON = new GIcon("icon.plugin.register");
+		private static Icon REG_GROUP_ICON = new GIcon("icon.plugin.register.provider");
+		private final Register register;
+
+		public RegisterTreeNode(Register register) {
+			this.register = register;
+			for (Register childRegister : register.getChildRegisters()) {
+				addNode(new RegisterTreeNode(childRegister));
 			}
 		}
-		Collections.sort(nodes);
-		setChildren(nodes);
-	}
-}
 
-class RegisterTreeNode extends SearchableRegisterTreeNode {
-	private static Icon REG_ICON = new GIcon("icon.plugin.register");
-	private static Icon REG_GROUP_ICON = new GIcon("icon.plugin.register.provider");
-	private final Register register;
+		@Override
+		public Icon getIcon(boolean expanded) {
+			return register.hasChildren() ? REG_GROUP_ICON : REG_ICON;
+		}
 
-	public RegisterTreeNode(Register register) {
-		this.register = register;
-		for (Register childRegister : register.getChildRegisters()) {
-			addNode(new RegisterTreeNode(childRegister));
+		@Override
+		public String getName() {
+			return register.getName() + "  (" + register.getBitLength() + getAliases() +
+				")";
+		}
+
+		private String getAliases() {
+			StringBuffer buf = new StringBuffer();
+			for (String alias : register.getAliases()) {
+				buf.append(buf.length() == 0 ? "; " : ", ");
+				buf.append(alias);
+			}
+			return buf.toString();
+		}
+
+		@Override
+		public String getToolTip() {
+			return register.getDescription();
+		}
+
+		@Override
+		public boolean isLeaf() {
+			return !register.hasChildren();
+		}
+
+		Register getRegister() {
+			return register;
 		}
 	}
 
-	@Override
-	public Icon getIcon(boolean expanded) {
-		return register.hasChildren() ? REG_GROUP_ICON : REG_ICON;
-	}
+	private static class RegisterTreeGroupNode extends SearchableRegisterTreeNode {
+		private static Icon OPEN_ICON = Icons.OPEN_FOLDER_ICON;
+		private static Icon CLOSED_ICON = Icons.CLOSED_FOLDER_ICON;
+		private String name;
 
-	@Override
-	public String getName() {
-		return register.getName() + "  (" + register.getBitLength() + getAliases() + ")";
-	}
-
-	private String getAliases() {
-		StringBuffer buf = new StringBuffer();
-		for (String alias : register.getAliases()) {
-			buf.append(buf.length() == 0 ? "; " : ", ");
-			buf.append(alias);
+		public RegisterTreeGroupNode(String name) {
+			this.name = name;
 		}
-		return buf.toString();
-	}
 
-	@Override
-	public String getToolTip() {
-		return register.getDescription();
-	}
-
-	@Override
-	public boolean isLeaf() {
-		return !register.hasChildren();
-	}
-
-	@Override
-	public int compareTo(GTreeNode other) {
-		if (!(other instanceof RegisterTreeNode)) {
-			return 1;
+		@Override
+		public Icon getIcon(boolean expanded) {
+			return expanded ? OPEN_ICON : CLOSED_ICON;
 		}
-		return getName().compareTo(other.getName());
-	}
 
-	public Register getRegister() {
-		return register;
-	}
-}
-
-class RegisterTreeGroupNode extends SearchableRegisterTreeNode {
-	private static Icon OPEN_ICON = Icons.OPEN_FOLDER_ICON;
-	private static Icon CLOSED_ICON = Icons.CLOSED_FOLDER_ICON;
-	private String name;
-
-	public RegisterTreeGroupNode(String name) {
-		this.name = name;
-	}
-
-	@Override
-	public Icon getIcon(boolean expanded) {
-		return expanded ? OPEN_ICON : CLOSED_ICON;
-	}
-
-	@Override
-	public String getName() {
-		return name;
-	}
-
-	@Override
-	public String getToolTip() {
-		return null;
-	}
-
-	@Override
-	public boolean isLeaf() {
-		return false;
-	}
-
-	public void addRegister(Register register) {
-		addNode(new RegisterTreeNode(register));
-	}
-
-	@Override
-	public int compareTo(GTreeNode o) {
-		if (!(o instanceof RegisterTreeGroupNode)) {
-			return -1;
+		@Override
+		public String getName() {
+			return name;
 		}
-		return name.compareTo(o.getName());
+
+		@Override
+		public String getToolTip() {
+			return null;
+		}
+
+		@Override
+		public boolean isLeaf() {
+			return false;
+		}
+
+		public void addRegister(Register register) {
+			addNode(new RegisterTreeNode(register));
+		}
+	}
+
+	private static class RegisterTreeRootNode extends SearchableRegisterTreeNode {
+		private Register[] lastRegisters;
+
+		@Override
+		public Icon getIcon(boolean expanded) {
+			return null;
+		}
+
+		@Override
+		public String getName() {
+			return "Registers";
+		}
+
+		@Override
+		public String getToolTip() {
+			return null;
+		}
+
+		@Override
+		public boolean isLeaf() {
+			return false;
+		}
+
+		public void setRegisters(Register[] registers) {
+			if (registers == lastRegisters) {
+				return;
+			}
+
+			removeAll(); // remove all current children before re-populating
+
+			lastRegisters = registers;
+			HashMap<String, RegisterTreeGroupNode> groups = new HashMap<>();
+
+			List<GTreeNode> nodes = new ArrayList<>();
+
+			for (Register register : registers) {
+				if (register.getBaseRegister() != register &&
+					!register.getParentRegister().isHidden()) {
+					continue;
+				}
+
+				String groupName = register.getGroup();
+				if (groupName != null) {
+					RegisterTreeGroupNode group = groups.get(groupName);
+					if (group == null) {
+						group = new RegisterTreeGroupNode(groupName);
+						groups.put(groupName, group);
+						nodes.add(group);
+					}
+					group.addRegister(register);
+				}
+				else {
+					nodes.add(new RegisterTreeNode(register));
+				}
+			}
+
+			setChildren(nodes);
+			sortChildren();
+		}
+
 	}
 }

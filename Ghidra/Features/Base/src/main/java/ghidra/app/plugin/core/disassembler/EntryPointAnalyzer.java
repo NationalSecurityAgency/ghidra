@@ -217,7 +217,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 			}
 			if (!foundNonJumpRef) {
 				// check if we have been thunked
-				Address[] functionThunkAddresses = function.getFunctionThunkAddresses();
+				Address[] functionThunkAddresses = function.getFunctionThunkAddresses(false);
 				foundNonJumpRef =
 					functionThunkAddresses != null && functionThunkAddresses.length != 0;
 			}
@@ -404,7 +404,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 	}
 
 	private void disassembleCodeMapMarkers(Program program, TaskMonitor monitor) {
-		AddressSetPropertyMap codeProp = program.getAddressSetPropertyMap("CodeMap");
+		AddressSetPropertyMap codeProp = program.getAddressSetPropertyMap(Program.CODE_MAP_NAME);
 		if (codeProp != null) {
 			Set<Address> codeSet = new HashSet<>();
 			AddressIterator aiter = codeProp.getAddresses();

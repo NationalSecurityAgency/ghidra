@@ -2498,6 +2498,39 @@ MapEntry *ScopeInternal::findOverlap(const Address &addr,int4 size) const
   return (MapEntry *)0;
 }
 
+MapEntry *ScopeInternal::findSymbolBefore(const Address &addr,const Address &usepoint) const
+
+{
+  EntryMap *rangemap = maptable[ addr.getSpace()->getIndex() ];
+  if (rangemap != (EntryMap *)0) {
+    EntryMap::const_iterator iter = rangemap->find_last_before(addr.getOffset());
+    if (iter != rangemap->end()) {
+      for(;;) {
+	if ((*iter).entry->inUse(usepoint))
+	  return (*iter).entry;
+	if (iter == rangemap->begin()) break;
+	--iter;
+      }
+    }
+  }
+  return (MapEntry *)0;
+}
+
+MapEntry *ScopeInternal::findSymbolAfter(const Address &addr,const Address &usepoint) const
+
+{
+  EntryMap *rangemap = maptable[ addr.getSpace()->getIndex() ];
+  if (rangemap != (EntryMap *)0) {
+    EntryMap::const_iterator iter = rangemap->find_first_after(addr.getOffset());
+    while (iter != rangemap->end()) {
+      if ((*iter).entry->inUse(usepoint))
+	return (*iter).entry;
+      ++iter;
+    }
+  }
+  return (MapEntry *)0;
+}
+
 void ScopeInternal::findByName(const string &nm,vector<Symbol *> &res) const
 
 {
