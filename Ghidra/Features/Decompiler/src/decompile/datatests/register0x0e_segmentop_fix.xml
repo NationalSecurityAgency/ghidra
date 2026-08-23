@@ -1,0 +1,38 @@
+<decompilertest>
+<binaryimage arch="H8:BE:32:H8539F:default">
+<!--
+   Regression test for the "register0x0e" print-layer bug: SP is
+   reassigned to a self-referential arithmetic value (e.g. "SP = SP - 2"
+   from an H8 link/unlk instruction) immediately before being used as a
+   SEGMENTOP's third input for a far-pointer memory access. The Varnode
+   carrying this value is isImplied()==true but isAnnotation()==false;
+   the decompiler's default annotation-print fallback path
+   (PrintC::pushAnnotation, via getRegisterName()/queryContainer()) is
+   NEVER reached for this shape, because PrintLanguage::recurse() takes
+   the isImplied() inline-arithmetic-expansion branch first, which has
+   no real register name to fall back on and previously printed the raw
+   "register0x0e" placeholder text instead. See review16.md for the full
+   investigation history (Ghidra-H8-Processor project,
+   printc.cc/printlanguage.cc/funcdata_varnode.cc changes).
+
+   Binary excerpt taken directly from init_copy_const_block_via_memcpy_banked
+   (the smallest/original repro case for this bug), extracted from the
+   real ROM disassembly.
+-->
+<bytechunk space="ram" offset="0x149c8" readonly="true">
+                17feeefe1388fef8
+f84a13a80998fe48000225f1bf070100
+bf07f862bf0600bf07cf80bf06020301
+72560f1119
+</bytechunk>
+<symbol space="ram" offset="0x149c8" name="init_copy_const_block_via_memcpy_banked"/>
+</binaryimage>
+<script>
+  <com>lo fu init_copy_const_block_via_memcpy_banked</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="No register0x0e placeholder text" min="0" max="0">register0x[0-9a-f]+</stringmatch>
+<stringmatch name="SP - 2 self-referential arithmetic prints as a real subtraction expression" min="1" max="1">SP - 2</stringmatch>
+</decompilertest>

@@ -1,4 +1,4 @@
-/* ###
+﻿/* ###
  * IP: GHIDRA
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1238,7 +1238,108 @@ Symbol *Funcdata::linkSymbol(Varnode *vn)
 
   return sym;
 }
+/// \brief Find or create a Symbol for the given Varnode, using an explicit usepoint
+///
+/// Identical to linkSymbol(), except the usepoint used both to query for an
+/// existing overlapping entry and, if none is found, to register a new one,
+/// is passed in explicitly rather than derived from vn->getUsePoint(). This
+/// matters for annotation-style Varnodes (e.g. a SEGMENTOP's raw input) whose
+/// printed representation is resolved by printc.cc's pushAnnotation() via its
+/// own independent symScope->queryContainer(vn->getAddr(), size, op->getAddr())
+/// call, bound to the consuming PcodeOp's address -- not through
+/// vn->getHigh()->getSymbol(). If linkSymbol() borrows a pre-existing entry
+/// registered at a different usepoint, that entry's range may not cover this
+/// op's address, and pushAnnotation()'s lookup then misses even though a
+/// Symbol genuinely exists. Passing the consuming op's own address as
+/// usepoint here guarantees the two lookups agree. (review15.md section 21+)
+/// \param vn is the given Varnode
+/// \param usepoint is the address to use for both the containment query and any new entry
+/// \return the associated Symbol or NULL
+Symbol *Funcdata::linkSymbolAtUsepoint(Varnode *vn,const Address &usepoint)
 
+{
+  if (vn->isProtoPartial())
+    linkProtoPartial(vn);
+  HighVariable *high = vn->getHigh();
+  Symbol *sym = high->getSymbol();
+  if (sym != (Symbol *)0 && vn->getSymbolEntry() != (SymbolEntry *)0)
+    return sym;		// Already assigned to a usable entry
+
+  uint4 fl = 0;
+  SymbolEntry *entry = localmap->queryProperties(vn->getAddr(), 1, usepoint, fl);
+  if (entry != (SymbolEntry *)0 && !entry->isConflict()) {
+    vn->setSymbolEntry(entry);
+    return entry->getSymbol();
+  }
+  if (!vn->isPersist()) {	// Only create local symbol
+    if (detectSymbolConflicts(vn)) {
+      entry = localmap->addSymbolWithConflict("", high->getType(), vn);
+    }
+    else {
+      entry = localmap->addSymbol("", high->getType(), vn->getAddr(), usepoint);
+    }
+    sym = entry->getSymbol();
+    vn->setSymbolEntry(entry);
+  }
+
+  return sym;
+}
+
+/// \brief Find an existing Symbol for an annotation Varnode, using an explicit usepoint
+///
+/// Annotation Varnodes (vn->isAnnotation()) never get a HighVariable
+/// assigned -- Funcdata::assignHigh() explicitly skips them by design,
+/// since they're not meant to be treated as ordinary program variables.
+/// linkSymbol()/linkSymbolAtUsepoint() both start by dereferencing
+/// vn->getHigh(), so neither can be used for an annotation Varnode. This
+/// method does an equivalent lookup using the same Scope API
+/// (queryProperties) but never touches vn->getHigh().
+///
+/// CHANGED 2026-08-25: this method NO LONGER calls addSymbol() to mint a
+/// new Symbol when none is found. The original version did, keyed to
+/// vn->getAddr() -- for a self-referential/cross-register SEGMENTOP input,
+/// that address is the base register's OWN canonical storage address (e.g.
+/// SP's register-space address). That is the exact same address the
+/// separate stack-frame-layout recovery pass uses as its anchor when
+/// resolving a function's local stack variables. Minting a competing
+/// Symbol there caused frame-layout recovery to see two claims on the same
+/// storage and fall back to materializing the ENTIRE stack-frame-adjustment
+/// region as one opaque local array (observed as "auStack_NNN [128]"-style
+/// declarations replacing what should have been compact "stack0xNNNN"
+/// implicit references) across every function using the ordinary
+/// SP-adjustment prologue idiom -- i.e. nearly the whole ROM, not just the
+/// SEGMENTOP-affected functions this fix was meant to touch. See the ROM
+/// regression investigation following the original register0x0e fix
+/// (auStack_ occurrence count: 16 -> 214; stack0x occurrence count:
+/// 355 -> 20 across the full RVR_1998_x3 export, most of the delta in
+/// functions with NO decompiler spacebase-tracking warning at all, i.e. not
+/// explained by any pre-existing issue).
+///
+/// Now: if a Symbol already exists at this address/usepoint (e.g. the base
+/// register happens to already be named elsewhere in the function), it is
+/// still returned and reused -- this is not a regression for that case,
+/// since reusing an existing entry doesn't create a new frame-layout
+/// collision. If none exists, this returns NULL and the caller
+/// (PrintC::pushSegmentRegisterExpression / pushCrossRegisterExpression) is
+/// expected to fall back to printing the register's real name directly
+/// (via Architecture::translate->getRegisterName(), the same call
+/// previously used to build the now-removed addSymbol() call's name
+/// argument) without creating any Scope entry at all.
+/// \param vn is the given annotation Varnode
+/// \param usepoint is the address to use for the containment query
+/// \return the associated Symbol if one already exists, or NULL
+Symbol *Funcdata::linkAnnotationSymbolAtUsepoint(Varnode *vn,const Address &usepoint)
+
+{
+  uint4 fl = 0;
+  SymbolEntry *entry = localmap->queryProperties(vn->getAddr(),1,usepoint,fl);
+  if (entry == (SymbolEntry *)0 || entry->isConflict()) return (Symbol *)0;
+  vn->setSymbolEntry(entry);
+  return entry->getSymbol();
+}
+
+/// \brief Reconstruct and link a Symbol from a constant Varnode reference
+///
 /// A reference to a symbol (i.e. &varname) is typically stored as a PTRSUB operation, where the
 /// first input Varnode is a \e spacebase Varnode indicating whether the symbol is on the \e stack or at
 /// a \e global RAM location.  The second input Varnode is a constant encoding the address of the symbol.

@@ -433,10 +433,12 @@ public:
   void clearDeadOps(void) { obank.destroyDead(); }		///< Delete any dead PcodeOps
   void remapVarnode(Varnode *vn,Symbol *sym,const Address &usepoint);
   void remapDynamicVarnode(Varnode *vn,Symbol *sym,const Address &usepoint,uint8 hash);
-  void remapConflictSymbol(Symbol *sym);	///< Convert any MapEntryConflict on the Symbol into a DynamicEntry
+  void remapConflictSymbol(Symbol *sym);			///< Convert any MapEntryConflict on the Symbol into a DynamicEntry
   bool detectSymbolConflicts(Varnode *vn);			///< Detect potential symbol conflicts
   void linkProtoPartial(Varnode *vn);				///< Find or create Symbol and a partial mapping
   Symbol *linkSymbol(Varnode *vn);				///< Find or create Symbol associated with given Varnode
+  Symbol *linkSymbolAtUsepoint(Varnode *vn,const Address &usepoint);	///< Find or create Symbol for given Varnode, using an explicit usepoint rather than vn->getUsePoint()
+  Symbol *linkAnnotationSymbolAtUsepoint(Varnode *vn,const Address &usepoint);	///< Find or create Symbol for an annotation Varnode (bypasses vn->getHigh(), which is always NULL for isAnnotation() Varnodes -- see review16.md)
   Symbol *linkSymbolReference(Varnode *vn);			///< Discover and attach Symbol to a constant reference
   Varnode *findLinkedVarnode(SymbolEntry *entry) const;	///< Find a Varnode matching the given Symbol mapping
   void findLinkedVarnodes(SymbolEntry *entry,vector<Varnode *> &res) const;	///< Find Varnodes that map to the given SymbolEntry
