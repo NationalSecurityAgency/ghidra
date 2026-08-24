@@ -6113,6 +6113,7 @@ void ActionDatabase::universalAction(Architecture *conf)
   act->addAction( new ActionOutputPrototype("localrecovery") );
   act->addAction( new ActionInputPrototype("fixateproto") );
   act->addAction( new ActionMapGlobals("fixateglobals") );
+  act->addAction( new ActionMapVolatileGlobals("fixateglobals") );
   act->addAction( new ActionDynamicSymbols("dynamic") );
   act->addAction( new ActionNameVars("merge") );
   act->addAction( new ActionSetCasts("casts") );

@@ -405,6 +405,7 @@ public:
 
   HighVariable *findHigh(const string &nm) const;	///< Find a high-level variable by name
   void mapGlobals(void);			///< Make sure there is a Symbol entry for all global Varnodes
+  void mapVolatileGlobals(void);		///< Make sure there is a Symbol entry for any never-before-named address touched by a volatile read or write
   void prepareThisPointer(void);		///< Prepare for recovery of the "this" pointer
   bool checkCallDoubleUse(const PcodeOp *opmatch,const PcodeOp *op,const Varnode *vn,uint4 fl,const ParamTrial &trial) const;
   bool onlyOpUse(const Varnode *invn,const PcodeOp *opmatch,const ParamTrial &trial,uint4 mainFlags) const;

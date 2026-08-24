@@ -1,0 +1,27 @@
+<decompilertest>
+<binaryimage arch="MIPS:LE:32:default:default">
+<!--
+   Covers the #488/#9062 label bug together with its companion print-time
+   fold, for a volatile MMIO address that already carries a real but
+   undersized (1-byte) Symbol; the situation PrintC::pushAnnotation's
+   size-1 anchor retry (added for the label fix) and
+   PrintC::matchVolatileReadWriteFold (the duplication fold) are both
+   meant to handle. The function performs a 4-byte volatile
+   read-modify-write, x = *addr; *addr = x | 1;, matching the shape
+   reported against #9062's digital_io_init repro.
+-->
+<bytechunk space="ram" offset="0xbfc00000">
+0240083c1810028d01004234181002ad0800e00300000000
+</bytechunk>
+<symbol space="ram" offset="0xbfc00000" name="foldreadmodifywrite"/>
+</binaryimage>
+<script>
+  <com>volatile [ram,0x40021018,4]</com>
+  <com>map addr r0x40021018 int1 DAT_40021018</com>
+  <com>lo fu foldreadmodifywrite</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Volatile Label Fold #1" min="1" max="1">_DAT_40021018 = _DAT_40021018 \| 1;</stringmatch>
+</decompilertest>

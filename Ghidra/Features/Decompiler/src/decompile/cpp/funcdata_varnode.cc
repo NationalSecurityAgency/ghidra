@@ -1798,6 +1798,51 @@ void Funcdata::mapGlobals(void)
     warningHeader("Globals starting with '_' overlap smaller symbols at the same address");
 }
 
+/// A volatile CALLOTHER's address-annotation Varnode (built by Funcdata::newCodeRef, which
+/// exists primarily to hold branch destinations) is never addrtied, so it never participates in
+/// mapGlobals's iteration -- a volatile MMIO address nobody has touched before gets no
+/// persisted Symbol at all, only a synthesized display name recomputed fresh on every print
+/// (see PrintC::pushAnnotation). This gives such an address a real, renamable Symbol, sized to
+/// match the actual access, the first time any function reads or writes it.
+///
+/// Deliberately narrow, unlike mapGlobals: this never creates a Symbol when *any* Symbol already
+/// covers the address, even a smaller, non-matching one. That overlap-tolerant display case is
+/// already handled at print time; duplicating the logic here would risk creating a second,
+/// conflicting Symbol at the same address instead of reusing the existing one.
+void Funcdata::mapVolatileGlobals(void)
+
+{
+  list<PcodeOp *>::const_iterator iter = beginOp(CPUI_CALLOTHER);
+  list<PcodeOp *>::const_iterator enditer = endOp(CPUI_CALLOTHER);
+  for(;iter!=enditer;++iter) {
+    PcodeOp *op = *iter;
+    if (op->isDead()) continue;
+    UserPcodeOp *userop = glb->userops.getOp((int4)op->getIn(0)->getOffset());
+    uint4 optype = userop->getType();
+    if (optype != UserPcodeOp::volatile_read && optype != UserPcodeOp::volatile_write) continue;
+
+    Varnode *addrVn = op->getIn(1);
+    int4 size = userop->extractAnnotationSize(addrVn,op);
+    if (size <= 0) continue;
+    Address addr = addrVn->getAddr();
+
+    uint4 fl = 0;
+    Address usepoint;
+    // Anchor query at size 1, same as mapGlobals: any existing Symbol at this starting
+    // address at all, regardless of size, is left for PrintC::pushAnnotation to display.
+    MapEntry *entry = localmap->queryProperties(addr,1,usepoint,fl);
+    if (entry != (MapEntry *)0) continue;
+
+    Scope *discover = localmap->discoverScope(addr,size,usepoint);
+    if (discover == (Scope *)0) continue;	// no scope claims this address; leave it alone
+    Datatype *ct = glb->types->getBase(size,TYPE_UNKNOWN);
+    int4 index = 0;
+    string symbolname = discover->buildVariableName(addr,usepoint,ct,index,
+						      Varnode::addrtied|Varnode::persist);
+    discover->addSymbol(symbolname,ct,addr,usepoint);
+  }
+}
+
 /// Make sure that if a Varnode exists representing the "this" pointer for the function, that it
 /// is treated as pointer data-type.
 void Funcdata::prepareThisPointer(void)

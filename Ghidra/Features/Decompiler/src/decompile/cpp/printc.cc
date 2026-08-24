@@ -711,6 +711,15 @@ void PrintC::opCallother(const PcodeOp *op)
   }
   else if (display == UserPcodeOp::annotation_assignment) {
     pushOp(&assignment,op);
+    // pushVn only enqueues op->getIn(2) for later processing; it does not print it immediately.
+    // So rather than substituting here, arm volatileFoldReadOp/volatileFoldTargetVn and let
+    // PrintC::pushSymbol perform the substitution when it actually reaches the matched leaf,
+    // wherever in the (possibly combine-op-wrapped) expression that turns out to be.
+    const PcodeOp *foldedRead = matchVolatileReadWriteFold(op);
+    if (foldedRead != (const PcodeOp *)0) {
+      volatileFoldReadOp = foldedRead;
+      volatileFoldTargetVn = foldedRead->getOut();
+    }
     pushVn(op->getIn(2),op,mods);
     pushVn(op->getIn(1),op,mods);
   }
@@ -1920,6 +1929,115 @@ bool PrintC::pushEquate(uintb val,int4 sz,const EquateSymbol *sym,const Varnode 
   return false;
 }
 
+/// \brief If \b vn is defined directly by a volatile read of the same address as \b writeAddrVn,
+/// used nowhere except by \b expectedConsumer, return that read op.
+/// \param vn is the candidate leaf Varnode
+/// \param expectedConsumer is the op \b vn must be used by, and only by
+/// \param writeAddrVn is the address annotation Varnode of the volatile write being matched against
+/// \return the matching volatile read CALLOTHER, or \b null
+const PcodeOp *PrintC::candidateVolatileRead(const Varnode *vn,const PcodeOp *expectedConsumer,
+					      const Varnode *writeAddrVn) const
+
+{
+  if (!vn->isWritten()) return (const PcodeOp *)0;
+  if (vn->loneDescend() != expectedConsumer) return (const PcodeOp *)0;
+  const PcodeOp *readOp = vn->getDef();
+  if (readOp->code() != CPUI_CALLOTHER) return (const PcodeOp *)0;
+  UserPcodeOp *readUserOp = glb->userops.getOp((int4)readOp->getIn(0)->getOffset());
+  if (readUserOp->getType() != UserPcodeOp::volatile_read) return (const PcodeOp *)0;
+  const Varnode *readAddrVn = readOp->getIn(1);
+  if (readAddrVn->getAddr() != writeAddrVn->getAddr()) return (const PcodeOp *)0;
+  if (readAddrVn->getSize() != writeAddrVn->getSize()) return (const PcodeOp *)0;
+  return readOp;
+}
+
+/// \brief Check whether \b writeOp is a volatile write whose value comes directly, or through a
+/// single combining op (`*addr = *addr | 1;`-shaped), from an adjacent volatile read of the same
+/// address, such that the two can be displayed as one statement instead of two
+/// (`x = *addr; *addr = x | 1;`).
+///
+/// This is deliberately conservative and print-only: it does not change what gets analyzed,
+/// merged, or optimized, only how an already-fixed set of p-code ops gets rendered. Every
+/// condition below must hold, and any op strictly between the read and the write that is not
+/// itself implied (i.e. would print as its own visible statement) disqualifies the fold, so
+/// nothing that could be a separate, user-visible side effect is silently elided from display.
+/// If more than one input anywhere in the checked expression turns out to be a matching read,
+/// the fold is refused rather than guessing which one to substitute.
+/// \param writeOp is the candidate volatile write CALLOTHER
+/// \return the matching volatile read CALLOTHER, or \b null if no fold applies
+const PcodeOp *PrintC::matchVolatileReadWriteFold(const PcodeOp *writeOp) const
+
+{
+  if (writeOp->code() != CPUI_CALLOTHER) return (const PcodeOp *)0;
+  UserPcodeOp *writeUserOp = glb->userops.getOp((int4)writeOp->getIn(0)->getOffset());
+  if (writeUserOp->getType() != UserPcodeOp::volatile_write) return (const PcodeOp *)0;
+
+  const Varnode *writeAddrVn = writeOp->getIn(1);
+  const Varnode *valueVn = writeOp->getIn(2);
+
+  const PcodeOp *readOp = candidateVolatileRead(valueVn,writeOp,writeAddrVn);
+  if (readOp == (const PcodeOp *)0) {
+    if (!valueVn->isWritten()) return (const PcodeOp *)0;
+    const PcodeOp *combineOp = valueVn->getDef();
+    if (combineOp->code() == CPUI_CALLOTHER) return (const PcodeOp *)0;	// not a simple combine
+    if (valueVn->loneDescend() != writeOp) return (const PcodeOp *)0;		// combine result used only here
+    for(int4 i=0;i<combineOp->numInput();++i) {
+      const PcodeOp *cand = candidateVolatileRead(combineOp->getIn(i),combineOp,writeAddrVn);
+      if (cand != (const PcodeOp *)0) {
+	if (readOp != (const PcodeOp *)0) return (const PcodeOp *)0;	// more than one match; ambiguous
+	readOp = cand;
+      }
+    }
+  }
+  if (readOp == (const PcodeOp *)0) return (const PcodeOp *)0;
+  if (readOp->getParent() != writeOp->getParent()) return (const PcodeOp *)0;
+
+  // Walk forward from the read to the write. Every op strictly in between must be implied
+  // (never printed as its own statement) -- otherwise something visibly happens between the
+  // read and the write and folding them would misrepresent that. PcodeOp::nextOp can in
+  // general follow flow into a successor block, but since readOp and writeOp are already
+  // confirmed to share a parent block and a definition must precede its use within that block,
+  // this walk reaches writeOp before nextOp ever needs to leave the block.
+  const PcodeOp *cur = readOp->nextOp();
+  while (cur != writeOp) {
+    if (cur == (const PcodeOp *)0) return (const PcodeOp *)0;
+    const Varnode *curOut = cur->getOut();
+    if (curOut == (const Varnode *)0 || !curOut->isImplied()) return (const PcodeOp *)0;
+    cur = cur->nextOp();
+  }
+  return readOp;
+}
+
+/// \brief Is \b op a volatile read whose statement PrintC::emitBlockBasic should skip because
+/// PrintC::matchVolatileReadWriteFold will inline it directly into a following volatile write?
+///
+/// Walks forward from \b op's lone descendant to find the plausible enclosing volatile write --
+/// either that descendant directly, or (the common `*addr = *addr | 1;` shape) one combining op
+/// further -- then defers to matchVolatileReadWriteFold as the single authority on whether the
+/// fold is actually valid, so the adjacency/address/single-match conditions only ever live in
+/// one place.
+/// \param op is the candidate volatile read CALLOTHER
+/// \return \b true if \b op's own statement should not be separately printed
+bool PrintC::isVolatileReadFoldedIntoNextWrite(const PcodeOp *op) const
+
+{
+  if (op->code() != CPUI_CALLOTHER) return false;
+  UserPcodeOp *userop = glb->userops.getOp((int4)op->getIn(0)->getOffset());
+  if (userop->getType() != UserPcodeOp::volatile_read) return false;
+  const Varnode *outVn = op->getOut();
+  if (outVn == (const Varnode *)0) return false;
+  PcodeOp *descend = outVn->loneDescend();
+  if (descend == (PcodeOp *)0) return false;
+  if (matchVolatileReadWriteFold(descend) == op) return true;	// direct passthrough fold
+
+  // descend may instead be the single combining op whose own result feeds the write
+  const Varnode *combineOut = descend->getOut();
+  if (combineOut == (const Varnode *)0) return false;
+  PcodeOp *writeCandidate = combineOut->loneDescend();
+  if (writeCandidate == (PcodeOp *)0) return false;
+  return matchVolatileReadWriteFold(writeCandidate) == op;
+}
+
 void PrintC::pushAnnotation(const Varnode *vn,const PcodeOp *op)
 
 {
@@ -1949,6 +2067,20 @@ void PrintC::pushAnnotation(const Varnode *vn,const PcodeOp *op)
     }
   }
   else {
+    // No Symbol contains the full annotation range. Unlike an ordinary addrtied Varnode
+    // (which Funcdata::mapGlobals resolves against a size-1 anchor query and links to any
+    // smaller pre-existing Symbol at the same address, tolerating the mismatch), an annotation
+    // Varnode never goes through mapGlobals, so a real but too-small Symbol at this exact
+    // address (e.g. a byte-granularity label auto-generated before the access was known to be
+    // wider) is otherwise missed entirely. Retry with the same size-1 anchor mapGlobals uses,
+    // and if that finds something, defer to the same mismatch-name convention
+    // (PrintLanguage::pushSymbolDetail / pushMismatchSymbol) ordinary Varnode printing already
+    // uses for this situation, instead of falling straight to a synthesized address-based name.
+    MapEntry *anchorEntry = symScope->queryContainer(vn->getAddr(),1,op->getAddr());
+    if (anchorEntry != (MapEntry *)0) {
+      pushMismatchSymbol(anchorEntry->getSymbol(),0,size,vn,op);
+      return;
+    }
     string regname = glb->translate->getRegisterName(vn->getSpace(),vn->getOffset(),size);
     if (regname.empty()) {
       AddrSpace *spc = vn->getSpace();
@@ -1967,6 +2099,17 @@ void PrintC::pushAnnotation(const Varnode *vn,const PcodeOp *op)
 void PrintC::pushSymbol(const Symbol *sym,const Varnode *vn,const PcodeOp *op)
 
 {
+  if (vn != (const Varnode *)0 && vn == volatileFoldTargetVn) {
+    // This is the specific volatile-read output opCallother armed as foldable into the
+    // enclosing volatile write's expression (see matchVolatileReadWriteFold). Consume it:
+    // print the read's own address expression here instead of the read's symbol, and clear
+    // the pending fold immediately so nothing else can match it again.
+    const PcodeOp *readOp = volatileFoldReadOp;
+    volatileFoldTargetVn = (const Varnode *)0;
+    volatileFoldReadOp = (const PcodeOp *)0;
+    pushVn(readOp->getIn(1),readOp,mods);
+    return;
+  }
   EmitMarkup::syntax_highlight tokenColor;
   if (sym->isVolatile())
     tokenColor = EmitMarkup::special_color;
@@ -2828,6 +2971,8 @@ void PrintC::emitBlockBasic(const BlockBasic *bb)
       }
       const Varnode *vn = inst->getOut();
       if ((vn!=(const Varnode *)0)&&(vn->isImplied()))
+	continue;
+      if (isVolatileReadFoldedIntoNextWrite(inst))
 	continue;
       if (separator) {
 	if (isSet(comma_separate)) {

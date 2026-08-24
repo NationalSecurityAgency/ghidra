@@ -208,6 +208,12 @@ protected:
   virtual bool pushEquate(uintb val,int4 sz,const EquateSymbol *sym,
 			  const Varnode *vn,const PcodeOp *op);
   virtual void pushAnnotation(const Varnode *vn,const PcodeOp *op);
+  const PcodeOp *candidateVolatileRead(const Varnode *vn,const PcodeOp *expectedConsumer,
+					const Varnode *writeAddrVn) const;	///< Is \b vn defined by a matching, lone-use volatile read?
+  const PcodeOp *matchVolatileReadWriteFold(const PcodeOp *writeOp) const;	///< Find a volatile read immediately absorbed by the given volatile write, if any
+  bool isVolatileReadFoldedIntoNextWrite(const PcodeOp *op) const;		///< Is \b op a volatile read that emitBlockBasic should skip because matchVolatileReadWriteFold will inline it
+  const Varnode *volatileFoldTargetVn = (const Varnode *)0;	///< Pending fold: Varnode that should print as volatileFoldReadOp's address expression when next reached as a leaf
+  const PcodeOp *volatileFoldReadOp = (const PcodeOp *)0;	///< Pending fold: the volatile read CALLOTHER supplying the substitute expression for volatileFoldTargetVn
   virtual void pushSymbol(const Symbol *sym,const Varnode *vn,const PcodeOp *op);
   virtual void pushUnnamedLocation(const Address &addr,
 				   const Varnode *vn,const PcodeOp *op);
