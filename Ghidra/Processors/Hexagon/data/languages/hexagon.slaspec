@@ -1,4 +1,4 @@
-# Qualcomm Hexagon (V73) and HVX (V69)
+# Qualcomm Hexagon (V79) and HVX (V79)
 
 ## KNOWN ISSUES
 # 1. Shift amounts may be positive or negative, however in some cases no special handling 
@@ -7,7 +7,10 @@
 #
 ## NOTES
 # 1. Implementation includes V73 system registers, instruction set may be incomplete
-# 2. HVX vector register size is 128-bytes (see defines below), paired size is 256-bytes
+# 2. HVX register pairs may be access with a vector-swap mode (lsb of 5-bit field is 1)
+#    introduced with Hexagon v67.
+# 3. HVX vector register size is 128-bytes (see defines below), paired size is 256-bytes,
+#    and HVX-v2 quad size is 512-bytes.  Quads appear only in the V66+ ZReg extension.
 #
 ## VERSIONS
 # 1.x - preliminary versions (pre-release)
@@ -18,10 +21,25 @@
 #       ADD_DP_OPS property has been used to contain these although they may be removed
 #       in the future.
 # 2.4 - Added EXEC_COND crossbuild (12.0.1) and added HVX support (12.0.2)
+# 2.5 - 1) Corrected improper reserved/dont-care-bit use in patterns.  Bits documented as 
+#          having a value of '-' are not constrained and will match with either a '0' or '1';
+#          although the PRM declares these as "reserved" and states they should be encoded
+#          as '0' when emitted by a compiler/assembler.
+#       2) added many missing instructions,
+#       3) add support for vector-pair addressing mode with vector-swap mode, 
+#       4) expanded HVX support (quad-vector instructions not yet supported).
 #
 
 @define HVX_VECTOR_SIZE "128"
+@define HVX_VECTOR_SIZE_BITS "1024"
+
+# Byte offset of a word within a vector: (Rs & (HVX_VECTOR_SIZE-1)) & ~0x3, pre-folded so the
+# p-code is a single INT_AND instead of three ops on constants. Keep in step with HVX_VECTOR_SIZE.
+@define HVX_VECTOR_WORD_MASK "0x7c"
+
 @define HVX_VECTOR_PAIR_SIZE "256"
+@define HVX_VECTOR_QUAD_SIZE "512"
+
 @define HVX_VECTOR_BASE "0x2000"
 @define HVX_VECTOR_TMP_BASE "0x3000"
 
@@ -85,6 +103,12 @@ define register offset=0x200 size=4 [ SA0 LC0 SA1 LC1 P3P0 C5 M0 M1
 define register offset=0x210 size=1	[ P3 P2 P1 P0 ]; # corresponds to P3P0
 
 # TODO: Do ALL of the control registers need shadows for writing/flushing ??
+
+# NOTE/TODO: System registers (S0..S63), guest registers (G0..G31), and supervisor registers lack shadow versions.
+# Writes to these registers currently bypass the deferred-commit mechanism. In user-mode programs this is 
+# rarely an issue; kernel-mode programs that write system registers within a multi-instruction execute 
+# packet may observe incorrect semantics. 
+
 define register offset=0x300 size=8 [ C1C0_ C3C2_ C5C4_ C7C6_ C9C8_ C11C10_ C13C12_ UPCYCLE_ 
                                       C17C16_ PKTCOUNT_ C21C20_ C23C22_ C25C24_ C27C26_ C29C28_ UTIMER_ ];
                                       
@@ -143,6 +167,11 @@ define register offset=0x1000 size=1 [ ConditionReg ];
 
 define register offset=0x1004 size=4 [ ReturnAddr ];
 
+# Quad-vector registers (not yet supported)
+#define register offset=$(HVX_VECTOR_BASE) size=$(HVX_VECTOR_QUAD_SIZE) 
+#	[	V3V0	V7V4	V11V8	V15V12	V19V16	V23V20	V27V24	V31V28 ];
+
+# Paired-vector registers
 define register offset=$(HVX_VECTOR_BASE) size=$(HVX_VECTOR_PAIR_SIZE) 
 	[	V1V0	V3V2	V5V4	V7V6	V9V8	V11V10	V13V12	V15V14
 		V17V16	V19V18	V21V20	V23V22	V25V24	V27V26	V29V28	V31V30 ];
@@ -157,10 +186,14 @@ define register offset=$(HVX_VECTOR_BASE) size=$(HVX_VECTOR_SIZE)
 # HVX vector temporary / shadow registers
 #
 
+# Quad-vector registers (not yet supported)
+#define register offset=$(HVX_VECTOR_TMP_BASE) size=$(HVX_VECTOR_QUAD_SIZE) 
+#	[	V3V0_	V7V4_	V11V8_	V15V12_	V19V16_	V23V20_	V27V24_	V31V28_ ];
+	
+# Paired-vector registers
 define register offset=$(HVX_VECTOR_TMP_BASE) size=$(HVX_VECTOR_PAIR_SIZE) 
 	[	V1V0_	V3V2_	V5V4_	V7V6_	V9V8_	V11V10_	V13V12_	V15V14_
 		V17V16_	V19V18_	V21V20_	V23V22_	V25V24_	V27V26_	V29V28_	V31V30_ ];
-
 
 define register offset=$(HVX_VECTOR_TMP_BASE) size=$(HVX_VECTOR_SIZE) 
 	[	V0.new	V1.new	V2.new	V3.new	V4.new	V5.new	V6.new	V7.new
@@ -208,7 +241,8 @@ define context contextreg
     nreg1        = (41,45) noflow #(keep) slot-1 assigned reg (raw reg-number)
     nreg2        = (46,50) noflow #(keep) slot-2 assigned reg (raw reg-number)
     
-    removed1     = (51,55) noflow # no longer used - available for reuse
+    tmpvreg      = (51,55) noflow # .tmp vector register (raw reg-number)
+    tmpvreg_     = (51,55) noflow # .tmp vector shadow register
     
     # xreg - tracks immext use required for Ns8 and Os8 new register tracking
     xreg         = (56,60) noflow #(keep) slot reduction count when identifying nreg assignment slot
@@ -280,6 +314,9 @@ define token instr (32)
   op1820		= (18,20)
   op1827		= (18,27)
   op1720		= (17,20)
+  op1628		= (16,28)
+  op1619		= (16,19)
+  op1618		= (16,18)
   op1620		= (16,20)
   op1617		= (16,17)
   op1213		= (12,13)
@@ -316,6 +353,7 @@ define token instr (32)
   op0004		= (0,4)
   op0002		= (0,2)
   op0001		= (0,1)
+  op0102		= (1,2)
   
   op27			= (27,27)
   op26			= (26,26)
@@ -421,24 +459,24 @@ define token instr (32)
   
   pu2324		= (23,24)  # 8-bit predicate reg
   pu2122		= (21,22)  # 8-bit predicate reg
-  pu2122_		= (21,22)  # 8-bit predicate reg (shadow)
+  pu2122_		= (21,22)  # 8-bit predicate reg, shadow
   pu2122name	= (21,22)  # 8-bit predicate reg (name)
   pu1617		= (16,17)  # 8-bit predicate reg
   pu1112		= (11,12)  # 8-bit predicate reg
-  pu1112_		= (11,12)  # 8-bit predicate reg (shadow)
+  pu1112_		= (11,12)  # 8-bit predicate reg, shadow
   pu1112name	= (11,12)  # 8-bit predicate reg (name)
   pu0910		= (9,10)   # 8-bit predicate reg
-  pu0910_		= (9,10)   # 8-bit predicate reg (shadow)
+  pu0910_		= (9,10)   # 8-bit predicate reg, shadow
   pu0910name	= (9,10)   # 8-bit predicate reg (name)
   pu0809		= (8,9)    # 8-bit predicate reg
-  pu0809_		= (8,9)    # 8-bit predicate reg (shadow)
+  pu0809_		= (8,9)    # 8-bit predicate reg, shadow
   pu0809name	= (8,9)    # 8-bit predicate reg (name)
   pu0607		= (6,7)    # 8-bit predicate reg
   pu0506		= (5,6)    # 8-bit predicate reg
-  pu0506_		= (5,6)    # 8-bit predicate reg (shadow)
+  pu0506_		= (5,6)    # 8-bit predicate reg, shadow
   pu0506name	= (5,6)    # 8-bit predicate reg (name)
   pu0001		= (0,1)    # 8-bit predicate reg
-  pu0001_		= (0,1)    # 8-bit predicate reg (shadow)
+  pu0001_		= (0,1)    # 8-bit predicate reg, shadow
   pu0001name	= (0,1)    # 8-bit predicate reg (name)
   
   pu25			= (25,25)  # P0/P1
@@ -469,16 +507,15 @@ define token instr (32)
   rss5h			= (16,20)  # 32-bit high reg for rss5
   
   rxx5			= (16,20)  # 64-bit general reg
-  rxx5_			= (16,20)  # 64-bit general reg (shadow)
+  rxx5_			= (16,20)  # 64-bit general reg, shadow
   rx5			= (16,20)  # 32-bit general reg
-  rx5_			= (16,20)  # 32-bit general reg (shadow)
+  rx5_			= (16,20)  # 32-bit general reg, shadow
   rf5			= (16,20)  # 32-bit general reg
-  rf5_			= (16,20)  # 32-bit general reg (shadow)
+  rf5_			= (16,20)  # 32-bit general reg, shadow
   rx5H			= (16,20)  # 16-bit general reg (high halfword)
   rx5H_			= (16,20)  # 16-bit general reg (high halfword, shadow)
   rx5L			= (16,20)  # 16-bit general reg (low halfword)
   rx5L_			= (16,20)  # 16-bit general reg (low halfword, shadow)
-  
   
   rtt5			= (8,12)   # 64-bit general reg
   rtt5h			= (8,12)   # 32-bit high reg for rtt5
@@ -487,23 +524,23 @@ define token instr (32)
   rt5L			= (8,12)   # 16-bit general reg (low halfword)
   
   rd0812		= (8,12)   # 32-bit general reg
-  rd0812_		= (8,12)   # 32-bit general reg (shadow) 
+  rd0812_		= (8,12)   # 32-bit general reg, shadow 
   rdd0812		= (8,12)   # 64-bit general reg
-  rdd0812_		= (8,12)   # 64-bit general reg (shadow) 
+  rdd0812_		= (8,12)   # 64-bit general reg, shadow 
   
   rd5			= (0,4)    # 32-bit general reg
-  rd5_			= (0,4)    # 32-bit general reg (shadow)   
+  rd5_			= (0,4)    # 32-bit general reg, shadow   
   rdd5			= (0,4)	   # 64-bit general reg
-  rdd5_			= (0,4)	   # 64-bit general reg (shadow)
+  rdd5_			= (0,4)	   # 64-bit general reg, shadow
   rdd5h			= (0,4)	   # hi (odd) 32-bit reg of a 64-bit general reg (use rd5 for lo/even)
-  rdd5h_		= (0,4)	   # hi (odd) 32-bit reg of a 64-bit general reg (use rd5 for lo/even) (shadow)
+  rdd5h_		= (0,4)	   # hi (odd) 32-bit reg of a 64-bit general reg (use rd5 for lo/even), shadow
   
-  rt1618		= (16,18)  # 32-bit general reg (r0..r7) 
+  rt1618		= (16,18)  # 32-bit general reg (r0..r7)
   
   cd5			= (0,4)    # 32-bit control reg
-  cd5_			= (0,4)    # 32-bit control reg (shadow) 
+  cd5_			= (0,4)    # 32-bit control reg, shadow 
   cdd5			= (0,4)    # dual 32-bit control reg  
-  cdd5_			= (0,4)    # dual 32-bit control reg (shadow)
+  cdd5_			= (0,4)    # dual 32-bit control reg, shadow
 
   gd5			= (0,4)    # 32-bit guest reg  
   gdd5			= (0,4)	   # dual 32-bit guest regs
@@ -513,31 +550,41 @@ define token instr (32)
   ru5H			= (0,4)    # 16-bit general reg (high halfword)
   ru5L			= (0,4)    # 16-bit general reg (low halfword)
  
-  vdd5			= (0,4)    # HVX vector register pair
-  vdd5_			= (0,4)    # HVX vector register pair (shadow)
-    
-  vss5			= (0,4)    # HVX vector register pair
-    
-  vuu5			= (8,12)   # HVX vector register pair
-#  vuu5_			= (8,12)   # HVX vector register pair (shadow)
+  vdddd3 		= (2,4)    # HVX quad-vector register
+  vdddd3_ 		= (2,4)    # HVX quad-vector register, shadow
+  
+  vssss3 		= (2,4)    # HVX quad-vector register
+  vssss3_ 		= (2,4)    # HVX quad-vector register, shadow
  
-  vvv5			= (16,20)   # HVX vector register pair
-#  vvv5_			= (16,20)   # HVX vector register pair (shadow) 
+  vdd4			= (1,4)    # HVX vector register pair (4-msb of 5-bit field)
+  vdd4h			= (1,4)    # most-significant vector of a vdd4 vector-pair
+  vdd4l			= (1,4)    # least-significant vector of a vdd4 vector-pair
+  vdd4R			= (1,4)    # HVX vector register pair reversed name attach
+  vddM			= (0,0)    # HVX vector register pair, mode (lsb of 5-bit field; 1=swap vectors)
+  vdd4_			= (1,4)    # HVX vector register pair, shadow (4-msb of 5-bit field)
+     
+  vss4			= (1,4)    # HVX vector register pair (4-msb of 5-bit field)
+  vss4R			= (1,4)    # HVX vector register pair reversed name attach
+  vssM			= (0,0)    # HVX vector register pair, mode (lsb of 5-bit field; 1=swap vectors)
+    
+  vuu4			= (9,12)   # HVX vector register pair (4-msb of 5-bit field)
+  vuu4R			= (9,12)   # HVX vector register pair reversed name attach
+  vuuM			= (8,8)    # HVX vector register pair, mode (lsb of 5-bit field; 1=swap vectors)
+ 
+  vvv4			= (17,20)  # HVX vector register pair (4-msb of 5-bit field)
+  vvv4R			= (17,20)  # HVX vector register pair reversed name attach
+  vvvM			= (16,16)  # HVX vector register pair, mode (lsb of 5-bit field; 1=swap vectors)
   
   vd5			= (0,4)    # HVX vector register
-  vd5_			= (0,4)    # HVX vector register (shadow)
+  vd5_			= (0,4)    # HVX vector register, shadow
   
   vs5			= (0,4)   # HVX vector register
-#  vs5_			= (0,4)   # HVX vector register (shadow)
   
   vu5			= (8,12)   # HVX vector register
-#  vu5_			= (8,12)   # HVX vector register (shadow)
  
   vv5			= (16,20)   # HVX vector register
-#  vv5_			= (16,20)   # HVX vector register (shadow)
   
   vz5			= (19,23)   # HVX vector register
-#  vz5_			= (19,23)   # HVX vector register (shadow)
  
   nreg_1618		= (16,18)  # Ns8 32-bit general register .new (3-bit encoded)
   nreg_0810		= (8,10)   # Ns8 32-bit general register .new (3-bit encoded)
@@ -554,27 +601,27 @@ define token instr (32)
   rs4p			= (16,19)   # 16-bit general reg
   rt4p			= (8,11)    # 16-bit general reg
   rd0811		= (8,11)    # 16-bit general reg
-  rd0811_		= (8,11)    # 16-bit general reg (shadow)
+  rd0811_		= (8,11)    # 16-bit general reg, shadow
   rd1619		= (16,19)   # 16-bit general reg
-  rd1619_		= (16,19)   # 16-bit general reg (shadow)
+  rd1619_		= (16,19)   # 16-bit general reg, shadow
    
   # duplex/packed fields - left side (register attachments are somewhat assumed)
   
   rdd3l			= (16,18)  # 64-bit general reg
-  rdd3l_		= (16,18)  # 64-bit general reg (shadow)
+  rdd3l_		= (16,18)  # 64-bit general reg, shadow
   rtt3l			= (16,18)  # 64-bit general reg
   rd4l			= (16,19)  # 32-bit general reg
-  rd4l_			= (16,19)  # 32-bit general reg (shadow)
+  rd4l_			= (16,19)  # 32-bit general reg, shadow
   rt4l			= (16,19)  # 32-bit general reg
   rs4l			= (20,23)  # 32-bit general reg 
  
  # duplex/packed fields - right side (register attachments are somewhat assumed)
   
   rdd3r			= (0,2)  # 64-bit general reg
-  rdd3r_		= (0,2)  # 64-bit general reg
+  rdd3r_		= (0,2)  # 64-bit general reg, shadow
   rtt3r			= (0,2)  # 64-bit general reg
   rd4r			= (0,3)  # 32-bit general reg
-  rd4r_			= (0,3)  # 32-bit general reg (shadow)
+  rd4r_			= (0,3)  # 32-bit general reg, shadow
   rs4r			= (4,7)  # 32-bit general reg
   rt4r			= (0,3)  # 32-bit general reg
 ;
@@ -734,11 +781,38 @@ attach variables [ gs5 gd5 ] [ # TODO: Shadow reg's not implemented for guest re
 # We currently do not name lane-access registers and rely on lane access sizes as 
 # defined by the pspec.
 
-# double-vector reg selector is 5-bits - the LS bit must always be 0 (even reg)
+# Double-vector reg selector is 5-bits
+# The most-significant 4 bits of the 5-bit field select one of the 16 vector pairs
+# The least-significant-bit meaning depends on architecture version, although the
+# disassembler follow v67 convention:
+#   - through V66: the LSB must be 0. Odd encodings are reserved/invalid, and the pair
+#     is always written high:low as Vodd:Veven (e.g. v1:0).
+#   - V67 and later: the LSB selects pair order. LSB=0 is the normal pair (v1:0), 
+#     LSB=1 is the reversed pair (v0:1) - the same two registers with the high/low
+#     roles swapped.
+# NOTE: Swapped ordering has issues preserving varnode storage relationship between:
+# individual vector regs, normal paired-vector and reversed paired-vector.  The
+# reversed paired-vector cannot be treated as a single atomic varnode and relies
+# on pcode manipulation to perform the vector swap.
 
-attach variables [ vdd5 vss5 vuu5 vvv5 ]	
-	[	V1V0	_	V3V2	_	V5V4	_	V7V6	_	V9V8	_	V11V10	_	V13V12	_	V15V14	_
-		V17V16	_	V19V18	_	V21V20	_	V23V22	_	V25V24	_	V27V26	_	V29V28	_	V31V30	_ ];
+# Quad vector attach (not supported)
+#attach variables [ vdddd3 vssss3 ]		
+#	[	V3V0	V7V4	V11V8	V15V12	V19V16	V23V20	V27V24	V31V28 ];
+
+attach variables [ vdd4 vss4 vuu4 vvv4 ]	
+	[	V1V0	V3V2	V5V4	V7V6	V9V8	V11V10	V13V12	V15V14
+		V17V16	V19V18	V21V20	V23V22	V25V24	V27V26	V29V28	V31V30 ];
+	
+# Paired vector swapped-mode (reversed name attach)	
+attach names [ vdd4R vss4R vuu4R vvv4R ] 
+	[ "V0:1"   "V2:3"   "V4:5"   "V6:7"   "V8:9"   "V10:11" "V12:13" "V14:15"
+	  "V16:17" "V18:19" "V20:21" "V22:23" "V24:25" "V26:27" "V28:29" "V30:31" ];
+		
+attach variables [ vdd4h ]	
+	[	V1	V3	V5	V7	V9	V11	V13	V15	V17	V19	V21	V23	V25	V27	V29	V31 ];
+	
+attach variables [ vdd4l ]	
+	[	V0	V2	V4	V6	V8	V10	V12	V14	V16	V18	V20	V22	V24	V26	V28	V30 ];
 		
 attach variables [ vd5 vs5 vu5 vv5 vz5 vnreg ]	
 	[	V0		V1		V2		V3		V4		V5		V6		V7
@@ -746,11 +820,15 @@ attach variables [ vd5 vs5 vu5 vv5 vz5 vnreg ]
 		V16		V17		V18		V19		V20		V21		V22		V23
 		V24		V25		V26		V27		V28		V29		V30		V31 ];
 		
-attach variables [ vdd5_ ] # TODO: Removed vuu5_ vvv5_	
-	[	V1V0_	_	V3V2_	_	V5V4_	_	V7V6_	_	V9V8_	_	V11V10_	_	V13V12_	_	V15V14_	_
-		V17V16_	_	V19V18_	_	V21V20_	_	V23V22_	_	V25V24_	_	V27V26_	_	V29V28_	_	V31V30_	_ ];
+# Quad vector attach (not supported)
+#attach variables [ vdddd3_ vssss3_ ]		
+#	[	V3V0_	V7V4_	V11V8_	V15V12_	V19V16_	V23V20_	V27V24_	V31V28_ ];
+
+attach variables [ vdd4_ ]
+	[	V1V0_	V3V2_	V5V4_	V7V6_	V9V8_	V11V10_	V13V12_	V15V14_
+		V17V16_	V19V18_	V21V20_	V23V22_	V25V24_	V27V26_	V29V28_	V31V30_ ];
 		
-attach variables [ vd5_ vnreg_ ]	# TODO: Removed vs5_ vu5_ vv5_ vz5_
+attach variables [ vd5_ vnreg_ tmpvreg_ ]
 	[	V0.new	V1.new	V2.new	V3.new	V4.new	V5.new	V6.new	V7.new
 		V8.new	V9.new	V10.new	V11.new	V12.new	V13.new	V14.new	V15.new
 		V16.new	V17.new	V18.new	V19.new	V20.new	V21.new	V22.new	V23.new
@@ -886,3 +964,8 @@ VNreg0002: vnreg_	is GetVNAltReg & vnreg_ & vnreg & nreg_0002lsb=1 & nreg_0002 [
 #       
 @include "hexagon_hvx.sinc"
 
+
+#
+# Vector Instruction Set (V73 extension)
+#
+@include "hexagon_hvx2.sinc"
