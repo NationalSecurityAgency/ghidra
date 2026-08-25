@@ -199,7 +199,6 @@ public:
   const Translate *translate;	///< Translation method for this binary
   LoadImage *loader;		///< Method for loading portions of binary
   PcodeInjectLibrary *pcodeinjectlib;	///< Pcode injection manager
-  RangeList nohighptr;          ///< Ranges for which high-level pointers are not possible
   CommentDatabase *commentdb;	///< Comments for this architecture
   StringManager *stringManager;	///< Manager of decoded strings
   ConstantPool *cpool;		///< Deferred constant values
@@ -225,7 +224,6 @@ public:
   ProtoModel *getModel(const string &nm) const;		///< Get a specific PrototypeModel
   bool hasModel(const string &nm) const;		///< Does this Architecture have a specific PrototypeModel
   ProtoModel *createUnknownModel(const string &modelName);	///< Create a model for an unrecognized name
-  bool highPtrPossible(const Address &loc,int4 size) const; ///< Are pointers possible to the given location?
   AddrSpace *getSpaceBySpacebase(const Address &loc,int4 size) const; ///< Get space associated with a \e spacebase register
   const LanedRegister *getLanedRegister(const Address &loc,int4 size) const;	///< Get LanedRegister associated with storage
   int4 getMinimumLanedRegisterSize(void) const;		///< Get the minimum size of a laned register in bytes
@@ -260,7 +258,6 @@ public:
 protected:
   void addSpacebase(AddrSpace *basespace,const string &nm,const VarnodeData &ptrdata,
 		    int4 truncSize,bool isreversejustified,bool stackGrowth,bool isFormal);
-  void addNoHighPtr(const Range &rng); ///< Add a new region where pointers do not exist
 
   // Factory routines for building this architecture
   virtual Scope *buildDatabase(DocumentStorage &store);		///< Build the database and global scope for this executable
@@ -398,19 +395,6 @@ public:
   SegmentedResolver(Architecture *g,AddrSpace *sp,SegmentOp *sop) { glb=g; spc=sp; segop=sop; }
   virtual Address resolve(uintb val,int4 sz,const Address &point,uintb &fullEncoding);
 };
-
-/// The Translate object keeps track of address ranges for which
-/// it is effectively impossible to have a pointer into. This is
-/// used for pointer aliasing calculations.  This routine returns
-/// \b true if it is \e possible to have pointers into the indicated
-/// range.
-/// \param loc is the starting address of the range
-/// \param size is the size of the range in bytes
-/// \return \b true if pointers are possible
-inline bool Architecture::highPtrPossible(const Address &loc,int4 size) const {
-  if (loc.getSpace()->getType() == IPTR_INTERNAL) return false;
-  return !nohighptr.inRange(loc,size);
-}
 
 } // End namespace ghidra
 #endif

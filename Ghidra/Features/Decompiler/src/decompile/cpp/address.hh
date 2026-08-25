@@ -94,6 +94,7 @@ public:
   int4 overlapJoin(int4 skip,const Address &op,int4 size) const;	///< Determine how \b this falls in a possible \e join space address range
   bool isContiguous(int4 sz,const Address &loaddr,int4 losz) const; ///< Does \e this form a contiguous range with \e loaddr
   bool isConstant(void) const; ///< Is this a \e constant \e value
+  bool highPtrPossible(int4 size) const;	///< Are pointers possible to \b this address
   void renormalize(int4 size);	///< Make sure there is a backing JoinRecord if \b this is in the \e join space
   bool isJoin(void) const;	///< Is this a \e join \e value
   void encode(Encoder &encoder) const; ///< Encode \b this to a stream
@@ -246,9 +247,12 @@ public:
   const Range *getRange(AddrSpace *spaceid,uintb offset) const;	///< Get Range containing the given byte
   const Range *getNearestRange(AddrSpace *spaceid,uintb offset) const;	///< Get the nearest Range to the given byte
   void insertRange(AddrSpace *spc,uintb first,uintb last);	///< Insert a range of addresses
+  void insertRange(const Range &rng) { insertRange(rng.getSpace(),rng.getFirst(),rng.getLast()); }	///< Insert a range
   void removeRange(AddrSpace *spc,uintb first,uintb last);	///< Remove a range of addresses
+  void removeRange(const Range &rng) { removeRange(rng.getSpace(),rng.getFirst(),rng.getLast()); }	///< Remove a range
   void merge(const RangeList &op2);				///< Merge another RangeList into \b this
-  bool inRange(const Address &addr,int4 size) const;		///< Check containment an address range
+  bool inRange(const Address &addr,uintb size) const;		///< Check containment an address range
+  bool inRange(const Range &rng) const;				///< Check containment of given range
   uintb longestFit(const Address &addr,uintb maxsize) const;	///< Find size of biggest Range containing given address
   void printBounds(ostream &s) const;				///< Print a description of \b this RangeList to stream
   void encode(Encoder &encoder) const;				///< Encode \b this RangeList to a stream

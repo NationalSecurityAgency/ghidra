@@ -1192,7 +1192,7 @@ void Heritage::guard(const Address &addr,int4 size,bool addIndirects,
     fd->getScopeLocal()->queryProperties(addr,size,Address(),fl);
     guardCalls(fl,addr,size,write);
     guardReturns(fl,addr,size,write);
-    if (fd->getArch()->highPtrPossible(addr,size)) {
+    if (addr.highPtrPossible(size)) {
       guardStores(addr,size,write);
       guardLoads(fl,addr,size,write);
     }
