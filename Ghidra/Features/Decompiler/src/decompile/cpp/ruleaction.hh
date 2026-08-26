@@ -598,12 +598,12 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
-class RuleIndirectCollapse : public Rule {
+class RuleAliasUpdate : public Rule {
 public:
-  RuleIndirectCollapse(const string &g) : Rule(g, 0, "indirectcollapse") {}	///< Constructor
+  RuleAliasUpdate(const string &g) : Rule(g, 0, "aliasupdate") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
-    return new RuleIndirectCollapse(getGroup());
+    return new RuleAliasUpdate(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
@@ -690,6 +690,7 @@ public:
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
 class RuleShiftPiece : public Rule {
+  static int4 multPowerOf2(PcodeOp *op);	///< Verify that op multiplies by a power of 2
 public:
   RuleShiftPiece(const string &g) : Rule(g, 0, "shiftpiece") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
@@ -726,7 +727,7 @@ public:
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RulePropagateCopy(getGroup());
   }
-  // applies to all opcodes
+  virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
 class Rule2Comp2Mult : public Rule {

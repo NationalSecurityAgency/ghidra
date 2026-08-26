@@ -3909,24 +3909,29 @@ bool LaneDivide::buildZext(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 
 {
   int4 inLanes,inSkip;
   Varnode *invn = op->getIn(0);
-  if (!description.restriction(numLanes, skipLanes, 0, invn->getSize(), inLanes, inSkip)) {
-    return false;
-  }
+  if (!invn->isConstant() || invn->getOffset() != 0) {
+    if (!description.restriction(numLanes, skipLanes, 0, invn->getSize(), inLanes, inSkip)) {
+      return false;
+    }
   // inSkip should always come back as equal to skipLanes
-  if (inLanes == 1) {
-    TransformOp *rop = newOpReplace(1, CPUI_COPY, op);
-    TransformVar *inVar = getPreexistingVarnode(invn);
-    opSetInput(rop,inVar,0);
-    opSetOutput(rop,outVars);
+    if (inLanes == 1) {
+      TransformOp *rop = newOpReplace(1, CPUI_COPY, op);
+      TransformVar *inVar = getPreexistingVarnode(invn);
+      opSetInput(rop,inVar,0);
+      opSetOutput(rop,outVars);
+    }
+    else {
+      TransformVar *inRvn = setReplacement(invn,inLanes,inSkip);
+      if (inRvn == (TransformVar *)0) return false;
+      for(int4 i=0;i<inLanes;++i) {
+	TransformOp *rop = newOpReplace(1, CPUI_COPY, op);
+	opSetInput(rop,inRvn+i,0);
+	opSetOutput(rop,outVars + i);
+      }
+    }
   }
   else {
-    TransformVar *inRvn = setReplacement(invn,inLanes,inSkip);
-    if (inRvn == (TransformVar *)0) return false;
-    for(int4 i=0;i<inLanes;++i) {
-      TransformOp *rop = newOpReplace(1, CPUI_COPY, op);
-      opSetInput(rop,inRvn+i,0);
-      opSetOutput(rop,outVars + i);
-    }
+    inLanes = 0;
   }
   for(int4 i=0;i<numLanes-inLanes;++i) {			// Write 0 constants to remaining lanes
     TransformOp *rop = newOpReplace(1, CPUI_COPY, op);
