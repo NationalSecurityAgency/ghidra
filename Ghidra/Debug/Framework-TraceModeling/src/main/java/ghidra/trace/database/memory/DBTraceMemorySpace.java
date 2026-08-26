@@ -40,8 +40,7 @@ import ghidra.trace.database.space.DBTraceSpaceBased;
 import ghidra.trace.model.*;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryState;
-import ghidra.trace.util.TraceChangeRecord;
-import ghidra.trace.util.TraceEvents;
+import ghidra.trace.util.*;
 import ghidra.util.*;
 import ghidra.util.AddressIteratorAdapter;
 import ghidra.util.database.*;
@@ -340,7 +339,7 @@ public class DBTraceMemorySpace
 	// TODO: Ensure a code unit is not having rug taken out from under it?
 	public void setState(long snap, Address start, Address end, TraceMemoryState state) {
 		checkState(state);
-		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+		try (LockHold _ = LockHold.lock(lock.writeLock())) {
 			doSetState(snap, start, end, state);
 		}
 	}
@@ -348,7 +347,7 @@ public class DBTraceMemorySpace
 	@Override
 	public void setState(long snap, AddressRange range, TraceMemoryState state) {
 		checkState(state);
-		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+		try (LockHold _ = LockHold.lock(lock.writeLock())) {
 			doSetState(snap, range.getMinAddress(), range.getMaxAddress(), state);
 		}
 	}
@@ -356,7 +355,7 @@ public class DBTraceMemorySpace
 	@Override
 	public void setState(long snap, Address address, TraceMemoryState state) {
 		checkState(state);
-		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+		try (LockHold _ = LockHold.lock(lock.writeLock())) {
 			doSetState(snap, address, address, state);
 		}
 	}
@@ -364,7 +363,7 @@ public class DBTraceMemorySpace
 	@Override
 	public void setState(long snap, AddressSetView set, TraceMemoryState state) {
 		checkState(state);
-		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+		try (LockHold _ = LockHold.lock(lock.writeLock())) {
 			for (AddressRange range : set) {
 				doSetState(snap, range.getMinAddress(), range.getMaxAddress(), state);
 			}
@@ -413,7 +412,7 @@ public class DBTraceMemorySpace
 			Address address) {
 		// LATER: Cache here or on the delegate?
 		return mostRecentStateEntryCache.computeIfAbsent(new MostRecentStateCacheKey(snap, address),
-			k -> getViewMostRecentStateEntry(snap, new AddressRangeImpl(address, address),
+			_ -> getViewMostRecentStateEntry(snap, new AddressRangeImpl(address, address),
 				StatePredicate.IS_KNOWN_OR_ERROR));
 	}
 
@@ -454,7 +453,7 @@ public class DBTraceMemorySpace
 	@Override
 	public AddressSetView getAddressesWithState(Lifespan span, AddressSetView set,
 			Predicate<TraceMemoryState> predicate) {
-		try (LockHold hold = LockHold.lock(lock.readLock())) {
+		try (LockHold _ = LockHold.lock(lock.readLock())) {
 			if (!(predicate instanceof StatePredicate stock)) {
 				return doGetAddressesWithState(span, set, predicate);
 			}
@@ -469,7 +468,7 @@ public class DBTraceMemorySpace
 
 				result.add(addressSetStateCache.computeIfAbsent(
 					new AddressSetStateCacheKey(span, blockMinOffset, stock),
-					k -> doGetAddressesWithState(span, new AddressSet(blockMin, blockMax), stock)));
+					_ -> doGetAddressesWithState(span, new AddressSet(blockMin, blockMax), stock)));
 			}
 			return result.intersect(set);
 		}
@@ -708,11 +707,12 @@ public class DBTraceMemorySpace
 	@Override
 	public int putBytes(long snap, Address start, ByteBuffer buf) {
 		assertInSpace(start);
-		int pos = buf.position();
-		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 
+		int pos = buf.position();
+		try (LockHold _ = LockHold.lock(lock.writeLock())) {
 			ByteBuffer oldBuf = ByteBuffer.allocate(buf.remaining());
 			getBytes(snap, start, oldBuf);
+			oldBuf.flip();
 
 			OutSnap lastSnap = new OutSnap(snap);
 			Set<TraceAddressSnapRange> changed = new HashSet<>();
@@ -721,20 +721,31 @@ public class DBTraceMemorySpace
 				Address end = start.add(result - 1);
 				doSetState(snap, start, end, TraceMemoryState.KNOWN);
 
-				// Read back the written bytes and fire event
-				byte[] bytes = new byte[result];
-				byte[] oldBytes = new byte[result];
-				buf.get(pos, bytes);
-				oldBuf.get(0, oldBytes);
 				ImmutableTraceAddressSnapRange tasr = new ImmutableTraceAddressSnapRange(start,
 					start.add(result - 1), snap, lastSnap.snap);
-				trace.setChanged(new TraceChangeRecord<>(TraceEvents.BYTES_CHANGED, space, tasr,
-					oldBytes, bytes));
+				// Fire event
+				if (trace.isSendingEvents()) {
+					byte[] bytes = ByteArrayUtils.arrayOrGet(buf);
+					byte[] oldBytes = ByteArrayUtils.arrayOrGet(oldBuf);
+					trace.setChanged(new TraceChangeRecord<>(TraceEvents.BYTES_CHANGED, space, tasr,
+						oldBytes, bytes));
+				}
 
 				// Fixup affected code units
 				DBTraceCodeSpace codeSpace = trace.getCodeManager().get(space, false);
 				if (codeSpace != null) {
-					codeSpace.bytesChanged(changed, snap, start, oldBytes, bytes);
+					int savePos = buf.position();
+					int saveLimit = buf.limit();
+					try {
+						buf.limit(pos + result);
+						buf.position(pos);
+						oldBuf.limit(oldBuf.position() + result); // No need to save & restore
+						codeSpace.bytesChanged(changed, snap, start, oldBuf, buf);
+					}
+					finally {
+						buf.limit(saveLimit);
+						buf.position(savePos);
+					}
 				}
 				// Clear program view caches
 				trace.updateViewsBytesChanged(tasr.getRange());
@@ -763,7 +774,7 @@ public class DBTraceMemorySpace
 	public int getBytes(long snap, Address start, ByteBuffer buf) {
 		assertInSpace(start);
 		int result = 0;
-		try (LockHold hold = LockHold.lock(lock.readLock())) {
+		try (LockHold _ = LockHold.lock(lock.readLock())) {
 			int maxLen;
 			for (Address cur = start; buf.hasRemaining(); cur = cur.addNoWrap(maxLen)) {
 				long offset = cur.getOffset();
@@ -961,7 +972,7 @@ public class DBTraceMemorySpace
 	@Override
 	public Long getSnapOfMostRecentChangeToBlock(long snap, Address address) {
 		assertInSpace(address);
-		try (LockHold hold = LockHold.lock(lock.readLock())) {
+		try (LockHold _ = LockHold.lock(lock.readLock())) {
 			long offset = address.getOffset();
 			long roundOffset = offset & BLOCK_MASK;
 			OffsetSnap loc = new OffsetSnap(roundOffset, snap);
@@ -1012,7 +1023,7 @@ public class DBTraceMemorySpace
 		Lifespan fwdOne = Lifespan.span(lower + 1, cross ? -1 : upper);
 		ByteBuffer buf1 = ByteBuffer.allocate(BLOCK_SIZE);
 		ByteBuffer buf2 = ByteBuffer.allocate(BLOCK_SIZE);
-		try (LockHold hold = LockHold.lock(lock.readLock())) {
+		try (LockHold _ = LockHold.lock(lock.readLock())) {
 			for (TraceAddressSnapRange tasr : stateMapSpace
 					.reduce(TraceAddressSnapRangeQuery.leastRecent(range, fwdOne))
 					.orderedKeys()) {
@@ -1039,7 +1050,7 @@ public class DBTraceMemorySpace
 		if (len <= 0) {
 			return;
 		}
-		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+		try (LockHold _ = LockHold.lock(lock.writeLock())) {
 			ByteBuffer oldBytes = ByteBuffer.allocate(len);
 			getBytes(snap, start, oldBytes);
 			// New in the sense that they're about to replace the old bytes
@@ -1064,7 +1075,7 @@ public class DBTraceMemorySpace
 			// Fixup affected code units
 			DBTraceCodeSpace codeSpace = trace.getCodeManager().get(space, false);
 			if (codeSpace != null) {
-				codeSpace.bytesChanged(changed, snap, start, oldBytes.array(), newBytes.array());
+				codeSpace.bytesChanged(changed, snap, start, oldBytes, newBytes);
 			}
 		}
 		catch (IOException e) {
@@ -1079,7 +1090,7 @@ public class DBTraceMemorySpace
 
 	@Override
 	public void pack() {
-		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+		try (LockHold _ = LockHold.lock(lock.writeLock())) {
 			// TODO: Check and rearrange blocks chronologically
 			// TODO: Remove identical, adjacent future blocks
 			for (DBTraceMemoryBufferEntry bufEnt : bufferStore.asMap().values()) {
@@ -1093,7 +1104,7 @@ public class DBTraceMemorySpace
 
 	@Override
 	public void invalidateCache() {
-		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+		try (LockHold _ = LockHold.lock(lock.writeLock())) {
 			trace.updateViewsRefreshBlocks();
 			trace.updateViewsBytesChanged(null);
 			stateMapSpace.invalidateCache();
@@ -1107,6 +1118,9 @@ public class DBTraceMemorySpace
 
 	/**
 	 * For developers and testers.
+	 * 
+	 * @param painter painter
+	 * @param depth depth
 	 */
 	@Internal
 	public void paint(Painter painter, int depth) {
@@ -1115,6 +1129,8 @@ public class DBTraceMemorySpace
 
 	/**
 	 * For developers and testers.
+	 * 
+	 * @return depth
 	 */
 	@Internal
 	public int getDepth() {
@@ -1123,6 +1139,8 @@ public class DBTraceMemorySpace
 
 	/**
 	 * For developers and testers.
+	 * 
+	 * @return root bounds
 	 */
 	@Internal
 	public TraceAddressSnapRange getRootBounds() {
@@ -1131,6 +1149,9 @@ public class DBTraceMemorySpace
 
 	/**
 	 * For developers and testers.
+	 * 
+	 * @param rec record
+	 * @return children
 	 */
 	@Internal
 	public Collection<? extends DBTreeRecord<?, ? extends TraceAddressSnapRange>>
