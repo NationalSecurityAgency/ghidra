@@ -139,7 +139,7 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		// close the options
 		final JButton okButton = findButtonByText(dialog.getComponent(), "OK");
 		assertTrue(okButton.isEnabled());
-		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));
+		pressButton(okButton);
 
 		assertTrue(!dialog.isShowing());
 
@@ -188,7 +188,7 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		// close the options
 		final JButton okButton = findButtonByText(dialog.getComponent(), "OK");
 		assertTrue(okButton.isEnabled());
-		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));
+		pressButton(okButton);
 
 		assertTrue(!dialog.isShowing());
 
