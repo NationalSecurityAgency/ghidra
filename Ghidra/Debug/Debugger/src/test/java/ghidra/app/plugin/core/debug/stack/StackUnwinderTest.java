@@ -101,7 +101,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 				byte[] ins = res.getInstruction().getVals();
 				// HACK to avoid 16-bit CALL.... TODO: Why does this happen?
 				if (ins.length >= 2 && ins[0] == (byte) 0x66 && ins[1] == (byte) 0xe8) {
-					System.err.println(
+					Msg.error(StackUnwinderTest.class,
 						"Filtered 16-bit call " + NumericUtilities.convertBytesToString(ins));
 					continue;
 				}
