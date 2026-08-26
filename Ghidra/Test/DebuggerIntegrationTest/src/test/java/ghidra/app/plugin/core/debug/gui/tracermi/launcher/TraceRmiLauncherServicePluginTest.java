@@ -18,6 +18,8 @@ package ghidra.app.plugin.core.debug.gui.tracermi.launcher;
 import static org.junit.Assert.*;
 import static org.junit.Assume.*;
 
+import java.net.URL;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -25,7 +27,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import db.Transaction;
-import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.analysis.AnalysisBackgroundCommand;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
@@ -35,7 +36,6 @@ import ghidra.app.util.opinion.LoadResults;
 import ghidra.debug.api.ValStr;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer.*;
-import ghidra.framework.Application;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.plugintool.AutoConfigState.PathIsFile;
@@ -75,11 +75,26 @@ public class TraceRmiLauncherServicePluginTest extends AbstractGhidraHeadedDebug
 		};
 	}
 
+	public static class HelloWorld {
+		public static void main(String[] args) {
+			System.out.println("Hello, World!");
+		}
+	}
+
 	@Test
 	public void testGetClassName() throws Exception {
-		ResourceFile rf = Application.getModuleDataFile("TestResources", "HelloWorld.class");
+		Path classPath = null;
+		try {
+			Class<?> clazz = HelloWorld.class;
+			String resourceName = clazz.getName().replace('.', '/') + ".class";
+			URL classURL = clazz.getClassLoader().getResource(resourceName);
+			classPath = Path.of(classURL.toURI());
+		}
+		catch (Exception e) {
+			fail();
+		}
 		try (LoadResults<Program> results = ProgramLoader.builder()
-				.source(rf.getFile(false))
+				.source(classPath.toString())
 				.project(env.getProject())
 				.monitor(monitor)
 				.load()) {
@@ -90,7 +105,8 @@ public class TraceRmiLauncherServicePluginTest extends AbstractGhidraHeadedDebug
 		Command<Program> cmd = new AnalysisBackgroundCommand(analyzer, false);
 		tool.execute(cmd, program);
 		waitForBusyTool(tool);
-		assertEquals("HelloWorld", TraceRmiLauncherServicePlugin.tryProgramJvmClass(program));
+		String className = TraceRmiLauncherServicePlugin.tryProgramJvmClass(program);
+		assertTrue(className.endsWith("HelloWorld"));
 	}
 
 	// @Test // This is currently hanging the test machine. The gdb process is left running
