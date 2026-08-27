@@ -730,13 +730,13 @@ The Ghidra log file(s) may be examined for feedback on queued command execution 
 The general command usage is:
 ```bash
 svrAdmin [<server-root-path>]
-         [-add <user_sid> [--p]]
-         [-grant <user_sid> <"+r"|"+w"|"+a"> <repository_name>] 
-         [-revoke <user_sid> <repository_name>] 
-         [-remove <user_sid>] 
-         [-reset <user_sid> [--p]] 
-         [-dn <user_sid> "<user_dn>"]
-         [-list  <user_sid> [<user_sid>...]]
+         [-add <user_id> [--p]]
+         [-grant <user_id> <"+r"|"+w"|"+a"> <repository_name>] 
+         [-revoke <user_id> <repository_name>] 
+         [-remove <user_id>] 
+         [-reset <user_id> [--p]] 
+         [-dn <user_id> "<user_dn>"]
+         [-list  <user_id> [<user_id>...]]
          [-list [--users]]
          [-users]
          [-migrate-all]
@@ -750,7 +750,7 @@ both the server execution and _svrAdmin_ script to utilize the same setting.
 
 #### `-add` (Adding a User)
 All authentication modes require that a user first be added to the server for a connection to be 
-permitted.  If Ghidra password authentication is used (`-a0`), the initial password is set to 
+permitted.  If Ghidra local password authentication is used (`-a0`), the initial password is set to 
 "__changeme__". This password must be changed by the user within 24-hours to avoid its expiration 
 (password expiration period can be extended as a server option, see `-e` 
 [server option](#server-options).  Alternatively, the initial password may be specified by including
@@ -758,9 +758,13 @@ the optional `--p` parameter which will prompt for an initial password.
 
 Examples:
 ```bash
-svrAdmin -add mySID
-svrAdmin -add mySID --p
+svrAdmin -add joe
+svrAdmin -add joe --p
 ```
+
+IMPORTANT: The server manages names in a case-insenstive manner. However, the specified case will
+be retained and may be important if a case-sensitive JAAS authenticator is utilized.  This may also
+apply if a user explicitly specifies their login name during authentication when JAAS is used.
 
 #### `-grant` (Grant Repository Access for User)
 Grant access for a specified user and repository where both must be known to the server. Repository
@@ -768,8 +772,8 @@ access permission must be specified as +r for READ_ONLY, +w for WRITE or +a for 
 
 Examples:
 ```bash
-svrAdmin -grant mySID +a myRepo
-svrAdmin -grant mySID +w myRepo
+svrAdmin -grant joe +a myRepo
+svrAdmin -grant joe +w myRepo
 ```
     
 #### `-revoke` (Revoke Repository Access for User)
@@ -778,7 +782,7 @@ does not disconnect them if currently connected.
 
 Examples:
 ```bash
-svrAdmin -revoke mySID myRepo
+svrAdmin -revoke joe myRepo
 ```
 
 #### `-remove` (Removing a User)
@@ -790,7 +794,7 @@ removing a user does not disconnect them if currently connected.
 
 Example:
 ```bash
-svrAdmin -remove mySID
+svrAdmin -remove joe
 ```
 
 #### `-reset` (Reset User's Ghidra Password)
@@ -802,8 +806,8 @@ initial password.
 
 Example:
 ```bash
-svrAdmin -reset mySID
-svrAdmin -reset mySID --p
+svrAdmin -reset joe
+svrAdmin -reset joe --p
 ```
     
 #### `-dn` (Assign User's Distinguished Name)
@@ -811,7 +815,7 @@ The use of PKI authentication requires that each user's DN be associated with th
 
 Example:
 ```bash
-svrAdmin -dn mySID "CN=MyName,OU=AGENCY,OU=DoD,O=U.S. Government,C=US"
+svrAdmin -dn joe "CN=MyName,OU=AGENCY,OU=DoD,O=U.S. Government,C=US"
 ```
 __NOTE__: After having been added to the server, a user's DN may be copied from the _UnknownDN.log_
 file following an attempted connection with their PKCS certificate.
@@ -825,7 +829,7 @@ Example:
 ```bash
 svrAdmin -list
 svrAdmin -list --users
-svrAdmin -list mySID
+svrAdmin -list joe
 ```
 
 #### `-users` (List All Users)
