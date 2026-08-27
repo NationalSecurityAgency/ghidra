@@ -130,6 +130,10 @@
 			<tocdef id="DebuggerPlatformPlugin" text="Platform Selection"
 				sortgroup="y"
 				target="help/topics/DebuggerPlatformPlugin/DebuggerPlatformPlugin.html" />
+
+            <tocdef id="TraceCallTreePlugin" text="Trace Call Tree"
+				sortgroup="z"
+				target="help/topics/TraceCallTreePlugin/TraceCallTreePlugin.html" />
 		</tocdef>
 	</tocref>
 </tocroot>

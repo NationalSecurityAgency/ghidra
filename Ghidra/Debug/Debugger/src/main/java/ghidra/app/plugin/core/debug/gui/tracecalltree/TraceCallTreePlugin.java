@@ -35,7 +35,7 @@ import ghidra.trace.model.Trace;
 	packageName = DebuggerPluginPackage.NAME,
 	status = PluginStatus.UNSTABLE,
 	servicesRequired = { DebuggerTraceManagerService.class, DebuggerStaticMappingService.class,
-		DebuggerListingService.class, ProgressService.class },
+		DebuggerListingService.class, ProgressService.class, DebuggerConsoleService.class },
 	eventsConsumed = { TraceClosedPluginEvent.class, TraceActivatedPluginEvent.class,
 		OpenProgramPluginEvent.class, CloseProgramPluginEvent.class }
 )
