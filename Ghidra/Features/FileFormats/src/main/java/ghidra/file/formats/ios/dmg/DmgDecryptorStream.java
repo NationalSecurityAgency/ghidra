@@ -16,6 +16,7 @@
 package ghidra.file.formats.ios.dmg;
 
 import java.io.*;
+import java.nio.file.AccessMode;
 import java.util.Arrays;
 
 import ghidra.app.util.bin.*;
@@ -57,7 +58,7 @@ public class DmgDecryptorStream extends InputStream {
 	 */
 	public DmgDecryptorStream(String containerName, String dmgName, File srcFile)
 			throws IOException {
-		this(containerName, dmgName, new RandomAccessByteProvider(srcFile));
+		this(containerName, dmgName, new FileByteProvider(srcFile, null, AccessMode.READ));
 	}
 
 	/**

@@ -307,7 +307,7 @@ public class DescriptorDecoder {
 			case BASE_TYPE_LONG:
 				return LongDataType.dataType;
 			case BASE_TYPE_VOID:  //void (only for return types)
-				return DataType.VOID;
+				return VoidDataType.dataType;
 			default:
 				throw new IllegalArgumentException("Invalid type descriptor: " + descriptor);
 		}

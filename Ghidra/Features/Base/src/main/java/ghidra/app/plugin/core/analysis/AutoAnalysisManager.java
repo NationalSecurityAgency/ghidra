@@ -1524,7 +1524,7 @@ public class AutoAnalysisManager {
 		}
 
 		@Override
-		public void checkCanceled() throws CancelledException {
+		public void checkCancelled() throws CancelledException {
 			primaryMonitor.checkCancelled();
 			secondaryMonitor.checkCancelled();
 		}
@@ -1568,7 +1568,7 @@ public class AutoAnalysisManager {
 		}
 
 		@Override
-		public void clearCanceled() {
+		public void clearCancelled() {
 			primaryMonitor.clearCancelled();
 			secondaryMonitor.clearCancelled();
 		}

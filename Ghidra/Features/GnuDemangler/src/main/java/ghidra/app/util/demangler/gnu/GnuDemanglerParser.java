@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
@@ -602,7 +603,7 @@ public class GnuDemanglerParser {
 	private String replaceStdLibraryTypes(String demangled) {
 		String d = demangled;
 		for (GnuDemanglerReplacement replacement : REPLACEMENTS) {
-			d = StringUtils.replace(d, replacement.find(), replacement.replace());
+			d = Strings.CS.replace(d, replacement.find(), replacement.replace());
 		}
 		return d;
 	}

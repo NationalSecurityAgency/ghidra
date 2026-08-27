@@ -478,7 +478,8 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 			//  then it isn't a switch statment
 			//
 			// NOTE: Assumption, we have found all flows leading to the switch that might split the basic block
-
+			// NOTE: This assumption is a problem for internal pcode branching.  Need to check for that.
+			
 			final AtomicInteger foundCount = new AtomicInteger(0);
 			SymbolicPropogator prop = new SymbolicPropogator(program,false);
 			prop.flowConstants(jumpBlockAt.getFirstStartAddress(), jumpBlockAt,
@@ -492,6 +493,27 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 							foundCount.incrementAndGet();
 						}
 						return false;
+					}
+				
+					@Override
+					public boolean evaluateContextBefore(VarnodeContext context, Instruction instr) {
+						// There shouldn't be any branching because a branch would split a block
+						// but there could be internal branches, as the basic block algorithm can't
+						// detect these cases correctly.
+						PcodeOp[] pcode = instr.getPcode();
+						for (PcodeOp pcodeOp : pcode) {
+							if (pcodeOp.getOpcode() == PcodeOp.CBRANCH) {
+								return true;
+							}
+						}
+						return false;
+					}
+
+					@Override
+					public boolean followFalseConditionalBranches() {
+						// There shouldn't be any because a branch would split a block
+						// but there could be internal branches.
+					     return false;
 					}
 				}, false, monitor);
 

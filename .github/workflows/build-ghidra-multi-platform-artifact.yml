@@ -1,0 +1,83 @@
+name: Build Ghidra Multi-Platform Artifact
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Read Ghidra JDK Version
+        shell: bash
+        run: echo "JDK_VER=$(awk -F'=' '$1=="application.java.min" {print $2}' Ghidra/application.properties)" >> $GITHUB_ENV 
+
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '${{ env.JDK_VER }}'
+
+      - name: Fetch Dependencies
+        run: ./gradlew -I gradle/support/fetchDependencies.gradle -DhideDownloadProgress -DnoEclipse
+
+      - name: Build Ghidra
+        run: ./gradlew buildGhidra --parallel
+
+      - name: Upload Linux Artifact
+        uses: actions/upload-artifact@v7
+        if: matrix.platform == 'ubuntu-latest'
+        with:
+          name: ghidra-linux
+          path: build/dist/ghidra_*.zip
+
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v7
+        if: matrix.platform == 'windows-latest'
+        with:
+          name: ghidra-windows
+          path: build/dist/ghidra_*.zip
+
+      - name: Upload macOS Artifact
+        uses: actions/upload-artifact@v7      
+        if: matrix.platform == 'macos-latest'
+        with:
+          name: ghidra-macos
+          path: build/dist/ghidra_*.zip
+
+  merge-artifacts:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Download Platform-Specific Artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+          skip-decompress: true
+          merge-multiple: true
+
+      - name: Merge Platform-Specific Artifacts
+        run: |
+          mkdir -p merged
+          for file in artifacts/*; do 
+            unzip -o $file -d artifacts/tmp
+            export FNAME="$(ls artifacts/tmp/*.zip)"
+            unzip -n $FNAME -d merged
+          done
+          cd merged
+          zip -r $(basename $FNAME) *
+
+      - name: Upload Merged Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          path: merged/ghidra_*.zip
+          archive: false
+

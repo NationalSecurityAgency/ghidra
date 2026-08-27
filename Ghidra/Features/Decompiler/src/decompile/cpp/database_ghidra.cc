@@ -353,6 +353,39 @@ Funcdata *ScopeGhidra::resolveExternalRefFunction(ExternRefSymbol *sym) const
   return resFd;
 }
 
+MapEntry *ScopeGhidra::findSymbolBefore(const Address &addr,const Address &usepoint) const
+
+{
+  uintb off = addr.getOffset();
+  MapEntry *res = findContainer(addr, 1, usepoint);
+  if (res != (MapEntry *)0)
+    off = res->getAddr().getOffset();
+  if (off == 0)
+    return (MapEntry *)0;
+  if ((off & 7) == 0)
+    off -= 8;
+  else
+    off -= off & 7;
+  Address curAddr(addr.getSpace(),off);
+  return findContainer(curAddr,1,usepoint);
+}
+
+MapEntry *ScopeGhidra::findSymbolAfter(const Address &addr,const Address &usepoint) const
+
+{
+  uintb off = addr.getOffset();
+  MapEntry *res = findContainer(addr, 1, usepoint);
+  if (res != (MapEntry *)0)
+    off = res->getAddr().getOffset() + res->getSize() - 1;
+  if ((off & 7) != 0)
+    off -= off & 7;
+  off += 8;
+  if (off < addr.getOffset() || off > addr.getSpace()->getHighest())
+    return (MapEntry *)0;
+  Address curAddr(addr.getSpace(),off);
+  return findContainer(curAddr,1,usepoint);
+}
+
 MapEntry *ScopeGhidra::addSymbol(const string &nm,Datatype *ct,const Address &addr,const Address &usepoint)
 
 {

@@ -103,10 +103,10 @@ public class GFileSystemExtractAllTask extends AbstractFileExtractorTask {
 		}
 	}
 
-	private boolean verifyRootOutputDir(String destDirName) {
+	private boolean verifyRootOutputDir(String destDirName) throws IOException {
 		boolean isSameName = destDirName.equals(rootOutputDirectory.getName());
-		File newRootOutputDir =
-			isSameName ? rootOutputDirectory : new File(rootOutputDirectory, destDirName);
+		File newRootOutputDir = isSameName ? rootOutputDirectory
+				: FileUtilities.getSecureFile(rootOutputDirectory, destDirName);
 		if (newRootOutputDir.isFile()) {
 			Msg.showError(this, parentComponent, "Export Destination Error",
 				"Unable to export to " + newRootOutputDir + " as it is a file");

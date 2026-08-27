@@ -146,10 +146,7 @@ class ThemeReader extends AbstractThemeReader {
 
 		String relativePath = path.substring(indexOf, path.length());
 		File dir = Application.getUserSettingsDirectory();
-		File iconFile = new File(dir, relativePath);
-		if (!FileUtilities.isPathContainedWithin(dir, iconFile)) {
-			throw new IOException("Zip entry escapes target directory: " + relativePath);
-		}
+		File iconFile = FileUtilities.getSecureFile(dir, relativePath);
 		FileUtils.copyInputStreamToFile(is, iconFile);
 	}
 

@@ -627,7 +627,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 				if (lib == null) {
 					for (DomainFolder searchFolder : searchFolders) {
 						DomainFile df =
-							findLibraryInProject(path, searchFolder, searchPaths, settings);
+							findLibraryInProject(path, searchFolder, searchPaths, true, settings);
 						if (df != null) {
 							DomainObject obj = df.getDomainObject(this, true, true, monitor);
 							if (obj instanceof Program p) {

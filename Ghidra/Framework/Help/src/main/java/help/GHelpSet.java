@@ -17,8 +17,7 @@ package help;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.*;
 import java.util.Enumeration;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -223,9 +222,9 @@ public class GHelpSet extends HelpSet {
 
 			URL url = null;
 			try {
-				url = new URL(id);
+				url = new URI(id).toURL();
 			}
-			catch (MalformedURLException e) {
+			catch (IllegalArgumentException | MalformedURLException | URISyntaxException e) {
 				LOG.trace("ID is not a URL; tried to make URL from string: " + id);
 				return null;
 			}

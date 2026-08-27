@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -249,7 +249,6 @@ public class ClippingTextField implements TextField {
 	}
 
 	void print(Graphics g, PaintContext context) {
-		// TODO fix printing
 		textElement.paint(null, g, startX, 0);
 		if (isClipped) {
 			paintDots(g, startX + textElement.getStringWidth());
@@ -337,15 +336,6 @@ public class ClippingTextField implements TextField {
 		}
 	}
 
-	/**
-	 * Converts a single column value into a MultiStringLocation which specifies
-	 * a string index and a column position within that string.
-	 * 
-	 * @param screenColumn
-	 *            the overall column position in the total String.
-	 * @return MultiStringLocation the MultiStringLocation corresponding to the
-	 *         given column.
-	 */
 	@Override
 	public RowColLocation screenToDataLocation(int screenRow, int screenColumn) {
 		return originalElement.getDataLocationForCharacterIndex(screenColumn);
@@ -354,15 +344,19 @@ public class ClippingTextField implements TextField {
 	@Override
 	public RowColLocation dataToScreenLocation(int dataRow, int dataColumn) {
 
-		int column = textElement.getCharacterIndexForDataLocation(dataRow, dataColumn);
+		int column = originalElement.getCharacterIndexForDataLocation(dataRow, dataColumn);
 		if (column < 0) {
-			column = textElement.getCharacterIndexForDataLocation(dataRow, dataColumn - 3);
-			if (column < 0) {
-				return new DefaultRowColLocation(0, textElement.length());
-			}
-			return new RowColLocation(0, textElement.length());
+			return new DefaultRowColLocation(0, textElement.length());
 		}
-		return new RowColLocation(0, column);
+
+		// the text of this field does not contain the '...' when clipped, that is added when 
+		// rendered by the paint() method
+		int screenLength = textElement.length();
+		boolean locationClipped = column > screenLength;
+
+		// Note: the column value we return is 0, as the client will update the row when using 
+		// multiple clipping text field rows.
+		return new RowColLocation(0, column, locationClipped);
 	}
 
 	private int findX(int col) {
@@ -372,9 +366,6 @@ public class ClippingTextField implements TextField {
 		return textElement.substring(0, col).getStringWidth();
 	}
 
-	/**
-	 * Returns true if the text is clipped (truncated)
-	 */
 	@Override
 	public boolean isClipped() {
 		return isClipped;

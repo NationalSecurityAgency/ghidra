@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.pdb;
 
 import java.util.*;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.program.database.data.DataTypeUtilities;
@@ -195,7 +195,7 @@ class PdbDataTypeParser {
 		}
 
 		// Deal with other unrecognized types
-		dataTypeName = StringUtils.replace(dataTypeName, "<NoType>", "undefined");
+		dataTypeName = Strings.CS.replace(dataTypeName, "<NoType>", "undefined");
 
 		// Example type representations:
 		// char *[2][3]     pointer(array(array(char,3),2))
