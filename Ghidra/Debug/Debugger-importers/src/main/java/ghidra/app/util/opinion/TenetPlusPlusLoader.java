@@ -61,7 +61,7 @@ import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 public class TenetPlusPlusLoader implements Loader {
-	private record ModuleEvent(String path, String module, AddressRange range) {}
+	private record ModuleEvent(String path, String module, AddressRange range, byte[] bytes) {}
 
 	private static final String TRACE_SUFFIX = ".trace";
 	private static final String TENET_SUFFIX = ".tenet";
@@ -73,7 +73,7 @@ public class TenetPlusPlusLoader implements Loader {
 	private static final Pattern MEM_PATTERN =
 		Pattern.compile("(?:^|,)(mr|mw|ma)=0x([^:]+):([0-9a-fA-F]+)");
 	private static final Pattern MODULE_LOAD_PATTERN =
-		Pattern.compile("Loaded image: 0x([0-9a-fA-F]+):0x([0-9a-fA-F]+) -> (.*)$");
+		Pattern.compile("Loaded image: 0x([0-9a-fA-F]+):0x([0-9a-fA-F]+) -> (.*) Bytes: (.*)$");
 	private static final Pattern MODULE_UNLOAD_PATTERN =
 		Pattern.compile("Unloaded image: 0x([0-9a-fA-F]+):0x([0-9a-fA-F]+) -> (.*)$");
 
@@ -214,6 +214,8 @@ public class TenetPlusPlusLoader implements Loader {
 		if (!load.isEmpty()) {
 			for (final ModuleEvent event : load) {
 				modMan.addLoadedModule(event.path, event.module, event.range, snap);
+				trace.getMemoryManager()
+						.putBytes(snap, event.range.getMinAddress(), ByteBuffer.wrap(event.bytes));
 			}
 
 			load.clear();
@@ -512,7 +514,8 @@ public class TenetPlusPlusLoader implements Loader {
 
 			load.add(new ModuleEvent("Modules[%s]".formatted(mod), mod,
 				rng(Long.parseLong(modLoadMatcher.group(1), 16),
-					Long.parseLong(modLoadMatcher.group(2), 16))));
+					Long.parseLong(modLoadMatcher.group(2), 16)),
+					HexFormat.of().parseHex(modLoadMatcher.group(4))));
 			return true;
 		}
 
@@ -525,7 +528,8 @@ public class TenetPlusPlusLoader implements Loader {
 
 			unload.add(new ModuleEvent("Modules[%s]".formatted(mod), mod,
 				rng(Long.parseLong(modUnloadMatcher.group(1), 16),
-					Long.parseLong(modUnloadMatcher.group(2), 16))));
+					Long.parseLong(modUnloadMatcher.group(2), 16)),
+					null));
 			return true;
 		}
 		return false;
