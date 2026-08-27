@@ -37,7 +37,6 @@ import ghidra.app.util.HelpTopics;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.task.OpenProgramRequest;
 import ghidra.app.util.task.OpenProgramTask;
-import ghidra.framework.client.ClientUtil;
 import ghidra.framework.main.OpenVersionedFileDialog;
 import ghidra.framework.model.*;
 import ghidra.framework.options.*;
@@ -1079,20 +1078,6 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 	@Override
 	public boolean isVisible(Program program) {
 		return programMgr.isVisible(program);
-	}
-
-	@Override
-	public void releaseProgram(Program program, Object owner) {
-		if (programMgr.contains(program)) {
-			programMgr.releaseProgram(program, owner);
-			Msg.info(ClientUtil.class,
-				"Released program from " + tool.getName() + " tool: " + program.getDomainFile());
-		}
-	}
-
-	@Override
-	public boolean setPersistentOwner(Program program, Object owner) {
-		return programMgr.setPersistentOwner(program, owner);
 	}
 
 	public boolean isManaged(Program program) {

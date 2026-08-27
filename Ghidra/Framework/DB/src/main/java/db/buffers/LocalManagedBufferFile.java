@@ -93,10 +93,11 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	/**
 	 * <code>bfMgr</code> manages the various files associated with this buffer 
 	 * file.  When working with versioned files or when Save support is 
-	 * required <code>bfMgr</code> must be set.  The bufMgr will be null for
-	 * a read-only non-updateable file.
+	 * required <code>bfMgr</code> must be set.  The openForUpdate will be false 
+	 * for a read-only non-updateable file.
 	 */
 	private BufferFileManager bfMgr;
+	private boolean openForUpdate = false;
 
 	/**
 	 * <code>checkinId</code> is the checkin ID needed by bfMgr when a new
@@ -174,6 +175,7 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 		}
 		this.version = 1;
 		this.bfMgr = bfManager;
+		this.openForUpdate = true;
 		this.checkinId = checkinId;
 	}
 
@@ -191,6 +193,7 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 			int minChangeDataVer, long checkinId) throws IOException {
 		super(bfManager.getBufferFile(bfManager.getCurrentVersion()), true);
 		this.bfMgr = bfManager;
+		this.openForUpdate = true;
 		this.version = bfManager.getCurrentVersion();
 		this.minChangeDataVer = minChangeDataVer;
 		this.checkinId = checkinId;
@@ -200,7 +203,7 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	}
 
 	/**
-	 * Open an older version of an existing buffer file as read-only and NOT UPDATEABLE (bfMgr remains null).
+	 * Open an older version of an existing buffer file as read-only and NOT UPDATEABLE (openForUpdate remains false).
 	 * Version files must exist for all versions starting with the requested version.
 	 * These version files will be used in conjunction with the current buffer file
 	 * to emulate an older version buffer file.
@@ -214,6 +217,7 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	public LocalManagedBufferFile(BufferFileManager bfManager, int version, int minChangeDataVer)
 			throws IOException {
 		super(bfManager.getBufferFile(bfManager.getCurrentVersion()), true);
+		this.bfMgr = bfManager;
 		this.version = version;
 		this.minChangeDataVer = minChangeDataVer;
 		int curVer = bfManager.getCurrentVersion();
@@ -243,9 +247,6 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 
 	@Override
 	public BufferFile getNextChangeDataFile(boolean getFirst) throws IOException {
-		if (bfMgr == null) {
-			return null;
-		}
 		if (getFirst || nextChangeDataVer == -1) {
 			nextChangeDataVer = minChangeDataVer != -1 ? minChangeDataVer : (version - 1);
 		}
@@ -373,8 +374,7 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 
 		super.setReadOnly();
 
-		if (bfMgr != null) {
-// TODO: This seems very hidden!
+		if (openForUpdate) {
 			bfMgr.versionCreated(version, comment, checkinId);
 			startPreSave();
 		}
@@ -411,7 +411,8 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 			// NOTE: the above close will delete non-read-only files which were not committed
 		}
 		finally {
-			if (bfMgr != null) {
+			if (openForUpdate) {
+				openForUpdate = false;
 				if (comit) {
 					bfMgr.versionCreated(version, comment, checkinId);
 				}
@@ -454,7 +455,8 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 			}
 		}
 		finally {
-			if (bfMgr != null) {
+			if (openForUpdate) {
+				openForUpdate = false;
 				bfMgr.updateEnded(checkinId);
 			}
 		}
@@ -462,9 +464,6 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	}
 
 	private byte[] getForwardModMapData() throws IOException {
-		if (bfMgr == null) {
-			return null;
-		}
 		File mf = bfMgr.getChangeMapFile();
 		if (mf == null || !mf.exists()) {
 			return null;
@@ -480,9 +479,6 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 
 	@Override
 	public byte[] getForwardModMapData(int oldVersion) throws IOException {
-		if (bfMgr == null) {
-			return null;
-		}
 		if (oldVersion < 1 || oldVersion >= version) {
 			throw new IOException("Invalid mod-map version requested: " + oldVersion);
 		}
@@ -700,6 +696,7 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 			if (saveFile.renameFile(newFile)) {
 				saveFile.version = newVersion;
 				saveFile.bfMgr = bfMgr;
+				saveFile.openForUpdate = true;
 				saveFile.checkinId = checkinId;
 
 				if (saveChangeFile != null) {
@@ -778,7 +775,7 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 
 		synchronized (this) {
 			// If preSaveFile is null and !preSaveFailed - we were unsuccessful at terminating the pre-save
-			if (endUpdate && bfMgr != null && (preSaveFailed || preSaveFile != null)) {
+			if (endUpdate && openForUpdate && (preSaveFailed || preSaveFile != null)) {
 
 				// Update is ended when we can no longer perform a save
 				bfMgr.updateEnded(checkinId);

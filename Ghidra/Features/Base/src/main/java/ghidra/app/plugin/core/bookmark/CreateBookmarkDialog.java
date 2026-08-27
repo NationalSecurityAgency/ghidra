@@ -61,7 +61,7 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 
 		initializeDescription(cu);
 
-		setFocusComponent(categoryComboBox);
+		setFocusComponent(descriptionTextField);
 		setHelpLocation(new HelpLocation("BookmarkPlugin", "CreateBookmarkDialog"));
 	}
 

@@ -106,13 +106,6 @@ public class GoToAddressLabelDialog extends ReusableDialogComponentProvider
 		this.navigatable = nav;
 		currentAddress = addr;
 		clearStatusText();
-		GoToOverrideService override = goToService.getOverrideService();
-		if (override != null) {
-			JComponent comp = override.getOverrideComponent();
-			if (comp != null) {
-				mainPanel.add(comp, BorderLayout.SOUTH);
-			}
-		}
 		setDialogEnabled(true);
 		tool.showDialog(this);
 	}

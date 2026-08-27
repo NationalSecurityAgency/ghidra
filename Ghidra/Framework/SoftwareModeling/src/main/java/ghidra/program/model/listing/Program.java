@@ -99,7 +99,7 @@ public interface Program extends DataTypeManagerDomainObject, ProgramArchitectur
 	 * @deprecated Method intended for internal ProgramDB use and is not intended for general use.
 	 * This method may be removed from this interface in a future release.
 	 */
-	@Deprecated(forRemoval = true)
+	@Deprecated(since = "10.3", forRemoval = true)
 	public AddressMap getAddressMap();
 
 	/**

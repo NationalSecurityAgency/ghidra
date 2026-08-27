@@ -217,7 +217,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 			}
 			if (!foundNonJumpRef) {
 				// check if we have been thunked
-				Address[] functionThunkAddresses = function.getFunctionThunkAddresses();
+				Address[] functionThunkAddresses = function.getFunctionThunkAddresses(false);
 				foundNonJumpRef =
 					functionThunkAddresses != null && functionThunkAddresses.length != 0;
 			}

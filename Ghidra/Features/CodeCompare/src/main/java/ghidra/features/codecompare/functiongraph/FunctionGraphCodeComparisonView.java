@@ -259,7 +259,7 @@ public class FunctionGraphCodeComparisonView extends CodeComparisonView {
 		}
 
 		FormatManager formatManager = new FormatManager(displayOptions, fieldOptions);
-		formatManager.readState(formatState);
+		formatManager.readState(formatState, false);
 		leftController.updateMinimalFormatManager(formatManager);
 
 		FgDisplay rightDisplay = displays.get(Side.RIGHT);

@@ -2269,22 +2269,17 @@ void ProtoModel::defaultLocalRange(void)
   if (stackgrowsnegative) {	// This the normal stack convention
     // Default locals are negative offsets off the stack
     last = spc->getHighest();
-    if (spc->getAddrSize()>=4)
-      first = last - 999999;
-    else if (spc->getAddrSize()>=2)
-      first = last - 9999;
-    else
-      first = last - 99;
+    uintb size = last >> 1;
+    if (size > 0x7fffffff)
+      size = 0x7fffffff;
+    first = last - size;
     localrange.insertRange(spc,first,last);
   }
   else {			// This is the flipped stack convention
     first = 0;
-    if (spc->getAddrSize()>=4)
-      last = 999999;
-    else if (spc->getAddrSize()>=2)
-      last = 9999;
-    else
-      last = 99;
+    last = spc->getHighest() >> 1;
+    if (last > 0x7fffffff)
+      last = 0x7fffffff;
     localrange.insertRange(spc,first,last);
   }
 }
@@ -2298,22 +2293,17 @@ void ProtoModel::defaultParamRange(void)
   if (stackgrowsnegative) {	// This the normal stack convention
     // Default parameters are positive offsets off the stack
     first = 0;
-    if (spc->getAddrSize()>=4)
-      last = 511;
-    else if (spc->getAddrSize()>=2)
-      last = 255;
-    else
-      last = 15;
+    last = spc->getHighest() >> 2;
+    if (last > 0x7fffffff)
+      last = 0x7fffffff;
     paramrange.insertRange(spc,first,last);
   }
   else {			// This is the flipped stack convention
     last = spc->getHighest();
-    if (spc->getAddrSize()>=4)
-      first = last - 511;
-    else if (spc->getAddrSize()>=2)
-      first = last - 255;
-    else
-      first = last - 15;
+    uintb size = last >> 2;
+    if (size > 0x7fffffff)
+      size = 0x7fffffff;
+    first = last - size;
     paramrange.insertRange(spc,first,last); // Parameters are negative offsets
   }
 }
@@ -4042,91 +4032,31 @@ void FuncProto::cancelInjectId(void)
   flags &= ~((uint4)is_inline);
 }
 
-/// \brief Update input parameters based on Varnode trials
+/// \brief Update input parameters based on active trials
 ///
-/// If the input parameters are locked, don't do anything. Otherwise,
-/// given a list of Varnodes and their associated trial information,
-/// create an input parameter for each trial in order, grabbing data-type
-/// information from the Varnode.  Any old input parameters are cleared.
+/// Create an input parameter for each trial in order, grabbing data-type information from the
+/// list provided, linked by trial \e slot. Any old input parameters are cleared.
 /// \param data is the function containing the trial Varnodes
-/// \param triallist is the list of Varnodes
+/// \param typeList is the list of data-types
 /// \param activeinput is the trial container
-void FuncProto::updateInputTypes(Funcdata &data,const vector<Varnode *> &triallist,ParamActive *activeinput)
+void FuncProto::updateInputTypes(Funcdata &data,const vector<Datatype *> &typeList,ParamActive *activeinput)
 
 {
-  if (isInputLocked()) return;	// Input is locked, do no updating
   store->clearAllInputs();
   int4 count = 0;
   int4 numtrials = activeinput->getNumTrials();
   for(int4 i=0;i<numtrials;++i) {
     ParamTrial &trial(activeinput->getTrial(i));
     if (trial.isUsed()) {
-      Varnode *vn = triallist[trial.getSlot()-1];
-      if (vn->isMark()) continue;
       ParameterPieces pieces;
-      if (vn->isPersist()) {
-	int4 sz;
-	pieces.addr = data.findDisjointCover(vn, sz);
-	if (sz == vn->getSize())
-	  pieces.type = vn->getHigh()->getType();
-	else
-	  pieces.type = data.getArch()->types->getBase(sz, TYPE_UNKNOWN);
-	pieces.flags = 0;
-      }
-      else {
-	pieces.addr = trial.getAddress();
-	pieces.type = vn->getHigh()->getType();
-	pieces.flags = 0;
-      }
+      pieces.addr = trial.getAddress();
+      pieces.type = typeList[trial.getSlot()-1];
+      pieces.flags = 0;
       store->setInput(count,"",pieces);
       count += 1;
-      vn->setMark();
     }
   }
-  for(int4 i=0;i<triallist.size();++i)
-    triallist[i]->clearMark();
   updateThisPointer();
-}
-
-/// \brief Update input parameters based on Varnode trials, but do not store the data-type
-///
-/// This is accomplished in the same way as if there were data-types but instead of
-/// pulling a data-type from the Varnode, only the size is used.
-/// Undefined data-types are pulled from the given TypeFactory
-/// \param data is the function containing the trial Varnodes
-/// \param triallist is the list of Varnodes
-/// \param activeinput is the trial container
-void FuncProto::updateInputNoTypes(Funcdata &data,const vector<Varnode *> &triallist,ParamActive *activeinput)
-{
-  if (isInputLocked()) return;	// Input is locked, do no updating
-  store->clearAllInputs();
-  int4 count = 0;
-  int4 numtrials = activeinput->getNumTrials();
-  TypeFactory *factory = data.getArch()->types;
-  for(int4 i=0;i<numtrials;++i) {
-    ParamTrial &trial(activeinput->getTrial(i));
-    if (trial.isUsed()) {
-      Varnode *vn = triallist[trial.getSlot()-1];
-      if (vn->isMark()) continue;
-      ParameterPieces pieces;
-      if (vn->isPersist()) {
-	int4 sz;
-	pieces.addr = data.findDisjointCover(vn, sz);
-	pieces.type = factory->getBase(sz, TYPE_UNKNOWN);
-	pieces.flags = 0;
-      }
-      else {
-	pieces.addr = trial.getAddress();
-	pieces.type = factory->getBase(vn->getSize(),TYPE_UNKNOWN);
-	pieces.flags = 0;
-      }
-      store->setInput(count,"",pieces);
-      count += 1;
-      vn->setMark();		// Make sure vn is used only once
-    }
-  }
-  for(int4 i=0;i<triallist.size();++i)
-    triallist[i]->clearMark();
 }
 
 /// \brief Update the return value based on Varnode trials

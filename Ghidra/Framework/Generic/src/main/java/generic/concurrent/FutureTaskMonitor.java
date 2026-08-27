@@ -97,7 +97,7 @@ class FutureTaskMonitor<I, R> extends FutureTask<R> implements TaskMonitor {
 	}
 
 	@Override
-	public void checkCanceled() throws CancelledException {
+	public void checkCancelled() throws CancelledException {
 		if (isCancelled()) {
 			throw new CancelledException();
 		}
@@ -187,7 +187,7 @@ class FutureTaskMonitor<I, R> extends FutureTask<R> implements TaskMonitor {
 	}
 
 	@Override
-	public void clearCanceled() {
+	public void clearCancelled() {
 		// once cancelled, always cancelled
 		throw new UnsupportedOperationException();
 

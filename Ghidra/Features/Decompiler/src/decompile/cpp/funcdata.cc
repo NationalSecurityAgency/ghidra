@@ -240,7 +240,7 @@ void Funcdata::spacebase(void)
     for(i=0;i<numspace;++i) {
       const VarnodeData &point(spc->getSpacebase(i));
 				// Find input varnode at this size and location
-      Datatype *ct = glb->types->getTypeSpacebase(spc,getAddress());
+      Datatype *ct = glb->types->getTypeSpacebase(spc,localmap->getId());
       Datatype *ptr = glb->types->getTypePointer(point.size,ct,spc->getWordSize());
     
       iter = vbank.beginLoc(point.size,Address(point.space,point.offset));
@@ -313,7 +313,7 @@ Varnode *Funcdata::constructSpacebaseInput(AddrSpace *id)
   if (id->numSpacebase() == 0)
     throw LowlevelError("Unable to construct pointer into space: "+id->getName());
   const VarnodeData &point(id->getSpacebase(0));
-  Datatype *ct = glb->types->getTypeSpacebase(id,getAddress());
+  Datatype *ct = glb->types->getTypeSpacebase(id,localmap->getId());
   Datatype *ptr = glb->types->getTypePointer(point.size,ct,id->getWordSize());
   spacePtr = newVarnode(point.size, point.getAddr(), ptr);
   spacePtr = setInputVarnode(spacePtr);
@@ -330,7 +330,7 @@ Varnode *Funcdata::constructSpacebaseInput(AddrSpace *id)
 Varnode *Funcdata::constructConstSpacebase(AddrSpace *id)
 
 {
-  Datatype *ct = glb->types->getTypeSpacebase(id,Address());
+  Datatype *ct = glb->types->getTypeSpacebase(id,0);
   Datatype *ptr = glb->types->getTypePointer(id->getAddrSize(),ct,id->getWordSize());
   Varnode *spacePtr = newConstant(id->getAddrSize(),0);
   spacePtr->updateType(ptr,true,true);
@@ -360,7 +360,7 @@ void Funcdata::spacebaseConstant(PcodeOp *op,int4 slot,MapEntry *entry,const Add
 {
   int4 sz = rampoint.getAddrSize();
   AddrSpace *spaceid = rampoint.getSpace();
-  Datatype *sb_type = glb->types->getTypeSpacebase(spaceid,Address());
+  Datatype *sb_type = glb->types->getTypeSpacebase(spaceid,entry->getSymbol()->getScope()->getId());
   sb_type = glb->types->getTypePointer(sz,sb_type,spaceid->getWordSize());
   Varnode *spacebase_vn,*outvn,*newconst;
 

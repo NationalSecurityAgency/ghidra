@@ -255,7 +255,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 	 *             (we are standardizing timeouts).  The timeouts passed to this method will
 	 *             be ignored in favor of the standard value.
 	 */
-	@Deprecated
+	@Deprecated(since = "9.1")
 	public static Window waitForWindow(String title, int timeoutMS) {
 		return waitForWindow(title);
 	}
@@ -610,7 +610,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 	 *             (we are standardizing timeouts).  The timeouts passed to this method will
 	 *             be ignored in favor of the standard value.
 	 */
-	@Deprecated
+	@Deprecated(since = "9.1")
 	public static <T extends DialogComponentProvider> T waitForDialogComponent(Window parentWindow,
 			Class<T> clazz, int timeoutMS) {
 		if (!DialogComponentProvider.class.isAssignableFrom(clazz)) {

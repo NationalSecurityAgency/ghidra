@@ -20,10 +20,17 @@ import java.util.*;
 
 import ghidra.app.util.Option;
 import ghidra.app.util.OptionUtils;
-import ghidra.app.util.bin.StructConverter;
+import ghidra.app.util.bin.*;
+import ghidra.app.util.bin.format.pe.PortableExecutable;
+import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
+import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.PeLoader;
+import ghidra.app.util.opinion.PeLoader.CompilerOpinion;
+import ghidra.app.util.opinion.PeLoader.CompilerOpinion.CompilerEnum;
 import ghidra.file.formats.dump.*;
 import ghidra.file.formats.dump.cmd.ModuleToPeHelper;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
@@ -433,12 +440,67 @@ public class Minidump extends DumpFile {
 
 	@Override
 	public void analyze(TaskMonitor monitor) {
+		// The dump loader sets the executable format to PE but does not run compiler detection,
+		// leaving the program compiler "unknown".  That prevents the Microsoft PE analyzers (RTTI,
+		// TEB, exception handling) from being offered on dump-loaded programs (GitHub issue #5214).
+		// Recover the compiler from the dumped module images so those analyzers become available for
+		// Visual Studio / Clang PEs, while other compilers remain correctly identified (and excluded).
+		recoverCompilerFromModules(monitor);
+
 		boolean analyzeEmbeddedObjects =
 			OptionUtils.getBooleanOptionValue(ANALYZE_EMBEDDED_OBJECTS_OPTION_NAME,
 				options,
 				ANALYZE_EMBEDDED_OBJECTS_OPTION_DEFAULT);
 		if (analyzeEmbeddedObjects) {
 			ModuleToPeHelper.queryModules(program, monitor);
+		}
+	}
+
+	/**
+	 * Determine the compiler of the dumped main executable image and record it on the program.  The
+	 * dump loader only maps memory and never runs compiler detection, so {@code program.getCompiler()}
+	 * would otherwise remain {@link CompilerEnum#Unknown}, causing the Microsoft PE analyzers to be
+	 * unavailable.  Only the first module (the process' main executable) is examined so that the many
+	 * Microsoft-compiled system DLLs also present in the dump do not misidentify the program's
+	 * compiler.  Any failure is ignored, leaving the compiler unset (the pre-existing behavior).
+	 *
+	 * @param monitor the task monitor
+	 */
+	private void recoverCompilerFromModules(TaskMonitor monitor) {
+		if (!CompilerEnum.Unknown.toString().equals(program.getCompiler())) {
+			return; // compiler already identified
+		}
+		StructConverter sv = getStreamByType(Directory.MODULE_LIST_STREAM);
+		if (!(sv instanceof ModuleListStream modstr) || modstr.getNumberOfModules() == 0) {
+			return;
+		}
+		// Module 0 is the process' main executable; identify its compiler.
+		Module mainModule = modstr.getModule(0);
+		long base = mainModule.getBaseOfImage();
+		long size = mainModule.getSizeOfImage();
+		try {
+			AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
+			Address baseAddr = space.getAddress(base);
+			if (!program.getMemory().contains(baseAddr)) {
+				return; // main module image not captured in this dump
+			}
+			Address maxAddr = space.getAddress(base + size - 1);
+			ByteProvider provider = new MemoryByteProvider(program.getMemory(), baseAddr, maxAddr);
+			PortableExecutable pe =
+				new PortableExecutable(provider, SectionLayout.MEMORY, false, false);
+			if (pe.getNTHeader() == null) {
+				return;
+			}
+			// Pass a null program so the opinion does not touch program memory (e.g. Rust
+			// detection); only the compiler identity is needed, which is applied below.
+			CompilerEnum compiler =
+				CompilerOpinion.getOpinion(pe, provider, null, monitor, new MessageLog());
+			if (compiler != CompilerEnum.Unknown) {
+				program.setCompiler(compiler.toString());
+			}
+		}
+		catch (Exception e) {
+			// Main module is not a parseable PE image in the dump; leave the compiler unset.
 		}
 	}
 

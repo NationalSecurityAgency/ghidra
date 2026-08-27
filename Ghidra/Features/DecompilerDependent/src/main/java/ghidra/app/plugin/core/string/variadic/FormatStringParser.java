@@ -659,7 +659,7 @@ public class FormatStringParser {
 			case 'X':
 				return new UnsignedIntegerDataType(dataTypeManager);
 			case 'p':
-				return dataTypeManager.getPointer(DataType.VOID);
+				return dataTypeManager.getPointer(VoidDataType.dataType);
 			case 's':
 				return dataTypeManager.getPointer(new CharDataType(dataTypeManager));
 			case 'n':

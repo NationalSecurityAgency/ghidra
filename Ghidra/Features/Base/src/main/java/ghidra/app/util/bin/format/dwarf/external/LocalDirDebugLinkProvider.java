@@ -21,6 +21,7 @@ import java.util.zip.CRC32;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
+import utilities.util.FileUtilities;
 
 /**
  * Searches for DWARF external debug files specified via a debug-link filename / crc in a directory.
@@ -96,7 +97,7 @@ public class LocalDirDebugLinkProvider implements DebugFileProvider {
 	}
 
 	private void ensureSafeFilename(String filename) throws IOException {
-		File testFile = new File(searchDir, filename);
+		File testFile = FileUtilities.getSecureFile(searchDir, filename);
 		if (!searchDir.equals(testFile.getParentFile())) {
 			throw new IOException("Unsupported path specified in debug file: " + filename);
 		}

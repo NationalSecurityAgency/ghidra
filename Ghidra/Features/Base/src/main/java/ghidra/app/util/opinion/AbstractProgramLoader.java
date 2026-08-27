@@ -281,7 +281,7 @@ public abstract class AbstractProgramLoader implements Loader {
 		int id = prog.startTransaction("Set program properties");
 		boolean success = false;
 		try {
-			setProgramProperties(prog, settings.provider(), getName());
+			setProgramProperties(prog, settings.provider(), getName(), settings.monitor());
 			try {
 				if (shouldSetImageBase(prog, imageBase)) {
 					prog.setImageBase(imageBase, true);
@@ -327,17 +327,25 @@ public abstract class AbstractProgramLoader implements Loader {
 	 * @param prog {@link Program} (with active transaction)
 	 * @param provider {@link ByteProvider} that the program was created from
 	 * @param executableFormatName executable format string
+	 * @param monitor The {@link TaskMonitor}
 	 * @throws IOException if error reading from ByteProvider
 	 */
 	public static void setProgramProperties(Program prog, ByteProvider provider,
-			String executableFormatName) throws IOException {
+			String executableFormatName, TaskMonitor monitor) throws IOException {
 		prog.setExecutablePath(provider.getAbsolutePath());
 		if (executableFormatName != null) {
 			prog.setExecutableFormat(executableFormatName);
 		}
 		FSRL fsrl = provider.getFSRL();
-		String md5 =
-			(fsrl != null && fsrl.getMD5() != null) ? fsrl.getMD5() : computeBinaryMD5(provider);
+		String md5;
+		monitor.setIndeterminate(true);
+		if (fsrl != null && fsrl.getMD5() != null) {
+			md5 = fsrl.getMD5();
+		}
+		else {
+			monitor.setMessage("Computing MD5...");
+			md5 = computeBinaryMD5(provider);
+		}
 		if (fsrl != null) {
 			if (fsrl.getMD5() == null) {
 				fsrl = fsrl.withMD5(md5);
@@ -345,8 +353,12 @@ public abstract class AbstractProgramLoader implements Loader {
 			FSRL.writeToProgramInfo(prog, fsrl);
 		}
 		prog.setExecutableMD5(md5);
+
+		monitor.setMessage("Computing SHA256...");
 		String sha256 = computeBinarySHA256(provider);
 		prog.setExecutableSHA256(sha256);
+
+		monitor.setIndeterminate(false);
 	}
 
 	/**
