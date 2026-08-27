@@ -120,7 +120,15 @@ public class ResourceManager {
 	 * @return the File for the given resource; null if there is no such file
 	 */
 	public static File getResourceFile(String filename) {
-		URL url = getResource(filename);
+
+		URL url = classLoader.getResource(filename);
+		if (url == null || !"file".equals(url.getProtocol())) {
+			// In the gradle test environment we may have find a resource inside of an upstream
+			// module jar.  Since this method expects a file object, see if it lives in an upstream
+			// test module resource directory.
+			url = getResource(getTestSearchPaths(), filename);
+		}
+
 		if (url == null || !"file".equals(url.getProtocol())) {
 			return null;
 		}
