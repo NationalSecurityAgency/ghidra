@@ -381,7 +381,7 @@ VAlignMemAddrRxS4: "("^rx5^"+"^Simm32_0810_13^")"	is rx5 & Simm32_0810_13 {
 	export *[ram]:$(HVX_VECTOR_SIZE) ptr;
 }
 VAlignMemAddrRxS4: "("^rx5^")"	is rx5 & op0810=0 & op13=0 {
-	ptr = rx5 & ~(0x3F); # align offset
+	local ptr = rx5 & ~(0x3F); # align offset
 	export *[ram]:$(HVX_VECTOR_SIZE) ptr;
 }
 
