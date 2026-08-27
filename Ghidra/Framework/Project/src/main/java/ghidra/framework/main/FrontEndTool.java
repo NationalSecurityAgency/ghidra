@@ -88,15 +88,17 @@ import help.HelpService;
  * manner.
  */
 public class FrontEndTool extends PluginTool implements OptionsChangeListener {
-	public static final String DEFAULT_TOOL_LAUNCH_MODE = "Default Tool Launch Mode";
-	public static final String AUTOMATICALLY_SAVE_TOOLS = "Automatically Save Tools";
-	private static final String USE_ALERT_ANIMATION_OPTION_NAME = "Use Notification Animation";
-	private static final String USE_COMBINED_ALT_GRAPH_OPTION_NAME = "Use Combined Alt Keys";
-	private static final String SHOW_TOOLTIPS_OPTION_NAME = "Show Tooltips";
-	private static final String BLINKING_CURSORS_OPTION_NAME = "Allow Blinking Cursors";
 
-	private static final String ENABLE_COMPRESSED_DATABUFFER_OUTPUT =
+	private static final String BLINKING_CURSORS_OPTION_NAME = "Allow Blinking Cursors";
+	public static final String AUTOMATICALLY_SAVE_TOOLS = "Automatically Save Tools";
+	public static final String DEFAULT_TOOL_LAUNCH_MODE = "Default Tool Launch Mode";
+	private static final String SHOW_TOOLTIPS_OPTION_NAME = "Show Tooltips";
+	private static final String USE_COMPRESSED_DATABUFFER_OUTPUT =
 		"Use DataBuffer Output Compression";
+	private static final String USE_NATURAL_SORT = "Use Natural File Sort";
+	private static final String USE_COMBINED_ALT_GRAPH_OPTION_NAME = "Use Combined Alt Keys";
+	private static final String USE_ALERT_ANIMATION_OPTION_NAME = "Use Notification Animation";
+
 	private static final Boolean ENABLE_COMPRESSED_DATABUFFER_OUTPUT_DEFAULT = true;
 
 	private static final String RESTORE_PREVIOUS_PROJECT_NAME = "Restore Previous Project";
@@ -356,7 +358,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 		options.registerOption(SHOW_TOOLTIPS_OPTION_NAME, true, help,
 			"Controls the display of tooltip popup windows.");
-		options.registerOption(ENABLE_COMPRESSED_DATABUFFER_OUTPUT,
+		options.registerOption(USE_COMPRESSED_DATABUFFER_OUTPUT,
 			ENABLE_COMPRESSED_DATABUFFER_OUTPUT_DEFAULT, help,
 			"When enabled data buffers sent to Ghidra Server are compressed (see server " +
 				"configuration for other direction)");
@@ -366,6 +368,9 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 		options.registerOption(RESTORE_PREVIOUS_PROJECT_NAME, true, help,
 			"Restore the previous project when Ghidra starts.");
+
+		options.registerOption(USE_NATURAL_SORT, true, help,
+			"Use a natural sort for program files with numeric digits treated as numeric values.");
 
 		defaultLaunchMode = options.getEnum(DEFAULT_TOOL_LAUNCH_MODE, defaultLaunchMode);
 
@@ -382,7 +387,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		DockingUtils.setGlobalTooltipEnabledOption(showToolTips);
 
 		boolean compressDataBuffers =
-			options.getBoolean(ENABLE_COMPRESSED_DATABUFFER_OUTPUT,
+			options.getBoolean(USE_COMPRESSED_DATABUFFER_OUTPUT,
 				ENABLE_COMPRESSED_DATABUFFER_OUTPUT_DEFAULT);
 		DataBuffer.enableCompressedSerializationOutput(compressDataBuffers);
 
@@ -390,6 +395,9 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 		boolean blink = options.getBoolean(BLINKING_CURSORS_OPTION_NAME, true);
 		Gui.setBlinkingCursors(blink);
+
+		boolean useNaturalSort = options.getBoolean(USE_NATURAL_SORT, true);
+		plugin.setUseNaturalSort(useNaturalSort);
 
 		options.addOptionsChangeListener(this);
 	}
@@ -412,7 +420,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		else if (SHOW_TOOLTIPS_OPTION_NAME.equals(optionName)) {
 			DockingUtils.setGlobalTooltipEnabledOption((Boolean) newValue);
 		}
-		else if (ENABLE_COMPRESSED_DATABUFFER_OUTPUT.equals(optionName)) {
+		else if (USE_COMPRESSED_DATABUFFER_OUTPUT.equals(optionName)) {
 			DataBuffer.enableCompressedSerializationOutput((Boolean) newValue);
 		}
 		else if (RESTORE_PREVIOUS_PROJECT_NAME.equals(optionName)) {
@@ -420,6 +428,9 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		}
 		else if (BLINKING_CURSORS_OPTION_NAME.equals(optionName)) {
 			Gui.setBlinkingCursors((Boolean) newValue);
+		}
+		else if (USE_NATURAL_SORT.equals(optionName)) {
+			plugin.setUseNaturalSort((Boolean) newValue);
 		}
 	}
 
