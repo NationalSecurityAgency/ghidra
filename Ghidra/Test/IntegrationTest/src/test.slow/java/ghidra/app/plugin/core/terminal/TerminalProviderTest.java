@@ -15,9 +15,8 @@
  */
 package ghidra.app.plugin.core.terminal;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assert.*;
+import static org.junit.Assume.*;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
@@ -122,7 +121,6 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 				term.addTerminalListener(new TerminalListener() {
 					@Override
 					public void resized(short cols, short rows) {
-						// System.err.println("resized: " + cols + "x" + rows);
 						child.setWindowSize(cols, rows);
 					}
 				});
@@ -157,7 +155,6 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 				term.addTerminalListener(new TerminalListener() {
 					@Override
 					public void resized(short cols, short rows) {
-						// System.err.println("resized: " + cols + "x" + rows);
 						child.setWindowSize(cols, rows);
 					}
 				});
@@ -189,7 +186,6 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 				term.addTerminalListener(new TerminalListener() {
 					@Override
 					public void resized(short cols, short rows) {
-						// System.err.println("resized: " + cols + "x" + rows);
 						child.setWindowSize(cols, rows);
 					}
 				});

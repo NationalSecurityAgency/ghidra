@@ -15,8 +15,7 @@
  */
 package ghidra.pcode.emu.jit.gen;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.io.*;
 import java.lang.invoke.MethodHandles;
@@ -52,8 +51,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.util.DefaultLanguageService;
-import ghidra.util.NumericUtilities;
-import ghidra.util.SystemUtilities;
+import ghidra.util.*;
 
 @SuppressWarnings("javadoc")
 public abstract class AbstractJitCodeGeneratorTest extends AbstractJitTest {
@@ -69,7 +67,7 @@ public abstract class AbstractJitCodeGeneratorTest extends AbstractJitTest {
 		if (!DEBUG_ENABLED) {
 			return;
 		}
-		System.out.println(program);
+		Msg.debug(AbstractJitCodeGeneratorTest.class, program);
 	}
 
 	public static void dumpClass(byte[] classbytes) throws Exception {
@@ -287,7 +285,6 @@ public abstract class AbstractJitCodeGeneratorTest extends AbstractJitTest {
 
 		@PcodeUserop(functional = true)
 		public int tap_int(int a) {
-			System.err.println("tap: %x".formatted(a));
 			return a;
 		}
 	}

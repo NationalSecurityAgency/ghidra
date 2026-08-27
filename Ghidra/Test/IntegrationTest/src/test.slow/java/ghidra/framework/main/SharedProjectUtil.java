@@ -35,6 +35,7 @@ import ghidra.framework.main.wizard.project.*;
 import ghidra.framework.model.*;
 import ghidra.server.remote.ServerTestUtil;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
+import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.UserAccessException;
 import utilities.util.FileUtilities;
@@ -63,7 +64,8 @@ public class SharedProjectUtil {
 	public static boolean createSharedProject(FrontEndTool frontEndTool, final String projectName)
 			throws Exception {
 		// create shared project against existing repository
-		System.err.println("SharedProjectUtil.createSharedProject(): " + projectName);
+		Msg.info(SharedProjectUtil.class,
+			"SharedProjectUtil.createSharedProject(): " + projectName);
 
 		UtilProjectListener projectListener = new UtilProjectListener();
 		frontEndTool.addProjectListener(projectListener);
@@ -130,7 +132,7 @@ public class SharedProjectUtil {
 		AbstractGuiTest.pressButton(finishButton, true);
 		AbstractGuiTest.waitForSwing();
 		boolean didOpen = waitForProjectToOpen(projectName, projectListener);
-		System.err.println("\tdid the project get opened?: " + didOpen);
+		Msg.info(SharedProjectUtil.class, "\tdid the project get opened?: " + didOpen);
 		return didOpen;
 	}
 
@@ -148,7 +150,8 @@ public class SharedProjectUtil {
 		AbstractGuiTest.waitForSwing();
 		boolean success = desiredProjectName.equals(lastOpenedProjectName);
 		if (!success) {
-			System.err.println("\tOpen windows: " + AbstractDockingTest.getOpenWindowsAsString());
+			Msg.info(SharedProjectUtil.class,
+				"\tOpen windows: " + AbstractDockingTest.getOpenWindowsAsString());
 		}
 
 		return success;
@@ -167,14 +170,14 @@ public class SharedProjectUtil {
 				Thread.sleep(50);
 			}
 			catch (InterruptedException e) {
-				e.printStackTrace();
+				Msg.error(SharedProjectUtil.class, e, e);
 			}
 
 			AbstractGhidraHeadlessIntegrationTest.deleteProject(projectDirectory.getAbsolutePath(),
 				projectName);
 		}
 		if (count > 500) {
-			System.err.println("Could not delete " + projectName);
+			Msg.warn(SharedProjectUtil.class, "Could not delete " + projectName);
 			return false;
 		}
 		return true;
@@ -192,7 +195,7 @@ public class SharedProjectUtil {
 	 * @throws Exception if there are any exceptions starting the server
 	 */
 	public static RepositoryAdapter startServer() throws Exception {
-		System.err.println("SharedProjectUtil.startServer()...");
+		Msg.info(SharedProjectUtil.class, "SharedProjectUtil.startServer()...");
 		repositoryServer = null;
 		File parent = new File(AbstractGTest.getTestDirectoryPath());
 
@@ -200,16 +203,19 @@ public class SharedProjectUtil {
 		serverRoot = new File(parent, "My_Server");
 		FileUtilities.deleteDir(serverRoot);
 
-		System.err.println("SharedProjectUtil.startServer()\tgetting server adapter...");
+		Msg.info(SharedProjectUtil.class,
+			"SharedProjectUtil.startServer()\tgetting server adapter...");
 		repositoryServer = ServerTestUtil.getServerAdapter(serverRoot, new String[] { USER });
 
-		System.err.println("SharedProjectUtil.startServer()\tchecking connection...");
+		Msg.info(SharedProjectUtil.class,
+			"SharedProjectUtil.startServer()\tchecking connection...");
 		if (repositoryServer == null || !repositoryServer.isConnected()) {
 			deleteServerRoot();
 			fail("Server connect failed");
 		}
 
-		System.err.println("SharedProjectUtil.startServer()\tcreating repository...");
+		Msg.info(SharedProjectUtil.class,
+			"SharedProjectUtil.startServer()\tcreating repository...");
 		return repositoryServer.createRepository("My_Repository");
 	}
 
@@ -243,12 +249,14 @@ public class SharedProjectUtil {
 
 		@Override
 		public void projectClosed(Project project) {
-			System.err.println(getClass().getSimpleName() + ".projectClosed(): " + project);
+			Msg.info(UtilProjectListener.class,
+				getClass().getSimpleName() + ".projectClosed(): " + project);
 		}
 
 		@Override
 		public void projectOpened(Project project) {
-			System.err.println(getClass().getSimpleName() + ".projectOpened(): " + project);
+			Msg.info(UtilProjectListener.class,
+				getClass().getSimpleName() + ".projectOpened(): " + project);
 			lastOpenedProjectName = project.getName();
 		}
 
