@@ -251,6 +251,18 @@ Qv_1112_S05: "!"^qv1112   is qv1112 & op5=1 {
    tmp:$(HVX_PREDICATE_SIZE) = ~qv1112;
    export tmp;
 }
+
+# Vector predicate source qv0809 (inverted)
+Qv0809Not: "!"^qv0809   is qv0809 {
+   tmp:$(HVX_PREDICATE_SIZE) = ~qv0809;
+   export tmp;
+}
+
+# Vector predicate source qv2223 (inverted)
+Qv2223Not: "!"^qv2223   is qv2223 {
+   tmp:$(HVX_PREDICATE_SIZE) = ~qv2223;
+   export tmp;
+}
  
 
 # Predicate Register Condition (least significant bit only)
@@ -290,7 +302,6 @@ VPuCond1112_S05: ".if(!"pu1112name")"		is op5=1 & pu1112 & pu1112name	[cond=1;] 
  <<COMMIT_COND>>
    ConditionReg = condition;
 }
-
 
 # Signed immediate s3
 Simm32_0810: "#"^s0810   is s0810 { export *[const]:4 s0810; }
@@ -543,6 +554,16 @@ define pcodeop vhistq;
    build EndPacket;
 }
 
+# (v60,1) and  --  "Qd4=and(Qs4,!Qt4)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  t  t  0  -  -  -  1  1  P  P  0  -  -  -  s  s  0  0  0  1  0  1  d  d
+
+:and Qd2,qv0809,Qv2223Not EndPacket  is iclass=0x1 & op2427=0xe & op21=0x0 & op1617=0x3 & op13=0x0 & op0207=0x5 & Qd2 & qv0809 & Qv2223Not & $(END_PACKET) {
+   Qd2 = qv0809 & Qv2223Not;
+   build EndPacket;
+}
+
 # (v60,1) or  --  "Qd4=or(Qs4,Qt4)"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
@@ -553,6 +574,16 @@ define pcodeop vhistq;
    build EndPacket;
 }
 
+# (v60,1) or  --  "Qd4=or(Qs4,!Qt4)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  t  t  0  -  -  -  1  1  P  P  0  -  -  -  s  s  0  0  0  1  0  0  d  d
+
+:or Qd2,qv0809,Qv2223Not EndPacket  is iclass=0x1 & op2427=0xe & op21=0x0 & op1617=0x3 & op13=0x0 & op0207=0x4 & Qd2 & qv0809 & Qv2223Not & $(END_PACKET) {
+   Qd2 = qv0809 | Qv2223Not;
+   build EndPacket;
+}
+
 # (v60,1) xor  --  "Qd4=xor(Qs4,Qt4)"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
@@ -560,26 +591,6 @@ define pcodeop vhistq;
 
 :xor Qd2,qv0809,qv2223 EndPacket  is iclass=0x1 & op2427=0xe & op21=0x0 & op1617=0x3 & op13=0x0 & op0207=0x3 & Qd2 & qv0809 & qv2223 & $(END_PACKET) {
    Qd2 = qv0809 ^ qv2223;
-   build EndPacket;
-}
-
-# (v60,1) or  --  "Qd4=or(Qs4,!Qt4)"
-#  _________________________________________________________________________________________________
-#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  0  0  1  1  1  1  0  t  t  0  -  -  -  1  1  P  P  0  -  -  -  s  s  0  0  0  1  0  0  d  d
-
-:or Qd2,qv0809,"!"^qv2223 EndPacket  is iclass=0x1 & op2427=0xe & op21=0x0 & op1617=0x3 & op13=0x0 & op0207=0x4 & Qd2 & qv0809 & qv2223 & $(END_PACKET) {
-   Qd2 = qv0809 | ~qv2223;
-   build EndPacket;
-}
-
-# (v60,1) and  --  "Qd4=and(Qs4,!Qt4)"
-#  _________________________________________________________________________________________________
-#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  0  0  1  1  1  1  0  t  t  0  -  -  -  1  1  P  P  0  -  -  -  s  s  0  0  0  1  0  1  d  d
-
-:and Qd2,qv0809,"!"^qv2223 EndPacket  is iclass=0x1 & op2427=0xe & op21=0x0 & op1617=0x3 & op13=0x0 & op0207=0x5 & Qd2 & qv0809 & qv2223 & $(END_PACKET) {
-   Qd2 = qv0809 & ~qv2223;
    build EndPacket;
 }
 
@@ -978,6 +989,7 @@ define pcodeop vsub_WuwWuw_sat;
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    0  0  0  1  1  1  1  0  v  v  0  -  -  0  1  1  P  P  1  u  u  u  u  u  0  0  0  d  d  d  d  d
+#
 
 define pcodeop vand_QV;
 
@@ -991,8 +1003,8 @@ define pcodeop vand_QV;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    0  0  0  1  1  1  1  0  v  v  0  -  -  0  1  1  P  P  1  u  u  u  u  u  0  0  1  d  d  d  d  d
 
-:vand Vd5,qv2223,Vu_0812 EndPacket  is iclass=0x1 & op2427=0xe & op21=0x0 & op18=0x0 & op1617=0x3 & op13=0x1 & op0507=0x1 & Vd5 & qv2223 & Vu_0812 & $(END_PACKET) {
-   Vd5 = vand_QV(~qv2223,Vu_0812);
+:vand Vd5,Qv2223Not,Vu_0812 EndPacket  is iclass=0x1 & op2427=0xe & op21=0x0 & op18=0x0 & op1617=0x3 & op13=0x1 & op0507=0x1 & Vd5 & Qv2223Not & Vu_0812 & $(END_PACKET) {
+   Vd5 = vand_QV(Qv2223Not,Vu_0812);
    build EndPacket;
 }
 
@@ -2365,8 +2377,20 @@ define pcodeop vcmp_gtxacc_QVhfVhf;
 
 define pcodeop condnac_QnVbVb;
 
+# TODO: Verify that Ghidra renders properly (other cases like this exist)
 :accum^".if("^qv2223^")+=" VsB_0004,VuB_0812 EndPacket  is iclass=0x1 & op2427=0xe & op21=0x0 & op18=0x0 & op1617=0x1 & op13=0x1 & op0507=0x0 & qv2223 & Vd5 & VsB_0004 & VuB_0812 & $(END_PACKET) {
    Vd5 = condnac_QnVbVb(qv2223,VsB_0004,VuB_0812);
+   build EndPacket;
+}
+
+# (v60,1) "if (!Qv4) Vx.b+=Vu.b"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  v  v  0  -  -  0  0  1  P  P  1  u  u  u  u  u  0  1  1  x  x  x  x  x
+
+# TODO: Verify that Ghidra renders properly (other cases like this exist)
+:accum^".if(!"^qv2223^")+=" VsB_0004,VuB_0812 EndPacket  is iclass=0x1 & op2427=0xe & op21=0x0 & op18=0x0 & op1617=0x1 & op13=0x1 & op0507=0x3 & qv2223 & Vd5 & VsB_0004 & VuB_0812 & $(END_PACKET) {
+   Vd5 = condnac_QnVbVb(~qv2223,VsB_0004,VuB_0812);
    build EndPacket;
 }
 
@@ -2382,6 +2406,16 @@ define pcodeop condnac_QnVhVh;
    build EndPacket;
 }
 
+# (v60,1) "if (!Qv4) Vx.h+=Vu.h"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  v  v  0  -  -  0  0  1  P  P  1  u  u  u  u  u  1  0  0  x  x  x  x  x
+
+:accum^".if(!"^qv2223^")+=" VsH_0004,VuH_0812 EndPacket  is iclass=0x1 & op2427=0xe & op21=0x0 & op18=0x0 & op1617=0x1 & op13=0x1 & op0507=0x4 & qv2223 & Vd5 & VsH_0004 & VuH_0812 & $(END_PACKET) {
+   Vd5 = condnac_QnVhVh(~qv2223,VsH_0004,VuH_0812);
+   build EndPacket;
+}
+
 # (v60,1) "if (Qv4) Vx.w+=Vu.w"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
@@ -2391,26 +2425,6 @@ define pcodeop condnac_QnVwVw;
 
 :accum^".if("^qv2223^")+=" VsW_0004,VuW_0812 EndPacket  is iclass=0x1 & op2427=0xe & op21=0x0 & op18=0x0 & op1617=0x1 & op13=0x1 & op0507=0x2 & qv2223 & Vd5 & VsW_0004 & VuW_0812 & $(END_PACKET) {
    Vd5 = condnac_QnVwVw(qv2223,VsW_0004,VuW_0812);
-   build EndPacket;
-}
-
-# (v60,1) "if (!Qv4) Vx.b+=Vu.b"
-#  _________________________________________________________________________________________________
-#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  0  0  1  1  1  1  0  v  v  0  -  -  0  0  1  P  P  1  u  u  u  u  u  0  1  1  x  x  x  x  x
-
-:accum^".if(!"^qv2223^")+=" VsB_0004,VuB_0812 EndPacket  is iclass=0x1 & op2427=0xe & op21=0x0 & op18=0x0 & op1617=0x1 & op13=0x1 & op0507=0x3 & qv2223 & Vd5 & VsB_0004 & VuB_0812 & $(END_PACKET) {
-   Vd5 = condnac_QnVbVb(~qv2223,VsB_0004,VuB_0812);
-   build EndPacket;
-}
-
-# (v60,1) "if (!Qv4) Vx.h+=Vu.h"
-#  _________________________________________________________________________________________________
-#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  0  0  1  1  1  1  0  v  v  0  -  -  0  0  1  P  P  1  u  u  u  u  u  1  0  0  x  x  x  x  x
-
-:accum^".if(!"^qv2223^")+=" VsH_0004,VuH_0812 EndPacket  is iclass=0x1 & op2427=0xe & op21=0x0 & op18=0x0 & op1617=0x1 & op13=0x1 & op0507=0x4 & qv2223 & Vd5 & VsH_0004 & VuH_0812 & $(END_PACKET) {
-   Vd5 = condnac_QnVhVh(~qv2223,VsH_0004,VuH_0812);
    build EndPacket;
 }
 
@@ -4765,8 +4779,8 @@ define pcodeop V_vandor_VQR;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    0  0  0  1  1  0  0  1  0  1  1  t  t  t  t  t  P  P  1  -  -  1  u  u  0  1  1  x  x  x  x  x
 
-:vand|= Vd5,qv0809,rx5 EndPacket  is iclass=0x1 & op2127=0x4b & op13=0x1 & op10=0x1 & op0507=0x3 & Vd5 & vs5 & qv0809 & rx5 & $(END_PACKET) {
-   Vd5 = V_vandor_VQR(vs5,~qv0809,rx5);
+:vand|= Vd5,Qv0809Not,rx5 EndPacket  is iclass=0x1 & op2127=0x4b & op13=0x1 & op10=0x1 & op0507=0x3 & Vd5 & vs5 & Qv0809Not & rx5 & $(END_PACKET) {
+   Vd5 = V_vandor_VQR(vs5,Qv0809Not,rx5);
    build EndPacket;
 }
 
@@ -4787,8 +4801,8 @@ define pcodeop V_vand_QR;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    0  0  0  1  1  0  0  1  1  0  1  t  t  t  t  t  P  P  0  -  -  1  u  u  1  0  1  d  d  d  d  d
 
-:vand Vd5,qv0809,rx5 EndPacket  is iclass=0x1 & op2127=0x4d & op13=0x0 & op10=0x1 & op0507=0x5 & Vd5 & qv0809 & rx5 & $(END_PACKET) {
-   Vd5 = V_vand_QR(~qv0809,rx5);
+:vand Vd5,Qv0809Not,rx5 EndPacket  is iclass=0x1 & op2127=0x4d & op13=0x0 & op10=0x1 & op0507=0x5 & Vd5 & Qv0809Not & rx5 & $(END_PACKET) {
+   Vd5 = V_vand_QR(Qv0809Not,rx5);
    build EndPacket;
 }
 
