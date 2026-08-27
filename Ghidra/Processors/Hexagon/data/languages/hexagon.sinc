@@ -1245,14 +1245,14 @@ LdMemAIS4CircMuC9b2: LdAddrAIS4CircMuC9	is LdAddrAIS4CircMuC9 [ shift = 2; ] { e
 
 # Class-9 Load Memory: Rx++I:circ(Mu) -- 'cond=1' context must be set by conditional instructions! 
 LdAddrAIICircMuC9: "("^rx5^"++I:circ("^mu^"))"		is cond=0 & rx5 & rx5_ & mu {
-	i = (mu[28,4] << 7) | mu[17,7]; # Isolate I value from specified M0/M1 reg
+	local i = (mu[28,4] << 7) | mu[17,7]; # Isolate I value from specified M0/M1 reg
 	tmp:4 = circularAdd(rx5, i, mu);
 	export rx5; 
  <<COMMIT>>
   	rx5 = tmp;
 }
 LdAddrAIICircMuC9: "("^rx5^"++I:circ("^mu^"))"		is cond=1 & rx5 & rx5_ & mu {
-	i = (mu[28,4] << 7) | mu[17,7]; # Isolate I value from specified M0/M1 reg
+	local i = (mu[28,4] << 7) | mu[17,7]; # Isolate I value from specified M0/M1 reg
 	tmp:4 = circularAdd(rx5, i, mu);
 	export rx5;
  <<COMMIT_COND>>
@@ -1439,7 +1439,7 @@ StMemAIS4CircMuC10b: StAddrAIS4CircMuC10	is StAddrAIS4CircMuC10 [ shift = 0; ] {
 
 # Class-10 Store Memory: Rx++I:circ(Mu) -- 'cond=1' context must be set by conditional instructions!
 StAddrAIICircMuC10: "("^rx5^"++I:circ("^mu^"))"	is cond=0 & op2527=4 & rx5 & rx5_ & mu & i1=1 {
-	i = (mu[28,4] << 7) | mu[17,7]; # Isolate I value from specified M0/M1 reg
+	local i = (mu[28,4] << 7) | mu[17,7]; # Isolate I value from specified M0/M1 reg
 	tmp:4 = circularAdd(rx5, i, mu);
 	ptr:4 = rx5;
 	export ptr;
@@ -1447,7 +1447,7 @@ StAddrAIICircMuC10: "("^rx5^"++I:circ("^mu^"))"	is cond=0 & op2527=4 & rx5 & rx5
   	rx5 = tmp; 
 }
 StAddrAIICircMuC10: "("^rx5^"++I:circ("^mu^"))"	is cond=1 & op2527=4 & rx5 & rx5_ & mu & i1=1 {
-	i = (mu[28,4] << 7) | mu[17,7]; # Isolate I value from specified M0/M1 reg
+	local i = (mu[28,4] << 7) | mu[17,7]; # Isolate I value from specified M0/M1 reg
 	tmp:4 = circularAdd(rx5, i, mu);
 	ptr:4 = rx5;
 	export ptr;
@@ -2357,15 +2357,16 @@ ClbRss: "clb("^rss5")"	is rss5 { cnt:4 = countLeadingBits(rss5); export cnt; }
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    0  1  1  0  1  0  1  0  0  1  0  0  1  0  0  1  P  P  -  i  i  i  i  i  i  -  -  d  d  d  d  d  
 
-:assign Rd5,PacketPC EndPacket	is iclass=6 & op2127=0x52 & op1620=0x9 & i0712=0 & immext=0 & Rd5 & PacketPC & $(END_PACKET)
+:add Rd5,PacketPC,Uimm32_0712x EndPacket   is iclass=6 & op2127=0x52 & op1620=0x9 & Rd5 & PacketPC & Uimm32_0712x & $(END_PACKET)
 {
-	Rd5 = PacketPC;
+	Rd5 = PacketPC + Uimm32_0712x;
 	build EndPacket;
 }
 
-:add Rd5,PacketPC,Uimm32_0712x EndPacket	is iclass=6 & op2127=0x52 & op1620=0x9 & Rd5 & PacketPC & Uimm32_0712x & $(END_PACKET)
+# Simplification when adding zero constant to packet PC
+:assign Rd5,PacketPC EndPacket	           is iclass=6 & op2127=0x52 & op1620=0x9 & i0712=0 & immext=0 & Rd5 & PacketPC & $(END_PACKET)
 {
-	Rd5 = PacketPC + Uimm32_0712x;
+	Rd5 = PacketPC;
 	build EndPacket;
 }
 
@@ -13428,17 +13429,12 @@ define pcodeop pmpyw;
 	build EndPacket;
 }
 
-# (v2,6) resume  --  "resume ( Rs32 )"
-#  _________________________________________________________________________________________________
-#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  1  1  0  0  1  0  0  0  1  0  s  s  s  s  s  P  P  -  -  -  -  -  -  0  0  1  -  -  -  -  -  
-
 # (v5,8) popcount  --  "Rd32 = popcount ( Rss32 )"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    1  0  0  0  1  0  0  0  0  1  1  s  s  s  s  s  P  P  -  -  -  -  -  -  0  1  1  d  d  d  d  d  
 
-:popcount Rd5,rss5 EndPacket	is iclass=8 & op2127=0x43 & op0507=0x3 & rss5 & Rd5 & $(END_PACKET) {
+:"popcount" Rd5,rss5 EndPacket	is iclass=8 & op2127=0x43 & op0507=0x3 & rss5 & Rd5 & $(END_PACKET) {
 	Rd5 = popcount(rss5);
 	build EndPacket;
 }

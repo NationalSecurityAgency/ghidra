@@ -1,26 +1,13 @@
 #
 # Floating Point Instructions
-#   Added with V5x:
-#      convert_sf2d, convert_sf2df, convert_sf2ud, convert_sf2uw, convert_sf2w
-#      convert_d2sf, convert_ud2sf, convert_uw2sf, convert_w2sf
-#      convert_df2d, convert_df2sf, convert_df2ud, convert_df2uw, convert_df2w
-#      convert_d2df, convert_ud2df, convert_uw2df, convert_w2df
-#      sfadd, sfclass, sfcmp.*, sffixupd, sffixupn, sffixupr, sfmake, sfmax, sfmin, sfmpy, sfsub
-#      dfclass, dfcmp.*, dfmake
-#   Added with V65:
-#      sfinvsqrta, sfrecipa
-#   Added with V66:
-#      dfadd, dfsub
-#   Added with V67:   
-#      dfmax, dfmin, dfmpyfix, dfmpyhh, dfmpylh, dfmpyll
 #
-#   See bottom of this file for additional instruction patterns found within QEMU source code.
-#   Use of the undocumented double-precission floating instructions are disabled by default
-#   due to conflicts with V6 instructions.  The option ADD_DP_OPS must be defined to
-#   to enable the use of these undocumented instructions which will disable the use of
-#   corresponding V6 instructions which conflict.
+# NOTE: See bottom of this file for additional instruction patterns found within QEMU source code.
+# Use of the undocumented double-precission floating instructions are disabled by default
+# due to conflicts with V6 instructions.  The option ADD_DP_OPS must be defined to
+# to enable the use of these undocumented instructions which will disable the use of
+# corresponding V6 instructions which conflict.
 # 
-# NOTE:The SLEIGH built-in float operators (float2float, int2float, float2int) use IEEE-754 
+# NOTE: The SLEIGH built-in float operators (float2float, int2float, float2int) use IEEE-754 
 # round-to-nearest-even by default. Hexagon's USR register (bits 2:0 = RND) controls the 
 # rounding mode, and bits in USR capture FP exception status. For decompilation purposes the 
 # default rounding mode is acceptable. For emulation, programs that rely on non-default 
@@ -423,6 +410,28 @@ define pcodeop sffixupr;
 	build EndPacket;
 }
 
+# (v5,8) sfinvsqrta  --  "Rd,Pe = sfinvsqrta ( Rs )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    1  0  0  0  1  0  1  1  1  1  1  s  s  s  s  s  P  P  -  -  -  -  -  -  0  e  e  d  d  d  d  d
+
+define pcodeop sfinvsqrta;      # Rd = float inverse square root approximation of Rs
+define pcodeop sfinvsqrtaPred;  # Pe = exponent class bits of the approximation
+
+:sfinvsqrta Rd5,pu0506,rs5 EndPacket	is iclass=8 & op2127=0x5f & op7=0 & pu0506_ & pu0506 & rs5 & Rd5 & $(END_PACKET) {
+
+	# NOTE: Per PRM 80-N2040-60 p.594, Rd and Pe are only written when
+	# invsqrt_common(Rs) returns true (i.e. Rs is a normal-range value).
+	# For special inputs (NaN, infinity, zero, denormal) the writes are
+	# suppressed; that conditional is not modelled here.
+
+	Rd5 = sfinvsqrta(rs5);
+	pu0506_ = sfinvsqrtaPred(rs5);
+	build EndPacket;
+ <<COMMIT>>
+	pu0506 = pu0506_;
+}
+
 # (v5,13) sfmake  --  "Rd = sfmake ( #u10 ) :neg"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
@@ -535,8 +544,18 @@ define pcodeop sffixupr;
 	build EndPacket;
 }
 
+# (v5,14) sfrecipa  --  "Rd,Pe = sfrecipa ( Rs, Rt )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    1  1  1  0  1  0  1  1  1  1  1  s  s  s  s  s  P  P  0  t  t  t  t  t  1  e  e  d  d  d  d  d
 
-
+:sfrecipa Rd5,Pd0506,rs5,rt5 EndPacket	is iclass=14 & op2127=0x5f & op13=0 & op7=1 & Pd0506 & rs5 & rt5 & Rd5 & $(END_PACKET) {
+	src1:4 = rs5;
+	src2:4 = rt5;
+	Rd5 = reciprocal(src1, src2);
+	Pd0506 = Pd0506 & reciprocalAdjust(src1, src2);
+	build EndPacket;
+}
 
 # (v5,14) sfsub  --  "Rd = sfsub ( Rs, Rt )"
 #  _________________________________________________________________________________________________
@@ -624,46 +643,7 @@ define pcodeop sffixupr;
 }
 
 #
-# V65 Floating Point Instructions  
-#
-
-# (v65,8) sfinvsqrta  --  "Rd,Pe = sfinvsqrta ( Rs )"
-#  _________________________________________________________________________________________________
-#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
-#    1  0  0  0  1  0  1  1  1  1  1  s  s  s  s  s  P  P  -  -  -  -  -  -  0  e  e  d  d  d  d  d
-
-define pcodeop sfinvsqrta;      # Rd = float inverse square root approximation of Rs
-define pcodeop sfinvsqrtaPred;  # Pe = exponent class bits of the approximation
-
-:sfinvsqrta Rd5,pu0506,rs5 EndPacket	is iclass=8 & op2127=0x5f & op7=0 & pu0506_ & pu0506 & rs5 & Rd5 & $(END_PACKET) {
-	
-	# NOTE: Per PRM 80-N2040-60 p.594, Rd and Pe are only written when
-	# invsqrt_common(Rs) returns true (i.e. Rs is a normal-range value).
-	# For special inputs (NaN, infinity, zero, denormal) the writes are
-	# suppressed; that conditional is not modelled here.
-	
-	Rd5 = sfinvsqrta(rs5);
-	pu0506_ = sfinvsqrtaPred(rs5);
-	build EndPacket;
- <<COMMIT>>
-	pu0506 = pu0506_;
-}
-
-# (v65,14) sfrecipa  --  "Rd,Pe = sfrecipa ( Rs, Rt )"
-#  _________________________________________________________________________________________________
-#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
-#    1  1  1  0  1  0  1  1  1  1  1  s  s  s  s  s  P  P  0  t  t  t  t  t  1  e  e  d  d  d  d  d
-
-:sfrecipa Rd5,Pd0506,rs5,rt5 EndPacket	is iclass=14 & op2127=0x5f & op13=0 & op7=1 & Pd0506 & rs5 & rt5 & Rd5 & $(END_PACKET) {
-	src1:4 = rs5;
-	src2:4 = rt5;
-	Rd5 = reciprocal(src1, src2);
-	Pd0506 = Pd0506 & reciprocalAdjust(src1, src2);
-	build EndPacket;
-}
-
-#
-# V66 Floating Point Instructions  
+# V66 Floating Point Instructions
 #
 
 # (v66,14) dfadd  --  "Rdd = dfadd ( Rss, Rtt )"
@@ -720,7 +700,7 @@ define pcodeop sfinvsqrtaPred;  # Pe = exponent class bits of the approximation
  	build EndPacket;
 }
 
-# (v5,14) c  --  "Rdd = dfmpyfix ( Rss, Rtt )"
+# (v67,14) dfmpyfix  --  "Rdd = dfmpyfix ( Rss, Rtt )"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
 #    1  1  1  0  1  0  0  0  0  1  0  s  s  s  s  s  P  P  0  t  t  t  t  t  0  1  1  d  d  d  d  d
@@ -755,7 +735,7 @@ define pcodeop dfmpylh;
 	build EndPacket;
 }
 
-# (v5,14) dfmpyll  --  "Rdd = dfmpyll ( Rss, Rtt )"
+# (v67,14) dfmpyll  --  "Rdd = dfmpyll ( Rss, Rtt )"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00| 
 #    1  1  1  0  1  0  0  0  1  0  1  s  s  s  s  s  P  P  0  t  t  t  t  t  0  1  1  d  d  d  d  d
@@ -774,6 +754,14 @@ define pcodeop dfmpyll;
 # WARNING: The following instructions were discovered within various QEMU revisions not associated with a
 # specific processor version that we have been able to identify.  These instructions are for experimental
 # use only and may be intended for QEMU development testing only.
+#
+# The "??" version marker below is intentional: no processor version could be established for these
+# encodings.  QEMU itself guards them with its own ADD_DP_OPS conditional in
+# target/hexagon/imported/encode_pp.def (alongside the emulator-only F2_dfdivcheat / F2_dfsqrtcheat
+# encodings) without attributing an architecture version, has no corresponding definitions in
+# target/hexagon/imported/float.idef, and LLVM's HexagonDepInstrInfo.td has no definitions for them at
+# all.  They are likewise absent from every PRM checked (V60/V61 through V79), and the Qualcomm
+# hexagon-llvm-mc assembler rejects them for every supported -mcpu (hexagonv65 through hexagonv71).
 #
 #############################################################################################################
 
