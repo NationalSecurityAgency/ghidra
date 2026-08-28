@@ -144,6 +144,7 @@ public class SwiftNativeDemangler {
 			command.add("demangle");
 		}
 		command.addAll(options);
+		command.add("--"); // indicate end of flags
 		command.add(mangled);
 		Process p = new ProcessBuilder(command).redirectErrorStream(true).start();
 		return new BufferedReader(new InputStreamReader(p.getInputStream()));
