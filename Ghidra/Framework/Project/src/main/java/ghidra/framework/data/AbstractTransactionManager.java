@@ -66,14 +66,24 @@ abstract class AbstractTransactionManager {
 			lockReason = reason;
 			++lockCount;
 		}
-		if (doPrepare) {
-			for (DomainObjectAdapterDB domainObj : getDomainObjects()) {
-				if (domainObj.isChanged()) {
-					domainObj.prepareToSave();
+
+		boolean success = false;
+		try {
+			if (doPrepare) {
+				for (DomainObjectAdapterDB domainObj : getDomainObjects()) {
+					if (domainObj.isChanged()) {
+						domainObj.prepareToSave();
+					}
 				}
 			}
+			success = true;
+			return true;
 		}
-		return true;
+		finally {
+			if (!success) {
+				--lockCount;
+			}
+		}
 	}
 
 	/**
@@ -152,7 +162,10 @@ abstract class AbstractTransactionManager {
 	}
 
 	/**
-	 * Release the modification lock which is associated with the specified LockingTaskHandler.
+	 * Release the modification lock which is associated with the specified 
+	 * {@link LockingTaskMonitor handler}.
+	 * 
+	 * @param handler The {@link LockingTaskMonitor handler}
 	 */
 	final synchronized void unlock(LockingTaskMonitor handler) {
 		if (handler == null) {
