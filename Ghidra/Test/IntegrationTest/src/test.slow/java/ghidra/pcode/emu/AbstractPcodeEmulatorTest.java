@@ -429,6 +429,7 @@ public abstract class AbstractPcodeEmulatorTest extends AbstractGTest {
 		assertEquals(target, thread.getCounter());
 	}
 
+	@Test
 	public void testArmPltIntoThumbFunction() throws Exception {
 		PcodeEmulator emu = createEmulator(getLanguage(LANGID_ARMV8));
 		PcodeArithmetic<byte[]> arithmetic = emu.getArithmetic();
