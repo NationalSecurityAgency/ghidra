@@ -1584,8 +1584,10 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			throw new IllegalArgumentException();
 		}
 		boolean isResolveCacheOwner = false;
+		boolean isEquivalenceCacheOwner = false;
 		try (Closeable c = lock.write()) {
 			isResolveCacheOwner = dataMgr.activateResolveCache();
+			isEquivalenceCacheOwner = dataMgr.activateEquivalenceCache();
 			checkDeleted();
 			doReplaceWith((StructureInternal) dataType, true);
 		}
@@ -1598,6 +1600,9 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		finally {
 			if (isResolveCacheOwner) {
 				dataMgr.processResolveQueue(true);
+			}
+			if (isEquivalenceCacheOwner) {
+				dataMgr.clearEquivalenceCache();
 			}
 		}
 	}

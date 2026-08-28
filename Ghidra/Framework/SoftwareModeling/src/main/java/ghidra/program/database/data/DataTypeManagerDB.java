@@ -179,6 +179,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	private IdentityHashMap<DataType, DataType> resolveCache;
 	private TreeSet<ResolvePair> resolveQueue; // Note: is TreeSet really needed?
 	private LinkedList<DataType> conflictQueue = new LinkedList<>();
+	private Map<Long, Long> pendingDataTypesUsed;
+
+	private java.util.function.Function<DataType, DataType> resolveIdentityHint;
 
 	private boolean isBulkRemoving;
 
@@ -1224,6 +1227,13 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				return dataType;
 			}
 
+			if (resolveIdentityHint != null) {
+				DataType hinted = resolveIdentityHint.apply(dataType);
+				if (hinted != null && contains(hinted)) {
+					return hinted;
+				}
+			}
+
 			if (handler != null) {
 				currentHandler = handler;
 			}
@@ -1954,7 +1964,12 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 
 		// perform any necessary external use replacements
-		replaceDataTypesUsed(dataTypeReplacementMap);
+		if (pendingDataTypesUsed != null) {
+			pendingDataTypesUsed.putAll(dataTypeReplacementMap);
+		}
+		else {
+			replaceDataTypesUsed(dataTypeReplacementMap);
+		}
 
 		// perform actual database updates (e.g., record updates, change notifications, etc.)
 		for (Pair<DataType, DataType> dataTypeReplacement : dataTypeReplacements) {
@@ -4400,33 +4415,64 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 */
 	private DataType processConflictQueue(DataType dataType) {
 
-		while (!conflictQueue.isEmpty()) {
+		boolean isPendingDataTypesUsedOwner = pendingDataTypesUsed == null;
+		if (isPendingDataTypesUsedOwner) {
+			pendingDataTypesUsed = new HashMap<>();
+		}
+		try {
+			while (!conflictQueue.isEmpty()) {
 
 			// Process last conflict first (LIFO) to ensure conflicts with larger
 			// numbers are discarded first if applicable - although unlikely to occur
 			// during the same resolve-cycle.
-			DataType dt = conflictQueue.removeLast();
+				DataType dt = conflictQueue.removeLast();
 
-			List<DataType> relatedByName = findDataTypesSameLocation(dt);
-			for (DataType candidate : relatedByName) {
-				if (candidate != dt && DataTypeDB.isEquivalent(candidate, dt,
-					DataTypeConflictHandler.DEFAULT_HANDLER)) {
-					try {
-						replace(dt, candidate);
-						if (dt == dataType) {
-							// switch final type
-							dataType = candidate;
+				List<DataType> relatedByName = findDataTypesSameLocation(dt);
+				for (DataType candidate : relatedByName) {
+					if (candidate != dt && DataTypeDB.isEquivalent(candidate, dt,
+						DataTypeConflictHandler.DEFAULT_HANDLER)) {
+						try {
+							replace(dt, candidate);
+							if (dt == dataType) {
+								// switch final type
+								dataType = candidate;
+							}
+							break;
 						}
-						break;
-					}
-					catch (DataTypeDependencyException e) {
-						// ignore - try next if available
+						catch (DataTypeDependencyException e) {}
 					}
 				}
-			}
 
+			}
+		}
+		finally {
+			if (isPendingDataTypesUsedOwner) {
+				Map<Long, Long> batch = pendingDataTypesUsed;
+				pendingDataTypesUsed = null;
+				if (!batch.isEmpty()) {
+					replaceDataTypesUsed(batch);
+				}
+			}
 		}
 		return dataType;
+	}
+
+	/**
+	 * Lets {@link #resolve(DataType, DataTypeConflictHandler)} skip equivalence resolution for a
+	 * foreign datatype when {@code hint} maps it to a datatype this manager already contains.
+	 *
+	 * @param hint foreign datatype -> already-contained equivalent, or null if unknown
+	 * @return closes the hint; use in a try-with-resources around the resolve/replaceWith call
+	 */
+	public AutoCloseable withResolveIdentityHint(java.util.function.Function<DataType, DataType> hint) {
+		if (hint == null) {
+			throw new IllegalArgumentException("hint must not be null");
+		}
+		if (resolveIdentityHint != null) {
+			throw new IllegalStateException("resolve identity hint already active");
+		}
+		resolveIdentityHint = hint;
+		return () -> resolveIdentityHint = null;
 	}
 
 	/**
@@ -4638,7 +4684,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * 
 	 * @return true if successful, false if already active
 	 */
-	private boolean activateEquivalenceCache() {
+	boolean activateEquivalenceCache() {
 		EquivalenceCache cache = equivalenceCache.get();
 		if (cache == null) {
 			cache = new EquivalenceCache();
@@ -4649,7 +4695,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		return false;
 	}
 
-	private void clearEquivalenceCache() {
+	void clearEquivalenceCache() {
 		equivalenceCache.set(null);
 	}
 

@@ -471,6 +471,19 @@ public class CompositeViewerDataTypeManager<T extends Composite> extends StandAl
 	}
 
 	/**
+	 * Same as {@link #findOriginalDataTypeFromMyID(long)}, keyed by datatype instance instead of ID.
+	 *
+	 * @param viewDataType a datatype instance belonging to this manager
+	 * @return matching original-side datatype, or null
+	 */
+	public DataType findOriginalDataTypeFromViewDataType(DataType viewDataType) {
+		if (viewDataType.getDataTypeManager() != this || !(viewDataType instanceof DbObject)) {
+			return null;
+		}
+		return findOriginalDataTypeFromMyID(getID(viewDataType));
+	}
+
+	/**
 	 * Determine if the specified datatype which has previsouly been resolved to this datatype
 	 * manager originated from original composite's source (e.g., program).  
 	 * <P>
