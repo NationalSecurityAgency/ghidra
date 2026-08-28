@@ -99,7 +99,7 @@ public class DeadFlatDebuggerAPITest extends AbstractFlatDebuggerAPITest<FlatDeb
 
 		createAndOpenTrace();
 		TraceThread thread;
-		try (Transaction tx = tb.startTransaction()) {
+		try (Transaction _ = tb.startTransaction()) {
 			tb.createRootObject(buildContext(), "Target");
 			thread = tb.getOrAddThread("Threads[0]", 0);
 		}
@@ -130,7 +130,7 @@ public class DeadFlatDebuggerAPITest extends AbstractFlatDebuggerAPITest<FlatDeb
 
 		createAndOpenTrace();
 		TraceThread thread;
-		try (Transaction tx = tb.startTransaction()) {
+		try (Transaction _ = tb.startTransaction()) {
 			tb.createRootObject(buildContext(), "Target");
 			thread = tb.getOrAddThread("Threads[0]", 0);
 			TraceStack stack = tb.trace.getStackManager().getStack(thread, 0, true);
@@ -337,11 +337,16 @@ public class DeadFlatDebuggerAPITest extends AbstractFlatDebuggerAPITest<FlatDeb
 		TraceSchedule schedule =
 			traceManager.getCurrent().getTime().steppedForward(traceManager.getCurrentThread(), 1);
 
+		Trace trace = traceManager.getCurrentTrace();
+		assertEquals(addr(trace, 0x00400000), api.getProgramCounter());
+
 		api.stepEmuInstruction(1, monitor);
 		assertEquals(schedule, traceManager.getCurrent().getTime());
+		assertEquals(addr(trace, 0x00400002), api.getProgramCounter());
 
 		api.stepEmuInstruction(-1, monitor);
 		assertEquals(TraceSchedule.ZERO, traceManager.getCurrent().getTime());
+		assertEquals(addr(trace, 0x00400000), api.getProgramCounter());
 	}
 
 	@Test
