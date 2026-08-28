@@ -36,6 +36,8 @@ public class VTOptionDefines {
 	public static boolean DEFAULT_OPTION_FOR_PARAMETER_NAMES_REPLACE_IF_SAME_PRIORITY = false;
 	public static ReplaceDataChoices DEFAULT_OPTION_FOR_DATA_MATCH_DATA_TYPE =
 		ReplaceDataChoices.REPLACE_UNDEFINED_DATA_ONLY;
+	public static DataTypeConflictChoices DEFAULT_OPTION_FOR_DATA_TYPE_CONFLICT_HANDLER =
+		DataTypeConflictChoices.USE_EXISTING;
 	public static FunctionNameChoices DEFAULT_OPTION_FOR_FUNCTION_NAME =
 		FunctionNameChoices.ADD_AS_PRIMARY;
 	public static FunctionSignatureChoices DEFAULT_OPTION_FOR_FUNCTION_SIGNATURE =
@@ -83,6 +85,8 @@ public class VTOptionDefines {
 	public static final String POST_COMMENT = APPLY_MARKUP_OPTIONS_NAME + ".Post Comment";
 	public static final String DATA_MATCH_DATA_TYPE = APPLY_MARKUP_OPTIONS_NAME +
 		".Data Match Data Type";
+	public static final String DATA_TYPE_CONFLICT_HANDLER = APPLY_MARKUP_OPTIONS_NAME +
+		".Data Type Conflict Handler";
 	public static final String FUNCTION_SIGNATURE = APPLY_MARKUP_OPTIONS_NAME +
 		".Function Signature";
 	public static final String CALLING_CONVENTION = APPLY_MARKUP_OPTIONS_NAME +

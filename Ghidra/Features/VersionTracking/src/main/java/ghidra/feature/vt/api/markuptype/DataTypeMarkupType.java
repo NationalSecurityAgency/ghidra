@@ -24,6 +24,7 @@ import ghidra.feature.vt.api.stringable.DataTypeStringable;
 import ghidra.feature.vt.api.util.Stringable;
 import ghidra.feature.vt.api.util.VersionTrackingApplyException;
 import ghidra.feature.vt.gui.util.VTMatchApplyChoices;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.DataTypeConflictChoices;
 import ghidra.feature.vt.gui.util.VTMatchApplyChoices.ReplaceDataChoices;
 import ghidra.feature.vt.gui.util.VTOptionDefines;
 import ghidra.framework.options.Options;
@@ -331,6 +332,17 @@ public class DataTypeMarkupType extends VTMarkupType {
 		if (sourceDataLength <= 0) {
 			sourceDataLength = sourceData.getLength();
 		}
+
+		DataTypeConflictChoices conflictChoice = markupOptions.getEnum(
+			VTOptionDefines.DATA_TYPE_CONFLICT_HANDLER,
+			VTOptionDefines.DEFAULT_OPTION_FOR_DATA_TYPE_CONFLICT_HANDLER);
+		DataTypeConflictHandler conflictHandler = switch (conflictChoice) {
+			case USE_EXISTING -> DataTypeConflictHandler.KEEP_HANDLER;
+			case REPLACE_EXISTING -> DataTypeConflictHandler.REPLACE_HANDLER;
+			default -> DataTypeConflictHandler.DEFAULT_HANDLER;
+		};
+		sourceDataType =
+			destinationProgram.getDataTypeManager().resolve(sourceDataType, conflictHandler);
 
 		try {
 			return setDataType(destinationProgram, destinationAddress, sourceDataType,

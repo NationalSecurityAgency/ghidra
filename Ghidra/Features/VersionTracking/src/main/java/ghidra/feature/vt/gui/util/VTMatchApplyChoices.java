@@ -239,4 +239,21 @@ public class VTMatchApplyChoices {
 		}
 	}
 
+	public static enum DataTypeConflictChoices {
+		USE_EXISTING("Use Existing Data Type"),
+		RENAME_AND_ADD("Rename New Data Type"),
+		REPLACE_EXISTING("Replace Existing Data Type");
+
+		private String optionDisplayString;
+
+		private DataTypeConflictChoices(String optionDisplayString) {
+			this.optionDisplayString = optionDisplayString;
+		}
+
+		@Override
+		public String toString() {
+			return optionDisplayString;
+		}
+	}
+
 }
