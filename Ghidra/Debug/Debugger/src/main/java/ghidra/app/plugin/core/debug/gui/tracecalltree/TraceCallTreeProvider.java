@@ -79,6 +79,7 @@ public class TraceCallTreeProvider extends ComponentProviderAdapter
 			setEnabled(true);
 			Icon icon = Icons.CLEAR_ICON;
 			setToolBarData(new ToolBarData(icon, "log"));
+			setHelpLocation(new HelpLocation("TraceCallTreePlugin", "clear_log"));
 		}
 
 		@Override
@@ -94,6 +95,7 @@ public class TraceCallTreeProvider extends ComponentProviderAdapter
 			setEnabled(true);
 			Icon icon = Icons.COLLAPSE_ALL_ICON;
 			setToolBarData(new ToolBarData(icon, "expand"));
+			setHelpLocation(new HelpLocation("TraceCallTreePlugin", "collapse_recursive"));
 		}
 
 		@Override
@@ -114,6 +116,7 @@ public class TraceCallTreeProvider extends ComponentProviderAdapter
 			setEnabled(true);
 			Icon icon = Icons.HOME_ICON;
 			setToolBarData(new ToolBarData(icon, "jump"));
+			setHelpLocation(new HelpLocation("TraceCallTreePlugin", "jump_to_current"));
 		}
 
 		@Override
@@ -134,6 +137,7 @@ public class TraceCallTreeProvider extends ComponentProviderAdapter
 			setEnabled(true);
 			Icon icon = Icons.REFRESH_ICON;
 			setToolBarData(new ToolBarData(icon, "refresh"));
+			setHelpLocation(new HelpLocation("TraceCallTreePlugin", "rebuild_call_tree"));
 		}
 
 		@Override
@@ -158,6 +162,7 @@ public class TraceCallTreeProvider extends ComponentProviderAdapter
 			Icon icon = Icons.WARNING_ICON;
 			setToolBarData(new ToolBarData(icon, "log"));
 			setSelected(showLogWindow);
+			setHelpLocation(new HelpLocation("TraceCallTreePlugin", "show_log_window"));
 		}
 
 		@Override
@@ -188,6 +193,7 @@ public class TraceCallTreeProvider extends ComponentProviderAdapter
 			setEnabled(true);
 			Icon icon = Icons.ARROW_UP_LEFT_ICON;
 			setToolBarData(new ToolBarData(icon, "show"));
+			setHelpLocation(new HelpLocation("TraceCallTreePlugin", "show_returns"));
 			setSelected(showReturns);
 		}
 
@@ -212,6 +218,7 @@ public class TraceCallTreeProvider extends ComponentProviderAdapter
 			setEnabled(true);
 			Icon icon = Icons.NAVIGATE_ON_INCOMING_EVENT_ICON;
 			setToolBarData(new ToolBarData(icon, "show"));
+			setHelpLocation(new HelpLocation("TraceCallTreePlugin", "show_tail_calls"));
 			setSelected(showTailCalls);
 		}
 
@@ -286,6 +293,7 @@ public class TraceCallTreeProvider extends ComponentProviderAdapter
 			setEnabled(true);
 			Icon icon = Icons.EXPAND_ALL_ICON;
 			setToolBarData(new ToolBarData(icon, "expand"));
+			setHelpLocation(new HelpLocation("TraceCallTreePlugin", "expand_recursive"));
 		}
 
 		@Override
@@ -298,6 +306,10 @@ public class TraceCallTreeProvider extends ComponentProviderAdapter
 			}
 		}
 	}
+
+	// Package-private for screenshots
+	final UnfoldRecursiveAction unfoldRecursiveAction;
+	final ShowReturnsToggleAction showReturnsToggleAction;
 
 	protected static double computeResizeWeight(JSplitPane split) {
 		final java.util.function.Function<Dimension, Integer> axis =
@@ -326,12 +338,12 @@ public class TraceCallTreeProvider extends ComponentProviderAdapter
 	private final Map<Trace, Long> traceToMaxSnap = new HashMap<>();
 
 	private final Map<Trace, RootCache> rootNodesForTraceThreadMap = new HashMap<>();
-	private boolean rootNodeChanged = false;
 
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 	private JComponent component;
-	private TraceCallTreeTable treeTable;
+	// Package-private for screenshots
+	TraceCallTreeTable treeTable;
 	private AbstractTraceCallTreeNode currentRootNode;
 	private AbstractTraceCallTreeNode currentNode;
 	private TraceCallTreeModel treeTableModel;
@@ -398,13 +410,16 @@ public class TraceCallTreeProvider extends ComponentProviderAdapter
 		setVisible(true);
 		tool.addPopupActionProvider(this);
 		tool.addLocalAction(this, new FoldRecursiveAction(this));
-		tool.addLocalAction(this, new UnfoldRecursiveAction(this));
-		tool.addLocalAction(this, new ShowReturnsToggleAction(this));
+		unfoldRecursiveAction = new UnfoldRecursiveAction(this);
+		tool.addLocalAction(this, unfoldRecursiveAction);
+		showReturnsToggleAction = new ShowReturnsToggleAction(this);
+		tool.addLocalAction(this, showReturnsToggleAction);
 		tool.addLocalAction(this, new ShowTailCallsToggleAction(this));
 		tool.addLocalAction(this, new RebuildCallTreeAction(this));
 		tool.addLocalAction(this, new JumpToCurrentAction(this));
 		tool.addLocalAction(this, new ShowLogWindowAction(this));
 		tool.addLocalAction(this, new ClearLogAction(this));
+		setHelpLocation(new HelpLocation("TraceCallTreePlugin", "plugin"));
 	}
 
 	private void buildPanel() {
@@ -905,10 +920,10 @@ public class TraceCallTreeProvider extends ComponentProviderAdapter
 		callTreeNodeCompletableFuture.whenComplete((result, ex) -> {
 			if ((ex != null) && !(ex instanceof CancellationException)) {
 				treeTable.setStatusMessage(ex.getMessage());
+				return;
 			}
 			else if (result != null) {
 				currentRootNode = result;
-				rootNodeChanged = true;
 				final Map<TraceThread, AbstractTraceCallTreeNode> threadMap =
 					rootNodesForTraceThreadMap
 							.computeIfAbsent(coords.getTrace(), e -> new RootCache())
@@ -1255,7 +1270,6 @@ public class TraceCallTreeProvider extends ComponentProviderAdapter
 			final Map<TraceThread, AbstractTraceCallTreeNode> threadMap =
 				rootNodesForTraceThreadMap.get(coords.getTrace()).rootNodesPerThread();
 			if (threadMap.containsKey(coords.getThread())) {
-				rootNodeChanged = threadMap.get(coords.getThread()) != currentRootNode;
 				currentRootNode = threadMap.get(coords.getThread());
 				refresh(coords);
 			}
@@ -1289,12 +1303,8 @@ public class TraceCallTreeProvider extends ComponentProviderAdapter
 
 	private void updateModel(AbstractTraceCallTreeNode node) {
 		SwingUtilities.invokeLater(() -> {
-			treeTableModel.setRootNode(node);
-			if (rootNodeChanged) {
-				rootNodeChanged = false;
-				if (node != null) {
-					treeTableModel.setNumberOfParameterColumns(node.getLargestParamSize());
-				}
+			if (treeTableModel.setRootNode(node) && node != null) {
+				treeTableModel.setNumberOfParameterColumns(node.getLargestParamSize());
 			}
 		});
 	}
