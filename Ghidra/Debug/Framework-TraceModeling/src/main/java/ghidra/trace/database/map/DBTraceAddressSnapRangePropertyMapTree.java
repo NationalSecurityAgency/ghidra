@@ -516,7 +516,7 @@ public class DBTraceAddressSnapRangePropertyMapTree<T,
 				new ImmutableTraceAddressSnapRange(space.getMinAddress(), range.getMaxAddress(),
 					span),
 				new ImmutableTraceAddressSnapRange(range.getMinAddress(), space.getMaxAddress(),
-					Lifespan.nowOnMaybeScratch(span.lmax())),
+					Lifespan.nowOnMaybeScratch(span.lmin())),
 				null);
 		}
 

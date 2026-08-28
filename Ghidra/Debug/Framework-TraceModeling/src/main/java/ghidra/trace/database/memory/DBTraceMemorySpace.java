@@ -1083,6 +1083,270 @@ public class DBTraceMemorySpace
 		}
 	}
 
+	private static List<Integer> withinBlockMatchOffsets(byte[] buf, byte[] pattern) {
+		List<Integer> offsets = new ArrayList<>();
+		byte firstByte = pattern[0];
+		for (int off = 0; off < buf.length - pattern.length; off++) {
+			if (buf[off] == firstByte &&
+			    Arrays.mismatch(buf, off, off + pattern.length, pattern, 0, pattern.length) == -1) {
+				offsets.add(off);
+			}
+		}
+		return offsets;
+	}
+
+	private static List<Integer> partialUpperBoundaryMatchOffsets(byte[] buf, byte[] pattern) {
+		List<Integer> offsets = new ArrayList<>();
+		int startOffset = buf.length - Math.min(buf.length, pattern.length) + 1;
+		byte firstByte = pattern[0];
+		for (int off = startOffset; off < buf.length; off++) {
+			int lengthToCheck = buf.length - off;
+			if (buf[off] == firstByte &&
+			    Arrays.mismatch(buf, off, off + lengthToCheck, pattern, 0, lengthToCheck) == -1) {
+				offsets.add(off);
+			}
+		}
+		return offsets;
+	}
+
+	private static List<TraceAddressSnapRange> coalesceLifespansAndPruneToExactSearch(int hitLength,
+			Map<Address, List<Lifespan>> hits, AddressRange targetRange, Lifespan targetSpan) {
+		hits.values().forEach(l -> l.sort(Comparator.comparing(Lifespan::lmin)));
+
+		List<TraceAddressSnapRange> retHits = new ArrayList<>();
+
+		for (Entry<Address, List<Lifespan>> entry : hits.entrySet()) {
+			AddressRangeImpl range =
+					new AddressRangeImpl(entry.getKey(), entry.getKey().add(hitLength));
+			if (!targetRange.intersects(range.getMinAddress(), range.getMaxAddress())) {
+				continue;
+			}
+			Lifespan accumulator = entry.getValue().getFirst();
+			for (Lifespan lifespan : entry.getValue()) {
+				if (accumulator != lifespan) {
+					if (accumulator.intersects(lifespan) ||
+					    accumulator.lmax() + 1 == lifespan.lmin()) {
+						accumulator = accumulator.bound(lifespan);
+					}
+					else {
+						retHits.add(new ImmutableTraceAddressSnapRange(range, accumulator));
+						accumulator = lifespan;
+					}
+				}
+			}
+			ImmutableTraceAddressSnapRange snapRange =
+					new ImmutableTraceAddressSnapRange(range, accumulator);
+			if (!retHits.contains(snapRange)) {
+				retHits.add(snapRange);
+			}
+		}
+
+		return retHits.stream().filter(e -> e.getLifespan().intersects(targetSpan)).toList();
+	}
+
+	@Override
+	public Collection<Entry<TraceAddressSnapRange, TraceMemoryState>> getStates(Lifespan span,
+			AddressRange range) {
+		assertInSpace(range);
+		return doGetStates(span, range);
+	}
+
+	@Override
+	public List<TraceAddressSnapRange> findBytesAcrossLifespan(Lifespan span, AddressRange range, byte[] pattern,
+			TaskMonitor monitor) {
+		assertInSpace(range);
+		if (pattern.length == 0) {
+			return List.of();
+		}
+
+		Map<Address, List<Lifespan>> hits = searchBytesByMemoryBlocks(range, pattern, monitor);
+
+		return coalesceLifespansAndPruneToExactSearch(pattern.length, hits, range, span);
+	}
+
+	private Map<Address, List<Lifespan>> searchBytesByMemoryBlocks(AddressRange range,
+			byte[] pattern, TaskMonitor monitor) {
+		// Cheat a little to include a lower block in the case that the pattern crosses the lower
+		// search boundary
+		long minOffset = Math.max(range.getMinAddress().getUnsignedOffset() - pattern.length, 0);
+		long maxOffset = range.getMaxAddress().getUnsignedOffset();
+		long firstBlock = minOffset & BLOCK_MASK;
+		long lastBlock = maxOffset & BLOCK_MASK;
+
+		OffsetSnap lo = new OffsetSnap(firstBlock, Long.MIN_VALUE);
+		OffsetSnap hi = new OffsetSnap(lastBlock, Long.MAX_VALUE);
+
+		Map<Address, List<Lifespan>> hits = new HashMap<>();
+
+		for (Entry<OffsetSnap, DBTraceMemoryBlockEntry> ent : blocksByOffset.sub(lo, true, hi,
+				true).entries()) {
+			if (monitor.isCancelled()) {
+				return Map.of();
+			}
+
+			byte[] blockBuf = new byte[BLOCK_SIZE];
+			try (var _ = LockHold.lock(lock.readLock())) {
+				ent.getValue().getBytes(ByteBuffer.wrap(blockBuf), 0, BLOCK_SIZE);
+			}
+			catch (IOException e) {
+				blockStore.dbError(e);
+				continue;
+			}
+			Map<OffsetSnap, Lifespan> lifespanCache = new HashMap<>();
+			patternSearchWithinBlock(pattern, ent, blockBuf, hits, lifespanCache);
+			patternSearchSpanningBlocks(pattern, monitor, ent, blockBuf, hits, lifespanCache);
+		}
+
+		return hits;
+	}
+
+	private void patternSearchWithinBlock(byte[] pattern,
+			Entry<OffsetSnap, DBTraceMemoryBlockEntry> ent, byte[] blockBuf,
+			Map<Address, List<Lifespan>> hits, Map<OffsetSnap, Lifespan> lifespanCache) {
+		for (int off : withinBlockMatchOffsets(blockBuf, pattern)) {
+			Address address = toAddress(ent.getValue().getOffset() + off);
+			hits.computeIfAbsent(address, e -> new ArrayList<>());
+			hits.get(address).add(getLifespanOfBlock(ent.getKey(), lifespanCache));
+		}
+	}
+
+	private void patternSearchSpanningBlocks(byte[] pattern, TaskMonitor monitor,
+			Entry<OffsetSnap, DBTraceMemoryBlockEntry> ent, byte[] blockBuf,
+			Map<Address, List<Lifespan>> hits, Map<OffsetSnap, Lifespan> lifespanCache) {
+		int adjacentBlocksToCheck = (int) Math.ceil((double) pattern.length / BLOCK_SIZE) + 1;
+
+		int leadingZeros = 0;
+		for (byte b : pattern) {
+			if (b != 0) {
+				break;
+			}
+			leadingZeros++;
+		}
+		byte[] modifiedPattern = Arrays.copyOfRange(pattern, leadingZeros, pattern.length);
+
+		// Check upper bounds if we hit a partial match
+		for (int off : partialUpperBoundaryMatchOffsets(blockBuf, modifiedPattern)) {
+			if (monitor.isCancelled()) {
+				return;
+			}
+			List<Lifespan> adjacentBlocks =
+					getIntersectingLifespansOfAdjacentBlocks(ent.getKey(), adjacentBlocksToCheck,
+							null, lifespanCache);
+			for (Lifespan lifespan : adjacentBlocks) {
+				byte[] buf = new byte[pattern.length];
+				getBytes(lifespan.lmin(),
+						toAddress(ent.getValue().getOffset() + off - leadingZeros),
+						ByteBuffer.wrap(buf));
+
+				if (Arrays.mismatch(buf, pattern) == -1) {
+					Address address = toAddress(ent.getValue().getOffset() + off - leadingZeros);
+					hits.computeIfAbsent(address, e -> new ArrayList<>());
+					hits.get(address).add(lifespan);
+				}
+			}
+		}
+
+		// Check lower bounds since we got leading 0s to deal with
+		if (leadingZeros > 0 && !lowerMemoryBlockExists(ent.getKey())) {
+			byte[] buf = new byte[pattern.length];
+			getBytes(ent.getKey().snap, toAddress(ent.getValue().getOffset() - leadingZeros),
+					ByteBuffer.wrap(buf));
+			if (Arrays.mismatch(buf, pattern) == -1) {
+				Address address = toAddress(ent.getValue().getOffset() - leadingZeros);
+				hits.computeIfAbsent(address, e -> new ArrayList<>());
+				hits.get(address).add(getLifespanOfBlock(ent.getKey(), lifespanCache));
+			}
+		}
+	}
+
+	private boolean lowerMemoryBlockExists(OffsetSnap offsetSnap) {
+		OffsetSnap start = new OffsetSnap(offsetSnap.offset - BLOCK_SIZE, 0);
+		OffsetSnap stop = new OffsetSnap(offsetSnap.offset - BLOCK_SIZE, Long.MAX_VALUE);
+		return blocksByOffset.sub(start, true, stop, true).keys().iterator().hasNext();
+	}
+
+	private boolean upperMemoryBlockExists(OffsetSnap offsetSnap) {
+		OffsetSnap start = new OffsetSnap(offsetSnap.offset + BLOCK_SIZE, 0);
+		OffsetSnap stop = new OffsetSnap(offsetSnap.offset + BLOCK_SIZE, Long.MAX_VALUE);
+		return blocksByOffset.sub(start, true, stop, true).keys().iterator().hasNext();
+	}
+
+	private Lifespan getLifespanOfBlock(OffsetSnap offsetSnap, Map<OffsetSnap, Lifespan> cache) {
+		if (cache != null && cache.containsKey(offsetSnap)) {
+			return cache.get(offsetSnap);
+		}
+		Lifespan lifespan;
+		OffsetSnap nextOffsetSnap = blocksByOffset.higherKey(offsetSnap);
+		if (nextOffsetSnap == null) {
+			lifespan = Lifespan.nowOn(offsetSnap.snap);
+		}
+		else if (offsetSnap.offset == nextOffsetSnap.offset &&
+		         offsetSnap.isScratch() == nextOffsetSnap.isScratch()) {
+			lifespan = Lifespan.span(offsetSnap.snap, nextOffsetSnap.snap - 1);
+		}
+		else if (offsetSnap.isScratch()) {
+			lifespan = Lifespan.at(offsetSnap.snap);
+		}
+		else {
+			lifespan = Lifespan.nowOn(offsetSnap.snap);
+		}
+		if (cache != null) {
+			cache.put(offsetSnap, lifespan);
+		}
+		return lifespan;
+	}
+
+	private List<Lifespan> getIntersectingLifespansOfAdjacentBlocks(OffsetSnap offsetSnap,
+			int numberOfBlocks, Lifespan accumulatorSpan,
+			Map<OffsetSnap, Lifespan> lifespanCache) {
+		if (numberOfBlocks == 1) {
+			return List.of(accumulatorSpan);
+		}
+		List<Lifespan> intersectingLifespans = new ArrayList<>();
+		Lifespan curLifespan;
+		if (accumulatorSpan != null) {
+			curLifespan = accumulatorSpan;
+		}
+		else {
+			curLifespan = getLifespanOfBlock(offsetSnap, lifespanCache);
+		}
+
+		if (upperMemoryBlockExists(offsetSnap)) {
+			// Check all lifespans of next block for intersections
+			OffsetSnap firstHit = null;
+			OffsetSnap start = new OffsetSnap(offsetSnap.offset + BLOCK_SIZE, 0);
+			OffsetSnap stop = new OffsetSnap(offsetSnap.offset + BLOCK_SIZE, Long.MAX_VALUE);
+			for (OffsetSnap adjacentOffsetSnap : blocksByOffset.sub(start, true, stop, true)
+					.keys()) {
+				Lifespan intersected =
+						getLifespanOfBlock(adjacentOffsetSnap, lifespanCache).intersect(
+								curLifespan);
+				if (firstHit == null) {
+					firstHit = adjacentOffsetSnap;
+				}
+				if (!intersected.isEmpty()) {
+					intersectingLifespans.addAll(
+							getIntersectingLifespansOfAdjacentBlocks(adjacentOffsetSnap,
+									numberOfBlocks - 1, intersected, lifespanCache));
+				}
+			}
+
+			// Check if lifespan before block was initialized (i.e. when it was all 0s) intersects
+			assert firstHit != null;
+			Lifespan intersected = Lifespan.before(firstHit.snap).intersect(curLifespan);
+			if (!intersected.isEmpty()) {
+				intersectingLifespans.addAll(getIntersectingLifespansOfAdjacentBlocks(
+						new OffsetSnap(firstHit.offset, Long.MIN_VALUE), numberOfBlocks - 1,
+						intersected, lifespanCache));
+			}
+		}
+		else {
+			// Upper block was never touched so just return same lifespan
+			intersectingLifespans.add(curLifespan);
+		}
+		return intersectingLifespans;
+	}
+
 	@Override
 	public MemBuffer getBufferAt(long snap, Address start, ByteOrder byteOrder) {
 		return new DBTraceMemBuffer(this, snap, start, byteOrder);
