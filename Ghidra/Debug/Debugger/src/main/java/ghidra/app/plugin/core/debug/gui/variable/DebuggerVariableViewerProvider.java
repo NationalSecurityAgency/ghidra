@@ -80,14 +80,13 @@ public class DebuggerVariableViewerProvider extends ComponentProviderAdapter
 	interface DebuggerVariableViewerPopupAction {
 		String NAME = "Debugger variable viewer Popup Actions";
 		String DESCRIPTION = "Popup actions for debugger variable viewer";
-		String HELP_ANCHOR = "";
+		String HELP_ANCHOR = "popup_actions";
 		String GROUP1 = "z";
 		String GROUP2 = "zz";
 
-		static ActionBuilder builder(ComponentProvider owner, String subgroup, String... path) {
-			final String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR))
+		static ActionBuilder builder(String subgroup, String... path) {
+			return new ActionBuilder(NAME, "DebuggerVariableViewerPlugin").description(DESCRIPTION)
+					.helpLocation(new HelpLocation("DebuggerVariableViewerPlugin", HELP_ANCHOR))
 					.popupMenuGroup(GROUP1, subgroup)
 					.popupMenuPath(path)
 					.popupWhen(c -> true)
@@ -142,6 +141,8 @@ public class DebuggerVariableViewerProvider extends ComponentProviderAdapter
 
 	public DebuggerVariableViewerProvider(DebuggerVariableViewerPlugin plugin) {
 		super(plugin.getTool(), "Variable Viewer", plugin.getName());
+		setHelpLocation(new HelpLocation("DebuggerVariableViewerPlugin", "plugin"));
+
 		autoServiceWiring = AutoService.wireServicesConsumed(plugin, this);
 		pluginTool = plugin.getTool();
 		model = new DebuggerVariableViewerModel(plugin.getTool(), this);
@@ -174,6 +175,7 @@ public class DebuggerVariableViewerProvider extends ComponentProviderAdapter
 						c -> currentCoordinates != null && currentCoordinates.getTrace() != null)
 				.onAction(c -> {
 				})
+				.helpLocation(new HelpLocation("DebuggerVariableViewerPlugin", "enable_edits"))
 				.buildAndInstallLocal(this);
 
 		actionShowVariables =
@@ -188,6 +190,7 @@ public class DebuggerVariableViewerProvider extends ComponentProviderAdapter
 						new GIcon("icon.decompiler.action.provider"),
 						VariableViewerStates.DECOMPILER)
 				.toolBarGroup("z")
+				.helpLocation(new HelpLocation("DebuggerVariableViewerPlugin", "show_variables"))
 				.buildAndInstallLocal(this);
 
 		setVisible(true);
@@ -394,7 +397,7 @@ public class DebuggerVariableViewerProvider extends ComponentProviderAdapter
 				.getAddressFactory()
 				.getAddress(selected.getFirst().getValue());
 		if (address != null) {
-			addActions(result, "View *%s @ 0x%x in...".formatted(selected.getFirst().getSymbol(),
+			addActions(result, "Deref *%s @ 0x%x in...".formatted(selected.getFirst().getSymbol(),
 					address.getOffset()), address);
 		}
 		return result;
@@ -403,7 +406,7 @@ public class DebuggerVariableViewerProvider extends ComponentProviderAdapter
 	private void addActions(List<DockingActionIf> result, String name, Address address) {
 		// Add action for each additional debugger listing window
 		int i = 0;
-		result.add(DebuggerVariableViewerPopupAction.builder(this, Integer.toString(i), name,
+		result.add(DebuggerVariableViewerPopupAction.builder(Integer.toString(i), name,
 				"Main Listing").onAction(ctx -> {
 			if (listingService == null) {
 				return;
@@ -420,7 +423,7 @@ public class DebuggerVariableViewerProvider extends ComponentProviderAdapter
 				continue;
 			}
 
-			result.add(DebuggerVariableViewerPopupAction.builder(this, Integer.toString(i), name,
+			result.add(DebuggerVariableViewerPopupAction.builder(Integer.toString(i), name,
 					dl.getTitle()).onAction(ctx -> {
 				if (listingService == null) {
 					return;
@@ -433,8 +436,8 @@ public class DebuggerVariableViewerProvider extends ComponentProviderAdapter
 			i++;
 		}
 
-		result.add(DebuggerVariableViewerPopupAction.builder(this, Integer.toString(i), name,
-						"New Listing")
+		result.add(
+				DebuggerVariableViewerPopupAction.builder(Integer.toString(i), name, "New Listing")
 				.popupMenuGroup(DebuggerVariableViewerPopupAction.GROUP2)
 				.onAction(ctx -> {
 					if (listingService == null) {
