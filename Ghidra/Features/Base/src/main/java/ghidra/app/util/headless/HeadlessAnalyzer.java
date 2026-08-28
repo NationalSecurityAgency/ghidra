@@ -1697,6 +1697,10 @@ public class HeadlessAnalyzer {
 			folderPath += DomainFolder.SEPARATOR;
 		}
 		folderPath += startDir.getName();
+		
+		// Handles windows directory paths like "d:", both real and extracted paths on non-windows 
+		// filesystem or archive files
+		folderPath = folderPath.replaceAll(":/", "/");
 
 		for (GFile file : fs.getListing(startDir)) {
 			String name = file.getName();
@@ -1713,7 +1717,9 @@ public class HeadlessAnalyzer {
 				continue;
 			}
 			try {
-				checkValidFilename(fqFSRL.getName());
+				if (!file.isDirectory()) {
+					checkValidFilename(fqFSRL.getName());
+				}
 				processWithImport(fqFSRL, folderPath, depth, false);
 			}
 			catch (InvalidInputException e) {

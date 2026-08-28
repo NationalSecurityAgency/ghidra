@@ -66,7 +66,7 @@ for common use cases.
         [<a href="#-scriptlog-path-to-script-log-file">-scriptlog &lt;path to script log file&gt;</a>]
         [<a href="#-log-path-to-log-file">-log &lt;path to log file&gt;</a>]
         [<a href="#-overwrite">-overwrite</a>]
-        [<a href="#-mirror">-overwrite</a>]
+        [<a href="#-mirror">-mirror</a>]
         [<a href="#-recursive-depth">-recursive [&lt;depth&gt;]</a>]
         [<a href="#-readonly">-readOnly</a>]
         [<a href="#-deleteproject">-deleteProject</a>]
