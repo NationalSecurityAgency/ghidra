@@ -31,13 +31,11 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.pcode.*;
-import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * The interpreter of p-code ops in the domain of {@link Sym}
- * 
  * <p>
  * This is used for static analysis by executing specific basic blocks. As such, it should never be
  * expected to interpret a conditional jump. (TODO: This rule might be violated if a fall-through
@@ -101,14 +99,19 @@ public class SymPcodeExecutor extends PcodeExecutor<Sym> {
 
 	@Override
 	public void stepOp(PcodeOp op, PcodeFrame frame, PcodeUseropLibrary<Sym> library) {
-		// TODO: This function can probably be removed after GP-6707 is complete
 		try {
 			monitor.checkCancelled();
 		}
 		catch (CancelledException e) {
-			throw new PcodeExecutionException("Monitor was cancelled", frame, e);
+			throw new PcodeExecutionException("Cancelled", frame, e);
 		}
 		super.stepOp(op, frame, library);
+	}
+
+	@Override
+	protected void branchInternal(PcodeOp op, PcodeFrame frame, int relative) {
+		warnings.add(new IgnoredInternalFlowStackUnwindWarning(op.getSeqnum()));
+		// Don't call super! Could put us in a loop
 	}
 
 	/**
