@@ -31,8 +31,8 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.pcode.*;
-import ghidra.util.exception.InvalidInputException;
-import ghidra.util.exception.NotFoundException;
+import ghidra.util.Msg;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -97,6 +97,18 @@ public class SymPcodeExecutor extends PcodeExecutor<Sym> {
 	public void executeCallother(PcodeOp op, PcodeFrame frame, PcodeUseropLibrary<Sym> library) {
 		// Do nothing
 		// TODO: Is there a way to know if a userop affects the stack?
+	}
+
+	@Override
+	public void stepOp(PcodeOp op, PcodeFrame frame, PcodeUseropLibrary<Sym> library) {
+		// TODO: This function can probably be removed after GP-6707 is complete
+		try {
+			monitor.checkCancelled();
+		}
+		catch (CancelledException e) {
+			throw new PcodeExecutionException("Monitor was cancelled", frame, e);
+		}
+		super.stepOp(op, frame, library);
 	}
 
 	/**
