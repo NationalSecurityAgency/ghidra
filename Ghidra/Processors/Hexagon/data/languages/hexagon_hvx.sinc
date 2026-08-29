@@ -2,6 +2,8 @@
 
 # NOTES:
 # - HVX implementation has been updated through V79
+# - Decode additionally covers the V66 ZReg matrix family (vrmpyz / vr8mpyz / vr16mpyz
+#   and the z-register loads) plus V81 valign4, as decode-only stubs (unimpl pcode).
 # - HVX hardware supports either 64-byte or 128-byte vector lengths.  See hexagon.slaspec for
 #   default length of 128-bytes. 
 
