@@ -13737,8 +13737,8 @@ define pcodeop shuffeh;
 
 define pcodeop shuffob;
 
-:shuffob Rdd5,rss5,rtt5 EndPacket	is iclass=12 & op2227=0x4 & op0607=2 & Rdd5 & rss5 & rtt5 & $(END_PACKET) {
-	Rdd5 = shuffob(rss5,rtt5);
+:shuffob Rdd5,rtt5,rss5 EndPacket	is iclass=12 & op2227=0x4 & op0607=2 & Rdd5 & rss5 & rtt5 & $(END_PACKET) {
+	Rdd5 = shuffob(rtt5,rss5);
 	build EndPacket;
 }
 
@@ -13749,8 +13749,8 @@ define pcodeop shuffob;
 
 define pcodeop shuffoh;
 
-:shuffoh Rdd5,rss5,rtt5 EndPacket	is iclass=12 & op2227=0x6 & op0607=0 & op5=0 & Rdd5 & rss5 & rtt5 & $(END_PACKET) {
-	Rdd5 = shuffoh(rss5,rtt5);
+:shuffoh Rdd5,rtt5,rss5 EndPacket	is iclass=12 & op2227=0x6 & op0607=0 & op5=0 & Rdd5 & rss5 & rtt5 & $(END_PACKET) {
+	Rdd5 = shuffoh(rtt5,rss5);
 	build EndPacket;
 }
 
@@ -14806,10 +14806,10 @@ define pcodeop vaddubSat;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    1  1  0  1  0  0  1  1  0  0  0  s  s  s  s  s  P  P  -  t  t  t  t  t  1  0  1  d  d  d  d  d  
 
-:vaddw Rdd5,rtt5,rss5 EndPacket	is iclass=0xd & op2127=0x18 & op0507=5 & rss5 & rtt5 & Rdd5 & $(END_PACKET)
+:vaddw Rdd5,rss5,rtt5 EndPacket	is iclass=0xd & op2127=0x18 & op0507=5 & rss5 & rtt5 & Rdd5 & $(END_PACKET)
 {
-	Rdd5[0,32] = rtt5[0,32] + rss5[0,32];
-	Rdd5[32,32] = rtt5[32,32] + rss5[32,32];
+	Rdd5[0,32] = rss5[0,32] + rtt5[0,32];
+	Rdd5[32,32] = rss5[32,32] + rtt5[32,32];
 	build EndPacket;
 }
 
@@ -14818,12 +14818,12 @@ define pcodeop vaddubSat;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    1  1  0  1  0  0  1  1  0  0  0  s  s  s  s  s  P  P  -  t  t  t  t  t  1  1  0  d  d  d  d  d  
 
-:vaddw":sat" Rdd5,rtt5,rss5 EndPacket	is iclass=0xd & op2127=0x18 & op0507=6 & rss5 & rtt5 & Rdd5 & $(END_PACKET)
+:vaddw":sat" Rdd5,rss5,rtt5 EndPacket	is iclass=0xd & op2127=0x18 & op0507=6 & rss5 & rtt5 & Rdd5 & $(END_PACKET)
 {
 	w:4 = 0;
-	addSat32(w, rtt5[0,32], rss5[0,32]);
+	addSat32(w, rss5[0,32], rtt5[0,32]);
 	Rdd5[0,32] = w;
-	addSat32(w, rtt5[32,32], rss5[32,32]);
+	addSat32(w, rss5[32,32], rtt5[32,32]);
 	Rdd5[32,32] = w;
 	build EndPacket;
 }
@@ -15814,8 +15814,8 @@ define pcodeop vlsrw;
 
 define pcodeop vmaxb;
 
-:vmaxb Rdd5,rss5,rtt5 EndPacket	is iclass=13 & op2127=0x1e & op0507=6 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
-	Rdd5 = vmaxb(rss5, rtt5);
+:vmaxb Rdd5,rtt5,rss5 EndPacket	is iclass=13 & op2127=0x1e & op0507=6 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
+	Rdd5 = vmaxb(rtt5, rss5);
 	build EndPacket;
 }
 
@@ -15826,8 +15826,8 @@ define pcodeop vmaxb;
 
 define pcodeop vmaxh;
 
-:vmaxh Rdd5,rss5,rtt5 EndPacket	is iclass=13 & op2127=0x1e & op0507=1 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
-	Rdd5 = vmaxh(rss5, rtt5);
+:vmaxh Rdd5,rtt5,rss5 EndPacket	is iclass=13 & op2127=0x1e & op0507=1 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
+	Rdd5 = vmaxh(rtt5, rss5);
 	build EndPacket;
 }
 
@@ -15838,8 +15838,8 @@ define pcodeop vmaxh;
 
 define pcodeop vmaxub;
 
-:vmaxub Rdd5,rss5,rtt5 EndPacket	is iclass=13 & op2127=0x1e & op0507=0 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
-	Rdd5 = vmaxub(rss5, rtt5);
+:vmaxub Rdd5,rtt5,rss5 EndPacket	is iclass=13 & op2127=0x1e & op0507=0 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
+	Rdd5 = vmaxub(rtt5, rss5);
 	build EndPacket;
 }
 
@@ -15850,8 +15850,8 @@ define pcodeop vmaxub;
 
 define pcodeop vmaxuh;
 
-:vmaxuh Rdd5,rss5,rtt5 EndPacket	is iclass=13 & op2127=0x1e & op0507=2 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
-	Rdd5 = vmaxuh(rss5, rtt5);
+:vmaxuh Rdd5,rtt5,rss5 EndPacket	is iclass=13 & op2127=0x1e & op0507=2 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
+	Rdd5 = vmaxuh(rtt5, rss5);
 	build EndPacket;
 }
 
@@ -15862,8 +15862,8 @@ define pcodeop vmaxuh;
 
 define pcodeop vmaxuw;
 
-:vmaxuw Rdd5,rss5,rtt5 EndPacket	is iclass=13 & op2127=0x1d & op0507=5 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
-	Rdd5 = vmaxuw(rss5, rtt5);
+:vmaxuw Rdd5,rtt5,rss5 EndPacket	is iclass=13 & op2127=0x1d & op0507=5 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
+	Rdd5 = vmaxuw(rtt5, rss5);
 	build EndPacket;
 }
 
@@ -15874,8 +15874,8 @@ define pcodeop vmaxuw;
 
 define pcodeop vmaxw;
 
-:vmaxw Rdd5,rss5,rtt5 EndPacket	is iclass=13 & op2127=0x1e & op0507=3 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
-	Rdd5 = vmaxw(rss5, rtt5);
+:vmaxw Rdd5,rtt5,rss5 EndPacket	is iclass=13 & op2127=0x1e & op0507=3 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
+	Rdd5 = vmaxw(rtt5, rss5);
 	build EndPacket;
 }
 
@@ -15886,8 +15886,8 @@ define pcodeop vmaxw;
 
 define pcodeop vminb;
 
-:vminb Rdd5,rss5,rtt5 EndPacket	is iclass=13 & op2127=0x1e & op0507=7 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
-	Rdd5 = vminb(rss5, rtt5);
+:vminb Rdd5,rtt5,rss5 EndPacket	is iclass=13 & op2127=0x1e & op0507=7 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
+	Rdd5 = vminb(rtt5, rss5);
 	build EndPacket;
 }
 
@@ -15898,8 +15898,8 @@ define pcodeop vminb;
 
 define pcodeop vminh;
 
-:vminh Rdd5,rss5,rtt5 EndPacket	is iclass=13 & op2127=0x1d & op0507=1 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
-	Rdd5 = vminh(rss5, rtt5);
+:vminh Rdd5,rtt5,rss5 EndPacket	is iclass=13 & op2127=0x1d & op0507=1 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
+	Rdd5 = vminh(rtt5, rss5);
 	build EndPacket;
 }
 
@@ -15910,8 +15910,8 @@ define pcodeop vminh;
 
 define pcodeop vminub;
 
-:vminub Rdd5,rss5,rtt5 EndPacket	is iclass=13 & op2127=0x1d & op0507=0 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
-	Rdd5 = vminub(rss5, rtt5);
+:vminub Rdd5,rtt5,rss5 EndPacket	is iclass=13 & op2127=0x1d & op0507=0 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
+	Rdd5 = vminub(rtt5, rss5);
 	build EndPacket;
 }
 
@@ -15921,9 +15921,9 @@ define pcodeop vminub;
 #    1  1  1  0  1  0  1  0  1  1  1  s  s  s  s  s  P  P  0  t  t  t  t  t  0  e  e  d  d  d  d  d
 
 define pcodeop vminubPred; # per-byte predicate bits: Pe[i] = (first.ub[i] > second.ub[i])
-:vminub Rdd5,Pd0506,rss5,rtt5 EndPacket	is iclass=14 & op2127=0x57 & op13=0 & op7=0 & Rdd5 & Pd0506 & rtt5 & rss5 & $(END_PACKET) {
-	Rdd5 = vminub(rss5, rtt5);
-	Pd0506 = vminubPred(rss5, rtt5);
+:vminub Rdd5,Pd0506,rtt5,rss5 EndPacket	is iclass=14 & op2127=0x57 & op13=0 & op7=0 & Rdd5 & Pd0506 & rtt5 & rss5 & $(END_PACKET) {
+	Rdd5 = vminub(rtt5, rss5);
+	Pd0506 = vminubPred(rtt5, rss5);
 	build EndPacket;
 }
 
@@ -15934,8 +15934,8 @@ define pcodeop vminubPred; # per-byte predicate bits: Pe[i] = (first.ub[i] > sec
 
 define pcodeop vminuh;
 
-:vminuh Rdd5,rss5,rtt5 EndPacket	is iclass=13 & op2127=0x1d & op0507=2 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
-	Rdd5 = vminuh(rss5, rtt5);
+:vminuh Rdd5,rtt5,rss5 EndPacket	is iclass=13 & op2127=0x1d & op0507=2 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
+	Rdd5 = vminuh(rtt5, rss5);
 	build EndPacket;
 }
 
@@ -15946,8 +15946,8 @@ define pcodeop vminuh;
 
 define pcodeop vminuw;
 
-:vminuw Rdd5,rss5,rtt5 EndPacket	is iclass=13 & op2127=0x1d & op0507=4 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
-	Rdd5 = vminuw(rss5, rtt5);
+:vminuw Rdd5,rtt5,rss5 EndPacket	is iclass=13 & op2127=0x1d & op0507=4 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
+	Rdd5 = vminuw(rtt5, rss5);
 	build EndPacket;
 }
 
@@ -15958,8 +15958,8 @@ define pcodeop vminuw;
 
 define pcodeop vminw;
 
-:vminw Rdd5,rss5,rtt5 EndPacket	is iclass=13 & op2127=0x1d & op0507=3 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
-	Rdd5 = vminw(rss5, rtt5);
+:vminw Rdd5,rtt5,rss5 EndPacket	is iclass=13 & op2127=0x1d & op0507=3 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
+	Rdd5 = vminw(rtt5, rss5);
 	build EndPacket;
 }
 
