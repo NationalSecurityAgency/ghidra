@@ -10964,7 +10964,8 @@ int4 RuleExpandLoad::applyOp(PcodeOp *op,Funcdata &data)
       lsbCut = offset;
   }
   else {
-    // Check for natural integer truncation
+    // Check for natural integer truncation from an explicitly typed pointer
+    if (!rootPtr->isTypeLock()) return 0;
     if (meta != TYPE_INT && meta != TYPE_UINT) return 0;
     type_metatype outMeta = outVn->getTypeDefFacing()->getMetatype();
     if (outMeta != TYPE_INT && outMeta != TYPE_UINT && outMeta != TYPE_UNKNOWN && outMeta != TYPE_BOOL)
