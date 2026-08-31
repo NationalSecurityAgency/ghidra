@@ -1123,10 +1123,10 @@ define pcodeop vl1re64_v;
 # vl1re64.v  vd, (rs1)
 :vl1re64.v   vd, (rs1) is op2931=0x0 & op2828=0x0 & op2627=0x0 & op2525=0x1 & op2024=0x8 & rs1 & op1214=0x7 & vd & op0006=0x7 {vd=vl1re64_v(rs1);}
 
-define pcodeop vl1r_v;
-# vl1r.v       31..29=0 28=0 27..26=0 25=1 24..20=0x08 rs1 14..12=0x0 vd  6..0=0x07
-# vl1r.v   vd, (rs1)
-:vl1r.v    vd, (rs1) is op2931=0x0 & op2828=0x0 & op2627=0x0 & op2525=0x1 & op2024=0x8 & rs1 & op1214=0x0 & vd & op0006=0x7 {vd=vl1r_v(rs1);}
+define pcodeop vl1re8_v;
+# vl1re8.v       31..29=0 28=0 27..26=0 25=1 24..20=0x08 rs1 14..12=0x0 vd  6..0=0x07
+# vl1re8.v   vd, (rs1)
+:vl1re8.v    vd, (rs1) is op2931=0x0 & op2828=0x0 & op2627=0x0 & op2525=0x1 & op2024=0x8 & rs1 & op1214=0x0 & vd & op0006=0x7 {vd=vl1re8_v(rs1);}
 
 define pcodeop vl2re16_v;
 # vl2re16.v      31..29=1 28=0 27..26=0 25=1 24..20=0x08 rs1 14..12=0x5 vd  6..0=0x07
@@ -1143,10 +1143,10 @@ define pcodeop vl2re64_v;
 # vl2re64.v  vd, (rs1)
 :vl2re64.v   vd, (rs1) is op2931=0x1 & op2828=0x0 & op2627=0x0 & op2525=0x1 & op2024=0x8 & rs1 & op1214=0x7 & vd & op0006=0x7 {vd=vl2re64_v(rs1);}
 
-define pcodeop vl2r_v;
-# vl2r.v       31..29=1 28=0 27..26=0 25=1 24..20=0x08 rs1 14..12=0x0 vd  6..0=0x07
-# vl2r.v   vd, (rs1)
-:vl2r.v    vd, (rs1) is op2931=0x1 & op2828=0x0 & op2627=0x0 & op2525=0x1 & op2024=0x8 & rs1 & op1214=0x0 & vd & op0006=0x7 {vd=vl2r_v(rs1);}
+define pcodeop vl2re8_v;
+# vl2re8.v       31..29=1 28=0 27..26=0 25=1 24..20=0x08 rs1 14..12=0x0 vd  6..0=0x07
+# vl2re8.v   vd, (rs1)
+:vl2re8.v    vd, (rs1) is op2931=0x1 & op2828=0x0 & op2627=0x0 & op2525=0x1 & op2024=0x8 & rs1 & op1214=0x0 & vd & op0006=0x7 {vd=vl2re8_v(rs1);}
 
 define pcodeop vl4re16_v;
 # vl4re16.v      31..29=3 28=0 27..26=0 25=1 24..20=0x08 rs1 14..12=0x5 vd  6..0=0x07
@@ -1163,10 +1163,10 @@ define pcodeop vl4re64_v;
 # vl4re64.v  vd, (rs1)
 :vl4re64.v   vd, (rs1) is op2931=0x3 & op2828=0x0 & op2627=0x0 & op2525=0x1 & op2024=0x8 & rs1 & op1214=0x7 & vd & op0006=0x7 {vd=vl4re64_v(rs1);}
 
-define pcodeop vl4r_v;
-# vl4r.v       31..29=3 28=0 27..26=0 25=1 24..20=0x08 rs1 14..12=0x0 vd  6..0=0x07
-# vl4r.v   vd, (rs1)
-:vl4r.v    vd, (rs1) is op2931=0x3 & op2828=0x0 & op2627=0x0 & op2525=0x1 & op2024=0x8 & rs1 & op1214=0x0 & vd & op0006=0x7 {vd=vl4r_v(rs1);}
+define pcodeop vl4re8_v;
+# vl4re8.v       31..29=3 28=0 27..26=0 25=1 24..20=0x08 rs1 14..12=0x0 vd  6..0=0x07
+# vl4re8.v   vd, (rs1)
+:vl4re8.v    vd, (rs1) is op2931=0x3 & op2828=0x0 & op2627=0x0 & op2525=0x1 & op2024=0x8 & rs1 & op1214=0x0 & vd & op0006=0x7 {vd=vl4re8_v(rs1);}
 
 define pcodeop vl8re16_v;
 # vl8re16.v      31..29=7 28=0 27..26=0 25=1 24..20=0x08 rs1 14..12=0x5 vd  6..0=0x07
@@ -1183,10 +1183,10 @@ define pcodeop vl8re64_v;
 # vl8re64.v  vd, (rs1)
 :vl8re64.v   vd, (rs1) is op2931=0x7 & op2828=0x0 & op2627=0x0 & op2525=0x1 & op2024=0x8 & rs1 & op1214=0x7 & vd & op0006=0x7 {vd=vl8re64_v(rs1);}
 
-define pcodeop vl8r_v;
-# vl8r.v       31..29=7 28=0 27..26=0 25=1 24..20=0x08 rs1 14..12=0x0 vd  6..0=0x07
-# vl8r.v   vd, (rs1)
-:vl8r.v    vd, (rs1) is op2931=0x7 & op2828=0x0 & op2627=0x0 & op2525=0x1 & op2024=0x8 & rs1 & op1214=0x0 & vd & op0006=0x7 {vd=vl8r_v(rs1);}
+define pcodeop vl8re8_v;
+# vl8re8.v       31..29=7 28=0 27..26=0 25=1 24..20=0x08 rs1 14..12=0x0 vd  6..0=0x07
+# vl8re8.v   vd, (rs1)
+:vl8re8.v    vd, (rs1) is op2931=0x7 & op2828=0x0 & op2627=0x0 & op2525=0x1 & op2024=0x8 & rs1 & op1214=0x0 & vd & op0006=0x7 {vd=vl8re8_v(rs1);}
 
 define pcodeop vle1024_v;
 # vle1024.v      nf 28=1 27..26=0 vm 24..20=0 rs1 14..12=0x7  vd 6..0=0x07
@@ -1642,9 +1642,9 @@ define pcodeop vlseg8e8_v;
 :vlseg8e8.v vd, (rs1)         is nf & op2931=0x7 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7 {vd=vlseg8e8_v(rs1);}
 :vlseg8e8.v vd, (rs1), "v0.t" is nf & op2931=0x7 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7 {vd=vlseg8e8_v(rs1,v0);}
 
-define pcodeop vlm8_v;
-# vlm8.v    vd, (rs1)        # Load byte vector of length ceil(vl/8)
-:vlm.v      vd, (rs1)         is nf & op2828=0x0 & op2627=0x0 & vm & op2024=0x0b & rs1 & op1214=0x0 & vd & op0006=0x7 {vd=vlm8_v(rs1);} 
+define pcodeop vlm_v;
+# vlm.v    vd, (rs1)        # Load byte vector of length ceil(vl/8)
+:vlm.v      vd, (rs1)         is nf & op2828=0x0 & op2627=0x0 & vm & op2024=0x0b & rs1 & op1214=0x0 & vd & op0006=0x7 {vd=vlm_v(rs1);} 
 
 # vloxei8.v Vector indexed-ordered load instructions
 
@@ -3006,9 +3006,9 @@ define pcodeop vrsub_vx;
 :vrsub.vx  vd, vs2, rs1, "v0.t"  is op2631=0x3 & op2525=0 & vs2 & rs1      & op1214=0x4 & vd & op0006=0x57 {vd=vrsub_vx(vs2,rs1,v0);}
 
 define pcodeop vs1r_v;
-# vs1r.v         31..29=0 28=0 27..26=0 25=1 24..20=0x08 rs1 14..12=0x0 vs3 6..0=0x27
-# vs1r.v   vs3, (rs1)
-:vs1r.v    vs3, (rs1) is op2931=0x0 & op2828=0x0 & op2627=0x0 & op2525=0x1 & op2024=0x8 & rs1 & op1214=0x0 & vs3 & op0006=0x27 {vs1r_v(vs3,rs1);}
+# vs1re8.v         31..29=0 28=0 27..26=0 25=1 24..20=0x08 rs1 14..12=0x0 vs3 6..0=0x27
+# vs1re8.v   vs3, (rs1)
+:vs1re8.v    vs3, (rs1) is op2931=0x0 & op2828=0x0 & op2627=0x0 & op2525=0x1 & op2024=0x8 & rs1 & op1214=0x0 & vs3 & op0006=0x27 {vs1r_v(vs3,rs1);}
 
 define pcodeop vs2r_v;
 # vs2r.v         31..29=1 28=0 27..26=0 25=1 24..20=0x08 rs1 14..12=0x0 vs3 6..0=0x27
