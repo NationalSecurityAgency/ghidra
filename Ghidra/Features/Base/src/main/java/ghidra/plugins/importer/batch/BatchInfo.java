@@ -61,6 +61,23 @@ public class BatchInfo {
 		Collections.synchronizedList(new ArrayList<>());
 
 	/**
+	 * Tracks FSRLs already visited during the current batch session. Used to
+	 * detect filesystem cycles (symlink loops, self-referencing archives,
+	 * directory junctions, etc.) and prevent infinite recursion that would
+	 * otherwise cause {@link StackOverflowError} in the {@code doAddFile} /
+	 * {@code processFS} chain.
+	 */
+	private Set<FSRL> visitedFSRLs = Collections.synchronizedSet(new HashSet<>());
+
+	/**
+	 * Hard upper bound on filesystem nesting depth, enforced regardless of
+	 * {@link #maxDepth}. Belt-and-suspenders for cases where FSRL identity
+	 * comparison fails to detect a cycle (e.g., FSRLs that grow without ever
+	 * repeating).
+	 */
+	private static final int HARD_MAX_NEST_DEPTH = 32;
+
+	/**
 	 * Maximum depth of containers (ie. filesystems) to recurse into when processing
 	 * a file added by the user.
 	 * <p>
@@ -219,6 +236,26 @@ public class BatchInfo {
 			throws IOException, CancelledException {
 
 		// use the fsrl param instead of file.getFSRL() as param may have more info (ie. md5)
+
+		// Cycle detection: if this FSRL was already visited in the current batch
+		// session, skip it to break filesystem cycles (symlink loops, self-
+		// referencing archives, NTFS junctions, deep directory trees with
+		// back-references, etc.). Without this, doAddFile -> processFS ->
+		// doAddFile can recurse without bound and crash with StackOverflowError.
+		if (!visitedFSRLs.add(fsrl)) {
+			Msg.warn(this,
+				"BatchInfo: cycle detected, skipping already-visited FSRL: " + fsrl);
+			return false;
+		}
+
+		// Hard depth fallback: even if FSRL identity check misses a cycle (e.g.,
+		// FSRLs that grow without ever repeating), enforce an absolute cap so a
+		// pathological filesystem cannot consume the entire JVM stack.
+		if (fsrl.getNestingDepth() > HARD_MAX_NEST_DEPTH) {
+			Msg.warn(this, "BatchInfo: hard nesting depth limit (" +
+				HARD_MAX_NEST_DEPTH + ") reached, skipping: " + fsrl);
+			return false;
+		}
 
 		try (RefdFile refdFile = fsService.getRefdFile(fsrl, taskMonitor)) {
 			GFile file = refdFile.file;
