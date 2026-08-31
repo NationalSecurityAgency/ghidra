@@ -2579,13 +2579,12 @@ public class DataTypeMergeManager implements MergeResolver {
 		int ordinal = info.resultOrdinal;
 
 		DataTypeComponent dtc;
-		if (ordinal >= 0 || ordinal < struct.getNumComponents()) {
-			dtc = struct.getComponent(ordinal);
-		}
-		else {
-			throw new AssertException(
-				"Expected fixup component at ordinal " + ordinal + " in " + struct.getPathName());
-		}
+		if (ordinal < 0 || ordinal >= struct.getNumComponents()) {
+            throw new AssertException(
+                "Expected fixup component at ordinal " + ordinal + " in " + struct.getPathName());
+        }
+
+		dtc = struct.getComponent(ordinal);
 
 		long lastChangeTime = struct.getLastChangeTime(); // Don't let the time change.
 		try {
@@ -2675,13 +2674,21 @@ public class DataTypeMergeManager implements MergeResolver {
 
 		int ordinal = info.resultOrdinal;
 
-		DataTypeComponent dtc;
-		if (ordinal >= 0 || ordinal < struct.getNumComponents()) {
-			dtc = struct.getComponent(ordinal);
+		DataTypeComponent dtc = null;
+		if (info.offset >= 0) {
+			DataTypeComponent atOffset = struct.getComponentAt(info.offset);
+			if (atOffset != null && atOffset.getDataType() == BadDataType.dataType) {
+				dtc = atOffset;
+				ordinal = dtc.getOrdinal();
+			}
 		}
-		else {
-			throw new AssertException(
-				"Expected fixup component at ordinal " + ordinal + " in " + struct.getPathName());
+
+		if (dtc == null) {
+			if (ordinal < 0 || ordinal >= struct.getNumComponents()) {
+				throw new AssertException(
+					"Expected fixup component at ordinal " + ordinal + " in " + struct.getPathName());
+			}
+			dtc = struct.getComponent(ordinal);
 		}
 
 		long lastChangeTime = struct.getLastChangeTime(); // Don't let the time change.
