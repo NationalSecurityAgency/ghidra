@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<language_definitions>
+
+   <language processor="PicoBlaze"
+            endian="big"
+            size="24"
+            variant="KCPSM3"
+            version="1.0"
+            slafile="KCPSM3.sla"
+            processorspec="KCPSM3.pspec"
+            id="KCPSM3:BE:24:default">            
+    <description>PicoBlaze KCPSM3</description>
+    <compiler name="default" spec="KCPSM3.cspec" id="default"/>
+  </language> 
+  
+      <language processor="PicoBlaze"
+            endian="big"
+            size="24"
+            variant="KCPSM6"
+            version="1.0"
+            slafile="KCPSM6.sla"
+            processorspec="KCPSM6.pspec"
+            id="KCPSM6:BE:24:default">
+                <description>PicoBlaze KCPSM6</description>
+    <compiler name="default" spec="KCPSM3.cspec" id="default"/>
+  </language> 
+  
+</language_definitions>
