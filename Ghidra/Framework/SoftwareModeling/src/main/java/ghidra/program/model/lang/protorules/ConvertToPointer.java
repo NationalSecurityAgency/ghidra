@@ -67,7 +67,8 @@ public class ConvertToPointer extends AssignAction {
 	public int assignAddress(DataType dt, PrototypePieces proto, int pos, DataTypeManager dtManager,
 			int[] status, ParameterPieces res) {
 
-		int pointersize = (space != null) ? space.getPointerSize() : -1;
+		int pointersize = proto.model.getPointerSize(space);
+
 		// Convert the data-type to a pointer
 		DataType pointertp = dtManager.getPointer(dt, pointersize);
 		// (Recursively) assign storage
