@@ -159,15 +159,17 @@
 }
 
 # KMOVW/KMOVB/KMOVQ/KMOVD 3-499 PAGE 1069 LINE 56184
-:KMOVW Reg32, KReg_rm is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_NONE) & $(VEX_0F) & $(VEX_W0); byte=0x93; Reg32 & KReg_rm
+:KMOVW Reg32, KReg_rm is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_NONE) & $(VEX_0F) & $(VEX_W0); byte=0x93; Reg32 & KReg_rm & check_Reg32_dest
 {
 	Reg32 = zext(KReg_rm[0,16]);
+	build check_Reg32_dest;
 }
 
 # KMOVW/KMOVB/KMOVQ/KMOVD 3-499 PAGE 1069 LINE 56186
-:KMOVB Reg32, KReg_rm is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_W0); byte=0x93; Reg32 & KReg_rm
+:KMOVB Reg32, KReg_rm is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_W0); byte=0x93; Reg32 & KReg_rm & check_Reg32_dest
 {
 	Reg32 = zext(KReg_rm[0,8]);
+	build check_Reg32_dest;
 }
 
 # KMOVW/KMOVB/KMOVQ/KMOVD 3-499 PAGE 1069 LINE 56188
@@ -179,9 +181,10 @@
 @endif
 
 # KMOVW/KMOVB/KMOVQ/KMOVD 3-499 PAGE 1069 LINE 56190
-:KMOVD Reg32, KReg_rm is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_F2) & $(VEX_0F) & $(VEX_W0); byte=0x93; Reg32 & KReg_rm
+:KMOVD Reg32, KReg_rm is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_F2) & $(VEX_0F) & $(VEX_W0); byte=0x93; Reg32 & KReg_rm & check_Reg32_dest
 {
 	Reg32 = KReg_rm[0,32];
+	build check_Reg32_dest;
 }
 
 # KNOTW/KNOTB/KNOTQ/KNOTD 3-501 PAGE 1071 LINE 56266
