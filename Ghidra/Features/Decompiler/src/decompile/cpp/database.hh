@@ -405,7 +405,7 @@ public:
 /// meta-data on.
 class ExternRefSymbol : public Symbol {
   Address refaddr;			///< The \e placeholder address for meta-data
-  void buildNameType(void);		///< Create a name and data-type for the Symbol
+  void buildNameType(Datatype *ct=(Datatype *)0);	///< Create a name and data-type for the Symbol
   virtual ~ExternRefSymbol(void) {}
 public:
   ExternRefSymbol(Scope *sc,const Address &ref,const string &nm);	///< Construct given a \e placeholder address
