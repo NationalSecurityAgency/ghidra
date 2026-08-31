@@ -253,7 +253,7 @@ public class BytesPcodeExecutorStateSpace {
 		Map<Register, byte[]> result = new HashMap<>();
 		for (Register reg : registers) {
 			long min = reg.getAddress().getOffset();
-			long max = min + reg.getNumBytes();
+			long max = min + reg.getNumBytes() - 1;
 			if (!bytes.isInitialized(min, max)) {
 				continue;
 			}
