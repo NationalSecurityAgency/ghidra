@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <properties>
+    <property key="assemblyRating:avr8:LE:16:extended" value="PLATINUM"/>
+  </properties>
+
+  <programcounter register="PC"/> 
+
+  <data_space space="mem"/>
+  
+  <!-- 
+     - NOTE: The settings within this file may be specific to a particular 
+     - processor variant and will likely need to be changed to reflect 
+     - the specific target processor.
+     The RAMPx, EIND, SREG registers are not marked volatile, even though they could be changed
+     indirectly with memory references.  If they are made volatile, then the addressing
+     won't work in decompiler or reference recovery.
+	 Some registers only appear in newer avr8's, or with large memory spaces
+    --> 
+    
+  <volatile outputop="write_volatile" inputop="read_volatile">
+    <range space="mem" first="0x20" last="0x57"/>
+    <range space="mem" first="0x60" last="0xff"/>
+  </volatile>
+  
+  <context_data>
+    <tracked_set space="code">
+      <set name="R1" val="0"/>
+    </tracked_set>
+  </context_data>
+  
+  <default_symbols>
+  
+    <symbol name="Reset" address="code:0x0" entry="true"/>
+    <symbol name="INT0" address="code:0x1" entry="true"/>
+    <symbol name="INT1" address="code:0x2" entry="true"/>
+    <symbol name="TIMER2_COMP" address="code:0x3" entry="true"/>
+    <symbol name="TIMER2_OVF" address="code:0x4" entry="true"/>
+    <symbol name="TIMER1_CAPT" address="code:0x5" entry="true"/>
+    <symbol name="TIMER1_COMPA" address="code:0x6" entry="true"/>
+    <symbol name="TIMER2_COMPB" address="code:0x7" entry="true"/>
+    <symbol name="TIMER1_OVF" address="code:0x8" entry="true"/>
+    <symbol name="TIMER0_OVF" address="code:0x9" entry="true"/>
+    <symbol name="SPI_STC" address="code:0xa" entry="true"/>
+    <symbol name="USART_RXC" address="code:0xb" entry="true"/>
+    <symbol name="USART_UDRE" address="code:0xc" entry="true"/>
+    <symbol name="USART_TXC" address="code:0xd" entry="true"/>
+    <symbol name="ADC" address="code:0xe" entry="true"/>
+    <symbol name="EE_RDY" address="code:0xf" entry="true"/>
+    <symbol name="ANA_COMP" address="code:0x10" entry="true"/>
+    <symbol name="TWI" address="code:0x11" entry="true"/>
+    <symbol name="SPM_RDY" address="code:0x12" entry="true"/>
+ 
+    
+    <!-- See /usr/lib/avr/include/avr/iom64.h -->
+    <symbol name="TWBR" address="mem:0x20"/>
+    <symbol name="TWSR" address="mem:0x21"/>
+    <symbol name="TWAR" address="mem:0x22"/>
+    <symbol name="TWDR" address="mem:0x23"/>
+    <symbol name="ADCL" address="mem:0x24"/>
+    <symbol name="ADCH" address="mem:0x25"/>
+    <symbol name="ADCSRA" address="mem:0x26"/>
+    <symbol name="ADMUX" address="mem:0x27"/>
+    <symbol name="ACSR" address="mem:0x28"/>
+    <symbol name="UBRRL" address="mem:0x29"/>
+    <symbol name="UCSRB" address="mem:0x2a"/>
+    <symbol name="UCSRA" address="mem:0x2b"/>
+    <symbol name="UDR" address="mem:0x2c"/>
+    <symbol name="SPCR" address="mem:0x2d"/>
+    <symbol name="SPSR" address="mem:0x2e"/>
+    <symbol name="SPDR" address="mem:0x2f"/>
+    <symbol name="PIND" address="mem:0x30"/>
+    <symbol name="DDRD" address="mem:0x31"/>
+    <symbol name="PORTD" address="mem:0x32"/>
+    <symbol name="PINC" address="mem:0x33"/>
+    <symbol name="DDRC" address="mem:0x34"/>
+    <symbol name="PORTC" address="mem:0x35"/>
+    <symbol name="PINB" address="mem:0x36"/>
+    <symbol name="DDRB" address="mem:0x37"/>
+    <symbol name="PORTB" address="mem:0x38"/>
+    <!-- 
+    <symbol name="RES" address="mem:0x39"/>
+    <symbol name="RES" address="mem:0x3a"/>
+    <symbol name="RES" address="mem:0x3b"/> 
+    -->
+    <symbol name="EECR" address="mem:0x3c"/>
+    <symbol name="EEDR" address="mem:0x3d"/>
+    <symbol name="EEARL" address="mem:0x3e"/>
+    <symbol name="EEARH" address="mem:0x3f"/>
+    <symbol name="UBRRH" address="mem:0x40"/>
+    <symbol name="SCSRC" address="mem:0x40"/>
+    <symbol name="WDTCR" address="mem:0x41"/>
+    <symbol name="ASSR" address="mem:0x42"/>
+    <symbol name="OCR2" address="mem:0x43"/>
+    <symbol name="TCNT2" address="mem:0x44"/>
+    <symbol name="TCCR2" address="mem:0x45"/>
+    <symbol name="ICR1L" address="mem:0x46"/>
+    <symbol name="ICR1H" address="mem:0x47"/>
+    <symbol name="OCR1BL" address="mem:0x48"/>
+    <symbol name="OCR1BH" address="mem:0x49"/>
+    <symbol name="OCR1AL" address="mem:0x4a"/>
+    <symbol name="OCR1AH" address="mem:0x4B"/>
+    <symbol name="TCNT1L" address="mem:0x4C"/>
+    <symbol name="TCNT1H" address="mem:0x4D"/>
+    <symbol name="TCCR1B" address="mem:0x4E"/>
+    <symbol name="TCCR1A" address="mem:0x4F"/>
+    <symbol name="SFIOR" address="mem:0x50"/>
+    <symbol name="OSCCAL" address="mem:0x51"/>
+    <symbol name="TCNT0" address="mem:0x52"/>
+    <symbol name="TCCR0" address="mem:0x53"/>
+    <symbol name="MCUCSR" address="mem:0x54"/>
+    <symbol name="MCUCR" address="mem:0x55"/>
+    <symbol name="TWCR" address="mem:0x56"/>
+    <symbol name="SPMCR" address="mem:0x57"/>
+    <symbol name="TIFR" address="mem:0x58"/>
+    <symbol name="TIMSK" address="mem:0x59"/>
+    <symbol name="GIFR" address="mem:0x5A"/>
+    <symbol name="GICR" address="mem:0x5B"/>
+    <!-- 
+    <symbol name="RES" address="mem:0x5C"/>
+    -->
+    <!-- SP defined by slaspec
+    	<symbol name="SPL" address="mem:0x5D"/>
+    	<symbol name="SPH" address="mem:0x5E"/>
+    -->
+    <symbol name="SREG" address="mem:0x5F"/>
+
+  </default_symbols>
+
+  <default_memory_blocks>
+    <memory_block name="regalias" start_address="mem:0x00" length="0x20" initialized="false"/>
+    <memory_block name="iospace" start_address="mem:0x20" length="0x40" initialized="false"/>
+    <memory_block name="mem" start_address="mem:0x60" length="0x400" initialized="false"/>
+    <memory_block name="codebyte" start_address="codebyte:0x0" length="0x1000" byte_mapped_address="code:0x0"/>
+  </default_memory_blocks>
+
+
+</processor_spec>
