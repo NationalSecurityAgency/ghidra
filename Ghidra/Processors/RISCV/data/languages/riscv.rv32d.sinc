@@ -11,18 +11,18 @@
 # fclass.d d,S e2001053 fff0707f SIMPLE (0, 0) 
 :fclass.d rd,frs1D is frs1D & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x1 & funct7=0x71 & op2024=0x0
 {
-	#TODO
-	# rd = 0;
-	# rd[0, 1] = 0; #TODO  - inf
-	# rd[1, 1] = 0; #TODO  - norm num
-	# rd[2, 1] = 0; #TODO  - subnorm num
-	# rd[3, 1] = 0; #TODO  - 0
-	# rd[4, 1] = 0; #TODO  + 0
-	# rd[5, 1] = 0; #TODO  + norm num
-	# rd[6, 1] = 0; #TODO  + subnorm num
-	# rd[7, 1] = 0; #TODO  + inf
-	# rd[8, 1] = 0; #TODO  snan
-	# rd[9, 1] = 0; #TODO  qnan
+	rd = 0;
+	rd[0, 1] = frs1D == 0xFFF0000000000000; # - inf
+	rd[1, 1] = frs1D[63,1] == 1 && frs1D[52,11] != 0 && frs1D[52,11] != 0x7ffff; # - norm num
+	rd[2, 1] = frs1D[63,1] == 1 && frs1D[52,11] == 0 && frs1D[0,52] != 0; # - subnorm num
+	rd[3, 1] = frs1D == 0x8000000000000000; # - 0
+	rd[4, 1] = frs1D == 0; # + 0
+	rd[5, 1] = frs1D[63,1] == 0 && frs1D[52,11] != 0 && frs1D[52,11] != 0x3ffff; # + norm num
+	rd[6, 1] = frs1D[63,1] == 0 && frs1D[52,11] == 0 && frs1D[0,52] != 0; # + subnorm num
+	rd[7, 1] = frs1D == 0x7FF0000000000000; # + inf
+	rd[8, 1] = nan(frs1D) && frs1D[51,1] == 0; # snan
+	rd[9, 1] = nan(frs1D) && frs1D[51,1] == 1; # qnan
+
 }
 
 
