@@ -1729,20 +1729,24 @@ void PrintC::pushCharConstant(uintb val,const Datatype *ct,tagtype tag,const Var
 void PrintC::pushEnumConstant(uintb val,const TypeEnum *ct,tagtype tag,
 			      const Varnode *vn,const PcodeOp *op)
 {
-  TypeEnum::Representation rep;
-
-  ct->getMatches(val,rep);
-  if (rep.matchname.size() > 0) {
-    if (rep.shiftAmount != 0)
+  TypeEnum::Representation representation;
+  
+  int sizeInBits = (vn ? vn->getSize() : ct->getSize()) * 8;
+  
+  ct->getMatches(val,sizeInBits,0,representation);
+  if (representation.matchname.size() > 0) {
+    if (representation.shiftAmount > 0) {
       pushOp(&shift_right,op);
-    if (rep.complement)
+    }
+    if (representation.complement)
       pushOp(&bitwise_not,op);
-    for(int4 i=rep.matchname.size()-1;i>0;--i)
+    for(int4 i=representation.matchname.size()-1;i>0;--i)
       pushOp(&enum_cat,op);
-    for(int4 i=0;i<rep.matchname.size();++i)
-      pushAtom(Atom(rep.matchname[i],tag,EmitMarkup::const_color,op,vn,val));
-    if (rep.shiftAmount != 0)
-      push_integer(rep.shiftAmount,4,false,tag,vn,op,0);
+    for(int4 i=0;i<representation.matchname.size();++i)
+      pushAtom(Atom(representation.matchname[i],tag,EmitMarkup::const_color,op,vn,val));
+    if (representation.shiftAmount) {
+      push_integer(representation.shiftAmount,4,false,tag,vn,op,0);
+    }
   }
   else {
     push_integer(val,ct->getSize(),false,tag,vn,op,ct->getDisplayFormat());
