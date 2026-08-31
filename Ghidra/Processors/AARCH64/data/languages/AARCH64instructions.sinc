@@ -3988,13 +3988,5 @@ with : ImmS_ImmR_TestSet=1 {
 is b_0031=0xe7ffdeff
 unimpl
 
-:NotYetImplemented_UNK2
-is b_0031=0x00200820
-unimpl
-
-:NotYetImplemented_UNK3
-is b_0031=0x00200c20
-unimpl
-
 } # end with ImmS_ImmR_TestSet=1
 
