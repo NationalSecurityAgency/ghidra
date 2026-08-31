@@ -42,7 +42,7 @@ public class AndroidBootLoaderHeader implements StructConverter {
 		magic = reader.readNextAsciiString(AndroidBootLoaderConstants.BOOTLDR_MAGIC_SIZE);
 		numberOfImages = reader.readNextInt();
 		if (numberOfImages < 0 || numberOfImages > NUM_IMAGES_LIMIT) {
-			throw new IOException("Image count exceeds limit (%s): %s"
+			throw new IOException("Image count exceeds limit (%d): %d"
 					.formatted(NUM_IMAGES_LIMIT, numberOfImages));
 		}
 		startOffset = reader.readNextInt();

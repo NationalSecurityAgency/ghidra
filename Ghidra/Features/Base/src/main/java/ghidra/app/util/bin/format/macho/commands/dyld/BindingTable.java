@@ -147,7 +147,7 @@ public class BindingTable extends OpcodeTable {
 					ulebOffsets.add(reader.getPointerIndex() - origIndex);
 					long count = reader.readNext(LEB128::unsigned);
 					if (count < 0 || count > COUNT_LIMIT) {
-						throw new MachException("BIND_OPCODE count exceeds limit (%s): %s"
+						throw new MachException("BIND_OPCODE count exceeds limit (%d): %d"
 								.formatted(COUNT_LIMIT, count));
 					}
 					ulebOffsets.add(reader.getPointerIndex() - origIndex);

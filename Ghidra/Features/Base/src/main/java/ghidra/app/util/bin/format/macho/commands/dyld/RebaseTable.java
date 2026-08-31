@@ -100,7 +100,7 @@ public class RebaseTable extends OpcodeTable {
 					ulebOffsets.add(reader.getPointerIndex() - origIndex);
 					int count = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 					if (count < 0 || count > COUNT_LIMIT) {
-						throw new MachException("REBASE_OPCODE count exceeds limit (%s): %s"
+						throw new MachException("REBASE_OPCODE count exceeds limit (%d): %d"
 								.formatted(COUNT_LIMIT, count));
 					}
 					for (int i = 0; i < count; ++i) {
@@ -119,7 +119,7 @@ public class RebaseTable extends OpcodeTable {
 					ulebOffsets.add(reader.getPointerIndex() - origIndex);
 					int count = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 					if (count < 0 || count > COUNT_LIMIT) {
-						throw new MachException("REBASE_OPCODE count exceeds limit (%s): %s"
+						throw new MachException("REBASE_OPCODE count exceeds limit (%d): %d"
 								.formatted(COUNT_LIMIT, count));
 					}
 					ulebOffsets.add(reader.getPointerIndex() - origIndex);
