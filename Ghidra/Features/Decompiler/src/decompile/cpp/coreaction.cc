@@ -5920,7 +5920,7 @@ void ActionDatabase::universalAction(Architecture *conf)
 	actprop->addRule( new RuleShift2Mult("analysis") );
 	actprop->addRule( new RuleShiftPiece("analysis") );
 	actprop->addRule( new RuleMultiCollapse("analysis") );
-	actprop->addRule( new RuleIndirectCollapse("analysis") );
+	actprop->addRule( new RuleAliasUpdate("analysis") );
 	actprop->addRule( new Rule2Comp2Mult("analysis") );
 	actprop->addRule( new RuleSub2Add("analysis") );
 	actprop->addRule( new RuleCarryElim("analysis") );
@@ -6075,6 +6075,7 @@ void ActionDatabase::universalAction(Architecture *conf)
     actcleanup->addRule( new RulePtrsubCharConstant("cleanup") );
     actcleanup->addRule( new RuleExtensionPush("cleanup") );
     actcleanup->addRule( new RulePieceStructure("cleanup") );
+    actcleanup->addRule( new RuleAndStructure("cleanup") );
     actcleanup->addRule( new RuleSplitCopy("splitcopy") );
     actcleanup->addRule( new RuleSplitLoad("splitpointer") );
     actcleanup->addRule( new RuleSplitStore("splitpointer") );

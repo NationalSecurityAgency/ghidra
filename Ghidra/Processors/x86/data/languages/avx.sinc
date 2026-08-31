@@ -1832,16 +1832,16 @@ define pcodeop vpcmpistrm_avx ;
 define pcodeop vpextrb_avx ;
 :VPEXTRB Rmr32, XmmReg1, imm8 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0); byte=0x14; mod=3 & XmmReg1 & Rmr32 & check_Rmr32_dest; imm8
 {
-	local tmp8:1 = imm8;
-	local tmp = XmmReg1 >> (tmp8[0,3]*8);
+	local tmp8:1 = imm8 & 0xf;
+	local tmp = XmmReg1 >> (tmp8*8);
 	Rmr32 = zext(tmp[0,8]);
 	build check_Rmr32_dest;
 }
 
 :VPEXTRB m8, XmmReg1, imm8 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0); byte=0x14; (XmmReg1 ... & m8); imm8
 {
-	local tmp8:1 = imm8;
-	local tmp = XmmReg1 >> (tmp8[0,3]*8);
+	local tmp8:1 = imm8 & 0xf;
+	local tmp = XmmReg1 >> (tmp8*8);
 	m8 = tmp[0,8];
 }
 
@@ -1849,39 +1849,52 @@ define pcodeop vpextrb_avx ;
 define pcodeop vpextrd_avx ;
 :VPEXTRD Rmr32, XmmReg1, imm8 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0); byte=0x16; mod=3 & XmmReg1 & Rmr32 & check_Rmr32_dest; imm8
 {
-	local tmp = XmmReg1 >> (imm8*32);
+	local tmp8:1 = imm8 & 3;
+	local tmp = XmmReg1 >> (tmp8*32);
 	Rmr32 = tmp(0);
 	build check_Rmr32_dest;
 }
 
 :VPEXTRD m32, XmmReg1, imm8 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0); byte=0x16; XmmReg1 ... & m32; imm8
 {
-	local tmp = XmmReg1 >> (imm8*32);
+	local tmp8:1 = imm8 & 3;
+	local tmp = XmmReg1 >> (tmp8*32);
 	m32 = tmp(0);
 }
 
 # PEXTRB/PEXTRD/PEXTRQ 4-274 PAGE 1394 LINE 72330
-define pcodeop vpextrq_avx ;
 @ifdef IA64
 :VPEXTRQ rm64, XmmReg1, imm8 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1); byte=0x16; XmmReg1 ... & rm64; imm8
 {
-	rm64 = vpextrq_avx( XmmReg1, imm8:1 );
+	local tmp8:1 = imm8 & 1;
+	local tmp = XmmReg1 >> (tmp8*64);
+	rm64 = tmp(0);
 }
 @endif
 
 # PEXTRW 4-277 PAGE 1397 LINE 72478
-define pcodeop vpextrw_avx ;
-:VPEXTRW Reg32, XmmReg2, imm8 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG); byte=0xC5; Reg32 & (mod=0x3 & XmmReg2); imm8
+:VPEXTRW Reg32, XmmReg2, imm8 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG); byte=0xC5; Reg32 & check_Reg32_dest & (mod=0x3 & XmmReg2); imm8
 {
-	Reg32 = vpextrw_avx( XmmReg2, imm8:1 );
-	# TODO Reg64 = zext(Reg32)
+	local tmp8:1 = imm8 & 7;
+	local tmp = XmmReg2 >> (tmp8*16);
+	Reg32 = zext(tmp[0,16]);
+	build check_Reg32_dest;
 }
 
 # PEXTRW 4-277 PAGE 1397 LINE 72483
-:VPEXTRW Reg32_m16, XmmReg1, imm8 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG); byte=0x15; XmmReg1 ... & Reg32_m16; imm8
+:VPEXTRW Reg32, XmmReg1, imm8 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG); byte=0x15; XmmReg1 & mod=3 & Reg32 & check_Reg32_dest; imm8
 {
-	Reg32_m16 = vpextrw_avx( XmmReg1, imm8:1 );
-	# TODO Reg64 = zext(Reg32)
+	local tmp8:1 = imm8 & 7;
+	local tmp = XmmReg1 >> (tmp8*16);
+	Reg32 = zext(tmp[0,16]);
+	build check_Reg32_dest;
+}
+
+:VPEXTRW m16, XmmReg1, imm8 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG); byte=0x15; XmmReg1 ... & m16; imm8
+{
+	local tmp8:1 = imm8 & 7;
+	local tmp = XmmReg1 >> (tmp8*16);
+	m16 = tmp[0,16];
 }
 
 # PHADDW/PHADDD 4-280 PAGE 1400 LINE 72627
@@ -1950,7 +1963,16 @@ define pcodeop vpinsrb_avx ;
 
 # PINSRW 4-296 PAGE 1416 LINE 73446
 define pcodeop vpinsrw_avx ;
-:VPINSRW XmmReg1, vexVVVV_XmmReg, Reg32_m16, imm8 is $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xC4; (XmmReg1 & ZmmReg1) ... & Reg32_m16; imm8
+@ifdef IA64
+:VPINSRW XmmReg1, vexVVVV_XmmReg, Reg32_m16, imm8 is $(LONGMODE_ON) & $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG) & vexVVVV_XmmReg; byte=0xC4; (XmmReg1 & ZmmReg1) ... & Reg32_m16; imm8
+{
+	local tmp:16 = vpinsrw_avx( vexVVVV_XmmReg, Reg32_m16, imm8:1 );
+	ZmmReg1 = zext(tmp);
+}
+@endif
+
+# Footnote in manual: In 64-bit mode, VEX.W1 is ignored for VPINSRW (similar to legacy REX.W=1 prefix in PINSRW).
+:VPINSRW XmmReg1, vexVVVV_XmmReg, Reg32_m16, imm8 is $(LONGMODE_OFF) & $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xC4; (XmmReg1 & ZmmReg1) ... & Reg32_m16; imm8
 {
 	local tmp:16 = vpinsrw_avx( vexVVVV_XmmReg, Reg32_m16, imm8:1 );
 	ZmmReg1 = zext(tmp);

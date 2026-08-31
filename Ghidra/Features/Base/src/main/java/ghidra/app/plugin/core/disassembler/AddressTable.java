@@ -285,7 +285,7 @@ public class AddressTable {
 			for (int k = 0; k < totalLen; k++) {
 				Data data = listing.getDataContaining(currentAddress.addWrap(k));
 				if (data == null ||
-					(!(data.isPointer() || data.getDataType() instanceof Undefined) &&
+					(!(data.isPointer() || Undefined.isUndefined(data.getDataType())) &&
 						data.isDefined())) {
 					return false;
 				}
@@ -1235,7 +1235,7 @@ public class AddressTable {
 				}
 
 				// undefined data is OK, could be a pointer
-				if (data.getDataType() instanceof Undefined) {
+				if (Undefined.isUndefined(data.getDataType())) {
 					continue;
 				}
 

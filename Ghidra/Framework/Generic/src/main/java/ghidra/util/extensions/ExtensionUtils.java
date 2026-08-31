@@ -585,11 +585,7 @@ public class ExtensionUtils {
 				monitor.checkCancelled();
 
 				ZipArchiveEntry entry = entries.nextElement();
-				String filePath = installDir + File.separator + entry.getName();
-				File destination = new File(filePath);
-				if (!FileUtilities.isPathContainedWithin(installDirRoot, destination)) {
-					throw new IOException("Zip entry escapes target directory: " + entry.getName());
-				}
+				File destination = FileUtilities.getSecureFile(installDirRoot, entry.getName());
 				if (entry.isDirectory()) {
 					destination.mkdirs();
 				}

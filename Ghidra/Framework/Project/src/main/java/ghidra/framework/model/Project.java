@@ -143,7 +143,7 @@ public interface Project extends AutoCloseable, Iterable<DomainFile> {
 
 	/**
 	 * Allows the user to store data related to the project.
-	 * See {@link #getSaveableData(String)} for future retieval of data.
+	 * See {@link #getSaveableData(String)} for future retrieval of data.
 	 * @param key a value used to store and lookup saved data
 	 * @param saveState a container of data that will be written out when persisted
 	 */
@@ -212,7 +212,7 @@ public interface Project extends AutoCloseable, Iterable<DomainFile> {
 
 	/**
 	 * Return a {@link DomainFile} iterator over all non-link files within this project's data store.
-	 * If links should be followed use an appropropriate static method from {@link ProjectDataUtils}.
+	 * If links should be followed use an appropriate static method from {@link ProjectDataUtils}.
 	 * @return domain file iterator
 	 */
 	@Override

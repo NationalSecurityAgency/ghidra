@@ -1021,6 +1021,19 @@ bool Funcdata::syncVarnodesWithSymbols(const ScopeLocal *lm,bool updateDatatypes
   return updateoccurred;
 }
 
+/// If the Varnode is defined by an INDIRECT, mark PcodeOp causing the effect as having updated alias information
+/// \param vn is the given Varnode
+void Funcdata::markIndirectAliasUpdate(Varnode *vn)
+
+{
+  PcodeOp *indop = vn->def;
+  if (indop == (PcodeOp *)0) return;
+  if (indop->code() != CPUI_INDIRECT) return;
+  if (indop->getIn(1)->getSpace()->getType()!=IPTR_IOP) return ;
+  PcodeOp *effectOp = PcodeOp::getOpFromConst(indop->getIn(1)->getAddr());
+  effectOp->setAliasUpdate();
+}
+
 /// \brief Update properties (and the data-type) for a set of Varnodes associated with one Symbol
 ///
 /// The set of Varnodes with the same size and address all have their boolean properties
@@ -1072,12 +1085,14 @@ bool Funcdata::syncVarnodesWithSymbol(VarnodeLocSet::const_iterator &iter,uint4 
 	updateoccurred = true;
 	vn->setFlags(localFlags);
 	vn->clearFlags((~localFlags)&localMask);
+	markIndirectAliasUpdate(vn);
       }
     }
     else if ((vnflags & mask) != fl) { // We have a change
       updateoccurred = true;
       vn->setFlags(fl);
       vn->clearFlags((~fl)&mask);
+      markIndirectAliasUpdate(vn);
     }
     if (ct != (Datatype *)0) {
       if (vn->updateType(ct))

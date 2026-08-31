@@ -33,7 +33,7 @@ using std::sqrt;
 vector<ArchitectureCapability *> ArchitectureCapability::thelist;
 
 const uint4 ArchitectureCapability::majorversion = 6;
-const uint4 ArchitectureCapability::minorversion = 1;
+const uint4 ArchitectureCapability::minorversion = 2;
 
 AttributeId ATTRIB_ADDRESS = AttributeId("address",148);
 AttributeId ATTRIB_ADJUSTVMA = AttributeId("adjustvma",103);

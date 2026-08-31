@@ -41,6 +41,7 @@ public class GhidraApplicationConfiguration extends HeadlessGhidraApplicationCon
 
 	public GhidraApplicationConfiguration() {
 		if (GraphicsEnvironment.isHeadless()) {
+			// NOTE: System.err must be used here because Messaging hasn't been initialized yet
 			System.err.println(
 				"ERROR: Unable to launch Ghidra GUI application in headless environment.");
 			System.err.println(

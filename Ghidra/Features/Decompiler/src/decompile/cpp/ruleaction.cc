@@ -3164,80 +3164,22 @@ int4 RuleLogic2Bool::applyOp(PcodeOp *op,Funcdata &data)
   return 1;
 }
 
-/// \class RuleIndirectCollapse
-/// \brief Remove a CPUI_INDIRECT if its blocking PcodeOp is dead
-void RuleIndirectCollapse::getOpList(vector<uint4> &oplist) const
+/// \class RuleAliasUpdate
+/// \brief Collapse INDIRECTs when there is no longer a possible alias of its output
+void RuleAliasUpdate::getOpList(vector<uint4> &oplist) const
 
 {
-  oplist.push_back(CPUI_INDIRECT);
+  oplist.push_back(CPUI_STORE);
+  oplist.push_back(CPUI_CALL);
+  oplist.push_back(CPUI_CALLIND);
+  oplist.push_back(CPUI_CALLOTHER);
 }
 
-int4 RuleIndirectCollapse::applyOp(PcodeOp *op,Funcdata &data)
+int4 RuleAliasUpdate::applyOp(PcodeOp *op,Funcdata &data)
 
 {
-  PcodeOp *indop;
-
-  if (op->getIn(1)->getSpace()->getType()!=IPTR_IOP) return 0;
-  indop = PcodeOp::getOpFromConst(op->getIn(1)->getAddr());
-
-				// Is the indirect effect gone?
-  if (!indop->isDead()) {
-    if (indop->code() == CPUI_COPY) { // STORE resolved to a COPY
-      Varnode *vn1 = indop->getOut();
-      Varnode *vn2 = op->getOut();
-      int4 res = vn1->characterizeOverlap(*vn2);
-      if (res > 0) { // Copy has an effect of some sort
-	if (res == 2) { // vn1 and vn2 are the same storage
-	  // Convert INDIRECT to COPY
-	  data.opUninsert(op);
-	  data.opSetInput(op,vn1,0);
-	  data.opRemoveInput(op,1);
-	  data.opSetOpcode(op,CPUI_COPY);
-	  data.opInsertAfter(op, indop);
-	  return 1;
-	}
-	if (vn1->contains(*vn2) == 0) {	// INDIRECT output is properly contained in COPY output
-	  // Convert INDIRECT to a SUBPIECE
-	  uintb trunc;
-	  if (vn1->getSpace()->isBigEndian())
-	    trunc = vn1->getOffset() + vn1->getSize() - (vn2->getOffset() + vn2->getSize());
-	  else
-	    trunc = vn2->getOffset() - vn1->getOffset();
-	  data.opUninsert(op);
-	  data.opSetInput(op,vn1,0);
-	  data.opSetInput(op,data.newConstant(4,trunc),1);
-	  data.opSetOpcode(op, CPUI_SUBPIECE);
-	  data.opInsertAfter(op, indop);
-	  return 1;
-	}
-	data.warning("Ignoring partial resolution of indirect",indop->getAddr());
-	return 0;		// Partial overlap, not sure what to do
-      }
-    }
-    else if (op->getOut()->hasNoLocalAlias()) {
-      if (op->isIndirectCreation() || op->noIndirectCollapse())
-	return 0;
-    }
-    else if (indop->usesSpacebasePtr()) {
-      if (indop->code() == CPUI_STORE) {
-	const LoadGuard *guard = data.getStoreGuard(indop);
-	if (guard != (const LoadGuard *)0) {
-	  if (guard->isGuarded(op->getOut()->getAddr()))
-	    return 0;
-	}
-	else {
-	  // A marked STORE that is not guarded should eventually get converted to a COPY
-	  // so we keep the INDIRECT until that happens
-	  return 0;
-	}
-      }
-    }
-    else
-      return 0;	
-  }
-
-  data.totalReplace(op->getOut(),op->getIn(0));
-  data.opDestroy(op);		// Get rid of the INDIRECT
+  if (!op->hasAliasUpdate()) return 0;
+  data.opCollapseIndirectsForAlias(op);
   return 1;
 }
 
@@ -3786,6 +3728,24 @@ void RuleShiftPiece::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_INT_ADD);
 }
 
+/// Check for both INT_LEFT and INT_MULT forms of multiplying by a constant power of 2.
+/// \param op is the op to check
+/// \return the power (shift amount) or -1 if the op does not match
+int4 RuleShiftPiece::multPowerOf2(PcodeOp *op)
+
+{
+  OpCode opc = op->code();
+  if (opc != CPUI_INT_LEFT && opc != CPUI_INT_MULT) return -1;
+  Varnode *cvn = op->getIn(1);
+  if (!cvn->isConstant()) return -1;
+  uintb val = cvn->getOffset();
+  if (opc == CPUI_INT_LEFT) return val;
+  int4 sa = leastsigbit_set(val);
+  if (sa >=0 && (val >> sa) == 1)
+    return sa;
+  return -1;
+}
+
 int4 RuleShiftPiece::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -3798,13 +3758,14 @@ int4 RuleShiftPiece::applyOp(PcodeOp *op,Funcdata &data)
   if (!vn2->isWritten()) return 0;
   shiftop = vn1->getDef();
   zextloop = vn2->getDef();
-  if (shiftop->code() != CPUI_INT_LEFT) {
-    if (zextloop->code() != CPUI_INT_LEFT) return 0;
+  int4 sa = multPowerOf2(shiftop);
+  if (sa < 0) {
+    sa = multPowerOf2(zextloop);
+    if (sa < 0) return 0;
     PcodeOp *tmpop = zextloop;
     zextloop = shiftop;
     shiftop = tmpop;
   }
-  if (!shiftop->getIn(1)->isConstant()) return 0;
   vn1 = shiftop->getIn(0);
   if (!vn1->isWritten()) return 0;
   zexthiop = vn1->getDef();
@@ -3819,7 +3780,6 @@ int4 RuleShiftPiece::applyOp(PcodeOp *op,Funcdata &data)
   }
   else if (vn1->isFree())
     return 0;
-  int4 sa = shiftop->getIn(1)->getOffset();
   int4 concatsize = sa + 8*vn1->getSize();
   if (op->getOut()->getSize() * 8 < concatsize) return 0;
   if (zextloop->code() != CPUI_INT_ZEXT) {
@@ -3941,40 +3901,44 @@ int4 RuleTransformCpool::applyOp(PcodeOp *op,Funcdata &data)
 
 /// \class RulePropagateCopy
 /// \brief Propagate the input of a COPY to all the places that read the output
+void RulePropagateCopy::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_COPY);
+}
+
 int4 RulePropagateCopy::applyOp(PcodeOp *op,Funcdata &data)
 
 {
-  int4 i;
-  PcodeOp *copyop;
-  Varnode *vn,*invn;
-
-  if (op->isReturnCopy()) return 0;
-  for(i=0;i<op->numInput();++i) {
-    vn = op->getIn(i);
-    if (!vn->isWritten()) continue; // Varnode must be written to
-
-    copyop = vn->getDef();
-    if (copyop->code()!=CPUI_COPY)
-      continue;			// not a propagating instruction
-    
-    invn = copyop->getIn(0);
-    if (!invn->isHeritageKnown()) continue; // Don't propagate free's away from their first use
-    if (invn == vn)
-      throw LowlevelError("Self-defined varnode");
-    if (op->isMarker()) {
-      if (invn->isConstant()) continue;		// Don't propagate constants into markers
-      if (vn->isAddrForce()) continue;		// Don't propagate if we are keeping the COPY anyway
-      if (invn->isAddrTied() && op->getOut()->isAddrTied() && 
-	  (op->getOut()->getAddr() != invn->getAddr()))
-	continue;		// We must not allow merging of different addrtieds
-      if (op->code() == CPUI_MULTIEQUAL && copyop->getParent() == op->getParent()->getIn(i)) {
-	op->setCopyImmed(i);
+  Varnode *vn = op->getOut();
+  Varnode *invn = op->getIn(0);
+  if (invn == vn)
+    throw LowlevelError("Self-defined varnode");
+  if (!invn->isHeritageKnown()) return 0; // Don't propagate free's away from their first use
+  list<PcodeOp *>::const_iterator iter = vn->beginDescend();
+  int4 count = 0;
+  while(iter != vn->endDescend()) {
+    PcodeOp *otherOp = *iter;
+    ++iter;
+    if (otherOp->isReturnCopy()) continue;
+    for(int4 slot=0;slot<otherOp->numInput();++slot) {
+      if (vn != otherOp->getIn(slot)) continue;
+      if (otherOp->isMarker()) {
+	if (invn->isConstant()) continue;		// Don't propagate constants into markers
+	if (vn->isAddrForce()) continue;		// Don't propagate if we are keeping the COPY anyway
+	if (invn->isAddrTied() && otherOp->getOut()->isAddrTied() &&
+	    (otherOp->getOut()->getAddr() != invn->getAddr()))
+	  continue;		// We must not allow merging of different addrtieds
+	if (otherOp->code() == CPUI_MULTIEQUAL && op->getParent() == otherOp->getParent()->getIn(slot)) {
+	  otherOp->setCopyImmed(slot);
+	}
       }
+      data.opSetInput(otherOp,invn,slot); // Propagate input of COPY into otherVn
+      count += 1;
+      break;			// Allow at most one propagation per descendant
     }
-    data.opSetInput(op,invn,i); // otherwise propagate just a single copy
-    return 1;
   }
-  return 0;
+  return count;
 }
 
 /// \class Rule2Comp2Mult
@@ -4358,6 +4322,7 @@ int4 RuleStoreVarnode::applyOp(PcodeOp *op,Funcdata &data)
   if (op->isStoreUnmapped()) {
     data.getScopeLocal()->markNotMapped(baseoff, offoff, size, false);
   }
+  data.opCollapseIndirectsForCopy(op);
   return 1;
 }
 
@@ -4891,7 +4856,7 @@ int4 RuleZextShiftZext::applyOp(PcodeOp *op,Funcdata &data)
   PcodeOp *shiftop = invn->getDef();
   if (shiftop->code() == CPUI_INT_ZEXT) {	// Check for ZEXT( ZEXT( a ) )
     Varnode *vn = shiftop->getIn(0);
-    if (vn->isFree()) return 0;
+    if (vn->isFree() && !vn->isConstant()) return 0;
     if (invn->loneDescend() != op)		// Only propagate if -op- is only use of -invn-
       return 0;
     data.opSetInput(op,vn,0);
@@ -4991,6 +4956,7 @@ int4 RuleConcatZero::applyOp(PcodeOp *op,Funcdata &data)
 
   int4 sa = 8*op->getIn(1)->getSize();
   Varnode *highvn = op->getIn(0);
+  if (highvn->isConstant() && highvn->getOffset() == 0) return 0;
   PcodeOp *newop = data.newOp(1,op->getAddr());
   Varnode *outvn = data.newUniqueOut(op->getOut()->getSize(),newop);
   data.opSetOpcode(newop,CPUI_INT_ZEXT);
@@ -5872,7 +5838,7 @@ int4 RuleEqual2Zero::applyOp(PcodeOp *op,Funcdata &data)
 
 {
   Varnode *vn,*vn2,*addvn;
-  Varnode *posvn,*negvn,*unnegvn;
+  Varnode *posvn,*unnegvn;
   PcodeOp *addop;
   
   vn = op->getIn(0);
@@ -5902,21 +5868,16 @@ int4 RuleEqual2Zero::applyOp(PcodeOp *op,Funcdata &data)
     posvn = vn;
   }
   else {
-    if ((vn->isWritten())&&(vn->getDef()->code()==CPUI_INT_MULT)) {
-      negvn = vn;
+    if (vn->isWritten() && vn->getDef()->verifyMultNegOne()) {
       posvn = vn2;
+      unnegvn = vn->getDef()->getIn(0);
     }
-    else if ((vn2->isWritten())&&(vn2->getDef()->code()==CPUI_INT_MULT)) {
-      negvn = vn2;
+    else if (vn2->isWritten() && vn2->getDef()->verifyMultNegOne()) {
       posvn = vn;
+      unnegvn = vn2->getDef()->getIn(0);
     }
     else
       return 0;
-    uintb multiplier;
-    if (!negvn->getDef()->getIn(1)->isConstant()) return 0;
-    unnegvn = negvn->getDef()->getIn(0);
-    multiplier = negvn->getDef()->getIn(1)->getOffset();
-    if (multiplier != calc_mask(unnegvn->getSize())) return 0;
   }
   if (!posvn->isHeritageKnown()) return 0;
   if (!unnegvn->isHeritageKnown()) return 0;
@@ -7682,6 +7643,63 @@ int4 RulePieceStructure::applyOp(PcodeOp *op,Funcdata &data)
   }
   if (!anyAddrTied)
     data.getMerge().registerProtoPartialRoot(outvn);
+  return 1;
+}
+
+/// \class RuleAndStructure
+/// \brief Convert `and(x,#mask) => zext(sub(x,#c)` when the mask corresponds to a field access
+void RuleAndStructure::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_INT_AND);
+}
+
+int4 RuleAndStructure::applyOp(PcodeOp *op,Funcdata &data)
+
+{
+  Varnode *cvn = op->getIn(1);
+  if (!cvn->isConstant()) return 0;
+  Varnode *vn = op->getIn(0);
+  Datatype *baseType = vn->getTypeReadFacing(op);
+  type_metatype meta = baseType->getMetatype();
+  if (meta != TYPE_STRUCT && meta != TYPE_PARTIALSTRUCT && meta != TYPE_ARRAY)
+    return 0;
+  uintb off = cvn->getOffset();
+  int4 count = sizeof(uintb)*8 - count_leading_zeros(off);
+  int4 size = count / 8;	// Number of bytes being masked off
+  if (count % 8 != 0)
+    size += 1;
+  int8 structOff = vn->getSpace()->isBigEndian() ? vn->getSize() - size : 0;
+  Datatype *ct = baseType->findSmallestContainer(structOff, size, &structOff);
+  if (ct->getSize() >= vn->getSize() || structOff != 0)
+    return 0;
+  PcodeOp *subOp = data.newOp(2, op->getAddr());
+  data.opSetOpcode(subOp, CPUI_SUBPIECE);
+  data.opSetInput(subOp,data.newConstant(4, 0),1);
+  data.opMarkSpecialPrint(subOp);	// Mark SUBPIECE as a field extraction
+  Address addr = op->getOut()->getAddr();
+  if (addr.isBigEndian())
+    addr = addr + (vn->getSize() - ct->getSize());
+  addr.renormalize(vn->getSize());		// Allow for possible join address
+  Varnode *outvn = data.newVarnodeOut(ct->getSize(), addr, subOp);
+  outvn->updateType(ct);
+  if (calc_mask(size) == off) {
+    data.opRemoveInput(op, 1);
+    data.opSetInput(op, outvn, 0);
+    data.opSetOpcode(op, CPUI_INT_ZEXT);
+    data.opSetInput(subOp,vn,0);
+    data.opInsertBefore(subOp, op);
+  }
+  else {
+    PcodeOp *newZext = data.newOp(1, op->getAddr());
+    data.opSetOpcode(newZext, CPUI_INT_ZEXT);
+    Varnode *outzext = data.newUniqueOut(vn->getSize(), newZext);
+    data.opSetInput(op, outzext, 0);
+    data.opSetInput(subOp, vn, 0);
+    data.opSetInput(newZext,outvn,0);
+    data.opInsertBefore(newZext,op);
+    data.opInsertBefore(subOp,newZext);
+  }
   return 1;
 }
 

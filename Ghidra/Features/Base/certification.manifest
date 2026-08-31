@@ -1096,3 +1096,6 @@ src/test.slow/resources/ghidra/app/script/GhidraScriptAsk.properties||GHIDRA||||
 src/test/resources/defaultTools/TestCodeBrowser.tool||GHIDRA||||END|
 src/test/resources/ghidra/app/util/opinion/decompile_debug_test.xml||GHIDRA||||END|
 src/test/resources/ghidra/app/util/opinion/test.ord||GHIDRA||||END|
+src/test/resources/ghidra/util/bytesearch/bytepatternsearch/basic_search_collection.xml||GHIDRA||||END|
+src/test/resources/ghidra/util/bytesearch/bytepatternsearch/dword_qword_for32bit_pattern.xml||GHIDRA||||END|
+src/test/resources/ghidra/util/bytesearch/bytepatternsearch/parse_errors.xml||GHIDRA||||END|

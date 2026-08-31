@@ -219,7 +219,7 @@ public class AngrTaintState extends AbstractTaintState {
 					taintAddressSet.add(address);
 				}
 				else {
-					System.err.println(line);
+					Msg.error(this, line);
 				}
 			}
 			bufferedReader.close();
