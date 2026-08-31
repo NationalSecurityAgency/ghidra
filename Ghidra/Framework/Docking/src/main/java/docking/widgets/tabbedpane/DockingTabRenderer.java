@@ -16,10 +16,17 @@
 package docking.widgets.tabbedpane;
 
 import java.awt.*;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DragGestureListener;
+import java.awt.dnd.DragSource;
+import java.awt.dnd.DragSourceMotionListener;
 import java.awt.event.*;
+import java.awt.geom.Area;
 
 import javax.swing.*;
 
+import docking.ComponentPlaceholder;
+import docking.DockableComponent;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.label.GDLabel;
 import generic.theme.CloseIcon;
@@ -33,19 +40,33 @@ public class DockingTabRenderer extends JPanel {
 	private static final int MAX_TITLE_LENGTH = 25;
 	private Icon CLOSE_ICON = new CloseIcon(true);
 
+	// This is for easy access to the tabbed pane.
+	private final JTabbedPane tabbedPane;
+
 	private JLabel titleLabel;
 	private JLabel iconLabel;
 	private JButton closeButton;
 
+	private DragSource dragSource;
+
 	private HierarchyListener hierarchyListener;
 	private TabContainerForwardingMouseListener forwardingListener;
 	private JPopupMenu popupMenu;
+
+	// Semi-transparent yellow color to highlight selected tabs.
+	private static final Color highlightColor = new Color(
+			Color.YELLOW.getRed(),
+			Color.YELLOW.getGreen(),
+			Color.YELLOW.getBlue(),
+			50);
 
 	public DockingTabRenderer(final JTabbedPane tabbedPane, String fullTitle, String tabText,
 			ActionListener closeListener) {
 
 		final ForwardingMouseListener eventForwardingListener =
 			new ForwardingMouseListener(tabbedPane);
+
+		this.tabbedPane = tabbedPane;
 
 		titleLabel = new GDLabel();
 		iconLabel = new GDLabel();
@@ -82,6 +103,44 @@ public class DockingTabRenderer extends JPanel {
 		titleLabel.addMouseMotionListener(eventForwardingListener);
 
 		installMouseForwardingListenerWorkaround(tabbedPane);
+	}
+
+	@Override
+	protected void paintComponent(Graphics g) {
+		super.paintComponent(g);
+
+		// Highlight the tab.
+		if (isHighlighted()) {
+			Rectangle r = getVisibleRect();
+			g.setColor(highlightColor);
+			g.fillRect(r.x, r.y, r.width, r.height);
+		}
+	}
+
+	/**
+	 * Returns the current state of the tab highlight.
+	 *
+	 * @return TRUE is highlighted, otherwise FALSE
+	 */
+	public boolean isHighlighted() {
+		return isComponentDragged();
+	}
+
+	/**
+	 * Specifies if the associated component is being dragged around.
+	 *
+	 * @return TRUE is the associated component is being dragged around
+	 */
+	private boolean isComponentDragged() {
+		if (DockableComponent.SOURCE_SECTION_INFO != null) {
+			int index = tabbedPane.indexOfTabComponent(this);
+			Component comp = tabbedPane.getComponentAt(index);
+			if (comp instanceof DockableComponent) {
+				ComponentPlaceholder placeholder = ((DockableComponent) comp).getComponentWindowingPlaceholder();
+				return DockableComponent.SOURCE_SECTION_INFO.contains(placeholder);
+			}
+		}
+		return false;
 	}
 
 	private void installMouseForwardingListenerWorkaround(final JTabbedPane tabbedPane) {
@@ -128,6 +187,12 @@ public class DockingTabRenderer extends JPanel {
 
 	public void installPopupMenu(JPopupMenu popupMenu) {
 		this.popupMenu = popupMenu;
+	}
+
+	public void installDragSource(DragGestureListener dgl) {
+		dragSource = new DragSource();
+		dragSource.createDefaultDragGestureRecognizer(titleLabel, DnDConstants.ACTION_MOVE, dgl);
+		dragSource.addDragSourceMotionListener((DragSourceMotionListener) dgl);
 	}
 
 	public void setIcon(Icon icon) {
@@ -238,7 +303,13 @@ public class DockingTabRenderer extends JPanel {
 				return false;
 			}
 
-			popupMenu.show(e.getComponent(), e.getX(), e.getY());
+			// Verify that the cursor was over the component at the moment of the
+			// event.  Suppress cases in which the right mouse button was clicked
+			// outside of the region of the component.  This could happen while a
+			// tab drag-N-drop operation is in progress, misplacing the popup.
+			if (new Area(getVisibleRect()).contains(e.getX(), e.getY())) {
+				popupMenu.show(e.getComponent(), e.getX(), e.getY());
+			}
 
 			return true;
 		}
