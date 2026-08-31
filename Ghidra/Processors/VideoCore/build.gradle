@@ -1,0 +1,13 @@
+apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
+apply from: "$rootProject.projectDir/gradle/processorProject.gradle"
+apply plugin: 'eclipse'
+eclipse.project.name = 'Processors VideoCore IV'
+
+
+dependencies {
+	api project(':Base')
+}
+
