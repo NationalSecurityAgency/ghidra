@@ -112,6 +112,7 @@ int main(int argc, char **argv) {
   set<string> dataTestNames;
   string dirname("../datatests");
   string sleighdirname("../../../../../../..");
+  bool verbose = false;
   while (argc > 0) {
     string command(argv[0]);
     if (command == "-path") {
@@ -136,6 +137,11 @@ int main(int argc, char **argv) {
       argv += 1;
       argc -= 1;
     }
+    else if (command == "-verbose") {
+      verbose = true;
+      argv += 1;
+      argc -= 1;
+    }
     else if (command == "unittests") {
       runUnitTests = true;
       runDataTests = false;	// Run only unit tests
@@ -149,7 +155,7 @@ int main(int argc, char **argv) {
       break;
     }
     else {
-      cout << "USAGE: ghidra_test [-usesleighenv] [-sleighpath <sleighdir>] [-path <datatestdir>] [[unittests|datatests] [testname1 testname2 ...]]" << endl;
+      cout << "USAGE: ghidra_test [-verbose][-usesleighenv] [-sleighpath <sleighdir>] [-path <datatestdir>] [[unittests|datatests] [testname1 testname2 ...]]" << endl;
       return -1;
     }
   }
@@ -166,7 +172,7 @@ int main(int argc, char **argv) {
     vector<string> testFiles;
     gatherDataTests(dirname,dataTestNames,testFiles);
     cout << endl << endl;
-    int errors = FunctionTestCollection::runTestFiles(testFiles,cout);
+    int errors = FunctionTestCollection::runTestFiles(testFiles,cout,verbose);
     failedTests = add_exit_code(failedTests, errors);
   }
 
