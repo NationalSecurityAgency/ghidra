@@ -25,6 +25,7 @@ import javax.swing.KeyStroke;
 import docking.*;
 import docking.action.*;
 import docking.actions.KeyBindingUtils;
+import generic.theme.GIcon;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import resources.ResourceManager;
@@ -440,6 +441,9 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	/**
 	 * Sets the icon to use in this action's tool bar button.  Setting this attribute is what 
 	 * causes the action to appear on the tool's or component provider's action tool bar.
+	 * <P>
+	 * Clients should be passing in {@link GIcon}s so that icons can be changed via the theme 
+	 * framework.
 	 * 
 	 * @param icon the icon to use in the action's tool bar
 	 * @return this builder (for chaining)
@@ -457,7 +461,9 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * @param iconFilepath the module-relative path for the icon to use in the action's tool bar
 	 * @return this builder (for chaining)
 	 * @see #toolBarIcon(Icon)
+	 * @deprecated use {@link #toolBarIcon(Icon)}, passing in a {@link GIcon}
 	 */
+	@Deprecated(forRemoval = true, since = "12.2")
 	public B toolBarIcon(String iconFilepath) {
 		toolbarIcon = ResourceManager.loadImage(iconFilepath);
 		return self();
