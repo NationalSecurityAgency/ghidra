@@ -335,11 +335,18 @@ bool ActionStackPtrFlow::isStackRelative(Varnode *spcbasein,Varnode *vn,uintb &c
     return true;
   }
   if (!vn->isWritten()) return false;
-  PcodeOp *addop = vn->getDef();
-  if (addop->code() != CPUI_INT_ADD) return false;
-  if (addop->getIn(0) != spcbasein) return false;
-  Varnode *constvn = addop->getIn(1);
+  PcodeOp *op = vn->getDef();
+  if (op->getIn(0) != spcbasein) return false;
+  Varnode *constvn = op->getIn(1);
   if (!constvn->isConstant()) return false;
+  if (op->code() == CPUI_INT_OR) {
+    if ((spcbasein->getNZMask() & constvn->getOffset()) == 0) {
+      constval = constvn->getOffset();
+      return true;
+    }
+    return false;
+  }
+  if (op->code() != CPUI_INT_ADD) return false;
   constval = constvn->getOffset();
   return true;
 }
