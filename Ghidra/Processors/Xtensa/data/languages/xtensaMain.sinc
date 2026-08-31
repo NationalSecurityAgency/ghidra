@@ -198,9 +198,9 @@ call_srel_sh2: rel is call_o18 [
     rel = (inst_start & ~3) + ( call_o18 << 2 ) + 4;
 ] { export *:4 rel; }
 
-srel_oex_sh2: rel is ri16_i16 [
-    rel = ((inst_start + 3) & ~3) + ((ri16_i16 | 0xffff0000) << 2);
-] { export *:4 rel; }
+srel_oex_sh2_imm: rel is ri16_i16 [
+    rel = ((ri16_i16 | 0xffff0000) << 2);
+] { export *[const]:4 rel; }
 
 # Immediates split across the instruction.
 u5_8_11_20: tmp is op2_0 & op_s  [ tmp = (op2_0 << 4) | op_s; ] { export *[const]:4 tmp; }
