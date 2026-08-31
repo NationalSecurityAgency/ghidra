@@ -36,8 +36,7 @@ class FileManage {
   static char separator;
   static char separatorClass[];	// Characters that can be accepted as a separator
   static string buildPath(const vector<string> &pathels,int level);
-  static bool testDevelopmentPath(const vector<string> &pathels,int level,string &root);
-  static bool testInstallPath(const vector<string> &pathels,int level,string &root);
+  static bool testGhidraPath(const vector<string> &pathels,int level,string &root);
 public:
   void addDir2Path(const string &path);
   void addCurrentDir(void);
