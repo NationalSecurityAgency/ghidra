@@ -1,0 +1,10 @@
+<opinions>
+    <constraint loader="Executable and Linking Format (ELF)" compilerSpecID="default">
+        <!--e_machine value 36 (0x24) taken from: https://refspecs.linuxfoundation.org/elf/gabi4+/ch4.eheader.html
+        since this is for the V800 family in general. -->
+        <constraint primary="36"   processor="V810"                      size="32" />
+        <constraint primary="36"   processor="V830"                      size="32" />
+        <!--e_machine value 28868 (0x70C4) observed in several ELF files compiled under Metrowerks Codewarrior v2.2.1 for the V831 CPU.-->
+        <constraint primary="28868"  processor="V830"                    size="32" />
+    </constraint>
+</opinions>
