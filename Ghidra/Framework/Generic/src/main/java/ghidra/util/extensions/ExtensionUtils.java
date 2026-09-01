@@ -16,20 +16,18 @@
 package ghidra.util.extensions;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import generic.jar.ResourceFile;
 import ghidra.framework.Application;
 import ghidra.util.Msg;
+import ghidra.util.SecureZipExtractor;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
@@ -578,21 +576,8 @@ public class ExtensionUtils {
 			return false;
 		}
 
-		try (ZipFile zipFile = new ZipFile.Builder().setFile(file).get()) {
-
-			Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
-			while (entries.hasMoreElements()) {
-				monitor.checkCancelled();
-
-				ZipArchiveEntry entry = entries.nextElement();
-				File destination = FileUtilities.getSecureFile(installDirRoot, entry.getName());
-				if (entry.isDirectory()) {
-					destination.mkdirs();
-				}
-				else {
-					writeZipEntryToFile(zipFile, entry, destination);
-				}
-			}
+		try {
+			SecureZipExtractor.extractSecurely(file, installDirRoot, monitor);
 		}
 		catch (IOException e) {
 			if (!FileUtilities.deleteDir(destinationFolder)) {
@@ -619,74 +604,5 @@ public class ExtensionUtils {
 			return true;
 		}
 		return false;
-	}
-
-	private static void writeZipEntryToFile(ZipFile zFile, ZipArchiveEntry entry, File destination)
-			throws IOException {
-		try (OutputStream outputStream =
-			new BufferedOutputStream(new FileOutputStream(destination))) {
-
-			// Create the file at the new location...
-			IOUtils.copy(zFile.getInputStream(entry), outputStream);
-
-			// ...and update its permissions. But only continue if the zip was created on a unix
-			//platform. If not, we cannot use the posix libraries to set permissions.
-			if (entry.getPlatform() != ZipArchiveEntry.PLATFORM_UNIX) {
-				return;
-			}
-
-			int mode = entry.getUnixMode();
-			if (mode != 0) { // 0 indicates non-unix platform
-				Set<PosixFilePermission> perms = getPermissions(mode);
-				try {
-					Files.setPosixFilePermissions(destination.toPath(), perms);
-				}
-				catch (UnsupportedOperationException e) {
-					// Need to catch this, as Windows does not support the posix call. This is not
-					// an error, however, and should just silently fail.
-				}
-			}
-		}
-	}
-
-	/**
-	 * Converts Unix permissions to a set of {@link PosixFilePermission}s.
-	 *
-	 * @param unixMode integer representation of file permissions
-	 * @return set of POSIX file permissions
-	 */
-	private static Set<PosixFilePermission> getPermissions(int unixMode) {
-
-		Set<PosixFilePermission> permissions = new HashSet<>();
-
-		if ((unixMode & 0400) != 0) {
-			permissions.add(PosixFilePermission.OWNER_READ);
-		}
-		if ((unixMode & 0200) != 0) {
-			permissions.add(PosixFilePermission.OWNER_WRITE);
-		}
-		if ((unixMode & 0100) != 0) {
-			permissions.add(PosixFilePermission.OWNER_EXECUTE);
-		}
-		if ((unixMode & 0040) != 0) {
-			permissions.add(PosixFilePermission.GROUP_READ);
-		}
-		if ((unixMode & 0020) != 0) {
-			permissions.add(PosixFilePermission.GROUP_WRITE);
-		}
-		if ((unixMode & 0010) != 0) {
-			permissions.add(PosixFilePermission.GROUP_EXECUTE);
-		}
-		if ((unixMode & 0004) != 0) {
-			permissions.add(PosixFilePermission.OTHERS_READ);
-		}
-		if ((unixMode & 0002) != 0) {
-			permissions.add(PosixFilePermission.OTHERS_WRITE);
-		}
-		if ((unixMode & 0001) != 0) {
-			permissions.add(PosixFilePermission.OTHERS_EXECUTE);
-		}
-
-		return permissions;
 	}
 }
