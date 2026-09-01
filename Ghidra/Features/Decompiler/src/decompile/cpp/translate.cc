@@ -455,6 +455,29 @@ void AddrSpaceManager::addSpacebasePointer(SpacebaseSpace *basespace,const Varno
   basespace->setBaseRegister(ptrdata,truncSize,stackGrowth);
 }
 
+/// This routine is used by the initialization process to add
+/// address ranges to which there is never an (indirect) pointer
+/// Should only be called during initialization
+/// \param rng is the new range with no aliases to be added
+void AddrSpaceManager::addNoHighPtr(const Range &rng)
+
+{
+  AddrSpace *spc = rng.getSpace();
+  if (spc->manage != this) {		// Make sure the manager matches the range
+    spc->manage->addNoHighPtr(rng);
+    return;
+  }
+  if ((spc->flags & AddrSpace::addressable_none)!=0)
+    return;		// Whole space already unaddressable
+  if ((spc->flags & AddrSpace::addressable_all) != 0)
+    spc->flags &= ~(uint4)AddrSpace::addressable_all;
+  nohighptr.insertRange(spc,rng.getFirst(),rng.getLast());
+  Range whole(spc,0,spc->getHighest());
+  if (nohighptr.inRange(whole)) {
+    spc->flags |= AddrSpace::addressable_none;
+  }
+}
+
 /// Provide a new specialized resolver for a specific AddrSpace.  The manager takes ownership of resolver.
 /// \param spc is the space to which the resolver is associated
 /// \param rsolv is the new resolver object
@@ -660,7 +683,7 @@ AddrSpace *AddrSpaceManager::getNextSpaceInOrder(AddrSpace *spc) const
 /// \param pieces if the list memory locations to be joined
 /// \param logicalsize of a \e single \e piece join, or zero
 /// \return a pointer to the JoinRecord
-JoinRecord *AddrSpaceManager::findAddJoin(const vector<VarnodeData> &pieces,uint4 logicalsize)
+JoinRecord *AddrSpaceManager::findAddJoin(const vector<VarnodeData> &pieces,uint4 logicalsize) const
 
 { // Find a pre-existing split record, or create a new one corresponding to the input -pieces-
   // If -logicalsize- is 0, calculate logical size as sum of pieces
@@ -782,7 +805,7 @@ void AddrSpaceManager::truncateSpace(const TruncationTag &tag)
 /// \param realsize is the size of the real floating-point register
 /// \param logicalsize is the size (lower precision) size of the logical value
 Address AddrSpaceManager::constructFloatExtensionAddress(const Address &realaddr,int4 realsize,
-							 int4 logicalsize)
+							 int4 logicalsize) const
 {
   if (logicalsize == realsize)
     return realaddr;
@@ -808,7 +831,7 @@ Address AddrSpaceManager::constructFloatExtensionAddress(const Address &realaddr
 /// \return an address representing the start of the joined range
 Address AddrSpaceManager::constructJoinAddress(const Translate *translate,
 					       const Address &hiaddr,int4 hisz,
-					       const Address &loaddr,int4 losz)
+					       const Address &loaddr,int4 losz) const
 {
   spacetype hitp = hiaddr.getSpace()->getType();
   spacetype lotp = loaddr.getSpace()->getType();
@@ -856,7 +879,7 @@ Address AddrSpaceManager::constructJoinAddress(const Translate *translate,
 /// \param addr is the initial address in the range
 /// \param size is the number of bytes in the range
 /// \return the address representing the wrapped range
-Address AddrSpaceManager::constructWrappingAddress(const Address &addr,int4 size)
+Address AddrSpaceManager::constructWrappingAddress(const Address &addr,int4 size) const
 
 {
   AddrSpace *spc = addr.getSpace();
@@ -891,7 +914,7 @@ Address AddrSpaceManager::constructWrappingAddress(const Address &addr,int4 size
 /// either to the offset corresponding to the new JoinRecord or to a normal \e non-join Address.
 /// \param addr is the given Address
 /// \param size is the size of the range in bytes
-void AddrSpaceManager::renormalizeJoinAddress(Address &addr,int4 size)
+void AddrSpaceManager::renormalizeJoinAddress(Address &addr,int4 size) const
 
 {
   JoinRecord *joinRecord = findJoinInternal(addr.getOffset());
@@ -944,7 +967,7 @@ void AddrSpaceManager::renormalizeJoinAddress(Address &addr,int4 size)
 /// \param join is the JoinRecord to strip
 /// \param index is the index of the piece to strip, which must be at the front or back
 /// \return the VarnodeData corresponding to the remaining piece(s)
-const VarnodeData &AddrSpaceManager::stripJoinPiece(JoinRecord *join,int4 index)
+const VarnodeData &AddrSpaceManager::stripJoinPiece(JoinRecord *join,int4 index) const
 
 {
   int4 start,end;
@@ -972,7 +995,7 @@ const VarnodeData &AddrSpaceManager::stripJoinPiece(JoinRecord *join,int4 index)
 /// by ':' to separate it from the offset.  If the name is not present, the default data space is assumed.
 /// \param val is the string to parse
 /// \return the parsed address
-Address AddrSpaceManager::parseAddressSimple(const string &val)
+Address AddrSpaceManager::parseAddressSimple(const string &val) const
 
 {
   string::size_type col = val.find(':');

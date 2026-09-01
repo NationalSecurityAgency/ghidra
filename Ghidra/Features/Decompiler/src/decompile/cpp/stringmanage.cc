@@ -190,7 +190,7 @@ uint8 StringManager::registerInternalStringData(const Address &addr,const uint1 
   if (numChars < 0)
     return 0;	// Not a legal encoding
   uint8 hash = calcInternalHash(addr, buf, size);
-  Address constAddr = addr.getSpace()->getManager()->getConstant(hash);
+  Address constAddr = addr.getSpace()->getTrans()->getConstant(hash);
   StringData &stringData( stringMap[constAddr] );
   stringData.byteData.clear();
   stringData.isTruncated = false;

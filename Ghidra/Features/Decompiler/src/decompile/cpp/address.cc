@@ -185,12 +185,21 @@ bool Address::isContiguous(int4 sz,const Address &loaddr,int4 losz) const
   return false;
 }
 
+/// If pointers are possible anywhere within the \b size byte region return \b true, \b false otherwise.
+/// \param size is the number bytes in the region
+/// \return \b true if pointers into the region are possible
+bool Address::highPtrPossible(int4 size) const
+
+{
+  return base->manage->highPtrPossible(*this, size);
+}
+
 /// If \b this is (originally) a \e join address, reevaluate it in terms of its new
 /// \e offset and \e size, changing the space and offset if necessary.
 /// \param size is the new size in bytes of the underlying object
 void Address::renormalize(int4 size) {
   if (base->getType() == IPTR_JOIN)
-    base->getManager()->renormalizeJoinAddress(*this,size);
+    base->manage->renormalizeJoinAddress(*this,size);
 }
 
 /// This is usually used to decode an address from an \b \<addr\>
@@ -457,15 +466,15 @@ void RangeList::merge(const RangeList &op2)
   while(iter1 != iter2) {
     const Range &range( *iter1 );
     ++iter1;
-    insertRange(range.spc, range.first, range.last);
+    insertRange(range);
   }
 }
 
 /// Make sure indicated range of addresses is \e contained in \b this RangeList
 /// \param addr is the first Address in the target range
 /// \param size is the number of bytes in the target range
-/// \return \b true is the range is fully contained by this RangeList
-bool RangeList::inRange(const Address &addr,int4 size) const
+/// \return \b true if the range is fully contained by this RangeList
+bool RangeList::inRange(const Address &addr,uintb size) const
 
 {
   set<Range>::const_iterator iter;
@@ -487,6 +496,24 @@ bool RangeList::inRange(const Address &addr,int4 size) const
   if ((*iter).last >= end)
     return true;
   return false;
+}
+
+/// \param rng is the target range
+/// \return \b true if the range is fully contained by this RangeList
+bool RangeList::inRange(const Range &rng) const
+
+{
+  set<Range>::const_iterator iter;
+
+  if (tree.empty()) return false;
+
+  // iter = first range with its first > rng.first
+  iter = tree.upper_bound(rng);
+  if (iter == tree.begin()) return false;
+  // Set iter to last range with range.first <= rng.first
+  --iter;
+  if ((*iter).spc != rng.getSpace()) return false;
+  return ((*iter).last >= rng.last);
 }
 
 /// If \b this RangeList contains the specific address (spaceid,offset), return it

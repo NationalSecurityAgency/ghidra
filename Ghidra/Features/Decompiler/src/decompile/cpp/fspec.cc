@@ -94,11 +94,9 @@ void ParamEntry::resolveFirst(list<ParamEntry> &curList)
 void ParamEntry::resolveJoin(list<ParamEntry> &curList)
 
 {
-  if (spaceid->getType() != IPTR_JOIN) {
-    joinrec = (JoinRecord *)0;
+  joinrec = spaceid->findJoin(addressbase);
+  if (joinrec == (JoinRecord *)0)
     return;
-  }
-  joinrec = spaceid->getManager()->findJoin(addressbase);
   groupSet.clear();
   for(int4 i=0;i<joinrec->numPieces();++i) {
     const ParamEntry *entry = findEntryByStorage(curList, joinrec->getPiece(i));
@@ -430,11 +428,12 @@ int4 ParamEntry::getSlot(const Address &addr,int4 skip) const
 /// \param slotnum is a reference to used slots (which will be updated)
 /// \param sz is the size of the parameter to allocated
 /// \param typeAlign is the required byte alignment for the parameter
+/// \param m is the space manager
 /// \return the address of the new parameter (or an invalid address)
-Address ParamEntry::getAddrBySlot(int4 &slotnum, int4 sz, int4 typeAlign) const
+Address ParamEntry::getAddrBySlot(int4 &slotnum, int4 sz, int4 typeAlign,const AddrSpaceManager *m) const
 
 {
-	return getAddrBySlot(slotnum, sz, typeAlign, !isLeftJustified());
+  return getAddrBySlot(slotnum, sz, typeAlign, !isLeftJustified(),m);
 }
 
 /// \brief Calculate the storage address assigned when allocating a parameter of a given size
@@ -446,8 +445,9 @@ Address ParamEntry::getAddrBySlot(int4 &slotnum, int4 sz, int4 typeAlign) const
 /// \param sz is the size of the parameter to allocated
 /// \param typeAlign is the required byte alignment for the parameter
 /// \param justifyRight is true if initial bytes are padding for odd data-type sizes
+/// \param m is the space manager
 /// \return the address of the new parameter (or an invalid address)
-Address ParamEntry::getAddrBySlot(int4 &slotnum,int4 sz,int4 typeAlign, bool justifyRight) const
+Address ParamEntry::getAddrBySlot(int4 &slotnum,int4 sz,int4 typeAlign, bool justifyRight,const AddrSpaceManager *m) const
 
 {
   Address res;			// Start with an invalid result
@@ -459,8 +459,7 @@ Address ParamEntry::getAddrBySlot(int4 &slotnum,int4 sz,int4 typeAlign, bool jus
     res = Address(spaceid,addressbase);	// Get base address of the slot
     spaceused = size;
     if (((flags & smallsize_floatext)!=0)&&(sz != size)) { // Do we have an implied floating-point extension
-      AddrSpaceManager *manager = spaceid->getManager();
-      res = manager->constructFloatExtensionAddress(res,size,sz);
+      res = m->constructFloatExtensionAddress(res,size,sz);
       return res;
     }
   }
@@ -604,6 +603,7 @@ ParamListStandard::ParamListStandard(const ParamListStandard &op2)
   thisbeforeret = op2.thisbeforeret;
   autoKilledByCall = op2.autoKilledByCall;
   resourceStart = op2.resourceStart;
+  glb = op2.glb;
   for(list<ModelRule>::const_iterator iter=op2.modelRules.begin();iter!=op2.modelRules.end();++iter) {
     modelRules.emplace_back(*iter,&op2);
   }
@@ -745,7 +745,7 @@ uint4 ParamListStandard::assignAddressFallback(type_class resource,Datatype *tp,
 	continue;			// Wrong type
     }
 
-    param.addr = curEntry.getAddrBySlot(status[grp],tp->getAlignSize(),tp->getAlignment());
+    param.addr = curEntry.getAddrBySlot(status[grp],tp->getAlignSize(),tp->getAlignment(),glb);
     if (param.addr.isInvalid()) continue; // If -tp- doesn't fit an invalid address is returned
     if (curEntry.isExclusion()) {
       const vector<int4> &groupSet(curEntry.getAllGroups());
@@ -892,7 +892,7 @@ void ParamListStandard::buildTrialMap(ParamActive *active) const
 	continue;
       int4 sz = curentry->isExclusion() ? curentry->getSize() : curentry->getAlign();
       int4 nextslot = 0;
-      Address addr = curentry->getAddrBySlot(nextslot,sz,1);
+      Address addr = curentry->getAddrBySlot(nextslot,sz,1,glb);
       int4 trialpos = active->getNumTrials();
       active->registerTrial(addr,sz);
       ParamTrial &paramtrial(active->getTrial(trialpos));
@@ -923,7 +923,7 @@ void ParamListStandard::buildTrialMap(ParamActive *active) const
       for(int4 j=0;j<slotlist.size();++j) {
 	if (slotlist[j] == 0) {
 	  int4 nextslot = j;	// Make copy of j, so that getAddrBySlot can change it
-	  Address addr = curentry->getAddrBySlot(nextslot,curentry->getAlign(),1);
+	  Address addr = curentry->getAddrBySlot(nextslot,curentry->getAlign(),1,glb);
 	  int4 trialpos = active->getNumTrials();
 	  active->registerTrial(addr,curentry->getAlign());
 	  ParamTrial &paramtrial(active->getTrial(trialpos));
@@ -1451,6 +1451,7 @@ void ParamListStandard::getRangeList(AddrSpace *spc,RangeList &res) const
 void ParamListStandard::decode(Decoder &decoder,vector<EffectRecord> &effectlist,bool normalstack)
 
 {
+  glb = decoder.getAddrSpaceManager();
   numgroup = 0;
   spacebase = (AddrSpace *)0;
   int4 pointermax = 0;
@@ -2633,7 +2634,7 @@ void ProtoModel::decode(Decoder &decoder)
       while(decoder.peekElement() != 0) {
         Range range;
         range.decode(decoder);
-        localrange.insertRange(range.getSpace(),range.getFirst(),range.getLast());
+        localrange.insertRange(range);
       }
       decoder.closeElement(subId);
     }
@@ -2643,7 +2644,7 @@ void ProtoModel::decode(Decoder &decoder)
       while(decoder.peekElement() != 0) {
         Range range;
         range.decode(decoder);
-        paramrange.insertRange(range.getSpace(),range.getFirst(),range.getLast());
+        paramrange.insertRange(range);
       }
       decoder.closeElement(subId);
     }
@@ -2853,9 +2854,9 @@ void ProtoModelMerged::foldIn(ProtoModel *model)
     // Take the union of the localrange and paramrange
     set<Range>::const_iterator iter;
     for(iter=model->localrange.begin();iter!=model->localrange.end();++iter)
-      localrange.insertRange((*iter).getSpace(),(*iter).getFirst(),(*iter).getLast());
+      localrange.insertRange(*iter);
     for(iter=model->paramrange.begin();iter!=model->paramrange.end();++iter)
-      paramrange.insertRange((*iter).getSpace(),(*iter).getFirst(),(*iter).getLast());
+      paramrange.insertRange(*iter);
   }
 }
 

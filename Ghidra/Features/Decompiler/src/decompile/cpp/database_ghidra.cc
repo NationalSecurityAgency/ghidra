@@ -85,7 +85,7 @@ void ScopeGhidra::decodeHole(Decoder &decoder) const
     else if (attribId==ATTRIB_VOLATILE && decoder.readBool())
       flags |= Varnode::volatil;
   }
-  holes.insertRange(range.getSpace(),range.getFirst(),range.getLast());
+  holes.insertRange(range);
   decoder.closeElement(elemId);
   if (flags != 0) {
     ghidra->symboltab->setPropertyRange(flags,range);
