@@ -87,6 +87,17 @@ public interface Program extends DataTypeManagerDomainObject, ProgramArchitectur
 	/** Name of cold entry point addresses property map **/
 	public static final String COLD_ENTRY_MAP_NAME = "ColdEntries";
 
+	public enum LoadState {
+		/** Load state is not known **/
+		INDETERMINATE,
+	
+		/** Program is fully loaded **/
+		LOADED,
+	
+		/** Program is in the process of being loaded **/
+		LOADING
+	}
+
 	/**
 	 * Get the listing object.
 	 * @return the Listing interface to the listing object.
@@ -251,6 +262,25 @@ public interface Program extends DataTypeManagerDomainObject, ProgramArchitectur
 	 * @param path  the path to the program's exe
 	 */
 	public void setExecutablePath(String path);
+
+	/**
+	 * Gets programs LoadState, an Enum which indicates whether the Program has been fully
+	 * constructed or not.
+	 *
+	 * @return loadState  the current loadState
+	 */
+	public LoadState getLoadState();
+
+	/**
+	 * Sets programs LoadState, an Enum which indicates whether the Program has been fully
+	 * constructed or not.
+	 * 
+	 * NOTE: the current implementation of loadState (where / how it's set) is approximate,
+	 * further review is recommended if relying on loadState for a critical use case
+	 *
+	 * @param state - the updated LoadState
+	 */
+	public void setLoadState(LoadState state);
 
 	/**
 	 * Returns a value corresponding to the original file format.
