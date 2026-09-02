@@ -17,7 +17,6 @@ package ghidra.app.util.pcodeInject;
 
 import ghidra.javaclass.format.DescriptorDecoder;
 import ghidra.javaclass.format.JavaClassConstants;
-import ghidra.javaclass.format.constantpool.AbstractConstantPoolInfoJava;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
 
@@ -57,11 +56,9 @@ public class ArrayMethods {
 	 * and a dimension as its second argument.
 	 * @param pCode is the pcode accumulator
 	 * @param constantPoolIndex
-	 * @param constantPool
 	 * @param dimensions
 	 */
 	public static void getPcodeForMultiANewArray(PcodeOpEmitter pCode, int constantPoolIndex,
-			AbstractConstantPoolInfoJava[] constantPool,
 			int dimensions) {
 		//pop all of the dimensions off the stack
 		for (int i = dimensions; i >= 1; --i){
@@ -93,8 +90,7 @@ public class ArrayMethods {
 				multianewarrayOpArgs[i] = DIMENSION + Integer.toString(i);
 			}
 		}
-		pCode.emitAssignVarnodeFromPcodeOpCall(ARRAY_REF, 4, MULTIANEWARRAY, CLASS_NAME, "dim1",
-			"dim2");
+		pCode.emitAssignVarnodeFromPcodeOpCall(ARRAY_REF, 4, MULTIANEWARRAY, multianewarrayOpArgs);
 		
 
 
