@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<compiler_spec>
+  <data_organization>
+    <absolute_max_alignment value="0"/>
+    <machine_alignment value="8"/>
+    <default_alignment value="1"/>
+    <default_pointer_alignment value="8"/>
+    <pointer_size value="8"/>
+    <wchar_size value="4"/>
+    <short_size value="2"/>
+    <integer_size value="4"/>
+    <long_size value="8"/>
+    <long_long_size value="8"/>
+    <float_size value="4"/>
+    <double_size value="8"/>
+    <long_double_size value="8"/>
+    <size_alignment_map>
+      <entry size="1" alignment="1"/>
+      <entry size="2" alignment="2"/>
+      <entry size="4" alignment="4"/>
+      <entry size="8" alignment="8"/>
+    </size_alignment_map>
+  </data_organization>
+  <global>
+    <range space="ram"/>
+    <register name="tp"/>
+  </global>
+  <funcptr align="8"/>
+  <stackpointer register="sp" space="ram"/>
+  <returnaddress>
+    <register name="lr"/>
+  </returnaddress>
+  <default_proto>
+    <prototype name="__default" extrapop="0" stackshift="0">
+      <input>
+        <pentry minsize="1" maxsize="8" extension="sign"><register name="r0"/></pentry>
+        <pentry minsize="1" maxsize="8" extension="sign"><register name="r1"/></pentry>
+        <pentry minsize="1" maxsize="8" extension="sign"><register name="r2"/></pentry>
+        <pentry minsize="1" maxsize="8" extension="sign"><register name="r3"/></pentry>
+        <pentry minsize="1" maxsize="8" extension="sign"><register name="r4"/></pentry>
+        <pentry minsize="1" maxsize="8" extension="sign"><register name="r5"/></pentry>
+        <pentry minsize="1" maxsize="8" extension="sign"><register name="r6"/></pentry>
+        <pentry minsize="1" maxsize="8" extension="sign"><register name="r7"/></pentry>
+        <pentry minsize="1" maxsize="8" extension="sign"><register name="r8"/></pentry>
+        <pentry minsize="1" maxsize="8" extension="sign"><register name="r9"/></pentry>
+        <pentry minsize="1" maxsize="500" align="8"><addr offset="16" space="stack"/></pentry>
+        <rule>
+          <datatype name="any"/>
+          <join align="true" stackspill="false"/>
+        </rule>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="8" extension="sign"><register name="r0"/></pentry>
+        <pentry minsize="1" maxsize="8" extension="sign"><register name="r1"/></pentry>
+        <pentry minsize="1" maxsize="8" extension="sign"><register name="r2"/></pentry>
+        <pentry minsize="1" maxsize="8" extension="sign"><register name="r3"/></pentry>
+        <pentry minsize="1" maxsize="8" extension="sign"><register name="r4"/></pentry>
+        <pentry minsize="1" maxsize="8" extension="sign"><register name="r5"/></pentry>
+        <pentry minsize="1" maxsize="8" extension="sign"><register name="r6"/></pentry>
+        <pentry minsize="1" maxsize="8" extension="sign"><register name="r7"/></pentry>
+        <pentry minsize="1" maxsize="8" extension="sign"><register name="r8"/></pentry>
+        <pentry minsize="1" maxsize="8" extension="sign"><register name="r9"/></pentry>
+        <rule>
+          <datatype name="any" minsize="81"/>
+          <hidden_return/>
+        </rule>
+        <rule>
+          <datatype name="any"/>
+          <join/>
+        </rule>
+      </output>
+      <unaffected>
+        <register name="r30"/>
+        <register name="r31"/>
+        <register name="r32"/>
+        <register name="r33"/>
+        <register name="r34"/>
+        <register name="r35"/>
+        <register name="r36"/>
+        <register name="r37"/>
+        <register name="r38"/>
+        <register name="r39"/>
+        <register name="r40"/>
+        <register name="r41"/>
+        <register name="r42"/>
+        <register name="r43"/>
+        <register name="r44"/>
+        <register name="r45"/>
+        <register name="r46"/>
+        <register name="r47"/>
+        <register name="r48"/>
+        <register name="r49"/>
+        <register name="r50"/>
+        <register name="r51"/>
+        <register name="r52"/>
+        <register name="tp"/>
+        <register name="sp"/>
+      </unaffected>
+    </prototype>
+  </default_proto>
+</compiler_spec>
