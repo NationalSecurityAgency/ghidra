@@ -1,0 +1,26 @@
+<decompilertest>
+<binaryimage arch="MIPS:LE:32:default:default">
+<!--
+   Covers Funcdata::mapVolatileGlobals for the case deadvolatile.xml does
+   not: a volatile address with no pre-existing Symbol whatsoever, whose
+   read value is actually used (returned), not dead. deadvolatile.xml
+   already proves the mechanism fires on a dead-value read; this proves
+   it also fires, and produces a usable, real, persisted Symbol name,
+   on a live one.
+-->
+<bytechunk space="ram" offset="0xbfc00000">
+0340083c0000028d0800e00300000000
+</bytechunk>
+<symbol space="ram" offset="0xbfc00000" name="livevolatileread"/>
+</binaryimage>
+<script>
+  <com>volatile [ram,0x40030000,4]</com>
+  <com>lo fu livevolatileread</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Volatile Map Global Live #1" min="1" max="1">xVar1 = xRam40030000;</stringmatch>
+<stringmatch name="Volatile Map Global Live #2" min="1" max="1">return xVar1;</stringmatch>
+<stringmatch name="Volatile Map Global Live #3" min="3" max="3">xVar1</stringmatch>
+</decompilertest>
