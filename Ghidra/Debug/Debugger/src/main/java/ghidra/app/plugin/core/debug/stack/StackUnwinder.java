@@ -99,7 +99,7 @@ public class StackUnwinder {
 	final AddressSpace codeSpace;
 	private final Register sp;
 
-	record ThreadAndSnap(TraceThread thread, Long viewSnap) {}
+	record ThreadAndSnap(TraceThread thread, long viewSnap) {}
 
 	private Map<ThreadAndSnap, TreeMap<Integer, AnalysisUnwoundFrame<WatchValue>>> unwound =
 		new HashMap<>();
@@ -186,7 +186,7 @@ public class StackUnwinder {
 
 			ThreadAndSnap tas = new ThreadAndSnap(coord.getThread(), coord.getViewSnap());
 			TreeMap<Integer, AnalysisUnwoundFrame<WatchValue>> treeMap = unwound.computeIfAbsent(
-				tas, t -> new TreeMap<Integer, AnalysisUnwoundFrame<WatchValue>>());
+				tas, _ -> new TreeMap<Integer, AnalysisUnwoundFrame<WatchValue>>());
 			AnalysisUnwoundFrame<WatchValue> savedFrame = treeMap.get(coord.getFrame());
 			if (savedFrame != null) {
 				// Short circuit here if possible to avoid recomputing UnwindInfo
@@ -373,7 +373,8 @@ public class StackUnwinder {
 	}
 
 	/**
-	 * A convenience method 
+	 * A convenience method
+	 * 
 	 * @return the deepest level
 	 */
 	public int getRecoveredFrameCount() {

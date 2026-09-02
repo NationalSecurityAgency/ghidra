@@ -239,6 +239,20 @@ public interface StackUnwindWarning {
 	}
 
 	/**
+	 * While interpreting p-code, we encountered an internal branch but ignored it.
+	 * 
+	 * @param seq the sequence number of the op
+	 */
+	public record IgnoredInternalFlowStackUnwindWarning(SequenceNumber seq)
+			implements StackUnwindWarning {
+		@Override
+		public String getMessage() {
+			return "Ignored control flow internal to instruction at %s:%d"
+					.formatted(seq.getTarget(), seq.getTime());
+		}
+	}
+
+	/**
 	 * A custom warning, either because a specific type is too onerous, or because the message was
 	 * deserialized and the specific type and info cannot be recovered.
 	 * 

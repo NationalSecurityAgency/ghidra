@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,16 +21,15 @@ import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.StructureDataType;
+import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Class to represent the Android boot loader header.
- *
  */
 public class AndroidBootLoaderHeader implements StructConverter {
+
+	private static final int NUM_IMAGES_LIMIT = 50_000;
 
 	private String magic;
 	private int numberOfImages;
@@ -42,6 +41,10 @@ public class AndroidBootLoaderHeader implements StructConverter {
 	public AndroidBootLoaderHeader(BinaryReader reader) throws IOException {
 		magic = reader.readNextAsciiString(AndroidBootLoaderConstants.BOOTLDR_MAGIC_SIZE);
 		numberOfImages = reader.readNextInt();
+		if (numberOfImages < 0 || numberOfImages > NUM_IMAGES_LIMIT) {
+			throw new IOException("Image count exceeds limit (%d): %d"
+					.formatted(NUM_IMAGES_LIMIT, numberOfImages));
+		}
 		startOffset = reader.readNextInt();
 		bootLoaderSize = reader.readNextInt();
 		for (int i = 0; i < numberOfImages; ++i) {
@@ -66,7 +69,7 @@ public class AndroidBootLoaderHeader implements StructConverter {
 	}
 
 	public List<AndroidBootLoaderImageInfo> getImageInfoList() {
-		return new ArrayList<AndroidBootLoaderImageInfo>(imageInfoList);
+		return new ArrayList<>(imageInfoList);
 	}
 
 	@Override

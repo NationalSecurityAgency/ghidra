@@ -98,8 +98,8 @@ public abstract class AbstractIntegerTextFieldTest<T extends AbstractIntegerText
 		triggerText(textField, text);
 	}
 
-	protected void setUsePrefix(boolean b) {
-		runSwing(() -> field.setUseNumberPrefix(b));
+	protected void setAutoSwitchMode(boolean b) {
+		runSwing(() -> field.setAutoSwitchMode(b));
 	}
 
 	class TestChangeListener implements ChangeListener {

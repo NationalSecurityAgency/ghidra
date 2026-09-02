@@ -3032,7 +3032,22 @@ int4 RuleDumptyHumpLate::applyOp(PcodeOp *op,Funcdata &data)
   Varnode *vn = op->getIn(0);
   if (!vn->isWritten()) return 0;
   PcodeOp *pieceOp = vn->getDef();
-  if (pieceOp->code() != CPUI_PIECE) return 0;
+  OpCode opc = pieceOp->code();
+  if (opc == CPUI_SUBPIECE) {
+    // SUB(SUB(base,#c),#d)   =>  SUB(base,#c+#d)
+    Varnode *base = pieceOp->getIn(0);
+    data.opSetInput(op,base,0);
+    uintb trunc = op->getIn(1)->getOffset() + pieceOp->getIn(1)->getOffset();
+    if (trunc != op->getIn(1)->getOffset())
+      data.opSetInput(op,data.newConstant(4, trunc),1);
+    if (vn->hasNoDescend() && !vn->isAutoLive()) {
+      vector<PcodeOp *> scratch;
+      data.opDestroyRecursive(pieceOp, scratch);
+    }
+    return 1;
+  }
+  else if (opc != CPUI_PIECE)
+    return 0;
   Varnode *out = op->getOut();
   int4 outSize = out->getSize();
   int4 trunc = (int4)op->getIn(1)->getOffset();
@@ -3894,24 +3909,29 @@ bool LaneDivide::buildZext(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 
 {
   int4 inLanes,inSkip;
   Varnode *invn = op->getIn(0);
-  if (!description.restriction(numLanes, skipLanes, 0, invn->getSize(), inLanes, inSkip)) {
-    return false;
-  }
+  if (!invn->isConstant() || invn->getOffset() != 0) {
+    if (!description.restriction(numLanes, skipLanes, 0, invn->getSize(), inLanes, inSkip)) {
+      return false;
+    }
   // inSkip should always come back as equal to skipLanes
-  if (inLanes == 1) {
-    TransformOp *rop = newOpReplace(1, CPUI_COPY, op);
-    TransformVar *inVar = getPreexistingVarnode(invn);
-    opSetInput(rop,inVar,0);
-    opSetOutput(rop,outVars);
+    if (inLanes == 1) {
+      TransformOp *rop = newOpReplace(1, CPUI_COPY, op);
+      TransformVar *inVar = getPreexistingVarnode(invn);
+      opSetInput(rop,inVar,0);
+      opSetOutput(rop,outVars);
+    }
+    else {
+      TransformVar *inRvn = setReplacement(invn,inLanes,inSkip);
+      if (inRvn == (TransformVar *)0) return false;
+      for(int4 i=0;i<inLanes;++i) {
+	TransformOp *rop = newOpReplace(1, CPUI_COPY, op);
+	opSetInput(rop,inRvn+i,0);
+	opSetOutput(rop,outVars + i);
+      }
+    }
   }
   else {
-    TransformVar *inRvn = setReplacement(invn,inLanes,inSkip);
-    if (inRvn == (TransformVar *)0) return false;
-    for(int4 i=0;i<inLanes;++i) {
-      TransformOp *rop = newOpReplace(1, CPUI_COPY, op);
-      opSetInput(rop,inRvn+i,0);
-      opSetOutput(rop,outVars + i);
-    }
+    inLanes = 0;
   }
   for(int4 i=0;i<numLanes-inLanes;++i) {			// Write 0 constants to remaining lanes
     TransformOp *rop = newOpReplace(1, CPUI_COPY, op);

@@ -255,14 +255,13 @@ public class ProjectDataTablePanel extends JPanel {
 		}
 	}
 
-	private void reload() {
+	public void reload() {
 
 		checkCapacity();
 
 		if (!capacityExceeded) {
 			model.reload();
 		}
-
 	}
 
 	// load the max file count system property

@@ -235,7 +235,7 @@ public interface ProjectData extends Iterable<DomainFile> {
 	 * NOTE: The project should be closed and then reopened after this method is called.
 	 * @param newRepository new repository to use
 	 * @param force if true any existing local checkout which is not recognized/valid
-	 *    for newRepository will be forceably terminated if offline with old repository. 
+	 *    for newRepository will be forcibly terminated if offline with old repository. 
 	 * @param monitor task monitor 
 	 * @throws IOException thrown if files are still checked out, or if there was a problem accessing
 	 * the filesystem
@@ -281,7 +281,7 @@ public interface ProjectData extends Iterable<DomainFile> {
 
 	/**
 	 * Return a {@link DomainFile} iterator over all non-link files within this project data store.
-	 * If links should be followed use an appropropriate static method from {@link ProjectDataUtils}.
+	 * If links should be followed use an appropriate static method from {@link ProjectDataUtils}.
 	 * @return domain file iterator
 	 */
 	@Override

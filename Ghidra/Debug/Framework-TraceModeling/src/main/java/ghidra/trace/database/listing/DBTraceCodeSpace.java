@@ -16,6 +16,7 @@
 package ghidra.trace.database.listing;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 
@@ -261,7 +262,7 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 
 	@Override
 	public void invalidateCache() {
-		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+		try (LockHold _ = LockHold.lock(lock.writeLock())) {
 			instructionMapSpace.invalidateCache();
 			instructions.invalidateCache();
 
@@ -287,7 +288,7 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 	 * @param newBytes the new bytes
 	 */
 	public void bytesChanged(Set<TraceAddressSnapRange> changed, long snap, Address start,
-			byte[] oldBytes, byte[] newBytes) {
+			ByteBuffer oldBytes, ByteBuffer newBytes) {
 		AddressSet diffs = ByteArrayUtils.computeDiffsAddressSet(start, oldBytes, newBytes);
 		Set<AbstractDBTraceCodeUnit<?>> affectedUnits = new HashSet<>();
 		for (TraceAddressSnapRange box : changed) {
@@ -301,8 +302,8 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 			}
 		}
 
-		MemBuffer newBuf =
-			new ByteMemBufferImpl(start, newBytes, trace.getBaseLanguage().isBigEndian());
+		MemBuffer newBuf = new ByteMemBufferImpl(start, ByteArrayUtils.arrayOrGet(newBytes),
+			trace.getBaseLanguage().isBigEndian());
 		for (AbstractDBTraceCodeUnit<?> unit : affectedUnits) {
 			// Rule:
 			//     Break unit down into time portions before affected range, and at/within range
@@ -321,12 +322,10 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 				unitStartSnap = unit.getStartSnap();
 				unit.delete();
 			}
-			if (unit instanceof DBTraceData) {
-				DBTraceData dataUnit = (DBTraceData) unit;
-				boolean reApply = false;
+			if (unit instanceof DBTraceData dataUnit) {
+				boolean reApply;
 				DataType dataType = dataUnit.getDataType();
-				if (dataType instanceof Dynamic) {
-					Dynamic ddt = (Dynamic) dataType;
+				if (dataType instanceof Dynamic ddt) {
 					WrappedMemBuffer newWrapped =
 						new WrappedMemBuffer(newBuf, (int) dataUnit.getAddress().subtract(start));
 					int newLength = ddt.getLength(newWrapped, dataUnit.getLength());

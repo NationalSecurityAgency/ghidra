@@ -441,10 +441,7 @@ class GhidraScriptActionManager {
 
 					ZipEntry entry = entries.nextElement();
 					String name = entry.getName();
-					File destination = new File(versionedExtractDir, name);
-					if (!FileUtilities.isPathContainedWithin(versionedExtractDir, destination)) {
-						throw new IOException("Zip entry escapes target directory: " + name);
-					}
+					FileUtilities.getSecureFile(versionedExtractDir, name);
 					monitor.setMessage("Extracting " + name + "...");
 					writeZipEntry(versionedExtractDir, entry, zipFileObject.getInputStream(entry));
 					monitor.incrementProgress(1);

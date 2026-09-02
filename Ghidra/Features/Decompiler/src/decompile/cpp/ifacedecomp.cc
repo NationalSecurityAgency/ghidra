@@ -564,16 +564,15 @@ void IfcMapaddress::execute(istream &s)
     sym->getScope()->setAttribute(sym,Varnode::namelock|Varnode::typelock);
   }
   else {
-    Symbol *sym;
     uint4 flags = Varnode::namelock|Varnode::typelock;
     flags |= dcp->conf->symboltab->getProperty(addr); // Inherit existing properties
     string basename;
     Scope *scope = dcp->conf->symboltab->findCreateScopeFromSymbolName(name, basename, (Scope *)0);
-    sym = scope->addSymbol(basename,ct,addr,Address())->getSymbol();
+    MapEntry *entry = scope->addSymbol(basename,ct,addr,Address());
+    Symbol *sym = entry->getSymbol();
     sym->getScope()->setAttribute(sym,flags);
     if (scope->getParent() != (Scope *)0) {		// If this is a global namespace scope
-      SymbolEntry *e = sym->getFirstWholeMap();		// Adjust range
-      dcp->conf->symboltab->addRange(scope,e->getAddr().getSpace(),e->getFirst(),e->getLast());
+      dcp->conf->symboltab->addRange(scope,entry->getAddr().getSpace(),entry->getFirst(),entry->getLast());
     }
   }
 
@@ -1354,6 +1353,7 @@ void IfcRename::execute(istream &s)
 
   if (sym->getCategory() == Symbol::function_parameter)
     dcp->fd->getFuncProto().setInputLock(true);
+  dcp->fd->remapConflictSymbol(sym);
   sym->getScope()->renameSymbol(sym,newname);
   sym->getScope()->setAttribute(sym,Varnode::namelock|Varnode::typelock);
 }
@@ -1412,6 +1412,7 @@ void IfcRetype::execute(istream &s)
 
   if (sym->getCategory()==Symbol::function_parameter)
     dcp->fd->getFuncProto().setInputLock(true);
+  dcp->fd->remapConflictSymbol(sym);
   sym->getScope()->retypeSymbol(sym,ct);
   sym->getScope()->setAttribute(sym,Varnode::typelock);
   if ((newname.size()!=0)&&(newname != name)) {

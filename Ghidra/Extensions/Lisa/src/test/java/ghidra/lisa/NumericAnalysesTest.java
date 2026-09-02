@@ -132,11 +132,10 @@ public class NumericAnalysesTest extends AbstractLisaTest {
 		lisaOptions.setHighPcode(true);
 		runTest();
 		equalsAssert(valueOf("0040000a:2:register:00000000"), null);
-		equalsAssert(valueOf("00400011:142:register:00000000"), "[-Inf, +Inf]");
+		equalsAssert(valueOf("00400011:148:register:00000000"), "[-Inf, +Inf]");
 		equalsAssert(valueOf("0040001c:26:register:00000000"), "[-Inf, -3]");
-		equalsAssert(valueOf("00400011:142:register:00000000"), "[-Inf, +Inf]");
-		equalsAssert(valueOf("00400020:111:register:00000000"), "[3, +Inf]");
-		equalsAssert(valueOf("00400022:115:register:00000000"), "[3, 8]");
+		equalsAssert(valueOf("00400020:117:register:00000000"), "[3, +Inf]");
+		equalsAssert(valueOf("00400022:121:register:00000000"), "[3, 8]");
 		equalsAssert(valueOf("00400026:29:register:00000000"), "[-Inf, 39]");
 		equalsAssert(valueOf("0040002a:38:register:00000000"), "[-Inf, +Inf]");
 	}

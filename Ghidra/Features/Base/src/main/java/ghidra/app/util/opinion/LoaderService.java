@@ -50,7 +50,7 @@ public class LoaderService {
 		for (Loader loader : getAllLoaders()) {
 			if (loaderFilter.test(loader)) {
 				if (!loader.isFallback()) {
-					tryLoadSpecs(loader, provider, loaderMap);
+					tryLoadSpecs(loader, provider, loaderMap, monitor);
 				}
 				else {
 					fallback.add(loader);
@@ -64,7 +64,7 @@ public class LoaderService {
 				.map(Loader::getName)
 				.anyMatch(Predicate.not(BinaryLoader.BINARY_NAME::equals));
 		if (!matches) {
-			fallback.forEach(loader -> tryLoadSpecs(loader, provider, loaderMap));
+			fallback.forEach(loader -> tryLoadSpecs(loader, provider, loaderMap, monitor));
 		}
 
 		return loaderMap;
@@ -90,9 +90,13 @@ public class LoaderService {
 	 * @param loader The {@link Loader} to query
 	 * @param provider The {@link ByteProvider} to load from
 	 * @param loaderMap The {@link LoaderMap} to populate with discovered {@link LoadSpec}s
+	 * @param monitor The {@link TaskMonitor}
 	 */
-	private static void tryLoadSpecs(Loader loader, ByteProvider provider, LoaderMap loaderMap) {
+	private static void tryLoadSpecs(Loader loader, ByteProvider provider, LoaderMap loaderMap,
+			TaskMonitor monitor) {
 		try {
+			monitor.setMessage("Trying loader: " + loader.getName());
+			monitor.setIndeterminate(true);
 			Collection<LoadSpec> loadSpecs = loader.findSupportedLoadSpecs(provider);
 			if (!CollectionUtils.isBlank(loadSpecs)) {
 				loaderMap.put(loader, loadSpecs);
@@ -104,6 +108,9 @@ public class LoaderService {
 		catch (RuntimeException e) {
 			Msg.error(LoaderService.class, "Unexpected Loader exception from " + loader.getName(),
 				e);
+		}
+		finally {
+			monitor.setIndeterminate(false);
 		}
 	}
 
@@ -168,7 +175,7 @@ public class LoaderService {
 	 * @return An instance of every known {@link Loader}.  The {@link Loader} instances are sorted
 	 *   according to their {@link Loader#compareTo(Loader) natural ordering}. 
 	 */
-	private synchronized static Collection<Loader> getAllLoaders() {
+	public synchronized static Collection<Loader> getAllLoaders() {
 		List<Loader> loaders = new ArrayList<>(ClassSearcher.getInstances(Loader.class));
 		Collections.sort(loaders);
 		return loaders;

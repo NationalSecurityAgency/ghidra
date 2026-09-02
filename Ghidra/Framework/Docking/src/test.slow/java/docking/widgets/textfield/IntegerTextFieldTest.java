@@ -80,7 +80,7 @@ public class IntegerTextFieldTest extends AbstractIntegerTextFieldTest<IntegerTe
 		typeText("a");
 		assertEquals(null, getBigIntegerValue());
 
-		setUsePrefix(false);
+		setAutoSwitchMode(false);
 		typeText("abc");
 		assertEquals(0xabc, getValue());
 	}
@@ -134,12 +134,9 @@ public class IntegerTextFieldTest extends AbstractIntegerTextFieldTest<IntegerTe
 		assertNull(field.getValue());
 	}
 
-	@Test
+	@Test(expected = IllegalArgumentException.class)
 	public void testMinSetTo1() {
 		field.setMinValue(BigInteger.ONE);
-		setValue(0);
-		assertEquals(1, getValue());
-
 	}
 
 	@Test
@@ -219,15 +216,15 @@ public class IntegerTextFieldTest extends AbstractIntegerTextFieldTest<IntegerTe
 
 	@Test
 	public void testHexValueInDontRequireHexPrefixMode() {
-		field.setUseNumberPrefix(false);
+		field.setAutoSwitchMode(false);
 		field.setFormat(HEX);
 		setValue(255);
 		assertEquals("ff", field.getText());
 	}
 
 	@Test
-	public void testAutoModeSwitchingIsOffWhenPrefixNotUsed() {
-		field.setUseNumberPrefix(false);
+	public void testAutoSwitchingMode() {
+		field.setAutoSwitchMode(false);
 		field.setFormat(HEX);
 		typeText("15");
 		assertEquals(HEX, getFormat());
@@ -265,12 +262,12 @@ public class IntegerTextFieldTest extends AbstractIntegerTextFieldTest<IntegerTe
 
 	@Test
 	public void testUseHexPrefixUpdatesTextField() {
-		field.setUseNumberPrefix(false);
+		field.setAutoSwitchMode(false);
 		setFormat(HEX);
 		setValue(255);
 		assertEquals("ff", field.getText());
-		field.setUseNumberPrefix(true);
-		assertEquals("0xff", field.getText());
+		field.setAutoSwitchMode(true);
+		assertEquals("ff", field.getText());
 	}
 
 	@Test
@@ -311,21 +308,19 @@ public class IntegerTextFieldTest extends AbstractIntegerTextFieldTest<IntegerTe
 	}
 
 	@Test
-	public void testMinValueOfOneDecimalFormat() {
+	public void testDecimalFormat_ValueOfZero() {
 		setFormat(DEC);
-		field.setMinValue(BigInteger.ONE);
 		typeText("0");
-		assertEquals("", field.getText());
-		typeText("1");
-		assertEquals("1", field.getText());
+		assertEquals("0", field.getText());
+		assertEquals(BigInteger.ZERO, field.getValue());
 	}
 
 	@Test
-	public void testMinValueOfOneHexFormat() {
+	public void testHexFormat_ValueOfZero() {
 		setFormat(HEX);
-		field.setMinValue(BigInteger.ONE);
-		typeText("0x1");
-		assertEquals("0x1", field.getText());
+		typeText("0");
+		assertEquals("0", field.getText());
+		assertEquals(BigInteger.ZERO, field.getValue());
 	}
 
 	protected void setMinValue(BigInteger minValue) {

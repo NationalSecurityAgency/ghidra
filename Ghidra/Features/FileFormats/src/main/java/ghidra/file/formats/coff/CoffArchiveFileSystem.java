@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,12 @@ import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
 import ghidra.util.task.TaskMonitor;
 
-@FileSystemInfo(type = "coff", description = "COFF Archive", factory = CoffArchiveFileSystemFactory.class)
+@FileSystemInfo(
+	type = "coff",
+	description = "COFF Archive",
+	factory = CoffArchiveFileSystemFactory.class,
+	extensions = { "a" }
+)
 public class CoffArchiveFileSystem extends AbstractFileSystem<CoffArchiveMemberHeader> {
 
 	private ByteProvider provider;

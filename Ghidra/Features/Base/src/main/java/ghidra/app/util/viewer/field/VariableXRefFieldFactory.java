@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,6 +34,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.VariableXRefFieldLocation;
+import ghidra.util.datastruct.Counter;
 
 /**
  * Variable Cross-reference Field Factory
@@ -89,9 +90,10 @@ public class VariableXRefFieldFactory extends XRefFieldFactory {
 		Variable var = (Variable) obj;
 		List<Reference> xrefs = new ArrayList<>();
 		List<Reference> offcuts = new ArrayList<>();
-		XReferenceUtils.getVariableRefs(var, xrefs, offcuts, maxXRefs);
+		Counter fullCount = new Counter();
+		XReferenceUtils.getVariableRefs(var, xrefs, offcuts, maxXRefs, fullCount);
 
-		if (xrefs.size() + offcuts.size() == 0) {
+		if (fullCount.intValue() == 0) {
 			return null;
 		}
 
@@ -104,7 +106,7 @@ public class VariableXRefFieldFactory extends XRefFieldFactory {
 		displayBlockName = false; //provider.isDisplayBlockName();
 
 		int totalXrefs = xrefs.size() + offcuts.size();
-		boolean tooMany = totalXrefs > maxXRefs;
+		boolean tooMany = fullCount.intValue() > maxXRefs;
 
 		AttributedString delimiter = new AttributedString(delim, Colors.FOREGROUND, getMetrics());
 

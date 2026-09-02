@@ -40,8 +40,7 @@ import ghidra.trace.database.space.DBTraceSpaceBased;
 import ghidra.trace.model.*;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryState;
-import ghidra.trace.util.TraceChangeRecord;
-import ghidra.trace.util.TraceEvents;
+import ghidra.trace.util.*;
 import ghidra.util.*;
 import ghidra.util.AddressIteratorAdapter;
 import ghidra.util.database.*;
@@ -340,7 +339,7 @@ public class DBTraceMemorySpace
 	// TODO: Ensure a code unit is not having rug taken out from under it?
 	public void setState(long snap, Address start, Address end, TraceMemoryState state) {
 		checkState(state);
-		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+		try (LockHold _ = LockHold.lock(lock.writeLock())) {
 			doSetState(snap, start, end, state);
 		}
 	}
@@ -348,7 +347,7 @@ public class DBTraceMemorySpace
 	@Override
 	public void setState(long snap, AddressRange range, TraceMemoryState state) {
 		checkState(state);
-		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+		try (LockHold _ = LockHold.lock(lock.writeLock())) {
 			doSetState(snap, range.getMinAddress(), range.getMaxAddress(), state);
 		}
 	}
@@ -356,7 +355,7 @@ public class DBTraceMemorySpace
 	@Override
 	public void setState(long snap, Address address, TraceMemoryState state) {
 		checkState(state);
-		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+		try (LockHold _ = LockHold.lock(lock.writeLock())) {
 			doSetState(snap, address, address, state);
 		}
 	}
@@ -364,7 +363,7 @@ public class DBTraceMemorySpace
 	@Override
 	public void setState(long snap, AddressSetView set, TraceMemoryState state) {
 		checkState(state);
-		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+		try (LockHold _ = LockHold.lock(lock.writeLock())) {
 			for (AddressRange range : set) {
 				doSetState(snap, range.getMinAddress(), range.getMaxAddress(), state);
 			}
@@ -413,7 +412,7 @@ public class DBTraceMemorySpace
 			Address address) {
 		// LATER: Cache here or on the delegate?
 		return mostRecentStateEntryCache.computeIfAbsent(new MostRecentStateCacheKey(snap, address),
-			k -> getViewMostRecentStateEntry(snap, new AddressRangeImpl(address, address),
+			_ -> getViewMostRecentStateEntry(snap, new AddressRangeImpl(address, address),
 				StatePredicate.IS_KNOWN_OR_ERROR));
 	}
 
@@ -454,7 +453,7 @@ public class DBTraceMemorySpace
 	@Override
 	public AddressSetView getAddressesWithState(Lifespan span, AddressSetView set,
 			Predicate<TraceMemoryState> predicate) {
-		try (LockHold hold = LockHold.lock(lock.readLock())) {
+		try (LockHold _ = LockHold.lock(lock.readLock())) {
 			if (!(predicate instanceof StatePredicate stock)) {
 				return doGetAddressesWithState(span, set, predicate);
 			}
@@ -469,7 +468,7 @@ public class DBTraceMemorySpace
 
 				result.add(addressSetStateCache.computeIfAbsent(
 					new AddressSetStateCacheKey(span, blockMinOffset, stock),
-					k -> doGetAddressesWithState(span, new AddressSet(blockMin, blockMax), stock)));
+					_ -> doGetAddressesWithState(span, new AddressSet(blockMin, blockMax), stock)));
 			}
 			return result.intersect(set);
 		}
@@ -708,11 +707,12 @@ public class DBTraceMemorySpace
 	@Override
 	public int putBytes(long snap, Address start, ByteBuffer buf) {
 		assertInSpace(start);
-		int pos = buf.position();
-		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 
+		int pos = buf.position();
+		try (LockHold _ = LockHold.lock(lock.writeLock())) {
 			ByteBuffer oldBuf = ByteBuffer.allocate(buf.remaining());
 			getBytes(snap, start, oldBuf);
+			oldBuf.flip();
 
 			OutSnap lastSnap = new OutSnap(snap);
 			Set<TraceAddressSnapRange> changed = new HashSet<>();
@@ -721,20 +721,31 @@ public class DBTraceMemorySpace
 				Address end = start.add(result - 1);
 				doSetState(snap, start, end, TraceMemoryState.KNOWN);
 
-				// Read back the written bytes and fire event
-				byte[] bytes = new byte[result];
-				byte[] oldBytes = new byte[result];
-				buf.get(pos, bytes);
-				oldBuf.get(0, oldBytes);
 				ImmutableTraceAddressSnapRange tasr = new ImmutableTraceAddressSnapRange(start,
 					start.add(result - 1), snap, lastSnap.snap);
-				trace.setChanged(new TraceChangeRecord<>(TraceEvents.BYTES_CHANGED, space, tasr,
-					oldBytes, bytes));
+				// Fire event
+				if (trace.isSendingEvents()) {
+					byte[] bytes = ByteArrayUtils.arrayOrGet(buf);
+					byte[] oldBytes = ByteArrayUtils.arrayOrGet(oldBuf);
+					trace.setChanged(new TraceChangeRecord<>(TraceEvents.BYTES_CHANGED, space, tasr,
+						oldBytes, bytes));
+				}
 
 				// Fixup affected code units
 				DBTraceCodeSpace codeSpace = trace.getCodeManager().get(space, false);
 				if (codeSpace != null) {
-					codeSpace.bytesChanged(changed, snap, start, oldBytes, bytes);
+					int savePos = buf.position();
+					int saveLimit = buf.limit();
+					try {
+						buf.limit(pos + result);
+						buf.position(pos);
+						oldBuf.limit(oldBuf.position() + result); // No need to save & restore
+						codeSpace.bytesChanged(changed, snap, start, oldBuf, buf);
+					}
+					finally {
+						buf.limit(saveLimit);
+						buf.position(savePos);
+					}
 				}
 				// Clear program view caches
 				trace.updateViewsBytesChanged(tasr.getRange());
@@ -763,7 +774,7 @@ public class DBTraceMemorySpace
 	public int getBytes(long snap, Address start, ByteBuffer buf) {
 		assertInSpace(start);
 		int result = 0;
-		try (LockHold hold = LockHold.lock(lock.readLock())) {
+		try (LockHold _ = LockHold.lock(lock.readLock())) {
 			int maxLen;
 			for (Address cur = start; buf.hasRemaining(); cur = cur.addNoWrap(maxLen)) {
 				long offset = cur.getOffset();
@@ -961,7 +972,7 @@ public class DBTraceMemorySpace
 	@Override
 	public Long getSnapOfMostRecentChangeToBlock(long snap, Address address) {
 		assertInSpace(address);
-		try (LockHold hold = LockHold.lock(lock.readLock())) {
+		try (LockHold _ = LockHold.lock(lock.readLock())) {
 			long offset = address.getOffset();
 			long roundOffset = offset & BLOCK_MASK;
 			OffsetSnap loc = new OffsetSnap(roundOffset, snap);
@@ -1012,7 +1023,7 @@ public class DBTraceMemorySpace
 		Lifespan fwdOne = Lifespan.span(lower + 1, cross ? -1 : upper);
 		ByteBuffer buf1 = ByteBuffer.allocate(BLOCK_SIZE);
 		ByteBuffer buf2 = ByteBuffer.allocate(BLOCK_SIZE);
-		try (LockHold hold = LockHold.lock(lock.readLock())) {
+		try (LockHold _ = LockHold.lock(lock.readLock())) {
 			for (TraceAddressSnapRange tasr : stateMapSpace
 					.reduce(TraceAddressSnapRangeQuery.leastRecent(range, fwdOne))
 					.orderedKeys()) {
@@ -1039,7 +1050,7 @@ public class DBTraceMemorySpace
 		if (len <= 0) {
 			return;
 		}
-		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+		try (LockHold _ = LockHold.lock(lock.writeLock())) {
 			ByteBuffer oldBytes = ByteBuffer.allocate(len);
 			getBytes(snap, start, oldBytes);
 			// New in the sense that they're about to replace the old bytes
@@ -1064,12 +1075,276 @@ public class DBTraceMemorySpace
 			// Fixup affected code units
 			DBTraceCodeSpace codeSpace = trace.getCodeManager().get(space, false);
 			if (codeSpace != null) {
-				codeSpace.bytesChanged(changed, snap, start, oldBytes.array(), newBytes.array());
+				codeSpace.bytesChanged(changed, snap, start, oldBytes, newBytes);
 			}
 		}
 		catch (IOException e) {
 			blockStore.dbError(e);
 		}
+	}
+
+	private static List<Integer> withinBlockMatchOffsets(byte[] buf, byte[] pattern) {
+		List<Integer> offsets = new ArrayList<>();
+		byte firstByte = pattern[0];
+		for (int off = 0; off < buf.length - pattern.length; off++) {
+			if (buf[off] == firstByte &&
+			    Arrays.mismatch(buf, off, off + pattern.length, pattern, 0, pattern.length) == -1) {
+				offsets.add(off);
+			}
+		}
+		return offsets;
+	}
+
+	private static List<Integer> partialUpperBoundaryMatchOffsets(byte[] buf, byte[] pattern) {
+		List<Integer> offsets = new ArrayList<>();
+		int startOffset = buf.length - Math.min(buf.length, pattern.length) + 1;
+		byte firstByte = pattern[0];
+		for (int off = startOffset; off < buf.length; off++) {
+			int lengthToCheck = buf.length - off;
+			if (buf[off] == firstByte &&
+			    Arrays.mismatch(buf, off, off + lengthToCheck, pattern, 0, lengthToCheck) == -1) {
+				offsets.add(off);
+			}
+		}
+		return offsets;
+	}
+
+	private static List<TraceAddressSnapRange> coalesceLifespansAndPruneToExactSearch(int hitLength,
+			Map<Address, List<Lifespan>> hits, AddressRange targetRange, Lifespan targetSpan) {
+		hits.values().forEach(l -> l.sort(Comparator.comparing(Lifespan::lmin)));
+
+		List<TraceAddressSnapRange> retHits = new ArrayList<>();
+
+		for (Entry<Address, List<Lifespan>> entry : hits.entrySet()) {
+			AddressRangeImpl range =
+					new AddressRangeImpl(entry.getKey(), entry.getKey().add(hitLength));
+			if (!targetRange.intersects(range.getMinAddress(), range.getMaxAddress())) {
+				continue;
+			}
+			Lifespan accumulator = entry.getValue().getFirst();
+			for (Lifespan lifespan : entry.getValue()) {
+				if (accumulator != lifespan) {
+					if (accumulator.intersects(lifespan) ||
+					    accumulator.lmax() + 1 == lifespan.lmin()) {
+						accumulator = accumulator.bound(lifespan);
+					}
+					else {
+						retHits.add(new ImmutableTraceAddressSnapRange(range, accumulator));
+						accumulator = lifespan;
+					}
+				}
+			}
+			ImmutableTraceAddressSnapRange snapRange =
+					new ImmutableTraceAddressSnapRange(range, accumulator);
+			if (!retHits.contains(snapRange)) {
+				retHits.add(snapRange);
+			}
+		}
+
+		return retHits.stream().filter(e -> e.getLifespan().intersects(targetSpan)).toList();
+	}
+
+	@Override
+	public Collection<Entry<TraceAddressSnapRange, TraceMemoryState>> getStates(Lifespan span,
+			AddressRange range) {
+		assertInSpace(range);
+		return doGetStates(span, range);
+	}
+
+	@Override
+	public List<TraceAddressSnapRange> findBytesAcrossLifespan(Lifespan span, AddressRange range, byte[] pattern,
+			TaskMonitor monitor) {
+		assertInSpace(range);
+		if (pattern.length == 0) {
+			return List.of();
+		}
+
+		Map<Address, List<Lifespan>> hits = searchBytesByMemoryBlocks(range, pattern, monitor);
+
+		return coalesceLifespansAndPruneToExactSearch(pattern.length, hits, range, span);
+	}
+
+	private Map<Address, List<Lifespan>> searchBytesByMemoryBlocks(AddressRange range,
+			byte[] pattern, TaskMonitor monitor) {
+		// Cheat a little to include a lower block in the case that the pattern crosses the lower
+		// search boundary
+		long minOffset = Math.max(range.getMinAddress().getUnsignedOffset() - pattern.length, 0);
+		long maxOffset = range.getMaxAddress().getUnsignedOffset();
+		long firstBlock = minOffset & BLOCK_MASK;
+		long lastBlock = maxOffset & BLOCK_MASK;
+
+		OffsetSnap lo = new OffsetSnap(firstBlock, Long.MIN_VALUE);
+		OffsetSnap hi = new OffsetSnap(lastBlock, Long.MAX_VALUE);
+
+		Map<Address, List<Lifespan>> hits = new HashMap<>();
+
+		for (Entry<OffsetSnap, DBTraceMemoryBlockEntry> ent : blocksByOffset.sub(lo, true, hi,
+				true).entries()) {
+			if (monitor.isCancelled()) {
+				return Map.of();
+			}
+
+			byte[] blockBuf = new byte[BLOCK_SIZE];
+			try (var _ = LockHold.lock(lock.readLock())) {
+				ent.getValue().getBytes(ByteBuffer.wrap(blockBuf), 0, BLOCK_SIZE);
+			}
+			catch (IOException e) {
+				blockStore.dbError(e);
+				continue;
+			}
+			Map<OffsetSnap, Lifespan> lifespanCache = new HashMap<>();
+			patternSearchWithinBlock(pattern, ent, blockBuf, hits, lifespanCache);
+			patternSearchSpanningBlocks(pattern, monitor, ent, blockBuf, hits, lifespanCache);
+		}
+
+		return hits;
+	}
+
+	private void patternSearchWithinBlock(byte[] pattern,
+			Entry<OffsetSnap, DBTraceMemoryBlockEntry> ent, byte[] blockBuf,
+			Map<Address, List<Lifespan>> hits, Map<OffsetSnap, Lifespan> lifespanCache) {
+		for (int off : withinBlockMatchOffsets(blockBuf, pattern)) {
+			Address address = toAddress(ent.getValue().getOffset() + off);
+			hits.computeIfAbsent(address, e -> new ArrayList<>());
+			hits.get(address).add(getLifespanOfBlock(ent.getKey(), lifespanCache));
+		}
+	}
+
+	private void patternSearchSpanningBlocks(byte[] pattern, TaskMonitor monitor,
+			Entry<OffsetSnap, DBTraceMemoryBlockEntry> ent, byte[] blockBuf,
+			Map<Address, List<Lifespan>> hits, Map<OffsetSnap, Lifespan> lifespanCache) {
+		int adjacentBlocksToCheck = (int) Math.ceil((double) pattern.length / BLOCK_SIZE) + 1;
+
+		int leadingZeros = 0;
+		for (byte b : pattern) {
+			if (b != 0) {
+				break;
+			}
+			leadingZeros++;
+		}
+		byte[] modifiedPattern = Arrays.copyOfRange(pattern, leadingZeros, pattern.length);
+
+		// Check upper bounds if we hit a partial match
+		for (int off : partialUpperBoundaryMatchOffsets(blockBuf, modifiedPattern)) {
+			if (monitor.isCancelled()) {
+				return;
+			}
+			List<Lifespan> adjacentBlocks =
+					getIntersectingLifespansOfAdjacentBlocks(ent.getKey(), adjacentBlocksToCheck,
+							null, lifespanCache);
+			for (Lifespan lifespan : adjacentBlocks) {
+				byte[] buf = new byte[pattern.length];
+				getBytes(lifespan.lmin(),
+						toAddress(ent.getValue().getOffset() + off - leadingZeros),
+						ByteBuffer.wrap(buf));
+
+				if (Arrays.mismatch(buf, pattern) == -1) {
+					Address address = toAddress(ent.getValue().getOffset() + off - leadingZeros);
+					hits.computeIfAbsent(address, e -> new ArrayList<>());
+					hits.get(address).add(lifespan);
+				}
+			}
+		}
+
+		// Check lower bounds since we got leading 0s to deal with
+		if (leadingZeros > 0 && !lowerMemoryBlockExists(ent.getKey())) {
+			byte[] buf = new byte[pattern.length];
+			getBytes(ent.getKey().snap, toAddress(ent.getValue().getOffset() - leadingZeros),
+					ByteBuffer.wrap(buf));
+			if (Arrays.mismatch(buf, pattern) == -1) {
+				Address address = toAddress(ent.getValue().getOffset() - leadingZeros);
+				hits.computeIfAbsent(address, e -> new ArrayList<>());
+				hits.get(address).add(getLifespanOfBlock(ent.getKey(), lifespanCache));
+			}
+		}
+	}
+
+	private boolean lowerMemoryBlockExists(OffsetSnap offsetSnap) {
+		OffsetSnap start = new OffsetSnap(offsetSnap.offset - BLOCK_SIZE, 0);
+		OffsetSnap stop = new OffsetSnap(offsetSnap.offset - BLOCK_SIZE, Long.MAX_VALUE);
+		return blocksByOffset.sub(start, true, stop, true).keys().iterator().hasNext();
+	}
+
+	private boolean upperMemoryBlockExists(OffsetSnap offsetSnap) {
+		OffsetSnap start = new OffsetSnap(offsetSnap.offset + BLOCK_SIZE, 0);
+		OffsetSnap stop = new OffsetSnap(offsetSnap.offset + BLOCK_SIZE, Long.MAX_VALUE);
+		return blocksByOffset.sub(start, true, stop, true).keys().iterator().hasNext();
+	}
+
+	private Lifespan getLifespanOfBlock(OffsetSnap offsetSnap, Map<OffsetSnap, Lifespan> cache) {
+		if (cache != null && cache.containsKey(offsetSnap)) {
+			return cache.get(offsetSnap);
+		}
+		Lifespan lifespan;
+		OffsetSnap nextOffsetSnap = blocksByOffset.higherKey(offsetSnap);
+		if (nextOffsetSnap == null) {
+			lifespan = Lifespan.nowOn(offsetSnap.snap);
+		}
+		else if (offsetSnap.offset == nextOffsetSnap.offset &&
+		         offsetSnap.isScratch() == nextOffsetSnap.isScratch()) {
+			lifespan = Lifespan.span(offsetSnap.snap, nextOffsetSnap.snap - 1);
+		}
+		else if (offsetSnap.isScratch()) {
+			lifespan = Lifespan.at(offsetSnap.snap);
+		}
+		else {
+			lifespan = Lifespan.nowOn(offsetSnap.snap);
+		}
+		if (cache != null) {
+			cache.put(offsetSnap, lifespan);
+		}
+		return lifespan;
+	}
+
+	private List<Lifespan> getIntersectingLifespansOfAdjacentBlocks(OffsetSnap offsetSnap,
+			int numberOfBlocks, Lifespan accumulatorSpan,
+			Map<OffsetSnap, Lifespan> lifespanCache) {
+		if (numberOfBlocks == 1) {
+			return List.of(accumulatorSpan);
+		}
+		List<Lifespan> intersectingLifespans = new ArrayList<>();
+		Lifespan curLifespan;
+		if (accumulatorSpan != null) {
+			curLifespan = accumulatorSpan;
+		}
+		else {
+			curLifespan = getLifespanOfBlock(offsetSnap, lifespanCache);
+		}
+
+		if (upperMemoryBlockExists(offsetSnap)) {
+			// Check all lifespans of next block for intersections
+			OffsetSnap firstHit = null;
+			OffsetSnap start = new OffsetSnap(offsetSnap.offset + BLOCK_SIZE, 0);
+			OffsetSnap stop = new OffsetSnap(offsetSnap.offset + BLOCK_SIZE, Long.MAX_VALUE);
+			for (OffsetSnap adjacentOffsetSnap : blocksByOffset.sub(start, true, stop, true)
+					.keys()) {
+				Lifespan intersected =
+						getLifespanOfBlock(adjacentOffsetSnap, lifespanCache).intersect(
+								curLifespan);
+				if (firstHit == null) {
+					firstHit = adjacentOffsetSnap;
+				}
+				if (!intersected.isEmpty()) {
+					intersectingLifespans.addAll(
+							getIntersectingLifespansOfAdjacentBlocks(adjacentOffsetSnap,
+									numberOfBlocks - 1, intersected, lifespanCache));
+				}
+			}
+
+			// Check if lifespan before block was initialized (i.e. when it was all 0s) intersects
+			assert firstHit != null;
+			Lifespan intersected = Lifespan.before(firstHit.snap).intersect(curLifespan);
+			if (!intersected.isEmpty()) {
+				intersectingLifespans.addAll(getIntersectingLifespansOfAdjacentBlocks(
+						new OffsetSnap(firstHit.offset, Long.MIN_VALUE), numberOfBlocks - 1,
+						intersected, lifespanCache));
+			}
+		}
+		else {
+			// Upper block was never touched so just return same lifespan
+			intersectingLifespans.add(curLifespan);
+		}
+		return intersectingLifespans;
 	}
 
 	@Override
@@ -1079,7 +1354,7 @@ public class DBTraceMemorySpace
 
 	@Override
 	public void pack() {
-		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+		try (LockHold _ = LockHold.lock(lock.writeLock())) {
 			// TODO: Check and rearrange blocks chronologically
 			// TODO: Remove identical, adjacent future blocks
 			for (DBTraceMemoryBufferEntry bufEnt : bufferStore.asMap().values()) {
@@ -1093,7 +1368,7 @@ public class DBTraceMemorySpace
 
 	@Override
 	public void invalidateCache() {
-		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+		try (LockHold _ = LockHold.lock(lock.writeLock())) {
 			trace.updateViewsRefreshBlocks();
 			trace.updateViewsBytesChanged(null);
 			stateMapSpace.invalidateCache();
@@ -1107,6 +1382,9 @@ public class DBTraceMemorySpace
 
 	/**
 	 * For developers and testers.
+	 * 
+	 * @param painter painter
+	 * @param depth depth
 	 */
 	@Internal
 	public void paint(Painter painter, int depth) {
@@ -1115,6 +1393,8 @@ public class DBTraceMemorySpace
 
 	/**
 	 * For developers and testers.
+	 * 
+	 * @return depth
 	 */
 	@Internal
 	public int getDepth() {
@@ -1123,6 +1403,8 @@ public class DBTraceMemorySpace
 
 	/**
 	 * For developers and testers.
+	 * 
+	 * @return root bounds
 	 */
 	@Internal
 	public TraceAddressSnapRange getRootBounds() {
@@ -1131,6 +1413,9 @@ public class DBTraceMemorySpace
 
 	/**
 	 * For developers and testers.
+	 * 
+	 * @param rec record
+	 * @return children
 	 */
 	@Internal
 	public Collection<? extends DBTreeRecord<?, ? extends TraceAddressSnapRange>>

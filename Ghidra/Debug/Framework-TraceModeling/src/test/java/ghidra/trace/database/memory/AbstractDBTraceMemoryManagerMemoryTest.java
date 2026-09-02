@@ -15,18 +15,12 @@
  */
 package ghidra.trace.database.memory;
 
-import static org.junit.Assert.*;
-import static org.junit.Assume.assumeFalse;
-
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.Map.Entry;
-
-import org.junit.Ignore;
-import org.junit.Test;
 
 import db.DBHandle;
 import db.Transaction;
@@ -35,8 +29,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.trace.database.DBTrace;
-import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.*;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.memory.TraceMemoryOperations.StatePredicate;
 import ghidra.trace.model.thread.TraceThread;
@@ -44,6 +37,11 @@ import ghidra.trace.model.thread.TraceThreadManager;
 import ghidra.util.SystemUtilities;
 import ghidra.util.task.ConsoleTaskMonitor;
 import ghidra.util.task.TaskMonitor;
+import org.junit.Ignore;
+import org.junit.Test;
+
+import static org.junit.Assert.*;
+import static org.junit.Assume.assumeFalse;
 
 public abstract class AbstractDBTraceMemoryManagerMemoryTest
 		extends AbstractDBTraceMemoryManagerTest {
@@ -1008,6 +1006,108 @@ public abstract class AbstractDBTraceMemoryManagerMemoryTest
 				memory.setState(0, b.range(0, -1), TraceMemoryState.UNKNOWN);
 			}
 		}
+	}
+
+	@Test
+	public void testFindBytesAcrossLifespan() {
+		try (Transaction tx = b.startTransaction()) {
+			assertEquals(5, memory.putBytes(2, b.addr(0x4ffb), b.buf(1, 1, 1, 1, 1)));
+			assertEquals(5, memory.putBytes(3, b.addr(0x4000), b.buf(1, 2, 3, 4, 5)));
+			// Test lifespan
+			assertEquals(5, memory.putBytes(4, b.addr(0x4001), b.buf(1, 2, 3, 4, 5)));
+			assertEquals(5, memory.putBytes(5, b.addr(0x4200), b.buf(1, 2, 3, 4, 5)));
+			// Test block spanning
+			assertEquals(5, memory.putBytes(6, b.addr(0x4fff), b.buf(1, 2, 3, 4, 5)));
+			assertEquals(5, memory.putBytes(7, b.addr(0x4321), b.buf(1, 2, 3, 4, 5)));
+			assertEquals(5, memory.putBytes(8, b.addr(0x4000), b.buf(1, 2, 3, 4, 5)));
+			assertEquals(5, memory.putBytes(9, b.addr(0x4000), b.buf(1, 1, 1, 1, 1)));
+			assertEquals(5, memory.putBytes(10, b.addr(0x5ffb), b.buf(1, 1, 1, 1, 1)));
+
+		}
+
+		ImmutableTraceAddressSnapRange hit1 =
+				new ImmutableTraceAddressSnapRange(b.range(0x4000, 0x4005), Lifespan.at(3));
+		ImmutableTraceAddressSnapRange hit2 =
+				new ImmutableTraceAddressSnapRange(b.range(0x4001, 0x4006), Lifespan.span(4, 7));
+		ImmutableTraceAddressSnapRange hit3 =
+				new ImmutableTraceAddressSnapRange(b.range(0x4200, 0x4205), Lifespan.nowOn(5));
+		ImmutableTraceAddressSnapRange hit4 =
+				new ImmutableTraceAddressSnapRange(b.range(0x4fff, 0x5004), Lifespan.nowOn(6));
+		ImmutableTraceAddressSnapRange hit5 =
+				new ImmutableTraceAddressSnapRange(b.range(0x4321, 0x4326), Lifespan.nowOn(7));
+		ImmutableTraceAddressSnapRange hit6 =
+				new ImmutableTraceAddressSnapRange(b.range(0x4000, 0x4005), Lifespan.at(8));
+		ImmutableTraceAddressSnapRange hit7 =
+				new ImmutableTraceAddressSnapRange(b.range(0x3fff, 0x4005), Lifespan.nowOn(9));
+		ImmutableTraceAddressSnapRange hit8 =
+				new ImmutableTraceAddressSnapRange(b.range(0x4ffb, 0x5001), Lifespan.span(2, 5));
+		ImmutableTraceAddressSnapRange hit9 =
+				new ImmutableTraceAddressSnapRange(b.range(0x5ffb, 0x6001), Lifespan.nowOn(10));
+
+		// Lifespan All
+		List<TraceAddressSnapRange> bytesAcrossLifespan =
+				memory.findBytesAcrossLifespan(Lifespan.ALL, b.range(0, 0xFFFF_FFFF_FFFF_FFFFL),
+						new byte[] { 1, 2, 3, 4, 5 }, TaskMonitor.DUMMY);
+		assertContainsExactly(List.of(hit1, hit2, hit3, hit4, hit5, hit6), bytesAcrossLifespan);
+
+		// Narrow lifespan
+		bytesAcrossLifespan = memory.findBytesAcrossLifespan(Lifespan.before(5),
+				b.range(0, 0xFFFF_FFFF_FFFF_FFFFL),
+				new byte[] { 1, 2, 3, 4, 5 }, TaskMonitor.DUMMY);
+		assertContainsExactly(List.of(hit1, hit2), bytesAcrossLifespan);
+
+		// Narrow Range
+		bytesAcrossLifespan = memory.findBytesAcrossLifespan(Lifespan.ALL, b.range(0x4200, 0x4500),
+				new byte[] { 1, 2, 3, 4, 5 }, TaskMonitor.DUMMY);
+		assertContainsExactly(List.of(hit3, hit5), bytesAcrossLifespan);
+
+		// Narrow lifespan/range
+		bytesAcrossLifespan = memory.findBytesAcrossLifespan(Lifespan.since(5),
+				b.range(0x4200, 0x4500),
+				new byte[] { 1, 2, 3, 4, 5 }, TaskMonitor.DUMMY);
+		assertContainsExactly(List.of(hit3), bytesAcrossLifespan);
+
+		// Narrow lifespan/range (miss)
+		bytesAcrossLifespan = memory.findBytesAcrossLifespan(Lifespan.before(5),
+				b.range(0x4200, 0x4500),
+				new byte[] { 1, 2, 3, 4, 5 }, TaskMonitor.DUMMY);
+		assertContainsExactly(List.of(), bytesAcrossLifespan);
+
+		// Empty pattern
+		bytesAcrossLifespan =
+				memory.findBytesAcrossLifespan(Lifespan.ALL, b.range(0, 0xFFFF_FFFF_FFFF_FFFFL), new byte[] {},
+						TaskMonitor.DUMMY);
+		assertContainsExactly(List.of(), bytesAcrossLifespan);
+
+		// Leading 0s, with block crossing
+		bytesAcrossLifespan = memory.findBytesAcrossLifespan(Lifespan.ALL,
+				b.range(0, 0xFFFF_FFFF_FFFF_FFFFL),
+				new byte[] { 0, 1, 1, 1, 1, 1 }, TaskMonitor.DUMMY);
+		// hit7 should work, no memory block means it's all 0s
+		assertContainsExactly(List.of(hit7), bytesAcrossLifespan);
+
+		// Trailing 0s, with block crossing
+		bytesAcrossLifespan = memory.findBytesAcrossLifespan(Lifespan.before(6),
+				b.range(0, 0xFFFF_FFFF_FFFF_FFFFL),
+				new byte[] { 1, 1, 1, 1, 1, 0 }, TaskMonitor.DUMMY);
+		// hit8 should work, no memory block means it's all 0s
+		assertContainsExactly(List.of(hit8), bytesAcrossLifespan);
+
+		// 1 byte intersect on range, start of pattern, with block crossing
+		bytesAcrossLifespan = memory.findBytesAcrossLifespan(Lifespan.ALL, b.range(0x4fff, 0x4fff),
+				new byte[] { 1, 2, 3, 4, 5  }, TaskMonitor.DUMMY);
+		assertContainsExactly(List.of(hit4), bytesAcrossLifespan);
+
+		// 1 byte intersect on range, end of pattern, with block crossing
+		bytesAcrossLifespan = memory.findBytesAcrossLifespan(Lifespan.ALL, b.range(0x5004, 0x5004),
+				new byte[] { 1, 2, 3, 4, 5  }, TaskMonitor.DUMMY);
+		assertContainsExactly(List.of(hit4), bytesAcrossLifespan);
+
+		// Block crossing into never touched memory
+		bytesAcrossLifespan = memory.findBytesAcrossLifespan(Lifespan.nowOn(6),
+				b.range(0, 0xFFFF_FFFF_FFFF_FFFFL),
+				new byte[] { 1, 1, 1, 1, 1, 0 }, TaskMonitor.DUMMY);
+		assertContainsExactly(List.of(hit9), bytesAcrossLifespan);
 	}
 
 	/**

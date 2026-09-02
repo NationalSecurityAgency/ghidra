@@ -328,18 +328,6 @@ public interface DataTypeManager {
 	public boolean remove(DataType dataType);
 
 	/**
-	 * Deprecated.  Use {@link #remove(DataType)}.
-	 * @param dataType the data type
-	 * @param monitor the monitor
-	 * @return true if the data type existed and was removed
-	 * @deprecated use {@link #remove(DataType)}
-	 */
-	@Deprecated(since = "10.4", forRemoval = true)
-	public default boolean remove(DataType dataType, TaskMonitor monitor) {
-		return remove(dataType);
-	}
-
-	/**
 	 * Remove the given data types from this manager.
 	 * <br>
 	 * NOTE: Any use of the specified data types within a {@link FunctionDefinition} will be 

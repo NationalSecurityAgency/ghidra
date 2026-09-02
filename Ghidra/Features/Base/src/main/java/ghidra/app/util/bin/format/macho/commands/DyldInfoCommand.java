@@ -18,8 +18,7 @@ package ghidra.app.util.bin.format.macho.commands;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.macho.MachConstants;
-import ghidra.app.util.bin.format.macho.MachHeader;
+import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.commands.dyld.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.flatapi.FlatProgramAPI;
@@ -61,9 +60,10 @@ public class DyldInfoCommand extends LoadCommand {
 	 *   references.  Note that this might be in a different underlying provider.
 	 * @param header The {@link MachHeader header} associated with this load command
 	 * @throws IOException if an IO-related error occurs while parsing
+	 * @throws MachException if the {@link DyldInfoCommand} is invalid
 	 */
 	DyldInfoCommand(BinaryReader loadCommandReader, BinaryReader dataReader, MachHeader header)
-			throws IOException {
+			throws IOException, MachException {
 		super(loadCommandReader);
 
 		rebaseOff = loadCommandReader.readNextUnsignedInt();

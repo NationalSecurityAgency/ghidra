@@ -1492,12 +1492,12 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
 :shad rm_04_07, rn_08_11   is opcode_12_15=0b0100 & rn_08_11 & rm_04_07 & opcode_00_03=0b1100
 {
     if (rm_04_07 s> 0) goto <shift_left>;
-    if (rm_04_07 s<= -32) goto <shift_right_32>;
+    if ((rm_04_07 & 0x1f) == 0) goto <shift_right_32>;
     # shift right
-    rn_08_11 = rn_08_11 s>> -rm_04_07;
+    rn_08_11 = rn_08_11 s>> ( ( ~rm_04_07 & 0x1f ) + 1 );
     goto <end>;
 <shift_left>
-    rn_08_11 = rn_08_11 << (rm_04_07 & 0x0000001F);
+    rn_08_11 = rn_08_11 << (rm_04_07 & 0x1f);
     goto <end>;
 <shift_right_32>
     rn_08_11 = -1 * zext(rn_08_11 s< 0);
@@ -1526,10 +1526,10 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
     if (rm_04_07 s> 0) goto <shift_left>;
     if (rm_04_07 s<= -32) goto <shift_right_32>;
     # shift right
-    rn_08_11 = rn_08_11 >> -rm_04_07;
+    rn_08_11 = rn_08_11 >> ( ( ~rm_04_07 & 0x1f ) + 1 );
     goto <end>;
 <shift_left>
-    rn_08_11 = rn_08_11 << (rm_04_07 & 0x0000001F);
+    rn_08_11 = rn_08_11 << (rm_04_07 & 0x1f);
     goto <end>;
 <shift_right_32>
     rn_08_11 = 0;

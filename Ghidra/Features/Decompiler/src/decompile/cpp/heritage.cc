@@ -882,6 +882,7 @@ void Heritage::analyzeNewLoadGuards(void)
   for(iter=storeIter;iter!=storeGuard.end(); ++iter) {
     LoadGuard &guard( *iter );
     guard.establishRange(vsSolver.getValueSetRead(guard.op->getSeqNum()));
+    guard.op->setAliasUpdate();		// Mark that alias information for the STORE has been changed
     if (guard.analysisState == 0)
       runFullAnalysis = true;
   }
@@ -1191,7 +1192,7 @@ void Heritage::guard(const Address &addr,int4 size,bool addIndirects,
     fd->getScopeLocal()->queryProperties(addr,size,Address(),fl);
     guardCalls(fl,addr,size,write);
     guardReturns(fl,addr,size,write);
-    if (fd->getArch()->highPtrPossible(addr,size)) {
+    if (addr.highPtrPossible(size)) {
       guardStores(addr,size,write);
       guardLoads(fl,addr,size,write);
     }

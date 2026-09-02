@@ -1697,6 +1697,10 @@ public class HeadlessAnalyzer {
 			folderPath += DomainFolder.SEPARATOR;
 		}
 		folderPath += startDir.getName();
+		
+		// Handles windows directory paths like "d:", both real and extracted paths on non-windows 
+		// filesystem or archive files
+		folderPath = folderPath.replaceAll(":/", "/");
 
 		for (GFile file : fs.getListing(startDir)) {
 			String name = file.getName();
@@ -1713,7 +1717,9 @@ public class HeadlessAnalyzer {
 				continue;
 			}
 			try {
-				checkValidFilename(fqFSRL.getName());
+				if (!file.isDirectory()) {
+					checkValidFilename(fqFSRL.getName());
+				}
 				processWithImport(fqFSRL, folderPath, depth, false);
 			}
 			catch (InvalidInputException e) {
@@ -1860,7 +1866,27 @@ public class HeadlessAnalyzer {
 		}
 	}
 
+	/**
+	 * A headless version of the {@link DefaultProjectManager} that does not update the project's 
+	 * preferences. This prevents the headless environment from overwriting settings GUI 
+	 * installations.
+	 */
 	private static class HeadlessGhidraProjectManager extends DefaultProjectManager {
-		// this exists just to allow access to the constructor
+
+		@Override
+		public void setLastOpenedProject(ProjectLocator projectLocator) {
+			// No need to save this for headless.  We also do not want to affect the GUI by saving
+			// this value.
+		}
+
+		@Override
+		public ProjectLocator getLastOpenedProject() {
+			return null;
+		}
+
+		@Override
+		protected void updatePreferences() {
+			// nothing to save
+		}
 	}
 }

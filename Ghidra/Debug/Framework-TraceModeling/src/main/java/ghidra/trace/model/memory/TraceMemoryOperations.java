@@ -17,8 +17,7 @@ package ghidra.trace.model.memory;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
 
@@ -322,6 +321,35 @@ public interface TraceMemoryOperations {
 	 */
 	Collection<Entry<TraceAddressSnapRange, TraceMemoryState>> getStates(long snap,
 			AddressRange range);
+
+	/**
+	 * Get all the entries covering the given range effective within the given span
+	 * <p>
+	 * Note that {@link TraceMemoryState#UNKNOWN} entries will not appear in the result. Gaps in
+	 * the returned entries are implied to be {@link TraceMemoryState#UNKNOWN}.
+	 *
+	 * @param span the time span to examine
+	 * @param range the range to examine
+	 * @return the map of ranges to states
+	 */
+	Collection<Entry<TraceAddressSnapRange, TraceMemoryState>> getStates(Lifespan span,
+			AddressRange range);
+
+	/**
+	 * Search the given range, across a given lifespan, for a byte pattern.
+	 * <p>
+	 * Addresses outside the given range may be returned if the pattern matches at the edges of
+	 * the given range. Full lifespans for each hit are included as long as they intersect the
+	 * lifespan given.
+	 *
+	 * @param span the range of time
+	 * @param range the range to search
+	 * @param pattern the pattern
+	 * @param monitor a monitor for cancellation/progress
+	 * @return the list of matches, each with the span of time during which it holds
+	 */
+	List<TraceAddressSnapRange> findBytesAcrossLifespan(Lifespan span, AddressRange range,
+			byte[] pattern, TaskMonitor monitor);
 
 	/**
 	 * Check if a range addresses are all known

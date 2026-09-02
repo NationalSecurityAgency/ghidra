@@ -15,12 +15,12 @@
  */
 package ghidra.app.util.bin.format.pe;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
 
 import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.Writeable;
+import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.data.*;
-import ghidra.program.model.mem.*;
 import ghidra.util.DataConverter;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -45,7 +45,7 @@ import ghidra.util.exception.DuplicateNameException;
 /// 
 /// #define IMAGE_SIZEOF_SECTION_HEADER 40
 /// ```
-public class SectionHeader implements StructConverter, ByteArrayConverter, Writeable {
+public class SectionHeader implements StructConverter, ByteArrayConverter {
 	/// The name to use when converting into a structure data type
 	public final static String NAME = "IMAGE_SECTION_HEADER";
 
@@ -204,7 +204,13 @@ public class SectionHeader implements StructConverter, ByteArrayConverter, Write
 	private short numberOfLinenumbers;
 	private int characteristics;
 
+	private Integer alignedVirtualSize;
+	private Integer alignedVirtualAddress;
+	private Integer alignedSizeOfRawData;
+	private Integer alignedPointerToRawData;
+
 	private BinaryReader reader;
+	private int sectionNumber;
 
 	/**
 	 * Creates a new {@link SectionHeader} from the specified stream starting at {@code index}
@@ -212,11 +218,13 @@ public class SectionHeader implements StructConverter, ByteArrayConverter, Write
 	 * @param reader {@link BinaryReader} to read from
 	 * @param index long offset in the reader where the section header starts
 	 * @param stringTableOffset offset of the string table, or -1 if not available
+	 * @param sectionNumber The section number (0-based)
 	 * @throws IOException if error reading data
 	 */
-	public SectionHeader(BinaryReader reader, long index, long stringTableOffset)
+	public SectionHeader(BinaryReader reader, long index, long stringTableOffset, int sectionNumber)
 			throws IOException {
 		this.reader = reader;
+		this.sectionNumber = sectionNumber;
 
 		name = reader.readAsciiString(index, IMAGE_SIZEOF_SHORT_NAME).trim();
 		if (name.startsWith("/") && stringTableOffset != -1) {
@@ -245,47 +253,6 @@ public class SectionHeader implements StructConverter, ByteArrayConverter, Write
 	}
 
 	/**
-	 * Creates a new {@link SectionHeader} from the given {@link MemoryBlock}
-	 * 
-	 * @param block The {@link MemoryBlock}
-	 * @param optHeader The {@link OptionalHeader}
-	 * @param ptr The pointer to raw data
-	 */
-	SectionHeader(MemoryBlock block, OptionalHeader optHeader, int ptr) {
-		name = block.getName();
-		physicalAddress = virtualSize = (int) block.getSize();
-		virtualAddress = (int) block.getStart().getOffset() - (int) optHeader.getImageBase();
-		sizeOfRawData = PeUtils.align(virtualSize, optHeader.getFileAlignment());
-		pointerToRawData = ptr;
-		pointerToLinenumbers = 0;
-		pointerToRelocations = 0;
-		numberOfLinenumbers = 0;
-		numberOfRelocations = 0;
-		characteristics = 0;
-		if (block.isRead()) {
-			characteristics |= SectionFlags.IMAGE_SCN_MEM_READ.getMask();
-		}
-		if (block.isWrite()) {
-			characteristics |= SectionFlags.IMAGE_SCN_MEM_WRITE.getMask();
-		}
-		if (block.isExecute()) {
-			characteristics |= SectionFlags.IMAGE_SCN_MEM_EXECUTE.getMask() |
-				SectionFlags.IMAGE_SCN_CNT_CODE.getMask();
-		}
-		if (block.isExecute()) {
-			characteristics |= IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_CNT_CODE;
-		}
-		else if (block.getType() == MemoryBlockType.DEFAULT) {//not executable, then must be data...
-			if (block.isInitialized()) {
-				characteristics |= SectionFlags.IMAGE_SCN_CNT_INITIALIZED_DATA.getMask();
-			}
-			else {
-				characteristics |= SectionFlags.IMAGE_SCN_CNT_UNINITIALIZED_DATA.getMask();
-			}
-		}
-	}
-
-	/**
 	 * {@return the ASCII name of the section}
 	 * <p>
 	 * A section name is not guaranteed to be null-terminated. If you specify a section name 
@@ -306,6 +273,10 @@ public class SectionHeader implements StructConverter, ByteArrayConverter, Write
 	 * underscores}
 	 */
 	public String getReadableName() {
+		if (name.isBlank()) {
+			return "SECTION." + sectionNumber;
+		}
+
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < name.length(); ++i) {
 			char ch = name.charAt(i);
@@ -320,62 +291,158 @@ public class SectionHeader implements StructConverter, ByteArrayConverter, Write
 	}
 
 	/**
-	 * {@return the physical (file) address of this section}
+	 * {@return the original, unaligned physical address of this section}
 	 */
 	public int getPhysicalAddress() {
 		return physicalAddress;
 	}
 
 	/**
-	 * {@return the RVA where the section begins in memory}
+	 * {@return the original, unaligned RVA where the section begins in memory}
 	 */
 	public int getVirtualAddress() {
 		return virtualAddress;
 	}
 
 	/**
-	 * {@return the actual, used size of the section}
-	 * <p>
-	 * This field may be larger or smaller than the SizeOfRawData field. If the VirtualSize is 
-	 * larger, the SizeOfRawData field is the size of the initialized data from the executable, and 
-	 * the remaining bytes up to the VirtualSize should be zero-padded. This field is set to 0 in 
-	 * OBJ files.
+	 * {@return the aligned RVA where the section begins in memory}
+	 * 
+	 * @param optionalHeader The {@link OptionalHeader}, or {@code null} if not available
 	 */
-	public int getVirtualSize() {
-		return virtualSize != 0 ? virtualSize : sizeOfRawData;
+	public int getAlignedVirtualAddress(OptionalHeader optionalHeader) {
+		if (alignedVirtualAddress != null) {
+			return alignedVirtualAddress;
+		}
+
+		alignedVirtualAddress = optionalHeader != null
+				? PeUtils.alignUp(virtualAddress, optionalHeader.getSectionAlignment())
+				: virtualAddress;
+
+		return alignedVirtualAddress;
 	}
 
 	/**
-	 * {@return the size (in bytes) of data stored for the section}
+	 * {@return the original, unaligned size of the section in memory}
+	 */
+	public int getVirtualSize() {
+		return virtualSize;
+	}
+
+	/**
+	 * {@return the actual, used size of the section}
+	 * 
+	 * @param optionalHeader The {@link OptionalHeader}, or {@code null} if not available
+	 * @param log A log to report errors to
+	 */
+	public int getAlignedVirtualSize(OptionalHeader optionalHeader, MessageLog log) {
+		if (alignedVirtualSize != null) {
+			return alignedVirtualSize;
+		}
+
+		if (virtualSize != 0 && optionalHeader != null) {
+			alignedVirtualSize = PeUtils.alignUp(virtualSize, optionalHeader.getSectionAlignment());
+		}
+		else if (virtualSize != 0) {
+			alignedVirtualSize = virtualSize;
+		}
+		else {
+			alignedVirtualSize = getAlignedSizeOfRawData(optionalHeader, log);
+		}
+
+		return alignedVirtualSize;
+	}
+
+	/**
+	 * {@return the original, unaligned offset of the section in the file}
+	 */
+	public int getPointerToRawData() {
+		return pointerToRawData;
+	}
+
+	/**
+	 * {@return the aligned offset of the section in the file}
+	 * 
+	 * @param optionalHeader The {@link OptionalHeader}, or {@code null} if not available
+	 * @param log A log to report errors to
+	 */
+	public int getAlignedPointerToRawData(OptionalHeader optionalHeader, MessageLog log) {
+		if (alignedPointerToRawData != null) {
+			return alignedPointerToRawData;
+		}
+
+		alignedPointerToRawData = pointerToRawData;
+
+		// While this value *should* be a multiple of the file alignment, Windows will round down 
+		// to the nearest multiple of 0x200 regardless of the file alignment. Also note that for 
+		// values below 0x200 but above 0x0 Windows will round down to 0 but still load the section
+		// into memory instead of not loading anything as it would if it were 0 from the start.
+		if (optionalHeader.getFileAlignment() >= 0x200) {
+			PeUtils.alignDown(pointerToRawData, 0x200);
+		}
+
+		// Ensure aligned PointerToRawData is within file bounds
+		if (alignedPointerToRawData >= reader.length()) {
+			log.appendMsg("NOTE: Section '%s' begins after end of file!".formatted(name));
+			alignedPointerToRawData = 0;
+		}
+
+		return alignedPointerToRawData;
+	}
+
+	/**
+	 * {@return the original, unaligned size of the section in the file}
 	 */
 	public int getSizeOfRawData() {
 		return sizeOfRawData;
 	}
 
 	/**
-	 * {@return the file offset where the data for the section begins}
-	 * <p>
-	 * For executables, this value *should* be a multiple of the file alignment given in the PE 
-	 * header.
-	 * <p>
-	 * Note: While this value *should* be a multiple of the file alignment, Windows will round down 
-	 * to the nearest multiple of 0x200 regardless of the file alignment. Also note that for values 
-	 * below 0x200 but above 0x0 Windows will round down to 0 but still load the section into memory 
-	 * instead of not loading anything as it would if it were 0 from the start.
-	 */
-	public int getPointerToRawData() {
-		return (pointerToRawData / 0x200) * 0x200;
-	}
-
-	/**
-	 * {@return the file offset where the data for the section begins, as specified in the file.
-	 * This value does not take alignment into account, and may not represent the true start of
-	 * the data in the file}
+	 * {@return the aligned size of the section in the file}
 	 * 
-	 * @see #getPointerToRawData()
+	 * @param optionalHeader The {@link OptionalHeader}, or {@code null} if not available
+	 * @param log A log to report errors to
 	 */
-	public int getRawPointerToRawData() {
-		return pointerToRawData;
+	public int getAlignedSizeOfRawData(OptionalHeader optionalHeader, MessageLog log) {
+		if (alignedSizeOfRawData != null) {
+			return alignedSizeOfRawData;
+		}
+
+		int fileAlignment = optionalHeader.getFileAlignment();
+		if (sizeOfRawData % fileAlignment != 0) {
+			log.appendMsg(
+				"NOTE: Section '%s' has SizeOfRawData (0x%x) that is not a multiple of the file alignment (0x%x)"
+						.formatted(name, sizeOfRawData, fileAlignment));
+		}
+		alignedSizeOfRawData =
+			fileAlignment > 0 ? PeUtils.alignUp(sizeOfRawData, fileAlignment) : sizeOfRawData;
+
+		// Malware can deliberately set invalid or abnormally large values of SizeOfRawData 
+		// to break static analysis. If we suspect that is happening, default to the
+		// VirtualSize. This may result in padding bytes being replaced by garbage bytes,
+		// but it will allow the binary to be imported and analyzed.
+		if (sizeOfRawData < 0) {
+			log.appendMsg("NOTE: Section '%s' has negative SizeOfRawData (0x%x)".formatted(name,
+				sizeOfRawData));
+			log.appendMsg(
+				"Using '%s' VirtualSize (0x%x) in its place".formatted(name, virtualSize));
+			alignedSizeOfRawData = virtualSize;
+		}
+
+		// Ensure SizeOfRawData does not exceed the aligned VirtualSize
+		alignedSizeOfRawData =
+			Math.min(alignedSizeOfRawData, getAlignedVirtualSize(optionalHeader, log));
+
+		// Ensure aligned PointerToRawData + SizeOfRawData doesn't exceed the length of the file
+		int ptr = getAlignedPointerToRawData(optionalHeader, log);
+		if (ptr + alignedSizeOfRawData > reader.length()) {
+			int newSizeOfRawData = (int) (reader.length() - ptr);
+			log.appendMsg(
+				"NOTE: Section '%s' exceeds file length...truncating aligned SizeOfRawData from %d to %d"
+						.formatted(name, alignedSizeOfRawData, newSizeOfRawData));
+			alignedSizeOfRawData = newSizeOfRawData;
+		}
+
+		return alignedSizeOfRawData;
 	}
 
 	/**
@@ -410,8 +477,9 @@ public class SectionHeader implements StructConverter, ByteArrayConverter, Write
 		return characteristics;
 	}
 
+	
 	/**
-	 * {@return the number of line numbers pointed to by the {@code NumberOfRelocations} field}
+	 * {@return the number of line numbers pointed to by the {@code PointerToLinenumbers} field}
 	 */
 	public short getNumberOfLinenumbers() {
 		return numberOfLinenumbers;
@@ -437,6 +505,27 @@ public class SectionHeader implements StructConverter, ByteArrayConverter, Write
 	public ByteProvider getDataByteProvider() {
 		return new ByteProviderWrapper(reader.getByteProvider(), getPointerToRawData(),
 			getSizeOfRawData());
+	}
+
+	/**
+	 * {@return whether or not this section has read permissions}
+	 */
+	public boolean isRead() {
+		return (characteristics & SectionFlags.IMAGE_SCN_MEM_READ.getMask()) != 0;
+	}
+
+	/**
+	 * {@return whether or not this section has write permissions}
+	 */
+	public boolean isWrite() {
+		return (characteristics & SectionFlags.IMAGE_SCN_MEM_WRITE.getMask()) != 0;
+	}
+
+	/**
+	 * {@return whether or not this section has execute permissions}
+	 */
+	public boolean isExecute() {
+		return (characteristics & SectionFlags.IMAGE_SCN_MEM_EXECUTE.getMask()) != 0;
 	}
 
 	@Override
@@ -488,81 +577,5 @@ public class SectionHeader implements StructConverter, ByteArrayConverter, Write
 		struct.add(characteristicsEnum, "Characteristics", null);
 		struct.setCategoryPath(new CategoryPath("/PE"));
 		return struct;
-	}
-
-	@Override
-	public void write(RandomAccessFile raf, DataConverter dc) throws IOException {
-		byte[] paddedName = new byte[IMAGE_SIZEOF_SHORT_NAME];
-		byte[] nameBytes = name.getBytes();
-		System.arraycopy(nameBytes, 0, paddedName, 0,
-			Math.min(nameBytes.length, IMAGE_SIZEOF_SHORT_NAME));
-
-		raf.write(paddedName);
-		raf.write(dc.getBytes(virtualSize));
-		raf.write(dc.getBytes(virtualAddress));
-		raf.write(dc.getBytes(sizeOfRawData));
-		raf.write(dc.getBytes(pointerToRawData));
-		raf.write(dc.getBytes(pointerToRelocations));
-		raf.write(dc.getBytes(pointerToLinenumbers));
-		raf.write(dc.getBytes(numberOfRelocations));
-		raf.write(dc.getBytes(numberOfLinenumbers));
-		raf.write(dc.getBytes(characteristics));
-	}
-
-	/**
-	 * Writes the bytes from this section into the specified random access file. The bytes will be 
-	 * written starting at the byte position specified by {@link #getPointerToRawData()}
-	 * 
-	 * @param raf the random access file
-	 * @param rafIndex the index into the RAF where the bytes will be written
-	 * @param dc the data converter
-	 * @param block the memory block corresponding to this section
-	 * @param useBlockBytes if true, then use the bytes from the memory block, otherwise use the 
-	 *   bytes from this section.
-	 * @throws IOException if there are errors writing to the file
-	 * @throws MemoryAccessException if the byte from the memory block cannot be accesses
-	 */
-	public void writeBytes(RandomAccessFile raf, int rafIndex, DataConverter dc, MemoryBlock block,
-			boolean useBlockBytes) throws IOException, MemoryAccessException {
-
-		if (getSizeOfRawData() == 0) {
-			return;
-		}
-
-		raf.seek(rafIndex);
-
-		if (useBlockBytes) {
-			byte[] blockBytes = new byte[(int) block.getSize()];
-			block.getBytes(block.getStart(), blockBytes);
-			raf.write(blockBytes);
-		}
-		else {
-			raf.write(toBytes(dc));
-		}
-
-		int padLength = getSizeOfRawData() - getVirtualSize();
-		if (padLength > 0) {
-			raf.write(new byte[padLength]);
-		}
-	}
-
-	void updatePointers(int offset) {
-		if (pointerToRawData > 0) {
-			pointerToRawData += offset;
-		}
-		if (pointerToRelocations > 0) {
-			pointerToRelocations += offset;
-		}
-		if (pointerToLinenumbers > 0) {
-			pointerToLinenumbers += offset;
-		}
-	}
-
-	public void setVirtualSize(int size) {
-		this.virtualSize = size;
-	}
-
-	public void setSizeOfRawData(int size) {
-		this.sizeOfRawData = size;
 	}
 }

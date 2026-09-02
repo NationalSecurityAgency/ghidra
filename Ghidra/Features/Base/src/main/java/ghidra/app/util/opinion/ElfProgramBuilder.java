@@ -50,7 +50,6 @@ import ghidra.program.model.reloc.*;
 import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
-import ghidra.program.model.util.AddressSetPropertyMap;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.*;
 import ghidra.util.datastruct.*;
@@ -613,13 +612,13 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				set.delete(startAddr, block.getEnd());
 			}
 		}
-		catch (MemoryBlockException | LockException | NotFoundException e) {
+		catch (MemoryBlockException | LockException e) {
 			throw new AssertException(e); // unexpected
 		}
 	}
 
 	private MemoryBlock setReadOnlyBlockRange(MemoryBlock block, AddressRange range)
-			throws MemoryBlockException, LockException, NotFoundException {
+			throws MemoryBlockException, LockException {
 		if (!block.isWrite()) {
 			return block;
 		}
@@ -2102,7 +2101,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			}
 
 			try {
-				boolean isPrimary = (elfSymbol.getType() == ElfSymbol.STT_FUNC) ||
+				boolean isPrimary = elfSymbol.isFunction() ||
 					(elfSymbol.getType() == ElfSymbol.STT_OBJECT) || (elfSymbol.getSize() != 0);
 				// don't displace existing primary unless symbol is a function or object symbol
 				if (name.contains("@")) {
@@ -2127,8 +2126,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					program.getSymbolTable().addExternalEntryPoint(address);
 				}
 
-				if (elfSymbol.getType() == ElfSymbol.STT_FUNC) {
-					Function existingFunction = program.getFunctionManager().getFunctionAt(address);
+				Function existingFunction = program.getFunctionManager().getFunctionAt(address);
+				if (elfSymbol.isFunction(true)) {
 					if (existingFunction == null) {
 						Function f = createOneByteFunction(null, address, false);
 						if (f != null) {
@@ -2146,13 +2145,17 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 						}
 					}
 				}
+				else if (elfSymbol.isFunction(false) && existingFunction == null) {
+					AbstractProgramLoader.markProperty(program, address, Program.CODE_MAP_NAME);
+					AbstractProgramLoader.markProperty(program, address,
+						Program.COLD_ENTRY_MAP_NAME);
+				}
 			}
 			catch (DuplicateNameException e) {
 				throw new RuntimeException("Unexpected Exception", e);
 			}
 		}
 	}
-
 
 	@Override
 	public void setElfSymbolAddress(ElfSymbol elfSymbol, Address address) {
@@ -2162,25 +2165,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	@Override
 	public Address getElfSymbolAddress(ElfSymbol elfSymbol) {
 		return symbolMap.get(elfSymbol);
-	}
-
-	@Override
-	public void markAsCode(Address address) {
-		// TODO: this should be in a common place, so all importers can communicate that something
-		// is code or data.
-		AddressSetPropertyMap codeProp = program.getAddressSetPropertyMap("CodeMap");
-		if (codeProp == null) {
-			try {
-				codeProp = program.createAddressSetPropertyMap("CodeMap");
-			}
-			catch (DuplicateNameException e) {
-				codeProp = program.getAddressSetPropertyMap("CodeMap");
-			}
-		}
-
-		if (codeProp != null) {
-			codeProp.add(address, address);
-		}
 	}
 
 	@Override

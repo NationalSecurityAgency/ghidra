@@ -263,10 +263,10 @@ void HighVariable::setSymbol(Varnode *vn) const
   else if (symbol->getCategory() == Symbol::equate)
     symboloffset = -1;			// For equates, we don't care about size
   else if (symbol->getType()->getSize() == vn->getSize() &&
-      entry->getAddr() == vn->getAddr() && !entry->isPiece())
+      ((MapEntry *)entry)->getAddr() == vn->getAddr() && !entry->isPiece())
     symboloffset = -1;			// A matching entry
   else {
-    symboloffset = vn->getAddr().overlapJoin(0,entry->getAddr(),symbol->getType()->getSize()) + entry->getOffset();
+    symboloffset = vn->getAddr().overlapJoin(0,((MapEntry *)entry)->getAddr(),symbol->getType()->getSize()) + entry->getOffset();
   }
 
   if (type != (Datatype *)0 && type->getMetatype() == TYPE_PARTIALUNION)
@@ -308,8 +308,8 @@ void HighVariable::stripType(void) const
   if (meta == TYPE_PARTIALUNION || meta == TYPE_PARTIALSTRUCT) {
     if (symbol != (Symbol *)0 && symboloffset != -1) {	// If there is a bigger backing symbol
 	type_metatype submeta = symbol->getType()->getMetatype();
-	if (submeta == TYPE_STRUCT || submeta == TYPE_UNION)
-	  return;			// Don't strip the partial union
+	if (submeta == TYPE_STRUCT || submeta == TYPE_UNION || submeta == TYPE_ARRAY)
+	  return;			// Don't strip the partial
     }
   }
   else if (type->isEnumType()) {

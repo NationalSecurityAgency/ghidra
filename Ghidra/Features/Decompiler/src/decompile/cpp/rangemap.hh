@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -99,6 +99,7 @@ public:
   /// may be visited multiple times by the iterator, depending on how much it overlaps other
   /// \b recordtypes. The sub-ranges are sorted in linear order, then depending on the \b subsorttype.
   class PartIterator {
+    friend class rangemap<_recordtype>;
     typename std::multiset<AddrRange>::const_iterator iter;	///< The underlying multiset iterator
   public:
     PartIterator(void) {}		///< Constructor
@@ -157,6 +158,12 @@ public:
 
   /// \brief Find first record overlapping given interval
   const_iterator find_overlap(linetype point,linetype end) const;
+
+  /// \brief Find first record whose range begins after the given point
+  const_iterator find_first_after(linetype point) const;
+
+  /// \brief Find last record whose range ends before the given point
+  const_iterator find_last_before(linetype point) const;
 
   /// \brief Insert a new record into the container
   typename std::list<_recordtype>::iterator insert(const inittype &data,linetype a,linetype b);
@@ -420,6 +427,38 @@ rangemap<_recordtype>::find_overlap(linetype point,linetype end) const
   if ((*iter).first<=end)
     return iter;
   return tree.end();
+}
+
+/// \param point is the given boundary point
+/// \return iterator to the first sub-range of a record not containing \b point, or end()
+template<typename _recordtype>
+typename rangemap<_recordtype>::const_iterator
+rangemap<_recordtype>::find_first_after(linetype point) const
+
+{
+  const_iterator iter = find_end(point);	// First subrange after point
+  while (iter != end()) {
+    if (point < (*iter.iter).a)			// Skip records whose full range contains point (a <= point)
+      return iter;
+    ++iter;
+  }
+  return iter;
+}
+
+/// \param point is the given boundary point
+/// \return iterator to the last sub-range of a record not containing \b point, or end()
+template<typename _recordtype>
+typename rangemap<_recordtype>::const_iterator
+rangemap<_recordtype>::find_last_before(linetype point) const
+
+{
+  const_iterator iter = find_begin(point);	// Earliest subrange that contains point
+  while (iter != begin()) {
+    --iter;					// Move backwards to latest subranges not containing point
+    if ((*iter.iter).b < point)			// Skip records whose full range contains point (b >= point)
+      return iter;
+  }
+  return end();
 }
 
 } // End namespace ghidra

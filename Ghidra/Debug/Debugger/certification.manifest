@@ -68,9 +68,17 @@ src/main/help/help/topics/DebuggerTraceManagerServicePlugin/DebuggerTraceManager
 src/main/help/help/topics/DebuggerTraceViewDiffPlugin/DebuggerTraceViewDiffPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerTraceViewDiffPlugin/images/DebuggerTimeSelectionDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerTraceViewDiffPlugin/images/DebuggerTraceViewDiffPlugin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerVariableViewerPlugin/DebuggerVariableViewerPlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerVariableViewerPlugin/images/DebuggerVariableViewerPlugin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerVariableViewerPlugin/images/DebuggerVariableViewerPluginRightClick.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerWatchesPlugin/DebuggerWatchesPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerWatchesPlugin/images/DebuggerWatchesPlugin.png||GHIDRA||||END|
 src/main/help/help/topics/DynamicStaticSynchronizationPlugin/DynamicStaticSynchronizationPlugin.html||GHIDRA||||END|
+src/main/help/help/topics/TraceCallTreePlugin/TraceCallTreePlugin.html||GHIDRA||||END|
+src/main/help/help/topics/TraceCallTreePlugin/images/TraceCallTreePlugin.png||GHIDRA||||END|
+src/main/help/help/topics/TraceCallTreePlugin/images/TraceCallTreePluginHideReturns.png||GHIDRA||||END|
+src/main/help/help/topics/TraceCallTreePlugin/images/TraceCallTreePluginRightClick.png||GHIDRA||||END|
+src/main/help/help/topics/TraceCallTreePlugin/images/TraceCallTreePluginUnfolded.png||GHIDRA||||END|
 src/main/help/help/topics/VariableValueHoverPlugin/VariableValueHoverPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/VariableValueHoverPlugin/images/VariableValueHoverPluginBrowser.png||GHIDRA||||END|
 src/main/help/help/topics/VariableValueHoverPlugin/images/VariableValueHoverPluginDecompiler.png||GHIDRA||||END|

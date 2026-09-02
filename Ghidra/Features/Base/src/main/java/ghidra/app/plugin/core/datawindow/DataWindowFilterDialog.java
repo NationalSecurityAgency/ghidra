@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,7 @@ import java.util.Map.Entry;
 import javax.swing.*;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import docking.DialogComponentProvider;
 import docking.DockingUtils;
@@ -184,7 +185,7 @@ class DataWindowFilterDialog extends DialogComponentProvider {
 			for (String type : filteredList) {
 				Boolean enabled = typeEnabledMap.get(type);
 				StringBuilder html = new StringBuilder(type);
-				int firstIndex = StringUtils.indexOfIgnoreCase(type, filteredText, 0);
+				int firstIndex = Strings.CI.indexOf(type, filteredText, 0);
 				int lastIndex = firstIndex + filteredText.length();
 				html.insert(lastIndex, "</b>"); // do before first index (for no math on index)
 				html.insert(firstIndex, "<b>");
@@ -233,7 +234,7 @@ class DataWindowFilterDialog extends DialogComponentProvider {
 			Set<Entry<String, Boolean>> entrySet = typeEnabledMap.entrySet();
 			for (Entry<String, Boolean> entry : entrySet) {
 				String checkboxName = entry.getKey();
-				if (StringUtils.containsIgnoreCase(checkboxName, filterText)) {
+				if (Strings.CI.contains(checkboxName, filterText)) {
 					checkboxNameList.add(checkboxName);
 				}
 			}
@@ -253,7 +254,7 @@ class DataWindowFilterDialog extends DialogComponentProvider {
 			plugin.setFilterEnabled(false);
 		}
 		else {
-			Coverage coverage = (Coverage) coverageCombo.getSelectedItem();
+			Coverage coverage = coverageCombo.getSelectedItem();
 			plugin.setFilter(typeEnabledMap, coverage);
 		}
 

@@ -1,0 +1,61 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger Adapter Protocol (DAP)</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1>DAP Server</H1>
+
+    <P>The DebuggerDapServerPlugin provides a very simple adapter allowing access to the Ghidra
+    debugger by standard DAP clients. The plugin provides two actions, <B>Start server</B> and
+    <B>Stop server</B>, and two options, <B>IP Address</B> and <B>Port</B>. The server will remain
+    running until the stop command is issued. Ghidra debugger agents may launch and kill sessions
+    without restarting the server, and DAP clients may connect, disconnect, and reconnect. Running
+    multiple sessions simultaneously has not been tested extensively and requires, at a minimum,
+    changing port values.</P>
+
+    <H1>DAP Clients</H1>
+
+    <P>Exact configuration and use of the DAP client will be largely client-dependent, particularly
+    with regard to supported commands. <B>Attach</B> and <B>launch</B> are again largely untested,
+    as the server assumes an active agent session. As a starting example, the DAP server may be
+    accessed from <B><TT>VSCode</TT></B> by writing a <TT>config.yaml</TT> file, and pointing a new
+    or existing debuggger configuration at it. For example, pointing <TT>"Python Debugger: Remote
+    Attach"</TT> to the following <TT>config.yaml</TT> will allow <B>F5</B> to establish a local
+    connection to a DAP server running at port <TT>54321</TT>:</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Remote Attach",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 54321
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "."
+                }
+            ]
+        }
+    ]
+}
+</PRE>
+      </LI>
+    </UL>
+  </BODY>
+</HTML>

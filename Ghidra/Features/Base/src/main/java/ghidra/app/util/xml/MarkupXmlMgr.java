@@ -331,7 +331,7 @@ class MarkupXmlMgr {
 // FIXME What do we need to do for externals in XML now?
 // FIXME
 			SetExternalRefCmd addCmd = new SetExternalRefCmd(addr, opIndex, programName, label,
-				libAddr, userDefined ? SourceType.USER_DEFINED : SourceType.IMPORTED);
+				libAddr, RefType.DATA, userDefined ? SourceType.USER_DEFINED : SourceType.IMPORTED);
 			addCmd.applyTo(program);
 
 //			// if there happens to be a pointer here, then

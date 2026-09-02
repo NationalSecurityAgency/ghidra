@@ -33,6 +33,7 @@ import ghidra.program.model.listing.Data;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.XRefHeaderFieldLocation;
+import ghidra.util.datastruct.Counter;
 
 /**
  * Field for display XRef headers.
@@ -134,22 +135,19 @@ public class XRefHeaderFieldFactory extends XRefFieldFactory {
 			return null;
 		}
 
-		List<Reference> xrefs = XReferenceUtils.getXReferences(cu, maxXRefs);
-		int xRefCount = xrefs.size();
+		Counter counter = new Counter();
+		XReferenceUtils.getXReferences(cu, maxXRefs, counter);
+		int fullCount = counter.intValue();
+		int xRefCount = fullCount;
 
 		String xRefCountText = Integer.toString(xRefCount);
-		if (xRefCount == maxXRefs) {
-			xRefCountText += "+";
-		}
 
-		List<Reference> offcuts = XReferenceUtils.getOffcutXReferences(cu, maxXRefs);
+		counter = new Counter();
+		List<Reference> offcuts = XReferenceUtils.getOffcutXReferences(cu, maxXRefs, counter);
 		int offcutCount = offcuts.size();
 
+		fullCount = counter.intValue();
 		String offcutCountText = Integer.toString(offcutCount);
-		if (offcutCount == maxXRefs) {
-			offcutCountText += "+";
-		}
-
 		if (offcutCount > 0) {
 			return "XREF[" + xRefCountText + "," + offcutCountText + "]: ";
 		}

@@ -37,7 +37,11 @@ public class SevenZipCliToolWrapper extends AbstractCliToolWrapper
 	private static final List<String> NATIVE_UNIX_EXE_NAMES = List.of("7zz", "7zzs", "7z");
 	private static final List<String> NATIVE_WIN_EXE_NAMES = List.of("7z.exe");
 	private static final Pattern SZ_VER_PATTERN =
-		Pattern.compile(".*7-Zip \\(z\\) ([0-9.]+) .*Copyright \\(c\\).*");
+		Pattern.compile(".*7-Zip " +   // const prefix
+			"(\\(.\\) )?" +            // optional "(a|r|z)" specifier, group=1 
+			"([0-9.]+) " +             // 7z version number, eg. 23.01, group=2
+			".*Copyright \\(c\\).*"    // const sufix
+		);
 
 	private static final List<String> getCurrentOSNativeExeNames() {
 		return switch (OperatingSystem.CURRENT_OPERATING_SYSTEM) {
@@ -61,7 +65,7 @@ public class SevenZipCliToolWrapper extends AbstractCliToolWrapper
 			if (execAndReadStdOut(List.of("--help"), monitor, sb::append) == 0) {
 				Matcher m = SZ_VER_PATTERN.matcher(sb.toString());
 				if (m.matches()) {
-					SemVer ver = SemVer.parse(m.group(1));
+					SemVer ver = SemVer.parse(m.group(2));
 					return ver != SemVer.INVALID && ver.compareTo(MIN_SUPPORTED_VER) >= 0;
 				}
 			}

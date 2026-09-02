@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,7 @@
 package help;
 
 import java.awt.Component;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.*;
 import java.util.*;
 
 import javax.help.*;
@@ -281,10 +280,10 @@ public class CustomTOCView extends TOCView {
 
 			urlString = urlString.substring(0, anchorIndex);
 			try {
-				URL newURL = new URL(urlString);
+				URL newURL = new URI(urlString).toURL();
 				selectNodeForID(newURL, null);
 			}
-			catch (MalformedURLException e) {
+			catch (MalformedURLException | URISyntaxException e) {
 				// shouldn't happen, as we are starting with a valid URL
 				Msg.debug(this,
 					"Unexpected error create a help URL from an existing URL: " + urlString, e);

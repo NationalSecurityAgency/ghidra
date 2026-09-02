@@ -18,7 +18,7 @@ package ghidra.app.plugin.exceptionhandlers.gcc.structures.ehFrame;
 import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.cmd.data.CreateArrayCmd;
 import ghidra.app.cmd.data.CreateDataCmd;
-import ghidra.app.cmd.function.CreateFunctionCmd;
+import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.exceptionhandlers.gcc.*;
 import ghidra.app.plugin.exceptionhandlers.gcc.sections.CieSource;
 import ghidra.app.plugin.exceptionhandlers.gcc.sections.DebugFrameSection;
@@ -469,9 +469,12 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 		region.setIPRange(addrRange);
 
 		try {
-			/* Create a function at the pcBegin Addr address */
-			CreateFunctionCmd createFuncCmd = new CreateFunctionCmd(pcBeginAddr);
-			createFuncCmd.applyTo(program);
+			/* pcBeginAddr is not necessarily a function start, but it is code */
+			/* schedule disassembly if there is not already a function defined there */
+			if (program.getListing().getFunctionAt(pcBeginAddr) == null) {
+				AutoAnalysisManager analysisMgr = AutoAnalysisManager.getAnalysisManager(program);
+				analysisMgr.disassemble(new AddressSet(pcBeginAddr));
+			}
 		}
 		catch (AddressOutOfBoundsException e) {
 			throw new ExceptionHandlerFrameException(

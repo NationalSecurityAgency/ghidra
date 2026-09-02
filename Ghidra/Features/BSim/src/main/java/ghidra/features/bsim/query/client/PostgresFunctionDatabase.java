@@ -74,7 +74,7 @@ public final class PostgresFunctionDatabase
 		new CachedStatement<>();
 
 	public PostgresFunctionDatabase(URL postgresUrl, boolean async) {
-		super(BSimPostgresDBConnectionManager.getDataSource(postgresUrl),
+		super(BSimPostgresDBConnectionManager.getDataSource(new BSimServerInfo(postgresUrl)),
 			FunctionDatabase.generateLSHVectorFactory(), LAYOUT_VERSION);
 		postgresDs = (BSimPostgresDataSource) ds;
 		asynchronous = async;

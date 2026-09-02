@@ -85,7 +85,7 @@ public:
     virtual void performOverride(const Address &addr,Funcdata &data) const;
     virtual void encode(Encoder &encoder,const Address &addr) const;
     virtual void printRaw(ostream &s,const Address &addr) const;
-    static const string NAME;
+    static const string NAME;		///< Name of the branch override record
   };
 
   /// \brief Override a BRANCH, BRANCHIND, or RETURN to become a CALL or CALLIND operation
@@ -94,7 +94,7 @@ public:
     virtual void performOverride(const Address &addr,Funcdata &data) const;
     virtual void encode(Encoder &encoder,const Address &addr) const;
     virtual void printRaw(ostream &s,const Address &addr) const;
-    static const string NAME;
+    static const string NAME;		///< Name of the call override record
   };
 
   /// \brief Override a BRANCH, BRANCHIND, or RETURN to become a CALL or CALLIND, followed by a RETURN
@@ -103,7 +103,7 @@ public:
     virtual void performOverride(const Address &addr,Funcdata &data) const;
     virtual void encode(Encoder &encoder,const Address &addr) const;
     virtual void printRaw(ostream &s,const Address &addr) const;
-    static const string NAME;
+    static const string NAME;		///< Name of the callreturn override record
   };
 
   /// \brief Override a BRANCHIND or CALLIND to become a RETURN
@@ -112,40 +112,40 @@ public:
     virtual void performOverride(const Address &addr,Funcdata &data) const;
     virtual void encode(Encoder &encoder,const Address &addr) const;
     virtual void printRaw(ostream &s,const Address &addr) const;
-    static const string NAME;
+    static const string NAME;		///< Name of the return override record
   };
 
   /// \brief Convert a CALLOTHER to a direct CALL
   class CallotherCall : public Record {
     Address callAddress;	///< Address of direct CALL
   public:
-    CallotherCall(const Address &dest) : callAddress(dest) {}
+    CallotherCall(const Address &dest) : callAddress(dest) {}	///< Constructor
     virtual void performOverride(const Address &addr,Funcdata &data) const;
     virtual void encode(Encoder &encoder,const Address &addr) const;
     virtual void printRaw(ostream &s,const Address &addr) const;
-    static const string NAME;
+    static const string NAME;	///< Name of the callother -> call override record
   };
 
   /// \brief Convert a CALLOTHER to a BRANCH
   class CallotherBranch : public Record {
     Address branchAddress;	///< Destination of BRANCH
   public:
-    CallotherBranch(const Address &dest) : branchAddress(dest) {}
+    CallotherBranch(const Address &dest) : branchAddress(dest) {}	///< Constructor
     virtual void performOverride(const Address &addr,Funcdata &data) const;
     virtual void encode(Encoder &encoder,const Address &addr) const;
     virtual void printRaw(ostream &s,const Address &addr) const;
-    static const string NAME;
+    static const string NAME;	///< Name of the callther -> branch override record
   };
 
   /// \brief Convert CALL or CALLIND into a CALL with a new destination address
   class CallCall : public Record {
     Address callAddress;	///< Address of (new) CALL
   public:
-    CallCall(const Address &dest) : callAddress(dest) {}
+    CallCall(const Address &dest) : callAddress(dest) {}	///< Constructor
     virtual void performOverride(const Address &addr,Funcdata &data) const;
     virtual void encode(Encoder &encoder,const Address &addr) const;
     virtual void printRaw(ostream &s,const Address &addr) const;
-    static const string NAME;
+    static const string NAME;	///< Name of the call -> call override record
   };
 private:
   map<Address,Record *> pcodeover;	///< Raw p-code overrides for instructions

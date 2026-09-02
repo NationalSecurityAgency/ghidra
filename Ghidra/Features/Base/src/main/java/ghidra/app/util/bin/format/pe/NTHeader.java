@@ -16,14 +16,11 @@
 package ghidra.app.util.bin.format.pe;
 
 import java.io.IOException;
-import java.io.RandomAccessFile;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.Writeable;
 import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
 import ghidra.program.model.data.*;
-import ghidra.util.DataConverter;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -36,7 +33,7 @@ import ghidra.util.exception.DuplicateNameException;
 ///     IMAGE_OPTIONAL_HEADER32 OptionalHeader;
 /// };
 /// ```
-public class NTHeader implements StructConverter, OffsetValidator, Writeable {
+public class NTHeader implements StructConverter, OffsetValidator {
 
 	/// The size of the NT header signature.
 	public final static int SIZEOF_SIGNATURE = BinaryReader.SIZEOF_INT;
@@ -46,7 +43,6 @@ public class NTHeader implements StructConverter, OffsetValidator, Writeable {
 	private int signature;
 	private FileHeader fileHeader;
 	private OptionalHeader optionalHeader;
-	private int index;
 	private boolean parseCliHeaders = false;
 
 	private SectionLayout layout = SectionLayout.FILE;
@@ -63,14 +59,11 @@ public class NTHeader implements StructConverter, OffsetValidator, Writeable {
 	 */
 	public NTHeader(BinaryReader reader, int index, SectionLayout layout, boolean parseCliHeaders)
 			throws InvalidNTHeaderException, IOException {
-		this.index = index;
 		this.layout = layout;
 		this.parseCliHeaders = parseCliHeaders;
 
-		int tmpIndex = index;
-
 		try {
-			signature = reader.readInt(tmpIndex);
+			signature = reader.readInt(index);
 		}
 		catch (IndexOutOfBoundsException ioobe) {
 			// Handled below
@@ -81,15 +74,15 @@ public class NTHeader implements StructConverter, OffsetValidator, Writeable {
 			throw new InvalidNTHeaderException();
 		}
 
-		tmpIndex += 4;
+		index += 4;
 
-		fileHeader = new FileHeader(reader, tmpIndex, this);
+		fileHeader = new FileHeader(reader, index, this);
 		if (fileHeader.getSizeOfOptionalHeader() == 0) {
 			Msg.warn(this, "Section headers overlap optional header");
 		}
-		tmpIndex += FileHeader.IMAGE_SIZEOF_FILE_HEADER;
+		index += FileHeader.IMAGE_SIZEOF_FILE_HEADER;
 
-		optionalHeader = new OptionalHeader(this, reader, tmpIndex);
+		optionalHeader = new OptionalHeader(this, reader, index);
 
 		// Process symbols.  Allow parsing to continue on failure.
 		boolean symbolsProcessed = false;
@@ -98,6 +91,7 @@ public class NTHeader implements StructConverter, OffsetValidator, Writeable {
 			symbolsProcessed = true;
 		}
 		catch (Exception e) {
+			e.printStackTrace();
 			Msg.error(this, "Failed to process symbols: " + e.getMessage());
 		}
 
@@ -161,8 +155,7 @@ public class NTHeader implements StructConverter, OffsetValidator, Writeable {
 	 * @param rva the relative virtual address
 	 */
 	public long rvaToPointer(long rva) {
-		SectionHeader[] sections = fileHeader.getSectionHeaders();
-		for (SectionHeader section : sections) {
+		for (SectionHeader section : fileHeader.getSectionHeaders()) {
 			long sectionVA = Integer.toUnsignedLong(section.getVirtualAddress());
 			long vSize = Integer.toUnsignedLong(section.getVirtualSize());
 			long rawPtr = Integer.toUnsignedLong(section.getPointerToRawData());
@@ -205,8 +198,7 @@ public class NTHeader implements StructConverter, OffsetValidator, Writeable {
 
 	@Override
 	public boolean checkPointer(long ptr) {
-		SectionHeader[] sections = fileHeader.getSectionHeaders();
-		for (SectionHeader section : sections) {
+		for (SectionHeader section : fileHeader.getSectionHeaders()) {
 			long virtPtr = Integer.toUnsignedLong(section.getVirtualAddress());
 			long virtSize = Integer.toUnsignedLong(section.getVirtualSize());
 			long rawSize = Integer.toUnsignedLong(section.getSizeOfRawData());
@@ -220,7 +212,7 @@ public class NTHeader implements StructConverter, OffsetValidator, Writeable {
 			}
 		}
 		if (optionalHeader != null) {
-			if (optionalHeader.getFileAlignment() == optionalHeader.getSectionAlignment()) {
+			if (getFileAlignment() == getSectionAlignment()) {
 				return checkRVA(ptr);
 			}
 		}
@@ -229,10 +221,17 @@ public class NTHeader implements StructConverter, OffsetValidator, Writeable {
 
 	@Override
 	public boolean checkRVA(long rva) {
-		if (optionalHeader != null) {
-			return (0 <= rva) && (rva <= optionalHeader.getSizeOfImage());
-		}
-		return true;
+		return optionalHeader == null || (0 <= rva && rva < optionalHeader.getSizeOfImage());
+	}
+
+	@Override
+	public int getSectionAlignment() {
+		return optionalHeader != null ? optionalHeader.getSectionAlignment() : 0;
+	}
+
+	@Override
+	public int getFileAlignment() {
+		return optionalHeader != null ? optionalHeader.getFileAlignment() : 0;
 	}
 
 	/**
@@ -253,23 +252,6 @@ public class NTHeader implements StructConverter, OffsetValidator, Writeable {
 	 */
 	public long vaToPointer(long va) {
 		return rvaToPointer(va - getOptionalHeader().getImageBase());
-	}
-
-	@Override
-	public void write(RandomAccessFile raf, DataConverter dc) throws IOException {
-
-		raf.seek(index);
-
-		raf.write(dc.getBytes(signature));
-
-		fileHeader.write(raf, dc);
-
-		optionalHeader.writeHeader(raf, dc);
-
-		SectionHeader[] sections = fileHeader.getSectionHeaders();
-		for (SectionHeader section : sections) {
-			section.write(raf, dc);
-		}
 	}
 
 	/**

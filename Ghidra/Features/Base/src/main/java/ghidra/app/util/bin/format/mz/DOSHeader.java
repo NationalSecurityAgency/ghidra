@@ -16,11 +16,9 @@
 package ghidra.app.util.bin.format.mz;
 
 import java.io.IOException;
-import java.io.RandomAccessFile;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.data.*;
-import ghidra.util.DataConverter;
 import ghidra.util.exception.DuplicateNameException;
 
 
@@ -201,20 +199,5 @@ public class DOSHeader extends OldDOSHeader {
 				stubBytes = new byte[0];				
 			}
 		}
-	}
-
-	@Override
-	public void write(RandomAccessFile raf, DataConverter dc) throws IOException {
-		super.write(raf, dc);
-		for (short e_re : e_res) {
-			raf.write(dc.getBytes(e_re));
-		}
-		raf.write(dc.getBytes(e_oemid));
-		raf.write(dc.getBytes(e_oeminfo));
-		for (short element : e_res2) {
-			raf.write(dc.getBytes(element));
-		}
-		raf.write(dc.getBytes(e_lfanew));
-		raf.write(stubBytes);		
 	}
 }

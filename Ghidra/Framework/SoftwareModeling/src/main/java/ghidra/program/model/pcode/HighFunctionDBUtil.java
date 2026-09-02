@@ -535,15 +535,10 @@ public class HighFunctionDBUtil {
 			return null;
 		}
 
+		highSymbol.resolveStorage();
 		VariableStorage storage = highSymbol.getStorage();
 		Address pcAddr = highSymbol.getPCAddress();
 		Variable localVariable = getLocalVariable(function, storage, pcAddr);
-
-		if (!storage.isHashStorage() && highVar != null && highVar.requiresDynamicStorage()) {
-			DynamicEntry entry = DynamicEntry.build(highVar.getRepresentative());
-			storage = entry.getStorage();
-			pcAddr = entry.getPCAdress();	// The address may change from original Varnode
-		}
 
 		if (localVariable != null) {
 			return localVariable;
@@ -605,24 +600,17 @@ public class HighFunctionDBUtil {
 		}
 		else if (!highSymbol.isGlobal()) {
 			Variable[] varList = null;
+			highSymbol.resolveStorage();
 			VariableStorage storage = highSymbol.getStorage();
 			Address pcAddr = highSymbol.getPCAddress();
-			HighVariable tmpHigh = highSymbol.getHighVariable();
-			if (!storage.isHashStorage() && tmpHigh != null && tmpHigh.requiresDynamicStorage()) {
-				DynamicEntry entry = DynamicEntry.build(tmpHigh.getRepresentative());
-				storage = entry.getStorage();
-				pcAddr = entry.getPCAdress();	// The address may change from original Varnode
-			}
-			else {
-				Variable var = clearConflictingLocalVariables(function, storage, pcAddr);
-				if (var != null) {
-					if (!resized) {
-						varList = gatherMergeSet(function, var);	// Cannot resize a whole multi-merge
-					}
-					else {
-						varList = new Variable[1];
-						varList[0] = var;
-					}
+			Variable conflictVar = clearConflictingLocalVariables(function, storage, pcAddr);
+			if (conflictVar != null) {
+				if (!resized) {
+					varList = gatherMergeSet(function, conflictVar);	// Cannot resize a whole multi-merge
+				}
+				else {
+					varList = new Variable[1];
+					varList[0] = conflictVar;
 				}
 			}
 			boolean usesHashStorage = storage.isHashStorage();

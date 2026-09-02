@@ -1,0 +1,251 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger: Trace Call Tree</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="plugin"></A>Debugger: Trace Call Tree</H1>
+
+    <DIV class="image">
+      <IMG alt="" src="images/TraceCallTreePlugin.png">
+    </DIV>
+
+    <P>The Trace Call Tree window reconstructs the call hierarchy of all functions executed by a
+    single thread over the entire recorded trace. It does this by:</P>
+
+    <UL>
+      <LI>Iterating over every snapshot associated with the active thread</LI>
+
+      <LI>Reading the program counter (PC) register at each step</LI>
+
+      <LI>Mapping the dynamic address to a statically-analyzed program via the <A href=
+      "help/topics/DebuggerStaticMappingPlugin/DebuggerStaticMappingPlugin.html">Static
+      Mappings</A> service</LI>
+
+      <LI>Detecting function entries, call instructions, returns, and tail calls.</LI>
+
+      <LI>There are some <A href="#limitations">limitations</A> for how accurate the call tree will
+      be.</LI>
+    </UL>
+
+    <P>The resulting tree shows the sequence of function invocations in the order they occurred,
+    with each call nested under its caller.</P>
+    <BR>
+     
+
+    <P>For the tree to be populated, the following conditions must be met:</P>
+
+    <UL>
+      <LI>A trace must be open and a thread must be active.</LI>
+
+      <LI>The trace must contain at least one snapshot whose event thread matches the active
+      thread.</LI>
+
+      <LI>The modules visited during execution must be imported, analyzed, and mapped to the trace
+      via the Static Mappings service.</LI>
+
+      <LI>Functions must be defined in the mapped program databases at the addresses visited.</LI>
+    </UL>
+
+    <P>The window is divided into two panels: the <B>Call Tree Table</B> on top and the
+    (toggleable) <B>Log Window</B> on the bottom. The divider between them can be dragged to resize
+    each panel. The log window can be hidden using the <A href="#show_log_window">Show/Hide Log
+    Window</A> action.</P>
+
+    <H2>Call Tree Table Columns</H2>
+
+    <P>The call tree table has the following columns:</P>
+
+    <UL>
+      <LI>
+        <B>Function</B> - The name of the function, displayed as a tree. Each row is indented under
+        its caller. The tree data prefix indicates the node type: 
+
+        <UL>
+          <LI>Plain name - a regular function call. The PC was observed at the entry point of a
+          function. The function's parameters are captured from registers, stack, or memory at this
+          snapshot.</LI>
+
+          <LI><CODE>Return: &lt;name&gt;</CODE> - a return from the named function. A terminal
+          (return) instruction was executed inside a known function. The function's return value is
+          captured at this snapshot. Return nodes can be hidden with the <A href=
+          "#show_returns">Show/Hide Returns</A> action.</LI>
+
+          <LI><CODE>Tail Call: &lt;name&gt;</CODE> - a tail call from this named function to
+          another. A call-terminator instruction (e.g., a jump used as a tail call) was executed
+          inside a known function. Tail call nodes can be hidden with the <A href=
+          "#show_tail_calls">Show/Hide Tail Calls</A> action.</LI>
+
+          <LI><CODE>External: &lt;name&gt;</CODE> - a call to an external (thunked) function. The
+          PC was observed at the entry point of a thunk function whose target is an external symbol
+          (e.g., a shared library function). External nodes are always shown.</LI>
+        </UL>
+      </LI>
+
+      <LI><B>Snapshot</B> - The snapshot key when the function was entered, returned from, or
+      tail-called. Double-clicking a row activates this snapshot in the Debugger.</LI>
+
+      <LI><B>Module</B> - The name of the module where the function is defined.</LI>
+
+      <LI><B>Return</B> - The raw bytes of the return value, displayed as a hex string, captured at
+      the moment the function returned. Only populated for return nodes.</LI>
+
+      <LI><B>Parameter 0</B>, <B>Parameter 1</B>, ... - One column per parameter, up to the maximum
+      number of parameters found across all functions in the tree. Each cell shows the parameter
+      name and its raw byte value captured at the moment the function was entered. The number of
+      parameter columns adjusts automatically when the tree is rebuilt.</LI>
+    </UL>
+
+    <H2><A name="log_window"></A>Log Window</H2>
+
+    <P>The log window displays diagnostic messages generated while building the call tree. Each row
+    describes a snapshot at which the tree builder encountered a problem, such as:</P>
+
+    <UL>
+      <LI>The PC register was null or could not be read.</LI>
+
+      <LI>The dynamic address could not be mapped to a static program location (e.g., the module is
+      not imported or not mapped).</LI>
+
+      <LI>The static address is not inside any known function.</LI>
+
+      <LI>A call instruction had no default fall-through address.</LI>
+
+      <LI>A return was encountered with an empty call stack.</LI>
+    </UL>
+
+    <P>Log entries are automatically removed when the condition that caused them is resolved on a
+    subsequent rebuild. The log table has the following columns:</P>
+
+    <UL>
+      <LI><B>Trace</B> - The name of the trace in which the problem occurred.</LI>
+
+      <LI><B>Snap</B> - The snapshot key at which the problem occurred.</LI>
+
+      <LI><B>Message</B> - A human-readable description of the problem.</LI>
+
+      <LI><B>Dynamic Address</B> - The raw dynamic (trace) address of the PC at the time of the
+      problem, if available.</LI>
+
+      <LI><B>Static Address</B> - The mapped static address, if the mapping was successful.</LI>
+    </UL>
+
+    <H2>Actions</H2>
+
+    <H3><A name="rebuild_call_tree"></A><IMG alt="" src="icon.refresh">Rebuild Call Tree</H3>
+
+    <P>Cancels any in-progress build and restarts the call tree generation from scratch using the
+    current trace and thread. Use this action after changing static mappings, adding function
+    definitions, or any other change that may affect the tree's contents. The tree is rebuilt
+    automatically when new snapshots are appended to the trace.</P>
+
+    <H3><A name="jump_to_current"></A><IMG alt="" src="icon.home">Jump to Current</H3>
+
+    <P>Scrolls the call tree table to the node that corresponds to the current debugger
+    coordinates. The node is selected and its ancestors are expanded so it is visible.</P>
+
+    <H3><A name="expand_recursive"></A><IMG alt="" src="icon.expand.all">Expand from Selected Cell
+    Recursively</H3>
+
+    <DIV class="image">
+      <IMG alt="" src="images/TraceCallTreePluginUnfolded.png">
+    </DIV>
+
+    <P>Expands the currently selected node and all of its descendants in the tree.</P>
+
+    <H3><A name="collapse_recursive"></A><IMG alt="" src="icon.collapse.all">Collapse from Selected
+    Cell Recursively</H3>
+
+    <P>Collapses the currently selected node and all of its descendants in the tree.</P>
+
+    <H3><A name="show_returns"></A><IMG alt="" src="icon.arrow.up.left">Show/Hide Returns</H3>
+
+    <DIV class="image">
+      <IMG alt="" src="images/TraceCallTreePluginHideReturns.png">
+    </DIV>
+
+    <P>Toggles the visibility of return nodes in the tree.</P>
+
+    <H3><A name="show_tail_calls"></A><IMG alt="" src="icon.navigate.in">Show/Hide Tail Calls</H3>
+
+    <P>Toggles the visibility of tail call nodes in the tree.</P>
+
+    <H3><A name="show_log_window"></A><IMG alt="" src="icon.warning">Show/Hide Log Window</H3>
+
+    <P>Toggles the visibility of the log panel.</P>
+
+    <H3><A name="clear_log"></A><IMG alt="" src="icon.clear">Clear Log</H3>
+
+    <P>Removes all entries from the log table.</P>
+
+    <H2>Popup (Right-Click) Actions</H2>
+
+    <DIV class="image">
+      <IMG alt="" src="images/TraceCallTreePluginRightClick.png">
+    </DIV>
+
+    <P>Right-clicking a row in the call tree table provides the following context actions:</P>
+
+    <UL>
+      <LI><B>Go To Snapshot N</B> - Activates snapshot <EM>N</EM> in the Debugger.</LI>
+
+      <LI><B>View &lt;param&gt;</B> - For each parameter whose raw byte value can be interpreted as
+      a valid address, navigates the main Debugger Listing to that address.</LI>
+
+      <LI><B>View &lt;param&gt; -&gt; View In &lt;listing&gt;</B> - Navigates an additional open
+      Debugger Listing window to the parameter's address.</LI>
+
+      <LI><B>View &lt;param&gt; -&gt; View In New Listing</B> - Opens a new Debugger Listing window
+      and navigates it to the parameter's address.</LI>
+
+      <LI><B>View Return</B> - Same as the parameter actions above, but for the function's return
+      value. Only available for return nodes whose return value can be interpreted as a valid
+      address.</LI>
+
+      <LI><B>Expand</B> - Expands the selected node(s) one level.</LI>
+
+      <LI><B>Collapse</B> - Collapses the selected node(s) one level.</LI>
+
+      <LI><B>Expand Recursively</B> - Expands the selected node(s) and all descendants.</LI>
+
+      <LI><B>Collapse Recursively</B> - Collapses the selected node(s) and all descendants.</LI>
+    </UL>
+
+    <H2>Double-Click</H2>
+
+    <P>Double-clicking any row in the call tree table activates the snapshot recorded in that row's
+    <B>Snapshot</B> column.</P>
+
+    <H2><A name="limitations"></A>Limitations</H2>
+
+    <UL>
+      <LI>The tree is built per-thread. Switching to a different thread triggers a separate build.
+      Previously built trees are cached per trace and thread and reused when switching back.</LI>
+
+      <LI>The tree relies on static mappings being present and correct. If a module is not imported
+      or not mapped, all snapshots where the PC falls in that module will be skipped and logged as
+      errors.</LI>
+
+      <LI>If the trace does not record every instruction, the tree may miss calls or returns that
+      occurred between recorded snapshots. The fall-through tracking heuristic attempts to recover
+      from missed returns, but it is not guaranteed to be correct.</LI>
+
+      <LI>Parameter and return values are read directly from registers, stack memory, or data
+      memory at the snapshot where the function entry or return was detected. If the calling
+      convention is not correctly defined in the program database, the values shown may be
+      incorrect or absent. Additionally, if the storage location of the parameter is stale/unknown
+      the values may be incorrect</LI>
+
+      <LI>The tree is marked stale (with a status bar message) when functions or symbols change in
+      an open program database. Use <A href="#rebuild_call_tree">Rebuild Call Tree</A> to refresh
+      it.</LI>
+    </UL>
+  </BODY>
+</HTML>

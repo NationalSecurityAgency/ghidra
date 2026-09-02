@@ -280,14 +280,14 @@ def get_current_interpreter():
     try:
         from ghidra.util import SystemUtilities
         from ghidra.framework.main import AppInfo
+        from ghidra.pyghidra import PyGhidraScriptProvider
 
         global _headless_interpreter
 
         if SystemUtilities.isInHeadlessMode():
             if _headless_interpreter is None:
                 # one hasn't been created yet so make one now
-                PyGhidraScriptProvider = JClass("ghidra.pyghidra.PyGhidraScriptProvider")
-                _headless_interpreter = PyGhidraScriptProvider.PyGhidraHeadlessScript()
+                _headless_interpreter = PyGhidraScriptProvider().getScriptInstance(None, None) # type: ignore
             return _headless_interpreter
 
         project = AppInfo.getActiveProject()

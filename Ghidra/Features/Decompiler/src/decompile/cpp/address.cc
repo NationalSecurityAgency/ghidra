@@ -185,12 +185,21 @@ bool Address::isContiguous(int4 sz,const Address &loaddr,int4 losz) const
   return false;
 }
 
+/// If pointers are possible anywhere within the \b size byte region return \b true, \b false otherwise.
+/// \param size is the number bytes in the region
+/// \return \b true if pointers into the region are possible
+bool Address::highPtrPossible(int4 size) const
+
+{
+  return base->manage->highPtrPossible(*this, size);
+}
+
 /// If \b this is (originally) a \e join address, reevaluate it in terms of its new
 /// \e offset and \e size, changing the space and offset if necessary.
 /// \param size is the new size in bytes of the underlying object
 void Address::renormalize(int4 size) {
   if (base->getType() == IPTR_JOIN)
-    base->getManager()->renormalizeJoinAddress(*this,size);
+    base->manage->renormalizeJoinAddress(*this,size);
 }
 
 /// This is usually used to decode an address from an \b \<addr\>
@@ -457,15 +466,15 @@ void RangeList::merge(const RangeList &op2)
   while(iter1 != iter2) {
     const Range &range( *iter1 );
     ++iter1;
-    insertRange(range.spc, range.first, range.last);
+    insertRange(range);
   }
 }
 
 /// Make sure indicated range of addresses is \e contained in \b this RangeList
 /// \param addr is the first Address in the target range
 /// \param size is the number of bytes in the target range
-/// \return \b true is the range is fully contained by this RangeList
-bool RangeList::inRange(const Address &addr,int4 size) const
+/// \return \b true if the range is fully contained by this RangeList
+bool RangeList::inRange(const Address &addr,uintb size) const
 
 {
   set<Range>::const_iterator iter;
@@ -481,9 +490,30 @@ bool RangeList::inRange(const Address &addr,int4 size) const
   //  if (iter == tree.end())   // iter can't be end if non-empty
   //    return false;
   if ((*iter).spc != addr.getSpace()) return false;
-  if ((*iter).last >= addr.getOffset()+size-1)
+  uintb end = addr.getOffset()+size-1;
+  if (end < addr.getOffset())
+    return false;	// size causes overflow
+  if ((*iter).last >= end)
     return true;
   return false;
+}
+
+/// \param rng is the target range
+/// \return \b true if the range is fully contained by this RangeList
+bool RangeList::inRange(const Range &rng) const
+
+{
+  set<Range>::const_iterator iter;
+
+  if (tree.empty()) return false;
+
+  // iter = first range with its first > rng.first
+  iter = tree.upper_bound(rng);
+  if (iter == tree.begin()) return false;
+  // Set iter to last range with range.first <= rng.first
+  --iter;
+  if ((*iter).spc != rng.getSpace()) return false;
+  return ((*iter).last >= rng.last);
 }
 
 /// If \b this RangeList contains the specific address (spaceid,offset), return it
@@ -502,6 +532,37 @@ const Range *RangeList::getRange(AddrSpace *spaceid,uintb offset) const
   if ((*iter).last >= offset)
     return &(*iter);
   return (const Range *)0;
+}
+
+/// If \b this contains no Range in the given address space, null is returned.
+/// If a range contains \b offset, it is returned.
+/// Otherwise the range with a boundary point closest to \b offset is returned.
+/// If two ranges are equidistant to \b offset, the earlier Range is returned.
+/// \param spaceid is the given address space
+/// \param offset is the given offset
+/// \return the nearest Range in the same address space or null
+const Range *RangeList::getNearestRange(AddrSpace *spaceid,uintb offset) const
+
+{
+  if (tree.empty()) return (const Range *)0;
+
+  set<Range>::const_iterator iter = tree.upper_bound(Range(spaceid,offset,offset));
+  const Range *after = (const Range *)0;
+  if (iter != tree.end()) {
+    after = &(*iter);
+    if (after->spc != spaceid)
+      after = (const Range *)0;
+  }
+
+  if (iter == tree.begin()) return after;	// nothing earlier, after is closest
+  --iter;
+  const Range *before = &(*iter);
+  if (before->spc != spaceid) return after;
+  if (after == (const Range *)0) return before;
+  if (before->last >= offset) return before;		// Range contains offset, it is closest
+  uint8 distafter = after->first - offset;
+  uint8 distbefore = offset - before->last;
+  return (distafter < distbefore) ? after : before;
 }
 
 /// Return the size of the biggest contiguous sequence of addresses in

@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.macho.MachException;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.program.model.data.LEB128;
 
@@ -29,6 +30,8 @@ import ghidra.program.model.data.LEB128;
  * A Mach-O rebase table
  */
 public class RebaseTable extends OpcodeTable {
+
+	private static final int COUNT_LIMIT = 100_000;
 
 	private List<Rebase> rebases = new ArrayList<>();
 
@@ -46,8 +49,10 @@ public class RebaseTable extends OpcodeTable {
 	 * @param header The header
 	 * @param tableSize The size of the table, in bytes
 	 * @throws IOException if an IO-related error occurs while parsing
+	 * @throws MachException if the {@link RebaseTable} is invalid
 	 */
-	public RebaseTable(BinaryReader reader, MachHeader header, long tableSize) throws IOException {
+	public RebaseTable(BinaryReader reader, MachHeader header, long tableSize)
+			throws IOException, MachException {
 		this();
 
 		int pointerSize = header.getAddressSize();
@@ -94,6 +99,10 @@ public class RebaseTable extends OpcodeTable {
 				case REBASE_OPCODE_DO_REBASE_ULEB_TIMES: { // 0x60
 					ulebOffsets.add(reader.getPointerIndex() - origIndex);
 					int count = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
+					if (count < 0 || count > COUNT_LIMIT) {
+						throw new MachException("REBASE_OPCODE count exceeds limit (%d): %d"
+								.formatted(COUNT_LIMIT, count));
+					}
 					for (int i = 0; i < count; ++i) {
 						rebases.add(new Rebase(rebase));
 						rebase.segmentOffset += pointerSize;
@@ -109,6 +118,10 @@ public class RebaseTable extends OpcodeTable {
 				case REBASE_OPCODE_DO_REBASE_ULEB_TIMES_SKIPPING_ULEB: { // 0x80
 					ulebOffsets.add(reader.getPointerIndex() - origIndex);
 					int count = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
+					if (count < 0 || count > COUNT_LIMIT) {
+						throw new MachException("REBASE_OPCODE count exceeds limit (%d): %d"
+								.formatted(COUNT_LIMIT, count));
+					}
 					ulebOffsets.add(reader.getPointerIndex() - origIndex);
 					int skip = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 					for (int i = 0; i < count; ++i) {

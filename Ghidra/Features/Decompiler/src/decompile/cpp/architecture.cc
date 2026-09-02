@@ -33,7 +33,7 @@ using std::sqrt;
 vector<ArchitectureCapability *> ArchitectureCapability::thelist;
 
 const uint4 ArchitectureCapability::majorversion = 6;
-const uint4 ArchitectureCapability::minorversion = 1;
+const uint4 ArchitectureCapability::minorversion = 2;
 
 AttributeId ATTRIB_ADDRESS = AttributeId("address",148);
 AttributeId ATTRIB_ADJUSTVMA = AttributeId("adjustvma",103);
@@ -581,16 +581,6 @@ void Architecture::addSpacebase(AddrSpace *basespace,const string &nm,const Varn
   addSpacebasePointer(spc,ptrdata,truncSize,stackGrowth);
 }
 
-/// This routine is used by the initialization process to add
-/// address ranges to which there is never an (indirect) pointer
-/// Should only be called during initialization
-/// \param rng is the new range with no aliases to be added
-void Architecture::addNoHighPtr(const Range &rng)
-
-{
-  nohighptr.insertRange(rng.getSpace(),rng.getFirst(),rng.getLast());
-}
-
 /// This builds the \e universal Action for function transformation
 /// and instantiates the "decompile" root Action
 /// \param store may hold configuration information
@@ -688,7 +678,7 @@ void Architecture::cacheAddrSpaceProperties(void)
     AddrSpace *spc = copyList[i];
     if (spc == lastSpace) continue;
     lastSpace = spc;
-    if (spc->getDelay() == 0) continue;		// Don't put in a register space
+    if (spc->noHighPtrPossible()) continue;		// Don't put in a register space
     if (spc->getType() == IPTR_SPACEBASE) continue;
     if (spc->isOtherSpace()) continue;
     if (spc->isOverlay()) continue;

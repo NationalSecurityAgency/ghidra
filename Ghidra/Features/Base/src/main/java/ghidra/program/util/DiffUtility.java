@@ -94,9 +94,9 @@ public class DiffUtility extends SimpleDiffUtility {
 		if (otherSpace == null) {
 			return null;
 		}
-		Range<Long> r = Range.between(range.getMinAddress().getOffset(),
+		Range<Long> r = Range.of(range.getMinAddress().getOffset(),
 			range.getMaxAddress().getOffset(), unsignedLongComparator);
-		Range<Long> otherSpaceRange = Range.between(otherSpace.getMinAddress().getOffset(),
+		Range<Long> otherSpaceRange = Range.of(otherSpace.getMinAddress().getOffset(),
 			otherSpace.getMaxAddress().getOffset(), unsignedLongComparator);
 		if (!r.isOverlappedBy(otherSpaceRange)) {
 			return null;

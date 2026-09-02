@@ -97,7 +97,8 @@ public abstract class AbstractOrdinalSupportLoader extends AbstractLibrarySuppor
 				log.appendMsg("Created exports file: " + newExportsFile);
 			}
 			catch (IOException e) {
-				log.appendMsg("Unable to create exports file for " + libFsrl);
+				log.appendMsg(
+					"Unable to create exports file for %s: %s".formatted(libFsrl, e.getMessage()));
 			}
 		}
 		else {

@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.*;
 
 import docking.widgets.OptionDialog;
+import docking.widgets.filechooser.GhidraFileChooser;
 import ghidra.app.events.ProgramAddedToPluginEvent;
 import ghidra.app.plugin.core.help.AboutDomainObjectUtils;
 import ghidra.app.services.FileSystemBrowserService;
@@ -31,6 +32,7 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.*;
 import ghidra.app.util.opinion.Loader.ImporterSettings;
 import ghidra.formats.gfilesystem.*;
+import ghidra.formats.gfilesystem.factory.FileSystemFactoryMgr;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.model.*;
@@ -46,7 +48,6 @@ import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.CryptoException;
 import ghidra.util.filechooser.ExtensionFileFilter;
-import ghidra.util.filechooser.GhidraFileFilter;
 import ghidra.util.task.TaskLauncher;
 import ghidra.util.task.TaskMonitor;
 import util.CollectionUtils;
@@ -60,20 +61,44 @@ import util.CollectionUtils;
 public class ImporterUtilities {
 
 	/**
-	 * File extension filter for well known 'loadable' files for GhidraFileChoosers.
+	 * Adds file filters for associated {@link Loader} file extensions to the given 
+	 * {@link GhidraFileChooser}
+	 * 
+	 * @param chooser The {@link GhidraFileChooser} to add extension file filters to
 	 */
-	public static final GhidraFileFilter LOADABLE_FILES_FILTER = ExtensionFileFilter.forExtensions(
-		"Loadable files", "exe", "dll", "obj", "drv", "bin", "hex", "o", "a", "so", "class", "lib",
-		"dylib");
+	public static void addLoadableFileFilters(GhidraFileChooser chooser) {
+		Set<String> all = new HashSet<>();
+		for (Loader loader : LoaderService.getAllLoaders()) {
+			Collection<String> exts = loader.getAssociatedFileExtensions();
+			if (!exts.isEmpty()) {
+				chooser.addFileFilter(new ExtensionFileFilter(exts, loader.getName()));
+				all.addAll(exts);
+			}
+		}
+		if (!all.isEmpty()) {
+			chooser.addFileFilter(new ExtensionFileFilter(all, "Loadable files"));
+		}
+	}
 
 	/**
-	 * File extension filter for well known 'container' files for GhidraFileChoosers.
+	 * Adds file filters for associated {@link GFileSystem} file extensions to the given 
+	 * {@link GhidraFileChooser}
+	 * 
+	 * @param chooser The {@link GhidraFileChooser} to add extension file filters to
 	 */
-	public static final GhidraFileFilter CONTAINER_FILES_FILTER =
-		ExtensionFileFilter.forExtensions("Container files", "zip", "tar", "tgz", "jar", "gz",
-			"ipsw", "img3", "dmg", "apk", "cpio", "rpm", "lib");
-
-	private static final FileSystemService fsService = FileSystemService.getInstance();
+	public static void addFileSystemFileFilters(GhidraFileChooser chooser) {
+		Set<String> all = new HashSet<>();
+		FileSystemFactoryMgr mgr = FileSystemFactoryMgr.getInstance();
+		mgr.getFilesystemExtensionsByDescription().forEach((description, exts) -> {
+			if (exts.length > 0) {
+				chooser.addFileFilter(new ExtensionFileFilter(exts, description));
+				Collections.addAll(all, exts);
+			}
+		});
+		if (!all.isEmpty()) {
+			chooser.addFileFilter(new ExtensionFileFilter(all, "Container files"));
+		}
+	}
 
 	static List<LanguageCompilerSpecPair> getPairs(Collection<LoadSpec> loadSpecs) {
 		Set<LanguageCompilerSpecPair> pairs = new HashSet<>();
@@ -132,6 +157,8 @@ public class ImporterUtilities {
 			DomainFolder destinationFolder, String suggestedPath, TaskMonitor monitor) {
 
 		Objects.requireNonNull(monitor);
+
+		FileSystemService fsService = FileSystemService.getInstance();
 
 		try (RefdFile referencedFile = fsService.getRefdFile(fsrl, monitor)) {
 			if (!ensureFileImportable(referencedFile, monitor)) {
@@ -222,6 +249,7 @@ public class ImporterUtilities {
 		}
 
 		try {
+			FileSystemService fsService = FileSystemService.getInstance();
 			ByteProvider provider = fsService.getByteProvider(fsrl, false, monitor);
 			if (provider.length() == 0) {
 				Msg.showWarn(null, null, "Error opening " + fsrl.getName(),
@@ -319,6 +347,7 @@ public class ImporterUtilities {
 			TaskMonitor monitor) {
 
 		try {
+			FileSystemService fsService = FileSystemService.getInstance();
 			ByteProvider provider = fsService.getByteProvider(fsrl, true, monitor);
 			LoaderMap loaderMap = LoaderService.getAllSupportedLoadSpecs(provider, monitor);
 
@@ -421,6 +450,8 @@ public class ImporterUtilities {
 
 		Objects.requireNonNull(monitor);
 
+		FileSystemService fsService = FileSystemService.getInstance();
+
 		try (ByteProvider bp = fsService.getByteProvider(fsrl, false, monitor)) {
 			MessageLog messageLog = new MessageLog();
 
@@ -511,6 +542,7 @@ public class ImporterUtilities {
 
 		Objects.requireNonNull(monitor);
 
+		FileSystemService fsService = FileSystemService.getInstance();
 		MessageLog messageLog = new MessageLog();
 		Object consumer = new Object();
 		program.addConsumer(consumer);

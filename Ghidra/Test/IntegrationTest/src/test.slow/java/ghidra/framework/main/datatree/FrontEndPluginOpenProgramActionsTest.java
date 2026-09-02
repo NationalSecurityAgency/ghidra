@@ -23,7 +23,8 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.*;
+import javax.swing.JTree;
+import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
 
 import org.junit.*;
@@ -272,20 +273,6 @@ public class FrontEndPluginOpenProgramActionsTest extends AbstractGhidraHeadedIn
 
 		// make sure that the tool is loaded and processes all of the tasks it launches
 		Window window = waitForToolLaunch();
-
-		// DEBUG:
-		if (window == null) {
-			// see if any tools have been launched
-			PluginTool[] runningTools = frontEndTool.getToolServices().getRunningTools();
-			for (PluginTool tool : runningTools) {
-				System.err.println("\t\"" + tool.getName() + "\"");
-				JFrame toolFrame = tool.getToolFrame();
-				System.err.println("\t\twith window: " + toolFrame.getTitle());
-			}
-
-			System.err.println("Open Windows: ");
-			System.err.println(getOpenWindowsAsString());
-		}
 
 		assertNotNull(window);
 		waitForBusyTool(env.getProject().getToolManager().getRunningTools()[0]);

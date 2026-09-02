@@ -15,7 +15,7 @@
  */
 package ghidra.pcode.emu.symz3.plain;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.math.BigInteger;
 
@@ -33,6 +33,7 @@ import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.emu.linux.EmuLinuxAmd64SyscallUseropLibraryTest;
 import ghidra.pcode.emu.linux.EmuLinuxAmd64SyscallUseropLibraryTest.Syscall;
 import ghidra.pcode.emu.symz3.SymZ3PcodeThread;
+import ghidra.pcode.emu.symz3.SymZ3TestUtils;
 import ghidra.pcode.emu.symz3.lib.*;
 import ghidra.pcode.emu.symz3.state.SymZ3PcodeEmulator;
 import ghidra.pcode.emu.sys.EmuProcessExitedException;
@@ -73,6 +74,8 @@ public class SymZ3PcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 
 	@Before
 	public void setUpSymZ3Test() throws Exception {
+		SymZ3TestUtils.skipTestIfUnsupportedPlatform();
+
 		program = createDefaultProgram("HelloSymZ3", "x86:LE:64:default", "gcc", this);
 		space = program.getAddressFactory().getDefaultAddressSpace();
 		start = space.getAddress(0x00400000);

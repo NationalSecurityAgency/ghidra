@@ -66,8 +66,7 @@ import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.module.DBTraceStaticMappingManager;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.modules.TraceStaticMapping;
-import ghidra.util.InvalidNameException;
-import ghidra.util.NumericUtilities;
+import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import junit.framework.AssertionFailedError;
 
@@ -649,7 +648,7 @@ public class LldbStackUnwindTest extends AbstractLldbTraceRmiTest {
 				byte[] ins = res.getInstruction().getVals();
 				// HACK to avoid 16-bit CALL.... TODO: Why does this happen?
 				if (ins.length >= 2 && ins[0] == (byte) 0x66 && ins[1] == (byte) 0xe8) {
-					System.err.println(
+					Msg.error(LldbStackUnwindTest.class,
 						"Filtered 16-bit call " + NumericUtilities.convertBytesToString(ins));
 					continue;
 				}

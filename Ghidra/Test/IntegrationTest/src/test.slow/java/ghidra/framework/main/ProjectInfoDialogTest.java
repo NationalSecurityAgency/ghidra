@@ -38,6 +38,7 @@ import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.listing.Program;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -81,7 +82,7 @@ public class ProjectInfoDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		RepositoryAdapter rep = null;
 		try {
 			// this can throw a NotConnectedException
-			System.err.println(getClass().getName() + "\tstarting server...");
+			Msg.info(this, getClass().getName() + "\tstarting server...");
 			rep = SharedProjectUtil.startServer();
 		}
 		catch (Exception e) {
@@ -99,9 +100,9 @@ public class ProjectInfoDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 		try {
 			DockingActionIf saveAction = getAction("Save Project");
-			System.err.println("\tsaving project");
+			Msg.info(this, "\tsaving project");
 			performAction(saveAction, true);
-			System.err.println("\tclosing project");
+			Msg.info(this, "\tclosing project");
 			DockingActionIf action = getAction("Close Project");
 			performAction(action, true);
 		}
@@ -112,21 +113,21 @@ public class ProjectInfoDialogTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void cleanupResources() throws Exception {
-		System.err.println(getClass().getName() + ".cleanupResources()...");
+		Msg.info(this, getClass().getName() + ".cleanupResources()...");
 		try {
-			System.err.println(getClass().getName() + "\tdisposing...");
+			Msg.info(this, getClass().getName() + "\tdisposing...");
 			env.dispose();
-			System.err.println(getClass().getName() + "\tstoring preferences...");
+			Msg.info(this, getClass().getName() + "\tstoring preferences...");
 			Preferences.setProperty("ServerInfo", null);
 			Preferences.store();
 		}
 		finally {
-			System.err.println(getClass().getName() + "\tdeleting server root...");
+			Msg.info(this, getClass().getName() + "\tdeleting server root...");
 			SharedProjectUtil.deleteServerRoot();
-			System.err.println(getClass().getName() + "\tdeleting test project...");
+			Msg.info(this, getClass().getName() + "\tdeleting test project...");
 			SharedProjectUtil.deleteTestProject("TestProject");
 		}
-		System.err.println(getClass().getName() + ".cleanupResources() done!s");
+		Msg.info(this, getClass().getName() + ".cleanupResources() done!s");
 	}
 
 	@Test
@@ -377,7 +378,7 @@ public class ProjectInfoDialogTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void stepThroughWizard(boolean doFinish, final String repositoryName) throws Exception {
-		System.err.println(getClass().getName() + ".stepThroughWizard()...");
+		Msg.info(this, getClass().getName() + ".stepThroughWizard()...");
 		windowForComponent(dialog.getComponent());
 		WizardDialog wm = waitForDialogComponent(WizardDialog.class);
 		assertNotNull(wm);
@@ -397,13 +398,13 @@ public class ProjectInfoDialogTest extends AbstractGhidraHeadedIntegrationTest {
 			portNumberField.setText(Integer.toString(SharedProjectUtil.SERVER_PORT));
 		});
 
-		System.err.println(getClass().getName() + ".stepThroughWizard()\tpressing next button...");
+		Msg.info(this, getClass().getName() + ".stepThroughWizard()\tpressing next button...");
 		pressButton(nextButton);
 
 		// next panel should be the repository panel
 		RepositoryPanel repPanel = findComponent(wm, RepositoryPanel.class);
 
-		System.err.println(
+		Msg.info(this,
 			getClass().getName() + ".stepThroughWizard()\tfound repPanel: " + repPanel);
 		final JList<?> repList = findComponent(repPanel, JList.class);
 		ListModel<?> model = repList.getModel();
@@ -429,6 +430,6 @@ public class ProjectInfoDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 		assertTrue("The wizard panel is not closed for some reason", !wm.isShowing());
 
-		System.err.println(getClass().getName() + ".stepThroughWizard() done!");
+		Msg.info(this, getClass().getName() + ".stepThroughWizard() done!");
 	}
 }

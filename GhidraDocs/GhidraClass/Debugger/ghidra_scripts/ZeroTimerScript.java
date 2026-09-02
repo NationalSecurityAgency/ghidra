@@ -91,24 +91,17 @@ public class ZeroTimerScript extends GhidraScript implements FlatDebuggerAPI {
 
 			TraceExecutionState execState = getExecutionState(trace);
 			switch (execState) {
-				case STOPPED:
-					resume();
-					break;
-				case TERMINATED:
-				case INACTIVE:
-					throw new AssertionError("Target terminated");
-				case ALIVE:
-					println(
-						"I don't know whether or not the target is running. Please make it RUNNING.");
-					break;
-				case RUNNING:
+				case STOPPED -> resume();
+				case TERMINATED, INACTIVE -> throw new AssertionError("Target terminated");
+				case ALIVE -> println(
+					"I don't know whether or not the target is running. Please make it RUNNING.");
+				case RUNNING -> {
 					/**
 					 * Probably timed out waiting for break. That's fine. Give the player time to
 					 * win.
 					 */
-					break;
-				default:
-					throw new AssertionError("Unrecognized state: " + execState);
+				}
+				default -> throw new AssertionError("Unrecognized state: " + execState);
 			}
 			try {
 				monitor.setMessage("Waiting for player to win");

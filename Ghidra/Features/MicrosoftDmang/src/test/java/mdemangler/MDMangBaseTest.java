@@ -1615,9 +1615,17 @@ public class MDMangBaseTest extends AbstractGenericTest {
 	@Test
 	public void testExtendedTypes__P() throws Exception {
 		mangled = "?Name@@3_PA";
-		msTruth = "UNKNOWN Name";
+		msTruth = "auto Name";
 		mdTruth = msTruth;
 		demangleAndTest();
+	}
+
+	@Test
+	public void testExtendedTypes__P_1() throws Exception {
+		mangled = "?a@@YA?A_PXZ";
+		msTruth = "auto __cdecl a(void)";
+		mdTruth = msTruth;
+		demangleAndTest16Bit();
 	}
 
 	@Test
@@ -1637,6 +1645,14 @@ public class MDMangBaseTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testExtendedTypes__R_1() throws Exception {
+		mangled = "?a@@YA?A_RXZ";
+		msTruth = "<unknown> __cdecl a(void)";
+		mdTruth = msTruth;
+		demangleAndTest16Bit();
+	}
+
+	@Test
 	public void testExtendedTypes__S() throws Exception {
 		mangled = "?Name@@3_SA";
 		msTruth = "char16_t Name";
@@ -1647,9 +1663,17 @@ public class MDMangBaseTest extends AbstractGenericTest {
 	@Test
 	public void testExtendedTypes__T() throws Exception {
 		mangled = "?Name@@3_TA";
-		msTruth = "UNKNOWN Name";
+		msTruth = "decltype(auto) Name";
 		mdTruth = msTruth;
 		demangleAndTest();
+	}
+
+	@Test
+	public void testExtendedTypes__T_1() throws Exception {
+		mangled = "?a@@YA?A_TXZ";
+		msTruth = "decltype(auto) __cdecl a(void)";
+		mdTruth = msTruth;
+		demangleAndTest16Bit();
 	}
 
 	@Test

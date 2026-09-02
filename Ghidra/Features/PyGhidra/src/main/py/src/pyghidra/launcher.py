@@ -746,6 +746,10 @@ class GuiPyGhidraLauncher(PyGhidraLauncher):
         stdout = _PyGhidraStdOut(sys.stdout)
         stderr = _PyGhidraStdOut(sys.stderr)
         with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+            try:
+                Ghidra.setLinuxApplicationName()
+            except AttributeError:
+                pass # Ghidra 12.2 and later
             Thread(lambda: Ghidra.main(["ghidra.GhidraRun", *self.args])).start()
             is_exiting = threading.Event()
             Runtime.getRuntime().addShutdownHook(Thread(is_exiting.set))

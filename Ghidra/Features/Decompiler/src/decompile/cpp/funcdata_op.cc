@@ -1278,6 +1278,171 @@ bool Funcdata::opNormalizeFlip(PcodeOp *cbranch)
   return true;
 }
 
+/// The op is assumed to be a recent STORE converted to a COPY.  The INDIRECTs associated with
+/// the old STORE are converted to a COPY or SUBPIECE, depending on the overlap of the
+/// INDIRECT output with the COPY output.
+/// \param copyOp is the new COPY converted from a STORE
+void Funcdata::opCollapseIndirectsForCopy(PcodeOp *copyOp)
+
+{
+  BlockBasic *bb = copyOp->getParent();
+  list<PcodeOp *>::iterator iter = copyOp->getBasicIter();
+  while(iter != bb->beginOp()) {
+   list<PcodeOp *>::iterator previter = iter;
+   --previter;
+    PcodeOp *op = *previter;
+    if (op->code() != CPUI_INDIRECT) break;
+    Varnode *vn1 = copyOp->getOut();
+    Varnode *vn2 = op->getOut();
+    int4 res = vn1->characterizeOverlap(*vn2);
+    if (res > 0) { // Copy has an effect of some sort
+      if (res != 2 && vn1->contains(*vn2) == 0) {	// INDIRECT output is properly contained in COPY output
+	// Convert INDIRECT to a SUBPIECE
+	uintb trunc;
+	if (vn1->getSpace()->isBigEndian())
+	  trunc = vn1->getOffset() + vn1->getSize() - (vn2->getOffset() + vn2->getSize());
+	else
+	  trunc = vn2->getOffset() - vn1->getOffset();
+	opUninsert(op);
+	opSetInput(op,vn1,0);
+	opSetInput(op,newConstant(4,trunc),1);
+	opSetOpcode(op, CPUI_SUBPIECE);
+	opInsertAfter(op, copyOp);
+	continue;
+      }
+      if (res != 2) {
+	Varnode *invn = op->getIn(0);
+	PcodeOp *insertPoint = copyOp;
+	int4 bytesBefore = 0;
+	if (vn2->getOffset() < vn1->getOffset())
+	  bytesBefore = vn1->getOffset() - vn2->getOffset();
+	uintb vn2end = vn2->getOffset() + vn2->getSize()-1;
+	uintb vn1end = vn1->getOffset() + vn1->getSize()-1;
+	int4 bytesAfter = 0;
+	if (vn2end > vn1end)
+	  bytesAfter = vn2end - vn1end;
+	int4 overlap = vn2->getSize() - bytesBefore - bytesAfter;
+	Varnode *frontVn = (Varnode *)0;
+	Varnode *backVn = (Varnode *)0;
+	Varnode *otherPiece;
+	int4 frontSlot = (vn2->getSpace()->isBigEndian()) ? 0 : 1;
+	if (bytesBefore != 0) {
+	  int4 byteOff = (vn2->getSpace()->isBigEndian()) ? vn2->getSize() - bytesBefore : 0;
+	  PcodeOp *subBefore = newOp(2,op->getAddr());
+	  opSetOpcode(subBefore,CPUI_SUBPIECE);
+	  frontVn = newVarnodeOut(bytesAfter,vn2->getAddr(),subBefore);
+	  opSetInput(subBefore,invn,0);
+	  opSetInput(subBefore,newConstant(4,byteOff),1);
+	  opInsertAfter(subBefore, insertPoint);
+	  insertPoint = subBefore;
+	}
+	if (bytesAfter != 0) {
+	  int4 byteOff = (vn2->getSpace()->isBigEndian()) ? 0 : vn2->getSize() - bytesAfter;
+	  PcodeOp *subAfter = newOp(2,op->getAddr());
+	  opSetOpcode(subAfter,CPUI_SUBPIECE);
+	  Address addr = vn2->getAddr() + (vn2->getSize() - bytesAfter);
+	  backVn = newVarnodeOut(bytesAfter,addr,subAfter);
+	  opSetInput(subAfter,invn,0);
+	  opSetInput(subAfter,newConstant(4,byteOff),1);
+	  opInsertAfter(subAfter,insertPoint);
+	  insertPoint = subAfter;
+	}
+	if (overlap != vn1->getSize()) {
+	  int4 byteOff;
+	  if (bytesAfter == 0)
+	    byteOff = (vn1->getSpace()->isBigEndian()) ? vn1->getSize() - overlap : 0;
+	  else
+	    byteOff = (vn1->getSpace()->isBigEndian()) ? 0 : vn1->getSize() - overlap;
+	  PcodeOp *subMiddle = newOp(2,op->getAddr());
+	  opSetOpcode(subMiddle,CPUI_SUBPIECE);
+	  Address addr = vn2->getAddr() + bytesBefore;
+	  otherPiece = newVarnodeOut(overlap,addr,subMiddle);
+	  opSetInput(subMiddle,vn1,0);
+	  opSetInput(subMiddle,newConstant(4,byteOff),1);
+	  opInsertAfter(subMiddle,insertPoint);
+	  insertPoint = subMiddle;
+	}
+	else {
+	  otherPiece = vn1;
+	}
+	if (bytesBefore == 0) {
+	  frontVn = otherPiece;
+	}
+	else if (bytesAfter == 0) {
+	  backVn = otherPiece;
+	}
+	else {
+	  PcodeOp *concat = newOp(2,op->getAddr());
+	  opSetOpcode(concat,CPUI_PIECE);
+	  Varnode *newVn = newVarnodeOut(frontVn->getSize() + otherPiece->getSize(),vn2->getAddr(),concat);
+	  opSetInput(concat,frontVn,frontSlot);
+	  opSetInput(concat,otherPiece,1-frontSlot);
+	  opInsertAfter(concat,insertPoint);
+	  insertPoint = concat;
+	  frontVn = newVn;
+	}
+	opUninsert(op);
+	opSetOpcode(op, CPUI_PIECE);
+	opSetInput(op,frontVn,frontSlot);
+	opSetInput(op,backVn,1-frontSlot);
+	opInsertAfter(op, insertPoint);
+	continue;
+      }
+      // Convert INDIRECT to COPY
+      opUninsert(op);
+      opSetInput(op,vn1,0);
+      opRemoveInput(op,1);
+      opSetOpcode(op,CPUI_COPY);
+      opInsertAfter(op, copyOp);
+    }
+    else {
+      totalReplace(op->getOut(),op->getIn(0));
+      opDestroy(op);		// Get rid of the INDIRECT
+    }
+  }
+}
+
+/// For the given op with indirect effects, run through its INDIRECTs, and
+/// if there is no longer a possible alias for an INDIRECT address, remove the INDIRECT.
+/// \param effectOp is the given op with indirect effects
+void Funcdata::opCollapseIndirectsForAlias(PcodeOp *effectOp)
+
+{
+  effectOp->clearAdditionalFlag(PcodeOp::store_aliasupdate);
+  BlockBasic *bb = effectOp->getParent();
+  list<PcodeOp *>::iterator iter = effectOp->getBasicIter();
+  if (iter == bb->beginOp()) return;
+  --iter;
+  const LoadGuard *guard = (const LoadGuard *)0;
+  if (effectOp->usesSpacebasePtr() && effectOp->code() == CPUI_STORE)
+    guard = getStoreGuard(effectOp);
+  for(;;) {
+    PcodeOp *op = *iter;
+    if (op->code() != CPUI_INDIRECT) break;
+    bool shouldDestroy = false;
+    if (op->getOut()->hasNoLocalAlias() && !op->isIndirectCreation() && !op->noIndirectCollapse())
+      shouldDestroy = true;
+    else if (guard != (const LoadGuard *)0 && !guard->isGuarded(op->getOut()->getAddr()))
+      shouldDestroy = true;
+
+    if (shouldDestroy) {
+      totalReplace(op->getOut(),op->getIn(0));
+      if (iter == bb->beginOp()) {
+	opDestroy(op);		// Get rid of the INDIRECT
+	break;
+      }
+      else {
+	--iter;
+	opDestroy(op);
+      }
+    }
+    else if (iter == bb->beginOp())
+      break;
+    else
+      --iter;
+  }
+}
+
 /// \brief Find a duplicate calculation of a given PcodeOp reading a specific Varnode
 ///
 /// We only match 1 level of calculation.  Additionally the duplicate must occur in the

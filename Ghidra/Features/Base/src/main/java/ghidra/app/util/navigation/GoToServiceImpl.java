@@ -39,11 +39,6 @@ public class GoToServiceImpl implements GoToService {
 	}
 
 	@Override
-	public GoToOverrideService getOverrideService() {
-		return override;
-	}
-
-	@Override
 	public boolean goTo(ProgramLocation loc) {
 		return helper.goTo(defaultNavigatable, loc, loc.getProgram());
 	}
@@ -153,11 +148,6 @@ public class GoToServiceImpl implements GoToService {
 	public boolean goToQuery(Address fromAddr, QueryData queryData, GoToServiceListener listener,
 			TaskMonitor monitor) {
 		return goToQuery(defaultNavigatable, fromAddr, queryData, listener, monitor);
-	}
-
-	@Override
-	public void setOverrideService(GoToOverrideService override) {
-		this.override = override;
 	}
 
 	@Override
