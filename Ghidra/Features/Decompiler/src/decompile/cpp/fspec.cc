@@ -50,6 +50,9 @@ ElementId ELEM_RETPARAM = ElementId("retparam",171);
 ElementId ELEM_RETURNSYM = ElementId("returnsym",172);
 ElementId ELEM_UNAFFECTED = ElementId("unaffected",173);
 ElementId ELEM_INTERNAL_STORAGE = ElementId("internal_storage",286);
+ElementId ELEM_FARPOINTERJOIN = ElementId("farpointerjoin",292);
+AttributeId ATTRIB_HISLOT = AttributeId("hislot",160);
+AttributeId ATTRIB_JOINSIZE = AttributeId("joinsize",161);
 
 /// \brief Find a ParamEntry matching the given storage Varnode
 ///
@@ -790,7 +793,7 @@ void ParamListStandard::assignMap(const PrototypePieces &proto,TypeFactory &type
   if (res.size() == 2) {	// Check for hidden parameters defined by the output list
     Datatype *dt = res.back().type;
     if ((res.back().flags & ParameterPieces::hiddenretparm) != 0) {
-      // Need to pull from registers marked as hiddenret 
+      // Need to pull from registers marked as hiddenret
       if (assignAddressFallback(TYPECLASS_HIDDENRET,dt,false,status,res.back()) == AssignAction::fail) {
         throw ParamUnassignedError("Cannot assign parameter address for " + res.back().type->getName());
       }
@@ -801,7 +804,7 @@ void ParamListStandard::assignMap(const PrototypePieces &proto,TypeFactory &type
         throw ParamUnassignedError("Cannot assign parameter address for " + res.back().type->getName());
 	  }
 	}
-	
+
     res.back().flags |= ParameterPieces::hiddenretparm;
   }
   for(int4 i=0;i<proto.intypes.size();++i) {
@@ -2656,6 +2659,20 @@ void ProtoModel::decode(Decoder &decoder)
       }
       decoder.closeElement(subId);
     }
+    else if (subId == ELEM_FARPOINTERJOIN) {
+      // farpointerjoin is a per-FuncProto override (see FuncProto::decode),
+      // not a ProtoModel-level concept -- ProtoModel has no field for it.
+      // Parse and discard here so ProtoModel::decode tolerates the element
+      // when it appears in a <prototype> block at this (model-definition)
+      // level, matching how likelytrash/internal_storage etc. are genuine
+      // ProtoModel fields but farpointerjoin intentionally is not one.
+      decoder.openElement();
+      while(decoder.peekElement() != 0) {
+	uint4 skipId = decoder.openElement();
+	decoder.closeElementSkipping(skipId);
+      }
+      decoder.closeElement(subId);
+    }
     else if (subId == ELEM_INTERNAL_STORAGE) {
       decoder.openElement();
       while(decoder.peekElement() != 0) {
@@ -3639,6 +3656,25 @@ void FuncProto::encodeLikelyTrash(Encoder &encoder) const
   encoder.closeElement(ELEM_LIKELYTRASH);
 }
 
+
+/// Encode each declared FarPointerJoinSpec in \e farPointerJoins as its own
+/// <farpointerjoin> element with hislot/joinsize attributes, matching exactly
+/// what decode() expects to read back. farPointerJoins has no ProtoModel-level
+/// default to diff against (unlike likelytrash/effectlist), so every declared
+/// entry is always encoded in full.
+/// \param encoder is the stream encoder
+void FuncProto::encodeFarPointerJoins(Encoder &encoder) const
+
+{
+  for(int4 i=0;i<farPointerJoins.size();++i) {
+    const FarPointerJoinSpec &spec(farPointerJoins[i]);
+    encoder.openElement(ELEM_FARPOINTERJOIN);
+    encoder.writeSignedInteger(ATTRIB_HISLOT,spec.hislot);
+    encoder.writeSignedInteger(ATTRIB_JOINSIZE,spec.joinsize);
+    encoder.closeElement(ELEM_FARPOINTERJOIN);
+  }
+}
+
 /// EffectRecords read into \e effectlist by decode() override the list from ProtoModel.
 /// If this list is not empty, set up \e effectlist as a complete override containing
 /// all EffectRecords from ProtoModel plus all the overrides.
@@ -3793,6 +3829,7 @@ void FuncProto::copy(const FuncProto &op2)
     store = (ProtoStore *)0;
   effectlist = op2.effectlist;
   likelytrash = op2.likelytrash;
+  farPointerJoins = op2.farPointerJoins;
   injectid = op2.injectid;
 }
 
@@ -4589,6 +4626,8 @@ void FuncProto::encode(Encoder &encoder) const
   encoder.closeElement(ELEM_RETURNSYM);
   encodeEffect(encoder);
   encodeLikelyTrash(encoder);
+
+  encodeFarPointerJoins(encoder);
   if (injectid >= 0) {
     Architecture *glb = model->getArch();
     encoder.openElement(ELEM_INJECT);
@@ -4753,6 +4792,24 @@ void FuncProto::decode(Decoder &decoder,Architecture *glb)
     }
     else if (subId == ELEM_INTERNALLIST) {
       store->decode(decoder,model);
+    }
+    else if (subId == ELEM_FARPOINTERJOIN) {
+      decoder.openElement();
+      FarPointerJoinSpec spec;
+      spec.hislot = -1;
+      spec.joinsize = -1;
+      for(;;) {
+	uint4 attribId = decoder.getNextAttributeId();
+	if (attribId == 0) break;
+	if (attribId == ATTRIB_HISLOT)
+	  spec.hislot = decoder.readSignedInteger();
+	else if (attribId == ATTRIB_JOINSIZE)
+	  spec.joinsize = decoder.readSignedInteger();
+      }
+      decoder.closeElement(subId);
+      if (spec.hislot < 0 || spec.joinsize <= 0)
+	throw LowlevelError("<farpointerjoin> requires hislot and joinsize attributes");
+      farPointerJoins.push_back(spec);
     }
   }
   decoder.closeElement(elemId);

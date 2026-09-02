@@ -1818,6 +1818,48 @@ int4 ActionParamDouble::apply(Funcdata &data)
   return 0;
 }
 
+/// \brief Fuse declared far-pointer call-argument slot pairs
+///
+/// For each call site, checks the call's prototype for declared
+/// FarPointerJoinSpec entries (from <farpointerjoin> in the cspec) and
+/// unconditionally joins the two adjacent raw input Varnodes at hislot
+/// and hislot+1 into one Varnode, using SplitVarnode::createJoinedWhole
+/// to synthesize the whole (falling back to Architecture::constructJoinAddress
+/// when the pieces are not address-tied contiguous), then folds the join
+/// into the call's prototype via checkInputJoin/doInputJoin, the same
+/// machinery ActionParamDouble uses for its dataflow-detected joins.
+/// Unlike ActionParamDouble, no SplitVarnode/CONCAT evidence is required --
+/// the join is declared, not inferred.
+/// \param data is the function being analyzed
+/// \return 0 (always succeeds)
+int4 ActionFarPointerJoin::apply(Funcdata &data)
+
+{
+  for(int4 i=0;i<data.numCalls();++i) {
+    FuncCallSpecs *fc = data.getCallSpecs(i);
+    const vector<FuncProto::FarPointerJoinSpec> &joins( fc->getFarPointerJoins() );
+    if (joins.empty()) continue;
+    PcodeOp *op = fc->getOp();
+    for(int4 k=0;k<joins.size();++k) {
+      int4 j = joins[k].hislot;	// hislot is the most significant (hi) piece by convention
+      if (j < 1 || j+1 >= op->numInput()) continue;	// slot pair must be a valid, in-range pair of true inputs
+      Varnode *hivn = op->getIn(j);
+      Varnode *lovn = op->getIn(j+1);
+      SplitVarnode whole(lovn,hivn);
+      if (!whole.hasBothPieces()) continue;	// one piece folded to a constant zero; not a real pair to join here
+      whole.createJoinedWhole(data);
+      bool isslothi = true;
+      if (fc->checkInputJoin(j,isslothi,hivn,lovn)) {
+	data.opSetInput(op,whole.getWhole(),j);
+	data.opRemoveInput(op,j+1);
+	fc->doInputJoin(j,isslothi);
+	count += 1;
+      }
+    }
+  }
+  return 0;
+}
+
 int4 ActionActiveParam::apply(Funcdata &data)
 
 {
@@ -5864,6 +5906,7 @@ void ActionDatabase::universalAction(Architecture *conf)
       actmainloop->addAction( new ActionVarnodeProps("base") );
       actmainloop->addAction( new ActionHeritage("base") );
       actmainloop->addAction( new ActionParamDouble("protorecovery") );
+      actmainloop->addAction( new ActionFarPointerJoin("protorecovery") );
       actmainloop->addAction( new ActionSegmentize("base"));
       actmainloop->addAction( new ActionInternalStorage("base") );
       actmainloop->addAction( new ActionForceGoto("blockrecovery") );
