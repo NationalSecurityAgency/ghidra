@@ -37,6 +37,7 @@ import ghidra.plugin.importer.ImporterPlugin;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Library;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.Program.LoadState;
 import ghidra.program.model.symbol.ExternalManager;
 import ghidra.util.StringUtilities;
 import ghidra.util.exception.CancelledException;
@@ -928,12 +929,14 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		Program program = createProgram(settings);
 
 		int transactionID = program.startTransaction("Loading");
+		program.setLoadState(LoadState.LOADING);
 		boolean success = false;
 		try {
 			log.appendMsg("Loading %s...".formatted(settings.provider().getFSRL()));
 			load(program, settings);
 			createDefaultMemoryBlocks(program, settings);
 			libraryNameList.addAll(getLibraryNames(settings.provider(), program));
+			program.setLoadState(LoadState.LOADED);
 			success = true;
 			return program;
 		}

@@ -32,6 +32,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.data.CategoryPath;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Program.LoadState;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.reloc.RelocationTable;
@@ -422,6 +423,16 @@ public class StubProgram implements Program {
 
 	@Override
 	public void setExecutablePath(String path) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public LoadState getLoadState() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void setLoadState(LoadState state) {
 		throw new UnsupportedOperationException();
 	}
 

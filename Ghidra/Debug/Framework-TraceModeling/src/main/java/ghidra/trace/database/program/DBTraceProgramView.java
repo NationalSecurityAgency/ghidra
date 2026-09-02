@@ -844,6 +844,18 @@ public class DBTraceProgramView implements TraceProgramView {
 	public void setExecutablePath(String path) {
 		trace.setExecutablePath(path);
 	}
+	
+	@Override
+	public LoadState getLoadState() {
+		// TODO: not yet implemented
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void setLoadState(LoadState state) {
+		// TODO: not yet implemented
+		throw new UnsupportedOperationException();
+	}
 
 	@Override
 	public String getExecutableFormat() {
