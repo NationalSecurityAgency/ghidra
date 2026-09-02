@@ -793,7 +793,7 @@ public:
 class RuleLoadVarnode : public Rule {
   friend class RuleStoreVarnode;
   static AddrSpace *correctSpacebase(Architecture *glb,Varnode *vn,AddrSpace *spc);
-  static AddrSpace *vnSpacebase(Architecture *glb,Varnode *vn,uintb &val,AddrSpace *spc);
+  static AddrSpace *vnSpacebase(Architecture *glb,Varnode *vn,uintb &val,AddrSpace *spc,int4 depth=0);
   static AddrSpace *checkSpacebase(Architecture *glb,PcodeOp *op,uintb &offoff);
 public:
   RuleLoadVarnode(const string &g) : Rule(g, 0, "loadvarnode") {}	///< Constructor
