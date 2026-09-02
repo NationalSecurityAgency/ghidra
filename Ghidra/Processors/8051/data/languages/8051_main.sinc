@@ -394,9 +394,16 @@ macro compflags(op1, op2) {  # Flags set by the compare instructions
 $(CY) = (op1 < op2);        # Check for carry
 }
 
+# N and Z are MCS-251 flags, read by its JE/JG/JLE/JNE/JSG/JSGE/JSL/JSLE
+# branches. A plain 8051 has neither: PSW bit 5 is the user flag F0 and bit 1
+# is user-definable, and nothing in the 8051 instruction set reads either one
+# (JZ/JNZ test ACC directly). Writing them there only clobbers operator state
+# and adds p-code noise to every instruction that sets result flags (#9064).
 macro resultflags(op1) { # Set N,Z flag for results
+@if defined(MCS251)
  $(N) = op1 s< 0;
  $(Z) = op1 == 0;
+@endif
 }
 
 macro push8(val) {
