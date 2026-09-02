@@ -703,6 +703,11 @@ Rel16:   relAddr is rel16		     [ relAddr=inst_next+rel16; ] { export *:1 relAdd
 # detect A5 prefix
 :^instruction	is phase=0 & ophi=0xa & oplo=0x5; instruction [ phase=1; A5Prefix=1; ] { }
 :^instruction	is phase=0 & instruction [ phase=1; A5Prefix=0; ] { }
+
+# The prefix constructors above match any instruction in phase 0, so the
+# instructions themselves have to be confined to phase 1; otherwise the two
+# cannot be told apart and the language fails to build with -l.
+with: phase=1 {
 @endif
 
 @if defined(MCS80390)
@@ -974,3 +979,7 @@ pc:3 = 0; pop24(pc); return[pc];
 :XRL Direct,Areg is $(GROUP1) & ophi=6 & oplo=2 & Areg; Direct	{ Direct = Direct ^ ACC; }
 :XRL Direct,Data is $(GROUP1) & ophi=6 & oplo=3; Direct; Data	{ Direct = Direct ^ Data; }
 
+
+@if defined(MCS251)
+}
+@endif

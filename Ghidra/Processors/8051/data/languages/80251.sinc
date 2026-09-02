@@ -184,6 +184,8 @@ macro pop24(val) {
 # NOTE: >>>> Find MCS251 instructions by searching for "Binary Mode = [A5][Encoding]" in PDF manual  <<<<
 # NOTE: All instructions should include the $(GROUP3) pattern prefix
 
+with: phase=1 {
+
 # ADD Rmd,Rms
 :ADD rm47,rm03	is $(GROUP3) & ophi=2 & oplo=12; rm47 & rm03  { addflags(rm47,rm03); rm47 = rm47 + rm03; resultflags(rm47); }
 
@@ -662,3 +664,5 @@ macro pop24(val) {
 
 # XRL Rm,@Drk
 :XRL rm47_,AtDRkb	is $(GROUP3) & ophi=6 & oplo=14; $(ATDRK) & AtDRkb & s03=11; rm47_ & s03_=0  { rm47_ = rm47_ ^ AtDRkb; resultflags(rm47_); }
+
+}
