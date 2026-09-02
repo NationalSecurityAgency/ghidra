@@ -1,4 +1,4 @@
-# Qualcomm Hexagon (V73) General Instruction Set
+# Qualcomm Hexagon (V60-V81) General Instruction Set
 
 #
 # Custom pcode-op
@@ -2907,7 +2907,7 @@ VcmpbEq: "vcmpb.eq("^rss5,rtt5^")"  is rss5 & rtt5 { tmp:1 = vcmpb.eq(rss5,rtt5)
 #    1  0  0  0  1  1  0  0  0  0  0  s  s  s  s  s  P  P  0  i  i  i  i  i  0  1  1  d  d  d  d  d  
 
 :rol Rd5,rs5,Uimm8_0812 EndPacket	is iclass=8 & op2127=0x60 & op13=0 & op0507=3 & Rd5 & rs5 & Uimm8_0812 & $(END_PACKET) {
-	Rd5 = (rs5 << Uimm8_0812) | zext((rs5 s< 0) * 1);
+	Rd5 = (rs5 << Uimm8_0812) | (rs5 >> (32 - Uimm8_0812));
 	build EndPacket;
 }
 
@@ -2939,8 +2939,9 @@ define pcodeop aslSat;
 #    1  1  0  0  0  1  1  0  0  1  -  s  s  s  s  s  P  P  -  t  t  t  t  t  1  0  -  d  d  d  d  d  
 
 :asl Rd5,rs5,rt5 EndPacket	is iclass=12 & op2227=0x19 & op0607=2 & Rd5 & rs5 & rt5 & $(END_PACKET) {
-	right:1 = rt5 s< 0;
-	Rd5 = (zext(right) * (rs5 s>> -rt5)) + (zext(!right) * (rs5 << rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	right:1 = shamt s< 0;
+	Rd5 = (zext(right) * (rs5 s>> -shamt)) + (zext(!right) * (rs5 << shamt));
 	build EndPacket;
 }
 
@@ -2970,7 +2971,7 @@ define pcodeop aslSat;
 #    1  0  0  0  0  0  0  0  0  0  0  s  s  s  s  s  P  P  i  i  i  i  i  i  0  1  1  d  d  d  d  d  
 
 :rol Rdd5,rss5,Uimm8_0813 EndPacket	is iclass=8 & op2227=0x0 & op21=0 & op0507=3 & Rdd5 & rss5 & Uimm8_0813 & $(END_PACKET) {
-	Rdd5 = (rss5 << Uimm8_0813) | zext((rss5 s< 0) * 1);
+	Rdd5 = (rss5 << Uimm8_0813) | (rss5 >> (64 - Uimm8_0813));
 	build EndPacket;
 }
 
@@ -2980,8 +2981,9 @@ define pcodeop aslSat;
 #    1  1  0  0  0  0  1  1  1  0  -  s  s  s  s  s  P  P  -  t  t  t  t  t  1  0  -  d  d  d  d  d  
 
 :asl Rdd5,rss5,rt5 EndPacket	is iclass=12 & op2227=0xe & op0607=2 & Rdd5 & rss5 & rt5 & $(END_PACKET) {
-	right:1 = rt5 s< 0;
-	Rdd5 = (zext(right) * (rss5 s>> -rt5)) + (zext(!right) * (rss5 << rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	right:1 = shamt s< 0;
+	Rdd5 = (zext(right) * (rss5 s>> -shamt)) + (zext(!right) * (rss5 << shamt));
 	build EndPacket;
 }
 
@@ -3001,7 +3003,7 @@ define pcodeop aslSat;
 #    1  0  0  0  1  1  1  0  0  1  -  s  s  s  s  s  P  P  0  i  i  i  i  i  0  1  1  x  x  x  x  x  
 
 :rol&= Rd5,rs5,Uimm8_0812 EndPacket	is iclass=8 & op2227=0x39 & op13=0 & op0507=3 & Rd5 & rd5 & rs5 & Uimm8_0812 & $(END_PACKET) {
-	Rd5 = rd5 & ((rs5 << Uimm8_0812) | zext((rs5 s<0) * 1));
+	Rd5 = rd5 & ((rs5 << Uimm8_0812) | (rs5 >> (32 - Uimm8_0812)));
 	build EndPacket;
 }
 
@@ -3011,8 +3013,9 @@ define pcodeop aslSat;
 #    1  1  0  0  1  1  0  0  0  1  -  s  s  s  s  s  P  P  -  t  t  t  t  t  1  0  -  x  x  x  x  x  
 
 :asl&= Rd5,rs5,rt5 EndPacket	is iclass=12 & op2227=0x31 & op0607=2 & Rd5 & rd5 & rs5 & rt5 & $(END_PACKET) {
-	right:1 = rt5 s< 0;
-	result:4 = (zext(right) * (rs5 s>> -rt5)) + (zext(!right) * (rs5 << rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	right:1 = shamt s< 0;
+	result:4 = (zext(right) * (rs5 s>> -shamt)) + (zext(!right) * (rs5 << shamt));
 	Rd5 = rd5 & result;
 	build EndPacket;
 }
@@ -3033,7 +3036,7 @@ define pcodeop aslSat;
 #    1  0  0  0  1  1  1  0  0  0  -  s  s  s  s  s  P  P  0  i  i  i  i  i  1  1  1  x  x  x  x  x  
 
 :rol+= Rd5,rs5,Uimm8_0812 EndPacket	is iclass=8 & op2227=0x38 & op13=0 & op0507=7 & Rd5 & rd5 & rs5 & Uimm8_0812 & $(END_PACKET) {
-	Rd5 = rd5 + ((rs5 << Uimm8_0812) | zext((rs5 s< 0) * 1));
+	Rd5 = rd5 + ((rs5 << Uimm8_0812) | (rs5 >> (32 - Uimm8_0812)));
 	build EndPacket;
 }
 
@@ -3043,8 +3046,9 @@ define pcodeop aslSat;
 #    1  1  0  0  1  1  0  0  1  1  -  s  s  s  s  s  P  P  -  t  t  t  t  t  1  0  -  x  x  x  x  x  
 
 :asl+= Rd5,rs5,rt5 EndPacket	is iclass=12 & op2227=0x33 & op0607=2 & Rd5 & rd5 & rs5 & rt5 & $(END_PACKET) {
-	right:1 = rt5 s< 0;
-	result:4 = (zext(right) * (rs5 s>> -rt5)) + (zext(!right) * (rs5 << rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	right:1 = shamt s< 0;
+	result:4 = (zext(right) * (rs5 s>> -shamt)) + (zext(!right) * (rs5 << shamt));
 	Rd5 = rd5 + result;
 	build EndPacket;
 }
@@ -3065,7 +3069,7 @@ define pcodeop aslSat;
 #    1  0  0  0  1  1  1  0  0  0  -  s  s  s  s  s  P  P  0  i  i  i  i  i  0  1  1  x  x  x  x  x  
 
 :rol-= Rd5,rs5,Uimm8_0812 EndPacket	is iclass=8 & op2227=0x38 & op13=0 & op0507=3 & Rd5 & rd5 & rs5 & Uimm8_0812 & $(END_PACKET) {
-	Rd5 = rd5 - ((rs5 << Uimm8_0812) | zext((rs5 s< 0) * 1));
+	Rd5 = rd5 - ((rs5 << Uimm8_0812) | (rs5 >> (32 - Uimm8_0812)));
 	build EndPacket;
 }
 
@@ -3075,8 +3079,9 @@ define pcodeop aslSat;
 #    1  1  0  0  1  1  0  0  1  0  -  s  s  s  s  s  P  P  -  t  t  t  t  t  1  0  -  x  x  x  x  x  
 
 :asl-= Rd5,rs5,rt5 EndPacket	is iclass=12 & op2227=0x32 & op0607=2 & Rd5 & rd5 & rs5 & rt5 & $(END_PACKET) {
-	right:1 = rt5 s< 0;
-	result:4 = (zext(right) * (rs5 s>> -rt5)) + (zext(!right) * (rs5 << rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	right:1 = shamt s< 0;
+	result:4 = (zext(right) * (rs5 s>> -shamt)) + (zext(!right) * (rs5 << shamt));
 	Rd5 = rd5 - result;
 	build EndPacket;
 }
@@ -3097,7 +3102,7 @@ define pcodeop aslSat;
 #    1  0  0  0  1  1  1  0  1  0  -  s  s  s  s  s  P  P  0  i  i  i  i  i  0  1  1  x  x  x  x  x  
 
 :rol"^=" Rd5,rs5,Uimm8_0812 EndPacket	is iclass=8 & op2227=0x3a & op13=0 & op0507=3 & Rd5 & rd5 & rs5 & Uimm8_0812 & $(END_PACKET) {
-	Rd5 = rd5 ^ ((rs5 << Uimm8_0812) | zext((rs5 s< 0) * 1));
+	Rd5 = rd5 ^ ((rs5 << Uimm8_0812) | (rs5 >> (32 - Uimm8_0812)));
 	build EndPacket;
 }
 
@@ -3117,7 +3122,7 @@ define pcodeop aslSat;
 #    1  0  0  0  1  1  1  0  0  1  -  s  s  s  s  s  P  P  0  i  i  i  i  i  1  1  1  x  x  x  x  x  
 
 :rol|= Rd5,rs5,Uimm8_0812 EndPacket	is iclass=8 & op2227=0x39 & op13=0 & op0507=7 & Rd5 & rd5 & rs5 & Uimm8_0812 & $(END_PACKET) {
-	Rd5 = rd5 | ((rs5 << Uimm8_0812) | zext((rs5 s< 0) * 1));
+	Rd5 = rd5 | ((rs5 << Uimm8_0812) | (rs5 >> (32 - Uimm8_0812)));
 	build EndPacket;
 }
 
@@ -3127,8 +3132,9 @@ define pcodeop aslSat;
 #    1  1  0  0  1  1  0  0  0  0  -  s  s  s  s  s  P  P  -  t  t  t  t  t  1  0  -  x  x  x  x  x  
 
 :asl|= Rd5,rs5,rt5 EndPacket	is iclass=12 & op2227=0x30 & op0607=2 & Rd5 & rd5 & rs5 & rt5 & $(END_PACKET) {
-	right:1 = rt5 s< 0;
-	result:4 = (zext(right) * (rs5 s>> -rt5)) + (zext(!right) * (rs5 << rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	right:1 = shamt s< 0;
+	result:4 = (zext(right) * (rs5 s>> -shamt)) + (zext(!right) * (rs5 << shamt));
 	Rd5 = rd5 | result;
 	build EndPacket;
 }
@@ -3149,7 +3155,7 @@ define pcodeop aslSat;
 #    1  0  0  0  0  0  1  0  0  1  -  s  s  s  s  s  P  P  i  i  i  i  i  i  0  1  1  x  x  x  x  x  
 
 :rol&= Rdd5,rss5,Uimm8_0813 EndPacket	is iclass=8 & op2227=0x9 & op0507=3 & Rdd5 & rdd5 & rss5 & Uimm8_0813 & $(END_PACKET) {
-	Rdd5 = rdd5 & ((rss5 << Uimm8_0813) | zext((rss5 s< 0) * 1));
+	Rdd5 = rdd5 & ((rss5 << Uimm8_0813) | (rss5 >> (64 - Uimm8_0813)));
 	build EndPacket;
 }
 
@@ -3159,8 +3165,9 @@ define pcodeop aslSat;
 #    1  1  0  0  1  0  1  1  0  1  0  s  s  s  s  s  P  P  -  t  t  t  t  t  1  0  -  x  x  x  x  x  
 
 :asl&= Rdd5,rss5,rt5 EndPacket	is iclass=12 & op2127=0x5a & op0607=2 & Rdd5 & rdd5 & rss5 & rt5 & $(END_PACKET) {
-	right:1 = rt5 s< 0;
-	result:8 = (zext(right) * (rss5 s>> -rt5)) + (zext(!right) * (rss5 << rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	right:1 = shamt s< 0;
+	result:8 = (zext(right) * (rss5 s>> -shamt)) + (zext(!right) * (rss5 << shamt));
 	Rdd5 = rdd5 & result;
 	build EndPacket;
 }
@@ -3181,7 +3188,7 @@ define pcodeop aslSat;
 #    1  0  0  0  0  0  1  0  0  0  -  s  s  s  s  s  P  P  i  i  i  i  i  i  1  1  1  x  x  x  x  x  
 
 :rol+= Rdd5,rss5,Uimm8_0813 EndPacket	is iclass=8 & op2227=0x8 & op0507=7 & Rdd5 & rdd5 & rss5 & Uimm8_0813 & $(END_PACKET) {
-	Rdd5 = rdd5 + ((rss5 << Uimm8_0813) | zext((rss5 s< 0) * 1));
+	Rdd5 = rdd5 + ((rss5 << Uimm8_0813) | (rss5 >> (64 - Uimm8_0813)));
 	build EndPacket;
 }
 
@@ -3191,8 +3198,9 @@ define pcodeop aslSat;
 #    1  1  0  0  1  0  1  1  1  1  0  s  s  s  s  s  P  P  -  t  t  t  t  t  1  0  -  x  x  x  x  x  
 
 :asl+= Rdd5,rss5,rt5 EndPacket	is iclass=12 & op2127=0x5e & op0607=2 & Rdd5 & rdd5 & rss5 & rt5 & $(END_PACKET) {
-	right:1 = rt5 s< 0;
-	result:8 = (zext(right) * (rss5 s>> -rt5)) + (zext(!right) * (rss5 << rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	right:1 = shamt s< 0;
+	result:8 = (zext(right) * (rss5 s>> -shamt)) + (zext(!right) * (rss5 << shamt));
 	Rdd5 = rdd5 + result;
 	build EndPacket;
 }
@@ -3213,7 +3221,7 @@ define pcodeop aslSat;
 #    1  0  0  0  0  0  1  0  0  0  -  s  s  s  s  s  P  P  i  i  i  i  i  i  0  1  1  x  x  x  x  x  
 
 :rol-= Rdd5,rss5,Uimm8_0813 EndPacket	is iclass=8 & op2227=0x8 & op0507=3 & Rdd5 & rdd5 & rss5 & Uimm8_0813 & $(END_PACKET) {
-	Rdd5 = rdd5 - ((rss5 << Uimm8_0813) | zext((rss5 s< 0) * 1));
+	Rdd5 = rdd5 - ((rss5 << Uimm8_0813) | (rss5 >> (64 - Uimm8_0813)));
 	build EndPacket;
 }
 
@@ -3223,8 +3231,9 @@ define pcodeop aslSat;
 #    1  1  0  0  1  0  1  1  1  0  0  s  s  s  s  s  P  P  -  t  t  t  t  t  1  0  -  x  x  x  x  x  
 
 :asl-= Rdd5,rss5,rt5 EndPacket	is iclass=12 & op2127=0x5c & op0607=2 & Rdd5 & rdd5 & rss5 & rt5 & $(END_PACKET) {
-	right:1 = rt5 s< 0;
-	result:8 = (zext(right) * (rss5 s>> -rt5)) + (zext(!right) * (rss5 << rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	right:1 = shamt s< 0;
+	result:8 = (zext(right) * (rss5 s>> -shamt)) + (zext(!right) * (rss5 << shamt));
 	Rdd5 = rdd5 - result;
 	build EndPacket;
 }
@@ -3245,7 +3254,7 @@ define pcodeop aslSat;
 #    1  0  0  0  0  0  1  0  1  0  -  s  s  s  s  s  P  P  i  i  i  i  i  i  0  1  1  x  x  x  x  x  
 
 :rol"^=" Rdd5,rss5,Uimm8_0813 EndPacket	is iclass=8 & op2227=0xa & op0507=3 & Rdd5 & rdd5 & rss5 & Uimm8_0813 & $(END_PACKET) {
-	Rdd5 = rdd5 ^ ((rss5 << Uimm8_0813) | zext((rss5 s< 0) * 1));
+	Rdd5 = rdd5 ^ ((rss5 << Uimm8_0813) | (rss5 >> (64 - Uimm8_0813)));
 	build EndPacket;
 }
 
@@ -3255,8 +3264,9 @@ define pcodeop aslSat;
 #    1  1  0  0  1  0  1  1  0  1  1  s  s  s  s  s  P  P  -  t  t  t  t  t  1  0  -  x  x  x  x  x  
 
 :asl"^=" Rdd5,rss5,rt5 EndPacket	is iclass=12 & op2127=0x5b & op0607=2 & Rdd5 & rdd5 & rss5 & rt5 & $(END_PACKET) {
-	right:1 = rt5 s< 0;
-	result:8 = (zext(right) * (rss5 s>> -rt5)) + (zext(!right) * (rss5 << rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	right:1 = shamt s< 0;
+	result:8 = (zext(right) * (rss5 s>> -shamt)) + (zext(!right) * (rss5 << shamt));
 	Rdd5 = rdd5 ^ result;
 	build EndPacket;
 }
@@ -3277,7 +3287,7 @@ define pcodeop aslSat;
 #    1  0  0  0  0  0  1  0  0  1  -  s  s  s  s  s  P  P  i  i  i  i  i  i  1  1  1  x  x  x  x  x  
 
 :rol|= Rdd5,rss5,Uimm8_0813 EndPacket	is iclass=8 & op2227=0x9 & op0507=7 & Rdd5 & rdd5 & rss5 & Uimm8_0813 & $(END_PACKET) {
-	Rdd5 = rdd5 | ((rss5 << Uimm8_0813) | zext((rss5 s< 0) * 1));
+	Rdd5 = rdd5 | ((rss5 << Uimm8_0813) | (rss5 >> (64 - Uimm8_0813)));
 	build EndPacket;
 }
 
@@ -3287,8 +3297,9 @@ define pcodeop aslSat;
 #    1  1  0  0  1  0  1  1  0  0  0  s  s  s  s  s  P  P  -  t  t  t  t  t  1  0  -  x  x  x  x  x  
 
 :asl|= Rdd5,rss5,rt5 EndPacket	is iclass=12 & op2127=0x58 & op0607=2 & Rdd5 & rdd5 & rss5 & rt5 & $(END_PACKET) {
-	right:1 = rt5 s< 0;
-	result:8 = (zext(right) * (rss5 s>> -rt5)) + (zext(!right) * (rss5 << rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	right:1 = shamt s< 0;
+	result:8 = (zext(right) * (rss5 s>> -shamt)) + (zext(!right) * (rss5 << shamt));
 	Rdd5 = rdd5 | result;
 	build EndPacket;
 }
@@ -3374,8 +3385,9 @@ define pcodeop aslSat;
 #    1  1  0  0  0  1  1  0  0  1  -  s  s  s  s  s  P  P  -  t  t  t  t  t  0  0  -  d  d  d  d  d  
 
 :asr Rd5,rs5,rt5 EndPacket	is iclass=12 & op2227=0x19 & op0607=0 & Rd5 & rs5 & rt5 & $(END_PACKET) {
-	left:1 = rt5 s< 0;
-	Rd5 = (zext(!left) * (rs5 s>> rt5)) + (zext(left) * (rs5 << -rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	left:1 = shamt s< 0;
+	Rd5 = (zext(!left) * (rs5 s>> shamt)) + (zext(left) * (rs5 << -shamt));
 	build EndPacket;
 }
 
@@ -3407,8 +3419,9 @@ define pcodeop asrSat;
 #    1  1  0  0  0  0  1  1  1  0  -  s  s  s  s  s  P  P  -  t  t  t  t  t  0  0  -  d  d  d  d  d  
 
 :asr Rdd5,rss5,rt5 EndPacket	is iclass=12 & op2227=0xe & op0607=0 & Rdd5 & rss5 & rt5 & $(END_PACKET) {
-	left:1 = rt5 s< 0;
-	Rdd5 = (zext(!left) * (rss5 s>> rt5)) + (zext(left) * (rss5 << -rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	left:1 = shamt s< 0;
+	Rdd5 = (zext(!left) * (rss5 s>> shamt)) + (zext(left) * (rss5 << -shamt));
 	build EndPacket;
 }
 
@@ -3428,8 +3441,9 @@ define pcodeop asrSat;
 #    1  1  0  0  1  1  0  0  0  1  -  s  s  s  s  s  P  P  -  t  t  t  t  t  0  0  -  x  x  x  x  x  
 
 :asr&= Rd5,rs5,rt5 EndPacket	is iclass=12 & op2227=0x31 & op0607=0 & Rd5 & rd5 & rs5 & rt5 & $(END_PACKET) {
-	left:1 = rt5 s< 0;
-	result:4 = (zext(!left) * (rs5 s>> rt5)) + (zext(left) * (rs5 << -rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	left:1 = shamt s< 0;
+	result:4 = (zext(!left) * (rs5 s>> shamt)) + (zext(left) * (rs5 << -shamt));
 	Rd5 = rd5 & result;
 	build EndPacket;
 }
@@ -3450,8 +3464,9 @@ define pcodeop asrSat;
 #    1  1  0  0  1  1  0  0  1  1  -  s  s  s  s  s  P  P  -  t  t  t  t  t  0  0  -  x  x  x  x  x  
 
 :asr+= Rd5,rs5,rt5 EndPacket	is iclass=12 & op2227=0x33 & op0607=0 & Rd5 & rd5 & rs5 & rt5 & $(END_PACKET) {
-	left:1 = rt5 s< 0;
-	result:4 = (zext(!left) * (rs5 s>> rt5)) + (zext(left) * (rs5 << -rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	left:1 = shamt s< 0;
+	result:4 = (zext(!left) * (rs5 s>> shamt)) + (zext(left) * (rs5 << -shamt));
 	Rd5 = rd5 + result;
 	build EndPacket;
 }
@@ -3472,8 +3487,9 @@ define pcodeop asrSat;
 #    1  1  0  0  1  1  0  0  1  0  -  s  s  s  s  s  P  P  -  t  t  t  t  t  0  0  -  x  x  x  x  x  
 
 :asr-= Rd5,rs5,rt5 EndPacket	is iclass=12 & op2227=0x32 & op0607=0 & Rd5 & rd5 & rs5 & rt5 & $(END_PACKET) {
-	left:1 = rt5 s< 0;
-	result:4 = (zext(!left) * (rs5 s>> rt5)) + (zext(left) * (rs5 << -rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	left:1 = shamt s< 0;
+	result:4 = (zext(!left) * (rs5 s>> shamt)) + (zext(left) * (rs5 << -shamt));
 	Rd5 = rd5 - result;
 	build EndPacket;
 }
@@ -3494,8 +3510,9 @@ define pcodeop asrSat;
 #    1  1  0  0  1  1  0  0  0  0  -  s  s  s  s  s  P  P  -  t  t  t  t  t  0  0  -  x  x  x  x  x  
 
 :asr|= Rd5,rs5,rt5 EndPacket	is iclass=12 & op2227=0x30 & op0607=0 & Rd5 & rd5 & rs5 & rt5 & $(END_PACKET) {
-	left:1 = rt5 s< 0;
-	result:4 = (zext(!left) * (rs5 s>> rt5)) + (zext(left) * (rs5 << -rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	left:1 = shamt s< 0;
+	result:4 = (zext(!left) * (rs5 s>> shamt)) + (zext(left) * (rs5 << -shamt));
 	Rd5 = rd5 | result;
 	build EndPacket;
 }
@@ -3516,8 +3533,9 @@ define pcodeop asrSat;
 #    1  1  0  0  1  0  1  1  0  1  0  s  s  s  s  s  P  P  -  t  t  t  t  t  0  0  -  x  x  x  x  x  
 
 :asr&= Rdd5,rss5,rt5 EndPacket	is iclass=12 & op2127=0x5a & op0607=0 & Rdd5 & rdd5 & rss5 & rt5 & $(END_PACKET) {
-	left:1 = rt5 s< 0;
-	result:8 = (zext(!left) * (rss5 s>> rt5)) + (zext(left) * (rss5 << -rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	left:1 = shamt s< 0;
+	result:8 = (zext(!left) * (rss5 s>> shamt)) + (zext(left) * (rss5 << -shamt));
 	Rdd5 = rdd5 & result;
 	build EndPacket;
 }
@@ -3538,8 +3556,9 @@ define pcodeop asrSat;
 #    1  1  0  0  1  0  1  1  1  1  0  s  s  s  s  s  P  P  -  t  t  t  t  t  0  0  -  x  x  x  x  x  
 
 :asr+= Rdd5,rss5,rt5 EndPacket	is iclass=12 & op2127=0x5e & op0607=0 & Rdd5 & rdd5 & rss5 & rt5 & $(END_PACKET) {
-	left:1 = rt5 s< 0;
-	result:8 = (zext(!left) * (rss5 s>> rt5)) + (zext(left) * (rss5 << -rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	left:1 = shamt s< 0;
+	result:8 = (zext(!left) * (rss5 s>> shamt)) + (zext(left) * (rss5 << -shamt));
 	Rdd5 = rdd5 + result;
 	build EndPacket;
 }
@@ -3560,8 +3579,9 @@ define pcodeop asrSat;
 #    1  1  0  0  1  0  1  1  1  0  0  s  s  s  s  s  P  P  -  t  t  t  t  t  0  0  -  x  x  x  x  x  
 
 :asr-= Rdd5,rss5,rt5 EndPacket	is iclass=12 & op2127=0x5c & op0607=0 & Rdd5 & rdd5 & rss5 & rt5 & $(END_PACKET) {
-	left:1 = rt5 s< 0;
-	result:8 = (zext(!left) * (rss5 s>> rt5)) + (zext(left) * (rss5 << -rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	left:1 = shamt s< 0;
+	result:8 = (zext(!left) * (rss5 s>> shamt)) + (zext(left) * (rss5 << -shamt));
 	Rdd5 = rdd5 - result;
 	build EndPacket;
 }
@@ -3572,8 +3592,9 @@ define pcodeop asrSat;
 #    1  1  0  0  1  0  1  1  0  1  1  s  s  s  s  s  P  P  -  t  t  t  t  t  0  0  -  x  x  x  x  x  
 
 :asr"^=" Rdd5,rss5,rt5 EndPacket	is iclass=12 & op2127=0x5b & op0607=0 & Rdd5 & rdd5 & rss5 & rt5 & $(END_PACKET) {
-	left:1 = rt5 s< 0;
-	result:8 = (zext(!left) * (rss5 s>> rt5)) + (zext(left) * (rss5 << -rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	left:1 = shamt s< 0;
+	result:8 = (zext(!left) * (rss5 s>> shamt)) + (zext(left) * (rss5 << -shamt));
 	Rdd5 = rdd5 ^ result;
 	build EndPacket;
 }
@@ -3594,8 +3615,9 @@ define pcodeop asrSat;
 #    1  1  0  0  1  0  1  1  0  0  0  s  s  s  s  s  P  P  -  t  t  t  t  t  0  0  -  x  x  x  x  x  
 
 :asr|= Rdd5,rss5,rt5 EndPacket	is iclass=12 & op2127=0x58 & op0607=0 & Rdd5 & rdd5 & rss5 & rt5 & $(END_PACKET) {
-	left:1 = rt5 s< 0;
-	result:8 = (zext(!left) * (rss5 s>> rt5)) + (zext(left) * (rss5 << -rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	left:1 = shamt s< 0;
+	result:8 = (zext(!left) * (rss5 s>> shamt)) + (zext(left) * (rss5 << -shamt));
 	Rdd5 = rdd5 | result;
 	build EndPacket;
 }
@@ -4211,7 +4233,8 @@ define pcodeop clip;
 #    1  1  0  0  0  1  1  0  1  0  -  s  s  s  s  s  P  P  -  t  t  t  t  t  0  1  -  d  d  d  d  d  
 
 :clrbit Rd5,rs5,rt5 EndPacket	is iclass=12 & op2227=0x1a & op0607=1 & Rd5 & rs5 & rt5 & $(END_PACKET) {
-	mask:4 = 1 << rt5;
+	shamt:4 = (rt5 << 25) s>> 25;
+	mask:4 = zext(shamt s>= 0) * (1 << shamt);
 	Rd5 = rs5 & ~mask;
 	build EndPacket;
 }
@@ -4232,7 +4255,7 @@ define pcodeop clip;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    0  1  1  1  0  1  0  1  0  0  i  s  s  s  s  s  P  P  i  i  i  i  i  i  i  i  i  1  0  0  d  d  
 
-:cmp.eq! Pd2,rs5,Simm32_21_0513x EndPacket  is iclass=7 & op2227=0x14 & op0204=4 & rs5 & Simm32_21_0513x & Pd2 & $(END_PACKET) {
+:"!cmp.eq" Pd2,rs5,Simm32_21_0513x EndPacket  is iclass=7 & op2227=0x14 & op0204=4 & rs5 & Simm32_21_0513x & Pd2 & $(END_PACKET) {
 	bool:1 = (rs5 != Simm32_21_0513x);
 	Pd2 = Pd2 & (bool * 0xff);
 	build EndPacket;
@@ -4254,7 +4277,7 @@ define pcodeop clip;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    1  1  1  1  0  0  1  0  -  0  0  s  s  s  s  s  P  P  -  t  t  t  t  t  -  -  -  1  0  0  d  d  
 
-:cmp.eq! Pd2,rs5,rt5 EndPacket  is iclass=15 & op2427=0x2 & op2122=0x0 & op0204=4 & rs5 & rt5 & Pd2 & $(END_PACKET) {
+:"!cmp.eq" Pd2,rs5,rt5 EndPacket  is iclass=15 & op2427=0x2 & op2122=0x0 & op0204=4 & rs5 & rt5 & Pd2 & $(END_PACKET) {
 	bool:1 = (rs5 != rt5);
 	Pd2 = Pd2 & (bool * 0xff);
 	build EndPacket;
@@ -4287,7 +4310,7 @@ define pcodeop clip;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    0  1  1  1  0  1  0  1  0  1  i  s  s  s  s  s  P  P  i  i  i  i  i  i  i  i  i  1  0  0  d  d  
 
-:cmp.gt! Pd2,rs5,Simm32_21_0513x EndPacket  is iclass=7 & op2227=0x15 & op0204=4 & rs5 & Simm32_21_0513x & Pd2 & $(END_PACKET) {
+:"!cmp.gt" Pd2,rs5,Simm32_21_0513x EndPacket  is iclass=7 & op2227=0x15 & op0204=4 & rs5 & Simm32_21_0513x & Pd2 & $(END_PACKET) {
 	bool:1 = (rs5 s<= Simm32_21_0513x);
 	Pd2 = Pd2 & (bool * 0xff);
 	build EndPacket;
@@ -4309,7 +4332,7 @@ define pcodeop clip;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    1  1  1  1  0  0  1  0  -  1  0  s  s  s  s  s  P  P  -  t  t  t  t  t  -  -  -  1  0  0  d  d  
 
-:cmp.gt! Pd2,rs5,rt5 EndPacket  is iclass=15 & op2427=0x2 & op2122=0x2 & op0204=4 & rs5 & rt5 & Pd2 & $(END_PACKET) {
+:"!cmp.gt" Pd2,rs5,rt5 EndPacket  is iclass=15 & op2427=0x2 & op2122=0x2 & op0204=4 & rs5 & rt5 & Pd2 & $(END_PACKET) {
 	bool:1 = (rs5 s<= rt5);
 	Pd2 = Pd2 & (bool * 0xff);
 	build EndPacket;
@@ -4342,7 +4365,7 @@ define pcodeop clip;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    0  1  1  1  0  1  0  1  1  0  0  s  s  s  s  s  P  P  i  i  i  i  i  i  i  i  i  1  0  0  d  d  
 
-:cmp.gtu! Pd2,rs5,Uimm32_0513x EndPacket  is iclass=7 & op2127=0x2c & op0204=4 & rs5 & Uimm32_0513x & Pd2 & $(END_PACKET) {
+:"!cmp.gtu" Pd2,rs5,Uimm32_0513x EndPacket  is iclass=7 & op2127=0x2c & op0204=4 & rs5 & Uimm32_0513x & Pd2 & $(END_PACKET) {
 	bool:1 = (rs5 <= Uimm32_0513x);
 	Pd2 = Pd2 & (bool * 0xff);
 	build EndPacket;
@@ -4364,7 +4387,7 @@ define pcodeop clip;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    1  1  1  1  0  0  1  0  -  1  1  s  s  s  s  s  P  P  -  t  t  t  t  t  -  -  -  1  0  0  d  d  
 
-:cmp.gtu! Pd2,rs5,rt5 EndPacket  is iclass=15 & op2427=0x2 & op2122=0x3 & op0204=4 & rs5 & rt5 & Pd2 & $(END_PACKET) {
+:"!cmp.gtu" Pd2,rs5,rt5 EndPacket  is iclass=15 & op2427=0x2 & op2122=0x3 & op0204=4 & rs5 & rt5 & Pd2 & $(END_PACKET) {
 	bool:1 = (rs5 <= rt5);
 	Pd2 = Pd2 & (bool * 0xff);
 	build EndPacket;
@@ -4387,7 +4410,6 @@ define pcodeop clip;
 #    0  1  1  1  0  0  1  1  -  1  0  s  s  s  s  s  P  P  1  i  i  i  i  i  i  i  i  d  d  d  d  d  
 
 :cmp.eq Rd5,rs5,Simm32_0512x EndPacket  is iclass=7 & op2427=0x3 & op2122=0x2 & op13=1 & rs5 & Rd5 & Simm32_0512x & $(END_PACKET) {
-	# TODO: Verify output value - assuming 0/1 boolean
 	Rd5 = zext(rs5 == Simm32_0512x);
 	build EndPacket;
 }
@@ -4397,8 +4419,7 @@ define pcodeop clip;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    0  1  1  1  0  0  1  1  -  1  1  s  s  s  s  s  P  P  1  i  i  i  i  i  i  i  i  d  d  d  d  d  
 
-:cmp.eq! Rd5,rs5,Simm32_0512x EndPacket  is iclass=7 & op2427=0x3 & op2122=0x3 & op13=1 & rs5 & Rd5 & Simm32_0512x & $(END_PACKET) {
-	# TODO: Verify output value - assuming 0/1 boolean
+:"!cmp.eq" Rd5,rs5,Simm32_0512x EndPacket  is iclass=7 & op2427=0x3 & op2122=0x3 & op13=1 & rs5 & Rd5 & Simm32_0512x & $(END_PACKET) {
 	Rd5 = zext(rs5 != Simm32_0512x);
 	build EndPacket;
 }
@@ -4418,7 +4439,7 @@ define pcodeop clip;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    1  1  1  1  0  0  1  1  0  1  1  s  s  s  s  s  P  P  -  t  t  t  t  t  -  -  -  d  d  d  d  d  
 
-:cmp.eq! Rd5,rs5,rt5 EndPacket  is iclass=15 & op2127=0x1b & rs5 & rt5 & Rd5 & $(END_PACKET) {
+:"!cmp.eq" Rd5,rs5,rt5 EndPacket  is iclass=15 & op2127=0x1b & rs5 & rt5 & Rd5 & $(END_PACKET) {
 	Rd5 = zext(rs5 != rt5);
 	build EndPacket;
 }
@@ -5843,7 +5864,7 @@ define pcodeop getimask;
 #    0  1  0  1  0  0  1  0  1  0  1  s  s  s  s  s  P  P  -  -  -  -  -  -  -  -  -  -  -  -  -  -  
 
 :hintjr rs5 EndPacket	is iclass=5 & op2127=0x15 & rs5 & $(END_PACKET) {
-	# TODO: appears in decomp compilation - not sure what it does
+	# branch hint - intentionally no-op
 	build EndPacket;
 }
 
@@ -5950,7 +5971,7 @@ define pcodeop ictagr;
 
 define pcodeop ictagw;
 
-:ictagw rs5,rt5 EndPacket	is iclass=5 & op2127=0x2e & op13=0 & op0007=0 & Rd5 & rs5 & rt5 & $(END_PACKET) {
+:ictagw rs5,rt5 EndPacket	is iclass=5 & op2127=0x2e & op13=0 & op0007=0 & rs5 & rt5 & $(END_PACKET) {
 	ictagw(rs5, rt5);
 	build EndPacket;
 }
@@ -6922,7 +6943,9 @@ LoopUimm10: "#"^val  is i1620 & i0507 & i0001  [ val = (i1620 << 5) | (i0507 << 
 #    1  1  0  0  0  1  1  0  1  0  -  i  i  i  i  i  P  P  -  t  t  t  t  t  1  1  i  d  d  d  d  d  
 
 :lsl Rd5,Simm8_1620_05,rt5 EndPacket	is iclass=12 & op2227=0x1a & op0607=3 & Rd5 & rt5 & Simm8_1620_05 & $(END_PACKET) {
-	Rd5 = sext(Simm8_1620_05) << rt5;
+	shamt:4 = (rt5 << 25) s>> 25;
+	right:1 = shamt s< 0;
+	Rd5 = (zext(right) * (sext(Simm8_1620_05) >> -shamt)) + (zext(!right) * (sext(Simm8_1620_05) << shamt));
 	build EndPacket;
 }
 
@@ -6932,8 +6955,9 @@ LoopUimm10: "#"^val  is i1620 & i0507 & i0001  [ val = (i1620 << 5) | (i0507 << 
 #    1  1  0  0  0  1  1  0  0  1  -  s  s  s  s  s  P  P  -  t  t  t  t  t  1  1  -  d  d  d  d  d  
 
 :lsl Rd5,rs5,rt5 EndPacket	is iclass=12 & op2227=0x19 & op0607=3 & Rd5 & rt5 & rs5 & $(END_PACKET) {
-	right:1 = rt5 s< 0;
-	Rd5 = (zext(right) * (rs5 >> -rt5)) + (zext(!right) * (rs5 << rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	right:1 = shamt s< 0;
+	Rd5 = (zext(right) * (rs5 >> -shamt)) + (zext(!right) * (rs5 << shamt));
 	build EndPacket;
 }
 
@@ -6943,8 +6967,9 @@ LoopUimm10: "#"^val  is i1620 & i0507 & i0001  [ val = (i1620 << 5) | (i0507 << 
 #    1  1  0  0  0  0  1  1  1  0  -  s  s  s  s  s  P  P  -  t  t  t  t  t  1  1  -  d  d  d  d  d  
 
 :lsl Rdd5,rss5,rt5 EndPacket	is iclass=12 & op2227=0xe & op0607=3 & Rdd5 & rt5 & rss5 & $(END_PACKET) {
-	right:1 = rt5 s< 0;
-	Rdd5 = (zext(right) * (rss5 >> -rt5)) + (zext(!right) * (rss5 << rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	right:1 = shamt s< 0;
+	Rdd5 = (zext(right) * (rss5 >> -shamt)) + (zext(!right) * (rss5 << shamt));
 	build EndPacket;
 }
 
@@ -6954,8 +6979,9 @@ LoopUimm10: "#"^val  is i1620 & i0507 & i0001  [ val = (i1620 << 5) | (i0507 << 
 #    1  1  0  0  1  1  0  0  0  1  -  s  s  s  s  s  P  P  -  t  t  t  t  t  1  1  -  x  x  x  x  x  
 
 :lsl&= Rd5,rs5,rt5 EndPacket	is iclass=12 & op2227=0x31 & op0607=3 & Rd5 & rd5 & rt5 & rs5 & $(END_PACKET) {
-	right:1 = rt5 s< 0;
-	result:4 = (zext(right) * (rs5 >> -rt5)) + (zext(!right) * (rs5 << rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	right:1 = shamt s< 0;
+	result:4 = (zext(right) * (rs5 >> -shamt)) + (zext(!right) * (rs5 << shamt));
 	Rd5 = rd5 & result;
 	build EndPacket;
 }
@@ -6966,8 +6992,9 @@ LoopUimm10: "#"^val  is i1620 & i0507 & i0001  [ val = (i1620 << 5) | (i0507 << 
 #    1  1  0  0  1  1  0  0  1  1  -  s  s  s  s  s  P  P  -  t  t  t  t  t  1  1  -  x  x  x  x  x  
 
 :lsl+= Rd5,rs5,rt5 EndPacket	is iclass=12 & op2227=0x33 & op0607=3 & Rd5 & rd5 & rt5 & rs5 & $(END_PACKET) {
-	right:1 = rt5 s< 0;
-	result:4 = (zext(right) * (rs5 >> -rt5)) + (zext(!right) * (rs5 << rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	right:1 = shamt s< 0;
+	result:4 = (zext(right) * (rs5 >> -shamt)) + (zext(!right) * (rs5 << shamt));
 	Rd5 = rd5 + result;
 	build EndPacket;
 }
@@ -6978,8 +7005,9 @@ LoopUimm10: "#"^val  is i1620 & i0507 & i0001  [ val = (i1620 << 5) | (i0507 << 
 #    1  1  0  0  1  1  0  0  1  0  -  s  s  s  s  s  P  P  -  t  t  t  t  t  1  1  -  x  x  x  x  x  
 
 :lsl-= Rd5,rs5,rt5 EndPacket	is iclass=12 & op2227=0x32 & op0607=3 & Rd5 & rd5 & rt5 & rs5 & $(END_PACKET) {
-	right:1 = rt5 s< 0;
-	result:4 = (zext(right) * (rs5 >> -rt5)) + (zext(!right) * (rs5 << rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	right:1 = shamt s< 0;
+	result:4 = (zext(right) * (rs5 >> -shamt)) + (zext(!right) * (rs5 << shamt));
 	Rd5 = rd5 - result;
 	build EndPacket;
 }
@@ -6990,8 +7018,9 @@ LoopUimm10: "#"^val  is i1620 & i0507 & i0001  [ val = (i1620 << 5) | (i0507 << 
 #    1  1  0  0  1  1  0  0  0  0  -  s  s  s  s  s  P  P  -  t  t  t  t  t  1  1  -  x  x  x  x  x  
 
 :lsl|= Rd5,rs5,rt5 EndPacket	is iclass=12 & op2227=0x30 & op0607=3 & Rd5 & rd5 & rt5 & rs5 & $(END_PACKET) {
-	right:1 = rt5 s< 0;
-	result:4 = (zext(right) * (rs5 >> -rt5)) + (zext(!right) * (rs5 << rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	right:1 = shamt s< 0;
+	result:4 = (zext(right) * (rs5 >> -shamt)) + (zext(!right) * (rs5 << shamt));
 	Rd5 = rd5 | result;
 	build EndPacket;
 }
@@ -7002,7 +7031,10 @@ LoopUimm10: "#"^val  is i1620 & i0507 & i0001  [ val = (i1620 << 5) | (i0507 << 
 #    1  1  0  0  1  0  1  1  0  1  0  s  s  s  s  s  P  P  -  t  t  t  t  t  1  1  -  x  x  x  x  x  
 
 :lsl&= Rdd5,rss5,rt5 EndPacket	is iclass=12 & op2127=0x5a & op0607=3 & Rdd5 & rdd5 & rt5 & rss5 & $(END_PACKET) {
-	Rdd5 = rdd5 & (rss5 << rt5);
+	shamt:4 = (rt5 << 25) s>> 25;
+	right:1 = shamt s< 0;
+	result:8 = (zext(right) * (rss5 >> -shamt)) + (zext(!right) * (rss5 << shamt));
+	Rdd5 = rdd5 & result;
 	build EndPacket;
 }
 
@@ -7012,8 +7044,9 @@ LoopUimm10: "#"^val  is i1620 & i0507 & i0001  [ val = (i1620 << 5) | (i0507 << 
 #    1  1  0  0  1  0  1  1  1  1  0  s  s  s  s  s  P  P  -  t  t  t  t  t  1  1  -  x  x  x  x  x  
 
 :lsl+= Rdd5,rss5,rt5 EndPacket	is iclass=12 & op2127=0x5e & op0607=3 & Rdd5 & rdd5 & rt5 & rss5 & $(END_PACKET) {
-	right:1 = rt5 s< 0;
-	result:8 = (zext(right) * (rss5 >> -rt5)) + (zext(!right) * (rss5 << rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	right:1 = shamt s< 0;
+	result:8 = (zext(right) * (rss5 >> -shamt)) + (zext(!right) * (rss5 << shamt));
 	Rdd5 = rdd5 + result;
 	build EndPacket;
 }
@@ -7024,8 +7057,9 @@ LoopUimm10: "#"^val  is i1620 & i0507 & i0001  [ val = (i1620 << 5) | (i0507 << 
 #    1  1  0  0  1  0  1  1  1  0  0  s  s  s  s  s  P  P  -  t  t  t  t  t  1  1  -  x  x  x  x  x  
 
 :lsl-= Rdd5,rss5,rt5 EndPacket	is iclass=12 & op2127=0x5c & op0607=3 & Rdd5 & rdd5 & rt5 & rss5 & $(END_PACKET) {
-	right:1 = rt5 s< 0;
-	result:8 = (zext(right) * (rss5 >> -rt5)) + (zext(!right) * (rss5 << rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	right:1 = shamt s< 0;
+	result:8 = (zext(right) * (rss5 >> -shamt)) + (zext(!right) * (rss5 << shamt));
 	Rdd5 = rdd5 - result;
 	build EndPacket;
 }
@@ -7036,8 +7070,9 @@ LoopUimm10: "#"^val  is i1620 & i0507 & i0001  [ val = (i1620 << 5) | (i0507 << 
 #    1  1  0  0  1  0  1  1  0  1  1  s  s  s  s  s  P  P  -  t  t  t  t  t  1  1  -  x  x  x  x  x  
 
 :lsl"^=" Rdd5,rss5,rt5 EndPacket	is iclass=12 & op2127=0x5b & op0607=3 & Rdd5 & rdd5 & rt5 & rss5 & $(END_PACKET) {
-	right:1 = rt5 s< 0;
-	result:8 = (zext(right) * (rss5 >> -rt5)) + (zext(!right) * (rss5 << rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	right:1 = shamt s< 0;
+	result:8 = (zext(right) * (rss5 >> -shamt)) + (zext(!right) * (rss5 << shamt));
 	Rdd5 = rdd5 ^ result;
 	build EndPacket;
 }
@@ -7048,8 +7083,9 @@ LoopUimm10: "#"^val  is i1620 & i0507 & i0001  [ val = (i1620 << 5) | (i0507 << 
 #    1  1  0  0  1  0  1  1  0  0  0  s  s  s  s  s  P  P  -  t  t  t  t  t  1  1  -  x  x  x  x  x  
 
 :lsl|= Rdd5,rss5,rt5 EndPacket	is iclass=12 & op2127=0x58 & op0607=3 & Rdd5 & rdd5 & rt5 & rss5 & $(END_PACKET) {
-	right:1 = rt5 s< 0;
-	result:8 = (zext(right) * (rss5 >> -rt5)) + (zext(!right) * (rss5 << rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	right:1 = shamt s< 0;
+	result:8 = (zext(right) * (rss5 >> -shamt)) + (zext(!right) * (rss5 << shamt));
 	Rdd5 = rdd5 | result;
 	build EndPacket;
 }
@@ -7070,8 +7106,9 @@ LoopUimm10: "#"^val  is i1620 & i0507 & i0001  [ val = (i1620 << 5) | (i0507 << 
 #    1  1  0  0  0  1  1  0  0  1  -  s  s  s  s  s  P  P  -  t  t  t  t  t  0  1  -  d  d  d  d  d  
 
 :lsr Rd5,rs5,rt5 EndPacket	is iclass=12 & op2227=0x19 & op0607=1 & Rd5 & rs5 & rt5 & $(END_PACKET) {
-	left:1 = rt5 s< 0;
-	Rd5 = (zext(!left) * (rs5 >> rt5)) + (zext(left) * (rs5 << -rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	left:1 = shamt s< 0;
+	Rd5 = (zext(!left) * (rs5 >> shamt)) + (zext(left) * (rs5 << -shamt));
 	build EndPacket;
 }
 
@@ -7091,8 +7128,9 @@ LoopUimm10: "#"^val  is i1620 & i0507 & i0001  [ val = (i1620 << 5) | (i0507 << 
 #    1  1  0  0  0  0  1  1  1  0  -  s  s  s  s  s  P  P  -  t  t  t  t  t  0  1  -  d  d  d  d  d  
 
 :lsr Rdd5,rss5,rt5 EndPacket	is iclass=12 & op2227=0xe & op0607=1 & Rdd5 & rss5 & rt5 & $(END_PACKET) {
-	left:1 = rt5 s< 0;
-	Rdd5 = (zext(!left) * (rss5 >> rt5)) + (zext(left) * (rss5 << -rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	left:1 = shamt s< 0;
+	Rdd5 = (zext(!left) * (rss5 >> shamt)) + (zext(left) * (rss5 << -shamt));
 	build EndPacket;
 }
 
@@ -7112,8 +7150,9 @@ LoopUimm10: "#"^val  is i1620 & i0507 & i0001  [ val = (i1620 << 5) | (i0507 << 
 #    1  1  0  0  1  1  0  0  0  1  -  s  s  s  s  s  P  P  -  t  t  t  t  t  0  1  -  x  x  x  x  x  
 
 :lsr&= Rd5,rs5,rt5 EndPacket	is iclass=12 & op2227=0x31 & op0607=1 & Rd5 & rd5 & rs5 & rt5 & $(END_PACKET) {
-	left:1 = rt5 s< 0;
-	result:4 = (zext(!left) * (rs5 >> rt5)) + (zext(left) * (rs5 << -rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	left:1 = shamt s< 0;
+	result:4 = (zext(!left) * (rs5 >> shamt)) + (zext(left) * (rs5 << -shamt));
 	Rd5 = rd5 & result;
 	build EndPacket;
 }
@@ -7134,8 +7173,9 @@ LoopUimm10: "#"^val  is i1620 & i0507 & i0001  [ val = (i1620 << 5) | (i0507 << 
 #    1  1  0  0  1  1  0  0  1  1  -  s  s  s  s  s  P  P  -  t  t  t  t  t  0  1  -  x  x  x  x  x  
 
 :lsr+= Rd5,rs5,rt5 EndPacket	is iclass=12 & op2227=0x33 & op0607=1 & Rd5 & rd5 & rs5 & rt5 & $(END_PACKET) {
-	left:1 = rt5 s< 0;
-	result:4 = (zext(!left) * (rs5 >> rt5)) + (zext(left) * (rs5 << -rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	left:1 = shamt s< 0;
+	result:4 = (zext(!left) * (rs5 >> shamt)) + (zext(left) * (rs5 << -shamt));
 	Rd5 = rd5 + result;
 	build EndPacket;
 }
@@ -7156,8 +7196,9 @@ LoopUimm10: "#"^val  is i1620 & i0507 & i0001  [ val = (i1620 << 5) | (i0507 << 
 #    1  1  0  0  1  1  0  0  1  0  -  s  s  s  s  s  P  P  -  t  t  t  t  t  0  1  -  x  x  x  x  x  
 
 :lsr-= Rd5,rs5,rt5 EndPacket	is iclass=12 & op2227=0x32 & op0607=1 & Rd5 & rd5 & rs5 & rt5 & $(END_PACKET) {
-	left:1 = rt5 s< 0;
-	result:4 = (zext(!left) * (rs5 >> rt5)) + (zext(left) * (rs5 << -rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	left:1 = shamt s< 0;
+	result:4 = (zext(!left) * (rs5 >> shamt)) + (zext(left) * (rs5 << -shamt));
 	Rd5 = rd5 - result;
 	build EndPacket;
 }
@@ -7188,8 +7229,9 @@ LoopUimm10: "#"^val  is i1620 & i0507 & i0001  [ val = (i1620 << 5) | (i0507 << 
 #    1  1  0  0  1  1  0  0  0  0  -  s  s  s  s  s  P  P  -  t  t  t  t  t  0  1  -  x  x  x  x  x  
 
 :lsr|= Rd5,rs5,rt5 EndPacket	is iclass=12 & op2227=0x30 & op0607=1 & Rd5 & rd5 & rs5 & rt5 & $(END_PACKET) {
-	left:1 = rt5 s< 0;
-	result:4 = (zext(!left) * (rs5 >> rt5)) + (zext(left) * (rs5 << -rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	left:1 = shamt s< 0;
+	result:4 = (zext(!left) * (rs5 >> shamt)) + (zext(left) * (rs5 << -shamt));
 	Rd5 = rd5 | result;
 	build EndPacket;
 }
@@ -7210,8 +7252,9 @@ LoopUimm10: "#"^val  is i1620 & i0507 & i0001  [ val = (i1620 << 5) | (i0507 << 
 #    1  1  0  0  1  0  1  1  0  1  0  s  s  s  s  s  P  P  -  t  t  t  t  t  0  1  -  x  x  x  x  x  
 
 :lsr&= Rdd5,rss5,rt5 EndPacket	is iclass=12 & op2127=0x5a & op0607=1 & Rdd5 & rdd5 & rss5 & rt5 & $(END_PACKET) {
-	left:1 = rt5 s< 0;
-	result:8 = (zext(!left) * (rss5 >> rt5)) + (zext(left) * (rss5 << -rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	left:1 = shamt s< 0;
+	result:8 = (zext(!left) * (rss5 >> shamt)) + (zext(left) * (rss5 << -shamt));
 	Rdd5 = rdd5 & result;
 	build EndPacket;
 }
@@ -7232,8 +7275,9 @@ LoopUimm10: "#"^val  is i1620 & i0507 & i0001  [ val = (i1620 << 5) | (i0507 << 
 #    1  1  0  0  1  0  1  1  1  1  0  s  s  s  s  s  P  P  -  t  t  t  t  t  0  1  -  x  x  x  x  x  
 
 :lsr+= Rdd5,rss5,rt5 EndPacket	is iclass=12 & op2127=0x5e & op0607=1 & Rdd5 & rdd5 & rss5 & rt5 & $(END_PACKET) {
-	left:1 = rt5 s< 0;
-	result:8 = (zext(!left) * (rss5 >> rt5)) + (zext(left) * (rss5 << -rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	left:1 = shamt s< 0;
+	result:8 = (zext(!left) * (rss5 >> shamt)) + (zext(left) * (rss5 << -shamt));
 	Rdd5 = rdd5 + result;
 	build EndPacket;
 }
@@ -7254,8 +7298,9 @@ LoopUimm10: "#"^val  is i1620 & i0507 & i0001  [ val = (i1620 << 5) | (i0507 << 
 #    1  1  0  0  1  0  1  1  1  0  0  s  s  s  s  s  P  P  -  t  t  t  t  t  0  1  -  x  x  x  x  x  
 
 :lsr-= Rdd5,rss5,rt5 EndPacket	is iclass=12 & op2127=0x5c & op0607=1 & Rdd5 & rdd5 & rss5 & rt5 & $(END_PACKET) {
-	left:1 = rt5 s< 0;
-	result:8 = (zext(!left) * (rss5 >> rt5)) + (zext(left) * (rss5 << -rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	left:1 = shamt s< 0;
+	result:8 = (zext(!left) * (rss5 >> shamt)) + (zext(left) * (rss5 << -shamt));
 	Rdd5 = rdd5 - result;
 	build EndPacket;
 }
@@ -7276,8 +7321,9 @@ LoopUimm10: "#"^val  is i1620 & i0507 & i0001  [ val = (i1620 << 5) | (i0507 << 
 #    1  1  0  0  1  0  1  1  0  1  1  s  s  s  s  s  P  P  -  t  t  t  t  t  0  1  -  x  x  x  x  x  
 
 :lsr"^=" Rdd5,rss5,rt5 EndPacket	is iclass=12 & op2127=0x5b & op0607=1 & Rdd5 & rdd5 & rss5 & rt5 & $(END_PACKET) {
-	left:1 = rt5 s< 0;
-	result:8 = (zext(!left) * (rss5 >> rt5)) + (zext(left) * (rss5 << -rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	left:1 = shamt s< 0;
+	result:8 = (zext(!left) * (rss5 >> shamt)) + (zext(left) * (rss5 << -shamt));
 	Rdd5 = rdd5 ^ result;
 	build EndPacket;
 }
@@ -7298,8 +7344,9 @@ LoopUimm10: "#"^val  is i1620 & i0507 & i0001  [ val = (i1620 << 5) | (i0507 << 
 #    1  1  0  0  1  0  1  1  0  0  0  s  s  s  s  s  P  P  -  t  t  t  t  t  0  1  -  x  x  x  x  x  
 
 :lsr|= Rdd5,rss5,rt5 EndPacket	is iclass=12 & op2127=0x58 & op0607=1 & Rdd5 & rdd5 & rss5 & rt5 & $(END_PACKET) {
-	left:1 = rt5 s< 0;
-	result:8 = (zext(!left) * (rss5 >> rt5)) + (zext(left) * (rss5 << -rt5));
+	shamt:4 = (rt5 << 25) s>> 25;
+	left:1 = shamt s< 0;
+	result:8 = (zext(!left) * (rss5 >> shamt)) + (zext(left) * (rss5 << -shamt));
 	Rdd5 = rdd5 | result;
 	build EndPacket;
 }
@@ -11642,6 +11689,14 @@ define pcodeop memw_phys;
 	build EndPacket;
 }
 
+# (v68,9) memw_aq  --  "Rd32 = memw_aq ( Rs32 )"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    1  0  0  1  0  0  1  0  0  0  0  s  s  s  s  s  P  P  0  0  1  0  0  0  0  0  0  d  d  d  d  d
+
+:memw_aq Rd5,rs5 EndPacket	is iclass=9 & op2127=0x10 & op0513=0x40 & Rd5 & rs5 & $(END_PACKET)
+unimpl
+
 # (v2,13) min  --  "Rd32 = min ( Rt32 , Rs32 )"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
@@ -11649,7 +11704,7 @@ define pcodeop memw_phys;
 
 define pcodeop min;
 
-:min Rd5,rs5,rt5 EndPacket  is iclass=13 & op2127=0x2d & op7=0 & rs5 & rt5 & Rd5 & $(END_PACKET) {
+:min Rd5,rt5,rs5 EndPacket  is iclass=13 & op2127=0x2d & op7=0 & rs5 & rt5 & Rd5 & $(END_PACKET) {
 	Rd5 = min(rt5,rs5);
 	build EndPacket;
 }
@@ -11659,7 +11714,7 @@ define pcodeop min;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    1  1  0  1  0  0  1  1  1  0  1  s  s  s  s  s  P  P  -  t  t  t  t  t  1  1  0  d  d  d  d  d  
 
-:min Rdd5,rss5,rtt5 EndPacket  is iclass=13 & op2127=0x1d & op0507=6 & rss5 & rtt5 & Rdd5 & $(END_PACKET) {
+:min Rdd5,rtt5,rss5 EndPacket  is iclass=13 & op2127=0x1d & op0507=6 & rss5 & rtt5 & Rdd5 & $(END_PACKET) {
 	Rdd5 = min(rtt5,rss5);
 	build EndPacket;
 }
@@ -11671,7 +11726,7 @@ define pcodeop min;
 
 define pcodeop minu;
 
-:minu Rd5,rs5,rt5 EndPacket  is iclass=13 & op2127=0x2d & op7=1 & rs5 & rt5 & Rd5 & $(END_PACKET) {
+:minu Rd5,rt5,rs5 EndPacket  is iclass=13 & op2127=0x2d & op7=1 & rs5 & rt5 & Rd5 & $(END_PACKET) {
 	Rd5 = minu(rt5,rs5);
 	build EndPacket;
 }
@@ -11681,7 +11736,7 @@ define pcodeop minu;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    1  1  0  1  0  0  1  1  1  0  1  s  s  s  s  s  P  P  -  t  t  t  t  t  1  1  1  d  d  d  d  d  
 
-:minu Rdd5,rss5,rtt5 EndPacket  is iclass=13 & op2127=0x1d & op0507=7 & rss5 & rtt5 & Rdd5 & $(END_PACKET) {
+:minu Rdd5,rtt5,rss5 EndPacket  is iclass=13 & op2127=0x1d & op0507=7 & rss5 & rtt5 & Rdd5 & $(END_PACKET) {
 	Rdd5 = minu(rtt5,rss5);
 	build EndPacket;
 }
@@ -12639,7 +12694,7 @@ define pcodeop mpySatSub;
 #    1  1  1  0  1  1  0  0  1  1  0  s  s  s  s  s  P  P  -  t  t  t  t  t  0  0  0  d  d  d  d  d  
 
 :mpyu^":<<1" Rd5,Rs5HL06,Rt5HL05 EndPacket  is iclass=14 & op2127=0x66 & op7=0 & Rs5HL06 & Rt5HL05 & Rd5 & $(END_PACKET) {
-	Rd5 = zext(Rs5HL06) * zext(Rs5HL06);
+	Rd5 = zext(Rs5HL06) * zext(Rt5HL05);
 	Rd5 = Rd5 << 1;
 	build EndPacket;
 }
@@ -12865,7 +12920,7 @@ define pcodeop mpySatSub;
 #    1  1  1  0  0  1  1  0  1  1  0  s  s  s  s  s  P  P  -  t  t  t  t  t  0  0  0  x  x  x  x  x  
 
 :mpyu+=^":<<1" Rdd5,Rs5HL06,Rt5HL05 EndPacket  is iclass=14 & op2127=0x36 & op7=0 & Rs5HL06 & Rt5HL05 & Rdd5 & rdd5 & $(END_PACKET) {
-	tmp:8 = zext(Rs5HL06) * zext(Rs5HL06);
+	tmp:8 = zext(Rs5HL06) * zext(Rt5HL05);
 	Rdd5 = rdd5 + (tmp << 1);
 	build EndPacket;
 }
@@ -13622,7 +13677,8 @@ define pcodeop roundArithmeticPSat;
 #    1  1  0  0  0  1  1  0  1  0  -  s  s  s  s  s  P  P  -  t  t  t  t  t  0  0  -  d  d  d  d  d  
 
 :setbit Rd5,rs5,rt5 EndPacket	is iclass=12 & op2227=0x1a & op0607=0 & Rd5 & rs5 & rt5 & $(END_PACKET) {
-	mask:4 = 1 << rt5;
+	shamt:4 = (rt5 << 25) s>> 25;
+	mask:4 = zext(shamt s>= 0) * (1 << shamt);
 	Rd5 = rs5 | mask;
 	build EndPacket;
 }
@@ -13681,8 +13737,8 @@ define pcodeop shuffeh;
 
 define pcodeop shuffob;
 
-:shuffob Rdd5,rss5,rtt5 EndPacket	is iclass=12 & op2227=0x4 & op0607=2 & Rdd5 & rss5 & rtt5 & $(END_PACKET) {
-	Rdd5 = shuffob(rss5,rtt5);
+:shuffob Rdd5,rtt5,rss5 EndPacket	is iclass=12 & op2227=0x4 & op0607=2 & Rdd5 & rss5 & rtt5 & $(END_PACKET) {
+	Rdd5 = shuffob(rtt5,rss5);
 	build EndPacket;
 }
 
@@ -13693,8 +13749,8 @@ define pcodeop shuffob;
 
 define pcodeop shuffoh;
 
-:shuffoh Rdd5,rss5,rtt5 EndPacket	is iclass=12 & op2227=0x6 & op0607=0 & op5=0 & Rdd5 & rss5 & rtt5 & $(END_PACKET) {
-	Rdd5 = shuffoh(rss5,rtt5);
+:shuffoh Rdd5,rtt5,rss5 EndPacket	is iclass=12 & op2227=0x6 & op0607=0 & op5=0 & Rdd5 & rss5 & rtt5 & $(END_PACKET) {
+	Rdd5 = shuffoh(rtt5,rss5);
 	build EndPacket;
 }
 
@@ -14387,10 +14443,9 @@ define pcodeop tlbw;
 #    1  1  0  0  0  1  1  0  1  0  -  s  s  s  s  s  P  P  -  t  t  t  t  t  1  0  -  d  d  d  d  d  
 
 :togglebit Rd5,rs5,rt5 EndPacket	is iclass=12 & op2227=0x1a & op0607=2 & Rd5 & rs5 & rt5 & $(END_PACKET) {
-	if (rt5 > 31) goto <end>;
-	mask:4 = 1 << rt5;
+	shamt:4 = (rt5 << 25) s>> 25;
+	mask:4 = zext(shamt s>= 0) * (1 << shamt);
 	Rd5 = rs5 ^ mask;
-  <end>
 	build EndPacket;
 }
 
@@ -14487,7 +14542,8 @@ define pcodeop getTrap1Vector;
 #    1  1  0  0  0  1  1  1  0  0  0  s  s  s  s  s  P  P  -  t  t  t  t  t  -  -  -  -  -  -  d  d  
 
 :tstbit Pd2,rs5,rt5 EndPacket  is iclass=12 & op2127=0x38 & rs5 & rt5 & Pd2 & $(END_PACKET) {
-	mask:4 = 1 << rt5;
+	shamt:4 = (rt5 << 25) s>> 25;
+	mask:4 = zext(shamt s>= 0) * (1 << shamt);
 	bool:1 = (rs5 & mask) != 0;
 	Pd2 = Pd2 & (bool * 0xff);
 	build EndPacket;
@@ -14499,7 +14555,8 @@ define pcodeop getTrap1Vector;
 #    1  1  0  0  0  1  1  1  0  0  1  s  s  s  s  s  P  P  -  t  t  t  t  t  -  -  -  -  -  -  d  d  
 
 :"!tstbit" Pd2,rs5,rt5 EndPacket  is iclass=12 & op2127=0x39 & rs5 & rt5 & Pd2 & $(END_PACKET) {
-	mask:4 = 1 << rt5;
+	shamt:4 = (rt5 << 25) s>> 25;
+	mask:4 = zext(shamt s>= 0) * (1 << shamt);
 	bool:1 = (rs5 & mask) == 0;
 	Pd2 = Pd2 & (bool * 0xff);
 	build EndPacket;
@@ -14749,10 +14806,10 @@ define pcodeop vaddubSat;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    1  1  0  1  0  0  1  1  0  0  0  s  s  s  s  s  P  P  -  t  t  t  t  t  1  0  1  d  d  d  d  d  
 
-:vaddw Rdd5,rtt5,rss5 EndPacket	is iclass=0xd & op2127=0x18 & op0507=5 & rss5 & rtt5 & Rdd5 & $(END_PACKET)
+:vaddw Rdd5,rss5,rtt5 EndPacket	is iclass=0xd & op2127=0x18 & op0507=5 & rss5 & rtt5 & Rdd5 & $(END_PACKET)
 {
-	Rdd5[0,32] = rtt5[0,32] + rss5[0,32];
-	Rdd5[32,32] = rtt5[32,32] + rss5[32,32];
+	Rdd5[0,32] = rss5[0,32] + rtt5[0,32];
+	Rdd5[32,32] = rss5[32,32] + rtt5[32,32];
 	build EndPacket;
 }
 
@@ -14761,12 +14818,12 @@ define pcodeop vaddubSat;
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    1  1  0  1  0  0  1  1  0  0  0  s  s  s  s  s  P  P  -  t  t  t  t  t  1  1  0  d  d  d  d  d  
 
-:vaddw":sat" Rdd5,rtt5,rss5 EndPacket	is iclass=0xd & op2127=0x18 & op0507=6 & rss5 & rtt5 & Rdd5 & $(END_PACKET)
+:vaddw":sat" Rdd5,rss5,rtt5 EndPacket	is iclass=0xd & op2127=0x18 & op0507=6 & rss5 & rtt5 & Rdd5 & $(END_PACKET)
 {
 	w:4 = 0;
-	addSat32(w, rtt5[0,32], rss5[0,32]);
+	addSat32(w, rss5[0,32], rtt5[0,32]);
 	Rdd5[0,32] = w;
-	addSat32(w, rtt5[32,32], rss5[32,32]);
+	addSat32(w, rss5[32,32], rtt5[32,32]);
 	Rdd5[32,32] = w;
 	build EndPacket;
 }
@@ -15757,8 +15814,8 @@ define pcodeop vlsrw;
 
 define pcodeop vmaxb;
 
-:vmaxb Rdd5,rss5,rtt5 EndPacket	is iclass=13 & op2127=0x1e & op0507=6 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
-	Rdd5 = vmaxb(rss5, rtt5);
+:vmaxb Rdd5,rtt5,rss5 EndPacket	is iclass=13 & op2127=0x1e & op0507=6 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
+	Rdd5 = vmaxb(rtt5, rss5);
 	build EndPacket;
 }
 
@@ -15769,8 +15826,8 @@ define pcodeop vmaxb;
 
 define pcodeop vmaxh;
 
-:vmaxh Rdd5,rss5,rtt5 EndPacket	is iclass=13 & op2127=0x1e & op0507=1 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
-	Rdd5 = vmaxh(rss5, rtt5);
+:vmaxh Rdd5,rtt5,rss5 EndPacket	is iclass=13 & op2127=0x1e & op0507=1 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
+	Rdd5 = vmaxh(rtt5, rss5);
 	build EndPacket;
 }
 
@@ -15781,8 +15838,8 @@ define pcodeop vmaxh;
 
 define pcodeop vmaxub;
 
-:vmaxub Rdd5,rss5,rtt5 EndPacket	is iclass=13 & op2127=0x1e & op0507=0 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
-	Rdd5 = vmaxub(rss5, rtt5);
+:vmaxub Rdd5,rtt5,rss5 EndPacket	is iclass=13 & op2127=0x1e & op0507=0 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
+	Rdd5 = vmaxub(rtt5, rss5);
 	build EndPacket;
 }
 
@@ -15793,8 +15850,8 @@ define pcodeop vmaxub;
 
 define pcodeop vmaxuh;
 
-:vmaxuh Rdd5,rss5,rtt5 EndPacket	is iclass=13 & op2127=0x1e & op0507=2 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
-	Rdd5 = vmaxuh(rss5, rtt5);
+:vmaxuh Rdd5,rtt5,rss5 EndPacket	is iclass=13 & op2127=0x1e & op0507=2 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
+	Rdd5 = vmaxuh(rtt5, rss5);
 	build EndPacket;
 }
 
@@ -15805,8 +15862,8 @@ define pcodeop vmaxuh;
 
 define pcodeop vmaxuw;
 
-:vmaxuw Rdd5,rss5,rtt5 EndPacket	is iclass=13 & op2127=0x1d & op0507=5 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
-	Rdd5 = vmaxuw(rss5, rtt5);
+:vmaxuw Rdd5,rtt5,rss5 EndPacket	is iclass=13 & op2127=0x1d & op0507=5 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
+	Rdd5 = vmaxuw(rtt5, rss5);
 	build EndPacket;
 }
 
@@ -15817,8 +15874,8 @@ define pcodeop vmaxuw;
 
 define pcodeop vmaxw;
 
-:vmaxw Rdd5,rss5,rtt5 EndPacket	is iclass=13 & op2127=0x1e & op0507=3 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
-	Rdd5 = vmaxw(rss5, rtt5);
+:vmaxw Rdd5,rtt5,rss5 EndPacket	is iclass=13 & op2127=0x1e & op0507=3 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
+	Rdd5 = vmaxw(rtt5, rss5);
 	build EndPacket;
 }
 
@@ -15829,8 +15886,8 @@ define pcodeop vmaxw;
 
 define pcodeop vminb;
 
-:vminb Rdd5,rss5,rtt5 EndPacket	is iclass=13 & op2127=0x1e & op0507=7 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
-	Rdd5 = vminb(rss5, rtt5);
+:vminb Rdd5,rtt5,rss5 EndPacket	is iclass=13 & op2127=0x1e & op0507=7 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
+	Rdd5 = vminb(rtt5, rss5);
 	build EndPacket;
 }
 
@@ -15841,8 +15898,8 @@ define pcodeop vminb;
 
 define pcodeop vminh;
 
-:vminh Rdd5,rss5,rtt5 EndPacket	is iclass=13 & op2127=0x1d & op0507=1 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
-	Rdd5 = vminh(rss5, rtt5);
+:vminh Rdd5,rtt5,rss5 EndPacket	is iclass=13 & op2127=0x1d & op0507=1 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
+	Rdd5 = vminh(rtt5, rss5);
 	build EndPacket;
 }
 
@@ -15853,8 +15910,8 @@ define pcodeop vminh;
 
 define pcodeop vminub;
 
-:vminub Rdd5,rss5,rtt5 EndPacket	is iclass=13 & op2127=0x1d & op0507=0 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
-	Rdd5 = vminub(rss5, rtt5);
+:vminub Rdd5,rtt5,rss5 EndPacket	is iclass=13 & op2127=0x1d & op0507=0 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
+	Rdd5 = vminub(rtt5, rss5);
 	build EndPacket;
 }
 
@@ -15864,9 +15921,9 @@ define pcodeop vminub;
 #    1  1  1  0  1  0  1  0  1  1  1  s  s  s  s  s  P  P  0  t  t  t  t  t  0  e  e  d  d  d  d  d
 
 define pcodeop vminubPred; # per-byte predicate bits: Pe[i] = (first.ub[i] > second.ub[i])
-:vminub Rdd5,Pd0506,rss5,rtt5 EndPacket	is iclass=14 & op2127=0x57 & op13=0 & op7=0 & Rdd5 & Pd0506 & rtt5 & rss5 & $(END_PACKET) {
-	Rdd5 = vminub(rss5, rtt5);
-	Pd0506 = vminubPred(rss5, rtt5);
+:vminub Rdd5,Pd0506,rtt5,rss5 EndPacket	is iclass=14 & op2127=0x57 & op13=0 & op7=0 & Rdd5 & Pd0506 & rtt5 & rss5 & $(END_PACKET) {
+	Rdd5 = vminub(rtt5, rss5);
+	Pd0506 = vminubPred(rtt5, rss5);
 	build EndPacket;
 }
 
@@ -15877,8 +15934,8 @@ define pcodeop vminubPred; # per-byte predicate bits: Pe[i] = (first.ub[i] > sec
 
 define pcodeop vminuh;
 
-:vminuh Rdd5,rss5,rtt5 EndPacket	is iclass=13 & op2127=0x1d & op0507=2 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
-	Rdd5 = vminuh(rss5, rtt5);
+:vminuh Rdd5,rtt5,rss5 EndPacket	is iclass=13 & op2127=0x1d & op0507=2 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
+	Rdd5 = vminuh(rtt5, rss5);
 	build EndPacket;
 }
 
@@ -15889,8 +15946,8 @@ define pcodeop vminuh;
 
 define pcodeop vminuw;
 
-:vminuw Rdd5,rss5,rtt5 EndPacket	is iclass=13 & op2127=0x1d & op0507=4 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
-	Rdd5 = vminuw(rss5, rtt5);
+:vminuw Rdd5,rtt5,rss5 EndPacket	is iclass=13 & op2127=0x1d & op0507=4 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
+	Rdd5 = vminuw(rtt5, rss5);
 	build EndPacket;
 }
 
@@ -15901,8 +15958,8 @@ define pcodeop vminuw;
 
 define pcodeop vminw;
 
-:vminw Rdd5,rss5,rtt5 EndPacket	is iclass=13 & op2127=0x1d & op0507=3 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
-	Rdd5 = vminw(rss5, rtt5);
+:vminw Rdd5,rtt5,rss5 EndPacket	is iclass=13 & op2127=0x1d & op0507=3 & Rdd5 & rtt5 & rss5 & $(END_PACKET) {
+	Rdd5 = vminw(rtt5, rss5);
 	build EndPacket;
 }
 
