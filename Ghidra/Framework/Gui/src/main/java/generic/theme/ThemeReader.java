@@ -17,13 +17,13 @@ package generic.theme;
 
 import java.io.*;
 import java.util.Enumeration;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipFile;
 
 import ghidra.framework.Application;
 import ghidra.util.Msg;
+import ghidra.util.SecureZipExtractor;
 import utilities.util.FileUtilities;
 
 /**
@@ -70,18 +70,18 @@ class ThemeReader extends AbstractThemeReader {
 	}
 
 	private GTheme readZipTheme() throws IOException {
-		try (ZipFile zipFile = new ZipFile(file)) {
-			Enumeration<? extends ZipEntry> entries = zipFile.entries();
+		try (ZipFile archive = ZipFile.builder().setFile(file).get()) {
+			Enumeration<ZipArchiveEntry> entries = archive.getEntries();
 			while (entries.hasMoreElements()) {
-				ZipEntry entry = entries.nextElement();
+				ZipArchiveEntry entry = entries.nextElement();
 				String name = entry.getName();
-				try (InputStream is = zipFile.getInputStream(entry)) {
-					if (name.endsWith(".theme")) {
+				if (name.endsWith(".theme")) {
+					try (InputStream is = archive.getInputStream(entry)) {
 						processThemeData(name, is);
 					}
-					else {
-						processIconFile(name, is);
-					}
+				}
+				else {
+					processIconFile(name, entry, archive);
 				}
 			}
 		}
@@ -131,7 +131,8 @@ class ThemeReader extends AbstractThemeReader {
 			"Custom sections not allowed in theme files! " + section.getName());
 	}
 
-	private void processIconFile(String path, InputStream is) throws IOException {
+	private void processIconFile(String path, ZipArchiveEntry entry, ZipFile archive)
+			throws IOException {
 		int indexOf = path.indexOf("images/");
 		if (indexOf < 0) {
 			Msg.error(this, "Unknown file: " + path);
@@ -147,7 +148,8 @@ class ThemeReader extends AbstractThemeReader {
 		String relativePath = path.substring(indexOf, path.length());
 		File dir = Application.getUserSettingsDirectory();
 		File iconFile = FileUtilities.getSecureFile(dir, relativePath);
-		FileUtils.copyInputStreamToFile(is, iconFile);
+		iconFile.getParentFile().mkdirs();
+		SecureZipExtractor.extractSecurely(archive, entry, iconFile);
 	}
 
 	private void processThemeData(String name, InputStream is) throws IOException {
