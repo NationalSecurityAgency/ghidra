@@ -1,4 +1,4 @@
-/* ###
+﻿/* ###
  * IP: GHIDRA
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -209,6 +209,72 @@ void PrintLanguage::pushVn(const Varnode *vn,const PcodeOp *op,uint4 m)
   // But it is more efficient to just call them in reverse order
   nodepend.emplace_back(vn,op,m);
 }
+
+/// \brief Check if a Varnode's value was computed by INT_ADD/INT_SUB
+/// against a constant -- the shape produced when a base/segment register
+/// is reassigned to a value computed from itself (e.g. H8 link/unlk's
+/// "SP = SP - 2"), landing back in the register's own storage.
+/// \param vn is the Varnode to test
+/// \return \b true if vn is defined by self-referential arithmetic against a constant
+static bool isSelfReferentialRegisterArithmetic(const Varnode *vn)
+
+{
+  if (vn == (const Varnode *)0 || vn->isConstant()) return false;
+  const PcodeOp *def = vn->getDef();
+  if (def == (const PcodeOp *)0) return false;
+  OpCode opc = def->code();
+  if (opc != CPUI_INT_ADD && opc != CPUI_INT_SUB) return false;
+  if (def->numInput() != 2) return false;
+  const Varnode *amt = def->getIn(1);
+  if (!amt->isConstant()) return false;
+  // The arithmetic's base operand must be the same storage location as vn
+  // itself; otherwise this would match any implied INT_ADD/INT_SUB against
+  // a constant feeding a SEGMENTOP, not just a register reassigned from itself.
+  // The base operand may be wrapped in a CAST (e.g. H8's "link FP,#-0x2:8"
+  // lowers to INT_ADD(CAST(SP), 0xfffe)) -- unwrap through it before
+  // comparing addresses, otherwise this always fails against the CAST's
+  // unique-space output instead of SP's real storage address.
+  const Varnode *base = def->getIn(0);
+  if (base->getDef() != (const PcodeOp *)0 && base->getDef()->code() == CPUI_CAST)
+    base = base->getDef()->getIn(0);
+  if (base->getAddr() != vn->getAddr()) return false;
+  return true;
+}
+
+/// \brief Check if a Varnode's value was computed by INT_ADD/INT_SUB
+/// against a constant, where the base operand is a DIFFERENT register
+/// from \b vn itself -- the shape produced by H8's "link FP,#-2" prologue
+/// idiom (FP = SP - 2), where FP has no independent hardware meaning (per
+/// the H8/300 GCC ABI's -fomit-frame-pointer note, FP-relative and
+/// SP-relative addressing are just two representations of the same stack
+/// location) and so is correctly rendered in terms of the register it was
+/// actually derived from.
+/// \param vn is the Varnode to test (e.g. FP)
+/// \param baseOut receives the resolved base register Varnode (e.g. SP) on success
+/// \return \b true if vn is defined by cross-register arithmetic against a constant
+static bool isCrossRegisterArithmetic(const Varnode *vn,const Varnode **baseOut)
+
+{
+  if (vn == (const Varnode *)0 || vn->isConstant()) return false;
+  const PcodeOp *def = vn->getDef();
+  if (def == (const PcodeOp *)0) return false;
+  OpCode opc = def->code();
+  if (opc != CPUI_INT_ADD && opc != CPUI_INT_SUB) return false;
+  if (def->numInput() != 2) return false;
+  const Varnode *amt = def->getIn(1);
+  if (!amt->isConstant()) return false;
+  const Varnode *base = def->getIn(0);
+  if (base->getDef() != (const PcodeOp *)0 && base->getDef()->code() == CPUI_CAST)
+    base = base->getDef()->getIn(0);
+  // Must be a genuine register (an address in a register-backed space, not a
+  // "unique" temporary) and must be a DIFFERENT register from vn -- the
+  // same-register case is isSelfReferentialRegisterArithmetic's job, not this one.
+  if (base->getSpace()->getType() != IPTR_PROCESSOR) return false;
+  if (base->getAddr() == vn->getAddr()) return false;
+  *baseOut = base;
+  return true;
+}
+
 
 /// This method pushes a given Varnode as a \b leaf of the current expression.
 /// It decides how the Varnode should get emitted, as a symbol, constant, etc.,
@@ -521,13 +587,30 @@ void PrintLanguage::recurse(void)
   uint4 modsave = mods;
   int4 lastPending = pending;		// Already claimed
   pending = nodepend.size();	// Lay claim to the rest
+  const Varnode *crossBase;		// Set by isCrossRegisterArithmetic on success
   while(lastPending < pending) {
     const Varnode *vn = nodepend.back().vn;
     const PcodeOp *op = nodepend.back().op;
     mods = nodepend.back().vnmod;
     nodepend.pop_back();
     pending -= 1;
-    if (vn->isImplied()) {
+    if (vn->isImplied() && op->code()==CPUI_SEGMENTOP && isSelfReferentialRegisterArithmetic(vn) &&
+	pushSegmentRegisterExpression(vn,op)) {
+      // Handled: print as a "SP - 2" style expression instead of taking
+      // the normal isImplied() inline-expansion path below, which would
+      // otherwise print the raw register offset via the arithmetic op's
+      // own push().
+    }
+    else if (vn->isImplied() && op->code()==CPUI_SEGMENTOP &&
+	     isCrossRegisterArithmetic(vn,&crossBase) &&
+	     pushCrossRegisterExpression(vn,crossBase,op)) {
+      // Handled: cross-register case, e.g. H8 "link FP,#-2" -- FP itself
+      // has no independent hardware meaning, so print its SEGMENTOP-consumed
+      // value in terms of the register it was actually derived from
+      // (e.g. "SP - 2") instead of falling through to the register0x0e
+      // annotation fallback below.
+    }
+    else if (vn->isImplied()) {
       if (vn->hasImpliedField()) {
 	pushImpliedField(vn, op);
       }
