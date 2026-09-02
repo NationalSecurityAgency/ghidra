@@ -431,12 +431,10 @@ macro additionFlags(op1, op2, res) {
 }
 
 macro subtractFlags(op1, op2, res) {
-	local subOp1 = op1;	# op1/op2 may denote a memory-mapped register read; cache each
-	local subOp2 = op2;	# once so referencing them twice below doesn't duplicate the access
 	$(N) = (res s< 0);
 	$(Z) = (res == 0);
-	$(C) = (subOp1 < subOp2) == 0;
-	$(V) = sborrow(subOp1, subOp2);
+	$(C) = (op1 < op2) == 0;
+	$(V) = sborrow(op1, op2);
 	$(VT) = $(VT) | $(V);
 }
 
