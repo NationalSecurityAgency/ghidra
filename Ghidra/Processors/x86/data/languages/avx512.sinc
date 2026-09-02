@@ -10055,118 +10055,107 @@ define pcodeop vpblendmq_avx512f ;
 }
 
 # VPBROADCASTB/W/D/Q 5-328 PAGE 2152 LINE 110617
-# WARNING: did not recognize operand "reg" (encoding ModRM:r/m (r)) for "VPBROADCASTB xmm1 {k1}{z}, reg"
-#TODO: fix
 define pcodeop vpbroadcastb_avx512vl ;
-:VPBROADCASTB XmmReg1^XmmOpMask8  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x7A; (XmmReg1 & ZmmReg1 & XmmOpMask8)
+:VPBROADCASTB XmmReg1^XmmOpMask8, Rmr32  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x7A; (XmmReg1 & ZmmReg1 & XmmOpMask8) & Rmr32
 [ evexD8Type = 1; evexTType = 3; ] # (TupleType T1S)
 {
-	local tmp:16 = vpbroadcastb_avx512vl(  );
+	local tmp:16 = vpbroadcastb_avx512vl( Rmr32 );
 	build XmmOpMask8;
 	ZmmReg1 = zext(tmp);
 }
 
 # VPBROADCASTB/W/D/Q 5-328 PAGE 2152 LINE 110619
-# WARNING: did not recognize operand "reg" (encoding ModRM:r/m (r)) for "VPBROADCASTB ymm1 {k1}{z}, reg"
-:VPBROADCASTB YmmReg1^YmmOpMask8  is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x7A; (YmmReg1 & ZmmReg1 & YmmOpMask8)
+:VPBROADCASTB YmmReg1^YmmOpMask8, Rmr32  is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x7A; (YmmReg1 & ZmmReg1 & YmmOpMask8) & Rmr32
 [ evexD8Type = 1; evexTType = 3; ] # (TupleType T1S)
 {
-	YmmResult = vpbroadcastb_avx512vl(  );
+	YmmResult = vpbroadcastb_avx512vl( Rmr32 );
 	YmmMask = YmmReg1;
 	build YmmOpMask8;
 	ZmmReg1 = zext(YmmResult);
 }
 
 # VPBROADCASTB/W/D/Q 5-328 PAGE 2152 LINE 110621
-# WARNING: did not recognize operand "reg" (encoding ModRM:r/m (r)) for "VPBROADCASTB zmm1 {k1}{z}, reg"
 define pcodeop vpbroadcastb_avx512bw ;
-:VPBROADCASTB ZmmReg1^ZmmOpMask8  is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x7A; ZmmReg1 & ZmmOpMask8
+:VPBROADCASTB ZmmReg1^ZmmOpMask8, Rmr32  is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x7A; ZmmReg1 & ZmmOpMask8 & Rmr32
 [ evexD8Type = 1; evexTType = 3; ] # (TupleType T1S)
 {
-	ZmmResult = vpbroadcastb_avx512bw(  );
+	ZmmResult = vpbroadcastb_avx512bw( Rmr32 );
 	ZmmMask = ZmmReg1;
 	build ZmmOpMask8;
 	ZmmReg1 = ZmmResult;
 }
 
 # VPBROADCASTB/W/D/Q 5-328 PAGE 2152 LINE 110623
-# WARNING: did not recognize operand "reg" (encoding ModRM:r/m (r)) for "VPBROADCASTW xmm1 {k1}{z}, reg"
 define pcodeop vpbroadcastw_avx512vl ;
-:VPBROADCASTW XmmReg1^XmmOpMask16  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x7B; (XmmReg1 & ZmmReg1 & XmmOpMask16)
+:VPBROADCASTW XmmReg1^XmmOpMask16, Rmr32  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x7B; (XmmReg1 & ZmmReg1 & XmmOpMask16) & Rmr32
 [ evexD8Type = 1; evexTType = 3; ] # (TupleType T1S)
 {
-	XmmResult = vpbroadcastw_avx512vl(  );
+	XmmResult = vpbroadcastw_avx512vl( Rmr32 );
 	XmmMask = XmmReg1;
 	build XmmOpMask16;
 	ZmmReg1 = zext(XmmResult);
 }
 
 # VPBROADCASTB/W/D/Q 5-328 PAGE 2152 LINE 110625
-# WARNING: did not recognize operand "reg" (encoding ModRM:r/m (r)) for "VPBROADCASTW ymm1 {k1}{z}, reg"
-:VPBROADCASTW YmmReg1^YmmOpMask16  is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x7B; (YmmReg1 & ZmmReg1 & YmmOpMask16)
+:VPBROADCASTW YmmReg1^YmmOpMask16, Rmr32  is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x7B; (YmmReg1 & ZmmReg1 & YmmOpMask16) & Rmr32
 [ evexD8Type = 1; evexTType = 3; ] # (TupleType T1S)
 {
-	YmmResult = vpbroadcastw_avx512vl(  );
+	YmmResult = vpbroadcastw_avx512vl( Rmr32 );
 	YmmMask = YmmReg1;
 	build YmmOpMask16;
 	ZmmReg1 = zext(YmmResult);
 }
 
 # VPBROADCASTB/W/D/Q 5-328 PAGE 2152 LINE 110627
-# WARNING: did not recognize operand "reg" (encoding ModRM:r/m (r)) for "VPBROADCASTW zmm1 {k1}{z}, reg"
 define pcodeop vpbroadcastw_avx512bw ;
-:VPBROADCASTW ZmmReg1^ZmmOpMask16  is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x7B; ZmmReg1 & ZmmOpMask16
+:VPBROADCASTW ZmmReg1^ZmmOpMask16, Rmr32  is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x7B; ZmmReg1 & ZmmOpMask16 & Rmr32
 [ evexD8Type = 1; evexTType = 3; ] # (TupleType T1S)
 {
-	ZmmResult = vpbroadcastw_avx512bw(  );
+	ZmmResult = vpbroadcastw_avx512bw( Rmr32 );
 	ZmmMask = ZmmReg1;
 	build ZmmOpMask16;
 	ZmmReg1 = ZmmResult;
 }
 
 # VPBROADCASTB/W/D/Q 5-328 PAGE 2152 LINE 110629
-# WARNING: did not recognize operand "r32" (encoding ModRM:r/m (r)) for "VPBROADCASTD xmm1 {k1}{z}, r32"
 define pcodeop vpbroadcastd_avx512vl ;
-:VPBROADCASTD XmmReg1^XmmOpMask32  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x7C; (XmmReg1 & ZmmReg1 & XmmOpMask32)
+:VPBROADCASTD XmmReg1^XmmOpMask32, Rmr32  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x7C; (XmmReg1 & ZmmReg1 & XmmOpMask32) & Rmr32
 [ evexD8Type = 1; evexTType = 3; ] # (TupleType T1S)
 {
-	XmmResult = vpbroadcastd_avx512vl(  );
+	XmmResult = vpbroadcastd_avx512vl( Rmr32 );
 	XmmMask = XmmReg1;
 	build XmmOpMask32;
 	ZmmReg1 = zext(XmmResult);
 }
 
 # VPBROADCASTB/W/D/Q 5-328 PAGE 2152 LINE 110631
-# WARNING: did not recognize operand "r32" (encoding ModRM:r/m (r)) for "VPBROADCASTD ymm1 {k1}{z}, r32"
-:VPBROADCASTD YmmReg1^YmmOpMask32  is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x7C; (YmmReg1 & ZmmReg1 & YmmOpMask32)
+:VPBROADCASTD YmmReg1^YmmOpMask32, Rmr32  is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x7C; (YmmReg1 & ZmmReg1 & YmmOpMask32) & Rmr32
 [ evexD8Type = 1; evexTType = 3; ] # (TupleType T1S)
 {
-	YmmResult = vpbroadcastd_avx512vl(  );
+	YmmResult = vpbroadcastd_avx512vl( Rmr32 );
 	YmmMask = YmmReg1;
 	build YmmOpMask32;
 	ZmmReg1 = zext(YmmResult);
 }
 
 # VPBROADCASTB/W/D/Q 5-328 PAGE 2152 LINE 110633
-# WARNING: did not recognize operand "r32" (encoding ModRM:r/m (r)) for "VPBROADCASTD zmm1 {k1}{z}, r32"
 define pcodeop vpbroadcastd_avx512f ;
-:VPBROADCASTD ZmmReg1^ZmmOpMask32  is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x7C; ZmmReg1 & ZmmOpMask32
+:VPBROADCASTD ZmmReg1^ZmmOpMask32, Rmr32  is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x7C; ZmmReg1 & ZmmOpMask32 & Rmr32
 [ evexD8Type = 1; evexTType = 3; ] # (TupleType T1S)
 {
-	ZmmResult = vpbroadcastd_avx512f(  );
+	ZmmResult = vpbroadcastd_avx512f( Rmr32 );
 	ZmmMask = ZmmReg1;
 	build ZmmOpMask32;
 	ZmmReg1 = ZmmResult;
 }
 
 # VPBROADCASTB/W/D/Q 5-328 PAGE 2152 LINE 110635
-# WARNING: did not recognize operand "r64" (encoding ModRM:r/m (r)) for "VPBROADCASTQ xmm1 {k1}{z}, r64"
 define pcodeop vpbroadcastq_avx512vl ;
 @ifdef IA64
-:VPBROADCASTQ XmmReg1^XmmOpMask64  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1); byte=0x7C; (XmmReg1 & ZmmReg1 & XmmOpMask64)
+:VPBROADCASTQ XmmReg1^XmmOpMask64, Rmr64  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1); byte=0x7C; (XmmReg1 & ZmmReg1 & XmmOpMask64) & Rmr64
 [ evexD8Type = 1; evexTType = 3; ] # (TupleType T1S)
 {
-	XmmResult = vpbroadcastq_avx512vl(  );
+	XmmResult = vpbroadcastq_avx512vl( Rmr64 );
 	XmmMask = XmmReg1;
 	build XmmOpMask64;
 	ZmmReg1 = zext(XmmResult);
@@ -10174,12 +10163,11 @@ define pcodeop vpbroadcastq_avx512vl ;
 @endif
 
 # VPBROADCASTB/W/D/Q 5-328 PAGE 2152 LINE 110637
-# WARNING: did not recognize operand "r64" (encoding ModRM:r/m (r)) for "VPBROADCASTQ ymm1 {k1}{z}, r64"
 @ifdef IA64
-:VPBROADCASTQ YmmReg1^YmmOpMask64  is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1); byte=0x7C; (YmmReg1 & ZmmReg1 & YmmOpMask64)
+:VPBROADCASTQ YmmReg1^YmmOpMask64, Rmr64  is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1); byte=0x7C; (YmmReg1 & ZmmReg1 & YmmOpMask64) & Rmr64
 [ evexD8Type = 1; evexTType = 3; ] # (TupleType T1S)
 {
-	YmmResult = vpbroadcastq_avx512vl(  );
+	YmmResult = vpbroadcastq_avx512vl( Rmr64 );
 	YmmMask = YmmReg1;
 	build YmmOpMask64;
 	ZmmReg1 = zext(YmmResult);
@@ -10187,13 +10175,12 @@ define pcodeop vpbroadcastq_avx512vl ;
 @endif
 
 # VPBROADCASTB/W/D/Q 5-328 PAGE 2152 LINE 110639
-# WARNING: did not recognize operand "r64" (encoding ModRM:r/m (r)) for "VPBROADCASTQ zmm1 {k1}{z}, r64"
 define pcodeop vpbroadcastq_avx512f ;
 @ifdef IA64
-:VPBROADCASTQ ZmmReg1^ZmmOpMask64  is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1); byte=0x7C; ZmmReg1 & ZmmOpMask64
+:VPBROADCASTQ ZmmReg1^ZmmOpMask64, Rmr64  is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1); byte=0x7C; ZmmReg1 & ZmmOpMask64 & Rmr64
 [ evexD8Type = 1; evexTType = 3; ] # (TupleType T1S)
 {
-	ZmmResult = vpbroadcastq_avx512f(  );
+	ZmmResult = vpbroadcastq_avx512f( Rmr64 );
 	ZmmMask = ZmmReg1;
 	build ZmmOpMask64;
 	ZmmReg1 = ZmmResult;
