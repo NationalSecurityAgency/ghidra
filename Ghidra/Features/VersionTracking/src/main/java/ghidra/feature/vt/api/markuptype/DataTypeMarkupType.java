@@ -207,7 +207,8 @@ public class DataTypeMarkupType extends VTMarkupType {
 	}
 
 	private boolean setDataType(Program program, Address startAddress, DataType dataType,
-			int dataLength, VTMatchApplyChoices.ReplaceDataChoices replaceChoice)
+			int dataLength, VTMatchApplyChoices.ReplaceDataChoices replaceChoice,
+			DataTypeConflictHandler conflictHandler)
 			throws CodeUnitInsertionException, VersionTrackingApplyException {
 
 		Listing listing = program.getListing();
@@ -259,15 +260,17 @@ public class DataTypeMarkupType extends VTMarkupType {
 		}
 
 		if (replaceFirstOnly && hasOtherDefinedData) {
-			// Just return since we are only replacing first data and this has some defined 
+			// Just return since we are only replacing first data and this has some defined
 			// data that would be overwritten following the first data in the destination.
 			return false;
 		}
+		
+		DataType resolvedDataType = program.getDataTypeManager().resolve(dataType, conflictHandler);
 
 		listing.clearCodeUnits(startAddress, endAddress, false); // Clear the necessary code units.
 
 		try {
-			listing.createData(startAddress, dataType, dataLength);
+			listing.createData(startAddress, resolvedDataType, dataLength);
 		}
 		catch (CodeUnitInsertionException e) {
 			tryToRestoreOriginalData(listing, startAddress, originalDataType, originalDataLength);
@@ -341,12 +344,10 @@ public class DataTypeMarkupType extends VTMarkupType {
 			case REPLACE_EXISTING -> DataTypeConflictHandler.REPLACE_HANDLER;
 			default -> DataTypeConflictHandler.DEFAULT_HANDLER;
 		};
-		sourceDataType =
-			destinationProgram.getDataTypeManager().resolve(sourceDataType, conflictHandler);
 
 		try {
 			return setDataType(destinationProgram, destinationAddress, sourceDataType,
-				sourceDataLength, replaceChoice);
+				sourceDataLength, replaceChoice, conflictHandler);
 		}
 		catch (CodeUnitInsertionException e) {
 			throw new VersionTrackingApplyException(getApplyFailedMessage(sourceAddress,
@@ -397,7 +398,8 @@ public class DataTypeMarkupType extends VTMarkupType {
 
 		try {
 			setDataType(destinationProgram, destinationAddress, originalDataType,
-				originalDataLength, VTMatchApplyChoices.ReplaceDataChoices.REPLACE_ALL_DATA);
+				originalDataLength, VTMatchApplyChoices.ReplaceDataChoices.REPLACE_ALL_DATA,
+				DataTypeConflictHandler.DEFAULT_HANDLER);
 		}
 		catch (CodeUnitInsertionException e) {
 			throw new VersionTrackingApplyException("Couldn't unapply data type markup @ " +
