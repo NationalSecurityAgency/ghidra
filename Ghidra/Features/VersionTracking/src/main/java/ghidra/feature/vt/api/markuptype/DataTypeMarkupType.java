@@ -341,8 +341,7 @@ public class DataTypeMarkupType extends VTMarkupType {
 			VTOptionDefines.DEFAULT_OPTION_FOR_DATA_TYPE_CONFLICT_HANDLER);
 		DataTypeConflictHandler conflictHandler = switch (conflictChoice) {
 			case USE_EXISTING -> DataTypeConflictHandler.KEEP_HANDLER;
-			case REPLACE_EXISTING -> DataTypeConflictHandler.REPLACE_HANDLER;
-			default -> DataTypeConflictHandler.DEFAULT_HANDLER;
+			case RENAME_AND_ADD -> DataTypeConflictHandler.DEFAULT_HANDLER;
 		};
 
 		try {
