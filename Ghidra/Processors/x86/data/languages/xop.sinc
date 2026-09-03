@@ -30,9 +30,12 @@
 
 # VPROT{B,W,D,Q} by imm8 (XOP map 8, opcodes 0xC0..0xC3): rotate each lane of
 # src left by (imm8 mod lane-width), into dest (upper bits of the ZMM alias
-# zeroed, AVX-style). Note: p-code shifts by >= the operand bit-width yield 0,
-# so the kk=0 case degenerates to (a << 0) | 0 = a with no masking needed.
-:VPROTB XmmReg1, XmmReg2_m128, imm8 is $(XOP_M8) & vexMode=1 & vexL=0; byte=0xC0; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128; imm8
+# zeroed, AVX-style). The immediate-count form requires XOP.W=0 and an encoded
+# vvvv of 1111b (both reserved); W=1 or vvvv!=1111 encodings are #UD. (The
+# prefix stores vvvv inverted, so encoded-1111 constrains vexVVVV=0.)
+# Note: p-code shifts by >= the operand bit-width yield 0, so the kk=0 case
+# degenerates to (a << 0) | 0 = a with no masking needed.
+:VPROTB XmmReg1, XmmReg2_m128, imm8 is $(XOP_M8) & vexMode=1 & vexL=0 & rexWprefix=0 & vexVVVV=0; byte=0xC0; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128; imm8
 {
 	local tmp:16;
 	local srcA:16 = XmmReg2_m128;
@@ -57,7 +60,7 @@
 	ZmmReg1 = zext(tmp);
 }
 
-:VPROTW XmmReg1, XmmReg2_m128, imm8 is $(XOP_M8) & vexMode=1 & vexL=0; byte=0xC1; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128; imm8
+:VPROTW XmmReg1, XmmReg2_m128, imm8 is $(XOP_M8) & vexMode=1 & vexL=0 & rexWprefix=0 & vexVVVV=0; byte=0xC1; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128; imm8
 {
 	local tmp:16;
 	local srcA:16 = XmmReg2_m128;
@@ -74,7 +77,7 @@
 	ZmmReg1 = zext(tmp);
 }
 
-:VPROTD XmmReg1, XmmReg2_m128, imm8 is $(XOP_M8) & vexMode=1 & vexL=0; byte=0xC2; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128; imm8
+:VPROTD XmmReg1, XmmReg2_m128, imm8 is $(XOP_M8) & vexMode=1 & vexL=0 & rexWprefix=0 & vexVVVV=0; byte=0xC2; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128; imm8
 {
 	local tmp:16;
 	local srcA:16 = XmmReg2_m128;
@@ -87,7 +90,7 @@
 	ZmmReg1 = zext(tmp);
 }
 
-:VPROTQ XmmReg1, XmmReg2_m128, imm8 is $(XOP_M8) & vexMode=1 & vexL=0; byte=0xC3; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128; imm8
+:VPROTQ XmmReg1, XmmReg2_m128, imm8 is $(XOP_M8) & vexMode=1 & vexL=0 & rexWprefix=0 & vexVVVV=0; byte=0xC3; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128; imm8
 {
 	local tmp:16;
 	local srcA:16 = XmmReg2_m128;
