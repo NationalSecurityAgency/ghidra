@@ -181,7 +181,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	private LinkedList<DataType> conflictQueue = new LinkedList<>();
 	private Map<Long, Long> pendingDataTypesUsed;
 
-	private java.util.function.Function<DataType, DataType> resolveIdentityHint;
+	private final ThreadLocal<java.util.function.Function<DataType, DataType>> resolveIdentityHint =
+		new ThreadLocal<>();
 
 	private boolean isBulkRemoving;
 
@@ -1227,8 +1228,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				return dataType;
 			}
 
-			if (resolveIdentityHint != null) {
-				DataType hinted = resolveIdentityHint.apply(dataType);
+			java.util.function.Function<DataType, DataType> identityHint = resolveIdentityHint.get();
+			if (identityHint != null) {
+				DataType hinted = identityHint.apply(dataType);
 				if (hinted != null && contains(hinted)) {
 					return hinted;
 				}
@@ -4468,11 +4470,11 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		if (hint == null) {
 			throw new IllegalArgumentException("hint must not be null");
 		}
-		if (resolveIdentityHint != null) {
+		if (resolveIdentityHint.get() != null) {
 			throw new IllegalStateException("resolve identity hint already active");
 		}
-		resolveIdentityHint = hint;
-		return () -> resolveIdentityHint = null;
+		resolveIdentityHint.set(hint);
+		return () -> resolveIdentityHint.remove();
 	}
 
 	/**
