@@ -8,7 +8,7 @@
 # restoring of the return value for function calls.
 #@define OMIT_RETADDR
 
-# TODO !!! need to fully employ resultflags macro after resolving the use of the above BIT_OPS !!!
+# TODO !!! need to fully employ setNZflags macro after resolving the use of the above BIT_OPS !!!
 # TODO !!! Need to reconcile use of PSW vs. PSW1 for MCS251 !!!
 # TODO !!! Need to fill-out SFR bits in 80251.pspec !!!
 
@@ -212,11 +212,11 @@ define register offset=$(DPS_REG_NUM) size=1 [ AUXR1 ]; # Bit 0 is DPS
 
 @define CY 		"PSW[7,1]"
 @define AC  	"PSW[6,1]"
-@define N   	"PSW[5,1]"
+@define N   	"PSW[5,1]"   # MCS-251 PSW1.5 negative flag, mapped onto the 8051 user flag PSW.F0
 @define RS1  	"PSW[4,1]"
 @define RS0  	"PSW[3,1]"
 @define OV		"PSW[2,1]"
-@define Z  		"PSW[1,1]"
+@define Z  		"PSW[1,1]"   # MCS-251 PSW1.1 zero flag, mapped onto the 8051 user-definable PSW.UD
 
 @if defined(MX51)
 # remap these into the normal register file for decompiler use.
@@ -394,9 +394,16 @@ macro compflags(op1, op2) {  # Flags set by the compare instructions
 $(CY) = (op1 < op2);        # Check for carry
 }
 
-macro resultflags(op1) { # Set N,Z flag for results
- $(N) = op1 s< 0;
- $(Z) = op1 == 0;
+# N and Z are MCS-251 flags, read by its JE/JG/JLE/JNE/JSG/JSGE/JSL/JSLE
+# branches. A plain 8051 has neither: PSW bit 5 is the user flag F0 and bit 1
+# is user-definable, and nothing in the 8051 instruction set reads either one
+# (JZ/JNZ test ACC directly). Writing them there only clobbers operator state
+# and adds p-code noise to every instruction that sets result flags (#9064).
+macro setNZflags(op1) { # Set the MCS-251 N,Z result flags; the 8051 has neither
+@if defined(MCS251)
+ $(N) = op1 s< 0;   # PSW1.5 mapped onto PSW.F0
+ $(Z) = op1 == 0;   # PSW1.1 mapped onto PSW.UD
+@endif
 }
 
 macro push8(val) {
@@ -696,6 +703,11 @@ Rel16:   relAddr is rel16		     [ relAddr=inst_next+rel16; ] { export *:1 relAdd
 # detect A5 prefix
 :^instruction	is phase=0 & ophi=0xa & oplo=0x5; instruction [ phase=1; A5Prefix=1; ] { }
 :^instruction	is phase=0 & instruction [ phase=1; A5Prefix=0; ] { }
+
+# The prefix constructors above match any instruction in phase 0, so the
+# instructions themselves have to be confined to phase 1; otherwise the two
+# cannot be told apart and the language fails to build with -l.
+with: phase=1 {
 @endif
 
 @if defined(MCS80390)
@@ -704,15 +716,15 @@ Rel16:   relAddr is rel16		     [ relAddr=inst_next+rel16; ] { export *:1 relAdd
 :ACALL  Addr11 is  $(GROUP1) & aaddrfill=1 & aoplo=1 & Addr11   { ret:2 = inst_next; push16(ret); call Addr11; }
 @endif
 
-:ADD Areg,rn      is $(GROUP2) & ophi=2          & Areg & rnfill=1 & rn 	 { addflags(ACC,rn); ACC = ACC + rn; resultflags(ACC); }
-:ADD Areg,Direct  is $(GROUP1) & ophi=2 & oplo=5 & Areg; Direct  { addflags(ACC,Direct); ACC = ACC + Direct; resultflags(ACC); }
-:ADD Areg,Ri      is $(GROUP2) & ophi=2          & Areg & rifill=3 & Ri	 { addflags(ACC,Ri); ACC = ACC + Ri; resultflags(ACC); }
-:ADD Areg,Data    is $(GROUP1) & ophi=2 & oplo=4 & Areg; Data    { addflags(ACC,Data); ACC = ACC + Data; resultflags(ACC); }
+:ADD Areg,rn      is $(GROUP2) & ophi=2          & Areg & rnfill=1 & rn 	 { addflags(ACC,rn); ACC = ACC + rn; setNZflags(ACC); }
+:ADD Areg,Direct  is $(GROUP1) & ophi=2 & oplo=5 & Areg; Direct  { addflags(ACC,Direct); ACC = ACC + Direct; setNZflags(ACC); }
+:ADD Areg,Ri      is $(GROUP2) & ophi=2          & Areg & rifill=3 & Ri	 { addflags(ACC,Ri); ACC = ACC + Ri; setNZflags(ACC); }
+:ADD Areg,Data    is $(GROUP1) & ophi=2 & oplo=4 & Areg; Data    { addflags(ACC,Data); ACC = ACC + Data; setNZflags(ACC); }
 
-:ADDC Areg,rn     is $(GROUP2) & ophi=3          & Areg & rnfill=1 & rn	   { tmp:1 =$(CY)+ rn; addflags(ACC,tmp); ACC = ACC + tmp; resultflags(ACC); }
-:ADDC Areg,Direct is $(GROUP1) & ophi=3 & oplo=5 & Areg; Direct    { tmp:1 =$(CY)+ Direct; addflags(ACC,tmp); ACC = ACC + tmp; resultflags(ACC); }
-:ADDC Areg,Ri     is $(GROUP2) & ophi=3          & Areg & rifill=3 & Ri	   { tmp:1 =$(CY)+ Ri; addflags(ACC,tmp); ACC = ACC + tmp; resultflags(ACC); }
-:ADDC Areg,Data   is $(GROUP1) & ophi=3 & oplo=4 & Areg; Data      {  tmp:1 =$(CY)+ Data; addflags(ACC,tmp); ACC = ACC + tmp; resultflags(ACC); }
+:ADDC Areg,rn     is $(GROUP2) & ophi=3          & Areg & rnfill=1 & rn	   { tmp:1 =$(CY)+ rn; addflags(ACC,tmp); ACC = ACC + tmp; setNZflags(ACC); }
+:ADDC Areg,Direct is $(GROUP1) & ophi=3 & oplo=5 & Areg; Direct    { tmp:1 =$(CY)+ Direct; addflags(ACC,tmp); ACC = ACC + tmp; setNZflags(ACC); }
+:ADDC Areg,Ri     is $(GROUP2) & ophi=3          & Areg & rifill=3 & Ri	   { tmp:1 =$(CY)+ Ri; addflags(ACC,tmp); ACC = ACC + tmp; setNZflags(ACC); }
+:ADDC Areg,Data   is $(GROUP1) & ophi=3 & oplo=4 & Areg; Data      {  tmp:1 =$(CY)+ Data; addflags(ACC,tmp); ACC = ACC + tmp; setNZflags(ACC); }
 
 #TODO: which GROUP does AJMP belong to ??
 @if defined(MCS80390)
@@ -721,14 +733,14 @@ Rel16:   relAddr is rel16		     [ relAddr=inst_next+rel16; ] { export *:1 relAdd
 :AJMP Addr11 is  $(GROUP1) & aaddrfill=0 & aoplo=1 & Addr11			 { goto Addr11; }
 @endif
 
-:ANL Areg,rn     is $(GROUP2) & ophi=5 & Areg & rnfill=1 & rn					 { ACC = ACC & rn; resultflags(ACC); }
-:ANL Areg,Direct is $(GROUP1) & ophi=5 & oplo=5 & Areg; Direct		 { ACC = ACC & Direct; resultflags(ACC); }
-:ANL Areg,Ri     is $(GROUP2) & ophi=5 & Areg & rifill=3 & Ri					 { ACC = ACC & Ri; resultflags(ACC); }
-:ANL Areg,Data   is $(GROUP1) & ophi=5 & oplo=4 & Areg; Data		 { ACC = ACC & Data; resultflags(ACC); }
-:ANL Direct,Areg is $(GROUP1) & ophi=5 & oplo=2 & Areg; Direct		 { tmp:1 = Direct & ACC; Direct = tmp; resultflags(tmp); }
-:ANL Direct,Data is $(GROUP1) & ophi=5 & oplo=3; Direct; Data		 { tmp:1 = Direct & Data; Direct = tmp; resultflags(tmp); }
+:ANL Areg,rn     is $(GROUP2) & ophi=5 & Areg & rnfill=1 & rn					 { ACC = ACC & rn; setNZflags(ACC); }
+:ANL Areg,Direct is $(GROUP1) & ophi=5 & oplo=5 & Areg; Direct		 { ACC = ACC & Direct; setNZflags(ACC); }
+:ANL Areg,Ri     is $(GROUP2) & ophi=5 & Areg & rifill=3 & Ri					 { ACC = ACC & Ri; setNZflags(ACC); }
+:ANL Areg,Data   is $(GROUP1) & ophi=5 & oplo=4 & Areg; Data		 { ACC = ACC & Data; setNZflags(ACC); }
+:ANL Direct,Areg is $(GROUP1) & ophi=5 & oplo=2 & Areg; Direct		 { tmp:1 = Direct & ACC; Direct = tmp; setNZflags(tmp); }
+:ANL Direct,Data is $(GROUP1) & ophi=5 & oplo=3; Direct; Data		 { tmp:1 = Direct & Data; Direct = tmp; setNZflags(tmp); }
 
-:ANL CY,BitAddr   is $(GROUP1) & CY & ophi=8  & oplo=2; BitAddr  & bitaddr57=7 & sfrbit3=0 & sfrbit & BitByteAddr {tmp:1 = BitByteAddr; $(CY)=$(CY)& ((tmp>>sfrbit)&1); resultflags(tmp); }
+:ANL CY,BitAddr   is $(GROUP1) & CY & ophi=8  & oplo=2; BitAddr  & bitaddr57=7 & sfrbit3=0 & sfrbit & BitByteAddr {tmp:1 = BitByteAddr; $(CY)=$(CY)& ((tmp>>sfrbit)&1); setNZflags(tmp); }
 :ANL CY,BitAddr2  is $(GROUP1) & CY & ophi=11 & oplo=0; BitAddr2 & bitaddr57=7 & sfrbit3=0 & sfrbit & BitByteAddr {tmp:1 = BitByteAddr; $(CY)=$(CY)& (~((tmp>>sfrbit)&1));  }
 @if BIT_OPS == "BIT_ADDRS"
 :ANL CY,BitAddr   is $(GROUP1) & CY & ophi=8  & oplo=2; BitAddr  & sfrbit & BitByteAddr {$(CY)=$(CY)& BitAddr; }
@@ -967,3 +979,7 @@ pc:3 = 0; pop24(pc); return[pc];
 :XRL Direct,Areg is $(GROUP1) & ophi=6 & oplo=2 & Areg; Direct	{ Direct = Direct ^ ACC; }
 :XRL Direct,Data is $(GROUP1) & ophi=6 & oplo=3; Direct; Data	{ Direct = Direct ^ Data; }
 
+
+@if defined(MCS251)
+}
+@endif
