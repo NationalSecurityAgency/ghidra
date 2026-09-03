@@ -212,11 +212,11 @@ define register offset=$(DPS_REG_NUM) size=1 [ AUXR1 ]; # Bit 0 is DPS
 
 @define CY 		"PSW[7,1]"
 @define AC  	"PSW[6,1]"
-@define N   	"PSW[5,1]"
+@define N   	"PSW[5,1]"   # MCS-251 PSW1.5 negative flag, mapped onto the 8051 user flag PSW.F0
 @define RS1  	"PSW[4,1]"
 @define RS0  	"PSW[3,1]"
 @define OV		"PSW[2,1]"
-@define Z  		"PSW[1,1]"
+@define Z  		"PSW[1,1]"   # MCS-251 PSW1.1 zero flag, mapped onto the 8051 user-definable PSW.UD
 
 @if defined(MX51)
 # remap these into the normal register file for decompiler use.
@@ -401,8 +401,8 @@ $(CY) = (op1 < op2);        # Check for carry
 # and adds p-code noise to every instruction that sets result flags (#9064).
 macro resultflags(op1) { # Set N,Z flag for results
 @if defined(MCS251)
- $(N) = op1 s< 0;
- $(Z) = op1 == 0;
+ $(N) = op1 s< 0;   # PSW1.5 mapped onto PSW.F0
+ $(Z) = op1 == 0;   # PSW1.1 mapped onto PSW.UD
 @endif
 }
 
