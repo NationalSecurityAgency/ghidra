@@ -2001,6 +2001,50 @@ void ActionReturnRecovery::buildReturnOutput(ParamActive *active,PcodeOp *retop,
   }
 }
 
+/// \brief Check if a return trial Varnode holds a called function's return value
+///
+/// A function that ends in \b return \b callee(...) leaves the value produced by the
+/// CALL in the return storage without ever writing it itself. Funcdata::ancestorOpUse()
+/// deliberately refuses to accept a CALL as evidence of a single use, because every call
+/// leaves its return storage defined whether or not the caller passes that value on. When
+/// the callee's prototype is known and declares a return value occupying exactly the
+/// trial's storage, that ambiguity is resolved: the value reaching the RETURN is the
+/// callee's return value, not an incidental leftover.  If the trial Varnode merges
+/// several control-flow paths (MULTIEQUAL), every path must be such a declared return
+/// value for the trial to qualify.
+/// \param data is the function being analyzed
+/// \param vn is the trial Varnode reaching the RETURN
+/// \param trial is the associated parameter trial object
+/// \param depth is the remaining depth for following MULTIEQUAL merges
+/// \return \b true if the Varnode is a called function's declared return value
+static bool trialIsCalleeReturnValue(const Funcdata &data,const Varnode *vn,const ParamTrial &trial,int4 depth)
+
+{
+  if (!vn->isWritten()) return false;
+  const PcodeOp *def = vn->getDef();
+  OpCode opc = def->code();
+  if (opc == CPUI_MULTIEQUAL) {
+    if (depth <= 0) return false;	// Also acts as a loop guard
+    for(int4 i=0;i<def->numInput();++i) {
+      if (!trialIsCalleeReturnValue(data,def->getIn(i),trial,depth-1))
+	return false;
+    }
+    return true;
+  }
+  if ((opc != CPUI_CALL)&&(opc != CPUI_CALLIND)) return false;
+  FuncCallSpecs *fc = data.getCallSpecs(def);
+  if (fc == (FuncCallSpecs *)0) return false;
+  if (!fc->isOutputLocked()) return false;	// Only a known prototype resolves the ambiguity
+  ProtoParameter *outparam = fc->getOutput();
+  if (outparam == (ProtoParameter *)0) return false;
+  Datatype *ct = outparam->getType();
+  if (ct == (Datatype *)0) return false;
+  if (ct->getMetatype() == TYPE_VOID) return false;
+  if (outparam->getSize() != trial.getSize()) return false;
+  if (outparam->getAddress() != trial.getAddress()) return false;
+  return true;
+}
+
 int4 ActionReturnRecovery::apply(Funcdata &data)
 
 {
@@ -2023,9 +2067,12 @@ int4 ActionReturnRecovery::apply(Funcdata &data)
 	if (trial.isChecked()) continue; // Already checked
 	int4 slot = trial.getSlot();
 	vn = op->getIn(slot);
-	if (ancestorReal.execute(op,slot,&trial,false))
+	if (ancestorReal.execute(op,slot,&trial,false)) {
 	  if (data.ancestorOpUse(maxancestor,vn,op,trial,0,0))
 	    trial.markActive(); // This varnode sees active use as a parameter
+	  else if (trialIsCalleeReturnValue(data,vn,trial,4))
+	    trial.markActive(); // Passed through from a callee with a known return value
+	}
 	count += 1;
       }
     }
