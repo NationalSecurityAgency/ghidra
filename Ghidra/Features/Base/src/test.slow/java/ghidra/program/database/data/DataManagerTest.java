@@ -18,6 +18,8 @@ package ghidra.program.database.data;
 import static org.junit.Assert.*;
 
 import java.util.*;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.*;
 
@@ -505,6 +507,72 @@ public class DataManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(bb);
 		dtm.endTransaction(id, true);
 		dtm.close();
+	}
+
+	@Test
+	public void testResolveIdentityHintIsThreadLocal() throws Exception {
+		DataType hintedTarget = dataMgr.resolve(new ByteDataType(), null);
+
+		StandAloneDataTypeManager fromDtm = new StandAloneDataTypeManager("Test");
+		int id = fromDtm.startTransaction("");
+		DataType foreignDataType = fromDtm.resolve(new FloatDataType(), null);
+		fromDtm.endTransaction(id, true);
+		
+		CyclicBarrier hintReady = new CyclicBarrier(2);
+		CyclicBarrier proceedWithClear = new CyclicBarrier(2);
+		AtomicReference<DataType> hintedThreadResult = new AtomicReference<>();
+		AtomicReference<DataType> otherThreadResult = new AtomicReference<>();
+		AtomicReference<Throwable> failure = new AtomicReference<>();
+
+		Runnable withHint = () -> {
+			int txId = dataMgr.startTransaction("resolve with hint");
+			try (AutoCloseable hintScope =
+				dataMgr.withResolveIdentityHint(dt -> dt == foreignDataType ? hintedTarget : null)) {
+				hintedThreadResult.set(dataMgr.resolve(foreignDataType, null));
+				hintReady.await();
+				proceedWithClear.await();
+			}
+			catch (Throwable t) {
+				failure.set(t);
+			}
+			finally {
+				dataMgr.endTransaction(txId, true);
+			}
+		};
+
+		Runnable withoutHint = () -> {
+			int txId = dataMgr.startTransaction("resolve without hint");
+			try {
+				hintReady.await();
+				otherThreadResult.set(dataMgr.resolve(foreignDataType, null));
+				proceedWithClear.await();
+			}
+			catch (Throwable t) {
+				failure.set(t);
+			}
+			finally {
+				dataMgr.endTransaction(txId, true);
+			}
+		};
+
+		Thread t1 = new Thread(withHint, "resolve-with-hint");
+		Thread t2 = new Thread(withoutHint, "resolve-without-hint");
+		t1.start();
+		t2.start();
+		t1.join(20000);
+		t2.join(20000);
+
+		fromDtm.close();
+
+		if (failure.get() != null) {
+			throw new AssertionError(failure.get());
+		}
+
+		assertEquals("Hint-installing thread should have its hint honored", hintedTarget,
+			hintedThreadResult.get());
+		assertNotEquals(
+			"Concurrent thread with no hint of its own must not see the other thread's hint",
+			hintedTarget, otherThreadResult.get());
 	}
 
 	@Test
