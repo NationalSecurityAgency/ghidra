@@ -5991,6 +5991,7 @@ void ActionDatabase::universalAction(Architecture *conf)
 	actprop->addRule( new RuleLzcountShiftBool("analysis") );
 	actprop->addRule( new RuleFloatSign("analysis") );
 	actprop->addRule( new RuleOrCompare("analysis") );
+	actprop->addRule( new RuleUnsignedComparisonFromSignBit("analysis") );
 	actprop->addRule( new RuleSubvarAnd("subvar") );
 	actprop->addRule( new RuleSubvarSubpiece("subvar") );
 	actprop->addRule( new RuleSplitFlow("subvar") );

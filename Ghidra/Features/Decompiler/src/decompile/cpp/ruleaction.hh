@@ -1603,6 +1603,17 @@ public:
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
 
+class RuleUnsignedComparisonFromSignBit : public Rule {
+public:
+  RuleUnsignedComparisonFromSignBit(const string &g) : Rule( g, 0, "unsignedcomparisonfromsignbit") {}  ///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleUnsignedComparisonFromSignBit(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+
 class RuleExpandLoad : public Rule {
   static bool checkAndComparison(Varnode *vn);
   static void modifyAndComparison(Funcdata &data,Varnode *oldVn,Varnode *newVn,Datatype *dt,int4 offset);
