@@ -181,28 +181,6 @@ public class Hexagon_ElfRelocationHandler
 		  
 		  return findMaskR6Common(maskedIns);
 	}
-	
-	/* 
-	 * Find the mask for R_HEX_GPREL16_* type relocations
-	 */
-	private Optional<Integer> findMaskGpRelative(int ins) {
-		
-		if((ins & 0xF9E00000) == 0x48000000) {
-			return Optional.of(0x061F20FF);
-		}
-		if((ins & 0xF9E01800) == 0x48A00000) {
-			return Optional.of(0x061F20FF);
-		}
-		if((ins & 0xF9E00000) == 0x49000000) {
-			return Optional.of(0x061F3FE0);
-		}
-		if((ins & 0xF9E00000) == 0x49200000) {
-			return Optional.of(0x061F3FE0);
-		}
-		return Optional.empty();
-	}
-	
-	
 
 	@Override
 	protected RelocationResult relocate(ElfRelocationContext<?> elfRelocationContext,
@@ -299,94 +277,14 @@ public class Hexagon_ElfRelocationHandler
 				byteLength = 1;
 				break;
 
-			case R_HEXAGON_GPREL16_0:
-				Optional<Integer> gpMask = findMaskGpRelative(memValue);
-				if(gpMask.isEmpty()) {
-					markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName, log);
-					return RelocationResult.UNSUPPORTED;
-				}
-				mask = gpMask.get();
-				memValue |= applyMask(mask, value);
-				memory.setInt(relocationAddress, memValue);
-				break;
-			case R_HEXAGON_GPREL16_1:
-				value >>>= 1;
-				if(
-					// Rd=memh(gp+#u16:1)
-					((((memValue >> 27) & 0b11111) == 0b01001) && (((memValue >> 21) & 0b1111) == 0b1010)) ||
-					// Rd=memuh(gp+#u16:1)
-					((((memValue >> 27) & 0b11111) == 0b01001) && (((memValue >> 21) & 0b1111) == 0b1011))
-				) {
-					memValue &= ~0x61F3FE0;
-					memValue |= (value & 0x1FF) << 5;
-					memValue |= ((value >> 9) & 0x1F) << 16;
-					memValue |= ((value >> 14) & 0x3) << 25;
-					memory.setInt(relocationAddress, memValue);
-				} else if (
-					// memh(gp+#u16:1)=Rt
-					((((memValue >> 27) & 0b11111) == 0b01001) && (((memValue >> 21) & 0b1111) == 0b0010)) ||
-					// memh(gp+#u16:1)=Rt.H
-					((((memValue >> 27) & 0b11111) == 0b01001) && (((memValue >> 21) & 0b1111) == 0b0011)) ||
-					// memh(gp+#u16:1)=Nt.new
-					((((memValue >> 27) & 0b11111) == 0b01001) && (((memValue >> 21) & 0b1111) == 0b0101) && (((memValue >> 11) & 0b11) == 0b01))
-				) {
-					memValue &= ~0x61f20ff;
-					memValue |= (value & 0xFF);
-					memValue |= ((value >> 8) & 1) << 13;
-					memValue |= ((value >> 9) & 0x1F) << 16;
-					memValue |= ((value >> 14) & 0x3) << 25;
-					memory.setInt(relocationAddress, memValue);
-				}
-				else {
-					markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName, log);
-					return RelocationResult.UNSUPPORTED;
-				}
-				break;
-			case R_HEXAGON_GPREL16_2:
-				value >>>= 2;
-				if(
-					// Rd=memw(gp+#u16:2)
-					(((memValue >> 27) & 0b11111) == 0b01001) && (((memValue >> 21) & 0b1111) == 0b1100)
-				) {
-					memValue &= ~0x61F3FE0;
-					memValue |= (value & 0x1FF) << 5;
-					memValue |= ((value >> 9) & 0x1F) << 16;
-					memValue |= ((value >> 14) & 0x3) << 25;
-					memory.setInt(relocationAddress, memValue);
-				} else if (
-					// memw(gp+#u16:2)=Rt
-					((((memValue >> 27) & 0b11111) == 0b01001) && (((memValue >> 21) & 0b1111) == 0b0100)) ||
-					// memw(gp+#u16:2)=Nt.new
-					((((memValue >> 27) & 0b11111) == 0b01001) && (((memValue >> 21) & 0b1111) == 0b0101) && (((memValue >> 11) & 0b11) == 0b10))
-				) {
-					memValue &= ~0x61f20ff;
-					memValue |= (value & 0xFF);
-					memValue |= ((value >> 8) & 1) << 13;
-					memValue |= ((value >> 9) & 0x1F) << 16;
-					memValue |= ((value >> 14) & 0x3) << 25;
-					memory.setInt(relocationAddress, memValue);
-				}
-				else {
-					markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName, log);
-					return RelocationResult.UNSUPPORTED;
-				}
-				break;
-			case R_HEXAGON_GPREL16_3:
-				value >>>= 3;
-				if(
-					// Rdd=memd(gp+#u16:3)
-					((((memValue >> 27) & 0b11111) == 0b01001) && (((memValue >> 21) & 0b1111) == 0b1110))
-				) {
-					memValue &= ~0x61F3FE0;
-					memValue |= (value & 0x1FF) << 5;
-					memValue |= ((value >> 9) & 0x1F) << 16;
-					memValue |= ((value >> 14) & 0x3) << 25;
-					memory.setInt(relocationAddress, memValue);
-				} else {
-					markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName, log);
-					return RelocationResult.UNSUPPORTED;
-				}
-				break;
+//			case R_HEXAGON_GPREL16_0:
+//				break;
+//			case R_HEXAGON_GPREL16_1:
+//				break;
+//			case R_HEXAGON_GPREL16_2:
+//				break;
+//			case R_HEXAGON_GPREL16_3:
+//				break;
 //			case R_HEXAGON_HL16:
 //				break;
 			case R_HEXAGON_B13_PCREL:
