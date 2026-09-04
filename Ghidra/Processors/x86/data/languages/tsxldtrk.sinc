@@ -1,0 +1,5 @@
+define pcodeop xsusldtrk;
+:XSUSLDTRK is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x01; byte=0xE8 { xsusldtrk(); }
+
+define pcodeop xresldtrk;
+:XRESLDTRK is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x01; byte=0xE9 { xresldtrk(); }
