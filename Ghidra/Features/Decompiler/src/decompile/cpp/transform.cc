@@ -197,6 +197,7 @@ void TransformVar::createReplacement(Funcdata *fd)
       if ((bytePos & 7) != 0)
 	throw LowlevelError("Varnode piece is not byte aligned");
       bytePos >>= 3;
+      int4 significanceOffset = bytePos;
       if (vn->getSpace()->isBigEndian())
 	bytePos = vn->getSize() - bytePos - byteSize;
       Address addr = vn->getAddr() + bytePos;
@@ -205,7 +206,7 @@ void TransformVar::createReplacement(Funcdata *fd)
 	replacement = fd->newVarnode(byteSize,addr);
       else
 	replacement = fd->newVarnodeOut(byteSize, addr, def->replacement);
-      fd->transferVarnodeProperties(vn,replacement,bytePos);
+      fd->transferVarnodeProperties(vn,replacement,significanceOffset);
       break;
     }
     case TransformVar::constant_iop:
