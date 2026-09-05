@@ -7368,11 +7368,13 @@ is b_31=0 & b_30=1 & b_2129=0b001110010 & b_1015=0b001101 & Rd_VPR128.8H & Rn_VP
 :fmax Rd_FPR64, Rn_FPR64, Rm_FPR64
 is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=1 & Rm_FPR64 & b_1215=0x4 & b_1011=2 & Rn_FPR64 & Rd_FPR64 & Zd
 {
-	Rd_FPR64 = Rn_FPR64;
+	local lhs64:8 = Rn_FPR64;
+	local rhs64:8 = Rm_FPR64;
+	Rd_FPR64 = lhs64;
 	zext_zd(Zd); # zero upper 24 bytes of Zd
-	local tmp1:1 = Rn_FPR64 f> Rm_FPR64;
+	local tmp1:1 = lhs64 f> rhs64;
 	if (tmp1) goto inst_next;
-	Rd_FPR64 = Rm_FPR64;
+	Rd_FPR64 = rhs64;
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 }
 
@@ -7385,11 +7387,13 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=1 & Rm_FPR64 & b_1215=0
 :fmax Rd_FPR32, Rn_FPR32, Rm_FPR32
 is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=1 & Rm_FPR32 & b_1215=0x4 & b_1011=2 & Rn_FPR32 & Rd_FPR32 & Zd
 {
-	Rd_FPR32 = Rn_FPR32;
+	local lhs32:4 = Rn_FPR32;
+	local rhs32:4 = Rm_FPR32;
+	Rd_FPR32 = lhs32;
 	zext_zs(Zd); # zero upper 28 bytes of Zd
-	local tmp1:1 = Rn_FPR32 f> Rm_FPR32;
+	local tmp1:1 = lhs32 f> rhs32;
 	if (tmp1) goto inst_next;
-	Rd_FPR32 = Rm_FPR32;
+	Rd_FPR32 = rhs32;
 	zext_zs(Zd); # zero upper 28 bytes of Zd
 }
 
@@ -7401,11 +7405,13 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=1 & Rm_FPR32 & b_1215=0
 :fmax Rd_FPR16, Rn_FPR16, Rm_FPR16
 is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=3 & b_2121=1 & Rm_FPR16 & b_1215=0x4 & b_1011=2 & Rn_FPR16 & Rd_FPR16 & Zd
 {
-	Rd_FPR16 = Rn_FPR16;
+	local lhs16:2 = Rn_FPR16;
+	local rhs16:2 = Rm_FPR16;
+	Rd_FPR16 = lhs16;
 	zext_zh(Zd); # zero upper 30 bytes of Zd
-	local tmp1:1 = Rn_FPR16 f> Rm_FPR16;
+	local tmp1:1 = lhs16 f> rhs16;
 	if (tmp1) goto inst_next;
-	Rd_FPR16 = Rm_FPR16;
+	Rd_FPR16 = rhs16;
 	zext_zh(Zd);# zero upper 30 bytes of Zd
 }
 
@@ -7475,11 +7481,13 @@ is b_31=0 & b_30=1 & b_2129=0b001110010 & b_1015=0b000001 & Rd_VPR128.8H & Rn_VP
 :fmaxnm Rd_FPR64, Rn_FPR64, Rm_FPR64
 is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=1 & Rm_FPR64 & b_1215=0x6 & b_1011=2 & Rn_FPR64 & Rd_FPR64 & Zd
 {
-	Rd_FPR64 = Rn_FPR64;
+	local lhs64:8 = Rn_FPR64;
+	local rhs64:8 = Rm_FPR64;
+	Rd_FPR64 = lhs64;
 	zext_zd(Zd); # zero upper 24 bytes of Zd
-	local tmp1:1 = Rn_FPR64 f> Rm_FPR64;
+	local tmp1:1 = lhs64 f> rhs64;
 	if (tmp1) goto inst_next;
-	Rd_FPR64 = Rm_FPR64;
+	Rd_FPR64 = rhs64;
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 }
 
@@ -7492,11 +7500,13 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=1 & Rm_FPR64 & b_1215=0
 :fmaxnm Rd_FPR32, Rn_FPR32, Rm_FPR32
 is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=1 & Rm_FPR32 & b_1215=0x6 & b_1011=2 & Rn_FPR32 & Rd_FPR32 & Zd
 {
-	Rd_FPR32 = Rn_FPR32;
+	local lhs32:4 = Rn_FPR32;
+	local rhs32:4 = Rm_FPR32;
+	Rd_FPR32 = lhs32;
 	zext_zs(Zd); # zero upper 28 bytes of Zd
-	local tmp1:1 = Rn_FPR32 f> Rm_FPR32;
+	local tmp1:1 = lhs32 f> rhs32;
 	if (tmp1) goto inst_next;
-	Rd_FPR32 = Rm_FPR32;
+	Rd_FPR32 = rhs32;
 	zext_zs(Zd); # zero upper 28 bytes of Zd
 }
 
@@ -7509,11 +7519,13 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=1 & Rm_FPR32 & b_1215=0
 :fmaxnm Rd_FPR16, Rn_FPR16, Rm_FPR16
 is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=3 & b_2121=1 & Rm_FPR16 & b_1215=0x6 & b_1011=2 & Rn_FPR16 & Rd_FPR16 & Zd
 {
-	Rd_FPR16 = Rn_FPR16;
+	local lhs16:2 = Rn_FPR16;
+	local rhs16:2 = Rm_FPR16;
+	Rd_FPR16 = lhs16;
 	zext_zh(Zd); # zero upper 30 bytes of Zd
-	local tmp1:1 = Rn_FPR16 f> Rm_FPR16;
+	local tmp1:1 = lhs16 f> rhs16;
 	if (tmp1) goto inst_next;
-	Rd_FPR16 = Rm_FPR16;
+	Rd_FPR16 = rhs16;
 	zext_zh(Zd); # zero upper 30 bytes of Zd
 }
 
@@ -7834,11 +7846,13 @@ is b_31=0 & b_30=1 & b_2129=0b001110110 & b_1015=0b001101 & Rd_VPR128.8H & Rn_VP
 :fmin Rd_FPR64, Rn_FPR64, Rm_FPR64
 is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=1 & Rm_FPR64 & b_1215=0x5 & b_1011=2 & Rn_FPR64 & Rd_FPR64 & Zd
 {
-	Rd_FPR64 = Rn_FPR64;
+	local lhs64:8 = Rn_FPR64;
+	local rhs64:8 = Rm_FPR64;
+	Rd_FPR64 = lhs64;
 	zext_zd(Zd); # zero upper 24 bytes of Zd
-	local tmp1:1 = Rn_FPR64 f<= Rm_FPR64;
+	local tmp1:1 = lhs64 f<= rhs64;
 	if (tmp1) goto inst_next;
-	Rd_FPR64 = Rm_FPR64;
+	Rd_FPR64 = rhs64;
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 }
 
@@ -7850,11 +7864,13 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=1 & Rm_FPR64 & b_1215=0
 :fmin Rd_FPR32, Rn_FPR32, Rm_FPR32
 is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=1 & Rm_FPR32 & b_1215=0x5 & b_1011=2 & Rn_FPR32 & Rd_FPR32 & Zd
 {
-	Rd_FPR32 = Rn_FPR32;
+	local lhs32:4 = Rn_FPR32;
+	local rhs32:4 = Rm_FPR32;
+	Rd_FPR32 = lhs32;
 	zext_zs(Zd); # zero upper 28 bytes of Zd
-	local tmp1:1 = Rn_FPR32 f<= Rm_FPR32;
+	local tmp1:1 = lhs32 f<= rhs32;
 	if (tmp1) goto inst_next;
-	Rd_FPR32 = Rm_FPR32;
+	Rd_FPR32 = rhs32;
 	zext_zs(Zd); # zero upper 28 bytes of Zd
 }
 
@@ -7866,11 +7882,13 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=1 & Rm_FPR32 & b_1215=0
 :fmin Rd_FPR16, Rn_FPR16, Rm_FPR16
 is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=3 & b_2121=1 & Rm_FPR16 & b_1215=0x5 & b_1011=2 & Rn_FPR16 & Rd_FPR16 & Zd
 {
-	Rd_FPR16 = Rn_FPR16;
+	local lhs16:2 = Rn_FPR16;
+	local rhs16:2 = Rm_FPR16;
+	Rd_FPR16 = lhs16;
 	zext_zh(Zd); # zero upper 30 bytes of Zd
-	local tmp1:1 = Rn_FPR16 f<= Rm_FPR16;
+	local tmp1:1 = lhs16 f<= rhs16;
 	if (tmp1) goto inst_next;
-	Rd_FPR16 = Rm_FPR16;
+	Rd_FPR16 = rhs16;
 	zext_zh(Zd);# zero upper 30 bytes of Zd
 }
 
