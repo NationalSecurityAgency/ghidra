@@ -1,0 +1,32 @@
+@PACKAGE_INIT@
+
+# Exported build facts.
+set(GhidraDecompiler_GHIDRA_VERSION "@GHIDRA_DECOMP_GHIDRA_VERSION@")
+set(GhidraDecompiler_SLA_FORMAT_VERSION @GHIDRA_DECOMP_SLA_FORMAT_VERSION@)
+set(GhidraDecompiler_HAVE_BFD @GHIDRA_DECOMP_BFD@)
+set(GhidraDecompiler_HAVE_CONSOLE @GHIDRA_DECOMP_CONSOLE@)
+set(GhidraDecompiler_HAVE_TERMINAL @GHIDRA_DECOMP_TERMINAL@)
+set(GhidraDecompiler_HAVE_CPUI_DEBUG @GHIDRA_DECOMP_CPUI_DEBUG@)
+set(GhidraDecompiler_HAVE_LOCAL_ZLIB @GHIDRA_DECOMP_LOCAL_ZLIB@)
+set(GhidraDecompiler_SANITIZE "@GHIDRA_DECOMP_SANITIZE@")
+set(GhidraDecompiler_CXX_STANDARD @GHIDRA_DECOMP_CXX_STANDARD@)
+set_and_check(GhidraDecompiler_INCLUDE_DIR "@PACKAGE_GHIDRA_DECOMP_INSTALL_INCLUDEDIR@")
+if(EXISTS "@PACKAGE_GHIDRA_DECOMP_INSTALL_SLEIGH_HOME@")
+  set(GhidraDecompiler_SLEIGH_HOME "@PACKAGE_GHIDRA_DECOMP_INSTALL_SLEIGH_HOME@")
+endif()
+
+include(CMakeFindDependencyMacro)
+if(NOT GhidraDecompiler_HAVE_LOCAL_ZLIB)
+  find_dependency(ZLIB)
+endif()
+
+include("${CMAKE_CURRENT_LIST_DIR}/GhidraDecompilerTargets.cmake")
+
+# Targets:
+#   ghidra::sla            SLEIGH only: disassembly, p-code, emulation
+#   ghidra::decomp         the decompiler, linked whole-archive so the
+#                          capability singletons register themselves
+#   ghidra::decomp_archive the plain archive behind ghidra::decomp
+#   ghidra::sleigh_compiler, ghidra::decomp_console when installed
+
+check_required_components(GhidraDecompiler)
