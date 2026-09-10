@@ -65,7 +65,10 @@ elseif(MODE STREQUAL "runtime")
   if(NOT BINARY)
     message(FATAL_ERROR "NoJvmCheck: BINARY is required")
   endif()
-  find_program(_env env)
+  # Do not inherit a shadow command from the caller's PATH.  This test
+  # deliberately constructs its own minimal environment, so /usr/bin/env is
+  # the portable system utility we mean to execute.
+  find_program(_env env PATHS /usr/bin /bin NO_DEFAULT_PATH)
   if(NOT _env)
     message(FATAL_ERROR "NoJvmCheck: env not found")
   endif()

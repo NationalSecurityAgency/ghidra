@@ -1,0 +1,35 @@
+0x401000 PUSH RBP
+  unique[0x4f900:8] = COPY register[0x28:8]
+  register[0x20:8] = INT_SUB register[0x20:8] const[0x8:8]
+  STORE spaceid[ram] register[0x20:8] unique[0x4f900:8]
+0x401001 MOV RBP,RSP
+  register[0x28:8] = COPY register[0x20:8]
+0x401004 MOV dword ptr [RBP + -0x4],EDI
+  unique[0x8f00:8] = INT_ADD register[0x28:8] const[0xfffffffffffffffc:8]
+  unique[0xd400:4] = COPY register[0x38:4]
+  STORE spaceid[ram] unique[0x8f00:8] unique[0xd400:4]
+0x401007 MOV EAX,dword ptr [RBP + -0x4]
+  unique[0x8f00:8] = INT_ADD register[0x28:8] const[0xfffffffffffffffc:8]
+  unique[0x23d00:4] = LOAD spaceid[ram] unique[0x8f00:8]
+  register[0x0:4] = COPY unique[0x23d00:4]
+  register[0x0:8] = INT_ZEXT register[0x0:4]
+0x40100a ADD EAX,0x1
+  register[0x200:1] = INT_CARRY register[0x0:4] const[0x1:4]
+  register[0x20b:1] = INT_SCARRY register[0x0:4] const[0x1:4]
+  register[0x0:4] = INT_ADD register[0x0:4] const[0x1:4]
+  register[0x0:8] = INT_ZEXT register[0x0:4]
+  register[0x207:1] = INT_SLESS register[0x0:4] const[0x0:4]
+  register[0x206:1] = INT_EQUAL register[0x0:4] const[0x0:4]
+  unique[0x58300:4] = INT_AND register[0x0:4] const[0xff:4]
+  unique[0x58400:1] = POPCOUNT unique[0x58300:4]
+  unique[0x58500:1] = INT_AND unique[0x58400:1] const[0x1:1]
+  register[0x202:1] = INT_EQUAL unique[0x58500:1] const[0x0:1]
+0x40100d POP RBP
+  unique[0xa7200:8] = COPY const[0x0:8]
+  unique[0xa7200:8] = LOAD spaceid[ram] register[0x20:8]
+  register[0x20:8] = INT_ADD register[0x20:8] const[0x8:8]
+  register[0x28:8] = COPY unique[0xa7200:8]
+0x40100e RET
+  register[0x288:8] = LOAD spaceid[ram] register[0x20:8]
+  register[0x20:8] = INT_ADD register[0x20:8] const[0x8:8]
+  RETURN register[0x288:8]
