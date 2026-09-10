@@ -79,8 +79,11 @@ elseif(MODE STREQUAL "runtime")
   if(STRACE)
     set(_trace_file "${WORKDIR}/no_jvm_runtime.strace")
     file(REMOVE "${_trace_file}")
+    # LeakSanitizer cannot run while strace ptraces the process.  Keep leak
+    # checking enabled for normal sanitizer tests; this applies only to the
+    # execve-count proof below.
     execute_process(
-      COMMAND ${_clean_env} "${STRACE}" -f -e trace=execve -o "${_trace_file}" "${BINARY}" ${ARGS}
+      COMMAND ${_clean_env} ASAN_OPTIONS=detect_leaks=0 "${STRACE}" -f -e trace=execve -o "${_trace_file}" "${BINARY}" ${ARGS}
       WORKING_DIRECTORY "${WORKDIR}"
       OUTPUT_VARIABLE _out ERROR_VARIABLE _err RESULT_VARIABLE _rc)
   else()
