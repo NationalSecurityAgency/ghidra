@@ -1065,6 +1065,23 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 				"Unable to find containing module for structure at 0x%x".formatted(ptrInModule));
 		}
 		long nameStart = module.getTypesOffset() + off;
+		if (nameStart < module.getTypesOffset() || nameStart >= module.getTypesEndOffset()) {
+			// A name offset is relative to the module's types base and must
+			// resolve to an address within the module's type/name area
+			// [types, etypes).  A value outside that range means the referring
+			// structure's name offset is corrupt, or the structure was
+			// misidentified as a Go type (observed on stripped Go >= 1.25
+			// binaries, where one rtti type's pkgPath name offset reads as a
+			// large garbage value).  Return null (no name) rather than reading
+			// an out-of-bounds address, which throws an EOFException that
+			// aborts the entire Go analysis pass and leaves the program with
+			// no recovered Go symbols.
+			Msg.warn(this,
+				"Ignoring out-of-bounds Go name offset 0x%x for structure at 0x%x (module types [0x%x, 0x%x))"
+						.formatted(off, ptrInModule, module.getTypesOffset(),
+							module.getTypesEndOffset()));
+			return null;
+		}
 		return getGoName(nameStart);
 	}
 

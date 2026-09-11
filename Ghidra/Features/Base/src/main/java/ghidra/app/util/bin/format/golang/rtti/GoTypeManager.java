@@ -165,7 +165,17 @@ public class GoTypeManager {
 		// were referenced from the firstModule struct
 		for (GoType goType : allTypes()) {
 			monitor.checkCancelled();
-			markupSession.markup(goType, false);
+			try {
+				markupSession.markup(goType, false);
+			}
+			catch (IOException e) {
+				// Don't let one bad type (e.g. a mis-recovered type in a
+				// stripped binary whose name-offset resolves out of bounds)
+				// abort markup of every remaining type and the later function
+				// markup pass.  Log and continue.
+				Msg.warn(this, "Failed to markup Go type at %s"
+						.formatted(goType.getStructureContext().getStructureAddress()), e);
+			}
 		}
 	}
 
