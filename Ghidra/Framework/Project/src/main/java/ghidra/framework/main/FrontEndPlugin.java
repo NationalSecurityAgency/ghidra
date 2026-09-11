@@ -238,10 +238,12 @@ public class FrontEndPlugin extends Plugin
 		newFolderAction = new FrontEndProjectDataNewFolderAction(owner, groupName);
 
 		groupName = "Cut/copy/paste/new2";
+		copyGhidraURLAction = new ProjectDataCopyGhidraURLAction(owner, groupName);
+
+		groupName = "Cut/copy/paste/new3";
 		cutAction = new ProjectDataCutAction(owner, groupName);
 		clearCutAction = new ClearCutAction(owner);
 		copyAction = new ProjectDataCopyAction(owner, groupName);
-		copyGhidraURLAction = new ProjectDataCopyGhidraURLAction(owner, groupName);
 		pasteAction = new ProjectDataPasteAction(owner, groupName);
 		pasteLinkAction = new ProjectDataPasteLinkAction(owner, groupName, false);
 		pasteRelativeLinkAction = new ProjectDataPasteLinkAction(owner, groupName, true);

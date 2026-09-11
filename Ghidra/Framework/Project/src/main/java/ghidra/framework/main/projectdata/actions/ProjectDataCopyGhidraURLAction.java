@@ -19,16 +19,13 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.net.URL;
 
-import javax.swing.Icon;
-
 import org.apache.commons.collections4.CollectionUtils;
 
 import docking.action.MenuData;
 import docking.dnd.GClipboard;
-import generic.theme.GIcon;
-import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.datatree.FrontEndProjectTreeContext;
-import ghidra.framework.model.Project;
+import ghidra.framework.model.DomainFile;
+import ghidra.framework.model.LinkFileInfo;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 
@@ -45,21 +42,25 @@ public class ProjectDataCopyGhidraURLAction extends ProjectDataCopyCutBaseAction
 		Clipboard clipboard = GClipboard.getSystemClipboard();
 		
 		try {
-			URL url = null;
 			if(CollectionUtils.isNotEmpty(context.getSelectedFiles())) {
-				url = context.getSelectedFiles().getFirst().getSharedProjectURL(null);
+				DomainFile df = context.getSelectedFiles().getFirst();
+				LinkFileInfo linkInfo = df.getLinkInfo();
+				if (linkInfo != null && linkInfo.isFolderLink()) {
+					return; // folder-link not supported
+				}
+				URL url = df.getSharedProjectURL(null);
 				if(url == null) {
-					url = context.getSelectedFiles().getFirst().getLocalProjectURL(null);
+					url = df.getLocalProjectURL(null);
+				}
+				if (url != null) {
+					clipboard.setContents(new StringSelection(url.toString()), null);
+				}
+				else {
+					Msg.showError(ProjectDataCopyGhidraURLAction.class, null,
+						"Copy GhidraURL Failed",
+						"Failed to create file URL for: " + df.getPathname());
 				}
 			}
-			else {
-				url = context.getSelectedFolders().getFirst().getSharedProjectURL();
-				if(url == null) {
-					url = context.getSelectedFolders().getFirst().getLocalProjectURL();
-				}
-			}
-			
-			clipboard.setContents(new StringSelection(url.toString()), null);
 		}
 		catch (IllegalStateException ise) {
 			// this can happen when other applications are accessing the system clipboard
@@ -71,12 +72,12 @@ public class ProjectDataCopyGhidraURLAction extends ProjectDataCopyCutBaseAction
 
 	@Override
 	protected boolean isEnabledForContext(FrontEndProjectTreeContext context) {
-		if (!context.hasExactlyOneFileOrFolder()) {
+		if (context.hasExactlyOneFileOrFolder() && context.getFileCount() != 1) {
 			return false;
 		}
-		
-		Project activeProject = AppInfo.getActiveProject();
-		if (activeProject == null) {
+		DomainFile df = context.getSelectedFiles().getFirst();
+		LinkFileInfo linkInfo = df.getLinkInfo();
+		if (linkInfo != null && linkInfo.isFolderLink()) {
 			return false;
 		}
 		return true;
