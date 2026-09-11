@@ -1975,6 +1975,15 @@ void ParamActive::registerTrial(const Address &addr,int4 sz)
   slotbase += 1;
 }
 
+/// Copy the memory range of the trial and its boolean properties but assign a new slot.
+/// \param oldTrial is the trial to register
+void ParamActive::reregisterTrial(const ParamTrial &oldTrial)
+
+{
+  trial.emplace_back(oldTrial,slotbase);
+  slotbase += 1;
+}
+
 /// The (index of) the first overlapping trial is returned.
 /// \param addr is the starting address of the given range
 /// \param sz is the number of bytes in the range
@@ -4980,6 +4989,7 @@ int4 FuncCallSpecs::transferLockedInputParam(ProtoParameter *param)
     Address trialend = curtrial.getAddress() + (curtrial.getSize() - 1);
     if (trialend < lastaddr) continue;
     if (curtrial.isDefinitelyNotUsed()) return 0;	// Trial has already been stripped
+    curtrial.markUsed();	// Trial is definitely used, picked up by collectUnlockedTrials
     return curtrial.getSlot();
   }
   if (startaddr.getSpace()->getType() == IPTR_SPACEBASE)
@@ -5069,6 +5079,23 @@ bool FuncCallSpecs::transferLockedOutput(vector<Varnode *> &newoutput,const Func
   return true;
 }
 
+/// \brief Put any trials that might represent a \e varargs parameter in the given container
+///
+/// For a \e locked and \e varargs prototype, collect trials that are not in the locked portion of the prototype.
+/// \param unlockedTrials will hold the collected trials
+void FuncCallSpecs::collectUnlockedTrials(vector<ParamTrial> &unlockedTrials)
+
+{
+  if (!isDotdotdot()) return;
+  for(int4 i=0;i<activeinput.getNumTrials();++i) {
+    const ParamTrial &trial(activeinput.getTrial(i));
+    if (trial.isUsed()) continue;	// Trials for locked slots are marked as used
+    int4 slot = trial.getSlot();
+    if (slot < 1 || slot >= op->numInput()) continue;
+    unlockedTrials.push_back(trial);
+  }
+}
+
 /// \brief Update input Varnodes to \b this CALL to reflect the formal input parameters
 ///
 /// The current input parameters must be locked and are presumably out of date
@@ -5084,6 +5111,8 @@ void FuncCallSpecs::commitNewInputs(Funcdata &data,vector<Varnode *> &newinput)
   if (!isInputLocked()) return;
   Varnode *stackref = getSpacebaseRelative();
   Varnode *placeholder = (Varnode *)0;
+  vector<ParamTrial> unlockedTrials;
+  collectUnlockedTrials(unlockedTrials);
   if (stackPlaceholderSlot>=0)
     placeholder = op->getIn(stackPlaceholderSlot);
   bool noplacehold = true;
@@ -5106,6 +5135,11 @@ void FuncCallSpecs::commitNewInputs(Funcdata &data,vector<Varnode *> &newinput)
       noplacehold = false;	// Only set this on the first parameter
       placeholder = (Varnode *)0;	// With a locked stack param, we don't need a placeholder
     }
+  }
+  for(int4 i=0;i<unlockedTrials.size();++i) {
+    Varnode *vn = op->getIn(unlockedTrials[i].getSlot());
+    newinput.push_back(vn);
+    activeinput.reregisterTrial(unlockedTrials[i]);
   }
   if (placeholder != (Varnode *)0) {		// If we still need a placeholder
     newinput.push_back(placeholder);		// Add it at end of parameters
