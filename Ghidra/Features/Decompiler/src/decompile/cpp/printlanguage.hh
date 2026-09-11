@@ -348,6 +348,24 @@ protected:
   /// \param op is the PcodeOp which takes the annotation as input
   virtual void pushAnnotation(const Varnode *vn,const PcodeOp *op)=0;
 
+  /// \brief Push a self-referential register-arithmetic Varnode as a
+  /// binary expression (e.g. "SP - 2") instead of falling through to
+  /// pushAnnotation()'s register0x0e-style fallback name.
+  ///
+  /// Default implementation does nothing and returns \b false,
+  /// \brief Push a cross-register-arithmetic annotation Varnode (e.g. H8's
+  /// "FP = SP - 2") as a binary expression printed in terms of the base
+  /// register it was actually derived from.
+  /// \param vn is the cross-register-arithmetic annotation Varnode (e.g. FP)
+  /// \param base is the register vn was derived from (e.g. SP)
+  /// \param op is the PcodeOp (expected CPUI_SEGMENTOP) consuming vn
+  /// \return \b true if the expression form was successfully pushed
+  virtual bool pushCrossRegisterExpression(const Varnode *vn,const Varnode *base,const PcodeOp *op) { return false; }
+  /// \param vn is the self-referential-arithmetic annotation Varnode
+  /// \param op is the PcodeOp (expected CPUI_SEGMENTOP) consuming it
+  /// \return \b true if the expression form was successfully pushed
+  virtual bool pushSegmentRegisterExpression(const Varnode *vn,const PcodeOp *op) { return false; }
+
   /// \brief Push a specific Symbol onto the RPN stack
   ///
   /// \param sym is the given Symbol
