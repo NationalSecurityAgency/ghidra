@@ -36,7 +36,14 @@ import ghidra.util.Msg;
  */
 public class ProgramLocator {
 	private final DomainFile domainFile;
+
+	// Connections and any saved state should be based upon a non-normalized URL 
+	// as it was originally specified.  This is necessary to ensure that server
+	// certificate validation is based upon the original server hostname as 
+	// specified by the user.
 	private final URL ghidraURL;
+	private final URL normalizedGhidraURL;
+
 	private final int version;
 	private final boolean invalidContent;
 
@@ -49,7 +56,8 @@ public class ProgramLocator {
 		if (!GhidraURL.isGhidraURL(url)) {
 			throw new IllegalArgumentException("unsupported protocol: " + url.getProtocol());
 		}
-		this.ghidraURL = GhidraURL.getNormalizedURL(url);
+		this.ghidraURL = url;
+		this.normalizedGhidraURL = GhidraURL.getNormalizedURL(url);
 		this.domainFile = null;
 		this.version = DomainFile.DEFAULT_VERSION;
 		this.invalidContent = false; // unable to validate
@@ -98,6 +106,7 @@ public class ProgramLocator {
 		}
 		this.domainFile = file;
 		this.ghidraURL = url;
+		this.normalizedGhidraURL = url != null ? GhidraURL.getNormalizedURL(url) : null;
 	}
 
 	/**
@@ -109,11 +118,20 @@ public class ProgramLocator {
 	}
 
 	/**
-	 * Returns the URL for this locator or null if this is a DomainFile based locator
-	 * @return the URL for this locator or null if this is a DomainFile based locator
+	 * Returns the Ghidra URL for this locator or null if this is a DomainFile based locator.
+	 * This URL represents the original URL form when locator was first instantiated.
+	 * @return the Ghidra URL for this locator or null if this is a DomainFile based locator.
 	 */
 	public URL getURL() {
 		return ghidraURL;
+	}
+
+	/**
+	 * Returns the normalized Ghidra URL for this locator or null if this is a DomainFile based locator.
+	 * @return the Ghidra URL for this locator or null if this is a DomainFile based locator.
+	 */
+	public URL getNormalizedURL() {
+		return normalizedGhidraURL;
 	}
 
 	/**
@@ -166,7 +184,7 @@ public class ProgramLocator {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(domainFile, ghidraURL, version);
+		return Objects.hash(domainFile, normalizedGhidraURL, version);
 	}
 
 	@Override
@@ -182,7 +200,8 @@ public class ProgramLocator {
 		}
 		ProgramLocator other = (ProgramLocator) obj;
 		return Objects.equals(domainFile, other.domainFile) &&
-			Objects.equals(ghidraURL, other.ghidraURL) && version == other.version;
+			Objects.equals(normalizedGhidraURL, other.normalizedGhidraURL) &&
+			version == other.version;
 	}
 
 }

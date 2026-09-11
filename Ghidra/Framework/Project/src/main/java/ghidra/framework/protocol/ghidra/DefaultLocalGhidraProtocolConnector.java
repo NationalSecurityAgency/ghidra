@@ -61,7 +61,7 @@ public class DefaultLocalGhidraProtocolConnector extends GhidraProtocolConnector
 	protected void checkHostInfo() throws MalformedURLException {
 		String host = url.getHost();
 		if (host.length() != 0) {
-			throw new MalformedURLException("unsupported host specification");
+			throw new MalformedURLException("Invalid local Ghidra URL");
 		}
 	}
 

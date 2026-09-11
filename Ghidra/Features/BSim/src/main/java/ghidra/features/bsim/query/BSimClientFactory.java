@@ -51,7 +51,7 @@ public class BSimClientFactory {
 		String protocol = url.getProtocol();
 		if (!protocol.equals("postgresql") && !protocol.equals("https") &&
 			!protocol.equals("elastic") && !protocol.equals("file")) {
-			throw new MalformedURLException("Protocol not permissable for BSim URL");
+			throw new MalformedURLException("Protocol not permitted for BSim URL");
 		}
 		String path = url.getPath();
 		if (path == null || path.length() == 0 || path.equals("/")) {

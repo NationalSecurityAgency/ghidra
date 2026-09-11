@@ -681,7 +681,14 @@ public class GhidraURL {
 
 	/**
 	 * Get a normalized URL which eliminates use of host names and optional URL ref
-	 * which may prevent direct comparison.
+	 * which may prevent direct comparison.  
+	 * <p>
+	 * NOTE: This method is primarily intended to be used when caching based upon
+	 * a Ghidra URL.  This method should not be used to transform a URL for
+	 * connection use since the original hostname FQDN is used during server
+	 * certificate validation.  Although, it is a good practice for a server 
+	 * certificate to include both FQDN and IP Address as subject alternative
+	 * names.
 	 * 
 	 * @param url Ghidra URL
 	 * @return normalized url
