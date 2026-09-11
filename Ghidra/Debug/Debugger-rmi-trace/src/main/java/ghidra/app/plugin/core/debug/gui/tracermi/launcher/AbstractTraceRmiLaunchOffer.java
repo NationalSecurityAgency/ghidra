@@ -181,7 +181,7 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 		};
 		mappingService.addChangeListener(result.listener);
 		result.check();
-		result.exceptionally(ex -> {
+		result.exceptionally(_ -> {
 			mappingService.removeChangeListener(result.listener);
 			return null;
 		});
@@ -229,11 +229,12 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 	}
 
 	protected void saveState(SaveState state) {
-		plugin.writeToolLaunchConfig(getConfigName(), state);
 		if (program == null) {
-			return;
+			plugin.writeToolLaunchConfig(getConfigName(), state);
 		}
-		plugin.writeProgramLaunchConfig(program, getConfigName(), state);
+		else {
+			plugin.writeProgramLaunchConfig(program, getConfigName(), state);
+		}
 	}
 
 	protected void saveLauncherArgs(Map<String, ValStr<?>> args,

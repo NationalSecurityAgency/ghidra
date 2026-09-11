@@ -27,13 +27,10 @@ import org.jdom2.JDOMException;
 
 import db.Transaction;
 import docking.ActionContext;
-import docking.action.DockingActionIf;
-import docking.action.builder.ActionBuilder;
 import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.events.ProgramClosedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.DebugProgramAction;
 import ghidra.app.services.*;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer.LaunchConfigurator;
@@ -41,7 +38,8 @@ import ghidra.debug.api.tracermi.TraceRmiLaunchOffer.PromptMode;
 import ghidra.debug.spi.tracermi.TraceRmiLaunchOpinion;
 import ghidra.formats.gfilesystem.FSRL;
 import ghidra.framework.model.DomainFile;
-import ghidra.framework.options.*;
+import ghidra.framework.options.SaveState;
+import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.AddressSpace;
@@ -52,7 +50,6 @@ import ghidra.program.model.lang.ProcessorNotFoundException;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.util.Msg;
-import ghidra.util.bean.opteditor.OptionsVetoException;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.Task;
@@ -78,8 +75,7 @@ import ghidra.util.xml.XmlUtilities;
 	servicesProvided = {
 		TraceRmiLauncherService.class,
 	})
-public class TraceRmiLauncherServicePlugin extends Plugin
-		implements TraceRmiLauncherService, OptionsChangeListener {
+public class TraceRmiLauncherServicePlugin extends Plugin implements TraceRmiLauncherService {
 	protected static final String KEY_DBGLAUNCH = "DBGLAUNCH";
 	protected static final String PREFIX_DBGLAUNCH = "DBGLAUNCH_";
 	protected static final String KEY_LAST = "last";
@@ -280,16 +276,13 @@ public class TraceRmiLauncherServicePlugin extends Plugin
 
 	protected final ToolOptions options;
 
-	protected Program currentProgram;
 	protected LaunchAction launchAction;
-	protected List<DockingActionIf> currentLaunchers = new ArrayList<>();
 
 	protected SaveState toolLaunchConfigs = new SaveState();
 
 	public TraceRmiLauncherServicePlugin(PluginTool tool) {
 		super(tool);
 		this.options = tool.getOptions(DebuggerPluginPackage.NAME);
-		this.options.addOptionsChangeListener(this);
 		createActions();
 	}
 
@@ -305,18 +298,6 @@ public class TraceRmiLauncherServicePlugin extends Plugin
 	protected void createActions() {
 		launchAction = new LaunchAction(this);
 		tool.addAction(launchAction);
-	}
-
-	@Override
-	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
-			Object newValue) throws OptionsVetoException {
-		for (TraceRmiLaunchOpinion opinion : ClassSearcher
-				.getInstances(TraceRmiLaunchOpinion.class)) {
-			if (opinion.requiresRefresh(optionName)) {
-				updateLauncherMenu();
-				return;
-			}
-		}
 	}
 
 	@Override
@@ -350,7 +331,7 @@ public class TraceRmiLauncherServicePlugin extends Plugin
 		executeTask(new ReLaunchTask(offer));
 	}
 
-	protected void relaunch(ActionContext ctx, TraceRmiLaunchOffer offer) {
+	protected void relaunchOrConfigure(ActionContext ctx, TraceRmiLaunchOffer offer) {
 		int mods = ctx == null ? 0 : ctx.getEventClickModifiers();
 		if ((mods & ActionEvent.SHIFT_MASK) != 0) {
 			configureAndLaunch(offer);
@@ -370,59 +351,6 @@ public class TraceRmiLauncherServicePlugin extends Plugin
 			return df.getName();
 		}
 		return program.getName();
-	}
-
-	protected String[] constructLaunchMenuPrefix() {
-		return new String[] {
-			DebuggerPluginPackage.NAME,
-			"Configure and Launch " + getProgramName(currentProgram) + " using..." };
-	}
-
-	protected String[] prependConfigAndLaunch(List<String> menuPath) {
-		return Stream.concat(
-			Stream.of(constructLaunchMenuPrefix()),
-			menuPath.stream()).toArray(String[]::new);
-	}
-
-	private void updateLauncherMenu() {
-		Collection<TraceRmiLaunchOffer> offers = currentProgram == null
-				? List.of()
-				: getOffers(currentProgram);
-		synchronized (currentLaunchers) {
-			for (DockingActionIf launcher : currentLaunchers) {
-				tool.removeAction(launcher);
-			}
-			currentLaunchers.clear();
-
-			if (!offers.isEmpty()) {
-				tool.setMenuGroup(constructLaunchMenuPrefix(), DebugProgramAction.GROUP, "zz");
-			}
-			for (TraceRmiLaunchOffer offer : offers) {
-				currentLaunchers.add(new ActionBuilder(offer.getConfigName(), getName())
-						.menuPath(prependConfigAndLaunch(offer.getMenuPath()))
-						.menuGroup(offer.getMenuGroup(), offer.getMenuOrder())
-						.menuIcon(offer.getIcon())
-						.helpLocation(offer.getHelpLocation())
-						.enabledWhen(ctx -> true)
-						.onAction(ctx -> configureAndLaunch(offer))
-						.buildAndInstall(tool));
-			}
-		}
-	}
-
-	@Override
-	public void processEvent(PluginEvent event) {
-		super.processEvent(event);
-		if (event instanceof ProgramActivatedPluginEvent evt) {
-			currentProgram = evt.getActiveProgram();
-			updateLauncherMenu();
-		}
-		if (event instanceof ProgramClosedPluginEvent evt) {
-			if (currentProgram == evt.getProgram()) {
-				currentProgram = null;
-				updateLauncherMenu();
-			}
-		}
 	}
 
 	@Override
@@ -479,7 +407,7 @@ public class TraceRmiLauncherServicePlugin extends Plugin
 	protected void writeProgramLaunchConfig(Program program, String name, SaveState state) {
 		ProgramUserData userData = program.getProgramUserData();
 		state.putLong(KEY_LAST, System.currentTimeMillis());
-		try (Transaction tx = userData.openTransaction()) {
+		try (Transaction _ = userData.openTransaction()) {
 			Element element = state.saveToXml();
 			userData.setStringProperty(PREFIX_DBGLAUNCH + name, XmlUtilities.toString(element));
 		}
@@ -490,8 +418,7 @@ public class TraceRmiLauncherServicePlugin extends Plugin
 		toolLaunchConfigs.putSaveState(name, state);
 	}
 
-	protected record ConfigLast(String configName, long last, Program program) {
-	}
+	protected record ConfigLast(String configName, long last, Program program) {}
 
 	protected ConfigLast checkSavedConfig(Program program, ProgramUserData userData,
 			String propName) {
@@ -532,8 +459,12 @@ public class TraceRmiLauncherServicePlugin extends Plugin
 				.filter(c -> c != null);
 	}
 
-	protected ConfigLast findMostRecentConfig(Program program) {
-		return streamSavedConfigs(program).max(Comparator.comparing(c -> c.last)).orElse(null);
+	protected ConfigLast findMostRecentConfig() {
+		return Stream.concat(Stream.of(tool.getService(ProgramManager.class).getAllOpenPrograms())
+				.flatMap(this::streamSavedConfigs),
+			this.streamSavedConfigs(null))
+				.max(Comparator.comparing(c -> c.last))
+				.orElse(null);
 	}
 
 	protected TraceRmiLaunchOffer findOffer(ConfigLast last) {
