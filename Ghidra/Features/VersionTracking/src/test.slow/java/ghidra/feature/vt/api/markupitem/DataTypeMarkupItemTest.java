@@ -25,6 +25,7 @@ import org.junit.Test;
 
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.markuptype.DataTypeMarkupType;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.DataTypeConflictChoices;
 import ghidra.feature.vt.gui.util.VTMatchApplyChoices.ReplaceDataChoices;
 import ghidra.feature.vt.gui.util.VTOptionDefines;
 import ghidra.framework.options.ToolOptions;
@@ -310,6 +311,38 @@ public class DataTypeMarkupItemTest extends AbstractVTMarkupItemTest {
 	}
 
 	@Test
+	public void testRejectedApplyDoesNotMutateDestinationDataTypeManager() throws Exception {
+		
+		Address sourceAddress = addr("0x010074e6", sourceProgram); // LoadCursorW
+		StructureDataType sourceDataType = new StructureDataType("RejectedApplyStruct", 0);
+		sourceDataType.add(new DWordDataType());
+		Data sourceData =
+			setDataType(sourceProgram, sourceAddress, sourceDataType, sourceDataType.getLength());
+
+		Address destinationAddress = addr("0x010074e6", destinationProgram); // LoadCursorW
+		StringDataType destinationDataType = new StringDataType();
+		Data destinationData =
+			setDataType(destinationProgram, destinationAddress, destinationDataType, 4); // Get "Load".
+		setDataType(destinationProgram, destinationAddress.add(4), destinationDataType, 6); // Get "Cursor".
+
+		DataTypeManager destinationDTM = destinationProgram.getDataTypeManager();
+		assertNull("Test setup invalid - destination should not already have this data type",
+			destinationDTM.getDataType(sourceDataType.getCategoryPath(),
+				sourceDataType.getName()));
+
+		DataTypeValidator validator = new DataTypeValidator(sourceData, destinationData,
+			ReplaceDataChoices.REPLACE_UNDEFINED_DATA_ONLY);
+		validator.setConflictChoice(DataTypeConflictChoices.RENAME_AND_ADD);
+		doTestFindAndApplyMarkupItem_NoEffect(validator);
+
+		assertNull(
+			"Rejected apply must not add the source data type to the destination data type " +
+				"manager",
+			destinationDTM.getDataType(sourceDataType.getCategoryPath(),
+				sourceDataType.getName()));
+	}
+
+	@Test
 	public void testReplaceUndefinedOnlyWithLargerWhenBlockedByInstruction() throws Exception {
 
 		Address sourceAddress = addr("0x010074e6", sourceProgram); // LoadCursorW
@@ -404,6 +437,7 @@ public class DataTypeMarkupItemTest extends AbstractVTMarkupItemTest {
 		private int sourceLength;
 		private int originalDestinationLength;
 		private ReplaceDataChoices dataTypeChoice;
+		private DataTypeConflictChoices conflictChoice;
 
 		DataTypeValidator(Data sourceData, Data destinationData,
 				ReplaceDataChoices dataTypeChoice) {
@@ -418,6 +452,10 @@ public class DataTypeMarkupItemTest extends AbstractVTMarkupItemTest {
 			this.originalDestinationDataType =
 				originalDestinationDataType.clone(originalDestinationDataType.getDataTypeManager());
 			this.originalDestinationLength = destinationData.getLength();
+		}
+
+		void setConflictChoice(DataTypeConflictChoices conflictChoice) {
+			this.conflictChoice = conflictChoice;
 		}
 
 		@Override
@@ -481,6 +519,9 @@ public class DataTypeMarkupItemTest extends AbstractVTMarkupItemTest {
 		public ToolOptions getOptions() {
 			ToolOptions vtOptions = super.getOptions();
 			vtOptions.setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE, dataTypeChoice);
+			if (conflictChoice != null) {
+				vtOptions.setEnum(VTOptionDefines.DATA_TYPE_CONFLICT_HANDLER, conflictChoice);
+			}
 
 			return vtOptions;
 		}
