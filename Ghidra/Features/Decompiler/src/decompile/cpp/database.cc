@@ -820,12 +820,16 @@ void LabSymbol::decode(Decoder &decoder)
 }
 
 /// Build name, type, and flags based on the placeholder address
-void ExternRefSymbol::buildNameType(void)
+void ExternRefSymbol::buildNameType(Datatype *ct)
 
 {
   TypeFactory *typegrp = scope->getArch()->types;
-  type = typegrp->getTypeCode();
-  type = typegrp->getTypePointer(refaddr.getAddrSize(),type,refaddr.getSpace()->getWordSize());
+  if (ct != (Datatype *)0)
+    type = ct;
+  else {
+    type = typegrp->getTypeCode();
+    type = typegrp->getTypePointer(refaddr.getAddrSize(),type,refaddr.getSpace()->getWordSize());
+  }
   if (name.size() == 0) {	// If a name was not already provided
     ostringstream s;		// Give the reference a unique name
     s << refaddr.getShortcut();
@@ -872,8 +876,12 @@ void ExternRefSymbol::decode(Decoder &decoder)
       displayName = decoder.readString();
   }
   refaddr = Address::decode(decoder);
+  Datatype *ct = (Datatype *)0;
+  // External data references may include a type supplied by the Ghidra callback.
+  if (decoder.peekElement() != 0)
+    ct = scope->getArch()->types->decodeType(decoder);
   decoder.closeElement(elemId);
-  buildNameType();
+  buildNameType(ct);
 }
 
 /// The iterator is advanced by one

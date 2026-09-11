@@ -41,15 +41,20 @@ public class HighExternalSymbol extends HighSymbol {
 	 * @param nm is the given name
 	 * @param addr is the symbol Address
 	 * @param resolveAddr is the resolve Address
+	 * @param dataType is an optional type associated with the external reference
 	 * @param dtmanage is a PcodeDataTypeManager for facilitating XML marshaling
 	 */
-	public HighExternalSymbol(String nm, Address addr, Address resolveAddr,
+	public HighExternalSymbol(String nm, Address addr, Address resolveAddr, DataType dataType,
 			PcodeDataTypeManager dtmanage) {
-		super(0, nm, DataType.DEFAULT, true, true, dtmanage);
+		super(0, nm, dataType != null ? dataType : DataType.DEFAULT, true, true, dtmanage);
 		resolveAddress = resolveAddr;
 		VariableStorage store;
 		try {
-			store = new VariableStorage(getProgram(), addr, 1);
+			int size = addr.getPointerSize();
+			if (size <= 0) {
+				size = 1;
+			}
+			store = new VariableStorage(getProgram(), addr, size);
 		}
 		catch (InvalidInputException e) {
 			store = VariableStorage.UNASSIGNED_STORAGE;
@@ -65,6 +70,9 @@ public class HighExternalSymbol extends HighSymbol {
 			encoder.writeString(ATTRIB_NAME, name + "_exref");
 		}
 		AddressXML.encode(encoder, resolveAddress);
+		if (type != DataType.DEFAULT) {
+			dtmanage.encodeTypeRef(encoder, type, type.getLength());
+		}
 		encoder.closeElement(ELEM_EXTERNREFSYMBOL);
 	}
 }
