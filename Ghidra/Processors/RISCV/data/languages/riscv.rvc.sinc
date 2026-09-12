@@ -169,20 +169,23 @@
 # c.jalr d 00009002 0000f07f JSR (0, 0) 
 :c.jalr crd is crd & cop0001=0x2 & cop1315=0x4 & cop0206=0x0 & cop1212=0x1
 {
+	local tmp:$(XLEN) = crd & ~1;
 	ra = inst_next;
-	call [crd];
+	call [tmp];
 }
 
 # c.jr d 00008002 0000f07f BRANCH (0, 0) 
 :c.jr crd is crd & cop0001=0x2 & cop1315=0x4 & cop0206=0x0 & cop1212=0x0
 {
-	goto [crd];
+	local tmp:$(XLEN) = crd & ~1;
+	goto [tmp];
 }
 
 # ret  00008082 0000ffff BRANCH|ALIAS (0, 0)
 :ret is cop0001=0x2 & cop1315=0x4 & cop0206=0x0 & cop1212=0x0 & cop0711=1
 {
-	return [ra];
+	local tmp:$(XLEN) = ra & ~1;
+	return [tmp];
 }
 
 @if (ADDRSIZE == "64") || (ADDRSIZE == "128")
