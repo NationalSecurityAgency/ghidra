@@ -262,6 +262,20 @@ mnemonic, rather than perhaps a later part, needs to be considered as
 an operand. An initial ‘^’ character can also facilitate certain
 recursive constructions.
 </p>
+<div class="informalexample"><pre class="programlisting">
+:^instruction is               <span class="weak">...</span>
+</pre></div>
+<p>
+</p>
+<p>
+In the example above, the ‘^’ character is prepended to the reserved 
+<span class="emphasis"><em>instruction</em></span> identifier to create 
+a “pure recursive” constructor. Constructors of this form are often employed 
+to perform generic actions for multiple instructions (such as handling instruction prefixes).
+These constructors must be designed with care, as infinite recursion is possible with improper constraints 
+(see <a class="xref" href="sleigh_constructors.html#sleigh_constraints" title="7.4.1. Constraints">Section 7.4.1, “Constraints”</a> and 
+<a class="xref" href="sleigh_tokens.html#sleigh_context_variables" title="6.4. Context Variables">Section 6.4, “Context Variables”</a>).
+</p>
 </div>
 </div>
 <div class="sect2">
