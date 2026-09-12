@@ -1,0 +1,7 @@
+# aes64es - AES final round encryption instruction for RV64
+define pcodeop aes64es;
+:aes64es rd, rs1, rs2 is op2531=0x19 & rs2 & rs1 & op1214=0x0 & rd & op0006=0x33 {rd=aes64es(rs1,rs2);}
+
+# aes64esm - AES middle round encryption instruction for RV64
+define pcodeop aes64esm;
+:aes64esm rd, rs1, rs2 is op2531=0x1b & rs2 & rs1 & op1214=0x0 & rd & op0006=0x33 {rd=aes64esm(rs1,rs2);}
