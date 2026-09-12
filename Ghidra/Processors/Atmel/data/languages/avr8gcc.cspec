@@ -32,7 +32,7 @@
   <global>
     <range space="code"/>
     <range space="codebyte"/>
-    <range space="mem"/>
+    <range space="mem" first="40" last="0xffff"/>
   </global>
   
   <stackpointer register="SP" space="mem" growth="negative"/>
