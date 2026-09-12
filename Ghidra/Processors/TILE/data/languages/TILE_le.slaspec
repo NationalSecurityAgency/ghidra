@@ -1,0 +1,899 @@
+# Generated from GNU binutils tilegx-opc.c.
+# Common scalar, memory, and control instructions include p-code.
+# Complex DSP/system instructions remain explicit user-ops.
+define endian=little;
+define alignment=8;
+
+define space ram type=ram_space size=8 default;
+define space register type=register_space size=4;
+
+define register offset=0x0000 size=8 [
+    r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15
+    r16 r17 r18 r19 r20 r21 r22 r23 r24 r25 r26 r27 r28 r29 r30 r31
+    r32 r33 r34 r35 r36 r37 r38 r39 r40 r41 r42 r43 r44 r45 r46 r47
+    r48 r49 r50 r51 r52 tp sp lr sn idn0 idn1 udn0 udn1 udn2 udn3 zero
+];
+define register offset=0x0400 size=8 [
+    r0_new r1_new r2_new r3_new r4_new r5_new r6_new r7_new r8_new r9_new r10_new r11_new r12_new r13_new r14_new r15_new
+    r16_new r17_new r18_new r19_new r20_new r21_new r22_new r23_new r24_new r25_new r26_new r27_new r28_new r29_new r30_new r31_new
+    r32_new r33_new r34_new r35_new r36_new r37_new r38_new r39_new r40_new r41_new r42_new r43_new r44_new r45_new r46_new r47_new
+    r48_new r49_new r50_new r51_new r52_new tp_new sp_new lr_new sn_new idn0_new idn1_new udn0_new udn1_new udn2_new udn3_new zero_new
+];
+define register offset=0x0200 size=8 pc;
+define register offset=0x0208 size=8 cmpexch_value;
+define register offset=0x0210 size=8 branch_target;
+define register offset=0x0218 size=1 branch_taken;
+
+define pcodeop tilegx_fence;
+define pcodeop tilegx_mfspr;
+define pcodeop tilegx_mtspr;
+define pcodeop tilegx_finv;
+define pcodeop tilegx_flush;
+define pcodeop tilegx_icoh;
+define pcodeop tilegx_wait;
+define pcodeop tilegx_trap;
+define pcodeop tilegx_cmul;
+define pcodeop tilegx_cmula;
+define pcodeop tilegx_cmulaf;
+define pcodeop tilegx_cmulf;
+define pcodeop tilegx_cmulfr;
+define pcodeop tilegx_cmulh;
+define pcodeop tilegx_cmulhr;
+define pcodeop tilegx_dtlbpr;
+define pcodeop tilegx_fdouble_add_flags;
+define pcodeop tilegx_fdouble_addsub;
+define pcodeop tilegx_fdouble_mul_flags;
+define pcodeop tilegx_fdouble_pack1;
+define pcodeop tilegx_fdouble_pack2;
+define pcodeop tilegx_fdouble_sub_flags;
+define pcodeop tilegx_fdouble_unpack_max;
+define pcodeop tilegx_fdouble_unpack_min;
+define pcodeop tilegx_flushwb;
+define pcodeop tilegx_fsingle_add1;
+define pcodeop tilegx_fsingle_addsub2;
+define pcodeop tilegx_fsingle_mul1;
+define pcodeop tilegx_fsingle_mul2;
+define pcodeop tilegx_fsingle_pack1;
+define pcodeop tilegx_fsingle_pack2;
+define pcodeop tilegx_fsingle_sub1;
+define pcodeop tilegx_inv;
+define pcodeop tilegx_ld4s_tls;
+define pcodeop tilegx_ld_tls;
+define pcodeop tilegx_prefetch_add_l1;
+define pcodeop tilegx_prefetch_add_l1_fault;
+define pcodeop tilegx_prefetch_add_l2;
+define pcodeop tilegx_prefetch_add_l2_fault;
+define pcodeop tilegx_prefetch_add_l3;
+define pcodeop tilegx_prefetch_add_l3_fault;
+define pcodeop tilegx_v1add;
+define pcodeop tilegx_v1adduc;
+define pcodeop tilegx_v1adiffu;
+define pcodeop tilegx_v1avgu;
+define pcodeop tilegx_v1cmples;
+define pcodeop tilegx_v1cmpleu;
+define pcodeop tilegx_v1cmplts;
+define pcodeop tilegx_v1cmpltsi;
+define pcodeop tilegx_v1cmpltu;
+define pcodeop tilegx_v1cmpltui;
+define pcodeop tilegx_v1cmpne;
+define pcodeop tilegx_v1ddotpu;
+define pcodeop tilegx_v1ddotpua;
+define pcodeop tilegx_v1ddotpus;
+define pcodeop tilegx_v1ddotpusa;
+define pcodeop tilegx_v1dotp;
+define pcodeop tilegx_v1dotpa;
+define pcodeop tilegx_v1dotpu;
+define pcodeop tilegx_v1dotpua;
+define pcodeop tilegx_v1dotpus;
+define pcodeop tilegx_v1dotpusa;
+define pcodeop tilegx_v1maxu;
+define pcodeop tilegx_v1maxui;
+define pcodeop tilegx_v1minu;
+define pcodeop tilegx_v1minui;
+define pcodeop tilegx_v1mnz;
+define pcodeop tilegx_v1multu;
+define pcodeop tilegx_v1mulu;
+define pcodeop tilegx_v1mulus;
+define pcodeop tilegx_v1mz;
+define pcodeop tilegx_v1sadau;
+define pcodeop tilegx_v1sadu;
+define pcodeop tilegx_v1shl;
+define pcodeop tilegx_v1shli;
+define pcodeop tilegx_v1shrs;
+define pcodeop tilegx_v1shrsi;
+define pcodeop tilegx_v1shru;
+define pcodeop tilegx_v1sub;
+define pcodeop tilegx_v1subuc;
+define pcodeop tilegx_v2add;
+define pcodeop tilegx_v2addsc;
+define pcodeop tilegx_v2adiffs;
+define pcodeop tilegx_v2avgs;
+define pcodeop tilegx_v2cmpeq;
+define pcodeop tilegx_v2cmpeqi;
+define pcodeop tilegx_v2cmples;
+define pcodeop tilegx_v2cmpleu;
+define pcodeop tilegx_v2cmplts;
+define pcodeop tilegx_v2cmpltsi;
+define pcodeop tilegx_v2cmpltu;
+define pcodeop tilegx_v2cmpltui;
+define pcodeop tilegx_v2cmpne;
+define pcodeop tilegx_v2dotp;
+define pcodeop tilegx_v2dotpa;
+define pcodeop tilegx_v2maxs;
+define pcodeop tilegx_v2maxsi;
+define pcodeop tilegx_v2mins;
+define pcodeop tilegx_v2minsi;
+define pcodeop tilegx_v2mnz;
+define pcodeop tilegx_v2mulfsc;
+define pcodeop tilegx_v2muls;
+define pcodeop tilegx_v2mults;
+define pcodeop tilegx_v2mz;
+define pcodeop tilegx_v2packh;
+define pcodeop tilegx_v2packl;
+define pcodeop tilegx_v2packuc;
+define pcodeop tilegx_v2sadas;
+define pcodeop tilegx_v2sads;
+define pcodeop tilegx_v2shl;
+define pcodeop tilegx_v2shli;
+define pcodeop tilegx_v2shlsc;
+define pcodeop tilegx_v2shrs;
+define pcodeop tilegx_v2shrsi;
+define pcodeop tilegx_v2shru;
+define pcodeop tilegx_v2shrui;
+define pcodeop tilegx_v2sub;
+define pcodeop tilegx_v2subsc;
+define pcodeop tilegx_v4add;
+define pcodeop tilegx_v4addsc;
+define pcodeop tilegx_v4packsc;
+define pcodeop tilegx_v4shl;
+define pcodeop tilegx_v4shlsc;
+define pcodeop tilegx_v4shrs;
+define pcodeop tilegx_v4shru;
+define pcodeop tilegx_v4sub;
+define pcodeop tilegx_v4subsc;
+
+define token bundle(64)
+    bundle_bits=(0,63)
+    mode=(62,63)
+    imm8_x0=(12,19) signed
+    imm8_x1=(43,50) signed
+    imm8_y0=(12,19) signed
+    imm8_y1=(43,50) signed
+    imm16_x0=(12,27) signed
+    imm16_x1=(43,58) signed
+    dest_x1=(31,36)
+    srca_x1=(37,42)
+    dest_x0=(0,5)
+    srca_x0=(6,11)
+    dest_y0=(0,5)
+    srca_y0=(6,11)
+    dest_y1=(31,36)
+    srca_y1=(37,42)
+    srca_y2=(20,25)
+    srcb_x0=(12,17)
+    srcb_x1=(43,48)
+    srcb_y0=(12,17)
+    srcb_y1=(43,48)
+    bfstart_x0=(18,23)
+    bfend_x0=(12,17)
+    jumpoff_x1=(31,57) signed
+    srcbdest_y2=(51,56)
+    mf_imm14_x1=(37,50)
+    shamt_x0=(12,17)
+    shamt_x1=(43,48)
+    shamt_y0=(12,17)
+    shamt_y1=(43,48)
+    br_lo=(31,36)
+    br_hi=(43,53) signed
+    mt_lo=(31,36)
+    mt_hi=(43,50)
+    destimm_lo=(31,36)
+    destimm_hi=(43,44) signed
+    dest_x1_num=(31,36)
+    dest_x1_new=(31,36)
+    srca_x1_num=(37,42)
+    srca_x1_new=(37,42)
+    dest_x0_num=(0,5)
+    dest_x0_new=(0,5)
+    srca_x0_num=(6,11)
+    srca_x0_new=(6,11)
+    dest_y0_num=(0,5)
+    dest_y0_new=(0,5)
+    srca_y0_num=(6,11)
+    srca_y0_new=(6,11)
+    dest_y1_num=(31,36)
+    dest_y1_new=(31,36)
+    srca_y1_num=(37,42)
+    srca_y1_new=(37,42)
+    srca_y2_num=(20,25)
+    srca_y2_new=(20,25)
+    srcb_x0_num=(12,17)
+    srcb_x0_new=(12,17)
+    srcb_x1_num=(43,48)
+    srcb_x1_new=(43,48)
+    srcb_y0_num=(12,17)
+    srcb_y0_new=(12,17)
+    srcb_y1_num=(43,48)
+    srcb_y1_new=(43,48)
+    srcbdest_y2_num=(51,56)
+    srcbdest_y2_new=(51,56)
+    m_00_11=(0,11)
+    m_06_11=(6,11)
+    m_12_17=(12,17)
+    m_12_19=(12,19)
+    m_12_30=(12,30)
+    m_18_19=(18,19)
+    m_18_30=(18,30)
+    m_20_30=(20,30)
+    m_24_30=(24,30)
+    m_26_26=(26,26)
+    m_27_30=(27,30)
+    m_28_30=(28,30)
+    m_31_36=(31,36)
+    m_31_42=(31,42)
+    m_31_63=(31,63)
+    m_37_42=(37,42)
+    m_43_48=(43,48)
+    m_43_50=(43,50)
+    m_43_63=(43,63)
+    m_49_50=(49,50)
+    m_49_63=(49,63)
+    m_51_56=(51,56)
+    m_51_57=(51,57)
+    m_51_63=(51,63)
+    m_54_63=(54,63)
+    m_57_57=(57,57)
+    m_58_61=(58,61)
+    m_58_63=(58,63)
+    m_59_63=(59,63)
+    m_62_63=(62,63)
+;
+
+attach variables [ dest_x1 srca_x1 dest_x0 srca_x0 dest_y0 srca_y0 dest_y1 srca_y1 srca_y2 srcb_x0 srcb_x1 srcb_y0 srcb_y1 srcbdest_y2 ] [
+    r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15
+    r16 r17 r18 r19 r20 r21 r22 r23 r24 r25 r26 r27 r28 r29 r30 r31
+    r32 r33 r34 r35 r36 r37 r38 r39 r40 r41 r42 r43 r44 r45 r46 r47
+    r48 r49 r50 r51 r52 tp sp lr sn idn0 idn1 udn0 udn1 udn2 udn3 zero
+];
+
+attach variables [ dest_x1_new srca_x1_new dest_x0_new srca_x0_new dest_y0_new srca_y0_new dest_y1_new srca_y1_new srca_y2_new srcb_x0_new srcb_x1_new srcb_y0_new srcb_y1_new srcbdest_y2_new ] [
+    r0_new r1_new r2_new r3_new r4_new r5_new r6_new r7_new r8_new r9_new r10_new r11_new r12_new r13_new r14_new r15_new
+    r16_new r17_new r18_new r19_new r20_new r21_new r22_new r23_new r24_new r25_new r26_new r27_new r28_new r29_new r30_new r31_new
+    r32_new r33_new r34_new r35_new r36_new r37_new r38_new r39_new r40_new r41_new r42_new r43_new r44_new r45_new r46_new r47_new
+    r48_new r49_new r50_new r51_new r52_new tp_new sp_new lr_new sn_new idn0_new idn1_new udn0_new udn1_new udn2_new udn3_new zero_new
+];
+
+D_x1: dest_x1 is dest_x1 & dest_x1_num=0x3f { local ignored:8 = 0; export ignored; }
+D_x1: dest_x1 is dest_x1 & dest_x1_new & dest_x1_num!=0x3f { export dest_x1_new; <<COMMIT>> dest_x1 = dest_x1_new; }
+A_x1: srca_x1 is srca_x1 & srca_x1_num=0x3f { export 0:8; }
+A_x1: srca_x1 is srca_x1 & srca_x1_num!=0x3f { export srca_x1; }
+D_x0: dest_x0 is dest_x0 & dest_x0_num=0x3f { local ignored:8 = 0; export ignored; }
+D_x0: dest_x0 is dest_x0 & dest_x0_new & dest_x0_num!=0x3f { export dest_x0_new; <<COMMIT>> dest_x0 = dest_x0_new; }
+A_x0: srca_x0 is srca_x0 & srca_x0_num=0x3f { export 0:8; }
+A_x0: srca_x0 is srca_x0 & srca_x0_num!=0x3f { export srca_x0; }
+D_y0: dest_y0 is dest_y0 & dest_y0_num=0x3f { local ignored:8 = 0; export ignored; }
+D_y0: dest_y0 is dest_y0 & dest_y0_new & dest_y0_num!=0x3f { export dest_y0_new; <<COMMIT>> dest_y0 = dest_y0_new; }
+A_y0: srca_y0 is srca_y0 & srca_y0_num=0x3f { export 0:8; }
+A_y0: srca_y0 is srca_y0 & srca_y0_num!=0x3f { export srca_y0; }
+D_y1: dest_y1 is dest_y1 & dest_y1_num=0x3f { local ignored:8 = 0; export ignored; }
+D_y1: dest_y1 is dest_y1 & dest_y1_new & dest_y1_num!=0x3f { export dest_y1_new; <<COMMIT>> dest_y1 = dest_y1_new; }
+A_y1: srca_y1 is srca_y1 & srca_y1_num=0x3f { export 0:8; }
+A_y1: srca_y1 is srca_y1 & srca_y1_num!=0x3f { export srca_y1; }
+A_y2: srca_y2 is srca_y2 & srca_y2_num=0x3f { export 0:8; }
+A_y2: srca_y2 is srca_y2 & srca_y2_num!=0x3f { export srca_y2; }
+AD_x1: srca_x1 is srca_x1 & srca_x1_num=0x3f { local ignored:8 = 0; export ignored; }
+AD_x1: srca_x1 is srca_x1 & srca_x1_new & srca_x1_num!=0x3f { srca_x1_new = srca_x1; export srca_x1_new; <<COMMIT>> srca_x1 = srca_x1_new; }
+B_x0: srcb_x0 is srcb_x0 & srcb_x0_num=0x3f { export 0:8; }
+B_x0: srcb_x0 is srcb_x0 & srcb_x0_num!=0x3f { export srcb_x0; }
+B_x1: srcb_x1 is srcb_x1 & srcb_x1_num=0x3f { export 0:8; }
+B_x1: srcb_x1 is srcb_x1 & srcb_x1_num!=0x3f { export srcb_x1; }
+B_y0: srcb_y0 is srcb_y0 & srcb_y0_num=0x3f { export 0:8; }
+B_y0: srcb_y0 is srcb_y0 & srcb_y0_num!=0x3f { export srcb_y0; }
+B_y1: srcb_y1 is srcb_y1 & srcb_y1_num=0x3f { export 0:8; }
+B_y1: srcb_y1 is srcb_y1 & srcb_y1_num!=0x3f { export srcb_y1; }
+AD_x0: dest_x0 is dest_x0 & dest_x0_num=0x3f { local ignored:8 = 0; export ignored; }
+AD_x0: dest_x0 is dest_x0 & dest_x0_new & dest_x0_num!=0x3f { dest_x0_new = dest_x0; export dest_x0_new; <<COMMIT>> dest_x0 = dest_x0_new; }
+AD_y0: dest_y0 is dest_y0 & dest_y0_num=0x3f { local ignored:8 = 0; export ignored; }
+AD_y0: dest_y0 is dest_y0 & dest_y0_new & dest_y0_num!=0x3f { dest_y0_new = dest_y0; export dest_y0_new; <<COMMIT>> dest_y0 = dest_y0_new; }
+D_y2: srcbdest_y2 is srcbdest_y2 & srcbdest_y2_num=0x3f { local ignored:8 = 0; export ignored; }
+D_y2: srcbdest_y2 is srcbdest_y2 & srcbdest_y2_new & srcbdest_y2_num!=0x3f { export srcbdest_y2_new; <<COMMIT>> srcbdest_y2 = srcbdest_y2_new; }
+AD_y2: srcbdest_y2 is srcbdest_y2 & srcbdest_y2_num=0x3f { local ignored:8 = 0; export ignored; }
+AD_y2: srcbdest_y2 is srcbdest_y2 & srcbdest_y2_new & srcbdest_y2_num!=0x3f { srcbdest_y2_new = srcbdest_y2; export srcbdest_y2_new; <<COMMIT>> srcbdest_y2 = srcbdest_y2_new; }
+
+broff_x1: reloc is br_hi & br_lo [ reloc = inst_start + (((br_hi << 6) | br_lo) << 3); ] { export *[ram]:8 reloc; }
+mf_spr_x1: mf_imm14_x1 is mf_imm14_x1 { local value:8 = mf_imm14_x1; export value; }
+mt_imm14_x1: mt_hi^":"^mt_lo is mt_hi & mt_lo { local value:8 = (mt_hi << 6) | mt_lo; export value; }
+dest_imm8_x1: immediate is destimm_hi & destimm_lo [ immediate = (destimm_hi << 6) | destimm_lo; ] { export *[const]:8 immediate; }
+jumpoff_target: reloc is jumpoff_x1 [ reloc = inst_start + (jumpoff_x1 << 3); ] { export *[ram]:8 reloc; }
+bundle_address: address is epsilon [ address = inst_start; ] { export *[ram]:8 address; }
+
+x0: "info"^" "^imm8_x0 is imm8_x0 & m_00_11=0xfff & m_20_30=0x403 & m_62_63=0x0 {  }
+x0: "move"^" "^D_x0^", "^A_x0 is D_x0 & A_x0 & m_12_30=0x5107f & m_62_63=0x0 { D_x0 = A_x0; }
+x0: "clz"^" "^D_x0^", "^A_x0 is D_x0 & A_x0 & m_12_30=0x51481 & m_62_63=0x0 { D_x0 = lzcount(A_x0); }
+x0: "ctz"^" "^D_x0^", "^A_x0 is D_x0 & A_x0 & m_12_30=0x51482 & m_62_63=0x0 { local isolated:8 = A_x0 & (0 - A_x0); D_x0 = popcount(isolated - 1); }
+x0: "fnop" is m_12_30=0x51483 & m_62_63=0x0 {  }
+x0: "fsingle_pack1"^" "^D_x0^", "^A_x0 is D_x0 & A_x0 & m_12_30=0x51484 & m_62_63=0x0 { D_x0 = tilegx_fsingle_pack1(A_x0); }
+x0: "nop" is m_12_30=0x51485 & m_62_63=0x0 {  }
+x0: "pcnt"^" "^D_x0^", "^A_x0 is D_x0 & A_x0 & m_12_30=0x51486 & m_62_63=0x0 { D_x0 = popcount(A_x0); }
+x0: "revbits"^" "^D_x0^", "^A_x0 is D_x0 & A_x0 & m_12_30=0x51487 & m_62_63=0x0 { local value:8 = A_x0; value = ((value & 0x5555555555555555) << 1) | ((value >> 1) & 0x5555555555555555); value = ((value & 0x3333333333333333) << 2) | ((value >> 2) & 0x3333333333333333); value = ((value & 0x0f0f0f0f0f0f0f0f) << 4) | ((value >> 4) & 0x0f0f0f0f0f0f0f0f); value = ((value & 0x00ff00ff00ff00ff) << 8) | ((value >> 8) & 0x00ff00ff00ff00ff); value = ((value & 0x0000ffff0000ffff) << 16) | ((value >> 16) & 0x0000ffff0000ffff); D_x0 = (value << 32) | (value >> 32); }
+x0: "revbytes"^" "^D_x0^", "^A_x0 is D_x0 & A_x0 & m_12_30=0x51488 & m_62_63=0x0 { local value:8 = A_x0; value = ((value & 0x00ff00ff00ff00ff) << 8) | ((value >> 8) & 0x00ff00ff00ff00ff); value = ((value & 0x0000ffff0000ffff) << 16) | ((value >> 16) & 0x0000ffff0000ffff); D_x0 = (value << 32) | (value >> 32); }
+x0: "tblidxb0"^" "^AD_x0^", "^A_x0 is AD_x0 & A_x0 & m_12_30=0x51489 & m_62_63=0x0 { AD_x0 = (AD_x0 & 0xfffffffffffffc03) | (((A_x0 >> 0) & 0xff) << 2); }
+x0: "tblidxb1"^" "^AD_x0^", "^A_x0 is AD_x0 & A_x0 & m_12_30=0x5148a & m_62_63=0x0 { AD_x0 = (AD_x0 & 0xfffffffffffffc03) | (((A_x0 >> 8) & 0xff) << 2); }
+x0: "tblidxb2"^" "^AD_x0^", "^A_x0 is AD_x0 & A_x0 & m_12_30=0x5148b & m_62_63=0x0 { AD_x0 = (AD_x0 & 0xfffffffffffffc03) | (((A_x0 >> 16) & 0xff) << 2); }
+x0: "tblidxb3"^" "^AD_x0^", "^A_x0 is AD_x0 & A_x0 & m_12_30=0x5148c & m_62_63=0x0 { AD_x0 = (AD_x0 & 0xfffffffffffffc03) | (((A_x0 >> 24) & 0xff) << 2); }
+x0: "movei"^" "^D_x0^", "^imm8_x0 is D_x0 & imm8_x0 & m_06_11=0x3f & m_20_30=0x401 & m_62_63=0x0 { D_x0 = imm8_x0; }
+x0: "infol"^" "^imm16_x0 is imm16_x0 & m_00_11=0xfff & m_28_30=0x7 & m_62_63=0x0 {  }
+x0: "add"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1403 & m_62_63=0x0 { D_x0 = A_x0 + B_x0; }
+x0: "addx"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1402 & m_62_63=0x0 { local result:4 = A_x0:4 + B_x0:4; D_x0 = sext(result); }
+x0: "addxsc"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1401 & m_62_63=0x0 { local value:8 = sext(A_x0:4) + sext(B_x0:4); if (value s<= 0x7fffffff) goto <high_ok>; value = 0x7fffffff; <high_ok> if (value s>= 0xffffffff80000000) goto <low_ok>; value = 0xffffffff80000000; <low_ok> D_x0 = value; }
+x0: "and"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1404 & m_62_63=0x0 { D_x0 = A_x0 & B_x0; }
+x0: "cmoveqz"^" "^AD_x0^", "^A_x0^", "^B_x0 is AD_x0 & A_x0 & B_x0 & m_18_30=0x1405 & m_62_63=0x0 { if (A_x0 != 0) goto <done>; AD_x0 = B_x0; <done> }
+x0: "cmovnez"^" "^AD_x0^", "^A_x0^", "^B_x0 is AD_x0 & A_x0 & B_x0 & m_18_30=0x1406 & m_62_63=0x0 { if (A_x0 == 0) goto <done>; AD_x0 = B_x0; <done> }
+x0: "cmpeq"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1407 & m_62_63=0x0 { D_x0 = zext(A_x0 == B_x0); }
+x0: "cmples"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1408 & m_62_63=0x0 { D_x0 = zext(A_x0 s<= B_x0); }
+x0: "cmpleu"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1409 & m_62_63=0x0 { D_x0 = zext(A_x0 <= B_x0); }
+x0: "cmplts"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x140a & m_62_63=0x0 { D_x0 = zext(A_x0 s< B_x0); }
+x0: "cmpltu"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x140b & m_62_63=0x0 { D_x0 = zext(A_x0 < B_x0); }
+x0: "cmpne"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x140c & m_62_63=0x0 { D_x0 = zext(A_x0 != B_x0); }
+x0: "cmul"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1413 & m_62_63=0x0 { D_x0 = tilegx_cmul(A_x0, B_x0); }
+x0: "cmula"^" "^AD_x0^", "^A_x0^", "^B_x0 is AD_x0 & A_x0 & B_x0 & m_18_30=0x140e & m_62_63=0x0 { AD_x0 = tilegx_cmula(A_x0, B_x0); }
+x0: "cmulaf"^" "^AD_x0^", "^A_x0^", "^B_x0 is AD_x0 & A_x0 & B_x0 & m_18_30=0x140d & m_62_63=0x0 { AD_x0 = tilegx_cmulaf(A_x0, B_x0); }
+x0: "cmulf"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1410 & m_62_63=0x0 { D_x0 = tilegx_cmulf(A_x0, B_x0); }
+x0: "cmulfr"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x140f & m_62_63=0x0 { D_x0 = tilegx_cmulfr(A_x0, B_x0); }
+x0: "cmulh"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1412 & m_62_63=0x0 { D_x0 = tilegx_cmulh(A_x0, B_x0); }
+x0: "cmulhr"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1411 & m_62_63=0x0 { D_x0 = tilegx_cmulhr(A_x0, B_x0); }
+x0: "crc32_32"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1414 & m_62_63=0x0 { local crc:4 = A_x0:4; local input:4 = B_x0:4; local bit0:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit0 == 0) goto <crc0>; crc = crc ^ 0xedb88320; <crc0> input = input >> 1; local bit1:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit1 == 0) goto <crc1>; crc = crc ^ 0xedb88320; <crc1> input = input >> 1; local bit2:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit2 == 0) goto <crc2>; crc = crc ^ 0xedb88320; <crc2> input = input >> 1; local bit3:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit3 == 0) goto <crc3>; crc = crc ^ 0xedb88320; <crc3> input = input >> 1; local bit4:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit4 == 0) goto <crc4>; crc = crc ^ 0xedb88320; <crc4> input = input >> 1; local bit5:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit5 == 0) goto <crc5>; crc = crc ^ 0xedb88320; <crc5> input = input >> 1; local bit6:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit6 == 0) goto <crc6>; crc = crc ^ 0xedb88320; <crc6> input = input >> 1; local bit7:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit7 == 0) goto <crc7>; crc = crc ^ 0xedb88320; <crc7> input = input >> 1; local bit8:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit8 == 0) goto <crc8>; crc = crc ^ 0xedb88320; <crc8> input = input >> 1; local bit9:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit9 == 0) goto <crc9>; crc = crc ^ 0xedb88320; <crc9> input = input >> 1; local bit10:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit10 == 0) goto <crc10>; crc = crc ^ 0xedb88320; <crc10> input = input >> 1; local bit11:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit11 == 0) goto <crc11>; crc = crc ^ 0xedb88320; <crc11> input = input >> 1; local bit12:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit12 == 0) goto <crc12>; crc = crc ^ 0xedb88320; <crc12> input = input >> 1; local bit13:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit13 == 0) goto <crc13>; crc = crc ^ 0xedb88320; <crc13> input = input >> 1; local bit14:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit14 == 0) goto <crc14>; crc = crc ^ 0xedb88320; <crc14> input = input >> 1; local bit15:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit15 == 0) goto <crc15>; crc = crc ^ 0xedb88320; <crc15> input = input >> 1; local bit16:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit16 == 0) goto <crc16>; crc = crc ^ 0xedb88320; <crc16> input = input >> 1; local bit17:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit17 == 0) goto <crc17>; crc = crc ^ 0xedb88320; <crc17> input = input >> 1; local bit18:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit18 == 0) goto <crc18>; crc = crc ^ 0xedb88320; <crc18> input = input >> 1; local bit19:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit19 == 0) goto <crc19>; crc = crc ^ 0xedb88320; <crc19> input = input >> 1; local bit20:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit20 == 0) goto <crc20>; crc = crc ^ 0xedb88320; <crc20> input = input >> 1; local bit21:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit21 == 0) goto <crc21>; crc = crc ^ 0xedb88320; <crc21> input = input >> 1; local bit22:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit22 == 0) goto <crc22>; crc = crc ^ 0xedb88320; <crc22> input = input >> 1; local bit23:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit23 == 0) goto <crc23>; crc = crc ^ 0xedb88320; <crc23> input = input >> 1; local bit24:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit24 == 0) goto <crc24>; crc = crc ^ 0xedb88320; <crc24> input = input >> 1; local bit25:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit25 == 0) goto <crc25>; crc = crc ^ 0xedb88320; <crc25> input = input >> 1; local bit26:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit26 == 0) goto <crc26>; crc = crc ^ 0xedb88320; <crc26> input = input >> 1; local bit27:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit27 == 0) goto <crc27>; crc = crc ^ 0xedb88320; <crc27> input = input >> 1; local bit28:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit28 == 0) goto <crc28>; crc = crc ^ 0xedb88320; <crc28> input = input >> 1; local bit29:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit29 == 0) goto <crc29>; crc = crc ^ 0xedb88320; <crc29> input = input >> 1; local bit30:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit30 == 0) goto <crc30>; crc = crc ^ 0xedb88320; <crc30> input = input >> 1; local bit31:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit31 == 0) goto <crc31>; crc = crc ^ 0xedb88320; <crc31> input = input >> 1; D_x0 = zext(crc); }
+x0: "crc32_8"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1415 & m_62_63=0x0 { local crc:4 = A_x0:4; local input:4 = B_x0:4; local bit0:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit0 == 0) goto <crc0>; crc = crc ^ 0xedb88320; <crc0> input = input >> 1; local bit1:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit1 == 0) goto <crc1>; crc = crc ^ 0xedb88320; <crc1> input = input >> 1; local bit2:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit2 == 0) goto <crc2>; crc = crc ^ 0xedb88320; <crc2> input = input >> 1; local bit3:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit3 == 0) goto <crc3>; crc = crc ^ 0xedb88320; <crc3> input = input >> 1; local bit4:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit4 == 0) goto <crc4>; crc = crc ^ 0xedb88320; <crc4> input = input >> 1; local bit5:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit5 == 0) goto <crc5>; crc = crc ^ 0xedb88320; <crc5> input = input >> 1; local bit6:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit6 == 0) goto <crc6>; crc = crc ^ 0xedb88320; <crc6> input = input >> 1; local bit7:4 = (crc ^ input) & 1; crc = crc >> 1; if (bit7 == 0) goto <crc7>; crc = crc ^ 0xedb88320; <crc7> input = input >> 1; D_x0 = zext(crc); }
+x0: "dblalign"^" "^AD_x0^", "^A_x0^", "^B_x0 is AD_x0 & A_x0 & B_x0 & m_18_30=0x1419 & m_62_63=0x0 { local amount:8 = (B_x0 & 7) << 3; AD_x0 = (AD_x0 >> amount) | ((A_x0 << (amount ^ 63)) << 1); }
+x0: "dblalign2"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1416 & m_62_63=0x0 { D_x0 = (B_x0 >> 16) | (A_x0 << 48); }
+x0: "dblalign4"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1417 & m_62_63=0x0 { D_x0 = (B_x0 >> 32) | (A_x0 << 32); }
+x0: "dblalign6"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1418 & m_62_63=0x0 { D_x0 = (B_x0 >> 48) | (A_x0 << 16); }
+x0: "fdouble_add_flags"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x141b & m_62_63=0x0 { D_x0 = tilegx_fdouble_add_flags(A_x0, B_x0); }
+x0: "fdouble_addsub"^" "^AD_x0^", "^A_x0^", "^B_x0 is AD_x0 & A_x0 & B_x0 & m_18_30=0x141a & m_62_63=0x0 { AD_x0 = tilegx_fdouble_addsub(A_x0, B_x0); }
+x0: "fdouble_mul_flags"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x141c & m_62_63=0x0 { D_x0 = tilegx_fdouble_mul_flags(A_x0, B_x0); }
+x0: "fdouble_pack1"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x141d & m_62_63=0x0 { D_x0 = tilegx_fdouble_pack1(A_x0, B_x0); }
+x0: "fdouble_pack2"^" "^AD_x0^", "^A_x0^", "^B_x0 is AD_x0 & A_x0 & B_x0 & m_18_30=0x141e & m_62_63=0x0 { AD_x0 = tilegx_fdouble_pack2(A_x0, B_x0); }
+x0: "fdouble_sub_flags"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x141f & m_62_63=0x0 { D_x0 = tilegx_fdouble_sub_flags(A_x0, B_x0); }
+x0: "fdouble_unpack_max"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1420 & m_62_63=0x0 { D_x0 = tilegx_fdouble_unpack_max(A_x0, B_x0); }
+x0: "fdouble_unpack_min"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1421 & m_62_63=0x0 { D_x0 = tilegx_fdouble_unpack_min(A_x0, B_x0); }
+x0: "fsingle_add1"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1422 & m_62_63=0x0 { D_x0 = tilegx_fsingle_add1(A_x0, B_x0); }
+x0: "fsingle_addsub2"^" "^AD_x0^", "^A_x0^", "^B_x0 is AD_x0 & A_x0 & B_x0 & m_18_30=0x1423 & m_62_63=0x0 { AD_x0 = tilegx_fsingle_addsub2(A_x0, B_x0); }
+x0: "fsingle_mul1"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1424 & m_62_63=0x0 { D_x0 = tilegx_fsingle_mul1(A_x0, B_x0); }
+x0: "fsingle_mul2"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1425 & m_62_63=0x0 { D_x0 = tilegx_fsingle_mul2(A_x0, B_x0); }
+x0: "fsingle_pack2"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1426 & m_62_63=0x0 { D_x0 = tilegx_fsingle_pack2(A_x0, B_x0); }
+x0: "fsingle_sub1"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1427 & m_62_63=0x0 { D_x0 = tilegx_fsingle_sub1(A_x0, B_x0); }
+x0: "mnz"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1428 & m_62_63=0x0 { local mask:8 = sext(A_x0 != 0); D_x0 = mask & B_x0; }
+x0: "mul_hs_hs"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1435 & m_62_63=0x0 { D_x0 = ((A_x0 s>> 32) * (B_x0 s>> 32)); }
+x0: "mul_hs_hu"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1436 & m_62_63=0x0 { D_x0 = ((A_x0 s>> 32) * (B_x0 >> 32)); }
+x0: "mul_hs_ls"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1437 & m_62_63=0x0 { D_x0 = ((A_x0 s>> 32) * sext(B_x0:4)); }
+x0: "mul_hs_lu"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1438 & m_62_63=0x0 { D_x0 = ((A_x0 s>> 32) * zext(B_x0:4)); }
+x0: "mul_hu_hu"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1439 & m_62_63=0x0 { D_x0 = ((A_x0 >> 32) * (B_x0 >> 32)); }
+x0: "mul_hu_ls"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x143a & m_62_63=0x0 { D_x0 = ((A_x0 >> 32) * sext(B_x0:4)); }
+x0: "mul_hu_lu"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x143b & m_62_63=0x0 { D_x0 = ((A_x0 >> 32) * zext(B_x0:4)); }
+x0: "mul_ls_ls"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x143c & m_62_63=0x0 { D_x0 = (sext(A_x0:4) * sext(B_x0:4)); }
+x0: "mul_ls_lu"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x143d & m_62_63=0x0 { D_x0 = (sext(A_x0:4) * zext(B_x0:4)); }
+x0: "mul_lu_lu"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x143e & m_62_63=0x0 { D_x0 = (zext(A_x0:4) * zext(B_x0:4)); }
+x0: "mula_hs_hs"^" "^AD_x0^", "^A_x0^", "^B_x0 is AD_x0 & A_x0 & B_x0 & m_18_30=0x142a & m_62_63=0x0 { AD_x0 = AD_x0 + ((A_x0 s>> 32) * (B_x0 s>> 32)); }
+x0: "mula_hs_hu"^" "^AD_x0^", "^A_x0^", "^B_x0 is AD_x0 & A_x0 & B_x0 & m_18_30=0x142b & m_62_63=0x0 { AD_x0 = AD_x0 + ((A_x0 s>> 32) * (B_x0 >> 32)); }
+x0: "mula_hs_ls"^" "^AD_x0^", "^A_x0^", "^B_x0 is AD_x0 & A_x0 & B_x0 & m_18_30=0x142c & m_62_63=0x0 { AD_x0 = AD_x0 + ((A_x0 s>> 32) * sext(B_x0:4)); }
+x0: "mula_hs_lu"^" "^AD_x0^", "^A_x0^", "^B_x0 is AD_x0 & A_x0 & B_x0 & m_18_30=0x142d & m_62_63=0x0 { AD_x0 = AD_x0 + ((A_x0 s>> 32) * zext(B_x0:4)); }
+x0: "mula_hu_hu"^" "^AD_x0^", "^A_x0^", "^B_x0 is AD_x0 & A_x0 & B_x0 & m_18_30=0x142e & m_62_63=0x0 { AD_x0 = AD_x0 + ((A_x0 >> 32) * (B_x0 >> 32)); }
+x0: "mula_hu_ls"^" "^AD_x0^", "^A_x0^", "^B_x0 is AD_x0 & A_x0 & B_x0 & m_18_30=0x142f & m_62_63=0x0 { AD_x0 = AD_x0 + ((A_x0 >> 32) * sext(B_x0:4)); }
+x0: "mula_hu_lu"^" "^AD_x0^", "^A_x0^", "^B_x0 is AD_x0 & A_x0 & B_x0 & m_18_30=0x1430 & m_62_63=0x0 { AD_x0 = AD_x0 + ((A_x0 >> 32) * zext(B_x0:4)); }
+x0: "mula_ls_ls"^" "^AD_x0^", "^A_x0^", "^B_x0 is AD_x0 & A_x0 & B_x0 & m_18_30=0x1431 & m_62_63=0x0 { AD_x0 = AD_x0 + (sext(A_x0:4) * sext(B_x0:4)); }
+x0: "mula_ls_lu"^" "^AD_x0^", "^A_x0^", "^B_x0 is AD_x0 & A_x0 & B_x0 & m_18_30=0x1432 & m_62_63=0x0 { AD_x0 = AD_x0 + (sext(A_x0:4) * zext(B_x0:4)); }
+x0: "mula_lu_lu"^" "^AD_x0^", "^A_x0^", "^B_x0 is AD_x0 & A_x0 & B_x0 & m_18_30=0x1433 & m_62_63=0x0 { AD_x0 = AD_x0 + (zext(A_x0:4) * zext(B_x0:4)); }
+x0: "mulax"^" "^AD_x0^", "^A_x0^", "^B_x0 is AD_x0 & A_x0 & B_x0 & m_18_30=0x1429 & m_62_63=0x0 { local result:4 = AD_x0:4 + (A_x0:4 * B_x0:4); AD_x0 = sext(result); }
+x0: "mulx"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1434 & m_62_63=0x0 { local result:4 = (A_x0:4 * B_x0:4); D_x0 = sext(result); }
+x0: "mz"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x143f & m_62_63=0x0 { local mask:8 = sext(A_x0 == 0); D_x0 = mask & B_x0; }
+x0: "nor"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1440 & m_62_63=0x0 { D_x0 = ~(A_x0 | B_x0); }
+x0: "or"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1441 & m_62_63=0x0 & (m_12_17!=0x3f) { D_x0 = A_x0 | B_x0; }
+x0: "rotl"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1442 & m_62_63=0x0 { local amount:8 = (B_x0 & 0x3f); D_x0 = (A_x0 << amount) | (A_x0 >> ((64 - amount) & 0x3f)); }
+x0: "rotli"^" "^D_x0^", "^A_x0^", "^shamt_x0 is D_x0 & A_x0 & shamt_x0 & m_18_30=0x1801 & m_62_63=0x0 { local amount:8 = shamt_x0; D_x0 = (A_x0 << amount) | (A_x0 >> ((64 - amount) & 0x3f)); }
+x0: "shl"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x144a & m_62_63=0x0 { D_x0 = A_x0 << (B_x0 & 0x3f); }
+x0: "shl1add"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1444 & m_62_63=0x0 { D_x0 = (A_x0 << 1) + B_x0; }
+x0: "shl1addx"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1443 & m_62_63=0x0 { local result:4 = (A_x0:4 << 1) + B_x0:4; D_x0 = sext(result); }
+x0: "shl2add"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1446 & m_62_63=0x0 { D_x0 = (A_x0 << 2) + B_x0; }
+x0: "shl2addx"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1445 & m_62_63=0x0 { local result:4 = (A_x0:4 << 2) + B_x0:4; D_x0 = sext(result); }
+x0: "shl3add"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1448 & m_62_63=0x0 { D_x0 = (A_x0 << 3) + B_x0; }
+x0: "shl3addx"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1447 & m_62_63=0x0 { local result:4 = (A_x0:4 << 3) + B_x0:4; D_x0 = sext(result); }
+x0: "shli"^" "^D_x0^", "^A_x0^", "^shamt_x0 is D_x0 & A_x0 & shamt_x0 & m_18_30=0x1802 & m_62_63=0x0 { D_x0 = A_x0 << shamt_x0; }
+x0: "shlx"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1449 & m_62_63=0x0 { local result:4 = A_x0:4 << (B_x0 & 0x1f); D_x0 = sext(result); }
+x0: "shlxi"^" "^D_x0^", "^A_x0^", "^shamt_x0 is D_x0 & A_x0 & shamt_x0 & m_18_30=0x1803 & m_62_63=0x0 { local result:4 = A_x0:4 << shamt_x0; D_x0 = sext(result); }
+x0: "shrs"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x144b & m_62_63=0x0 { D_x0 = A_x0 s>> (B_x0 & 0x3f); }
+x0: "shrsi"^" "^D_x0^", "^A_x0^", "^shamt_x0 is D_x0 & A_x0 & shamt_x0 & m_18_30=0x1804 & m_62_63=0x0 { D_x0 = A_x0 s>> shamt_x0; }
+x0: "shru"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x144d & m_62_63=0x0 { D_x0 = A_x0 >> (B_x0 & 0x3f); }
+x0: "shrui"^" "^D_x0^", "^A_x0^", "^shamt_x0 is D_x0 & A_x0 & shamt_x0 & m_18_30=0x1805 & m_62_63=0x0 { D_x0 = A_x0 >> shamt_x0; }
+x0: "shrux"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x144c & m_62_63=0x0 { local result:4 = A_x0:4 >> (B_x0 & 0x1f); D_x0 = sext(result); }
+x0: "shruxi"^" "^D_x0^", "^A_x0^", "^shamt_x0 is D_x0 & A_x0 & shamt_x0 & m_18_30=0x1806 & m_62_63=0x0 { local result:4 = A_x0:4 >> shamt_x0; D_x0 = sext(result); }
+x0: "shufflebytes"^" "^AD_x0^", "^A_x0^", "^B_x0 is AD_x0 & A_x0 & B_x0 & m_18_30=0x144e & m_62_63=0x0 { local original:8 = AD_x0; local output:8 = 0; local shifted_selector0:8 = B_x0 >> 0; local selector0:1 = shifted_selector0:1; local source0:8 = original; if ((selector0 & 8) == 0) goto <selected0>; source0 = A_x0; <selected0> local shifted_source0:8 = source0 >> ((selector0 & 7) << 3); local byte0:1 = shifted_source0:1; output = output | (zext(byte0) << 0); local shifted_selector1:8 = B_x0 >> 8; local selector1:1 = shifted_selector1:1; local source1:8 = original; if ((selector1 & 8) == 0) goto <selected1>; source1 = A_x0; <selected1> local shifted_source1:8 = source1 >> ((selector1 & 7) << 3); local byte1:1 = shifted_source1:1; output = output | (zext(byte1) << 8); local shifted_selector2:8 = B_x0 >> 16; local selector2:1 = shifted_selector2:1; local source2:8 = original; if ((selector2 & 8) == 0) goto <selected2>; source2 = A_x0; <selected2> local shifted_source2:8 = source2 >> ((selector2 & 7) << 3); local byte2:1 = shifted_source2:1; output = output | (zext(byte2) << 16); local shifted_selector3:8 = B_x0 >> 24; local selector3:1 = shifted_selector3:1; local source3:8 = original; if ((selector3 & 8) == 0) goto <selected3>; source3 = A_x0; <selected3> local shifted_source3:8 = source3 >> ((selector3 & 7) << 3); local byte3:1 = shifted_source3:1; output = output | (zext(byte3) << 24); local shifted_selector4:8 = B_x0 >> 32; local selector4:1 = shifted_selector4:1; local source4:8 = original; if ((selector4 & 8) == 0) goto <selected4>; source4 = A_x0; <selected4> local shifted_source4:8 = source4 >> ((selector4 & 7) << 3); local byte4:1 = shifted_source4:1; output = output | (zext(byte4) << 32); local shifted_selector5:8 = B_x0 >> 40; local selector5:1 = shifted_selector5:1; local source5:8 = original; if ((selector5 & 8) == 0) goto <selected5>; source5 = A_x0; <selected5> local shifted_source5:8 = source5 >> ((selector5 & 7) << 3); local byte5:1 = shifted_source5:1; output = output | (zext(byte5) << 40); local shifted_selector6:8 = B_x0 >> 48; local selector6:1 = shifted_selector6:1; local source6:8 = original; if ((selector6 & 8) == 0) goto <selected6>; source6 = A_x0; <selected6> local shifted_source6:8 = source6 >> ((selector6 & 7) << 3); local byte6:1 = shifted_source6:1; output = output | (zext(byte6) << 48); local shifted_selector7:8 = B_x0 >> 56; local selector7:1 = shifted_selector7:1; local source7:8 = original; if ((selector7 & 8) == 0) goto <selected7>; source7 = A_x0; <selected7> local shifted_source7:8 = source7 >> ((selector7 & 7) << 3); local byte7:1 = shifted_source7:1; output = output | (zext(byte7) << 56); AD_x0 = output; }
+x0: "sub"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1451 & m_62_63=0x0 { D_x0 = A_x0 - B_x0; }
+x0: "subx"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1450 & m_62_63=0x0 { local result:4 = A_x0:4 - B_x0:4; D_x0 = sext(result); }
+x0: "subxsc"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x144f & m_62_63=0x0 { local value:8 = sext(A_x0:4) - sext(B_x0:4); if (value s<= 0x7fffffff) goto <high_ok>; value = 0x7fffffff; <high_ok> if (value s>= 0xffffffff80000000) goto <low_ok>; value = 0xffffffff80000000; <low_ok> D_x0 = value; }
+x0: "v1add"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1454 & m_62_63=0x0 { D_x0 = tilegx_v1add(A_x0, B_x0); }
+x0: "v1adduc"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1453 & m_62_63=0x0 { D_x0 = tilegx_v1adduc(A_x0, B_x0); }
+x0: "v1adiffu"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1455 & m_62_63=0x0 { D_x0 = tilegx_v1adiffu(A_x0, B_x0); }
+x0: "v1avgu"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1456 & m_62_63=0x0 { D_x0 = tilegx_v1avgu(A_x0, B_x0); }
+x0: "v1cmpeq"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1457 & m_62_63=0x0 { local output:8 = 0; local shifted_a0:8 = A_x0 >> 0; local shifted_b0:8 = B_x0 >> 0; local a0:1 = shifted_a0:1; local b0:1 = shifted_b0:1; local lane_result0:1 = zext(a0 == b0); output = output | (zext(lane_result0) << 0); local shifted_a1:8 = A_x0 >> 8; local shifted_b1:8 = B_x0 >> 8; local a1:1 = shifted_a1:1; local b1:1 = shifted_b1:1; local lane_result1:1 = zext(a1 == b1); output = output | (zext(lane_result1) << 8); local shifted_a2:8 = A_x0 >> 16; local shifted_b2:8 = B_x0 >> 16; local a2:1 = shifted_a2:1; local b2:1 = shifted_b2:1; local lane_result2:1 = zext(a2 == b2); output = output | (zext(lane_result2) << 16); local shifted_a3:8 = A_x0 >> 24; local shifted_b3:8 = B_x0 >> 24; local a3:1 = shifted_a3:1; local b3:1 = shifted_b3:1; local lane_result3:1 = zext(a3 == b3); output = output | (zext(lane_result3) << 24); local shifted_a4:8 = A_x0 >> 32; local shifted_b4:8 = B_x0 >> 32; local a4:1 = shifted_a4:1; local b4:1 = shifted_b4:1; local lane_result4:1 = zext(a4 == b4); output = output | (zext(lane_result4) << 32); local shifted_a5:8 = A_x0 >> 40; local shifted_b5:8 = B_x0 >> 40; local a5:1 = shifted_a5:1; local b5:1 = shifted_b5:1; local lane_result5:1 = zext(a5 == b5); output = output | (zext(lane_result5) << 40); local shifted_a6:8 = A_x0 >> 48; local shifted_b6:8 = B_x0 >> 48; local a6:1 = shifted_a6:1; local b6:1 = shifted_b6:1; local lane_result6:1 = zext(a6 == b6); output = output | (zext(lane_result6) << 48); local shifted_a7:8 = A_x0 >> 56; local shifted_b7:8 = B_x0 >> 56; local a7:1 = shifted_a7:1; local b7:1 = shifted_b7:1; local lane_result7:1 = zext(a7 == b7); output = output | (zext(lane_result7) << 56); D_x0 = output; }
+x0: "v1cmples"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1458 & m_62_63=0x0 { D_x0 = tilegx_v1cmples(A_x0, B_x0); }
+x0: "v1cmpleu"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1459 & m_62_63=0x0 { D_x0 = tilegx_v1cmpleu(A_x0, B_x0); }
+x0: "v1cmplts"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x145a & m_62_63=0x0 { D_x0 = tilegx_v1cmplts(A_x0, B_x0); }
+x0: "v1cmpltu"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x145b & m_62_63=0x0 { D_x0 = tilegx_v1cmpltu(A_x0, B_x0); }
+x0: "v1cmpne"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x145c & m_62_63=0x0 { D_x0 = tilegx_v1cmpne(A_x0, B_x0); }
+x0: "v1ddotpu"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x14a2 & m_62_63=0x0 { D_x0 = tilegx_v1ddotpu(A_x0, B_x0); }
+x0: "v1ddotpua"^" "^AD_x0^", "^A_x0^", "^B_x0 is AD_x0 & A_x0 & B_x0 & m_18_30=0x14a1 & m_62_63=0x0 { AD_x0 = tilegx_v1ddotpua(A_x0, B_x0); }
+x0: "v1ddotpus"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x145e & m_62_63=0x0 { D_x0 = tilegx_v1ddotpus(A_x0, B_x0); }
+x0: "v1ddotpusa"^" "^AD_x0^", "^A_x0^", "^B_x0 is AD_x0 & A_x0 & B_x0 & m_18_30=0x145d & m_62_63=0x0 { AD_x0 = tilegx_v1ddotpusa(A_x0, B_x0); }
+x0: "v1dotp"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1462 & m_62_63=0x0 { D_x0 = tilegx_v1dotp(A_x0, B_x0); }
+x0: "v1dotpa"^" "^AD_x0^", "^A_x0^", "^B_x0 is AD_x0 & A_x0 & B_x0 & m_18_30=0x145f & m_62_63=0x0 { AD_x0 = tilegx_v1dotpa(A_x0, B_x0); }
+x0: "v1dotpu"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x14a4 & m_62_63=0x0 { D_x0 = tilegx_v1dotpu(A_x0, B_x0); }
+x0: "v1dotpua"^" "^AD_x0^", "^A_x0^", "^B_x0 is AD_x0 & A_x0 & B_x0 & m_18_30=0x14a3 & m_62_63=0x0 { AD_x0 = tilegx_v1dotpua(A_x0, B_x0); }
+x0: "v1dotpus"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1461 & m_62_63=0x0 { D_x0 = tilegx_v1dotpus(A_x0, B_x0); }
+x0: "v1dotpusa"^" "^AD_x0^", "^A_x0^", "^B_x0 is AD_x0 & A_x0 & B_x0 & m_18_30=0x1460 & m_62_63=0x0 { AD_x0 = tilegx_v1dotpusa(A_x0, B_x0); }
+x0: "v1int_h"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1463 & m_62_63=0x0 { local output:8 = 0; output = output | (((B_x0 >> 32) & 0xff) << 0); output = output | (((A_x0 >> 32) & 0xff) << 8); output = output | (((B_x0 >> 40) & 0xff) << 16); output = output | (((A_x0 >> 40) & 0xff) << 24); output = output | (((B_x0 >> 48) & 0xff) << 32); output = output | (((A_x0 >> 48) & 0xff) << 40); output = output | (((B_x0 >> 56) & 0xff) << 48); output = output | (((A_x0 >> 56) & 0xff) << 56); D_x0 = output; }
+x0: "v1int_l"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1464 & m_62_63=0x0 { local output:8 = 0; output = output | (((B_x0 >> 0) & 0xff) << 0); output = output | (((A_x0 >> 0) & 0xff) << 8); output = output | (((B_x0 >> 8) & 0xff) << 16); output = output | (((A_x0 >> 8) & 0xff) << 24); output = output | (((B_x0 >> 16) & 0xff) << 32); output = output | (((A_x0 >> 16) & 0xff) << 40); output = output | (((B_x0 >> 24) & 0xff) << 48); output = output | (((A_x0 >> 24) & 0xff) << 56); D_x0 = output; }
+x0: "v1maxu"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1465 & m_62_63=0x0 { D_x0 = tilegx_v1maxu(A_x0, B_x0); }
+x0: "v1minu"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1466 & m_62_63=0x0 { D_x0 = tilegx_v1minu(A_x0, B_x0); }
+x0: "v1mnz"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1467 & m_62_63=0x0 { D_x0 = tilegx_v1mnz(A_x0, B_x0); }
+x0: "v1multu"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1468 & m_62_63=0x0 { D_x0 = tilegx_v1multu(A_x0, B_x0); }
+x0: "v1mulu"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x146a & m_62_63=0x0 { D_x0 = tilegx_v1mulu(A_x0, B_x0); }
+x0: "v1mulus"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1469 & m_62_63=0x0 { D_x0 = tilegx_v1mulus(A_x0, B_x0); }
+x0: "v1mz"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x146b & m_62_63=0x0 { D_x0 = tilegx_v1mz(A_x0, B_x0); }
+x0: "v1sadau"^" "^AD_x0^", "^A_x0^", "^B_x0 is AD_x0 & A_x0 & B_x0 & m_18_30=0x146c & m_62_63=0x0 { AD_x0 = tilegx_v1sadau(A_x0, B_x0); }
+x0: "v1sadu"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x146d & m_62_63=0x0 { D_x0 = tilegx_v1sadu(A_x0, B_x0); }
+x0: "v1shl"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x146e & m_62_63=0x0 { D_x0 = tilegx_v1shl(A_x0, B_x0); }
+x0: "v1shli"^" "^D_x0^", "^A_x0^", "^shamt_x0 is D_x0 & A_x0 & shamt_x0 & m_18_30=0x1807 & m_62_63=0x0 { D_x0 = tilegx_v1shli(A_x0); }
+x0: "v1shrs"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x146f & m_62_63=0x0 { D_x0 = tilegx_v1shrs(A_x0, B_x0); }
+x0: "v1shrsi"^" "^D_x0^", "^A_x0^", "^shamt_x0 is D_x0 & A_x0 & shamt_x0 & m_18_30=0x1808 & m_62_63=0x0 { D_x0 = tilegx_v1shrsi(A_x0); }
+x0: "v1shru"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1470 & m_62_63=0x0 { D_x0 = tilegx_v1shru(A_x0, B_x0); }
+x0: "v1shrui"^" "^D_x0^", "^A_x0^", "^shamt_x0 is D_x0 & A_x0 & shamt_x0 & m_18_30=0x1809 & m_62_63=0x0 { local amount:8 = shamt_x0 & 7; local output:8 = 0; local shifted_a0:8 = A_x0 >> 0; local a0:1 = shifted_a0:1; local lane_result0:1 = a0 >> amount; output = output | (zext(lane_result0) << 0); local shifted_a1:8 = A_x0 >> 8; local a1:1 = shifted_a1:1; local lane_result1:1 = a1 >> amount; output = output | (zext(lane_result1) << 8); local shifted_a2:8 = A_x0 >> 16; local a2:1 = shifted_a2:1; local lane_result2:1 = a2 >> amount; output = output | (zext(lane_result2) << 16); local shifted_a3:8 = A_x0 >> 24; local a3:1 = shifted_a3:1; local lane_result3:1 = a3 >> amount; output = output | (zext(lane_result3) << 24); local shifted_a4:8 = A_x0 >> 32; local a4:1 = shifted_a4:1; local lane_result4:1 = a4 >> amount; output = output | (zext(lane_result4) << 32); local shifted_a5:8 = A_x0 >> 40; local a5:1 = shifted_a5:1; local lane_result5:1 = a5 >> amount; output = output | (zext(lane_result5) << 40); local shifted_a6:8 = A_x0 >> 48; local a6:1 = shifted_a6:1; local lane_result6:1 = a6 >> amount; output = output | (zext(lane_result6) << 48); local shifted_a7:8 = A_x0 >> 56; local a7:1 = shifted_a7:1; local lane_result7:1 = a7 >> amount; output = output | (zext(lane_result7) << 56); D_x0 = output; }
+x0: "v1sub"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1472 & m_62_63=0x0 { D_x0 = tilegx_v1sub(A_x0, B_x0); }
+x0: "v1subuc"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1471 & m_62_63=0x0 { D_x0 = tilegx_v1subuc(A_x0, B_x0); }
+x0: "v2add"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1474 & m_62_63=0x0 { D_x0 = tilegx_v2add(A_x0, B_x0); }
+x0: "v2addsc"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1473 & m_62_63=0x0 { D_x0 = tilegx_v2addsc(A_x0, B_x0); }
+x0: "v2adiffs"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1475 & m_62_63=0x0 { D_x0 = tilegx_v2adiffs(A_x0, B_x0); }
+x0: "v2avgs"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1476 & m_62_63=0x0 { D_x0 = tilegx_v2avgs(A_x0, B_x0); }
+x0: "v2cmpeq"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1477 & m_62_63=0x0 { D_x0 = tilegx_v2cmpeq(A_x0, B_x0); }
+x0: "v2cmples"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1478 & m_62_63=0x0 { D_x0 = tilegx_v2cmples(A_x0, B_x0); }
+x0: "v2cmpleu"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1479 & m_62_63=0x0 { D_x0 = tilegx_v2cmpleu(A_x0, B_x0); }
+x0: "v2cmplts"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x147a & m_62_63=0x0 { D_x0 = tilegx_v2cmplts(A_x0, B_x0); }
+x0: "v2cmpltu"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x147b & m_62_63=0x0 { D_x0 = tilegx_v2cmpltu(A_x0, B_x0); }
+x0: "v2cmpne"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x147c & m_62_63=0x0 { D_x0 = tilegx_v2cmpne(A_x0, B_x0); }
+x0: "v2dotp"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x147e & m_62_63=0x0 { D_x0 = tilegx_v2dotp(A_x0, B_x0); }
+x0: "v2dotpa"^" "^AD_x0^", "^A_x0^", "^B_x0 is AD_x0 & A_x0 & B_x0 & m_18_30=0x147d & m_62_63=0x0 { AD_x0 = tilegx_v2dotpa(A_x0, B_x0); }
+x0: "v2int_h"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x147f & m_62_63=0x0 { local output:8 = 0; output = output | (((B_x0 >> 32) & 0xffff) << 0); output = output | (((A_x0 >> 32) & 0xffff) << 16); output = output | (((B_x0 >> 48) & 0xffff) << 32); output = output | (((A_x0 >> 48) & 0xffff) << 48); D_x0 = output; }
+x0: "v2int_l"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1480 & m_62_63=0x0 { local output:8 = 0; output = output | (((B_x0 >> 0) & 0xffff) << 0); output = output | (((A_x0 >> 0) & 0xffff) << 16); output = output | (((B_x0 >> 16) & 0xffff) << 32); output = output | (((A_x0 >> 16) & 0xffff) << 48); D_x0 = output; }
+x0: "v2maxs"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1481 & m_62_63=0x0 { D_x0 = tilegx_v2maxs(A_x0, B_x0); }
+x0: "v2mins"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1482 & m_62_63=0x0 { D_x0 = tilegx_v2mins(A_x0, B_x0); }
+x0: "v2mnz"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1483 & m_62_63=0x0 { D_x0 = tilegx_v2mnz(A_x0, B_x0); }
+x0: "v2mulfsc"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1484 & m_62_63=0x0 { D_x0 = tilegx_v2mulfsc(A_x0, B_x0); }
+x0: "v2muls"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1485 & m_62_63=0x0 { D_x0 = tilegx_v2muls(A_x0, B_x0); }
+x0: "v2mults"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1486 & m_62_63=0x0 { D_x0 = tilegx_v2mults(A_x0, B_x0); }
+x0: "v2mz"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1487 & m_62_63=0x0 { D_x0 = tilegx_v2mz(A_x0, B_x0); }
+x0: "v2packh"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1488 & m_62_63=0x0 { D_x0 = tilegx_v2packh(A_x0, B_x0); }
+x0: "v2packl"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1489 & m_62_63=0x0 { D_x0 = tilegx_v2packl(A_x0, B_x0); }
+x0: "v2packuc"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x148a & m_62_63=0x0 { D_x0 = tilegx_v2packuc(A_x0, B_x0); }
+x0: "v2sadas"^" "^AD_x0^", "^A_x0^", "^B_x0 is AD_x0 & A_x0 & B_x0 & m_18_30=0x148b & m_62_63=0x0 { AD_x0 = tilegx_v2sadas(A_x0, B_x0); }
+x0: "v2sadau"^" "^AD_x0^", "^A_x0^", "^B_x0 is AD_x0 & A_x0 & B_x0 & m_18_30=0x148c & m_62_63=0x0 { local output:8 = 0; local shifted_a0:8 = A_x0 >> 0; local shifted_b0:8 = B_x0 >> 0; local a0:2 = shifted_a0:2; local b0:2 = shifted_b0:2; local au0:8 = zext(a0); local bu0:8 = zext(b0); local diff0:8 = au0 - bu0; if (au0 >= bu0) goto <sad0>; diff0 = 0 - diff0; <sad0> output = output + diff0; local shifted_a1:8 = A_x0 >> 16; local shifted_b1:8 = B_x0 >> 16; local a1:2 = shifted_a1:2; local b1:2 = shifted_b1:2; local au1:8 = zext(a1); local bu1:8 = zext(b1); local diff1:8 = au1 - bu1; if (au1 >= bu1) goto <sad1>; diff1 = 0 - diff1; <sad1> output = output + diff1; local shifted_a2:8 = A_x0 >> 32; local shifted_b2:8 = B_x0 >> 32; local a2:2 = shifted_a2:2; local b2:2 = shifted_b2:2; local au2:8 = zext(a2); local bu2:8 = zext(b2); local diff2:8 = au2 - bu2; if (au2 >= bu2) goto <sad2>; diff2 = 0 - diff2; <sad2> output = output + diff2; local shifted_a3:8 = A_x0 >> 48; local shifted_b3:8 = B_x0 >> 48; local a3:2 = shifted_a3:2; local b3:2 = shifted_b3:2; local au3:8 = zext(a3); local bu3:8 = zext(b3); local diff3:8 = au3 - bu3; if (au3 >= bu3) goto <sad3>; diff3 = 0 - diff3; <sad3> output = output + diff3; AD_x0 = AD_x0 + output; }
+x0: "v2sads"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x148d & m_62_63=0x0 { D_x0 = tilegx_v2sads(A_x0, B_x0); }
+x0: "v2sadu"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x148e & m_62_63=0x0 { local output:8 = 0; local shifted_a0:8 = A_x0 >> 0; local shifted_b0:8 = B_x0 >> 0; local a0:2 = shifted_a0:2; local b0:2 = shifted_b0:2; local au0:8 = zext(a0); local bu0:8 = zext(b0); local diff0:8 = au0 - bu0; if (au0 >= bu0) goto <sad0>; diff0 = 0 - diff0; <sad0> output = output + diff0; local shifted_a1:8 = A_x0 >> 16; local shifted_b1:8 = B_x0 >> 16; local a1:2 = shifted_a1:2; local b1:2 = shifted_b1:2; local au1:8 = zext(a1); local bu1:8 = zext(b1); local diff1:8 = au1 - bu1; if (au1 >= bu1) goto <sad1>; diff1 = 0 - diff1; <sad1> output = output + diff1; local shifted_a2:8 = A_x0 >> 32; local shifted_b2:8 = B_x0 >> 32; local a2:2 = shifted_a2:2; local b2:2 = shifted_b2:2; local au2:8 = zext(a2); local bu2:8 = zext(b2); local diff2:8 = au2 - bu2; if (au2 >= bu2) goto <sad2>; diff2 = 0 - diff2; <sad2> output = output + diff2; local shifted_a3:8 = A_x0 >> 48; local shifted_b3:8 = B_x0 >> 48; local a3:2 = shifted_a3:2; local b3:2 = shifted_b3:2; local au3:8 = zext(a3); local bu3:8 = zext(b3); local diff3:8 = au3 - bu3; if (au3 >= bu3) goto <sad3>; diff3 = 0 - diff3; <sad3> output = output + diff3; D_x0 = output; }
+x0: "v2shl"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1490 & m_62_63=0x0 { D_x0 = tilegx_v2shl(A_x0, B_x0); }
+x0: "v2shli"^" "^D_x0^", "^A_x0^", "^shamt_x0 is D_x0 & A_x0 & shamt_x0 & m_18_30=0x180a & m_62_63=0x0 { D_x0 = tilegx_v2shli(A_x0); }
+x0: "v2shlsc"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x148f & m_62_63=0x0 { D_x0 = tilegx_v2shlsc(A_x0, B_x0); }
+x0: "v2shrs"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1491 & m_62_63=0x0 { D_x0 = tilegx_v2shrs(A_x0, B_x0); }
+x0: "v2shrsi"^" "^D_x0^", "^A_x0^", "^shamt_x0 is D_x0 & A_x0 & shamt_x0 & m_18_30=0x180b & m_62_63=0x0 { D_x0 = tilegx_v2shrsi(A_x0); }
+x0: "v2shru"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1492 & m_62_63=0x0 { D_x0 = tilegx_v2shru(A_x0, B_x0); }
+x0: "v2shrui"^" "^D_x0^", "^A_x0^", "^shamt_x0 is D_x0 & A_x0 & shamt_x0 & m_18_30=0x180c & m_62_63=0x0 { D_x0 = tilegx_v2shrui(A_x0); }
+x0: "v2sub"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1494 & m_62_63=0x0 { D_x0 = tilegx_v2sub(A_x0, B_x0); }
+x0: "v2subsc"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1493 & m_62_63=0x0 { D_x0 = tilegx_v2subsc(A_x0, B_x0); }
+x0: "v4add"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1496 & m_62_63=0x0 { D_x0 = tilegx_v4add(A_x0, B_x0); }
+x0: "v4addsc"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1495 & m_62_63=0x0 { D_x0 = tilegx_v4addsc(A_x0, B_x0); }
+x0: "v4int_h"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1497 & m_62_63=0x0 { local output:8 = 0; output = output | (((B_x0 >> 32) & 0xffffffff) << 0); output = output | (((A_x0 >> 32) & 0xffffffff) << 32); D_x0 = output; }
+x0: "v4int_l"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1498 & m_62_63=0x0 { D_x0 = (A_x0 << 32) | (B_x0 & 0xffffffff); }
+x0: "v4packsc"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x1499 & m_62_63=0x0 { D_x0 = tilegx_v4packsc(A_x0, B_x0); }
+x0: "v4shl"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x149b & m_62_63=0x0 { D_x0 = tilegx_v4shl(A_x0, B_x0); }
+x0: "v4shlsc"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x149a & m_62_63=0x0 { D_x0 = tilegx_v4shlsc(A_x0, B_x0); }
+x0: "v4shrs"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x149c & m_62_63=0x0 { D_x0 = tilegx_v4shrs(A_x0, B_x0); }
+x0: "v4shru"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x149d & m_62_63=0x0 { D_x0 = tilegx_v4shru(A_x0, B_x0); }
+x0: "v4sub"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x149f & m_62_63=0x0 { D_x0 = tilegx_v4sub(A_x0, B_x0); }
+x0: "v4subsc"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x149e & m_62_63=0x0 { D_x0 = tilegx_v4subsc(A_x0, B_x0); }
+x0: "xor"^" "^D_x0^", "^A_x0^", "^B_x0 is D_x0 & A_x0 & B_x0 & m_18_30=0x14a0 & m_62_63=0x0 { D_x0 = A_x0 ^ B_x0; }
+x0: "addi"^" "^D_x0^", "^A_x0^", "^imm8_x0 is D_x0 & A_x0 & imm8_x0 & m_20_30=0x401 & m_62_63=0x0 & (m_06_11!=0x3f) { D_x0 = A_x0 + imm8_x0; }
+x0: "addxi"^" "^D_x0^", "^A_x0^", "^imm8_x0 is D_x0 & A_x0 & imm8_x0 & m_20_30=0x402 & m_62_63=0x0 { local result:4 = A_x0:4 + imm8_x0:4; D_x0 = sext(result); }
+x0: "andi"^" "^D_x0^", "^A_x0^", "^imm8_x0 is D_x0 & A_x0 & imm8_x0 & m_20_30=0x403 & m_62_63=0x0 & (m_00_11!=0xfff) { D_x0 = A_x0 & imm8_x0; }
+x0: "cmpeqi"^" "^D_x0^", "^A_x0^", "^imm8_x0 is D_x0 & A_x0 & imm8_x0 & m_20_30=0x404 & m_62_63=0x0 { D_x0 = zext(A_x0 == imm8_x0); }
+x0: "cmpltsi"^" "^D_x0^", "^A_x0^", "^imm8_x0 is D_x0 & A_x0 & imm8_x0 & m_20_30=0x405 & m_62_63=0x0 { D_x0 = zext(A_x0 s< imm8_x0); }
+x0: "cmpltui"^" "^D_x0^", "^A_x0^", "^imm8_x0 is D_x0 & A_x0 & imm8_x0 & m_20_30=0x406 & m_62_63=0x0 { D_x0 = zext(A_x0 < imm8_x0); }
+x0: "ori"^" "^D_x0^", "^A_x0^", "^imm8_x0 is D_x0 & A_x0 & imm8_x0 & m_20_30=0x407 & m_62_63=0x0 { D_x0 = A_x0 | imm8_x0; }
+x0: "v1addi"^" "^D_x0^", "^A_x0^", "^imm8_x0 is D_x0 & A_x0 & imm8_x0 & m_20_30=0x408 & m_62_63=0x0 { local immediate:1 = imm8_x0; local output:8 = 0; local shifted_a0:8 = A_x0 >> 0; local a0:1 = shifted_a0:1; local lane_result0:1 = a0 + immediate; output = output | (zext(lane_result0) << 0); local shifted_a1:8 = A_x0 >> 8; local a1:1 = shifted_a1:1; local lane_result1:1 = a1 + immediate; output = output | (zext(lane_result1) << 8); local shifted_a2:8 = A_x0 >> 16; local a2:1 = shifted_a2:1; local lane_result2:1 = a2 + immediate; output = output | (zext(lane_result2) << 16); local shifted_a3:8 = A_x0 >> 24; local a3:1 = shifted_a3:1; local lane_result3:1 = a3 + immediate; output = output | (zext(lane_result3) << 24); local shifted_a4:8 = A_x0 >> 32; local a4:1 = shifted_a4:1; local lane_result4:1 = a4 + immediate; output = output | (zext(lane_result4) << 32); local shifted_a5:8 = A_x0 >> 40; local a5:1 = shifted_a5:1; local lane_result5:1 = a5 + immediate; output = output | (zext(lane_result5) << 40); local shifted_a6:8 = A_x0 >> 48; local a6:1 = shifted_a6:1; local lane_result6:1 = a6 + immediate; output = output | (zext(lane_result6) << 48); local shifted_a7:8 = A_x0 >> 56; local a7:1 = shifted_a7:1; local lane_result7:1 = a7 + immediate; output = output | (zext(lane_result7) << 56); D_x0 = output; }
+x0: "v1cmpeqi"^" "^D_x0^", "^A_x0^", "^imm8_x0 is D_x0 & A_x0 & imm8_x0 & m_20_30=0x409 & m_62_63=0x0 { local immediate:1 = imm8_x0; local output:8 = 0; local shifted_a0:8 = A_x0 >> 0; local a0:1 = shifted_a0:1; local lane_result0:1 = zext(a0 == immediate); output = output | (zext(lane_result0) << 0); local shifted_a1:8 = A_x0 >> 8; local a1:1 = shifted_a1:1; local lane_result1:1 = zext(a1 == immediate); output = output | (zext(lane_result1) << 8); local shifted_a2:8 = A_x0 >> 16; local a2:1 = shifted_a2:1; local lane_result2:1 = zext(a2 == immediate); output = output | (zext(lane_result2) << 16); local shifted_a3:8 = A_x0 >> 24; local a3:1 = shifted_a3:1; local lane_result3:1 = zext(a3 == immediate); output = output | (zext(lane_result3) << 24); local shifted_a4:8 = A_x0 >> 32; local a4:1 = shifted_a4:1; local lane_result4:1 = zext(a4 == immediate); output = output | (zext(lane_result4) << 32); local shifted_a5:8 = A_x0 >> 40; local a5:1 = shifted_a5:1; local lane_result5:1 = zext(a5 == immediate); output = output | (zext(lane_result5) << 40); local shifted_a6:8 = A_x0 >> 48; local a6:1 = shifted_a6:1; local lane_result6:1 = zext(a6 == immediate); output = output | (zext(lane_result6) << 48); local shifted_a7:8 = A_x0 >> 56; local a7:1 = shifted_a7:1; local lane_result7:1 = zext(a7 == immediate); output = output | (zext(lane_result7) << 56); D_x0 = output; }
+x0: "v1cmpltsi"^" "^D_x0^", "^A_x0^", "^imm8_x0 is D_x0 & A_x0 & imm8_x0 & m_20_30=0x40a & m_62_63=0x0 { D_x0 = tilegx_v1cmpltsi(A_x0); }
+x0: "v1cmpltui"^" "^D_x0^", "^A_x0^", "^imm8_x0 is D_x0 & A_x0 & imm8_x0 & m_20_30=0x40b & m_62_63=0x0 { D_x0 = tilegx_v1cmpltui(A_x0); }
+x0: "v1maxui"^" "^D_x0^", "^A_x0^", "^imm8_x0 is D_x0 & A_x0 & imm8_x0 & m_20_30=0x40c & m_62_63=0x0 { D_x0 = tilegx_v1maxui(A_x0); }
+x0: "v1minui"^" "^D_x0^", "^A_x0^", "^imm8_x0 is D_x0 & A_x0 & imm8_x0 & m_20_30=0x40d & m_62_63=0x0 { D_x0 = tilegx_v1minui(A_x0); }
+x0: "v2addi"^" "^D_x0^", "^A_x0^", "^imm8_x0 is D_x0 & A_x0 & imm8_x0 & m_20_30=0x40e & m_62_63=0x0 { local immediate:2 = imm8_x0; local output:8 = 0; local shifted_a0:8 = A_x0 >> 0; local a0:2 = shifted_a0:2; local lane_result0:2 = a0 + immediate; output = output | (zext(lane_result0) << 0); local shifted_a1:8 = A_x0 >> 16; local a1:2 = shifted_a1:2; local lane_result1:2 = a1 + immediate; output = output | (zext(lane_result1) << 16); local shifted_a2:8 = A_x0 >> 32; local a2:2 = shifted_a2:2; local lane_result2:2 = a2 + immediate; output = output | (zext(lane_result2) << 32); local shifted_a3:8 = A_x0 >> 48; local a3:2 = shifted_a3:2; local lane_result3:2 = a3 + immediate; output = output | (zext(lane_result3) << 48); D_x0 = output; }
+x0: "v2cmpeqi"^" "^D_x0^", "^A_x0^", "^imm8_x0 is D_x0 & A_x0 & imm8_x0 & m_20_30=0x40f & m_62_63=0x0 { D_x0 = tilegx_v2cmpeqi(A_x0); }
+x0: "v2cmpltsi"^" "^D_x0^", "^A_x0^", "^imm8_x0 is D_x0 & A_x0 & imm8_x0 & m_20_30=0x410 & m_62_63=0x0 { D_x0 = tilegx_v2cmpltsi(A_x0); }
+x0: "v2cmpltui"^" "^D_x0^", "^A_x0^", "^imm8_x0 is D_x0 & A_x0 & imm8_x0 & m_20_30=0x411 & m_62_63=0x0 { D_x0 = tilegx_v2cmpltui(A_x0); }
+x0: "v2maxsi"^" "^D_x0^", "^A_x0^", "^imm8_x0 is D_x0 & A_x0 & imm8_x0 & m_20_30=0x412 & m_62_63=0x0 { D_x0 = tilegx_v2maxsi(A_x0); }
+x0: "v2minsi"^" "^D_x0^", "^A_x0^", "^imm8_x0 is D_x0 & A_x0 & imm8_x0 & m_20_30=0x413 & m_62_63=0x0 { D_x0 = tilegx_v2minsi(A_x0); }
+x0: "xori"^" "^D_x0^", "^A_x0^", "^imm8_x0 is D_x0 & A_x0 & imm8_x0 & m_20_30=0x414 & m_62_63=0x0 { D_x0 = A_x0 ^ imm8_x0; }
+x0: "moveli"^" "^D_x0^", "^imm16_x0 is D_x0 & imm16_x0 & m_06_11=0x3f & m_28_30=0x1 & m_62_63=0x0 { D_x0 = imm16_x0; }
+x0: "bfexts"^" "^D_x0^", "^A_x0^", "^bfstart_x0^", "^bfend_x0 is D_x0 & A_x0 & bfstart_x0 & bfend_x0 & m_24_30=0x34 & m_62_63=0x0 { local width:8 = ((bfend_x0 - bfstart_x0) & 0x3f) + 1; local value:8 = (A_x0 >> bfstart_x0) | (A_x0 << ((64 - bfstart_x0) & 0x3f)); local mask:8 = (1 << width) - 1; value = value & mask; local shift:8 = 64 - width; D_x0 = (value << shift) s>> shift; }
+x0: "bfextu"^" "^D_x0^", "^A_x0^", "^bfstart_x0^", "^bfend_x0 is D_x0 & A_x0 & bfstart_x0 & bfend_x0 & m_24_30=0x35 & m_62_63=0x0 { local width:8 = ((bfend_x0 - bfstart_x0) & 0x3f) + 1; local value:8 = (A_x0 >> bfstart_x0) | (A_x0 << ((64 - bfstart_x0) & 0x3f)); local mask:8 = (1 << width) - 1; value = value & mask; D_x0 = value; }
+x0: "bfins"^" "^AD_x0^", "^A_x0^", "^bfstart_x0^", "^bfend_x0 is AD_x0 & A_x0 & bfstart_x0 & bfend_x0 & m_24_30=0x36 & m_62_63=0x0 { local width:8 = ((bfend_x0 - bfstart_x0) & 0x3f) + 1; local lowmask:8 = (1 << width) - 1; local mask:8 = (lowmask << bfstart_x0) | (lowmask >> ((64 - bfstart_x0) & 0x3f)); local value:8 = (A_x0 << bfstart_x0) | (A_x0 >> ((64 - bfstart_x0) & 0x3f)); AD_x0 = (AD_x0 & ~mask) | (value & mask); }
+x0: "mm"^" "^AD_x0^", "^A_x0^", "^bfstart_x0^", "^bfend_x0 is AD_x0 & A_x0 & bfstart_x0 & bfend_x0 & m_24_30=0x37 & m_62_63=0x0 { local width:8 = ((bfend_x0 - bfstart_x0) & 0x3f) + 1; local lowmask:8 = (1 << width) - 1; local mask:8 = (lowmask << bfstart_x0) | (lowmask >> ((64 - bfstart_x0) & 0x3f)); AD_x0 = (AD_x0 & mask) | (A_x0 & ~mask); }
+x0: "addli"^" "^D_x0^", "^A_x0^", "^imm16_x0 is D_x0 & A_x0 & imm16_x0 & m_28_30=0x1 & m_62_63=0x0 & (m_06_11!=0x3f) { D_x0 = A_x0 + imm16_x0; }
+x0: "addxli"^" "^D_x0^", "^A_x0^", "^imm16_x0 is D_x0 & A_x0 & imm16_x0 & m_28_30=0x2 & m_62_63=0x0 { local result:4 = A_x0:4 + imm16_x0:4; D_x0 = sext(result); }
+x0: "shl16insli"^" "^D_x0^", "^A_x0^", "^imm16_x0 is D_x0 & A_x0 & imm16_x0 & m_28_30=0x7 & m_62_63=0x0 & (m_00_11!=0xfff) { D_x0 = (A_x0 << 16) | (imm16_x0 & 0xffff); }
+x1: "bpt" is m_31_63=0x50d4895c { local trap_number:8 = 0; tilegx_trap(trap_number); }
+x1: "raise" is m_31_63=0x50d4895d { local trap_number:8 = 0; tilegx_trap(trap_number); }
+x1: "prefetch"^" "^A_x1 is A_x1 & m_31_36=0x3f & m_43_63=0x50d50 {  }
+x1: "prefetch_l1_fault"^" "^A_x1 is A_x1 & m_31_36=0x3f & m_43_63=0x50d4f {  }
+x1: "prefetch_l2"^" "^A_x1 is A_x1 & m_31_36=0x3f & m_43_63=0x50d52 {  }
+x1: "prefetch_l2_fault"^" "^A_x1 is A_x1 & m_31_36=0x3f & m_43_63=0x50d51 {  }
+x1: "prefetch_l3"^" "^A_x1 is A_x1 & m_31_36=0x3f & m_43_63=0x50d54 {  }
+x1: "prefetch_l3_fault"^" "^A_x1 is A_x1 & m_31_36=0x3f & m_43_63=0x50d53 {  }
+x1: "info"^" "^imm8_x1 is imm8_x1 & m_31_42=0xfff & m_51_63=0x303 {  }
+x1: "ld4s_tls"^" "^D_x1^", "^A_x1^", "^imm8_x1 is D_x1 & A_x1 & imm8_x1 & m_43_63=0x30b00 { D_x1 = tilegx_ld4s_tls(A_x1); }
+x1: "ld_tls"^" "^D_x1^", "^A_x1^", "^imm8_x1 is D_x1 & A_x1 & imm8_x1 & m_43_63=0x31400 { D_x1 = tilegx_ld_tls(A_x1); }
+x1: "move"^" "^D_x1^", "^A_x1 is D_x1 & A_x1 & m_43_63=0x5077f { D_x1 = A_x1; }
+x1: "drain" is m_43_63=0x50d41 { tilegx_fence(); }
+x1: "dtlbpr"^" "^A_x1 is A_x1 & m_43_63=0x50d42 { tilegx_dtlbpr(A_x1); }
+x1: "finv"^" "^A_x1 is A_x1 & m_43_63=0x50d43 { tilegx_finv(A_x1); }
+x1: "flush"^" "^A_x1 is A_x1 & m_43_63=0x50d45 { tilegx_flush(A_x1); }
+x1: "flushwb" is m_43_63=0x50d44 { tilegx_flushwb(); }
+x1: "fnop" is m_43_63=0x50d46 {  }
+x1: "icoh"^" "^A_x1 is A_x1 & m_43_63=0x50d47 { tilegx_icoh(A_x1); }
+x1: "ill" is m_43_63=0x50d48 & (m_31_42!=0x95c) & (m_31_42!=0x95d) { local trap_number:8 = 0; tilegx_trap(trap_number); }
+x1: "inv"^" "^A_x1 is A_x1 & m_43_63=0x50d49 { tilegx_inv(A_x1); }
+x1: "iret" is m_43_63=0x50d4a { local exception_context_spr:8 = 0x2580; branch_target = tilegx_mfspr(exception_context_spr); <<FLOW>> return [branch_target]; }
+x1: "jalr"^" "^A_x1 is A_x1 & m_43_63=0x50d4c { lr_new = inst_next; branch_target = A_x1 & ~7; <<COMMIT>> lr = lr_new; <<FLOW>> call [branch_target]; }
+x1: "jalrp"^" "^A_x1 is A_x1 & m_43_63=0x50d4b { lr_new = inst_next; branch_target = A_x1 & ~7; <<COMMIT>> lr = lr_new; <<FLOW>> call [branch_target]; }
+x1: "jr"^" "^A_x1 is A_x1 & m_43_63=0x50d4e { branch_target = A_x1 & ~7; <<FLOW>> goto [branch_target]; }
+x1: "jrp"^" "^A_x1 is A_x1 & m_43_63=0x50d4d { branch_target = A_x1 & ~7; <<FLOW>> return [branch_target]; }
+x1: "ld"^" "^D_x1^", "^A_x1 is D_x1 & A_x1 & m_43_63=0x50d5d { local addr:8 = A_x1; D_x1 = *[ram]:8 addr; }
+x1: "ld1s"^" "^D_x1^", "^A_x1 is D_x1 & A_x1 & m_43_63=0x50d4f & (m_31_36!=0x3f) { local addr:8 = A_x1; D_x1 = sext(*[ram]:1 addr); }
+x1: "ld1u"^" "^D_x1^", "^A_x1 is D_x1 & A_x1 & m_43_63=0x50d50 & (m_31_36!=0x3f) { local addr:8 = A_x1; D_x1 = zext(*[ram]:1 addr); }
+x1: "ld2s"^" "^D_x1^", "^A_x1 is D_x1 & A_x1 & m_43_63=0x50d51 & (m_31_36!=0x3f) { local addr:8 = A_x1; D_x1 = sext(*[ram]:2 addr); }
+x1: "ld2u"^" "^D_x1^", "^A_x1 is D_x1 & A_x1 & m_43_63=0x50d52 & (m_31_36!=0x3f) { local addr:8 = A_x1; D_x1 = zext(*[ram]:2 addr); }
+x1: "ld4s"^" "^D_x1^", "^A_x1 is D_x1 & A_x1 & m_43_63=0x50d53 & (m_31_36!=0x3f) { local addr:8 = A_x1; D_x1 = sext(*[ram]:4 addr); }
+x1: "ld4u"^" "^D_x1^", "^A_x1 is D_x1 & A_x1 & m_43_63=0x50d54 & (m_31_36!=0x3f) { local addr:8 = A_x1; D_x1 = zext(*[ram]:4 addr); }
+x1: "ldna"^" "^D_x1^", "^A_x1 is D_x1 & A_x1 & m_43_63=0x50d55 { local addr:8 = A_x1; D_x1 = *[ram]:8 addr; }
+x1: "ldnt"^" "^D_x1^", "^A_x1 is D_x1 & A_x1 & m_43_63=0x50d5c { local addr:8 = A_x1; D_x1 = *[ram]:8 addr; }
+x1: "ldnt1s"^" "^D_x1^", "^A_x1 is D_x1 & A_x1 & m_43_63=0x50d56 { local addr:8 = A_x1; D_x1 = sext(*[ram]:1 addr); }
+x1: "ldnt1u"^" "^D_x1^", "^A_x1 is D_x1 & A_x1 & m_43_63=0x50d57 { local addr:8 = A_x1; D_x1 = zext(*[ram]:1 addr); }
+x1: "ldnt2s"^" "^D_x1^", "^A_x1 is D_x1 & A_x1 & m_43_63=0x50d58 { local addr:8 = A_x1; D_x1 = sext(*[ram]:2 addr); }
+x1: "ldnt2u"^" "^D_x1^", "^A_x1 is D_x1 & A_x1 & m_43_63=0x50d59 { local addr:8 = A_x1; D_x1 = zext(*[ram]:2 addr); }
+x1: "ldnt4s"^" "^D_x1^", "^A_x1 is D_x1 & A_x1 & m_43_63=0x50d5a { local addr:8 = A_x1; D_x1 = sext(*[ram]:4 addr); }
+x1: "ldnt4u"^" "^D_x1^", "^A_x1 is D_x1 & A_x1 & m_43_63=0x50d5b { local addr:8 = A_x1; D_x1 = zext(*[ram]:4 addr); }
+x1: "lnk"^" "^D_x1 is D_x1 & m_43_63=0x50d5e { D_x1 = inst_next; }
+x1: "mf" is m_43_63=0x50d5f { tilegx_fence(); }
+x1: "nap" is m_43_63=0x50d60 { tilegx_wait(); }
+x1: "nop" is m_43_63=0x50d61 {  }
+x1: "swint0" is m_43_63=0x50d62 { local trap_number:8 = 0; tilegx_trap(trap_number); }
+x1: "swint1" is m_43_63=0x50d63 { local trap_number:8 = 1; tilegx_trap(trap_number); }
+x1: "swint2" is m_43_63=0x50d64 { local trap_number:8 = 2; tilegx_trap(trap_number); }
+x1: "swint3" is m_43_63=0x50d65 { local trap_number:8 = 3; tilegx_trap(trap_number); }
+x1: "wh64"^" "^A_x1 is A_x1 & m_43_63=0x50d66 {  }
+x1: "movei"^" "^D_x1^", "^imm8_x1 is D_x1 & imm8_x1 & m_37_42=0x3f & m_51_63=0x301 { D_x1 = imm8_x1; }
+x1: "prefetch_add_l1"^" "^AD_x1^", "^imm8_x1 is AD_x1 & imm8_x1 & m_31_36=0x3f & m_51_63=0x308 { tilegx_prefetch_add_l1(AD_x1); }
+x1: "prefetch_add_l1_fault"^" "^AD_x1^", "^imm8_x1 is AD_x1 & imm8_x1 & m_31_36=0x3f & m_51_63=0x307 { tilegx_prefetch_add_l1_fault(AD_x1); }
+x1: "prefetch_add_l2"^" "^AD_x1^", "^imm8_x1 is AD_x1 & imm8_x1 & m_31_36=0x3f & m_51_63=0x30a { tilegx_prefetch_add_l2(AD_x1); }
+x1: "prefetch_add_l2_fault"^" "^AD_x1^", "^imm8_x1 is AD_x1 & imm8_x1 & m_31_36=0x3f & m_51_63=0x309 { tilegx_prefetch_add_l2_fault(AD_x1); }
+x1: "prefetch_add_l3"^" "^AD_x1^", "^imm8_x1 is AD_x1 & imm8_x1 & m_31_36=0x3f & m_51_63=0x30c { tilegx_prefetch_add_l3(AD_x1); }
+x1: "prefetch_add_l3_fault"^" "^AD_x1^", "^imm8_x1 is AD_x1 & imm8_x1 & m_31_36=0x3f & m_51_63=0x30b & (m_43_50!=0x0) { tilegx_prefetch_add_l3_fault(AD_x1); }
+x1: "infol"^" "^imm16_x1 is imm16_x1 & m_31_42=0xfff & m_59_63=0x7 {  }
+x1: "add"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1403 { D_x1 = A_x1 + B_x1; }
+x1: "addx"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1402 { local result:4 = A_x1:4 + B_x1:4; D_x1 = sext(result); }
+x1: "addxsc"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1401 { local value:8 = sext(A_x1:4) + sext(B_x1:4); if (value s<= 0x7fffffff) goto <high_ok>; value = 0x7fffffff; <high_ok> if (value s>= 0xffffffff80000000) goto <low_ok>; value = 0xffffffff80000000; <low_ok> D_x1 = value; }
+x1: "and"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1404 { D_x1 = A_x1 & B_x1; }
+x1: "cmpeq"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1405 { D_x1 = zext(A_x1 == B_x1); }
+x1: "cmpexch"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1407 { local addr:8 = A_x1; local old:8 = *[ram]:8 addr; D_x1 = old; if (D_x1 != cmpexch_value) goto <done>; *[ram]:8 addr = B_x1:8; <done> }
+x1: "cmpexch4"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1406 { local addr:8 = A_x1; local old:4 = *[ram]:4 addr; D_x1 = sext(old); if (D_x1 != sext(cmpexch_value:4)) goto <done>; *[ram]:4 addr = B_x1:4; <done> }
+x1: "cmples"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1408 { D_x1 = zext(A_x1 s<= B_x1); }
+x1: "cmpleu"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1409 { D_x1 = zext(A_x1 <= B_x1); }
+x1: "cmplts"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x140a { D_x1 = zext(A_x1 s< B_x1); }
+x1: "cmpltu"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x140b { D_x1 = zext(A_x1 < B_x1); }
+x1: "cmpne"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x140c { D_x1 = zext(A_x1 != B_x1); }
+x1: "dblalign2"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x140d { D_x1 = (B_x1 >> 16) | (A_x1 << 48); }
+x1: "dblalign4"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x140e { D_x1 = (B_x1 >> 32) | (A_x1 << 32); }
+x1: "dblalign6"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x140f { D_x1 = (B_x1 >> 48) | (A_x1 << 16); }
+x1: "exch"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1411 { local addr:8 = A_x1; local old:8 = *[ram]:8 addr; D_x1 = old; *[ram]:8 addr = B_x1:8; }
+x1: "exch4"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1410 { local addr:8 = A_x1; local old:4 = *[ram]:4 addr; D_x1 = sext(old); *[ram]:4 addr = B_x1:4; }
+x1: "fetchadd"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1415 { local addr:8 = A_x1; local old:8 = *[ram]:8 addr; D_x1 = old; local updated:8 = old + B_x1:8; *[ram]:8 addr = updated; }
+x1: "fetchadd4"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1412 { local addr:8 = A_x1; local old:4 = *[ram]:4 addr; D_x1 = sext(old); local updated:4 = old + B_x1:4; *[ram]:4 addr = updated; }
+x1: "fetchaddgez"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1414 { local addr:8 = A_x1; local old:8 = *[ram]:8 addr; D_x1 = old; local updated:8 = old + B_x1:8; if (updated s< 0) goto <done>; *[ram]:8 addr = updated; <done> }
+x1: "fetchaddgez4"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1413 { local addr:8 = A_x1; local old:4 = *[ram]:4 addr; D_x1 = sext(old); local updated:4 = old + B_x1:4; if (updated s< 0) goto <done>; *[ram]:4 addr = updated; <done> }
+x1: "fetchand"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1417 { local addr:8 = A_x1; local old:8 = *[ram]:8 addr; D_x1 = old; local updated:8 = old & B_x1:8; *[ram]:8 addr = updated; }
+x1: "fetchand4"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1416 { local addr:8 = A_x1; local old:4 = *[ram]:4 addr; D_x1 = sext(old); local updated:4 = old & B_x1:4; *[ram]:4 addr = updated; }
+x1: "fetchor"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1419 { local addr:8 = A_x1; local old:8 = *[ram]:8 addr; D_x1 = old; local updated:8 = old | B_x1:8; *[ram]:8 addr = updated; }
+x1: "fetchor4"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1418 { local addr:8 = A_x1; local old:4 = *[ram]:4 addr; D_x1 = sext(old); local updated:4 = old | B_x1:4; *[ram]:4 addr = updated; }
+x1: "mnz"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x141a { local mask:8 = sext(A_x1 != 0); D_x1 = mask & B_x1; }
+x1: "mz"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x141b { local mask:8 = sext(A_x1 == 0); D_x1 = mask & B_x1; }
+x1: "nor"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x141c { D_x1 = ~(A_x1 | B_x1); }
+x1: "or"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x141d & (m_43_48!=0x3f) { D_x1 = A_x1 | B_x1; }
+x1: "rotl"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x141e { local amount:8 = (B_x1 & 0x3f); D_x1 = (A_x1 << amount) | (A_x1 >> ((64 - amount) & 0x3f)); }
+x1: "rotli"^" "^D_x1^", "^A_x1^", "^shamt_x1 is D_x1 & A_x1 & shamt_x1 & m_49_63=0x1801 { local amount:8 = shamt_x1; D_x1 = (A_x1 << amount) | (A_x1 >> ((64 - amount) & 0x3f)); }
+x1: "shl"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1426 { D_x1 = A_x1 << (B_x1 & 0x3f); }
+x1: "shl1add"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1420 { D_x1 = (A_x1 << 1) + B_x1; }
+x1: "shl1addx"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x141f { local result:4 = (A_x1:4 << 1) + B_x1:4; D_x1 = sext(result); }
+x1: "shl2add"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1422 { D_x1 = (A_x1 << 2) + B_x1; }
+x1: "shl2addx"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1421 { local result:4 = (A_x1:4 << 2) + B_x1:4; D_x1 = sext(result); }
+x1: "shl3add"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1424 { D_x1 = (A_x1 << 3) + B_x1; }
+x1: "shl3addx"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1423 { local result:4 = (A_x1:4 << 3) + B_x1:4; D_x1 = sext(result); }
+x1: "shli"^" "^D_x1^", "^A_x1^", "^shamt_x1 is D_x1 & A_x1 & shamt_x1 & m_49_63=0x1802 { D_x1 = A_x1 << shamt_x1; }
+x1: "shlx"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1425 { local result:4 = A_x1:4 << (B_x1 & 0x1f); D_x1 = sext(result); }
+x1: "shlxi"^" "^D_x1^", "^A_x1^", "^shamt_x1 is D_x1 & A_x1 & shamt_x1 & m_49_63=0x1803 { local result:4 = A_x1:4 << shamt_x1; D_x1 = sext(result); }
+x1: "shrs"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1427 { D_x1 = A_x1 s>> (B_x1 & 0x3f); }
+x1: "shrsi"^" "^D_x1^", "^A_x1^", "^shamt_x1 is D_x1 & A_x1 & shamt_x1 & m_49_63=0x1804 { D_x1 = A_x1 s>> shamt_x1; }
+x1: "shru"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1429 { D_x1 = A_x1 >> (B_x1 & 0x3f); }
+x1: "shrui"^" "^D_x1^", "^A_x1^", "^shamt_x1 is D_x1 & A_x1 & shamt_x1 & m_49_63=0x1805 { D_x1 = A_x1 >> shamt_x1; }
+x1: "shrux"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1428 { local result:4 = A_x1:4 >> (B_x1 & 0x1f); D_x1 = sext(result); }
+x1: "shruxi"^" "^D_x1^", "^A_x1^", "^shamt_x1 is D_x1 & A_x1 & shamt_x1 & m_49_63=0x1806 { local result:4 = A_x1:4 >> shamt_x1; D_x1 = sext(result); }
+x1: "st"^" "^A_x1^", "^B_x1 is A_x1 & B_x1 & m_49_63=0x1431 { local addr:8 = A_x1; *[ram]:8 addr = B_x1:8; }
+x1: "st1"^" "^A_x1^", "^B_x1 is A_x1 & B_x1 & m_49_63=0x142a { local addr:8 = A_x1; *[ram]:1 addr = B_x1:1; }
+x1: "st2"^" "^A_x1^", "^B_x1 is A_x1 & B_x1 & m_49_63=0x142b { local addr:8 = A_x1; *[ram]:2 addr = B_x1:2; }
+x1: "st4"^" "^A_x1^", "^B_x1 is A_x1 & B_x1 & m_49_63=0x142c { local addr:8 = A_x1; *[ram]:4 addr = B_x1:4; }
+x1: "stnt"^" "^A_x1^", "^B_x1 is A_x1 & B_x1 & m_49_63=0x1430 { local addr:8 = A_x1; *[ram]:8 addr = B_x1:8; }
+x1: "stnt1"^" "^A_x1^", "^B_x1 is A_x1 & B_x1 & m_49_63=0x142d { local addr:8 = A_x1; *[ram]:1 addr = B_x1:1; }
+x1: "stnt2"^" "^A_x1^", "^B_x1 is A_x1 & B_x1 & m_49_63=0x142e { local addr:8 = A_x1; *[ram]:2 addr = B_x1:2; }
+x1: "stnt4"^" "^A_x1^", "^B_x1 is A_x1 & B_x1 & m_49_63=0x142f { local addr:8 = A_x1; *[ram]:4 addr = B_x1:4; }
+x1: "sub"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1434 { D_x1 = A_x1 - B_x1; }
+x1: "subx"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1433 { local result:4 = A_x1:4 - B_x1:4; D_x1 = sext(result); }
+x1: "subxsc"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1432 { local value:8 = sext(A_x1:4) - sext(B_x1:4); if (value s<= 0x7fffffff) goto <high_ok>; value = 0x7fffffff; <high_ok> if (value s>= 0xffffffff80000000) goto <low_ok>; value = 0xffffffff80000000; <low_ok> D_x1 = value; }
+x1: "v1add"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1437 { D_x1 = tilegx_v1add(A_x1, B_x1); }
+x1: "v1adduc"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1436 { D_x1 = tilegx_v1adduc(A_x1, B_x1); }
+x1: "v1cmpeq"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1438 { local output:8 = 0; local shifted_a0:8 = A_x1 >> 0; local shifted_b0:8 = B_x1 >> 0; local a0:1 = shifted_a0:1; local b0:1 = shifted_b0:1; local lane_result0:1 = zext(a0 == b0); output = output | (zext(lane_result0) << 0); local shifted_a1:8 = A_x1 >> 8; local shifted_b1:8 = B_x1 >> 8; local a1:1 = shifted_a1:1; local b1:1 = shifted_b1:1; local lane_result1:1 = zext(a1 == b1); output = output | (zext(lane_result1) << 8); local shifted_a2:8 = A_x1 >> 16; local shifted_b2:8 = B_x1 >> 16; local a2:1 = shifted_a2:1; local b2:1 = shifted_b2:1; local lane_result2:1 = zext(a2 == b2); output = output | (zext(lane_result2) << 16); local shifted_a3:8 = A_x1 >> 24; local shifted_b3:8 = B_x1 >> 24; local a3:1 = shifted_a3:1; local b3:1 = shifted_b3:1; local lane_result3:1 = zext(a3 == b3); output = output | (zext(lane_result3) << 24); local shifted_a4:8 = A_x1 >> 32; local shifted_b4:8 = B_x1 >> 32; local a4:1 = shifted_a4:1; local b4:1 = shifted_b4:1; local lane_result4:1 = zext(a4 == b4); output = output | (zext(lane_result4) << 32); local shifted_a5:8 = A_x1 >> 40; local shifted_b5:8 = B_x1 >> 40; local a5:1 = shifted_a5:1; local b5:1 = shifted_b5:1; local lane_result5:1 = zext(a5 == b5); output = output | (zext(lane_result5) << 40); local shifted_a6:8 = A_x1 >> 48; local shifted_b6:8 = B_x1 >> 48; local a6:1 = shifted_a6:1; local b6:1 = shifted_b6:1; local lane_result6:1 = zext(a6 == b6); output = output | (zext(lane_result6) << 48); local shifted_a7:8 = A_x1 >> 56; local shifted_b7:8 = B_x1 >> 56; local a7:1 = shifted_a7:1; local b7:1 = shifted_b7:1; local lane_result7:1 = zext(a7 == b7); output = output | (zext(lane_result7) << 56); D_x1 = output; }
+x1: "v1cmples"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1439 { D_x1 = tilegx_v1cmples(A_x1, B_x1); }
+x1: "v1cmpleu"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x143a { D_x1 = tilegx_v1cmpleu(A_x1, B_x1); }
+x1: "v1cmplts"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x143b { D_x1 = tilegx_v1cmplts(A_x1, B_x1); }
+x1: "v1cmpltu"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x143c { D_x1 = tilegx_v1cmpltu(A_x1, B_x1); }
+x1: "v1cmpne"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x143d { D_x1 = tilegx_v1cmpne(A_x1, B_x1); }
+x1: "v1int_h"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x143e { local output:8 = 0; output = output | (((B_x1 >> 32) & 0xff) << 0); output = output | (((A_x1 >> 32) & 0xff) << 8); output = output | (((B_x1 >> 40) & 0xff) << 16); output = output | (((A_x1 >> 40) & 0xff) << 24); output = output | (((B_x1 >> 48) & 0xff) << 32); output = output | (((A_x1 >> 48) & 0xff) << 40); output = output | (((B_x1 >> 56) & 0xff) << 48); output = output | (((A_x1 >> 56) & 0xff) << 56); D_x1 = output; }
+x1: "v1int_l"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x143f { local output:8 = 0; output = output | (((B_x1 >> 0) & 0xff) << 0); output = output | (((A_x1 >> 0) & 0xff) << 8); output = output | (((B_x1 >> 8) & 0xff) << 16); output = output | (((A_x1 >> 8) & 0xff) << 24); output = output | (((B_x1 >> 16) & 0xff) << 32); output = output | (((A_x1 >> 16) & 0xff) << 40); output = output | (((B_x1 >> 24) & 0xff) << 48); output = output | (((A_x1 >> 24) & 0xff) << 56); D_x1 = output; }
+x1: "v1maxu"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1440 { D_x1 = tilegx_v1maxu(A_x1, B_x1); }
+x1: "v1minu"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1441 { D_x1 = tilegx_v1minu(A_x1, B_x1); }
+x1: "v1mnz"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1442 { D_x1 = tilegx_v1mnz(A_x1, B_x1); }
+x1: "v1mz"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1443 { D_x1 = tilegx_v1mz(A_x1, B_x1); }
+x1: "v1shl"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1444 { D_x1 = tilegx_v1shl(A_x1, B_x1); }
+x1: "v1shli"^" "^D_x1^", "^A_x1^", "^shamt_x1 is D_x1 & A_x1 & shamt_x1 & m_49_63=0x1807 { D_x1 = tilegx_v1shli(A_x1); }
+x1: "v1shrs"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1445 { D_x1 = tilegx_v1shrs(A_x1, B_x1); }
+x1: "v1shrsi"^" "^D_x1^", "^A_x1^", "^shamt_x1 is D_x1 & A_x1 & shamt_x1 & m_49_63=0x1808 { D_x1 = tilegx_v1shrsi(A_x1); }
+x1: "v1shru"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1446 { D_x1 = tilegx_v1shru(A_x1, B_x1); }
+x1: "v1shrui"^" "^D_x1^", "^A_x1^", "^shamt_x1 is D_x1 & A_x1 & shamt_x1 & m_49_63=0x1809 { local amount:8 = shamt_x1 & 7; local output:8 = 0; local shifted_a0:8 = A_x1 >> 0; local a0:1 = shifted_a0:1; local lane_result0:1 = a0 >> amount; output = output | (zext(lane_result0) << 0); local shifted_a1:8 = A_x1 >> 8; local a1:1 = shifted_a1:1; local lane_result1:1 = a1 >> amount; output = output | (zext(lane_result1) << 8); local shifted_a2:8 = A_x1 >> 16; local a2:1 = shifted_a2:1; local lane_result2:1 = a2 >> amount; output = output | (zext(lane_result2) << 16); local shifted_a3:8 = A_x1 >> 24; local a3:1 = shifted_a3:1; local lane_result3:1 = a3 >> amount; output = output | (zext(lane_result3) << 24); local shifted_a4:8 = A_x1 >> 32; local a4:1 = shifted_a4:1; local lane_result4:1 = a4 >> amount; output = output | (zext(lane_result4) << 32); local shifted_a5:8 = A_x1 >> 40; local a5:1 = shifted_a5:1; local lane_result5:1 = a5 >> amount; output = output | (zext(lane_result5) << 40); local shifted_a6:8 = A_x1 >> 48; local a6:1 = shifted_a6:1; local lane_result6:1 = a6 >> amount; output = output | (zext(lane_result6) << 48); local shifted_a7:8 = A_x1 >> 56; local a7:1 = shifted_a7:1; local lane_result7:1 = a7 >> amount; output = output | (zext(lane_result7) << 56); D_x1 = output; }
+x1: "v1sub"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1448 { D_x1 = tilegx_v1sub(A_x1, B_x1); }
+x1: "v1subuc"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1447 { D_x1 = tilegx_v1subuc(A_x1, B_x1); }
+x1: "v2add"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x144a { D_x1 = tilegx_v2add(A_x1, B_x1); }
+x1: "v2addsc"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1449 { D_x1 = tilegx_v2addsc(A_x1, B_x1); }
+x1: "v2cmpeq"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x144b { D_x1 = tilegx_v2cmpeq(A_x1, B_x1); }
+x1: "v2cmples"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x144c { D_x1 = tilegx_v2cmples(A_x1, B_x1); }
+x1: "v2cmpleu"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x144d { D_x1 = tilegx_v2cmpleu(A_x1, B_x1); }
+x1: "v2cmplts"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x144e { D_x1 = tilegx_v2cmplts(A_x1, B_x1); }
+x1: "v2cmpltu"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x144f { D_x1 = tilegx_v2cmpltu(A_x1, B_x1); }
+x1: "v2cmpne"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1450 { D_x1 = tilegx_v2cmpne(A_x1, B_x1); }
+x1: "v2int_h"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1451 { local output:8 = 0; output = output | (((B_x1 >> 32) & 0xffff) << 0); output = output | (((A_x1 >> 32) & 0xffff) << 16); output = output | (((B_x1 >> 48) & 0xffff) << 32); output = output | (((A_x1 >> 48) & 0xffff) << 48); D_x1 = output; }
+x1: "v2int_l"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1452 { local output:8 = 0; output = output | (((B_x1 >> 0) & 0xffff) << 0); output = output | (((A_x1 >> 0) & 0xffff) << 16); output = output | (((B_x1 >> 16) & 0xffff) << 32); output = output | (((A_x1 >> 16) & 0xffff) << 48); D_x1 = output; }
+x1: "v2maxs"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1453 { D_x1 = tilegx_v2maxs(A_x1, B_x1); }
+x1: "v2mins"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1454 { D_x1 = tilegx_v2mins(A_x1, B_x1); }
+x1: "v2mnz"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1455 { D_x1 = tilegx_v2mnz(A_x1, B_x1); }
+x1: "v2mz"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1456 { D_x1 = tilegx_v2mz(A_x1, B_x1); }
+x1: "v2packh"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1457 { D_x1 = tilegx_v2packh(A_x1, B_x1); }
+x1: "v2packl"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1458 { D_x1 = tilegx_v2packl(A_x1, B_x1); }
+x1: "v2packuc"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1459 { D_x1 = tilegx_v2packuc(A_x1, B_x1); }
+x1: "v2shl"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x145b { D_x1 = tilegx_v2shl(A_x1, B_x1); }
+x1: "v2shli"^" "^D_x1^", "^A_x1^", "^shamt_x1 is D_x1 & A_x1 & shamt_x1 & m_49_63=0x180a { D_x1 = tilegx_v2shli(A_x1); }
+x1: "v2shlsc"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x145a { D_x1 = tilegx_v2shlsc(A_x1, B_x1); }
+x1: "v2shrs"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x145c { D_x1 = tilegx_v2shrs(A_x1, B_x1); }
+x1: "v2shrsi"^" "^D_x1^", "^A_x1^", "^shamt_x1 is D_x1 & A_x1 & shamt_x1 & m_49_63=0x180b { D_x1 = tilegx_v2shrsi(A_x1); }
+x1: "v2shru"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x145d { D_x1 = tilegx_v2shru(A_x1, B_x1); }
+x1: "v2shrui"^" "^D_x1^", "^A_x1^", "^shamt_x1 is D_x1 & A_x1 & shamt_x1 & m_49_63=0x180c { D_x1 = tilegx_v2shrui(A_x1); }
+x1: "v2sub"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x145f { D_x1 = tilegx_v2sub(A_x1, B_x1); }
+x1: "v2subsc"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x145e { D_x1 = tilegx_v2subsc(A_x1, B_x1); }
+x1: "v4add"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1461 { D_x1 = tilegx_v4add(A_x1, B_x1); }
+x1: "v4addsc"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1460 { D_x1 = tilegx_v4addsc(A_x1, B_x1); }
+x1: "v4int_h"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1462 { local output:8 = 0; output = output | (((B_x1 >> 32) & 0xffffffff) << 0); output = output | (((A_x1 >> 32) & 0xffffffff) << 32); D_x1 = output; }
+x1: "v4int_l"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1463 { D_x1 = (A_x1 << 32) | (B_x1 & 0xffffffff); }
+x1: "v4packsc"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1464 { D_x1 = tilegx_v4packsc(A_x1, B_x1); }
+x1: "v4shl"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1466 { D_x1 = tilegx_v4shl(A_x1, B_x1); }
+x1: "v4shlsc"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1465 { D_x1 = tilegx_v4shlsc(A_x1, B_x1); }
+x1: "v4shrs"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1467 { D_x1 = tilegx_v4shrs(A_x1, B_x1); }
+x1: "v4shru"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1468 { D_x1 = tilegx_v4shru(A_x1, B_x1); }
+x1: "v4sub"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x146a { D_x1 = tilegx_v4sub(A_x1, B_x1); }
+x1: "v4subsc"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x1469 { D_x1 = tilegx_v4subsc(A_x1, B_x1); }
+x1: "xor"^" "^D_x1^", "^A_x1^", "^B_x1 is D_x1 & A_x1 & B_x1 & m_49_63=0x146b { D_x1 = A_x1 ^ B_x1; }
+x1: "addi"^" "^D_x1^", "^A_x1^", "^imm8_x1 is D_x1 & A_x1 & imm8_x1 & m_51_63=0x301 & (m_37_42!=0x3f) { D_x1 = A_x1 + imm8_x1; }
+x1: "addxi"^" "^D_x1^", "^A_x1^", "^imm8_x1 is D_x1 & A_x1 & imm8_x1 & m_51_63=0x302 { local result:4 = A_x1:4 + imm8_x1:4; D_x1 = sext(result); }
+x1: "andi"^" "^D_x1^", "^A_x1^", "^imm8_x1 is D_x1 & A_x1 & imm8_x1 & m_51_63=0x303 & (m_31_42!=0xfff) { D_x1 = A_x1 & imm8_x1; }
+x1: "cmpeqi"^" "^D_x1^", "^A_x1^", "^imm8_x1 is D_x1 & A_x1 & imm8_x1 & m_51_63=0x304 { D_x1 = zext(A_x1 == imm8_x1); }
+x1: "cmpltsi"^" "^D_x1^", "^A_x1^", "^imm8_x1 is D_x1 & A_x1 & imm8_x1 & m_51_63=0x305 { D_x1 = zext(A_x1 s< imm8_x1); }
+x1: "cmpltui"^" "^D_x1^", "^A_x1^", "^imm8_x1 is D_x1 & A_x1 & imm8_x1 & m_51_63=0x306 { D_x1 = zext(A_x1 < imm8_x1); }
+x1: "ld1s_add"^" "^D_x1^", "^AD_x1^", "^imm8_x1 is D_x1 & AD_x1 & imm8_x1 & m_51_63=0x307 & (m_31_36!=0x3f) { local addr:8 = AD_x1; D_x1 = sext(*[ram]:1 addr); AD_x1 = addr + imm8_x1; }
+x1: "ld1u_add"^" "^D_x1^", "^AD_x1^", "^imm8_x1 is D_x1 & AD_x1 & imm8_x1 & m_51_63=0x308 & (m_31_36!=0x3f) { local addr:8 = AD_x1; D_x1 = zext(*[ram]:1 addr); AD_x1 = addr + imm8_x1; }
+x1: "ld2s_add"^" "^D_x1^", "^AD_x1^", "^imm8_x1 is D_x1 & AD_x1 & imm8_x1 & m_51_63=0x309 & (m_31_36!=0x3f) { local addr:8 = AD_x1; D_x1 = sext(*[ram]:2 addr); AD_x1 = addr + imm8_x1; }
+x1: "ld2u_add"^" "^D_x1^", "^AD_x1^", "^imm8_x1 is D_x1 & AD_x1 & imm8_x1 & m_51_63=0x30a & (m_31_36!=0x3f) { local addr:8 = AD_x1; D_x1 = zext(*[ram]:2 addr); AD_x1 = addr + imm8_x1; }
+x1: "ld4s_add"^" "^D_x1^", "^AD_x1^", "^imm8_x1 is D_x1 & AD_x1 & imm8_x1 & m_51_63=0x30b & (m_43_50!=0x0) & (m_31_36!=0x3f) { local addr:8 = AD_x1; D_x1 = sext(*[ram]:4 addr); AD_x1 = addr + imm8_x1; }
+x1: "ld4u_add"^" "^D_x1^", "^AD_x1^", "^imm8_x1 is D_x1 & AD_x1 & imm8_x1 & m_51_63=0x30c & (m_31_36!=0x3f) { local addr:8 = AD_x1; D_x1 = zext(*[ram]:4 addr); AD_x1 = addr + imm8_x1; }
+x1: "ld_add"^" "^D_x1^", "^AD_x1^", "^imm8_x1 is D_x1 & AD_x1 & imm8_x1 & m_51_63=0x314 & (m_43_50!=0x0) { local addr:8 = AD_x1; D_x1 = *[ram]:8 addr; AD_x1 = addr + imm8_x1; }
+x1: "ldna_add"^" "^D_x1^", "^AD_x1^", "^imm8_x1 is D_x1 & AD_x1 & imm8_x1 & m_51_63=0x315 { local addr:8 = AD_x1; D_x1 = *[ram]:8 addr; AD_x1 = addr + imm8_x1; }
+x1: "ldnt1s_add"^" "^D_x1^", "^AD_x1^", "^imm8_x1 is D_x1 & AD_x1 & imm8_x1 & m_51_63=0x30d { local addr:8 = AD_x1; D_x1 = sext(*[ram]:1 addr); AD_x1 = addr + imm8_x1; }
+x1: "ldnt1u_add"^" "^D_x1^", "^AD_x1^", "^imm8_x1 is D_x1 & AD_x1 & imm8_x1 & m_51_63=0x30e { local addr:8 = AD_x1; D_x1 = zext(*[ram]:1 addr); AD_x1 = addr + imm8_x1; }
+x1: "ldnt2s_add"^" "^D_x1^", "^AD_x1^", "^imm8_x1 is D_x1 & AD_x1 & imm8_x1 & m_51_63=0x30f { local addr:8 = AD_x1; D_x1 = sext(*[ram]:2 addr); AD_x1 = addr + imm8_x1; }
+x1: "ldnt2u_add"^" "^D_x1^", "^AD_x1^", "^imm8_x1 is D_x1 & AD_x1 & imm8_x1 & m_51_63=0x310 { local addr:8 = AD_x1; D_x1 = zext(*[ram]:2 addr); AD_x1 = addr + imm8_x1; }
+x1: "ldnt4s_add"^" "^D_x1^", "^AD_x1^", "^imm8_x1 is D_x1 & AD_x1 & imm8_x1 & m_51_63=0x311 { local addr:8 = AD_x1; D_x1 = sext(*[ram]:4 addr); AD_x1 = addr + imm8_x1; }
+x1: "ldnt4u_add"^" "^D_x1^", "^AD_x1^", "^imm8_x1 is D_x1 & AD_x1 & imm8_x1 & m_51_63=0x312 { local addr:8 = AD_x1; D_x1 = zext(*[ram]:4 addr); AD_x1 = addr + imm8_x1; }
+x1: "ldnt_add"^" "^D_x1^", "^AD_x1^", "^imm8_x1 is D_x1 & AD_x1 & imm8_x1 & m_51_63=0x313 { local addr:8 = AD_x1; D_x1 = *[ram]:8 addr; AD_x1 = addr + imm8_x1; }
+x1: "mfspr"^" "^D_x1^", "^mf_spr_x1 is D_x1 & mf_spr_x1 & m_51_63=0x316 { if (mf_spr_x1 != 0x2780) goto <other_spr>; D_x1 = cmpexch_value; goto <spr_done>; <other_spr> D_x1 = tilegx_mfspr(mf_spr_x1); <spr_done> }
+x1: "mtspr"^" "^mt_imm14_x1^", "^A_x1 is mt_imm14_x1 & A_x1 & m_51_63=0x317 { if (mt_imm14_x1 != 0x2780) goto <other_spr>; cmpexch_value = A_x1; goto <spr_done>; <other_spr> tilegx_mtspr(mt_imm14_x1, A_x1); <spr_done> }
+x1: "ori"^" "^D_x1^", "^A_x1^", "^imm8_x1 is D_x1 & A_x1 & imm8_x1 & m_51_63=0x318 { D_x1 = A_x1 | imm8_x1; }
+x1: "st1_add"^" "^AD_x1^", "^B_x1^", "^dest_imm8_x1 is AD_x1 & B_x1 & dest_imm8_x1 & m_51_63=0x319 { local addr:8 = AD_x1; *[ram]:1 addr = B_x1:1; AD_x1 = addr + dest_imm8_x1; }
+x1: "st2_add"^" "^AD_x1^", "^B_x1^", "^dest_imm8_x1 is AD_x1 & B_x1 & dest_imm8_x1 & m_51_63=0x31a { local addr:8 = AD_x1; *[ram]:2 addr = B_x1:2; AD_x1 = addr + dest_imm8_x1; }
+x1: "st4_add"^" "^AD_x1^", "^B_x1^", "^dest_imm8_x1 is AD_x1 & B_x1 & dest_imm8_x1 & m_51_63=0x31b { local addr:8 = AD_x1; *[ram]:4 addr = B_x1:4; AD_x1 = addr + dest_imm8_x1; }
+x1: "st_add"^" "^AD_x1^", "^B_x1^", "^dest_imm8_x1 is AD_x1 & B_x1 & dest_imm8_x1 & m_51_63=0x320 { local addr:8 = AD_x1; *[ram]:8 addr = B_x1:8; AD_x1 = addr + dest_imm8_x1; }
+x1: "stnt1_add"^" "^AD_x1^", "^B_x1^", "^dest_imm8_x1 is AD_x1 & B_x1 & dest_imm8_x1 & m_51_63=0x31c { local addr:8 = AD_x1; *[ram]:1 addr = B_x1:1; AD_x1 = addr + dest_imm8_x1; }
+x1: "stnt2_add"^" "^AD_x1^", "^B_x1^", "^dest_imm8_x1 is AD_x1 & B_x1 & dest_imm8_x1 & m_51_63=0x31d { local addr:8 = AD_x1; *[ram]:2 addr = B_x1:2; AD_x1 = addr + dest_imm8_x1; }
+x1: "stnt4_add"^" "^AD_x1^", "^B_x1^", "^dest_imm8_x1 is AD_x1 & B_x1 & dest_imm8_x1 & m_51_63=0x31e { local addr:8 = AD_x1; *[ram]:4 addr = B_x1:4; AD_x1 = addr + dest_imm8_x1; }
+x1: "stnt_add"^" "^AD_x1^", "^B_x1^", "^dest_imm8_x1 is AD_x1 & B_x1 & dest_imm8_x1 & m_51_63=0x31f { local addr:8 = AD_x1; *[ram]:8 addr = B_x1:8; AD_x1 = addr + dest_imm8_x1; }
+x1: "v1addi"^" "^D_x1^", "^A_x1^", "^imm8_x1 is D_x1 & A_x1 & imm8_x1 & m_51_63=0x321 { local immediate:1 = imm8_x1; local output:8 = 0; local shifted_a0:8 = A_x1 >> 0; local a0:1 = shifted_a0:1; local lane_result0:1 = a0 + immediate; output = output | (zext(lane_result0) << 0); local shifted_a1:8 = A_x1 >> 8; local a1:1 = shifted_a1:1; local lane_result1:1 = a1 + immediate; output = output | (zext(lane_result1) << 8); local shifted_a2:8 = A_x1 >> 16; local a2:1 = shifted_a2:1; local lane_result2:1 = a2 + immediate; output = output | (zext(lane_result2) << 16); local shifted_a3:8 = A_x1 >> 24; local a3:1 = shifted_a3:1; local lane_result3:1 = a3 + immediate; output = output | (zext(lane_result3) << 24); local shifted_a4:8 = A_x1 >> 32; local a4:1 = shifted_a4:1; local lane_result4:1 = a4 + immediate; output = output | (zext(lane_result4) << 32); local shifted_a5:8 = A_x1 >> 40; local a5:1 = shifted_a5:1; local lane_result5:1 = a5 + immediate; output = output | (zext(lane_result5) << 40); local shifted_a6:8 = A_x1 >> 48; local a6:1 = shifted_a6:1; local lane_result6:1 = a6 + immediate; output = output | (zext(lane_result6) << 48); local shifted_a7:8 = A_x1 >> 56; local a7:1 = shifted_a7:1; local lane_result7:1 = a7 + immediate; output = output | (zext(lane_result7) << 56); D_x1 = output; }
+x1: "v1cmpeqi"^" "^D_x1^", "^A_x1^", "^imm8_x1 is D_x1 & A_x1 & imm8_x1 & m_51_63=0x322 { local immediate:1 = imm8_x1; local output:8 = 0; local shifted_a0:8 = A_x1 >> 0; local a0:1 = shifted_a0:1; local lane_result0:1 = zext(a0 == immediate); output = output | (zext(lane_result0) << 0); local shifted_a1:8 = A_x1 >> 8; local a1:1 = shifted_a1:1; local lane_result1:1 = zext(a1 == immediate); output = output | (zext(lane_result1) << 8); local shifted_a2:8 = A_x1 >> 16; local a2:1 = shifted_a2:1; local lane_result2:1 = zext(a2 == immediate); output = output | (zext(lane_result2) << 16); local shifted_a3:8 = A_x1 >> 24; local a3:1 = shifted_a3:1; local lane_result3:1 = zext(a3 == immediate); output = output | (zext(lane_result3) << 24); local shifted_a4:8 = A_x1 >> 32; local a4:1 = shifted_a4:1; local lane_result4:1 = zext(a4 == immediate); output = output | (zext(lane_result4) << 32); local shifted_a5:8 = A_x1 >> 40; local a5:1 = shifted_a5:1; local lane_result5:1 = zext(a5 == immediate); output = output | (zext(lane_result5) << 40); local shifted_a6:8 = A_x1 >> 48; local a6:1 = shifted_a6:1; local lane_result6:1 = zext(a6 == immediate); output = output | (zext(lane_result6) << 48); local shifted_a7:8 = A_x1 >> 56; local a7:1 = shifted_a7:1; local lane_result7:1 = zext(a7 == immediate); output = output | (zext(lane_result7) << 56); D_x1 = output; }
+x1: "v1cmpltsi"^" "^D_x1^", "^A_x1^", "^imm8_x1 is D_x1 & A_x1 & imm8_x1 & m_51_63=0x323 { D_x1 = tilegx_v1cmpltsi(A_x1); }
+x1: "v1cmpltui"^" "^D_x1^", "^A_x1^", "^imm8_x1 is D_x1 & A_x1 & imm8_x1 & m_51_63=0x324 { D_x1 = tilegx_v1cmpltui(A_x1); }
+x1: "v1maxui"^" "^D_x1^", "^A_x1^", "^imm8_x1 is D_x1 & A_x1 & imm8_x1 & m_51_63=0x325 { D_x1 = tilegx_v1maxui(A_x1); }
+x1: "v1minui"^" "^D_x1^", "^A_x1^", "^imm8_x1 is D_x1 & A_x1 & imm8_x1 & m_51_63=0x326 { D_x1 = tilegx_v1minui(A_x1); }
+x1: "v2addi"^" "^D_x1^", "^A_x1^", "^imm8_x1 is D_x1 & A_x1 & imm8_x1 & m_51_63=0x327 { local immediate:2 = imm8_x1; local output:8 = 0; local shifted_a0:8 = A_x1 >> 0; local a0:2 = shifted_a0:2; local lane_result0:2 = a0 + immediate; output = output | (zext(lane_result0) << 0); local shifted_a1:8 = A_x1 >> 16; local a1:2 = shifted_a1:2; local lane_result1:2 = a1 + immediate; output = output | (zext(lane_result1) << 16); local shifted_a2:8 = A_x1 >> 32; local a2:2 = shifted_a2:2; local lane_result2:2 = a2 + immediate; output = output | (zext(lane_result2) << 32); local shifted_a3:8 = A_x1 >> 48; local a3:2 = shifted_a3:2; local lane_result3:2 = a3 + immediate; output = output | (zext(lane_result3) << 48); D_x1 = output; }
+x1: "v2cmpeqi"^" "^D_x1^", "^A_x1^", "^imm8_x1 is D_x1 & A_x1 & imm8_x1 & m_51_63=0x328 { D_x1 = tilegx_v2cmpeqi(A_x1); }
+x1: "v2cmpltsi"^" "^D_x1^", "^A_x1^", "^imm8_x1 is D_x1 & A_x1 & imm8_x1 & m_51_63=0x329 { D_x1 = tilegx_v2cmpltsi(A_x1); }
+x1: "v2cmpltui"^" "^D_x1^", "^A_x1^", "^imm8_x1 is D_x1 & A_x1 & imm8_x1 & m_51_63=0x32a { D_x1 = tilegx_v2cmpltui(A_x1); }
+x1: "v2maxsi"^" "^D_x1^", "^A_x1^", "^imm8_x1 is D_x1 & A_x1 & imm8_x1 & m_51_63=0x32b { D_x1 = tilegx_v2maxsi(A_x1); }
+x1: "v2minsi"^" "^D_x1^", "^A_x1^", "^imm8_x1 is D_x1 & A_x1 & imm8_x1 & m_51_63=0x32c { D_x1 = tilegx_v2minsi(A_x1); }
+x1: "xori"^" "^D_x1^", "^A_x1^", "^imm8_x1 is D_x1 & A_x1 & imm8_x1 & m_51_63=0x32d { D_x1 = A_x1 ^ imm8_x1; }
+x1: "moveli"^" "^D_x1^", "^imm16_x1 is D_x1 & imm16_x1 & m_37_42=0x3f & m_59_63=0x0 { D_x1 = imm16_x1; }
+x1: "beqz"^" "^A_x1^", "^broff_x1 is A_x1 & broff_x1 & m_54_63=0x51 { branch_taken = A_x1 == 0; <<FLOW>> if (branch_taken != 0) goto broff_x1; }
+x1: "beqzt"^" "^A_x1^", "^broff_x1 is A_x1 & broff_x1 & m_54_63=0x50 { branch_taken = A_x1 == 0; <<FLOW>> if (branch_taken != 0) goto broff_x1; }
+x1: "bgez"^" "^A_x1^", "^broff_x1 is A_x1 & broff_x1 & m_54_63=0x53 { branch_taken = A_x1 s>= 0; <<FLOW>> if (branch_taken != 0) goto broff_x1; }
+x1: "bgezt"^" "^A_x1^", "^broff_x1 is A_x1 & broff_x1 & m_54_63=0x52 { branch_taken = A_x1 s>= 0; <<FLOW>> if (branch_taken != 0) goto broff_x1; }
+x1: "bgtz"^" "^A_x1^", "^broff_x1 is A_x1 & broff_x1 & m_54_63=0x55 { branch_taken = A_x1 s> 0; <<FLOW>> if (branch_taken != 0) goto broff_x1; }
+x1: "bgtzt"^" "^A_x1^", "^broff_x1 is A_x1 & broff_x1 & m_54_63=0x54 { branch_taken = A_x1 s> 0; <<FLOW>> if (branch_taken != 0) goto broff_x1; }
+x1: "blbc"^" "^A_x1^", "^broff_x1 is A_x1 & broff_x1 & m_54_63=0x57 { branch_taken = (A_x1 & 1) == 0; <<FLOW>> if (branch_taken != 0) goto broff_x1; }
+x1: "blbct"^" "^A_x1^", "^broff_x1 is A_x1 & broff_x1 & m_54_63=0x56 { branch_taken = (A_x1 & 1) == 0; <<FLOW>> if (branch_taken != 0) goto broff_x1; }
+x1: "blbs"^" "^A_x1^", "^broff_x1 is A_x1 & broff_x1 & m_54_63=0x59 { branch_taken = (A_x1 & 1) != 0; <<FLOW>> if (branch_taken != 0) goto broff_x1; }
+x1: "blbst"^" "^A_x1^", "^broff_x1 is A_x1 & broff_x1 & m_54_63=0x58 { branch_taken = (A_x1 & 1) != 0; <<FLOW>> if (branch_taken != 0) goto broff_x1; }
+x1: "blez"^" "^A_x1^", "^broff_x1 is A_x1 & broff_x1 & m_54_63=0x5b { branch_taken = A_x1 s<= 0; <<FLOW>> if (branch_taken != 0) goto broff_x1; }
+x1: "blezt"^" "^A_x1^", "^broff_x1 is A_x1 & broff_x1 & m_54_63=0x5a { branch_taken = A_x1 s<= 0; <<FLOW>> if (branch_taken != 0) goto broff_x1; }
+x1: "bltz"^" "^A_x1^", "^broff_x1 is A_x1 & broff_x1 & m_54_63=0x5d { branch_taken = A_x1 s< 0; <<FLOW>> if (branch_taken != 0) goto broff_x1; }
+x1: "bltzt"^" "^A_x1^", "^broff_x1 is A_x1 & broff_x1 & m_54_63=0x5c { branch_taken = A_x1 s< 0; <<FLOW>> if (branch_taken != 0) goto broff_x1; }
+x1: "bnez"^" "^A_x1^", "^broff_x1 is A_x1 & broff_x1 & m_54_63=0x5f { branch_taken = A_x1 != 0; <<FLOW>> if (branch_taken != 0) goto broff_x1; }
+x1: "bnezt"^" "^A_x1^", "^broff_x1 is A_x1 & broff_x1 & m_54_63=0x5e { branch_taken = A_x1 != 0; <<FLOW>> if (branch_taken != 0) goto broff_x1; }
+x1: "j"^" "^jumpoff_target is jumpoff_target & m_58_63=0x9 { <<FLOW>> goto jumpoff_target; }
+x1: "jal"^" "^jumpoff_target is jumpoff_target & m_58_63=0x8 { lr_new = inst_next; <<COMMIT>> lr = lr_new; <<FLOW>> call jumpoff_target; }
+x1: "addli"^" "^D_x1^", "^A_x1^", "^imm16_x1 is D_x1 & A_x1 & imm16_x1 & m_59_63=0x0 & (m_37_42!=0x3f) { D_x1 = A_x1 + imm16_x1; }
+x1: "addxli"^" "^D_x1^", "^A_x1^", "^imm16_x1 is D_x1 & A_x1 & imm16_x1 & m_59_63=0x1 { local result:4 = A_x1:4 + imm16_x1:4; D_x1 = sext(result); }
+x1: "shl16insli"^" "^D_x1^", "^A_x1^", "^imm16_x1 is D_x1 & A_x1 & imm16_x1 & m_59_63=0x7 & (m_31_42!=0xfff) { D_x1 = (A_x1 << 16) | (imm16_x1 & 0xffff); }
+y0: "info"^" "^imm8_y0 is imm8_y0 & m_00_11=0xfff & m_27_30=0x2 {  }
+y0: "move"^" "^D_y0^", "^A_y0 is D_y0 & A_y0 & m_12_19=0xbf & m_27_30=0xa { D_y0 = A_y0; }
+y0: "clz"^" "^D_y0^", "^A_y0 is D_y0 & A_y0 & m_12_19=0xc1 & m_27_30=0x6 { D_y0 = lzcount(A_y0); }
+y0: "ctz"^" "^D_y0^", "^A_y0 is D_y0 & A_y0 & m_12_19=0xc2 & m_27_30=0x6 { local isolated:8 = A_y0 & (0 - A_y0); D_y0 = popcount(isolated - 1); }
+y0: "fnop" is m_12_19=0xc3 & m_27_30=0x6 {  }
+y0: "fsingle_pack1"^" "^D_y0^", "^A_y0 is D_y0 & A_y0 & m_12_19=0xc4 & m_27_30=0x6 { D_y0 = tilegx_fsingle_pack1(A_y0); }
+y0: "nop" is m_12_19=0xc5 & m_27_30=0x6 {  }
+y0: "pcnt"^" "^D_y0^", "^A_y0 is D_y0 & A_y0 & m_12_19=0xc6 & m_27_30=0x6 { D_y0 = popcount(A_y0); }
+y0: "revbits"^" "^D_y0^", "^A_y0 is D_y0 & A_y0 & m_12_19=0xc7 & m_27_30=0x6 { local value:8 = A_y0; value = ((value & 0x5555555555555555) << 1) | ((value >> 1) & 0x5555555555555555); value = ((value & 0x3333333333333333) << 2) | ((value >> 2) & 0x3333333333333333); value = ((value & 0x0f0f0f0f0f0f0f0f) << 4) | ((value >> 4) & 0x0f0f0f0f0f0f0f0f); value = ((value & 0x00ff00ff00ff00ff) << 8) | ((value >> 8) & 0x00ff00ff00ff00ff); value = ((value & 0x0000ffff0000ffff) << 16) | ((value >> 16) & 0x0000ffff0000ffff); D_y0 = (value << 32) | (value >> 32); }
+y0: "revbytes"^" "^D_y0^", "^A_y0 is D_y0 & A_y0 & m_12_19=0xc8 & m_27_30=0x6 { local value:8 = A_y0; value = ((value & 0x00ff00ff00ff00ff) << 8) | ((value >> 8) & 0x00ff00ff00ff00ff); value = ((value & 0x0000ffff0000ffff) << 16) | ((value >> 16) & 0x0000ffff0000ffff); D_y0 = (value << 32) | (value >> 32); }
+y0: "tblidxb0"^" "^AD_y0^", "^A_y0 is AD_y0 & A_y0 & m_12_19=0xc9 & m_27_30=0x6 { AD_y0 = (AD_y0 & 0xfffffffffffffc03) | (((A_y0 >> 0) & 0xff) << 2); }
+y0: "tblidxb1"^" "^AD_y0^", "^A_y0 is AD_y0 & A_y0 & m_12_19=0xca & m_27_30=0x6 { AD_y0 = (AD_y0 & 0xfffffffffffffc03) | (((A_y0 >> 8) & 0xff) << 2); }
+y0: "tblidxb2"^" "^AD_y0^", "^A_y0 is AD_y0 & A_y0 & m_12_19=0xcb & m_27_30=0x6 { AD_y0 = (AD_y0 & 0xfffffffffffffc03) | (((A_y0 >> 16) & 0xff) << 2); }
+y0: "tblidxb3"^" "^AD_y0^", "^A_y0 is AD_y0 & A_y0 & m_12_19=0xcc & m_27_30=0x6 { AD_y0 = (AD_y0 & 0xfffffffffffffc03) | (((A_y0 >> 24) & 0xff) << 2); }
+y0: "movei"^" "^D_y0^", "^imm8_y0 is D_y0 & imm8_y0 & m_06_11=0x3f & m_27_30=0x0 { D_y0 = imm8_y0; }
+y0: "add"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x1 & m_27_30=0x5 { D_y0 = A_y0 + B_y0; }
+y0: "addx"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x0 & m_27_30=0x5 { local result:4 = A_y0:4 + B_y0:4; D_y0 = sext(result); }
+y0: "and"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x0 & m_27_30=0xa { D_y0 = A_y0 & B_y0; }
+y0: "cmoveqz"^" "^AD_y0^", "^A_y0^", "^B_y0 is AD_y0 & A_y0 & B_y0 & m_18_19=0x0 & m_27_30=0x9 { if (A_y0 != 0) goto <done>; AD_y0 = B_y0; <done> }
+y0: "cmovnez"^" "^AD_y0^", "^A_y0^", "^B_y0 is AD_y0 & A_y0 & B_y0 & m_18_19=0x1 & m_27_30=0x9 { if (A_y0 == 0) goto <done>; AD_y0 = B_y0; <done> }
+y0: "cmpeq"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x0 & m_27_30=0x8 { D_y0 = zext(A_y0 == B_y0); }
+y0: "cmples"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x0 & m_27_30=0x7 { D_y0 = zext(A_y0 s<= B_y0); }
+y0: "cmpleu"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x1 & m_27_30=0x7 { D_y0 = zext(A_y0 <= B_y0); }
+y0: "cmplts"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x2 & m_27_30=0x7 { D_y0 = zext(A_y0 s< B_y0); }
+y0: "cmpltu"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x3 & m_27_30=0x7 { D_y0 = zext(A_y0 < B_y0); }
+y0: "cmpne"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x1 & m_27_30=0x8 { D_y0 = zext(A_y0 != B_y0); }
+y0: "mnz"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x2 & m_27_30=0x9 { local mask:8 = sext(A_y0 != 0); D_y0 = mask & B_y0; }
+y0: "mul_hs_hs"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x0 & m_27_30=0xd { D_y0 = ((A_y0 s>> 32) * (B_y0 s>> 32)); }
+y0: "mul_hu_hu"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x1 & m_27_30=0xd { D_y0 = ((A_y0 >> 32) * (B_y0 >> 32)); }
+y0: "mul_ls_ls"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x2 & m_27_30=0xd { D_y0 = (sext(A_y0:4) * sext(B_y0:4)); }
+y0: "mul_lu_lu"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x3 & m_27_30=0xd { D_y0 = (zext(A_y0:4) * zext(B_y0:4)); }
+y0: "mula_hs_hs"^" "^AD_y0^", "^A_y0^", "^B_y0 is AD_y0 & A_y0 & B_y0 & m_18_19=0x0 & m_27_30=0xe { AD_y0 = AD_y0 + ((A_y0 s>> 32) * (B_y0 s>> 32)); }
+y0: "mula_hu_hu"^" "^AD_y0^", "^A_y0^", "^B_y0 is AD_y0 & A_y0 & B_y0 & m_18_19=0x1 & m_27_30=0xe { AD_y0 = AD_y0 + ((A_y0 >> 32) * (B_y0 >> 32)); }
+y0: "mula_ls_ls"^" "^AD_y0^", "^A_y0^", "^B_y0 is AD_y0 & A_y0 & B_y0 & m_18_19=0x2 & m_27_30=0xe { AD_y0 = AD_y0 + (sext(A_y0:4) * sext(B_y0:4)); }
+y0: "mula_lu_lu"^" "^AD_y0^", "^A_y0^", "^B_y0 is AD_y0 & A_y0 & B_y0 & m_18_19=0x3 & m_27_30=0xe { AD_y0 = AD_y0 + (zext(A_y0:4) * zext(B_y0:4)); }
+y0: "mulax"^" "^AD_y0^", "^A_y0^", "^B_y0 is AD_y0 & A_y0 & B_y0 & m_18_19=0x2 & m_27_30=0x8 { local result:4 = AD_y0:4 + (A_y0:4 * B_y0:4); AD_y0 = sext(result); }
+y0: "mulx"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x3 & m_27_30=0x8 { local result:4 = (A_y0:4 * B_y0:4); D_y0 = sext(result); }
+y0: "mz"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x3 & m_27_30=0x9 { local mask:8 = sext(A_y0 == 0); D_y0 = mask & B_y0; }
+y0: "nor"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x1 & m_27_30=0xa { D_y0 = ~(A_y0 | B_y0); }
+y0: "or"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x2 & m_27_30=0xa & (m_12_17!=0x3f) { D_y0 = A_y0 | B_y0; }
+y0: "rotl"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x0 & m_27_30=0xb { local amount:8 = (B_y0 & 0x3f); D_y0 = (A_y0 << amount) | (A_y0 >> ((64 - amount) & 0x3f)); }
+y0: "rotli"^" "^D_y0^", "^A_y0^", "^shamt_y0 is D_y0 & A_y0 & shamt_y0 & m_18_19=0x0 & m_27_30=0xf { local amount:8 = shamt_y0; D_y0 = (A_y0 << amount) | (A_y0 >> ((64 - amount) & 0x3f)); }
+y0: "shl"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x1 & m_27_30=0xb { D_y0 = A_y0 << (B_y0 & 0x3f); }
+y0: "shl1add"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x0 & m_27_30=0x6 { D_y0 = (A_y0 << 1) + B_y0; }
+y0: "shl1addx"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x1 & m_27_30=0xc { local result:4 = (A_y0:4 << 1) + B_y0:4; D_y0 = sext(result); }
+y0: "shl2add"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x1 & m_27_30=0x6 { D_y0 = (A_y0 << 2) + B_y0; }
+y0: "shl2addx"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x2 & m_27_30=0xc { local result:4 = (A_y0:4 << 2) + B_y0:4; D_y0 = sext(result); }
+y0: "shl3add"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x2 & m_27_30=0x6 { D_y0 = (A_y0 << 3) + B_y0; }
+y0: "shl3addx"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x3 & m_27_30=0xc { local result:4 = (A_y0:4 << 3) + B_y0:4; D_y0 = sext(result); }
+y0: "shli"^" "^D_y0^", "^A_y0^", "^shamt_y0 is D_y0 & A_y0 & shamt_y0 & m_18_19=0x1 & m_27_30=0xf { D_y0 = A_y0 << shamt_y0; }
+y0: "shrs"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x2 & m_27_30=0xb { D_y0 = A_y0 s>> (B_y0 & 0x3f); }
+y0: "shrsi"^" "^D_y0^", "^A_y0^", "^shamt_y0 is D_y0 & A_y0 & shamt_y0 & m_18_19=0x2 & m_27_30=0xf { D_y0 = A_y0 s>> shamt_y0; }
+y0: "shru"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x3 & m_27_30=0xb { D_y0 = A_y0 >> (B_y0 & 0x3f); }
+y0: "shrui"^" "^D_y0^", "^A_y0^", "^shamt_y0 is D_y0 & A_y0 & shamt_y0 & m_18_19=0x3 & m_27_30=0xf { D_y0 = A_y0 >> shamt_y0; }
+y0: "sub"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x3 & m_27_30=0x5 { D_y0 = A_y0 - B_y0; }
+y0: "subx"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x2 & m_27_30=0x5 { local result:4 = A_y0:4 - B_y0:4; D_y0 = sext(result); }
+y0: "xor"^" "^D_y0^", "^A_y0^", "^B_y0 is D_y0 & A_y0 & B_y0 & m_18_19=0x3 & m_27_30=0xa { D_y0 = A_y0 ^ B_y0; }
+y0: "addi"^" "^D_y0^", "^A_y0^", "^imm8_y0 is D_y0 & A_y0 & imm8_y0 & m_27_30=0x0 & (m_06_11!=0x3f) { D_y0 = A_y0 + imm8_y0; }
+y0: "addxi"^" "^D_y0^", "^A_y0^", "^imm8_y0 is D_y0 & A_y0 & imm8_y0 & m_27_30=0x1 { local result:4 = A_y0:4 + imm8_y0:4; D_y0 = sext(result); }
+y0: "andi"^" "^D_y0^", "^A_y0^", "^imm8_y0 is D_y0 & A_y0 & imm8_y0 & m_27_30=0x2 & (m_00_11!=0xfff) { D_y0 = A_y0 & imm8_y0; }
+y0: "cmpeqi"^" "^D_y0^", "^A_y0^", "^imm8_y0 is D_y0 & A_y0 & imm8_y0 & m_27_30=0x3 { D_y0 = zext(A_y0 == imm8_y0); }
+y0: "cmpltsi"^" "^D_y0^", "^A_y0^", "^imm8_y0 is D_y0 & A_y0 & imm8_y0 & m_27_30=0x4 { D_y0 = zext(A_y0 s< imm8_y0); }
+y1: "info"^" "^imm8_y1 is imm8_y1 & m_31_42=0xfff & m_58_61=0x3 {  }
+y1: "move"^" "^D_y1^", "^A_y1 is D_y1 & A_y1 & m_43_50=0xbf & m_58_61=0xb { D_y1 = A_y1; }
+y1: "fnop" is m_43_50=0xc8 & m_58_61=0x7 {  }
+y1: "ill" is m_43_50=0xc9 & m_58_61=0x7 { local trap_number:8 = 0; tilegx_trap(trap_number); }
+y1: "jalr"^" "^A_y1 is A_y1 & m_43_50=0xcb & m_58_61=0x7 { lr_new = inst_next; branch_target = A_y1 & ~7; <<COMMIT>> lr = lr_new; <<FLOW>> call [branch_target]; }
+y1: "jalrp"^" "^A_y1 is A_y1 & m_43_50=0xca & m_58_61=0x7 { lr_new = inst_next; branch_target = A_y1 & ~7; <<COMMIT>> lr = lr_new; <<FLOW>> call [branch_target]; }
+y1: "jr"^" "^A_y1 is A_y1 & m_43_50=0xcd & m_58_61=0x7 { branch_target = A_y1 & ~7; <<FLOW>> goto [branch_target]; }
+y1: "jrp"^" "^A_y1 is A_y1 & m_43_50=0xcc & m_58_61=0x7 { branch_target = A_y1 & ~7; <<FLOW>> return [branch_target]; }
+y1: "lnk"^" "^D_y1 is D_y1 & m_43_50=0xce & m_58_61=0x7 { D_y1 = inst_next; }
+y1: "nop" is m_43_50=0xcf & m_58_61=0x7 {  }
+y1: "movei"^" "^D_y1^", "^imm8_y1 is D_y1 & imm8_y1 & m_37_42=0x3f & m_58_61=0x1 { D_y1 = imm8_y1; }
+y1: "add"^" "^D_y1^", "^A_y1^", "^B_y1 is D_y1 & A_y1 & B_y1 & m_49_50=0x1 & m_58_61=0x6 { D_y1 = A_y1 + B_y1; }
+y1: "addx"^" "^D_y1^", "^A_y1^", "^B_y1 is D_y1 & A_y1 & B_y1 & m_49_50=0x0 & m_58_61=0x6 { local result:4 = A_y1:4 + B_y1:4; D_y1 = sext(result); }
+y1: "and"^" "^D_y1^", "^A_y1^", "^B_y1 is D_y1 & A_y1 & B_y1 & m_49_50=0x0 & m_58_61=0xb { D_y1 = A_y1 & B_y1; }
+y1: "cmpeq"^" "^D_y1^", "^A_y1^", "^B_y1 is D_y1 & A_y1 & B_y1 & m_49_50=0x2 & m_58_61=0x9 { D_y1 = zext(A_y1 == B_y1); }
+y1: "cmples"^" "^D_y1^", "^A_y1^", "^B_y1 is D_y1 & A_y1 & B_y1 & m_49_50=0x0 & m_58_61=0x8 { D_y1 = zext(A_y1 s<= B_y1); }
+y1: "cmpleu"^" "^D_y1^", "^A_y1^", "^B_y1 is D_y1 & A_y1 & B_y1 & m_49_50=0x1 & m_58_61=0x8 { D_y1 = zext(A_y1 <= B_y1); }
+y1: "cmplts"^" "^D_y1^", "^A_y1^", "^B_y1 is D_y1 & A_y1 & B_y1 & m_49_50=0x2 & m_58_61=0x8 { D_y1 = zext(A_y1 s< B_y1); }
+y1: "cmpltu"^" "^D_y1^", "^A_y1^", "^B_y1 is D_y1 & A_y1 & B_y1 & m_49_50=0x3 & m_58_61=0x8 { D_y1 = zext(A_y1 < B_y1); }
+y1: "cmpne"^" "^D_y1^", "^A_y1^", "^B_y1 is D_y1 & A_y1 & B_y1 & m_49_50=0x3 & m_58_61=0x9 { D_y1 = zext(A_y1 != B_y1); }
+y1: "mnz"^" "^D_y1^", "^A_y1^", "^B_y1 is D_y1 & A_y1 & B_y1 & m_49_50=0x2 & m_58_61=0xa { local mask:8 = sext(A_y1 != 0); D_y1 = mask & B_y1; }
+y1: "mz"^" "^D_y1^", "^A_y1^", "^B_y1 is D_y1 & A_y1 & B_y1 & m_49_50=0x3 & m_58_61=0xa { local mask:8 = sext(A_y1 == 0); D_y1 = mask & B_y1; }
+y1: "nor"^" "^D_y1^", "^A_y1^", "^B_y1 is D_y1 & A_y1 & B_y1 & m_49_50=0x1 & m_58_61=0xb { D_y1 = ~(A_y1 | B_y1); }
+y1: "or"^" "^D_y1^", "^A_y1^", "^B_y1 is D_y1 & A_y1 & B_y1 & m_49_50=0x2 & m_58_61=0xb & (m_43_48!=0x3f) { D_y1 = A_y1 | B_y1; }
+y1: "rotl"^" "^D_y1^", "^A_y1^", "^B_y1 is D_y1 & A_y1 & B_y1 & m_49_50=0x0 & m_58_61=0xc { local amount:8 = (B_y1 & 0x3f); D_y1 = (A_y1 << amount) | (A_y1 >> ((64 - amount) & 0x3f)); }
+y1: "rotli"^" "^D_y1^", "^A_y1^", "^shamt_y1 is D_y1 & A_y1 & shamt_y1 & m_49_50=0x0 & m_58_61=0xe { local amount:8 = shamt_y1; D_y1 = (A_y1 << amount) | (A_y1 >> ((64 - amount) & 0x3f)); }
+y1: "shl"^" "^D_y1^", "^A_y1^", "^B_y1 is D_y1 & A_y1 & B_y1 & m_49_50=0x1 & m_58_61=0xc { D_y1 = A_y1 << (B_y1 & 0x3f); }
+y1: "shl1add"^" "^D_y1^", "^A_y1^", "^B_y1 is D_y1 & A_y1 & B_y1 & m_49_50=0x0 & m_58_61=0x7 { D_y1 = (A_y1 << 1) + B_y1; }
+y1: "shl1addx"^" "^D_y1^", "^A_y1^", "^B_y1 is D_y1 & A_y1 & B_y1 & m_49_50=0x1 & m_58_61=0xd { local result:4 = (A_y1:4 << 1) + B_y1:4; D_y1 = sext(result); }
+y1: "shl2add"^" "^D_y1^", "^A_y1^", "^B_y1 is D_y1 & A_y1 & B_y1 & m_49_50=0x1 & m_58_61=0x7 { D_y1 = (A_y1 << 2) + B_y1; }
+y1: "shl2addx"^" "^D_y1^", "^A_y1^", "^B_y1 is D_y1 & A_y1 & B_y1 & m_49_50=0x2 & m_58_61=0xd { local result:4 = (A_y1:4 << 2) + B_y1:4; D_y1 = sext(result); }
+y1: "shl3add"^" "^D_y1^", "^A_y1^", "^B_y1 is D_y1 & A_y1 & B_y1 & m_49_50=0x2 & m_58_61=0x7 { D_y1 = (A_y1 << 3) + B_y1; }
+y1: "shl3addx"^" "^D_y1^", "^A_y1^", "^B_y1 is D_y1 & A_y1 & B_y1 & m_49_50=0x3 & m_58_61=0xd { local result:4 = (A_y1:4 << 3) + B_y1:4; D_y1 = sext(result); }
+y1: "shli"^" "^D_y1^", "^A_y1^", "^shamt_y1 is D_y1 & A_y1 & shamt_y1 & m_49_50=0x1 & m_58_61=0xe { D_y1 = A_y1 << shamt_y1; }
+y1: "shrs"^" "^D_y1^", "^A_y1^", "^B_y1 is D_y1 & A_y1 & B_y1 & m_49_50=0x2 & m_58_61=0xc { D_y1 = A_y1 s>> (B_y1 & 0x3f); }
+y1: "shrsi"^" "^D_y1^", "^A_y1^", "^shamt_y1 is D_y1 & A_y1 & shamt_y1 & m_49_50=0x2 & m_58_61=0xe { D_y1 = A_y1 s>> shamt_y1; }
+y1: "shru"^" "^D_y1^", "^A_y1^", "^B_y1 is D_y1 & A_y1 & B_y1 & m_49_50=0x3 & m_58_61=0xc { D_y1 = A_y1 >> (B_y1 & 0x3f); }
+y1: "shrui"^" "^D_y1^", "^A_y1^", "^shamt_y1 is D_y1 & A_y1 & shamt_y1 & m_49_50=0x3 & m_58_61=0xe { D_y1 = A_y1 >> shamt_y1; }
+y1: "sub"^" "^D_y1^", "^A_y1^", "^B_y1 is D_y1 & A_y1 & B_y1 & m_49_50=0x3 & m_58_61=0x6 { D_y1 = A_y1 - B_y1; }
+y1: "subx"^" "^D_y1^", "^A_y1^", "^B_y1 is D_y1 & A_y1 & B_y1 & m_49_50=0x2 & m_58_61=0x6 { local result:4 = A_y1:4 - B_y1:4; D_y1 = sext(result); }
+y1: "xor"^" "^D_y1^", "^A_y1^", "^B_y1 is D_y1 & A_y1 & B_y1 & m_49_50=0x3 & m_58_61=0xb { D_y1 = A_y1 ^ B_y1; }
+y1: "addi"^" "^D_y1^", "^A_y1^", "^imm8_y1 is D_y1 & A_y1 & imm8_y1 & m_58_61=0x1 & (m_37_42!=0x3f) { D_y1 = A_y1 + imm8_y1; }
+y1: "addxi"^" "^D_y1^", "^A_y1^", "^imm8_y1 is D_y1 & A_y1 & imm8_y1 & m_58_61=0x2 { local result:4 = A_y1:4 + imm8_y1:4; D_y1 = sext(result); }
+y1: "andi"^" "^D_y1^", "^A_y1^", "^imm8_y1 is D_y1 & A_y1 & imm8_y1 & m_58_61=0x3 & (m_31_42!=0xfff) { D_y1 = A_y1 & imm8_y1; }
+y1: "cmpeqi"^" "^D_y1^", "^A_y1^", "^imm8_y1 is D_y1 & A_y1 & imm8_y1 & m_58_61=0x4 { D_y1 = zext(A_y1 == imm8_y1); }
+y1: "cmpltsi"^" "^D_y1^", "^A_y1^", "^imm8_y1 is D_y1 & A_y1 & imm8_y1 & m_58_61=0x5 { D_y1 = zext(A_y1 s< imm8_y1); }
+y2: "prefetch"^" "^A_y2 is A_y2 & m_26_26=0x1 & m_51_57=0x3f & m_62_63=0x1 {  }
+y2: "prefetch_l1_fault"^" "^A_y2 is A_y2 & m_26_26=0x0 & m_51_57=0x3f & m_62_63=0x1 {  }
+y2: "prefetch_l2"^" "^A_y2 is A_y2 & m_26_26=0x1 & m_51_57=0x7f & m_62_63=0x1 {  }
+y2: "prefetch_l2_fault"^" "^A_y2 is A_y2 & m_26_26=0x0 & m_51_57=0x7f & m_62_63=0x1 {  }
+y2: "prefetch_l3"^" "^A_y2 is A_y2 & m_26_26=0x0 & m_51_57=0x7f & m_62_63=0x2 {  }
+y2: "prefetch_l3_fault"^" "^A_y2 is A_y2 & m_26_26=0x1 & m_51_57=0x3f & m_62_63=0x2 {  }
+y2: "ld"^" "^D_y2^", "^A_y2 is D_y2 & A_y2 & m_26_26=0x1 & m_57_57=0x1 & m_62_63=0x2 { local addr:8 = A_y2; D_y2 = *[ram]:8 addr; }
+y2: "ld1s"^" "^D_y2^", "^A_y2 is D_y2 & A_y2 & m_26_26=0x0 & m_57_57=0x0 & m_62_63=0x1 & (m_51_56!=0x3f) { local addr:8 = A_y2; D_y2 = sext(*[ram]:1 addr); }
+y2: "ld1u"^" "^D_y2^", "^A_y2 is D_y2 & A_y2 & m_26_26=0x1 & m_57_57=0x0 & m_62_63=0x1 & (m_51_56!=0x3f) { local addr:8 = A_y2; D_y2 = zext(*[ram]:1 addr); }
+y2: "ld2s"^" "^D_y2^", "^A_y2 is D_y2 & A_y2 & m_26_26=0x0 & m_57_57=0x1 & m_62_63=0x1 & (m_51_56!=0x3f) { local addr:8 = A_y2; D_y2 = sext(*[ram]:2 addr); }
+y2: "ld2u"^" "^D_y2^", "^A_y2 is D_y2 & A_y2 & m_26_26=0x1 & m_57_57=0x1 & m_62_63=0x1 & (m_51_56!=0x3f) { local addr:8 = A_y2; D_y2 = zext(*[ram]:2 addr); }
+y2: "ld4s"^" "^D_y2^", "^A_y2 is D_y2 & A_y2 & m_26_26=0x1 & m_57_57=0x0 & m_62_63=0x2 & (m_51_56!=0x3f) { local addr:8 = A_y2; D_y2 = sext(*[ram]:4 addr); }
+y2: "ld4u"^" "^D_y2^", "^A_y2 is D_y2 & A_y2 & m_26_26=0x0 & m_57_57=0x1 & m_62_63=0x2 & (m_51_56!=0x3f) { local addr:8 = A_y2; D_y2 = zext(*[ram]:4 addr); }
+y2: "st"^" "^A_y2^", "^AD_y2 is A_y2 & AD_y2 & m_26_26=0x1 & m_57_57=0x1 & m_62_63=0x3 { local addr:8 = A_y2; *[ram]:8 addr = AD_y2:8; }
+y2: "st1"^" "^A_y2^", "^AD_y2 is A_y2 & AD_y2 & m_26_26=0x0 & m_57_57=0x0 & m_62_63=0x3 { local addr:8 = A_y2; *[ram]:1 addr = AD_y2:1; }
+y2: "st2"^" "^A_y2^", "^AD_y2 is A_y2 & AD_y2 & m_26_26=0x1 & m_57_57=0x0 & m_62_63=0x3 { local addr:8 = A_y2; *[ram]:2 addr = AD_y2:2; }
+y2: "st4"^" "^A_y2^", "^AD_y2 is A_y2 & AD_y2 & m_26_26=0x0 & m_57_57=0x1 & m_62_63=0x3 { local addr:8 = A_y2; *[ram]:4 addr = AD_y2:4; }
+
+:"{" x0 ";" x1 "}" is x0 & x1 & bundle_address { build x0; build x1; crossbuild bundle_address,COMMIT; crossbuild bundle_address,FLOW; }
+:"{" y0 ";" y1 ";" y2 "}" is y0 & y1 & y2 & bundle_address { build y0; build y1; build y2; crossbuild bundle_address,COMMIT; crossbuild bundle_address,FLOW; }
