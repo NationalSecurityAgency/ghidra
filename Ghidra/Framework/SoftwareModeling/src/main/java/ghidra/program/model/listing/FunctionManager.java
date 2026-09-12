@@ -16,7 +16,9 @@
 package ghidra.program.model.listing;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.Set;
 
 import ghidra.program.database.ManagerDB;
 import ghidra.program.database.function.OverlappingFunctionException;
@@ -156,6 +158,31 @@ public interface FunctionManager extends ManagerDB {
 	 * @return function containing this address, null otherwise
 	 */
 	public Function getFunctionContaining(Address addr);
+
+	/**
+	 * Get all functions whose body or published body-extension contains
+	 * an address.  By default this returns a singleton set wrapping
+	 * {@link #getFunctionContaining(Address)} (or empty when no function
+	 * contains the address).  Processor analyzers can populate body
+	 * extensions via {@code AddressSetPropertyMap}s named
+	 * {@code "FunctionBodyExt:<entry-hex>"}; addresses in those maps are
+	 * treated as additional owners of the function.
+	 *
+	 * <p>This is the multi-owner query API: an instruction can be part
+	 * of multiple functions' flows (for example IFC-style shared bodies
+	 * where one instruction is reached as an inline call from several
+	 * caller functions).  Callers that need every function whose flow
+	 * touches an address should use this rather than the singular
+	 * {@link #getFunctionContaining(Address)}.
+	 *
+	 * @param addr address to query
+	 * @return non-null set of every Function whose primary body or
+	 *         body-extension contains {@code addr} (empty if none)
+	 */
+	public default Set<Function> getFunctionsContaining(Address addr) {
+		Function f = getFunctionContaining(addr);
+		return f == null ? Collections.emptySet() : Collections.singleton(f);
+	}
 
 	/**
 	 * Returns an iterator over all non-external functions in address (entry point) order
