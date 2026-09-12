@@ -95,7 +95,7 @@
         <pentry minsize="1" maxsize="8" metatype="float">
           <register name="fa0"/>
         </pentry>
-        <pentry minsize="1" maxsize="8">
+        <pentry minsize="1" maxsize="8" extension="inttype">
           <register name="a0"/>
         </pentry>
         <pentry minsize="9" maxsize="16">
