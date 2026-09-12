@@ -1,0 +1,40 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+  <!--
+      callee_ret  (0x100000):  mov rax,rdi ; sub rax,rsi ; ret
+      wrapper     (0x100007):  call callee_ret ; ret
+      callee_ret2 (0x100010):  mov rax,rdi ; add rax,rsi ; ret
+      wrapper2    (0x100020):  test rdx,rdx ; je L2 ; call callee_ret ; jmp L3
+                               L2: call callee_ret2 ; L3: ret
+
+      Neither wrapper ever writes RAX itself: the value each returns is
+      produced by a CALL.  With the callees' prototypes known to return an
+      8-byte value in RAX, the wrappers must be recovered as returning that
+      value, not as void.  wrapper2 exercises the case where return paths
+      from two different calls merge (MULTIEQUAL) before the RETURN.
+  -->
+<bytechunk space="ram" offset="0x100000" readonly="true">
+4889f84829f0c3e8f4ffffffc39090904889f84801f0c39090909090909090904885d27407e8d6ffffffeb05e8dfffffffc3
+</bytechunk>
+</binaryimage>
+<script>
+  <com>map fun r0x100000 callee_ret</com>
+  <com>map fun r0x100007 wrapper</com>
+  <com>map fun r0x100010 callee_ret2</com>
+  <com>map fun r0x100020 wrapper2</com>
+  <com>parse line extern int8 callee_ret(int8 a,int8 b);</com>
+  <com>parse line extern int8 callee_ret2(int8 a,int8 b);</com>
+  <com>lo fu wrapper</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu wrapper2</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Return passthrough #1" min="1" max="1">int8 wrapper\(</stringmatch>
+<stringmatch name="Return passthrough #2" min="1" max="2">= callee_ret\(param_1,param_2\);</stringmatch>
+<stringmatch name="Return passthrough #3" min="0" max="0">void wrapper</stringmatch>
+<stringmatch name="Return passthrough #4" min="1" max="1">int8 wrapper2\(</stringmatch>
+<stringmatch name="Return passthrough #5" min="1" max="1">= callee_ret2\(param_1,param_2\);</stringmatch>
+</decompilertest>
