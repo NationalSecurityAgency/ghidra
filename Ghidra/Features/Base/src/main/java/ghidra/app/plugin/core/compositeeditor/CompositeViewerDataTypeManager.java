@@ -17,12 +17,14 @@ package ghidra.app.plugin.core.compositeeditor;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.TreeSet;
 
 import javax.help.UnsupportedOperationException;
 
 import db.util.ErrorHandler;
 import ghidra.program.database.DbObject;
+import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.ProgramArchitecture;
 import ghidra.util.Swing;
@@ -66,6 +68,7 @@ public class CompositeViewerDataTypeManager<T extends Composite> extends StandAl
 	// datatype IDs to be checked as orphaned.
 	// NOTE: Orphan removal can only be done when this DTM actively manages the viewComposite
 	private TreeSet<Long> orphanIds = new TreeSet<>();
+	private final Set<Long> resolvingOriginalIds = new TreeSet<>();
 
 	/**
 	 * Creates a data type manager that the composite editor will use internally for managing 
@@ -230,13 +233,90 @@ public class CompositeViewerDataTypeManager<T extends Composite> extends StandAl
 			// DataTypeManager instance.
 			return viewComposite;
 		}
-		DataType resolvedDt = super.resolve(dataType, handler);
-		if ((dataType instanceof DbObject) && originalDTM.contains(dataType)) {
-			long originalId = originalDTM.getID(dataType);
-			long myId = getID(resolvedDt);
-			dataTypeIDMap.put(myId, originalId);
+
+		if (contains(dataType)) {
+			return dataType;
 		}
-		return resolvedDt;
+
+		DataType typedefMatch = findOriginalTypedefMatch(dataType);
+		if (typedefMatch != null) {
+			return resolve(typedefMatch, handler);
+		}
+
+		Long originalId = getOriginalId(dataType);
+		DataType existingViewDt =
+			originalId != null ? findMyDataTypeFromOriginalID(originalId) : null;
+		if (originalId != null) {
+			if (existingViewDt != null) {
+				return existingViewDt;
+			}
+			if (resolvingOriginalIds.contains(originalId)) {
+				DataType inProgressViewDt = findInProgressViewDataType(dataType);
+				if (inProgressViewDt != null) {
+					return inProgressViewDt;
+				}
+			}
+		}
+
+		boolean isTrackingOriginal = originalId != null && resolvingOriginalIds.add(originalId);
+		try {
+			DataType resolvedDt = super.resolve(dataType, handler);
+			if (originalId != null) {
+				DataType mappedResolvedDt = findMyDataTypeFromOriginalID(originalId);
+				if (shouldPreferMappedResolvedDataType(resolvedDt, mappedResolvedDt)) {
+					resolvedDt = mappedResolvedDt;
+				}
+				long myId = getID(resolvedDt);
+				dataTypeIDMap.put(myId, originalId);
+			}
+			return resolvedDt;
+		}
+		finally {
+			if (isTrackingOriginal) {
+				resolvingOriginalIds.remove(originalId);
+			}
+		}
+	}
+
+	private Long getOriginalId(DataType dataType) {
+		if (!(dataType instanceof DbObject) || !originalDTM.contains(dataType)) {
+			return null;
+		}
+		return originalDTM.getID(dataType);
+	}
+
+	private DataType findOriginalTypedefMatch(DataType dataType) {
+		if (dataType == null || !(dataType instanceof TypeDef)) {
+			return null;
+		}
+		if ((dataType instanceof DbObject && dataType.getDataTypeManager() == this) ||
+			originalDTM.contains(dataType)) {
+			return null;
+		}
+		DataType originalDataType =
+			originalDTM.getDataType(dataType.getCategoryPath(), dataType.getName());
+		if (originalDataType != null &&
+			DataTypeUtilities.isSameKindDataType(dataType, originalDataType)) {
+			return originalDataType;
+		}
+		return null;
+	}
+
+	private boolean shouldPreferMappedResolvedDataType(DataType resolvedDt, DataType mappedResolvedDt) {
+		if (resolvedDt == null || mappedResolvedDt == null || resolvedDt == mappedResolvedDt) {
+			return false;
+		}
+		return DataTypeUtilities.isSameKindDataType(resolvedDt, mappedResolvedDt) &&
+			DataTypeUtilities.equalsIgnoreConflict(resolvedDt.getPathName(),
+				mappedResolvedDt.getPathName());
+	}
+
+	private DataType findInProgressViewDataType(DataType dataType) {
+		DataType candidate = getDataType(dataType.getCategoryPath(), dataType.getName());
+		if (candidate != null && DataTypeUtilities.isSameKindDataType(dataType, candidate)) {
+			return candidate;
+		}
+		return null;
 	}
 
 	@Override
