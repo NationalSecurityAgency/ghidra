@@ -1,0 +1,119 @@
+main.c
+gcc2_compiled.
+int:t(0,1)=r(0,1);-2147483648;2147483647;
+char:t(0,2)=r(0,2);0;127;
+long int:t(0,3)=@s64;r(0,3);01000000000000000000000;00777777777777777777777;
+unsigned int:t(0,4)=r(0,4);0;037777777777;
+long unsigned int:t(0,5)=@s64;r(0,5);0;01777777777777777777777;
+__int128:t(0,6)=@s128;r(0,6);02000000000000000000000000000000000000000000;01777777777777777777777777777777777777777777;
+__int128 unsigned:t(0,7)=@s128;r(0,7);0;03777777777777777777777777777777777777777777;
+long long int:t(0,8)=@s64;r(0,8);01000000000000000000000;00777777777777777777777;
+long long unsigned int:t(0,9)=@s64;r(0,9);0;01777777777777777777777;
+short int:t(0,10)=@s16;r(0,10);-32768;32767;
+short unsigned int:t(0,11)=@s16;r(0,11);0;65535;
+signed char:t(0,12)=@s8;r(0,12);-128;127;
+unsigned char:t(0,13)=@s8;r(0,13);0;255;
+float:t(0,14)=r(0,1);4;0;
+double:t(0,15)=r(0,1);8;0;
+long double:t(0,16)=r(0,1);16;0;
+_Float32:t(0,17)=r(0,1);4;0;
+_Float64:t(0,18)=r(0,1);8;0;
+_Float128:t(0,19)=r(0,1);16;0;
+_Float32x:t(0,20)=r(0,1);8;0;
+_Float64x:t(0,21)=r(0,1);16;0;
+_Decimal32:t(0,22)=r(0,1);4;0;
+_Decimal64:t(0,23)=r(0,1);8;0;
+_Decimal128:t(0,24)=r(0,1);16;0;
+void:t(0,25)=(0,25)
+/usr/include/stdio.h
+/usr/lib/gcc/x86_64-linux-gnu/9/include/stddef.h
+size_t:t(2,1)=(0,5)
+/usr/lib/gcc/x86_64-linux-gnu/9/include/stdarg.h
+__gnuc_va_list:t(3,1)=(3,2)=(3,3)=ar(3,4)=@s64;r(3,4);0;01777777777777777777777;;0;0;(3,5)=xs__va_list_tag:
+/usr/include/x86_64-linux-gnu/bits/types.h
+__u_char:t(4,1)=(0,13)
+__u_short:t(4,2)=(0,11)
+__u_int:t(4,3)=(0,4)
+__u_long:t(4,4)=(0,5)
+__int8_t:t(4,5)=(0,12)
+__uint8_t:t(4,6)=(0,13)
+__int16_t:t(4,7)=(0,10)
+__uint16_t:t(4,8)=(0,11)
+__int32_t:t(4,9)=(0,1)
+__uint32_t:t(4,10)=(0,4)
+__int64_t:t(4,11)=(0,3)
+__uint64_t:t(4,12)=(0,5)
+__int_least8_t:t(4,13)=(4,5)
+__uint_least8_t:t(4,14)=(4,6)
+__int_least16_t:t(4,15)=(4,7)
+__uint_least16_t:t(4,16)=(4,8)
+__int_least32_t:t(4,17)=(4,9)
+__uint_least32_t:t(4,18)=(4,10)
+__int_least64_t:t(4,19)=(4,11)
+__uint_least64_t:t(4,20)=(4,12)
+__quad_t:t(4,21)=(0,3)
+__u_quad_t:t(4,22)=(0,5)
+__intmax_t:t(4,23)=(0,3)
+__uintmax_t:t(4,24)=(0,5)
+__dev_t:t(4,25)=(0,5)
+__uid_t:t(4,26)=(0,4)
+__gid_t:t(4,27)=(0,4)
+__ino_t:t(4,28)=(0,5)
+__ino64_t:t(4,29)=(0,5)
+__mode_t:t(4,30)=(0,4)
+__nlink_t:t(4,31)=(0,5)
+__off_t:t(4,32)=(0,3)
+__off64_t:t(4,33)=(0,3)
+__pid_t:t(4,34)=(0,1)
+__fsid_t:t(4,35)=(4,36)=s8__val:(4,37)=ar(3,4);0;00000000000000000000001;(0,1),0,64;;
+__clock_t:t(4,38)=(0,3)
+__rlim_t:t(4,39)=(0,5)
+__rlim64_t:t(4,40)=(0,5)
+__id_t:t(4,41)=(0,4)
+__time_t:t(4,42)=(0,3)
+__useconds_t:t(4,43)=(0,4)
+__suseconds_t:t(4,44)=(0,3)
+__daddr_t:t(4,45)=(0,1)
+__key_t:t(4,46)=(0,1)
+__clockid_t:t(4,47)=(0,1)
+__timer_t:t(4,48)=(4,49)=*(0,25)
+__blksize_t:t(4,50)=(0,3)
+__blkcnt_t:t(4,51)=(0,3)
+__blkcnt64_t:t(4,52)=(0,3)
+__fsblkcnt_t:t(4,53)=(0,5)
+__fsblkcnt64_t:t(4,54)=(0,5)
+__fsfilcnt_t:t(4,55)=(0,5)
+__fsfilcnt64_t:t(4,56)=(0,5)
+__fsword_t:t(4,57)=(0,3)
+__ssize_t:t(4,58)=(0,3)
+__syscall_slong_t:t(4,59)=(0,3)
+__syscall_ulong_t:t(4,60)=(0,5)
+__loff_t:t(4,61)=(4,33)
+__caddr_t:t(4,62)=(4,63)=*(0,2)
+__intptr_t:t(4,64)=(0,3)
+__socklen_t:t(4,65)=(0,4)
+__sig_atomic_t:t(4,66)=(0,1)
+/usr/include/x86_64-linux-gnu/bits/types/__fpos_t.h
+/usr/include/x86_64-linux-gnu/bits/types/__mbstate_t.h
+__mbstate_t:t(6,1)=(6,2)=s8__count:(0,1),0,32;__value:(6,3)=u4__wch:(0,4),0,32;__wchb:(6,4)=ar(3,4);0;00000000000000000000003;(0,2),0,32;;,32,32;;
+_G_fpos_t:T(5,1)=s16__pos:(4,32),0,64;__state:(6,1),64,64;;
+__fpos_t:t(5,2)=(5,1)
+/usr/include/x86_64-linux-gnu/bits/types/__fpos64_t.h
+_G_fpos64_t:T(7,1)=s16__pos:(4,33),0,64;__state:(6,1),64,64;;
+__fpos64_t:t(7,2)=(7,1)
+/usr/include/x86_64-linux-gnu/bits/types/__FILE.h
+__FILE:t(8,1)=(8,2)=xs_IO_FILE:
+/usr/include/x86_64-linux-gnu/bits/types/FILE.h
+FILE:t(9,1)=(8,2)
+/usr/include/x86_64-linux-gnu/bits/types/struct_FILE.h
+_IO_lock_t:t(10,1)=(0,25)
+_IO_FILE:T(8,2)=s216_flags:(0,1),0,32;_IO_read_ptr:(4,63),64,64;_IO_read_end:(4,63),128,64;_IO_read_base:(4,63),192,64;_IO_write_base:(4,63),256,64;_IO_write_ptr:(4,63),320,64;_IO_write_end:(4,63),384,64;_IO_buf_base:(4,63),448,64;_IO_buf_end:(4,63),512,64;_IO_save_base:(4,63),576,64;_IO_backup_base:(4,63),640,64;_IO_save_end:(4,63),704,64;_markers:(10,2)=*(10,3)=xs_IO_marker:,768,64;_chain:(10,4)=*(8,2),832,64;_fileno:(0,1),896,32;_flags2:(0,1),928,32;_old_offset:(4,32),960,64;_cur_column:(0,11),1024,16;_vtable_offset:(0,12),1040,8;_shortbuf:(10,5)=ar(3,4);0;0;(0,2),1048,8;_lock:(10,6)=*(10,1),1088,64;_offset:(4,33),1152,64;_codecvt:(10,7)=*(10,8)=xs_IO_codecvt:,1216,64;_wide_data:(10,9)=*(10,10)=xs_IO_wide_data:,1280,64;_freeres_list:(10,4),1344,64;_freeres_buf:(4,49),1408,64;__pad5:(2,1),1472,64;_mode:(0,1),1536,32;_unused2:(10,11)=ar(3,4);0;00000000000000000000023;(0,2),1568,160;;
+va_list:t(1,1)=(3,1)
+off_t:t(1,2)=(4,32)
+ssize_t:t(1,3)=(4,58)
+fpos_t:t(1,4)=(5,2)
+Numbers:T(0,26)=eZERO:0,ONE:1,TWO:2,THREE:3,;
+s_tag:T(0,27)=s24s_int:(0,1),0,32;s_float:(0,14),32,32;s_char_vec:(0,28)=ar(3,4);0;00000000000000000000007;(0,2),64,64;s_next:(0,29)=*(0,27),128,64;;
+s_typedef:t(0,30)=(0,27)
+vector:t(0,31)=(0,32)=ar(3,4);0;00000000000000000000003;(0,14)
+matrix:t(0,33)=(0,34)=ar(3,4);0;00000000000000000000003;(0,32)
