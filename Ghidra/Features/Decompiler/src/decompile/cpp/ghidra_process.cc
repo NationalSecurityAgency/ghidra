@@ -26,6 +26,21 @@
 #include "ifacedecomp.hh"
 #endif
 
+#if defined(GDB_BT) || defined(WAIT_DEBUGGER)
+#include <sys/prctl.h>
+#endif
+
+#ifdef WAIT_DEBUGGER
+#include <thread>
+#include <chrono>
+volatile bool startDebug = false;
+
+void wait_for_debugger() {
+  while (!startDebug)
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+}
+#endif
+
 namespace ghidra {
 
 #ifdef __REMOTE_SOCKET__
@@ -503,6 +518,31 @@ void GhidraDecompCapability::initialize(void)
 static void segvHandler(int4 sig)
 
 {
+#ifdef GDB_BT
+  pid_t crashed_pid = getpid();
+  pid_t child = fork();
+  if (child == 0) {
+    int gdb_fd = open("/tmp/ghidra_gdb_bt.log", O_CREAT | O_WRONLY | O_TRUNC, 0644);
+    if (gdb_fd != -1) {
+      dup2(gdb_fd, STDOUT_FILENO);
+      dup2(gdb_fd, STDERR_FILENO);
+      close(gdb_fd);
+    }
+    char attach_cmd[32];
+    snprintf(attach_cmd, sizeof(attach_cmd), "attach %d", crashed_pid);
+    execlp("gdb", "gdb",
+      "--batch",
+      "-ex", attach_cmd,
+      "-ex", "thread apply all bt full",
+      "-ex", "detach",
+      "-ex", "quit",
+      NULL);
+    exit(1);   // prevents OS from popping-up a dialog
+  } else if (child > 0) {
+    int status;
+    waitpid(child, &status, 0);
+  }
+#endif
   _Exit(1);	// Don't do any cleanup, just die - prevents OS from popping-up a dialog
 }
 
@@ -512,6 +552,14 @@ int main(int argc,char **argv)
 
 {
   using namespace ghidra;
+
+#if defined(GDB_BT) || defined(WAIT_DEBUGGER)
+  // Allow user to attach to this process with debugger
+  prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY);
+#endif
+#ifdef WAIT_DEBUGGER
+  wait_for_debugger();
+#endif
 
   signal(SIGSEGV, &segvHandler);  // Exit on SEGV errors
 #ifdef _WINDOWS
