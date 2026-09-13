@@ -1454,8 +1454,10 @@ operations. These are listed in <a class="xref" href="sleigh_ref.html#branchref.
 </p>
 <p>
 There are six forms covering the gamut of typical assembly language
-branches, but in terms of actual semantics there are really only
-three. With p-code,
+branches: <span class="emphasis"><em>BRANCH</em></span>, <span class="emphasis"><em>CBRANCH</em></span>,
+<span class="emphasis"><em>BRANCHIND</em></span>, <span class="emphasis"><em>CALL</em></span>,
+<span class="emphasis"><em>CALLIND</em></span>, and <span class="emphasis"><em>RETURN</em></span>.
+In terms of actual semantics there are really only three. With p-code,
 </p>
 <div class="informalexample"><div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; ">
 <li class="listitem" style="list-style-type: disc">
@@ -1469,7 +1471,12 @@ three. With p-code,
   </li>
 </ul></div></div>
 <p>
-The reason for this is that calls and returns imply the presence of
+Those two <span class="emphasis"><em>BRANCHIND</em></span> bullets are not a duplication
+error: both <span class="emphasis"><em>CALLIND</em></span> and <span class="emphasis"><em>RETURN</em></span>
+are indirect. <span class="emphasis"><em>CBRANCH</em></span> is the remaining form; it is
+the conditional branch and is not equivalent to any of the other five.
+The reason <span class="emphasis"><em>CALL</em></span>, <span class="emphasis"><em>CALLIND</em></span>, and
+<span class="emphasis"><em>RETURN</em></span> are kept as distinct operations is that calls and returns imply the presence of
 some sort of a stack. Typically an assembly language call instruction
 does several separate actions, manipulating a stack pointer, storing a
 return value, and so on. When translating the call instruction into
