@@ -1644,3 +1644,98 @@ define pcodeop vpmovuswb_avx512bw ;
 	ZmmReg1 = ZmmResult;
 }
 
+# SHA512 instructions
+define pcodeop vsha512msg1;
+define pcodeop vsha512msg2;
+define pcodeop vsha512rnds2;
+
+:VSHA512MSG1 YmmReg1, XmmReg2_m128 is $(VEX_NDS) & $(VEX_L256) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xCC; (YmmReg1 & ZmmReg1) ... & XmmReg2_m128
+{
+    YmmReg1 = vsha512msg1(XmmReg2_m128, vexVVVV_XmmReg);
+}
+
+:VSHA512MSG2 YmmReg1, YmmReg2 is $(VEX_NDS) & $(VEX_L256) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0xCD; YmmReg1 & YmmReg2
+{
+    YmmReg1 = vsha512msg2(YmmReg2, vexVVVV_YmmReg);
+}
+
+:VSHA512RNDS2 YmmReg1, vexVVVV_YmmReg, XmmReg2_m128 is $(VEX_NDS) & $(VEX_L256) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0xCB; YmmReg1 ... & XmmReg2_m128
+{
+    YmmReg1 = vsha512rnds2(XmmReg2_m128, vexVVVV_YmmReg);
+}
+
+# SM3 instructions
+define pcodeop vsm3msg1;
+define pcodeop vsm3msg2;
+define pcodeop vsm3rnds2;
+
+:VSM3MSG1 XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xDA; XmmReg1 ... & XmmReg2_m128
+{
+    XmmReg1 = vsm3msg1(XmmReg2_m128, vexVVVV_XmmReg);
+}
+
+:VSM3MSG2 XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xDA; XmmReg1 ... & XmmReg2_m128
+{
+    XmmReg1 = vsm3msg2(XmmReg2_m128, vexVVVV_XmmReg);
+}
+
+:VSM3RNDS2 XmmReg1, vexVVVV_XmmReg, XmmReg2_m128, imm8 is $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xDE; XmmReg1 ... & XmmReg2_m128; imm8
+{
+    XmmReg1 = vsm3rnds2(XmmReg2_m128, vexVVVV_XmmReg, imm8:1);
+}
+
+# SM4 VEX instructions
+define pcodeop vsm4key4;
+define pcodeop vsm4rnds4;
+
+:VSM4KEY4 XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xDA; XmmReg1 ... & XmmReg2_m128
+{
+    XmmReg1 = vsm4key4(XmmReg2_m128, vexVVVV_XmmReg);
+}
+
+:VSM4KEY4 YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_NDS) & $(VEX_L256) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0xDA; YmmReg1 ... & YmmReg2_m256
+{
+    YmmReg1 = vsm4key4(YmmReg2_m256, vexVVVV_YmmReg);
+}
+
+:VSM4RNDS4 XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xDA; XmmReg1 ... & XmmReg2_m128
+{
+    XmmReg1 = vsm4rnds4(XmmReg2_m128, vexVVVV_XmmReg);
+}
+
+:VSM4RNDS4 YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_NDS) & $(VEX_L256) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0xDA; YmmReg1 ... & YmmReg2_m256
+{
+    YmmReg1 = vsm4rnds4(YmmReg2_m256, vexVVVV_YmmReg);
+}
+
+# SM4 EVEX instructions
+:VSM4KEY4 XmmReg1, evexV5_XmmReg, XmmReg2_m128 is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & evexV5_XmmReg; byte=0xDA; XmmReg1 ... & XmmReg2_m128
+{
+    XmmReg1 = vsm4key4(XmmReg2_m128, evexV5_XmmReg);
+}
+
+:VSM4KEY4 YmmReg1, evexV5_YmmReg, YmmReg2_m256 is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & evexV5_YmmReg; byte=0xDA; YmmReg1 ... & YmmReg2_m256
+{
+    YmmReg1 = vsm4key4(YmmReg2_m256, evexV5_YmmReg);
+}
+
+:VSM4KEY4 ZmmReg1, evexV5_ZmmReg, ZmmReg2_m512 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & evexV5_ZmmReg; byte=0xDA; ZmmReg1 ... & ZmmReg2_m512
+{
+    ZmmReg1 = vsm4key4(ZmmReg2_m512, evexV5_ZmmReg);
+}
+
+:VSM4RNDS4 XmmReg1, evexV5_XmmReg, XmmReg2_m128 is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & evexV5_XmmReg; byte=0xDA; XmmReg1 ... & XmmReg2_m128
+{
+    XmmReg1 = vsm4rnds4(XmmReg2_m128, evexV5_XmmReg);
+}
+
+:VSM4RNDS4 YmmReg1, evexV5_YmmReg, YmmReg2_m256 is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & evexV5_YmmReg; byte=0xDA; YmmReg1 ... & YmmReg2_m256
+{
+    YmmReg1 = vsm4rnds4(YmmReg2_m256, evexV5_YmmReg);
+}
+
+:VSM4RNDS4 ZmmReg1, evexV5_ZmmReg, ZmmReg2_m512 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & evexV5_ZmmReg; byte=0xDA; ZmmReg1 ... & ZmmReg2_m512
+{
+    ZmmReg1 = vsm4rnds4(ZmmReg2_m512, evexV5_ZmmReg);
+}
+
