@@ -577,6 +577,11 @@ uintb PcodeOp::getNZMaskLocal(bool cliploop) const
   size = output->getSize();
   uintb fullmask = calc_mask( size );
 
+  for(int4 i=0;i<inrefs.size();++i) {
+    if (inrefs[i] == (Varnode *)0)
+      return fullmask;
+  }
+
   switch(opcode->getOpcode()) {
   case CPUI_INT_EQUAL:
   case CPUI_INT_NOTEQUAL:
