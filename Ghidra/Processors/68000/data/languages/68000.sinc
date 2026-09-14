@@ -925,7 +925,7 @@ with : extGUARD=1 {
 :abcd Tyb,Txb			is op=12 & op48=16 & Tyb & Txb {
 	CF = carry(Txb,carry(Tyb,XF));
 	Txb = Txb + Tyb + XF;
-	XF = bcdAdjust(Txb);
+	Txb = bcdAdjust(Txb);
 	bcdflags(Txb);
 }
 
