@@ -10773,28 +10773,33 @@ define pcodeop MaskedMoveQWord;
 bitLen: val is imm8 [ val=imm8 & 0x3f; ] { export *[const]:1 val; }
 lsbOffset: val is imm8 [ val=imm8 & 0x3f; ] { export *[const]:1 val; }
 :EXTRQ XmmReg2, bitLen, lsbOffset is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x78; reg_opcode=0 & XmmReg2; bitLen; lsbOffset {
-	local mask:16 = ((1 << bitLen) - 1) << lsbOffset;
+	# Length field is 6 bits; 0 means 64, same as the AMD encoding.
+	local len:1 = ((bitLen == 0) * 64) | bitLen;
+	local mask:16 = ((1 << len) - 1) << lsbOffset;
 	local val:16 = (XmmReg2 & mask) >> lsbOffset;
 	XmmReg2 = val;
 }
 
 :EXTRQ XmmReg1, XmmReg2 is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x79; XmmReg1 & XmmReg2 {
-	local len = XmmReg2[0,6];
-	local offs = XmmReg2[6,6];
-	local mask = ((1 << len) - 1) << offs;
-	local val = (XmmReg1 & mask) >> offs;
+	local len:1 = XmmReg2[0,6];
+	local offs:1 = XmmReg2[6,6];
+	len = ((len == 0) * 64) | len;
+	local mask:16 = ((1 << len) - 1) << offs;
+	local val:16 = (XmmReg1 & mask) >> offs;
 	XmmReg1 = val;
 }
 
 :INSERTQ XmmReg1, XmmReg2, bitLen, lsbOffset  is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x78; XmmReg1 & XmmReg2; bitLen; lsbOffset {
-	local mask:16 = ((1 << bitLen) - 1) << lsbOffset;
-	local val:16 = (zext(XmmReg2[0,64]) & ((1 << bitLen) - 1));
+	local len:1 = ((bitLen == 0) * 64) | bitLen;
+	local mask:16 = ((1 << len) - 1) << lsbOffset;
+	local val:16 = (zext(XmmReg2[0,64]) & ((1 << len) - 1));
 	XmmReg1 = (XmmReg1 & ~zext(mask)) | (zext(val) << lsbOffset);
 }
 
 :INSERTQ XmmReg1, XmmReg2 is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x79; XmmReg1 & XmmReg2 {
-	local len = XmmReg2[64,6];
-	local offs = XmmReg2[72,6];
+	local len:1 = XmmReg2[64,6];
+	local offs:1 = XmmReg2[72,6];
+	len = ((len == 0) * 64) | len;
 	local mask:16 = ((1 << len) - 1) << offs;
 	local val:16 = (zext(XmmReg2[0,64]) & ((1 << len) - 1));
 	XmmReg1 = (XmmReg1 & ~zext(mask)) | (zext(val) << offs);
