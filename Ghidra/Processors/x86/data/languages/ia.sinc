@@ -10775,8 +10775,8 @@ lsbOffset: val is imm8 [ val=imm8 & 0x3f; ] { export *[const]:1 val; }
 :EXTRQ XmmReg2, bitLen, lsbOffset is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x78; reg_opcode=0 & XmmReg2; bitLen; lsbOffset {
 	# Length field is 6 bits; 0 means 64, same as the AMD encoding.
 	local len:1 = ((bitLen == 0) * 64) | bitLen;
-	local mask:16 = ((1 << len) - 1) << lsbOffset;
-	local val:16 = (XmmReg2 & mask) >> lsbOffset;
+	local mask:16 = (1 << len) - 1;
+	local val:16 = (XmmReg2 >> lsbOffset) & mask;
 	XmmReg2 = val;
 }
 
@@ -10785,8 +10785,8 @@ lsbOffset: val is imm8 [ val=imm8 & 0x3f; ] { export *[const]:1 val; }
 	local len:1 = XmmReg2[0,6];
 	local offs:1 = XmmReg2[8,6];
 	len = ((len == 0) * 64) | len;
-	local mask:16 = ((1 << len) - 1) << offs;
-	local val:16 = (XmmReg1 & mask) >> offs;
+	local mask:16 = (1 << len) - 1;
+	local val:16 = (XmmReg1 >> offs) & mask;
 	XmmReg1 = val;
 }
 
