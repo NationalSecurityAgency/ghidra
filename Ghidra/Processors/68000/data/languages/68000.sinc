@@ -784,7 +784,7 @@ macro clearflags_fp() {
 
 macro bcdflags(result) {
  XF = CF;
- ZF = (result == 0) * ZF + (result != 0);
+ ZF = (result == 0) && (ZF == 1);
 }
 
 macro getbit(res,in,bitnum) {
