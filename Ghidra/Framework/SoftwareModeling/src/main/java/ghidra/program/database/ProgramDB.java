@@ -202,6 +202,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	private static final int NUM_MANAGERS = 15;
 
 	private ManagerDB[] managers = new ManagerDB[NUM_MANAGERS];
+	private LoadState loadState;
 	private OldFunctionManager oldFunctionMgr;
 	private MemoryMapDB memoryManager;
 	private GlobalNamespace globalNamespace;
@@ -253,6 +254,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 				"unsupported compilerSpec: " + compilerSpec.getClass().getName());
 		}
 
+		this.setLoadState(LoadState.INDETERMINATE);
 		this.language = language;
 		this.compilerSpec = ProgramCompilerSpec.getProgramCompilerSpec(this, compilerSpec);
 
@@ -317,6 +319,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			throws IOException, VersionException, LanguageNotFoundException, CancelledException {
 
 		super(dbh, "Untitled", 500, consumer);
+		this.setLoadState(LoadState.INDETERMINATE);
 
 		if (monitor == null) {
 			monitor = TaskMonitor.DUMMY;
@@ -329,6 +332,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		boolean success = false;
 		try {
 			int id = startTransaction("create program");
+			this.setLoadState(LoadState.LOADING);
 			recordChanges = false;
 			changeable = (openMode != OpenMode.IMMUTABLE);
 
@@ -414,6 +418,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			registerCompilerSpecOptions();
 			getCodeManager().activateContextLocking();
 			success = true;
+			this.setLoadState(LoadState.LOADED);
 		}
 		finally {
 			dbh.closeScratchPad();
@@ -691,6 +696,16 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	public void setExecutablePath(String path) {
 		Options pl = getOptions(PROGRAM_INFO);
 		pl.setString(EXECUTABLE_PATH, path);
+	}
+	
+	@Override
+	public LoadState getLoadState() {
+		return loadState;
+	}
+
+	@Override
+	public void setLoadState(LoadState state) {
+		loadState = state;
 	}
 
 	@Override
