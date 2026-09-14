@@ -417,6 +417,10 @@ public class BundleHost {
 		// setup the cache path
 		config.setProperty(Constants.FRAMEWORK_STORAGE, makeCacheDir());
 
+		// prevent the use of Felix URL handlers which can interfere with URL.openConnection 
+		// exception handling
+		config.put(FelixConstants.SERVICE_URLHANDLERS_PROP, "false");
+
 		config.put(FelixConstants.LOG_LEVEL_PROP, "1");
 		if (STDERR_DEBUGGING) {
 			config.put(FelixConstants.LOG_LEVEL_PROP, "999");
