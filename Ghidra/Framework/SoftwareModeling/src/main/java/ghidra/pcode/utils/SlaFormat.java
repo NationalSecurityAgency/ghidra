@@ -39,7 +39,7 @@ public class SlaFormat {
 	public static final int FORMAT_VERSION = 4;
 
 	/**
-	 * Absolute limit on the number of bytes in a .sla file
+	 * Absolute limit on the number of uncompressed bytes in a .sla file
 	 */
 	public static final int MAX_FILE_SIZE = 1 << 24;		// 16 Megabytes
 	// Attributes
@@ -265,6 +265,11 @@ public class SlaFormat {
 
 			try (InflaterInputStream inflaterStream = new InflaterInputStream(stream)) {
 				decoder.ingestStream(inflaterStream);
+				if (inflaterStream.read() != -1) {
+					throw new IOException(
+						"Uncompressed .sla file exceeds maximum supported size of " +
+							MAX_FILE_SIZE + " bytes");
+				}
 			}
 
 			decoder.endIngest();
