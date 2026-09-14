@@ -10781,8 +10781,9 @@ lsbOffset: val is imm8 [ val=imm8 & 0x3f; ] { export *[const]:1 val; }
 }
 
 :EXTRQ XmmReg1, XmmReg2 is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x79; XmmReg1 & XmmReg2 {
+	# Length is bits 5:0 of xmm2; index is bits 13:8 (byte 1). Bits 7:6 ignored.
 	local len:1 = XmmReg2[0,6];
-	local offs:1 = XmmReg2[6,6];
+	local offs:1 = XmmReg2[8,6];
 	len = ((len == 0) * 64) | len;
 	local mask:16 = ((1 << len) - 1) << offs;
 	local val:16 = (XmmReg1 & mask) >> offs;
