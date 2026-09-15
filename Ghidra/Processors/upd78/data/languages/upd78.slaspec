@@ -233,7 +233,11 @@ macro xor(op1, op2) {
 
 macro greater(op1, op2) {
     setSubFlags(op1, op2 + 1);
-    setResultFlags(op1 - op2 - 1);
+    # op2 + 1 will wrap if op2 is the maximum value, which makes the CY that
+    # setSubFlags computed incorrect. Recalculate CY and Z without addition.
+    # HC is still correct, since it only reads the low nibble.
+    $(CY_flag) = op1 <= op2;
+    $(Z_flag) = (op1 != 0) && (op1 - 1 == op2);
     $(SK_flag) = op1 > op2;
 }
 
