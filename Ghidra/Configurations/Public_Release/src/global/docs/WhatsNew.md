@@ -156,6 +156,46 @@ use are outlined below:
 - [Scoped Values](https://openjdk.org/jeps/506)
 - [Flexible Constructor Bodies](https://openjdk.org/jeps/513)
 
+## Processor Module changes since 12.1
+There have been numerous processor extensions and fixes added. These may cause an opened program to 
+upgrade and re-disassemble.
+
+- 8051/CIP-51: Added CIP-51 processor support and later corrected its language definition.
+- AArch64: Corrected `stlrb`/`stlrh` operand sizes, load/store operand formatting, NEON scalar 
+  zero-extension, and interrupt-mask sizing for `mrs IPSR`.
+- ARM/Thumb/NEON: Added missing ARM v8-M instructions; corrected `branchWritePC`, `ldrsh.w`, 
+  `ldrsb.w`, `msr apsr`, `sev.w`, and several NEON `vmov`/`vmvn` behaviors.
+- AVR32: Corrected `ICALL` behavior when `rd0` is the link register.
+- HCS12: Corrected disassembly of the `BRN` instruction.
+- Hexagon: Added the processor module with Sleigh crossbuild support, then substantially revised it
+  to fix reserved bits, paired-vector swap mode, missing p-code, and instructions through V79; 
+  quad-vector instructions remain unsupported.
+- M68000/CPU32: Added a CPU32 variant and fixed `movem.w` incrementing by four bytes instead of two.
+- MCS-96: Corrected the carry-flag calculation for `CMPL`.
+- MIPS/MIPS16e: Corrected signed-offset handling, `movn`/`movz` operand order, and MIPS16e language 
+  variant tags.
+- NDS32: Corrected disassembly of `fdiv` and `fmul`.
+- PIC-18: Corrected disassembly of addressing modes whose destination is a banked register.
+- PowerPC/e500mc: Added PowerPC 3.0B/3.0C instructions, corrected the signed offset for `LQ`, and 
+  fixed the e500mc stack-parameter offset.
+- RISC-V: Corrected writes to constants, 16-bit operand handling, and divide/remainder emulation 
+  when the divisor is zero.
+- RH850/V850: Added `RH850G3` instruction support to the V850 language module.
+- SPARC V9: Made register display formatting more consistent.
+- SuperH: Added an instruction index and corrected the missing return address for the SuperH4 `bsr` 
+  instruction.
+- TriCore: Reworded the processor description and corrected subc carry-flag handling.
+- x86: Added missing standard and `GFNI` instructions and `AVX` semantics; corrected instruction 
+  semantics, overflow-flag calculations, `REX`/`AVX-512` handling, 32-bit partial-register zeroing, 
+  segment-register moves, RIP-relative addressing, immediate masking, shift counts, and several 
+  instruction decodings.
+
+## Data Types
+Support has been added for integer datatypes in the C99 standard: `int8_t`, `uint8_t`, 
+`int16_t`, `uint16_t`, `int64_t`, `uint64_t`, `intptr_t`, `uintptr_t`. The CParser, PDB and DWARF 
+now leverage these new BuiltIn datatypes as well as related typedefs for improved portability across
+target architectures.
+
 ## Beta support for "Timeless Debugging"
 We've completed several enhancements to the Debugger to better support "timeless" or "time-travel" 
 debugging. This includes a native tool, based on Intel PIN, to capture execution traces in a format 
@@ -178,6 +218,22 @@ These views can also be used with live Debugger targets, but with some caveats.
 - To import the Trace, use **File &rarr; Import** from the Debugger tool. You must first import the
   program image in the usual fashion, if you have not already. When importing the Trace, click
   Options and associate it with the image.
+
+## Accessibility
+We've enhanced overall accessibility by optimizing focus and navigation across key interfaces. These
+updates include smarter default focus behaviors in the New Project Wizard and the help viewer, along
+with resolved accessibility issues in plugin configuration dialogs and the action chooser. Screen
+reader support has been improved for both the Listing and Byte Viewers, and a new keyboard shortcut 
+(Ctrl-E) has been introduced to allow users to easily toggle focus between the options tree and the 
+active editor panel.
+
+## Speed and memory use improvements
+Read/Write locks have been added to program database access, including the data base cache. These 
+changes, in theory, have improved the overall performance of multi-threaded access to the 
+database-backed Program API.
+
+In addition, Ghidra now runs Java with [Compact Object Headers](https://openjdk.org/jeps/519) to 
+reduce memory usage.
 
 ## Additional Bug Fixes and Enhancements
 Numerous other new features, improvements, and bug fixes are fully listed in the 
