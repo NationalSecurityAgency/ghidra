@@ -256,4 +256,12 @@ public record AttributeId(String name, int id) {
 
 	public static final AttributeId ATTRIB_UNKNOWN = new AttributeId("XMLunknown", 159);
 
+	// far-pointer call-argument fusion (H8/539F segmented-memory support)
+	// NOTE: the C++ side (fspec.cc) originally registered these as ids 130/131,
+	// which collide with ATTRIB_VECTOR_LANE_SIZES/ATTRIB_LABEL. 160/161 are the
+	// next free ids on this (Java) side; fspec.cc must be updated to match
+	// before this is used over the packed binary decompiler-communication protocol.
+	public static final AttributeId ATTRIB_HISLOT = new AttributeId("hislot", 160);
+	public static final AttributeId ATTRIB_JOINSIZE = new AttributeId("joinsize", 161);
+
 }

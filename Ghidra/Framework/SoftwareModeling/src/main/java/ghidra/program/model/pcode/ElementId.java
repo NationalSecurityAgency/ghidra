@@ -461,5 +461,12 @@ public record ElementId(String name, int id) {
 	public static final ElementId ELEM_EXTRA_STACK = new ElementId("extra_stack", 287);
 	public static final ElementId ELEM_CONSUME_REMAINING = new ElementId("consume_remaining", 288);
 
+
+	// far-pointer call-argument fusion (H8/539F segmented-memory support)
+	// NOTE: the C++ side (fspec.cc) originally registered this element as id 287,
+	// which collides with ELEM_EXTRA_STACK above. 292 is the next free id on
+	// this (Java) side; fspec.cc must be updated to match before this is used
+	// over the packed binary decompiler-communication protocol.
+	public static final ElementId ELEM_FARPOINTERJOIN = new ElementId("farpointerjoin", 292);
 	public static final ElementId ELEM_UNKNOWN = new ElementId("XMLunknown", 291);
 }
