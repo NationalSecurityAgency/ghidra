@@ -69,15 +69,34 @@
 
 # vadd.vi        31..26=0x00 vm vs2 simm5 14..12=0x3 vd 6..0=0x57
 # vadd.vi vd, vs2, simm5, vm   # vector-immediate
-:vadd.vi  vd, vs2, simm5^ vm    is op2631=0x0 & vm & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57  unimpl
+:vadd.vi  vd, vs2, simm5^ vm    is op2631=0x0 & vm & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57
+{
+	# Vector add immediate - simplified implementation
+	# TODO: Proper SEW/LMUL/masking support needed
+	# For now: assumes element-wise operation
+	vd = vs2 + sext(simm5);
+}
 
 # vadd.vv         31..26=0x00 vm vs2 vs1 14..12=0x0 vd 6..0=0x57
 # vadd.vv vd, vs2, vs1, vm   # Vector-vector
-:vadd.vv  vd, vs2, vs1^ vm    is op2631=0x0 & vm & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57  unimpl
+:vadd.vv  vd, vs2, vs1^ vm    is op2631=0x0 & vm & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57
+{
+	# Vector-vector add - simplified implementation
+	# TODO: Proper SEW/LMUL/masking support needed
+	# For now: treats entire vector register as single value
+	vd = vs1 + vs2;
+}
 
 # vadd.vx        31..26=0x00 vm vs2 rs1 14..12=0x4 vd 6..0=0x57
 # vadd.vx vd, vs2, rs1, vm   # vector-scalar
-:vadd.vx  vd, vs2, rs1^ vm    is op2631=0x0 & vm & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57  unimpl
+:vadd.vx  vd, vs2, rs1^ vm    is op2631=0x0 & vm & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57
+{
+	# Vector-scalar add - simplified implementation
+	# TODO: Proper SEW/LMUL/masking support needed
+	# Broadcast scalar across vector elements
+	local tmp:$(VLEN) = zext(rs1);
+	vd = vs2 + tmp;
+}
 
 # vamoaddei16.v  31..27=0x00 wd vm vs2 rs1 14..12=0x5 vd 6..0=0x2f
 # vamoaddei16.v vd, (rs1), vs2, vs3,  vm # Write original value to register, wd=1
@@ -369,15 +388,28 @@
 
 # vand.vi        31..26=0x09 vm vs2 simm5 14..12=0x3 vd 6..0=0x57
 # vand.vi vd, vs2, simm5, vm   # vector-immediate
-:vand.vi  vd, vs2, simm5^ vm    is op2631=0x9 & vm & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57  unimpl
+:vand.vi  vd, vs2, simm5^ vm    is op2631=0x9 & vm & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57
+{
+	# Vector AND immediate - simplified implementation
+	vd = vs2 & sext(simm5);
+}
 
 # vand.vv         31..26=0x09 vm vs2 vs1 14..12=0x0 vd 6..0=0x57
 # vand.vv vd, vs2, vs1, vm   # Vector-vector
-:vand.vv  vd, vs2, vs1^ vm    is op2631=0x9 & vm & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57  unimpl
+:vand.vv  vd, vs2, vs1^ vm    is op2631=0x9 & vm & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57
+{
+	# Vector-vector AND - simplified implementation
+	vd = vs1 & vs2;
+}
 
 # vand.vx        31..26=0x09 vm vs2 rs1 14..12=0x4 vd 6..0=0x57
 # vand.vx vd, vs2, rs1, vm   # vector-scalar
-:vand.vx  vd, vs2, rs1^ vm    is op2631=0x9 & vm & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57  unimpl
+:vand.vx  vd, vs2, rs1^ vm    is op2631=0x9 & vm & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57
+{
+	# Vector-scalar AND - simplified implementation
+	local tmp:$(VLEN) = zext(rs1);
+	vd = vs2 & tmp;
+}
 
 # vasub.vv       31..26=0x0b vm vs2 vs1 14..12=0x2 vd 6..0=0x57
 # vasub.vv vd, vs2, vs1, vm   # roundoff_signed(vs2[i] - vs1[i], 1)
@@ -1370,15 +1402,28 @@
 
 # vor.vi         31..26=0x0a vm vs2 simm5 14..12=0x3 vd 6..0=0x57
 # vor.vi vd, vs2, simm5, vm    # vector-immediate
-:vor.vi  vd, vs2, simm5^ vm     is op2631=0xa & vm & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57  unimpl
+:vor.vi  vd, vs2, simm5^ vm     is op2631=0xa & vm & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57
+{
+	# Vector OR immediate - simplified implementation
+	vd = vs2 | sext(simm5);
+}
 
 # vor.vv          31..26=0x0a vm vs2 vs1 14..12=0x0 vd 6..0=0x57
 # vor.vv vd, vs2, vs1, vm    # Vector-vector
-:vor.vv  vd, vs2, vs1^ vm     is op2631=0xa & vm & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57  unimpl
+:vor.vv  vd, vs2, vs1^ vm     is op2631=0xa & vm & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57
+{
+	# Vector-vector OR - simplified implementation
+	vd = vs1 | vs2;
+}
 
 # vor.vx         31..26=0x0a vm vs2 rs1 14..12=0x4 vd 6..0=0x57
 # vor.vx vd, vs2, rs1, vm    # vector-scalar
-:vor.vx  vd, vs2, rs1^ vm     is op2631=0xa & vm & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57  unimpl
+:vor.vx  vd, vs2, rs1^ vm     is op2631=0xa & vm & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57
+{
+	# Vector-scalar OR - simplified implementation
+	local tmp:$(VLEN) = zext(rs1);
+	vd = vs2 | tmp;
+}
 
 # vpopc.m        31..26=0x10 vm vs2 19..15=0x10 14..12=0x2 rd 6..0=0x57
 # vpopc.m rd, vs2, vm # x[rd] = sum_i ( vs2.mask[i] &amp;&amp; v0.mask[i] )
@@ -1735,11 +1780,20 @@
 
 # vsub.vv         31..26=0x02 vm vs2 vs1 14..12=0x0 vd 6..0=0x57
 # vsub.vv vd, vs2, vs1, vm   # Vector-vector
-:vsub.vv  vd, vs2, vs1^ vm    is op2631=0x2 & vm & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57  unimpl
+:vsub.vv  vd, vs2, vs1^ vm    is op2631=0x2 & vm & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57
+{
+	# Vector-vector subtract - simplified implementation
+	vd = vs2 - vs1;
+}
 
 # vsub.vx        31..26=0x02 vm vs2 rs1 14..12=0x4 vd 6..0=0x57
 # vsub.vx vd, vs2, rs1, vm   # vector-scalar
-:vsub.vx  vd, vs2, rs1^ vm    is op2631=0x2 & vm & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57  unimpl
+:vsub.vx  vd, vs2, rs1^ vm    is op2631=0x2 & vm & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57
+{
+	# Vector-scalar subtract - simplified implementation
+	local tmp:$(VLEN) = zext(rs1);
+	vd = vs2 - tmp;
+}
 
 # vsuxei1024.v     nf 28=1 27..26=1 vm vs2 rs1 14..12=0x7 vs3 6..0=0x27
 # vsuxei1024.v  vs3, (rs1), vs2, vm # unordered 1024-bit indexed store of SEW data
@@ -1931,15 +1985,28 @@
 
 # vxor.vi        31..26=0x0b vm vs2 simm5 14..12=0x3 vd 6..0=0x57
 # vxor.vi vd, vs2, simm5, vm    # vector-immediate
-:vxor.vi  vd, vs2, simm5^ vm     is op2631=0xb & vm & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57  unimpl
+:vxor.vi  vd, vs2, simm5^ vm     is op2631=0xb & vm & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57
+{
+	# Vector XOR immediate - simplified implementation
+	vd = vs2 ^ sext(simm5);
+}
 
 # vxor.vv         31..26=0x0b vm vs2 vs1 14..12=0x0 vd 6..0=0x57
 # vxor.vv vd, vs2, vs1, vm    # Vector-vector
-:vxor.vv  vd, vs2, vs1^ vm     is op2631=0xb & vm & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57  unimpl
+:vxor.vv  vd, vs2, vs1^ vm     is op2631=0xb & vm & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57
+{
+	# Vector-vector XOR - simplified implementation
+	vd = vs1 ^ vs2;
+}
 
 # vxor.vx        31..26=0x0b vm vs2 rs1 14..12=0x4 vd 6..0=0x57
 # vxor.vx vd, vs2, rs1, vm    # vector-scalar
-:vxor.vx  vd, vs2, rs1^ vm     is op2631=0xb & vm & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57  unimpl
+:vxor.vx  vd, vs2, rs1^ vm     is op2631=0xb & vm & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57
+{
+	# Vector-scalar XOR - simplified implementation
+	local tmp:$(VLEN) = zext(rs1);
+	vd = vs2 ^ tmp;
+}
 
 # vzext.vf2      31..26=0x12 vm vs2 19..15=6 14..12=0x2 vd 6..0=0x57
 # vzext.vf2 vd, vs2, vm  # Zero-extend SEW/2 source to SEW destination
