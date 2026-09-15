@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,14 +15,12 @@
  */
 package ghidra.pty.unix;
 
+import java.lang.foreign.*;
 import java.util.List;
 
-import ghidra.pty.unix.PosixC.ControllingTty;
-import ghidra.pty.unix.PosixC.Ioctls;
+import org.unix.*;
 
 public abstract class UnixPtySessionLeader {
-	private static final PosixC LIB_POSIX = PosixC.INSTANCE;
-	private static final int O_RDWR = 2; // TODO: Find this in libs
 
 	protected String ptyPath;
 	protected List<String> subArgs;
@@ -40,46 +38,58 @@ public abstract class UnixPtySessionLeader {
 		 * session's controlling TTY. Other platforms, e.g., BSD may require an explicit IOCTL.
 		 */
 		int bk = -1;
-		try {
-			int fd = LIB_POSIX.open(ptyPath, O_RDWR, 0);
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment cs = arena.allocate(UnixErr.LAYOUT);
+
+			int fd = UnixErr.checkLt0(fcntl_h.open.makeInvoker(fcntl_h.mode_t)
+					.apply(cs, arena.allocateFrom(ptyPath), fcntl_h.O_RDWR(), 0),
+				cs);
 
 			/** Copy stderr to a backup descriptor, in case something goes wrong. */
-			int bkt = fd + 1;
-			LIB_POSIX.dup2(2, bkt);
-			bk = bkt;
+			bk = UnixErr.checkLt0(unistd_h.dup(cs, 2), cs);
 
 			/**
 			 * Copy the TTY fd over all standard streams. This effectively redirects the leader's
 			 * standard streams to the TTY.
 			 */
-			LIB_POSIX.close(0);
-			LIB_POSIX.close(1);
-			LIB_POSIX.close(2);
-			LIB_POSIX.dup2(fd, 0);
-			LIB_POSIX.dup2(fd, 1);
-			LIB_POSIX.dup2(fd, 2);
-			LIB_POSIX.close(fd);
+			UnixErr.checkLt0(unistd_h.close(cs, 0), cs);
+			UnixErr.checkLt0(unistd_h.close(cs, 1), cs);
+			UnixErr.checkLt0(unistd_h.close(cs, 2), cs);
+			UnixErr.checkLt0(unistd_h.dup2(cs, fd, 0), cs);
+			UnixErr.checkLt0(unistd_h.dup2(cs, fd, 1), cs);
+			UnixErr.checkLt0(unistd_h.dup2(cs, fd, 2), cs);
+			UnixErr.checkLt0(unistd_h.close(cs, fd), cs);
 
 			/** This tells Linux to make this process the leader of a new session. */
-			LIB_POSIX.setsid();
-			ControllingTty.ByReference ctty = new ControllingTty.ByReference();
-			ctty.steal = 0;
-			LIB_POSIX.ioctl(0, ioctls().TIOCSCTTY(), ctty.getPointer());
+			// returns sid/pid, but I don't care to keep it
+			UnixErr.checkLt0(unistd_h.setsid(cs), cs);
+			/** arg=0 declines to "steal" the terminal */
+			UnixErr.checkLt0(ioctl_h.ioctl.makeInvoker(ioctl_h.C_INT)
+					.apply(cs, 0, ioctls().TIOCSCTTY(), 0),
+				cs);
 
 			/**
 			 * At this point, we are the session leader and the named TTY is the controlling PTY.
 			 * Now, exec the specified image with arguments as the session leader. Recall, this
 			 * replaces the image of this process.
 			 */
-			LIB_POSIX.execv(subArgs.get(0), subArgs.toArray(new String[0]));
+			// One extra element to be the null arg terminator
+			MemorySegment argsArr = arena.allocate(AddressLayout.ADDRESS, subArgs.size() + 1);
+			for (int i = 0; i < subArgs.size(); i++) {
+				argsArr.setAtIndex(AddressLayout.ADDRESS, i, arena.allocateFrom(subArgs.get(i)));
+			}
+			UnixErr.checkLt0(unistd_h.execv(cs,
+				arena.allocateFrom(subArgs.get(0)),
+				argsArr), cs);
 		}
 		catch (Throwable t) {
 			// Print to both redirected and to inherited stderr
 			System.err.println("Could not execute " + subArgs.get(0) + ": " + t.getMessage());
+			t.printStackTrace();
 			if (bk != -1) {
-				try {
-					int bkt = bk;
-					LIB_POSIX.dup2(bkt, 2);
+				try (Arena arena = Arena.ofConfined()) {
+					MemorySegment cs = arena.allocate(UnixErr.LAYOUT);
+					UnixErr.checkLt0(unistd_h.dup2(cs, bk, 2), cs);
 				}
 				catch (Throwable t2) {
 					// Catastrophic
@@ -87,6 +97,7 @@ public abstract class UnixPtySessionLeader {
 				}
 			}
 			System.err.println("Could not execute " + subArgs.get(0) + ": " + t.getMessage());
+			t.printStackTrace();
 			System.exit(127);
 		}
 	}

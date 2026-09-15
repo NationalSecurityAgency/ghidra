@@ -13,19 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import org.gradle.plugins.ide.eclipse.model.Container;
-
-apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
-apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
-apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
-apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
-apply from: "$rootProject.projectDir/gradle/javadoc.gradle"
-
-apply plugin: 'eclipse'
-eclipse.project.name = 'Framework Pty'
-
-dependencies {
-	api project(":Docking")
-
-	testImplementation project(":Generic")
-}
+#include <Windows.h>
+#include <WinCon.h>
+#include <ConsoleApi.h>

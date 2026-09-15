@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,27 +17,26 @@ package ghidra.pty.unix;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.foreign.*;
 
-import com.sun.jna.LastErrorException;
-import com.sun.jna.Memory;
+import org.unix.unistd_h;
+
+import ghidra.pty.unix.UnixErr.ErrnoException;
 
 /**
  * An input stream that wraps a native POSIX file descriptor
- * 
  * <p>
- * <b>WARNING:</b> This class makes use of jnr-ffi to invoke native functions. An invalid file
+ * <b>WARNING:</b> This class uses java.lang.foreign to invoke native functions. An invalid file
  * descriptor is generally detected, but an incorrect, but valid file descriptor may cause undefined
  * behavior.
  */
 public class FdInputStream extends InputStream {
-	private static final PosixC LIB_POSIX = PosixC.INSTANCE;
-
 	private final int fd;
 	private volatile boolean closed = false;
 
 	/**
 	 * Wrap the given file descriptor in an {@link InputStream}
-	 * 
+	 *
 	 * @param fd the file descriptor
 	 */
 	FdInputStream(int fd) {
@@ -69,19 +68,17 @@ public class FdInputStream extends InputStream {
 		if (len == 0) {
 			return 0;
 		}
-		Memory buf = new Memory(len);
-		int ret;
-		try {
-			ret = LIB_POSIX.read(fd, buf, len);
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment cs = arena.allocate(UnixErr.LAYOUT);
+			MemorySegment buf = arena.allocate(len);
+			int ret = (int) UnixErr.checkLt0(unistd_h.read(cs, fd, buf, len), cs);
+			MemorySegment.copy(buf, ValueLayout.JAVA_BYTE, 0, b, off, ret);
+			return ret;
 		}
-		catch (LastErrorException e) {
-			if (e.getErrorCode() == 5 || e.getErrorCode() == 9) {
-				throw new IOException(e);
-			}
-			throw e;
+		catch (ErrnoException e) {
+			// LATER: Should select specific err numbers?
+			throw new IOException(e);
 		}
-		buf.read(0, b, off, ret);
-		return ret;
 	}
 
 	@Override
