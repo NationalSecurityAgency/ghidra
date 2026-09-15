@@ -151,13 +151,6 @@ define pcodeop setInterruptMask;
 # Macros                                                       #
 ################################################################
 
-# Check skip flag and skip if needed
-macro check_skip() {
-    tmp = $(SK_flag);
-    $(SK_flag) = 0;
-    if tmp goto inst_next;
-}
-
 macro setResultFlags(result) {
     $(Z_flag) = (result == 0);
 }
@@ -194,7 +187,7 @@ macro addNC(op1, op2) {
 }
 
 macro setSubFlags(op1,op2) {
-    local AFmask = -1 >> 4;
+    local AFmask = 0xf;
     $(HC_flag) = (((op1 & AFmask) - (op2 & AFmask)) & (AFmask + 1)) != 0;
     $(CY_flag) = (op1 < op2);
 }
@@ -436,7 +429,9 @@ irf: AN7    is irf_0_4 = 0x13 & AN7 { export AN7; }
 ################################################################
 
 :^instruction is possibleSkip=1 & instruction [ possibleSkip=0; ] {
-    check_skip();
+    tmp = $(SK_flag);
+    $(SK_flag) = 0;
+    if tmp goto inst_next;
     build instruction;
 }
 
@@ -1234,41 +1229,27 @@ irf: AN7    is irf_0_4 = 0x13 & AN7 { export AN7; }
 }
 
 :DGT EA, rp3_ is rp3_ & ... op2_7 = 0x2b & EA [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
-    $(CY_flag) = EA < (rp3_ + 1);
-    $(HC_flag) = EAL < (rp3_:1 + 1);
-    $(Z_flag) = (EA - rp3_ - 1) == 0;
-    $(SK_flag) = $(CY_flag) == 0;
+    greater(EA, rp3_);
 }
 
 :DLT EA, rp3_ is rp3_ & ... op2_7 = 0x2f & EA [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
-    $(CY_flag) = EA < rp3_;
-    $(HC_flag) = EAL < rp3_:1;
-    $(Z_flag) = (EA - rp3_) == 0;
-    $(SK_flag) = $(CY_flag);
+    lesser(EA, rp3_);
 }
 
 :DNE EA, rp3_ is rp3_ & ... op2_7 = 0x3b & EA [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
-    $(CY_flag) = EA < rp3_;
-    $(HC_flag) = EAL < rp3_:1;
-    $(Z_flag) = (EA - rp3_) == 0;
-    $(SK_flag) = $(Z_flag) == 0;
+    notEqual(EA, rp3_);
 }
 
 :DEQ EA, rp3_ is rp3_ & ... op2_7 = 0x3f & EA [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
-    $(CY_flag) = EA < rp3_;
-    $(HC_flag) = EAL < rp3_:1;
-    $(Z_flag) = (EA - rp3_) == 0;
-    $(SK_flag) = $(Z_flag);
+    equal(EA, rp3_);
 }
 
 :DON EA, rp3_ is rp3_ & ... op2_7 = 0x33 & EA [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
-    $(Z_flag) = (EA & rp3_) == 0;
-    $(SK_flag) = $(Z_flag) == 0;
+    onTest(EA, rp3_);
 }
 
 :DOFF EA, rp3_ is rp3_ & ... op2_7 = 0x37 & EA [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
-    $(Z_flag) = (EA & rp3_) == 0;
-    $(SK_flag) = $(Z_flag);
+    offTest(EA, rp3_);
 }
 
 ################################################################
