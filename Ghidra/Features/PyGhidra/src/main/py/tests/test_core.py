@@ -171,6 +171,48 @@ def test_import_script(capsys, shared_datadir: Path):
     assert captured.out.rstrip() == "imported successfully"
 
 
+def test_script_globals_iteration():
+    pyghidra.start()
+    from pyghidra.core import _setup_script
+
+    script = _setup_script(None, None)
+    script["user_variable"] = 42
+    names = list(script)
+    for name in ("potentialPropertiesFileLocations", "propertiesFile", "referencePrimary"):
+        assert name not in names
+        with pytest.raises(KeyError):
+            script[name]
+
+    for name in ("user_variable", "currentProgram", "currentAddress", "monitor", "getCurrentProgram"):
+        assert name in names
+    assert script["user_variable"] == 42
+    assert script["currentProgram"] is None
+    assert script["currentAddress"] is None
+    assert script["monitor"] is not None
+    assert callable(script["getCurrentProgram"])
+
+
+def test_script_static_view_includes_write_only_properties():
+    pyghidra.start()
+    from pyghidra.script import PyGhidraScript
+
+    view = PyGhidraScript().get_static_view()
+    for name in ("potentialPropertiesFileLocations", "propertiesFile", "referencePrimary"):
+        assert name in list(view)
+        assert isinstance(view[name], property)
+
+
+def test_script_write_only_property_assignment():
+    pyghidra.start()
+    from java.util import ArrayList
+    from pyghidra.script import PyGhidraScript
+
+    script = PyGhidraScript()
+    locations = ArrayList()
+    script["potentialPropertiesFileLocations"] = locations
+    assert script["potentialPropertiesFileLocs"] == locations
+
+
 def test_import_ghidra_base_java_packages():
 
     def get_runtime_top_level_java_packages(launcher) -> set:
