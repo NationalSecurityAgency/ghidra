@@ -266,8 +266,17 @@ public class DataTypeMarkupType extends VTMarkupType {
 			// data that would be overwritten following the first data in the destination.
 			return false;
 		}
-		
-		DataType resolvedDataType = program.getDataTypeManager().resolve(dataType, conflictHandler);
+
+		/*
+		 	Note: the resolve may add a .conflict type.  That will not be removed if an exception is
+		 	thrown.  Also if an unapply is executed, .conflict types will not be removed.  For now,
+		 	we leave this up to the user to fix, should they care.  Trying to remove .conflict types
+		 	during an unapply may have unintended side-effects if the user added new uses of that 
+		 	conflict type.
+		 */
+
+		ProgramBasedDataTypeManager dtm = program.getDataTypeManager();
+		DataType resolvedDataType = dtm.resolve(dataType, conflictHandler);
 
 		listing.clearCodeUnits(startAddress, endAddress, false);
 
