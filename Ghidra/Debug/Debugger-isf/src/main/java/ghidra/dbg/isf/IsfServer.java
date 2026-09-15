@@ -32,8 +32,9 @@ import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.ProjectData;
 import ghidra.framework.store.db.PackedDatabase;
 import ghidra.program.database.ProgramDB;
+import ghidra.program.database.dtarchive.DataTypeArchiveFactory;
 import ghidra.program.model.data.DataTypeManager;
-import ghidra.program.model.data.FileDataTypeManager;
+import ghidra.program.model.dtarchive.FileDataTypeArchive;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
@@ -132,7 +133,9 @@ public class IsfServer extends Thread {
 
 	private DataTypeManager openAsDataTypeArchive(String ns) throws Exception {
 		File gdt = new File(ns);
-		return FileDataTypeManager.openFileArchive(gdt, false);
+		FileDataTypeArchive archive =
+			DataTypeArchiveFactory.openReadOnly(gdt, this, TaskMonitor.DUMMY);
+		return archive != null ? archive.getDataTypeManager() : null;
 	}
 
 	private DataTypeManager openAsProgramDatabase(String ns) throws Exception {

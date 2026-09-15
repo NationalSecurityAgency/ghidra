@@ -48,8 +48,6 @@ import docking.widgets.tree.GTreeNode;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.plugin.core.compositeeditor.ApplyAction;
 import ghidra.app.plugin.core.datamgr.actions.*;
-import ghidra.app.plugin.core.datamgr.archive.Archive;
-import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.plugin.core.datamgr.tree.*;
 import ghidra.app.plugin.core.function.AbstractEditFunctionSignatureDialog;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
@@ -64,6 +62,7 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
+import ghidra.program.model.dtarchive.DataTypeStore;
 import ghidra.program.model.listing.Program;
 import ghidra.test.*;
 import util.CollectionUtils;
@@ -86,7 +85,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 	private JTree jTree;
 	private ProgramActionContext treeContext;
 
-	private ArchiveNode programNode;
+	private DataTypeStoreNode programNode;
 	private DockingActionIf cutAction;
 	private DockingActionIf pasteAction;
 	private DataTypesProvider provider;
@@ -106,7 +105,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		jTree = (JTree) invokeInstanceMethod("getJTree", tree);
 		waitForTree();
 		ArchiveRootNode archiveRootNode = (ArchiveRootNode) tree.getModelRoot();
-		programNode = (ArchiveNode) archiveRootNode.getChild(program.getName());
+		programNode = (DataTypeStoreNode) archiveRootNode.getChild(program.getName());
 		assertNotNull("Did not successfully wait for the program node to load", programNode);
 
 		tool.showComponentProvider(provider, true);
@@ -188,10 +187,9 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 	@Test
 	public void testInvalidArchive() throws Exception {
-		final DataTypeManagerHandler managerHandler = plugin.getDataTypeManagerHandler();
-		final String[] invalidNames = { "BADARCHIVENAME.gdt" };
-		runSwing(() -> invokeInstanceMethod("openArchives", managerHandler,
-			new Class[] { String[].class }, new Object[] { invalidNames }));
+		List<String> invalidNames = Arrays.asList("BADARCHIVENAME.gdt");
+		runSwing(() -> invokeInstanceMethod("openArchives", plugin,
+			new Class[] { List.class }, new Object[] { invalidNames }));
 
 		GTreeNode rootNode = tree.getModelRoot();
 		GTreeNode invalidChild = rootNode.getChild("BADARCHIVENAME");
@@ -261,7 +259,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		//
 		disablePointerFilter();// make sure our new type is not filtered out
 
-		ArchiveNode builtInNode = getBuiltInNode();
+		DataTypeStoreNode builtInNode = getBuiltInNode();
 		expandNode(builtInNode);
 		String boolNodeName = "bool";
 		GTreeNode boolNode = builtInNode.getChild(boolNodeName);
@@ -514,7 +512,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		cat2Node = (CategoryNode) cat1Node.getChild("Category2");
 		assertNull(cat2Node.getChild("Category4"));
 		ArrayList<DataType> list = new ArrayList<>();
-		Archive archive = cat2Node.getArchiveNode().getArchive();
+		DataTypeStore archive = cat2Node.getArchiveNode().getDataTypeStore();
 		archive.getDataTypeManager().findDataTypes("CharStruct", list);
 		assertEquals(0, list.size());
 
@@ -555,7 +553,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		cat2Node = (CategoryNode) cat1Node.getChild("Category2");
 		assertNull(cat1Node.getChild("Category2"));
 		ArrayList<DataType> list = new ArrayList<>();
-		Archive archive = cat1Node.getArchiveNode().getArchive();
+		DataTypeStore archive = cat1Node.getArchiveNode().getDataTypeStore();
 		archive.getDataTypeManager().findDataTypes("CharStruct", list);
 		assertEquals(0, list.size());
 		archive.getDataTypeManager().findDataTypes("IntStruct", list);
@@ -566,7 +564,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		cat2Node = (CategoryNode) cat1Node.getChild("Category2");
 		assertNotNull(cat2Node);
 		list = new ArrayList<>();
-		archive = cat1Node.getArchiveNode().getArchive();
+		archive = cat1Node.getArchiveNode().getDataTypeStore();
 		archive.getDataTypeManager().findDataTypes("CharStruct", list);
 		assertEquals(1, list.size());
 		list.clear();
@@ -578,7 +576,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		cat1Node = (CategoryNode) programNode.getChild("Category1");
 		assertNull(cat1Node.getChild("Category2"));
 		list = new ArrayList<>();
-		archive = cat1Node.getArchiveNode().getArchive();
+		archive = cat1Node.getArchiveNode().getDataTypeStore();
 		archive.getDataTypeManager().findDataTypes("CharStruct", list);
 		assertEquals(0, list.size());
 		archive.getDataTypeManager().findDataTypes("IntStruct", list);
@@ -1433,9 +1431,9 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		runSwing(() -> provider.setPreviewWindowVisible(true));
 	}
 
-	private ArchiveNode getBuiltInNode() {
+	private DataTypeStoreNode getBuiltInNode() {
 		ArchiveRootNode archiveRootNode = (ArchiveRootNode) tree.getModelRoot();
-		ArchiveNode builtinNode = (ArchiveNode) archiveRootNode.getChild(BUILTIN_NAME);
+		DataTypeStoreNode builtinNode = (DataTypeStoreNode) archiveRootNode.getChild(BUILTIN_NAME);
 		assertNotNull(builtinNode);
 		return builtinNode;
 	}

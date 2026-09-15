@@ -25,7 +25,6 @@ import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.data.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
-import ghidra.util.InvalidNameException;
 import ghidra.util.task.TaskMonitor;
 
 public class DataManagerTest extends AbstractGhidraHeadedIntegrationTest {
@@ -44,13 +43,6 @@ public class DataManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	public void tearDown() throws Exception {
 		endTransaction();
 		program.release(this);
-	}
-
-	@Test
-	public void testSetName() throws InvalidNameException {
-		String newName = "NewName";
-		dataMgr.setName(newName);
-		assertEquals(newName, dataMgr.getName());
 	}
 
 	@Test
@@ -461,7 +453,7 @@ public class DataManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testResolveDataType() {
-		StandAloneDataTypeManager dtm = new StandAloneDataTypeManager("Test");
+		TransientDataTypeManager dtm = createTransientDataTypeManager("Test");
 		int id = dtm.startTransaction("");
 		DataType byteDT = dtm.resolve(new ByteDataType(), null);
 		DataType myByteDT = dataMgr.resolve(byteDT, null);
@@ -474,7 +466,7 @@ public class DataManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testResolveDataType2() throws Exception {
-		StandAloneDataTypeManager dtm = new StandAloneDataTypeManager("Test");
+		TransientDataTypeManager dtm = createTransientDataTypeManager("Test");
 		int id = dtm.startTransaction("");
 		Category otherRoot = dataMgr.getRootCategory();
 		Category subc = otherRoot.createCategory("subc");
@@ -487,9 +479,13 @@ public class DataManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		dtm.close();
 	}
 
+	private TransientDataTypeManager createTransientDataTypeManager(String name) {
+		return new TransientDataTypeManager(name);
+	}
+
 	@Test
 	public void testResolveDataType3() throws Exception {
-		StandAloneDataTypeManager dtm = new StandAloneDataTypeManager("Test");
+		TransientDataTypeManager dtm = createTransientDataTypeManager("Test");
 		int id = dtm.startTransaction("");
 		Category otherRoot = dataMgr.getRootCategory();
 		Category subc = otherRoot.createCategory("subc");

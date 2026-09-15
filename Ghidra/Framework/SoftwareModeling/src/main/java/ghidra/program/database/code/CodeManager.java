@@ -47,7 +47,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Class to manage database tables for data and instructions.
  */
-public class CodeManager implements ErrorHandler, ManagerDB {
+public class CodeManager implements ErrorHandler, ProgramDBModule {
 
 	private DBHandle dbHandle;
 	private AddressMap addrMap;
@@ -226,7 +226,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 * @param program The program object that this manager belongs to.
 	 */
 	@Override
-	public void setProgram(ProgramDB program) {
+	public void setDomainObject(ProgramDB program) {
 		this.program = program;
 		equateTable = program.getEquateTable();
 		symbolTable = program.getSymbolTable();
@@ -238,7 +238,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	}
 
 	@Override
-	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
+	public void domainObjectReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		if (openMode == OpenMode.UPGRADE) {
 			upgradeOldFallThroughMaps(monitor);

@@ -31,6 +31,7 @@ import ghidra.app.services.ProgramManager;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
+import ghidra.program.database.data.TransientDataTypeManager;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
@@ -1197,7 +1198,7 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 		Structure struct = new StructureDataType("struct_1", 100);
 		Structure struct2 = new StructureDataType("struct_2", 0);
 		Structure struct3 = new StructureDataType("struct_3", 0);
-		DataTypeManager dtm = new StandAloneDataTypeManager("dummyDTM");
+		DataTypeManager dtm = createTransientDataTypeManager("dummyDTM");
 		int id = dtm.startTransaction("");
 		struct = (Structure) dtm.resolve(struct, null);
 		struct2 = (Structure) dtm.resolve(struct2, null);
@@ -1252,7 +1253,7 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 		Structure struct = new StructureDataType("struct_1", 100);
 		Structure struct2 = new StructureDataType("struct_2", 0);
 		Structure struct3 = new StructureDataType("struct_3", 0);
-		DataTypeManager dtm = new StandAloneDataTypeManager("dummyDTM");
+		DataTypeManager dtm = createTransientDataTypeManager("dummyDTM");
 		int id = dtm.startTransaction("");
 		struct = (Structure) dtm.resolve(struct, null);
 		struct2 = (Structure) dtm.resolve(struct2, null);
@@ -1324,7 +1325,7 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 		Structure struct = new StructureDataType("struct_1", 100);
 		Structure struct2 = new StructureDataType("struct_2", 0);
 		Structure struct3 = new StructureDataType("struct_3", 0);
-		DataTypeManager dtm = new StandAloneDataTypeManager("dummyDTM");
+		DataTypeManager dtm = createTransientDataTypeManager("dummyDTM");
 		int id = dtm.startTransaction("");
 		struct = (Structure) dtm.resolve(struct, null);
 		struct2 = (Structure) dtm.resolve(struct2, null);
@@ -1385,7 +1386,7 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 		Structure struct = new StructureDataType("struct_1", 100);
 		Structure struct2 = new StructureDataType("struct_2", 0);
 		Structure struct3 = new StructureDataType("struct_3", 0);
-		DataTypeManager dtm = new StandAloneDataTypeManager("dummyDTM");
+		DataTypeManager dtm = createTransientDataTypeManager("dummyDTM");
 		int id = dtm.startTransaction("");
 		struct = (Structure) dtm.resolve(struct, null);
 		struct2 = (Structure) dtm.resolve(struct2, null);
@@ -1589,5 +1590,9 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private void endTransaction() {
 		program.endTransaction(transactionID, true);
+	}
+
+	private TransientDataTypeManager createTransientDataTypeManager(String name) {
+		return new TransientDataTypeManager(name);
 	}
 }

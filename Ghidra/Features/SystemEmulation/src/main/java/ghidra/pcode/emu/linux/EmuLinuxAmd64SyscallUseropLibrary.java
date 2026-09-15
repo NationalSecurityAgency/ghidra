@@ -26,9 +26,13 @@ import ghidra.pcode.emu.unix.EmuUnixFileSystem;
 import ghidra.pcode.emu.unix.EmuUnixUser;
 import ghidra.pcode.exec.SleighPcodeUseropDefinition;
 import ghidra.pcode.exec.SleighPcodeUseropDefinition.BuilderStage1;
+import ghidra.program.database.dtarchive.DataTypeArchiveFactory;
 import ghidra.program.model.data.DataTypeManager;
-import ghidra.program.model.data.FileDataTypeManager;
+import ghidra.program.model.dtarchive.FileDataTypeArchive;
 import ghidra.program.model.listing.Program;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * A system call library simulating Linux for amd64 / x86_64
@@ -37,7 +41,7 @@ import ghidra.program.model.listing.Program;
  */
 public class EmuLinuxAmd64SyscallUseropLibrary<T> extends AbstractEmuLinuxSyscallUseropLibrary<T> {
 
-	protected FileDataTypeManager clib64;
+	protected FileDataTypeArchive clib64;
 
 	/**
 	 * Construct the system call library for Linux-amd64
@@ -71,17 +75,17 @@ public class EmuLinuxAmd64SyscallUseropLibrary<T> extends AbstractEmuLinuxSyscal
 		try {
 			ResourceFile file =
 				Application.findDataFileInAnyModule("typeinfo/generic/generic_clib_64.gdt");
-			clib64 = FileDataTypeManager.openFileArchive(file, false);
-			return List.of(clib64);
+			clib64 = DataTypeArchiveFactory.openReadOnly(file, this, TaskMonitor.DUMMY);
+			return List.of(clib64.getDataTypeManager());
 		}
-		catch (IOException e) {
+		catch (IOException | VersionException | CancelledException e) {
 			throw new AssertionError(e);
 		}
 	}
 
 	@Override
 	protected void disposeAdditionalArchives() {
-		clib64.close();
+		clib64.release(this);
 	}
 
 	@PcodeUserop

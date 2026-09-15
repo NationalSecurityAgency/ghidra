@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,13 +22,17 @@ import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraLaunchable;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationConfiguration;
-import ghidra.program.model.data.*;
-import ghidra.program.model.data.StandAloneDataTypeManager.ArchiveWarning;
+import ghidra.program.database.dtarchive.DataTypeArchiveFactory;
+import ghidra.program.model.data.BuiltInDataType;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.dtarchive.ArchiveWarning;
+import ghidra.program.model.dtarchive.FileDataTypeArchive;
 import ghidra.util.NumericUtilities;
 import ghidra.util.UniversalID;
 import ghidra.util.datastruct.LongLongHashtable;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.exception.NoValueException;
+import ghidra.util.task.TaskMonitor;
 
 public class DataTypeIDConverter implements GhidraLaunchable {
 
@@ -42,7 +46,8 @@ public class DataTypeIDConverter implements GhidraLaunchable {
 	@Override
 	public void launch(GhidraApplicationLayout layout, String[] args) {
 		if (args.length != 3) {
-			System.out.println("DataTypeIDConverter <Input DataTypeArchive filepath> <ID map filepath> <Output DataTypeArchive filepath>");
+			System.out.println(
+				"DataTypeIDConverter <Input DataTypeArchive filepath> <ID map filepath> <Output DataTypeArchive filepath>");
 			System.exit(1);
 		}
 		Application.initializeApplication(layout, new ApplicationConfiguration());
@@ -88,9 +93,9 @@ public class DataTypeIDConverter implements GhidraLaunchable {
 			return;
 		}
 
-		FileDataTypeManager oldFileArchive = null;
+		FileDataTypeArchive oldFileArchive = null;
 		try {
-			oldFileArchive = FileDataTypeManager.openFileArchive(inFile, false);
+			oldFileArchive = DataTypeArchiveFactory.openReadOnly(inFile, this, TaskMonitor.DUMMY);
 			if (oldFileArchive.getWarning() != ArchiveWarning.NONE) {
 				System.out.println("Archive ID Conversion aborted");
 				return;
@@ -103,16 +108,12 @@ public class DataTypeIDConverter implements GhidraLaunchable {
 
 			oldFileArchive.saveAs(outFile, newFileID);
 		}
-		catch (IOException e) {
-			e.printStackTrace();
-		}
-		catch (NoValueException e) {
-			// TODO Auto-generated catch block
+		catch (Exception e) {
 			e.printStackTrace();
 		}
 		finally {
 			if (oldFileArchive != null) {
-				oldFileArchive.close();
+				oldFileArchive.release(this);
 			}
 		}
 	}
@@ -160,11 +161,11 @@ public class DataTypeIDConverter implements GhidraLaunchable {
 		}
 	}
 
-	private void transformDataTypes(FileDataTypeManager oldFileArchive) {
+	private void transformDataTypes(FileDataTypeArchive oldFileArchive) {
 		boolean commit = false;
 		int transactionID = oldFileArchive.startTransaction("Transforming Data Type Archive");
 		try {
-			Iterator<DataType> allDataTypes = oldFileArchive.getAllDataTypes();
+			Iterator<DataType> allDataTypes = oldFileArchive.getDataTypeManager().getAllDataTypes();
 			while (allDataTypes.hasNext()) {
 				DataType nextDt = allDataTypes.next();
 				if (!(nextDt instanceof DataTypeDB)) {

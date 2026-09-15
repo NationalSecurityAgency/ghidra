@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,6 @@ import docking.widgets.OptionDialog;
 import docking.widgets.tree.*;
 import ghidra.app.plugin.core.datamgr.*;
 import ghidra.app.plugin.core.datamgr.archive.BuiltInSourceArchive;
-import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
@@ -217,11 +216,12 @@ public class DisassociateDataTypeAction extends DockingAction {
 
 		monitor.setMessage("Disassociating types from " + dtm.getName());
 		monitor.initialize(dataTypes.size());
-		DataTypeManagerHandler handler = plugin.getDataTypeManagerHandler();
+		ArchiveManager archiveManager = plugin.getArchiveManager();
 		for (Entry<SourceArchive, List<DataType>> entry : sourceToTypes.entrySet()) {
 			SourceArchive source = entry.getKey();
 			List<DataType> types = entry.getValue();
-			DataTypeSynchronizer synchronizer = new DataTypeSynchronizer(handler, dtm, source);
+			DataTypeSynchronizer synchronizer =
+				new DataTypeSynchronizer(archiveManager, dtm, source);
 			disassociate(synchronizer, dtm, types, monitor);
 		}
 	}

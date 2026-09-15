@@ -29,6 +29,7 @@ import ghidra.program.database.ProgramOverlayAddressSpace;
 import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.*;
+import ghidra.program.model.data.ArchiveType;
 import ghidra.program.model.data.CategoryPath;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
@@ -41,6 +42,8 @@ import ghidra.program.model.util.PropertyMapManager;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
+import utility.function.ExceptionalCallback;
+import utility.function.ExceptionalSupplier;
 
 public class StubProgram implements Program {
 
@@ -623,6 +626,38 @@ public class StubProgram implements Program {
 	@Override
 	public long getUniqueProgramID() {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public String getPath() {
+		return null;
+	}
+
+	@Override
+	public <E extends Exception> void withTransaction(String description,
+			ExceptionalCallback<E> callback) throws E {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public <E extends Exception, T> T withTransaction(String description,
+			ExceptionalSupplier<T, E> supplier) throws E {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public ArchiveType getArchiveType() {
+		return ArchiveType.PROGRAM;
+	}
+
+	@Override
+	public ProgramArchitecture getProgramArchitecture() {
+		return this;
+	}
+
+	@Override
+	public String getProgramArchitectureSummary() {
+		return null;
 	}
 
 }

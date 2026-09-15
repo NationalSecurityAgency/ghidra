@@ -18,10 +18,10 @@ package ghidra.app.plugin.core.datamgr.util;
 import java.util.*;
 
 import generic.jar.ResourceFile;
-import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.util.opinion.*;
 import ghidra.framework.Application;
-import ghidra.program.model.data.FileDataTypeManager;
+import ghidra.program.database.dtarchive.FileDtArchiveDB;
+import ghidra.program.model.dtarchive.FileDataTypeArchive;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 
@@ -40,14 +40,14 @@ public class DataTypeArchiveUtility {
 		new HashMap<String, ResourceFile>();
 	static {
 		for (ResourceFile file : Application
-				.findFilesByExtensionInApplication(FileDataTypeManager.SUFFIX)) {
+				.findFilesByExtensionInApplication(FileDtArchiveDB.SUFFIX)) {
 			String name = file.getName();
 			ResourceFile resourceFile = GHIDRA_ARCHIVES.get(name);
 			if (resourceFile == null) {
 				GHIDRA_ARCHIVES.put(file.getName(), file);
 			}
 			else {
-				Msg.showError(DataTypeManagerHandler.class, null, "Duplicate Archive Name Error",
+				Msg.showError(DataTypeArchiveUtility.class, null, "Duplicate Archive Name Error",
 					"Duplicate datatype archive name detected and is not supported:\n  " +
 						resourceFile.getAbsolutePath() + "\n  " + file.getAbsolutePath());
 			}
@@ -76,8 +76,8 @@ public class DataTypeArchiveUtility {
 	 * @return existing resource file or null if not found
 	 */
 	public static ResourceFile findArchiveFile(String archiveName) {
-		if (!archiveName.endsWith(FileDataTypeManager.SUFFIX)) {
-			archiveName = archiveName + FileDataTypeManager.SUFFIX;
+		if (!archiveName.endsWith(FileDataTypeArchive.SUFFIX)) {
+			archiveName = archiveName + FileDataTypeArchive.SUFFIX;
 		}
 		archiveName = archiveName.replace('\\', '/');
 		if (archiveName.indexOf(':') >= 0 || archiveName.charAt(0) == '/') {

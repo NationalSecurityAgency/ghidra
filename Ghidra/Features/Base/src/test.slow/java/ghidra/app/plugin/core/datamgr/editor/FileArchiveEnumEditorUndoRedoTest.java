@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,13 +23,12 @@ import java.io.IOException;
 import org.junit.After;
 import org.junit.Before;
 
-import ghidra.app.plugin.core.datamgr.archive.Archive;
-import ghidra.program.model.data.FileDataTypeManager;
+import ghidra.program.model.dtarchive.FileDataTypeArchive;
 
 public class FileArchiveEnumEditorUndoRedoTest extends AbstractEnumEditorUndoRedoTest {
 
 	private File tempGdt;
-	private Archive fileArchive;
+	private FileDataTypeArchive fileArchive;
 
 	@Before
 	@Override
@@ -39,9 +38,9 @@ public class FileArchiveEnumEditorUndoRedoTest extends AbstractEnumEditorUndoRed
 		tempGdt = createTempFileForTest(".gdt");
 		tempGdt.delete();
 
-		fileArchive = plugin.getDataTypeManagerHandler().createArchive(tempGdt);
+		fileArchive = plugin.getArchiveManager().createFileArchive(tempGdt);
 
-		assertTrue(fileArchive.isModifiable());
+		assertTrue(fileArchive.isChangeable());
 
 		dtm = fileArchive.getDataTypeManager();
 	}
@@ -50,7 +49,7 @@ public class FileArchiveEnumEditorUndoRedoTest extends AbstractEnumEditorUndoRed
 	@Override
 	public void tearDown() throws Exception {
 		if (fileArchive != null) {
-			plugin.getDataTypeManagerHandler().closeArchive(fileArchive);
+			plugin.getArchiveManager().closeArchive(fileArchive);
 			tempGdt.delete();
 		}
 		super.tearDown();
@@ -58,14 +57,12 @@ public class FileArchiveEnumEditorUndoRedoTest extends AbstractEnumEditorUndoRed
 
 	@Override
 	void undo() throws IOException {
-		FileDataTypeManager fileDtm = (FileDataTypeManager) fileArchive.getDataTypeManager();
-		fileDtm.undo();
+		fileArchive.undo();
 	}
 
 	@Override
 	void redo() throws IOException {
-		FileDataTypeManager fileDtm = (FileDataTypeManager) fileArchive.getDataTypeManager();
-		fileDtm.redo();
+		fileArchive.redo();
 	}
 
 }

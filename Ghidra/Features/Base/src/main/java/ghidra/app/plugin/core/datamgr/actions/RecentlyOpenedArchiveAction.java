@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,13 +18,14 @@ package ghidra.app.plugin.core.datamgr.actions;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import generic.jar.ResourceFile;
 import generic.util.Path;
+import ghidra.app.plugin.core.datamgr.ArchiveManager;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
+import ghidra.app.services.Recover;
+import ghidra.app.services.Upgrade;
 import ghidra.framework.model.DomainFile;
 import ghidra.util.Msg;
-import ghidra.util.task.Task;
-import ghidra.util.task.TaskLauncher;
 
 /**
  * Class for action to open a recently opened data type archive.
@@ -41,7 +42,7 @@ public class RecentlyOpenedArchiveAction extends DockingAction {
 			String menuGroup) {
 		super(menuGroup + ": \"" + archivePath + "\"", plugin.getName(), false);
 		this.plugin = plugin;
-		String[] projectPathname = DataTypeManagerHandler.parseProjectPathname(archivePath);
+		String[] projectPathname = DataTypeManagerPlugin.parseProjectPathname(archivePath);
 		if (projectPathname == null) {
 			this.projectName = null;
 			this.archivePath = archivePath;
@@ -64,7 +65,7 @@ public class RecentlyOpenedArchiveAction extends DockingAction {
 			return getTypeInfoRelativeName(filepath);
 		}
 
-		String[] projectPathname = DataTypeManagerHandler.parseProjectPathname(filepath);
+		String[] projectPathname = DataTypeManagerPlugin.parseProjectPathname(filepath);
 		if (projectPathname == null) {
 			return filepath;
 		}
@@ -111,16 +112,17 @@ public class RecentlyOpenedArchiveAction extends DockingAction {
 
 	@Override
 	public void actionPerformed(ActionContext context) {
+		ArchiveManager archiveManager = plugin.getArchiveManager();
 		if (projectName == null) {
-			DataTypeManagerHandler archiveManager = plugin.getDataTypeManagerHandler();
 			Path path = new Path(archivePath);
-			OpenArchiveTask task = new OpenArchiveTask(archiveManager, path);
-			new TaskLauncher(task, plugin.getProvider().getComponent());
+			ResourceFile file = path.getPath();
+			archiveManager.openFileArchiveInTask(file, false, Upgrade.ASK, true);
 		}
 		else {
 			DomainFile df = plugin.getProjectArchiveFile(projectName, archivePath);
 			if (df != null) {
-				plugin.openArchive(df);
+				archiveManager.openProjectArchiveInTask(df, DomainFile.DEFAULT_VERSION, Upgrade.ASK,
+					Recover.ASK, true);
 			}
 			else {
 				Msg.showError(this, null, "Project Archive Open Error",
@@ -129,25 +131,4 @@ public class RecentlyOpenedArchiveAction extends DockingAction {
 		}
 	}
 
-	private class OpenArchiveTask extends Task {
-		private final Path taskArchivePath;
-		private final DataTypeManagerHandler archiveManager;
-
-		OpenArchiveTask(DataTypeManagerHandler archiveManager, Path archivePath) {
-			super("Opening Archive " + archivePath.getPath().getName(), false, false, true);
-			this.archiveManager = archiveManager;
-			this.taskArchivePath = archivePath;
-		}
-
-		@Override
-		public void run(ghidra.util.task.TaskMonitor monitor) {
-			try {
-				archiveManager.openArchive(taskArchivePath.getPath(), false, true);
-			}
-			catch (Exception e) {
-				DataTypeManagerHandler.handleArchiveFileException(plugin, taskArchivePath.getPath(),
-					e);
-			}
-		}
-	}
 }

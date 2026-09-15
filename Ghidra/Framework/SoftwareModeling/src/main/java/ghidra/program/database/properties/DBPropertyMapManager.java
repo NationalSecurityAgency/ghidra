@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import db.*;
 import ghidra.framework.data.OpenMode;
-import ghidra.program.database.ManagerDB;
+import ghidra.program.database.ProgramDBModule;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.bookmark.OldBookmark;
 import ghidra.program.database.map.AddressMap;
@@ -43,7 +43,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Manages generic address keyed properties.
  */
-public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
+public class DBPropertyMapManager implements PropertyMapManager, ProgramDBModule {
 
 	private DBHandle dbHandle;
 	private ProgramDB program;
@@ -104,12 +104,12 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 	}
 
 	@Override
-	public void setProgram(ProgramDB program) {
+	public void setDomainObject(ProgramDB program) {
 		this.program = program;
 	}
 
 	@Override
-	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
+	public void domainObjectReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		// Nothing to do
 	}

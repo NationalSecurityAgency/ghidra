@@ -27,9 +27,9 @@ import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeDragNDropHandler;
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.archive.FileArchive;
 import ghidra.app.plugin.core.datamgr.util.DataTypeTreeCopyMoveTask;
 import ghidra.app.plugin.core.datamgr.util.DataTypeTreeCopyMoveTask.ActionType;
+import ghidra.program.database.dtarchive.FileDtArchiveDB;
 import ghidra.program.model.data.*;
 import ghidra.util.Msg;
 import ghidra.util.task.Task;
@@ -118,7 +118,7 @@ public class DataTypeDragNDropHandler implements GTreeDragNDropHandler {
 			}
 
 			// we don't support dragging archives in their entirety
-			if (node instanceof ArchiveNode) {
+			if (node instanceof DataTypeStoreNode) {
 				return new DataFlavor[] {};
 			}
 		}
@@ -144,14 +144,14 @@ public class DataTypeDragNDropHandler implements GTreeDragNDropHandler {
 			return dragUserData;
 		}
 		else if (flavor.equals(DataFlavor.javaFileListFlavor)) {
-			List<?> nodeList = dragUserData;
+			List<GTreeNode> nodeList = dragUserData;
 			ArrayList<ResourceFile> fileList = new ArrayList<ResourceFile>();
 			for (Object node : nodeList) {
-
-				ArchiveNode archiveNode = (ArchiveNode) node;
-				FileArchive archive = (FileArchive) archiveNode.getArchive();
-				ResourceFile file = archive.getFile();
-				fileList.add(file);
+				if (node instanceof FileArchiveNode fileArchiveNode) {
+					FileDtArchiveDB archive = (FileDtArchiveDB) fileArchiveNode.getArchive();
+					ResourceFile file = archive.getFile();
+					fileList.add(file);
+				}
 			}
 			return fileList;
 		}
@@ -199,7 +199,7 @@ public class DataTypeDragNDropHandler implements GTreeDragNDropHandler {
 
 		// destination node must belong to either a modifiable archive or a program archive.
 		// i.e. it must be writable.
-		ArchiveNode archiveNode = ((DataTypeTreeNode) destinationNode).getArchiveNode();
+		DataTypeStoreNode archiveNode = ((DataTypeTreeNode) destinationNode).getArchiveNode();
 		if (archiveNode == null || !archiveNode.isModifiable()) {
 			return false;
 		}
@@ -221,7 +221,7 @@ public class DataTypeDragNDropHandler implements GTreeDragNDropHandler {
 			return true;
 		}
 		CategoryNode categoryNode = (CategoryNode) destinationNode;
-		return (categoryNode instanceof ArchiveNode);
+		return (categoryNode instanceof DataTypeStoreNode);
 	}
 
 	private boolean containsFlavor(DataFlavor[] flavors, DataFlavor flavor) {

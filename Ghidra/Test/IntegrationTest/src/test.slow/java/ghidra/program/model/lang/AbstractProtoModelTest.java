@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,12 +17,14 @@ package ghidra.program.model.lang;
 
 import java.util.ArrayList;
 
+import org.junit.After;
 import org.junit.Assert;
 
 import generic.test.AbstractGenericTest;
 import ghidra.app.plugin.processors.sleigh.SleighLanguageProvider;
 import ghidra.app.util.cparser.C.ParseException;
 import ghidra.app.util.parser.FunctionSignatureParser;
+import ghidra.program.database.data.TransientDataTypeManager;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
@@ -38,6 +40,13 @@ public class AbstractProtoModelTest extends AbstractGenericTest {
 	protected DataTypeManager dtManager;
 	protected FunctionSignatureParser parser;
 	protected DataTypeParser dataTypeParser;
+
+	@After
+	public void tearDown() {
+		if (dtManager != null) {
+			dtManager.close();
+		}
+	}
 
 	protected void buildParsers() {
 		parser = new FunctionSignatureParser(dtManager, null);
@@ -77,7 +86,7 @@ public class AbstractProtoModelTest extends AbstractGenericTest {
 	}
 
 	protected void buildDataTypeManager(String name) {
-		dtManager = new StandAloneDataTypeManager(name, cspec.getDataOrganization());
+		dtManager = new TransientDataTypeManager(name, cspec.getDataOrganization());
 		int txID = dtManager.startTransaction("Add core types");
 
 		try {
@@ -256,10 +265,15 @@ public class AbstractProtoModelTest extends AbstractGenericTest {
 				buffer.append(cspec.getCompilerSpecID());
 				buffer.append(' ').append(model.getName()).append(' ');
 				if (i == 0) {
-					buffer.append("Output ").append("@"+toString(resPiece)).append(" does not match for ");
+					buffer.append("Output ")
+							.append("@" + toString(resPiece))
+							.append(" does not match for ");
 				}
 				else {
-					buffer.append("Parameter ").append(i - 1).append(" @"+toString(resPiece)+" ").append(" does not match for: ");
+					buffer.append("Parameter ")
+							.append(i - 1)
+							.append(" @" + toString(resPiece) + " ")
+							.append(" does not match for: ");
 				}
 				buffer.append(signature);
 				message = buffer.toString();
@@ -272,13 +286,13 @@ public class AbstractProtoModelTest extends AbstractGenericTest {
 		Varnode[] joinPieces = resPiece.joinPieces;
 		if (joinPieces != null) {
 			StringBuilder buffer = new StringBuilder("join ");
-			
+
 			for (Varnode varnode : joinPieces) {
 				buffer.append(toString(varnode)).append(" ");
 			}
 			return buffer.toString();
 		}
-		
+
 		Address addr = resPiece.address;
 		resPiece.type.getLength();
 		if (addr != null) {

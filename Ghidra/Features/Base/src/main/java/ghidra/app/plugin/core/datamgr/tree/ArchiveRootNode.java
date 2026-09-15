@@ -20,16 +20,20 @@ import java.util.*;
 import javax.swing.Icon;
 
 import docking.widgets.tree.GTreeNode;
-import ghidra.app.plugin.core.datamgr.archive.*;
+import ghidra.app.plugin.core.datamgr.ArchiveManager;
+import ghidra.app.plugin.core.datamgr.ArchiveManagerListener;
+import ghidra.app.plugin.core.datamgr.archive.InvalidArchive;
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
-import ghidra.program.model.data.Category;
-import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.database.dtarchive.FileDtArchiveDB;
+import ghidra.program.model.data.*;
+import ghidra.program.model.dtarchive.*;
+import ghidra.program.model.listing.Program;
 import ghidra.util.exception.AssertException;
 
 public class ArchiveRootNode extends DataTypeTreeNode {
 	private static final String NAME = "Data Types";
 
-	private DataTypeManagerHandler archiveManager;
+	private ArchiveManager archiveManager;
 	private RootNodeListener archiveListener;
 	private boolean programDtmOnly;
 
@@ -37,11 +41,11 @@ public class ArchiveRootNode extends DataTypeTreeNode {
 
 	private DtFilterState dtFilterState = new DtFilterState();
 
-	public ArchiveRootNode(DataTypeManagerHandler archiveManager) {
+	public ArchiveRootNode(ArchiveManager archiveManager) {
 		this(archiveManager, false);
 	}
 
-	public ArchiveRootNode(DataTypeManagerHandler archiveManager, boolean programDtmOnly) {
+	public ArchiveRootNode(ArchiveManager archiveManager, boolean programDtmOnly) {
 		this.archiveManager = archiveManager;
 		this.programDtmOnly = programDtmOnly;
 		init();
@@ -58,10 +62,6 @@ public class ArchiveRootNode extends DataTypeTreeNode {
 	 */
 	public void setNodeListener(ArchiveRootNodeListener listener) {
 		this.listener = listener;
-	}
-
-	public DataTypeManagerHandler getArchiveHandler() {
-		return archiveManager;
 	}
 
 	/**
@@ -109,30 +109,20 @@ public class ArchiveRootNode extends DataTypeTreeNode {
 	}
 
 	// a factory method to isolate non-OO inheritance checks
-	private final ArchiveNode createArchiveNode(Archive archive, DtFilterState filterState) {
+	private final ArchiveNode createArchiveNode(PersistentDataTypeArchive archive,
+			DtFilterState filterState) {
 
 		if (programDtmOnly) {
-			if (archive instanceof ProgramArchive) {
-				return new ProgramArchiveNode((ProgramArchive) archive, filterState);
-			}
 			return null;
 		}
 
-		if (archive instanceof FileArchive) {
-			return new FileArchiveNode((FileArchive) archive, filterState);
+		if (archive instanceof FileDtArchiveDB fileArchive) {
+			return new FileArchiveNode(fileArchive, filterState);
 		}
-		else if (archive instanceof ProjectArchive) {
-			return new ProjectArchiveNode((ProjectArchive) archive, filterState);
+		else if (archive instanceof ProjectDataTypeArchive projectArchive) {
+			return new ProjectArchiveNode(projectArchive, filterState);
 		}
-		else if (archive instanceof InvalidFileArchive) {
-			return new InvalidArchiveNode((InvalidFileArchive) archive);
-		}
-		else if (archive instanceof ProgramArchive) {
-			return new ProgramArchiveNode((ProgramArchive) archive, filterState);
-		}
-		else if (archive instanceof BuiltInArchive) {
-			return new BuiltInArchiveNode((BuiltInArchive) archive, filterState);
-		}
+
 		return null;
 	}
 
@@ -166,7 +156,7 @@ public class ArchiveRootNode extends DataTypeTreeNode {
 	 * @see ghidra.app.plugin.core.datamgr.tree.DataTypeTreeNode#getArchiveNode()
 	 */
 	@Override
-	public ArchiveNode getArchiveNode() {
+	public DataTypeStoreNode getArchiveNode() {
 		return null;
 	}
 
@@ -177,7 +167,7 @@ public class ArchiveRootNode extends DataTypeTreeNode {
 
 	public CategoryNode findCategoryNode(Category category) {
 		for (GTreeNode node : getChildren()) {
-			ArchiveNode archiveNode = (ArchiveNode) node;
+			DataTypeStoreNode archiveNode = (DataTypeStoreNode) node;
 			CategoryNode categoryNode = archiveNode.findCategoryNode(category);
 			if (categoryNode != null) {
 				return categoryNode;
@@ -186,13 +176,14 @@ public class ArchiveRootNode extends DataTypeTreeNode {
 		return null;
 	}
 
-	public ArchiveNode getNodeForManager(DataTypeManager dtm) {
+	public DataTypeStoreNode getNodeForManager(DataTypeManager dtm) {
 		for (GTreeNode node : getChildren()) {
-			ArchiveNode archiveNode = (ArchiveNode) node;
-			Archive archive = archiveNode.getArchive();
-			DataTypeManager manager = archive.getDataTypeManager();
-			if (manager.equals(dtm)) {
-				return archiveNode;
+			if (node instanceof DataTypeStoreNode storeNode) {
+				DataTypeStore archive = storeNode.getDataTypeStore();
+				DataTypeManager manager = archive.getDataTypeManager();
+				if (manager.equals(dtm)) {
+					return storeNode;
+				}
 			}
 		}
 		return null;
@@ -201,22 +192,54 @@ public class ArchiveRootNode extends DataTypeTreeNode {
 	@Override
 	public List<GTreeNode> generateChildren() {
 		List<GTreeNode> list = new ArrayList<>();
-		for (Archive element : archiveManager.getAllArchives()) {
-			GTreeNode node = createArchiveNode(element, dtFilterState);
-			if (node != null) {
-				list.add(node);
-			}
-		}
+		addBuiltInNode(list);
+		addProgramNode(list);
+		addArchiveNodes(list);
+		addInvalidNodes(list);
 		Collections.sort(list);
 		return list;
 	}
 
-	private ArchiveNode getArchiveNode(Archive archive) {
+	private void addBuiltInNode(List<GTreeNode> list) {
+		if (programDtmOnly) {
+			return;
+		}
+		DataTypeManager builtInDtm = BuiltInDataTypeManager.getDataTypeManager();
+		DataTypeStore dataStore = builtInDtm.getDataStore();
+		list.add(new BuiltInArchiveNode(dataStore, dtFilterState));
+	}
+
+	private void addProgramNode(List<GTreeNode> list) {
+		Program program = archiveManager.getProgram();
+		if (program != null) {
+			list.add(new ProgramArchiveNode(program, dtFilterState));
+		}
+	}
+
+	private void addArchiveNodes(List<GTreeNode> list) {
+
+		for (PersistentDataTypeArchive archive : archiveManager.getOpenArchives()) {
+			GTreeNode node = createArchiveNode(archive, dtFilterState);
+			if (node != null) {
+				list.add(node);
+			}
+		}
+	}
+
+	private void addInvalidNodes(List<GTreeNode> list) {
+		List<InvalidArchive> invalidArchives = archiveManager.getInvalidArchives();
+		for (InvalidArchive invalidArchive : invalidArchives) {
+			InvalidArchiveNode node = new InvalidArchiveNode(invalidArchive);
+			list.add(node);
+		}
+	}
+
+	private DataTypeStoreNode getArchiveNode(DataTypeStore store) {
 		List<GTreeNode> allChildrenList = getChildren();
 		for (GTreeNode node : allChildrenList) {
-			if (node instanceof ArchiveNode) {
-				ArchiveNode archiveNode = (ArchiveNode) node;
-				if (archiveNode.archive == archive) {
+			if (node instanceof DataTypeStoreNode) {
+				DataTypeStoreNode archiveNode = (DataTypeStoreNode) node;
+				if (archiveNode.dataTypeStore == store) {
 					return archiveNode;
 				}
 			}
@@ -229,36 +252,67 @@ public class ArchiveRootNode extends DataTypeTreeNode {
 //==================================================================================================
 
 	private class RootNodeListener implements ArchiveManagerListener {
-
 		@Override
-		public void archiveClosed(Archive archive) {
+		public void programClosed(Program program) {
 			if (!isLoaded()) {
 				return;
 			}
 
 			List<GTreeNode> allChildrenList = getChildren();
 			for (GTreeNode node : allChildrenList) {
-				ArchiveNode archiveNode = (ArchiveNode) node;
-				if (archive == archiveNode.getArchive()) {
-					listener.archiveNodeRemoved(archiveNode);
-					removeNode(archiveNode);
-					archiveNode.dispose();
-					return;
+				if (node instanceof ProgramArchiveNode programNode) {
+					if (program == programNode.getProgram()) {
+						listener.archiveNodeRemoved(programNode);
+						removeNode(programNode);
+						programNode.dispose();
+						return;
+					}
 				}
 			}
 		}
 
 		@Override
-		public void archiveOpened(Archive archive) {
+		public void archiveClosed(PersistentDataTypeArchive archive) {
+			if (!isLoaded()) {
+				return;
+			}
+
+			List<GTreeNode> allChildrenList = getChildren();
+			for (GTreeNode node : allChildrenList) {
+				if (node instanceof ArchiveNode archiveNode) {
+					if (archive == archiveNode.getArchive()) {
+						listener.archiveNodeRemoved(archiveNode);
+						removeNode(archiveNode);
+						archiveNode.dispose();
+						return;
+					}
+				}
+			}
+		}
+
+		@Override
+		public void programOpened(Program program) {
+			if (!isLoaded()) {
+				return;
+			}
+			ProgramArchiveNode programNode = new ProgramArchiveNode(program, dtFilterState);
+
+			addDataStoreNode(programNode);
+		}
+
+		@Override
+		public void archiveOpened(PersistentDataTypeArchive archive) {
 			if (!isLoaded()) {
 				return;
 			}
 
 			ArchiveNode node = createArchiveNode(archive, dtFilterState);
-			if (node == null) {
-				return;
+			if (node != null) {
+				addDataStoreNode(node);
 			}
+		}
 
+		private void addDataStoreNode(DataTypeStoreNode node) {
 			List<GTreeNode> allChildrenList = getChildren();
 			int index = Collections.binarySearch(allChildrenList, node);
 			if (index < 0) {
@@ -270,18 +324,35 @@ public class ArchiveRootNode extends DataTypeTreeNode {
 		}
 
 		@Override
-		public void archiveDataTypeManagerChanged(Archive archive) {
-			ArchiveNode archiveNode = getArchiveNode(archive);
+		public void stateChanged(DataTypeStore dataTypeStore) {
+			DataTypeStoreNode archiveNode = getArchiveNode(dataTypeStore);
 			if (archiveNode != null) {
-				archiveNode.dataTypeManagerChanged();
+				archiveNode.nodeChanged();
 			}
 		}
 
 		@Override
-		public void archiveStateChanged(Archive archive) {
-			ArchiveNode archiveNode = getArchiveNode(archive);
-			if (archiveNode != null) {
-				archiveNode.archiveStateChanged();
+		public void invalidArchiveAdded(InvalidArchive invalidArchive) {
+			if (!isLoaded()) {
+				return;
+			}
+			addNode(new InvalidArchiveNode(invalidArchive));
+		}
+
+		@Override
+		public void invalidArchiveRemoved(InvalidArchive invalidArchive) {
+			if (!isLoaded()) {
+				return;
+			}
+			List<GTreeNode> allChildrenList = getChildren();
+			for (GTreeNode node : allChildrenList) {
+				if (node instanceof InvalidArchiveNode invalidNode) {
+					if (invalidArchive.equals(invalidNode.getInvalidArchive())) {
+						removeNode(node);
+						invalidNode.dispose();
+						return;
+					}
+				}
 			}
 		}
 	}

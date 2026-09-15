@@ -27,8 +27,9 @@ import ghidra.framework.data.LinkHandler;
 import ghidra.framework.data.LinkHandler.LinkStatus;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
-import ghidra.program.database.DataTypeArchiveDB;
 import ghidra.program.database.ProgramLinkContentHandler;
+import ghidra.program.database.dtarchive.DataTypeArchiveFactory;
+import ghidra.program.model.dtarchive.ProjectDataTypeArchive;
 import ghidra.program.model.listing.Program;
 import ghidra.server.remote.ServerTestUtil;
 import ghidra.test.*;
@@ -545,9 +546,10 @@ public class ProjectLinkFileStatusTest extends AbstractGhidraHeadedIntegrationTe
 		//
 		// Create DataTypeArchive project file /abc/foo
 		//
-		DataTypeArchiveDB dtm = new DataTypeArchiveDB(abcFolder, "foo", this);
-		dtm.save(null, TaskMonitor.DUMMY);
-		dtm.release(this);
+		ProjectDataTypeArchive archive =
+			DataTypeArchiveFactory.createProjectArchive(abcFolder, "foo", this);
+		archive.save(null, TaskMonitor.DUMMY);
+		archive.release(this);
 
 		env.waitForTree(); // give time for ChangeManager to update
 

@@ -15,7 +15,6 @@
  */
 package ghidra.app.services;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
@@ -23,11 +22,10 @@ import java.util.Set;
 import javax.swing.tree.TreePath;
 
 import generic.jar.ResourceFile;
-import ghidra.app.plugin.core.datamgr.archive.Archive;
 import ghidra.app.plugin.core.datamgr.archive.DuplicateIdException;
 import ghidra.framework.model.DomainFile;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.DataTypeArchive;
+import ghidra.program.model.dtarchive.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
@@ -130,18 +128,12 @@ public class TestDoubleDataTypeManagerService implements DataTypeManagerService 
 	}
 
 	@Override
+	public void closeArchive(PersistentDataTypeArchive archive) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public DataTypeManager openDataTypeArchive(String archiveName)
-			throws IOException, DuplicateIdException {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public Archive openArchive(DataTypeArchive dataTypeArchive) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public Archive openArchive(File file, boolean acquireWriteLock)
 			throws IOException, DuplicateIdException {
 		throw new UnsupportedOperationException();
 	}
@@ -182,14 +174,27 @@ public class TestDoubleDataTypeManagerService implements DataTypeManagerService 
 	}
 
 	@Override
-	public DataTypeManager openArchive(ResourceFile file, boolean acquireWriteLock)
+	public FileDataTypeArchive openFileArchive(String archiveName, TaskMonitor monitor)
 			throws IOException, DuplicateIdException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public DataTypeManager openArchive(DomainFile domainFile, TaskMonitor monitor)
+	public FileDataTypeArchive openFileArchive(ResourceFile file, boolean openForUpdate,
+			Upgrade upgradeStrategy, TaskMonitor monitor)
+			throws IOException, VersionException, DuplicateIdException, CancelledException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public ProjectDataTypeArchive openProjectArchive(DomainFile domainFile, Upgrade upgradeStrategy,
+			Recover recoverStrategy, TaskMonitor monitor)
 			throws VersionException, CancelledException, IOException, DuplicateIdException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public List<PersistentDataTypeArchive> getDataTypeArchives() {
 		throw new UnsupportedOperationException();
 	}
 }

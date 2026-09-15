@@ -51,6 +51,7 @@ import ghidra.program.database.sourcemap.SourceFileManagerDB;
 import ghidra.program.database.symbol.*;
 import ghidra.program.database.util.AddressSetPropertyMapDB;
 import ghidra.program.model.address.*;
+import ghidra.program.model.data.ArchiveType;
 import ghidra.program.model.data.CategoryPath;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
@@ -201,7 +202,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 
 	private static final int NUM_MANAGERS = 15;
 
-	private ManagerDB[] managers = new ManagerDB[NUM_MANAGERS];
+	private ProgramDBModule[] managers = new ProgramDBModule[NUM_MANAGERS];
 	private OldFunctionManager oldFunctionMgr;
 	private MemoryMapDB memoryManager;
 	private GlobalNamespace globalNamespace;
@@ -1834,7 +1835,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		globalNamespace = new GlobalNamespace(getMemory());
 		for (int i = 0; i < NUM_MANAGERS; i++) {
 			monitor.checkCancelled();
-			managers[i].setProgram(this);
+			managers[i].setDomainObject(this);
 		}
 		listing.setProgram(this);
 
@@ -1853,7 +1854,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 
 		for (int i = 0; i < NUM_MANAGERS; i++) {
 			monitor.checkCancelled();
-			managers[i].programReady(openMode, getStoredVersion(), monitor);
+			managers[i].domainObjectReady(openMode, getStoredVersion(), monitor);
 		}
 
 	}
@@ -2130,8 +2131,8 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 				getDataTypeManager().languageChanged(monitor);
 
 				// Force function manager to reconcile calling conventions
-				managers[FUNCTION_MGR].setProgram(this);
-				managers[FUNCTION_MGR].programReady(OpenMode.UPDATE, getStoredVersion(), monitor);
+				managers[FUNCTION_MGR].setDomainObject(this);
+				managers[FUNCTION_MGR].domainObjectReady(OpenMode.UPDATE, getStoredVersion(), monitor);
 
 				if (translator != null) {
 					// allow complex language upgrades to transform instructions/context
@@ -2361,7 +2362,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		super.close();
 		intRangePropertyMap.clear();
 		addrSetPropertyMap.clear();
-		for (ManagerDB manager : managers) {
+		for (ProgramDBModule manager : managers) {
 			// have to check for null in case we are closing after a failed open. This happens during
 			// testing where we first try to open a program and if it fails, we upgrade and re-open.
 			if (manager != null) {
@@ -2501,5 +2502,10 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	protected void domainObjectRestored() {
 		super.domainObjectRestored();
 		getDataTypeManager().notifyRestored();
+	}
+
+	@Override
+	public ArchiveType getArchiveType() {
+		return ArchiveType.PROGRAM;
 	}
 }

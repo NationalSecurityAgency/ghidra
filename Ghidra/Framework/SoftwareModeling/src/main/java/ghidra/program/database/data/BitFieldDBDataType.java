@@ -150,7 +150,7 @@ class BitFieldDBDataType extends BitFieldDataType {
 	 * @param dtm data type manager
 	 * @return bit-field data type
 	 */
-	static final BitFieldDataType getBitFieldDataType(long id, DataTypeManagerDB dtm) {
+	static final BitFieldDataType getBitFieldDataType(long id, DataTypeManager dtm) {
 
 		int bitSize = (int) (id & 0xff); // 8-bits
 		int bitOffset = (int) ((id >> BIT_OFFSET_SHIFT) & 0xff); // 8-bits

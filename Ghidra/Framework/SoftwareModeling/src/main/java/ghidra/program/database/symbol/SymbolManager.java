@@ -45,7 +45,7 @@ import ghidra.util.Lock.Closeable;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
-public class SymbolManager implements SymbolTable, ManagerDB {
+public class SymbolManager implements SymbolTable, ProgramDBModule {
 
 	private static final String OLD_LOCAL_SYMBOLS_TABLE = "OldLocalSymbols";
 	private static final int OLD_SYMBOL_ADDR_COL = 0;
@@ -146,7 +146,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	}
 
 	@Override
-	public void setProgram(ProgramDB program) {
+	public void setDomainObject(ProgramDB program) {
 		this.program = program;
 		refManager = program.getReferenceManager();
 		namespaceMgr = program.getNamespaceManager();
@@ -154,7 +154,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	}
 
 	@Override
-	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
+	public void domainObjectReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
 		if (openMode == OpenMode.UPGRADE) {

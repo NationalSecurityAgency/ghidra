@@ -26,11 +26,14 @@ import org.apache.commons.lang3.Strings;
 import ghidra.app.merge.*;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.data.DomainObjectMergeManager;
+import ghidra.framework.model.DomainObject;
 import ghidra.program.database.data.DataTypeManagerDB;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
+import ghidra.program.model.dtarchive.ProjectDataTypeArchive;
 import ghidra.program.model.listing.DataTypeChangeSet;
+import ghidra.program.model.listing.Program;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -54,7 +57,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	static final int OPTION_ORIGINAL = 2; // Original
 
 	private DomainObjectMergeManager mergeManager;
-	private DataTypeManagerDomainObject[] domainObjects = new DataTypeManagerDomainObject[4];
+	private DomainObject[] domainObjects = new DomainObject[4];
 	private DataTypeManager[] dtms = new DataTypeManager[4];
 	private TaskMonitor currentMonitor;
 	private int originalConflictOption;
@@ -93,30 +96,55 @@ public class DataTypeMergeManager implements MergeResolver {
 	/**
 	 * Manager for merging the data types using the four programs.
 	 * @param mergeManager overall merge manager for domain object
-	 * @param resultDomainObject the program to be updated with the result of the merge.
+	 * @param resultArchive the program to be updated with the result of the merge.
 	 * This is the program that will actually get checked in.
-	 * @param myDomainObject the program requesting to be checked in.
-	 * @param originalDomainObject the program that was checked out.
-	 * @param latestDomainObject the latest checked-in version of the program.
+	 * @param myArchive the program requesting to be checked in.
+	 * @param originalArchive the program that was checked out.
+	 * @param latestArchive the latest checked-in version of the program.
 	 * @param latestChanges the address set of changes between original and latest versioned program.
 	 * @param myChanges the address set of changes between original and my modified program.
 	 */
 	public DataTypeMergeManager(DomainObjectMergeManager mergeManager,
-			DataTypeManagerDomainObject resultDomainObject,
-			DataTypeManagerDomainObject myDomainObject,
-			DataTypeManagerDomainObject originalDomainObject,
-			DataTypeManagerDomainObject latestDomainObject, DataTypeChangeSet latestChanges,
+			ProjectDataTypeArchive resultArchive,
+			ProjectDataTypeArchive myArchive,
+			ProjectDataTypeArchive originalArchive,
+			ProjectDataTypeArchive latestArchive,
+			DataTypeChangeSet latestChanges,
 			DataTypeChangeSet myChanges) {
-		this.mergeManager = mergeManager;
-		domainObjects[RESULT] = resultDomainObject;
-		domainObjects[ORIGINAL] = originalDomainObject;
-		domainObjects[LATEST] = latestDomainObject;
-		domainObjects[MY] = myDomainObject;
-		dtms[RESULT] = resultDomainObject.getDataTypeManager();
-		dtms[ORIGINAL] = originalDomainObject.getDataTypeManager();
-		dtms[LATEST] = latestDomainObject.getDataTypeManager();
-		dtms[MY] = myDomainObject.getDataTypeManager();
 
+		this.mergeManager = mergeManager;
+		domainObjects[RESULT] = resultArchive;
+		domainObjects[ORIGINAL] = originalArchive;
+		domainObjects[LATEST] = latestArchive;
+		domainObjects[MY] = myArchive;
+		dtms[RESULT] = resultArchive.getDataTypeManager();
+		dtms[ORIGINAL] = originalArchive.getDataTypeManager();
+		dtms[LATEST] = latestArchive.getDataTypeManager();
+		dtms[MY] = myArchive.getDataTypeManager();
+		init(latestChanges, myChanges);
+	}
+
+	public DataTypeMergeManager(DomainObjectMergeManager mergeManager,
+			Program resultProgram,
+			Program myProgram,
+			Program originalProgram,
+			Program latestProgram,
+			DataTypeChangeSet latestChanges,
+			DataTypeChangeSet myChanges) {
+
+		this.mergeManager = mergeManager;
+		domainObjects[RESULT] = resultProgram;
+		domainObjects[ORIGINAL] = originalProgram;
+		domainObjects[LATEST] = latestProgram;
+		domainObjects[MY] = myProgram;
+		dtms[RESULT] = resultProgram.getDataTypeManager();
+		dtms[ORIGINAL] = originalProgram.getDataTypeManager();
+		dtms[LATEST] = latestProgram.getDataTypeManager();
+		dtms[MY] = myProgram.getDataTypeManager();
+		init(latestChanges, myChanges);
+	}
+
+	private void init(DataTypeChangeSet latestChanges, DataTypeChangeSet myChanges) {
 		totalConflictCount = 0;
 		setupSourceArchiveChanges(latestChanges, myChanges);
 		setupDataTypeChanges(latestChanges, myChanges);
@@ -1315,7 +1343,7 @@ public class DataTypeMergeManager implements MergeResolver {
 						try {
 							resultComp =
 								destStruct.addBitField(resultCompDt, bfDt.getDeclaredBitSize(),
-								sourceComp.getFieldName(), comment);
+									sourceComp.getFieldName(), comment);
 						}
 						catch (InvalidDataTypeException e) {
 							displayError(destStruct, e);
@@ -1338,14 +1366,14 @@ public class DataTypeMergeManager implements MergeResolver {
 							// If I have compDt, it should now be from result DTM.
 							resultComp =
 								destStruct.add(resultCompDt, length, sourceComp.getFieldName(),
-								comment);
+									comment);
 						}
 						catch (IllegalArgumentException e) {
 							comment =
 								buildDataTypeFailureComment(sourceCompDt, e.getMessage(), comment);
 							resultComp =
 								destStruct.add(BadDataType.dataType, sourceComp.getLength(),
-								sourceComp.getFieldName(), comment);
+									sourceComp.getFieldName(), comment);
 							if (e.getCause() instanceof DataTypeDependencyException) {
 								badIdDtMsgs.put(dtId, e.getMessage());
 							}
@@ -1364,8 +1392,8 @@ public class DataTypeMergeManager implements MergeResolver {
 					try {
 						resultComp = destStruct
 								.insertBitFieldAt(sourceComp.getOffset(), sourceComp.getLength(),
-							bfDt.getBitOffset(), resultCompDt, bfDt.getDeclaredBitSize(),
-							sourceComp.getFieldName(), comment);
+									bfDt.getBitOffset(), resultCompDt, bfDt.getDeclaredBitSize(),
+									sourceComp.getFieldName(), comment);
 					}
 					catch (InvalidDataTypeException e) {
 						displayError(destStruct, e);
@@ -1376,7 +1404,7 @@ public class DataTypeMergeManager implements MergeResolver {
 						try {
 							resultComp =
 								destStruct.addBitField(primitiveBaseDt, bfDt.getDeclaredBitSize(),
-								sourceComp.getFieldName(), comment);
+									sourceComp.getFieldName(), comment);
 						}
 						catch (InvalidDataTypeException exc) {
 							throw new RuntimeException(exc); // unexpected
@@ -1429,7 +1457,7 @@ public class DataTypeMergeManager implements MergeResolver {
 						comment = buildDataTypeFailureComment(sourceCompDt, badMsg, comment);
 						resultComp =
 							destStruct.insertAtOffset(sourceComp.getOffset(), BadDataType.dataType,
-							sourceComp.getLength(), sourceComp.getFieldName(), comment);
+								sourceComp.getLength(), sourceComp.getFieldName(), comment);
 					}
 				}
 			}

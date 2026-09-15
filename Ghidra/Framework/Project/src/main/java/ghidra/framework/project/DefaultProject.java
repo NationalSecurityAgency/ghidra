@@ -639,7 +639,10 @@ public class DefaultProject implements Project {
 		TransientDataManager.getTransients(list);
 		for (DomainFile df : list) {
 			if (df != null && df.isOpen()) {
-				openFiles.add(df);
+				DomainObject openDomainObject = df.getOpenedDomainObject(this);
+				if (openDomainObject.isChangeable() && !openDomainObject.isTemporary()) {
+					openFiles.add(df);
+				}
 			}
 		}
 		return openFiles;

@@ -21,13 +21,17 @@ import java.util.TreeSet;
 
 import javax.help.UnsupportedOperationException;
 
+import db.DBHandle;
 import db.util.ErrorHandler;
+import ghidra.framework.data.OpenMode;
+import ghidra.framework.model.RuntimeIOException;
 import ghidra.program.database.DbObject;
+import ghidra.program.database.data.ArchiveDataTypeManagerDB;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.ProgramArchitecture;
+import ghidra.util.Lock;
 import ghidra.util.Swing;
-import ghidra.util.exception.AssertException;
-import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 import utility.function.Callback;
 
@@ -38,25 +42,24 @@ import utility.function.Callback;
  * the editor.
  * @param <T> Specific {@link Composite} type being managed
  */
-public class CompositeViewerDataTypeManager<T extends Composite> extends StandAloneDataTypeManager
+public class CompositeViewerDataTypeManager<T extends Composite> extends ArchiveDataTypeManagerDB
 		implements ErrorHandler {
 
 	/** 
 	 * The data type manager for original composite data type being edited.
 	 * This is where the edited datatype will be written back to.
 	 */
-	private final DataTypeManager originalDTM;
-	private final T originalComposite; // may be null if not resolved into this DTM
-	private final T viewComposite;  // may be null if not resolved into this DTM
+	private DataTypeManager originalDTM;
+	private T originalComposite; // may be null if not resolved into this DTM
+	private T viewComposite;  // may be null if not resolved into this DTM
 
 	// Database-backed datatype ID map, view to/from original DTM
 	// This is needed to account for datatype use and ID alterations across undo/redo
-	private final IDMapDB dataTypeIDMap;
+	private IDMapDB dataTypeIDMap;
 
 	// Editor transaction use only - undo/redo not supported if restoreCallback is null
 	private Callback restoredCallback;
 	private Callback changeCallback;
-	private int transactionId = 0;
 	private boolean dataTypeChanged;
 
 	// Modification count used to signal optional clearing of undo/redo stack at the end of a
@@ -66,49 +69,51 @@ public class CompositeViewerDataTypeManager<T extends Composite> extends StandAl
 	// datatype IDs to be checked as orphaned.
 	// NOTE: Orphan removal can only be done when this DTM actively manages the viewComposite
 	private TreeSet<Long> orphanIds = new TreeSet<>();
+	private int transactionCount;
 
-	/**
-	 * Creates a data type manager that the composite editor will use internally for managing 
-	 * dependencies without resolving the actual composite being edited.  A single transaction 
-	 * will be started with this instantiation and held open until this instance is closed.  
-	 * Undo/redo and datatype pruning is not be supported.
-	 * @param rootName the root name for this data type manager (usually the program name).
-	 * @param originalDTM the original data type manager.
-	 */
-	public CompositeViewerDataTypeManager(String rootName, DataTypeManager originalDTM) {
-		this(rootName, originalDTM, null, null, null);
-		transactionId = startTransaction("Composite Edit");
+	public static <T extends Composite> CompositeViewerDataTypeManager<T> createNonUndoableInstance(
+			DataTypeManager originalDTM) {
+		try {
+			CompositeEditorDtArchiveDB<T> archive =
+				new CompositeEditorDtArchiveDB<T>(originalDTM);
+
+			return archive.getDataTypeManager();
+		}
+		catch (IOException e) {
+			throw new RuntimeIOException(e);
+		}
 	}
 
-	/**
-	 * Creates a data type manager that the structure editor will use internally for managing a 
-	 * structure being edited and its dependencies.
-	 * @param rootName the root name for this data type manager (usually the program name).
-	 * @param originalComposite the original composite data type that is being edited.
-	 * @param changeCallback Callback will be invoked when any change is made to the view composite.
-	 * @param restoredCallback Callback will be invoked following any undo/redo.
-	 */
-	public CompositeViewerDataTypeManager(String rootName, T originalComposite,
-			Callback changeCallback, Callback restoredCallback) {
-		this(rootName, originalComposite.getDataTypeManager(), originalComposite, changeCallback,
-			restoredCallback);
+	public static <T extends Composite> CompositeViewerDataTypeManager<T> createUndoableInstance(
+			T originalComposite, Callback changeCallback,
+			Callback restoredCallback) {
+		try {
+			CompositeEditorDtArchiveDB<T> archive =
+				new CompositeEditorDtArchiveDB<T>(originalComposite, changeCallback,
+					restoredCallback);
+			return archive.getDataTypeManager();
+		}
+		catch (IOException e) {
+			throw new RuntimeIOException(e);
+		}
 	}
 
-	/**
-	 * Constructor
-	 * @param rootName the root name for this data type manager (usually the program name).
-	 * @param originalDTM the original datatype manager
-	 * @param originalComposite the original composite data type that is being edited. (may be null)
-	 * @param changeCallback Callback will be invoked when any change is made to the view composite.
-	 * @param restoredCallback Callback will be invoked following any undo/redo.
-	 */
-	private CompositeViewerDataTypeManager(String rootName, DataTypeManager originalDTM,
-			T originalComposite, Callback changeCallback, Callback restoredCallback) {
-		super(rootName, originalDTM.getDataOrganization());
-		this.originalDTM = originalDTM;
-		this.originalComposite = originalComposite;
-		this.changeCallback = changeCallback;
-		this.restoredCallback = restoredCallback;
+	CompositeViewerDataTypeManager(DBHandle handle,
+			OpenMode openMode, ErrorHandler errHandler, Lock lock, TaskMonitor monitor)
+			throws CancelledException, VersionException, IOException {
+		super(handle, openMode, errHandler, lock, monitor);
+	}
+
+	@Override
+	public CompositeEditorDtArchiveDB<?> getDataStore() {
+		return (CompositeEditorDtArchiveDB<?>) super.getDataStore();
+	}
+
+	void intialize(DataTypeManager dtm, T composite, Callback changeCb, Callback restoredCb) {
+		this.originalDTM = dtm;
+		this.originalComposite = composite;
+		this.changeCallback = changeCb;
+		this.restoredCallback = restoredCb;
 
 		int txId = startTransaction("Setup for Edit");
 		try {
@@ -120,6 +125,7 @@ public class CompositeViewerDataTypeManager<T extends Composite> extends StandAl
 			endTransaction(txId, true);
 		}
 		clearUndo();
+
 	}
 
 	@SuppressWarnings("unchecked")
@@ -150,10 +156,8 @@ public class CompositeViewerDataTypeManager<T extends Composite> extends StandAl
 		return dbHandle.getModCount();
 	}
 
-	@Override
-	protected synchronized void clearUndo() {
-		// Exposes method for test use
-		super.clearUndo();
+	synchronized void clearUndo() {
+		archive.clearUndo();
 	}
 
 	@Override
@@ -197,10 +201,7 @@ public class CompositeViewerDataTypeManager<T extends Composite> extends StandAl
 
 	@Override
 	public synchronized void close() {
-		if (transactionId != 0) {
-			super.endTransaction(transactionId, true);
-		}
-		super.close();
+		getDataStore().close();
 	}
 
 	/**
@@ -361,9 +362,15 @@ public class CompositeViewerDataTypeManager<T extends Composite> extends StandAl
 	}
 
 	@Override
+	public synchronized int startTransaction(String description) {
+		transactionCount++;
+		return super.startTransaction(description);
+	}
+
+	@Override
 	public synchronized boolean endTransaction(int transactionID, boolean commit) {
 
-		if (viewComposite != null && getTransactionCount() == 1) {
+		if (viewComposite != null && transactionCount == 1) {
 			// Perform orphan removal only at the end of the outer-most transaction
 			synchronized (orphanIds) {
 				checkOrphansForRemoval(false);
@@ -371,6 +378,7 @@ public class CompositeViewerDataTypeManager<T extends Composite> extends StandAl
 		}
 
 		boolean committed = super.endTransaction(transactionID, commit);
+		transactionCount--;
 
 		if (!isTransactionActive() && flattenModCount != -1) {
 			if (flattenModCount != dbHandle.getModCount()) {
@@ -382,9 +390,6 @@ public class CompositeViewerDataTypeManager<T extends Composite> extends StandAl
 
 		if (committed && dataTypeChanged && changeCallback != null) {
 			Swing.runLater(() -> changeCallback.call());
-		}
-
-		if (getTransactionCount() == 0) {
 			dataTypeChanged = false;
 		}
 

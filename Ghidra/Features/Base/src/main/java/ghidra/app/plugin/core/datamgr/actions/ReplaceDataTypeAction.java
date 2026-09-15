@@ -24,15 +24,13 @@ import docking.action.MenuData;
 import docking.widgets.label.GLabel;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
-import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
-import ghidra.app.plugin.core.datamgr.archive.Archive;
-import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
+import ghidra.app.plugin.core.datamgr.*;
 import ghidra.app.plugin.core.datamgr.tree.*;
 import ghidra.app.util.datatype.DataTypeSelectionDialog;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
+import ghidra.program.model.dtarchive.DataTypeStore;
 import ghidra.util.Msg;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 import ghidra.util.layout.VerticalLayout;
@@ -134,14 +132,14 @@ public class ReplaceDataTypeAction extends DockingAction {
 			return; // cancelled
 		}
 
-		DataTypeManagerHandler dtmHandler = plugin.getDataTypeManagerHandler();
+		ArchiveManager archiveManager = plugin.getArchiveManager();
 		DataTypeManager newDtm = newDt.getDataTypeManager();
-		Archive sourceArchive = dtmHandler.getArchive(newDtm);
-		Archive destinationArchive = findArchive(node);
+		DataTypeStore sourceStore = newDtm.getDataStore();
+		DataTypeStore destinationStore = findArchive(node);
 
 		DataType oldDt = ((DataTypeNode) node).getDataType();
 		DataTypeManager dtm = oldDt.getDataTypeManager();
-		if (sourceArchive != destinationArchive) {
+		if (sourceStore != destinationStore) {
 			oldDt = oldDt.clone(oldDt.getDataTypeManager());
 		}
 
@@ -158,10 +156,10 @@ public class ReplaceDataTypeAction extends DockingAction {
 		}
 	}
 
-	private Archive findArchive(GTreeNode node) {
+	private DataTypeStore findArchive(GTreeNode node) {
 		while (node != null) {
-			if (node instanceof ArchiveNode) {
-				return ((ArchiveNode) node).getArchive();
+			if (node instanceof DataTypeStoreNode archiveNode) {
+				return archiveNode.getDataTypeStore();
 			}
 			node = node.getParent();
 		}

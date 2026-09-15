@@ -519,7 +519,7 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 	 */
 	@Test
 	public void testResolveDataTypeNonStructConflict() throws Exception {
-		DataTypeManager dtm = new StandAloneDataTypeManager("Test");
+		DataTypeManager dtm = new TransientDataTypeManager("Test");
 		int id = dtm.startTransaction("");
 		try {
 			Category otherRoot = dataMgr.getRootCategory();

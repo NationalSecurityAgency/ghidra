@@ -118,10 +118,10 @@ public class PasteAction extends DockingAction {
 		}
 
 		// can't cut nodes from one archive and paste into another
-		ArchiveNode destinationArchiveNode = destinationNode.getArchiveNode();
+		DataTypeStoreNode destinationArchiveNode = destinationNode.getArchiveNode();
 		for (GTreeNode cutNode : nodeList) {
 			DataTypeTreeNode dataTypeTreeNode = (DataTypeTreeNode) cutNode;
-			ArchiveNode archiveNode = dataTypeTreeNode.getArchiveNode();
+			DataTypeStoreNode archiveNode = dataTypeTreeNode.getArchiveNode();
 			if (!Objects.equals(archiveNode, destinationArchiveNode)) {
 				return true; // is invalid
 			}

@@ -15,32 +15,82 @@
  */
 package ghidra.app.plugin.core.datamgr.tree;
 
-import ghidra.app.plugin.core.datamgr.archive.ProgramArchive;
+import javax.swing.Icon;
+
+import generic.theme.GIcon;
+import ghidra.framework.data.DomainFileProxy;
 import ghidra.framework.model.DomainFile;
-import ghidra.program.model.data.DataTypeManager;
+import ghidra.framework.model.DomainObject;
+import ghidra.program.model.listing.Program;
 import ghidra.util.HTMLUtilities;
 
-public class ProgramArchiveNode extends DomainFileArchiveNode {
+/**
+ * Tree node representing datatypes from the currently active program
+ */
+public class ProgramArchiveNode extends DataTypeStoreNode implements VersionedNode {
+	private static Icon CLOSED_ICON = new GIcon("icon.plugin.datatypes.archive.program.closed");
+	private static Icon OPEN_ICON = new GIcon("icon.plugin.datatypes.archive.program.open");
+	private VersionState versionState;
 
-	public ProgramArchiveNode(ProgramArchive archive, DtFilterState filterState) {
-		super(archive, filterState);
+	public ProgramArchiveNode(Program program, DtFilterState filterState) {
+		super(program, filterState);
+		versionState = new VersionState(program);
+	}
+
+	public Program getProgram() {
+		return (Program) dataTypeStore;
 	}
 
 	@Override
 	public String getToolTip() {
-		DataTypeManager dtm = archive.getDataTypeManager();
-		DomainFile file = ((ProgramArchive) archive).getDomainFile();
+		DomainFile file = getDomainObject().getDomainFile();
+		DomainFile originalFile = file;
+		if (file instanceof DomainFileProxy proxy) {
+			originalFile = proxy.getOriginalDomainFile();
+		}
 		StringBuilder buf = new StringBuilder(HTMLUtilities.HTML);
-		if (file != null) {
-			buf.append(HTMLUtilities.escapeHTML(file.toString()));
+		if (originalFile != null) {
+			buf.append(HTMLUtilities.escapeHTML(originalFile.toString()));
 		}
 		else {
-			buf.append("[Unsaved New Program Archive]");
+			buf.append("[Unsaved Program]");
 		}
 		buf.append(HTMLUtilities.BR);
 		buf.append(HTMLUtilities.HTML_SPACE);
 		buf.append(HTMLUtilities.HTML_SPACE);
-		buf.append(HTMLUtilities.escapeHTML(dtm.getProgramArchitectureSummary()));
+		buf.append(HTMLUtilities.escapeHTML(dataTypeStore.getProgramArchitectureSummary()));
 		return buf.toString();
+	}
+
+	@Override
+	public Icon getIcon(boolean expanded) {
+		Icon baseIcon = expanded ? OPEN_ICON : CLOSED_ICON;
+		return versionState.getIcon(baseIcon);
+	}
+
+	@Override
+	public DomainObject getDomainObject() {
+		return dataTypeStore;
+	}
+
+	@Override
+	public String getDomainObjectInfo() {
+		return versionState.getDomainObjectInfo();
+	}
+
+	@Override
+	public void nodeChanged() {
+		super.nodeChanged();
+		versionState.updateDomainFileInfo();
+	}
+
+	@Override
+	public DomainFile getOriginalDomainFile() {
+		return versionState.getOriginalDomainFile();
+	}
+
+	@Override
+	public DomainFile getDomainFile() {
+		return dataTypeStore.getDomainFile();
 	}
 }

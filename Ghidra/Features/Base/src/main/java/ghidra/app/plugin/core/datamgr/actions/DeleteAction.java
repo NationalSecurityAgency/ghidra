@@ -28,7 +28,7 @@ import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
-import ghidra.app.plugin.core.datamgr.tree.ArchiveNode;
+import ghidra.app.plugin.core.datamgr.tree.DataTypeStoreNode;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeTreeNode;
 import ghidra.app.plugin.core.datamgr.util.DataTypeTreeDeleteTask;
 
@@ -84,7 +84,7 @@ public class DeleteAction extends DockingAction {
 	private boolean containsUndeletableNodes(TreePath[] selectionPaths) {
 		for (TreePath path : selectionPaths) {
 			DataTypeTreeNode node = (DataTypeTreeNode) path.getLastPathComponent();
-			if (!node.canDelete() || (node instanceof ArchiveNode)) {
+			if (!node.canDelete() || (node instanceof DataTypeStoreNode)) {
 				return true;
 			}
 		}

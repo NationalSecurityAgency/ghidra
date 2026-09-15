@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,6 @@ import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import generic.theme.GIcon;
 import ghidra.app.plugin.core.datamgr.*;
-import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.program.model.data.*;
@@ -68,8 +67,8 @@ public class UpdateSingleDataTypeAction extends DockingAction {
 		}
 		DataTypeNode dataTypeNode = (DataTypeNode) node;
 		DataType dataType = dataTypeNode.getDataType();
-		DataTypeManagerHandler handler = plugin.getDataTypeManagerHandler();
-		DataTypeSyncState syncStatus = DataTypeSynchronizer.getSyncStatus(handler, dataType);
+		ArchiveManager archiveManager = plugin.getArchiveManager();
+		DataTypeSyncState syncStatus = DataTypeSynchronizer.getSyncStatus(archiveManager, dataType);
 
 		switch (syncStatus) {
 			case UNKNOWN:
@@ -101,9 +100,9 @@ public class UpdateSingleDataTypeAction extends DockingAction {
 		DataTypeNode dataTypeNode = (DataTypeNode) node;
 		DataType dataType = dataTypeNode.getDataType();
 		DataTypeManager dtm = dataType.getDataTypeManager();
-		DataTypeManagerHandler handler = plugin.getDataTypeManagerHandler();
+		ArchiveManager archiveManager = plugin.getArchiveManager();
 		SourceArchive sourceArchive = dataType.getSourceArchive();
-		DataTypeSyncState syncStatus = DataTypeSynchronizer.getSyncStatus(handler, dataType);
+		DataTypeSyncState syncStatus = DataTypeSynchronizer.getSyncStatus(archiveManager, dataType);
 		if (syncStatus == DataTypeSyncState.CONFLICT) {
 			int result = OptionDialog.showOptionDialog(gTree, "Lose Local Changes?",
 				"This data type has local changes that will be\n" +
@@ -119,10 +118,10 @@ public class UpdateSingleDataTypeAction extends DockingAction {
 		}
 		plugin.update(dataType);
 
-		DataTypeManager sourceDTM = handler.getDataTypeManager(sourceArchive);
+		DataTypeManager sourceDTM = archiveManager.getDataTypeManager(sourceArchive);
 		if (sourceDTM != null) {
 			DataTypeSynchronizer synchronizer =
-				new DataTypeSynchronizer(handler, dtm, sourceArchive);
+				new DataTypeSynchronizer(archiveManager, dtm, sourceArchive);
 			synchronizer.reSyncOutOfSyncInTimeOnlyDataTypes();
 		}
 	}

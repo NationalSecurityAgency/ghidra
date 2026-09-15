@@ -22,7 +22,7 @@ import java.util.*;
 import db.*;
 import db.util.ErrorHandler;
 import ghidra.framework.data.OpenMode;
-import ghidra.program.database.ManagerDB;
+import ghidra.program.database.ProgramDBModule;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.database.util.AddressRangeMapDB;
@@ -41,7 +41,7 @@ import ghidra.util.task.TaskMonitor;
  * <code>ProgramContextDB</code> defines a processor context over an address 
  * space using database range maps for storage.
  */
-public class OldProgramContextDB implements ProgramContext, DefaultProgramContext, ManagerDB {
+public class OldProgramContextDB implements ProgramContext, DefaultProgramContext, ProgramDBModule {
 
 	private final static UndefinedValueException UNDEFINED_VALUE_EXCEPTION =
 		new UndefinedValueException();
@@ -323,12 +323,12 @@ public class OldProgramContextDB implements ProgramContext, DefaultProgramContex
 	}
 
 	@Override
-	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
+	public void domainObjectReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 	}
 
 	@Override
-	public void setProgram(ProgramDB program) {
+	public void setDomainObject(ProgramDB program) {
 	}
 
 	@Override

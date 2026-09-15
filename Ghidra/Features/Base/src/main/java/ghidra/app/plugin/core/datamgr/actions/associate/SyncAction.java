@@ -24,8 +24,7 @@ import docking.action.DockingAction;
 import docking.widgets.OptionDialog;
 import docking.widgets.tree.GTreeState;
 import ghidra.app.plugin.core.datamgr.*;
-import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
-import ghidra.app.plugin.core.datamgr.tree.ArchiveNode;
+import ghidra.app.plugin.core.datamgr.tree.DataTypeStoreNode;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.SourceArchive;
@@ -38,16 +37,16 @@ public abstract class SyncAction extends DockingAction implements Comparable<Syn
 
 	private final SourceArchive sourceArchive;
 	private final DataTypeManager dtm;
-	private final DataTypeManagerHandler handler;
+	private final ArchiveManager archiveManager;
 	private final DataTypeManagerPlugin plugin;
-	private final ArchiveNode archiveNode;
+	private final DataTypeStoreNode archiveNode;
 
-	SyncAction(String name, DataTypeManagerPlugin plugin, DataTypeManagerHandler handler,
-			DataTypeManager dtm, ArchiveNode archiveNode, SourceArchive sourceArchive,
+	SyncAction(String name, DataTypeManagerPlugin plugin, ArchiveManager archiveManager,
+			DataTypeManager dtm, DataTypeStoreNode archiveNode, SourceArchive sourceArchive,
 			boolean isEnabled) {
 		super(name, plugin.getName());
 		this.plugin = plugin;
-		this.handler = handler;
+		this.archiveManager = archiveManager;
 		this.dtm = dtm;
 		this.archiveNode = archiveNode;
 		this.sourceArchive = sourceArchive;
@@ -89,7 +88,7 @@ public abstract class SyncAction extends DockingAction implements Comparable<Syn
 			return;
 		}
 
-		DataTypeManager sourceDTM = handler.getDataTypeManager(sourceArchive);
+		DataTypeManager sourceDTM = archiveManager.getDataTypeManager(sourceArchive);
 		if (sourceDTM == null) {
 			Msg.showInfo(getClass(), plugin.getTool().getToolFrame(),
 				"Cannot Access Source Archive",
@@ -102,7 +101,8 @@ public abstract class SyncAction extends DockingAction implements Comparable<Syn
 			return;
 		}
 
-		DataTypeSynchronizer synchronizer = new DataTypeSynchronizer(handler, dtm, sourceArchive);
+		DataTypeSynchronizer synchronizer =
+			new DataTypeSynchronizer(archiveManager, dtm, sourceArchive);
 
 		//@formatter:off
 		TaskBuilder.withTask(new SyncTask(synchronizer))
