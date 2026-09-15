@@ -539,7 +539,7 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
 	}
 	return false;
       }
-      if (((newmask & 1)!=0)&&(outvn->getSize()==flowsize)) {
+      if (((newmask & 1)!=0)&&(outvn->getSize()==flowsize)&&(bitsize >= 8 || (~newmask & outvn->getNZMask())==0)) {
 	addTerminalPatch(op,rvn);
 	hcount += 1;		// Dealt with this descendant
 	break;
@@ -1655,13 +1655,7 @@ int4 RuleSubvarCompZero::applyOp(PcodeOp *op,Funcdata &data)
 	if (vn0->isConstant()) return 0;
 	uintb mask0 = vn0->getConsume() & vn0->getNZMask();
 	uintb wholemask = calc_mask(vn0->getSize()) & mask0;
-	// We really need a popcnt here
-	// We want: if the number of bits that are both consumed
-	// and not known to be zero are "big" then don't continue
-	// because it doesn't look like a few bits getting manipulated
-	// within a status register
-	if ((wholemask & 0xff)==0xff) return 0;
-	if ((wholemask & 0xff00)==0xff00) return 0;
+	if (popcount(wholemask) >= 8) return 0;
       }
       break;
     default:
