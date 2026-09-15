@@ -22,15 +22,13 @@ import java.io.*;
 import java.lang.ProcessBuilder.Redirect;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import com.sun.jna.LastErrorException;
 
 import ghidra.framework.OperatingSystem;
 import ghidra.pty.*;
 import ghidra.pty.testutil.DummyProc;
+import ghidra.pty.windows.Win32Err.LastErrorException;
 import ghidra.util.Msg;
 
 public class ConPtyTest extends AbstractPtyTest {
@@ -61,7 +59,7 @@ public class ConPtyTest extends AbstractPtyTest {
 			fail();
 		}
 		catch (LastErrorException e) {
-			assertEquals(2, e.getErrorCode());
+			assertEquals(2, e.getLastError());
 		}
 	}
 
@@ -148,8 +146,7 @@ public class ConPtyTest extends AbstractPtyTest {
 	 * we get to the {@link Process#waitFor(long, TimeUnit)} call. It will return false, thus
 	 * causing the expected {@link AssertionError}.
 	 * 
-	 * @throws Exception
-	 *             'tis a test
+	 * @throws Exception 'tis a test
 	 */
 	@Test(expected = AssertionError.class)
 	public void testGdbInterruptPlain() throws Exception {
@@ -211,8 +208,7 @@ public class ConPtyTest extends AbstractPtyTest {
 	 * signal to actually get sent to gdb. I haven't the slightest idea where it goes instead, if
 	 * anywhere.
 	 * 
-	 * @throws Exception
-	 *             'tis a test
+	 * @throws Exception 'tis a test
 	 */
 	@Test
 	public void testGdbInterruptConPty() throws Exception {

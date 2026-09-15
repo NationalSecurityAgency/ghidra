@@ -15,7 +15,7 @@
  */
 package ghidra.pty.openbsd;
 
-import ghidra.pty.unix.PosixC.Ioctls;
+import ghidra.pty.unix.Ioctls;
 import ghidra.pty.unix.UnixPtySessionLeader;
 
 public class OpenBSDPtySessionLeader extends UnixPtySessionLeader {
