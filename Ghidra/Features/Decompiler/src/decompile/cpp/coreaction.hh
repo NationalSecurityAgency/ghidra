@@ -900,6 +900,17 @@ public:
   virtual int4 apply(Funcdata &data) { data.mapGlobals(); return 0; }
 };
 
+/// \brief Create symbols for any never-before-named address touched by a volatile read or write.
+class ActionMapVolatileGlobals : public Action {
+public:
+  ActionMapVolatileGlobals(const string &g) : Action(rule_onceperfunc,"mapvolatileglobals",g) {}	///< Constructor
+  virtual Action *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Action *)0;
+    return new ActionMapVolatileGlobals(getGroup());
+  }
+  virtual int4 apply(Funcdata &data) { data.mapVolatileGlobals(); return 0; }
+};
+
 /// \brief Calculate the prototype for the function.
 ///
 /// If the prototype wasn't originally known, the discovered input Varnodes are analyzed
