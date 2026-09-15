@@ -29,6 +29,9 @@ Patches should be submitted in the form of Pull Requests to the Ghidra
 [repository] on GitHub. But first, consider the following tips to ensure a
 smooth process when submitting a patch:
 
+- Please do not open an issue just to submit your patch as Pull Request a moment later. It is
+  just duplicate work for all and wastes valuable time. Describe the problem it handles in patch
+  description text box instead.
 - Ensure that the patch compiles and runs in at least our development environment, and ideally our
   full build too. Even the most trivial change done in the GitHub editor has a chance to cause
   problems in the full development environment for unexpected reasons.
@@ -59,10 +62,11 @@ smooth process when submitting a patch:
   a need for an updated library, please submit an issue with your request instead of a pull request.
 - Before submission, please squash your commits down to a single commit that briefly describes the
   changes.
-- Please do not include the issue number that is being fixed in the pull request title field. 
-  Instead, use "Fixes #xxx" somewhere in the pull request description text box.
+- Please do not include the issue number that is being fixed in the pull request or patch title
+  field. Instead, use "Fixes #xxx" somewhere in the pull request or patch description text box.
 - Isolate multiple patches from each other. If you wish to make several independent patches, do so 
   in separate, smaller pull requests that can be reviewed more easily.
+- Patch title or lines must not begin with '#' since it leads to unrecognized lines while squashing.
 - Avoid submitting self-generated binary files as part of your pull request. Despite your best 
   intentions, our policy forbids accepting them because we cannot effectively review and validate 
   their content.
