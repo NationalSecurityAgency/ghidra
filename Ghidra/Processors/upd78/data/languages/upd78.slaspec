@@ -264,7 +264,7 @@ macro equal(op1, op2) {
 
 macro onTest(op1, op2) {
     $(Z_flag) = (op1 & op2) == 0;
-    $(SK_flag) = (op1 & op2) != 1;
+    $(SK_flag) = (op1 & op2) != 0;
 }
 
 macro offTest(op1, op2) {
