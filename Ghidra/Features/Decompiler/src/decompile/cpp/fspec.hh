@@ -233,6 +233,8 @@ private:
 public:
   /// \brief Construct from components
   ParamTrial(const Address &ad,int4 sz,int4 sl) { addr = ad; size = sz; slot = sl; flags=0; entry=(ParamEntry *)0; offset=-1; fixedPosition = -1; }
+  /// \brief Construct version with new slot
+  ParamTrial(const ParamTrial &op2,int4 sl) { addr = op2.addr; size = op2.size; flags = op2.flags; slot = sl; entry=(ParamEntry *)0; offset=-1; fixedPosition = -1; }
   const Address &getAddress(void) const { return addr; }	///< Get the starting address of \b this trial
   int4 getSize(void) const { return size; }			///< Get the number of bytes in \b this trial
   int4 getSlot(void) const { return slot; }			///< Get the \e slot associated with \b this trial
@@ -296,6 +298,7 @@ public:
   ParamActive(bool recoversub);	///< Construct an empty container
   void clear(void);		///< Reset to an empty container
   void registerTrial(const Address &addr,int4 sz);		///< Add a new trial to the container
+  void reregisterTrial(const ParamTrial &oldTrial);		///< Register a previously existing trial
   int4 getNumTrials(void) const { return trial.size(); }	///< Get the number of trials in \b this container
   ParamTrial &getTrial(int4 i) { return trial[i]; }		///< Get the i-th trial
   const ParamTrial &getTrialForInputVarnode(int4 slot) const;	///< Get trial corresponding to the given input Varnode
@@ -1666,6 +1669,7 @@ class FuncCallSpecs : public FuncProto {
   void transferLockedOutputParam(ProtoParameter *param,vector<Varnode *> &newoutput);
   bool transferLockedInput(vector<Varnode *> &newinput,const FuncProto &source);
   bool transferLockedOutput(vector<Varnode *> &newoutput,const FuncProto &source);
+  void collectUnlockedTrials(vector<ParamTrial> &unlockedTrials);
   void commitNewInputs(Funcdata &data,vector<Varnode *> &newinput);
   void commitNewOutputs(Funcdata &data,vector<Varnode *> &newoutput);
   void collectOutputTrialVarnodes(vector<Varnode *> &trialvn);

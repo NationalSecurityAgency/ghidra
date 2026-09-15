@@ -1962,7 +1962,6 @@ void Heritage::guardInput(const Address &addr,int4 size,vector<Varnode *> &input
   int4 i = 0;
   uintb cur = addr.getOffset();	// Range that needs to be covered
   uintb end = cur + size;
-  //  bool seenunspliced = false;
   Varnode *vn;
   vector<Varnode *> newinput;
 
@@ -1974,11 +1973,8 @@ void Heritage::guardInput(const Address &addr,int4 size,vector<Varnode *> &input
 	int4 sz = vn->getOffset() - cur;
 	vn = fd->newVarnode(sz,Address(addr.getSpace(),cur));
 	vn = fd->setInputVarnode(vn);
-	//	seenunspliced = true;
       }
       else {
-	//	if (vn->hasNoDescend())
-	//	  seenunspliced = true;
 	i += 1;
       }
     }
@@ -1986,7 +1982,6 @@ void Heritage::guardInput(const Address &addr,int4 size,vector<Varnode *> &input
       int4 sz = end-cur;
       vn = fd->newVarnode(sz,Address(addr.getSpace(),cur));
       vn = fd->setInputVarnode(vn);
-      //      seenunspliced = true;
     }
     newinput.push_back(vn);
     cur += vn->getSize();
@@ -1995,17 +1990,6 @@ void Heritage::guardInput(const Address &addr,int4 size,vector<Varnode *> &input
   // Now we need to make sure that all the inputs get linked
   // together into a single input
   if (newinput.size()==1) return; // Will get linked in automatically
-  for(uint4 j=0;j<newinput.size();++j)
-    newinput[j]->setWriteMask();
-//   if (!seenunspliced) {
-//     // Check to see if a concatenation of inputs already exists
-//     // If it existed already it would be defined at fd->getAddress()
-//     // and it would have full size
-//     VarnodeLocSet::const_iterator iter,enditer;
-//     iter = fd->beginLoc(size,addr,fd->getAddress());
-//     enditer = fd->endLoc(size,addr,fd->getAddress());
-//     if (iter != enditer) return; // It already exists
-//   }
   Varnode *newout = fd->newVarnode(size,addr);
   concatPieces(newinput,(PcodeOp *)0,newout)->setActiveHeritage();
 }
@@ -2747,8 +2731,10 @@ void Heritage::heritage(void)
       }
     }
   }
-  placeMultiequals();
-  rename();
+  if (!disjoint.empty()) {
+    placeMultiequals();
+    rename();
+  }
   if (reprocessStackCount > 0)
     reprocessFreeStores(stackSpace, freeStores);
   analyzeNewLoadGuards();
@@ -2849,6 +2835,17 @@ bool Heritage::deadRemovalAllowedSeen(AddrSpace *spc)
   if (res)
     info->deadremoved = 1;
   return res;
+}
+
+/// If no heritage has happened yet, do nothing.
+/// \param addr is the start of the range
+/// \param sz is the number of bytes in the range
+void Heritage::markRangeHeritaged(const Address &addr,int4 sz)
+
+{
+  int4 intersect;
+  if (pass > 0)
+    globaldisjoint.add(addr,sz,pass-1,intersect);
 }
 
 /// Reset all analysis as if no heritage passes have yet taken place for the function.

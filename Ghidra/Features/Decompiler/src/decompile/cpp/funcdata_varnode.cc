@@ -539,10 +539,8 @@ void Funcdata::adjustInputVarnodes(const Address &addr,int4 sz)
   // Now that all the intersecting inputs have been pulled out, we can create the new input
   Varnode *invn = newVarnode(sz,addr);
   invn = setInputVarnode(invn);
-  // The new input may cause new heritage and "Heritage AFTER dead removal" errors
-  // So tell heritage to ignore it
-  // FIXME: It would probably be better to insert this directly into heritage's globaldisjoint
-  invn->setWriteMask();
+  // Treat full range as if it has already been heritaged
+  heritage.markRangeHeritaged(invn->getAddr(), invn->getSize());
   // Now change all old inputs to be created as SUBPIECE from the new input
   for(uint4 i=0;i<inlist.size();++i) {
     PcodeOp *op = inlist[i]->getDef();
