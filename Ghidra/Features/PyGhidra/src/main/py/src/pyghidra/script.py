@@ -61,7 +61,9 @@ class _StaticMap(dict):
         return res if res is not _NO_ATTRIBUTE else default
 
     def __iter__(self):
-        yield from self.script
+        # Completions include write-only properties, even though they cannot be read.
+        yield from dict.__iter__(self.script)
+        yield from dir(self.script._script)
 
     def keys(self):
         return KeysView(self)
@@ -194,7 +196,13 @@ class PyGhidraScript(dict):
 
     def __iter__(self):
         yield from super().__iter__()
-        yield from dir(self._script)
+        for name in dir(self._script):
+            attr = inspect.getattr_static(self._script, name, _NO_ATTRIBUTE)
+            # JPype bean properties can have setters without getters. _JavaProperty
+            # has its own __get__, so only filter ordinary property descriptors.
+            if type(attr) is property and attr.fget is None:
+                continue
+            yield name
 
     def get_static(self, key):
         res = self.get(key, _NO_ATTRIBUTE)
