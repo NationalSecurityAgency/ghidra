@@ -15,7 +15,8 @@
  */
 package ghidra.pcode.emu.jit.gen;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.io.*;
 import java.lang.classfile.*;
@@ -27,13 +28,6 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.util.TraceClassVisitor;
 
 import generic.Unique;
 import ghidra.app.plugin.assembler.*;
@@ -86,9 +80,9 @@ public abstract class AbstractJitCodeGeneratorTest extends AbstractJitTest {
 		new ProcessBuilder("javap", "-c", "-l", tmp.getPath()).inheritIO().start().waitFor();
 	}
 
-	record Translation(PcodeProgram program, MethodNode init, MethodNode run, JitPcodeThread thread,
-			TestUseropLibrary library, JitBytesPcodeExecutorState state, byte[] classbytes,
-			JitCompiledPassageClass passageCls, JitCompiledPassage passage) {
+	record Translation(PcodeProgram program, MethodModel init, MethodModel run,
+			JitPcodeThread thread, TestUseropLibrary library, JitBytesPcodeExecutorState state,
+			byte[] classbytes, JitCompiledPassageClass passageCls, JitCompiledPassage passage) {
 
 		public void runErr(Class<? extends Throwable> excType, String message) {
 			try {
@@ -230,10 +224,7 @@ public abstract class AbstractJitCodeGeneratorTest extends AbstractJitTest {
 
 		dumpClass(classbytes);
 
-		ClassNode cn = new ClassNode(Opcodes.ASM9);
-		ClassReader cr = new ClassReader(classbytes);
-		ClassVisitor cv = DEBUG_ENABLED ? new TraceClassVisitor(cn, DEBUG_WRITER) : cn;
-		cr.accept(cv, 0);
+		ClassModel cm = ClassFile.of().parse(classbytes);
 
 		// Have the JVM validate this thing
 		JitBytesPcodeExecutorState state = thread.getState();
@@ -241,14 +232,15 @@ public abstract class AbstractJitCodeGeneratorTest extends AbstractJitTest {
 			JitCompiledPassageClass.load(MethodHandles.lookup(), classbytes);
 		JitCompiledPassage passage = passageCls.createInstance(thread);
 
-		assertEquals(Set.of(
-			"<clinit>", "<init>", "run", "thread"),
-			cn.methods.stream().map(m -> m.name).collect(Collectors.toSet()));
+		assertEquals(Set.of("<clinit>", "<init>", "run", "thread"), cm.methods()
+				.stream()
+				.map(m -> m.methodName().stringValue())
+				.collect(Collectors.toSet()));
 
-		MethodNode initMethod =
-			Unique.assertOne(cn.methods.stream().filter(m -> "<init>".equals(m.name)));
-		MethodNode runMethod =
-			Unique.assertOne(cn.methods.stream().filter(m -> "run".equals(m.name)));
+		MethodModel initMethod = Unique.assertOne(
+			cm.methods().stream().filter(m -> "<init>".equals(m.methodName().stringValue())));
+		MethodModel runMethod = Unique.assertOne(
+			cm.methods().stream().filter(m -> "run".equals(m.methodName().stringValue())));
 		return new Translation(program, initMethod, runMethod, thread,
 			(TestUseropLibrary) thread.getMachine().getUseropLibrary(), state, classbytes,
 			passageCls, passage);

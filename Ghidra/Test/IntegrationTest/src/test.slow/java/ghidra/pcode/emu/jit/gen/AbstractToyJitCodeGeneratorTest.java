@@ -15,16 +15,15 @@
  */
 package ghidra.pcode.emu.jit.gen;
 
-import static ghidra.lifecycle.Unfinished.*;
+import static ghidra.lifecycle.Unfinished.TODO;
 import static org.junit.Assert.*;
 
+import java.lang.classfile.instruction.InvokeInstruction;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
 import org.junit.Ignore;
 import org.junit.Test;
-import org.objectweb.asm.tree.MethodInsnNode;
 
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator.PcodeOpKey;
 import ghidra.pcode.exec.InterruptPcodeExecutionException;
@@ -3737,11 +3736,11 @@ public abstract class AbstractToyJitCodeGeneratorTest extends AbstractJitCodeGen
 		tr.runDecodeErr(0x00400004);
 		assertEquals(13, tr.getLongRegVal("r0"));
 
-		long countSCarrys = Stream.of(tr.run().instructions.toArray()).filter(i -> {
-			if (!(i instanceof MethodInsnNode mi)) {
+		long countSCarrys = tr.run().code().orElseThrow().elementStream().filter(c -> {
+			if (!(c instanceof InvokeInstruction ii)) {
 				return false;
 			}
-			return "sCarryLongRaw".equals(mi.name);
+			return "sCarryLongRaw".equals(ii.name().stringValue());
 		}).count();
 		long expected =
 			tr.thread().getMachine().getConfiguration().removeUnusedOperations() ? 1 : 2;
