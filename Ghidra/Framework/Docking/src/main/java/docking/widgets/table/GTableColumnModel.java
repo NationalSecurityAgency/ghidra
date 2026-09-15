@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import ghidra.docking.settings.Settings;
 import ghidra.util.datastruct.WeakDataStructureFactory;
@@ -587,13 +587,27 @@ public class GTableColumnModel
 
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
+
 		String name = evt.getPropertyName();
-		if ("width".equals(name) || "preferredWidth".equals(name)) {
-			invalidateWidthCache();
-			// This is a misnomer, we're using this method simply to cause a relayout
-			fireColumnMarginChanged();
-			columnModelState.saveState();
+		if (!("width".equals(name) || "preferredWidth".equals(name))) {
+			return;
 		}
+
+		invalidateWidthCache();
+		columnModelState.saveState();
+
+		if (table.isEditing()) {
+			// Calling fireColumnMarginChanged() while the table is editing will end the edit. The 
+			// assumption is that we really only want to trigger a relayout if the column sizes are
+			// changing programmatically.  We may get a propertyChange() callback related to 'width'
+			// and 'preferredWidth' when the is trying to initiate an edit.  Handle that case by 
+			// ignoring the callback with an active edit.
+			return;
+		}
+
+		// This is a misnomer, we're using this method simply to cause a relayout
+		fireColumnMarginChanged();
+
 	}
 
 	@Override

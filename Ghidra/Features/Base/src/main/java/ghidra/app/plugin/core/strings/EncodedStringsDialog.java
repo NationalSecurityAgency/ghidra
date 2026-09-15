@@ -16,7 +16,8 @@
 package ghidra.app.plugin.core.strings;
 
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.io.File;
 import java.io.IOException;
 import java.lang.Character.UnicodeScript;
@@ -57,6 +58,7 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
+import ghidra.util.charset.CharsetInfoManager;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.layout.PairLayout;
 import ghidra.util.table.GhidraTable;
@@ -68,10 +70,10 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 	private static final Map<String, AbstractStringDataType> CHARSET_TO_DT_MAP = Map.ofEntries(
 		// charsets not in this map will use StringDataType and will
 		// set the charset setting at the memory location of the string to be created
-		Map.entry(CharsetInfo.USASCII, StringDataType.dataType),
-		Map.entry(CharsetInfo.UTF8, StringUTF8DataType.dataType),
-		Map.entry(CharsetInfo.UTF16, UnicodeDataType.dataType),
-		Map.entry(CharsetInfo.UTF32, Unicode32DataType.dataType));
+		Map.entry(CharsetInfoManager.USASCII, StringDataType.dataType),
+		Map.entry(CharsetInfoManager.UTF8, StringUTF8DataType.dataType),
+		Map.entry(CharsetInfoManager.UTF16, UnicodeDataType.dataType),
+		Map.entry(CharsetInfoManager.UTF32, Unicode32DataType.dataType));
 
 	private static final String BUTTON_FONT_ID = "font.plugin.strings.buttons";
 
@@ -442,42 +444,13 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 	private void buildCharsetPickerComponents() {
 		charsetComboBox = new GhidraComboBox<>();
 		charsetComboBox.getAccessibleContext().setAccessibleName("Charset Checkboxes");
-		for (String charsetName : CharsetInfo.getInstance().getCharsetNames()) {
+		for (String charsetName : CharsetInfoManager.getInstance().getCharsetNames()) {
 			charsetComboBox.addToModel(charsetName);
 		}
 		charsetComboBox.setSelectedItem(getDefault(EncodedStringsPlugin.CHARSET_OPTIONNAME,
 			EncodedStringsPlugin.CHARSET_DEFAULT_VALUE));
 		charsetComboBox.addItemListener(itemListener);
 		charsetComboBox.setToolTipText("Which character set to use to decode the raw bytes.");
-		charsetComboBox.addKeyListener(new KeyListener() {
-
-			@Override
-			public void keyTyped(KeyEvent e) {
-				// empty
-			}
-
-			@Override
-			public void keyReleased(KeyEvent e) {
-				// empty
-			}
-
-			@Override
-			public void keyPressed(KeyEvent e) {
-				// Note: we override the [ENTER] key handling to allow the user to invoke the
-				// dialog and just hit enter to create the string without having to do any
-				// clicking (otherwise the charset combobox consumes the keystroke)
-				if (e.getKeyChar() == '\n') {
-					e.consume();
-					if (charsetComboBox.isPopupVisible()) {
-						charsetComboBox.setPopupVisible(false);
-					}
-					else {
-						EncodedStringsDialog.this.createButton.doClick();
-					}
-				}
-			}
-		});
-
 	}
 
 	private void buildOptionsButtonComponents() {
@@ -790,8 +763,10 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 		}
 	}
 
-	private void createStringsHelper(TaskMonitor monitor) {
+	private void createStringsHelper(Runnable followupAction, TaskMonitor monitor) {
 		int count = 0;
+		List<ProgramLocation> newStrings = new ArrayList<>();
+
 		setStatusText("Creating strings...");
 		int txId = program.startTransaction("Create Strings");
 		boolean success = false;
@@ -808,7 +783,6 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 			monitor.initialize(stringsToCreate.size());
 			monitor.setMessage("Creating strings...");
 			Settings settings = currentOptions.settings();
-			List<ProgramLocation> newStrings = new ArrayList<>();
 			for (EncodedStringsRow row : stringsToCreate) {
 				if (monitor.isCancelled()) {
 					break;
@@ -839,26 +813,28 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 				// See table listener for the other end of this
 				rowToSelect.set(selectedRowNums[0]);
 			}
-			StringTranslationService sts = getSelectedStringTranslationService(true);
-			if (sts != null) {
-				Swing.runLater(
-					() -> sts.translate(program, newStrings, new TranslateOptions(true)));
-			}
 			success = true;
 		}
 		finally {
 			program.endTransaction(txId, success);
 		}
+
+		StringTranslationService sts = getSelectedStringTranslationService(true);
+
+		if (followupAction != null) {
+			followupAction.run();
+		}
+		if (success && sts != null && !newStrings.isEmpty()) {
+			sts.translate(program, newStrings, new TranslateOptions(true));
+		}
 	}
 
 	private void createStrings(TaskMonitor monitor) {
-		createStringsHelper(monitor);
-		Swing.runLater(() -> setActionItemEnablement(true));
+		createStringsHelper(() -> setActionItemEnablement(true), monitor);
 	}
 
 	private void createStringsAndClose(TaskMonitor monitor) {
-		createStringsHelper(monitor);
-		Swing.runLater(this::close);
+		createStringsHelper(this::close, monitor);
 	}
 
 	private void setCreateButtonInfo(int rowCount, int selectedRowCount) {
@@ -933,7 +909,7 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 	private void updateOptions() {
 		String charsetName = charsetComboBox.getSelectedItem().toString();
 		if (!charsetExists(charsetName)) {
-			charsetName = CharsetInfo.USASCII;
+			charsetName = CharsetInfoManager.USASCII;
 		}
 
 		boolean scriptOptions = showScriptOptionsButton.isSelected();
@@ -955,7 +931,7 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 			settings = new SettingsImpl();
 			CharsetSettingsDefinition.CHARSET.setCharset(settings, charsetName);
 		}
-		int charSize = CharsetInfo.getInstance().getCharsetCharSize(charsetName);
+		int charSize = CharsetInfoManager.getInstance().getCharsetCharSize(charsetName);
 
 		updateTrigramStringValidator(stringModelFilenameComboBox.getText());
 		boolean requireValidStrings = requireValidStringCB.isSelected();
@@ -1131,9 +1107,11 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 	}
 
 	private static String makeTitleString(AddressSetView addrs) {
-		return "Search For Encoded Strings - %s (%s - %s)".formatted(
-			formatLength(addrs.getNumAddresses(), "addresses"), addrs.getMinAddress(),
-			addrs.getMaxAddress());
+		String addrRangeStr = !addrs.isEmpty()
+				? "(%s - %s)".formatted(addrs.getMinAddress(), addrs.getMaxAddress())
+				: "";
+		return "Search For Encoded Strings - %s %s"
+				.formatted(formatLength(addrs.getNumAddresses(), "addresses"), addrRangeStr);
 	}
 
 	private static boolean charsetExists(String charsetName) {

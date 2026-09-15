@@ -19,23 +19,22 @@ import java.util.Objects;
 
 import javax.swing.CellEditor;
 import javax.swing.JTree;
-import javax.swing.event.CellEditorListener;
-import javax.swing.event.ChangeEvent;
+import javax.swing.event.*;
 import javax.swing.tree.TreePath;
 
 import docking.widgets.tree.*;
+import docking.widgets.tree.internal.GTreeModel;
+import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class GTreeStartEditingTask extends GTreeTask {
 
-	private final GTreeNode modelParent;
-	private final GTreeNode editNode;
+	private final GTreeNode modelEditNode;
 
 	public GTreeStartEditingTask(GTree gTree, JTree jTree, GTreeNode editNode) {
 		super(gTree);
-		this.modelParent = tree.getModelNode(editNode.getParent());
-		this.editNode = editNode;
+		this.modelEditNode = tree.getModelNode(editNode);
 	}
 
 	@Override
@@ -54,30 +53,86 @@ public class GTreeStartEditingTask extends GTreeTask {
 	}
 
 	private void edit() {
-		TreePath path = editNode.getTreePath();
+
+		// add a model listener to re-select the newly edited node
+		GTreeModel model = tree.getModel();
+		SelectNodeListener listener = new SelectNodeListener(model);
+		model.addTreeModelListener(listener);
+
+		GTreeNode viewEditNode = tree.getViewNode(modelEditNode);
+		TreePath path = viewEditNode.getTreePath();
 		CellEditor cellEditor = tree.getCellEditor();
 		cellEditor.addCellEditorListener(new CellEditorListener() {
 			@Override
 			public void editingCanceled(ChangeEvent e) {
 				cellEditor.removeCellEditorListener(this);
-				tree.setSelectedNode(editNode); // reselect the node on cancel
+				tree.setSelectedNode(viewEditNode); // reselect the node on cancel
+				listener.dispose();
 			}
 
 			@Override
 			public void editingStopped(ChangeEvent e) {
 				String newName = Objects.toString(cellEditor.getCellEditorValue());
+				listener.setNewName(newName);
 				cellEditor.removeCellEditorListener(this);
-
-				// note: this call only works when the parent cannot have duplicate named nodes
-				tree.whenNodeIsReady(modelParent, newName, newNode -> {
-					tree.setSelectedNode(newNode);
-				});
 			}
 		});
 
-		tree.setNodeEditable(editNode);
+		tree.setNodeEditable(viewEditNode);
 		jTree.startEditingAtPath(path);
 
 	}
 
+	private class SelectNodeListener implements TreeModelListener {
+
+		private String newName;
+		private GTreeModel model;
+
+		SelectNodeListener(GTreeModel model) {
+			this.model = model;
+			model.addTreeModelListener(this);
+		}
+
+		void setNewName(String newName) {
+			this.newName = newName;
+		}
+
+		void dispose() {
+			// do later to avoid mutating the model during notification					
+			Swing.runLater(() -> model.removeTreeModelListener(this));
+		}
+
+		@Override
+		public void treeNodesInserted(TreeModelEvent e) {
+			if (newName == null) {
+				return; // editing cancelled
+			}
+
+			Object[] children = e.getChildren();
+			for (Object object : children) {
+				GTreeNode node = (GTreeNode) object;
+				String nodeName = node.getName();
+				if (nodeName.equals(newName) || nodeName.contains(newName)) {
+					tree.setSelectedNode(node);
+					dispose();
+					break;
+				}
+			}
+		}
+
+		@Override
+		public void treeNodesChanged(TreeModelEvent e) {
+			// stub
+		}
+
+		@Override
+		public void treeNodesRemoved(TreeModelEvent e) {
+			// stub
+		}
+
+		@Override
+		public void treeStructureChanged(TreeModelEvent e) {
+			// stub
+		}
+	}
 }

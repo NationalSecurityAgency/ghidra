@@ -582,7 +582,9 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 		for (GModule module : layout.getModules().values()) {
 			File moduleDir = module.getModuleRoot().getFile(false).getCanonicalFile();
 			File rootDir = getModuleRootDir(moduleDir);
-			modules.add(new ApplicationModule(rootDir, moduleDir));
+			if (rootDir != null) {
+				modules.add(new ApplicationModule(rootDir, moduleDir));
+			}
 		}
 
 		return modules;
@@ -601,7 +603,8 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 				return rootDir;
 			}
 		}
-		throw new AssertException("Module root directory could not be determined: " + moduleDir);
+		System.out.println("Skipping external module: " + moduleDir);
+		return null;
 	}
 
 	private String getPathFromRoot(String rootPath, File file) {

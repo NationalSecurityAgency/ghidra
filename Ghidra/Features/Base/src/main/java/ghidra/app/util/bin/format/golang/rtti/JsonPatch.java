@@ -171,7 +171,7 @@ public class JsonPatch {
 
 	private static PatchLine lineFromJson(JsonObject jsonObj) throws IOException {
 		PatchOp op = jsonObj.get("op") instanceof JsonPrimitive prim
-				? PatchOp.fromChar(prim.getAsCharacter())
+				? PatchOp.fromChar(prim.getAsString().charAt(0))
 				: null;
 		JsonElement value = jsonObj.get("value");
 		if (op == null || op == PatchOp.ADD && value == null) {

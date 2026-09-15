@@ -34,6 +34,7 @@ import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -108,7 +109,7 @@ public class PatchStep implements Step {
 
 	protected static void generateSleigh(List<String> result, Language language, Address address,
 			byte[] data) {
-		SemisparseByteArray array = new SemisparseByteArray(); // TODO: Seems heavy-handed
+		SemisparseByteArray array = new SemisparseByteArray(); // Seems heavy-handed
 		array.putData(address.getOffset(), data);
 		generateSleigh(result, language, address.getAddressSpace(), array);
 	}
@@ -190,7 +191,7 @@ public class PatchStep implements Step {
 	}
 
 	public static PatchStep parse(long threadKey, String stepSpec) {
-		// TODO: Can I parse and validate the sleigh here?
+		// Would be nice to parse and validate the sleigh here, but need a language.
 		if (!stepSpec.startsWith("{") || !stepSpec.endsWith("}")) {
 			throw new IllegalArgumentException("Cannot parse step: '" + stepSpec + "'");
 		}
@@ -200,7 +201,7 @@ public class PatchStep implements Step {
 	public PatchStep(long threadKey, String sleigh) {
 		this.threadKey = threadKey;
 		this.sleigh = Objects.requireNonNull(sleigh);
-		this.hashCode = Objects.hash(threadKey, sleigh); // TODO: May become mutable
+		this.hashCode = Objects.hash(threadKey, sleigh);
 	}
 
 	private void setSleigh(String sleigh) {
@@ -233,6 +234,11 @@ public class PatchStep implements Step {
 
 	@Override
 	public String toString() {
+		return toString(TimeRadix.DEFAULT);
+	}
+
+	@Override
+	public String toString(TimeRadix radix) {
 		if (threadKey == -1) {
 			return "{" + sleigh + "}";
 		}
@@ -251,7 +257,6 @@ public class PatchStep implements Step {
 
 	@Override
 	public boolean isNop() {
-		// TODO: If parsing beforehand, base on number of ops
 		return sleigh.length() == 0;
 	}
 
@@ -272,7 +277,7 @@ public class PatchStep implements Step {
 
 	@Override
 	public boolean isCompatible(Step step) {
-		// TODO: Can we combine ops?
+		// Can we combine ops?
 		return false; // For now, never combine sleigh steps
 	}
 
@@ -314,7 +319,7 @@ public class PatchStep implements Step {
 			return result;
 		}
 
-		// TODO: Compare ops, if/when we pre-compile
+		// Compare ops, if/when we pre-compile?
 		result = CompareResult.unrelated(this.sleigh.compareTo(that.sleigh));
 		if (result != CompareResult.EQUALS) {
 			return result;

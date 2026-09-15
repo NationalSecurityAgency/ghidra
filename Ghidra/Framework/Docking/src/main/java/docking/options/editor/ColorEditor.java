@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,21 +16,20 @@
 package docking.options.editor;
 
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.beans.PropertyEditorSupport;
 
-import javax.swing.*;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
 import docking.widgets.label.GDHtmlLabel;
-import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.util.ColorUtils;
 import ghidra.util.WebColors;
 
 /**
- * Color editor that is a bit unusual in that its custom component is a button that when pushed,
+ * Color editor that is a bit unusual in that its custom component is a label that when clicked,
  * pops up a dialog for editing the color. Use {@link ColorPropertyEditor} for a more traditional
  * property editor that returns a direct color editing component.
  */
@@ -38,27 +37,21 @@ public class ColorEditor extends PropertyEditorSupport {
 
 	private static GhidraColorChooser colorChooser;
 
-	private JLabel previewLabel = new GDHtmlLabel();
+	private FocusableLabel previewLabel = new FocusableLabel();
 	private Color color;
 	private Color lastUserSelectedColor;
 
 	public ColorEditor() {
-		previewLabel.setOpaque(true);
-		previewLabel.setPreferredSize(new Dimension(100, 20));
-		previewLabel.setHorizontalAlignment(SwingConstants.CENTER);
-		previewLabel.getAccessibleContext().setAccessibleName("Preview");
-		previewLabel.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent evt) {
-				// show the editor to get the user value
-				showDialog(evt.getComponent());
+	}
 
-				ColorEditor.this.firePropertyChange();
+	private void triggerEdit() {
+		// show the editor to get the user value
+		showDialog(previewLabel);
 
-				// now set the new value
-				updateColor(color);
-			}
-		});
+		ColorEditor.this.firePropertyChange();
+
+		// now set the new value
+		updateColor(color);
 	}
 
 	private void showDialog(Component parentComponent) {
@@ -108,17 +101,6 @@ public class ColorEditor extends PropertyEditorSupport {
 		return false;
 	}
 
-	@Override
-	public void paintValue(Graphics gfx, Rectangle box) {
-		if (color != null) {
-			gfx.setColor(color);
-		}
-		else {
-			gfx.setColor(Palette.BLACK);
-		}
-		gfx.fillRect(box.x, box.y, box.width, box.height);
-	}
-
 	private class EditorProvider extends DialogComponentProvider {
 		EditorProvider(JPanel contentPanel) {
 			super("Color Editor", true);
@@ -155,5 +137,64 @@ public class ColorEditor extends PropertyEditorSupport {
 			});
 			colorChooser.setColor(color);
 		}
+	}
+
+	private class FocusableLabel extends GDHtmlLabel {
+
+		FocusableLabel() {
+			setOpaque(true);
+			setFocusable(true);
+			setPreferredSize(new Dimension(100, 20));
+			setHorizontalAlignment(SwingConstants.CENTER);
+			getAccessibleContext().setAccessibleName("Preview");
+			addMouseListener(new MouseAdapter() {
+				@Override
+				public void mouseClicked(MouseEvent e) {
+					triggerEdit();
+				}
+			});
+			addKeyListener(new KeyAdapter() {
+				@Override
+				public void keyPressed(KeyEvent e) {
+					if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+						triggerEdit();
+						e.consume();
+					}
+				}
+			});
+			addFocusListener(new FocusListener() {
+				@Override
+				public void focusGained(FocusEvent e) {
+					repaint();
+				}
+
+				@Override
+				public void focusLost(FocusEvent e) {
+					repaint();
+				}
+			});
+		}
+
+		@Override
+		public void paint(Graphics g) {
+
+			super.paint(g);
+
+			if (!hasFocus()) {
+				return;
+			}
+
+			Color otherColor = ColorUtils.contrastForegroundColor(color);
+			g.setColor(otherColor);
+
+			Dimension size = getSize();
+			int offset = 4;
+			int x = offset;
+			int y = offset;
+			int w = size.width - (2 * offset);
+			int h = size.height - (2 * offset);
+			g.drawRect(x, y, w, h);
+		}
+
 	}
 }

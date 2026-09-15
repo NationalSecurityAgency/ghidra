@@ -19,7 +19,6 @@ import java.util.List;
 
 import docking.action.DockingAction;
 import docking.action.builder.ActionBuilder;
-import ghidra.formats.gfilesystem.FileSystemRef;
 import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.plugins.fsbrowser.*;
 
@@ -29,6 +28,7 @@ public class OpenFsFSBFileHandler implements FSBFileHandler {
 	public static final String FSB_OPEN_FILE_SYSTEM_CHOOSER = "FSB Open File System Chooser";
 	public static final String FSB_OPEN_FILE_SYSTEM_IN_NEW_WINDOW =
 		"FSB Open File System In New Window";
+	public static final String FSB_OPEN_DIR_IN_NEW_WINDOW = "FSB Open Directory In New Window";
 	public static final String FSB_OPEN_FILE_SYSTEM_NESTED = "FSB Open File System Nested";
 
 	private FSBFileHandlerContext context;
@@ -59,7 +59,18 @@ public class OpenFsFSBFileHandler implements FSBFileHandler {
 						ac.getSelectedNode() instanceof FSBFileNode fileNode && fileNode.isLeaf() &&
 						!fileNode.isSymlink())
 					.popupMenuIcon(FSBIcons.OPEN_FILE_SYSTEM)
-					.popupMenuPath("Open File System in new window")
+					.popupMenuPath("Open File System [new window]")
+					.popupMenuGroup("C")
+					.onAction(
+						ac -> ac.getComponentProvider().openFileSystem(ac.getSelectedNode(), false))
+					.build(),
+
+			new ActionBuilder(FSB_OPEN_DIR_IN_NEW_WINDOW, context.plugin().getName())
+					.withContext(FSBActionContext.class)
+					.enabledWhen(ac -> ac.notBusy() &&
+						ac.getSelectedNode() instanceof FSBDirNode dirNode && !dirNode.isSymlink())
+					.popupMenuIcon(FSBIcons.OPEN_FILE_SYSTEM)
+					.popupMenuPath("Open Directory [new window]")
 					.popupMenuGroup("C")
 					.onAction(
 						ac -> ac.getComponentProvider().openFileSystem(ac.getSelectedNode(), false))
@@ -72,9 +83,9 @@ public class OpenFsFSBFileHandler implements FSBFileHandler {
 					.toolBarGroup("B")
 					.onAction(ac -> {
 						FileSystemService fsService = context.fsService();
-						FileSystemRef fsRef =
-							fsService.getMountedFilesystem(fsService.getLocalFS().getFSRL());
-						context.plugin().createNewFileSystemBrowser(fsRef, true);
+						context.plugin()
+								.createNewFileSystemBrowser(
+									fsService.getLocalFS().getRefManager().create(), null, true);
 					})
 					.build(),
 
@@ -84,8 +95,7 @@ public class OpenFsFSBFileHandler implements FSBFileHandler {
 					.toolBarIcon(FSBIcons.OPEN_FILE_SYSTEM)
 					.toolBarGroup("B")
 					.onAction(ac -> context.plugin().openFileSystem())
-					.build()
-		);
+					.build());
 	}
 
 }

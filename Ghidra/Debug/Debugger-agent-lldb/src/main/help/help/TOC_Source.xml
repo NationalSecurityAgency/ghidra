@@ -17,6 +17,9 @@
 			<tocdef id="lldb_ssh" text="Via SSH"
 				target="help/topics/lldb/lldb.html#ssh" />
 
+			<tocdef id="lldb_ssh_win" text="Via SSH (to Windows cmd shell)"
+				target="help/topics/lldb/lldb.html#ssh-win" />
+
 			<tocdef id="lldb_android" text="Android (native)"
 				target="help/topics/lldb/lldb.html#android" />
 

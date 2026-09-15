@@ -21,7 +21,7 @@ import java.util.List;
 
 import javax.swing.tree.TreePath;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 import org.junit.*;
 
 import docking.DockingWindowManager;

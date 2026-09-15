@@ -192,4 +192,10 @@ public class MDCharacterIterator {
 	public boolean positionStartsWith(String substring) {
 		return string.regionMatches(index, substring, 0, substring.length());
 	}
+
+	@Override
+	public String toString() {
+		return string + "\n" + " ".repeat(index) + "^";
+	}
+
 }

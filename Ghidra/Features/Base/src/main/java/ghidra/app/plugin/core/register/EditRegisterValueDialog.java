@@ -22,8 +22,8 @@ import javax.swing.*;
 
 import docking.DialogComponentProvider;
 import docking.widgets.label.GLabel;
+import docking.widgets.textfield.FixedSizeIntegerTextField;
 import ghidra.app.util.AddressInput;
-import ghidra.app.util.bean.FixedBitSizeValueField;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Register;
@@ -36,7 +36,7 @@ class EditRegisterValueDialog extends DialogComponentProvider {
 
 	private AddressInput startAddrField;
 	private AddressInput endAddrField;
-	private FixedBitSizeValueField registerValueField;
+	private FixedSizeIntegerTextField registerValueField;
 	private boolean wasCancelled = true;
 
 	EditRegisterValueDialog(Register register, Address start, Address end, BigInteger value,
@@ -61,10 +61,16 @@ class EditRegisterValueDialog extends DialogComponentProvider {
 		startAddrField = new AddressInput(program, addressChangeListener);
 		endAddrField = new AddressInput(program, addressChangeListener);
 
-		registerValueField = new FixedBitSizeValueField(register.getBitLength(), true, false);
-		registerValueField.getAccessibleContext().setAccessibleName("Register Value");
-		startAddrField.setAddress(start);
-		endAddrField.setAddress(end);
+		registerValueField = new FixedSizeIntegerTextField(16, register.getBitLength());
+		registerValueField.getComponent()
+				.getAccessibleContext()
+				.setAccessibleName("Register Value");
+		if (start != null) {
+			startAddrField.setAddress(start);
+		}
+		if (end != null) {
+			endAddrField.setAddress(end);
+		}
 		registerValueField.setValue(value);
 
 		JPanel panel = new JPanel(new PairLayout(5, 1));
@@ -77,7 +83,7 @@ class EditRegisterValueDialog extends DialogComponentProvider {
 		panel.add(new GLabel("End Address:"));
 		panel.add(endAddrField);
 		panel.add(new GLabel("Value:"));
-		panel.add(registerValueField);
+		panel.add(registerValueField.getComponent());
 		panel.getAccessibleContext().setAccessibleName("Edit Register Value");
 		return panel;
 	}

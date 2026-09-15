@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.*;
 
 import ghidra.app.util.SymbolPath;
 import ghidra.app.util.SymbolPathParser;
@@ -174,7 +174,7 @@ public class MDMangUtils {
 
 	/**
 	 * Given a number in string format as input, creates the standardized local namespace
-	 *  node string of the format {@code __l2} where {@code 2} is an an example number.
+	 *  node string of the format {@code __l2} where {@code 2} is an example number.
 	 * @param localNumber the input string
 	 * @return the standardized local namespace component
 	 */
@@ -211,6 +211,9 @@ public class MDMangUtils {
 		// When simple is true, we need to recurse the nested hierarchy to pull the names
 		// up to the main namespace level, so we set recurse = true
 		recurseNamespace(demangledParts, parsableItem, simple);
+		if(ObjectUtils.isEmpty(regularPathName)) {
+			return createSymbolPath(demangledParts);
+		}
 		List<String> regularParts = SymbolPathParser.parse(regularPathName);
 
 		int m = Integer.min(demangledParts.size(), regularParts.size());
@@ -239,6 +242,10 @@ public class MDMangUtils {
 			parts.add(0, n);
 		}
 
+		return createSymbolPath(parts);
+	}
+	
+	private static SymbolPath createSymbolPath(List<String> parts) {
 		SymbolPath sp = null;
 		for (String part : parts) {
 			sp = new SymbolPath(sp, part);
@@ -265,7 +272,7 @@ public class MDMangUtils {
 		for (int i = 0; i < parts.size(); i++) {
 			String part = parts.get(i);
 			// These anonymous namespaces are those that come in the clear (non-mangled)
-			StringUtils.replace(part, "`anonymous-namespace'", "`anonymous namespace'");
+			Strings.CS.replace(part, "`anonymous-namespace'", "`anonymous namespace'");
 			StringBuilder sb = new StringBuilder();
 			Matcher m = LOCAL_NS_PATTERN.matcher(part);
 			if (m.find()) {
@@ -298,7 +305,7 @@ public class MDMangUtils {
 		for (int i = 0; i < parts.size(); i++) {
 			String part = parts.get(i);
 			// These anonymous namespaces are those that come in the clear (non-mangled)
-			StringUtils.replace(part, "`anonymous-namespace'", "`anonymous namespace'");
+			Strings.CS.replace(part, "`anonymous-namespace'", "`anonymous namespace'");
 			StringBuilder sb = new StringBuilder();
 			Matcher m = DEMANGLED_LOCAL_NS_PATTERN.matcher(part);
 			if (m.find()) {

@@ -309,6 +309,10 @@ public class ArchiveNode extends CategoryNode {
 
 		@Override
 		public void categoryAdded(DataTypeManager dtm, CategoryPath path) {
+			if (!isLoaded()) {
+				return;
+			}
+
 			Category newCategory = dtm.getCategory(path);
 			if (newCategory == null) {
 				return;
@@ -326,6 +330,10 @@ public class ArchiveNode extends CategoryNode {
 
 		@Override
 		public void categoryMoved(DataTypeManager dtm, CategoryPath oldPath, CategoryPath newPath) {
+			if (!isLoaded()) {
+				return;
+			}
+
 			Category newCategory = dtm.getCategory(newPath);
 			Category oldParent = dtm.getCategory(oldPath.getParent());
 			CategoryNode categoryNode = findCategoryNode(oldParent);
@@ -340,6 +348,10 @@ public class ArchiveNode extends CategoryNode {
 
 		@Override
 		public void categoryRemoved(DataTypeManager dtm, CategoryPath path) {
+			if (!isLoaded()) {
+				return;
+			}
+
 			Category parentCategory = dtm.getCategory(path.getParent());
 			CategoryNode categoryNode = findCategoryNode(parentCategory);
 			if (categoryNode != null) {
@@ -350,6 +362,10 @@ public class ArchiveNode extends CategoryNode {
 		@Override
 		public void categoryRenamed(DataTypeManager dtm, CategoryPath oldPath,
 				CategoryPath newPath) {
+			if (!isLoaded()) {
+				return;
+			}
+
 			if (oldPath.getParent() == null) { // root has no parent
 				ArchiveNode.this.fireNodeChanged(); // fire that the root changed
 				return;
@@ -365,6 +381,10 @@ public class ArchiveNode extends CategoryNode {
 
 		@Override
 		public void dataTypeAdded(DataTypeManager dtm, DataTypePath path) {
+			if (!isLoaded()) {
+				return;
+			}
+
 			Category parentCategory = dtm.getCategory(path.getCategoryPath());
 			CategoryNode categoryNode = findCategoryNode(parentCategory);
 			if (categoryNode != null) {
@@ -379,6 +399,10 @@ public class ArchiveNode extends CategoryNode {
 
 		@Override
 		public void favoritesChanged(DataTypeManager dtm, DataTypePath path, boolean isFavorite) {
+			if (!isLoaded()) {
+				return;
+			}
+
 			DataType dataType = dtm.getDataType(path);
 			Category category = dtm.getCategory(path.getCategoryPath());
 			CategoryNode categoryNode = findCategoryNode(category);
@@ -399,6 +423,10 @@ public class ArchiveNode extends CategoryNode {
 
 		@Override
 		public void dataTypeChanged(DataTypeManager dtm, DataTypePath path) {
+			if (!isLoaded()) {
+				return;
+			}
+
 			Category dtmCategory = dtm.getCategory(path.getCategoryPath());
 			CategoryNode categoryNode = findCategoryNode(dtmCategory);
 			if (categoryNode != null) {
@@ -413,6 +441,10 @@ public class ArchiveNode extends CategoryNode {
 
 		@Override
 		public void dataTypeMoved(DataTypeManager dtm, DataTypePath oldPath, DataTypePath newPath) {
+			if (!isLoaded()) {
+				return;
+			}
+
 			Category oldParent = dtm.getCategory(oldPath.getCategoryPath());
 			CategoryNode categoryNode = findCategoryNode(oldParent);
 			if (categoryNode != null) {
@@ -433,6 +465,10 @@ public class ArchiveNode extends CategoryNode {
 
 		@Override
 		public void dataTypeRemoved(DataTypeManager dtm, DataTypePath path) {
+			if (!isLoaded()) {
+				return;
+			}
+
 			Category oldParent = dtm.getCategory(path.getCategoryPath());
 			CategoryNode categoryNode = findCategoryNode(oldParent);
 			if (categoryNode != null) {
@@ -443,6 +479,10 @@ public class ArchiveNode extends CategoryNode {
 		@Override
 		public void dataTypeRenamed(DataTypeManager dtm, DataTypePath oldPath,
 				DataTypePath newPath) {
+			if (!isLoaded()) {
+				return;
+			}
+
 			Category dtmCategory = dtm.getCategory(newPath.getCategoryPath());
 			CategoryNode categoryNode = findCategoryNode(dtmCategory);
 			if (categoryNode != null) {

@@ -15,9 +15,12 @@
  */
 package ghidra.features.base.memsearch.gui;
 
+import ghidra.features.base.memsearch.matcher.SearchData;
 import ghidra.features.base.memsearch.searcher.MemoryMatch;
 import ghidra.framework.plugintool.ServiceProvider;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.FunctionManager;
+import ghidra.program.model.listing.Program;
 import ghidra.util.table.ProgramLocationTableRowMapper;
 
 /**
@@ -25,10 +28,10 @@ import ghidra.util.table.ProgramLocationTableRowMapper;
  * table columns.
  */
 public class MemoryMatchtToFunctionTableRowMapper
-		extends ProgramLocationTableRowMapper<MemoryMatch, Function> {
+		extends ProgramLocationTableRowMapper<MemoryMatch<SearchData>, Function> {
 
 	@Override
-	public Function map(MemoryMatch rowObject, Program program,
+	public Function map(MemoryMatch<SearchData> rowObject, Program program,
 			ServiceProvider serviceProvider) {
 		FunctionManager functionManager = program.getFunctionManager();
 		return functionManager.getFunctionContaining(rowObject.getAddress());

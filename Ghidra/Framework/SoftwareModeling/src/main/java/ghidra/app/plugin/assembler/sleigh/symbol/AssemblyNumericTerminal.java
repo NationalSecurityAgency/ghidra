@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 
 import ghidra.app.plugin.assembler.sleigh.grammars.AssemblyGrammar;
 import ghidra.app.plugin.assembler.sleigh.tree.AssemblyParseNumericToken;
+import ghidra.app.plugin.assembler.sleigh.tree.AssemblyParseSymbolToken;
 import ghidra.program.model.address.AddressSpace;
 
 /**
@@ -140,7 +141,7 @@ public class AssemblyNumericTerminal extends AssemblyTerminal {
 		String lab = buffer.substring(s, b);
 		return symbols.choose(lab, space)
 				.stream()
-				.map(val -> new AssemblyParseNumericToken(grammar, this, lab, val))
+				.map(val -> new AssemblyParseSymbolToken(grammar, this, lab, val))
 				.collect(Collectors.toList());
 	}
 

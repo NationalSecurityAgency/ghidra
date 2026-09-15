@@ -267,4 +267,18 @@ public abstract class TestTraceRmiConnection extends AbstractTraceRmiConnection 
 		Trace trace = object.getTrace();
 		doActivate(object, trace, snapshots.get(trace));
 	}
+
+	@Override
+	public boolean isBusy() {
+		return false;
+	}
+
+	@Override
+	public boolean isBusy(Target target) {
+		return false;
+	}
+
+	@Override
+	public void forciblyCloseTransactions(Target target) {
+	}
 }

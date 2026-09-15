@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@ import java.awt.*;
 import java.awt.event.FocusListener;
 import java.text.BreakIterator;
 import java.util.Locale;
+import java.util.Objects;
 
 import javax.accessibility.*;
 import javax.swing.JComponent;
@@ -49,11 +50,12 @@ public class AccessibleField extends AccessibleContext
 	 * @param bounds the bounds of the field relative to the field panel.
 	 */
 	public AccessibleField(Field field, JComponent parent, int indexInParent, Rectangle bounds) {
+		Objects.requireNonNull(field);
 		this.field = field;
 		this.parent = parent;
 		this.indexInParent = indexInParent;
 		this.locale = parent.getLocale();
-		this.boundsInParent = bounds;
+		this.boundsInParent = bounds != null ? bounds : new Rectangle(0, 0, 0, 0);
 		setAccessibleName("Field");
 	}
 

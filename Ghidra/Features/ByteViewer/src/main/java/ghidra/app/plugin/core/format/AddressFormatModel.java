@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +15,8 @@
  */
 package ghidra.app.plugin.core.format;
 
+import java.math.BigInteger;
+
 import ghidra.app.plugin.core.byteviewer.MemoryByteBlock;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Listing;
@@ -23,8 +24,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.HelpLocation;
-
-import java.math.BigInteger;
 
 /**
  * Converts byte values to Ascii representation.
@@ -46,6 +45,7 @@ public class AddressFormatModel implements ProgramDataFormatModel {
 	/**
 	 * Get the name of this formatter.
 	 */
+	@Override
 	public String getName() {
 		return "Address";
 	}
@@ -54,6 +54,7 @@ public class AddressFormatModel implements ProgramDataFormatModel {
 	 * Get the number of bytes to make a unit; in this case it
 	 * takes 1 byte to make an Ascii value.
 	 */
+	@Override
 	public int getUnitByteSize() {
 		return 1;
 	}
@@ -63,6 +64,7 @@ public class AddressFormatModel implements ProgramDataFormatModel {
 	 * it returns a number from 0 to unit byte size - 1 indicating which
 	 * byte the character position was obtained from.
 	 */
+	@Override
 	public int getByteOffset(ByteBlock block, int position) {
 		return 0;
 	}
@@ -70,6 +72,7 @@ public class AddressFormatModel implements ProgramDataFormatModel {
 	/**
 	 * Given the byte offset into a unit, get the column position.
 	 */
+	@Override
 	public int getColumnPosition(ByteBlock block, int byteOffset) {
 		return 0;
 	}
@@ -78,6 +81,7 @@ public class AddressFormatModel implements ProgramDataFormatModel {
 	 * Gets the number of characters required to display a
 	 * unit.
 	 */
+	@Override
 	public int getDataUnitSymbolSize() {
 		return symbolSize;
 	}
@@ -90,6 +94,7 @@ public class AddressFormatModel implements ProgramDataFormatModel {
 	 * @throws IndexOutOfBoundsException if index is not valid for the
 	 * block
 	 */
+	@Override
 	public String getDataRepresentation(ByteBlock block, BigInteger index)
 			throws ByteBlockAccessException {
 
@@ -173,58 +178,11 @@ public class AddressFormatModel implements ProgramDataFormatModel {
 	}
 
 	/**
-	 * Returns true if the formatter allows values to be changed.
-	 */
-	public boolean isEditable() {
-		return false;
-	}
-
-	/**
-	 * Overwrite a value in a ByteBlock.
-	 * @param block block to change
-	 * @param index byte index into the block
-	 * @param pos The position within the unit where c will be the
-	 * new character.
-	 * @param c new character to put at pos param
-	 * @return true if the replacement is legal, false if the
-	 * replacement value would not make sense for this format, e.g.
-	 * attempt to put a 'z' in a hex unit.
-	 * block
-	 */
-	public boolean replaceValue(ByteBlock block, BigInteger index, int charPosition, char c) {
-		return false;
-	}
-
-	/**
 	 * Get the number of characters separating units.
 	 */
+	@Override
 	public int getUnitDelimiterSize() {
 		return 0;
-	}
-
-	/**
-	 * Get number of units in a group. A group may represent
-	 * multiple units shown as one entity. This format does not
-	 * support groups.
-	 */
-	public int getGroupSize() {
-		return 0;
-	}
-
-	/**
-	 * Set the number of units in a group. This format does not
-	 * support groups.
-	 * @throws UnsupportedOperationException
-	 */
-	public void setGroupSize(int groupSize) {
-		throw new UnsupportedOperationException("groups are not supported");
-	}
-
-	/**
-	 * @see ghidra.app.plugin.core.format.DataFormatModel#validateBytesPerLine(int)
-	 */
-	public boolean validateBytesPerLine(int bytesPerLine) {
-		return true;
 	}
 
 	/**
@@ -233,6 +191,7 @@ public class AddressFormatModel implements ProgramDataFormatModel {
 	 * are added as a view to Memory Viewer are created via a Factory within their
 	 * respective Formatter Plugin.
 	 */
+	@Override
 	public void setProgram(Program program) {
 		if (program == null) {
 			listing = null;
@@ -247,10 +206,12 @@ public class AddressFormatModel implements ProgramDataFormatModel {
 	/* (non-Javadoc)
 	 * @see ghidra.app.plugin.format.DataFormatModel#getHelpLocation()
 	 */
+	@Override
 	public HelpLocation getHelpLocation() {
 		return new HelpLocation("ByteViewerPlugin", "Address");
 	}
 
+	@Override
 	public void dispose() {
 		listing = null;
 		memory = null;

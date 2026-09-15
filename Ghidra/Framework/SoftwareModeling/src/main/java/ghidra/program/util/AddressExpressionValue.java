@@ -15,8 +15,15 @@
  */
 package ghidra.program.util;
 
-import generic.expressions.*;
+import java.math.BigInteger;
+
+import generic.expressions.BigIntegerExpressionValue;
+import generic.expressions.ExpressionException;
+import generic.expressions.ExpressionOperator;
+import generic.expressions.ExpressionValue;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressOutOfBoundsException;
+import ghidra.program.model.address.AddressSpace;
 
 /**
  * Address operand values. See {@link ExpressionValue}. Defines supported operators and other
@@ -29,8 +36,13 @@ public class AddressExpressionValue implements ExpressionValue {
 		this.value = address;
 	}
 
+	public AddressExpressionValue(AddressSpace space, BigInteger value) throws ExpressionException {
+		this.value = toAddress(space, value);
+	}
+
 	@Override
-	public ExpressionValue applyUnaryOperator(ExpressionOperator operator) throws ExpressionException {
+	public ExpressionValue applyUnaryOperator(ExpressionOperator operator)
+			throws ExpressionException {
 		long offset = value.getOffset();
 		switch (operator) {
 			case BITWISE_NOT:
@@ -46,8 +58,51 @@ public class AddressExpressionValue implements ExpressionValue {
 	}
 
 	private AddressExpressionValue addressExpressionOf(long offset) {
-		Address address = value.getNewAddress(offset);
 		return new AddressExpressionValue(addressOf(offset));
+	}
+
+	private AddressExpressionValue addressExpressionOf(BigInteger bigIntValue)
+			throws ExpressionException {
+		Address address = toAddress(value.getAddressSpace(), bigIntValue);
+		return new AddressExpressionValue(address);
+	}
+
+	private Address toAddress(AddressSpace space, BigInteger value) throws ExpressionException {
+		if (value.signum() < 0) {
+			// a negative value is less than than min address
+			throw new AddressOutOfBoundsException(
+				"Address out of bounds. Expression evaluated to a negative value: " + value);
+		}
+
+		if (isBiggerThanMaxAddress(space, value)) {
+			throw new AddressOutOfBoundsException(
+				"Address out of bounds. Expression evaluated to a value larger than max address: " +
+					value);
+		}
+
+		return toAddress(value.longValue(), space);
+	}
+
+	private Address toAddress(long value, AddressSpace space) throws ExpressionException {
+		try {
+			return space.getAddressInThisSpaceOnly(value);
+		}
+		catch (AddressOutOfBoundsException e) {
+			throw new ExpressionException(e.getMessage());
+		}
+	}
+
+	private boolean isBiggerThanMaxAddress(AddressSpace space, BigInteger value) {
+		BigInteger byteOffset = computeByteOffset(space, value);
+		Address maxAddress = space.getMaxAddress();
+		long unsignedOffset = maxAddress.getOffset();
+		BigInteger max = new BigInteger(Long.toUnsignedString(unsignedOffset));
+		return byteOffset.compareTo(max) > 0;
+	}
+
+	private BigInteger computeByteOffset(AddressSpace space, BigInteger value) {
+		int bytesPerAddress = space.getAddressableUnitSize();	// this is 1 for most programs
+		return value.multiply(BigInteger.valueOf(bytesPerAddress));
 	}
 
 	private AddressExpressionValue addressExpressionOf(Address address) {
@@ -62,8 +117,8 @@ public class AddressExpressionValue implements ExpressionValue {
 	public ExpressionValue applyBinaryOperator(ExpressionOperator operator, ExpressionValue operand)
 			throws ExpressionException {
 
-		if (operand instanceof LongExpressionValue longOperand) {
-			return applyBinaryOperator(operator, longOperand);
+		if (operand instanceof BigIntegerExpressionValue bigIntValue) {
+			return applyBinaryOperator(operator, bigIntValue);
 		}
 
 		if (operand instanceof AddressExpressionValue addressOperand) {
@@ -74,30 +129,30 @@ public class AddressExpressionValue implements ExpressionValue {
 	}
 
 	private ExpressionValue applyBinaryOperator(ExpressionOperator operator,
-			LongExpressionValue expressionValue) throws ExpressionException {
-		long otherValue = expressionValue.getLongValue();
-		long offset = value.getOffset();
-		int compareResult = Long.compareUnsigned(offset, otherValue);
+			BigIntegerExpressionValue expressionValue) throws ExpressionException {
+		BigInteger otherValue = expressionValue.getValue();
+		BigInteger myValue = new BigInteger(Long.toUnsignedString(value.getOffset()));
+		int compareResult = myValue.compareTo(otherValue);
 
 		switch (operator) {
 			case BITWISE_AND:
-				return addressExpressionOf(offset & otherValue);
+				return addressExpressionOf(myValue.and(otherValue));
 			case BITWISE_OR:
-				return addressExpressionOf(offset | otherValue);
+				return addressExpressionOf(myValue.or(otherValue));
 			case BITWISE_XOR:
-				return addressExpressionOf(offset ^ otherValue);
+				return addressExpressionOf(myValue.xor(otherValue));
 			case DIVIDE:
-				return addressExpressionOf(offset / otherValue);
+				return addressExpressionOf(myValue.divide(otherValue));
 			case SUBTRACT:
-				return addressExpressionOf(value.subtract(otherValue));
+				return addressExpressionOf(value.subtract(otherValue.longValueExact()));
 			case ADD:
-				return addressExpressionOf(value.add(otherValue));
+				return addressExpressionOf(value.add(otherValue.longValueExact()));
 			case MULTIPLY:
-				return addressExpressionOf(offset * otherValue);
+				return addressExpressionOf(myValue.multiply(otherValue));
 			case SHIFT_LEFT:
-				return addressExpressionOf(offset << otherValue);
+				return addressExpressionOf(myValue.shiftLeft(otherValue.intValueExact()));
 			case SHIFT_RIGHT:
-				return addressExpressionOf(offset >> otherValue);
+				return addressExpressionOf(myValue.shiftRight(otherValue.intValueExact()));
 			case EQUALS:
 				return booleanExpression(compareResult == 0);
 			case GREATER_THAN:
@@ -113,11 +168,17 @@ public class AddressExpressionValue implements ExpressionValue {
 				throw new ExpressionException(
 					"Binary Operator \"" + operator +
 						"\" with Long operands not supported by Address values!");
+
 		}
 	}
 
 	private ExpressionValue booleanExpression(boolean b) {
-		return new LongExpressionValue(b ? 1 : 0);
+		return new BigIntegerExpressionValue(b ? 1 : 0);
+	}
+
+	private ExpressionValue unsignedValue(long unsignedLong) {
+		BigInteger value = new BigInteger(Long.toUnsignedString(unsignedLong));
+		return new BigIntegerExpressionValue(value);
 	}
 
 	private ExpressionValue applyBinaryOperator(ExpressionOperator operator,
@@ -129,15 +190,15 @@ public class AddressExpressionValue implements ExpressionValue {
 
 		switch (operator) {
 			case BITWISE_AND:
-				return new LongExpressionValue(offset & otherValueOffset);
+				return unsignedValue(offset & otherValueOffset);
 			case BITWISE_OR:
-				return new LongExpressionValue(offset | otherValueOffset);
+				return unsignedValue(offset | otherValueOffset);
 			case BITWISE_XOR:
-				return new LongExpressionValue(offset ^ otherValueOffset);
+				return unsignedValue(offset ^ otherValueOffset);
 			case SUBTRACT:
-				return new LongExpressionValue(value.subtract(otherValue));
+				return new BigIntegerExpressionValue(value.subtract(otherValue));
 			case ADD:
-				return new LongExpressionValue(offset + otherValueOffset);
+				return new BigIntegerExpressionValue(offset + otherValueOffset);
 			case EQUALS:
 				return booleanExpression(compareResult == 0);
 			case GREATER_THAN:

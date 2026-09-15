@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
 import ghidra.test.*;
 
@@ -79,11 +79,11 @@ public class CommentWindowPluginTest extends AbstractGhidraHeadedIntegrationTest
 		ClassicSampleX86ProgramBuilder builder = new ClassicSampleX86ProgramBuilder();
 		program = builder.getProgram();
 
-		builder.createComment("01006420", "test EOL comment", CodeUnit.EOL_COMMENT);
-		builder.createComment("01008004", "test Pre comment", CodeUnit.PRE_COMMENT);
-		builder.createComment("0100b2b", "test Post comment", CodeUnit.POST_COMMENT);
-		builder.createComment("010018a0", "test Plate comment", CodeUnit.PLATE_COMMENT);
-		builder.createComment("010018cf", "test Repeatable comment", CodeUnit.REPEATABLE_COMMENT);
+		builder.createComment("01006420", "test EOL comment", CommentType.EOL);
+		builder.createComment("01008004", "test Pre comment", CommentType.PRE);
+		builder.createComment("0100b2b", "test Post comment", CommentType.POST);
+		builder.createComment("010018a0", "test Plate comment", CommentType.PLATE);
+		builder.createComment("010018cf", "test Repeatable comment", CommentType.REPEATABLE);
 
 		ProgramManager pm = tool.getService(ProgramManager.class);
 		pm.openProgram(program.getDomainFile());
@@ -144,7 +144,7 @@ public class CommentWindowPluginTest extends AbstractGhidraHeadedIntegrationTest
 
 		assertEquals(5, numComments);
 
-		addComment(addr("0x01001000"), CodeUnit.EOL_COMMENT, "Added EOL Comment");
+		addComment(addr("0x01001000"), CommentType.EOL, "Added EOL Comment");
 
 		assertRowCount(6);
 
@@ -169,7 +169,7 @@ public class CommentWindowPluginTest extends AbstractGhidraHeadedIntegrationTest
 		assertEquals("test EOL comment", getTableComment(rowIndex));
 
 		// Then set the comment to a different value
-		setComment(addr("0x01006420"), CodeUnit.EOL_COMMENT, "Changed EOL Comment");
+		setComment(addr("0x01006420"), CommentType.EOL, "Changed EOL Comment");
 
 		// Test to see if the changed comment is in the table
 		assertEquals("Changed EOL Comment", getTableComment(rowIndex));
@@ -193,7 +193,7 @@ public class CommentWindowPluginTest extends AbstractGhidraHeadedIntegrationTest
 		loadProgram("notepad");
 	}
 
-	private void addComment(Address addr, int commentType, String comment) {
+	private void addComment(Address addr, CommentType commentType, String comment) {
 		int id = program.startTransaction(testName.getMethodName());
 		try {
 			program.getListing().setComment(addr, commentType, comment);
@@ -230,7 +230,7 @@ public class CommentWindowPluginTest extends AbstractGhidraHeadedIntegrationTest
 		return commentTable.getValueAt(rowIndex, CommentTableModel.COMMENT_COL).toString();
 	}
 
-	private void setComment(Address addr, int commentType, String comment) {
+	private void setComment(Address addr, CommentType commentType, String comment) {
 		int id = program.startTransaction(testName.getMethodName());
 		try {
 			program.getListing().setComment(addr, commentType, comment);

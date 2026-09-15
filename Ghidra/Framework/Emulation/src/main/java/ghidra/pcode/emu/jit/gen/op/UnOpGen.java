@@ -15,11 +15,7 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import org.objectweb.asm.MethodVisitor;
-
-import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
-import ghidra.pcode.emu.jit.analysis.JitType;
-import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
+import ghidra.pcode.emu.jit.gen.opnd.Opnd.Ext;
 import ghidra.pcode.emu.jit.op.JitUnOp;
 
 /**
@@ -30,34 +26,22 @@ import ghidra.pcode.emu.jit.op.JitUnOp;
 public interface UnOpGen<T extends JitUnOp> extends OpGen<T> {
 
 	/**
-	 * Emit code for the unary operator
-	 * 
+	 * Whether this operator is signed
 	 * <p>
-	 * At this point the operand is on the stack. After this returns, code to write the result from
-	 * the stack into the destination operand will be emitted.
+	 * In many cases, the operator itself is not affected by the signedness of the operands;
+	 * however, if size adjustments to the operands are needed, this can determine how those
+	 * operands are extended.
 	 * 
-	 * @param gen the code generator
-	 * @param op the operator
-	 * @param block the block containing the operator
-	 * @param uType the actual type of the operand
-	 * @param rv the method visitor
-	 * @return the actual type of the result
+	 * @return true for signed, false if not
 	 */
-	JitType generateUnOpRunCode(JitCodeGenerator gen, T op, JitBlock block, JitType uType,
-			MethodVisitor rv);
+	boolean isSigned();
 
 	/**
-	 * {@inheritDoc}
+	 * When loading and storing variables, the kind of extension to apply
 	 * 
-	 * <p>
-	 * This default implementation emits code to load the operand, invokes
-	 * {@link #generateUnOpRunCode(JitCodeGenerator, JitUnOp, JitBlock, JitType, MethodVisitor)
-	 * gen-unop}, and finally emits code to write the destination operand.
+	 * @return the extension kind
 	 */
-	@Override
-	default void generateRunCode(JitCodeGenerator gen, T op, JitBlock block, MethodVisitor rv) {
-		JitType uType = gen.generateValReadCode(op.u(), op.uType());
-		JitType outType = generateUnOpRunCode(gen, op, block, uType, rv);
-		gen.generateVarWriteCode(op.out(), outType);
+	default Ext ext() {
+		return Ext.forSigned(isSigned());
 	}
 }

@@ -31,6 +31,7 @@ import java.util.function.*;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Before;
+import org.junit.BeforeClass;
 
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
@@ -45,14 +46,16 @@ import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginsConfiguration;
 import ghidra.framework.plugintool.util.*;
 import ghidra.pty.testutil.DummyProc;
+import ghidra.trace.model.Trace;
 import ghidra.util.Msg;
+import ghidra.util.SystemUtilities;
 import junit.framework.AssertionFailedError;
 
 public abstract class AbstractDrgnTraceRmiTest extends AbstractGhidraHeadedDebuggerTest {
 
-	protected static String CORE = "core.12137";
-	protected static String MDO = "/New Traces/" + CORE;
-	public static String PREAMBLE = """
+	protected static final String CORE = "core.12137";
+	protected static final String MDO = "/New Traces/" + CORE;
+	public static final String PREAMBLE = """
 			import os
 			import drgn
 			import drgn.cli
@@ -76,19 +79,23 @@ public abstract class AbstractDrgnTraceRmiTest extends AbstractGhidraHeadedDebug
 	private Path outFile;
 	private Path errFile;
 
-	@Before
-	public void assertOS() {
+	@BeforeClass
+	public static void assertOS() {
 		assumeTrue(OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.LINUX);
 	}
 
-	//@BeforeClass
+	@BeforeClass
 	public static void setupPython() throws Throwable {
 		if (didSetupPython) {
 			// Only do this once when running the full suite.
 			return;
 		}
+		if (SystemUtilities.isInTestingBatchMode()) {
+			// Don't run gradle in gradle. It already did this task.
+			return;
+		}
 		String gradle = DummyProc.which("gradle");
-		new ProcessBuilder(gradle, "Debugger-agent-drgn:assemblePyPackage")
+		new ProcessBuilder(gradle, "assemblePyPackage")
 				.directory(TestApplicationUtils.getInstallationDirectory())
 				.inheritIO()
 				.start()
@@ -314,19 +321,19 @@ public abstract class AbstractDrgnTraceRmiTest extends AbstractGhidraHeadedDebug
 		return xout.split(head)[1].split("---")[0].replace("(python)", "").trim();
 	}
 
-	protected ManagedDomainObject openDomainObject(String path) throws Exception {
+	protected ManagedDomainObject<Trace> openTrace(String path) throws Exception {
 		DomainFile df = env.getProject().getProjectData().getFile(path);
 		assertNotNull(df);
-		return new ManagedDomainObject(df, false, false, monitor);
+		return new ManagedDomainObject<>(df, Trace.class, monitor);
 	}
 
-	protected ManagedDomainObject waitDomainObject(String path) throws Exception {
+	protected ManagedDomainObject<Trace> waitTrace(String path) throws Exception {
 		DomainFile df;
 		long start = System.currentTimeMillis();
 		while (true) {
 			df = env.getProject().getProjectData().getFile(path);
 			if (df != null) {
-				return new ManagedDomainObject(df, false, false, monitor);
+				return new ManagedDomainObject<>(df, Trace.class, monitor);
 			}
 			Thread.sleep(1000);
 			if (System.currentTimeMillis() - start > 30000) {

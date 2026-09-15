@@ -72,7 +72,7 @@ The editor provides the following capabilities:
 
 ### Syntax Highlighting
 Keywords, Tokens, Sub-constructor names, Comments, Instruction Formats, Strings, Variables, and more
-can be colorized to make the sliegh specification more readable. In the 
+can be colorized to make the sleigh specification more readable. In the 
 `Window -> Preferences -> Sleigh` preferences panel, the color and font style can be changed for any
 sleigh file tokens.
 

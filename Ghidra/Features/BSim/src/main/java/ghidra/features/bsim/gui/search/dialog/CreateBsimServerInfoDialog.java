@@ -38,7 +38,6 @@ import docking.widgets.textfield.GFormattedTextField;
 import docking.widgets.textfield.GFormattedTextField.Status;
 import ghidra.features.bsim.query.*;
 import ghidra.features.bsim.query.BSimServerInfo.DBType;
-import ghidra.framework.client.ClientUtil;
 import ghidra.util.HelpLocation;
 import ghidra.util.filechooser.GhidraFileChooserModel;
 import ghidra.util.filechooser.GhidraFileFilter;

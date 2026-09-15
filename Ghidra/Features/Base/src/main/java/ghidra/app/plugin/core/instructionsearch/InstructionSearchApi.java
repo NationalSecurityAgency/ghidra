@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,19 +31,23 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * API for users who wish to perform instruction searching without the GUI. 
- * 
+ * <p>
  * Limitations:	
- * 		1) Searches may only be performed on a single program.
- * 		2) Only a single address range may be searched for.
- * 
+ * <ol>
+ * 		<li>1) Searches may only be performed on a single program.</li>
+ * 		<li>2) Only a single address range may be searched for.</li>
+ * </ol>
+ * <p>
  * Results:
  * 		Can be returned in 2 ways: 
- * 			1) As a list of addresses representing the location of search matches.
- * 			2) As a string (either binary or hex) representing the search string to be used.
- * 		The latter results option is useful if using another tool to perform the search (ie yara).
- * 
+ * <ol>
+ * 			<li>1) As a list of addresses representing the location of search matches.</li>
+ * 			<li>2) As a string (either binary or hex) representing the search string to be used.</li>
+ * </ol>
+ * 		The latter results option is useful if using another tool to perform the search (i.e., Yara).
+ * <p>
  * Extending:
- * 		This class may be extended to provide an api for specific searching formats.  There is
+ * 		This class may be extended to provide an API for specific searching formats.  There is
  * 		currently an extension for Yara: {@link InstructionSearchApi_Yara}.
  * 
  */
@@ -54,10 +58,10 @@ public class InstructionSearchApi {
 	 * filtering of results is performed; all matches regardless of operand type will be 
 	 * returned.
 	 * 
-	 * @param program
-	 * @param addressRange
+	 * @param program the program
+	 * @param addressRange the addresses
 	 * @return a list of addresses indicating starting positions of matches.
-	 * @throws InvalidInputException 
+	 * @throws InvalidInputException if there are no code units in the given addresses
 	 */
 	public final List<Address> search(Program program, AddressRange addressRange)
 			throws InvalidInputException {
@@ -84,12 +88,12 @@ public class InstructionSearchApi {
 	 * Searches the given program for the instructions specified by the given address range, with
 	 * masking set according to the given {@link MaskSettings} object
 	 * 
-	 * @param program
-	 * @param addressRange
-	 * @param maskSettings
+	 * @param program the program
+	 * @param addressRange the addresses
+	 * @param maskSettings the mask settings
 	 * 
 	 * @return a list of addresses indicating starting positions of matches.
-	 * @throws InvalidInputException 
+	 * @throws InvalidInputException if there are no code units in the given addresses
 	 */
 	public final List<Address> search(Program program, AddressRange addressRange,
 			MaskSettings maskSettings) throws InvalidInputException {
@@ -127,10 +131,10 @@ public class InstructionSearchApi {
 	/**
 	 * Returns a binary string representing the bytes in the address range provided. 
 	 * 
-	 * @param program
-	 * @param addressRange
-	 * @return
-	 * @throws InvalidInputException 
+	 * @param program the program
+	 * @param addressRange the addresses
+	 * @return the search string
+	 * @throws InvalidInputException  if there are no code units in the given addresses
 	 */
 	public final String getBinarySearchString(Program program, AddressRange addressRange)
 			throws InvalidInputException {
@@ -144,14 +148,15 @@ public class InstructionSearchApi {
 	/**
 	 * Returns a hex version of the bytes representing the address range given.
 	 * 
-	 * @param program
-	 * @param addressRange
-	 * @return
-	 * @throws InvalidInputException 
+	 * @param program the program
+	 * @param addressRange the addresses
+	 * @return the search string
+	 * @throws InvalidInputException  if there are no code units in the given addresses
 	 */
 	public final String getHexSearchString(Program program, AddressRange addressRange)
 			throws InvalidInputException {
-		return InstructionSearchUtils.toHexNibblesOnly(getBinarySearchString(program, addressRange)).toString();
+		String searchString = getBinarySearchString(program, addressRange);
+		return InstructionSearchUtils.toHexNibblesOnly(searchString).toString();
 	}
 
 	/**
@@ -160,11 +165,11 @@ public class InstructionSearchApi {
 	 * 
 	 * Note: Masked bits will be represented by a '.' character.
 	 * 
-	 * @param maskSettings
-	 * @param addressRange
-	 * @param maskSettings
-	 * @return
-	 * @throws InvalidInputException 
+	 * @param program the program
+	 * @param addressRange the addresses
+	 * @param maskSettings the mask settings
+	 * @return the search string
+	 * @throws InvalidInputException  if there are no code units in the given addresses
 	 */
 	public final String getBinarySearchString(Program program, AddressRange addressRange,
 			MaskSettings maskSettings) throws InvalidInputException {
@@ -190,16 +195,16 @@ public class InstructionSearchApi {
 	/**
 	 * Returns a hex version of the bytes representing the address range given.
 	 * 
-	 * @param program
-	 * @param addressRange
-	 * @param maskSettings
-	 * @return
-	 * @throws InvalidInputException 
+	 * @param program the program
+	 * @param addressRange the addresses
+	 * @param maskSettings the mask settings
+	 * @return the search string
+	 * @throws InvalidInputException  if there are no code units in the given addresses
 	 */
 	public final String getHexSearchString(Program program, AddressRange addressRange,
 			MaskSettings maskSettings) throws InvalidInputException {
-		return InstructionSearchUtils.toHexNibblesOnly(
-			getBinarySearchString(program, addressRange, maskSettings)).toString();
+		String searchString = getBinarySearchString(program, addressRange, maskSettings);
+		return InstructionSearchUtils.toHexNibblesOnly(searchString).toString();
 	}
 
 	/**
@@ -224,6 +229,7 @@ public class InstructionSearchApi {
 	 * instructions would be impossible otherwise. 
 	 * 
 	 * @param bytes binary or hex string representing the bytes to be loaded
+	 * @param tool the tool
 	 */
 	public void loadInstructions(String bytes, PluginTool tool) {
 

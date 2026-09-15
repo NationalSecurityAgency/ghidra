@@ -11,6 +11,9 @@
 			<tocdef id="gdb_ssh" text="Via SSH"
 				target="help/topics/gdb/gdb.html#ssh" />
 
+			<tocdef id="gdb_ssh_win" text="Via SSH (to Windows cmd shell)"
+				target="help/topics/gdb/gdb.html#ssh-win" />
+
 			<tocdef id="gdb_gdbserver_ssh" text="gdbserver via SSH"
 				target="help/topics/gdb/gdb.html#gdbserver_ssh" />
 

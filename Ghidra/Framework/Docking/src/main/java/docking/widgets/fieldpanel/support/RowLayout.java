@@ -68,6 +68,19 @@ public class RowLayout implements Layout {
 	}
 
 	@Override
+	public int getWidth() {
+		int startX = fields[0].getStartX();
+		int rowWidth = startX;
+
+		for (int i = 0; i < fields.length; i++) {
+			Field field = fields[i];
+			int width = field.getWidth(); // layout manager width
+			rowWidth += width;
+		}
+		return rowWidth;
+	}
+
+	@Override
 	public int getCompressableWidth() {
 		//
 		// Can only compress the last field, as the rest are potentially part of a grid surrounded

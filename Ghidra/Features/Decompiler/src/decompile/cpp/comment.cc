@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -280,9 +280,9 @@ bool CommentSorter::findPosition(Subsort &subsort,Comment *comm,const Funcdata *
 
   // Try to find block containing comment
   // Find op at lowest address greater or equal to comment's address
-  PcodeOpTree::const_iterator opiter = fd->beginOp(comm->getAddr());
+  PcodeOpTree::const_iterator opiter = fd->beginOpMain(comm->getAddr());
   PcodeOp *backupOp = (PcodeOp *)0;
-  if (opiter != fd->endOpAll()) {	// If there is an op at or after the comment
+  if (opiter != fd->endOpMain()) {	// If there is an op at or after the comment
     PcodeOp *op = (*opiter).second;
     BlockBasic *block = op->getParent();
     if (block == (BlockBasic *)0)
@@ -295,7 +295,7 @@ bool CommentSorter::findPosition(Subsort &subsort,Comment *comm,const Funcdata *
     if (comm->getAddr() == op->getAddr())
       backupOp = op;
   }
-  if (opiter != fd->beginOpAll()) {	// If there is a previous op
+  if (opiter != fd->beginOpMain()) {	// If there is a previous op
     --opiter;
     PcodeOp *op = (*opiter).second;
     BlockBasic *block = op->getParent();
@@ -313,7 +313,7 @@ bool CommentSorter::findPosition(Subsort &subsort,Comment *comm,const Funcdata *
     subsort.setBlock(backupOp->getParent()->getIndex(),(uint4)backupOp->getSeqNum().getOrder());
     return true;
   }
-  if (fd->beginOpAll() == fd->endOpAll()) {	// If there are no ops at all
+  if (fd->beginOpMain() == fd->endOpMain()) {	// If there are no ops at all
     subsort.setBlock(0,0);	// Put comment at the beginning of the first block
     return true;
   }

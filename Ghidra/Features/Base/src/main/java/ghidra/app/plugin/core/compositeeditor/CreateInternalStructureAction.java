@@ -65,7 +65,6 @@ public class CreateInternalStructureAction extends CompositeEditorTableAction {
 			createStructure();
 		}
 
-		requestTableFocus();
 		Swing.runLater(() -> {
 			provider.toFront();
 			provider.requestFocus();

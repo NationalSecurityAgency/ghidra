@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ std::wstring printVariant( VARIANT & v ) {
 			return v.bstrVal;
 		case VT_EMPTY://Indicates that a value was not specified. 
 			return L"empty";
-		case VT_NULL://Indicates a a null reference (Nothing in Visual Basic) value, similar to a null value in SQL. 
+		case VT_NULL://Indicates a null reference (Nothing in Visual Basic) value, similar to a null value in SQL. 
 			return L"null";
 	}
 

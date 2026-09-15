@@ -15,10 +15,11 @@
  */
 package ghidra.app.util.pdb.classtype;
 
-import java.util.*;
+import java.util.List;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.gclass.ClassID;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
@@ -33,12 +34,6 @@ public class ProgramVirtualBaseTable extends VirtualBaseTable {
 	private int entrySize;
 	private String mangledName; // remove?
 
-	private Boolean createdFromMemory = null;
-	private Boolean createdFromCompiled = null;
-
-	private int maxIndexSeen = -1;
-	private Map<Integer, VBTableEntry> entriesByIndex = new HashMap<>();
-
 	/**
 	 * Constructor
 	 * @param owner the class that owns the table
@@ -46,20 +41,15 @@ public class ProgramVirtualBaseTable extends VirtualBaseTable {
 	 * @param program the program
 	 * @param address the address of the table
 	 * @param entrySize the size of the index field for each table entry in memory
-	 * @param ctm the class type manager
 	 * @param mangledName the mangled name of the table
 	 */
 	public ProgramVirtualBaseTable(ClassID owner, List<ClassID> parentage, Program program,
-			Address address, int entrySize, ClassTypeManager ctm, String mangledName) {
+			Address address, int entrySize, String mangledName) {
 		super(owner, parentage);
-		if (entrySize != 4 && entrySize != 8) {
-			throw new IllegalArgumentException("Invalid size (" + entrySize + "): must be 4 or 8.");
-		}
 		this.program = program;
 		this.address = address;
 		this.entrySize = entrySize;
 		this.mangledName = mangledName;
-		createdFromMemory = true;
 	}
 
 	/**
@@ -78,27 +68,25 @@ public class ProgramVirtualBaseTable extends VirtualBaseTable {
 		return mangledName;
 	}
 
-	/*
-	 * For the next method below... once we determine the number of virtual bases (virtual and
-	 * indirect virtual) for each class (from PDB or other), we can determine the number of
-	 * entries in each VBT.  For a VBT for the main class, the number is equal... if for some
-	 * parentage, then the number can reflect the number of the parent.  TODO: can VBT overlay/extend one from parent????????????????????????????????????????????
-	 */
-	/**
-	 * TBD: need to determine table size to do this.  Might want to place a symbol (diff method?).
-	 */
-	void placeTableDataType(int numEntries) {
-
-	}
-
-	int getMaxIndex() {
-		return maxIndexSeen;
-	}
-
 	@Override
-	public Long getBaseOffset(int index) throws PdbException {
+	public Long getBaseOffset(int tableIndex) throws PdbException {
+		Long offset = baseOffsetByTableIndex.get(tableIndex);
+		if (offset != null) {
+			return offset;
+		}
+		offset = getOffsetFromMemory(tableIndex);
+		if (offset != null) {
+			baseOffsetByTableIndex.put(tableIndex, offset);
+		}
+		return offset;
+	}
+
+	private Long getOffsetFromMemory(int tableIndex) throws PdbException {
+		if (program == null || address == null) {
+			return null;
+		}
 		Memory memory = program.getMemory();
-		Address entryAddress = address.add(index * entrySize);
+		Address entryAddress = address.add(tableIndex * entrySize);
 		try {
 			Long offset = (entrySize == 4) ? (long) memory.getInt(entryAddress)
 					: memory.getLong(entryAddress);
@@ -110,40 +98,31 @@ public class ProgramVirtualBaseTable extends VirtualBaseTable {
 					entryAddress);
 		}
 		finally {
-			maxIndexSeen = Integer.max(maxIndexSeen, index);
+			maxTableIndexSeen = Integer.max(maxTableIndexSeen, tableIndex);
 		}
 	}
 
 	@Override
-	public ClassID getBaseClassId(int index) throws PdbException {
-		VBTableEntry entry = entriesByIndex.get(index);
-		if (entry == null) {
-			throw new PdbException("No entry in Virtual Base Table for index: " + index);
-		}
-		maxIndexSeen = Integer.max(maxIndexSeen, index);
-		return entry.getClassId();
+	protected VirtualBaseTableEntry getNewEntry(ClassID baseId) {
+		return new VirtualBaseTableEntry(baseId);
 	}
 
-	@Override
-	public VBTableEntry getBase(int index) throws PdbException {
-		VBTableEntry entry = entriesByIndex.get(index);
+	/**
+	 * Returns the entry for the table index; the table index is based at 1
+	 * @param tableIndex the index location in the table
+	 * @return the entry
+	 */
+	private VirtualBaseTableEntry entry(int tableIndex) {
+		return entryByTableIndex.get(tableIndex);
+	}
+
+	private VirtualBaseTableEntry existing(int tableIndex) throws PdbException {
+		VirtualBaseTableEntry entry = entry(tableIndex);
 		if (entry == null) {
-			throw new PdbException("No entry in Virtual Base Table for index: " + index);
+			throw new PdbException(
+				"No entry in Virtual Base Table for table offset: " + tableIndex);
 		}
-		maxIndexSeen = Integer.max(maxIndexSeen, index);
 		return entry;
-	}
-
-	public void setBaseClassId(int index, ClassID baseId) {
-		VBTableEntry entry = entriesByIndex.get(index);
-		if (entry == null) {
-			entry = new VirtualBaseTableEntry(baseId);
-			entriesByIndex.put(index, entry);
-		}
-		else {
-			entry.setClassId(baseId);
-		}
-		maxIndexSeen = Integer.max(maxIndexSeen, index);
 	}
 
 }

@@ -30,5 +30,24 @@
 		<!-- <register_mapping dwarf="68" ghidra="XMM16" auto_count="16"/> **not implemented yet** --> <!-- XMM16..XMM31 -->
 		<!-- <register_mapping dwarf="118" ghidra="K0" auto_count="8"/>  **not implemented yet** -->
 	</register_mappings>
+
+	<!--
+		call_frame_cfa and stack_frame allow specifying static values for DWARF expressions that
+		calculate stack locations of params or variables, typically used in a func's 
+		DW_AT_frame_base attribute (later referenced via a DW_OP_fbreg instruction),
+		or in param/variable DW_AT_location attributes.
+		Using these values is controlled by dwarf import options, but not settable by the user currently.
+	-->	
+	
+	<!--
+		call_frame_cfa specifies the static offset of the func's CFA, which
+		technically should be looked up in the func's CIE structs.
+	-->
 	<call_frame_cfa value="8"/>
+	
+	<!--
+		stack_frame allows dwarf expressions that reference RBP to be converted to a ghidra stack
+		location without evaluating the actual RBP value via symbolic propagation.
+	 -->
+	<stack_frame register="RBP" offset="-8" />
 </dwarf>

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -145,7 +145,7 @@ public class PluginManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		// Load a plugin and a second plugin that provides a dependency at the same time.
 		// Loading PluginA by itself would fail.
 		tool.addPlugins(
-			new String[] { MissingDepPluginA.class.getName(), MissingDepPluginB.class.getName() });
+			List.of(MissingDepPluginA.class.getName(), MissingDepPluginB.class.getName()));
 
 		assertPlugin(MissingDepPluginA.class);
 		assertPlugin(MissingDepPluginB.class);
@@ -225,8 +225,8 @@ public class PluginManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		setErrorsExpected(true);
 		try {
-			tool.addPlugins(new String[] { IsolatedFailPluginA.class.getName(),
-				IsolatedFailPluginB.class.getName() });
+			tool.addPlugins(
+				List.of(IsolatedFailPluginA.class.getName(), IsolatedFailPluginB.class.getName()));
 			fail("Should have gotten an exception because PluginB was bad");
 		}
 		catch (PluginException pe) {
@@ -282,7 +282,7 @@ public class PluginManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		runSwing(() -> {
 			try {
 
-				tool.removePlugins(new Plugin[] { p });
+				tool.removePlugins(List.of(p));
 			}
 			catch (Exception e) {
 				if (!exceptional) {

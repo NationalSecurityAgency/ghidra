@@ -1,0 +1,5 @@
+<patternconstraints>
+  <language id="Hexagon:LE:32:*">
+    <patternfile>Hexagon_patterns.xml</patternfile>
+  </language> 
+</patternconstraints>

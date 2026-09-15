@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,28 +16,15 @@
 package sarif.managers;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.google.gson.JsonArray;
 
 import ghidra.app.util.importer.MessageLog;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressFormatException;
-import ghidra.program.model.address.AddressOverflowException;
-import ghidra.program.model.listing.GhidraClass;
-import ghidra.program.model.listing.Library;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.symbol.ExternalLocation;
-import ghidra.program.model.symbol.ExternalManager;
-import ghidra.program.model.symbol.Namespace;
-import ghidra.program.model.symbol.SourceType;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.exception.InvalidInputException;
+import ghidra.program.model.address.*;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.*;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskLauncher;
 import ghidra.util.task.TaskMonitor;
 import sarif.SarifProgramOptions;
@@ -127,14 +114,21 @@ public class ExternalLibSarifMgr extends SarifMgr {
 			return; // already has a value--don't override it
 		}
 
-		// NB: Can't use "DEFAULT" here or result.get("sourceType") which may be
-		// "DEFAULT"
+		// NB: Can't use "DEFAULT" here or result.get("sourceType") which may be "DEFAULT"
 		String source = (String) result.get("sourceType");
 		SourceType sourceType = getSourceType(source);
 		if (sourceType.equals(SourceType.DEFAULT)) {
 			sourceType = SourceType.IMPORTED;
 		}
 		library = extManager.addExternalLibraryName(progName, sourceType);
+
+		// NOTE: It is assumed that a full export/import will maintain the ordered sequence of Libraries
+
+		// NOTE: Skip setting library location within project which is unlikely to match-up properly
+		// String progPath = (String) result.get("location");
+		// if (progPath != null) {
+		// 	extManager.setExternalPath(progName, progPath, sourceType == SourceType.USER_DEFINED);
+		// }
 	}
 
 	private void processExternalLocation(Map<String, Object> result) throws IOException {

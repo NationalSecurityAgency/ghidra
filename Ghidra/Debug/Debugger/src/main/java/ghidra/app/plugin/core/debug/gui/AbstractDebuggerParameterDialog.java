@@ -52,7 +52,6 @@ import ghidra.util.layout.PairLayout;
 
 public abstract class AbstractDebuggerParameterDialog<P> extends DialogComponentProvider
 		implements PropertyChangeListener {
-	static final String KEY_MEMORIZED_ARGUMENTS = "memorizedArguments";
 
 	public static class BigIntEditor extends PropertyEditorSupport {
 		String asText = "";
@@ -435,21 +434,7 @@ public abstract class AbstractDebuggerParameterDialog<P> extends DialogComponent
 		}
 	}
 
-	protected record NameTypePair(String name, Class<?> type) {
-		public static NameTypePair fromString(String name) throws ClassNotFoundException {
-			String[] parts = name.split(",", 2);
-			if (parts.length != 2) {
-				// This appears to be a bad assumption - empty fields results in solitary labels
-				return new NameTypePair(parts[0], String.class);
-				//throw new IllegalArgumentException("Could not parse name,type");
-			}
-			return new NameTypePair(parts[0], Class.forName(parts[1]));
-		}
-
-		public final String encodeString() {
-			return name + "," + type.getName();
-		}
-	}
+	protected record NameTypePair(String name, Class<?> type) {}
 
 	private final BidiMap<P, PropertyEditor> paramEditors = new DualLinkedHashBidiMap<>();
 
@@ -720,46 +705,6 @@ public abstract class AbstractDebuggerParameterDialog<P> extends DialogComponent
 		P param = paramEditors.getKey(editor);
 		memorized.put(parameterNameAndType(param),
 			new ValStr<>(editor.getValue(), editor.getAsText()));
-	}
-
-	public void writeConfigState(SaveState saveState) {
-		SaveState subState = new SaveState();
-		for (Map.Entry<NameTypePair, ValStr<?>> ent : memorized.entrySet()) {
-			NameTypePair ntp = ent.getKey();
-			P param = parameters.get(ntp.name());
-			if (param == null) {
-				continue;
-			}
-			parameterSaveValue(param, subState, ntp.encodeString(), ent.getValue());
-		}
-		saveState.putSaveState(KEY_MEMORIZED_ARGUMENTS, subState);
-	}
-
-	public void readConfigState(SaveState saveState) {
-		/**
-		 * TODO: This method is defunct. It is only used by the DebuggerObjectsProvider, which is
-		 * now deprecated, but I suspect other providers intend to use this in the same way. If
-		 * those providers don't manually load/compute initial and default values at the time of
-		 * prompting, then this will need to be fixed. The decode of the values will need to be
-		 * delayed until (and repeated every time) parameters are populated.
-		 */
-		SaveState subState = saveState.getSaveState(KEY_MEMORIZED_ARGUMENTS);
-		if (subState == null) {
-			return;
-		}
-		for (String name : subState.getNames()) {
-			try {
-				NameTypePair ntp = NameTypePair.fromString(name);
-				P param = parameters.get(ntp.name());
-				if (param == null) {
-					continue;
-				}
-				memorized.put(ntp, parameterLoadValue(param, subState, ntp.encodeString()));
-			}
-			catch (Exception e) {
-				Msg.error(this, "Error restoring memorized parameter " + name, e);
-			}
-		}
 	}
 
 	public void setDescription(String htmlDescription) {

@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
 ## ###
 # IP: GHIDRA
 #
@@ -22,32 +22,27 @@
 #@desc     For setup instructions, press <b>F1</b>.
 #@desc   </p>
 #@desc </body></html>
-#@menu-group local
+#@menu-group gdb
 #@icon icon.debugger
 #@help gdb#rr
+#@depends Debugger-rmi-trace
 #@enum StartCmd:str run start starti
 #@enum Endian:str auto big little
 #@arg :file "Trace Dir" "The target trace directory (e.g. .local/share/rr/trace)"
 #@env OPT_RR_PATH:file="rr" "rr command" "The path to rr. Omit the full path to resolve using the system PATH."
+#@env OPT_RR_ARGS:str="" "rr cmd args" "Arguments passed to rr (versus the target)"
 #@env OPT_ARCH:str="i386:x86-64" "Architecture" "Target architecture"
 #@env OPT_ENDIAN:Endian="auto" "Endian" "Target byte order"
 #@env OPT_EXTRA_TTY:bool=false "Inferior TTY" "Provide a separate terminal emulator for the target."
 #@tty TTY_TARGET if env:OPT_EXTRA_TTY
 
-if [ -d ${GHIDRA_HOME}/ghidra/.git ]
-then
-  export PYTHONPATH=$GHIDRA_HOME/ghidra/Ghidra/Debug/Debugger-agent-gdb/build/pypkg/src:$PYTHONPATH
-  export PYTHONPATH=$GHIDRA_HOME/ghidra/Ghidra/Debug/Debugger-rmi-trace/build/pypkg/src:$PYTHONPATH
-elif [ -d ${GHIDRA_HOME}/.git ]
-then 
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-agent-gdb/build/pypkg/src:$PYTHONPATH
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-rmi-trace/build/pypkg/src:$PYTHONPATH
-else
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-agent-gdb/pypkg/src:$PYTHONPATH
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-rmi-trace/pypkg/src:$PYTHONPATH
-fi
+. ../support/gdbsetuputils.sh
 
-target_image="$1"
+pypathTrace=$(ghidra-module-pypath "Debugger-rmi-trace")
+pypathGdb=$(ghidra-module-pypath)
+export PYTHONPATH=$pypathGdb:$pypathTrace:$PYTHONPATH
+
+target_trace="$1"
 
 # Ghidra will leave TTY_TARGET empty when OPT_EXTRA_TTY is false. Gdb takes empty to mean the same terminal.
 
@@ -68,5 +63,5 @@ set confirm on
 set pagination on
 ' > $RRINIT
 
-"$OPT_RR_PATH" replay -x $RRINIT "$target_image"
+"$OPT_RR_PATH" $OPT_RR_ARGS replay -x $RRINIT "$target_trace"
 

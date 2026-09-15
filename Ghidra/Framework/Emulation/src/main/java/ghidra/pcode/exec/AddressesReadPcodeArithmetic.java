@@ -31,6 +31,11 @@ public enum AddressesReadPcodeArithmetic implements PcodeArithmetic<AddressSetVi
 	INSTANCE;
 
 	@Override
+	public Class<AddressSetView> getDomain() {
+		return AddressSetView.class;
+	}
+
+	@Override
 	public Endian getEndian() {
 		return null;
 	}

@@ -29,7 +29,7 @@ import java.util.function.Function;
 
 import javax.swing.*;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.*;
 import docking.action.*;
@@ -55,7 +55,7 @@ import ghidra.framework.plugintool.dialog.ManagePluginsDialog;
 import ghidra.framework.plugintool.mgr.*;
 import ghidra.framework.plugintool.util.*;
 import ghidra.framework.project.ProjectDataService;
-import ghidra.framework.project.extensions.ExtensionTableProvider;
+import ghidra.framework.project.extensions.ExtensionTableDialog;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
@@ -339,7 +339,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * Displays the extensions installation dialog.
 	 */
 	public void showExtensions() {
-		showDialog(new ExtensionTableProvider(this));
+		showDialog(new ExtensionTableDialog(this));
 	}
 
 	/**
@@ -894,19 +894,6 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 	/**
 	 * Add plugins to the tool.
-	 * @param classNames array of plugin class names
-	 * @throws PluginException if a plugin could not be constructed, or
-	 * there was problem executing its init() method, or if a plugin of this
-	 * class already exists in the tool
-	 * @deprecated use {@link #addPlugins(Collection)}
-	 */
-	@Deprecated(since = "10.2", forRemoval = true)
-	public void addPlugins(String[] classNames) throws PluginException {
-		addPlugins(Arrays.asList(classNames));
-	}
-
-	/**
-	 * Add plugins to the tool.
 	 * @param classNames collection of plugin class names
 	 * @throws PluginException if a plugin could not be constructed, or
 	 * there was problem executing its init() method, or if a plugin of this
@@ -928,16 +915,6 @@ public abstract class PluginTool extends AbstractDockingTool {
 			pluginMgr.addPlugin(p);
 			setConfigChanged(true);
 		}, PluginException.class);
-	}
-
-	/**
-	 * Remove the array of plugins from the tool.
-	 * @param plugins array of plugins to remove
-	 * @deprecated use {@link #removePlugins(List)}
-	 */
-	@Deprecated(since = "10.2", forRemoval = true)
-	public void removePlugins(Plugin[] plugins) {
-		removePlugins(Arrays.asList(plugins));
 	}
 
 	/**

@@ -15,8 +15,8 @@
  */
 package docking;
 
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
+import java.awt.event.*;
+import java.awt.event.FocusEvent.Cause;
 import java.util.Objects;
 
 import javax.swing.KeyStroke;
@@ -47,7 +47,21 @@ public class KeyEntryTextField extends HintTextField {
 		getAccessibleContext().setAccessibleName(getName());
 		setColumns(columns);
 		this.listener = listener;
+
+		// remove the default mouse listeners to prevent pasting
+		MouseListener[] oldListeners1 = getMouseListeners();
+		for (MouseListener l : oldListeners1) {
+			removeMouseListener(l);
+		}
+
 		addKeyListener(new MyKeyListener());
+
+		addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				requestFocusInWindow(Cause.MOUSE_EVENT);
+			}
+		});
 	}
 
 	@Override

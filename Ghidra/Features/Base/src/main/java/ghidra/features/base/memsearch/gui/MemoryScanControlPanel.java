@@ -15,7 +15,6 @@
  */
 package ghidra.features.base.memsearch.gui;
 
-import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 
 import javax.swing.*;
@@ -36,22 +35,44 @@ public class MemoryScanControlPanel extends JPanel {
 	private boolean hasResults;
 	private boolean isBusy;
 	private JButton scanButton;
+	private JButton compareButton;
 
 	MemoryScanControlPanel(MemorySearchProvider provider) {
-		super(new BorderLayout());
+		super();
+
+		setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
+
 		setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
-		add(buildButtonPanel(), BorderLayout.CENTER);
+
 		scanButton = new JButton("Scan Values");
+		scanButton.setMnemonic('V');
+		scanButton.setEnabled(false);
 		scanButton.setToolTipText("Refreshes byte values of current results and eliminates " +
 			"those that don't meet the selected change criteria");
+
+		add(scanButton);
+		
+		add(Box.createHorizontalStrut(20));
+
+		compareButton = new JButton("Compare to...");
+		compareButton.setEnabled(false);
+		compareButton.setToolTipText("Create a new search using a new program, " +
+			"remapping the current results");
+
+		add(compareButton);
+		
+		add(Box.createHorizontalStrut(20));
+		add(buildButtonPanel());
+
 		HelpService helpService = Help.getHelpService();
 		helpService.registerHelp(this, new HelpLocation(HelpTopics.SEARCH, "Scan_Controls"));
-		add(scanButton, BorderLayout.WEST);
+
 		scanButton.addActionListener(e -> provider.scan(selectedScanner));
+		compareButton.addActionListener(e -> provider.generateNewProvider(selectedScanner));
 	}
 
 	private JComponent buildButtonPanel() {
-		JPanel panel = new JPanel(new FlowLayout());
+		JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING));
 		ButtonGroup buttonGroup = new ButtonGroup();
 		for (Scanner scanner : Scanner.values()) {
 			GRadioButton button = new GRadioButton(scanner.getName());
@@ -68,6 +89,7 @@ public class MemoryScanControlPanel extends JPanel {
 		this.hasResults = hasResults;
 		this.isBusy = isBusy;
 		updateScanButton();
+		updateCompareButton();
 	}
 
 	private void updateScanButton() {
@@ -76,6 +98,10 @@ public class MemoryScanControlPanel extends JPanel {
 
 	private boolean canScan() {
 		return hasResults && !isBusy;
+	}
+
+	private void updateCompareButton() {
+		compareButton.setEnabled(canScan());
 	}
 
 }

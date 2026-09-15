@@ -15,10 +15,13 @@
  */
 package ghidra.framework.main.wizard.project;
 
+import java.awt.Component;
 import java.io.IOException;
 import java.util.List;
 
 import javax.swing.JComponent;
+
+import org.apache.commons.lang3.StringUtils;
 
 import docking.wizard.WizardModel;
 import docking.wizard.WizardStep;
@@ -38,6 +41,11 @@ public class RepositoryStep extends WizardStep<ProjectWizardData> {
 
 	protected RepositoryStep(WizardModel<ProjectWizardData> model) {
 		super(model, "", new HelpLocation(GenericHelpTopics.FRONT_END, "SelectRepository"));
+	}
+
+	@Override
+	public Component getDefaultFocusComponent() {
+		return panel.getDefaultFocusComponent();
 	}
 
 	@Override
@@ -77,10 +85,20 @@ public class RepositoryStep extends WizardStep<ProjectWizardData> {
 			if (repositoryName.length() == 0) {
 				return false;
 			}
-			if (!NamingUtilities.isValidProjectName(repositoryName)) {
-				setStatusMessage("Invalid project repository name");
+			if (StringUtils.isBlank(repositoryName)) {
+				setStatusMessage("Enter project repository name");
 				return false;
 			}
+
+			try {
+				NamingUtilities.checkName(repositoryName,
+					"Repository name");
+			}
+			catch (IllegalArgumentException e) {
+				setStatusMessage(e.getMessage());
+				return false;
+			}
+
 			if (List.of(repositoryNames).contains(repositoryName)) {
 				setStatusMessage("Repository " + repositoryName + " already exists");
 				return false;

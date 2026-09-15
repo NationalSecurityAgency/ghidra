@@ -10,6 +10,7 @@
     </prepatterns>
     <postpatterns>
       <data>0x558bec</data>  <!-- PUSH EBP : MOV EBP,ESP -->
+      <data>0x5589e5</data>  <!-- PUSH EBP : MOV EBP,ESP -->
       <data>0x83ec 0.....00 </data> <!-- SUBESP#small -->
       <data>0x6aff68........64a100000000 </data> <!-- PUSH-1 PUSHFUNC MOVEAXFS[0] -->
       <data>0x568bf1 </data> <!-- PUSHESI MOVESIECX -->
@@ -29,6 +30,7 @@
       <data>0x53568bf0</data> <!-- PUSH EBX : PUSH ESI : MOV ESI,EAX -->
       <data>0x56578bf9</data> <!-- PUSH ESI : PUSH EDI : MOV EDI,ECX -->
       <data>0x56578bf1</data> <!-- PUSH ESI : PUSH EDI : MOV ESI,ECX -->
+      <data>0x55575653</data> <!-- PUSH EBP : PUSH EDI : PUSH ESI : PUSH EBX -->
 
       <funcstart/>
     </postpatterns>
@@ -143,5 +145,14 @@
      <data> 0xcc  </data>  <!-- int 3 function break -->
      <funcstart label="__break" validcode="function" noreturn="true"/>  <!-- must be defined at an existing function -->
   </pattern>
+  
+  <pattern> <!-- This can most likely be removed when VS2022 FID files are added __security_check_cookie -->
+    <data>  0x3b 0x0d 0x.. 0x.. 0x.. 0x..
+            0x75 0x01 
+            0xc3 
+            0xe9 
+            </data>
+     <funcstart label="__security_check_cookie" validcode="function"/>
+   </pattern>
   
 </patternlist>

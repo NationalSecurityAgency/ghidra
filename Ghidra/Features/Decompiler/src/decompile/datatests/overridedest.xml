@@ -1,0 +1,31 @@
+<decompilertest>
+  <!--
+     Examples of overriding destination addresses
+  -->
+<binaryimage arch="x86:LE:64:default:gcc">
+<bytechunk space="ram" offset="0x100647" readonly="true">
+              4883ec08ffd766e8e9
+ff0f050f054883c408c3
+</bytechunk>
+<symbol space="ram" offset="0x10063a" name="badcall"/>
+<symbol space="ram" offset="0x10063d" name="mycallinddest"/>
+<symbol space="ram" offset="0x100640" name="mysyscalldest"/>
+<symbol space="ram" offset="0x100643" name="mynewcalldest"/>
+</binaryimage>
+<script>
+  <com>map fun r0x100647 overridedest</com>
+  <com>override dest r0x10064b call_call r0x10063d</com>
+  <com>override dest r0x10064d call_call r0x100643</com>
+  <com>override dest r0x100651 callother_call r0x100640</com>
+  <com>override dest r0x100653 callother_branch r0x100651</com>
+  <com>lo fu overridedest</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Override destination #1" min="1" max="1">mycallinddest\(\);</stringmatch>
+<stringmatch name="Override destination #2" min="1" max="1">mysyscalldest\(\);</stringmatch>
+<stringmatch name="Override destination #3" min="1" max="1">mynewcalldest\(\);</stringmatch>
+<stringmatch name="Override destination #4" min="1" max="1">\} while\( true \);</stringmatch>
+<stringmatch name="Override destination #5" min="0" max="0">badcall</stringmatch>
+</decompilertest>

@@ -15,8 +15,6 @@
  */
 package ghidra.app.plugin.core.debug.client.tracermi;
 
-import com.sun.jdi.VirtualMachine;
-
 import ghidra.program.model.address.Address;
 
 public interface MemoryMapper {

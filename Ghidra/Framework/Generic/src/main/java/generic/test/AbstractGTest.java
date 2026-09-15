@@ -172,7 +172,7 @@ public abstract class AbstractGTest {
 		int stringLength = getRandomInt(min, max);
 		StringBuilder buffy = new StringBuilder();
 		for (int i = 0; i < stringLength; i++) {
-			buffy.append((char) getRandomInt(65, 127));
+			buffy.append((char) getRandomInt(65, 126));
 		}
 		return buffy.toString();
 	}

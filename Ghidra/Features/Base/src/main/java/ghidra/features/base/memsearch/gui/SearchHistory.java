@@ -18,7 +18,7 @@ package ghidra.features.base.memsearch.gui;
 import java.util.*;
 
 import ghidra.features.base.memsearch.format.SearchFormat;
-import ghidra.features.base.memsearch.matcher.ByteMatcher;
+import ghidra.features.base.memsearch.matcher.UserInputByteMatcher;
 
 /**
  * Class for managing memory search history. It maintains a list of previously used ByteMatchers to
@@ -26,7 +26,7 @@ import ghidra.features.base.memsearch.matcher.ByteMatcher;
  * to create it.
  */
 public class SearchHistory {
-	private List<ByteMatcher> history = new LinkedList<>();
+	private List<UserInputByteMatcher> history = new LinkedList<>();
 	private int maxHistory;
 
 	public SearchHistory(int maxHistory) {
@@ -38,18 +38,18 @@ public class SearchHistory {
 		this.maxHistory = other.maxHistory;
 	}
 
-	public void addSearch(ByteMatcher matcher) {
+	public void addSearch(UserInputByteMatcher matcher) {
 		removeSimilarMatchers(matcher);
 		history.addFirst(matcher);
 		truncateHistoryAsNeeded();
 	}
 
-	private void removeSimilarMatchers(ByteMatcher matcher) {
-		Iterator<ByteMatcher> it = history.iterator();
+	private void removeSimilarMatchers(UserInputByteMatcher matcher) {
+		Iterator<UserInputByteMatcher> it = history.iterator();
 		String newInput = matcher.getInput();
 		SearchFormat newFormat = matcher.getSettings().getSearchFormat();
 		while (it.hasNext()) {
-			ByteMatcher historyMatch = it.next();
+			UserInputByteMatcher historyMatch = it.next();
 			SearchFormat historyFormat = historyMatch.getSettings().getSearchFormat();
 			String historyInput = historyMatch.getInput();
 			if (historyFormat.equals(newFormat) && historyInput.equals(newInput)) {
@@ -70,8 +70,8 @@ public class SearchHistory {
 		}
 	}
 
-	public ByteMatcher[] getHistoryAsArray() {
-		ByteMatcher[] historyArray = new ByteMatcher[history.size()];
+	public UserInputByteMatcher[] getHistoryAsArray() {
+		UserInputByteMatcher[] historyArray = new UserInputByteMatcher[history.size()];
 		history.toArray(historyArray);
 		return historyArray;
 	}

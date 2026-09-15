@@ -201,9 +201,8 @@ public class BinaryReader {
 	 * Returns the length of the underlying file.
 	 * 
 	 * @return returns the length of the underlying file
-	 * @exception IOException if an I/O error occurs
 	 */
-	public long length() throws IOException {
+	public long length() {
 		return provider.length();
 	}
 
@@ -597,6 +596,7 @@ public class BinaryReader {
 	 * 
 	 * @param length number of bytes to read
 	 * @return the US-ASCII string at the current index
+	 * @throws IOException if an IO-related error occurred
 	 */
 	public String readNextAsciiString(int length) throws IOException {
 		return readNextString(length, StandardCharsets.US_ASCII, 1);
@@ -658,7 +658,7 @@ public class BinaryReader {
 	 * @return the string
 	 * @exception IOException if an I/O error occurs
 	 */
-	private String readNextString(Charset charset, int charLen) throws IOException {
+	public String readNextString(Charset charset, int charLen) throws IOException {
 		byte[] bytes = readUntilNullTerm(currentIndex, charLen);
 		currentIndex += bytes.length + charLen;
 
@@ -680,7 +680,7 @@ public class BinaryReader {
 	 * @return the string
 	 * @exception IOException if an I/O error occurs
 	 */
-	private String readNextString(int charCount, Charset charset, int charLen) throws IOException {
+	public String readNextString(int charCount, Charset charset, int charLen) throws IOException {
 		if (charCount < 0) {
 			throw new IllegalArgumentException(String.format("Invalid charCount: %d", charCount));
 		}
@@ -696,6 +696,7 @@ public class BinaryReader {
 	 * Reads a byte array of <code>nElements</code>
 	 * starting at the current index and then increments the current
 	 * index by <code>SIZEOF_BYTE * nElements</code>.
+	 * @param nElements number of elements to read
 	 * @return the byte array starting at the current index
 	 * @exception IOException if an I/O error occurs
 	 */
@@ -709,6 +710,7 @@ public class BinaryReader {
 	 * Reads a short array of <code>nElements</code>
 	 * starting at the current index and then increments the current
 	 * index by <code>SIZEOF_SHORT * nElements</code>.
+	 * @param nElements number of elements to read
 	 * @return the short array starting at the current index
 	 * @exception IOException if an I/O error occurs
 	 */
@@ -943,7 +945,7 @@ public class BinaryReader {
 	 * @return the string
 	 * @exception IOException if an I/O error occurs
 	 */
-	private String readString(long index, int charCount, Charset charset, int charLen)
+	public String readString(long index, int charCount, Charset charset, int charLen)
 			throws IOException {
 		if (charCount < 0) {
 			throw new IllegalArgumentException(String.format("Invalid charCount: %d", charCount));
@@ -965,7 +967,7 @@ public class BinaryReader {
 	 * @return the string
 	 * @exception IOException if an I/O error occurs
 	 */
-	private String readString(long index, Charset charset, int charLen) throws IOException {
+	public String readString(long index, Charset charset, int charLen) throws IOException {
 		byte[] bytes = readUntilNullTerm(index, charLen);
 
 		String result = new String(bytes, charset);

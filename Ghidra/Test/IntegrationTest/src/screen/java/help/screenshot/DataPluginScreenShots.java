@@ -15,11 +15,19 @@
  */
 package help.screenshot;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import javax.swing.JRadioButton;
+import javax.swing.JTable;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 
 import org.junit.Test;
 
-import docking.DialogComponentProvider;
+import docking.*;
+import docking.action.DockingActionIf;
+import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.util.table.GhidraTable;
 
 public class DataPluginScreenShots extends GhidraScreenShotGenerator {
@@ -61,7 +69,21 @@ public class DataPluginScreenShots extends GhidraScreenShotGenerator {
 		GhidraTable table = (GhidraTable) getInstanceField("matchingStructuresTable", dialog);
 		selectRow(table, 2);
 
-		captureDialog(500, 400);
+		shrinkCategoryColumn(table);
+
+		captureDialog(600, 500);
+	}
+
+	private void shrinkCategoryColumn(JTable table) {
+
+		runSwing(() -> {
+			TableColumnModel columnModel = table.getColumnModel();
+			int columnIndex = columnModel.getColumnIndex("Category");
+			TableColumn column = columnModel.getColumn(columnIndex);
+			int size = 150;
+			column.setPreferredWidth(size);
+			column.setMaxWidth(size);
+		});
 	}
 
 	@Test
@@ -75,7 +97,10 @@ public class DataPluginScreenShots extends GhidraScreenShotGenerator {
 	@Test
 	public void testDefaultSettings() {
 		positionListingTop(0x40d3a4);
-		performAction("Default Data Settings", "DataPlugin", false);
+		ComponentProvider componentProvider = getProvider(CodeViewerProvider.class);
+		ActionContext context = createActionContext(componentProvider);
+		DockingActionIf action = getAction("Default Settings", context);
+		performAction(action, context, false);
 		captureDialog();
 	}
 
@@ -86,4 +111,29 @@ public class DataPluginScreenShots extends GhidraScreenShotGenerator {
 		captureDialog();
 	}
 
+	private DockingActionIf getAction(String name, ActionContext context) {
+		Set<DockingActionIf> actions = getDataPluginActions(context);
+		for (DockingActionIf element : actions) {
+			String actionName = element.getName();
+			int pos = actionName.indexOf(" (");
+			if (pos > 0) {
+				actionName = actionName.substring(0, pos);
+			}
+			if (actionName.equals(name)) {
+				return element;
+			}
+		}
+		return null;
+	}
+
+	private Set<DockingActionIf> getDataPluginActions(ActionContext context) {
+		Set<DockingActionIf> actions = getActionsByOwner(tool, "DataPlugin");
+		if (context == null) {
+			return actions;
+		}
+		// assumes returned set may be modified
+		return actions.stream()
+				.filter(a -> a.isValidContext(context))
+				.collect(Collectors.toSet());
+	}
 }

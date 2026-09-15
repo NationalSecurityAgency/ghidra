@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,8 +21,7 @@ import java.awt.event.MouseEvent;
 import javax.swing.*;
 import javax.swing.border.Border;
 
-import docking.ActionContext;
-import docking.WindowPosition;
+import docking.*;
 import docking.util.image.ToolIconURL;
 import docking.widgets.OptionDialog;
 import docking.widgets.label.*;
@@ -86,30 +85,24 @@ class MergeManagerProvider extends ComponentProviderAdapter {
 		MergeManager mergeManager = plugin.getMergeManager();
 		if (event != null && event.getSource() instanceof FieldHeaderComp) {
 			FieldHeaderComp comp = (FieldHeaderComp) event.getSource();
-			FieldHeaderLocation fieldHeaderLocation = comp.getFieldHeaderLocation(event.getPoint());
-			return createContext(fieldHeaderLocation);
-
+			FieldHeaderLocation fhLoc = comp.getFieldHeaderLocation(event.getPoint());
+			return new DefaultActionContext(this).setContextObject(fhLoc);
 		}
-		if (mergeManager instanceof ProgramMultiUserMergeManager) {
-			ProgramMultiUserMergeManager programMergeManager =
-				(ProgramMultiUserMergeManager) mergeManager;
-			Navigatable navigatable = programMergeManager.navigatable;
-			if (currentComponent instanceof ListingMergePanel) {
+
+		if (mergeManager instanceof ProgramMultiUserMergeManager programMerger) {
+			Navigatable navigatable = programMerger.navigatable;
+			if (currentComponent instanceof ListingMergePanel listingMergePanel) {
 				// Set the program location within the context so it is from the listing panel
 				// that is being clicked. Actions should use the location to know which of the
 				// 4 programs or listings is in the current context.
-				ListingMergePanel listingMergePanel = (ListingMergePanel) currentComponent;
 				Object actionContext = listingMergePanel.getActionContext(event);
-				if (actionContext instanceof ProgramLocation) {
-					ListingActionContext listingActionContext = new ListingActionContext(this,
-						navigatable, (ProgramLocation) actionContext);
-					return listingActionContext;
+				if (actionContext instanceof ProgramLocation loc) {
+					return new ListingActionContext(this, navigatable, loc);
 				}
 			}
-			ProgramLocation programLocation = navigatable.getLocation();
-			ListingActionContext listingActionContext =
-				new ListingActionContext(this, navigatable, programLocation);
-			return listingActionContext;
+
+			ProgramLocation location = navigatable.getLocation();
+			return new ListingActionContext(this, navigatable, location);
 		}
 		return null;
 	}

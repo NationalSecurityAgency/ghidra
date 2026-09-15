@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import static org.junit.Assert.*;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -101,6 +100,10 @@ public abstract class AbstractMergeTest extends AbstractGhidraHeadedIntegrationT
 	}
 
 	private void tryToPressCancel() {
+		DockingWindowManager activeInstance = DockingWindowManager.getActiveInstance();
+		if (activeInstance == null) {
+			return;
+		}
 		Window window = DockingWindowManager.getActiveInstance().getActiveWindow();
 		JButton cancel = findButtonByText(window, "Cancel");
 		if (cancel == null) {
@@ -191,12 +194,11 @@ public abstract class AbstractMergeTest extends AbstractGhidraHeadedIntegrationT
 		}
 		ArrayList<String> list = tx.getOpenSubTransactions();
 		StringBuffer tip = new StringBuffer();
-		Iterator<String> iter = list.iterator();
-		while (iter.hasNext()) {
+		for (String element : list) {
 			if (tip.length() != 0) {
 				tip.append('\n');
 			}
-			tip.append(iter.next());
+			tip.append(element);
 		}
 		Msg.error(this, prefix + "Test Case " + testName.getMethodName() +
 			" : ERROR: Transactions still exist!  " + tip.toString());

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,41 +15,25 @@
  */
 package ghidra.app.util.viewer.field;
 
+import static ghidra.app.util.viewer.field.AbstractOpenCloseField.*;
+
 import java.awt.*;
 
 import javax.swing.JComponent;
 
 import docking.widgets.fieldpanel.internal.FieldBackgroundColorManager;
 import docking.widgets.fieldpanel.internal.PaintContext;
-import docking.widgets.fieldpanel.support.*;
-import generic.theme.GIcon;
+import docking.widgets.fieldpanel.support.RowColLocation;
 import generic.theme.GThemeDefaults.Colors.Palette;
-import ghidra.app.util.viewer.proxy.EmptyProxy;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.program.model.listing.Data;
 
 /**
  * FactoryField class for displaying the open/close field.
  */
-public class OpenCloseField implements ListingField {
-	private static final GIcon OPEN_ICON =
-		new GIcon("icon.base.util.viewer.fieldfactory.openclose.open");
-	private static final GIcon CLOSED_ICON =
-		new GIcon("icon.base.util.viewer.fieldfactory.openclose.closed");
-
-	private FieldFactory factory;
-	private int startX;
-	private int startY;
-	private int fieldWidth;
-	private int heightAbove;
-	private int heightBelow;
-	private ProxyObj<?> proxy;
-
-	private boolean isOpen;
+public class OpenCloseField extends AbstractOpenCloseField {
 	private int indentLevel;
 	private boolean isLast;
-
-	private int toggleHandleSize;
 	private int insetSpace = 1;
 
 	/**
@@ -64,87 +48,15 @@ public class OpenCloseField implements ListingField {
 	 */
 	public OpenCloseField(FieldFactory factory, ProxyObj<?> proxy, int indentLevel,
 			FontMetrics metrics, int x, int width, boolean isLast) {
-		this.factory = factory;
-		this.proxy = proxy;
+		super(factory, proxy, metrics, x, width);
 		this.isOpen = proxy.getListingLayoutModel().isOpen((Data) proxy.getObject());
-		this.fieldWidth = width;
-		this.startX = x;
 		this.indentLevel = indentLevel;
 		this.isLast = isLast;
-		this.heightAbove = metrics.getAscent();
-		this.heightBelow = metrics.getLeading() + metrics.getDescent();
-		this.toggleHandleSize = OpenCloseField.getOpenCloseHandleSize();
-	}
-
-	@Override
-	public FieldFactory getFieldFactory() {
-		return factory;
-	}
-
-	@Override
-	public ProxyObj<?> getProxy() {
-		if (proxy == null) {
-			return EmptyProxy.EMPTY_PROXY;
-		}
-		return proxy;
-	}
-
-	@Override
-	public int getHeightAbove() {
-		return heightAbove;
-	}
-
-	@Override
-	public int getHeightBelow() {
-		return heightBelow;
-	}
-
-	/**
-	 * Sets the yPos relative to the overall layout.
-	 * @param yPos the starting Y position of the layout row.
-	 * @param heightAbove the heightAbove the alignment line in the layout row.
-	 * @param heightBelow the heightBelow the alignment line in the layout row.
-	 */
-	public void setYPos(int yPos, int heightAbove, int heightBelow) {
-		this.startY = yPos;
-		this.heightAbove = heightAbove;
-		this.heightBelow = heightBelow;
 	}
 
 	@Override
 	public int getWidth() {
 		return (indentLevel + 1) * fieldWidth;
-	}
-
-	@Override
-	public int getPreferredWidth() {
-		return getWidth(); // does the width of this field vary?
-	}
-
-	@Override
-	public int getHeight() {
-		return heightAbove + heightBelow;
-	}
-
-	@Override
-	public int getStartX() {
-		return startX;
-	}
-
-	/**
-	 * Returns the vertical position of this field.
-	 * @return the position
-	 */
-	public int getStartY() {
-		return startY;
-	}
-
-	/**
-	 * Sets the starting vertical position of this field.
-	 * @param startY the starting vertical position.
-	 */
-	public void setStartY(int startY) {
-		this.startY = startY;
 	}
 
 	@Override
@@ -211,132 +123,11 @@ public class OpenCloseField implements ListingField {
 		paintCursor(g, context.getCursorColor(), cursorLoc);
 	}
 
-	private void paintCursor(Graphics g, Color cursorColor, RowColLocation cursorLoc) {
-		if (cursorLoc != null) {
-			g.setColor(cursorColor);
-			Rectangle cursorBounds = getCursorBounds(cursorLoc.row(), cursorLoc.col());
-			g.fillRect(cursorBounds.x, cursorBounds.y, cursorBounds.width, cursorBounds.height);
-		}
-	}
-
-	@Override
-	public boolean contains(int x, int y) {
-		if ((x < startX) || (x >= startX + fieldWidth) || (y < startY) ||
-			(y >= startY + heightAbove + heightBelow)) {
-			return false;
-		}
-		return true;
-	}
-
-	@Override
-	public int getNumDataRows() {
-		return 1;
-	}
-
-	@Override
-	public int getNumRows() {
-		return 1;
-	}
-
-	@Override
-	public int getNumCols(int row) {
-		return 0;
-	}
-
-	@Override
-	public int getX(int row, int col) {
-		return startX;
-	}
-
-	@Override
-	public int getY(int row) {
-		return startY;
-	}
-
-	@Override
-	public int getRow(int y) {
-		return 0;
-	}
-
-	@Override
-	public int getCol(int row, int x) {
-		return 0;
-	}
-
-	@Override
-	public boolean isValid(int row, int col) {
-		return ((row == 0) && (col == 0));
-	}
-
-	@Override
-	public Rectangle getCursorBounds(int row, int col) {
-		if (!isValid(row, col)) {
-			return null;
-		}
-
-		return new Rectangle(startX, -heightAbove, 2, heightAbove + heightBelow);
-	}
-
-	@Override
-	public int getScrollableUnitIncrement(int topOfScreen, int direction, int max) {
-		if ((topOfScreen < startY) || (topOfScreen > startY + heightAbove + heightBelow)) {
-			return max;
-		}
-
-		if (direction > 0) { // if scrolling down
-			return heightAbove + heightBelow - (topOfScreen - startY);
-		}
-		return startY - topOfScreen;
-	}
-
-	@Override
-	public boolean isPrimary() {
-		return false;
-	}
-
-	@Override
-	public void rowHeightChanged(int newHeightAbove, int newHeightBelow) {
-		this.heightAbove = newHeightAbove;
-		this.heightBelow = newHeightBelow;
-	}
-
-	@Override
-	public String getText() {
-		return "";
-	}
-
-	@Override
-	public String getTextWithLineSeparators() {
-		return "";
-	}
-
-	@Override
-	public RowColLocation textOffsetToScreenLocation(int textOffset) {
-		return new DefaultRowColLocation();
-	}
-
-	@Override
-	public int screenLocationToTextOffset(int row, int col) {
-		return 0;
-	}
-
-	@Override
-	public Object getClickedObject(FieldLocation fieldLocation) {
-		return this;
-	}
-
 	/**
 	 * Toggles the open state of this field.
 	 */
+	@Override
 	public void toggleOpenCloseState() {
 		proxy.getListingLayoutModel().toggleOpen((Data) proxy.getObject());
-	}
-
-//==================================================================================================
-// Static Methods
-//==================================================================================================
-
-	static int getOpenCloseHandleSize() {
-		return OPEN_ICON.getIconWidth();
 	}
 }

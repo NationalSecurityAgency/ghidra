@@ -17,8 +17,7 @@ package help;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.*;
 import java.util.Enumeration;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -46,7 +45,7 @@ import help.validator.JavaHelpValidator;
  * Further, it does not properly locate the shared HTML file reference.  This class allows lookups
  * across modules by overridden the lookup functionality done by the map object.  More specifically,
  * we override {@link #getCombinedMap()} and {@link #getLocalMap()} to use a custom delegate map
- * object that knows how do do this "cross-module" help lookup.
+ * object that knows how to do this "cross-module" help lookup.
  * 
  *
  *@see GHelpHTMLEditorKit
@@ -223,9 +222,9 @@ public class GHelpSet extends HelpSet {
 
 			URL url = null;
 			try {
-				url = new URL(id);
+				url = new URI(id).toURL();
 			}
-			catch (MalformedURLException e) {
+			catch (IllegalArgumentException | MalformedURLException | URISyntaxException e) {
 				LOG.trace("ID is not a URL; tried to make URL from string: " + id);
 				return null;
 			}

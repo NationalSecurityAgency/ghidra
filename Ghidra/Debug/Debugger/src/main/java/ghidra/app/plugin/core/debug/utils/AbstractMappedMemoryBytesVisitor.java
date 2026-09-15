@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,8 +19,8 @@ import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.Objects;
 
-import ghidra.app.services.DebuggerStaticMappingService;
-import ghidra.app.services.DebuggerStaticMappingService.MappedAddressRange;
+import ghidra.debug.api.modules.DebuggerAddressTranslator;
+import ghidra.debug.api.modules.MappedAddressRange;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
@@ -39,20 +39,20 @@ import ghidra.util.MathUtilities;
  * bytes from the mapped programs, along with the trace address where they apply.
  */
 public abstract class AbstractMappedMemoryBytesVisitor {
-	private final DebuggerStaticMappingService mappingService;
+	private final DebuggerAddressTranslator translator;
 	private final byte[] buffer;
 
 	/**
 	 * Construct a visitor object
 	 * 
-	 * @param mappingService the mapping service
+	 * @param translator the address translator
 	 * @param buffer a buffer for the data. This is passed directly into
 	 *            {@link #visitData(Address, byte[], int)}. If a mapped range exceeds the buffer
 	 *            size, the range is broken down into smaller pieces.
 	 */
-	public AbstractMappedMemoryBytesVisitor(DebuggerStaticMappingService mappingService,
+	public AbstractMappedMemoryBytesVisitor(DebuggerAddressTranslator translator,
 			byte[] buffer) {
-		this.mappingService = Objects.requireNonNull(mappingService);
+		this.translator = Objects.requireNonNull(translator);
 		this.buffer = buffer;
 	}
 
@@ -100,7 +100,7 @@ public abstract class AbstractMappedMemoryBytesVisitor {
 	public boolean visit(Trace trace, long snap, AddressSetView hostView)
 			throws MemoryAccessException {
 		boolean result = false;
-		for (Entry<Program, Collection<MappedAddressRange>> ent : mappingService
+		for (Entry<Program, Collection<MappedAddressRange>> ent : translator
 				.getOpenMappedViews(trace, hostView, snap)
 				.entrySet()) {
 			result |= visitProgram(ent.getKey(), ent.getValue());

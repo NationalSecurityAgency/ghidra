@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,13 +17,14 @@ package generic.theme;
 
 import java.io.*;
 import java.util.Enumeration;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipFile;
 
 import ghidra.framework.Application;
 import ghidra.util.Msg;
+import ghidra.util.SecureZipExtractor;
+import utilities.util.FileUtilities;
 
 /**
  * Reads Themes from a file or {@link Reader}
@@ -69,18 +70,18 @@ class ThemeReader extends AbstractThemeReader {
 	}
 
 	private GTheme readZipTheme() throws IOException {
-		try (ZipFile zipFile = new ZipFile(file)) {
-			Enumeration<? extends ZipEntry> entries = zipFile.entries();
+		try (ZipFile archive = ZipFile.builder().setFile(file).get()) {
+			Enumeration<ZipArchiveEntry> entries = archive.getEntries();
 			while (entries.hasMoreElements()) {
-				ZipEntry entry = entries.nextElement();
+				ZipArchiveEntry entry = entries.nextElement();
 				String name = entry.getName();
-				try (InputStream is = zipFile.getInputStream(entry)) {
-					if (name.endsWith(".theme")) {
+				if (name.endsWith(".theme")) {
+					try (InputStream is = archive.getInputStream(entry)) {
 						processThemeData(name, is);
 					}
-					else {
-						processIconFile(name, is);
-					}
+				}
+				else {
+					processIconFile(name, entry, archive);
 				}
 			}
 		}
@@ -130,15 +131,25 @@ class ThemeReader extends AbstractThemeReader {
 			"Custom sections not allowed in theme files! " + section.getName());
 	}
 
-	private void processIconFile(String path, InputStream is) throws IOException {
+	private void processIconFile(String path, ZipArchiveEntry entry, ZipFile archive)
+			throws IOException {
 		int indexOf = path.indexOf("images/");
 		if (indexOf < 0) {
 			Msg.error(this, "Unknown file: " + path);
+			return;
 		}
+
+		if (path.contains("..")) {
+			// We write the theme images to an 'images' dir under the zip root.  No need for '..'
+			Msg.error(this, "Zip paths with '..' not allowed: " + path);
+			return;
+		}
+
 		String relativePath = path.substring(indexOf, path.length());
 		File dir = Application.getUserSettingsDirectory();
-		File iconFile = new File(dir, relativePath);
-		FileUtils.copyInputStreamToFile(is, iconFile);
+		File iconFile = FileUtilities.getSecureFile(dir, relativePath);
+		iconFile.getParentFile().mkdirs();
+		SecureZipExtractor.extractSecurely(archive, entry, iconFile);
 	}
 
 	private void processThemeData(String name, InputStream is) throws IOException {

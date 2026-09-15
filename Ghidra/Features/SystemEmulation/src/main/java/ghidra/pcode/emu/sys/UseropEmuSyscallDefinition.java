@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,22 +15,25 @@
  */
 package ghidra.pcode.emu.sys;
 
-import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
+import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.lifecycle.Unfinished;
 import ghidra.pcode.emu.sys.EmuSyscallLibrary.EmuSyscallDefinition;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
+import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropSymbolMap;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.VoidDataType;
 import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.VariableStorage;
-import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.pcode.*;
 
 /**
  * A system call that is defined by delegating to a p-code userop
- * 
  * <p>
  * This is essentially a wrapper of the p-code userop. Knowing the number of inputs to the userop
  * and by applying the calling conventions of the platform, the wrapper aliases each parameter's
@@ -56,6 +59,7 @@ public class UseropEmuSyscallDefinition<T> implements EmuSyscallDefinition<T> {
 		return dtPointer;
 	}
 
+	protected PcodeOp op; // fabricate the CALLOTHER, so the executor can choose what to do
 	protected final PcodeUseropDefinition<T> opdef;
 	protected final List<Varnode> inVars;
 	protected final Varnode outVar;
@@ -64,12 +68,13 @@ public class UseropEmuSyscallDefinition<T> implements EmuSyscallDefinition<T> {
 	 * Construct a syscall definition
 	 * 
 	 * @see AnnotatedEmuSyscallUseropLibrary
+	 * @param number the opIndex assigned to this userop
 	 * @param opdef the wrapped userop definition
 	 * @param program the program, used for storage computation
 	 * @param convention the "syscall" calling convention
 	 * @param dtMachineWord the "pointer" data type
 	 */
-	public UseropEmuSyscallDefinition(PcodeUseropDefinition<T> opdef, Program program,
+	public UseropEmuSyscallDefinition(long number, PcodeUseropDefinition<T> opdef, Program program,
 			PrototypeModel convention, DataType dtMachineWord) {
 		this.opdef = opdef;
 
@@ -80,36 +85,52 @@ public class UseropEmuSyscallDefinition<T> implements EmuSyscallDefinition<T> {
 				" cannot be used as a syscall");
 		}
 		DataType[] locs = new DataType[inputCount + 1];
-		for (int i = 0; i < locs.length; i++) {
+		locs[0] = opdef.getOutputType() == void.class ? VoidDataType.dataType : dtMachineWord;
+		for (int i = 1; i < locs.length; i++) {
 			locs[i] = dtMachineWord;
 		}
-		VariableStorage[] vss = convention.getStorageLocations(program, locs, false);
+		VariableStorage[] vss = convention.getStorageLocations(program, locs, false, false);
 
 		outVar = getSingleVnStorage(vss[0]);
-		inVars = Arrays.asList(new Varnode[inputCount]);
-		for (int i = 0; i < inputCount; i++) {
-			inVars.set(i, getSingleVnStorage(vss[i + 1]));
-		}
+		inVars = Stream.of(vss).skip(1).map(this::getSingleVnStorage).toList();
 	}
 
 	/**
-	 * Assert variable storage is a single varnode, and get that varnode
+	 * Assert variable storage is empty or a single varnode, and get that varnode
 	 * 
 	 * @param vs the storage
-	 * @return the single varnode
+	 * @return the single varnode, or null if empty
 	 */
 	protected Varnode getSingleVnStorage(VariableStorage vs) {
 		Varnode[] vns = vs.getVarnodes();
-		if (vns.length != 1) {
-			Unfinished.TODO();
+		return switch (vns.length) {
+			case 0 -> null;
+			case 1 -> vns[0];
+			default -> Unfinished.TODO();
+		};
+	}
+
+	PcodeOp constructOp(SleighLanguage language, PcodeUseropLibrary<?> library) {
+		PcodeUseropSymbolMap userops = library.getSymbols(language);
+		int opNumber = userops.getUseropIndex(opdef.getName());
+		if (opNumber == -1) {
+			throw new AssertionError();
 		}
-		return vns[0];
+		Varnode[] opIns = Stream.concat(
+			Stream.of(new Varnode(language.getAddressFactory().getConstantAddress(opNumber), 4)),
+			inVars.stream()).toArray(Varnode[]::new);
+		return new PcodeOp(new SequenceNumber(Address.NO_ADDRESS, 0), PcodeOp.CALLOTHER, opIns,
+			outVar);
 	}
 
 	@Override
 	public void invoke(PcodeExecutor<T> executor, PcodeUseropLibrary<T> library) {
+		SleighLanguage language = executor.getLanguage();
+		if (op == null) {
+			op = constructOp(language, library);
+		}
 		try {
-			opdef.execute(executor, library, outVar, inVars);
+			executor.execute(List.of(op), library);
 		}
 		catch (PcodeExecutionException e) {
 			throw e;

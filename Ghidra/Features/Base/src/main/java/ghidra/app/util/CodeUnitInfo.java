@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,13 +15,13 @@
  */
 package ghidra.app.util;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.*;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Container object to keep a relative index, label, and comments. Used
@@ -91,23 +90,23 @@ public class CodeUnitInfo {
 		List<SourceType> scopeSymSourceList = new ArrayList<SourceType>();
 		List<String> otherSymList = new ArrayList<String>();
 		List<SourceType> otherSymSourceList = new ArrayList<SourceType>();
-		for (int i = 0; i < symbols.length; i++) {
-			SymbolType symbolType = symbols[i].getSymbolType();
-			if (symbols[i].isDynamic()) {
+		for (Symbol symbol : symbols) {
+			SymbolType symbolType = symbol.getSymbolType();
+			if (symbol.isDynamic()) {
 				hasDynamicSymbol = true;
 			}
-			else if (symbols[i].isPrimary()) {
-				primarySymbolName = symbols[i].getName();
-				primarySymbolSource = symbols[i].getSource();
+			else if (symbol.isPrimary()) {
+				primarySymbolName = symbol.getName();
+				primarySymbolSource = symbol.getSource();
 				primarySymbolInFunctionScope = (symbolType == SymbolType.FUNCTION);
 			}
 			else if (symbolType == SymbolType.FUNCTION) {
-				scopeSymList.add(symbols[i].getName());
-				scopeSymSourceList.add(symbols[i].getSource());
+				scopeSymList.add(symbol.getName());
+				scopeSymSourceList.add(symbol.getSource());
 			}
 			else {
-				otherSymList.add(symbols[i].getName());
-				otherSymSourceList.add(symbols[i].getSource());
+				otherSymList.add(symbol.getName());
+				otherSymSourceList.add(symbol.getSource());
 			}
 		}
 		functionScopeSymbolNames = new String[scopeSymList.size()];
@@ -122,30 +121,34 @@ public class CodeUnitInfo {
 
 	/**
 	 * Set the comment to be transferred.
-	 * @param commentType CodeUnit.PRE_COMMENT, POST_COMMENT, 
-	 * PLATE_COMMENT, EOL_COMMENT, or REPEATABLE.
+	 * @param commentType comment type
 	 * @param comment comment
 	 */
-	public void setComment(int commentType, String[] comment) {
+	public void setComment(CommentType commentType, String[] comment) {
 		switch (commentType) {
-			case CodeUnit.PLATE_COMMENT:
+			case PLATE:
 				plateComment = comment;
 				break;
 
-			case CodeUnit.PRE_COMMENT:
+			case PRE:
 				preComment = comment;
 				break;
 
-			case CodeUnit.POST_COMMENT:
+			case POST:
 				postComment = comment;
 				break;
 
-			case CodeUnit.REPEATABLE_COMMENT:
+			case REPEATABLE:
 				repeatableComment = comment;
 				break;
 
-			case CodeUnit.EOL_COMMENT:
+			case EOL:
 				eolComment = comment;
+				break;
+
+			default:
+				throw new IllegalArgumentException(
+					"Unsupported comment type: " + commentType.name());
 		}
 	}
 
@@ -387,17 +390,17 @@ public class CodeUnitInfo {
 	 */
 	private void setNonStackVarInfo(Variable[] vars) {
 		int variableIndex = 0;
-		for (int i = 0; i < vars.length; i++) {
-			if (vars[i].isStackVariable()) {
+		for (Variable var : vars) {
+			if (var.isStackVariable()) {
 				continue; // skip stack variables
 			}
-			varNames[variableIndex] = vars[i].getName();
-			varSources[variableIndex] = vars[i].getSource();
-			Varnode firstVarnode = vars[i].getFirstStorageVarnode();
+			varNames[variableIndex] = var.getName();
+			varSources[variableIndex] = var.getSource();
+			Varnode firstVarnode = var.getFirstStorageVarnode();
 			varAddrs[variableIndex] =
 				firstVarnode != null ? firstVarnode.getAddress() : Address.NO_ADDRESS;
-			varFUOffsets[variableIndex] = vars[i].getFirstUseOffset();
-			varComments[variableIndex] = vars[i].getComment();
+			varFUOffsets[variableIndex] = var.getFirstUseOffset();
+			varComments[variableIndex] = var.getComment();
 			++variableIndex;
 		}
 	}

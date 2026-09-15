@@ -15,21 +15,14 @@
  */
 package ghidra.app.plugin.core.datamgr.actions;
 
-import java.util.Arrays;
-import java.util.List;
-
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.tree.TreePath;
 
 import docking.DialogComponentProvider;
-import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GLabel;
-import docking.widgets.list.GComboBoxCellRenderer;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.tree.ArchiveNode;
-import ghidra.app.plugin.core.datamgr.tree.DataTypeTreeNode;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
 import ghidra.program.model.data.*;
 import ghidra.util.MessageType;
@@ -42,7 +35,7 @@ public class CreateTypeDefDialog extends DialogComponentProvider {
 	private final Category category;
 	private JTextField nameTextField;
 	private DataTypeSelectionEditor dataTypeEditor;
-	private GhidraComboBox<DataTypeManager> dataTypeManagerBox;
+	private JTextField categoryField;
 	private boolean isCancelled;
 	private final TreePath selectedTreePath;
 
@@ -59,10 +52,6 @@ public class CreateTypeDefDialog extends DialogComponentProvider {
 	}
 
 	private JComponent createWorkPanel() {
-		List<DataTypeManager> managers = Arrays.stream(plugin.getDataTypeManagers())
-				.filter(dtm -> !(dtm instanceof BuiltInDataTypeManager))
-				.toList();
-		DataTypeManager defaultDTM = getDefaultDataTypeManager(managers);
 
 		JPanel panel = new JPanel(new PairLayout());
 
@@ -76,9 +65,10 @@ public class CreateTypeDefDialog extends DialogComponentProvider {
 		panel.add(nameTextField);
 
 		// data type info
-		dataTypeEditor = new DataTypeSelectionEditor(
-			null, /* TODO: can't set default dtm for the data type selection field because the dialog allows switching between destination DTMs */
-			plugin.getTool(), AllowedDataTypes.ALL);
+		// Note: can't set default DTM for the data type selection field because the dialog allows 
+		// switching between destination DTMs
+		DataTypeManager dtm = null;
+		dataTypeEditor = new DataTypeSelectionEditor(dtm, plugin.getTool(), AllowedDataTypes.ALL);
 		panel.add(new GLabel("Data type:"));
 		panel.add(dataTypeEditor.getEditorComponent());
 
@@ -86,41 +76,31 @@ public class CreateTypeDefDialog extends DialogComponentProvider {
 			@Override
 			public void editingStopped(ChangeEvent e) {
 				setStatusText("");
+				okCallback();
 			}
 
 			@Override
 			public void editingCanceled(ChangeEvent e) {
 				setStatusText("");
+				cancelCallback();
 			}
 		});
 
 		dataTypeEditor.setDefaultSelectedTreePath(selectedTreePath);
 
-		dataTypeManagerBox = new GhidraComboBox<>();
-		dataTypeManagerBox
-				.setRenderer(GComboBoxCellRenderer.createDefaultTextRenderer(dtm -> dtm.getName()));
-		dataTypeManagerBox.addToModel(managers);
-		dataTypeManagerBox.setSelectedItem(defaultDTM);
+		categoryField = new JTextField(24);
+		categoryField.setEditable(false);
+		categoryField.setName("Category");
 
-		panel.add(new GLabel("Archive:"));
-		panel.add(dataTypeManagerBox);
+		String archiveName = category.getDataTypeManager().getName();
+		categoryField.setText(archiveName + category.getCategoryPath().getPath());
+
+		panel.add(new GLabel("Category:"));
+		panel.add(categoryField);
 
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
 
 		return panel;
-	}
-
-	private DataTypeManager getDefaultDataTypeManager(List<DataTypeManager> mgrs) {
-		// select the manager from where the dialog was created
-		Object lastPathComponent = selectedTreePath.getLastPathComponent();
-		if (lastPathComponent instanceof DataTypeTreeNode dataTypeTreeNode) {
-			ArchiveNode archiveNode = dataTypeTreeNode.getArchiveNode();
-			DataTypeManager manager = archiveNode.getArchive().getDataTypeManager();
-			if (mgrs.contains(manager)) {
-				return manager;
-			}
-		}
-		return null;
 	}
 
 	@Override
@@ -162,12 +142,6 @@ public class CreateTypeDefDialog extends DialogComponentProvider {
 			return;
 		}
 
-		DataTypeManager manager = (DataTypeManager) dataTypeManagerBox.getSelectedItem();
-		if (manager == null) {
-			setStatusText("Must select an archive", MessageType.ERROR);
-			return;
-		}
-
 		clearStatusText();
 		close();
 	}
@@ -198,7 +172,4 @@ public class CreateTypeDefDialog extends DialogComponentProvider {
 		return dataType;
 	}
 
-	DataTypeManager getDataTypeManager() {
-		return (DataTypeManager) dataTypeManagerBox.getSelectedItem();
-	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -478,7 +478,7 @@ public class FunctionPlugin extends Plugin implements DataService {
 			return false;
 		}
 
-		if (dataType != DataType.DEFAULT && dataType != DataType.VOID) {
+		if (dataType != DataType.DEFAULT && dataType != VoidDataType.dataType) {
 			dtmService.setRecentlyUsed(dataType);
 		}
 
@@ -652,7 +652,8 @@ public class FunctionPlugin extends Plugin implements DataService {
 		// Add Favorite data actions
 		List<DataType> favorites = dtmService.getFavorites();
 		for (DataType dataType : favorites) {
-			if (dataType.isEquivalent(POINTER_DATA_TYPE) || dataType.isEquivalent(DataType.VOID)) {
+			if (dataType.isEquivalent(POINTER_DATA_TYPE) ||
+				dataType.isEquivalent(VoidDataType.dataType)) {
 				continue;
 			}
 			action = new DataAction(dataType, this);

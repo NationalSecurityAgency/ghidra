@@ -15,7 +15,7 @@
  */
 package docking;
 
-import java.awt.event.ActionEvent;
+import java.awt.Component;
 import java.util.List;
 
 import javax.swing.AbstractAction;
@@ -46,23 +46,10 @@ public abstract class DockingKeyBindingAction extends AbstractAction {
 		return true; // always enable; this is a internal action that cannot be disabled
 	}
 
-	public abstract KeyBindingPrecedence getKeyBindingPrecedence();
+	public abstract ExecutableAction getExecutableAction(Component focusOwner);
 
 	public boolean isSystemKeybindingPrecedence() {
 		return false;
-	}
-
-	@Override
-	public void actionPerformed(final ActionEvent e) {
-		tool.setStatusInfo("");
-		ComponentProvider provider = tool.getActiveComponentProvider();
-		ActionContext context = getLocalContext(provider);
-		context.setSourceObject(e.getSource());
-		dockingAction.actionPerformed(context);
-	}
-
-	public List<DockingActionIf> getValidActions(Object source) {
-		return getActions(); // the action for this class is always enabled and valid
 	}
 
 	protected ActionContext getLocalContext(ComponentProvider localProvider) {
@@ -70,15 +57,17 @@ public abstract class DockingKeyBindingAction extends AbstractAction {
 			return new DefaultActionContext();
 		}
 
-		ActionContext actionContext = localProvider.getActionContext(null);
-		if (actionContext != null) {
-			return actionContext;
+		ActionContext context = localProvider.getActionContext(null);
+		if (context == null) {
+			context = new DefaultActionContext(localProvider);
 		}
 
-		return new DefaultActionContext(localProvider, null);
+		context.setContextProvider(localProvider);
+		return context;
 	}
 
 	public List<DockingActionIf> getActions() {
 		return List.of(dockingAction);
 	}
+
 }

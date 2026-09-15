@@ -18,6 +18,6 @@ package ghidra.app.util.pdb.classtype;
 /**
  * Compiler-generated virtual base table
  */
-public interface VBTable {
+public interface VBTable extends VXT {
 	// empty for now
 }

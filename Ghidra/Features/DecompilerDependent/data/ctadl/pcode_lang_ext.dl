@@ -1,0 +1,489 @@
+// This file will eventually be incorporate upstream in the CTADL project.
+// It resides here purely to facilitate coordination.
+
+#include "pcode/declarations_ext.dl"
+
+location_hfunc(a, fn) :-
+    LOCATION_FUNC(a, fn).
+
+op_hfunc(op, fn),
+bb_hfunc(bb, fn),
+location_hfunc(a, fn) :-
+    (E_OP_ADDR(op, a) ; E_OP_IOP(op, a)),
+    E_BLOCK_OP(bb, op),
+    BB_HFUNCX(bb, fn),
+    E_DOC_FUNCTION(fn, _).
+    
+OFFSET_INDEXX(num, n) :-
+    LOCATION_NUM(off, num),
+    LOCATION_UNIQ(off, n).
+         
+// VNODE
+ 
+// vnode's either have refs, are constant (spaceid / iop), or are void 
+VNODE_NAMEX(id, vn),
+vnode_id(id, a) :-
+    A_ADDR_REF(a, ref),
+    location_hfunc(a, fn),
+    vn = cat("vn", to_string(ref)),
+    id = cat(fn, ":", to_string(ref)).
+// Tempted to add this, but the results are bad
+//    (E_OP_INPUT(_, a) ; E_OP_OUTPUT(_, a)),
+
+// checked
+VNODE_SPACEX(id, "const"),
+VNODE_ADDRESSX(id, num),
+VNODE_NAMEX(id, id),
+vnode_id(id, id) :-
+    E_OP_IOP(op, id),
+    A_IOP_VALUE(id, num).
+
+// checked
+VNODE_SPACEX(id, "const"),
+VNODE_ADDRESSX(id, num),
+VNODE_NAMEX(id, id),
+vnode_id(id, id) :-
+    E_OP_SPACEID(op, id),
+    A_SPACEID_NAME(id, num).
+
+
+VNODE_ADDRESSX(id, num) :-
+    vnode_id(id, a),
+    A_ADDR_OFFSET(a, off),
+    LOCATION_NUM(off, num).
+           
+VNODE_SPACEX(id, sp) :-
+    vnode_id(id, a),
+    A_ADDR_SPACE(a, sp).
+    
+VNODE_OFFSETX(id, off) :-
+    VNODE_ADDRESSX(id, a),
+    LOCATION_HEX(a, off).
+    
+VNODE_OFFSET_NX(id, n) :-
+    VNODE_ADDRESSX(id, a),
+    LOCATION_NUM(a, n).
+    
+VNODE_PC_ADDRESSX(id, off) :-
+    vnode_id(id, a),
+    A_ADDR_REF(a, aref),
+    A_VARIABLE_VARREF(v, aref),
+    A_VARIABLE_OPREF(v, ref),
+    A_SEQNUM_UNIQ(sq, ref),
+    A_SEQNUM_OFFSET(sq, off).
+  
+VNODE_PC_ADDRESSX(id, off) :-
+    vnode_id(id, a),
+    E_OP_OUTPUT(op, a),
+    E_OP_SEQNUM(op, sq),
+    A_SEQNUM_OFFSET(sq, off).
+
+    
+VNODE_SIZEX(id, sz) :-
+    vnode_id(id, a),
+    A_ADDR_SIZE(a, sz).
+
+VNODE_SIZEX(id, sz) :-
+    vnode_id(id, a),
+    A_ADDR_REF(a, ref),
+    A_HIGH_REPREF(hv, ref),
+    E_HIGH_TYPE(hv, type),
+    A_TYPE_SIZE(type, sz).
+
+
+VNODE_HFUNCX(id, fn) :-
+    vnode_id(id, a),
+    location_hfunc(a, fn).
+    
+VNODE_HVARX(id, hv) :-
+    vnode_id(id, a),
+    E_HIGH_ADDR(hv, a).
+    
+// PCODE
+
+PCODE_MNEMONICX(op, mn) :-
+    A_OP_CODE(op, n),
+    MNEMONICS(n, mn).
+    
+PCODE_OPCODEX(op, n) :-
+    A_OP_CODE(op, n).
+    
+PCODE_INPUTX(op, n, id) :-
+    E_OP_INPUT(op, addr),
+    vnode_id(id, addr),
+    A_INPUT_INDEX(addr, n).
+
+PCODE_OUTPUTX(op, id) :-
+    E_OP_OUTPUT(op, addr),
+    vnode_id(id, addr).
+
+
+PCODE_TARGETX(op, addr) :-
+    E_OP_SEQNUM(op, sq),
+    A_SEQNUM_OFFSET(sq, addr).
+    
+PCODE_PARENTX(op, p) :-
+    A_OP_CODE(op, _),
+    E_BLOCK_OP(p, op).
+    
+PCODE_NEXTX(op, nxt) :-
+    E_OP_SEQNUM(op, opsq),
+    E_BLOCK_OP(block, op),
+    E_BLOCK_OP(block, nxt),
+    A_OP_INDEX(op, opn),
+    A_OP_INDEX(nxt, nxtn),
+    nxtn = opn + 1.
+
+pcode_id(op, var) :-
+    E_OP_SEQNUM(op, sq),
+    A_SEQNUM_OFFSET(sq, addr),
+    A_OP_INDEX(op, ref),
+    var = cat(addr, ":", to_string(ref)).
+  
+PCODE_INDEXX(op, idx) :-
+    A_OP_INDEX(op, idx).
+  
+// SYMBOL
+  
+SYMBOL_NAMEX(hs, name) :-
+    A_SYMBOL_NAME(hs, name).
+    
+// checked    
+SYMBOL_HVARX(hs, hv) :-
+    A_HIGH_SYMREF(hv, ref),
+    A_SYMBOL_ID(hs, ref),
+    hvar_hfunc(hv, fn),
+    SYMBOL_HFUNCX(hs, fn).
+    
+// checked    
+SYMBOL_HFUNCX(hs, fn) :-
+    E_DOC_FUNCTION(fn, f),
+    E_FUNCTION_LOCALDB(f, db),
+    E_LOCALDB_SCOPE(db, scope),
+    E_SCOPE_SYMBOLLIST(scope, list),
+    E_SYMBOLLIST_MAPSYM(list, map),
+    E_MAPSYM_SYMBOL(map, hs).
+
+// HVAR
+
+// test
+hvar_hfunc(hv, fn) :-
+    E_DOC_FUNCTION(fn, f),
+    E_FUNCTION_HIGHLIST(f, list),
+    E_HIGHLIST_HIGH(list, hv).
+
+
+// checked    
+HVAR_NAMEX(hv, name) :-
+    SYMBOL_HVARX(sym, hv),
+    A_SYMBOL_NAME(sym, name).
+            
+// adds for XML content
+HVAR_NAMEX(hv, name) :-
+    varnode_hvar(v, hv),
+    A_VARIABLE_XMLCONTENT(v, name).
+    
+HVAR_NAMEX(hv, name) :-
+    varnode_hvar(v, hv),
+    A_VARIABLE_XMLCONTENT(v, prefix),
+    VARIABLE_FIELD(v, f),
+    A_FIELD_XMLCONTENT(f, suffix),
+    name = cat(prefix, ".", suffix).
+
+// adds for addresses
+HVAR_NAMEX(hv, name) :-
+    hvar_hfunc(hv, fn),
+    A_HIGH_REPREF(hv, ref),
+    A_ADDR_REF(a, ref),
+    A_ADDR_OFFSET(a, off),
+    A_ADDR_SPACE(a, space),
+    location_hfunc(a, fn),
+    name = cat(fn, ":", space, ":", to_string(off)).
+            
+HVAR_NAMEX(hv, name) :-
+    A_HIGH_CLASS(hv, cls),
+    E_HIGH_ADDR(hv, addr),
+    A_ADDR_OFFSET(addr, off),
+    name = cat(cls, ":", to_string(off)).
+  
+HVAR_REPRESENTATIVEX(hv, id) :-
+    vnode_id(id, a),
+    A_ADDR_REF(a, ref),
+    A_HIGH_REPREF(hv, ref).
+   
+HVAR_TYPEX(hv, type) :-
+    E_HIGH_TYPE(hv, type).
+   
+HVAR_TYPEX(hv, ref) :-
+    E_HIGH_TYPEREF(hv, ref).
+   
+// BB
+
+BB_FIRSTX(bb, op) :-
+    E_BLOCK_OP(bb, op),
+    A_OP_INDEX(op, n),
+    n = 0.
+    
+BB_EDGE(b0, b1) :-
+   A_BLOCKEDGE_INDEX(be, to),
+   E_BLOCKEDGE_EDGE(be, e),
+   A_EDGE_END(e, from),
+   A_BLOCK_INDEX(b0, from),
+   A_BLOCK_INDEX(b1, to).
+
+BB_HFUNCX(bb, fn) :-
+    E_DOC_FUNCTION(fn, f),
+    E_FUNCTION_BLOCK(f, bb).
+    
+BB_HFUNCX(bb, fn) :-
+    E_DOC_FUNCTION(fn, f),
+    E_FUNCTION_AST(f, ast),
+    E_AST_BLOCK(ast, bb).
+   
+BB_HFUNCX(bb, fn) :-
+    BB_HFUNCX(bbf, fn),
+    E_BLOCK_BLOCK(bbf, bb).
+ 
+// HFUNC
+  
+HFUNC_EPX(fn, off) :-
+    E_DOC_FUNCTION(fn, f),
+    E_FUNCTION_ADDR(f, addr),
+    A_ADDR_OFFSET(addr, off).
+    
+HFUNC_LOCAL_EPX(off, off) :-
+    E_FUNCTION_ADDR(_, addr),
+    A_ADDR_OFFSET(addr, off).
+    
+HFUNC_FUNCX(fn, fn) :-
+    E_DOC_FUNCTION(fn, _).
+    
+HFUNC_NAMEX(fn, name) :-
+    E_DOC_FUNCTION(fn, f),
+    A_FUNCTION_NAME(f, name).
+    
+HFUNC_ISEXTX(fn) :-
+    E_DOC_FUNCTION(fn, f),
+    HFUNC_FUNCX(f, fx),
+    FUNC_ISEXT(fx).
+    
+HFUNC_PROTOX(fn, p) :-
+    E_DOC_FUNCTION(fn, f),
+    E_FUNCTION_FUNCPROTO(f, p).
+    
+// PROTO
+
+PROTO_CALLING_CONVENTIONX(proto, cc) :-
+    A_PROTOTYPE_MODEL(proto, cc).
+    
+PROTO_HAS_THISX(proto) :-
+    A_PROTOTYPE_MODEL(proto, "__thiscall").
+    
+PROTO_IS_CONSTRUCTORX(proto) :-
+    A_PROTOTYPE_CONSTRUCTOR(proto, "true").
+    
+PROTO_IS_DESTRUCTORX(proto) :-
+    A_PROTOTYPE_DESTRUCTOR(proto, "true").
+    
+PROTO_IS_INLINEX(proto) :-
+    A_PROTOTYPE_INLINE(proto, "true").
+    
+PROTO_IS_VARARGX(proto) :-
+    A_PROTOTYPE_DOTDOTDOT(proto, "true").
+    
+PROTO_IS_VOIDX(proto) :-
+    E_PROTOTYPE_RETURNSYM(proto, ret),
+    E_RETURNSYM_VOID(ret, _).
+    
+PROTO_PARAMETERX(proto, n, p) :-
+    SYMBOL_HFUNCX(p, fn),
+    A_SYMBOL_CAT(p, 0),
+    A_SYMBOL_INDEX(p, n),
+    E_DOC_FUNCTION(fn, f),
+    E_FUNCTION_FUNCPROTO(f, proto).
+
+PROTO_PARAMETER_COUNTX(proto, mx) :-
+    mx = 1 + max n : {
+	PROTO_PARAMETERX(proto, n, _)
+    }.
+
+PROTO_PARAMETER_DATATYPEX(p, type) :-
+    PROTO_PARAMETERX(_, _, p),
+    E_SYMBOL_TYPE(p, type).
+//  E_TYPE_TYPEREF(type, ref),
+//  A_TYPEREF_NAME(ref, name).
+
+PROTO_PARAMETER_DATATYPEX(p, ref) :-
+    PROTO_PARAMETERX(_, _, p),
+    E_SYMBOL_TYPEREF(p, ref).
+//  A_TYPEREF_NAME(ref, name).
+
+PROTO_RETTYPEX(proto, type) :-
+    E_PROTOTYPE_RETURNSYM(proto, sym),
+    E_RETURNSYM_TYPE(sym, type).
+//  A_TYPEREF_NAME(ref, name).
+
+PROTO_RETTYPEX(proto, ref) :-
+    E_PROTOTYPE_RETURNSYM(proto, sym),
+    E_RETURNSYM_TYPEREF(sym, ref).
+//  A_TYPEREF_NAME(ref, name).
+
+// Helper relations:  VARNODE_...
+
+varnode_hfunc(v, fn) :-
+    E_BLOCK_VARIABLE(bb, v),
+    BB_HFUNCX(bb, fn).
+    
+varnode_hfunc(v, fn) :-
+    E_STATEMENT_VARIABLE(st, v),
+    E_BLOCK_STATEMENT(bb, st),
+    BB_HFUNCX(bb, fn).
+    
+varnode_hfunc(v, fn) :-
+    E_VARDECL_VARIABLE(decl, v),
+    E_FUNCTION_VARDECL(f, decl),
+    E_DOC_FUNCTION(fn, f).
+
+varnode_hfunc(v, fn) :-
+    E_VARDECL_VARIABLE(decl, v),
+    E_FUNCPROTO_VARDECL(proto, decl),
+    E_FUNCTION_FUNCPROTO(f, proto),
+    E_DOC_FUNCTION(fn, f).
+
+varnode_hfunc(v, fn) :-
+    E_DOC_FUNCTION(fn, f),
+    E_FUNCTION_AST(f, ast),
+    E_AST_VARNODES(ast, v). 
+
+varnode_hfunc(a, fn) :-
+    (E_OP_INPUT(op, a) ; E_OP_OUTPUT(op, a)),
+    E_OP_SEQNUM(op, sq),
+    location_hfunc(sq, fn).
+
+       
+varnode_hvar(v, hv) :-
+    E_HIGH_ADDR(hv, addr),
+    A_ADDR_REF(addr, ref),
+    A_VARIABLE_VARREF(v, ref),
+    location_hfunc(addr, fn),
+    varnode_hfunc(v, fn).
+    
+varnode_hvar(v, hv) :-
+    E_HIGH_ADDR(hv, addr),
+    A_HIGH_REPREF(hv, ref),
+    A_VARIABLE_VARREF(v, ref),
+    location_hfunc(addr, fn),
+    varnode_hfunc(v, fn).
+ 
+// Should this be E_OP_OUTPUT?    
+varnode_hvar(v, hv) :-
+    A_VARIABLE_XMLCONTENT(v, _),
+    A_VARIABLE_OPREF(v, ref),
+    A_SEQNUM_UNIQ(sq, ref),
+    E_OP_SEQNUM(op, sq),
+    E_OP_ADDR(op, x),
+    A_ADDR_REF(x, xref),
+    A_HIGH_REPREF(hv, xref).  
+ 
+
+.output OFFSET_INDEXX(IO=file, filename="./export/OFFSET_INDEX.facts")
+.output VNODE_SPACEX(IO=file, filename="./export/VNODE_SPACE.facts")
+.output VNODE_PC_ADDRESSX(IO=file, filename="./export/VNODE_PC_ADDRESS.facts")
+.output VNODE_ADDRESSX(IO=file, filename="./export/VNODE_ADDRESS.facts")
+.output VNODE_OFFSETX(IO=file, filename="./export/VNODE_OFFSET.facts")
+.output VNODE_OFFSET_NX(IO=file, filename="./export/VNODE_OFFSET_N.facts")
+.output VNODE_NAMEX(IO=file, filename="./export/VNODE_NAME.facts")
+.output VNODE_SIZEX(IO=file, filename="./export/VNODE_SIZE.facts")
+.output VNODE_HFUNCX(IO=file, filename="./export/VNODE_HFUNC.facts")
+.output VNODE_HVARX(IO=file, filename="./export/VNODE_HVAR.facts")
+.output PCODE_INDEXX(IO=file, filename="./export/PCODE_INDEX.facts")
+.output PCODE_INPUTX(IO=file, filename="./export/PCODE_INPUT.facts")
+.output PCODE_OUTPUTX(IO=file, filename="./export/PCODE_OUTPUT.facts")
+.output PCODE_MNEMONICX(IO=file, filename="./export/PCODE_MNEMONIC.facts")
+.output PCODE_NEXTX(IO=file, filename="./export/PCODE_NEXT.facts")
+.output PCODE_OPCODEX(IO=file, filename="./export/PCODE_OPCODE.facts")
+.output PCODE_TARGETX(IO=file, filename="./export/PCODE_TARGET.facts")
+.output PCODE_PARENTX(IO=file, filename="./export/PCODE_PARENT.facts")
+.output SYMBOL_NAMEX(IO=file, filename="./export/SYMBOL_NAME.facts")
+.output SYMBOL_HFUNCX(IO=file, filename="./export/SYMBOL_HFUNC.facts")
+.output SYMBOL_HVARX(IO=file, filename="./export/SYMBOL_HVAR.facts")
+.output hvar_hfunc(IO=file, filename="./export/HVAR_HFUNC.facts")
+.output HVAR_NAMEX(IO=file, filename="./export/HVAR_NAME.facts")
+.output HVAR_REPRESENTATIVEX(IO=file, filename="./export/HVAR_REPRESENTATIVE.facts")
+.output HFUNC_EPX(IO=file, filename="./export/HFUNC_EP.facts")
+.output HFUNC_FUNCX(IO=file, filename="./export/HFUNC_FUNC.facts")
+.output HFUNC_NAMEX(IO=file, filename="./export/HFUNC_NAME.facts")
+.output HFUNC_ISEXTX(IO=file, filename="./export/HFUNC_ISEXT.facts")
+.output HFUNC_LOCAL_EPX(IO=file, filename="./export/HFUNC_LOCAL_EP.facts")
+.output HFUNC_PROTOX(IO=file, filename="./export/HFUNC_PROTO.facts")
+.output BB_FIRSTX(IO=file, filename="./export/BB_FIRST.facts")
+.output BB_HFUNCX(IO=file, filename="./export/BB_HFUNC.facts")
+.output PROTO_CALLING_CONVENTIONX(IO=file, filename="./export/PROTO_CALLING_CONVENTION.facts")
+.output PROTO_IS_VOIDX(IO=file, filename="./export/PROTO_IS_VOID.facts")
+.output PROTO_IS_VARARGX(IO=file, filename="./export/PROTO_IS_VARARG.facts")
+.output PROTO_IS_INLINEX(IO=file, filename="./export/PROTO_IS_INLINE.facts")
+.output PROTO_IS_CONSTRUCTORX(IO=file, filename="./export/PROTO_IS_CONSTRUCTOR.facts")
+.output PROTO_IS_DESTRUCTORX(IO=file, filename="./export/PROTO_IS_DESTRUCTOR.facts")
+.output PROTO_HAS_THISX(IO=file, filename="./export/PROTO_HAS_THIS.facts")
+.output PROTO_PARAMETERX(IO=file, filename="./export/PROTO_PARAMETER.facts")
+.output PROTO_PARAMETER_COUNTX(IO=file, filename="./export/PROTO_PARAMETER_COUNT.facts")
+.output PROTO_PARAMETER_DATATYPEX(IO=file, filename="./export/PROTO_PARAMETER_DATATYPE.facts")
+.output PROTO_RETTYPEX(IO=file, filename="./export/PROTO_RETTYPE.facts")
+
+.output pcode_id(IO=file, filename="./export/PCODE_ID.facts")
+.output vnode_id(IO=file, filename="./export/VNODE_ID.facts")
+.output location_hfunc(IO=file, filename="./export/LOCATION_HFUNC.facts")
+.output varnode_hfunc(IO=file, filename="./export/VARNODE_HFUNC.facts")
+.output varnode_hvar(IO=file, filename="./export/VARNODE_HVAR.facts")
+
+.output VNODE_SPACEX(CTADL_OUTPUT_DB_IO)
+.output VNODE_PC_ADDRESSX(CTADL_OUTPUT_DB_IO)
+.output VNODE_ADDRESSX(CTADL_OUTPUT_DB_IO)
+.output VNODE_SIZEX(CTADL_OUTPUT_DB_IO)
+.output VNODE_HFUNCX(CTADL_OUTPUT_DB_IO)
+.output VNODE_HVARX(CTADL_OUTPUT_DB_IO)
+.output VNODE_OFFSETX(CTADL_OUTPUT_DB_IO)
+.output VNODE_OFFSET_NX(CTADL_OUTPUT_DB_IO)
+.output VNODE_NAMEX(CTADL_OUTPUT_DB_IO)
+.output OFFSET_INDEXX(CTADL_OUTPUT_DB_IO)
+.output PCODE_MNEMONICX(CTADL_OUTPUT_DB_IO)
+.output PCODE_INDEXX(CTADL_OUTPUT_DB_IO)
+.output PCODE_INPUTX(CTADL_OUTPUT_DB_IO)
+.output PCODE_OUTPUTX(CTADL_OUTPUT_DB_IO)
+.output PCODE_NEXTX(CTADL_OUTPUT_DB_IO)
+.output PCODE_OPCODEX(CTADL_OUTPUT_DB_IO)
+.output PCODE_TARGETX(CTADL_OUTPUT_DB_IO)
+.output PCODE_PARENTX(CTADL_OUTPUT_DB_IO)
+.output PCODE_NEXTX(CTADL_OUTPUT_DB_IO)
+.output SYMBOL_NAMEX(CTADL_OUTPUT_DB_IO)
+.output SYMBOL_HVARX(CTADL_OUTPUT_DB_IO)
+.output SYMBOL_HFUNCX(CTADL_OUTPUT_DB_IO)
+.output HVAR_NAMEX(CTADL_OUTPUT_DB_IO)
+.output HVAR_REPRESENTATIVEX(CTADL_OUTPUT_DB_IO)
+.output HVAR_TYPEX(CTADL_OUTPUT_DB_IO)
+.output BB_FIRSTX(CTADL_OUTPUT_DB_IO)
+.output BB_HFUNCX(CTADL_OUTPUT_DB_IO)
+.output HFUNC_ISEXTX(CTADL_OUTPUT_DB_IO)
+.output HFUNC_EPX(CTADL_OUTPUT_DB_IO)
+.output HFUNC_FUNCX(CTADL_OUTPUT_DB_IO)
+.output HFUNC_NAMEX(CTADL_OUTPUT_DB_IO)
+.output HFUNC_LOCAL_EPX(CTADL_OUTPUT_DB_IO)
+.output HFUNC_PROTOX(CTADL_OUTPUT_DB_IO)
+.output PROTO_CALLING_CONVENTIONX(CTADL_OUTPUT_DB_IO)
+.output PROTO_IS_VOIDX(CTADL_OUTPUT_DB_IO)
+.output PROTO_IS_VARARGX(CTADL_OUTPUT_DB_IO)
+.output PROTO_IS_INLINEX(CTADL_OUTPUT_DB_IO)
+.output PROTO_IS_CONSTRUCTORX(CTADL_OUTPUT_DB_IO)
+.output PROTO_IS_DESTRUCTORX(CTADL_OUTPUT_DB_IO)
+.output PROTO_HAS_THISX(CTADL_OUTPUT_DB_IO)
+.output PROTO_PARAMETERX(CTADL_OUTPUT_DB_IO)
+.output PROTO_PARAMETER_COUNTX(CTADL_OUTPUT_DB_IO)
+.output PROTO_PARAMETER_DATATYPEX(CTADL_OUTPUT_DB_IO)
+.output PROTO_RETTYPEX(CTADL_OUTPUT_DB_IO)
+
+.output pcode_id(CTADL_OUTPUT_DB_IO)
+.output vnode_id(CTADL_OUTPUT_DB_IO)
+.output location_hfunc(CTADL_OUTPUT_DB_IO)
+
+
+

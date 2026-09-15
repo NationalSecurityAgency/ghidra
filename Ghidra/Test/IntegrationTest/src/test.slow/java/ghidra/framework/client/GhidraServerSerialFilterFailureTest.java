@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.InvalidClassException;
-import java.rmi.RemoteException;
 import java.rmi.UnmarshalException;
 import java.security.Principal;
 import java.util.HashSet;
@@ -33,7 +32,7 @@ import org.junit.experimental.categories.Category;
 import generic.test.category.PortSensitiveCategory;
 import ghidra.framework.model.ServerInfo;
 import ghidra.framework.remote.GhidraServerHandle;
-import ghidra.net.ApplicationKeyManagerFactory;
+import ghidra.net.DefaultKeyManagerFactory;
 import ghidra.server.remote.ServerTestUtil;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.util.task.TaskMonitor;
@@ -46,7 +45,7 @@ public class GhidraServerSerialFilterFailureTest extends AbstractGhidraHeadlessI
 
 	@Before
 	public void setUp() throws Exception {
-		System.clearProperty(ApplicationKeyManagerFactory.KEYSTORE_PATH_PROPERTY);
+		System.clearProperty(DefaultKeyManagerFactory.KEYSTORE_PATH_PROPERTY);
 	}
 
 	@After
@@ -79,7 +78,6 @@ public class GhidraServerSerialFilterFailureTest extends AbstractGhidraHeadlessI
 			enableAnonymous);
 	}
 
-
 	static class BogusPrincipal implements Principal, java.io.Serializable {
 
 		private String username;
@@ -110,22 +108,21 @@ public class GhidraServerSerialFilterFailureTest extends AbstractGhidraHeadlessI
 		startServer(-1, false, false, false);
 
 		ServerInfo server = new ServerInfo("localhost", ServerTestUtil.GHIDRA_TEST_SERVER_PORT);
-		
+
 		GhidraServerHandle serverHandle =
 			ServerConnectTask.getGhidraServerHandle(server, TaskMonitor.DUMMY);
-		
+
 		try {
 			serverHandle.getRepositoryServer(getBogusUserSubject(), new Callback[0]);
 			fail("serial filter rejection failed to perform");
 		}
-		catch (RemoteException e) {
+		catch (Exception e) {
 			Throwable cause = e.getCause();
-			assertTrue("expected remote unmarshall exception", cause instanceof UnmarshalException);
-			cause = cause.getCause();
-			assertTrue("expected remote invalid class exceptionn",
+			assertTrue("Expected remote unmarshall exception", e instanceof UnmarshalException);
+			assertTrue("Expected remote invalid class exceptionn",
 				cause instanceof InvalidClassException);
 		}
-		
+
 	}
 
 }

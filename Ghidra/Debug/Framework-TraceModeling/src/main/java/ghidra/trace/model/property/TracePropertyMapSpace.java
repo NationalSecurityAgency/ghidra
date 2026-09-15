@@ -18,9 +18,11 @@ package ghidra.trace.model.property;
 import java.util.Collection;
 import java.util.Map;
 
+import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Register;
 import ghidra.trace.model.*;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.util.TraceRegisterUtils;
 
 /**
@@ -46,12 +48,39 @@ public interface TracePropertyMapSpace<T> extends TracePropertyMapOperations<T> 
 	/**
 	 * Set a property on the given register for the given lifespan
 	 * 
+	 * @param platform the platform defining the register
+	 * @param lifespan the range of snaps
+	 * @param register the register
+	 * @param value the value to set
+	 */
+	default void set(TracePlatform platform, Lifespan lifespan, Register register, T value) {
+		AddressRange range = platform.getConventionalRegisterRange(getAddressSpace(), register);
+		set(lifespan, range, value);
+	}
+
+	/**
+	 * Set a property on the given register for the given lifespan
+	 * 
 	 * @param lifespan the range of snaps
 	 * @param register the register
 	 * @param value the value to set
 	 */
 	default void set(Lifespan lifespan, Register register, T value) {
-		set(lifespan, TraceRegisterUtils.rangeForRegister(register), value);
+		set(getTrace().getPlatformManager().getHostPlatform(), lifespan, register, value);
+	}
+
+	/**
+	 * Get all entries intersecting the given register and lifespan
+	 * 
+	 * @param platform the platform defining the register
+	 * @param lifespan the range of snaps
+	 * @param register the register
+	 * @return the entries
+	 */
+	default Collection<Map.Entry<TraceAddressSnapRange, T>> getEntries(TracePlatform platform,
+			Lifespan lifespan, Register register) {
+		AddressRange range = platform.getConventionalRegisterRange(getAddressSpace(), register);
+		return getEntries(lifespan, range);
 	}
 
 	/**
@@ -63,7 +92,7 @@ public interface TracePropertyMapSpace<T> extends TracePropertyMapOperations<T> 
 	 */
 	default Collection<Map.Entry<TraceAddressSnapRange, T>> getEntries(Lifespan lifespan,
 			Register register) {
-		return getEntries(lifespan, TraceRegisterUtils.rangeForRegister(register));
+		return getEntries(getTrace().getPlatformManager().getHostPlatform(), lifespan, register);
 	}
 
 	/**

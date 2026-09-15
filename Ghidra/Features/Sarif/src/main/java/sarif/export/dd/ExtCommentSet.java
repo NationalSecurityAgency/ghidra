@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,15 +15,12 @@
  */
 package sarif.export.dd;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import ghidra.program.model.data.ISF.IsfObject;
 import ghidra.program.model.data.ISF.IsfSetting;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Data;
-import sarif.managers.CommentsSarifMgr;
 
 public class ExtCommentSet implements IsfObject {
 
@@ -49,8 +46,7 @@ public class ExtCommentSet implements IsfObject {
 	}
 
 	private void exportComments(Data data) {
-		for (int i = 0; i < CommentsSarifMgr.COMMENT_TYPES.length; i++) {
-			int type = CommentsSarifMgr.COMMENT_TYPES[i];
+		for (CommentType type : CommentType.values()) {
 			String cval = data.getComment(type);
 			if (cval != null) {
 				if (comment == null) {

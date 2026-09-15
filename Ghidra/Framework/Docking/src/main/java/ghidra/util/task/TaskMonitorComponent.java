@@ -153,7 +153,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 	}
 
 	@Override
-	public void checkCanceled() throws CancelledException {
+	public void checkCancelled() throws CancelledException {
 		if (isCancelled) {
 			throw new CancelledException();
 		}
@@ -251,7 +251,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 	}
 
 	@Override
-	public void clearCanceled() {
+	public void clearCancelled() {
 		synchronized (this) {
 			isCancelled = false;
 		}

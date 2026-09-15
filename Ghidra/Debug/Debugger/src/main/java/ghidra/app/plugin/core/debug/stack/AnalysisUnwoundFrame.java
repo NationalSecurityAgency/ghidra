@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,17 +15,16 @@
  */
 package ghidra.app.plugin.core.debug.stack;
 
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import ghidra.app.plugin.core.bookmark.BookmarkNavigator;
 import ghidra.app.services.DebuggerControlService.StateEditor;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
-import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.exec.BytesPcodeArithmetic;
+import ghidra.pcode.exec.DebuggerPcodeUtils.WatchValue;
 import ghidra.pcode.exec.PcodeExecutorState;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRangeImpl;
@@ -47,12 +46,7 @@ import ghidra.util.task.TaskMonitor;
  * 
  * <p>
  * The typical pattern for invoking analysis to unwind an entire stack is to use
- * {@link StackUnwinder#start(DebuggerCoordinates, TaskMonitor)} or similar, followed by
- * {@link #unwindNext(TaskMonitor)} in a chain until the stack is exhausted or analysis fails to
- * unwind a frame. It may be more convenient to use
- * {@link StackUnwinder#frames(DebuggerCoordinates, TaskMonitor)}. Its iterator implements that
- * pattern. Because unwinding can be expensive, it is recommended to cache the unwound stack when
- * possible. A centralized service for stack unwinding may be added later.
+ * {@link StackUnwinder#getFrames(DebuggerCoordinates, TaskMonitor)}.
  * 
  * @param <T> the type of values retrievable from the unwound frame
  */
@@ -64,7 +58,7 @@ public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 	private final Address spVal;
 	private final Address staticPcVal;
 	private final UnwindInfo info;
-	private final SavedRegisterMap registerMap;
+	final SavedRegisterMap registerMap;
 
 	private final Address base;
 
@@ -83,22 +77,19 @@ public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 	 * @param state the machine state, typically the watch value state for the same coordinates. It
 	 *            is the caller's (i.e., subclass') responsibility to ensure the given state
 	 *            corresponds to the given coordinates.
-	 * @param level the level of this frame
 	 * @param pcVal the (dynamic) address of the next instruction when this frame becomes the
 	 *            current frame
 	 * @param spVal the address of the top of the stack when this frame becomes the current frame
 	 * @param staticPcVal the (static) address of the next instruction
 	 * @param info the information used to unwind this frame
-	 * @param infoErr if applicable, an error describing why the unwind info is missing or
-	 *            incomplete
 	 * @param registerMap a map from registers to the offsets of their saved values on the stack
 	 */
 	AnalysisUnwoundFrame(PluginTool tool, DebuggerCoordinates coordinates, StackUnwinder unwinder,
-			PcodeExecutorState<T> state, int level, Address pcVal, Address spVal,
+			PcodeExecutorState<T> state, Address pcVal, Address spVal,
 			Address staticPcVal, UnwindInfo info, SavedRegisterMap registerMap) {
 		super(tool, coordinates, state);
 		this.unwinder = unwinder;
-		this.level = level;
+		this.level = coordinates.getFrame();
 
 		this.pcVal = pcVal;
 		this.spVal = spVal;
@@ -116,16 +107,13 @@ public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 
 	/**
 	 * Unwind the next frame up
-	 * 
 	 * <p>
 	 * Unwind the frame that would become current if the function that allocated this frame were to
 	 * return. For example, if this frame is at level 3, {@code unwindNext} will attempt to unwind
 	 * the frame at level 4.
-	 * 
 	 * <p>
 	 * The program counter and stack pointer for the next frame are computed using the state
-	 * originally given in
-	 * {@link StackUnwinder#start(DebuggerCoordinates, PcodeExecutorState, TaskMonitor)} and this
+	 * originally given in {@link StackUnwinder#start(DebuggerCoordinates, TaskMonitor)} and this
 	 * frame's unwind information. The state is usually the watch-value state bound to the starting
 	 * coordinates. The program counter is evaluated like any other variable. The stack pointer is
 	 * computed by removing the depth of this frame. Then registers are restored and unwinding
@@ -136,24 +124,19 @@ public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 	 * @throws CancelledException if the monitor is cancelled
 	 * @throws UnwindException if unwinding fails
 	 */
-	public AnalysisUnwoundFrame<T> unwindNext(TaskMonitor monitor) throws CancelledException {
+	public AnalysisUnwoundFrame<WatchValue> unwindNext(TaskMonitor monitor)
+			throws CancelledException {
 		if (info == null || info.ofReturn() == null) {
 			throw new NoSuchElementException();
 		}
-		SavedRegisterMap registerMap = this.registerMap.fork();
-		info.mapSavedRegisters(base, registerMap);
-		Address pcVal = info.computeNextPc(base, state, codeSpace, pc);
-		Address spVal = info.computeNextSp(base);
-		return unwinder.unwind(coordinates, level + 1, pcVal, spVal, state, registerMap,
-			monitor);
+		return unwinder.getFrame(coordinates, state, level + 1, null, monitor);
 	}
 
 	@Override
 	protected Address applyBase(long offset) {
 		if (base == null) {
-			throw new UnwindException(
-				"Cannot compute stack address for offset %d.\nFrame error: %s".formatted(offset,
-					info.error().getMessage()),
+			throw new UnwindException("Cannot compute stack address for offset %d.\nFrame error: %s"
+					.formatted(offset, info.error().getMessage()),
 				info.error());
 		}
 		return base.add(offset);
@@ -191,8 +174,7 @@ public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 
 	@Override
 	public String getDescription() {
-		return String.format("%s %s pc=%s sp=%s base=%s",
-			level, info.function(),
+		return String.format("%s %s pc=%s sp=%s base=%s", level, info.function(),
 			pcVal == null ? null : pcVal.toString(false),
 			spVal == null ? null : spVal.toString(false),
 			base == null ? null : base.toString(false));
@@ -206,6 +188,11 @@ public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 	@Override
 	public Address getProgramCounter() {
 		return pcVal;
+	}
+
+	@Override
+	public Address getStaticCounter() {
+		return staticPcVal;
 	}
 
 	public Address getStackPointer() {
@@ -296,18 +283,15 @@ public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 	 * may be placed a little after the derived stack pointer to accommodate the parameters of an
 	 * inner stack frame. The structure data type will have the category path
 	 * {@link StackUnwinder#FRAMES_PATH}. This allows follow-on analysis to identify data units
-	 * representing unwound frames. See {@link #isFrame(TraceData)}.</li>
+	 * representing unwound frames.</li>
 	 * <li>Places a comment at the start of the frame. This is meant for human consumption, so
 	 * follow-on analysis should not attempt to parse or otherwise interpret it. It will indicate
 	 * the frame level (0 being the innermost), the function name, the program counter, the stack
 	 * pointer, and the frame base pointer.</li>
 	 * <li>Places a {@link RefType#DATA} reference from the frame start to its own base address.
-	 * This permits follow-on analysis to derive variable values stored on the stack. See
-	 * {@link #getBase(TraceData)} and {@link #getValue(TraceData, VariableStorage)}.</li>
+	 * This permits follow-on analysis to derive variable values stored on the stack.</li>
 	 * <li>Places a {@link RefType#DATA} reference from the program counter to the frame start. This
-	 * allows follow-on analysis to determine the function for the frame. See
-	 * {@link #getProgramCounter(TraceData)} and
-	 * {@link #getFunction(TraceData, DebuggerStaticMappingService)}.</li>
+	 * allows follow-on analysis to determine the function for the frame.</li>
 	 * </ul>
 	 * 
 	 * <p>
@@ -337,8 +321,13 @@ public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 				"Frame " + level + " has lenght 0");
 			return null;
 		}
-		for (TraceBookmark existing : bm.getBookmarksIntersecting(span,
-			new AddressRangeImpl(spPlusParams, spPlusParams.add(structure.getLength() - 1)))) {
+
+		List<TraceBookmark> copy = new ArrayList<>();
+		bm.getBookmarksIntersecting(span,
+			new AddressRangeImpl(spPlusParams, spPlusParams.add(structure.getLength() - 1)))
+				.forEach(copy::add);
+
+		for (TraceBookmark existing : copy) {
 			truncateOrDelete(existing, span);
 		}
 		if (!warnings.isBlank()) {
@@ -352,8 +341,8 @@ public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 						spPlusParams.add(structure.getLength() - 1)), false, monitor);
 			TraceData frame = trace.getCodeManager()
 					.definedData()
-					.create(span, spPlusParams, structure);
-			frame.setComment(CodeUnit.PRE_COMMENT, getDescription());
+					.create(span, spPlusParams, platform, structure);
+			frame.setComment(CommentType.PRE, getDescription());
 			TraceReferenceManager refs = trace.getReferenceManager();
 			refs.clearReferencesFrom(span, frame.getRange());
 			refs.clearReferencesTo(span, frame.getRange());

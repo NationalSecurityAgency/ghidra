@@ -1,0 +1,35 @@
+<BytePatternSearchLibrary>
+   <Family Name="TestD" Filter="TypeA">
+	<SearchItem Name="DIP32" DataType="Dword" SearchType="Function" NotInSearchLength="0" SearchLength="5" Classifier="Test" Submitter="JJ" 		Description="DIP 32 bit function contants (45188e60)">
+		<FunctionConstant>f0f0f0f0</FunctionConstant>
+		<FunctionConstant>fff0000f</FunctionConstant>
+		<FunctionConstant>33333333</FunctionConstant>
+		<FunctionConstant>03fc03fc</FunctionConstant>
+		<FunctionConstant>aaaaaaaa</FunctionConstant>
+	</SearchItem>
+	<SearchItem Name="DIP64" DataType="Qword" SearchType="Function" NotInSearchLength="0" SearchLength="3" Classifier="Test" Submitter="JJ" 				Description="DIP 64 bit function constants - made up for testing purposes (45188e60)">
+		<FunctionConstant>f0f0f0f0fff0000f</FunctionConstant>
+		<FunctionConstant>3333333303fc03fc</FunctionConstant>
+		<FunctionConstant>aaaaaaaafcfcfcfc</FunctionConstant>
+	</SearchItem>
+	
+	<SearchItem Name="DER" DataType="Byte" SearchType="WholeTable" TableLength="16" Classifier="Test" Submitter="JJ" Description="DER Byte Table (45182880)">
+		<AllBytes>00 00 01 01 01 01 01 01 00 01 01 01 01 01 01 00</AllBytes>
+	</SearchItem>
+
+	<SearchItem Name="DTr0" DataType="Dword" SearchType="WholeTable" TableLength="64" Classifier="Test" Submitter="JJ" Description="DTr0 Dword Table (45182890)">
+		<AllBytes>02080800 00080000 02000002 02080802 02000000 00080802 00080002 02000002 00080802 02080800 02080000 00000802 02000802 02000000 00000000 00080002 00080000 00000002 02000800 00080800 02080802 02080000 00000802 02000800 00000002 00000800 00080800 02080002 00000800 02000802 02080002 00000000 00000000 02080802 02000800 00080002 02080800 00080000 00000802 02000800 02080002 00000800 00080800 02000002 00080802 00000002 02000002 02080000 02080802 00080800 02080000 02000802 02000000 00000802 00080002 00000000 00080000 02000000 02000802 02080800 00000002 02080002 00000800 00080802</AllBytes>
+	</SearchItem>
+  </Family>
+  <Family Name="TestQ64" Filter="TypeB">
+	<SearchItem Name="QFunction1" DataType="Qword" SearchType="Function" NotInSearchLength="0" SearchLength="3" Classifier="Test" Submitter="JJ" 		Description="Unsure what function contants in (180008258)">
+		<FunctionConstant>00002b992ddfa232</FunctionConstant>
+		<FunctionConstant>ffffffffffffffff</FunctionConstant>
+		<FunctionConstant>00002b992ddfa233</FunctionConstant>
+	</SearchItem>
+	<SearchItem Name="QFunction2" DataType="Qword" SearchType="Function" NotInSearchLength="0" SearchLength="2" Classifier="Test" Submitter="JJ" 		Description="Unsure what function contants refed by (180008258)">
+		<FunctionConstant>FFFFD466D2205DCD</FunctionConstant>
+		<FunctionConstant>00002B992DDFA232</FunctionConstant>
+	</SearchItem>
+  </Family>
+</BytePatternSearchLibrary>

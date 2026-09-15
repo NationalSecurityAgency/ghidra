@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -133,7 +133,6 @@ public class ProgramDiffPlugin extends ProgramPlugin
 	private DiffController diffControl;
 	private Program primaryProgram;
 	private Program secondaryDiffProgram;
-	private AddressFactory p2AddressFactory;
 	private ProgramDiffDetails diffDetails;
 
 	private ProgramSelection p2DiffHighlight;
@@ -286,33 +285,39 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		if (primaryProgram != null && !showingSecondProgram) {
 			return;
 		}
+
 		p1ViewAddrSet = p1AddressSet;
+		if (!showingSecondProgram) {
+			return;
+		}
 
-		if (showingSecondProgram) {
-			ProgramSelection previousP1Selection = currentSelection;
-			ProgramSelection previousP2DiffHighlight = p2DiffHighlight;
-			ProgramSelection previousP2Selection = p2Selection;
+		ProgramSelection previousP1Selection = currentSelection;
+		ProgramSelection previousP2DiffHighlight = p2DiffHighlight;
+		ProgramSelection previousP2Selection = p2Selection;
 
-			AddressSet p2ViewAddrSet =
-				DiffUtility.getCompatibleAddressSet(p1ViewAddrSet, secondaryDiffProgram);
-			diffListingPanel.setView(p2ViewAddrSet);
-			FieldPanel fp = diffListingPanel.getFieldPanel();
+		AddressSet p2ViewAddrSet =
+			DiffUtility.getCompatibleAddressSet(p1ViewAddrSet, secondaryDiffProgram);
+		diffListingPanel.setView(p2ViewAddrSet);
+		FieldPanel fp = diffListingPanel.getFieldPanel();
 
-			AddressSet p1AddressSetAsP2 =
-				DiffUtility.getCompatibleAddressSet(p1AddressSet, secondaryDiffProgram);
-			AddressIndexMap p2IndexMap = new AddressIndexMap(p1AddressSetAsP2);
-			markerManager.getOverviewProvider().setProgram(secondaryDiffProgram, p2IndexMap);
-			fp.setBackgroundColorModel(new MarkerServiceBackgroundColorModel(markerManager,
-				secondaryDiffProgram, p2IndexMap));
+		AddressSet p1AddressSetAsP2 =
+			DiffUtility.getCompatibleAddressSet(p1AddressSet, secondaryDiffProgram);
+		AddressIndexMap p2IndexMap = new AddressIndexMap(p1AddressSetAsP2);
+		List<ListingOverviewProvider> providers = diffListingPanel.getOverviewProviders();
+		for (ListingOverviewProvider provider : providers) {
+			provider.screenDataChanged(secondaryDiffProgram, p2IndexMap);
+		}
 
-			currentSelection = previousP1Selection;
-			p2DiffHighlight = previousP2DiffHighlight;
+		fp.setBackgroundColorModel(new MarkerServiceBackgroundColorModel(markerManager,
+			secondaryDiffProgram, p2IndexMap));
 
-			p2Selection = previousP2Selection;
-			setProgram2Selection(p2Selection);
-			if (p2DiffHighlight != null) {
-				setDiffHighlight(p2DiffHighlight);
-			}
+		currentSelection = previousP1Selection;
+		p2DiffHighlight = previousP2DiffHighlight;
+
+		p2Selection = previousP2Selection;
+		setProgram2Selection(p2Selection);
+		if (p2DiffHighlight != null) {
+			setDiffHighlight(p2DiffHighlight);
 		}
 	}
 
@@ -556,9 +561,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 			return;
 		}
 		if (currentSelection == null) {
-			AddressFactory p1AddressFactory =
-				(primaryProgram != null) ? primaryProgram.getAddressFactory() : null;
-			currentSelection = new ProgramSelection(p1AddressFactory);
+			currentSelection = new ProgramSelection();
 		}
 		actionManager.setP1SelectToP2ActionEnabled(
 			secondaryDiffProgram != null && !currentSelection.isEmpty());
@@ -605,8 +608,13 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		diffListingPanel.setProgramLocationListener(this);
 		diffListingPanel.setProgramSelectionListener(this);
 		diffListingPanel.getFieldPanel().addFieldMouseListener(new MyFieldMouseListener());
-		diffListingPanel.addMarginProvider(markerManager.getMarginProvider());
-		diffListingPanel.addOverviewProvider(markerManager.getOverviewProvider());
+
+		// Manually install our custom margin provider.  We are not calling setMarginService(), 
+		// which means that many of the listing markers will not work in the diff view.
+		MarkerService markerService = tool.getService(MarkerService.class);
+		diffListingPanel.addMarginProvider(markerService.createMarginProvider());
+		diffListingPanel.addOverviewProvider(markerService.createOverviewProvider());
+
 		diffNavigatable = new DiffNavigatable(this, codeViewerService.getNavigatable());
 		diffFieldNavigator = new FieldNavigator(diffServiceProvider, diffNavigatable);
 		diffListingPanel.addButtonPressedListener(diffFieldNavigator);
@@ -678,9 +686,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 
 	ProgramSelection getCurrentSelection() {
 		if (currentSelection == null) {
-			AddressFactory p1AddressFactory =
-				(primaryProgram != null) ? primaryProgram.getAddressFactory() : null;
-			currentSelection = new ProgramSelection(p1AddressFactory);
+			currentSelection = new ProgramSelection();
 		}
 		return currentSelection;
 	}
@@ -753,10 +759,8 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		// Make sure that the Diff selection is to the code unit boundary.
 		ProgramSelection p2CodeUnitSelection =
 			new ProgramSelection(DiffUtility.getCodeUnitSet(newP2Selection, secondaryDiffProgram));
-		AddressFactory p1AddressFactory =
-			(primaryProgram != null) ? primaryProgram.getAddressFactory() : null;
 		ProgramSelection intersection =
-			new ProgramSelection(p2AddressFactory, p2CodeUnitSelection.intersect(p2DiffHighlight));
+			new ProgramSelection(p2CodeUnitSelection.intersect(p2DiffHighlight));
 
 		p2Selection = intersection;
 		AddressSet p2SelectionAsP1Set =
@@ -767,8 +771,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		// of the MultiListing Layout being used.
 		///////////////////////////////////////////
 
-		ProgramSelection p2SelectionAsP1 =
-			new ProgramSelection(p1AddressFactory, p2SelectionAsP1Set);
+		ProgramSelection p2SelectionAsP1 = new ProgramSelection(p2SelectionAsP1Set);
 		runSwing(() -> {
 			MarkerSet selectionMarkers = getSelectionMarkers();
 			selectionMarkers.clearAll();
@@ -783,7 +786,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 			actionManager.setP1SelectToP2ActionEnabled(
 				(secondaryDiffProgram != null) && !currentSelection.isEmpty());
 			firePluginEvent(new ProgramSelectionPluginEvent(this.getName(),
-				new ProgramSelection(p1AddressFactory, currentSelection), primaryProgram));
+				new ProgramSelection(currentSelection), primaryProgram));
 		}
 	}
 
@@ -873,7 +876,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		}
 
 		AddressSet p2DiffSet = DiffUtility.getCompatibleAddressSet(p1DiffSet, secondaryDiffProgram);
-		ProgramSelection p2DiffSelection = new ProgramSelection(p2AddressFactory, p2DiffSet);
+		ProgramSelection p2DiffSelection = new ProgramSelection(p2DiffSet);
 		p2DiffHighlight = p2DiffSelection;
 		AddressSet p2DiffSetAsP1 = DiffUtility.getCompatibleAddressSet(p2DiffSet, primaryProgram);
 
@@ -918,7 +921,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		if (diffControl.hasNext()) {
 			diffControl.next();
 		}
-		setProgram2Selection(new ProgramSelection(p2AddressFactory, getDiffHighlightBlock()));
+		setProgram2Selection(new ProgramSelection(getDiffHighlightBlock()));
 	}
 
 	void previousDiff() {
@@ -926,7 +929,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		if (diffControl.hasPrevious()) {
 			diffControl.previous();
 		}
-		setProgram2Selection(new ProgramSelection(p2AddressFactory, getDiffHighlightBlock()));
+		setProgram2Selection(new ProgramSelection(getDiffHighlightBlock()));
 	}
 
 	private void clearDiff() {
@@ -992,8 +995,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 			AddressSet p1IgnoreSet =
 				DiffUtility.getCompatibleAddressSet(p2IgnoreSet, primaryProgram);
 			diffControl.ignore(p1IgnoreSet, null);
-			p2DiffHighlight =
-				new ProgramSelection(p2AddressFactory, p2DiffHighlight.subtract(p2IgnoreSet));
+			p2DiffHighlight = new ProgramSelection(p2DiffHighlight.subtract(p2IgnoreSet));
 
 			adjustDiffDisplay();
 
@@ -1047,7 +1049,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 			}
 			AddressSetView p2ViewAddrSet =
 				DiffUtility.getCompatibleAddressSet(adjustedView, secondaryDiffProgram);
-			setProgram2Selection(new ProgramSelection(p2AddressFactory, p2ViewAddrSet));
+			setProgram2Selection(new ProgramSelection(p2ViewAddrSet));
 		}
 		finally {
 			diffListingPanel.getFieldPanel().requestFocus();
@@ -1078,7 +1080,6 @@ public class ProgramDiffPlugin extends ProgramPlugin
 			primaryProgram.removeListener(this);
 			primaryProgram = null;
 			secondaryDiffProgram = null;
-			p2AddressFactory = null;
 		}
 		sameProgramContext = false;
 		updatePgm2Enablement();
@@ -1221,7 +1222,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		if (!currentSelection.isEmpty()) {
 			AddressSet p2SelectionSet =
 				DiffUtility.getCompatibleAddressSet(currentSelection, secondaryDiffProgram);
-			setProgram2Selection(new ProgramSelection(p2AddressFactory,
+			setProgram2Selection(new ProgramSelection(
 				DiffUtility.getCodeUnitSet(p2SelectionSet, secondaryDiffProgram)));
 		}
 		if (p2Selection.isEmpty()) {
@@ -1630,7 +1631,6 @@ public class ProgramDiffPlugin extends ProgramPlugin
 
 		primaryProgram = currentProgram;
 		secondaryDiffProgram = newProgram;
-		p2AddressFactory = secondaryDiffProgram.getAddressFactory();
 		applyFilter = applySettingsMgr.getDefaultApplyFilter();
 		diffDetails = new ProgramDiffDetails(primaryProgram, secondaryDiffProgram);
 		primaryProgram.addListener(this);
@@ -1884,14 +1884,14 @@ public class ProgramDiffPlugin extends ProgramPlugin
 					}
 				}
 
-				if (set.equals(p2Selection)) {
+				AddressSetView asView = p2Selection;
+				if (set.equals(asView)) {
 					return; // Selection is unchanged so do nothing.
 				}
 				MarkerSet selectionMarkers = getSelectionMarkers();
 				selectionMarkers.clearAll();
 
-				programSelectionChanged(new ProgramSelection(p2AddressFactory, set),
-					EventTrigger.GUI_ACTION);
+				programSelectionChanged(new ProgramSelection(set), EventTrigger.GUI_ACTION);
 				updatePgm2Enablement();
 			}
 		}

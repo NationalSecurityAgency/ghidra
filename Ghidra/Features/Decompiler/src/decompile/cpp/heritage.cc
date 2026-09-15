@@ -882,6 +882,7 @@ void Heritage::analyzeNewLoadGuards(void)
   for(iter=storeIter;iter!=storeGuard.end(); ++iter) {
     LoadGuard &guard( *iter );
     guard.establishRange(vsSolver.getValueSetRead(guard.op->getSeqNum()));
+    guard.op->setAliasUpdate();		// Mark that alias information for the STORE has been changed
     if (guard.analysisState == 0)
       runFullAnalysis = true;
   }
@@ -1083,7 +1084,7 @@ bool Heritage::discoverIndexedStackPointers(AddrSpace *spc,vector<PcodeOp *> &fr
 	      // If there were no traversals (of non-constant ADD or MULTIEQUAL) then the
 	      // pointer is equal to the stackpointer plus a constant (through an indirect is possible)
 	      // This will likely get resolved in the next heritage pass, but we leave the
-	      // spacebaseptr mark on, so that that the indirects don't get removed
+	      // spacebaseptr mark on, so the indirects don't get removed
 	      fd->opMarkSpacebasePtr(op);
 	    }
 	  }
@@ -1191,7 +1192,7 @@ void Heritage::guard(const Address &addr,int4 size,bool addIndirects,
     fd->getScopeLocal()->queryProperties(addr,size,Address(),fl);
     guardCalls(fl,addr,size,write);
     guardReturns(fl,addr,size,write);
-    if (fd->getArch()->highPtrPossible(addr,size)) {
+    if (addr.highPtrPossible(size)) {
       guardStores(addr,size,write);
       guardLoads(fl,addr,size,write);
     }
@@ -1739,15 +1740,16 @@ void Heritage::splitByRefinement(Varnode *vn,const Address &addr,const vector<in
   uint4 diff = (uint4)spc->wrapOffset(curaddr.getOffset() - addr.getOffset());
   int4 cutsz = refine[diff];
   if (sz <= cutsz) return;	// Already refined
+  split.push_back(fd->newVarnode(cutsz,curaddr));
+  sz -= cutsz;
   while(sz > 0) {
-    Varnode *vn2 = fd->newVarnode(cutsz,curaddr);
-    split.push_back(vn2);
     curaddr = curaddr + cutsz;
-    sz -= cutsz;
     diff = (uint4)spc->wrapOffset(curaddr.getOffset() - addr.getOffset());
     cutsz = refine[diff];
     if (cutsz > sz)
       cutsz = sz;		// Final piece
+    split.push_back(fd->newVarnode(cutsz,curaddr));
+    sz -= cutsz;
   }
 }
 

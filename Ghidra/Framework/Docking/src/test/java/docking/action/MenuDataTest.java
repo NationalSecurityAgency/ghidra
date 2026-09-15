@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,16 +32,16 @@ public class MenuDataTest {
 	@Test
 	public void testMenuDataParsesMnemonicFromAmpersand() {
 		MenuData menuData = new MenuData(new String[] { "One", "Two", "&Three" });
-		assertEquals(menuData.getMnemonic(), 'T');
+		assertEquals('T', menuData.getMnemonic());
 	}
-	
+
 	/**
 	 * There should be no mnemonic, the ampersand is escaped.
 	 */
 	@Test
 	public void testMenuDataMnemonicSkipsEscapedAmpersand() {
 		MenuData menuData = new MenuData(new String[] { "One", "Two", "&&Three" });
-		assertEquals(menuData.getMnemonic(), MenuData.NO_MNEMONIC);
+		assertEquals(MenuData.NO_MNEMONIC, menuData.getMnemonic());
 	}
 
 	/**
@@ -51,7 +51,7 @@ public class MenuDataTest {
 	@Test
 	public void testMenuDataMnemonicEscapesAmpersandLeftToRight() {
 		MenuData menuData = new MenuData(new String[] { "One", "Two", "T&&&hree" });
-		assertEquals(menuData.getMnemonic(), 'h');
+		assertEquals('h', menuData.getMnemonic());
 	}
 
 	/**
@@ -61,7 +61,7 @@ public class MenuDataTest {
 	@Test
 	public void testMenuDataMnemonicIgnoresTrailingAmpersand() {
 		MenuData menuData = new MenuData(new String[] { "One", "Two", "Three&" });
-		assertEquals(menuData.getMnemonic(), MenuData.NO_MNEMONIC);
+		assertEquals(MenuData.NO_MNEMONIC, menuData.getMnemonic());
 	}
 
 	/**
@@ -71,7 +71,7 @@ public class MenuDataTest {
 	@Test
 	public void testMenuDataMnemonicParsesLeftToRight() {
 		MenuData menuData = new MenuData(new String[] { "One", "Two", "&T&hree" });
-		assertEquals(menuData.getMnemonic(), 'T');
+		assertEquals('T', menuData.getMnemonic());
 	}
 
 	/**
@@ -81,7 +81,7 @@ public class MenuDataTest {
 	public void testMenuDataPassedMnemonicWins() {
 		MenuData menuData = new MenuData(
 			new String[] { "One", "Two", "&Three" }, null, null, 'h', null);
-		assertEquals(menuData.getMnemonic(), 'h');
+		assertEquals('h', menuData.getMnemonic());
 	}
 
 	/**
@@ -110,7 +110,7 @@ public class MenuDataTest {
 
 		String newName = "Completely New Name";
 		menuData.setMenuItemName(newName);
-		assertEquals(menuData.getMnemonic(), MenuData.NO_MNEMONIC);
+		assertEquals(MenuData.NO_MNEMONIC, menuData.getMnemonic());
 	}
 
 	@Test
@@ -123,15 +123,15 @@ public class MenuDataTest {
 		String newName = "Completely New Name";
 		String[] newPath = { "Four", newName };
 		menuData.setMenuPath(newPath);
-		assertEquals(menuData.getMnemonic(), MenuData.NO_MNEMONIC);
+		assertEquals(MenuData.NO_MNEMONIC, menuData.getMnemonic());
 	}
-	
+
 	@Test
 	public void testGetMenuItemNameEscapesAmpersand() {
 		MenuData menuData = new MenuData(new String[] { "One", "Two", "&&Three" });
-		assertEquals(menuData.getMenuItemName(), "&Three");
+		assertEquals("&Three", menuData.getMenuItemName());
 	}
-	
+
 	/**
 	 * Ampersands that are not escaped should be ignored regardless of use as
 	 * mnemonics.
@@ -140,8 +140,8 @@ public class MenuDataTest {
 	public void testGetMenuItemNameIgnoresUnescapedAmpersand() {
 		MenuData menuData = new MenuData(new String[] { "One", "Two", "Three&" });
 		assertEquals(menuData.getMenuItemName(), "Three");
-		
+
 		menuData.setMenuItemName("&T&hree");
-		assertEquals(menuData.getMenuItemName(), "Three");
+		assertEquals("Three", menuData.getMenuItemName());
 	}
 }

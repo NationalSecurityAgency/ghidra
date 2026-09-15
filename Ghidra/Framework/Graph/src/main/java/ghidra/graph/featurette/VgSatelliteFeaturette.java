@@ -97,27 +97,11 @@ public class VgSatelliteFeaturette<V extends VisualVertex,
 		view.setSatelliteDocked(dockSatellite);
 
 		boolean showSatellite = saveState.getBoolean(DISPLAY_SATELLITE, true);
-		toggleSatelliteAction.setSelected(showSatellite);
-		view.setSatelliteVisible(showSatellite);
+		setSatelliteVisible(showSatellite);
 
 		String positionString = saveState.getString(DOCK_SATELLITE_POSITION, LOWER_RIGHT.name());
 		SatellitePosition position = SatellitePosition.valueOf(positionString);
-		view.setSatellitePosition(position);
-		deselectAllSatellitePositions();
-		switch (position) {
-			case LOWER_LEFT:
-				lowerLeftAction.setSelected(true);
-				break;
-			case LOWER_RIGHT:
-				lowerRightAction.setSelected(true);
-				break;
-			case UPPER_LEFT:
-				upperLeftAction.setSelected(true);
-				break;
-			case UPPER_RIGHT:
-				upperRightAction.setSelected(true);
-				break;
-		}
+		setSatellitePosition(position);
 	}
 
 	@Override
@@ -129,7 +113,7 @@ public class VgSatelliteFeaturette<V extends VisualVertex,
 		providerName = provider.getName();
 		windowGroup = provider.getWindowGroup();
 
-		view.setSatelliteListener(new SatelliteListener());
+		view.addSatelliteListener(new SatelliteListener());
 
 		addActions(provider);
 	}
@@ -172,11 +156,10 @@ public class VgSatelliteFeaturette<V extends VisualVertex,
 					return false;
 				}
 
-				if (!(context instanceof VisualGraphActionContext)) {
+				if (!(context instanceof VisualGraphActionContext vgContext)) {
 					return false;
 				}
 
-				VisualGraphActionContext vgContext = (VisualGraphActionContext) context;
 				return vgContext.shouldShowSatelliteActions();
 			}
 		};
@@ -184,7 +167,7 @@ public class VgSatelliteFeaturette<V extends VisualVertex,
 		toggleSatelliteAction.setPopupMenuData(
 			new MenuData(new String[] { "Display Satellite View" }));
 		toggleSatelliteAction.setHelpLocation(
-			new HelpLocation("FunctionCallGraphPlugin", "Satellite_View"));
+			new HelpLocation("VisualGraph", "Satellite_View"));
 
 		dockSatelliteAction = new ToggleDockingAction("Dock Satellite View", owner) {
 			@Override
@@ -200,18 +183,16 @@ public class VgSatelliteFeaturette<V extends VisualVertex,
 					return false;
 				}
 
-				if (!(context instanceof VisualGraphActionContext)) {
+				if (!(context instanceof VisualGraphActionContext vgContext)) {
 					return false;
 				}
 
-				VisualGraphActionContext vgContext = (VisualGraphActionContext) context;
 				return vgContext.shouldShowSatelliteActions();
 			}
 		};
 		dockSatelliteAction.setSelected(true);
 		dockSatelliteAction.setPopupMenuData(new MenuData(new String[] { "Dock Satellite View" }));
-		dockSatelliteAction.setHelpLocation(
-			new HelpLocation("FunctionCallGraphPlugin", "Satellite_View"));
+		dockSatelliteAction.setHelpLocation(new HelpLocation("VisualGraph", "Satellite_View"));
 
 		upperLeftAction = new SatellitePositionAction("Upper Left", UPPER_LEFT, provider);
 		upperRightAction = new SatellitePositionAction("Upper Right", UPPER_RIGHT, provider);
@@ -236,7 +217,31 @@ public class VgSatelliteFeaturette<V extends VisualVertex,
 		}
 	}
 
-	public void deselectAllSatellitePositions() {
+	public void setSatelliteVisible(boolean visible) {
+		toggleSatelliteAction.setSelected(visible);
+		view.setSatelliteVisible(visible);
+	}
+
+	public void setSatellitePosition(SatellitePosition position) {
+		deselectAllSatellitePositions();
+		switch (position) {
+			case LOWER_LEFT:
+				lowerLeftAction.setSelected(true);
+				break;
+			case LOWER_RIGHT:
+				lowerRightAction.setSelected(true);
+				break;
+			case UPPER_LEFT:
+				upperLeftAction.setSelected(true);
+				break;
+			case UPPER_RIGHT:
+				upperRightAction.setSelected(true);
+				break;
+		}
+		view.setSatellitePosition(position);
+	}
+
+	void deselectAllSatellitePositions() {
 		upperLeftAction.setSelected(false);
 		upperRightAction.setSelected(false);
 		lowerLeftAction.setSelected(false);
@@ -283,9 +288,7 @@ public class VgSatelliteFeaturette<V extends VisualVertex,
 
 			satelliteComponent.setMinimumSize(new Dimension(400, 400));
 
-			// TODO - need generic, shared help for the common abstract graph features;
-			//        will be done in an upcoming ticket
-			// setHelpLocation(new HelpLocation("Graph", "Satellite_View_Dock"));
+			setHelpLocation(new HelpLocation("VisualGraph", "Satellite_View_Dock"));
 
 			// this will group the satellite with the provider
 			setWindowMenuGroup(windowGroup);
@@ -357,7 +360,7 @@ public class VgSatelliteFeaturette<V extends VisualVertex,
 			this.position = posiiton;
 			this.provider = provider;
 			setPopupMenuData(new MenuData(new String[] { "Docked Satellite Position", name }));
-			setHelpLocation(new HelpLocation("FunctionCallGraphPlugin", "Satellite_Location"));
+			setHelpLocation(new HelpLocation("VisualGraph", "Satellite_Location"));
 		}
 
 		@Override

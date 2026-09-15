@@ -44,8 +44,20 @@ public class VSCodeIntegrationOptionsPlugin extends Plugin implements Applicatio
 	public static final String PLUGIN_OPTIONS_NAME = "Visual Studio Code Integration";
 
 	public static final String VSCODE_EXE_PATH_OPTION = "Visual Studio Code Executable Path";
-	private static final String VSCODE_EXE_PATH_DESC = "Path to Visual Studio Code executable";
+	private static final String VSCODE_EXE_PATH_DESC = "Full path to Visual Studio Code executable";
 	private static final File VSCODE_EXE_PATH_DEFAULT = getDefaultVSCodeExecutable();
+
+	public static final String VSCODE_ARG1_OPTION =
+		"Visual Studio Code Launch Argument 1 (optional)";
+	private static final String VSCODE_ARG1_DESC =
+		"Optional argument 1 for Visual Studio Code executable";
+	private static final String VSCODE_ARG1_DEFAULT = null;
+
+	public static final String VSCODE_ARG2_OPTION =
+		"Visual Studio Code Launch Argument 2 (optional)";
+	private static final String VSCODE_ARG2_DESC =
+		"Optional argument 2 for Visual Studio Code executable";
+	private static final String VSCODE_ARG2_DEFAULT = null;
 
 	public VSCodeIntegrationOptionsPlugin(PluginTool tool) {
 		super(tool);
@@ -57,6 +69,10 @@ public class VSCodeIntegrationOptionsPlugin extends Plugin implements Applicatio
 		ToolOptions options = tool.getOptions(PLUGIN_OPTIONS_NAME);
 		options.registerOption(VSCODE_EXE_PATH_OPTION, OptionType.FILE_TYPE,
 			VSCODE_EXE_PATH_DEFAULT, null, VSCODE_EXE_PATH_DESC);
+		options.registerOption(VSCODE_ARG1_OPTION, OptionType.STRING_TYPE,
+			VSCODE_ARG1_DEFAULT, null, VSCODE_ARG1_DESC);
+		options.registerOption(VSCODE_ARG2_OPTION, OptionType.STRING_TYPE,
+			VSCODE_ARG2_DEFAULT, null, VSCODE_ARG2_DESC);
 		options.setOptionsHelpLocation(
 			new HelpLocation("VSCodeIntegration", "VSCodeIntegrationOptions"));
 	}
@@ -66,12 +82,18 @@ public class VSCodeIntegrationOptionsPlugin extends Plugin implements Applicatio
 	 */
 	private static File getDefaultVSCodeExecutable() {
 		return switch (OperatingSystem.CURRENT_OPERATING_SYSTEM) {
-			case WINDOWS -> new File(System.getenv("LOCALAPPDATA"),
-				"Programs/Microsoft VS Code/bin/code.cmd");
-			case MAC_OS_X -> new File(
-				"/Applications/Visual Studio Code.app/Contents/MacOS/Electron");
-			case LINUX -> new File("/usr/bin/code");
-			default -> null;
+			case WINDOWS:
+				File local = new File(System.getenv("LOCALAPPDATA"),
+					"Programs/Microsoft VS Code/bin/code.cmd");
+				File admin =
+					new File(System.getenv("PROGRAMFILES"), "Microsoft VS Code/bin/code.cmd");
+				yield admin.exists() ? admin : local;
+			case MAC_OS_X:
+				yield new File("/Applications/Visual Studio Code.app/Contents/MacOS/Electron");
+			case LINUX:
+				yield new File("/usr/bin/code");
+			default:
+				yield null;
 		};
 	}
 }

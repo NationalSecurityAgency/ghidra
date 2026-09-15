@@ -37,9 +37,9 @@ public class OptionsPanel extends JPanel {
 
 	private static final Dimension DEFAULT_PREFERRED_SIZE = new Dimension(650, 350);
 
+	private Map<VTProgramCorrelatorFactory, VTOptions> optionsMap;
 	private List<OptionsEditorPanel> optionsEditorPanelList = new ArrayList<>();
 	private Callback statusChangedCallback;
-	private Map<VTProgramCorrelatorFactory, VTOptions> optionsMap = new HashMap<>();
 
 	private JPanel stagingPanel;
 
@@ -63,25 +63,9 @@ public class OptionsPanel extends JPanel {
 		return preferredSize;
 	}
 
-	public boolean isApplicable(List<VTProgramCorrelatorFactory> correlators) {
-		updateOptionsMap(correlators);
-		return !optionsMap.isEmpty();
-	}
-
-	private void updateOptionsMap(List<VTProgramCorrelatorFactory> correlators) {
-		optionsMap.keySet().retainAll(correlators);
-		for (VTProgramCorrelatorFactory correlator : correlators) {
-			if (!optionsMap.containsKey(correlator)) {
-				VTOptions defaultOptions = correlator.createDefaultOptions();
-				if (defaultOptions != null) {
-					optionsMap.put(correlator, defaultOptions);
-				}
-			}
-		}
-	}
-
-	void initialize(List<VTProgramCorrelatorFactory> correlators) {
-		updateOptionsMap(correlators);
+	void initialize(List<VTProgramCorrelatorFactory> correlators,
+			Map<VTProgramCorrelatorFactory, VTOptions> map) {
+		optionsMap = map;
 		JPanel panel = new JPanel(new VerticalLayout(30));
 		optionsEditorPanelList.clear();
 		for (VTProgramCorrelatorFactory correlator : correlators) {
@@ -132,10 +116,6 @@ public class OptionsPanel extends JPanel {
 		for (OptionsEditorPanel panel : optionsEditorPanelList) {
 			panel.apply();
 		}
-	}
-
-	Map<VTProgramCorrelatorFactory, VTOptions> getOptionsMap() {
-		return optionsMap;
 	}
 
 }

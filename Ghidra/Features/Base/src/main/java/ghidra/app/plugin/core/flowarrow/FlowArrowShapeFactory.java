@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,26 +27,27 @@ class FlowArrowShapeFactory {
 	private static final int TRIANGLE_HEIGHT = 9;
 	private static final int TRIANGLE_WIDTH = 7;
 
-	static Shape createArrowBody(FlowArrowPlugin plugin, FlowArrow arrow, int width, int height,
+	static Shape createArrowBody(FlowArrowMarginProvider provider, FlowArrow arrow, int width,
+			int height,
 			int lineSpacing) {
 
 		GeneralPath linePath = new GeneralPath();
 
 		// Compute the start Y coordinate (place at proper offset, fix if off screen)
-		Integer startTop = plugin.getStartPos(arrow.start);
-		Integer startBottom = plugin.getEndPos(arrow.start);
+		Integer startTop = provider.getStartPos(arrow.start);
+		Integer startBottom = provider.getEndPos(arrow.start);
 		int startY = 0;
 		if (startTop != null && startBottom != null) {
 			int start = startTop;
 			int end = startBottom;
 			startY = (start + end) / 2;// middle of line
 		}
-		else if (plugin.isBelowScreen(arrow.start)) {
+		else if (provider.isBelowScreen(arrow.start)) {
 			startY = height;
 		}
 
-		Integer endTop = plugin.getStartPos(arrow.end);
-		Integer endBottom = plugin.getEndPos(arrow.end);
+		Integer endTop = provider.getStartPos(arrow.end);
+		Integer endBottom = provider.getEndPos(arrow.end);
 		int endY = 0;
 		if (endTop != null && endBottom != null) {
 			int start = endTop;
@@ -55,11 +55,11 @@ class FlowArrowShapeFactory {
 			endY = (start + end) / 2;
 			endY = Math.min(endY, height); // ensure on screen
 		}
-		else if (plugin.isBelowScreen(arrow.end)) {
+		else if (provider.isBelowScreen(arrow.end)) {
 			endY = height;
 		}
 
-		int x = width - ((arrow.depth + 1) * lineSpacing);
+		int x = width - ((arrow.column + 1) * lineSpacing);
 		if (x < 3) {
 			x = 3;
 		}
@@ -126,12 +126,13 @@ class FlowArrowShapeFactory {
 		return linePath;
 	}
 
-	static Shape createArrowHead(FlowArrowPlugin plugin, FlowArrow arrow, int width, int height,
+	static Shape createArrowHead(FlowArrowMarginProvider provider, FlowArrow arrow, int width,
+			int height,
 			int lineSpacing) {
 
 		// Compute the start Y coordinate (place at proper offset, fix if off screen)
-		Integer addrStartInt = plugin.getStartPos(arrow.end);
-		Integer addrEndInt = plugin.getEndPos(arrow.end);
+		Integer addrStartInt = provider.getStartPos(arrow.end);
+		Integer addrEndInt = provider.getEndPos(arrow.end);
 		int endY = 0;
 		if (addrStartInt != null && addrEndInt != null) {
 			int start = addrStartInt;
@@ -139,11 +140,11 @@ class FlowArrowShapeFactory {
 			endY = (start + end) / 2;
 			endY = Math.min(endY, height); // ensure on screen
 		}
-		else if (plugin.isBelowScreen(arrow.end)) {
+		else if (provider.isBelowScreen(arrow.end)) {
 			endY = height;
 		}
 
-		int x = width - ((arrow.depth + 1) * lineSpacing);
+		int x = width - ((arrow.column + 1) * lineSpacing);
 		if (x < 0) {
 			x = 3;
 		}

@@ -23,6 +23,7 @@ import ghidra.app.plugin.core.decompiler.taint.TaintLabel;
 import ghidra.app.plugin.core.decompiler.taint.TaintPlugin;
 import ghidra.app.plugin.core.decompiler.taint.TaintState.MarkType;
 import ghidra.program.model.listing.Function;
+import ghidra.util.HelpLocation;
 import ghidra.util.UndefinedFunction;
 
 /**
@@ -46,6 +47,7 @@ public class TaintSetSizeAction extends TaintAbstractDecompilerAction {
 
 	public TaintSetSizeAction(TaintPlugin plugin) {
 		super("Set length");
+		setHelpLocation(new HelpLocation(TaintPlugin.HELP_LOCATION, TaintPlugin.HELP_LOCATION));
 		// Taint Menu  -> Source sub item.
 		setPopupMenuData(new MenuData(new String[] { "Taint", "Set length" }, "Decompile"));
 		this.plugin = plugin;

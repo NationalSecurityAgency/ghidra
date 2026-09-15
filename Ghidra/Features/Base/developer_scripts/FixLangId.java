@@ -4,15 +4,16 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import static ghidra.framework.main.DataTreeDialogType.*;
 
 import java.io.IOException;
@@ -20,8 +21,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.swing.SwingUtilities;
+import java.util.concurrent.atomic.AtomicReference;
 
 import db.*;
 import db.buffers.BufferFile;
@@ -30,6 +30,7 @@ import ghidra.app.script.ImproperUseException;
 import ghidra.framework.data.GhidraFile;
 import ghidra.framework.data.GhidraFileData;
 import ghidra.framework.main.DataTreeDialog;
+import ghidra.framework.model.DefaultDomainFileFilter;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.store.FolderItem;
 import ghidra.framework.store.local.LocalDatabaseItem;
@@ -38,6 +39,7 @@ import ghidra.program.model.lang.LanguageID;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.Msg;
+import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -115,8 +117,8 @@ public class FixLangId extends GhidraScript {
 			if (langId != null) {
 				Msg.warn(this, "Changing language ID from '" + record.getString(0) + "' to '" +
 					langId + "' for program: " + df.getName());
-				desc = DefaultLanguageService.getLanguageService().getLanguageDescription(
-					new LanguageID(langId));
+				desc = DefaultLanguageService.getLanguageService()
+						.getLanguageDescription(new LanguageID(langId));
 				long txId = dbh.startTransaction();
 				try {
 					record.setString(0, langId);
@@ -138,25 +140,30 @@ public class FixLangId extends GhidraScript {
 	}
 
 	public DomainFile askProgramFile(String title) {
-		final DomainFile[] domainFile = new DomainFile[] { null };
-		final DataTreeDialog dtd = new DataTreeDialog(null, title, OPEN);
-		dtd.addOkActionListener(e -> {
-			dtd.close();
-			domainFile[0] = dtd.getDomainFile();
+
+		AtomicReference<DomainFile> ref = new AtomicReference<>();
+		Swing.runNow(() -> {
+
+			// The file filter employed restricts selection to a program file within the active
+			// project where we have the ability to update file data.
+			DefaultDomainFileFilter filter = new DefaultDomainFileFilter(Program.class, true);
+			DataTreeDialog dtd = new DataTreeDialog(null, title, OPEN, filter);
+			dtd.addOkActionListener(e -> {
+				dtd.close();
+				ref.set(dtd.getDomainFile());
+			});
+
+			dtd.showComponent();
 		});
-		try {
-			SwingUtilities.invokeAndWait(() -> dtd.showComponent());
-		}
-		catch (Exception e) {
-			return null;
-		}
-		if (domainFile[0] != null &&
-			!Program.class.isAssignableFrom(domainFile[0].getDomainObjectClass())) {
+
+		DomainFile domainFile = ref.get();
+		if (domainFile != null &&
+			!Program.class.isAssignableFrom(domainFile.getDomainObjectClass())) {
 			Msg.showError(getClass(), null, "Script Error",
 				"Selected project file is not a program file!");
 			return null;
 		}
-		return domainFile[0];
+		return domainFile;
 	}
 
 	public static Object getInstanceField(String fieldName, Object ownerInstance)

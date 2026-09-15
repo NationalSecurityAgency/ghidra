@@ -20,6 +20,7 @@ import java.util.*;
 
 import javax.swing.Icon;
 
+import docking.widgets.table.actions.DeleteTableRowAction;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramClosedPluginEvent;
 import ghidra.app.nav.Navigatable;
@@ -38,7 +39,6 @@ import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Swing;
 import ghidra.util.table.GhidraProgramTableModel;
-import ghidra.util.table.actions.DeleteTableRowAction;
 import ghidra.util.task.SwingUpdateManager;
 
 //@formatter:off
@@ -170,9 +170,7 @@ public class TableServicePlugin extends ProgramPlugin
 	}
 
 	void remove(TableComponentProvider<?> provider) {
-		Iterator<Program> iter = programMap.keySet().iterator();
-		while (iter.hasNext()) {
-			Program p = iter.next();
+		for (Program p : programMap.keySet()) {
 			List<TableComponentProvider<?>> list = programMap.get(p);
 			if (list.remove(provider)) {
 				if (list.size() == 0) {
@@ -184,9 +182,7 @@ public class TableServicePlugin extends ProgramPlugin
 	}
 
 	void removeDialog(TableServiceTableChooserDialog dialog) {
-		Iterator<Program> iter = programToDialogMap.keySet().iterator();
-		while (iter.hasNext()) {
-			Program p = iter.next();
+		for (Program p : programToDialogMap.keySet()) {
 			List<TableChooserDialog> list = programToDialogMap.get(p);
 			if (list.remove(dialog)) {
 				if (list.size() == 0) {
@@ -213,9 +209,7 @@ public class TableServicePlugin extends ProgramPlugin
 
 	private List<TableComponentProvider<?>> getProviders() {
 		List<TableComponentProvider<?>> clist = new ArrayList<>();
-		Iterator<List<TableComponentProvider<?>>> iter = programMap.values().iterator();
-		while (iter.hasNext()) {
-			List<TableComponentProvider<?>> list = iter.next();
+		for (List<TableComponentProvider<?>> list : programMap.values()) {
 			clist.addAll(list);
 		}
 		return clist;

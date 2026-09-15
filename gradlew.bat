@@ -1,3 +1,6 @@
+:: ###
+:: IP: Apache License 2.0
+:: ##
 @rem
 @rem Copyright 2015 the original author or authors.
 @rem
@@ -77,12 +80,12 @@ if exist "%APP_HOME%\gradle-wrapper.jar" (
     set "GHIDRA_HOME=%APP_HOME%..\..\"
 ) else (
     @rem Development Environment (Eclipse classes or "gradle jar")
-    set "CLASSPATH=%APP_HOME%Ghidra\RuntimeScripts\Common\support\gradle\gradle-wrapper.jar"
+    set "CLASSPATH=%APP_HOME%Ghidra\RuntimeScripts\support\gradle\gradle-wrapper.jar"
     set "GHIDRA_HOME=%APP_HOME%"
 )
 
 @rem Read application properties
-for /f "tokens=1,2 delims==" %%g in (%GHIDRA_HOME%Ghidra\application.properties) DO (set %%g=%%h)
+for /f "usebackq tokens=1,2 delims==" %%g in ("%GHIDRA_HOME%Ghidra\application.properties") DO (set %%g=%%h)
 
 @rem Only proceed with wrapper if we are in single-repo PUBLIC/DEV mode
 set PROCEED=1

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -157,7 +157,7 @@ public class DbViewer extends JFrame {
 				tables[i].getName() + " (" + Integer.toString(tables[i].getRecordCount()) + ")";
 		}
 		combo = new GComboBox<>(names);
-		combo.addActionListener(e -> updateTable());
+		combo.addItemListener(e -> updateTable());
 		subNorthPanel.add(combo);
 		northPanel.add(subNorthPanel);
 		mainPanel.add(northPanel, BorderLayout.NORTH);

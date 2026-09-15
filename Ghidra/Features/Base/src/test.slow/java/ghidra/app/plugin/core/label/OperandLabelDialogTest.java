@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,6 @@ import static org.junit.Assert.*;
 import org.junit.*;
 
 import docking.ActionContext;
-import docking.widgets.combobox.GhidraComboBox;
 import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.framework.plugintool.PluginTool;
@@ -74,10 +73,9 @@ public class OperandLabelDialogTest extends AbstractGhidraHeadedIntegrationTest 
 		performAction(setLabelAction, context, false);
 		waitForSwing();
 
-		OperandLabelDialog dialog = waitForDialogComponent(OperandLabelDialog.class);
-		GhidraComboBox<?> combo = (GhidraComboBox<?>) findComponentByName(dialog, "MYCHOICE");
+		SymbolChooserDialog dialog = waitForDialogComponent(SymbolChooserDialog.class);
 
-		setSelectedItem(combo, "bob");
+		setSelectedItem(dialog, "bob");
 
 		pressButtonByText(dialog, "OK");
 		waitForSwing();
@@ -91,10 +89,9 @@ public class OperandLabelDialogTest extends AbstractGhidraHeadedIntegrationTest 
 		performAction(setLabelAction, context, false);
 		waitForSwing();
 
-		dialog = waitForDialogComponent(OperandLabelDialog.class);
-		combo = (GhidraComboBox<?>) findComponentByName(dialog, "MYCHOICE");
+		dialog = waitForDialogComponent(SymbolChooserDialog.class);
 
-		setSelectedItem(combo, "b");
+		setSelectedItem(dialog, "b");
 		pressButtonByText(dialog, "OK");
 
 		program.flushEvents();
@@ -108,7 +105,7 @@ public class OperandLabelDialogTest extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals("dword ptr [b]", cb.getCurrentFieldText());
 	}
 
-	private void setSelectedItem(GhidraComboBox<?> combo, String s) {
-		runSwing(() -> combo.setSelectedItem(s));
+	private void setSelectedItem(SymbolChooserDialog dialog, String item) {
+		runSwing(() -> dialog.setSelectedItem(item));
 	}
 }

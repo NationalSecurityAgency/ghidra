@@ -25,7 +25,6 @@ import generic.lsh.vector.LSHVectorFactory;
 import ghidra.app.script.GhidraScript;
 import ghidra.features.base.values.GhidraValuesMap;
 import ghidra.features.bsim.query.*;
-import ghidra.features.bsim.query.BSimServerInfo.DBType;
 import ghidra.features.bsim.query.FunctionDatabase.BSimError;
 import ghidra.features.bsim.query.FunctionDatabase.ErrorCategory;
 import ghidra.features.bsim.query.description.DatabaseInformation;
@@ -53,6 +52,12 @@ public class AddProgramToH2BSimDatabaseScript extends GhidraScript {
 
 		if (currentProgram == null) {
 			popup("This script requires that a program be open in the tool");
+			return;
+		}
+
+		if (currentProgram.isChanged()) {
+			popup(currentProgram.getName() + " has unsaved changes.  Please save the program" +
+				" before adding it to a BSim database.");
 			return;
 		}
 
@@ -84,6 +89,16 @@ public class AddProgramToH2BSimDatabaseScript extends GhidraScript {
 
 			h2Database.initialize();
 			DatabaseInformation dbInfo = h2Database.getInfo();
+
+			// check whether the executable is already in the database
+			// before generating signatures
+			QueryExeInfo exeInfo = new QueryExeInfo();
+			exeInfo.filterMd5 = currentProgram.getExecutableMD5();
+			ResponseExe response = exeInfo.execute(h2Database);
+			if (response.recordCount > 0) {
+				popup(currentProgram.getName() + " is already in the database.");
+				return;
+			}
 
 			LSHVectorFactory vectorFactory = h2Database.getLSHVectorFactory();
 			GenSignatures gensig = null;
@@ -118,6 +133,11 @@ public class AddProgramToH2BSimDatabaseScript extends GhidraScript {
 				final Iterator<Function> iter = fman.getFunctions(true);
 				gensig.scanFunctions(iter, fman.getFunctionCount(), monitor);
 				final DescriptionManager manager = gensig.getDescriptionManager();
+				if (manager.numFunctions() == 0) {
+					Msg.showWarn(this, null, "Skipping Insert",
+						currentProgram.getName() + " contains no functions with bodies");
+					return;
+				}
 
 				//need to call sortCallGraph on each FunctionDescription
 				//this de-dupes the list of callees for each function

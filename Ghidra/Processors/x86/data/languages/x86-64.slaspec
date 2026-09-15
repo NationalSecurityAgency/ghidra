@@ -3,4 +3,5 @@
 with : lockprefx=0 {
 @include "sgx.sinc"
 @include "fma.sinc"
+@include "cmpccxadd.sinc"
 }

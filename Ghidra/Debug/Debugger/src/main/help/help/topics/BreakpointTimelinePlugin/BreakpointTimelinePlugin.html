@@ -1,0 +1,216 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger: Breakpoint Timeline</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="plugin"></A>Debugger: Breakpoint Timeline</H1>
+
+    <DIV class="image">
+      <IMG alt="" src="images/BreakpointTimelinePlugin.png">
+    </DIV>
+
+    <P>The Breakpoint Timeline window provides a visual overview of all snapshots in the current
+    trace, highlighting snapshots where breakpoints were hit. Each cell in the grid represents one
+    or more consecutive snapshots. Cells are ordered left to right, top to bottom starting from the
+    lowest snapshot to the highest. Cells are colored according to the type of breakpoint hit
+    recorded in those snapshots. Clicking a cell navigates to the earliest hit or snapshot in the
+    cell. A click and drag across cells opens another Timeline window zoomed on the selected
+    snapshot range.</P>
+
+    <P>Breakpoint hits are detected by examining the trace's recorded data. For execution
+    breakpoints (hardware or software), the plugin searches for stack frames whose program counter
+    falls within the breakpoint's address range. For memory read and write breakpoints, it searches
+    for trace memory references to the breakpoint's address range with the corresponding reference
+    type. The plugin listens for changes to breakpoints and snapshots and updates the display
+    automatically. <B>NOTE:</B> R/W breakpoints are only supported for connectors and/or importers
+    that record memory references to the trace. At this time, that includes only the TENET and
+    TENET++ loaders.</P>
+
+    <P>The timeline panel fills the window with a grid of cells. Each cell covers a contiguous
+    range of snapshots. The number of snapshots per cell is determined automatically so that all
+    snapshots from 0 to the maximum snapshot (or from the start to the stop snapshot of a zoomed
+    window) fit within the visible area.</P>
+
+    <H3>Cell Colors</H3>
+
+    <P>Each cell is filled with a color indicating the breakpoint activity in its snapshot
+    range:</P>
+
+    <UL>
+      <LI><B>Empty (Background color)</B> - No breakpoint hit was recorded in this range.</LI>
+
+      <LI><B>Instruction hit (Red by default)</B> - An execution breakpoint was hit in this
+      range.</LI>
+
+      <LI><B>Memory read (Blue by default)</B> - A memory read breakpoint was hit in this
+      range.</LI>
+
+      <LI><B>Memory write (Yellow by default)</B> - A memory write breakpoint was hit in this
+      range.</LI>
+
+      <LI><B>Multiple hits (Colors of hits are blended)</B> - Multiple breakpoint types were hit in
+      this range.</LI>
+    </UL>
+
+    <P>In addition, three overlay colors indicate interactive state:</P>
+
+    <UL>
+      <LI><B>Current snapshot (Green by default)</B> - The cell containing the active snapshot is
+      highlighted.</LI>
+
+      <LI><B>Hover (Green by default)</B> - The cell under the mouse cursor is highlighted.</LI>
+
+      <LI><B>Selection (Green by default)</B> - Cells covered by an active drag selection are
+      highlighted.</LI>
+    </UL>
+
+    <H3>Tooltips</H3>
+
+    <P>Hovering over a cell shows a tooltip with:</P>
+
+    <UL>
+      <LI>The snapshot range covered by the cell (start and end snapshot numbers).</LI>
+
+      <LI>The snapshot the cell will navigate to when clicked.</LI>
+
+      <LI>The breakpoint type of the first event in the cell (if any).</LI>
+
+      <LI>The name of the breakpoint that was hit (if any).</LI>
+    </UL>
+
+    <H2>Navigation and Interaction</H2>
+
+    <H3>Click to Navigate</H3>
+
+    <P>Clicking a cell activates the snapshot associated with the first breakpoint hit event in
+    that cell. If the cell contains no breakpoint hit, the first snapshot in the cell's range is
+    activated.</P>
+
+    <H3>Click and Drag to Zoom</H3>
+
+    <P>Clicking and dragging across a range of cells opens a new zoom window focused on the
+    snapshot range covered by the drag selection. The zoom window is a separate <B>Breakpoint
+    Timeline</B> provider showing only the selected sub-range. Zoom windows are trace specific and
+    are hidden when a different trace is activated and restored when the original trace is
+    reactivated.</P>
+
+    <H3>Mouse Wheel</H3>
+
+    <P>Scrolling the mouse wheel over the timeline panel activates the next (wheel down) or
+    previous (wheel up) snapshot.</P>
+
+    <H2>Toolbar Actions</H2>
+
+    <H3><A name="toggle_grid_column"></A> <IMG alt="" src="icon.debugger.breakpoint.timeline.grid">
+    <IMG alt="" src="icon.debugger.breakpoint.timeline.single_column">Toggle between Grid and
+    Single Column</H3>
+
+    <DIV class="image">
+      <IMG alt="" src="images/BreakpointTimelinePluginSingleColumn.png">
+    </DIV>
+
+    <P>Switches the layout between a 2D grid and a single vertical column. In column mode, each
+    cell occupies the full width of the panel and cells are stacked vertically from top (earliest
+    snapshot) to bottom (latest snapshot).</P>
+
+    <H3><A name="toggle_grid_outline"></A> <IMG alt="" src=
+    "icon.debugger.breakpoint.timeline.outline"> <IMG alt="" src=
+    "icon.debugger.breakpoint.timeline.no_outline">Toggle Grid Outline</H3>
+
+    <DIV class="image">
+      <IMG alt="" src="images/BreakpointTimelinePluginNoGrid.png">
+    </DIV>
+
+    <P>Shows or hides the border drawn around each cell. When the grid outline is enabled, cell
+    boundaries are drawn in the disabled foreground color.</P>
+
+    <H3><A name="zoom_in"></A> <IMG alt="" src="icon.debugger.breakpoint.timeline.zoom_in">Zoom In
+    (Increase Cell Size)</H3>
+
+    <P>Increases the default cell size by one pixel in each dimension. The grid is recalculated
+    after each step.</P>
+
+    <H3><A name="zoom_out"></A> <IMG alt="" src="icon.debugger.breakpoint.timeline.zoom_out">Zoom
+    Out (Decrease Cell Size)</H3>
+
+    <P>Decreases the default cell size by one pixel in each dimension, down to a minimum of one
+    pixel.</P>
+
+    <H3><A name="smallest_cell"></A> <IMG alt="" src=
+    "icon.debugger.breakpoint.timeline.zoom_out_max">Set Default Cell Size to the Smallest</H3>
+
+    <P>Sets the default cell size to the minimum (one pixel).</P>
+
+    <H3><A name="close_zoom_windows"></A> <IMG alt="" src=
+    "icon.debugger.breakpoint.timeline.close_all_zoom_windows">Close All Zoom Windows</H3>
+
+    <P>Closes all zoom sub-windows that were created for the current trace. This action has no
+    effect on the main Breakpoint Timeline window itself.</P>
+
+    <H2>Context Menu Actions</H2>
+
+    <P>The Breakpoint Timeline plugin adds context menu actions to the following views: the <A
+    href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Static Listing</A>, the <A href=
+    "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html">Dynamic Listing</A>, the <A
+    href="help/topics/DebuggerRegistersPlugin/DebuggerRegistersPlugin.html">Registers</A> window,
+    and the <A href="help/topics/DebuggerMemoryBytesPlugin/DebuggerMemoryBytesPlugin.html">Byte
+    Viewer</A>. These actions search the current trace for breakpoint hits at the address or
+    address range selected in the active view and navigate to or list the matching snapshots.</P>
+
+    <P>The address range used for the search is determined from the current selection in the active
+    view. If there is no selection, the single address at the cursor is used.</P>
+
+    <P>Actions are organized into two top-level menu groups:</P>
+
+    <H3><A name="goto_actions"></A>Go to...</H3>
+
+    <P>These actions navigate to a single snapshot. They appear as submenus under <B>Go to...</B>,
+    grouped by search direction:</P>
+
+    <UL>
+      <LI><B>First...</B> - Navigate to the earliest snapshot in the entire trace where the
+      selected address was hit.</LI>
+
+      <LI><B>Previous...</B> - Navigate to the latest snapshot <EM>before</EM> the current snapshot
+      where the selected address was hit.</LI>
+
+      <LI><B>Next...</B> - Navigate to the earliest snapshot <EM>after</EM> the current snapshot
+      where the selected address was hit.</LI>
+
+      <LI><B>Final...</B> - Navigate to the latest snapshot in the entire trace where the selected
+      address was hit.</LI>
+    </UL>
+
+    <P>Each submenu contains one entry per breakpoint type:</P>
+
+    <UL>
+      <LI><B>Execution</B> - Search for execution breakpoint hits at the selected address
+      range.</LI>
+
+      <LI><B>Memory Read</B> - Search for memory read breakpoint hits at the selected address
+      range.</LI>
+
+      <LI><B>Memory Write</B> - Search for memory write breakpoint hits at the selected address
+      range.</LI>
+
+      <LI><B>Memory Access</B> - Search for any memory access (read or write) breakpoint hits at
+      the selected address range.</LI>
+    </UL>
+
+    <H3><A name="show_all_actions"></A>Show All...</H3>
+
+    <P>These actions open a table window listing every snapshot in the trace where the selected
+    address was hit, for the chosen breakpoint type. The table has two columns: <B>Snap</B> (the
+    snapshot number) and <B>Address</B> (the PC when the hit occurred). Double-clicking a row in
+    the table navigates to that snapshot. The same four breakpoint type entries (Execution, Memory
+    Read, Memory Write, Memory Access) are used for this action.</P>
+  </BODY>
+</HTML>

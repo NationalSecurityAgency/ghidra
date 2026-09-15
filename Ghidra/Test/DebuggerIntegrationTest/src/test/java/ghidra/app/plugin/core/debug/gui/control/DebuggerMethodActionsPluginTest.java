@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.control;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -26,6 +26,7 @@ import org.junit.Test;
 import db.Transaction;
 import docking.action.DockingActionIf;
 import ghidra.app.context.ProgramLocationActionContext;
+import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerIntegrationTest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
@@ -50,6 +51,7 @@ public class DebuggerMethodActionsPluginTest extends AbstractGhidraHeadedDebugge
 
 	@Before
 	public void setUpMethodActionsTest() throws Exception {
+		addPlugin(tool, CodeBrowserPlugin.class);
 		listingPlugin = addPlugin(tool, DebuggerListingPlugin.class);
 		mappingService = addPlugin(tool, DebuggerStaticMappingServicePlugin.class);
 		methodsPlugin = addPlugin(tool, DebuggerMethodActionsPlugin.class);

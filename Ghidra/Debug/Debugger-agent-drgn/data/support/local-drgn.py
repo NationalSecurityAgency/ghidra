@@ -22,25 +22,18 @@ import sys
 
 import drgn.cli
 
-home = os.getenv('GHIDRA_HOME')
 
-if os.path.isdir(f'{home}/ghidra/.git'):
+def append_paths():
     sys.path.append(
-        f'{home}/ghidra/Ghidra/Debug/Debugger-agent-drgn/build/pypkg/src')
-    sys.path.append(
-        f'{home}/ghidra/Ghidra/Debug/Debugger-rmi-trace/build/pypkg/src')
-elif os.path.isdir(f'{home}/.git'):
-    sys.path.append(
-        f'{home}/Ghidra/Debug/Debugger-agent-drgn/build/pypkg/src')
-    sys.path.append(
-        f'{home}/Ghidra/Debug/Debugger-rmi-trace/build/pypkg/src')
-else:
-    sys.path.append(
-        f'{home}/Ghidra/Debug/Debugger-agent-drgn/pypkg/src')
-    sys.path.append(f'{home}/Ghidra/Debug/Debugger-rmi-trace/pypkg/src')
+        f"{os.getenv('MODULE_Debugger_rmi_trace_HOME')}/data/support")
+    from gmodutils import ghidra_module_pypath
+    sys.path.append(ghidra_module_pypath("Debugger-rmi-trace"))
+    sys.path.append(ghidra_module_pypath())
 
 
 def main():
+    append_paths()
+
     from ghidradrgn import commands as cmd
     cmd.ghidra_trace_connect(address=os.getenv('GHIDRA_TRACE_RMI_ADDR'))
     cmd.ghidra_trace_create(start_trace=True)
@@ -49,9 +42,7 @@ def main():
     cmd.ghidra_trace_txcommit()
     cmd.ghidra_trace_activate()
     drgn.cli.run_interactive(cmd.prog)
-    
+
 
 if __name__ == '__main__':
     main()
-    
-    

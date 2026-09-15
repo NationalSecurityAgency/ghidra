@@ -573,9 +573,30 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 		DataType cdt = root.getDataType("InnerStruct");
 		assertNotNull(cdt);
 
+		//@formatter:off
+		assertEquals("/SubCat-A/Sub-cat/MyStruct\n" + "pack(disabled)\n" +
+			"Structure MyStruct {\n" + 
+			"   0   byte   1      \"\"\n" +
+			"   1   word   2      \"\"\n" + 
+			"   3   byte   1      \"\"\n" +
+			"   4   InnerStruct   31      \"\"\n" + 
+			"}\n" + 
+			"Length: 135 Alignment: 1\n", newDt.toString());
+		//@formatter:on
+
 		root.remove(cdt, monitor);
 
-		assertEquals(comps.length - 1, newDt.getDefinedComponents().length);
+		//@formatter:off
+		assertEquals("/SubCat-A/Sub-cat/MyStruct\n" + 
+			"pack(disabled)\n" + 
+			"Structure MyStruct {\n" + 
+			"   0   byte   1      \"\"\n" + 
+			"   1   word   2      \"\"\n" + 
+			"   3   byte   1      \"\"\n" + 
+			"   4   -BAD-   31      \"Type 'InnerStruct' was deleted\"\n" + 
+			"}\n" + 
+			"Length: 135 Alignment: 1\n", newDt.toString());
+		//@formatter:on
 	}
 
 	@Test

@@ -18,6 +18,7 @@ package ghidra.feature.fid.service;
 import java.util.Map.Entry;
 
 import docking.DockingWindowManager;
+import docking.widgets.OkDialog;
 import ghidra.feature.fid.plugin.TextAreaDialog;
 import ghidra.feature.fid.service.FidPopulateResult.Disposition;
 
@@ -30,6 +31,8 @@ public class DefaultFidPopulateResultReporter implements FidPopulateResultReport
 	@Override
 	public void report(FidPopulateResult result) {
 		if (result == null) {
+			OkDialog.showError("No library created",
+				"No programs matched the language and compiler spec requirement");
 			return;
 		}
 

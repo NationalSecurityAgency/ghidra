@@ -198,10 +198,9 @@ public class DialogComponentProvider
 		DockingAction closeAction = new ActionBuilder(CLOSE_ACTION_NAME, owner)
 				.sharedKeyBinding()
 				.keyBinding(ESC_KEYSTROKE)
-				.withContext(DialogActionContext.class)
-				.enabledWhen(c -> c.getDialogComponentProvider() != null)
+				.enabledWhen(c -> c.getContextProvider() instanceof DialogComponentProvider)
 				.onAction(c -> {
-					DialogComponentProvider dcp = c.getDialogComponentProvider();
+					DialogComponentProvider dcp = (DialogComponentProvider) c.getContextProvider();
 					dcp.escapeCallback();
 				})
 				.build();
@@ -489,7 +488,14 @@ public class DialogComponentProvider
 		okButton.setMnemonic('K');
 		okButton.setName("OK");
 		okButton.getAccessibleContext().setAccessibleName("OK");
-		okButton.addActionListener(e -> okCallback());
+		okButton.addActionListener(e -> {
+
+			int mods = e.getModifiers();
+			// Note: action event does not use extended modifiers; use the deprecated values
+			@SuppressWarnings("deprecation")
+			boolean isMouseClick = (mods & InputEvent.BUTTON1_MASK) == InputEvent.BUTTON1_MASK;
+			okCallback(isMouseClick);
+		});
 		addButton(okButton);
 	}
 
@@ -683,6 +689,9 @@ public class DialogComponentProvider
 	 */
 	public void setAccessibleDescription(String description) {
 		this.accessibleDescription = description;
+		if (dialog != null) {
+			dialog.getAccessibleContext().setAccessibleDescription(description);
+		}
 	}
 
 	private void doSetStatusText(String text, MessageType type, boolean alert) {
@@ -919,6 +928,15 @@ public class DialogComponentProvider
 	 */
 	protected void okCallback() {
 		Msg.debug(this, "Ok button pressed");
+	}
+
+	/**
+	 * A version of the OK callback that allows clients to know if the action is a result of a 
+	 * mouse click or the Enter key.
+	 * @param mouseClick true if the mouse clicked the OK button
+	 */
+	protected void okCallback(boolean mouseClick) {
+		okCallback();
 	}
 
 	/**
@@ -1253,7 +1271,7 @@ public class DialogComponentProvider
 	/**
 	 * An optional extension point for subclasses to provider action context for the actions used by
 	 * this provider.
-	 *
+	 * 
 	 * @param event The mouse event used (may be null) to generate a popup menu
 	 */
 	@Override
@@ -1274,7 +1292,10 @@ public class DialogComponentProvider
 		if (sourceComponent != null) {
 			c = sourceComponent;
 		}
-		return new DialogActionContext(this, c).setSourceObject(event.getSource());
+
+		DialogActionContext context = new DialogActionContext(this, c);
+		context.setSourceObject(event.getSource());
+		return context;
 	}
 
 	/**
@@ -1286,6 +1307,9 @@ public class DialogComponentProvider
 		if (context == null) {
 			context = new DefaultActionContext();
 		}
+
+		context.setContextProvider(this);
+
 		Set<DockingActionIf> keySet = toolbarButtonsByAction.keySet();
 		for (DockingActionIf action : keySet) {
 			action.setEnabled(action.isEnabledForContext(context));
@@ -1319,6 +1343,10 @@ public class DialogComponentProvider
 	 * @param action the action
 	 */
 	public void addAction(DockingActionIf action) {
+		if (dialogActions.contains(action)) {
+			return; // protect from repeated adding
+		}
+
 		dialogActions.add(action);
 		addToolbarAction(action);
 		popupManager.addAction(action);
@@ -1327,7 +1355,7 @@ public class DialogComponentProvider
 
 	private void addKeyBindingAction(DockingActionIf action) {
 
-		DialogActionProxy proxy = new DialogActionProxy(action);
+		DialogActionProxy proxy = new DialogActionProxy(this, action);
 		keyBindingProxyActions.add(proxy);
 
 		// The tool will be null when clients add actions to this dialog before it has been shown.
@@ -1460,8 +1488,11 @@ public class DialogComponentProvider
 
 		@Override
 		public void popupTriggered(MouseEvent e) {
-			ActionContext actionContext = getActionContext(e);
-			popupManager.popupMenu(actionContext, e);
+			ActionContext context = getActionContext(e);
+			if (context != null) {
+				context.setContextProvider(DialogComponentProvider.this);
+			}
+			popupManager.popupMenu(context, e);
 		}
 
 		@Override
@@ -1481,8 +1512,11 @@ public class DialogComponentProvider
 	 */
 	private class DialogActionProxy extends DockingActionProxy {
 
-		public DialogActionProxy(DockingActionIf dockingAction) {
+		private DialogComponentProvider provider;
+
+		public DialogActionProxy(DialogComponentProvider provider, DockingActionIf dockingAction) {
 			super(dockingAction);
+			this.provider = provider;
 		}
 
 		@Override
@@ -1493,6 +1527,15 @@ public class DialogComponentProvider
 		@Override
 		public ToolBarData getToolBarData() {
 			return null;
+		}
+
+		@Override
+		public boolean isEnabledForContext(ActionContext context) {
+			ActionContextProvider contextProvider = context.getContextProvider();
+			if (provider != contextProvider) {
+				return false;
+			}
+			return dockingAction.isEnabledForContext(context);
 		}
 	}
 }

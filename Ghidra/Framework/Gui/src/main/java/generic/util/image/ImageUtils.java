@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,7 @@ import javax.swing.*;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.util.MathUtilities;
 import ghidra.util.Msg;
+import resources.ResourceManager;
 
 public class ImageUtils {
 
@@ -85,6 +86,18 @@ public class ImageUtils {
 
 		waitForImage(null, newImage);
 		return newImage;
+	}
+
+	/**
+	 * Pads the given image with space in the amount given.
+	 * 
+	 * @param i the image to pad
+	 * @param c the color to use for the padding background
+	 * @param padding the padding
+	 * @return a new image with the given image centered inside of padding
+	 */
+	public static Image padImage(Image i, Color c, Padding padding) {
+		return padImage(i, c, padding.top, padding.left, padding.right, padding.bottom);
 	}
 
 	/**
@@ -310,7 +323,12 @@ public class ImageUtils {
 		icon.paintIcon(null, g, 0, 0);
 		g.dispose();
 
-		return new ImageIcon(newImage);
+		ImageIcon imageIcon = new ImageIcon(newImage);
+		String iconName = ResourceManager.getIconName(icon);
+		if (iconName != null) {
+			imageIcon.setDescription(iconName);
+		}
+		return imageIcon;
 	}
 
 	/**
@@ -467,5 +485,16 @@ public class ImageUtils {
 
 		destination[3] = rgbPixels[3];
 		return destination;
+	}
+
+	/**
+	 * Four int values that represent padding on each side of an image
+	 * @param top top padding
+	 * @param left left padding
+	 * @param right right padding
+	 * @param bottom bottom padding
+	 */
+	public record Padding(int top, int left, int right, int bottom) {
+
 	}
 }

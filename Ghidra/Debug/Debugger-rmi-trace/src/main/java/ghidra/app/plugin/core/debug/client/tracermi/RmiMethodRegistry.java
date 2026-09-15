@@ -26,7 +26,7 @@ public class RmiMethodRegistry {
 	 */
 	@Target(ElementType.METHOD)
 	@Retention(RetentionPolicy.RUNTIME)
-	public static @interface TraceMethod {
+	public static @interface TraceRmiMethod {
 		String action() default "";
 
 		String display() default "";

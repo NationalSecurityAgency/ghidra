@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ import ghidra.util.task.TaskMonitor;
  * An implementation of exporter that creates
  * an XML representation of the program.
  */
-public class XmlExporter extends Exporter {
+public class XmlExporter extends ProgramExporter {
 	private XmlProgramOptions options = new XmlProgramOptions();
 
 	/**
@@ -62,11 +62,14 @@ public class XmlExporter extends Exporter {
 
 		log.clear();
 
-		if (!(domainObj instanceof Program)) {
-			log.appendMsg("Unsupported type: "+domainObj.getClass().getName());
+		Program program;
+		try {
+			program = getProgram(domainObj);
+		}
+		catch (ClassCastException e) {
+			log.appendMsg("Unsupported type: " + domainObj.getClass().getName());
 			return false;
 		}
-		Program program = (Program)domainObj;
 
 		if (addrSet == null) {
 			addrSet = program.getMemory();

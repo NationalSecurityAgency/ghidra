@@ -23,8 +23,9 @@ import ghidra.feature.fid.service.*;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
 import ghidra.program.database.ProgramContentHandler;
-import ghidra.program.model.lang.LanguageID;
+import ghidra.program.model.lang.*;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
@@ -41,15 +42,17 @@ public class IngestTask extends Task {
 	protected String libraryFamilyName;
 	protected String libraryVersion;
 	protected String libraryVariant;
-	private LanguageID languageId;
+	private FidFilter programFilter;
 	private File commonSymbolsFile;
 	private FidService fidService;
 	private FidPopulateResultReporter reporter;
 
 	public IngestTask(String title, FidFile fidFile, LibraryRecord libraryRecord,
 			DomainFolder folder, String libraryFamilyName, String libraryVersion,
-			String libraryVariant, String languageId, File commonSymbolsFile, FidService fidService,
-			FidPopulateResultReporter reporter) {
+			String libraryVariant, FidFilter programFilter, File commonSymbolsFile,
+			FidService fidService, FidPopulateResultReporter reporter)
+			throws IllegalArgumentException, LanguageNotFoundException,
+			CompilerSpecNotFoundException {
 		super(title, true, false, false, false);
 		this.fidFile = fidFile;
 		this.libraryRecord = libraryRecord;
@@ -60,7 +63,37 @@ public class IngestTask extends Task {
 		this.commonSymbolsFile = commonSymbolsFile;
 		this.fidService = fidService;
 		this.reporter = reporter;
-		this.languageId = new LanguageID(languageId);
+		this.programFilter = programFilter;
+		checkArgumentValidity();
+	}
+
+	private void checkArgumentValidity() throws IllegalArgumentException, LanguageNotFoundException,
+			CompilerSpecNotFoundException {
+		if (libraryFamilyName == null || libraryFamilyName.isBlank()) {
+			throw new IllegalArgumentException("Library Family Name is empty");
+		}
+		if (libraryVersion == null || libraryVersion.isBlank()) {
+			throw new IllegalArgumentException("Library Version is empty");
+		}
+		if (libraryVariant == null || libraryVariant.isBlank()) {
+			throw new IllegalArgumentException("Library Variant is empty");
+		}
+		LanguageID languageId = programFilter.getLanguageID();
+		if (languageId == null) {
+			throw new IllegalArgumentException("Language is empty");
+		}
+		LanguageService languageService = DefaultLanguageService.getLanguageService();
+		LanguageDescription language = languageService.getLanguageDescription(languageId);
+		Set<CompilerSpecID> compilerSpecs = programFilter.getCompilerSpecs(languageId);
+		if (compilerSpecs != null) {
+			for (CompilerSpecID id : compilerSpecs) {
+				language.getCompilerSpecDescriptionByID(id);	// Verify spec is present
+			}
+		}
+		if (commonSymbolsFile != null && !commonSymbolsFile.isFile()) {
+			throw new IllegalArgumentException(
+				"Common Symbols File: " + commonSymbolsFile.getName() + " does not exist");
+		}
 	}
 
 	@Override
@@ -93,7 +126,7 @@ public class IngestTask extends Task {
 
 			monitor.setMessage("Populating library...");
 			FidPopulateResult result = fidService.createNewLibraryFromPrograms(fidDb,
-				libraryFamilyName, libraryVersion, libraryVariant, programs, null, languageId,
+				libraryFamilyName, libraryVersion, libraryVariant, programs, null, programFilter,
 				libraryRecord == null ? null : Arrays.asList(libraryRecord), commonSymbols,
 				monitor);
 			reporter.report(result);

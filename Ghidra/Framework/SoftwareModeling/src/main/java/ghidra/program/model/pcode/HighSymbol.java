@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -375,6 +375,29 @@ public class HighSymbol {
 	 */
 	public VariableStorage getStorage() {
 		return entryList[0].getStorage();
+	}
+
+	/**
+	 * Prepare the symbol for generating VariableStorage.  Calculate dynamic storage if necessary.
+	 */
+	public void resolveStorage() {
+		if (entryList != null && entryList[0] instanceof DynamicEntry) {
+			if (((DynamicEntry) entryList[0]).getHash() != 0) {
+				return;
+			}
+		}
+		else if (highVariable == null) {
+			return;
+		}
+		else {
+			if (!highVariable.requiresDynamicStorage()) {
+				return;
+			}
+		}
+		if (entryList.length != 1) {
+			entryList = new SymbolEntry[1];
+		}
+		entryList[0] = DynamicEntry.build(highVariable.getRepresentative());
 	}
 
 	/**

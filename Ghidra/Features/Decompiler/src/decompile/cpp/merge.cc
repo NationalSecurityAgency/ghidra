@@ -416,7 +416,7 @@ PcodeOp *Merge::allocateCopyTrim(Varnode *inVn,const Address &addr,PcodeOp *trim
   Datatype *ct = inVn->getType();
   if (ct->needsResolution()) {		// If the data-type needs resolution
     if (inVn->isWritten()) {
-      int4 fieldNum = data.inheritResolution(ct, copyOp, -1, inVn->getDef(), -1);
+      int4 fieldNum = data.inheritUnionField(ct, copyOp, -1, inVn->getDef(), -1);
       data.forceFacingType(ct, fieldNum, copyOp, 0);
     }
     else {
@@ -669,7 +669,7 @@ void Merge::trimOpOutput(PcodeOp *op)
   copyop = data.newOp(1,op->getAddr());
   data.opSetOpcode(copyop,CPUI_COPY);
   if (ct->needsResolution()) {
-    int4 fieldNum = data.inheritResolution(ct, copyop, -1, op, -1);
+    int4 fieldNum = data.inheritUnionField(ct, copyop, -1, op, -1);
     data.forceFacingType(ct, fieldNum, copyop, 0);
     if (ct->getMetatype() == TYPE_PARTIALUNION)
       ct = vn->getTypeDefFacing();
@@ -801,7 +801,7 @@ void Merge::collectInputs(HighVariable *high,vector<PcodeOpNode> &oplist,PcodeOp
   }
 }
 
-/// \brief Snip instances of the output of an INDIRECT that are also inputs to to the underlying PcodeOp
+/// \brief Snip instances of the output of an INDIRECT that are also inputs to the underlying PcodeOp
 ///
 /// Examine the output HighVariable for the given INDIRECT op. Varnode instances (or pieces) that are also
 /// inputs to the underlying PcodeOp causing the INDIRECT are snipped by creating a new COPY op from the
@@ -871,7 +871,7 @@ void Merge::mergeIndirect(PcodeOp *indop)
   PcodeOp *newop = allocateCopyTrim(invn0, indop->getAddr(), indop);
   SymbolEntry *entry = outvn->getSymbolEntry();
   if (entry != (SymbolEntry *)0 && entry->getSymbol()->getType()->needsResolution()) {
-    data.inheritResolution(entry->getSymbol()->getType(), newop, -1, indop, -1);
+    data.inheritUnionField(entry->getSymbol()->getType(), newop, -1, indop, -1);
   }
   data.opSetInput(indop,newop->getOut(),0);
   data.opInsertBefore(newop,indop);

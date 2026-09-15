@@ -28,7 +28,7 @@ import java.util.function.Supplier;
 import javax.swing.*;
 
 import org.apache.commons.collections4.map.LazyMap;
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.action.*;
 import docking.action.builder.ActionBuilder;
@@ -929,7 +929,6 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	void showComponent(ComponentProvider provider, boolean visibleState, boolean shouldEmphasize) {
-
 		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
 		if (placeholder != null) {
 			showComponent(placeholder, visibleState, true, shouldEmphasize);
@@ -993,8 +992,18 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	private void movePlaceholderToFront(ComponentPlaceholder placeholder, boolean emphasisze) {
+
+		if (!placeholder.canTakeFocus()) {
+			// If we move the parent window to the front when the placeholder is not ready, then
+			// some other placeholder will get focus when the window is activated, which we do not
+			// want to happen.  Later, when the placeholder is fully constructed, the window will 
+			// brought to the front.
+			return;
+		}
+
 		placeholder.toFront();
 		toFront(root.getWindow(placeholder));
+
 		if (emphasisze) {
 			placeholder.emphasize();
 		}
@@ -1519,6 +1528,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		if (root == null) {
 			return;
 		}
+
 		actionToGuiMapper.setActive(active);
 		if (active) {
 			setActiveManager(this);
@@ -1540,6 +1550,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			pendingRequestFocusComponent = null; // only do it once so that we don't get stuck in this state
 			return;
 		}
+
 		pendingRequestFocusComponent = component;
 		pendingRequestFocusComponent.requestFocus();
 	}
@@ -2507,10 +2518,16 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 */
 	public ActionContext getDefaultActionContext(Class<? extends ActionContext> contextType) {
 		ActionContextProvider actionContextProvider = defaultContextProviderMap.get(contextType);
-		if (actionContextProvider != null) {
-			return actionContextProvider.getActionContext(null);
+		if (actionContextProvider == null) {
+			return null;
 		}
-		return null;
+
+		ActionContext context = actionContextProvider.getActionContext(null);
+		if (context != null) {
+			context.setContextProvider(actionContextProvider);
+		}
+
+		return context;
 	}
 
 	/**
@@ -2523,7 +2540,13 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			defaultContextProviderMap.entrySet();
 
 		for (Entry<Class<? extends ActionContext>, ActionContextProvider> entry : entrySet) {
-			contextMap.put(entry.getKey(), entry.getValue().getActionContext(null));
+			Class<? extends ActionContext> clazz = entry.getKey();
+			ActionContextProvider provider = entry.getValue();
+			ActionContext context = provider.getActionContext(null);
+			if (context != null) {
+				context.setContextProvider(provider);
+			}
+			contextMap.put(clazz, context);
 		}
 		return contextMap;
 	}
@@ -2540,8 +2563,11 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	public ActionContext createActionContext(DockingActionIf action) {
 		ComponentProvider provider = getActiveComponentProvider();
 		ActionContext context = provider == null ? null : provider.getActionContext(null);
-		if (context != null && action.isValidContext(context)) {
-			return context;
+		if (context != null) {
+			context.setContextProvider(provider);
+			if (action.isValidContext(context)) {
+				return context;
+			}
 		}
 
 		// Some actions work on a non-active, default component provider. See if this action
@@ -2565,10 +2591,16 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 	private ActionContext getDefaultContext(Class<? extends ActionContext> contextType) {
 		ActionContextProvider contextProvider = defaultContextProviderMap.get(contextType);
-		if (contextProvider != null) {
-			return contextProvider.getActionContext(null);
+		if (contextProvider == null) {
+			return null;
 		}
-		return null;
+
+		ActionContext context = contextProvider.getActionContext(null);
+		if (context != null) {
+			context.setContextProvider(contextProvider);
+		}
+
+		return context;
 	}
 
 	/**
@@ -2580,7 +2612,12 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 *
 	 * @param context the context
 	 */
-	void doContextChanged(ActionContext context) {
+	void notifyContextListeners(ActionContext context) {
+
+		if (context == null) {
+			return;
+		}
+
 		for (DockingContextListener listener : contextListeners) {
 			listener.contextChanged(context);
 		}

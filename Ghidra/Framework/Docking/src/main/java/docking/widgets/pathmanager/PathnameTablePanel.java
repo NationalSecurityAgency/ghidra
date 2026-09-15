@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,7 +70,7 @@ public class PathnameTablePanel extends JPanel {
 	 * @param enableEdits true to allow editing of entries <em>directly in the table</em>, i.e., via
 	 *            the cell editor. The add and remove buttons still allow modification of the list.
 	 * @param addToTop true if the add button should add entries to the top of the list. False to
-	 *            add entries to the bottom. This behavior is overridden if if {@code ordered} is
+	 *            add entries to the bottom. This behavior is overridden if {@code ordered} is
 	 *            false.
 	 * @param ordered true if the order of entries matters. If so, up and down buttons are provided
 	 *            so the user may arrange the entries. If not, entries are sorted alphabetically.
@@ -92,7 +92,7 @@ public class PathnameTablePanel extends JPanel {
 	 * @param enableEdits true to allow editing of entries <em>directly in the table</em>, i.e., via
 	 *            the cell editor. The add and remove buttons still allow modification of the list.
 	 * @param addToTop true if the add button should add entries to the top of the list. False to
-	 *            add entries to the bottom. This behavior is overridden if if {@code ordered} is
+	 *            add entries to the bottom. This behavior is overridden if {@code ordered} is
 	 *            false.
 	 * @param ordered true if the order of entries matters. If so, up and down buttons are provided
 	 *            so the user may arrange the entries. If not, entries are sorted alphabetically.

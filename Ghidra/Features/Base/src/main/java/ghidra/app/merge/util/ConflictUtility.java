@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,8 @@ package ghidra.app.merge.util;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
-import ghidra.program.util.DiffUtility;
 import ghidra.util.HTMLUtilities;
+import ghidra.util.NumericUtilities;
 
 /**
  * <code>ConflictUtility</code> provides some constants and static methods 
@@ -280,7 +280,7 @@ public class ConflictUtility {
 	 * @return the message string containing HTML tags.
 	 */
 	public static String getOffsetString(int offset) {
-		return colorString(OFFSET_COLOR, DiffUtility.toSignedHexString(offset));
+		return colorString(OFFSET_COLOR, NumericUtilities.toSignedHexString(offset));
 	}
 
 	/**

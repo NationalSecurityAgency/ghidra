@@ -29,9 +29,11 @@ import docking.widgets.fieldpanel.listener.IndexMapper;
 import docking.widgets.fieldpanel.listener.LayoutModelListener;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.FieldRange;
+import generic.theme.Gui;
 import ghidra.app.plugin.core.terminal.vt.*;
 import ghidra.app.plugin.core.terminal.vt.AnsiColorResolver.ReverseVideo;
 import ghidra.app.plugin.core.terminal.vt.VtCharset.G;
+import ghidra.framework.Application;
 import ghidra.util.*;
 
 /**
@@ -54,6 +56,9 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 	protected final CharBuffer cb = CharBuffer.allocate(16);
 
 	protected final CharsetDecoder decoder;
+
+	// For "repeat char"
+	protected byte lastChar;
 
 	// States for handling VT-style charsets
 	protected final Map<VtCharset.G, VtCharset> vtCharsets = new HashMap<>();
@@ -91,6 +96,8 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 	// Flags for what's been enabled
 	protected boolean showCursor;
 	protected boolean bracketedPaste;
+	protected boolean themeChangeNotification;
+	protected boolean win32InputMode; // not implemented
 	protected boolean reportMousePress;
 	protected boolean reportMouseRelease;
 	protected boolean reportFocus;
@@ -105,7 +112,6 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 	 * @param panel the panel to receive commands from the model's VT/ANSI parser
 	 * @param charset the charset for decoding bytes to characters
 	 * @param metrics font metrics for the monospaced terminal font
-	 * @param fontSizeAdjustment the font size adjustment
 	 * @param colors a resolver for ANSI colors
 	 */
 	public TerminalLayoutModel(TerminalPanel panel, Charset charset, FontMetrics metrics,
@@ -136,6 +142,8 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 		buffer = bufPrimary;
 
 		bracketedPaste = false;
+		themeChangeNotification = false;
+		win32InputMode = false;
 		reportMousePress = false;
 		reportMouseRelease = false;
 		reportFocus = false;
@@ -216,7 +224,7 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 			if (i < layouts.size()) {
 				TerminalLayout layout = layouts.get(i);
 				if (layout.line == line) {
-					return; // Already checked for line.clearDirty()
+					return;
 				}
 				layout = layoutCache.computeIfAbsent(line, this::newLayout);
 				layouts.set(i, layout);
@@ -265,9 +273,7 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 		return NumericUtilities.convertBytesToString(data, ":");
 	}
 
-	@Override
-	public void handleChar(byte b) throws Exception {
-		bb.put(b);
+	protected void doHandleCharBytes() {
 		bb.flip();
 		CoderResult result = decoder.decode(bb, cb, false);
 		if (result.isError()) {
@@ -282,14 +288,37 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 		while (cb.hasRemaining()) {
 			try {
 				// A little strange using both unicode and vt charsets....
-				buffer.putChar(curVtCharset.mapChar(cb.get()));
-				buffer.moveCursorRight(1, true, showCursor);
+				char maybeHighSurrogate = cb.get();
+				if (Character.isHighSurrogate(maybeHighSurrogate)) {
+					char betterBeLowSurrogate = cb.get();
+					if (Character.isLowSurrogate(betterBeLowSurrogate)) {
+						buffer.putCodePoint(curVtCharset.mapCodePoint(
+							Character.toCodePoint(maybeHighSurrogate, betterBeLowSurrogate)));
+						buffer.moveCursorRight(1, true, showCursor);
+					}
+					else {
+						buffer.putCodePoint(curVtCharset.mapCodePoint(maybeHighSurrogate));
+						buffer.putCodePoint(curVtCharset.mapCodePoint(betterBeLowSurrogate));
+						buffer.moveCursorRight(2, true, showCursor);
+					}
+				}
+				else {
+					buffer.putCodePoint(curVtCharset.mapCodePoint(maybeHighSurrogate));
+					buffer.moveCursorRight(1, true, showCursor);
+				}
 			}
 			catch (Throwable t) {
 				Msg.error(this, "Error handling character: " + t, t);
 			}
 		}
 		cb.clear();
+	}
+
+	@Override
+	public void handleChar(byte b) throws Exception {
+		bb.put(b);
+		lastChar = b;
+		doHandleCharBytes();
 	}
 
 	@Override
@@ -312,6 +341,28 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 		for (int i = 0; i < n; i++) {
 			buffer.tabBack();
 		}
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * It's unclear exactly what is repeated. Some documentation, including
+	 * http://rheuh.free.fr/docpack/C/ansi/ansi.html says Repeat Character or Control. Here, I only
+	 * handle characters. I tried repeating a Cursor Up control. I also tried repeating a new line.
+	 * Neither did what I expected when tested against the reference. That said, those control also
+	 * seemed to "forget" what the last character was. Nothing was repeated at all. I'll assume that
+	 * is undefined behavior. I'll not worry about "forgetting," as I'll assume the character to
+	 * repeat will always immediately precede this CSI.
+	 */
+	@Override
+	public void handleRepeatChar(int n) {
+		if (lastChar == 0) {
+			return;
+		}
+		for (int i = 0; i < n; i++) {
+			bb.put(lastChar);
+		}
+		doHandleCharBytes();
 	}
 
 	@Override
@@ -466,6 +517,27 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 	@Override
 	public void handleBracketedPasteMode(boolean en) {
 		this.bracketedPaste = en;
+	}
+
+	@Override
+	public void handleThemeChangeNotification(boolean en) {
+		this.themeChangeNotification = en;
+	}
+
+	@Override
+	public void handleQueryTheme() {
+		panel.responseEncoder.reportDarkMode(Gui.isDarkTheme());
+	}
+
+	@Override
+	public void handleXTVersion() {
+		panel.responseEncoder.reportXTVersion("GhidraTerminal",
+			Application.getApplicationVersion());
+	}
+
+	@Override
+	public void handleWin32InputMode(boolean en) {
+		this.win32InputMode = en;
 	}
 
 	@Override

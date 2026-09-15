@@ -81,6 +81,11 @@ public interface Function extends Namespace {
 	public final static int UNKNOWN_STACK_DEPTH_CHANGE = Integer.MAX_VALUE;
 	public final static int INVALID_STACK_DEPTH_CHANGE = Integer.MAX_VALUE - 1;
 
+	@Override
+	default Type getType() {
+		return Type.FUNCTION;
+	}
+
 	/**
 	 * Get the name of this function.
 	 *
@@ -278,7 +283,7 @@ public interface Function extends Namespace {
 	/**
 	 * Return all {@link FunctionTag} objects associated with this function.
 	 * 
-	 * @return set of tag names
+	 * @return set of tags
 	 */
 	public Set<FunctionTag> getTags();
 
@@ -331,7 +336,7 @@ public interface Function extends Namespace {
 	 * which are easily overlooked when considering parameter ordinal.  The function signature should generally be 
 	 * adjusted with a single call to {@link #updateFunction(String, Variable, List, FunctionUpdateType, boolean, SourceType)}
 	 */
-	@Deprecated
+	@Deprecated(since = "9.0")
 	public Parameter addParameter(Variable var, SourceType source)
 			throws DuplicateNameException, InvalidInputException;
 
@@ -356,7 +361,7 @@ public interface Function extends Namespace {
 	 * which are easily overlooked when considering parameter ordinal.  The function signature should generally be 
 	 * adjusted with a single call to {@link #updateFunction(String, Variable, List, FunctionUpdateType, boolean, SourceType)}
 	 */
-	@Deprecated
+	@Deprecated(since = "9.0")
 	public Parameter insertParameter(int ordinal, Variable var, SourceType source)
 			throws DuplicateNameException, InvalidInputException;
 
@@ -462,7 +467,7 @@ public interface Function extends Namespace {
 	 * @deprecated The use of this method is discouraged.  The function signature should generally be 
 	 * adjusted with a single call to {@link #updateFunction(String, Variable, List, FunctionUpdateType, boolean, SourceType)}
 	 */
-	@Deprecated
+	@Deprecated(since = "9.0")
 	public void removeParameter(int ordinal);
 
 	/**
@@ -476,7 +481,7 @@ public interface Function extends Namespace {
 	 * @deprecated The use of this method is discouraged.  The function signature should generally be 
 	 * adjusted with a single call to {@link #updateFunction(String, Variable, List, FunctionUpdateType, boolean, SourceType)}
 	 */
-	@Deprecated
+	@Deprecated(since = "9.0")
 	public Parameter moveParameter(int fromOrdinal, int toOrdinal) throws InvalidInputException;
 
 	/**
@@ -677,7 +682,7 @@ public interface Function extends Namespace {
 	 * a recursive search is generally needed (see {@link #getFunctionThunkAddresses(boolean)}).
 	 * This method form may be removed in a future release.
 	 */
-	@Deprecated
+	@Deprecated(since = "10.2", forRemoval = true)
 	public default Address[] getFunctionThunkAddresses() {
 		return getFunctionThunkAddresses(false);
 	}
@@ -697,6 +702,7 @@ public interface Function extends Namespace {
 	 * @throws IllegalArgumentException if an attempt is made to thunk a function or another
 	 * thunk which would result in a loop back to this function or if this function is an external
 	 * function, or specified function is from a different program instance.
+	 * @throws UnsupportedOperationException if this method is invoked on an external function.
 	 */
 	public void setThunkedFunction(Function thunkedFunction) throws IllegalArgumentException;
 

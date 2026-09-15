@@ -20,7 +20,6 @@ import static org.junit.Assert.assertNotNull;
 
 import java.awt.event.MouseEvent;
 import java.util.List;
-import java.util.Set;
 
 import org.junit.*;
 
@@ -59,7 +58,7 @@ import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.model.DefaultTraceLocation;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.util.Msg;
@@ -115,7 +114,7 @@ public class DebuggerBreakpointMarkerPluginScreenShots extends GhidraScreenShotG
 			DBTraceObject objBptLoc = tb.trace.getObjectManager().createObject(pathSpec.index(1));
 			objBptLoc.setAttribute(Lifespan.nowOn(0), "Range",
 				new AddressRangeImpl(dynAddr, dynAddr));
-			objBptSpec.setAttribute(Lifespan.nowOn(0), "Kinds", "SW_EXECUTE");
+			objBptSpec.setAttribute(Lifespan.nowOn(0), "Kinds", "x");
 			objBptSpec.setAttribute(Lifespan.nowOn(0), "Enabled", enabled);
 			objBptLoc.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 		}
@@ -150,7 +149,7 @@ public class DebuggerBreakpointMarkerPluginScreenShots extends GhidraScreenShotG
 
 		Msg.debug(this, "Placing disabled breakpoint");
 		breakpointService.placeBreakpointAt(program, addr(program, 0x00401c60), 1,
-			Set.of(TraceBreakpointKind.SW_EXECUTE), "");
+			CommonSet.SWX.kinds(), "");
 		LogicalBreakpoint lbDis = waitForValue(() -> Unique.assertAtMostOne(
 			breakpointService.getBreakpointsAt(program, addr(program, 0x00401c60))));
 		placeBreakpoint(1, lbDis.getTraceAddress(tb.trace), false);
@@ -158,7 +157,7 @@ public class DebuggerBreakpointMarkerPluginScreenShots extends GhidraScreenShotG
 
 		Msg.debug(this, "Placing enabled breakpoint");
 		breakpointService.placeBreakpointAt(program, addr(program, 0x00401c63), 1,
-			Set.of(TraceBreakpointKind.SW_EXECUTE), "");
+			CommonSet.SWX.kinds(), "");
 		LogicalBreakpoint lbEn = waitForValue(() -> Unique.assertAtMostOne(
 			breakpointService.getBreakpointsAt(program, addr(program, 0x00401c63))));
 		placeBreakpoint(2, lbEn.getTraceAddress(tb.trace), true);
@@ -296,7 +295,7 @@ public class DebuggerBreakpointMarkerPluginScreenShots extends GhidraScreenShotG
 
 		Msg.debug(this, "Placing breakpoint");
 		breakpointService.placeBreakpointAt(program, addr(program, 0x00401070), 1,
-			Set.of(TraceBreakpointKind.SW_EXECUTE), "");
+			CommonSet.SWX.kinds(), "");
 		LogicalBreakpoint lbEn = waitForValue(() -> Unique.assertAtMostOne(
 			breakpointService.getBreakpointsAt(program, addr(program, 0x00401070))));
 		placeBreakpoint(1, lbEn.getTraceAddress(tb.trace), true);
@@ -337,7 +336,7 @@ public class DebuggerBreakpointMarkerPluginScreenShots extends GhidraScreenShotG
 
 		Msg.debug(this, "Placing breakpoint");
 		breakpointService.placeBreakpointAt(program, addr(program, 0x00401070), 1,
-			Set.of(TraceBreakpointKind.SW_EXECUTE), "");
+			CommonSet.SWX.kinds(), "");
 		LogicalBreakpoint lbEn = waitForValue(() -> Unique.assertAtMostOne(
 			breakpointService.getBreakpointsAt(program, addr(program, 0x00401070))));
 		placeBreakpoint(1, lbEn.getTraceAddress(tb.trace), true);
@@ -357,11 +356,12 @@ public class DebuggerBreakpointMarkerPluginScreenShots extends GhidraScreenShotG
 	public void testCaptureDebuggerPlaceBreakpointDialog() throws Throwable {
 		runSwing(
 			() -> listing.goTo(program, new ProgramLocation(program, addr(program, 0x00401c63))));
-		performAction(breakpointMarkerPlugin.actionSetSoftwareBreakpoint, false);
+		performAction(breakpointMarkerPlugin.actionsSetBreakpoint.get(CommonSet.SWX), false);
 		DebuggerPlaceBreakpointDialog dialog =
 			waitForDialogComponent(DebuggerPlaceBreakpointDialog.class);
 
 		dialog.setName("After setup");
+		dialog.getComponent().grabFocus();
 		captureDialog(dialog);
 	}
 }

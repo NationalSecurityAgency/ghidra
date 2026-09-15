@@ -36,7 +36,7 @@ class FlowArrowPanel extends JPanel {
 	private Cursor clickCursor;
 	private Cursor defaultCursor;
 
-	private FlowArrowPlugin plugin;
+	private FlowArrowMarginProvider provider;
 	private Color foregroundColor;
 	private Color highlightColor;
 	private Color selectedColor;
@@ -44,8 +44,8 @@ class FlowArrowPanel extends JPanel {
 	private SwingUpdateManager mouseClickUpdater;
 	private Point pendingMouseClickPoint;
 
-	FlowArrowPanel(FlowArrowPlugin p) {
-		this.plugin = p;
+	FlowArrowPanel(FlowArrowMarginProvider provider) {
+		this.provider = provider;
 		setMinimumSize(new Dimension(0, 0));
 		setPreferredSize(new Dimension(32, 1));
 
@@ -110,18 +110,18 @@ class FlowArrowPanel extends JPanel {
 	}
 
 	private FlowArrow getArrow(Point p) {
-		FlowArrow arrow = getArrow(p, plugin.getFlowArrowIterator());
+		FlowArrow arrow = getArrow(p, provider.getFlowArrowIterator());
 		if (arrow != null) {
 			return arrow;
 		}
 
 		// try the arrows that hang around a bit
-		arrow = getArrow(p, plugin.getSelectedFlowArrows());
+		arrow = getArrow(p, provider.getSelectedFlowArrows());
 		if (arrow != null) {
 			return arrow;
 		}
 
-		return getArrow(p, plugin.getActiveArrows());
+		return getArrow(p, provider.getActiveArrows());
 	}
 
 	private FlowArrow getArrow(Point p, Iterator<FlowArrow> it) {
@@ -139,26 +139,24 @@ class FlowArrowPanel extends JPanel {
 			return;
 		}
 
-// TODO to do this, we should probably have another concept of 'navigated'/'current' as to not
-// confuse the concept of selecting arrows				
 		// select any arrow we double-click
 		arrow.selected = true;
-		plugin.setArrowSelected(arrow, true);
+		provider.setArrowSelected(arrow, true);
 
 		Address end = arrow.end;
-		if (end.equals(plugin.getCurrentAddress())) {
+		if (end.equals(provider.getCurrentAddress())) {
 			// go back the other direction
 			end = arrow.start;
 		}
 
-		if (plugin.isOnScreen(end)) {
+		if (provider.isOnScreen(end)) {
 			// don't animate arrows completely on screen
-			plugin.goTo(end);
+			provider.goTo(end);
 			return;
 		}
 
 		// Start the animation at the edge of the screen
-		Address start = plugin.getLastAddressOnScreen(end, arrow.isUp());
+		Address start = provider.getLastAddressOnScreen(end, arrow.isUp());
 
 		ScrollingCallback callback = new ScrollingCallback(start, end);
 		Animator animator = AnimationUtils.executeSwingAnimationCallback(callback);
@@ -169,7 +167,7 @@ class FlowArrowPanel extends JPanel {
 		FlowArrow arrow = getArrow(point);
 		if (arrow != null) {
 			arrow.selected = !arrow.selected; // toggle
-			plugin.setArrowSelected(arrow, arrow.selected);
+			provider.setArrowSelected(arrow, arrow.selected);
 			repaint();
 			return; // only select one line at a time
 		}
@@ -179,13 +177,13 @@ class FlowArrowPanel extends JPanel {
 	public void setBounds(int x, int y, int width, int height) {
 		// note: this gets called as the user drags the divider pane
 		super.setBounds(x, y, width, height);
-		plugin.updateAndRepaint();
+		provider.updateAndRepaint();
 	}
 
 	@Override
 	public String getToolTipText(MouseEvent e) {
 		Point point = e.getPoint();
-		Iterator<FlowArrow> it = plugin.getFlowArrowIterator();
+		Iterator<FlowArrow> it = provider.getFlowArrowIterator();
 		while (it.hasNext()) {
 			FlowArrow arrow = it.next();
 			if (arrow.intersects(point)) {
@@ -223,7 +221,7 @@ class FlowArrowPanel extends JPanel {
 
 		super.paintComponent(g);
 
-		Address currentAddress = plugin.getCurrentAddress();
+		Address currentAddress = provider.getCurrentAddress();
 		if (currentAddress == null) {
 			return;
 		}
@@ -235,7 +233,7 @@ class FlowArrowPanel extends JPanel {
 		//
 		// Non-selected arrows
 		//
-		Iterator<FlowArrow> it = plugin.getFlowArrowIterator();
+		Iterator<FlowArrow> it = provider.getFlowArrowIterator();
 		while (it.hasNext()) {
 			FlowArrow arrow = it.next();
 			if (arrow.active || arrow.selected) {
@@ -251,7 +249,7 @@ class FlowArrowPanel extends JPanel {
 		//
 		// Active arrows--those at the selected address; paint on top of normal arrows
 		//
-		it = plugin.getActiveArrows();
+		it = provider.getActiveArrows();
 		while (it.hasNext()) {
 			FlowArrow arrow = it.next();
 			if (arrow.selected) {
@@ -266,7 +264,7 @@ class FlowArrowPanel extends JPanel {
 		// Selected arrows
 		//
 		fgColor = selectedColor;
-		it = plugin.getSelectedFlowArrows();
+		it = provider.getSelectedFlowArrows();
 		while (it.hasNext()) {
 			FlowArrow arrow = it.next();
 			paintJump(g2, arrow, fgColor);
@@ -274,7 +272,7 @@ class FlowArrowPanel extends JPanel {
 	}
 
 	private void paintJump(Graphics2D g2, FlowArrow arrow, Color fgColor) {
-		if (plugin.isOffscreen(arrow)) {
+		if (provider.isOffscreen(arrow)) {
 			return; // don't paint linger arrows, such as selected or active arrows
 		}
 
@@ -329,19 +327,19 @@ class FlowArrowPanel extends JPanel {
 			// System.err.printf("%1.3f%%\t", (percentComplete * 100));
 			// System.err.println("scrolling to: " + current);
 
-			plugin.scrollTo(current);
+			provider.scrollTo(current);
 			lastAddress = current; // let's us avoid multiple duplicate requests
 		}
 
 		@Override
 		public void done() {
 			// set the final position
-// TODO This happens after the animation is finished, which is jarring.  If we want this centered, 
-//		then we need an entirely different way of animating the transition so that the centering
-//	    is part of the animation.
+// Note: This happens after the animation is finished, which is jarring.  If we want this centered, 
+//		 then we need an entirely different way of animating the transition so that the centering
+//	     is part of the animation.
 //			plugin.scrollToCenter(end);
 
-			plugin.goTo(end);
+			provider.goTo(end);
 		}
 
 		void setAnimator(Animator animator) {
@@ -392,7 +390,7 @@ class FlowArrowPanel extends JPanel {
 	private class FlowArrowPanelMouseWheelListener implements MouseWheelListener {
 		@Override
 		public void mouseWheelMoved(MouseWheelEvent e) {
-			plugin.forwardMouseEventToListing(e);
+			provider.forwardMouseEventToListing(e);
 		}
 	}
 

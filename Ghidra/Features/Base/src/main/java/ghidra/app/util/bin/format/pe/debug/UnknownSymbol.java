@@ -18,7 +18,6 @@ package ghidra.app.util.bin.format.pe.debug;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.util.Conv;
 import ghidra.util.Msg;
 
 class UnknownSymbol extends DebugSymbol{
@@ -27,7 +26,7 @@ class UnknownSymbol extends DebugSymbol{
 	UnknownSymbol(short length, short type, BinaryReader reader, int ptr) throws IOException {
 		processDebugSymbol(length, type);
 		try {
-			unknown = reader.readByteArray(ptr, Conv.shortToInt(length));
+			unknown = reader.readByteArray(ptr, Short.toUnsignedInt(length));
 		}
 		catch (RuntimeException e) {
 		    Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import java.awt.event.KeyEvent;
 import javax.swing.Icon;
 
 import docking.ActionContext;
+import docking.DockingUtils;
 import docking.action.*;
 import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
@@ -300,7 +301,8 @@ class DiffActionManager {
 		};
 		icon = Icons.DOWN_ICON;
 		nextDiffAction.setKeyBindingData(
-			new KeyBindingData('N', InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK));
+			new KeyBindingData('N',
+				DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.ALT_DOWN_MASK));
 		nextDiffAction.setPopupMenuData(
 			new MenuData(new String[] { "Next Difference" }, icon, DIFF_NAVIGATE_GROUP));
 		nextDiffAction.setToolBarData(new ToolBarData(icon, DIFF_NAVIGATE_GROUP));
@@ -314,7 +316,8 @@ class DiffActionManager {
 		};
 		icon = Icons.UP_ICON;
 		previousDiffAction.setKeyBindingData(
-			new KeyBindingData('P', InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK));
+			new KeyBindingData('P',
+				DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.ALT_DOWN_MASK));
 		previousDiffAction.setPopupMenuData(
 			new MenuData(new String[] { "Previous Difference" }, icon, DIFF_NAVIGATE_GROUP));
 		previousDiffAction.setToolBarData(new ToolBarData(icon, DIFF_NAVIGATE_GROUP));

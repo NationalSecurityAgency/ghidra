@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,6 +23,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import ghidra.app.merge.MergeManager;
 import ghidra.app.merge.tool.ListingMergePanel;
 import ghidra.app.merge.util.ConflictUtility;
 import ghidra.program.database.function.FunctionManagerDB;
@@ -37,35 +38,35 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Handles merging of function tags when they are added/removed from 
  * functions. 
- * 
+ * <p>
  * Most merging can be done automatically; the exception being when a
  * tag has been added to a function by one user, but deleted from the
  * program by another.
- * 
+ * <p>
  * Note that there are other tag related conflict cases, but they are 
  * handled by the {@link FunctionTagMerger}, which handles all aspects of
  * creation/deletion/editing of tags independent of functions. 
- * 
+ * <p>
  * THIS CLASS ONLY DEALS WITH FUNCTION-RELATED ADDS/REMOVES.
- * 
+ * <p>
  * The specific cases handled by the class are described below:
- * 
- *  - X and Y are tags
- *  - ** indicates a conflict
- *  
- * 		User A	|	Add X	Add Y	Delete X	Delete Y	
- * 				|
- * User B		|
+ * <ul>
+ * <li>X and Y are tags</li>
+ * <li>** indicates a conflict</li>
+ * </ul>
+ * <pre>
+ *      User A  |  Add X   Add Y  Delete X  Delete Y	
+ * 	            |
+ * User B       |
  * -------------------------------------------------------
- * Add X		|	X		X,Y			**			X		
- * 				|
- * Add Y		|	X,Y		Y			Y			**		
- * 				|
- * Delete X		|	**		Y			-			-				
- * 				|
- * Delete Y		|	X		**			-			-		
- * 
- * 
+ * Add X        |  X       X,Y      **        X		
+ *              |
+ * Add Y        |  X,Y     Y        Y         **		
+ *              |
+ * Delete X     |  **      Y        -         -			
+ *              |
+ * Delete Y     |  X       **       -         -		
+ * </pre>
  */
 public class FunctionTagListingMerger extends AbstractListingMerger {
 
@@ -82,7 +83,7 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 	// the same address, they will still require separate conflict
 	// panels. This keeps track of which one we're currently resolving.
 	private Long currentlyMergingTagID = null;
-	
+
 	private int tagChoice = ASK_USER;
 
 	/**
@@ -94,7 +95,7 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 		super(listingMergeMgr);
 	}
 
-	/******************************************************************************
+	/****************************************************************************
 	 * PUBLIC METHODS
 	 ******************************************************************************/
 
@@ -203,9 +204,9 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 					// Make sure we're supposed to prompt the user; if not, just use the 
 					// previous choice and merge.
 					if (tagChoice != ASK_USER) {
-						int optionToUse =
-							(tagChoice == ASK_USER) ? chosenConflictOption : tagChoice;
-						mergeConflictingTag(addr, optionToUse, monitor);
+						// tagChoice may have been changed by the user's "Use For All" selection
+						// in a previous iteration; use it directly.
+						mergeConflictingTag(addr, tagChoice, monitor);
 					}
 					else {
 						showMergePanel(listingPanel, addr, id, monitor);
@@ -227,7 +228,7 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 		}
 	}
 
-	/******************************************************************************
+	/****************************************************************************
 	 * PRIVATE METHODS
 	 ******************************************************************************/
 
@@ -237,26 +238,23 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 	 * 
 	 * @param diffType from {@link ProgramDiffFilter}
 	 * @param monitor task monitor
-	 * @throws ProgramConflictException
-	 * @throws CancelledException
-	 * @throws IOException
+	 * @throws CancelledException if the user cancelled the operation
+	 * @throws IOException if an IO-related error occurred
 	 */
 	private void autoMerge(int diffType, TaskMonitor monitor)
-			throws ProgramConflictException, CancelledException, IOException {
+			throws CancelledException, IOException {
 
 		// Get the address of all changes in Latest and My. These changes are guaranteed to ONLY be
 		// additions/removals of tags from the address; tag creations/deletions/edits will not be 
 		// in these change sets.
 		AddressSetView myChangedAddresses =
 			listingMergeMgr.diffOriginalMy.getDifferences(new ProgramDiffFilter(diffType), monitor);
-		AddressSetView latestChangedAddresses = listingMergeMgr.diffOriginalLatest.getDifferences(
-			new ProgramDiffFilter(diffType), monitor);
+		AddressSetView latestChangedAddresses = listingMergeMgr.diffOriginalLatest
+				.getDifferences(new ProgramDiffFilter(diffType), monitor);
 
 		// Get a list of all deleted tags in My and Latest.
-		Collection<? extends FunctionTag> myDeletedTags =
-			getDeletedTags(myPgm, monitor);
-		Collection<? extends FunctionTag> latestDeletedTags =
-			getDeletedTags(latestPgm, monitor);
+		Collection<? extends FunctionTag> myDeletedTags = getDeletedTags(myPgm, monitor);
+		Collection<? extends FunctionTag> latestDeletedTags = getDeletedTags(latestPgm, monitor);
 
 		// Loop over all changed addresses in My and see if any added tags are in the 
 		// Latest delete list. If so, conflict panel!
@@ -277,7 +275,7 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 	 * @param changedAddresses list of addresses to inspect
 	 * @param deletedTags all tags deleted in the 'other' program
 	 * @param programAddedTo the program in which the adds reside
-	 * @throws IOException
+	 * @throws IOException if an IO-related error occurred
 	 */
 	private void processChangedAddresses(AddressSetView changedAddresses,
 			Collection<? extends FunctionTag> deletedTags, Program programAddedTo)
@@ -292,7 +290,7 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 			if (function == null) {
 				continue;
 			}
-			
+
 			// Get all the tags added to the function and compare against
 			// the delete list.
 			Collection<FunctionTag> tags = getTagsAddedToFunction(programAddedTo, addr);
@@ -313,7 +311,7 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 	 * Adds the given tag/address combo to the global conflict list.
 	 * 
 	 * @param addr the conflicting address
-	 * @param tag the conflicting tag
+	 	* @param tag the conflicting tag
 	 */
 	private void addToConflicts(Address addr, FunctionTag tag) {
 		if (conflictMap.get(addr) == null) {
@@ -325,11 +323,10 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 	}
 
 	/**
-	 * Returns all tags that were added to the function at the given address.
+	 * {@return all tags that were added to the function at the given address}
 	 * 
 	 * @param program the program where the function resides
 	 * @param addr the function entry point
-	 * @return
 	 */
 	private Collection<FunctionTag> getTagsAddedToFunction(Program program, Address addr) {
 
@@ -364,7 +361,7 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 	 * indicate deletions.
 	 * 
 	 * @param program the program version 
-	 * @param monitor
+	 * @param monitor A {@link TaskMonitor}
 	 * @return database IDs from the FunctionTagAdapter table that were deleted
 	 */
 	private Collection<? extends FunctionTag> getDeletedTags(Program program, TaskMonitor monitor) {
@@ -392,9 +389,9 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 	 * resolving the conflict will appear at the bottom.
 	 * 
 	 * @param listingPanel the main panel
-	 * @param addr 
-	 * @param tagID
-	 * @param changeListener
+	 * @param addr The address
+	 * @param tagID The tag ID
+	 * @param changeListener The {@link ChangeListener}
 	 */
 	private void setupConflictsPanel(ListingMergePanel listingPanel, Address addr, Long tagID,
 			ChangeListener changeListener) {
@@ -419,9 +416,10 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 
 			FunctionTag myTag = getTag(tagID, myPgm);
 			String my = myTag == null ? "<tag deleted>" : myTag.getName();
-			
+
 			conflictPanel.setRowHeader(new String[] { "Option", "Function Tags" });
-			String text = "Function Tag conflict @ address :" + ConflictUtility.getAddressString(addr);
+			String text =
+				"Function Tag conflict @ address :" + ConflictUtility.getAddressString(addr);
 			conflictPanel.setHeader(text);
 
 			conflictPanel.setRowHeader(getFunctionTagInfo(-1, null));
@@ -438,12 +436,12 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 	}
 
 	/**
-	 * Returns a string containing the tag and the program version it's associated
-	 * with. This is used when displaying the conflict panel.
+	 * {@return a string containing the tag and the program version it's associated with}
+	 * <p>
+	 * This is used when displaying the conflict panel.
 	 * 
-	 * @param version
-	 * @param tags
-	 * @return
+	 * @param version The program version
+	 * @param tag The associated tag
 	 */
 	private String[] getFunctionTagInfo(int version, String tag) {
 		String[] info = new String[] { "Keep", "", tag };
@@ -471,11 +469,11 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 	 * 
 	 * @param addr the location of the conflict
 	 * @param chosenConflictOption KEEP_ORIGINAL, KEEP_LATEST, KEEP_MY
-	 * @param monitor
-	 * @throws CancelledException
+	 * @param monitor A {@link TaskMonitor}
+	 * @throws CancelledException if the user cancelled the operation
 	 */
-	private void mergeConflictingTag(Address addr, int chosenConflictOption,
-			TaskMonitor monitor) throws CancelledException {
+	private void mergeConflictingTag(Address addr, int chosenConflictOption, TaskMonitor monitor)
+			throws CancelledException {
 
 		int resolutionType = ProgramMergeFilter.MERGE;
 
@@ -484,7 +482,7 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 		// want to throw away; the keep list is the one we want to keep.
 		//
 		// ie: 	Original 	= "Red"
-		//		My 			= "Red-my"
+		//		My 		= "Red-my"
 		//		Latest 		= "Red-latest"
 		//
 		// If the decision is KEEP_LATEST, then "Red-my" and "Red" will be added
@@ -595,8 +593,8 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 			SwingUtilities.invokeAndWait(new Runnable() {
 				@Override
 				public void run() {
-					setupConflictsPanel(listingPanel, FunctionTagListingMerger.this.currentAddress, tagID,
-						changeListener);
+					setupConflictsPanel(listingPanel, FunctionTagListingMerger.this.currentAddress,
+						tagID, changeListener);
 					listingPanel.setBottomComponent(conflictPanel);
 				}
 			});
@@ -613,7 +611,7 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 			});
 		}
 		catch (InterruptedException | InvocationTargetException e) {
-			Msg.showError(this, null, "Merge Error", "Error displaying merge panel", e);
+			MergeManager.showBlockingError("Merge Error", "Error displaying merge panel", e);
 			return;
 		}
 
@@ -629,7 +627,7 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 	 * @param id the tag ID
 	 * @param program the program version
 	 * @return null if tag not found for the given id
-	 * @throws IOException
+	 * @throws IOException if an IO-related error occurred
 	 */
 	private FunctionTag getTag(Long id, Program program) throws IOException {
 		FunctionManagerDB functionManagerDB = (FunctionManagerDB) program.getFunctionManager();

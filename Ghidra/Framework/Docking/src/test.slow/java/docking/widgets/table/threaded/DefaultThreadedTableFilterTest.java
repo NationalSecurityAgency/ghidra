@@ -16,6 +16,7 @@
 package docking.widgets.table.threaded;
 
 import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.*;
 
 import java.awt.BorderLayout;
@@ -269,9 +270,9 @@ public class DefaultThreadedTableFilterTest extends AbstractDockingTest {
 
 		startsWithFilter_AllowGlobbing("t\\?");
 		// sub-filter again
-		// The previous filer was not used due to our the the code we have that checks for globbing
+		// The previous filter was not used due to the code that checks for globbing
 		// escape characters.  But, the filter before that using just 't' is a valid parent of the
-		// current filter, so that get used.
+		// current filter, so that gets used.
 		assertNumberOfItemsPassedThroughFilter(5);
 		assertRowCount(1); // matching values: t?n
 

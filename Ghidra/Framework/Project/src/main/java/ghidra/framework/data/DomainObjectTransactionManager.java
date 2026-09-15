@@ -103,11 +103,12 @@ class DomainObjectTransactionManager extends AbstractTransactionManager {
 			throw new IllegalArgumentException("invalid domain object");
 		}
 
-		if (!force) {
-			verifyNoLock();
-		}
-
 		if (transaction == null) {
+
+			if (!force) {
+				verifyNoLock();
+			}
+
 			transactionTerminated = false;
 			transaction =
 				new DomainObjectDBTransaction(domainObj.dbh.startTransaction(), domainObj);

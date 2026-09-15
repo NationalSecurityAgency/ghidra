@@ -29,7 +29,7 @@ import ghidra.app.plugin.core.terminal.vt.*;
  * A text field element for rendering a full line of terminal text
  * 
  * <p>
- * {@link TerminalTextFields} are populated by a single element. The typical pattern seems to be to
+ * {@link TerminalTextField}s are populated by a single element. The typical pattern seems to be to
  * create a separate element for each bit of text having common attributes. This pattern would
  * generate quite a bit of garbage, since the terminal contents change frequently. Every time a line
  * content changed, we'd have to re-construct the elements. Instead, we use a single re-usable
@@ -103,7 +103,9 @@ public class TerminalTextFieldElement implements FieldElement {
 
 	@Override
 	public char charAt(int index) {
-		return line.getChar(index);
+		StringBuilder sb = new StringBuilder();
+		line.gatherText(sb, 0, line.length());
+		return sb.charAt(index);
 	}
 
 	@Override
@@ -162,7 +164,7 @@ public class TerminalTextFieldElement implements FieldElement {
 
 	protected void paintChars(JComponent c, Graphics g, int x, int y, VtAttributes attrs, int start,
 			int end) {
-		char[] ch = line.getCharBuffer();
+		int[] cps = line.getCodePointBuffer();
 		int descent = metrics.getDescent();
 		int height = metrics.getHeight();
 		int left = x + start * em;
@@ -205,6 +207,12 @@ public class TerminalTextFieldElement implements FieldElement {
 				case NONE:
 			}
 
+			/**
+			 * Draw each character individually, so I can force grid alignment, even in cases where
+			 * the glyph happens to not match width. (Could be a special glyph or a non-monospaced
+			 * font.)
+			 */
+			char[] ch = new char[2]; // Max length of UTF-16 encoding for a single code point
 			for (int i = start; i < end; i++) {
 				/**
 				 * HACK: The default monospaced font selected by Java may not have glyphs for the
@@ -213,16 +221,17 @@ public class TerminalTextFieldElement implements FieldElement {
 				 * monospaced. This is not acceptable. To deal with that, when we find a glyph whose
 				 * width does not match, we'll scale it horizontally so that it does.
 				 */
-				int chW = metrics.charWidth(ch[i]);
+				int chW = metrics.charWidth(cps[i]);
+				int len = Character.toChars(cps[i], ch, 0);
 				if (chW != em) {
 					try (SaveTransform st = new SaveTransform(g)) {
 						st.g.translate(x + em * i, 0);
 						st.g.scale((double) em / chW, 1.0);
-						st.g.drawChars(ch, i, 1, 0, 0);
+						st.g.drawChars(ch, 0, len, 0, 0);
 					}
 				}
 				else {
-					g.drawChars(ch, i, 1, x + em * i, 0);
+					g.drawChars(ch, 0, len, x + em * i, 0);
 				}
 			}
 			if (attrs.strikeThrough()) {

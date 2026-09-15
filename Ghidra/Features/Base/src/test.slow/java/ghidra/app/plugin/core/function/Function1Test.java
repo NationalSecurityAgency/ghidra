@@ -39,7 +39,6 @@ import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.data.DataPlugin;
 import ghidra.app.plugin.core.disassembler.DisassemblerPlugin;
 import ghidra.app.plugin.core.highlight.SetHighlightPlugin;
-import ghidra.app.plugin.core.instructionsearch.model.InstructionSearchData.UpdateType;
 import ghidra.app.plugin.core.navigation.*;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.AddEditDialog;

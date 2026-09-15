@@ -38,8 +38,7 @@ public:
     preexisting = 2,		///< Varnode preexisted in the original data-flow
     normal_temp = 3,		///< A new temporary (unique space) Varnode
     piece_temp = 4,		///< A temporary representing a piece of an original Varnode
-    constant = 5,		///< A new constant Varnode
-    constant_iop = 6,		///< Special iop constant encoding a PcodeOp reference
+    constant = 5		///< A new constant Varnode
   };
   /// \brief Flags for a TransformVar
   enum {
@@ -71,8 +70,9 @@ public:
   enum {
     op_replacement = 1,		///< Op replaces an existing op
     op_preexisting = 2,		///< Op already exists (but will be transformed)
-    indirect_creation = 4,	///< Mark op as indirect creation
-    indirect_creation_possible_out = 8	///< Mark op as indirect creation and possible call output
+    op_indirect = 4,		///< Op is a new INDIRECT
+    indirect_creation = 8,	///< Mark op as indirect creation
+    indirect_creation_possible_out = 0x10	///< Mark op as indirect creation and possible call output
   };
 private:
   PcodeOp *op;			///< Original op which \b this is splitting (or null)
@@ -87,7 +87,6 @@ private:
 public:
   TransformVar *getOut(void) const { return output; }	///< Get the output placeholder variable for \b this operator
   TransformVar *getIn(int4 i) const { return input[i]; }	///< Get the i-th input placeholder variable for \b this
-  void inheritIndirect(PcodeOp *indOp);		///< Set \e indirect \e creation flags for \b this based on given INDIRECT
 };
 
 /// \brief Describes a (register) storage location and the ways it might be split into lanes
@@ -174,11 +173,11 @@ public:
   TransformVar *newPreexistingVarnode(Varnode *vn);	///< Make placeholder for preexisting Varnode
   TransformVar *newUnique(int4 size);		///< Make placeholder for new unique space Varnode
   TransformVar *newConstant(int4 size,int4 lsbOffset,uintb val);	///< Make placeholder for constant Varnode
-  TransformVar *newIop(Varnode *vn);	///< Make placeholder for special iop constant
   TransformVar *newPiece(Varnode *vn,int4 bitSize,int4 lsbOffset);	///< Make placeholder for piece of a Varnode
   TransformVar *newSplit(Varnode *vn,const LaneDescription &description);
   TransformVar *newSplit(Varnode *vn,const LaneDescription &description,int4 numLanes,int4 startLane);
   TransformOp *newOpReplace(int4 numParams,OpCode opc,PcodeOp *replace);
+  TransformOp *newIndirectReplace(PcodeOp *replace);
   TransformOp *newOp(int4 numParams,OpCode opc,TransformOp *follow);
   TransformOp *newPreexistingOp(int4 numParams,OpCode opc,PcodeOp *originalOp);
 

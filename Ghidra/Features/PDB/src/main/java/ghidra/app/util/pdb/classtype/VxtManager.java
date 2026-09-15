@@ -15,8 +15,7 @@
  */
 package ghidra.app.util.pdb.classtype;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.PointerDataType;
@@ -28,8 +27,8 @@ public class VxtManager {
 
 	protected ClassTypeManager ctm;
 
-	protected Map<Address, VirtualBaseTable> vbtByAddress;
-	protected Map<Address, VirtualFunctionTable> vftByAddress;
+	protected TreeMap<Address, VirtualBaseTable> vbtByAddress;
+	protected TreeMap<Address, VirtualFunctionTable> vftByAddress;
 
 	/**
 	 * Virtual Base Table Lookup Manager
@@ -37,8 +36,8 @@ public class VxtManager {
 	 */
 	public VxtManager(ClassTypeManager ctm) {
 		this.ctm = ctm;
-		vbtByAddress = new HashMap<>();
-		vftByAddress = new HashMap<>();
+		vbtByAddress = new TreeMap<>();
+		vftByAddress = new TreeMap<>();
 	}
 
 	/**
@@ -73,6 +72,22 @@ public class VxtManager {
 	 */
 	public VirtualFunctionTable getVft(Address address) {
 		return vftByAddress.get(address);
+	}
+
+	/**
+	 * Dumps vbt addresses
+	 * @return the addresses
+	 */
+	public List<Address> dumpVbtAddresses() {
+		return new ArrayList<Address>(vbtByAddress.keySet());
+	}
+
+	/**
+	 * Dumps fbt addresses
+	 * @return the addresses
+	 */
+	public List<Address> dumpVftAddresses() {
+		return new ArrayList<Address>(vftByAddress.keySet());
 	}
 
 }

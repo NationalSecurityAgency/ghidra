@@ -24,6 +24,7 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkEvent.EventType;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.DefaultCaret;
+import javax.swing.text.html.HTMLEditorKit;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -35,7 +36,7 @@ import utility.function.Callback;
 
 /**
  * A component that acts like a label, but adds the ability to render HTML links with a client
- * callback for when the link is activated.  Links can be activated by mouse clicking or or by 
+ * callback for when the link is activated.  Links can be activated by mouse clicking or by
  * focusing the link and then pressing Enter or Space.
  * <p>
  * Users can make one simple text link by calling {@link #addLink(String, Callback)}.  
@@ -82,6 +83,24 @@ public class GHyperlinkComponent extends JPanel {
 		textPane.getAccessibleContext().setAccessibleDescription("Clickable link");
 	}
 
+	/**
+	 * Uses the given text to create a link the user can click.
+	 * @param text the text
+	 * @param accessibleText the text that should be read by a screen reader when the user focuses
+	 * this link.
+	 * @param linkActivatedCallback the callback that will be called when the link is activated
+	 */
+	public void addLink(String text, String accessibleText, Callback linkActivatedCallback) {
+		JTextPane textPane = new FixedSizeTextPane(text, linkActivatedCallback);
+		add(textPane);
+		setText(textPane, "<a href=\"stub\">" + text + "</a>");
+		textPane.getAccessibleContext().setAccessibleDescription("Clickable link");
+		textPane.getAccessibleContext().setAccessibleName(accessibleText);
+		HTMLEditorKit kit = (HTMLEditorKit)textPane.getEditorKit();
+        kit.getAccessibleContext().setAccessibleName(accessibleText);
+	}
+
+	
 	private void setText(JTextPane textPane, String text) {
 
 		String html = "<html><nobr>" + text;

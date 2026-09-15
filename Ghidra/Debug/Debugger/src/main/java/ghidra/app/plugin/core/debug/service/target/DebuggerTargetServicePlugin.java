@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,8 +27,15 @@ import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.trace.model.Trace;
 import ghidra.util.datastruct.ListenerSet;
 
-@PluginInfo(shortDescription = "Debugger targets manager service", description = "Maintains a collection of published targets and notifies listeners of changes.", category = PluginCategoryNames.DEBUGGER, packageName = DebuggerPluginPackage.NAME, status = PluginStatus.RELEASED, servicesProvided = {
-	DebuggerTargetService.class, })
+@PluginInfo(
+	shortDescription = "Debugger targets manager service",
+	description = "Maintains a collection of published targets and notifies listeners of changes.",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.RELEASED,
+	servicesProvided = {
+		DebuggerTargetService.class,
+	})
 public class DebuggerTargetServicePlugin extends Plugin implements DebuggerTargetService {
 
 	public DebuggerTargetServicePlugin(PluginTool tool) {

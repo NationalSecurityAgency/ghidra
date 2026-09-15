@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,7 +44,7 @@ import ghidra.util.task.TaskMonitor;
  * cause only lines that match the max record size to be printed; any other 
  * bytes will be dropped. If this option is not set, every byte will be represented in the output.
  */
-public class IntelHexExporter extends Exporter {
+public class IntelHexExporter extends ProgramExporter {
 
 	/** Option allowing the user to select the address space */
 	protected Option addressSpaceOption;
@@ -98,8 +98,9 @@ public class IntelHexExporter extends Exporter {
 		}
 		Program program = (Program) domainObject;
 
-		addressSpaceOption = new Option("Address Space",
-			program.getAddressFactory().getDefaultAddressSpace(), AddressSpace.class, null);
+		addressSpaceOption = Option.newAddressSpace("Address Space")
+				.value(program.getAddressFactory().getDefaultAddressSpace())
+				.build();
 
 		if (recordSizeOption == null) {
 			recordSizeOption = new RecordSizeOption("Record Size", Integer.class);
@@ -150,13 +151,12 @@ public class IntelHexExporter extends Exporter {
 
 		log.clear();
 
-		if (!(domainObj instanceof Program)) {
-			log.appendMsg("Unsupported type: " + domainObj.getClass().getName());
-			return false;
+		Program program;
+		try {
+			program = getProgram(domainObj);
 		}
-		Program program = (Program) domainObj;
-		if (program.getMaxAddress().getSize() > 32) {
-			log.appendMsg("Cannot be used for programs larger than 32 bits");
+		catch (ClassCastException e) {
+			log.appendMsg("Unsupported type: " + domainObj.getClass().getName());
 			return false;
 		}
 
@@ -168,12 +168,23 @@ public class IntelHexExporter extends Exporter {
 
 			Memory memory = program.getMemory();
 
-			if (addrSet == null) {
-				addrSet = memory;
+			AddressSet set = new AddressSet(addrSet != null ? addrSet : memory);
+
+			for (MemoryBlock block : memory.getBlocks()) {
+				if (!block.isInitialized() ||
+					block.getStart().getAddressSpace() != addressSpaceOption.getValue()) {
+					set.delete(new AddressRangeImpl(block.getStart(), block.getEnd()));
+				}
+			}
+
+			Address maxAddr = set.getMaxAddress();
+			if (maxAddr != null && maxAddr.getSize() > 32) {
+				log.appendMsg("Cannot be used for address spaces larger than 32 bits");
+				return false;
 			}
 
 			try {
-				List<IntelHexRecord> records = dumpMemory(program, memory, addrSet, monitor);
+				List<IntelHexRecord> records = dumpMemory(program, memory, set, monitor);
 				for (IntelHexRecord record : records) {
 					writer.println(record.format());
 				}
@@ -198,17 +209,7 @@ public class IntelHexExporter extends Exporter {
 
 		IntelHexRecordWriter writer = new IntelHexRecordWriter(size, dropBytes);
 
-		AddressSet set = new AddressSet(addrSetView);
-
-		MemoryBlock[] blocks = memory.getBlocks();
-		for (MemoryBlock block : blocks) {
-			if (!block.isInitialized() ||
-				block.getStart().getAddressSpace() != addressSpaceOption.getValue()) {
-				set.delete(new AddressRangeImpl(block.getStart(), block.getEnd()));
-			}
-		}
-
-		AddressIterator addresses = set.getAddresses(true);
+		AddressIterator addresses = addrSetView.getAddresses(true);
 		while (addresses.hasNext()) {
 			Address address = addresses.next();
 			byte b = memory.getByte(address);
@@ -220,7 +221,7 @@ public class IntelHexExporter extends Exporter {
 			program.getSymbolTable().getExternalEntryPointIterator();
 		while (entryPoint == null && entryPointIterator.hasNext()) {
 			Address address = entryPointIterator.next();
-			if (set.contains(address)) {
+			if (addrSetView.contains(address)) {
 				entryPoint = address;
 			}
 		}
@@ -239,16 +240,16 @@ public class IntelHexExporter extends Exporter {
 		private final RecordSizeComponent comp = new RecordSizeComponent(DEFAULT_RECORD_SIZE);
 
 		public RecordSizeOption(String name, Class<?> valueClass) {
-			super(name, valueClass);
+			super(name, valueClass, null, null, null, null, false, null);
 		}
 
 		public RecordSizeOption(String name, Class<?> valueClass, Object value, String arg,
 				String group) {
-			super(name, valueClass, value, arg, group);
+			super(name, valueClass, value, arg, group, null, false, null);
 		}
 
 		@Override
-		public Component getCustomEditorComponent() {
+		public Component getCustomEditorComponent(AddressFactoryService addressFactoryService) {
 			return comp;
 		}
 

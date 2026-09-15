@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,9 +20,9 @@ import static ghidra.feature.vt.api.db.VTMatchSetTableDBAdapter.ColumnDescriptio
 import java.io.*;
 import java.util.*;
 
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.input.SAXBuilder;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.input.SAXBuilder;
 
 import db.*;
 import ghidra.feature.vt.api.impl.*;
@@ -30,22 +30,22 @@ import ghidra.feature.vt.api.main.*;
 import ghidra.framework.data.OpenMode;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
-import ghidra.program.database.DBObjectCache;
-import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Lock;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.Msg;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.xml.XmlUtilities;
 
-public class VTMatchSetDB extends DatabaseObject implements VTMatchSet {
+public class VTMatchSetDB extends DbObject implements VTMatchSet {
 
 	private final DBRecord matchSetRecord;
 
-	private DBObjectCache<VTMatchDB> matchCache;
+	private DbCache<VTMatchDB> matchCache;
 	private final VTSessionDB session;
 	private VTMatchTableDBAdapter matchTableAdapter;
 
@@ -73,13 +73,13 @@ public class VTMatchSetDB extends DatabaseObject implements VTMatchSet {
 	}
 
 	private VTMatchSetDB(DBRecord record, VTSessionDB session, DBHandle dbHandle, Lock lock) {
-		super(null, record.getKey());// cache not supported
+		super(record.getKey());// cache not supported
 		this.matchSetRecord = record;
 		this.session = session;
 		this.dbHandle = dbHandle;
 		this.lock = lock;
 
-		matchCache = new DBObjectCache<>(10);
+		matchCache = new DbCache<>(new MatchFactory(), lock, 10);
 	}
 
 	private void createTableAdapters(long tableID) throws IOException {
@@ -162,19 +162,16 @@ public class VTMatchSetDB extends DatabaseObject implements VTMatchSet {
 		VTAssociationDB associationDB = associationManager.getOrCreateAssociationDB(
 			info.getSourceAddress(), info.getDestinationAddress(), info.getAssociationType());
 		VTMatchTag tag = info.getTag();
-		VTMatch newMatch = null;
-		try {
-			lock.acquire();
+		VTMatchDB newMatch = null;
+		try (Closeable c = lock.write()) {
 			VTMatchTagDB tagDB = session.getOrCreateMatchTagDB(tag);
 			DBRecord matchRecord =
 				matchTableAdapter.insertMatchRecord(info, this, associationDB, tagDB);
-			newMatch = getMatchForRecord(matchRecord);
+			newMatch = new VTMatchDB(matchRecord, this);
+			matchCache.add(newMatch);
 		}
 		catch (IOException e) {
 			dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 		if (newMatch != null) {
 			session.setObjectChanged(VTEvent.MATCH_ADDED, newMatch, null, newMatch);
@@ -213,8 +210,8 @@ public class VTMatchSetDB extends DatabaseObject implements VTMatchSet {
 		VTAssociation association = match.getAssociation();
 		Address sourceAddress = association.getSourceAddress();
 		Address destinationAddress = association.getDestinationAddress();
-		try {
-			lock.acquire();
+		try (Closeable c = lock.write()) {
+			checkDeleted();
 			long matchKey = matchDb.getKey();
 			boolean deleted = matchTableAdapter.deleteRecord(matchKey);
 			if (deleted) {
@@ -231,9 +228,6 @@ public class VTMatchSetDB extends DatabaseObject implements VTMatchSet {
 		catch (IOException e) {
 			dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 
 		DeletedMatch deletedMatch = new DeletedMatch(sourceAddress, destinationAddress);
 		session.setObjectChanged(VTEvent.MATCH_DELETED, match, deletedMatch, null);
@@ -247,35 +241,31 @@ public class VTMatchSetDB extends DatabaseObject implements VTMatchSet {
 	@Override
 	public Collection<VTMatch> getMatches() {
 		List<VTMatch> list = new LinkedList<>();
-		try {
-			lock.acquire();
+		try (Closeable c = lock.read()) {
 			RecordIterator iterator = matchTableAdapter.getRecords();
 			while (iterator.hasNext()) {
 				DBRecord nextRecord = iterator.next();
-				list.add(getMatchForRecord(nextRecord));
+				list.add(matchCache.getCachedInstance(nextRecord));
 			}
 		}
 		catch (IOException e) {
 			dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 		return list;
 	}
 
 	@Override
 	public Collection<VTMatch> getMatches(VTAssociation association) {
-		VTAssociationDB associationDB = (VTAssociationDB) association;
 		List<VTMatch> list = new LinkedList<>();
-		if (associationDB == null) {
-			return list; // No association, so no matches.
-		}
-		try {
+		try (Closeable c = lock.read()) {
+			VTAssociationDB associationDB = (VTAssociationDB) association;
+			if (associationDB == null) {
+				return list; // No association, so no matches.
+			}
 			RecordIterator iterator = matchTableAdapter.getRecords(associationDB.getKey());
 			while (iterator.hasNext()) {
 				DBRecord nextRecord = iterator.next();
-				VTMatch match = getMatchForRecord(nextRecord);
+				VTMatch match = matchCache.getCachedInstance(nextRecord);
 				list.add(match);
 			}
 		}
@@ -287,47 +277,21 @@ public class VTMatchSetDB extends DatabaseObject implements VTMatchSet {
 
 	@Override
 	public Collection<VTMatch> getMatches(Address sourceAddress, Address destinationAddress) {
-		AssociationDatabaseManager associationManager = session.getAssociationManagerDBM();
-		VTAssociationDB existingAssociationDB =
-			associationManager.getExistingAssociationDB(sourceAddress, destinationAddress);
-		if (existingAssociationDB == null) {
-			return Collections.emptyList();
-		}
-		return getMatches(existingAssociationDB);
-	}
-
-	@Override
-	protected boolean refresh() {
-		return true;
-	}
-
-	@Override
-	public boolean isInvalid() {
-		return session.getMatchSetRecord(key) == null;
-	}
-
-	private VTMatch getMatchForRecord(DBRecord matchRecord) {
-		try {
-			lock.acquire();
-			VTMatchDB match = matchCache.get(matchRecord);
-			if (match == null) {
-				match = new VTMatchDB(matchCache, matchRecord, this);
+		try (Closeable c = lock.read()) {
+			AssociationDatabaseManager associationManager = session.getAssociationManagerDBM();
+			VTAssociationDB existingAssociationDB =
+				associationManager.getExistingAssociationDB(sourceAddress, destinationAddress);
+			if (existingAssociationDB == null) {
+				return Collections.emptyList();
 			}
-			return match;
-		}
-		finally {
-			lock.release();
+			return getMatches(existingAssociationDB);
 		}
 	}
 
-	DBRecord getMatchRecord(long matchRecordKey) {
-		try {
-			return matchTableAdapter.getMatchRecord(matchRecordKey);
-		}
-		catch (IOException e) {
-			dbError(e);
-		}
-		return null;
+	@Override
+	protected boolean refresh(DBRecord rec) {
+		// MatchSets are not cached, so this method is not used
+		return true;
 	}
 
 	Program getDestinationProgram() {
@@ -346,13 +310,17 @@ public class VTMatchSetDB extends DatabaseObject implements VTMatchSet {
 		return matchTableAdapter;
 	}
 
-	public void invalidateCache() {
-		lock.acquire();
+	void invalidateCache() {
+		matchCache.invalidate();
+	}
+
+	DBRecord getMatchRecord(long matchKey) {
 		try {
-			matchCache.invalidate();
+			return matchTableAdapter.getMatchRecord(matchKey);
 		}
-		finally {
-			lock.release();
+		catch (IOException e) {
+			session.dbError(e);
+			return null;
 		}
 	}
 
@@ -361,4 +329,19 @@ public class VTMatchSetDB extends DatabaseObject implements VTMatchSet {
 		return "Match Set " + getID() + " - " + getMatchCount() + " matches [Correlator=" +
 			getProgramCorrelatorInfo().getName() + "]";
 	}
+
+	private class MatchFactory implements DbFactory<VTMatchDB> {
+
+		@Override
+		public VTMatchDB instantiate(long matchKey) {
+			DBRecord record = getMatchRecord(matchKey);
+			return record == null ? null : instantiate(record);
+		}
+
+		@Override
+		public VTMatchDB instantiate(DBRecord rec) {
+			return new VTMatchDB(rec, VTMatchSetDB.this);
+		}
+	}
+
 }

@@ -1131,10 +1131,12 @@ define token instrAARCH64 (32) endian = little
 
 	imm6 = (10,15)
 	aa_imm7 = (15,21)
+	imm8  = (10,17)
 	imm12 = (10,21)
 	imm16 = (5,20)
 
 	simm7 = (15,21) signed
+	simm8 = (10,17) signed
 	simm9 = (12,20) signed
 	simm14 = (5,18) signed
 	simm19 = (5,23) signed
@@ -2188,17 +2190,19 @@ RegShiftVal64: "" is aa_extreg_imm3=0 { export 0:8; }
 LSL_Sp_Special64: Rm_GPR64, "LSL " is Rm_GPR64 & aa_extreg_imm3 { export Rm_GPR64; }
 LSL_Sp_Special64: Rm_GPR64 is Rm_GPR64 & aa_extreg_imm3=0 { export Rm_GPR64; }
 
-ExtendReg64: Rm_GPR32, "UXTB " is Rm_GPR32 & b_2121=1 & aa_extreg_option=0 { tmp0:4 = Rm_GPR32; tmp:8 = zext(tmp0:1); export tmp; }
-ExtendReg64: Rm_GPR32, "UXTH " is Rm_GPR32 & b_2121=1 & aa_extreg_option=1 { tmp0:4 = Rm_GPR32; tmp:8 = zext(tmp0:2); export tmp; }
-ExtendReg64: Rm_GPR32, "UXTW " is Rm_GPR32 & b_2121=1 & aa_extreg_option=2 { tmp:8 = zext(Rm_GPR32); export tmp; }
-ExtendReg64: LSL_Sp_Special64 is Rm_GPR64 & b_2121=1 & aa_extreg_option=3 & b_29=1 & b_25=1 & (Rn=0x1f) & LSL_Sp_Special64 { tmp:8 = Rm_GPR64; export tmp; }
-ExtendReg64: LSL_Sp_Special64 is Rm_GPR64 & b_2121=1 & aa_extreg_option=3 & b_29=0 & b_25=1 & (Rd=0x1f | Rn=0x1f) & LSL_Sp_Special64 { tmp:8 = Rm_GPR64; export tmp; }
-ExtendReg64: Rm_GPR64, "LSL " is Rm_GPR64 & b_2121=1 & aa_extreg_option=3 & b_29 & b_25=0 { tmp:8 = Rm_GPR64; export tmp; }
-ExtendReg64: Rm_GPR64, "UXTX " is Rm_GPR64 & b_2121=1 & aa_extreg_option=3 { tmp:8 = Rm_GPR64; export tmp; }
-ExtendReg64: Rm_GPR32, "SXTB " is Rm_GPR32 & b_2121=1 & aa_extreg_option=4 { tmp0:4 = Rm_GPR32; tmp:8 = sext(tmp0:1); export tmp; }
-ExtendReg64: Rm_GPR32, "SXTH " is Rm_GPR32 & b_2121=1 & aa_extreg_option=5 { tmp0:4 = Rm_GPR32; tmp:8 = sext(tmp0:2); export tmp; }
-ExtendReg64: Rm_GPR32, "SXTW " is Rm_GPR32 & b_2121=1 & aa_extreg_option=6 { tmp:8 = sext(Rm_GPR32); export tmp; }
-ExtendReg64: Rm_GPR64, "SXTX " is Rm_GPR64 & b_2121=1 & aa_extreg_option=7 { tmp:8 = Rm_GPR64; export tmp; }
+ExtendReg64: Rm_GPR32, "UXTB " is Rm_GPR32 & aa_extreg_option=0 { tmp0:4 = Rm_GPR32; tmp:8 = zext(tmp0:1); export tmp; }
+ExtendReg64: Rm_GPR32, "UXTH " is Rm_GPR32 & aa_extreg_option=1 { tmp0:4 = Rm_GPR32; tmp:8 = zext(tmp0:2); export tmp; }
+ExtendReg64: Rm_GPR32, "UXTW " is Rm_GPR32 & aa_extreg_option=2 { tmp:8 = zext(Rm_GPR32); export tmp; }
+ExtendReg64: LSL_Sp_Special64  is Rm_GPR64 & aa_extreg_option=3 & b_29=1 & b_25=1 & (Rn=0x1f) & LSL_Sp_Special64 { tmp:8 = Rm_GPR64; export tmp; }
+ExtendReg64: LSL_Sp_Special64  is Rm_GPR64 & aa_extreg_option=3 & b_29=0 & b_25=1 & (Rd=0x1f | Rn=0x1f) & LSL_Sp_Special64 { tmp:8 = Rm_GPR64; export tmp; }
+# These two are only used by load/store (register) instructions
+ExtendReg64: Rm_GPR64, "LSL "  is Rm_GPR64 & b_1212=1 & aa_extreg_option=3 & b_25=0 { tmp:8 = Rm_GPR64; export tmp; }
+ExtendReg64: Rm_GPR64          is Rm_GPR64 & b_1212=0 & aa_extreg_option=3 & b_25=0 { tmp:8 = Rm_GPR64; export tmp; }
+ExtendReg64: Rm_GPR64, "UXTX " is Rm_GPR64 & aa_extreg_option=3 { tmp:8 = Rm_GPR64; export tmp; }
+ExtendReg64: Rm_GPR32, "SXTB " is Rm_GPR32 & aa_extreg_option=4 { tmp0:4 = Rm_GPR32; tmp:8 = sext(tmp0:1); export tmp; }
+ExtendReg64: Rm_GPR32, "SXTH " is Rm_GPR32 & aa_extreg_option=5 { tmp0:4 = Rm_GPR32; tmp:8 = sext(tmp0:2); export tmp; }
+ExtendReg64: Rm_GPR32, "SXTW " is Rm_GPR32 & aa_extreg_option=6 { tmp:8 = sext(Rm_GPR32); export tmp; }
+ExtendReg64: Rm_GPR64, "SXTX " is Rm_GPR64 & aa_extreg_option=7 { tmp:8 = Rm_GPR64; export tmp; }
 
 ExtendRegShift64: ExtendReg64^RegShiftVal64
 is aa_extreg_shift = 0 & aa_extreg_option & aa_extreg_imm3 & ExtendReg64 & RegShiftVal64
@@ -3265,7 +3269,6 @@ PACIXSP_BTITARGETS: is ShowBTI=0 { }
 
 define pcodeop SIMD_PIECE;
 
-define pcodeop NEON_addv;
 define pcodeop NEON_aesd;
 define pcodeop NEON_aese;
 define pcodeop NEON_aesimc;
@@ -3274,20 +3277,7 @@ define pcodeop NEON_bfdot;
 define pcodeop NEON_bfmlalb;
 define pcodeop NEON_bfmlalt;
 define pcodeop NEON_bfmmla;
-define pcodeop NEON_bif;
-define pcodeop NEON_bit;
-define pcodeop NEON_bsl;
 define pcodeop NEON_cls;
-define pcodeop NEON_clz;
-define pcodeop NEON_cmeq;
-define pcodeop NEON_cmge;
-define pcodeop NEON_cmgt;
-define pcodeop NEON_cmhi;
-define pcodeop NEON_cmhs;
-define pcodeop NEON_cmle;
-define pcodeop NEON_cmlt;
-define pcodeop NEON_cmtst;
-define pcodeop NEON_cnt;
 define pcodeop NEON_ext;
 define pcodeop NEON_facge;
 define pcodeop NEON_facgt;
@@ -3300,7 +3290,6 @@ define pcodeop NEON_fcmle;
 define pcodeop NEON_fcmlt;
 define pcodeop NEON_fcvtzs;
 define pcodeop NEON_fcvtzu;
-define pcodeop NEON_fmadd;
 define pcodeop NEON_fmax;
 define pcodeop NEON_fmaxnm;
 define pcodeop NEON_fmaxnmp;
@@ -3314,7 +3303,6 @@ define pcodeop NEON_fminnmv;
 define pcodeop NEON_fminp;
 define pcodeop NEON_fminv;
 define pcodeop NEON_fmov;
-define pcodeop NEON_fmsub;
 define pcodeop NEON_fmulx;
 define pcodeop NEON_fnmadd;
 define pcodeop NEON_fnmsub;

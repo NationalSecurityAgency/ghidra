@@ -59,13 +59,22 @@ public class JavaClassDecompilerFileSystem implements GFileSystem {
 		this.provider = provider;
 
 		this.containerFSRL = provider.getFSRL();
-		this.className = FilenameUtils.removeExtension(containerFSRL.getName());
+		this.className =
+			getSafeJavaClassname(FilenameUtils.removeExtension(containerFSRL.getName()));
 		this.javaSrcFilename = className + ".java";
 
 		try (ByteProvider decompiledBP = getDecompiledJavaSrcFileEntry(null, monitor)) {
 			this.fsIndexHelper = new SingleFileSystemIndexHelper(this, fsFSRL, javaSrcFilename,
 				decompiledBP.length(), decompiledBP.getFSRL().getMD5());
 		}
+	}
+
+	private static String getSafeJavaClassname(String s) throws IOException {
+		if (s.isEmpty() || !Character.isJavaIdentifierStart(s.codePointAt(0)) ||
+			!s.substring(1).codePoints().allMatch(Character::isJavaIdentifierPart)) {
+			throw new IOException("Bad classname: " + s);
+		}
+		return s;
 	}
 
 	private ByteProvider getDecompiledJavaSrcFileEntry(FSRL targetFSRL, TaskMonitor monitor)
@@ -80,13 +89,19 @@ public class JavaClassDecompilerFileSystem implements GFileSystem {
 		try {
 			tempDir = new File(Application.getUserTempDirectory(), "JavaClassDecompilerFileSystem");
 
-			File tempClassFile = new File(tempDir, containerFSRL.getName());
+			File tempClassFile = new File(tempDir, className + ".class");
+			if (!tempDir.equals(tempClassFile.getParentFile())) {
+				throw new IOException("Bad filename name: " + tempClassFile.getName());
+			}
 			FSUtilities.copyByteProviderToFile(provider, tempClassFile, monitor);
 
 			// tempDestJavaSrcFile (ie. "javaclass.java") contents are automagically
 			// created by the Jad process based on the class name it finds inside
 			// the binary "javaclass.class" file.  Class, class, class.
 			File tempDestJavaSrcFile = new File(tempDir, javaSrcFilename);
+			if (!tempDir.equals(tempDestJavaSrcFile.getParentFile())) {
+				throw new IOException("Bad filename name: " + tempDestJavaSrcFile.getName());
+			}
 
 			JadProcessWrapper wrapper = new JadProcessWrapper(tempClassFile);
 			JadProcessController controller = new JadProcessController(wrapper, className);

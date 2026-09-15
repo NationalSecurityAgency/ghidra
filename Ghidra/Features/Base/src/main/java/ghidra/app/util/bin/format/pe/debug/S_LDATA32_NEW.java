@@ -18,7 +18,6 @@ package ghidra.app.util.bin.format.pe.debug;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.util.Conv;
 
 class S_LDATA32_NEW extends DebugSymbol{
     private int reserved;
@@ -35,13 +34,13 @@ class S_LDATA32_NEW extends DebugSymbol{
 		this.name = reader.readAsciiString(ptr, Byte.toUnsignedInt(nameLen));
 		ptr += Byte.toUnsignedInt(nameLen);
 
-		int sizeOfPadding = Conv.shortToInt(length) - 
-							BinaryReader.SIZEOF_SHORT - 
-							BinaryReader.SIZEOF_INT - 
-							BinaryReader.SIZEOF_INT - 
-							BinaryReader.SIZEOF_SHORT - 
-							BinaryReader.SIZEOF_BYTE - 
-							Conv.byteToInt(nameLen);
+		int sizeOfPadding = Short.toUnsignedInt(length) -
+			BinaryReader.SIZEOF_SHORT -
+			BinaryReader.SIZEOF_INT -
+			BinaryReader.SIZEOF_INT -
+			BinaryReader.SIZEOF_SHORT -
+			BinaryReader.SIZEOF_BYTE -
+			Byte.toUnsignedInt(nameLen);
 		
 		padding = reader.readByteArray(ptr, sizeOfPadding);
 	}

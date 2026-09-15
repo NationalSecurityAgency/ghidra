@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,6 +29,7 @@ import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformOffer;
 import ghidra.app.services.DebuggerPlatformService;
 import ghidra.debug.api.platform.DebuggerPlatformMapper;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.program.model.lang.LanguageID;
 import ghidra.trace.database.ToyDBTraceBuilder;
 
@@ -73,10 +74,12 @@ public class DebuggerPlatformPluginTest extends AbstractGhidraHeadedDebuggerTest
 	public void testActionMore() throws Throwable {
 		createAndOpenTrace("DATA:BE:64:default");
 		traceManager.activateTrace(tb.trace);
-		
+
 		chooseLanguageIDViaMore(new LanguageID("Toy:BE:64:default"));
 		DebuggerPlatformMapper mapper = platformService.getCurrentMapperFor(tb.trace);
-		assertEquals(new LanguageID("Toy:BE:64:default"), mapper.getLangauge(null).getLanguageID());
+		DebuggerCoordinates current = traceManager.getCurrent();
+		assertEquals(new LanguageID("Toy:BE:64:default"),
+			mapper.getLangauge(current.getObject(), current.getSnap()).getLanguageID());
 	}
 
 	@Test

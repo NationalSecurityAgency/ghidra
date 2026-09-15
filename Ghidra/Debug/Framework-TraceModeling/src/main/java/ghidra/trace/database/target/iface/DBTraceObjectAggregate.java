@@ -18,10 +18,10 @@ package ghidra.trace.database.target.iface;
 import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectInterface;
 import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.target.iface.TraceObjectAggregate;
+import ghidra.trace.model.target.iface.TraceAggregate;
 import ghidra.trace.util.TraceChangeRecord;
 
-public class DBTraceObjectAggregate implements TraceObjectAggregate, DBTraceObjectInterface {
+public class DBTraceObjectAggregate implements TraceAggregate, DBTraceObjectInterface {
 	private final DBTraceObject object;
 
 	public DBTraceObjectAggregate(DBTraceObject object) {

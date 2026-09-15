@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.DomainObjectClosedListener;
@@ -202,7 +203,7 @@ public class UserDataPathTransformer implements SourcePathTransformer, DomainObj
 		if (leftLength != rightLength) {
 			return Integer.compare(leftLength, rightLength);
 		}
-		return StringUtils.compare(left, right);
+		return Strings.CS.compare(left, right);
 	}
 
 	private void reloadMaps() {

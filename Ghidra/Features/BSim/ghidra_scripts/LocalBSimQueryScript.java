@@ -26,7 +26,6 @@ import ghidra.app.decompiler.DecompileException;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.FunctionComparisonService;
 import ghidra.app.tablechooser.*;
-import ghidra.features.base.codecompare.model.MatchedFunctionComparisonModel;
 import ghidra.features.bsim.query.*;
 import ghidra.features.bsim.query.client.Configuration;
 import ghidra.features.bsim.query.description.FunctionDescription;

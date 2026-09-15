@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,9 +38,9 @@ public enum DWARFForm {
 
 		@Override
 		public DWARFAttributeValue readValue(DWARFFormContext context) throws IOException {
-			return new DWARFNumericAttribute(
-				context.reader().readNextUnsignedValue(context.compUnit().getPointerSize()),
-				context.def());
+			byte ptrSize = context.compUnit().getPointerSize();
+			return new DWARFNumericAttribute(ptrSize * 8,
+				context.reader().readNextUnsignedValue(ptrSize), false);
 		}
 	},
 	DW_FORM_block2(0x3, DWARFForm.DYNAMIC_SIZE, block) {
@@ -52,8 +52,7 @@ public enum DWARFForm {
 		@Override
 		public DWARFAttributeValue readValue(DWARFFormContext context) throws IOException {
 			int length = context.reader().readNextUnsignedShort();
-			return new DWARFBlobAttribute(context.reader().readNextByteArray(length),
-				context.def());
+			return new DWARFBlobAttribute(context.reader().readNextByteArray(length));
 		}
 	},
 	DW_FORM_block4(0x4, DWARFForm.DYNAMIC_SIZE, block) {
@@ -68,8 +67,7 @@ public enum DWARFForm {
 			if (length < 0 || length > MAX_BLOCK4_SIZE) {
 				throw new IOException("Invalid/bad dw_form_block4 size: " + length);
 			}
-			return new DWARFBlobAttribute(context.reader().readNextByteArray(length),
-				context.def());
+			return new DWARFBlobAttribute(context.reader().readNextByteArray(length));
 		}
 	},
 	DW_FORM_data2(0x5, 2, constant),
@@ -79,13 +77,14 @@ public enum DWARFForm {
 		@Override
 		public long getSize(DWARFFormContext context) throws IOException {
 			long start = context.reader().getPointerIndex();
-			context.reader().readNextUtf8String();
+			context.reader().readNextString(context.dprog().getCharset(), 1);
 			return context.reader().getPointerIndex() - start;
 		}
 
 		@Override
 		public DWARFAttributeValue readValue(DWARFFormContext context) throws IOException {
-			return new DWARFStringAttribute(context.reader().readNextUtf8String(), context.def());
+			String s = context.reader().readNextString(context.dprog().getCharset(), 1);
+			return new DWARFStringAttribute(s);
 		}
 	},
 	DW_FORM_block(0x9, DWARFForm.DYNAMIC_SIZE, block) {
@@ -101,8 +100,7 @@ public enum DWARFForm {
 			if (length < 0 || length > MAX_BLOCK4_SIZE) {
 				throw new IOException("Invalid/bad dw_form_block size: " + length);
 			}
-			return new DWARFBlobAttribute(context.reader().readNextByteArray(length),
-				context.def());
+			return new DWARFBlobAttribute(context.reader().readNextByteArray(length));
 		}
 	},
 	DW_FORM_block1(0xa, DWARFForm.DYNAMIC_SIZE, block) {
@@ -115,58 +113,36 @@ public enum DWARFForm {
 		@Override
 		public DWARFAttributeValue readValue(DWARFFormContext context) throws IOException {
 			int length = context.reader().readNextUnsignedByte();
-			return new DWARFBlobAttribute(context.reader().readNextByteArray(length),
-				context.def());
+			return new DWARFBlobAttribute(context.reader().readNextByteArray(length));
 		}
 	},
 	DW_FORM_data1(0xb, 1, constant),
 	DW_FORM_flag(0xc, 1, flag) {
 		@Override
 		public DWARFAttributeValue readValue(DWARFFormContext context) throws IOException {
-			return new DWARFBooleanAttribute(context.reader().readNextByte() != 0, context.def());
+			return new DWARFBooleanAttribute(context.reader().readNextByte() != 0);
 		}
 	},
 	DW_FORM_sdata(0xd, DWARFForm.LEB128_SIZE, constant) {
 		@Override
 		public DWARFAttributeValue readValue(DWARFFormContext context) throws IOException {
-			return new DWARFNumericAttribute(64, context.reader().readNext(LEB128::signed), true,
-				context.def());
+			return new DWARFNumericAttribute(64, context.reader().readNext(LEB128::signed), true);
 		}
 	},
-	DW_FORM_strp(0xe, DWARFForm.DWARF_INTSIZE, string) {
-		// offset in .debug_str
-		@Override
-		public DWARFAttributeValue readValue(DWARFFormContext context) throws IOException {
-			long stringOffset = context.reader().readNextUnsignedValue(context.dwarfIntSize());
-			return new DWARFDeferredStringAttribute(stringOffset, context.def());
-		}
-	},
+	DW_FORM_strp(0xe, DWARFForm.DWARF_INTSIZE, string),
 	DW_FORM_udata(0xf, DWARFForm.LEB128_SIZE, constant) {
 		@Override
 		public DWARFAttributeValue readValue(DWARFFormContext context) throws IOException {
-			return new DWARFNumericAttribute(64, context.reader().readNext(LEB128::unsigned), false,
-				context.def());
+			return new DWARFNumericAttribute(64, context.reader().readNext(LEB128::unsigned),
+				false);
 		}
 	},
-	DW_FORM_ref_addr(0x10, DWARFForm.DWARF_INTSIZE, reference) {
-		@Override
-		public DWARFAttributeValue readValue(DWARFFormContext context) throws IOException {
-			long addr = context.reader().readNextUnsignedValue(context.dwarfIntSize());
-			return new DWARFNumericAttribute(addr, context.def());
-		}
-	},
+	DW_FORM_ref_addr(0x10, DWARFForm.DWARF_INTSIZE, reference),
 	DW_FORM_ref1(0x11, 1, reference),
 	DW_FORM_ref2(0x12, 2, reference),
 	DW_FORM_ref4(0x13, 4, reference),
 	DW_FORM_ref8(0x14, 8, reference),
-	DW_FORM_ref_udata(0x15, DWARFForm.LEB128_SIZE, constant) {
-		@Override
-		public DWARFAttributeValue readValue(DWARFFormContext context) throws IOException {
-			long uoffset = context.reader().readNext(LEB128::unsigned);
-			return new DWARFNumericAttribute(uoffset + context.compUnit().getStartOffset(),
-				context.def());
-		}
-	},
+	DW_FORM_ref_udata(0x15, DWARFForm.LEB128_SIZE, constant, reference),
 	DW_FORM_indirect(0x16, DWARFForm.DYNAMIC_SIZE /* value class will depend on the indirect form*/ ) {
 		@Override
 		public long getSize(DWARFFormContext context) throws IOException {
@@ -176,8 +152,8 @@ public enum DWARFForm {
 
 			DWARFForm indirectForm = DWARFForm.of(indirectFormInt);
 			DWARFAttributeDef<?> indirectAS = context.def().withForm(indirectForm);
-			DWARFFormContext indirectContext =
-				new DWARFFormContext(context.reader(), context.compUnit(), indirectAS);
+			DWARFFormContext indirectContext = new DWARFFormContext(context.reader(),
+				context.compUnit(), indirectAS, context.dwarfIntSize());
 			long indirectSize = indirectForm.getSize(indirectContext);
 
 			return firstSize + indirectSize;
@@ -188,8 +164,8 @@ public enum DWARFForm {
 			int indirectFormInt = context.reader().readNextUnsignedVarIntExact(LEB128::unsigned);
 			DWARFForm indirectForm = DWARFForm.of(indirectFormInt);
 			DWARFAttributeDef<?> indirectAS = context.def().withForm(indirectForm);
-			DWARFFormContext indirectContext =
-				new DWARFFormContext(context.reader(), context.compUnit(), indirectAS);
+			DWARFFormContext indirectContext = new DWARFFormContext(context.reader(),
+				context.compUnit(), indirectAS, context.dwarfIntSize());
 			return indirectForm.readValue(indirectContext);
 		}
 	},
@@ -198,7 +174,7 @@ public enum DWARFForm {
 		@Override
 		public DWARFAttributeValue readValue(DWARFFormContext context) throws IOException {
 			long addr = context.reader().readNextUnsignedValue(context.dwarfIntSize());
-			return new DWARFNumericAttribute(addr, context.def());
+			return new DWARFNumericAttribute(context.dwarfIntSize() * 8, addr, false);
 		}
 	},
 	DW_FORM_exprloc(0x18, DWARFForm.DYNAMIC_SIZE, exprloc) {
@@ -214,66 +190,44 @@ public enum DWARFForm {
 			if (length < 0 || length > MAX_BLOCK4_SIZE) {
 				throw new IOException("Invalid/bad dw_form_exprloc size: " + length);
 			}
-			return new DWARFBlobAttribute(context.reader().readNextByteArray(length),
-				context.def());
+			return new DWARFBlobAttribute(context.reader().readNextByteArray(length));
 
 		}
 	},
 	DW_FORM_flag_present(0x19, 0, flag) {
 		@Override
 		public DWARFAttributeValue readValue(DWARFFormContext context) throws IOException {
-			return new DWARFBooleanAttribute(true, context.def());
+			return new DWARFBooleanAttribute(true);
 		}
 	},
-	DW_FORM_strx(0x1a, DWARFForm.LEB128_SIZE, string) {
-		@Override
-		public DWARFAttributeValue readValue(DWARFFormContext context) throws IOException {
-			int index = context.reader().readNextUnsignedVarIntExact(LEB128::unsigned);
-			return new DWARFDeferredStringAttribute(index, context.def());
-		}
-	},
-	DW_FORM_addrx(0x1b, DWARFForm.LEB128_SIZE, address) {
-		@Override
-		public DWARFAttributeValue readValue(DWARFFormContext context) throws IOException {
-			int index = context.reader().readNextUnsignedVarIntExact(LEB128::unsigned);
-			return new DWARFIndirectAttribute(index, context.def());
-		}
-	},
+	DW_FORM_strx(0x1a, DWARFForm.LEB128_SIZE, string),
+	DW_FORM_addrx(0x1b, DWARFForm.LEB128_SIZE, address),
 	DW_FORM_ref_sup4(0x1c, 4, reference), // unimpl
 	DW_FORM_strp_sup(0x1d, DWARFForm.DWARF_INTSIZE, string), // unimpl
 	DW_FORM_data16(0x1e, 16, constant) {
 		@Override
 		public DWARFAttributeValue readValue(DWARFFormContext context) throws IOException {
-			return new DWARFBlobAttribute(context.reader().readNextByteArray(16), context.def());
+			return new DWARFBlobAttribute(context.reader().readNextByteArray(16));
 		}
 	},
-	DW_FORM_line_strp(0x1f, DWARFForm.DWARF_INTSIZE, string) {
-		@Override
-		public DWARFAttributeValue readValue(DWARFFormContext context) throws IOException {
-			return new DWARFDeferredStringAttribute(
-				context.reader().readNextUnsignedValue(context.dwarfIntSize()), context.def());
-		}
-	},
+	DW_FORM_line_strp(0x1f, DWARFForm.DWARF_INTSIZE, string),
 	DW_FORM_ref_sig8(0x20, 8, reference), // unimpl
 	DW_FORM_implicit_const(0x21, 0) {
 		@Override
 		public DWARFAttributeValue readValue(DWARFFormContext context) throws IOException {
-			return new DWARFNumericAttribute(64, context.def().getImplicitValue(), true,
-				context.def());
+			return new DWARFNumericAttribute(64, context.def().getImplicitValue(), true);
 		}
 	},
 	DW_FORM_loclistx(0x22, DWARFForm.LEB128_SIZE, loclist) {
 		@Override
 		public DWARFAttributeValue readValue(DWARFFormContext context) throws IOException {
-			return new DWARFIndirectAttribute(context.reader().readNext(LEB128::unsigned),
-				context.def());
+			return new DWARFIndirectAttribute(context.reader().readNext(LEB128::unsigned));
 		}
 	},
 	DW_FORM_rnglistx(0x23, DWARFForm.LEB128_SIZE, rnglist) {
 		@Override
 		public DWARFAttributeValue readValue(DWARFFormContext context) throws IOException {
-			return new DWARFIndirectAttribute(context.reader().readNext(LEB128::unsigned),
-				context.def());
+			return new DWARFIndirectAttribute(context.reader().readNext(LEB128::unsigned));
 		}
 	},
 	DW_FORM_ref_sup8(0x24, 8, reference), // unimpl
@@ -284,7 +238,12 @@ public enum DWARFForm {
 	DW_FORM_addrx1(0x29, 1, address),
 	DW_FORM_addrx2(0x2a, 2, address),
 	DW_FORM_addrx3(0x2b, 3, address),
-	DW_FORM_addrx4(0x2c, 4, address);
+	DW_FORM_addrx4(0x2c, 4, address),
+
+	DW_FORM_gnu_addr_index(0x1f01, DWARFForm.LEB128_SIZE, address),
+	DW_FORM_gnu_str_index(0x1f02, DWARFForm.LEB128_SIZE, string),
+	DW_FORM_gnu_ref_alt(0x1f20, DWARFForm.DWARF_INTSIZE, reference),
+	DW_FORM_gnu_strp_alt(0x1f21, DWARFForm.DWARF_INTSIZE, string);
 
 	private final int id;
 	/**
@@ -334,7 +293,7 @@ public enum DWARFForm {
 	public long getSize(DWARFFormContext context) throws IOException {
 		switch (size) {
 			case DWARF_INTSIZE:
-				return context.compUnit().getIntSize();
+				return context.dwarfIntSize();
 			case LEB128_SIZE:
 				return context.reader().readNext(LEB128::getLength);
 			case DYNAMIC_SIZE:
@@ -358,7 +317,12 @@ public enum DWARFForm {
 			case DW_FORM_addrx3:
 			case DW_FORM_addrx4: {
 				long index = context.reader().readNextUnsignedValue(size);
-				return new DWARFIndirectAttribute(index, context.def());
+				return new DWARFIndirectAttribute(index);
+			}
+			case DW_FORM_addrx:
+			case DW_FORM_gnu_addr_index: {
+				int index = context.reader().readNextUnsignedVarIntExact(LEB128::unsigned);
+				return new DWARFIndirectAttribute(index);
 			}
 
 			case DW_FORM_data1:
@@ -366,7 +330,7 @@ public enum DWARFForm {
 			case DW_FORM_data4:
 			case DW_FORM_data8: {
 				long val = context.reader().readNextValue(size);
-				return new DWARFNumericAttribute(size * 8, val, true, true, context.def());
+				return new DWARFNumericAttribute(size * 8, val, true, true);
 			}
 				
 			case DW_FORM_ref1:
@@ -374,8 +338,17 @@ public enum DWARFForm {
 			case DW_FORM_ref4:
 			case DW_FORM_ref8: {
 				long uoffset = context.reader().readNextUnsignedValue(size);
-				return new DWARFNumericAttribute(uoffset + context.compUnit().getStartOffset(),
-					context.def());
+				return new DWARFNumericAttribute(size * 8, uoffset, false);
+			}
+			case DW_FORM_ref_addr:
+			case DW_FORM_gnu_ref_alt: {
+				int intSize = context.dwarfIntSize();
+				long addr = context.reader().readNextUnsignedValue(intSize);
+				return new DWARFNumericAttribute(intSize * 8, addr, false);
+			}
+			case DW_FORM_ref_udata: {
+				long uoffset = context.reader().readNext(LEB128::unsigned);
+				return new DWARFNumericAttribute(64, uoffset, false);
 			}
 
 			case DW_FORM_strx1:
@@ -383,7 +356,21 @@ public enum DWARFForm {
 			case DW_FORM_strx3:
 			case DW_FORM_strx4: {
 				long index = context.reader().readNextUnsignedValue(size);
-				return new DWARFDeferredStringAttribute(index, context.def());
+				String s = context.dieContainer().getString(this, index, context.compUnit());
+				return new DWARFStringAttribute(s);
+			}
+			case DW_FORM_strp:
+			case DW_FORM_line_strp:
+			case DW_FORM_gnu_strp_alt: {
+				long offset = context.reader().readNextUnsignedValue(context.dwarfIntSize());
+				String s = context.dieContainer().getString(this, offset, context.compUnit());
+				return new DWARFStringAttribute(s);
+			}
+			case DW_FORM_strx:
+			case DW_FORM_gnu_str_index: {
+				int index = context.reader().readNextUnsignedVarIntExact(LEB128::unsigned);
+				String s = context.dieContainer().getString(this, index, context.compUnit());
+				return new DWARFStringAttribute(s);
 			}
 
 			default:

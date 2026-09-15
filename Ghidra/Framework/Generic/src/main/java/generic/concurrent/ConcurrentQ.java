@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,8 @@ package generic.concurrent;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import ghidra.util.task.CancelledListener;
 import ghidra.util.task.TaskMonitor;
@@ -56,7 +58,7 @@ import ghidra.util.task.TaskMonitor;
  * <pre>
  * {@literal QCallback<ITEM, RESULT> callback = new AbstractQCallback<ITEM, RESULT>()} {
  *     public RESULT process(ITEM item, TaskMonitor monitor) {
- *         // do work here...
+ *         // do work here and create a RESULT item for later processing...
  *     }
  * };
  *
@@ -85,7 +87,7 @@ import ghidra.util.task.TaskMonitor;
  * <pre>{@literal
  * QCallback<ITEM, RESULT> callback = new AbstractQCallback<ITEM, RESULT>() {
  *     public RESULT process(ITEM item, TaskMonitor monitor) {
- *         // do work here...
+ *         // do work here and create a RESULT item for later processing...
  *     }
  * };}
  *
@@ -487,29 +489,65 @@ public class ConcurrentQ<I, R> {
 	 * @return a list of all items that have not yet been queued to the threadPool.
 	 */
 	public List<I> cancelAllTasks(boolean interruptRunningTasks) {
-		List<FutureTaskMonitor<I, R>> tasksToBeCancelled = new ArrayList<>();
+		return cancelAllTasks(i -> true, interruptRunningTasks);
+	}
+
+	/**
+	 * Cancels the processing of currently scheduled items in this queue that match the given 
+	 * predicate.  Any items that haven't yet been scheduled on the threadPool are returned
+	 * immediately from this call.  Items that are currently being processed will be cancelled and 
+	 * those results will be available on the next waitForResults() call and also if there is a 
+	 * QItemListener, it will be called with the QResult.  There is no guarantee that scheduled 
+	 * tasks will terminate any time soon.  If they check the isCancelled() state of their QMonitor,
+	 * it will be true.  Setting the interruptRunningTasks to true, will result in a thread 
+	 * interrupt to any currently running task which might be useful if the task perform waiting 
+	 * operations like I/O.
+	 * 
+	 * @param p the predicate that signals which jobs to cancel
+	 * @param interruptRunningTasks if true, an attempt will be made to interrupt any currently
+	 * processing thread.
+	 * @return a list of all items that have not yet been queued to the threadPool.
+	 */
+	public List<I> cancelAllTasks(Predicate<I> p, boolean interruptRunningTasks) {
+		List<FutureTaskMonitor<I, R>> tasksToCancel;
 		List<I> nonStartedItems;
 		lock.lock();
 		try {
-			nonStartedItems = removeUnscheduledJobs();
-			tasksToBeCancelled.addAll(taskSet);
+			nonStartedItems = removeUnscheduledJobs(p);
+			tasksToCancel = taskSet.stream()
+					.filter(t -> p.test(t.getItem()))
+					.collect(Collectors.toList());
 		}
 		finally {
 			lock.unlock();
 		}
-		for (FutureTaskMonitor<I, R> task : tasksToBeCancelled) {
+
+		for (FutureTaskMonitor<I, R> task : tasksToCancel) {
 			task.cancel(interruptRunningTasks);
 		}
 		return nonStartedItems;
 	}
 
+	/**
+	 * Removes all unscheduled jobs
+	 * @return the removed jobs
+	 */
 	public List<I> removeUnscheduledJobs() {
+		return removeUnscheduledJobs(i -> true);
+	}
+
+	/**
+	 * Removes all unscheduled jobs matching the given predicate
+	 * @param p the predicate
+	 * @return the removed jobs
+	 */
+	public List<I> removeUnscheduledJobs(Predicate<I> p) {
 		List<I> nonStartedItems = new ArrayList<>();
 		lock.lock();
 		try {
-			tracker.neverStartedItemsRemoved(queue.size());
-			nonStartedItems.addAll(queue);
-			queue.clear();
+			nonStartedItems = queue.stream().filter(p).collect(Collectors.toList());
+			tracker.neverStartedItemsRemoved(nonStartedItems.size());
+			queue.removeAll(nonStartedItems);
 		}
 		finally {
 			lock.unlock();
@@ -652,6 +690,7 @@ public class ConcurrentQ<I, R> {
 		}
 	}
 
+	// Called by the FutureTaskMonitor that we gave to the thread pool
 	private class CallbackCallable implements Callable<R> {
 
 		private I item;
@@ -663,6 +702,7 @@ public class ConcurrentQ<I, R> {
 
 		@Override
 		public R call() throws Exception {
+			// callback is the client callback given to this queue at construction
 			return callback.process(item, future);
 		}
 

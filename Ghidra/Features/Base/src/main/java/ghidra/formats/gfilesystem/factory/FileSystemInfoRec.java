@@ -36,6 +36,7 @@ public class FileSystemInfoRec {
 	private final int priority;
 	private final Class<? extends GFileSystem> fsClass;
 	private final GFileSystemFactory<?> factory;
+	private final String[] extensions;
 
 	/**
 	 * A static {@link Comparator} that will order {@link FileSystemInfoRec} by their
@@ -54,6 +55,7 @@ public class FileSystemInfoRec {
 	 * @return new {@link FileSystemInfoRec}, or null if the class doesn't have
 	 * valid file system meta data.
 	 */
+	@SuppressWarnings("unchecked")
 	public static FileSystemInfoRec fromClass(Class<? extends GFileSystem> fsClazz) {
 		FileSystemInfo fsi = fsClazz.getAnnotation(FileSystemInfo.class);
 		if (fsi == null) {
@@ -81,24 +83,26 @@ public class FileSystemInfoRec {
 
 		// Hack to allow GFileSystemBaseFactory to know which fsclass is using it
 		// so instances can be created by the single GFileSystemBaseFactory impl.
-		if (factory instanceof GFileSystemBaseFactory) {
-			((GFileSystemBaseFactory) factory).setFileSystemClass(
-				(Class<? extends GFileSystemBase>) fsClazz);
+		if (factory instanceof GFileSystemBaseFactory base) {
+			base.setFileSystemClass((Class<? extends GFileSystemBase>) fsClazz);
 		}
 
 		FileSystemInfoRec fsir =
-			new FileSystemInfoRec(fsType, fsi.description(), fsi.priority(), fsClazz, factory);
+			new FileSystemInfoRec(fsType, fsi.description(), fsi.priority(), fsClazz, factory,
+				fsi.extensions());
 
 		return fsir;
 	}
 
 	private FileSystemInfoRec(String type, String description, int priority,
-			Class<? extends GFileSystem> fsClass, GFileSystemFactory<?> factory) {
+			Class<? extends GFileSystem> fsClass, GFileSystemFactory<?> factory,
+			String[] extensions) {
 		this.type = type;
 		this.description = description;
 		this.priority = priority;
 		this.fsClass = fsClass;
 		this.factory = factory;
+		this.extensions = extensions;
 	}
 
 	/**
@@ -147,5 +151,12 @@ public class FileSystemInfoRec {
 	 */
 	public GFileSystemFactory<?> getFactory() {
 		return factory;
+	}
+
+	/**
+	 * {@return the associated file extensions for this filesystem}
+	 */
+	public String[] getExtensions() {
+		return extensions;
 	}
 }

@@ -15,45 +15,50 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import static ghidra.lifecycle.Unfinished.TODO;
-
-import org.objectweb.asm.MethodVisitor;
-
-import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
-import ghidra.pcode.emu.jit.analysis.JitType;
 import ghidra.pcode.emu.jit.analysis.JitType.*;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
-import ghidra.pcode.emu.jit.gen.type.TypeConversions;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.*;
+import ghidra.pcode.emu.jit.gen.util.Types.*;
 import ghidra.pcode.emu.jit.op.JitIntSDivOp;
 
 /**
  * The generator for a {@link JitIntSDivOp int_sdiv}.
  * 
  * <p>
- * This uses the binary operator generator and simply emits {@link #IDIV} or {@link #LDIV} depending
- * on the type.
+ * This uses the binary operator generator and simply emits {@link Op#idiv(Emitter) idiv} or
+ * {@link Op#ldiv(Emitter) ldiv} depending on the type.
+ * <p>
+ * For multi-precision division, this emits code to invoke
+ * {@link JitCompiledPassage#mpIntSignedDivide(int[], int[], int[])}.
  */
-public enum IntSDivOpGen implements BinOpGen<JitIntSDivOp> {
+public enum IntSDivOpGen implements IntOpBinOpGen<JitIntSDivOp> {
 	/** The generator singleton */
 	GEN;
 
 	@Override
-	public JitType afterLeft(JitCodeGenerator gen, JitIntSDivOp op, JitType lType, JitType rType,
-			MethodVisitor rv) {
-		return TypeConversions.forceUniformSExt(lType, rType, rv);
+	public boolean isSigned() {
+		return true;
 	}
 
 	@Override
-	public JitType generateBinOpRunCode(JitCodeGenerator gen, JitIntSDivOp op, JitBlock block,
-			JitType lType, JitType rType, MethodVisitor rv) {
-		rType = TypeConversions.forceUniformSExt(rType, lType, rv);
-		switch (rType) {
-			case IntJitType t -> rv.visitInsn(IDIV);
-			case LongJitType t -> rv.visitInsn(LDIV);
-			case MpIntJitType t -> TODO("MpInt");
-			default -> throw new AssertionError();
-		}
-		// TODO: For MpInt case, we should use the outvar's size to cull operations.
-		return rType;
+	public <N2 extends Next, N1 extends Ent<N2, TInt>, N0 extends Ent<N1, TInt>>
+			Emitter<Ent<N2, TInt>> opForInt(Emitter<N0> em, IntJitType type) {
+		return Op.idiv(em);
+	}
+
+	@Override
+	public <N2 extends Next, N1 extends Ent<N2, TLong>, N0 extends Ent<N1, TLong>>
+			Emitter<Ent<N2, TLong>> opForLong(Emitter<N0> em, LongJitType type) {
+		return Op.ldiv(em);
+	}
+
+	@Override
+	public <THIS extends JitCompiledPassage> Emitter<Bot> genRunMpInt(Emitter<Bot> em,
+			Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, JitIntSDivOp op,
+			MpIntJitType type, Scope scope) {
+		return genMpDelegationToStaticMethod(em, gen, localThis, type, "mpIntSignedDivide", op, 1,
+			TakeOut.OUT, scope);
 	}
 }

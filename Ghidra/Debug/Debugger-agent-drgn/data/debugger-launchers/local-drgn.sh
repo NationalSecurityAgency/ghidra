@@ -25,7 +25,8 @@
 #@menu-group drgn
 #@icon icon.debugger
 #@help drgn#attach
-#@env OPT_TARGET_PID:int=44068 "PID" "The target's process id"
+#@depends Debugger-rmi-trace
+#@env OPT_TARGET_PID:int=-1 "PID" "The target's process id"
 
 export OPT_TARGET_KIND="user" 
 # sudo -E drgn -p "$OPT_TARGET_PID" ../support/local-drgn.py

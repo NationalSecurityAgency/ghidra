@@ -62,9 +62,7 @@ public class GoStructField {
 	}
 
 	/**
-	 * Returns the type of this field.
-	 * 
-	 * @return type of this field
+	 * {@return the type of this field}
 	 * @throws IOException if error reading
 	 */
 	@Markup
@@ -83,21 +81,14 @@ public class GoStructField {
 	}
 
 	/**
-	 * Returns the offset of this field.
-	 * @return offset of this field
+	 * {@return the offset of this field}
 	 */
 	public long getOffset() {
 		return offset;
 	}
 
-//	public boolean isEmbedded() {
-//		return (offsetAnon & 0x1) != 0;
-//	}
-
 	/**
-	 * Returns the name of this field.
-	 * 
-	 * @return name of this field
+	 * {@return the name of this field}
 	 */
 	public String getName() {
 		return programContext.getSafeName(this::getGoName, this, null).getName();

@@ -108,14 +108,14 @@ final public class AnnotatedTextFieldElement extends AbstractTextFieldElement {
 
 	@Override
 	public RowColLocation getDataLocationForCharacterIndex(int characterIndex) {
-		return new RowColLocation(row, column);
+		return new RowColLocation(row, column + characterIndex);
 	}
 
 	@Override
 	public int getCharacterIndexForDataLocation(int dataRow, int dataColumn) {
 		if (row == dataRow) {
 			if (dataColumn >= column && dataColumn < column + attributedString.length()) {
-				return 0;
+				return dataColumn - column;
 			}
 		}
 		return -1;

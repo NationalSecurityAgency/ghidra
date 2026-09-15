@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,82 +16,143 @@
 package ghidra.file.formats.yaffs2;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
-import ghidra.app.util.bin.StructConverter;
-import ghidra.program.model.data.*;
-import ghidra.util.exception.DuplicateNameException;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.ByteProvider;
+import ghidra.util.NumericUtilities;
 
-public class YAFFS2Header implements StructConverter {
+/**
+ * <pre>
+ * struct yaffs_obj_hdr  // Length: 512 (0x200)
+ * {
+ *   u32                type
+ *   u32                parent_obj_id
+ *   u16                sum_no_longer_used
+ *   YCHAR[256]         name
+ *   u32                yst_mode
+ *   u32                yst_uid
+ *   u32                yst_gid
+ *   u32                yst_atime
+ *   u32                yst_mtime
+ *   u32                yst_ctime
+ *   u32                file_size_low
+ *   int                equiv_id
+ *   YCHAR[160]         alias
+ *   u32                yst_rdev
+ *   u32[2]             win_ctime
+ *   u32[2]             win_atime
+ *   u32[2]             win_mtime
+ *   u32                inband_shadowed_obj_id
+ *   u32                inband_is_shrink
+ *   u32                file_size_high
+ *   u32[1]             reserved
+ *   int                shadows_obj
+ *   u32                is_shrink
+ * }
+ * </pre>
+ */
+public class YAFFS2Header {
+
+	/**
+	 * Reads a YAFFS2 objhdr struct.
+	 * 
+	 * @param br stream to read from
+	 * @return new YAFFS2Header, never null
+	 * @throws IOException if error reading
+	 */
+	public static YAFFS2Header read(BinaryReader br) throws IOException {
+		YAFFS2Header result = new YAFFS2Header();
+		result.objectType = br.readNextInt();
+		result.parentObjectId = br.readNextUnsignedInt();
+		result.checksum = br.readNextShort();
+		result.fileName = readNextYaffs2String(br, 256);
+		br.align(4 /*sizeof(int) */);
+		result.ystMode = br.readNextUnsignedInt();
+		result.ystUId = br.readNextUnsignedInt();
+		result.ystGId = br.readNextUnsignedInt();
+		result.ystATime = br.readNextUnsignedInt();
+		result.ystMTime = br.readNextUnsignedInt();
+		result.ystCTime = br.readNextUnsignedInt();
+		result.fileSizeLow = br.readNextUnsignedInt();
+		result.equivId = br.readNextUnsignedInt();
+		result.aliasFileName = readNextYaffs2String(br, 160);
+		result.ystRDev = br.readNextUnsignedInt();
+		result.winCTime = br.readNextIntArray(2);
+		result.winATime = br.readNextIntArray(2);
+		result.winMTime = br.readNextIntArray(2);
+		result.inbandObjId = br.readNextUnsignedInt();
+		result.inbandIsShrink = br.readNextUnsignedInt();
+		result.fileSizeHigh = br.readNextUnsignedInt();
+		br.readNextInt(); // reserved
+		result.shadowsObject = br.readNextUnsignedInt();
+		result.isShrink = br.readNextUnsignedInt();
+		// assert(br.index == +512)
+		return result;
+	}
 
 	// header objects
 	private long objectType;
 	private long parentObjectId;
 	private short checksum;
-    private String fileName;
-    private long ystMode;
-    private long ystUId;
-    private long ystGId;
-    private String ystATime;
-    private String ystMTime;
-    private String ystCTime;
-    private long fileSizeLow;
-    private long equivId;
-    private String aliasFileName;
-    private long ystRDev;
-    private long winCTime;
-    private long winATime;
-    private long winMTime;
-    private long inbandObjId;
-    private long inbandIsShrink;
-    private long fileSizeHigh;
-    private long shadowsObject;
-    private long isShrink;
-
-	/**
-     * Construct an entry from an archive's header bytes.
-     */
-    public YAFFS2Header(byte[] buffer) {
-        
-        // parse header structure
-        objectType 		= YAFFS2Utils.parseInteger(buffer, 0, 4);
-        parentObjectId 	= YAFFS2Utils.parseInteger(buffer, 4, 4);
-        checksum 		= (short) YAFFS2Utils.parseInteger(buffer, 8, 2);
-        fileName 		= YAFFS2Utils.parseName(buffer, 10, 256);
-        // skip 2 bytes for the "unknown1" short field
-        ystMode 		= YAFFS2Utils.parseInteger(buffer, 268, 4);
-        ystUId 			= YAFFS2Utils.parseInteger(buffer, 272, 4);
-	    ystGId 			= YAFFS2Utils.parseInteger(buffer, 276, 4);
-	    ystATime 		= YAFFS2Utils.parseDateTime(buffer, 280, 4);
-	    ystMTime 		= YAFFS2Utils.parseDateTime(buffer, 284, 4);
-	    ystCTime 		= YAFFS2Utils.parseDateTime(buffer, 288, 4);
-	    fileSizeLow 	= YAFFS2Utils.parseFileSize(buffer, 292, 4);
-	    equivId 		= YAFFS2Utils.parseInteger(buffer, 296, 4);
-	    aliasFileName 	= YAFFS2Utils.parseName(buffer, 300, 160);
-        ystRDev 		= YAFFS2Utils.parseInteger(buffer, 460, 4);
-		winCTime = buffer[464];
-		winATime = buffer[472];
-		winMTime = buffer[480];
-        inbandObjId 	= YAFFS2Utils.parseInteger(buffer, 488, 4);
-        inbandIsShrink 	= YAFFS2Utils.parseInteger(buffer, 492, 4);
-        fileSizeHigh 	= YAFFS2Utils.parseInteger(buffer, 496, 4);
-        // skip 4 bytes for the "reserved" int field
-        shadowsObject 	= YAFFS2Utils.parseInteger(buffer, 504, 4);
-        isShrink 		= YAFFS2Utils.parseInteger(buffer, 508, 4);
-
-    }
+	private String fileName;
+	private long ystMode;
+	private long ystUId;
+	private long ystGId;
+	private long ystATime;
+	private long ystMTime;
+	private long ystCTime;
+	private long fileSizeLow;
+	private long equivId;
+	private String aliasFileName;
+	private long ystRDev;
+	private int[] winCTime;
+	private int[] winATime;
+	private int[] winMTime;
+	private long inbandObjId;
+	private long inbandIsShrink;
+	private long fileSizeHigh;
+	private long shadowsObject;
+	private long isShrink;
 
 	public YAFFS2Header() {
+	}
+
+	/**
+	 * Returns the number of data pages that will follow this page.
+	 * 
+	 * @param pageSize size of pages in this fs
+	 * @return the number of data pages that will follow this page
+	 */
+	public long getDataPageCount(int pageSize) {
+		return getObjectTypeEnum() == YAFFS2ObjectType.File
+				? NumericUtilities.getUnsignedAlignedValue(calcFileSize(), pageSize) / pageSize
+				: 0;
+	}
+
+	/**
+	 * Returns true if the data in this object appears valid
+	 * 
+	 * @param bp stream that contains the entire yaffs2 image
+	 * @return boolean true if the data in this object appears valid
+	 */
+	public boolean isValid(ByteProvider bp) {
+		YAFFS2ObjectType ote = getObjectTypeEnum();
+		if (ote == YAFFS2ObjectType.File) {
+			long filesize = calcFileSize();
+			if (filesize < 0 || filesize > bp.length()) {
+				return false;
+			}
+		}
+		return ote != YAFFS2ObjectType.INVALID;
 	}
 
 	public long getObjectType() {
 		return objectType;
 	}
-	
-	public boolean isDirectory() {
-		if (objectType == 3) {
-			return true;
-		}
-		return false;
+
+	public YAFFS2ObjectType getObjectTypeEnum() {
+		return YAFFS2ObjectType.parse(objectType);
 	}
 
 	public short getChecksum() {
@@ -114,15 +175,15 @@ public class YAFFS2Header implements StructConverter {
 		return ystGId;
 	}
 
-	public String getYstATime() {
+	public long getYstATime() {
 		return ystATime;
 	}
 
-	public String getYstMTime() {
+	public long getYstMTime() {
 		return ystMTime;
 	}
 
-	public String getYstCTime() {
+	public long getYstCTime() {
 		return ystCTime;
 	}
 
@@ -130,92 +191,71 @@ public class YAFFS2Header implements StructConverter {
 		return fileSizeLow;
 	}
 
+	public long getTotalSize() {
+		return fileSizeLow | (fileSizeHigh << 32L);
+	}
+
 	public long getEquivId() {
 		return equivId;
 	}
 
-    public String getAliasFileName() {
-    	return aliasFileName;
-    }
+	public String getAliasFileName() {
+		return aliasFileName;
+	}
 
-    public long getYstRDev() {
-    	return ystRDev;
-    }
+	public long getYstRDev() {
+		return ystRDev;
+	}
 
-    public long getWinCTime() {
-    	return winCTime;
-    }
+	public int[] getWinCTime() {
+		return winCTime;
+	}
 
-    public long getWinATime() {
-    	return winATime;
-    }
+	public int[] getWinATime() {
+		return winATime;
+	}
 
-    public long getWinMTime() {
-    	return winMTime;
-    }
+	public int[] getWinMTime() {
+		return winMTime;
+	}
 
-    public long getInbandObjId() {
-    	return inbandObjId;
-    }
+	public long getInbandObjId() {
+		return inbandObjId;
+	}
 
-    public long getInbandIsShrink() {
-    	return inbandIsShrink;
-    }
+	public long getInbandIsShrink() {
+		return inbandIsShrink;
+	}
 
-    public long getFileSizeHigh() {
-    	return fileSizeHigh;
-    }
+	public long getFileSizeHigh() {
+		return fileSizeHigh;
+	}
 
-    public long getShadowsObject() {
-    	return shadowsObject;
-    }
+	public long calcFileSize() {
+		return fileSizeLow |
+			(fileSizeHigh != NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG ? fileSizeHigh : 0);
+	}
 
-    public long getIsShrink() {
-    	return isShrink;
-    }
+	public long getShadowsObject() {
+		return shadowsObject;
+	}
+
+	public long getIsShrink() {
+		return isShrink;
+	}
 
 	public long getParentObjectId() {
 		return parentObjectId;
 	}
 
-	public boolean isFile() {
-		if (objectType == 1) {
-			return true;
+	static String readNextYaffs2String(BinaryReader br, int len) throws IOException {
+		// truncate both trailing 0's and FF's.
+		byte[] bytes = br.readNextByteArray(len);
+		int i = bytes.length - 1;
+		while (i >= 0 && (bytes[i] == 0 || bytes[i] == -1)) {
+			i--;
 		}
-		return false;
+		return new String(bytes, 0, i + 1, StandardCharsets.UTF_8);
 	}
-	
-	// header structure for analyzer
-	public DataType toDataType() throws DuplicateNameException, IOException {
-		
-		Structure structure = new StructureDataType( "yaffs2Hdr", 0 );
-		structure.add( DWORD, "objectType", null );
-		structure.add( DWORD, "parentObjectId", null );
-		structure.add( WORD, "checksum", null );
-		structure.add( STRING, YAFFS2Constants.FILE_NAME_SIZE, "fileName", null );
-		structure.add( WORD, "unknown1", null );
-		structure.add( DWORD, "ystMode", null );
-		structure.add( DWORD, "ystUId", null );
-		structure.add( DWORD, "ystGId", null );
-		structure.add( DWORD, "ystATime", null );
-		structure.add( DWORD, "ystMTime", null );
-		structure.add( DWORD, "ystCTime", null );
-		structure.add( DWORD, "fileSizeLow", null );
-		structure.add( DWORD, "equivId", null );
-		structure.add( STRING, YAFFS2Constants.ALIAS_FILE_NAME_SIZE, "aliasFileName", null );
-		structure.add( DWORD, "ystRDev", null );
-		structure.add( QWORD, "winCTime", null );
-		structure.add( QWORD, "winATime", null );
-		structure.add( QWORD, "winMTime", null );
-		structure.add( DWORD, "inbandObjId", null );
-		structure.add( DWORD, "inbandIsShrink", null );
-		structure.add( DWORD, "fileSizeHigh", null );
-		structure.add( DWORD, "reserved", null );
-		structure.add( DWORD, "shadowsObject", null );
-		structure.add( DWORD, "isShrink", null );
-		structure.add(new ArrayDataType(BYTE, YAFFS2Constants.EMPTY_DATA_SIZE, BYTE.getLength()), "emptyData", null);
-		return structure;
-		
-	}
-	
+
 }

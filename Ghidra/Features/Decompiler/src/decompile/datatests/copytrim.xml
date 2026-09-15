@@ -1,0 +1,44 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<bytechunk space="ram" offset="0x100000" readonly="true">
+554889e5897dec8b45ec48988b048500
+1010008945fc837dec007430eb1f8b45
+ec83e80148988b1485001010008b45ec
+489889148500101000836dec01837dec
+0075db8b45fc8905b40f0000905dc355
+4889e5897dfc8975f8837dfc01750b8b
+45f88905a00f0000eb23837dfc02750e
+8b45f883c00789058c0f0000eb0f837d
+fc0475098b45f889057b0f0000905dc3
+</bytechunk>
+<symbol space="ram" offset="0x100000" name="myloop"/>
+<symbol space="ram" offset="0x10004f" name="myglob"/>
+</binaryimage>
+<script>
+  <com>map addr r0x101000 int4 myarr[2]</com>
+  <com>map addr r0x101008 int4 globvar</com>
+  <com>lo fu myloop</com>
+  <com>map addr s0xffffffffffffffe4 int4 i</com>
+  <com>map hash r0x10000c 5fc6319fee int4 size</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu myglob</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Copy trim #1" min="1" max="1">size = myarr\[param_1\];</stringmatch>
+<stringmatch name="Copy trim #2" min="0" max="0">for \(.*myarr\[0\] = </stringmatch>
+<stringmatch name="Copy trim #3" min="1" max="1">for \(; i != 0; i = i \+ -1\) \{
+                                                   myarr\[i\] = myarr\[i \+ -1\];
+                                                 \}
+                                                 myarr\[0\] = size;</stringmatch>
+<stringmatch name="Copy trim #4" min="0" max="0">Var1 = param_2;</stringmatch>
+<stringmatch name="Copy trim #5" min="0" max="0">globvar = iVar1;</stringmatch>
+<stringmatch name="Copy trim #6" min="1" max="1">if \(param_1 == 1\) \{
+                                                   globvar = param_2;</stringmatch>
+<stringmatch name="Copy trim #7" min="1" max="1">if \(param_1 == 2\) \{
+                                                   globvar = param_2 \+ 7;</stringmatch>
+<stringmatch name="Copy trim #8" min="1" max="1">if \(param_1 == 4\) \{
+                                                   globvar = param_2;</stringmatch>
+</decompilertest>

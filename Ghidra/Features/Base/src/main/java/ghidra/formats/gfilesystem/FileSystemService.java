@@ -154,10 +154,6 @@ public class FileSystemService {
 	 */
 	public FileSystemService() {
 		this(new File(Application.getUserCacheDirectory(), "fscache2"));
-
-		// age off files in old cache dir.  Remove this after a few versions
-		FileCache.performCacheMaintOnOldDirIfNeeded(
-			new File(Application.getUserCacheDirectory(), "fscache"));
 	}
 
 	/**
@@ -255,11 +251,9 @@ public class FileSystemService {
 	 * @param fsrl {@link FSRL} of the desired file
 	 * @param monitor {@link TaskMonitor} so the user can cancel
 	 * @return a {@link RefdFile} which contains the resultant {@link GFile} and a
-	 * {@link FileSystemRef} that needs to be closed, or {@code null} if the filesystem
-	 * does not have the requested file.
-	 *
+	 * {@link FileSystemRef} that needs to be closed, never {@code null}
 	 * @throws CancelledException if the user cancels
-	 * @throws IOException if there was a file io problem
+	 * @throws IOException if file not found or there was a file io problem
 	 */
 	public RefdFile getRefdFile(FSRL fsrl, TaskMonitor monitor)
 			throws CancelledException, IOException {
@@ -267,8 +261,8 @@ public class FileSystemService {
 		try {
 			GFile gfile = ref.getFilesystem().lookup(fsrl.getPath());
 			if (gfile == null) {
-				throw new IOException("File [" + fsrl + "] not found in filesystem [" +
-					ref.getFilesystem().getFSRL() + "]");
+				throw new IOException("File [%s] not found in filesystem [%s]"
+						.formatted(fsrl.getPath(), ref.getFilesystem().getFSRL()));
 			}
 			RefdFile result = new RefdFile(ref, gfile);
 			ref = null;
@@ -551,7 +545,7 @@ public class FileSystemService {
 		if (provider instanceof RefdByteProvider) {
 			provider = ((RefdByteProvider) provider).getWrappedByteProvider();
 		}
-		if (provider instanceof FileByteProvider || provider instanceof RandomAccessByteProvider) {
+		if (provider instanceof FileByteProvider) {
 			return provider.getFile();
 		}
 
@@ -709,13 +703,6 @@ public class FileSystemService {
 			if (ref != null) {
 				return ref;
 			}
-
-			GFileSystem subdirFS = probeForLocalSubDirFilesystem(containerFSRL);
-			if (subdirFS != null) {
-				ref = subdirFS.getRefManager().create();
-				fsInstanceManager.add(subdirFS);
-				return ref;
-			}
 		}
 
 		// Normal case, probe the container file and create a filesystem instance.
@@ -748,18 +735,6 @@ public class FileSystemService {
 		return null;
 	}
 
-	private GFileSystem probeForLocalSubDirFilesystem(FSRL containerFSRL) {
-		if (localFS.isLocalSubdir(containerFSRL)) {
-			try {
-				return localFS.getSubFileSystem(containerFSRL);
-			}
-			catch (IOException e) {
-				Msg.error(this, "Problem when probing for local directory: ", e);
-			}
-		}
-		return null;
-	}
-	
 	/**
 	 * Mount a specific file system (by class) using a specified container file.
 	 * <p>
@@ -814,11 +789,6 @@ public class FileSystemService {
 	 */
 	public GFileSystem openFileSystemContainer(FSRL containerFSRL, TaskMonitor monitor)
 			throws CancelledException, IOException {
-
-		GFileSystem subdirFS = probeForLocalSubDirFilesystem(containerFSRL);
-		if (subdirFS != null) {
-			return subdirFS;
-		}
 
 		ByteProvider byteProvider = getByteProvider(containerFSRL, true, monitor);
 		return fsFactoryMgr.probe(byteProvider, this, null, FileSystemInfo.PRIORITY_LOWEST,

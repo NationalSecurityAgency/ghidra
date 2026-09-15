@@ -27,7 +27,7 @@ import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.table.AbstractTableModel;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.DropDownMenuIcon;
 import docking.widgets.button.GButton;

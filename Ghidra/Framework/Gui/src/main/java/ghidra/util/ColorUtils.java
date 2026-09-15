@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,8 @@ package ghidra.util;
 
 import java.awt.Color;
 import java.util.Comparator;
+
+import generic.theme.GColor;
 
 public class ColorUtils {
 
@@ -346,6 +348,26 @@ public class ColorUtils {
 		int blue = (color1.getBlue() + color2.getBlue()) / 2;
 		int alpha = (color1.getAlpha() + color2.getAlpha()) / 2;
 		return new Color(red, green, blue, alpha);
+	}
+
+	/**
+	 * Returns true if both colors are not null and have the same RGB value.  This is useful to
+	 * compare colors that may have different classes, such as {@link Color} and {@link GColor}.
+	 * 
+	 * @param c1 the first color
+	 * @param c2 the second color
+	 * @return true if the colors have the same RGB value
+	 */
+	public static boolean hasSameRgb(Color c1, Color c2) {
+		int rgb1 = 0;
+		int rgb2 = 0;
+		if (c1 != null) {
+			rgb1 = c1.getRGB();
+		}
+		if (c2 != null) {
+			rgb2 = c2.getRGB();
+		}
+		return rgb1 == rgb2;
 	}
 
 	/**

@@ -67,7 +67,7 @@
       <data> 11100101 00101101 1110.... ........     0xe24dd...                           </data> <!--  str lr,[sp,#...]; sub sp,sp;   -->
       <data> 11100101 00101101 1110.... ........     0x........    0xe24dd...             </data> <!--  str lr,[sp,#...]; <instr>; sub sp,sp;   -->
       <data> 0xe5 0x2d 0xe0 0x08                                                          </data> <!--  str lr,[sp,#-0x8] -->
-      <data> 0xe1a0c00d                              0xe92d....                           </data> <!--  cpy ip,sp; stmdb  sp!,{} -->
+      <data> 0xe1a0c00d                              0xe9 0x2. 11...... 0x.0                           </data> <!--  cpy ip,sp; stmdb  sp!,{} -->
       <align mark="0" bits="2"/>
       <setcontext name="TMode" value="0"/>
       <funcstart validcode="3"/>
@@ -140,7 +140,7 @@
   </pattern>
  
    <pattern> <!-- 32 bit ARM --> 
-       <data>0xe1a0c00d                             0xe92d....                           </data> <!--  cpy ip,sp; stmdb  sp!,{} -->
+       <data>0xe1a0c00d                         0xe9 0x2. 11...... 0x.0                      </data> <!--  cpy ip,sp; stmdb  sp!,{} -->
        <align mark="0" bits="2"/>
        <setcontext name="TMode" value="0"/>
        <codeboundary />                                 <!-- can't say it is a function yet, have seen instructions before -->
@@ -157,7 +157,7 @@
       <data> 0xe92d  0100.... ........                     </data> <!-- push { rlist, lr !sp !pc !r12 } -->
       <align mark="0" bits="1"/>
       <setcontext name="TMode" value="1"/>
-      <funcstart after="defined" validcode="10" contiguous="true" />     <!-- must be something defined right before this, && at least n valid instructions -->
+      <funcstart after="defined" validcode="20" contiguous="true" />     <!-- must be something defined right before this, && at least n valid instructions -->
   </pattern>
   
   <pattern> <!-- 16 bit Thumb -->

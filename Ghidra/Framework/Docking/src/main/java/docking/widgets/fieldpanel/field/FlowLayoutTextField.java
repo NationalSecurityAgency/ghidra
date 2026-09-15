@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,8 @@
  */
 package docking.widgets.fieldpanel.field;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import docking.widgets.fieldpanel.support.FieldHighlightFactory;
 
@@ -25,25 +26,6 @@ import docking.widgets.fieldpanel.support.FieldHighlightFactory;
  * next line.
  */
 public class FlowLayoutTextField extends VerticalLayoutTextField {
-
-	/**
-	 * This constructor will create a text field that will render one line of text. If
-	 * <code>metrics.stringWidth(text) &gt; width</code>, then the text will be wrapped.
-	 * If <code>text</code> contains the highlight string, then it will be highlighted using the
-	 * highlight color.
-	 * 
-	 * @param textElements the AttributedStrings to display
-	 * @param startX the x position to draw the string
-	 * @param width the max width allocated to this field
-	 * @param maxLines the max number of lines to display
-	 * @param hlFactory the highlight factory
-	 * @deprecated use the constructor that takes a list
-	 */
-	@Deprecated(since = "10.1", forRemoval = true)
-	public FlowLayoutTextField(FieldElement[] textElements, int startX,
-			int width, int maxLines, FieldHighlightFactory hlFactory) {
-		this(Arrays.asList(textElements), startX, width, maxLines, hlFactory);
-	}
 
 	/**
 	 * This constructor will create a text field that will render one line of text. If

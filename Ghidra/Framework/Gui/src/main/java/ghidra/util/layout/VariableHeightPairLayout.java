@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -59,16 +58,19 @@ public class VariableHeightPairLayout implements LayoutManager {
 	/**
 	 * @see LayoutManager#addLayoutComponent(String, Component)
 	 */
+	@Override
 	public void addLayoutComponent(String name, Component comp) {}
 
 	/**
 	 * @see LayoutManager#removeLayoutComponent(Component)
 	 */
+	@Override
 	public void removeLayoutComponent(Component comp) {}
 
 	/**
 	 * @see LayoutManager#preferredLayoutSize(Container)
 	 */
+	@Override
 	public Dimension preferredLayoutSize(Container parent) {
 		Dimension d = new Dimension(0,0);
 		Insets insets = parent.getInsets();
@@ -93,6 +95,7 @@ public class VariableHeightPairLayout implements LayoutManager {
 	/**
 	 * @see LayoutManager#minimumLayoutSize(Container)
 	 */
+	@Override
 	public Dimension minimumLayoutSize(Container parent) {
 		return preferredLayoutSize(parent);
 	}
@@ -100,6 +103,7 @@ public class VariableHeightPairLayout implements LayoutManager {
 	/**
 	 * @see LayoutManager#layoutContainer(Container)
 	 */
+	@Override
 	public void layoutContainer(Container parent) {
 		int[] widths = getPreferredWidths(parent);
 		Dimension d = parent.getSize();

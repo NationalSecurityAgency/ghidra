@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -79,6 +79,7 @@ private:
   Datatype *type;	///< Data-type associated with the object
   uint1 *byteData;	///< For string literals, the raw byte data of the string
   int4 byteDataLen;	///< The number of bytes in the data for a string literal
+  static constexpr int8 MAX_STRING_SIZE = 0x100000;	///< Maximum allowed bytes of string in pool
 public:
   CPoolRecord(void) { type = (Datatype *)0; byteData = (uint1 *)0; }		///< Construct an empty record
   ~CPoolRecord(void) { if (byteData != (uint1 *)0) delete [] byteData; }	///< Destructor

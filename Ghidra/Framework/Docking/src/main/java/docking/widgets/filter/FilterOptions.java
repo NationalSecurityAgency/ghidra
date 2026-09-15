@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 
 import javax.swing.Icon;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import generic.theme.GIcon;
 import resources.MultiIcon;

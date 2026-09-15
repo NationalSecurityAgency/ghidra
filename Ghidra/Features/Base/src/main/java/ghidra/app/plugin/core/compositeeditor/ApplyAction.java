@@ -32,7 +32,7 @@ public class ApplyAction extends CompositeEditorTableAction {
 	private final static Icon ICON = new GIcon("icon.plugin.composite.editor.apply");
 	private final static String[] POPUP_PATH = new String[] { "Apply Edits" };
 
-	public ApplyAction(CompositeEditorProvider provider) {
+	public ApplyAction(CompositeEditorProvider<?, ?> provider) {
 		super(provider, ACTION_NAME, GROUP_NAME, POPUP_PATH, null, ICON);
 
 		setDescription("Apply editor changes");

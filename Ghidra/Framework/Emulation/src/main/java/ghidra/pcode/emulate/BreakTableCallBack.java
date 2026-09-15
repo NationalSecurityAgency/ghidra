@@ -33,6 +33,7 @@ import ghidra.program.model.address.Address;
  * Breakpoints are stored in map containers, and the core BreakTable methods
  * are implemented to search in these containers
  */
+@Deprecated(since = "12.1", forRemoval = true)
 public class BreakTableCallBack implements BreakTable {
 
 	public static final String DEFAULT_NAME = "*";

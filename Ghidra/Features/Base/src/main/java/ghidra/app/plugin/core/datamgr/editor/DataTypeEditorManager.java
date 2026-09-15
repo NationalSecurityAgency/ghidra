@@ -129,6 +129,7 @@ public class DataTypeEditorManager implements EditorListener {
 	 * @param composite the structure.
 	 * @param fieldName the optional name of the field to select in the editor.
 	 */
+	@SuppressWarnings("rawtypes") // ignore on CompositeEditorProvider
 	public void edit(Composite composite, String fieldName) {
 
 		CompositeEditorProvider editor = (CompositeEditorProvider) getEditor(composite);
@@ -144,9 +145,11 @@ public class DataTypeEditorManager implements EditorListener {
 			editor = new StructureEditorProvider(plugin, (Structure) composite,
 				showStructureNumbersInHex());
 		}
-		editor.selectField(fieldName);
+
 		editor.addEditorListener(this);
 		editorList.add(editor);
+
+		editor.selectField(fieldName);
 	}
 
 	private EditorProvider reuseExistingEditor(DataType dataType) {
@@ -626,14 +629,14 @@ public class DataTypeEditorManager implements EditorListener {
 		@Override
 		protected List<String> getCallingConventionNames() {
 			// can't rely on functionDefinition which may be null for new definition
-			DataTypeManager dtMgr = getDataTypeManager();
-			if (dtMgr instanceof CompositeViewerDataTypeManager) {
-				dtMgr = ((CompositeViewerDataTypeManager) dtMgr).getOriginalDataTypeManager();
+			DataTypeManager dtm = getDataTypeManager();
+			if (dtm instanceof CompositeViewerDataTypeManager cvdtm) {
+				dtm = cvdtm.getOriginalDataTypeManager();
 			}
 			ArrayList<String> list = new ArrayList<>();
 			list.add(Function.UNKNOWN_CALLING_CONVENTION_STRING);
 			list.add(Function.DEFAULT_CALLING_CONVENTION_STRING);
-			list.addAll(dtMgr.getDefinedCallingConventionNames());
+			list.addAll(dtm.getDefinedCallingConventionNames());
 			return list;
 		}
 

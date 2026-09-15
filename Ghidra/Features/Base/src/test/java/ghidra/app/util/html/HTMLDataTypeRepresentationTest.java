@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,7 +47,9 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 		DataType dataTypeCopy = composite.copy(null);
 		Composite compositeCopy = (Composite) dataTypeCopy;
 		int fieldIndex = 0;
-		setName(compositeCopy, fieldIndex);
+
+		DataTypeComponent component = compositeCopy.getComponent(fieldIndex);
+		component.setFieldName("newName");
 
 		HTMLDataTypeRepresentation representation = ToolTipUtils.getHTMLRepresentation(composite);
 		HTMLDataTypeRepresentation otherRepresentation =
@@ -789,8 +791,8 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 		assertEquals("ccc ddd", l3a.get(1));
 
 		//[a bbbbbbbb, bbbbbbbbbb, bbbbbbbbbb, bbbbbb c]
-		List<String> l4 = HTMLDataTypeRepresentation.breakLongLineAtWordBoundaries(
-			"a bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb c", 10);
+		List<String> l4 = HTMLDataTypeRepresentation
+				.breakLongLineAtWordBoundaries("a bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb c", 10);
 		assertEquals(4, l4.size());
 		assertEquals("a bbbbbbbb", l4.get(0));
 		assertEquals("bbbbbbbbbb", l4.get(1));
@@ -1216,18 +1218,6 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 			}
 			assertTrue("Field at " + i + " does not match",
 				fieldList.get(i).matches(otherFieldList.get(i)));
-		}
-	}
-
-	private void setName(Composite c, int fieldIndex) {
-		DataTypeComponent component = c.getComponent(fieldIndex);
-		try {
-			component.setFieldName("newName");
-		}
-		catch (DuplicateNameException e) {
-			// shouldn't happen
-			e.printStackTrace();
-			Assert.fail("Unexpected duplicate name");
 		}
 	}
 

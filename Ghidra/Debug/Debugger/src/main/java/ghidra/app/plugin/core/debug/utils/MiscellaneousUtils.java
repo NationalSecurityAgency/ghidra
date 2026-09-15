@@ -93,7 +93,8 @@ public enum MiscellaneousUtils {
 	}
 
 	/**
-	 * Parses a value from 1 to 1<<64. Any value outside the range is "clipped" into the range.
+	 * Parses a value from 1 to {@code 1<<64}. Any value outside the range is "clipped" into the
+	 * range.
 	 * 
 	 * <p>
 	 * Note that a returned value of 0 indicates 2 to the power 64, which is just 1 too high to fit

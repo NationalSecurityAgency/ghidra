@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -107,7 +107,7 @@ class DomainObjectDBTransaction implements TransactionInfo {
 	 */
 	void setHasCommittedDBTransaction() {
 		if (getStatus() != Status.COMMITTED) {
-			throw new IllegalStateException("transaction was not committed");
+			throw new IllegalStateException("Transaction was not committed");
 		}
 		hasDBTransaction = true;
 	}
@@ -146,7 +146,7 @@ class DomainObjectDBTransaction implements TransactionInfo {
 		}
 		if (entry.status != Status.NOT_DONE) {
 			throw new IllegalStateException(
-				"Attempted to end Transaction " + "more that once: " + entry.description);
+				"Attempted to end Transaction " + "more than once: " + entry.description);
 		}
 		entry.status = commit ? Status.COMMITTED : Status.ABORTED;
 		if (!commit) {

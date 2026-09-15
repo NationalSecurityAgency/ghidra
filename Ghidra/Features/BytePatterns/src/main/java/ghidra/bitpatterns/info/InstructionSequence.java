@@ -17,7 +17,7 @@ package ghidra.bitpatterns.info;
 
 import java.util.*;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import ghidra.util.xml.XmlUtilities;
 

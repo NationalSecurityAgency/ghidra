@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.BiPredicate;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 
 import docking.*;
@@ -59,10 +60,6 @@ public class ActionChooserDialog extends DialogComponentProvider {
 		addOKButton();
 		addCancelButton();
 		updateTitle();
-		setAccessibleDescription(
-			"This dialog initialy shows only locally relevant actions. Repeat initial keybinding " +
-				"to show More. Use up down arrows to scroll through list of actions and press" +
-				" enter to invoke selected action. Type text to filter list.");
 		setOkEnabled(false);
 	}
 
@@ -115,6 +112,11 @@ public class ActionChooserDialog extends DialogComponentProvider {
 	public void setActionDisplayLevel(ActionDisplayLevel level) {
 		model.setDisplayLevel(level);
 		updateTitle();
+		updateAccessibleDescription();
+		// put the focus to the filter to help the screen reader report the current display level.
+		// The focus is probably already in the filter or it was moved to the tree, but the tree
+		// contents is totally changing, so going back to the filter should not be annoying.
+		searchList.getTextField().requestFocus();
 	}
 
 	@Override
@@ -137,8 +139,30 @@ public class ActionChooserDialog extends DialogComponentProvider {
 				setTitle("All Local and Global Actions (" + model.getSize() + ")");
 				break;
 		}
-	}
+	
+		setAccessibleDescription(
+				"This dialog initially shows only locally relevant actions. Repeat initial keybinding " +
+					"to show more. Use up down arrows to scroll through list of actions and press" +
+					" enter to invoke selected action. Type text to filter list.");
 
+	}
+	private void updateAccessibleDescription() {
+		JTextField textField = searchList.getTextField();
+		String msg = "Type to filter actions by name. List currently contains ";
+		switch (model.getActionDisplayLevel()) {
+		case LOCAL:
+			msg += "only the most relevant actions";
+			break;
+		case GLOBAL:
+			msg += "all valid local and global actions";
+			break;
+		case ALL:
+			msg += "all local and global actions";
+			break;
+		}		
+		textField.getAccessibleContext().setAccessibleDescription(msg);
+	}
+	
 	private JComponent buildMainPanel() {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 2, 0, 2));
@@ -152,8 +176,15 @@ public class ActionChooserDialog extends DialogComponentProvider {
 		searchList.setSelectionCallback(this::itemSelected);
 		searchList.setInitialSelection();  // update selection after adding our listener
 		searchList.setItemRenderer(new ActionRenderer());
-		searchList.setDisplayNameFunction(
-			(t, c) -> getActionDisplayName(t, c) + " " + getKeyBindingString(t));
+		searchList.setDisplayNameFunction((t, c) -> {
+			String name = getActionDisplayName(t, c) + " " + getKeyBindingString(t);
+			ActionContext context = model.getContext();
+			if (context != null && !(t.isValidContext(context) && t.isEnabledForContext(context))) {
+				name += " (Disabled)";
+			}
+			return name;
+			
+		});
 		panel.add(searchList);
 		return panel;
 	}

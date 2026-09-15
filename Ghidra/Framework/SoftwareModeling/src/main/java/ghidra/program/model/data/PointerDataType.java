@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import java.util.function.Consumer;
 import ghidra.docking.settings.Settings;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.address.*;
+import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
@@ -38,7 +39,8 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 	public static final String POINTER_NAME = "pointer";
 	public static final String POINTER_LABEL_PREFIX = "PTR";
-	public static final String POINTER_LOOP_LABEL_PREFIX = "PTR_LOOP";
+	public static final String POINTER_LABEL_PREFIX_U = POINTER_LABEL_PREFIX + "_";
+	public static final String POINTER_LOOP_LABEL = "PTR_LOOP";
 	public static final String NOT_A_POINTER = "NaP";
 
 	// NOTE: order dictates auto-name attribute ordering (order should not be changed)
@@ -203,32 +205,42 @@ public class PointerDataType extends BuiltIn implements Pointer {
 			return POINTER_LABEL_PREFIX;
 		}
 
+		Symbol symbol = program.getSymbolTable().getSymbol(ref);
+		if (symbol == null) {
+			// unexpected since we have a reference to the location
+			return POINTER_LABEL_PREFIX;
+		}
+		if (symbol.getSource() != SourceType.DEFAULT) {
+			return POINTER_LABEL_PREFIX_U + symbol.getName();
+		}
+
+		// Check for deep pointers or recursive conditions
 		PointerReferenceClassification pointerClassification =
 			getPointerClassification(program, ref);
 		if (pointerClassification == PointerReferenceClassification.DEEP) {
-			// pointer exceed depth limit of 2
-			return POINTER_LABEL_PREFIX + "_" + POINTER_LABEL_PREFIX;
+			// multi-level pointer exceeds depth limit of 2
+			return POINTER_LABEL_PREFIX_U + POINTER_LABEL_PREFIX;
 		}
 		if (pointerClassification == PointerReferenceClassification.LOOP) {
-			return POINTER_LOOP_LABEL_PREFIX;// pointer is self referencing
-		}
-
-		Symbol symbol = program.getSymbolTable().getSymbol(ref);
-		if (symbol == null) {
-			// unexpected
-			return POINTER_LABEL_PREFIX;
+			// multi-level pointer is self referencing
+			return POINTER_LOOP_LABEL;
 		}
 
 		String symName = symbol.getName();
 		symName = SymbolUtilities.getCleanSymbolName(symName, ref.getToAddress());
 		symName = symName.replace(Namespace.DELIMITER, "_");
-		return POINTER_LABEL_PREFIX + "_" + symName;
+
+		if (!symName.startsWith(POINTER_LABEL_PREFIX_U)) {
+			return POINTER_LABEL_PREFIX_U + symName;
+		}
+
+		return POINTER_LABEL_PREFIX_U + symName;
 	}
 
 	private enum PointerReferenceClassification {
 		// NORMAL - use recursive name generation (e.g., PTR_PTR_BYTE)
 		NORMAL,
-		// LOOP - references loop back - use label prefix PTR_LOOP
+		// LOOP - self-reference - use label prefix PTR_LOOP
 		LOOP,
 		// DEEP - references are too deep - use simple default label prefix
 		DEEP
@@ -241,7 +253,10 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 		Set<Address> refAddrs = new HashSet<>();
 		refAddrs.add(fromAddr);
-		int depth = 0;
+		if (fromAddr.equals(ref.getToAddress())) {
+			return PointerReferenceClassification.LOOP;
+		}
+		int depth = 1;
 		while (ref != null && ref.isMemoryReference()) {
 			Address toAddr = ref.getToAddress();
 			if (!refAddrs.add(toAddr)) {
@@ -400,6 +415,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 		AddressSpace targetSpace = null;
 
 		Memory mem = buf.getMemory();
+		Program program = mem != null ? mem.getProgram() : null;
 
 		boolean signedOffset = false;
 		PointerType pointerType = PointerTypeSettingsDefinition.DEF.getType(settings);
@@ -448,11 +464,13 @@ public class PointerDataType extends BuiltIn implements Pointer {
 					// A 0 relative offset is considered invalid (NaP)
 					return null; // NaP without error
 				}
-				if (mem == null) {
-					errorHandler.accept("Memory not specified");
+				if (program == null) {
+					errorHandler
+							.accept("Unable to compute IBO address - Program memory not specified");
+					return null;
 				}
 				// must ignore AddressSpaceSettingsDefinition
-				Address imageBase = mem.getProgram().getImageBase();
+				Address imageBase = program.getImageBase();
 				targetSpace = imageBase.getAddressSpace();
 				return imageBase.addWrap(addrOffset * targetSpace.getAddressableUnitSize());
 			}
@@ -468,10 +486,10 @@ public class PointerDataType extends BuiltIn implements Pointer {
 			}
 			else if (pointerType == PointerType.FILE_OFFSET) {
 				if (mem == null) {
-					errorHandler.accept("Memory not specified");
+					errorHandler.accept("File offset lookup failed - Memory not specified");
 				}
 				else if (mem.getAllFileBytes().size() == 0) {
-					errorHandler.accept("No File bytes used");
+					errorHandler.accept("File offset lookup failed - No File bytes used");
 				}
 				else {
 					List<Address> addressList = mem.locateAddressesForFileOffset(addrOffset);
@@ -495,20 +513,35 @@ public class PointerDataType extends BuiltIn implements Pointer {
 			}
 
 			if (spaceName != null) {
-				if (mem == null) {
-					errorHandler.accept("Memory not specified");
+				// Address space was specified by a setting
+				if (program == null) {
+					errorHandler
+							.accept("Address space lookup failed - Program memory not specified");
 					return null;
 				}
-				Program program = mem.getProgram();
 				targetSpace = program.getAddressFactory().getAddressSpace(spaceName);
 				if (targetSpace == null) {
 					errorHandler.accept(
 						"Address space not defined: " + spaceName + ":" + formatOffset(addrOffset));
 					return null;
 				}
+				if (!targetSpace.isLoadedMemorySpace()) {
+					errorHandler
+							.accept("Address space is not loaded memory space: " + spaceName + ":" +
+						formatOffset(addrOffset));
+					return null;
+				}
 			}
 			if (targetSpace == null) {
 				targetSpace = buf.getAddress().getAddressSpace();
+			}
+			if (targetSpace.isRegisterSpace()) {
+				Language language = buf.getLanguage();
+				if (language == null) {
+					errorHandler.accept("Unable to identify default Address space");
+					return null;
+				}
+				targetSpace = language.getDefaultSpace();
 			}
 
 			if (targetSpace instanceof SegmentedAddressSpace) {
@@ -741,11 +774,21 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 	@Override
 	public void dataTypeReplaced(DataType oldDt, DataType newDt) {
+		DataTypeUtilities.checkValidReplacement(oldDt, newDt);
 		if (referencedDataType == oldDt) {
+			if (newDt == this) {
+				newDt = DataType.DEFAULT;
+			}
 			referencedDataType.removeParent(this);
 			referencedDataType = newDt;
 			referencedDataType.addParent(this);
 			displayName = null;
+
+			if (!newDt.getCategoryPath().equals(oldDt.getCategoryPath())) {
+				// move this pointer to same category as newDt
+				super.setCategoryPath(newDt.getCategoryPath());
+			}
+
 			String oldName = name;
 			name = constructUniqueName(referencedDataType, length);
 			notifyNameChanged(oldName);

@@ -113,6 +113,6 @@ if __name__ == "__main__":
     _, remaining = parser.parse_known_args(namespace=args)
     
     launcher = GhidraLauncher(False, args.class_name, args.gui, install_dir=args.install_dir)
-    launcher.vm_args = args.jvm_args + launcher.vm_args
+    launcher.vm_args = launcher.vm_args + args.jvm_args
     launcher.args = remaining
     launcher.start()

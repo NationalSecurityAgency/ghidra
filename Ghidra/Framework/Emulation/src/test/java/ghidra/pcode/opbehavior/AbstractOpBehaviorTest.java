@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,10 +18,24 @@ package ghidra.pcode.opbehavior;
 import java.math.BigInteger;
 
 import generic.test.AbstractGenericTest;
+import ghidra.pcode.floatformat.FloatFormat;
+import ghidra.pcode.floatformat.FloatFormatFactory;
 import ghidra.pcode.utils.Utils;
 import ghidra.util.StringUtilities;
 
 public abstract class AbstractOpBehaviorTest extends AbstractGenericTest {
+	static final FloatFormat FF4 = FloatFormatFactory.getFloatFormat(4);
+	static final FloatFormat FF8 = FloatFormatFactory.getFloatFormat(8);
+
+	static final BigInteger NEGATIVE_ONE = Utils.convertToUnsignedValue(BigInteger.valueOf(-1), 16);
+	static final BigInteger NEGATIVE_TWO = Utils.convertToUnsignedValue(BigInteger.valueOf(-2), 16);
+	static final BigInteger BIG_POSITIVE = new BigInteger("7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", 16);
+	static final BigInteger BIG_NEGATIVE =
+		Utils.convertToUnsignedValue(new BigInteger("80000000000000000000000000000000", 16), 16);
+
+	static final BigInteger NEG_ONE = new BigInteger("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", 16);
+	static final BigInteger MIN_NUM = new BigInteger("80000000000000000000000000000000", 16);
+	static final BigInteger MAX_NUM = new BigInteger("7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", 16);
 
 	public AbstractOpBehaviorTest() {
 		super();

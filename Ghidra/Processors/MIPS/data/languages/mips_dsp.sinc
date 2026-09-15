@@ -989,22 +989,22 @@ define pcodeop SUBUH.QB;
 	RD = DSPControl & immed1625:$(REGSIZE);
 }
 
-:rddsp RD	is $(AMODE) & prime=0x1f & immed1625=0x1f & RD & fct2=0x12 & fct=0x38 {
+:rddsp RD	is $(AMODE) & prime=0x1f & simmed1625=0x1f & RD & fct2=0x12 & fct=0x38 {
 	RD = DSPControl;
 }
 
 
 # REPL.PH	Purpose: Replicate Immediate Integer into all Vector Element Positions
-:repl.ph RD, immed1625	is $(AMODE) & prime=0x1f & immed1625 & RD & fct2=0xa & fct=0x12 {
-	val:2 = immed1625;
+:repl.ph RD, simmed1625	is $(AMODE) & prime=0x1f & simmed1625 & RD & fct2=0xa & fct=0x12 {
+	val:2 = simmed1625;
 	repl:$(REGSIZE) = sext(val) << 16 | zext(val);
 	RD = repl;
 }
 
 
 # REPL.QB	Purpose: Replicate Immediate Integer into all Vector Element Positions
-:repl.qb RD, immed1623	is $(AMODE) & prime=0x1f & zero2425=0x0 & immed1623 & RD & fct2=0x2 & fct=0x12 {
-	byte:1 = immed1623;
+:repl.qb RD, simmed1623	is $(AMODE) & prime=0x1f & zero2425=0x0 & simmed1623 & RD & fct2=0x2 & fct=0x12 {
+	byte:1 = simmed1623;
 	RD = sext((byte << 24) | (byte << 16) | (byte << 8) | (byte));
 }
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -95,7 +95,7 @@ public class VTDomainObjectEventsTest extends VTBaseTestCase {
 	public void testEventsForAddingFirstMatchForAssociation() {
 		VTMatchSet matchSet = createMatchSet();
 		clearEvents();
-		VTMatchInfo match = VTTestUtils.createRandomMatch(null);
+		VTMatchInfo match = VTTestUtils.createRandomMatch(sourceProgram, destinationProgram);
 
 		matchSet.addMatch(match);
 
@@ -107,7 +107,7 @@ public class VTDomainObjectEventsTest extends VTBaseTestCase {
 	@Test
 	public void testEventsForAddingAdditionalMatchForAssociation() {
 		VTMatchSet matchSet = createMatchSet();
-		VTMatchInfo matchInfo = VTTestUtils.createRandomMatch(null);
+		VTMatchInfo matchInfo = VTTestUtils.createRandomMatch(sourceProgram, destinationProgram);
 		matchSet.addMatch(matchInfo);
 		clearEvents();
 
@@ -124,7 +124,7 @@ public class VTDomainObjectEventsTest extends VTBaseTestCase {
 	public void testEventsForRemovingLastMatchForAssociation() {
 		VTMatchSet manualMatchSet = db.getManualMatchSet();
 		clearEvents();
-		VTMatchInfo matchInfo = VTTestUtils.createRandomMatch(null);
+		VTMatchInfo matchInfo = VTTestUtils.createRandomMatch(sourceProgram, destinationProgram);
 		VTMatch match = manualMatchSet.addMatch(matchInfo);
 		clearEvents();
 
@@ -139,7 +139,7 @@ public class VTDomainObjectEventsTest extends VTBaseTestCase {
 	public void testEventsForDeletingLastMatchForAssociation() {
 		VTMatchSet manualMatchSet = db.getManualMatchSet();
 		clearEvents();
-		VTMatchInfo matchInfo = VTTestUtils.createRandomMatch(null);
+		VTMatchInfo matchInfo = VTTestUtils.createRandomMatch(sourceProgram, destinationProgram);
 		VTMatch match = manualMatchSet.addMatch(matchInfo);
 		clearEvents();
 
@@ -155,7 +155,7 @@ public class VTDomainObjectEventsTest extends VTBaseTestCase {
 	public void testEventsForRemovingNonLastMatchForAssociation() {
 		VTMatchSet manualMatchSet = db.getManualMatchSet();
 		clearEvents();
-		VTMatchInfo matchInfo = VTTestUtils.createRandomMatch(null);
+		VTMatchInfo matchInfo = VTTestUtils.createRandomMatch(sourceProgram, destinationProgram);
 		VTMatch match = manualMatchSet.addMatch(matchInfo);
 		clearEvents();
 
@@ -170,7 +170,7 @@ public class VTDomainObjectEventsTest extends VTBaseTestCase {
 	public void testEventsForDeletingNonLastMatchForAssociation() {
 		VTMatchSet manualMatchSet = db.getManualMatchSet();
 		clearEvents();
-		VTMatchInfo matchInfo = VTTestUtils.createRandomMatch(null);
+		VTMatchInfo matchInfo = VTTestUtils.createRandomMatch(sourceProgram, destinationProgram);
 		VTMatch match = manualMatchSet.addMatch(matchInfo);
 		clearEvents();
 
@@ -184,7 +184,7 @@ public class VTDomainObjectEventsTest extends VTBaseTestCase {
 	@Test
 	public void testEventsForRejectingMatch() throws VTAssociationStatusException {
 		VTMatchSet matchSet = createMatchSet();
-		VTMatchInfo matchInfo = VTTestUtils.createRandomMatch(null);
+		VTMatchInfo matchInfo = VTTestUtils.createRandomMatch(sourceProgram, destinationProgram);
 		VTMatch match = matchSet.addMatch(matchInfo);
 		clearEvents();
 		match.getAssociation().setRejected();
@@ -197,7 +197,7 @@ public class VTDomainObjectEventsTest extends VTBaseTestCase {
 	public void testAssociationStatusChangedEvent() throws Exception {
 		VTMatchSet manualMatchSet = db.getManualMatchSet();
 		clearEvents();
-		VTMatchInfo matchInfo = VTTestUtils.createRandomMatch(null);
+		VTMatchInfo matchInfo = VTTestUtils.createRandomMatch(sourceProgram, destinationProgram);
 		VTMatch match = manualMatchSet.addMatch(matchInfo);
 		clearEvents();
 
@@ -214,7 +214,7 @@ public class VTDomainObjectEventsTest extends VTBaseTestCase {
 		Msg.debug(this, "\tcalling clrearEvents()");
 		clearEvents();
 		Msg.debug(this, "\tcalling createRandomMatch()");
-		VTMatchInfo matchInfo = VTTestUtils.createRandomMatch(null);
+		VTMatchInfo matchInfo = VTTestUtils.createRandomMatch(sourceProgram, destinationProgram);
 		Msg.debug(this, "\tcalling addMatch()");
 		VTMatch match = manualMatchSet.addMatch(matchInfo);
 		Msg.debug(this, "\tcalling setAccepted()");
@@ -239,7 +239,7 @@ public class VTDomainObjectEventsTest extends VTBaseTestCase {
 	public void testMarkupStatusChangedEventWhenApplying() throws Exception {
 		VTMatchSet manualMatchSet = db.getManualMatchSet();
 		clearEvents();
-		VTMatchInfo matchInfo = VTTestUtils.createRandomMatch(null);
+		VTMatchInfo matchInfo = VTTestUtils.createRandomMatch(sourceProgram, destinationProgram);
 		VTMatch match = manualMatchSet.addMatch(matchInfo);
 		match.getAssociation().setAccepted();
 		VTMarkupItem markupItem = VTTestUtils.createRandomMarkupItemStub(match);
@@ -259,7 +259,7 @@ public class VTDomainObjectEventsTest extends VTBaseTestCase {
 	public void testMarkupStatusChangedEventWhenSettingStatus() throws Exception {
 		VTMatchSet manualMatchSet = db.getManualMatchSet();
 		clearEvents();
-		VTMatchInfo matchInfo = VTTestUtils.createRandomMatch(null);
+		VTMatchInfo matchInfo = VTTestUtils.createRandomMatch(sourceProgram, destinationProgram);
 		VTMatch match = manualMatchSet.addMatch(matchInfo);
 		match.getAssociation().setAccepted();
 		VTMarkupItem markupItem = VTTestUtils.createRandomMarkupItemStub(match);
@@ -295,7 +295,7 @@ public class VTDomainObjectEventsTest extends VTBaseTestCase {
 	public void testTagAppliedEvent() throws VTAssociationStatusException {
 		VTMatchTagDB tag = db.createMatchTag("TEST");
 		VTMatchSet manualMatchSet = db.getManualMatchSet();
-		VTMatchInfo matchInfo = VTTestUtils.createRandomMatch(null);
+		VTMatchInfo matchInfo = VTTestUtils.createRandomMatch(sourceProgram, destinationProgram);
 		VTMatch match = manualMatchSet.addMatch(matchInfo);
 		match.getAssociation().setAccepted();
 		clearEvents();
@@ -313,7 +313,7 @@ public class VTDomainObjectEventsTest extends VTBaseTestCase {
 	@Test
 	public void testEventsForVotes() {
 		VTMatchSet manualMatchSet = db.getManualMatchSet();
-		VTMatchInfo matchInfo = VTTestUtils.createRandomMatch(null);
+		VTMatchInfo matchInfo = VTTestUtils.createRandomMatch(sourceProgram, destinationProgram);
 		VTMatch match = manualMatchSet.addMatch(matchInfo);
 		clearEvents();
 		match.getAssociation().setVoteCount(4);

@@ -16,7 +16,6 @@
 apply plugin: 'eclipse'
 
 apply from: 'gradle/root/eclipse.gradle'
-apply from: "gradle/support/eclipseLauncher.gradle"
 apply from: "gradle/support/loadApplicationProperties.gradle"
 
 
@@ -67,6 +66,21 @@ allprojects {
 	tasks.withType(JavaForkOptions) {
 		jvmArgs '-Djava.awt.headless=true'
 	}
+
+	// enable generating lock files for gradle dependencies
+	dependencyLocking {
+		lockAllConfigurations()
+	}
+}
+
+/*********************************************************************************
+ *  Gradle 9+ by default gives every archived file a timestamp of Feb 1 1980.
+ *  We prefer to preserve the real timestamp of each file in the release.
+ **********************************************************************************/
+allprojects {
+	tasks.withType(AbstractArchiveTask).configureEach {
+		preserveFileTimestamps = true
+	}
 }
 
 /*********************************************************************************
@@ -82,13 +96,33 @@ if (flatRepo.isDirectory()) {
 		}
 	}
 }
-else {	
+else {
 	File f = file("ghidra.repos.config")
 	if (!f.exists()) {
-		throw new GradleException("\n\n\n\tUnable to find the local maven repo." +  
+		throw new GradleException("\n\n\n\tUnable to find the local maven repo." +
 			"  Ensure you have created the ${flatRepo.getName()} directory or ${f.getName()} file.\n\n\n");
 	}
 }
+
+/*********************************************************************************
+ *  Force all project compile classpaths to be resolved at configuration time.
+ *********************************************************************************/
+allprojects {
+	gradle.taskGraph.whenReady {
+		configurations.matching { it.name.endsWith("compileClasspath") }.all { cfg ->
+			if (cfg.canBeResolved) {
+				try {
+					cfg.files   // trigger resolution safely now
+				} catch (ignored) { }
+			}
+		}
+	}
+}
+
+/*********************************************************************************
+ *  Store :MarkdownSupport ClassPath to fix issues with Gradle 9.
+ *********************************************************************************/
+ext.markdownDeps = []
 
 /*********************************************************************************
  * Imports
@@ -319,6 +353,47 @@ def getCurrentDateTimeLong() {
 	def formattedDate = date.format('yyyy-MMM-dd HHmm z')
 	return formattedDate
 }
+
+/*********************************************************************************
+ * Returns the project object from the given projectDependency
+ *********************************************************************************/
+def getDependencyProject(p, projectDependency) {
+    if (projectDependency.hasProperty("path")) {
+        // Supported by Gradle 8.11 and later
+        return p.project(projectDependency.path)
+    }
+    else {
+        // Supported in Gradle 8.5, removed in Gradle 9
+        return projectDependency.dependencyProject
+    }
+}
+
+/*********************************************************************************
+ * Returns true if 'project' has a direct or transitive API project dependency
+ * on the project with path 'targetPath'. The 'targetPath' should be specified
+ * in the form ":<project-name>"
+ *********************************************************************************/
+boolean hasApiProjectDependency(Project project, String targetPath) {
+    def visited = [] as Set
+
+    def walk
+    walk = { Project p ->
+        if (!visited.add(p)) return false
+
+        def apiDeps = p.configurations.api
+            .allDependencies
+            .withType(org.gradle.api.artifacts.ProjectDependency)
+
+        if (apiDeps.any { getDependencyProject(p, it).path == targetPath }) {
+            return true
+        }
+
+        return apiDeps.any { walk(getDependencyProject(p, it)) }
+    }
+
+    walk(project)
+}
+
 
 /*********************************************************************************
  * Returns a list of all the external library paths declared as dependencies for the 

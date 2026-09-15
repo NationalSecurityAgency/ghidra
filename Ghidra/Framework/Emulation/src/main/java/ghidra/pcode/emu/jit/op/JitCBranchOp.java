@@ -17,9 +17,10 @@ package ghidra.pcode.emu.jit.op;
 
 import java.util.List;
 
-import ghidra.pcode.emu.jit.JitPassage.Branch;
+import ghidra.pcode.emu.jit.JitPassage.RBranch;
 import ghidra.pcode.emu.jit.analysis.JitTypeBehavior;
 import ghidra.pcode.emu.jit.var.JitVal;
+import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropSymbolMap;
 import ghidra.program.model.pcode.PcodeOp;
 
 /**
@@ -29,8 +30,15 @@ import ghidra.program.model.pcode.PcodeOp;
  * @param branch the branch record created for the p-code op
  * @param cond the use-def node for the branch condition
  */
-public record JitCBranchOp(PcodeOp op, Branch branch, JitVal cond)
-		implements JitOp {
+public record JitCBranchOp(PcodeOp op, RBranch branch, JitVal cond) implements JitOp {
+	@Override
+	public String toString(PcodeUseropSymbolMap symbols) {
+		return "%s[op=%s, branch=%s, cond=%s]".formatted(
+			getClass().getSimpleName(),
+			JitOp.toString(op, symbols),
+			branch,
+			cond.toString(symbols.language()));
+	}
 
 	@Override
 	public boolean canBeRemoved() {

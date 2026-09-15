@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
+import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
@@ -65,49 +66,33 @@ public class ImageRuntimeFunctionEntries_ARM implements ImageRuntimeFunctionEntr
 	 */
 	ImageRuntimeFunctionEntries_ARM(BinaryReader reader, int size, NTHeader ntHeader)
 			throws IOException {
-		int numEntries = size / ENTRY_SIZE;
-		for (int i = 0; i < numEntries; i++) {
+		for (int i = 0; i < size / ENTRY_SIZE; i++) {
 			long beginAddress = reader.readNextUnsignedInt() & ~0x1L; // low bit is set when thumb
 			int data = reader.readNextInt();
-			if (beginAddress == 0 && data == 0) {
-				break;
-			}
-
 			functionEntries.add(new ImageRuntimeFunctionEntry_ARM(beginAddress, data));
 		}
 	}
 
 	@Override
-	public void markup(Program program, Address headerStart) throws CodeUnitInsertionException,
-			IOException, DuplicateNameException {
-		StructureDataType exceptionInfoStruct = new StructureDataType("_IMAGE_RUNTIME_FUNCTION_ENTRY", 0);
-		exceptionInfoStruct.setPackingEnabled(true);
-		exceptionInfoStruct.add(StructConverter.IBO32, "BeginAddress", null);
-		exceptionInfoStruct.add(StructConverter.IBO32, "ExceptionInfo", null);
-
-		StructureDataType unwindDataStruct = new StructureDataType("_IMAGE_RUNTIME_FUNCTION_ENTRY_2", 0);
-		unwindDataStruct.setPackingEnabled(true);
-		unwindDataStruct.add(StructConverter.IBO32, "BeginAddress", null);
-		try {
-			unwindDataStruct.addBitField(StructConverter.DWORD, 2, "Flag", null);
-			unwindDataStruct.addBitField(StructConverter.DWORD, 11, "FunctionLength", null);
-			unwindDataStruct.addBitField(StructConverter.DWORD, 2, "Ret", null);
-			unwindDataStruct.addBitField(StructConverter.DWORD, 1, "H", null);
-			unwindDataStruct.addBitField(StructConverter.DWORD, 3, "Reg", null);
-			unwindDataStruct.addBitField(StructConverter.DWORD, 1, "R", null);
-			unwindDataStruct.addBitField(StructConverter.DWORD, 1, "L", null);
-			unwindDataStruct.addBitField(StructConverter.DWORD, 1, "C", null);
-			unwindDataStruct.addBitField(StructConverter.DWORD, 10, "StackAdjust", null);
-		}
-		catch (InvalidDataTypeException e) {
-			throw new IOException(e);
-		}
-
+	public void markup(Program program, Address headerStart, MessageLog log)
+			throws CodeUnitInsertionException, IOException, DuplicateNameException {
 		Address addr = headerStart;
+		DataType exceptionInfoDt = null;
+		DataType packedUnwindDt = null;
 		for (ImageRuntimeFunctionEntry_ARM entry : functionEntries) {
-			DataType struct = entry.isExceptionInfoRVA() ? exceptionInfoStruct : unwindDataStruct;
-			DataUtilities.createData(program, addr, struct, struct.getLength(), true,
-				DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+			if (entry.isExceptionInfoRVA()) {
+				if (exceptionInfoDt == null) {
+					exceptionInfoDt = entry.toDataType();
+				}
+				PeUtils.createData(program, addr, exceptionInfoDt, log);
+			}
+			else {
+				if (packedUnwindDt == null) {
+					packedUnwindDt = entry.toDataType();
+				}
+				PeUtils.createData(program, addr, packedUnwindDt, log);
+			}
+			entry.markup(program, log);
 			addr = addr.add(ENTRY_SIZE);
 		}
 	}
@@ -118,12 +103,10 @@ public class ImageRuntimeFunctionEntries_ARM implements ImageRuntimeFunctionEntr
 	 * @param beginAddress The RVA of the corresponding function
 	 * @param data The exception info RVA or the packed unwind data, depending on lower 2 bit flag
 	 */
-	record ImageRuntimeFunctionEntry_ARM(long beginAddress, int data) {
+	record ImageRuntimeFunctionEntry_ARM(long beginAddress, int data) implements StructConverter {
 		
 		/**
-		 * Checks whether or not this entry is an exception info RVA or packed unwind data
-		 * 
-		 * @return True if this entry is an exception info RVA, or false if it's packed unwind data
+		 * {@return whether or not this entry is an exception info RVA or packed unwind data}
 		 */
 		public boolean isExceptionInfoRVA() {
 			return (data & 0x3) == 0;
@@ -133,15 +116,48 @@ public class ImageRuntimeFunctionEntries_ARM implements ImageRuntimeFunctionEntr
 		 * Marks up this entry
 		 * 
 		 * @param program The {@link Program}
+		 * @param log The log
 		 * @throws IOException If there was an IO-related error creating the data
 		 * @throws DuplicateNameException If a data type of the same name already exists
 		 * @throws CodeUnitInsertionException If data creation failed
 		 */
-		public void markup(Program program)
+		public void markup(Program program, MessageLog log)
 				throws DuplicateNameException, IOException, CodeUnitInsertionException {
 			if (isExceptionInfoRVA()) {
 				// TODO
 			}
+		}
+
+		@Override
+		public DataType toDataType() throws DuplicateNameException, IOException {
+			StructureDataType struct;
+			if (isExceptionInfoRVA()) {
+				struct = new StructureDataType("_IMAGE_RUNTIME_FUNCTION_ENTRY", 0);
+				struct.setPackingEnabled(true);
+				struct.add(StructConverter.IBO32, "BeginAddress", null);
+				struct.add(StructConverter.IBO32, "ExceptionInfo", null);
+			}
+			else {
+				struct = new StructureDataType("_IMAGE_RUNTIME_FUNCTION_ENTRY_2", 0);
+				struct.setPackingEnabled(true);
+				struct.add(StructConverter.IBO32, "BeginAddress", null);
+				try {
+					struct.addBitField(StructConverter.DWORD, 2, "Flag", null);
+					struct.addBitField(StructConverter.DWORD, 11, "FunctionLength", null);
+					struct.addBitField(StructConverter.DWORD, 2, "Ret", null);
+					struct.addBitField(StructConverter.DWORD, 1, "H", null);
+					struct.addBitField(StructConverter.DWORD, 3, "Reg", null);
+					struct.addBitField(StructConverter.DWORD, 1, "R", null);
+					struct.addBitField(StructConverter.DWORD, 1, "L", null);
+					struct.addBitField(StructConverter.DWORD, 1, "C", null);
+					struct.addBitField(StructConverter.DWORD, 10, "StackAdjust", null);
+				}
+				catch (InvalidDataTypeException e) {
+					throw new IOException(e);
+				}
+			}
+			struct.setCategoryPath(new CategoryPath("/PE"));
+			return struct;
 		}
 	}
 }

@@ -21,7 +21,7 @@ import java.math.BigInteger;
 
 import org.junit.Test;
 
-import ghidra.features.base.memsearch.matcher.ByteMatcher;
+import ghidra.features.base.memsearch.matcher.UserInputByteMatcher;
 
 public class Int8SearchFormatTest extends AbstractSearchFormatTest {
 	public Int8SearchFormatTest() {
@@ -54,7 +54,7 @@ public class Int8SearchFormatTest extends AbstractSearchFormatTest {
 		assertBytes(0x80, 0, 0, 0, 0, 0, 0, 0);
 
 		BigInteger bigValue = BigInteger.valueOf(value).subtract(BigInteger.ONE);
-		ByteMatcher byteMatcher = format.parse(bigValue.toString(), settings);
+		UserInputByteMatcher byteMatcher = format.parse(bigValue.toString(), settings);
 		assertFalse(byteMatcher.isValidInput());
 		assertEquals("Number must be in the range [-9223372036854775808, 9223372036854775807]",
 			byteMatcher.getDescription());
@@ -67,7 +67,7 @@ public class Int8SearchFormatTest extends AbstractSearchFormatTest {
 		assertBytes(0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff);
 
 		BigInteger bigValue = BigInteger.valueOf(value).add(BigInteger.ONE);
-		ByteMatcher byteMatcher = format.parse(bigValue.toString(), settings);
+		UserInputByteMatcher byteMatcher = format.parse(bigValue.toString(), settings);
 		assertFalse(byteMatcher.isValidInput());
 		assertEquals("Number must be in the range [-9223372036854775808, 9223372036854775807]",
 			byteMatcher.getDescription());
@@ -75,7 +75,7 @@ public class Int8SearchFormatTest extends AbstractSearchFormatTest {
 
 	@Test
 	public void testNegativeSignOnly() {
-		ByteMatcher byteMatcher = format.parse("-", settings);
+		UserInputByteMatcher byteMatcher = format.parse("-", settings);
 		assertTrue(byteMatcher.isValidInput());
 		assertFalse(byteMatcher.isValidSearch());
 		assertEquals("Incomplete negative number", byteMatcher.getDescription());
@@ -83,7 +83,7 @@ public class Int8SearchFormatTest extends AbstractSearchFormatTest {
 
 	@Test
 	public void testBadChars() {
-		ByteMatcher byteMatcher = format.parse("12z", settings);
+		UserInputByteMatcher byteMatcher = format.parse("12z", settings);
 		assertFalse(byteMatcher.isValidInput());
 		assertFalse(byteMatcher.isValidSearch());
 		assertEquals("Number parse error: For input string: \"12z\"", byteMatcher.getDescription());

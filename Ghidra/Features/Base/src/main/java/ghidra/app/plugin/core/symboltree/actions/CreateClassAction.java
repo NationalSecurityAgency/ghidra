@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -64,19 +64,21 @@ public class CreateClassAction extends SymbolTreeContextAction {
 		if (object instanceof ClassCategoryNode) {
 			return true;
 		}
-		else if (object instanceof SymbolNode) {
-			SymbolNode symbolNode = (SymbolNode) object;
-			Symbol symbol = symbolNode.getSymbol();
-			SymbolType symbolType = symbol.getSymbolType();
-			if (symbolType == SymbolType.NAMESPACE) {
-				// allow SymbolType to perform additional checks
-				Namespace parentNamespace = (Namespace) symbol.getObject();
-				return SymbolType.CLASS.isValidParent(context.getProgram(), parentNamespace,
-					Address.NO_ADDRESS, parentNamespace.isExternal());
-			}
-			return (symbolType == SymbolType.CLASS || symbolType == SymbolType.LIBRARY);
+		if (!(object instanceof SymbolNode symbolNode)) {
+			return false;
 		}
-		return false;
+
+		Symbol symbol = symbolNode.getSymbol();
+		SymbolType symbolType = symbol.getSymbolType();
+		if (symbolType == SymbolType.NAMESPACE) {
+			Namespace parent = (Namespace) symbol.getObject();
+			if (parent == null) {
+				return false; // the symbol has been deleted, but the tree has not updated
+			}
+			return SymbolType.CLASS.isValidParent(context.getProgram(), parent,
+				Address.NO_ADDRESS, parent.isExternal());
+		}
+		return (symbolType == SymbolType.CLASS || symbolType == SymbolType.LIBRARY);
 	}
 
 	private void createNewClass(SymbolTreeActionContext context) {
@@ -85,7 +87,6 @@ public class CreateClassAction extends SymbolTreeContextAction {
 		Program program = context.getProgram();
 		Namespace parent = program.getGlobalNamespace();
 		GTreeNode node = (GTreeNode) selectionPaths[0].getLastPathComponent();
-
 		if (node instanceof SymbolNode) {
 			Symbol symbol = ((SymbolNode) node).getSymbol();
 			parent = (Namespace) symbol.getObject();
@@ -99,14 +100,16 @@ public class CreateClassAction extends SymbolTreeContextAction {
 			// error occurred
 			return;
 		}
+
 		program.flushEvents();
 		context.getSymbolTree().startEditing(node, newClassName);
 	}
 
 	private String createClass(Program program, Namespace parent) {
-		String newClassName = "NewClass";
-		int transactionID = program.startTransaction("Create Class");
-		try {
+
+		return program.withTransaction("Create Class", () -> {
+
+			String newClassName = "NewClass";
 			SymbolTable symbolTable = program.getSymbolTable();
 			int oneUp = 0;
 			Namespace namespace = null;
@@ -123,11 +126,8 @@ public class CreateClassAction extends SymbolTreeContextAction {
 					return null;
 				}
 			}
-		}
-		finally {
-			program.endTransaction(transactionID, true);
-		}
 
-		return newClassName;
+			return newClassName;
+		});
 	}
 }

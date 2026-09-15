@@ -15,11 +15,20 @@
  */
 package ghidra.app.util.navigation;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Cursor;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.LinkedList;
 import java.util.List;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JCheckBox;
+import javax.swing.JPanel;
 import javax.swing.border.Border;
 
 import docking.DockingWindowManager;
@@ -30,7 +39,9 @@ import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import ghidra.GhidraOptions;
 import ghidra.app.nav.Navigatable;
-import ghidra.app.services.*;
+import ghidra.app.services.GoToService;
+import ghidra.app.services.GoToServiceListener;
+import ghidra.app.services.QueryData;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.SaveState;
@@ -106,13 +117,6 @@ public class GoToAddressLabelDialog extends ReusableDialogComponentProvider
 		this.navigatable = nav;
 		currentAddress = addr;
 		clearStatusText();
-		GoToOverrideService override = goToService.getOverrideService();
-		if (override != null) {
-			JComponent comp = override.getOverrideComponent();
-			if (comp != null) {
-				mainPanel.add(comp, BorderLayout.SOUTH);
-			}
-		}
 		setDialogEnabled(true);
 		tool.showDialog(this);
 	}
@@ -152,7 +156,7 @@ public class GoToAddressLabelDialog extends ReusableDialogComponentProvider
 	public void gotoFailed(Exception exc) {
 		navigatable = null;
 		setDialogEnabled(true);
-		setStatusText("ERROR: " + exc.getMessage());
+		setStatusText(exc.getMessage());
 		initializeContents();
 	}
 
@@ -198,8 +202,14 @@ public class GoToAddressLabelDialog extends ReusableDialogComponentProvider
 		inner.add(hyperlink, gbc);
 
 		comboBox = new GhidraComboBox<>();
+		comboBox.addEditorKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				clearStatusText();
+			}
+		});
 		comboBox.setEditable(true);
-		comboBox.addActionListener(evt -> okCallback());
+
 		String comboName = "Go To Address or Label Text Field / Combobox";
 		comboBox.setName(comboName);
 		comboBox.getAccessibleContext().setAccessibleName(comboName);
@@ -243,9 +253,9 @@ public class GoToAddressLabelDialog extends ReusableDialogComponentProvider
 	private void readHistory(SaveState saveState) {
 		String[] strs = saveState.getStrings("GO_TO_HISTORY", null);
 		if (strs != null) {
-			for (int i = 0; i < strs.length; i++) {
-				if (!history.contains(strs[i])) {
-					history.add(strs[i]);
+			for (String str : strs) {
+				if (!history.contains(str)) {
+					history.add(str);
 				}
 			}
 			truncateHistoryAsNeeded();

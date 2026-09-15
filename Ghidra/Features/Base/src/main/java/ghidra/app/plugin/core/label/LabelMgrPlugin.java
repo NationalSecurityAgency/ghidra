@@ -102,10 +102,6 @@ public class LabelMgrPlugin extends Plugin {
 		return new EditFieldNameDialog("", tool);
 	}
 
-	OperandLabelDialog getOperandLabelDialog() {
-		return new OperandLabelDialog(this);
-	}
-
 	/**
 	 * Removes the label or alias that the cursor is over from the current label field. If an 
 	 * exception is caught during the removal of the label or alias, a message is written to the 
@@ -115,7 +111,8 @@ public class LabelMgrPlugin extends Plugin {
 	protected void removeLabelCallback(ListingActionContext context) {
 		Symbol s = getSymbol(context);
 		if (s != null) {
-			Command cmd = new DeleteLabelCmd(s.getAddress(), s.getName(), s.getParentNamespace());
+			Command<Program> cmd =
+				new DeleteLabelCmd(s.getAddress(), s.getName(), s.getParentNamespace());
 
 			if (!tool.execute(cmd, context.getProgram())) {
 				tool.setStatusInfo(cmd.getStatusMsg());
@@ -170,17 +167,18 @@ public class LabelMgrPlugin extends Plugin {
 	}
 
 	void setOperandLabelCallback(ListingActionContext context) {
-		getOperandLabelDialog().setOperandLabel(context);
+
+		SymbolChooserDialog dialog = new SymbolChooserDialog(this, context);
+		dialog.show();
 	}
 
 	Symbol getSymbol(ListingActionContext context) {
 		ProgramLocation location = context.getLocation();
-		if (location instanceof LabelFieldLocation) {
-			LabelFieldLocation lfl = (LabelFieldLocation) location;
+		if (location instanceof LabelFieldLocation lfl) {
 			return lfl.getSymbol();
 		}
-		else if (location instanceof OperandFieldLocation) {
-			VariableOffset variableOffset = ((OperandFieldLocation) location).getVariableOffset();
+		else if (location instanceof OperandFieldLocation ofl) {
+			VariableOffset variableOffset = ofl.getVariableOffset();
 			if (variableOffset != null) {
 				Variable var = variableOffset.getVariable();
 				if (var != null) {

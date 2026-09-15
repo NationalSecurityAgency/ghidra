@@ -36,6 +36,7 @@ public abstract class NSObject implements StructConverter {
 
 	public abstract String getType();
 
+	@Override
 	public abstract String toString();
 
 	protected void addHeader( Structure structure, int size ) {

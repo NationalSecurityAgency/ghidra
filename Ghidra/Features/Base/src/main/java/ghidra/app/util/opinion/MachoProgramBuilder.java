@@ -15,14 +15,11 @@
  */
 package ghidra.app.util.opinion;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
 
 import org.apache.commons.collections4.map.LazySortedMap;
 
-import ghidra.app.plugin.core.analysis.rust.RustConstants;
-import ghidra.app.plugin.core.analysis.rust.RustUtilities;
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.RelocationException;
@@ -40,7 +37,6 @@ import ghidra.app.util.bin.format.macho.dyld.DyldChainedPtr.DyldChainType;
 import ghidra.app.util.bin.format.macho.dyld.DyldFixup;
 import ghidra.app.util.bin.format.macho.relocation.*;
 import ghidra.app.util.bin.format.macho.threadcommand.ThreadCommand;
-import ghidra.app.util.bin.format.objectiveC.ObjectiveC1_Constants;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.database.function.OverlappingFunctionException;
@@ -56,7 +52,6 @@ import ghidra.program.model.reloc.RelocationResult;
 import ghidra.program.model.reloc.RelocationTable;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.program.util.ExternalSymbolResolver;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -65,6 +60,15 @@ import ghidra.util.task.TaskMonitor;
  * Builds up a Mach-O {@link Program} by parsing the Mach-O headers.
  */
 public class MachoProgramBuilder {
+
+	public static final String HEADER_SYMBOL = "MACH_HEADER";
+
+	/**
+	 * The spacing between symbols that get created in the 
+	 * {@link MemoryBlock#EXTERNAL_BLOCK_NAME EXTERNAL block}. This will allow some room for 
+	 * the recreation of external method thunks as they are discovered during analysis.
+	 */
+	public static final int UNDEFINED_SYMBOL_SPACING = 0x100;
 
 	protected MachHeader machoHeader;
 	protected Program program;
@@ -149,7 +153,8 @@ public class MachoProgramBuilder {
 		processCorruptLoadCommands();
 
 		// Markup structures
-		markupHeaders(machoHeader, setupHeaderAddr(machoHeader.getAllSegments()));
+		markupHeaders(machoHeader,
+			setupHeaderAddr(machoHeader.getAllSegments(), provider.getName()));
 		markupSections();
 		markupLoadCommandData(machoHeader, provider.getName());
 		markupChainedFixups(machoHeader, chainedFixups);
@@ -163,9 +168,7 @@ public class MachoProgramBuilder {
 		}
 
 		// Perform additional actions
-		renameObjMsgSendRtpSymbol();
 		fixupProgramTree(null); // should be done last to account for new memory blocks
-		setCompiler();
 	}
 
 	/**
@@ -224,14 +227,19 @@ public class MachoProgramBuilder {
 		for (SegmentCommand segment : segments) {
 			monitor.increment();
 
-			if (segment.getFileSize() > 0 && segment.getVMsize() > 0 &&
-				(allowZeroAddr || segment.getVMaddress() != 0)) {
-				if (createMemoryBlock(segment.getSegmentName(),
-					space.getAddress(segment.getVMaddress()), segment.getFileOffset(),
-					segment.getFileSize(), segment.getSegmentName(), source, segment.isRead(),
-					segment.isWrite(), segment.isExecute(), false, false) == null) {
-					log.appendMsg(String.format("Failed to create block: %s 0x%x 0x%x",
-						segment.getSegmentName(), segment.getVMaddress(), segment.getVMsize()));
+			if (segment.getSegmentName().equals(SegmentNames.SEG_PAGEZERO)) {
+				continue;
+			}
+
+			if (segment.getVMsize() > 0 && (allowZeroAddr || segment.getVMaddress() != 0)) {
+				if (segment.getFileSize() > 0) {
+					if (createMemoryBlock(segment.getSegmentName(),
+						space.getAddress(segment.getVMaddress()), segment.getFileOffset(),
+						segment.getFileSize(), segment.getSegmentName(), source, segment.isRead(),
+						segment.isWrite(), segment.isExecute(), false, false) == null) {
+						log.appendMsg(String.format("Failed to create block: %s 0x%x 0x%x",
+							segment.getSegmentName(), segment.getVMaddress(), segment.getVMsize()));
+					}
 				}
 				if (segment.getVMsize() > segment.getFileSize()) {
 					// Pad the remaining address range with uninitialized data
@@ -272,7 +280,8 @@ public class MachoProgramBuilder {
 				AddressSpace sectionSpace = overlaySections.contains(section)
 						? segmentOverlayMap.get(section.getSegmentName())
 						: space;
-				if (section.getSize() > 0 && section.getOffset() > 0 &&
+				if (section.getSize() > 0 &&
+					(section.getOffset() > 0 || section.getType() == SectionTypes.S_ZEROFILL) &&
 					(allowZeroAddr || section.getAddress() != 0)) {
 					if (createMemoryBlock(section.getSectionName(),
 						sectionSpace.getAddress(section.getAddress()), section.getOffset(),
@@ -506,7 +515,7 @@ public class MachoProgramBuilder {
 					if (!realEntryFound) {
 						program.getSymbolTable().createLabel(addr, "entry", SourceType.IMPORTED);
 						program.getSymbolTable().addExternalEntryPoint(addr);
-						createOneByteFunction("entry", addr);
+						createOneByteFunction(program, "entry", addr);
 						realEntryFound = true;
 					}
 					else {
@@ -675,18 +684,17 @@ public class MachoProgramBuilder {
 			for (int i = indirectSymbolTableIndex; i < indirectSymbolTableIndex + nSymbols; ++i) {
 				monitor.increment();
 				int symbolIndex = indirectSymbols.get(i);
-				NList symbol = symbolTableCommand.getSymbolAt(symbolIndex);
-				if (symbol != null) {
-					String name = SymbolUtilities.replaceInvalidChars(symbol.getString(), true);
-					if (name != null && name.length() > 0) {
-						Function stubFunc = createOneByteFunction(name, startAddr);
-						if (stubFunc != null) {
-							ExternalLocation loc = program.getExternalManager()
-									.addExtLocation(Library.UNKNOWN, name, null,
-										SourceType.IMPORTED);
-							stubFunc.setThunkedFunction(loc.createFunction());
-						}
-					}
+				NList symbol =
+					symbolTableCommand != null ? symbolTableCommand.getSymbolAt(symbolIndex) : null;
+				String name = null;
+				if (symbol != null && !symbol.getString().isBlank()) {
+					name = SymbolUtilities.replaceInvalidChars(symbol.getString(), true);
+				}
+				Function stubFunc = createOneByteFunction(program, name, startAddr);
+				if (stubFunc != null && name != null) {
+					ExternalLocation loc = program.getExternalManager()
+							.addExtLocation(Library.UNKNOWN, name, null, SourceType.IMPORTED);
+					stubFunc.setThunkedFunction(loc.createFunction());
 				}
 
 				startAddr = startAddr.add(symbolSize);
@@ -701,47 +709,47 @@ public class MachoProgramBuilder {
 			if (monitor.isCancelled()) {
 				return;
 			}
-			if (!(command instanceof SymbolTableCommand)) {
+			if (!(command instanceof SymbolTableCommand symbolTableCommand)) {
 				continue;
 			}
-			SymbolTableCommand symbolTableCommand = (SymbolTableCommand) command;
 			List<NList> symbols = symbolTableCommand.getSymbols();
-			monitor.initialize(symbols.size(), "Collectiing undefined symbols...");
+			monitor.initialize(symbols.size(), "Collecting undefined symbols...");
 			for (NList symbol : symbols) {
 				monitor.increment();
 				if (symbol.isSymbolicDebugging()) {
 					continue;
 				}
 				if (symbol.isTypeUndefined()) {
-					List<Symbol> globalSymbols = program.getSymbolTable()
-							.getLabelOrFunctionSymbols(symbol.getString(), null);
-					if (globalSymbols.isEmpty()) {//IF IT DOES NOT ALREADY EXIST...
+					String name = symbol.getString();
+					List<Symbol> globalSymbols =
+						program.getSymbolTable().getLabelOrFunctionSymbols(name, null);
+					if (globalSymbols.isEmpty()) { //IF IT DOES NOT ALREADY EXIST...
 						undefinedSymbols.add(symbol);
 					}
 				}
 			}
 		}
-		if (undefinedSymbols.size() == 0) {
+		if (undefinedSymbols.isEmpty()) {
 			return;
 		}
 		try {
-			Address addr = MachoProgramUtils.addExternalBlock(program,
-				undefinedSymbols.size() * machoHeader.getAddressSize(), log);
+			long blockSize = undefinedSymbols.size() * UNDEFINED_SYMBOL_SPACING;
+			Address addr = MemoryBlockUtils.addExternalBlock(program, blockSize, log);
 			monitor.initialize(undefinedSymbols.size(), "Processing undefined symbols...");
 			for (NList symbol : undefinedSymbols) {
 				monitor.increment();
+				String name = SymbolUtilities.replaceInvalidChars(symbol.getString(), true);
 				try {
-					String name = SymbolUtilities.replaceInvalidChars(symbol.getString(), true);
 					if (name != null && name.length() > 0) {
 						program.getSymbolTable().createLabel(addr, name, SourceType.IMPORTED);
 						program.getExternalManager()
-								.addExtLocation(Library.UNKNOWN, name, addr, SourceType.IMPORTED);
+								.addExtLocation(Library.UNKNOWN, name, null, SourceType.IMPORTED);
 					}
 				}
 				catch (Exception e) {
 					log.appendMsg("Unable to create undefined symbol: " + e.getMessage());
 				}
-				addr = addr.add(machoHeader.getAddressSize());
+				addr = addr.add(UNDEFINED_SYMBOL_SPACING);
 			}
 		}
 		catch (Exception e) {
@@ -754,10 +762,9 @@ public class MachoProgramBuilder {
 		List<LoadCommand> commands = machoHeader.getLoadCommands();
 		for (LoadCommand command : commands) {
 			monitor.checkCancelled();
-			if (!(command instanceof SymbolTableCommand)) {
+			if (!(command instanceof SymbolTableCommand symbolTableCommand)) {
 				continue;
 			}
-			SymbolTableCommand symbolTableCommand = (SymbolTableCommand) command;
 			List<NList> symbols = symbolTableCommand.getSymbols();
 			monitor.initialize(symbols.size(), "Collecting absolute symbols...");
 			for (NList symbol : symbols) {
@@ -773,7 +780,7 @@ public class MachoProgramBuilder {
 		if (absoluteSymbols.size() == 0) {
 			return;
 		}
-		Address start = MachoProgramUtils.getNextAvailableAddress(program);
+		Address start = MemoryBlockUtils.getNextAvailableAddress(program);
 		try {
 			memory.createUninitializedBlock("ABSOLUTE", start,
 				absoluteSymbols.size() * machoHeader.getAddressSize(), false);
@@ -960,8 +967,8 @@ public class MachoProgramBuilder {
 				}
 				finally {
 					program.getRelocationTable()
-							.add(addr, success ? Status.APPLIED_OTHER : Status.FAILURE,
-								binding.getType(), null, bytes.length, binding.getSymbolName());
+							.add(addr, success ? Status.APPLIED : Status.FAILURE, binding.getType(),
+								null, bytes.length, binding.getSymbolName());
 				}
 			}
 		}
@@ -975,6 +982,7 @@ public class MachoProgramBuilder {
 		try {
 			DataUtilities.createData(program, headerAddr, header.toDataType(), -1,
 				DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+			program.getSymbolTable().createLabel(headerAddr, HEADER_SYMBOL, SourceType.IMPORTED);
 
 			monitor.initialize(header.getLoadCommands().size(), "Marking up header...");
 			for (LoadCommand loadCommand : header.getLoadCommands()) {
@@ -987,8 +995,7 @@ public class MachoProgramBuilder {
 				listing.setComment(loadCommandAddr, CommentType.PRE,
 					LoadCommandTypes.getLoadCommandName(loadCommand.getCommandType()));
 
-				if (loadCommand instanceof SegmentCommand) {
-					SegmentCommand segmentCommand = (SegmentCommand) loadCommand;
+				if (loadCommand instanceof SegmentCommand segmentCommand) {
 					listing.setComment(loadCommandAddr, CommentType.EOL,
 						segmentCommand.getSegmentName());
 
@@ -1003,51 +1010,43 @@ public class MachoProgramBuilder {
 						sectionOffset += sectionDataType.getLength();
 					}
 				}
-				else if (loadCommand instanceof DynamicLinkerCommand) {
-					DynamicLinkerCommand dynamicLinkerCommand = (DynamicLinkerCommand) loadCommand;
+				else if (loadCommand instanceof DynamicLinkerCommand dynamicLinkerCommand) {
 					LoadCommandString name = dynamicLinkerCommand.getLoadCommandString();
 					DataUtilities.createData(program, loadCommandAddr.add(name.getOffset()),
 						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
 						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				}
-				else if (loadCommand instanceof DynamicLibraryCommand) {
-					DynamicLibraryCommand dynamicLibraryCommand =
-						(DynamicLibraryCommand) loadCommand;
+				else if (loadCommand instanceof DynamicLibraryCommand dynamicLibraryCommand) {
 					LoadCommandString name = dynamicLibraryCommand.getDynamicLibrary().getName();
 					DataUtilities.createData(program, loadCommandAddr.add(name.getOffset()),
 						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
 						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				}
-				else if (loadCommand instanceof RunPathCommand) {
-					RunPathCommand runPathCommand = (RunPathCommand) loadCommand;
+				else if (loadCommand instanceof RunPathCommand runPathCommand) {
 					LoadCommandString path = runPathCommand.getPath();
 					DataUtilities.createData(program, loadCommandAddr.add(path.getOffset()),
 						StructConverter.STRING, loadCommand.getCommandSize() - path.getOffset(),
 						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				}
-				else if (loadCommand instanceof SubFrameworkCommand) {
-					SubFrameworkCommand subFrameworkCommand = (SubFrameworkCommand) loadCommand;
+				else if (loadCommand instanceof SubFrameworkCommand subFrameworkCommand) {
 					LoadCommandString name = subFrameworkCommand.getUmbrellaFrameworkName();
 					DataUtilities.createData(program, loadCommandAddr.add(name.getOffset()),
 						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
 						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				}
-				else if (loadCommand instanceof SubClientCommand) {
-					SubClientCommand subClientCommand = (SubClientCommand) loadCommand;
+				else if (loadCommand instanceof SubClientCommand subClientCommand) {
 					LoadCommandString name = subClientCommand.getClientName();
 					DataUtilities.createData(program, loadCommandAddr.add(name.getOffset()),
 						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
 						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				}
-				else if (loadCommand instanceof SubLibraryCommand) {
-					SubLibraryCommand subLibraryCommand = (SubLibraryCommand) loadCommand;
+				else if (loadCommand instanceof SubLibraryCommand subLibraryCommand) {
 					LoadCommandString name = subLibraryCommand.getSubLibraryName();
 					DataUtilities.createData(program, loadCommandAddr.add(name.getOffset()),
 						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
 						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				}
-				else if (loadCommand instanceof SubUmbrellaCommand) {
-					SubUmbrellaCommand subUmbrellaCommand = (SubUmbrellaCommand) loadCommand;
+				else if (loadCommand instanceof SubUmbrellaCommand subUmbrellaCommand) {
 					LoadCommandString name = subUmbrellaCommand.getSubUmbrellaFrameworkName();
 					DataUtilities.createData(program, loadCommandAddr.add(name.getOffset()),
 						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
@@ -1056,15 +1055,13 @@ public class MachoProgramBuilder {
 						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
 						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				}
-				else if (loadCommand instanceof FileSetEntryCommand) {
-					FileSetEntryCommand fileSetEntryCommand = (FileSetEntryCommand) loadCommand;
+				else if (loadCommand instanceof FileSetEntryCommand fileSetEntryCommand) {
 					LoadCommandString name = fileSetEntryCommand.getFileSetEntryId();
 					DataUtilities.createData(program, loadCommandAddr.add(name.getOffset()),
 						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
 						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				}
-				else if (loadCommand instanceof LinkerOptionCommand) {
-					LinkerOptionCommand linkerOptionCommand = (LinkerOptionCommand) loadCommand;
+				else if (loadCommand instanceof LinkerOptionCommand linkerOptionCommand) {
 					List<String> linkerOptions = linkerOptionCommand.getLinkerOptions();
 					int offset = linkerOptionCommand.toDataType().getLength();
 					for (int i = 0; i < linkerOptions.size(); i++) {
@@ -1093,10 +1090,11 @@ public class MachoProgramBuilder {
 	 * area in the "OTHER" address space for the header to live in.
 	 * 
 	 * @param segments A {@link Collection} of {@link SegmentCommand Mach-O segments}
+	 * @param source A name that represents where the header came from
 	 * @return The {@link Address} of {@link MachHeader} in memory
 	 * @throws AddressOverflowException if the address lies outside the address space
 	 */
-	protected Address setupHeaderAddr(Collection<SegmentCommand> segments)
+	protected Address setupHeaderAddr(Collection<SegmentCommand> segments, String source)
 			throws AddressOverflowException {
 		Address headerAddr = null;
 		long lowestFileOffset = Long.MAX_VALUE;
@@ -1118,7 +1116,7 @@ public class MachoProgramBuilder {
 		// and copy the header there.
 		headerAddr = AddressSpace.OTHER_SPACE.getAddress(0);
 		MemoryBlock headerBlock = MemoryBlockUtils.createInitializedBlock(program, true, "HEADER",
-			headerAddr, fileBytes, 0, lowestFileOffset, "Header", "", false, false, false, log);
+			headerAddr, fileBytes, 0, lowestFileOffset, "Header", source, false, false, false, log);
 		return headerBlock.getStart();
 	}
 
@@ -1274,7 +1272,8 @@ public class MachoProgramBuilder {
 
 			String libraryPath = null;
 
-			if (command instanceof DynamicLibraryCommand dylibCommand) {
+			if (command instanceof DynamicLibraryCommand dylibCommand &&
+				dylibCommand.getCommandType() != LoadCommandTypes.LC_ID_DYLIB) {
 				DynamicLibrary dylib = dylibCommand.getDynamicLibrary();
 				libraryPath = dylib.getName().getString();
 			}
@@ -1292,7 +1291,7 @@ public class MachoProgramBuilder {
 					libraryPaths.add(libraryPath);
 					addLibrary(libraryPath);
 					props.setString(
-						ExternalSymbolResolver.getRequiredLibraryProperty(libraryIndex++),
+						AbstractLibrarySupportLoader.getRequiredLibraryProperty(libraryIndex++),
 						libraryPath);
 				}
 			}
@@ -1454,7 +1453,7 @@ public class MachoProgramBuilder {
 	}
 
 	private void addLibrary(String library) {
-		library = library.replaceAll(" ", "_");
+		library = SymbolUtilities.replaceInvalidChars(library, true);
 		try {
 			program.getExternalManager().addExternalLibraryName(library, SourceType.IMPORTED);
 		}
@@ -1577,7 +1576,7 @@ public class MachoProgramBuilder {
 		}
 		Register tModeRegister = program.getLanguage().getRegister("TMode");
 		program.getProgramContext().setValue(tModeRegister, address, address, BigInteger.ONE);
-		createOneByteFunction(null, address);
+		createOneByteFunction(program, null, address);
 	}
 
 	private void processLazyPointerSection(AddressSetView set) {
@@ -1631,13 +1630,14 @@ public class MachoProgramBuilder {
 	 * create a one-byte function, so that when the code is analyzed,
 	 * it will be disassembled, and the function created with the correct body.
 	 *
+	 * @param program The {@link Program}
 	 * @param name the name of the function
 	 * @param address location to create the function
 	 * @return If a function already existed at the given address, that function will be returned.
 	 *   Otherwise, the newly created function will be returned.  If there was a problem creating
 	 *   the function, null will be returned.
 	 */
-	Function createOneByteFunction(String name, Address address) {
+	public static Function createOneByteFunction(Program program, String name, Address address) {
 		FunctionManager functionMgr = program.getFunctionManager();
 		Function function = functionMgr.getFunctionAt(address);
 		if (function != null) {
@@ -1802,43 +1802,6 @@ public class MachoProgramBuilder {
 		}
 	}
 
-	protected void setCompiler() {
-		// Check for Rust
-		try {
-			SegmentCommand segment = machoHeader.getSegment(SegmentNames.SEG_TEXT);
-			if (segment == null) {
-				return;
-			}
-			Section section = segment.getSectionByName(SectionNames.TEXT_CONST);
-			if (section == null) {
-				return;
-			}
-			if (RustUtilities.isRust(memory.getBlock(space.getAddress(section.getAddress())))) {
-				program.setCompiler(RustConstants.RUST_COMPILER);
-				int extensionCount = RustUtilities.addExtensions(program, monitor,
-					RustConstants.RUST_EXTENSIONS_UNIX);
-				log.appendMsg("Installed " + extensionCount + " Rust cspec extensions");
-			}
-		}
-		catch (IOException e) {
-			log.appendMsg("Rust error: " + e.getMessage());
-		}
-	}
-
-	protected void renameObjMsgSendRtpSymbol()
-			throws DuplicateNameException, InvalidInputException {
-		Address address = space.getAddress(ObjectiveC1_Constants.OBJ_MSGSEND_RTP);
-		Symbol symbol = program.getSymbolTable().getPrimarySymbol(address);
-		if (symbol != null && symbol.isDynamic()) {
-			symbol.setName(ObjectiveC1_Constants.OBJC_MSG_SEND_RTP_NAME, SourceType.IMPORTED);
-		}
-		else {
-			program.getSymbolTable()
-					.createLabel(address, ObjectiveC1_Constants.OBJC_MSG_SEND_RTP_NAME,
-						SourceType.IMPORTED);
-		}
-	}
-
 	/**
 	 * Associates the given {@link Symbol} with the correct external {@link Library} (fixing
 	 * the {@code <EXTERNAL>} association)
@@ -1851,13 +1814,23 @@ public class MachoProgramBuilder {
 	 */
 	public static void fixupExternalLibrary(Program program, List<String> libraryPaths,
 			int libraryOrdinal, String symbol) throws Exception {
+
+		switch (libraryOrdinal) {
+			case DyldInfoCommandConstants.BIND_SPECIAL_DYLIB_SELF:
+			case DyldInfoCommandConstants.BIND_SPECIAL_DYLIB_MAIN_EXECUTABLE:
+			case DyldInfoCommandConstants.BIND_SPECIAL_DYLIB_FLAT_LOOKUP:
+			case DyldInfoCommandConstants.BIND_SPECIAL_DYLIB_WEAK_LOOKUP:
+				return;
+		}
+
 		ExternalManager extManager = program.getExternalManager();
 		int libraryIndex = libraryOrdinal - 1;
 		if (libraryIndex < 0 || libraryIndex >= libraryPaths.size()) {
 			throw new Exception(
 				"Library ordinal '%d' outside of expected range".formatted(libraryOrdinal));
 		}
-		String libraryName = libraryPaths.get(libraryIndex).replaceAll(" ", "_");
+		String libraryName =
+			SymbolUtilities.replaceInvalidChars(libraryPaths.get(libraryIndex), true);
 		Library library = extManager.getExternalLibrary(libraryName);
 		if (library == null) {
 			throw new Exception(
@@ -1870,7 +1843,7 @@ public class MachoProgramBuilder {
 				loc.setName(library, symbol, SourceType.IMPORTED);
 			}
 			catch (InvalidInputException e) {
-				throw new Exception("Symbol name contains illegal characters");
+				throw new Exception(e.getMessage());
 			}
 		}
 	}

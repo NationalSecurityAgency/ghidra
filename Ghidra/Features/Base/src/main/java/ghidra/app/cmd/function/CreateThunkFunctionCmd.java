@@ -462,7 +462,7 @@ public class CreateThunkFunctionCmd extends BackgroundCommand<Program> {
 		}
 
 		final AtomicInteger foundCount = new AtomicInteger(0);
-		SymbolicPropogator prop = new SymbolicPropogator(program);
+		SymbolicPropogator prop = new SymbolicPropogator(program,false);
 
 		// try to compute the thunk by flowing constants from the start of the block
 		prop.flowConstants(jumpBlockAt.getFirstStartAddress(), jumpBlockAt,
@@ -563,6 +563,13 @@ public class CreateThunkFunctionCmd extends BackgroundCommand<Program> {
 		Listing listing = program.getListing();
 
 		Instruction instr = listing.getInstructionAt(entry);
+
+		// if there is no pcode, go to the next instruction
+		// assume fallthrough (ie. x86 instruction ENDBR64)
+		// TODO: at some point, might need to do a NOP detection
+		if (instr != null && instr.getPcode().length == 0) {
+			instr = listing.getInstructionAfter(entry);
+		}
 		if (instr == null) {
 			return null;
 		}
@@ -628,6 +635,8 @@ public class CreateThunkFunctionCmd extends BackgroundCommand<Program> {
 
 			// keep going if flow target is right below, allow only a simple branch.
 			if (isLocalBranch(listing, instr, flowType)) {
+				Address[] flows = instr.getFlows();
+				instr = listing.getInstructionAt(flows[0]);
 				continue;
 			}
 
@@ -660,10 +669,12 @@ public class CreateThunkFunctionCmd extends BackgroundCommand<Program> {
 	}
 
 	/**
-	 * Handle conversion of label within reserved EXTERNAL block to a real 
-	 * external function which can be thunked.  This may be necessary when a
-	 * loaded symbol failed to identify itself as a function.  This will 
-	 * only handle single symbols contained within the global namespace.
+	 * Facilitates conversion of a global label within the reserved EXTERNAL block to an 
+	 * external function which can be thunked.  This may be necessary when a loaded symbol 
+	 * failed to identify itself as a function.
+	 * <p>
+	 * NOTE: If a suitable External symbol is found or created the original symbol for the 
+	 * thunk function will be removed.
 	 * 
 	 * @param program the program
 	 * @param entry function being created
@@ -687,10 +698,29 @@ public class CreateThunkFunctionCmd extends BackgroundCommand<Program> {
 		}
 		try {
 			ExternalManager extMgr = program.getExternalManager();
-			ExternalLocation extLoc =
-				extMgr.addExtFunction(Library.UNKNOWN, s.getName(), null, s.getSource());
+
+			Symbol externalSymbol = null;
+			for (Symbol symbol : symbolTable.getSymbols(s.getName())) {
+				// Only consider external symbols directly in a Library root Namespace
+				if (!symbol.isExternal() || !symbol.getParentNamespace().isLibrary()) {
+					continue;
+				}
+				if (externalSymbol != null) {
+					// multiple ambiguous external symbols - can't decide
+					return null;
+				}
+				externalSymbol = symbol;
+			}
+
+			if (externalSymbol == null) {
+				ExternalLocation extLoc =
+					extMgr.addExtFunction(Library.UNKNOWN, s.getName(), null, s.getSource());
+				externalSymbol = extLoc.getSymbol();
+			}
+
 			s.delete(); // remove original symbol from EXTERNAL block
-			return extLoc.getExternalSpaceAddress();
+
+			return externalSymbol.getAddress();
 		}
 		catch (DuplicateNameException | InvalidInputException e) {
 			// ignore - unexpected

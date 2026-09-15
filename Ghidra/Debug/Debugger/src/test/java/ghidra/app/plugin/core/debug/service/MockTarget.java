@@ -29,12 +29,13 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceExecutionState;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.*;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.stack.TraceStackFrame;
+import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.time.schedule.TraceSchedule.ScheduleForm;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -68,6 +69,11 @@ public class MockTarget implements Target {
 	@Override
 	public long getSnap() {
 		return snap;
+	}
+
+	@Override
+	public ScheduleForm getSupportedTimeForm(TraceObject obj, long snap) {
+		return null;
 	}
 
 	@Override
@@ -226,27 +232,27 @@ public class MockTarget implements Target {
 	}
 
 	@Override
-	public boolean isBreakpointValid(TraceBreakpoint breakpoint) {
+	public boolean isBreakpointValid(TraceBreakpointLocation breakpoint) {
 		return true;
 	}
 
 	@Override
-	public CompletableFuture<Void> deleteBreakpointAsync(TraceBreakpoint breakpoint) {
+	public CompletableFuture<Void> deleteBreakpointAsync(TraceBreakpointCommon breakpoint) {
 		return AsyncUtils.nil();
 	}
 
 	@Override
-	public void deleteBreakpoint(TraceBreakpoint breakpoint) {
+	public void deleteBreakpoint(TraceBreakpointCommon breakpoint) {
 	}
 
 	@Override
-	public CompletableFuture<Void> toggleBreakpointAsync(TraceBreakpoint breakpoint,
+	public CompletableFuture<Void> toggleBreakpointAsync(TraceBreakpointCommon breakpoint,
 			boolean enabled) {
 		return AsyncUtils.nil();
 	}
 
 	@Override
-	public void toggleBreakpoint(TraceBreakpoint breakpoint, boolean enabled) {
+	public void toggleBreakpoint(TraceBreakpointCommon breakpoint, boolean enabled) {
 	}
 
 	@Override
@@ -265,5 +271,14 @@ public class MockTarget implements Target {
 
 	@Override
 	public void disconnect() {
+	}
+
+	@Override
+	public boolean isBusy() {
+		return false;
+	}
+
+	@Override
+	public void forciblyCloseTransactions() {
 	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -101,7 +101,8 @@ public class SystemUtilities {
 
 	/**
 	 * Clean the specified user name to eliminate any spaces or leading domain name
-	 * which may be present (e.g., "MyDomain\John Doe" becomes "JohnDoe").
+	 * which may be present (e.g., "MyDomain\John Doe" becomes "JohnDoe").  Treat '/' in 
+	 * a similar fashion.
 	 * @param name user name string to be cleaned-up
 	 * @return the clean user name
 	 */
@@ -118,8 +119,12 @@ public class SystemUtilities {
 			uname = nameBuf.toString();
 		}
 
-		// Remove leading Domain Name if present
+		// Remove leading Domain Name if present (treat / and \ in a similar fashion)
 		int slashIndex = uname.lastIndexOf('\\');
+		if (slashIndex >= 0) {
+			uname = uname.substring(slashIndex + 1);
+		}
+		slashIndex = uname.lastIndexOf('/');
 		if (slashIndex >= 0) {
 			uname = uname.substring(slashIndex + 1);
 		}

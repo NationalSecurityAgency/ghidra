@@ -16,6 +16,7 @@
 package ghidra.framework.main;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -47,6 +48,10 @@ public class ServerInfoComponent extends JPanel {
 	public ServerInfoComponent() {
 		super(new BorderLayout(10, 10));
 		buildMainPanel();
+	}
+
+	public Component getDefaultFocusComponent() {
+		return nameField;
 	}
 
 	/**
@@ -185,14 +190,14 @@ public class ServerInfoComponent extends JPanel {
 	}
 
 	private boolean checkPortNumber() {
-		portNumber = -1;
+		portNumber = GhidraServerHandle.DEFAULT_PORT;
 		String portStr = portNumberField.getText();
 		String msg = null;
 		try {
 			portNumber = Integer.parseInt(portStr);
-			if (portNumber < 0 || portNumber > 65536) {
-				portNumber = -1;
-				msg = "Port number must in range of 0 to 65536";
+			if (portNumber < 1 || portNumber > 65536) {
+				portNumber = GhidraServerHandle.DEFAULT_PORT;
+				msg = "Port number must in range of 1 to 65536";
 			}
 		}
 		catch (NumberFormatException e) {
@@ -218,4 +223,5 @@ public class ServerInfoComponent extends JPanel {
 	public boolean isValidInformation() {
 		return checkServerName() && checkPortNumber();
 	}
+
 }

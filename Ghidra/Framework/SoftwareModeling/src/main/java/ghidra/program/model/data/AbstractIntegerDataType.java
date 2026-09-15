@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -53,8 +53,11 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	protected static final DataTypeMnemonicSettingsDefinition MNEMONIC =
 		DataTypeMnemonicSettingsDefinition.DEF;
 
-	private static SettingsDefinition[] SETTINGS_DEFS =
+	protected static final SettingsDefinition[] SETTINGS_DEFS =
 		{ FormatSettingsDefinition.DEF_HEX, PADDING, ENDIAN, MNEMONIC };
+
+	protected static final TypeDefSettingsDefinition[] TYPEDEF_SETTINGS_DEFS =
+		EMPTY_TYPEDEF_DEFINITIONS;
 
 	/**
 	 * Constructor
@@ -79,6 +82,11 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	@Override
 	protected SettingsDefinition[] getBuiltInSettingsDefinitions() {
 		return SETTINGS_DEFS;
+	}
+
+	@Override
+	public TypeDefSettingsDefinition[] getTypeDefSettingsDefinitions() {
+		return TYPEDEF_SETTINGS_DEFS;
 	}
 
 	/**
@@ -243,9 +251,8 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 				this);
 		}
 		BigInteger maxValueExclusive = BigInteger.ONE.shiftLeft(length * 8 - (isSigned() ? 1 : 0));
-		BigInteger minValueInclusive = isSigned()
-				? BigInteger.ONE.shiftLeft(length * 8 - 1).negate()
-				: BigInteger.ZERO;
+		BigInteger minValueInclusive =
+			isSigned() ? BigInteger.ONE.shiftLeft(length * 8 - 1).negate() : BigInteger.ZERO;
 		if (bigValue.compareTo(maxValueExclusive) >= 0) {
 			throw new DataTypeEncodeException("Value is too large", bigValue, this);
 		}
@@ -282,11 +289,12 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 		BigInteger value = DataConverter.getInstance(ENDIAN.isBigEndian(settings, buf))
 				.getBigInteger(bytes, size, true);
 
-		if (getFormatSettingsDefinition().getFormat(settings) == FormatSettingsDefinition.CHAR) {
+		int format = getFormatSettingsDefinition().getFormat(settings);
+		if (format == FormatSettingsDefinition.CHAR) {
 			return StringDataInstance.getCharRepresentation(this, bytes, settings);
 		}
 
-		return getRepresentation(value, settings, 8 * length);
+		return getRepresentation(value, settings, 8 * length, isSigned());
 	}
 
 	/**
@@ -298,16 +306,18 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	 * @param bigInt BigInteger value with the appropriate sign
 	 * @param settings integer format settings (PADDING, FORMAT, etc.)
 	 * @param bitLength number of value bits to be used from bigInt
+	 * @param isSigned true if type is signed, else false
 	 * @return formatted integer string
 	 */
-	/*package*/ String getRepresentation(BigInteger bigInt, Settings settings, int bitLength) {
+	/*package*/ static String getRepresentation(BigInteger bigInt, Settings settings, int bitLength,
+			boolean isSigned) {
 
-		int format = getFormatSettingsDefinition().getFormat(settings);
 		boolean padded = PADDING.isPadded(settings);
 
 		boolean negative = bigInt.signum() < 0;
 
-		if (negative && (!isSigned() || (format != FormatSettingsDefinition.DECIMAL))) {
+		int format = FormatSettingsDefinition.DEF_HEX.getChoice(settings);
+		if (negative && (!isSigned || (format != FormatSettingsDefinition.DECIMAL))) {
 			// force use of unsigned value
 			bigInt = bigInt.add(BigInteger.valueOf(2).pow(bitLength));
 		}

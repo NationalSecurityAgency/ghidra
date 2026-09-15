@@ -17,9 +17,9 @@ package ghidra.app.extension.datatype.finder;
 
 import java.util.List;
 
+import docking.widgets.search.SearchLocationContext;
+import docking.widgets.search.SearchLocationContextBuilder;
 import ghidra.app.decompiler.*;
-import ghidra.app.plugin.core.navigation.locationreferences.LocationReferenceContext;
-import ghidra.app.plugin.core.navigation.locationreferences.LocationReferenceContextBuilder;
 import ghidra.app.services.DataTypeReference;
 import ghidra.app.services.FieldMatcher;
 import ghidra.program.model.address.Address;
@@ -87,15 +87,14 @@ public abstract class DecompilerReference {
 		return line;
 	}
 
-	protected LocationReferenceContext getContext() {
-		LocationReferenceContext context = getContext(variable);
-		return context;
+	protected SearchLocationContext getContext() {
+		return getContext(variable);
 	}
 
-	protected LocationReferenceContext getContext(DecompilerVariable var) {
+	protected SearchLocationContext getContext(DecompilerVariable var) {
 
-		LocationReferenceContextBuilder builder = new LocationReferenceContextBuilder();
-		builder.append(line.getLineNumber() + ": ");
+		SearchLocationContextBuilder builder = new SearchLocationContextBuilder();
+		builder.lineNumber(line.getLineNumber());
 		List<ClangToken> tokens = line.getAllTokens();
 		for (ClangToken token : tokens) {
 			if (token.equals(var.variable)) {
@@ -163,6 +162,18 @@ public abstract class DecompilerReference {
 				DataTypeComponent dtc = parent.getComponentContaining(field.getOffset());
 				if (dtc != null) {
 					return dtc.getDataType();
+				}
+			}
+		}
+		else if (fieldDt instanceof Union union) {
+
+			String fieldName = field.getText();
+			int n = union.getNumComponents();
+			for (int i = 0; i < n; i++) {
+				DataTypeComponent unionDtc = union.getComponent(i);
+				String dtcName = unionDtc.getFieldName();
+				if (fieldName.equals(dtcName)) {
+					return unionDtc.getDataType();
 				}
 			}
 		}

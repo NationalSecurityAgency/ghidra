@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -200,18 +200,26 @@ public class SlaFormat {
 	 * @throws IOException for any errors reading from the stream
 	 */
 	public static boolean isSlaFormat(InputStream stream) throws IOException {
+		return getSlaFormat(stream) == FORMAT_VERSION;
+	}
+
+	/**
+	 * Returns the format version number of the specified binary .sla file.
+	 * 
+	 * @param stream {@link InputStream}
+	 * @return sla version number, -1 if invalid header
+	 * @throws IOException if error reading
+	 */
+	public static int getSlaFormat(InputStream stream) throws IOException {
 		byte[] header = new byte[4];
 		int readLen = stream.read(header);
 		if (readLen < 4) {
-			return false;
+			return -1;
 		}
 		if (header[0] != 's' || header[1] != 'l' || header[2] != 'a') {
-			return false;
+			return -1;
 		}
-		if (header[3] != FORMAT_VERSION) {
-			return false;
-		}
-		return true;
+		return Byte.toUnsignedInt(header[3]);
 	}
 
 	/**
@@ -248,21 +256,19 @@ public class SlaFormat {
 	 * @throws IOException if the header is invalid or there are problems reading the file
 	 */
 	public static PackedDecode buildDecoder(ResourceFile sleighFile) throws IOException {
-		InputStream stream = sleighFile.getInputStream();
-		try {
+		try (InputStream stream = sleighFile.getInputStream()) {
 			if (!isSlaFormat(stream)) {
 				throw new IOException("Missing SLA format header");
 			}
-			InflaterInputStream inflaterStream = new InflaterInputStream(stream);
 			PackedDecode decoder = new PackedDecode();
 			decoder.open(MAX_FILE_SIZE, ".sla file loader");
-			decoder.ingestStream(inflaterStream);
+
+			try (InflaterInputStream inflaterStream = new InflaterInputStream(stream)) {
+				decoder.ingestStream(inflaterStream);
+			}
+
 			decoder.endIngest();
-			inflaterStream.close();
 			return decoder;
-		}
-		finally {
-			stream.close();
 		}
 	}
 }

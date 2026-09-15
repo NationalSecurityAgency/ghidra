@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,7 @@ package ghidra.program.database.data;
 
 import static org.junit.Assert.*;
 
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 
 import org.junit.*;
 
@@ -28,7 +27,6 @@ import ghidra.program.model.data.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.InvalidNameException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 public class DataManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	private ProgramDB program;
@@ -50,10 +48,8 @@ public class DataManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testSetName() throws InvalidNameException {
-		String oldName = dataMgr.getName();
 		String newName = "NewName";
-		dataMgr.setName("NewName");
-
+		dataMgr.setName(newName);
 		assertEquals(newName, dataMgr.getName());
 	}
 
@@ -100,10 +96,12 @@ public class DataManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		dataMgr.resolve(new EnumDataType(s3.getCategoryPath(), "Enum", 2), null);
 		dataMgr.resolve(new EnumDataType(s3.getCategoryPath(), "Enum", 2), null);
 
-		ArrayList<DataType> list = new ArrayList<DataType>();
+		List<DataType> list = new ArrayList<DataType>();
 		dataMgr.findDataTypes("Enum", list);
-
 		assertEquals(3, list.size());
+
+		list.clear();
+		dataMgr.findDataTypes("Enum1", list);
 
 		Category c1 = root.createCategory("c1");
 		dataMgr.resolve(new EnumDataType(c1.getCategoryPath(), "Enum", 2), null);
@@ -274,7 +272,7 @@ public class DataManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(p.isEquivalent(dataMgr.getDataType("/ByteTypedef *32")));
 		assertTrue(ptr.isEquivalent(dataMgr.getDataType("/ByteTypedef *32 *32")));
 		DataType bdt = dataMgr.getDataType("/byte");
-		dataMgr.remove(bdt, new TaskMonitorAdapter());
+		dataMgr.remove(bdt);
 		assertNull(dataMgr.getDataType("/byte"));
 		assertNull(dataMgr.getDataType("/byte[5]"));
 		assertNull(dataMgr.getDataType("/ByteTypedef"));
@@ -294,9 +292,29 @@ public class DataManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		DataType bdt = td.getDataType();
 		long byteID = dataMgr.getResolvedID(bdt);
 
-		dataMgr.remove(td, new TaskMonitorAdapter());
+		dataMgr.remove(td);
 		assertNull(ptr.getDataType());
 		assertNotNull(dataMgr.getDataType(byteID));
+	}
+
+	@Test
+	public void testRemoveDataTypes() throws Exception {
+		Array array = new ArrayDataType(new ByteDataType(), 5, 1);
+
+		List<DataType> toDelete = new ArrayList<>();
+
+		// Use a number that will trigger the 'chunking' behavior of the DataTypeManagerDB
+		for (int i = 0; i < 2500; i++) {
+			TypeDef td = new TypedefDataType("ByteTypedef" + (i + 1), array);
+			DataType dt = dataMgr.resolve(td, null);
+			toDelete.add(dt);
+		}
+
+		dataMgr.remove(toDelete, TaskMonitor.DUMMY);
+
+		for (DataType dt : toDelete) {
+			assertFalse(dataMgr.contains(dt));
+		}
 	}
 
 //	public void testSave() throws Exception {
@@ -443,25 +461,20 @@ public class DataManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testResolveDataType() {
-
-		DataTypeManager dtm = new StandAloneDataTypeManager("Test");
+		StandAloneDataTypeManager dtm = new StandAloneDataTypeManager("Test");
 		int id = dtm.startTransaction("");
-		try {
-			DataType byteDT = dtm.resolve(new ByteDataType(), null);
-
-			DataType myByteDT = dataMgr.resolve(byteDT, null);
-			assertTrue(myByteDT == dataMgr.getDataType("/byte"));
-			assertNotNull(myByteDT);
-			assertEquals(myByteDT.getCategoryPath(), CategoryPath.ROOT);
-		}
-		finally {
-			dtm.endTransaction(id, true);
-		}
+		DataType byteDT = dtm.resolve(new ByteDataType(), null);
+		DataType myByteDT = dataMgr.resolve(byteDT, null);
+		assertTrue(myByteDT == dataMgr.getDataType("/byte"));
+		assertNotNull(myByteDT);
+		assertEquals(myByteDT.getCategoryPath(), CategoryPath.ROOT);
+		dtm.endTransaction(id, true);
+		dtm.close();
 	}
 
 	@Test
 	public void testResolveDataType2() throws Exception {
-		DataTypeManager dtm = new StandAloneDataTypeManager("Test");
+		StandAloneDataTypeManager dtm = new StandAloneDataTypeManager("Test");
 		int id = dtm.startTransaction("");
 		Category otherRoot = dataMgr.getRootCategory();
 		Category subc = otherRoot.createCategory("subc");
@@ -476,7 +489,7 @@ public class DataManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testResolveDataType3() throws Exception {
-		DataTypeManager dtm = new StandAloneDataTypeManager("Test");
+		StandAloneDataTypeManager dtm = new StandAloneDataTypeManager("Test");
 		int id = dtm.startTransaction("");
 		Category otherRoot = dataMgr.getRootCategory();
 		Category subc = otherRoot.createCategory("subc");

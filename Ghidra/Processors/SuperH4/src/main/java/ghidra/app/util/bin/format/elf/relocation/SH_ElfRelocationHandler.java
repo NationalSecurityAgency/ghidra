@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,7 +54,7 @@ public class SH_ElfRelocationHandler
 		int newValue = 0;
 		int oldValue;
 		int byteLength = 4; // most relocations affect 4-bytes (change if different)
-		
+
 		// Handle relative relocations that do not require symbolAddr or symbolValue 
 		switch (type) {
 
@@ -65,25 +65,26 @@ public class SH_ElfRelocationHandler
 				newValue = (int) (elfRelocationContext.getImageBaseWordAdjustmentOffset()) + addend;
 				memory.setInt(relocationAddress, newValue);
 				return new RelocationResult(Status.APPLIED, byteLength);
-				
+
 			case R_SH_COPY:
 				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
 					sym.getSize(), elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
-			
+
 			default:
 				break;
 		}
-		
+
 		// Check for unresolved symbolAddr and symbolValue required by remaining relocation types handled below
 		if (handleUnresolvedSymbol(elfRelocationContext, relocation, relocationAddress)) {
 			return RelocationResult.FAILURE;
-		}	
+		}
 
 		switch (type) {
-			case R_SH_DIR32:
-				// 32-bit absolute relocation w/ addend
-				if (elfRelocationContext.extractAddend()) {
+			case R_SH_DIR32: // 32-bit absolute relocation w/ addend
+				// Use partially-linked value as addend for RELA case when based on section 
+				// symbol with a RELA addend of 0.
+				if (elfRelocationContext.extractAddend() || (sym.isSection() && addend == 0)) {
 					addend = memory.getInt(relocationAddress);
 				}
 				newValue = (int) symbolValue + addend;
@@ -101,7 +102,9 @@ public class SH_ElfRelocationHandler
 				break;
 
 			case R_SH_REL32:  // 32-bit PC relative relocation
-				if (elfRelocationContext.extractAddend()) {
+				// Use partially-linked value as addend for RELA case when based on section 
+				// symbol with a RELA addend of 0.
+				if (elfRelocationContext.extractAddend() || (sym.isSection() && addend == 0)) {
 					addend = memory.getInt(relocationAddress);
 				}
 				newValue = ((int) symbolValue + addend) - offset;

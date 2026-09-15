@@ -37,7 +37,7 @@ By providing common stubs in a userop library, the user can stub the external fu
 ### Modeling by Java Callbacks
 
 A userop library is created by implementing the `PcodeUseropLibrary` interface, most likely by extending `AnnotatedPcodeUseropLibrary`.
-For example, to provide a stub for `strlen`:
+For example, to provide a stub for `strnlen`:
 
 ```java {.numberLines}
 public static class JavaStdLibPcodeUseropLibrary<T> extends AnnotatedPcodeUseropLibrary<T> {
@@ -47,7 +47,7 @@ public static class JavaStdLibPcodeUseropLibrary<T> extends AnnotatedPcodeUserop
 	private final Register regRDI;
 	private final Register regRSI;
 
-	public JavaStdLibPcodeUseropLibrary(SleighLanguage language) {
+	public JavaStdLibPcodeUseropLibrary(Language language) {
 		space = language.getDefaultSpace();
 		regRSP = language.getRegister("RSP");
 		regRAX = language.getRegister("RAX");
@@ -56,21 +56,18 @@ public static class JavaStdLibPcodeUseropLibrary<T> extends AnnotatedPcodeUserop
 	}
 
 	@PcodeUserop
-	public void __x86_64_RET(
-			@OpExecutor PcodeExecutor<T> executor,
-			@OpState PcodeExecutorState<T> state) {
+	public void __x86_64_POP(@OpExecutor PcodeExecutor<T> executor,
+			@OpState PcodeExecutorState<T> state, @OpOutput Varnode out) {
 		PcodeArithmetic<T> arithmetic = state.getArithmetic();
 		T tRSP = state.getVar(regRSP, Reason.EXECUTE_READ);
-		long lRSP = arithmetic.toLong(tRSP, Purpose.OTHER);
+		long lRSP = arithmetic.toLong(tRSP, Purpose.LOAD);
 		T tReturn = state.getVar(space, lRSP, 8, true, Reason.EXECUTE_READ);
-		long lReturn = arithmetic.toLong(tReturn, Purpose.BRANCH);
 		state.setVar(regRSP, arithmetic.fromConst(lRSP + 8, 8));
-		((PcodeThreadExecutor<T>) executor).getThread()
-				.overrideCounter(space.getAddress(lReturn));
+		state.setVar(out, tReturn);
 	}
 
 	@PcodeUserop
-	public void __libc_strlen(@OpState PcodeExecutorState<T> state) {
+	public void __libc_strnlen(@OpState PcodeExecutorState<T> state) {
 		PcodeArithmetic<T> arithmetic = state.getArithmetic();
 		T tStr = state.getVar(regRDI, Reason.EXECUTE_READ);
 		long lStr = arithmetic.toLong(tStr, Purpose.OTHER);
@@ -91,7 +88,11 @@ public static class JavaStdLibPcodeUseropLibrary<T> extends AnnotatedPcodeUserop
 Here, we implement the stub using Java callbacks.
 This is more useful when modeling things outside of Ghidra's definition of machine state, e.g., to simulate kernel objects in an underlying operating system.
 Nevertheless, it can be used to model simple state changes as well.
-A user would place a breakpoint at either the call site or the call target, have it invoke `__libc_strlen()`, and then invoke either `emu_skip_decoded()` or `__x86_64_RET()` depending on where the breakpoint was placed.
+A user would place a breakpoint at either the call site or the call target, have it invoke `__libc_strnlen()`, and then invoke either `emu_skip_decoded()` or `RIP = __x86_64_POP(); return [RIP];` depending on where the breakpoint was placed.
+**NOTE**: Control transfers should rarely, if ever, be performed within a userop, except internal to that userop.
+This assures advanced execution engines can better process the control graph of the target.
+In particular, invoking `thread.overrideCounter()` from within a Java-callback userop is *not* recommended.
+It is better to place such control transfers in the injection, which is why we include `return [RIP];` rather than having an `__x86_64_RET()` userop that performs the control transfer.
 
 ### Modeling by Sleigh Semantics
 
@@ -100,79 +101,124 @@ You may notice the library uses a type parameter `T`, which specifies the type o
 Leaving it as `T` indicates the library is compatible with any type.
 For a concrete emulator, `T := byte[]`, and so there is no loss in making things concrete, and then converting back to `T` using the `arithmetic` object.
 However, if the emulator has been augmented, as we will discuss below, the model may become confused, because values computed by a careless userop will appear to the model a literal constant.
-To avoid this, you should keep everything a T and use the `arithmetic` object to perform any arithmetic operations.
-Alternatively, you can implement the userop using pre-compiled Sleigh code:
+To avoid this, you should keep everything a `T` and use the `arithmetic` object to perform any arithmetic operations.
+Alternatively, you can implement the userop using Sleigh code:
 
 ```java {.numberLines}
 public static class SleighStdLibPcodeUseropLibrary<T> extends AnnotatedPcodeUseropLibrary<T> {
-	private static final String SRC_RET = """
-			RIP = *:8 RSP;
-			RSP = RSP + 8;
-			return [RIP];
-			""";
-	private static final String SRC_STRLEN = """
-			__result = 0;
-			<loop>
-			if (*:1 (str+__result) == 0 || __result >= maxlen) goto <exit>;
-			__result = __result + 1;
-			goto <loop>;
-			<exit>
-			""";
-	private final Register regRAX;
-	private final Register regRDI;
-	private final Register regRSI;
-	private final Varnode vnRAX;
-	private final Varnode vnRDI;
-	private final Varnode vnRSI;
-
-	private PcodeProgram progRet;
-	private PcodeProgram progStrlen;
-
-	public SleighStdLibPcodeUseropLibrary(SleighLanguage language) {
-		regRAX = language.getRegister("RAX");
-		regRDI = language.getRegister("RDI");
-		regRSI = language.getRegister("RSI");
-		vnRAX = new Varnode(regRAX.getAddress(), regRAX.getMinimumByteSize());
-		vnRDI = new Varnode(regRDI.getAddress(), regRDI.getMinimumByteSize());
-		vnRSI = new Varnode(regRSI.getAddress(), regRSI.getMinimumByteSize());
+	@PcodeUserop
+	public SleighPcodeUseropDefinition __x86_64_POP(BuilderStage1 builder) {
+		return builder.params().body(_ -> """
+				__op_output = *:8 RSP;
+				RSP = RSP + 8;
+				""").build();
 	}
 
 	@PcodeUserop
-	public void __x86_64_RET(@OpExecutor PcodeExecutor<T> executor,
-			@OpLibrary PcodeUseropLibrary<T> library) {
-		if (progRet == null) {
-			progRet = SleighProgramCompiler.compileUserop(executor.getLanguage(),
-				"__x86_64_RET", List.of(), SRC_RET, PcodeUseropLibrary.nil(), List.of());
-		}
-		progRet.execute(executor, library);
+	public SleighPcodeUseropDefinition __libc_strnlen(BuilderStage1 builder) {
+		return builder.params().body(_ -> """
+				RAX = __libc_strnlen_generic(RDI, RSI);
+				""").build();
 	}
 
 	@PcodeUserop
-	public void __libc_strlen(@OpExecutor PcodeExecutor<T> executor,
-			@OpLibrary PcodeUseropLibrary<T> library) {
-		if (progStrlen == null) {
-			progStrlen = SleighProgramCompiler.compileUserop(executor.getLanguage(),
-				"__libc_strlen", List.of("__result", "str", "maxlen"),
-				SRC_STRLEN, PcodeUseropLibrary.nil(), List.of(vnRAX, vnRDI, vnRSI));
-		}
-		progStrlen.execute(executor, library);
+	public SleighPcodeUseropDefinition __libc_strnlen_generic(BuilderStage1 builder) {
+		return builder.params("str", "maxlen").body(_ -> """
+				local result = 0;
+				<loop>
+				if (*:1 (str+result) == 0 || result >= maxlen) goto <exit>;
+				result = result + 1;
+				goto <loop>;
+				<exit>
+				__op_output = result;
+				""").build();
 	}
 }
 ```
 
-At construction, we capture the varnodes we need to use.
-We could just use them directly in the source, but this demonstrates the ability to alias them, which makes the Sleigh source more re-usable across target architectures.
-We then lazily compile each userop upon its first invocation.
-These are technically still Java callbacks, but our implementation delegates to the executor, giving it the compiled p-code program.
+Each userop implementation is still annotated with `@PcodeUserop`; however, the return type `SleighPcodeUseropDefinition` tells the framework the userop is not a run-time callback, but a factory method for Sleigh source code.
+The builder provides a fluent style for specifying the different forms, parameters, and bodies of the userop.
+The examples above are fairly simple.
 
-The advantage here is that the p-code will use the underlying arithmetic appropriately.
-However, for some models, that may actually not be desired.
-Some symbolic models might just like to see an abstract call to `strlen()`.
+The `params(...)` call indicates the number and names of parameters.
+The `body(...)` call generates the Sleigh source for the userop, typically expressed using a lambda.
+The lambda takes `List<Varnode>` and returns a `String` of Sleigh source.
+Upon encountering a callother to this userop, the emulator invokes the lambda, giving the actual varnode arguments, and executes the generated Sleigh.
+The arguments are often ignored, because the Sleigh source can refer to them by the names given in `params(...)`.
+Finally, we call `build()` to create the userop definition and return it.
+
+Overloading is possible, but we discuss that later.
+The `__libc_strnlen` userop delegates to `__libc_strnlen_generic`, which in turn implements `strnlen` naively.
+It loops from 0 to maxlen until it finds a zero.
+Note that the generic userop does not refer to any x86-specific registers.
+
+Userops can refer to any other userop defined either by the language's Sleigh spec file, by the userop library, or by any other userop library composed with it.
+Arguments (inputs) and the output varnodes are passed by reference.
+Technically, userops can read and write to any of them freely, but conventionally, they should read only from inputs and write only to the output.
+The output varnode is named `__op_output`.
+The input varnode names are specified in the call to `params()`.
+The compiled result is as if those varnodes were substituted for their arguments.
+Note that expressions are given intermediate unique varnodes.
+When used as a userop input argument, the expression is evaluated once, then that temporary varnode is passed.
+Thus, writing to an input risks undefined behavior.
+Conventionally, userops should write to `__op_output` exactly once, at or near the end of the userop.
+
+With is mind, we re-examine the definition of `__libc_strnlen`:
+
+```sleigh
+RAX = __libc_strnlen_generic(RDI, RSI);
+```
+
+It implements `strnlen` for the System V ABI by naming the appropriate register for each parameter and return value.
+(A more sophisticated implementation of this library could take a `CompilerSpec` and/or calling convention argument in its constructor to generate the appropriate register names.)
+Essentially, the generic parameter names (and `__op_output`) become aliased to the register names.
+The generated p-code will be exactly the same as if it had been defined:
+
+```sleigh
+local result = 0;
+<loop>
+if (*:1 (RDI+result) == 0 || result >= RSI) goto <exit>;
+result = result + 1;
+goto <loop>;
+<exit>
+RAX = result;
+```
+
+#### Overloading
+
+Two kinds of overloading are possible:
+
+1. The userop has multiple forms, each having a different number of parameters
+2. A single form's implementation depends on the size of at least one varnode argument
+
+The first kind is handled using the `overload()` method on the builder and then repeating the `params().body()` sequence for each form.
+For example
+
+```java
+return builder.params("a").body(args -> """
+		...
+		""").overload().params("a", "b").body(args -> """
+		...
+		""").build();
+```
+
+The second kind is handled by inspecting the actual argument list in the lambda expression.
+This can often be accomplished using a `switch` expression on the size of a varnode, e.g.:
+
+```java
+return builder.params("n").body(a -> switch(a.get(0).getSize()) {
+	case 4 -> "__op_output = sin_float(n);";
+	case 8 -> "__op_output = sin_double(n);";
+}).build();
+```
+
+In this example, we select between a single-precision and double-precision `sin` operation, based on the size of the input varnode.
+This pattern of delegating to size-specific userops is common, and those userops can be Java callbacks.
+Both kinds of overloading may be applied to the same userop definition.
 
 ### Modeling by Structured Sleigh
 
-The disadvantage to pre-compiled p-code is all the boilerplate and manual handling of Sleigh compilation.
-Additionally, when stubbing C functions, you have to be mindful of the types, and things may get complicated enough that you pine for more C-like control structures.
+When stubbing C functions, you have to be mindful of the types, and things may get complicated enough that you pine for more C-like control structures.
 The same library can be implemented using an incubating feature we call *Structured Sleigh*:
 
 ```java {.numberLines}
@@ -187,24 +233,25 @@ public static class StructuredStdLibPcodeUseropLibrary<T>
 			super(cs);
 		}
 
-		@StructuredUserop
-		public void __x86_64_RET() {
-			Var RSP = lang("RSP", type("void **"));
-			Var RIP = lang("RIP", type("void *"));
-			RIP.set(RSP.deref());
+		@StructuredUserop(type = "undefined *")
+		public void __x86_64_POP() {
+			Var RSP = lang("RSP", type("undefined **"));
+			Var result = temp(type("undefined *"));
+			result.set(RSP.deref());
 			RSP.addiTo(8);
-			_return(RIP);
+			_result(result);
 		}
 
 		@StructuredUserop
-		public void __libc_strlen() {
+		public void __libc_strnlen() {
 			Var result = lang("RAX", type("long"));
 			Var str = lang("RDI", type("char *"));
 			Var maxlen = lang("RSI", type("long"));
 
-			_for(result.set(0), result.ltiu(maxlen).andb(str.index(result).deref().eq(0)),
-				result.inc(), () -> {
-				});
+			RVal inBounds = result.ltiu(maxlen);
+			RVal notTerm = str.index(result).deref().neq(0);
+			_for(result.set(0), inBounds.andb(notTerm), result.inc(), () -> {
+			});
 		}
 	}
 }
@@ -218,10 +265,10 @@ In a sense, Structured Sleigh is a DSL hosted in Java....
 
 Unfortunately, we cannot overload operators in Java, so we are stuck using method invocations.
 Another disadvantage is the dependence on a compiler spec for type resolution.
-Structured Sleigh is not the best suited for all circumstances, e.g., the implementation of `__x86_64_RET` is odd to express.
+Structured Sleigh is not the best suited for all circumstances, e.g., the implementation of `__x86_64_POP` is odd to express.
 Arguably, there is no real need to ascribe high-level types to `RSP` and `RIP` when expressing low-level operations.
 Luckily, these implementation techniques can be mixed.
-A single library can implement the `RET` using pre-compiled Sleigh, but `strlen` using Structured Sleigh.
+A single library could implement the `POP` using (raw) Sleigh, but `strnlen` using Structured Sleigh.
 
 ### Modeling System Calls
 
@@ -254,10 +301,14 @@ public class CustomLibraryScript extends GhidraScript {
 		};
 		emu.inject(currentAddress, """
 				__libc_strlen();
-				__X86_64_RET();
+				RIP = __X86_64_POP();
+				return [RIP];
 				""");
+
 		// TODO: Initialize the emulator's memory from the current program
+
 		PcodeThread<byte[]> thread = emu.newThread();
+
 		// TODO: Initialize the thread's registers
 
 		while (true) {
@@ -268,36 +319,35 @@ public class CustomLibraryScript extends GhidraScript {
 }
 ```
 
-The key is to override `createUseropLibrary()` in an anonymous extension of the `PcodeEmulator`.
+The key is to override `createUseropLibrary()` in an extension of the `PcodeEmulator`.
 It is polite to compose your library with the one already provided by the super class, lest you remove userops and cause unexpected crashes later.
 For the sake of demonstration, we have included an injection that uses the custom library, and we have included a monitored loop to execute a single thread indefinitely.
 The initialization of the machine and its one thread is left to the script writer.
 The emulation *is not* implicitly associated with the program!
-You must copy the program image into its state, and you should choose a different location for the injection.
+You must copy the program image into its state, and you should choose an appropriate location for the injection.
 Refer to the example scripts in Ghidra's `SystemEmulation` module.
 
 If you would like to (temporarily) override the GUI with a custom userop library, you can by setting the GUI's emulator factory:
 
 ```java {.numberLines}
 public class InstallCustomLibraryScript extends GhidraScript implements FlatDebuggerAPI {
-	public static class CustomBytesDebuggerPcodeEmulator extends BytesDebuggerPcodeEmulator {
-		private CustomBytesDebuggerPcodeEmulator(PcodeDebuggerAccess access) {
-			super(access);
+	public static class CustomPcodeEmulator extends PcodeEmulator {
+		private CustomPcodeEmulator(Language language, PcodeEmulationCallbacks<byte[]> cb) {
+			super(language, cb);
 		}
 
 		@Override
 		protected PcodeUseropLibrary<byte[]> createUseropLibrary() {
 			return super.createUseropLibrary()
-					.compose(new ModelingScript.SleighStdLibPcodeUseropLibrary<>(
-						(SleighLanguage) access.getLanguage()));
+					.compose(new ModelingScript.SleighStdLibPcodeUseropLibrary<>());
 		}
 	}
 
 	public static class CustomBytesDebuggerPcodeEmulatorFactory
-			extends BytesDebuggerPcodeEmulatorFactory {
+			extends DefaultEmulatorFactory {
 		@Override
-		public DebuggerPcodeMachine<?> create(PcodeDebuggerAccess access) {
-			return new CustomBytesDebuggerPcodeEmulator(access);
+		public PcodeMachine<?> create(PcodeDebuggerAccess access, Writer writer) {
+			return new CustomPcodeEmulator(access.getLanguage(), writer.callbacks());
 		}
 	}
 
@@ -339,6 +389,7 @@ These need not extend from nor implement any Ghidra-specific interface, but they
 ```java {.numberLines}
 public class ModelingScript extends GhidraScript {
 	interface Expr {
+		int size();
 	}
 
 	interface UnExpr extends Expr {
@@ -351,8 +402,7 @@ public class ModelingScript extends GhidraScript {
 		Expr r();
 	}
 
-	record LitExpr(BigInteger val, int size) implements Expr {
-	}
+	record LitExpr(BigInteger val, int size) implements Expr {}
 
 	record VarExpr(Varnode vn) implements Expr {
 		public VarExpr(AddressSpace space, long offset, int size) {
@@ -362,16 +412,18 @@ public class ModelingScript extends GhidraScript {
 		public VarExpr(Address address, int size) {
 			this(new Varnode(address, size));
 		}
+
+		@Override
+		public int size() {
+			return vn.getSize();
+		}
 	}
 
-	record InvExpr(Expr u) implements UnExpr {
-	}
+	record InvExpr(Expr u, int size) implements UnExpr {}
 
-	record AddExpr(Expr l, Expr r) implements BinExpr {
-	}
+	record AddExpr(Expr l, Expr r, int size) implements BinExpr {}
 
-	record SubExpr(Expr l, Expr r) implements BinExpr {
-	}
+	record SubExpr(Expr l, Expr r, int size) implements BinExpr {}
 
 	@Override
 	protected void run() throws Exception {
@@ -383,7 +435,7 @@ public class ModelingScript extends GhidraScript {
 
 It should be fairly apparent how you could add more expression types to complete the model.
 There is some odd nuance in the naming of p-code operations, so do read the documentation carefully.
-If you are not entirely certain what an operation does, take a look at [OpBehaviorFactory](../../../Ghidra/Framework/SoftwareModeling/src/main/java/ghidra/pcode/opbehavior/OpBehaviorFactory.java).
+If you are not entirely certain what an operation does, take a look at [OpBehaviorFactory](../../../Ghidra/Framework/Emulation/src/main/java/ghidra/pcode/opbehavior/OpBehaviorFactory.java).
 You can also examine the concrete implementation on byte arrays [BytesPcodeArithmetic](../../../Ghidra/Framework/Emulation/src/main/java/ghidra/pcode/exec/BytesPcodeArithmetic.java).
 
 ### Mapping the Model
@@ -412,6 +464,11 @@ public enum ExprPcodeArithmetic implements PcodeArithmetic<Expr> {
 	}
 
 	@Override
+	public Class<Expr> getDomain() {
+		return Expr.class;
+	}
+
+	@Override
 	public Endian getEndian() {
 		return endian;
 	}
@@ -419,7 +476,7 @@ public enum ExprPcodeArithmetic implements PcodeArithmetic<Expr> {
 	@Override
 	public Expr unaryOp(int opcode, int sizeout, int sizein1, Expr in1) {
 		return switch (opcode) {
-			case PcodeOp.INT_NEGATE -> new InvExpr(in1);
+			case PcodeOp.INT_NEGATE -> new InvExpr(in1, sizeout);
 			default -> throw new UnsupportedOperationException(PcodeOp.getMnemonic(opcode));
 		};
 	}
@@ -428,8 +485,8 @@ public enum ExprPcodeArithmetic implements PcodeArithmetic<Expr> {
 	public Expr binaryOp(int opcode, int sizeout, int sizein1, Expr in1, int sizein2,
 			Expr in2) {
 		return switch (opcode) {
-			case PcodeOp.INT_ADD -> new AddExpr(in1, in2);
-			case PcodeOp.INT_SUB -> new SubExpr(in1, in2);
+			case PcodeOp.INT_ADD -> new AddExpr(in1, in2, sizeout);
+			case PcodeOp.INT_SUB -> new SubExpr(in1, in2, sizeout);
 			default -> throw new UnsupportedOperationException(PcodeOp.getMnemonic(opcode));
 		};
 	}
@@ -473,7 +530,7 @@ public enum ExprPcodeArithmetic implements PcodeArithmetic<Expr> {
 
 	@Override
 	public long sizeOf(Expr value) {
-		throw new UnsupportedOperationException();
+		return value.size();
 	}
 }
 ```
@@ -527,49 +584,52 @@ If you are not already familiar with Java naming conventions for "enterprise app
 
 ```java {.numberLines}
 public static class ExprSpace {
-	protected final NavigableMap<Long, Expr> map;
+	protected final NavigableMap<Long, Expr> map = new TreeMap<>(Long::compareUnsigned);
+	protected final ExprPcodeExecutorStatePiece piece;
 	protected final AddressSpace space;
 
-	protected ExprSpace(AddressSpace space, NavigableMap<Long, Expr> map) {
+	protected ExprSpace(AddressSpace space, ExprPcodeExecutorStatePiece piece) {
 		this.space = space;
-		this.map = map;
-	}
-
-	public ExprSpace(AddressSpace space) {
-		this(space, new TreeMap<>());
+		this.piece = piece;
 	}
 
 	public void clear() {
 		map.clear();
 	}
 
-	public void set(long offset, Expr val) {
+	public void set(long offset, int size, Expr val, PcodeStateCallbacks cb) {
 		// TODO: Handle overlaps / offcut gets and sets
 		map.put(offset, val);
+		cb.dataWritten(piece, space.getAddress(offset), size, val);
 	}
 
-	protected Expr whenNull(long offset, int size) {
-		return new VarExpr(space, offset, size);
-	}
-
-	public Expr get(long offset, int size) {
+	public Expr get(long offset, int size, Reason reason, PcodeStateCallbacks cb) {
 		// TODO: Handle overlaps / offcut gets and sets
 		Expr expr = map.get(offset);
-		return expr != null ? expr : whenNull(offset, size);
+		if (expr == null) {
+			byte[] aOffset =
+				piece.getAddressArithmetic().fromConst(offset, space.getPointerSize());
+			if (cb.readUninitialized(piece, space, aOffset, size, reason) != 0) {
+				return map.get(offset);
+			}
+		}
+		return null;
+	}
+
+	public Entry<Long, Expr> getNextEntry(long offset) {
+		return map.ceilingEntry(offset);
 	}
 }
 
-public static abstract class AbstractExprPcodeExecutorStatePiece<S extends ExprSpace> extends
-		AbstractLongOffsetPcodeExecutorStatePiece<byte[], Expr, S> {
+public static class ExprPcodeExecutorStatePiece
+		extends AbstractLongOffsetPcodeExecutorStatePiece<byte[], Expr, ExprSpace> {
 
-	protected final AbstractSpaceMap<S> spaceMap = newSpaceMap();
+	protected final Map<AddressSpace, ExprSpace> spaceMap = new HashMap<>();
 
-	public AbstractExprPcodeExecutorStatePiece(Language language) {
+	public ExprPcodeExecutorStatePiece(Language language, PcodeStateCallbacks cb) {
 		super(language, BytesPcodeArithmetic.forLanguage(language),
-			ExprPcodeArithmetic.forLanguage(language));
+			ExprPcodeArithmetic.forLanguage(language), cb);
 	}
-
-	protected abstract AbstractSpaceMap<S> newSpaceMap();
 
 	@Override
 	public MemBuffer getConcreteBuffer(Address address, Purpose purpose) {
@@ -578,53 +638,52 @@ public static abstract class AbstractExprPcodeExecutorStatePiece<S extends ExprS
 
 	@Override
 	public void clear() {
-		for (S space : spaceMap.values()) {
+		for (ExprSpace space : spaceMap.values()) {
 			space.clear();
 		}
 	}
 
 	@Override
-	protected S getForSpace(AddressSpace space, boolean toWrite) {
-		return spaceMap.getForSpace(space, toWrite);
+	protected ExprSpace getForSpace(AddressSpace space, boolean toWrite) {
+		if (toWrite) {
+			return spaceMap.computeIfAbsent(space, s -> new ExprSpace(s, this));
+		}
+		return spaceMap.get(space);
 	}
 
 	@Override
-	protected void setInSpace(ExprSpace space, long offset, int size, Expr val) {
-		space.set(offset, val);
+	public Entry<Long, Expr> getNextEntryInternal(AddressSpace space, long offset) {
+		ExprSpace s = getForSpace(space, false);
+		if (s == null) {
+			return null;
+		}
+		return s.getNextEntry(offset);
 	}
 
 	@Override
-	protected Expr getFromSpace(S space, long offset, int size, Reason reason) {
-		return space.get(offset, size);
+	protected void setInSpace(ExprSpace space, long offset, int size, Expr val,
+			PcodeStateCallbacks cb) {
+		space.set(offset, size, val, cb);
 	}
 
 	@Override
-	protected Map<Register, Expr> getRegisterValuesFromSpace(S s, List<Register> registers) {
+	protected Expr getFromSpace(ExprSpace space, long offset, int size, Reason reason,
+			PcodeStateCallbacks cb) {
+		return space.get(offset, size, reason, cb);
+	}
+
+	@Override
+	protected Map<Register, Expr> getRegisterValuesFromSpace(ExprSpace s,
+			List<Register> registers) {
 		throw new UnsupportedOperationException();
 	}
 }
 
-public static class ExprPcodeExecutorStatePiece
-		extends AbstractExprPcodeExecutorStatePiece<ExprSpace> {
-	public ExprPcodeExecutorStatePiece(Language language) {
-		super(language);
-	}
-
-	@Override
-	protected AbstractSpaceMap<ExprSpace> newSpaceMap() {
-		return new SimpleSpaceMap<ExprSpace>() {
-			@Override
-			protected ExprSpace newSpace(AddressSpace space) {
-				return new ExprSpace(space);
-			}
-		};
-	}
-}
-
 public static class BytesExprPcodeExecutorState extends PairedPcodeExecutorState<byte[], Expr> {
-	public BytesExprPcodeExecutorState(PcodeExecutorStatePiece<byte[], byte[]> concrete) {
+	public BytesExprPcodeExecutorState(PcodeExecutorStatePiece<byte[], byte[]> concrete,
+			PcodeStateCallbacks cb) {
 		super(new PairedPcodeExecutorStatePiece<>(concrete,
-			new ExprPcodeExecutorStatePiece(concrete.getLanguage())));
+			new ExprPcodeExecutorStatePiece(concrete.getLanguage(), cb)));
 	}
 }
 ```
@@ -638,11 +697,9 @@ Notably, we have neglected the possibility that writes overlap or that reads are
 This may not seem like a huge problem, but it is actually quite common, esp., since x86 registers are structured.
 A write to `RAX` followed by a read from `EAX` will immediately demonstrate this issue.
 Nevertheless, we leave those details as an exercise.
-We factor `whenNull` so that it can be overridden later.
 
 The remaining parts are mostly boilerplate.
-We implement the "state piece" interface by creating another abstract class.
-An abstract class is not absolutely necessary, but it will be useful when we integrate the model with traces and the Debugger GUI later.
+We implement the "state piece" interface by creating another class.
 We are given the language and applicable arithmetics, which we just pass to the super constructor.
 We need not implement a concrete buffer.
 This would only be required if we needed to decode instructions from the abstract storage model.
@@ -653,7 +710,7 @@ Note that the abstract implementation does not provide that map for us, so we mu
 The next three methods are for getting spaces from that map and then setting and getting values in them.
 The last method `getRegisterValuesFromSpace()` is more for user inspection, so it need not be implemented, at least not yet.
 
-Finally, we complete the implementation of the state piece with `ExprPcodeExecutorStatePiece`, which provides the actual map and an `ExprSpace` factory method `newSpace()`.
+Finally, we complete the implementation of the state piece with `ExprPcodeExecutorStatePiece`, which provides the actual map of `ExprSpace`s.
 The implementation of `ExprPcodeExecutorState` is simple.
 It takes the concrete piece and pairs it with a new piece for our model.
 
@@ -705,25 +762,31 @@ public enum BytesExprEmulatorPartsFactory implements AuxEmulatorPartsFactory<Exp
 
 	@Override
 	public PcodeExecutorState<Pair<byte[], Expr>> createSharedState(
-			AuxPcodeEmulator<Expr> emulator, BytesPcodeExecutorStatePiece concrete) {
-		return new BytesExprPcodeExecutorState(concrete);
+			AuxPcodeEmulator<Expr> emulator, BytesPcodeExecutorStatePiece concrete,
+			PcodeStateCallbacks cb) {
+		return new BytesExprPcodeExecutorState(concrete, cb);
 	}
 
 	@Override
 	public PcodeExecutorState<Pair<byte[], Expr>> createLocalState(
 			AuxPcodeEmulator<Expr> emulator, PcodeThread<Pair<byte[], Expr>> thread,
-			BytesPcodeExecutorStatePiece concrete) {
-		return new BytesExprPcodeExecutorState(concrete);
+			BytesPcodeExecutorStatePiece concrete, PcodeStateCallbacks cb) {
+		return new BytesExprPcodeExecutorState(concrete, cb);
 	}
 }
 
-public class BytesExprPcodeEmulator extends AuxPcodeEmulator<Expr> {
+public static class BytesExprPcodeEmulator extends AuxPcodeEmulator<Expr> {
+	public BytesExprPcodeEmulator(Language language,
+			PcodeEmulationCallbacks<Pair<byte[], Expr>> cb) {
+		super(language, cb);
+	}
+
 	public BytesExprPcodeEmulator(Language language) {
-		super(language);
+		this(language, PcodeEmulationCallbacks.none());
 	}
 
 	@Override
-	protected AuxEmulatorPartsFactory<ModelingScript.Expr> getPartsFactory() {
+	protected AuxEmulatorPartsFactory<Expr> getPartsFactory() {
 		return BytesExprEmulatorPartsFactory.INSTANCE;
 	}
 }
@@ -738,7 +801,7 @@ Finally, for the states, we just take the provided concrete state and construct 
 
 ## Use in Dynamic Analysis
 
-What we have constructed so far is suitable for constructing and using our augmented emulator in a script.
+What we have built so far is suitable for constructing and using our augmented emulator in a script.
 Using it is about as straightforward as the plain concrete emulator.
 The exception may be when accessing its state, you will need to be cognizant of the pairing.
 
@@ -778,212 +841,71 @@ See [UnwindAnalysis](../../../Ghidra/Debug/Debugger/src/main/java/ghidra/app/plu
 
 ## GUI Integration
 
-This part is rather tedious.
-It is mostly boilerplate, and the only real functionality we need to provide is a means of serializing `Expr` to the trace database.
+This part is much less onerous than it had been in previous versions.
+The only functionality we need to provide is a means of serializing `Expr` to the trace database.
 Ideally, this serialization is also human readable, since that will make it straightforward to display in the UI.
-Typically, there are two more stages of integration.
-First is integration with traces, which involves the aforementioned serialization.
-Second is integration with targets, which often does not apply to abstract models, but could.
-Each stage involves an extension to the lower stage's state.
-Java does not allow multiple inheritance, so we will have to be clever in our factoring, but we generally cannot escape the boilerplate.
+We need only provide a `PieceHandler` for our new state piece.
 
 ```java {.numberLines}
-public static class ExprTraceSpace extends ExprSpace {
-	protected final PcodeTracePropertyAccess<String> property;
-
-	public ExprTraceSpace(AddressSpace space, PcodeTracePropertyAccess<String> property) {
-		super(space);
-		this.property = property;
+public static class ExprPieceHandler
+		extends AbstractSimplePropertyBasedPieceHandler<byte[], Expr, String> {
+	@Override
+	public Class<byte[]> getAddressDomain() {
+		return byte[].class;
 	}
 
 	@Override
-	protected Expr whenNull(long offset, int size) {
-		String string = property.get(space.getAddress(offset));
-		return deserialize(string);
-	}
-
-	public void writeDown(PcodeTracePropertyAccess<String> into) {
-		if (space.isUniqueSpace()) {
-			return;
-		}
-
-		for (Entry<Long, Expr> entry : map.entrySet()) {
-			// TODO: Ignore and/or clear non-entries
-			into.put(space.getAddress(entry.getKey()), serialize(entry.getValue()));
-		}
-	}
-
-	protected String serialize(Expr expr) {
-		return Unfinished.TODO();
-	}
-
-	protected Expr deserialize(String string) {
-		return Unfinished.TODO();
-	}
-}
-
-public static class ExprTracePcodeExecutorStatePiece
-		extends AbstractExprPcodeExecutorStatePiece<ExprTraceSpace>
-		implements TracePcodeExecutorStatePiece<byte[], Expr> {
-	public static final String NAME = "Expr";
-
-	protected final PcodeTraceDataAccess data;
-	protected final PcodeTracePropertyAccess<String> property;
-
-	public ExprTracePcodeExecutorStatePiece(PcodeTraceDataAccess data) {
-		super(data.getLanguage());
-		this.data = data;
-		this.property = data.getPropertyAccess(NAME, String.class);
+	public Class<Expr> getValueDomain() {
+		return Expr.class;
 	}
 
 	@Override
-	public PcodeTraceDataAccess getData() {
-		return data;
+	protected String getPropertyName() {
+		return "Expr";
 	}
 
 	@Override
-	protected AbstractSpaceMap<ExprTraceSpace> newSpaceMap() {
-		return new CacheingSpaceMap<PcodeTracePropertyAccess<String>, ExprTraceSpace>() {
-			@Override
-			protected PcodeTracePropertyAccess<String> getBacking(AddressSpace space) {
-				return property;
-			}
-
-			@Override
-			protected ExprTraceSpace newSpace(AddressSpace space,
-					PcodeTracePropertyAccess<String> backing) {
-				return new ExprTraceSpace(space, property);
-			}
-		};
+	protected Class<String> getPropertyType() {
+		return String.class;
 	}
 
 	@Override
-	public ExprTracePcodeExecutorStatePiece fork() {
-		throw new UnsupportedOperationException();
+	protected Expr decode(String propertyValue) {
+		return Unfinished.TODO("Left as an exercise");
 	}
 
 	@Override
-	public void writeDown(PcodeTraceDataAccess into) {
-		PcodeTracePropertyAccess<String> property = into.getPropertyAccess(NAME, String.class);
-		for (ExprTraceSpace space : spaceMap.values()) {
-			space.writeDown(property);
-		}
-	}
-}
-
-public static class ExprTracePcodeExecutorState
-		extends PairedTracePcodeExecutorState<byte[], Expr> {
-	public ExprTracePcodeExecutorState(TracePcodeExecutorStatePiece<byte[], byte[]> concrete) {
-		super(new PairedTracePcodeExecutorStatePiece<>(concrete,
-			new ExprTracePcodeExecutorStatePiece(concrete.getData())));
+	protected String encode(Expr value) {
+		return Unfinished.TODO("Left as an exercise");
 	}
 }
 ```
 
-Because we do not need any additional logic for target integration, we do not need to extend the state pieces any further.
-The concrete pieces that we augment will contain all the target integration needed.
-We have left the serialization as an exercise, though.
-Last, we implement the full parts factory and use it to construct and install a full `Expr`-augmented emulator factory:
+This piece handler identifies itself as suitable for handling pieces where the address domain is concrete `byte[]` and the value domain is our abstract `Expr`.
+It then claims the property name `"Expr"` and tells the framework that the property map should use `String`s.
+Finally, it provides the actual codec, which we have left as an exercise.
+**NOTE**: You should also consider using `AbstractPropertyBasedPieceHandler` if you'd like to do the exercise of implementing the piecewise and/or overlapping variable access.
+
+Last, we implement the final `Expr`-augmented emulator factory:
 
 ```java {.numberLines}
-public enum BytesExprDebuggerEmulatorPartsFactory
-	implements AuxDebuggerEmulatorPartsFactory<Expr> {
-	INSTANCE;
-
-	@Override
-	public PcodeArithmetic<Expr> getArithmetic(Language language) {
-		return ExprPcodeArithmetic.forLanguage(language);
-	}
-
-	@Override
-	public PcodeUseropLibrary<Pair<byte[], Expr>> createSharedUseropLibrary(
-			AuxPcodeEmulator<Expr> emulator) {
-		return PcodeUseropLibrary.nil();
-	}
-
-	@Override
-	public PcodeUseropLibrary<Pair<byte[], Expr>> createLocalUseropStub(
-			AuxPcodeEmulator<Expr> emulator) {
-		return PcodeUseropLibrary.nil();
-	}
-
-	@Override
-	public PcodeUseropLibrary<Pair<byte[], Expr>> createLocalUseropLibrary(
-			AuxPcodeEmulator<Expr> emulator, PcodeThread<Pair<byte[], Expr>> thread) {
-		return PcodeUseropLibrary.nil();
-	}
-
-	@Override
-	public PcodeExecutorState<Pair<byte[], Expr>> createSharedState(
-			AuxPcodeEmulator<Expr> emulator, BytesPcodeExecutorStatePiece concrete) {
-		return new BytesExprPcodeExecutorState(concrete);
-	}
-
-	@Override
-	public PcodeExecutorState<Pair<byte[], Expr>> createLocalState(
-			AuxPcodeEmulator<Expr> emulator, PcodeThread<Pair<byte[], Expr>> thread,
-			BytesPcodeExecutorStatePiece concrete) {
-		return new BytesExprPcodeExecutorState(concrete);
-	}
-
-	@Override
-	public TracePcodeExecutorState<Pair<byte[], ModelingScript.Expr>> createTraceSharedState(
-			AuxTracePcodeEmulator<ModelingScript.Expr> emulator,
-			BytesTracePcodeExecutorStatePiece concrete) {
-		return new ExprTracePcodeExecutorState(concrete);
-	}
-
-	@Override
-	public TracePcodeExecutorState<Pair<byte[], ModelingScript.Expr>> createTraceLocalState(
-			AuxTracePcodeEmulator<ModelingScript.Expr> emulator,
-			PcodeThread<Pair<byte[], ModelingScript.Expr>> thread,
-			BytesTracePcodeExecutorStatePiece concrete) {
-		return new ExprTracePcodeExecutorState(concrete);
-	}
-
-	@Override
-	public TracePcodeExecutorState<Pair<byte[], ModelingScript.Expr>> createDebuggerSharedState(
-			AuxDebuggerPcodeEmulator<ModelingScript.Expr> emulator,
-			RWTargetMemoryPcodeExecutorStatePiece concrete) {
-		return new ExprTracePcodeExecutorState(concrete);
-	}
-
-	@Override
-	public TracePcodeExecutorState<Pair<byte[], ModelingScript.Expr>> createDebuggerLocalState(
-			AuxDebuggerPcodeEmulator<ModelingScript.Expr> emulator,
-			PcodeThread<Pair<byte[], ModelingScript.Expr>> thread,
-			RWTargetRegistersPcodeExecutorStatePiece concrete) {
-		return new ExprTracePcodeExecutorState(concrete);
-	}
-}
-
-public static class BytesExprDebuggerPcodeEmulator extends AuxDebuggerPcodeEmulator<Expr> {
-	public BytesExprDebuggerPcodeEmulator(PcodeDebuggerAccess access) {
-		super(access);
-	}
-
-	@Override
-	protected AuxDebuggerEmulatorPartsFactory<Expr> getPartsFactory() {
-		return BytesExprDebuggerEmulatorPartsFactory.INSTANCE;
-	}
-}
-
-public static class BytesExprDebuggerPcodeEmulatorFactory
-		extends AbstractDebuggerPcodeEmulatorFactory {
-
+public static class BytesExprEmulatorFactory implements EmulatorFactory {
 	@Override
 	public String getTitle() {
 		return "Expr";
 	}
 
 	@Override
-	public DebuggerPcodeMachine<?> create(PcodeDebuggerAccess access) {
-		return new BytesExprDebuggerPcodeEmulator(access);
+	public PcodeMachine<?> create(PcodeDebuggerAccess access, Writer writer) {
+		writer.putHandler(new ExprPieceHandler());
+		return new BytesExprPcodeEmulator(access.getLanguage(), writer.callbacks());
 	}
 }
 ```
 
-The factory can then be installed using a script.
+It merely takes the framework-provided trace `Writer` and adds our `ExprPieceHandler` to it.
+
+This factory can then be installed using a script.
 The script will set your factory as the current emulator factory for the whole tool; however, your script-based factory will not be listed in the menus.
 Also, if you change your emulator, you must re-run the script to install those modifications.
 You might also want to invalidate the emulation cache.
@@ -993,14 +915,14 @@ public class InstallExprEmulatorScript extends GhidraScript implements FlatDebug
 	@Override
 	protected void run() throws Exception {
 		getEmulationService()
-				.setEmulatorFactory(new ModelingScript.BytesExprDebuggerPcodeEmulatorFactory());
+				.setEmulatorFactory(new ModelingScript.BytesExprEmulatorFactory());
 	}
 }
 ```
 
 Alternatively, and this is recommended once your emulator is "production ready," you should create a proper Module project using the GhidraDev plugin for Eclipse.
 You will need to break all the nested classes from your script out into separate files.
-So long as your factory class is public, named with the suffix `DebuggerPcodeEmulatorFactory`, implements the interface, and included in Ghidra's classpath, Ghidra should find and list it in the **Debugger &rarr; Configure Emulator** menu.
+So long as your factory class is public, named with the suffix `EmulatorFactory`, implements the interface, and included in Ghidra's classpath, Ghidra should find and list it in the **Debugger &rarr; Configure Emulator** menu.
 
 ### Displaying and Manipulating Abstract State
 
@@ -1015,6 +937,6 @@ Since string-based serialization may be a common case, we may eventually provide
 For now, we refer you to the implementations for the Taint-augmented emulator:
 
 * For memory state: [TaintFieldFactory](../../../Ghidra/Debug/TaintAnalysis/src/main/java/ghidra/taint/gui/field/TaintFieldFactory.java)
-* For regsiter state: [TaintDebuggerRegisterColumnFactory](../../../Ghidra/Debug/TaintAnalysis/src/main/java/ghidra/taint/gui/field/TaintDebuggerRegisterColumnFactory.java)
+* For register state: [TaintDebuggerRegisterColumnFactory](../../../Ghidra/Debug/TaintAnalysis/src/main/java/ghidra/taint/gui/field/TaintDebuggerRegisterColumnFactory.java)
 
 Anything more than that would require completely custom providers, plugins, etc.

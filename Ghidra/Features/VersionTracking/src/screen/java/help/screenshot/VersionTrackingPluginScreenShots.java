@@ -52,7 +52,7 @@ import ghidra.feature.vt.gui.provider.onetomany.VTMatchSourceTableProvider;
 import ghidra.feature.vt.gui.task.*;
 import ghidra.feature.vt.gui.util.MatchInfo;
 import ghidra.feature.vt.gui.wizard.add.*;
-import ghidra.features.base.codecompare.listing.ListingCodeComparisonPanel;
+import ghidra.features.base.codecompare.listing.ListingCodeComparisonView;
 import ghidra.framework.main.DataTreeDialog;
 import ghidra.framework.main.datatree.DataTree;
 import ghidra.framework.main.datatree.ProjectDataTreePanel;
@@ -765,7 +765,7 @@ public class VersionTrackingPluginScreenShots extends GhidraScreenShotGenerator 
 
 		JComponent component = provider.getComponent();
 		Component listingComponent =
-			findComponentByName(component, ListingCodeComparisonPanel.NAME);
+			findComponentByName(component, ListingCodeComparisonView.NAME);
 		if (listingComponent == null) {
 			return false; // not in the parent's hierarchy
 		}

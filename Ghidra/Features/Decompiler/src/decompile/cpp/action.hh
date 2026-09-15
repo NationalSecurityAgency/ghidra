@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -136,7 +136,7 @@ public:
 
 /// \brief A group of actions (generally) applied in sequence
 ///
-/// This is a a list of Action objects, which are usually applied in sequence.
+/// This is a list of Action objects, which are usually applied in sequence.
 /// But the behavior properties of each individual Action may affect this.
 /// Properties (like rule_repeatapply) may be put directly to this group
 /// that also affect how the Actions are applied.
@@ -234,7 +234,10 @@ public:
   /// \param grouplist is the list of groups being cloned
   /// \return the cloned Rule or NULL
   virtual Rule *clone(const ActionGroupList &grouplist) const=0;
-  virtual void getOpList(vector<uint4> &oplist) const;		///< List of op codes this rule operates on
+
+  /// Populate the given array with all possible OpCodes this Rule might apply to.
+  /// \param oplist is the array to populate
+  virtual void getOpList(vector<uint4> &oplist) const=0;		///< Provide OpCodes \b this rule operates on
 
   /// \brief Attempt to apply \b this Rule
   ///

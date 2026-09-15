@@ -45,9 +45,7 @@ public class GoArrayType extends GoType {
 	}
 
 	/**
-	 * Returns a reference to the {@link GoType} of the elements of this array.
-	 *  
-	 * @return reference to the {@link GoType} of the elements of this array
+	 * {@return a reference to the {@link GoType} of the elements of this array}
 	 * @throws IOException if error reading data
 	 */
 	@Markup
@@ -56,8 +54,7 @@ public class GoArrayType extends GoType {
 	}
 
 	/**
-	 * Returns a reference to the {@link GoType} that defines the slice version of this array. 
-	 * @return reference to the {@link GoType} that defines the slice version of this array
+	 * {@return a reference to the {@link GoType} that defines the slice version of this array} 
 	 * @throws IOException if error reading data
 	 */
 	@Markup
@@ -66,9 +63,10 @@ public class GoArrayType extends GoType {
 	}
 
 	@Override
-	public DataType recoverDataType(GoTypeManager goTypes) throws IOException {
-		DataType elementDt = goTypes.getGhidraDataType(getElement());
-		DataType self = goTypes.getGhidraDataType(this, DataType.class, true);
+	public DataType recoverDataType() throws IOException {
+		GoTypeManager goTypes = programContext.getGoTypes();
+		DataType elementDt = goTypes.getDataType(getElement());
+		DataType self = goTypes.getDataType(this, DataType.class, true);
 		if (self != null) {
 			return self;
 		}
@@ -132,13 +130,30 @@ public class GoArrayType extends GoType {
 	protected String getTypeDeclString() throws IOException {
 		// type CustomArraytype [elementcount]elementType
 		String selfName = typ.getName();
-		String elemName = getElement().getName();
+		GoType elementType = getElement();
+		String elemName =
+			elementType != null ? elementType.getName() : "<missing type %x>".formatted(elem);
 		String arrayDefStr = "[%d]%s".formatted(len, elemName);
 		String defStrWithLinks = "[%d]%s".formatted(len,
 			AddressAnnotatedStringHandler.createAddressAnnotationString(elem, elemName));
 		boolean hasName = !arrayDefStr.equals(selfName);
 
 		return "type %s%s".formatted(hasName ? selfName + " " : "", defStrWithLinks);
+	}
+
+	@Override
+	public boolean isValid() {
+		try {
+			GoType elementType = getElement();
+			return elementType != null && super.isValid() && isValidSize(elementType);
+		}
+		catch (IOException e) {
+			return false;
+		}
+	}
+
+	private boolean isValidSize(GoType elementType) {
+		return typ.getSize() == (elementType.getBaseType().getSize() * len);
 	}
 
 }

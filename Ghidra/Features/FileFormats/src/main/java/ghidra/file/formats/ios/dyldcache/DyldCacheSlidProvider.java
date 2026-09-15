@@ -114,7 +114,7 @@ public class DyldCacheSlidProvider implements ByteProvider {
 	}
 
 	@Override
-	public long length() throws IOException {
+	public long length() {
 		return origProvider.length();
 	}
 

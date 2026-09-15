@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,8 +35,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.MarkerLocation;
 import ghidra.program.util.ProgramLocation;
-import ghidra.util.ColorUtils;
-import ghidra.util.Swing;
+import ghidra.util.*;
 import ghidra.util.datastruct.SortedRangeList;
 
 abstract class MarkerSetImpl implements MarkerSet {
@@ -52,7 +51,7 @@ abstract class MarkerSetImpl implements MarkerSet {
 	protected AddressSetCollection markers;
 	protected SortedRangeList overview = null;
 
-	protected VerticalPixelAddressMap activePixmap = null;
+	protected VerticalPixelAddressMap activePixMap = null;
 	protected List<Integer> activeLayouts = null;
 
 	protected Color markerColor;
@@ -72,9 +71,11 @@ abstract class MarkerSetImpl implements MarkerSet {
 	private boolean colorBackground;
 	private boolean isPreferred;
 
+	/** Optional owner ID.  A null ID implies a global marker set. */
+	private UniversalID ownerId;
+
 	MarkerSetImpl(MarkerManager mgr, Program program, String name, String desc, int priority,
-			boolean showMarkers,
-			boolean showNavigation, boolean colorBackground, Color markerColor,
+			boolean showMarkers, boolean showNavigation, boolean colorBackground, Color markerColor,
 			boolean isPreferred) {
 
 		this.mgr = mgr;
@@ -91,6 +92,16 @@ abstract class MarkerSetImpl implements MarkerSet {
 			throw new NullPointerException("Marker color can't be null");
 		}
 		markers = new ModifiableAddressSetCollection();
+	}
+
+	@Override
+	public void setOwnerId(UniversalID ownerId) {
+		this.ownerId = ownerId;
+	}
+
+	@Override
+	public UniversalID getOwnerId() {
+		return ownerId;
 	}
 
 	protected abstract void doPaintMarkers(Graphics g, VerticalPixelAddressMap pixmap, int index,
@@ -244,11 +255,11 @@ abstract class MarkerSetImpl implements MarkerSet {
 		}
 	}
 
-	public final void paintMarkers(Graphics g, int index, VerticalPixelAddressMap pixmap,
+	public final void paintMarkers(Graphics g, int index, VerticalPixelAddressMap pixMap,
 			AddressIndexMap map) {
 		if (showMarkers) {
-			List<Integer> layouts = computeActiveLayouts(pixmap, map);
-			doPaintMarkers(g, pixmap, index, map, layouts);
+			List<Integer> layouts = computeActiveLayouts(pixMap, map);
+			doPaintMarkers(g, pixMap, index, map, layouts);
 		}
 	}
 
@@ -289,32 +300,32 @@ abstract class MarkerSetImpl implements MarkerSet {
 		return markers.contains(addr);
 	}
 
-	private List<Integer> computeActiveLayouts(VerticalPixelAddressMap pixmap,
+	private List<Integer> computeActiveLayouts(VerticalPixelAddressMap pixMap,
 			AddressIndexMap map) {
 
-		if (pixmap == null) {
+		if (pixMap == null) {
 			return null;
 		}
 
-		if (activeLayouts != null && activePixmap == pixmap) {
+		if (activeLayouts != null && activePixMap == pixMap) {
 			return activeLayouts; // use cache
 		}
 
 		List<Integer> newLayouts = new ArrayList<>();
-		int n = pixmap.getNumLayouts();
+		int n = pixMap.getNumLayouts();
 		for (int i = 0; i < n; i++) {
-			Address addr = pixmap.getLayoutAddress(i);
+			Address addr = pixMap.getLayoutAddress(i);
 			if (addr == null) {
 				continue;
 			}
 
-			Address end = pixmap.getLayoutEndAddress(i);
+			Address end = pixMap.getLayoutEndAddress(i);
 			if (markers.intersects(addr, end)) {
 				newLayouts.add(i);
 			}
 		}
 
-		activePixmap = pixmap;
+		activePixMap = pixMap;
 		activeLayouts = newLayouts;
 		return newLayouts;
 	}
@@ -536,6 +547,6 @@ abstract class MarkerSetImpl implements MarkerSet {
 
 	@Override
 	public String toString() {
-		return Json.toString(this, "active", "colorBackground", "markers");
+		return Json.toString(this, "name", "active", "colorBackground", "markers");
 	}
 }

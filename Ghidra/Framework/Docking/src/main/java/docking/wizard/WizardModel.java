@@ -180,7 +180,7 @@ public abstract class WizardModel<T> {
 	}
 
 	/**
-	 * Calls dispose() on all the wizard steps. Subclasses can override this do do additional
+	 * Calls dispose() on all the wizard steps. Subclasses can override this to do additional
 	 * cleanup if needed.
 	 */
 	public void dispose() {

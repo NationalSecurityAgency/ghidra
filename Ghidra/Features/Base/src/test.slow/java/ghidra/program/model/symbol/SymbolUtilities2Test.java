@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -128,6 +128,56 @@ public class SymbolUtilities2Test extends AbstractGhidraHeadedIntegrationTest {
 		listing.createData(addr(0x200), new StringDataType(), 1);
 		Symbol symbol = symbolTable.getPrimarySymbol(addr(0x200));
 		assertEquals("s__CODE_0200", symbol.getName());
+	}
+
+	@Test
+	public void testDynamicPTRLabel() throws Exception {
+		// 50 -> 100(pointer) -> 200(pointer) -> 300(pointer) -> 400(byte)XYZ
+		listing.createData(addr(0x100), PointerDataType.dataType);
+		listing.createData(addr(0x200), PointerDataType.dataType);
+		listing.createData(addr(0x300), PointerDataType.dataType);
+		listing.createData(addr(0x400), ByteDataType.dataType);
+		symbolTable.createLabel(addr(0x400), "XYZ", SourceType.USER_DEFINED);
+		refMgr.addMemoryReference(addr(0x50), addr(0x100), RefType.DATA, SourceType.USER_DEFINED,
+			0);
+		refMgr.addMemoryReference(addr(0x100), addr(0x200), RefType.DATA, SourceType.USER_DEFINED,
+			0);
+		refMgr.addMemoryReference(addr(0x200), addr(0x300), RefType.DATA, SourceType.USER_DEFINED,
+			0);
+		refMgr.addMemoryReference(addr(0x300), addr(0x400), RefType.DATA, SourceType.USER_DEFINED,
+			0);
+
+		Symbol symbol = symbolTable.getPrimarySymbol(addr(0x100));
+		assertEquals("PTR_PTR_CODE_0100", symbol.getName());
+		symbol = symbolTable.getPrimarySymbol(addr(0x200));
+		assertEquals("PTR_PTR_CODE_0200", symbol.getName());
+		symbol = symbolTable.getPrimarySymbol(addr(0x300));
+		assertEquals("PTR_XYZ_CODE_0300", symbol.getName());
+	}
+
+	@Test
+	public void testDynamicPTRLOOP1Label() throws Exception {
+		// 100(pointer) -> 100(pointer)
+		listing.createData(addr(0x100), PointerDataType.dataType);
+		refMgr.addMemoryReference(addr(0x100), addr(0x100), RefType.READ, SourceType.USER_DEFINED,
+			0);
+		Symbol symbol = symbolTable.getPrimarySymbol(addr(0x100));
+		assertEquals("PTR_LOOP_CODE_0100", symbol.getName());
+	}
+
+	@Test
+	public void testDynamicPTRLOOP2Label() throws Exception {
+		// 100(pointer) -> 200(pointer) -> 100(pointer)
+		listing.createData(addr(0x100), PointerDataType.dataType);
+		listing.createData(addr(0x200), PointerDataType.dataType);
+		refMgr.addMemoryReference(addr(0x100), addr(0x200), RefType.READ, SourceType.USER_DEFINED,
+			0);
+		refMgr.addMemoryReference(addr(0x200), addr(0x100), RefType.READ, SourceType.USER_DEFINED,
+			0);
+		Symbol symbol = symbolTable.getPrimarySymbol(addr(0x100));
+		assertEquals("PTR_LOOP_CODE_0100", symbol.getName());
+		symbol = symbolTable.getPrimarySymbol(addr(0x200));
+		assertEquals("PTR_LOOP_CODE_0200", symbol.getName());
 	}
 
 	@Test

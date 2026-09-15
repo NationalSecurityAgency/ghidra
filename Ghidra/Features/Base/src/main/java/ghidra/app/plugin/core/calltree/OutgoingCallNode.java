@@ -87,34 +87,19 @@ public class OutgoingCallNode extends CallNode {
 		Function currentFunction = fm.getFunctionContaining(address);
 		LazyMap<Function, List<GTreeNode>> nodesByFunction =
 			LazyMap.lazyMap(new HashMap<>(), k -> new ArrayList<>());
-		FunctionManager functionManager = program.getFunctionManager();
-		ReferenceManager refManager = program.getReferenceManager();
 
-		AddressRangeIterator rangeIter = currentFunction.getBody().getAddressRanges();
-		while (rangeIter.hasNext()) {
-			AddressRange range = rangeIter.next();
-			ReferenceIterator refIter = refManager.getReferenceIterator(range.getMinAddress());
-			while (refIter.hasNext()) {
-				monitor.checkCancelled();
-				Reference reference = refIter.next();
-				if (!range.contains(reference.getFromAddress())) {
-					break; // go to next AddressRange
-				}
-				Address toAddress = reference.getToAddress();
-				Function calledFunction = functionManager.getFunctionAt(toAddress);
-				if (calledFunction == null) {
-					createNode(nodesByFunction, reference, calledFunction);
-					continue;
-				}
-
-				// If we are not showing thunks, then replace the thunk with the thunked function
-				if (calledFunction.isThunk() && !callTreeOptions.allowsThunks()) {
-					Function thunkedFunction = calledFunction.getThunkedFunction(true);
-					createNode(nodesByFunction, reference, thunkedFunction);
-					continue;
-				}
-
-				createNode(nodesByFunction, reference, calledFunction);
+		if (currentFunction.isThunk()) {
+			Function thunkedFunction =
+				currentFunction.getThunkedFunction(!callTreeOptions.allowsThunks());
+			ThunkReference thunkRef = new ThunkReference(currentFunction.getEntryPoint(),
+				thunkedFunction.getEntryPoint());
+			createNode(nodesByFunction, thunkRef, thunkedFunction);
+		}
+		else {
+			AddressRangeIterator rangeIter = currentFunction.getBody().getAddressRanges();
+			while (rangeIter.hasNext()) {
+				AddressRange range = rangeIter.next();
+				collectOutgoingByReference(range, nodesByFunction, monitor);
 			}
 		}
 
@@ -123,6 +108,37 @@ public class OutgoingCallNode extends CallNode {
 				.flatMap(list -> list.stream())
 				.collect(Collectors.toList());
 		results.addAll(children);
+	}
+
+	private void collectOutgoingByReference(AddressRange range,
+			LazyMap<Function, List<GTreeNode>> nodesByFunction,
+			TaskMonitor monitor) throws CancelledException {
+		FunctionManager functionManager = program.getFunctionManager();
+		ReferenceManager refManager = program.getReferenceManager();
+		ReferenceIterator refIter = refManager.getReferenceIterator(range.getMinAddress());
+		while (refIter.hasNext()) {
+			monitor.checkCancelled();
+			Reference reference = refIter.next();
+			if (!range.contains(reference.getFromAddress())) {
+				break; // go to next AddressRange
+			}
+			Address toAddress = reference.getToAddress();
+			Function calledFunction = functionManager.getFunctionAt(toAddress);
+			if (calledFunction == null) {
+				// Assume analysis has not be run fully
+				createNode(nodesByFunction, reference, calledFunction);
+				continue;
+			}
+
+			// If we are not showing thunks, then replace the thunk with the thunked function
+			if (calledFunction.isThunk() && !callTreeOptions.allowsThunks()) {
+				Function thunkedFunction = calledFunction.getThunkedFunction(true);
+				createNode(nodesByFunction, reference, thunkedFunction);
+				continue;
+			}
+
+			createNode(nodesByFunction, reference, calledFunction);
+		}
 	}
 
 	private void createNode(LazyMap<Function, List<GTreeNode>> nodes, Reference reference,

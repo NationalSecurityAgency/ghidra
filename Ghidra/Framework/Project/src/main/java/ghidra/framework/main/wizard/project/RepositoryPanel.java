@@ -16,6 +16,7 @@
 package ghidra.framework.main.wizard.project;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -51,6 +52,10 @@ public class RepositoryPanel extends JPanel {
 		this.statusChangedCallback = Callback.dummyIfNull(statusChangedCallback);
 		setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 		buildMainPanel(repositoryNames, readOnlyServerAccess);
+	}
+
+	public Component getDefaultFocusComponent() {
+		return nameList;
 	}
 
 	public boolean isCreateRepositorySelected() {

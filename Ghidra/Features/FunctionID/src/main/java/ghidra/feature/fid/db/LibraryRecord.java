@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,9 +16,9 @@
 package ghidra.feature.fid.db;
 
 import static ghidra.feature.fid.db.LibrariesTable.*;
-import ghidra.program.model.lang.CompilerSpecID;
-import ghidra.program.model.lang.LanguageID;
+
 import db.DBRecord;
+import ghidra.program.model.lang.LanguageID;
 
 /**
  * Represents a library record in the FID database.
@@ -105,11 +105,46 @@ public class LibraryRecord {
 	}
 
 	/**
-	 * Returns the Ghidra CompilerSpecID (used to create the library).
-	 * @return the Ghidra CompilerSpecID
+	 * Returns a list of CompilerSpecIDs (used to create the library)
+	 * as a string of comma separated names.
+	 * A null value indicates that all CompilerSpecIDs are allowed.
+	 * @return a list of CompilerSpecIDs or null
 	 */
-	public CompilerSpecID getGhidraCompilerSpecID() {
-		return new CompilerSpecID(record.getString(GHIDRA_COMPILER_SPEC_ID_COL));
+	public String getGhidraCompilerSpecID() {
+		String rawString = record.getString(LIBRARY_METADATA_COL);
+		if (rawString == null) {
+			return null;
+		}
+		int pos = rawString.indexOf(':');
+		if (pos >= 0) {
+			rawString = rawString.substring(0, pos);
+		}
+		if (rawString.length() == 0) {
+			return null;
+		}
+		return rawString;
+	}
+
+	/**
+	 * Returns a list of SourceLanguageIDs (used to create the library)
+	 * as a string of comma separated names.
+	 * A null value means that all SourceLanguageIDs are allowed.
+	 * @return a list of SourceLanguageIDs or null
+	 */
+	public String getGhidraSourceLanguageID() {
+		String rawString = record.getString(LIBRARY_METADATA_COL);
+		if (rawString == null) {
+			return null;
+		}
+		int pos = rawString.indexOf(':');
+		if (pos < 0) {
+			return null;
+		}
+		rawString = rawString.substring(pos + 1);
+		if (rawString.length() == 0) {
+			return null;
+		}
+		return rawString;
 	}
 
 	/**

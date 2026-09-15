@@ -5,12 +5,30 @@
             endian="little"
             size="32"
             variant="E1, E2, E2M"
-            version="1.0"
+            version="1.1"
             slafile="V850.sla"
             processorspec="V850.pspec"
             manualindexfile="../manuals/v850.idx"
             id="V850:LE:32:default">
     <description>Renesas V850 family</description>
     <compiler name="default" spec="V850.cspec" id="default"/>
+    <external_name tool="IDA-PRO" name="v850"/>
+    <external_name tool="DWARF.register.mapping.file" name="V850.dwarf"/>
+    <external_name tool="gnu" name="v850e2v4"/>
+    
+  </language>
+  <language processor="V850"
+            endian="little"
+            size="32"
+            variant="v850e3v5"
+            version="1.1"
+            slafile="V850e3.sla"
+            processorspec="V850.pspec"
+            manualindexfile="../manuals/v850.idx"
+            id="V850:LE:32:v850e3v5">
+    <description>Renesas V850 family</description>
+    <compiler name="default" spec="V850.cspec" id="default"/>
+    <external_name tool="DWARF.register.mapping.file" name="V850.dwarf"/>
+    <external_name tool="gnu" name="v850e3v5"/>
   </language>
 </language_definitions>

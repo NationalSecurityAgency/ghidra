@@ -194,7 +194,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertTrue(writeCB.isEnabled());
 		assertTrue(executeCB.isEnabled());
 
-		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));
+		pressButton(okButton);
 		program.flushEvents();
 		waitForSwing();
 
@@ -268,7 +268,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertTrue(writeCB.isEnabled());
 		assertTrue(executeCB.isEnabled());
 
-		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));
+		pressButton(okButton);
 		program.flushEvents();
 		waitForSwing();
 
@@ -531,7 +531,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertTrue(writeCB.isSelected());
 		assertFalse(executeCB.isSelected());
 
-		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));
+		pressButton(okButton);
 		program.flushEvents();
 		waitForSwing();
 
@@ -611,7 +611,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertTrue(writeCB.isSelected());
 		assertTrue(executeCB.isSelected());
 
-		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));
+		pressButton(okButton);
 		program.flushEvents();
 		waitForSwing();
 
@@ -689,7 +689,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertTrue(writeCB.isEnabled());
 		assertTrue(executeCB.isEnabled());
 
-		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));
+		pressButton(okButton);
 		program.flushEvents();
 		waitForSwing();
 
@@ -779,7 +779,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertTrue(writeCB.isEnabled());
 		assertTrue(executeCB.isEnabled());
 
-		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));
+		pressButton(okButton);
 		program.flushEvents();
 		waitForSwing();
 
@@ -855,7 +855,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertTrue(writeCB.isEnabled());
 		assertTrue(executeCB.isEnabled());
 
-		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));
+		pressButton(okButton);
 		program.flushEvents();
 		waitForSwing();
 
@@ -1044,7 +1044,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals(newEnd, endField.getAddress());
 		assertTrue(okButton.isEnabled());
 
-		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));
+		pressButton(okButton);
 		// wait for thread to start
 		Thread.sleep(1000);
 

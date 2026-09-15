@@ -39,14 +39,14 @@ import ghidra.util.UserSearchUtils;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * This class attempts to search for text as it is rendered on the screen.  This in in
+ * This class attempts to search for text as it is rendered on the screen.  This is in
  * contrast to the Program Database Searcher which searches the database.  This is
  * needed because some information on the screen is rendered "on the fly" and not
  * stored in the database.  This searcher is much slower, but delivers
  * results that are in-line with what the user sees.
  * <p>
  * The search is performed in two steps.  First it uses Instruction and Data iterators to
- * find possible addresses where where information would be rendered.  Then for each of those
+ * find possible addresses where information would be rendered.  Then for each of those
  * addresses, it uses the code browsers rendering engine to produce a textual representation
  * for that address.  The textual representation also maintains information about the field
  * that generated it so that the search can be constrained to specific fields such as the

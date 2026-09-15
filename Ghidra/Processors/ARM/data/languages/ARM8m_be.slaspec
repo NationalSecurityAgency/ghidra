@@ -11,7 +11,7 @@
 @define VERSION_8 ""
 @define SIMD ""
 @define CDE ""
-@define CORTEX ""
+@define VERSION_8M ""
 @define VFPv3 ""
 @define VFPv4 ""
 

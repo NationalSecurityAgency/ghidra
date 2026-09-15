@@ -16,8 +16,7 @@
 package ghidra.pcode.emu.jit;
 
 import ghidra.pcode.emu.jit.JitBytesPcodeExecutorStatePiece.JitBytesPcodeExecutorStateSpace;
-import ghidra.pcode.exec.AbstractBytesPcodeExecutorStatePiece;
-import ghidra.pcode.exec.BytesPcodeExecutorStateSpace;
+import ghidra.pcode.exec.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
@@ -36,18 +35,18 @@ public class JitBytesPcodeExecutorStatePiece
 	/**
 	 * An object to manage state for a specific {@link AddressSpace}
 	 */
-	public class JitBytesPcodeExecutorStateSpace extends BytesPcodeExecutorStateSpace<Void> {
+	public class JitBytesPcodeExecutorStateSpace extends BytesPcodeExecutorStateSpace {
 
 		/**
 		 * Construct a state space
 		 * 
 		 * @param language the emulation target language
 		 * @param space the address space
-		 * @param backing any extra read-through backing (not used)
+		 * @param piece the owning piece
 		 */
 		public JitBytesPcodeExecutorStateSpace(Language language, AddressSpace space,
-				Void backing) {
-			super(language, space, backing);
+				AbstractBytesPcodeExecutorStatePiece<?> piece) {
+			super(language, space, piece);
 		}
 
 		/**
@@ -83,18 +82,20 @@ public class JitBytesPcodeExecutorStatePiece
 		 * @return the value of the variable as a byte array
 		 */
 		public byte[] read(long offset, int size) {
-			return read(offset, size, Reason.EXECUTE_READ);
+			return read(offset, size, Reason.EXECUTE_READ, cb);
 		}
-	}
 
-	/**
-	 * A state space map that creates a {@link JitBytesPcodeExecutorStateSpace} for each needed
-	 * {@link AddressSpace}
-	 */
-	class JitBytesSpaceMap extends SimpleSpaceMap<JitBytesPcodeExecutorStateSpace> {
-		@Override
-		protected JitBytesPcodeExecutorStateSpace newSpace(AddressSpace space) {
-			return new JitBytesPcodeExecutorStateSpace(language, space, null);
+		/**
+		 * Write a variable to this (pre-fetched) state space
+		 * 
+		 * @see #read(long, int)
+		 * @param offset the offset
+		 * @param val the value
+		 * @param srcOffset offset within val to start
+		 * @param length the number of bytes to write
+		 */
+		public void write(long offset, byte[] val, int srcOffset, int length) {
+			write(offset, val, srcOffset, length, cb);
 		}
 	}
 
@@ -102,14 +103,16 @@ public class JitBytesPcodeExecutorStatePiece
 	 * Construct a state piece
 	 * 
 	 * @param language the emulation target language
+	 * @param cb callbacks to receive emulation events. Note that many accesses by the JIT are
+	 *            direct and so will not generate a callback. DO NOT rely on state callbacks yet.
 	 */
-	public JitBytesPcodeExecutorStatePiece(Language language) {
-		super(language);
+	public JitBytesPcodeExecutorStatePiece(Language language, PcodeStateCallbacks cb) {
+		super(language, cb);
 	}
 
 	@Override
-	protected AbstractSpaceMap<JitBytesPcodeExecutorStateSpace> newSpaceMap() {
-		return new JitBytesSpaceMap();
+	protected JitBytesPcodeExecutorStateSpace newSpace(AddressSpace space) {
+		return new JitBytesPcodeExecutorStateSpace(language, space, this);
 	}
 
 	@Override

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,11 +19,10 @@ import java.io.*;
 import java.net.*;
 import java.util.Properties;
 
-import ghidra.net.ApplicationKeyManagerFactory;
+import ghidra.net.DefaultKeyManagerFactory;
 import ghidra.util.Msg;
 
 public class HttpUtil {
-
 
 	/**
 	 * Execute an HTTP/HTTPS GET request and return the resulting HttpURLConnection.
@@ -32,19 +31,20 @@ public class HttpUtil {
 	 * @param allowRedirect allow site redirects to be handled if true
 	 * @return HttpURLConnection which contains information about the URL
 	 * @throws MalformedURLException bad httpUrlString specified
+	 * @throws URISyntaxException bad httpUrlString specified
 	 * @throws IOException if an error occurs while executing request
 	 */
 	public static HttpURLConnection getContent(String httpUrlString,
-			Properties httpRequestProperties, boolean allowRedirect) throws MalformedURLException,
-			IOException {
+			Properties httpRequestProperties, boolean allowRedirect)
+			throws MalformedURLException, URISyntaxException, IOException {
 
-		URL url = new URL(httpUrlString);
+		URL url = new URI(httpUrlString).toURL();
 		String protocol = url.getProtocol();
 
 		if ("https".equals(protocol)) {
 			// force password prompt before connecting
-			if (!ApplicationKeyManagerFactory.initialize()) {
-				if (ApplicationKeyManagerFactory.getKeyStore() != null) {
+			if (!DefaultKeyManagerFactory.initialize()) {
+				if (DefaultKeyManagerFactory.getKeyStore() != null) {
 					// Report error condition?
 					throw new IOException("Failed to initialize PKI certificate keystore");
 				}
@@ -98,11 +98,13 @@ public class HttpUtil {
 	 * @param allowRedirect allow site redirects to be handled if true
 	 * @param destFile destination file
 	 * @throws MalformedURLException bad httpUrlString specified
+	 * @throws URISyntaxException bad httpUrlString specified
 	 * @throws IOException if an error occurs while executing request
 	 * @return String representing the content-type of the file, or null if the information is not available
 	 */
 	public static String getFile(String httpUrlString, Properties httpRequestProperties,
-			boolean allowRedirect, File destFile) throws MalformedURLException, IOException {
+			boolean allowRedirect, File destFile)
+			throws MalformedURLException, URISyntaxException, IOException {
 
 		HttpURLConnection connection = null;
 		InputStream content = null;

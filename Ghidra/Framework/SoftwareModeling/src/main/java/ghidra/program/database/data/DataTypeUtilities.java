@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import java.util.regex.*;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.SymbolPathParser;
 import ghidra.docking.settings.Settings;
+import ghidra.program.database.data.merge.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.listing.*;
@@ -62,19 +63,173 @@ public class DataTypeUtilities {
 		cPrimitiveNameMap.put("long double", LongDoubleDataType.dataType);
 	}
 
-	// TODO: Should we drop the handling of "_" use in conflict name.  It's unclear 
+	private static Map<String, DataType> cTypedefBuiltInNameRemap = new HashMap<>();
+	static {
+		cTypedefBuiltInNameRemap.put("int8_t", Int8TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__int8_t", Int8TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__int8", Int8TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("int_fast8_t", Int8TDataType.dataType);
+
+		cTypedefBuiltInNameRemap.put("uint8_t", UInt8TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__uint8_t", UInt8TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__uint8", UInt8TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("uint_fast8_t", UInt8TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("u_int8_t", UInt8TDataType.dataType);
+
+		cTypedefBuiltInNameRemap.put("int16_t", Int16TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__int16_t", Int16TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__int16", Int16TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("int_fast16_t", Int16TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("_G_int16_t", Int16TDataType.dataType);
+
+		cTypedefBuiltInNameRemap.put("uint16_t", UInt16TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__uint16_t", UInt16TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__uint16", UInt16TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("uint_fast16_t", UInt16TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("u_int16_t", UInt16TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("_G_uint16_t", UInt16TDataType.dataType);
+
+		cTypedefBuiltInNameRemap.put("int32_t", Int32TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__int32_t", Int32TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__int32", Int32TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("int_fast32_t", Int32TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("_G_int32_t", Int32TDataType.dataType);
+
+		cTypedefBuiltInNameRemap.put("uint32_t", UInt32TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__uint32_t", UInt32TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__uint32", UInt32TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("uint_fast32_t", UInt32TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("u_int32_t", UInt32TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("_G_uint32_t", UInt32TDataType.dataType);
+
+		cTypedefBuiltInNameRemap.put("int64_t", Int64TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__int64_t", Int64TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__int64", Int64TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("int_fast64_t", Int64TDataType.dataType);
+
+		cTypedefBuiltInNameRemap.put("uint64_t", UInt64TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__uint64_t", UInt64TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__uint64", UInt64TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("uint_fast64_t", UInt64TDataType.dataType);
+		cTypedefBuiltInNameRemap.put("u_int64_t", UInt64TDataType.dataType);
+
+		cTypedefBuiltInNameRemap.put("intptr_t", PointerSizedIntegerDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__intptr_t", PointerSizedIntegerDataType.dataType);
+
+		cTypedefBuiltInNameRemap.put("uintptr_t", UnsignedPointerSizedIntegerDataType.dataType);
+		cTypedefBuiltInNameRemap.put("__uintptr_t", UnsignedPointerSizedIntegerDataType.dataType);
+
+		cTypedefBuiltInNameRemap.put("wchar_t", WideCharDataType.dataType);
+		cTypedefBuiltInNameRemap.put("wchar", WideCharDataType.dataType);
+
+		cTypedefBuiltInNameRemap.put("char16_t", WideChar16DataType.dataType);
+
+		cTypedefBuiltInNameRemap.put("char32_t", WideChar32DataType.dataType);
+
+	}
+
+	// TODO: Should we drop the handling of "_" use in conflict name.  It's unclear
 	// when/if this was ever used in the generation of a conflict name.
-	// NOTE: It is assumed that all BuiltInDataType types (other then possibly Pointers) 
+	// NOTE: It is assumed that all BuiltInDataType types (other then possibly Pointers)
 	// will not utilize conflict names.  This includes pointers and arrays whose base
 	// type is a BuiltInDataType.
 	// NOTE: The BASE_DATATYPE_CONFLICT_PATTERN may never be applied to a pointer
-	// or array name as it will always fail to match.  Pointer and array decorations 
+	// or array name as it will always fail to match.  Pointer and array decorations
 	// must be stripped off first.
 	private static final Pattern BASE_DATATYPE_CONFLICT_PATTERN =
 		Pattern.compile(Pattern.quote(DataType.CONFLICT_SUFFIX) + "([_]{0,1}\\d+){0,1}$");
 
 	private static final Pattern DATATYPE_POINTER_ARRAY_PATTERN =
 		Pattern.compile("(( \\*\\d*)|(\\[\\d+\\]))+$");
+
+	/**
+	 * Get a BuiltIn {@link TypeDef} replacement, if one exists, for the specified fabricated 
+	 * typedef.  It is important that the supplied typedef has the correct target 
+	 * {@link DataTypeManager} and associated {@link DataOrganization} so that a proper replacement 
+	 * verification may be performed.
+	 * <p>
+	 * This method is intended to be used by parsers prior to resolving or applying a fabricated
+	 * fixed-length typedef to allow a portable implementation to be used in its place.  If one
+	 * exists, this ensures that its size will not change when moving between different architectures.
+	 * 
+	 * @param typedef {@link TypeDef} data type to consider for replacement
+	 * @param enforceSizeMatch if true, size of replacement must match specified typedef
+	 * @return replacement data type or the original typedef if a replacement was not found
+	 * @throws IllegalArgumentException if typedef was not constructed or cloned for a specific
+	 * data type manager.
+	 */
+	public static DataType getTypedefReplacement(TypeDef typedef, boolean enforceSizeMatch) {
+
+		DataTypeManager dtm = typedef.getDataTypeManager();
+		if (dtm == null) {
+			throw new IllegalArgumentException(
+				"typedef does not target a specific data type manager");
+		}
+
+		// Check for direct replacement of typedef with BuiltIn of same name
+		DataType directReplacement = getValidReplacement(typedef, enforceSizeMatch, dtm);
+		if (directReplacement != null && directReplacement.getName().equals(typedef.getName())) {
+			return directReplacement;
+		}
+
+		// Handle as possible typedef to BuiltIn replacement
+		DataType refDt = typedef.getDataType();
+		if (refDt instanceof TypeDef td) {
+			DataType replacementDt = getTypedefReplacement(td, enforceSizeMatch);
+			if (replacementDt != td) {
+				return new TypedefDataType(typedef.getCategoryPath(), typedef.getName(), refDt,
+					dtm);
+			}
+		}
+
+		// Handle as typedef replacement based on remap if directReplacement differs from refDt
+		if (directReplacement != null && !directReplacement.equals(refDt)) {
+			return new TypedefDataType(typedef.getCategoryPath(), typedef.getName(),
+				directReplacement, dtm);
+		}
+
+		return typedef;
+	}
+
+	/**
+	 * Get valid typedef replacement
+	 * @param typedef typedef to be replaced (should not reference another typedef)
+	 * @param enforceSizeMatch if true size of replacement must match specified typedef
+	 * @param dtm data type manager
+	 * @return replacement data type or the null if a replacement was not found
+	 */
+	private static DataType getValidReplacement(TypeDef typedef, boolean enforceSizeMatch,
+			DataTypeManager dtm) {
+		
+		DataType replacementDt = cTypedefBuiltInNameRemap.get(typedef.getName());
+		if (replacementDt == null) {
+			return null;
+		}
+
+		if (enforceSizeMatch) {
+			if (replacementDt.hasLanguageDependantLength()) {
+				replacementDt = replacementDt.clone(dtm);
+			}
+			if (typedef.getLength() != replacementDt.getLength()) {
+				return null;
+			}
+		}
+
+		DataType tdDt = typedef.getBaseDataType();
+
+		if (replacementDt instanceof AbstractIntegerDataType intDt) {
+			if (tdDt instanceof AbstractIntegerDataType tdIntDt) {
+				if (intDt.isSigned() == tdIntDt.isSigned()) {
+					return replacementDt = replacementDt.clone(dtm);
+				}
+			}
+		}
+		else if (replacementDt instanceof DataTypeWithCharset) {
+			// Unsure what other constraints should be placed on valid replacement
+			return replacementDt = replacementDt.clone(dtm);
+		}
+		return null;
+	}
 
 	public static Collection<DataType> getContainedDataTypes(DataType rootDataType) {
 		HashMap<String, DataType> dataTypeMap = new HashMap<>();
@@ -157,7 +312,7 @@ public class DataTypeUtilities {
 	 * Note: pointers to the second data type are references and therefore are not considered to be
 	 * part of the first and won't cause true to be returned. If you pass a pointer to this method
 	 * for the first or second parameter, it will return false.
-	 * 
+	 *
 	 * @param firstDataType the data type whose components or base type should be checked to see if
 	 *            the second data type is part of it.
 	 * @param secondDataType the data type to be checked for in the first data type.
@@ -191,8 +346,109 @@ public class DataTypeUtilities {
 	}
 
 	/**
-	 * Returns true if the two dataTypes have the same sourceArchive and the same UniversalID
+	 * This method throws an exception if the indicated component data type is an ancestor of
+	 * the specified dataType (i.e., the specified component data type has a component or
+	 * sub-component containing the specified dataType).
 	 * 
+	 * @param dataType the data type
+	 * @param componentDataType component data type
+	 * @throws DataTypeDependencyException if ancestry check fails
+	 */
+	public static void checkAncestry(DataType dataType, DataType componentDataType)
+			throws DataTypeDependencyException {
+		if (DataTypeUtilities.isSecondPartOfFirst(componentDataType, dataType)) {
+			throw new DataTypeDependencyException(
+				"Data type " + componentDataType.getDisplayName() + " has " +
+					dataType.getDisplayName() + " within it.");
+		}
+	}
+
+	/**
+	 * Check if the specified replacement data type pair is invalid.
+	 * @param replacedDt existing data type being replaced
+	 * @param replacementDt replacement data type
+	 * @throws IllegalArgumentException if an invalid replaced/replacement data type pair is specified.
+	 */
+	public static void checkValidReplacement(DataType replacedDt, DataType replacementDt)
+			throws IllegalArgumentException {
+
+		DataTypeUtilities.checkValidReplacementDataType(replacedDt);
+		DataTypeUtilities.checkValidReplacementDataType(replacementDt);
+
+		checkForInvalidFunctionDefinitionReplacement(replacedDt, replacementDt);
+	}
+
+	/**
+	 * Validate the replacement data type.  Certain data types are not permitted
+	 * to participate in a replacement including a {@link FactoryDataType}, {@link Dynamic} or
+	 * {@link BitFieldDataType}.
+	 * @param dataType data type to be checked
+	 * @throws IllegalArgumentException if an invalid datatype is specified.
+	 */
+	private static void checkValidReplacementDataType(DataType dataType) {
+		if (dataType instanceof DataTypeDB) {
+			return;
+		}
+		if (dataType instanceof VoidDataType) {
+			throw new IllegalArgumentException("Replacement data type may not be 'void' data type");
+		}
+		if (dataType instanceof DefaultDataType) {
+			throw new IllegalArgumentException(
+				"Replacement data type may not be 'default' undefined data type");
+		}
+		if (dataType instanceof BitFieldDataType) {
+			throw new IllegalArgumentException(
+				"Replacement data type may not be a bitfield: " + dataType.getName());
+		}
+		if (dataType instanceof FactoryDataType) {
+			throw new IllegalArgumentException(
+				"Replacement data type may not be a Factory data type: " + dataType.getName());
+		}
+		if (dataType instanceof Dynamic) {
+			throw new IllegalArgumentException(
+				"Replacement data type may not be a Dynamic data type: " + dataType.getName());
+		}
+	}
+
+	/**
+	 * Determine if the replacement data type pair represents an invalid function definition 
+	 * replacement.
+	 * @param replacedDt replaced data type to be replaced
+	 * @param replacementDt new replacement data type
+	 * @throws IllegalArgumentException if an invalid replaced/replacement data type pair is specified.
+	 */
+	private static void checkForInvalidFunctionDefinitionReplacement(DataType replacedDt,
+			DataType replacementDt) throws IllegalArgumentException {
+
+		DataType replacedBaseDt = replacedDt;
+		if (replacedDt instanceof TypeDef replacedTypedef) {
+			replacedBaseDt = replacedTypedef.getBaseDataType();
+		}
+
+		DataType replacementBaseDt = replacementDt;
+		if (replacementDt instanceof TypeDef replacementTypedef) {
+			replacementBaseDt = replacementTypedef.getBaseDataType();
+		}
+
+		// Impose similarity constraints
+		if (replacedBaseDt instanceof FunctionDefinition) {
+			if (!(replacementBaseDt instanceof FunctionDefinition)) {
+				throw new IllegalArgumentException(
+					"Existing function definition \"" + replacedDt.getName() +
+						"\" may not be replaced with \"" + replacementDt.getName() + "\"");
+			}
+		}
+		else if (replacementBaseDt instanceof FunctionDefinition) {
+			throw new IllegalArgumentException("Existing data type \"" + replacedDt.getName() +
+				"\" may not be replaced with function definition \"" + replacementDt.getName() +
+				"\"");
+		}
+
+	}
+
+	/**
+	 * Returns true if the two dataTypes have the same sourceArchive and the same UniversalID
+	 *
 	 * @param dataType1 first data type
 	 * @param dataType2 second data type
 	 * @return true if types correspond to the same type from a source archive
@@ -218,7 +474,7 @@ public class DataTypeUtilities {
 	/**
 	 * Returns true if two dataTypes have the same sourceArchive and the same UniversalID OR are
 	 * equivalent
-	 * 
+	 *
 	 * @param dataType1 first data type (if invoked by DB object or manager, this argument must
 	 *            correspond to the DataTypeDB).
 	 * @param dataType2 second data type
@@ -230,6 +486,10 @@ public class DataTypeUtilities {
 		if (isSameDataType(dataType1, dataType2)) {
 			return true;
 		}
+		if (dataType2 instanceof DataTypeDB) {
+			// Leverage optimizations within most DataTypeDB implementations
+			return dataType2.isEquivalent(dataType1);
+		}
 		// otherwise, check if they are equivalent
 		return dataType1.isEquivalent(dataType2);
 	}
@@ -237,16 +497,16 @@ public class DataTypeUtilities {
 	/**
 	 * Determine if two dataTypes are the same kind of datatype without considering naming or
 	 * component makeup.  The use of Typedefs is ignored and stripped away for comparison.
-	 * This method also ignores details about most built-in types, pointers and arrays 
+	 * This method also ignores details about most built-in types, pointers and arrays
 	 * (e.g., number of elements or size).  Implementations of the following abstract classes
 	 * will be treated as the same kind as another datatype which extends the same abstract
 	 * class:
 	 * <ul>
-	 * <li>{@link AbstractIntegerDataType}</li> 
+	 * <li>{@link AbstractIntegerDataType}</li>
 	 * <li>{@link AbstractFloatDataType}</li>
 	 * <li>{@link AbstractStringDataType}</li>
 	 * </ul>
-	 *  Other uses of {@link BuiltInDataType} must match the specific implementation class. 
+	 *  Other uses of {@link BuiltInDataType} must match the specific implementation class.
 	 * @param dataType1 first data type
 	 * @param dataType2 second data type
 	 * @return true if the two dataTypes are the same basic kind else false
@@ -311,7 +571,7 @@ public class DataTypeUtilities {
 	 * Get the base data type for the specified data type stripping away pointers and arrays only. A
 	 * null will be returned for a default pointer.
 	 *
-	 * @param dt the data type whose base data type is to be determined. 
+	 * @param dt the data type whose base data type is to be determined.
 	 * @return the base data type (may be null for default pointer).
 	 */
 	public static DataType getBaseDataType(DataType dt) {
@@ -393,7 +653,7 @@ public class DataTypeUtilities {
 	/**
 	 * Create a data type category path derived from the specified namespace and rooted from the
 	 * specified baseCategory
-	 * 
+	 *
 	 * @param baseCategory category path from which to root the namespace-base path
 	 * @param namespace the namespace
 	 * @return namespace derived category path
@@ -415,9 +675,9 @@ public class DataTypeUtilities {
 	 * Find the structure data type which corresponds to the specified class namespace
 	 * within the specified data type manager.
 	 * The structure must utilize a namespace-based category path, however,
-	 * the match criteria can be fuzzy and relies primarily on the full class namespace.  
-	 * A properly named class structure must reside within a category whose trailing 
-	 * path either matches the class namespace or the class-parent's namespace.  
+	 * the match criteria can be fuzzy and relies primarily on the full class namespace.
+	 * A properly named class structure must reside within a category whose trailing
+	 * path either matches the class namespace or the class-parent's namespace.
 	 * Preference is given to it residing within the class-parent's namespace.
 	 * @param dataTypeManager data type manager which should be searched.
 	 * @param classNamespace class namespace
@@ -440,10 +700,10 @@ public class DataTypeUtilities {
 
 	/**
 	 * Attempt to find the data type whose dtName and specified namespace match a stored data type
-	 * within the specified dataTypeManager. The first match which satisfies the category path 
-	 * requirement will be returned.  If a non-root namespace is specified the datatype's trailing 
+	 * within the specified dataTypeManager. The first match which satisfies the category path
+	 * requirement will be returned.  If a non-root namespace is specified the datatype's trailing
 	 * category path must match the specified namespace path.
-	 * 
+	 *
 	 * @param dataTypeManager data type manager
 	 * @param namespace namespace associated with dtName (null indicates no namespace constraint)
 	 * @param dtName name of data type
@@ -466,10 +726,10 @@ public class DataTypeUtilities {
 
 	/**
 	 * Attempt to find the data type whose dtNameWithNamespace match a stored data type within the
-	 * specified dataTypeManager. The namespace will be used in checking data type parent categories.  
-	 * NOTE: name parsing assumes :: namespace delimiter which can be thrown off if name includes 
+	 * specified dataTypeManager. The namespace will be used in checking data type parent categories.
+	 * NOTE: name parsing assumes :: namespace delimiter which can be thrown off if name includes
 	 * template information which could contain namespaces (see {@link SymbolPathParser#parse(String)}).
-	 * 
+	 *
 	 * @param dataTypeManager data type manager
 	 * @param dtNameWithNamespace name of data type qualified with namespace (e.g.,
 	 *            ns1::ns2::dtname)
@@ -507,7 +767,7 @@ public class DataTypeUtilities {
 
 	/**
 	 * Return the appropriate datatype for a given C primitive datatype name.
-	 * 
+	 *
 	 * @param dataTypeName the datatype name (e.g. "unsigned int", "long long")
 	 * @return the appropriate datatype for a given C primitive datatype name.
 	 */
@@ -525,11 +785,11 @@ public class DataTypeUtilities {
 
 	/**
 	 * Get relative/partial category paths which corresponds to a specified namespace.
-	 * Any {@link Library} namespace will be ignored and treated like the global namespace 
+	 * Any {@link Library} namespace will be ignored and treated like the global namespace
 	 * when generating a related category path. An empty string will be returned for the
 	 * global namespace.
 	 * @param namespace data type namespace
-	 * @return partial two-element array with category path for namespace [NAMESPACE_PATH_INDEX] 
+	 * @return partial two-element array with category path for namespace [NAMESPACE_PATH_INDEX]
 	 * and parent-namespace [PARENT_NAMESPACE_PATH_INDEX].
 	 * A null is returned if namespace is null or the root/global namespace.
 	 */
@@ -557,12 +817,12 @@ public class DataTypeUtilities {
 	/**
 	 * Namespace category matcher.  Only those datatypes contained within a catgeory
 	 * whose trailing category path matches the specified namespacePath will be considered
-	 * a possible match.  If the namespacePath is empty array all category paths will 
+	 * a possible match.  If the namespacePath is empty array all category paths will
 	 * be considered a match with preference given to the root category.
 	 * @param categoryPath datatype category path
 	 * @param namespacePath namespace path
 	 * @return {@link CategoryMatchType#PREFERRED} if namespace match found, {@link CategoryMatchType#SECONDARY}
-	 * if no namespace constraint specified else {@link CategoryMatchType#NONE} if namespace constraint not 
+	 * if no namespace constraint specified else {@link CategoryMatchType#NONE} if namespace constraint not
 	 * satisfied.
 	 */
 	private static CategoryMatchType getCategoryMatchType(CategoryPath categoryPath,
@@ -577,14 +837,14 @@ public class DataTypeUtilities {
 	}
 
 	/**
-	 * Namespace category matcher.  
+	 * Namespace category matcher.
 	 * @param categoryPath datatype category path
 	 * @param namespacePaths namespace paths constraint or null for no namespace.  This value should
 	 * be obtained from the {@link #getRelativeCategoryPaths(Namespace)} method.
-	 * @param parentNamespacePreferred if true matching on parent namespace is 
+	 * @param parentNamespacePreferred if true matching on parent namespace is
 	 * enabled and preferred over match on actual namespace.  This is used for
 	 * class structure searching.
-	 * @return {@link CategoryMatchType#PREFERRED} is returned if parentNamespacePreferred is true 
+	 * @return {@link CategoryMatchType#PREFERRED} is returned if parentNamespacePreferred is true
 	 * and category path matches on parent-namespace or parentNamespacePreferred is false
 	 * and category path matches on namespace.  {@link CategoryMatchType#SECONDARY} is returned
 	 * if parentNamespacePreferred is true and category path matches on namespace.  Otherwise
@@ -639,7 +899,7 @@ public class DataTypeUtilities {
 	 * @param <T> A standard interface which extends {@link DataType} (e.g., {@link Structure}).
 	 * @param dataTypeManager datatype manager to query
 	 * @param rootPath root category path
-	 * @param namespacePath an optional namespace path to be checked under rootPath.  
+	 * @param namespacePath an optional namespace path to be checked under rootPath.
 	 * If null or empty the rootPath will be checked for dtName.
 	 * @param dtName datatype name
 	 * @param classConstraint datatype class constraint (optional, may be null)
@@ -667,7 +927,7 @@ public class DataTypeUtilities {
 	}
 
 	/**
-	 * Get the specified datatype by name and category and return only if its type 
+	 * Get the specified datatype by name and category and return only if its type
 	 * corresponds to an class constraint if specified.
 	 * @param <T> A standard interface which extends {@link DataType} (e.g., {@link Structure}).
 	 * @param category datatype category to query
@@ -689,16 +949,16 @@ public class DataTypeUtilities {
 	/**
 	 * Perform a preferred category namespace qualified datatype search using
 	 * category path supplied by {@link Program#getPreferredRootNamespaceCategoryPath()}.
-	 * Any {@link Library} namespace will be ignored and treated like the global namespace 
-	 * when generating a related category path.  This method only applies to 
-	 * {@link ProgramBasedDataTypeManager} and will always return null for other 
+	 * Any {@link Library} namespace will be ignored and treated like the global namespace
+	 * when generating a related category path.  This method only applies to
+	 * {@link ProgramBasedDataTypeManager} and will always return null for other
 	 * datatype managers.
 	 * @param dataTypeManager datatype manager
 	 * @param namespace namespace constraint or null for no namespace.
 	 * @param dtName datatype name
 	 * @param classConstraint type of datatype by its interface class (e.g., {@link Structure}).
 	 * @param parentNamespacePreferred if true matching on parent namespace is 
-	 * enabled and preferred over match on actual namespace.  This is relavent for
+	 * enabled and preferred over match on actual namespace.  This is relevant for
 	 * class structure searching.
 	 * @return preferred datatype match if found
 	 */
@@ -730,7 +990,7 @@ public class DataTypeUtilities {
 	 * Compare datatype category path lengths for sorting shortest path first.
 	 * Tie-breaker based on path name sort.
 	 * Rationale is to provide some deterministic datatype selection behavior and
-	 * to allow duplicates within a hierarchical orgainzation to prefer the short
+	 * to allow duplicates within a hierarchical organization to prefer the short
 	 * path to reduce bad namespace matches.
 	 */
 	private static final Comparator<DataType> DATATYPE_CATEGORY_PATH_LENGTH_COMPARATOR =
@@ -745,15 +1005,15 @@ public class DataTypeUtilities {
 		};
 
 	/**
-	 * Perform a namespace qualified datatype search.  
+	 * Perform a namespace qualified datatype search.
 	 * @param dataTypeManager datatype manager
 	 * @param dtName datatype name
 	 * @param classConstraint type of datatype by its interface class (e.g., {@link Structure}).
 	 * @param categoryMatcher responsible for evaluating the category path
-	 * for a possible match with a namespace constraint.  
-	 * @return The first {@link CategoryMatchType#PREFERRED} match will be 
-	 * returned if found.  If none are {@link CategoryMatchType#PREFERRED}, the first 
-	 * {@link CategoryMatchType#SECONDARY} match will be returned.  Otherwise null is returned. 
+	 * for a possible match with a namespace constraint.
+	 * @return The first {@link CategoryMatchType#PREFERRED} match will be
+	 * returned if found.  If none are {@link CategoryMatchType#PREFERRED}, the first
+	 * {@link CategoryMatchType#SECONDARY} match will be returned.  Otherwise null is returned.
 	 */
 	@SuppressWarnings("unchecked")
 	private static <T extends DataType> T findDataType(DataTypeManager dataTypeManager,
@@ -812,10 +1072,10 @@ public class DataTypeUtilities {
 
 	/**
 	 * Get the name of a data type with all conflict naming patterns removed.
-	 * 
+	 *
 	 * @param dataType data type
 	 * @param includeCategoryPath if true, the category path will be included with the
-	 * returned name (e.g., /mypath/mydt) and any occurance of a forward slash within individual 
+	 * returned name (e.g., /mypath/mydt) and any occurance of a forward slash within individual
 	 * path components, including the data type name, will be escaped (e.g., {@code "\/"}).
 	 * @return name with optional category path included
 	 */
@@ -829,7 +1089,7 @@ public class DataTypeUtilities {
 
 	/**
 	 * Get the name of a data type with all conflict naming patterns removed.
-	 * 
+	 *
 	 * @param dataTypeName data type name with optional category path included
 	 * @return name with optional category path included
 	 */
@@ -849,7 +1109,7 @@ public class DataTypeUtilities {
 
 	/**
 	 * Get a datatype's name without conflict suffix.
-	 * 
+	 *
 	 * @param dt datatype (pointer and array permitted)
 	 * @return datatype's name without conflict suffix
 	 */
@@ -904,13 +1164,13 @@ public class DataTypeUtilities {
 
 	/**
 	 * Get the conflict value string associated with a conflict datatype name.
-	 * 
+	 *
 	 * @param dataType datatype to be checked
 	 * @return conflict value:
 	 * <ol>
 	 * <li>-1: when type does not have a conflict name,</li>
 	 * <li>0: when conflict name does not have a number (i.e., {@code .conflict}), or</li>
-	 * <li>a positive value which corresponds to the conflict number in the name 
+	 * <li>a positive value which corresponds to the conflict number in the name
 	 *     (e.g., returns 2 for {@code .conflict2}).</li>
 	 * </ol>
 	 */
@@ -930,13 +1190,13 @@ public class DataTypeUtilities {
 
 	/**
 	 * Get the conflict value associated with a conflict datatype name.
-	 * 
+	 *
 	 * @param dataTypeName datatype name to be checked
 	 * @return conflict value:
 	 * <ol>
 	 * <li>-1: when name is not have a conflict name,</li>
 	 * <li>0: when conflict name does not have a number (i.e., {@code .conflict}), or</li>
-	 * <li>a positive value which corresponds to the conflict number in the name 
+	 * <li>a positive value which corresponds to the conflict number in the name
 	 *     (e.g., returns 2 for {@code .conflict2}).</li>
 	 * </ol>
 	 */
@@ -952,7 +1212,7 @@ public class DataTypeUtilities {
 
 	/**
 	 * Determine if the specified data type name is a conflict name.
-	 * 
+	 *
 	 * @param dataTypeName datatype name
 	 * @return true if data type name is a conflict name.
 	 */
@@ -991,12 +1251,65 @@ public class DataTypeUtilities {
 	/**
 	 * Compares two data type name strings to determine if they are equivalent names, ignoring
 	 * conflict patterns present.
-	 * 
+	 *
 	 * @param name1 the first name
 	 * @param name2 the second name
 	 * @return true if the names are equivalent when conflict suffixes are ignored.
 	 */
 	public static boolean equalsIgnoreConflict(String name1, String name2) {
 		return getNameWithoutConflict(name1).equals(getNameWithoutConflict(name2));
+	}
+	
+
+	/**
+	 * Returns true if there is a {@link DataTypeMerger} that can handle the given datatype. Currently, only structures
+	 * unions, and enums are supported.
+	 * @param dataType the dataType to check
+	 * @return true if there is support for merging that dataType
+	 */
+	public static boolean supportsMerge(DataType dataType) {
+		return dataType instanceof Composite || dataType instanceof Enum;
+	}
+	/**
+	 * Convenience method for getting the appropriate datatype merger or throwing an exception
+	 * if the two datatypes are not eligible to be merged.
+	 * @param dt1 the first datatype to be merged
+	 * @param dt2 the second datatype to be merged
+	 * @return A merger to be used to merge the two data types.
+	 * @throws DataTypeMergeException if the two datatypes are not the same type or their type
+	 * is not supported for merging
+	 */
+	public static DataTypeMerger<?> getMerger(DataType dt1, DataType dt2)
+			throws DataTypeMergeException {
+
+		if (dt1 instanceof Structure struct1) {
+			if (dt2 instanceof Structure struct2) {
+				return new StructureMerger(struct1, struct2);
+			}
+			error("structure", dt1, dt2);
+		}
+
+		if (dt1 instanceof Union union1) {
+			if (dt2 instanceof Union union2) {
+				return new UnionMerger(union1, union2);
+			}
+			error("union", dt1, dt2);
+		}
+
+		if (dt1 instanceof Enum enum1) {
+			if (dt2 instanceof Enum enum2) {
+				return new EnumMerger(enum1, enum2);
+			}
+			error("enum", dt1, dt2);
+		}
+
+		throw new DataTypeMergeException("Merge target must be one of structure, union, or enum.");
+	}
+
+	private static void error(String typeName, DataType mergeToDt, DataType selectedDt)
+			throws DataTypeMergeException {
+		String msg = "Can't merge non-%s '%s' datatype into structure '%s' ".formatted(typeName,
+			selectedDt.getName(), mergeToDt.getName());
+		throw new DataTypeMergeException(msg);
 	}
 }

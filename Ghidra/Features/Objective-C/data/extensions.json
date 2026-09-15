@@ -1,0 +1,8 @@
+[
+  {
+    "processor": "AARCH64",
+	"endian": "little",
+	"size": "64",
+    "directory": "extensions/aarch64"
+  }
+]

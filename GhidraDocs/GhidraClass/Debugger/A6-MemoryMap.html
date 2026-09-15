@@ -55,9 +55,9 @@ Mappings</a></li>
 <li><a href="#moving-knowledge-from-dynamic-to-static"
 id="toc-moving-knowledge-from-dynamic-to-static">Moving Knowledge from
 Dynamic to Static</a></li>
-<li><a href="#exercise-export-and-map-ncurses"
-id="toc-exercise-export-and-map-ncurses">Exercise: Export and Map
-<code>ncurses</code></a></li>
+<li><a href="#exercise-export-and-map-system-supplied-dso"
+id="toc-exercise-export-and-map-system-supplied-dso">Exercise: Export
+and Map <code>system-supplied DSO</code></a></li>
 <li><a href="#exercise-cheat-like-the-devs"
 id="toc-exercise-cheat-like-the-devs">Exercise: Cheat Like the
 Devs</a></li>
@@ -276,7 +276,7 @@ anyway.</p></li>
 <li><p>The table displays the <em>copy plan</em>. For a new program,
 this will copy with an identical mapping of addresses, which is probably
 the best plan, since the target system has already applied fixups. Do
-not change any addresses, lest your corrupt references in the
+not change any addresses, lest you corrupt references in the
 copy.</p></li>
 <li><p>Click <strong>Copy</strong>.</p></li>
 <li><p>When prompted, name the program <code>libncurses</code>.</p></li>
@@ -296,8 +296,9 @@ libncurses</strong>.</li>
 <li>Check the proposed mapping and click <strong>OK</strong>.</li>
 </ol>
 </section>
-<section id="exercise-export-and-map-ncurses" class="level2">
-<h2>Exercise: Export and Map <code>ncurses</code></h2>
+<section id="exercise-export-and-map-system-supplied-dso"
+class="level2">
+<h2>Exercise: Export and Map <code>system-supplied DSO</code></h2>
 <p>Repeat this technique for the “system-supplied DSO” module. In
 practice, there is no real reason to do this, but this particular module
 prevents you from using <strong>Import From File System</strong>.</p>

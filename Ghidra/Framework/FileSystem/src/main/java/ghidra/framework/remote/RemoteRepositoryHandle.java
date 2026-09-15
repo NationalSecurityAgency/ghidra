@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@ package ghidra.framework.remote;
 
 import java.io.IOException;
 import java.rmi.Remote;
+import java.rmi.RemoteException;
 import java.rmi.server.RemoteObjectInvocationHandler;
 
 import db.buffers.ManagedBufferFileHandle;
@@ -33,10 +34,10 @@ import ghidra.util.InvalidNameException;
  */
 public interface RemoteRepositoryHandle extends RepositoryHandle, Remote {
 	@Override
-	String getName() throws IOException;
+	String getName() throws RemoteException;
 
 	@Override
-	User getUser() throws IOException;
+	User getUser() throws RemoteException;
 
 	@Override
 	User[] getUserList() throws IOException;
@@ -45,7 +46,7 @@ public interface RemoteRepositoryHandle extends RepositoryHandle, Remote {
 	boolean anonymousAccessAllowed() throws IOException;
 
 	@Override
-	String[] getServerUserList() throws IOException;
+	String[] getServerUserList() throws RemoteException;
 
 	@Override
 	void setUserList(User[] users, boolean anonymousAccessAllowed) throws IOException;
@@ -69,6 +70,10 @@ public interface RemoteRepositoryHandle extends RepositoryHandle, Remote {
 	ManagedBufferFileHandle createDatabase(String parentPath, String itemName, String fileID,
 			int bufferSize, String contentType, String projectPath)
 			throws IOException, InvalidNameException;
+
+	@Override
+	void createTextDataFile(String parentPath, String itemName, String fileID, String contentType,
+			String textData, String comment) throws InvalidNameException, IOException;
 
 	@Override
 	ManagedBufferFileHandle openDatabase(String parentPath, String itemName, int version,

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,10 +25,9 @@ import ghidra.program.model.listing.*;
 public class AppendCommentCmd implements Command<Program> {
 
 	private Address address;
-	private int commentType;
+	private CommentType commentType;
 	private String comment;
 	private String separator;
-	private String cmdName;
 	private String message;
 
 	/**
@@ -40,17 +39,30 @@ public class AppendCommentCmd implements Command<Program> {
 	 * @param separator characters to separate the new comment from the previous comment when
 	 * concatenating.
 	 */
+	@Deprecated(forRemoval = true, since = "11.4")
 	public AppendCommentCmd(Address addr, int commentType, String comment, String separator) {
+		this(addr, CommentType.valueOf(commentType), comment, separator);
+	}
+
+	/**
+	 * Construct command
+	 * @param addr address of code unit where comment will be placed
+	 * @param commentType comment type
+	 * @param comment comment for code unit, should not be null
+	 * @param separator characters to separate the new comment from the previous comment when
+	 * concatenating.
+	 */
+	public AppendCommentCmd(Address addr, CommentType commentType, String comment,
+			String separator) {
 		this.address = addr;
 		this.commentType = commentType;
 		this.comment = comment;
 		this.separator = separator;
-		cmdName = "Append Comment";
 	}
 
 	@Override
 	public String getName() {
-		return cmdName;
+		return "Append Comment";
 	}
 
 	@Override

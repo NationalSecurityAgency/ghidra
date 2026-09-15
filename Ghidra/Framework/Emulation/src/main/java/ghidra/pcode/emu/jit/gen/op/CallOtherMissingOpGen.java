@@ -16,12 +16,19 @@
 package ghidra.pcode.emu.jit.gen.op;
 
 import static ghidra.pcode.emu.jit.gen.GenConsts.MDESC_SLEIGH_LINK_EXCEPTION__$INIT;
-import static ghidra.pcode.emu.jit.gen.GenConsts.NAME_SLEIGH_LINK_EXCEPTION;
-
-import org.objectweb.asm.MethodVisitor;
+import static ghidra.pcode.emu.jit.gen.GenConsts.T_SLEIGH_LINK_EXCEPTION;
 
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
+import ghidra.pcode.emu.jit.gen.JitCodeGenerator.PcGen;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.EntryPoint;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Bot;
+import ghidra.pcode.emu.jit.gen.util.Methods.Inv;
+import ghidra.pcode.emu.jit.gen.util.Methods.RetReq;
+import ghidra.pcode.emu.jit.gen.util.Types.TInt;
+import ghidra.pcode.emu.jit.gen.util.Types.TRef;
 import ghidra.pcode.emu.jit.op.JitCallOtherMissingOp;
 import ghidra.pcode.exec.SleighLinkException;
 
@@ -37,23 +44,21 @@ public enum CallOtherMissingOpGen implements OpGen<JitCallOtherMissingOp> {
 	GEN;
 
 	@Override
-	public void generateRunCode(JitCodeGenerator gen, JitCallOtherMissingOp op, JitBlock block,
-			MethodVisitor rv) {
-		gen.generatePassageExit(block, () -> {
-			rv.visitLdcInsn(gen.getAddressForOp(op.op()).getOffset());
-		}, gen.getExitContext(op.op()), rv);
-
+	public <THIS extends JitCompiledPassage> OpResult genRun(Emitter<Bot> em,
+			Local<TRef<THIS>> localThis, Local<TInt> localCtxmod, RetReq<TRef<EntryPoint>> retReq,
+			JitCodeGenerator<THIS> gen, JitCallOtherMissingOp op, JitBlock block, Scope scope) {
 		String message = gen.getErrorMessage(op.op());
-		// [...]
-		rv.visitTypeInsn(NEW, NAME_SLEIGH_LINK_EXCEPTION);
-		// [...,error:NEW]
-		rv.visitInsn(DUP);
-		// [...,error:NEW,error:NEW]
-		rv.visitLdcInsn(message);
-		// [...,error:NEW,error:NEW,message]
-		rv.visitMethodInsn(INVOKESPECIAL, NAME_SLEIGH_LINK_EXCEPTION, "<init>",
-			MDESC_SLEIGH_LINK_EXCEPTION__$INIT, false);
-		// [...,error]
-		rv.visitInsn(ATHROW);
+		PcGen pcGen = PcGen.loadOffset(gen.getAddressForOp(op.op()));
+		return new DeadOpResult(em
+				.emit(gen::genExit, localThis, block, pcGen, gen.getExitContext(op.op()))
+				.emit(Op::new_, T_SLEIGH_LINK_EXCEPTION)
+				.emit(Op::dup)
+				.emit(Op::ldc__a, message)
+				.emit(Op::invokespecial, T_SLEIGH_LINK_EXCEPTION, "<init>",
+					MDESC_SLEIGH_LINK_EXCEPTION__$INIT, false)
+				.step(Inv::takeArg)
+				.step(Inv::takeObjRef)
+				.step(Inv::retVoid)
+				.emit(Op::athrow));
 	}
 }

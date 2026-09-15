@@ -17,8 +17,6 @@ package docking.widgets.table.constraint.dialog;
 
 import java.util.*;
 
-import org.apache.commons.collections4.CollectionUtils;
-
 import docking.widgets.table.*;
 import docking.widgets.table.constraint.ColumnConstraint;
 import docking.widgets.table.constraint.ColumnTypeMapper;
@@ -168,15 +166,7 @@ public class ColumnFilterData<T> implements Comparable<ColumnFilterData<T>> {
 
 	@Override
 	public String toString() {
-		//@formatter:off
-		return "{\n" +
-			"\tname: " + name + ",\n" +
-			"\tmodelColumn: " + modelIndex + ",\n" +
-			"\tviewColumn: " + viewIndex + ",\n" +
-			"\tconstraints: " + 
-				CollectionUtils.collect(applicableConstraints, c -> c.asString()) +"\n" +
-		"}";
-		//@formatter:on
+		return "[name=%s, model col=%s, view col=%s]".formatted(name, modelIndex, viewIndex);
 	}
 
 	/**

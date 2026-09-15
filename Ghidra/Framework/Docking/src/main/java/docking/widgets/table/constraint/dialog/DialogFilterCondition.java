@@ -162,13 +162,7 @@ public class DialogFilterCondition<T> {
 
 	@Override
 	public String toString() {
-		//@formatter:off
-		return "{\n" +
-			"\tname: " + constraintName + ",\n" +
-			"\teditor: " + editor + "\n" +
-//			"\tparent: " + parent + "\n" + // stack overflow when DialogFilterConditionSet.toString() is called
-		"}";
-		//@formatter:on
+		return "[name=%s, editor=%s]".formatted(constraintName, editor);
 	}
 
 	private ColumnConstraintEditor<T> buildDummyEditor() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package ghidra.app.util.bin.format.dwarf.sectionprovider;
+
+import static ghidra.app.util.bin.format.dwarf.sectionprovider.DWARFSectionId.*;
 
 import java.io.Closeable;
 import java.util.List;
@@ -48,13 +50,13 @@ public class DWARFSectionProviderFactory {
 	/**
 	 * Iterates through the statically registered {@link #sectionProviderFactoryFuncs factory funcs},
 	 * trying each factory method until one returns a {@link DWARFSectionProvider} 
-	 * that can successfully retrieve the {@link DWARFSectionNames#MINIMAL_DWARF_SECTIONS minimal} 
+	 * that can successfully retrieve the {@link DWARFSectionId#MINIMAL_DWARF_SECTIONS minimal} 
 	 * sections we need to do a DWARF import.
 	 * <p>
 	 * The resulting {@link DWARFSectionProvider} is {@link Closeable} and it is the caller's
 	 * responsibility to ensure that the object is closed when done. 
 	 * 
-	 * @param program
+	 * @param program {@link Program}
 	 * @param monitor {@link TaskMonitor}
 	 * @return {@link DWARFSectionProvider} that should be closed by the caller or NULL if no
 	 * section provider types match the specified program.
@@ -65,14 +67,14 @@ public class DWARFSectionProviderFactory {
 			DWARFSectionProvider sp = factoryFunc.apply(program, monitor);
 			if (sp != null) {
 				try {
-					if (sp.hasSection(DWARFSectionNames.MINIMAL_DWARF_SECTIONS)) {
+					if (sp.hasSection(MINIMAL_DWARF_SECTIONS)) {
 						return sp;
 					}
 
 					// if normal sections were not found, look for compressed sections in the
 					// same provider
 					sp = new CompressedSectionProvider(sp);
-					if (sp.hasSection(DWARFSectionNames.MINIMAL_DWARF_SECTIONS)) {
+					if (sp.hasSection(MINIMAL_DWARF_SECTIONS)) {
 						return sp;
 					}
 				}

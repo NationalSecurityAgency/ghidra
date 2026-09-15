@@ -25,8 +25,7 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.FunctionDefinition;
+import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
@@ -79,8 +78,7 @@ public class FunctionSymbolApplier extends AbstractBlockContextApplier
 		return applicator.getAddress(symbol);
 	}
 
-	private void processSymbol(MsSymbolIterator iter)
-			throws CancelledException, PdbException {
+	private void processSymbol(MsSymbolIterator iter) throws CancelledException, PdbException {
 
 		Address address = applicator.getAddress(symbol);
 		String name = symbol.getName();
@@ -119,6 +117,9 @@ public class FunctionSymbolApplier extends AbstractBlockContextApplier
 		if (!(fType instanceof AbstractMemberFunctionMsType memberFunction)) {
 			return symbolPath;
 		}
+
+		// For Future investigation
+		//String modName = getConstructorName(symbolPath);
 
 		// Get containing type, and while we are at it, ensure that it is defined as a class
 		//  namespace.
@@ -171,6 +172,29 @@ public class FunctionSymbolApplier extends AbstractBlockContextApplier
 		return new SymbolPath(parts);
 	}
 
+	// For Future investigation
+	@SuppressWarnings("unused")
+	private String getConstructorName(SymbolPath symbolPath) {
+		if (isConstructor() && function != null) {
+			DataType ret = function.getReturnType();
+			if (ret != null) {
+				if (ret instanceof Pointer p) {
+					DataType u = p.getDataType();
+					if (u instanceof Composite c) {
+						String s = c.getName();
+						String x = symbolPath.getName();
+						if (!s.equals(x)) {
+							// Future investigation?  In what cases does this hit?
+							// For example, triggers on x:=DName<1> and s:=DName
+							// (standard embedded msft demangler stuff found in most binaries)
+						}
+					}
+				}
+			}
+		}
+		return null;
+	}
+
 	/**
 	 * returns true only if we set a function signature
 	 * @return true if function signature was set
@@ -186,8 +210,7 @@ public class FunctionSymbolApplier extends AbstractBlockContextApplier
 		}
 		// Remaining are non-thunks
 
-		if (function.getSignatureSource().isHigherPriorityThan(SourceType.ANALYSIS)) {
-			// return if IMPORTED or USER_DEFINED
+		if (function.getSignatureSource().isHigherOrEqualPriorityThan(SourceType.IMPORTED)) {
 			return false;
 		}
 
@@ -232,6 +255,22 @@ public class FunctionSymbolApplier extends AbstractBlockContextApplier
 			return false;
 		}
 		return true;
+	}
+
+	/**
+	 * Returns true if we can tell that we have a constructor type; false if not or we cannot tell
+	 * @return true if we know that we have a constructor type
+	 */
+	private boolean isConstructor() {
+		RecordNumber typeRecordNumber = symbol.getTypeRecordNumber();
+		AbstractMsType fType = applicator.getTypeRecord(typeRecordNumber);
+		if (fType instanceof AbstractMemberFunctionMsType memFn) {
+			return memFn.getFunctionAttributes().isConstructor();
+		}
+		else if (fType instanceof AbstractProcedureMsType fn) {
+			return fn.getFunctionAttributes().isConstructor();
+		}
+		return false;
 	}
 
 	//==============================================================================================

@@ -16,17 +16,18 @@
 package ghidra.trace.model.time.schedule;
 
 import ghidra.pcode.emu.PcodeThread;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class SkipStep extends AbstractStep {
 
-	public static SkipStep parse(long threadKey, String stepSpec) {
+	public static SkipStep parse(long threadKey, String stepSpec, TimeRadix radix) {
 		if (!stepSpec.startsWith("s")) {
 			throw new IllegalArgumentException("Cannot parse skip step: '" + stepSpec + "'");
 		}
 		try {
-			return new SkipStep(threadKey, Long.parseLong(stepSpec.substring(1)));
+			return new SkipStep(threadKey, radix.decode(stepSpec.substring(1)));
 		}
 		catch (NumberFormatException e) {
 			throw new IllegalArgumentException("Cannot parse skip step: '" + stepSpec + "'");
@@ -54,8 +55,8 @@ public class SkipStep extends AbstractStep {
 	}
 
 	@Override
-	protected String toStringStepPart() {
-		return String.format("s%d", tickCount);
+	protected String toStringStepPart(TimeRadix radix) {
+		return "s" + radix.format(tickCount);
 	}
 
 	@Override

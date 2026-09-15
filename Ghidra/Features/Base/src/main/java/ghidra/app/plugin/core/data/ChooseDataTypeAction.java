@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,8 +67,8 @@ public class ChooseDataTypeAction extends ListingContextAction {
 		int noSizeRestriction = -1;
 		DataTypeSelectionDialog selectionDialog = new DataTypeSelectionDialog(tool,
 			data.getProgram().getDataTypeManager(), noSizeRestriction, AllowedDataTypes.ALL);
-		DataType initialType = data.getBaseDataType();
-		selectionDialog.setInitialDataType(initialType);
+		DataType dt = data.getDataType();
+		selectionDialog.setInitialDataType(dt);
 		tool.showDialog(selectionDialog);
 		return selectionDialog.getUserChosenDataType();
 	}

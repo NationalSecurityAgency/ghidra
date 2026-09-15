@@ -170,7 +170,7 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 			return true;
 		}
 
-		// We used to have code that pass proxy objects to this class to remove items.  That code
+		// We used to have code that passed proxy objects to this class to remove items.  That code
 		// has been updated to no longer pass proxy objects.  Leaving this code here for a while
 		// just in case we find another client doing the same thing.
 		// return data.remove(t);
@@ -188,6 +188,10 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 	 */
 	public void process(
 			BiFunction<List<ROW_OBJECT>, TableSortingContext<ROW_OBJECT>, List<ROW_OBJECT>> function) {
+
+		if (!isSorted()) {
+			return;
+		}
 
 		if (source != null) {
 			source.process(function);

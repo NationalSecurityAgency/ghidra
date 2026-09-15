@@ -22,7 +22,7 @@ import com.sun.jdi.connect.AttachingConnector;
 import com.sun.jdi.connect.Connector;
 import com.sun.jdi.connect.Connector.Argument;
 
-import ghidra.pty.ShellUtils;
+import ghidra.pty.ShellUtils.Shell;
 
 public class JdiArguments {
 	enum Mode {
@@ -101,7 +101,7 @@ public class JdiArguments {
 				}
 				String cp = env.get("OPT_TARGET_CLASSPATH");
 				if (!cp.isBlank()) {
-					args.get("options").setValue("-cp " + ShellUtils.generateArgument(cp));
+					args.get("options").setValue("-cp " + Shell.LOCAL.generateArgument(cp));
 				}
 			}
 		}

@@ -82,7 +82,8 @@ public class NoteGnuProperty extends ElfNote {
 	/**
 	 * Contains the information of an individual note property. 
 	 */
-	public record NotePropertyElement(int type, String typeName, String value, int length) {}
+	public record NotePropertyElement(int type, String typeName, String value, int length) {
+	}
 
 	private static NotePropertyElement readNextNotePropertyElement(BinaryReader reader, int intSize)
 			throws IOException {
@@ -187,7 +188,7 @@ public class NoteGnuProperty extends ElfNote {
 				DataType elementDT = getElementDataType(dtm, element);
 				Data elementData = DataUtilities.createData(program, address, elementDT, -1, false,
 					ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
-				listing.setComment(address, CodeUnit.EOL_COMMENT,
+				listing.setComment(address, CommentType.EOL,
 					element.typeName() + "=" + element.value());
 				address = elementData.getMaxAddress().next();
 			}
@@ -199,8 +200,8 @@ public class NoteGnuProperty extends ElfNote {
 	}
 
 	private DataType getElementDataType(DataTypeManager dtm, NotePropertyElement element) {
-		StructureDataType result =
-			new StructureDataType("NoteGnuPropertyElement_%d".formatted(element.length()), 0, dtm);
+		StructureDataType result = new StructureDataType(StandardElfInfoProducer.ELF_CATEGORYPATH,
+			"NoteGnuPropertyElement_%d".formatted(element.length()), 0, dtm);
 
 		result.add(StructConverter.DWORD, "prType", null);
 		result.add(StructConverter.DWORD, "prDatasz", null);

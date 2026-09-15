@@ -1,0 +1,23 @@
+<decompilertest>
+<binaryimage arch="AARCH64:LE:64:v8A:default">
+<!--
+   Example of conditional constant operated on prior to branch
+-->
+<bytechunk space="ram" offset="0x110320" readonly="true">
+400000b40b000014c0035fd6
+</bytechunk>
+</binaryimage>
+<script>
+  <com>map fun r0x110320 foo</com>
+  <com>override flow r0x110324 callreturn</com>
+  <com>map fun r0x110350 otherfunc</com>
+  <com>parse line extern int4 foo(void *ptr);</com>
+  <com>lo fu foo</com>
+  <com>decompile</com>
+  <com>print C</com>
+</script>
+<stringmatch name="Modified conditional constant #1" min="1" max="1">return 0;</stringmatch>
+<stringmatch name="Modified conditional constant #2" min="1" max="1">iVar1 = otherfunc\(\);</stringmatch>
+<stringmatch name="Modified conditional constant #3" min="1" max="1">return iVar1;</stringmatch>
+<stringmatch name="Modified conditional constant #4" min="0" max="0">\(int4\)ptr</stringmatch>
+</decompilertest>

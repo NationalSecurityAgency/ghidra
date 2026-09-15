@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import static org.junit.Assert.*;
 
 import java.util.*;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 import ghidra.util.graph.*;
@@ -186,7 +185,7 @@ public class DependencyGraphTest {
 			while (!graph.isEmpty()) {
 				graph.pop();
 			}
-			Assert.fail("Expected cycle exception");
+			fail("Expected cycle exception");
 		}
 		catch (IllegalStateException e) {
 			// expected
@@ -285,28 +284,26 @@ public class DependencyGraphTest {
 	/**
 	 * Given a dependency map, does the captured linear order of execution 
 	 * satisfy the ordering constraints?
-	 * @param <T> the type of the keys being compared
 	 * @param dependencyGraph a map where keys are predecessors and values 
 	 *        are successors that depend on the respective key
 	 * @param visitedOrder the actual execution order to be tested
-	 * @return
 	 */
 	private void checkOrderSatisfiesDependencies(AbstractDependencyGraph<String> dependencyGraph,
 			List<String> visitedOrder) {
 
 		if (visitedOrder.size() > dependencyGraph.size()) {
-			Assert.fail("More items were visited than the number of items in the graph");
+			fail("More items were visited than the number of items in the graph");
 		}
 		if (visitedOrder.size() < dependencyGraph.size()) {
-			Assert.fail("Not all items in the graph were visited");
+			fail("Not all items in the graph were visited");
 		}
 
-		HashSet<String> items = new HashSet<>(visitedOrder);
+		Set<String> items = new HashSet<>(visitedOrder);
 		if (items.size() != visitedOrder.size()) {
-			Assert.fail("duplicate item(s) in linearOrder\n");
+			fail("duplicate item(s) in linearOrder\n");
 		}
 
-		HashMap<String, Integer> visitedOrderMap = new HashMap<>();
+		Map<String, Integer> visitedOrderMap = new HashMap<>();
 		for (int i = 0; i < visitedOrder.size(); i++) {
 			visitedOrderMap.put(visitedOrder.get(i), i);
 		}
@@ -314,21 +311,21 @@ public class DependencyGraphTest {
 		for (String key : dependencyGraph.getValues()) {
 			Integer visitedOrdinal = visitedOrderMap.get(key);
 			if (visitedOrdinal == null) {
-				Assert.fail("dependencyGraph key " + key + " not in linearOrder\n");
+				fail("dependencyGraph key " + key + " not in linearOrder\n");
 			}
 
 			Set<String> dependents = dependencyGraph.getDependentValues(key);
 			for (String dependent : dependents) {
 				if (key.equals(dependent)) {
-					Assert.fail("dependencyGraph key " + key + " depends on itself\n");
+					fail("dependencyGraph key " + key + " depends on itself\n");
 				}
 				Integer dependentVisitedOrdinal = visitedOrderMap.get(dependent);
 				if (dependentVisitedOrdinal == null) {
-					Assert.fail("dependent " + dependent + " of dependencyGraph key " + key +
+					fail("dependent " + dependent + " of dependencyGraph key " + key +
 						" not in linearOrder\n");
 				}
 				if (dependentVisitedOrdinal <= visitedOrdinal) {
-					Assert.fail("dependent " + dependent + " of dependencyGraph key " + key +
+					fail("dependent " + dependent + " of dependencyGraph key " + key +
 						" came first (" + dependentVisitedOrdinal + " < " + visitedOrdinal + ")\n");
 				}
 			}

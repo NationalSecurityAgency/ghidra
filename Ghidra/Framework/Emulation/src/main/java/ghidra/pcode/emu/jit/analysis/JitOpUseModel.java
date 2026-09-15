@@ -16,6 +16,7 @@
 package ghidra.pcode.emu.jit.analysis;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 import ghidra.pcode.emu.jit.JitCompiler;
 import ghidra.pcode.emu.jit.JitCompiler.Diag;
@@ -26,21 +27,21 @@ import ghidra.pcode.emu.jit.op.*;
 import ghidra.pcode.emu.jit.var.JitMissingVar;
 import ghidra.pcode.emu.jit.var.JitVal;
 import ghidra.pcode.exec.AnnotatedPcodeUseropLibrary.PcodeUserop;
+import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
+import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropSymbolMap;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 
 /**
  * The operator output use analysis for JIT-accelerated emulation.
- * 
  * <p>
  * This implements the Operation Elimination phase of the {@link JitCompiler} using a simple graph
  * traversal. The result is the set of {@link JitOp ops} whose outputs are (or could be) used by a
- * downstream op. This includes all "sink" ops and all ops on which they depend.
- * 
+ * downstream op. This includes all "sink" ops and all ops on which they depend. We also collect the
+ * set of {@link JitVal values} used.
  * <p>
  * Some of the sink ops are easy to identify. These are ops that have direct effects on memory,
  * control flow, or other aspects of the emulated machine:
- * 
  * <ul>
  * <li><b>Memory outputs</b> - any p-code op whose output operand is a memory varnode.</li>
  * <li><b>Store ops</b> - a {@link JitStoreOp store} op.</li>
@@ -51,11 +52,9 @@ import ghidra.program.model.pcode.Varnode;
  * <li><b>Errors</b> - e.g., {@link JitUnimplementedOp unimplemented}, {@link JitCallOtherMissingOp
  * missing userop}.</li>
  * </ul>
- * 
  * <p>
  * We identify these ops by invoking {@link JitOp#canBeRemoved()}. Ops that return {@code false} are
  * "sink" ops.
- * 
  * <p>
  * There is another class of ops to consider as "sinks," though: The definitions of SSA variables
  * that could be retired. This could be from exiting the passage, flowing to a block with fewer live
@@ -68,14 +67,12 @@ import ghidra.program.model.pcode.Varnode;
  * analysis state into {@link JitCallOtherOpIf#dfState()} <em>at the time of invocation</em>. We can
  * then use {@link MiniDFState#getVar(Varnode)}. The defining op for each retired SSA variable is
  * considered used.
- * 
  * <p>
  * Retirement due to block flow requires a little more attention. Consider an op that defines a
  * variable, where that op exists in a block that ends with a conditional branch. The analyzer does
  * not know which flow the code will take, so we have to consider that it could take either. If for
  * either branch, the variable goes out of scope and is retired, we have to consider the defining op
  * as used.
- * 
  * <p>
  * The remainder of the algorithm is simply an upward traversal of the use-def graph to collect all
  * of the sink ops' dependencies. All the dependencies are considered used.
@@ -89,9 +86,11 @@ public class JitOpUseModel {
 	private final JitAnalysisContext context;
 	private final JitControlFlowModel cfm;
 	private final JitDataFlowModel dfm;
+	private final JitReachabilityModel rm;
 	private final JitVarScopeModel vsm;
 
-	private final Set<JitOp> used = new HashSet<>();
+	private final Set<JitOp> usedOps = new HashSet<>();
+	private final Set<JitVal> usedVals = new HashSet<>();
 
 	/**
 	 * Construct the operator use model
@@ -99,13 +98,15 @@ public class JitOpUseModel {
 	 * @param context the analysis context
 	 * @param cfm the control flow model
 	 * @param dfm the data flow model
+	 * @param rm the reachability model
 	 * @param vsm the variable scope model
 	 */
 	public JitOpUseModel(JitAnalysisContext context, JitControlFlowModel cfm,
-			JitDataFlowModel dfm, JitVarScopeModel vsm) {
+			JitDataFlowModel dfm, JitReachabilityModel rm, JitVarScopeModel vsm) {
 		this.context = context;
 		this.cfm = cfm;
 		this.dfm = dfm;
+		this.rm = rm;
 		this.vsm = vsm;
 
 		if (context.getConfiguration().removeUnusedOperations()) {
@@ -115,11 +116,11 @@ public class JitOpUseModel {
 
 	/**
 	 * The implementation of the graph traversal
-	 * 
 	 * <p>
 	 * This implements the use-def upward visitor to collect the dependencies of ops and variables
 	 * identified elsewhere in the code. By calling {@link #visitOp(JitOp)},
-	 * {@link #visitVal(JitVal)}, etc., all used ops are collected into {@link JitOpUseModel#used}.
+	 * {@link #visitVal(JitVal)}, etc., all used ops are collected into
+	 * {@link JitOpUseModel#usedOps}.
 	 */
 	class OpUseCollector implements JitOpUpwardVisitor {
 		final JitBlock block;
@@ -137,10 +138,27 @@ public class JitOpUseModel {
 
 		@Override
 		public void visitOp(JitOp op) {
-			if (!used.add(op)) {
+			if (!usedOps.add(op)) {
 				return;
 			}
 			JitOpUpwardVisitor.super.visitOp(op);
+		}
+
+		@Override
+		public void visitVal(JitVal v) {
+			if (!usedVals.add(v)) {
+				return;
+			}
+			JitOpUpwardVisitor.super.visitVal(v);
+		}
+
+		@Override
+		public void visitPhiOp(JitPhiOp op) {
+			for (Entry<BlockFlow, JitVal> entry : op.options().entrySet()) {
+				if (rm.isTakeable(entry.getKey())) {
+					visitVal(entry.getValue());
+				}
+			}
 		}
 
 		@Override
@@ -150,7 +168,6 @@ public class JitOpUseModel {
 
 		/**
 		 * Visit a varnode that could be retired upon exiting a block
-		 *
 		 * <p>
 		 * This applies whether exiting the passage altogether or just flowing to another block. It
 		 * will find all definitions (including just-generated phi nodes) and visit them.
@@ -165,7 +182,6 @@ public class JitOpUseModel {
 
 		/**
 		 * Visit a varnode that will be retired before calling a userop
-		 * 
 		 * <p>
 		 * This applies only when the userop is invoked using the Standard strategy.
 		 * 
@@ -186,10 +202,21 @@ public class JitOpUseModel {
 	 * @param block the block containing the callother
 	 * @param op the callother op
 	 * @return the block's live varnodes, or empty, depending on the callother invocation strategy.
+	 * @implNote in general, we must retire all varnodes before invoking a callother, so that its
+	 *           implementation can confidently retrieve up-to-date values from the machine state,
+	 *           including registers and uniques. If a userop attests to being functional, i.e., it
+	 *           neither reads to writes state outside what's given by its operands, then we can
+	 *           neglect to retire the state. However, we must also consider that a functional
+	 *           userop could interrupt execution, in which case, we must ensure the values get
+	 *           retired. In the op-use model, this method just served to indicate the varnodes are
+	 *           "used." At generation, this should ensure that the varnode retirement that happens
+	 *           in the exception handler includes the actual values, because none of the writes
+	 *           into the allocated locals should be elided.
 	 */
 	private Set<Varnode> getCallOtherRetireVarnodes(JitBlock block, JitCallOtherOpIf op) {
 		// Should not see inline-replaced ops here
-		if (op.userop().isFunctional()) {
+		PcodeUseropDefinition<?> userop = op.userop();
+		if (userop.isFunctional() && !userop.canInterrupt()) {
 			return Set.of();
 		}
 		return vsm.getLiveVars(block);
@@ -197,7 +224,6 @@ public class JitOpUseModel {
 
 	/**
 	 * Get the varnodes that could be retired upon leaving this block
-	 * 
 	 * <p>
 	 * If the block has an {@link JitBlock#branchesOut() exit} branch, then all live varnodes could
 	 * be retired. The result is the union of retired varnodes among each flow
@@ -216,14 +242,24 @@ public class JitOpUseModel {
 		if (!block.branchesOut().isEmpty()) {
 			return vsm.getLiveVars(block);
 		}
-		if (block.flowsFrom().isEmpty()) {
+
+		List<BlockFlow> reachableFlowsFrom =
+			block.flowsFrom().values().stream().filter(rm::isTakeable).toList();
+
+		if (reachableFlowsFrom.isEmpty()) {
+			/**
+			 * Reachable flows from should only be smaller than all flows from in the event a
+			 * CBRANCH was folded to a BRANCH, so 2 becomes 1. Thus, there should still always be at
+			 * least one reachable flow from (or a branch out).
+			 */
 			throw new AssertionError();
 			// or just return Set.of()?
 		}
-		Set<Varnode> aliveAfterAnyFlow =
-			new HashSet<>(vsm.getLiveVars(block.flowsFrom().values().iterator().next().to()));
-		for (BlockFlow flow : block.flowsFrom().values()) {
-			aliveAfterAnyFlow.retainAll(vsm.getLiveVars(flow.to()));
+
+		Iterator<BlockFlow> it = reachableFlowsFrom.iterator();
+		Set<Varnode> aliveAfterAnyFlow = new HashSet<>(vsm.getLiveVars(it.next().to()));
+		while (it.hasNext()) {
+			aliveAfterAnyFlow.retainAll(vsm.getLiveVars(it.next().to()));
 		}
 		Set<Varnode> result = new HashSet<>(vsm.getLiveVars(block));
 		result.removeAll(aliveAfterAnyFlow);
@@ -232,7 +268,6 @@ public class JitOpUseModel {
 
 	/**
 	 * Perform the analysis
-	 * 
 	 * <p>
 	 * This first backfills any missing phi nodes that might not have been considered during data
 	 * flow analysis. Then, it collects all the sinks and invokes the traversal on them. Note that
@@ -249,7 +284,9 @@ public class JitOpUseModel {
 
 		Set<JitPhiOp> phisBefore = Set.copyOf(dfm.phiNodes());
 		for (JitBlock block : cfm.getBlocks()) {
-
+			if (!rm.isReachable(block)) {
+				continue;
+			}
 			for (PcodeOp op : block.getCode()) {
 				if (dfm.getJitOp(op) instanceof JitCallOtherOpIf callother) {
 					for (Varnode vn : getCallOtherRetireVarnodes(block, callother)) {
@@ -269,6 +306,9 @@ public class JitOpUseModel {
 		dfm.analyzeInterblock(extraPhis);
 
 		for (JitBlock block : cfm.getBlocks()) {
+			if (!rm.isReachable(block)) {
+				continue;
+			}
 			OpUseCollector collector = new OpUseCollector(block);
 
 			// Locate memory outputs, stores, branches, callothers
@@ -294,17 +334,43 @@ public class JitOpUseModel {
 	/**
 	 * Check whether the given op node is used.
 	 * 
-	 * <p>
-	 * If the op is used, then it cannot be eliminated.
-	 * 
 	 * @param op the op to check
 	 * @return true if used, i.e., non-removable
 	 */
 	public boolean isUsed(JitOp op) {
 		if (context.getConfiguration().removeUnusedOperations()) {
-			return used.contains(op);
+			return usedOps.contains(op);
 		}
 		return true;
+	}
+
+	/**
+	 * Check whether the given value node is used.
+	 * 
+	 * @param val the value to check
+	 * @return true if used, i.e., non-removable
+	 */
+	public boolean isUsed(JitVal val) {
+		if (context.getConfiguration().removeUnusedOperations()) {
+			return usedVals.contains(val);
+		}
+		return true;
+	}
+
+	/**
+	 * For diagnostics: A visual hint as to whether the op or its output are removable.
+	 * 
+	 * @param op the op to check
+	 * @return DEL, OUT, or blank to indicate op deletion, output removal, or keep.
+	 */
+	public String prefixFor(JitOp op) {
+		if (!isUsed(op)) {
+			return "[DEL]";
+		}
+		if (op instanceof JitDefOp defOp && !isUsed(defOp.out())) {
+			return "[OUT]";
+		}
+		return "[   ]";
 	}
 
 	/**
@@ -313,20 +379,23 @@ public class JitOpUseModel {
 	 * @see Diag#PRINT_OUM
 	 */
 	public void dumpResult() {
+		PcodeUseropSymbolMap symbols = dfm.getLibrary().getSymbols(context.getLanguage());
 		System.err.println("STAGE: OpUse");
 		for (JitBlock block : cfm.getBlocks()) {
+			if (!rm.isReachable(block)) {
+				continue;
+			}
 			JitDataFlowBlockAnalyzer analyzer = dfm.getAnalyzer(block);
 			System.err.println("  Block: " + block);
 			for (Varnode vn : getCouldRetireVarnodes(block)) {
 				for (JitVal val : analyzer.getOutput(vn)) {
-					System.err.println("    Could retire: " + val);
+					System.err.println("    Could retire: " + val.toString(context.getLanguage()));
 				}
 			}
 			for (PcodeOp op : block.getCode()) {
 				JitOp jitOp = dfm.getJitOp(op);
-				if (!isUsed(jitOp)) {
-					System.err.println("    Removed: %s: %s".formatted(op.getSeqnum(), jitOp));
-				}
+				System.err.println("   %s %s: %s".formatted(prefixFor(jitOp), op.getSeqnum(),
+					jitOp.toString(symbols)));
 			}
 		}
 	}

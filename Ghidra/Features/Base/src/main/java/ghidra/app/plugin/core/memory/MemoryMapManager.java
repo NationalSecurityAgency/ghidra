@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,8 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.util.Msg;
-import ghidra.util.exception.*;
+import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.exception.RollbackException;
 
 /**
  * Helper class to make changes to memory blocks.
@@ -267,10 +268,6 @@ class MemoryMapManager {
 				return false;
 			}
 			catch (IllegalArgumentException e) {
-				msg = e.getMessage();
-				return false;
-			}
-			catch (NotFoundException e) {
 				msg = e.getMessage();
 				return false;
 			}

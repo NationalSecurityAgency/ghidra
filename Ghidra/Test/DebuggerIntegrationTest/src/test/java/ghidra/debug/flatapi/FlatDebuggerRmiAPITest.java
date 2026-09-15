@@ -38,7 +38,6 @@ import ghidra.program.model.lang.RegisterValue;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.database.target.DBTraceObjectManager;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 
 public class FlatDebuggerRmiAPITest extends AbstractLiveFlatDebuggerAPITest<FlatDebuggerRmiAPI> {
@@ -69,12 +68,12 @@ public class FlatDebuggerRmiAPITest extends AbstractLiveFlatDebuggerAPITest<Flat
 		addMemoryMethods();
 		addRegisterMethods();
 		createTrace();
-		try (Transaction tx = tb.startTransaction()) {
+		try (Transaction _ = tb.startTransaction()) {
 			DBTraceObjectManager objs = tb.trace.getObjectManager();
 			objs.createRootObject(SCHEMA_SESSION);
 			tb.createObjectsProcessAndThreads();
 			tb.createObjectsFramesAndRegs(
-				tb.obj("Processes[1].Threads[1]").queryInterface(TraceObjectThread.class),
+				tb.obj("Processes[1].Threads[1]").queryInterface(TraceThread.class),
 				Lifespan.nowOn(0), tb.host, 2);
 			addMemoryRegion(objs, Lifespan.nowOn(0), tb.range(0x00400000, 0x00400fff), ".text",
 				"rx");
@@ -89,8 +88,8 @@ public class FlatDebuggerRmiAPITest extends AbstractLiveFlatDebuggerAPITest<Flat
 	@Test
 	public void testReadLiveMemory() throws Throwable {
 		TraceRmiTarget target = createTarget();
-		var args = rmiMethodReadMem.expect(a -> {
-			try (Transaction tx = tb.startTransaction()) {
+		var args = rmiMethodReadMem.expect(_ -> {
+			try (Transaction _ = tb.startTransaction()) {
 				tb.trace.getMemoryManager()
 						.putBytes(target.getSnap(), tb.addr(0x00400000),
 							tb.buf(1, 2, 3, 4, 5, 6, 7, 8));
@@ -112,8 +111,8 @@ public class FlatDebuggerRmiAPITest extends AbstractLiveFlatDebuggerAPITest<Flat
 		TraceThread thread =
 			tb.trace.getThreadManager().getLiveThreadByPath(0, "Processes[1].Threads[1]");
 		Register r0 = tb.reg("r0");
-		var args = rmiMethodReadRegs.expect(a -> {
-			try (Transaction tx = tb.startTransaction()) {
+		var args = rmiMethodReadRegs.expect(_ -> {
+			try (Transaction _ = tb.startTransaction()) {
 				DBTraceMemorySpace regs =
 					tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
 				regs.setValue(target.getSnap(), new RegisterValue(r0, new BigInteger("1234")));
@@ -134,8 +133,8 @@ public class FlatDebuggerRmiAPITest extends AbstractLiveFlatDebuggerAPITest<Flat
 			tb.trace.getThreadManager().getLiveThreadByPath(0, "Processes[1].Threads[1]");
 		Register r0 = tb.reg("r0");
 		Register r1 = tb.reg("r1");
-		var args = rmiMethodReadRegs.expect(a -> {
-			try (Transaction tx = tb.startTransaction()) {
+		var args = rmiMethodReadRegs.expect(_ -> {
+			try (Transaction _ = tb.startTransaction()) {
 				DBTraceMemorySpace regs =
 					tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
 				regs.setValue(target.getSnap(), new RegisterValue(r0, new BigInteger("1234")));
@@ -201,12 +200,11 @@ public class FlatDebuggerRmiAPITest extends AbstractLiveFlatDebuggerAPITest<Flat
 	protected void runTestStep(Predicate<TraceThread> step, Supplier<TestRemoteMethod> method)
 			throws Throwable {
 		createTarget();
-		TraceObjectThread thread =
-			tb.obj("Processes[1].Threads[1]").queryInterface(TraceObjectThread.class);
+		TraceThread thread = tb.obj("Processes[1].Threads[1]").queryInterface(TraceThread.class);
 		traceManager.activateThread(thread);
 		waitForSwing();
 
-		var args = method.get().expect(a -> null);
+		var args = method.get().expect(_ -> null);
 		assertTrue(step.test(thread));
 		assertEquals(Map.ofEntries(
 			Map.entry("thread", thread.getObject())),
@@ -220,17 +218,17 @@ public class FlatDebuggerRmiAPITest extends AbstractLiveFlatDebuggerAPITest<Flat
 
 	@Test
 	public void testStepInto() throws Throwable {
-		runTestStep(t -> api.stepInto(), () -> rmiMethodStepInto);
+		runTestStep(_ -> api.stepInto(), () -> rmiMethodStepInto);
 	}
 
 	@Test
 	public void testStepOver() throws Throwable {
-		runTestStep(t -> api.stepOver(), () -> rmiMethodStepOver);
+		runTestStep(_ -> api.stepOver(), () -> rmiMethodStepOver);
 	}
 
 	@Test
 	public void testStepOut() throws Throwable {
-		runTestStep(t -> api.stepOut(), () -> rmiMethodStepOut);
+		runTestStep(_ -> api.stepOut(), () -> rmiMethodStepOut);
 	}
 
 	@Override
@@ -239,7 +237,7 @@ public class FlatDebuggerRmiAPITest extends AbstractLiveFlatDebuggerAPITest<Flat
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
-		var args = rmiMethodResume.expect(a -> null);
+		var args = rmiMethodResume.expect(_ -> null);
 		assertTrue(resume.getAsBoolean());
 		assertEquals(Map.ofEntries(
 			Map.entry("process", tb.obj("Processes[1]"))),
@@ -252,7 +250,7 @@ public class FlatDebuggerRmiAPITest extends AbstractLiveFlatDebuggerAPITest<Flat
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
-		var args = rmiMethodInterrupt.expect(a -> null);
+		var args = rmiMethodInterrupt.expect(_ -> null);
 		assertTrue(interrupt.getAsBoolean());
 		assertEquals(Map.ofEntries(
 			Map.entry("process", tb.obj("Processes[1]"))),
@@ -265,7 +263,7 @@ public class FlatDebuggerRmiAPITest extends AbstractLiveFlatDebuggerAPITest<Flat
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
-		var args = rmiMethodKill.expect(a -> null);
+		var args = rmiMethodKill.expect(_ -> null);
 		assertTrue(kill.getAsBoolean());
 		assertEquals(Map.ofEntries(
 			Map.entry("process", tb.obj("Processes[1]"))),
@@ -278,7 +276,7 @@ public class FlatDebuggerRmiAPITest extends AbstractLiveFlatDebuggerAPITest<Flat
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
-		var args = rmiMethodExecute.expect(a -> "result");
+		var args = rmiMethodExecute.expect(_ -> "result");
 		assertEquals("result", api.executeCapture("some command"));
 		assertEquals(Map.ofEntries(
 			Map.entry("cmd", "some command"),

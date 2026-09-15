@@ -13,10 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
+from dataclasses import dataclass, field
 import threading
 import time
+from typing import Any, Optional, Union
 
-import lldb
+import lldb #  type: ignore  # no stubs available from upstream/SWIG
 
 from . import commands, util
 
@@ -24,34 +26,41 @@ from . import commands, util
 ALL_EVENTS = 0xFFFF
 
 
+@dataclass(frozen=False)
 class HookState(object):
-    __slots__ = ('installed', 'mem_catchpoint')
+    installed = False
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.installed = False
-        self.mem_catchpoint = None
 
 
+@dataclass(frozen=False)
 class ProcessState(object):
-    __slots__ = ('first', 'regions', 'modules', 'threads',
-                 'breaks', 'watches', 'visited')
+    first = True
+    # For things we can detect changes to between stops
+    regions = False
+    modules = False
+    threads = False
+    breaks = False
+    watches = False
+    # For frames and threads that have already been synced since last stop
+    visited: set[Any] = field(default_factory=set)
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.first = True
-        # For things we can detect changes to between stops
         self.regions = False
         self.modules = False
         self.threads = False
         self.breaks = False
         self.watches = False
-        # For frames and threads that have already been synced since last stop
         self.visited = set()
 
-    def record(self, description=None):
+    def record(self, description: Optional[str] = None) -> None:
         first = self.first
         self.first = False
+        trace = commands.STATE.require_trace()
         if description is not None:
-            commands.STATE.trace.snapshot(description)
+            trace.snapshot(description)
         if first:
             commands.put_processes()
             commands.put_environment()
@@ -59,6 +68,8 @@ class ProcessState(object):
             commands.put_threads()
             self.threads = False
         thread = util.selected_thread()
+        if not thread.GetProcess().is_alive:
+            return
         if thread is not None:
             if first or thread.GetThreadID() not in self.visited:
                 commands.put_frames()
@@ -102,10 +113,11 @@ class ProcessState(object):
         commands.put_processes()
         commands.put_threads()
 
-    def record_exited(self, exit_code):
+    def record_exited(self, exit_code: int):
         proc = util.get_process()
         ipath = commands.PROCESS_PATTERN.format(procnum=proc.GetProcessID())
-        procobj = commands.STATE.trace.proxy_object_path(ipath)
+        trace = commands.STATE.require_trace()
+        procobj = trace.proxy_object_path(ipath)
         procobj.set_value('Exit Code', exit_code)
         procobj.set_value('State', 'TERMINATED')
 
@@ -121,7 +133,8 @@ class QuitSentinel(object):
 QUIT = QuitSentinel()
 
 
-def process_event(self, listener, event):
+def process_event(self, listener: lldb.SBListener,
+                  event: lldb.SBEvent) -> Union[QuitSentinel, bool]:
     try:
         desc = util.get_description(event)
         # print(f"Event: {desc}")
@@ -130,7 +143,7 @@ def process_event(self, listener, event):
             # LLDB may crash on event.GetBroadcasterClass, otherwise
             # All the checks below, e.g. SBTarget.EventIsTargetEvent, call this
             print(f"Ignoring {desc} because target is invalid")
-            return
+            return False
         event_process = util.get_process()
         if event_process.IsValid() and event_process.GetProcessID() not in PROC_STATE:
             PROC_STATE[event_process.GetProcessID()] = ProcessState()
@@ -260,13 +273,14 @@ def process_event(self, listener, event):
         return True
     except BaseException as e:
         print(e)
+        return False
 
 
 class EventThread(threading.Thread):
     func = process_event
     event = lldb.SBEvent()
 
-    def run(self):
+    def run(self) -> None:
         # Let's only try at most 4 times to retrieve any kind of event.
         # After that, the thread exits.
         listener = lldb.SBListener('eventlistener')
@@ -276,35 +290,25 @@ class EventThread(threading.Thread):
         rc = cli.GetBroadcaster().AddListener(listener, ALL_EVENTS)
         if not rc:
             print("add listener for cli failed")
-            # return
         rc = target.GetBroadcaster().AddListener(listener, ALL_EVENTS)
         if not rc:
             print("add listener for target failed")
-            # return
         rc = proc.GetBroadcaster().AddListener(listener, ALL_EVENTS)
         if not rc:
             print("add listener for process failed")
-            # return
 
-        # Not sure what effect this logic has
-        rc = cli.GetBroadcaster().AddInitialEventsToListener(listener, ALL_EVENTS)
+        rc = listener.StartListeningForEventClass(
+            util.get_debugger(), lldb.SBTarget.GetBroadcasterClassName(), ALL_EVENTS)
         if not rc:
-            print("add initial events for cli failed")
-            # return
-        rc = target.GetBroadcaster().AddInitialEventsToListener(listener, ALL_EVENTS)
+            print("add listener for targets failed")
+        rc = listener.StartListeningForEventClass(
+            util.get_debugger(), lldb.SBProcess.GetBroadcasterClassName(), ALL_EVENTS)
         if not rc:
-            print("add initial events for target failed")
-            # return
-        rc = proc.GetBroadcaster().AddInitialEventsToListener(listener, ALL_EVENTS)
-        if not rc:
-            print("add initial events for process failed")
-            # return
-
+            print("add listener for processes failed")
         rc = listener.StartListeningForEventClass(
             util.get_debugger(), lldb.SBThread.GetBroadcasterClassName(), ALL_EVENTS)
         if not rc:
             print("add listener for threads failed")
-            # return
         # THIS WILL NOT WORK: listener = util.get_debugger().GetListener()
 
         while True:
@@ -326,8 +330,6 @@ class EventThread(threading.Thread):
                             print(e)
                     event_recvd = True
             proc = util.get_process()
-            if proc is not None and not proc.is_alive:
-                break
         return
 
 
@@ -365,40 +367,40 @@ class EventThread(threading.Thread):
 """
 
 
-def on_new_process(event):
+def on_new_process(event: lldb.SBEvent) -> None:
     trace = commands.STATE.trace
     if trace is None:
         return
-    with commands.STATE.client.batch():
-        with trace.open_tx("New Process {}".format(event.process.num)):
+    with trace.client.batch():
+        with trace.open_tx(f"New Process {event.process.num}"):
             commands.put_processes()  # TODO: Could put just the one....
 
 
-def on_process_selected():
+def on_process_selected() -> None:
     proc = util.get_process()
     if proc.GetProcessID() not in PROC_STATE:
         return
     trace = commands.STATE.trace
     if trace is None:
         return
-    with commands.STATE.client.batch():
-        with trace.open_tx("Process {} selected".format(proc.GetProcessID())):
+    with trace.client.batch():
+        with trace.open_tx(f"Process {proc.GetProcessID()} selected"):
             PROC_STATE[proc.GetProcessID()].record()
             commands.activate()
 
 
-def on_process_deleted(event):
+def on_process_deleted(event: lldb.SBEvent) -> None:
     trace = commands.STATE.trace
     if trace is None:
         return
     if event.process.num in PROC_STATE:
         del PROC_STATE[event.process.num]
-    with commands.STATE.client.batch():
-        with trace.open_tx("Process {} deleted".format(event.process.num)):
+    with trace.client.batch():
+        with trace.open_tx(f"Process {event.process.num} deleted"):
             commands.put_processes()  # TODO: Could just delete the one....
 
 
-def on_new_thread(event):
+def on_new_thread(event: lldb.SBEvent) -> None:
     proc = util.get_process()
     if proc.GetProcessID() not in PROC_STATE:
         return
@@ -406,224 +408,238 @@ def on_new_thread(event):
     # TODO: Syscall clone/exit to detect thread destruction?
 
 
-def on_thread_selected():
+def on_thread_selected() -> bool:
     proc = util.get_process()
     if proc.GetProcessID() not in PROC_STATE:
-        return
+        return False
     trace = commands.STATE.trace
     if trace is None:
-        return
+        return False
     t = util.selected_thread()
-    with commands.STATE.client.batch():
-        with trace.open_tx("Thread {}.{} selected".format(proc.GetProcessID(), t.GetThreadID())):
+    with trace.client.batch():
+        with trace.open_tx(f"Thread {proc.GetProcessID()}.{t.GetThreadID()} selected"):
             PROC_STATE[proc.GetProcessID()].record()
             commands.put_threads()
             commands.activate()
+    return True
 
 
-def on_frame_selected():
+def on_frame_selected() -> bool:
     proc = util.get_process()
     if proc.GetProcessID() not in PROC_STATE:
-        return
+        return False
     trace = commands.STATE.trace
     if trace is None:
-        return
+        return False
     f = util.selected_frame()
     t = f.GetThread()
-    with commands.STATE.client.batch():
-        with trace.open_tx("Frame {}.{}.{} selected".format(proc.GetProcessID(), t.GetThreadID(), f.GetFrameID())):
+    with trace.client.batch():
+        with trace.open_tx(f"Frame {proc.GetProcessID()}.{t.GetThreadID()}.{f.GetFrameID()} selected"):
             PROC_STATE[proc.GetProcessID()].record()
             commands.put_threads()
             commands.put_frames()
             commands.activate()
+    return True
 
 
-def on_syscall_memory():
+def on_syscall_memory() -> bool:
     proc = util.get_process()
     if proc.GetProcessID() not in PROC_STATE:
-        return
+        return False
     PROC_STATE[proc.GetProcessID()].regions = True
+    return True
 
 
-def on_memory_changed(event):
+def on_memory_changed(event: lldb.SBEvent) -> bool:
     proc = util.get_process()
     if proc.GetProcessID() not in PROC_STATE:
-        return
+        return False
     trace = commands.STATE.trace
     if trace is None:
-        return
-    with commands.STATE.client.batch():
-        with trace.open_tx("Memory *0x{:08x} changed".format(event.address)):
+        return False
+    with trace.client.batch():
+        with trace.open_tx(f"Memory *0x{event.address:08x} changed"):
             commands.put_bytes(event.address, event.address + event.length,
-                               pages=False, is_mi=False, result=None)
+                               pages=False, result=None)
+    return True
 
 
-def on_register_changed(event):
-    # print("Register changed: {}".format(dir(event)))
+def on_register_changed(event: lldb.SBEvent) -> bool:
     proc = util.get_process()
     if proc.GetProcessID() not in PROC_STATE:
-        return
+        return False
     trace = commands.STATE.trace
     if trace is None:
-        return
-    # I'd rather have a descriptor!
-    # TODO: How do I get the descriptor from the number?
-    # For now, just record the lot
-    with commands.STATE.client.batch():
-        with trace.open_tx("Register {} changed".format(event.regnum)):
+        return False
+    with trace.client.batch():
+        with trace.open_tx(f"Register {event.regnum} changed"):
             banks = event.frame.GetRegisters()
             commands.putreg(
                 event.frame, banks.GetFirstValueByName(commands.DEFAULT_REGISTER_BANK))
+    return True
 
 
-def on_cont(event):
+def on_cont(event: lldb.SBEvent) -> bool:
     proc = util.get_process()
     if proc.GetProcessID() not in PROC_STATE:
-        return
+        return False
     trace = commands.STATE.trace
     if trace is None:
-        return
+        return False
     state = PROC_STATE[proc.GetProcessID()]
-    with commands.STATE.client.batch():
+    with trace.client.batch():
         with trace.open_tx("Continued"):
             state.record_continued()
+    return True
 
 
-def on_stop(event):
+def on_stop(event: lldb.SBEvent) -> bool:
     proc = lldb.SBProcess.GetProcessFromEvent(
         event) if event is not None else util.get_process()
     if proc.GetProcessID() not in PROC_STATE:
-        print("not in state")
-        return
+        enable_current_process()
+        commands.put_processes()
     trace = commands.STATE.trace
     if trace is None:
         print("no trace")
-        return
+        return False
     state = PROC_STATE[proc.GetProcessID()]
     state.visited.clear()
-    with commands.STATE.client.batch():
+    with trace.client.batch():
         with trace.open_tx("Stopped"):
             state.record("Stopped")
             commands.put_event_thread()
             commands.put_threads()
             commands.put_frames()
             commands.activate()
+            commands.put_breakpoints()
+    return True
 
 
-def on_exited(event):
+def on_exited(event: lldb.SBEvent) -> bool:
     proc = util.get_process()
     if proc.GetProcessID() not in PROC_STATE:
-        return
+        return False
     trace = commands.STATE.trace
     if trace is None:
-        return
+        return False
     state = PROC_STATE[proc.GetProcessID()]
     state.visited.clear()
     exit_code = proc.GetExitStatus()
     description = "Exited with code {}".format(exit_code)
-    with commands.STATE.client.batch():
+    with trace.client.batch():
         with trace.open_tx(description):
             state.record(description)
             state.record_exited(exit_code)
             commands.put_event_thread()
             commands.activate()
+    return False
 
 
-def modules_changed():
+def modules_changed() -> bool:
     # Assumption: affects the current process
     proc = util.get_process()
     if proc.GetProcessID() not in PROC_STATE:
-        return
+        return False
     PROC_STATE[proc.GetProcessID()].modules = True
+    return True
 
 
-def on_new_objfile(event):
+def on_new_objfile(event: lldb.SBEvent) -> bool:
     modules_changed()
+    return True
 
 
-def on_free_objfile(event):
+def on_free_objfile(event: lldb.SBEvent) -> bool:
     modules_changed()
+    return True
 
 
-def on_breakpoint_created(b):
+def on_breakpoint_created(b: lldb.SBBreakpoint) -> bool:
     proc = util.get_process()
     if proc.GetProcessID() not in PROC_STATE:
-        return
+        return False
     trace = commands.STATE.trace
     if trace is None:
-        return
-    with commands.STATE.client.batch():
+        return False
+    with trace.client.batch():
         with trace.open_tx("Breakpoint {} created".format(b.GetID())):
             commands.put_single_breakpoint(b, proc)
+    return True
 
 
-def on_breakpoint_modified(b):
+def on_breakpoint_modified(b: lldb.SBBreakpoint) -> bool:
     proc = util.get_process()
     if proc.GetProcessID() not in PROC_STATE:
-        return
+        return False
     trace = commands.STATE.trace
     if trace is None:
-        return
-    with commands.STATE.client.batch():
+        return False
+    with trace.client.batch():
         with trace.open_tx("Breakpoint {} modified".format(b.GetID())):
             commands.put_single_breakpoint(b, proc)
+    return True
 
 
-def on_breakpoint_deleted(b):
+def on_breakpoint_deleted(b: lldb.SBBreakpoint) -> bool:
     proc = util.get_process()
     if proc.GetProcessID() not in PROC_STATE:
-        return
+        return False
     trace = commands.STATE.trace
     if trace is None:
-        return
+        return False
     bpt_path = commands.PROC_BREAK_PATTERN.format(
         procnum=proc.GetProcessID(), breaknum=b.GetID())
     bpt_obj = trace.proxy_object_path(bpt_path)
-    with commands.STATE.client.batch():
+    with trace.client.batch():
         with trace.open_tx("Breakpoint {} deleted".format(b.GetID())):
             bpt_obj.remove(tree=True)
+    return True
 
 
-def on_watchpoint_created(b):
+def on_watchpoint_created(b: lldb.SBWatchpoint) -> bool:
     proc = util.get_process()
     if proc.GetProcessID() not in PROC_STATE:
-        return
+        return False
     trace = commands.STATE.trace
     if trace is None:
-        return
-    with commands.STATE.client.batch():
+        return False
+    with trace.client.batch():
         with trace.open_tx("Breakpoint {} created".format(b.GetID())):
             commands.put_single_watchpoint(b, proc)
+    return True
 
 
-def on_watchpoint_modified(b):
+def on_watchpoint_modified(b: lldb.SBWatchpoint) -> bool:
     proc = util.get_process()
     if proc.GetProcessID() not in PROC_STATE:
-        return
+        return False
     trace = commands.STATE.trace
     if trace is None:
-        return
-    with commands.STATE.client.batch():
+        return False
+    with trace.client.batch():
         with trace.open_tx("Watchpoint {} modified".format(b.GetID())):
             commands.put_single_watchpoint(b, proc)
+    return True
 
 
-def on_watchpoint_deleted(b):
+def on_watchpoint_deleted(b: lldb.SBWatchpoint) -> bool:
     proc = util.get_process()
     if proc.GetProcessID() not in PROC_STATE:
-        return
+        return False
     trace = commands.STATE.trace
     if trace is None:
-        return
+        return False
     wpt_path = commands.PROC_WATCH_PATTERN.format(
         procnum=proc.GetProcessID(), watchnum=b.GetID())
     wpt_obj = trace.proxy_object_path(wpt_path)
-    with commands.STATE.client.batch():
+    with trace.client.batch():
         with trace.open_tx("Watchpoint {} deleted".format(b.GetID())):
             wpt_obj.remove(tree=True)
+    return True
 
 
-def install_hooks():
+def install_hooks() -> None:
     if HOOK_STATE.installed:
         return
     HOOK_STATE.installed = True
@@ -632,18 +648,18 @@ def install_hooks():
     event_thread.start()
 
 
-def remove_hooks():
+def remove_hooks() -> None:
     if not HOOK_STATE.installed:
         return
     HOOK_STATE.installed = False
 
 
-def enable_current_process():
+def enable_current_process() -> None:
     proc = util.get_process()
     PROC_STATE[proc.GetProcessID()] = ProcessState()
 
 
-def disable_current_process():
+def disable_current_process() -> None:
     proc = util.get_process()
     if proc.GetProcessID() in PROC_STATE:
         # Silently ignore already disabled

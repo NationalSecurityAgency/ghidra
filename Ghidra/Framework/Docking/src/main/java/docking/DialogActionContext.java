@@ -16,30 +16,24 @@
 package docking;
 
 import java.awt.Component;
-import java.util.Objects;
+
+import docking.action.ActionContextProvider;
 
 /**
  * Action context for {@link DialogComponentProvider}s.
+ * <p>
+ * Note: due to context changes related to the addition of 
+ * {@link #setContextProvider(ActionContextProvider)}, this class serves no real purpose at the time
+ * this comment was made.
  */
 public class DialogActionContext extends DefaultActionContext {
 
-	private DialogComponentProvider dialogProvider;
-
 	public DialogActionContext(DialogComponentProvider dialogProvider, Component sourceComponent) {
 		super(null, dialogProvider, sourceComponent);
-		this.dialogProvider = Objects.requireNonNull(dialogProvider);
 	}
 
-	// this constructor allows clients to set the dialog later
+	// An unusual constructor for when clients don't yet have a dialog in hand
 	public DialogActionContext(Object contextObject, Component sourceComponent) {
 		super(null, contextObject, sourceComponent);
-	}
-
-	public void setDialogComponentProvider(DialogComponentProvider dialogProvider) {
-		this.dialogProvider = dialogProvider;
-	}
-
-	public DialogComponentProvider getDialogComponentProvider() {
-		return dialogProvider;
 	}
 }

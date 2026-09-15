@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,12 +26,12 @@ import ghidra.util.LockHold;
 import ghidra.util.database.DBSynchronizedIterator;
 import ghidra.util.database.spatial.DBTreeDataRecord.RecordEntry;
 
-public abstract class AbstractConstraintsTreeSpatialMap< //
-		DS extends BoundedShape<NS>, //
-		DR extends DBTreeDataRecord<DS, NS, T>, //
-		NS extends BoundingShape<NS>, //
-		T, //
-		Q extends Query<DS, NS>> //
+public abstract class AbstractConstraintsTreeSpatialMap<
+	DS extends BoundedShape<NS>,
+	DR extends DBTreeDataRecord<DS, NS, T>,
+	NS extends BoundingShape<NS>,
+	T,
+	Q extends Query<DS, NS>>
 		implements SpatialMap<DS, T, Q> {
 
 	protected final AbstractConstraintsTree<DS, DR, NS, ?, T, Q> tree;
@@ -149,15 +149,21 @@ public abstract class AbstractConstraintsTreeSpatialMap< //
 
 			public Object[] toArray() {
 				try (LockHold hold = LockHold.lock(tree.dataStore.readLock())) {
-					// Note, computing size requires a traversal. Bad idea, I think.
-					List<Entry<DS, T>> result = new ArrayList<>();
-					tree.visitAllData(query, new ToListConsumer<>(result) {
-						@Override
-						protected Entry<DS, T> transformed(DR t) {
+					/**
+					 * One one hand, traversing twice (one to compute the size, and again to
+					 * retrieve the elements) is not great. On the other, resizing the array list
+					 * many times is also not great. Which is worse? IDK. LATER: Take some
+					 * measurements with large traces.
+					 */
+					int size = AbstractConstraintsTreeSpatialMap.this.size();
+					Object[] a = new Object[size];
+					ToArrayConsumer<Object, DR, Object> consumer = new ToArrayConsumer<>(a) {
+						protected Object transformed(DR t) {
 							return t.asEntry();
-						}
-					}, false);
-					return result.toArray();
+						};
+					};
+					tree.visitAllData(query, consumer, false);
+					return a;
 				}
 			}
 

@@ -27,7 +27,6 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 
-import docking.*;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.util.Swing;
@@ -196,21 +195,6 @@ public class MultiStateButton<T> extends JButton {
 
 		popupListener = new PopupMouseListener(mouseListeners);
 		addMouseListener(popupListener);
-	}
-
-	protected ActionContext getActionContext() {
-		ComponentProvider provider = getComponentProvider();
-		ActionContext context = provider == null ? null : provider.getActionContext(null);
-		final ActionContext actionContext = context == null ? new DefaultActionContext() : context;
-		return actionContext;
-	}
-
-	private ComponentProvider getComponentProvider() {
-		DockingWindowManager manager = DockingWindowManager.getActiveInstance();
-		if (manager == null) {
-			return null;
-		}
-		return manager.getActiveComponentProvider();
 	}
 
 	/**

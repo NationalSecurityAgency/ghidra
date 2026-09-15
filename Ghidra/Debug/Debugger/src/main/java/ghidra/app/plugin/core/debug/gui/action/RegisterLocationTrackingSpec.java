@@ -29,7 +29,6 @@ import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceAddressSpace;
 
 public interface RegisterLocationTrackingSpec extends LocationTrackingSpec, LocationTracker {
 	Register computeRegister(DebuggerCoordinates coordinates);
@@ -84,8 +83,12 @@ public interface RegisterLocationTrackingSpec extends LocationTrackingSpec, Loca
 		if (value == null) {
 			return null;
 		}
-		// TODO: Action to select the address space
-		// Could use code unit, but that can't specify space, yet, either....
+		/**
+		 * NOTE: I don't think the user needs a way to select the address space. For PC and SP, the
+		 * tracker provides the best default, i.e., the default (code) space and the compiler's
+		 * physical stack space. For watches, I believe the sleigh syntax allows the user to pick,
+		 * but I can't recall testing that.
+		 */
 		return platform.mapGuestToHost(computeDefaultAddressSpace(coordinates)
 				.getAddress(value.getUnsignedValue().longValue(), true));
 	}
@@ -98,18 +101,17 @@ public interface RegisterLocationTrackingSpec extends LocationTrackingSpec, Loca
 	}
 
 	@Override
-	default boolean affectedByBytesChange(TraceAddressSpace space,
-			TraceAddressSnapRange range, DebuggerCoordinates coordinates) {
+	default boolean affectedByBytesChange(AddressSpace space, TraceAddressSnapRange range,
+			DebuggerCoordinates coordinates) {
 		if (!LocationTrackingSpec.changeIsCurrent(space, range, coordinates)) {
 			return false;
 		}
 		Register register = computeRegister(coordinates);
-		AddressSpace as = space.getAddressSpace();
-		if (register == null || register.getAddressSpace() != as) {
+		if (register == null) {
 			return false;
 		}
 		AddressRange regRng = coordinates.getPlatform()
-				.getConventionalRegisterRange(as.isRegisterSpace() ? as : null, register);
+				.getConventionalRegisterRange(space.isRegisterSpace() ? space : null, register);
 		return range.getRange().intersects(regRng);
 	}
 

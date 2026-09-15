@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import mdemangler.naming.MDQualifiedName;
 // ***********NOTE: For "based5 bug" or "basedptr"**************
 //
 // Any modifier type that has a case '5' (representing that the
-// Modifier location is based on a a pointer location ("basedptr")
+// Modifier location is based on a pointer location ("basedptr")
 // is currently invalid in the Microsoft model.  There is a bug
 // (my words for it) where it seem that in this case, the notation
 // of an invalid option here is noted with a null character ('\0')
@@ -37,7 +37,7 @@ import mdemangler.naming.MDQualifiedName;
 // that String at the appropriate time in the processing of
 // outputting a demangled String.  So, we first, purposefully
 // insert this null character, and later look for it in order
-// to properly truncate the substring in question, in order to 
+// to properly truncate the substring in question, in order to
 // mimic what we believe is happening in Microsoft demangler
 // code.... but this is true only if we care to mimic Microsoft
 // code, which we do and do not want to do, depending on which
@@ -69,7 +69,8 @@ public class MDBasedAttribute extends MDParsableItem {
 	protected void parseInternal() throws MDException {
 		parsed = true;
 		// TODO: Provide mechanism to turn on/off (move this boolean into MDMang?)
-		boolean boolean32BitSymbols = true;
+		// Guessing that this is correct.  We do not yet have real demangled output to test against
+		boolean boolean32BitSymbols = dmang.getArchitectureSize() != 16;
 		if (boolean32BitSymbols) {
 			switch (dmang.getAndIncrement()) {
 				case '0': // UINFO: void
@@ -124,7 +125,7 @@ public class MDBasedAttribute extends MDParsableItem {
 					bn.parse();
 					StringBuilder bnBuilder = new StringBuilder();
 					bn.insert(bnBuilder);
-					dmang.appendString(bnBuilder, "\"");
+					dmang.appendString(bnBuilder, "\")");
 					dmang.insertString(bnBuilder, "__segmname(\"");
 					basedName = bnBuilder.toString();
 					break;

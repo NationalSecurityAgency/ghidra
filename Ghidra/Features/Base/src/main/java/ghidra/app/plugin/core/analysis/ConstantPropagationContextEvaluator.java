@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -119,13 +119,13 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 	}
 
 	/**
-	 * Set maximum speculative memory offset for references
+	 * Set minimum offset from the start or end of memory for computed store/load references
 	 * 
-	 * @param minStoreLoadRefAddress maximum address offset
+	 * @param minStoreLoadRefAddress minimum address offset
 	 * @return this
 	 */
 	public ConstantPropagationContextEvaluator setMinStoreLoadOffset(long minStoreLoadRefAddress) {
-		maxSpeculativeOffset = minStoreLoadRefAddress;
+		minStoreLoadOffset = minStoreLoadRefAddress;
 		return this;
 	}
 
@@ -427,7 +427,7 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 			}
 
 			SourceType mostTrusted = getMostTrustedParameterSource(func);
-			if (SourceType.ANALYSIS.isLowerPriorityThan(mostTrusted)) {
+			if (mostTrusted.isHigherOrEqualPriorityThan(SourceType.IMPORTED)) {
 				return;
 			}
 		}

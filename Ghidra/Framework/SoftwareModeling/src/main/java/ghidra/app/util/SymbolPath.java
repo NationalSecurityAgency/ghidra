@@ -28,7 +28,7 @@ import ghidra.program.model.symbol.*;
  * name of a symbol in the "bar" namespace, which is in the "foo" namespace.
  * <UL>
  * <LI>{@link #getName()} will return "baz".</LI>
- * <LI>{@link #getParentPath()} will return "foo:bar".</LI>
+ * <LI>{@link #getParentPath()} will return "foo::bar".</LI>
  * <LI>{@link #getPath()} will return "foo::bar::baz".</LI>
  * </UL>
  *

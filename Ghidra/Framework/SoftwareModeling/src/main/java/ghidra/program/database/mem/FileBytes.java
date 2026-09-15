@@ -18,7 +18,7 @@ package ghidra.program.database.mem;
 import java.io.IOException;
 import java.util.ConcurrentModificationException;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import db.*;
 
@@ -53,7 +53,7 @@ public class FileBytes {
 		String f = record.getString(FileBytesAdapter.FILENAME_COL);
 		long offset = record.getLongValue(FileBytesAdapter.OFFSET_COL);
 		long sz = record.getLongValue(FileBytesAdapter.SIZE_COL);
-		if (offset != fileOffset || sz != size || !StringUtils.equals(f, filename)) {
+		if (offset != fileOffset || sz != size || !Strings.CS.equals(f, filename)) {
 			return false;
 		}
 

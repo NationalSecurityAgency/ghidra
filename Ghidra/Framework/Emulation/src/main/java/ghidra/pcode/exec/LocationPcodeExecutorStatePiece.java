@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@ package ghidra.pcode.exec;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.program.model.address.Address;
@@ -79,7 +80,12 @@ public class LocationPcodeExecutorStatePiece
 	}
 
 	@Override
-	public LocationPcodeExecutorStatePiece fork() {
+	public Stream<PcodeExecutorStatePiece<?, ?>> streamPieces() {
+		return Stream.of(this);
+	}
+
+	@Override
+	public LocationPcodeExecutorStatePiece fork(PcodeStateCallbacks cb) {
 		return new LocationPcodeExecutorStatePiece(language, addressArithmetic,
 			new HashMap<>(unique));
 	}
@@ -96,6 +102,11 @@ public class LocationPcodeExecutorStatePiece
 	}
 
 	@Override
+	public void setVarInternal(AddressSpace space, byte[] offset, int size, ValueLocation val) {
+		setVar(space, offset, size, false, val);
+	}
+
+	@Override
 	public ValueLocation getVar(AddressSpace space, byte[] offset, int size, boolean quantize,
 			Reason reason) {
 		long lOffset = addressArithmetic.toLong(offset, Purpose.LOAD);
@@ -103,6 +114,12 @@ public class LocationPcodeExecutorStatePiece
 			return ValueLocation.fromVarnode(space.getAddress(lOffset), size);
 		}
 		return unique.get(lOffset);
+	}
+
+	@Override
+	public ValueLocation getVarInternal(AddressSpace space, byte[] offset, int size,
+			Reason reason) {
+		return getVar(space, offset, size, false, reason);
 	}
 
 	@Override

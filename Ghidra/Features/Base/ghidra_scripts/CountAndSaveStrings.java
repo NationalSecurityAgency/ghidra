@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,13 +15,13 @@
  */
 //Counts the number of defined strings in the current selection, or current program if no selection is made,
 //and saves the results to a file.
-//@category CustomerSubmission.Strings
+//@category Customer Submission.Strings
+
+import java.io.*;
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.ProgramSelection;
-
-import java.io.*;
 
 public class CountAndSaveStrings extends GhidraScript {
 	private Listing listing;
@@ -46,8 +46,8 @@ public class CountAndSaveStrings extends GhidraScript {
 	private File getSaveFile() throws Exception {
 		File file = askFile("Choose File Location", "Save");
 		if (file.exists()) {
-			if (!askYesNo("File Already Exists", "A file already exists with the name you "
-				+ "chose.\nDo you want to overwrite it?")) {
+			if (!askYesNo("File Already Exists", "A file already exists with the name you " +
+				"chose.\nDo you want to overwrite it?")) {
 				return null;
 			}
 		}

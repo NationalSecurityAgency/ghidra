@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,12 +21,12 @@ import java.io.File;
 import java.security.*;
 import java.security.cert.X509Certificate;
 
-import javax.net.ssl.KeyManager;
 import javax.net.ssl.X509ExtendedKeyManager;
 
 import org.junit.*;
 
 import generic.test.AbstractGenericTest;
+import ghidra.framework.OperatingSystem;
 import ghidra.security.KeyStorePasswordProvider;
 
 public class ApplicationKeyManagerFactoryTest extends AbstractGenericTest {
@@ -53,7 +53,7 @@ public class ApplicationKeyManagerFactoryTest extends AbstractGenericTest {
 				state = 0;
 				return null;
 			}
-			if (state == 0) { // enter wrong password once 
+			if (state == 0) { // enter wrong password once
 				state = 1;
 				return "BAD".toCharArray();
 			}
@@ -73,8 +73,8 @@ public class ApplicationKeyManagerFactoryTest extends AbstractGenericTest {
 		keystoreFile = createTempFile("test-key", ".p12");
 		keystoreFile.delete();
 
-		ApplicationKeyManagerUtils.createKeyStore(ALIAS, TEST_IDENTITY, 2, null, keystoreFile,
-			"PKCS12", null, TEST_PWD.toCharArray());
+		PKIUtils.createKeyStore(ALIAS, TEST_IDENTITY, 2, null, false, keystoreFile, "PKCS12", null,
+				TEST_PWD.toCharArray());
 
 		ApplicationKeyManagerFactory.setKeyStorePasswordProvider(passwordProvider);
 	}
@@ -89,45 +89,63 @@ public class ApplicationKeyManagerFactoryTest extends AbstractGenericTest {
 	@Test
 	public void testCancelledPasswordOnSetCertificate() throws Exception {
 
-		assertNull(ApplicationKeyManagerFactory.getKeyStore());
-		ApplicationKeyManagerFactory instance = ApplicationKeyManagerFactory.getInstance();
-		KeyManager[] keyManagers = instance.getKeyManagers();
-		assertEquals(1, keyManagers.length);
-		assertTrue("", keyManagers[0] instanceof X509ExtendedKeyManager);
-		X509ExtendedKeyManager keyManager = (X509ExtendedKeyManager) keyManagers[0];
+		assertFalse(DefaultKeyManagerFactory.isServerMode());
+		assertNull(DefaultKeyManagerFactory.getPreferredKeyStore());
+		assertNull(DefaultKeyManagerFactory.getKeyStore());
+		X509ExtendedKeyManager keyManager = DefaultKeyManagerFactory.getKeyManager();
+		assertNotNull(keyManager);
 
-		// verify that no certs are installed
-		assertNull(keyManager.getCertificateChain(ALIAS));
-		assertNull(keyManager.getClientAliases("RSA", null));
+		// With no keystore specified, a client default identity is always established
+		// (OS-managed keystore or auto-generated self-signed client certificate).
+		// NOTE: must not assert specific aliases which depend on host OS keystore
+		// content.
+		assertTrue(DefaultKeyManagerFactory.initialize());
+		if (OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS
+				|| OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.MAC_OS_X) {
+			assertTrue(DefaultKeyManagerFactory.usingOSManagedKeyStore()); // OS key store will be used
+		} else {
+			assertFalse(DefaultKeyManagerFactory.usingOSManagedKeyStore());
+		}
+		assertFalse(DefaultKeyManagerFactory.usingFileKeyStore());
+		assertFalse(DefaultKeyManagerFactory.usingGeneratedSelfSignedCertificate());
+
+		assertNull(DefaultKeyManagerFactory.getKeyStore());
 
 		passwordProvider.cancelNextEntry();
+		assertFalse(DefaultKeyManagerFactory.setDefaultKeyStore(keystoreFile.getAbsolutePath(), false));
 
-		ApplicationKeyManagerFactory.setKeyStore(keystoreFile.getAbsolutePath(), false);
-
-		// verify that no certs are installed
-		assertEquals(null, ApplicationKeyManagerFactory.getKeyStore());
+		// verify that keystore file was not activated
+		assertEquals(null, DefaultKeyManagerFactory.getKeyStore());
 		assertNull(keyManager.getCertificateChain(ALIAS));
-		assertNull(keyManager.getClientAliases("RSA", null));
+
+		// verify no impact to key manager state
+		if (OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS
+				|| OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.MAC_OS_X) {
+			assertTrue(DefaultKeyManagerFactory.usingOSManagedKeyStore());
+		} else {
+			assertFalse(DefaultKeyManagerFactory.usingOSManagedKeyStore());
+		}
+		assertFalse(DefaultKeyManagerFactory.usingFileKeyStore());
+
 	}
 
 	@Test
 	public void testSetClearCertificate() throws Exception {
 
-		assertNull(ApplicationKeyManagerFactory.getKeyStore());
-		ApplicationKeyManagerFactory instance = ApplicationKeyManagerFactory.getInstance();
-		KeyManager[] keyManagers = instance.getKeyManagers();
-		assertEquals(1, keyManagers.length);
-		assertTrue("", keyManagers[0] instanceof X509ExtendedKeyManager);
-		X509ExtendedKeyManager keyManager = (X509ExtendedKeyManager) keyManagers[0];
+		assertFalse(DefaultKeyManagerFactory.isServerMode());
+		assertNull(DefaultKeyManagerFactory.getPreferredKeyStore());
+		assertNull(DefaultKeyManagerFactory.getKeyStore());
+		X509ExtendedKeyManager keyManager = DefaultKeyManagerFactory.getKeyManager();
+		assertNotNull(keyManager);
 
-		// verify that no certs are installed
-		assertNull(keyManager.getCertificateChain(ALIAS));
-		assertNull(keyManager.getClientAliases("RSA", null));
-
-		ApplicationKeyManagerFactory.setKeyStore(keystoreFile.getAbsolutePath(), false);
+		DefaultKeyManagerFactory.setDefaultKeyStore(keystoreFile.getAbsolutePath(), false);
 
 		// verify that generated cert is installed
-		assertEquals(keystoreFile.getAbsolutePath(), ApplicationKeyManagerFactory.getKeyStore());
+		assertEquals(keystoreFile.getAbsolutePath(), DefaultKeyManagerFactory.getKeyStore());
+		assertFalse(DefaultKeyManagerFactory.usingOSManagedKeyStore());
+		assertFalse(DefaultKeyManagerFactory.usingGeneratedSelfSignedCertificate());
+		assertTrue(DefaultKeyManagerFactory.usingFileKeyStore());
+
 		X509Certificate[] chain = keyManager.getCertificateChain(ALIAS);
 		assertNotNull(chain);
 		String[] aliases = keyManager.getClientAliases("RSA", new Principal[0]); // any CA allowed
@@ -158,13 +176,15 @@ public class ApplicationKeyManagerFactoryTest extends AbstractGenericTest {
 		}
 
 		// clear keystore
-		ApplicationKeyManagerFactory.setKeyStore(null, false);
-
-		// verify that no certs are installed
-		assertNull(ApplicationKeyManagerFactory.getKeyStore());
-		assertNull(keyManager.getCertificateChain(ALIAS));
-		assertNull(keyManager.getClientAliases("RSA", null));
-
+		assertTrue(DefaultKeyManagerFactory.setDefaultKeyStore(null, false));
+		if (OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS
+				|| OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.MAC_OS_X) {
+			assertTrue(DefaultKeyManagerFactory.usingOSManagedKeyStore()); // OS key store will be used
+		} else {
+			assertFalse(DefaultKeyManagerFactory.usingOSManagedKeyStore());
+		}
+		assertFalse(DefaultKeyManagerFactory.usingGeneratedSelfSignedCertificate());
+		assertFalse(DefaultKeyManagerFactory.usingFileKeyStore());
 	}
 
 }

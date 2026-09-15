@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ interface EmulateSkipOverAction extends ControlAction {
 		"Skip the integrated emulator a single instruction, ignoring its effects";
 	Icon ICON = DebuggerResources.ICON_SKIP_OVER;
 	String HELP_ANCHOR = "emu_skip_over";
-	int SUB_GROUP = 7;
+	int SUB_GROUP = 5;
 	KeyStroke KEY_BINDING = KeyStroke.getKeyStroke(KeyEvent.VK_F10, KeyEvent.CTRL_DOWN_MASK);
 
 	static ActionBuilder builder(Plugin owner) {

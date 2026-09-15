@@ -64,35 +64,6 @@ public abstract class ProgramPlugin extends Plugin {
 	}
 
 	/**
-	 * Calling this constructor is works the same as calling {@link ProgramPlugin}.
-	 *
-	 * @deprecated call {@link #ProgramPlugin(PluginTool)} instead
-	 * @param plugintool the tool
-	 * @param consumeLocationChange not used
-	 * @param consumeSelectionChange not used
-	 */
-	@Deprecated(forRemoval = true, since = "10.2")
-	public ProgramPlugin(PluginTool plugintool, boolean consumeLocationChange,
-			boolean consumeSelectionChange) {
-		this(plugintool);
-	}
-
-	/**
-	 * Calling this constructor is works the same as calling {@link ProgramPlugin}.
-	 *
-	 * @deprecated call {@link #ProgramPlugin(PluginTool)} instead
-	 * @param plugintool the tool
-	 * @param consumeLocationChange not used
-	 * @param consumeSelectionChange not used
-	 * @param consumeHighlightChange not used
-	 */
-	@Deprecated(forRemoval = true, since = "10.2")
-	public ProgramPlugin(PluginTool plugintool, boolean consumeLocationChange,
-			boolean consumeSelectionChange, boolean consumeHighlightChange) {
-		this(plugintool);
-	}
-
-	/**
 	 * Process the plugin event.
 	 * <p>
 	 * When a program closed event or focus changed event comes in, the locationChanged() and

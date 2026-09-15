@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package ghidra.app.plugin.core.flowarrow;
+
+import static ghidra.util.HTMLUtilities.*;
 
 import java.awt.*;
 import java.awt.geom.PathIterator;
@@ -23,7 +25,6 @@ import java.util.List;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.symbol.RefType;
-import ghidra.util.HTMLUtilities;
 import ghidra.util.exception.AssertException;
 
 abstract class FlowArrow {
@@ -36,15 +37,16 @@ abstract class FlowArrow {
 
 	Address start;
 	Address end;
-	AddressSet addressSet;
-	int depth = -1;
+	AddressSet addresses;
+	int column = -1;
 	RefType refType;
+	private int maxColumn;
 	private boolean isUp;
 
 	boolean active;
 	boolean selected;
 
-	private FlowArrowPlugin plugin;
+	private FlowArrowMarginProvider provider;
 	private Component canvas;
 	protected Shape arrowBody;
 	protected Shape arrowHead;
@@ -52,15 +54,16 @@ abstract class FlowArrow {
 	/** The shape of the arrow body, but with added size */
 	private List<Shape> clickableShapes = new ArrayList<>();
 
-	FlowArrow(FlowArrowPlugin plugin, Component canvas, Address start, Address end,
+	FlowArrow(FlowArrowMarginProvider provider, Component canvas, Address start, Address end,
 			RefType referenceType) {
-		this.plugin = plugin;
+		this.provider = provider;
 		this.canvas = canvas;
 		this.start = start;
 		this.end = end;
 		this.refType = referenceType;
-		this.addressSet = new AddressSet(new AddressRangeImpl(start, end));
-		isUp = start.compareTo(end) > 0;
+		this.maxColumn = provider.getMaxColumn();
+		this.addresses = new AddressSet(new AddressRangeImpl(start, end));
+		this.isUp = start.compareTo(end) > 0;
 	}
 
 	abstract Stroke getSelectedStroke();
@@ -101,7 +104,7 @@ abstract class FlowArrow {
 		g2.setStroke(oldStroke);
 	}
 
-	/** True if this arrow points up instead of down */
+	/** {@return true if this arrow points up instead of down} */
 	boolean isUp() {
 		return isUp;
 	}
@@ -242,20 +245,20 @@ abstract class FlowArrow {
 		int displayWidth = canvas.getWidth();// - FlowArrowPlugin.LEFT_OFFSET;
 		int lineWidth = calculateLineWidth(displayWidth);
 
-		arrowBody = FlowArrowShapeFactory.createArrowBody(plugin, this, displayWidth, displayHeight,
-			lineWidth);
+		arrowBody =
+			FlowArrowShapeFactory.createArrowBody(provider, this, displayWidth, displayHeight,
+				lineWidth);
 
-		arrowHead = FlowArrowShapeFactory.createArrowHead(plugin, this, displayWidth, displayHeight,
-			lineWidth);
+		arrowHead =
+			FlowArrowShapeFactory.createArrowHead(provider, this, displayWidth, displayHeight,
+				lineWidth);
 	}
 
 	private int calculateLineWidth(int displayWidth) {
 		// Crunch or stretch spacing depending upon width and maximum depth
 		int lineWidth = DEFAULT_LINE_SPACING;
-		int maxDepth = plugin.getMaxDepth();
-
-		if (maxDepth >= 0) {
-			int availabeWidth = displayWidth - FlowArrowPlugin.LEFT_OFFSET;
+		if (maxColumn >= 0) {
+			int availabeWidth = displayWidth - FlowArrowMarginProvider.LEFT_OFFSET;
 			lineWidth = (int) (availabeWidth * ARROW_SPACING_RATIO);
 		}
 		if (lineWidth < MIN_LINE_SPACING) {
@@ -321,9 +324,17 @@ abstract class FlowArrow {
 	}
 
 	public String getDisplayString() {
-		return "<html><table><tr><td>start</td><td>" + HTMLUtilities.escapeHTML(start.toString()) +
-			"</td><tr><td>end</td><td>" + HTMLUtilities.escapeHTML(end.toString()) +
-			"</td><tr><td>ref type</td><td>" + refType + "</td></tr></table>";
+		//@formatter:off
+		return 	"""		
+			<html><table> 
+			<tr><td>start</td><td>%s</td></tr> 
+			<tr><td>end</td><td>%s</td></tr> 
+			<tr><td>ref type</td><td>%s</td></tr> 
+			</table>
+		""".formatted(escapeHTML(start.toString()),	
+			          escapeHTML(end.toString()), 
+			          refType).trim();
+		//@formatter:on
 	}
 
 	@Override

@@ -26,6 +26,13 @@
     </P>
     
     <P>
+    <B>Note on imports:</B> Since you are running inside Ghidra, you do <I>not</I> need to
+    <TT>import pyghidra</TT> or call <TT>pyghidra.start()</TT>. The <TT>pyghidra</TT> module is
+    only needed for standalone Python scripts running outside of Ghidra. Here, you can directly
+    import Ghidra API modules like <TT>from ghidra.program.flatapi import FlatProgramAPI</TT>.
+    </P>
+
+    <P>
     As in Java, classes outside of your current package/module need to be explicitly imported.
     For example, consider the following code snippet:
     </P>

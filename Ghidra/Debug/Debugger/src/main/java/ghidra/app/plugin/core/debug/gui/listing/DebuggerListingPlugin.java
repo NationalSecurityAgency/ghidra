@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,15 +15,18 @@
  */
 package ghidra.app.plugin.core.debug.gui.listing;
 
-import static ghidra.app.plugin.core.debug.gui.DebuggerResources.GROUP_TRANSIENT_VIEWS;
+import static ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 
+import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.ActionContext;
+import docking.ComponentProvider;
 import docking.action.MenuData;
 import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -37,21 +40,21 @@ import ghidra.app.plugin.core.debug.gui.action.NoneLocationTrackingSpec;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
+import ghidra.debug.api.action.AutoReadMemorySpec;
 import ghidra.debug.api.action.LocationTrackingSpec;
+import ghidra.debug.api.listing.DebuggerListing;
 import ghidra.debug.api.listing.MultiBlendedListingBackgroundColorModel;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
+import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.pcode.exec.SleighUtils.LitIdMode;
 import ghidra.program.model.address.*;
-import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.program.TraceProgramView;
-import ghidra.util.Swing;
-import utilities.util.SuppressableCallback;
-import utilities.util.SuppressableCallback.Suppression;
 
 @PluginInfo(
 	shortDescription = "View and annotate listings of trace (possibly live) memory",
@@ -62,33 +65,36 @@ import utilities.util.SuppressableCallback.Suppression;
 	packageName = DebuggerPluginPackage.NAME,
 	status = PluginStatus.RELEASED,
 	eventsConsumed = {
-		// ProgramHighlightPluginEvent.class, // TODO: Later or remove
-		ProgramOpenedPluginEvent.class, // For auto-open log cleanup
 		ProgramClosedPluginEvent.class, // For marker set cleanup
-		ProgramActivatedPluginEvent.class, // To track the static program for sync
-		ProgramLocationPluginEvent.class, // For static listing sync
-		ProgramSelectionPluginEvent.class, // For static listing sync
 		TraceActivatedPluginEvent.class, // Trace/thread activation and register tracking
 		TraceClosedPluginEvent.class,
+		TraceLocationPluginEvent.class,
+		TraceSelectionPluginEvent.class,
+		TraceHighlightPluginEvent.class,
+		TrackingChangedPluginEvent.class,
 	},
 	eventsProduced = {
-		ProgramLocationPluginEvent.class,
-		ProgramSelectionPluginEvent.class,
 		TraceLocationPluginEvent.class,
-		TraceSelectionPluginEvent.class
+		TraceSelectionPluginEvent.class,
+		TraceHighlightPluginEvent.class,
+		TrackingChangedPluginEvent.class,
 	},
 	servicesRequired = {
 		DebuggerStaticMappingService.class, // For static listing sync. TODO: Optional?
 		DebuggerEmulationService.class, // TODO: Optional?
 		ProgramManager.class, // For static listing sync
 		ClipboardService.class,
-		MarkerService.class // TODO: Make optional?
+		MarkerService.class, // TODO: Make optional?
 	},
 	servicesProvided = {
 		DebuggerListingService.class,
 	})
 public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerListingProvider>
 		implements DebuggerListingService {
+
+	private static final AutoConfigState.ClassHandler<DebuggerListingPlugin> CONFIG_STATE_HANDLER =
+		AutoConfigState.wireHandler(DebuggerListingPlugin.class, MethodHandles.lookup());
+
 	private static final String KEY_CONNECTED_PROVIDER = "connectedProvider";
 	private static final String KEY_DISCONNECTED_COUNT = "disconnectedCount";
 	private static final String PREFIX_DISCONNECTED_PROVIDER = "disconnectedProvider";
@@ -125,9 +131,8 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	@SuppressWarnings("unused")
 	private AutoService.Wiring autoServiceWiring;
 
-	private final SuppressableCallback<Void> cbProgramLocationEvents = new SuppressableCallback<>();
-	private final SuppressableCallback<Void> cbProgramSelectionEvents =
-		new SuppressableCallback<>();
+	@AutoConfigStateField
+	protected LitIdMode goToSleighMode = LitIdMode.HEX;
 
 	private DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
 
@@ -189,13 +194,29 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	}
 
 	@Override
-	protected void viewChanged(AddressSetView addrSet) {
+	public DebuggerListing createNewListing() {
+		return createNewDisconnectedProvider();
+	}
+
+	public String findNextCustomTitle() {
+		List<String> allTitles = disconnectedProviders.stream().map(ComponentProvider::getTitle).toList();
+		int i;
+		for (i = 0; i < allTitles.size(); i++) {
+			if (!allTitles.contains("Dynamic %d".formatted(i))) {
+				return "Dynamic %d".formatted(i);
+			}
+		}
+		return "Dynamic %d".formatted(i);
+	}
+
+	@Override
+	protected void setView(AddressSetView addrSet) {
 		TraceProgramView view = current.getView();
 		if (view == null) {
-			super.viewChanged(new AddressSet());
+			super.setView(new AddressSet());
 		}
 		else {
-			super.viewChanged(view.getMemory());
+			super.setView(view.getMemory());
 		}
 	}
 
@@ -205,14 +226,19 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	}
 
 	@Override
-	public void locationChanged(CodeViewerProvider provider, ProgramLocation location) {
+	public void broadcastLocationChanged(CodeViewerProvider provider, ProgramLocation location) {
 		// TODO: Fix cursor?
 		// Do not fire ProgramLocationPluginEvent.
-		firePluginEvent(new TraceLocationPluginEvent(getName(), location));
+		if (provider == connectedProvider) {
+			firePluginEvent(new TraceLocationPluginEvent(getName(), location));
+		}
 	}
 
 	@Override
-	public void selectionChanged(CodeViewerProvider provider, ProgramSelection selection) {
+	public void broadcastSelectionChanged(CodeViewerProvider provider, ProgramSelection selection) {
+		if (provider != connectedProvider) {
+			return;
+		}
 		TraceProgramView view = current.getView();
 		if (view == null) {
 			return;
@@ -222,9 +248,16 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	}
 
 	@Override
-	public void highlightChanged(CodeViewerProvider codeViewerProvider,
-			ProgramSelection highlight) {
-		// TODO Nothing, yet
+	public void broadcastHighlightChanged(CodeViewerProvider provider, ProgramSelection highlight) {
+		if (provider != connectedProvider) {
+			return;
+		}
+		TraceProgramView view = current.getView();
+		if (view == null) {
+			return;
+		}
+		// Do not fire ProgramHighlightPluginEvent
+		firePluginEvent(new TraceHighlightPluginEvent(getName(), highlight, view));
 	}
 
 	protected boolean heedLocationEvent(PluginEvent ev) {
@@ -259,57 +292,36 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 
 	@Override
 	public void processEvent(PluginEvent event) {
-		if (event instanceof ProgramLocationPluginEvent ev) {
-			cbProgramLocationEvents.invoke(() -> {
-				if (heedLocationEvent(ev)) {
-					connectedProvider.staticProgramLocationChanged(ev.getLocation());
-				}
-			});
-		}
-		if (event instanceof ProgramSelectionPluginEvent ev) {
-			cbProgramSelectionEvents.invoke(() -> {
-				if (heedSelectionEvent(ev)) {
-					connectedProvider.staticProgramSelectionChanged(ev.getProgram(),
-						ev.getSelection());
-				}
-			});
-		}
-		if (event instanceof ProgramOpenedPluginEvent ev) {
-			allProviders(p -> p.programOpened(ev.getProgram()));
-		}
-		if (event instanceof ProgramClosedPluginEvent ev) {
-			allProviders(p -> p.programClosed(ev.getProgram()));
-		}
-		if (event instanceof ProgramActivatedPluginEvent ev) {
-			allProviders(p -> p.staticProgramActivated(ev.getActiveProgram()));
-		}
-		if (event instanceof TraceActivatedPluginEvent ev) {
-			current = ev.getActiveCoordinates();
-			allProviders(p -> p.coordinatesActivated(current));
-		}
-		if (event instanceof TraceClosedPluginEvent ev) {
-			if (current.getTrace() == ev.getTrace()) {
-				current = DebuggerCoordinates.NOWHERE;
+		switch (event) {
+			case ProgramClosedPluginEvent ev -> allProviders(p -> p.programClosed(ev.getProgram()));
+			case TraceActivatedPluginEvent ev -> {
+				current = ev.getActiveCoordinates();
+				allProviders(p -> p.coordinatesActivated(current));
 			}
-			allProviders(p -> p.traceClosed(ev.getTrace()));
-		}
-	}
-
-	void fireStaticLocationEvent(ProgramLocation staticLoc) {
-		assert Swing.isSwingThread();
-		try (Suppression supp = cbProgramLocationEvents.suppress(null)) {
-			// Use this instead of GoToService to avoid event loopback
-			programManager.setCurrentProgram(staticLoc.getProgram());
-			tool.firePluginEvent(new ProgramLocationPluginEvent(getName(), staticLoc,
-				staticLoc.getProgram()));
-			//goToService.goTo(staticLoc);
-		}
-	}
-
-	void fireStaticSelectionEvent(Program staticProg, ProgramSelection staticSel) {
-		assert Swing.isSwingThread();
-		try (Suppression supp = cbProgramSelectionEvents.suppress(null)) {
-			tool.firePluginEvent(new ProgramSelectionPluginEvent(getName(), staticSel, staticProg));
+			case TraceClosedPluginEvent ev -> {
+				if (current.getTrace() == ev.getTrace()) {
+					current = DebuggerCoordinates.NOWHERE;
+				}
+				allProviders(p -> p.traceClosed(ev.getTrace()));
+			}
+			case TraceLocationPluginEvent ev -> {
+				// For those comparing to CodeBrowserPlugin, there is no "viewManager" here.
+				connectedProvider.goTo(ev.getTraceProgramView(), ev.getLocation());
+			}
+			case TraceSelectionPluginEvent ev -> {
+				if (ev.getTraceProgramView() == current.getView()) {
+					connectedProvider.setSelection(ev.getSelection());
+				}
+			}
+			case TraceHighlightPluginEvent ev -> {
+				if (ev.getTraceProgramView() == current.getView()) {
+					connectedProvider.setHighlight(ev.getHighlight());
+				}
+			}
+			case TrackingChangedPluginEvent ev -> connectedProvider
+					.setTrackingSpec(ev.getLocationTrackingSpec());
+			default -> {
+			}
 		}
 	}
 
@@ -350,20 +362,13 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	}
 
 	@Override
-	public void setCurrentSelection(ProgramSelection selection) {
-		connectedProvider.setSelection(selection);
+	public AutoReadMemorySpec getAutoReadMemorySpec() {
+		return connectedProvider.getAutoReadMemorySpec();
 	}
 
 	@Override
-	public boolean goTo(ProgramLocation location, boolean centerOnScreen) {
-		boolean result = super.goTo(location, centerOnScreen);
-		if (!result) {
-			return false;
-		}
-		DebuggerListingProvider provider = connectedProvider;
-		provider.doAutoSyncCursorIntoStatic(location);
-		provider.doCheckCurrentModuleMissing();
-		return true;
+	public void setCurrentSelection(ProgramSelection selection) {
+		connectedProvider.setSelection(selection);
 	}
 
 	@Override
@@ -376,31 +381,22 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 		return goTo(loc, centerOnScreen);
 	}
 
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * <p>
-	 * This is only used by the ProgramManager. I don't need state per program. It would be nice to
-	 * have state per Trace, but this facility is usurped only for the ProgramManager. Here, it gets
-	 * in my way, since it restores previous, now incorrect, state on program switch. It tends to
-	 * override the static sync.
-	 */
 	@Override
-	public Object getTransientState() {
-		// ProgramManager does all this for programs. I don't need that here.
-		return new Object[] {};
+	public void setGoToSleighMode(LitIdMode mode) {
+		goToSleighMode = mode;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * @see #getTransientState()
-	 */
 	@Override
-	public void restoreTransientState(Object objectState) {
-		/*try (Suppression supp = cbGoTo.suppress(null)) {
-			super.restoreTransientState(objectState);
-		}*/
+	public LitIdMode getGoToSleighMode() {
+		return goToSleighMode;
+	}
+
+	@Override
+	public List<DebuggerListing> getAllListings() {
+		final List<DebuggerListing> ret = new ArrayList<>();
+		ret.add(connectedProvider);
+		ret.addAll(disconnectedProviders);
+		return ret;
 	}
 
 	@Override
@@ -475,6 +471,9 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 
 	@Override
 	public void writeConfigState(SaveState saveState) {
+		super.writeConfigState(saveState);
+		CONFIG_STATE_HANDLER.writeConfigState(this, saveState);
+
 		SaveState connectedProviderState = new SaveState();
 		connectedProvider.writeConfigState(connectedProviderState);
 		saveState.putXmlElement(KEY_CONNECTED_PROVIDER, connectedProviderState.saveToXml());
@@ -495,6 +494,9 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 
 	@Override
 	public void readConfigState(SaveState saveState) {
+		super.readConfigState(saveState);
+		CONFIG_STATE_HANDLER.readConfigState(this, saveState);
+
 		Element connectedProviderElement = saveState.getXmlElement(KEY_CONNECTED_PROVIDER);
 		if (connectedProviderElement != null) {
 			SaveState connectedProviderState = new SaveState(connectedProviderElement);

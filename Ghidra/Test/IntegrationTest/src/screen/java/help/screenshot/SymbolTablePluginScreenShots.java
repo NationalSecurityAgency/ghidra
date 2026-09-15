@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,7 +49,6 @@ public class SymbolTablePluginScreenShots extends GhidraScreenShotGenerator {
 		GTable table = getTable(symbolProvider);
 		setColumnSizes(table);
 		selectRow(table, "WideCharToMultiByte");
-		triggerText(table, "\n"); // hack to kick the references table
 
 		Window window = windowForComponent(symbolProvider.getComponent());
 		captureWindow(window);
@@ -67,7 +66,6 @@ public class SymbolTablePluginScreenShots extends GhidraScreenShotGenerator {
 		GTable table = getTable(symbolProvider);
 		setColumnSizes(table);
 		selectRow(table, "_malloc00403762");
-		triggerText(table, "\n"); // hack to kick the references table
 
 		Window window = windowForComponent(symbolProvider.getComponent());
 		captureWindow(window);
@@ -85,7 +83,6 @@ public class SymbolTablePluginScreenShots extends GhidraScreenShotGenerator {
 		GTable table = getTable(symbolProvider);
 		setColumnSizes(table);
 		selectRow(table, "FUN_004010e0");
-		triggerText(table, "\n"); // hack to kick the references table
 
 		Window window = windowForComponent(symbolProvider.getComponent());
 		captureWindow(window);
@@ -124,8 +121,7 @@ public class SymbolTablePluginScreenShots extends GhidraScreenShotGenerator {
 
 		performAction("Set Filter", "SymbolTablePlugin", false);
 
-		FilterDialog dialog =
-			waitForDialogComponent(null, FilterDialog.class, DEFAULT_WINDOW_TIMEOUT);
+		FilterDialog dialog = waitForDialogComponent(FilterDialog.class);
 		final JCheckBox advancedCheckBox =
 			(JCheckBox) getInstanceField("advancedFilterCheckbox", dialog);
 
@@ -160,7 +156,7 @@ public class SymbolTablePluginScreenShots extends GhidraScreenShotGenerator {
 
 	private GTable getTable(ComponentProvider provider) {
 		Object symbolPanel = getInstanceField("symbolPanel", provider);
-		return (GTable) getInstanceField("symTable", symbolPanel);
+		return (GTable) getInstanceField("gTable", symbolPanel);
 	}
 
 	private void setColumnSizes(final GTable table) {

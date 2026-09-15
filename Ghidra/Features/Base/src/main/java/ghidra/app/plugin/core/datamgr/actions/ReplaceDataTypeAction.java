@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,16 +48,13 @@ public class ReplaceDataTypeAction extends DockingAction {
 		super("Replace", plugin.getName());
 
 		this.plugin = plugin;
-		setPopupMenuData(new MenuData(new String[] { "Replace..." }, "Edit"));
+		setPopupMenuData(new MenuData(new String[] { "Replace..." }, "EditAdvanced"));
 	}
 
 	@Override
 	public boolean isAddToPopup(ActionContext context) {
 		DataTypeTreeNode node = getSelectedDataTypeTreeNode(context);
-		if (node instanceof BuiltInArchiveNode) {
-			return false;
-		}
-		return (node != null);
+		return node instanceof DataTypeNode;
 	}
 
 	@Override
@@ -67,10 +64,18 @@ public class ReplaceDataTypeAction extends DockingAction {
 			return false;
 		}
 
-		if (!(node instanceof DataTypeNode)) {
+		if (!(node instanceof DataTypeNode dtNode)) {
 			return false;
 		}
-		return node.isModifiable();
+		if (!dtNode.isModifiable()) {
+			return false;
+		}
+		if (dtNode.getDataType() instanceof BadDataType) {
+			// Although BAD datatype should not appear in tree, if it does replace is
+			// not supported.  Delete should be used instead.
+			return false;
+		}
+		return true;
 	}
 
 	private DataTypeTreeNode getSelectedDataTypeTreeNode(ActionContext context) {

@@ -32,7 +32,7 @@ package db;
  * </pre>
  * 
  * <p>
- * Can be expressed using an an {@link Transaction} instead:
+ * Can be expressed using a {@link Transaction} instead:
  * 
  * <pre>
  * try (Transaction tx = dbHandle.openTransaction(dbErrorHandler)) {

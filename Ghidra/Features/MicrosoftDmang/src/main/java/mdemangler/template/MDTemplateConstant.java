@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,9 +16,13 @@
 package mdemangler.template;
 
 import mdemangler.*;
+import mdemangler.datatype.MDDataType;
+import mdemangler.datatype.MDDataTypeParser;
 import mdemangler.naming.MDFragmentName;
 import mdemangler.object.MDObject;
 import mdemangler.object.MDObjectCPP;
+import mdemangler.typeinfo.MDTypeInfo;
+import mdemangler.typeinfo.MDTypeInfoParser;
 
 /**
  * This class represents a the template constant portion of a
@@ -66,24 +70,17 @@ public class MDTemplateConstant extends MDParsableItem {
 						// name = "&" + object;
 					}
 						break;
-					case '2': // TODO: Currently, we have no test data for this.
-						a = new MDSignedEncodedNumber(dmang);
-						a.parse();
-						String aStr = a.toString();
-						// 20140630: seems that '\'' is not there in $2a'b (documentation
-						// notation failure--the single quote (any type) is not really in the
-						// mangled string)
-						b = new MDSignedEncodedNumber(dmang);
-						b.parse();
-						if (aStr.charAt(0) == '-') {
-							name = "-";
-							aStr = aStr.substring(1, aStr.length());
+					case '2':
+						// This is not perect.  The newer encoding might not get tripped
+						// up by attempting to demangle with the older scheme or vice versa.
+						int currentIndex = dmang.getIndex();
+						try {
+							name = parseFloatingPointConstant();
 						}
-						name += aStr.charAt(0) + ".";
-						if (aStr.length() > 1) {
-							name += aStr.substring(1, aStr.length());
+						catch (MDException e) {
+							dmang.setIndex(currentIndex);
+							name = parseInitializedTemplateConstant();
 						}
-						name += "e" + b;
 						break;
 					case 'D':
 						a = new MDSignedEncodedNumber(dmang);
@@ -102,7 +99,7 @@ public class MDTemplateConstant extends MDParsableItem {
 					case 'F':
 						// 20140630: seems that '\'' is not there in $Fa'b (documentation
 						// notation failure--the single quote (any type) is not really in the
-						// mangled string)						
+						// mangled string)
 						a = new MDSignedEncodedNumber(dmang);
 						a.parse();
 						b = new MDSignedEncodedNumber(dmang);
@@ -112,7 +109,7 @@ public class MDTemplateConstant extends MDParsableItem {
 					case 'G':
 						// 20140630: seems that '\'' is not there in $Ga'b'c (documentation
 						// notation failure--the single quote (any type) is not really in the
-						// mangled string)						
+						// mangled string)
 						a = new MDSignedEncodedNumber(dmang);
 						a.parse();
 						b = new MDSignedEncodedNumber(dmang);
@@ -140,7 +137,7 @@ public class MDTemplateConstant extends MDParsableItem {
 					case 'I': { // Used in some cases ($$issue!!!!!!)
 						// 20140630: seems that '\'' is not there in $Ix'y (documentation
 						// notation failure--the single quote (any type) is not really in the
-						// mangled string)						
+						// mangled string)
 						// It also seems that the second parameter CAN be negative: $Ixa, where
 						// x is some object, and a is some signed number
 						// Do not do a pushModifierContext here.
@@ -165,7 +162,7 @@ public class MDTemplateConstant extends MDParsableItem {
 					case 'J': { // Used in some cases ($$issue!!!!!!)
 						// 20140630: seems that '\'' is not there in $Jx'y'z (documentation
 						// notation failure--the single quote (any type) is not really in the
-						// mangled string)						
+						// mangled string)
 						// It also seems that the second, third, and fourth parameters CAN be
 						// negative: $Jxabc, where x is some object, and a, b, and care some
 						// signed numbers
@@ -219,6 +216,65 @@ public class MDTemplateConstant extends MDParsableItem {
 			default:
 				throw new MDException("Template Parameter needs work: " + code + " code");
 		}
+	}
+
+	private String parseFloatingPointConstant() throws MDException {
+		String str = "";
+		MDSignedEncodedNumber a = new MDSignedEncodedNumber(dmang);
+		a.parse();
+		String aStr = a.toString();
+		// 20140630: seems that '\'' is not there in $2a'b (documentation
+		// notation failure--the single quote (any type) is not really in the
+		// mangled string)
+		MDSignedEncodedNumber b = new MDSignedEncodedNumber(dmang);
+		b.parse();
+		if (aStr.charAt(0) == '-') {
+			str = "-";
+			aStr = aStr.substring(1, aStr.length());
+		}
+		str += aStr.charAt(0) + ".";
+		if (aStr.length() > 1) {
+			str += aStr.substring(1, aStr.length());
+		}
+		str += "e" + b;
+		return str;
+	}
+
+	// Not sure that I like the name of this method, as I'm not sure what the full scope of
+	// encodings/initializations are at this time.
+	private String parseInitializedTemplateConstant() throws MDException {
+		String str = "";
+		// I don't know if we need to push and pop context before and after this
+		//  (to have correct back references if needed).
+		MDDataType t = MDDataTypeParser.parseDataType(dmang, true);
+		t.parse();
+
+		str += t.toString() + "{";
+
+		char code = dmang.peek();
+		while (code != '@') {
+			//From MDDataTypeParser:
+//		MDParsableItem item = new MDObjectCPP(dmang);
+//		dmang.pushContext();
+//		item.parse();
+//		dmang.popContext();
+
+			// I don't know if we need to push and pop context before and after this
+			//  (to have correct back references if needed).
+
+			//From MDObjectCpp
+			//int RTTINum = qualifiedName.getRTTINumber();
+			MDTypeInfo typeInfo = MDTypeInfoParser.parse(dmang, -1);
+			//if (qualifiedName.isTypeCast()) {
+			//	typeInfo.setTypeCast();
+			//}
+			typeInfo.parse();
+
+			str += typeInfo.toString();
+		}
+		dmang.next(); // skip the '@' character
+		str += "}";
+		return str;
 	}
 
 	@Override

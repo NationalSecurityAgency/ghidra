@@ -26,8 +26,6 @@ import ghidra.app.decompiler.*;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.VoidDataType;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
@@ -152,12 +150,12 @@ public class DecompilerParameterIdCmd extends BackgroundCommand<Program> {
 				// since decompile could fail and leave the source types changed.
 				Parameter retParam = func.getReturn();
 				if (retParam != null) {
-					if (!retParam.getSource().isHigherPriorityThan(sourceTypeClearLevel)) {
+					if (retParam.getSource().isLowerOrEqualPriorityThan(sourceTypeClearLevel)) {
 						func.setReturn(retParam.getDataType(), retParam.getVariableStorage(),
 							SourceType.DEFAULT);
 					}
 				}
-				if (!func.getSignatureSource().isHigherPriorityThan(sourceTypeClearLevel)) {
+				if (func.getSignatureSource().isLowerOrEqualPriorityThan(sourceTypeClearLevel)) {
 					func.setSignatureSource(SourceType.DEFAULT);
 				}
 			}

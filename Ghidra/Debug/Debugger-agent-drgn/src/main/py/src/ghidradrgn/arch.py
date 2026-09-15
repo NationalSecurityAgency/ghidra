@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
+from typing import Dict, List, Literal, Optional, Tuple
+
 from ghidratrace.client import Address, RegVal
 import drgn
 
@@ -20,7 +22,7 @@ from . import util
 
 
 # NOTE: This map is derived from the ldefs using a script
-language_map = {
+language_map: Dict[str, List[str]] = {
     'AARCH64': ['AARCH64:BE:64:v8A', 'AARCH64:LE:64:AppleSilicon', 'AARCH64:LE:64:v8A'],
     'ARM': ['ARM:BE:32:v8', 'ARM:BE:32:v8T', 'ARM:LE:32:v8', 'ARM:LE:32:v8T'],
     'PPC64': ['PowerPC:BE:64:4xx', 'PowerPC:LE:64:4xx'],
@@ -31,19 +33,19 @@ language_map = {
     'UNKNOWN': ['DATA:LE:64:default', 'DATA:LE:64:default'],
 }
 
-data64_compiler_map = {
+data64_compiler_map: Dict[Optional[str], str] = {
     None: 'pointer64',
 }
 
-default_compiler_map = {
+default_compiler_map: Dict[Optional[str], str] = {
     'Language.C': 'default',
 }
 
-x86_compiler_map = {
+x86_compiler_map: Dict[Optional[str], str] = {
     'Language.C': 'gcc',
 }
 
-compiler_map = {
+compiler_map: Dict[str, Dict[Optional[str], str]] = {
     'DATA:BE:64:': data64_compiler_map,
     'DATA:LE:64:': data64_compiler_map,
     'x86:LE:32:': x86_compiler_map,
@@ -56,12 +58,12 @@ compiler_map = {
 }
 
 
-def get_arch():
+def get_arch() -> str:
     platform = drgn.host_platform
     return platform.arch.name
 
 
-def get_endian():
+def get_endian() -> Literal['little', 'big']:
     parm = util.get_convenience_variable('endian')
     if parm != 'auto':
         return parm
@@ -73,7 +75,7 @@ def get_endian():
         return 'big'
 
 
-def get_size():
+def get_size() -> str:
     parm = util.get_convenience_variable('size')
     if parm != 'auto':
         return parm
@@ -85,11 +87,11 @@ def get_size():
         return '32'
 
 
-def get_osabi():
+def get_osabi() -> str:
     return "Language.C"
 
 
-def compute_ghidra_language():
+def compute_ghidra_language() -> str:
     # First, check if the parameter is set
     lang = util.get_convenience_variable('ghidra-language')
     if lang != 'auto':
@@ -103,7 +105,7 @@ def compute_ghidra_language():
     sz = get_size()
     lebe = ':BE:' if endian == 'big' else ':LE:'
     if not arch in language_map:
-        return 'DATA' + lebe + sz +':default'
+        return 'DATA' + lebe + sz + ':default'
     langs = language_map[arch]
     matched_endian = sorted(
         (l for l in langs if lebe in l),
@@ -115,7 +117,7 @@ def compute_ghidra_language():
     return 'DATA' + lebe + sz + ':default'
 
 
-def compute_ghidra_compiler(lang):
+def compute_ghidra_compiler(lang: str) -> str:
     # First, check if the parameter is set
     comp = util.get_convenience_variable('ghidra-compiler')
     if comp != 'auto':
@@ -124,12 +126,12 @@ def compute_ghidra_compiler(lang):
     # Check if the selected lang has specific compiler recommendations
     matched_lang = sorted(
         (l for l in compiler_map if l in lang),
-#        key=lambda l: compiler_map[l]
+        #        key=lambda l: compiler_map[l]
     )
     if len(matched_lang) == 0:
         print(f"{lang} not found in compiler map - using default compiler")
         return 'default'
-    
+
     comp_map = compiler_map[matched_lang[0]]
     if comp_map == data64_compiler_map:
         print(f"Using the DATA64 compiler map")
@@ -145,7 +147,7 @@ def compute_ghidra_compiler(lang):
     return 'default'
 
 
-def compute_ghidra_lcsp():
+def compute_ghidra_lcsp() -> Tuple[str, str]:
     lang = compute_ghidra_language()
     comp = compute_ghidra_compiler(lang)
     return lang, comp
@@ -153,14 +155,14 @@ def compute_ghidra_lcsp():
 
 class DefaultMemoryMapper(object):
 
-    def __init__(self, defaultSpace):
+    def __init__(self, defaultSpace: str) -> None:
         self.defaultSpace = defaultSpace
 
-    def map(self, proc: drgn.Program, offset: int):
+    def map(self, proc: int, offset: int) -> Tuple[str, Address]:
         space = self.defaultSpace
         return self.defaultSpace, Address(space, offset)
 
-    def map_back(self, proc: drgn.Program, address: Address) -> int:
+    def map_back(self, proc: int, address: Address) -> int:
         if address.space == self.defaultSpace:
             return address.offset
         raise ValueError(
@@ -169,10 +171,10 @@ class DefaultMemoryMapper(object):
 
 DEFAULT_MEMORY_MAPPER = DefaultMemoryMapper('ram')
 
-memory_mappers = {}
+memory_mappers: Dict[str, DefaultMemoryMapper] = {}
 
 
-def compute_memory_mapper(lang):
+def compute_memory_mapper(lang: str) -> DefaultMemoryMapper:
     if not lang in memory_mappers:
         return DEFAULT_MEMORY_MAPPER
     return memory_mappers[lang]
@@ -180,29 +182,29 @@ def compute_memory_mapper(lang):
 
 class DefaultRegisterMapper(object):
 
-    def __init__(self, byte_order):
+    def __init__(self, byte_order: str) -> None:
         if not byte_order in ['big', 'little']:
             raise ValueError("Invalid byte_order: {}".format(byte_order))
         self.byte_order = byte_order
-        self.union_winners = {}
 
-    def map_name(self, proc, name):
+    def map_name(self, proc: int, name: str) -> str:
         return name
 
-    def map_value(self, proc, name, value):
+    def map_value(self, proc: int, name: str, value: bytes):
         return RegVal(self.map_name(proc, name), value)
 
-    def map_name_back(self, proc, name):
+    def map_name_back(self, proc: int, name: str):
         return name
 
-    def map_value_back(self, proc, name, value):
+    def map_value_back(self, proc: int, name: str, value: bytes):
         return RegVal(self.map_name_back(proc, name), value)
 
 
 DEFAULT_BE_REGISTER_MAPPER = DefaultRegisterMapper('big')
 DEFAULT_LE_REGISTER_MAPPER = DefaultRegisterMapper('little')
 
-def compute_register_mapper(lang):
+
+def compute_register_mapper(lang: str) -> DefaultRegisterMapper:
     if ':BE:' in lang:
         return DEFAULT_BE_REGISTER_MAPPER
     else:

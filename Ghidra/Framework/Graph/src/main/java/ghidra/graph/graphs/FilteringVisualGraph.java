@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  */
 package ghidra.graph.graphs;
 
-import static util.CollectionUtils.asList;
+import static util.CollectionUtils.*;
 
 import java.util.*;
 
@@ -69,6 +69,25 @@ public abstract class FilteringVisualGraph<V extends VisualVertex, E extends Vis
 
 	// a flag to track the stack of updates so we know when to ignore events
 	private int internalCallCount;
+
+	/**
+	 * Allows subclasses to copy filtered and unfiltered vertices.  The copy will use the same 
+	 * vertices and edges.  
+	 * 
+	 * @param newGraph the new graph
+	 */
+	protected void doCopy(FilteringVisualGraph<V, E> newGraph) {
+
+		newGraph.completeGraph = completeGraph.copy();
+
+		for (V v : vertices.keySet()) {
+			newGraph.addVertex(v);
+		}
+
+		for (E e : edges.keySet()) {
+			newGraph.addEdge(e);
+		}
+	}
 
 	public void filterVertices(Collection<V> toFilter) {
 
@@ -462,9 +481,11 @@ public abstract class FilteringVisualGraph<V extends VisualVertex, E extends Vis
 		}
 
 		@Override
-		public DefaultVisualGraph<V, E> copy() {
-			// stub
-			return null;
+		public UnfilteredGraph copy() {
+			UnfilteredGraph newGraph = new UnfilteredGraph();
+			newGraph.vertices.putAll(vertices);
+			newGraph.edges.putAll(edges);
+			return newGraph;
 		}
 
 		@Override

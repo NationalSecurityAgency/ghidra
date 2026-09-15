@@ -29,7 +29,8 @@ import java.util.Iterator;
 
 public class ReportDisassemblyErrors extends GhidraScript {
 
-    public void run() throws Exception {
+    @Override
+	public void run() throws Exception {
 		    Program prog = currentProgram;
 	    	Iterator<Bookmark> bookmarkIter = prog.getBookmarkManager().getBookmarksIterator("Error");
 	    	int count = 0;

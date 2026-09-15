@@ -19,6 +19,7 @@ import java.util.List;
 
 import ghidra.pcode.emu.jit.analysis.JitTypeBehavior;
 import ghidra.pcode.emu.jit.var.JitVal;
+import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropSymbolMap;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.pcode.PcodeOp;
 
@@ -32,6 +33,15 @@ import ghidra.program.model.pcode.PcodeOp;
  */
 public record JitStoreOp(PcodeOp op, AddressSpace space, JitVal offset, JitVal value)
 		implements JitOp {
+	@Override
+	public String toString(PcodeUseropSymbolMap symbols) {
+		return "%s[op=%s, space=%s, offset=%s, value=%s]".formatted(
+			getClass().getSimpleName(),
+			JitOp.toString(op, symbols),
+			space,
+			offset.toString(symbols.language()),
+			value.toString(symbols.language()));
+	}
 
 	@Override
 	public boolean canBeRemoved() {

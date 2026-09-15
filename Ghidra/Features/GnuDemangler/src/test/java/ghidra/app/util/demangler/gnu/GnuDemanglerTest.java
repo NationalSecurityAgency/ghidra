@@ -28,7 +28,7 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.TerminatedStringDataType;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.symbol.*;
 import ghidra.test.ToyProgramBuilder;
@@ -154,14 +154,14 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		assertNotNull(dobj);
 
 		String signature = dobj.getSignature();
-		assertEquals("undefined Greeter::greet(std::string)", signature);
+		assertEquals("undefined Greeter::greet(std::__cxx11::string)", signature);
 
 		DemangledParameter demangledParameter = dobj.getParameters().get(0);
 		DemangledDataType type = demangledParameter.getType();
 		DataType dt = type.getDataType(program.getDataTypeManager());
 		assertTrue(dt.isNotYetDefined());
 		//@formatter:off
-		assertEquals("/Demangler/std/string\n" + 
+		assertEquals("/Demangler/std/__cxx11/string\n" + 
 			"pack(disabled)\n" + 
 			"Structure string {\n" + 
 			"}\n" + 
@@ -226,7 +226,7 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		assertEquals("AP_HAL::HAL::Callbacks", s.getParentNamespace().getName(true));
 
 		assertEquals("typeinfo for AP_HAL::HAL::Callbacks",
-			program.getListing().getComment(CodeUnit.PLATE_COMMENT, addr("01001000")));
+			program.getListing().getComment(CommentType.PLATE, addr("01001000")));
 
 		Data d = program.getListing().getDefinedDataAt(addr("01001000"));
 		assertNotNull(d);
@@ -259,7 +259,7 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		assertEquals("AP_HAL::HAL::Callbacks", s.getParentNamespace().getName(true));
 
 		assertEquals("typeinfo name for AP_HAL::HAL::Callbacks",
-			program.getListing().getComment(CodeUnit.PLATE_COMMENT, addr("01001000")));
+			program.getListing().getComment(CommentType.PLATE, addr("01001000")));
 
 		Data d = program.getListing().getDefinedDataAt(addr("01001000"));
 		assertNotNull(d);

@@ -15,31 +15,40 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
+import ghidra.pcode.emu.jit.gen.util.Emitter;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Ent;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Next;
+import ghidra.pcode.emu.jit.gen.util.Lbl.LblEm;
+import ghidra.pcode.emu.jit.gen.util.Op;
+import ghidra.pcode.emu.jit.gen.util.Types.*;
 import ghidra.pcode.emu.jit.op.JitFloatNotEqualOp;
 
 /**
  * The generator for a {@link JitFloatNotEqualOp float_notequal}.
  * 
  * <p>
- * This uses the float comparison operator generator and simply emits {@link #FCMPL} or
- * {@link #DCMPL} depending on the type and then {@link #IFNE}.
+ * This uses the float comparison operator generator and simply emits {@link Op#fcmpl(Emitter)
+ * fcmpl} or {@link Op#dcmpl(Emitter) dcmpl} depending on the type and then {@link Op#ifne(Emitter)
+ * ifne}.
  */
-public enum FloatNotEqualOpGen implements CompareFloatOpGen<JitFloatNotEqualOp> {
+public enum FloatNotEqualOpGen implements FloatCompareBinOpGen<JitFloatNotEqualOp> {
 	/** The generator singleton */
 	GEN;
 
 	@Override
-	public int fcmpOpcode() {
-		return FCMPL;
+	public <N2 extends Next, N1 extends Ent<N2, TFloat>, N0 extends Ent<N1, TFloat>> //
+			Emitter<Ent<N2, TInt>> opForFloatCmp(Emitter<N0> em) {
+		return Op.fcmpl(em);
 	}
 
 	@Override
-	public int dcmpOpcode() {
-		return DCMPL;
+	public <N2 extends Next, N1 extends Ent<N2, TDouble>, N0 extends Ent<N1, TDouble>> //
+			Emitter<Ent<N2, TInt>> opForDoubleCmp(Emitter<N0> em) {
+		return Op.dcmpl(em);
 	}
 
 	@Override
-	public int condOpcode() {
-		return IFNE;
+	public <N1 extends Next, N0 extends Ent<N1, TInt>> LblEm<N1, N1> opForCondJump(Emitter<N0> em) {
+		return Op.ifne(em);
 	}
 }

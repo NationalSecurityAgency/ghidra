@@ -1,0 +1,101 @@
+<Wrapper> 
+	<BadTag>
+		<SearchItem>
+			<Bytes>00 00</Bytes>
+		</SearchItem>
+	</BadTag>
+	<Search noAttribute="name">
+		<SearchItem> 
+			<Bytes>00 00</Bytes>
+		</SearchItem>
+	</Search>
+	<Search Name="good">
+		<SearchPiece Name="good" WordSize="QWord"> 
+			<Bytes>00 00</Bytes>
+		</SearchPiece>
+	</Search>
+	<Search Name="good">
+		<SearchItem Name="Bad" WordSize="DWord" SearchPlan="bad">
+			<Bytes>00 00</Bytes>
+		</SearchItem>
+	</Search>
+	<Search Name="good">
+		<SearchItem Name="notBad" DataType="DWord" SearchType="function">
+			<Bytes>00 00 00 00 00 00</Bytes>
+		</SearchItem>
+	</Search>
+	<Search Name="2SearchItems">
+		<SearchItem Name="notBad" DataType="DWord" SearchType="function">
+			<Bytes>00 00 00 00 00 00</Bytes>
+		</SearchItem>
+		<SearchItem Name="bad" DataType="DWord" SearchType="bad">
+			<Bytes>00 00 00 00 00 00</Bytes>
+		</SearchItem>
+	</Search>
+	<Search missing="BadFamily">
+		<SearchItem Name="notBad" DataType="DWord" SearchType="function">
+			<Bytes>00 00 00 00 00 00</Bytes>
+		</SearchItem>
+		<SearchItem Name="notBad2" DataType="DWord" SearchType="function">
+			<Bytes>00 00 00 00 00 00</Bytes>
+		</SearchItem>
+	</Search>
+	<Search Name="1SearchItemBad">
+		<SearchItem Name="shouldBeSkipped" dt="DWord" SearchType="function">
+			<Bytes>00 00 00 00 00 00</Bytes>
+		</SearchItem>
+		<SearchItem Name="shouldNotBeSkiped" DataType="DWord" SearchType="function">
+			<Bytes>00 00 00 00 00 00</Bytes>
+		</SearchItem>
+	</Search>
+	<Search Name="Search9"> 
+		<SearchItem Name="UnevenHexTest" DataType="DWord" SearchLength="2" SearchType="Constant">
+			<Bytes>67e6096</Bytes>
+			<Bytes>67e6096a</Bytes>
+		</SearchItem>
+	</Search>
+	<Search Name="SameName"> 
+		<SearchItem Name="UniqueName" DataType="DWord" SearchLength="2" SearchType="Constant">
+			<Bytes>67e60960</Bytes>
+			<Bytes>67e6096a</Bytes>
+		</SearchItem>
+	</Search>
+	<Search Name="SameName"> 
+		<SearchItem Name="SameName" DataType="DWord" SearchLength="2" SearchType="Constant">
+			<Bytes>67e6096a</Bytes>
+			<Bytes>67e6096a</Bytes>
+		</SearchItem>
+		<SearchItem Name="Samename" DataType="DWord" SearchLength="2" SearchType="Constant">
+			<Bytes>67e60a96</Bytes>
+			<Bytes>67e6096a</Bytes>
+		</SearchItem>
+	</Search>
+	<Search Name="DifferentName"> 
+		<SearchItem Name="SameName" DataType="DWord" SearchLength="2" SearchType="Constant">
+			<Bytes>67e6096a</Bytes>
+			<Bytes>67e6096a</Bytes>
+		</SearchItem>
+		<SearchItem Name="Samename" DataType="DWord" SearchLength="2" SearchType="Constant">
+			<Bytes>67e60a96</Bytes>
+			<Bytes>67e6096a</Bytes>
+		</SearchItem>
+	</Search>
+	<Search Name="Invalid WordSize"> 
+		<SearchItem Name="bad wordsize" DataType="bad" SearchLength="2" SearchType="Constant">
+			<Bytes>67e6096a</Bytes>
+			<Bytes>67e6096a</Bytes>
+		</SearchItem>
+	</Search>
+	<Search> 
+		<SearchItem>
+			<Bytes>67e6096a</Bytes>
+			<Bytes>67e6096a</Bytes>
+		</SearchItem>
+	</Search>
+	<Search Name="no attrs on searchItem"> 
+		<SearchItem>
+			<Bytes>67e6096a</Bytes>
+			<Bytes>67e6096a</Bytes>
+		</SearchItem>
+	</Search>
+</Wrapper>

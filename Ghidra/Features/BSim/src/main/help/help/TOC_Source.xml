@@ -170,6 +170,28 @@
                              text="BSim Command (bsim)"
                              target="help/topics/BSim/CommandLineReference.html#BSimCommand"/>
 	         </tocdef>
+
+	         <tocdef id="StructureRecovery"         sortgroup="f"
+	                 text="Structure Recovery Using BSim"
+	                 target="help/topics/StructureRecovery/StructureRecovery.html" >
+
+                     <tocdef id="TagStructureUse"
+                             sortgroup="a"
+                             text="Tag structure use"
+                             target="help/topics/StructureRecovery/StructureRecovery.html#TagStructureUse"/>
+                     <tocdef id="MatchFunctions"
+                             sortgroup="b"
+                             text="Match functions"
+                             target="help/topics/StructureRecovery/StructureRecovery.html#MatchFunctions"/>
+                     <tocdef id="GenerateStructure"
+                             sortgroup="c"
+                             text="Generate structure"
+                             target="help/topics/StructureRecovery/StructureRecovery.html#GenerateStructure"/>
+                     <tocdef id="Options"
+                             sortgroup="z"
+                             text="Options"
+                             target="help/topics/StructureRecovery/StructureRecovery.html#Options"/>
+	         </tocdef>
 	    </tocdef>        
 	</tocref>
 </tocroot>

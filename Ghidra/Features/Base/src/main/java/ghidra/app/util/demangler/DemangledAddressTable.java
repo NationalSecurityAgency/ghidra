@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,7 +83,7 @@ public class DemangledAddressTable extends DemangledObject {
 			return false;
 		}
 
-		Symbol s = applyDemangledName(address, true, false, program);
+		Symbol s = applyDemangledName(address, isPrimary, false, program);
 		if (s == null) {
 			return false;
 		}
@@ -96,10 +96,9 @@ public class DemangledAddressTable extends DemangledObject {
 
 		Listing listing = program.getListing();
 		if (program.getMemory().isExternalBlockAddress(address)) {
-			Msg.warn(this,
-				"Unable to fully apply external demangled Address Table at " + address + ": " +
-					s.getName(true));
-			listing.setComment(address, CodeUnit.EOL_COMMENT,
+			Msg.warn(this, "Unable to fully apply external demangled Address Table at " + address +
+				": " + s.getName(true));
+			listing.setComment(address, CommentType.EOL,
 				"WARNING: Unable to apply demangled Address Table");
 			return true; // don't complain
 		}
@@ -122,7 +121,7 @@ public class DemangledAddressTable extends DemangledObject {
 
 		if (isUndefinedInRange(program, address, address.add(length - 1))) {
 			long count = length / program.getDefaultPointerSize();
-			createPointers(program, address, (int) count);
+			createPointers(program, address, (int) count, monitor);
 		}
 
 		return true;
@@ -167,8 +166,9 @@ public class DemangledAddressTable extends DemangledObject {
 	/**
 	 * Creates pointers from start address.
 	 * If a pointer already exists, then skip it and continue.
+	 * @param monitor the task monitor
 	 */
-	private void createPointers(Program program, Address start, int count) {
+	private void createPointers(Program program, Address start, int count, TaskMonitor monitor) {
 
 		DataType pointerDt = new PointerDataType(program.getDataTypeManager());
 
@@ -177,6 +177,10 @@ public class DemangledAddressTable extends DemangledObject {
 		DumbMemBufferImpl buf = new DumbMemBufferImpl(mem, start);
 
 		for (int i = 0; i < count; ++i) {
+
+			if (monitor.isCancelled()) {
+				return;
+			}
 
 			Address addr = start.add(pointerDt.getLength() * i);
 			buf.setPosition(addr);

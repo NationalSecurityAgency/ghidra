@@ -314,7 +314,7 @@ public class ExportDataDirectory extends DataDirectory implements StructConverte
 
 				// See if this function has an associated name exported for it.
 				for (int j = 0; j < numberOfNames; ++j) {
-					int jthOrdinalVal = reader.readShort(pointerToOrdinals + (j * 2));
+					int jthOrdinalVal = reader.readUnsignedShort(pointerToOrdinals + (j * 2));
 					if (jthOrdinalVal == i) {
 						int jthNameRVA = reader.readInt(pointerToNames + (j * 4));
 						int jthNamePtr = ntHeader.rvaToPointer(jthNameRVA);

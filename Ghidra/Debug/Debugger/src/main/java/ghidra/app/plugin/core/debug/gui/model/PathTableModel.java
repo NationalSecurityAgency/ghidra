@@ -122,8 +122,9 @@ public class PathTableModel extends AbstractQueryTableModel<PathRow> {
 	}
 
 	protected void updateTimelineMax() {
-		Long max = getTrace() == null ? null : getTrace().getTimeManager().getMaxSnap();
-		Lifespan fullRange = Lifespan.span(0L, max == null ? 1 : max + 1);
+		Long maxBoxed = getTrace() == null ? null : getTrace().getTimeManager().getMaxSnap();
+		long max = maxBoxed == null ? 0 : maxBoxed;
+		Lifespan fullRange = Lifespan.span(0L, max == Lifespan.DOMAIN.lmax() ? max : (max + 1));
 		lifespanPlotColumn.setFullRange(fullRange);
 	}
 

@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.opinion;
 
+import java.util.Comparator;
+
 import ghidra.app.util.bin.format.coff.CoffSectionHeader;
 import ghidra.app.util.bin.format.pe.SectionHeader;
 
@@ -32,8 +34,8 @@ public class MSCoffLoader extends CoffLoader {
 	}
 
 	@Override
-	protected boolean isCaseInsensitiveLibraryFilenames() {
-		return true;
+	protected Comparator<String> getLibraryNameComparator() {
+		return String.CASE_INSENSITIVE_ORDER;
 	}
 
 	@Override

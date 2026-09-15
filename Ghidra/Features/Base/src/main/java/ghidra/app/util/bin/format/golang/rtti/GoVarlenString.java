@@ -30,8 +30,8 @@ import ghidra.util.BigEndianDataConverter;
  * A pascal-ish string, using a LEB128 (or a uint16 in pre-1.16) value as the length of the
  * following bytes.
  * <p>
- * Used mainly in lower-level RTTI structures, this class is a ghidra'ism used to parse the
- * golang rtti data and does not have a counterpart in the golang src. 
+ * Used mainly in lower-level RTTI structures, this class is a Ghidra'ism used to parse the
+ * Go RTTI data and does not have a counterpart in the Go src. 
  */
 @StructureMapping(structureName = "GoVarlenString")
 public class GoVarlenString implements StructureReader<GoVarlenString> {

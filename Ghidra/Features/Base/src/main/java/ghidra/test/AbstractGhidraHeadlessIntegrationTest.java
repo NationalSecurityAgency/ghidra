@@ -24,6 +24,7 @@ import java.util.*;
 import org.junit.AfterClass;
 
 import docking.test.AbstractDockingTest;
+import generic.jar.ResourceFile;
 import ghidra.GhidraTestApplicationLayout;
 import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.app.events.ProgramSelectionPluginEvent;
@@ -261,27 +262,27 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 *
 	 * @param <T> the return type
 	 * @param <E> the exception type
-	 * @param p the program
+	 * @param dobj the program or other domain object
 	 * @param s the code to execute
 	 * @return the supplier's return value
 	 * @see #modifyProgram(Program, ExceptionalCallback)
 	 * @see #modifyProgram(Program, ExceptionalFunction)
 	 */
-	public static <T, E extends Exception> T tx(Program p, ExceptionalSupplier<T, E> s) {
-		int txId = p.startTransaction("Test - Function in Transaction");
+	public static <T, E extends Exception> T tx(DomainObject dobj, ExceptionalSupplier<T, E> s) {
+		int txId = dobj.startTransaction("Test - Function in Transaction");
 		boolean commit = true;
 		try {
 			T t = s.get();
-			p.flushEvents();
+			dobj.flushEvents();
 			waitForSwing();
 			return t;
 		}
 		catch (Exception e) {
 			commit = false;
-			failWithException("Exception modifying program '" + p.getName() + "'", e);
+			failWithException("Exception modifying program '" + dobj.getName() + "'", e);
 		}
 		finally {
-			p.endTransaction(txId, commit);
+			dobj.endTransaction(txId, commit);
 		}
 		return null;
 	}
@@ -659,9 +660,16 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 			Set<ClassFileInfo> serviceSet = extensionPointSuffixToInfoMap.get(suffix);
 			assertNotNull(serviceSet);
 			serviceSet.clear();
-			ClassFileInfo info = new ClassFileInfo("", replacement.getClass().getName(), suffix);
+			Class<? extends Object> clazz = replacement.getClass();
+			ResourceFile module = Application.getModuleContainingClass(clazz);
+			String modulePath = "";
+			if (module != null) {
+				modulePath = module.getAbsolutePath();
+			}
+			String name = clazz.getName();
+			ClassFileInfo info = new ClassFileInfo("", name, suffix, modulePath);
 			serviceSet.add(info);
-			loadedCache.put(info, replacement.getClass());
+			loadedCache.put(info, clazz);
 		}
 
 		T instance = tool.getService(service);

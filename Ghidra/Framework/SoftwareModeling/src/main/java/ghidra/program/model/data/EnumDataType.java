@@ -225,7 +225,7 @@ public class EnumDataType extends GenericDataType implements Enum {
 	}
 
 	@Override
-	public DataType clone(DataTypeManager dtm) {
+	public Enum clone(DataTypeManager dtm) {
 		if (getDataTypeManager() == dtm) {
 			return this;
 		}
@@ -311,7 +311,7 @@ public class EnumDataType extends GenericDataType implements Enum {
 		boolean hasNegativeValues = minValue < 0;
 
 		// check the min and max values in this enum to see if they fit in 1 byte enum, then 
-		// 2 byte enum, then 4 byte enum. If the min min and max values fit, then all other values
+		// 2 byte enum, then 4 byte enum. If the min and max values fit, then all other values
 		// will fit as well
 		for (int size = 1; size < 8; size *= 2) {
 			long minPossible = getMinPossibleValue(size, hasNegativeValues);
@@ -545,4 +545,22 @@ public class EnumDataType extends GenericDataType implements Enum {
 	public void pack() {
 		setLength(getMinimumPossibleLength());
 	}
+
+	@Override
+	public String toString() {
+		StringBuilder buf = new StringBuilder();
+		buf.append(getPathName() + "\n");
+		buf.append("\tDescription: " + getDescription());
+		buf.append("\nValues: \n");
+		for (String name : getNames()) {
+			buf.append("\t" + name + ": " + getValue(name));
+			String comment = getComment(name);
+			if (comment != null) {
+				buf.append(" " + comment);
+			}
+			buf.append("\n");
+		}
+		return buf.toString();
+	}
+
 }

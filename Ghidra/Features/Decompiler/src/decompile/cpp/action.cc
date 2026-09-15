@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,7 +43,7 @@ void Action::issueWarning(Architecture *glb)
 {
   if ((flags&(rule_warnings_on|rule_warnings_given)) == rule_warnings_on) {
     flags |= rule_warnings_given;
-    glb->printMessage("WARNING: Applied action "+name);
+    glb->printWarning("Applied action "+name);
   }
 }
 
@@ -640,7 +640,7 @@ void Rule::issueWarning(Architecture *glb)
 {
   if ((flags&(warnings_on|warnings_given)) == warnings_on) {
     flags |= warnings_given;
-    glb->printMessage("WARNING: Applied rule "+name);
+    glb->printWarning("Applied rule "+name);
   }
 }
 
@@ -698,18 +698,6 @@ void Rule::printStatistics(ostream &s) const
 
 {
   s << name << dec << " Tested=" << count_tests << " Applied=" << count_apply << endl;
-}
-
-/// Populate the given array with all possible OpCodes this Rule might apply to.
-/// By default, this method returns all possible OpCodes
-/// \param oplist is the array to populate
-void Rule::getOpList(vector<uint4> &oplist) const
-
-{
-  uint4 i;
-
-  for(i=0;i<CPUI_MAX;++i)
-    oplist.push_back(i);
 }
 
 /// This method is called every time the Rule successfully applies. If it returns
@@ -862,11 +850,11 @@ int4 ActionPool::processOp(PcodeOp *op,Funcdata &data)
         rule_index = 0;		
       }
     }
+#ifdef CPUI_DEBUG
     else if (opc != op->code()) {
-      data.getArch()->printMessage("ERROR: Rule " + rl->getName() + " changed op without returning result of 1!");
-      opc = op->code();
-      rule_index = 0;	
+      throw LowlevelError("ERROR: Rule " + rl->getName() + " changed op without returning result of 1!");
     }
+#endif
   }
   op_state++;
   rule_index = 0;
@@ -878,11 +866,11 @@ int4 ActionPool::apply(Funcdata &data)
 
 {
   if (status != status_mid) {
-    op_state = data.beginOpAll();	// Initialize the derived action
+    op_state = data.beginOpMain();	// Initialize the derived action
     rule_index = 0;
   }
-  for(;op_state!=data.endOpAll();)
-	  if (0!=processOp((*op_state).second,data)) return -1;
+  for(;op_state!=data.endOpMain();)
+    if (0!=processOp((*op_state).second,data)) return -1;
 
   return 0;			// Indicate successful completion
 }

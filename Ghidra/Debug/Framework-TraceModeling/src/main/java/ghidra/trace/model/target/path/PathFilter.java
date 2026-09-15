@@ -117,7 +117,7 @@ public interface PathFilter {
 
 		<T> ListIterator<T> iterator(T[] arr) {
 			return iterator(Arrays.asList(arr));
-		};
+		}
 	}
 
 	static boolean keyMatches(String pat, String key) {

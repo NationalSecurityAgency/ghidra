@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,7 @@ public class IHDRChunk {
 	 * Represents the IHDR chunk to process and return the important
 	 * metadata within this chunk.
 	 * @param chunk the chunk to process as an IHDR chunk
-	 * @throws IOException
+	 * @throws IOException if an IO-related error occurred
 	 */
 	public IHDRChunk(PNGChunk chunk) throws IOException {
 		if (chunk.getIDString().equals(CrushedPNGConstants.IHDR_STRING)) {
@@ -49,7 +49,13 @@ public class IHDRChunk {
 				ByteBuffer buff = ByteBuffer.wrap(data);
 
 				imgWidth = buff.getInt();
+				if (imgWidth <= 0 || imgWidth > 65535) {
+					throw new IllegalArgumentException("Invalid image width: " + imgWidth);
+				}
 				imgHeight = buff.getInt();
+				if (imgHeight <= 0 || imgHeight > 65535) {
+					throw new IllegalArgumentException("Invalid image height: " + imgHeight);
+				}
 				bitDepth = buff.get();
 				colorType = buff.get();
 				compressionMethod = buff.get();

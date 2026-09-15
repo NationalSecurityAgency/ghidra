@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,10 +22,7 @@ import java.util.List;
 
 import com.google.gson.JsonArray;
 
-import ghidra.program.model.symbol.ExternalLocation;
-import ghidra.program.model.symbol.ExternalLocationIterator;
-import ghidra.program.model.symbol.ExternalManager;
-import ghidra.program.model.symbol.SourceType;
+import ghidra.program.model.symbol.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import sarif.export.AbstractExtWriter;
@@ -53,6 +50,7 @@ public class SarifExternalLibraryWriter extends AbstractExtWriter {
 	private void genLibraries(TaskMonitor monitor) throws CancelledException, IOException {
 		monitor.initialize(externalNames.size());
 		for (String n : externalNames) {
+			monitor.checkCancelled();
 			String path = externalManager.getExternalLibraryPath(n);
 			if (path == null) {
 				path = "";
@@ -63,6 +61,7 @@ public class SarifExternalLibraryWriter extends AbstractExtWriter {
 			
 			ExternalLocationIterator externalLocations = externalManager.getExternalLocations(n);
 			while (externalLocations.hasNext()) {
+				monitor.checkCancelled();
 				ExternalLocation loc = externalLocations.next();
 				ExtLibraryLocation obj = new ExtLibraryLocation(loc);
 				SarifObject sarif2 = new SarifObject(ExternalLibSarifMgr.SUBKEY1, ExternalLibSarifMgr.KEY, getTree(obj), loc.getAddress(), loc.getAddress());
@@ -72,6 +71,7 @@ public class SarifExternalLibraryWriter extends AbstractExtWriter {
 		}
 	}
 
+	@Override
 	public JsonArray getResults() {
 		return objects;
 	}

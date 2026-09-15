@@ -20,13 +20,11 @@ import java.util.*;
 
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.AbstractProgramWrapperLoader;
 import ghidra.app.util.opinion.LoadSpec;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * Provide class-level documentation that describes what this loader does.
@@ -52,27 +50,29 @@ public class SkeletonLoader extends AbstractProgramWrapperLoader {
 	}
 
 	@Override
-	protected void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, TaskMonitor monitor, MessageLog log)
+	protected void load(Program prgram, ImporterSettings settiings)
 			throws CancelledException, IOException {
 
-		// Load the bytes from 'provider' into the 'program'.
+		// Load the bytes from 'settings.provider()' into the 'program'.
 	}
 
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
-			DomainObject domainObject, boolean isLoadIntoProgram) {
-		List<Option> list =
-			super.getDefaultOptions(provider, loadSpec, domainObject, isLoadIntoProgram);
+			DomainObject domainObject, boolean isLoadIntoProgram, boolean mirrorFsLayout) {
+		List<Option> list = super.getDefaultOptions(provider, loadSpec, domainObject,
+			isLoadIntoProgram, mirrorFsLayout);
 
 		// If this loader has custom options, add them to 'list'
-		list.add(new Option("Option name goes here", "Default option value goes here"));
+		list.add(Option.newString("Option name goes here")
+				.value("Default option value goes here")
+				.build());
 
 		return list;
 	}
 
 	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program program) {
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
+			Program program) {
 
 		// If this loader has custom options, validate them here.  Not all options require
 		// validation.

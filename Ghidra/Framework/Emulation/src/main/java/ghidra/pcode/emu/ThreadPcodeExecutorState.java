@@ -16,10 +16,10 @@
 package ghidra.pcode.emu;
 
 import java.util.*;
+import java.util.stream.Stream;
 
-import ghidra.pcode.exec.PcodeArithmetic;
+import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
-import ghidra.pcode.exec.PcodeExecutorState;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
@@ -63,9 +63,19 @@ public class ThreadPcodeExecutorState<T> implements PcodeExecutorState<T> {
 		return arithmetic;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * This will only include the pieces in the thread's <em>local</em> state.
+	 */
 	@Override
-	public ThreadPcodeExecutorState<T> fork() {
-		return new ThreadPcodeExecutorState<>(sharedState.fork(), localState.fork());
+	public Stream<PcodeExecutorStatePiece<?, ?>> streamPieces() {
+		return localState.streamPieces();
+	}
+
+	@Override
+	public ThreadPcodeExecutorState<T> fork(PcodeStateCallbacks cb) {
+		return new ThreadPcodeExecutorState<>(sharedState.fork(cb), localState.fork(cb));
 	}
 
 	/**
@@ -88,12 +98,28 @@ public class ThreadPcodeExecutorState<T> implements PcodeExecutorState<T> {
 	}
 
 	@Override
+	public void setVarInternal(AddressSpace space, T offset, int size, T val) {
+		if (isThreadLocalSpace(space)) {
+			localState.setVarInternal(space, offset, size, val);
+		}
+		sharedState.setVarInternal(space, offset, size, val);
+	}
+
+	@Override
 	public void setVar(AddressSpace space, long offset, int size, boolean quantize, T val) {
 		if (isThreadLocalSpace(space)) {
 			localState.setVar(space, offset, size, quantize, val);
 			return;
 		}
 		sharedState.setVar(space, offset, size, quantize, val);
+	}
+
+	@Override
+	public void setVarInternal(AddressSpace space, long offset, int size, T val) {
+		if (isThreadLocalSpace(space)) {
+			localState.setVarInternal(space, offset, size, val);
+		}
+		sharedState.setVarInternal(space, offset, size, val);
 	}
 
 	@Override
@@ -105,11 +131,27 @@ public class ThreadPcodeExecutorState<T> implements PcodeExecutorState<T> {
 	}
 
 	@Override
+	public T getVarInternal(AddressSpace space, T offset, int size, Reason reason) {
+		if (isThreadLocalSpace(space)) {
+			return localState.getVarInternal(space, offset, size, reason);
+		}
+		return sharedState.getVarInternal(space, offset, size, reason);
+	}
+
+	@Override
 	public T getVar(AddressSpace space, long offset, int size, boolean quantize, Reason reason) {
 		if (isThreadLocalSpace(space)) {
 			return localState.getVar(space, offset, size, quantize, reason);
 		}
 		return sharedState.getVar(space, offset, size, quantize, reason);
+	}
+
+	@Override
+	public T getVarInternal(AddressSpace space, long offset, int size, Reason reason) {
+		if (isThreadLocalSpace(space)) {
+			return localState.getVarInternal(space, offset, size, reason);
+		}
+		return sharedState.getVarInternal(space, offset, size, reason);
 	}
 
 	@Override

@@ -18,16 +18,16 @@ package ghidra.trace.model.target;
 import java.util.Collection;
 import java.util.stream.Stream;
 
-import ghidra.trace.database.module.TraceObjectSection;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Lifespan.LifeSet;
 import ghidra.trace.model.memory.*;
-import ghidra.trace.model.modules.TraceObjectModule;
+import ghidra.trace.model.modules.TraceModule;
+import ghidra.trace.model.modules.TraceSection;
 import ghidra.trace.model.target.iface.*;
 import ghidra.trace.model.target.path.*;
 import ghidra.trace.model.target.schema.TraceObjectSchema;
-import ghidra.trace.model.thread.TraceObjectProcess;
-import ghidra.trace.model.thread.TraceObjectThread;
+import ghidra.trace.model.thread.TraceProcess;
+import ghidra.trace.model.thread.TraceThread;
 
 /**
  * A record of a target object in a debugger
@@ -72,9 +72,9 @@ import ghidra.trace.model.thread.TraceObjectThread;
  * <ol>
  * <li><b>The object itself:</b> Test if the context target object supports the desired interface.
  * If it does, take it.</li>
- * <li><b>Aggregate objects:</b> If the object is marked with {@link TraceObjectAggregate}, collect
- * all attributes supporting the desired interface. If there are any, take them. This step is
- * applied recursively if any child attribute is also marked with {@link TraceObjectAggregate}.</li>
+ * <li><b>Aggregate objects:</b> If the object is marked with {@link TraceAggregate}, collect all
+ * attributes supporting the desired interface. If there are any, take them. This step is applied
+ * recursively if any child attribute is also marked with {@link TraceAggregate}.</li>
  * <li><b>Ancestry:</b> Apply these same steps to the object's (canonical) parent, recursively.</li>
  * </ol>
  * 
@@ -92,44 +92,52 @@ import ghidra.trace.model.thread.TraceObjectThread;
  * may be presented by a user-space debugger for a desktop operating system:
  * 
  * <ul>
- * <li>"Session" : {@link TraceObject}</li>
+ * <li>"Session" : {@link TraceObject}
  * <ul>
- * <li>"Process 789" : {@link TraceObjectProcess}, {@link TraceObjectAggregate}</li>
+ * <li>"Process 789" : {@link TraceProcess}, {@link TraceAggregate}
  * <ul>
- * <li>"Threads" : {@link TraceObject}</li>
+ * <li>"Threads" : {@link TraceObject}
  * <ul>
- * <li>"Thread 1" : {@link TraceObjectThread}, {@link TraceObjectExecutionStateful},
- * {@link TraceObjectAggregate}</li>
+ * <li>"Thread 1" : {@link TraceThread}, {@link TraceExecutionStateful}, {@link TraceAggregate}
  * <ul>
- * <li>"Registers" : {@link TraceObjectRegisterContainer}</li>
+ * <li>"Registers" : {@link TraceRegisterContainer}
  * <ul>
- * <li>"r1" : {@link TraceObjectRegister}</li>
+ * <li>"r1" : {@link TraceRegister}</li>
  * <li>...</li>
  * </ul>
+ * </li>
  * </ul>
+ * </li>
  * <li>...more threads</li>
  * </ul>
- * <li>"Memory" : {@link TraceObjectMemory}</li>
+ * </li>
+ * <li>"Memory" : {@link TraceMemory}
  * <ul>
- * <li>"[0x00400000:0x00401234]" : {@link TraceObjectMemoryRegion}</li>
+ * <li>"[0x00400000:0x00401234]" : {@link TraceMemoryRegion}</li>
  * <li>...more regions</li>
  * </ul>
- * <li>"Modules" : {@link TraceObject}</li>
+ * </li>
+ * <li>"Modules" : {@link TraceObject}
  * <ul>
- * <li>"/usr/bin/echo" : {@link TraceObjectModule}</li>
+ * <li>"/usr/bin/echo" : {@link TraceModule}
  * <ul>
- * <li>".text" : {@link TraceObjectSection}</li>
+ * <li>".text" : {@link TraceSection}</li>
  * <li>...more sections</li>
  * </ul>
+ * </li>
  * <li>...more modules</li>
  * </ul>
+ * </li>
  * </ul>
- * <li>"Environment": {@link TraceObjectEnvironment}</li>
+ * </li>
+ * <li>"Environment": {@link TraceEnvironment}
  * <ul>
  * <li>"Process 321" : {@link TraceObject}</li>
  * <li>...more processes</li>
  * </ul>
+ * </li>
  * </ul>
+ * </li>
  * </ul>
  * 
  * <p>
@@ -691,7 +699,7 @@ public interface TraceObject extends TraceUniqueObject {
 	 * @return true if a method
 	 */
 	default boolean isMethod(long snap) {
-		if (getSchema().getInterfaces().contains(TraceObjectMethod.class)) {
+		if (getSchema().getInterfaces().contains(TraceMethod.class)) {
 			return true;
 		}
 		TraceObjectValue extras = getAttribute(snap, TraceObject.EXTRA_INTERFACES_ATTRIBUTE_NAME);
@@ -797,15 +805,15 @@ public interface TraceObject extends TraceUniqueObject {
 	 * @return the state or null
 	 */
 	default TraceExecutionState getExecutionState(long snap) {
-		TraceObject stateful = findSuitableInterface(TraceObjectExecutionStateful.class);
+		TraceObject stateful = findSuitableInterface(TraceExecutionStateful.class);
 		if (stateful == null) {
 			return null;
 		}
 		TraceObjectValue stateVal =
-			stateful.getAttribute(snap, TraceObjectExecutionStateful.KEY_STATE);
+			stateful.getAttribute(snap, TraceExecutionStateful.KEY_STATE);
 		if (stateVal == null) {
 			return TraceExecutionState.INACTIVE;
 		}
-		return TraceExecutionState.valueOf((String) stateVal.getValue());
+		return TraceExecutionState.valueOf(stateVal.castValue());
 	}
 }

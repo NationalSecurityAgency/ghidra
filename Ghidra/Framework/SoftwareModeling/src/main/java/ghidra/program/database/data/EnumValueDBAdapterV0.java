@@ -80,6 +80,7 @@ class EnumValueDBAdapterV0 extends EnumValueDBAdapter {
 		return table.findRecords(new LongField(enumID), ENUMVAL_ID_COL);
 	}
 
+	@Override
 	void deleteTable(DBHandle handle) throws IOException {
 		handle.deleteTable(ENUM_VALUE_TABLE_NAME);
 	}

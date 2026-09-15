@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,10 +17,17 @@ package ghidra.framework.project.extensions;
 
 import java.awt.Font;
 import java.awt.Point;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.swing.JViewport;
 
 import docking.widgets.table.threaded.ThreadedTableModelListener;
 import generic.theme.*;
 import ghidra.framework.plugintool.dialog.AbstractDetailsPanel;
+import ghidra.util.classfinder.ClassFileInfo;
 import ghidra.util.extensions.ExtensionDetails;
 
 /**
@@ -43,6 +50,11 @@ class ExtensionDetailsPanel extends AbstractDetailsPanel {
 	private static final GColor FG_COLOR_VERSION =
 		new GColor("color.fg.extensionpanel.details.version");
 
+	private static final GColor FG_COLOR_CLASSES_HEADER =
+		new GColor("color.fg.extensionpanel.details.classes.header");
+	private static final GColor FG_COLOR_CLASSES_TYPE =
+		new GColor("color.fg.extensionpanel.details.classes.type");
+
 	/** Attribute sets define the visual characteristics for each field */
 	private GAttributes nameAttrSet;
 	private GAttributes descrAttrSet;
@@ -50,7 +62,11 @@ class ExtensionDetailsPanel extends AbstractDetailsPanel {
 	private GAttributes createdOnAttrSet;
 	private GAttributes versionAttrSet;
 	private GAttributes pathAttrSet;
-	private ExtensionDetails currentDetails;
+
+	private GAttributes classesHeaderAttrSet;
+	private GAttributes classesTypeAtrrSet;
+
+	private ExtensionRowObject currentRowObject;
 
 	ExtensionDetailsPanel(ExtensionTablePanel tablePanel) {
 		createFieldAttributes();
@@ -83,23 +99,30 @@ class ExtensionDetailsPanel extends AbstractDetailsPanel {
 
 	@Override
 	protected void refresh() {
-		setDescription(currentDetails);
+
+		JViewport vp = sp.getViewport();
+		Point p = vp.getViewPosition();
+
+		setDescription(currentRowObject);
+
+		// restore the viewer's scrolled position to avoid jumping around
+		vp.setViewPosition(p);
 	}
 
-	/**
-	 * Updates this panel with the given extension.
-	 *
-	 * @param details the extension to display
-	 */
-	public void setDescription(ExtensionDetails details) {
+	private void setDescription(ExtensionRowObject ro) {
 
-		this.currentDetails = details;
+		this.currentRowObject = ro;
 		clear();
-		if (details == null) {
+		if (ro == null) {
 			return;
 		}
 
+		ExtensionDetails details = ro.getExtension();
+
 		StringBuilder buffer = new StringBuilder("<html>");
+
+		buffer.append("<H2>Extension Properties</H2>");
+
 		buffer.append("<TABLE cellpadding=2>");
 
 		insertRowTitle(buffer, "Name");
@@ -133,8 +156,73 @@ class ExtensionDetailsPanel extends AbstractDetailsPanel {
 
 		buffer.append("</TABLE>");
 
+		addExtensionClasses(buffer, ro);
+
 		textLabel.setText(buffer.toString());
 		sp.getViewport().setViewPosition(new Point(0, 0));
+	}
+
+	private void addExtensionClasses(StringBuilder buffer, ExtensionRowObject ro) {
+
+		Set<ClassFileInfo> infos = ro.getClassInfos();
+		if (infos.isEmpty()) {
+			return;
+		}
+
+		buffer.append("<BR><CENTER><HR></CENTER><BR>");
+
+		buffer.append("<H2>Provided Extension Points</H2>");
+
+		buffer.append("<TABLE cellpadding=4>");
+
+		buffer.append("<TR>");
+		insertHeader(buffer, "Type");
+		insertHeader(buffer, "Implementations");
+		buffer.append("</TR>");
+
+		Map<String, Set<ClassFileInfo>> classesByType = infos.stream()
+				.collect(
+					Collectors.groupingBy(
+						ClassFileInfo::suffix,
+						Collectors.toSet()));
+
+		Set<Entry<String, Set<ClassFileInfo>>> entries = classesByType.entrySet();
+		for (Entry<String, Set<ClassFileInfo>> entry : entries) {
+			String type = entry.getKey();
+
+			insertRowTitle(buffer, type, classesTypeAtrrSet);
+
+			StringBuilder infosBuffer = new StringBuilder();
+			Set<ClassFileInfo> typeInfos = entry.getValue();
+			for (ClassFileInfo typeInfo : typeInfos) {
+				String name = typeInfo.name();
+				String shortName = getShortName(name);
+				insertHTMLLine(infosBuffer, shortName, descrAttrSet);
+			}
+
+			buffer.append("<TD VALIGN=\"TOP\" WIDTH=\"80%\">");
+			buffer.append(infosBuffer.toString());
+			buffer.append("</TD>");
+			buffer.append("</TR>");
+		}
+
+		buffer.append("</TABLE>");
+
+	}
+
+	private String getShortName(String name) {
+		int index = name.lastIndexOf('.');
+		if (index < 0) {
+			return name; // no package
+		}
+		return name.substring(index + 1);
+	}
+
+	protected void insertHeader(StringBuilder buffer, String rowName) {
+
+		buffer.append("<TH VALIGN=\"TOP\" ALIGN=\"LEFT\">");
+		insertHTMLLine(buffer, rowName, classesHeaderAttrSet);
+		buffer.append("</TH>");
 	}
 
 	@Override
@@ -148,5 +236,8 @@ class ExtensionDetailsPanel extends AbstractDetailsPanel {
 		createdOnAttrSet = new GAttributes(font, FG_COLOR_DATE);
 		versionAttrSet = new GAttributes(font, FG_COLOR_VERSION);
 		pathAttrSet = new GAttributes(font, FG_COLOR_PATH);
+		classesHeaderAttrSet = new GAttributes(font, FG_COLOR_CLASSES_HEADER);
+		classesTypeAtrrSet = new GAttributes(font, FG_COLOR_CLASSES_TYPE);
 	}
+
 }

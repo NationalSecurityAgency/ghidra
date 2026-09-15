@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 
 import javax.swing.*;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import generic.theme.GIcon;
 import ghidra.framework.Application;
@@ -120,7 +120,15 @@ public class ResourceManager {
 	 * @return the File for the given resource; null if there is no such file
 	 */
 	public static File getResourceFile(String filename) {
-		URL url = getResource(filename);
+
+		URL url = classLoader.getResource(filename);
+		if (url == null || !"file".equals(url.getProtocol())) {
+			// In the gradle test environment we may have find a resource inside of an upstream
+			// module jar.  Since this method expects a file object, see if it lives in an upstream
+			// test module resource directory.
+			url = getResource(getTestSearchPaths(), filename);
+		}
+
 		if (url == null || !"file".equals(url.getProtocol())) {
 			return null;
 		}
@@ -217,7 +225,7 @@ public class ResourceManager {
 		// now search the path entries
 		for (String path : paths) {
 
-			if (!StringUtils.endsWithAny(path.toLowerCase(), ".jar", ".zip")) {
+			if (!Strings.CI.endsWithAny(path, ".jar", ".zip")) {
 
 				// maybe a directory	
 				String classpathDirectoryEntry = path + File.separator + resourceDirName;
@@ -657,8 +665,8 @@ public class ResourceManager {
 	private static void filterImages(Set<String> set) {
 		Iterator<String> it = set.iterator();
 		while (it.hasNext()) {
-			String filename = it.next().toLowerCase();
-			if (!StringUtils.endsWithAny(filename, ".gif", ".jpg", ".png")) {
+			String filename = it.next();
+			if (!Strings.CI.endsWithAny(filename, ".gif", ".jpg", ".png")) {
 				it.remove();
 			}
 		}

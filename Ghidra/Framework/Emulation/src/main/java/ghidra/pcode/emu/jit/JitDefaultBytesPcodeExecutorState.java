@@ -17,8 +17,8 @@ package ghidra.pcode.emu.jit;
 
 import ghidra.pcode.emu.jit.JitBytesPcodeExecutorStatePiece.JitBytesPcodeExecutorStateSpace;
 import ghidra.pcode.emu.jit.analysis.JitDataFlowState;
-import ghidra.pcode.exec.BytesPcodeArithmetic;
 import ghidra.pcode.exec.DefaultPcodeExecutorState;
+import ghidra.pcode.exec.PcodeStateCallbacks;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
 
@@ -44,10 +44,11 @@ public class JitDefaultBytesPcodeExecutorState extends DefaultPcodeExecutorState
 	 * Construct a new state for the given language
 	 * 
 	 * @param language the emulation target language
+	 * @param cb callbacks to receive emulation events. Because the JIT often accesses state
+	 *            directly, it will bypass several callbacks. DO NOT rely on callbacks, yet.
 	 */
-	public JitDefaultBytesPcodeExecutorState(Language language) {
-		super(new JitBytesPcodeExecutorStatePiece(language),
-			BytesPcodeArithmetic.forLanguage(language));
+	public JitDefaultBytesPcodeExecutorState(Language language, PcodeStateCallbacks cb) {
+		super(new JitBytesPcodeExecutorStatePiece(language, cb));
 	}
 
 	/**

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,12 +20,14 @@ import java.util.*;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.plugin.core.instructionsearch.InstructionSearchPlugin;
 import ghidra.app.plugin.core.instructionsearch.model.InstructionMetadata;
+import ghidra.app.plugin.core.instructionsearch.model.InstructionSearchData;
 import ghidra.app.plugin.core.instructionsearch.ui.SearchDirectionWidget.Direction;
 import ghidra.app.services.GoToService;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.BytesFieldLocation;
+import ghidra.program.util.ProgramLocation;
 import ghidra.util.Swing;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
@@ -58,10 +60,9 @@ class SearchInstructionsTask extends Task {
 	}
 
 	@Override
-	public void run(TaskMonitor taskMonitor) {
-		if (taskMonitor == null) {
-			return;
-		}
+	public void run(TaskMonitor monitor) {
+
+		monitor = TaskMonitor.dummyIfNull(monitor);
 
 		// First get all the search ranges we have to search.  
 		List<AddressRange> searchRanges =
@@ -107,16 +108,18 @@ class SearchInstructionsTask extends Task {
 			}
 
 			if (searchRanges.size() > 1) {
-				taskMonitor.setMessage(
+				monitor.setMessage(
 					"Searching range " + rangeNum + " of " + searchRanges.size());
 			}
 			else {
-				taskMonitor.setMessage("Searching...");
+				monitor.setMessage("Searching...");
 			}
 
 			// And SEARCH.
+			ProgramLocation location = searchPlugin.getProgramLocation();
+			InstructionSearchData searchData = searchDialog.getSearchData();
 			InstructionMetadata searchResults =
-				searchDialog.getSearchData().search(searchPlugin, range, taskMonitor, forward);
+				searchData.search(location, range, forward, monitor);
 
 			// If there are results, move the cursor there, otherwise keep looping and check
 			// the next range.

@@ -80,7 +80,7 @@ void StringManager::assignStringData(StringData &data,const uint1 *buf,int4 size
     data.byteData.reserve(newSize + 1);
     const uint1 *ptr = (const uint1 *)resString.c_str();
     data.byteData.assign(ptr,ptr+newSize);
-    data.byteData[newSize] = 0;		// Make sure there is a null terminator
+    data.byteData.push_back(0);		// Make sure there is a null terminator
   }
   data.isTruncated = (numChars >= maximumChars);
 }
@@ -190,7 +190,7 @@ uint8 StringManager::registerInternalStringData(const Address &addr,const uint1 
   if (numChars < 0)
     return 0;	// Not a legal encoding
   uint8 hash = calcInternalHash(addr, buf, size);
-  Address constAddr = addr.getSpace()->getManager()->getConstant(hash);
+  Address constAddr = addr.getSpace()->getTrans()->getConstant(hash);
   StringData &stringData( stringMap[constAddr] );
   stringData.byteData.clear();
   stringData.isTruncated = false;

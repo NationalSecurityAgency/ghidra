@@ -64,7 +64,7 @@ public class FileSystemFactoryMgr {
 		for (Class<? extends GFileSystem> fsClass : ClassSearcher.getClasses(GFileSystem.class)) {
 			addFactory(fsClass);
 		}
-		Collections.sort(sortedFactories, FileSystemInfoRec.BY_PRIORITY);
+		sortedFactories.sort(FileSystemInfoRec.BY_PRIORITY);
 	}
 
 	private void addFactory(Class<? extends GFileSystem> fsClass) {
@@ -76,9 +76,9 @@ public class FileSystemFactoryMgr {
 		if (fsByType.containsKey(fsir.getType())) {
 			FileSystemInfoRec prevFSI = fsByType.get(fsir.getType());
 			Msg.error(this,
-				"GFileSystem type '" + fsir.getType() + "' registered more than one time: " +
-					fsClass.getName() + ", " + prevFSI.getFSClass().getName() +
-					", ommitting second instance.");
+				"GFileSystem type '%s' registered more than one time: %s, %s, ommitting second instance."
+						.formatted(fsir.getType(), fsClass.getName(),
+							prevFSI.getFSClass().getName()));
 			return;
 		}
 
@@ -86,13 +86,11 @@ public class FileSystemFactoryMgr {
 			// don't register any filesystem that uses this factory
 			return;
 		}
-		if (fsir.getFactory() instanceof GFileSystemProbeBytesOnly) {
-			GFileSystemProbeBytesOnly pbo = (GFileSystemProbeBytesOnly) fsir.getFactory();
+		if (fsir.getFactory() instanceof GFileSystemProbeBytesOnly pbo) {
 			if (pbo.getBytesRequired() > GFileSystemProbeBytesOnly.MAX_BYTESREQUIRED) {
 				Msg.error(this,
-					"GFileSystemProbeBytesOnly for " + fsClass.getName() +
-						" specifies too large value for bytes_required: " + pbo.getBytesRequired() +
-						", skipping this probe.");
+					"GFileSystemProbeBytesOnly for %s specifies too large value for bytes_required: %s, skipping this probe."
+							.formatted(fsClass.getName(), pbo.getBytesRequired()));
 			}
 			else {
 				largestBytesRequired = Math.max(largestBytesRequired, pbo.getBytesRequired());
@@ -115,8 +113,20 @@ public class FileSystemFactoryMgr {
 				.stream()
 				.map(fsType -> fsByType.get(fsType).getDescription())
 				.sorted(String::compareToIgnoreCase)
-				.collect(Collectors.toList());
+				.toList();
 		//@formatter:on
+	}
+
+	/**
+	 * {@return a map of associated file system extensions keyed by file system description}
+	 */
+	public Map<String, String[]> getFilesystemExtensionsByDescription() {
+		return sortedFactories
+				.stream()
+				.collect(
+					Collectors.toMap(FileSystemInfoRec::getDescription,
+						FileSystemInfoRec::getExtensions));
+				
 	}
 
 	/**
@@ -147,7 +157,7 @@ public class FileSystemFactoryMgr {
 			throws IOException, CancelledException {
 		FileSystemInfoRec fsir = fsByType.get(fsType);
 		if (fsir == null) {
-			byteProvider.close();
+			FSUtilities.uncheckedClose(byteProvider, null);
 			throw new IOException("Unknown file system type " + fsType);
 		}
 
@@ -164,23 +174,27 @@ public class FileSystemFactoryMgr {
 		GFileSystem result = null;
 		boolean bpTaken = false;
 		try {
-			GFileSystemFactory<?> factory = fsir.getFactory();
-			if (factory instanceof GFileSystemFactoryByteProvider) {
-				GFileSystemFactoryByteProvider<?> bpFactory =
-					(GFileSystemFactoryByteProvider<?>) factory;
+			if (fsir.getFactory() instanceof GFileSystemFactoryByteProvider bpFactory) {
 				bpTaken = true;
 				result = bpFactory.create(targetFSRL, byteProvider, fsService, monitor);
 			}
 			// add additional GFileSystemFactoryXYZ support blocks here
 		}
 		catch (IOException | CancelledException e) {
-			Msg.warn(this,
-				"Error during fs factory create: " + fsir.getType() + ", " + fsir.getFSClass(), e);
+			if (e instanceof FileSystemFactoryDependencyException) {
+				// don't need stacktrace
+				Msg.warn(this, "File system dependency error: %s (%s)".formatted(e.getMessage(),
+					fsir.getType()));
+			}
+			else {
+				Msg.warn(this, "Error during fs factory create: %s, %s".formatted(fsir.getType(),
+					fsir.getFSClass()), e);
+			}
 			throw e;
 		}
 		finally {
 			if (byteProvider != null && !bpTaken) {
-				byteProvider.close();
+				FSUtilities.uncheckedClose(byteProvider, null);
 			}
 		}
 
@@ -190,15 +204,15 @@ public class FileSystemFactoryMgr {
 	/**
 	 * Returns true if the specified file contains a supported {@link GFileSystem}.
 	 * 
-	 * @param byteProvider 
+	 * @param byteProvider container {@link ByteProvider}
 	 * @param fsService reference to the {@link FileSystemService} instance.
 	 * @param monitor {@link TaskMonitor} to use for canceling and updating progress.
 	 * @return {@code true} if the file seems to contain a filesystem, {@code false} if it does not.
 	 * @throws IOException if error when accessing the containing file
 	 * @throws CancelledException if the user canceled the operation
 	 */
-	public boolean test(ByteProvider byteProvider, FileSystemService fsService,
-			TaskMonitor monitor) throws IOException, CancelledException {
+	public boolean test(ByteProvider byteProvider, FileSystemService fsService, TaskMonitor monitor)
+			throws IOException, CancelledException {
 
 		int pboByteCount = Math.min(
 			(int) Math.min(byteProvider.length(), GFileSystemProbeBytesOnly.MAX_BYTESREQUIRED),
@@ -221,8 +235,8 @@ public class FileSystemFactoryMgr {
 				}
 			}
 			catch (IOException e) {
-				Msg.trace(this, "File system probe error for " + fsir.getDescription() +
-					" with " + containerFSRL, e);
+				Msg.trace(this, "File system probe error for " + fsir.getDescription() + " with " +
+					containerFSRL, e);
 			}
 		}
 		return false;
@@ -272,7 +286,8 @@ public class FileSystemFactoryMgr {
 			FileSystemProbeConflictResolver conflictResolver, int priorityFilter,
 			TaskMonitor monitor) throws IOException, CancelledException {
 
-		conflictResolver = (conflictResolver == null) ? FileSystemProbeConflictResolver.CHOOSEFIRST
+		conflictResolver = (conflictResolver == null)
+				? FileSystemProbeConflictResolver.CHOOSEFIRST
 				: conflictResolver;
 
 		FSRL containerFSRL = byteProvider.getFSRL();
@@ -288,9 +303,7 @@ public class FileSystemFactoryMgr {
 					if (fsir.getPriority() < priorityFilter) {
 						break;
 					}
-					if (fsir.getFactory() instanceof GFileSystemProbeBytesOnly) {
-						GFileSystemProbeBytesOnly factoryProbe =
-							(GFileSystemProbeBytesOnly) fsir.getFactory();
+					if (fsir.getFactory() instanceof GFileSystemProbeBytesOnly factoryProbe) {
 						if (factoryProbe.getBytesRequired() <= startBytes.length) {
 							if (factoryProbe.probeStartBytes(containerFSRL, startBytes)) {
 								probeMatches.add(fsir);
@@ -298,9 +311,7 @@ public class FileSystemFactoryMgr {
 							}
 						}
 					}
-					if (fsir.getFactory() instanceof GFileSystemProbeByteProvider) {
-						GFileSystemProbeByteProvider factoryProbe =
-							(GFileSystemProbeByteProvider) fsir.getFactory();
+					if (fsir.getFactory() instanceof GFileSystemProbeByteProvider factoryProbe) {
 						if (factoryProbe.probe(byteProvider, fsService, monitor)) {
 							probeMatches.add(fsir);
 							continue;
@@ -308,8 +319,9 @@ public class FileSystemFactoryMgr {
 					}
 				}
 				catch (IOException e) {
-					Msg.trace(this, "File system probe error for " + fsir.getDescription() +
-						" with " + containerFSRL, e);
+					Msg.trace(this, "File system probe error for %s with %s"
+							.formatted(fsir.getDescription(), containerFSRL),
+						e);
 				}
 			}
 
@@ -330,9 +342,7 @@ public class FileSystemFactoryMgr {
 			return fs;
 		}
 		finally {
-			if (byteProvider != null) {
-				byteProvider.close();
-			}
+			FSUtilities.uncheckedClose(byteProvider, null);
 		}
 
 	}

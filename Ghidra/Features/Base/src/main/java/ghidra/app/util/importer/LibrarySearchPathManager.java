@@ -85,14 +85,9 @@ public class LibrarySearchPathManager {
 				}
 			}
 			catch (MalformedURLException e) {
-				try {
-					File f = new File(path);
-					if (f.exists() && f.isAbsolute()) {
-						fsrl = fsService.getLocalFSRL(f.getCanonicalFile());
-					}
-				}
-				catch (IOException e2) {
-					log.appendException(e2);
+				File f = new File(path);
+				if (f.exists() && f.isAbsolute()) {
+					fsrl = fsService.getLocalFSRL(f);
 				}
 			}
 			if (fsrl != null) {
@@ -114,7 +109,7 @@ public class LibrarySearchPathManager {
 	}
 
 	/**
-	 * Adds the specified library search path path to the end of the path search list
+	 * Adds the specified library search path {@code path} to the end of the path search list
 	 * 
 	 * @param path the library search path to add
 	 * @return true if the path was appended, false if the path was a duplicate

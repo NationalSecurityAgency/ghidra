@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,17 +44,11 @@ public class ThreadedXmlParserTest extends AbstractGenericTest {
 		"<project name=\"foo\"/>" + "<project name=\"foo\"/>" + "<project name=\"foo\"/>" +
 		"<project name=\"foo\"/>" + "</doc>";
 
-	
 	private static final String XXE_XML = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n" +
 		"<!DOCTYPE foo [\n" + "    <!ELEMENT foo ANY >\n" +
 		"<!ENTITY xxe SYSTEM \"file://@TEMP_FILE@\">]><foo>&xxe; fizzbizz</foo>";
-	
-	public ThreadedXmlParserTest() {
-		super();
-	}
 
 	/**
-	 * <p>
 	 * XML External Entities attacks benefit from an XML feature to build documents dynamically at 
 	 * the time of processing.  An XML entity allows inclusion of data dynamically from a given 
 	 * resource.  External entities allow an XML document to include data from an external URI. 
@@ -71,7 +65,7 @@ public class ThreadedXmlParserTest extends AbstractGenericTest {
 	 * than ResourceFile) will use a default Entity Resolver. The XmlUtilities.createSecureSAXParserFactory 
 	 * factory configurations will disable external entities regardless of which Entity Resolver is used.
 	 * 
-	 * @throws Exception
+	 * @throws Exception if there is an exception
 	 */
 	@Test
 	public void testXXEXml() throws Exception {

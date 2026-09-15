@@ -30,6 +30,7 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.sourcemap.*;
 import ghidra.program.util.ProgramEvent;
 import ghidra.util.Lock;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -100,8 +101,7 @@ public class SourceFileManagerDB implements SourceFileManager, ManagerDB, ErrorH
 
 		AddressRange.checkValidRange(start, end);
 		AddressRange rangeToDelete = new AddressRangeImpl(start, end);
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 
 			RecordIterator recIter = sourceMapTableAdapter.getSourceMapRecordIterator(end, false);
 			boolean sourceMapChanged = false;
@@ -126,7 +126,7 @@ public class SourceFileManagerDB implements SourceFileManager, ManagerDB, ErrorH
 					continue;
 				}
 
-				Address recEnd = getEndAddress(recStart,recLength);
+				Address recEnd = getEndAddress(recStart, recLength);
 
 				if (!rangeToDelete.intersects(recStart, recEnd)) {
 					// we've found an entry that does not touch the range to delete
@@ -168,9 +168,6 @@ public class SourceFileManagerDB implements SourceFileManager, ManagerDB, ErrorH
 		catch (IOException e) {
 			dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	/**
@@ -198,9 +195,7 @@ public class SourceFileManagerDB implements SourceFileManager, ManagerDB, ErrorH
 			return; // nothing to do
 		}
 
-		lock.acquire();
-
-		try {
+		try (Closeable c = lock.write()) {
 			Address rangeToMoveEnd = fromAddr.addNoWrap(length - 1);
 			AddressRange rangeToMove = new AddressRangeImpl(fromAddr, rangeToMoveEnd);
 			RecordIterator recIter =
@@ -297,17 +292,13 @@ public class SourceFileManagerDB implements SourceFileManager, ManagerDB, ErrorH
 		catch (IOException e) {
 			dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public boolean addSourceFile(SourceFile sourceFile) throws LockException {
 		Objects.requireNonNull(sourceFile, "sourceFile cannot be null");
 		program.checkExclusiveAccess();
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			Long key = getKeyForSourceFile(sourceFile);
 			if (key != null) {
 				return false;
@@ -321,9 +312,6 @@ public class SourceFileManagerDB implements SourceFileManager, ManagerDB, ErrorH
 			dbError(e);
 			return false;
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
@@ -331,8 +319,7 @@ public class SourceFileManagerDB implements SourceFileManager, ManagerDB, ErrorH
 		Objects.requireNonNull(sourceFile, "sourceFile cannot be null");
 		boolean mapChanged = false;
 		program.checkExclusiveAccess();
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			Long key = getKeyForSourceFile(sourceFile);
 			if (key == null) {
 				return false;
@@ -351,9 +338,6 @@ public class SourceFileManagerDB implements SourceFileManager, ManagerDB, ErrorH
 		catch (IOException e) {
 			dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 		program.setObjChanged(ProgramEvent.SOURCE_FILE_REMOVED, null, sourceFile, null);
 		if (mapChanged) {
 			program.setChanged(ProgramEvent.SOURCE_MAP_CHANGED, sourceFile, null);
@@ -366,8 +350,7 @@ public class SourceFileManagerDB implements SourceFileManager, ManagerDB, ErrorH
 
 		List<SourceMapEntry> sourceMapEntries = new ArrayList<>();
 
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			RecordIterator recIter = sourceMapTableAdapter.getSourceMapRecordIterator(addr, false);
 			boolean foundNonZeroLength = false;
 			while (recIter.hasPrevious()) {
@@ -395,9 +378,6 @@ public class SourceFileManagerDB implements SourceFileManager, ManagerDB, ErrorH
 		catch (IOException e) {
 			dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 		Collections.sort(sourceMapEntries);
 		return sourceMapEntries;
 	}
@@ -419,8 +399,7 @@ public class SourceFileManagerDB implements SourceFileManager, ManagerDB, ErrorH
 		}
 		program.checkExclusiveAccess();
 
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			Long sourceFileId = getKeyForSourceFile(sourceFile);
 			if (sourceFileId == null) {
 				throw new IllegalArgumentException(
@@ -481,9 +460,6 @@ public class SourceFileManagerDB implements SourceFileManager, ManagerDB, ErrorH
 			dbError(e);
 			throw new AssertionError("addSourceMapEntry unsuccessful - possible database error");
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
@@ -491,8 +467,7 @@ public class SourceFileManagerDB implements SourceFileManager, ManagerDB, ErrorH
 		if (addrs == null || addrs.isEmpty()) {
 			return false;
 		}
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			for (AddressRangeIterator rangeIter = addrs.getAddressRanges(); rangeIter.hasNext();) {
 				AddressRange r = rangeIter.next();
 				RecordIterator recIter =
@@ -519,9 +494,7 @@ public class SourceFileManagerDB implements SourceFileManager, ManagerDB, ErrorH
 			dbError(e);
 			return false;
 		}
-		finally {
-			lock.release();
-		}
+
 	}
 
 	@Override
@@ -532,8 +505,7 @@ public class SourceFileManagerDB implements SourceFileManager, ManagerDB, ErrorH
 	@Override
 	public List<SourceFile> getMappedSourceFiles() {
 		List<SourceFile> sourceFiles = new ArrayList<>();
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			for (RecordIterator sourceFileRecordIter =
 				sourceFileTableAdapter.getRecords(); sourceFileRecordIter
 						.hasNext();) {
@@ -550,17 +522,13 @@ public class SourceFileManagerDB implements SourceFileManager, ManagerDB, ErrorH
 		catch (IOException e) {
 			dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 		return sourceFiles;
 	}
 
 	@Override
 	public List<SourceFile> getAllSourceFiles() {
 		List<SourceFile> sourceFiles = new ArrayList<>();
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			for (RecordIterator recordIter = sourceFileTableAdapter.getRecords(); recordIter
 					.hasNext();) {
 				updateLastSourceFileAndLastKey(recordIter.next());
@@ -570,9 +538,6 @@ public class SourceFileManagerDB implements SourceFileManager, ManagerDB, ErrorH
 		catch (IOException e) {
 			dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 		return sourceFiles;
 	}
 
@@ -581,8 +546,7 @@ public class SourceFileManagerDB implements SourceFileManager, ManagerDB, ErrorH
 			throws LockException {
 		program.checkExclusiveAccess();
 
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			Long srcKey = getKeyForSourceFile(source);
 			if (srcKey == null) {
 				throw new IllegalArgumentException(
@@ -606,9 +570,6 @@ public class SourceFileManagerDB implements SourceFileManager, ManagerDB, ErrorH
 			// can't happen - entry ranges were validated upon insert
 			throw new AssertionError("bad address range in source map entry table");
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
@@ -628,13 +589,10 @@ public class SourceFileManagerDB implements SourceFileManager, ManagerDB, ErrorH
 		if (sourceFile == null) {
 			return false;
 		}
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			return getKeyForSourceFile(sourceFile) != null;
 		}
-		finally {
-			lock.release();
-		}
+
 	}
 
 	@Override
@@ -650,8 +608,7 @@ public class SourceFileManagerDB implements SourceFileManager, ManagerDB, ErrorH
 			throw new IllegalArgumentException("maxLine cannot be less than minLine");
 		}
 		List<SourceMapEntry> entries = new ArrayList<>();
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			Long key = getKeyForSourceFile(sourceFile);
 			if (key == null) {
 				return entries;
@@ -668,9 +625,6 @@ public class SourceFileManagerDB implements SourceFileManager, ManagerDB, ErrorH
 				dbError(e);
 			}
 		}
-		finally {
-			lock.release();
-		}
 		Collections.sort(entries);
 		return entries;
 	}
@@ -679,8 +633,7 @@ public class SourceFileManagerDB implements SourceFileManager, ManagerDB, ErrorH
 	public boolean removeSourceMapEntry(SourceMapEntry entry) throws LockException {
 		Objects.requireNonNull(entry, "entry cannot be null");
 		program.checkExclusiveAccess();
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			RecordIterator recIter =
 				sourceMapTableAdapter.getSourceMapRecordIterator(entry.getBaseAddress(), true);
 			while (recIter.hasNext()) {
@@ -706,19 +659,12 @@ public class SourceFileManagerDB implements SourceFileManager, ManagerDB, ErrorH
 			dbError(e);
 			return false;
 		}
-		finally {
-			lock.release();
-		}
 		return false;
 	}
 
 	SourceFile getSourceFile(long key) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			return getSourceFileFromKey(key);
-		}
-		finally {
-			lock.release();
 		}
 	}
 

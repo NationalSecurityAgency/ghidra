@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -400,6 +400,7 @@ public class TextFieldLinker {
 		 * Set the composite text
 		 * 
 		 * @param text the new text
+		 * @return the adjustment to the caret position
 		 */
 		public int setText(String text) {
 			int adj = 0;
@@ -497,6 +498,9 @@ public class TextFieldLinker {
 
 	/**
 	 * @see #linkField(JTextField, Pattern, String)
+	 * @param field the field to link
+	 * @param exp the regular expression to search for following the field
+	 * @param sep the separator that replaces {@code pat} when matched
 	 */
 	public void linkField(JTextField field, String exp, String sep) {
 		Pattern pat = Pattern.compile(exp);

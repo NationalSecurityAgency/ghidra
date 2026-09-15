@@ -16,15 +16,17 @@
 import re
 
 from ghidratrace import sch
-from ghidratrace.client import MethodRegistry, ParamDesc, Address, AddressRange
+from ghidratrace.client import (MethodRegistry, ParamDesc, Address,
+                                AddressRange, TraceObject)
 from ghidradbg import util, commands, methods
 from ghidradbg.methods import REGISTRY, SESSIONS_PATTERN, SESSION_PATTERN, extre
 
 from . import exdi_commands
 
-XPROCESSES_PATTERN = extre(SESSION_PATTERN, '\.ExdiProcesses')
-XPROCESS_PATTERN = extre(XPROCESSES_PATTERN, '\[(?P<procnum>\\d*)\]')
-XTHREADS_PATTERN = extre(XPROCESS_PATTERN, '\.Threads')
+XPROCESSES_PATTERN = extre(SESSION_PATTERN, '\\.ExdiProcesses')
+XPROCESS_PATTERN = extre(XPROCESSES_PATTERN, '\\[(?P<procnum>\\d*)\\]')
+XTHREADS_PATTERN = extre(XPROCESS_PATTERN, '\\.Threads')
+
 
 def find_pid_by_pattern(pattern, object, err_msg):
     mat = pattern.fullmatch(object.path)
@@ -38,16 +40,23 @@ def find_pid_by_obj(object):
     return find_pid_by_pattern(XTHREADS_PATTERN, object, "an ExdiThreadsContainer")
 
 
+class ExdiProcessContainer(TraceObject):
+    pass
+
+
+class ExdiThreadContainer(TraceObject):
+    pass
+
 
 @REGISTRY.method(action='refresh', display="Refresh Target Processes")
-def refresh_exdi_processes(node: sch.Schema('ExdiProcessContainer')):
+def refresh_exdi_processes(node: ExdiProcessContainer) -> None:
     """Refresh the list of processes in the target kernel."""
     with commands.open_tracked_tx('Refresh Processes'):
         exdi_commands.ghidra_trace_put_processes_exdi()
 
 
 @REGISTRY.method(action='refresh', display="Refresh Process Threads")
-def refresh_exdi_threads(node: sch.Schema('ExdiThreadContainer')):
+def refresh_exdi_threads(node: ExdiThreadContainer) -> None:
     """Refresh the list of threads in the process."""
     pid = find_pid_by_obj(node)
     with commands.open_tracked_tx('Refresh Threads'):

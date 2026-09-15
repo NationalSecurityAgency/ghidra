@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,6 @@ package ghidra.app.plugin.assembler.sleigh.sem;
 import java.math.BigInteger;
 import java.util.List;
 
-import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
@@ -37,8 +36,6 @@ public class AssemblyDefaultContext implements DisassemblerContext, DefaultProgr
 
 	protected AssemblyPatternBlock curctx; // the pseudo context value
 	protected AssemblyPatternBlock defctx; // the computed default
-
-	protected final static DbgTimer dbg = DbgTimer.INACTIVE;
 
 	/**
 	 * Compute the default context at most addresses for the given language
@@ -110,17 +107,14 @@ public class AssemblyDefaultContext implements DisassemblerContext, DefaultProgr
 
 	@Override
 	public void setValue(Register register, BigInteger value) throws ContextChangeException {
-		dbg.println("Set " + register + " to " + value);
 	}
 
 	@Override
 	public void setRegisterValue(RegisterValue value) throws ContextChangeException {
-		dbg.println("Set " + value);
 	}
 
 	@Override
 	public void clearRegister(Register register) throws ContextChangeException {
-		dbg.println("Clear " + register);
 	}
 
 	@Override
@@ -165,12 +159,10 @@ public class AssemblyDefaultContext implements DisassemblerContext, DefaultProgr
 
 	@Override
 	public void setFutureRegisterValue(Address address, RegisterValue value) {
-		dbg.println("Set " + value + " at " + address);
 	}
 
 	@Override
 	public void setFutureRegisterValue(Address fromAddr, Address toAddr, RegisterValue value) {
-		dbg.println("Set " + value + " for [" + fromAddr + ":" + toAddr + "]");
 	}
 
 	@Override
@@ -182,8 +174,6 @@ public class AssemblyDefaultContext implements DisassemblerContext, DefaultProgr
 			return;
 		}
 		defctx = defctx.combine(AssemblyPatternBlock.fromRegisterValue(registerValue));
-		dbg.println("Combining " + registerValue);
-		dbg.println("  " + defctx);
 	}
 
 	@Override

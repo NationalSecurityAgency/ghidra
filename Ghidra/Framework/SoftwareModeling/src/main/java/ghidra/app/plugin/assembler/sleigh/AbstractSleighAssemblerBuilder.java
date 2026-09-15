@@ -27,8 +27,6 @@ import ghidra.app.plugin.assembler.sleigh.grammars.AssemblySentential;
 import ghidra.app.plugin.assembler.sleigh.parse.AssemblyParser;
 import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.assembler.sleigh.symbol.*;
-import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
-import ghidra.app.plugin.assembler.sleigh.util.DbgTimer.DbgCtx;
 import ghidra.app.plugin.languages.sleigh.SleighLanguages;
 import ghidra.app.plugin.languages.sleigh.SubtableEntryVisitor;
 import ghidra.app.plugin.processors.sleigh.*;
@@ -38,13 +36,10 @@ import ghidra.app.plugin.processors.sleigh.template.ConstructTpl;
 import ghidra.app.plugin.processors.sleigh.template.HandleTpl;
 import ghidra.program.model.lang.LanguageID;
 import ghidra.program.model.listing.Program;
-import ghidra.util.SystemUtilities;
 
 public abstract class AbstractSleighAssemblerBuilder< //
 		RP extends AssemblyResolvedPatterns, A extends GenericAssembler<RP>>
 		implements GenericAssemblerBuilder<RP, A> {
-	protected static final DbgTimer dbg =
-		SystemUtilities.isInTestingBatchMode() ? DbgTimer.INACTIVE : DbgTimer.ACTIVE;
 
 	protected final SleighLanguage lang;
 	protected final AbstractAssemblyResolutionFactory<RP, ?> factory;
@@ -319,41 +314,39 @@ public abstract class AbstractSleighAssemblerBuilder< //
 	 * Build the full grammar for the language
 	 */
 	protected void buildGrammar() {
-		try (DbgCtx dc = dbg.start("Building grammar")) {
-			grammar = new AssemblyGrammar(factory);
-			for (Symbol sym : lang.getSymbolTable().getSymbolList()) {
-				if (sym instanceof SubtableSymbol) {
-					SubtableSymbol subtable = (SubtableSymbol) sym;
-					grammar.combine(buildSubGrammar(subtable));
-				}
-				else if (sym instanceof VarnodeSymbol) {
-					// Ignore. This just becomes a string terminal
-				}
-				else if (sym instanceof StartSymbol) {
-					// Ignore. We handle inst_start in semantic processing
-				}
-				else if (sym instanceof EndSymbol) {
-					// Ignore. We handle inst_next in semantic processing
-				}
-
-				else if (sym instanceof Next2Symbol) {
-					// Ignore. We handle inst_next2 in semantic processing
-				}
-				else if (sym instanceof UseropSymbol) {
-					// Ignore. We don't do pcode.
-				}
-				else if (sym instanceof OperandSymbol) {
-					// Ignore. These are terminals, or will be produced by their defining symbols
-				}
-				else if (sym instanceof ValueSymbol) {
-					// Ignore. These are now terminals
-				}
-				else {
-					throw new RuntimeException("Unexpected type: " + sym.getClass());
-				}
+		grammar = new AssemblyGrammar(factory);
+		for (Symbol sym : lang.getSymbolTable().getSymbolList()) {
+			if (sym instanceof SubtableSymbol) {
+				SubtableSymbol subtable = (SubtableSymbol) sym;
+				grammar.combine(buildSubGrammar(subtable));
 			}
-			grammar.setStartName("instruction");
+			else if (sym instanceof VarnodeSymbol) {
+				// Ignore. This just becomes a string terminal
+			}
+			else if (sym instanceof StartSymbol) {
+				// Ignore. We handle inst_start in semantic processing
+			}
+			else if (sym instanceof EndSymbol) {
+				// Ignore. We handle inst_next in semantic processing
+			}
+
+			else if (sym instanceof Next2Symbol) {
+				// Ignore. We handle inst_next2 in semantic processing
+			}
+			else if (sym instanceof UseropSymbol) {
+				// Ignore. We don't do pcode.
+			}
+			else if (sym instanceof OperandSymbol) {
+				// Ignore. These are terminals, or will be produced by their defining symbols
+			}
+			else if (sym instanceof ValueSymbol) {
+				// Ignore. These are now terminals
+			}
+			else {
+				throw new RuntimeException("Unexpected type: " + sym.getClass());
+			}
 		}
+		grammar.setStartName("instruction");
 	}
 
 	/**
@@ -367,18 +360,14 @@ public abstract class AbstractSleighAssemblerBuilder< //
 	 * Build the context transition graph for the language
 	 */
 	protected void buildContextGraph() {
-		try (DbgCtx dc = dbg.start("Building context graph")) {
-			ctxGraph = new AssemblyContextGraph(factory, lang, grammar);
-		}
+		ctxGraph = new AssemblyContextGraph(factory, lang, grammar);
 	}
 
 	/**
 	 * Build the parser for the language
 	 */
 	protected void buildParser() {
-		try (DbgCtx dc = dbg.start("Building parser")) {
-			parser = new AssemblyParser(grammar);
-		}
+		parser = new AssemblyParser(grammar);
 	}
 
 	/**

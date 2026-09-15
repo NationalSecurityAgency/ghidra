@@ -18,6 +18,8 @@ package docking;
 import java.awt.Component;
 import java.awt.event.MouseEvent;
 
+import docking.action.ActionContextProvider;
+
 /**
  * The default implementation of ActionContext
  */
@@ -32,6 +34,10 @@ public class DefaultActionContext implements ActionContext {
 	//       of this context.  This object will be set when getSourceComponent() is called if it
 	//       has not already been set.
 	private Component sourceComponent;
+
+	// Initialized by the framework.  This will be null if clients create their own context outside
+	// of the framework and do not set the provider.
+	private ActionContextProvider contextProvider;
 
 	/**
 	 * Default constructor with no provider, context object, or source component
@@ -119,11 +125,6 @@ public class DefaultActionContext implements ActionContext {
 	}
 
 	@Override
-	public Object getSourceObject() {
-		return sourceObject;
-	}
-
-	@Override
 	public void setEventClickModifiers(int modifiers) {
 		this.eventClickModifiers = modifiers;
 	}
@@ -139,9 +140,25 @@ public class DefaultActionContext implements ActionContext {
 	}
 
 	@Override
+	public Object getSourceObject() {
+		return sourceObject;
+	}
+
+	@Override
 	public DefaultActionContext setSourceObject(Object sourceObject) {
 		this.sourceObject = sourceObject;
 		return this;
+	}
+
+	@Override
+	public ActionContext setContextProvider(ActionContextProvider provider) {
+		this.contextProvider = provider;
+		return this;
+	}
+
+	@Override
+	public ActionContextProvider getContextProvider() {
+		return contextProvider;
 	}
 
 	@Override

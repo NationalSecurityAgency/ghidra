@@ -15,81 +15,26 @@
  */
 package ghidra.pcode.exec;
 
-import java.util.Map;
-
-import ghidra.pcode.exec.PcodeArithmetic.Purpose;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.lang.Language;
-import ghidra.program.model.lang.Register;
-import ghidra.program.model.mem.MemBuffer;
-
 /**
  * A p-code executor state formed from a piece whose address and value types are the same
  *
  * @param <T> the type of values and addresses in the state
  */
-public class DefaultPcodeExecutorState<T> implements PcodeExecutorState<T> {
-	protected final PcodeExecutorStatePiece<T, T> piece;
+public class DefaultPcodeExecutorState<T> extends AbstractPcodeExecutorState<T, T> {
 	protected final PcodeArithmetic<T> arithmetic;
 
-	public DefaultPcodeExecutorState(PcodeExecutorStatePiece<T, T> piece,
-			PcodeArithmetic<T> arithmetic) {
-		this.piece = piece;
-		this.arithmetic = arithmetic;
-	}
-
 	public DefaultPcodeExecutorState(PcodeExecutorStatePiece<T, T> piece) {
-		this(piece, piece.getArithmetic());
+		super(piece);
+		this.arithmetic = piece.getArithmetic();
 	}
 
 	@Override
-	public Language getLanguage() {
-		return piece.getLanguage();
+	protected T extractAddress(T value) {
+		return value;
 	}
 
 	@Override
-	public PcodeArithmetic<T> getArithmetic() {
-		return arithmetic;
-	}
-
-	@Override
-	public DefaultPcodeExecutorState<T> fork() {
-		return new DefaultPcodeExecutorState<>(piece.fork(), arithmetic);
-	}
-
-	@Override
-	public T getVar(AddressSpace space, T offset, int size, boolean quantize, Reason reason) {
-		return piece.getVar(space, offset, size, quantize, reason);
-	}
-
-	@Override
-	public T getVar(AddressSpace space, long offset, int size, boolean quantize, Reason reason) {
-		return piece.getVar(space, offset, size, quantize, reason);
-	}
-
-	@Override
-	public void setVar(AddressSpace space, T offset, int size, boolean quantize, T val) {
-		piece.setVar(space, offset, size, quantize, val);
-	}
-
-	@Override
-	public void setVar(AddressSpace space, long offset, int size, boolean quantize, T val) {
-		piece.setVar(space, offset, size, quantize, val);
-	}
-
-	@Override
-	public Map<Register, T> getRegisterValues() {
-		return piece.getRegisterValues();
-	}
-
-	@Override
-	public MemBuffer getConcreteBuffer(Address address, Purpose purpose) {
-		return piece.getConcreteBuffer(address, purpose);
-	}
-
-	@Override
-	public void clear() {
-		piece.clear();
+	public PcodeExecutorState<T> fork(PcodeStateCallbacks cb) {
+		return new DefaultPcodeExecutorState<>(piece.fork(cb));
 	}
 }

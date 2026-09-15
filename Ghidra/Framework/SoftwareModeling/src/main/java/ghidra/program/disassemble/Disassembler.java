@@ -37,6 +37,7 @@ import ghidra.program.util.AbstractProgramContext;
 import ghidra.program.util.ProgramContextImpl;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
+import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -963,7 +964,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 				}
 
 				// if fall-through already exists in another block - check for conflict 
-				// and terminate terminate block
+				// and terminate block
 				if (!block.isEmpty() && instructionSet != null &&
 					instructionSet.containsBlockAt(addr)) {
 					existingBlockStartInstr = instructionSet.getInstructionAt(addr);
@@ -1864,29 +1865,28 @@ public class Disassembler implements DisassemblerConflictHandler {
 
 	}
 
-	@SuppressWarnings("unchecked")
 	private static Class<? extends Disassembler> getLanguageSpecificDisassembler(Language parser) {
 		String className = parser.getProperty(GhidraLanguagePropertyKeys.CUSTOM_DISASSEMBLER_CLASS);
 		if (className == null) {
 			return null;
 		}
 		try {
-			Class<?> disassemblerClass = Class.forName(className);
-			if (!Disassembler.class.isAssignableFrom(disassemblerClass)) {
-				Msg.error(Disassembler.class,
-					"Invalid Class specified for " +
-						GhidraLanguagePropertyKeys.CUSTOM_DISASSEMBLER_CLASS + " (" +
-						disassemblerClass.getName() + "): " +
-						parser.getLanguageDescription().getLanguageID());
-				return null;
-			}
-			return (Class<? extends Disassembler>) disassemblerClass;
+			Class<? extends Disassembler> disassemblerClass = ClassSearcher.forNameSafe(className,
+				Disassembler.class, Disassembler.class.getClassLoader());
+			return  disassemblerClass;
 		}
 		catch (ClassNotFoundException e) {
 			throw new RuntimeException("Invalid Class specified for " +
 				GhidraLanguagePropertyKeys.CUSTOM_DISASSEMBLER_CLASS + " (" + className + "): " +
 				parser.getLanguageDescription().getLanguageID(), e);
 		}
+		catch (ClassCastException e) {
+			Msg.error(Disassembler.class,
+				"Invalid Class specified for " +
+					GhidraLanguagePropertyKeys.CUSTOM_DISASSEMBLER_CLASS + " (" + className +
+					"): " +
+					parser.getLanguageDescription().getLanguageID());
+			return null;
+		}
 	}
-
 }

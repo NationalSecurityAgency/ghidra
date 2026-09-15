@@ -40,49 +40,140 @@
   <default_proto>
     <prototype name="__stdcall" extrapop="2" stackshift="2">
       <input>
-        <pentry minsize="1" maxsize="2">
-          <register name="R25R24"/>
+        <pentry minsize="1" maxsize="1">
+          <register name="R25"/>
         </pentry>
-        <pentry minsize="1" maxsize="2">
-          <register name="R23R22"/>
+        <pentry minsize="1" maxsize="1">
+          <register name="R24"/>
         </pentry>
-        <pentry minsize="1" maxsize="2">
-          <register name="R21R20"/>
+        <pentry minsize="1" maxsize="1">
+          <register name="R23"/>
         </pentry>
-        <pentry minsize="1" maxsize="2">
-          <register name="R19R18"/>
+        <pentry minsize="1" maxsize="1">
+          <register name="R22"/>
         </pentry>
-        <pentry minsize="1" maxsize="2">
-          <register name="R17R16"/>
+        <pentry minsize="1" maxsize="1">
+          <register name="R21"/>
         </pentry>
-        <pentry minsize="1" maxsize="2">
-          <register name="R15R14"/>
+        <pentry minsize="1" maxsize="1">
+          <register name="R20"/>
         </pentry>
-        <pentry minsize="1" maxsize="2">
-          <register name="R13R12"/>
+        <pentry minsize="1" maxsize="1">
+          <register name="R19"/>
         </pentry>
-        <pentry minsize="1" maxsize="2">
-          <register name="R11R10"/>
+        <pentry minsize="1" maxsize="1">
+          <register name="R18"/>
         </pentry>
-        <pentry minsize="1" maxsize="2">
-          <register name="R9R8"/>
+        <pentry minsize="1" maxsize="1">
+          <register name="R17"/>
         </pentry>
-        <!-- Currently messes up parameter allocation, for known data types bigger than 2 -->
-        <!-- strategy="packreg" planned to mitigate this problem -->
+        <pentry minsize="1" maxsize="1">
+          <register name="R16"/>
+        </pentry>
+        <pentry minsize="1" maxsize="1">
+          <register name="R15"/>
+        </pentry>
+        <pentry minsize="1" maxsize="1">
+          <register name="R14"/>
+        </pentry>
+        <pentry minsize="1" maxsize="1">
+          <register name="R13"/>
+        </pentry>
+        <pentry minsize="1" maxsize="1">
+          <register name="R12"/>
+        </pentry>
+        <pentry minsize="1" maxsize="1">
+          <register name="R11"/>
+        </pentry>
+        <pentry minsize="1" maxsize="1">
+          <register name="R10"/>
+        </pentry>
+        <pentry minsize="1" maxsize="1">
+          <register name="R9"/>
+        </pentry>
+        <pentry minsize="1" maxsize="1">
+          <register name="R8"/>
+        </pentry>
         <pentry minsize="1" maxsize="500" align="1">
           <addr offset="3" space="stack"/>
-        </pentry>          
+        </pentry>
+        
+        <!-- In a varargs function, everything is unconditionally on the stack -->
+        <rule>
+          <datatype name="any"/>
+          <varargs/>
+          <goto_stack/>
+        </rule>
+        
+        <!-- Arguments are passed entirely in registers if possible, else entirely on stack -->
+        <!-- Odd-sized types are rounded to the next even register number for assignment -->
+        <rule>
+          <datatype name="any" sizes="1,3,5,7,9,11,13,15,17"/>
+          <consume_extra storage="general" matchsize="false"/>
+          <join stackspill="false" reversesignif="true"/>
+        </rule>
+        
+        <rule>
+          <datatype name="any"/>
+          <join stackspill="false" reversesignif="true"/>
+        </rule>
+        
+        <!-- Once any argument is passed on the stack, do not return to register allocation -->
+        <rule>
+          <datatype name="any"/>
+          <goto_stack/>
+          <consume_remaining storage="general"/>
+        </rule>
       </input>
       <output>
-        <pentry minsize="1" maxsize="2">
-          <register name="R25R24"/>
+        <pentry minsize="1" maxsize="1">
+          <register name="R25"/>
         </pentry>
-        <pentry minsize="3" maxsize="4">
-          <addr space="join" piece1="R25R24" piece2="R23R22"/>
+        <pentry minsize="1" maxsize="1">
+          <register name="R24"/>
         </pentry>
-        <pentry minsize="5" maxsize="8">
-          <addr space="join" piece1="R25R24" piece2="R23R22" piece3="R21R20" piece4="R19R18"/>
+        <pentry minsize="1" maxsize="1">
+          <register name="R23"/>
         </pentry>
+        <pentry minsize="1" maxsize="1">
+          <register name="R22"/>
+        </pentry>
+        <pentry minsize="1" maxsize="1">
+          <register name="R21"/>
+        </pentry>
+        <pentry minsize="1" maxsize="1">
+          <register name="R20"/>
+        </pentry>
+        <pentry minsize="1" maxsize="1">
+          <register name="R19"/>
+        </pentry>
+        <pentry minsize="1" maxsize="1">
+          <register name="R18"/>
+        </pentry>
+        
+        <!-- return value sizes are padded up to the nearest power of two -->
+        <rule>
+          <datatype name="any" sizes="1,3,7"/>
+          <consume_extra storage="general" matchsize="false"/>
+          <join reversesignif="true"/>
+        </rule>
+        <rule>
+          <datatype name="any" minsize="5" maxsize="5"/>
+          <consume_extra storage="general" matchsize="false"/>
+          <consume_extra storage="general" matchsize="false"/>
+          <consume_extra storage="general" matchsize="false"/>
+          <join reversesignif="true"/>
+        </rule> 
+        <rule>
+          <datatype name="any" minsize="6" maxsize="6"/>
+          <consume_extra storage="general" matchsize="false"/>
+          <consume_extra storage="general" matchsize="false"/>
+          <join reversesignif="true"/>
+        </rule>
+        <rule>
+          <datatype name="any"/>
+          <join reversesignif="true"/>
+        </rule>
       </output>
       <unaffected>
         <register name="SP"/>

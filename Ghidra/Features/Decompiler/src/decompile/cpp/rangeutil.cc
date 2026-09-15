@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -181,8 +181,8 @@ CircleRange::CircleRange(uintb lft,uintb rgt,int4 size,int4 stp)
 {
   mask = calc_mask(size);
   step = stp;
-  left = lft;
-  right = rgt;
+  left = lft & mask;
+  right = rgt & mask;
   isempty = false;
 }
 
@@ -200,7 +200,7 @@ CircleRange::CircleRange(bool val)
 
 /// A size specifies the number of bytes (*8 to get number of bits) in the mask.
 /// The stride is assumed to be 1.
-/// \param val is is the single value
+/// \param val is the single value
 /// \param size is the size of the mask in bytes
 CircleRange::CircleRange(uintb val,int4 size)
 
@@ -220,15 +220,15 @@ void CircleRange::setRange(uintb lft,uintb rgt,int4 size,int4 stp)
 
 {
   mask = calc_mask(size);
-  left = lft;
-  right = rgt;
+  left = lft & mask;
+  right = rgt & mask;
   step = stp;
   isempty = false;
 }
 
 /// A size specifies the number of bytes (*8 to get number of bits) in the mask.
 /// The stride is assumed to be 1.
-/// \param val is is the single value
+/// \param val is the single value
 /// \param size is the size of the mask in bytes
 void CircleRange::setRange(uintb val,int4 size)
 

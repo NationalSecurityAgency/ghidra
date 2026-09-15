@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -252,6 +252,25 @@ void EmitMarkup::tagField(const string &name,syntax_highlight hl,const Datatype 
   encoder->closeElement(ELEM_FIELD);
 }
 
+void EmitMarkup::tagBitField(const string &name,syntax_highlight hl,const Datatype *ct,int4 id,const PcodeOp *op)
+
+{
+  encoder->openElement(ELEM_BITFIELD);
+  if (hl != no_color)
+    encoder->writeUnsignedInteger(ATTRIB_COLOR,hl);
+
+  encoder->writeString(ATTRIB_NAME,ct->getName());
+  uint8 typeId = ct->getUnsizedId();
+  if (typeId != 0) {
+    encoder->writeUnsignedInteger(ATTRIB_ID, typeId);
+  }
+  encoder->writeSignedInteger(ATTRIB_OFF, id);
+  if (op != (const PcodeOp *)0)
+    encoder->writeUnsignedInteger(ATTRIB_OPREF, op->getTime());
+  encoder->writeString(ATTRIB_CONTENT,name);
+  encoder->closeElement(ELEM_BITFIELD);
+}
+
 void EmitMarkup::tagComment(const string &name,syntax_highlight hl,const AddrSpace *spc,uintb off)
 
 {
@@ -407,6 +426,9 @@ void TokenSplit::print(Emit *emit) const
   case field_t: // tagField
     emit->tagField(tok,hl,ptr_second.ct,(int4)off,op);
     break;
+  case bitfield_t:	// tagBitField
+    emit->tagBitField(tok,hl,ptr_second.ct,(int4)off,op);
+    break;
   case comm_t:	// tagComment
     emit->tagComment(tok,hl,ptr_second.spc,off);
     break;
@@ -500,6 +522,9 @@ void TokenSplit::printDebug(ostream &s) const
     break;
   case field_t: // tagField
     s << "field_t";
+    break;
+  case bitfield_t: // tagBitField
+    s << "bitfield_t";
     break;
   case comm_t:	// tagComment
     s << "comm_t";
@@ -1052,6 +1077,15 @@ void EmitPrettyPrint::tagField(const string &name,syntax_highlight hl,const Data
   checkstring();
   TokenSplit &tok( tokqueue.push() );
   tok.tagField(name,hl,ct,o,op);
+  scan();
+}
+
+void EmitPrettyPrint::tagBitField(const string &name,syntax_highlight hl,const Datatype *ct,int4 id,const PcodeOp *op)
+
+{
+  checkstring();
+  TokenSplit &tok( tokqueue.push() );
+  tok.tagBitField(name,hl,ct,id,op);
   scan();
 }
 

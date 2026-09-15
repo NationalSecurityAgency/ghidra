@@ -15,14 +15,16 @@
  */
 package ghidra.app.util.bin.format.dwarf.expression;
 
-import static ghidra.app.util.bin.format.dwarf.expression.DWARFExpressionOpCodes.*;
+import static ghidra.app.util.bin.format.dwarf.expression.DWARFExpressionOpCode.*;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
 
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Test;
 
 import ghidra.app.util.bin.format.dwarf.DWARFTestBase;
+import ghidra.program.model.scalar.Scalar;
 
 public class DWARFExpressionEvaluatorTest extends DWARFTestBase {
 
@@ -36,188 +38,39 @@ public class DWARFExpressionEvaluatorTest extends DWARFTestBase {
 		evaluator = new DWARFExpressionEvaluator(cu);
 	}
 
-	/**
-	 * Test {@link DWARFExpressionEvaluator} by executing a expr that calculates
-	 * the fibonacci series.
-	 *
-	 * @throws IOException
-	 * @throws DWARFExpressionException
-	 */
 	@Test
 	public void fibTest() throws IOException, DWARFExpressionException {
-		// calculates the Nth fibonacci number
+		// Test by executing a expr that calculates the fibonacci series.
+		// Calculates the Nth fibonacci number, with N being pushed on stack as 'arg' to the
+		// expression, result left on stack.
 		// @formatter:off
-		DWARFExpression expr = evaluator.readExpr(
-			new byte[] {
-				DW_OP_lit0,
-				DW_OP_lit1,
-				DW_OP_rot,
-				DW_OP_rot,
-				DW_OP_lit1,
-				DW_OP_minus,
-				DW_OP_dup,
-				DW_OP_lit0,
-				DW_OP_eq,
-				DW_OP_bra, 0xc, 0,
-				DW_OP_rot,
-				DW_OP_dup,
-				DW_OP_rot,
-				DW_OP_plus,
-				DW_OP_rot,
-				DW_OP_rot,
-				DW_OP_skip, (byte)0xf2, (byte) 0xff,
-				DW_OP_drop,
-				DW_OP_swap,
-				DW_OP_drop
-			});
+		DWARFExpression expr = expr(
+				instr(DW_OP_lit0),
+				instr(DW_OP_lit1),
+				instr(DW_OP_rot),
+				instr(DW_OP_rot),
+				instr(DW_OP_lit1),
+				instr(DW_OP_minus),
+				instr(DW_OP_dup),
+				instr(DW_OP_lit0),
+				instr(DW_OP_eq),
+				instr(DW_OP_bra, 0xc, 0),
+				instr(DW_OP_rot),
+				instr(DW_OP_dup),
+				instr(DW_OP_rot),
+				instr(DW_OP_plus),
+				instr(DW_OP_rot),
+				instr(DW_OP_rot),
+				instr(DW_OP_skip, 0xf2, 0xff),
+				instr(DW_OP_drop),
+				instr(DW_OP_swap),
+				instr(DW_OP_drop)
+		);
 		// @formatter:on
 
-		long result = evaluator.evaluate(expr, 19).pop();
+		evaluator.evaluate(expr, 19);
+		long result = evaluator.popLong();
 		assertEquals("Fibonacci[19] should be 4181", 4181, result);
-	}
-
-	/**
-	 * Test reading (but not executing) an expression that has every opcode
-	 * that takes operands.  Operands that are signed vs unsigned are present in
-	 * byte patterns that exercise high-bit set vs. not set.
-	 * @throws IOException
-	 */
-	@Test
-	public void testReadingAllOpCodesWithArgs() throws DWARFExpressionException {
-		// @formatter:off
-		DWARFExpression expr =
-			evaluator.readExpr(new byte[] {
-			/* 0 */ DW_OP_addr, 1, 2, 3, 4, 5, 6, 7, 8,
-
-			/* 1 */ DW_OP_const1u, (byte)0x55,
-			/* 2 */ DW_OP_const1u, (byte)0xfe,
-
-			/* 3 */ DW_OP_const1s, (byte)0x55,
-			/* 4 */ DW_OP_const1s, (byte) 0xfe, // -2
-
-			/* 5 */ DW_OP_const2u, (byte)0x55, (byte)0x55,
-			/* 6 */ DW_OP_const2u, (byte)0xf0, (byte)0xf0,
-
-			/* 7 */ DW_OP_const2s, (byte)0x55, (byte)0x55,
-			/* 8 */ DW_OP_const2s, (byte)0xf0, (byte)0xf0, // -3856
-
-			/* 9 */ DW_OP_const4u, (byte)0x55, (byte)0x55, (byte)0x55, (byte)0x55,
-			/* 10 */ DW_OP_const4u, (byte)0xf0, (byte)0xf0, (byte)0xf0, (byte)0xf0,
-
-			/* 11 */ DW_OP_const4s, (byte)0x55, (byte)0x55, (byte)0x55, (byte)0x55,
-			/* 12 */ DW_OP_const4s, (byte) 0xf0, (byte) 0xf0, (byte) 0xf0, (byte) 0xf0, // -252645136
-
-			/* 13 */ DW_OP_const8u, (byte)0x55, (byte)0x55, (byte)0x55, (byte)0x55, (byte)0x55, (byte)0x55, (byte)0x55, (byte)0x55,
-			/* 14 */ DW_OP_const8u, (byte)0xf0, (byte)0xf0, (byte)0xf0, (byte)0xf0, (byte)0xf0, (byte)0xf0, (byte)0xf0, (byte)0xf0,
-
-			/* 15 */ DW_OP_const8s, (byte)0x55, (byte)0x55, (byte)0x55, (byte)0x55, (byte)0x55, (byte)0x55, (byte)0x55, (byte)0x55,
-			/* 16 */ DW_OP_const8s, (byte)0xf0, (byte)0xf0, (byte)0xf0, (byte)0xf0, (byte)0xf0, (byte)0xf0, (byte)0xf0, (byte)0xf0,
-
-			/* 17 */ DW_OP_constu, (byte)0x55,
-			/* 18 */ DW_OP_constu, (byte)0x80, (byte)0x01,	// == 128
-			/* 19 */ DW_OP_constu, (byte)0x80, (byte)0x7f,	// == 16256
-
-			/* 20 */ DW_OP_consts, (byte)0x33,
-			/* 21 */ DW_OP_consts, (byte)0x80, (byte)0x01, // == 128
-			/* 22 */ DW_OP_consts, (byte)0x80, (byte)0x7f, // == -128
-
-			/* 23 */ DW_OP_pick, (byte)0x04,
-			/* 24 */ DW_OP_pick, (byte)0xf0,
-
-			/* 25 */ DW_OP_plus_uconst, (byte)0x80, (byte)0x01,
-			/* 26 */ DW_OP_plus_uconst, (byte)0xbf, (byte)0x01,	// == 191
-
-			/* 27 */ DW_OP_skip, (byte)0x05, (byte)0x05,
-			/* 28 */ DW_OP_skip, (byte)0xf0, (byte)0xf0,
-
-			/* 29 */ DW_OP_bra, (byte)0x05, (byte)0x05,
-			/* 30 */ DW_OP_bra, (byte)0xf0, (byte)0xf0,
-
-			/* 31 */ DW_OP_breg0, (byte) 0x0a,
-			/* 32 */ DW_OP_breg0, (byte)0x80, (byte)0x01,	// == ????
-
-			/* 33 */ (byte)DW_OP_breg31, (byte)0x55,
-			/* 34 */ (byte)DW_OP_breg31, (byte)0x80, (byte)0x01,	// == ????
-
-			/* 35 */ (byte)DW_OP_regx, (byte)0x55,
-			/* 36 */ (byte)DW_OP_regx, (byte)0x80, (byte)0x01,	// == ????
-
-			/* 37 */ (byte)DW_OP_fbreg, (byte)0x55,
-			/* 38 */ (byte)DW_OP_fbreg, (byte)0x80, (byte)0x01,	// == ????
-
-			/* 39 */ (byte)DW_OP_bregx, (byte)0x55, (byte)0x44,
-			/* 40 */ (byte)DW_OP_bregx, (byte)0x55, (byte)0x80, (byte)0x01,
-
-			/* 41 */ (byte)DW_OP_piece, (byte)0x55,
-			/* 42 */ (byte)DW_OP_piece, (byte)0x80, (byte)0x01,	// == 191
-
-			/* 43 */ (byte)DW_OP_deref_size, (byte)0x55,
-			/* 44 */ (byte)DW_OP_deref_size, (byte)0xf0,
-
-			/* 45 */ (byte)DW_OP_xderef_size, (byte)0x55,
-			/* 46 */ (byte)DW_OP_xderef_size, (byte)0xf0,
-
-			/* 47 */ (byte)DW_OP_call2, (byte)0x55, (byte)0x55,
-			/* 48 */ (byte)DW_OP_call2, (byte)0xf0, (byte)0xf0,
-
-			/* 49 */ (byte)DW_OP_call4, (byte)0x55, (byte)0x55, (byte)0x55, (byte)0x55,
-			/* 50 */ (byte)DW_OP_call4, (byte)0xf0, (byte)0xf0, (byte)0xf0, (byte)0xf0,
-
-			/* 51 */ (byte)DW_OP_bit_piece, (byte)0x55, (byte)0x55,
-			/* 52 */ (byte)DW_OP_bit_piece, (byte)0x80, (byte)0x01, (byte)0x81, (byte)0x01,
-
-			/* 53 */ (byte) DW_OP_call_ref, 4, 3, 2, 1,
-
-			/* 54 */ (byte) DW_OP_implicit_value, (byte) 0x05, 1, 2, 3, 4, 5, //
-			
-			/* 55 */ (byte) DW_OP_implicit_pointer, 1, 0, 0, 0, 2,
-			
-			/* 56 */ (byte) DW_OP_addrx, 0
-			
-			
-		});
-		// @formatter:on
-
-		assertEquals(4, evaluator.getDWARFCompilationUnit().getIntSize());
-		assertNotNull("Did not successfully instantiate DWARFExpression", expr);
-		assertEquals("Did not read all opcodes", 57, expr.getOpCount());
-
-		assertEquals(0x55, expr.getOp(1).getOperandValue(0));
-		assertEquals(0xfe, expr.getOp(2).getOperandValue(0));
-
-		assertEquals(0x55, expr.getOp(3).getOperandValue(0));
-		assertEquals(-2, expr.getOp(4).getOperandValue(0));
-
-		assertEquals(0x5555, expr.getOp(5).getOperandValue(0));
-		assertEquals(0xf0f0, expr.getOp(6).getOperandValue(0));
-
-		assertEquals(0x5555, expr.getOp(7).getOperandValue(0));
-		assertEquals(-3856, expr.getOp(8).getOperandValue(0));
-
-		assertEquals(0x55555555, expr.getOp(9).getOperandValue(0));
-		assertEquals(0xf0f0f0f0L, expr.getOp(10).getOperandValue(0));
-
-		assertEquals(0x55555555, expr.getOp(11).getOperandValue(0));
-		assertEquals(-252645136, expr.getOp(12).getOperandValue(0));
-
-		assertEquals(0x5555555555555555L, expr.getOp(13).getOperandValue(0));
-		assertEquals(0xf0f0f0f0f0f0f0f0L, expr.getOp(14).getOperandValue(0));
-
-		assertEquals(0x5555555555555555L, expr.getOp(15).getOperandValue(0));
-		assertEquals(0xf0f0f0f0f0f0f0f0L, expr.getOp(16).getOperandValue(0));
-
-		assertEquals(0x55, expr.getOp(17).getOperandValue(0));
-		assertEquals(128, expr.getOp(18).getOperandValue(0));
-		assertEquals(16256, expr.getOp(19).getOperandValue(0));
-
-		assertEquals(0x33, expr.getOp(20).getOperandValue(0));
-		assertEquals(128, expr.getOp(21).getOperandValue(0));
-		assertEquals(-128, expr.getOp(22).getOperandValue(0));
-
-		assertEquals(5, expr.getOp(54).getOperandValue(0));
-
-		assertEquals(1, expr.getOp(55).getOperandValue(0));
-		assertEquals(2, expr.getOp(55).getOperandValue(1));
 	}
 
 	@Test
@@ -229,8 +82,8 @@ public class DWARFExpressionEvaluatorTest extends DWARFTestBase {
 		}
 		for (int i = 0; i < count; i++) {
 			long expected = (count - i - 1) * 3;
-			evaluator.evaluate(new byte[] { DW_OP_pick, (byte) i });
-			long result = evaluator.pop();
+			evaluator.evaluate(instr(DW_OP_pick, i));
+			long result = evaluator.popLong();
 			assertEquals(expected, result);
 		}
 
@@ -244,7 +97,7 @@ public class DWARFExpressionEvaluatorTest extends DWARFTestBase {
 		}
 
 		try {
-			evaluator.evaluate(new byte[] { DW_OP_pick, (byte) (count + 1) });
+			evaluator.evaluate(instr(DW_OP_pick, (byte) (count + 1)));
 			fail("Should not get here");
 		}
 		catch (DWARFExpressionException e) {
@@ -256,13 +109,13 @@ public class DWARFExpressionEvaluatorTest extends DWARFTestBase {
 	public void test_DW_OP_over() throws DWARFExpressionException {
 		evaluator.push(10);
 		evaluator.push(20);
-		evaluator.evaluate(new byte[] { DW_OP_over });
-		assertEquals(10, evaluator.pop());
+		evaluator.evaluate(instr(DW_OP_over));
+		assertEquals(10, evaluator.popLong());
 	}
 
 	@Test
 	public void test_DW_OP_over_OOB() throws DWARFExpressionException {
-		DWARFExpression expr = evaluator.readExpr(new byte[] { DW_OP_over });
+		DWARFExpression expr = expr(instr(DW_OP_over));
 
 		try {
 			evaluator.evaluate(expr);
@@ -284,49 +137,37 @@ public class DWARFExpressionEvaluatorTest extends DWARFTestBase {
 
 	@Test
 	public void test_DW_OP_deref() throws DWARFExpressionException {
-		DWARFExpression expr =
-			evaluator.readExpr(new byte[] { (byte) DW_OP_fbreg, 0x48, DW_OP_deref });
 
-		evaluator.setFrameBase(0);
-		evaluator.evaluate(expr);
-		assertTrue(evaluator.isDeref());
+		try {
+			evaluator.setFrameBaseStackLocation(0);
+			evaluator.evaluate(expr(instr(DW_OP_fbreg, 0x48), instr(DW_OP_deref)));
+			fail();
+		}
+		catch (DWARFExpressionUnsupportedOpException e) {
+			assertEquals(DW_OP_deref, e.getInstruction().getOpCode());
+		}
 	}
 
-	/**
-	 * Test to ensure that non-terminal DW_OP_deref opcodes trigger an exception.
-	 * @throws IOException
-	 */
 	@Test
 	public void test_DW_OP_deref_nonterm() throws DWARFExpressionException {
-		DWARFExpression expr =
-			evaluator.readExpr(new byte[] { (byte) DW_OP_fbreg, 0x48, DW_OP_deref, DW_OP_dup });
-
+		// Test to ensure that non-terminal DW_OP_deref opcodes trigger an exception.
 		try {
-			evaluator.setFrameBase(0);
-			evaluator.evaluate(expr);
+			evaluator.setFrameBaseStackLocation(0);
+			evaluator
+					.evaluate(expr(instr(DW_OP_fbreg, 0x48), instr(DW_OP_deref), instr(DW_OP_dup)));
 			fail("Should not get here");
 		}
-		catch (DWARFExpressionException dee) {
-			// good
+		catch (DWARFExpressionUnsupportedOpException e) {
+			assertEquals(DW_OP_deref, e.getInstruction().getOpCode());
 		}
 	}
 
-	/**
-	 * Test to ensure that non-terminal DW_OP_reg[?] opcodes trigger an exception
-	 * when evaluating.
-	 *
-	 * @throws IOException
-	 * @throws DWARFExpressionException
-	 */
 	@Test
-	public void test_DW_OP_regx_nonterm() throws IOException, DWARFExpressionException {
-
-		DWARFExpression expr1 = evaluator.readExpr(new byte[] { (byte) DW_OP_reg0, DW_OP_dup });
-		DWARFExpression expr2 =
-			evaluator.readExpr(new byte[] { (byte) DW_OP_regx, (byte) 0x01, DW_OP_dup });
-
+	public void test_DW_OP_regx_nonterm() {
+		// Test to ensure that non-terminal DW_OP_reg[?] opcodes trigger an exception
+		// when evaluating.
 		try {
-			evaluator.evaluate(expr1);
+			evaluator.evaluate(expr(instr(DW_OP_reg0), instr(DW_OP_neg)));
 			fail("Should not get here");
 		}
 		catch (DWARFExpressionException dee) {
@@ -334,7 +175,7 @@ public class DWARFExpressionEvaluatorTest extends DWARFTestBase {
 		}
 
 		try {
-			evaluator.evaluate(expr2);
+			evaluator.evaluate(expr(instr(DW_OP_regx, 0x01), instr(DW_OP_neg)));
 			fail("Should not get here");
 		}
 		catch (DWARFExpressionException dee) {
@@ -342,19 +183,29 @@ public class DWARFExpressionEvaluatorTest extends DWARFTestBase {
 		}
 	}
 
-	/**
-	 * Test to ensure that endless loops or excessive runtime are prevented by
-	 * {@link DWARFExpressionEvaluator#setMaxStepCount(int) maxStepCount}
-	 * 
-	 * @throws IOException
-	 */
+	@Test
+	public void test_DW_OP_regx_callback() throws DWARFExpressionException {
+		evaluator.setValReader(vn -> new Scalar(64, 0x10000));
+		evaluator.evaluate(expr(instr(DW_OP_reg0), instr(DW_OP_neg)));
+		long result = evaluator.popLong();
+		assertEquals(-0x10000, result);
+	}
+
+	@Test
+	public void test_DW_OP_breg_callback() throws DWARFExpressionException {
+		evaluator.setValReader(vn -> new Scalar(64, 0x10000));
+		evaluator.evaluate(expr(instr(DW_OP_breg0, sleb128(-100)), instr(DW_OP_neg)));
+		long result = evaluator.popLong();
+		assertEquals(-(0x10000 - 100), result);
+	}
+
 	@Test(timeout = 10000)
-	public void testExcessiveExprLength() throws DWARFExpressionException {
-		// Endless loop: nop, skip -1.
-		DWARFExpression expr = evaluator.readExpr(
-			new byte[] { (byte) DW_OP_nop, (byte) DW_OP_skip, (byte) 0xff, (byte) 0xff, });
+	public void testExcessiveExprLength() {
+		// Test to ensure that endless loops or excessive runtime are prevented by
+		// DWARFExpressionEvaluator.setMaxStepCount(int) maxStepCount
 		try {
-			evaluator.evaluate(expr);
+			// Endless loop: nop, skip -1.
+			evaluator.evaluate(expr(instr(DW_OP_nop), instr(DW_OP_skip, 0xff, 0xff)));
 			fail(
 				"DWARFExpressionEvaluator should have thrown an exception because of the length of the expression, " +
 					"but you are probably not reading this message because junit can't get here because of the endless loop in the expr.");
@@ -362,21 +213,12 @@ public class DWARFExpressionEvaluatorTest extends DWARFTestBase {
 		catch (DWARFExpressionException dee) {
 			// good
 		}
-
 	}
 
-	/**
-	 * Test to ensure that endless loops are ended when the thread is interrupted.
-	 * 
-	 * @throws IOException
-	 */
 	@Test(timeout = 10000)
-	public void testThreadIntr() throws DWARFExpressionException {
-		// Endless loop: nop, skip -1.
-		DWARFExpression expr = evaluator.readExpr(
-			new byte[] { (byte) DW_OP_nop, (byte) DW_OP_skip, (byte) 0xff, (byte) 0xff, });
-
-		final Thread junitThread = Thread.currentThread();
+	public void testThreadIntr() {
+		// Test to ensure that endless loops are ended when the thread is interrupted.
+		Thread junitThread = Thread.currentThread();
 		Thread intrThread = new Thread(() -> {
 			try {
 				Thread.sleep(500);
@@ -390,7 +232,10 @@ public class DWARFExpressionEvaluatorTest extends DWARFTestBase {
 
 		try {
 			evaluator.setMaxStepCount(Integer.MAX_VALUE);
-			evaluator.evaluate(expr);
+
+			// Endless loop: nop, skip -1.
+			evaluator.evaluate(expr(instr(DW_OP_nop), instr(DW_OP_skip, 0xff, 0xff)));
+
 			fail(
 				"DWARFExpressionEvaluator should have thrown an exception because it recieved an interrupt, " +
 					"but you are probably not reading this message because junit can't get here because of the endless loop in the expr.");
@@ -401,27 +246,10 @@ public class DWARFExpressionEvaluatorTest extends DWARFTestBase {
 	}
 
 	@Test
-	public void testBadExpr() {
-		try {
-			DWARFExpression expr =
-				evaluator.readExpr(new byte[] { DW_OP_addr, 1, 2, 3, 4, 5, 6, 7, 8, DW_OP_const1u,
-					(byte) 0x55, DW_OP_const1u, (byte) 0xfe, DW_OP_addr, 1, 2 /* truncated */ });
-			fail(
-				"readExpr should have thrown an exception because the expr's final op was truncated: " +
-					expr.toString());
-		}
-		catch (DWARFExpressionException dee) {
-			// Should have been able to read 3 of the operations before failing
-			Assert.assertEquals(dee.getExpression().getOpCount(), 3);
-		}
-	}
-
-	@Test
-	public void testAddrx() throws DWARFExpressionException {
+	public void testAddrx() {
 		// test that OP_addrx fails with invalid index.  Needs real test
-		DWARFExpression expr = evaluator.readExpr(new byte[] { (byte) DW_OP_addrx, 0 });
 		try {
-			evaluator.evaluate(expr);
+			evaluator.evaluate(expr(instr(DW_OP_addrx, 0)));
 			fail();
 		}
 		catch (DWARFExpressionException dee) {
@@ -430,11 +258,10 @@ public class DWARFExpressionEvaluatorTest extends DWARFTestBase {
 	}
 
 	@Test
-	public void testConstx() throws DWARFExpressionException {
+	public void testConstx() {
 		// test that OP_constx fails with invalid index.  Needs real test
-		DWARFExpression expr = evaluator.readExpr(new byte[] { (byte) DW_OP_constx, 0 });
 		try {
-			evaluator.evaluate(expr);
+			evaluator.evaluate(expr(instr(DW_OP_constx, 0)));
 			fail();
 		}
 		catch (DWARFExpressionException dee) {

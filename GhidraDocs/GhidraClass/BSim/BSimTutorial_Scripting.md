@@ -4,7 +4,7 @@ Finally, we briefly mention a few other topics related to BSim.
 
 ## Scripting BSim
 
-There are are number of example scripts in the ``BSim`` script category, which demonstrate how to interact with BSim programmatically.
+There are a number of example scripts in the ``BSim`` script category, which demonstrate how to interact with BSim programmatically.
 
 ![script manager](images/script_manager.png)
 

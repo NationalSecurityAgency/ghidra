@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 package help.screenshot;
+
+import java.awt.Dialog;
+import java.io.IOException;
 
 import javax.swing.JComboBox;
 
@@ -25,6 +28,10 @@ import ghidra.app.util.exporter.Exporter;
 import ghidra.framework.model.*;
 import ghidra.framework.preferences.Preferences;
 import ghidra.program.model.listing.Program;
+import ghidra.util.Swing;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskMonitor;
 
 public class ExporterPluginScreenShots extends GhidraScreenShotGenerator {
 
@@ -35,10 +42,15 @@ public class ExporterPluginScreenShots extends GhidraScreenShotGenerator {
 		Preferences.setProperty(Preferences.LAST_EXPORT_DIRECTORY, "/path");
 
 		DomainFile df = createDomainFile();
-		ExporterDialog dialog = new ExporterDialog(tool, df);
-		runSwing(() -> tool.showDialog(dialog), false);
+
+		runSwing(() -> ExporterDialog.show(tool, df), false);
+
+		Dialog dialog = waitForJDialog("Export Program_A");
+
 		waitForSwing();
 		captureDialog(dialog);
+
+		Swing.runNow(() -> dialog.dispose());
 	}
 
 	@Test
@@ -102,6 +114,20 @@ public class ExporterPluginScreenShots extends GhidraScreenShotGenerator {
 			public Class<? extends DomainObject> getDomainObjectClass() {
 				return Program.class;
 			}
+
+			@Override
+			public DomainObject getImmutableDomainObject(Object consumer, int version,
+					TaskMonitor monitor) throws VersionException, IOException, CancelledException {
+				try {
+					return createDefaultProgram(getName(),
+						getSLEIGH_8051_LANGUAGE().getLanguageID().toString(), consumer);
+				}
+				catch (Exception e) {
+					failWithException("Unexpected exception", e);
+					return null;
+				}
+			}
+
 		};
 		return df;
 	}

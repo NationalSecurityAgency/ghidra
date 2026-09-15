@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,21 +15,16 @@
  */
 package ghidra.app.util.bin.format.pe;
 
-import java.io.IOException;
-import java.io.RandomAccessFile;
-
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.Writeable;
 import ghidra.app.util.bin.format.pe.rich.RichHeaderRecord;
 import ghidra.program.model.data.DataType;
-import ghidra.util.DataConverter;
 
 /**
  * The "Rich" header contains encoded metadata about the tool chain used to generate the binary.
  * This class decodes and writes the Rich header (if it exists).
  */
-public class RichHeader implements StructConverter, Writeable {
+public class RichHeader implements StructConverter {
 
 	public final static int IMAGE_RICH_SIGNATURE = 0x68636952; // Rich
 	public final static int IMAGE_DANS_SIGNATURE = 0x536E6144; // DanS
@@ -105,25 +100,5 @@ public class RichHeader implements StructConverter, Writeable {
 			return null;
 		}
 		return table.toDataType();
-	}
-
-	@Override
-	public void write(RandomAccessFile raf, DataConverter dc) throws IOException {
-
-		if (table != null) {
-			raf.write(dc.getBytes(IMAGE_DANS_SIGNATURE ^ table.getMask()));
-
-			raf.write(dc.getBytes(table.getMask())); // 0 ^ mask
-			raf.write(dc.getBytes(table.getMask())); // 0 ^ mask
-			raf.write(dc.getBytes(table.getMask())); // 0 ^ mask
-
-			for (RichHeaderRecord rec : table.getRecords()) {
-				raf.write(dc.getBytes(rec.getCompId().getValue() ^ table.getMask()));
-				raf.write(dc.getBytes(rec.getObjectCount() ^ table.getMask()));
-			}
-
-			raf.write(dc.getBytes(IMAGE_RICH_SIGNATURE));
-			raf.write(dc.getBytes(table.getMask()));
-		}
 	}
 }

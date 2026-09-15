@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,10 +35,21 @@ public class LanguageNotFoundException extends IOException {
 
 	/**
 	 * Language not found
-	 * @param languageID
+	 * 
+	 * @param languageID {@link LanguageID}
 	 */
 	public LanguageNotFoundException(LanguageID languageID) {
-		super("Language not found for '" + languageID + "'");
+		this(languageID, (Throwable) null);
+	}
+
+	/**
+	 * Language not found because of an exception
+	 * 
+	 * @param languageID {@link LanguageID}
+	 * @param cause {@link Throwable} that caused the language to not be found
+	 */
+	public LanguageNotFoundException(LanguageID languageID, Throwable cause) {
+		super("Language not found for '" + languageID + "'", cause);
 	}
 
 	public LanguageNotFoundException(String message) {

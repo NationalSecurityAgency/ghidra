@@ -18,7 +18,7 @@ package ghidra.app.plugin.core.debug.client.tracermi;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 
-import ghidra.trace.model.target.iface.TraceObjectMethod.ParameterDescription;
+import ghidra.trace.model.target.iface.TraceMethod.ParameterDescription;
 import ghidra.trace.model.target.schema.*;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 

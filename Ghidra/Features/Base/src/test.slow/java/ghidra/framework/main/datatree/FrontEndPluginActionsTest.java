@@ -732,11 +732,22 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 		performAction(selectAction, getTreeActionContext(), true);
 		waitForTree();
 
+		// NOTE: All nodes except the root node should be selected.
+		// Root is not selected to allow for most popup actions to
+		// be enabled and work as expected
+
 		BreadthFirstIterator it = new BreadthFirstIterator(rootNode);
+		int count = 0;
 		while (it.hasNext()) {
 			GTreeNode node = it.next();
-			assertTrue(tree.isPathSelected(node.getTreePath()));
+			if (tree.isPathSelected(node.getTreePath())) {
+				++count;
+			}
+			else {
+				assertTrue(node.isRoot());
+			}
 		}
+		assertEquals(7, count);
 	}
 
 	@Test
@@ -954,11 +965,12 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 		for (TreePath path : paths) {
 
 			GTreeNode node = (GTreeNode) path.getLastPathComponent();
-			if (node instanceof DomainFileNode) {
-				fileList.add(((DomainFileNode) node).getDomainFile());
+			if (node instanceof DomainFileNode fileNode) {
+				// NOTE: File may be a linked-folder.  Treatment as folder or file depends on action
+				fileList.add(fileNode.getDomainFile());
 			}
-			else if (node instanceof DomainFolderNode) {
-				folderList.add(((DomainFolderNode) node).getDomainFolder());
+			else if (node instanceof DomainFolderNode folderNode) {
+				folderList.add(folderNode.getDomainFolder());
 			}
 		}
 

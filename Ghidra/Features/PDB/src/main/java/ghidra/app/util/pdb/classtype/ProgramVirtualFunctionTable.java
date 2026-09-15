@@ -16,10 +16,13 @@
 package ghidra.app.util.pdb.classtype;
 
 import java.util.List;
+import java.util.TreeMap;
 
 import ghidra.app.util.SymbolPath;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.data.Pointer;
+import ghidra.program.model.gclass.ClassID;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
@@ -54,6 +57,7 @@ public class ProgramVirtualFunctionTable extends VirtualFunctionTable {
 		this.address = address;
 		this.defaultEntrySize = defaultEntrySize;
 		this.mangledName = mangledName;
+		entriesByTableIndex = new TreeMap<>();
 	}
 
 	/**
@@ -70,6 +74,13 @@ public class ProgramVirtualFunctionTable extends VirtualFunctionTable {
 	 */
 	public String getMangledName() {
 		return mangledName;
+	}
+
+	@Override
+	protected VirtualFunctionTableEntry getNewEntry(SymbolPath originalMethodPath,
+			SymbolPath overrideMethodPath, Pointer functionPointer) {
+		return new VirtualFunctionTableEntry(originalMethodPath, overrideMethodPath,
+			functionPointer);
 	}
 
 	@Override
@@ -91,11 +102,19 @@ public class ProgramVirtualFunctionTable extends VirtualFunctionTable {
 				"MemoryAccessException while trying to parse virtual function table entry at address: " +
 					entryAddress);
 		}
-		//throw new UnsupportedOperationException();
 	}
 
-	@Override
-	public SymbolPath getPath(int index) throws PdbException {
-		throw new UnsupportedOperationException();
+	private VirtualFunctionTableEntry entry(int tableIndex) {
+		return (VirtualFunctionTableEntry) entriesByTableIndex.get(tableIndex);
 	}
+
+	private VirtualFunctionTableEntry existing(int tableIndex) throws PdbException {
+		VirtualFunctionTableEntry entry = entry(tableIndex);
+		if (entry == null) {
+			throw new PdbException(
+				"No entry in Virtual Function Table for table offset: " + tableIndex);
+		}
+		return entry;
+	}
+
 }

@@ -239,6 +239,24 @@ public class PathPattern implements PathFilter {
 		return false;
 	}
 
+	/**
+	 * Sanitize the given key.
+	 * 
+	 * <p>
+	 * Because brackets {@code []} indicate an index in a path, they cannot themselves be used in an
+	 * index. The first closing bracket seen is taken to end the index. We could support escaping,
+	 * e.g., by "{@code \[}," but that seems a bit onerous for what little it affords. We also
+	 * should not endeavor to support things like "{@code Memory[something[with][brackets]]},"
+	 * because we'd still have an issue if the user's brackets are not balanced. Instead, we'll just
+	 * replace the square brackets with curley braces, unless/until that turns out to be a Bad Idea.
+	 * 
+	 * @param key the key to sanitize
+	 * @return the sanitized key
+	 */
+	public static String sanitizeKey(String key) {
+		return key.replace('[', '{').replace(']', '}');
+	}
+
 	@Override
 	public PathPattern applyKeys(Align align, List<String> keys) {
 		String[] result = new String[pattern.size()];
@@ -249,7 +267,7 @@ public class PathPattern implements PathFilter {
 			int i = pit.nextIndex();
 			String pat = pit.next();
 			if (kit.hasNext() && isWildcard(pat)) {
-				String index = kit.next();
+				String index = sanitizeKey(kit.next());
 				if (KeyPath.isIndex(pat)) {
 					result[i] = KeyPath.makeKey(index);
 				}

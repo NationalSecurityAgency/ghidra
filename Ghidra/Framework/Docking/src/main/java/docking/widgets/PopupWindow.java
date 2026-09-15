@@ -38,8 +38,8 @@ import util.CollectionUtils;
  * the window will be closed. 
  */
 public class PopupWindow {
-	private static final int X_PADDING = 25;
-	private static final int Y_PADDING = 25;
+	private static final int X_PADDING = 15;
+	private static final int Y_PADDING = 15;
 	private static final List<WeakReference<PopupWindow>> VISIBLE_POPUPS = new ArrayList<>();
 
 	public static void hideAllWindows() {
@@ -370,9 +370,7 @@ public class PopupWindow {
 			if (CollectionUtils.isAllNull(location, keepVisibleArea)) {
 				throw new NullPointerException("Both location and keepVisibleArea cannot be null");
 			}
-			if (keepVisibleArea == null) {
-				keepVisibleArea = new Rectangle(location, new Dimension(0, 0));
-			}
+
 			this.location = location;
 			this.source = source;
 			this.screenKeepVisibleArea = createScreenKeepVisibleArea(location, keepVisibleArea);

@@ -452,6 +452,28 @@ public class BulkSignatures implements AutoCloseable {
 	}
 
 	/**
+	 * Drops the current BSim database.
+	 * 
+	 * @throws IOException if there's an error establishing the database connection
+	 */
+	public void dropDatabase() throws IOException {
+		establishQueryServerConnection(false); // Set up client configuration
+		querydb.close(); // Database can't be in use when we try to drop it
+		DropDatabase command = new DropDatabase();
+		command.databaseName = bsimServerInfo.getDBName();
+		ResponseDropDatabase response = command.execute(querydb);
+		if (response == null) {
+			throw new IOException("Unable to drop database: " + querydb.getLastError().message);
+		}
+		if (response.dropSuccessful) {
+			Msg.info(this, "Successfully dropped database \"" + command.databaseName + "\"");
+		}
+		else {
+			Msg.error(this, "Unable to drop database: " + response.errorMessage);
+		}
+	}
+
+	/**
 	 * Adds function signatures from the specified project to the BSim database
 	 * @param ghidraURL ghidra repository from which to pull files for signature generation
 	 * @param sigsLocation the location where signature files will be stored
@@ -756,6 +778,58 @@ public class BulkSignatures implements AutoCloseable {
 		Msg.info(this, "   Database:     " + info.databasename);
 		Msg.info(this, "   Owner:        " + info.owner);
 		Msg.info(this, "   Description:  " + info.description);
+	}
+
+	/**
+	 * Prints the metadata.
+	 *
+	 * @throws IOException if there's an error establishing the database connection
+	 */
+	public void printMetadata() throws IOException {
+		DatabaseInformation info = establishQueryServerConnection(false);
+		Msg.info(this, "BSim metadata: ");
+		Msg.info(this, "   Database:     " + info.databasename);
+		Msg.info(this, "   Owner:        " + info.owner);
+		Msg.info(this, "   Description:  " + info.description);
+	}
+
+	/**
+	 * Connect to the BSim database identified by this instance's server info and print the
+	 * database information which was originally specified at creation time (see
+	 * {@code bsim createdatabase}).  This is intended for use by command-line clients listing
+	 * BSim databases.
+	 *
+	 * @throws IOException if there's an error establishing the database connection or the
+	 * referenced database does not appear to be a BSim database
+	 */
+	public void printDatabaseInfo() throws IOException {
+		DatabaseInformation info = establishQueryServerConnection(false);
+		Msg.info(this, formatDatabaseInfo(bsimServerInfo, info));
+	}
+
+	/**
+	 * Format the creation-time details of a BSim database for display.
+	 *
+	 * @param serverInfo the BSim server info identifying the database
+	 * @param info the database information
+	 * @return a formatted multi-line description
+	 */
+	private String formatDatabaseInfo(BSimServerInfo serverInfo, DatabaseInformation info) {
+		// TODO: Verify / consolidate with printMetadata above
+		StringBuilder buf = new StringBuilder();
+		buf.append("BSim Database: ");
+		buf.append(serverInfo.getShortDBName());
+		buf.append("\n");
+		buf.append(" Name:            ");
+		buf.append(info.databasename);
+		buf.append("\n");
+		buf.append(" Owner:           ");
+		buf.append(info.owner);
+		buf.append("\n");
+		buf.append(" Description:     ");
+		buf.append(info.description);
+		buf.append("\n");
+		return buf.toString();
 	}
 
 	/**

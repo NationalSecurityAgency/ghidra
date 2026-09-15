@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,15 +15,17 @@
  */
 package ghidra.app.util.demangler;
 
+import generic.json.Json;
+
 /**
  * A simple class to contain the various settings for demangling
  */
 public class DemanglerOptions {
 
-	private boolean applyCallingConvention = true;
-	private boolean applySignature = true;
-	private boolean doDisassembly = true;
-	private boolean demangleOnlyKnownPatterns = true;
+	protected boolean applyCallingConvention = true;
+	protected boolean applySignature = true;
+	protected boolean doDisassembly = true;
+	protected boolean demangleOnlyKnownPatterns = true;
 
 	public DemanglerOptions() {
 		// use default values
@@ -118,12 +120,6 @@ public class DemanglerOptions {
 
 	@Override
 	public String toString() {
-		//@formatter:off
-		return "{\n" +
-			"\tdoDisassembly: " + doDisassembly + ",\n" +
-			"\tapplySignature: " + applySignature + ",\n" +
-			"\tdemangleOnlyKnownPatterns: " + demangleOnlyKnownPatterns + ",\n" +
-		"}";
-		//@formatter:on
+		return Json.toString(this);
 	}
 }

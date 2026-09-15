@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -93,7 +93,7 @@ public class BlockGraphTask extends Task {
 		AttributedGraph graph = createGraph(graphTitle);
 		monitor.setMessage("Generating Graph...");
 		try {
-			GraphDisplay display = graphProvider.getGraphDisplay(reuseGraph, monitor);
+			GraphDisplay display = graphProvider.getGraphDisplay(reuseGraph, appendGraph, monitor);
 			GraphDisplayOptions graphOptions = new ProgramGraphDisplayOptions(graphType, tool);
 			if (showCode) { // arrows need to be bigger as this generates larger vertices
 				graphOptions.setArrowLength(30);

@@ -228,13 +228,28 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// Now create a selection to add an instruction and call 'add'
 		createSelection("0x004065e6", "0x004065e6");
-		pressButtonByName(component, "add");
+		pressButtonByName(component, "append");
 		waitForTasks();
 
 		// grab the rebuilt table
 		instructionTable = dialog.getTablePanel().getTable();
 		assertEquals(9, instructionTable.getRowCount());
 		assertInstructionValue(8, "PUSH EAX");
+	}
+
+	@Test
+	public void testDeleteAll() throws Exception {
+
+		// sanity check
+		assertEquals(8, instructionTable.getRowCount());
+		assertInstructionValue(0, "INC EDI");
+		assertInstructionValue(7, "MOV dword ptr [EBP + -0x4] EAX");
+
+		pressButtonByName(component, "delete all button");
+		waitForTasks();
+
+		instructionTable = dialog.getTablePanel().getTable();
+		assertEquals(0, instructionTable.getRowCount());
 	}
 
 	/**
@@ -695,6 +710,7 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testManualInsert_Invalid() {
 
+		setErrorsExpected(true);
 		loadBytes("0000 abcd efgh 01011");
 
 		instructionTable = dialog.getTablePanel().getTable();
@@ -706,6 +722,7 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		Window errorDialog = waitForWindowByTitleContaining("Input Error");
 		assertNotNull(errorDialog);
 		runSwing(() -> errorDialog.setVisible(false));
+		setErrorsExpected(false);
 	}
 
 	/**

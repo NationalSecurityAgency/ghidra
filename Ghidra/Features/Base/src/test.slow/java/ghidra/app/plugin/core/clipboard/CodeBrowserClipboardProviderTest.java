@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.clipboard;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsInstanceOf.*;
 import static org.junit.Assert.*;
 

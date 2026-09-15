@@ -16,6 +16,7 @@
 package ghidra.util.database.spatial;
 
 public interface BoundingShape<S extends BoundingShape<S>> extends BoundedShape<S> {
+
 	double getArea();
 
 	double getMargin();

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,10 +21,9 @@ import javax.swing.*;
 
 import org.junit.Test;
 
-import docking.widgets.combobox.GhidraComboBox;
-import ghidra.app.plugin.core.label.*;
-import ghidra.app.util.AddEditDialog;
-import ghidra.app.util.EditFieldNameDialog;
+import ghidra.app.plugin.core.label.LabelHistoryDialog;
+import ghidra.app.plugin.core.label.LabelHistoryInputDialog;
+import ghidra.app.util.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.symbol.LabelHistory;
 
@@ -77,19 +76,13 @@ public class LabelMgrPluginScreenShots extends GhidraScreenShotGenerator {
 	}
 
 	@Test
-	public void testSetLabel() {
-		LabelMgrPlugin plugin = getPlugin(tool, LabelMgrPlugin.class);
-		final OperandLabelDialog dialog = new OperandLabelDialog(plugin);
-		final GhidraComboBox combo = (GhidraComboBox) getInstanceField("myChoice", dialog);
-		runSwing(new Runnable() {
-			@Override
-			public void run() {
-				dialog.setTitle("Set Label at 004a671");
-				combo.setSelectedItem("LAB_0040a671");
-			}
+	public void testChooseNamespace() {
+		runSwingLater(() -> {
+			NamespaceChooserDialog dialog = new NamespaceChooserDialog();
+			dialog.getNamespace(program);
 		});
-		showDialogWithoutBlocking(tool, dialog);
-		captureDialog(350, 116);
+		waitForDialogComponent(NamespaceChooserDialog.class);
+		captureDialog();
 	}
 
 	@Test

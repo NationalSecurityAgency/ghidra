@@ -17,6 +17,7 @@ package ghidra.features.base.memsearch.format;
 
 import ghidra.features.base.memsearch.gui.SearchSettings;
 import ghidra.features.base.memsearch.matcher.ByteMatcher;
+import ghidra.features.base.memsearch.matcher.UserInputByteMatcher;
 
 /**
  * SearchFormats are responsible for parsing user input data into a {@link ByteMatcher} that
@@ -57,7 +58,7 @@ public abstract class SearchFormat {
 	 * @param settings the current search/parse settings
 	 * @return a ByteMatcher that can be used for searching bytes (or an error version of a matcher)
 	 */
-	public abstract ByteMatcher parse(String input, SearchSettings settings);
+	public abstract UserInputByteMatcher parse(String input, SearchSettings settings);
 
 	/**
 	 * Returns a tool tip describing this search format
@@ -152,7 +153,7 @@ public abstract class SearchFormat {
 	}
 
 	protected boolean isValidText(String text, SearchSettings settings) {
-		ByteMatcher byteMatcher = parse(text, settings);
+		UserInputByteMatcher byteMatcher = parse(text, settings);
 		return byteMatcher.isValidSearch();
 	}
 

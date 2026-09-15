@@ -16,6 +16,7 @@
 package ghidra.app.util.bin.format.dwarf;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -31,25 +32,29 @@ public class StringTable {
 	 * Creates a StringTable instance, if the supplied BinaryReader is non-null.
 	 * 
 	 * @param reader BinaryReader
+	 * @param charset {@link Charset} of strings in table
 	 * @return new instance, or null if reader is null
 	 */
-	public static StringTable of(BinaryReader reader) {
+	public static StringTable of(BinaryReader reader, Charset charset) {
 		if (reader == null) {
 			return null;
 		}
-		return new StringTable(reader);
+		return new StringTable(reader, charset);
 	}
 
 	protected BinaryReader reader;
 	protected WeakValueHashMap<Long, String> cache = new WeakValueHashMap<>();
+	private Charset charset;
 
 	/**
 	 * Creates a StringTable
 	 * 
 	 * @param reader {@link BinaryReader} .debug_str or .debug_line_str
+	 * @param charset {@link Charset} of strings in table
 	 */
-	public StringTable(BinaryReader reader) {
+	public StringTable(BinaryReader reader, Charset charset) {
 		this.reader = reader;
+		this.charset = charset;
 	}
 
 	/**
@@ -77,12 +82,12 @@ public class StringTable {
 	 */
 	public String getStringAtOffset(long offset) throws IOException {
 		if (!isValid(offset)) {
-			throw new IOException("Invalid offset requested " + offset);
+			throw new IOException("Invalid offset requested %d [0x%x]".formatted(offset, offset));
 		}
 
 		String s = cache.get(offset);
 		if (s == null) {
-			s = reader.readUtf8String(offset);
+			s = reader.readString(offset, charset, 1);
 			cache.put(offset, s);
 		}
 

@@ -19,7 +19,7 @@
 //script is more for diagnostic and demonstration purposes, since the application of unwind
 //information is already integrated into the Debugger.
 //@author
-//@category Stack
+//@category
 //@keybinding
 //@menupath
 //@toolbar

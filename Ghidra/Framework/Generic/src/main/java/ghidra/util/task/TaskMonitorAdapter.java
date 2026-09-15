@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,14 +36,6 @@ public class TaskMonitorAdapter implements TaskMonitor {
 	private boolean cancelEnabled = false;
 	private volatile boolean cancelled;
 
-	/**
-	 * Provides a static instance of <code>TaskMonitorAdapter</code>
-	 * which is a non-cancellable task monitor with no visual components.
-	 * @deprecated use {@link TaskMonitor#DUMMY} instead
-	 */
-	@Deprecated
-	public static final TaskMonitor DUMMY_MONITOR = TaskMonitor.DUMMY;
-
 	public TaskMonitorAdapter() {
 		// do nothing
 	}
@@ -55,14 +47,6 @@ public class TaskMonitorAdapter implements TaskMonitor {
 	@Override
 	public boolean isCancelled() {
 		return cancelled;
-	}
-
-	@Deprecated(since = "10.3")
-	@Override
-	public void checkCanceled() throws CancelledException {
-		if (cancelled) {
-			throw new CancelledException();
-		}
 	}
 
 	@Override
@@ -147,7 +131,7 @@ public class TaskMonitorAdapter implements TaskMonitor {
 	}
 
 	@Override
-	public void clearCanceled() {
+	public void clearCancelled() {
 		synchronized (this) {
 			if (!cancelled) {
 				return;

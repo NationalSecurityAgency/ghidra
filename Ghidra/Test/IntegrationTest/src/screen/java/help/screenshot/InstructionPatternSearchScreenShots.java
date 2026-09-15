@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,8 @@ import org.junit.Test;
 import docking.DialogComponentProvider;
 import docking.action.DockingActionIf;
 import generic.test.AbstractGuiTest;
+import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
+import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.instructionsearch.InstructionSearchPlugin;
 import ghidra.app.plugin.core.instructionsearch.ui.*;
 import ghidra.app.plugin.core.table.TableComponentProvider;
@@ -35,6 +37,7 @@ import ghidra.app.plugin.core.table.TableComponentProvider;
 public class InstructionPatternSearchScreenShots extends AbstractSearchScreenShots {
 
 	private InstructionSearchPlugin instructionSearchPlugin;
+	private CodeViewerProvider codeViewer;
 
 	@Override
 	@Before
@@ -44,6 +47,9 @@ public class InstructionPatternSearchScreenShots extends AbstractSearchScreenSho
 
 		instructionSearchPlugin = env.getPlugin(InstructionSearchPlugin.class);
 
+		CodeBrowserPlugin cbp = env.getPlugin(CodeBrowserPlugin.class);
+		codeViewer = cbp.getProvider();
+
 		env.showTool();
 	}
 
@@ -52,7 +58,7 @@ public class InstructionPatternSearchScreenShots extends AbstractSearchScreenSho
 
 		DockingActionIf openSearchDialogAction =
 			getAction(instructionSearchPlugin, "Search Instruction Patterns");
-		performAction(openSearchDialogAction, true);
+		performAction(openSearchDialogAction, codeViewer, true);
 
 		waitForSwing();
 
@@ -78,7 +84,7 @@ public class InstructionPatternSearchScreenShots extends AbstractSearchScreenSho
 
 		DockingActionIf openSearchDialogAction =
 			getAction(instructionSearchPlugin, "Search Instruction Patterns");
-		performAction(openSearchDialogAction, true);
+		performAction(openSearchDialogAction, codeViewer, true);
 		waitForSwing();
 
 		captureDialog(DialogComponentProvider.class, 900, 461);
@@ -96,7 +102,7 @@ public class InstructionPatternSearchScreenShots extends AbstractSearchScreenSho
 
 		DockingActionIf openSearchDialogAction =
 			getAction(instructionSearchPlugin, "Search Instruction Patterns");
-		performAction(openSearchDialogAction, true);
+		performAction(openSearchDialogAction, codeViewer, true);
 		waitForSwing();
 
 		Component instrTable =
@@ -117,7 +123,7 @@ public class InstructionPatternSearchScreenShots extends AbstractSearchScreenSho
 
 		DockingActionIf openSearchDialogAction =
 			getAction(instructionSearchPlugin, "Search Instruction Patterns");
-		performAction(openSearchDialogAction, true);
+		performAction(openSearchDialogAction, codeViewer, true);
 		waitForSwing();
 
 		Component previewTable =
@@ -137,7 +143,7 @@ public class InstructionPatternSearchScreenShots extends AbstractSearchScreenSho
 
 		DockingActionIf openSearchDialogAction =
 			getAction(instructionSearchPlugin, "Search Instruction Patterns");
-		performAction(openSearchDialogAction, true);
+		performAction(openSearchDialogAction, codeViewer, true);
 		waitForSwing();
 
 		Component controlPanel =
@@ -158,7 +164,7 @@ public class InstructionPatternSearchScreenShots extends AbstractSearchScreenSho
 
 		DockingActionIf openSearchDialogAction =
 			getAction(instructionSearchPlugin, "Search Instruction Patterns");
-		performAction(openSearchDialogAction, true);
+		performAction(openSearchDialogAction, codeViewer, true);
 		waitForSwing();
 
 		Component instructionTable =
@@ -180,7 +186,7 @@ public class InstructionPatternSearchScreenShots extends AbstractSearchScreenSho
 
 		DockingActionIf openSearchDialogAction =
 			getAction(instructionSearchPlugin, "Search Instruction Patterns");
-		performAction(openSearchDialogAction, true);
+		performAction(openSearchDialogAction, codeViewer, true);
 		waitForSwing();
 
 		Component previewTable =
@@ -205,7 +211,7 @@ public class InstructionPatternSearchScreenShots extends AbstractSearchScreenSho
 
 		DockingActionIf openSearchDialogAction =
 			getAction(instructionSearchPlugin, "Search Instruction Patterns");
-		performAction(openSearchDialogAction, true);
+		performAction(openSearchDialogAction, codeViewer, true);
 		waitForSwing();
 
 		DialogComponentProvider dialog = getDialog();

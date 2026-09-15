@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.pe.debug.DebugCodeViewConstants;
 import ghidra.framework.options.Options;
 import ghidra.program.model.data.*;
-import ghidra.util.Conv;
+import ghidra.util.NumericUtilities;
 
 /**
  * Older style pdb information, using a simple 32bit hash to link the pdb to its binary.
@@ -91,7 +91,8 @@ public class PdbInfoCodeView implements StructConverter, PdbInfo {
 	public void serializeToOptions(Options options) {
 		options.setString(PdbParserConstants.PDB_VERSION,
 			new String(magic, StandardCharsets.US_ASCII));
-		options.setString(PdbParserConstants.PDB_SIGNATURE, Conv.toHexString(sig));
+		options.setString(PdbParserConstants.PDB_SIGNATURE,
+			NumericUtilities.toPaddedHexString(sig));
 		options.setString(PdbParserConstants.PDB_AGE, Integer.toHexString(age));
 		options.setString(PdbParserConstants.PDB_FILE, pdbName);
 	}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,8 +57,8 @@ const uint4 DynamicHash::transtable[] = {
 
   0,				// CAST is skipped
   CPUI_INT_ADD,  CPUI_INT_ADD, 	// PTRADD and PTRSUB hash same as INT_ADD
-  CPUI_SEGMENTOP, CPUI_CPOOLREF, CPUI_NEW, CPUI_INSERT, CPUI_EXTRACT,
-  CPUI_POPCOUNT, CPUI_LZCOUNT
+  CPUI_SEGMENTOP, CPUI_CPOOLREF, CPUI_NEW, CPUI_INSERT, CPUI_ZPULL,
+  CPUI_POPCOUNT, CPUI_LZCOUNT, CPUI_SPULL
   
 };
 
@@ -499,7 +499,7 @@ void DynamicHash::uniqueHash(const PcodeOp *op,int4 slot,Funcdata *fd)
     addrresult = Address();	// Hash cannot be calculated
     return;
   }
-  gatherOpsAtAddress(oplist,fd,op->getAddr());
+  fd->listOps(oplist,op->getAddr());
   for(method=4;method<7;++method) {
     clear();
     calcHash(op,slot,method);
@@ -600,7 +600,7 @@ PcodeOp *DynamicHash::findOp(const Funcdata *fd,const Address &addr,uint8 h)
   clearTotalPosition(h);
   vector<PcodeOp *> oplist;
   vector<PcodeOp *> oplist2;
-  gatherOpsAtAddress(oplist,fd,addr);
+  fd->listOps(oplist, addr);
   for(uint4 i=0;i<oplist.size();++i) {
     PcodeOp *tmpop = oplist[i];
     if (slot >= tmpop->numInput()) continue;
@@ -648,12 +648,11 @@ void DynamicHash::gatherFirstLevelVars(vector<Varnode *> &varlist,const Funcdata
   uint4 opcVal = getOpCodeFromHash(h);
   int4 slot = getSlotFromHash(h);
   bool isnotattached = getIsNotAttached(h);
-  PcodeOpTree::const_iterator iter = fd->beginOp(addr);
-  PcodeOpTree::const_iterator enditer = fd->endOp(addr);
+  vector<PcodeOp *> opList;
+  fd->listOps(opList, addr);
 
-  while(iter!=enditer) {
-    PcodeOp *op = (*iter).second;
-    ++iter;
+  for(int4 i=0;i<opList.size();++i) {
+    PcodeOp *op = opList[i];
     if (op->isDead()) continue;
     if (transtable[op->code()] != opcVal) continue;
     if (slot <0) {
@@ -682,23 +681,6 @@ void DynamicHash::gatherFirstLevelVars(vector<Varnode *> &varlist,const Funcdata
     }
   }
   dedupVarnodes(varlist);
-}
-
-/// \brief Place all PcodeOps at the given address in the provided container
-///
-/// \param opList is the container to hold the PcodeOps
-/// \param fd is the function
-/// \param addr is the given address
-void DynamicHash::gatherOpsAtAddress(vector<PcodeOp *> &opList,const Funcdata *fd,const Address &addr)
-
-{
-  PcodeOpTree::const_iterator iter,enditer;
-  enditer = fd->endOp(addr);
-  for(iter = fd->beginOp(addr); iter != enditer; ++iter) {
-    PcodeOp *op = (*iter).second;
-    if (op->isDead()) continue;
-    opList.push_back(op);
-  }
 }
 
 /// The hash encodes the input \e slot the root Varnode was attached to in its PcodeOp.

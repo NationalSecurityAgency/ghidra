@@ -271,7 +271,7 @@ macro setHCSphysPage(addr) {
 	                       (zext(isPpage) *       (0x400000 | ((zext(PPAGE) << 14 ) ^ 0x8000))) +
 	                       (zext(isPpage_FF) * (0x400000 | ((0x3FC000) ^ 0xC000))) ;
 }
-@elif defined(HCS12)  && SIZE=="3"
+@elif defined(HCS12) && SIZE=="3"
 macro setHCSphysPage(addr) {
 	local a3:3 = zext(addr);
 
@@ -1961,11 +1961,9 @@ with : XGATE=0 {
 }
 
 # branch never is a two-byte nop
-SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest; }
 
-:BRN SkipNextInstr                 is Prefix18=0 & op8=0x21 & SkipNextInstr
+:BRN rel8                 is Prefix18=0 & op8=0x21; rel8
 {
-	goto SkipNextInstr;
 }
 
 :BRSET opr8a_8, msk8, rel8    is Prefix18=0 & op8=0x4E; opr8a_8; msk8; rel8

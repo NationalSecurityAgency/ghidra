@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -68,11 +68,11 @@ public class CommentWindowPluginScreenShots extends GhidraScreenShotGenerator {
 
 		int id = prog.startTransaction("Test");
 		Listing listing = prog.getListing();
-		listing.setComment(addr(0x00401006), CodeUnit.EOL_COMMENT, "My EOL comment");
-		listing.setComment(addr(0x0040101b), CodeUnit.PRE_COMMENT, "My Pre comment");
-		listing.setComment(addr(0x0040101c), CodeUnit.POST_COMMENT, "My Post comment");
-		listing.setComment(addr(0x00401020), CodeUnit.PLATE_COMMENT, "My Plate comment");
-		listing.setComment(addr(0x0040100d), CodeUnit.REPEATABLE_COMMENT, "My Repeatable comment");
+		listing.setComment(addr(0x00401006), CommentType.EOL, "My EOL comment");
+		listing.setComment(addr(0x0040101b), CommentType.PRE, "My Pre comment");
+		listing.setComment(addr(0x0040101c), CommentType.POST, "My Post comment");
+		listing.setComment(addr(0x00401020), CommentType.PLATE, "My Plate comment");
+		listing.setComment(addr(0x0040100d), CommentType.REPEATABLE, "My Repeatable comment");
 		prog.endTransaction(id, true);
 		prog.flushEvents();
 		waitForSwing();

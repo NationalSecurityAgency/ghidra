@@ -33,7 +33,7 @@ public class EditComponentAction extends CompositeEditorTableAction {
 	private static String[] MENU_PATH = new String[] { ACTION_NAME };
 	private DataTypeManagerService dtmService;
 
-	public EditComponentAction(CompositeEditorProvider provider) {
+	public EditComponentAction(CompositeEditorProvider<?, ?> provider) {
 		super(provider, ACTION_NAME, GROUP_NAME, POPUP_PATH, MENU_PATH, null);
 		this.dtmService = provider.dtmService;
 		setDescription(DESCRIPTION);

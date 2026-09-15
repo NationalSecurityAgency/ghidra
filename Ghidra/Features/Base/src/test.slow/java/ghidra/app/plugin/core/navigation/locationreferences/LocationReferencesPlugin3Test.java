@@ -16,12 +16,17 @@
 package ghidra.app.plugin.core.navigation.locationreferences;
 
 import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.*;
 
 import java.util.*;
 
+import javax.swing.ListSelectionModel;
+
 import org.junit.Test;
 
+import docking.action.DockingActionIf;
+import docking.widgets.table.GTable;
 import ghidra.app.cmd.function.SetReturnDataTypeCmd;
 import ghidra.app.cmd.refs.RemoveReferenceCmd;
 import ghidra.app.plugin.core.clear.ClearCmd;
@@ -142,8 +147,8 @@ public class LocationReferencesPlugin3Test extends AbstractLocationReferencesTes
 
 		// 0100415a - sscanf
 		Address address = addr(0x0100415a);
-		int parameterColumn = 7;
-		goTo(address, "Function Signature", parameterColumn);
+		int returnTypeColumn = 7;
+		goTo(address, "Function Signature", returnTypeColumn);
 
 		search();
 
@@ -170,6 +175,33 @@ public class LocationReferencesPlugin3Test extends AbstractLocationReferencesTes
 		assertEquals("Removing a reference did not decrease the reference count.", referenceCount,
 			referenceAddresses.size());
 		verifyReferenceAddresses(address, referenceAddresses);
+	}
+
+	@Test
+	public void testDeleteReferencesFromTable() {
+
+		// 01002cf5 - ghidra
+		Address address = addr(0x01002cf5);
+		int functionNameColumn = 15;
+		goTo(address, "Function Signature", functionNameColumn);
+
+		search();
+
+		List<Address> referenceAddresses = getResultAddresses();
+		int referenceCount = referenceAddresses.size();
+
+		DockingActionIf deleteAction =
+			getAction(tool, locationReferencesPlugin.getName(), "Delete Reference");
+		LocationReferencesProvider provider = getResultsProvider();
+		assertFalse(isEnabled(deleteAction, provider));
+
+		selectRows(0);
+		assertTrue(isEnabled(deleteAction, provider));
+		performAction(deleteAction, provider, true);
+
+		referenceAddresses = getResultAddresses();
+		int updatedReferenceCount = referenceAddresses.size();
+		assertEquals(referenceCount - 1, updatedReferenceCount);
 	}
 
 	@Test
@@ -368,6 +400,19 @@ public class LocationReferencesPlugin3Test extends AbstractLocationReferencesTes
 //==================================================================================================
 // Private Methods
 //==================================================================================================
+
+	private void selectRows(int... rows) {
+	
+		LocationReferencesProvider provider = getResultsProvider();
+		runSwing(() -> {
+			GTable gTable = provider.getTable();
+			ListSelectionModel selectionModel = gTable.getSelectionModel();
+			for (int row : rows) {
+				selectionModel.addSelectionInterval(row, row);
+			}
+		});
+		waitForSwing();
+	}
 
 	private void createString_CallStructure(String addressString) throws Exception {
 		// String

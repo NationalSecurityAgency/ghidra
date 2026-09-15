@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,11 +14,6 @@
  * limitations under the License.
  */
 package ghidra.app.plugin.core.debug.gui.breakpoint;
-
-import static ghidra.trace.model.breakpoint.TraceBreakpointKind.*;
-
-import java.util.Collection;
-import java.util.Set;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -34,8 +29,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.util.MessageType;
 import ghidra.util.Swing;
 import ghidra.util.layout.PairLayout;
@@ -45,12 +39,12 @@ public class DebuggerPlaceBreakpointDialog extends DialogComponentProvider {
 	private Program program;
 	private Address address;
 	private long length;
-	private Set<TraceBreakpointKind> kinds;
+	private CommonSet kind;
 	private String name;
 
 	private JTextField fieldAddress;
 	private JTextField fieldLength;
-	private JComboBox<String> fieldKinds;
+	private JComboBox<CommonSet> fieldKind;
 	private JTextField fieldName;
 	private PluginTool tool;
 	private String statusText = null;
@@ -119,20 +113,15 @@ public class DebuggerPlaceBreakpointDialog extends DialogComponentProvider {
 		panel.add(labelLength);
 		panel.add(fieldLength);
 
-		JLabel labelKinds = new JLabel("Kinds");
-		labelKinds.getAccessibleContext().setAccessibleName("Kinds");
-		DefaultComboBoxModel<String> kindModel = new DefaultComboBoxModel<>();
-		// TODO: Let user select whatever combo?
-		kindModel.addElement(TraceBreakpointKindSet.encode(Set.of(SW_EXECUTE)));
-		kindModel.addElement(TraceBreakpointKindSet.encode(Set.of(HW_EXECUTE)));
-		kindModel.addElement(TraceBreakpointKindSet.encode(Set.of(READ)));
-		kindModel.addElement(TraceBreakpointKindSet.encode(Set.of(WRITE)));
-		kindModel.addElement(TraceBreakpointKindSet.encode(Set.of(READ, WRITE)));
-		fieldKinds = new JComboBox<String>(kindModel);
-		fieldKinds.setEditable(true);
-		fieldKinds.getAccessibleContext().setAccessibleName("Kinds");
-		panel.add(labelKinds);
-		panel.add(fieldKinds);
+		JLabel labelKind = new JLabel("Kind");
+		labelKind.getAccessibleContext().setAccessibleName("Kind");
+		DefaultComboBoxModel<CommonSet> kindModel = new DefaultComboBoxModel<>();
+		kindModel.addAll(CommonSet.VALUES);
+		fieldKind = new JComboBox<CommonSet>(kindModel);
+		fieldKind.setEditable(false);
+		fieldKind.getAccessibleContext().setAccessibleName("Kind");
+		panel.add(labelKind);
+		panel.add(fieldKind);
 
 		JLabel labelName = new JLabel("Name");
 		fieldName = new JTextField();
@@ -148,17 +137,17 @@ public class DebuggerPlaceBreakpointDialog extends DialogComponentProvider {
 	}
 
 	public void prompt(PluginTool tool, DebuggerLogicalBreakpointService service, String title,
-			ProgramLocation loc, long length, Collection<TraceBreakpointKind> kinds, String name) {
+			ProgramLocation loc, long length, CommonSet kind, String name) {
 		this.service = service;
 		this.program = loc.getProgram();
 		this.address = DebuggerLogicalBreakpointService.addressFromLocation(loc);
 		this.length = length;
-		this.kinds = Set.copyOf(kinds);
+		this.kind = kind;
 		this.name = name;
 
 		this.fieldAddress.setText(address.toString());
 		this.fieldLength.setText(Long.toUnsignedString(length));
-		this.fieldKinds.setSelectedItem(TraceBreakpointKindSet.encode(kinds));
+		this.fieldKind.setSelectedItem(kind);
 		this.fieldName.setText("");
 		this.tool = tool;
 
@@ -182,18 +171,11 @@ public class DebuggerPlaceBreakpointDialog extends DialogComponentProvider {
 			return;
 		}
 
-		try {
-			kinds = TraceBreakpointKindSet.decode((String) fieldKinds.getSelectedItem(), true);
-		}
-		catch (IllegalArgumentException e) {
-			setStatusText("Invalid kinds: " + e);
-			return;
-		}
-
+		kind = ((CommonSet) fieldKind.getSelectedItem());
 		name = fieldName.getText();
 
 		ProgramLocation loc = new ProgramLocation(program, address);
-		service.placeBreakpointAt(loc, length, kinds, name).exceptionally(ex -> {
+		service.placeBreakpointAt(loc, length, kind.kinds(), name).exceptionally(ex -> {
 			ex = AsyncUtils.unwrapThrowable(ex);
 			statusText = ex.getMessage(); // will be set when dialog is shown later
 			tool.showDialog(this);

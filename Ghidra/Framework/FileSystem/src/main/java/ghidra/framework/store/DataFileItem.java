@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,19 +23,19 @@ import java.io.OutputStream;
  * <code>DataFileItem</code> corresponds to a private serialized
  * data file within a FileSystem.  Methods are provided for opening
  * the underlying file as an input or output stream.
- * <br>
+ * <P>
  * NOTE: The use of DataFile is not encouraged and is not fully
  * supported.
  */
 public interface DataFileItem extends FolderItem {
-	
+
 	/**
 	 * Open the current version of this item for reading.
 	 * @return input stream
 	 * @throws FileNotFoundException
 	 */
 	InputStream getInputStream() throws FileNotFoundException;
-	
+
 	/**
 	 * Open a new version of this item for writing.
 	 * @return output stream.
@@ -50,5 +49,5 @@ public interface DataFileItem extends FolderItem {
 	 * @throws FileNotFoundException
 	 */
 	InputStream getInputStream(int version) throws FileNotFoundException;
-	
+
 }

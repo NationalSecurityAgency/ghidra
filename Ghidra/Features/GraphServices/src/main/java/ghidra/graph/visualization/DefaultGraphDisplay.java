@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -109,7 +109,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	 * Whether to ensure the focused vertex is visible, scrolling if necessary the visualization in
 	 * order to center the selected vertex or the center of the set of selected vertices
 	 */
-	private boolean ensureVertexIsVisible = false;
+	private boolean ensureVertexIsVisible = true;
 
 	/**
 	 * Allows selection of various {@link LayoutAlgorithm} ('arrangements')
@@ -314,21 +314,17 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		new ToggleActionBuilder("Scroll To Selection", ACTION_OWNER)
 				.toolBarIcon(Icons.NAVIGATE_ON_INCOMING_EVENT_ICON)
 				.description("Ensure that the 'focused' vertex is visible")
-				.selected(true)
-				.onAction(context -> ensureVertexIsVisible =
-					((AbstractButton) context.getSourceObject()).isSelected())
+				.selected(ensureVertexIsVisible)
+				.onAction(context -> ensureVertexIsVisible = !ensureVertexIsVisible)
 				.buildAndInstallLocal(componentProvider);
-
-		this.ensureVertexIsVisible = true;  // since we initialized action to selected
 
 		// create a toggle for enabling 'free-form' selection: selection is inside of a traced
 		// shape instead of a rectangle
 		new ToggleActionBuilder("Free-Form Selection", ACTION_OWNER)
 				.toolBarIcon(DefaultDisplayGraphIcons.LASSO_ICON)
 				.description("Trace Free-Form Shape to select multiple vertices (CTRL-click-drag)")
-				.selected(false)
-				.onAction(context -> freeFormSelection =
-					((AbstractButton) context.getSourceObject()).isSelected())
+				.selected(freeFormSelection)
+				.onAction(context -> freeFormSelection = !freeFormSelection)
 				.buildAndInstallLocal(componentProvider);
 
 		// create an icon button to display the satellite view
@@ -349,8 +345,10 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		ToggleDockingAction lensToggle = new ToggleActionBuilder("View Magnifier", ACTION_OWNER)
 				.description("Show View Magnifier")
 				.toolBarIcon(DefaultDisplayGraphIcons.VIEW_MAGNIFIER_ICON)
-				.onAction(context -> magnifyViewSupport
-						.activate(((AbstractButton) context.getSourceObject()).isSelected()))
+				.onAction(context -> {
+					boolean isActive = magnifyViewSupport.isActive();
+					magnifyViewSupport.activate(!isActive);
+				})
 				.build();
 		magnifyViewSupport.addItemListener(
 			itemEvent -> lensToggle.setSelected(itemEvent.getStateChange() == ItemEvent.SELECTED));
@@ -501,9 +499,9 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				.buildAndInstallLocal(componentProvider);
 
 		new ActionBuilder("Graph Type Display Options", ACTION_OWNER)
-				.popupMenuPath("Graph Type Options ...")
+				.popupMenuPath("Graph Type Options")
 				.popupMenuGroup("zzz")
-				.menuPath("Graph Type Options ...")
+				.menuPath("Graph Type Options")
 				.description("Brings up option editor for configuring vertex and edge types.")
 				.onAction(c -> editGraphDisplayOptions())
 				.buildAndInstallLocal(componentProvider);
@@ -570,7 +568,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	}
 
 	private void createAndDisplaySubGraph() {
-		GraphDisplay display = graphDisplayProvider.getGraphDisplay(false, TaskMonitor.DUMMY);
+		GraphDisplay display =
+			graphDisplayProvider.getGraphDisplay(false, false, TaskMonitor.DUMMY);
 		try {
 			display.setGraph(createSubGraph(), graphRenderer.getGraphDisplayOptions(),
 				title + " - Sub-graph", false, TaskMonitor.DUMMY);
@@ -749,9 +748,12 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	}
 
 	private void toggleSatellite(ActionContext context) {
-		boolean selected = ((AbstractButton) context.getSourceObject()).isSelected();
-		graphDisplayProvider.setDefaultSatelliteState(selected);
-		if (selected) {
+
+		boolean wasSelected = graphDisplayProvider.getDefaultSatelliteState();
+		boolean isSelected = !wasSelected;
+
+		graphDisplayProvider.setDefaultSatelliteState(isSelected);
+		if (isSelected) {
 			viewer.getComponent().add(satelliteViewer.getComponent());
 			satelliteViewer.scaleToLayout();
 		}
@@ -765,8 +767,18 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			VisualizationViewer<AttributedVertex, AttributedEdge> parentViewer) {
 		Dimension viewerSize = parentViewer.getSize();
 		Dimension satelliteSize = new Dimension(viewerSize.width / 4, viewerSize.height / 4);
-		final SatelliteVisualizationViewer<AttributedVertex, AttributedEdge> satellite =
-			SatelliteVisualizationViewer.builder(parentViewer).viewSize(satelliteSize).build();
+		SatelliteVisualizationViewer<AttributedVertex, AttributedEdge> satellite =
+			SatelliteVisualizationViewer
+					.builder(parentViewer)
+					.viewSize(satelliteSize)
+
+					// Unusual Code: setting the background of the satellite will have no effected, 
+					// since the SatelliteVisualizationViewer changes the background color in the
+					// paint method.  That updated color is based on the lens color.  Thus, we need
+					// to set the lens color to a value that will trigger the background to get set
+					// to what we desire.
+					.lensColor(BACKGROUND_COLOR.brighter())
+					.build();
 
 		//
 		// JUNGRAPHT CHANGE 3
@@ -797,6 +809,9 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				satellite.getComponent().setSize(quarterSize);
 			}
 		});
+
+		satellite.setBackground(BACKGROUND_COLOR);
+
 		return satellite;
 	}
 
@@ -1064,7 +1079,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	public void setGraph(AttributedGraph graph, GraphDisplayOptions options, String title,
 			boolean append, TaskMonitor monitor) {
 		setGraphDisplayOptions(options);
-		if (append && Objects.equals(title, this.title) && this.graph != null) {
+		if (append && this.graph != null &&
+			graph.getGraphType().equals(this.graph.getGraphType())) {
 			graph = mergeGraphs(graph, this.graph);
 		}
 

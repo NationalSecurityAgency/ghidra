@@ -15,10 +15,14 @@
  */
 package ghidra.feature.vt.gui.wizard.add;
 
+import java.util.Map;
+
 import javax.swing.JComponent;
 
 import docking.wizard.WizardModel;
 import docking.wizard.WizardStep;
+import ghidra.feature.vt.api.main.VTProgramCorrelatorFactory;
+import ghidra.feature.vt.api.util.VTOptions;
 import ghidra.util.HelpLocation;
 
 /**
@@ -37,14 +41,13 @@ public class OptionsStep extends WizardStep<AddToSessionData> {
 
 	@Override
 	public void initialize(AddToSessionData data) {
-		panel.initialize(data.getCorrelators());
-		// set the options here so that we know this step was visited
-		data.setOptions(panel.getOptionsMap());
+		panel.initialize(data.getCorrelators(), data.getOptions());
 	}
 
 	@Override
 	public boolean isApplicable(AddToSessionData data) {
-		return panel.isApplicable(data.getCorrelators());
+		Map<VTProgramCorrelatorFactory, VTOptions> options = data.getOptions();
+		return !options.isEmpty();
 	}
 
 	@Override
@@ -59,7 +62,7 @@ public class OptionsStep extends WizardStep<AddToSessionData> {
 
 	@Override
 	public void populateData(AddToSessionData data) {
-		data.setOptions(panel.getOptionsMap());
+		// stub
 	}
 
 	@Override

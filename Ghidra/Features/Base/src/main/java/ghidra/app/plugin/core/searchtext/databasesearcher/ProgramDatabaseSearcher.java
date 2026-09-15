@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import ghidra.app.plugin.core.searchtext.Searcher;
 import ghidra.app.util.viewer.field.BrowserCodeUnitFormat;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.*;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.UserSearchUtils;
@@ -64,6 +64,7 @@ public class ProgramDatabaseSearcher implements Searcher {
 	private long totalSearchCount;
 	private AddressSet remainingAddresses;
 	private TaskMonitor monitor;
+	private CommentAddressSupplier commentSupplier;
 
 	public ProgramDatabaseSearcher(ServiceProvider serviceProvider, Program program,
 			ProgramLocation startLoc, AddressSetView set, SearchOptions options,
@@ -131,7 +132,7 @@ public class ProgramDatabaseSearcher implements Searcher {
 	}
 
 	private Address findNextSignificantAddress() {
-		Address nextAddress = null;
+		Address nextAddress = commentSupplier.advance(currentAddress);
 		for (ProgramDatabaseFieldSearcher searcher : searchers) {
 			if (monitor.isCancelled()) {
 				return null;
@@ -179,17 +180,22 @@ public class ProgramDatabaseSearcher implements Searcher {
 			UserSearchUtils.createSearchPattern(options.getText(), options.isCaseSensitive());
 		BrowserCodeUnitFormat format = new BrowserCodeUnitFormat(serviceProvider, false);
 
+		// this comment supplier will be used in all the comment searchers and is explicitly 
+		// advanced in the findNextSignificantAddress() method
+		commentSupplier = new CommentAddressSupplier(program, trimmedSet, forward);
+
+		// create the searchers in the order as displayed in the default listing panel field layout
 		if (options.searchComments()) {
-			searchers.add(new CommentFieldSearcher(program, adjustedStart, trimmedSet, forward,
-				pattern, CodeUnit.PLATE_COMMENT));
+			searchers.add(new CommentFieldSearcher(commentSupplier, program, adjustedStart,
+				trimmedSet, forward, pattern, CommentType.PLATE));
 		}
 		if (options.searchFunctions()) {
 			searchers.add(
 				new FunctionFieldSearcher(program, adjustedStart, trimmedSet, forward, pattern));
 		}
 		if (options.searchComments()) {
-			searchers.add(new CommentFieldSearcher(program, adjustedStart, trimmedSet, forward,
-				pattern, CodeUnit.PRE_COMMENT));
+			searchers.add(new CommentFieldSearcher(commentSupplier, program, adjustedStart,
+				trimmedSet, forward, pattern, CommentType.PRE));
 		}
 		if (options.searchLabels()) {
 			searchers.add(
@@ -209,10 +215,9 @@ public class ProgramDatabaseSearcher implements Searcher {
 				program, adjustedStart, trimmedSet, forward, pattern, format));
 		}
 		if (options.searchBothInstructionMnemonicAndOperands()) {
-			searchers.add(
-				InstructionMnemonicOperandFieldSearcher
-						.createInstructionMnemonicAndOperandFieldSearcher(
-							program, adjustedStart, trimmedSet, forward, pattern, format));
+			searchers.add(InstructionMnemonicOperandFieldSearcher
+					.createInstructionMnemonicAndOperandFieldSearcher(program, adjustedStart,
+						trimmedSet, forward, pattern, format));
 		}
 		if (options.searchOnlyInstructionMnemonics()) {
 			searchers.add(
@@ -225,12 +230,12 @@ public class ProgramDatabaseSearcher implements Searcher {
 					program, adjustedStart, trimmedSet, forward, pattern, format));
 		}
 		if (options.searchComments()) {
-			searchers.add(new CommentFieldSearcher(program, adjustedStart, trimmedSet, forward,
-				pattern, CodeUnit.EOL_COMMENT));
-			searchers.add(new CommentFieldSearcher(program, adjustedStart, trimmedSet, forward,
-				pattern, CodeUnit.REPEATABLE_COMMENT));
-			searchers.add(new CommentFieldSearcher(program, adjustedStart, trimmedSet, forward,
-				pattern, CodeUnit.POST_COMMENT));
+			searchers.add(new CommentFieldSearcher(commentSupplier, program, adjustedStart,
+				trimmedSet, forward, pattern, CommentType.EOL));
+			searchers.add(new CommentFieldSearcher(commentSupplier, program, adjustedStart,
+				trimmedSet, forward, pattern, CommentType.REPEATABLE));
+			searchers.add(new CommentFieldSearcher(commentSupplier, program, adjustedStart,
+				trimmedSet, forward, pattern, CommentType.POST));
 		}
 	}
 

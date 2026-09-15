@@ -15,36 +15,18 @@
  */
 package ghidra.app.util.pdb.classtype;
 
+import ghidra.program.model.gclass.ClassID;
+
 /**
  * Represents the Entry for a Virtual Base Table
  */
 public class VirtualBaseTableEntry implements VBTableEntry {
-	private Long offset;
 	private ClassID baseId;
 
 	// Re-evaluate which constructors and setters we need
 
-	public VirtualBaseTableEntry(Long offset) {
-		this(offset, null);
-	}
-
 	public VirtualBaseTableEntry(ClassID baseId) {
-		this(null, baseId);
-	}
-
-	public VirtualBaseTableEntry(Long offset, ClassID baseId) {
-		this.offset = offset;
 		this.baseId = baseId;
-	}
-
-	@Override
-	public void setOffset(Long offset) {
-		this.offset = offset;
-	}
-
-	@Override
-	public Long getOffset() {
-		return offset;
 	}
 
 	@Override

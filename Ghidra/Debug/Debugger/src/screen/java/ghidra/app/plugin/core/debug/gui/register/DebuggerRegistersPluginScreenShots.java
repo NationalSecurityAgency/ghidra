@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,11 +22,12 @@ import org.junit.*;
 import db.Transaction;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.services.DebuggerTraceManagerService;
-import ghidra.program.model.data.PointerDataType;
+import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
+import ghidra.trace.database.ToyDBTraceBuilder.ToySchemaBuilder;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
@@ -57,10 +58,15 @@ public class DebuggerRegistersPluginScreenShots extends GhidraScreenShotGenerato
 	@Test
 	public void testCaptureDebuggerRegistersPlugin() throws Throwable {
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(new ToySchemaBuilder()
+					.useRegistersPerThread()
+					.noRegisterGroups()
+					.build());
 			long snap0 = tb.trace.getTimeManager().createSnapshot("First").getKey();
 			long snap1 = tb.trace.getTimeManager().createSnapshot("Second").getKey();
 
-			TraceThread thread = tb.getOrAddThread("[1]", snap0);
+			TraceThread thread = tb.getOrAddThread("Targets[1].Threads[1]", snap0);
+			tb.createObjectsRegsForThread(thread, Lifespan.nowOn(snap0), tb.host);
 			TraceMemorySpace regs =
 				tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
 			Language lang = tb.trace.getBaseLanguage();
@@ -90,11 +96,16 @@ public class DebuggerRegistersPluginScreenShots extends GhidraScreenShotGenerato
 			regs.setValue(snap1,
 				new RegisterValue(lang.getRegister("RDX"), BigInteger.valueOf(0x80)));
 
+			TypeDef pointerRam = tb.trace.getBaseDataTypeManager()
+					.resolveType(PointerDataType.dataType.typedefBuilder()
+							.addressSpace(tb.language.getDefaultDataSpace())
+							.build(),
+						DataTypeConflictHandler.DEFAULT_HANDLER);
+
 			tb.trace.getCodeManager()
 					.getCodeRegisterSpace(thread, true)
 					.definedData()
-					.create(Lifespan.nowOn(snap0), lang.getRegister("RIP"),
-						PointerDataType.dataType);
+					.create(Lifespan.nowOn(snap0), lang.getRegister("RIP"), pointerRam);
 
 			traceManager.openTrace(tb.trace);
 			traceManager.activateThread(thread);

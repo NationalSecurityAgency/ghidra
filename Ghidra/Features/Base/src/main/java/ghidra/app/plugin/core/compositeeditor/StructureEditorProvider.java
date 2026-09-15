@@ -27,7 +27,8 @@ import ghidra.util.Msg;
 /**
  * Editor for a Structure Data Type.
  */
-public class StructureEditorProvider extends CompositeEditorProvider {
+public class StructureEditorProvider
+		extends CompositeEditorProvider<Structure, StructureEditorModel> {
 
 	private BitFieldEditorDialog bitFieldEditor;
 
@@ -37,15 +38,18 @@ public class StructureEditorProvider extends CompositeEditorProvider {
 	public StructureEditorProvider(Plugin plugin, Structure structureDataType,
 			boolean showHexNumbers) {
 		super(plugin);
+		if (structureDataType.isDeleted()) {
+			throw new IllegalArgumentException(
+				"Structure has been deleted: " + structureDataType.getPathName());
+		}
 		setIcon(STRUCTURE_EDITOR_ICON);
 		editorModel = new StructureEditorModel(this, showHexNumbers);
 		editorModel.load(structureDataType);
 		initializeActions();
-		editorPanel = new CompEditorPanel((StructureEditorModel) editorModel, this);
+		editorPanel = new StructureEditorPanel((StructureEditorModel) editorModel, this);
 		plugin.getTool().addComponentProvider(this, true);
 		updateTitle();
 		addActionsToTool();
-		editorPanel.getTable().requestFocus();
 		editorModel.selectionChanged();
 	}
 
@@ -81,6 +85,9 @@ public class StructureEditorProvider extends CompositeEditorProvider {
 			new AddBitFieldAction(this),
 			new EditBitFieldAction(this),
 			new ShowDataTypeInTreeAction(this),
+			new NextPrevDefinedComponentAction(this, true),
+			new NextPrevDefinedComponentAction(this, false),
+			new JumpToOffsetAction(this),
 
 //			new ViewBitFieldAction(this)
 		};
@@ -159,4 +166,14 @@ public class StructureEditorProvider extends CompositeEditorProvider {
 		}
 		return null;
 	}
+
+	public void goToNextDefinedRow(boolean forward) {
+		((StructureEditorPanel) editorPanel).goToNextDefinedRow(forward);
+	}
+
+	public void goToOffset(int offset) {
+		((StructureEditorPanel) editorPanel).goToOffset(offset);
+	}
+
+
 }

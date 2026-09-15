@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,9 +20,9 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-import org.jdom.*;
-import org.jdom.input.SAXBuilder;
-import org.jdom.output.XMLOutputter;
+import org.jdom2.*;
+import org.jdom2.input.SAXBuilder;
+import org.jdom2.output.XMLOutputter;
 import org.xml.sax.*;
 
 import generic.jar.ResourceFile;
@@ -485,7 +485,8 @@ class LibrarySymbolTable {
 		//}
 	}
 
-	void write(File output, File input, String lversion) throws IOException {
+	void write(File output, File input, String lversion)
+			throws IOException, IllegalNameException, IllegalDataException {
 		Element root = new Element("LIBRARY");
 
 		root.setAttribute("NAME", tableName);
@@ -515,15 +516,11 @@ class LibrarySymbolTable {
 			root.addContent(export);
 		}
 
-		FileOutputStream fos = new FileOutputStream(output);
-		try {
+		try (FileOutputStream fos = new FileOutputStream(output)) {
 			Document doc = new Document(root);
 
-			XMLOutputter xmlout = new GenericXMLOutputter();
+			XMLOutputter xmlout = GenericXMLOutputter.getInstance();
 			xmlout.output(doc, fos);
-		}
-		finally {
-			fos.close();
 		}
 
 		//StringBuffer buffer = new StringBuffer();

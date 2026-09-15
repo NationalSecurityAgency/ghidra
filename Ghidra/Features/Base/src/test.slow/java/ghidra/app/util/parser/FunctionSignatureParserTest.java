@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,6 +66,11 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 
 			@Override
 			public DataType getDataType(String filterText) {
+				return promptForDataType(filterText);
+			}
+
+			@Override
+			public DataType promptForDataType(String filterText) {
 				// method only called if no results or multiple results were found.
 				// Tool based implementation will prompt user, test will pick last one
 				ArrayList<DataType> list = new ArrayList<>();
@@ -127,6 +132,7 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 	public void testExtractFunctionName() throws Exception {
 		assertEquals("bob", parser.extractFunctionName("void bob(int a)"));
 		assertEquals("bob", parser.extractFunctionName("void    bob    (int a)"));
+		assertEquals("Foo::Bar::bob", parser.extractFunctionName("void Foo::Bar::bob (int a)"));
 	}
 
 	@Test

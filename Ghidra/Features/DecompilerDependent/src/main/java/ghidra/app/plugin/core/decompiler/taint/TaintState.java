@@ -27,6 +27,7 @@ import ghidra.app.services.ConsoleService;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.*;
 import ghidra.program.model.symbol.Symbol;
@@ -34,6 +35,7 @@ import ghidra.program.model.symbol.SymbolTable;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.classfinder.ExtensionPoint;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * The interface for the methods that collect desired taint information from the decompiler window and store them
@@ -91,6 +93,8 @@ public interface TaintState extends ExtensionPoint {
 	 */
 	public boolean queryIndex(Program program, PluginTool tool, QueryType queryType);
 
+	public String getQueryName();
+
 	public TaintLabel toggleMark(MarkType mtype, ClangToken token) throws PcodeException;
 
 	public Set<TaintLabel> getTaintLabels(MarkType mtype);
@@ -120,9 +124,11 @@ public interface TaintState extends ExtensionPoint {
 	// predicate that indicates there are sources, sinks, or gates.
 	public boolean hasMarks();
 
-	public boolean wasCancelled();
+	public void setMonitor(TaskMonitor monitor);
 
-	public void setCancellation(boolean status);
+	public boolean isCancelled();
+
+	public void cancel();
 
 	public void setTaintVarnodeMap(Map<Address, Set<TaintQueryResult>> vmap, TaskType delta);
 
@@ -139,37 +145,74 @@ public interface TaintState extends ExtensionPoint {
 
 	public TaintLabel getLabelForToken(MarkType type, ClangToken token);
 
-	public static String hvarName(ClangToken token) {
-		HighVariable hv = token.getHighVariable();
-		HighFunction hf =
-			(hv == null) ? token.getClangFunction().getHighFunction() : hv.getHighFunction();
-		if (hv == null || hv.getName() == null || hv.getName().equals("UNNAMED")) {
-			SymbolTable symbolTable = hf.getFunction().getProgram().getSymbolTable();
-			Varnode rep = hv.getRepresentative();
-			Address addr = rep.getAddress();
-			Symbol symbol = symbolTable.getPrimarySymbol(addr);
-			if (symbol == null) {
-				if (hv instanceof HighLocal) {
-					return addr.toString();
-				}
-				return token.getText();
+	public static String varName(ClangToken token, boolean append) {
+		String tokenText = token.getText();
+		if (token instanceof ClangFieldToken ftoken) {
+			ClangVariableToken vtoken = TaintState.getParentToken(ftoken);
+			if (vtoken == null) {
+				return tokenText;
 			}
-			return symbol.getName();
+			HighVariable hv = vtoken.getHighVariable();
+			Varnode rep = hv.getRepresentative();
+			return rep.getAddress().toString();
+		}
+		
+		HighVariable hv = token.getHighVariable();
+		if (hv != null) {
+			if (hv instanceof HighLocal && token.getVarnode() == null) {
+				int offset = hv.getOffset();
+				Varnode rep = hv.getRepresentative();
+				return rep.getAddress().subtract(offset).toString();
+			}
+			return hvarName(hv);
+		}
+		return tokenText;
+	}
+
+	private static String hvarName(HighVariable hv) {
+		Varnode rep = hv.getRepresentative();
+		if (rep.getAddress().isUniqueAddress()) {
+			HighFunction hf = hv.getHighFunction();
+			DynamicHash dynamicHash = new DynamicHash(rep, hf);
+			return "hv"+Long.toString(dynamicHash.getHash());
+		}
+		if (hv.getName() == null || hv.getName().equals("UNNAMED")) {
+			if (hv instanceof HighConstant || hv instanceof HighOther) {
+				Address addr = rep.getAddress();
+				return addr.toString();
+			}
+			if (hv instanceof HighLocal) {
+				Address addr = rep.getAddress();
+				return addr.toString();
+			}
+			if (hv instanceof HighGlobal) {
+				Function fn = hv.getHighFunction().getFunction();
+				SymbolTable symbolTable = fn.getProgram().getSymbolTable();
+				Address addr = rep.getAddress();
+				Symbol symbol = symbolTable.getPrimarySymbol(addr);
+				if (symbol != null) {
+					return symbol.getName();
+				}
+				return addr.toString();
+			}
+			return null;
 		}
 		return hv.getName();
 	}
 
 	public static ClangVariableToken getParentToken(ClangFieldToken token) {
 		ClangTokenGroup group = (ClangTokenGroup) token.Parent();
-		Iterator<ClangNode> iterator = group.iterator();
+		Iterator<ClangToken> iterator = group.tokenIterator(true);
+		ClangVariableToken parent = null;
 		while (iterator.hasNext()) {
-			ClangNode next = iterator.next();
+			ClangToken next = iterator.next();
 			if (next instanceof ClangVariableToken vtoken) {
-				HighVariable highVariable = vtoken.getHighVariable();
-				if (highVariable == null || highVariable instanceof HighConstant) {
-					continue;
+				parent = vtoken;
+			}
+			if (next instanceof ClangFieldToken ftoken) {
+				if (ftoken.equals(token)) {
+					return parent;
 				}
-				return vtoken;
 			}
 		}
 		return null;

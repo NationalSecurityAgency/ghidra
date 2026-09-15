@@ -15,6 +15,8 @@
  */
 package ghidra.program.model.data;
 
+import ghidra.util.charset.CharsetInfoManager;
+
 /**
  * A fixed-length UTF-32 string {@link DataType}.
  */
@@ -36,7 +38,7 @@ public class Unicode32DataType extends AbstractStringDataType {
 			"UNI", // default label prefix
 			"u", // default abbrev label prefix
 			"String (Fixed Length UTF-32 Unicode)", // description
-			CharsetInfo.UTF32, // charset
+			CharsetInfoManager.UTF32, // charset
 			WideChar32DataType.dataType, // replacement data type
 			StringLayoutEnum.FIXED_LEN, // StringLayoutEnum
 			dtm// data type manager

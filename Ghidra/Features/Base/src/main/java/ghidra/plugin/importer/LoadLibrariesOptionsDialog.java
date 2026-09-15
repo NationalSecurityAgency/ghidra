@@ -25,6 +25,7 @@ import ghidra.app.util.*;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.*;
+import ghidra.app.util.opinion.Loader.ImporterSettings;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
@@ -69,17 +70,19 @@ public class LoadLibrariesOptionsDialog extends OptionsDialog {
 	protected void okCallback() {
 		TaskLauncher.launchNonModal(TITLE, monitor -> {
 			super.okCallback();
-			try {
-				Object consumer = new Object();
-				MessageLog messageLog = new MessageLog();
-				LoadResults<? extends DomainObject> loadResults = loadSpec.getLoader()
-						.load(provider, program.getDomainFile().getName(), tool.getProject(),
-							program.getDomainFile().getParent().getPathname(), loadSpec,
-							getOptions(), messageLog, consumer, monitor);
-				loadResults.save(tool.getProject(), consumer, messageLog, monitor);
+			Object consumer = new Object();
+			MessageLog log = new MessageLog();
+			ImporterSettings settings =
+				new ImporterSettings(provider, program.getDomainFile().getName(), tool.getProject(),
+					program.getDomainFile().getParent().getPathname(), false, loadSpec,
+					getOptions(), consumer, log, monitor);
+			try (LoadResults<? extends DomainObject> loadResults =
+				loadSpec.getLoader().load(settings)) {
+
+				loadResults.save(monitor);
 				
 				// Display results
-				String importMessages = messageLog.toString();
+				String importMessages = log.toString();
 				if (!importMessages.isEmpty()) {
 					if (!Loader.loggingDisabled) {
 						Msg.info(ImporterUtilities.class, TITLE + ":\n" + importMessages);
@@ -90,8 +93,6 @@ public class LoadLibrariesOptionsDialog extends OptionsDialog {
 				else {
 					Msg.showInfo(this, null, TITLE, "The program has no libraries.");
 				}
-
-				loadResults.release(consumer);
 			}
 			catch (CancelledException e) {
 				// no need to show a message
@@ -114,7 +115,7 @@ public class LoadLibrariesOptionsDialog extends OptionsDialog {
 	private static List<Option> getLoadLibraryOptions(ByteProvider provider, LoadSpec loadSpec) {
 		List<Option> options = new ArrayList<>();
 		for (Option option : loadSpec.getLoader()
-				.getDefaultOptions(provider, loadSpec, null, false)) {
+				.getDefaultOptions(provider, loadSpec, null, false, false)) {
 			switch (option.getName()) {
 				case LOAD_ONLY_LIBRARIES_OPTION_NAME:
 				case LOAD_LIBRARY_OPTION_NAME:
@@ -123,6 +124,7 @@ public class LoadLibrariesOptionsDialog extends OptionsDialog {
 				case LINK_SEARCH_FOLDER_OPTION_NAME:
 				case LIBRARY_SEARCH_PATH_DUMMY_OPTION_NAME:
 				case LIBRARY_DEST_FOLDER_OPTION_NAME:
+				case MIRROR_LAYOUT_OPTION_NAME:
 					options.add(option);
 					break;
 				default:

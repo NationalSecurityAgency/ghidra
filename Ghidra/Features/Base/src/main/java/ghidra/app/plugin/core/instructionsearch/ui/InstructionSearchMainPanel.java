@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,12 +16,12 @@
 package ghidra.app.plugin.core.instructionsearch.ui;
 
 import java.awt.BorderLayout;
+import java.util.Objects;
 
 import javax.swing.*;
 
 import ghidra.app.plugin.core.instructionsearch.InstructionSearchPlugin;
 import ghidra.app.plugin.core.instructionsearch.model.InstructionSearchData;
-import ghidra.util.exception.InvalidInputException;
 
 /**
  * Container for the {@link InstructionTable} and {@link PreviewTable}.
@@ -53,10 +53,9 @@ public class InstructionSearchMainPanel extends JPanel {
 	 * 
 	 * @param plugin the instruction search plugin
 	 * @param dialog the parent dialog
-	 * @throws InvalidInputException if the search data is invalid
 	 */
 	public InstructionSearchMainPanel(final InstructionSearchPlugin plugin,
-			InstructionSearchDialog dialog) throws InvalidInputException {
+			InstructionSearchDialog dialog) {
 
 		super(new BorderLayout());
 
@@ -64,9 +63,7 @@ public class InstructionSearchMainPanel extends JPanel {
 
 		// Get the number of operands we need to show (across all instructions); this 
 		// will define the number of columns to create.
-		if (searchData == null) {
-			throw new InvalidInputException("Search data object cannot be null");
-		}
+		Objects.requireNonNull(searchData);
 		int operands = searchData.getMaxNumOperands();
 
 		// Create the two main panels and link their scroll panes so they'll always
@@ -100,10 +97,8 @@ public class InstructionSearchMainPanel extends JPanel {
 	 * Displays the current search strings based on all user settings. What is
 	 * displayed in the {@link PreviewTablePanel} is what will be used for any
 	 * subsequent searches.
-	 * 
-	 * @throws InvalidInputException
 	 */
-	public void buildPreview() throws InvalidInputException {
+	public void buildPreview() {
 		previewTablePanel.buildPreview();
 	}
 
@@ -128,7 +123,7 @@ public class InstructionSearchMainPanel extends JPanel {
 	 * 
 	 * @param panel1 left panel
 	 * @param panel2 right panel
-	 * @return
+	 * @return the split pane
 	 */
 	private JSplitPane splitPanels(JPanel panel1, JPanel panel2) {
 

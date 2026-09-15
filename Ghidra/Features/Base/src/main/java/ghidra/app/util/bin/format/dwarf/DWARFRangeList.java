@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,7 +83,7 @@ public class DWARFRangeList {
 
 		List<DWARFRange> list = new ArrayList<>();
 
-		DWARFProgram dprog = cu.getProgram();
+		DIEContainer dieContainer = cu.getDIEContainer();
 		long baseAddr = cu.getPCRange().getFrom();
 
 		while (reader.hasNext()) {
@@ -94,21 +94,21 @@ public class DWARFRangeList {
 			switch (rleId) {
 				case DW_RLE_base_addressx: {
 					int addrIndex = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
-					baseAddr = dprog.getAddress(DW_FORM_addrx, addrIndex, cu);
+					baseAddr = dieContainer.getAddress(DW_FORM_addrx, addrIndex, cu);
 					break;
 				}
 				case DW_RLE_startx_endx: {
 					int startAddrIndex = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 					int endAddrIndex = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
-					long start = dprog.getAddress(DW_FORM_addrx, startAddrIndex, cu);
-					long end = dprog.getAddress(DW_FORM_addrx, endAddrIndex, cu);
+					long start = dieContainer.getAddress(DW_FORM_addrx, startAddrIndex, cu);
+					long end = dieContainer.getAddress(DW_FORM_addrx, endAddrIndex, cu);
 					list.add(new DWARFRange(start, end));
 					break;
 				}
 				case DW_RLE_startx_length: {
 					int startAddrIndex = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 					int len = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
-					long start = dprog.getAddress(DW_FORM_addrx, startAddrIndex, cu);
+					long start = dieContainer.getAddress(DW_FORM_addrx, startAddrIndex, cu);
 					list.add(new DWARFRange(start, start + len));
 					break;
 				}

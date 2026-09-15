@@ -1145,18 +1145,24 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 # ADDC D[c], D[a], D[b] (RR)
 :addc Rd2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xb ; Rd2831 & op1627=0x50
 {
-	local tmp:5 = zext(Rd0811) + zext(Rd1215) + zext($(PSW_C));
-	Rd2831 = tmp[0,32];
-	$(PSW_C) = tmp[32,1];
+	local op1:4 = Rd0811;
+	local op2:4 = Rd1215;
+	local tmp:4 = op1 + op2;
+	local tmp_c = zext($(PSW_C));
+	Rd2831 = tmp + tmp_c;
+	$(PSW_C) = carry(op1, op2) || carry(tmp,tmp_c);
 	overflowflags(Rd2831);
 }
 
 # ADDC D[c], D[a], const9 (RC)
 :addc Rd2831,Rd0811,const1220S is PCPMode=0 & ( Rd0811 & op0007=0x8b ; Rd2831 & op2127=0x5 ) & const1220S
 {
-	local tmp:5 = zext(Rd0811) + zext(const1220S) + zext($(PSW_C));
-	Rd2831 = tmp[0,32];
-	$(PSW_C) = tmp[32,1];
+	local op1:4 = Rd0811;
+	local op2:4 = const1220S;
+	local tmp:4 = op1 + op2;
+	local tmp_c = zext($(PSW_C));
+	Rd2831 = tmp  + tmp_c;
+	$(PSW_C) = carry(op1, op2) || carry(tmp,tmp_c);
 	overflowflags(Rd2831);
 }
 
@@ -8166,9 +8172,11 @@ macro multiply_u_u(mres0, rega, regb, n) {
 # SUBC D[c], D[a], D[b] (RR)
 :subc Rd2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xb ; Rd2831 & op1627=0xd0
 {
-	local tmp:5 = zext(Rd0811) - zext(Rd1215) + zext($(PSW_C)) - 1;
-	Rd2831 = tmp[0,32];
-	$(PSW_C) = tmp[32,1];
+	local result = Rd0811 - Rd1215;
+	local n_old_C:1 = !$(PSW_C);
+	$(PSW_C) = (Rd0811 < Rd1215) || (result < zext(n_old_C));
+	# + PSW.C - 1 is equivalent to - !PSW.C
+	Rd2831 = result - zext(!n_old_C);
 	overflowflags(Rd2831);
 }
 
@@ -8220,8 +8228,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 :subx Rd2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xb ; Rd2831 & op1627=0xc0
 {
 	Rd2831 = Rd0811 - Rd1215;
-	local tmp:5 = zext(Rd0811) + ~zext(Rd1215) + 1;
-	$(PSW_C) = tmp[32,1];
+	$(PSW_C) = Rd0811 < Rd1215;
 	overflowflags(Rd2831);
 }
 

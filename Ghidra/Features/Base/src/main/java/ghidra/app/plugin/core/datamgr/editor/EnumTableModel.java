@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,7 @@ package ghidra.app.plugin.core.datamgr.editor;
 
 import java.util.*;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import docking.widgets.table.AbstractSortedTableModel;
 import docking.widgets.table.TableSortState;
@@ -355,7 +355,7 @@ class EnumTableModel extends AbstractSortedTableModel<EnumEntry> {
 	private class EnumCommentComparator implements Comparator<EnumEntry> {
 		@Override
 		public int compare(EnumEntry entry1, EnumEntry entry2) {
-			return StringUtils.compare(entry1.getComment(), entry2.getComment());
+			return Strings.CS.compare(entry1.getComment(), entry2.getComment());
 		}
 	}
 }

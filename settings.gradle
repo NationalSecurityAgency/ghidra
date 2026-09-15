@@ -33,6 +33,7 @@ includeProjects('GPL')
 /*******************************************************************************************
  * Include miscellaneous support modules
  *******************************************************************************************/
+includeProject('docker', '.', true)
 includeProject('Doclets', 'GhidraBuild/BuildFiles', true)
 includeProject('LaunchSupport', 'GhidraBuild', true)
 includeProject('MarkdownSupport', 'GhidraBuild', true)

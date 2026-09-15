@@ -207,7 +207,7 @@ public class DyldCacheSlideInfo4 extends DyldCacheSlideInfoCommon {
 				chainValue += valueAdd /* + slide */;
 			}
 
-			fixups.add(new DyldFixup(dataOffset, chainValue, 4, null, null));
+			fixups.add(new DyldFixup(dataOffset, Long.valueOf(chainValue), 4, null, null));
 		}
 
 		return fixups;

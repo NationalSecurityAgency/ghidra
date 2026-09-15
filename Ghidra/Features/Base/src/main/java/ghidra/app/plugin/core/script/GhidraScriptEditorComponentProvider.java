@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,6 @@ package ghidra.app.plugin.core.script;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
 import java.io.*;
 
 import javax.swing.*;
@@ -250,8 +249,8 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 
 			@Override
 			public boolean isEnabledForContext(ActionContext context) {
-				Object contextObject = context.getContextObject();
-				if (contextObject != GhidraScriptEditorComponentProvider.this) {
+				ComponentProvider contextProvider = context.getComponentProvider();
+				if (contextProvider != GhidraScriptEditorComponentProvider.this) {
 					return false;
 				}
 
@@ -487,7 +486,6 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 		// this will overwrite any changes--be sure to resolve that before calling this method!
 		try {
 			loadScript(scriptSourceFile);
-			fileHash = MD5Utilities.getMD5Hash(scriptSourceFile.getFile(false));
 			clearChanges();
 			refreshAction();
 		}
@@ -634,11 +632,6 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 	}
 
 	@Override
-	public ActionContext getActionContext(MouseEvent event) {
-		return createContext(this);
-	}
-
-	@Override
 	public JComponent getComponent() {
 		return scrollPane;
 	}
@@ -646,6 +639,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
+
 	/**
 	 * Special JTextArea that knows how to properly handle it's key events.
 	 * See {@link #processKeyBinding(KeyStroke, KeyEvent, int, boolean)}

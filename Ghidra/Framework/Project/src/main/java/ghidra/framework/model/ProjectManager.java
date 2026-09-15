@@ -78,7 +78,8 @@ public interface ProjectManager {
 	/**
 	 * Set the projectLocator of last opened (active) project; this projectLocator is returned
 	 * in the getLastOpenedProject() method.
-	 * @param projectLocator project location of last project that was opened
+	 * @param projectLocator project location of last project that was opened.  A null value signals
+	 *        that the user closed the project.
 	 */
 	public void setLastOpenedProject(ProjectLocator projectLocator);
 
@@ -125,7 +126,7 @@ public interface ProjectManager {
 	public boolean deleteProject(ProjectLocator projectLocator);
 
 	/**
-	 * Returns true if a project with the given projectLocator exists.
+	 * {@return true if a project with the given projectLocator exists}
 	 * @param projectLocator project location
 	 */
 	public boolean projectExists(ProjectLocator projectLocator);
@@ -134,20 +135,20 @@ public interface ProjectManager {
 	 * Establish a connection to the given host and port number. 
 	 * @param host server name or IP address
 	 * @param portNumber server port or 0 for default
-	 * @param forceConnect if true and currently not connected, an attempt will be be to connect
+	 * @param forceConnect if true and currently not connected, an attempt will be made to connect
 	 * @return a handle to the remote server containing shared repositories
 	 */
 	public RepositoryServerAdapter getRepositoryServerAdapter(String host, int portNumber,
 			boolean forceConnect);
 
 	/**
-	 * Get the information that was last used to access a repository
-	 * managed by a Ghidra server.
+	 * {@return the information that was last used to access a repository managed by a Ghidra 
+	 * server}
 	 */
 	public ServerInfo getMostRecentServerInfo();
 
 	/**
-	 * Return the user's ToolChest
+	 * {@return the user's ToolChest}
 	 */
 	public ToolChest getUserToolChest();
 

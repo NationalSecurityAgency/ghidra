@@ -82,6 +82,7 @@ public class ProgramSelection implements AddressSetView {
 	 * @param addressFactory NOT USED
 	 * @param from the start of the selection
 	 * @param to the end of the selection
+	 * @deprecated use {@link #ProgramSelection(Address, Address)}
 	 */
 	@Deprecated(since = "11.2", forRemoval = true)
 	public ProgramSelection(AddressFactory addressFactory, Address from, Address to) {

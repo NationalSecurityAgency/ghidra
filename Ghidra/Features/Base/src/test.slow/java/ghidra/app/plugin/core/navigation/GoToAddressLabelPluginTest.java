@@ -376,13 +376,15 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		loadProgram("x86");
 		createOverlay("TestOverlay1", "1002000", 100);
 		MemoryBlock overlay2Block = createOverlay("TestOverlay2", "1003000", 100);
+		waitForSwing();
 
 		//
 		// Put us in an address space that does not have a match for the query address
 		// The default space and 'Test Overlay 1' each have an address for 1002000.  The
 		// 'Test Overlay 2' does not.  So, put the cursor there.
 		String name = overlay2Block.getName();
-		assertTrue(cbPlugin.goTo(new ProgramLocation(program, addr(name + "::1003000"))));
+		ProgramLocation location = new ProgramLocation(program, addr(name + "::1003000"));
+		assertTrue(cbPlugin.goTo(location));
 
 		showDialog();
 		setText("1002000");

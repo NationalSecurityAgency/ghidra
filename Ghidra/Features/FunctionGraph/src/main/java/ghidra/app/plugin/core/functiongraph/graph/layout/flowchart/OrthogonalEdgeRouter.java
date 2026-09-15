@@ -115,7 +115,7 @@ public class OrthogonalEdgeRouter<V extends VisualVertex, E extends VisualEdge<V
 		// default the range is empty, allowing any column.
 		GridRange excludedRange = excludedColumnsFunction.apply(e);
 
-		// try each each left and right column expanding outwards, starting at the columns of
+		// try each left and right column expanding outwards, starting at the columns of
 		// the start and end vertex.
 		for (int i = 1; i <= startCol; i++) {
 			int left = startCol - i;

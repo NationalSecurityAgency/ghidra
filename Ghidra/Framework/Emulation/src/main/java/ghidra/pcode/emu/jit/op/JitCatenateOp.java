@@ -16,16 +16,17 @@
 package ghidra.pcode.emu.jit.op;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.iterators.ReverseListIterator;
 
 import ghidra.pcode.emu.jit.analysis.JitTypeBehavior;
 import ghidra.pcode.emu.jit.var.JitOutVar;
 import ghidra.pcode.emu.jit.var.JitVal;
+import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropSymbolMap;
 
 /**
  * The synthetic use-def node for concatenation.
- *
  * <p>
  * These are synthesized when memory/register access patterns cause multiple use-def variable nodes
  * to be "read" at the same time. E.g., consider {@code AL} and {@code AH} to be written and then
@@ -45,6 +46,15 @@ public record JitCatenateOp(JitOutVar out, List<JitVal> parts) implements JitDef
 		if (parts.size() <= 1) {
 			throw new IllegalArgumentException("Must have at least 2 parts");
 		}
+	}
+
+	@Override
+	public String toString(PcodeUseropSymbolMap symbols) {
+		return "%s[out=%s, parts=%s]".formatted(
+			out.toString(symbols.language()),
+			parts.stream()
+					.map(p -> p.toString(symbols.language()))
+					.collect(Collectors.joining(",")));
 	}
 
 	@Override

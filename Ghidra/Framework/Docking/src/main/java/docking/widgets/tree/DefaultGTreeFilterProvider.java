@@ -21,8 +21,8 @@ import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
 
-import org.jdom.Attribute;
-import org.jdom.Element;
+import org.jdom2.Attribute;
+import org.jdom2.Element;
 
 import docking.DockingWindowManager;
 import docking.widgets.EmptyBorderButton;
@@ -197,6 +197,17 @@ public class DefaultGTreeFilterProvider implements GTreeFilterProvider {
 		doToggleVisibility();
 		if (isFilterDisplayed) {
 			filterPanel.requestFocus();
+		}
+		else {
+			gTree.requestFocus();
+		}
+	}
+
+	@Override
+	public void close() {
+		if (isFilterDisplayed) {
+			doToggleVisibility();
+			gTree.requestFocus();
 		}
 	}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -237,7 +237,7 @@ public class GTimerCache<K, V> {
 
 	/**
 	 * Called when an item's cache time has expired to determine if the item should be removed from
-	 * the cache. The default to to remove an item when its time has expired. Subclasses can 
+	 * the cache. The default behavior is to remove an item when its time has expired. Subclasses can
 	 * override this method to have more control over expiring value removal.
 	 * <P>
 	 * Note: this method will always be called from within a synchronized block. Subclasses should

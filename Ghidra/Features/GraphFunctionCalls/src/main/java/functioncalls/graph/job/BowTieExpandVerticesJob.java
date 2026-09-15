@@ -38,7 +38,7 @@ import ghidra.util.Msg;
  * 
  * <P>This class is handed a group of edges to processes.  In this group there are vertices that
  * do not need to be arranged, referred to as the {@code existing} vertices.  This 
- * classes uses {@link VertexCollection} to find and store the new vertices that need
+ * classes uses {@link FcgExpandingVertexCollection} to find and store the new vertices that need
  * to be arranged. 
  */
 public class BowTieExpandVerticesJob extends AbstractGraphTransitionJob<FcgVertex, FcgEdge> {

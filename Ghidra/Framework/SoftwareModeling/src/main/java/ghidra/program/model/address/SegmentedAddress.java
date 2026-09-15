@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 package ghidra.program.model.address;
-
 
 /**
  * Address class for dealing with (intel) segmented addresses.  The class itself is agnostic
@@ -88,7 +87,7 @@ public class SegmentedAddress extends GenericAddress {
 	/**
 	 * Returns a new address that is equivalent to this address using
 	 * the given segment number.
-	 * @param seg the seqment value to normalize to.
+	 * @param seg the segment value to normalize to.
 	 * @return the new address
 	 */
 	public SegmentedAddress normalize(int seg) {
@@ -135,17 +134,11 @@ public class SegmentedAddress extends GenericAddress {
 		return zeros.substring(0, 4 - str.length()) + str;
 	}
 
-	/**
-	 * @see ghidra.program.model.address.Address#toString(String)
-	 */
 	@Override
 	public String toString(String prefix) {
 		return prefix + getString(segment) + SEPARATOR_CHAR + getString(getSegmentOffset());
 	}
 
-	/**
-	 * @see ghidra.program.model.address.Address#getPhysicalAddress()
-	 */
 	@Override
 	public Address getPhysicalAddress() {
 		return this;  // A segmented address is already a physical address.
@@ -155,7 +148,7 @@ public class SegmentedAddress extends GenericAddress {
 	public String toString(boolean showAddressSpace, int minNumDigits) {
 		String addr = getString(segment) + SEPARATOR_CHAR + getString(getSegmentOffset());
 		if (showAddressSpace) {
-			addr = addrSpace.getName() + SEPARATOR_CHAR + addr;
+			addr = addrSpace + addr;
 		}
 		return addr;
 	}

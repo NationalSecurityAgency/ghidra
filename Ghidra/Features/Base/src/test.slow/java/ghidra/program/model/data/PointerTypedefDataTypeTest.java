@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ import static org.junit.Assert.*;
 import org.junit.*;
 
 import ghidra.docking.settings.Settings;
-import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.DbObject;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.data.PointerTypedefInspector;
 import ghidra.program.model.address.AddressSpace;
@@ -96,7 +96,7 @@ public class PointerTypedefDataTypeTest extends AbstractGhidraHeadedIntegrationT
 		assertEquals("char * " + formatAttributes("offset(0x8)"), dt.getName());
 		DataType dbDt = dtm.resolve(dt, null);
 		assertTrue(dbDt instanceof TypeDef);
-		assertTrue(dbDt instanceof DatabaseObject); // transforms to TypedefDB
+		assertTrue(dbDt instanceof DbObject); // transforms to TypedefDB
 		assertTrue(dt.isEquivalent(dbDt));
 		assertEquals(dt.getName(), dbDt.getName());
 
@@ -112,7 +112,7 @@ public class PointerTypedefDataTypeTest extends AbstractGhidraHeadedIntegrationT
 		assertEquals("char * " + formatAttributes("relative"), dt.getName());
 		dbDt = dtm.resolve(dt, null);
 		assertTrue(dbDt instanceof TypeDef);
-		assertTrue(dbDt instanceof DatabaseObject); // transforms to TypedefDB
+		assertTrue(dbDt instanceof DbObject); // transforms to TypedefDB
 		assertTrue(dt.isEquivalent(dbDt));
 		assertEquals(dt.getName(), dbDt.getName());
 
@@ -131,7 +131,7 @@ public class PointerTypedefDataTypeTest extends AbstractGhidraHeadedIntegrationT
 		assertEquals("char *16 " + formatAttributes("space(register)"), dt.getName());
 		DataType dbDt = dtm.resolve(dt, null);
 		assertTrue(dbDt instanceof TypeDef);
-		assertTrue(dbDt instanceof DatabaseObject); // transforms to TypedefDB
+		assertTrue(dbDt instanceof DbObject); // transforms to TypedefDB
 		assertTrue(dt.isEquivalent(dbDt));
 		assertEquals(dt.getName(), dbDt.getName());
 
@@ -147,7 +147,7 @@ public class PointerTypedefDataTypeTest extends AbstractGhidraHeadedIntegrationT
 		assertEquals("char *32 " + formatAttributes("space(register)"), dt.getName());
 		dbDt = dtm.resolve(dt, null);
 		assertTrue(dbDt instanceof TypeDef);
-		assertTrue(dbDt instanceof DatabaseObject); // transforms to TypedefDB
+		assertTrue(dbDt instanceof DbObject); // transforms to TypedefDB
 		assertTrue(dt.isEquivalent(dbDt));
 		assertEquals(dt.getName(), dbDt.getName());
 
@@ -169,7 +169,7 @@ public class PointerTypedefDataTypeTest extends AbstractGhidraHeadedIntegrationT
 		assertEquals("foo *16 " + formatAttributes("space(register)"), dt.getName());
 		DataType dbDt = dtm.resolve(dt, null);
 		assertTrue(dbDt instanceof TypeDef);
-		assertTrue(dbDt instanceof DatabaseObject); // transforms to TypedefDB
+		assertTrue(dbDt instanceof DbObject); // transforms to TypedefDB
 		assertTrue(dt.isEquivalent(dbDt));
 		assertEquals(dt.getName(), dbDt.getName());
 
@@ -244,7 +244,7 @@ public class PointerTypedefDataTypeTest extends AbstractGhidraHeadedIntegrationT
 		assertEquals(2, dt.getLength());
 		assertEquals("foo *16 " + formatAttributes("space(register)"), dt.getName());
 		TypeDef dbDt = (TypeDef) dtm.resolve(dt, null);
-		assertTrue(dbDt instanceof DatabaseObject); // transforms to TypedefDB
+		assertTrue(dbDt instanceof DbObject); // transforms to TypedefDB
 		assertTrue(dt.isEquivalent(dbDt));
 		assertEquals(dt.getName(), dbDt.getName());
 
@@ -252,7 +252,8 @@ public class PointerTypedefDataTypeTest extends AbstractGhidraHeadedIntegrationT
 		assertTrue(dbDt == dtm.resolve(dt, null)); // should resolve to same instance
 
 		dt = (TypeDef) dt.copy(dtm);
-		PointerTypeSettingsDefinition.DEF.setType(dt.getDefaultSettings(), PointerType.IMAGE_BASE_RELATIVE);
+		PointerTypeSettingsDefinition.DEF.setType(dt.getDefaultSettings(),
+			PointerType.IMAGE_BASE_RELATIVE);
 		TypeDef dbDt2 = (TypeDef) dtm.resolve(dt, null);    // should resolve to new instance
 		assertTrue(dbDt != dbDt2);
 		assertEquals("foo *16 " + formatAttributes("image-base-relative,space(register)"),
@@ -276,7 +277,7 @@ public class PointerTypedefDataTypeTest extends AbstractGhidraHeadedIntegrationT
 		assertEquals(2, dt.getLength());
 		assertEquals("foo *16 " + formatAttributes("space(register)"), dt.getName());
 		TypeDef dbDt = (TypeDef) dtm.resolve(dt, null);
-		assertTrue(dbDt instanceof DatabaseObject); // transforms to TypedefDB
+		assertTrue(dbDt instanceof DbObject); // transforms to TypedefDB
 		assertTrue(dt.isEquivalent(dbDt));
 		assertEquals(dt.getName(), dbDt.getName());
 
@@ -290,7 +291,7 @@ public class PointerTypedefDataTypeTest extends AbstractGhidraHeadedIntegrationT
 		assertTrue(dbDt != dbDt2);
 		assertFalse(dbDt.isEquivalent(dbDt2));
 		assertFalse(dbDt2.isEquivalent(dbDt));
-		assertTrue(dbDt2 instanceof DatabaseObject); // transforms to TypedefDB
+		assertTrue(dbDt2 instanceof DbObject); // transforms to TypedefDB
 		assertTrue(dt2.isEquivalent(dbDt2));
 		assertEquals(dt2.getName(), dbDt2.getName());
 

@@ -2138,7 +2138,7 @@ scope. The macro can refer to these and any global specific symbol.
 <div class="informalexample"><pre class="programlisting">
 macro resultflags(op) {
   zeroflag = (op == 0);
-  signflag = (op1 s&lt; 0);
+  signflag = (op s&lt; 0);
 }
 
 :add r1,r2 is opcode=0xba &amp; r1 &amp; r2 { r1 = r1 + r2; resultflags(r1); }

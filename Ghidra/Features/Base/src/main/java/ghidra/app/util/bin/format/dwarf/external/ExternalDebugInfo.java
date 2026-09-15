@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,26 +45,54 @@ public class ExternalDebugInfo {
 
 		String filename = debugLink != null ? debugLink.getFilename() : null;
 		int crc = debugLink != null ? debugLink.getCrc() : 0;
-		byte[] hash = buildId != null ? buildId.getDescription() : null;
-		return new ExternalDebugInfo(filename, crc, hash);
+		String hash = buildId != null
+				? NumericUtilities.convertBytesToString(buildId.getDescription())
+				: null;
+
+		return new ExternalDebugInfo(filename, crc, hash, ObjectType.DEBUGINFO, null);
 	}
 
-	private String filename;
-	private int crc;
-	private byte[] hash;
+	/**
+	 * {@return a new ExternalDebugInfo instance created using the specified Build-Id value}
+	 * @param buildId hex string
+	 */
+	public static ExternalDebugInfo forBuildId(String buildId) {
+		return new ExternalDebugInfo(null, 0, buildId, ObjectType.DEBUGINFO, null);
+	}
+
+	/**
+	 * {@return a new ExternalDebugInfo instance created using the specified debuglink values}
+	 * @param debugLinkFilename filename from debuglink section
+	 * @param crc crc32 from debuglink section
+	 */
+	public static ExternalDebugInfo forDebugLink(String debugLinkFilename, int crc) {
+		return new ExternalDebugInfo(debugLinkFilename, crc, null, ObjectType.DEBUGINFO, null);
+	}
+
+	private final String filename;
+	private final int crc;
+	private final String buildId;
+	private final ObjectType objectType;
+	private final String extra;
 
 	/**
 	 * Constructor to create an {@link ExternalDebugInfo} instance.
 	 * 
 	 * @param filename filename of external debug file, or null
 	 * @param crc crc32 of external debug file, or 0 if no filename 
-	 * @param hash build-id hash digest found in ".note.gnu.build-id" section, or null if
+	 * @param buildId build-id hash digest found in ".note.gnu.build-id" section, or null if
 	 * not present 
+	 * @param objectType {@link ObjectType} specifies what kind of debug file is specified by the
+	 * other info  
+	 * @param extra additional information used by {@link ObjectType#SOURCE} 
 	 */
-	public ExternalDebugInfo(String filename, int crc, byte[] hash) {
+	public ExternalDebugInfo(String filename, int crc, String buildId, ObjectType objectType,
+			String extra) {
 		this.filename = filename;
 		this.crc = crc;
-		this.hash = hash;
+		this.buildId = buildId;
+		this.objectType = objectType;
+		this.extra = extra;
 	}
 
 	/**
@@ -72,7 +100,7 @@ public class ExternalDebugInfo {
 	 * 
 	 * @return boolean true if filename is available, false if not
 	 */
-	public boolean hasFilename() {
+	public boolean hasDebugLink() {
 		return filename != null && !filename.isBlank();
 	}
 
@@ -95,19 +123,38 @@ public class ExternalDebugInfo {
 	}
 
 	/**
-	 * Return the build-id hash digest.
+	 * Return the build-id.
 	 * 
-	 * @return byte array containing the build-id hash (usually 20 bytes)
+	 * @return build-id hash string
 	 */
-	public byte[] getHash() {
-		return hash;
+	public String getBuildId() {
+		return buildId;
+	}
+
+	/**
+	 * {@return true if buildId is available, false if not}
+	 */
+	public boolean hasBuildId() {
+		return buildId != null && !buildId.isBlank();
+	}
+
+	public ObjectType getObjectType() {
+		return objectType;
+	}
+
+	public String getExtra() {
+		return extra;
+	}
+
+	public ExternalDebugInfo withType(ObjectType newObjectType, String newExtra) {
+		return new ExternalDebugInfo(extra, crc, buildId, newObjectType, newExtra);
 	}
 
 	@Override
 	public String toString() {
-		return String.format("ExternalDebugInfo [filename=%s, crc=%s, hash=%s]",
-			filename,
-			Integer.toHexString(crc),
-			NumericUtilities.convertBytesToString(hash));
+		return String.format(
+			"ExternalDebugInfo [filename=%s, crc=%s, hash=%s, objectType=%s, extra=%s]", filename,
+			crc, buildId, objectType, extra);
 	}
+
 }

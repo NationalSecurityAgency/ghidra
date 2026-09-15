@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,8 @@ import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import ghidra.program.model.pcode.PcodeOp;
+
 /**
  * A mutable, but fixed-size, buffer of taint sets
  * 
@@ -32,6 +34,18 @@ import java.util.stream.Stream;
  * do not (yet) have a {@code parse(String)} method.
  */
 public class TaintVec {
+
+	/**
+	 * Create a vector of taint sets
+	 * 
+	 * @param op the originating p-code op
+	 * @param taints the taint set
+	 * @return the new vector
+	 */
+	public static TaintVec of(PcodeOp op, TaintSet... taints) {
+		return new TaintVec(taints, op);
+	}
+
 	/**
 	 * Create a vector of empty taint sets
 	 * 
@@ -74,6 +88,14 @@ public class TaintVec {
 	private TaintSet[] sets;
 	private List<TaintSet> setsView;
 	public final int length;
+	private final PcodeOp originatingOp;
+
+	private TaintVec(TaintSet[] sets, PcodeOp op) {
+		this.sets = sets;
+		this.setsView = Collections.unmodifiableList(Arrays.asList(sets));
+		this.length = sets.length;
+		this.originatingOp = op;
+	}
 
 	/**
 	 * Create a new uninitialized taint vector of the given length
@@ -81,9 +103,17 @@ public class TaintVec {
 	 * @param length the length
 	 */
 	public TaintVec(int length) {
-		this.sets = new TaintSet[length];
-		this.setsView = Collections.unmodifiableList(Arrays.asList(sets));
-		this.length = sets.length;
+		this(new TaintSet[length], null);
+	}
+
+	/**
+	 * Create a new uninitialized taint vector of the given length
+	 * 
+	 * @param length the length
+	 * @param op the originating op
+	 */
+	public TaintVec(int length, PcodeOp op) {
+		this(new TaintSet[length], op);
 	}
 
 	@Override
@@ -356,7 +386,25 @@ public class TaintVec {
 		return this;
 	}
 
+	/**
+	 * Common shifting behaviors
+	 */
 	public enum ShiftMode {
+		/**
+		 * No bound is applied to the shift. Values that fall off the edge are dropped. Furthermore,
+		 * if the shift is greater than the length, all the values will fall off the edge and be
+		 * dropped.
+		 * 
+		 * <pre>
+		 * +---+------+
+		 * | 0 | 1234 |
+		 * | 1 | _123 |
+		 * | 2 | __12 |
+		 * | 3 | ___1 |
+		 * | 4 | ____ |
+		 * +---+------+
+		 * </pre>
+		 */
 		UNBOUNDED {
 			@Override
 			int adjustRight(int right, int length) {
@@ -368,6 +416,20 @@ public class TaintVec {
 				return src;
 			}
 		},
+		/**
+		 * Only the lowest required bits are taken for the shift amount, i.e., the remainder when
+		 * divided by the length, often a power of 2. Values that fall off the edge are dropped.
+		 * 
+		 * <pre>
+		 * +---+------+
+		 * | 0 | 1234 |
+		 * | 1 | _123 |
+		 * | 2 | __12 |
+		 * | 3 | ___1 |
+		 * | 4 | 1234 | (Only the lowest 2 bits of the shift amount are considered)
+		 * +---+------+
+		 * </pre>
+		 */
 		REMAINDER {
 			@Override
 			int adjustRight(int right, int length) {
@@ -379,6 +441,21 @@ public class TaintVec {
 				return src;
 			}
 		},
+		/**
+		 * Only the lowest required bits are taken for the shift amount, i.e., the remainder when
+		 * divided by the length, often a power of 2. (Even if unbounded, a circular shift yields
+		 * the same result.) Values that fall off the edge are cycled to the opposite end.
+		 * 
+		 * <pre>
+		 * +---+------+
+		 * | 0 | 1234 |
+		 * | 1 | 4123 |
+		 * | 2 | 3412 |
+		 * | 3 | 2341 |
+		 * | 4 | 1234 |
+		 * +---+------+
+		 * </pre>
+		 */
 		CIRCULAR {
 			@Override
 			int adjustRight(int right, int length) {
@@ -404,6 +481,7 @@ public class TaintVec {
 	 * Shift this vector some number of elements, in place
 	 * 
 	 * @param right the number of elements to shift right, or negative for left
+	 * @param mode the behavior of the shift
 	 * @return this vector
 	 */
 	public TaintVec setShifted(int right, ShiftMode mode) {
@@ -451,7 +529,7 @@ public class TaintVec {
 		TaintVec vec = new TaintVec(length);
 		int shift = isBigEndian ? this.length - length : 0;
 		for (int i = 0; i < length; i++) {
-			vec.sets[i] = vec.sets[i + shift];
+			vec.sets[i] = this.sets[i + shift];
 		}
 		return vec;
 	}
@@ -500,5 +578,37 @@ public class TaintVec {
 			vec.sets[start + i] = ext;
 		}
 		return vec;
+	}
+
+	/**
+	 * Extract a subpiece of this vector
+	 * 
+	 * @param offset the offset into this vector
+	 * @param length the number of sets to extract
+	 * @return the resulting vector
+	 */
+	public TaintVec sub(int offset, int length) {
+		TaintVec vec = new TaintVec(length);
+		for (int i = 0; i < length; i++) {
+			vec.sets[i] = this.sets[i + offset];
+		}
+		return vec;
+	}
+
+	/**
+	 * @return the originating op
+	 */
+	public PcodeOp getOriginatingOp() {
+		return originatingOp;
+	}
+
+	/**
+	 * Supply the originating op
+	 * 
+	 * @param op originating op
+	 * @return the tagged TaintVec
+	 */
+	public TaintVec withOp(PcodeOp op) {
+		return new TaintVec(sets, op);
 	}
 }

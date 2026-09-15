@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,15 +25,15 @@ package ghidra.util.datastruct;
 public interface Array {
 
     /**
-     * Removes the value at that index.  If the array is of primitive type (int, short, etc),
-     * then "removing" the value is equivilent to setting the value to 0;
-     * @param index int index into the array to remove.
-     */
+	 * Removes the value at that index.  If the array is of primitive type (int, short, etc),
+	 * then "removing" the value is equivalent to setting the value to 0;
+	 * @param index int index into the array to remove.
+	 */
     void remove(int index);
 
     /**
-     * Returns the index of the last non-null or non-zero element in the array.
-     */
+	 * {@return the index of the last non-null or non-zero element in the array}
+	 */
     int getLastNonEmptyIndex();
 
 	/**

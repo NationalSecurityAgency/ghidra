@@ -15,6 +15,9 @@
  */
 package ghidra.features.bsim.gui.overview;
 
+import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.program.util.ProgramEvent.*;
+
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.MouseEvent;
@@ -36,6 +39,7 @@ import ghidra.features.bsim.gui.search.dialog.BSimSearchSettings;
 import ghidra.features.bsim.gui.search.results.BSimSearchInfoDisplayDialog;
 import ghidra.features.bsim.query.BSimServerInfo;
 import ghidra.features.bsim.query.protocol.ResponseNearestVector;
+import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
@@ -62,6 +66,7 @@ public class BSimOverviewProvider extends ComponentProviderAdapter {
 	private BSimServerInfo serverInfo;
 
 	private BSimSearchSettings settings;
+	private DomainObjectListener listener;
 
 	public BSimOverviewProvider(BSimSearchPlugin plugin, BSimServerInfo serverInfo, Program program,
 			LSHVectorFactory vFactory, BSimSearchSettings settings) {
@@ -87,6 +92,13 @@ public class BSimOverviewProvider extends ComponentProviderAdapter {
 
 		createActions();
 		updateSubTitle();
+		listener = ev -> {
+			if (ev.contains(SYMBOL_RENAMED, RESTORED)) {
+				overviewModel.fireTableDataChanged();
+			}
+		};
+		program.addListener(listener);
+
 	}
 
 	public Program getProgram() {
@@ -217,6 +229,7 @@ public class BSimOverviewProvider extends ComponentProviderAdapter {
 	public void componentHidden() {
 		super.componentHidden();
 		if (plugin != null) {
+			program.removeListener(listener);
 			plugin.providerClosed(this);
 		}
 	}

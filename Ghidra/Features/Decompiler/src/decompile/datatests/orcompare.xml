@@ -25,5 +25,5 @@ c1e20409d07510833d920f000007ba02
   <com>quit</com>
 </script>
 <stringmatch name="Compare INT_OR #1" min="1" max="1">if \(a == 10 \|\| b == 0x14\)</stringmatch>
-<stringmatch name="Compare INT_OR #2" min="1" max="1">if \(\(y != 200 &amp;&amp; x != 100\) &amp;&amp; z != 300\)</stringmatch>
+<stringmatch name="Compare INT_OR #2" min="1" max="1">if \(\(y == 200 \|\| x == 100\) \|\| z == 300\)</stringmatch>
 </decompilertest>

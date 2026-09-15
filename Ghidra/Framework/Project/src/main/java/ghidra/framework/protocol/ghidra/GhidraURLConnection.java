@@ -36,6 +36,11 @@ public class GhidraURLConnection extends URLConnection {
 		 */
 		UNAUTHORIZED(401, "Unauthorized"),
 		/**
+		 * Ghidra Status-Code 403: Forbidden by client allow list.
+		 * This status code occurs when repository access is denied.
+		 */
+		FORBIDDEN(403, "Forbidden"),
+		/**
 		 * Ghidra Status-Code 404: Not Found.
 		 * This status code occurs when repository or project does not exist.
 		 */
@@ -49,6 +54,8 @@ public class GhidraURLConnection extends URLConnection {
 		 * Ghidra Status-Code 503: Unavailable.
 		 * This status code includes a variety of connection errors
 		 * which are reported/logged by the Ghidra Server support code.
+		 * This error may also occur when the connection is not allowed
+		 * by the user (see {@link DefaultGhidraUrlAllowListProvider}).
 		 */
 		UNAVAILABLE(503, "Unavailable");
 
@@ -149,7 +156,7 @@ public class GhidraURLConnection extends URLConnection {
 	public void setReadOnly(boolean state) {
 		if (connected)
 			throw new IllegalStateException("Already connected");
-		if (GhidraURL.isLocalProjectURL(url) && !state) {
+		if (GhidraURL.isLocalURL(url) && !state) {
 			// local project write-access not supported due to inadequate cleanup/disposal strategy
 			throw new UnsupportedOperationException("write access to local projects not supported");
 		}
@@ -310,10 +317,16 @@ public class GhidraURLConnection extends URLConnection {
 		// will be established with a RepositoryAdapter supplied by the connector.
 
 		// Obtain connected transient project for repository and complete connection
-		TransientProjectManager transientProjectManager =
-			TransientProjectManager.getTransientProjectManager();
-		TransientProjectData transientProjectData =
-			transientProjectManager.getTransientProject(protocolConnector, readOnly);
+		TransientProjectData transientProjectData = null;
+		try {
+			TransientProjectManager transientProjectManager =
+				TransientProjectManager.getTransientProjectManager();
+			transientProjectData =
+				transientProjectManager.getTransientProject(protocolConnector, readOnly);
+		}
+		catch (IOException e) {
+			// ignore - rely on status code
+		}
 
 		connected = true;
 		statusCode = protocolConnector.getStatusCode();

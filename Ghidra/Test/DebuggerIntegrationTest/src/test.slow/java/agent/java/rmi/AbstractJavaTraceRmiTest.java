@@ -45,6 +45,7 @@ import ghidra.framework.plugintool.PluginsConfiguration;
 import ghidra.framework.plugintool.util.*;
 import ghidra.program.model.address.Address;
 import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.target.path.PathFilter;
@@ -401,22 +402,22 @@ public abstract class AbstractJavaTraceRmiTest extends AbstractGhidraHeadedDebug
 		return new MemDump(address, buf.toByteArray());
 	}
 
-	protected ManagedDomainObject openDomainObject(String path) throws Exception {
+	protected ManagedDomainObject<Trace> openTrace(String path) throws Exception {
 		DomainFile dfx = waitForPass(() -> {
 			DomainFile df = env.getProject().getProjectData().getFile(path);
 			assertNotNull(df);
 			return df;
 		}, TIMEOUT_SECONDS * 1000, 500);
-		return new ManagedDomainObject(dfx, false, false, monitor);
+		return new ManagedDomainObject<>(dfx, Trace.class, monitor);
 	}
 
-	protected ManagedDomainObject waitDomainObject(String path) throws Exception {
+	protected ManagedDomainObject<Trace> waitTrace(String path) throws Exception {
 		DomainFile df;
 		long start = System.currentTimeMillis();
 		while (true) {
 			df = env.getProject().getProjectData().getFile(path);
 			if (df != null) {
-				return new ManagedDomainObject(df, false, false, monitor);
+				return new ManagedDomainObject<Trace>(df, Trace.class, monitor);
 			}
 			Thread.sleep(1000);
 			if (System.currentTimeMillis() - start > 30000) {

@@ -437,6 +437,8 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 
 		final Language lang = language;
 		final CompilerSpec cspec = compilerSpec;
+
+		// Use ProgramAddressFactory to provide stack space
 		final AddressFactory addrFactory = new ProgramAddressFactory(lang, cspec, s -> null);
 
 		super.setProgramArchitecture(new ProgramArchitecture() {
@@ -578,8 +580,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 	 */
 	public void clearProgramArchitecture(TaskMonitor monitor)
 			throws CancelledException, IOException, LockException {
-		lock.acquire();
-		try {
+		try (Lock.Closeable c = lock.write()) {
 
 			if (!isArchitectureChangeAllowed()) {
 				throw new UnsupportedOperationException(
@@ -612,10 +613,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 			}
 
 			defaultListener.programArchitectureChanged(this);
-		}
-		finally {
 			invalidateCache();
-			lock.release();
 		}
 	}
 
@@ -662,8 +660,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 			CancelledException, LockException, UnsupportedOperationException,
 			IncompatibleLanguageException {
 
-		lock.acquire();
-		try {
+		try (Lock.Closeable c = lock.write()) {
 
 			if (!isArchitectureChangeAllowed()) {
 				throw new UnsupportedOperationException(
@@ -733,6 +730,10 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 					}
 				}
 
+				// Use ProgramAddressFactory to provide stack space
+				final AddressFactory addrFactory =
+					new ProgramAddressFactory(language, compilerSpec, s -> null);
+
 				ProgramArchitecture programArchitecture = new ProgramArchitecture() {
 
 					@Override
@@ -747,7 +748,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 
 					@Override
 					public AddressFactory getAddressFactory() {
-						return language.getAddressFactory();
+						return addrFactory;
 					}
 				};
 
@@ -766,7 +767,6 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 		}
 		finally {
 			invalidateCache();
-			lock.release();
 		}
 	}
 
@@ -873,15 +873,15 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 	}
 
 	/**
-	 * Get the number of active transactions
-	 * @return number of active transactions
+	 * Get the number of active datatype manager transactions
+	 * @return number of active datatype manager transactions
 	 */
 	protected int getTransactionCount() {
 		return transactionCount;
 	}
 
 	@Override
-	public void endTransaction(int transactionID, boolean commit) {
+	public boolean endTransaction(int transactionID, boolean commit) {
 		boolean restored = false;
 		synchronized (this) {
 			if (transaction == null) {
@@ -917,6 +917,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 			invalidateCache();
 			notifyRestored();
 		}
+		return transaction == null && !restored;
 	}
 
 	public void undo() {

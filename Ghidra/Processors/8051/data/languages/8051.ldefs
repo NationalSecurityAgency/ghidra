@@ -50,4 +50,16 @@
     <compiler name="default" spec="mx51.cspec" id="default"/>
     <external_name tool="IDA-PRO" name="8051"/>
   </language>
+  <language processor="8051"
+            endian="big"
+            size="24"
+            variant="cip-51"
+            version="1.0"
+            slafile="cip-51.sla"
+            processorspec="cip-51.pspec"
+            manualindexfile="../manuals/8051.idx"
+            id="8051:BE:24:cip-51">
+    <description>Silicon Labs CIP-51 Microcontroller Family</description>
+    <compiler name="default" spec="keil-cx51.cspec" id="default"/>
+  </language>
 </language_definitions>

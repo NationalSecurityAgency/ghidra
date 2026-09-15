@@ -53,14 +53,13 @@ public class DataTypeArchiveIDTest extends AbstractGenericTest {
 			Map.entry("typeinfo/golang/golang_1.20_anybit_any.gdt", "3533817003441909616"),
 			Map.entry("typeinfo/golang/golang_1.21_anybit_any.gdt", "3574190573109087960"),
 			Map.entry("typeinfo/golang/golang_1.22_anybit_any.gdt", "3596108668808850319"),
-			Map.entry("typeinfo/golang/golang_1.23_anybit_any.gdt", "3629085086035854850"),
-			Map.entry("typeinfo/rust/rust-common.gdt", "3557867258392862055"));
+			Map.entry("typeinfo/golang/golang_1.23_anybit_any.gdt", "3629085086035854850"));
 	//@formatter:on
 
 	private Map<ResourceFile, String> getCurrentGdts() {
 		return Application.findFilesByExtensionInApplication(".gdt")
 				.stream()
-				.filter(f -> f.getAbsolutePath().contains("/data/typeinfo/"))
+				.filter(f -> f.getAbsolutePath().replace('\\', '/').contains("/data/typeinfo/"))
 				.collect(Collectors.toMap(Function.identity(), f -> getGdtUniversalId(f)));
 	}
 
@@ -80,7 +79,7 @@ public class DataTypeArchiveIDTest extends AbstractGenericTest {
 	}
 
 	private String getGdtRelativePath(ResourceFile gdtFile) {
-		String path = gdtFile.getAbsolutePath();
+		String path = gdtFile.getAbsolutePath().replace('\\', '/');
 		int ix = path.indexOf("/typeinfo/");
 		path = path.substring(ix + 1);
 		return path;

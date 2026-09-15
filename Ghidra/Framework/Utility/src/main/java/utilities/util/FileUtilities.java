@@ -19,9 +19,12 @@ import java.awt.Desktop;
 import java.io.*;
 import java.net.URI;
 import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.FileSystem;
+import java.nio.file.attribute.*;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.*;
@@ -385,8 +388,37 @@ public final class FileUtilities {
 	}
 
 	/**
+	 * Create {@code file} with owner-only permissions and return a stream for writing.
+	 * The stream is opened on the same file handle used to create the file
+	 * (O_CREAT|O_EXCL on POSIX / CREATE_NEW on Windows), so there is no second path
+	 * lookup between creation and write.
+	 * @param file file to be created and written
+	 * @return file output stream
+	 * @throws IOException if operation fails
+	 */
+	public static OutputStream newOwnerPrivateFileOutputStream(File file) throws IOException {
+		Path path = file.toPath();
+
+		if (file.exists() && !file.canWrite()) {
+			file.setWritable(true, true);
+		}
+		Files.deleteIfExists(path);
+
+		Set<OpenOption> opts = Set.of(StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+		try {
+			FileAttribute<Set<PosixFilePermission>> perms =
+				PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------"));
+			return Channels.newOutputStream(FileChannel.open(path, opts, perms));
+		}
+		catch (UnsupportedOperationException e) {
+			// Non-POSIX (Windows): rely on parent-directory ACL, as documented
+			return Channels.newOutputStream(FileChannel.open(path, opts));
+		}
+	}
+
+	/**
 	 * Delete a file or directory and all of its contents
-	 * 
+	 *
 	 * @param dir the directory to delete
 	 * @return true if delete was successful. If false is returned, a partial
 	 *         delete may have occurred.
@@ -842,12 +874,75 @@ public final class FileUtilities {
 	}
 
 	/**
-	 * Returns true if the given <code>potentialParentFile</code> is the parent path of
-	 * the given <code>otherFile</code>, or if the two file paths point to the same path.
+	 * Tests if {@code otherPath} starts with {@code potentialParentPath}. The paths are
+	 * {@link Path#normalize() normalized} before comparing.
+	 *
+	 * @param potentialParentPath The path that may be the parent
+	 * @param otherPath The path that may be the child
+	 * @return true if the normalized {@code otherPath} starts with the normalized 
+	 *   {@code potentialParentPath} and the paths are {@link Paths#get valid}; otherwise false
+	 */
+	public static boolean startsWith(String potentialParentPath, String otherPath) {
+		try {
+			return Paths.get(otherPath)
+					.normalize()
+					.startsWith(Paths.get(potentialParentPath).normalize());
+		}
+		catch (InvalidPathException e) {
+			return false;
+		}
+	}
+
+	/**
+	 * Tests if {@code otherPath} starts with any of the given {@code potentialParents}. The paths 
+	 * are {@link Path#normalize() normalized} before comparing.
+	 *
+	 * @param potentialParents The paths that may be the parent
+	 * @param otherPath The path that may be the child
+	 * @return boolean true if the normalized {@code otherPath} starts with any of the given
+	 *   normalized {@code potentialParents}s and the paths are {@link Paths#get valid}; otherwise
+	 *   false
+	 */
+	public static boolean startsWith(Collection<ResourceFile> potentialParents, String otherPath) {
+		return potentialParents.stream().anyMatch(p -> startsWith(p.getAbsolutePath(), otherPath));
+	}
+
+	/**
+	 * {@return a new {@link File} object from the given {@code secureBaseDir} and 
+	 * {@code untrustedPathname} that is safe from 
+	 * <a href="https://en.wikipedia.org/wiki/Directory_traversal_attack"> path traversal 
+	 * attacks</a>}
+	 * 
+	 * @param secureBaseDir The trusted base directory from which to create the {@link File}
+	 * @param untrustedPathname A pathname relative to the {@code baseDir} used to form the new {@link File},
+	 *   possibly supplied or controlled by an attacker
+	 * @throws IOException if a path traversal attack is detected
+	 */
+	public static File getSecureFile(File secureBaseDir, String untrustedPathname)
+			throws IOException {
+		File f = new File(secureBaseDir, untrustedPathname);
+		if (!startsWith(secureBaseDir.getPath(), f.getPath())) {
+			throw new IOException("Path traversal detected! '%s' escapes '%s'"
+					.formatted(untrustedPathname, secureBaseDir));
+		}
+		return f;
+	}
+
+	/**
+	 * Returns true if the given {@code potentialParentFile} is the parent path of
+	 * the given {@code otherFile}, or if the two file paths point to the same path.
+	 * <p>
+	 * NOTE: Both files are converted to their {@link File#getCanonicalPath() canonical form} prior
+	 * to comparing their paths, which may have performance implications, particularly on Windows.
+	 * <p>
+	 * WARNING: The canonical form of a pathname may change depending on whether or not 
+	 * the file or directory exists (particularly on Windows). If any of the given {@link File} 
+	 * parameters do not exist, this method may not behave as expected.
 	 *
 	 * @param potentialParentFile The file that may be the parent
 	 * @param otherFile The file that may be the child
-	 * @return boolean true if otherFile's path is within potentialParentFile's path
+	 * @return boolean true if {@code otherFile}'s canonical path is within 
+	 *   {@code potentialParentFile}'s canonical path
 	 */
 	public static boolean isPathContainedWithin(File potentialParentFile, File otherFile) {
 		try {
@@ -869,17 +964,25 @@ public final class FileUtilities {
 	}
 
 	/**
-	 * Returns true if any of the given <code>potentialParents</code> is the parent path of or has
-	 * the same path as the given <code>otherFile</code>.
-	 *
+	 * Returns true if any of the given {@code potentialParents} is the parent path of or has
+	 * the same path as the given {@code otherFile}.
+	 * <p>
+	 * NOTE: All files are converted to their {@link File#getCanonicalPath() canonical form} prior
+	 * to comparing their paths, which may have performance implications, particularly on Windows.
+	 * <p>
+	 * WARNING: The canonical form of a pathname may change depending on whether or not 
+	 * the file or directory exists (particularly on Windows). If any of the given {@link File} 
+	 * parameters do not exist, this method may not behave as expected.
+	 * 
 	 * @param potentialParents The files that may be the parent
 	 * @param otherFile The file that may be the child
-	 * @return boolean true if otherFile's path is within any of the potentialParents' paths 
+	 * @return boolean true if {@code otherFile}'s canonical path is within any of the 
+	 *   {@code potentialParents}' canonical paths 
 	 */
 	public static boolean isPathContainedWithin(Collection<ResourceFile> potentialParents,
 			ResourceFile otherFile) {
-
-		return potentialParents.stream().anyMatch(parent -> parent.containsPath(otherFile));
+		File f = otherFile.getFile(false);
+		return potentialParents.stream().anyMatch(p -> isPathContainedWithin(p.getFile(false), f));
 	}
 
 	/**

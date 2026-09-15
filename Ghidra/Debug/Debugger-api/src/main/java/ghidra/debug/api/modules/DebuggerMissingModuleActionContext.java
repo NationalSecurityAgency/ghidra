@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,15 +22,21 @@ import ghidra.trace.model.modules.TraceModule;
 
 public class DebuggerMissingModuleActionContext extends DefaultActionContext {
 	private final TraceModule module;
+	private final long snap;
 	private final int hashCode;
 
-	public DebuggerMissingModuleActionContext(TraceModule module) {
+	public DebuggerMissingModuleActionContext(TraceModule module, long snap) {
 		this.module = Objects.requireNonNull(module);
-		this.hashCode = Objects.hash(getClass(), module);
+		this.hashCode = Objects.hash(getClass(), module, snap);
+		this.snap = snap;
 	}
 
 	public TraceModule getModule() {
 		return module;
+	}
+
+	public long getSnap() {
+		return snap;
 	}
 
 	@Override
@@ -47,6 +53,9 @@ public class DebuggerMissingModuleActionContext extends DefaultActionContext {
 			return false;
 		}
 		if (!this.module.equals(that.module)) {
+			return false;
+		}
+		if (this.snap != that.snap) {
 			return false;
 		}
 		return true;

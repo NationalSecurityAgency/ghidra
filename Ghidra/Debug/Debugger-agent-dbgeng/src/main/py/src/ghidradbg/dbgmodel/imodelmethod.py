@@ -37,9 +37,8 @@ class ModelMethod(object):
         metadata = POINTER(DbgMod.IKeyStore)()
         try:
             self._method.Call(byref(object), argcount, byref(arguments),
-                               byref(result), byref(metadata))
+                              byref(result), byref(metadata))
         except COMError as ce:
             return None
 
         return mo.ModelObject(result)
- 

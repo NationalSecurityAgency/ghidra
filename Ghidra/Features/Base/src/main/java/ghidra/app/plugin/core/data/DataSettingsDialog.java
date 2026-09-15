@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -75,7 +75,7 @@ public class DataSettingsDialog extends AbstractSettingsDialog {
 	}
 
 	private static String constructTitle(Data data) {
-		StringBuffer buffy = new StringBuffer(
+		StringBuilder buffy = new StringBuilder(
 			DataTypeSettingsDialog.constructTitle(null, data.getDataType(), false));
 		buffy.append(" at ");
 		buffy.append(data.getMinAddress().toString());
@@ -203,7 +203,8 @@ public class DataSettingsDialog extends AbstractSettingsDialog {
 
 	private static SettingsDefinition[] getCommonSettings(Program program,
 			ProgramSelection selection) throws CancelledException {
-		CommonSettingsAccumulatorTask myTask = new CommonSettingsAccumulatorTask(program, selection);
+		CommonSettingsAccumulatorTask myTask =
+			new CommonSettingsAccumulatorTask(program, selection);
 		new TaskLauncher(myTask, null);
 		if (myTask.isCancelled()) {
 			throw new CancelledException();
@@ -237,7 +238,8 @@ public class DataSettingsDialog extends AbstractSettingsDialog {
 		Program program;
 		ProgramSelection selection;
 
-		ApplyCommonSettingsTask(DataSettingsDialog dlg, Program program, ProgramSelection selection) {
+		ApplyCommonSettingsTask(DataSettingsDialog dlg, Program program,
+				ProgramSelection selection) {
 			super("Applying Settings", true, false, true);
 			this.dlg = dlg;
 			this.program = program;
@@ -356,6 +358,7 @@ public class DataSettingsDialog extends AbstractSettingsDialog {
 		return settingsDefinition.getSuggestedValues(sampleSelectionSettings);
 	}
 
+	@Override
 	protected void applySettings() throws CancelledException {
 		int txId = program.startTransaction(getTitle());
 		try {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -167,21 +167,21 @@ public class GUID {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(Conv.toHexString(data1));
+		sb.append(NumericUtilities.toPaddedHexString(data1));
 		sb.append("-");
-		sb.append(Conv.toHexString(data2));
+		sb.append(NumericUtilities.toPaddedHexString(data2));
 		sb.append("-");
-		sb.append(Conv.toHexString(data3));
+		sb.append(NumericUtilities.toPaddedHexString(data3));
 		sb.append("-");
-		sb.append(Conv.toHexString(data4[0]));
-		sb.append(Conv.toHexString(data4[1]));
+		sb.append(NumericUtilities.toPaddedHexString(data4[0]));
+		sb.append(NumericUtilities.toPaddedHexString(data4[1]));
 		sb.append("-");
-		sb.append(Conv.toHexString(data4[2]));
-		sb.append(Conv.toHexString(data4[3]));
-		sb.append(Conv.toHexString(data4[4]));
-		sb.append(Conv.toHexString(data4[5]));
-		sb.append(Conv.toHexString(data4[6]));
-		sb.append(Conv.toHexString(data4[7]));
+		sb.append(NumericUtilities.toPaddedHexString(data4[2]));
+		sb.append(NumericUtilities.toPaddedHexString(data4[3]));
+		sb.append(NumericUtilities.toPaddedHexString(data4[4]));
+		sb.append(NumericUtilities.toPaddedHexString(data4[5]));
+		sb.append(NumericUtilities.toPaddedHexString(data4[6]));
+		sb.append(NumericUtilities.toPaddedHexString(data4[7]));
 		return sb.toString();
 	}
 

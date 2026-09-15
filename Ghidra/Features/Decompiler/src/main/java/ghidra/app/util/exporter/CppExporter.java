@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,12 +41,13 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 import util.CollectionUtils;
 
-public class CppExporter extends Exporter {
+public class CppExporter extends ProgramExporter {
 
 	public static final String CREATE_C_FILE = "Create C File (.c)";
 	public static final String CREATE_HEADER_FILE = "Create Header File (.h)";
 	public static final String USE_CPP_STYLE_COMMENTS = "Use C++ Style Comments (//)";
 	public static final String EMIT_TYPE_DEFINITONS = "Emit Data-type Definitions";
+	public static final String EMIT_REFERENCED_GLOBALS = "Emit Referenced Globals";
 	public static final String FUNCTION_TAG_FILTERS = "Function Tags to Filter";
 	public static final String FUNCTION_TAG_EXCLUDE = "Function Tags Excluded";
 
@@ -56,6 +57,7 @@ public class CppExporter extends Exporter {
 	private boolean isCreateCFile = true;
 	private boolean isUseCppStyleComments = true;
 	private boolean emitDataTypeDefinitions = true;
+	private boolean emitReferencedGlobals = true;
 	private String tagOptions = "";
 
 	private Set<FunctionTag> functionTagSet = new HashSet<>();
@@ -69,7 +71,7 @@ public class CppExporter extends Exporter {
 	}
 
 	public CppExporter(DecompileOptions options, boolean createHeader, boolean createFile,
-			boolean emitTypes, boolean excludeTags, String tags) {
+			boolean emitTypes, boolean emitGlobals, boolean excludeTags, String tags) {
 		this();
 		this.options = options;
 		if (options != null) {
@@ -78,6 +80,7 @@ public class CppExporter extends Exporter {
 		isCreateHeaderFile = createHeader;
 		isCreateCFile = createFile;
 		emitDataTypeDefinitions = emitTypes;
+		emitReferencedGlobals = emitGlobals;
 		excludeMatchingTags = excludeTags;
 		if (tags != null) {
 			tagOptions = tags;
@@ -87,12 +90,15 @@ public class CppExporter extends Exporter {
 	@Override
 	public boolean export(File file, DomainObject domainObj, AddressSetView addrSet,
 			TaskMonitor monitor) throws IOException, ExporterException {
-		if (!(domainObj instanceof Program)) {
+
+		Program program;
+		try {
+			program = getProgram(domainObj);
+		}
+		catch (ClassCastException e) {
 			log.appendMsg("Unsupported type: " + domainObj.getClass().getName());
 			return false;
 		}
-
-		Program program = (Program) domainObj;
 
 		configureOptions(program);
 		configureFunctionTags(program);
@@ -164,13 +170,14 @@ public class CppExporter extends Exporter {
 		Listing listing = program.getListing();
 		FunctionIterator iterator = listing.getFunctions(addrSet, true);
 		List<Function> functions = new ArrayList<>();
+		Set<String> processedGlobals = new HashSet<>();
 		for (int i = 0; iterator.hasNext(); i++) {
 			//
 			// Write results every so many items so that we don't blow out memory
 			//
 			if (i % 10000 == 0) {
 				List<CPPResult> results = parallelDecompiler.decompileFunctions(functions);
-				writeResults(results, headerWriter, cFileWriter, chunkingMonitor);
+				writeResults(results, processedGlobals, headerWriter, cFileWriter, chunkingMonitor);
 				functions.clear();
 			}
 
@@ -184,7 +191,7 @@ public class CppExporter extends Exporter {
 
 		// handle any remaining functions
 		List<CPPResult> results = parallelDecompiler.decompileFunctions(functions);
-		writeResults(results, headerWriter, cFileWriter, chunkingMonitor);
+		writeResults(results, processedGlobals, headerWriter, cFileWriter, chunkingMonitor);
 	}
 
 	private boolean excludeFunction(Function currentFunction) {
@@ -205,26 +212,37 @@ public class CppExporter extends Exporter {
 		return excludeMatchingTags == hasTag;
 	}
 
-	private void writeResults(List<CPPResult> results, PrintWriter headerWriter,
-			PrintWriter cFileWriter, TaskMonitor monitor) throws CancelledException {
+	private void writeResults(List<CPPResult> results, Set<String> processedGlobals,
+			PrintWriter headerWriter, PrintWriter cFileWriter, TaskMonitor monitor)
+			throws CancelledException {
 		monitor.checkCancelled();
 
 		Collections.sort(results);
 
+		StringBuilder globalDecls = new StringBuilder();
 		StringBuilder headers = new StringBuilder();
 		StringBuilder bodies = new StringBuilder();
+
 		for (CPPResult result : results) {
 			monitor.checkCancelled();
 			if (result == null) {
 				continue;
 			}
-			String headerCode = result.getHeaderCode();
+			if (emitReferencedGlobals) {
+				for (String global : result.globals()) {
+					if (processedGlobals.add(global)) {
+						globalDecls.append(global);
+						globalDecls.append(EOL);
+					}
+				}
+			}
+			String headerCode = result.headerCode();
 			if (headerCode != null) {
 				headers.append(headerCode);
 				headers.append(EOL);
 			}
 
-			String bodyCode = result.getBodyCode();
+			String bodyCode = result.bodyCode();
 			if (bodyCode != null) {
 				bodies.append(bodyCode);
 				bodies.append(EOL);
@@ -237,6 +255,7 @@ public class CppExporter extends Exporter {
 			headerWriter.println(headers.toString());
 		}
 		if (cFileWriter != null) {
+			cFileWriter.print(globalDecls.toString());
 			cFileWriter.print(bodies.toString());
 		}
 	}
@@ -279,7 +298,7 @@ public class CppExporter extends Exporter {
 			DataTypeWriter dataTypeWriter =
 				new DataTypeWriter(dtm, headerWriter, isUseCppStyleComments);
 			headerWriter.write(getFakeCTypeDefinitions(dtm.getDataOrganization()));
-			dataTypeWriter.write(dtm, monitor);
+			dataTypeWriter.write(monitor);
 
 			headerWriter.println("");
 			headerWriter.println("");
@@ -292,7 +311,7 @@ public class CppExporter extends Exporter {
 			DataTypeManager dtm = program.getDataTypeManager();
 			DataTypeWriter dataTypeWriter =
 				new DataTypeWriter(dtm, cFileWriter, isUseCppStyleComments);
-			dataTypeWriter.write(dtm, monitor);
+			dataTypeWriter.write(monitor);
 		}
 
 		if (cFileWriter != null) {
@@ -339,12 +358,27 @@ public class CppExporter extends Exporter {
 	@Override
 	public List<Option> getOptions(DomainObjectService domainObjectService) {
 		ArrayList<Option> list = new ArrayList<>();
-		list.add(new Option(CREATE_HEADER_FILE, Boolean.valueOf(isCreateHeaderFile)));
-		list.add(new Option(CREATE_C_FILE, Boolean.valueOf(isCreateCFile)));
-		list.add(new Option(USE_CPP_STYLE_COMMENTS, Boolean.valueOf(isUseCppStyleComments)));
-		list.add(new Option(EMIT_TYPE_DEFINITONS, Boolean.valueOf(emitDataTypeDefinitions)));
-		list.add(new Option(FUNCTION_TAG_FILTERS, tagOptions));
-		list.add(new Option(FUNCTION_TAG_EXCLUDE, Boolean.valueOf(excludeMatchingTags)));
+		list.add(Option.newBoolean(CREATE_HEADER_FILE)
+				.value(isCreateHeaderFile)
+				.build());
+		list.add(Option.newBoolean(CREATE_C_FILE)
+				.value(isCreateCFile)
+				.build());
+		list.add(Option.newBoolean(USE_CPP_STYLE_COMMENTS)
+				.value(isUseCppStyleComments)
+				.build());
+		list.add(Option.newBoolean(EMIT_TYPE_DEFINITONS)
+				.value(emitDataTypeDefinitions)
+				.build());
+		list.add(Option.newBoolean(EMIT_REFERENCED_GLOBALS)
+				.value(emitReferencedGlobals)
+				.build());
+		list.add(Option.newString(FUNCTION_TAG_FILTERS)
+				.value(tagOptions)
+				.build());
+		list.add(Option.newBoolean(FUNCTION_TAG_EXCLUDE)
+				.value(excludeMatchingTags)
+				.build());
 		return list;
 	}
 
@@ -364,6 +398,9 @@ public class CppExporter extends Exporter {
 				}
 				else if (optName.equals(EMIT_TYPE_DEFINITONS)) {
 					emitDataTypeDefinitions = ((Boolean) option.getValue()).booleanValue();
+				}
+				else if (optName.equals(EMIT_REFERENCED_GLOBALS)) {
+					emitReferencedGlobals = ((Boolean) option.getValue()).booleanValue();
 				}
 				else if (optName.equals(FUNCTION_TAG_FILTERS)) {
 					tagOptions = (String) option.getValue();
@@ -452,31 +489,12 @@ public class CppExporter extends Exporter {
 // Inner Classes
 //==================================================================================================
 
-	private class CPPResult implements Comparable<CPPResult> {
-
-		private Address address;
-		private String bodyCode;
-		private String headerCode;
-
-		CPPResult(Address address, String headerCode, String bodyCode) {
-			this.address = address;
-			this.headerCode = headerCode;
-			this.bodyCode = bodyCode;
-		}
-
-		String getHeaderCode() {
-			return headerCode;
-		}
-
-		String getBodyCode() {
-			return bodyCode;
-		}
-
+	private record CPPResult(Address address, String headerCode, String bodyCode,
+			List<String> globals) implements Comparable<CPPResult> {
 		@Override
 		public int compareTo(CPPResult other) {
 			return address.compareTo(other.address);
 		}
-
 	}
 
 	private class DecompilerFactory extends CountingBasicFactory<DecompInterface> {
@@ -492,7 +510,7 @@ public class CppExporter extends Exporter {
 			DecompInterface decompiler = new DecompInterface();
 			decompiler.setOptions(options);
 			decompiler.openProgram(program);
-			decompiler.toggleSyntaxTree(false);		// Don't need syntax tree
+			decompiler.toggleSyntaxTree(true);
 			return decompiler;
 		}
 
@@ -532,7 +550,7 @@ public class CppExporter extends Exporter {
 			CodeUnit codeUnitAt = function.getProgram().getListing().getCodeUnitAt(entryPoint);
 			if (codeUnitAt == null || !(codeUnitAt instanceof Instruction)) {
 				return new CPPResult(entryPoint, function.getPrototypeString(false, false) + ';',
-					null);
+					null, List.of());
 			}
 
 			monitor.setMessage("Decompiling " + function.getName());
@@ -546,14 +564,24 @@ public class CppExporter extends Exporter {
 					monitor.incrementProgress(1);
 					return new CPPResult(entryPoint, null,
 						"/*" + EOL + "Unable to decompile '" + function.getName() + "'" + EOL +
-							"Cause: " + errorMessage + EOL + "*/" + EOL);
+							"Cause: " + errorMessage + EOL + "*/" + EOL,
+						List.of());
 				}
 				return null;
 			}
 
 			DecompiledFunction decompiledFunction = dr.getDecompiledFunction();
+			List<String> globals =
+				CollectionUtils.asStream(dr.getHighFunction().getGlobalSymbolMap().getSymbols())
+						.map(hsym -> {
+							String dt = hsym.getDataType().getDisplayName();
+							String name = hsym.getName();
+							String space = dt.endsWith("*") ? "" : " ";
+							return "%s%s%s;".formatted(dt, space, name);
+						})
+						.toList();
 			return new CPPResult(entryPoint, decompiledFunction.getSignature(),
-				decompiledFunction.getC());
+				decompiledFunction.getC(), globals);
 		}
 	}
 

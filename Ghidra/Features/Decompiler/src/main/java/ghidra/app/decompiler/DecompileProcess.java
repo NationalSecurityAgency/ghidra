@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -169,7 +169,7 @@ public class DecompileProcess {
 				if (!getAndSetErrorDisplayed()) {
 					String err = new String(nativeProcess.getErrorStream().readAllBytes());
 					String errorDetail = "Decompiler executable may not be compatible with your system and may need to be rebuilt.\n" +
-							"(see InstallationGuide.html, 'Building Native Components').\n\n" +
+							"(see GettingStarted.md, 'Building Native Components').\n\n" +
 							err;		
 					Msg.showError(this, null, "Failed to launch Decompiler process", errorDetail);
 				}
@@ -304,6 +304,17 @@ public class DecompileProcess {
 		throw new DecompileException(type, message);
 	}
 
+	private void generateWarning() throws IOException {
+		stringDecoder.open(1 << 16, programSource);
+		int type = readToBuffer(stringDecoder);
+		if (type != 19) {
+			throw new IOException("GHIDRA/decompiler alignment error");
+		}
+		stringDecoder.endIngest();
+		Msg.warn(this, stringDecoder.toString());
+		stringDecoder.clear();
+	}
+
 	private void readResponse(ByteIngest mainResponse) throws IOException, DecompileException {
 		mainResponse.clear();
 		readToResponse();
@@ -420,20 +431,23 @@ public class DecompileProcess {
 					currentResponse.endIngest();
 					currentResponse = null;		// Reset current buffer as a native message may follow
 					break;
-				case 16:			// Beginning of any native message from the decompiler
-					if (currentResponse != null) {	// Beginning of native message before end of main response
+				case 16:			// Beginning of any error message from the decompiler
+					if (currentResponse != null) {	// If error message comes before end of main response
 						currentResponse.clear();	// Don't try to parse main response
 					}
 					currentResponse = stringDecoder;
 					currentResponse.open(1 << 20, programSource);
 					break;
-				case 17:			// End of the native message from the decompiler
+				case 17:			// End of the error message from the decompiler
 					if (currentResponse == null) {
 						throw new IOException("Mismatched message header");
 					}
 					currentResponse.endIngest();
-					callback.setNativeMessage(currentResponse.toString());
+					callback.setErrorMessage(currentResponse.toString());
 					currentResponse = null;
+					break;
+				case 18:			// Beginning of informational message
+					generateWarning();
 					break;
 				default:
 					throw new IOException("GHIDRA/decompiler alignment error");

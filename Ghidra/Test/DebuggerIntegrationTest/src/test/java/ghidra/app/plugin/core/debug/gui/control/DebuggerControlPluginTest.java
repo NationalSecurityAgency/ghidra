@@ -54,11 +54,13 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.data.ShortDataType;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.util.ProgramLocation;
+import ghidra.trace.database.ToyDBTraceBuilder.ToySchemaBuilder;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.TraceExecutionState;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.program.TraceVariableSnapProgramView;
 import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.schema.SchemaContext;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.Scheduler;
 import ghidra.trace.model.time.schedule.TraceSchedule;
@@ -247,17 +249,26 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 			() -> rmiMethodStepOut);
 	}
 
+	SchemaContext buildContext() {
+		return new ToySchemaBuilder()
+				.noRegisterGroups()
+				.useRegistersPerFrame()
+				.build();
+	}
+
 	TraceThread createToyLoopTrace() throws Throwable {
 		createAndOpenTrace();
 
 		Address start = tb.addr(0x00400000);
 		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject(buildContext(), "Target");
 			Assembler asm = Assemblers.getAssembler(tb.language);
 			AssemblyBuffer buf = new AssemblyBuffer(asm, start);
 			buf.assemble("br 0x" + start);
 
 			thread = tb.getOrAddThread("Threads[0]", 0);
+			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), tb.host, 1);
 			tb.exec(0, thread, 0, "pc = 0x" + start + ";");
 			tb.trace.getMemoryManager().putBytes(0, start, ByteBuffer.wrap(buf.getBytes()));
 		}
@@ -282,8 +293,10 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 	}
 
 	/**
-	 * Tests the UI so it does not error when the user presses resume after already stepped into a
-	 * pcode instruction.
+	 * Tests the UI so it does not error when the user presses resume after already stepping into a
+	 * p-code instruction.
+	 * 
+	 * @throws Throwable because
 	 */
 	@Test
 	public void testEmulateResumeActionAfterPcodeStep() throws Throwable {
@@ -291,7 +304,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
 
 		traceManager.activateThread(thread);
-		traceManager.activateTime(TraceSchedule.parse("0:.t0-2"));
+		traceManager.activateTime(TraceSchedule.parse("0:.t%d-2".formatted(thread.getKey())));
 		waitForSwing();
 
 		performEnabledAction(null, controlPlugin.actionEmulateResume, true);
@@ -335,7 +348,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 
 		assertFalse(controlPlugin.actionEmulateStepBack.isEnabled());
 
-		traceManager.activateTime(TraceSchedule.parse("0:t0-1"));
+		traceManager.activateTime(TraceSchedule.parse("0:t%d-1".formatted(thread.getKey())));
 		waitForSwing();
 
 		performEnabledAction(null, controlPlugin.actionEmulateStepBack, true);
@@ -354,7 +367,8 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 
 		performEnabledAction(null, controlPlugin.actionEmulateStepInto, true);
 
-		assertEquals(TraceSchedule.parse("0:t0-1"), traceManager.getCurrent().getTime());
+		assertEquals(TraceSchedule.parse("0:t%d-1".formatted(thread.getKey())),
+			traceManager.getCurrent().getTime());
 	}
 
 	@Test
@@ -367,7 +381,8 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 
 		performEnabledAction(null, controlPlugin.actionEmulateSkipOver, true);
 
-		assertEquals(TraceSchedule.parse("0:t0-s1"), traceManager.getCurrent().getTime());
+		assertEquals(TraceSchedule.parse("0:t%d-s1".formatted(thread.getKey())),
+			traceManager.getCurrent().getTime());
 	}
 
 	protected void create2SnapTrace() throws Throwable {
@@ -419,6 +434,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 		createAndOpenTrace();
 		TraceVariableSnapProgramView view = tb.trace.getProgramView();
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject("Target");
 			tb.getOrAddThread("Threads[0]", 0);
 			tb.trace.getMemoryManager()
 					.createRegion("Memory[bin:.text]", 0, tb.range(0x00400000, 0x00401000),
@@ -450,15 +466,19 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 
 		assertTrue(
 			helper.patchInstructionAction.isAddToPopup(listingProvider.getActionContext(null)));
+		long snapBefore = traceManager.getCurrent().getViewSnap();
 		Instruction ins =
 			helper.patchInstructionAt(tb.addr(0x00400123), "imm r0,#0x0", "imm r0,#0x3d2");
 		assertEquals(2, ins.getLength());
 
+		waitForPass(() -> assertNotEquals(snapBefore, traceManager.getCurrent().getViewSnap()));
 		long snap = traceManager.getCurrent().getViewSnap();
 		assertTrue(Lifespan.isScratch(snap));
 		byte[] bytes = new byte[2];
-		view.getMemory().getBytes(tb.addr(0x00400123), bytes);
-		assertArrayEquals(tb.arr(0x30, 0xd2), bytes);
+		waitForPass(noExc(() -> {
+			view.getMemory().getBytes(tb.addr(0x00400123), bytes);
+			assertArrayEquals(tb.arr(0x30, 0xd2), bytes);
+		}));
 	}
 
 	@Test
@@ -471,6 +491,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 		createAndOpenTrace();
 		TraceVariableSnapProgramView view = tb.trace.getProgramView();
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject("Target");
 			tb.getOrAddThread("Threads[0]", 0);
 			tb.trace.getMemoryManager()
 					.createRegion("Memory[bin:.text]", 0, tb.range(0x00400000, 0x00401000),
@@ -500,6 +521,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 
 		goTo(listingProvider.getListingPanel(), new ProgramLocation(view, tb.addr(0x00400123)));
 		assertTrue(helper.patchDataAction.isAddToPopup(listingProvider.getActionContext(null)));
+		long snapBefore = traceManager.getCurrent().getViewSnap();
 
 		/**
 		 * TODO: There's a bug in the trace forking: Data units are not replaced when bytes changed.
@@ -508,11 +530,14 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 		/*Data data =*/ helper.patchDataAt(tb.addr(0x00400123), "0h", "5h");
 		// assertEquals(2, data.getLength());
 
+		waitForPass(() -> assertNotEquals(snapBefore, traceManager.getCurrent().getViewSnap()));
 		long snap = traceManager.getCurrent().getViewSnap();
 		assertTrue(Lifespan.isScratch(snap));
 		byte[] bytes = new byte[2];
-		view.getMemory().getBytes(tb.addr(0x00400123), bytes);
-		assertArrayEquals(tb.arr(0, 5), bytes);
+		waitForPass(noExc(() -> {
+			view.getMemory().getBytes(tb.addr(0x00400123), bytes);
+			assertArrayEquals(tb.arr(0, 5), bytes);
+		}));
 	}
 
 	@Test
@@ -527,6 +552,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 		createAndOpenTrace();
 		TraceVariableSnapProgramView view = tb.trace.getProgramView();
 		try (Transaction tx = tb.startTransaction()) {
+			tb.createRootObject("Target");
 			tb.getOrAddThread("Threads[0]", 0);
 			tb.trace.getMemoryManager()
 					.createRegion("Memory[bin:.text]", 0, tb.range(0x00400000, 0x00401000),

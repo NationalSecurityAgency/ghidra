@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,12 +15,13 @@
  */
 package db.buffers;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.io.*;
 import java.util.Arrays;
 import java.util.Random;
 
+import org.junit.After;
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
@@ -33,6 +34,12 @@ public class DataBufferTest extends AbstractGenericTest {
 
 	public DataBufferTest() {
 		super();
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		// restore default compression: enabled
+		DataBuffer.enableCompressedSerializationOutput(true);
 	}
 
 	private void transferData(boolean useRandomFill) throws Exception {

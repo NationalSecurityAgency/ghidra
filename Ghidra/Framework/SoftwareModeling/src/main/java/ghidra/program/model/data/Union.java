@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,8 @@ public interface Union extends Composite {
 	 * @param baseDataType the bitfield base datatype (certain restrictions apply).
 	 * @param bitSize the declared bitfield size in bits.  The effective bit size may be
 	 * adjusted based upon the specified baseDataType.
-	 * @param componentName the field name to associate with this component.
+	 * @param componentName the field name to associate with this component. (may be null)
+	 * 			The name may be sanitized to convert all whitespace characters to an underscore.  
 	 * @param comment the comment to associate with this component.
 	 * @return the bitfield component created whose associated data type will
 	 * be BitFieldDataType.

@@ -88,6 +88,10 @@ public final class LanguageProviderPlugin extends Plugin implements ApplicationL
 					return false;
 				}
 
+				if (file.isLink() && file.getLinkInfo().isExternalLink()) {
+					return false;
+				}
+
 				return file.isInWritableProject() &&
 					Program.class.isAssignableFrom(file.getDomainObjectClass());
 			}
@@ -105,12 +109,12 @@ public final class LanguageProviderPlugin extends Plugin implements ApplicationL
 			}
 
 		};
-		setLanguageAction.setPopupMenuData(
-			new MenuData(new String[] { "Set Language..." }, "Language"));
+		setLanguageAction
+				.setPopupMenuData(new MenuData(new String[] { "Set Language..." }, "Language"));
 
 		setLanguageAction.setEnabled(true);
-		setLanguageAction.setHelpLocation(
-			new HelpLocation("LanguageProviderPlugin", "set language"));
+		setLanguageAction
+				.setHelpLocation(new HelpLocation("LanguageProviderPlugin", "set language"));
 		tool.addAction(setLanguageAction);
 	}
 

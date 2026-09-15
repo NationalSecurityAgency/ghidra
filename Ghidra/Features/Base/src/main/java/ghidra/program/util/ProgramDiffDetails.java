@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -899,11 +899,12 @@ public class ProgramDiffDetails {
 			fieldName = dtc.getDefaultFieldName();
 		}
 		// TODO: how should we display bitfields?
-		buf.append(indent + "Offset=" + DiffUtility.toSignedHexString(offset) + " " + "Ordinal=" +
-			ordinal + " " + fieldName + " " + actualDt.getMnemonic(actualDt.getDefaultSettings()) +
-			"  " + getCategoryName(actualDt) + " " + "DataTypeSize=" +
-			(actualDt.isZeroLength() ? 0 : actualDt.getLength()) + " " + "ComponentSize=" +
-			dtc.getLength() + " " + ((comment != null) ? comment : "") + " " + newLine);
+		buf.append(indent + "Offset=" + NumericUtilities.toSignedHexString(offset) + " " +
+			"Ordinal=" + ordinal + " " + fieldName + " " +
+			actualDt.getMnemonic(actualDt.getDefaultSettings()) + "  " + getCategoryName(actualDt) +
+			" " + "DataTypeSize=" + (actualDt.isZeroLength() ? 0 : actualDt.getLength()) + " " +
+			"ComponentSize=" + dtc.getLength() + " " + ((comment != null) ? comment : "") + " " +
+			newLine);
 		return actualDt;
 	}
 
@@ -1398,19 +1399,19 @@ public class ProgramDiffDetails {
 	}
 
 	private void addEOLCommentDetails() {
-		hasEolCommentDiffs = addSpecificCommentDetails(CodeUnit.EOL_COMMENT, "EOL-Comment");
+		hasEolCommentDiffs = addSpecificCommentDetails(CommentType.EOL, "EOL-Comment");
 	}
 
 	private void addPreCommentDetails() {
-		hasPreCommentDiffs = addSpecificCommentDetails(CodeUnit.PRE_COMMENT, "Pre-Comment");
+		hasPreCommentDiffs = addSpecificCommentDetails(CommentType.PRE, "Pre-Comment");
 	}
 
 	private void addPostCommentDetails() {
-		hasPostCommentDiffs = addSpecificCommentDetails(CodeUnit.POST_COMMENT, "Post-Comment");
+		hasPostCommentDiffs = addSpecificCommentDetails(CommentType.POST, "Post-Comment");
 	}
 
 	private void addPlateCommentDetails() {
-		hasPlateCommentDiffs = addSpecificCommentDetails(CodeUnit.PLATE_COMMENT, "Plate-Comment");
+		hasPlateCommentDiffs = addSpecificCommentDetails(CommentType.PLATE, "Plate-Comment");
 	}
 
 	/**
@@ -1455,7 +1456,7 @@ public class ProgramDiffDetails {
 
 	private void addRepeatableCommentDetails() {
 		hasRepeatableCommentDiffs =
-			addSpecificCommentDetails(CodeUnit.REPEATABLE_COMMENT, "Repeatable-Comment");
+			addSpecificCommentDetails(CommentType.REPEATABLE, "Repeatable-Comment");
 	}
 
 	/**
@@ -1490,7 +1491,7 @@ public class ProgramDiffDetails {
 		return retString;
 	}
 
-	private boolean addSpecificCommentDetails(int commentType, String commentName) {
+	private boolean addSpecificCommentDetails(CommentType commentType, String commentName) {
 		boolean hasCommentDiff = false;
 		try {
 			for (Address p1Address = minP1Address; p1Address
@@ -1862,7 +1863,7 @@ public class ProgramDiffDetails {
 
 	private void addReturnOffset(StyledDocument doc, StackFrame frame) {
 		addFrameInfo(doc, "Return Address Offset: ",
-			DiffUtility.toSignedHexString(frame.getReturnAddressOffset()));
+			NumericUtilities.toSignedHexString(frame.getReturnAddressOffset()));
 	}
 
 	private void addReturnOffset(StyledDocument doc1, StyledDocument doc2, StackFrame frame1,
@@ -1870,14 +1871,16 @@ public class ProgramDiffDetails {
 		int offset1 = frame1.getReturnAddressOffset();
 		int offset2 = frame2.getReturnAddressOffset();
 		if (offset1 != offset2) {
-			addFrameInfo(doc1, "Return Address Offset: ", DiffUtility.toSignedHexString(offset1));
-			addFrameInfo(doc2, "Return Address Offset: ", DiffUtility.toSignedHexString(offset2));
+			addFrameInfo(doc1, "Return Address Offset: ",
+				NumericUtilities.toSignedHexString(offset1));
+			addFrameInfo(doc2, "Return Address Offset: ",
+				NumericUtilities.toSignedHexString(offset2));
 		}
 	}
 
 	private void addParameterOffset(StyledDocument doc, StackFrame frame) {
 		addFrameInfo(doc, "Parameter Offset: ",
-			DiffUtility.toSignedHexString(frame.getParameterOffset()));
+			NumericUtilities.toSignedHexString(frame.getParameterOffset()));
 	}
 
 	private void addParameterOffset(StyledDocument doc1, StyledDocument doc2, StackFrame frame1,
@@ -1885,8 +1888,8 @@ public class ProgramDiffDetails {
 		int offset1 = frame1.getParameterOffset();
 		int offset2 = frame2.getParameterOffset();
 		if (offset1 != offset2) {
-			addFrameInfo(doc1, "Parameter Offset: ", DiffUtility.toSignedHexString(offset1));
-			addFrameInfo(doc2, "Parameter Offset: ", DiffUtility.toSignedHexString(offset2));
+			addFrameInfo(doc1, "Parameter Offset: ", NumericUtilities.toSignedHexString(offset1));
+			addFrameInfo(doc2, "Parameter Offset: ", NumericUtilities.toSignedHexString(offset2));
 		}
 	}
 
@@ -1925,7 +1928,7 @@ public class ProgramDiffDetails {
 			vl.dtLen = Math.max(vl.dtLen, var.getDataType().getPathName().length());
 			vl.offsetLen = Math.max(vl.offsetLen, var.getVariableStorage().toString().length());
 			vl.firstUseLen = Math.max(vl.firstUseLen,
-				DiffUtility.toSignedHexString(var.getFirstUseOffset()).length());
+				NumericUtilities.toSignedHexString(var.getFirstUseOffset()).length());
 			vl.nameLen = Math.max(vl.nameLen, var.getName().length());
 			vl.sizeLen = Math.max(vl.sizeLen, Integer.toString(var.getLength()).length());
 			vl.sourceLen = Math.max(vl.sourceLen, var.getSource().toString().length());
@@ -2125,7 +2128,7 @@ public class ProgramDiffDetails {
 		else {
 			String dt = var.getDataType().getPathName();
 			String offset = var.getVariableStorage().toString();
-			String firstUse = DiffUtility.toSignedHexString(var.getFirstUseOffset());
+			String firstUse = NumericUtilities.toSignedHexString(var.getFirstUseOffset());
 			String name = var.getName();
 			String size = "" + var.getLength();
 			String source = var.getSource().toString();

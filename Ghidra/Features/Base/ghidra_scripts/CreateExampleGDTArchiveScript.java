@@ -110,11 +110,10 @@ public class CreateExampleGDTArchiveScript extends GhidraScript {
 		};
 		
 		String includeFiles[] = {
-			headerFilePath+"/VC/VS22/10.0.190141.0",
-			headerFilePath+"/VC/VS22/10.0.19041.0/um",
+			headerFilePath+"/VC/VS22/Community/VC/Tools/MSVC/14.29.30133/include",
 			headerFilePath+"/VC/VS22/10.0.19041.0/shared",
 			headerFilePath+"/VC/VS22/10.0.19041.0/ucrt",
-			headerFilePath+"/VC/VS22/Community/VC/Tools/MSVC/14.30.30705/include",			
+			headerFilePath+"/VC/VS22/10.0.19041.0/um",
 		};
 		
 		String args[] = {
@@ -252,8 +251,6 @@ public class CreateExampleGDTArchiveScript extends GhidraScript {
 				"af_irda.h",
 				"in6addr.h",
 				"mstcpip.h",
-				"ws2def.h",
-				"winsock.h",
 				"winsock2.h",
 				"nsemail.h",
 				"nspapi.h",
@@ -472,8 +469,6 @@ public class CreateExampleGDTArchiveScript extends GhidraScript {
 				"-D_USE_ATTRIBUTES_FOR_SAL",
 				"-D_CRTBLD",
 				"-D_OPENMP_NOFORCE_MANIFEST",
-				"-DSTRSAFE_LIB",
-				"-DSTRSAFE_LIB_IMPL",
 				"-DLPSKBINFO=LPARAM",
 				"-DCONST=const",
 				"-D_CRT_SECURE_NO_WARNINGS",

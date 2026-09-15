@@ -51,7 +51,9 @@ public class CoffBinaryAnalysisCommand extends FlatProgramAPI
 
 			ByteProvider provider =
 				MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
-			return CoffFileHeader.isValid(provider);
+			CoffFileHeader header = new CoffFileHeader(provider);
+			header.parseSectionHeaders();
+			return true;
 		}
 		catch (Exception e) {
 			return false;
@@ -64,18 +66,16 @@ public class CoffBinaryAnalysisCommand extends FlatProgramAPI
 
 		ByteProvider provider =
 			MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
-		CoffFileHeader header = new CoffFileHeader(provider);
-
-		if (!CoffMachineType.isMachineTypeDefined(header.getMagic())) {
-			return false;
-
+		try {
+			CoffFileHeader header = new CoffFileHeader(provider);
+			header.parse(monitor);
+			applyDataTypes(header);
+			removeEmptyFragments();
+			return true;
 		}
-		header.parse(provider, monitor);
-
-		applyDataTypes(header);
-		removeEmptyFragments();
-
-		return true;
+		catch (CoffException e) {
+			return false;
+		}
 	}
 
 	@Override

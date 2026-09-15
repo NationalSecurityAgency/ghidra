@@ -21,12 +21,13 @@ import java.util.Set;
 
 import ghidra.app.util.bin.format.golang.rtti.*;
 import ghidra.app.util.bin.format.golang.structmapping.*;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.TypedefDataType;
-import ghidra.util.exception.CancelledException;
+import ghidra.app.util.viewer.field.AddressAnnotatedStringHandler;
+import ghidra.program.model.data.*;
+import ghidra.util.InvalidNameException;
+import ghidra.util.exception.*;
 
 /**
- * A {@link GoType} structure that defines a golang interface. 
+ * A {@link GoType} structure that defines a Go interface. 
  */
 @StructureMapping(structureName = {"runtime.interfacetype", "internal/abi.InterfaceType"})
 public class GoInterfaceType extends GoType {
@@ -54,17 +55,14 @@ public class GoInterfaceType extends GoType {
 	}
 
 	/**
-	 * Returns a slice containing the methods of this interface.
-	 * 
-	 * @return slice containing the methods of this interface
+	 * {@return a slice containing the methods of this interface}
 	 */
 	public GoSlice getMethodsSlice() {
 		return mhdr;
 	}
 
 	/**
-	 * Returns the methods defined by this interface
-	 * @return methods defined by this interface
+	 * {@return the methods defined by this interface}
 	 * @throws IOException if error reading data
 	 */
 	public List<GoIMethod> getMethods() throws IOException {
@@ -80,14 +78,59 @@ public class GoInterfaceType extends GoType {
 	}
 
 	@Override
-	public DataType recoverDataType(GoTypeManager goTypes) throws IOException {
-		DataType dt = programContext.getStructureDataType(GoIface.class);
+	public DataType recoverDataType() throws IOException {
+		GoTypeManager goTypes = programContext.getGoTypes();
+		Structure genericIfaceDT = programContext.getStructureDataType(GoIface.class);
 
-		String name = goTypes.getTypeName(this);
-		if (!dt.getName().equals(name)) {
-			dt = new TypedefDataType(goTypes.getCP(this), name, dt, goTypes.getDTM());
+		CategoryPath ifaceCP = goTypes.getCP(this);
+		String ifaceName = goTypes.getTypeName(this);
+		StructureDataType ifaceDT =
+			new StructureDataType(ifaceCP, ifaceName, genericIfaceDT.getLength(), goTypes.getDTM());
+
+		ifaceDT.replaceWith(genericIfaceDT);
+
+		goTypes.cacheRecoveredDataType(this, ifaceDT);
+
+		Structure itabStruct = getSpecializedITabStruct(ifaceCP, ifaceName, goTypes);
+
+		int itabComponentOrdinal = 0; // TODO: hacky
+		DataTypeComponentImpl genericItabDTC = ifaceDT.getComponent(itabComponentOrdinal);
+		ifaceDT.replace(itabComponentOrdinal, goTypes.getDTM().getPointer(itabStruct), -1,
+			genericItabDTC.getFieldName(), null);
+
+		return ifaceDT;
+	}
+
+	public Structure getSpecializedITabStruct(CategoryPath ifaceCP, String ifaceName,
+			GoTypeManager goTypes) throws IOException {
+		DataTypeManager dtm = goTypes.getDTM();
+
+		Structure genericItabStruct = goTypes.getGenericITabDT();
+
+		StructureDataType itabStruct = new StructureDataType(ifaceCP, ifaceName + "_itab", 0, dtm);
+		itabStruct.replaceWith(genericItabStruct);
+
+		FieldMappingInfo<GoItab> funFMI =
+			programContext.getStructureMappingInfo(GoItab.class).getFieldInfo("fun");
+		int funDTCOrdinal = funFMI.getDtc().getOrdinal();
+		//DataTypeComponentImpl funDtc = itabStruct.getComponent(funDTCOrdinal);
+		itabStruct.delete(funDTCOrdinal);
+
+		CategoryPath funcsCP = ifaceCP.extend(itabStruct.getName() + "_funcs");
+		for (GoIMethod imethod : getMethods()) {
+			FunctionDefinition methodFuncDef = imethod.getFunctionDefinition(false, goTypes);
+			try {
+				methodFuncDef.setNameAndCategory(funcsCP, imethod.getName());
+				itabStruct.add(dtm.getPointer(methodFuncDef), imethod.getName(), null);
+				methodFuncDef
+						.setCallingConvention(programContext.getDefaultCallingConventionName());
+			}
+			catch (InvalidNameException | DuplicateNameException | InvalidInputException e) {
+				throw new IOException("Error creating itab for " + ifaceName, e);
+			}
 		}
-		return dt;
+
+		return itabStruct;
 	}
 
 	@Override
@@ -105,6 +148,27 @@ public class GoInterfaceType extends GoType {
 		return sb.toString();
 	}
 	
+	protected String getTypesThatImplementInterfaceString() {
+		StringBuilder sb = new StringBuilder();
+		for (GoItab goItab : programContext.getGoTypes().getTypesThatImplementInterface(this)) {
+			if (!sb.isEmpty()) {
+				sb.append("\n");
+			}
+			try {
+				GoType type = goItab.getType();
+				sb.append(AddressAnnotatedStringHandler.createAddressAnnotationString(
+					type.getStructureContext().getStructureAddress(),
+					type.getFullyQualifiedName()));
+				sb.append(AddressAnnotatedStringHandler.createAddressAnnotationString(
+					goItab.getStructureContext().getStructureAddress(), "[itab]"));
+			}
+			catch (IOException e) {
+				sb.append("bad type info");
+			}
+		}
+		return sb.toString();
+	}
+
 	@Override
 	public boolean discoverGoTypes(Set<Long> discoveredTypes) throws IOException {
 		if (!super.discoverGoTypes(discoveredTypes)) {
@@ -121,7 +185,23 @@ public class GoInterfaceType extends GoType {
 
 	@Override
 	public boolean isValid() {
-		return super.isValid() && typ.getSize() == programContext.getPtrSize() * 2; // runtime.iface?
+		return super.isValid() && isValidSize();
+	}
+
+	private boolean isValidSize() {
+		return typ.getSize() == programContext.getPtrSize() * 2 &&
+			typ.getPtrBytes() == programContext.getPtrSize() * 2;
+	}
+
+	@Override
+	public String toString() {
+		String s = super.toString();
+
+		String implementations = getTypesThatImplementInterfaceString();
+		if (!implementations.isEmpty()) {
+			s += "\n\n// Implemented by:\n" + implementations;
+		}
+		return s;
 	}
 
 }

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--  
+
+	Log4j appender that sends messages to the console.  This is a default configuration that is only
+	used when the logging system is not correctly initialized by the application.
+	
+-->	
+<Console 	
+	name="script" 
+	target="SYSTEM_OUT">
+	<PatternLayout pattern="%-5p %m (%c{1}) %ex %n"/>  
+</Console>
+
+

@@ -24,14 +24,13 @@ import org.apache.commons.lang3.StringUtils;
 import ghidra.app.cmd.label.DemanglerCmd;
 import ghidra.app.plugin.core.analysis.ReferenceAddressPair;
 import ghidra.app.util.NamespaceUtils;
-import ghidra.app.util.demangler.DemangledObject;
-import ghidra.app.util.demangler.DemanglerUtil;
+import ghidra.app.util.PseudoDisassembler;
+import ghidra.app.util.demangler.*;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
-import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.scalar.Scalar;
@@ -56,9 +55,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		"N10__cxxabiv120__si_class_type_infoE";
 	private static final String MANGLED_VMI_CLASS_TYPEINFO_NAMESPACE =
 		"N10__cxxabiv121__vmi_class_type_infoE";
-	private static final String MANGLED_VTABLE_PREFIX = "_ZTV";
-	private static final String MANGLED_STRING_PREFIX = "_ZTS";
-	private static final String MANGLED_TYPEINFO_PREFIX = "_ZTI";
+	private static final String MANGLED_VTABLE_PREFIX = "ZTV";
+	private static final String MANGLED_STRING_PREFIX = "ZTS";
+	private static final String MANGLED_TYPEINFO_PREFIX = "ZTI";
 
 	private static final String VMI_CLASS_TYPE_INFO_STRUCTURE = "VmiClassTypeInfoStructure";
 	private static final String BASE_CLASS_TYPE_INFO_STRUCTURE = "BaseClassTypeInfoStructure";
@@ -107,10 +106,11 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 	public RTTIGccClassRecoverer(Program program, ServiceProvider serviceProvider,
 			FlatProgramAPI api, boolean createBookmarks, boolean useShortTemplates,
-			boolean nameVfunctions, boolean isDwarfLoaded, TaskMonitor monitor) throws Exception {
+			boolean nameVfunctions, boolean makeVfunctionsThisCalls, boolean isDwarfLoaded,
+			TaskMonitor monitor) throws Exception {
 
 		super(program, serviceProvider, api, createBookmarks, useShortTemplates, nameVfunctions,
-			isDwarfLoaded, monitor);
+			makeVfunctionsThisCalls, isDwarfLoaded, monitor);
 
 		this.isDwarfLoaded = isDwarfLoaded;
 
@@ -211,6 +211,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		Msg.debug(this, "Processing constructors and destructors");
 		processConstructorAndDestructors();
+
+		identifyPureVirtualFunction(recoveredClasses);
 
 		Msg.debug(this, "Creating vftable order maps");
 		createVftableOrderMap(recoveredClasses);
@@ -428,10 +430,17 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	private Symbol findAndReturnDemangledSymbol(String mangledSymbolName,
 			String specialClassNamespaceName, String classNamespaceName, String label) {
 
-		SymbolIterator symbolIterator = symbolTable.getSymbolIterator(mangledSymbolName, true);
-		if (symbolIterator.hasNext()) {
+		// check for both _ and __ prefixed mangled names
+		List<Symbol> mangledSymbols = getSymbols("_" + mangledSymbolName, true);
+		if (mangledSymbols.isEmpty()) {
+			mangledSymbols = getSymbols("__" + mangledSymbolName, true);
+		}
 
-			Symbol mangledSymbol = symbolIterator.next();
+		for (Symbol mangledSymbol : mangledSymbols) {
+			if (monitor.isCancelled()) {
+				return null;
+			}
+
 			Address symbolAddress = mangledSymbol.getAddress();
 			Namespace specialClassNamespace =
 				getOrCreateNamespace(specialClassNamespaceName, globalNamespace);
@@ -456,6 +465,20 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		}
 		return null;
+	}
+
+	private List<Symbol> getSymbols(String name, boolean caseSensitive) {
+
+		List<Symbol> symbols = new ArrayList<>();
+		SymbolIterator symbolIterator = symbolTable.getSymbolIterator(name, caseSensitive);
+		if (symbolIterator.hasNext()) {
+			if (monitor.isCancelled()) {
+				return new ArrayList<>();
+			}
+			Symbol symbol = symbolIterator.next();
+			symbols.add(symbol);
+		}
+		return symbols;
 	}
 
 	private Symbol findTypeinfoSymbolUsingMangledNamespaceString(String mangledNamespace,
@@ -1621,8 +1644,14 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			internalString = "internal_";
 		}
 
-		symbolTable.createLabel(vtable.getVfunctionTop(),
-			internalString + constructionString + VFTABLE_LABEL, classNamespace,
+		// check for non-ideal primary symbol that another analyzer may have created and remove it 
+		// so it can be replaced with a better one
+		Symbol primaryVftableSymbol = symbolTable.getPrimarySymbol(vtable.getVfunctionTop());
+		if (primaryVftableSymbol != null && primaryVftableSymbol.getName().startsWith("vfTable_")) {
+			primaryVftableSymbol.delete();
+		}
+		String vftableName = internalString + constructionString + VFTABLE_LABEL;
+		symbolTable.createLabel(vtable.getVfunctionTop(), vftableName, classNamespace,
 			SourceType.ANALYSIS);
 
 	}
@@ -2285,7 +2314,13 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			monitor.checkCancelled();
 
 			if (specialTypeinfo.isInProgramMemory()) {
-				applyTypeinfoStructure(siClassTypeInfoStructure, specialTypeinfo.getAddress());
+				Data struct =
+					applyTypeinfoStructure(siClassTypeInfoStructure, specialTypeinfo.getAddress());
+				if (struct == null) {
+					Msg.error(this,
+						specialTypeinfo.getNamespace().getName() + ": cannot apply structure");
+					continue;
+				}
 				typeinfoToStructuretypeMap.put(specialTypeinfo.getAddress(),
 					SI_CLASS_TYPE_INFO_STRUCTURE);
 			}
@@ -2332,6 +2367,12 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 				// test if creating the pointer at typeinfoAddress would overlap anything
 				// else and skip if so
 				if (!canContainPointer(typeinfoAddress)) {
+					continue;
+				}
+
+				// test to see if there is a string at the typeinfo name location in the would be
+				// typeinfo structure
+				if (!hasStringAtTypeinfoNameLocation(typeinfoAddress)) {
 					continue;
 				}
 
@@ -2428,6 +2469,36 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		updateTypeinfosWithBases(typeinfos, typeinfoMap);
 
 		return typeinfos;
+	}
+
+	/**
+	 * Method to validate the second member of the typeinfo struct is a string
+	 * @param typeinfoAddress the address of the potential typeinfo struct
+	 * @return true if what is pointed to by the typeinfoName pointer is a valid string, false otherwise
+	 */
+	private boolean hasStringAtTypeinfoNameLocation(Address typeinfoAddress) {
+
+		// first get the referenced address and verify it is an address
+		Address typeinfoNameAddress =
+			extendedFlatAPI.getPointer(typeinfoAddress.add(defaultPointerSize));
+		if (typeinfoNameAddress == null) {
+			return false;
+		}
+
+		// get defined string if defined already
+		String definedString = getDefinedStringAt(typeinfoNameAddress);
+		if (definedString != null) {
+			return true;
+		}
+
+		// get string from memory if not defined to see if ascii there
+		String stringInMem = getStringFromMemory(typeinfoNameAddress);
+		if (stringInMem != null) {
+			return true;
+		}
+
+		return false;
+
 	}
 
 	private GccTypeinfo getTypeinfo(String namespaceName, List<GccTypeinfo> typeinfos)
@@ -2725,13 +2796,19 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 	}
 
-	private Data applyTypeinfoStructure(Structure typeInfoStructure, Address typeinfoAddress)
-			throws CancelledException, AddressOutOfBoundsException, Exception {
+	private Data applyTypeinfoStructure(Structure typeInfoStructure, Address typeinfoAddress) {
 
-		api.clearListing(typeinfoAddress, typeinfoAddress.add(typeInfoStructure.getLength() - 1));
-		Data newStructure = api.createData(typeinfoAddress, typeInfoStructure);
+		try {
+			api.clearListing(typeinfoAddress,
+				typeinfoAddress.add(typeInfoStructure.getLength() - 1));
+			Data newStructure = api.createData(typeinfoAddress, typeInfoStructure);
+			return newStructure;
+		}
+		catch (CodeUnitInsertionException | CancelledException e) {
+			Msg.warn(this, "Could not apply typeinfo struct at " + typeinfoAddress.toString());
+			return null;
+		}
 
-		return newStructure;
 	}
 
 	private Structure getOrCreateVmiTypeinfoStructure(Address typeinfoAddress,
@@ -2808,7 +2885,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		}
 		mangledLabel = "_ZTS" + mangledLabel;
 
-		if (!isTypeinfoNameString(mangledLabel)) {
+		if (!isTypeinfoNameString(mangledLabel, typeinfoNameAddress)) {
 			return null;
 		}
 
@@ -2978,15 +3055,27 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		return true;
 	}
 
-	private boolean isTypeinfoNameString(String string) {
+	private boolean isTypeinfoNameString(String string, Address address) {
 
-		DemangledObject demangledObject = DemanglerUtil.demangle(string);
-		if (demangledObject == null) {
+		List<DemangledObject> demangledObjects = DemanglerUtil.demangle(program, string, address);
+		if (demangledObjects == null || demangledObjects.isEmpty()) {
 			return false;
 		}
 
-		if (demangledObject.getName().equals("typeinfo-name")) {
-			return true;
+		for (DemangledObject demangledObject : demangledObjects) {
+
+			DemanglerOptions options = demangledObject.getMangledContext().getOptions();
+
+			// Currently no good way to do this since this is in Decompiler package and GnuDemangler
+			// is in its own package. Once no longer a script but an analyzer in Base, update to 
+			// do !(options instanceof GnuDemanglerOptions)
+			if (!options.toString().contains("gnu")) {
+				continue;
+			}
+
+			if (demangledObject.getName().equals("typeinfo-name")) {
+				return true;
+			}
 		}
 		return false;
 	}
@@ -3221,7 +3310,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		assignConstructorsAndDestructorsUsingExistingNameNew(recoveredClasses);
 
 		// find gcc destructors in top of vftables
-		findVftableDestructors(recoveredClasses);
+		findVftableDestructors();
 
 		// figure out which are inlined and put on separate list to be processed later
 		separateInlinedConstructorDestructors(recoveredClasses);
@@ -3303,8 +3392,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		}
 	}
 
-	private void findVftableDestructors(List<RecoveredClass> recoveredClasses)
-			throws CancelledException {
+	private void findVftableDestructors() throws CancelledException {
 
 		for (RecoveredClass recoveredClass : recoveredClasses) {
 
@@ -3322,80 +3410,129 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 					continue;
 				}
 
-				Function firstVfunction = virtualFunctions.get(0);
-				Function secondVfunction = virtualFunctions.get(1);
-
-				Address callingAddressOfFirstVfunction =
-					getCallingAddress(secondVfunction, firstVfunction);
-				if (callingAddressOfFirstVfunction == null) {
+				Function deletingDestructor = getDeletingDestructor(virtualFunctions);
+				if (deletingDestructor == null) {
 					continue;
 				}
 
-				// TODO: eventually work into new op delete discovery
-				Address callingAddrOfOpDelete =
-					getCallingAddress(secondVfunction, "operator.delete");
-				if (callingAddrOfOpDelete == null) {
+				// find case where deleting destructor only calls operator.delete and the 
+				// destructor is just a RET instruction
+				if (getFunctionCallMap(deletingDestructor, true).keySet().size() == 1) {
+					for (Function vfunction : virtualFunctions) {
+						monitor.checkCancelled();
+
+						if (hasOnlyReturnInstruction(vfunction)) {
+							recoveredClass.addDestructor(vfunction);
+							recoveredClass.addDeletingDestructor(deletingDestructor);
+							break;
+						}
+					}
 					continue;
 				}
 
-				// if firsrVfunction is called before op delete then valid set of
-				// destructor/deleting destructor
-				if (callingAddrOfOpDelete.getOffset() > callingAddressOfFirstVfunction
-						.getOffset()) {
-					recoveredClass.addDestructor(firstVfunction);
-					recoveredClass.addDeletingDestructor(secondVfunction);
+				// find case where deleting destructor calls destructor then operator.delete
+				for (Function vfunction : virtualFunctions) {
+					monitor.checkCancelled();
+
+					// skip deleting destructor - won't call itself
+					if (vfunction.equals(deletingDestructor)) {
+						continue;
+					}
+
+					Address callingAddessOfDestructor =
+						getCallingAddress(deletingDestructor, vfunction);
+					if (callingAddessOfDestructor != null) {
+						Address callingAddrOfOpDelete =
+							getCallingAddress(deletingDestructor, "operator.delete");
+
+						if (callingAddrOfOpDelete.compareTo(callingAddessOfDestructor) > 0) {
+							recoveredClass.addDestructor(vfunction);
+							recoveredClass.addDeletingDestructor(deletingDestructor);
+						}
+
+					}
 				}
 
 			}
 		}
+	}
+
+	private boolean hasOnlyReturnInstruction(Function function) {
+
+		InstructionIterator instructions =
+			program.getListing().getInstructions(function.getBody(), true);
+
+		// get the first instruction
+		if (instructions.hasNext()) {
+			Instruction instruction = instructions.next();
+			if (instruction.getFlowType().isTerminal() && !instructions.hasNext()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private Function getDeletingDestructor(List<Function> functions) throws CancelledException {
+
+		for (Function function : functions) {
+			monitor.checkCancelled();
+
+			Map<Address, Function> map = getFunctionCallMap(function, true);
+
+			for (Address address : map.keySet()) {
+				monitor.checkCancelled();
+
+				Function calledFunction = map.get(address);
+				if (calledFunction == null) {
+					continue;
+				}
+
+				if (calledFunction.getName().equals("operator.delete")) {
+					return function;
+				}
+			}
+		}
+
+		return null;
 	}
 
 	private Address getCallingAddress(Function function, Function expectedCalledFunction)
 			throws CancelledException {
 
-		InstructionIterator instructions =
-			function.getProgram().getListing().getInstructions(function.getBody(), true);
+		Map<Address, Function> map = getFunctionCallMap(function, true);//should this be false?
 
-		while (instructions.hasNext()) {
+		for (Address address : map.keySet()) {
 			monitor.checkCancelled();
-			Instruction instruction = instructions.next();
-			if (instruction.getFlowType().isCall()) {
 
-				Function calledFunction =
-					extendedFlatAPI.getReferencedFunction(instruction.getMinAddress(), false);
+			Function calledFunction = map.get(address);
+			if (calledFunction == null) {
+				continue;
+			}
 
-				if (calledFunction == null) {
-					continue;
-				}
-				if (calledFunction.equals(expectedCalledFunction)) {
-					return instruction.getAddress();
-				}
+			if (calledFunction.equals(expectedCalledFunction)) {
+				return address;
 			}
 		}
 		return null;
-
 	}
 
-	private Address getCallingAddress(Function function, String expectedCalledFunctionName)
-			throws CancelledException {
+	private Address getCallingAddress(Function function, String name) throws CancelledException {
 
-		InstructionIterator instructions =
-			function.getProgram().getListing().getInstructions(function.getBody(), true);
+		Map<Address, Function> map = getFunctionCallMap(function, false);
 
-		while (instructions.hasNext()) {
+		for (Address address : map.keySet()) {
 			monitor.checkCancelled();
-			Instruction instruction = instructions.next();
-			if (instruction.getFlowType().isCall()) {
 
-				Function calledFunction =
-					extendedFlatAPI.getReferencedFunction(instruction.getMinAddress(), false);
-				if (calledFunction.getName().equals(expectedCalledFunctionName)) {
-					return instruction.getAddress();
-				}
+			Function calledFunction = map.get(address);
+			if (calledFunction == null) {
+				continue;
+			}
+
+			if (calledFunction.getName().equals(name)) {
+				return address;
 			}
 		}
 		return null;
-
 	}
 
 	private void removeFromIndeterminateLists(List<RecoveredClass> recoveredClasses,
@@ -3844,7 +3981,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		Address typeinfoAddress = typeinfoNameRef.subtract(defaultPointerSize);
 
-		mangledNamespaceString = MANGLED_STRING_PREFIX + mangledNamespaceString;
+		// Doesn't matter if _ or __ is prefixed because gets same result and this is manufacturing
+		// not searching for
+		mangledNamespaceString = "_" + MANGLED_STRING_PREFIX + mangledNamespaceString;
 
 		try {
 			symbolTable.createLabel(findSingleMangledString, mangledNamespaceString,
@@ -4383,68 +4522,59 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	 */
 	private boolean isPossibleFunctionPointer(Address address) throws CancelledException {
 
-		// TODO: make one that works for all casea in helper
-
-		long longValue = extendedFlatAPI.getLongValueAt(address);
-
-		Register lowBitCodeMode = program.getRegister("LowBitCodeMode");
-		if (lowBitCodeMode != null) {
-			longValue = longValue & ~0x1;
-		}
-
-		Address possibleFunctionPointer = null;
-
-		try {
-			possibleFunctionPointer = address.getNewAddress(longValue);
-		}
-		catch (AddressOutOfBoundsException e) {
+		Address referencedAddress = extendedFlatAPI.getSingleReferencedAddress(address);
+		if (referencedAddress == null) {
 			return false;
 		}
 
-		if (possibleFunctionPointer == null) {
+		Address normalizedReferencedAddress =
+			PseudoDisassembler.getNormalizedDisassemblyAddress(program, referencedAddress);
+
+		if (normalizedReferencedAddress == null) {
 			return false;
 		}
 
-		Function function = api.getFunctionAt(possibleFunctionPointer);
+		Function function = api.getFunctionAt(normalizedReferencedAddress);
 		if (function != null) {
 			return true;
 		}
 
 		AddressSetView executeSet = program.getMemory().getExecuteSet();
 
-		if (!executeSet.contains(possibleFunctionPointer)) {
+		if (!executeSet.contains(normalizedReferencedAddress)) {
 			return false;
 		}
 
-		Instruction instruction = api.getInstructionAt(possibleFunctionPointer);
+		Instruction instruction = api.getInstructionAt(normalizedReferencedAddress);
 		if (instruction != null) {
-			api.createFunction(possibleFunctionPointer, null);
+			api.createFunction(normalizedReferencedAddress, null);
 			return true;
 
 		}
 
-		boolean disassemble = api.disassemble(possibleFunctionPointer);
+		boolean disassemble = api.disassemble(normalizedReferencedAddress);
 		if (disassemble) {
 
 			// check for the case where there is conflicting data at the thumb offset function
 			// pointer and if so clear the data and redisassemble and remove the bad bookmark
-			long originalLongValue = extendedFlatAPI.getLongValueAt(address);
-			if (originalLongValue != longValue) {
-				Address offsetPointer = address.getNewAddress(originalLongValue);
-				Data dataAt = listing.getDataAt(offsetPointer);
+			//	long originalLongValue = extendedFlatAPI.getLongValueAt(address);
+			if (!referencedAddress.equals(normalizedReferencedAddress)) {
+
+				Data dataAt = listing.getDataAt(referencedAddress);
 				if (dataAt != null && dataAt.isDefined()) {
-					api.clearListing(offsetPointer);
+					api.clearListing(referencedAddress);
 					disassemble = api.disassemble(address);
 
-					Bookmark bookmark = getBookmarkAt(possibleFunctionPointer, BookmarkType.ERROR,
-						"Bad Instruction", "conflicting data");
+					Bookmark bookmark =
+						getBookmarkAt(normalizedReferencedAddress, BookmarkType.ERROR,
+							"Bad Instruction", "conflicting data");
 					if (bookmark != null) {
 						api.removeBookmark(bookmark);
 					}
 				}
 			}
 
-			api.createFunction(possibleFunctionPointer, null);
+			api.createFunction(normalizedReferencedAddress, null);
 			return true;
 		}
 		return false;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -131,18 +131,18 @@ public interface BlockModelService {
 	/**
 	 * Get new instance of the active Subroutine Block model for the current program.
 	 * @return new Subroutine Block model instance or null if program is not open
-	 * @deprecated use getActiveSubroutineModel(Program) instead
+	 * @deprecated use {@link #getActiveSubroutineModel(Program)} instead
 	 */
-	@Deprecated
+	@Deprecated(since = "9.0")
 	public CodeBlockModel getActiveSubroutineModel();
 
 	/**
 	 * Get new instance of the active Subroutine Block model for the current program.
 	 * @param includeExternals externals are included if true
 	 * @return new Subroutine Block model instance or null if program is not open
-	 * @deprecated use getActiveSubroutineModel(Program) instead
+	 * @deprecated use {@link #getActiveSubroutineModel(Program, boolean)} instead
 	 */
-	@Deprecated
+	@Deprecated(since = "9.0")
 	public CodeBlockModel getActiveSubroutineModel(boolean includeExternals);
 
 	/**
@@ -171,7 +171,7 @@ public interface BlockModelService {
 	 * @param modelName name of registered block model
 	 * @return new model instance or null if program is not open.
 	 * @throws NotFoundException if specified model is not registered
-	 * @deprecated use getNewModelByName(String, Program) instead
+	 * @deprecated use {@link #getNewModelByName(String, Program)} instead
 	 */
 	@Deprecated
 	public CodeBlockModel getNewModelByName(String modelName)
@@ -183,7 +183,7 @@ public interface BlockModelService {
 	 * @param includeExternals externals are included if true
 	 * @return new model instance or null if program is not open.
 	 * @throws NotFoundException if specified model is not registered
-	 * @deprecated use getNewModelByName(String, Program, boolean) instead
+	 * @deprecated use {@link #getNewModelByName(String, Program, boolean)} instead
 	 */
 	@Deprecated
 	public CodeBlockModel getNewModelByName(String modelName, boolean includeExternals)

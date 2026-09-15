@@ -29,8 +29,8 @@ import ghidra.debug.api.modules.ModuleMapProposal;
 import ghidra.debug.api.modules.ModuleMapProposal.ModuleMapEntry;
 import ghidra.program.model.listing.Program;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.memory.TraceObjectMemoryRegion;
-import ghidra.trace.model.modules.TraceObjectModule;
+import ghidra.trace.model.memory.TraceMemoryRegion;
+import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.util.TraceEvent;
 import ghidra.trace.util.TraceEvents;
@@ -76,8 +76,8 @@ public class ByModuleAutoMapSpec implements AutoMapSpec {
 
 	@Override
 	public boolean objectHasType(TraceObjectValue value) {
-		return value.getParent().queryInterface(TraceObjectModule.class) != null ||
-			value.getParent().queryInterface(TraceObjectMemoryRegion.class) != null;
+		return value.getParent().queryInterface(TraceModule.class) != null ||
+			value.getParent().queryInterface(TraceMemoryRegion.class) != null;
 	}
 
 	@Override

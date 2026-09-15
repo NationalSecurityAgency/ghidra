@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ import javax.security.auth.spi.LoginModule;
 import com.sun.security.auth.UserPrincipal;
 
 import generic.concurrent.io.ProcessConsumer;
-import ghidra.server.RepositoryManager;
+import ghidra.server.remote.RemoteLoggingUtil;
 import ghidra.util.DateUtils;
 import ghidra.util.timer.Watchdog;
 
@@ -209,11 +209,11 @@ public class ExternalProgramLoginModule implements LoginModule {
 			process.set(p);
 
 			ProcessConsumer.consume(p.getInputStream(), stdOutStr -> {
-				RepositoryManager.log(null, null, extProgramName + " STDOUT: " + stdOutStr, null);
+				RemoteLoggingUtil.log(extProgramName + " STDOUT: " + stdOutStr);
 			});
 
 			ProcessConsumer.consume(p.getErrorStream(), errStr -> {
-				RepositoryManager.log(null, null, extProgramName + " STDERR: " + errStr, null);
+				RemoteLoggingUtil.log(extProgramName + " STDERR: " + errStr);
 			});
 
 			PrintWriter outputWriter = new PrintWriter(p.getOutputStream());
@@ -230,8 +230,8 @@ public class ExternalProgramLoginModule implements LoginModule {
 			}
 		}
 		catch (IOException | InterruptedException e) {
-			RepositoryManager.log(null, null,
-				"Exception when executing " + extProgramName + ":" + e.getMessage(), null);
+			RemoteLoggingUtil
+					.log("Exception when executing " + extProgramName + ": " + e.getMessage());
 			throw new LoginException("Error executing external program");
 		}
 		finally {

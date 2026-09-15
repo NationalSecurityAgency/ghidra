@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,7 @@ import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.GhidraOptions;
 import ghidra.app.context.ListingActionContext;
+import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.util.viewer.field.ListingField;
 import ghidra.app.util.viewer.listingpanel.ListingModelAdapter;
@@ -35,10 +36,12 @@ import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressOutOfBoundsException;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramLocation;
+import ghidra.util.Swing;
 
 /**
  * An abstract action for patching
@@ -47,7 +50,7 @@ import ghidra.program.util.ProgramLocation;
  * This handles most of the field placement, but relies on quite a few callbacks.
  */
 public abstract class AbstractPatchAction extends DockingAction {
-	protected static final String MENU_GROUP = "Disassembly";
+	public static final String MENU_GROUP = "Disassembly";
 
 	protected final PluginTool tool;
 
@@ -56,6 +59,7 @@ public abstract class AbstractPatchAction extends DockingAction {
 	private FieldPanel fieldPanel;
 	private ListingPanel listingPanel;
 
+	private Navigatable navigatable;
 	private Program program;
 	private Address address;
 	private CodeUnit codeUnit;
@@ -157,6 +161,13 @@ public abstract class AbstractPatchAction extends DockingAction {
 	 * @param font the listing's base font
 	 */
 	protected abstract void setInputFont(Font font);
+
+	/**
+	 * {@return the navigatable that had focus when this action was performed}
+	 */
+	protected Navigatable getNavigatable() {
+		return navigatable;
+	}
 
 	/**
 	 * Get the program on which this action was invoked
@@ -286,8 +297,7 @@ public abstract class AbstractPatchAction extends DockingAction {
 	 */
 	protected abstract boolean isApplicableToUnit(CodeUnit unit);
 
-	@Override
-	public boolean isAddToPopup(ActionContext context) {
+	protected boolean isApplicableToContext(ActionContext context) {
 		CodeUnit cu = getCodeUnit(context);
 		if (cu == null || !isApplicableToUnit(cu)) {
 			return false;
@@ -296,11 +306,10 @@ public abstract class AbstractPatchAction extends DockingAction {
 		ListingActionContext lac = (ListingActionContext) context;
 
 		ComponentProvider provider = lac.getComponentProvider();
-		if (!(provider instanceof CodeViewerProvider)) {
+		if (!(provider instanceof CodeViewerProvider codeViewer)) {
 			return false;
 		}
 
-		CodeViewerProvider codeViewer = (CodeViewerProvider) provider;
 		if (codeViewer.isReadOnly()) {
 			return false;
 		}
@@ -319,6 +328,16 @@ public abstract class AbstractPatchAction extends DockingAction {
 			return false;
 		}
 		return true;
+	}
+
+	@Override
+	public boolean isEnabledForContext(ActionContext context) {
+		return super.isEnabledForContext(context) && isApplicableToContext(context);
+	}
+
+	@Override
+	public boolean isAddToPopup(ActionContext context) {
+		return super.isAddToPopup(context) && isApplicableToContext(context);
 	}
 
 	/**
@@ -372,6 +391,7 @@ public abstract class AbstractPatchAction extends DockingAction {
 		ListingActionContext lac = (ListingActionContext) context;
 		prepareLayout(lac);
 
+		navigatable = lac.getNavigatable();
 		ProgramLocation cur = lac.getLocation();
 		program = cur.getProgram();
 		address = cur.getAddress();
@@ -398,5 +418,16 @@ public abstract class AbstractPatchAction extends DockingAction {
 		fillInputs();
 
 		fieldLayoutManager.layoutContainer(fieldPanel);
+	}
+
+	protected void doGoToNext(int length) {
+		program.flushEvents(); // Or else the listing layout may not be updated yet
+		try {
+			Address next = getAddress().add(length);
+			Swing.runLater(() -> navigatable.goTo(new ProgramLocation(program, next)));
+		}
+		catch (AddressOutOfBoundsException e) {
+			// Just don't goto
+		}
 	}
 }

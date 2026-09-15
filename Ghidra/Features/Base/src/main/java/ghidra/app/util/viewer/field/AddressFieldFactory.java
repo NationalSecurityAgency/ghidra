@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,6 +46,7 @@ public class AddressFieldFactory extends FieldFactory {
 	private boolean padZeros;
 	private int minHexDigits;
 	private boolean rightJustify;
+	private boolean displayUpperCase;
 
 	/**
 	 * Default Constructor
@@ -87,6 +88,7 @@ public class AddressFieldFactory extends FieldFactory {
 		minHexDigits = afowo.getMinimumHexDigits();
 		displayBlockName = afowo.showBlockName();
 		rightJustify = afowo.rightJustify();
+		displayUpperCase = afowo.displayUpperCase();
 
 		fieldOptions.getOptions(GROUP_TITLE).setOptionsHelpLocation(helpLoc);
 	}
@@ -100,6 +102,7 @@ public class AddressFieldFactory extends FieldFactory {
 			minHexDigits = afowo.getMinimumHexDigits();
 			displayBlockName = afowo.showBlockName();
 			rightJustify = afowo.rightJustify();
+			displayUpperCase = afowo.displayUpperCase();
 			model.update();
 		}
 	}
@@ -132,14 +135,26 @@ public class AddressFieldFactory extends FieldFactory {
 	private String getAddressString(CodeUnit cu) {
 		Address addr = cu.getMinAddress();
 		AddressSpace space = addr.getAddressSpace();
+		int minDigits = padZeros ? 16 : minHexDigits;
+		String addrText = addr.toString(false, minDigits);
+		if (displayUpperCase) {
+			addrText = addrText.toUpperCase();
+		}
+
 		if (displayBlockName) {
-			String text = addr.toString(false, padZeros ? 16 : minHexDigits);
 			MemoryBlock block = cu.getProgram().getMemory().getBlock(addr);
 			if (block != null) {
-				return block.getName() + ":" + text;
+				return block.getName() + ":" + addrText;
 			}
 		}
-		return addr.toString(space.showSpaceName(), padZeros ? 16 : minHexDigits);
+
+		String spaceText = "";
+		if (space.showSpaceName()) {
+			// this will be the space name followed by one or two colons
+			spaceText = space.toString();
+		}
+
+		return spaceText + addrText;
 	}
 
 	@Override
@@ -178,8 +193,7 @@ public class AddressFieldFactory extends FieldFactory {
 		}
 		else if (loc instanceof AddressFieldLocation) {
 			if (hasSamePath(lf, loc)) {
-				return new FieldLocation(index, fieldNum, 0,
-					((AddressFieldLocation) loc).getCharOffset());
+				return new FieldLocation(index, fieldNum, 0, loc.getCharOffset());
 			}
 		}
 		return null;

@@ -97,4 +97,14 @@ public class GridBounds {
 		return true;
 	}
 
+	public void transpose() {
+		int temp = minRow;
+		minRow = minCol;
+		minCol = temp;
+
+		temp = maxRow;
+		maxRow = maxCol;
+		maxCol = temp;
+	}
+
 }

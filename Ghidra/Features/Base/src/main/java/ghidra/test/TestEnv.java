@@ -23,7 +23,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.ComponentProvider;
 import docking.DialogComponentProvider;
@@ -31,6 +31,7 @@ import docking.test.AbstractDockingTest;
 import docking.tool.ToolConstants;
 import generic.jar.ResourceFile;
 import generic.test.*;
+import generic.theme.ThemeManager;
 import ghidra.app.events.CloseProgramPluginEvent;
 import ghidra.app.events.OpenProgramPluginEvent;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
@@ -49,6 +50,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginException;
 import ghidra.framework.project.DefaultProjectManager;
 import ghidra.framework.protocol.ghidra.GhidraURL;
+import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.data.FileDataTypeManager;
 import ghidra.program.model.lang.*;
@@ -75,7 +77,7 @@ public class TestEnv {
 	private static Set<TestEnv> instances = new HashSet<>();
 
 	private FrontEndTool frontEndTool;
-	private PluginTool tool;
+	protected PluginTool tool;
 
 	private static TestProgramManager programManager = new TestProgramManager();
 
@@ -252,6 +254,7 @@ public class TestEnv {
 	private void dipsoseTestTools() {
 		AbstractGuiTest.runSwing(() -> {
 			disposeSingleTool(tool);
+			tool = null;
 
 			for (PluginTool pt : extraTools) {
 				disposeSingleTool(pt);
@@ -437,6 +440,7 @@ public class TestEnv {
 	}
 
 	private PluginTool lazyTool() {
+
 		if (tool != null) {
 			return tool;
 		}
@@ -557,18 +561,18 @@ public class TestEnv {
 		}
 
 		JavaScriptProvider scriptProvider = new JavaScriptProvider();
-		PrintWriter writer = new PrintWriter(System.out);
+		PrintWriter errWriter = new PrintWriter(System.err);
 		ResourceFile resourceFile = new ResourceFile(scriptFile);
 		GhidraScript script = null;
 		try {
-			script = scriptProvider.getScriptInstance(resourceFile, writer);
+			script = scriptProvider.getScriptInstance(resourceFile, errWriter);
 		}
 		catch (GhidraScriptLoadException e) {
 			Msg.error(TestEnv.class, "Problem creating script", e);
 
 		}
 		if (script == null) {
-			writer.flush();
+			errWriter.flush();
 			throw new RuntimeException("Failed to compile script " + scriptFile.getAbsolutePath());
 		}
 
@@ -962,7 +966,7 @@ public class TestEnv {
 
 	public Program loadResourceProgramAsBinary(String programName, Language language,
 			CompilerSpec compilerSpec) throws LanguageNotFoundException, IOException,
-			CancelledException, DuplicateNameException, InvalidNameException, VersionException {
+			CancelledException, VersionException {
 		File file = AbstractGenericTest.getTestDataFile(programName);
 		if (file == null || !file.exists()) {
 			throw new FileNotFoundException("Can not find test program: " + programName);
@@ -971,8 +975,7 @@ public class TestEnv {
 	}
 
 	public Program loadResourceProgramAsBinary(String programName, Processor processor)
-			throws CancelledException, DuplicateNameException, InvalidNameException,
-			VersionException, IOException {
+			throws CancelledException, VersionException, IOException {
 		Language language =
 			DefaultLanguageService.getLanguageService().getDefaultLanguage(processor);
 		CompilerSpec compilerSpec = language.getDefaultCompilerSpec();
@@ -1073,6 +1076,8 @@ public class TestEnv {
 		privateWaitForSwingRunnables();
 		programManager.disposeOpenPrograms();
 
+		ProgramBuilder.disposeAllBuilders();
+		
 		if (gp.getProject() == null) {
 			throw new IllegalStateException("The TestEnv's GhidraProject has already been closed!");
 		}
@@ -1095,6 +1100,15 @@ public class TestEnv {
 		disposeAllSwingUpdateManagers();
 
 		deleteTestProject(projectName);
+
+		resetTheme();
+	}
+
+	private void resetTheme() {
+		Swing.runNow(() -> {
+			ThemeManager themeManager = ThemeManager.getInstance();
+			themeManager.restoreThemeValues();
+		});
 	}
 
 	private void deleteTestProject(String projectName) {

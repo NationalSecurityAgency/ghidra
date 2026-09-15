@@ -66,10 +66,15 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 	private static final String OPTION_DESCRIPTION_DEMANGLER_FORMAT =
 		"The demangling format to use";
 
+	static final String OPTION_NAME_TIMEOUT_SECONDS = "Timeout (seconds)";
+	private static final String OPTION_DESCRIPTION_TIMEOUT_SECONDS =
+		"The maximum amount of seconds to spend demangling a string";
+
 	private boolean applyFunctionSignature = true;
 	private boolean applyCallingConvention = true;
 	private boolean demangleOnlyKnownPatterns = false;
 	private boolean useStandardReplacements = true;
+	private long timeoutSeconds = GnuDemanglerOptions.DEFAULT_TIMEOUT_SECONDS;
 	private GnuDemanglerFormat demanglerFormat = GnuDemanglerFormat.AUTO;
 	private boolean useDeprecatedDemangler = false;
 
@@ -110,6 +115,8 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 			demanglerFormat, help, OPTION_DESCRIPTION_DEMANGLER_FORMAT,
 			() -> optionsEditor.getFormatEditor());
 
+		options.registerOption(OPTION_NAME_TIMEOUT_SECONDS, timeoutSeconds, help,
+			OPTION_DESCRIPTION_TIMEOUT_SECONDS);
 	}
 
 	@Override
@@ -123,6 +130,8 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 		useStandardReplacements =
 			options.getBoolean(OPTION_NAME_DEMANGLE_USE_STANDARD_REPLACEMENTS,
 				useStandardReplacements);
+		timeoutSeconds = options.getLong(OPTION_NAME_TIMEOUT_SECONDS,
+			GnuDemanglerOptions.DEFAULT_TIMEOUT_SECONDS);
 		demanglerFormat = options.getEnum(OPTION_NAME_DEMANGLER_FORMAT, GnuDemanglerFormat.AUTO);
 		useDeprecatedDemangler =
 			options.getBoolean(OPTION_NAME_USE_DEPRECATED_DEMANGLER, useDeprecatedDemangler);
@@ -131,7 +140,7 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 	@Override
 	protected DemanglerOptions getOptions() {
 		GnuDemanglerOptions options =
-			new GnuDemanglerOptions(demanglerFormat, useDeprecatedDemangler);
+			new GnuDemanglerOptions(demanglerFormat, useDeprecatedDemangler, timeoutSeconds);
 		options.setDoDisassembly(true);
 		options.setApplySignature(applyFunctionSignature);
 		options.setApplyCallingConvention(applyCallingConvention);

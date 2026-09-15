@@ -16,6 +16,7 @@
 package ghidra.trace.model.time.schedule;
 
 import ghidra.pcode.emu.PcodeThread;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -24,9 +25,9 @@ import ghidra.util.task.TaskMonitor;
  */
 public class TickStep extends AbstractStep {
 
-	public static TickStep parse(long threadKey, String stepSpec) {
+	public static TickStep parse(long threadKey, String stepSpec, TimeRadix radix) {
 		try {
-			return new TickStep(threadKey, Long.parseLong(stepSpec));
+			return new TickStep(threadKey, radix.decode(stepSpec));
 		}
 		catch (NumberFormatException e) {
 			throw new IllegalArgumentException("Cannot parse tick step: '" + stepSpec + "'");
@@ -54,8 +55,8 @@ public class TickStep extends AbstractStep {
 	}
 
 	@Override
-	protected String toStringStepPart() {
-		return Long.toString(tickCount);
+	protected String toStringStepPart(TimeRadix radix) {
+		return radix.format(tickCount);
 	}
 
 	@Override

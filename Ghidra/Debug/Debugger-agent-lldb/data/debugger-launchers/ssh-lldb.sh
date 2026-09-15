@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
 ## ###
 # IP: GHIDRA
 #
@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
-#@timeout 60000
 #@title lldb via ssh
 #@image-opt arg:1
 #@desc <html><body width="300px">
@@ -24,9 +23,10 @@
 #@desc     For setup instructions, press <b>F1</b>.
 #@desc   </p>
 #@desc </body></html>
-#@menu-group remote
+#@menu-group lldb
 #@icon icon.debugger
 #@help lldb#ssh
+#@depends Debugger-rmi-trace
 #@enum StartCmd:str "process launch" "process launch --stop-at-entry"
 #@enum Endian:str auto big little
 #@arg :str "Image" "The target binary executable image on the remote system"
@@ -36,33 +36,67 @@
 #@env OPT_REMOTE_PORT:int=12345 "Remote Trace RMI Port" "A free port on the remote end to receive and forward the Trace RMI connection."
 #@env OPT_EXTRA_SSH_ARGS:str="" "Extra ssh arguments" "Extra arguments to pass to ssh. Use with care."
 #@env OPT_LLDB_PATH:str="lldb" "lldb command" "The path to lldb on the remote system. Omit the full path to resolve using the system PATH."
+#@env OPT_LLDB_ARGS:str="" "lldb cmd args" "Arguments passed to lldb (versus the target)"
 #@env OPT_START_CMD:StartCmd="process launch" "Run command" "The lldb command to actually run the target."
 #@env OPT_ARCH:str="x86_64" "Architecture" "Target architecture"
 
+. ../support/lldbsetuputils.sh
+
 target_image="$1"
 shift
-target_args="$@"
 
-if [ -z "$target_image" ]
-then
-  "$OPT_SSH_PATH" "-R$OPT_REMOTE_PORT:$GHIDRA_TRACE_RMI_ADDR" -t $OPT_EXTRA_SSH_ARGS "$OPT_HOST" "TERM='$TERM' '$OPT_LLDB_PATH' \
-	-o 'version' ^
-	-o 'script import ghidralldb' ^
-    -o 'settings set target.default-arch %OPT_ARCH%' ^
-    -o 'ghidra trace connect \"localhost:%OPT_REMOTE_PORT%\"' ^
-    -o 'target create \"%OPT_TARGET_IMG%\"' ^
-    -o 'ghidra trace start' ^
-    -o 'ghidra trace sync-enable' ^
-	-o '%OPT_START_CMD%'
-else
-  "$OPT_SSH_PATH" "-R$OPT_REMOTE_PORT:$GHIDRA_TRACE_RMI_ADDR" -t $OPT_EXTRA_SSH_ARGS "$OPT_HOST" "TERM='$TERM' '$OPT_LLDB_PATH' \
-	-o 'version' ^
-	-o 'script import ghidralldb' ^
-    -o 'settings set target.default-arch %OPT_ARCH%' ^
-    -o 'ghidra trace connect \"localhost:%OPT_REMOTE_PORT%\"' ^
-    -o 'target create \"%OPT_TARGET_IMG%\"' ^
-	-o 'settings set target.run-args %OPT_TARGET_ARGS%' ^
-    -o 'ghidra trace start' ^
-    -o 'ghidra trace sync-enable' ^
-	-o '%OPT_START_CMD%'
+function launch-lldb-ssh() {
+	local -a args
+	compute-lldb-usermode-args "$target_image" "localhost:$OPT_REMOTE_PORT" "$@"
+	local -a sshargs
+	compute-ssh-args true "${args[@]}"
+
+	"${sshargs[@]}"
+}
+version=$(get-ghidra-version)
+
+function do-installation() {
+	local -a pipargs
+	compute-lldb-pipinstall-args "'-f'" "os.environ['HOME']" "'ghidralldb>=$version'"
+	local -a sshargs
+	compute-ssh-args false "${pipargs[@]}"
+
+	"${sshargs[@]}"
+}
+
+launch-lldb-ssh "$@"
+if check-result-and-prompt-mitigation $? "
+It appears ghidralldb is missing from the remote system. This can happen if you
+forgot to install the required package. This can also happen if you installed
+the packages to a different Python environment than is being used by the
+remote's lldb.
+
+This script is about to offer automatic resolution. If you'd like to resolve
+this manually, answer no to the next question and then see Ghidra's help by
+pressing F1 in the dialog of launch parameters.
+
+WARNING: Answering yes to the next question will invoke pip to try to install
+missing or incorrectly-versioned dependencies. It may attempt to find packages
+from the PyPI mirror configured on the REMOTE system. If you have not configured
+one, it will connect to the official one.
+
+WARNING: We invoke pip with the --break-system-packages flag, because some
+debuggers that embed Python (gdb, lldb) may not support virtual environments,
+and so the packages must be installed to your user environment.
+
+NOTE: This will copy Python wheels into the HOME directory of the user on the
+remote system. You may be prompted to authenticate a few times while packages
+are copied and installed.
+
+NOTE: Automatic resolution may cause this session to terminate. When it has
+finished, try launching again.
+" "Would you like to install 'ghidralldb>=$version'?"; then
+
+	echo "Copying Wheels to $OPT_HOST"
+	if ! mitigate-scp-pymodules "Debugger-rmi-trace" "<SELF>"; then
+		exit 1
+	fi
+
+	echo "Installing Wheels into LLDB's embedded Python"
+	do-installation
 fi

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,6 @@ import org.junit.Test;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.ProgramModifierListener;
 import ghidra.program.model.data.*;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * Tests for merging data types.
@@ -88,7 +87,7 @@ public class DataTypeMergeUseForAllTest extends AbstractDataTypeMergeTest {
 						"CharStruct");
 
 				intStruct.add(new ByteDataType());// Change data type.
-				dtm.remove(coolUnion, TaskMonitor.DUMMY);// Remove the data type.
+				dtm.remove(coolUnion);// Remove the data type.
 				charStruct.add(new FloatDataType());
 			}
 
@@ -106,7 +105,7 @@ public class DataTypeMergeUseForAllTest extends AbstractDataTypeMergeTest {
 					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category4"),
 						"CharStruct");
 
-				dtm.remove(intStruct, TaskMonitor.DUMMY);// Remove the data type.
+				dtm.remove(intStruct);// Remove the data type.
 				coolUnion.delete(2);
 				charStruct.add(new CharDataType());
 			}

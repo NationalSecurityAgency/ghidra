@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,12 +18,26 @@ package ghidra.app.services;
 import java.awt.Color;
 
 import ghidra.program.model.address.*;
+import ghidra.util.UniversalID;
 
 /**
  * Defines methods for working with a set of addresses that correspond to markers.
  * @see MarkerService
  */
 public interface MarkerSet extends Comparable<MarkerSet> {
+
+	/**
+	 * Sets an optional owner ID that signals when this marker set should be painted.  A null ID 
+	 * means that this marker set is global and should always be painted.  Otherwise, this marker 
+	 * set will be painted when its owner ID matches the owner ID being painted.
+	 * @param ownerId the ID
+	 */
+	public void setOwnerId(UniversalID ownerId);
+
+	/**
+	 * {@return the owner ID.  See #setOwner(UniversalID).}
+	 */
+	public UniversalID getOwnerId();
 
 	/**
 	 * Add a marker at the address
@@ -45,7 +59,7 @@ public interface MarkerSet extends Comparable<MarkerSet> {
 	public void add(AddressRange range);
 
 	/**
-	 * Sets the AddressSetCollection to be used for this this marker set.
+	 * Sets the AddressSetCollection to be used for this marker set.
 	 *  
 	 * <p><strong>Warning!</strong> 
 	 * Using this method will cause this MarkerSet to directly use the given AddressSetCollection.
@@ -151,8 +165,9 @@ public interface MarkerSet extends Comparable<MarkerSet> {
 	public void setMarkerColor(Color color);
 
 	/**
-	 * Set the marker manager listener to use for user interaction
-	 * with markers owned by this manager.
+	 * Set the marker set descriptor.  This allows clients to control tooltip text and program
+	 * location generation for individual markers on-the-fly.
+	 * 
 	 * @param markerDescriptor the descriptor
 	 */
 	public void setMarkerDescriptor(MarkerDescriptor markerDescriptor);

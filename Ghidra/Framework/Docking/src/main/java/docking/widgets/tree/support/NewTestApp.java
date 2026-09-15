@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,11 +39,7 @@ public class NewTestApp extends JPanel {
 	}
 
 	public static void main(String[] args) {
-		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		}
-		catch (Exception e1) {
-		}
+
 		System.setProperty(SystemUtilities.HEADLESS_PROPERTY, Boolean.FALSE.toString());
 		JFrame frame = new JFrame("Test App");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -230,9 +226,8 @@ class DragNDropHandler implements GTreeDragNDropHandler {
 		Msg.info(this, "Dropped the following Files onto " + destUserData);
 		try {
 			List<?> list = (List<?>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
-			Iterator<?> it = list.iterator();
-			while (it.hasNext()) {
-				Msg.info(this, "\t" + it.next());
+			for (Object element : list) {
+				Msg.info(this, "\t" + element);
 			}
 		}
 		catch (UnsupportedFlavorException e) {
@@ -263,9 +258,8 @@ class DragNDropHandler implements GTreeDragNDropHandler {
 		}
 		else if (flavor.equals(DataFlavor.stringFlavor)) {
 			StringBuffer buf = new StringBuffer();
-			Iterator<?> it = dragUserData.iterator();
-			while (it.hasNext()) {
-				buf.append(it.next().toString());
+			for (GTreeNode element : dragUserData) {
+				buf.append(element.toString());
 				buf.append("\n");
 			}
 			return buf.toString();

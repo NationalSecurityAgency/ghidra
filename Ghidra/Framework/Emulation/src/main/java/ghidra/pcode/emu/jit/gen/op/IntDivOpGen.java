@@ -15,50 +15,64 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import static ghidra.lifecycle.Unfinished.TODO;
-import static ghidra.pcode.emu.jit.gen.GenConsts.*;
-
-import org.objectweb.asm.MethodVisitor;
-
-import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
-import ghidra.pcode.emu.jit.analysis.JitType;
 import ghidra.pcode.emu.jit.analysis.JitType.*;
+import ghidra.pcode.emu.jit.gen.GenConsts;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
-import ghidra.pcode.emu.jit.gen.type.TypeConversions;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.*;
+import ghidra.pcode.emu.jit.gen.util.Methods.Inv;
+import ghidra.pcode.emu.jit.gen.util.Types.*;
 import ghidra.pcode.emu.jit.op.JitIntAddOp;
 import ghidra.pcode.emu.jit.op.JitIntDivOp;
 
 /**
  * The generator for a {@link JitIntAddOp int_add}.
- * 
  * <p>
- * This uses the binary operator generator and simply emits {@link #INVOKESTATIC} on
- * {@link Integer#divideUnsigned(int, int)} or {@link Long#divideUnsigned(long, long)} depending on
- * the type.
+ * This uses the binary operator generator and simply emits
+ * {@link Op#invokestatic(Emitter, TRef, String, ghidra.pcode.emu.jit.gen.util.Methods.MthDesc, boolean)
+ * invokestatic} on {@link Integer#divideUnsigned(int, int)} or *
+ * {@link Long#divideUnsigned(long, long)} depending on the type.
+ * <p>
+ * For multi-precision division, this emits code to invoke
+ * {@link JitCompiledPassage#mpIntDivide(int[], int[], int[])}.
  */
-public enum IntDivOpGen implements BinOpGen<JitIntDivOp> {
+public enum IntDivOpGen implements IntOpBinOpGen<JitIntDivOp> {
 	/** The generator singleton */
 	GEN;
 
 	@Override
-	public JitType afterLeft(JitCodeGenerator gen, JitIntDivOp op, JitType lType, JitType rType,
-			MethodVisitor rv) {
-		return TypeConversions.forceUniformZExt(lType, rType, rv);
+	public boolean isSigned() {
+		return false;
 	}
 
 	@Override
-	public JitType generateBinOpRunCode(JitCodeGenerator gen, JitIntDivOp op, JitBlock block,
-			JitType lType, JitType rType, MethodVisitor rv) {
-		rType = TypeConversions.forceUniformZExt(rType, lType, rv);
-		switch (rType) {
-			case IntJitType t -> rv.visitMethodInsn(INVOKESTATIC, NAME_INTEGER, "divideUnsigned",
-				MDESC_$INT_BINOP, false);
-			case LongJitType t -> rv.visitMethodInsn(INVOKESTATIC, NAME_LONG, "divideUnsigned",
-				MDESC_$LONG_BINOP, false);
-			case MpIntJitType t -> TODO("MpInt");
-			default -> throw new AssertionError();
-		}
-		// TODO: For MpInt case, we should use the outvar's size to cull operations.
-		return lType;
+	public <N2 extends Next, N1 extends Ent<N2, TInt>, N0 extends Ent<N1, TInt>>
+			Emitter<Ent<N2, TInt>> opForInt(Emitter<N0> em, IntJitType type) {
+		return em
+				.emit(Op::invokestatic, GenConsts.TR_INTEGER, "divideUnsigned",
+					GenConsts.MDESC_$INT_BINOP, false)
+				.step(Inv::takeArg)
+				.step(Inv::takeArg)
+				.step(Inv::ret);
+	}
+
+	@Override
+	public <N2 extends Next, N1 extends Ent<N2, TLong>, N0 extends Ent<N1, TLong>>
+			Emitter<Ent<N2, TLong>> opForLong(Emitter<N0> em, LongJitType type) {
+		return em
+				.emit(Op::invokestatic, GenConsts.TR_LONG, "divideUnsigned",
+					GenConsts.MDESC_$LONG_BINOP, false)
+				.step(Inv::takeArg)
+				.step(Inv::takeArg)
+				.step(Inv::ret);
+	}
+
+	@Override
+	public <THIS extends JitCompiledPassage> Emitter<Bot> genRunMpInt(Emitter<Bot> em,
+			Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, JitIntDivOp op,
+			MpIntJitType type, Scope scope) {
+		return genMpDelegationToStaticMethod(em, gen, localThis, type, "mpIntDivide", op, 1,
+			TakeOut.OUT, scope);
 	}
 }

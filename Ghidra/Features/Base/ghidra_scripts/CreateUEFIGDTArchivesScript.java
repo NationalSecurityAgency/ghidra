@@ -33,11 +33,9 @@ import java.io.IOException;
 
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.cparser.C.CParserUtils;
-import ghidra.app.util.cparser.C.CParserUtils.CParseResults;
 import ghidra.app.util.cparser.C.ParseException;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.FileDataTypeManager;
-import ghidra.util.Msg;
 
 public class CreateUEFIGDTArchivesScript extends GhidraScript {
 
@@ -130,6 +128,7 @@ public class CreateUEFIGDTArchivesScript extends GhidraScript {
 		};
 		
 		String args[] = {
+			"-DSTATIC_ASSERT=static_assert"
 		};
 		
 		parseHeaderFilesToGDT(outputDirectory, "uefi_"+name, languageID, compiler, filenames, includePaths, args);

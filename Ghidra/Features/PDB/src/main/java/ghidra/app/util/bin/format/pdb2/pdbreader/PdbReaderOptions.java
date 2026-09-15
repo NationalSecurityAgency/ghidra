@@ -19,8 +19,8 @@ import java.nio.charset.Charset;
 import java.util.List;
 
 import ghidra.framework.options.Options;
-import ghidra.program.model.data.CharsetInfo;
 import ghidra.util.HelpLocation;
+import ghidra.util.charset.CharsetInfoManager;
 
 /**
  * Options used while reading a PDB ({@link AbstractPdb}) that control various aspects.  These
@@ -39,7 +39,7 @@ public class PdbReaderOptions extends Exception {
 	private static final String OPTION_DESCRIPTION_ONE_BYTE_CHARSET_NAME =
 		"Charset used for processing of one-byte (or multi) encoded Strings: " +
 			PdbReaderOptions.getOneByteCharsetNames();
-	private static final String DEFAULT_ONE_BYTE_CHARSET_NAME = CharsetInfo.UTF8;
+	private static final String DEFAULT_ONE_BYTE_CHARSET_NAME = CharsetInfoManager.UTF8;
 	private String oneByteCharsetName;
 
 	// Sets the wchar_t Charset to be used for PDB processing.
@@ -49,14 +49,14 @@ public class PdbReaderOptions extends Exception {
 	private static final String OPTION_DESCRIPTION_WCHAR_CHARSET_NAME =
 		"Charset used for processing of wchar_t encoded Strings: " +
 			PdbReaderOptions.getTwoByteCharsetNames();
-	private static final String DEFAULT_TWO_BYTE_CHARSET_NAME = CharsetInfo.UTF16;
+	private static final String DEFAULT_TWO_BYTE_CHARSET_NAME = CharsetInfoManager.UTF16;
 	private String wideCharCharsetName;
 
 	//==============================================================================================
 	private static List<String> oneByteCharsetNames =
-		CharsetInfo.getInstance().getCharsetNamesWithCharSize(1);
+		CharsetInfoManager.getInstance().getCharsetNamesWithCharSize(1);
 	private static List<String> twoByteCharsetNames =
-		CharsetInfo.getInstance().getCharsetNamesWithCharSize(2);
+		CharsetInfoManager.getInstance().getCharsetNamesWithCharSize(2);
 
 	private Charset oneByteCharset;
 	private Charset wideCharset;

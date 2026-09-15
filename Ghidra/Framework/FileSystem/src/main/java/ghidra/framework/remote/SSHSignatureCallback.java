@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,9 +33,12 @@ import org.bouncycastle.util.Strings;
  * by the server with a random token which must be signed using the 
  * user's SSH private key.
  * <p>
- * It is the responsibility of the callback handler to invoke the 
- * sign method and return this object in response
- * to the callback.
+ * It is the responsibility of the callback handler to invoke the sign method and return this 
+ * object in response to the callback.  This callback must be signed and returned to the server 
+ * in a short period of time or the authentication will fail.
+ * <p>
+ * The supplied token is validated by the server during authentication as one that it had issued
+ * but is primarily intended as the basis for the client's signature.
  */
 public class SSHSignatureCallback implements Callback, Serializable {
 
@@ -56,17 +59,17 @@ public class SSHSignatureCallback implements Callback, Serializable {
 	}
 
 	/**
-	 * @return token to be signed using user certificate.
+	 * {@return token to be signed using user certificate}
 	 */
 	public byte[] getToken() {
-		return (token == null ? null : (byte[]) token.clone());
+		return token;
 	}
 
 	/**
-	 * @return signed token bytes set by callback handler.
+	 * {@return signed token bytes set by callback handler}
 	 */
 	public byte[] getSignature() {
-		return (signature == null ? null : (byte[]) signature.clone());
+		return signature;
 	}
 
 	/**
@@ -78,7 +81,7 @@ public class SSHSignatureCallback implements Callback, Serializable {
 	}
 
 	/**
-	 * @return true if callback has been signed
+	 * {@return true if callback has been signed}
 	 */
 	public boolean isSigned() {
 		return signature != null;

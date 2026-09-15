@@ -96,5 +96,4 @@ public class NumberInputDialog extends AbstractNumberInputDialog {
 	public int getValue() {
 		return getIntValue();
 	}
-
 }

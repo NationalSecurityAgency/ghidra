@@ -98,9 +98,15 @@
         </UL>
       </BLOCKQUOTE>
 
-      <H3>&nbsp;</H3>
+	  <H3><A name="Manage_Certificates"></A>Manage Certificates (Windows and macOS only)&nbsp;</H3>
 
-      <H3><A name="Set_PKI_Certificate"></A>PKI Certificate &nbsp;</H3>
+	      <BLOCKQUOTE>
+	        <P>On Windows and macOS systems the menu action <B>Edit<IMG src="help/shared/arrow.gif" border="0">Manage Certificates...</B> 
+			may be used to launch the system-provided user Certificate Manager.  This dialog may be used to specify both user and
+			trusted certificates.</P>
+	      </BLOCKQUOTE>
+			  
+      <H3><A name="Set_PKI_Certificate"></A>Set PKI Certificate &nbsp;</H3>
 
       <BLOCKQUOTE>
         <P>The Ghidra Server can be set up to perform user authentication using PKI
@@ -117,12 +123,54 @@
         When you connect to the server the next time you run Ghidra, you will be prompted for the
         key-store password associated with this certificate key file. The path to your PKI
         certificate file is saved as part of your Ghidra preferences.</P>
-      </BLOCKQUOTE>
 
+        <P><IMG src="help/shared/note.png" border="0"> If the Ghidra Server, or other server,
+        is not using PKI Certificates for user authentication, you can ignore this menu option
+		since the certificate keystore will not be used.</P>
+
+        <P><IMG src="help/shared/note.png" border="0"> Setting your user PKI certificate key store
+		may also be required if Ghidra communicates with other web services which rely on PKI user 
+		authentication.</P>
+
+        <P><IMG src="help/shared/note.png" border="0"> Specifying the single user certificate 
+		 keystore in this fashion will prevent the OS managed keystore from being used
+		(applies to Windows and macOS only).</P>
+        </BLOCKQUOTE>
+	
+	<H3><A name="Clear_PKI_Certificate"></A>Clear PKI Certificate &nbsp;</H3>
+
+	      <BLOCKQUOTE>
+	        <P>If a PKI Certificate keystore had previously been set, it may be cleared using the
+			menu action <B>Edit<IMG src="help/shared/arrow.gif" border="0">Clear PKI Certificate...</B> 
+			if no longer needed or to allow OS managed certificates to be used.</P>
+	      </BLOCKQUOTE>
+
+       </BLOCKQUOTE>
+
+	<H3><A name="Clear_Server_Allow_List"></A>Server Allow List &nbsp;</H3>
       <BLOCKQUOTE>
-        <P><IMG src="help/shared/note.png" border="0"> If the Ghidra Server
-        is not using PKI Certificates for user authentication, you can ignore this menu option.</P>
-      </BLOCKQUOTE>
+			<P>When attempting to communicate with various servers based upon a URL, you may be
+			prompted to either allow or disallow the connection and all future connection attempts.
+			The choice will be saved to a <I>Server Allow List</I>.  A server entry is identified
+			by the associated communication protocol (e.g., "https", "ghidra"), its host name
+			as specified by a URL and the associated TCP port.  The "ghidra" protocol is only
+			identified with its base-port (e.g., 13100) and not the other two related ports.
+			If you change your mind about a server connection it may be neccessary to revise this 
+			saved <I>Server Allow List</I>.  Two options exist for altering this list:</P>
+			
+			<UL>
+			<LI>To clear the entire Server Allow List from the Ghidra GUI Project Window, 
+			choose <B>Edit<IMG src="help/shared/arrow.gif" border="0">Clear Server Allow List...</B>.</LI>
+			
+			<LI>From a system command prompt, the <B>updateServerAllowList</B> command
+			can be used to view and selectively modify the allow-list.  This command can
+			be found within the Ghidra installation <B>support</B> directory. 
+			Server Allow List entries may be displayed with the <I>-list</I>
+			option, and added or modified using the <I>-allow or -disallow</I> options.
+			Entries may also removed entirely by using the <I>-clear or -clearAll</I> option.</LI> 
+			
+			</UL>
+		</BLOCKQUOTE>  
     </BLOCKQUOTE>
 
     <H2><A name="Exit_Ghidra"></A>Exiting Ghidra</H2>

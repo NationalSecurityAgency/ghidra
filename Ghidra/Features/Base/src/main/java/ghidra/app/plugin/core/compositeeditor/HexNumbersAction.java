@@ -35,7 +35,7 @@ public class HexNumbersAction extends CompositeEditorTableAction implements Togg
 	private static String[] PATH = new String[] { DESCRIPTION };
 	private boolean isSelected;
 
-	public HexNumbersAction(CompositeEditorProvider provider) {
+	public HexNumbersAction(CompositeEditorProvider<?, ?> provider) {
 		super(provider, ACTION_NAME, GROUP_NAME, PATH, PATH, null);
 		setDescription(DESCRIPTION);
 		setSelected(model.isShowingNumbersInHex());

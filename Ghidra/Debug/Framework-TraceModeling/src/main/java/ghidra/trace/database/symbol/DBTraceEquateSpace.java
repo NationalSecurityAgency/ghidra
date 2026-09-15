@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,6 @@ import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager.DBTraceSpace
 import ghidra.trace.database.space.DBTraceSpaceBased;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.symbol.TraceEquateSpace;
-import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
@@ -61,8 +60,8 @@ public class DBTraceEquateSpace implements DBTraceSpaceBased, TraceEquateSpace {
 		@DBAnnotatedColumn(TYPE_COLUMN_NAME)
 		static DBObjectColumn TYPE_COLUMN;
 
-		public static String tableName(AddressSpace space, long threadKey, int frameLevel) {
-			return DBTraceUtils.tableName(TABLE_NAME, space, threadKey, frameLevel);
+		public static String tableName(AddressSpace space) {
+			return DBTraceUtils.tableName(TABLE_NAME, space);
 		}
 
 		@DBAnnotatedField(column = EQUATE_COLUMN_NAME, indexed = true)
@@ -99,8 +98,6 @@ public class DBTraceEquateSpace implements DBTraceSpaceBased, TraceEquateSpace {
 	protected final DBTraceEquateManager manager;
 	protected final DBHandle dbh;
 	protected final AddressSpace space;
-	protected final TraceThread thread;
-	protected final int frameLevel;
 	protected final ReadWriteLock lock;
 	protected final Language baseLanguage;
 	protected final DBTrace trace;
@@ -110,12 +107,10 @@ public class DBTraceEquateSpace implements DBTraceSpaceBased, TraceEquateSpace {
 	protected final DBTraceAddressSnapRangePropertyMapSpace<DBTraceEquateReference, DBTraceEquateReference> equateMapSpace;
 
 	public DBTraceEquateSpace(DBTraceEquateManager manager, DBHandle dbh, AddressSpace space,
-			DBTraceSpaceEntry ent, TraceThread thread) throws VersionException, IOException {
+			DBTraceSpaceEntry ent) throws VersionException, IOException {
 		this.manager = manager;
 		this.dbh = dbh;
 		this.space = space;
-		this.thread = thread;
-		this.frameLevel = ent.getFrameLevel();
 		this.lock = manager.getLock();
 		this.baseLanguage = manager.getBaseLanguage();
 		this.trace = manager.getTrace();
@@ -124,27 +119,19 @@ public class DBTraceEquateSpace implements DBTraceSpaceBased, TraceEquateSpace {
 
 		DBCachedObjectStoreFactory factory = trace.getStoreFactory();
 
-		long threadKey = ent.getThreadKey();
-		int frameLevel = ent.getFrameLevel();
 		this.equateMapSpace = new DBTraceAddressSnapRangePropertyMapSpace<>(
-			DBTraceEquateReference.tableName(space, threadKey, frameLevel), factory, lock, space,
-			thread, ent.getFrameLevel(), DBTraceEquateReference.class,
-			(t, s, r) -> new DBTraceEquateReference(this, t, s, r));
+			DBTraceEquateReference.tableName(space), trace, factory, lock, space,
+			DBTraceEquateReference.class, (t, s, r) -> new DBTraceEquateReference(this, t, s, r));
+	}
+
+	@Override
+	public DBTrace getTrace() {
+		return trace;
 	}
 
 	@Override
 	public AddressSpace getAddressSpace() {
 		return space;
-	}
-
-	@Override
-	public TraceThread getThread() {
-		return thread;
-	}
-
-	@Override
-	public int getFrameLevel() {
-		return frameLevel;
 	}
 
 	@Override

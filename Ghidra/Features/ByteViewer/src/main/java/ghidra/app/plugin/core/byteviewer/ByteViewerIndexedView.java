@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,8 +25,6 @@ import javax.swing.*;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.Layout;
 import docking.widgets.indexedscrollpane.*;
-import generic.theme.GColor;
-import generic.theme.Gui;
 import ghidra.app.plugin.core.format.DataFormatModel;
 
 /**
@@ -42,7 +40,6 @@ import ghidra.app.plugin.core.format.DataFormatModel;
  * client's responsibility to get the header component and install it into the IndexedScrollPane.
  */
 class ByteViewerIndexedView extends JPanel implements IndexedScrollable, IndexScrollListener {
-	private static final String HEADER_FONT_ID = "font.byteviewer.header";
 	private FieldPanel indexPanel;
 	private List<FieldPanel> allPanels = new ArrayList<>();
 	private boolean processingIndexRangeChanged;
@@ -53,14 +50,12 @@ class ByteViewerIndexedView extends JPanel implements IndexedScrollable, IndexSc
 		this.indexPanel = indexPanel;
 		allPanels.add(indexPanel);
 		panelManager = new InteractivePanelManager();
-		panelManager.setHeaderFont(Gui.getFont(HEADER_FONT_ID));
 
 		indexPanel.addIndexScrollListener(this);
 
 		panelManager.addComponent(ByteViewerComponentProvider.INDEX_COLUMN_NAME, indexPanel);
 		JComponent mainPanel = panelManager.getMainPanel();
 		add(mainPanel, BorderLayout.CENTER);
-		mainPanel.setBackground(new GColor("color.bg.byteviewer"));
 
 		addMouseWheelListener(e -> {
 			// this lets us scroll the byte viewer when the user is not over any panel, but still

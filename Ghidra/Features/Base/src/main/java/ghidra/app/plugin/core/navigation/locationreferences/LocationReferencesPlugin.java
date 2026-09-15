@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,10 +16,12 @@
 package ghidra.app.plugin.core.navigation.locationreferences;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.builder.ActionBuilder;
+import docking.widgets.table.actions.DeleteTableRowAction;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.events.ProgramClosedPluginEvent;
@@ -38,7 +40,6 @@ import ghidra.program.model.symbol.Reference;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
-import ghidra.util.table.actions.DeleteTableRowAction;
 
 /**
  * Plugin to show a list of references to the item represented by the location of the cursor.
@@ -112,7 +113,7 @@ public class LocationReferencesPlugin extends Plugin
 		// only so the user can bind a key binding to it if they wish.
 		new ActionBuilder("Show Xrefs", getName())
 				.description("Show the Xrefs to the code unit containing the cursor")
-				.validContextWhen(context -> context instanceof ListingActionContext)
+				.withContext(ListingActionContext.class)
 				.helpLocation(new HelpLocation("CodeBrowserPlugin", "Show_Xrefs"))
 				.onAction(context -> showXrefs(context))
 				.buildAndInstall(tool);
@@ -133,7 +134,7 @@ public class LocationReferencesPlugin extends Plugin
 			return; // not sure if this can happen
 		}
 
-		Set<Reference> refs = XReferenceUtils.getAllXrefs(location);
+		Supplier<Collection<Reference>> refs = () -> XReferenceUtils.getAllXrefs(location);
 		XReferenceUtils.showXrefs(lac.getNavigatable(), tool, service, location, refs);
 	}
 

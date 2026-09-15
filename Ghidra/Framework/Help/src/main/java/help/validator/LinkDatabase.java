@@ -204,4 +204,8 @@ public class LinkDatabase {
 	public void generateTOCOutputFile(Path outputFile, GhidraTOCFile file) throws IOException {
 		printableTree.printTreeForID(outputFile, file.getFile().toUri().toString());
 	}
+
+	public void validateAllTOCs() {
+		printableTree.validateAllTOCs();
+	}
 }

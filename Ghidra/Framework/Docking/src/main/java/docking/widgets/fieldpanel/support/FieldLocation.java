@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,10 +17,11 @@ package docking.widgets.fieldpanel.support;
 
 import java.math.BigInteger;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 
 import docking.widgets.fieldpanel.Layout;
 import docking.widgets.fieldpanel.field.Field;
+import generic.json.Json;
 
 /**
  * Class to represent {@link Field} locations within the field viewer.
@@ -86,12 +87,19 @@ public class FieldLocation implements Comparable<FieldLocation> {
 	 * @param index the index of the layout containing the location
 	 * @param fieldNum the index of the field in the layout containing the location
 	 * @param row the text row in the field containing the location.
-	 * @param col the character position the row containing the location.
+	 * @param col the character position in the row containing the location.
 	 */
 	public FieldLocation(int index, int fieldNum, int row, int col) {
 		this(BigInteger.valueOf(index), fieldNum, row, col);
 	}
 
+	/**
+	* Construct a new FieldLocation with the given index,fieldNum,row, and col.
+	* @param index the index of the layout containing the location
+	* @param fieldNum the index of the field in the layout containing the location
+	* @param row the text row in the field containing the location.
+	* @param col the character position in the row containing the location.
+	*/
 	public FieldLocation(BigInteger index, int fieldNum, int row, int col) {
 		this.index = index;
 		this.fieldNum = fieldNum;
@@ -207,7 +215,7 @@ public class FieldLocation implements Comparable<FieldLocation> {
 
 	@Override
 	public String toString() {
-		return index.toString() + ", " + fieldNum + ", " + row + ", " + col;
+		return Json.toString(this, "index", "fieldNum", "row", "col");
 
 	}
 

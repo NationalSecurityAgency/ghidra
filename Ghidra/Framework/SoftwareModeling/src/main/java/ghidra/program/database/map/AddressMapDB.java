@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -295,6 +295,48 @@ public class AddressMapDB implements AddressMap {
 		return encodeAbsolute(addr, create ? INDEX_CREATE : INDEX_MATCH);
 	}
 
+	private Address checkAddressSpace(Address addr) {
+		AddressSpace space = addr.getAddressSpace();
+		if (space.getType() == AddressSpace.TYPE_DELETED) {
+			return addr;
+		}
+		if (space.isStackSpace()) {
+			AddressSpace myStackSpace = addrFactory.getStackSpace();
+			if (!space.equals(myStackSpace)) {
+				// Stack AddressSpace differs from my program's stack
+				throw new IllegalArgumentException(
+					"Unknown stack address from a different Program: " + addr.toString(true));
+			}
+		}
+		else if (space.isMemorySpace()) {
+			AddressSpace mySpace = addrFactory.getAddressSpace(space.getSpaceID()); // fast lookup
+			if (space != mySpace) {
+				// AddressSpace instance is not from my program's AddressFactory -
+				// perform a lookup by name and allow use if matching space is found.
+				// Although mixing address space use between programs is not preferred we try to 
+				// accomodate provided all address characterics match.  An ID lookup is performed 
+				// first since it is the fastest way to verify the address originated from our
+				// address factory, otherwise we must attempt to find the same address space
+				// by name and check all characteristics via the equals method.  This assumes
+				// a HashMap lookup based on an integer key is faster than a string key lookup.
+				mySpace = addrFactory.getAddressSpace(space.getName());
+
+				// NOTE: overlay spaces from different programs will never be equal if their 
+				// 'orderedKey' differ.  This can occur if they get renamed.
+				if (!space.equals(mySpace)) {
+					throw new IllegalArgumentException(
+						"Unknown address from a different Program: " + addr.toString(true));
+				}
+				// Transform into my address to avoid map contamination
+				if (mySpace instanceof OverlayAddressSpace myOvSpace) {
+					return myOvSpace.getAddressInThisSpaceOnly(addr.getOffset());
+				}
+				return mySpace.getAddress(addr.getOffset());
+			}
+		}
+		return addr;
+	}
+
 	/**
 	 * Get absolute key encoding for the specified address
 	 * @param addr address
@@ -315,6 +357,7 @@ public class AddressMapDB implements AddressMap {
 			case AddressSpace.TYPE_CODE:
 			case AddressSpace.TYPE_DELETED:
 			case AddressSpace.TYPE_OTHER:
+				addr = checkAddressSpace(addr);
 				int baseIndex = getBaseAddressIndex(addr, false, indexOperation);
 				long offset;
 				if (baseIndex < 0) {
@@ -347,6 +390,7 @@ public class AddressMapDB implements AddressMap {
 				return REGISTER_ADDR_TYPE_LONG | (addr.getOffset() & ADDR_OFFSET_MASK);
 
 			case AddressSpace.TYPE_STACK:
+				addr = checkAddressSpace(addr);
 				return STACK_ADDR_TYPE_LONG | (addr.getOffset() & ADDR_OFFSET_MASK);
 
 			case AddressSpace.TYPE_EXTERNAL:
@@ -425,7 +469,6 @@ public class AddressMapDB implements AddressMap {
 		}
 
 		// A new address map entry is required
-		checkAddressSpace(addr.getAddressSpace());
 		int index = baseAddrs.length;
 		if (readOnly) {
 			// Create new base without modifying database
@@ -446,18 +489,6 @@ public class AddressMapDB implements AddressMap {
 		addrToIndexMap.put(baseAddrs[index], index);
 		init(false); // re-sorts baseAddrs
 		return index;
-	}
-
-	void checkAddressSpace(AddressSpace addrSpace) {
-		AddressSpace[] spaces = addrFactory.getPhysicalSpaces();
-		for (AddressSpace space : spaces) {
-			if (addrSpace.equals(space)) {
-				return;
-			}
-		}
-		if (addrSpace.getPhysicalSpace() != AddressSpace.OTHER_SPACE) { // not physical - but always exists in program
-			throw new IllegalArgumentException("Address space not found in program");
-		}
 	}
 
 	@Override
@@ -621,6 +652,7 @@ public class AddressMapDB implements AddressMap {
 			case AddressSpace.TYPE_CODE:
 			case AddressSpace.TYPE_DELETED:
 			case AddressSpace.TYPE_OTHER:
+				addr = checkAddressSpace(addr);
 				boolean normalize = !addrIsNormalized && isInDefaultAddressSpace(addr);
 				int baseIndex = getBaseAddressIndex(addr, normalize, indexOperation);
 				long offset;

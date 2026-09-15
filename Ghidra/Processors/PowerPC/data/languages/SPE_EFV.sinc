@@ -1137,9 +1137,9 @@
 
 # evlwhe RT,D(RA)
 # evlwhe rT,rA,UI
-:evlwhe D,EVUIMM_4_RAt is OP=4 & D & EVUIMM_4_RAt & RA_OR_ZERO & UI & XOP_0_10=785
+:evlwhe D,EVUIMM_4_RAt is OP=4 & D & EVUIMM_4_RAt  & XOP_0_10=785
 {
-   ea:$(REGISTER_SIZE) = RA_OR_ZERO + (UI * 4);
+   ea:$(REGISTER_SIZE) = EVUIMM_4_RAt;
 
    # move results into upper and lower words
    tmpZ:8 = zext( *:2(ea + 2) );
@@ -1179,9 +1179,9 @@
 # ISA-info: evlwwsplat - Form "EVX" Page 521 Category "SP"
 # binutils: NO-EXAMPLE - evlwwsplat
 # collides with maclhwu
-:evlwwsplat D,EVUIMM_4_RAt is OP=4 & D & RA_OR_ZERO & EVUIMM_4_RAt & UI & XOP_0_10=793
+:evlwwsplat D,EVUIMM_4_RAt is OP=4 & D & EVUIMM_4_RAt & XOP_0_10=793
 {
-   ea:$(REGISTER_SIZE) = RA_OR_ZERO + (UI * 4);
+   ea:$(REGISTER_SIZE) = EVUIMM_4_RAt;
 
    # move results into upper and lower words
    tmpZ:8 = zext( *:4(ea) );
@@ -1413,10 +1413,34 @@
    tmpAL:8 = zext( A:4 );
    tmpBL:8 = zext( B:4 );
 
-   D = tmpAL * tmpBL;
+   temp:8 = tmpAL * tmpBL;
+   D = temp;
 }
 
+# evmwumia RT,RA,RB
+# ISA-cmt: Vector Multiply Word Unsigned, Modulo, Integer to Accumulator
+# evmwumia rD,rA,rB 100 01A1 1000 A=1
+:evmwumia D,A,B is OP=4 & A & B & D & XOP_0_10=0x478 {
+   tmpAL:8 = zext( A:4 );
+   tmpBL:8 = zext( B:4 );
 
+   temp:8 = tmpAL * tmpBL;
+   D = temp;
+   ACC = D;
+}
+
+# evmwumiaa RT,RA,RB
+# ISA-cmt: Vector Multiply Word Unsigned, Modulo, Integer and Accumulate
+# evmwumiaa rD,rA,rB 101 0101 1000
+# evmwumiaa confict with macchwo
+:evmwumiaa D,A,B is OP=4 & A & B & D & XOP_0_10=0x558 { 
+   tmpAL:8 = zext( A:4 );
+   tmpBL:8 = zext( B:4 );
+
+   temp:8 = tmpAL * tmpBL;
+   D = ACC + temp;
+   ACC = D;
+}
 
 # =================================================================
 # Page 547

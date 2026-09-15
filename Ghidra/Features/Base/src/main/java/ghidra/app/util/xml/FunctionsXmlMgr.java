@@ -228,7 +228,7 @@ class FunctionsXmlMgr {
 		parser.end(element);
 		FunctionPurgeAnalysisCmd purgeAnalysisCmd = new FunctionPurgeAnalysisCmd(functions);
 		purgeAnalysisCmd.applyTo(program, monitor);
-		FunctionStackAnalysisCmd stackAnalysisCmd = new FunctionStackAnalysisCmd(functions, true);
+		NewFunctionStackAnalysisCmd stackAnalysisCmd = new NewFunctionStackAnalysisCmd(functions, true);
 		stackAnalysisCmd.applyTo(program, monitor);
 	}
 

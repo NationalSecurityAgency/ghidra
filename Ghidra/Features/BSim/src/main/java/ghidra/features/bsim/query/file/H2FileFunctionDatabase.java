@@ -22,10 +22,8 @@ import java.util.*;
 import generic.concurrent.*;
 import generic.lsh.vector.LSHVector;
 import generic.lsh.vector.VectorCompare;
-import ghidra.features.bsim.query.*;
-import ghidra.features.bsim.query.BSimPostgresDBConnectionManager.BSimPostgresDataSource;
-import ghidra.features.bsim.query.BSimServerInfo.DBType;
-import ghidra.features.bsim.query.FunctionDatabase.Status;
+import ghidra.features.bsim.query.BSimServerInfo;
+import ghidra.features.bsim.query.LSHException;
 import ghidra.features.bsim.query.client.*;
 import ghidra.features.bsim.query.description.*;
 import ghidra.features.bsim.query.elastic.Base64VectorFactory;
@@ -54,7 +52,7 @@ public class H2FileFunctionDatabase extends AbstractSQLFunctionDatabase<Base64Ve
 	 * @param bsimURL local file URL for H2 database
 	 */
 	public H2FileFunctionDatabase(URL bsimURL) {
-		this(BSimH2FileDBConnectionManager.getDataSource(bsimURL));
+		this(BSimH2FileDBConnectionManager.getDataSource(new BSimServerInfo(bsimURL)));
 	}
 
 	/**

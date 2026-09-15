@@ -16,6 +16,7 @@
 package ghidra.program.util;
 
 import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 
 public class CommentTypeUtils {
 
@@ -25,34 +26,39 @@ public class CommentTypeUtils {
 	 * @param cu
 	 * @param loc
 	 * @param defaultCommentType
-	 * @return comment type
+	 * @return comment type or defaultCommentType if location does not correspond 
+	 * to a comment
 	 */
-	public static int getCommentType(CodeUnit cu, ProgramLocation loc, int defaultCommentType) {
+	public static CommentType getCommentType(CodeUnit cu, ProgramLocation loc,
+			CommentType defaultCommentType) {
 		if (loc instanceof CommentFieldLocation) {
 			CommentFieldLocation cfLoc = (CommentFieldLocation) loc;
-			return cfLoc.getCommentType();
+			CommentType type = cfLoc.getCommentType();
+			if (type != null) {
+				return type;
+			}
 		}
 		else if (loc instanceof PlateFieldLocation) {
-			return CodeUnit.PLATE_COMMENT;
+			return CommentType.PLATE;
 		}
 		else if (loc instanceof FunctionRepeatableCommentFieldLocation) {
-			return CodeUnit.REPEATABLE_COMMENT;
+			return CommentType.REPEATABLE;
 		}
 		else if (cu != null) {
-			if (cu.getComment(CodeUnit.PRE_COMMENT) != null) {
-				return CodeUnit.PRE_COMMENT;
+			if (cu.getComment(CommentType.PRE) != null) {
+				return CommentType.PRE;
 			}
-			if (cu.getComment(CodeUnit.POST_COMMENT) != null) {
-				return CodeUnit.POST_COMMENT;
+			if (cu.getComment(CommentType.POST) != null) {
+				return CommentType.POST;
 			}
-			if (cu.getComment(CodeUnit.EOL_COMMENT) != null) {
-				return CodeUnit.EOL_COMMENT;
+			if (cu.getComment(CommentType.EOL) != null) {
+				return CommentType.EOL;
 			}
-			if (cu.getComment(CodeUnit.PLATE_COMMENT) != null) {
-				return CodeUnit.PLATE_COMMENT;
+			if (cu.getComment(CommentType.PLATE) != null) {
+				return CommentType.PLATE;
 			}
-			if (cu.getComment(CodeUnit.REPEATABLE_COMMENT) != null) {
-				return CodeUnit.REPEATABLE_COMMENT;
+			if (cu.getComment(CommentType.REPEATABLE) != null) {
+				return CommentType.REPEATABLE;
 			}
 		}
 		return defaultCommentType;

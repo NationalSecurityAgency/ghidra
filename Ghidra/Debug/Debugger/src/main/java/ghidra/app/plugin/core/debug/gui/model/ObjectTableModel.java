@@ -513,8 +513,9 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 	}
 
 	protected Lifespan computeFullRange() {
-		Long max = getTrace() == null ? null : getTrace().getTimeManager().getMaxSnap();
-		return Lifespan.span(0L, max == null ? 1 : max + 1);
+		Long maxBoxed = getTrace() == null ? null : getTrace().getTimeManager().getMaxSnap();
+		long max = maxBoxed == null ? 0 : maxBoxed;
+		return Lifespan.span(0L, max == Lifespan.DOMAIN.lmax() ? max : (max + 1));
 	}
 
 	protected void updateTimelineMax() {

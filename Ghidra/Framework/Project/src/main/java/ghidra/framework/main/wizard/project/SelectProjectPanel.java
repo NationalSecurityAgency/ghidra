@@ -16,6 +16,7 @@
 package ghidra.framework.main.wizard.project;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.io.File;
 
 import javax.swing.*;
@@ -26,6 +27,7 @@ import docking.widgets.button.BrowseButton;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GDLabel;
+import docking.widgets.textfield.ElidingFilePathTextField;
 import ghidra.framework.GenericRunInfo;
 import ghidra.framework.model.ProjectLocator;
 import ghidra.framework.preferences.Preferences;
@@ -46,7 +48,7 @@ public class SelectProjectPanel extends JPanel {
 	private static String PROJECT_EXTENSION = ProjectLocator.getProjectExtension().substring(1);
 
 	private JTextField projectNameField;
-	private JTextField directoryField;
+	private ElidingFilePathTextField directoryField;
 	private JButton browseButton;
 
 	private Callback statusChangedCallback;
@@ -61,6 +63,10 @@ public class SelectProjectPanel extends JPanel {
 
 		this.statusChangedCallback = statusChangedCallback;
 		buildMainPanel();
+	}
+
+	public Component getDefaultFocusComponent() {
+		return directoryField;
 	}
 
 	void setProjectName(String projectName) {
@@ -91,6 +97,7 @@ public class SelectProjectPanel extends JPanel {
 	private JTextField createProjectNameField(DocumentListener documentListener) {
 		projectNameField = new JTextField(10);
 		projectNameField.setName("Project Name");
+		projectNameField.getAccessibleContext().setAccessibleName("Project Name Field");
 		projectNameField.addActionListener(e -> statusChangedCallback.call());
 		projectNameField.getDocument().addDocumentListener(documentListener);
 		return projectNameField;
@@ -98,9 +105,11 @@ public class SelectProjectPanel extends JPanel {
 
 	private JPanel createDirectoryPanel(DocumentListener listener) {
 		JPanel panel = new JPanel(new BorderLayout());
-		directoryField = new JTextField(10);
+		directoryField = new ElidingFilePathTextField();
+		directoryField.setColumns(10);
 		directoryField.getDocument().addDocumentListener(listener);
 		directoryField.setName("Project Directory");
+		directoryField.getAccessibleContext().setAccessibleName("Project Directory Field");
 
 		File projectDirectory = null;
 		String projectDirPath = Preferences.getProperty(Preferences.LAST_NEW_PROJECT_DIRECTORY);
@@ -121,6 +130,7 @@ public class SelectProjectPanel extends JPanel {
 
 		browseButton = new BrowseButton();
 		browseButton.addActionListener(e -> displayFileChooser());
+		browseButton.getAccessibleContext().setAccessibleName("Browse project tree");
 		JPanel buttonPanel = new JPanel(new BorderLayout());
 		buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
 		buttonPanel.add(browseButton, BorderLayout.CENTER);

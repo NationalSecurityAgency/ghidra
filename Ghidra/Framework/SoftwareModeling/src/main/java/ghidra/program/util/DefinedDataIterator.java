@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,6 +28,8 @@ import ghidra.program.model.listing.*;
  * <p>
  * Data elements that are nested inside of composites or arrays are visited, not just the
  * parent/containing data element.
+ * <p>
+ * Not thread safe.
  */
 public class DefinedDataIterator implements DataIterator {
 
@@ -69,46 +71,6 @@ public class DefinedDataIterator implements DataIterator {
 	public static DefinedDataIterator byDataInstance(Program program,
 			Predicate<Data> dataInstancePredicate) {
 		return new DefinedDataIterator(program, null, null, dataInstancePredicate);
-	}
-
-	/**
-	 * Creates a new iterator that traverses the entire Program's address space returning
-	 * data instances that are strings.
-	 *
-	 * @param program Ghidra {@link Program} to search
-	 * @return new iterator
-	 */
-	public static DefinedDataIterator definedStrings(Program program) {
-		return new DefinedDataIterator(program, null,
-			dataType -> StringDataInstance.isStringDataType(dataType),
-			data -> StringDataInstance.isString(data));
-	}
-
-	/**
-	 * Creates a new iterator that traverses a portion of the Program's address space returning
-	 * data instances that are strings.
-	 *
-	 * @param program Ghidra {@link Program} to search
-	 * @param addrs addresses to limit the iteration to
-	 * @return new iterator
-	 */
-	public static DefinedDataIterator definedStrings(Program program, AddressSetView addrs) {
-		return new DefinedDataIterator(program, addrs,
-			dataType -> StringDataInstance.isStringDataType(dataType),
-			data -> StringDataInstance.isString(data));
-	}
-
-	/**
-	 * Creates a new iterator that traverses the address space of a single data item (ie. a
-	 * composite or array data instance that needs to be recursed into).
-	 *
-	 * @param singleDataInstance Data instance
-	 * @return new iterator
-	 */
-	public static DefinedDataIterator definedStrings(Data singleDataInstance) {
-		return new DefinedDataIterator(singleDataInstance,
-			dataType -> StringDataInstance.isStringDataType(dataType),
-			data -> StringDataInstance.isString(data));
 	}
 
 	private Predicate<DataType> dataTypePredicate;

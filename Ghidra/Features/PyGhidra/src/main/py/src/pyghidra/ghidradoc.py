@@ -103,6 +103,8 @@ class _Helper:
             sig = f"{field['type_long']} {field['name']}"
             if field['static']:
                 sig = "static " + sig
+            if field.get("access"):
+                sig = field.get("access") + " " + sig
             if constant_value := field['constant_value']:
                 sig += " = " + constant_value
             sig += "\n"
@@ -124,6 +126,8 @@ class _Helper:
             sig = f"{method['return']['type_short']} {method['name']}({paramsig})\n"
             if method['static']:
                 sig = "static " + sig
+            if method.get("access"):
+                sig = method.get("access") + " " + sig
             if comment := method['comment']:
                 desc = f"  {comment}\n\n"
             else:

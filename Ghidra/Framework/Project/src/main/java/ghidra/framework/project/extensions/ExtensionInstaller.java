@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,7 +46,7 @@ import utility.application.ApplicationLayout;
  *
  * <p>
  * Extensions may be installed/uninstalled by users at runtime, using the
- * {@link ExtensionTableProvider}. Installation consists of unzipping the extension archive to an
+ * {@link ExtensionTableDialog}. Installation consists of unzipping the extension archive to an
  * installation folder, currently <code>{ghidra user settings dir}/Extensions</code>. To uninstall,
  * the unpacked folder is simply removed.
  */
@@ -78,7 +78,7 @@ public class ExtensionInstaller {
 		}
 
 		Extensions extensions = ExtensionUtils.getAllInstalledExtensions();
-		if (checkForConflictWithDevelopmentExtension(extension, extensions)) {
+		if (checkForConflictWithPreInstalledExtension(extension, extensions)) {
 			return false;
 		}
 
@@ -235,7 +235,7 @@ public class ExtensionInstaller {
 			buffy.toString());
 	}
 
-	private static boolean checkForConflictWithDevelopmentExtension(ExtensionDetails newExtension,
+	private static boolean checkForConflictWithPreInstalledExtension(ExtensionDetails newExtension,
 			Extensions extensions) {
 
 		String name = newExtension.getName();

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import java.io.IOException;
 
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.Msg;
+import ghidra.util.classfinder.ClassSearcher;
 
 /**
  * Reads and writes current theme info to preferences
@@ -47,8 +48,9 @@ public class ThemePreferences {
 		else if (themeId.startsWith(DiscoverableGTheme.CLASS_PREFIX)) {
 			String className = themeId.substring(DiscoverableGTheme.CLASS_PREFIX.length());
 			try {
-				Class<?> forName = Class.forName(className);
-				return (GTheme) forName.getDeclaredConstructor().newInstance();
+				Class<? extends GTheme> clazz =
+					ClassSearcher.forNameSafe(className, GTheme.class, getClass().getClassLoader());
+				return clazz.getDeclaredConstructor().newInstance();
 			}
 			catch (Exception e) {
 				Msg.showError(GTheme.class, null, "Can't Load Previous Theme",

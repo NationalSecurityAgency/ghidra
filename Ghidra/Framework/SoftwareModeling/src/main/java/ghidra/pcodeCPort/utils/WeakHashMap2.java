@@ -213,7 +213,7 @@ public class WeakHashMap2<K, V> extends AbstractMap<K, V> {
 	 *                mapped
 	 *
 	 * @return  The previous value to which this key was mapped, or
-	 *          <code>null</code> if if there was no mapping for the key
+	 *          <code>null</code> if there was no mapping for the key
 	 */
 	@Override
 	public V put(K key, V value) {

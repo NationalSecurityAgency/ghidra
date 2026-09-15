@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -120,22 +120,33 @@ public class TypeDefDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 	}
 
 	private String getDataTypeNameHTML(TypeDef td, boolean trim) {
-		String name = td.getName();
+		String tdName = td.getName();
 		if (trim) {
-			name = truncateAsNecessary(name);
+			tdName = truncateAsNecessary(tdName);
 		}
-		name = HTMLUtilities.friendlyEncodeHTML(name);
+		tdName = HTMLUtilities.friendlyEncodeHTML(tdName);
 
 		StringBuilder buffy = new StringBuilder(TT_OPEN);
 		if (td.isAutoNamed()) {
 			buffy.append("auto-typedef ");
-			buffy.append(name);
+			buffy.append(tdName);
 		}
 		else {
+
+			// format: typedef data_type name
 			buffy.append("typedef ");
-			buffy.append(td != typeDef ? generateTypeName(td, null, trim) : name);
+
+			String dtName = generateTypeName(td.getDataType(), null, trim);
+			buffy.append(dtName);
 			buffy.append(" ");
-			buffy.append(generateTypeName(td.getDataType(), null, trim));
+
+			String bestName = tdName;
+			if (td != typeDef) {
+				// this method is called when unrolling a typedef chain; don't use the original
+				// typedef name for the intermediate types
+				bestName = generateTypeName(td, null, trim);
+			}
+			buffy.append(bestName);
 		}
 		buffy.append(TT_CLOSE).append(BR);
 		return buffy.toString();

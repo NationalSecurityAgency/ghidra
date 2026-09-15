@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,7 @@ import ghidra.program.database.util.AddressRangeMapDB;
 import ghidra.program.model.address.*;
 import ghidra.program.util.ProgramEvent;
 import ghidra.util.Lock;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
@@ -42,24 +43,19 @@ public class IntRangeMapDB implements IntRangeMap {
 	public static IntRangeMapDB getPropertyMap(ProgramDB program, String mapName,
 			ErrorHandler errHandler, AddressMap addrMap, Lock lock) {
 
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			DBHandle dbh = program.getDBHandle();
 			String tableName = IntRangeMapDB.TABLE_PREFIX + mapName;
 			if (dbh.getTable(tableName) != null) {
 				return new IntRangeMapDB(program, mapName, program, addrMap, lock);
 			}
 		}
-		finally {
-			lock.release();
-		}
 		return null;
 	}
 
 	public static IntRangeMapDB createPropertyMap(ProgramDB program, String mapName,
 			ErrorHandler errHandler, AddressMap addrMap, Lock lock) throws DuplicateNameException {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			DBHandle dbh = program.getDBHandle();
 			String tableName = TABLE_PREFIX + mapName;
 			if (dbh.getTable(tableName) != null) {
@@ -68,9 +64,6 @@ public class IntRangeMapDB implements IntRangeMap {
 			}
 
 			return new IntRangeMapDB(program, mapName, program, addrMap, lock);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -99,23 +92,16 @@ public class IntRangeMapDB implements IntRangeMap {
 	@Override
 	public void setValue(Address start, Address end, int value) {
 		checkDeleted();
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			propertyMap.paintRange(start, end, new IntField(value));
 			program.setChanged(ProgramEvent.INT_PROPERTY_MAP_CHANGED, null, mapName);
 		}
-		finally {
-			lock.release();
-		}
-
 	}
 
 	@Override
 	public void setValue(AddressSetView addresses, int value) {
 		checkDeleted();
-
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			AddressRangeIterator iter = addresses.getAddressRanges();
 			while (iter.hasNext()) {
 				AddressRange range = iter.next();
@@ -123,42 +109,30 @@ public class IntRangeMapDB implements IntRangeMap {
 			}
 			program.setChanged(ProgramEvent.INT_PROPERTY_MAP_CHANGED, null, mapName);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public void clearAll() {
 		checkDeleted();
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			propertyMap.dispose();
 			program.setChanged(ProgramEvent.INT_PROPERTY_MAP_CHANGED, null, mapName);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
 	@Override
 	public void clearValue(Address startAddr, Address endAddr) {
 		checkDeleted();
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			propertyMap.clearRange(startAddr, endAddr);
 			program.setChanged(ProgramEvent.INT_PROPERTY_MAP_CHANGED, null, mapName);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
 	@Override
 	public void clearValue(AddressSetView addresses) {
 		checkDeleted();
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			AddressRangeIterator iter = addresses.getAddressRanges();
 			while (iter.hasNext()) {
 				AddressRange range = iter.next();
@@ -166,48 +140,33 @@ public class IntRangeMapDB implements IntRangeMap {
 			}
 			program.setChanged(ProgramEvent.INT_PROPERTY_MAP_CHANGED, null, mapName);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public Integer getValue(Address address) {
 		checkDeleted();
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			Field value = propertyMap.getValue(address);
 			if (value == null) {
 				return null;
 			}
 			return ((IntField) value).getIntValue();
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public AddressSet getAddressSet() {
 		checkDeleted();
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			return propertyMap.getAddressSet();
-		}
-		finally {
-			lock.release();
 		}
 	}
 
 	@Override
 	public AddressSet getAddressSet(int value) {
 		checkDeleted();
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			return propertyMap.getAddressSet(new IntField(value));
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -216,13 +175,16 @@ public class IntRangeMapDB implements IntRangeMap {
 	 * @param fromAddr move from address
 	 * @param toAddr move to address
 	 * @param length number of address to move
-	 * @param monitor
-	 * @throws CancelledException
+	 * @param monitor the task monitor
+	 * @throws CancelledException if cancelled
 	 */
 	@Override
 	public void moveAddressRange(Address fromAddr, Address toAddr, long length, TaskMonitor monitor)
 			throws CancelledException {
-		propertyMap.moveAddressRange(fromAddr, toAddr, length, monitor);
+		checkDeleted();
+		try (Closeable c = lock.write()) {
+			propertyMap.moveAddressRange(fromAddr, toAddr, length, monitor);
+		}
 	}
 
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.service.emulation.data;
 
-import ghidra.app.services.DebuggerStaticMappingService;
+import ghidra.debug.api.modules.DebuggerAddressTranslator;
 import ghidra.pcode.exec.trace.data.DefaultPcodeTracePropertyAccess;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.util.PropertyMap;
@@ -52,12 +52,11 @@ public class DefaultPcodeDebuggerPropertyAccess<T>
 
 	@Override
 	protected T whenNull(Address hostAddress) {
-		DebuggerStaticMappingService mappingService =
-			data.getServiceProvider().getService(DebuggerStaticMappingService.class);
-		if (mappingService == null) {
+		DebuggerAddressTranslator translator = data.getAddressTranslator();
+		if (translator == null) {
 			return super.whenNull(hostAddress);
 		}
-		ProgramLocation progLoc = mappingService.getOpenMappedLocation(new DefaultTraceLocation(
+		ProgramLocation progLoc = translator.getOpenMappedLocation(new DefaultTraceLocation(
 			data.getPlatform().getTrace(), null, Lifespan.at(data.getSnap()), hostAddress));
 		if (progLoc == null) {
 			return super.whenNull(hostAddress);

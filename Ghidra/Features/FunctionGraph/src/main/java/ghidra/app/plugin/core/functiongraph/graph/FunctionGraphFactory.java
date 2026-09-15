@@ -222,7 +222,11 @@ public class FunctionGraphFactory {
 		for (FGVertex v : vertices) {
 			monitor.increment();
 			try {
-				Swing.runNow(v::getComponent);
+				Swing.runNow(() -> {
+					if (!monitor.isCancelled()) {
+						v.getComponent();
+					}
+				});
 			}
 			catch (Exception e) {
 				return false;
@@ -312,7 +316,17 @@ public class FunctionGraphFactory {
 		CodeBlockIterator iterator = blockModel.getCodeBlocksContaining(addresses, monitor);
 		monitor.initialize(addresses.getNumAddresses());
 
-		for (; iterator.hasNext();) {
+		FunctionGraphOptions fgOptions = controller.getFunctionGraphOptions();
+		int maxNodes = fgOptions.getMaxNodes();
+
+		for (int i = 0; iterator.hasNext(); i++) {
+
+			if (i > maxNodes) {
+				String message =
+					"Graph is too large; options limit set to %s nodes".formatted(maxNodes);
+				throw new CancelledException(message);
+			}
+
 			CodeBlock codeBlock = iterator.next();
 
 			FlowType flowType = codeBlock.getFlowType();

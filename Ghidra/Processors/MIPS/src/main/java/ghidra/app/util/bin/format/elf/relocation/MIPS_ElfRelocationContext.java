@@ -72,8 +72,6 @@ class MIPS_ElfRelocationContext extends ElfRelocationContext<MIPS_ElfRelocationH
 		int typeId = relocation.getType();
 		int symbolIndex = relocation.getSymbolIndex();
 
-		saveValueForNextReloc = nextRelocationHasSameOffset(relocation);
-
 		RelocationResult lastResult = RelocationResult.FAILURE;
 		if (getElfHeader().is64Bit()) {
 
@@ -99,7 +97,10 @@ class MIPS_ElfRelocationContext extends ElfRelocationContext<MIPS_ElfRelocationH
 				typeId >>= 8;
 				int nextRelocType = (n < 2) ? (typeId & 0xff) : 0;
 				if (nextRelocType == MIPS_ElfRelocationType.R_MIPS_NONE.typeId) {
-					saveValueForNextReloc = false;
+					saveValueForNextReloc = nextRelocationHasSameOffset(relocation);
+				}
+				else {
+					saveValueForNextReloc = true;
 				}
 
 				RelocationResult result =
@@ -117,6 +118,8 @@ class MIPS_ElfRelocationContext extends ElfRelocationContext<MIPS_ElfRelocationH
 			return lastResult;
 		}
 
+		// 32-bit ELF
+		saveValueForNextReloc = nextRelocationHasSameOffset(relocation);
 		return doRelocate(relocation, relocationAddress, typeId, symbolIndex);
 	}
 

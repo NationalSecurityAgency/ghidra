@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import ghidra.pcodeCPort.utils.AddrSpaceToIdSymmetryMap;
 //cpui_mach_addr is expected to print itself and read itself. It can take
 //a size as a "suggestion" for how it should print itself
 
-//All addresses are absolute and there are are no registers in CPUI. However,
+//All addresses are absolute and there are no registers in CPUI. However,
 //all addresses are prefixed with an "immutable" pointer, which can
 //specify a separate RAM space, a register space, an i/o space etc. Thus
 //a translation from a real machine language will typically simulate registers

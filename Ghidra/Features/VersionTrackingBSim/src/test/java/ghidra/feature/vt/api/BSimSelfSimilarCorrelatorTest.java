@@ -16,13 +16,9 @@
  */
 package ghidra.feature.vt.api;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressFactory;
-import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.address.AddressSpace;
-
 import org.junit.Test;
+
+import ghidra.program.model.address.*;
 
 public class BSimSelfSimilarCorrelatorTest extends AbstractSelfSimilarCorrelatorTest {
 	public BSimSelfSimilarCorrelatorTest( ) {
@@ -40,7 +36,7 @@ public class BSimSelfSimilarCorrelatorTest extends AbstractSelfSimilarCorrelator
 		AddressFactory addressFactory = sourceProgram.getAddressFactory();
 		AddressSpace addressSpace = addressFactory.getDefaultAddressSpace();
 		AddressSet set =
-			new AddressSet(sourceProgram.getMemory().getInitializedAddressSet());
+			new AddressSet(sourceProgram.getMemory().getLoadedAndInitializedAddressSet());
 		for (long l : addresses) {
 			Address address = addressSpace.getAddress(l);
 			set = set.subtract(new AddressSet(address, address));

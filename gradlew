@@ -121,14 +121,14 @@ if [ -f "${APP_HOME}/gradle-wrapper.jar" ]; then
     GHIDRA_HOME="${APP_HOME}/../.."
 else
     # Development Environment (Eclipse classes or "gradle jar")
-    CLASSPATH="${APP_HOME}/Ghidra/RuntimeScripts/Common/support/gradle/gradle-wrapper.jar"
+    CLASSPATH="${APP_HOME}/Ghidra/RuntimeScripts/support/gradle/gradle-wrapper.jar"
     GHIDRA_HOME="${APP_HOME}"
 fi
 
 # Read application properties
 while IFS='=' read -r key value
 do
-    key=$(echo $key | tr '.' '_')
+    key=$(echo $key | tr '.-' '_')
     eval ${key}=\${value}
 done < "${GHIDRA_HOME}/Ghidra/application.properties"
 

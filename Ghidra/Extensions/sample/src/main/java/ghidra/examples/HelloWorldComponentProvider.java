@@ -17,7 +17,8 @@ package ghidra.examples;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
-import java.awt.event.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 
 import javax.swing.*;
 
@@ -66,7 +67,8 @@ public class HelloWorldComponentProvider extends ComponentProviderAdapter {
 		Icon icon = new GIcon("icon.sample.action.hello.world");
 		action.setMenuBarData(new MenuData(new String[] { "Misc", "Hello World" }, icon));
 		action.setKeyBindingData(
-			new KeyBindingData(KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK)));
+			new KeyBindingData(
+				KeyStroke.getKeyStroke(KeyEvent.VK_W, DockingUtils.CONTROL_KEY_MODIFIER_MASK)));
 
 		// puts the action on the local toolbar.
 		action.setToolBarData(new ToolBarData(icon));

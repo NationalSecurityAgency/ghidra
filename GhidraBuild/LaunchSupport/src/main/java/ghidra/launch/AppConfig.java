@@ -373,7 +373,7 @@ public class AppConfig {
 
 		// Get the required launch properties file
 		File launchPropertiesFile = new File(installDir,
-			(isDev ? "Ghidra/RuntimeScripts/Common/" : "") + "support/" + LAUNCH_PROPERTIES_NAME);
+			(isDev ? "Ghidra/RuntimeScripts/" : "") + "support/" + LAUNCH_PROPERTIES_NAME);
 		if (!launchPropertiesFile.isFile()) {
 			throw new FileNotFoundException(
 				"Launch properties file does not exist: " + launchPropertiesFile);
@@ -396,9 +396,13 @@ public class AppConfig {
 		String userSettingsDirName = appName + "_" + applicationVersion + "_" +
 			applicationReleaseName.replaceAll("\\s", "").toUpperCase();
 		if (isDev) {
-			userSettingsDirName += "_location_" + installDir.getParentFile().getName();
+			String dirName = new File(installDir, "ghidra.repos.config").isFile()
+					? installDir.getParentFile().getName()
+					: installDir.getName();
+			userSettingsDirName += "_location_" + dirName;
 		}
 		
+
 		// Ensure there is a user home directory (there definitely should be)
 		String userHomeDirPath = System.getProperty("user.home");
 		if (userHomeDirPath == null || userHomeDirPath.isEmpty()) {
@@ -415,6 +419,20 @@ public class AppConfig {
 		if (applicationLayoutVersion.equals("1")) {
 			userSettingsDir = new File(userHomeDir, "." + appName + "/." + userSettingsDirName);
 			return new File(userSettingsDir, saveFileName);
+		}
+
+		// Handle application.settingsdir system property
+		for (String arg : launchProperties.getVmArgList()) {
+			if (arg.startsWith("-Dapplication.settingsdir")) {
+				String[] parts = arg.split("=", 2);
+				if (parts.length == 2) {
+					String path = parts[1].trim();
+					if (!path.isEmpty()) {
+						userSettingsDir = new File(path, appName + "/" + userSettingsDirName);
+						return new File(userSettingsDir, saveFileName);
+					}
+				}
+			}
 		}
 
 		// Look for XDG environment variable
@@ -435,6 +453,7 @@ public class AppConfig {
 					new File(localAppDataDirPath, appName + "/" + userSettingsDirName);
 				break;
 			case LINUX:
+			case OPEN_BSD:
 				userSettingsDir =
 					new File(userHomeDir, ".config/" + appName + "/" + userSettingsDirName);
 				break;

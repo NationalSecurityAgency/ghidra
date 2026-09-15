@@ -50,7 +50,10 @@
 
 <tocroot>
     <tocref id="Program Annotation">
-        <tocdef id="SARIF" sortgroup="s" text="SARIF" target="help/topics/Sarif/SARIF.htm" >
+    
+    	<!-- The sort group places this entry at the bottom of all other entries in the Program
+    	     Annotation section.  'z' puts it at the end.  The rest makes it unique. -->
+        <tocdef id="SARIF" sortgroup="z_Sarif" text="SARIF" target="help/topics/Sarif/SARIF.htm" >
         </tocdef>
     </tocref>
 </tocroot>

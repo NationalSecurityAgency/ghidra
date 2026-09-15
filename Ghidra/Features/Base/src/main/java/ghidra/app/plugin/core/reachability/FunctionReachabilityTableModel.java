@@ -136,12 +136,12 @@ public class FunctionReachabilityTableModel
 		CodeBlockModel model;
 		try {
 			model = blockModelService.getNewModelByName(
-				BlockModelService.ISOLATED_ENTRY_SUBROUTINE_MODEL_NAME);
+				BlockModelService.ISOLATED_ENTRY_SUBROUTINE_MODEL_NAME, program);
 		}
 		catch (NotFoundException e) {
 			Msg.error(this, "Code block model not found: " +
 				BlockModelService.ISOLATED_ENTRY_SUBROUTINE_MODEL_NAME);
-			model = blockModelService.getActiveSubroutineModel();
+			model = blockModelService.getActiveSubroutineModel(program);
 		}
 
 		return model.getCodeBlocks(monitor);
@@ -179,7 +179,7 @@ public class FunctionReachabilityTableModel
 
 		Address targetAddress = destination.getDestinationAddress();
 		BlockModelService blockModelService = serviceProvider.getService(BlockModelService.class);
-		CodeBlockModel codeBlockModel = blockModelService.getActiveSubroutineModel();
+		CodeBlockModel codeBlockModel = blockModelService.getActiveSubroutineModel(program);
 		CodeBlock targetBlock = codeBlockModel.getFirstCodeBlockContaining(targetAddress, monitor);
 		if (targetBlock == null) {
 			return null; // no code found for call; external?
@@ -248,11 +248,6 @@ public class FunctionReachabilityTableModel
 		}
 
 		@Override
-		public Iterator<List<FRVertex>> iterator() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
 		public void add(List<FRVertex> t) {
 			accumulator.add(new FunctionReachabilityResult(fromFunction, toFunction, t));
 		}
@@ -265,18 +260,8 @@ public class FunctionReachabilityTableModel
 		}
 
 		@Override
-		public boolean contains(List<FRVertex> t) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Collection<List<FRVertex>> get() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public int size() {
-			return accumulator.size();
+		public int getProgress() {
+			return accumulator.getProgress();
 		}
 
 	}

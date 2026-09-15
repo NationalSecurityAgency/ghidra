@@ -255,3 +255,48 @@ define pcodeop enclu_unknown;
 
 	<done>		
 }
+
+define pcodeop enclv_edecvirtchild;
+define pcodeop enclv_eincvirtchild;
+define pcodeop enclv_esetcontext;
+define pcodeop enclv_unknown;
+
+:ENCLV           is vexMode=0 & byte=0x0f; byte=0x01; byte=0xc0 {
+	
+	if ( EAX != 0x0 ) goto <leaf_1>;
+		RAX = enclv_edecvirtchild( RBX, RCX );
+		ZF = (RAX != 0);
+		CF = 0;
+		PF = 0;
+		AF = 0;
+		OF = 0;
+		SF = 0;
+		goto <done>;
+		
+	<leaf_1>
+	if ( EAX != 0x1 ) goto <leaf_2>;
+		RAX =  enclv_eincvirtchild( RBX, RCX );
+		ZF = (RAX != 0);
+		CF = 0;
+		PF = 0;
+		AF = 0;
+		OF = 0;
+		SF = 0;
+		goto <done>;
+
+	<leaf_2>
+	if ( EAX != 0x2 ) goto <unknown>;
+		RAX = enclv_esetcontext( RCX, RDX );
+		ZF = (RAX != 0);
+		CF = 0;
+		PF = 0;
+		AF = 0;
+		OF = 0;
+		SF = 0;
+		goto <done>;
+	<unknown>
+		enclv_unknown();
+
+	<done>
+
+}

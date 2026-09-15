@@ -85,11 +85,8 @@ public class PluginUtils {
 				}
 			}
 
-			Class<?> tmpClass = Class.forName(pluginClassName);
-			if (!Plugin.class.isAssignableFrom(tmpClass)) {
-				throw new PluginException(
-					"Class " + pluginClassName + " is not derived from Plugin");
-			}
+			Class<? extends Plugin> tmpClass = ClassSearcher.forNameSafe(pluginClassName,
+				Plugin.class, PluginUtils.class.getClassLoader());
 			return tmpClass.asSubclass(Plugin.class);
 		}
 		catch (ClassNotFoundException e) {
@@ -134,8 +131,8 @@ public class PluginUtils {
 		}
 		if (defaultProviderClassName != null) {
 			try {
-				Class<?> tmpClass = Class.forName(defaultProviderClassName);
-				return tmpClass.asSubclass(Plugin.class);
+				return ClassSearcher.forNameSafe(defaultProviderClassName, Plugin.class,
+					PluginUtils.class.getClassLoader());
 			}
 			catch (ClassCastException cce) {
 				Msg.error(PluginUtils.class,
@@ -145,7 +142,6 @@ public class PluginUtils {
 			catch (ClassNotFoundException e) {
 				throw new AssertException(
 					"default provider class for " + serviceClass.getName() + " not found!");
-
 			}
 		}
 		return null;

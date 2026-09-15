@@ -18,22 +18,20 @@ package ghidra.app.plugin.core.decompile.actions;
 import docking.widgets.CursorPosition;
 import docking.widgets.SearchLocation;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import ghidra.app.plugin.core.navigation.locationreferences.LocationReferenceContext;
+import docking.widgets.search.SearchLocationContext;
 
 public class DecompilerSearchLocation extends SearchLocation {
 
 	private final FieldLocation fieldLocation;
 	private String textLine;
-	private LocationReferenceContext context;
 
 	public DecompilerSearchLocation(FieldLocation fieldLocation, int startIndexInclusive,
-			int endIndexInclusive, String searchText, boolean forwardDirection, String textLine,
-			LocationReferenceContext context) {
+			int endIndexInclusive, String text, boolean forwardDirection, String textLine,
+			int lineNumber, SearchLocationContext context) {
 
-		super(startIndexInclusive, endIndexInclusive, searchText, forwardDirection);
+		super(startIndexInclusive, endIndexInclusive, text, lineNumber, context);
 		this.fieldLocation = fieldLocation;
 		this.textLine = textLine;
-		this.context = context;
 	}
 
 	public FieldLocation getFieldLocation() {
@@ -44,10 +42,6 @@ public class DecompilerSearchLocation extends SearchLocation {
 		return textLine;
 	}
 
-	public LocationReferenceContext getContext() {
-		return context;
-	}
-
 	@Override
 	public CursorPosition getCursorPosition() {
 		return new DecompilerCursorPosition(fieldLocation);
@@ -56,5 +50,16 @@ public class DecompilerSearchLocation extends SearchLocation {
 	@Override
 	protected String fieldsToString() {
 		return super.fieldsToString() + ", fieldLocation=" + fieldLocation;
+	}
+
+	public boolean contains(FieldLocation other) {
+		int line = getLineNumber();
+		int otherLine = other.getIndex().intValue() + 1; // +1 for zero based
+		if (line != otherLine) {
+			return false;
+		}
+
+		int col = other.getCol();
+		return contains(col);
 	}
 }

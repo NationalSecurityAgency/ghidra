@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,25 +20,19 @@ import java.util.Map.Entry;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
-import ghidra.app.plugin.core.debug.service.emulation.*;
-import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.script.GhidraScript;
-import ghidra.debug.api.emulation.DebuggerPcodeMachine;
+import ghidra.debug.api.emulation.EmulatorFactory;
 import ghidra.debug.api.emulation.PcodeDebuggerAccess;
 import ghidra.lifecycle.Unfinished;
-import ghidra.pcode.emu.DefaultPcodeThread.PcodeThreadExecutor;
-import ghidra.pcode.emu.PcodeThread;
+import ghidra.pcode.emu.*;
 import ghidra.pcode.emu.auxiliary.AuxEmulatorPartsFactory;
 import ghidra.pcode.emu.auxiliary.AuxPcodeEmulator;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
-import ghidra.pcode.exec.debug.auxiliary.AuxDebuggerEmulatorPartsFactory;
-import ghidra.pcode.exec.debug.auxiliary.AuxDebuggerPcodeEmulator;
-import ghidra.pcode.exec.trace.*;
-import ghidra.pcode.exec.trace.auxiliary.AuxTracePcodeEmulator;
-import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
-import ghidra.pcode.exec.trace.data.PcodeTracePropertyAccess;
+import ghidra.pcode.exec.SleighPcodeUseropDefinition.BuilderStage1;
+import ghidra.pcode.exec.trace.TraceEmulationIntegration.AbstractSimplePropertyBasedPieceHandler;
+import ghidra.pcode.exec.trace.TraceEmulationIntegration.Writer;
 import ghidra.pcode.struct.StructuredSleigh;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
@@ -58,7 +52,7 @@ public class ModelingScript extends GhidraScript {
 		private final Register regRDI;
 		private final Register regRSI;
 
-		public JavaStdLibPcodeUseropLibrary(SleighLanguage language) {
+		public JavaStdLibPcodeUseropLibrary(Language language) {
 			space = language.getDefaultSpace();
 			regRSP = language.getRegister("RSP");
 			regRAX = language.getRegister("RAX");
@@ -67,21 +61,18 @@ public class ModelingScript extends GhidraScript {
 		}
 
 		@PcodeUserop
-		public void __x86_64_RET(
-				@OpExecutor PcodeExecutor<T> executor,
-				@OpState PcodeExecutorState<T> state) {
+		public void __x86_64_POP(@OpExecutor PcodeExecutor<T> executor,
+				@OpState PcodeExecutorState<T> state, @OpOutput Varnode out) {
 			PcodeArithmetic<T> arithmetic = state.getArithmetic();
 			T tRSP = state.getVar(regRSP, Reason.EXECUTE_READ);
-			long lRSP = arithmetic.toLong(tRSP, Purpose.OTHER);
+			long lRSP = arithmetic.toLong(tRSP, Purpose.LOAD);
 			T tReturn = state.getVar(space, lRSP, 8, true, Reason.EXECUTE_READ);
-			long lReturn = arithmetic.toLong(tReturn, Purpose.BRANCH);
 			state.setVar(regRSP, arithmetic.fromConst(lRSP + 8, 8));
-			((PcodeThreadExecutor<T>) executor).getThread()
-					.overrideCounter(space.getAddress(lReturn));
+			state.setVar(out, tReturn);
 		}
 
 		@PcodeUserop
-		public void __libc_strlen(@OpState PcodeExecutorState<T> state) {
+		public void __libc_strnlen(@OpState PcodeExecutorState<T> state) {
 			PcodeArithmetic<T> arithmetic = state.getArithmetic();
 			T tStr = state.getVar(regRDI, Reason.EXECUTE_READ);
 			long lStr = arithmetic.toLong(tStr, Purpose.OTHER);
@@ -101,57 +92,32 @@ public class ModelingScript extends GhidraScript {
 	// ----------------------
 
 	public static class SleighStdLibPcodeUseropLibrary<T> extends AnnotatedPcodeUseropLibrary<T> {
-		private static final String SRC_RET = """
-				RIP = *:8 RSP;
-				RSP = RSP + 8;
-				return [RIP];
-				""";
-		private static final String SRC_STRLEN = """
-				__result = 0;
-				<loop>
-				if (*:1 (str+__result) == 0 || __result >= maxlen) goto <exit>;
-				__result = __result + 1;
-				goto <loop>;
-				<exit>
-				""";
-		private final Register regRAX;
-		private final Register regRDI;
-		private final Register regRSI;
-		private final Varnode vnRAX;
-		private final Varnode vnRDI;
-		private final Varnode vnRSI;
-
-		private PcodeProgram progRet;
-		private PcodeProgram progStrlen;
-
-		public SleighStdLibPcodeUseropLibrary(SleighLanguage language) {
-			regRAX = language.getRegister("RAX");
-			regRDI = language.getRegister("RDI");
-			regRSI = language.getRegister("RSI");
-			vnRAX = new Varnode(regRAX.getAddress(), regRAX.getMinimumByteSize());
-			vnRDI = new Varnode(regRDI.getAddress(), regRDI.getMinimumByteSize());
-			vnRSI = new Varnode(regRSI.getAddress(), regRSI.getMinimumByteSize());
+		@PcodeUserop
+		public SleighPcodeUseropDefinition __x86_64_POP(BuilderStage1 builder) {
+			return builder.params().body(_ -> """
+					__op_output = *:8 RSP;
+					RSP = RSP + 8;
+					""").build();
 		}
 
 		@PcodeUserop
-		public void __x86_64_RET(@OpExecutor PcodeExecutor<T> executor,
-				@OpLibrary PcodeUseropLibrary<T> library) {
-			if (progRet == null) {
-				progRet = SleighProgramCompiler.compileUserop(executor.getLanguage(),
-					"__x86_64_RET", List.of(), SRC_RET, PcodeUseropLibrary.nil(), List.of());
-			}
-			progRet.execute(executor, library);
+		public SleighPcodeUseropDefinition __libc_strnlen(BuilderStage1 builder) {
+			return builder.params().body(_ -> """
+					RAX = __libc_strnlen_generic(RDI, RSI);
+					""").build();
 		}
 
 		@PcodeUserop
-		public void __libc_strlen(@OpExecutor PcodeExecutor<T> executor,
-				@OpLibrary PcodeUseropLibrary<T> library) {
-			if (progStrlen == null) {
-				progStrlen = SleighProgramCompiler.compileUserop(executor.getLanguage(),
-					"__libc_strlen", List.of("__result", "str", "maxlen"),
-					SRC_STRLEN, PcodeUseropLibrary.nil(), List.of(vnRAX, vnRDI, vnRSI));
-			}
-			progStrlen.execute(executor, library);
+		public SleighPcodeUseropDefinition __libc_strnlen_generic(BuilderStage1 builder) {
+			return builder.params("str", "maxlen").body(_ -> """
+					local result = 0;
+					<loop>
+					if (*:1 (str+result) == 0 || result >= maxlen) goto <exit>;
+					result = result + 1;
+					goto <loop>;
+					<exit>
+					__op_output = result;
+					""").build();
 		}
 	}
 
@@ -168,24 +134,25 @@ public class ModelingScript extends GhidraScript {
 				super(cs);
 			}
 
-			@StructuredUserop
-			public void __x86_64_RET() {
-				Var RSP = lang("RSP", type("void **"));
-				Var RIP = lang("RIP", type("void *"));
-				RIP.set(RSP.deref());
+			@StructuredUserop(type = "undefined *")
+			public void __x86_64_POP() {
+				Var RSP = lang("RSP", type("undefined **"));
+				Var result = temp(type("undefined *"));
+				result.set(RSP.deref());
 				RSP.addiTo(8);
-				_return(RIP);
+				_result(result);
 			}
 
 			@StructuredUserop
-			public void __libc_strlen() {
+			public void __libc_strnlen() {
 				Var result = lang("RAX", type("long"));
 				Var str = lang("RDI", type("char *"));
 				Var maxlen = lang("RSI", type("long"));
 
-				_for(result.set(0), result.ltiu(maxlen).andb(str.index(result).deref().eq(0)),
-					result.inc(), () -> {
-					});
+				RVal inBounds = result.ltiu(maxlen);
+				RVal notTerm = str.index(result).deref().neq(0);
+				_for(result.set(0), inBounds.andb(notTerm), result.inc(), () -> {
+				});
 			}
 		}
 	}
@@ -193,6 +160,7 @@ public class ModelingScript extends GhidraScript {
 	// ----------------------
 
 	interface Expr {
+		int size();
 	}
 
 	interface UnExpr extends Expr {
@@ -205,8 +173,7 @@ public class ModelingScript extends GhidraScript {
 		Expr r();
 	}
 
-	record LitExpr(BigInteger val, int size) implements Expr {
-	}
+	record LitExpr(BigInteger val, int size) implements Expr {}
 
 	record VarExpr(Varnode vn) implements Expr {
 		public VarExpr(AddressSpace space, long offset, int size) {
@@ -216,16 +183,18 @@ public class ModelingScript extends GhidraScript {
 		public VarExpr(Address address, int size) {
 			this(new Varnode(address, size));
 		}
+
+		@Override
+		public int size() {
+			return vn.getSize();
+		}
 	}
 
-	record InvExpr(Expr u) implements UnExpr {
-	}
+	record InvExpr(Expr u, int size) implements UnExpr {}
 
-	record AddExpr(Expr l, Expr r) implements BinExpr {
-	}
+	record AddExpr(Expr l, Expr r, int size) implements BinExpr {}
 
-	record SubExpr(Expr l, Expr r) implements BinExpr {
-	}
+	record SubExpr(Expr l, Expr r, int size) implements BinExpr {}
 
 	// ----------------------
 
@@ -247,6 +216,11 @@ public class ModelingScript extends GhidraScript {
 		}
 
 		@Override
+		public Class<Expr> getDomain() {
+			return Expr.class;
+		}
+
+		@Override
 		public Endian getEndian() {
 			return endian;
 		}
@@ -254,7 +228,7 @@ public class ModelingScript extends GhidraScript {
 		@Override
 		public Expr unaryOp(int opcode, int sizeout, int sizein1, Expr in1) {
 			return switch (opcode) {
-				case PcodeOp.INT_NEGATE -> new InvExpr(in1);
+				case PcodeOp.INT_NEGATE -> new InvExpr(in1, sizeout);
 				default -> throw new UnsupportedOperationException(PcodeOp.getMnemonic(opcode));
 			};
 		}
@@ -263,8 +237,8 @@ public class ModelingScript extends GhidraScript {
 		public Expr binaryOp(int opcode, int sizeout, int sizein1, Expr in1, int sizein2,
 				Expr in2) {
 			return switch (opcode) {
-				case PcodeOp.INT_ADD -> new AddExpr(in1, in2);
-				case PcodeOp.INT_SUB -> new SubExpr(in1, in2);
+				case PcodeOp.INT_ADD -> new AddExpr(in1, in2, sizeout);
+				case PcodeOp.INT_SUB -> new SubExpr(in1, in2, sizeout);
 				default -> throw new UnsupportedOperationException(PcodeOp.getMnemonic(opcode));
 			};
 		}
@@ -308,57 +282,59 @@ public class ModelingScript extends GhidraScript {
 
 		@Override
 		public long sizeOf(Expr value) {
-			throw new UnsupportedOperationException();
+			return value.size();
 		}
 	}
 
 	// ----------------------
 
 	public static class ExprSpace {
-		protected final NavigableMap<Long, Expr> map;
+		protected final NavigableMap<Long, Expr> map = new TreeMap<>(Long::compareUnsigned);
+		protected final ExprPcodeExecutorStatePiece piece;
 		protected final AddressSpace space;
 
-		protected ExprSpace(AddressSpace space, NavigableMap<Long, Expr> map) {
+		protected ExprSpace(AddressSpace space, ExprPcodeExecutorStatePiece piece) {
 			this.space = space;
-			this.map = map;
-		}
-
-		public ExprSpace(AddressSpace space) {
-			this(space, new TreeMap<>());
+			this.piece = piece;
 		}
 
 		public void clear() {
 			map.clear();
 		}
 
-		public void set(long offset, Expr val) {
+		public void set(long offset, int size, Expr val, PcodeStateCallbacks cb) {
 			// TODO: Handle overlaps / offcut gets and sets
 			map.put(offset, val);
+			cb.dataWritten(piece, space.getAddress(offset), size, val);
 		}
 
-		public Expr get(long offset, int size) {
+		public Expr get(long offset, int size, Reason reason, PcodeStateCallbacks cb) {
 			// TODO: Handle overlaps / offcut gets and sets
 			Expr expr = map.get(offset);
-			return expr != null ? expr : whenNull(offset, size);
+			if (expr == null) {
+				byte[] aOffset =
+					piece.getAddressArithmetic().fromConst(offset, space.getPointerSize());
+				if (cb.readUninitialized(piece, space, aOffset, size, reason) != 0) {
+					return map.get(offset);
+				}
+			}
+			return null;
 		}
 
-		protected Expr whenNull(long offset, int size) {
-			return new VarExpr(space, offset, size);
+		public Entry<Long, Expr> getNextEntry(long offset) {
+			return map.ceilingEntry(offset);
 		}
 	}
 
-	public static abstract class AbstractBytesExprPcodeExecutorStatePiece<S extends ExprSpace>
-			extends
-			AbstractLongOffsetPcodeExecutorStatePiece<byte[], Expr, S> {
+	public static class ExprPcodeExecutorStatePiece
+			extends AbstractLongOffsetPcodeExecutorStatePiece<byte[], Expr, ExprSpace> {
 
-		protected final AbstractSpaceMap<S> spaceMap = newSpaceMap();
+		protected final Map<AddressSpace, ExprSpace> spaceMap = new HashMap<>();
 
-		public AbstractBytesExprPcodeExecutorStatePiece(Language language) {
+		public ExprPcodeExecutorStatePiece(Language language, PcodeStateCallbacks cb) {
 			super(language, BytesPcodeArithmetic.forLanguage(language),
-				ExprPcodeArithmetic.forLanguage(language));
+				ExprPcodeArithmetic.forLanguage(language), cb);
 		}
-
-		protected abstract AbstractSpaceMap<S> newSpaceMap();
 
 		@Override
 		public MemBuffer getConcreteBuffer(Address address, Purpose purpose) {
@@ -367,53 +343,52 @@ public class ModelingScript extends GhidraScript {
 
 		@Override
 		public void clear() {
-			for (S space : spaceMap.values()) {
+			for (ExprSpace space : spaceMap.values()) {
 				space.clear();
 			}
 		}
 
 		@Override
-		protected S getForSpace(AddressSpace space, boolean toWrite) {
-			return spaceMap.getForSpace(space, toWrite);
+		protected ExprSpace getForSpace(AddressSpace space, boolean toWrite) {
+			if (toWrite) {
+				return spaceMap.computeIfAbsent(space, s -> new ExprSpace(s, this));
+			}
+			return spaceMap.get(space);
 		}
 
 		@Override
-		protected void setInSpace(ExprSpace space, long offset, int size, Expr val) {
-			space.set(offset, val);
+		public Entry<Long, Expr> getNextEntryInternal(AddressSpace space, long offset) {
+			ExprSpace s = getForSpace(space, false);
+			if (s == null) {
+				return null;
+			}
+			return s.getNextEntry(offset);
 		}
 
 		@Override
-		protected Expr getFromSpace(S space, long offset, int size, Reason reason) {
-			return space.get(offset, size);
+		protected void setInSpace(ExprSpace space, long offset, int size, Expr val,
+				PcodeStateCallbacks cb) {
+			space.set(offset, size, val, cb);
 		}
 
 		@Override
-		protected Map<Register, Expr> getRegisterValuesFromSpace(S s, List<Register> registers) {
+		protected Expr getFromSpace(ExprSpace space, long offset, int size, Reason reason,
+				PcodeStateCallbacks cb) {
+			return space.get(offset, size, reason, cb);
+		}
+
+		@Override
+		protected Map<Register, Expr> getRegisterValuesFromSpace(ExprSpace s,
+				List<Register> registers) {
 			throw new UnsupportedOperationException();
 		}
 	}
 
-	public static class ExprPcodeExecutorStatePiece
-			extends AbstractBytesExprPcodeExecutorStatePiece<ExprSpace> {
-		public ExprPcodeExecutorStatePiece(Language language) {
-			super(language);
-		}
-
-		@Override
-		protected AbstractSpaceMap<ExprSpace> newSpaceMap() {
-			return new SimpleSpaceMap<ExprSpace>() {
-				@Override
-				protected ExprSpace newSpace(AddressSpace space) {
-					return new ExprSpace(space);
-				}
-			};
-		}
-	}
-
 	public static class BytesExprPcodeExecutorState extends PairedPcodeExecutorState<byte[], Expr> {
-		public BytesExprPcodeExecutorState(PcodeExecutorStatePiece<byte[], byte[]> concrete) {
+		public BytesExprPcodeExecutorState(PcodeExecutorStatePiece<byte[], byte[]> concrete,
+				PcodeStateCallbacks cb) {
 			super(new PairedPcodeExecutorStatePiece<>(concrete,
-				new ExprPcodeExecutorStatePiece(concrete.getLanguage())));
+				new ExprPcodeExecutorStatePiece(concrete.getLanguage(), cb)));
 		}
 	}
 
@@ -447,21 +422,27 @@ public class ModelingScript extends GhidraScript {
 
 		@Override
 		public PcodeExecutorState<Pair<byte[], Expr>> createSharedState(
-				AuxPcodeEmulator<Expr> emulator, BytesPcodeExecutorStatePiece concrete) {
-			return new BytesExprPcodeExecutorState(concrete);
+				AuxPcodeEmulator<Expr> emulator, BytesPcodeExecutorStatePiece concrete,
+				PcodeStateCallbacks cb) {
+			return new BytesExprPcodeExecutorState(concrete, cb);
 		}
 
 		@Override
 		public PcodeExecutorState<Pair<byte[], Expr>> createLocalState(
 				AuxPcodeEmulator<Expr> emulator, PcodeThread<Pair<byte[], Expr>> thread,
-				BytesPcodeExecutorStatePiece concrete) {
-			return new BytesExprPcodeExecutorState(concrete);
+				BytesPcodeExecutorStatePiece concrete, PcodeStateCallbacks cb) {
+			return new BytesExprPcodeExecutorState(concrete, cb);
 		}
 	}
 
-	public class BytesExprPcodeEmulator extends AuxPcodeEmulator<Expr> {
+	public static class BytesExprPcodeEmulator extends AuxPcodeEmulator<Expr> {
+		public BytesExprPcodeEmulator(Language language,
+				PcodeEmulationCallbacks<Pair<byte[], Expr>> cb) {
+			super(language, cb);
+		}
+
 		public BytesExprPcodeEmulator(Language language) {
-			super(language);
+			this(language, PcodeEmulationCallbacks.none());
 		}
 
 		@Override
@@ -472,194 +453,49 @@ public class ModelingScript extends GhidraScript {
 
 	// ----------------------
 
-	public static class ExprTraceSpace extends ExprSpace {
-		protected final PcodeTracePropertyAccess<String> property;
-
-		public ExprTraceSpace(AddressSpace space, PcodeTracePropertyAccess<String> property) {
-			super(space);
-			this.property = property;
+	public static class ExprPieceHandler
+			extends AbstractSimplePropertyBasedPieceHandler<byte[], Expr, String> {
+		@Override
+		public Class<byte[]> getAddressDomain() {
+			return byte[].class;
 		}
 
 		@Override
-		protected Expr whenNull(long offset, int size) {
-			String string = property.get(space.getAddress(offset));
-			return deserialize(string);
+		public Class<Expr> getValueDomain() {
+			return Expr.class;
 		}
 
-		public void writeDown(PcodeTracePropertyAccess<String> into) {
-			if (space.isUniqueSpace()) {
-				return;
-			}
-
-			for (Entry<Long, Expr> entry : map.entrySet()) {
-				// TODO: Ignore and/or clear non-entries
-				into.put(space.getAddress(entry.getKey()), serialize(entry.getValue()));
-			}
+		@Override
+		protected String getPropertyName() {
+			return "Expr";
 		}
 
-		protected String serialize(Expr expr) {
-			return Unfinished.TODO();
+		@Override
+		protected Class<String> getPropertyType() {
+			return String.class;
 		}
 
-		protected Expr deserialize(String string) {
-			return Unfinished.TODO();
+		@Override
+		protected Expr decode(String propertyValue) {
+			return Unfinished.TODO("Left as an exercise");
+		}
+
+		@Override
+		protected String encode(Expr value) {
+			return Unfinished.TODO("Left as an exercise");
 		}
 	}
 
-	public static class BytesExprTracePcodeExecutorStatePiece
-			extends AbstractBytesExprPcodeExecutorStatePiece<ExprTraceSpace>
-			implements TracePcodeExecutorStatePiece<byte[], Expr> {
-		public static final String NAME = "Taint";
-
-		protected final PcodeTraceDataAccess data;
-		protected final PcodeTracePropertyAccess<String> property;
-
-		public BytesExprTracePcodeExecutorStatePiece(PcodeTraceDataAccess data) {
-			super(data.getLanguage());
-			this.data = data;
-			this.property = data.getPropertyAccess(NAME, String.class);
-		}
-
-		@Override
-		public PcodeTraceDataAccess getData() {
-			return data;
-		}
-
-		@Override
-		protected AbstractSpaceMap<ExprTraceSpace> newSpaceMap() {
-			return new CacheingSpaceMap<PcodeTracePropertyAccess<String>, ExprTraceSpace>() {
-				@Override
-				protected PcodeTracePropertyAccess<String> getBacking(AddressSpace space) {
-					return property;
-				}
-
-				@Override
-				protected ExprTraceSpace newSpace(AddressSpace space,
-						PcodeTracePropertyAccess<String> backing) {
-					return new ExprTraceSpace(space, property);
-				}
-			};
-		}
-
-		@Override
-		public BytesExprTracePcodeExecutorStatePiece fork() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void writeDown(PcodeTraceDataAccess into) {
-			PcodeTracePropertyAccess<String> property = into.getPropertyAccess(NAME, String.class);
-			for (ExprTraceSpace space : spaceMap.values()) {
-				space.writeDown(property);
-			}
-		}
-	}
-
-	public static class BytesExprTracePcodeExecutorState
-			extends PairedTracePcodeExecutorState<byte[], Expr> {
-
-		public BytesExprTracePcodeExecutorState(
-				TracePcodeExecutorStatePiece<byte[], byte[]> concrete) {
-			super(new PairedTracePcodeExecutorStatePiece<>(concrete,
-				new BytesExprTracePcodeExecutorStatePiece(concrete.getData())));
-		}
-	}
-
-	enum BytesExprDebuggerEmulatorPartsFactory implements AuxDebuggerEmulatorPartsFactory<Expr> {
-		INSTANCE;
-
-		@Override
-		public PcodeArithmetic<Expr> getArithmetic(Language language) {
-			return ExprPcodeArithmetic.forLanguage(language);
-		}
-
-		@Override
-		public PcodeUseropLibrary<Pair<byte[], Expr>> createSharedUseropLibrary(
-				AuxPcodeEmulator<Expr> emulator) {
-			return PcodeUseropLibrary.nil();
-		}
-
-		@Override
-		public PcodeUseropLibrary<Pair<byte[], Expr>> createLocalUseropStub(
-				AuxPcodeEmulator<Expr> emulator) {
-			return PcodeUseropLibrary.nil();
-		}
-
-		@Override
-		public PcodeUseropLibrary<Pair<byte[], Expr>> createLocalUseropLibrary(
-				AuxPcodeEmulator<Expr> emulator,
-				PcodeThread<Pair<byte[], Expr>> thread) {
-			return PcodeUseropLibrary.nil();
-		}
-
-		@Override
-		public PcodeExecutorState<Pair<byte[], Expr>> createSharedState(
-				AuxPcodeEmulator<Expr> emulator,
-				BytesPcodeExecutorStatePiece concrete) {
-			return new BytesExprPcodeExecutorState(concrete);
-		}
-
-		@Override
-		public PcodeExecutorState<Pair<byte[], Expr>> createLocalState(
-				AuxPcodeEmulator<Expr> emulator,
-				PcodeThread<Pair<byte[], Expr>> thread,
-				BytesPcodeExecutorStatePiece concrete) {
-			return new BytesExprPcodeExecutorState(concrete);
-		}
-
-		@Override
-		public TracePcodeExecutorState<Pair<byte[], Expr>> createTraceSharedState(
-				AuxTracePcodeEmulator<Expr> emulator,
-				BytesTracePcodeExecutorStatePiece concrete) {
-			return new BytesExprTracePcodeExecutorState(concrete);
-		}
-
-		@Override
-		public TracePcodeExecutorState<Pair<byte[], Expr>> createTraceLocalState(
-				AuxTracePcodeEmulator<Expr> emulator,
-				PcodeThread<Pair<byte[], Expr>> thread,
-				BytesTracePcodeExecutorStatePiece concrete) {
-			return new BytesExprTracePcodeExecutorState(concrete);
-		}
-
-		@Override
-		public TracePcodeExecutorState<Pair<byte[], Expr>> createDebuggerSharedState(
-				AuxDebuggerPcodeEmulator<Expr> emulator,
-				RWTargetMemoryPcodeExecutorStatePiece concrete) {
-			return new BytesExprTracePcodeExecutorState(concrete);
-		}
-
-		@Override
-		public TracePcodeExecutorState<Pair<byte[], Expr>> createDebuggerLocalState(
-				AuxDebuggerPcodeEmulator<Expr> emulator,
-				PcodeThread<Pair<byte[], Expr>> thread,
-				RWTargetRegistersPcodeExecutorStatePiece concrete) {
-			return new BytesExprTracePcodeExecutorState(concrete);
-		}
-	}
-
-	public static class BytesExprDebuggerPcodeEmulator extends AuxDebuggerPcodeEmulator<Expr> {
-		public BytesExprDebuggerPcodeEmulator(PcodeDebuggerAccess access) {
-			super(access);
-		}
-
-		@Override
-		protected AuxDebuggerEmulatorPartsFactory<Expr> getPartsFactory() {
-			return BytesExprDebuggerEmulatorPartsFactory.INSTANCE;
-		}
-	}
-
-	public static class BytesExprDebuggerPcodeEmulatorFactory
-			extends AbstractDebuggerPcodeEmulatorFactory {
-
+	public static class BytesExprEmulatorFactory implements EmulatorFactory {
 		@Override
 		public String getTitle() {
 			return "Expr";
 		}
 
 		@Override
-		public DebuggerPcodeMachine<?> create(PcodeDebuggerAccess access) {
-			return new BytesExprDebuggerPcodeEmulator(access);
+		public PcodeMachine<?> create(PcodeDebuggerAccess access, Writer writer) {
+			writer.putHandler(new ExprPieceHandler());
+			return new BytesExprPcodeEmulator(access.getLanguage(), writer.callbacks());
 		}
 	}
 

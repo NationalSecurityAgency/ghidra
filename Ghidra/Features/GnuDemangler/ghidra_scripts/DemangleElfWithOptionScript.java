@@ -18,7 +18,7 @@
 // See binutils' c++filt for more information on supported options.
 
 //
-//@category Examples.Demangler
+//@category Demangler
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.demangler.DemangledObject;
 import ghidra.app.util.demangler.MangledContext;

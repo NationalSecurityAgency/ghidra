@@ -17,11 +17,8 @@ package ghidra.app.plugin.core.cparser;
 
 import static org.junit.Assert.*;
 
-import java.awt.Window;
 import java.io.File;
-import java.util.ArrayList;
-
-import javax.swing.JTextArea;
+import java.util.List;
 
 import org.junit.*;
 
@@ -45,8 +42,6 @@ import ghidra.test.*;
 import utilities.util.FileUtilities;
 
 public class ParseDialogParsingAndPromptsTest extends AbstractGhidraHeadedIntegrationTest {
-
-	private static final String TITLE = "CParser Results Summary";
 
 	private TestEnv env;
 	private PluginTool tool;
@@ -534,55 +529,11 @@ public class ParseDialogParsingAndPromptsTest extends AbstractGhidraHeadedIntegr
 		}
 	}
 
-	private void startSetLanguage(LanguageID languageID, CompilerSpecID compilerSpecID)
-			throws Exception {
-		if (languageID == null) {
-			throw new RuntimeException("languageID == null not allowed");
-		}
-		if (compilerSpecID == null) {
-			throw new RuntimeException("compilerSpecID == null not allowed");
-		}
-
-		SetLanguageDialog dlg = waitForDialogComponent(SetLanguageDialog.class);
-		assertNotNull(dlg);
-		NewLanguagePanel languagePanel =
-			(NewLanguagePanel) getInstanceField("selectLangPanel", dlg);
-		assertNotNull(languagePanel);
-
-		waitForSwing();
-
-		runSwing(() -> {
-			NewLanguagePanel selectLangPanel =
-				(NewLanguagePanel) getInstanceField("selectLangPanel", dlg);
-			selectLangPanel.setSelectedLcsPair(
-				new LanguageCompilerSpecPair(languageID, compilerSpecID));
-		}, true);
-
-		waitForSwing();
-
-		pressButtonByText(dlg, "OK");
-	}
-
-	private void assertResultDialog() {
-		Window aboutDialog = waitForWindow(TITLE);
-		assertNotNull(aboutDialog);
-		pressButtonByText(aboutDialog, "OK");
-	}
-
 	private ParseDialog showParseDialog() {
-
-		//ActionContext actionContext = cbPlugin.getProvider().getActionContext(null);
 		performAction(cparserAction, false);
 		ParseDialog parseDialog = waitForDialogComponent(ParseDialog.class);
 		assertNotNull(parseDialog);
 		return parseDialog;
-	}
-
-	private void setOption(ParseDialog dialog, String options) {
-		runSwing(() -> {
-			JTextArea parseOptionsTextField = dialog.getParseOptionsTextField();
-			parseOptionsTextField.setText(options);
-		});
 	}
 
 	private void setIncludePaths(ParseDialog dialog, String paths[]) {
@@ -602,7 +553,7 @@ public class ParseDialogParsingAndPromptsTest extends AbstractGhidraHeadedIntegr
 	private void setSelectedParseProfile(ParseDialog dialog, String profileName) {
 		runSwing(() -> {
 			GhidraComboBox<ParseDialog.ComboBoxItem> parseComboBox = dialog.getParseComboBox();
-			ArrayList<ComboBoxItem> profiles = dialog.getProfiles();
+			List<ComboBoxItem> profiles = dialog.getProfiles();
 			int index = 0;
 			for (ComboBoxItem comboBoxItem : profiles) {
 				if (profileName.equals(comboBoxItem.getName())) {

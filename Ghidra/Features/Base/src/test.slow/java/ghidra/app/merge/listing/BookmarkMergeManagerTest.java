@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,6 +44,7 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
     public void testAddLatest() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
+			@Override
 			public void modifyLatest(ProgramDB program) {
 				BookmarkManager bookMgr = program.getBookmarkManager();
 				Address addr = addr(program, "0x10028b1");
@@ -51,6 +52,7 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
 					"Test bookmark @ 0x10028b1");
 			}
 
+			@Override
 			public void modifyPrivate(ProgramDB program) {
 			}
 		});
@@ -65,9 +67,11 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
     public void testAddMy() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
+			@Override
 			public void modifyLatest(ProgramDB program) {
 			}
 
+			@Override
 			public void modifyPrivate(ProgramDB program) {
 				BookmarkManager bookMgr = program.getBookmarkManager();
 				Address addr = addr(program, "0x10028b1");
@@ -86,6 +90,7 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
     public void testAddSame() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
+			@Override
 			public void modifyLatest(ProgramDB program) {
 				BookmarkManager bookMgr = program.getBookmarkManager();
 				Address addr = addr(program, "0x10028b1");
@@ -93,6 +98,7 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
 					"Test bookmark @ 0x10028b1");
 			}
 
+			@Override
 			public void modifyPrivate(ProgramDB program) {
 				BookmarkManager bookMgr = program.getBookmarkManager();
 				Address addr = addr(program, "0x10028b1");
@@ -111,6 +117,7 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
     public void testAddDiffPickLatest() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
+			@Override
 			public void modifyLatest(ProgramDB program) {
 				BookmarkManager bookMgr = program.getBookmarkManager();
 				Address addr = addr(program, "0x10028b1");
@@ -118,6 +125,7 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
 					"Test bookmark @ 0x10028b1");
 			}
 
+			@Override
 			public void modifyPrivate(ProgramDB program) {
 				BookmarkManager bookMgr = program.getBookmarkManager();
 				Address addr = addr(program, "0x10028b1");
@@ -136,6 +144,7 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
     public void testAddDiffPickMy() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
+			@Override
 			public void modifyLatest(ProgramDB program) {
 				BookmarkManager bookMgr = program.getBookmarkManager();
 				Address addr = addr(program, "0x10028b1");
@@ -143,6 +152,7 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
 					"Test bookmark @ 0x10028b1");
 			}
 
+			@Override
 			public void modifyPrivate(ProgramDB program) {
 				BookmarkManager bookMgr = program.getBookmarkManager();
 				Address addr = addr(program, "0x10028b1");
@@ -161,6 +171,7 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
     public void testChangeLatest() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 			
+			@Override
 			public void modifyLatest(ProgramDB program) {
 				BookmarkManager bookMgr = program.getBookmarkManager();
 				Address addr;
@@ -182,6 +193,7 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
 				bookmarks[0].set("NewCat", "This is a new analysis comment.");
 			}
 
+			@Override
 			public void modifyPrivate(ProgramDB program) {
 			}
 		});
@@ -201,9 +213,11 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
     public void testChangeMy() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 			
+			@Override
 			public void modifyLatest(ProgramDB program) {
 			}
 
+			@Override
 			public void modifyPrivate(ProgramDB program) {
 					BookmarkManager bookMgr = program.getBookmarkManager();
 					Address addr;
@@ -241,6 +255,7 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
     public void testChangeSame() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
+			@Override
 			public void modifyLatest(ProgramDB program) {
 				BookmarkManager bookMgr = program.getBookmarkManager();
 				Address addr;
@@ -262,6 +277,7 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
 				bookmarks[0].set("NewCat", "This is a new analysis comment.");
 			}
 
+			@Override
 			public void modifyPrivate(ProgramDB program) {
 				BookmarkManager bookMgr = program.getBookmarkManager();
 				Address addr;
@@ -299,6 +315,7 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
     public void testChangeDiff() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 			
+			@Override
 			public void modifyLatest(ProgramDB program) {
 				BookmarkManager bookMgr = program.getBookmarkManager();
 				bookMgr.setBookmark(addr(program, "0x1001978"), BookmarkType.ANALYSIS,
@@ -307,6 +324,7 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
 					"Found Code", "Latest bookmark @ 0x100248f");
 			}
 
+			@Override
 			public void modifyPrivate(ProgramDB program) {
 				BookmarkManager bookMgr = program.getBookmarkManager();
 				bookMgr.setBookmark(addr(program, "0x1001978"), BookmarkType.ANALYSIS,
@@ -330,6 +348,7 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
     public void testRemoveLatest() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
+			@Override
 			public void modifyLatest(ProgramDB program) {		
 				BookmarkManager bookMgr = program.getBookmarkManager();
 				Bookmark[] bookmarks;
@@ -338,6 +357,7 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
 				bookMgr.removeBookmark(bookmarks[0]);
 			}
 
+			@Override
 			public void modifyPrivate(ProgramDB program) {
 			}
 		});
@@ -355,9 +375,11 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
     public void testRemoveMy() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
+			@Override
 			public void modifyLatest(ProgramDB program) {
 			}
 
+			@Override
 			public void modifyPrivate(ProgramDB program) {
 				BookmarkManager bookMgr = program.getBookmarkManager();
 				Bookmark[] bookmarks;
@@ -380,6 +402,7 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
     public void testRemoveSame() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
+			@Override
 			public void modifyLatest(ProgramDB program) {
 				BookmarkManager bookMgr = program.getBookmarkManager();
 				Bookmark[] bookmarks;
@@ -388,6 +411,7 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
 				bookMgr.removeBookmark(bookmarks[0]);
 			}
 
+			@Override
 			public void modifyPrivate(ProgramDB program) {
 				BookmarkManager bookMgr = program.getBookmarkManager();
 				Bookmark[] bookmarks;
@@ -410,6 +434,7 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
     public void testChangeLatestRemoveMy() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 			
+			@Override
 			public void modifyLatest(ProgramDB program) {
 				BookmarkManager bookMgr = program.getBookmarkManager();
 				bookMgr.setBookmark(addr(program, "0x1001978"), BookmarkType.ANALYSIS,
@@ -418,6 +443,7 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
 					"Found Code", "Latest bookmark @ 0x100248f");
 			}
 			
+			@Override
 			public void modifyPrivate(ProgramDB program) {			
 				BookmarkManager bookMgr = program.getBookmarkManager();
 				Bookmark[] bookmarks;
@@ -444,6 +470,7 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
     public void testChangeMyRemoveLatest() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 			
+			@Override
 			public void modifyLatest(ProgramDB program) {
 				BookmarkManager bookMgr = program.getBookmarkManager();
 				Bookmark[] bookmarks;
@@ -455,6 +482,7 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
 				bookMgr.removeBookmark(bookmarks[0]);
 			}
 			
+			@Override
 			public void modifyPrivate(ProgramDB program) {
 				BookmarkManager bookMgr = program.getBookmarkManager();
 				bookMgr.setBookmark(addr(program, "0x1001978"), BookmarkType.ANALYSIS,
@@ -476,6 +504,7 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
 	private void setupUseForAll() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
+			@Override
 			public void modifyLatest(ProgramDB program) {
 				BookmarkManager bookMgr = program.getBookmarkManager();
 				Bookmark[] bookmarks;
@@ -487,6 +516,7 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
 				bookMgr.removeBookmark(bookmarks[0]);
 			}
 
+			@Override
 			public void modifyPrivate(ProgramDB program) {
 				BookmarkManager bookMgr = program.getBookmarkManager();
 				bookMgr.setBookmark(addr(program, "0x1001978"), BookmarkType.ANALYSIS,

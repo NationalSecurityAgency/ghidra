@@ -41,7 +41,7 @@ import ghidra.util.table.GhidraTable;
 
 class EnumEditorPanel extends JPanel {
 
-	private JTable table;
+	private GTable table;
 	private JTextField nameField;
 	private JTextField descField;
 	private JLabel descLabel;
@@ -301,7 +301,7 @@ class EnumEditorPanel extends JPanel {
 		table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		add(sp, BorderLayout.CENTER);
 
-		table.setRowHeight(table.getRowHeight() + 4);
+		table.setRowPadding(4);
 		table.setDefaultEditor(String.class, new EnumStringCellEditor());
 		table.getColumnModel()
 				.getColumn(EnumTableModel.VALUE_COL)

@@ -22,11 +22,9 @@ import java.awt.Window;
 import org.junit.*;
 
 import docking.action.DockingActionIf;
-import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.marker.MarkerManagerPlugin;
 import ghidra.app.plugin.core.programtree.ProgramTreePlugin;
-import ghidra.app.services.ProgramManager;
 import ghidra.features.base.memsearch.gui.MemorySearchPlugin;
 import ghidra.features.base.memsearch.gui.MemorySearchProvider;
 import ghidra.features.base.memsearch.mnemonic.MnemonicSearchPlugin;
@@ -35,7 +33,6 @@ import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ProgramSelection;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.Swing;
@@ -45,9 +42,9 @@ public class MnemonicSearchPluginTest extends AbstractGhidraHeadedIntegrationTes
 	private PluginTool tool;
 	private ProgramDB program;
 	private MnemonicSearchPlugin plugin;
-	private DockingActionIf searchMnemonicOperandsNoConstAction;
-	private DockingActionIf searchMnemonicNoOperandsNoConstAction;
-	private DockingActionIf searchMnemonicOperandsConstAction;
+	private DockingActionIf includeOperandsExcludeConstAction;
+	private DockingActionIf excludeOperandsAction;
+	private DockingActionIf includeOperandsAction;
 	private CodeBrowserPlugin cb;
 	private MemorySearchProvider searchProvider;
 
@@ -63,16 +60,12 @@ public class MnemonicSearchPluginTest extends AbstractGhidraHeadedIntegrationTes
 		plugin = env.getPlugin(MnemonicSearchPlugin.class);
 		cb = env.getPlugin(CodeBrowserPlugin.class);
 		program = (ProgramDB) buildProgram();
+		env.showTool(program);
 
-		ProgramManager pm = tool.getService(ProgramManager.class);
-		pm.openProgram(program.getDomainFile());
-
-		searchMnemonicOperandsNoConstAction =
+		excludeOperandsAction = getAction(plugin, "Exclude Operands");
+		includeOperandsAction = getAction(plugin, "Include Operands");
+		includeOperandsExcludeConstAction =
 			getAction(plugin, "Include Operands (except constants)");
-		searchMnemonicNoOperandsNoConstAction = getAction(plugin, "Exclude Operands");
-		searchMnemonicOperandsConstAction = getAction(plugin, "Include Operands");
-
-		env.showTool();
 	}
 
 	private Program buildProgram() throws Exception {
@@ -93,29 +86,19 @@ public class MnemonicSearchPluginTest extends AbstractGhidraHeadedIntegrationTes
 
 	@Test
 	public void testSearchMnemonicOperandsNoConst() {
-		ProgramSelection sel = new ProgramSelection(addr(0x01004062), addr(0x0100406a));
-		tool.firePluginEvent(new ProgramSelectionPluginEvent("Test", sel, program));
-
-		performAction(searchMnemonicOperandsNoConstAction, cb.getProvider(), true);
+		makeSelection(tool, program, addr(0x01004062), addr(0x0100406a));
+		performAction(includeOperandsExcludeConstAction, cb.getProvider(), true);
 		searchProvider = waitForComponentProvider(MemorySearchProvider.class);
-
-		assertNotNull(searchProvider);
 		assertEquals(
 			"01010101 10001011 11101100 10000001 11101100 ........ ........ ........ ........",
 			getInput());
-
 	}
 
 	@Test
 	public void testSearchMnemonicNoOperandsNoConst() {
-		ProgramSelection sel = new ProgramSelection(addr(0x01004062), addr(0x0100406a));
-		tool.firePluginEvent(new ProgramSelectionPluginEvent("Test", sel, program));
-
-		performAction(searchMnemonicNoOperandsNoConstAction, cb.getProvider(), true);
-
+		makeSelection(tool, program, addr(0x01004062), addr(0x0100406a));
+		performAction(excludeOperandsAction, cb.getProvider(), true);
 		searchProvider = waitForComponentProvider(MemorySearchProvider.class);
-		assertNotNull(searchProvider);
-
 		assertEquals(
 			"01010... 10001011 11...... 10000001 11101... ........ ........ ........ ........",
 			getInput());
@@ -124,16 +107,10 @@ public class MnemonicSearchPluginTest extends AbstractGhidraHeadedIntegrationTes
 
 	@Test
 	public void testSearchMnemonicOperandsConst() {
-		ProgramSelection sel = new ProgramSelection(addr(0x01004062), addr(0x0100406a));
-		tool.firePluginEvent(new ProgramSelectionPluginEvent("Test", sel, program));
 
-		performAction(searchMnemonicOperandsConstAction, cb.getProvider(), true);
-
-		performAction(searchMnemonicOperandsConstAction, cb.getProvider(), true);
-
+		makeSelection(tool, program, addr(0x01004062), addr(0x0100406a));
+		performAction(includeOperandsAction, cb.getProvider(), true);
 		searchProvider = waitForComponentProvider(MemorySearchProvider.class);
-		assertNotNull(searchProvider);
-
 		assertEquals(
 			"01010101 10001011 11101100 10000001 11101100 00000100 00000001 00000000 00000000",
 			getInput());
@@ -142,7 +119,6 @@ public class MnemonicSearchPluginTest extends AbstractGhidraHeadedIntegrationTes
 	/**
 	 * Tests that when multiple regions are selected, the user is notified via
 	 * pop-up that this is not acceptable.
-	 *
 	 */
 	@Test
 	public void testMultipleSelection() {
@@ -158,7 +134,7 @@ public class MnemonicSearchPluginTest extends AbstractGhidraHeadedIntegrationTes
 		makeSelection(tool, program, addrSet);
 
 		// Now invoke the menu option we want to test.
-		performAction(searchMnemonicOperandsConstAction, cb.getProvider(), false);
+		performAction(includeOperandsAction, cb.getProvider(), false);
 
 		// Here's the main assert: If the code recognizes that we have multiple selection, the
 		// MemSearchDialog will NOT be displayed (an error message pops up instead).  So verify that
@@ -172,7 +148,7 @@ public class MnemonicSearchPluginTest extends AbstractGhidraHeadedIntegrationTes
 		return program.getMinAddress().getNewAddress(offset);
 	}
 
-	protected String getInput() {
+	private String getInput() {
 		return Swing.runNow(() -> searchProvider.getSearchInput());
 	}
 }

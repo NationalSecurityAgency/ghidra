@@ -405,6 +405,11 @@ public:
   virtual void execute(istream &s);
 };
 
+class IfcDestinationOverride : public IfaceDecompCommand {
+public:
+  virtual void execute(istream &s);
+};
+
 class IfcDeadcodedelay : public IfaceDecompCommand {
 public:
   virtual void execute(istream &s);
@@ -495,12 +500,21 @@ public:
   virtual void execute(istream &s);
 };
 
+class IfcFindVarnodeHash : public IfaceDecompCommand {
+public:
+  virtual void execute(istream &s);
+};
+
+class IfcFindOpHash : public IfaceDecompCommand {
+public:
+  virtual void execute(istream &s);
+};
+
 class IfcDuplicateHash : public IfaceDecompCommand {
 public:
   virtual void execute(istream &s);
   virtual void iterationCallback(Funcdata *fd);
   static void check(Funcdata *fd,ostream &s);		///< Check for duplicate hashes in given function
-
 };
 
 class IfcCallGraphDump : public IfaceDecompCommand {

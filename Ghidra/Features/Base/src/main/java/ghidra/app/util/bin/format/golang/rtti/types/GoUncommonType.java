@@ -18,9 +18,7 @@ package ghidra.app.util.bin.format.golang.rtti.types;
 import java.io.IOException;
 import java.util.List;
 
-import ghidra.app.util.bin.format.golang.rtti.GoName;
-import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
-import ghidra.app.util.bin.format.golang.rtti.GoSlice;
+import ghidra.app.util.bin.format.golang.rtti.*;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.util.Msg;
 
@@ -52,9 +50,7 @@ public class GoUncommonType {
 	long moff;
 
 	/**
-	 * Returns the package path of the type.
-	 * 
-	 * @return package path of the type
+	 * {@return  the package path of the type}
 	 * @throws IOException if error reading data
 	 */
 	@Markup
@@ -63,8 +59,7 @@ public class GoUncommonType {
 	}
 
 	/**
-	 * Returns the package path of the type.
-	 * @return package path of the type, as a string
+	 * {@return the package path of the type}
 	 * @throws IOException if error reading data
 	 */
 	public String getPackagePathString() throws IOException {
@@ -73,18 +68,14 @@ public class GoUncommonType {
 	}
 
 	/**
-	 * Returns a slice containing the methods defined by the type.
-	 * 
-	 * @return slice containing the methods defined by the type
+	 * {@return a slice containing the methods defined by the type}
 	 */
 	public GoSlice getMethodsSlice() {
 		return new GoSlice(context.getFieldLocation(moff), mcount, mcount, programContext);
 	}
 
 	/**
-	 * Returns a list of the methods defined by the type.
-	 * 
-	 * @return list of the methods defined by the type
+	 * {@return a list of the methods defined by the type}
 	 * @throws IOException if error reading data
 	 */
 	public List<GoMethod> getMethods() throws IOException {
@@ -98,10 +89,8 @@ public class GoUncommonType {
 	}
 
 	/**
-	 * Returns the location of where this object, and any known associated optional
-	 * structures ends.
-	 * 
-	 * @return index location of end of this type object
+	 * {@return the location of where this object, and any known associated optional
+	 * structures ends}
 	 */
 	public long getEndOfTypeInfo() {
 		if (mcount == 0) {

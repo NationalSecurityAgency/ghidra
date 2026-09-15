@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,12 +17,14 @@ package ghidra.file.formats.tar;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
-import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
+import org.tukaani.xz.XZ;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
@@ -40,7 +42,9 @@ public class TarFileSystemFactory implements GFileSystemFactoryByteProvider<TarF
 	public static final int TAR_MAGIC_BYTES_REQUIRED =
 		TarConstants.VERSION_OFFSET + TarConstants.VERSIONLEN;
 
-	private static final String[] TAR_EXTS = { ".tar", ".tgz", ".tar.gz", ".tbz2", ".tar.bz2" };
+	private static final Set<String> TAR_EXTS =
+		Set.of(".tar", ".tgz", ".tar.gz", ".tbz2", ".tar.bz2", ".tar.xz");
+
 
 	@Override
 	public TarFileSystem create(FSRLRoot targetFSRL, ByteProvider provider,
@@ -49,13 +53,14 @@ public class TarFileSystemFactory implements GFileSystemFactoryByteProvider<TarF
 
 		FSRL containerFSRL = provider.getFSRL();
 		ByteProvider uncompressedBP = provider;
-		if (isCompressedMagicBytes(provider)) {
+		TarCompressors compressor = detectCompressor(provider);
+		if (compressor != null) {
 			UnknownProgressWrappingTaskMonitor upwtm =
 				new UnknownProgressWrappingTaskMonitor(monitor, provider.length());
 			uncompressedBP = fsService.getDerivedByteProvider(containerFSRL, null,
 				"uncompressed tar", -1, () -> {
 					Msg.info(TarFileSystem.class, "Uncompressing tar file " + containerFSRL);
-					return newFileInputStreamAutoDetectCompressed(provider);
+					return getTarInputStream(provider, compressor);
 				}, upwtm);
 			provider.close();
 		}
@@ -79,34 +84,17 @@ public class TarFileSystemFactory implements GFileSystemFactoryByteProvider<TarF
 	 * <p>
 	 * Note: if a compressed TAR file doesn't have a well-known extension, the
 	 * other {@link #probeStartBytes(FSRL, byte[]) probe method} will detect the TAR file after
-	 * the {@link GZipFileSystem} has exposed the uncompressed data.
+	 * a {@link GZipFileSystem} (and friends) has exposed the uncompressed data.
 	 *
 	 */
 	@Override
 	public boolean probe(ByteProvider provider, FileSystemService fsService,
 			TaskMonitor taskMonitor) throws IOException, CancelledException {
-		String filename = provider.getFSRL().getName();
-		String ext = FSUtilities.getExtension(filename, 1);
-		if (ext == null) {
-			return false;
-		}
-		ext = ext.toLowerCase();
-
-		// special case hack to get 2-part ext for tar.gz or tar.bz2
-		ext =
-			(".gz".equals(ext) || ".bz2".equals(ext)) ? FSUtilities.getExtension(filename, 2) : ext;
-
-		// Only continue with probe (which requires us to open the file) if it has the
-		// correct file extension.'
-		if (!ArrayUtils.contains(TAR_EXTS, ext)) {
+		if (!hasTarExt(provider.getFSRL().getName().toLowerCase())) {
 			return false;
 		}
 
-		if (!isCompressedMagicBytes(provider)) {
-			return false;
-		}
-
-		try (InputStream is = newFileInputStreamAutoDetectCompressed(provider)) {
+		try (InputStream is = getTarInputStream(provider, detectCompressor(provider))) {
 			byte[] startBytes = new byte[TAR_MAGIC_BYTES_REQUIRED];
 			if (is.read(startBytes) != TAR_MAGIC_BYTES_REQUIRED) {
 				return false;
@@ -116,35 +104,51 @@ public class TarFileSystemFactory implements GFileSystemFactoryByteProvider<TarF
 		}
 	}
 
-	private static InputStream newFileInputStreamAutoDetectCompressed(ByteProvider bp)
+	private static InputStream getTarInputStream(ByteProvider bp, TarCompressors compressor)
 			throws IOException {
-		int magicBytes = readMagicBytes(bp);
 
 		InputStream is = bp.getInputStream(0);
-		switch (magicBytes) {
-			case GZIPInputStream.GZIP_MAGIC:
-				return new GZIPInputStream(is);
-			case Bzip2Recognizer.MAGIC_BYTES:
-				return new BZip2CompressorInputStream(is);
-		}
-		return is;
+		return switch (compressor) {
+			case null -> is;
+			case GZIP -> new GZIPInputStream(is);
+			case BZIP2 -> new BZip2CompressorInputStream(is);
+			case XZ -> new XZCompressorInputStream(is);
+		};
 	}
 
-	private static boolean isCompressedMagicBytes(ByteProvider bp) throws IOException {
-		int magicBytes = readMagicBytes(bp);
+
+	private static TarCompressors detectCompressor(ByteProvider bp) throws IOException {
+		int magicBytes = readMagicShort(bp);
 		switch (magicBytes) {
 			case GZIPInputStream.GZIP_MAGIC:
+				return TarCompressors.GZIP;
 			case Bzip2Recognizer.MAGIC_BYTES:
-				return true;
-			default:
-				return false;
+				return TarCompressors.BZIP2;
 		}
+
+		byte[] startBytes = bp.readBytes(0, XZ.HEADER_MAGIC.length);
+		if (XZCompressorInputStream.matches(startBytes, startBytes.length)) {
+			return TarCompressors.XZ;
+		}
+
+		return null;
 	}
 
-	private static int readMagicBytes(ByteProvider bp) throws IOException {
+	private static int readMagicShort(ByteProvider bp) throws IOException {
 		BinaryReader br = new BinaryReader(bp, true /* LE */);
 		int magicBytes = br.readUnsignedShort(0);
 
 		return magicBytes;
 	}
+
+	private static boolean hasTarExt(String filename) {
+		for (String ext : TAR_EXTS) {
+			if (filename.endsWith(ext)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	enum TarCompressors { GZIP, BZIP2, XZ }
 }

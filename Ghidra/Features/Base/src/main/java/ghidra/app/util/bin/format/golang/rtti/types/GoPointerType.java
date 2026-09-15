@@ -38,9 +38,7 @@ public class GoPointerType extends GoType {
 	}
 
 	/**
-	 * Returns a reference to the element's type.
-	 * 
-	 * @return reference to the element's type
+	 * {@return a reference to the element's type}
 	 * @throws IOException if error reading data
 	 */
 	@Markup
@@ -49,9 +47,10 @@ public class GoPointerType extends GoType {
 	}
 
 	@Override
-	public DataType recoverDataType(GoTypeManager goTypes) throws IOException {
-		DataType elementDT = goTypes.getGhidraDataType(getElement());
-		DataType self = goTypes.getGhidraDataType(this, DataType.class, true);
+	public DataType recoverDataType() throws IOException {
+		GoTypeManager goTypes = programContext.getGoTypes();
+		DataType elementDT = goTypes.getDataType(getElement());
+		DataType self = goTypes.getDataType(this, DataType.class, true);
 		if (self != null) {
 			return self;
 		}
@@ -108,7 +107,14 @@ public class GoPointerType extends GoType {
 
 	@Override
 	public boolean isValid() {
-		return super.isValid() && typ.getSize() == programContext.getPtrSize();
+		return super.isValid() && isValidSize();
+	}
+
+	private boolean isValidSize() {
+		long ptrBytesSize = typ.getPtrBytes();
+		// Future: ptrbytessize will occasionally be 0 instead of ptrSize.  Need to nail down why
+		return typ.getSize() == programContext.getPtrSize() &&
+			(ptrBytesSize == 0 || ptrBytesSize == programContext.getPtrSize());
 	}
 
 }

@@ -22,6 +22,7 @@ import ghidra.app.emulator.Emulator;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.plugin.processors.sleigh.SleighParserContext;
 import ghidra.app.util.PseudoInstruction;
+import ghidra.pcode.emu.jit.decode.CanDecode;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
@@ -36,13 +37,11 @@ import ghidra.util.Msg;
 
 /**
  * The default implementation of {@link PcodeThread} suitable for most applications
- * 
  * <p>
  * When emulating on concrete state, consider using {@link ModifiedPcodeThread}, so that state
  * modifiers from the older {@link Emulator} are incorporated. In either case, it may be worthwhile
  * to examine existing state modifiers to ensure they are appropriately represented in any abstract
  * state. It may be necessary to port them.
- * 
  * <p>
  * This class implements the control-flow logic of the target machine, cooperating with the p-code
  * program flow implemented by the {@link PcodeExecutor}. This implementation exists primarily in
@@ -54,7 +53,6 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 	/**
 	 * A userop library exporting some methods for emulated thread control
-	 *
 	 * <p>
 	 * TODO: Since p-code userops can now receive the executor, it may be better to receive it, cast
 	 * it, and obtain the thread, rather than binding a library to each thread.
@@ -75,7 +73,6 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 		/**
 		 * Execute the actual machine instruction at the current program counter
-		 * 
 		 * <p>
 		 * Because "injects" override the machine instruction, injects which need to defer to the
 		 * machine instruction must invoke this userop.
@@ -98,7 +95,6 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 		/**
 		 * Advance the program counter beyond the current machine instruction
-		 * 
 		 * <p>
 		 * Because "injects" override the machine instruction, they must specify the effect on the
 		 * program counter, lest the thread become caught in an infinite loop on the inject. To
@@ -117,21 +113,19 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 		/**
 		 * Interrupt execution
-		 * 
 		 * <p>
 		 * This immediately throws an {@link InterruptPcodeExecutionException}. To implement
 		 * out-of-band breakpoints, inject an invocation of this userop at the desired address.
 		 * 
 		 * @see PcodeMachine#addBreakpoint(Address, String)
 		 */
-		@PcodeUserop(functional = true)
+		@PcodeUserop(functional = true, canInterrupt = true)
 		public void emu_swi() {
 			thread.swi();
 		}
 
 		/**
 		 * Notify the client of a failed Sleigh inject compilation.
-		 * 
 		 * <p>
 		 * To avoid pestering the client during emulator set-up, a service may effectively defer
 		 * notifying the user of Sleigh compilation errors by replacing the erroneous injects with
@@ -139,21 +133,20 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		 * the client be notified.
 		 */
 		@PcodeUserop(functional = true)
-		public void emu_injection_err() {
+		public static void emu_injection_err() {
 			throw new InjectionErrorPcodeExecutionException(null, null);
 		}
 	}
 
 	/**
 	 * An executor for the p-code thread
-	 * 
 	 * <p>
 	 * This executor checks for thread suspension and updates the program counter register upon
 	 * execution of (external) branches.
 	 * 
 	 * @param <T> the type of variables in the emulator
 	 */
-	public static class PcodeThreadExecutor<T> extends PcodeExecutor<T> {
+	public static class PcodeThreadExecutor<T> extends PcodeExecutor<T> implements CanDecode {
 		volatile boolean suspended = false;
 		protected final DefaultPcodeThread<T> thread;
 
@@ -171,9 +164,10 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 		@Override
 		public void executeSleigh(String source) {
+			PcodeUseropLibrary<T> library = thread.getUseropLibrary();
 			PcodeProgram program =
-				SleighProgramCompiler.compileProgram(language, "exec", source, thread.library);
-			execute(program, thread.library);
+				SleighProgramCompiler.compileProgram(language, "exec", source, library);
+			execute(program, library);
 		}
 
 		@Override
@@ -181,30 +175,47 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 			if (suspended || thread.machine.suspended) {
 				throw new SuspendedPcodeExecutionException(frame, null);
 			}
+			thread.machine.cb.beforeStepOp(thread, op, frame);
 			super.stepOp(op, frame, library);
 			thread.stepped();
+			thread.machine.cb.afterStepOp(thread, op, frame);
 		}
 
 		@Override
-		protected void checkLoad(AddressSpace space, T offset, int size) {
+		protected void beforeLoad(PcodeOp op, AddressSpace space, T offset, int size) {
 			thread.checkLoad(space, offset, size);
+			thread.machine.cb.beforeLoad(thread, op, space, offset, size);
 		}
 
 		@Override
-		protected void checkStore(AddressSpace space, T offset, int size) {
+		protected void afterLoad(PcodeOp op, AddressSpace space, T offset, int size, T value) {
+			thread.machine.cb.afterLoad(thread, op, space, offset, size, value);
+		}
+
+		@Override
+		protected void beforeStore(PcodeOp op, AddressSpace space, T offset, int size, T value) {
 			thread.checkStore(space, offset, size);
+			thread.machine.cb.beforeStore(thread, op, space, offset, size, value);
+		}
+
+		@Override
+		protected void afterStore(PcodeOp op, AddressSpace space, T offset, int size, T value) {
+			thread.machine.cb.afterStore(thread, op, space, offset, size, value);
 		}
 
 		@Override
 		protected void branchToAddress(PcodeOp op, Address target) {
 			thread.branchToAddress(target);
+			thread.machine.cb.afterBranch(thread, op, target);
 		}
 
 		@Override
 		protected void onMissingUseropDef(PcodeOp op, PcodeFrame frame, String opName,
 				PcodeUseropLibrary<T> library) {
-			if (!thread.onMissingUseropDef(op, opName)) {
-				super.onMissingUseropDef(op, frame, opName, library);
+			if (!thread.machine.cb.handleMissingUserop(thread, op, frame, opName, library)) {
+				if (!thread.onMissingUseropDef(op, opName)) {
+					super.onMissingUseropDef(op, frame, opName, library);
+				}
 			}
 		}
 
@@ -216,6 +227,11 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		public DefaultPcodeThread<T> getThread() {
 			return thread;
 		}
+
+		@Override
+		public PseudoInstruction decodeInstruction() {
+			return thread.decoder.decodeInstruction(thread.counter, thread.context);
+		}
 	}
 
 	private final String name;
@@ -224,7 +240,9 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	protected final PcodeArithmetic<T> arithmetic;
 	protected final ThreadPcodeExecutorState<T> state;
 	protected final InstructionDecoder decoder;
-	protected final PcodeUseropLibrary<T> library;
+
+	// Delay, and compute lazily
+	private PcodeUseropLibrary<T> library;
 
 	protected final PcodeThreadExecutor<T> executor;
 	protected final Register pc;
@@ -255,7 +273,6 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		PcodeExecutorState<T> localState = machine.createLocalState(this);
 		this.state = createThreadState(sharedState, localState);
 		this.decoder = createInstructionDecoder(sharedState);
-		this.library = createUseropLibrary();
 
 		this.executor = createExecutor();
 		this.pc =
@@ -297,7 +314,6 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 	/**
 	 * A factory method to create the complete userop library for this thread
-	 * 
 	 * <p>
 	 * The returned library must compose the containing machine's shared userop library. See
 	 * {@link PcodeUseropLibrary#compose(PcodeUseropLibrary)}.
@@ -342,7 +358,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		decoder.branched(counter);
 	}
 
-	protected void writeCounter(Address counter) {
+	protected final void writeCounter(Address counter) {
 		setCounter(counter);
 		state.setVar(pc,
 			arithmetic.fromConst(counter.getAddressableWordOffset(), pc.getMinimumByteSize()));
@@ -355,8 +371,12 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 	@Override
 	public void assignContext(RegisterValue context) {
-		if (!context.getRegister().isProcessorContext()) {
+		if (context.getRegister().getBaseRegister() != contextreg) {
 			throw new IllegalArgumentException("context must be the contextreg value");
+		}
+		if (this.context == null) {
+			assert this.contextreg == Register.NO_CONTEXT;
+			return;
 		}
 		this.context = this.context.assign(context.getRegister(), context);
 	}
@@ -366,12 +386,23 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		return context;
 	}
 
-	@Override
-	public void overrideContext(RegisterValue context) {
+	protected final void writeContext(RegisterValue context) {
+		if (contextreg == Register.NO_CONTEXT && context == null) {
+			return;
+		}
 		assignContext(context);
+		if (this.context == null) {
+			assert this.contextreg == Register.NO_CONTEXT;
+			return;
+		}
 		state.setVar(contextreg, arithmetic.fromConst(
 			this.context.getUnsignedValueIgnoreMask(),
 			contextreg.getMinimumByteSize(), true));
+	}
+
+	@Override
+	public void overrideContext(RegisterValue context) {
+		writeContext(context);
 	}
 
 	@Override
@@ -417,16 +448,19 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	@Override
 	public void stepInstruction() {
 		assertCompletedInstruction();
+		Address counter = this.counter;
 		PcodeProgram inj = getInject(counter);
 		if (inj != null) {
 			instruction = null;
+			machine.cb.beforeExecuteInject(this, counter, inj);
 			try {
-				executor.execute(inj, library);
+				executor.execute(inj, getUseropLibrary());
 			}
 			catch (PcodeExecutionException e) {
 				frame = e.getFrame();
 				throw e;
 			}
+			machine.cb.afterExecuteInject(this, counter);
 		}
 		else {
 			executeInstruction();
@@ -439,7 +473,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 			beginInstructionOrInject();
 		}
 		else if (!frame.isFinished()) {
-			executor.step(frame, library);
+			executor.step(frame, getUseropLibrary());
 		}
 		else {
 			advanceAfterFinished();
@@ -462,7 +496,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	@Override
 	public void stepPatch(String sleigh) {
 		PcodeProgram prog = getMachine().compileSleigh("patch", sleigh + ";");
-		executor.execute(prog, library);
+		executor.execute(prog, getUseropLibrary());
 	}
 
 	/**
@@ -519,20 +553,22 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	 */
 	protected void advanceAfterFinished() {
 		if (instruction == null) { // Frame resulted from an inject
+			machine.cb.afterExecuteInject(this, counter);
 			frame = null;
 			return;
 		}
 		if (frame.isFallThrough()) {
-			overrideCounter(counter.addWrap(decoder.getLastLengthWithDelays()));
+			writeCounter(counter.addWrap(decoder.getLastLengthWithDelays()));
 		}
 		if (contextreg != Register.NO_CONTEXT) {
 			RegisterValue ctx = new RegisterValue(contextreg, BigInteger.ZERO)
 					.combineValues(defaultContext.getDefaultValue(contextreg, counter))
 					.combineValues(defaultContext.getFlowValue(context))
 					.combineValues(getContextAfterCommits());
-			overrideContext(ctx);
+			writeContext(ctx);
 		}
 		postExecuteInstruction();
+		machine.cb.afterExecuteInstruction(this, instruction);
 		frame = null;
 		instruction = null;
 	}
@@ -568,7 +604,6 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 	/**
 	 * Extension point: Extra behavior before executing an instruction
-	 * 
 	 * <p>
 	 * This is currently used for incorporating state modifiers from the older {@link Emulator}
 	 * framework. There is likely utility here when porting those to this framework.
@@ -578,7 +613,6 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 	/**
 	 * Extension point: Extra behavior after executing an instruction
-	 * 
 	 * <p>
 	 * This is currently used for incorporating state modifiers from the older {@link Emulator}
 	 * framework. There is likely utility here when porting those to this framework.
@@ -599,11 +633,13 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 	@Override
 	public void executeInstruction() {
+		machine.cb.beforeDecodeInstruction(this, counter, context);
 		instruction = decoder.decodeInstruction(counter, context);
 		PcodeProgram insProg = PcodeProgram.fromInstruction(instruction);
 		preExecuteInstruction();
+		machine.cb.beforeExecuteInstruction(this, instruction, insProg);
 		try {
-			frame = executor.execute(insProg, library);
+			frame = executor.execute(insProg, getUseropLibrary());
 		}
 		catch (PcodeExecutionException e) {
 			frame = e.getFrame();
@@ -615,13 +651,14 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	@Override
 	public void finishInstruction() {
 		assertMidInstruction();
-		executor.finish(frame, library);
+		executor.finish(frame, getUseropLibrary());
 		advanceAfterFinished();
 	}
 
 	@Override
 	public void skipInstruction() {
 		assertCompletedInstruction();
+		machine.cb.beforeDecodeInstruction(this, counter, context);
 		instruction = decoder.decodeInstruction(counter, context);
 		overrideCounter(counter.addWrap(decoder.getLastLengthWithDelays()));
 	}
@@ -669,6 +706,9 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 	@Override
 	public PcodeUseropLibrary<T> getUseropLibrary() {
+		if (library == null) {
+			library = createUseropLibrary();
+		}
 		return library;
 	}
 
@@ -679,7 +719,6 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 	/**
 	 * Check for a p-code injection (override) at the given address
-	 * 
 	 * <p>
 	 * This checks this thread's particular injects and then defers to the machine's injects.
 	 * 
@@ -687,7 +726,11 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	 * @return the injected program, most likely {@code null}
 	 */
 	protected PcodeProgram getInject(Address address) {
-		PcodeProgram inj = injects.get(address);
+		PcodeProgram inj = machine.cb.getInject(this, address);
+		if (inj != null) {
+			return inj;
+		}
+		inj = injects.get(address);
 		if (inj != null) {
 			return inj;
 		}
@@ -697,7 +740,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	@Override
 	public void inject(Address address, String source) {
 		PcodeProgram pcode = SleighProgramCompiler.compileProgram(
-			language, "thread_inject:" + address, source, library);
+			language, "thread_inject:" + address, source, getUseropLibrary());
 		injects.put(address, pcode);
 	}
 
@@ -713,7 +756,6 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 	/**
 	 * Perform checks on a requested LOAD
-	 * 
 	 * <p>
 	 * Throw an exception if the LOAD should cause an interrupt.
 	 * 
@@ -727,7 +769,6 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 	/**
 	 * Perform checks on a requested STORE
-	 * 
 	 * <p>
 	 * Throw an exception if the STORE should cause an interrupt.
 	 * 

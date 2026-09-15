@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.List;
 
 import db.DBRecord;
-import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.DbObject;
 import ghidra.util.LockHold;
 import ghidra.util.database.DBCachedObjectStoreFactory.DBFieldCodec;
 import ghidra.util.database.annot.DBAnnotatedObjectInfo;
@@ -34,12 +34,12 @@ import ghidra.util.database.annot.DBAnnotatedObjectInfo;
  * fields from the record. These objects are managed using a {@link DBCachedObjectStore}. An example
  * object definition:
  * 
- * <pre>
+ * <pre>{@code
  * interface Person {
  * 	// ...
  * }
  * 
- * &#64;DBAnnotatedObjectInfo(version = 1)
+ * @DBAnnotatedObjectInfo(version = 1)
  * public class DBPerson extends DBAnnotatedObject implements Person {
  * 	public static final String TABLE_NAME = "Person"; // Conventionally defined here
  * 
@@ -48,15 +48,15 @@ import ghidra.util.database.annot.DBAnnotatedObjectInfo;
  * 	static final String ADDRESS_COLUMN_NAME = "Address";
  * 
  * 	// Column handles
- * 	&#64;DBAnnotatedColumn(NAME_COLUMN_NAME)
+ * 	@DBAnnotatedColumn(NAME_COLUMN_NAME)
  * 	static DBObjectColumn NAME_COLUMN;
- * 	&#64;DBAnnotatedColumn(ADDRESS_COLUMN_NAME)
+ * 	@DBAnnotatedColumn(ADDRESS_COLUMN_NAME)
  * 	static DBObjectColumn ADDRESS_COLUMN;
  * 
  * 	// Column-backed fields
- * 	&#64;DBAnnotatedField(column = NAME_COLUMN_NAME, indexed = true)
+ * 	@DBAnnotatedField(column = NAME_COLUMN_NAME, indexed = true)
  * 	private String name;
- * 	&#64;DBAnnotatedField(column = ADDRESS_COLUMN_NAME)
+ * 	@DBAnnotatedField(column = ADDRESS_COLUMN_NAME)
  * 	private String address;
  * 
  * 	DBPerson(DBCachedObjectStore<DBPerson> store, DBRecord record) {
@@ -72,7 +72,7 @@ import ghidra.util.database.annot.DBAnnotatedObjectInfo;
  * 
  * 	// ... other methods, getters, setters
  * }
- * </pre>
+ * }</pre>
  * 
  * <p>
  * See {@link DBCachedObjectStoreFactory} for example code that uses the example {@code DBPerson}
@@ -116,7 +116,7 @@ import ghidra.util.database.annot.DBAnnotatedObjectInfo;
  * Note that there is no way to specify the primary key. For object stores, the primary key is
  * always the object id, and its type is always {@code long}.
  */
-public class DBAnnotatedObject extends DatabaseObject {
+public class DBAnnotatedObject extends DbObject {
 	private final DBCachedObjectStore<?> store;
 	private final DBCachedDomainObjectAdapter adapter;
 	private final List<DBFieldCodec<?, ?, ?>> codecs; // The codecs, ordered by field
@@ -131,7 +131,7 @@ public class DBAnnotatedObject extends DatabaseObject {
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	protected DBAnnotatedObject(DBCachedObjectStore<?> store, DBRecord record) {
-		super(store == null ? null : store.cache, record == null ? -1 : record.getKey());
+		super(record == null ? -1 : record.getKey());
 		this.store = store;
 		this.record = record;
 		if (store != null) {
@@ -192,7 +192,7 @@ public class DBAnnotatedObject extends DatabaseObject {
 	}
 
 	/**
-	 * 2-arity version of {@link #update(DBObjectColumn...)}
+	 * 3-arity version of {@link #update(DBObjectColumn...)}
 	 * 
 	 * @param col1 a column
 	 * @param col2 another column
@@ -279,17 +279,6 @@ public class DBAnnotatedObject extends DatabaseObject {
 			return null;
 		}
 		return store.table.getRecord(key);
-	}
-
-	@Override
-	protected boolean refresh() {
-		try (LockHold hold = LockHold.lock(store.readLock())) {
-			return doRefresh(null);
-		}
-		catch (IOException e) {
-			adapter.dbError(e);
-			return false;
-		}
 	}
 
 	@Override

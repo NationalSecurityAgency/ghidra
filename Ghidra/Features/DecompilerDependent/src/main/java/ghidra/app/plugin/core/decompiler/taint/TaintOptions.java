@@ -66,7 +66,7 @@ public class TaintOptions {
 	public final static Boolean DEFAULT_GET_PATHS = true;
 
 	private final static GColor TAINT_HIGHLIGHT_COLOR =
-		new GColor("color.bg.listing.highlighter.default");
+		new GColor("color.bg.listing.highlighter.middle.mouse");
 	private final static Highlighter TAINT_HIGHLIGHT_STYLE_DEFAULT = Highlighter.DEFAULT;
 
 	private String taintEnginePath;
@@ -191,7 +191,7 @@ public class TaintOptions {
 				taintQueryEngine = engine;
 			}
 		}
-		
+
 		taintEnginePath = opt.getString(OP_KEY_TAINT_ENGINE_PATH, "");
 		taintFactsDir = opt.getString(OP_KEY_TAINT_FACTS_DIR, "");
 		taintQuery = opt.getString(OP_KEY_TAINT_QUERY, "");

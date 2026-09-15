@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,6 @@ import ghidra.app.plugin.assembler.sleigh.parse.*;
 import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.assembler.sleigh.symbol.AssemblyNumericSymbols;
 import ghidra.app.plugin.assembler.sleigh.tree.AssemblyParseBranch;
-import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.model.DomainObjectListener;
@@ -43,7 +42,6 @@ import ghidra.util.task.TaskMonitor;
 
 public abstract class AbstractSleighAssembler<RP extends AssemblyResolvedPatterns>
 		implements GenericAssembler<RP> {
-	protected static final DbgTimer dbg = DbgTimer.INACTIVE;
 
 	protected class ListenerForSymbolsRefresh implements DomainObjectListener {
 		@Override
@@ -150,7 +148,6 @@ public abstract class AbstractSleighAssembler<RP extends AssemblyResolvedPattern
 		for (String part : assembly) {
 			for (String line : part.split("\n")) {
 				RegisterValue rv = program.getProgramContext().getDisassemblyContext(at);
-				dbg.println(rv);
 				AssemblyPatternBlock ctx = AssemblyPatternBlock.fromRegisterValue(rv);
 				ctx = ctx.fillMask();
 				byte[] insbytes = assembleLine(at, line, ctx);

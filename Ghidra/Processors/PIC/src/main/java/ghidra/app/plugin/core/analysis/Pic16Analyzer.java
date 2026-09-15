@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,11 +20,12 @@ import java.math.BigInteger;
 import ghidra.app.services.AnalysisPriority;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.symbol.*;
-import ghidra.program.util.*;
+import ghidra.program.model.symbol.FlowType;
+import ghidra.program.model.symbol.Reference;
+import ghidra.program.util.SymbolicPropogator;
+import ghidra.program.util.VarnodeContext;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 

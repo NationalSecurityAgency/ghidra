@@ -84,5 +84,4 @@ public class Worker extends AbstractWorker<Job> {
 		super(new LinkedBlockingQueue<Job>(), isPersistentThread, name, useSharedThreadPool,
 			monitor);
 	}
-
 }

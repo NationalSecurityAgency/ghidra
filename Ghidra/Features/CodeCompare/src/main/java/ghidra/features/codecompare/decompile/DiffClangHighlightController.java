@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,18 +17,16 @@ package ghidra.features.codecompare.decompile;
 
 import java.awt.Color;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import ghidra.app.decompiler.ClangSyntaxToken;
-import ghidra.app.decompiler.ClangToken;
+import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.*;
 import ghidra.features.codecompare.graphanalysis.TokenBin;
-import ghidra.util.ColorUtils;
-import ghidra.util.SystemUtilities;
-import util.CollectionUtils;
 
 /**
  * Class to handle Function Difference highlights for a decompiled function.
@@ -40,202 +38,251 @@ public class DiffClangHighlightController extends LocationClangHighlightControll
 	private Set<ClangToken> diffTokenSet = new HashSet<>();
 	private ClangToken locationToken;
 	private TokenBin locationTokenBin;
-	private List<TokenBin> highlightBins;
-	private List<DiffClangHighlightListener> listenerList = new ArrayList<>();
-	private TokenBin matchingTokenBin;
+	private List<TokenBin> allTokenBins;
 	private DecompilerCodeComparisonOptions comparisonOptions;
+	private DiffClangHighlightListener listener = new DummyListener();
+
+	private DiffTokenHighlighter diffColorHighlighter;
+	private BasicTokenHighlighter currentTokenHighlighter;
+
+	// highlights the token in this highlighter for the selected token in the other highlighter
+	private BasicTokenHighlighter matchingTokenHighlighter;
 
 	public DiffClangHighlightController(DecompilerCodeComparisonOptions comparisonOptions) {
 		this.comparisonOptions = comparisonOptions;
 	}
 
-	public void clearDiffHighlights() {
-		doClearDiffHighlights();
-		notifyListeners();
-	}
-
-	private void doClearDiffHighlights() {
-		ClangToken[] array = diffTokenSet.toArray(new ClangToken[diffTokenSet.size()]);
-		for (ClangToken clangToken : array) {
-			clearDiffHighlight(clangToken);
-		}
-	}
-
-	private void clearDiffHighlight(ClangToken clangToken) {
-		Color highlight = clangToken.getHighlight();
-		if (highlight != null && highlight.equals(comparisonOptions.getDiffHighlightColor())) {
-			clangToken.setHighlight(null);
-		}
-		diffTokenSet.remove(clangToken);
-	}
-
-	private void clearNonDiffHighlight(ClangToken clangToken) {
-		if (diffTokenSet.contains(clangToken)) {
-			clangToken.setHighlight(comparisonOptions.getDiffHighlightColor());
-		}
-		else {
-			clangToken.setHighlight(null);
-		}
-		if (clangToken.isMatchingToken()) {
-			clangToken.setMatchingToken(false);
-		}
-	}
-
 	public void setDiffHighlights(List<TokenBin> highlightBins, Set<ClangToken> tokenSet) {
-		this.highlightBins = highlightBins;
-		doClearDiffHighlights();
-		for (ClangToken clangToken : tokenSet) {
-			clangToken.setHighlight(comparisonOptions.getDiffHighlightColor());
-			diffTokenSet.add(clangToken);
+		this.allTokenBins = highlightBins;
+
+		clearDiffHighlights();
+
+		if (!tokenSet.isEmpty()) {
+			Color color = comparisonOptions.getDiffHighlightColor();
+			diffColorHighlighter = new DiffTokenHighlighter(new ArrayList<>(tokenSet), color);
+			diffColorHighlighter.applyHighlights();
 		}
 		notifyListeners();
 	}
 
 	@Override
-	public void fieldLocationChanged(FieldLocation location, Field field, EventTrigger trigger) {
+	public void fieldLocationChanged(FieldLocation location, Field field,
+			EventTrigger trigger) {
 
-		if (!(field instanceof ClangTextField)) {
+		if (!(field instanceof ClangTextField textField)) {
 			return;
 		}
 
-		// Get the token for the location so we can highlight its token bin.
-		// Also we will use it when notifying the other panel to highlight.
-		ClangToken tok = ((ClangTextField) field).getToken(location);
-		if (SystemUtilities.isEqual(locationToken, tok)) {
-			return; // Current location's token hasn't changed.
+		// Get the token for the location so we can highlight its token bin. Also we will use it 
+		// when notifying the other panel to highlight.
+		ClangToken tok = textField.getToken(location);
+		if (Objects.equals(locationToken, tok)) {
+			return; // current location's token hasn't changed
 		}
-
-		// Undo any highlight of the previous matching tokenBin.
-		if (matchingTokenBin != null && matchingTokenBin.getMatch() != null) {
-			clearTokenBinHighlight(matchingTokenBin.getMatch());
-			matchingTokenBin = null;
-		}
-
-		clearCurrentLocationHighlight();
 
 		clearPrimaryHighlights();
-		addPrimaryHighlight(tok, defaultHighlightColor);
-		if (tok instanceof ClangSyntaxToken) {
-			List<ClangToken> tokens = addPrimaryHighlightToTokensForParenthesis(
-				(ClangSyntaxToken) tok, defaultParenColor);
-			reHighlightDiffs(tokens);
-			addPrimaryHighlightToTokensForBrace((ClangSyntaxToken) tok, defaultParenColor);
+		clearCurrentLocationHighlight();
+		clearMatchingTokenBin();
+
+		highlightTokensBetweenParens(tok);
+		highlightCurrentLocationToken(tok);
+
+		listener.locationTokenChanged(locationTokenBin);
+	}
+
+	private void highlightTokensBetweenParens(ClangToken tok) {
+
+		if (!(tok instanceof ClangSyntaxToken syntaxToken)) {
+			return;
 		}
+
+		addPrimaryHighlightToTokensForParenthesis(syntaxToken, defaultParenColor);
+		addPrimaryHighlightToTokensForBrace(syntaxToken, defaultParenColor);
+	}
+
+	private void highlightCurrentLocationToken(ClangToken tok) {
 
 		TokenBin tokenBin = null;
-		if (tok != null) {
-			Color highlightColor = comparisonOptions.getFocusedTokenIneligibleHighlightColor(); // Don't know
-			if (highlightBins != null) {
-				tokenBin = TokenBin.getBinContainingToken(highlightBins, tok);
-				if (tokenBin != null) {
-					if (tokenBin.getMatch() != null) {
-						highlightColor = comparisonOptions.getFocusedTokenMatchHighlightColor();
-					}
-					else if (tokenBin.getMatch() == null) {
-						highlightColor = comparisonOptions.getFocusedTokenUnmatchedHighlightColor();
-					}
-					else {
-						// All the tokens that didn't fall into the "has a match" or "no match"
-						// categories above are in a single token bin.
-						// We don't want all these highlighted at the same time, so set the
-						// tokenBin to null. By doing this, only the current token gets highlighted.
-						tokenBin = null;
-					}
-				}
-			}
-			locationToken = tok;
-			locationTokenBin = tokenBin;
-			if (tokenBin == null) {
-				addPrimaryHighlight(tok, highlightColor);
+		if (tok != null && allTokenBins != null) {
+			tokenBin = TokenBin.getBinContainingToken(allTokenBins, tok);
+		}
+
+		Color binHlColor = comparisonOptions.getFocusedTokenIneligibleHighlightColor();
+		if (tokenBin != null) {
+			if (tokenBin.getMatch() != null) {
+				binHlColor = comparisonOptions.getFocusedTokenMatchHighlightColor();
 			}
 			else {
-				addTokenBinHighlight(tokenBin, highlightColor);
+				binHlColor = comparisonOptions.getFocusedTokenUnmatchedHighlightColor();
 			}
 		}
 
-		// Notify other decompiler panel highlight controller we have a new location token.
-		for (DiffClangHighlightListener listener : listenerList) {
-			listener.locationTokenChanged(tok, tokenBin);
+		locationToken = tok;
+		locationTokenBin = tokenBin;
+
+		List<ClangToken> tokens = List.of();
+		if (tokenBin != null) {
+			tokens = toList(tokenBin);
+		}
+		else if (tok != null) {
+			tokens = List.of(tok);
+		}
+
+		installCurrentTokenHighlighter(tokens, binHlColor);
+		refreshDiffHighlightsForCurrentLocationChange();
+	}
+
+	/*
+	 * The diff highlighter is smart enough to ignore the token at the current location.  We have to
+	 * kick it when the location changes so it will update the highlights.
+	 */
+	private void refreshDiffHighlightsForCurrentLocationChange() {
+		if (diffColorHighlighter != null) {
+			diffColorHighlighter.clearHighlights();
+			diffColorHighlighter.applyHighlights();
 		}
 	}
 
-	private void reHighlightDiffs(List<ClangToken> tokenList) {
-		Color averageColor =
-			ColorUtils.blend(defaultParenColor, comparisonOptions.getDiffHighlightColor(), 0.5);
-		for (ClangToken clangToken : tokenList) {
-			if (diffTokenSet.contains(clangToken)) {
-				clangToken.setHighlight(averageColor);
-			}
-		}
+	private static List<ClangToken> toList(TokenBin tokens) {
+		return StreamSupport.stream(tokens.spliterator(), false).collect(Collectors.toList());
 	}
 
 	private void clearCurrentLocationHighlight() {
-		if (locationTokenBin != null) {
-			clearTokenBinHighlight(locationTokenBin);
-			locationTokenBin = null;
-			locationToken = null;
+
+		if (currentTokenHighlighter != null) {
+			currentTokenHighlighter.dispose();
+			currentTokenHighlighter = null;
 		}
-		if (locationToken != null) {
-			clearNonDiffHighlight(locationToken);
-			locationToken = null;
+
+		locationTokenBin = null;
+		locationToken = null;
+	}
+
+	private void clearDiffHighlights() {
+
+		if (diffColorHighlighter != null) {
+			diffColorHighlighter.dispose();
+			diffColorHighlighter = null;
+		}
+
+		diffTokenSet.clear();
+	}
+
+	private void clearMatchingTokenBin() {
+		if (matchingTokenHighlighter != null) {
+			matchingTokenHighlighter.dispose();
+			matchingTokenHighlighter = null;
 		}
 	}
 
-	private void addTokenBinHighlight(TokenBin tokenBin, Color highlightColor) {
-		for (ClangToken token : tokenBin) {
-			addPrimaryHighlight(token, highlightColor);
+	private void installCurrentTokenHighlighter(List<ClangToken> tokens, Color highlightColor) {
+		if (tokens.isEmpty()) {
+			return;
 		}
+
+		currentTokenHighlighter = new BasicTokenHighlighter(tokens, highlightColor);
+		currentTokenHighlighter.applyHighlights();
 	}
 
-	private void clearTokenBinHighlight(TokenBin tokenBin) {
-		for (ClangToken token : tokenBin) {
-			clearNonDiffHighlight(token);
+	private void installMatchingTokenBinHighlighter(TokenBin tokenBin, Color highlightColor) {
+
+		clearMatchingTokenBin();
+
+		if (tokenBin == null) {
+			return;
 		}
+
+		matchingTokenHighlighter = new BasicTokenHighlighter(tokenBin, highlightColor);
+		matchingTokenHighlighter.applyHighlights();
 	}
 
-	private void doClearHighlights(TokenHighlights tokens) {
-		List<ClangToken> clangTokens =
-			CollectionUtils.asStream(tokens).map(ht -> ht.getToken()).collect(Collectors.toList());
-		for (ClangToken clangToken : clangTokens) {
-			clearNonDiffHighlight(clangToken);
-		}
-		tokens.clear();
-		notifyListeners();
+	public void setTokenChangedListener(DiffClangHighlightListener listener) {
+		this.listener = listener == null ? new DummyListener() : listener;
 	}
 
 	@Override
-	public void clearPrimaryHighlights() {
-		doClearHighlights(getPrimaryHighlights());
-	}
-
-	public boolean addListener(DiffClangHighlightListener listener) {
-		return listenerList.add(listener);
-	}
-
-	public boolean removeListener(DiffClangHighlightListener listener) {
-		return listenerList.remove(listener);
-	}
-
-	@Override
-	public void locationTokenChanged(ClangToken tok, TokenBin tokenBin) {
+	public void locationTokenChanged(TokenBin tokenBin) {
 		clearCurrentLocationHighlight();
+		refreshDiffHighlightsForCurrentLocationChange();
 
 		// The token Changed in our other matching DiffClangHighlightController
-		highlightMatchingToken(tok, tokenBin);
+		if (tokenBin != null) {
+			TokenBin match = tokenBin.getMatch();
+			Color color = comparisonOptions.getFocusedTokenMatchHighlightColor();
+			installMatchingTokenBinHighlighter(match, color);
+		}
 	}
 
-	private void highlightMatchingToken(ClangToken tok, TokenBin tokenBin) {
-		// Undo any highlight of the previous matching tokenBin.
-		if (matchingTokenBin != null && matchingTokenBin.getMatch() != null) {
-			clearTokenBinHighlight(matchingTokenBin.getMatch());
+//=================================================================================================
+// Inner Classes
+//=================================================================================================
+
+	/**
+	 * Highlights a given set of tokens with the given color.
+	 */
+	private class BasicTokenHighlighter implements DecompilerHighlighter {
+
+		private String id;
+		protected List<ClangToken> tokens;
+		private Color color;
+
+		BasicTokenHighlighter(TokenBin tokens, Color color) {
+			this(toList(tokens), color);
 		}
 
-		// Highlight the new matching tokenBin.
-		if (tokenBin != null && tokenBin.getMatch() != null) {
-			addTokenBinHighlight(tokenBin.getMatch(),
-				comparisonOptions.getFocusedTokenMatchHighlightColor());
+		BasicTokenHighlighter(List<ClangToken> tokens, Color color) {
+			this.color = color;
+			UUID uuId = UUID.randomUUID();
+			this.id = uuId.toString();
+			this.tokens = tokens;
 		}
 
-		matchingTokenBin = tokenBin;
+		// subclass overrides this method
+		protected List<ClangToken> getCurrentTokens() {
+			return tokens;
+		}
+
+		@Override
+		public void applyHighlights() {
+			Supplier<? extends Collection<ClangToken>> tokenSupplier = this::getCurrentTokens;
+			ColorProvider cp = t -> color;
+			addHighlighterHighlights(this, tokenSupplier, cp);
+		}
+
+		@Override
+		public void clearHighlights() {
+			removeHighlighterHighlights(this);
+		}
+
+		@Override
+		public void dispose() {
+			removeHighlighterHighlights(this);
+		}
+
+		@Override
+		public String getId() {
+			return id;
+		}
+	}
+
+	private class DiffTokenHighlighter extends BasicTokenHighlighter {
+
+		DiffTokenHighlighter(List<ClangToken> tokens, Color color) {
+			super(tokens, color);
+		}
+
+		@Override
+		protected List<ClangToken> getCurrentTokens() {
+			// ignore the selected token so that it paints with its own color and does not get 
+			// blended with this highlighter's color
+			return tokens.stream().filter(t -> t != locationToken).collect(Collectors.toList());
+		}
+	}
+
+	private class DummyListener implements DiffClangHighlightListener {
+		@Override
+		public void locationTokenChanged(TokenBin tokenBin) {
+			// stub
+		}
 	}
 }

@@ -35,7 +35,7 @@ public class FavoritesAction extends CompositeEditorTableAction {
 	 * @param provider the provider that owns this action
 	 * @param dt the favorite data type
 	 */
-	public FavoritesAction(CompositeEditorProvider provider, DataType dt) {
+	public FavoritesAction(CompositeEditorProvider<?, ?> provider, DataType dt) {
 		super(provider, dt.getDisplayName());
 		this.dataType = dt;
 

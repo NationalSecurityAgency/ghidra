@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,63 +20,46 @@ import java.math.BigInteger;
 import org.junit.Assert;
 import org.junit.Test;
 
-import ghidra.pcode.floatformat.FloatFormat;
-import ghidra.pcode.floatformat.FloatFormatFactory;
-
 public class OpBehaviorFloatMultTest extends AbstractOpBehaviorTest {
-
-	public OpBehaviorFloatMultTest() {
-		super();
-	}
+	static final OpBehaviorFloatMult OP = OpBehavior.FLOAT_MULT;
 
 	@Test
 	public void testEvaluateBinaryLong() {
+		long a = FF8.getEncoding(2.5);
+		long b = FF8.getEncoding(1.5);
+		long result = OP.evaluateBinary(8, 8, a, b);
+		Assert.assertEquals(3.75, FF8.decodeHostFloat(result), 0);
 
-		OpBehaviorFloatMult op = new OpBehaviorFloatMult();
+		b = FF8.getEncoding(Double.POSITIVE_INFINITY);
+		result = OP.evaluateBinary(8, 8, a, b);
+		Assert.assertEquals(Double.POSITIVE_INFINITY, FF8.decodeHostFloat(result), 0);
 
-		FloatFormat ff = FloatFormatFactory.getFloatFormat(8);
+		a = FF8.getEncoding(Double.NEGATIVE_INFINITY);
+		result = OP.evaluateBinary(8, 8, a, b);
+		Assert.assertEquals(Double.NEGATIVE_INFINITY, FF8.decodeHostFloat(result), 0);
 
-		long a = ff.getEncoding(2.5);
-		long b = ff.getEncoding(1.5);
-		long result = op.evaluateBinary(8, 8, a, b);
-		Assert.assertEquals(3.75, ff.decodeHostFloat(result), 0);
-
-		b = ff.getEncoding(Double.POSITIVE_INFINITY);
-		result = op.evaluateBinary(8, 8, a, b);
-		Assert.assertEquals(Double.POSITIVE_INFINITY, ff.decodeHostFloat(result), 0);
-
-		a = ff.getEncoding(Double.NEGATIVE_INFINITY);
-		result = op.evaluateBinary(8, 8, a, b);
-		Assert.assertEquals(Double.NEGATIVE_INFINITY, ff.decodeHostFloat(result), 0);
-
-		b = ff.getEncoding(Double.NaN);
-		result = op.evaluateBinary(8, 8, a, b);
-		Assert.assertEquals(Double.NaN, ff.decodeHostFloat(result), 0);
+		b = FF8.getEncoding(Double.NaN);
+		result = OP.evaluateBinary(8, 8, a, b);
+		Assert.assertEquals(Double.NaN, FF8.decodeHostFloat(result), 0);
 	}
 
 	@Test
 	public void testEvaluateBinaryBigInteger() {
+		BigInteger a = FF8.getEncoding(FF8.getBigFloat(2.5d));
+		BigInteger b = FF8.getEncoding(FF8.getBigFloat(1.5d));
+		BigInteger result = OP.evaluateBinary(8, 8, a, b);
+		Assert.assertEquals(FF8.getBigFloat(3.75d), FF8.decodeBigFloat(result));
 
-		OpBehaviorFloatMult op = new OpBehaviorFloatMult();
+		b = FF8.getBigInfinityEncoding(false);
+		result = OP.evaluateBinary(8, 8, a, b);
+		Assert.assertEquals(FF8.getBigInfinity(false), FF8.decodeBigFloat(result));
 
-		FloatFormat ff = FloatFormatFactory.getFloatFormat(8);
+		a = FF8.getBigInfinityEncoding(true);
+		result = OP.evaluateBinary(8, 8, a, b);
+		Assert.assertEquals(FF8.getBigInfinity(true), FF8.decodeBigFloat(result));
 
-		BigInteger a = ff.getEncoding(ff.getBigFloat(2.5d));
-		BigInteger b = ff.getEncoding(ff.getBigFloat(1.5d));
-		BigInteger result = op.evaluateBinary(8, 8, a, b);
-		Assert.assertEquals(ff.getBigFloat(3.75d), ff.decodeBigFloat(result));
-
-		b = ff.getBigInfinityEncoding(false);
-		result = op.evaluateBinary(8, 8, a, b);
-		Assert.assertEquals(ff.getBigInfinity(false), ff.decodeBigFloat(result));
-
-		a = ff.getBigInfinityEncoding(true);
-		result = op.evaluateBinary(8, 8, a, b);
-		Assert.assertEquals(ff.getBigInfinity(true), ff.decodeBigFloat(result));
-
-		b = ff.getBigNaNEncoding(false);
-		result = op.evaluateBinary(8, 8, a, b);
-		Assert.assertEquals(ff.getBigNaN(false), ff.decodeBigFloat(result));
+		b = FF8.getBigNaNEncoding(false);
+		result = OP.evaluateBinary(8, 8, a, b);
+		Assert.assertEquals(FF8.getBigNaN(false), FF8.decodeBigFloat(result));
 	}
-
 }

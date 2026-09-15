@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,8 +45,7 @@ import ghidra.server.UserManager;
  */
 public class SSHAuthenticationModule {
 
-	private static final long MAX_TOKEN_TIME = 10000;
-	private static final int TOKEN_SIZE = 64;
+
 
 	private final boolean nameCallbackAllowed;
 
@@ -72,12 +71,12 @@ public class SSHAuthenticationModule {
 		if (addNameCallback) {
 			list.add(new NameCallback("User ID:"));
 		}
-		byte[] token = TokenGenerator.getNewToken(TOKEN_SIZE);
+		byte[] token = TokenGenerator.getNewToken();
 		try {
 			boolean usingSelfSignedCert =
-				ApplicationKeyManagerFactory.usingGeneratedSelfSignedCertificate();
-			SignedToken signedToken = ApplicationKeyManagerUtils.getSignedToken(
-				usingSelfSignedCert ? null : ApplicationKeyManagerUtils.getTrustedIssuers(), token);
+				DefaultKeyManagerFactory.usingGeneratedSelfSignedCertificate();
+			SignedToken signedToken = DefaultKeyManagerFactory.getSignedToken(
+				usingSelfSignedCert ? null : DefaultTrustManagerFactory.getTrustedIssuers(), token);
 			list.add(new SSHSignatureCallback(token, signedToken.signature));
 		}
 		catch (Exception e) {
@@ -88,9 +87,9 @@ public class SSHAuthenticationModule {
 
 	public boolean hasSignedSSHCallback(Callback[] callbacks) {
 		if (callbacks != null) {
-			for (int i = 0; i < callbacks.length; i++) {
-				if (callbacks[i] instanceof SSHSignatureCallback) {
-					SSHSignatureCallback sshCb = (SSHSignatureCallback) callbacks[i];
+			for (Callback callback : callbacks) {
+				if (callback instanceof SSHSignatureCallback) {
+					SSHSignatureCallback sshCb = (SSHSignatureCallback) callback;
 					return sshCb.isSigned();
 				}
 			}
@@ -140,10 +139,10 @@ public class SSHAuthenticationModule {
 	 * @param subject unauthenticated user ID (must be used if name callback not provided/allowed)
 	 * @param callbacks authentication callbacks
 	 * @return authenticated user ID (may come from callbacks)
-	 * @throws LoginException if authentication failure occurs
+	 * @throws FailedLoginException if authentication failure occurs
 	 */
 	public String authenticate(UserManager userMgr, Subject subject, Callback[] callbacks)
-			throws LoginException {
+			throws FailedLoginException {
 
 		GhidraPrincipal user = GhidraPrincipal.getGhidraPrincipal(subject);
 		if (user == null) {
@@ -154,12 +153,12 @@ public class SSHAuthenticationModule {
 		NameCallback nameCb = null;
 		SSHSignatureCallback sshCb = null;
 		if (callbacks != null) {
-			for (int i = 0; i < callbacks.length; i++) {
-				if (callbacks[i] instanceof NameCallback) {
-					nameCb = (NameCallback) callbacks[i];
+			for (Callback callback : callbacks) {
+				if (callback instanceof NameCallback) {
+					nameCb = (NameCallback) callback;
 				}
-				if (callbacks[i] instanceof SSHSignatureCallback) {
-					sshCb = (SSHSignatureCallback) callbacks[i];
+				if (callback instanceof SSHSignatureCallback) {
+					sshCb = (SSHSignatureCallback) callback;
 				}
 			}
 		}
@@ -190,16 +189,16 @@ public class SSHAuthenticationModule {
 		}
 
 		byte[] token = sshCb.getToken();
-		if (!TokenGenerator.isRecentToken(token, MAX_TOKEN_TIME)) {
+		if (!TokenGenerator.isValidToken(token)) {
 			throw new FailedLoginException("Stale SSH Signature callback");
 		}
 
 		boolean isValid = false;
 		try {
 			boolean usingSelfSignedCert =
-				ApplicationKeyManagerFactory.usingGeneratedSelfSignedCertificate();
-			isValid = ApplicationKeyManagerUtils.isMySignature(
-				usingSelfSignedCert ? null : ApplicationKeyManagerUtils.getTrustedIssuers(), token,
+				DefaultKeyManagerFactory.usingGeneratedSelfSignedCertificate();
+			isValid = DefaultKeyManagerFactory.isMySignature(
+				usingSelfSignedCert ? null : DefaultTrustManagerFactory.getTrustedIssuers(), token,
 				sshCb.getServerSignature());
 		}
 		catch (Exception e) {

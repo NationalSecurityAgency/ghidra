@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -136,6 +136,16 @@ public class TargetActionTask extends Task {
 	/**
 	 * Execute an {@link ActionEntry}
 	 * 
+	 * <p>
+	 * If the {@link ProgressService} is available, we will not enforce a timeout, because it should
+	 * be relatively easy for the user to manage the pending tasks. Otherwise, we'll enforce the
+	 * timeout. The rationale here is that some tasks do actually take a good bit of time. For
+	 * example, some targets just have a large module list. Often a GUI component is asking for a
+	 * reason, and if we time it out, that thing doesn't get what it needs. Furthermore, the entry
+	 * disappears from the task list, even though the back-end is likely still working on it. That's
+	 * not good, actually. Since we have a cancel button, let the user decide when it's had enough
+	 * time.
+	 * 
 	 * @param tool the tool in which to execute
 	 * @param title the title, often {@link ActionEntry#display()}
 	 * @param entry the action to execute
@@ -144,11 +154,13 @@ public class TargetActionTask extends Task {
 	 */
 	public static CompletableFuture<Void> runAction(PluginTool tool, String title,
 			ActionEntry entry) {
-		return executeTask(tool, new TargetActionTask(tool, title, entry));
+		return executeTask(tool, new TargetActionTask(tool, title, entry,
+			tool.getService(ProgressService.class) == null));
 	}
 
 	private final PluginTool tool;
 	private final ActionEntry entry;
+	private final boolean timeout;
 
 	/**
 	 * Construct a task fore the given action
@@ -156,17 +168,24 @@ public class TargetActionTask extends Task {
 	 * @param tool the plugin tool
 	 * @param title the title, often {@link ActionEntry#display()}
 	 * @param entry the action to execute
+	 * @param timeout whether or not to enforce the timeout
 	 */
-	public TargetActionTask(PluginTool tool, String title, ActionEntry entry) {
+	public TargetActionTask(PluginTool tool, String title, ActionEntry entry, boolean timeout) {
 		super(title, false, false, false);
 		this.tool = tool;
 		this.entry = entry;
+		this.timeout = timeout;
 	}
 
 	@Override
 	public void run(TaskMonitor monitor) throws CancelledException {
 		try {
-			entry.run(entry.requiresPrompt());
+			if (timeout) {
+				entry.run(entry.requiresPrompt());
+			}
+			else {
+				entry.invokeAsyncWithoutTimeout(entry.requiresPrompt()).get();
+			}
 		}
 		catch (Throwable e) {
 			reportError(e);

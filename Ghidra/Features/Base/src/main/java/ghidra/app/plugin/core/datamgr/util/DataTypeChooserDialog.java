@@ -31,13 +31,14 @@ import docking.DialogComponentProvider;
 import docking.Tool;
 import docking.widgets.filter.FilterOptions;
 import docking.widgets.filter.TextFilterStrategy;
-import docking.widgets.label.GLabel;
+import docking.widgets.label.GDLabel;
 import docking.widgets.tree.*;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
-import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
+import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
+import ghidra.app.plugin.core.datamgr.tree.*;
 import ghidra.app.util.datatype.DataTypeSelectionDialog;
-import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.*;
+import ghidra.util.HelpLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -47,20 +48,27 @@ import ghidra.util.task.TaskMonitor;
  * {@link DataTypeSelectionDialog} utility widget.
  */
 public class DataTypeChooserDialog extends DialogComponentProvider {
+
+	private DataTypeManagerPlugin plugin;
 	private DataTypeArchiveGTree tree;
 	private DataType selectedDataType;
-	private GLabel messageLabel;
-	boolean isFilterEditable;
+	private CategoryPath selectedCategoryPath;
+
+	private GDLabel messageLabel;
+	private boolean isFilterEditable;
+
+	private boolean categorySelectionMode;
 
 	public DataTypeChooserDialog(DataTypeManagerPlugin plugin) {
 		super("Data Type Chooser", true, true, true, false);
+		this.plugin = plugin;
 
 		tree = new DataTypeArchiveGTree(plugin);
 
 		tree.setEditable(false);
 		tree.updateFilterForChoosingDataType();
 
-		tree.addGTreeSelectionListener(e -> setOkEnabled(getSelectedNode() != null));
+		tree.addGTreeSelectionListener(e -> setOkEnabled(isValidNodeSelected()));
 
 		tree.addMouseListener(new MouseAdapter() {
 			@Override
@@ -69,7 +77,18 @@ public class DataTypeChooserDialog extends DialogComponentProvider {
 					return;
 				}
 
-				DataTypeNode selectedNode = getSelectedNode();
+				if (categorySelectionMode) {
+					CategoryPath path = getCurrentCategoryPath();
+					if (path == null) {
+						return;
+					}
+
+					selectedCategoryPath = path;
+					close();
+					return;
+				}
+
+				DataTypeNode selectedNode = getSelectedDtNode();
 				if (selectedNode == null) {
 					return;
 				}
@@ -84,20 +103,75 @@ public class DataTypeChooserDialog extends DialogComponentProvider {
 		addOKButton();
 		addCancelButton();
 		setOkEnabled(false);
+
+		setHelpLocation(new HelpLocation("DataTypeEditors", "browse"));
 	}
 
-	private DataTypeNode getSelectedNode() {
+	/**
+	 * Signals that this chooser is intended to pick {@link CategoryPath}s instead of data types.
+	 * @param categorySelectionMode true to pick category paths
+	 */
+	public void setCategorySelectionMode(boolean categorySelectionMode) {
+		this.categorySelectionMode = categorySelectionMode;
+		if (categorySelectionMode) {
+			setTitle("Category Chooser");
+			messageLabel.setText("Choose a category:");
+		}
+		else {
+			setTitle("Data Type Chooser");
+			messageLabel.setText("Choose a data type:");
+		}
+	}
+
+	public void setShowProgramArchiveOnly(boolean programOnly) {
+		DataTypeManagerHandler handler = plugin.getDataTypeManagerHandler();
+		if (programOnly) {
+			DataTypeManager programDtm = handler.getProgramDataTypeManager();
+			if (programDtm != null) {
+				ArchiveRootNode root = new ArchiveRootNode(handler, true);
+				tree.setRootNode(root);
+				return;
+			}
+		}
+
+		ArchiveRootNode root = new ArchiveRootNode(handler);
+		tree.setRootNode(root);
+	}
+
+	private boolean isValidNodeSelected() {
+		TreePath[] selectionPath = tree.getSelectionPaths();
+		if (selectionPath.length != 1) {
+			return false;
+		}
+
+		GTreeNode node = (GTreeNode) selectionPath[0].getLastPathComponent();
+		return node instanceof DataTypeTreeNode;
+	}
+
+	private DataTypeNode getSelectedDtNode() {
 		TreePath[] selectionPath = tree.getSelectionPaths();
 		if (selectionPath.length != 1) {
 			return null;
 		}
 
 		GTreeNode node = (GTreeNode) selectionPath[0].getLastPathComponent();
-		if (!(node instanceof DataTypeNode)) {
+		if (node instanceof DataTypeNode dtNode) {
+			return dtNode;
+		}
+		return null;
+	}
+
+	private CategoryNode getSelectedCategoryNode() {
+		TreePath[] selectionPath = tree.getSelectionPaths();
+		if (selectionPath.length != 1) {
 			return null;
 		}
 
-		return (DataTypeNode) node;
+		GTreeNode node = (GTreeNode) selectionPath[0].getLastPathComponent();
+		if (node instanceof CategoryNode catNode) {
+			return catNode;
+		}
+		return null;
 	}
 
 	@Override
@@ -108,7 +182,7 @@ public class DataTypeChooserDialog extends DialogComponentProvider {
 
 	private JComponent createWorkPanel() {
 		JPanel panel = new JPanel(new BorderLayout());
-		messageLabel = new GLabel("Choose the data type you wish to use.");
+		messageLabel = new GDLabel("Choose the data type you wish to use.");
 		messageLabel.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 2));
 		messageLabel.getAccessibleContext().setAccessibleName("Message");
 		panel.add(messageLabel, BorderLayout.NORTH);
@@ -119,10 +193,34 @@ public class DataTypeChooserDialog extends DialogComponentProvider {
 
 	@Override
 	protected void okCallback() {
-		// can't be null since we control button enablement
-		DataTypeNode dataTypeNode = getSelectedNode();
-		selectedDataType = dataTypeNode.getDataType();
+
+		if (categorySelectionMode) {
+			selectedCategoryPath = getCurrentCategoryPath();
+		}
+		else {
+			DataTypeNode dtNode = getSelectedDtNode();
+			selectedDataType = dtNode.getDataType();
+		}
+
 		close();
+	}
+
+	private CategoryPath getCurrentCategoryPath() {
+
+		DataTypeNode dtNode = getSelectedDtNode();
+
+		// the user may have picked a data type node or a category node
+		if (dtNode != null) {
+			return dtNode.getDataType().getCategoryPath();
+		}
+
+		CategoryNode categoryNode = getSelectedCategoryNode();
+		if (categoryNode != null) {
+			Category category = categoryNode.getCategory();
+			return category.getCategoryPath();
+		}
+
+		return null;
 	}
 
 	/**
@@ -207,6 +305,10 @@ public class DataTypeChooserDialog extends DialogComponentProvider {
 		tree.setFilterProvider(provider);
 	}
 
+	public CategoryPath getSelectedCategoryPath() {
+		return selectedCategoryPath;
+	}
+
 	public DataType getSelectedDataType() {
 		return selectedDataType;
 	}
@@ -263,4 +365,5 @@ public class DataTypeChooserDialog extends DialogComponentProvider {
 			}
 		}
 	}
+
 }

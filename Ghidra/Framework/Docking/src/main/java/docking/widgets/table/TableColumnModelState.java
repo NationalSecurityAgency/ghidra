@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import java.util.List;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
-import org.jdom.*;
+import org.jdom2.*;
 
 import docking.DockingWindowManager;
 import ghidra.docking.settings.Settings;
@@ -34,40 +34,38 @@ import ghidra.util.task.SwingUpdateManager;
  * A class to keep track of and persist state for column models, including size, ordering and
  * visibility.
  * <p>
- * This class performs a bit of magic to accomplish its goals.  Resultingly, some of the code
- * herein may seem a bit odd or of poor quality.  These rough spots are documented as best as
- * possible.
+ * This class performs a bit of magic to accomplish its goals. Resultingly, some of the code herein
+ * may seem a bit odd or of poor quality. These rough spots are documented as best as possible.
  * <p>
  * The basic outline of how this class works:<br>
  *
- * This class loads and save table column state via requests made by clients like the {@link GTable} or
- * the {@link GTableColumnModel}.  These requests are in response to direct users actions (like
- * showing a new column) or to table changes (like column resizing).  There are few things that
- * make this code tricky.  Namely, when a change notification comes from the subsystem and not
- * direct user intervention, we do not know if the change was motived by the user directly or
- * by programmatic table configuration.  We would prefer to only save data when the user makes
- * changes, but we can not always know the source of the change.  For example, column resizing
- * can happen due to user dragging or due to the table subsystem performing a column layout.
+ * This class loads and save table column state via requests made by clients like the {@link GTable}
+ * or the {@link GTableColumnModel}. These requests are in response to direct users actions (like
+ * showing a new column) or to table changes (like column resizing). There are few things that make
+ * this code tricky. Namely, when a change notification comes from the subsystem and not direct user
+ * intervention, we do not know if the change was motived by the user directly or by programmatic
+ * table configuration. We would prefer to only save data when the user makes changes, but we can
+ * not always know the source of the change. For example, column resizing can happen due to user
+ * dragging or due to the table subsystem performing a column layout.
  * <p>
  * To facilitate this magic, we listen to all changes, attempting to: 1) ignore those that we know
  * are not from the user, and 2) buffer the changes so that they are not excessive and so they
  * happen in the correct order.
  * <p>
- * For 1, we ignore all changes until the table has been shown for the first time.  For 2, we use
+ * For 1, we ignore all changes until the table has been shown for the first time. For 2, we use
  * SwingUpdate managers.
  * <p>
- * The complicated part is that we allow clients to add columns at any time.  If they do so
- * after the table has been made visible, then we cannot ignore the event like we do when the
- * table has not yet been realized.  In our world view, the uniqueness of a table is based upon
- * it's class and its columns.  Thus, when a column is added or removed, it becomes a different
- * table and thus, saved settings must be applied.
+ * The complicated part is that we allow clients to add columns at any time. If they do so after the
+ * table has been made visible, then we cannot ignore the event like we do when the table has not
+ * yet been realized. In our world view, the uniqueness of a table is based upon it's class and its
+ * columns. Thus, when a column is added or removed, it becomes a different table and thus, saved
+ * settings must be applied.
  */
 public class TableColumnModelState implements SortListener {
 
 	/**
-	 * A width that is large enough to consume the extra space when columns are getting
-	 * resized.  This value is meant to be used when a column does not specify it's
-	 * preferred width.
+	 * A width that is large enough to consume the extra space when columns are getting resized.
+	 * This value is meant to be used when a column does not specify it's preferred width.
 	 */
 	private static final int LARGE_DEFAULT_COL_WIDTH = 500;
 
@@ -461,38 +459,39 @@ public class TableColumnModelState implements SortListener {
 	}
 
 	/**
-	 * This method will return a string key that uniquely describes a table model and its
-	 * *default* columns (those initially added by the model) so that settings for column state
-	 * can be persisted and retrieved.
+	 * This method will return a string key that uniquely describes a table model and its *default*
+	 * columns (those initially added by the model) so that settings for column state can be
+	 * persisted and retrieved.
 	 */
 	private String getPreferenceKey() {
 		String preferenceKey = table.getPreferenceKey();
 		if (preferenceKey != null) {
 			return preferenceKey;
 		}
-		TableModel tableModel = table.getModel();
 
-		int columnCount = getDefaultColumnCount();
-		StringBuffer buffer = new StringBuffer();
+		TableModel model = table.getModel();
+		int n = model.getColumnCount();
+		StringBuilder buffer = new StringBuilder();
 		buffer.append(getTableModelName());
 		buffer.append(":");
-		for (int i = 0; i < columnCount; i++) {
-			String columnName = tableModel.getColumnName(i);
-			buffer.append(columnName).append(":");
+		for (int i = 0; i < n; i++) {
+			if (isDefaultColumn(i)) {
+				String columnName = model.getColumnName(i);
+				buffer.append(columnName).append(":");
+			}
 		}
 		return buffer.toString();
 	}
 
-	private int getDefaultColumnCount() {
-
+	private boolean isDefaultColumn(int col) {
 		TableModel tableModel = table.getUnwrappedTableModel();
 		if (tableModel instanceof VariableColumnTableModel) {
 			VariableColumnTableModel variableTableModel = (VariableColumnTableModel) tableModel;
 			// VariableColumnTableModels have default columns and 'found' columns.  We only want to
 			// create a key based upon the default columns
-			return variableTableModel.getDefaultColumnCount();
+			return variableTableModel.isDefaultColumn(col);
 		}
-		return tableModel.getColumnCount();
+		return true;
 	}
 
 	private void setDefaultColumnsVisible() {
@@ -546,11 +545,10 @@ public class TableColumnModelState implements SortListener {
 		//
 
 		TableModel model = table.getUnwrappedTableModel();
-		if (!(model instanceof AbstractGTableModel<?>)) {
+		if (!(model instanceof AbstractGTableModel<?> gModel)) {
 			return;
 		}
 
-		AbstractGTableModel<?> gModel = (AbstractGTableModel<?>) model;
 		List<TableColumn> columnList = columnModel.getAllColumns();
 		for (TableColumn col : columnList) {
 			int defaultPreferred = col.getPreferredWidth();
@@ -561,13 +559,23 @@ public class TableColumnModelState implements SortListener {
 				continue;
 			}
 
-			int preferred = gModel.getPreferredColumnWidth(col.getModelIndex());
+			int modelIndex = col.getModelIndex();
+			int preferred = gModel.getPreferredColumnWidth(modelIndex);
 			if (preferred < 15) {
 				preferred = LARGE_DEFAULT_COL_WIDTH;
 			}
 			int size = preferred;
 			col.setWidth(size);
 			col.setPreferredWidth(size);
+
+			int max = gModel.getMaxColumnWidth(modelIndex);
+			if (max != AbstractGTableModel.WIDTH_UNDEFINED) {
+				col.setMaxWidth(max);
+			}
+			int min = gModel.getMinColumnWidth(modelIndex);
+			if (min != AbstractGTableModel.WIDTH_UNDEFINED) {
+				col.setMinWidth(min);
+			}
 		}
 	}
 

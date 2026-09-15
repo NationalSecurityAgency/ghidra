@@ -17,15 +17,18 @@ package ghidra.app.plugin.core.decompile;
 
 import static org.junit.Assert.*;
 
-import java.util.function.BooleanSupplier;
-import java.util.function.Supplier;
+import java.util.List;
+import java.util.function.*;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
+import docking.widgets.fieldpanel.field.Field;
 import ghidra.app.cmd.function.CreateFunctionCmd;
+import ghidra.app.decompiler.component.ClangTextField;
+import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.gotoquery.GoToHelper;
@@ -34,10 +37,11 @@ import ghidra.app.plugin.core.navigation.NextPrevAddressPlugin;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.navigation.GoToServiceImpl;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Library;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
-import ghidra.program.util.OperandFieldLocation;
-import ghidra.program.util.ProgramLocation;
+import ghidra.program.util.*;
 import ghidra.test.ClassicSampleX86ProgramBuilder;
 
 public class DecompilerNavigationTest extends AbstractDecompilerTest {
@@ -77,7 +81,7 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 
 	private Program buildProgram() throws Exception {
 		ClassicSampleX86ProgramBuilder builder =
-			new ClassicSampleX86ProgramBuilder("notepad", false, this);
+			new ClassicSampleX86ProgramBuilder("sample", false, this);
 
 		// need a default label at 01002cf0, so make up a reference
 		builder.createMemoryReference("01002ce5", "01002cf0", RefType.FALL_THROUGH,
@@ -136,14 +140,28 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 
 		decompile("10059a3"); // function that calls 'ghidra' 
 
-		int line = 35;
 		int character = 1;
-		assertToken("ghidra", line, character);
+		int line = getLineForFunctionCall("ghidra");
 		setDecompilerLocation(line, character);
 		doubleClick();
 
 		assertExternalNavigationPerformed();
 		assertNotEquals(thunkAddress, codeBrowser.getCurrentAddress());
+	}
+
+	private int getLineForFunctionCall(String functionName) {
+
+		DecompilerPanel panel = provider.getDecompilerPanel();
+		List<Field> fields = panel.getFields();
+		for (Field field : fields) {
+			String text = field.getText();
+			if (text.trim().startsWith(functionName)) {
+				return ((ClangTextField) field).getLineNumber();
+			}
+		}
+
+		fail("Could not find function call to " + functionName);
+		return -1;
 	}
 
 	@Test
@@ -171,9 +189,8 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 
 		decompile("10059a3"); // function that calls 'ghidra' 
 
-		int line = 35;
+		int line = getLineForFunctionCall("ghidra");
 		int character = 1;
-		assertToken("ghidra", line, character);
 		setDecompilerLocation(line, character);
 		doubleClick();
 
@@ -228,6 +245,111 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 		//
 		previousFunction();
 		assertCurrentAddress(f1);
+	}
+
+	@Test
+	public void testDecompilerLocationEvent_VariableDeclaration() {
+
+		/*
+			undefined4 FUN_010059a3(undefined4 param_1,undefined4 param_2,int param_3)
+			
+			{
+			  int iVar1;
+			  int iVar2;
+			  int *piVar3;
+			  undefined4 uVar4;
+			  int iVar5;
+			  bool bVar6;
+			  int local_14;
+			  int local_10;
+			  undefined1 local_c [4];
+			  undefined4 local_8;
+		 */
+
+		decompile("010059a3"); // FUN_010059a3
+
+		// 16: undefined4 local_8;
+		int line = 16;
+		int character = 13;
+		assertToken("local_8", line, character);
+		setDecompilerLocation(line, character);
+
+		assertLocationType(loc -> loc instanceof VariableLocFieldLocation);
+	}
+
+	@Test
+	public void testDecompilerLocationEvent_FunctionSignature_Parameter() {
+
+		/*
+			undefined4 FUN_010059a3(undefined4 param_1,undefined4 param_2,int param_3)
+			
+			{
+			  int iVar1;
+			  int iVar2;
+			  int *piVar3;
+			  undefined4 uVar4;
+			  int iVar5;
+			  bool bVar6;
+			  int local_14;
+			  int local_10;
+			  undefined1 local_c [4];
+			  undefined4 local_8;
+		 */
+
+		decompile("010059a3"); // FUN_010059a3
+
+		// 4: undefined4 FUN_010059a3(undefined4 param_1
+		int line = 4;
+		int character = 36;
+		assertToken("param_1", line, character);
+		setDecompilerLocation(line, character);
+
+		assertLocationType(loc -> loc instanceof VariableLocFieldLocation);
+	}
+
+	@Test
+	public void testDecompilerLocationEvent_FunctionSignature_FunctionName() {
+
+		/*
+			undefined4 FUN_010059a3(undefined4 param_1,undefined4 param_2,int param_3)
+			
+			{
+			  int iVar1;
+			  int iVar2;
+			  int *piVar3;
+			  undefined4 uVar4;
+			  int iVar5;
+			  bool bVar6;
+			  int local_14;
+			  int local_10;
+			  undefined1 local_c [4];
+			  undefined4 local_8;
+		 */
+
+		decompile("010059a3"); // FUN_010059a3
+
+		// 4: undefined4 FUN_010059a3(undefined4 param_1
+		int line = 4;
+		int character = 12;
+		assertToken("FUN_010059a3", line, character);
+		setDecompilerLocation(line, character);
+
+		assertLocationType(loc -> loc instanceof FunctionNameFieldLocation);
+	}
+
+	private void assertLocationType(Predicate<ProgramLocation> predicate) {
+		waitForSwing();
+
+		BooleanSupplier success = () -> {
+			ProgramLocation loc = codeBrowser.getCurrentLocation();
+			return predicate.test(loc);
+		};
+
+		Supplier<String> failureMessage =
+			() -> "Listing is not at the expected field location.  Current location: " +
+				codeBrowser.getCurrentLocation();
+
+		waitForCondition(success, failureMessage);
 	}
 
 	@Override

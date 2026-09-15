@@ -33,7 +33,19 @@ sourceSets {
 }
 
 configurations {
-   ghidraClassImplementation.extendsFrom implementation
+	ghidraClassImplementation.extendsFrom implementation
+	ghidraClassArtifacts {
+		canBeConsumed = true
+	}
+}
+
+task ghidraClassJar(type:Jar) {
+	from sourceSets.ghidraClass.output
+	archiveFileName = 'GhidraDocs-Examples.jar'
+}
+
+artifacts {
+	ghidraClassArtifacts(ghidraClassJar)
 }
 
 dependencies {
@@ -52,8 +64,8 @@ rootProject.assembleDistribution {
 }
 
 rootProject.assembleMarkdownToHtml {
-	from ("${this.projectDir}/InstallationGuide.md") {
-		into "docs"
+	from ("${this.projectDir}/GettingStarted.md") {
+		into "."
 	}
 	from ("${this.projectDir}/GhidraClass/BSim") {
 		include "*.md"

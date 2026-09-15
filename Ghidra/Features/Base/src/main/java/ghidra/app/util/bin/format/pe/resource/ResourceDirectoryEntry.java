@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -161,8 +161,7 @@ public class ResourceDirectoryEntry implements StructConverter {
 	}
 
 	/**
-	 * Returns true if the parent resource directory is named,
-	 * false indicates an ID.
+	 * {@return true if the parent resource directory is named; false indicates an ID}
 	 */
 	public boolean isNameEntry() {
 		return isNameEntry;
@@ -254,8 +253,14 @@ public class ResourceDirectoryEntry implements StructConverter {
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		StructureDataType nameStruct = new StructureDataType(NAME + "_" + "NameStruct", 0);
-		nameStruct.add(DWORD, "NameOffset", null);
-		nameStruct.add(DWORD, "NameIsString", null);
+		nameStruct.setPackingEnabled(true);
+		try {
+			nameStruct.addBitField(DWORD, 31, "NameOffset", null);
+			nameStruct.addBitField(DWORD, 1, "NameIsString", null);
+		}
+		catch (InvalidDataTypeException e) {
+			throw new IOException(e);
+		}
 		nameStruct.setCategoryPath(new CategoryPath("/PE"));
 
 		UnionDataType union1 = new UnionDataType(NAME + "_" + "NameUnion");
@@ -265,19 +270,25 @@ public class ResourceDirectoryEntry implements StructConverter {
 		union1.setCategoryPath(new CategoryPath("/PE"));
 
 		StructureDataType offsetStruct = new StructureDataType(NAME + "_" + "DirectoryStruct", 0);
-		offsetStruct.add(DWORD, "OffsetToDirectory", null);
-		offsetStruct.add(DWORD, "DataIsDirectory", null);
+		offsetStruct.setPackingEnabled(true);
+		try {
+			offsetStruct.addBitField(DWORD, 31, "OffsetToDirectory", null);
+			offsetStruct.addBitField(DWORD, 1, "DataIsDirectory", null);
+		}
+		catch (InvalidDataTypeException e) {
+			throw new IOException(e);
+		}
 
 		UnionDataType union2 = new UnionDataType(NAME + "_" + "DirectoryUnion");
 		union2.add(DWORD, "OffsetToData", null);
 		union2.add(offsetStruct, offsetStruct.getName(), null);
 
-		UnionDataType union3 = new UnionDataType(NAME);
-		union3.add(union1, "NameUnion", null);
-		union3.add(union2, "DirectoryUnion", null);
+		StructureDataType struct = new StructureDataType(NAME, 0);
+		struct.add(union1, "NameUnion", null);
+		struct.add(union2, "DirectoryUnion", null);
 
-		union3.setCategoryPath(new CategoryPath("/PE"));
-		return union3;
+		struct.setCategoryPath(new CategoryPath("/PE"));
+		return struct;
 	}
 
 	public boolean isValid() {

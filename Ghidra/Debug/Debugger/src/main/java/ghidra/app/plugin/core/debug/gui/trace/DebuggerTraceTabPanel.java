@@ -35,12 +35,13 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginEventListener;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.util.Swing;
 import utilities.util.SuppressableCallback;
 import utilities.util.SuppressableCallback.Suppression;
 
 public class DebuggerTraceTabPanel extends GTabPanel<Trace>
-		implements PluginEventListener, DomainObjectListener {
+		implements PluginEventListener, DomainObjectListener, DomainFolderChangeListener {
 
 	private class TargetsChangeListener implements TargetPublicationListener {
 		@Override
@@ -78,6 +79,7 @@ public class DebuggerTraceTabPanel extends GTabPanel<Trace>
 		tool.addEventListener(TraceOpenedPluginEvent.class, this);
 		tool.addEventListener(TraceActivatedPluginEvent.class, this);
 		tool.addEventListener(TraceClosedPluginEvent.class, this);
+		tool.getProject().getProjectData().addDomainFolderChangeListener(this);
 
 		setNameFunction(this::getNameForTrace);
 		setIconFunction(this::getIconForTrace);
@@ -101,29 +103,33 @@ public class DebuggerTraceTabPanel extends GTabPanel<Trace>
 				.buildAndInstall(tool);
 		actionCloseAllTraces = CloseAllTracesAction.builderPopup(plugin)
 				.withContext(DebuggerTraceFileActionContext.class)
-				.popupWhen(c -> !traceManager.getOpenTraces().isEmpty())
+				.popupWhen(c -> traceManager != null && !traceManager.getOpenTraces().isEmpty())
 				.onAction(c -> traceManager.closeAllTraces())
 				.buildAndInstall(tool);
 		actionCloseOtherTraces = CloseOtherTracesAction.builderPopup(plugin)
 				.withContext(DebuggerTraceFileActionContext.class)
-				.popupWhen(c -> traceManager.getOpenTraces().size() > 1 && c.getTrace() != null)
+				.popupWhen(c -> traceManager != null && traceManager.getOpenTraces().size() > 1 &&
+					c.getTrace() != null)
 				.onAction(c -> traceManager.closeOtherTraces(c.getTrace()))
 				.buildAndInstall(tool);
 		actionCloseDeadTraces = CloseDeadTracesAction.builderPopup(plugin)
 				.withContext(DebuggerTraceFileActionContext.class)
-				.popupWhen(c -> !traceManager.getOpenTraces().isEmpty() && targetService != null)
+				.popupWhen(c -> traceManager != null && !traceManager.getOpenTraces().isEmpty() &&
+					targetService != null)
 				.onAction(c -> traceManager.closeDeadTraces())
 				.buildAndInstall(tool);
 	}
 
 	private String getNameForTrace(Trace trace) {
 		String name = DomainObjectDisplayUtils.getTabText(trace);
-		DebuggerCoordinates current = traceManager.getCurrentFor(trace);
+		DebuggerCoordinates current =
+			traceManager == null ? DebuggerCoordinates.NOWHERE : traceManager.getCurrentFor(trace);
 		if (current == DebuggerCoordinates.NOWHERE) {
-			// TODO: Could use view's snap and time table's schedule
+			// NOTE: Could use view's snap and time table's schedule, but not worth it.
 			return name + " (?)";
 		}
-		String schedule = current.getTime().toString();
+		TimeRadix radix = trace.getTimeManager().getTimeRadix();
+		String schedule = current.getTime().toString(radix);
 		if (schedule.length() > 15) {
 			schedule = "..." + schedule.substring(schedule.length() - 12);
 		}
@@ -207,8 +213,30 @@ public class DebuggerTraceTabPanel extends GTabPanel<Trace>
 		}
 	}
 
+	@Override
+	public void domainFileRenamed(DomainFile file, String oldName) {
+		if (file.getOpenedDomainObject(this) instanceof Trace trace) {
+			try {
+				refreshTab(trace);
+			}
+			finally {
+				trace.release(this);
+			}
+		}
+	}
+
+	@Override
+	public void domainFileObjectOpenedForUpdate(DomainFile file, DomainObject object) {
+		if (object instanceof Trace trace) {
+			refreshTab(trace);
+		}
+	}
+
 	private void traceTabSelected(Trace newTrace) {
 		cbCoordinateActivation.invoke(() -> {
+			if (traceManager == null) {
+				return;
+			}
 			traceManager.activateTrace(newTrace);
 		});
 	}

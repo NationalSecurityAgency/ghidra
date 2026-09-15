@@ -234,7 +234,7 @@ public class ClassicSampleX86ProgramBuilder extends ProgramBuilder {
 		//
 		// Comments
 		//
-		createComment("0x0100415a", "Repeatable Comment", CodeUnit.REPEATABLE_COMMENT);
+		createComment("0x0100415a", "Repeatable Comment", CommentType.REPEATABLE);
 
 		//
 		// References

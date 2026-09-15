@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,9 +43,10 @@ public class DisconnectedSymbolTreeProvider extends SymbolTreeProvider {
 
 		createActions();
 
-		// Snapshots do not usually track events.  Turn this off now, but leave the action so 
-		// clients can turn the action on as desired.
-		goToToggleAction.setEnabled(false);
+		// Snapshots do not usually respond to incoming location events.  But, it seems to make 
+		// sense that users would like to use the snapshot to navigate the tool.
+		tool.removeLocalAction(this, navigateIncomingAction);
+		navigateIncomingAction.setSelected(false);
 
 		setHelpLocation(new HelpLocation("SymbolTreePlugin", "Disconnected_Symbol_Tree"));
 
@@ -114,7 +115,7 @@ public class DisconnectedSymbolTreeProvider extends SymbolTreeProvider {
 
 	@Override
 	protected SymbolTreeRootNode createRootNode() {
-		return new ConfigurableSymbolTreeRootNode(program);
+		return new ConfigurableSymbolTreeRootNode(program, getNodeGroupThreshold());
 	}
 
 	@Override

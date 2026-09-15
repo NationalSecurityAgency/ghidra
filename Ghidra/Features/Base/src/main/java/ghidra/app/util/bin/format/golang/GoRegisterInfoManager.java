@@ -17,14 +17,10 @@ package ghidra.app.util.bin.format.golang;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.input.SAXBuilder;
+import org.jdom2.*;
+import org.jdom2.input.SAXBuilder;
 
 import generic.jar.ResourceFile;
 import ghidra.app.util.bin.format.dwarf.DWARFUtil;
@@ -67,7 +63,7 @@ public class GoRegisterInfoManager {
 	/**
 	 * Returns a {@link GoRegisterInfo} instance for the specified {@link Language}.
 	 * <p>
-	 * If the language didn't define golang register info, a generic/empty instance will be
+	 * If the language didn't define Go register info, a generic/empty instance will be
 	 * returned that forces all parameters to be stack allocated.
 	 * 
 	 * @param lang {@link Language}
@@ -83,7 +79,7 @@ public class GoRegisterInfoManager {
 		}
 		
 		int goSize = lang.getInstructionAlignment();
-		Msg.warn(this, "Missing Golang register info for: %s, defaulting to abi0, size=%d"
+		Msg.warn(this, "Missing Go register info for: %s, defaulting to abi0, size=%d"
 				.formatted(lang.getLanguageID(), goSize));
 		return getDefault(lang);
 	}
@@ -95,11 +91,10 @@ public class GoRegisterInfoManager {
 				return read(f, lang);
 			}
 			Msg.warn(GoRegisterInfoManager.class,
-				"Missing Golang register info file for: %s".formatted(lang.getLanguageID()));
+				"Missing Go register info file for: %s".formatted(lang.getLanguageID()));
 		}
 		catch (IOException e) {
-			Msg.warn(GoRegisterInfoManager.class, "Failed to read Golang register info file",
-				e);
+			Msg.warn(GoRegisterInfoManager.class, "Failed to read Go register info file", e);
 		}
 		return List.of();
 	}
@@ -114,8 +109,8 @@ public class GoRegisterInfoManager {
 			return readFrom(rootElem, lang);
 		}
 		catch (JDOMException | IOException e) {
-			Msg.error(GoRegisterInfo.class, "Bad Golang register info file " + f, e);
-			throw new IOException("Failed to read Golang register info file " + f, e);
+			Msg.error(GoRegisterInfo.class, "Bad Go register info file " + f, e);
+			throw new IOException("Failed to read Go register info file " + f, e);
 		}
 
 	}
@@ -143,7 +138,6 @@ public class GoRegisterInfoManager {
 		Element zeroRegElem = regInfoElem.getChild("zero_register");
 		Element duffZeroElem = regInfoElem.getChild("duffzero");
 		Element closureContextElem = regInfoElem.getChild("closurecontext");
-		Element gcWriteBarrierElem = regInfoElem.getChild("gcwritebarrier");
 		if (intRegsElem == null || floatRegsElem == null || stackElem == null ||
 			goRoutineElem == null || zeroRegElem == null || duffZeroElem == null ||
 			closureContextElem == null) {

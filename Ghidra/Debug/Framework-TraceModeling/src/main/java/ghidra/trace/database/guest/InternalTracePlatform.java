@@ -18,12 +18,11 @@ package ghidra.trace.database.guest;
 import java.util.*;
 
 import ghidra.program.model.address.*;
-import ghidra.program.model.lang.Language;
-import ghidra.program.model.lang.Register;
+import ghidra.program.model.lang.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.trace.database.guest.DBTraceGuestPlatform.DBTraceGuestLanguage;
 import ghidra.trace.model.guest.TracePlatform;
-import ghidra.trace.model.memory.TraceObjectRegister;
+import ghidra.trace.model.memory.TraceRegister;
 import ghidra.trace.model.symbol.*;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.path.*;
@@ -34,7 +33,7 @@ import ghidra.util.LockHold;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
-public interface InternalTracePlatform extends TracePlatform {
+public interface InternalTracePlatform extends TracePlatform, ProgramArchitecture {
 	String REG_MAP_BE = "__reg_map_be__";
 	String REG_MAP_LE = "__reg_map_le__";
 
@@ -50,6 +49,11 @@ public interface InternalTracePlatform extends TracePlatform {
 	int getIntKey();
 
 	DBTraceGuestLanguage getLanguageEntry();
+
+	@Override
+	default AddressFactory getAddressFactory() {
+		return TracePlatform.super.getAddressFactory();
+	}
 
 	@Override
 	default AddressRange getConventionalRegisterRange(AddressSpace space, Register register) {
@@ -99,7 +103,7 @@ public interface InternalTracePlatform extends TracePlatform {
 		TraceSymbolManager symbolManager = getTrace().getSymbolManager();
 		TraceNamespaceSymbol nsRegMap = symbolManager.namespaces().getGlobalNamed(regMap(register));
 		Collection<String> labels = symbolManager.labels()
-				.getAt(0, null, pmin, false)
+				.getAt(0, pmin, false)
 				.stream()
 				.filter(s -> s.getParentNamespace() == nsRegMap)
 				.map(TraceSymbol::getName)
@@ -113,7 +117,7 @@ public interface InternalTracePlatform extends TracePlatform {
 	@Override
 	default PathFilter getConventionalRegisterPath(TraceObjectSchema schema, KeyPath path,
 			Collection<String> names) {
-		PathFilter filter = schema.searchFor(TraceObjectRegister.class, path, true);
+		PathFilter filter = schema.searchFor(TraceRegister.class, path, true);
 		if (filter.isNone()) {
 			return PathFilter.NONE;
 		}
@@ -162,12 +166,12 @@ public interface InternalTracePlatform extends TracePlatform {
 				nsRegMap = namespaces.add(regMap, globals, SourceType.USER_DEFINED);
 			}
 			TraceLabelSymbol exists = symbolManager.labels()
-					.getChildWithNameAt(objectName, getIntKey(), null, hostAddr, nsRegMap);
+					.getChildWithNameAt(objectName, getIntKey(), hostAddr, nsRegMap);
 			if (exists != null) {
 				return exists;
 			}
 			return symbolManager.labels()
-					.create(0, null, hostAddr, objectName, nsRegMap, SourceType.USER_DEFINED);
+					.create(0, hostAddr, objectName, nsRegMap, SourceType.USER_DEFINED);
 		}
 		catch (DuplicateNameException | InvalidInputException e) {
 			// I checked for the namespace first and with a write lock

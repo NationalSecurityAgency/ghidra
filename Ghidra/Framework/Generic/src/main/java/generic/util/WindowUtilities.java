@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
 
 import ghidra.util.Swing;
@@ -200,7 +201,7 @@ public class WindowUtilities {
 
 	private static Point center(Rectangle area, Dimension d) {
 
-		// restrict to bounds size
+		// restrict to the smallest size
 		Rectangle b = area;
 		int userWidth = Math.min(b.width, d.width);
 		int userHeigh = Math.min(b.height, d.height);
@@ -225,6 +226,14 @@ public class WindowUtilities {
 	 * the size of the given <code>child</code>.
 	 */
 	public static Point centerOnComponent(Component parent, Component child) {
+
+		// Clients inside of scroll panes can be much larger than what is visible.  We only wish to
+		// use the visible size when calculating the center position.
+		Container grandParent = parent.getParent();
+		if (grandParent instanceof JViewport) {
+			parent = grandParent.getParent();
+		}
+
 		Dimension parentSize = parent.getSize();
 		Dimension childSize = child.getSize();
 		int x = (parentSize.width >> 1) - (childSize.width >> 1);
@@ -288,18 +297,30 @@ public class WindowUtilities {
 	 */
 	public static void ensureOnScreen(Component c, Rectangle bounds) {
 
-		Shape visibleScreenBounds = getVisibleScreenBounds();
-		if (visibleScreenBounds.intersects(bounds)) {
+		Shape visibleScreenShape = getVisibleScreenBounds();
+		if (visibleScreenShape.contains(bounds)) {
+			return; // the given shape is completely on the screen 
+		}
+
+		if (!visibleScreenShape.intersects(bounds)) {
+			// The bounds are completely off-screen
+			Rectangle screen = getScreenBounds(c);
+			if (screen == null) {
+				throw new IllegalArgumentException("Component is not on screen: " + c);
+			}
+
+			Point newPoint = center(screen, bounds.getSize());
+			bounds.setLocation(newPoint);
 			return; // some portion of the window is visible
 		}
 
-		Rectangle screen = getScreenBounds(c);
-		if (screen == null) {
-			throw new IllegalArgumentException("Component is not on screen: " + c);
+		// The given bounds are partially on-screen.  We only wish to move the bounds enough to get
+		// the window bar on screen.  This allows users to grab and move the window.
+		Rectangle vsb = visibleScreenShape.getBounds();
+		if (bounds.y < vsb.y) {
+			// above the top
+			bounds.y = vsb.y + 30; // move enough to clear any task bar
 		}
-
-		Point newPoint = center(screen, bounds.getSize());
-		bounds.setLocation(newPoint);
 	}
 
 	/**
@@ -316,8 +337,8 @@ public class WindowUtilities {
 	 */
 	public static void ensureEntirelyOnScreen(Component c, Rectangle bounds) {
 
-		Shape visibleScreenBounds = getVisibleScreenBounds();
-		if (visibleScreenBounds.contains(bounds)) {
+		Shape visibleScreenShape = getVisibleScreenBounds();
+		if (visibleScreenShape.contains(bounds)) {
 			return; // the given shape is completely on the screen 
 		}
 
@@ -326,8 +347,48 @@ public class WindowUtilities {
 			throw new IllegalArgumentException("Component is not on screen: " + c);
 		}
 
-		Point newPoint = center(screen, bounds.getSize());
-		bounds.setLocation(newPoint);
+		/*
+		 	Some things we wish to avoid:
+		 		- resizing the bounds when it is close to the screen size (on some OSes, full-screen
+		 		  windows will fail the contains() test)
+		 		- moving a partially off-screen window to the center of the screen (this is jarring
+		 		  for users with multiple windows that are considered one big screen)
+		 */
+
+		//
+		// First make sure the window will fit on the screen.
+		// 'pad' is for checking to avoid full-size windows with odd OS borders.  This is an 
+		// arbitrary number that is larger than the 'move' amount below.
+		int pad = 50;
+		if (bounds.width > screen.width) {
+			bounds.width = screen.width - pad;
+		}
+		if (bounds.height > screen.height) {
+			bounds.height = screen.height - pad;
+		}
+
+		// Next, move the window as little as possible to get fully on-screen.
+		// 'move' is the  amount to move the window in the x and y direction when the window is 
+		// off-screen. This is an arbitrary number that is smaller than 'pad' above and is based on 
+		// OS features, like the task bar.
+		int move = 30;
+		if (bounds.y < screen.y) {
+			// above the top
+			bounds.y = screen.y + move;
+		}
+		else if (bounds.y + bounds.height > screen.y + screen.height) {
+			// below the bottom 
+			bounds.y = (screen.y + screen.height) - (bounds.height + move);
+		}
+
+		if (bounds.x < screen.x) {
+			// to the left
+			bounds.x = screen.x + move;
+		}
+		else if (bounds.x + bounds.width > screen.x + screen.width) {
+			// to the right
+			bounds.x = (screen.x + screen.width) - (bounds.width + move);
+		}
 	}
 
 	private static ScreenBounds doGetScreenBounds(Point p) {

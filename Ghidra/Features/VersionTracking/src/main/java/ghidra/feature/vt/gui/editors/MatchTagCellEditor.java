@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,10 +14,6 @@
  * limitations under the License.
  */
 package ghidra.feature.vt.gui.editors;
-
-import ghidra.feature.vt.api.main.*;
-import ghidra.feature.vt.gui.plugin.VTController;
-import ghidra.util.SystemUtilities;
 
 import java.awt.Component;
 import java.awt.event.*;
@@ -29,6 +24,9 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableModel;
 
 import docking.widgets.table.RowObjectTableModel;
+import ghidra.feature.vt.api.main.*;
+import ghidra.feature.vt.gui.plugin.VTController;
+import ghidra.util.SystemUtilities;
 
 public class MatchTagCellEditor extends AbstractCellEditor implements TableCellEditor {
 
@@ -55,12 +53,6 @@ public class MatchTagCellEditor extends AbstractCellEditor implements TableCellE
 		VTSession session = controller.getSession();
 		tag = match.getTag();
 		matchTagChoices = new MatchTagComboBox(session, matches, theTable, tag);
-		matchTagChoices.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				stopCellEditing();
-			}
-		});
 
 		matchTagChoices.addItemListener(new ItemListener() {
 			@Override

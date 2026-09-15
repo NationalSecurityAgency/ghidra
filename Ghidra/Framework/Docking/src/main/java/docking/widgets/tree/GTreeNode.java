@@ -448,7 +448,14 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 		int count = 1;
 		for (GTreeNode child : children) {
 			monitor.checkCancelled();
-			count += child.loadAll(monitor);
+			if (child.isAutoExpandPermitted()) {
+				// count the child and its children
+				count += child.loadAll(monitor);
+			}
+			else {
+				// count just the child
+				++count;
+			}
 			monitor.incrementProgress(1);
 		}
 		return count;

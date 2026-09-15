@@ -16,7 +16,6 @@
 package ghidra.app.plugin.core.debug.gui.breakpoint;
 
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import db.Transaction;
 import ghidra.debug.api.breakpoint.LogicalBreakpoint;
@@ -24,13 +23,15 @@ import ghidra.debug.api.breakpoint.LogicalBreakpoint.State;
 import ghidra.pcode.exec.SleighUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramLocation;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
+import ghidra.trace.model.breakpoint.TraceBreakpointSpec;
 
 public class BreakpointLocationRow {
 	private final DebuggerBreakpointsProvider provider;
-	private final TraceBreakpoint loc;
+	private final TraceBreakpointLocation loc;
 
-	public BreakpointLocationRow(DebuggerBreakpointsProvider provider, TraceBreakpoint loc) {
+	public BreakpointLocationRow(DebuggerBreakpointsProvider provider,
+			TraceBreakpointLocation loc) {
 		this.provider = provider;
 		this.loc = loc;
 	}
@@ -93,15 +94,6 @@ public class BreakpointLocationRow {
 		return loc.getTrace().getName();
 	}
 
-	public String getThreads() {
-		long snap = getSnap();
-		return loc.getThreads(snap)
-				.stream()
-				.map(t -> t.getName(snap))
-				.collect(Collectors.toSet())
-				.toString();
-	}
-
 	public String getComment() {
 		return loc.getComment(getSnap());
 	}
@@ -112,11 +104,20 @@ public class BreakpointLocationRow {
 		}
 	}
 
+	public String getExpression() {
+		TraceBreakpointSpec spec = loc.getSpecification();
+		if (spec == null) {
+			// Shouldn't happen, but may in the interim
+			return "";
+		}
+		return spec.getExpression(getSnap());
+	}
+
 	public boolean hasSleigh() {
 		return !SleighUtils.UNCONDITIONAL_BREAK.equals(loc.getEmuSleigh(getSnap()));
 	}
 
-	public TraceBreakpoint getTraceBreakpoint() {
+	public TraceBreakpointLocation getTraceBreakpoint() {
 		return loc;
 	}
 }

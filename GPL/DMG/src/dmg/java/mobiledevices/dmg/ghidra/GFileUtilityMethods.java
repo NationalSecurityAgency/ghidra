@@ -18,12 +18,13 @@ public final class GFileUtilityMethods {
 	public final static File writeTemporaryFile( InputStream inputStream, int maxBytesToWrite ) throws IOException {
 		File tempOutputFile = File.createTempFile( GHIDRA_FILE_SYSTEM_PREFIX, GHIDRA_FILE_SYSTEM_SUFFIX );
 		tempOutputFile.deleteOnExit();
-		OutputStream outputStream = new FileOutputStream( tempOutputFile );
-		try {
+
+		try (OutputStream outputStream = new FileOutputStream(tempOutputFile)) {
 			int nWritten = 0;
-			byte [] buffer = new byte[ 8192 ];
+			byte[] buffer = new byte[8192];
 			while ( true ) {
-				int nRead = inputStream.read( buffer );
+				int limit = Math.min(maxBytesToWrite - nWritten, buffer.length);
+				int nRead = inputStream.read(buffer, 0, limit);
 				if ( nRead == -1 ) {
 					break;
 				}
@@ -34,13 +35,10 @@ public final class GFileUtilityMethods {
 				}
 			}
 		}
-		finally {
-			outputStream.close();
-		}
 		return tempOutputFile;
 	}
 
-	public final static File writeTemporaryFile( byte [] bytes, String prefix ) throws IOException {
+	public final static File writeTemporaryFile(byte[] bytes, String prefix) throws IOException {
 		if ( prefix == null ) {
 			prefix = GHIDRA_FILE_SYSTEM_PREFIX;
 		}
@@ -51,13 +49,11 @@ public final class GFileUtilityMethods {
 		}
 		File tempFile = File.createTempFile( prefix , GHIDRA_FILE_SYSTEM_SUFFIX );
 		tempFile.deleteOnExit();
-		OutputStream tempFileOut = new FileOutputStream( tempFile );
-		try {
+
+		try (OutputStream tempFileOut = new FileOutputStream(tempFile)) {
 			tempFileOut.write( bytes );
 		}
-		finally {
-			tempFileOut.close();
-		}
+
 		return tempFile;
 	}
 }

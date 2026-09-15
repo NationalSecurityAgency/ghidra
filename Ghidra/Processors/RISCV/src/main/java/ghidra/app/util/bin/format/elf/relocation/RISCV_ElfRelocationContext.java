@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,7 +52,7 @@ class RISCV_ElfRelocationContext extends ElfRelocationContext<RISCV_ElfRelocatio
 	}
 
 	/**
-	 * Find the HI20 relocation whose offset matches the value of of the specified symbol.
+	 * Find the HI20 relocation whose offset matches the value of the specified symbol.
 	 * @param hi20Symbol ELF symbol which corresponds to HI20 relocation
 	 * @return matching relocation or null if not found
 	 */

@@ -16,6 +16,7 @@
 package ghidra.pcode.emu.jit;
 
 import java.lang.invoke.MethodHandles.Lookup;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -23,10 +24,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.objectweb.asm.MethodTooLargeException;
 
-import ghidra.pcode.emu.PcodeEmulator;
-import ghidra.pcode.emu.PcodeThread;
+import ghidra.pcode.emu.*;
 import ghidra.pcode.emu.jit.JitPassage.AddrCtx;
 import ghidra.pcode.emu.jit.analysis.JitDataFlowModel;
 import ghidra.pcode.emu.jit.analysis.JitDataFlowUseropLibrary;
@@ -45,14 +44,12 @@ import ghidra.util.Msg;
 /**
  * An extension of {@link PcodeEmulator} that applies Just-in-Time (JIT) translation to accelerate
  * execution.
- * 
  * <p>
  * This is meant as a near drop-in replacement for the class it extends. Aside from some additional
- * configuration, and some annotations you might add to a {@link PcodeUseropLibrary}, if applicable,
- * you can simply replace {@code new PcodeEmulator()} with {@code new JitPcodeEmulator(...)}.
+ * configuration, and some annotations you might add to a {@link PcodeUseropLibrary}, you can simply
+ * replace "{@code new PcodeEmulator()}" with "{@code new JitPcodeEmulator(...)}."
  * 
  * <h1>A JIT-Accelerated P-code Emulator for the Java Virtual Machine</h1>
- * 
  * <p>
  * There are two major tasks to achieving JIT-accelerated p-code emulation: 1) The translation of
  * p-code to a suitable target's machine language, and 2) The selection, decoding, and cache
@@ -61,7 +58,6 @@ import ghidra.util.Msg;
  * different than targeting native machine language.
  * 
  * <h2>Terminology</h2>
- * 
  * <p>
  * Because of the potential for confusion of terms with similar meanings from similar disciplines,
  * and to distinguish our particular use of the terms, we establish some definitions up front:
@@ -118,7 +114,7 @@ import ghidra.util.Msg;
  * <li><b>Translation target</b>: The target of the JIT translation, usually the <b>emulation
  * host</b>. For our purposes, this is always JVM bytecode.</li>
  * 
- * <li><b>Varnode</b>: The triple (space,offset,size) giving the address and size of a variable in
+ * <li><b>Varnode</b>: The triple (space, offset, size) giving the address and size of a variable in
  * the emulation target's machine state. This is distinct from a variable node (see {@link JitVal})
  * in the {@link JitDataFlowModel use-def} graph. The name "{@link Varnode}" is an unfortunate
  * inheritance from the Ghidra API, where they <em>can</em> represent genuine variable nodes in the
@@ -156,14 +152,12 @@ public class JitPcodeEmulator extends PcodeEmulator {
 
 	/**
 	 * This emulator's cache of passage translations, incl. all entry points.
-	 * 
 	 * <p>
 	 * TODO: Invalidation of entries. One possible complication is any thread may still have an
 	 * instance of one, and could possibly be executing it. Perhaps this could be a weak hash map,
 	 * and they'll stay alive by virtue of the instances pointing to their classes? Still, we might
 	 * like to impose a total size max, which would have to be implemented among the threads. Other
 	 * reasons we may need to invalidate include:
-	 * 
 	 * <ol>
 	 * <li>Self-modifying code (we'll probably want to provide a configuration toggle given how
 	 * expensive that may become).</li>
@@ -179,25 +173,44 @@ public class JitPcodeEmulator extends PcodeEmulator {
 	/**
 	 * Create a JIT-accelerated p-code emulator
 	 * 
-	 * @param language the emulation target langauge
+	 * @param language the emulation target language
+	 * @param cb callbacks to receive emulation events. WARNING. Callbacks are not completely
+	 *            implemented, and so are not recommended, yet. For that reason, this constructor is
+	 *            made private until the caveats are completely documented and/or some alternatives
+	 *            made available.
+	 * @param config configuration options for this emulator
+	 * @param lookup a lookup in case the emulator (or its target) needs access to non-public
+	 *            elements, e.g., to access a nested {@link PcodeUseropLibrary}.
+	 */
+	private JitPcodeEmulator(Language language, PcodeEmulationCallbacks<byte[]> cb,
+			JitConfiguration config, Lookup lookup) {
+		super(language, cb);
+		this.compiler = new JitCompiler(config);
+		this.lookup = lookup;
+	}
+
+	/**
+	 * Create a JIT-accelerated p-code emulator
+	 * 
+	 * @param language the emulation target language
 	 * @param config configuration options for this emulator
 	 * @param lookup a lookup in case the emulator (or its target) needs access to non-public
 	 *            elements, e.g., to access a nested {@link PcodeUseropLibrary}.
 	 */
 	public JitPcodeEmulator(Language language, JitConfiguration config, Lookup lookup) {
-		super(language);
-		this.compiler = new JitCompiler(config);
-		this.lookup = lookup;
+		this(language, PcodeEmulationCallbacks.none(), config, lookup);
 	}
 
 	@Override
 	protected PcodeExecutorState<byte[]> createSharedState() {
-		return new JitDefaultBytesPcodeExecutorState(language);
+		PcodeStateCallbacks scb = cb.wrapFor(null);
+		return new JitDefaultBytesPcodeExecutorState(language, scb);
 	}
 
 	@Override
 	protected PcodeExecutorState<byte[]> createLocalState(PcodeThread<byte[]> thread) {
-		return new JitDefaultBytesPcodeExecutorState(language);
+		PcodeStateCallbacks scb = cb.wrapFor(thread);
+		return new JitDefaultBytesPcodeExecutorState(language, scb);
 	}
 
 	@Override
@@ -217,13 +230,11 @@ public class JitPcodeEmulator extends PcodeEmulator {
 
 	/**
 	 * {@inheritDoc}
-	 * 
 	 * <p>
 	 * Userops can be optimized by the JIT translator under certain circumstances. To read more, see
 	 * {@link JitDataFlowUseropLibrary}. DO NOT extend that library. The internals use it to wrap
 	 * the library you provide here, but its documentation describes when and how the JIT translator
 	 * optimizes invocations to your userops.
-	 * 
 	 * <p>
 	 * <b>WARNING</b>: Userops that accept floating point types via direct invocation should be
 	 * careful that the sizes match exactly. That is, if you pass a {@code float} argument to a
@@ -241,7 +252,6 @@ public class JitPcodeEmulator extends PcodeEmulator {
 
 	/**
 	 * Check if the emulator already has translated a given entry point.
-	 * 
 	 * <p>
 	 * This is used by the decoder to detect if it should end a stride before reaching its natural
 	 * end (i.e., a non-fall-through instruction.) This was a design decision to reduce
@@ -268,7 +278,6 @@ public class JitPcodeEmulator extends PcodeEmulator {
 
 	/**
 	 * Translate a new passage starting at the given seed.
-	 * 
 	 * <p>
 	 * Note the compiler must provide an entry to the resulting passage at the requested seed. It
 	 * and any additional entry points are placed into the code cache. Each thread executing the
@@ -287,7 +296,10 @@ public class JitPcodeEmulator extends PcodeEmulator {
 			try {
 				return compiler.compilePassage(lookup, decoded);
 			}
-			catch (MethodTooLargeException e) {
+			catch (IllegalArgumentException e) {
+				if (!isMethodTooLargeException(e)) {
+					throw e;
+				}
 				Msg.warn(this, "Method too large for " + pcCtx + " with maxOps=" + maxOps +
 					". Retrying with half.");
 				maxOps >>= 1;
@@ -309,7 +321,6 @@ public class JitPcodeEmulator extends PcodeEmulator {
 
 	/**
 	 * Get the entry prototype for a given address and contextreg value.
-	 * 
 	 * <p>
 	 * An <b>entry prototype</b> is a class representing a translated passage and an index
 	 * identifying the point at which to enter the passage. The compiler numbers each entry point it
@@ -317,7 +328,6 @@ public class JitPcodeEmulator extends PcodeEmulator {
 	 * point indices are entered into the code cache for each translated passage. If no entry point
 	 * exists for the requested address and contextreg value, the emulator will decode and translate
 	 * a new passage at the requested seed.
-	 *
 	 * <p>
 	 * It's a bit odd to take the thread's decoder for a machine-level thing; however, all thread
 	 * decoders ought to have the same behavior. The particular thread's decoder will have better
@@ -398,7 +408,6 @@ public class JitPcodeEmulator extends PcodeEmulator {
 
 	/**
 	 * {@inheritDoc}
-	 * 
 	 * <p>
 	 * <b>TODO</b>: The JIT-accelerated emulator does not currently implement access breakpoints.
 	 * Furthermore, because JIT generated code is granted direct access to the emulator's state
@@ -409,5 +418,23 @@ public class JitPcodeEmulator extends PcodeEmulator {
 	@Override
 	public void addAccessBreakpoint(AddressRange range, AccessKind kind) {
 		throw new UnsupportedOperationException();
+	}
+
+	/**
+	 * Check if the given exception is a "method too large" error from the ClassFile API.
+	 *
+	 * @param e the exception to check
+	 * @return true if the exception indicates a method-too-large condition
+	 */
+	private static boolean isMethodTooLargeException(IllegalArgumentException e) {
+		String msg = e.getMessage();
+		if (msg == null) {
+			return false;
+		}
+		// FRAGILE: ClassFile API throws IAE with "too large" for oversized methods.
+		// No typed exception exists (as of JDK 25). Also check stack origin.
+		return msg.toLowerCase().contains("too large")
+			&& Arrays.stream(e.getStackTrace())
+				.anyMatch(f -> f.getClassName().startsWith("java.lang.classfile"));
 	}
 }

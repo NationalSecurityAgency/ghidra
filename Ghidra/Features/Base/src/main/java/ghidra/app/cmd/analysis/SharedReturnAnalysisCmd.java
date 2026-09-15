@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,7 @@
  */
 package ghidra.app.cmd.analysis;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import ghidra.app.cmd.disassemble.SetFlowOverrideCmd;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
@@ -24,6 +23,7 @@ import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
+import ghidra.program.model.util.AddressSetPropertyMap;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -72,6 +72,10 @@ public class SharedReturnAnalysisCmd extends BackgroundCommand<Program> {
 				processFunctionJumpReferences(program, entry, monitor);
 			}
 
+			AddressSetPropertyMap coldMap =
+				program.getAddressSetPropertyMap(Program.COLD_ENTRY_MAP_NAME);
+			Set<Address> conditionalJumpTargets = new HashSet<>();
+			Set<Address> onlyUnconditionalJumpTargets = new HashSet<>();
 			if (assumeContiguousFunctions) {
 				// assume if checkAllJumpReferences then set is much more than new function starts
 
@@ -114,6 +118,45 @@ public class SharedReturnAnalysisCmd extends BackgroundCommand<Program> {
 					}
 					if (srcAddr.getAddressSpace() != destAddr.getAddressSpace()) {
 						continue; // can't handle flows between different spaces/overlays
+					}
+
+					// skip .cold targets
+					if (coldMap != null) {
+						if (coldMap.contains(destAddr)) {
+							continue;
+						}
+					}
+
+					if (!considerConditionalBranches) {
+						if (conditionalJumpTargets.contains(destAddr)) {
+							// destAddr is a conditional jump target, skip
+							continue;
+						}
+
+						if (!onlyUnconditionalJumpTargets.contains(destAddr)) {
+							//haven't checked the types of flow refs to destAddr yet
+							ReferenceIterator refIter =
+								program.getReferenceManager().getReferencesTo(destAddr);
+							boolean conditionalRef = false;
+							while (refIter.hasNext()) {
+								Reference ref = refIter.next();
+								RefType refType = ref.getReferenceType();
+								if (!refType.isFlow()) {
+									continue;
+								}
+								if (refType.isConditional()) {
+									conditionalRef = true;
+									break;
+								}
+							}
+							if (conditionalRef) {
+								// found a conditional jump, record destAddr and skip
+								conditionalJumpTargets.add(destAddr);
+								continue;
+							}
+							// no conditional flow refs to destAddr
+							onlyUnconditionalJumpTargets.add(destAddr);
+						}
 					}
 
 					// Reset cached functions if we transition to a different space/overlay

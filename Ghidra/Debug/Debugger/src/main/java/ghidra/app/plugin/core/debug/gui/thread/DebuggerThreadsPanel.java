@@ -38,17 +38,17 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.target.iface.TraceObjectExecutionStateful;
+import ghidra.trace.model.target.iface.TraceExecutionStateful;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.target.schema.TraceObjectSchema;
-import ghidra.trace.model.thread.TraceObjectProcess;
-import ghidra.trace.model.thread.TraceObjectThread;
+import ghidra.trace.model.thread.TraceProcess;
+import ghidra.trace.model.thread.TraceThread;
 
-public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceObjectThread> {
+public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceThread> {
 
 	protected static ModelQuery successorThreads(TraceObjectSchema rootSchema, KeyPath path) {
 		TraceObjectSchema schema = rootSchema.getSuccessorSchema(path);
-		return new ModelQuery(schema.searchFor(TraceObjectThread.class, path, true));
+		return new ModelQuery(schema.searchFor(TraceThread.class, path, true));
 	}
 
 	private static class ThreadPathColumn extends TraceValueKeyColumn {
@@ -246,7 +246,7 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 	private static class ThreadStateColumn extends TraceValueObjectAttributeColumn<String> {
 		public ThreadStateColumn() {
 			// NB. The recorder converts enums to strings
-			super(TraceObjectExecutionStateful.KEY_STATE, String.class);
+			super(TraceExecutionStateful.KEY_STATE, String.class);
 		}
 
 		@Override
@@ -258,7 +258,7 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 	private static class ThreadCommentColumn
 			extends TraceValueObjectEditableAttributeColumn<String> {
 		public ThreadCommentColumn() {
-			super(TraceObjectThread.KEY_COMMENT, String.class);
+			super(TraceThread.KEY_COMMENT, String.class);
 		}
 
 		@Override
@@ -315,7 +315,7 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 	};
 
 	public DebuggerThreadsPanel(DebuggerThreadsProvider provider) {
-		super(provider.plugin, provider, TraceObjectThread.class);
+		super(provider.plugin, provider, TraceThread.class);
 		this.provider = provider;
 		setLimitToSnap(false); // TODO: Toggle for this?
 
@@ -346,18 +346,18 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 	protected ModelQuery computeQuery(TraceObject object) {
 		TraceObjectSchema rootSchema = object.getRoot().getSchema();
 		KeyPath seedPath = object.getCanonicalPath();
-		KeyPath processPath = rootSchema.searchForAncestor(TraceObjectProcess.class, seedPath);
+		KeyPath processPath = rootSchema.searchForAncestor(TraceProcess.class, seedPath);
 		if (processPath != null) {
-			ModelQuery result =  successorThreads(rootSchema, processPath);
+			ModelQuery result = successorThreads(rootSchema, processPath);
 			if (!result.isEmpty()) {
 				return result;
 			}
 		}
 		KeyPath containerPath =
-			rootSchema.searchForSuitableContainer(TraceObjectThread.class, seedPath);
+			rootSchema.searchForSuitableContainer(TraceThread.class, seedPath);
 
 		if (containerPath != null) {
-			ModelQuery result =  successorThreads(rootSchema, containerPath);
+			ModelQuery result = successorThreads(rootSchema, containerPath);
 			if (!result.isEmpty()) {
 				return result;
 			}

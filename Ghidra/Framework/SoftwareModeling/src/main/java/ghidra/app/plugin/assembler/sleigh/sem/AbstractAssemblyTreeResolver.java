@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,8 +27,6 @@ import ghidra.app.plugin.assembler.sleigh.sem.AbstractAssemblyStateGenerator.Gen
 import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolutionResults.Applicator;
 import ghidra.app.plugin.assembler.sleigh.symbol.AssemblyNonTerminal;
 import ghidra.app.plugin.assembler.sleigh.tree.*;
-import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
-import ghidra.app.plugin.assembler.sleigh.util.DbgTimer.DbgCtx;
 import ghidra.app.plugin.processors.sleigh.*;
 import ghidra.app.plugin.processors.sleigh.symbol.*;
 import ghidra.program.model.address.Address;
@@ -45,11 +43,11 @@ import ghidra.program.model.mem.MemBuffer;
  * attempts to determine possible encodings using the semantics associated with each branch of the
  * given parse tree. Details of this process are described in {@link SleighAssemblerBuilder}.
  * 
+ * @param <RP> the type for resolved assembly patterns
  * @see SleighAssemblerBuilder
  */
 public abstract class AbstractAssemblyTreeResolver<RP extends AssemblyResolvedPatterns> {
 	protected static final RecursiveDescentSolver SOLVER = RecursiveDescentSolver.getSolver();
-	protected static final DbgTimer DBG = DbgTimer.INACTIVE;
 
 	public static final String INST_START = "inst_start";
 	public static final String INST_NEXT = "inst_next";
@@ -67,7 +65,8 @@ public abstract class AbstractAssemblyTreeResolver<RP extends AssemblyResolvedPa
 	/**
 	 * Construct a resolver for the given parse tree
 	 * 
-	 * @param lang
+	 * @param factory a factory for assembly results
+	 * @param lang the language
 	 * @param at the address where the instruction will start
 	 * @param tree the parse tree
 	 * @param context the context expected at {@code instStart}
@@ -86,6 +85,9 @@ public abstract class AbstractAssemblyTreeResolver<RP extends AssemblyResolvedPa
 		this.ctxGraph = ctxGraph;
 	}
 
+	/**
+	 * {@return the factory for assembly results}
+	 */
 	public AbstractAssemblyResolutionFactory<RP, ?> getFactory() {
 		return factory;
 	}
@@ -103,15 +105,6 @@ public abstract class AbstractAssemblyTreeResolver<RP extends AssemblyResolvedPa
 		Collection<AssemblyResolvedError> errors = new ArrayList<>();
 		Stream<AssemblyGeneratedPrototype> protStream =
 			rootGen.generate(new GeneratorContext(List.of(), 0));
-
-		if (DBG == DbgTimer.ACTIVE) {
-			try (DbgCtx dc = DBG.start("Prototypes:")) {
-				protStream = protStream.map(prot -> {
-					DBG.println(prot);
-					return prot;
-				}).collect(Collectors.toList()).stream();
-			}
-		}
 
 		Stream<AssemblyResolvedPatterns> patStream =
 			protStream.map(p -> p.state).distinct().flatMap(s -> s.resolve(empty, errors));
@@ -159,33 +152,28 @@ public abstract class AbstractAssemblyTreeResolver<RP extends AssemblyResolvedPa
 		if (rootRec == null) {
 			return temp;
 		}
-		try (DbgCtx dc = DBG.start("Resolving root recursion:")) {
-			AssemblyResolutionResults result = factory.newAssemblyResolutionResults();
+		AssemblyResolutionResults result = factory.newAssemblyResolutionResults();
 
-			for (AssemblyResolution ar : temp) {
-				if (ar.isError()) {
-					result.add(ar);
-					continue;
-				}
-				@SuppressWarnings("unchecked")
-				RP rp = (RP) ar;
-				AssemblyPatternBlock dst = rp.getContext();
-				// TODO: The desired context may need to be passed in. For now, just take start.
-				AssemblyPatternBlock src = context; // NOTE: This is only correct for "instruction"
-				String table = "instruction";
-
-				DBG.println("Finding paths from " + src + " to " + ar.lineToString());
-				Collection<Deque<AssemblyConstructorSemantic>> paths =
-					ctxGraph.computeOptimalApplications(src, table, dst, table);
-				DBG.println("Found " + paths.size());
-				for (Deque<AssemblyConstructorSemantic> path : paths) {
-					DBG.println("  " + path);
-					result.absorb(applyRecursionPath(path, tree, rootRec, ar));
-				}
+		for (AssemblyResolution ar : temp) {
+			if (ar.isError()) {
+				result.add(ar);
+				continue;
 			}
+			@SuppressWarnings("unchecked")
+			RP rp = (RP) ar;
+			AssemblyPatternBlock dst = rp.getContext();
+			// TODO: The desired context may need to be passed in. For now, just take start.
+			AssemblyPatternBlock src = context; // NOTE: This is only correct for "instruction"
+			String table = "instruction";
 
-			return result;
+			Collection<Deque<AssemblyConstructorSemantic>> paths =
+				ctxGraph.computeOptimalApplications(src, table, dst, table);
+			for (Deque<AssemblyConstructorSemantic> path : paths) {
+				result.absorb(applyRecursionPath(path, tree, rootRec, ar));
+			}
 		}
+
+		return result;
 	}
 
 	/**
@@ -206,9 +194,7 @@ public abstract class AbstractAssemblyTreeResolver<RP extends AssemblyResolvedPa
 			vals.put(INST_NEXT, at.add(rp.getInstructionLength()).getAddressableWordOffset());
 			// inst_next2 use not really supported
 			vals.put(INST_NEXT2, at.add(rp.getInstructionLength()).getAddressableWordOffset());
-			DBG.println("Backfilling: " + rp);
 			AssemblyResolution ar = rp.backfill(SOLVER, vals);
-			DBG.println("Backfilled final: " + ar);
 			return ar;
 		}).apply(factory, rp -> {
 			if (rp.hasBackfills()) {
@@ -364,11 +350,8 @@ public abstract class AbstractAssemblyTreeResolver<RP extends AssemblyResolvedPa
 	 */
 	protected AssemblyResolutionResults applyMutations(AssemblyConstructorSemantic sem,
 			AssemblyResolutionResults temp) {
-		DBG.println("Applying context mutations:");
 		return temp.apply(factory, rp -> {
-			DBG.println("Current: " + rp.lineToString());
 			AssemblyResolution backctx = sem.solveContextChanges(rp, vals);
-			DBG.println("Mutated: " + backctx.lineToString());
 			return backctx;
 		}).apply(factory, rp -> {
 			return rp.solveContextChangesForForbids(sem, vals);
@@ -381,7 +364,6 @@ public abstract class AbstractAssemblyTreeResolver<RP extends AssemblyResolvedPa
 	 */
 	protected AssemblyResolutionResults applyPatterns(AssemblyConstructorSemantic sem, int shift,
 			AssemblyResolutionResults temp) {
-		DBG.println("Applying patterns:");
 		Collection<AssemblyResolution> patterns =
 			sem.getPatterns()
 					.stream()

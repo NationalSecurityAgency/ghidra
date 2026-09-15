@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,18 +38,11 @@ public class InteractivePanelManager {
 	public InteractivePanelManager() {
 		JTable table = new JTable();
 		header = table.getTableHeader();
+		header.setFont(ByteViewerComponentProvider.HEADER_FONT);
 		columnModel = header.getColumnModel();
 		separatorWidth = (new JSeparator(SwingConstants.VERTICAL)).getPreferredSize().width;
 		mainPanel = new JPanel(new HeaderLayoutManager());
 		columnModel.addColumnModelListener(new PanelManagerColumnModelListener());
-	}
-
-	/**
-	 * Sets the font for the header component.
-	 * @param font the font to be used to display view names in the header
-	 */
-	public void setHeaderFont(Font font) {
-		header.setFont(font);
 	}
 
 	/**
@@ -297,7 +290,9 @@ public class InteractivePanelManager {
 	record ComponentData(String name, JComponent component) {
 		@Override
 		public String toString() {
-			return name;
+			return component instanceof ByteViewerComponentNamer bvcn
+					? bvcn.getByteViewerComponentName()
+					: name;
 		}
 	}
 

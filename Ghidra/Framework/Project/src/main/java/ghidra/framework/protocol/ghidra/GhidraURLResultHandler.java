@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -75,5 +75,14 @@ public interface GhidraURLResultHandler {
 	 */
 	default void handleUnauthorizedAccess(URL url) throws IOException {
 		// do nothing - assume user has already been notified or issue has been logged
+	}
+
+	/**
+	 * Handle an external link URL which is not followed.
+	 * @param url connection URL
+	 * @throws IOException may be thrown if handler decides to propogate error
+	 */
+	default void externalLinkIgnored(URL url) throws IOException {
+		// do nothing
 	}
 }

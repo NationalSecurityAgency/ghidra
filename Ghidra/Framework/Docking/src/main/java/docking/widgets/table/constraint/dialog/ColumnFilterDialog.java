@@ -469,18 +469,45 @@ public class ColumnFilterDialog<R> extends ReusableDialogComponentProvider
 // TableFilterDialogModelListener methods
 //==================================================================================================
 
+	void filterRemoved(ColumnBasedTableFilter<R> filter) {
+		filterManager.updateSavedFilters(filter, false);
+	}
+
 	@Override
 	public void editorValueChanged(ColumnConstraintEditor<?> editor) {
 		updateStatus();
 	}
 
-	@Override
-	public void structureChanged() {
-		loadFilterRows();
-		updateStatus();
+	private ColumnFilterGridLocation getFocusedGridLocation() {
+		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+		Component focusOwner = kfm.getFocusOwner();
+
+		for (int row = 0; row < filterPanels.size(); row++) {
+			ColumnFilterPanel panel = filterPanels.get(row);
+			if (SwingUtilities.isDescendingFrom(focusOwner, panel)) {
+				return panel.getActiveGridLocation(focusOwner, row);
+			}
+		}
+
+		return null;
 	}
 
-	void filterRemoved(ColumnBasedTableFilter<R> filter) {
-		filterManager.updateSavedFilters(filter, false);
+	@Override
+	public void structureChanged() {
+
+		ColumnFilterGridLocation restoreLocation = getFocusedGridLocation();
+
+		loadFilterRows();
+		updateStatus();
+
+		if (restoreLocation != null) {
+			int dialogRow = restoreLocation.dialogRow();
+			if (filterPanels.size() <= dialogRow) {
+				return; // the UI was rebuilt in such a way that the old grid location is not valid
+			}
+
+			ColumnFilterPanel panel = filterPanels.get(dialogRow);
+			panel.restoreActiveGridLocation(restoreLocation);
+		}
 	}
 }

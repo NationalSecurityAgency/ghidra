@@ -44,7 +44,7 @@ class ModelIterator(object):
             next = (self._index, mo.ModelObject(object))
             self._index += 1
             return next
-               
+
         index = mo.ModelObject(indexer)
         ival = index.GetIntrinsicValue()
         if ival is None:

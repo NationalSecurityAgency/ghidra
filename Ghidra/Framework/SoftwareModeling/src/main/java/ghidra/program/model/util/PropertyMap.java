@@ -35,6 +35,11 @@ public interface PropertyMap<T> {
 	public Class<T> getValueClass();
 
 	/**
+	 * Removes all properties from this map
+	 */
+	public void clear();
+
+	/**
 	 * Given two addresses, indicate whether there is an address in
 	 * that range (inclusive) having the property.
 	 * 
@@ -45,7 +50,7 @@ public interface PropertyMap<T> {
 	 * has the property, false otherwise.
 	 */
 	public boolean intersects(Address start, Address end);
-	
+
 	/**
 	 * Indicate whether there is an address within
 	 * the set which exists within this map.
@@ -55,7 +60,7 @@ public interface PropertyMap<T> {
 	 * has the property, false otherwise.
 	 */
 	public boolean intersects(AddressSetView set);
-	
+
 	/**
 	 * Removes all property values within a given range.
 	 * @param start begin range
@@ -64,6 +69,7 @@ public interface PropertyMap<T> {
 	 * 		false otherwise.
 	 */
 	public boolean removeRange(Address start, Address end);
+
 	/**
 	 * Remove the property value at the given address.
 	 * @return true if the property value was removed, false
@@ -71,7 +77,7 @@ public interface PropertyMap<T> {
 	 * @param addr the address where the property should be removed
 	 */
 	public boolean remove(Address addr);
-	
+
 	/**
 	 * returns whether there is a property value at addr.
 	 * @param addr the address in question
@@ -86,7 +92,7 @@ public interface PropertyMap<T> {
 	 * @throws IllegalArgumentException if property value type is inappropriate for this map
 	 */
 	public void add(Address addr, Object value);
-	
+
 	/**
 	 * Returns the property value stored at the specified 
 	 * address or null if no property found.
@@ -94,39 +100,39 @@ public interface PropertyMap<T> {
 	 * @return property value
 	 */
 	public T get(Address addr);
-	
+
 	/**
 	 * Get the next address where the property value exists.
 	 * @param addr the address from which to begin the search (exclusive).
 	 * @return property value location after specified {@code addr} or null if none found
 	 */
 	public Address getNextPropertyAddress(Address addr);
-	
+
 	/**
 	 * Get the previous Address where a property value exists.
 	 * @param addr the address from which to begin the search (exclusive).
 	 * @return property value location after specified {@code addr} or null if none found
 	 */
 	public Address getPreviousPropertyAddress(Address addr);
-	
+
 	/**
 	 * Get the first Address where a property value exists.
 	 * @return first property value location or null if none found
 	 */
 	public Address getFirstPropertyAddress();
-	
+
 	/**
 	 * Get the last Address where a property value exists.
 	 * @return last property value location or null if none found
 	 */
 	public Address getLastPropertyAddress();
-	
+
 	/**
 	 * Get the number of properties in the map.
 	 * @return number of stored property values
 	 */
 	public int getSize();
-	
+
 	/**
 	 * Returns an iterator over the indices having a property value.
 	 * @param start minimum address
@@ -134,7 +140,7 @@ public interface PropertyMap<T> {
 	 * @return forward property address iterator
 	 */
 	public AddressIterator getPropertyIterator(Address start, Address end);
-	
+
 	/**
 	 * Returns an iterator over addresses that have a property value.
 	 * @param start minimum address
@@ -144,7 +150,7 @@ public interface PropertyMap<T> {
 	 * @return property address iterator
 	 */
 	public AddressIterator getPropertyIterator(Address start, Address end, boolean forward);
-	
+
 	/**
 	 * Returns an iterator over the addresses that a property value.
 	 * @return forward property address iterator
@@ -157,7 +163,7 @@ public interface PropertyMap<T> {
 	 * @param asv the set of addresses to iterate over.
 	 * @return forward property address iterator
 	 */
-	public AddressIterator getPropertyIterator(AddressSetView asv); 
+	public AddressIterator getPropertyIterator(AddressSetView asv);
 
 	/**
 	 * Returns an iterator over the addresses that have a property value and
@@ -168,7 +174,7 @@ public interface PropertyMap<T> {
 	 * @return property address iterator
 	 */
 	public AddressIterator getPropertyIterator(AddressSetView asv, boolean forward);
-	
+
 	/**
 	 * Returns an iterator over the address having a property value.
 	 * @param start the starting address
@@ -177,7 +183,7 @@ public interface PropertyMap<T> {
 	 * @return property address iterator
 	 */
 	public AddressIterator getPropertyIterator(Address start, boolean forward);
-	
+
 	/**
 	 * Moves the properties defined in the range from the start address thru the 
 	 * end address to now be located beginning at the newStart address. 

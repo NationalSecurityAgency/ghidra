@@ -18,10 +18,10 @@ package ghidra.trace.database.target.iface;
 import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectInterface;
 import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.target.iface.TraceObjectEventScope;
+import ghidra.trace.model.target.iface.TraceEventScope;
 import ghidra.trace.util.TraceChangeRecord;
 
-public class DBTraceObjectEventScope implements TraceObjectEventScope, DBTraceObjectInterface {
+public class DBTraceObjectEventScope implements TraceEventScope, DBTraceObjectInterface {
 	private final DBTraceObject object;
 
 	public DBTraceObjectEventScope(DBTraceObject object) {

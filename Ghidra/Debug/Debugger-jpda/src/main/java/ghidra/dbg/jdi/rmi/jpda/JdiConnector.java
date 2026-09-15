@@ -21,7 +21,7 @@ import java.util.Map;
 import com.sun.jdi.*;
 
 import ghidra.app.plugin.core.debug.client.tracermi.*;
-import ghidra.app.plugin.core.debug.client.tracermi.RmiMethodRegistry.TraceMethod;
+import ghidra.app.plugin.core.debug.client.tracermi.RmiMethodRegistry.TraceRmiMethod;
 import ghidra.dbg.jdi.manager.impl.DebugStatus;
 import ghidra.dbg.jdi.manager.impl.JdiManagerImpl;
 import ghidra.program.model.address.*;
@@ -144,7 +144,7 @@ public class JdiConnector {
 	}
 
 	public void registerRemoteMethod(JdiMethods methods, java.lang.reflect.Method m, String name) {
-		TraceMethod annot = m.getAnnotation(TraceMethod.class);
+		TraceRmiMethod annot = m.getAnnotation(TraceRmiMethod.class);
 		if (annot == null) {
 			return;
 		}

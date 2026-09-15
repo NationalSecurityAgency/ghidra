@@ -1,0 +1,19 @@
+<decompilertest>
+<!--
+    Example of accessing a stack range from high addresses to low addresses
+-->
+<binaryimage arch="x86:LE:64:default:gcc">
+<bytechunk space="ram" offset="0x172390" readonly="true">
+4883ec04488b04244883c404c3
+</bytechunk>
+<symbol space="ram" offset="0x172390" name="wraprange"/>
+</binaryimage>
+<script>
+  <com>load function wraprange</com>
+  <com>decompile</com>
+  <com>print raw</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Wrapped range #1" min="1" max="1">j\{0x00000000,0xfffffffffffffffc\}.* = CONCAT44\(s0x00000000:4\(i\),s0xfffffffffffffffc:4\(i\)\)</stringmatch>
+<stringmatch name="Wrapped range #2" min="1" max="1">RAX\(.*\) = j\{0x00000000,0xfffffffffffffffc\}</stringmatch>
+</decompilertest>

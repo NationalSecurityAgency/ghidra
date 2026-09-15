@@ -18,7 +18,7 @@ package generic.theme;
 import java.awt.Font;
 import java.text.ParseException;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import ghidra.util.Msg;
 
@@ -110,7 +110,7 @@ public class FontValue extends ThemeValue<Font> {
 	 * @return true if the given key string is a valid external key for a font value
 	 */
 	public static boolean isFontKey(String key) {
-		return StringUtils.startsWithAny(key, FONT_ID_PREFIX, EXTERNAL_PREFIX,
+		return Strings.CS.startsWithAny(key, FONT_ID_PREFIX, EXTERNAL_PREFIX,
 			EXTERNAL_LAF_ID_PREFIX);
 	}
 

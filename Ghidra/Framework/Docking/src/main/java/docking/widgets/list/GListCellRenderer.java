@@ -15,8 +15,7 @@
  */
 package docking.widgets.list;
 
-import java.awt.Color;
-import java.awt.Component;
+import java.awt.*;
 import java.util.function.Function;
 
 import javax.swing.*;
@@ -38,7 +37,7 @@ public class GListCellRenderer<E> extends AbstractGCellRenderer implements ListC
 	private static final Color LIST_BACKGROUND_COLOR = new GColor("color.bg.list.row");
 
 	/**
-	 * Returns a new ListCellRenderer that maps the list's data instance to a string used in the cell.
+	 * Returns a new renderer that maps the list's data instance to a string used in the cell.
 	 * <p>
 	 * Use this if you only need to provide a way to get the string value from the type being shown
 	 * in the list.
@@ -56,18 +55,23 @@ public class GListCellRenderer<E> extends AbstractGCellRenderer implements ListC
 		};
 	}
 
-	/**
-	 * Constructs a new GListCellRenderer.
-	 */
 	public GListCellRenderer() {
 
 		// lists don't need alternation for rows, as they don't use long columnar data
 		setShouldAlternateRowBackgroundColors(false);
+	}
 
+	protected void initBorders() {
 		// Base our borders on those used by the list.  ComboBoxes do not change the list borders in
 		// the Look and Feel.
 		noFocusBorder = getBorder("List.noFocusBorder");
 		focusBorder = getBorder("List.focusCellHighlightBorder");
+	}
+
+	@Override
+	public void updateUI() {
+		super.updateUI();
+		initBorders();
 	}
 
 	private Border getBorder(String id) {
@@ -77,6 +81,25 @@ public class GListCellRenderer<E> extends AbstractGCellRenderer implements ListC
 			border = BorderFactory.createEmptyBorder(2, 4, 2, 4);
 		}
 		return border;
+	}
+
+	/**
+	 * Gets the max border size for the default borders used by this renderer.  If any subclass or
+	 * client uses borders other than 'noFocusBorder' or 'focusBorder', then they will need to 
+	 * override this method if any of their borders have bigger insets than the default borders of
+	 * this class. 
+	 * @return the largest known border width
+	 */
+	protected int getMaxBorderWidth() {
+		Insets insets = noFocusBorder.getBorderInsets(this);
+		int left = insets.left;
+		int right = insets.right;
+		int width = left + right;
+
+		insets = focusBorder.getBorderInsets(this);
+		left = Math.max(left, insets.left);
+		right = Math.max(right, insets.right);
+		return Math.max(width, left + right);
 	}
 
 	// overridden to return the list-specific background color
@@ -102,15 +125,14 @@ public class GListCellRenderer<E> extends AbstractGCellRenderer implements ListC
 
 		setHorizontalAlignment(
 			value instanceof Number ? SwingConstants.RIGHT : SwingConstants.LEFT);
-		ListModel<? extends E> model = list.getModel();
-		configureFont(list, model, index);
+		setFont(defaultFont);
 
 		if (isSelected) {
 			setForeground(list.getSelectionForeground());
 			setBackground(list.getSelectionBackground());
 		}
 		else {
-			setForegroundColor(list, model, value);
+			setForeground(list.getForeground());
 
 			JList.DropLocation dropLocation = list.getDropLocation();
 			// @formatter:off
@@ -129,14 +151,5 @@ public class GListCellRenderer<E> extends AbstractGCellRenderer implements ListC
 		setBorder(hasFocus ? focusBorder : noFocusBorder);
 
 		return this;
-	}
-
-	protected void setForegroundColor(JList<? extends E> list, ListModel<? extends E> model,
-			Object value) {
-		setForeground(list.getForeground());
-	}
-
-	protected void configureFont(JList<? extends E> list, ListModel<? extends E> model, int index) {
-		setFont(defaultFont);
 	}
 }

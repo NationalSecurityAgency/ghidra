@@ -4,7 +4,7 @@
 # by the actual processor (e.g., floating pointer registers and associated instructions).
 # The actual processor only supports a subset of the registers and instructions implemented.
 
-@define E500
+@define E500 "1"
 
 @define ENDIAN "big"
 
@@ -19,10 +19,11 @@
 
 @define CTR_OFFSET "32"
 
-@define NoLegacyIntegerMultiplyAccumulate
+@define NoLegacyIntegerMultiplyAccumulate "1"
 
 @include "ppc_common.sinc"
 @include "quicciii.sinc"
+@include "SPE_APU.sinc"
 @include "evx.sinc"
 @include "SPEF_SCR.sinc"
 @include "SPE_EFSD.sinc"

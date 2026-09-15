@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+    <programcounter register="pc"/>
+
+  <default_memory_blocks>
+    <memory_block name="csr" start_address="csreg:0x0" length="0x8000" initialized="false"/>
+  </default_memory_blocks>
+  
+    <default_symbols>
+         <symbol name="cpu_ver"         address="csreg:0x000"     size="4" description="" />
+         <symbol name="core_id"         address="csreg:0x001"     size="4" description="" />
+         <symbol  name="icm_cfg"        address="csreg:0x008"     size="4" description="" />
+         <symbol  name="dcm_cfg"        address="csreg:0x010"     size="4" description="" />
+         <symbol  name="mmu_cfg"        address="csreg:0x018"     size="4" description="" />
+         <symbol  name="msc_cfg"        address="csreg:0x020"     size="4" description="" />
+         <symbol  name="msc_cfg2"       address="csreg:0x021"     size="4" description="" />
+         <symbol  name="fucop_exist"    address="csreg:0x028"     size="4" description="" />
+         
+         <symbol name="psw"             address="csreg:0x080"     size="4" description="" />
+         <symbol name="ipsw"            address="csreg:0x081"     size="4" description="" />
+         <symbol name="p_ipsw"          address="csreg:0x082"     size="4" description="" />
+         <symbol name="ivb"             address="csreg:0x089"     size="4" description="" />
+         <symbol name="int_ctrl"        address="csreg:0x08a"     size="4" description="" />
+         <symbol name="int_gpr_push_dis"  address="csreg:0x08b"   size="4" description="" />
+         <symbol name="eva"            address="csreg:0x091"      size="4" description="" />
+         <symbol name="p_eva"          address="csreg:0x092"      size="4" description="" />
+         <symbol name="itype"          address="csreg:0x099"      size="4" description="" />
+         <symbol name="p_itype"        address="csreg:0x09a"      size="4" description="" />
+         <symbol name="merr"           address="csreg:0x0a1"      size="4" description="" />
+         <symbol name="ipc"            address="csreg:0x0a9"      size="4" description="" />
+         <symbol name="p_ipc"          address="csreg:0x0aa"      size="4" description="" />
+         <symbol name="oipc"           address="csreg:0x0ab"      size="4" description="" />
+         <symbol name="p_p0"           address="csreg:0x0b2"      size="4" description="" />
+         <symbol name="p_p1"           address="csreg:0x0ba"      size="4" description="" />
+         <symbol name="int_mask"       address="csreg:0x0c0"      size="4" description="" />
+         <symbol name="int_mask2"      address="csreg:0x0c1"      size="4" description="" />
+         <symbol name="int_mask3"      address="csreg:0x0c2"      size="4" description="" />
+         <symbol name="int_pend"       address="csreg:0x0c8"      size="4" description="" />
+         <symbol name="int_pend2"      address="csreg:0x0c9"      size="4" description="" />
+         <symbol name="int_pend3"      address="csreg:0x0ca"      size="4" description="" />
+         <symbol name="int_trigger"    address="csreg:0x0cc"      size="4" description="" />
+         <symbol name="int_trigger2"   address="csreg:0x0cd"      size="4" description="" />
+         <symbol name="sp_usr"         address="csreg:0x0d0"      size="4" description="" />
+         <symbol name="sp_priv"        address="next"             size="4" description="" />
+         <symbol name="sp_usr1"        address="next"             size="4" description="" />
+         <symbol name="sp_priv1"       address="next"             size="4" description="" />
+         <symbol name="sp_usr2"        address="next"             size="4" description="" />
+         <symbol name="sp_priv2"       address="next"             size="4" description="" />
+         <symbol name="sp_usr3"        address="next"             size="4" description="" />
+         <symbol name="sp_priv3"       address="next"             size="4" description="" />
+         <symbol name="int_pri"        address="next"             size="4" description="" />
+         <symbol name="int_pri2"       address="next"             size="4" description="" />
+         <symbol name="int_pri3"       address="next"             size="4" description="" />
+         <symbol name="int_pri4"       address="next"             size="4" description="" />
+         
+         <symbol name="mmu_ctl"        address="csreg:0x100"      size="4" description="" />
+         <symbol name="bg_region"      address="csreg:0x101"      size="4" description="" />
+         <symbol name="l1pptb"         address="csreg:0x108"      size="4" description="" />
+         <symbol name="tlb_vpn"        address="csreg:0x110"      size="4" description="" />
+         <symbol name="tlb_data"       address="csreg:0x118"      size="4" description="" />
+         <symbol name="tlb_misc"       address="csreg:0x120"      size="4" description="" />
+         <symbol name="vlpt_idx"       address="csreg:0x128"      size="4" description="" />
+         <symbol name="ilmb"           address="csreg:0x130"      size="4" description="" />
+         <symbol name="dlmb"           address="csreg:0x138"      size="4" description="" />
+         <symbol name="cache_ctl"      address="csreg:0x140"      size="4" description="" />
+         <symbol name="hsmp_saddr"     address="csreg:0x148"      size="4" description="" />
+         <symbol name="hsmp_eaddr"     address="csreg:0x149"      size="4" description="" />
+         <symbol name="sdz_ctl"        address="csreg:0x178"      size="4" description="" />
+         <symbol name="misc_ctl"       address="csreg:0x179"      size="4" description="" />
+         <symbol name="ecc_misc"       address="csreg:0x17a"      size="4" description="" />
+         <symbol name="bpc0"           address="csreg:0x180"      size="4" description="" />
+         
+         <symbol name="bpc1"           address="next"             size="4" description="" />
+         <symbol name="bpc2"           address="next"             size="4" description="" />
+         <symbol name="bpc3"           address="next"             size="4" description="" />
+         <symbol name="bpc4"           address="next"             size="4" description="" />
+         <symbol name="bpc5"           address="next"             size="4" description="" />
+         <symbol name="bpc6"           address="next"             size="4" description="" />
+         <symbol name="bpc7"           address="next"             size="4" description="" />
+         <symbol name="bpa0"           address="next"             size="4" description="" />
+         <symbol name="bpa1"           address="next"             size="4" description="" />
+         <symbol name="bpa2"           address="next"             size="4" description="" />
+         <symbol name="bpa3"           address="next"             size="4" description="" />
+         <symbol name="bpa4"           address="next"             size="4" description="" />
+         <symbol name="bpa5"           address="next"             size="4" description="" />
+         <symbol name="bpa6"           address="next"             size="4" description="" />
+         <symbol name="bpa7"           address="next"             size="4" description="" />
+         <symbol name="bpam0"          address="next"             size="4" description="" />
+         <symbol name="bpam1"          address="next"             size="4" description="" />
+         <symbol name="bpam2"          address="next"             size="4" description="" />
+         <symbol name="bpam3"          address="next"             size="4" description="" />
+         <symbol name="bpam4"          address="next"             size="4" description="" />
+         <symbol name="bpam5"          address="next"             size="4" description="" />
+         <symbol name="bpam6"          address="next"             size="4" description="" />
+         <symbol name="bpam7"          address="next"             size="4" description="" />
+         <symbol name="bpv0"           address="next"             size="4" description="" />
+         <symbol name="bpv1"           address="next"             size="4" description="" />
+         <symbol name="bpv2"           address="next"             size="4" description="" />
+         <symbol name="bpv3"           address="next"             size="4" description="" />
+         <symbol name="bpv4"           address="next"             size="4" description="" />
+         <symbol name="bpv5"           address="next"             size="4" description="" />
+         <symbol name="bpv6"           address="next"             size="4" description="" />
+         <symbol name="bpv7"           address="next"             size="4" description="" />
+         <symbol name="bpcid0"         address="next"             size="4" description="" />
+         <symbol name="bpcid1"         address="next"             size="4" description="" />
+         <symbol name="bpcid2"         address="next"             size="4" description="" />
+         <symbol name="bpcid3"         address="next"             size="4" description="" />
+         <symbol name="bpcid4"         address="next"             size="4" description="" />
+         <symbol name="bpcid5"         address="next"             size="4" description="" />
+         <symbol name="bpcid6"         address="next"             size="4" description="" />
+         <symbol name="bpcid7"         address="next"             size="4" description="" />
+         <symbol name="edm_cfg"        address="csreg:0x1a8"      size="4" description="" />
+         <symbol name="edmsw"          address="csreg:0x1b0"      size="4" description="" />
+         <symbol name="edm_ctl"        address="csreg:0x1b8"      size="4" description="" />
+         <symbol name="edm_dtr"        address="csreg:0x1c0"      size="4" description="" />
+         <symbol name="bpmtc"          address="csreg:0x1c8"      size="4" description="" />
+         <symbol name="dimbr"          address="csreg:0x1d0"      size="4" description="" />
+         <symbol name="tecr0"          address="csreg:0x1f0"      size="4" description="" />
+         <symbol name="tecr1"          address="csreg:0x1f1"      size="4" description="" />
+
+         <symbol name="pfmc0"          address="csreg:0x200"      size="4" description="" />
+         <symbol name="pfmc1"          address="csreg:0x201"      size="4" description="" />
+         <symbol name="pfmc2"          address="csreg:0x202"      size="4" description="" />
+         <symbol name="pfm_ctl"        address="csreg:0x208"      size="4" description="" />
+         <symbol name="pft_ctl"        address="csreg:0x210"      size="4" description="" />
+         <symbol name="prusr_acc_ctl"  address="csreg:0x220"      size="4" description="" />
+         <symbol name="fucpr"          address="csreg:0x228"      size="4" description="" />
+         <symbol name="hsp_ctl"        address="csreg:0x230"      size="4" description="" />
+         <symbol name="sp_bound"       address="csreg:0x231"      size="4" description="" />
+         <symbol name="sp_bound_priv"  address="csreg:0x230"      size="4" description="" />
+         <symbol name="sp_base"        address="csreg:0x230"      size="4" description="" />
+         <symbol name="sp_base_priv"   address="csreg:0x230"      size="4" description="" />
+
+         <symbol name="dma_cfg"        address="csreg:0x280"      size="4" description="" />
+         <symbol name="dma_gcsw"       address="csreg:0x288"      size="4" description="" />
+         <symbol name="dma_chnsel"     address="csreg:0x290"      size="4" description="" />
+         <symbol name="dma_act"        address="csreg:0x298"      size="4" description="" />
+         <symbol name="dma_setup"      address="csreg:0x2a0"      size="4" description="" />
+         <symbol name="dma_isaddr"     address="csreg:0x2a8"      size="4" description="" />
+         <symbol name="dma_esaddr"     address="csreg:0x2b0"      size="4" description="" />
+         <symbol name="dma_tcnt"       address="csreg:0x2b8"      size="4" description="" />
+         <symbol name="dma_rcnt"       address="csreg:0x2b9"      size="4" description="" />
+         <symbol name="dma_status"     address="csreg:0x2c0"      size="4" description="" />
+         <symbol name="dma_hstatus"    address="csreg:0x2c1"      size="4" description="" />
+         <symbol name="dma_2dset"      address="csreg:0x2c8"      size="4" description="" />
+         <symbol name="dma_2dsctl"     address="csreg:0x2c9"      size="4" description="" />
+
+         <symbol name="secur0"         address="csreg:0x300"      size="4" description="" />
+         <symbol name="secur1"         address="csreg:0x308"      size="4" description="" />
+         <symbol name="secur2"         address="csreg:0x309"      size="4" description="" />
+         <symbol name="secur3"         address="csreg:0x30a"      size="4" description="" />
+  </default_symbols>
+  
+</processor_spec>

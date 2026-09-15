@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,25 +20,16 @@ import java.util.Set;
 import ghidra.pcode.emu.PcodeMachine;
 import ghidra.pcode.emu.sys.EmuIOException;
 import ghidra.pcode.emu.unix.EmuUnixFileSystem.OpenFlag;
-import ghidra.pcode.exec.PcodeArithmetic;
+import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.program.model.lang.CompilerSpec;
-import ghidra.program.model.pcode.PcodeOp;
 
 /**
- * A file descriptor associated with a file on a simulated UNIX file system
- *
- * @param <T> the type of values stored by the file
+ * A concrete file descriptor
+ * 
+ * @param <T> the type of values stored in the file
  */
-public class DefaultEmuUnixFileHandle<T> implements EmuUnixFileDescriptor<T> {
-
-	protected final PcodeArithmetic<T> arithmetic;
-	protected final EmuUnixFile<T> file;
-	// TODO: T flags? Meh.
-	protected final Set<OpenFlag> flags;
-	protected final EmuUnixUser user;
-	protected final int offsetBytes;
-
-	private T offset;
+public class DefaultEmuUnixFileHandle<T> extends AbstractEmuUnixFileHandle<T> {
+	long offset;
 
 	/**
 	 * Construct a new handle on the given file
@@ -52,90 +43,58 @@ public class DefaultEmuUnixFileHandle<T> implements EmuUnixFileDescriptor<T> {
 	 */
 	public DefaultEmuUnixFileHandle(PcodeMachine<T> machine, CompilerSpec cSpec,
 			EmuUnixFile<T> file, Set<OpenFlag> flags, EmuUnixUser user) {
-		this.arithmetic = machine.getArithmetic();
-		this.file = file;
-		this.flags = flags;
-		this.user = user;
-		this.offsetBytes = cSpec.getDataOrganization().getLongSize(); // off_t's fundamental type
-
-		this.offset = arithmetic.fromConst(0, offsetBytes);
-	}
-
-	/**
-	 * Get the file opened to this handle
-	 * 
-	 * @return the file
-	 */
-	public EmuUnixFile<T> getFile() {
-		return file;
-	}
-
-	/**
-	 * Check if the file is readable, throwing {@link EmuIOException} if not
-	 */
-	public void checkReadable() {
-		if (!OpenFlag.isRead(flags)) {
-			throw new EmuIOException("File not opened for reading");
-		}
-	}
-
-	/**
-	 * Check if the file is writable, throwing {@link EmuIOException} if not
-	 */
-	public void checkWritable() {
-		if (!OpenFlag.isWrite(flags)) {
-			throw new EmuIOException("File not opened for writing");
-		}
-	}
-
-	/**
-	 * Advance the handle's offset (negative to rewind)
-	 * 
-	 * @param len the number of bytes to advance
-	 */
-	protected void advanceOffset(T len) {
-		int sizeofLen = (int) arithmetic.sizeOf(len);
-		offset =
-			arithmetic.binaryOp(PcodeOp.INT_ADD, offsetBytes, offsetBytes, offset, sizeofLen, len);
+		super(machine, cSpec, file, flags, user);
+		this.offset = flags.contains(OpenFlag.O_APPEND) ? file.getStat().st_size : 0;
 	}
 
 	@Override
-	public T getOffset() {
+	public long getOffset() {
 		return offset;
 	}
 
 	@Override
+	public T getAbstractOffset() {
+		return arithmetic.fromConst(offset, offsetBytes);
+	}
+
+	@Override
 	public void seek(T offset) throws EmuIOException {
+		seek(arithmetic.toLong(offset, Purpose.OTHER));
+	}
+
+	@Override
+	public void seek(long offset) throws EmuIOException {
 		// TODO: Where does bounds check happen?
 		this.offset = offset;
 	}
 
 	@Override
-	public T read(T buf) throws EmuIOException {
+	public int read(T buf) throws EmuIOException {
 		checkReadable();
-		T len = file.read(arithmetic, offset, buf);
-		advanceOffset(len);
-		return len;
-	}
-
-	@Override
-	public T write(T buf) throws EmuIOException {
-		checkWritable();
-		if (flags.contains(OpenFlag.O_APPEND)) {
-			offset = arithmetic.fromConst(file.getStat().st_size, offsetBytes);
+		int len = file.read(offset, buf);
+		if (len > 0) {
+			offset += len;
 		}
-		T len = file.write(arithmetic, offset, buf);
-		advanceOffset(len);
 		return len;
 	}
 
 	@Override
-	public EmuUnixFileStat stat() {
-		return file.getStat();
+	public T readAbstract(T buf) throws EmuIOException {
+		return arithmetic.fromConst(read(buf), offsetBytes);
 	}
 
 	@Override
-	public void close() {
-		// TODO: Let the file know a handle was closed?
+	public int write(T buf) throws EmuIOException {
+		checkWritable();
+		int len = file.write(offset, buf);
+		if (len > 0) {
+			offset += len;
+		}
+		return len;
+	}
+
+	@Override
+	public T writeAbstract(T buf) throws EmuIOException {
+		return arithmetic.fromConst(write(buf), offsetBytes);
 	}
 }

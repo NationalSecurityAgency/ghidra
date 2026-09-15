@@ -1,0 +1,93 @@
+<context>
+	<schema name="Session" elementResync="NEVER" attributeResync="NEVER">
+		<attribute name="ExdiProcesses" schema="ExdiProcessContainer" required="no" fixed="yes" />
+		<attribute name="Memory" schema="Memory" required="no" fixed="yes" />
+		<attribute name="Modules" schema="ModuleContainer" required="no" fixed="yes" />
+	</schema>
+	<schema name="Process" elementResync="NEVER" attributeResync="NEVER">
+		<attribute name="Memory" schema="ProcessMemory" required="yes" fixed="yes" />
+		<attribute name="Modules" schema="ProcessModuleContainer" required="yes" fixed="yes" />
+	</schema>
+	<schema name="ProcessModuleContainer" canonical="yes" elementResync="ONCE" attributeResync="NEVER">
+		<!-- interface name="ModuleContainer" /-->
+		<element schema="ProcessModule" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute schema="ANY" />
+	</schema>
+	<schema name="ProcessMemory" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<!-- interface name="Memory" /-->
+		<element schema="ProcessMemoryRegion" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="ProcessModule" elementResync="NEVER" attributeResync="NEVER">
+		<!-- interface name="Module" /-->
+		<element schema="VOID" />
+		<attribute name="Sections" schema="SectionContainer" required="yes" fixed="yes" />
+		<attribute name="Symbols" schema="SymbolContainer" required="yes" fixed="yes" />
+		<attribute name="Range" schema="RANGE" />
+		<attribute name="Name" schema="STRING" />
+		<attribute-alias from="_module_name" to="Name" />
+		<attribute-alias from="_range" to="Range" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="ToDisplayString" schema="BOOL" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="ProcessMemoryRegion" elementResync="NEVER" attributeResync="NEVER">
+		<!-- interface name="MemoryRegion" /-->
+		<element schema="VOID" />
+		<attribute name="Base" schema="LONG" required="yes" fixed="yes" />
+		<attribute name="Object File" schema="STRING" fixed="yes" />
+		<attribute name="_readable" schema="BOOL" required="yes" hidden="yes" />
+		<attribute name="_writable" schema="BOOL" required="yes" hidden="yes" />
+		<attribute name="_executable" schema="BOOL" required="yes" hidden="yes" />
+		<attribute name="Range" schema="RANGE" required="yes" hidden="yes" />
+		<attribute-alias from="_range" to="Range" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="ExdiProcessContainer" canonical="yes" elementResync="ONCE" attributeResync="NEVER">
+		<element schema="ExdiProcess" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="_base" schema="INT" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="ExdiProcess" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="Process" />
+		<interface name="Aggregate" />
+		<interface name="ExecutionStateful" />
+		<element schema="VOID" />
+		<attribute name="Threads" schema="ExdiThreadContainer" required="yes" fixed="yes" />
+		<!-- attribute name="Modules" schema="ModuleContainer" required="yes" fixed="yes" /-->
+		<attribute name="PID" schema="LONG" />
+		<attribute-alias from="_pid" to="PID" />
+		<attribute name="State" schema="EXECUTION_STATE" required="yes" hidden="yes" />
+		<attribute-alias from="_state" to="State" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_short_display" schema="STRING" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute schema="OBJECT" />
+	</schema>
+	<schema name="ExdiThreadContainer" canonical="yes" elementResync="ONCE" attributeResync="NEVER">
+		<element schema="ExdiThread" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="_base" schema="INT" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="ExdiThread" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="Thread" />
+		<interface name="ExecutionStateful" />
+		<interface name="Aggregate" />
+		<element schema="VOID" />
+		<attribute name="TID" schema="LONG" />
+		<attribute-alias from="_tid" to="TID" />
+		<attribute name="State" schema="EXECUTION_STATE" required="yes" hidden="yes" />
+		<attribute-alias from="_state" to="State" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_short_display" schema="STRING" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute schema="OBJECT" />
+	</schema>
+</context>

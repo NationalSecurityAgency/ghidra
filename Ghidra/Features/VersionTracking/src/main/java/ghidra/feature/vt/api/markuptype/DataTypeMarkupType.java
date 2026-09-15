@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,9 @@
  */
 package ghidra.feature.vt.api.markuptype;
 
-import java.util.ArrayList;
-import java.util.List;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.*;
+
+import java.util.*;
 
 import ghidra.feature.vt.api.impl.MarkupItemImpl;
 import ghidra.feature.vt.api.main.*;
@@ -34,7 +35,6 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.util.*;
 import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
 import ghidra.util.exception.AssertException;
 
 public class DataTypeMarkupType extends VTMarkupType {
@@ -217,6 +217,7 @@ public class DataTypeMarkupType extends VTMarkupType {
 			throw new VersionTrackingApplyException(
 				"Data Type Markup cannot be applied since there isn't Data at the destination address!");
 		}
+
 		DataType originalDataType = originalData.getDataType();
 		int originalDataLength = originalData.getLength();
 		Address endAddress;
@@ -231,6 +232,7 @@ public class DataTypeMarkupType extends VTMarkupType {
 				"Data Type Markup cannot be applied since there isn't enough space at the " +
 					"destination address!");
 		}
+
 		AddressSet addressSet = new AddressSet(startAddress, endAddress);
 		InstructionIterator instructions = listing.getInstructions(addressSet, true);
 		boolean hasInstructions = instructions.hasNext();
@@ -242,6 +244,7 @@ public class DataTypeMarkupType extends VTMarkupType {
 					" before this Data Type Markup can be applied.";
 			throw new VersionTrackingApplyException(message);
 		}
+
 		boolean replaceUndefinedDataOnly =
 			(replaceChoice == ReplaceDataChoices.REPLACE_UNDEFINED_DATA_ONLY);
 		boolean replaceFirstOnly = (replaceChoice == ReplaceDataChoices.REPLACE_FIRST_DATA_ONLY);
@@ -251,7 +254,6 @@ public class DataTypeMarkupType extends VTMarkupType {
 		Data nextNonUndefinedDataAfter =
 			DataUtilities.getNextNonUndefinedDataAfter(program, startAddress, endAddress);
 		boolean hasOtherDefinedData = nextNonUndefinedDataAfter != null;
-
 		if (replaceUndefinedDataOnly && hasDefinedData) {
 			// Just return since we are only replacing undefined data and this has some defined data.
 			return false;
@@ -263,7 +265,7 @@ public class DataTypeMarkupType extends VTMarkupType {
 			return false;
 		}
 
-		listing.clearCodeUnits(startAddress, endAddress, false); // Clear the necessary code units.
+		listing.clearCodeUnits(startAddress, endAddress, false);
 
 		try {
 			listing.createData(startAddress, dataType, dataLength);
@@ -285,7 +287,7 @@ public class DataTypeMarkupType extends VTMarkupType {
 			// If we get an error trying to put the original back then dump a message and bail out.
 			Msg.error(this,
 				"Couldn't restore data type of " + originalDataType.getName() +
-					" after failing to set data type markup at " + address.toString() + ".\n" +
+					" after failing to set data type markup at " + address.toString() + ". " +
 					e2.getMessage());
 		}
 	}
@@ -319,13 +321,13 @@ public class DataTypeMarkupType extends VTMarkupType {
 			throw new VersionTrackingApplyException("The destination Data cannot be null!");
 		}
 
-		DataType sourceDataType = sourceData.getDataType();
-		DataType destinationDataType = destinationData.getDataType();
-		if (SystemUtilities.isEqual(sourceDataType, destinationDataType)) {
-			return false;
-		}
 		VTSession session = association.getSession();
 		Program destinationProgram = session.getDestinationProgram();
+		DataType sourceDataType = getSourceDataType(sourceData, destinationProgram, markupOptions);
+		DataType destinationDataType = destinationData.getDataType();
+		if (Objects.equals(sourceDataType, destinationDataType)) {
+			return false;
+		}
 
 		int sourceDataLength = sourceDataType.getLength();
 		if (sourceDataLength <= 0) {
@@ -340,6 +342,23 @@ public class DataTypeMarkupType extends VTMarkupType {
 			throw new VersionTrackingApplyException(getApplyFailedMessage(sourceAddress,
 				destinationAddress, e, sourceDataLength, destinationData.getLength()), e);
 		}
+	}
+
+	private DataType getSourceDataType(Data sourceData, Program destinationProgram,
+			ToolOptions markupOptions) {
+
+		DataType sourceDt = sourceData.getDataType();
+		if (!markupOptions.getBoolean(USE_EMPTY_COMPOSITES,
+			DEFAULT_OPTION_FOR_USE_EMPTY_STRUCTURES)) {
+			return sourceDt;
+		}
+
+		// The user would like to create empty structures when creating data types
+		ProgramBasedDataTypeManager dtm = destinationProgram.getDataTypeManager();
+		DataTypeCleaner dtCleaner = new DataTypeCleaner(dtm, false);
+		DataType cleanedDt = dtCleaner.clean(sourceDt);
+		dtCleaner.close();
+		return cleanedDt;
 	}
 
 	private String getApplyFailedMessage(Address sourceAddress, Address destinationAddress,

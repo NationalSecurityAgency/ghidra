@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,9 +26,9 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.output.XMLOutputter;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.output.XMLOutputter;
 
 import docking.ActionContext;
 import docking.DialogComponentProvider;
@@ -43,6 +43,7 @@ import ghidra.framework.Application;
 import ghidra.framework.main.ApplicationLevelPlugin;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.IncompatibleLanguageException;
@@ -50,6 +51,7 @@ import ghidra.program.util.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.filechooser.ExtensionFileFilter;
+import ghidra.util.task.TaskMonitor;
 import ghidra.util.xml.GenericXMLOutputter;
 
 //@formatter:off
@@ -388,15 +390,14 @@ public class GenerateOldLanguagePlugin extends Plugin implements ApplicationLeve
 
 			Document doc = new Document(root);
 			FileOutputStream out = new FileOutputStream(transFile);
-			XMLOutputter xml = new GenericXMLOutputter();
+			XMLOutputter xml = GenericXMLOutputter.getInstance();
 			xml.output(doc, out);
 			out.close();
 
 			Register oldCtx = oldLang.getContextBaseRegister();
 			Register newCtx = newLang.getContextBaseRegister();
 			boolean contextWarning = false;
-			if (oldCtx != Register.NO_CONTEXT &&
-				defaultTrans.isValueTranslationRequired(oldCtx)) {
+			if (oldCtx != Register.NO_CONTEXT && defaultTrans.isValueTranslationRequired(oldCtx)) {
 				contextWarning = true;
 			}
 			else if (oldCtx == Register.NO_CONTEXT && newCtx != Register.NO_CONTEXT) {

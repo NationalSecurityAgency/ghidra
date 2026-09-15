@@ -15,21 +15,21 @@
  */
 package agent.lldb.rmi;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.*;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Objects;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
 import ghidra.program.model.address.AddressSpace;
-import ghidra.pty.testutil.DummyProc;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
@@ -43,7 +43,8 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 	private static final long RUN_TIMEOUT_MS = 5000;
 	private static final long RETRY_MS = 500;
 
-	record LldbAndTrace(LldbAndConnection conn, ManagedDomainObject mdo) implements AutoCloseable {
+	record LldbAndTrace(LldbAndConnection conn, ManagedDomainObject<Trace> mdo)
+			implements AutoCloseable {
 		public void execute(String cmd) {
 			conn.execute(cmd);
 		}
@@ -52,10 +53,28 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 			return conn.executeCapture(cmd);
 		}
 
+		public void success() {
+			conn.success();
+		}
+
 		@Override
 		public void close() throws Exception {
-			conn.close();
-			mdo.close();
+			Exception toThrow = null;
+			try {
+				conn.close();
+			}
+			catch (Exception e) {
+				toThrow = e;
+			}
+			try {
+				mdo.close();
+			}
+			catch (Exception e) {
+				toThrow = e;
+			}
+			if (toThrow != null) {
+				throw toThrow;
+			}
 		}
 	}
 
@@ -64,8 +83,8 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 		LldbAndConnection conn = startAndConnectLldb();
 		try {
 			conn.execute("ghidra trace start");
-			ManagedDomainObject mdo = waitDomainObject("/New Traces/lldb/noname");
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			ManagedDomainObject<Trace> mdo = waitTrace("/New Traces/lldb/noname");
+			tb = new ToyDBTraceBuilder(mdo.get());
 			return new LldbAndTrace(conn, mdo);
 		}
 		catch (Exception e) {
@@ -81,10 +100,10 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 	// TODO: This passes if you single-step through it but fails on some transactional stuff if run
 	//@Test
 	public void testOnNewThread() throws Exception {
-		String cloneExit = DummyProc.which("expCloneExit");
+		String specimen = getSpecimenNewThreadAndExit();
 		try (LldbAndTrace conn = startAndSyncLldb()) {
 
-			start(conn, "%s".formatted(cloneExit));
+			start(conn, "%s".formatted(specimen));
 			conn.execute("break set -n work");
 			waitForPass(() -> {
 				TraceObject proc = tb.objAny0("Processes[]");
@@ -103,17 +122,18 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 			waitForPass(() -> assertEquals(2,
 				tb.objValues(lastSnap(conn), "Processes[].Threads[]").size()),
 				RUN_TIMEOUT_MS, RETRY_MS);
+			conn.success();
 		}
 	}
 
 	// TODO: This passes if you single-step through it but fails on some transactional stuff if run
 	//@Test
 	public void testOnThreadSelected() throws Exception {
-		String cloneExit = DummyProc.which("expCloneExit");
+		String specimen = getSpecimenNewThreadAndExit();
 		try (LldbAndTrace conn = startAndSyncLldb()) {
 			traceManager.openTrace(tb.trace);
 
-			start(conn, "%s".formatted(cloneExit));
+			start(conn, "%s".formatted(specimen));
 			conn.execute("break set -n work");
 
 			waitForPass(() -> {
@@ -165,6 +185,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 				String threadIndex = threadIndex(traceManager.getCurrentObject());
 				assertTrue(ti0.contains(threadIndex));
 			}, RUN_TIMEOUT_MS, RETRY_MS);
+			conn.success();
 		}
 	}
 
@@ -204,7 +225,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 			traceManager.openTrace(tb.trace);
 
 			start(conn, getSpecimenPrint());
-			conn.execute("breakpoint set -n puts");
+			conn.execute("breakpoint set -n wrapputs");
 			conn.execute("cont");
 
 			waitStopped(conn.conn);
@@ -222,13 +243,12 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 				RUN_TIMEOUT_MS, RETRY_MS);
 
 			conn.execute("kill");
+			conn.success();
 		}
 	}
 
-	@Test
-	@Ignore
+	//@Test // Need a specimen
 	public void testOnSyscallMemory() throws Exception {
-		// TODO: Need a specimen
 		// FWIW, I've already seen this getting exercised in other tests.
 	}
 
@@ -248,6 +268,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 				tb.trace.getMemoryManager().getBytes(lastSnap(conn), tb.addr(address), buf);
 				assertEquals(0x7f, buf.get(0));
 			}, RUN_TIMEOUT_MS, RETRY_MS);
+			conn.success();
 		}
 	}
 
@@ -270,13 +291,14 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 				regs.getValue(lastSnap(conn), tb.reg(PLAT.intReg()))
 						.getUnsignedValue()
 						.toString(16)));
+			conn.success();
 		}
 	}
 
 	@Test
 	public void testOnCont() throws Exception {
 		try (LldbAndTrace conn = startAndSyncLldb()) {
-			start(conn, getSpecimenRead());
+			start(conn, getSpecimenSpin());
 
 			conn.execute("cont");
 			waitRunning(conn.conn);
@@ -287,6 +309,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 			}, RUN_TIMEOUT_MS, RETRY_MS);
 
 			conn.execute("process interrupt");
+			conn.success();
 		}
 	}
 
@@ -295,10 +318,11 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 		try (LldbAndTrace conn = startAndSyncLldb()) {
 			start(conn, getSpecimenPrint());
 
-			TraceObject inf = waitForValue(() -> tb.objAny0("Processes[]"));
+			TraceObject proc = waitForValue(() -> tb.objAny0("Processes[]"));
 			waitForPass(() -> {
-				assertEquals("STOPPED", tb.objValue(inf, lastSnap(conn), "_state"));
+				assertEquals("STOPPED", tb.objValue(proc, lastSnap(conn), "_state"));
 			}, RUN_TIMEOUT_MS, RETRY_MS);
+			conn.success();
 		}
 	}
 
@@ -308,7 +332,6 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 			start(conn, getSpecimenPrint());
 
 			conn.execute("cont");
-			waitRunning(conn.conn);
 
 			waitForPass(() -> {
 				TraceSnapshot snapshot =
@@ -322,6 +345,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 				assertThat(val, instanceOf(Number.class));
 				assertEquals(72, ((Number) val).longValue());
 			}, RUN_TIMEOUT_MS, RETRY_MS);
+			conn.success();
 		}
 	}
 
@@ -339,6 +363,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 				assertEquals(1, brks.size());
 				return (TraceObject) brks.get(0);
 			});
+			conn.success();
 		}
 	}
 
@@ -368,6 +393,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 
 			waitForPass(
 				() -> assertEquals("x>3", tb.objValue(brk, lastSnap(conn), "Condition")));
+			conn.success();
 		}
 	}
 
@@ -388,11 +414,30 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 
 			waitStopped(conn.conn);
 			conn.execute("breakpoint delete %s".formatted(brk.getCanonicalPath().index()));
-			conn.execute("stepi");
+			waitForPass(noExc(() -> conn.execute("stepi")));
 
-			waitForPass(
-				() -> assertEquals(0,
-					tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]").size()));
+			waitForPass(() -> {
+				assertEquals(0, tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]").size());
+			});
+			conn.success();
+		}
+	}
+
+	// NB: This is basically the minimum working example required to cause timeout
+	// errors in LldbAndConnection's close method. The error results (I think) from
+	// the connections being torn down before 'quit' executes.  We can throw an error
+	// for this, but why really?
+	//@Test
+	//@Repeated(100)
+	public void testTimeout() throws Exception {
+		try (LldbAndTrace conn = startAndSyncLldb()) {
+			String obj = getSpecimenPrint();
+			conn.execute("file " + obj);
+			conn.execute("process launch --stop-at-entry");
+			conn.execute("ghidra trace sync-enable");
+			conn.execute("ghidra trace sync-synth-stopped");
+			txPut(conn, "processes");
+			conn.success();
 		}
 	}
 
@@ -400,6 +445,8 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 		conn.execute("file " + obj);
 		conn.execute("ghidra trace sync-enable");
 		conn.execute("process launch --stop-at-entry");
+		conn.execute("ghidra trace sync-enable");
+		conn.execute("ghidra trace sync-synth-stopped");
 		txPut(conn, "processes");
 	}
 
@@ -408,5 +455,4 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 		conn.execute("ghidra trace put-" + obj);
 		conn.execute("ghidra trace tx-commit");
 	}
-
 }

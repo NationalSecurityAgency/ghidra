@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -745,14 +745,15 @@ public class VariableUtilities {
 
 			DataType dt = findOrCreateClassStruct(function);
 			if (dt == null) {
-				dt = DataType.VOID;
+				dt = VoidDataType.dataType;
 			}
 			dt = new PointerDataType(dt);
 			DataType[] arr = new DataType[2];
-			arr[0] = DataType.VOID;
+			arr[0] = VoidDataType.dataType;
 			arr[1] = dt;
 			VariableStorage thisStorage =
-				convention.getStorageLocations(function.getProgram(), arr, true)[1];
+				convention.getStorageLocations(function.getProgram(), arr, true,
+					function.hasVarArgs())[1];
 			try {
 				return new ParameterImpl("this", 0, dt, thisStorage, false, function.getProgram(),
 					SourceType.ANALYSIS);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,13 +18,13 @@ package ghidra.app.plugin.core.symboltree.actions;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DnDConstants;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 import javax.swing.Icon;
 import javax.swing.KeyStroke;
 import javax.swing.tree.TreePath;
 
+import docking.DockingUtils;
 import docking.KeyBindingPrecedence;
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
@@ -42,7 +42,8 @@ public class PasteAction extends SymbolTreeContextAction {
 		super("Paste Symbols", plugin.getName());
 		setPopupMenuData(new MenuData(new String[] { "Paste" }, PASTE_ICON, "cut/paste"));
 		setKeyBindingData(
-			new KeyBindingData(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK),
+			new KeyBindingData(
+				KeyStroke.getKeyStroke(KeyEvent.VK_V, DockingUtils.CONTROL_KEY_MODIFIER_MASK),
 				KeyBindingPrecedence.ActionMapLevel));
 	}
 

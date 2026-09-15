@@ -20,8 +20,6 @@ import java.net.*;
 import java.util.HashMap;
 import java.util.Map;
 
-import utilities.util.FileUtilities;
-
 /**
  * Class for representing file object regardless of whether they are actual files in the file system or
  * or files stored inside of a jar file.  This class provides most all the same capabilities as the
@@ -338,14 +336,5 @@ public class ResourceFile implements Comparable<ResourceFile> {
 	 */
 	public URI toURI() {
 		return resource.toURI();
-	}
-
-	/**
-	 * Returns true if this file's path contains the entire path of the given file.
-	 * @param otherFile the other file to check
-	 * @return true if this file's path contains the entire path of the given file.
-	 */
-	public boolean containsPath(ResourceFile otherFile) {
-		return FileUtilities.isPathContainedWithin(getFile(false), otherFile.getFile(false));
 	}
 }

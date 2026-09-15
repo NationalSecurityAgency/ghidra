@@ -28,7 +28,7 @@ dependencies {
 	api project(':Generic')
 	api 'com.formdev:flatlaf:3.5.4'
 	
-	compileOnly "junit:junit:4.12"
+	compileOnly "junit:junit:4.13.2"
 	
 	testImplementation project(path: ':Generic', configuration: 'testArtifacts')
 }

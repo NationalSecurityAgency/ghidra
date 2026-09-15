@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,33 +16,20 @@
 package ghidra.file.formats.android.multidex;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
+import ghidra.app.util.opinion.Loaded;
 import ghidra.file.formats.android.dex.DexHeaderFactory;
 import ghidra.file.formats.android.dex.format.DexHeader;
 import ghidra.file.formats.android.dex.format.MethodIDItem;
 import ghidra.file.formats.android.dex.util.DexUtil;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.DataIterator;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.model.symbol.ExternalLocation;
-import ghidra.program.model.symbol.ExternalManager;
-import ghidra.program.model.symbol.ExternalReference;
-import ghidra.program.model.symbol.RefType;
-import ghidra.program.model.symbol.Reference;
-import ghidra.program.model.symbol.ReferenceManager;
-import ghidra.program.model.symbol.SourceType;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.exception.InvalidInputException;
+import ghidra.program.model.symbol.*;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -50,7 +37,7 @@ import ghidra.util.task.TaskMonitor;
  * via the "method_lookup" section using
  * external references.
  */
-public final class MultiDexLinker {
+public final class MultiDexLinker implements AutoCloseable {
 
 	private List<Program> programs;
 	private Map<Program, DexHeader> dexMap = new HashMap<>();
@@ -109,8 +96,11 @@ public final class MultiDexLinker {
 		}
 	}
 
-	public MultiDexLinker(List<Program> programs) {
-		this.programs = new ArrayList<>(programs);//create copy of list
+	public MultiDexLinker(List<Loaded<Program>> loadedPrograms) {
+		this.programs = new ArrayList<>();
+		for (Loaded<Program> loaded : loadedPrograms) {
+			this.programs.add(loaded.getDomainObject(this));
+		}
 	}
 
 	public void link(TaskMonitor monitor) throws CancelledException, IOException,
@@ -121,12 +111,12 @@ public final class MultiDexLinker {
 		linkPrograms(monitor);
 	}
 
-	public void clear(TaskMonitor monitor) throws CancelledException {
-		Objects.requireNonNull(monitor);
+	@Override
+	public void close() {
+		programs.forEach(p -> p.release(this));
 		programs.clear();
 		dexMap.clear();
 		for (DexHeader header : cmpMap.keySet()) {
-			monitor.checkCancelled();
 			cmpMap.get(header).clear();
 		}
 		cmpMap.clear();

@@ -87,15 +87,15 @@ attach variables [ br bs bt ] [
 # bits are named foo_LL.LM_ML.MM, where LL is the least significant bits of the least
 # singificant operand half, LM the most significant bits of the least significant operand half, etc.
 
-attach variables [ mw_12_13 ] [
+attach variables [ mw ] [
 	M0 M1 M2 M3
 ];
 
-attach variables [ m2m3_6_6 ] [
+attach variables [ my ] [
 	M2 M3
 ];
 
-attach variables [ m0m1_14_14 ] [
+attach variables [ mx ] [
 	M0 M1
 ];
 
@@ -184,62 +184,62 @@ define pcodeop xsr;
 # bits are named foo_LL_LM_ML_MM, where LL is the least significant bits of the least
 # singificant operand half, LM the most significant bits of the least significant operand half, etc.
 
-srel_16_23: rel is s8_16_23  [ rel = inst_start + s8_16_23  + 4; ] { export *:4 rel; }
+ri8_srel: rel is ri8_si8  [ rel = inst_start + ri8_si8  + 4; ] { export *:4 rel; }
 
-srel_12_23: rel is s12_12_23 [ rel = inst_start + s12_12_23 + 4; ] { export *:4 rel; }
+bri12_srel: rel is bri12_si12 [ rel = inst_start + bri12_si12 + 4; ] { export *:4 rel; }
 
-srel_6_23:  rel is s8_6_23   [ rel = inst_start + s8_6_23   + 4; ] { export *:4 rel; }
-
-urel_12_15_4_5: rel is n_u2_4_5 & n_u4_12_15 [
-    rel = inst_start + ((n_u2_4_5 << 4) | n_u4_12_15) + 4;
+ri6_rel: rel is ri6_i6_4_2 & ri6_i6_0_4 [
+    rel = inst_start + ((ri6_i6_4_2 << 4) | ri6_i6_0_4) + 4;
 ] { export *:4 rel; }
 
-srel_6_23_sb2: rel is s8_6_23 [
-    rel = (inst_start & ~3) + ( s8_6_23 << 2 ) + 4;
+call_srel:  rel is call_o18   [ rel = inst_start + call_o18   + 4; ] { export *:4 rel; }
+
+call_srel_sh2: rel is call_o18 [
+    rel = (inst_start & ~3) + ( call_o18 << 2 ) + 4;
 ] { export *:4 rel; }
 
-srel_8_23_oex_sb2: rel is u16_8_23 [
-    rel = ((inst_start + 3) & ~3) + ((u16_8_23 | 0xffff0000) << 2);
+srel_oex_sh2: rel is ri16_i16 [
+    rel = ((inst_start + 3) & ~3) + ((ri16_i16 | 0xffff0000) << 2);
 ] { export *:4 rel; }
 
 # Immediates split across the instruction.
-u5_8_11_20: tmp is u1_20 & u4_8_11  [ tmp = (u1_20 << 4) | u4_8_11; ] { export *[const]:4 tmp; }
-u5_4_7_20:  tmp is u1_20 & u4_4_7   [ tmp = 32 - ((u1_20 << 4) | u4_4_7);  ] { export *[const]:4 tmp; }
-u5_8_11_16: tmp is u1_16 & u4_8_11  [ tmp = (u1_16 << 4) | u4_8_11; ] { export *[const]:4 tmp; }
-u5_4_7_12:  tmp is u1_12 & u4_4_7   [ tmp = (u1_12 << 4) | u4_4_7;  ] { export *[const]:4 tmp; }
-u5_8_11_4:  tmp is u1_4 & u4_8_11   [ tmp = (u1_4  << 4) | u4_8_11; ] { export *[const]:4 tmp; }
+u5_8_11_20: tmp is op2_0 & op_s  [ tmp = (op2_0 << 4) | op_s; ] { export *[const]:4 tmp; }
+u5_4_7_20:  tmp is op2_0 & op_t   [ tmp = 32 - ((op2_0 << 4) | op_t);  ] { export *[const]:4 tmp; }
+u5_8_11_16: tmp is op1_0 & op_s  [ tmp = (op1_0 << 4) | op_s; ] { export *[const]:4 tmp; }
+u5_4_7_12:  tmp is op_r_0 & op_t   [ tmp = (op_r_0 << 4) | op_t;  ] { export *[const]:4 tmp; }
+u5_8_11_4:  tmp is op_t_0 & op_s   [ tmp = (op_t_0  << 4) | op_s; ] { export *[const]:4 tmp; }
 
 # Signed 12-bit (extended to 16) immediate, used by MOVI.
-s16_16_23_8_11: tmp is s4_8_11 & u8_16_23 [
-   tmp = (s4_8_11 << 8) | u8_16_23;
+movi_si16: tmp is op_st_i8 & ri8_i8 [
+   tmp = (op_st_i8 << 8) | ri8_i8;
 ] { export *[const]:2 tmp; }
 
 # An “asymmetric” immediate from -32..95, used by MOVI.N.
-n_s8_12_15_4_6_asymm: tmp is n_s3_4_6 & n_s4_12_15 [
-    tmp = ((((n_s3_4_6 & 7) << 4) | (n_s4_12_15 & 15)) |
-          ((((n_s3_4_6 >> 2) & 1) & ((n_s3_4_6 >> 1) & 1)) << 7));
+movin_si8: tmp is n_op_s_0_3 & ri6_si6_0_4 [
+    tmp = ((((n_op_s_0_3 & 7) << 4) | (ri6_si6_0_4 & 15)) |
+          ((((n_op_s_0_3 >> 2) & 1) & ((n_op_s_0_3 >> 1) & 1)) << 7));
 ] { export *[const]:1 tmp; }
 
 # Immediates shifted or with offset.
-s16_16_23_sb8:  tmp is s8_16_23     [ tmp = s8_16_23  << 8; ] { export *[const]:4 tmp; }
-u15_12_23_sb3:  tmp is u12_12_23    [ tmp = u12_12_23 << 3; ] { export *[const]:4 tmp; }
-u10_16_23_sb2:  tmp is u8_16_23     [ tmp = u8_16_23  << 2; ] { export *[const]:4 tmp; }
-u9_16_23_sb1:   tmp is u8_16_23     [ tmp = u8_16_23  << 1; ] { export *[const]:4 tmp; }
-u5_20_23_plus1: tmp is u4_20_23     [ tmp = u4_20_23   + 1; ] { export *[const]:4 tmp; }
-u8_20_23_sb4:   tmp is u4_20_23     [ tmp = u4_20_23  << 4; ] { export *[const]:4 tmp; }
-u5_4_7_plus7:   tmp is u4_4_7       [ tmp = u4_4_7     + 7; ] { export *[const]:4 tmp; }
+ri8_si8_sh8:  tmp is ri8_si8     [ tmp = ri8_si8  << 8; ] { export *[const]:4 tmp; }
+bri12_i12_sh3:  tmp is bri12_i12    [ tmp = bri12_i12 << 3; ] { export *[const]:4 tmp; }
+ri8_i8_sh2:  tmp is ri8_i8     [ tmp = ri8_i8  << 2; ] { export *[const]:4 tmp; }
+u9_16_23_sb1:   tmp is ri8_i8     [ tmp = ri8_i8  << 1; ] { export *[const]:4 tmp; }
+u5_20_23_plus1: tmp is op2     [ tmp = op2   + 1; ] { export *[const]:4 tmp; }
+u8_20_23_sb4:   tmp is op2     [ tmp = op2  << 4; ] { export *[const]:4 tmp; }
+u5_4_7_plus7:   tmp is op_t       [ tmp = op_t     + 7; ] { export *[const]:4 tmp; }
 
-n_u6_12_15_sb2: tmp is n_u4_12_15  [ tmp = n_u4_12_15 << 2; ] { export *[const]:4 tmp; }
+n_u6_12_15_sb2: tmp is ri6_i6_0_4  [ tmp = ri6_i6_0_4 << 2; ] { export *[const]:4 tmp; }
 
 # One-extended. FIXME: Verify this. Only used by [LS]32E (window extension), which aren’t yet
 # implemented.
-s5_12_15_oex:  tmp is u4_12_15      [ tmp = (u4_12_15 << 2) - 64; ] { export *[const]:2 tmp; }
+s5_12_15_oex:  tmp is op_r      [ tmp = (op_r << 2) - 64; ] { export *[const]:2 tmp; }
 
 # Some 4-bit immediates with mappings that can’t be (easily) expressed in a single disassembly action.
 
 # n_u4_4_7 with 0 being -1, used by ADDI.N.
-n_s4_4_7_nozero: tmp is n_u4_4_7 = 0  [ tmp = -1;         ] { export *[const]:4 tmp; }
-n_s4_4_7_nozero: tmp is n_u4_4_7      [ tmp = n_u4_4_7+0; ] { export *[const]:4 tmp; }
+n_s4_4_7_nozero: tmp is n_op_s = 0  [ tmp = -1;         ] { export *[const]:4 tmp; }
+n_s4_4_7_nozero: tmp is n_op_s      [ tmp = n_op_s+0; ] { export *[const]:4 tmp; }
 
 # B4CONST(ar) (Branch Immediate) encodings, pg. 41 f.
 r_b4const: tmp is ar = 0         [ tmp = 0xffffffff; ] { export *[const]:4 tmp; }

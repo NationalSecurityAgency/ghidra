@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -75,7 +75,8 @@ public class DataTypeHelper {
 	 * @throws UsrException if the specified data type can't be used at the 
 	 * specified index in the composite.
 	 */
-	public static DataType parseDataType(int index, String dtValue, CompositeEditorModel editModel,
+	public static DataType parseDataType(int index, String dtValue,
+			CompositeEditorModel<?> editModel,
 			DataTypeManager dtManager, DataTypeManagerService dtmService)
 			throws InvalidDataTypeException, UsrException {
 
@@ -98,7 +99,7 @@ public class DataTypeHelper {
 		return newDt;
 	}
 
-	static DataTypeInstance getSizedDataType(CompositeEditorProvider provider, DataType dt,
+	static DataTypeInstance getSizedDataType(CompositeEditorProvider<?, ?> provider, DataType dt,
 			int defaultSize, int maxSize) throws InvalidDataTypeException {
 		if (dt instanceof FactoryDataType) {
 			throw new InvalidDataTypeException("Factory data types are not allowed.");
@@ -137,7 +138,7 @@ public class DataTypeHelper {
 			provider.editorModel.usesAlignedLengthComponents());
 	}
 
-	public static int requestDtSize(CompositeEditorProvider provider, String dtName,
+	public static int requestDtSize(CompositeEditorProvider<?, ?> provider, String dtName,
 			int defaultSize, int maxBytes) throws CancelledException {
 		NumberInputDialog dtSizeDialog =
 			new NumberInputDialog(dtName + " bytes", defaultSize, 1, maxBytes);
@@ -149,7 +150,7 @@ public class DataTypeHelper {
 		}
 		int resultBytes = dtSizeDialog.getValue();
 
-		CompositeEditorModel model = provider.getModel();
+		CompositeEditorModel<?> model = provider.getModel();
 		model.setLastNumBytes(resultBytes);
 
 		return resultBytes;
@@ -162,7 +163,8 @@ public class DataTypeHelper {
 	 * index where it will be located. If the data type is a valid size, it
 	 * will be returned unchanged. If the user cancels from the size dialog,
 	 * then a null is returned.
-	 *
+	 * 
+	 * @param model The composite editor model
 	 * @param index the component index of where to add the data type.
 	 * @param dt the data type to add
 	 * @param useAlignedLength if true a fixed-length primitive data type will use its 
@@ -171,7 +173,7 @@ public class DataTypeHelper {
 	 * @return the data type and its size or null if the user canceled when 
 	 * prompted for a size.
 	 */
-	public static DataTypeInstance getFixedLength(CompositeEditorModel model, int index,
+	public static DataTypeInstance getFixedLength(CompositeEditorModel<?> model, int index,
 			DataType dt, boolean useAlignedLength) {
 		if (dt instanceof FactoryDataType) {
 			model.setStatus("Factory data types are not allowed in a composite data type.");
@@ -196,9 +198,9 @@ public class DataTypeHelper {
 		return DataTypeInstance.getDataTypeInstance(dt, length, useAlignedLength);
 	}
 
-	public static DataTypeInstance requestBytes(CompositeEditorModel model, DataType dt,
+	public static DataTypeInstance requestBytes(CompositeEditorModel<?> model, DataType dt,
 			int maxBytes) {
-		CompositeEditorProvider provider = model.getProvider();
+		CompositeEditorProvider<?, ?> provider = model.getProvider();
 		DataType actualDt = dt;
 		if (actualDt instanceof TypeDef) {
 			actualDt = ((TypeDef) actualDt).getBaseDataType();

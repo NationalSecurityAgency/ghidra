@@ -4,6 +4,7 @@
   <properties>
     <property key="addressesDoNotAppearDirectlyInCode" value="true"/>
     <property key="emulateInstructionStateModifierClass" value="ghidra.program.emulation.PPCEmulateInstructionStateModifier"/>
+    <property key="useropLibs" value="ppc"/>
     <property key="assemblyRating:PowerPC:BE:64:A2-32addr" value="PLATINUM"/>
     <property key="assemblyRating:PowerPC:BE:64:A2ALT-32addr" value="PLATINUM"/>
     <property key="assemblyRating:PowerPC:BE:64:default" value="PLATINUM"/>

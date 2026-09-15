@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,19 +23,20 @@ import ghidra.program.model.listing.Function;
 import ghidra.util.datastruct.Duo.Side;
 
 public abstract class CodeComparisonActionContext extends DefaultActionContext
-		implements CodeComparisonPanelActionContext {
-	private CodeComparisonPanel comparisonPanel;
+		implements CodeComparisonViewActionContext {
+	private CodeComparisonView comparisonProvider;
 
 	/** 
 	 * Constructor
 	 * @param provider the ComponentProvider containing the code comparison panel
-	 * @param panel the CodeComparisonPanel that generated this context
+	 * @param comparisonProvider the provider that generated this context
 	 * @param component the focusable component for associated with the comparison panel
 	 */
-	public CodeComparisonActionContext(ComponentProvider provider, CodeComparisonPanel panel,
+	public CodeComparisonActionContext(ComponentProvider provider,
+			CodeComparisonView comparisonProvider,
 			Component component) {
-		super(provider, panel, component);
-		this.comparisonPanel = panel;
+		super(provider, comparisonProvider, component);
+		this.comparisonProvider = comparisonProvider;
 	}
 
 	/**
@@ -44,8 +45,8 @@ public abstract class CodeComparisonActionContext extends DefaultActionContext
 	 * @return the function to get information from
 	 */
 	public Function getSourceFunction() {
-		Side activeSide = comparisonPanel.getActiveSide();
-		return comparisonPanel.getFunction(activeSide.otherSide());
+		Side activeSide = comparisonProvider.getActiveSide();
+		return comparisonProvider.getFunction(activeSide.otherSide());
 	}
 
 	/**
@@ -54,7 +55,7 @@ public abstract class CodeComparisonActionContext extends DefaultActionContext
 	 * @return the function to apply information to
 	 */
 	public Function getTargetFunction() {
-		Side activeSide = comparisonPanel.getActiveSide();
-		return comparisonPanel.getFunction(activeSide);
+		Side activeSide = comparisonProvider.getActiveSide();
+		return comparisonProvider.getFunction(activeSide);
 	}
 }

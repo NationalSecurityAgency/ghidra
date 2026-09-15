@@ -27,16 +27,15 @@ import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.EntryPoint;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.EntryPointPrototype;
 import ghidra.pcode.exec.*;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.ProgramContext;
 
 /**
  * A JIT-accelerated thread of p-code emulation
- * 
  * <p>
  * This class implements the actual JIT-accelerated execution loop. In contrast to the normal
  * per-instruction Fetch-Execute-Store loop inherited from {@link DefaultPcodeThread}, this thread's
  * {@link #run()} method implements a per-<em>passage</em> Fetch-Decode-Translate-Execute loop.
- * 
  * 
  * <h2>Fetch</h2>
  * <p>
@@ -83,11 +82,9 @@ public class JitPcodeThread extends BytesPcodeThread {
 
 	/**
 	 * This thread's cache of translations instantiated for this thread.
-	 * 
 	 * <p>
 	 * As an optimization, the translator generates classes which pre-fetch portions of the thread's
 	 * state. Thus, the class must be instantiated for each particular thread needing to execute it.
-	 * 
 	 * <p>
 	 * TODO: Invalidation of entries. There are several reasons an entry may need to be invalidated:
 	 * Expiration, eviction, or perhaps because the {@link EntryPointPrototype} (from the emulator)
@@ -97,7 +94,6 @@ public class JitPcodeThread extends BytesPcodeThread {
 
 	/**
 	 * Create a thread
-	 * 
 	 * <p>
 	 * This should only be called by the emulator and its test suites.
 	 * 
@@ -118,7 +114,6 @@ public class JitPcodeThread extends BytesPcodeThread {
 
 	/**
 	 * Create the passage decoder
-	 * 
 	 * <p>
 	 * This is an extension point in case the decoder needs to be replaced with a further extension.
 	 * 
@@ -183,7 +178,6 @@ public class JitPcodeThread extends BytesPcodeThread {
 	/**
 	 * Check if the <em>emulator</em> has an entry prototype for the given address and contextreg
 	 * value.
-	 * 
 	 * <p>
 	 * This simply passes through to the emulator. It does not matter whether or not this thread has
 	 * instantiated the prototype or not. If any thread has caused the emulator to translate the
@@ -199,12 +193,10 @@ public class JitPcodeThread extends BytesPcodeThread {
 
 	/**
 	 * Get the translated and instantiated entry point for the given address and contextreg value.
-	 * 
 	 * <p>
 	 * An <b>entry point</b> is an instance of a class representing a translated passage and an
 	 * index identifying the point at which to enter the passage. In essence, it is an instance of
 	 * an <b>entry prototype</b> for this thread.
-	 * 
 	 * <p>
 	 * This will first check the cache for an existing instance. Then, it will delegate to the
 	 * emulator. The emulator will check its cache for an existing translation. If one is found, we
@@ -225,7 +217,6 @@ public class JitPcodeThread extends BytesPcodeThread {
 
 	/**
 	 * {@inheritDoc}
-	 * 
 	 * <p>
 	 * We override only this method to accelerate execution using JIT translation. Implementing
 	 * single stepping via JIT doesn't make much sense from an efficiency standpoint. However, this
@@ -242,7 +233,7 @@ public class JitPcodeThread extends BytesPcodeThread {
 			finishInstruction();
 		}
 		EntryPoint next = null;
-		while (!isSuspended()) {
+		while (!isSuspended() && !getMachine().isSuspended()) {
 			if (next == null) {
 				next = getEntry(new AddrCtx(getContext(), getCounter()));
 			}
@@ -257,7 +248,6 @@ public class JitPcodeThread extends BytesPcodeThread {
 
 	/**
 	 * This is called before each basic block is executed.
-	 * 
 	 * <p>
 	 * This gives the thread an opportunity to track and control execution, if desired. It provides
 	 * the number of instructions and additional p-code ops about to be completed. If the counts
@@ -271,8 +261,44 @@ public class JitPcodeThread extends BytesPcodeThread {
 	 *            in the current (partial) instruction.
 	 */
 	public void count(int instructions, int trailingOps) {
-		if (isSuspended()) {
+		if (isSuspended() || getMachine().isSuspended()) {
 			throw new SuspendedPcodeExecutionException(null, null);
+		}
+	}
+
+	/**
+	 * Write the given counter and context to the emulator and its machine state
+	 * 
+	 * @param counter the counter
+	 * @param context the context
+	 */
+	public void writeCounterAndContext(Address counter, RegisterValue context) {
+		// Not overrideCounter/Context. Things can override those.
+		writeCounter(counter);
+		if (context != null) {
+			writeContext(context);
+		}
+	}
+
+	/**
+	 * Set the emulator's counter and context without affecting its machine state
+	 * 
+	 * @param counter the counter
+	 * @param context the context
+	 * @implNote the reasons for doing this are a bit nuanced and they deal in the setting of the pc
+	 *           by p-code ops whilst it also makes hazardous userop invocations. The intended value
+	 *           of the pc may not survive if it gets clobbered with the current counter before
+	 *           execution reaches the "goto pc".
+	 */
+	public void setCounterAndContext(Address counter, RegisterValue context) {
+		setCounter(counter);
+		if (context != null) {
+			/**
+			 * TODO: Later this might become assignContext, but only after we establish conventions
+			 * for accessing context in userops. For now, state modifiers expect the contextreg to
+			 * be in the machine state.
+			 */
+			writeContext(context);
 		}
 	}
 }

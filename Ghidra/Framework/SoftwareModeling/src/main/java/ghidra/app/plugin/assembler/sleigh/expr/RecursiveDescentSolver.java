@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,6 @@ package ghidra.app.plugin.assembler.sleigh.expr;
 import java.util.*;
 
 import ghidra.app.plugin.assembler.sleigh.sem.*;
-import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
 import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
 
 /**
@@ -39,7 +38,6 @@ import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
  * {@link PatternExpression}.
  */
 public class RecursiveDescentSolver {
-	protected static final DbgTimer DBG = DbgTimer.INACTIVE;
 	private static final RecursiveDescentSolver INSTANCE = new RecursiveDescentSolver();
 
 	// A mapping from each subclass of PatternExpression to the appropriate solver
@@ -118,14 +116,8 @@ public class RecursiveDescentSolver {
 			PatternExpression exp, MaskedLong goal, Map<String, Long> vals,
 			AssemblyResolvedPatterns cur, Set<SolverHint> hints, String description)
 			throws NeedsBackfillException {
-		try {
-			return getRegistered(exp.getClass()).solve(factory, exp, goal, vals, cur, hints,
-				description);
-		}
-		catch (UnsupportedOperationException e) {
-			DBG.println("Error solving " + exp + " = " + goal);
-			throw e;
-		}
+		return getRegistered(exp.getClass()).solve(factory, exp, goal, vals, cur, hints,
+			description);
 	}
 
 	/**
@@ -170,7 +162,6 @@ public class RecursiveDescentSolver {
 	protected <T extends PatternExpression> MaskedLong getValue(T exp, Map<String, Long> vals,
 			AssemblyResolvedPatterns cur) throws NeedsBackfillException {
 		MaskedLong value = getRegistered(exp.getClass()).getValue(exp, vals, cur);
-		DBG.println("Expression: " + value + " =: " + exp);
 		return value;
 	}
 

@@ -54,6 +54,7 @@ public abstract class MenuHandler implements MenuListener, PopupMenuListener {
 	 * Invoked when a menu is cancelled (not sure if this is ever invoked)
 	 * @see javax.swing.event.MenuListener#menuCanceled(javax.swing.event.MenuEvent)
 	 */
+	@Override
 	public void menuCanceled(MenuEvent e) {
 	}
 
@@ -63,6 +64,7 @@ public abstract class MenuHandler implements MenuListener, PopupMenuListener {
 	 * if an action item is selected.
 	 * @see javax.swing.event.MenuListener#menuDeselected(javax.swing.event.MenuEvent)
 	 */
+	@Override
 	public void menuDeselected(MenuEvent e) {
 	}
 
@@ -70,6 +72,7 @@ public abstract class MenuHandler implements MenuListener, PopupMenuListener {
 	 * Invoked when a menu is selected.
 	 * @see javax.swing.event.MenuListener#menuSelected(javax.swing.event.MenuEvent)
 	 */
+	@Override
 	public void menuSelected(MenuEvent e) {
 	}
 
@@ -77,7 +80,8 @@ public abstract class MenuHandler implements MenuListener, PopupMenuListener {
 	 * This method is called before the popup menu becomes visible 
 	 * @see javax.swing.event.PopupMenuListener#popupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent)
 	 */
-    public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+    @Override
+	public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
     }
 
     /**
@@ -85,14 +89,16 @@ public abstract class MenuHandler implements MenuListener, PopupMenuListener {
      * Note that a JPopupMenu can become invisible any time 
      * @see javax.swing.event.PopupMenuListener#popupMenuWillBecomeInvisible(javax.swing.event.PopupMenuEvent)
      */
-    public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+    @Override
+	public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
     }
 
     /**
      * This method is called when the popup menu is canceled
      * @see javax.swing.event.PopupMenuListener#popupMenuCanceled(javax.swing.event.PopupMenuEvent)
      */
-    public void popupMenuCanceled(PopupMenuEvent e) {
+    @Override
+	public void popupMenuCanceled(PopupMenuEvent e) {
     }
 	
 }

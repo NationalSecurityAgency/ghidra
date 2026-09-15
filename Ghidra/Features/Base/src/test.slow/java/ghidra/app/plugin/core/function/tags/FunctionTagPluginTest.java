@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -401,15 +401,15 @@ public class FunctionTagPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		goTo(tool, program, addr("00000000"));
 		FunctionTagTable table = getSourceTable();
 		selectTagInTable(tagName1, table);
-		int index = table.getSelectedRow();
-		table.addRowSelectionInterval(index, index + 1);
-		clickTableRange(table, index, 2);
+		int row = table.getSelectedRow();
+		table.addRowSelectionInterval(row, row + 1);
+		clickTableRange(table, row, 2);
 
 		waitForTableModel(functionsPanel.getTableModel());
 
 		// Verify that all 3 functions are in the function panel
 		functions = functionsPanel.getFunctions();
-		assertTrue(functions.size() == 3);
+		assertEquals(3, functions.size());
 		Function f1 = functions.get(0);
 		Function f2 = functions.get(1);
 		Function f3 = functions.get(2);

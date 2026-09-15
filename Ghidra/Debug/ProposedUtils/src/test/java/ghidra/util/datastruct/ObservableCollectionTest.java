@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,8 +18,6 @@ package ghidra.util.datastruct;
 import static org.junit.Assert.*;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.After;
 import org.junit.Test;
@@ -56,6 +54,8 @@ public class ObservableCollectionTest {
 			super(new LinkedHashSet<>(), TestCollectionListener.class);
 		}
 	}
+
+	private TestListener listener = new TestListener();
 
 	protected boolean gotSpurious = false;
 
@@ -102,56 +102,37 @@ public class ObservableCollectionTest {
 	@Test
 	public void testAddCausesEvent() {
 		TestObservableCollection col = new TestObservableCollection();
-		AtomicReference<Object> lastAdded = new AtomicReference<>();
-		TestCollectionListener listener = new DefaultTestCollectionListener() {
-			@Override
-			public void elementAdded(Object element) {
-				lastAdded.set(element);
-			}
-		};
+
 		col.addChangeListener(listener);
 		col.add("Ent1");
-		assertEquals("Ent1", lastAdded.get());
-		lastAdded.set(null);
+		assertEquals("Ent1", listener.getLastAdded());
+		listener.clear();
 		col.add("Ent1"); // Already there, so no event
-		assertEquals(null, lastAdded.get());
+		assertEquals(null, listener.getLastAdded());
 	}
 
 	@Test
 	public void testRemoveCausesEvent() {
 		TestObservableCollection col = new TestObservableCollection();
 		col.add("Ent1");
-		AtomicReference<Object> lastRemoved = new AtomicReference<>();
-		TestCollectionListener listener = new DefaultTestCollectionListener() {
-			@Override
-			public void elementRemoved(Object element) {
-				lastRemoved.set(element);
-			}
-		};
+
 		col.addChangeListener(listener);
 		col.remove("Ent1");
-		assertEquals("Ent1", lastRemoved.get());
-		lastRemoved.set(null);
+		assertEquals("Ent1", listener.getLastRemoved());
+		listener.clear();
 		col.remove("Ent1"); // Already gone, so no event
-		assertEquals(null, lastRemoved.get());
+		assertEquals(null, listener.getLastRemoved());
 	}
 
 	@Test
 	public void testRemoveViaIteratorCausesEvent() {
 		TestObservableCollection col = new TestObservableCollection();
 		col.addAll(List.of("Ent1", "Ent2", "Ent3"));
-		AtomicReference<Object> lastRemoved = new AtomicReference<>();
-		TestCollectionListener listener = new DefaultTestCollectionListener() {
-			@Override
-			public void elementRemoved(Object element) {
-				lastRemoved.set(element);
-			}
-		};
 		col.addChangeListener(listener);
 		for (Iterator<String> it = col.iterator(); it.hasNext();) {
 			String ent = it.next();
 			it.remove();
-			assertEquals(ent, lastRemoved.get());
+			assertEquals(ent, listener.getLastRemoved());
 		}
 		assertTrue(col.isEmpty());
 	}
@@ -159,306 +140,191 @@ public class ObservableCollectionTest {
 	@Test
 	public void testAddAllCausesEvent() {
 		TestObservableCollection col = new TestObservableCollection();
-		List<Object> added = new ArrayList<>();
-		TestCollectionListener listener = new DefaultTestCollectionListener() {
-			@Override
-			public void elementAdded(Object element) {
-				added.add(element);
-			}
-		};
 		col.addChangeListener(listener);
 		assertTrue(col.addAll(List.of("Ent1", "Ent2")));
 		assertTrue(col.addAll(List.of("Ent3", "Ent2")));
 		assertTrue(col.addAll(List.of("Ent3", "Ent4")));
 		assertFalse(col.addAll(List.of("Ent1", "Ent2")));
-		assertEquals(List.of("Ent1", "Ent2", "Ent3", "Ent4"), added);
+		assertEquals(List.of("Ent1", "Ent2", "Ent3", "Ent4"), listener.added);
 	}
 
 	@Test
 	public void testRemovalAllCausesEvent() {
 		TestObservableCollection col = new TestObservableCollection();
 		col.addAll(List.of("Ent1", "Ent2", "Ent3", "Ent4"));
-		List<Object> removed = new ArrayList<>();
-		TestCollectionListener listener = new DefaultTestCollectionListener() {
-			@Override
-			public void elementRemoved(Object element) {
-				removed.add(element);
-			}
-		};
 		col.addChangeListener(listener);
 		assertTrue(col.removeAll(List.of("Ent1", "Ent2")));
 		assertTrue(col.removeAll(List.of("Ent3", "Ent2")));
 		assertTrue(col.removeAll(List.of("Ent3", "Ent4")));
 		assertFalse(col.removeAll(List.of("Ent1", "Ent2")));
-		assertEquals(List.of("Ent1", "Ent2", "Ent3", "Ent4"), removed);
+		assertEquals(List.of("Ent1", "Ent2", "Ent3", "Ent4"), listener.removed);
 	}
 
 	@Test
 	public void testRetailAllCausesEvent() {
 		TestObservableCollection col = new TestObservableCollection();
 		col.addAll(List.of("Ent1", "Ent2", "Ent3", "Ent4"));
-		List<Object> removed = new ArrayList<>();
-		TestCollectionListener listener = new DefaultTestCollectionListener() {
-			@Override
-			public void elementRemoved(Object element) {
-				removed.add(element);
-			}
-		};
 		col.addChangeListener(listener);
 		assertTrue(col.retainAll(List.of("Ent3", "Ent4")));
 		assertTrue(col.retainAll(List.of("Ent4", "Ent1")));
 		assertTrue(col.retainAll(List.of("Ent1", "Ent2")));
 		assertFalse(col.retainAll(List.of("Ent3", "Ent4")));
-		assertEquals(List.of("Ent1", "Ent2", "Ent3", "Ent4"), removed);
+		assertEquals(List.of("Ent1", "Ent2", "Ent3", "Ent4"), listener.removed);
 	}
 
 	@Test
 	public void testClearCausesEvent() {
 		TestObservableCollection col = new TestObservableCollection();
 		col.addAll(List.of("Ent1", "Ent2", "Ent3", "Ent4"));
-		List<Object> removed = new ArrayList<>();
-		TestCollectionListener listener = new DefaultTestCollectionListener() {
-			@Override
-			public void elementRemoved(Object element) {
-				removed.add(element);
-			}
-		};
 		col.addChangeListener(listener);
 		col.clear();
-		assertEquals(List.of("Ent1", "Ent2", "Ent3", "Ent4"), removed);
+		assertEquals(List.of("Ent1", "Ent2", "Ent3", "Ent4"), listener.removed);
 	}
 
 	@Test
 	public void testNotifyModified() {
 		TestObservableCollection col = new TestObservableCollection();
 		col.add("Ent1");
-		List<Object> modified = new ArrayList<>();
-		TestCollectionListener listener = new DefaultTestCollectionListener() {
-			@Override
-			public void elementModified(Object element) {
-				modified.add(element);
-			}
-		};
 		col.addChangeListener(listener);
 		col.notifyModified("Ent1");
 		col.notifyModified("Ent1");
-		assertEquals(List.of("Ent1", "Ent1"), modified);
+		assertEquals(List.of("Ent1", "Ent1"), listener.modified);
 	}
 
 	@Test
 	public void testRemoveChangeListener() {
 		TestObservableCollection col = new TestObservableCollection();
-		AtomicBoolean didAdd = new AtomicBoolean();
-		TestCollectionListener listener = new DefaultTestCollectionListener() {
-			@Override
-			public void elementAdded(Object element) {
-				if (didAdd.getAndSet(true)) {
-					fail();
-				}
-			}
-		};
 		col.addChangeListener(listener);
 		assertTrue(col.add("Ent1"));
-		assertTrue(didAdd.get());
+		assertEquals(1, listener.added.size());
 		col.removeChangeListener(listener);
 		assertTrue(col.add("Ent2"));
-		assertTrue(didAdd.get());
 	}
 
 	@Test
 	public void testAggregateChangesDelays() {
 		TestObservableCollection col = new TestObservableCollection();
-		List<Object> added = new ArrayList<>();
-		TestCollectionListener listener = new DefaultTestCollectionListener() {
-			@Override
-			public void elementAdded(Object element) {
-				added.add(element);
-			}
-		};
 		col.addChangeListener(listener);
 		try (ChangeAggregator changes = col.aggregateChanges()) {
 			assertTrue(col.add("Ent1"));
-			assertEquals(List.of(), added);
+			assertEquals(List.of(), listener.added);
 		}
-		assertEquals(List.of("Ent1"), added);
+		assertEquals(List.of("Ent1"), listener.added);
 	}
 
 	@Test
 	public void testAggregateChangesAggregates() {
 		TestObservableCollection col = new TestObservableCollection();
-		List<Object> added = new ArrayList<>();
-		TestCollectionListener listener = new DefaultTestCollectionListener() {
-			@Override
-			public void elementAdded(Object element) {
-				added.add(element);
-			}
-		};
 		col.addChangeListener(listener);
 		try (ChangeAggregator changes = col.aggregateChanges()) {
 			assertTrue(col.add("Ent1"));
 			assertTrue(col.add("Ent2"));
-			assertEquals(List.of(), added);
+			assertEquals(List.of(), listener.added);
 		}
-		assertEquals(List.of("Ent1", "Ent2"), added);
+		assertEquals(List.of("Ent1", "Ent2"), listener.added);
 	}
 
 	@Test
 	public void testAggregateChangesAddAddIsAdd() {
 		TestObservableCollection col = new TestObservableCollection();
-		List<Object> added = new ArrayList<>();
-		TestCollectionListener listener = new DefaultTestCollectionListener() {
-			@Override
-			public void elementAdded(Object element) {
-				added.add(element);
-			}
-		};
 		col.addChangeListener(listener);
 		try (ChangeAggregator changes = col.aggregateChanges()) {
 			assertTrue(col.add("Ent1"));
 			assertFalse(col.add("Ent1"));
-			assertEquals(List.of(), added);
+			assertEquals(List.of(), listener.added);
 		}
-		assertEquals(List.of("Ent1"), added);
+		assertEquals(List.of("Ent1"), listener.added);
 	}
 
 	@Test
 	public void testAggregateChangesAddModIsAdd() {
 		TestObservableCollection col = new TestObservableCollection();
-		List<Object> added = new ArrayList<>();
-		TestCollectionListener listener = new DefaultTestCollectionListener() {
-			@Override
-			public void elementAdded(Object element) {
-				added.add(element);
-			}
-		};
 		col.addChangeListener(listener);
 		try (ChangeAggregator changes = col.aggregateChanges()) {
 			assertTrue(col.add("Ent1"));
 			col.notifyModified("Ent1");
-			assertEquals(List.of(), added);
+			assertEquals(List.of(), listener.added);
 		}
-		assertEquals(List.of("Ent1"), added);
+		assertEquals(List.of("Ent1"), listener.added);
 	}
 
 	@Test
 	public void testAggregateChangesAddRemIsNothing() {
 		TestObservableCollection col = new TestObservableCollection();
-		List<Object> added = new ArrayList<>();
-		TestCollectionListener listener = new DefaultTestCollectionListener() {
-			@Override
-			public void elementAdded(Object element) {
-				added.add(element);
-			}
-		};
 		col.addChangeListener(listener);
 		try (ChangeAggregator changes = col.aggregateChanges()) {
 			assertTrue(col.add("Ent1"));
-			assertEquals(List.of(), added);
+			assertEquals(List.of(), listener.added);
 			assertTrue(col.remove("Ent1"));
-			assertEquals(List.of(), added);
+			assertEquals(List.of(), listener.added);
 		}
-		assertEquals(List.of(), added);
+		assertEquals(List.of(), listener.added);
 	}
 
 	@Test
 	public void testAggregateChangesModAddIsMod() {
 		TestObservableCollection col = new TestObservableCollection();
-		List<Object> modified = new ArrayList<>();
 		col.add("Ent1");
-		TestCollectionListener listener = new DefaultTestCollectionListener() {
-			@Override
-			public void elementModified(Object element) {
-				modified.add(element);
-			}
-		};
 		col.addChangeListener(listener);
 		try (ChangeAggregator changes = col.aggregateChanges()) {
 			col.notifyModified("Ent1");
-			assertEquals(List.of(), modified);
+			assertEquals(List.of(), listener.modified);
 			assertFalse(col.add("Ent1"));
-			assertEquals(List.of(), modified);
+			assertEquals(List.of(), listener.modified);
 		}
-		assertEquals(List.of("Ent1"), modified);
+		assertEquals(List.of("Ent1"), listener.modified);
 	}
 
 	@Test
 	public void testAggregateChangesModModIsMod() {
 		TestObservableCollection col = new TestObservableCollection();
-		List<Object> modified = new ArrayList<>();
 		col.add("Ent1");
-		TestCollectionListener listener = new DefaultTestCollectionListener() {
-			@Override
-			public void elementModified(Object element) {
-				modified.add(element);
-			}
-		};
 		col.addChangeListener(listener);
 		try (ChangeAggregator changes = col.aggregateChanges()) {
 			col.notifyModified("Ent1");
-			assertEquals(List.of(), modified);
+			assertEquals(List.of(), listener.modified);
 			col.notifyModified("Ent1");
-			assertEquals(List.of(), modified);
+			assertEquals(List.of(), listener.modified);
 		}
-		assertEquals(List.of("Ent1"), modified);
+		assertEquals(List.of("Ent1"), listener.modified);
 	}
 
 	@Test
 	public void testAggregateChangesModRemIsRem() {
 		TestObservableCollection col = new TestObservableCollection();
-		List<Object> removed = new ArrayList<>();
 		col.add("Ent1");
-		TestCollectionListener listener = new DefaultTestCollectionListener() {
-			@Override
-			public void elementRemoved(Object element) {
-				removed.add(element);
-			}
-		};
 		col.addChangeListener(listener);
 		try (ChangeAggregator changes = col.aggregateChanges()) {
 			col.notifyModified("Ent1");
-			assertEquals(List.of(), removed);
+			assertEquals(List.of(), listener.removed);
 			assertTrue(col.remove("Ent1"));
-			assertEquals(List.of(), removed);
+			assertEquals(List.of(), listener.removed);
 		}
-		assertEquals(List.of("Ent1"), removed);
+		assertEquals(List.of("Ent1"), listener.removed);
 	}
 
 	@Test
 	public void testAggregateChangesRemAddIsMod() {
 		TestObservableCollection col = new TestObservableCollection();
-		List<Object> modified = new ArrayList<>();
 		col.add("Ent1");
-		TestCollectionListener listener = new DefaultTestCollectionListener() {
-			@Override
-			public void elementModified(Object element) {
-				modified.add(element);
-			}
-		};
 		col.addChangeListener(listener);
 		try (ChangeAggregator changes = col.aggregateChanges()) {
 			assertTrue(col.remove("Ent1"));
-			assertEquals(List.of(), modified);
+			assertEquals(List.of(), listener.modified);
 			assertTrue(col.add("Ent1"));
-			assertEquals(List.of(), modified);
+			assertEquals(List.of(), listener.modified);
 		}
-		assertEquals(List.of("Ent1"), modified);
+		assertEquals(List.of("Ent1"), listener.modified);
 	}
 
 	@Test(expected = AssertionError.class)
 	public void testAggregateChangesRemModIsError() {
 		TestObservableCollection col = new TestObservableCollection();
-		List<Object> removed = new ArrayList<>();
 		col.add("Ent1");
-		TestCollectionListener listener = new DefaultTestCollectionListener() {
-			@Override
-			public void elementRemoved(Object element) {
-				removed.add(element);
-			}
-		};
 		col.addChangeListener(listener);
 		try (ChangeAggregator changes = col.aggregateChanges()) {
 			assertTrue(col.remove("Ent1"));
-			assertEquals(List.of(), removed);
+			assertEquals(List.of(), listener.removed);
 			col.notifyModified("Ent1");
 		}
 	}
@@ -466,45 +332,75 @@ public class ObservableCollectionTest {
 	@Test
 	public void testAggregateChangesRemRemIsRem() {
 		TestObservableCollection col = new TestObservableCollection();
-		List<Object> removed = new ArrayList<>();
 		col.add("Ent1");
-		TestCollectionListener listener = new DefaultTestCollectionListener() {
-			@Override
-			public void elementRemoved(Object element) {
-				removed.add(element);
-			}
-		};
 		col.addChangeListener(listener);
 		try (ChangeAggregator changes = col.aggregateChanges()) {
 			assertTrue(col.remove("Ent1"));
-			assertEquals(List.of(), removed);
+			assertEquals(List.of(), listener.removed);
 			assertFalse(col.remove("Ent1"));
-			assertEquals(List.of(), removed);
+			assertEquals(List.of(), listener.removed);
 		}
-		assertEquals(List.of("Ent1"), removed);
+		assertEquals(List.of("Ent1"), listener.removed);
 	}
 
 	@Test
 	public void testAggregateChangesNest() {
 		TestObservableCollection col = new TestObservableCollection();
-		List<Object> added = new ArrayList<>();
-		TestCollectionListener listener = new DefaultTestCollectionListener() {
-			@Override
-			public void elementAdded(Object element) {
-				added.add(element);
-			}
-		};
 		col.addChangeListener(listener);
 		try (ChangeAggregator changesOuter = col.aggregateChanges()) {
 			assertTrue(col.add("Ent1"));
-			assertEquals(List.of(), added);
+			assertEquals(List.of(), listener.added);
 			try (ChangeAggregator changesInner = col.aggregateChanges()) {
 				assertTrue(col.add("Ent2"));
-				assertEquals(List.of(), added);
+				assertEquals(List.of(), listener.added);
 			}
 			assertTrue(col.add("Ent3"));
-			assertEquals(List.of(), added);
+			assertEquals(List.of(), listener.added);
 		}
-		assertEquals(List.of("Ent1", "Ent2", "Ent3"), added);
+		assertEquals(List.of("Ent1", "Ent2", "Ent3"), listener.added);
 	}
+
+	private class TestListener extends DefaultTestCollectionListener {
+
+		private List<Object> added = new ArrayList<>();
+		private List<Object> removed = new ArrayList<>();
+		private List<Object> modified = new ArrayList<>();
+
+		@Override
+		public void elementAdded(Object element) {
+			added.add(element);
+		}
+
+		@Override
+		public void elementRemoved(Object element) {
+			removed.add(element);
+		}
+
+		@Override
+		public void elementModified(Object element) {
+			modified.add(element);
+		}
+
+		public void clear() {
+			added.clear();
+			removed.clear();
+			modified.clear();
+		}
+
+		public Object getLastRemoved() {
+			if (removed.isEmpty()) {
+				return null;
+			}
+			return removed.get(removed.size() - 1);
+		}
+
+		public Object getLastAdded() {
+			if (added.isEmpty()) {
+				return null;
+			}
+			return added.get(added.size() - 1);
+		}
+
+	}
+
 }

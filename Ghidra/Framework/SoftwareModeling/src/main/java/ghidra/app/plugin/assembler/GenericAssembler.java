@@ -61,8 +61,8 @@ public interface GenericAssembler<RP extends AssemblyResolvedPatterns> {
 	 * @throws AddressOverflowException the resulting block is beyond the valid address range
 	 */
 	public InstructionIterator assemble(Address at, String... listing)
-			throws AssemblySyntaxException,
-			AssemblySemanticException, MemoryAccessException, AddressOverflowException;
+			throws AssemblySyntaxException, AssemblySemanticException, MemoryAccessException,
+			AddressOverflowException;
 
 	/**
 	 * Assemble a line instruction at the given address.

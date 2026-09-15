@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@ import java.util.Collection;
 
 import ghidra.features.base.codecompare.model.FunctionComparisonModel;
 import ghidra.features.base.codecompare.model.MatchedFunctionComparisonModel;
+import ghidra.features.base.codecompare.panel.FunctionComparisonPanel;
 import ghidra.program.model.listing.Function;
 import utility.function.Callback;
 
@@ -84,6 +85,17 @@ public interface FunctionComparisonService {
 	 * @param closeListener an optional callback if the client wants to be notified when the 
 	 * associated function comparison windows is closed.
 	 */
-	public void createCustomComparison(FunctionComparisonModel model,
-			Callback closeListener);
+	public void createCustomComparison(FunctionComparisonModel model, Callback closeListener);
+
+	/**
+	 * Creates a new comparison view that the caller can install into their UI.  This is in contrast
+	 * with {@link #createCustomComparison(FunctionComparisonModel, Callback)}, which will install
+	 * the new comparison into an existing UI.
+	 * <p>
+	 * Note: clients are responsible for calling {@link FunctionComparisonPanel#dispose()} when done
+	 * using the panel.
+	 * 
+	 * @return the new panel
+	 */
+	public FunctionComparisonPanel createComparisonViewer();
 }

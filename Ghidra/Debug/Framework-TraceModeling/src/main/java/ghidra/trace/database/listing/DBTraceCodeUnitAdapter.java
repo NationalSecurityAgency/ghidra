@@ -18,15 +18,16 @@ package ghidra.trace.database.listing;
 import static ghidra.lifecycle.Unfinished.TODO;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map.Entry;
 
 import org.apache.commons.collections4.IteratorUtils;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRangeImpl;
+import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
 import ghidra.trace.database.DBTrace;
@@ -38,7 +39,6 @@ import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.property.*;
 import ghidra.trace.model.symbol.TraceReference;
 import ghidra.trace.model.symbol.TraceSymbol;
-import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.LockHold;
 import ghidra.util.Saveable;
 import ghidra.util.exception.NoValueException;
@@ -57,13 +57,7 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferMixin {
 
 	@Override
 	default TraceProgramView getProgram() {
-		TraceThread thread = getThread();
-		TraceProgramView view = getTrace().getProgramView();
-		if (thread == null) {
-			return view;
-		}
-		// Non-null: How could a unit be here otherwise?
-		return Objects.requireNonNull(view.getViewRegisters(thread, false));
+		return getTrace().getProgramView();
 	}
 
 	// TODO: Do I delete comments when code unit is deleted?
@@ -87,12 +81,17 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferMixin {
 		}
 	}
 
+	default AddressSpace getAddressSpace() {
+		return getAddress().getAddressSpace();
+	}
+
 	@Override
 	default <T> void setProperty(String name, Class<T> valueClass, T value) {
 		try (LockHold hold = LockHold.lock(getTrace().getReadWriteLock().writeLock())) {
 			TracePropertyMap<? super T> map = getTrace().getInternalAddressPropertyManager()
 					.getOrCreatePropertyMapSuper(name, valueClass);
-			TracePropertyMapSpace<? super T> space = map.getPropertyMapSpace(getTraceSpace(), true);
+			TracePropertyMapSpace<? super T> space =
+				map.getPropertyMapSpace(getAddressSpace(), true);
 			space.set(getLifespan(), getAddress(), value);
 		}
 	}
@@ -106,7 +105,6 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferMixin {
 
 	@Override
 	default void setProperty(String name, Saveable value) {
-		// TODO: It'd be better if the CodeUnit interface took a valueClass variable...
 		setTypedProperty(name, value);
 	}
 
@@ -128,14 +126,13 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferMixin {
 	@Override
 	default <T> T getProperty(String name, Class<T> valueClass) {
 		try (LockHold hold = LockHold.lock(getTrace().getReadWriteLock().readLock())) {
-			TracePropertyMap<? extends T> map =
-				getTrace().getInternalAddressPropertyManager()
-						.getPropertyMapExtends(name, valueClass);
+			TracePropertyMap<? extends T> map = getTrace().getInternalAddressPropertyManager()
+					.getPropertyMapExtends(name, valueClass);
 			if (map == null) {
 				return null;
 			}
 			TracePropertyMapSpace<? extends T> space =
-				map.getPropertyMapSpace(getTraceSpace(), false);
+				map.getPropertyMapSpace(getAddressSpace(), false);
 			if (space == null) {
 				return null;
 			}
@@ -185,7 +182,7 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferMixin {
 			if (map == null) {
 				return false;
 			}
-			TracePropertyMapSpace<Void> space = map.getPropertyMapSpace(getTraceSpace(), false);
+			TracePropertyMapSpace<Void> space = map.getPropertyMapSpace(getAddressSpace(), false);
 			if (space == null) {
 				return false;
 			}
@@ -224,9 +221,8 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferMixin {
 	@Override
 	default Symbol[] getSymbols() {
 		try (LockHold hold = getTrace().lockRead()) {
-			Collection<? extends TraceSymbol> at = getTrace().getSymbolManager()
-					.labels()
-					.getAt(getStartSnap(), getThread(), getAddress(), true);
+			Collection<? extends TraceSymbol> at =
+				getTrace().getSymbolManager().labels().getAt(getStartSnap(), getAddress(), true);
 			return at.toArray(new TraceSymbol[at.size()]);
 		}
 	}
@@ -234,9 +230,8 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferMixin {
 	@Override
 	default Symbol getPrimarySymbol() {
 		try (LockHold hold = getTrace().lockRead()) {
-			Collection<? extends TraceSymbol> at = getTrace().getSymbolManager()
-					.labels()
-					.getAt(getStartSnap(), getThread(), getAddress(), true);
+			Collection<? extends TraceSymbol> at =
+				getTrace().getSymbolManager().labels().getAt(getStartSnap(), getAddress(), true);
 			if (at.isEmpty()) {
 				return null;
 			}
@@ -250,17 +245,16 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferMixin {
 	}
 
 	@Override
-	default void setComment(int commentType, String comment) {
+	default void setComment(CommentType commentType, String comment) {
 		if (getThread() != null) {
 			TODO(); // TODO: Comments in register space
 		}
 		getTrace().getCommentAdapter()
-				.setComment(getLifespan(), getAddress(), commentType,
-					comment);
+				.setComment(getLifespan(), getAddress(), commentType, comment);
 	}
 
 	@Override
-	default String getComment(int commentType) {
+	default String getComment(CommentType commentType) {
 		if (getThread() != null) {
 			// TODO: Comments in register space
 			return null;
@@ -269,12 +263,12 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferMixin {
 	}
 
 	@Override
-	default void setCommentAsArray(int commentType, String[] comment) {
+	default void setCommentAsArray(CommentType commentType, String[] comment) {
 		setComment(commentType, DBTraceCommentAdapter.commentFromArray(comment));
 	}
 
 	@Override
-	default String[] getCommentAsArray(int commentType) {
+	default String[] getCommentAsArray(CommentType commentType) {
 		return DBTraceCommentAdapter.arrayFromComment(getComment(commentType));
 	}
 
@@ -297,16 +291,15 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferMixin {
 	@Override
 	default void addMnemonicReference(Address refAddr, RefType refType, SourceType sourceType) {
 		getTrace().getReferenceManager()
-				.addMemoryReference(getLifespan(), getAddress(), refAddr,
-					refType, sourceType, MNEMONIC);
+				.addMemoryReference(getLifespan(), getAddress(), refAddr, refType, sourceType,
+					MNEMONIC);
 	}
 
 	@Override
 	default void addOperandReference(int index, Address refAddr, RefType type,
 			SourceType sourceType) {
 		getTrace().getReferenceManager()
-				.addMemoryReference(getLifespan(), getAddress(), refAddr,
-					type, sourceType, index);
+				.addMemoryReference(getLifespan(), getAddress(), refAddr, type, sourceType, index);
 	}
 
 	@Override
@@ -319,16 +312,16 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferMixin {
 	default void setStackReference(int opIndex, int offset, SourceType sourceType,
 			RefType refType) {
 		getTrace().getReferenceManager()
-				.addStackReference(getLifespan(), getAddress(), offset,
-					refType, sourceType, opIndex);
+				.addStackReference(getLifespan(), getAddress(), offset, refType, sourceType,
+					opIndex);
 	}
 
 	@Override
 	default void setRegisterReference(int opIndex, Register reg, SourceType sourceType,
 			RefType refType) {
 		getTrace().getReferenceManager()
-				.addRegisterReference(getLifespan(), getAddress(), reg,
-					refType, sourceType, opIndex);
+				.addRegisterReference(getLifespan(), getAddress(), reg, refType, sourceType,
+					opIndex);
 	}
 
 	@Override
@@ -346,8 +339,7 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferMixin {
 	@Override
 	default DBTraceReference getPrimaryReference(int index) {
 		return getTrace().getReferenceManager()
-				.getPrimaryReferenceFrom(getStartSnap(), getAddress(),
-					index);
+				.getPrimaryReferenceFrom(getStartSnap(), getAddress(), index);
 	}
 
 	@Override
@@ -359,10 +351,9 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferMixin {
 
 	@Override
 	default ReferenceIterator getReferenceIteratorTo() {
-		return new ReferenceIteratorAdapter(
-			getTrace().getReferenceManager()
-					.getReferencesTo(getStartSnap(), getAddress())
-					.iterator());
+		return new ReferenceIteratorAdapter(getTrace().getReferenceManager()
+				.getReferencesTo(getStartSnap(), getAddress())
+				.iterator());
 	}
 
 	@Override
@@ -377,9 +368,8 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferMixin {
 
 	@Override
 	default void removeOperandReference(int index, Address refAddr) {
-		TraceReference ref =
-			getTrace().getReferenceManager()
-					.getReference(getStartSnap(), getAddress(), refAddr, index);
+		TraceReference ref = getTrace().getReferenceManager()
+				.getReference(getStartSnap(), getAddress(), refAddr, index);
 		if (ref == null) {
 			return;
 		}

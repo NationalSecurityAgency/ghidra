@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,8 +39,7 @@ public class DeleteFunctionCmdTest extends AbstractGenericTest {
 	private Program program;
 
 	/**
-	 * Constructs this test class with the given test method name.
-	 * 
+	 * Constructs this test class with the given test method name
 	 */
 	public DeleteFunctionCmdTest() {
 		super();
@@ -56,7 +55,7 @@ public class DeleteFunctionCmdTest extends AbstractGenericTest {
 	}
 
 	/**
-	 * Tests the deleting of functions via the {@link DeleteFunctionCmd}.
+	 * Tests the deleting of functions via the {@link DeleteFunctionCmd}
 	 */
 	@Test
 	public void testDeleteFunction() {
@@ -115,11 +114,38 @@ public class DeleteFunctionCmdTest extends AbstractGenericTest {
 		program.endTransaction(transactionID, false);
 	}
 
+	/**
+	 * This is a regression test. Make sure function deletes work with multiple tags.
+	 */
+	@Test
+	public void testDeleteFunctionWithMultipleTags() {
+
+		Address address = addr(0x0);
+		String defaultName = SymbolUtilities.getDefaultFunctionName(address);
+
+		int transactionID = program.startTransaction("TEST");
+
+		Function function =
+			createFunction(defaultName, address, new AddressSet(address, address.add(200L)));
+		assertNotNull("The test function was not created as expected.", function);
+
+		function.addTag("tag1");
+		function.addTag("tag2");
+		function.addTag("tag3");
+
+		DeleteFunctionCmd deleteFunctionCmd = new DeleteFunctionCmd(address);
+		deleteFunctionCmd.applyTo(program);
+
+		function = program.getListing().getFunctionAt(address);
+		assertNull("The function was not deleted as expected.", function);
+
+		program.endTransaction(transactionID, false);
+	}
+
 	// looks through the given symbol array to see if any have the same name 
 	// as the provided string
 	private boolean containsMatchingSymbolName(Symbol[] symbols, String name) {
 		for (Symbol symbol : symbols) {
-			System.err.println("checking: " + symbol + " against " + name);
 			if (symbol.getName().equals(name)) {
 				return true;
 			}

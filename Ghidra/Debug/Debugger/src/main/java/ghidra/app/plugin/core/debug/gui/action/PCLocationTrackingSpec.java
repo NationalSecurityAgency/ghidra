@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,10 +22,10 @@ import ghidra.debug.api.action.*;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.stack.TraceStack;
-import ghidra.trace.util.TraceAddressSpace;
 
 public enum PCLocationTrackingSpec implements LocationTrackingSpec, LocationTracker {
 	INSTANCE;
@@ -91,7 +91,7 @@ public enum PCLocationTrackingSpec implements LocationTrackingSpec, LocationTrac
 	}
 
 	@Override
-	public boolean affectedByBytesChange(TraceAddressSpace space, TraceAddressSnapRange range,
+	public boolean affectedByBytesChange(AddressSpace space, TraceAddressSnapRange range,
 			DebuggerCoordinates coordinates) {
 		return BY_REG.affectedByBytesChange(space, range, coordinates);
 	}

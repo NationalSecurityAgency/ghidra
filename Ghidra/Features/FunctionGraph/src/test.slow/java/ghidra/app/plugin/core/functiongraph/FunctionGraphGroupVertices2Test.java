@@ -60,7 +60,7 @@ public class FunctionGraphGroupVertices2Test extends AbstractFunctionGraphTest {
 		assertVerticesRemoved(graph, ungroupedVertices);
 		assertEdgesRemoved(graph, ungroupedEdges);
 
-		// -1 because one one of the edges was between two of the vertices being grouped
+		// -1 because one of the edges was between two of the vertices being grouped
 		int expectedGroupedEdgeCount = ungroupedEdges.size() - 1;
 		GroupedFunctionGraphVertex groupedVertex = validateNewGroupedVertexFromVertices(
 			functionGraph, ungroupedVertices, expectedGroupedEdgeCount);
@@ -89,7 +89,7 @@ public class FunctionGraphGroupVertices2Test extends AbstractFunctionGraphTest {
 
 		group(ungroupedVertices);
 
-		// (size - 1) because one one of the edges was between two of the vertices being grouped
+		// (size - 1) because one of the edges was between two of the vertices being grouped
 		int expectedGroupedEdgeCount = ungroupedEdges.size() - 1;
 		GroupedFunctionGraphVertex groupedVertex = validateNewGroupedVertexFromVertices(
 			functionGraph, ungroupedVertices, expectedGroupedEdgeCount);
@@ -97,7 +97,8 @@ public class FunctionGraphGroupVertices2Test extends AbstractFunctionGraphTest {
 		//
 		// Clone the graph
 		//
-		FGController clonedController = cloneGraph();
+		FGProvider clonedProvider = cloneGraph();
+		FGController clonedController = clonedProvider.getController();
 		FGData clonedData = clonedController.getFunctionGraphData();
 		FunctionGraph clonedFunctionGraph = clonedData.getFunctionGraph();
 

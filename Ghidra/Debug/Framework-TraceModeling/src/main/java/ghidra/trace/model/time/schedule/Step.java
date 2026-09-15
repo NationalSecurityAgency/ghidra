@@ -22,6 +22,7 @@ import ghidra.pcode.emu.PcodeThread;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.thread.TraceThreadManager;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -40,21 +41,22 @@ public interface Step extends Comparable<Step> {
 	 * applies to the last thread or the event thread.
 	 * 
 	 * @param stepSpec the string specification
+	 * @param radix the radix
 	 * @return the parsed step
 	 * @throws IllegalArgumentException if the specification is of the wrong form
 	 */
-	static Step parse(String stepSpec) {
+	static Step parse(String stepSpec, TimeRadix radix) {
 		if ("".equals(stepSpec)) {
 			return nop();
 		}
 		String[] parts = stepSpec.split("-");
 		if (parts.length == 1) {
-			return parse(-1, parts[0].trim());
+			return parse(-1, parts[0].trim(), radix);
 		}
 		if (parts.length == 2) {
 			String tPart = parts[0].trim();
 			if (tPart.startsWith("t")) {
-				return parse(Long.parseLong(tPart.substring(1)), parts[1].trim());
+				return parse(Long.parseLong(tPart.substring(1)), parts[1].trim(), radix);
 			}
 		}
 		throw new IllegalArgumentException("Cannot parse step: '" + stepSpec + "'");
@@ -70,22 +72,25 @@ public interface Step extends Comparable<Step> {
 	 * 
 	 * @param threadKey the thread to step, or -1 for the last thread or event thread
 	 * @param stepSpec the string specification
+	 * @param radix the radix
 	 * @return the parsed step
 	 * @throws IllegalArgumentException if the specification is of the wrong form
 	 */
-	static Step parse(long threadKey, String stepSpec) {
+	static Step parse(long threadKey, String stepSpec, TimeRadix radix) {
 		if (stepSpec.startsWith("s")) {
-			return SkipStep.parse(threadKey, stepSpec);
+			return SkipStep.parse(threadKey, stepSpec, radix);
 		}
 		if (stepSpec.startsWith("{")) {
 			return PatchStep.parse(threadKey, stepSpec);
 		}
-		return TickStep.parse(threadKey, stepSpec);
+		return TickStep.parse(threadKey, stepSpec, radix);
 	}
 
 	static TickStep nop() {
 		return new TickStep(-1, 0);
 	}
+
+	String toString(TimeRadix radix);
 
 	StepType getType();
 
@@ -101,17 +106,21 @@ public interface Step extends Comparable<Step> {
 		return getThreadKey() == -1;
 	}
 
-	default TraceThread getThread(TraceThreadManager tm, TraceThread eventThread) {
-		TraceThread thread = isEventThread() ? eventThread : tm.getThread(getThreadKey());
+	static TraceThread requireThread(TraceThread thread, long key) {
 		if (thread == null) {
-			if (isEventThread()) {
+			if (key == -1) {
 				throw new IllegalArgumentException("Thread must be given, e.g., 0:t1-3, " +
 					"since the last thread or snapshot event thread is not given.");
 			}
 			throw new IllegalArgumentException(
-				"Thread with key " + getThreadKey() + " does not exist in given trace");
+				"Thread with key %d does not exist in given trace".formatted(key));
 		}
 		return thread;
+	}
+
+	default TraceThread getThread(TraceThreadManager tm, TraceThread eventThread) {
+		long key = getThreadKey();
+		return requireThread(isEventThread() ? eventThread : tm.getThread(key), key);
 	}
 
 	long getTickCount();

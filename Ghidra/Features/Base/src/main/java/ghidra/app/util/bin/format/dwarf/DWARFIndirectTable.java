@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,7 @@
 package ghidra.app.util.bin.format.dwarf;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 import ghidra.app.util.bin.BinaryReader;
@@ -34,7 +33,8 @@ public class DWARFIndirectTable {
 	}
 
 	private final BinaryReader reader;
-	private final Map<Long, DWARFIndirectTableHeader> lookupMap = new HashMap<>();
+	private final List<DWARFIndirectTableHeader> headers = new ArrayList<>();
+	private final List<Long> headerOffsets = new ArrayList<>();
 	private final Function<DWARFCompilationUnit, Long> baseOffsetFunc;
 
 	/**
@@ -71,11 +71,12 @@ public class DWARFIndirectTable {
 		while (reader.hasNext()) {
 			monitor.checkCancelled();
 			monitor.setProgress(reader.getPointerIndex());
-			monitor.setMessage(msg + " #" + lookupMap.size());
+			monitor.setMessage(msg + " #" + headerOffsets.size());
 
 			DWARFIndirectTableHeader header = headerReader.apply(reader);
 			if (header != null) {
-				lookupMap.put(header.getFirstElementOffset(), header);
+				headers.add(header);
+				headerOffsets.add(header.getFirstElementOffset());
 			}
 		}
 	}
@@ -90,17 +91,29 @@ public class DWARFIndirectTable {
 	 * @throws IOException if error reading table data
 	 */
 	public long getOffset(int index, DWARFCompilationUnit cu) throws IOException {
-		long base = baseOffsetFunc.apply(cu);
-		DWARFIndirectTableHeader header = lookupMap.get(base);
-		if (header == null) {
-			throw new IOException(
-				"Invalid base %d for compUnit %x".formatted(base, cu.getStartOffset()));
+
+		// offset to/into a indirect table, from which the index applies.  Some indirect table types
+		// (addr, string) allow the base to point anywhere in a table, others (loclist, rangelist)
+		// specify that the base must be the first element of one of the tables
+		long baseOffset = baseOffsetFunc.apply(cu);
+
+		// calculate which header object contains the base offset
+		int baseHeaderIndex = Collections.binarySearch(headerOffsets, baseOffset);
+		if (baseHeaderIndex < 0) {
+			baseHeaderIndex = ~baseHeaderIndex - 1;
 		}
-		return header.getOffset(index, reader);
+		if (baseHeaderIndex < 0) {
+			throw new IOException(
+				"Invalid base %d for compUnit %x".formatted(baseOffset, cu.getStartOffset()));
+		}
+		DWARFIndirectTableHeader header = headers.get(baseHeaderIndex);
+
+		return header.getOffset(index, baseOffset, reader);
 	}
 
 	public void clear() {
-		lookupMap.clear();
+		headers.clear();
+		headerOffsets.clear();
 	}
 
 }

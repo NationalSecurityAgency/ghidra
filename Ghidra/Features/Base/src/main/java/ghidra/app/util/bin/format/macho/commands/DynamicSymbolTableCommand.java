@@ -363,11 +363,15 @@ public class DynamicSymbolTableCommand extends LoadCommand {
 
 		markupPlateComment(program, indirectSymbolTableAddr, source, "indirect");
 		
+		Address symbolTableAddr = null;
+		Address stringTableAddr = null;
 		SymbolTableCommand symbolTable = header.getFirstLoadCommand(SymbolTableCommand.class);
-		Address symbolTableAddr = fileOffsetToAddress(program, header,
-			symbolTable.getSymbolOffset(), symbolTable.getNumberOfSymbols());
-		Address stringTableAddr = fileOffsetToAddress(program, header,
-			symbolTable.getStringTableOffset(), symbolTable.getStringTableSize());
+		if (symbolTable != null) {
+			symbolTableAddr = fileOffsetToAddress(program, header, symbolTable.getSymbolOffset(),
+				symbolTable.getNumberOfSymbols());
+			stringTableAddr = fileOffsetToAddress(program, header,
+				symbolTable.getStringTableOffset(), symbolTable.getStringTableSize());
+		}
 
 		ReferenceManager referenceManager = program.getReferenceManager();
 		try {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ public class GhidraProgramUtilities {
 
 	/**
 	 * Returns the current program for the given tool or null if no program is open.
-	 * @param tool the tool get get the current program for
+	 * @param tool the tool get the current program for
 	 * @return the current program for the given tool or null if no program is open
 	 */
 	public static Program getCurrentProgram(PluginTool tool) {

@@ -25,8 +25,8 @@ import javax.swing.border.BevelBorder;
 import javax.swing.event.*;
 import javax.swing.table.TableColumnModel;
 
-import org.jdom.Attribute;
-import org.jdom.Element;
+import org.jdom2.Attribute;
+import org.jdom2.Element;
 
 import docking.DockingWindowManager;
 import docking.widgets.EmptyBorderButton;
@@ -402,8 +402,18 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 			setVisible(true);
 			isFilterDisplayed = true;
 		}
-
 		requestFocus();
+	}
+
+	/**
+	 * Hides this filter if showing.
+	 */
+	public void close() {
+		if (isFilterDisplayed) {
+			setVisible(false);
+			isFilterDisplayed = false;
+			table.requestFocus();
+		}
 	}
 
 	/**
@@ -667,6 +677,16 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 	public ROW_OBJECT getRowObject(int viewRow) {
 		ROW_OBJECT rowObject = rowObjectFilterModel.getRowObject(viewRow);
 		return rowObject;
+	}
+
+	/**
+	 * Returns the view row for the given object.
+	
+	 * @param t the row object 
+	 * @return the view row
+	 */
+	public int getViewRow(ROW_OBJECT t) {
+		return rowObjectFilterModel.getViewIndex(t);
 	}
 
 	/**

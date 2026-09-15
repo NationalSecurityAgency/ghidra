@@ -34,7 +34,7 @@ public interface TableDataLoader<T> {
 
 	/**
 	 * Loads data into the given accumulator
-	 * @param accumulator the the accumulator for storing table data
+	 * @param accumulator the accumulator for storing table data
 	 * @param monitor the {@link TaskMonitor}
 	 * @throws CancelledException if the operation is cancelled
 	 */

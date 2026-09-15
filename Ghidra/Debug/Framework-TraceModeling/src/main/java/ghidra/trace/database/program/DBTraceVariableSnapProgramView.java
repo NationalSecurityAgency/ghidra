@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,8 @@ package ghidra.trace.database.program;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.trace.database.DBTrace;
+import ghidra.trace.database.guest.InternalTracePlatform;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceVariableSnapProgramView;
 
 /**
@@ -47,5 +49,14 @@ public class DBTraceVariableSnapProgramView extends DBTraceProgramView
 
 		// TODO: I could be more particular, but this seems to work fast enough, now.
 		fireObjectRestored();
+	}
+
+	@Override
+	public void setPlatform(TracePlatform platform) {
+		if (!(platform instanceof InternalTracePlatform iPlatform) ||
+			platform.getTrace() != trace) {
+			throw new IllegalArgumentException("Platform is not in this trace");
+		}
+		this.platform = iPlatform;
 	}
 }

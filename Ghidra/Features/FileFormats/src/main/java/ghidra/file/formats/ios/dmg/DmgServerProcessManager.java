@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -240,7 +240,7 @@ class DmgServerProcessManager implements Closeable {
 		String java =
 			System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
 
-		// optional: -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=18200
+		// optional: -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=18200
 		try {
 			Process p = Runtime.getRuntime().exec(
 				new String[] { java, "-classpath", classPath, "-Xmx" + dmgServerMemoryMB + "m", //need more memory to load and xfer data across pipe

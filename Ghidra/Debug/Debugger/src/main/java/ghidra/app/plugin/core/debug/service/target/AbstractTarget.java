@@ -24,8 +24,8 @@ import docking.ActionContext;
 import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.*;
-import ghidra.app.services.DebuggerStaticMappingService.MappedAddressRange;
 import ghidra.async.AsyncUtils;
+import ghidra.debug.api.modules.MappedAddressRange;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;
@@ -36,7 +36,7 @@ import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.util.MarkerLocation;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.TraceSpan;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
+import ghidra.trace.model.breakpoint.TraceBreakpointCommon;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
@@ -321,12 +321,12 @@ public abstract class AbstractTarget implements Target {
 	}
 
 	@Override
-	public void deleteBreakpoint(TraceBreakpoint breakpoint) {
+	public void deleteBreakpoint(TraceBreakpointCommon breakpoint) {
 		runSync("delete breakpoint", () -> deleteBreakpointAsync(breakpoint));
 	}
 
 	@Override
-	public void toggleBreakpoint(TraceBreakpoint breakpoint, boolean enabled) {
+	public void toggleBreakpoint(TraceBreakpointCommon breakpoint, boolean enabled) {
 		String msg = enabled ? "enable breakpoint" : "disable breakpoint";
 		runSync(msg, () -> toggleBreakpointAsync(breakpoint, enabled));
 	}

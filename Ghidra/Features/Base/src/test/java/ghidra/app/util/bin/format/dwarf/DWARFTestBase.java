@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.dwarf;
 
 import static ghidra.app.util.bin.format.dwarf.DWARFEncoding.*;
 import static ghidra.app.util.bin.format.dwarf.DWARFTag.*;
-import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute.*;
+import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.*;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
@@ -29,6 +29,7 @@ import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteArrayProvider;
+import ghidra.app.util.bin.format.dwarf.expression.*;
 import ghidra.app.util.bin.format.dwarf.sectionprovider.NullSectionProvider;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
@@ -36,6 +37,7 @@ import ghidra.program.database.data.DataTypeManagerDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
+import ghidra.program.model.mem.MemoryBlock;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -55,14 +57,13 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 	protected int transactionID;
 	protected TaskMonitor monitor = TaskMonitor.DUMMY;
 
-	protected DWARFImportOptions importOptions;
 	protected MockDWARFProgram dwarfProg;
+	protected MockDIEContainer dieContainer;
 	protected MockDWARFCompilationUnit cu;
 	protected DWARFDataTypeManager dwarfDTM;
 	protected MockStringTable stringTable;
 	protected CategoryPath uncatCP;
 	protected CategoryPath dwarfRootCP;
-
 
 	@Before
 	public void setUp() throws Exception {
@@ -72,19 +73,20 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 		dataMgr = program.getDataTypeManager();
 		startTransaction();
 
-		program.getMemory()
+		MemoryBlock memblk = program.getMemory()
 				.createInitializedBlock("test", addr(BaseAddress), 500, (byte) 0, TaskMonitor.DUMMY,
 					false);
+		memblk.setExecute(true);
 
 		AutoAnalysisManager mgr = AutoAnalysisManager.getAnalysisManager(program);
 		DataTypeManagerService dtms = mgr.getDataTypeManagerService();
 		builtInDTM = dtms.getBuiltInDataTypesManager();
 
-		importOptions = new DWARFImportOptions();
-		dwarfProg = new MockDWARFProgram(program, importOptions, TaskMonitor.DUMMY,
-			new NullSectionProvider());
-		stringTable = new MockStringTable(br());
-		dwarfProg.setStringTable(stringTable);
+		dwarfProg =
+			new MockDWARFProgram(program, new DWARFImportOptions(), new NullSectionProvider());
+		dwarfProg.init(monitor);
+		dieContainer = dwarfProg.getDIEContainer();
+		stringTable = dieContainer.getStringTable();
 
 		dwarfDTM = dwarfProg.getDwarfDTM();
 		dwarfRootCP = dwarfProg.getRootDNI().asCategoryPath();
@@ -110,13 +112,13 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 		program.endTransaction(transactionID, true);
 	}
 
-	protected BinaryReader br(byte... bytes) {
-		return new BinaryReader(new ByteArrayProvider(bytes), dwarfProg.isLittleEndian());
+	protected BinaryReader br(int... intBytes) {
+		return new BinaryReader(new ByteArrayProvider(bytes(intBytes)), dwarfProg.isLittleEndian());
 	}
 
 	protected void buildMockDIEIndexes() throws CancelledException, DWARFException {
-		dwarfProg.buildMockDIEIndexes();
-		dwarfProg.dumpDIEs(System.out);
+		dieContainer.buildMockDIEIndexes();
+		//dieContainer.dumpDIEs(System.out);
 	}
 
 	protected void importAllDataTypes() throws CancelledException, IOException, DWARFException {
@@ -133,7 +135,7 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	protected DIEAggregate getAggregate(DebugInfoEntry die) {
-		return dwarfProg.getAggregate(die);
+		return dieContainer.getAggregate(die);
 	}
 
 	protected void ensureCompUnit() {
@@ -147,12 +149,12 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	protected MockDWARFCompilationUnit addCompUnit64() {
-		setCompUnit(dwarfProg.addCompUnit(DWARFSourceLanguage.DW_LANG_C, 8 /* dwarf64 */));
+		setCompUnit(dieContainer.addCompUnit(DWARFSourceLanguage.DW_LANG_C, 8 /* dwarf64 */));
 		return cu;
 	}
 
 	protected MockDWARFCompilationUnit addCompUnit(int cuLang) {
-		setCompUnit(dwarfProg.addCompUnit(cuLang));
+		setCompUnit(dieContainer.addCompUnit(cuLang));
 		return cu;
 	}
 
@@ -280,10 +282,9 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 
 	protected DebugInfoEntry addFwdPtr(int fwdRecordOffset) {
 		ensureCompUnit();
-		long absOffset =
-			dwarfProg.getRelativeDIEOffset(fwdRecordOffset + /* the ptr die we are about to add */ 1);
-		return new DIECreator(dwarfProg, DW_TAG_pointer_type)
-				.addRef(DW_AT_type, absOffset)
+		long absOffset = dieContainer
+				.getRelativeDIEOffset(fwdRecordOffset + /* the ptr die we are about to add */ 1);
+		return new DIECreator(dwarfProg, DW_TAG_pointer_type).addRef(DW_AT_type, absOffset)
 				.create();
 	}
 
@@ -361,6 +362,21 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	protected DIECreator newFormalParam(DebugInfoEntry subprogram, String paramName,
+			DebugInfoEntry paramDataType, byte[] locationExpr) {
+		ensureCompUnit();
+		DIECreator param = new DIECreator(dwarfProg, DW_TAG_formal_parameter) //
+				.addRef(DW_AT_type, paramDataType)
+				.setParent(subprogram);
+		if (locationExpr.length > 0) {
+			param.addBlockBytes(DW_AT_location, locationExpr);
+		}
+		if (paramName != null) {
+			param.addString(DW_AT_name, paramName);
+		}
+		return param;
+	}
+
+	protected DIECreator newFormalParam(DebugInfoEntry subprogram, String paramName,
 			DebugInfoEntry paramDataType, int... locationExpr) {
 		ensureCompUnit();
 		DIECreator param = new DIECreator(dwarfProg, DW_TAG_formal_parameter) //
@@ -395,5 +411,50 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 			return;
 		}
 		assertNotEquals(0, component.getLength());
+	}
+
+	protected DWARFExpression expr(byte[]... instructions) throws DWARFExpressionException {
+		return DWARFExpression.read(exprBytes(instructions), cu);
+	}
+
+	public static byte[] exprBytes(byte[]... instructions) {
+		int totalBytes = 0;
+		for (byte[] instrBytes : instructions) {
+			totalBytes += instrBytes.length;
+		}
+		byte[] exprBytes = new byte[totalBytes];
+		int offset = 0;
+		for (byte[] instrBytes : instructions) {
+			System.arraycopy(instrBytes, 0, exprBytes, offset, instrBytes.length);
+			offset += instrBytes.length;
+		}
+		return exprBytes;
+	}
+
+	public static byte[] instr(DWARFExpressionOpCode opcode, int... operandBytes) {
+		byte[] result = new byte[1 + operandBytes.length];
+		result[0] = opcode.getOpCodeValue();
+		for (int i = 0; i < operandBytes.length; i++) {
+			result[i + 1] = (byte) operandBytes[i];
+		}
+		return result;
+	}
+
+	public static int[] uleb128(long val) {
+		// return int[] to match instr(...)
+		return bytesToInts(LEB128.encode(val, false));
+	}
+
+	public static int[] sleb128(long val) {
+		// return int[] to match instr(...)
+		return bytesToInts(LEB128.encode(val, true));
+	}
+
+	public static int[] bytesToInts(byte[] bytes) {
+		int[] result = new int[bytes.length];
+		for (int i = 0; i < bytes.length; i++) {
+			result[i] = bytes[i];
+		}
+		return result;
 	}
 }

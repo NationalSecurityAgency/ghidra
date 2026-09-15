@@ -24,7 +24,7 @@ import ghidra.feature.vt.gui.util.VTOptionDefines;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.PlateFieldLocation;
 import ghidra.program.util.ProgramLocation;
@@ -46,8 +46,8 @@ public class PlateCommentMarkupType extends CommentMarkupType {
 	}
 
 	@Override
-	protected int getCodeUnitCommentType() {
-		return CodeUnit.PLATE_COMMENT;
+	protected CommentType getCodeUnitCommentType() {
+		return CommentType.PLATE;
 	}
 
 	@Override

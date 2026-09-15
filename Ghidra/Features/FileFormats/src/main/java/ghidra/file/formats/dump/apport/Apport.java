@@ -22,6 +22,7 @@ import ghidra.app.util.*;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.*;
+import ghidra.app.util.opinion.Loader.ImporterSettings;
 import ghidra.file.formats.dump.DumpFile;
 import ghidra.file.formats.dump.DumpFileReader;
 import ghidra.framework.store.LockException;
@@ -79,14 +80,22 @@ public class Apport extends DumpFile {
 	private void createBlocksFromElf(LoadSpec loadSpec, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
+		Object consumer = new Object();
 		try (
 			DecodedProvider provider =
 				new DecodedProvider(this, reader.getByteProvider(), monitor)) {
 			ElfLoader elfLoader = new ElfLoader();
-			Option base = new Option(ElfLoaderOptionsFactory.IMAGE_BASE_OPTION_NAME,
-				Long.toHexString(header.getMemoryInfo(0).getBaseAddress()));
+			Option base = Option.newString(ElfLoaderOptionsFactory.IMAGE_BASE_OPTION_NAME)
+					.value(Long.toHexString(header.getMemoryInfo(0).getBaseAddress()))
+					.build();
 			options.add(base);
-			elfLoader.load(provider, loadSpec, options, program, monitor, log);
+			program.addConsumer(consumer);
+			ImporterSettings settings = new ImporterSettings(provider, program.getName(), null,
+				null, false, loadSpec, options, consumer, log, monitor);
+			elfLoader.load(program, settings);
+		}
+		finally {
+			program.release(consumer);
 		}
 
 		Memory memory = program.getMemory();
@@ -184,8 +193,10 @@ public class Apport extends DumpFile {
 	public static Collection<? extends Option> getDefaultOptions(DumpFileReader reader) {
 		List<Option> list = new ArrayList<>();
 
-		list.add(new Option(CREATE_MEMORY_BLOCKS_OPTION_NAME, CREATE_MEMORY_BLOCKS_OPTION_DEFAULT,
-			Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-createMemoryBlocks"));
+		list.add(Option.newBoolean(CREATE_MEMORY_BLOCKS_OPTION_NAME)
+				.value(CREATE_MEMORY_BLOCKS_OPTION_DEFAULT)
+				.commandLineArgument(Loader.COMMAND_LINE_ARG_PREFIX + "-createMemoryBlocks")
+				.build());
 
 		return list;
 	}

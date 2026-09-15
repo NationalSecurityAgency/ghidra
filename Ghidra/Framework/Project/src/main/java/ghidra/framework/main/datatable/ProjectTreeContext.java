@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,6 +43,16 @@ public interface ProjectTreeContext {
 	 * @return the number of files selected in the tree.
 	 */
 	public int getFileCount();
+
+	/**
+	 * {@return true of only one file or folder has been selected, else false.}
+	 */
+	public boolean hasExactlyOneFileOrFolder();
+
+	/**
+	 * {@return true if one or more file and/or folders have been selected, else false.}
+	 */
+	public boolean hasOneOrMoreFilesAndFolders();
 
 	/**
 	 * Returns a list of {@link DomainFolder}s selected in the tree.

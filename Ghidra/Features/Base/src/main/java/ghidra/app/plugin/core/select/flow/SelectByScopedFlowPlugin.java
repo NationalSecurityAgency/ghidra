@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -238,8 +238,7 @@ public class SelectByScopedFlowPlugin extends ProgramPlugin {
 	private ProgramSelection makeSelectionFromCodeBlocks(Collection<CodeBlock> blocks,
 			Program program) {
 		AddressSet set = getAddressForCodeBlocks(blocks, program);
-		AddressFactory addressFactory = program.getAddressFactory();
-		ProgramSelection selection = new ProgramSelection(addressFactory, set);
+		ProgramSelection selection = new ProgramSelection(set);
 		return selection;
 	}
 

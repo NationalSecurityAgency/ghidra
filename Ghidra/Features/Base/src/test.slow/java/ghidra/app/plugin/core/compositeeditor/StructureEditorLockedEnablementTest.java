@@ -23,7 +23,6 @@ import org.junit.Test;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.Structure;
 import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.task.TaskMonitor;
 
 public class StructureEditorLockedEnablementTest extends AbstractStructureEditorTest {
 
@@ -33,7 +32,7 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 		Structure desiredEmptyStructure = emptyStructure;
 		int txID = program.startTransaction("Removing emptyStruct from DTM.");
 		try {
-			programDTM.remove(emptyStructure, TaskMonitor.DUMMY);
+			programDTM.remove(emptyStructure);
 			if (emptyStructure.getDataTypeManager() != catDTM) {
 				desiredEmptyStructure = (Structure) emptyStructure.copy(catDTM);
 				desiredEmptyStructure.setCategoryPath(pgmTestCat.getCategoryPath());
@@ -68,7 +67,9 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 		for (CompositeEditorTableAction action : actions) {
 			if ((action instanceof EditFieldAction) || (action instanceof AddBitFieldAction) ||
 				(action instanceof InsertUndefinedAction) || (action instanceof PointerAction) ||
-				(action instanceof HexNumbersAction) || (action instanceof ApplyAction)) {
+				(action instanceof HexNumbersAction) || (action instanceof ApplyAction) ||
+				action instanceof NextPrevDefinedComponentAction ||
+				action instanceof JumpToOffsetAction) {
 				checkEnablement(action, true);
 			}
 			else if (action instanceof FavoritesAction) {
@@ -119,7 +120,9 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 			if ((action instanceof EditFieldAction) || (action instanceof AddBitFieldAction) ||
 				(action instanceof InsertUndefinedAction) || (action instanceof PointerAction) ||
 				(action instanceof HexNumbersAction) ||
-				(action instanceof ShowDataTypeInTreeAction)) {
+				(action instanceof ShowDataTypeInTreeAction) ||
+				(action instanceof NextPrevDefinedComponentAction) ||
+				action instanceof JumpToOffsetAction) {
 				checkEnablement(action, true);
 			}
 			else if (action instanceof FavoritesAction) {
@@ -169,7 +172,10 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 				(action instanceof DeleteAction) || (action instanceof ArrayAction) ||
 				(action instanceof PointerAction) || (action instanceof HexNumbersAction) ||
 				(action instanceof CreateInternalStructureAction) ||
-				(action instanceof ShowDataTypeInTreeAction)) {
+				(action instanceof ShowDataTypeInTreeAction) ||
+				action instanceof FindReferencesToStructureFieldAction ||
+				action instanceof NextPrevDefinedComponentAction ||
+				action instanceof JumpToOffsetAction) {
 				checkEnablement(action, true);
 			}
 			else {
@@ -199,7 +205,10 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 				(action instanceof DeleteAction) || (action instanceof ArrayAction) ||
 				(action instanceof PointerAction) || (action instanceof HexNumbersAction) ||
 				(action instanceof CreateInternalStructureAction) ||
-				(action instanceof ShowDataTypeInTreeAction)) {
+				(action instanceof ShowDataTypeInTreeAction) ||
+				action instanceof FindReferencesToStructureFieldAction ||
+				action instanceof NextPrevDefinedComponentAction ||
+				action instanceof JumpToOffsetAction) {
 				checkEnablement(action, true);
 			}
 			else {
@@ -229,7 +238,10 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 				(action instanceof DuplicateMultipleAction) || (action instanceof ArrayAction) ||
 				(action instanceof PointerAction) || (action instanceof HexNumbersAction) ||
 				(action instanceof CreateInternalStructureAction) ||
-				(action instanceof ShowDataTypeInTreeAction)) {
+				(action instanceof ShowDataTypeInTreeAction) ||
+				action instanceof FindReferencesToStructureFieldAction ||
+				action instanceof NextPrevDefinedComponentAction ||
+				action instanceof JumpToOffsetAction) {
 				checkEnablement(action, true);
 			}
 			else {
@@ -258,7 +270,9 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 				(action instanceof DeleteAction) || (action instanceof ArrayAction) ||
 				(action instanceof PointerAction) || (action instanceof HexNumbersAction) ||
 				(action instanceof CreateInternalStructureAction) ||
-				(action instanceof ShowDataTypeInTreeAction)) {
+				(action instanceof ShowDataTypeInTreeAction) ||
+				action instanceof NextPrevDefinedComponentAction ||
+				action instanceof JumpToOffsetAction) {
 				checkEnablement(action, true);
 			}
 			else {
@@ -283,7 +297,9 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 			}
 			else if ((action instanceof CycleGroupAction) || (action instanceof ClearAction) ||
 				(action instanceof DeleteAction) || (action instanceof HexNumbersAction) ||
-				(action instanceof ShowDataTypeInTreeAction)) {
+				(action instanceof ShowDataTypeInTreeAction) ||
+				action instanceof NextPrevDefinedComponentAction ||
+				action instanceof JumpToOffsetAction) {
 				checkEnablement(action, true);
 			}
 			else {
@@ -361,7 +377,7 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 
 		setSelection(new int[] { 19 });
 		assertEquals("simpleStructureTypedef", getDataType(19).getDisplayName());
-		assertTrue(!unpackageAction.isEnabled());
+		assertTrue(unpackageAction.isEnabled());
 
 		setSelection(new int[] { 21 });
 		assertEquals("simpleStructure", getDataType(21).getDisplayName());

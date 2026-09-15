@@ -168,8 +168,10 @@ public class ClassSearcher {
 				"Cannot call the getClasses() while the ClassSearcher is searching!");
 		}
 
-		String suffix = getExtensionPointSuffix(ancestorClass.getName());
+		String className = ancestorClass.getName();
+		String suffix = getExtensionPointSuffix(className);
 		if (suffix == null) {
+			Msg.error(ClassSearcher.class, "Class is not a known extension point: " + className);
 			return List.of();
 		}
 
@@ -270,6 +272,42 @@ public class ClassSearcher {
 
 		return instances;
 
+	}
+
+	/**
+	 * Get the named class in a safe(r) manner.
+	 * <p>
+	 * This addresses the concern that many tools and database entries can refer to custom types,
+	 * e.g., options and properties, that may permit an attacker to construct instances of arbitrary
+	 * class, those constructors perhaps implementing gadgets that could be used in an exploit
+	 * chain.
+	 * <p>
+	 * The pattern to "mitigate" this is to ensure the found class implements a given interface or
+	 * extends from a given class, <em>before</em> invoking a constructor. Ideally, this check can
+	 * be applied before <em>class initialization</em>. While much narrower, static initializers may
+	 * also provide gadgets. This method implements the pattern which avoids class initialization
+	 * until the type has been checked.
+	 * <p>
+	 * <b>WARNING:</b> Do not pass {@link Object}, a standard JDK interface, or any interface from a
+	 * dependency like apache-commons. The purpose of the super type is to narrow the set of
+	 * acceptable classes to those we control or that a user has intentionally installed/loaded as a
+	 * Ghidra extension. Thus, the static initializers and constructors of all subclasses should be
+	 * reviewed carefully.
+	 * 
+	 * @param <T> the super type
+	 * @param name the class binary name, as in {@link Class#forName(String, boolean, ClassLoader)}.
+	 * @param sup the super type
+	 * @param loader the class loader, or {@code null} to use the bootstrap loader.
+	 * @return the found class as a subclass of the given type
+	 * @throws ClassNotFoundException if the class cannot be found
+	 * @throws ClassCastException if the found class is not a sub type of the given type
+	 */
+	public static <T> Class<? extends T> forNameSafe(String name, Class<T> sup, ClassLoader loader)
+			throws ClassNotFoundException {
+		Class<?> cls = Class.forName(name, false, loader);
+		Class<? extends T> sub = cls.asSubclass(sup);
+		Class.forName(name, true, loader); // Initialize it this time
+		return sub;
 	}
 
 	/**
@@ -414,8 +452,11 @@ public class ClassSearcher {
 		for (String searchPath : gatherSearchPaths()) {
 			String lcSearchPath = searchPath.toLowerCase();
 			File searchFile = new File(searchPath);
-			if ((lcSearchPath.endsWith(".jar") || lcSearchPath.endsWith(".zip")) &&
-				searchFile.exists()) {
+			if (!searchFile.exists()) {
+				continue;
+			}
+
+			if (lcSearchPath.endsWith(".jar") || lcSearchPath.endsWith(".zip")) {
 
 				if (ClassJar.ignoreJar(searchPath)) {
 					log.trace("Ignoring jar file: {}", searchPath);
@@ -423,11 +464,11 @@ public class ClassSearcher {
 				}
 
 				log.trace("Searching jar file: {}", searchPath);
-				classJars.add(new ClassJar(searchPath, monitor));
+				classJars.add(new ClassJar(searchFile, monitor));
 			}
 			else if (searchFile.isDirectory()) {
 				log.trace("Searching classpath directory: {}", searchPath);
-				classDirs.add(new ClassDir(searchPath, monitor));
+				classDirs.add(new ClassDir(searchFile, monitor));
 			}
 		}
 
@@ -533,8 +574,8 @@ public class ClassSearcher {
 			for (String className : classNames) {
 				String epName = getExtensionPointSuffix(className);
 				if (epName != null) {
-					extensionClasses
-							.add(new ClassFileInfo(appRoot.getAbsolutePath(), className, epName));
+					String path = appRoot.getAbsolutePath();
+					extensionClasses.add(new ClassFileInfo(path, className, epName, ""));
 				}
 			}
 			return extensionClasses.stream()
@@ -626,11 +667,11 @@ public class ClassSearcher {
 
 	/**
 	 * If the given class name matches the known extension name patterns, then this method will try
-	 * to load that class using the provided path.   Extensions may be loaded using their own 
-	 * class loader, depending on the system property 
+	 * to load that class using the provided path.  Extensions may be loaded using their own
+	 * class loader, depending on the system property
 	 * {@link GhidraClassLoader#ENABLE_RESTRICTED_EXTENSIONS_PROPERTY}.
 	 * <p>
-	 * Examples: 
+	 * Examples:
 	 * <pre>
 	 * /foo/bar/baz/file.jar fully.qualified.ClassName
 	 * /foo/bar/baz/bin fully.qualified.ClassName

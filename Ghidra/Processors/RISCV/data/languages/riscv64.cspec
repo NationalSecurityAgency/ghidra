@@ -18,45 +18,65 @@
 		<entry size="8" alignment="8" />
 	</size_alignment_map>
   </data_organization>
+  
   <global>
     <range space="ram"/>
+    <range space="csreg"/>
     <register name="gp"/>
     <register name="tp"/>
   </global>
+  
   <returnaddress>
     <register name="ra"/>
   </returnaddress>
   <stackpointer register="sp" space="ram"/>
   <default_proto>
-    <prototype name="__stdcall" extrapop="0" stackshift="0" strategy="register">
+    <prototype name="__stdcall" extrapop="0" stackshift="0">
       <input>
-	<pentry minsize="1" maxsize="8">
-	  <register name="a0"/>
+        <pentry minsize="1" maxsize="8">
+          <register name="a0"/>
         </pentry>
-	<pentry minsize="1" maxsize="8">
-	  <register name="a1"/>
+        <pentry minsize="1" maxsize="8">
+          <register name="a1"/>
         </pentry>
-	<pentry minsize="1" maxsize="8">
-	  <register name="a2"/>
+        <pentry minsize="1" maxsize="8">
+          <register name="a2"/>
         </pentry>
-	<pentry minsize="1" maxsize="8">
-	  <register name="a3"/>
+        <pentry minsize="1" maxsize="8">
+          <register name="a3"/>
         </pentry>
-	<pentry minsize="1" maxsize="8">
-	  <register name="a4"/>
+        <pentry minsize="1" maxsize="8">
+          <register name="a4"/>
         </pentry>
-	<pentry minsize="1" maxsize="8">
-	  <register name="a5"/>
+        <pentry minsize="1" maxsize="8">
+          <register name="a5"/>
         </pentry>
-	<pentry minsize="1" maxsize="8">
-	  <register name="a6"/>
+        <pentry minsize="1" maxsize="8">
+          <register name="a6"/>
         </pentry>
-	<pentry minsize="1" maxsize="8">
-	  <register name="a7"/>
+        <pentry minsize="1" maxsize="8">
+          <register name="a7"/>
         </pentry>
-	<pentry minsize="1" maxsize="500" align="4">
-	  <addr offset="16" space="ram"/>
-	</pentry>
+        <pentry minsize="1" maxsize="500" align="8">
+          <addr offset="0" space="stack"/>
+        </pentry>
+        <rule>
+	      <datatype name="any"/>
+	      <varargs first="0"/>
+	      <join align="true"/>
+	    </rule>
+        <rule>
+	      <datatype name="struct" minsize="17"/>
+	      <convert_to_ptr/>
+	    </rule>
+        <rule>
+          <datatype name="union" minsize="17"/>
+          <convert_to_ptr/>
+        </rule>
+	    <rule>
+	      <datatype name="any"/>
+	      <join/>
+	    </rule>
       </input>
       <output>
         <pentry minsize="1" maxsize="8">
@@ -65,6 +85,10 @@
         <pentry minsize="1" maxsize="8">
           <register name="a1"/>
         </pentry>
+        <rule>
+          <datatype name="any"/>
+          <join/>
+        </rule>
       </output>
       <unaffected>
         <register name="sp"/>
@@ -83,6 +107,24 @@
         <register name="s10"/>
         <register name="s11"/>
       </unaffected>
+      <killedbycall>
+        <register name="ra"/>
+        <register name="t0"/>
+        <register name="t1"/>
+        <register name="t2"/>
+        <register name="t3"/>
+        <register name="t4"/>
+        <register name="t5"/>
+        <register name="t6"/>
+        <register name="a0"/>
+        <register name="a1"/>
+        <register name="a2"/>
+        <register name="a3"/>
+        <register name="a4"/>
+        <register name="a5"/>
+        <register name="a6"/>
+        <register name="a7"/>
+      </killedbycall>
     </prototype>
   </default_proto>
 </compiler_spec>

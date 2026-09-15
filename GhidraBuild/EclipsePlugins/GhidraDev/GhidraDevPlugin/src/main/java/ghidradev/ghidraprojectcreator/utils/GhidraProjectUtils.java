@@ -40,6 +40,7 @@ import ghidra.launch.AppConfig;
 import ghidradev.Activator;
 import ghidradev.EclipseMessageUtils;
 import ghidradev.ghidraprojectcreator.utils.PyDevUtils.ProjectPythonInterpreter;
+import ghidradev.ghidraprojectcreator.utils.PyDevUtils.ProjectPythonInterpreterType;
 import utility.module.ModuleUtilities;
 
 /**
@@ -203,6 +204,34 @@ public class GhidraProjectUtils {
 		}
 
 		return project;
+	}
+
+	/**
+	 * For the given Java project, gets all of its classpath dependencies that are themselves 
+	 * projects.  The result is formatted as a string of paths separated by 
+	 * {@link File#pathSeparator}.
+	 *   
+	 * @param javaProject The Java project whose project dependencies we are getting.
+	 * @return A string of paths separated by {@link File#pathSeparator} that represents the given
+	 *   Java project's dependencies that are projects.  Could be empty if there are no 
+	 *   dependencies.
+	 * @throws CoreException if there was an Eclipse-related problem with getting the dependencies.
+	 */
+	public static String getProjectDependencyDirs(IJavaProject javaProject) throws CoreException {
+		String paths = "";
+		for (IClasspathEntry entry : javaProject.getRawClasspath()) {
+			if (entry.getEntryKind() == IClasspathEntry.CPE_PROJECT) {
+				if (!paths.isEmpty()) {
+					paths += File.pathSeparator;
+				}
+				IResource resource =
+					ResourcesPlugin.getWorkspace().getRoot().findMember(entry.getPath());
+				if (resource != null) {
+					paths += resource.getLocation();
+				}
+			}
+		}
+		return paths;
 	}
 
 	/**
@@ -456,13 +485,15 @@ public class GhidraProjectUtils {
 		GhidraModuleUtils.writeAntProperties(javaProject.getProject(), ghidraLayout);
 
 		// Setup Python for the project
-		try {
-			PyDevUtils.setupPythonForProject(javaProject, libraryClasspathEntries,
-				pythonInterpreter, monitor);
-		}
-		catch (OperationNotSupportedException e) {
-			EclipseMessageUtils.showErrorDialog("PyDev error",
-				"Failed to setup Python for the project.  PyDev version is not supported.");
+		if (!pythonInterpreter.type().equals(ProjectPythonInterpreterType.NONE)) {
+			try {
+				PyDevUtils.setupPythonForProject(javaProject, libraryClasspathEntries,
+					pythonInterpreter, monitor);
+			}
+			catch (OperationNotSupportedException e) {
+				EclipseMessageUtils.showErrorDialog("PyDev error",
+					"Failed to setup Python for the project.  PyDev version is not supported.");
+			}
 		}
 	}
 

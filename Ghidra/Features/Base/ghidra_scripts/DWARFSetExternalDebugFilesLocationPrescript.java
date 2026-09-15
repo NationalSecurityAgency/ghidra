@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,15 +41,16 @@ public class DWARFSetExternalDebugFilesLocationPrescript extends GhidraScript {
 			Msg.warn(this, "Invalid DWARF external debug files location specified: " + dir);
 			return;
 		}
-		List<SearchLocation> searchLocations = new ArrayList<>();
+		List<DebugInfoProvider> searchLocations = new ArrayList<>();
 
 		File buildIdDir = new File(dir, ".build-id");
 		if (buildIdDir.isDirectory()) {
-			searchLocations.add(new BuildIdSearchLocation(buildIdDir));
+			searchLocations.add(new BuildIdDebugFileProvider(buildIdDir));
 		}
-		searchLocations.add(new LocalDirectorySearchLocation(dir));
-		ExternalDebugFilesService edfs = new ExternalDebugFilesService(searchLocations);
-		DWARFExternalDebugFilesPlugin.saveExternalDebugFilesService(edfs);
+		searchLocations.add(new LocalDirDebugLinkProvider(dir));
+		ExternalDebugFilesService edfs = new ExternalDebugFilesService(
+			LocalDirDebugInfoDProvider.getGhidraCacheInstance(), searchLocations);
+		ExternalDebugFilesService.saveToPrefs(edfs);
 	}
 
 }

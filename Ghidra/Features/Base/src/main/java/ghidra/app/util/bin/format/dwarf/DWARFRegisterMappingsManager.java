@@ -17,12 +17,13 @@ package ghidra.app.util.bin.format.dwarf;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.jdom.*;
-import org.jdom.input.SAXBuilder;
+import org.jdom2.*;
+import org.jdom2.input.SAXBuilder;
 
 import generic.jar.ResourceFile;
 import ghidra.program.model.lang.*;
@@ -132,15 +133,31 @@ public class DWARFRegisterMappingsManager {
 
 		Map<Integer, Register> regmap = new HashMap<>();
 		int spi;
-		long cfa;
+		Integer cfa = null; // null == not set
+		Register stackFrameRegister = null;
+		int stackFrameRegisterOffset = 0;
 		boolean useFPS;
 		try {
 			spi = readMappingsElem(regMappingsElem, lang, regmap);
 			Element callFrameElem = rootElem.getChild("call_frame_cfa");
-			cfa = (callFrameElem != null)
-					? XmlUtilities.parseOptionalBoundedLongAttr(callFrameElem, "value", 0, 0,
-						Long.MAX_VALUE)
-					: 0;
+			if (callFrameElem != null) {
+				cfa = XmlUtilities.parseOptionalBoundedIntAttr(callFrameElem, "value", 0, 0,
+					Integer.MAX_VALUE);
+			}
+
+			Element stackFrameElem = rootElem.getChild("stack_frame");
+			if (stackFrameElem != null) {
+				String stackFrameRegisterName =
+					stackFrameElem.getAttributeValue("register");
+				stackFrameRegister =
+					stackFrameRegisterName != null && !stackFrameRegisterName.isEmpty()
+							? lang.getRegister(stackFrameRegisterName)
+							: null;
+				if (stackFrameRegister != null) {
+					stackFrameRegisterOffset = XmlUtilities.parseBoundedIntAttr(stackFrameElem,
+						"offset", Integer.MIN_VALUE, Integer.MAX_VALUE);
+				}
+			}
 
 			Element useFormalParameterStorageElem =
 				rootElem.getChild("use_formal_parameter_storage");
@@ -151,21 +168,20 @@ public class DWARFRegisterMappingsManager {
 				nfe);
 		}
 
-		return new DWARFRegisterMappings(regmap, cfa, spi, useFPS);
+		return new DWARFRegisterMappings(regmap, cfa, spi, stackFrameRegister,
+			stackFrameRegisterOffset, useFPS);
 	}
 
 	/*
 	 * Reads and populates map of dwarf reg numbers to ghidra register objects, and returns
 	 * the index of the dwarf stack pointer register.
 	 */
-	@SuppressWarnings("unchecked")
 	private static int readMappingsElem(Element regMappingsElem, Language lang,
 			Map<Integer, Register> dwarfRegisterMap) throws IOException {
 
 		int stackPointerIndex = -1;
 
-		for (Element regMappingElem : (List<Element>) regMappingsElem.getChildren(
-			"register_mapping")) {
+		for (Element regMappingElem : regMappingsElem.getChildren("register_mapping")) {
 
 			int dwarfRegNum =
 				XmlUtilities.parseBoundedIntAttr(regMappingElem, "dwarf", 0, Integer.MAX_VALUE);

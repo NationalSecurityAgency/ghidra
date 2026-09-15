@@ -39,7 +39,9 @@ import ghidra.app.plugin.core.terminal.TerminalFinder.TextTerminalFinder;
 import ghidra.app.plugin.core.terminal.vt.*;
 import ghidra.app.plugin.core.terminal.vt.VtHandler.*;
 import ghidra.app.services.ClipboardService;
-import ghidra.util.*;
+import ghidra.util.ColorUtils;
+import ghidra.util.Swing;
+import ghidra.util.datastruct.ListenerSet;
 
 /**
  * A VT100 terminal emulator in a panel.
@@ -180,7 +182,8 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 	protected TerminalClipboardProvider clipboardProvider;
 	protected String selectedText;
 
-	protected final ArrayList<TerminalListener> terminalListeners = new ArrayList<>();
+	protected final ListenerSet<TerminalListener> terminalListeners =
+		new ListenerSet<TerminalListener>(TerminalListener.class, false);
 
 	protected VtOutput outputCb;
 	protected final TerminalAwtEventEncoder eventEncoder;
@@ -363,31 +366,24 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 	}
 
 	protected void notifyTerminalResized(short cols, short rows) {
-		for (TerminalListener l : terminalListeners) {
-			try {
-				l.resized(cols, rows);
-			}
-			catch (Throwable t) {
-				Msg.showError(this, null, "Error", t.getMessage(), t);
-			}
-		}
+		terminalListeners.invoke().resized(cols, rows);
 	}
 
 	protected void notifyTerminalRetitled(String title) {
-		for (TerminalListener l : terminalListeners) {
-			try {
-				l.retitled(title);
-			}
-			catch (Throwable t) {
-				Msg.showError(this, null, "Error", t.getMessage(), t);
-			}
-		}
+		terminalListeners.invoke().retitled(title);
+	}
+
+	protected void notifyTerminalTerminated(int exitcode) {
+		terminalListeners.invoke().terminated(exitcode);
 	}
 
 	@Override
 	public void themeChanged(ThemeEvent event) {
 		if (event.isLookAndFeelChanged()) {
 			setFont(Gui.getFont(DEFAULT_FONT_ID));
+			if (model.themeChangeNotification) {
+				responseEncoder.reportDarkMode(Gui.isDarkTheme());
+			}
 		}
 		if (event.isFontChanged(DEFAULT_FONT_ID)) {
 			setFont(Gui.getFont(DEFAULT_FONT_ID));
@@ -782,8 +778,13 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 			return;
 		}
 		Rectangle bounds = scroller.getViewportBorderBounds();
-		int cols = bounds.width / metrics.charWidth('M');
-		int rows = bounds.height / metrics.getHeight();
+		int mWidth = metrics.charWidth('M');
+		int mHeight = metrics.getHeight();
+		if (mWidth == 0 || mHeight == 0) {
+			return;
+		}
+		int cols = bounds.width / mWidth;
+		int rows = bounds.height / mHeight;
 		resizeTerminal((short) cols, (short) rows);
 	}
 

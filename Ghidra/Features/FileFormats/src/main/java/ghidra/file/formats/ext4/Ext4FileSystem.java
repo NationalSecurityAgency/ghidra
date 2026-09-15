@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,6 +23,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.BitSet;
 import java.util.Date;
 
+import org.apache.commons.io.FilenameUtils;
+
 import ghidra.app.util.bin.*;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
@@ -37,6 +39,8 @@ import ghidra.util.task.TaskMonitor;
 public class Ext4FileSystem extends AbstractFileSystem<Ext4File> {
 
 	public static final Charset EXT4_DEFAULT_CHARSET = StandardCharsets.UTF_8;
+
+	private static final int MAX_SANE_INODE_COUNT = 30_000_000; // should handle 500gb disk images  
 
 	private int blockSize;
 	private ByteProvider provider;
@@ -56,24 +60,17 @@ public class Ext4FileSystem extends AbstractFileSystem<Ext4File> {
 		this.volumeName = superBlock.getVolumeName();
 		this.uuid = NumericUtilities.convertBytesToString(superBlock.getS_uuid());
 
-		long blockCount = superBlock.getS_blocks_count();
-		int s_log_block_size = superBlock.getS_log_block_size();
-		this.blockSize = (int) Math.pow(2, (10 + s_log_block_size));
-
-		int groupSize = blockSize * superBlock.getS_blocks_per_group();
-		if (groupSize <= 0) {
-			throw new IOException("Invalid groupSize: " + groupSize);
-		}
-		int numGroups = (int) (blockCount / superBlock.getS_blocks_per_group());
-		if (blockCount % superBlock.getS_blocks_per_group() != 0) {
-			numGroups++;
+		this.blockSize = superBlock.getBlockSize();
+		long numGroups = superBlock.getNumGroups();
+		if (numGroups > Integer.MAX_VALUE - 1000 /*ensure we can alloc jvm array */) {
+			throw new IOException("Bad numgroups: " + numGroups);
 		}
 
 		int groupDescriptorOffset = blockSize + (superBlock.getS_first_data_block() * blockSize);
 		reader.setPointerIndex(groupDescriptorOffset);
 		monitor.initialize(numGroups);
 		monitor.setMessage("Reading inode tables");
-		Ext4GroupDescriptor[] groupDescriptors = new Ext4GroupDescriptor[numGroups];
+		Ext4GroupDescriptor[] groupDescriptors = new Ext4GroupDescriptor[(int) numGroups];
 		for (int i = 0; i < numGroups; i++) {
 			groupDescriptors[i] = new Ext4GroupDescriptor(reader, superBlock.is64Bit());
 			monitor.increment();
@@ -176,10 +173,31 @@ public class Ext4FileSystem extends AbstractFileSystem<Ext4File> {
 	public FileAttributes getFileAttributes(GFile file, TaskMonitor monitor) {
 		FileAttributes result = new FileAttributes();
 
+		if (fsIndex.getRootDir().equals(file)) {
+			result.add(NAME_ATTR, file.getName());
+			result.add(PATH_ATTR, FilenameUtils.getFullPathNoEndSeparator(file.getPath()));
+			String volStr = superBlock.getVolumeName();
+			if (!volStr.isEmpty()) {
+				result.add("Volume", volStr);
+			}
+			String lastMountedAt = superBlock.getLastMountedString();
+			if (!lastMountedAt.isEmpty()) {
+				result.add("Last Mounted At", lastMountedAt);
+			}
+			result.add("UUID", uuid);
+			result.add(MODIFIED_DATE_ATTR, "Superblock last mod",
+				new Date((long) superBlock.getS_mtime() * 1000));
+			result.add(MODIFIED_DATE_ATTR, "Superblock last write",
+				new Date((long) superBlock.getS_wtime() * 1000));
+			result.add(CREATE_DATE_ATTR, new Date((long) superBlock.getS_mkfs_time() * 1000));
+			return result;
+		}
+
 		Ext4File ext4File = fsIndex.getMetadata(file);
 		if (ext4File != null) {
 			Ext4Inode inode = ext4File.getInode();
 			result.add(NAME_ATTR, ext4File.getName());
+			result.add(PATH_ATTR, FilenameUtils.getFullPathNoEndSeparator(file.getPath()));
 			result.add(SIZE_ATTR, inode.getSize());
 			result.add(FILE_TYPE_ATTR, inodeToFileType(inode));
 			if (inode.isSymLink()) {
@@ -192,13 +210,19 @@ public class Ext4FileSystem extends AbstractFileSystem<Ext4File> {
 				}
 				result.add(SYMLINK_DEST_ATTR, symLinkDest);
 			}
-			result.add(MODIFIED_DATE_ATTR, new Date(inode.getI_mtime() * 1000));
+			result.add(MODIFIED_DATE_ATTR, new Date((long) inode.getI_mtime() * 1000));
 			result.add(UNIX_ACL_ATTR, (long) (inode.getI_mode() & 0xFFF));
 			result.add(USER_ID_ATTR, Short.toUnsignedLong(inode.getI_uid()));
 			result.add(GROUP_ID_ATTR, Short.toUnsignedLong(inode.getI_gid()));
 			result.add("Link Count", inode.getI_links_count());
 		}
 		return result;
+	}
+
+	@Override
+	public FileType getFileType(GFile f, TaskMonitor monitor) {
+		Ext4File ext4File = fsIndex.getMetadata(f);
+		return ext4File != null ? inodeToFileType(ext4File.getInode()) : FileType.UNKNOWN;
 	}
 
 	FileType inodeToFileType(Ext4Inode inode) {
@@ -234,15 +258,6 @@ public class Ext4FileSystem extends AbstractFileSystem<Ext4File> {
 		return inode;
 	}
 
-	/**
-	 * Returns a {@link ByteProvider} that supplies the bytes of the requested file.
-	 * 
-	 * @param file {@link GFile} to get
-	 * @param monitor {@link TaskMonitor} to cancel
-	 * @return {@link ByteProvider} containing the bytes of the requested file, caller is
-	 * responsible for closing the ByteProvider
-	 * @throws IOException if error
-	 */
 	@Override
 	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor) throws IOException {
 		file = fsIndex.resolveSymlinks(file);
@@ -276,6 +291,10 @@ public class Ext4FileSystem extends AbstractFileSystem<Ext4File> {
 
 	private Ext4Inode[] getInodes(BinaryReader reader, Ext4GroupDescriptor[] groupDescriptors,
 			TaskMonitor monitor) throws IOException, CancelledException {
+
+		if (superBlock.getS_inodes_count() > MAX_SANE_INODE_COUNT) {
+			throw new IOException("Inode number too big: " + superBlock.getS_inodes_count());
+		}
 
 		int inodeCount = superBlock.getS_inodes_count();
 		int inodesPerGroup = superBlock.getS_inodes_per_group();

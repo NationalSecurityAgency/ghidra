@@ -27,35 +27,37 @@
 
 
 # fcvt.s.w D,s,m d0000053 fff0007f SIMPLE (0, 0) 
-:fcvt.s.w frd,rs1W,FRM is frd & FRM & rs1W & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x68 & op2024=0x0
+:fcvt.s.w frd,rs1,FRM is frd & FRM & rs1 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x68 & op2024=0x0
 {
-	local tmp:4 = int2float(rs1W);
+	local tmp:4 = int2float(rs1:$(WXLEN));
 	fassignS(frd, tmp);
 }
 
 
 # fcvt.s.wu D,s,m d0100053 fff0007f SIMPLE (0, 0) 
-:fcvt.s.wu frd,rs1W,FRM is frd & FRM & rs1W & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x68 & op2024=0x1
+:fcvt.s.wu frd,rs1,FRM is frd & FRM & rs1 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x68 & op2024=0x1
 {
 	#ATTN  unsigned can be an issue here
-	local u32:$(XLEN2) = zext(rs1W);
+	local u32:8 = zext(rs1:$(WXLEN));
 	local tmp:4 = int2float(u32);
 	fassignS(frd, tmp);
 }
 
 
 # fcvt.w.s d,S,m c0000053 fff0007f SIMPLE (0, 0) 
-:fcvt.w.s rdW,frs1S,FRM is frs1S & FRM & rdW & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x60 & op2024=0x0
+:fcvt.w.s rd,frs1S,FRM is frs1S & FRM & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x60 & op2024=0x0
 {
-	rdW = trunc(frs1S);
+	local tmp:4 = trunc(frs1S);
+	rd = sext(tmp);
 }
 
 
 # fcvt.wu.s d,S,m c0100053 fff0007f SIMPLE (0, 0) 
-:fcvt.wu.s rdW,frs1S,FRM is frs1S & FRM & rdW & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x60 & op2024=0x1
+:fcvt.wu.s rd,frs1S,FRM is frs1S & FRM & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x60 & op2024=0x1
 {
-	#TODO  unsigned
-	rdW = trunc(frs1S);
+	local cond = (frs1S s<0);
+	local tmp:4 = (zext(cond) * 0:4) + (zext(!cond) * trunc(frs1S));
+	rd = sext(tmp); # x[rd] = sext(f32->u32(f[rs1]))
 }
 
 
@@ -153,17 +155,17 @@
 
 
 # fmv.w.x D,s f0000053 fff0707f SIMPLE (0, 0) 
-:fmv.w.x frd,rs1W is frd & rs1W & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x0
+:fmv.w.x frd,rs1 is frd & rs1 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x78 & op2024=0x0
 {
-	fassignS(frd, rs1W);
+	fassignS(frd, rs1:$(WXLEN));
 }
 
 # fmv.x.w d,S e0000053 fff0707f SIMPLE (0, 0) 
-:fmv.x.w rdW,frs1S is frs1S & rdW & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x70 & op2024=0x0
+:fmv.x.w rd,frs1S is frs1S & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x70 & op2024=0x0
 {
 	local tmpreg:4 = &frs1S;
 	local tmp:4 = *[register]:4 tmpreg;
-	rdW = tmp;
+	rd = zext(tmp);
 }
 
 

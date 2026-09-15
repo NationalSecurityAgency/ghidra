@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.Assert;
 
@@ -169,8 +170,9 @@ public abstract class GhidraScreenShotGenerator extends AbstractScreenShotGenera
 	}
 
 	protected File getHelpTopic() {
+		String moduleName = getHelpTopicModuleName();
 		String topicName = getHelpTopicName();
-		File helpTopicDir = getHelpTopicDir(topicName);
+		File helpTopicDir = getHelpTopicDir(moduleName, topicName);
 		assertNotNull("Unable to find help topic for test file: " + getClass().getName(),
 			helpTopicDir);
 		return helpTopicDir;
@@ -178,6 +180,16 @@ public abstract class GhidraScreenShotGenerator extends AbstractScreenShotGenera
 
 	public void loadDefaultTool() {
 		env.launchDefaultTool();
+	}
+
+	/**
+	 * Returns an optional module.  The default value is null, which signals to find the help topic
+	 * name in any module.  This needs to be overridden when a given help topic name is in more than
+	 * one module.
+	 * @return the module name (e.g., Base)
+	 */
+	protected String getHelpTopicModuleName() {
+		return null; // null means to use the first matching help topic found in any module
 	}
 
 	protected String getHelpTopicName() {
@@ -339,11 +351,31 @@ public abstract class GhidraScreenShotGenerator extends AbstractScreenShotGenera
 		writeFile(imageFile);
 	}
 
-	protected File getHelpTopicDir(String helpTopic) {
+	protected File getHelpTopicDir(String topicName) {
+		return getHelpTopicDir(null, topicName);
+	}
+
+	protected File getHelpTopicDir(String moduleName, String helpTopic) {
 		List<File> helpTopicDirs = getHelpTopicDirs();
 		for (File file : helpTopicDirs) {
 			File potential = new File(file, helpTopic);
-			if (potential.exists()) {
+			if (!potential.exists()) {
+				continue;
+			}
+
+			if (StringUtils.isBlank(moduleName)) {
+				return potential; // any module will do
+			}
+
+			// Module/src/main/help/help/topics/TopicName
+			File topics = potential.getParentFile();
+			File help = topics.getParentFile();
+			File helpParent = help.getParentFile();
+			File main = helpParent.getParentFile();
+			File src = main.getParentFile();
+			File module = src.getParentFile();
+			String actualModuleName = module.getName();
+			if (actualModuleName.equals(moduleName)) {
 				return potential;
 			}
 		}

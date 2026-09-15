@@ -38,6 +38,15 @@ public class MicrosoftMangledContext extends MangledContext {
 	}
 
 	/**
+	 * Returns the demangler options
+	 * @return the options
+	 */
+	@Override
+	public MicrosoftDemanglerOptions getOptions() {
+		return (MicrosoftDemanglerOptions) options;
+	}
+
+	/**
 	 * Returns the program architecture size
 	 * @return the architecture size or zero if not known (program is null)
 	 */

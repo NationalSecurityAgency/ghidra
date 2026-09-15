@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,8 @@ package db.buffers;
 
 import java.io.IOException;
 import java.util.NoSuchElementException;
+
+import ghidra.util.task.TaskMonitor;
 
 /**
  * <code>BufferFileHandle</code> facilitates access to a BufferFile
@@ -34,6 +36,7 @@ public interface BufferFileHandle {
 	public boolean setReadOnly() throws IOException;
 
 	/**
+	 * NOTE: NoSuchElementException is runtime so must be handled if wrapped in RemoteException
 	 * @see BufferFile#getParameter(java.lang.String)
 	 */
 	public int getParameter(String name) throws NoSuchElementException, IOException;
@@ -101,14 +104,14 @@ public interface BufferFileHandle {
 	/**
 	 * Provides local access to an input block stream.  This method should only be used 
 	 * if the associated {@link BufferFileAdapter#isRemote()} is <i>false</i>.
-	 * @see BufferFileAdapter#getInputBlockStream()
+	 * @see BufferFileAdapter#getInputBlockStream(TaskMonitor)
 	 */
 	public InputBlockStream getInputBlockStream() throws IOException;
 
 	/**
 	 * Provides local access to an output block stream.  This method should only be used 
 	 * if the associated {@link BufferFileAdapter#isRemote()} is <i>false</i>.
-	 * @see BufferFileAdapter#getOutputBlockStream(int)
+	 * @see BufferFileAdapter#getOutputBlockStream(int, TaskMonitor)
 	 */
 	public OutputBlockStream getOutputBlockStream(int blockCount) throws IOException;
 
@@ -116,7 +119,7 @@ public interface BufferFileHandle {
 	 * Get an input block stream handle which will facilitate access to a remote InputBlockStream.
 	 * The handle will facilitate use of a remote streaming interface.  This method should only be used 
 	 * if the associated {@link BufferFileAdapter#isRemote()} is <i>true</i>. 
-	 * @see BufferFileAdapter#getInputBlockStream()
+	 * @see BufferFileAdapter#getInputBlockStream(TaskMonitor)
 	 */
 	public BlockStreamHandle<InputBlockStream> getInputBlockStreamHandle() throws IOException;
 
@@ -124,7 +127,7 @@ public interface BufferFileHandle {
 	 * Get an output block stream handle which will facilitate access to a remote InputBlockStream.
 	 * The handle will facilitate use of a remote streaming interface.  This method should only be used 
 	 * if the associated {@link BufferFileAdapter#isRemote()} is <i>true</i>. 
-	 * @see BufferFileAdapter#getOutputBlockStream(int)
+	 * @see BufferFileAdapter#getOutputBlockStream(int, TaskMonitor)
 	 */
 	public BlockStreamHandle<OutputBlockStream> getOutputBlockStreamHandle(int blockCount)
 			throws IOException;

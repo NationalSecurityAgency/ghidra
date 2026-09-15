@@ -401,8 +401,7 @@ public class LibreTranslateStringTranslationService implements StringTranslation
 			// if possible, unwrap the exception that happened inside the future
 			Throwable cause = e.getCause();
 			Msg.error(this, "Error during HTTP request [%s]".formatted(request.uri()), cause);
-			throw (cause instanceof IOException)
-					? (IOException) cause
+			throw (cause instanceof IOException) ? (IOException) cause
 					: new IOException("Error during HTTP request", cause);
 		}
 		finally {

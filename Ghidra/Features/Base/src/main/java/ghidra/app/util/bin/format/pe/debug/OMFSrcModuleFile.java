@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,12 +15,10 @@
  */
 package ghidra.app.util.bin.format.pe.debug;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
-import java.io.IOException;
-
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.util.Conv;
 
 /**
  * A class to represent the Object Module Format (OMF) Source Module File data structure. 
@@ -62,16 +60,16 @@ public class OMFSrcModuleFile {
 		pad = reader.readShort(index);
 		index += BinaryReader.SIZEOF_SHORT;
 
-		baseSrcLn = new int[Conv.shortToInt(cSeg)];
+		baseSrcLn = new int[Short.toUnsignedInt(cSeg)];
 		for (int i = 0; i < cSeg; ++i) {
 			baseSrcLn[i] = reader.readInt(index);
 			index += BinaryReader.SIZEOF_INT;
 		}
 
-		starts = new int[Conv.shortToInt(cSeg)];
-		ends = new int[Conv.shortToInt(cSeg)];
+		starts = new int[Short.toUnsignedInt(cSeg)];
+		ends = new int[Short.toUnsignedInt(cSeg)];
 
-		for (int i = 0; i < Conv.shortToInt(cSeg); ++i) {
+		for (int i = 0; i < Short.toUnsignedInt(cSeg); ++i) {
 			starts[i] = reader.readInt(index);
 			index += BinaryReader.SIZEOF_INT;
 			ends[i] = reader.readInt(index);
@@ -84,7 +82,7 @@ public class OMFSrcModuleFile {
 		name = reader.readAsciiString(index, Byte.toUnsignedInt(cbName));
 		index += Byte.toUnsignedInt(cbName);
 
-		for (int i = 0; i < Conv.shortToInt(cSeg); ++i) {
+		for (int i = 0; i < Short.toUnsignedInt(cSeg); ++i) {
 			//OMFSrcModuleLine line = new OMFSrcModuleLine(reader, index);
 			OMFSrcModuleLine line = new OMFSrcModuleLine(reader, moduleBase + baseSrcLn[i]);
 			moduleLineList.add(line);

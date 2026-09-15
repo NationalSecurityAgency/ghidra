@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,8 @@
  */
 package ghidra.app.emulator;
 
+import ghidra.pcode.emu.PcodeEmulationCallbacks;
+import ghidra.pcode.emu.PcodeEmulator;
 import ghidra.program.model.address.AddressSpace;
 
 /**
@@ -24,7 +26,11 @@ import ghidra.program.model.address.AddressSpace;
  * Several of these filters may be chained together, each being invoked in the reverse of the order
  * added. In this way, the first added gets the "final say," but it also is farthest from the
  * original request.
+ * 
+ * @deprecated Please use {@link PcodeEmulator} instead. For similar callbacks, see
+ *             {@link PcodeEmulationCallbacks}
  */
+@Deprecated(since = "12.1", forRemoval = true)
 public abstract class MemoryAccessFilter {
 
 	private MemoryAccessFilter prevFilter;

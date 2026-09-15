@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,8 @@
 package ghidra.app.util.importer;
 
 import ghidra.app.util.opinion.*;
+import ghidra.program.model.lang.CompilerSpecID;
+import ghidra.program.model.lang.LanguageID;
 
 /**
  * Chooses a {@link LoadSpec} for a {@link Loader} to use based on some criteria
@@ -30,6 +32,26 @@ public interface LoadSpecChooser {
 	 * @return The chosen {@link LoadSpec}, or null if one could not be found
 	 */
 	public LoadSpec choose(LoaderMap loaderMap);
+
+	/**
+	 * Gets the desired {@link LanguageID} associated with this chooser
+	 * 
+	 * @return the desired {@link LanguageID} associated with this chooser, or {@code null} to mean
+	 *   "any"
+	 */
+	public default LanguageID getLanguageId() {
+		return null;
+	}
+
+	/**
+	 * Gets the desired {@link CompilerSpecID} associated with this chooser
+	 * 
+	 * @return the desired {@link CompilerSpecID} associated with this chooser, or {@code null} to
+	 *   mean "any"
+	 */
+	public default CompilerSpecID getCompilerSpecId() {
+		return null;
+	}
 
 	/**
 	 * Chooses the first "preferred" {@link LoadSpec}

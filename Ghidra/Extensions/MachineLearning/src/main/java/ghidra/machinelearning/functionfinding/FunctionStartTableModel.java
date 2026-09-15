@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,8 +24,9 @@ import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.block.BasicBlockModel;
+import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.Program;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.exception.CancelledException;
@@ -38,7 +39,7 @@ import ghidra.util.task.TaskMonitor;
  */
 public class FunctionStartTableModel extends AddressBasedTableModel<FunctionStartRowObject> {
 	private RandomForestRowObject modelRow;
-	private AddressSet addressesToClassify;
+	private AddressSetView addressesToClassify;
 	private boolean debug;
 	private BasicBlockModel blockModel;
 	private Map<Address, Double> addressToProbability;
@@ -54,7 +55,7 @@ public class FunctionStartTableModel extends AddressBasedTableModel<FunctionStar
 	 * @param modelRow trained model info
 	 * @param debug is table displaying debug data
 	 */
-	public FunctionStartTableModel(PluginTool plugin, Program program, AddressSet toClassify,
+	public FunctionStartTableModel(PluginTool plugin, Program program, AddressSetView toClassify,
 			RandomForestRowObject modelRow, boolean debug) {
 		super(program.getName(), plugin, program, null, false);
 		this.modelRow = modelRow;
@@ -100,6 +101,7 @@ public class FunctionStartTableModel extends AddressBasedTableModel<FunctionStar
 		descriptor.addVisibleColumn(new AddressTableColumn());
 		descriptor.addVisibleColumn(new ProbabilityTableColumn(), 0, false);
 		descriptor.addVisibleColumn(new InterpretationTableColumn());
+		descriptor.addVisibleColumn(new FallthroughTableColumn());
 		descriptor.addVisibleColumn(new DataReferencesTableColumn());
 		descriptor.addVisibleColumn(new UnconditionalFlowReferencesTableColumn());
 		descriptor.addVisibleColumn(new ConditionalFlowReferencesTableColumn());
@@ -171,6 +173,32 @@ public class FunctionStartTableModel extends AddressBasedTableModel<FunctionStar
 				Object data, ServiceProvider services) throws IllegalArgumentException {
 			return rowObject.getCurrentInterpretation();
 		}
+	}
+
+	private class FallthroughTableColumn
+			extends AbstractDynamicTableColumn<FunctionStartRowObject, Boolean, Object> {
+
+		@Override
+		public String getColumnName() {
+			return "Is Fallthrough Target";
+		}
+
+		@Override
+		public Boolean getValue(FunctionStartRowObject rowObject, Settings settings, Object data,
+				ServiceProvider services) throws IllegalArgumentException {
+			Instruction preInstr =
+				program.getListing().getInstructionBefore(rowObject.getAddress());
+			if (preInstr == null) {
+				return false;
+			}
+
+			if (!preInstr.hasFallthrough()) {
+				return false;
+			}
+
+			return preInstr.getFallThrough().equals(rowObject.getAddress());
+		}
+
 	}
 
 	private class DataReferencesTableColumn

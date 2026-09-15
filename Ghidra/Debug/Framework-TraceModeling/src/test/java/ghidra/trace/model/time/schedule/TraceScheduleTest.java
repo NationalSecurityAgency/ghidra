@@ -30,6 +30,8 @@ import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
+import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
 public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
@@ -161,7 +163,7 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
 	public void testRewind() {
-		Sequence seq = Sequence.parse("10;t1-20;t2-30");
+		Sequence seq = Sequence.parse("10;t1-20;t2-30", TimeRadix.DEC);
 
 		assertEquals(0, seq.rewind(5));
 		assertEquals("10;t1-20;t2-25", seq.toString());
@@ -181,7 +183,7 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testRewindNegativeErr() {
-		Sequence seq = Sequence.parse("10;t1-20;t2-30");
+		Sequence seq = Sequence.parse("10;t1-20;t2-30", TimeRadix.DEC);
 		seq.rewind(-1);
 	}
 
@@ -251,7 +253,8 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	public String strRelativize(String fromSpec, String toSpec) {
-		Sequence seq = Sequence.parse(toSpec).relativize(Sequence.parse(fromSpec));
+		Sequence seq = Sequence.parse(toSpec, TimeRadix.DEC)
+				.relativize(Sequence.parse(fromSpec, TimeRadix.DEC));
 		return seq == null ? null : seq.toString();
 	}
 
@@ -277,13 +280,16 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 	@Test
 	public void testExecute() throws Exception {
 		TestMachine machine = new TestMachine();
-		TraceSchedule time = TraceSchedule.parse("1:4;t0-3;t1-2.1");
+		TraceSchedule time = TraceSchedule.parse("1:4;t1-3;t3-2.1");
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", ToyProgramBuilder._TOY64_BE)) {
-			TraceThread t2;
 			try (Transaction tx = tb.startTransaction()) {
-				tb.trace.getThreadManager().createThread("Threads[0]", 0);
-				tb.trace.getThreadManager().createThread("Threads[1]", 0);
-				t2 = tb.trace.getThreadManager().createThread("Threads[2]", 0);
+				tb.createRootObject("Target");
+				TraceThread t0 = tb.trace.getThreadManager().createThread("Threads[0]", 0);
+				Msg.trace(this, "[0] is t%d".formatted(t0.getKey()));
+				TraceThread t1 = tb.trace.getThreadManager().createThread("Threads[1]", 0);
+				Msg.trace(this, "[1] is t%d".formatted(t1.getKey()));
+				TraceThread t2 = tb.trace.getThreadManager().createThread("Threads[2]", 0);
+				Msg.trace(this, "[2] is t%d".formatted(t2.getKey()));
 				tb.trace.getTimeManager().getSnapshot(1, true).setEventThread(t2);
 			}
 			time.execute(tb.trace, machine, TaskMonitor.DUMMY);
@@ -306,13 +312,16 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 	@Test
 	public void testExecuteWithSkips() throws Exception {
 		TestMachine machine = new TestMachine();
-		TraceSchedule time = TraceSchedule.parse("1:4;t0-s3;t1-2.s1");
+		TraceSchedule time = TraceSchedule.parse("1:4;t1-s3;t3-2.s1");
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", ToyProgramBuilder._TOY64_BE)) {
-			TraceThread t2;
 			try (Transaction tx = tb.startTransaction()) {
-				tb.trace.getThreadManager().createThread("Threads[0]", 0);
-				tb.trace.getThreadManager().createThread("Threads[1]", 0);
-				t2 = tb.trace.getThreadManager().createThread("Threads[2]", 0);
+				tb.createRootObject("Target");
+				TraceThread t0 = tb.trace.getThreadManager().createThread("Threads[0]", 0);
+				Msg.trace(this, "[0] is t%d".formatted(t0.getKey()));
+				TraceThread t1 = tb.trace.getThreadManager().createThread("Threads[1]", 0);
+				Msg.trace(this, "[1] is t%d".formatted(t1.getKey()));
+				TraceThread t2 = tb.trace.getThreadManager().createThread("Threads[2]", 0);
+				Msg.trace(this, "[2] is t%d".formatted(t2.getKey()));
 				tb.trace.getTimeManager().getSnapshot(1, true).setEventThread(t2);
 			}
 			time.execute(tb.trace, machine, TaskMonitor.DUMMY);
@@ -337,11 +346,14 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 		TestMachine machine = new TestMachine();
 		TraceSchedule time = TraceSchedule.parse("1:{r0=0x1234};4");
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", "Toy:BE:64:default")) {
-			TraceThread t2;
 			try (Transaction tx = tb.startTransaction()) {
-				tb.trace.getThreadManager().createThread("Threads[0]", 0);
-				tb.trace.getThreadManager().createThread("Threads[1]", 0);
-				t2 = tb.trace.getThreadManager().createThread("Threads[2]", 0);
+				tb.createRootObject("Target");
+				TraceThread t0 = tb.trace.getThreadManager().createThread("Threads[0]", 0);
+				Msg.trace(this, "[0] is t%d".formatted(t0.getKey()));
+				TraceThread t1 = tb.trace.getThreadManager().createThread("Threads[1]", 0);
+				Msg.trace(this, "[1] is t%d".formatted(t1.getKey()));
+				TraceThread t2 = tb.trace.getThreadManager().createThread("Threads[2]", 0);
+				Msg.trace(this, "[2] is t%d".formatted(t2.getKey()));
 				tb.trace.getTimeManager().getSnapshot(1, true).setEventThread(t2);
 			}
 			time.execute(tb.trace, machine, TaskMonitor.DUMMY);
@@ -362,6 +374,7 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 		TraceSchedule time = TraceSchedule.parse("1:4;t0-3;t1-2.1");
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", "Toy:BE:64:default")) {
 			try (Transaction tx = tb.startTransaction()) {
+				tb.createRootObject("Target");
 				tb.trace.getThreadManager().createThread("Threads[0]", 0);
 				tb.trace.getThreadManager().createThread("Threads[1]", 0);
 				tb.trace.getThreadManager().createThread("Threads[2]", 0);
@@ -374,13 +387,16 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 	@Test(expected = IllegalArgumentException.class)
 	public void testExecuteBadThreadKeyErr() throws Exception {
 		TestMachine machine = new TestMachine();
-		TraceSchedule time = TraceSchedule.parse("1:4;t0-3;t5-2.1");
+		TraceSchedule time = TraceSchedule.parse("1:4;t1-3;t999-2.1");
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", "Toy:BE:64:default")) {
-			TraceThread t2;
 			try (Transaction tx = tb.startTransaction()) {
-				tb.trace.getThreadManager().createThread("Threads[0]", 0);
-				tb.trace.getThreadManager().createThread("Threads[1]", 0);
-				t2 = tb.trace.getThreadManager().createThread("Threads[2]", 0);
+				tb.createRootObject("Target");
+				TraceThread t0 = tb.trace.getThreadManager().createThread("Threads[0]", 0);
+				Msg.trace(this, "[0] is t%d".formatted(t0.getKey()));
+				TraceThread t1 = tb.trace.getThreadManager().createThread("Threads[1]", 0);
+				Msg.trace(this, "[1] is t%d".formatted(t1.getKey()));
+				TraceThread t2 = tb.trace.getThreadManager().createThread("Threads[2]", 0);
+				Msg.trace(this, "[2] is t%d".formatted(t2.getKey()));
 				tb.trace.getTimeManager().getSnapshot(1, true).setEventThread(t2);
 			}
 			time.execute(tb.trace, machine, TaskMonitor.DUMMY);
@@ -390,16 +406,19 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 	@Test
 	public void testFinish() throws Exception {
 		TestMachine machine = new TestMachine();
-		TraceSchedule time = TraceSchedule.parse("1:4;t0-3;t1-2.1");
+		TraceSchedule time = TraceSchedule.parse("1:4;t1-3;t3-2.1");
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", "Toy:BE:64:default")) {
-			TraceThread t2;
 			try (Transaction tx = tb.startTransaction()) {
-				tb.trace.getThreadManager().createThread("Threads[0]", 0);
-				tb.trace.getThreadManager().createThread("Threads[1]", 0);
-				t2 = tb.trace.getThreadManager().createThread("Threads[2]", 0);
+				tb.createRootObject("Target");
+				TraceThread t0 = tb.trace.getThreadManager().createThread("Threads[0]", 0);
+				Msg.trace(this, "[0] is t%d".formatted(t0.getKey()));
+				TraceThread t1 = tb.trace.getThreadManager().createThread("Threads[1]", 0);
+				Msg.trace(this, "[1] is t%d".formatted(t1.getKey()));
+				TraceThread t2 = tb.trace.getThreadManager().createThread("Threads[2]", 0);
+				Msg.trace(this, "[2] is t%d".formatted(t2.getKey()));
 				tb.trace.getTimeManager().getSnapshot(1, true).setEventThread(t2);
 			}
-			time.finish(tb.trace, TraceSchedule.parse("1:4;t0-2"), machine, TaskMonitor.DUMMY);
+			time.finish(tb.trace, TraceSchedule.parse("1:4;t1-2"), machine, TaskMonitor.DUMMY);
 		}
 
 		assertEquals(List.of(
@@ -413,16 +432,19 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 	@Test
 	public void testFinishPcode() throws Exception {
 		TestMachine machine = new TestMachine();
-		TraceSchedule time = TraceSchedule.parse("1:4;t0-3;t1-2.1");
+		TraceSchedule time = TraceSchedule.parse("1:4;t1-3;t3-2.1");
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", "Toy:BE:64:default")) {
-			TraceThread t2;
 			try (Transaction tx = tb.startTransaction()) {
-				tb.trace.getThreadManager().createThread("Threads[0]", 0);
-				tb.trace.getThreadManager().createThread("Threads[1]", 0);
-				t2 = tb.trace.getThreadManager().createThread("Threads[2]", 0);
+				tb.createRootObject("Target");
+				TraceThread t0 = tb.trace.getThreadManager().createThread("Threads[0]", 0);
+				Msg.trace(this, "[0] is t%d".formatted(t0.getKey()));
+				TraceThread t1 = tb.trace.getThreadManager().createThread("Threads[1]", 0);
+				Msg.trace(this, "[1] is t%d".formatted(t1.getKey()));
+				TraceThread t2 = tb.trace.getThreadManager().createThread("Threads[2]", 0);
+				Msg.trace(this, "[2] is t%d".formatted(t2.getKey()));
 				tb.trace.getTimeManager().getSnapshot(1, true).setEventThread(t2);
 			}
-			time.finish(tb.trace, TraceSchedule.parse("1:4;t0-3;t1-2"), machine,
+			time.finish(tb.trace, TraceSchedule.parse("1:4;t1-3;t3-2"), machine,
 				TaskMonitor.DUMMY);
 		}
 
@@ -434,40 +456,46 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 	@Test(expected = IllegalArgumentException.class)
 	public void testFinishUnrelatedErr() throws Exception {
 		TestMachine machine = new TestMachine();
-		TraceSchedule time = TraceSchedule.parse("1:4;t0-3;t1-2.1");
+		TraceSchedule time = TraceSchedule.parse("1:4;t1-3;t3-2.1");
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", "Toy:BE:64:default")) {
-			TraceThread t2;
 			try (Transaction tx = tb.startTransaction()) {
-				tb.trace.getThreadManager().createThread("Threads[0]", 0);
-				tb.trace.getThreadManager().createThread("Threads[1]", 0);
-				t2 = tb.trace.getThreadManager().createThread("Threads[2]", 0);
+				tb.createRootObject("Target");
+				TraceThread t0 = tb.trace.getThreadManager().createThread("Threads[0]", 0);
+				Msg.trace(this, "[0] is t%d".formatted(t0.getKey()));
+				TraceThread t1 = tb.trace.getThreadManager().createThread("Threads[1]", 0);
+				Msg.trace(this, "[1] is t%d".formatted(t1.getKey()));
+				TraceThread t2 = tb.trace.getThreadManager().createThread("Threads[2]", 0);
+				Msg.trace(this, "[2] is t%d".formatted(t2.getKey()));
 				tb.trace.getTimeManager().getSnapshot(1, true).setEventThread(t2);
 			}
-			time.finish(tb.trace, TraceSchedule.parse("1:4;t0-4"), machine, TaskMonitor.DUMMY);
+			time.finish(tb.trace, TraceSchedule.parse("1:4;t1-4"), machine, TaskMonitor.DUMMY);
 		}
 	}
 
 	@Test
 	public void testCoalescePatches() throws Exception {
-		// TODO: Should parse require coalescing? Can't without passing a language...
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", "Toy:BE:64:default")) {
 			TraceThread thread;
 			try (Transaction tx = tb.startTransaction()) {
+				tb.createRootObject("Target");
 				thread = tb.trace.getThreadManager().createThread("Threads[0]", 0);
 			}
 			TraceSchedule time = TraceSchedule.parse("0");
 			time = time.patched(thread, tb.language, "r0l=1");
-			assertEquals("0:t0-{r0l=0x1}", time.toString());
+			long i = thread.getKey();
+			assertEquals("0:t%d-{r0l=0x1}".formatted(i), time.toString());
 			time = time.patched(thread, tb.language, "r0h=2");
-			assertEquals("0:t0-{r0=0x200000001}", time.toString());
+			assertEquals("0:t%d-{r0=0x200000001}".formatted(i), time.toString());
 			time = time.patched(thread, tb.language, "r1l=3")
 					.patched(thread, tb.language, "*[ram]:4 0xcafe:8=0xdeadbeef");
-			assertEquals("0:t0-{*:4 0xcafe:8=0xdeadbeef};t0-{r0=0x200000001};t0-{r1l=0x3}",
+			assertEquals("0:t%d-{*:4 0xcafe:8=0xdeadbeef};t%d-{r0=0x200000001};t%d-{r1l=0x3}"
+					.formatted(i, i, i),
 				time.toString());
 
 			time = time.patched(thread, tb.language, "*:8 0xcb00:8 = 0x1122334455667788");
-			assertEquals("0:t0-{*:8 0xcafe:8=0xdead112233445566};t0-{*:2 0xcb06:8=0x7788};" +
-				"t0-{r0=0x200000001};t0-{r1l=0x3}", time.toString());
+			assertEquals("""
+					0:t%d-{*:8 0xcafe:8=0xdead112233445566};t%d-{*:2 0xcb06:8=0x7788};\
+					t%d-{r0=0x200000001};t%d-{r1l=0x3}""".formatted(i, i, i, i), time.toString());
 		}
 	}
 
@@ -502,5 +530,14 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 			TraceSchedule.parse("1:1.1").differsOnlyByPatch(TraceSchedule.parse("1:1.1;{r0=1}")));
 		assertFalse(
 			TraceSchedule.parse("1:1.1;{r0=1}").differsOnlyByPatch(TraceSchedule.parse("1:1.1")));
+	}
+
+	@Test
+	public void testTimeRadix() throws Exception {
+		TraceSchedule schedule = TraceSchedule.parse("A:t10-B.C", TimeRadix.HEX_UPPER);
+
+		assertEquals("10:t10-11.12", schedule.toString(TimeRadix.DEC));
+		assertEquals("A:t10-B.C", schedule.toString(TimeRadix.HEX_UPPER));
+		assertEquals("a:t10-b.c", schedule.toString(TimeRadix.HEX_LOWER));
 	}
 }

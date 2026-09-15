@@ -171,6 +171,7 @@ public interface ProgramModule extends Group {
 	 * @return the minimum address, this will be null if all of the module's
 	 * descendant fragments are empty.
 	 */
+	@Override
 	public Address getMinAddress();
 
 	/**
@@ -181,6 +182,7 @@ public interface ProgramModule extends Group {
 	 * @return the maximum address, this will be null if all of the module's
 	 * descendant fragments are empty.
 	 */
+	@Override
 	public Address getMaxAddress();
 
 	/**

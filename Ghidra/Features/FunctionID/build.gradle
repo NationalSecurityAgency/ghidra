@@ -113,9 +113,10 @@ task buildFidHelpPdf(type: Exec) {
 	// Check the OS before executing command.
 	doFirst {
 		if ( !(org.gradle.internal.os.OperatingSystem.current().isLinux() 
-			|| org.gradle.internal.os.OperatingSystem.current().isMacOsX())) {
+			|| org.gradle.internal.os.OperatingSystem.current().isMacOsX()
+			|| org.gradle.internal.os.OperatingSystem.current().isOpenBSD())) {
 			throw new TaskExecutionException( it,
-				new Exception( "The '$it.name' task only works on Linux or Mac Os X" ))
+				new Exception( "The '$it.name' task only works on Linux, Mac Os X or OpenBSD" ))
 		}
 	}
 
@@ -177,8 +178,9 @@ task buildFidHelpHtml(type: Exec) {
 
 	// Check the OS before executing command.
 	doFirst {
-		if (!getCurrentPlatformName().startsWith("linux")) {
-			throw new TaskExecutionException( it, new Exception("The '$it.name' task only works on Linux."))
+		if (!(getCurrentPlatformName().startsWith("linux")
+		    || getCurrentPlatformName().startsWith("openbsd"))) {
+			throw new TaskExecutionException( it, new Exception("The '$it.name' task only works on Linux or OpenBSD."))
 		}
 	}
 

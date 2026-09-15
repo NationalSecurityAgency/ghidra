@@ -36,6 +36,7 @@ import javax.swing.text.JTextComponent;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.junit.*;
 
 import docking.*;
@@ -254,7 +255,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 	 *             (we are standardizing timeouts).  The timeouts passed to this method will
 	 *             be ignored in favor of the standard value.
 	 */
-	@Deprecated
+	@Deprecated(since = "9.1")
 	public static Window waitForWindow(String title, int timeoutMS) {
 		return waitForWindow(title);
 	}
@@ -351,19 +352,19 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 		}
 
 		String title = dialog.getTitle();
-		boolean isSavePrompt = StringUtils.containsAny(title, "Changed", "Saved");
+		boolean isSavePrompt = Strings.CS.containsAny(title, "Changed", "Saved");
 		if (!isSavePrompt) {
 			throw new AssertionError("Unexpected dialog with title '" + title + "'; " +
 				"Expected a dialog alerting to program changes");
 		}
 
-		if (StringUtils.contains(title, "Program Changed")) {
+		if (Strings.CS.contains(title, "Program Changed")) {
 			// the program is read-only or not in a writable project
 			pressButtonByText(dialog, "Continue");
 			return;
 		}
 
-		if (StringUtils.contains(title, "Save Program?")) {
+		if (Strings.CS.contains(title, "Save Program?")) {
 			pressButtonByText(dialog, "Cancel");
 			return;
 		}
@@ -609,7 +610,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 	 *             (we are standardizing timeouts).  The timeouts passed to this method will
 	 *             be ignored in favor of the standard value.
 	 */
-	@Deprecated
+	@Deprecated(since = "9.1")
 	public static <T extends DialogComponentProvider> T waitForDialogComponent(Window parentWindow,
 			Class<T> clazz, int timeoutMS) {
 		if (!DialogComponentProvider.class.isAssignableFrom(clazz)) {
@@ -1283,6 +1284,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 
 			ActionContext providerContext = provider.getActionContext(null);
 			if (providerContext != null) {
+				providerContext.setContextProvider(provider);
 				return providerContext;
 			}
 
@@ -1297,6 +1299,9 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 
 		assertNotNull("Action cannot be null", action);
 		assertNotNull("Action context cannot be null", context);
+
+		boolean isValid = runSwing(() -> action.isValidContext(context));
+		assertTrue("Attempted to invoke action with invalid context", isValid);
 
 		runSwing(() -> {
 
@@ -1338,11 +1343,13 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 
 			ActionContext newContext = provider.getActionContext(null);
 			if (newContext == null) {
+				actionContext.setContextProvider(provider);
 				return actionContext;
 			}
 
 			actionContext = newContext;
 			actionContext.setSourceObject(provider.getComponent());
+			actionContext.setContextProvider(provider);
 
 			return actionContext;
 		});
@@ -1366,6 +1373,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 			ActionContext actionContext = provider.getActionContext(null);
 			if (actionContext != null) {
 				actionContext.setSourceObject(provider.getComponent());
+				actionContext.setContextProvider(provider);
 			}
 			return actionContext;
 		});
@@ -1392,7 +1400,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 	 *
 	 * @param toggleAction the action
 	 * @param context the context for the action
-	 * @param selected true if the action is be be selected; false for not selected
+	 * @param selected true if the action is to be selected; false for not selected
 	 */
 	public static void setToggleActionSelected(ToggleDockingActionIf toggleAction,
 			ActionContext context, boolean selected) {
@@ -1405,7 +1413,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 	 *
 	 * @param toggleAction the action
 	 * @param context the context for the action
-	 * @param selected true if the action is be be selected; false for not selected
+	 * @param selected true if the action is to be selected; false for not selected
 	 * @param wait true to wait for the action to finish; false to invoke later
 	 */
 	public static void setToggleActionSelected(ToggleDockingActionIf toggleAction,
@@ -1515,9 +1523,24 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 	 */
 	private static void forceTextComponentFocus(JTextComponent tc) {
 
-		Object contextKey = getInstanceField("FOCUSED_COMPONENT", tc);
-		AppContext context = AppContext.getAppContext();
-		context.put(contextKey, tc);
+		runSwing(() -> {
+
+			// Update Swing's notion of the focused component
+			Object contextKey = getInstanceField("FOCUSED_COMPONENT", tc);
+			AppContext context = AppContext.getAppContext();
+			context.put(contextKey, tc);
+
+			/*
+			 	The FlatLaf will select all text in a text field when it gains focus.  This will 
+			 	break how we send key events to text fields.  For text handling to work correctly, 
+			 	we need to ensure that the given field has focus.  If it gains focus in FlatLaf and
+			 	then selects the text, the next key event will overwrite the current text, which we
+			 	do not want.  
+			 	
+			 	See FlatClientProperties.SELECT_ALL_ON_FOCUS_POLICY
+			 */
+			tc.putClientProperty("JTextField.selectAllOnFocusPolicy", "never");
+		});
 	}
 
 	/**
@@ -2144,6 +2167,11 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 				TimeUnit.NANOSECONDS));
 		*/
 		doWaitForTree(gTree);
+
+		// some client tree operations will launch tasks that wait for the tree and then call a 
+		// Swing task to run at some point after that.  waitForSwing() is not good enough for these,
+		// since the tree may be using a timer that has not yet expired.
+		waitForExpiringSwingTimers();
 	}
 
 	private static void doWaitForTree(GTree gTree) {
@@ -2178,7 +2206,17 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 	}
 
 	public static boolean isEnabled(DockingActionIf action, ActionContextProvider contextProvider) {
-		return runSwing(() -> action.isEnabledForContext(contextProvider.getActionContext(null)));
+		return runSwing(() -> action.isEnabledForContext(createActionContext(contextProvider)));
+	}
+
+	public static ActionContext createActionContext(ActionContextProvider provider) {
+		return runSwing(() -> {
+			ActionContext context = provider.getActionContext(null);
+			if (context != null) {
+				context.setContextProvider(provider);
+			}
+			return context;
+		});
 	}
 
 	public static boolean isEnabled(AbstractButton button) {

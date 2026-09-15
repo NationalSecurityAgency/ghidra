@@ -17,6 +17,8 @@ package ghidra.features.bsim.gui.filters;
 
 import java.sql.SQLException;
 
+import org.postgresql.core.Utils;
+
 import ghidra.features.bsim.query.client.IDSQLResolution;
 import ghidra.features.bsim.query.client.SQLEffects;
 import ghidra.features.bsim.query.description.ExecutableRecord;
@@ -40,7 +42,9 @@ public class PathStartsBSimFilterType extends BSimFilterType {
 			effect.setExeTable();
 			effect.setPathTable();
 			StringBuilder buf = new StringBuilder();
-			buf.append("position( \'").append(atom.value).append("\' in pathtable.val) = 1");
+			buf.append("position( '");
+			Utils.escapeLiteral(buf, atom.value, true);
+			buf.append("' in pathtable.val) = 1");
 			effect.addWhere(this, buf.toString());
 		}
 	}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,11 +21,7 @@
 
 package ghidra.program.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
-import java.util.Arrays;
-import java.util.Objects;
+import static org.junit.Assert.*;
 
 import org.junit.*;
 
@@ -36,11 +32,11 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.SourceType;
-import ghidra.test.ClassicSampleX86ProgramBuilder;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
+import ghidra.test.ClassicSampleX86ProgramBuilder;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
+import junit.framework.TestCase;
 
 /**
  * <CODE>ProgramDiffTest</CODE> tests the <CODE>ProgramDiff</CODE> class
@@ -183,14 +179,14 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 		programBuilder1.createMemory("d1", "0x100", 0x100, null, (byte) 0xAC);
 		programBuilder1.createMemory("d2", "0x200", 0x100);
 		programBuilder1.createLabel("0x01006420", "Function1");
-		programBuilder1.createComment("0x010059a3", "Here we are.", CodeUnit.EOL_COMMENT);
+		programBuilder1.createComment("0x010059a3", "Here we are.", CommentType.EOL);
 		programBuilder1.setBytes("0x01002b45", "ee");
 		programBuilder1.setBytes("0x01002b49", "57");
 
 		programBuilder2.createMemory("d1", "0x100", 0x100, null, (byte) 0xAF);
 		programBuilder2.createMemory("d4", "0x400", 0x100);
 		programBuilder2.createLabel("0x01006420", "Function2");
-		programBuilder2.createComment("0x010059a3", "There you have it.", CodeUnit.EOL_COMMENT);
+		programBuilder2.createComment("0x010059a3", "There you have it.", CommentType.EOL);
 		programBuilder2.setBytes("0x01002b45", "8b");
 		programBuilder2.setBytes("0x01002b49", "ee");
 
@@ -280,7 +276,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 		programBuilder1.createMemory("d1", "0x100", 0x100, null, (byte) 0xAC);
 		programBuilder1.createMemory("d2", "0x200", 0x100);
 		programBuilder1.createLabel("0x01006420", "Function1");
-		programBuilder1.createComment("0x010059a3", "Here we are.", CodeUnit.EOL_COMMENT);
+		programBuilder1.createComment("0x010059a3", "Here we are.", CommentType.EOL);
 		programBuilder1.setBytes("0x01002b45", "ee");
 		programBuilder1.setBytes("0x01002b49", "57", true);
 		programBuilder1.clearCodeUnits("0x01002cf5", "0x01002d6d", true);
@@ -289,7 +285,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 		programBuilder2.createMemory("d1", "0x100", 0x100, null, (byte) 0xAF);
 		programBuilder2.createMemory("d4", "0x400", 0x100);
 		programBuilder2.createLabel("0x01006420", "Function2");
-		programBuilder2.createComment("0x010059a3", "There you have it.", CodeUnit.EOL_COMMENT);
+		programBuilder2.createComment("0x010059a3", "There you have it.", CommentType.EOL);
 		programBuilder2.setBytes("0x01002b45", "8b");
 		programBuilder2.setBytes("0x01002b49", "ee", true);
 		programBuilder2.clearCodeUnits("0x01002239", "0x0100248e", true);
@@ -367,12 +363,11 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testGetCommentDifference1() throws Exception {
 		// 0x1002040: p1 has Plate, Pre, EOL, Post, & Repeatable comment.
-		programBuilder1.createComment("0x1002040", "My Plate Comment", CodeUnit.PLATE_COMMENT);
-		programBuilder1.createComment("0x1002040", "My Pre Comment", CodeUnit.PRE_COMMENT);
-		programBuilder1.createComment("0x1002040", "My EOL Comment", CodeUnit.EOL_COMMENT);
-		programBuilder1.createComment("0x1002040", "My Post Comment", CodeUnit.POST_COMMENT);
-		programBuilder1.createComment("0x1002040", "My Repeatable Comment",
-			CodeUnit.REPEATABLE_COMMENT);
+		programBuilder1.createComment("0x1002040", "My Plate Comment", CommentType.PLATE);
+		programBuilder1.createComment("0x1002040", "My Pre Comment", CommentType.PRE);
+		programBuilder1.createComment("0x1002040", "My EOL Comment", CommentType.EOL);
+		programBuilder1.createComment("0x1002040", "My Post Comment", CommentType.POST);
+		programBuilder1.createComment("0x1002040", "My Repeatable Comment", CommentType.REPEATABLE);
 
 		checkCommentDifference(0x1002040);
 	}
@@ -380,12 +375,12 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testGetCommentDifference2() throws Exception {
 		// 0x100204c: p2 has Plate, Pre, EOL, Post, & Repeatable comment.
-		programBuilder2.createComment("0x100204c", "Other Plate Comment", CodeUnit.PLATE_COMMENT);
-		programBuilder2.createComment("0x100204c", "Other Pre Comment", CodeUnit.PRE_COMMENT);
-		programBuilder2.createComment("0x100204c", "Other EOL Comment", CodeUnit.EOL_COMMENT);
-		programBuilder2.createComment("0x100204c", "Other Post Comment", CodeUnit.POST_COMMENT);
+		programBuilder2.createComment("0x100204c", "Other Plate Comment", CommentType.PLATE);
+		programBuilder2.createComment("0x100204c", "Other Pre Comment", CommentType.PRE);
+		programBuilder2.createComment("0x100204c", "Other EOL Comment", CommentType.EOL);
+		programBuilder2.createComment("0x100204c", "Other Post Comment", CommentType.POST);
 		programBuilder2.createComment("0x100204c", "Other Repeatable Comment",
-			CodeUnit.REPEATABLE_COMMENT);
+			CommentType.REPEATABLE);
 
 		checkCommentDifference(0x100204c);
 	}
@@ -393,7 +388,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testGetCommentDifference3() throws Exception {
 		// 0x1002304: p1 has EOL comment.
-		programBuilder1.createComment("0x1002304", "My EOL Comment", CodeUnit.EOL_COMMENT);
+		programBuilder1.createComment("0x1002304", "My EOL Comment", CommentType.EOL);
 
 		checkCommentDifference(0x1002304);
 	}
@@ -401,7 +396,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testGetCommentDifference4() throws Exception {
 		// 0x1002306: p1 has pre-comment.
-		programBuilder1.createComment("0x1002306", "My Pre Comment", CodeUnit.PRE_COMMENT);
+		programBuilder1.createComment("0x1002306", "My Pre Comment", CommentType.PRE);
 
 		checkCommentDifference(0x1002306);
 	}
@@ -409,8 +404,8 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testGetCommentDifference5() throws Exception {
 		// 0x100230b: p1 has plate and post comments.
-		programBuilder1.createComment("0x100230b", "My Plate Comment", CodeUnit.PLATE_COMMENT);
-		programBuilder1.createComment("0x100230b", "My Post Comment", CodeUnit.POST_COMMENT);
+		programBuilder1.createComment("0x100230b", "My Plate Comment", CommentType.PLATE);
+		programBuilder1.createComment("0x100230b", "My Post Comment", CommentType.POST);
 
 		checkCommentDifference(0x100230b);
 	}
@@ -418,8 +413,8 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testGetCommentDifference6() throws Exception {
 		// p2 plate comments contain the p1 comment string.
-		programBuilder1.createComment("0x100230d", "Plate Comment", CodeUnit.PLATE_COMMENT);
-		programBuilder2.createComment("0x100230d", "Other Plate Comment", CodeUnit.PLATE_COMMENT);
+		programBuilder1.createComment("0x100230d", "Plate Comment", CommentType.PLATE);
+		programBuilder2.createComment("0x100230d", "Other Plate Comment", CommentType.PLATE);
 
 		checkCommentDifference(0x100230d);
 	}
@@ -427,8 +422,8 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testGetCommentDifference7() throws Exception {
 		// p2 pre comments contain the p1 comment string.
-		programBuilder1.createComment("0x100230d", "Pre Comment", CodeUnit.PRE_COMMENT);
-		programBuilder2.createComment("0x100230d", "Other Pre Comment", CodeUnit.PRE_COMMENT);
+		programBuilder1.createComment("0x100230d", "Pre Comment", CommentType.PRE);
+		programBuilder2.createComment("0x100230d", "Other Pre Comment", CommentType.PRE);
 
 		checkCommentDifference(0x100230d);
 	}
@@ -436,8 +431,8 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testGetCommentDifference8() throws Exception {
 		// p2 eol comments contain the p1 comment string.
-		programBuilder1.createComment("0x100230d", "EOL Comment", CodeUnit.EOL_COMMENT);
-		programBuilder2.createComment("0x100230d", "Other EOL Comment", CodeUnit.EOL_COMMENT);
+		programBuilder1.createComment("0x100230d", "EOL Comment", CommentType.EOL);
+		programBuilder2.createComment("0x100230d", "Other EOL Comment", CommentType.EOL);
 
 		checkCommentDifference(0x100230d);
 	}
@@ -445,8 +440,8 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testGetCommentDifference9() throws Exception {
 		// p2 post comments contain the p1 comment string.
-		programBuilder1.createComment("0x100230d", "Post Comment", CodeUnit.POST_COMMENT);
-		programBuilder2.createComment("0x100230d", "Other Post Comment", CodeUnit.POST_COMMENT);
+		programBuilder1.createComment("0x100230d", "Post Comment", CommentType.POST);
+		programBuilder2.createComment("0x100230d", "Other Post Comment", CommentType.POST);
 
 		checkCommentDifference(0x100230d);
 	}
@@ -454,10 +449,9 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testGetCommentDifference10() throws Exception {
 		// p2 repeatable comments contain the p1 comment string.
-		programBuilder1.createComment("0x100230d", "Repeatable Comment",
-			CodeUnit.REPEATABLE_COMMENT);
+		programBuilder1.createComment("0x100230d", "Repeatable Comment", CommentType.REPEATABLE);
 		programBuilder2.createComment("0x100230d", "Other Repeatable Comment",
-			CodeUnit.REPEATABLE_COMMENT);
+			CommentType.REPEATABLE);
 
 		checkCommentDifference(0x100230d);
 	}
@@ -465,10 +459,9 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testGetCommentDifference11() throws Exception {
 		// 0x1002336: Different Repeatable comments.
-		programBuilder1.createComment("0x1002336", "Once upon a time,",
-			CodeUnit.REPEATABLE_COMMENT);
+		programBuilder1.createComment("0x1002336", "Once upon a time,", CommentType.REPEATABLE);
 		programBuilder2.createComment("0x1002336", "This is a sample comment.",
-			CodeUnit.REPEATABLE_COMMENT);
+			CommentType.REPEATABLE);
 
 		checkCommentDifference(0x1002336);
 	}
@@ -477,8 +470,8 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	public void testGetCommentDifference12() throws Exception {
 		// 0x1002346: P1 Repeatable comment contains P2 Repeatable comment.
 		programBuilder1.createComment("0x1002346", "This is a sample comment.",
-			CodeUnit.REPEATABLE_COMMENT);
-		programBuilder2.createComment("0x1002346", "This is a sample", CodeUnit.REPEATABLE_COMMENT);
+			CommentType.REPEATABLE);
+		programBuilder2.createComment("0x1002346", "This is a sample", CommentType.REPEATABLE);
 
 		checkCommentDifference(0x1002346);
 	}
@@ -486,9 +479,9 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testGetCommentDifference13() throws Exception {
 		// 0x1002350: P1 Repeatable comment contained within P2 Repeatable comment.
-		programBuilder1.createComment("0x1002350", "This is a sample", CodeUnit.REPEATABLE_COMMENT);
+		programBuilder1.createComment("0x1002350", "This is a sample", CommentType.REPEATABLE);
 		programBuilder2.createComment("0x1002350", "This is a sample comment.",
-			CodeUnit.REPEATABLE_COMMENT);
+			CommentType.REPEATABLE);
 
 		checkCommentDifference(0x1002350);
 	}
@@ -496,9 +489,8 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testGetCommentDifference14() throws Exception {
 		// 0x100238f: Different EOL comments.
-		programBuilder1.createComment("0x100238f", "Once upon a time,", CodeUnit.EOL_COMMENT);
-		programBuilder2.createComment("0x100238f", "This is a sample comment.",
-			CodeUnit.EOL_COMMENT);
+		programBuilder1.createComment("0x100238f", "Once upon a time,", CommentType.EOL);
+		programBuilder2.createComment("0x100238f", "This is a sample comment.", CommentType.EOL);
 
 		checkCommentDifference(0x100238f);
 	}
@@ -506,9 +498,8 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testGetCommentDifference15() throws Exception {
 		// 0x1002395: Different Pre comments.
-		programBuilder1.createComment("0x1002395", "Once upon a time,", CodeUnit.PRE_COMMENT);
-		programBuilder2.createComment("0x1002395", "This is a sample comment.",
-			CodeUnit.PRE_COMMENT);
+		programBuilder1.createComment("0x1002395", "Once upon a time,", CommentType.PRE);
+		programBuilder2.createComment("0x1002395", "This is a sample comment.", CommentType.PRE);
 
 		checkCommentDifference(0x1002395);
 	}
@@ -516,9 +507,8 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testGetCommentDifference16() throws Exception {
 		// 0x100239d: Different Plate comments.
-		programBuilder1.createComment("0x100239d", "Once upon a time,", CodeUnit.PLATE_COMMENT);
-		programBuilder2.createComment("0x100239d", "This is a sample comment.",
-			CodeUnit.PLATE_COMMENT);
+		programBuilder1.createComment("0x100239d", "Once upon a time,", CommentType.PLATE);
+		programBuilder2.createComment("0x100239d", "This is a sample comment.", CommentType.PLATE);
 
 		checkCommentDifference(0x100239d);
 	}
@@ -526,9 +516,8 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testGetCommentDifference17() throws Exception {
 		// 0x100239d: Different Post comments.
-		programBuilder1.createComment("0x100239d", "Once upon a time,", CodeUnit.POST_COMMENT);
-		programBuilder2.createComment("0x100239d", "This is a sample comment.",
-			CodeUnit.POST_COMMENT);
+		programBuilder1.createComment("0x100239d", "Once upon a time,", CommentType.POST);
+		programBuilder2.createComment("0x100239d", "This is a sample comment.", CommentType.POST);
 
 		checkCommentDifference(0x100239d);
 	}
@@ -536,8 +525,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testGetCommentDifference18() throws Exception {
 		// 0x1002a91: p2 has a plate comment.
-		programBuilder2.createComment("0x1002a91", "This is a sample comment.",
-			CodeUnit.PLATE_COMMENT);
+		programBuilder2.createComment("0x1002a91", "This is a sample comment.", CommentType.PLATE);
 
 		checkCommentDifference(0x1002a91);
 	}

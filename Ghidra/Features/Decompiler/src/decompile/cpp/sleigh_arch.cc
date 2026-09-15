@@ -342,7 +342,7 @@ void SleighArchitecture::resolveArchitecture(void)
     if (description[i].getId() == baseid) {
       languageindex = i;
       if (description[i].isDeprecated())
-        printMessage("WARNING: Language "+baseid+" is deprecated");
+        printWarning("Language "+baseid+" is deprecated");
       break;
     }
   }
@@ -474,6 +474,12 @@ void SleighArchitecture::restoreXmlHeader(const Element *el)
 {
   filename = el->getAttributeValue("name");
   target = el->getAttributeValue("target");
+}
+
+void SleighArchitecture::printWarning(const string &message) const
+
+{
+  *errorstream << "WARNING: " << message << endl;
 }
 
 /// Given an architecture target string try to recover an

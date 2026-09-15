@@ -34,7 +34,7 @@ public class PointerAction extends CompositeEditorTableAction {
 	private final static String DESCRIPTION = "Create a pointer(s) on the selection";
 	private final static DataType POINTER_DT = new PointerDataType();
 
-	public PointerAction(CompositeEditorProvider provider) {
+	public PointerAction(CompositeEditorProvider<?, ?> provider) {
 		super(provider, ACTION_NAME, GROUP_NAME, null, null, null);
 		setDescription(DESCRIPTION);
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_P, 0));

@@ -226,9 +226,9 @@
 }
 
 # c.lui d,Cu 00006001 0000e003 SIMPLE (0, 0) 
-:c.lui crd,cbigimm is crd & cbigimm & cop0001=0x1 & cop1315=0x3
+:c.lui cd0711NoSp,cbigimm is cd0711NoSp & cbigimm & cop0001=0x1 & cop1315=0x3
 {
-	crd = cbigimm;
+	cd0711NoSp = cbigimm;
 }
 
 # c.lw Ct,Ck(Cs) 00004000 0000e003 DWORD|DREF (0, 4) 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,6 +57,7 @@ public class QueryRecordIterator implements RecordIterator {
 	/** 
 	 * @see db.RecordIterator#hasNext()
 	 */
+	@Override
 	public boolean hasNext() throws IOException {
 		if (record == null) {
 			if (forward) {
@@ -72,6 +73,7 @@ public class QueryRecordIterator implements RecordIterator {
 	/**
 	 * @see db.RecordIterator#next()
 	 */
+	@Override
 	public DBRecord next() throws IOException {
 		if (hasNext()) {
 			DBRecord rec = record;
@@ -84,6 +86,7 @@ public class QueryRecordIterator implements RecordIterator {
 	/**
 	 * @see db.RecordIterator#hasPrevious()
 	 */
+	@Override
 	public boolean hasPrevious() throws IOException {
 		if (record == null) {
 			findPrevious();
@@ -94,6 +97,7 @@ public class QueryRecordIterator implements RecordIterator {
 	/**
 	 * @see db.RecordIterator#previous()
 	 */
+	@Override
 	public DBRecord previous() throws IOException {
 		if (hasPrevious()) {
 			DBRecord rec = record;
@@ -106,6 +110,7 @@ public class QueryRecordIterator implements RecordIterator {
 	/**
 	 * @see db.RecordIterator#delete()
 	 */
+	@Override
 	public boolean delete() throws IOException {
 		return iter.delete();
 	}

@@ -211,14 +211,20 @@ public class SharedStubKeyBindingAction extends DockingAction implements Options
 	}
 
 	private void setKeyBindingData(DockingActionIf action, ActionTrigger actionTrigger) {
-		KeyBindingData kbData = null;
+
+		KeyBindingData newKbData = null;
 		if (actionTrigger != null) {
-			kbData = new KeyBindingData(actionTrigger);
+			newKbData = new KeyBindingData(actionTrigger);
+		}
+
+		KeyBindingData currentKbData = action.getKeyBindingData();
+		if (Objects.equals(currentKbData, newKbData)) {
+			return;
 		}
 
 		// we use the 'unvalidated' call since this value is provided by the user--we assume
 		// that user input is correct; we only validate programmer input
-		action.setUnvalidatedKeyBindingData(kbData);
+		action.setUnvalidatedKeyBindingData(newKbData);
 	}
 
 	private ActionTrigger getActionTriggerFromOptions(ActionTrigger validatedTrigger) {
@@ -232,6 +238,27 @@ public class SharedStubKeyBindingAction extends DockingAction implements Options
 		return data.getActionTrigger();
 	}
 
+	/*
+	 * This can be called from ToolActions.optionsRebuilt().  In that case, the code only
+	 * loops over KeyBindingType.INDIVIDAL actions types (which this class is), but not 
+	 * KeyBindingType.SHARED actions, which the contained actions are.  In the case of options 
+	 * getting restored, 1) only this action gets updated, and 2),  there is no options changed 
+	 * event fired.  Thus, to handle options being restored, we have to override this method to make
+	 * sure we update out internal client actions.
+	 */
+	@Override
+	public void setUnvalidatedKeyBindingData(KeyBindingData newKeyBindingData) {
+
+		// update this shared key binding
+		super.setUnvalidatedKeyBindingData(newKeyBindingData);
+
+		// update the client keybindings
+		ActionTrigger newTrigger = getActionTrigger(newKeyBindingData);
+		for (DockingActionIf action : clientActions.keySet()) {
+			setKeyBindingData(action, newTrigger);
+		}
+	}
+
 	@Override
 	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
 			Object newValue) {
@@ -240,9 +267,11 @@ public class SharedStubKeyBindingAction extends DockingAction implements Options
 			return; // not my binding
 		}
 
+		// update this shared key binding
 		ActionTrigger newTrigger = (ActionTrigger) newValue;
 		setKeyBindingData(this, newTrigger);
 
+		// update the client keybindings
 		for (DockingActionIf action : clientActions.keySet()) {
 			setKeyBindingData(action, newTrigger);
 		}
@@ -259,6 +288,11 @@ public class SharedStubKeyBindingAction extends DockingAction implements Options
 	}
 
 	@Override
+	public boolean isValidContext(ActionContext context) {
+		return false;
+	}
+
+	@Override
 	public boolean isEnabledForContext(ActionContext context) {
 		return false;
 	}
@@ -268,6 +302,11 @@ public class SharedStubKeyBindingAction extends DockingAction implements Options
 		super.dispose();
 		clientActions.clear();
 		keyBindingOptions.removeOptionsChangeListener(this);
+	}
+
+	@Override
+	public String toString() {
+		return "Shared Stub Action: " + super.toString();
 	}
 
 	private static void logDifferentKeyBindingsWarnigMessage(DockingActionIf newAction,

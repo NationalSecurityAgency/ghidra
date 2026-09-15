@@ -1,0 +1,12 @@
+<callfixup name="_objc_setProperty_fixup">
+    <target name="_objc_setProperty"/>
+    <target name="_objc_setProperty_atomic"/>
+    <target name="_objc_setProperty_atomic_copy"/>
+    <target name="_objc_setProperty_nonatomic"/>
+    <target name="_objc_setProperty_nonatomic_copy"/>
+    <pcode>
+        <body><![CDATA[
+            *(x0 + x3) = x2;
+        ]]></body>
+    </pcode>
+</callfixup>

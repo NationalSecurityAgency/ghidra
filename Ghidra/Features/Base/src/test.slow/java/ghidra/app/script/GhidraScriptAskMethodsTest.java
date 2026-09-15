@@ -42,7 +42,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
-import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
 
 public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationTest {
@@ -902,7 +901,7 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 				// test stub
 			}
 		};
-		script.set(state, TaskMonitor.DUMMY, null);
+		script.set(state, ScriptControls.NONE);
 
 		URL url = GhidraScriptTest.class.getResource("GhidraScriptAsk.properties");
 		assertNotNull("Test cannot run without properties file!", url);

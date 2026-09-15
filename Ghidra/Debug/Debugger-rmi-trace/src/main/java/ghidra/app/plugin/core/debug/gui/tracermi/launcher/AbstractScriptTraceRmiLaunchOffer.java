@@ -98,12 +98,13 @@ public abstract class AbstractScriptTraceRmiLaunchOffer extends AbstractTraceRmi
 	protected void prepareSubprocess(List<String> commandLine, Map<String, String> env,
 			Map<String, ValStr<?>> args, SocketAddress address) {
 		ScriptAttributesParser.processArguments(commandLine, env, script, attrs.parameters(), args,
-			address);
+			attrs.dependencies(), address);
 	}
 
 	@Override
-	protected void launchBackEnd(TaskMonitor monitor, Map<String, TerminalSession> sessions,
-			Map<String, ValStr<?>> args, SocketAddress address) throws Exception {
+	protected TraceRmiBackEnd launchBackEnd(TaskMonitor monitor,
+			Map<String, TerminalSession> sessions, Map<String, ValStr<?>> args,
+			SocketAddress address) throws Exception {
 		List<String> commandLine = new ArrayList<>();
 		Map<String, String> env = new HashMap<>(System.getenv());
 		prepareSubprocess(commandLine, env, args, address);
@@ -112,7 +113,8 @@ public abstract class AbstractScriptTraceRmiLaunchOffer extends AbstractTraceRmi
 			if (imageParameter != null) {
 				ValStr<?> valStr = args.get(imageParameter.name());
 				if (valStr != null && !valStr.str().contains(program.getName())) {
-					Msg.warn(this, "Possible mismatch for " + program.getName() + ": " + valStr.str());
+					Msg.warn(this,
+						"Possible mismatch for " + program.getName() + ": " + valStr.str());
 				}
 			}
 			env.put("GHIDRA_LANGUAGE_ID", program.getLanguageID().toString());
@@ -127,8 +129,12 @@ public abstract class AbstractScriptTraceRmiLaunchOffer extends AbstractTraceRmi
 			sessions.put(ent.getKey(), ns);
 		}
 
-		sessions.put("Shell",
-			runInTerminal(commandLine, env, script.getParentFile(), sessions.values()));
+		PtyTerminalSession session =
+			runInTerminal(commandLine, env, script.getParentFile(), sessions.values());
+		sessions.put("Shell", session);
+		TraceRmiBackEnd result = new TraceRmiBackEnd();
+		session.terminal().addTerminalListener(result);
+		return result;
 	}
 
 	@Override

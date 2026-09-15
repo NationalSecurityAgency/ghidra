@@ -13,7 +13,6 @@ from pcodetest import *
 # set default properties first, then update values from the command
 # line before they are instantiated.
 
-
 def test_action(action_class, deprecate=False):
     class pcodeTestAction(action_class):
         def __call__(self, parser, namespace, values, option_string=None):
@@ -25,7 +24,7 @@ def test_action(action_class, deprecate=False):
             action_class.__call__(self, parser, namespace, values, option_string)
     return pcodeTestAction
 
-exec(compile(open('defaults.py', "rb").read(), 'defaults.py', 'exec'))
+from defaults import *
 
 parser = argparse.ArgumentParser(description='''Build pcodetests.
 One and only one of the following options must be given:
@@ -48,48 +47,52 @@ required_group.add_argument('--pcodetest-list', dest='list', action=test_action(
 
 # all-applicable arguments
 
-parser.add_argument('-f', '--force', action='store_true', help='force a build')
+parser.add_argument('-f', '--force', action='store_true', default=pcodeTestDefaults.force, help='force a build')
 parser.add_argument('-v', '--verbose', action='store_true', help='verbose output where available ')
-parser.add_argument('--toolchain-root', default=PCodeTest.defaults.toolchain_root, help='directory where toolchain directories can be found (*)')
-parser.add_argument('--build-root', default=PCodeTest.defaults.build_root, help='temporary directory to hold build files (*)')
-parser.add_argument('--gcc-version', default=PCodeTest.defaults.gcc_version, help='default version of gcc (*)')
-
+parser.add_argument('--toolchain-root', default=pcodeTestDefaults.toolchain_root, help='directory where toolchain directories can be found (*)')
+parser.add_argument('--build-root', default=pcodeTestDefaults.build_root, help='temporary directory to hold build files (*)')
+parser.add_argument('--gcc-version', default=pcodeTestDefaults.gcc_version, help='default version of gcc (*)')
+parser.add_argument('--gcc-config', default=pcodeTestDefaults.gcc_version, help='default configuration of gcc (*)')
 
 # pcodetest arguments
 
 pcodetest_group = parser.add_argument_group('Pcodetest Options')
 pcodetest_group.add_argument('--no-publish', action='store_true', help='do not publish pcode test binaries to pcode test root')
-pcodetest_group.add_argument('--pcodetest-root', default=PCodeTest.defaults.pcodetest_root, help='location to publish pcode tests binaries (*)')
-pcodetest_group.add_argument('--pcodetest-src', default=PCodeTest.defaults.pcodetest_src, help='location of pcode test .c and .h source files (*)')
-pcodetest_group.add_argument('--skip-files', nargs='+', default=PCodeTest.defaults.skip_files, help='default .c files to remove from the pcode test image (*)')
+pcodetest_group.add_argument('--export-root', default=pcodeTestDefaults.export_root, help='location to publish pcode tests binaries (*)')
+pcodetest_group.add_argument('--pcodetest-src', default=pcodeTestDefaults.pcodetest_src, help='location of pcode test .c and .h source files (*)')
+pcodetest_group.add_argument('--skip-files', nargs='+', default=pcodeTestDefaults.skip_files, help='default .c files to remove from the pcode test image (*)')
 pcodetest_group.add_argument('--strip-symbols', action='store_true', help='strip symbols from image')
 pcodetest_group.add_argument('--add-ccflags', default='', help='additional flags to pass to compiler (must be quoted)')
+pcodetest_group.add_argument('--gcc-libdir', default='', help='location of gcc libraries')
+pcodetest_group.add_argument('--add-cclibs', default='', help='additional libraries to pass to the linker')
 pcodetest_group.add_argument('--add-info', action='store_true', help='add data to binary with information about types and symbols')
 pcodetest_group.add_argument('--build-exe', action='store_true', help='build a guest executable binary (exe)')
-pcodetest_group.add_argument('--variants', default=json.dumps(PCodeTest.defaults.variants, sort_keys=True, separators=(',',':')), type=json.loads, help='build the (optimization) variants, encoded as a json dict')
+pcodetest_group.add_argument('--variants', default=json.dumps(pcodeTestDefaults.variants, sort_keys=True, separators=(',',':')), type=json.loads, help='build the (optimization) variants, encoded as a json dict')
 
 
 sys.argv.pop(0)
 args = parser.parse_args(sys.argv)
 
-PCodeTest.defaults.skip_files = args.skip_files
-PCodeTest.defaults.pcodetest_root = args.pcodetest_root
-PCodeTest.defaults.pcodetest_src = args.pcodetest_src
-PCodeTest.defaults.strip_symbols = args.strip_symbols
-PCodeTest.defaults.add_ccflags = args.add_ccflags
-PCodeTest.defaults.add_info = args.add_info
-PCodeTest.defaults.build_exe = args.build_exe
-PCodeTest.defaults.variants = args.variants
-PCodeTest.defaults.verbose = args.verbose
-PCodeTest.defaults.force = args.force
-PCodeTest.defaults.no_publish = args.no_publish
-PCodeTest.defaults.toolchain_root = args.toolchain_root
-PCodeTest.defaults.build_root = args.build_root
-PCodeTest.defaults.gcc_version = args.gcc_version
+pcodeTestDefaults.skip_files = args.skip_files
+pcodeTestDefaults.export_root = args.export_root
+pcodeTestDefaults.pcodetest_src = args.pcodetest_src
+pcodeTestDefaults.strip_symbols = args.strip_symbols
+pcodeTestDefaults.add_ccflags = args.add_ccflags
+pcodeTestDefaults.gcc_libdir = args.gcc_libdir
+pcodeTestDefaults.add_cclibs = args.add_cclibs
+pcodeTestDefaults.add_info = args.add_info
+pcodeTestDefaults.build_exe = args.build_exe
+pcodeTestDefaults.variants = args.variants
+pcodeTestDefaults.verbose = args.verbose
+pcodeTestDefaults.force = args.force
+pcodeTestDefaults.no_publish = args.no_publish
+pcodeTestDefaults.toolchain_root = args.toolchain_root
+pcodeTestDefaults.build_root = args.build_root
+pcodeTestDefaults.gcc_version = args.gcc_version
+pcodeTestDefaults.gcc_config = args.gcc_config
 
 # load the known pcodetests
-
-exec(compile(open('pcode_defs.py', "rb").read(), 'pcode_defs.py', 'exec'))
+from pcode_defs import *
 
 cwd = os.getcwd()
 

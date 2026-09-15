@@ -25,6 +25,7 @@ import ghidra.*;
 import ghidra.app.util.importer.LibrarySearchPathManager;
 import ghidra.app.util.opinion.Loader;
 import ghidra.framework.*;
+import ghidra.framework.client.*;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.protocol.ghidra.Handler;
 import ghidra.util.Msg;
@@ -45,16 +46,17 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 		//@formatter:off
 		IMPORT("-import", true, "[<directory>|<file>]+"),
 		PROCESS("-process", true, "[<project_file>]"),
-		PRE_SCRIPT("-prescript", true, "<ScriptName>"),
-		POST_SCRIPT("-postscript", true, "<ScriptName>"),
+		PRE_SCRIPT("-preScript", true, "<ScriptName>"),
+		POST_SCRIPT("-postScript", true, "<ScriptName>"),
 		SCRIPT_PATH("-scriptPath", true, "\"<path1>[;<path2>...]\""),
 		PROPERTIES_PATH("-propertiesPath", true, "\"<path1>[;<path2>...]\""),
 		SCRIPT_LOG("-scriptlog", true, "<path to script log file>"),
 		LOG("-log", true, "<path to log file>"),
 		OVERWRITE("-overwrite", false),
+		MIRROR("-mirror", false),
 		RECURSIVE("-recursive", false),
 		READ_ONLY("-readOnly", false),
-		DELETE_PROJECT("-deleteproject", false),
+		DELETE_PROJECT("-deleteProject", false),
 		NO_ANALYSIS("-noanalysis", false),
 		PROCESSOR("-processor", true, "<languageID>"),
 		CSPEC("-cspec", true, "<compilerSpecID>"),
@@ -64,9 +66,10 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 		PASSWORD("-p", false),
 		COMMIT("-commit", false, "[\"<comment>\"]]"),
 		OK_TO_DELETE("-okToDelete", false),
+		ALLOW_ALL_ACCESS("-allowAllAccess", false),
 		MAX_CPU("-max-cpu", true, "<max cpu cores to use>"),
 		LIBRARY_SEARCH_PATHS("-librarySearchPaths", true, "<path1>[;<path2>...]"),
-		LOADER("-loader", true, "<desired loader name>"),
+		LOADER(Loader.COMMAND_LINE_ARG_PREFIX, true, "<desired loader name>"),
 		LOADER_ARGS(Loader.COMMAND_LINE_ARG_PREFIX + "-", true, "<loader argument value>") {
 			@Override
 			public boolean matches(String arg) {
@@ -185,6 +188,16 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 		HeadlessOptions options = analyzer.getOptions();
 		parseOptions(options, args, optionStartIndex, ghidraURL, filesToImport);
 
+		// Ensure that we do not rely on prompting user for allowing server access
+		if (options.allowAllAccess) {
+			Msg.warn(AnalyzeHeadless.class,
+				"All remote server access is Allowed (" + Arg.ALLOW_ALL_ACCESS + ")");
+			ClientUtil.setAllowListProvider(new AllowAllUrlAllowListProvider());
+		}
+		else {
+			ClientUtil.setAllowListProvider(new DefaultlUrlAllowListProvider());
+		}
+
 		Msg.info(AnalyzeHeadless.class,
 			"Headless startup complete (" + GhidraLauncher.getMillisecondsFromLaunch() + " ms)");
 		ClassSearcher.logStatistics();
@@ -197,6 +210,11 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 			else {
 				analyzer.processLocal(args[0], projectName, rootFolderPath, filesToImport);
 			}
+		}
+		catch (IOException e) {
+			Msg.error(HeadlessAnalyzer.class,
+				"Abort due to error: " + e.getMessage());
+			System.exit(EXIT_CODE_ERROR);
 		}
 		catch (Throwable e) {
 			Msg.error(HeadlessAnalyzer.class,
@@ -242,6 +260,9 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 			}
 			else if (checkArgument(Arg.OVERWRITE, args, argi)) {
 				options.enableOverwriteOnConflict(true);
+			}
+			else if (checkArgument(Arg.MIRROR, args, argi)) {
+				options.enableMirroring(true);
 			}
 			else if (checkArgument(Arg.NO_ANALYSIS, args, argi)) {
 				options.enableAnalysis(false);
@@ -408,6 +429,9 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 			else if (checkArgument(Arg.OK_TO_DELETE, args, argi)) {
 				options.setOkToDelete(true);
 			}
+			else if (checkArgument(Arg.ALLOW_ALL_ACCESS, args, argi)) {
+				options.setAllowAllAccess(true);
+			}
 			else if (checkArgument(Arg.LIBRARY_SEARCH_PATHS, args, argi)) {
 				LibrarySearchPathManager.setLibraryPaths(args[++argi].split(";"));
 			}
@@ -424,7 +448,8 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 		options.setPostScriptsWithArgs(postScripts);
 
 		// Set loader and loader args
-		options.setLoader(loaderName, loaderArgs);
+		options.setLoader(loaderName);
+		options.setLoaderArgs(loaderArgs);
 
 		// Set user-specified language and compiler spec
 		options.setLanguageAndCompiler(languageId, compilerSpecId);
@@ -578,5 +603,25 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 
 	private boolean isExistingArg(String s) {
 		return Arrays.stream(Arg.values()).anyMatch(e -> e.matches(s));
+	}
+
+	private static class AllowAllUrlAllowListProvider implements UrlAllowListProvider {
+
+		@Override
+		public boolean isAllowed(URL url) {
+			return true; // do not cache decision
+		}
+	}
+
+	private static class DefaultlUrlAllowListProvider extends AbstractUrlAllowListProvider {
+
+		@Override
+		public boolean isAllowed(URL url) {
+			Boolean allowed = accessAllowed(url);
+			if (allowed != null) {
+				return allowed;
+			}
+			return false; // do not cache decision
+		}
 	}
 }

@@ -16,25 +16,30 @@
 package ghidra.pcode.emu.jit.gen;
 
 import static ghidra.pcode.emu.jit.gen.GenConsts.*;
-import static org.objectweb.asm.Opcodes.*;
+import static java.lang.classfile.ClassFile.ACC_FINAL;
+import static java.lang.classfile.ClassFile.ACC_PRIVATE;
 
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.MethodVisitor;
+import java.lang.classfile.ClassBuilder;
 
 import ghidra.pcode.emu.jit.analysis.JitDataFlowUseropLibrary;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Ent;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Next;
+import ghidra.pcode.emu.jit.gen.util.Methods.Inv;
+import ghidra.pcode.emu.jit.gen.util.Types.TRef;
 import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
 
 /**
  * A field request for a pre-fetched userop definition
- * 
  * <p>
  * These are used to invoke userops using the Standard or Direct strategies.
  * 
  * @param userop the definition to pre-fetch
  * @see JitDataFlowUseropLibrary
  */
-public record FieldForUserop(PcodeUseropDefinition<?> userop) implements InstanceFieldReq {
+public record FieldForUserop(PcodeUseropDefinition<?> userop)
+		implements InstanceFieldReq<TRef<PcodeUseropDefinition<byte[]>>> {
 	@Override
 	public String name() {
 		return "userop_" + userop.getName();
@@ -42,14 +47,12 @@ public record FieldForUserop(PcodeUseropDefinition<?> userop) implements Instanc
 
 	/**
 	 * {@inheritDoc}
-	 * 
 	 * <p>
 	 * Consider the userop {@code syscall()}. The declaration is equivalent to:
 	 * 
 	 * <pre>
 	 * private final {@link PcodeUseropDefinition} userop_syscall;
 	 * </pre>
-	 * 
 	 * <p>
 	 * And the initialization is equivalent to:
 	 * 
@@ -58,30 +61,27 @@ public record FieldForUserop(PcodeUseropDefinition<?> userop) implements Instanc
 	 * </pre>
 	 */
 	@Override
-	public void generateInitCode(JitCodeGenerator gen, ClassVisitor cv, MethodVisitor iv) {
-		cv.visitField(ACC_PRIVATE | ACC_FINAL, name(), TDESC_PCODE_USEROP_DEFINITION, null,
-			null);
-
-		// []
-		iv.visitVarInsn(ALOAD, 0);
-		// [this]
-		iv.visitInsn(DUP);
-		// [this,this]
-		iv.visitLdcInsn(userop.getName());
-		// [this,this,name]
-		iv.visitMethodInsn(INVOKEINTERFACE, NAME_JIT_COMPILED_PASSAGE, "getUseropDefinition",
-			MDESC_JIT_COMPILED_PASSAGE__GET_USEROP_DEFINITION, true);
-		// [this,userop]
-		iv.visitFieldInsn(PUTFIELD, gen.nameThis, name(), TDESC_PCODE_USEROP_DEFINITION);
-		// []
+	public <THIS extends JitCompiledPassage, N extends Next> Emitter<N> genInit(Emitter<N> em,
+			Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, ClassBuilder clb) {
+		Fld.decl(clb, ACC_PRIVATE | ACC_FINAL, T_PCODE_USEROP_DEFINITION, name());
+		return em
+				.emit(Op::aload, localThis)
+				.emit(Op::dup)
+				.emit(Op::ldc__a, userop.getName())
+				.emit(Op::invokeinterface, T_JIT_COMPILED_PASSAGE, "getUseropDefinition",
+					MDESC_JIT_COMPILED_PASSAGE__GET_USEROP_DEFINITION)
+				.step(Inv::takeArg)
+				.step(Inv::takeObjRef)
+				.step(Inv::ret)
+				.emit(Op::putfield, gen.typeThis, name(), T_PCODE_USEROP_DEFINITION);
 	}
 
 	@Override
-	public void generateLoadCode(JitCodeGenerator gen, MethodVisitor rv) {
-		// []
-		rv.visitVarInsn(ALOAD, 0);
-		// [this]
-		rv.visitFieldInsn(GETFIELD, gen.nameThis, name(), TDESC_PCODE_USEROP_DEFINITION);
-		// [userop]
+	public <THIS extends JitCompiledPassage, N extends Next>
+			Emitter<Ent<N, TRef<PcodeUseropDefinition<byte[]>>>>
+			genLoad(Emitter<N> em, Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen) {
+		return em
+				.emit(Op::aload, localThis)
+				.emit(Op::getfield, gen.typeThis, name(), T_PCODE_USEROP_DEFINITION__BYTEARR);
 	}
 }

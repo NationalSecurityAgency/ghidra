@@ -18,7 +18,6 @@ package ghidra.app.util.bin.format.pe.debug;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.util.Conv;
 
 class S_UDT32 extends DebugSymbol {
     private int checksum;
@@ -35,7 +34,7 @@ class S_UDT32 extends DebugSymbol {
 		ptr += BinaryReader.SIZEOF_INT;
 		this.typeLen = reader.readByte(ptr);
 		ptr += BinaryReader.SIZEOF_BYTE;
-		this.name = reader.readAsciiString(ptr, Conv.byteToInt(typeLen));
+		this.name = reader.readAsciiString(ptr, Byte.toUnsignedInt(typeLen));
 	}
 
 	public int getChecksum() {

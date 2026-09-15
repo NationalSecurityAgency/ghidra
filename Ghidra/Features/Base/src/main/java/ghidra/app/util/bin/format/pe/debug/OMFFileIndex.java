@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.util.Conv;
 
 /**
  * A class to represent the Object Module Format (OMF) File Index data structure.
@@ -51,31 +50,31 @@ public class OMFFileIndex {
 		cRef = reader.readShort(index);
 		index += BinaryReader.SIZEOF_SHORT;
 
-		modStart = new short[Conv.shortToInt(cMod)];
+		modStart = new short[Short.toUnsignedInt(cMod)];
 		for (int i = 0; i < cMod; ++i) {
 			modStart[i] = reader.readShort(index);
 			index += BinaryReader.SIZEOF_SHORT;
 		}
 
-		cRefCnt = new short[Conv.shortToInt(cMod)];
+		cRefCnt = new short[Short.toUnsignedInt(cMod)];
 		for (int i = 0; i < cMod; i++) {
 			cRefCnt[i] = reader.readShort(index);
 			index += BinaryReader.SIZEOF_SHORT;
 		}
 
-		nameRef = new int[Conv.shortToInt(cRef)];
+		nameRef = new int[Short.toUnsignedInt(cRef)];
 		for (int i = 0; i < cRef; ++i) {
 			nameRef[i] = reader.readInt(index);
 			index += BinaryReader.SIZEOF_INT;
 		}
 
 		ArrayList<String> namesList = new ArrayList<String>();
-		for (int i = 0; i < Conv.shortToInt(cRef); ++i) {
+		for (int i = 0; i < Short.toUnsignedInt(cRef); ++i) {
 			int nameIndex = index + nameRef[i];
 
 			byte len = reader.readByte(nameIndex);
 			nameIndex += BinaryReader.SIZEOF_BYTE;
-			int length = Conv.byteToInt(len);
+			int length = Byte.toUnsignedInt(len);
 
 			String name = reader.readAsciiString(nameIndex, length);
 			namesList.add(name);

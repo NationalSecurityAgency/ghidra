@@ -15,18 +15,22 @@
  */
 package ghidra.pcode.emu.jit.gen;
 
-import static ghidra.pcode.emu.jit.gen.GenConsts.TDESC_JIT_BYTES_PCODE_EXECUTOR_STATE_SPACE;
-import static org.objectweb.asm.Opcodes.*;
+import static ghidra.pcode.emu.jit.gen.GenConsts.T_JIT_BYTES_PCODE_EXECUTOR_STATE_SPACE;
+import static java.lang.classfile.ClassFile.ACC_FINAL;
+import static java.lang.classfile.ClassFile.ACC_PRIVATE;
 
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.MethodVisitor;
+import java.lang.classfile.ClassBuilder;
 
 import ghidra.pcode.emu.jit.JitBytesPcodeExecutorStatePiece.JitBytesPcodeExecutorStateSpace;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Ent;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Next;
+import ghidra.pcode.emu.jit.gen.util.Types.TRef;
 import ghidra.program.model.address.AddressSpace;
 
 /**
  * A field request for a pre-fetched {@link JitBytesPcodeExecutorStateSpace}
- * 
  * <p>
  * The field is used for indirect memory accesses. For those, the address space is given in the
  * p-code, but the offset must be computed at run time. Thus, we can pre-fetch the state space, but
@@ -34,7 +38,8 @@ import ghidra.program.model.address.AddressSpace;
  * 
  * @param space the address space of the state space to pre-fetch
  */
-public record FieldForSpaceIndirect(AddressSpace space) implements InstanceFieldReq {
+public record FieldForSpaceIndirect(AddressSpace space)
+		implements InstanceFieldReq<TRef<JitBytesPcodeExecutorStateSpace>> {
 	@Override
 	public String name() {
 		return "spaceInd_" + space.getName();
@@ -42,14 +47,12 @@ public record FieldForSpaceIndirect(AddressSpace space) implements InstanceField
 
 	/**
 	 * {@inheritDoc}
-	 * 
 	 * <p>
 	 * Consider the "ram" space. The declaration is equivalent to:
 	 * 
 	 * <pre>
 	 * private final {@link JitBytesPcodeExecutorStateSpace} spaceInd_ram;
 	 * </pre>
-	 * 
 	 * <p>
 	 * And the initialization is equivalent to:
 	 * 
@@ -58,27 +61,21 @@ public record FieldForSpaceIndirect(AddressSpace space) implements InstanceField
 	 * </pre>
 	 */
 	@Override
-	public void generateInitCode(JitCodeGenerator gen, ClassVisitor cv, MethodVisitor iv) {
-		cv.visitField(ACC_PRIVATE | ACC_FINAL, name(),
-			TDESC_JIT_BYTES_PCODE_EXECUTOR_STATE_SPACE, null, null);
-
-		// [...]
-		iv.visitVarInsn(ALOAD, 0);
-		// [...,this]
-		gen.generateLoadJitStateSpace(space, iv);
-		// [...,this,jitspace]
-		iv.visitFieldInsn(PUTFIELD, gen.nameThis, name(),
-			TDESC_JIT_BYTES_PCODE_EXECUTOR_STATE_SPACE);
-		// [...]
+	public <THIS extends JitCompiledPassage, N extends Next> Emitter<N> genInit(Emitter<N> em,
+			Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, ClassBuilder clb) {
+		Fld.decl(clb, ACC_PRIVATE | ACC_FINAL, T_JIT_BYTES_PCODE_EXECUTOR_STATE_SPACE, name());
+		return em
+				.emit(Op::aload, localThis)
+				.emit(gen::genLoadJitStateSpace, localThis, space)
+				.emit(Op::putfield, gen.typeThis, name(), T_JIT_BYTES_PCODE_EXECUTOR_STATE_SPACE);
 	}
 
 	@Override
-	public void generateLoadCode(JitCodeGenerator gen, MethodVisitor rv) {
-		// [...]
-		rv.visitVarInsn(ALOAD, 0);
-		// [...,this]
-		rv.visitFieldInsn(GETFIELD, gen.nameThis, name(),
-			TDESC_JIT_BYTES_PCODE_EXECUTOR_STATE_SPACE);
-		// [...,jitspace]
+	public <THIS extends JitCompiledPassage, N extends Next>
+			Emitter<Ent<N, TRef<JitBytesPcodeExecutorStateSpace>>>
+			genLoad(Emitter<N> em, Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen) {
+		return em
+				.emit(Op::aload, localThis)
+				.emit(Op::getfield, gen.typeThis, name(), T_JIT_BYTES_PCODE_EXECUTOR_STATE_SPACE);
 	}
 }

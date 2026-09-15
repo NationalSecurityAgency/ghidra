@@ -37,7 +37,6 @@ import ghidra.app.services.DebuggerEmulationService.EmulatorStateListener;
 import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.async.AsyncUtils;
 import ghidra.debug.api.control.ControlMode;
-import ghidra.debug.api.emulation.DebuggerPcodeMachine;
 import ghidra.debug.api.model.DebuggerObjectActionContext;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
@@ -47,6 +46,7 @@ import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.pcode.emu.PcodeMachine;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.trace.model.*;
@@ -382,7 +382,7 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 		return true;
 	}
 
-	private DebuggerPcodeMachine<?> getBusyEmulator() {
+	private PcodeMachine<?> getBusyEmulator() {
 		/**
 		 * NOTE: Could search for current trace, but task manager will only allow one to actually
 		 * run at a time. Best not let the user queue a bunch up if another trace's emulator is
@@ -430,7 +430,7 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 		if (emulationService == null) {
 			return;
 		}
-		DebuggerPcodeMachine<?> emu = getBusyEmulator();
+		PcodeMachine<?> emu = getBusyEmulator();
 		emu.setSuspended(true);
 	}
 

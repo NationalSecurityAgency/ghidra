@@ -15,33 +15,28 @@
  */
 package ghidra.pcode.emu.jit.analysis;
 
-import static ghidra.pcode.emu.jit.analysis.JitVarScopeModel.*;
-import static org.objectweb.asm.Opcodes.*;
+import static ghidra.pcode.emu.jit.analysis.JitVarScopeModel.maxAddr;
 
+import java.lang.classfile.CodeBuilder;
 import java.math.BigInteger;
 import java.util.*;
-import java.util.Map.Entry;
-
-import org.apache.commons.collections4.iterators.ReverseListIterator;
-import org.objectweb.asm.*;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.emu.jit.JitBytesPcodeExecutorState;
 import ghidra.pcode.emu.jit.JitCompiler;
+import ghidra.pcode.emu.jit.alloc.*;
 import ghidra.pcode.emu.jit.analysis.JitType.*;
-import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
-import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
-import ghidra.pcode.emu.jit.gen.type.TypeConversions;
-import ghidra.pcode.emu.jit.gen.var.VarGen;
+import ghidra.pcode.emu.jit.gen.util.Local;
+import ghidra.pcode.emu.jit.gen.util.Scope;
+import ghidra.pcode.emu.jit.gen.util.Types.BPrim;
+import ghidra.pcode.emu.jit.gen.util.Types.TInt;
 import ghidra.pcode.emu.jit.var.*;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressFactory;
-import ghidra.program.model.lang.Endian;
+import ghidra.program.model.address.*;
+import ghidra.program.model.lang.*;
 import ghidra.program.model.pcode.Varnode;
 
 /**
  * Type variable allocation phase for JIT-accelerated emulation.
- * 
  * <p>
  * The implements the Variable Allocation phase of the {@link JitCompiler} using a very simple
  * placement and another "voting" algorithm to decide the allocated JVM variable types. We place/map
@@ -55,10 +50,8 @@ import ghidra.program.model.pcode.Varnode;
  * local variable allocated for {@code RAX}. Note that variables which occupy only part of a
  * coalesced varnode always vote for a JVM {@code int}, because of the shifting and masking required
  * to extract that part.
- * 
  * <p>
  * The allocation process is very simple, presuming successful type assignment:
- * 
  * <ol>
  * <li>Vote Tabulation</li>
  * <li>Index Reservation</li>
@@ -79,11 +72,9 @@ import ghidra.program.model.pcode.Varnode;
  * 1. RAX = FLOAT_ADD RCX, RDX
  * 2. EAX = FLOAT_ADD EBX, 0x3f800000:4 # 1.0f
  * </pre>
- * 
  * <p>
  * Several values and variables are at play here. We tabulate the type assignments and resulting
  * votes:
- * 
  * <table border="1">
  * <tr>
  * <th>SSA Var</th>
@@ -126,7 +117,7 @@ import ghidra.program.model.pcode.Varnode;
  * <td>{@code long}</td>
  * </tr>
  * </table>
- * 
+ * <p>
  * The registers {@code RCX}, {@code RDX}, and {@code EBX} are trivially allocated as locals of JVM
  * types {@code double}, {@code double}, and {@code float}, respectively. It is also worth noting
  * that {@code 0x3f800000} is allocated as a {@code float} constant in the classfile's constant
@@ -152,8 +143,8 @@ import ghidra.program.model.pcode.Varnode;
  * This actually extends a little beyond allocation, but this is a suitable place for it: All SSA
  * values are assigned a handler, including constants and memory variables. Variables which access
  * the same varnode get the same handler. For varnodes that are allocated in a JVM local, we create
- * a handler that generates loads and stores to that local, e.g., {@link Opcodes#ILOAD iload}. For
- * constant varnodes, we create a handler that generates {@link Opcodes#LDC ldc} instructions. For
+ * a handler that generates loads and stores to that local, e.g., {@link CodeBuilder#iload}. For
+ * constant varnodes, we create a handler that generates {@link CodeBuilder#ldc} instructions. For
  * memory varnodes, we create a handler that generates a sequence of method invocations on the
  * {@link JitBytesPcodeExecutorState state}. The code generator will delegate to these handlers in
  * order to generate reads and writes of the corresponding variables, as well as to prepare any
@@ -175,456 +166,22 @@ import ghidra.program.model.pcode.Varnode;
 public class JitAllocationModel {
 
 	/**
-	 * An allocated JVM local
-	 * 
-	 * @param index the index reserved for this local
-	 * @param name the human-readable name for this local
-	 * @param type a type for this local
-	 * @param vn the varnode whose value this local holds
-	 */
-	public record JvmLocal(int index, String name, SimpleJitType type, Varnode vn) {
-
-		/**
-		 * Emit bytecode into the class constructor.
-		 * 
-		 * @param gen the code generator
-		 * @param iv the visitor for the class constructor
-		 */
-		public void generateInitCode(JitCodeGenerator gen, MethodVisitor iv) {
-			VarGen.generateValInitCode(gen, vn);
-		}
-
-		/**
-		 * Emit bytecode at the top of the {@link JitCompiledPassage#run(int) run} method.
-		 * 
-		 * <p>
-		 * This will declare all of the allocated locals for the entirety of the method.
-		 * 
-		 * @param gen the code generator
-		 * @param start a label at the top of the method
-		 * @param end a label at the end of the method
-		 * @param rv the visitor for the run method
-		 */
-		public void generateDeclCode(JitCodeGenerator gen, Label start, Label end,
-				MethodVisitor rv) {
-			rv.visitLocalVariable(name, Type.getDescriptor(type.javaType()), null, start, end,
-				index);
-		}
-
-		/**
-		 * Emit bytecode to load the varnode's value onto the JVM stack.
-		 * 
-		 * @param rv the visitor for the {@link JitCompiledPassage#run(int) run} method
-		 */
-		public void generateLoadCode(MethodVisitor rv) {
-			rv.visitVarInsn(type.opcodeLoad(), index);
-		}
-
-		/**
-		 * Emit bytecode to store the value on the JVM stack into the varnode.
-		 * 
-		 * @param rv the visitor for the {@link JitCompiledPassage#run(int) run} method
-		 */
-		public void generateStoreCode(MethodVisitor rv) {
-			rv.visitVarInsn(type.opcodeStore(), index);
-		}
-
-		/**
-		 * Emit bytecode to bring this varnode into scope.
-		 * 
-		 * <p>
-		 * This will copy the value from the {@link JitBytesPcodeExecutorState state} into the local
-		 * variable.
-		 * 
-		 * @param gen the code generator
-		 * @param rv the visitor for the {@link JitCompiledPassage#run(int) run} method
-		 */
-		public void generateBirthCode(JitCodeGenerator gen, MethodVisitor rv) {
-			VarGen.generateValReadCodeDirect(gen, type, vn, rv);
-			generateStoreCode(rv);
-		}
-
-		/**
-		 * Emit bytecode to take this varnode out of scope.
-		 * 
-		 * <p>
-		 * This will copy the value from the local variable into the
-		 * {@link JitBytesPcodeExecutorState state}.
-		 * 
-		 * @param gen the code generator
-		 * @param rv the visitor for the {@link JitCompiledPassage#run(int)} method
-		 */
-		public void generateRetireCode(JitCodeGenerator gen, MethodVisitor rv) {
-			generateLoadCode(rv);
-			VarGen.generateValWriteCodeDirect(gen, type, vn, rv);
-		}
-	}
-
-	/**
-	 * A handler that knows how to load and store variable values onto and from the JVM stack.
-	 */
-	public interface VarHandler {
-		/**
-		 * Get the p-code type of the variable this handler handles.
-		 * 
-		 * @return the type
-		 */
-		JitType type();
-
-		/**
-		 * Emit bytecode into the class constructor.
-		 * 
-		 * @param gen the code generator
-		 * @param iv the visitor for the class constructor
-		 */
-		void generateInitCode(JitCodeGenerator gen, MethodVisitor iv);
-
-		/**
-		 * If needed, emit bytecode at the top of the {@link JitCompiledPassage#run(int) run}
-		 * method.
-		 * 
-		 * @param gen the code generator
-		 * @param start a label at the top of the method
-		 * @param end a label at the end of the method
-		 * @param rv the visitor for the run method
-		 */
-		void generateDeclCode(JitCodeGenerator gen, Label start, Label end, MethodVisitor rv);
-
-		/**
-		 * Emit bytecode to load the varnode's value onto the JVM stack.
-		 * 
-		 * @param gen the code generator
-		 * @param type the p-code type of the value expected on the JVM stack by the proceeding
-		 *            bytecode
-		 * @param rv the visitor for the {@link JitCompiledPassage#run(int) run} method
-		 */
-		void generateLoadCode(JitCodeGenerator gen, JitType type, MethodVisitor rv);
-
-		/**
-		 * Emit bytecode to load the varnode's value onto the JVM stack.
-		 * 
-		 * @param gen the code generator
-		 * @param type the p-code type of the value produced on the JVM stack by the preceding
-		 *            bytecode
-		 * @param rv the visitor for the {@link JitCompiledPassage#run(int) run} method
-		 */
-		void generateStoreCode(JitCodeGenerator gen, JitType type, MethodVisitor rv);
-	}
-
-	/**
-	 * A handler for p-code variables composed of a single JVM local variable.
-	 */
-	public interface OneLocalVarHandler extends VarHandler {
-		/**
-		 * Get the local variable into which this p-code variable is allocated
-		 * 
-		 * @return the local
-		 */
-		JvmLocal local();
-
-		@Override
-		default void generateInitCode(JitCodeGenerator gen, MethodVisitor iv) {
-			// Generator inits decls directly
-		}
-
-		@Override
-		default void generateDeclCode(JitCodeGenerator gen, Label start, Label end,
-				MethodVisitor rv) {
-			// Generator calls decls directly
-		}
-
-		@Override
-		default void generateLoadCode(JitCodeGenerator gen, JitType type, MethodVisitor rv) {
-			local().generateLoadCode(rv);
-			TypeConversions.generate(gen, this.type(), type, rv);
-		}
-
-		@Override
-		default void generateStoreCode(JitCodeGenerator gen, JitType type, MethodVisitor rv) {
-			TypeConversions.generate(gen, type, this.type(), rv);
-			local().generateStoreCode(rv);
-		}
-	}
-
-	/**
-	 * The handler for a p-code variable allocated in one JVM {@code int}.
-	 * 
-	 * @param local the JVM local
-	 * @param type the p-code type
-	 */
-	public record IntVarAlloc(JvmLocal local, IntJitType type) implements OneLocalVarHandler {}
-
-	/**
-	 * The handler for a p-code variable allocated in one JVM {@code long}.
-	 * 
-	 * @param local the JVM local
-	 * @param type the p-code type
-	 */
-	public record LongVarAlloc(JvmLocal local, LongJitType type) implements OneLocalVarHandler {}
-
-	/**
-	 * The handler for a p-code variable allocated in one JVM {@code float}.
-	 * 
-	 * @param local the JVM local
-	 * @param type the p-code type
-	 */
-	public record FloatVarAlloc(JvmLocal local, FloatJitType type) implements OneLocalVarHandler {}
-
-	/**
-	 * The handler for a p-code variable allocated in one JVM {@code double}.
-	 * 
-	 * @param local the JVM local
-	 * @param type the p-code type
-	 */
-	public record DoubleVarAlloc(JvmLocal local, DoubleJitType type)
-			implements OneLocalVarHandler {}
-
-	/**
-	 * A portion of a multi-local variable handler.
-	 * 
-	 * <p>
-	 * This portion is allocated in a JVM local. When loading with a positive shift, the value is
-	 * shifted to the right to place it into position.
-	 * 
-	 * @param local the local variable allocated to this part
-	 * @param shift the number of bytes and direction to shift
-	 */
-	public record MultiLocalPart(JvmLocal local, int shift) {
-		private JitType chooseLargerType(JitType t1, JitType t2) {
-			return t1.size() > t2.size() ? t1 : t2;
-		}
-
-		/**
-		 * Emit bytecode to load the value from this local and position it in a value on the JVM
-		 * stack.
-		 * 
-		 * <p>
-		 * If multiple parts are to be combined, the caller should emit a bitwise or after all loads
-		 * but the first.
-		 * 
-		 * @param gen the code generator
-		 * @param type the p-code type of the value expected on the stack by the proceeding
-		 *            bytecode, which may be to load additional parts
-		 * @param rv the visitor for the {@link JitCompiledPassage#run(int) run} method
-		 * 
-		 * @implNote We must keep temporary values in a variable of the larger of the local's or the
-		 *           expected type, otherwise bits may get dropped while positioning the value.
-		 */
-		public void generateLoadCode(JitCodeGenerator gen, JitType type, MethodVisitor rv) {
-			local.generateLoadCode(rv);
-			JitType tempType = chooseLargerType(local.type, type);
-			TypeConversions.generate(gen, local.type, tempType, rv);
-			if (shift > 0) {
-				switch (tempType) {
-					case IntJitType t -> {
-						rv.visitLdcInsn(shift * Byte.SIZE);
-						rv.visitInsn(IUSHR);
-					}
-					case LongJitType t -> {
-						rv.visitLdcInsn(shift * Byte.SIZE);
-						rv.visitInsn(LUSHR);
-					}
-					default -> throw new AssertionError();
-				}
-			}
-			else if (shift < 0) {
-				switch (tempType) {
-					case IntJitType t -> {
-						rv.visitLdcInsn(-shift * Byte.SIZE);
-						rv.visitInsn(ISHL);
-					}
-					case LongJitType t -> {
-						rv.visitLdcInsn(-shift * Byte.SIZE);
-						rv.visitInsn(LSHL);
-					}
-					default -> throw new AssertionError();
-				}
-			}
-			TypeConversions.generate(gen, tempType, type, rv);
-		}
-
-		/**
-		 * Emit bytecode to extract this part from the value on the JVM stack and store it in the
-		 * local variable.
-		 * 
-		 * <p>
-		 * If multiple parts are to be stored, the caller should emit a {@link Opcodes#DUP dup} or
-		 * {@link Opcodes#DUP2 dup2} before all stores but the last.
-		 * 
-		 * @param gen the code generator
-		 * @param type the p-code type of the value expected on the stack by the proceeding
-		 *            bytecode, which may be to load additional parts
-		 * @param rv the visitor for the {@link JitCompiledPassage#run(int) run} method
-		 * 
-		 * @implNote We must keep temporary values in a variable of the larger of the local's or the
-		 *           expected type, otherwise bits may get dropped while positioning the value.
-		 */
-		public void generateStoreCode(JitCodeGenerator gen, JitType type, MethodVisitor rv) {
-			JitType tempType = chooseLargerType(local.type, type);
-			TypeConversions.generate(gen, type, tempType, rv);
-			switch (tempType) {
-				case IntJitType t -> {
-					if (shift > 0) {
-						rv.visitLdcInsn(shift * Byte.SIZE);
-						rv.visitInsn(ISHL);
-					}
-					else if (shift < 0) {
-						rv.visitLdcInsn(-shift * Byte.SIZE);
-						rv.visitInsn(IUSHR);
-					}
-				}
-				case LongJitType t -> {
-					if (shift > 0) {
-						rv.visitLdcInsn(shift * Byte.SIZE);
-						rv.visitInsn(LSHL);
-					}
-					else if (shift < 0) {
-						rv.visitLdcInsn(-shift * Byte.SIZE);
-						rv.visitInsn(LUSHR);
-					}
-				}
-				default -> throw new AssertionError();
-			}
-			TypeConversions.generate(gen, tempType, local.type, rv);
-			switch (local.type) {
-				case IntJitType t -> {
-					int mask = -1 >>> (Integer.SIZE - Byte.SIZE * type.size());
-					if (shift > 0) {
-						mask <<= shift * Byte.SIZE;
-					}
-					else {
-						mask >>>= -shift * Byte.SIZE;
-					}
-					rv.visitLdcInsn(mask);
-					rv.visitInsn(IAND);
-					local.generateLoadCode(rv);
-					rv.visitLdcInsn(~mask);
-					rv.visitInsn(IAND);
-					rv.visitInsn(IOR);
-					local.generateStoreCode(rv);
-				}
-				case LongJitType t -> {
-					long mask = -1L >>> (Long.SIZE - Byte.SIZE * type.size());
-					if (shift > 0) {
-						mask <<= shift * Byte.SIZE;
-					}
-					else {
-						mask >>>= -shift * Byte.SIZE;
-					}
-					rv.visitLdcInsn(mask);
-					rv.visitInsn(LAND);
-					local.generateLoadCode(rv);
-					rv.visitLdcInsn(~mask);
-					rv.visitInsn(LAND);
-					rv.visitInsn(LOR);
-					local.generateStoreCode(rv);
-				}
-				default -> throw new AssertionError();
-			}
-		}
-	}
-
-	/**
-	 * The handler for a variable allocated in a composition of locals
-	 *
-	 * <p>
-	 * This can also handle a varnode that is a subpiece of a local variable allocated for a larger
-	 * varnode. For example, this may handle {@code EAX}, when we have allocated a {@code long} to
-	 * hold all of {@code RAX}.
-	 * 
-	 * @param parts the parts describing how the locals are composed
-	 * @param type the p-code type of the (whole) variable
-	 */
-	public record MultiLocalVarHandler(List<MultiLocalPart> parts, JitType type)
-			implements VarHandler {
-		@Override
-		public void generateInitCode(JitCodeGenerator gen, MethodVisitor iv) {
-			// Generator calls local inits directly
-		}
-
-		@Override
-		public void generateDeclCode(JitCodeGenerator gen, Label start, Label end,
-				MethodVisitor rv) {
-			// Generator calls local decls directly
-		}
-
-		@Override
-		public void generateLoadCode(JitCodeGenerator gen, JitType type, MethodVisitor rv) {
-			parts.get(0).generateLoadCode(gen, this.type, rv);
-			for (MultiLocalPart part : parts.subList(1, parts.size())) {
-				part.generateLoadCode(gen, this.type, rv);
-				switch (this.type) {
-					case IntJitType t -> rv.visitInsn(IOR);
-					case LongJitType t -> rv.visitInsn(LOR);
-					default -> throw new AssertionError();
-				}
-			}
-			TypeConversions.generate(gen, this.type, type, rv);
-		}
-
-		@Override
-		public void generateStoreCode(JitCodeGenerator gen, JitType type, MethodVisitor rv) {
-			TypeConversions.generate(gen, type, this.type, rv);
-			for (MultiLocalPart part : parts.subList(1, parts.size()).reversed()) {
-				switch (this.type) {
-					case IntJitType t -> rv.visitInsn(DUP);
-					case LongJitType t -> rv.visitInsn(DUP2);
-					default -> throw new AssertionError();
-				}
-				part.generateStoreCode(gen, this.type, rv);
-			}
-			parts.get(0).generateStoreCode(gen, this.type, rv);
-		}
-	}
-
-	/**
-	 * A dummy handler for values/variables that are not allocated in JVM locals
-	 */
-	public enum NoHandler implements VarHandler {
-		/** Singleton */
-		INSTANCE;
-
-		@Override
-		public JitType type() {
-			return null;
-		}
-
-		@Override
-		public void generateInitCode(JitCodeGenerator gen, MethodVisitor iv) {
-		}
-
-		@Override
-		public void generateDeclCode(JitCodeGenerator gen, Label start, Label end,
-				MethodVisitor rv) {
-		}
-
-		@Override
-		public void generateLoadCode(JitCodeGenerator gen, JitType type, MethodVisitor rv) {
-			throw new AssertionError();
-		}
-
-		@Override
-		public void generateStoreCode(JitCodeGenerator gen, JitType type, MethodVisitor rv) {
-			throw new AssertionError();
-		}
-	}
-
-	/**
 	 * The descriptor of a p-code variable
-	 * 
 	 * <p>
 	 * This is just a logical grouping of a varnode and its assigned p-code type.
 	 */
-	private record VarDesc(int spaceId, long offset, int size, JitType type) {
+	private record VarDesc(int spaceId, long offset, int size, JitType type,
+			Language language) {
 		/**
 		 * Create a descriptor from the given varnode and type
 		 * 
 		 * @param vn the varnode
 		 * @param type the p-code type
+		 * @param langauge the language
 		 * @return the descriptor
 		 */
-		static VarDesc fromVarnode(Varnode vn, JitType type) {
-			return new VarDesc(vn.getSpace(), vn.getOffset(), vn.getSize(), type);
+		static VarDesc fromVarnode(Varnode vn, JitType type, Language language) {
+			return new VarDesc(vn.getSpace(), vn.getOffset(), vn.getSize(), type, language);
 		}
 
 		/**
@@ -633,50 +190,58 @@ public class JitAllocationModel {
 		 * @return the name
 		 */
 		public String name() {
+			AddressFactory factory = language.getAddressFactory();
+			AddressSpace space = factory.getAddressSpace(spaceId);
+			Register reg = language.getRegister(space, offset, size);
+			if (reg != null) {
+				return "%s_%d_%s".formatted(reg.getName(), size, type.nm());
+			}
 			return "s%d_%x_%d_%s".formatted(spaceId, offset, size, type.nm());
 		}
 
 		/**
 		 * Convert this descriptor back to a varnode
 		 * 
-		 * @param factory the address factory for the emulation target language
 		 * @return the varnode
 		 */
-		public Varnode toVarnode(AddressFactory factory) {
+		public Varnode toVarnode() {
+			AddressFactory factory = language.getAddressFactory();
 			return new Varnode(factory.getAddressSpace(spaceId).getAddress(offset), size);
 		}
 	}
 
 	private final JitDataFlowModel dfm;
 	private final JitVarScopeModel vsm;
+	private final JitOpUseModel oum;
 	private final JitTypeModel tm;
 
 	private final SleighLanguage language;
 	private final Endian endian;
 
-	private int nextLocal = 2; // 0:this, 1:blockId in run(int blockId)
 	private final Map<JitVal, VarHandler> handlers = new HashMap<>();
 	private final Map<Varnode, VarHandler> handlersPerVarnode = new HashMap<>();
-	private final NavigableMap<Address, JvmLocal> locals = new TreeMap<>();
+	private final NavigableMap<Address, JvmLocal<?, ?>> locals = new TreeMap<>();
 
 	/**
 	 * Construct the allocation model.
 	 * 
 	 * @param context the analysis context
-	 * @param dfm the data flow moel
+	 * @param dfm the data flow model
 	 * @param vsm the variable scope model
+	 * @param oum the p-code op use model
 	 * @param tm the type model
 	 */
 	public JitAllocationModel(JitAnalysisContext context, JitDataFlowModel dfm,
-			JitVarScopeModel vsm, JitTypeModel tm) {
+			JitVarScopeModel vsm, JitOpUseModel oum, JitTypeModel tm) {
 		this.dfm = dfm;
 		this.vsm = vsm;
+		this.oum = oum;
 		this.tm = tm;
 
 		this.endian = context.getEndian();
 		this.language = context.getLanguage();
 
-		allocate();
+		analyze();
 	}
 
 	/**
@@ -687,30 +252,10 @@ public class JitAllocationModel {
 	 * @param desc the variable's descriptor
 	 * @return the allocated JVM local
 	 */
-	private JvmLocal genFreeLocal(String name, SimpleJitType type, VarDesc desc) {
-		int i = nextLocal;
-		if (type.javaType() == long.class || type.javaType() == double.class) {
-			nextLocal += 2;
-		}
-		else {
-			nextLocal += 1;
-		}
-		return new JvmLocal(i, name, type, desc.toVarnode(language.getAddressFactory()));
-	}
-
-	/**
-	 * Get the next free local index without reserving it
-	 * 
-	 * <p>
-	 * This should be used by operator code generators <em>after</em> all the
-	 * {@link JitBytesPcodeExecutorState state} bypassing local variables have been allocated. The
-	 * variables should be scoped to that operator only, so that the ids used are freed for the next
-	 * operator.
-	 * 
-	 * @return the next id
-	 */
-	public int nextFreeLocal() {
-		return nextLocal;
+	private <T extends BPrim<?>, JT extends SimpleJitType<T, JT>> JvmLocal<T, JT> declareLocal(
+			Scope scope, JT type, String name, VarDesc desc) {
+		Local<T> local = scope.decl(type.bType(), name);
+		return JvmLocal.of(local, type, desc.toVarnode());
 	}
 
 	/**
@@ -721,26 +266,23 @@ public class JitAllocationModel {
 	 * @param desc the (whole) variable's descriptor
 	 * @return the allocated JVM locals from most to least significant
 	 */
-	private List<JvmLocal> genFreeLocals(String name, List<SimpleJitType> types,
-			VarDesc desc) {
-		JvmLocal[] result = new JvmLocal[types.size()];
-		Iterable<SimpleJitType> it = language.isBigEndian()
-				? types
-				: () -> new ReverseListIterator<SimpleJitType>(types);
+	private <T extends BPrim<?>, JT extends SimpleJitType<T, JT>> List<JvmLocal<T, JT>>
+			declareLocals(Scope scope, List<JT> types, String name, VarDesc desc) {
+		@SuppressWarnings("unchecked")
+		JvmLocal<T, JT>[] result = new JvmLocal[types.size()];
+		// assert types.stream().mapToInt(t -> t.size()).sum() == desc.size;
 		long offset = desc.offset;
-		int i = 0;
-		for (SimpleJitType t : it) {
-			VarDesc d = new VarDesc(desc.spaceId, offset, t.size(), t);
-			result[i] = genFreeLocal(name + "_" + i, t, d);
+		for (int i = 0; i < types.size(); i++) {
+			JT t = types.get(i);
+			VarDesc d = new VarDesc(desc.spaceId, offset, t.size(), t, language);
+			result[i] = declareLocal(scope, t, name + "_" + i, d);
 			offset += t.size();
-			i++;
 		}
 		return List.of(result);
 	}
 
 	/**
 	 * A content for assigning a type to a varnode
-	 * 
 	 * <p>
 	 * Because several SSA variables can share one varnode, we let each cast a vote to determine the
 	 * JVM type of the local(s) allocated to it.
@@ -763,7 +305,7 @@ public class JitAllocationModel {
 		 * @param type the type
 		 */
 		public void vote(JitType type) {
-			map.compute(type.ext(), (t, v) -> v == null ? 1 : v + 1);
+			map.compute(type.ext(), (_, v) -> v == null ? 1 : v + 1);
 		}
 
 		/**
@@ -791,13 +333,29 @@ public class JitAllocationModel {
 	 * @param local the local
 	 * @return the handler
 	 */
-	private OneLocalVarHandler createOneLocalHandler(JvmLocal local) {
-		return switch (local.type) {
-			case IntJitType t -> new IntVarAlloc(local, t);
-			case LongJitType t -> new LongVarAlloc(local, t);
-			case FloatJitType t -> new FloatVarAlloc(local, t);
-			case DoubleJitType t -> new DoubleVarAlloc(local, t);
+	@SuppressWarnings("unchecked")
+	private <T extends BPrim<?>, JT extends SimpleJitType<T, JT>> SimpleVarHandler<T, JT>
+			createSimpleHandler(JvmLocal<T, JT> local) {
+		return (SimpleVarHandler<T, JT>) switch (local.type()) {
+			case IntJitType t -> new IntVarAlloc(local.castOf(t), t);
+			case LongJitType t -> new LongVarAlloc(local.castOf(t), t);
+			case FloatJitType t -> new FloatVarAlloc(local.castOf(t), t);
+			case DoubleJitType t -> new DoubleVarAlloc(local.castOf(t), t);
 			default -> throw new AssertionError();
+		};
+	}
+
+	private int computeByteShift(Varnode part, Varnode first, Varnode last) {
+		Varnode coalesced = vsm.getCoalesced(part);
+		if (coalesced.equals(part)) {
+			/**
+			 * We could shift, but there's no point since there's no interplay with other varnodes.
+			 */
+			return 0;
+		}
+		return (int) switch (endian) {
+			case BIG -> maxAddr(last).subtract(maxAddr(part));
+			case LITTLE -> part.getAddress().subtract(first.getAddress());
 		};
 	}
 
@@ -809,20 +367,65 @@ public class JitAllocationModel {
 	 *         locals.
 	 */
 	private VarHandler createComplicatedHandler(Varnode vn) {
-		Entry<Address, JvmLocal> leftEntry = locals.floorEntry(vn.getAddress());
-		assert overlapsLeft(leftEntry.getValue().vn, vn);
-		Address min = leftEntry.getKey();
-		NavigableMap<Address, JvmLocal> sub = locals.subMap(min, true, maxAddr(vn), true);
+		JitType type = JitTypeBehavior.INTEGER.type(vn.getSize());
 
-		List<MultiLocalPart> parts = new ArrayList<>();
-		for (JvmLocal local : sub.values()) {
-			int offset = (int) switch (endian) {
-				case BIG -> maxAddr(leftEntry.getValue().vn).subtract(maxAddr(vn));
-				case LITTLE -> vn.getAddress().subtract(leftEntry.getKey());
-			};
-			parts.add(new MultiLocalPart(local, offset));
+		Map.Entry<Address, JvmLocal<?, ?>> firstEntry = locals.floorEntry(vn.getAddress());
+		assert JitVarScopeModel.overlapsLeft(firstEntry.getValue().vn(), vn);
+
+		if (type instanceof SimpleJitType<?, ?> st) {
+			JvmLocal<?, ?> local = firstEntry.getValue();
+			if (local.vn().contains(maxAddr(vn))) {
+				int byteShift = computeByteShift(vn, local.vn(), local.vn());
+				return switch (st) {
+					case IntJitType t -> switch (local.type()) {
+						case IntJitType ct -> new IntInIntHandler(local.castOf(ct), t, vn,
+							byteShift);
+						case LongJitType ct -> new IntInLongHandler(local.castOf(ct), t, vn,
+							byteShift);
+						default -> throw new AssertionError();
+					};
+					case LongJitType t -> switch (local.type()) {
+						case LongJitType ct -> new LongInLongHandler(local.castOf(ct), t, vn,
+							byteShift);
+						default -> throw new AssertionError();
+					};
+					default -> throw new AssertionError();
+				};
+			}
 		}
-		return new MultiLocalVarHandler(parts, JitTypeBehavior.INTEGER.type(vn.getSize()));
+
+		/**
+		 * NOTE: Type is not necessarily an MpIntJitType, but we are going to use an Aligned or
+		 * Shifted MpIntHandler. They know how to load/store primitive types to/from the stack, too.
+		 * We do need to select the equivalently-sized mp-int type, though, which is why we can't
+		 * always assert mp-ints have more than 2 ints (exceed a long). They should have more than
+		 * 1, though.
+		 */
+		MpIntJitType mpType = MpIntJitType.forSize(type.size());
+		assert mpType.legsAlloc() > 1;
+
+		List<JvmLocal<TInt, IntJitType>> parts = new ArrayList<>();
+		Address min = firstEntry.getKey();
+		NavigableMap<Address, JvmLocal<?, ?>> sub = locals.subMap(min, true, maxAddr(vn), true);
+		for (JvmLocal<?, ?> local : sub.values()) {
+			assert local.type() instanceof IntJitType;
+			@SuppressWarnings("unchecked")
+			var localInt = (JvmLocal<TInt, IntJitType>) local;
+			parts.add(localInt);
+		}
+		int byteShift = computeByteShift(vn, parts.getFirst().vn(), parts.getLast().vn());
+		/**
+		 * All of the mp-int stuff assumes the lower-indexed legs are less significant, i.e.,
+		 * they're given in little-endian order. We populated parts in order of address/offset. If
+		 * the machine is little-endian, then they are already in the correct order. If the machine
+		 * is big-endian, then we need to reverse them. (This seems opposite the usual intuition.)
+		 */
+		if (endian == Endian.BIG) {
+			Collections.reverse(parts);
+		}
+		return byteShift == 0
+				? new AlignedMpIntHandler(parts, mpType, vn)
+				: new ShiftedMpIntHandler(parts, mpType, vn, byteShift);
 	}
 
 	/**
@@ -833,9 +436,9 @@ public class JitAllocationModel {
 	 */
 	private VarHandler getOrCreateHandlerForVarnodeVar(JitVarnodeVar vv) {
 		return handlersPerVarnode.computeIfAbsent(vv.varnode(), vn -> {
-			JvmLocal oneLocal = locals.get(vn.getAddress());
-			if (oneLocal != null && oneLocal.vn.equals(vn)) {
-				return createOneLocalHandler(oneLocal);
+			JvmLocal<?, ?> oneLocal = locals.get(vn.getAddress());
+			if (oneLocal != null && oneLocal.vn().equals(vn)) {
+				return createSimpleHandler(oneLocal);
 			}
 			return createComplicatedHandler(vn);
 		});
@@ -852,6 +455,9 @@ public class JitAllocationModel {
 		if (v instanceof JitConstVal) {
 			return NoHandler.INSTANCE;
 		}
+		if (v instanceof JitFailVal) {
+			return NoHandler.INSTANCE;
+		}
 		if (v instanceof JitMemoryVar) {
 			return NoHandler.INSTANCE;
 		}
@@ -861,15 +467,13 @@ public class JitAllocationModel {
 		throw new AssertionError();
 	}
 
-	/**
-	 * Perform the actual allocations
-	 */
-	private void allocate() {
+	private void analyze() {
 		for (JitVal v : dfm.allValues()) {
-			if (v instanceof JitVarnodeVar vv && !(v instanceof JitMemoryVar)) {
+			if (oum.isUsed(v) && v instanceof JitVarnodeVar vv && !(v instanceof JitMemoryVar)) {
 				Varnode vn = vv.varnode();
 				Varnode coalesced = vsm.getCoalesced(vn);
-				TypeContest tc = typeContests.computeIfAbsent(coalesced, __ -> new TypeContest());
+				TypeContest tc =
+					typeContests.computeIfAbsent(coalesced, _ -> new TypeContest());
 				if (vn.equals(coalesced)) {
 					tc.vote(tm.typeOf(v));
 				}
@@ -878,19 +482,30 @@ public class JitAllocationModel {
 				}
 			}
 		}
+	}
 
+	/**
+	 * Perform the actual allocations
+	 * 
+	 * @param scope the (probably root) scope for declaring the locals
+	 */
+	public void allocate(Scope scope) {
 		for (Map.Entry<Varnode, TypeContest> entry : typeContests.entrySet()
 				.stream()
 				.sorted(Comparator.comparing(e -> e.getKey().getAddress()))
 				.toList()) {
-			VarDesc desc = VarDesc.fromVarnode(entry.getKey(), entry.getValue().winner());
+			VarDesc desc =
+				VarDesc.fromVarnode(entry.getKey(), entry.getValue().winner(), language);
 			switch (desc.type()) {
-				case SimpleJitType t -> {
-					locals.put(entry.getKey().getAddress(), genFreeLocal(desc.name(), t, desc));
+				case @SuppressWarnings("rawtypes") SimpleJitType t -> {
+					@SuppressWarnings("unchecked")
+					JvmLocal<?, ?> local = declareLocal(scope, t, desc.name(), desc);
+					locals.put(entry.getKey().getAddress(), local);
 				}
 				case MpIntJitType t -> {
-					for (JvmLocal leg : genFreeLocals(desc.name(), t.legTypes(), desc)) {
-						locals.put(leg.vn.getAddress(), leg);
+					for (JvmLocal<?, ?> leg : declareLocals(scope, t.legTypesBE(), desc.name(),
+						desc)) {
+						locals.put(leg.vn().getAddress(), leg);
 					}
 				}
 				default -> throw new AssertionError();
@@ -898,7 +513,16 @@ public class JitAllocationModel {
 		}
 
 		for (JitVal v : dfm.allValuesSorted()) {
-			handlers.put(v, createHandler(v));
+			/**
+			 * NOTE: We cannot cull outputs of synthetic ops here. Their outputs can (and usually
+			 * are) consumed by real ops, and the values are assigned handlers by ref ID. Thus, the
+			 * consuming op will need a handler for the synthetic op's output. We could consider
+			 * keying the handlers some by an alternative (e.g., varnode when available), but that's
+			 * for later exploration.
+			 */
+			if (oum.isUsed(v)) {
+				handlers.put(v, createHandler(v));
+			}
 		}
 	}
 
@@ -917,20 +541,19 @@ public class JitAllocationModel {
 	 * 
 	 * @return the locals
 	 */
-	public Collection<JvmLocal> allLocals() {
+	public Collection<JvmLocal<?, ?>> allLocals() {
 		return locals.values();
 	}
 
 	/**
 	 * Get all of the locals allocated for the given varnode
 	 * 
-	 * 
 	 * @implNote This is used by the code generator to birth and retire the local variables, given
 	 *           that scope is analyzed in terms of varnodes.
 	 * @param vn the varnode
 	 * @return the locals
 	 */
-	public Collection<JvmLocal> localsForVn(Varnode vn) {
+	public Collection<JvmLocal<?, ?>> localsForVn(Varnode vn) {
 		Address min = vn.getAddress();
 		Address floor = locals.floorKey(min);
 		if (floor != null) {

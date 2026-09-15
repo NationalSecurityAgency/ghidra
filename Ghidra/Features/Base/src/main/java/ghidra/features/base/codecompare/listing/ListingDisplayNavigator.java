@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,9 +37,9 @@ class ListingDisplayNavigator implements Navigatable {
 
 	/**
 	 * Constructor for a dual listing navigator.
+	 * 
 	 * @param listingPanel the dual listing whose left or right listing panel is to be controlled.
-	 * @param goToService which side LEFT or RIGHT
-	 * false means it's for the right side listing.
+	 * @param goToService which side LEFT or RIGHT. false means it's for the right side listing.
 	 */
 	ListingDisplayNavigator(ListingPanel listingPanel, GoToService goToService) {
 

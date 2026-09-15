@@ -166,4 +166,11 @@ public class DebuggerConsolePlugin extends Plugin implements DebuggerConsoleServ
 	public LogRow<?> getLogRow(ActionContext ctx) {
 		return provider.getLogRow(ctx);
 	}
+
+	/**
+	 * Clear the console
+	 */
+	public void clear() {
+		provider.clear();
+	}
 }

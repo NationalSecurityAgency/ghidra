@@ -152,17 +152,19 @@ public class SourceFileUtils {
 	}
 
 	/**
-	 * Corrects potentially relative paths encountered in DWARF debug info.
-	 * Relative paths are based at /{@code baseDir}/.  If normalization of "/../" subpaths
-	 * results in a path "above" /{@code baseDir}/, the returned path will be based at "baseDir_i"
-	 * where i is the count of initial "/../" in the normalized path.
+	 * Normalizes paths encountered in DWARF debug info.
+	 * Relative paths are made absolute with base /{@code baseDir}/.  If normalization of "/../" 
+	 * subpaths results in a path "above" /{@code baseDir}/, the returned path will be based at 
+	 * "baseDir_i" where i is the count of initial "/../" in the normalized path.
+	 * Additionally, any backslashes are converted to forward slashes (backslashes can occur in
+	 * files produced by MinGW).
 	 * @param path path to normalize
 	 * @param baseDir name of artificial root directory
 	 * @return normalized path
 	 * @throws IllegalArgumentException if the path is not valid or if baseDir contains a
 	 * non-alphanumeric, non-underscore character
 	 */
-	public static String fixDwarfRelativePath(String path, String baseDir) {
+	public static String normalizeDwarfPath(String path, String baseDir) {
 		if (StringUtils.isEmpty(baseDir)) {
 			throw new IllegalArgumentException("baseDir cannot be empty");
 		}
@@ -176,6 +178,7 @@ public class SourceFileUtils {
 			path = "/" + baseDir + path.substring(1);
 			based = true;
 		}
+		path = FSUtilities.normalizeNativePath(path);
 		try {
 			URI uri = new URI("file", null, path, null).normalize();
 			path = uri.getPath();

@@ -35,7 +35,7 @@ public abstract class AbstractCreateStructureCmd implements Command<Program> {
 	private Address structureAddress;
 
 	/**
-	 * Initializes the this class to create a structure with the given name 
+	 * Initializes this class to create a structure with the given name 
 	 * and address when the {@link #applyTo(Program)} is called.
 	 * 
 	 * @param name The name of the structure to create.

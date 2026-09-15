@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,6 @@ package generic.concurrent;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 
-import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.CancelledListener;
 import ghidra.util.task.TaskMonitor;
@@ -96,9 +95,9 @@ class FutureTaskMonitor<I, R> extends FutureTask<R> implements TaskMonitor {
 		currentProgress = value;
 		queue.progressChanged(id, item, currentProgress);
 	}
-	
+
 	@Override
-	public void checkCanceled() throws CancelledException {
+	public void checkCancelled() throws CancelledException {
 		if (isCancelled()) {
 			throw new CancelledException();
 		}
@@ -106,6 +105,7 @@ class FutureTaskMonitor<I, R> extends FutureTask<R> implements TaskMonitor {
 
 	@Override
 	public void setMessage(String message) {
+		lastMessage = message;
 		queue.progressMessageChanged(id, item, message);
 	}
 
@@ -168,7 +168,17 @@ class FutureTaskMonitor<I, R> extends FutureTask<R> implements TaskMonitor {
 
 	@Override
 	public void setCancelEnabled(boolean enable) {
-		throw new UnsupportedOperationException();
+		// throw new UnsupportedOperationException();
+
+		/*
+		 	Note: we used to throw the exception above.  This API requires cancel to work at all 
+		 	times in order to facilitate ConcurrentQ task management.   Currently, this monitor is 
+		 	handed out to clients, which means that this method is available to any
+		 	job that is being run in the queue.  Thus, this method is available to client code, 
+		 	which may decide to call this method.  Instead of throwing an exception, we will simply
+		 	do nothing here.  Unfortunately, this puts the onus on the client to know that this 
+		 	methods will sometimes not be supported.
+		 */
 	}
 
 	@Override
@@ -177,7 +187,8 @@ class FutureTaskMonitor<I, R> extends FutureTask<R> implements TaskMonitor {
 	}
 
 	@Override
-	public void clearCanceled() {
+	public void clearCancelled() {
+		// once cancelled, always cancelled
 		throw new UnsupportedOperationException();
 
 	}

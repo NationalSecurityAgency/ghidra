@@ -39,7 +39,7 @@
        [-processor &lt;languageID&gt;] [-cspec &lt;compilerSpecID&gt;]
        [-analysisTimeoutPerFile &lt;timeout in seconds&gt;]
        [-keystore &lt;KeystorePath&gt;] [-connect [&lt;userID&gt;]]
-       [-p] [-commit [&quot;&lt;comment&gt;&quot;]] [-okToDelete]
+       [-p] [-commit [&quot;&lt;comment&gt;&quot;]] [-okToDelete] [-allowAllAccess]
        [-max-cpu &lt;max cpu cores to use&gt;] [-loader &lt;desired loader name&gt;]
   </pre>
   </span>
@@ -416,6 +416,22 @@
 <ul>
   <li>When running in headless mode, some scripts exist that mark programs for deletion. This deletes all versions of a program in shared project mode and cannot be undone</li>
   <li>Therefore, so that programs are not accidentally deleted, this option is required to be set if user wants program deleted in headless mode.</li>
+</ul>
+</section>
+
+<section>
+<header><span style="color:#FFD700">-allowAllAccess</span></header>
+<br><br>
+<ul>
+  <li>Access to remote servers may be subject to a <b>Server Allow List</b>.  In order to avoid user 
+	prompting, connections to non-localhost servers, not previously added to the list via the GUI or 
+	<I>support/updateServerAllowList</I> shell script,  will fail by default.  
+	Execute this script without arguments to see usage information.
+	Access denial may be avoided by either updating the <b>Server Allow List</b> or including the 
+	<span style="color:#FFD700">-allowAllAccess</span> command line option.  
+	NOTE: <b>Server Allow List</b> screening is independent of possible SSL/TLS server authentication 
+	which may be required. 
+  </li>
 </ul>
 </section>
 

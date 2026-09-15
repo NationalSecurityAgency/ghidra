@@ -119,7 +119,7 @@ public abstract class CallNode extends GTreeSlowLoadingNode {
 		Function function = nodeToAdd.getRemoteFunction();
 		List<GTreeNode> nodes = nodesByFunction.get(function);
 		if (nodes.isEmpty()) {
-			nodes.add(nodeToAdd); // can can always add new nodes when the list is empty
+			nodes.add(nodeToAdd); // we can always add new nodes when the list is empty
 			return;
 		}
 

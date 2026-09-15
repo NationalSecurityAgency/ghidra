@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,10 +35,6 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 
 public class DataTypeMarkupItemTest extends AbstractVTMarkupItemTest {
-
-	public DataTypeMarkupItemTest() {
-		super();
-	}
 
 	@Test
 	public void testReplaceDataTypeWhereNone() throws Exception {
@@ -332,9 +328,103 @@ public class DataTypeMarkupItemTest extends AbstractVTMarkupItemTest {
 		doTestFindAndApplyMarkupItem_ApplyFails(validator);
 	}
 
+	@Test
+	public void testReplace_EmptyStructureOption_MatchingData() throws Exception {
+
+		// apply a Gadget struct to the source
+		Structure gadget = createGadgetStruct();
+		String dataAddr = "0x01007500";
+		sourceBuilder.setBytes(dataAddr, "4c 6f 61 64 43 75 72 73 6f 72 57 00"); // arbitrary bytes
+		sourceBuilder.applyDataType(dataAddr, gadget);
+		Address sourceAddr = addr(dataAddr, sourceProgram);
+		Data sourceData = sourceProgram.getListing().getDataAt(sourceAddr);
+
+		destinationBuilder.setBytes(dataAddr, "4c 6f 61 64 43 75 72 73 6f 72 57 00"); // same bytes
+		destinationBuilder.applyDataType(dataAddr, gadget);
+		Address destinationAddr = addr(dataAddr, destinationProgram);
+		Data destinationData = destinationProgram.getListing().getDataAt(destinationAddr);
+
+		DataTypeValidator validator = new DataTypeValidator(sourceData, destinationData,
+			ReplaceDataChoices.REPLACE_FIRST_DATA_ONLY) {
+			@Override
+			protected void assertApplied() {
+
+				Data appliedData =
+					destinationProgram.getListing().getDataAt(destinationAddr);
+				DataType dt = appliedData.getDataType();
+				assertTrue(dt instanceof Structure);
+				Structure struct = (Structure) dt;
+				assertEquals("Gadget", struct.getName());
+				assertTrue("Struct should have been empty due to options setting",
+					struct.isNotYetDefined());
+			}
+
+			@Override
+			public ToolOptions getOptions() {
+				ToolOptions vtOptions = super.getOptions();
+				vtOptions.setBoolean(VTOptionDefines.USE_EMPTY_COMPOSITES, true);
+				return vtOptions;
+			}
+		};
+		doTestFindAndDoNothingOnApplyOfSameMarkupItem(validator);
+	}
+
+	@Test
+	public void testReplace_EmptyStructureOption_WhereNone() throws Exception {
+
+		// apply a Gadget struct to the source
+		Structure gadget = createGadgetStruct();
+		String dataAddr = "0x01007500";
+		sourceBuilder.setBytes(dataAddr, "4c 6f 61 64 43 75 72 73 6f 72 57 00"); // arbitrary bytes
+		sourceBuilder.applyDataType(dataAddr, gadget);
+		Address sourceAddr = addr(dataAddr, sourceProgram);
+		Data sourceData = sourceProgram.getListing().getDataAt(sourceAddr);
+
+		destinationBuilder.setBytes(dataAddr, "4c 6f 61 64 43 75 72 73 6f 72 57 00"); // same bytes
+		Address destinationAddr = addr(dataAddr, destinationProgram);
+		Data destinationData = destinationProgram.getListing().getDataAt(destinationAddr);
+
+		DataTypeValidator validator = new DataTypeValidator(sourceData, destinationData,
+			ReplaceDataChoices.REPLACE_FIRST_DATA_ONLY) {
+			@Override
+			protected void assertApplied() {
+
+				Data appliedData =
+					destinationProgram.getListing().getDataAt(destinationAddr);
+				DataType dt = appliedData.getDataType();
+				assertTrue(dt instanceof Structure);
+				Structure struct = (Structure) dt;
+				assertEquals("Gadget", struct.getName());
+				assertTrue("Struct should have been empty due to options setting",
+					struct.isNotYetDefined());
+			}
+
+			@Override
+			public ToolOptions getOptions() {
+				ToolOptions vtOptions = super.getOptions();
+				vtOptions.setBoolean(VTOptionDefines.USE_EMPTY_COMPOSITES, true);
+				return vtOptions;
+			}
+		};
+		doTestFindAndApplyMarkupItem(validator);
+	}
+
 //==================================================================================================
 // Private Methods
 //==================================================================================================
+
+	private Structure createGadgetStruct() {
+
+		Structure gadgetStruct = new StructureDataType("Gadget", 0);
+		PointerDataType charPtr = new PointerDataType(new CharDataType());
+		gadgetStruct.add(charPtr, "name", "");
+		gadgetStruct.add(new IntegerDataType(), "type", "");
+		gadgetStruct.add(new BooleanDataType(), "deployed", "");
+		gadgetStruct.add(new PointerDataType(), "workingOn", "");
+
+		return gadgetStruct;
+
+	}
 
 	private Data setDataType(Program program, Address address, DataType dataType, int length) {
 
@@ -391,9 +481,9 @@ public class DataTypeMarkupItemTest extends AbstractVTMarkupItemTest {
 		}
 	}
 
-	//==================================================================================================
-	// Inner Classes
-	//==================================================================================================
+//==================================================================================================
+// Inner Classes
+//==================================================================================================
 
 	private class DataTypeValidator extends TestDataProviderAndValidator {
 

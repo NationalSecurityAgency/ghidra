@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import ghidra.file.formats.android.dex.util.DexUtil;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.PointerDataType;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
@@ -72,21 +72,21 @@ public class DexLoader extends AbstractProgramWrapperLoader {
 	}
 
 	@Override
-	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, TaskMonitor monitor, MessageLog log) throws IOException {
-
+	public void load(Program program, ImporterSettings settings) throws IOException {
+		MessageLog log = settings.log();
+		TaskMonitor monitor = settings.monitor();
 		monitor.setMessage(getMonitorMessagePrimary());
 		try {
 			Address start = program.getAddressFactory().getDefaultAddressSpace().getAddress(0x0);
-			long length = provider.length();
+			long length = settings.provider().length();
 
-			try (InputStream inputStream = provider.getInputStream(0)) {
+			try (InputStream inputStream = settings.provider().getInputStream(0)) {
 				program.getMemory()
 						.createInitializedBlock(getMemoryBlockName(), start, inputStream, length,
 							monitor, false);
 			}
 
-			BinaryReader reader = new BinaryReader(provider, true);
+			BinaryReader reader = new BinaryReader(settings.provider(), true);
 			DexHeader header = DexHeaderFactory.getDexHeader(reader);
 
 			monitor.setMessage(getMonitorMessageSecondary());
@@ -139,10 +139,8 @@ public class DexLoader extends AbstractProgramWrapperLoader {
 
 	protected void createMethods(Program program, DexHeader header, ClassDefItem item,
 			List<EncodedMethod> methods, TaskMonitor monitor, MessageLog log) throws Exception {
-		for (int i = 0; i < methods.size(); ++i) {
+		for (EncodedMethod encodedMethod : methods) {
 			monitor.checkCancelled();
-
-			EncodedMethod encodedMethod = methods.get(i);
 
 			CodeItem codeItem = encodedMethod.getCodeItem();
 
@@ -165,8 +163,7 @@ public class DexLoader extends AbstractProgramWrapperLoader {
 	}
 
 	protected void markupMethodLookup(Program program, DexHeader header, TaskMonitor monitor,
-			MessageLog log)
-			throws Exception {
+			MessageLog log) throws Exception {
 
 		monitor.setMessage("DEX: processing methods");
 		monitor.setMaximum(header.getMethodIdsSize());
@@ -189,7 +186,7 @@ public class DexLoader extends AbstractProgramWrapperLoader {
 
 			if (program.getMemory().getInt(methodIndexAddress) == -1) {
 				program.getListing()
-						.setComment(methodIndexAddress, CodeUnit.PLATE_COMMENT, builder.toString());
+						.setComment(methodIndexAddress, CommentType.PLATE, builder.toString());
 
 				// Add placeholder symbol for external functions
 				String methodName = DexUtil.convertToString(header, item.getNameIndex());
@@ -198,9 +195,8 @@ public class DexLoader extends AbstractProgramWrapperLoader {
 					DexUtil.createNameSpaceFromMangledClassName(program, className);
 				if (classNameSpace != null) {
 					Address externalAddress = DexUtil.toLookupAddress(program, methodIndex);
-					Symbol methodSymbol =
-						createMethodSymbol(program, externalAddress, methodName, classNameSpace,
-							log);
+					Symbol methodSymbol = createMethodSymbol(program, externalAddress, methodName,
+						classNameSpace, log);
 					if (methodSymbol != null) {
 						String externalName = methodSymbol.getName(true);
 						program.getReferenceManager()
@@ -248,7 +244,7 @@ public class DexLoader extends AbstractProgramWrapperLoader {
 
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
-			DomainObject domainObject, boolean loadIntoProgram) {
+			DomainObject domainObject, boolean loadIntoProgram, boolean mirrorFsLayout) {
 
 		return Collections.emptyList();
 	}

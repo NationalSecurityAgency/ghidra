@@ -18,13 +18,13 @@ apply from: "${rootProject.projectDir}/gradle/helpProject.gradle"
 apply from: "${rootProject.projectDir}/gradle/jacocoProject.gradle"
 apply from: "${rootProject.projectDir}/gradle/javaTestProject.gradle"
 apply from: "${rootProject.projectDir}/gradle/distributableGhidraModule.gradle"
+apply from: "${rootProject.projectDir}/gradle/javadoc.gradle"
 
 apply plugin: 'eclipse'
 eclipse.project.name = 'Debug Debugger'
 
 dependencies {
 	api project(':Debugger-api')
-	api project(':Framework-AsyncComm')
 	api project(':Framework-TraceModeling')
 	api project(':Base')
 	api project(':ByteViewer')
@@ -32,10 +32,10 @@ dependencies {
 	api project(':DecompilerDependent')
 	api project(':FunctionGraph')
 	api project(':ProposedUtils')
+	api project(':DataGraph')
 
 	testImplementation project(path: ':Generic', configuration: 'testArtifacts')
 	testImplementation project(path: ':Base', configuration: 'testArtifacts')
-	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-TraceModeling', configuration: 'testArtifacts')
 	testImplementation project(path: ':Project', configuration: 'testArtifacts')
 }

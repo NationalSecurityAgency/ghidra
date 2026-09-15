@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -90,9 +90,8 @@ public class OpenVersionedFileDialog<T extends DomainObject> extends AbstractDat
 	 */
 	public OpenVersionedFileDialog(PluginTool tool, String title, Class<T> domainObjectClass,
 			List<T> openDomainObjects) {
-		super(tool.getToolFrame(), title, OPEN, f -> {
-			return domainObjectClass.isAssignableFrom(f.getDomainObjectClass());
-		}, AppInfo.getActiveProject());
+		super(tool.getToolFrame(), title, OPEN,
+			new DefaultDomainFileFilter(domainObjectClass, false), AppInfo.getActiveProject());
 
 		this.tool = tool;
 		this.domainObjectClass = domainObjectClass;
@@ -214,8 +213,7 @@ public class OpenVersionedFileDialog<T extends DomainObject> extends AbstractDat
 		tabbedPane = new JTabbedPane();
 		tabbedPane.setName("Tabs");
 		tabbedPane.add("Project Files", projectFilePanel);
-		tabbedPane.add("Open " + domainObjectClass.getSimpleName() + "s",
-			buildOpenObjectsTable());
+		tabbedPane.add("Open " + domainObjectClass.getSimpleName() + "s", buildOpenObjectsTable());
 
 		tabbedPane.addChangeListener(e -> {
 			int selectedTabIndex = tabbedPane.getModel().getSelectedIndex();
@@ -254,8 +252,7 @@ public class OpenVersionedFileDialog<T extends DomainObject> extends AbstractDat
 
 		openObjectsTable = new GFilterTable<>(new OpenObjectsTableModel());
 		GTable table = openObjectsTable.getTable();
-		table.getSelectionModel()
-				.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		openObjectsTable.addSelectionListener(e -> {
 			setOkEnabled(true);
 			okButton.setToolTipText("Use the selected " + domainObjectClass.getSimpleName());

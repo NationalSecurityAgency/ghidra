@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -114,6 +114,7 @@ public class GhidraSwinglessTimer implements GhidraTimer {
 	 * Returns the delay for all callbacks after the first callback.
 	 * @return the delay for all callbacks after the first callback.
 	 */
+	@Override
 	public int getDelay() {
 		return delay;
 	}
@@ -122,6 +123,7 @@ public class GhidraSwinglessTimer implements GhidraTimer {
 	 * Returns the delay for the first callback.
 	 * @return the delay for the first callback.
 	 */
+	@Override
 	public int getInitialDelay() {
 		return initialDelay;
 	}
@@ -130,6 +132,7 @@ public class GhidraSwinglessTimer implements GhidraTimer {
 	 * Returns true if this timer is set to repeating.
 	 * @return true if this timer is set to repeating.
 	 */
+	@Override
 	public boolean isRepeats() {
 		return repeats;
 	}
@@ -137,6 +140,7 @@ public class GhidraSwinglessTimer implements GhidraTimer {
 	/**
 	 * Sets the delay for all callbacks after the first callback
 	 */
+	@Override
 	public synchronized void setDelay(int delay) {
 		this.delay = delay;
 		if (isRunning()) {
@@ -148,6 +152,7 @@ public class GhidraSwinglessTimer implements GhidraTimer {
 	/**
 	 * Sets the delay for the first callbacks.
 	 */
+	@Override
 	public synchronized void setInitialDelay(int initialDelay) {
 		this.initialDelay = initialDelay;
 	}
@@ -156,6 +161,7 @@ public class GhidraSwinglessTimer implements GhidraTimer {
 	 * Sets whether this timer repeats.
 	 * @param repeats if true, the timer will repeat, if false the timer will only fire once.
 	 */
+	@Override
 	public synchronized void setRepeats(boolean repeats) {
 		this.repeats = repeats;
 	}
@@ -163,6 +169,7 @@ public class GhidraSwinglessTimer implements GhidraTimer {
 	/**
 	 * Sets the callback to be called when the timer fires.
 	 */
+	@Override
 	public synchronized void setTimerCallback(TimerCallback callback) {
 		this.callback = callback;
 	}
@@ -170,6 +177,7 @@ public class GhidraSwinglessTimer implements GhidraTimer {
 	/**
 	 * Starts the timer.
 	 */
+	@Override
 	public synchronized void start() {
 		if (timerTask != null) {
 			return;
@@ -182,6 +190,7 @@ public class GhidraSwinglessTimer implements GhidraTimer {
 	/**
 	 * Stops the timer.
 	 */
+	@Override
 	public synchronized void stop() {
 		if (timerTask != null) {
 			timerTask.cancel();
@@ -193,6 +202,7 @@ public class GhidraSwinglessTimer implements GhidraTimer {
 	/**
 	 * Returns true if the timer is running.
 	 */
+	@Override
 	public synchronized boolean isRunning() {
 		return timerTask != null;
 	}
@@ -228,6 +238,7 @@ public class GhidraSwinglessTimer implements GhidraTimer {
 		
 		TimerCallback callback1 = new TimerCallback() {
 			int i = 0;
+			@Override
 			public void timerFired() {
 				System.out.println("A: "+i);
 				if (++i == 20) {
@@ -242,6 +253,7 @@ public class GhidraSwinglessTimer implements GhidraTimer {
 		
 		TimerCallback callback2 = new TimerCallback() {
 			int i = 0;
+			@Override
 			public void timerFired() {
 				System.out.println("B: "+i);
 				if (++i == 100) {
@@ -266,6 +278,7 @@ public class GhidraSwinglessTimer implements GhidraTimer {
 		
 		TimerCallback callback3 = new TimerCallback() {
 			int i = 0;
+			@Override
 			public void timerFired() {
 				System.out.println("C: "+i);
 				if (++i == 100) {

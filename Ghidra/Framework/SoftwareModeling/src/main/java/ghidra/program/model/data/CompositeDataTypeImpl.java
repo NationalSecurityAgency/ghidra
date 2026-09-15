@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package ghidra.program.model.data;
+
+import java.util.function.Consumer;
 
 import ghidra.docking.settings.Settings;
 import ghidra.program.database.data.DataTypeUtilities;
@@ -60,6 +62,13 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 	CompositeDataTypeImpl(CategoryPath path, String name, DataTypeManager dtm) {
 		super(path != null ? path : CategoryPath.ROOT, name, dtm);
 		description = "";
+	}
+
+	protected DataTypeComponentImpl createComponent(DataType dataType, int length, int ordinal,
+			int offset, String fieldName, String comment) {
+
+		return new DataTypeComponentImpl(dataType, this, length, ordinal,
+			offset, fieldName, comment);
 	}
 
 	@Override
@@ -176,26 +185,6 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 	}
 
 	/**
-	 * This method throws an exception if the indicated data type is an ancestor of
-	 * this data type (i.e., the specified data type has a component or
-	 * sub-component containing this data type).
-	 * 
-	 * @param dataType the data type
-	 * @throws IllegalArgumentException if the data type is an ancestor of this data
-	 *                                  type.
-	 */
-	protected void checkAncestry(DataType dataType) throws IllegalArgumentException {
-		if (this.equals(dataType)) {
-			throw new IllegalArgumentException(
-				"Data type " + getDisplayName() + " can't contain itself.");
-		}
-		else if (DataTypeUtilities.isSecondPartOfFirst(dataType, this)) {
-			throw new IllegalArgumentException("Data type " + dataType.getDisplayName() + " has " +
-				getDisplayName() + " within it.");
-		}
-	}
-
-	/**
 	 * This method throws an exception if the indicated data type is not a valid
 	 * data type for a component of this composite data type.  If the DEFAULT 
 	 * datatype is specified when unsupported an Undefined1 will be returned 
@@ -233,24 +222,23 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 	 * @param oldDt             affected datatype which has been removed or replaced
 	 * @param newDt             replacement datatype
 	 * @return true if bitfield component was modified
-	 * @throws InvalidDataTypeException if new datatype is not
 	 */
 	protected boolean updateBitFieldDataType(DataTypeComponentImpl bitfieldComponent,
-			DataType oldDt, DataType newDt) throws InvalidDataTypeException {
+			DataType oldDt, DataType newDt) {
 		if (!bitfieldComponent.isBitFieldComponent()) {
 			throw new AssertException("expected bitfield component");
 		}
 
 		BitFieldDataType bitfieldDt = (BitFieldDataType) bitfieldComponent.getDataType();
-		if (bitfieldDt.getBaseDataType() != oldDt) {
+		if (bitfieldDt.getBaseDataType() != oldDt || !BitFieldDataType.isValidBaseDataType(newDt)) {
 			return false;
 		}
 
 		if (newDt != null) {
-			BitFieldDataType.checkBaseDataType(newDt);
 			int maxBitSize = 8 * newDt.getLength();
 			if (bitfieldDt.getBitSize() > maxBitSize) {
-				throw new InvalidDataTypeException("Replacement datatype too small for bitfield");
+				// Replacement datatype too small for bitfield
+				return false;
 			}
 		}
 
@@ -262,7 +250,7 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 			newDt.addParent(this);
 		}
 		catch (InvalidDataTypeException e) {
-			throw new AssertException("unexpected");
+			throw new AssertException(e); // unexpected
 		}
 
 		return true;
@@ -461,6 +449,8 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 
 	@Override
 	public abstract int getAlignment();
+
+	abstract void forEachDefinedComponent(Consumer<DataTypeComponentImpl> dtcConsumer);
 
 	@Override
 	public String toString() {

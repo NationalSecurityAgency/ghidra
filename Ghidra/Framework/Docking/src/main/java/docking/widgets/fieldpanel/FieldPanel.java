@@ -102,10 +102,11 @@ public class FieldPanel extends JPanel
 
 		// initialize the focus traversal keys to control Tab to free up the tab key for internal
 		// field panel use. This is the same behavior that text components use.
-		KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.CTRL_DOWN_MASK);
+		KeyStroke ks =
+			KeyStroke.getKeyStroke(KeyEvent.VK_TAB, DockingUtils.CONTROL_KEY_MODIFIER_MASK);
 		setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, Set.of(ks));
 		ks = KeyStroke.getKeyStroke(KeyEvent.VK_TAB,
-			InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK);
+			DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.SHIFT_DOWN_MASK);
 		setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, Set.of(ks));
 
 		addKeyListener(new FieldPanelKeyAdapter());
@@ -347,6 +348,7 @@ public class FieldPanel extends JPanel
 	/**
 	 * Returns true if the given field location is rendered on the screen; false if scrolled
 	 * offscreen
+	 * 
 	 * @param location the location
 	 * @return true if the location is on the screen
 	 */
@@ -689,8 +691,9 @@ public class FieldPanel extends JPanel
 	}
 
 	/**
-	 * Returns the Field at the given x,y coordinates. Note the x,y must currently be visible on the
-	 * screen or else this method will return null.
+	 * Returns the Field at the given x,y coordinates.
+	 * <p>
+	 * Note the x,y must currently be visible on the screen or else this method will return null.
 	 *
 	 * @param x the x mouse coordinate in the component.
 	 * @param y the y mouse coordinate in the component.
@@ -841,8 +844,9 @@ public class FieldPanel extends JPanel
 	}
 
 	/**
-	 * Sets the cursor on or off. When the cursor is turned off, there is no visible cursor
-	 * displayed on the screen.
+	 * Sets the cursor on or off.
+	 * <p>
+	 * When the cursor is turned off, there is no visible cursor displayed on the screen.
 	 *
 	 * @param cursorOn true turns the cursor on, false turns it off.
 	 */
@@ -926,6 +930,10 @@ public class FieldPanel extends JPanel
 		return !selectionHandler.isInProgress();
 	}
 
+	protected boolean isDragging() {
+		return mouseHandler.isDragging();
+	}
+
 	/**
 	 * Sets the selection color
 	 *
@@ -945,8 +953,9 @@ public class FieldPanel extends JPanel
 	}
 
 	/**
-	 * Returns a ViewerPosition object which contains the top of screen information. The
-	 * ViewerPosition will have the index of the layout at the top of the screen and the yPos of
+	 * Returns a ViewerPosition object which contains the top of screen information.
+	 * <p>
+	 * The ViewerPosition will have the index of the layout at the top of the screen and the yPos of
 	 * that layout. For example, if the layout is completely displayed, yPos will be 0. If part of
 	 * the layout is off the top off the screen, then yPos will have a negative value (indicating
 	 * that it begins above the displayable part of the screen.
@@ -962,8 +971,10 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Scrolls the display to show the layout specified by index at the vertical position specified
-	 * by yPos. Generally, the index will be layout at the top of the screen and the yPos will be
-	 * &lt;= 0, meaning the layout may be partially off the top of the screen.
+	 * by yPos.
+	 * <p>
+	 * Generally, the index will be layout at the top of the screen and the yPos will be &lt;= 0,
+	 * meaning the layout may be partially off the top of the screen.
 	 *
 	 * @param index the index of the layout to show at the top of the screen.
 	 * @param xPos the x position to set.
@@ -1329,6 +1340,7 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Finds the layout containing the given y position.
+	 * 
 	 * @param y the y location
 	 * @return the layout.
 	 */
@@ -1824,7 +1836,6 @@ public class FieldPanel extends JPanel
 		private int mouseDownY;
 		private boolean didDrag;
 		private int timerScrollAmount;
-		private FieldLocation timerPoint;
 
 		MouseHandler() {
 			scrollTimer = new Timer(100, this);
@@ -1838,13 +1849,15 @@ public class FieldPanel extends JPanel
 		public void actionPerformed(ActionEvent e) {
 			try {
 				scrollView(timerScrollAmount);
-				if (timerScrollAmount > 0) {
-					timerPoint.setIndex(layouts.get(layouts.size() - 1).getIndex());
+				FieldLocation selectToLocation = new FieldLocation();
+				if (timerScrollAmount >= 0) {
+					BigInteger lastIndex = layouts.get(layouts.size() - 1).getIndex();
+					selectToLocation.setIndex(lastIndex.add(BigInteger.ONE));
 				}
 				else {
-					timerPoint.setIndex(layouts.get(0).getIndex());
+					selectToLocation.setIndex(layouts.get(0).getIndex());
 				}
-				selectionHandler.updateSelectionSequence(timerPoint);
+				selectionHandler.updateSelectionSequence(selectToLocation);
 			}
 			catch (Exception ex) {
 				// don't care
@@ -1892,27 +1905,49 @@ public class FieldPanel extends JPanel
 		}
 
 		void mouseDragged(MouseEvent e) {
+
 			if ((e.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) == 0) {
 				return;
 			}
+
+			BigInteger n = model.getNumIndexes();
+			if (n == BigInteger.ZERO) {
+				return; // empty display
+			}
+
 			int x = e.getX();
 			int y = e.getY();
-			if (((Math.abs(x - mouseDownX) > 3) || (Math.abs(y - mouseDownY) > 3))) {
-				didDrag = true;
-				if (selectionHandler.isInProgress()) {
-					if (y < 0 || y > getHeight()) {
-						timerScrollAmount = y < 0 ? y : y - getHeight();
-						timerPoint = new FieldLocation(cursorPosition);
-						scrollTimer.start();
-					}
-					else {
-						scrollTimer.stop();
-						cursorHandler.setCursorPos(x, y, null); // null means don't notify listeners
-						selectionHandler.updateSelectionSequence(cursorPosition);
-						repaint();
-					}
-				}
+			boolean draggedEnough = Math.abs(x - mouseDownX) > 3 || Math.abs(y - mouseDownY) > 3;
+			if (!draggedEnough) {
+				return;
 			}
+
+			didDrag = true;
+			if (!selectionHandler.isInProgress()) {
+				return;
+			}
+
+			if (y < 0 || y >= getHeight()) {
+				// mouse if off the screen; initiate scrolling
+				timerScrollAmount = y < 0 ? y : y - getHeight();
+				scrollTimer.start();
+				return;
+			}
+
+			// the drag is being used to update the selection
+			scrollTimer.stop();
+			cursorHandler.setCursorPos(x, y, null); // null means don't notify listeners			
+
+			// if the mouse is to the right of the last field, include the last field
+			FieldLocation selectionEnd = cursorPosition;
+			BigInteger endIndex = selectionEnd.getIndex();
+			Layout layout = model.getLayout(endIndex);
+			int width = layout.getWidth();
+			if (x > width) {
+				selectionEnd = new FieldLocation(endIndex.add(BigInteger.ONE));
+			}
+			selectionHandler.updateSelectionSequence(selectionEnd);
+			repaint();
 		}
 
 		void mouseReleased(MouseEvent e) {
@@ -1931,7 +1966,13 @@ public class FieldPanel extends JPanel
 			else if (!selectionHandler.isInProgress()) {
 				selectionHandler.clearSelection();
 			}
+
 			selectionHandler.endSelectionSequence();
+			didDrag = false;
+		}
+
+		boolean isDragging() {
+			return didDrag;
 		}
 
 		/**
@@ -2181,11 +2222,7 @@ public class FieldPanel extends JPanel
 			currentField = null;
 			// delegate to the appropriate layout to do the work
 			Layout layout = findLayoutAt(y);
-			if (layout == null) {
-				x = 0;
-				y = 0;
-				layout = findLayoutAt(y);
-			}
+
 			if (layout != null) {
 				FieldLocation newCursorPosition = new FieldLocation();
 				lastX = layout.setCursor(newCursorPosition, x, y);

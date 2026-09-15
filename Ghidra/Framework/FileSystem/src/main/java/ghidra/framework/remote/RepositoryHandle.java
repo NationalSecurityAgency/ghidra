@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -124,6 +124,21 @@ public interface RepositoryHandle {
 	RepositoryItem getItem(String fileID) throws IOException;
 
 	/**
+	 * Creates a new text data file within the specified parent folder.
+	 * @param parentPath folder path of parent
+	 * @param itemName new data file name
+	 * @param fileID unique file ID
+	 * @param contentType application defined content type
+	 * @param textData text data (required)
+	 * @param comment file comment (may be null)
+	 * @throws DuplicateFileException Thrown if a folderItem with that name already exists.
+	 * @throws InvalidNameException if the name has illegal characters.
+	 * @throws IOException if an IO error occurs.
+	 */
+	void createTextDataFile(String parentPath, String itemName, String fileID, String contentType,
+			String textData, String comment) throws InvalidNameException, IOException;
+
+	/**
 	 * Create a new empty database item within the repository.
 	 * @param parentPath parent folder path
 	 * @param itemName new item name
@@ -138,8 +153,8 @@ public interface RepositoryHandle {
 	 * @throws InvalidNameException if itemName or parentPath contains invalid characters
 	 */
 	ManagedBufferFileHandle createDatabase(String parentPath, String itemName, String fileID,
-			int bufferSize, String contentType, String projectPath) throws IOException,
-			InvalidNameException;
+			int bufferSize, String contentType, String projectPath)
+			throws IOException, InvalidNameException;
 
 	/**
 	 * Open an existing version of a database buffer file for non-update read-only use.
@@ -212,8 +227,8 @@ public interface RepositoryHandle {
 	 * @throws DuplicateFileException if target item already exists
 	 * @throws IOException if an IO error occurs
 	 */
-	void moveItem(String oldParentPath, String newParentPath, String oldItemName, String newItemName)
-			throws InvalidNameException, IOException;
+	void moveItem(String oldParentPath, String newParentPath, String oldItemName,
+			String newItemName) throws InvalidNameException, IOException;
 
 	/**
 	 * Perform a checkout on the specified item.

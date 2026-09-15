@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  */
 package ghidra.pcodeCPort.semantics;
 
-import static ghidra.pcode.utils.SlaFormat.*;
+import static ghidra.pcode.utils.SlaFormat.ELEM_VARNODE_TPL;
 
 import java.io.IOException;
 
@@ -210,13 +210,14 @@ public class VarnodeTpl {
 		if (obj == this) {
 			return true;
 		}
-		if (obj == null) {
+		if (!(obj instanceof VarnodeTpl op2)) {
 			return false;
 		}
-		if (!(obj instanceof VarnodeTpl)) {
-			return false;
-		}
-		VarnodeTpl o2 = (VarnodeTpl) obj;
-		return space.equals(o2.space) && offset.equals(o2.offset) && size.equals(o2.size);
+		return space.equals(op2.space) && offset.equals(op2.offset) && size.equals(op2.size);
+	}
+
+	@Override
+	public String toString() {
+		return "[space=%s:offset=%s:size=%s]".formatted(space, offset, size);
 	}
 }

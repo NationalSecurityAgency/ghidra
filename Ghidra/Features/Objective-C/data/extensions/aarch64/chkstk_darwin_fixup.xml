@@ -1,0 +1,8 @@
+<callfixup name="___chkstk_darwin_fixup">
+    <target name="___chkstk_darwin"/>
+    <pcode>
+        <body><![CDATA[
+            x0 = x0;
+        ]]></body>
+    </pcode>
+</callfixup>

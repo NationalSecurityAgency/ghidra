@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -192,7 +192,7 @@ public interface Field {
 	public String getTextWithLineSeparators();
 
 	/**
-	 * Returns the row, column position  for an offset into the string returned by getText()
+	 * Returns the row, column position for an offset into the string returned by getText()
 	 * @param textOffset the offset into the entire text string for this field
 	 * @return a RowColLocation that contains the row,column location in the field for a position in
 	 * 		the overall field text
@@ -206,4 +206,12 @@ public interface Field {
 	 * @return the offset
 	 */
 	public int screenLocationToTextOffset(int row, int col);
+
+	/**
+	 * Returns true if the field is not displaying all the text information
+	 * @return true if the field is not displaying all the text information
+	 */
+	public default boolean isClipped() {
+		return false;
+	}
 }

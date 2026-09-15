@@ -33,15 +33,14 @@
   <com>dec</com>
   <com>print C</com>
   <com>lo fu partial1</com>
-  <com>map unionfacet structunion 1 r0x1006ee 10603f2c20ffa6</com>
+  <com>map unionfacet structunion 1 r0x1006ee 10603fc3e29498</com>
   <com>dec</com>
   <com>print C</com>
   <com>quit</com>
 </script>
 <stringmatch name="Partial union #1" min="1" max="1">globvar\.b\.bval1 = val;</stringmatch>
 <stringmatch name="Partial union #2" min="1" max="1">return globvar\.a\.aval2;</stringmatch>
-<stringmatch name="Partial union #3" min="1" max="1">Var1 = globvar\.a\.aval2;</stringmatch>
+<stringmatch name="Partial union #3" min="2" max="2">globvar\.a\.aval2 = param_2;</stringmatch>
 <stringmatch name="Partial union #4" min="1" max="1">globvar\.a\.aval1 = param_2 \+ 7;</stringmatch>
 <stringmatch name="Partial union #5" min="1" max="1">globvar\.b\.bval1 = 0\.5;</stringmatch>
-<stringmatch name="Partial union #6" min="1" max="1">globvar\.a\.aval2 = .Var1;</stringmatch>
 </decompilertest>

@@ -29,9 +29,8 @@ import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.util.MathUtilities;
 
-public class DefaultModuleMapProposal
-		extends AbstractMapProposal<TraceModule, Program, ModuleMapEntry>
-		implements ModuleMapProposal {
+public class DefaultModuleMapProposal extends
+		AbstractMapProposal<TraceModule, Program, ModuleMapEntry> implements ModuleMapProposal {
 	protected static final int BLOCK_BITS = 12;
 	protected static final int BLOCK_SIZE = 1 << BLOCK_BITS;
 	protected static final long BLOCK_MASK = -1L << BLOCK_BITS;

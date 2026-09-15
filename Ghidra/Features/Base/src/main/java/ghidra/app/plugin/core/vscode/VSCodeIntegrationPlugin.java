@@ -19,6 +19,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.*;
 
 import com.google.gson.*;
@@ -154,6 +155,16 @@ public class VSCodeIntegrationPlugin extends ProgramPlugin implements VSCodeInte
 	}
 
 	@Override
+	public List<String> getVSCodeArguments() {
+		List<String> args = new ArrayList<>();
+		CollectionUtils.addIgnoreNull(args,
+			options.getString(VSCodeIntegrationOptionsPlugin.VSCODE_ARG1_OPTION, null));
+		CollectionUtils.addIgnoreNull(args,
+			options.getString(VSCodeIntegrationOptionsPlugin.VSCODE_ARG2_OPTION, null));
+		return args;
+	}
+
+	@Override
 	public void launchVSCode(File file) {
 		TaskLauncher.launch(new VSCodeLauncherTask(this, file));
 	}
@@ -274,9 +285,8 @@ public class VSCodeIntegrationPlugin extends ProgramPlugin implements VSCodeInte
 
 		// Build settings json object
 		JsonObject json = new JsonObject();
-		json.addProperty("java.import.maven.enabled", false);
-		json.addProperty("java.import.gradle.enabled", false);
-		json.addProperty("java.import.gradle.wrapper.enabled", false);
+		json.addProperty("java.import.gradle.enabled", true);
+		json.addProperty("java.import.gradle.wrapper.enabled", true);
 		json.addProperty("java.import.gradle.version", gradleVersion);
 		json.addProperty("java.format.settings.url",
 			new File(installDir, "support/eclipse/GhidraEclipseFormatter.xml").getAbsolutePath());

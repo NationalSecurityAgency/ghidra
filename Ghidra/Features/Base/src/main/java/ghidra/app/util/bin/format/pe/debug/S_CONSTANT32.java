@@ -18,10 +18,10 @@ package ghidra.app.util.bin.format.pe.debug;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.util.Conv;
 
 class S_CONSTANT32 extends DebugSymbol {
 
+	@SuppressWarnings("unused")
 	S_CONSTANT32(short length, short type, BinaryReader reader, int ptr) throws IOException {
 		processDebugSymbol(length, type);
 
@@ -33,7 +33,7 @@ class S_CONSTANT32 extends DebugSymbol {
 		byte nameLen = reader.readByte(ptr);
 		ptr += BinaryReader.SIZEOF_BYTE;
 
-		name = reader.readAsciiString(ptr, Conv.byteToInt(nameLen));
+		name = reader.readAsciiString(ptr, Byte.toUnsignedInt(nameLen));
 	}
 
 }

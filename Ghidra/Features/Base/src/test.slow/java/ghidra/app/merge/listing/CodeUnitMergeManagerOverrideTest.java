@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,12 +45,14 @@ public class CodeUnitMergeManagerOverrideTest extends AbstractListingMergeManage
     public void testAddLatestFlowOverride() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 			
+			@Override
 			public void modifyLatest(ProgramDB program) {
 				Instruction instruction =
 					program.getListing().getInstructionAt(addr(program, "0100354f"));
 				instruction.setFlowOverride(FlowOverride.BRANCH);
 			}
 
+			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// Do nothing.
 			}
@@ -67,10 +69,12 @@ public class CodeUnitMergeManagerOverrideTest extends AbstractListingMergeManage
     public void testAddMyFlowOverride() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 			
+			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Do nothing.
 			}
 
+			@Override
 			public void modifyPrivate(ProgramDB program) {
 				Instruction instruction =
 					program.getListing().getInstructionAt(addr(program, "0100354f"));
@@ -89,12 +93,14 @@ public class CodeUnitMergeManagerOverrideTest extends AbstractListingMergeManage
     public void testAddLatestFlowOverrideMyFlowOverridePickLatest() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 			
+			@Override
 			public void modifyLatest(ProgramDB program) {
 				Instruction instruction =
 					program.getListing().getInstructionAt(addr(program, "0100354f"));
 				instruction.setFlowOverride(FlowOverride.BRANCH);
 			}
 
+			@Override
 			public void modifyPrivate(ProgramDB program) {
 				Instruction instruction =
 					program.getListing().getInstructionAt(addr(program, "0100354f"));
@@ -114,12 +120,14 @@ public class CodeUnitMergeManagerOverrideTest extends AbstractListingMergeManage
     public void testAddLatestFlowOverrideMyFlowOverridePickMy() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 			
+			@Override
 			public void modifyLatest(ProgramDB program) {
 				Instruction instruction =
 					program.getListing().getInstructionAt(addr(program, "0100354f"));
 				instruction.setFlowOverride(FlowOverride.BRANCH);
 			}
 
+			@Override
 			public void modifyPrivate(ProgramDB program) {
 				Instruction instruction =
 					program.getListing().getInstructionAt(addr(program, "0100354f"));
@@ -139,12 +147,14 @@ public class CodeUnitMergeManagerOverrideTest extends AbstractListingMergeManage
     public void testAddLatestFlowOverrideMyFlowOverridePickOrig() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 			
+			@Override
 			public void modifyLatest(ProgramDB program) {
 				Instruction instruction =
 					program.getListing().getInstructionAt(addr(program, "0100354f"));
 				instruction.setFlowOverride(FlowOverride.BRANCH);
 			}
 
+			@Override
 			public void modifyPrivate(ProgramDB program) {
 				Instruction instruction =
 					program.getListing().getInstructionAt(addr(program, "0100354f"));
@@ -164,12 +174,14 @@ public class CodeUnitMergeManagerOverrideTest extends AbstractListingMergeManage
     public void testSameFlowOverrideLatestMy() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 			
+			@Override
 			public void modifyLatest(ProgramDB program) {
 				Instruction instruction =
 					program.getListing().getInstructionAt(addr(program, "0100354f"));
 				instruction.setFlowOverride(FlowOverride.BRANCH);
 			}
 
+			@Override
 			public void modifyPrivate(ProgramDB program) {
 				Instruction instruction =
 					program.getListing().getInstructionAt(addr(program, "0100354f"));

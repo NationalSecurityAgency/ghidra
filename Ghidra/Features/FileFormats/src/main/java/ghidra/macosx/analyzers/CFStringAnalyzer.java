@@ -103,16 +103,17 @@ public class CFStringAnalyzer extends AbstractAnalyzer {
 
 				String comment = makeComment(cFString);
 
-				program.getListing().setComment(currentAddress, CodeUnit.REPEATABLE_COMMENT,
-					"\"" + comment + "\",00");
+				program.getListing()
+						.setComment(currentAddress, CommentType.REPEATABLE,
+							"\"" + comment + "\",00");
 
-				if (program.getSymbolTable().getGlobalSymbol(symbolString,
-					currentAddress) != null) {
+				if (program.getSymbolTable()
+						.getGlobalSymbol(symbolString, currentAddress) != null) {
 					continue;
 				}
 
-				Symbol mine = program.getSymbolTable().createLabel(currentAddress, symbolString,
-					SourceType.ANALYSIS);
+				Symbol mine = program.getSymbolTable()
+						.createLabel(currentAddress, symbolString, SourceType.ANALYSIS);
 				mine.setPrimary();
 			}
 			catch (CodeUnitInsertionException e) {

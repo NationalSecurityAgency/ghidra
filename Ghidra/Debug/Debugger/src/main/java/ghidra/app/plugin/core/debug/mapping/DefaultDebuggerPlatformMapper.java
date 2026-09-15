@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,22 +49,26 @@ public class DefaultDebuggerPlatformMapper extends AbstractDebuggerPlatformMappe
 	}
 
 	@Override
-	public CompilerSpec getCompilerSpec(TraceObject object) {
+	public CompilerSpec getCompilerSpec(TraceObject object, long snap) {
 		return cSpec;
 	}
 
-	@Override
-	public void addToTrace(long snap) {
+	protected TracePlatform addOrGetPlatform(CompilerSpec cSpec, long snap) {
 		String description = "Add guest " + cSpec.getLanguage().getLanguageDescription() + "/" +
 			cSpec.getCompilerSpecDescription();
 		try (Transaction tx = trace.openTransaction(description)) {
 			TracePlatformManager platformManager = trace.getPlatformManager();
 			TracePlatform platform = platformManager.getOrAddPlatform(cSpec);
-			if (platform.isHost()) {
-				return;
+			if (!platform.isHost()) {
+				addMappedRanges((TraceGuestPlatform) platform);
 			}
-			addMappedRanges((TraceGuestPlatform) platform);
+			return platform;
 		}
+	}
+
+	@Override
+	public TracePlatform addToTrace(TraceObject newFocus, long snap) {
+		return addOrGetPlatform(cSpec, snap);
 	}
 
 	/**

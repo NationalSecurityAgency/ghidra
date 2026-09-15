@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -503,9 +503,13 @@ PatternExpression *PatternExpression::decodeExpression(Decoder &decoder,Translat
   else if (el == sla::ELEM_NOT_EXP)
     res = new NotExpression();
   else
-    return (PatternExpression *)0;
-
-  res->decode(decoder,trans);
+    throw DecoderError("Invalid pattern expression element");
+  try {
+    res->decode(decoder,trans);
+  } catch(...) {
+    delete res;
+    throw;
+  }
   return res;
 }
 
@@ -826,6 +830,9 @@ void OperandValue::decode(Decoder &decoder,Translate *trans)
   uintm ctid = decoder.readUnsignedInteger(sla::ATTRIB_CT);
   SleighBase *sleigh = (SleighBase *)trans;
   SubtableSymbol *tab = dynamic_cast<SubtableSymbol *>(sleigh->findSymbol(tabid));
+  if (ctid >= tab->getNumConstructors()) {
+    throw DecoderError("Invalid constructor id");
+  }
   ct = tab->getConstructor(ctid);
   decoder.closeElement(el);
 }

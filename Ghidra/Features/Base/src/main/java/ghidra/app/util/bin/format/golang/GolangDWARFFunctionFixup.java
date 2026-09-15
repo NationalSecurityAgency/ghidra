@@ -15,44 +15,29 @@
  */
 package ghidra.app.util.bin.format.golang;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import ghidra.app.util.bin.format.dwarf.DIEAggregate;
-import ghidra.app.util.bin.format.dwarf.DWARFException;
-import ghidra.app.util.bin.format.dwarf.DWARFFunction;
+import ghidra.app.util.bin.format.dwarf.*;
 import ghidra.app.util.bin.format.dwarf.DWARFFunction.CommitMode;
-import ghidra.app.util.bin.format.dwarf.DWARFSourceLanguage;
-import ghidra.app.util.bin.format.dwarf.DWARFUtil;
-import ghidra.app.util.bin.format.dwarf.DWARFVariable;
 import ghidra.app.util.bin.format.dwarf.funcfixup.DWARFFunctionFixup;
 import ghidra.app.util.bin.format.golang.rtti.GoFuncData;
 import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeComponent;
-import ghidra.program.model.data.DataTypeManager;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.VoidDataType;
+import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.SymbolType;
 import ghidra.util.classfinder.ExtensionPointProperties;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Fixups for golang functions found during DWARF processing.
+ * Fixups for Go functions found during DWARF processing.
  * <p>
- * Fixes storage of parameters to match the go callspec and modifies parameter lists to match
+ * Fixes storage of parameters to match the Go callspec and modifies parameter lists to match
  * Ghidra's capabilities.
  * <p>
- * Special characters used by golang in symbol names (middle dot \u00B7, weird slash \u2215) are 
+ * Special characters used by Go in symbol names (middle dot \u00B7, weird slash \u2215) are 
  * fixed up in DWARFProgram.getDWARFNameInfo() by calling 
  * GoSymbolName.fixGolangSpecialSymbolnameChars().
  * <p>
@@ -117,9 +102,12 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 			storageAllocator.setAbi0Mode();
 		}
 
-		dfunc.callingConventionName =
-			storageAllocator.isAbi0Mode() ? GoConstants.GOLANG_ABI0_CALLINGCONVENTION_NAME
-					: GoConstants.GOLANG_ABI_INTERNAL_CALLINGCONVENTION_NAME;
+		String ccName = storageAllocator.isAbi0Mode()
+				? GoConstants.GOLANG_ABI0_CALLINGCONVENTION_NAME
+				: GoConstants.GOLANG_ABI_INTERNAL_CALLINGCONVENTION_NAME;
+		if (goBinary.hasCallingConvention(ccName)) {
+			dfunc.callingConventionName = ccName;
+		}
 
 		GoFunctionMultiReturn multiReturnInfo = fixupFormalFuncDef(dfunc, storageAllocator, dtm);
 		fixupCustomStorage(dfunc, storageAllocator, dtm, multiReturnInfo);
@@ -164,7 +152,7 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 		}
 		dfunc.retval = DWARFVariable.fromDataType(dfunc, returnType);
 		dfunc.params = realParams;
-		dfunc.varArg = false;	// golang varargs are implemented via slice parameter, so this is always false
+		dfunc.varArg = false;	// Go varargs are implemented via slice parameter, so this is always false
 
 		return multiReturn;
 	}
@@ -179,7 +167,7 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 		// WARNING: this code should be kept in sync with GoFunctionFixup
 
 		Program program = goBinary.getProgram();
-		
+
 		// Allocate custom storage for each parameter
 		List<DWARFVariable> spillVars = new ArrayList<>();
 		for (DWARFVariable dvar : dfunc.params) {
@@ -191,7 +179,7 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 					dvar.getStorageSize() != dvar.type.getLength()) {
 					dfunc.getProgram()
 							.logWarningAt(dfunc.address, dfunc.name.getName(),
-								"Golang known storage allocation problem: param \"%s\" register allocation for structs missing inter-field padding."
+								"Go known storage allocation problem: param \"%s\" register allocation for structs missing inter-field padding."
 										.formatted(dvar.name.getName()));
 				}
 			}
@@ -223,8 +211,8 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 				// because we will do it manually
 				for (DataTypeComponent dtc : multiReturn.getComponentsInOriginalOrder()) {
 					allocateReturnStorage(dfunc, dfunc.retval,
-						dtc.getFieldName() + "_return_result_alias",
-						dtc.getDataType(), storageAllocator, false);
+						dtc.getFieldName() + "_return_result_alias", dtc.getDataType(),
+						storageAllocator, false);
 				}
 
 				if (!program.getMemory().isBigEndian()) {
@@ -249,7 +237,7 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 		}
 		storageAllocator.alignStack();
 
-		// For any parameters that were passed as registers, the golang caller pre-allocates
+		// For any parameters that were passed as registers, the Go caller pre-allocates
 		// space on the stack for the parameter value to be used when the register is overwritten.
 		// Ghidra decompilation results are improved if those storage locations are covered
 		// by variables that we create artificially.
@@ -301,7 +289,7 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 	}
 
 	private void appendComment(Function func, String prefix, String comment) {
-		DWARFUtil.appendComment(goBinary.getProgram(), func.getEntryPoint(), CodeUnit.PLATE_COMMENT,
+		DWARFUtil.appendComment(goBinary.getProgram(), func.getEntryPoint(), CommentType.PLATE,
 			prefix, comment, "\n");
 	}
 }

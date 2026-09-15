@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,10 +15,10 @@
  */
 package ghidra.pcode.utils;
 
+import java.math.BigInteger;
+
 import ghidra.util.BigEndianDataConverter;
 import ghidra.util.LittleEndianDataConverter;
-
-import java.math.BigInteger;
 
 public class Utils {
 
@@ -52,8 +51,13 @@ public class Utils {
 		return BigInteger.ONE.shiftLeft(size * 8).subtract(BigInteger.ONE);
 	}
 
-	public static boolean signbit_negative(long val, int size) { // Return true if signbit is set
-																	// (negative)
+	/**
+	 * {@return true if signbit is set (negative)}
+	 * 
+	 * @param val the raw value as a long
+	 * @param size the actual size (in bytes) of the value
+	 */
+	public static boolean signbit_negative(long val, int size) {
 		long mask = 0x80;
 		mask <<= 8 * (size - 1);
 		return ((val & mask) != 0);
@@ -63,9 +67,7 @@ public class Utils {
 		return ((~in) & calc_mask(size));
 	}
 
-	public static long sign_extend(long in, int sizein, int sizeout)
-
-	{
+	public static long sign_extend(long in, int sizein, int sizeout) {
 		int signbit;
 		long mask;
 
@@ -84,9 +86,7 @@ public class Utils {
 	}
 
 	// this used to void and changed the parameter val - can't do it in java
-	public static long zzz_sign_extend(long val, int bit)
-
-	{ // Sign extend -val- above -bit-
+	public static long zzz_sign_extend(long val, int bit) { // Sign extend -val- above -bit-
 		long mask = 0;
 		mask = (~mask) << bit;
 		if (((val >>> bit) & 1) != 0) {
@@ -108,7 +108,17 @@ public class Utils {
 		return val;
 	}
 
-	// this used to void and changed the parameter val - can't do it in java
+	// this used to be void and changed the parameter val - can't do it in java
+	/**
+	 * Swap the least-significant bytes of the given value
+	 * <p>
+	 * The size must be less than 8, as that is the largest possible size of the given value. If
+	 * size is larger than 8, there may be undefined behavior, e.g., bytes getting truncated.
+	 * 
+	 * @param val the value whose bytes to swap
+	 * @param size the number of least-signifcant bytes to swap
+	 * @return the value with the swapped bytes
+	 */
 	public static long byte_swap(long val, int size) { // Swap the least sig -size- bytes in val
 		long res = 0;
 		while (size > 0) {
@@ -143,12 +153,10 @@ public class Utils {
 
 	public static byte[] longToBytes(long val, int size, boolean bigEndian) {
 		long value = val;
-		if (!bigEndian) {
-			value = byte_swap(value, size);
-		}
 		byte[] bytes = new byte[size];
 		for (int i = 0; i < size; i++) {
-			bytes[size - i - 1] = (byte) value;
+			int index = bigEndian ? size - i - 1 : i;
+			bytes[index] = (byte) value;
 			value = value >> 8;
 		}
 		return bytes;
@@ -168,5 +176,4 @@ public class Utils {
 		}
 		return LittleEndianDataConverter.INSTANCE.getBytes(val, size);
 	}
-
 }

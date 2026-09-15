@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,6 @@ import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.listing.CircularDependencyException;
 import ghidra.program.model.listing.Library;
 import ghidra.program.model.symbol.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
@@ -47,7 +46,7 @@ public class ExternalManagerDBTest extends AbstractGhidraHeadedIntegrationTest {
 	public void setUp() throws Exception {
 		program = createDefaultProgram(testName.getMethodName(), ProgramBuilder._TOY, this);
 		space = program.getAddressFactory().getDefaultAddressSpace();
-		extMgr = (ExternalManagerDB) program.getExternalManager();
+		extMgr = program.getExternalManager();
 		transactionID = program.startTransaction("Test");
 	}
 
@@ -336,7 +335,7 @@ public class ExternalManagerDBTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testOriginalImportName()
-			throws InvalidInputException, DuplicateNameException, CircularDependencyException {
+			throws InvalidInputException, DuplicateNameException {
 		ExternalLocation extLoc =
 			extMgr.addExtLocation("ext1", "foo", addr(1000), SourceType.IMPORTED);
 

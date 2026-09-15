@@ -38,7 +38,8 @@ class MemviewMapModel extends AbstractSortedTableModel<MemoryBox> {
 	private Map<String, MemoryBox> memMap = new HashMap<>();
 	private MemviewProvider provider;
 
-	private final static String COLUMN_NAMES[] = { NAME_COL, ASTART_COL, ASTOP_COL, TSTART_COL, TSTOP_COL };
+	private final static String COLUMN_NAMES[] =
+		{ NAME_COL, ASTART_COL, ASTOP_COL, TSTART_COL, TSTOP_COL };
 
 	public MemviewMapModel(MemviewProvider provider) {
 		super(ASTART);
@@ -108,9 +109,9 @@ class MemviewMapModel extends AbstractSortedTableModel<MemoryBox> {
 	}
 
 	/**
-	 * Convenience method for locating columns by name. Implementation is naive so
-	 * this should be overridden if this method is to be called often. This method
-	 * is not in the TableModel interface and is not used by the JTable.
+	 * Convenience method for locating columns by name. Implementation is naive so this should be
+	 * overridden if this method is to be called often. This method is not in the TableModel
+	 * interface and is not used by the JTable.
 	 */
 	@Override
 	public int findColumn(String columnName) {
@@ -142,10 +143,9 @@ class MemviewMapModel extends AbstractSortedTableModel<MemoryBox> {
 	}
 
 	/**
-	 * Returns the number of records managed by the data source object. A
-	 * <B>JTable</B> uses this method to determine how many rows it should create
-	 * and display. This method should be quick, as it is call by <B>JTable</B>
-	 * quite frequently.
+	 * Returns the number of records managed by the data source object. A <B>JTable</B> uses this
+	 * method to determine how many rows it should create and display. This method should be quick,
+	 * as it is call by <B>JTable</B> quite frequently.
 	 *
 	 * @return the number or rows in the model
 	 * @see #getColumnCount
@@ -165,7 +165,8 @@ class MemviewMapModel extends AbstractSortedTableModel<MemoryBox> {
 		MemoryBox box = memList.get(rowIndex);
 		try {
 			box.getStart();
-		} catch (ConcurrentModificationException e) {
+		}
+		catch (ConcurrentModificationException e) {
 			update();
 		}
 		return memList.get(rowIndex);
@@ -179,24 +180,25 @@ class MemviewMapModel extends AbstractSortedTableModel<MemoryBox> {
 	public Object getColumnValueForRow(MemoryBox box, int columnIndex) {
 		try {
 			switch (columnIndex) {
-			case NAME:
-				return box.getId();
-			case ASTART:
-				return box.getRange().getMinAddress();
-			case ASTOP:
-				return box.getRange().getMaxAddress();
-			case TSTART:
-				return Long.toString(box.getStart(), 16);
-			case TSTOP:
-				long end = box.getEnd();
-				if (end == Long.MAX_VALUE) {
-					return "+" + '\u221e' + '\u2025';
-				}
-				return Long.toString(end, 16);
-			default:
-				return "UNKNOWN";
+				case NAME:
+					return box.getId();
+				case ASTART:
+					return box.getRange().getMinAddress();
+				case ASTOP:
+					return box.getRange().getMaxAddress();
+				case TSTART:
+					return box.formatStart();
+				case TSTOP:
+					long end = box.getEnd();
+					if (end == Long.MAX_VALUE) {
+						return "+" + '\u221e' + '\u2025';
+					}
+					return box.formatEnd();
+				default:
+					return "UNKNOWN";
 			}
-		} catch (ConcurrentModificationException e) {
+		}
+		catch (ConcurrentModificationException e) {
 			update();
 		}
 		return null;
@@ -223,18 +225,18 @@ class MemviewMapModel extends AbstractSortedTableModel<MemoryBox> {
 		public int compare(MemoryBox b1, MemoryBox b2) {
 
 			switch (sortColumn) {
-			case NAME:
-				return b1.getId().compareToIgnoreCase(b2.getId());
-			case ASTART:
-				return (int) (b1.getStartAddress() - b2.getStartAddress());
-			case ASTOP:
-				return (int) (b1.getStopAddress() - b2.getStopAddress());
-			case TSTART:
-				return (int) (b1.getStartTime() - b2.getStartTime());
-			case TSTOP:
-				return (int) (b1.getStopTime() - b2.getStopTime());
-			default:
-				return 0;
+				case NAME:
+					return b1.getId().compareToIgnoreCase(b2.getId());
+				case ASTART:
+					return (int) (b1.getStartAddress() - b2.getStartAddress());
+				case ASTOP:
+					return (int) (b1.getStopAddress() - b2.getStopAddress());
+				case TSTART:
+					return (int) (b1.getStartTime() - b2.getStartTime());
+				case TSTOP:
+					return (int) (b1.getStopTime() - b2.getStopTime());
+				default:
+					return 0;
 			}
 		}
 	}

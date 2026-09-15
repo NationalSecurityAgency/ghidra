@@ -4,16 +4,16 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/* A Bison parser, made by GNU Bison 3.5.1.  */
+/* A Bison parser, made by GNU Bison 3.7.4.  */
 
 /* Bison interface for Yacc-like parsers in C
 
@@ -46,8 +46,9 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-/* Undocumented macros, especially those whose name start with YY_,
-   are private implementation details.  Do not rely on them.  */
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
 
 #ifndef YY_SLEIGH_SLGHPARSE_HH_INCLUDED
 # define YY_SLEIGH_SLGHPARSE_HH_INCLUDED
@@ -67,123 +68,128 @@
 extern int sleighdebug;
 #endif
 
-/* Token type.  */
+/* Token kinds.  */
 #ifndef SLEIGHTOKENTYPE
 # define SLEIGHTOKENTYPE
   enum sleightokentype
   {
-    OP_BOOL_OR = 258,
-    OP_BOOL_AND = 259,
-    OP_BOOL_XOR = 260,
-    OP_OR = 261,
-    OP_XOR = 262,
-    OP_AND = 263,
-    OP_EQUAL = 264,
-    OP_NOTEQUAL = 265,
-    OP_FEQUAL = 266,
-    OP_FNOTEQUAL = 267,
-    OP_GREATEQUAL = 268,
-    OP_LESSEQUAL = 269,
-    OP_SLESS = 270,
-    OP_SGREATEQUAL = 271,
-    OP_SLESSEQUAL = 272,
-    OP_SGREAT = 273,
-    OP_FLESS = 274,
-    OP_FGREAT = 275,
-    OP_FLESSEQUAL = 276,
-    OP_FGREATEQUAL = 277,
-    OP_LEFT = 278,
-    OP_RIGHT = 279,
-    OP_SRIGHT = 280,
-    OP_FADD = 281,
-    OP_FSUB = 282,
-    OP_SDIV = 283,
-    OP_SREM = 284,
-    OP_FMULT = 285,
-    OP_FDIV = 286,
-    OP_ZEXT = 287,
-    OP_CARRY = 288,
-    OP_BORROW = 289,
-    OP_SEXT = 290,
-    OP_SCARRY = 291,
-    OP_SBORROW = 292,
-    OP_NAN = 293,
-    OP_ABS = 294,
-    OP_SQRT = 295,
-    OP_CEIL = 296,
-    OP_FLOOR = 297,
-    OP_ROUND = 298,
-    OP_INT2FLOAT = 299,
-    OP_FLOAT2FLOAT = 300,
-    OP_TRUNC = 301,
-    OP_CPOOLREF = 302,
-    OP_NEW = 303,
-    OP_POPCOUNT = 304,
-    OP_LZCOUNT = 305,
-    BADINTEGER = 306,
-    GOTO_KEY = 307,
-    CALL_KEY = 308,
-    RETURN_KEY = 309,
-    IF_KEY = 310,
-    DEFINE_KEY = 311,
-    ATTACH_KEY = 312,
-    MACRO_KEY = 313,
-    SPACE_KEY = 314,
-    TYPE_KEY = 315,
-    RAM_KEY = 316,
-    DEFAULT_KEY = 317,
-    REGISTER_KEY = 318,
-    ENDIAN_KEY = 319,
-    WITH_KEY = 320,
-    ALIGN_KEY = 321,
-    OP_UNIMPL = 322,
-    TOKEN_KEY = 323,
-    SIGNED_KEY = 324,
-    NOFLOW_KEY = 325,
-    HEX_KEY = 326,
-    DEC_KEY = 327,
-    BIG_KEY = 328,
-    LITTLE_KEY = 329,
-    SIZE_KEY = 330,
-    WORDSIZE_KEY = 331,
-    OFFSET_KEY = 332,
-    NAMES_KEY = 333,
-    VALUES_KEY = 334,
-    VARIABLES_KEY = 335,
-    PCODEOP_KEY = 336,
-    IS_KEY = 337,
-    LOCAL_KEY = 338,
-    DELAYSLOT_KEY = 339,
-    CROSSBUILD_KEY = 340,
-    EXPORT_KEY = 341,
-    BUILD_KEY = 342,
-    CONTEXT_KEY = 343,
-    ELLIPSIS_KEY = 344,
-    GLOBALSET_KEY = 345,
-    BITRANGE_KEY = 346,
-    CHAR = 347,
-    INTEGER = 348,
-    INTB = 349,
-    STRING = 350,
-    SYMBOLSTRING = 351,
-    SPACESYM = 352,
-    SECTIONSYM = 353,
-    TOKENSYM = 354,
-    USEROPSYM = 355,
-    VALUESYM = 356,
-    VALUEMAPSYM = 357,
-    CONTEXTSYM = 358,
-    NAMESYM = 359,
-    VARSYM = 360,
-    BITSYM = 361,
-    SPECSYM = 362,
-    VARLISTSYM = 363,
-    OPERANDSYM = 364,
-    JUMPSYM = 365,
-    MACROSYM = 366,
-    LABELSYM = 367,
-    SUBTABLESYM = 368
+    SLEIGHEMPTY = -2,
+    SLEIGHEOF = 0,                 /* "end of file"  */
+    SLEIGHerror = 256,             /* error  */
+    SLEIGHUNDEF = 257,             /* "invalid token"  */
+    OP_BOOL_OR = 258,              /* OP_BOOL_OR  */
+    OP_BOOL_AND = 259,             /* OP_BOOL_AND  */
+    OP_BOOL_XOR = 260,             /* OP_BOOL_XOR  */
+    OP_OR = 261,                   /* OP_OR  */
+    OP_XOR = 262,                  /* OP_XOR  */
+    OP_AND = 263,                  /* OP_AND  */
+    OP_EQUAL = 264,                /* OP_EQUAL  */
+    OP_NOTEQUAL = 265,             /* OP_NOTEQUAL  */
+    OP_FEQUAL = 266,               /* OP_FEQUAL  */
+    OP_FNOTEQUAL = 267,            /* OP_FNOTEQUAL  */
+    OP_GREATEQUAL = 268,           /* OP_GREATEQUAL  */
+    OP_LESSEQUAL = 269,            /* OP_LESSEQUAL  */
+    OP_SLESS = 270,                /* OP_SLESS  */
+    OP_SGREATEQUAL = 271,          /* OP_SGREATEQUAL  */
+    OP_SLESSEQUAL = 272,           /* OP_SLESSEQUAL  */
+    OP_SGREAT = 273,               /* OP_SGREAT  */
+    OP_FLESS = 274,                /* OP_FLESS  */
+    OP_FGREAT = 275,               /* OP_FGREAT  */
+    OP_FLESSEQUAL = 276,           /* OP_FLESSEQUAL  */
+    OP_FGREATEQUAL = 277,          /* OP_FGREATEQUAL  */
+    OP_LEFT = 278,                 /* OP_LEFT  */
+    OP_RIGHT = 279,                /* OP_RIGHT  */
+    OP_SRIGHT = 280,               /* OP_SRIGHT  */
+    OP_FADD = 281,                 /* OP_FADD  */
+    OP_FSUB = 282,                 /* OP_FSUB  */
+    OP_SDIV = 283,                 /* OP_SDIV  */
+    OP_SREM = 284,                 /* OP_SREM  */
+    OP_FMULT = 285,                /* OP_FMULT  */
+    OP_FDIV = 286,                 /* OP_FDIV  */
+    OP_ZEXT = 287,                 /* OP_ZEXT  */
+    OP_CARRY = 288,                /* OP_CARRY  */
+    OP_BORROW = 289,               /* OP_BORROW  */
+    OP_SEXT = 290,                 /* OP_SEXT  */
+    OP_SCARRY = 291,               /* OP_SCARRY  */
+    OP_SBORROW = 292,              /* OP_SBORROW  */
+    OP_NAN = 293,                  /* OP_NAN  */
+    OP_ABS = 294,                  /* OP_ABS  */
+    OP_SQRT = 295,                 /* OP_SQRT  */
+    OP_CEIL = 296,                 /* OP_CEIL  */
+    OP_FLOOR = 297,                /* OP_FLOOR  */
+    OP_ROUND = 298,                /* OP_ROUND  */
+    OP_INT2FLOAT = 299,            /* OP_INT2FLOAT  */
+    OP_FLOAT2FLOAT = 300,          /* OP_FLOAT2FLOAT  */
+    OP_TRUNC = 301,                /* OP_TRUNC  */
+    OP_CPOOLREF = 302,             /* OP_CPOOLREF  */
+    OP_NEW = 303,                  /* OP_NEW  */
+    OP_POPCOUNT = 304,             /* OP_POPCOUNT  */
+    OP_LZCOUNT = 305,              /* OP_LZCOUNT  */
+    BADINTEGER = 306,              /* BADINTEGER  */
+    GOTO_KEY = 307,                /* GOTO_KEY  */
+    CALL_KEY = 308,                /* CALL_KEY  */
+    RETURN_KEY = 309,              /* RETURN_KEY  */
+    IF_KEY = 310,                  /* IF_KEY  */
+    DEFINE_KEY = 311,              /* DEFINE_KEY  */
+    ATTACH_KEY = 312,              /* ATTACH_KEY  */
+    MACRO_KEY = 313,               /* MACRO_KEY  */
+    SPACE_KEY = 314,               /* SPACE_KEY  */
+    TYPE_KEY = 315,                /* TYPE_KEY  */
+    RAM_KEY = 316,                 /* RAM_KEY  */
+    DEFAULT_KEY = 317,             /* DEFAULT_KEY  */
+    REGISTER_KEY = 318,            /* REGISTER_KEY  */
+    ENDIAN_KEY = 319,              /* ENDIAN_KEY  */
+    WITH_KEY = 320,                /* WITH_KEY  */
+    ALIGN_KEY = 321,               /* ALIGN_KEY  */
+    OP_UNIMPL = 322,               /* OP_UNIMPL  */
+    TOKEN_KEY = 323,               /* TOKEN_KEY  */
+    SIGNED_KEY = 324,              /* SIGNED_KEY  */
+    NOFLOW_KEY = 325,              /* NOFLOW_KEY  */
+    HEX_KEY = 326,                 /* HEX_KEY  */
+    DEC_KEY = 327,                 /* DEC_KEY  */
+    BIG_KEY = 328,                 /* BIG_KEY  */
+    LITTLE_KEY = 329,              /* LITTLE_KEY  */
+    SIZE_KEY = 330,                /* SIZE_KEY  */
+    WORDSIZE_KEY = 331,            /* WORDSIZE_KEY  */
+    OFFSET_KEY = 332,              /* OFFSET_KEY  */
+    NAMES_KEY = 333,               /* NAMES_KEY  */
+    VALUES_KEY = 334,              /* VALUES_KEY  */
+    VARIABLES_KEY = 335,           /* VARIABLES_KEY  */
+    PCODEOP_KEY = 336,             /* PCODEOP_KEY  */
+    IS_KEY = 337,                  /* IS_KEY  */
+    LOCAL_KEY = 338,               /* LOCAL_KEY  */
+    DELAYSLOT_KEY = 339,           /* DELAYSLOT_KEY  */
+    CROSSBUILD_KEY = 340,          /* CROSSBUILD_KEY  */
+    EXPORT_KEY = 341,              /* EXPORT_KEY  */
+    BUILD_KEY = 342,               /* BUILD_KEY  */
+    CONTEXT_KEY = 343,             /* CONTEXT_KEY  */
+    ELLIPSIS_KEY = 344,            /* ELLIPSIS_KEY  */
+    GLOBALSET_KEY = 345,           /* GLOBALSET_KEY  */
+    BITRANGE_KEY = 346,            /* BITRANGE_KEY  */
+    CHAR = 347,                    /* CHAR  */
+    INTEGER = 348,                 /* INTEGER  */
+    INTB = 349,                    /* INTB  */
+    STRING = 350,                  /* STRING  */
+    SYMBOLSTRING = 351,            /* SYMBOLSTRING  */
+    SPACESYM = 352,                /* SPACESYM  */
+    SECTIONSYM = 353,              /* SECTIONSYM  */
+    TOKENSYM = 354,                /* TOKENSYM  */
+    USEROPSYM = 355,               /* USEROPSYM  */
+    VALUESYM = 356,                /* VALUESYM  */
+    VALUEMAPSYM = 357,             /* VALUEMAPSYM  */
+    CONTEXTSYM = 358,              /* CONTEXTSYM  */
+    NAMESYM = 359,                 /* NAMESYM  */
+    VARSYM = 360,                  /* VARSYM  */
+    BITSYM = 361,                  /* BITSYM  */
+    SPECSYM = 362,                 /* SPECSYM  */
+    VARLISTSYM = 363,              /* VARLISTSYM  */
+    OPERANDSYM = 364,              /* OPERANDSYM  */
+    JUMPSYM = 365,                 /* JUMPSYM  */
+    MACROSYM = 366,                /* MACROSYM  */
+    LABELSYM = 367,                /* LABELSYM  */
+    SUBTABLESYM = 368              /* SUBTABLESYM  */
   };
+  typedef enum sleightokentype sleightoken_kind_t;
 #endif
 
 /* Value type.  */

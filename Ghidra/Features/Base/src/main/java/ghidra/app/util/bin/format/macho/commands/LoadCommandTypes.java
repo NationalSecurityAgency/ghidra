@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ public final class LoadCommandTypes {
 	 * After MacOS X 10.1 when a new load command is added that is required to be
 	 * understood by the dynamic linker for the image to execute properly the
 	 * LC_REQ_DYLD bit will be or'ed into the load command constant.  If the dynamic
-	 * linker sees such a load command it it does not understand will issue a
+	 * linker sees such a load command that it does not understand, it will issue a
 	 * "unknown load command required for execution" error and refuse to use the
 	 * image.  Other load commands without this bit that are not understood will
 	 * simply be ignored.

@@ -19,7 +19,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import ghidra.features.base.memsearch.matcher.ByteMatcher;
+import ghidra.features.base.memsearch.matcher.UserInputByteMatcher;
 
 public class BinarySearchFormatTest extends AbstractSearchFormatTest {
 	public BinarySearchFormatTest() {
@@ -47,14 +47,14 @@ public class BinarySearchFormatTest extends AbstractSearchFormatTest {
 
 	@Test
 	public void testGroupTooBig() {
-		ByteMatcher bad = format.parse("111111111", settings);
+		UserInputByteMatcher bad = format.parse("111111111", settings);
 		assertFalse(bad.isValidInput());
 		assertEquals("Max group size exceeded. Enter <space> to add more.", bad.getDescription());
 	}
 
 	@Test
 	public void testInvalidChars() {
-		ByteMatcher bad = format.parse("012", settings);
+		UserInputByteMatcher bad = format.parse("012", settings);
 		assertFalse(bad.isValidInput());
 		assertEquals("Invalid character", bad.getDescription());
 	}

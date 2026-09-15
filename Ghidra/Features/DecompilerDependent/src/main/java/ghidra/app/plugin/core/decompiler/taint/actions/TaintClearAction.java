@@ -15,14 +15,13 @@
  */
 package ghidra.app.plugin.core.decompiler.taint.actions;
 
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
+import docking.DockingUtils;
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.plugin.core.decompiler.taint.TaintPlugin;
-import ghidra.app.plugin.core.decompiler.taint.TaintState;
 import ghidra.util.HelpLocation;
 
 /**
@@ -38,7 +37,8 @@ public class TaintClearAction extends TaintAbstractDecompilerAction {
 		super("Clear Markers");
 		setHelpLocation(new HelpLocation(TaintPlugin.HELP_LOCATION, "TaintClear"));
 		setPopupMenuData(new MenuData(new String[] { "Taint", "Clear" }, "Decompile"));
-		setKeyBindingData(new KeyBindingData(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
+		setKeyBindingData(
+			new KeyBindingData(KeyEvent.VK_S, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 		this.plugin = plugin;
 	}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,7 @@ import ghidra.file.formats.android.cdex.CDexConstants;
 import ghidra.file.formats.android.dex.DexHeaderFactory;
 import ghidra.file.formats.android.dex.format.DexConstants;
 import ghidra.file.formats.android.dex.format.DexHeader;
+import ghidra.program.model.listing.Program;
 
 public class CDexLoader extends DexLoader {
 
@@ -70,7 +71,7 @@ public class CDexLoader extends DexLoader {
 	}
 
 	@Override
-	public boolean supportsLoadIntoProgram() {
+	public boolean supportsLoadIntoProgram(Program program) {
 		return true;
 	}
 

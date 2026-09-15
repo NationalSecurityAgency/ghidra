@@ -82,23 +82,9 @@ public class FindReferencesToDataTypeAction extends AbstractFindReferencesDataTy
 			return false;
 		}
 
-		DecompilerActionContext decompilerContext = (DecompilerActionContext) context;
-		return decompilerContext.checkActionEnablement(() -> {
-
-			DataType dataType = getDataType(context);
-			updateMenuName(dataType);
-
-			return super.isEnabledForContext(context);
-		});
-	}
-
-	@Override
-	public void actionPerformed(ActionContext context) {
-
-		DecompilerActionContext decompilerContext = (DecompilerActionContext) context;
-		decompilerContext.performAction(() -> {
-			super.actionPerformed(context);
-		});
+		DataType dataType = getDataType(context);
+		updateMenuName(dataType);
+		return super.isEnabledForContext(context);
 	}
 
 	private void updateMenuName(DataType type) {

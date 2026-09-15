@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -96,7 +96,7 @@ public class ElfRelocation implements StructConverter {
 	 * @param reader binary reader positioned at start of relocation entry.
 	 * @param elfHeader ELF header
 	 * @param relocationIndex index of entry in relocation table
-	 * @param withAddend true if if RELA entry with addend, else false
+	 * @param withAddend true if it's a RELA entry with addend, else false
 	 * @return ELF relocation object
 	 * @throws IOException if an IO or parse error occurs
 	 */
@@ -113,7 +113,7 @@ public class ElfRelocation implements StructConverter {
 	 * relocation entry 
 	 * @param elfHeader ELF header
 	 * @param relocationIndex index of entry in relocation table
-	 * @param withAddend true if if RELA entry with addend, else false
+	 * @param withAddend true if it's a RELA entry with addend, else false
 	 * @param r_offset The offset for the entry
 	 * @param r_info The info value for the entry
 	 * @param r_addend The signed-addend for the entry (32-bit addends should be signed-extended to 64-bits)
@@ -172,7 +172,7 @@ public class ElfRelocation implements StructConverter {
 	 * a representative instance will be generated with all fields set to 0.
 	 * @param elfHeader ELF header
 	 * @param relocationTableIndex index of relocation within relocation table
-	 * @param withAddend true if if RELA entry with addend, else false
+	 * @param withAddend true if it's a RELA entry with addend, else false
 	 * @throws IOException if an IO or parse error occurs
 	 */
 	protected void initElfRelocation(BinaryReader reader, ElfHeader elfHeader,
@@ -189,7 +189,7 @@ public class ElfRelocation implements StructConverter {
 	 * Initialize ELF relocation entry using data provided via the parameters.
 	 * @param elfHeader ELF header
 	 * @param relocationTableIndex index of relocation within relocation table
-	 * @param withAddend true if if RELA entry with addend, else false
+	 * @param withAddend true if it's a RELA entry with addend, else false
 	 * @param offset The offset for the entry (r_offset)
 	 * @param info The info value for the entry (r_info)
 	 * @param addend The signed-addend (r_addend) for the entry (32-bit addends should 

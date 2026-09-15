@@ -83,6 +83,10 @@ class RegisterValuesPanel extends JPanel {
 
 	}
 
+	boolean hasSelectedRows() {
+		return table.getSelectedRowCount() > 0;
+	}
+
 	private void editRow(int row) {
 		RegisterValueRange range = model.values.get(row);
 		Address start = range.getStartAddress();
@@ -102,9 +106,9 @@ class RegisterValuesPanel extends JPanel {
 
 	private void updateValue(Address start, Address end, Address newStart, Address newEnd,
 			BigInteger newValue) {
-		CompoundCmd cmd = new CompoundCmd("Update Register Range");
-		Command cmd1 = new SetRegisterCmd(selectedRegister, start, end, null);
-		Command cmd2 = new SetRegisterCmd(selectedRegister, newStart, newEnd, newValue);
+		CompoundCmd<Program> cmd = new CompoundCmd<>("Update Register Range");
+		Command<Program> cmd1 = new SetRegisterCmd(selectedRegister, start, end, null);
+		Command<Program> cmd2 = new SetRegisterCmd(selectedRegister, newStart, newEnd, newValue);
 		cmd.add(cmd1);
 		cmd.add(cmd2);
 		tool.execute(cmd, currentProgram);
@@ -250,7 +254,7 @@ class RegisterValuesPanel extends JPanel {
 	}
 
 	void deleteSelectedRanges() {
-		CompoundCmd cmd = new CompoundCmd("Delete Register Value Ranges");
+		CompoundCmd<Program> cmd = new CompoundCmd<>("Delete Register Value Ranges");
 		int[] rows = table.getSelectedRows();
 		boolean containsDefaultValues = false;
 		for (int row : rows) {
@@ -275,7 +279,7 @@ class RegisterValuesPanel extends JPanel {
 		}
 	}
 
-	void selectedRanges() {
+	void selectRanges() {
 		int[] rows = table.getSelectedRows();
 		AddressSet set = new AddressSet();
 		for (int element : rows) {

@@ -8,7 +8,7 @@
 //@desc     For setup instructions, press <b>F1</b>.
 //@desc   </p>
 //@desc </body></html>
-//@menu-group local
+//@menu-group java
 //@icon icon.debugger
 //@help jpda#local
 //@env OPT_TARGET_CLASS:file="" "Image" "The Main Class to launch (defaults to current program)."

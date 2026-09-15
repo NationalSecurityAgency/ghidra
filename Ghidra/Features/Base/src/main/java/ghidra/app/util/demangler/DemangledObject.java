@@ -22,8 +22,7 @@ import java.util.regex.Pattern;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
@@ -117,6 +116,7 @@ public abstract class DemangledObject implements Demangled {
 	// Status of mangled String converted successfully to demangled String
 	private boolean demangledNameSucceeded = false;
 	private String errorMessage = null;
+	protected boolean isPrimary = true; // default to true for backward compatibility
 
 	/**
 	 * Constructor.  This is the older constructor that does not take a mangled context
@@ -248,6 +248,15 @@ public abstract class DemangledObject implements Demangled {
 				DemanglerUtil.stripSuperfluousSignatureSpaces(name).trim().replace(' ', '_');
 		}
 		demangledNameSucceeded = !mangled.equals(name);
+	}
+
+	/**
+	 * Sets whether the symbol from which this demangle object was created is the primary symbol at
+	 * the given address.  If true, then the demangled symbol will be made the primary symbol.
+	 * @param isPrimary true if primary
+	 */
+	public void setPrimary(boolean isPrimary) {
+		this.isPrimary = isPrimary;
 	}
 
 	/**
@@ -439,11 +448,14 @@ public abstract class DemangledObject implements Demangled {
 	 * @param address address which corresponds to this demangled object
 	 * @param options options which control how demangled data is applied
 	 * @param monitor task monitor
-	 * @return true if successfully applied, else false
+	 * @return false if there is an issue applying
 	 * @throws Exception if an error occurs during the apply operation
 	 */
 	public boolean applyTo(Program program, Address address, DemanglerOptions options,
 			TaskMonitor monitor) throws Exception {
+		if (!isPrimary) {
+			return true;
+		}
 		return applyPlateCommentOnly(program, address);
 	}
 
@@ -480,7 +492,8 @@ public abstract class DemangledObject implements Demangled {
 			return true; // skip this symbol
 		}
 
-		String comment = program.getListing().getComment(CodeUnit.PLATE_COMMENT, address);
+		Listing listing = program.getListing();
+		String comment = listing.getComment(CommentType.PLATE, address);
 		String newComment = generatePlateComment();
 		if (comment == null || comment.indexOf(newComment) < 0) {
 			if (comment == null) {
@@ -489,7 +502,7 @@ public abstract class DemangledObject implements Demangled {
 			else {
 				comment = comment + '\n' + newComment;
 			}
-			program.getListing().setComment(address, CodeUnit.PLATE_COMMENT, comment);
+			listing.setComment(address, CommentType.PLATE, comment);
 		}
 		return true;
 	}

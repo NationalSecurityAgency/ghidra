@@ -7,6 +7,7 @@
     <property key="useNewFunctionStackAnalysis" value="true"/>
     <property key="emulateInstructionStateModifierClass"
 			value="ghidra.program.emulation.AARCH64EmulateInstructionStateModifier"/>
+    <property key="useropLibs" value="aarch64"/>
     <property key="assemblyRating:AARCH64:BE:64:v8A" value="PLATINUM"/>
     <property key="assemblyRating:AARCH64:LE:64:v8A" value="PLATINUM"/>
   </properties>

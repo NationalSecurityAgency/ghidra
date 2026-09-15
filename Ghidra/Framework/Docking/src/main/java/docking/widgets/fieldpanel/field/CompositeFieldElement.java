@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -208,6 +208,10 @@ public class CompositeFieldElement implements FieldElement {
 		return fieldElements.length;
 	}
 
+	protected FieldElement getFieldElementByIndex(int index) {
+		return fieldElements[index];
+	}
+
 //==================================================================================================
 // Location Info
 //==================================================================================================
@@ -220,18 +224,14 @@ public class CompositeFieldElement implements FieldElement {
 
 	@Override
 	public int getCharacterIndexForDataLocation(int dataRow, int dataColumn) {
-
 		int columnsSoFar = 0;
-		for (int i = fieldElements.length - 1; i >= 0; i--) {
-			columnsSoFar += fieldElements[i].length();
+		for (int i = 0; i < fieldElements.length; i++) {
 			int column = fieldElements[i].getCharacterIndexForDataLocation(dataRow, dataColumn);
 			if (column != -1) {
-				// column value is relative to the current field; convert it to this field's offset
-				int fieldStart = length() - columnsSoFar;
-				return fieldStart + column;
+				return columnsSoFar + column;
 			}
+			columnsSoFar += fieldElements[i].length();
 		}
-
 		return -1;
 	}
 

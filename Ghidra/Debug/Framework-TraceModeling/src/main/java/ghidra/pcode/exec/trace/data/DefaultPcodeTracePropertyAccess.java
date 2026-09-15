@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,13 @@
  */
 package ghidra.pcode.exec.trace.data;
 
+import java.util.Map;
+import java.util.Map.Entry;
+
 import ghidra.program.model.address.*;
+import ghidra.program.model.lang.Language;
 import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.property.*;
 
 /**
@@ -47,6 +52,11 @@ public class DefaultPcodeTracePropertyAccess<T>
 		this.type = type;
 
 		this.po = data.getPropertyOps(name, type, false);
+	}
+
+	@Override
+	public Language getLanguage() {
+		return data.getLanguage();
 	}
 
 	/**
@@ -88,30 +98,78 @@ public class DefaultPcodeTracePropertyAccess<T>
 	}
 
 	@Override
+	public Entry<AddressRange, T> getEntry(Address address) {
+		Address hostAddr = data.getPlatform().mapGuestToHost(address);
+		if (hostAddr == null) {
+			return null;
+		}
+		TracePropertyMapOperations<T> ops = getPropertyOperations(false);
+		if (ops == null) {
+			return null;
+		}
+		Address overlayAddr = toOverlay(ops, hostAddr);
+		Entry<TraceAddressSnapRange, T> entry = ops.getEntry(data.getSnap(), overlayAddr);
+		return entry == null ? null : Map.entry(entry.getKey().getRange(), entry.getValue());
+	}
+
+	@Override
 	public void put(Address address, T value) {
 		Address hostAddr = data.getPlatform().mapGuestToHost(address);
 		if (hostAddr == null) {
-			// TODO: Warn?
+			// Warn?
 			return;
 		}
 		Lifespan span = Lifespan.nowOnMaybeScratch(data.getSnap());
 		TracePropertyMapOperations<T> ops = getPropertyOperations(true);
-		ops.set(span, toOverlay(ops, hostAddr), value);
+		if (value == null) {
+			if (ops == null) {
+				return;
+			}
+			ops.clear(span, toOverlay(ops, new AddressRangeImpl(hostAddr, hostAddr)));
+		}
+		else {
+			ops.set(span, toOverlay(ops, hostAddr), value);
+		}
+	}
+
+	@Override
+	public void put(AddressRange range, T value) {
+		AddressRange hostRange = data.getPlatform().mapGuestToHost(range);
+		if (hostRange == null) {
+			// Warn?
+			return;
+		}
+		Lifespan span = Lifespan.nowOnMaybeScratch(data.getSnap());
+		TracePropertyMapOperations<T> ops = getPropertyOperations(true);
+		if (value == null) {
+			if (ops == null) {
+				return;
+			}
+			ops.clear(span, toOverlay(ops, hostRange));
+		}
+		else {
+			ops.set(span, toOverlay(ops, hostRange), value);
+		}
 	}
 
 	@Override
 	public void clear(AddressRange range) {
-		AddressRange hostRange = data.getPlatform().mapGuestToHost(range);
-		if (hostRange == null) {
-			// TODO: Warn?
-			return;
-		}
-		Lifespan span = Lifespan.nowOnMaybeScratch(data.getSnap());
+		put(range, null);
+	}
+
+	@Override
+	public boolean hasSpace(AddressSpace space) {
 		TracePropertyMapOperations<T> ops = getPropertyOperations(false);
 		if (ops == null) {
-			return;
+			return false;
 		}
-		ops.clear(span, toOverlay(ops, hostRange));
+		if (ops instanceof TracePropertyMapSpace<T> propSpace) {
+			return propSpace.getAddressSpace() == space;
+		}
+		if (ops instanceof TracePropertyMap<T> propMap) {
+			return propMap.getPropertyMapSpace(space, false) != null;
+		}
+		throw new AssertionError();
 	}
 
 	/**

@@ -19,7 +19,7 @@ from pathlib import Path
 import re
 
 
-MINIMUM_GHIDRA_VERSION = "11.2"
+MINIMUM_GHIDRA_VERSION = "12.0"
 _APPLICATION_PATTERN = re.compile(r"^application\.(\S+?)=(.*)$")
 
 
@@ -77,10 +77,14 @@ class ExtensionDetails:
         def cast(key, value):
             return cls.__annotations__[key](value)
         lines = ext_path.read_text().splitlines()
+        # `sep` is empty for a line with no '=' at all (e.g. a stray bare "id"
+        # line). Without checking it, such a line would be silently accepted
+        # as a valid field with an empty value if the line happened to match
+        # a field name exactly.
         kwargs = {
             key: cast(key, value)
-            for key, value in map(lambda l: l.split("="), lines)
-            if key in valid_fields
+            for key, sep, value in map(lambda l: l.partition("="), lines)
+            if key in valid_fields and sep
         }
         return cls(**kwargs)
 

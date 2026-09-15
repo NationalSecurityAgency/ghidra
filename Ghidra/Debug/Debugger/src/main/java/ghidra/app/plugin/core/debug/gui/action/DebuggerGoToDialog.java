@@ -18,7 +18,7 @@ package ghidra.app.plugin.core.debug.gui.action;
 import java.awt.BorderLayout;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -29,11 +29,13 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.action.DebuggerGoToTrait.GoToResult;
 import ghidra.app.plugin.core.debug.gui.breakpoint.AbstractDebuggerSleighInputDialog;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
+import ghidra.app.services.DebuggerListingService;
 import ghidra.async.AsyncUtils;
 import ghidra.debug.api.action.GoToInput;
 import ghidra.framework.plugintool.util.PluginUtils;
-import ghidra.pcode.exec.SleighUtils;
-import ghidra.program.model.address.*;
+import ghidra.pcode.exec.SleighUtils.LitIdMode;
+import ghidra.program.model.address.AddressFactory;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.util.*;
 
@@ -42,7 +44,8 @@ public class DebuggerGoToDialog extends AbstractDebuggerSleighInputDialog {
 			<html>
 			<body width="400px">
 			<p>
-			Enter an address or Sleigh expression. Press <b>F1</b> for help and examples.
+			Enter an address or Sleigh expression. Use + (plus) or - (minus) for movement relative
+			to your current address. Press <b>F1</b> for help and examples.
 			</p>
 			</body>
 			</html>
@@ -52,6 +55,9 @@ public class DebuggerGoToDialog extends AbstractDebuggerSleighInputDialog {
 	private final DefaultComboBoxModel<String> modelSpaces;
 
 	final JComboBox<String> comboSpaces;
+	private final Map<LitIdMode, JRadioButton> modeButtons;
+
+	private LitIdMode mode = LitIdMode.HEX;
 
 	public DebuggerGoToDialog(DebuggerGoToTrait trait) {
 		super("Go To", TEXT);
@@ -63,10 +69,10 @@ public class DebuggerGoToDialog extends AbstractDebuggerSleighInputDialog {
 		modelSpaces = new DefaultComboBoxModel<>();
 		comboSpaces = new JComboBox<>(modelSpaces);
 
-		Box hbox = Box.createHorizontalBox();
-		hbox.add(comboSpaces);
-		hbox.add(new JLabel(":"));
-		panel.add(hbox, BorderLayout.WEST);
+		Box spaceBox = Box.createHorizontalBox();
+		spaceBox.add(comboSpaces);
+		spaceBox.add(new JLabel(":"));
+		panel.add(spaceBox, BorderLayout.WEST);
 
 		setFocusComponent(textInput);
 
@@ -79,6 +85,25 @@ public class DebuggerGoToDialog extends AbstractDebuggerSleighInputDialog {
 				}
 			}
 		});
+
+		Box modeBox = Box.createHorizontalBox();
+		modeBox.setBorder(BorderFactory.createTitledBorder("Radix / Label Resolution"));
+		Map<LitIdMode, JRadioButton> modeButtons = new LinkedHashMap<>();
+		ButtonGroup modeGroup = new ButtonGroup();
+		for (LitIdMode mode : LitIdMode.VALUES) {
+			JRadioButton button = new JRadioButton(mode.description);
+			modeButtons.put(mode, button);
+			modeGroup.add(button);
+			button.addActionListener(evt -> {
+				if (button.isSelected()) {
+					this.mode = mode;
+				}
+			});
+			modeBox.add(button);
+			button.setSelected(this.mode == mode);
+		}
+		this.modeButtons = Collections.unmodifiableMap(modeButtons);
+		panel.add(modeBox, BorderLayout.SOUTH);
 	}
 
 	protected void populateSpaces(AddressFactory factory) {
@@ -103,11 +128,19 @@ public class DebuggerGoToDialog extends AbstractDebuggerSleighInputDialog {
 		if (platform == null) {
 			throw new AssertionError("No current trace platform");
 		}
-		Address address = platform.getAddressFactory().getAddress(getInput());
-		if (address != null) {
-			return;
+		trait.validate(platform.getAddressFactory(), (String) comboSpaces.getSelectedItem(),
+			getInput(), mode);
+	}
+
+	@Override
+	protected void addErrorAttribute(int start, int stop) {
+		String input = getInput();
+		if (input.startsWith("+") || input.startsWith("-")) {
+			super.addErrorAttribute(start - 2, stop - 2);
 		}
-		SleighUtils.parseSleighExpression(getInput());
+		else {
+			super.addErrorAttribute(start, stop);
+		}
 	}
 
 	@Override // public for tests
@@ -119,7 +152,7 @@ public class DebuggerGoToDialog extends AbstractDebuggerSleighInputDialog {
 
 		CompletableFuture<GoToResult> future;
 		try {
-			future = trait.goTo((String) comboSpaces.getSelectedItem(), getInput());
+			future = trait.goTo((String) comboSpaces.getSelectedItem(), getInput(), mode);
 		}
 		catch (Throwable t) {
 			future = CompletableFuture.failedFuture(t);
@@ -132,14 +165,16 @@ public class DebuggerGoToDialog extends AbstractDebuggerSleighInputDialog {
 						""".formatted(result.address()),
 					MessageType.ERROR,
 					true);
+				repack();
 			}
 			else {
+				saveLitIdMode();
 				close();
 			}
 		}).exceptionally(ex -> {
 			ex = AsyncUtils.unwrapThrowable(ex);
-			Msg.error(this, ex.getMessage(), ex);
 			setStatusText(ex.getMessage(), MessageType.ERROR, true);
+			repack();
 			return null;
 		});
 	}
@@ -149,15 +184,37 @@ public class DebuggerGoToDialog extends AbstractDebuggerSleighInputDialog {
 		close();
 	}
 
+	protected void saveLitIdMode() {
+		DebuggerListingService listing = trait.tool.getService(DebuggerListingService.class);
+		if (listing != null) {
+			listing.setGoToSleighMode(mode);
+		}
+	}
+
+	protected void loadLitIdMode() {
+		DebuggerListingService listing = trait.tool.getService(DebuggerListingService.class);
+		if (listing != null) {
+			setLitIdMode(listing.getGoToSleighMode());
+		}
+	}
+
 	public void show(AddressFactory factory, GoToInput defaultInput) {
 		populateSpaces(factory);
 		if (factory.getAddressSpace(defaultInput.space()) != null) {
 			comboSpaces.setSelectedItem(defaultInput.space());
 		}
+		loadLitIdMode();
 		prompt(trait.tool, defaultInput.offset());
 	}
 
 	public void setOffset(String offset) {
 		textInput.setText(offset);
+	}
+
+	public void setLitIdMode(LitIdMode mode) {
+		this.mode = mode;
+		for (Map.Entry<LitIdMode, JRadioButton> ent : modeButtons.entrySet()) {
+			ent.getValue().setSelected(ent.getKey() == mode);
+		}
 	}
 }

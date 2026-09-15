@@ -141,7 +141,7 @@ public class FunctionDefinitionDataType extends GenericDataType implements Funct
 	}
 
 	@Override
-	public void setArguments(ParameterDefinition[] args) {
+	public void setArguments(ParameterDefinition... args) {
 		params = new ParameterDefinition[args.length];
 		for (int i = 0; i < args.length; i++) {
 			DataType dt = args[i].getDataType();
@@ -374,7 +374,7 @@ public class FunctionDefinitionDataType extends GenericDataType implements Funct
 
 	@Override
 	public void dataTypeReplaced(DataType oldDt, DataType newDt) {
-
+		DataTypeUtilities.checkValidReplacement(oldDt, newDt);
 		if (newDt == this) {
 			// avoid creating circular dependency
 			newDt = DataType.DEFAULT;
@@ -440,11 +440,6 @@ public class FunctionDefinitionDataType extends GenericDataType implements Funct
 	@Override
 	public void dataTypeNameChanged(DataType dt, String oldName) {
 		// ignore - no affect
-	}
-
-	@Override
-	public boolean dependsOn(DataType dt) {
-		return false;
 	}
 
 	@Override

@@ -31,8 +31,7 @@ import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Ids.Fonts;
 import generic.theme.Gui;
 import ghidra.framework.main.DataTreeDialog;
-import ghidra.framework.model.DomainFile;
-import ghidra.framework.model.DomainFolder;
+import ghidra.framework.model.*;
 import ghidra.util.StringUtilities;
 import utility.function.Callback;
 
@@ -230,8 +229,8 @@ public class SessionConfigurationPanel extends JPanel {
 		JButton button = new BrowseButton();
 		button.setName("SOURCE_BUTTON");
 		button.addActionListener(e -> {
-			DomainFile programFile = VTWizardUtils.chooseDomainFile(SessionConfigurationPanel.this,
-				"a source program", VTWizardUtils.PROGRAM_FILTER, null);
+			DomainFile programFile = VTWizardUtils.chooseProgramFile(SessionConfigurationPanel.this,
+				"a source program", null);
 			if (programFile != null) {
 				setSourceFile(programFile);
 				statusChangedCallback.call();
@@ -244,8 +243,8 @@ public class SessionConfigurationPanel extends JPanel {
 		JButton button = new BrowseButton();
 		button.setName("DESTINATION_BUTTON");
 		button.addActionListener(e -> {
-			DomainFile programFile = VTWizardUtils.chooseDomainFile(SessionConfigurationPanel.this,
-				"a destination program", VTWizardUtils.PROGRAM_FILTER, null);
+			DomainFile programFile = VTWizardUtils.chooseProgramFile(SessionConfigurationPanel.this,
+				"a destination program", null);
 			if (programFile != null) {
 				setDestinationFile(programFile);
 				statusChangedCallback.call();

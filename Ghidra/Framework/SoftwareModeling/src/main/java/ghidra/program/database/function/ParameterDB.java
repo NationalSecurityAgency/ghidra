@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.listing.*;
 
 class ParameterDB extends VariableDB implements Parameter {
+	int autoParamCount = 0;
 
 	ParameterDB(FunctionDB function, SymbolDB s) {
 		super(function, s);
@@ -33,17 +34,15 @@ class ParameterDB extends VariableDB implements Parameter {
 
 	@Override
 	public int getOrdinal() {
-		int baseOrdinal = function.getAutoParamCount();
-		int ordinal = symbol.getOrdinal();
-		return baseOrdinal + ordinal;
+		return symbol.getOrdinal() + autoParamCount;
 	}
 
-	void setOrdinal(int ordinal) {
-		if (getOrdinal() == ordinal) {
-			return;
+	void setOrdinal(int ordinal, int autoParamCount) {
+		this.autoParamCount = autoParamCount;
+		int symbolOrdinal = ordinal - autoParamCount;
+		if (symbol.getOrdinal() != symbolOrdinal) {
+			symbol.setOrdinal(symbolOrdinal);
 		}
-		int baseOrdinal = function.getAutoParamCount();
-		symbol.setOrdinal(ordinal - baseOrdinal);
 	}
 
 	@Override

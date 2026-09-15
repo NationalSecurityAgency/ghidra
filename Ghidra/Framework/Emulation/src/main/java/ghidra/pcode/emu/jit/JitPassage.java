@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.app.plugin.processors.sleigh.template.OpTpl;
 import ghidra.app.util.PseudoInstruction;
 import ghidra.pcode.emu.PcodeMachine;
 import ghidra.pcode.emu.PcodeThread;
@@ -27,10 +28,12 @@ import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.BlockSplitter;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
 import ghidra.pcode.emu.jit.analysis.JitDataFlowModel;
 import ghidra.pcode.emu.jit.decode.JitPassageDecoder;
+import ghidra.pcode.emu.jit.folding.FoldedState;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
 import ghidra.pcode.emu.jit.gen.op.OpGen;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
 import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.AnnotatedPcodeUseropLibrary.PcodeUserop;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.lang.*;
@@ -43,7 +46,6 @@ import ghidra.program.util.ProgramContextImpl;
 /**
  * A selection of instructions decoded from an emulation target, the generated p-code ops, and
  * associated metadata.
- * 
  * <p>
  * Note that the generated p-code ops include those injected by the emulator's client using
  * {@link PcodeMachine#inject(Address, String)} and {@link PcodeThread#inject(Address, String)},
@@ -55,7 +57,6 @@ public class JitPassage extends PcodeProgram {
 
 	/**
 	 * Check if a given p-code op could fall through
-	 * 
 	 * <p>
 	 * Conditional branches and non-branching ops are the only ones that can fall through. Note that
 	 * for JIT purposes, a {@link PcodeOp#CALL CALL} op <em>does not</em> fall through! For
@@ -84,7 +85,6 @@ public class JitPassage extends PcodeProgram {
 
 	/**
 	 * An address-context pair
-	 * 
 	 * <p>
 	 * Because decode is sensitive to the contextreg value, we have to consider that visiting the
 	 * same address with a different context could produce a completely different stride. Thus, we
@@ -227,7 +227,6 @@ public class JitPassage extends PcodeProgram {
 
 		/**
 		 * Indicates whether this branch represents a fall-through case.
-		 * 
 		 * <p>
 		 * Note that the {@link #from()} may not be an actual branching p-code op when
 		 * {@code isFall} is true. A "fall-through" branch happens in two cases. First, and most
@@ -253,6 +252,119 @@ public class JitPassage extends PcodeProgram {
 	}
 
 	/**
+	 * A branch as analyzed within an instruction step
+	 * <p>
+	 * After intra-instruction reachability is determined and this branch is to be added to the
+	 * whole passage, it will be "upgraded" to a {@link PBranch}.
+	 */
+	public interface SBranch extends Branch {
+	}
+
+	/**
+	 * A branch as analyzed within a passage
+	 * <p>
+	 * Many implement this via {@link RBranch}.
+	 */
+	public interface PBranch extends Branch {
+	}
+
+	/**
+	 * A branch with known intra-instruction reachability
+	 */
+	public interface RBranch extends PBranch {
+		/**
+		 * The intra-instruction reachability
+		 * 
+		 * @return the reachability
+		 */
+		CtxReach reach();
+	}
+
+	/**
+	 * Describes the manner in which something is reachable, wrt. dynamic context changes <em>within
+	 * an instruction step</em>.
+	 * <p>
+	 * At the moment, the only way context can be changed dynamically is via a p-code userop. Such
+	 * ops must have the {@link PcodeUserop#modifiesContext()} attribute set. If such an op is known
+	 * to have been executed when finishing an instruction (either by branch or fall-through), we
+	 * must exit the compiled passage.
+	 */
+	public enum CtxReach {
+		/**
+		 * There is at least one path to reach it. None of them modify the context dynamically.
+		 */
+		WITHOUT_CTXMOD {
+			@Override
+			public CtxReach combine(CtxReach that) {
+				return switch (that) {
+					case null -> this;
+					case WITHOUT_CTXMOD -> WITHOUT_CTXMOD;
+					case MAYBE_CTXMOD -> MAYBE_CTXMOD;
+					case WITH_CTXMOD -> MAYBE_CTXMOD;
+				};
+			}
+
+			@Override
+			public boolean canReachWithoutCtxMod() {
+				return true;
+			}
+		},
+		/**
+		 * There are at least two paths to reach it. Some modify the context dynamically, and some
+		 * do not.
+		 */
+		MAYBE_CTXMOD {
+			@Override
+			public CtxReach combine(CtxReach that) {
+				return MAYBE_CTXMOD;
+			}
+
+			@Override
+			public boolean canReachWithoutCtxMod() {
+				return true;
+			}
+		},
+		/**
+		 * There is at least one path to reach it. All of them modify the context dynamically.
+		 */
+		WITH_CTXMOD {
+			@Override
+			public CtxReach combine(CtxReach that) {
+				return switch (that) {
+					case null -> this;
+					case WITHOUT_CTXMOD -> MAYBE_CTXMOD;
+					case MAYBE_CTXMOD -> MAYBE_CTXMOD;
+					case WITH_CTXMOD -> WITH_CTXMOD;
+				};
+			}
+
+			@Override
+			public boolean canReachWithoutCtxMod() {
+				return false;
+			}
+		};
+
+		/**
+		 * Consider this and another reachability as "or"
+		 * 
+		 * @param that the other reachability
+		 * @return the "or" of both
+		 */
+		public abstract CtxReach combine(CtxReach that);
+
+		/**
+		 * Check if it is possible for this block to be reached without a context modification.
+		 * 
+		 * <p>
+		 * This is true if there exists <em>any</em> path to this block that doesn't include a
+		 * possible context modification.
+		 * 
+		 * @return true if reachable without context modification, false otherwise.
+		 */
+		public abstract boolean canReachWithoutCtxMod();
+	}
+
+	/**
 	 * A branch to another p-code op in the same passage
 	 * 
 	 * <p>
@@ -260,66 +372,204 @@ public class JitPassage extends PcodeProgram {
 	 * equivalent branch to the translation of the target p-code op. Thus, we remain executing
 	 * inside the {@link JitCompiledPassage#run(int) run} method. This branch type incurs the least
 	 * run-time cost.
-	 * 
-	 * @param from see {@link #from()}
-	 * @param to the target p-code op
-	 * @param isFall see {@link #isFall()}
 	 */
-	public record IntBranch(PcodeOp from, PcodeOp to, boolean isFall) implements Branch {}
+	public interface IntBranch extends Branch {
+		/**
+		 * The target pcode op
+		 * 
+		 * @return the op
+		 */
+		PcodeOp to();
+	}
+
+	/**
+	 * An {@link IntBranch} as analyzed during one instruction step
+	 * 
+	 * @param from see {@link IntBranch#from()}
+	 * @param to see {@link IntBranch#to()}
+	 * @param isFall see {@link IntBranch#isFall()}
+	 */
+	public record SIntBranch(PcodeOp from, PcodeOp to, boolean isFall)
+			implements IntBranch, SBranch {
+		/**
+		 * Upgrade this branch to an {@link RIntBranch} for inclusion in the passage.
+		 * 
+		 * @param reach see {@link RBranch#reach()}
+		 * @return the branch
+		 */
+		public RIntBranch withReach(CtxReach reach) {
+			return new RIntBranch(from, to, isFall, reach);
+		}
+	}
+
+	/**
+	 * A {@link IntBranch} as added to the passage
+	 * 
+	 * @param from see {@link IntBranch#from()}
+	 * @param to see {@link IntBranch#to()}
+	 * @param isFall see {@link IntBranch#isFall()}
+	 * @param reach see {@link RBranch#reach()}
+	 */
+	public record RIntBranch(PcodeOp from, PcodeOp to, boolean isFall, CtxReach reach)
+			implements IntBranch, RBranch {
+
+		/**
+		 * Convert this external branch into an indirect one
+		 * <p>
+		 * This is called whenever a once-folded branch is no longer foldable.
+		 * 
+		 * @return the resulting indirect branch
+		 */
+		public RIndBranch toIndBranch() {
+			if (!(to instanceof DecodedPcodeOp decTo)) {
+				throw new AssertionError();
+			}
+			return new RIndBranch(from, decTo.at.rvCtx, reach);
+		}
+	}
 
 	/**
 	 * A branch to an address (and context value) not in the same passage
-	 * 
 	 * <p>
 	 * When execution encounters this branch, the {@link JitCompiledPassage#run(int) run} method
 	 * sets the emulator's program counter and context to the {@link #to() branch target} and
 	 * returns the appropriate entry point for further execution.
-	 * 
+	 * <p>
 	 * Note that this branch type is used by the decoder to track queued decode seeds as well.
 	 * External branches that get decoded are changed into internal branches.
-	 * 
-	 * @param from see {@link #from()}
-	 * @param to the target address-context pair
 	 */
-	public record ExtBranch(PcodeOp from, AddrCtx to) implements Branch {}
+	public interface ExtBranch extends Branch {
+		/**
+		 * {@return the target address-context pair}
+		 */
+		AddrCtx to();
+
+		/**
+		 * {@return the constant-folding state at the branch}
+		 */
+		FoldedState state();
+	}
+
+	/**
+	 * An {@link ExtBranch} as analyzed during one instruction step
+	 * 
+	 * @param from see {@link ExtBranch#from()}
+	 * @param to see {@link ExtBranch#to()}
+	 * @param state the constant-folding state at the branch
+	 */
+	public record SExtBranch(PcodeOp from, AddrCtx to, FoldedState state)
+			implements ExtBranch, SBranch {
+		/**
+		 * Upgrade this branch to an {@link RExtBranch} for inclusion in the passage.
+		 * 
+		 * @param reach see {@link RBranch#reach()}
+		 * @return the branch
+		 */
+		public RExtBranch withReach(CtxReach reach) {
+			return new RExtBranch(from, to, state, reach);
+		}
+	}
+
+	/**
+	 * A {@link ExtBranch} as added to the passage
+	 * 
+	 * @param from see {@link ExtBranch#from()}
+	 * @param to see {@link ExtBranch#to()}
+	 * @param state the constant-folding state at the branch
+	 * @param reach see {@link RBranch#reach()}
+	 */
+	public record RExtBranch(PcodeOp from, AddrCtx to, FoldedState state, CtxReach reach)
+			implements ExtBranch, RBranch {
+		/**
+		 * Convert this external branch into an internal one
+		 * <p>
+		 * This is called whenever it becomes the case that an external target is decoded an added
+		 * to the passage, making it an internal branch. Notably, this happens when selecting a seed
+		 * from the queue of externals, when flowing to a target that is already decoded, and when
+		 * finishing up a passage where all remaining seeds must be examined.
+		 * 
+		 * @param to the target p-code op
+		 * @return the resulting internal branch
+		 */
+		public RIntBranch toIntBranch(PcodeOp to) {
+			return new RIntBranch(from, to, false, reach);
+		}
+
+		/**
+		 * Convert this external branch into an indirect one
+		 * <p>
+		 * This is called whenever a once-folded branch is no longer foldable.
+		 * 
+		 * @return the resulting indirect branch
+		 */
+		public RIndBranch toIndBranch() {
+			return new RIndBranch(from, to.rvCtx, reach);
+		}
+	}
 
 	/**
 	 * A branch to a dynamic address
-	 * 
 	 * <p>
 	 * When execution encounters this branch, the {@link JitCompiledPassage#run(int) run} method
 	 * will set the emulator's program counter to the computed address and its context to
 	 * {@link #flowCtx()}, then return the appropriate entry point for further execution.
-	 * 
 	 * <p>
 	 * TODO: Some analysis may be possible to narrow the possible addresses to a known few and then
 	 * treat this as several {@link IntBranch}es; however, I worry this is too expensive for what it
 	 * gets us. This will be necessary if we are to JIT, e.g., a switch table.
-	 * 
-	 * @param from see {@link #from()}
-	 * @param flowCtx the decode context after the branch is taken
 	 */
-	public record IndBranch(PcodeOp from, RegisterValue flowCtx) implements Branch {}
+	public interface IndBranch extends Branch {
+		/**
+		 * The decode context after the branch is taken
+		 * 
+		 * @return the context
+		 */
+		RegisterValue flowCtx();
+	}
+
+	/**
+	 * An {@link IndBranch} as analyzed during one instruction step
+	 * 
+	 * @param from see {@link IndBranch#from()}
+	 * @param flowCtx see {@link IndBranch#flowCtx()}
+	 */
+	public record SIndBranch(PcodeOp from, RegisterValue flowCtx) implements IndBranch, SBranch {
+		/**
+		 * Upgrade this branch to an {@link RIndBranch} for inclusion in the passage.
+		 * 
+		 * @param reach see {@link RBranch#reach()}
+		 * @return the branch
+		 */
+		public RIndBranch withReach(CtxReach reach) {
+			return new RIndBranch(from, flowCtx, reach);
+		}
+	}
+
+	/**
+	 * A {@link IndBranch} as added to the passage
+	 * 
+	 * @param from see {@link IndBranch#from()}
+	 * @param flowCtx see {@link IndBranch#flowCtx()}
+	 * @param reach see {@link RBranch#reach()}
+	 */
+	public record RIndBranch(PcodeOp from, RegisterValue flowCtx, CtxReach reach)
+			implements IndBranch, RBranch {}
 
 	/**
 	 * A "branch" representing an error
-	 * 
 	 * <p>
 	 * When execution encounters this branch, the {@link JitCompiledPassage#run(int) run} method
 	 * throws an exception. This branch is used to encode error conditions that may not actually be
 	 * encountered at run time. Some cases are:
-	 * 
 	 * <ul>
 	 * <li>An instruction decode error &mdash; synthesized as a {@link DecodeErrorPcodeOp}</li>
 	 * <li>An {@link PcodeOp#UNIMPLEMENTED unimplemented} instruction</li>
 	 * <li>A {@link PcodeOp#CALLOTHER call} to an undefined userop</li>
 	 * </ul>
-	 * 
 	 * <p>
 	 * The decoder and translator may encounter such an error, but unless execution actually reaches
 	 * the error, the emulator need not crash. Thus, we note the error and generate code that will
 	 * actually throw it in the translation, only if it's actually encountered.
-	 * 
 	 * <p>
 	 * Note that the {@link OpGen} for the specific p-code op generating the error will decide what
 	 * exception type to throw.
@@ -327,7 +577,7 @@ public class JitPassage extends PcodeProgram {
 	 * @param from see {@link #from()}
 	 * @param message the error message for the exception
 	 */
-	public record ErrBranch(PcodeOp from, String message) implements Branch {}
+	public record ErrBranch(PcodeOp from, String message) implements SBranch, PBranch {}
 
 	/**
 	 * An extension of {@link PcodeOp} that carries along with it the address and decode context
@@ -405,7 +655,6 @@ public class JitPassage extends PcodeProgram {
 
 		/**
 		 * Check if this op represents the start of an instruction
-		 * 
 		 * <p>
 		 * If this p-code op was produced by an inject, this will return false! It only returns true
 		 * for an op that is genuinely the first op in the result of {@link Instruction#getPcode()}.
@@ -427,19 +676,16 @@ public class JitPassage extends PcodeProgram {
 	/**
 	 * A synthetic p-code op that represents a return from the {@link JitCompiledPassage#run(int)}
 	 * method.
-	 * 
 	 * <p>
 	 * When execution encounters this op (and the corresponding {@link ExtBranch}), the emulator's
 	 * program counter and context values are set to the {@link ExtBranch#to() branch target}, and
 	 * the appropriate entry point is returned.
-	 * 
 	 * <p>
 	 * This is used in a few ways: The simplest, though perhaps not obvious, way is when the decoder
 	 * encounters an existing entry point. We avoid re-translating the same instructions by forcing
 	 * the stride to end. However, the last instruction in that stride would have fall through,
 	 * causing dangling control flow. To mitigate that, we append a synthetic exit op to return the
 	 * existing entry point. The emulator can then resume execution accordingly.
-	 * 
 	 * <p>
 	 * The next is even less obvious. When the emulation client (or user) injects Sleigh, a common
 	 * mistake is to forget control flow. The decoder detects this when "falling through" does not
@@ -447,14 +693,12 @@ public class JitPassage extends PcodeProgram {
 	 * translated passage. While it still results in an endless loop (just like the
 	 * interpretation-based emulator), it's easier to interrupt and diagnose when we exit the
 	 * translation between each "iteration."
-	 * 
 	 * <p>
 	 * The last is a small hack: The decoder needs to know whether each instruction (possibly
 	 * instrumented by an inject) falls through. To do this, it appends an exit op to the very end
 	 * of the instruction's (and inject's) ops and performs rudimentary control flow analysis (see
 	 * {@link BlockSplitter}). It then seeks a path from start to exit. If one is found, it has fall
 	 * through. This "probe" op is <em>not</em> included in the decoded stride.
-	 * 
 	 */
 	public static class ExitPcodeOp extends PcodeOp {
 		/**
@@ -462,16 +706,31 @@ public class JitPassage extends PcodeProgram {
 		 * 
 		 * @param at the address and context value to set on the emulator when exiting the
 		 *            {@link JitCompiledPassage#run(int)} method
+		 * @return the op
 		 */
-		public ExitPcodeOp(AddrCtx at) {
-			super(new SequenceNumber(at.address, 0), PcodeOp.BRANCH, new Varnode[] {
-				new Varnode(at.address, 0) }, null);
+		public static ExitPcodeOp exit(AddrCtx at) {
+			return new ExitPcodeOp(PcodeOp.BRANCH, at);
+		}
+
+		/**
+		 * Construct a synthetic conditional exit op
+		 * 
+		 * @param at the address and context value to set on the emulator when exiting the
+		 *            {@link JitCompiledPassage#run(int)} method
+		 * @return the op
+		 */
+		public static ExitPcodeOp cond(AddrCtx at) {
+			return new ExitPcodeOp(PcodeOp.CBRANCH, at);
+		}
+
+		private ExitPcodeOp(int opcode, AddrCtx at) {
+			super(new SequenceNumber(at.address, 0), opcode,
+				new Varnode[] { new Varnode(at.address, 0) }, null);
 		}
 	}
 
 	/**
 	 * A synthetic op representing the initial seed of a decoded passage.
-	 * 
 	 * <p>
 	 * Because we use a queue of {@link ExtBranch}es as the seed queue, and the initial seed has no
 	 * real {@link Branch#from()}, we synthesize a {@link PcodeOp#BRANCH branch op} from the entry
@@ -491,13 +750,11 @@ public class JitPassage extends PcodeProgram {
 
 	/**
 	 * A synthetic p-code op meant to encode "no operation"
-	 * 
 	 * <p>
 	 * P-code does not have a NOP opcode, because there's usually no reason to produce such. A NOP
 	 * machine instruction just produces an empty list of p-code ops, denoting "no operation."
 	 * However, for bookkeeping purposes in our JIT translator, we occasionally need some op to hold
 	 * an important place, but that op needs to do nothing. We use this in two situations:
-	 * 
 	 * <ul>
 	 * <li>An instruction (possibly because of an inject) that does nothing. Yes, essentially a NOP
 	 * machine instruction. Because another op may target this instruction, and {@link Branch}es
@@ -530,7 +787,6 @@ public class JitPassage extends PcodeProgram {
 
 	/**
 	 * A synthetic p-code op denoting a decode error
-	 * 
 	 * <p>
 	 * The decoder may encounter several decode errors as it selects and decodes the passage. An
 	 * instruction is selected because the JIT believes it <em>may</em> be executed by the emulator.
@@ -700,11 +956,18 @@ public class JitPassage extends PcodeProgram {
 		}
 	}
 
+	/**
+	 * @param op the p-code op
+	 * @param idx the operand index, -1 being output, inputs indexed 0-up
+	 */
+	public record Operand(PcodeOp op, int idx) {}
+
 	private final List<Instruction> instructions;
 	private final AddrCtx entry;
-	private final PcodeUseropLibrary<Object> decodeLibrary;
-	private final Map<PcodeOp, Branch> branches;
+	private final PcodeUseropLibrary<?> decodeLibrary;
+	private final Map<PcodeOp, PBranch> branches;
 	private final Map<PcodeOp, AddrCtx> entries;
+	private final Map<Operand, byte[]> folded;
 	private final Register contextreg;
 	private final ProgramContextImpl defaultContext;
 
@@ -722,16 +985,19 @@ public class JitPassage extends PcodeProgram {
 	 * @param instructions see {@link #getInstructions()}
 	 * @param branches see {@link #getBranches()}
 	 * @param entries see {@link #getOpEntry(PcodeOp)}
+	 * @param folded see {@link #getFoldedOperand(PcodeOp, int)}
 	 */
 	public JitPassage(SleighLanguage language, AddrCtx entry, List<PcodeOp> code,
-			PcodeUseropLibrary<Object> decodeLibrary, List<Instruction> instructions,
-			Map<PcodeOp, Branch> branches, Map<PcodeOp, AddrCtx> entries) {
+			PcodeUseropLibrary<?> decodeLibrary, List<Instruction> instructions,
+			Map<PcodeOp, PBranch> branches, Map<PcodeOp, AddrCtx> entries,
+			Map<Operand, byte[]> folded) {
 		super(language, code, decodeLibrary.getSymbols(language));
 		this.entry = entry;
 		this.decodeLibrary = decodeLibrary;
 		this.instructions = instructions;
 		this.branches = branches;
 		this.entries = entries;
+		this.folded = folded;
 
 		this.contextreg = language.getContextBaseRegister();
 
@@ -746,7 +1012,6 @@ public class JitPassage extends PcodeProgram {
 
 	/**
 	 * Get all of the instructions in the passage.
-	 * 
 	 * <p>
 	 * These are grouped by stride. Within each stride, the instructions are listed in decode order.
 	 * The strides are ordered by seed address-context pair, with context value taking precedence.
@@ -759,7 +1024,6 @@ public class JitPassage extends PcodeProgram {
 
 	/**
 	 * {@inheritDoc}
-	 * 
 	 * <p>
 	 * Conventionally, the first instruction of the program is the entry. Note this might
 	 * <em>not</em> be the initial seed. If the decoded passage contains a branch to an address
@@ -775,7 +1039,6 @@ public class JitPassage extends PcodeProgram {
 
 	/**
 	 * Get the initial seed of this passage.
-	 * 
 	 * <p>
 	 * This is informational only. It should be used in naming things and/or in diagnostics.
 	 * 
@@ -787,7 +1050,6 @@ public class JitPassage extends PcodeProgram {
 
 	/**
 	 * Get the userop library that was used during decode of the passage
-	 * 
 	 * <p>
 	 * This often wraps the emulator's userop library. Downstream components, namely the
 	 * {@link JitDataFlowModel}, will need this when translating {@link PcodeOp#CALLOTHER calls} to
@@ -795,7 +1057,7 @@ public class JitPassage extends PcodeProgram {
 	 * 
 	 * @return the library
 	 */
-	public PcodeUseropLibrary<Object> getDecodeLibrary() {
+	public PcodeUseropLibrary<?> getDecodeLibrary() {
 		return decodeLibrary;
 	}
 
@@ -804,7 +1066,7 @@ public class JitPassage extends PcodeProgram {
 	 * 
 	 * @return the branches, keyed by {@link Branch#from()}.
 	 */
-	public Map<PcodeOp, Branch> getBranches() {
+	public Map<PcodeOp, PBranch> getBranches() {
 		return branches;
 	}
 
@@ -815,9 +1077,29 @@ public class JitPassage extends PcodeProgram {
 		}).collect(Collectors.joining("\n  ")) + "\n>\n" + format(true);
 	}
 
+	@Override
+	public String format(boolean numberOps) {
+		return new MyFormatter(this, numberOps) {
+			@Override
+			protected FormatResult formatOpTemplate(MyAppender appender, OpTpl tpl) {
+				if (tpl.getOpcode() != PcodeOp.UNIMPLEMENTED) {
+					return super.formatOpTemplate(appender, tpl);
+				}
+				return switch (code.get(appender.getOpIdx())) {
+					case NopPcodeOp nop -> {
+						appender.appendIndent();
+						appender.appendString("NOP(%d)".formatted(System.identityHashCode(nop)));
+						appender.endLine();
+						yield FormatResult.CONTINUE;
+					}
+					default -> super.formatOpTemplate(appender, tpl);
+				};
+			}
+		}.formatOps(language, code);
+	}
+
 	/**
 	 * Check if a given p-code op is the first of an instruction.
-	 * 
 	 * <p>
 	 * <b>NOTE</b>: If an instruction is at an address with an inject, then the first op produced by
 	 * the inject is considered the "entry" to the instruction. This is to ensure that any control
@@ -829,6 +1111,24 @@ public class JitPassage extends PcodeProgram {
 	 */
 	public AddrCtx getOpEntry(PcodeOp op) {
 		return entries.get(op);
+	}
+
+	/**
+	 * Check if a given p-code op's operand was folded to a constant
+	 * 
+	 * @param op the p-code op
+	 * @param opIdx the operand idx, inputs indexed 0-up, -1 to indicate output
+	 * @return non-null constant value, if it was folded
+	 */
+	public byte[] getFoldedOperand(PcodeOp op, int opIdx) {
+		return folded.get(new Operand(op, opIdx));
+	}
+
+	/**
+	 * {@return the map of all folded operands (TESTING ONLY)}
+	 */
+	public Map<Operand, byte[]> allFoldedOperands() {
+		return folded;
 	}
 
 	/**

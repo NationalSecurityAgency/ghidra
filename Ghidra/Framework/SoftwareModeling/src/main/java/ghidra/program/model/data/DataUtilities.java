@@ -136,7 +136,7 @@ public final class DataUtilities {
 	 * @param addr data address (offcut data address only allowed if clearMode == ClearDataMode.CLEAR_ALL_CONFLICT_DATA)
 	 * @param newType new data-type being applied
 	 * @param length data length (used only for Dynamic newDataType which has canSpecifyLength()==true)
-	 * @param clearMode see CreateDataMode
+	 * @param clearMode the {@link ClearDataMode}
 	 * @return new data created
 	 * @throws CodeUnitInsertionException if data creation failed
 	 */
@@ -152,7 +152,7 @@ public final class DataUtilities {
 	 * @param newType new data-type being applied
 	 * @param length data length (used only for Dynamic newDataType which has canSpecifyLength()==true)
 	 * @param stackPointers see {@link #reconcileAppliedDataType(DataType, DataType, boolean)}
-	 * @param clearMode see CreateDataMode
+	 * @param clearMode the {@link ClearDataMode}
 	 * @return new data created
 	 * @throws CodeUnitInsertionException if data creation failed
 	 */

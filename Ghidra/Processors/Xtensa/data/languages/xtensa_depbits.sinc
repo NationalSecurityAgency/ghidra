@@ -2,9 +2,9 @@
 # This is broken out because it collides with the floating point instructions. It is not included by default
 
 # DEPBITS - Add (RRR), pg. 394.
-shiftimm: simm is u4_20_23 & u1_16 [ simm = u1_16 << 4 + u4_20_23; ] { export *[const]:4 simm; }
-:depbits as, at, shiftimm, u4_12_15 is u3_17_19=0x5 & u4_12_15 & as & at & op0 = 0 & shiftimm {
-	mask:4 = (1 << u4_12_15) - 1;
+shiftimm: simm is op2 & op1_0 [ simm = op1_0 << 4 + op2; ] { export *[const]:4 simm; }
+:depbits as, at, shiftimm, u4_12_15 is op1_1_3=0x5 & op_r & as & at & op0 = 0 & shiftimm {
+	mask:4 = (1 << op_r) - 1;
 	bits:4 = (as & mask) << shiftimm;
 	mask = mask << shiftimm;
 	at = (~mask & at) | bits;

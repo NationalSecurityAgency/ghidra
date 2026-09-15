@@ -25,8 +25,7 @@ import docking.widgets.OptionDialog;
 import ghidra.feature.vt.api.main.VTSession;
 import ghidra.feature.vt.gui.task.SaveTask;
 import ghidra.framework.main.DataTreeDialog;
-import ghidra.framework.model.DomainFile;
-import ghidra.framework.model.DomainFileFilter;
+import ghidra.framework.model.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.task.TaskLauncher;
@@ -37,29 +36,13 @@ public class VTWizardUtils {
 		DomainFile df;
 	}
 
-	public static final DomainFileFilter VT_SESSION_FILTER = new DomainFileFilter() {
+	public static final DomainFileFilter VT_SESSION_FILTER =
+		new DefaultDomainFileFilter(VTSession.class, true);
 
-		@Override
-		public boolean accept(DomainFile df) {
-			return VTSession.class.isAssignableFrom(df.getDomainObjectClass());
-		}
-
-		@Override
-		public boolean followLinkedFolders() {
-			return false;
-		}
-	};
-
-	public static final DomainFileFilter PROGRAM_FILTER = f -> {
-		return Program.class.isAssignableFrom(f.getDomainObjectClass());
-	};
-
-	public static DomainFile chooseDomainFile(Component parent, String domainIdentifier,
-			DomainFileFilter filter, DomainFile fileToSelect) {
-		final DataTreeDialog dataTreeDialog = filter == null
-				? new DataTreeDialog(parent, "Choose " + domainIdentifier, OPEN)
-				: new DataTreeDialog(parent, "Choose " + domainIdentifier, OPEN,
-					filter);
+	public static DomainFile chooseProgramFile(Component parent, String domainIdentifier,
+			DomainFile fileToSelect) {
+		final DataTreeDialog dataTreeDialog = new DataTreeDialog(parent,
+			"Choose " + domainIdentifier, OPEN, new DefaultDomainFileFilter(Program.class, true));
 		final DomainFileBox box = new DomainFileBox();
 		dataTreeDialog.addOkActionListener(new ActionListener() {
 			@Override

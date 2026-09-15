@@ -15,6 +15,11 @@
  */
 package ghidra.pcode.emu.jit;
 
+import java.util.EnumSet;
+import java.util.Set;
+
+import ghidra.pcode.emu.jit.op.JitCopyOp;
+
 /**
  * The configuration for a JIT-accelerated emulator.
  * 
@@ -30,23 +35,113 @@ package ghidra.pcode.emu.jit;
  *            limit is exceeded, the ASM library throws an exception. When this happens, the
  *            compiler will retry the whole process, but with this configuration parameter halved.
  * @param maxPassageStrides The maximum number of strides to include.
- * @param removeUnusedOperations Some p-code ops produce outputs that are never used later. One
- *            common case is flags computed from arithmetic operations. If this option is enabled,
- *            the JIT compiler will remove those p-code ops.
- * @param emitCounters Causes the translator to emit a call to
- *            {@link JitPcodeThread#count(int, int)} at the start of each basic block.
+ * @param foldConstants See {@link Opt#FOLD_CONSTANTS}
+ * @param removeUnreachableBlocks See {@link Opt#REMOVE_UNREACHABLE_BLOCKS}
+ * @param removeUnusedOperations See {@link Opt#REMOVE_UNUSED_OPERATIONS}
+ * @param emitCounters See {@link Opt#EMIT_COUNTERS}
+ * @param logStackTraces See {@link Opt#LOG_STACK_TRACES}
  */
 public record JitConfiguration(
 		int maxPassageInstructions,
 		int maxPassageOps,
 		int maxPassageStrides,
+		boolean foldConstants,
+		boolean removeUnreachableBlocks,
 		boolean removeUnusedOperations,
-		boolean emitCounters) {
+		boolean emitCounters,
+		boolean logStackTraces) {
+
+	/**
+	 * Fluent specifiers for the boolean options of {@link JitConfiguration}
+	 */
+	public enum Opt {
+		/**
+		 * Attempt to fold constants. This will re-write ops that output a folded constant as a
+		 * {@link JitCopyOp copy}, and any op that takes a folded constant input as taking that
+		 * const directly. To see benefits, this should be used with
+		 * {@link #REMOVE_UNUSED_OPERATIONS}.
+		 */
+		FOLD_CONSTANTS,
+		/**
+		 * Remove p-code basic blocks that cannot be reached. The ASM library or classfile API may
+		 * remove unreachable blocks on its own, regardless of this option. If this option is
+		 * enabled, the JIT compiler will remove unreachable blocks, <em>before</em> analyzing for
+		 * unused operations, permitting more code removal.
+		 */
+		REMOVE_UNREACHABLE_BLOCKS,
+		/**
+		 * Some p-code ops produce outputs that are never used later. One common case is flags
+		 * computed from arithmetic operations. If this option is enabled, the JIT compiler will
+		 * remove those p-code ops.
+		 */
+		REMOVE_UNUSED_OPERATIONS,
+		/**
+		 * Causes the translator to emit a call to {@link JitPcodeThread#count(int, int)} at the
+		 * start of each basic block.
+		 */
+		EMIT_COUNTERS,
+		/**
+		 * Causes the translator to emit code to print a stack trace in its exception handlers.
+		 */
+		LOG_STACK_TRACES,
+	}
 
 	/**
 	 * Construct a default configuration
 	 */
 	public JitConfiguration() {
-		this(1000, 5000, 10, true, true);
+		this(1000, 5000, 10, true, true, true, true, false);
+	}
+
+	/**
+	 * Construct a configuration with default maxes and the given boolean options
+	 * 
+	 * @param opts the options
+	 */
+	public JitConfiguration(Set<Opt> opts) {
+		this(1000, 5000, 10,
+			opts.contains(Opt.FOLD_CONSTANTS),
+			opts.contains(Opt.REMOVE_UNREACHABLE_BLOCKS),
+			opts.contains(Opt.REMOVE_UNUSED_OPERATIONS),
+			opts.contains(Opt.EMIT_COUNTERS),
+			opts.contains(Opt.LOG_STACK_TRACES));
+	}
+
+	/**
+	 * Construct a configuration with default maxes and the given boolean options
+	 * 
+	 * @param opts the options
+	 */
+	public JitConfiguration(Opt... opts) {
+		this(Set.of(opts));
+	}
+
+	public Set<Opt> opts() {
+		Set<Opt> opts = EnumSet.noneOf(Opt.class);
+		if (foldConstants) {
+			opts.add(Opt.FOLD_CONSTANTS);
+		}
+		if (removeUnusedOperations) {
+			opts.add(Opt.REMOVE_UNUSED_OPERATIONS);
+		}
+		if (emitCounters) {
+			opts.add(Opt.EMIT_COUNTERS);
+		}
+		if (logStackTraces) {
+			opts.add(Opt.LOG_STACK_TRACES);
+		}
+		return opts;
+	}
+
+	public JitConfiguration enable(Opt opt) {
+		Set<Opt> set = opts();
+		set.add(opt);
+		return new JitConfiguration(set);
+	}
+
+	public JitConfiguration disable(Opt opt) {
+		Set<Opt> set = opts();
+		set.remove(opt);
+		return new JitConfiguration(set);
 	}
 }

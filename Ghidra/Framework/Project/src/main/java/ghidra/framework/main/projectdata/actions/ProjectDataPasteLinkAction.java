@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,11 +22,11 @@ import javax.swing.Icon;
 
 import docking.action.MenuData;
 import docking.widgets.tree.GTreeNode;
-import ghidra.framework.data.LinkHandler;
+import ghidra.framework.data.*;
+import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.datatable.ProjectTreeAction;
 import ghidra.framework.main.datatree.*;
-import ghidra.framework.model.DomainFile;
-import ghidra.framework.model.DomainFolder;
+import ghidra.framework.model.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import resources.Icons;
@@ -35,10 +35,18 @@ import resources.MultiIcon;
 public class ProjectDataPasteLinkAction extends ProjectTreeAction {
 	private static Icon baseIcon = Icons.PASTE_ICON;
 
-	public ProjectDataPasteLinkAction(String owner, String group) {
-		super("Paste Link", owner);
-		setPopupMenuData(new MenuData(new String[] { "Paste as Link" }, getIcon(), group));
-		setHelpLocation(new HelpLocation("FrontEndPlugin", "Create_File_Links"));
+	private boolean relative;
+
+	public ProjectDataPasteLinkAction(String owner, String group, boolean relative) {
+		super("Paste " + getLinkType(relative), owner);
+		this.relative = relative;
+		setPopupMenuData(
+			new MenuData(new String[] { "Paste as " + getLinkType(relative) }, getIcon(), group));
+		setHelpLocation(new HelpLocation("FrontEndPlugin", "Paste_Link"));
+	}
+
+	private static String getLinkType(boolean relative) {
+		return relative ? "Relative-Link" : "Link";
 	}
 
 	private static Icon getIcon() {
@@ -49,18 +57,22 @@ public class ProjectDataPasteLinkAction extends ProjectTreeAction {
 
 	@Override
 	protected void actionPerformed(FrontEndProjectTreeContext context) {
-		GTreeNode node = (GTreeNode) context.getContextObject();
-		DomainFolderNode destNode = getFolderForNode(node);
 		if (!isEnabledForContext(context)) {
+			return;
+		}
+
+		GTreeNode node = (GTreeNode) context.getContextObject();
+		DomainFolder destFolder = DataTree.getRealInternalFolderForNode(node);
+		if (destFolder == null) {
 			Msg.showWarn(getClass(), context.getTree(), "Unsupported Operation",
 				"Unsupported paste link condition");
 		}
 
 		GTreeNode copyNode = getFolderOrFileCopyNode();
-		if (copyNode instanceof DomainFileNode) {
+		if (copyNode instanceof DomainFileNode fileNode) {
 			try {
-				DomainFile domainFile = ((DomainFileNode) copyNode).getDomainFile();
-				domainFile.copyToAsLink(destNode.getDomainFolder());
+				DomainFile domainFile = fileNode.getDomainFile();
+				domainFile.copyToAsLink(destFolder, relative);
 			}
 			catch (IOException e) {
 				Msg.showError(getClass(), context.getTree(), "Cannot Create Link",
@@ -70,7 +82,7 @@ public class ProjectDataPasteLinkAction extends ProjectTreeAction {
 		else {
 			try {
 				DomainFolder domainFolder = ((DomainFolderNode) copyNode).getDomainFolder();
-				domainFolder.copyToAsLink(destNode.getDomainFolder());
+				domainFolder.copyToAsLink(destFolder, relative);
 			}
 			catch (IOException e) {
 				Msg.showError(getClass(), context.getTree(), "Cannot Create Link",
@@ -82,65 +94,52 @@ public class ProjectDataPasteLinkAction extends ProjectTreeAction {
 
 	@Override
 	protected boolean isEnabledForContext(FrontEndProjectTreeContext context) {
-		if (!context.hasExactlyOneFileOrFolder()) {
-			return false;
-		}
-		if (!context.isInActiveProject()) {
+		if (!context.isInActiveProject() || !context.hasExactlyOneFileOrFolder()) {
 			return false;
 		}
 		GTreeNode node = (GTreeNode) context.getContextObject();
-		DomainFolderNode destNode = getFolderForNode(node);
-
-		GTreeNode copyNode = getFolderOrFileCopyNode();
-		if (copyNode == null || copyNode.getParent() == null) {
+		DomainFolder destFolder = DataTree.getRealInternalFolderForNode(node);
+		if (!ProjectDataPasteAction.checkNodeForPaste(destFolder)) {
 			return false;
 		}
-
-		// local internal linking not supported
-		if (destNode.getRoot() == copyNode.getRoot()) {
-			return false;
+		Project activeProject = AppInfo.getActiveProject();
+		DataTreeNode copyNode = getFolderOrFileCopyNode();
+		if (copyNode != null) {
+			if (relative && copyNode.getProjectData() != activeProject.getProjectData()) {
+				return false;
+			}
+			if (copyNode instanceof DomainFileNode fileNode) {
+				// Only enable action if a LinkHandler exists for the file
+				DomainFile domainFile = fileNode.getDomainFile();
+				try {
+					ContentHandler<?> contentHandler =
+						DomainObjectAdapter.getContentHandler(domainFile.getContentType());
+					return contentHandler.getLinkHandler() != null;
+				}
+				catch (IOException e) {
+					return false;
+				}
+			}
+			return true;
 		}
-
-		if (copyNode instanceof DomainFileNode) {
-			DomainFile df = ((DomainFileNode) copyNode).getDomainFile();
-			return df.isLinkingSupported();
-		}
-		return true;
+		return false;
 	}
 
-	@Override
-	protected boolean isAddToPopup(FrontEndProjectTreeContext context) {
-		if (!context.hasOneOrMoreFilesAndFolders()) {
-			return false;
-		}
-		if (!context.isInActiveProject()) {
-			return false;
-		}
-		GTreeNode copyNode = getFolderOrFileCopyNode();
-		return copyNode != null && copyNode.getParent() != null;
-	}
-
-	private DomainFolderNode getFolderForNode(GTreeNode node) {
-		if (node instanceof DomainFolderNode) {
-			return (DomainFolderNode) node;
-		}
-		return (DomainFolderNode) node.getParent();
-	}
-
-	private GTreeNode getFolderOrFileCopyNode() {
+	private DataTreeNode getFolderOrFileCopyNode() {
+		// Null will be returned if single node is marked for cut operation
 		List<GTreeNode> list = DataTreeClipboardUtils.getDataTreeNodesFromClipboard();
 		if (list.size() != 1) {
 			return null;
 		}
 		GTreeNode copyNode = list.get(0);
-		if (copyNode instanceof DomainFileNode) {
-			if (!((DomainFileNode) copyNode).isCut()) {
-				return copyNode;
+		if (copyNode instanceof DomainFileNode fileNode) {
+			if (!fileNode.isCut()) {
+				return fileNode;
 			}
 		}
-		if (copyNode instanceof DomainFolderNode) {
-			if (!((DomainFolderNode) copyNode).isCut()) {
-				return copyNode;
+		if (copyNode instanceof DomainFolderNode folderNode) {
+			if (!folderNode.isCut()) {
+				return folderNode;
 			}
 		}
 		return null;

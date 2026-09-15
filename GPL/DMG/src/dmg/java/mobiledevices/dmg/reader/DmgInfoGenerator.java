@@ -3,7 +3,6 @@
  */
 package mobiledevices.dmg.reader;
 
-import java.io.IOException;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,9 +19,7 @@ import mobiledevices.dmg.decmpfs.DecmpfsHeader;
 import mobiledevices.dmg.hfsplus.AttributesFileParser;
 
 /**
- * 
  * @see org.catacombae.hfsexplorer.gui.FSEntrySummaryPanel
- *
  */
 class DmgInfoGenerator {
 	private DmgFileReader fileSystem;
@@ -60,14 +57,10 @@ class DmgInfoGenerator {
 			appendFileID(infoList, file);
 
 			if (parser != null) {
-				try {
-					DecmpfsHeader decmpfsHeader = parser.getDecmpfsHeader(file);
-					if (decmpfsHeader != null) {
-						infoList.add(
-							"Decmpfs Size: " + getSizeString(decmpfsHeader.getUncompressedSize()));
-					}
-				}
-				catch (IOException e) {
+				DecmpfsHeader decmpfsHeader = parser.getDecmpfsHeader(file);
+				if (decmpfsHeader != null) {
+					infoList.add(
+						"Decmpfs Size: " + getSizeString(decmpfsHeader.getUncompressedSize()));
 				}
 			}
 		}
@@ -201,21 +194,21 @@ class DmgInfoGenerator {
 	}
 
 	private void calculateFolderSize(FSFolder folder, ObjectContainer<Long> result) {
-		for (FSEntry entry : folder.listEntries()) {
-			if (entry instanceof FSFile) {
+		for (FSEntry e : folder.listEntries()) {
+			if (e instanceof FSFile) {
 				Long value = result.o;
-				value += ((FSFile) entry).getMainFork().getLength();
+				value += ((FSFile) e).getMainFork().getLength();
 				result.o = value;
 			}
-			else if (entry instanceof FSFolder) {
-				calculateFolderSize((FSFolder) entry, result);
+			else if (e instanceof FSFolder) {
+				calculateFolderSize((FSFolder) e, result);
 			}
-			else if (entry instanceof FSLink) {
+			else if (e instanceof FSLink) {
 				/* Do nothing. Symbolic link targets aren't part of the folder. */
 			}
 			else {
 				System.err.println("FSEntrySummaryPanel.calculateFolderSize():" +
-					" unexpected type " + entry.getClass());
+					" unexpected type " + e.getClass());
 			}
 		}
 	}

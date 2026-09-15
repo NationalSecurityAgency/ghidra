@@ -24,7 +24,6 @@ import javax.swing.Icon;
 
 import db.Transaction;
 import generic.theme.GIcon;
-import ghidra.app.services.DebuggerEmulationService;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.debug.api.target.Target;
@@ -43,9 +42,8 @@ import ghidra.trace.model.program.TraceVariableSnapProgramView;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.PatchStep;
 import ghidra.trace.model.time.schedule.TraceSchedule;
+import ghidra.trace.model.time.schedule.TraceSchedule.ScheduleForm;
 import ghidra.trace.util.TraceRegisterUtils;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * The control / state editing modes
@@ -331,22 +329,7 @@ public enum ControlMode {
 			DebuggerTraceManagerService traceManager =
 				Objects.requireNonNull(tool.getService(DebuggerTraceManagerService.class),
 					"No trace manager service");
-			Long found = traceManager.findSnapshot(withTime);
-			// Materialize it on the same thread (even if swing)
-			// It shouldn't take long, since we're only appending one step.
-			if (found == null) {
-				// TODO: Could still do it async on another thread, no?
-				// Not sure it buys anything, since program view will call .get on swing thread
-				DebuggerEmulationService emulationService = Objects.requireNonNull(
-					tool.getService(DebuggerEmulationService.class), "No emulation service");
-				try {
-					emulationService.emulate(coordinates.getPlatform(), time,
-						TaskMonitor.DUMMY);
-				}
-				catch (CancelledException e) {
-					throw new AssertionError(e);
-				}
-			}
+
 			return traceManager.activateAndNotify(withTime, ActivationCause.EMU_STATE_EDIT);
 		}
 
@@ -389,22 +372,45 @@ public enum ControlMode {
 	 */
 	public DebuggerCoordinates validateCoordinates(PluginTool tool,
 			DebuggerCoordinates coordinates, ActivationCause cause) {
-		if (!followsPresent()) {
+		if (!followsPresent() || cause != ActivationCause.USER) {
 			return coordinates;
 		}
 		Target target = coordinates.getTarget();
 		if (target == null) {
 			return coordinates;
 		}
-		if (cause == ActivationCause.USER &&
-			(!coordinates.getTime().isSnapOnly() || coordinates.getSnap() != target.getSnap())) {
-			tool.setStatusInfo(
-				"Cannot navigate time in %s mode. Switch to Trace or Emulate mode first."
-						.formatted(name),
+
+		ScheduleForm form = coordinates.getObject() == null ? null
+				: target.getSupportedTimeForm(coordinates.getObject(), coordinates.getSnap());
+		if (form == null) {
+			if (coordinates.getTime().isSnapOnly() &&
+				coordinates.getSnap() == target.getSnap()) {
+				return coordinates;
+			}
+			tool.setStatusInfo("""
+					Cannot navigate time in %s mode. Switch to Trace or Emulate mode first."""
+					.formatted(name),
 				true);
 			return null;
 		}
-		return coordinates;
+		TraceSchedule norm = form.validate(coordinates.getTrace(), coordinates.getTime());
+		if (norm != null) {
+			return coordinates.time(norm);
+		}
+
+		String errMsg = switch (form) {
+			case SNAP_ONLY -> """
+					Target can only navigate to snapshots. Switch to Emulate mode first.""";
+			case SNAP_EVT_STEPS -> """
+					Target can only replay steps on the event thread. Switch to Emulate mode \
+					first.""";
+			case SNAP_ANY_STEPS -> """
+					Target cannot perform p-code steps. Switch to Emulate mode first.""";
+			case SNAP_ANY_STEPS_OPS -> throw new AssertionError();
+		};
+
+		tool.setStatusInfo(errMsg, true);
+		return null;
 	}
 
 	protected TracePlatform platformFor(DebuggerCoordinates coordinates, Address address) {

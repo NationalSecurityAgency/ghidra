@@ -34,20 +34,17 @@ import ghidra.program.model.pcode.Varnode;
 
 /**
  * A p-code arithmetic for interpreting p-code and constructing a use-def graph
- * 
  * <p>
  * This is used for intra-block data flow analysis. We leverage the same API as is used for concrete
  * p-code interpretation, but we use it for an abstraction. The type of the interpretation is
  * {@code T:=}{@link JitVal}, which can consist of constants and variables in the use-def graph. The
  * arithmetic must be provided to the {@link JitDataFlowExecutor}. The intra-block portions of the
  * use-def graph are populated as each block is interpreted by the executor.
- * 
  * <p>
  * The general strategy for each of the arithmetic operations is to 1) generate the output SSA
  * variable for the op, 2) generate the op node for the generated output and given inputs, 3) enter
  * the op into the use-def graph as the definition of its output, 4) record the inputs and used by
  * the new op, and finally 5) return the generated output.
- * 
  * <p>
  * There should only need to be one of these per data flow model, not per block.
  */
@@ -70,13 +67,28 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 	}
 
 	@Override
+	public Class<JitVal> getDomain() {
+		return JitVal.class;
+	}
+
+	@Override
 	public Endian getEndian() {
 		return endian;
 	}
 
 	/**
-	 * Remove {@code amt} bytes from the right of the <em>varnode</em>.
+	 * Remove the given number of bytes from the higher-offset end of the varnode
 	 * 
+	 * @param vn the varnode
+	 * @param amt the number of bytes to remove
+	 * @return the resulting varnode
+	 */
+	public Varnode truncVnFromRight(Varnode vn, int amt) {
+		return new Varnode(vn.getAddress(), vn.getSize() - amt);
+	}
+
+	/**
+	 * Remove {@code amt} bytes from the right of the <em>varnode</em>.
 	 * <p>
 	 * "Right" is considered with respect to the machine endianness. If it is little endian, then
 	 * the byte are shaved from the <em>left</em> of the value. This should be used when getting
@@ -89,13 +101,23 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 	 * @return the resulting value
 	 */
 	public JitVal truncFromRight(Varnode in1Vn, int amt, JitVal in1) {
-		Varnode outVn = new Varnode(in1Vn.getAddress(), in1Vn.getSize() - amt);
+		Varnode outVn = truncVnFromRight(in1Vn, amt);
 		return subpiece(outVn, endian.isBigEndian() ? amt : 0, in1);
 	}
 
 	/**
-	 * Remove {@code amt} bytes from the left of the <em>varnode</em>.
+	 * Remove the given number of bytes from the lower-offset end of the varnode
 	 * 
+	 * @param vn the varnode
+	 * @param amt the number of bytes to remove
+	 * @return the resulting varnode
+	 */
+	public Varnode truncVnFromLeft(Varnode vn, int amt) {
+		return new Varnode(vn.getAddress().add(amt), vn.getSize() - amt);
+	}
+
+	/**
+	 * Remove {@code amt} bytes from the left of the <em>varnode</em>.
 	 * <p>
 	 * "Left" is considered with respect to the machine endianness. If it is little endian, then the
 	 * byte are shaved from the <em>right</em> of the value. This should be used when getting values
@@ -108,7 +130,7 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 	 * @return the resulting value
 	 */
 	public JitVal truncFromLeft(Varnode in1Vn, int amt, JitVal in1) {
-		Varnode outVn = new Varnode(in1Vn.getAddress().add(amt), in1Vn.getSize() - amt);
+		Varnode outVn = truncVnFromLeft(in1Vn, amt);
 		return subpiece(outVn, endian.isBigEndian() ? 0 : amt, in1);
 	}
 
@@ -150,13 +172,12 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 
 	/**
 	 * Try to produce a simplified {@link JitSynthSubPieceOp} or {@link JitCatenateOp}
-	 * 
 	 * <p>
 	 * This takes an input, subpiece offset, and output variable. If the input variable is the
 	 * result of another subpiece, the result can be a single simplified subpiece. Similarly, if the
 	 * input is the result of a catenation, then the result can be a simplified catenation, or
 	 * possibly subpiece.
-	 * 
+	 * <p>
 	 * If either of these situations applies, and simplification is possible, this returns a
 	 * non-null result, and that result is added to the use-def graph specifying the given output
 	 * variable as the simplified output. Otherwise, the result is null and the caller should create
@@ -194,7 +215,6 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 
 	/**
 	 * Construct the result of taking the subpiece
-	 * 
 	 * <p>
 	 * If the input is another subpiece or a catenation, the result may be simplified. In
 	 * particular, the subpiece of a catenation may be a smaller catenation. No matter the case, the
@@ -215,16 +235,29 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 		return dfm.notifyOp(new JitSynthSubPieceOp(out, offset, v)).out();
 	}
 
-	private Varnode subPieceVn(int size, int offset, Varnode whole) {
-		if (endian.isBigEndian()) {
-			return new Varnode(whole.getAddress().add(whole.getSize() - offset - size), size);
+	/**
+	 * Compute the varnode representing a {@link JitSubPieceOp subpiece} of the given varnode
+	 * 
+	 * @param endian the endianness of the emulation target
+	 * @param whole the whole varnode
+	 * @param offset the number of least-significant bytes to remove
+	 * @param size the size of the subpiece (maximum, since truncation may occur)
+	 * @return the resulting subpiece.
+	 */
+	public static Varnode subPieceVn(Endian endian, Varnode whole, int offset, int size) {
+		int minSize = Math.min(whole.getSize() - offset, size);
+		if (minSize < 1) {
+			throw new AssertionError("subpiece would have non-positive size");
 		}
-		return new Varnode(whole.getAddress().add(offset), size);
+		int addrOffset = switch (endian) {
+			case BIG -> whole.getSize() - offset - minSize;
+			case LITTLE -> offset;
+		};
+		return new Varnode(whole.getAddress().add(addrOffset), minSize);
 	}
 
 	/**
 	 * Remove {@code amt} bytes from the right of the value.
-	 * 
 	 * <p>
 	 * The value is unaffected by the machine endianness, except to designate the output varnode.
 	 * 
@@ -233,12 +266,11 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 	 * @return the output
 	 */
 	public JitVal shaveFromRight(int amt, JitVal in1) {
-		return subpiece(in1.size() - amt, amt, in1);
+		return subpiece(in1, amt, in1.size() - amt);
 	}
 
 	/**
 	 * Remove {@code amt} bytes from the left of the value.
-	 * 
 	 * <p>
 	 * The value is unaffected by the machine endianness, except to designate the output varnode.
 	 * 
@@ -247,12 +279,11 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 	 * @return the output
 	 */
 	public JitVal shaveFromLeft(int amt, JitVal in1) {
-		return subpiece(in1.size() - amt, 0, in1);
+		return subpiece(in1, 0, in1.size() - amt);
 	}
 
 	/**
 	 * Compute the subpiece of a value.
-	 * 
 	 * <p>
 	 * The result is added to the use-def graph. The output varnode is computed from the input
 	 * varnode and the subpiece parameters. This is used to handle variable retrieval when an access
@@ -262,7 +293,6 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 	 * MOV RAX, qword ptr [...]
 	 * MOV dword ptr [...], EAX
 	 * </pre>
-	 * 
 	 * <p>
 	 * The second line reads {@code EAX}, which consists of only the lower part of {@code RAX}.
 	 * Thus, we synthesize a subpiece op. These are distinct from an actual {@link PcodeOp#SUBPIECE}
@@ -273,14 +303,14 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 	 * @param v the input value
 	 * @return the output value
 	 */
-	public JitVal subpiece(int size, int offset, JitVal v) {
+	public JitVal subpiece(JitVal v, int offset, int size) {
 		if (v instanceof JitConstVal c) {
 			return new JitConstVal(size,
 				OB_SUBPIECE.evaluateBinary(size, v.size(), c.value(), BigInteger.valueOf(offset)));
 		}
 		if (v instanceof JitVarnodeVar vv) {
 			Varnode inVn = vv.varnode();
-			Varnode outVn = subPieceVn(size, offset, inVn);
+			Varnode outVn = subPieceVn(endian, inVn, offset, size);
 			return subpiece(outVn, offset, v);
 		}
 		throw new UnsupportedOperationException("unsupported subpiece of " + v);
@@ -288,7 +318,6 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 
 	/**
 	 * Construct the catenation of the given values to form the given output varnode.
-	 * 
 	 * <p>
 	 * The result is added to the use-def graph. This is used to handle variable retrieval when the
 	 * pattern of accesses indicates catenation. Consider the x86 assembly:
@@ -298,7 +327,6 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 	 * MOV AL, byte ptr [...]
 	 * MOV word ptr [...], AX
 	 * </pre>
-	 * 
 	 * <p>
 	 * On the third line, the value in {@code AX} is the catenation of whatever values were written
 	 * into {@code AH} and {@code AL}. Thus, we synthesize a catenation op node in the use-def
@@ -336,7 +364,6 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 
 	/**
 	 * {@inheritDoc}
-	 * 
 	 * <p>
 	 * We override this to record the {@link JitStoreOp store} op into the use-def graph. As
 	 * "output" we just return {@code inValue}. The executor will call
@@ -356,7 +383,6 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 
 	/**
 	 * {@inheritDoc}
-	 * 
 	 * <p>
 	 * We override this to record the {@link JitLoadOp load} op into the use-def graph. For our
 	 * {@code inValue}, the {@link JitDataFlowState state} will have just returned the

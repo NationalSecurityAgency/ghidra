@@ -19,7 +19,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import ghidra.features.base.memsearch.matcher.ByteMatcher;
+import ghidra.features.base.memsearch.matcher.UserInputByteMatcher;
 
 public class UInt2SearchFormatTest extends AbstractSearchFormatTest {
 	public UInt2SearchFormatTest() {
@@ -48,7 +48,7 @@ public class UInt2SearchFormatTest extends AbstractSearchFormatTest {
 		matcher = parse("0");
 		assertBytes(0, 0);
 
-		ByteMatcher byteMatcher = format.parse("-1", settings);
+		UserInputByteMatcher byteMatcher = format.parse("-1", settings);
 		assertFalse(byteMatcher.isValidInput());
 		assertEquals("Number must be in the range [0, 65535]",
 			byteMatcher.getDescription());
@@ -61,7 +61,7 @@ public class UInt2SearchFormatTest extends AbstractSearchFormatTest {
 		assertBytes(0xff, 0xff);
 
 		value += 1;
-		ByteMatcher byteMatcher = format.parse(Long.toString(value), settings);
+		UserInputByteMatcher byteMatcher = format.parse(Long.toString(value), settings);
 		assertFalse(byteMatcher.isValidInput());
 		assertEquals("Number must be in the range [0, 65535]",
 			byteMatcher.getDescription());
@@ -69,7 +69,7 @@ public class UInt2SearchFormatTest extends AbstractSearchFormatTest {
 
 	@Test
 	public void testNegativeSignOnly() {
-		ByteMatcher byteMatcher = format.parse("-", settings);
+		UserInputByteMatcher byteMatcher = format.parse("-", settings);
 		assertFalse(byteMatcher.isValidInput());
 		assertFalse(byteMatcher.isValidSearch());
 		assertEquals("Negative numbers not allowed for unsigned values",
@@ -78,7 +78,7 @@ public class UInt2SearchFormatTest extends AbstractSearchFormatTest {
 
 	@Test
 	public void testBadChars() {
-		ByteMatcher byteMatcher = format.parse("12z", settings);
+		UserInputByteMatcher byteMatcher = format.parse("12z", settings);
 		assertFalse(byteMatcher.isValidInput());
 		assertFalse(byteMatcher.isValidSearch());
 		assertEquals("Number parse error: For input string: \"12z\"", byteMatcher.getDescription());

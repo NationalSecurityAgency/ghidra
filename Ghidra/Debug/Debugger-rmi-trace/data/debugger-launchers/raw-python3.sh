@@ -30,14 +30,9 @@
 #@env OPT_LANG:str="DATA:LE:64:default" "Ghidra Language" "The Ghidra LanguageID for the trace"
 #@env OPT_COMP:str="pointer64" "Ghidra Compiler" "The Ghidra CompilerSpecID for the trace"
 
-if [ -d ${GHIDRA_HOME}/ghidra/.git ]
-then
-  export PYTHONPATH=$GHIDRA_HOME/ghidra/Ghidra/Debug/Debugger-rmi-trace/build/pypkg/src:$PYTHONPATH
-elif [ -d ${GHIDRA_HOME}/.git ]
-then 
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-rmi-trace/build/pypkg/src:$PYTHONPATH
-else
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-rmi-trace/pypkg/src:$PYTHONPATH
-fi
+. ../support/setuputils.sh
+
+pypathTrace=$(ghidra-module-pypath)
+export PYTHONPATH=$pypathTrace:$PYTHONPATH
 
 "$OPT_PYTHON_EXE" -i ../support/raw-python3.py

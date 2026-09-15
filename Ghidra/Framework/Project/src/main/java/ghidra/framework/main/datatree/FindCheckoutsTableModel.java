@@ -98,6 +98,12 @@ class FindCheckoutsTableModel extends ThreadedTableModelStub<CheckoutInfo> {
 			if (monitor.isCancelled()) {
 				throw new CancelledException();
 			}
+			if (file.isLink()) {
+				// NOTE: We do not currently consider link-files whose referenced file 
+				// is checked-out.
+				continue;
+			}
+
 			if (file.isCheckedOut()) {
 				try {
 					CheckoutInfo info = new CheckoutInfo(file);

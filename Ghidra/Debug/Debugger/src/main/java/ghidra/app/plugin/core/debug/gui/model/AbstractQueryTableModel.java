@@ -28,6 +28,8 @@ import ghidra.framework.plugintool.Plugin;
 import ghidra.trace.model.*;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.time.TraceTimeManager;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.exception.CancelledException;
@@ -56,11 +58,19 @@ public abstract class AbstractQueryTableModel<T> extends ThreadedTableModel<T, T
 			if (query != null && query.involves(span, value)) {
 				reload(); // Can I be more surgical?
 			}
+
+			if (value.getCanonicalPath().equals(KeyPath.of(TraceTimeManager.KEY_TIME_RADIX))) {
+				fireTableDataChanged();
+			}
 		}
 
 		protected void valueDeleted(TraceObjectValue value) {
 			if (query != null && query.involves(span, value)) {
 				reload(); // Can I be more surgical?
+			}
+
+			if (value.getCanonicalPath().equals(KeyPath.of(TraceTimeManager.KEY_TIME_RADIX))) {
+				fireTableDataChanged();
 			}
 		}
 

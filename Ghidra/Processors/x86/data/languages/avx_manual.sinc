@@ -192,6 +192,36 @@
 	ZmmReg1 = zext(XmmReg1);
 }
 
+# PINSRB/PINSRD/PINSRQ 4-293 PAGE 1413 LINE 73324
+#define pcodeop vpinsrd_avx ;
+:VPINSRD XmmReg1, vexVVVV_XmmReg, rm32, imm8 is $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0) & vexVVVV_XmmReg; byte=0x22; (XmmReg1 & ZmmReg1) ... & rm32; imm8
+{
+	local tmp:4 = rm32;
+	local cond0:1 = (imm8:1 & 0x3) == 0;
+	local cond1:1 = (imm8:1 & 0x3) == 1;
+	local cond2:1 = (imm8:1 & 0x3) == 2;
+	local cond3:1 = (imm8:1 & 0x3) == 3;
+	conditionalAssign(XmmReg1[ 0,32], cond0, tmp, vexVVVV_XmmReg[ 0,32]);
+	conditionalAssign(XmmReg1[32,32], cond0, tmp, vexVVVV_XmmReg[32,32]);
+	conditionalAssign(XmmReg1[64,32], cond0, tmp, vexVVVV_XmmReg[64,32]);
+	conditionalAssign(XmmReg1[96,32], cond0, tmp, vexVVVV_XmmReg[96,32]);
+	ZmmReg1 = zext(XmmReg1);
+}
+
+# PINSRB/PINSRD/PINSRQ 4-293 PAGE 1413 LINE 73327
+#define pcodeop vpinsrq_avx ;
+@ifdef IA64
+:VPINSRQ XmmReg1, vexVVVV_XmmReg, rm64, imm8 is $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1) & vexVVVV_XmmReg; byte=0x22; (XmmReg1 & ZmmReg1) ... & rm64; imm8
+{
+	local tmp:8 = rm64;
+	local cond0:8 = zext((imm8:1 & 0x1) == 0);
+	local cond1:8 = zext((imm8:1 & 0x1) == 1);
+	# ignoring all but the least significant bit
+	XmmReg1[0,64] = (cond0 * tmp) + (cond1 * vexVVVV_XmmReg[0,64]);
+	XmmReg1[64,64] = (cond0 * vexVVVV_XmmReg[64,64]) + (cond1 * tmp);
+	ZmmReg1 = zext(XmmReg1);
+}
+@endif
 
 # PMOVMSKB 4-338 PAGE 1458 LINE 75651
 :VPMOVMSKB Reg32, XmmReg2 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG); byte=0xD7; Reg32 & (mod=0x3 & XmmReg2) & check_Reg32_dest

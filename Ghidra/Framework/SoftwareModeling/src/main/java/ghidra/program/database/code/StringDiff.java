@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,12 +35,12 @@ public class StringDiff {
 
 	/**
 	 * String being inserted.  This can be an insert or a complete replace (the positions will both
-	 * be -1 in a replace; pos1 will be non-negative during an insert).
+	 * be -1 in a replace; start will be non-negative during an insert).
 	 */
 	public String text;
 
 	/**
-	 * Construct a new StringDiff with pos1 and pos2 are initialized to -1
+	 * Construct a new StringDiff with start and end are initialized to -1
 	 * 
 	 * @param newText string 
 	 * @return the new diff 
@@ -50,7 +50,7 @@ public class StringDiff {
 	}
 
 	/**
-	 * Construct a new StringDiff that indicates text was deleted from pos1 to pos2
+	 * Construct a new StringDiff that indicates text was deleted from start and end
 	 * 
 	 * @param start position 1 for the diff
 	 * @param end position 2 for the diff
@@ -61,7 +61,7 @@ public class StringDiff {
 	}
 
 	/**
-	 * Construct a new StringDiff that indicates that insertData was inserted at the given position
+	 * Construct a new StringDiff that indicates that newText was inserted at the given position
 	 * 
 	 * @param newText inserted string
 	 * @param start position where the text was inserted

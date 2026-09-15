@@ -31,20 +31,20 @@ import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.*;
-import ghidra.trace.database.module.TraceObjectSection;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.modules.*;
+import ghidra.trace.model.modules.TraceModule;
+import ghidra.trace.model.modules.TraceSection;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.target.schema.TraceObjectSchema;
-import ghidra.trace.model.thread.TraceObjectProcess;
+import ghidra.trace.model.thread.TraceProcess;
 
-public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceObjectModule> {
+public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceModule> {
 
 	private static class ModuleBaseColumn extends AbstractTraceValueObjectAddressColumn {
 		public ModuleBaseColumn() {
-			super(TraceObjectModule.KEY_RANGE);
+			super(TraceModule.KEY_RANGE);
 		}
 
 		@Override
@@ -60,7 +60,7 @@ public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceOb
 
 	private static class ModuleMaxColumn extends AbstractTraceValueObjectAddressColumn {
 		public ModuleMaxColumn() {
-			super(TraceObjectModule.KEY_RANGE);
+			super(TraceModule.KEY_RANGE);
 		}
 
 		@Override
@@ -76,7 +76,7 @@ public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceOb
 
 	private static class ModuleNameColumn extends TraceValueObjectAttributeColumn<String> {
 		public ModuleNameColumn() {
-			super(TraceObjectModule.KEY_MODULE_NAME, String.class);
+			super(TraceModule.KEY_MODULE_NAME, String.class);
 		}
 
 		@Override
@@ -98,7 +98,7 @@ public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceOb
 				return "";
 			}
 			ValueAttribute<AddressRange> attr =
-				rowObject.getAttribute(TraceObjectModule.KEY_RANGE, AddressRange.class);
+				rowObject.getAttribute(TraceModule.KEY_RANGE, AddressRange.class);
 			if (attr == null) {
 				return "";
 			}
@@ -131,7 +131,7 @@ public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceOb
 
 	private static class ModuleLengthColumn extends AbstractTraceValueObjectLengthColumn {
 		public ModuleLengthColumn() {
-			super(TraceObjectModule.KEY_RANGE);
+			super(TraceModule.KEY_RANGE);
 		}
 
 		@Override
@@ -166,12 +166,12 @@ public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceOb
 				continue;
 			}
 			TraceObject child = value.getChild();
-			TraceObjectModule module = child.queryInterface(TraceObjectModule.class);
+			TraceModule module = child.queryInterface(TraceModule.class);
 			if (module != null) {
 				result.add(module);
 				continue;
 			}
-			TraceObjectSection section = child.queryInterface(TraceObjectSection.class);
+			TraceSection section = child.queryInterface(TraceSection.class);
 			if (section != null) {
 				result.add(section.getModule());
 				continue;
@@ -188,12 +188,12 @@ public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceOb
 				continue;
 			}
 			TraceObject child = value.getChild();
-			TraceObjectModule module = child.queryInterface(TraceObjectModule.class);
+			TraceModule module = child.queryInterface(TraceModule.class);
 			if (module != null) {
 				result.addAll(module.getSections(ctx.getSnap()));
 				continue;
 			}
-			TraceObjectSection section = child.queryInterface(TraceObjectSection.class);
+			TraceSection section = child.queryInterface(TraceSection.class);
 			if (section != null) {
 				result.add(section);
 				continue;
@@ -206,12 +206,12 @@ public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceOb
 		AddressSet result = new AddressSet();
 		for (TraceObjectValue value : ctx.getObjectValues()) {
 			TraceObject child = value.getChild();
-			TraceObjectModule module = child.queryInterface(TraceObjectModule.class);
+			TraceModule module = child.queryInterface(TraceModule.class);
 			if (module != null) {
 				result.add(module.getRange(ctx.getSnap()));
 				continue;
 			}
-			TraceObjectSection section = child.queryInterface(TraceObjectSection.class);
+			TraceSection section = child.queryInterface(TraceSection.class);
 			if (section != null) {
 				result.add(section.getRange(ctx.getSnap()));
 				continue;
@@ -222,13 +222,13 @@ public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceOb
 
 	protected static ModelQuery successorModules(TraceObjectSchema rootSchema, KeyPath path) {
 		TraceObjectSchema schema = rootSchema.getSuccessorSchema(path);
-		return new ModelQuery(schema.searchFor(TraceObjectModule.class, path, true));
+		return new ModelQuery(schema.searchFor(TraceModule.class, path, true));
 	}
 
 	private final DebuggerModulesProvider provider;
 
 	public DebuggerModulesPanel(DebuggerModulesProvider provider) {
-		super(provider.plugin, provider, TraceObjectModule.class);
+		super(provider.plugin, provider, TraceModule.class);
 		this.provider = provider;
 	}
 
@@ -241,15 +241,14 @@ public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceOb
 	protected ModelQuery computeQuery(TraceObject object) {
 		TraceObjectSchema rootSchema = object.getRoot().getSchema();
 		KeyPath seedPath = object.getCanonicalPath();
-		KeyPath processPath = rootSchema.searchForAncestor(TraceObjectProcess.class, seedPath);
+		KeyPath processPath = rootSchema.searchForAncestor(TraceProcess.class, seedPath);
 		if (processPath != null) {
 			ModelQuery result = successorModules(rootSchema, processPath);
 			if (!result.isEmpty()) {
 				return result;
 			}
 		}
-		KeyPath containerPath =
-			rootSchema.searchForSuitableContainer(TraceObjectModule.class, seedPath);
+		KeyPath containerPath = rootSchema.searchForSuitableContainer(TraceModule.class, seedPath);
 		if (containerPath != null) {
 			ModelQuery result = successorModules(rootSchema, containerPath);
 			if (!result.isEmpty()) {

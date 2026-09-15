@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -137,13 +137,13 @@ public class MDFunctionType extends MDType {
 		// output on underscore-based access-level types (from MDTypeInfoParser '_' prefix),
 		// specifically based5 variants.  This could possibly be put into the MDMangVS2015
 		//  demangler, but then we would probably need to describe the standard MDMang output
-		//  as "invalid," as based-on-basedptr is supposed to be invalid. 
+		//  as "invalid," as based-on-basedptr is supposed to be invalid.
 		StringBuilder conventionBuilder = new StringBuilder();
 		convention.insert(conventionBuilder);
 		if (based != null) {
 			based.append(conventionBuilder);
 		}
-		// Following to to clean the Based5 "bug" if seen.  See comments in MDBasedAttribute.
+		// Following is to clean the Based5 "bug" if seen.  See comments in MDBasedAttribute.
 		dmang.cleanOutput(conventionBuilder);
 		dmang.insertString(builder, conventionBuilder.toString());
 		//This logic moved to MdSpecialName, so that we can get a qualified name with the
@@ -159,7 +159,7 @@ public class MDFunctionType extends MDType {
 			dmang.insertString(builder, "(");
 			dmang.appendString(builder, ")");
 		}
-		if (hasArgs & argsList != null) {
+		if (hasArgs && argsList != null) {
 			dmang.appendString(builder, "(");
 			argsList.insert(builder);
 			dmang.appendString(builder, ")");
@@ -179,6 +179,7 @@ public class MDFunctionType extends MDType {
 			}
 		}
 	}
+
 }
 
 /******************************************************************************/

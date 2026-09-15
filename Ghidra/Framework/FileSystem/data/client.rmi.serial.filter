@@ -1,0 +1,108 @@
+# Ghidra Server RMI client deserialization filter patterns.
+# See GhidraObjectInputFilter javadoc.
+
+remoteIf=ghidra.framework.remote.GhidraServerHandle;
+remoteIf=ghidra.framework.remote.RemoteRepositoryServerHandle;
+remoteIf=ghidra.framework.remote.RemoteRepositoryHandle;
+remoteIf=db.buffers.RemoteBufferFileHandle;
+remoteIf=db.buffers.RemoteManagedBufferFileHandle;
+
+ghidra.framework.remote.*;
+ghidra.framework.store.*;
+ghidra.server.stream.*;
+
+[Lghidra.framework.remote.RepositoryChangeEvent;
+[Lghidra.framework.remote.RepositoryItem;
+[Lghidra.framework.store.ItemCheckoutStatus;
+[Lghidra.framework.store.Version;
+
+db.buffers.*;
+
+java.rmi.Remote;
+java.rmi.dgc.Lease;
+java.rmi.dgc.VMID;
+java.rmi.server.ObjID;
+java.rmi.server.RemoteObject;
+java.rmi.server.RemoteObjectInvocationHandler;
+java.rmi.server.UID;
+
+# RMI exception serialized from server to client
+java.rmi.AccessException;
+java.rmi.MarshalException;
+java.rmi.NoSuchObjectException;
+java.rmi.NotBoundException;
+java.rmi.RemoteException;
+java.rmi.ServerException;
+java.rmi.ServerError;
+java.rmi.ServerRuntimeException;
+java.rmi.server.SocketSecurityException;
+java.rmi.UnexpectedException;
+java.rmi.UnmarshalException;
+
+javax.rmi.ssl.SslRMIClientSocketFactory;
+
+java.lang.reflect.Proxy;
+
+java.lang.String;
+[Ljava.lang.String;
+
+java.util.Collections$EmptyList;
+
+javax.security.auth.callback.NameCallback;
+javax.security.auth.callback.PasswordCallback;
+
+javax.security.auth.x500.X500Principal;
+
+javax.security.auth.callback.Callback;
+[Ljavax.security.auth.callback.Callback;
+javax.security.auth.x500.X500Principal;
+[Ljavax.security.auth.x500.X500Principal;
+
+#
+# Exceptions thrown by Ghidra Server remote objects
+# (see above for various RMI remote exception implementations)
+#
+
+java.lang.StackTraceElement;
+[Ljava.lang.StackTraceElement; # Throwable stackTrace array field
+
+java.lang.Throwable;
+java.lang.Error;
+java.lang.Exception;
+java.lang.RuntimeException;
+
+java.security.GeneralSecurityException;
+
+# Exceptions explicitly thrown by Ghidra Server remote objects
+# as declared by corresponding Remote interface or encapsulated 
+# by a java.rmi.RemoteException.
+
+javax.security.auth.login.FailedLoginException;
+javax.security.auth.login.LoginException;
+
+java.lang.UnsupportedOperationException;
+
+java.util.NoSuchElementException;
+
+ghidra.util.exception.DuplicateNameException;
+ghidra.util.exception.UsrException;
+ghidra.util.InvalidNameException;
+
+#
+# IOExceptions
+#
+# NOTE: Any exception thrown on server with a cause will be logged on server and conveyed back
+# to client as a simple IOException without a cause.
+#
+# NOTE: All IOExceptions added below must be included within RemoteExceptionUtil.allowedIOExceptionClassSet
+#
+
+java.io.IOException;
+java.io.FileNotFoundException;
+
+ghidra.framework.store.ExclusiveCheckoutException;
+ghidra.util.exception.UserAccessException;
+ghidra.util.exception.DuplicateFileException;
+ghidra.util.exception.FileInUseException;
+ghidra.util.ReadOnlyException;
+

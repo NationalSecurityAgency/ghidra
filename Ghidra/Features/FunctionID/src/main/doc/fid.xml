@@ -25,7 +25,9 @@ where the compiled form of the functions does not change. Because of the hashing
 functions remain identifiable even if the library is relocated during linking.
 Larger changes to the compilation process of the library however
 will likely prevent successful searches.
-Function ID databases are necessarily targeted to a specific processor.
+Function ID databases are necessarily targeted to a specific processor and optionally to specific
+compilers or source languages.
+
 </para>
 <para>
 Function ID generally runs as part of <emphasis role="bold">Auto Analysis</emphasis> but can
@@ -202,7 +204,7 @@ presents some configurable options for the analyzer.
   <variablelist>
   <?dbfo list-presentation="blocks"?>
     <varlistentry>
-      <term><emphasis role="bold">Instruction count threshold</emphasis></term>
+      <term><emphasis role="bold">Instruction Count Threshold</emphasis></term>
       <listitem>
       <para>
       This is the <emphasis role="bold">primary threshold</emphasis> a potential
@@ -216,7 +218,7 @@ presents some configurable options for the analyzer.
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis role="bold">Multiple match threshold</emphasis></term>
+      <term><emphasis role="bold">Multiple Match Threshold</emphasis></term>
       <listitem>
       <para>
       In general for a single function, if there are multiple potential matches
@@ -228,7 +230,7 @@ presents some configurable options for the analyzer.
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis role="bold">Always apply FID labels</emphasis></term>
+      <term><emphasis role="bold">Always Apply FID Labels</emphasis></term>
       <listitem>
       <para>
       If this toggle is on, the analyzer will report matches even if there is
@@ -242,6 +244,17 @@ presents some configurable options for the analyzer.
       <para>
       The analyzer will only create bookmarks for matches if this toggle is on.
       This does not affect insertion of comments and symbols.
+      </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis role="bold">Ignore Database Filters</emphasis></term>
+      <listitem>
+	<para>
+	  If this toggle is on, the analyzer will ignore any compiler or
+	  source language filters built into a FID database.  Matching will be
+	  attempted when a database targets the same processor as the program,
+	  even if it targets different compilers or source languages.
       </para>
       </listitem>
     </varlistentry>
@@ -487,8 +500,36 @@ to populate the database.
       <listitem>
       <para>
       This is the required 4-field Ghidra Language ID (i.e. <emphasis>x86:LE:64:default</emphasis>)
-      specifying exactly what processor the new language will contain. While scanning during ingest,
+      specifying exactly what processor the new library will contain. While scanning during ingest,
       any program that does not match this program model will be automatically skipped.
+      </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis role="bold">Compiler Specs</emphasis></term>
+      <listitem>
+      <para>
+	This is an optional comma separated list of compiler names.  If at least one name is listed,
+	the new library will apply only to programs with a matching compiler specification.
+	Programs without a matching compiler specification will be filtered out during the
+	ingest process and, by default, cannot query against the library.
+	Each name listed must match a compiler specification associated with the selected Language ID. 
+	If no names are listed, any compiler specification is considered matching for the
+	new library, and no programs will be filtered.
+      </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis role="bold">Source Languages</emphasis></term>
+      <listitem>
+      <para>
+	This is an optional comma separated list of names that are compared against a
+	program's "Source Languages" property. If at least one name is listed,
+	the new library will apply only to programs with a matching source language.
+	Programs that do not match  will be filtered out during the
+	ingest process and, by default, cannot query against the library.
+	If no names are listed, any source language is considered matching for the
+	new library, and no programs will be filtered.
       </para>
       </listitem>
     </varlistentry>

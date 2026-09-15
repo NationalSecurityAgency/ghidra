@@ -35,6 +35,7 @@ import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.features.base.memsearch.bytesource.SearchRegion;
 import ghidra.features.base.memsearch.format.SearchFormat;
 import ghidra.features.base.memsearch.gui.*;
+import ghidra.features.base.memsearch.matcher.SearchData;
 import ghidra.features.base.memsearch.searcher.MemoryMatch;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
@@ -122,7 +123,7 @@ public abstract class AbstractMemSearchTest extends AbstractProgramBasedTest {
 		assertEquals("The inner-class has been renamed", "MemoryMatchHighlighter",
 			highlightProvider.getClass().getSimpleName());
 
-		List<MemoryMatch> data = searchProvider.getSearchResults();
+		List<MemoryMatch<SearchData>> data = searchProvider.getSearchResults();
 		return data.stream().map(result -> result.getAddress()).collect(Collectors.toList());
 	}
 

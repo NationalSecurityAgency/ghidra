@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -117,14 +117,14 @@ public class ARMAssemblyTest extends AbstractAssemblyTest {
 
 	@Test
 	public void testAssemble_T_vmov_simd_immed() {
-		assertOneCompatRestExact("vmov.i32 d0,simdExpand(0x0,0x0,0xb1)", "83:ff:11:00", THUMB,
-			0x00010100, "vmov.i32 d0,simdExpand(0x0,0x0,0xb1)");
-		assertOneCompatRestExact("vmov.i16 d0,simdExpand(0x0,0xa,0xb1)", "83:ff:11:0a", THUMB,
-			0x00010100, "vmov.i16 d0,simdExpand(0x0,0xa,0xb1)");
-		assertOneCompatRestExact("vmov.i32 d0,simdExpand(0x0,0xd,0xb1)", "83:ff:11:0d", THUMB,
-			0x00010100, "vmov.i32 d0,simdExpand(0x0,0xd,0xb1)");
-		assertOneCompatRestExact("vmov.i64 d0,simdExpand(0x1,0xe,0xb1)", "83:ff:31:0e", THUMB,
-			0x00010100, "vmov.i64 d0,simdExpand(0x1,0xe,0xb1)");
+		assertOneCompatRestExact("vmov.i32 d0,#0xb1", "83:ff:11:00", THUMB,
+			0x00010100, "vmov.i32 d0,#0xb1");
+		assertOneCompatRestExact("vmov.i16 d0,#0xb100", "83:ff:11:0a", THUMB,
+			0x00010100, "vmov.i16 d0,#0xb100");
+		assertOneCompatRestExact("vmov.i32 d0,#0xb1ffff", "83:ff:11:0d", THUMB,
+			0x00010100, "vmov.i32 d0,#0xb1ffff");
+		assertOneCompatRestExact("vmov.i64 d0,#-0xff0000ffffff01", "83:ff:31:0e", THUMB,
+			0x00010100, "vmov.i64 d0,#-0xff0000ffffff01");
 	}
 
 	@Test

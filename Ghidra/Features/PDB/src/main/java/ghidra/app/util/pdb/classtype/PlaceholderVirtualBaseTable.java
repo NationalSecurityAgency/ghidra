@@ -15,110 +15,76 @@
  */
 package ghidra.app.util.pdb.classtype;
 
-import java.util.*;
+import java.util.List;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
+import ghidra.program.model.gclass.ClassID;
 
 /**
  * Virtual Base Table without a program
  */
 public class PlaceholderVirtualBaseTable extends VirtualBaseTable {
 
-	private int entrySize;
-
-	private int maxIndexSeen = -1;
-	private Map<Integer, VBTableEntry> entriesByIndex = new HashMap<>();
-
 	/**
 	 * Constructor
 	 * @param owner the class that owns the table
 	 * @param parentage the parentage of the base class(es) of the table
-	 * @param entrySize the size of the index field for each table entry as it would be in memory
 	 */
-	public PlaceholderVirtualBaseTable(ClassID owner, List<ClassID> parentage, int entrySize) {
+	public PlaceholderVirtualBaseTable(ClassID owner, List<ClassID> parentage) {
 		super(owner, parentage);
-		if (entrySize != 4 && entrySize != 8) {
-			throw new IllegalArgumentException("Invalid size (" + entrySize + "): must be 4 or 8.");
-		}
-		this.entrySize = entrySize;
 	}
 
-	/*
-	 * For the next method below... once we determine the number of virtual bases (virtual and
-	 * indirect virtual) for each class (from PDB or other), we can determine the number of
-	 * entries in each VBT.  For a VBT for the main class, the number is equal... if for some
-	 * parentage, then the number can reflect the number of the parent.
-	 * TODO: can VBT overlay/extend one from parent????????????????????????????????????????????
-	 */
-	/**
-	 * TBD: need to determine table size to do this.  Might want to place a symbol (diff method?).
-	 */
-	void createTableDataType(int numEntries) {
-
-	}
-
-	int getMaxIndex() {
-		return maxIndexSeen;
-	}
-
-	public void setBaseClassOffsetAndId(int index, Long offset, ClassID baseId) {
-		VBTableEntry entry = entriesByIndex.get(index);
+	public void setBaseClassOffsetAndId(int tableIndex, Long offset, ClassID baseId) {
+		PlaceholderVirtualBaseTableEntry entry = entry(tableIndex);
 		if (entry == null) {
-			entry = new VirtualBaseTableEntry(offset, baseId);
-			entriesByIndex.put(index, entry);
+			entry = new PlaceholderVirtualBaseTableEntry(offset, baseId);
+			entryByTableIndex.put(tableIndex, entry);
+			maxTableIndexSeen = Integer.max(maxTableIndexSeen, tableIndex);
 		}
 		else {
 			entry.setOffset(offset);
 			entry.setClassId(baseId);
 		}
-		maxIndexSeen = Integer.max(maxIndexSeen, index);
 	}
 
-	public void setBaseClassId(int index, ClassID baseId) {
-		VBTableEntry entry = entriesByIndex.get(index);
+	public void setBaseOffset(int tableIndex, Long offset) {
+		PlaceholderVirtualBaseTableEntry entry = entry(tableIndex);
 		if (entry == null) {
-			entry = new VirtualBaseTableEntry(baseId);
-			entriesByIndex.put(index, entry);
-		}
-		else {
-			entry.setClassId(baseId);
-		}
-		maxIndexSeen = Integer.max(maxIndexSeen, index);
-	}
-
-	public void setBaseOffset(int index, Long offset) {
-		VBTableEntry entry = entriesByIndex.get(index);
-		if (entry == null) {
-			entry = new VirtualBaseTableEntry(offset);
-			entriesByIndex.put(index, entry);
+			entry = new PlaceholderVirtualBaseTableEntry(offset);
+			entryByTableIndex.put(tableIndex, entry);
+			maxTableIndexSeen = Integer.max(maxTableIndexSeen, tableIndex);
 		}
 		else {
 			entry.setOffset(offset);
 		}
-		maxIndexSeen = Integer.max(maxIndexSeen, index);
 	}
 
 	@Override
-	public Long getBaseOffset(int index) throws PdbException {
-		VBTableEntry entry = entriesByIndex.get(index);
+	public PlaceholderVirtualBaseTableEntry getEntry(int tableIndex) {
+		return (PlaceholderVirtualBaseTableEntry) entryByTableIndex.get(tableIndex);
+	}
+
+	@Override
+	public Long getBaseOffset(int tableIndex) throws PdbException {
+		PlaceholderVirtualBaseTableEntry entry = entry(tableIndex);
 		Long offset = (entry == null) ? null : entry.getOffset();
-		maxIndexSeen = Integer.max(maxIndexSeen, index);
 		return offset;
 	}
 
 	@Override
-	public ClassID getBaseClassId(int index) {
-		VBTableEntry entry = entriesByIndex.get(index);
-		ClassID id = (entry == null) ? null : entry.getClassId();
-		maxIndexSeen = Integer.max(maxIndexSeen, index);
-		return id;
+	protected PlaceholderVirtualBaseTableEntry getNewEntry(ClassID baseId) {
+		return new PlaceholderVirtualBaseTableEntry(baseId);
 	}
 
-	@Override
-	public VBTableEntry getBase(int index) throws PdbException {
-		VBTableEntry entry = entriesByIndex.get(index);
-		if (entry != null) {
-			maxIndexSeen = Integer.max(maxIndexSeen, index);
+	private PlaceholderVirtualBaseTableEntry entry(int tableIndex) {
+		return (PlaceholderVirtualBaseTableEntry) entryByTableIndex.get(tableIndex);
+	}
+
+	private PlaceholderVirtualBaseTableEntry existing(int tableIndex) throws PdbException {
+		PlaceholderVirtualBaseTableEntry entry = entry(tableIndex);
+		if (entry == null) {
+			throw new PdbException(
+				"No entry in Virtual Base Table for table index: " + tableIndex);
 		}
 		return entry;
 	}

@@ -22,14 +22,13 @@ import docking.action.KeyBindingData;
 import docking.action.ToolBarData;
 import generic.theme.GIcon;
 import ghidra.app.plugin.core.decompiler.taint.TaintPlugin;
-import ghidra.app.plugin.core.decompiler.taint.TaintState;
 import ghidra.app.plugin.core.decompiler.taint.TaintState.QueryType;
 
 public class TaintQueryDefaultAction extends TaintAbstractQueryAction {
 
 	public TaintQueryDefaultAction(TaintPlugin plugin) {
 		super(plugin, "DefaultQuery", "Default Taint Query", "Run default taint query");
-		executeTaintQueryIconString = "icon.version.tracking.markup.status.conflict";
+		executeTaintQueryIconString = "icon.plugin.decompiler.taint.default.query";
 		executeTaintQueryIcon = new GIcon(executeTaintQueryIconString);
 		queryType = QueryType.DEFAULT;
 

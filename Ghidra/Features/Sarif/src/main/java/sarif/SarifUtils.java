@@ -92,6 +92,31 @@ public class SarifUtils {
 		return locations;
 	}
 
+	public static JsonArray setLocation(Address addr, String kind, String uri, String name, String fqname, int index) {
+		JsonArray locations = new JsonArray();
+		JsonObject element = new JsonObject();
+		locations.add(element);
+		JsonObject ploc = new JsonObject();
+		JsonArray lloc = new JsonArray();
+		element.add("physicalLocation", ploc);
+		element.add("logicalLocations", lloc);
+		JsonObject artifact = new JsonObject();
+		artifact.addProperty("uri", uri);
+		JsonObject address = new JsonObject();
+		ploc.add("artifactLocation", artifact);
+		ploc.add("address", address);
+		address.addProperty("absoluteAddress", addr.getOffset());
+		if (name != null) {
+			address.addProperty("name", name);
+		}
+		address.addProperty("kind", kind);
+		address.addProperty("fullyQualifiedName", fqname);
+		JsonObject ll = new JsonObject();
+		lloc.add(ll);
+		ll.addProperty("index", index);
+		return locations;
+	}
+
 	@SuppressWarnings("unchecked")
 	public static AddressSet getLocations(Map<String, Object> result, Program program, AddressSet set)
 			throws AddressOverflowException {
@@ -119,9 +144,9 @@ public class SarifUtils {
 	}
 
 	public static Address locationToAddress(Location location, Program program, boolean useOverlays) {
-		if (!populating) {
-			throw new RuntimeException("Locations valid only during population phase");
-		}
+		//if (!populating) {
+		//	Msg.warn(program, "Locations valid only during population phase");
+		//}
 		Long addr = -1L;
 		PhysicalLocation physicalLocation = location.getPhysicalLocation();
 		if (location.getPhysicalLocation() != null) {
@@ -243,7 +268,7 @@ public class SarifUtils {
 			}
 			addr = subparts[0];
 		}
-		return program.getAddressFactory().getAddress(addr);
+		return addr == null ? null : program.getAddressFactory().getAddress(addr);
 	}
 
 	public static List<Address> extractFQNameAddrPair(Program program, String fqname) {
@@ -349,18 +374,21 @@ public class SarifUtils {
 	}
 
 	public static void validateRun(Run run) {
-		if (!run.equals(currentRun) || llocs == null) {
-			initRun(run);
-		}
+		initRun(run);
 	}
 
 	private static void initRun(Run run) {
+		edgeDescs.clear();
+		edgeSrcs.clear();
+		edgeDsts.clear();
 		currentRun = run;
 		addresses = run.getAddresses();
-		for (com.contrastsecurity.sarif.Address sarifAddr : addresses) {
-			Long offset = sarifAddr.getAbsoluteAddress();
-			String fqname = sarifAddr.getFullyQualifiedName();
-			nameToOffset.put(fqname, offset);
+		if (addresses != null) {
+			for (com.contrastsecurity.sarif.Address sarifAddr : addresses) {
+				Long offset = sarifAddr.getAbsoluteAddress();
+				String fqname = sarifAddr.getFullyQualifiedName();
+				nameToOffset.put(fqname, offset);
+			}
 		}
 		Set<LogicalLocation> runLocs = run.getLogicalLocations();
 		if (runLocs != null) {
@@ -368,40 +396,42 @@ public class SarifUtils {
 			runLocs.toArray(llocs);
 		}
 		Set<Graph> rgraphs = run.getGraphs();
-		for (Graph rg : rgraphs) {
-			Set<Edge> edges = rg.getEdges();
-			for (Edge e : edges) {
-				String id = e.getId();
-				String src = e.getSourceNodeId();
-				String dst = e.getTargetNodeId();
-				String desc = e.getLabel().getText();
-				edgeSrcs.put(id, src);
-				edgeDsts.put(id, dst);
-				Set<String> set = edgeDescs.get(desc);
-				if (set == null) {
-					set = new HashSet<>();
-					edgeDescs.put(desc, set);
-				}
-				set.add(id);
-			}
-			Set<Node> nodes = rg.getNodes();
-			for (Node n : nodes) {
-				String id = n.getId();
-				Location loc = n.getLocation();
-				if (loc != null) {
-					Set<LogicalLocation> logicalLocations = loc.getLogicalLocations();
-					LogicalLocation[] nodells = new LogicalLocation[logicalLocations.size()];
-					int i = 0;
-					for (LogicalLocation ll : logicalLocations) {
-						// NB: These have to be derefenced immediately as they will be invalid for subsequent queries
-						if (ll.getFullyQualifiedName() != null) {
-							nodells[i++] = ll;
-						}
-						else {
-							nodells[i++] = llocs[ll.getIndex().intValue()];
-						}
+		if (rgraphs != null) {
+			for (Graph rg : rgraphs) {
+				Set<Edge> edges = rg.getEdges();
+				for (Edge e : edges) {
+					String id = e.getId();
+					String src = e.getSourceNodeId();
+					String dst = e.getTargetNodeId();
+					String desc = e.getLabel().getText();
+					edgeSrcs.put(id, src);
+					edgeDsts.put(id, dst);
+					Set<String> set = edgeDescs.get(desc);
+					if (set == null) {
+						set = new HashSet<>();
+						edgeDescs.put(desc, set);
 					}
-					nodeLocs.put(id, nodells);
+					set.add(id);
+				}
+				Set<Node> nodes = rg.getNodes();
+				for (Node n : nodes) {
+					String id = n.getId();
+					Location loc = n.getLocation();
+					if (loc != null) {
+						Set<LogicalLocation> logicalLocations = loc.getLogicalLocations();
+						LogicalLocation[] nodells = new LogicalLocation[logicalLocations.size()];
+						int i = 0;
+						for (LogicalLocation ll : logicalLocations) {
+							// NB: These have to be derefenced immediately as they will be invalid for subsequent queries
+							if (ll.getFullyQualifiedName() != null) {
+								nodells[i++] = ll;
+							}
+							else {
+								nodells[i++] = llocs[ll.getIndex().intValue()];
+							}
+						}
+						nodeLocs.put(id, nodells);
+					}
 				}
 			}
 		}
@@ -424,6 +454,10 @@ public class SarifUtils {
 		if (offset == null) {
 			return null;
 		}
+		return getAddress(program, offset);
+	}
+
+	public static Address getAddress(Program program, Long offset) {
 		return program.getAddressFactory().getDefaultAddressSpace().getAddress(offset);
 	}
 

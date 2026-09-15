@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,6 +69,7 @@ class PropertyManagerTableModel extends AbstractTableModel {
 	/*
 	 * @see javax.swing.table.TableModel#getColumnCount()
 	 */
+	@Override
 	public int getColumnCount() {
 		return 1;
 	}
@@ -77,6 +77,7 @@ class PropertyManagerTableModel extends AbstractTableModel {
 	/*
 	 * @see javax.swing.table.TableModel#getRowCount()
 	 */
+	@Override
 	public synchronized int getRowCount() {
 		if (propertyNames != null) {
 			return propertyNames.length;	
@@ -95,6 +96,7 @@ class PropertyManagerTableModel extends AbstractTableModel {
 	/*
 	 * @see javax.swing.table.TableModel#getValueAt(int, int)
 	 */
+	@Override
 	public synchronized Object getValueAt(int rowIndex, int columnIndex) {
 		if (propertyNames != null && rowIndex < propertyNames.length) {	
 			return propertyNames[rowIndex];

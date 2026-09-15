@@ -1,0 +1,134 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Abstract Interpretation: LiSA</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="LisaPlugin"></A>Abstract Interpretation: LiSA</H1>
+
+    <P>The Lisa Plugin uses the "Library for Static Analysis", <B>LiSA</B>, developed and maintained
+		by the Software and System Verification (SSV) group at Universita Ca' Foscari in Venice, Italy,
+		(lisa-analyzer.github.io), to implement and run static analyzers based on the theory of Abstract Interpretation.
+	</P>
+
+    <H2>Setup</H2>
+
+    <P>If MavenCentral is accessible, the gradle build command will download the requisite LiSA libraries.
+		Otherwise, you should install them and add them to the relevant build paths. Add the Lisa and 
+		Taint plugins to your project in the usual way. (The various analyses are started using the 
+		"default taint query" button in Decompiler.)
+	</P>
+
+    <H2>Options</H2>
+
+	<P>The analysis to run is chosen via the Edit &rarr; ToolOptions, which gives you a default category
+		<B>Abstract Interpretation</B> and two subcategories <B>Abstract Interpretation/Domains</B> and 
+		<B>Abstract Interpretation/Output</B>.  <B>Domains</b> is the most important of these, as it provides the list of available analyses.
+	</P>
+
+	<P>
+ 	 <B>Domains</B> has three options, corresponding to the choice of <B>Heap</B>, <B>Type</B>, and <B>Value</B> domains,
+	 the last being the option you are most likely to want to change.  
+	 </P>
+	  <UL>
+	  <LI><B>Heap<A name="domain_heap"></A></B>: the abstraction used to model the target program's heap.</LI>
+	  <LI><B>Type<A name="domain_type"></A></B>: the abstraction used to model types.</LI>
+	  <LI><B>Value<A name="domain_value"></A></B>: the abstraction used to model values. &larr; </LI>	  
+	  </UL>
+	  <P>
+	  The symbolic state of an analysis is the combination of these domains.
+	</P>
+	
+	<P>
+	 <B>Output</B> has several options (not well-tested), which correspond to fields in the LiSAConfiguration class.
+	 </P>
+	  <UL>
+	  <LI><B>WorkDir<A name="work_dir"></A></B>: the working directory to be used for output if <B>SerializeResults</B> is selected.</LI>
+	  <LI><B>GraphFormat<A name="graph_format"></A></B>: graph format if graph output is desired.</LI>
+	  <LI><B>SerializeResults<A name="serialize"></A></B>: causes the analysis results to be dumped as JSON.</LI>	  
+	  </UL>
+
+	  <P>
+	   <B>Abstract Interpretation</B> (the base option set) has additional execution-related options, associated again with LiSAConfiguration.
+	   </P>
+	    <UL>
+	    <LI><B>CallGraph<A name="call_graph"></A></B>: "Class Hierarchy" or "Rapid Type" analysis of calls.</LI>
+		<LI><B>DescendingPhase<A name="descending_phase"></A></B>: the descending phase applied by the fixpoint algorithm.</LI>
+		<LI><B>Interprocedural<A name="interprocedural"></A></B>: type of interprocedural analysis desired.</LI>
+		<LI><B>OpenCallPolicy<A name="open_call_policy"></A></B>: how to treat unresolved calls.</LI>
+		<LI><B>OptimizeResults<A name="optimize"></A></B>: whether to optimize fixpoint execution.</LI>	  
+		<LI><B>PostState<A name="post_state"></A></B>: evaluate state post- or pre-statement.</LI>	  
+		<LI><B>CallDepth<A name="call_depth"></A></B>: cfg-computation depth (-1 == unlimited).</LI>	  
+		<LI><B>Threshhold<A name="threshhold"></A></B>: applied to either widening or glb.</LI>	  
+	    </UL>
+	  <P>
+		For the most part, these options may be left to their defaults.  However, specific analyses may benefit from different choices.
+	  </P>
+
+	  <H2>Actions</H2>
+
+	  <H3><A name="add_cfgs">Add CFGs</A></H3>
+	  <P>By default, an analysis uses the current function and its callees as the basis for the analysis. Under certain circumstances,
+		you may want to add additional functions to the base. This action generates control-flow graphs for the current function and its
+		descendants without invoking a particular analysis.
+	  </P>
+
+	  <H3><A name="clear_cfgs">Clear CFGs</A></H3>
+	  <P>Successive analyses will add to the set of control-flow graphs under consideration without clearing the previous results.
+		To clear previous CFGs, you must explicitly do so. This action removes all active CFGs.
+	  </P>
+
+	  <H3><A name="set_taint">Set Taint</A></H3>
+	  <P>For the "Taint" and "ThreeLevelTaint" analyses, you will need to specify sources of taint. There are two ways to do this.
+		From the decompiler, you may use the normal taint analysis functions (or this action) to specify <B>SOURCES</B> of taint. 
+		(<B>SINKS</B> and <B>GATES</B> may also be used, but be aware they currently correspond only to "clean" annotations in LiSA.)  
+		Alternatively, from the disassembly view, you may use this action on a line of PCode to mark an input to the op, or on a line
+		of disassembly to get a dialog for entering the varnode ID by hand.  The varnode should be specified using its address, e.g.
+		"register:00000000" for RAX.
+	  </P>
+
+	  <P>Using either method may be imprecise. In particular, the analysis currently uses the low PCode, so tokens selected in the
+		decompiler (high PCode) may or may not have an equivalent. Similarly, varnodes marked in the disassembly are inputs only.
+		Marking an input as a source does not mark it as tainted in the analysis' state.  In most cases, the resulting output will 
+		be tainted, but not future references to the input, e.g. "(unique:5) INT_ADD (register:4), 0x12" taints future references 
+		to (unique:5) but not to (register:4).
+	  </P>
+
+	  <H2>Current Analyses (Value Domains)</H2>
+	  <UL>
+		<LI><B>Numeric: Constant Propagation</B>: overflow-insensitive basic constant propagation.</LI>
+		<LI><B>Numeric: Interval</B>: approximating numeric values as the minimum interval containing them.</LI>
+		<LI><B>Numeric: Non-redundant Power Sets Of Intervals</B>: approximating numeric values as a non-redundant set of intervals.</LI>
+		<LI><B>Numeric: Parity</B>: tracking whether numeric values are even or odd.</LI>
+		<LI><B>Numeric: Pentagon</B>: capturing properties of the form of x in [a, b] &and; x &lt; y.</LI>
+		<LI><B>Numeric: Sign</B>: tracking zero, strictly positive and strictly negative values.</LI>
+		<LI><B>Numeric: Upper Bound</B>: capturing upper bounds on a variable.</LI>
+		<LI><B>Dataflow: Available Expressions</B>: expressions stored in some variable.</LI>
+		<LI><B>Dataflow: Constant Propagation</B>: overflow-insensitive basic constant propagation.</LI>
+		<LI><B>Dataflow: Reaching Definitions</B>: instruction whose targets reach the given one without an intervening assignment.</LI>
+		<LI><B>Dataflow: Liveness</B>: variables that are live at each point in the program.
+			 NB: typically uses the BackwardModularWorstCase interprocedural analysis.</LI>
+		<LI><B>Dataflow: Taint</B>: two levels of taintedness - clean and tainted. See above re setting taint.</LI>
+		<LI><B>Dataflow: Three-level Taint</B>: three levels of taintedness - clean, tainted, and top. See above re setting taint.</LI>
+		<LI><B>Non-interference</B>: type-system based implementation of non-interference analysis.</LI>
+		<LI><B>Stability</B>: per-variable numerical trends.</LI>
+	  </UL>
+	  <P>Note: with the exception of reaching, liveness, and non-interference domains, these domains have been extended (to a greater or lesser extent)
+		to handle p-code. Modifications may not be in sync with the latest domain definitions in the original LiSA analysis archive.
+	  </P>
+
+	  <H2>Results</H2>
+	
+	  <P>Results are passed, by default, via SARIF to a results table. The functionality of the table is described in more detail
+		in <A href="help/topics/DecompilerTaint/DecompilerTaint.html#ResultMenuActions">Decompiler Taint Operations</A>. In general, you'll want to enable the "name", "type", "value",
+		and "displayName" columns, as well as "Address" and possibly "location".
+	  </P>
+  </BODY>
+</HTML>

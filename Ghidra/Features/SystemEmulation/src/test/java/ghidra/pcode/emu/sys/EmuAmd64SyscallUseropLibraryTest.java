@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,8 @@
  */
 package ghidra.pcode.emu.sys;
 
-import static ghidra.pcode.emu.sys.EmuSyscallLibrary.*;
-import static org.junit.Assert.*;
+import static ghidra.pcode.emu.sys.EmuSyscallLibrary.SYSCALL_SPACE_NAME;
+import static org.junit.Assert.assertEquals;
 
 import org.junit.*;
 
@@ -26,8 +26,7 @@ import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.emu.*;
 import ghidra.pcode.exec.*;
-import ghidra.pcode.exec.PcodeArithmetic.Purpose;
-import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
+import ghidra.pcode.exec.SleighPcodeUseropDefinition.BuilderStage1;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataTypeConflictHandler;
 import ghidra.program.model.data.PointerDataType;
@@ -44,26 +43,25 @@ public class EmuAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadlessInte
 
 	/**
 	 * A library with two 4-argument syscalls.
-	 * 
 	 * <p>
 	 * For x86:LE:64:default:gcc, the storage for the 4th argument varies by calling convention. For
-	 * __stdcall, it's RCX. For syscall, it's R10. Both syscalls just return the 4th argument. Thus,
-	 * it's possible to detect whether the emulator heeds conventions by binding each to a different
-	 * convention, then invoking them with distinct values placed in RCX and R10 and verifying that
-	 * the correct value shows in RAX, the return register.
+	 * {@code __stdcall}, it's RCX. For syscall, it's R10. Both syscalls just return the 4th
+	 * argument. Thus, it's possible to detect whether the emulator heeds conventions by binding
+	 * each to a different convention, then invoking them with distinct values placed in RCX and R10
+	 * and verifying that the correct value shows in RAX, the return register.
 	 */
-	protected final class SyscallTestUseropLibrary
+	protected static final class SyscallTestUseropLibrary
 			extends AnnotatedEmuSyscallUseropLibrary<byte[]> {
-		protected final Register regRAX;
 
 		public SyscallTestUseropLibrary(PcodeMachine<byte[]> machine, Program program) {
 			super(machine, program);
-			regRAX = machine.getLanguage().getRegister("RAX");
 		}
 
-		@Override
-		public long readSyscallNumber(PcodeExecutorState<byte[]> state, Reason reason) {
-			return machine.getArithmetic().toLong(state.getVar(regRAX, reason), Purpose.OTHER);
+		@PcodeUserop
+		public SleighPcodeUseropDefinition syscall(BuilderStage1 builder) {
+			return builder.params().body(_ -> """
+					RAX = emu_syscall(RAX);
+					""").build();
 		}
 
 		@PcodeUserop
@@ -76,11 +74,6 @@ public class EmuAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadlessInte
 		@EmuSyscall("syscall1")
 		public byte[] test_syscall1(byte[] arg0, byte[] arg1, byte[] arg2, byte[] arg3) {
 			return arg3;
-		}
-
-		@Override
-		public boolean handleError(PcodeExecutor<byte[]> executor, PcodeExecutionException err) {
-			return false;
 		}
 	}
 
@@ -129,7 +122,7 @@ public class EmuAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadlessInte
 		start = space.getAddress(0x00400000);
 		size = 0x1000;
 
-		try (Transaction tx = program.openTransaction("Initialize")) {
+		try (Transaction _ = program.openTransaction("Initialize")) {
 			block = program.getMemory()
 					.createInitializedBlock(".text", start, size, (byte) 0, TaskMonitor.DUMMY,
 						false);
@@ -178,29 +171,36 @@ public class EmuAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadlessInte
 
 	@Test
 	public void testSyscallWithStdcallConvention() throws Exception {
-		try (Transaction tx = program.openTransaction("Initialize")) {
+		try (Transaction _ = program.openTransaction("Initialize")) {
 			asm.assemble(start,
 				"MOV RAX,0",
-				"MOV RCX,0xbeef",
+				"MOV RCX,0xbeef", // Will be clobbered with RIP by SYSCALL
 				"MOV R10,0xdead",
 				"SYSCALL");
 		}
+
+		/**
+		 * This test is a bit nonsensical, because the calling conventions will cause parameters to
+		 * get pulled from registers that get clobbered by the SYSCALL, per the ISA description, not
+		 * just convention. Still, I want to test that the emulator obeys the assigned calling
+		 * convention.
+		 */
 
 		SyscallTestPcodeEmulator emu = prepareEmulator();
 		PcodeThread<byte[]> thread = launchThread(emu, start);
 
 		thread.stepInstruction(4);
 
-		assertArrayEquals(arithmetic.fromConst(0xbeef, regRAX.getNumBytes()),
-			thread.getState().getVar(regRAX, Reason.INSPECT));
+		assertEquals("400017",
+			thread.getState().inspectRegisterValue(regRAX).getUnsignedValue().toString(16));
 	}
 
 	@Test
 	public void testSyscallWithSyscallConvention() throws Exception {
-		try (Transaction tx = program.openTransaction("Initialize")) {
+		try (Transaction _ = program.openTransaction("Initialize")) {
 			asm.assemble(start,
 				"MOV RAX,1",
-				"MOV RCX,0xdead",
+				"MOV RCX,0xdead", // Will be clobbered with RIP by SYSCALL
 				"MOV R10,0xbeef",
 				"SYSCALL");
 		}
@@ -210,7 +210,7 @@ public class EmuAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadlessInte
 
 		thread.stepInstruction(4);
 
-		assertArrayEquals(arithmetic.fromConst(0xbeef, regRAX.getNumBytes()),
-			thread.getState().getVar(regRAX, Reason.INSPECT));
+		assertEquals("beef",
+			thread.getState().inspectRegisterValue(regRAX).getUnsignedValue().toString(16));
 	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -69,7 +69,7 @@ public class ResourceActionsPlugin extends Plugin {
 
 		new ActionBuilder("Save Image New Format", getName())
 				.withContext(ProgramLocationActionContext.class)
-				.validContextWhen(plac -> plac.getLocation() instanceof ResourceFieldLocation &&
+				.validWhen(plac -> plac.getLocation() instanceof ResourceFieldLocation &&
 					((ResourceFieldLocation) plac.getLocation()).isDataImageResource())
 				.onAction(
 					plac -> saveImageAsNewImage((ResourceFieldLocation) plac.getLocation()))
@@ -78,7 +78,7 @@ public class ResourceActionsPlugin extends Plugin {
 
 		new ActionBuilder("Save Image Original Bytes", getName())
 				.withContext(ProgramLocationActionContext.class)
-				.validContextWhen(plac -> plac.getLocation() instanceof ResourceFieldLocation &&
+				.validWhen(plac -> plac.getLocation() instanceof ResourceFieldLocation &&
 					((ResourceFieldLocation) plac.getLocation()).isDataImageResource())
 				.onAction(
 					plac -> saveImageOriginalBytes((ResourceFieldLocation) plac.getLocation()))

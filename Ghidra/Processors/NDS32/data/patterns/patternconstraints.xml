@@ -1,0 +1,5 @@
+<patternconstraints>
+  <language id="NDS32:*:*:*">
+    <patternfile>nds32_patterns.xml</patternfile>
+  </language>
+</patternconstraints>

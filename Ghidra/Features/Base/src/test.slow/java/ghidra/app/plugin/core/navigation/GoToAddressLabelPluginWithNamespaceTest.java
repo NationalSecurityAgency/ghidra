@@ -185,7 +185,7 @@ public class GoToAddressLabelPluginWithNamespaceTest extends AbstractGhidraHeade
 	}
 
 	private void buildProgram() throws Exception {
-		ToyProgramBuilder builder = new ToyProgramBuilder("Test", false);
+		ToyProgramBuilder builder = new ToyProgramBuilder();
 
 		builder.createMemory("Block1", "0x1000", 1000);
 

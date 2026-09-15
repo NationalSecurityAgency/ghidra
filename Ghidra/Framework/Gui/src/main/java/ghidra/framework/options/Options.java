@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -160,12 +160,17 @@ public interface Options {
 	 * {@link #registerThemeColorBinding(String, String, HelpLocation, String)} or
 	 * {@link #registerThemeFontBinding(String, String, HelpLocation, String)}.
 	 * <P>
-	 * Note: we use a <i>supplier</i> of a custom editor, instead of a custom editor, to avoid
+	 * Note 1: we use a <i>supplier</i> of a custom editor, instead of a custom editor, to avoid
 	 * creating {@link PropertyEditor}s until needed.  This allows us to use the same API in both
 	 * GUI mode and headless mode.  If GUI property editors are created in headless mode, exceptions
 	 * may be thrown.  This API will not use the supplier when in headless mode, this avoiding the
 	 * creation of GUI components.  For this to work correctly, clients using custom property
 	 * editors must defer construction of the editor until the supplier is called.
+	 * <P>
+	 * Note 2: most clients are calling this API on the Swing thread, but that is not a requirement.
+	 * Any clients calling this method not on the Swing thread that also have a custom property 
+	 * editor, need to ensure they create that editor on the Swing thread (this is a Java 
+	 * requirement).
 	 *
 	 * @param optionName the name of the option being registered.
 	 * @param type the OptionType for this options.

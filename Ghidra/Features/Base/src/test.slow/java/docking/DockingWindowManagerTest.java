@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 
-import org.jdom.Element;
+import org.jdom2.Element;
 import org.junit.Test;
 
 import docking.test.AbstractDockingTest;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -76,8 +76,23 @@ class MultiProgramManager implements TransactionListener {
 		};
 	}
 
-	void addProgram(Program p, ProgramLocator locator, int state) {
+	/**
+	 * Add specified program.
+	 * <p>
+	 * NOTE: If this is the first program to be added it will be forced to CURRENT state.
+	 * 
+	 * @param p program to be added
+	 * @param locator program location source information
+	 * @param state initial state
+	 * @return true if program is the current program
+	 */
+	boolean addProgram(Program p, ProgramLocator locator, int state) {
+		if (programMap.isEmpty()) {
+			// Tool does not handle case where single open program is not current program
+			state = ProgramManager.OPEN_CURRENT;
+		}
 		addProgram(new ProgramInfo(p, locator, state != ProgramManager.OPEN_HIDDEN), state);
+		return state == ProgramManager.OPEN_CURRENT;
 	}
 
 	private void addProgram(ProgramInfo programInfo, int state) {

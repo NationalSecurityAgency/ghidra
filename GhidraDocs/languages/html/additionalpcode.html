@@ -354,27 +354,30 @@ interpretation as a data-type changes at this point.
 </table>
 </div></div>
 <p>
-The values <span class="emphasis"><em>position</em></span> and <span class="emphasis"><em>size</em></span> must be constants.
-The least significant <span class="emphasis"><em>size</em></span> bits from input1 are
-inserted into input0, overwriting a range of bits of the same size,
-but leaving any other bits in input0 unchanged. The least significant bit of the overwritten
-range is given by <span class="emphasis"><em>position</em></span>, where bits in index0 are labeled from least significant
-to most significant, starting at 0. The value obtained after this overwriting is returned
-as output.
-Varnodes input0 and output must be the same size and are intended to be the same varnode. 
-The value <span class="emphasis"><em>size</em></span> must be not be bigger than the varnode input1, and
-<span class="emphasis"><em>size</em></span> + <span class="emphasis"><em>position</em></span> must not be bigger than the varnode input0.
+  An <span class="bold"><strong>INSERT</strong></span> operation takes the least significant
+  <span class="emphasis"><em>size</em></span> bits from input1 and inserts them into input0, overwriting
+  a range of bits of the same size, but leaving any other bits in input0 unchanged.
 </p>
 <p>
-This operation is never generated as raw p-code, even though it is equivalent
-to SLEIGH <span class="bold"><strong>bitrange</strong></span> syntax such as input0[10,1] = input1.
+  The least significant bit of the overwritten range is given by <span class="emphasis"><em>position</em></span>,
+  where bits in index0 are labeled from least significant to most significant, starting at 0.
+  The value obtained after this overwriting is returned
+  as output. Varnodes input0 and output must be the same size and are intended to be the same
+  varnode. The values <span class="emphasis"><em>position</em></span> and <span class="emphasis"><em>size</em></span> must be
+  constants. The value <span class="emphasis"><em>size</em></span> must be not be bigger than the varnode input1,
+  and <span class="emphasis"><em>size</em></span> + <span class="emphasis"><em>position</em></span> must not be bigger than the
+  varnode input0.
+</p>
+<p>
+  This operation is never generated as raw p-code, even though it is equivalent
+  to SLEIGH <span class="bold"><strong>bitrange</strong></span> syntax such as input0[10,1] = input1.
 </p>
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="cpui_extract"></a>EXTRACT</h3></div></div></div>
+<a name="cpui_zpull"></a>ZPULL</h3></div></div></div>
 <div class="informalexample"><div class="table">
-<a name="extract.htmltable"></a><table xml:id="extract.htmltable" frame="above" width="80%" rules="groups">
+<a name="zpull.htmltable"></a><table xml:id="zpull.htmltable" frame="above" width="80%" rules="groups">
 <col width="23%">
 <col width="15%">
 <col width="61%">
@@ -401,7 +404,7 @@ to SLEIGH <span class="bold"><strong>bitrange</strong></span> syntax such as inp
 <tr>
   <td align="right">output</td>
   <td></td>
-  <td>Varnode result containing the extracted value.</td>
+  <td>Varnode containing the extracted value as an unsigned integer.</td>
 </tr>
 </tbody>
 <tfoot>
@@ -417,18 +420,87 @@ to SLEIGH <span class="bold"><strong>bitrange</strong></span> syntax such as inp
 </table>
 </div></div>
 <p>
-The values <span class="emphasis"><em>position</em></span> and <span class="emphasis"><em>size</em></span> must be constants.
-The operation extracts <span class="emphasis"><em>size</em></span> bits from input0 and returns it in output.
-The <span class="emphasis"><em>position</em></span> indicates the least significant bit in the range being extracted, with
-the bits in input0 labeled from least to most significant, starting at 0. The varnodes input0 and output
-can be different sizes, and the extracted value is zero extended into output.
-The value <span class="emphasis"><em>size</em></span> must not be bigger than the varnode output, and
-<span class="emphasis"><em>size</em></span> + <span class="emphasis"><em>position</em></span> must not be bigger
-than the varnode input0.
+  A <span class="bold"><strong>ZPULL</strong></span> operation extracts <span class="emphasis"><em>size</em></span> bits
+  from input0 and returns them as an unsigned integer value in output, zero extending the
+  bits to the size of output.
 </p>
 <p>
-This operation is never generated as raw p-code, even though it is equivalent
-to SLEIGH <span class="bold"><strong>bitrange</strong></span> syntax such as output = input0[10,1].
+  The <span class="emphasis"><em>position</em></span> indicates the least significant bit in the range
+  being extracted, with the bits in input0 labeled from least to most significant,
+  starting at 0. The varnodes input0 and output can be different size.
+  The values <span class="emphasis"><em>position</em></span> and <span class="emphasis"><em>size</em></span> must be constants.
+  The value <span class="emphasis"><em>size</em></span> must not be bigger than the varnode output, and
+  <span class="emphasis"><em>size</em></span> + <span class="emphasis"><em>position</em></span> must not be bigger
+  than the varnode input0.
+</p>
+<p>
+  <span class="bold"><strong>ZPULL</strong></span> is never generated as raw p-code, even though it
+  is equivalent to SLEIGH <span class="bold"><strong>bitrange</strong></span> syntax such as
+  output = input0[10,1].
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="cpui_spull"></a>SPULL</h3></div></div></div>
+<div class="informalexample"><div class="table">
+<a name="spull.htmltable"></a><table xml:id="spull.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Parameters</strong></span></td>
+  <td><span class="bold"><strong>Description</strong></span></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td align="right">input0</td>
+  <td></td>
+  <td>Varnode to extract a value from.</td>
+</tr>
+<tr>
+  <td align="right">position</td>
+  <td>(<span class="bold"><strong>constant</strong></span>)</td>
+  <td>Constant indicating the bit position to extract from.</td>
+</tr>
+<tr>
+  <td align="right">size</td>
+  <td>(<span class="bold"><strong>constant</strong></span>)</td>
+  <td>Constant indicating the number of bits to extract.</td>
+</tr>
+<tr>
+  <td align="right">output</td>
+  <td></td>
+  <td>Varnode containing the extracted value as a signed integer</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Semantic statement</strong></span></td>
+  <td></td>
+</tr>
+<tr>
+  <td></td>
+  <td colspan="2"><span class="emphasis"><em>Cannot be explicitly coded.</em></span></td>
+</tr>
+</tfoot>
+</table>
+</div></div>
+<p>
+  An <span class="bold"><strong>SPULL</strong></span> operation extracts <span class="emphasis"><em>size</em></span> bits
+  from input0 and returns them as a signed integer value in output. The value is sign extended
+  to the size of output, duplicating the most significant extracted bit.
+</p>
+<p>
+  The <span class="emphasis"><em>position</em></span> indicates the least significant bit in the range
+  being extracted, with the bits in input0 labeled from least to most significant,
+  starting at 0. The varnodes input0 and output can be different size.
+  The values <span class="emphasis"><em>position</em></span> and <span class="emphasis"><em>size</em></span> must be constants.
+  The value <span class="emphasis"><em>size</em></span> must not be bigger than the varnode output, and
+  <span class="emphasis"><em>size</em></span> + <span class="emphasis"><em>position</em></span> must not be bigger
+  than the varnode input0.
+</p>
+<p>
+  <span class="bold"><strong>SPULL</strong></span> is never generated as raw p-code.
 </p>
 </div>
 </div>

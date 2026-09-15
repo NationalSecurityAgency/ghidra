@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,15 +19,17 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.event.MouseEvent;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.Map.Entry;
 
 import javax.swing.*;
 
 import docking.*;
 import docking.widgets.tabbedpane.DockingTabRenderer;
 import ghidra.framework.client.NotConnectedException;
+import ghidra.framework.main.datatable.ProjectDataTableModel;
 import ghidra.framework.main.datatable.ProjectDataTablePanel;
+import ghidra.framework.main.datatree.DataTreeNode;
 import ghidra.framework.main.datatree.ProjectDataTreePanel;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
@@ -71,6 +73,7 @@ class ProjectDataPanel extends JSplitPane implements ProjectViewListener {
 		readOnlyViews = new HashMap<>(TYPICAL_NUM_VIEWS);
 
 		projectTab = new JTabbedPane(SwingConstants.BOTTOM);
+		projectTab.setName("PROJECT_TABBED_PANE");
 		projectTab.setBorder(BorderFactory.createTitledBorder(BORDER_PREFIX));
 		projectTab.addChangeListener(e -> frontEndPlugin.getTool().contextChanged(null));
 
@@ -143,6 +146,7 @@ class ProjectDataPanel extends JSplitPane implements ProjectViewListener {
 				int index = readOnlyTab.indexOfComponent(dtp);
 				readOnlyTab.setTabComponentAt(index, new DockingTabRenderer(readOnlyTab, viewName,
 					viewName, e -> viewRemoved(dtp, getProjectURL(dtp), true)));
+				readOnlyTab.setTitleAt(index, viewName);
 				readOnlyViews.put(view, dtp);
 			}
 			catch (Exception e) {
@@ -172,6 +176,7 @@ class ProjectDataPanel extends JSplitPane implements ProjectViewListener {
 
 	private void clearReadOnlyViews() {
 		readOnlyTab.removeAll();
+		readOnlyViews.values().forEach(ProjectDataTreePanel::dispose);
 		readOnlyViews.clear();
 		setViewsVisible(false);
 	}
@@ -209,11 +214,15 @@ class ProjectDataPanel extends JSplitPane implements ProjectViewListener {
 		}
 
 		try {
-			// TODO: addProjectView should be done in a model task
+			// Note: addProjectView should be done in a modal task
 			ProjectData projectData = activeProject.addProjectView(projectView, true);
 			if (projectData == null) {
 				return null; // repository connection may have been cancelled
 			}
+
+			// Force refresh to purge any stale data
+			projectData.refresh(true);
+
 			projectManager.rememberViewedProject(projectView);
 			String viewName = projectData.getProjectLocator().getName();
 			final ProjectDataTreePanel newPanel =
@@ -226,6 +235,7 @@ class ProjectDataPanel extends JSplitPane implements ProjectViewListener {
 			int index = readOnlyTab.indexOfComponent(newPanel);
 			readOnlyTab.setTabComponentAt(index, new DockingTabRenderer(readOnlyTab, viewName,
 				viewName, e -> viewRemoved(newPanel, getProjectURL(newPanel), true)));
+			readOnlyTab.setTitleAt(index, viewName);
 			readOnlyTab.setSelectedIndex(0);
 			readOnlyViews.put(projectData.getProjectLocator(), newPanel);
 			setViewsVisible(true);
@@ -355,6 +365,26 @@ class ProjectDataPanel extends JSplitPane implements ProjectViewListener {
 
 		validate();
 
+	}
+
+	void setUseNaturalSort(boolean b) {
+
+		// update the view sorting code and then trigger a reload
+		DataTreeNode.setUseNaturalSort(b);
+		ProjectDataTableModel.setUseNaturalSort(b);
+
+		// the active project 
+		treePanel.reload();
+		tablePanel.reload();
+
+		// read-only views
+		Set<Entry<ProjectLocator, ProjectDataTreePanel>> entries = readOnlyViews.entrySet();
+		for (Entry<ProjectLocator, ProjectDataTreePanel> entry : entries) {
+			ProjectDataTreePanel pdtp = entry.getValue();
+			if (pdtp != null) {
+				pdtp.reload();
+			}
+		}
 	}
 
 	void setBorder(String projectName) {

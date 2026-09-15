@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,6 +40,7 @@ import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.ColorUtils.ColorBlender;
+import ghidra.util.UniversalID;
 import ghidra.util.datastruct.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.SwingUpdateManager;
@@ -70,11 +71,9 @@ public class MarkerManager implements MarkerService {
 	private SwingUpdateManager updater;
 	private GoToService goToService;
 
-	private MarkerMarginProvider primaryMarginProvider;
 	private WeakSet<MarkerMarginProvider> marginProviders =
 		WeakDataStructureFactory.createCopyOnWriteWeakSet();
 
-	private MarkerOverviewProvider primaryOverviewProvider;
 	private WeakSet<MarkerOverviewProvider> overviewProviders =
 		WeakDataStructureFactory.createCopyOnWriteWeakSet();
 
@@ -100,9 +99,6 @@ public class MarkerManager implements MarkerService {
 			overviewProviders.forEach(provider -> provider.repaintPanel());
 			notifyListeners();
 		});
-
-		primaryMarginProvider = createMarginProvider();
-		primaryOverviewProvider = createOverviewProvider();
 
 		Gui.addThemeListener(themeListener);
 	}
@@ -220,8 +216,12 @@ public class MarkerManager implements MarkerService {
 
 	}
 
-	public MarkerMarginProvider getMarginProvider() {
-		return primaryMarginProvider;
+	public boolean contains(ListingMarginProvider provider) {
+		return marginProviders.contains(provider);
+	}
+
+	public boolean contains(ListingOverviewProvider provider) {
+		return overviewProviders.contains(provider);
 	}
 
 	@Override
@@ -231,8 +231,8 @@ public class MarkerManager implements MarkerService {
 		return provider;
 	}
 
-	public OverviewProvider getOverviewProvider() {
-		return primaryOverviewProvider;
+	public void removeProvider(MarkerMarginProvider provider) {
+		marginProviders.remove(provider);
 	}
 
 	@Override
@@ -246,7 +246,6 @@ public class MarkerManager implements MarkerService {
 		Gui.removeThemeListener(themeListener);
 		updater.dispose();
 		markerSetCache.clear();
-		overviewProviders.forEach(provider -> provider.dispose());
 	}
 
 	void navigateTo(Navigatable navigatable, Program program, int x, int y, int viewHeight,
@@ -276,13 +275,13 @@ public class MarkerManager implements MarkerService {
 		entry.paintNavigation(g, panel.getViewHeight(), panel.getWidth(), addrMap);
 	}
 
-	void paintMarkers(Program program, Graphics g, VerticalPixelAddressMap pixmap,
-			AddressIndexMap addrMap) {
+	void paintMarkers(UniversalID ownerId, Program program, Graphics g,
+			VerticalPixelAddressMap pixMap, AddressIndexMap addrMap) {
 		MarkerSetCacheEntry entry = markerSetCache.get(program);
 		if (entry == null) {
 			return;
 		}
-		entry.paintMarkers(g, pixmap, addrMap);
+		entry.paintMarkers(ownerId, g, pixMap, addrMap);
 	}
 
 	void showToolTipPopup(MouseEvent event, String tip) {
@@ -299,10 +298,6 @@ public class MarkerManager implements MarkerService {
 		popupWindow = new PopupWindow(event.getComponent(), toolTip);
 		popupWindow.setWindowName(MarkerManager.POPUP_WINDOW_NAME);
 		popupWindow.showPopup(event);
-	}
-
-	/*testing*/ String generateToolTip(MouseEvent event) {
-		return primaryMarginProvider.generateToolTip(event);
 	}
 
 	List<String> getMarkerTooltipLines(Program program, int y, int x, Address minAddr,
@@ -484,6 +479,7 @@ public class MarkerManager implements MarkerService {
 			if (program == null || program.isClosed()) {
 				return null;
 			}
+
 			MarkerSetCacheEntry entry = map.computeIfAbsent(program, this::newEntry);
 			if (program.isClosed()) {
 				map.remove(program);
@@ -571,13 +567,22 @@ public class MarkerManager implements MarkerService {
 			}
 		}
 
-		void paintMarkers(Graphics g, VerticalPixelAddressMap pixmap, AddressIndexMap addrMap) {
+		void paintMarkers(UniversalID ownerId, Graphics g, VerticalPixelAddressMap pixMap,
+				AddressIndexMap addrMap) {
 			int count = 0;
 			for (MarkerSetImpl markers : markerSets) {
 				count++;
-				if (markers.active) {
-					markers.paintMarkers(g, count++, pixmap, addrMap);
+				if (!markers.active) {
+					continue;
 				}
+
+				UniversalID markerId = markers.getOwnerId();
+				if (markerId != null && markerId != ownerId) {
+					// a non-global marker that does not match the owner being painted
+					continue;
+				}
+
+				markers.paintMarkers(g, count++, pixMap, addrMap);
 			}
 		}
 
@@ -638,4 +643,5 @@ public class MarkerManager implements MarkerService {
 			return new ArrayList<>(markerSets);
 		}
 	}
+
 }

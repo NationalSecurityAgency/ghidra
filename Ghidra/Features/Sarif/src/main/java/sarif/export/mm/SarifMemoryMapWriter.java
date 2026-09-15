@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,6 +52,7 @@ public class SarifMemoryMapWriter extends AbstractExtWriter {
 	private void genMaps(TaskMonitor monitor) throws CancelledException, IOException {
 		monitor.initialize(memory.size());
 		for (Pair<AddressRange, MemoryBlock> m : memory) {
+			monitor.checkCancelled();
 			AddressRange range = m.first;
 			ExtMemoryMap isf = new ExtMemoryMap(m.first, m.second, bytesFile, write);
 			SarifObject sarif = new SarifObject(MemoryMapSarifMgr.SUBKEY, MemoryMapSarifMgr.KEY, getTree(isf),

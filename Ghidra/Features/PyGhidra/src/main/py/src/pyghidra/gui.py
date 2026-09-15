@@ -21,7 +21,7 @@ import platform
 import sys
 import traceback
 from typing import List, NoReturn
-import warnings
+from typing_extensions import deprecated
 
 import pyghidra
 
@@ -153,11 +153,7 @@ def gui(install_dir: Path = None, vm_args: List[str] = None):
         launcher.vm_args += vm_args
     launcher.start()
 
-
+@deprecated("get_current_interpreter has been moved. Please use pyghidra.get_current_interpreter.")
 def get_current_interpreter():
-    warnings.warn(
-        "get_current_interpreter has been moved. Please use pyghidra.get_current_interpreter",
-        DeprecationWarning
-    )
     return pyghidra.get_current_interpreter()
 

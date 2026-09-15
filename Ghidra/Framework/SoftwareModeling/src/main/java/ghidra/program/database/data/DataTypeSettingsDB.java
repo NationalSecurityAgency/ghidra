@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  */
 package ghidra.program.database.data;
 
-import com.google.common.base.Predicate;
+import java.util.function.Predicate;
 
 import ghidra.docking.settings.*;
 import ghidra.program.model.data.*;
@@ -78,12 +78,17 @@ class DataTypeSettingsDB implements Settings {
 	}
 
 	@Override
+	public boolean isImmutableSettings() {
+		return locked;
+	}
+
+	@Override
 	public boolean isChangeAllowed(SettingsDefinition settingsDefinition) {
 		if (locked) {
 			return false;
 		}
 		if (allowedSettingPredicate != null &&
-			!allowedSettingPredicate.apply(settingsDefinition.getStorageKey())) {
+			!allowedSettingPredicate.test(settingsDefinition.getStorageKey())) {
 			return false;
 		}
 		return true;
@@ -113,7 +118,7 @@ class DataTypeSettingsDB implements Settings {
 			return false;
 		}
 		if (name != null && allowedSettingPredicate != null &&
-			!allowedSettingPredicate.apply(name)) {
+			!allowedSettingPredicate.test(name)) {
 			Msg.warn(this, "Ignored disallowed setting '" + name + "'");
 			return false;
 		}
@@ -137,9 +142,8 @@ class DataTypeSettingsDB implements Settings {
 			if (name == null) {
 				nameStr = "s";
 			}
-			Msg.warn(SettingsImpl.class,
-				"Ignored invalid attempt to modify immutable " + typeStr + "component setting" +
-					nameStr);
+			Msg.warn(SettingsImpl.class, "Ignored invalid attempt to modify immutable " + typeStr +
+				"component setting" + nameStr);
 			return false;
 		}
 		return true;

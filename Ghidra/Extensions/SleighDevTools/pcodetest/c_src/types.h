@@ -4,15 +4,17 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 #if defined(__GNUC__) && !defined(__llvm__)
 
 #define HAS_GNU_ATTRIBUTES      1
@@ -82,192 +84,110 @@
 #define IS_COMPILER_UNKNOWN
 #endif
 
-#if defined(IS_COMPILER_UNKNOWN) || defined(IS_COMPILER_PRE48_GCC)
-
-/* Catch specific platforms */
-#ifdef __AVR_ARCH__		/* defined(IS_COMPILER_UNKNOWN) || defined(IS_COMPILER_PRE48_GCC) && defined(__AVR_ARCH__) */
-typedef unsigned char u1;
-typedef signed char i1;
-typedef unsigned short u2;
-typedef signed short i2;
-typedef unsigned long u4;
-typedef signed long i4;
-typedef long long i8;
-typedef unsigned long long u8;
-typedef float f4;
-#ifdef HAS_DOUBLE
-#endif
-typedef i4 size_t;
-#elif __AVR32__
-typedef unsigned char u1;
-typedef signed char i1;
-typedef unsigned short u2;
-typedef signed short i2;
-typedef unsigned int u4;
-typedef signed int i4;
-#ifdef HAS_LONGLONG
-typedef long long i8;
-#endif
-#if defined(HAS_LONGLONG) || defined(HAS__DOUBLE)
-typedef unsigned long long u8;
-#endif
-#ifdef HAS_FLOAT
-typedef float f4;
-#endif
-#ifdef HAS_DOUBLE
-typedef double f8;
-#endif
-
-typedef __SIZE_TYPE__ size_t;
-#else /* defined(IS_COMPILER_UNKNOWN) || defined(IS_COMPILER_PRE48_GCC) && !defined(__AVR_ARCH__) */
-/* This is for non-GNU non CodeComposerStudio generic case. */
-typedef unsigned char u1;
-typedef signed char i1;
-typedef unsigned short u2;
-typedef signed short i2;
-#ifdef INT4_IS_LONG
-typedef unsigned long u4;
-typedef signed long i4;
+#if defined(U1)
+typedef U1 u1;
 #else
-typedef unsigned int u4;
-typedef signed int i4;
-#endif
-#ifdef HAS_LONGLONG
-typedef long long i8;
-#endif
-#if defined(HAS_LONGLONG) || defined(HAS__DOUBLE)
-typedef unsigned long long u8;
-#endif
-#ifdef HAS_FLOAT
-typedef float f4;
-#endif
-#ifdef HAS_DOUBLE
-#ifdef dsPIC30
-typedef long double f8;
-#else
-typedef double f8;
-#endif
-#endif
-
-#ifdef HAS_LONGLONG
-typedef i8 size_t;
-#else
-typedef i4 size_t;
-#endif
-#endif
-
-#endif /* #if defined(IS_COMPILER_UNKNOWN) || defined(IS_COMPILER_PRE48_GCC) */
-
-/* For CodeComposerStudio */
-#if defined(IS_COMPILER_CODECOMPOSERSTUDIO)
-
-#if defined(__MSP430__)		/*  defined(IS_COMPILER_CODECOMPOSERSTUDIO) && defined(__MSP430__)   */
-
-typedef unsigned char u1;
-typedef signed char i1;
-typedef unsigned short u2;
-typedef signed short i2;
-typedef unsigned long u4;
-typedef signed long i4;
-
-#undef HAS_FLOAT
-#undef HAS_DOUBLE
-#undef HAS_LONGLONG
-#undef HAS_GNU_ATTRIBUTES
-
-typedef unsigned int size_t;
-
-#endif /* #if defined(__MSP430__) */
-
-#endif /* #if defined(IS_COMPILER_CODECOMPOSERSTUDIO) */
-
-/* For GNU compilers */
-/* Modern GNU compilers > 4.7 have size macros to uses to give us definitions. */
-
-#if defined(IS_COMPILER_POST48_GCC)
-
-typedef __SIZE_TYPE__ size_t;
-
-typedef __INT8_TYPE__ i1;
-typedef __INT16_TYPE__ i2;
-typedef __INT32_TYPE__ i4;
-#if defined(__INT64_TYPE__)
-#ifdef HAS_LONGLONG
-typedef __INT64_TYPE__ i8;
-#endif
-#endif
-
+#if defined(__UINT8_TYPE__)
 typedef __UINT8_TYPE__ u1;
+#else
+typedef unsigned char u1;
+#endif
+#endif
+
+#if defined(I1)
+typedef I1 i1;
+#else
+#if defined(__INT8_TYPE__)
+typedef __INT8_TYPE__ i1;
+#else
+typedef signed char i1;
+#endif
+#endif
+
+#if defined(U2)
+typedef U2 u2;
+#else
+#if defined(__UINT16_TYPE__)
 typedef __UINT16_TYPE__ u2;
+#else
+typedef unsigned short u2;
+#endif
+#endif
+
+#if defined(I2)
+typedef I2 i2;
+#else
+#if defined(__INT16_TYPE__)
+typedef __INT16_TYPE__ i2;
+#else
+typedef signed short i2;
+#endif
+#endif
+
+#if defined(U4)
+typedef U4 u4;
+#else
+#if defined(__UINT32_TYPE__)
 typedef __UINT32_TYPE__ u4;
+#else
+typedef unsigned long u4;
+#endif
+#endif
+
+#if defined(I4)
+typedef I4 i4;
+#else
+#if defined(__INT32_TYPE__)
+typedef __INT32_TYPE__ i4;
+#else
+typedef signed long i4;
+#endif
+#endif
+
+#if defined(U8)
+typedef U8 u8;
+#else
 #if defined(__UINT64_TYPE__)
 typedef __UINT64_TYPE__ u8;
+#else
+typedef unsigned long long u8;
+#endif
 #endif
 
-#ifdef __SIZEOF_FLOAT__
-#ifdef HAS_FLOAT
+#if defined(I8)
+typedef I8 i8;
+#else
+#if defined(__INT64_TYPE__)
+typedef __INT64_TYPE__ i8;
+#else
+typedef signed long long i8;
+#endif
+#endif
+
+#if defined(F4)
+typedef F4 f4;
+#else
 typedef float f4;
 #endif
-#endif
 
-#ifdef __SIZEOF_DOUBLE__
-#ifdef HAS_DOUBLE
+#if defined(F8)
+typedef F8 f8;
+#else
 typedef double f8;
 #endif
+
+#if defined(F16)
+typedef F16 f16;
+#else
+typedef long double f16;
 #endif
 
-#define TYPES_ARE_DEFINED       1
-#endif /* #if defined(IS_COMPILER_POST48_GCC) */
 
-/* Microsoft VisualC++ compiler */
-#if defined(IS_COMPILER_MSVC)
-
-/* ARM on Visual C++ */
-#if defined(_M_ARM_FP)		/* defined(IS_COMPILER_MSVC) && defined(_M_ARM_FP) */
-typedef unsigned char u1;
-typedef signed char i1;
-typedef unsigned short u2;
-typedef signed short i2;
-typedef unsigned long u4;
-typedef signed long i4;
-
-#undef HAS_FLOAT
-#undef HAS_DOUBLE
-#undef HAS_LONGLONG
-#undef HAS_GNU_ATTRIBUTES
-
-typedef unsigned int size_t;
-
-#endif /* #if defined(IS_COMPILER_MSVC) */
-
-#endif /* #if defined(_M_ARM_FP) */
+#if defined(__SIZE_TYPE__)
+typedef __SIZE_TYPE__ size_t;
+#else
 
 #ifdef IS_COMPILER_LLVM
-typedef unsigned char u1;
-typedef signed char i1;
-typedef unsigned short u2;
-typedef signed short i2;
-typedef unsigned __INT32_TYPE__ u4;
-typedef signed __INT32_TYPE__ i4;
-#ifdef __INT64_TYPE__
-typedef unsigned long long u8;
-typedef signed long long i8;
-#define HAS_LONGLONG
-#else
-#undef  HAS_LONGLONG
-#endif /* LONGLONG */
-#ifdef __SIZEOF_FLOAT__
-typedef float f4;
-#define HAS_FLOAT
-#else
-#undef HAS_FLOAT
-#endif /* FLOAT */
-#ifdef __SIZEOF_DOUBLE__
-typedef double f8;
-#define HAS_DOUBLE
-#else
-#undef HAS_DOUBLE
-#endif /* DOUBLE */
 
 /* __is_identifier __has_feature */
 #ifdef __has_feature		/* LLVM clang magic (see clang docs) */
@@ -290,7 +210,26 @@ typedef i1 size_t;
 #pragma message "has NOT __has_feature"
 #endif /* #ifdef __has_feature */
 
+#else
+
+#if defined(HAS_LONGLONG)
+typedef u8 size_t;
+#else
+typedef u4 size_t;
+#endif /* HAS_LONGLONG */
 #endif /* #ifdef IS_COMPILER_LLVM */
+#endif /* defined(__SIZE_TYPE__) */
+
+
+/* For CodeComposerStudio */
+#if defined(IS_COMPILER_CODECOMPOSERSTUDIO) || defined(IS_COMPILER_MSVC)
+
+#undef HAS_GNU_ATTRIBUTES
+
+#endif /* #if defined(IS_COMPILER_CODECOMPOSERSTUDIO) || defined(IS_COMPILER_MSVC) */
+
+
+
 
 /* Simulated limit.h */
 #define U1_MAX                   0xFF

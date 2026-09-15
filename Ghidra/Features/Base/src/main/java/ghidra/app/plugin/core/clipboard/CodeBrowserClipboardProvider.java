@@ -42,14 +42,13 @@ import ghidra.app.cmd.label.RenameLabelCmd;
 import ghidra.app.plugin.core.codebrowser.CodeViewerActionContext;
 import ghidra.app.services.ClipboardContentProviderService;
 import ghidra.app.util.*;
+import ghidra.app.util.viewer.field.*;
 import ghidra.app.util.viewer.listingpanel.ListingModel;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.options.OptionsChangeListener;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.mem.AddressSourceInfo;
-import ghidra.program.database.symbol.CodeSymbol;
-import ghidra.program.database.symbol.FunctionSymbol;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
@@ -66,7 +65,6 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		implements ClipboardContentProviderService, OptionsChangeListener {
 
 	protected static final PaintContext PAINT_CONTEXT = new PaintContext();
-	private static int[] COMMENT_TYPES = CommentTypes.getTypes();
 
 	public static final ClipboardType ADDRESS_TEXT_TYPE =
 		new ClipboardType(DataFlavor.stringFlavor, "Address");
@@ -82,6 +80,8 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		new ClipboardType(DataFlavor.stringFlavor, "Memory Block Offset");
 	public static final ClipboardType CODE_TEXT_TYPE =
 		new ClipboardType(DataFlavor.stringFlavor, "Formatted Code");
+	public static final ClipboardType CODE_ASM_TYPE =
+		new ClipboardType(DataFlavor.stringFlavor, "Assembly Code");
 	public static final ClipboardType LABELS_COMMENTS_TYPE =
 		new ClipboardType(CodeUnitInfoTransferable.localDataTypeFlavor, "Labels and Comments");
 	public static final ClipboardType LABELS_TYPE =
@@ -104,6 +104,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		List<ClipboardType> list = new LinkedList<>();
 
 		list.add(CODE_TEXT_TYPE);
+		list.add(CODE_ASM_TYPE);
 		list.add(LABELS_COMMENTS_TYPE);
 		list.add(LABELS_TYPE);
 		list.add(COMMENTS_TYPE);
@@ -132,9 +133,9 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 	private String stringContent;
 	private boolean includeQuotesForStringData;
 
-	public CodeBrowserClipboardProvider(PluginTool tool, ComponentProvider codeViewerProvider) {
+	public CodeBrowserClipboardProvider(PluginTool tool, ComponentProvider componentProvider) {
 		this.tool = tool;
-		this.componentProvider = codeViewerProvider;
+		this.componentProvider = componentProvider;
 
 		PAINT_CONTEXT.setTextCopying(true);
 
@@ -142,7 +143,6 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		includeQuotesForStringData =
 			!options.getBoolean(ClipboardPlugin.REMOVE_QUOTES_OPTION, false);
 		options.addOptionsChangeListener(this);
-
 	}
 
 	@Override
@@ -236,12 +236,22 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		if (domainFile == null) {
 			return null;
 		}
-		if (domainFile.getLocalProjectURL(null) != null) {
-			return GHIDRA_LOCAL_URL_TYPE;
+
+		try {
+			if (domainFile.getLocalProjectURL(null) != null) {
+				return GHIDRA_LOCAL_URL_TYPE;
+			}
 		}
+		catch (IllegalArgumentException e) {
+			// this can happen if the filename has characters the GhidraURL doesn't like
+			Msg.debug(this, "Can't create GhidraURL for " + domainFile.getName());
+			return null;
+		}
+
 		if (domainFile.getSharedProjectURL(null) != null) {
 			return GHIDRA_SHARED_URL_TYPE;
 		}
+
 		return null;
 	}
 
@@ -268,6 +278,9 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		}
 		else if (copyType == CODE_TEXT_TYPE) {
 			return copyCode(monitor);
+		}
+		else if (copyType == CODE_ASM_TYPE) {
+			return copyAssembly(monitor);
 		}
 		else if (copyType == LABELS_COMMENTS_TYPE) {
 			return copyLabelsComments(true, true, monitor);
@@ -496,6 +509,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 	protected Transferable copyCode(TaskMonitor monitor) {
 
 		AddressSetView addressSet = getSelectedAddresses();
+
 		ListingModel listingModel = getListingModel();
 		TextLayoutGraphics g = new TextLayoutGraphics();
 		LayoutBackgroundColorManager colorMap =
@@ -524,6 +538,18 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		return createStringTransferable(g.getBuffer());
 	}
 
+	protected Transferable copyAssembly(TaskMonitor monitor) {
+		AddressSetView addressSet = getSelectedAddresses();
+		StringBuilder builder = new StringBuilder();
+
+		for (Instruction ins : currentProgram.getListing().getInstructions(addressSet, true)) {
+			builder.append(ins.toString());
+			builder.append("\n");
+		}
+
+		return createStringTransferable(builder.toString());
+	}
+
 	private Transferable copyByteString(Address address) {
 		AddressSet set = new AddressSet(address);
 		return createStringTransferable(copyBytesAsString(set, false, TaskMonitor.DUMMY));
@@ -540,6 +566,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 
 	/**
 	 * Gets the Local GhidraURL to the currentLocation within the currentProgram.
+	 * 
 	 * @return string transferable GhidraURL type.
 	 */
 	private Transferable copyLocalGhidraURL() {
@@ -550,6 +577,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 
 	/**
 	 * Gets the Shared GhidraURL to the currentLocation within the currentProgram.
+	 * 
 	 * @return string transferable GhidraURL type.
 	 */
 	private Transferable copySharedGhidraURL() {
@@ -736,7 +764,11 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 
 		SymbolTable symbolTable = currentProgram.getSymbolTable();
 		Symbol symbol = symbolTable.getSymbol(reference);
-		if ((symbol instanceof CodeSymbol) || (symbol instanceof FunctionSymbol)) {
+		if (symbol == null) {
+			return false;
+		}
+		SymbolType type = symbol.getSymbolType();
+		if ((type == SymbolType.LABEL) || (type == SymbolType.FUNCTION)) {
 			RenameLabelCmd cmd = new RenameLabelCmd(symbol, labelName, SourceType.USER_DEFINED);
 			return tool.execute(cmd, currentProgram);
 		}
@@ -757,9 +789,11 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		if (currentLocation instanceof CommentFieldLocation) {
 			CommentFieldLocation commentFieldLocation = (CommentFieldLocation) currentLocation;
 			Address address = commentFieldLocation.getAddress();
-			int commentType = commentFieldLocation.getCommentType();
-			SetCommentCmd cmd = new SetCommentCmd(address, commentType, string);
-			return tool.execute(cmd, currentProgram);
+			CommentType commentType = commentFieldLocation.getCommentType();
+			if (commentType != null) {
+				SetCommentCmd cmd = new SetCommentCmd(address, commentType, string);
+				return tool.execute(cmd, currentProgram);
+			}
 		}
 		return false;
 	}
@@ -802,11 +836,10 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 	}
 
 	private void setCommentInfo(CodeUnit cu, CodeUnitInfo info) {
-
-		for (int element : COMMENT_TYPES) {
-			String[] comments = cu.getCommentAsArray(element);
+		for (CommentType type : CommentType.values()) {
+			String[] comments = cu.getCommentAsArray(type);
 			if (comments != null && comments.length > 0) {
-				info.setComment(element, comments);
+				info.setComment(type, comments);
 			}
 		}
 	}
@@ -927,6 +960,15 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		return false;
 	}
 
+	@Override
+	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
+			Object newValue) throws OptionsVetoException {
+		if (optionName.equals(ClipboardPlugin.REMOVE_QUOTES_OPTION)) {
+			includeQuotesForStringData =
+				!options.getBoolean(ClipboardPlugin.REMOVE_QUOTES_OPTION, false);
+		}
+	}
+
 //==================================================================================================
 // Unsupported Operations
 //==================================================================================================
@@ -1024,15 +1066,6 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		@Override
 		public boolean isDataFlavorSupported(DataFlavor flavor) {
 			return flavorList.contains(flavor);
-		}
-	}
-
-	@Override
-	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
-			Object newValue) throws OptionsVetoException {
-		if (optionName.equals(ClipboardPlugin.REMOVE_QUOTES_OPTION)) {
-			includeQuotesForStringData =
-				!options.getBoolean(ClipboardPlugin.REMOVE_QUOTES_OPTION, false);
 		}
 	}
 }
