@@ -202,17 +202,20 @@ def initTestJVM(Task task, String rootDirName) {
 			'-Djdk.attach.allowAttachSelf',
 			'-XX:TieredStopAtLevel=1',
 			
-			// Note: this following arg is needed to enable remote debug.
-			
-			//'-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:' + debugPort,
-			
 			// Allow illegal reflective accesses
 			'--add-opens=java.base/java.util.concurrent=ALL-UNNAMED',
 			'--add-opens=java.desktop/sun.awt=ALL-UNNAMED',
 			'--add-opens=java.desktop/sun.swing=ALL-UNNAMED',
 			'--add-opens=java.desktop/java.awt=ALL-UNNAMED',
 			'--add-opens=java.desktop/javax.swing=ALL-UNNAMED',			
-			'--add-opens=java.desktop/javax.swing.text=ALL-UNNAMED'
+			'--add-opens=java.desktop/javax.swing.text=ALL-UNNAMED',
+			
+			// Enable native an unsafe access
+			'--enable-native-access=ALL-UNNAMED',
+			'--sun-misc-unsafe-memory-access=allow',
+			
+			// Note: this following arg is needed to enable remote debug.
+			//'-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:' + debugPort,
 			
 			// Note: these args are used to speed-up the tests, but are not safe for production code
 			// -noverify and -XX:TieredStopAtLevel=1			
