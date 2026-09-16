@@ -499,9 +499,14 @@ public class UnixAoutHeader implements StructConverter {
 	 * base address of the .text segment when loaded.
 	 */
 	private void determineTextAddr() {
-		txtAddr = (isSparc && exeType == AoutType.NMAGIC) || isNetBSD || exeType == AoutType.QMAGIC
-				? pageSize
-				: 0;
+		final long textStartAddr = isSparc || isNetBSD ? pageSize : 0;
+		final boolean isSunOs = isSparc && !isNetBSD;
+		txtAddr = switch (exeType) {
+			case QMAGIC -> pageSize;
+			case ZMAGIC -> isSunOs && a_entry < textStartAddr ? 0 : textStartAddr;
+			case NMAGIC -> isSunOs ? textStartAddr : 0;
+			default -> 0;
+		};
 	}
 
 	/**
