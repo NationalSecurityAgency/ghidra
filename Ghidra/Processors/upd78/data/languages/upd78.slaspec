@@ -146,6 +146,7 @@ define pcodeop enableMaskableInterrupts;
 define pcodeop halt;
 define pcodeop readInterruptMask;
 define pcodeop setInterruptMask;
+define pcodeop stop;
 
 ################################################################
 # Macros                                                       #
@@ -1551,5 +1552,5 @@ irf: AN7    is irf_0_4 = 0x13 & AN7 { export AN7; }
 }
 
 :STOP is op0_7 = 0x48; op0_7 = 0xbb {
-    halt();
+    stop();
 }
