@@ -4010,10 +4010,10 @@ define pcodeop TaskRegister;
 :MOV Rmr64,Sreg     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x8c; mod=3 & Rmr64 & Sreg    { Rmr64 = zext(Sreg); }
 @endif
 :MOV Sreg,m16       is vexMode=0 & byte=0x8e; (mod != 3 & Sreg) ... & m16                         { Sreg = m16; }
-:MOV Rmr16,Sreg     is vexMode=0 & opsize=0 & byte=0x8e; mod=3 & Rmr16 & Sreg                     { Sreg = Rmr16; }
-:MOV Rmr32,Sreg     is vexMode=0 & opsize=1 & byte=0x8e; mod=3 & Rmr32 & Sreg                     { Sreg = Rmr32(0); }
+:MOV Sreg,Rmr16     is vexMode=0 & opsize=0 & byte=0x8e; mod=3 & Rmr16 & Sreg                     { Sreg = Rmr16; }
+:MOV Sreg,Rmr32     is vexMode=0 & opsize=1 & byte=0x8e; mod=3 & Rmr32 & Sreg                     { Sreg = Rmr32(0); }
 @ifdef IA64
-:MOV Rmr64,Sreg     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x8e; mod=3 & Rmr64 & Sreg    { Sreg = Rmr64(0); }
+:MOV Sreg,Rmr64     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x8e; mod=3 & Rmr64 & Sreg    { Sreg = Rmr64(0); }
 @endif
 :MOV AL,moffs8      is vexMode=0 & byte=0xa0; AL & moffs8               { AL=moffs8; }
 :MOV AX,moffs16     is vexMode=0 & opsize=0 & byte=0xa1; AX & moffs16         { AX=moffs16; }

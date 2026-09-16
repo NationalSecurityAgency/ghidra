@@ -212,6 +212,11 @@ public class x64AssemblyTest extends AbstractAssemblyTest {
 	}
 
 	@Test
+	public void testAssemble_MOV_ES_RDI() {
+		assertOneCompatRestExact("MOV ES,RDI", "48:8e:c7");
+	}
+
+	@Test
 	public void testAssemble_NOP() {
 		assertOneCompatRestExact("NOP", "90");
 	}

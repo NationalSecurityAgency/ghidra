@@ -48,4 +48,19 @@ public class x86AssemblyTest extends AbstractAssemblyTest {
 	public void testAssemble_CALL_0x00401234_at0() {
 		assertOneCompatRestExact("CALL 0x00401234", "e8:2f:12:40:00", 0);
 	}
+
+	@Test
+	public void testAssemble_MOV_ES_EDI() {
+		assertOneCompatRestExact("MOV ES,EDI", "8e:c7");
+	}
+
+	@Test
+	public void testAssemble_MOV_ES_DI() {
+		assertOneCompatRestExact("MOV ES,DI", "66:8e:c7");
+	}
+
+	@Test
+	public void testAssemble_MOV_EDI_ES() {
+		assertOneCompatRestExact("MOV EDI,ES", "8c:c7");
+	}
 }
