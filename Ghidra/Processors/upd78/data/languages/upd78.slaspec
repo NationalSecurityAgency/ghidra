@@ -1061,7 +1061,7 @@ irf: AN7    is irf_0_4 = 0x13 & AN7 { export AN7; }
 }
 
 :ONI r_0_2, imm8 is op0_7 = 0x74; op3_7 = 0x09 & r_0_2; imm8 [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
-    onTest(r_0_2, A);
+    onTest(r_0_2, imm8);
 }
 
 :ONI sr2l_0_2, imm8 is op0_7 = 0x64; op3_7 = 0x09 & sr2l_0_2; imm8 [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
