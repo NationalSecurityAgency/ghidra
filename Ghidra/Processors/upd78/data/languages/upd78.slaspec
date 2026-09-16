@@ -175,7 +175,8 @@ macro addCarry(op1, op2) {
     $(CY_flag) = carry(op1, op2);
     local tempResult = op1 + op2;
     $(CY_flag) = $(CY_flag) || carry(tempResult, Ccopy);
-    result = tempResult + Ccopy;
+    op1 = tempResult + Ccopy;
+    setResultFlags(op1);
 }
 
 # op1 = op1 + op2, skip if no carry
