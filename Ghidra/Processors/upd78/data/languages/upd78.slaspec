@@ -156,7 +156,7 @@ macro setResultFlags(result) {
 }
 
 macro setAddFlags(op1,op2) {
-    local AFmask = -1 >> 4;
+    local AFmask = 0xf;
     $(HC_flag) = (((op1 & AFmask) + (op2 & AFmask)) & (AFmask + 1)) != 0;
     $(CY_flag) = carry(op1,op2);
 }
@@ -170,7 +170,7 @@ macro add(op1, op2) {
 # op1 = op1 + op2 + CY_flag
 macro addCarry(op1, op2) {
     local Ccopy = zext($(CY_flag));
-    local AFmask = -1 >> 4;
+    local AFmask = 0xf;
     $(HC_flag) = (((op1 & AFmask) + (op2 & AFmask) + Ccopy) & (AFmask + 1)) != 0;
     $(CY_flag) = carry(op1, op2);
     local tempResult = op1 + op2;
@@ -195,7 +195,7 @@ macro setSubFlags(op1,op2) {
 
 macro subWithBorrow(op1, op2) {
     local Ccopy = $(CY_flag);
-    local AFmask = -1 >> 4;
+    local AFmask = 0xf;
     $(HC_flag) = (((op1 & AFmask) - (op2 & AFmask) - Ccopy) & (AFmask + 1)) != 0;
     $(CY_flag) = op1 < op2;
     local tempResult = op1 - op2;
@@ -291,7 +291,7 @@ macro pop8(ret8) {
 }
 
 macro add16(op1, op2) {
-    local AFmask:2 = -1 >> 8;
+    local AFmask:2 = 0xf;
     $(HC_flag) = (((op1 & AFmask) + (op2 & AFmask)) & (AFmask + 1)) != 0;
     $(CY_flag) = carry(op1,op2);
     op1 = op1 + op2;
@@ -299,7 +299,7 @@ macro add16(op1, op2) {
 }
 
 macro sub16(op1, op2) {
-     local AFmask = -1 >> 8;
+    local AFmask:2 = 0xf;
     $(HC_flag) = (((op1 & AFmask) - (op2 & AFmask)) & (AFmask + 1)) != 0;
     $(CY_flag) = (op1 < op2);
     op1 = op1 - op2;
@@ -308,7 +308,7 @@ macro sub16(op1, op2) {
 
 macro sub16WithBorrow(op1, op2) {
     local Ccopy:2 = zext($(CY_flag));
-    local AFmask:2 = -1 >> 8;
+    local AFmask:2 = 0xf;
     $(HC_flag) = (((op1 & AFmask) - (op2 & AFmask) - Ccopy) & (AFmask + 1)) != 0;
     $(CY_flag) = op1 < op2;
     local tempResult = op1 - op2;
