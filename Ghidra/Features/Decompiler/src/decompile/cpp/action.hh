@@ -307,6 +307,7 @@ class ActionDatabase {
   static const char universalname[];		///< The name of the \e universal root Action
   void registerAction(const string &nm,Action *act);	///< Register a \e root Action
   void buildDefaultGroups(void);		///< Set up descriptions of preconfigured root Actions
+  void buildAnalysisAction(void);		///< Build the semantic-analysis root Action
   Action *getAction(const string &nm) const;				///< Look up a \e root Action by name
   Action *deriveAction(const string &baseaction,const string &grp);	///< Derive a \e root Action
 public:

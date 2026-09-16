@@ -988,6 +988,7 @@ void ActionDatabase::resetDefaults(void)
   registerAction(universalname, universalAction);
 
   buildDefaultGroups();
+  buildAnalysisAction();
   setCurrent("decompile");	// The default root action
 }
 

@@ -456,6 +456,10 @@ public class DecompInterface {
 	 * <ul>
 	 *   <li>"decompile" - this is the default, and performs all
 	 *      analysis steps suitable for producing C code.</li>
+	 *   <li>"analysis" - performs the semantic analysis used by the default
+	 *      style, including indirect branch and call recovery, but omits
+	 *      presentation-oriented cleanup, variable merging, and control-flow
+	 *      structuring.</li>
 	 *   <li>"normalize" - omits type recovery from the analysis
 	 *      and some of the final clean-up steps involved in
 	 *      making valid C code.  It is suitable for creating
@@ -478,7 +482,7 @@ public class DecompInterface {
 	 * Even after a crash, the new decompiler process will
 	 * automatically configured with the cached style value.
 	 * 
-	 * @param actionstring "decompile"|"normalize"|"register"|"firstpass"|"paramid"
+	 * @param actionstring "decompile"|"analysis"|"normalize"|"register"|"firstpass"|"paramid"
 	 * @return true - if the decompiler process was successfully configured
 	 */
 	public synchronized boolean setSimplificationStyle(String actionstring) {

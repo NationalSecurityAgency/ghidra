@@ -5789,7 +5789,7 @@ int4 ActionInferTypes::apply(Funcdata &data)
   return 0;
 }
 
-/// (Re)build the default \e root Actions: decompile, jumptable, normalize, paramid, register, firstpass
+/// (Re)build the default \e root Actions: decompile, analysis, jumptable, normalize, paramid, register, firstpass
 void ActionDatabase::buildDefaultGroups(void)
 
 {
@@ -5804,6 +5804,9 @@ void ActionDatabase::buildDefaultGroups(void)
 			    "unreachable", "subvar", "floatprecision",
 			    "conditionalexe", "" };
   setGroup("decompile",members);
+  // Run the complete semantic loop but stop before presentation-oriented
+  // cleanup, variable merging, and control-flow structuring.
+  setGroup("analysis",members);
 
   const char *jumptab[] = { "base", "noproto", "localrecovery", "deadcode", "stackptrflow",
 			    "stackvars", "analysis", "segment", "subvar", "normalizebranches", "conditionalexe", "" };
@@ -5830,6 +5833,38 @@ void ActionDatabase::buildDefaultGroups(void)
   setGroup("firstpass",firstmem);
   isDefaultGroups = true;
 }
+/// Build the root Action that performs semantic analysis without presentation transforms.
+///
+/// The complete decompile grouplist is used inside each phase so that the iterative semantic
+/// loop behaves identically to the default style.  The pipeline stops after the loop, before
+/// cleanup, variable merging, and control-flow structuring.
+void ActionDatabase::buildAnalysisAction(void)
+
+{
+  const ActionGroupList &groups(getGroup("analysis"));
+  ActionRestartGroup *analysisAction =
+    new ActionRestartGroup(Action::rule_onceperfunc, "analysis", 1);
+  const char *phases[] = {
+    "start", "constbase", "defaultparams", "extrapopsetup",
+    "prototypetypes", "funclink", "fullloop", "stop", ""
+  };
+  Action *universalAction = getAction(universalname);
+  for(int4 i=0;phases[i][0]!='\0';++i) {
+    Action *source = universalAction->getSubAction(phases[i]);
+    if (source == (Action *)0) {
+      delete analysisAction;
+      throw LowlevelError("Missing analysis action phase: " + string(phases[i]));
+    }
+    Action *phase = source->clone(groups);
+    if (phase == (Action *)0) {
+      delete analysisAction;
+      throw LowlevelError("Excluded analysis action phase: " + string(phases[i]));
+    }
+    analysisAction->addAction(phase);
+  }
+  registerAction("analysis",analysisAction);
+}
+
 
 /// Construct the \b universal Action that contains all possible components
 /// \param conf is the Architecture that will use the Action

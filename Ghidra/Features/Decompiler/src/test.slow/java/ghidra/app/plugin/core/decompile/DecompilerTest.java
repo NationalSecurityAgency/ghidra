@@ -15,12 +15,14 @@
  */
 package ghidra.app.plugin.core.decompile;
 
+import java.util.Iterator;
+
 import org.junit.*;
 
 import ghidra.app.decompiler.*;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.pcode.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.util.task.TaskMonitor;
@@ -33,9 +35,12 @@ public class DecompilerTest extends AbstractGhidraHeadedIntegrationTest {
 	public void setUp() throws Exception {
 
 		ToyProgramBuilder builder = new ToyProgramBuilder();
-		builder.createMemory("test", "0x0", 2);
-		builder.addBytesReturn(0x0);
+		builder.createMemory("test", "0x0", 6);
+		builder.addBytesCall(0x0, 0x4);
+		builder.addBytesReturn(0x2);
+		builder.addBytesReturn(0x4);
 		builder.createFunction("0x0");
+		builder.createFunction("0x4");
 		prog = builder.getProgram();
 
 		decompiler = new DecompInterface();
@@ -57,5 +62,27 @@ public class DecompilerTest extends AbstractGhidraHeadedIntegrationTest {
 			DecompileOptions.SUGGESTED_DECOMPILE_TIMEOUT_SECS, TaskMonitor.DUMMY);
 		String decompilation = decompResults.getDecompiledFunction().getC();
 		Assert.assertNotNull(decompilation);
+	}
+
+	@Test
+	public void testAnalysisStyleReturnsSemanticCallInformation() throws Exception {
+		Assert.assertTrue(decompiler.setSimplificationStyle("analysis"));
+
+		Address entry = prog.getAddressFactory().getDefaultAddressSpace().getAddress(0x0);
+		Function function = prog.getListing().getFunctionAt(entry);
+		DecompileResults results = decompiler.decompileFunction(function,
+			DecompileOptions.SUGGESTED_DECOMPILE_TIMEOUT_SECS, TaskMonitor.DUMMY);
+
+		Assert.assertTrue(results.decompileCompleted());
+		Assert.assertNotNull(results.getHighFunction());
+		Iterator<PcodeOpAST> ops = results.getHighFunction().getPcodeOps();
+		while (ops.hasNext()) {
+			PcodeOpAST op = ops.next();
+			if (op.getOpcode() == PcodeOp.CALL) {
+				Assert.assertEquals(0x4, op.getInput(0).getOffset());
+				return;
+			}
+		}
+		Assert.fail("Analysis style did not recover the direct call");
 	}
 }
