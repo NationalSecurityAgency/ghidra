@@ -2848,12 +2848,9 @@ taken, and a destination annotation.
 </informalexample>
 </para>
 <para>
-As in the above example, the <emphasis>CBRANCH</emphasis> operation
-takes two inputs, a boolean value indicating whether or operation is
-invoked with the <emphasis role="bold">if goto</emphasis> operation
-takes two inputs, a boolean value indicating whether or syntax. The
-condition of the <emphasis role="bold">if</emphasis> operation takes
-two inputs, a boolean value indicating whether or can be any semantic
+As in the above example, the <emphasis>CBRANCH</emphasis> operation is
+invoked with the <emphasis role="bold">if goto</emphasis> syntax. The
+condition of the <emphasis role="bold">if</emphasis> can be any semantic
 expression that results in a boolean value. The destination must be an
 annotation varnode.
 </para>
