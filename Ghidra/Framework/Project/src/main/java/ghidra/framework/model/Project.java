@@ -87,7 +87,7 @@ public interface Project extends AutoCloseable, Iterable<DomainFile> {
 	 * @param visible true if project may be made visible or false if hidden.  Hidden viewed
 	 * projects are used when only life-cycle management is required (e.g., close view project 
 	 * when this project is closed).
-	 * @return project data for this view
+	 * @return project data for this view or null if user cancels operation (e.g., cancels password prompt)
 	 * @throws IOException if this project is closed, an invalid URL is specified, or failed to 
 	 * open/connect to project/repository.
 	 */

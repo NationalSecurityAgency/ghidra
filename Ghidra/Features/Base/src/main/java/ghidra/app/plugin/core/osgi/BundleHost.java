@@ -31,12 +31,14 @@ import org.jgrapht.traverse.TopologicalOrderIterator;
 import org.osgi.framework.*;
 import org.osgi.framework.launch.Framework;
 import org.osgi.framework.wiring.*;
+import org.osgi.service.url.URLStreamHandlerService;
 
 import generic.io.NullPrintWriter;
 import generic.jar.ResourceFile;
 import ghidra.framework.Application;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.protocol.ghidra.*;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskLauncher;
 import ghidra.util.task.TaskMonitor;
@@ -417,10 +419,6 @@ public class BundleHost {
 		// setup the cache path
 		config.setProperty(Constants.FRAMEWORK_STORAGE, makeCacheDir());
 
-		// prevent the use of Felix URL handlers which can interfere with URL.openConnection 
-		// exception handling
-		config.put(FelixConstants.SERVICE_URLHANDLERS_PROP, "false");
-
 		config.put(FelixConstants.LOG_LEVEL_PROP, "1");
 		if (STDERR_DEBUGGING) {
 			config.put(FelixConstants.LOG_LEVEL_PROP, "999");
@@ -481,6 +479,8 @@ public class BundleHost {
 			throw new OSGiException("Felix OSGi framework has no bundle context");
 		}
 
+		registerGhidraProtocolHandler(frameworkBundleContext);
+
 		addDebuggingListeners();
 
 		Bundle bundle = frameworkBundleContext.getBundle();
@@ -519,6 +519,23 @@ public class BundleHost {
 		catch (BundleException | InterruptedException e) {
 			Msg.error(this, "Failed to stop OSGi framework.", e);
 		}
+	}
+
+	/**
+	 * Install Ghidra URL stream handler service to force standard use of {@code ghidra} protocol 
+	 * {@link Handler}.  This bypasses the improper IOException propagation caused by 
+	 * {@code URLHandlersStreamHandlerProxy.openConnection(URL)} which forces itself to
+	 * act as a proxy for all normal protocol handlers.
+	 *
+	 * @param context OSGI Bundle context
+	 */
+	private void registerGhidraProtocolHandler(BundleContext context) {
+		Hashtable<String, Object> properties = new Hashtable<>();
+		properties.put("url.handler.protocol", new String[] { GhidraURL.PROTOCOL });
+		context.registerService(
+			URLStreamHandlerService.class.getName(),
+			new GhidraOSGIStreamHandler(),
+			properties);
 	}
 
 	/**

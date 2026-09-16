@@ -23,6 +23,8 @@ import java.util.*;
 
 import javax.swing.event.ChangeListener;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.google.gson.*;
 
 import ghidra.framework.Application;
@@ -112,6 +114,10 @@ public class UrlAllowListManager {
 	 * @return true if server access is allowed, false if disallowed, null if no server entry was found
 	 */
 	public static synchronized Boolean getAccess(String protocol, String host, int port) {
+
+		if (StringUtils.isBlank(protocol) || StringUtils.isBlank(host)) {
+			return false;
+		}
 
 		// Always allow access to localhost if alwaysAllowLocalAccess is true
 		if (alwaysAllowLocalAccess && ("localhost".equals(host) || "127.0.0.1".equals(host))) {

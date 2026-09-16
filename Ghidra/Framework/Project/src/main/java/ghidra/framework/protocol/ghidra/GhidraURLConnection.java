@@ -51,6 +51,10 @@ public class GhidraURLConnection extends URLConnection {
 		 */
 		LOCKED(423, "Locked Project"),
 		/**
+		 * Ghidra Status-Code 499: Connect Request Cancelled (likely during password prompt)
+		 */
+		CANCELLED(499, "Client Cancelled Request"),
+		/**
 		 * Ghidra Status-Code 503: Unavailable.
 		 * This status code includes a variety of connection errors
 		 * which are reported/logged by the Ghidra Server support code.

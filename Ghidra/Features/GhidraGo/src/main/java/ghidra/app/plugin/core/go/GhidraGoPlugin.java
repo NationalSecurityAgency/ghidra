@@ -59,18 +59,27 @@ public class GhidraGoPlugin extends Plugin implements ApplicationLevelOnlyPlugin
 
 	private void processUrl(URL url) {
 		
-		URL projectUrl = GhidraURL.getProjectURL(url);
-		Msg.info(this, "GhidraGo accepting the resource at " + projectUrl);
 		FrontEndTool frontEndTool = AppInfo.getFrontEndTool();
 
-		// Check for case where server access has already been blocked to 
-		// launching tool and then failing to access program. 
-		if (!ClientUtil.getAllowListProvider().isAllowed(url)) {
-			Msg.showError(this, frontEndTool.getActiveWindow(), "URL Access Not Allowed",
-				"Access denied by Server Allow List:\n" + projectUrl);
+		try {
+			URL projectUrl = GhidraURL.getProjectURL(url);
+
+			// Check for case where remote server access has already been blocked to 
+			// launching tool and then failing to access program. 
+			if (!GhidraURL.isLocalURL(url) && !ClientUtil.getAllowListProvider().isAllowed(url)) {
+				Msg.showError(this, frontEndTool.getActiveWindow(), "URL Access Not Allowed",
+					"Access denied by Server Allow List:\n" + projectUrl);
+				return;
+			}
+
+			Msg.info(this, "GhidraGo accepting the resource at " + projectUrl);
+		}
+		catch (Exception e) {
+			Msg.showError(this, frontEndTool.getActiveWindow(), "GhidraGo Failed",
+				"GhidraGo rejected invalid URL: " + url);
 			return;
 		}
-		
+
 		Swing.runLater(() -> {
 			frontEndTool.toFront();
 			frontEndTool.accept(url);
