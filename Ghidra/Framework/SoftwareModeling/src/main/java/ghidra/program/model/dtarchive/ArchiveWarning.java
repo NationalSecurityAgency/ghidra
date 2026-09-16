@@ -36,7 +36,7 @@ public enum ArchiveWarning {
 	/**
 	 * {@link #LANGUAGE_NOT_FOUND} indicates the {@link Language} or its appropriate version, 
 	 * required by the associated {@link ProgramArchitecture}, was not found or encountered
-	 * a problem being loaded.  The {@link StandAloneDataTypeArchive#getWarningDetail()} may provide
+	 * a problem being loaded.  The {@link DataTypeArchive#getWarningDetail()} may provide
 	 * additional insight to the underlying cause. 
 	 */
 	LANGUAGE_NOT_FOUND(ArchiveWarningLevel.ERROR),
@@ -44,7 +44,7 @@ public enum ArchiveWarning {
 	/**
 	 * {@link #COMPILER_SPEC_NOT_FOUND} indicates the {@link CompilerSpec}, 
 	 * required by the associated {@link ProgramArchitecture}, was not found or encountered
-	 * a problem being loaded.  The {@link StandAloneDataTypeArchive#getWarningDetail()} may provide
+	 * a problem being loaded.  The {@link DataTypeArchive#getWarningDetail()} may provide
 	 * additional insight to the underlying cause.  This condition can only occur if the
 	 * required {@link Language} was found. 
 	 */

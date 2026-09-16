@@ -86,11 +86,8 @@ public interface Trace extends DomainObject {
 	TraceCodeManager getCodeManager();
 
 	/**
-	 * {@inheritDoc}
-	 * 
-	 * <p>
-	 * For traces, this gets the "base" or "host" {@link DataTypeManager}. For platform-specific
-	 * managers, see {@link TracePlatform#getDataTypeManager()}.
+	 * {@return the "base" or "host" {@link DataTypeManager} for traces. For platform-specific
+	 * managers, see {@link TracePlatform#getDataTypeManager()}}
 	 */
 	default TraceBasedDataTypeManager getDataTypeManager() {
 		return getBaseDataTypeManager();

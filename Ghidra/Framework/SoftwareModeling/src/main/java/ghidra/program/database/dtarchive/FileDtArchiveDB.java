@@ -35,8 +35,8 @@ import ghidra.framework.store.db.PackedDatabase;
 import ghidra.program.database.data.FileDataTypeManagerDB;
 import ghidra.program.model.data.ArchiveType;
 import ghidra.program.model.data.FileDataTypeManager;
-import ghidra.program.model.dtarchive.PersistentDataTypeArchive;
 import ghidra.program.model.dtarchive.FileDataTypeArchive;
+import ghidra.program.model.dtarchive.PersistentDataTypeArchive;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.IncompatibleLanguageException;
 import ghidra.program.util.DefaultLanguageService;
@@ -347,7 +347,7 @@ public class FileDtArchiveDB extends DataTypeArchiveDB implements FileDataTypeAr
 	 * Create a new data-type file archive using the specified language/compiler spec
 	 * @param packedDbfile archive file (filename must end with DataTypeFileManager.SUFFIX)
 	 * @param languageId valid language ID (see appropriate *.ldefs file for defined IDs).  If null
-	 * invocation will be deferred to {@link #create(File)}.
+	 * invocation will be deferred to {@link #create(File, Object)}.
 	 * @param compilerSpecId valid compiler spec ID which corresponds to the language ID.
 	 * @param consumer The object that is using this potentially shared archive. The caller of
 	 * this method is expected to call {@link PersistentDataTypeArchive#release(Object)} using this same

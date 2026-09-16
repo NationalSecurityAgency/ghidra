@@ -21,8 +21,8 @@ import java.io.IOException;
 import generic.jar.ResourceFile;
 import ghidra.program.database.dtarchive.DataTypeArchiveFactory;
 import ghidra.program.database.dtarchive.DefaultConsumer;
-import ghidra.program.model.dtarchive.PersistentDataTypeArchive;
 import ghidra.program.model.dtarchive.FileDataTypeArchive;
+import ghidra.program.model.dtarchive.PersistentDataTypeArchive;
 import ghidra.program.model.lang.*;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.*;
@@ -49,8 +49,8 @@ public interface FileDataTypeManager extends ArchiveDataTypeManager, AutoCloseab
 	 * @param packedDbfile archive file (filename must end with DataTypeFileManager.SUFFIX)
 	 * @return data-type manager backed by specified packedDbFile
 	 * @throws IOException if an IO error occurs
-	 * @deprecated Use {@link DataTypeArchiveFactory#createFileArchive(File)} to create a file
-	 * base archive, then call {@link PersistentDataTypeArchive#getDataTypeManager()}
+	 * @deprecated Use {@link DataTypeArchiveFactory#createFileArchive(File, Object)} to create a 
+	 * file base archive, then call {@link PersistentDataTypeArchive#getDataTypeManager()}
 	 */
 	@Deprecated(since = "12.2", forRemoval = true)
 	public static FileDataTypeManager createFileArchive(File packedDbfile) throws IOException {
@@ -71,8 +71,8 @@ public interface FileDataTypeManager extends ArchiveDataTypeManager, AutoCloseab
 	 * for the specified language. 
 	 * @throws IOException if an IO error occurs
 	 * @deprecated Use 
-	 * {@link DataTypeArchiveFactory#createFileArchive(File, LanguageID, CompilerSpecID)} to create
-	 * a file based archive, then call {@link PersistentDataTypeArchive#getDataTypeManager()}
+	 * {@link DataTypeArchiveFactory#createFileArchive(File, LanguageID, CompilerSpecID, Object)} to
+	 * create a file based archive, then call {@link PersistentDataTypeArchive#getDataTypeManager()}
 	 */
 	@Deprecated(since = "12.2", forRemoval = true)
 	public static FileDataTypeManager createFileArchive(File packedDbFile, LanguageID languageId,
@@ -98,7 +98,7 @@ public interface FileDataTypeManager extends ArchiveDataTypeManager, AutoCloseab
 	 * for the specified language. 
 	 * @throws IOException if an IO error occurs
 	 * @deprecated Use 
-	 * {@link DataTypeArchiveFactory#createFileArchive(File, String, String)} to create
+	 * {@link DataTypeArchiveFactory#createFileArchive(File, String, String, Object)} to create
 	 * a file based archive, then call {@link PersistentDataTypeArchive#getDataTypeManager()}
 	 */
 	@Deprecated(since = "12.2", forRemoval = true)
@@ -123,8 +123,8 @@ public interface FileDataTypeManager extends ArchiveDataTypeManager, AutoCloseab
 	 * @param openForUpdate if true archive will be open for update
 	 * @return data-type manager backed by specified packedDbFile
 	 * @throws IOException if an IO error occurs
-	 * @deprecated Use {@link DataTypeArchiveFactory#openReadOnly(File, TaskMonitor)} or
-	 * {@link DataTypeArchiveFactory#openForUpdate(File, boolean, TaskMonitor)} to open
+	 * @deprecated Use {@link DataTypeArchiveFactory#openReadOnly(File, Object, TaskMonitor)} or
+	 * {@link DataTypeArchiveFactory#openForUpdate(File, boolean, Object, TaskMonitor)} to open
 	 * a file based archive, then call {@link PersistentDataTypeArchive#getDataTypeManager()}
 	 */
 	@Deprecated(since = "12.2", forRemoval = true)
@@ -146,9 +146,9 @@ public interface FileDataTypeManager extends ArchiveDataTypeManager, AutoCloseab
 	 * @param openForUpdate if true archive will be open for update
 	 * @return data-type manager backed by specified packedDbFile
 	 * @throws IOException if an IO error occurs
-	 * @deprecated Use {@link DataTypeArchiveFactory#openReadOnly(ResourceFile, TaskMonitor)} or
-	 * {@link DataTypeArchiveFactory#openForUpdate(ResourceFile, boolean, TaskMonitor)} to open
-	 * a file based archive, then call {@link PersistentDataTypeArchive#getDataTypeManager()}
+	 * @deprecated Use {@link DataTypeArchiveFactory#openReadOnly(ResourceFile, Object, TaskMonitor)} 
+	 * or {@link DataTypeArchiveFactory#openForUpdate(ResourceFile, boolean, Object, TaskMonitor)} 
+	 * to open a file based archive, then call {@link PersistentDataTypeArchive#getDataTypeManager()}
 	 */
 	@Deprecated(since = "12.2", forRemoval = true)
 	public static FileDataTypeManager openFileArchive(ResourceFile file,
@@ -198,7 +198,7 @@ public interface FileDataTypeManager extends ArchiveDataTypeManager, AutoCloseab
 	/**
 	 * Save the archive back to its original file.
 	 * @throws IOException if IO error occurs
-	 * @deprecated Use {@link FileDataTypeArchive#save()}
+	 * @deprecated Use {@link FileDataTypeArchive#save(String, TaskMonitor)}
 	 */
 	@Deprecated(since = "12.2", forRemoval = true)
 	public void save() throws IOException;
@@ -221,7 +221,7 @@ public interface FileDataTypeManager extends ArchiveDataTypeManager, AutoCloseab
 	 * @param outFile the file to write to
 	 * @throws IOException if IO error occurs
 	 * @throws DuplicateFileException if a file with that name already exists.
-	 * @deprecated Use {@link FileDataTypeArchive#saveAs(File)}
+	 * @deprecated Use {@link FileDataTypeArchive#saveAs(File, TaskMonitor)}
 	 */
 	@Deprecated(since = "12.2", forRemoval = true)
 	public void saveAs(File outFile) throws DuplicateFileException, IOException;

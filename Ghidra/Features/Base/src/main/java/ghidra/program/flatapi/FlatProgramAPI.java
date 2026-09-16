@@ -44,8 +44,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.dtarchive.DataTypeArchiveFactory;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
-import ghidra.program.model.dtarchive.PersistentDataTypeArchive;
-import ghidra.program.model.dtarchive.FileDataTypeArchive;
+import ghidra.program.model.dtarchive.*;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
@@ -2543,7 +2542,7 @@ public class FlatProgramAPI {
 	 * prevent the archive from being opened.  Such a warning condition will be logged and may 
 	 * result in missing or stale information for existing datatypes which have architecture related
 	 * data.  In some case it may be appropriate to 
-	 * {@link FileDataTypeManager#getWarning() check for warnings} on the returned archive
+	 * {@link DataTypeArchive#getWarning() check for warnings} on the returned archive
 	 * object prior to its use.
 	 * 
 	 * @param archiveFile the archive file to open

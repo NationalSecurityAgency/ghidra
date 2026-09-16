@@ -55,6 +55,7 @@ public interface FileDataTypeArchive extends PersistentDataTypeArchive {
 	 * @param monitor the TaskMonitor that can be used to cancel the operation
 	 * @throws DuplicateFileException if output file already exists
 	 * @throws IOException if IO error occurs
+	 * @throws CancelledException if the user cancelled the operation
 	 */
 	public void saveAs(File outputFile, TaskMonitor monitor)
 			throws DuplicateFileException, IOException, CancelledException;

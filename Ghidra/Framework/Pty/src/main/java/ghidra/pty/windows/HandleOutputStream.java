@@ -79,9 +79,7 @@ public class HandleOutputStream extends OutputStream {
 	 * <p>
 	 * Windows can get touchy when trying to flush handles that are not actually buffered. If the
 	 * wrapped handle is not buffered, then this method must return false, otherwise, any attempt to
-	 * flush this stream will result in {@code ERROR_INVALID_HANDLE}.
-	 * 
-	 * @return
+	 * flush this stream will result in {@code ERROR_INVALID_HANDLE}. 
 	 */
 	protected boolean isBuffered() {
 		return true;

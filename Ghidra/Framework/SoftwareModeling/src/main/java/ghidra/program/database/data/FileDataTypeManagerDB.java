@@ -26,6 +26,7 @@ import ghidra.framework.data.OpenMode;
 import ghidra.framework.store.db.PackedDatabase;
 import ghidra.program.database.dtarchive.FileDtArchiveDB;
 import ghidra.program.model.data.*;
+import ghidra.program.model.dtarchive.DataTypeArchive;
 import ghidra.util.Lock;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.*;
@@ -40,8 +41,8 @@ public class FileDataTypeManagerDB extends ArchiveDataTypeManagerDB
 	/**
 	 * Construct a new DataTypeFileManager using the default data organization.
 	 * <p>
-	 * <B>NOTE:</B> it may be appropriate to {@link #getWarning() check for warnings} after
-	 * opening an existing archive file prior to use.  While an archive will remain useable 
+	 * <B>NOTE:</B> it may be appropriate to {@link DataTypeArchive#getWarning() check for warnings} 
+	 * after opening an existing archive file prior to use.  While an archive will remain useable 
 	 * with a warning condition, architecture-specific data may not be available or up-to-date.
 	 * @param handle the open database handle
 	 * @param openMode CREATE, READ_ONLY or UPDATE

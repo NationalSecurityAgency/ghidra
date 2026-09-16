@@ -94,9 +94,10 @@ public interface DataTypeArchive extends DataTypeStore {
 	 * this method to be used.
 	 * @param languageId valid processor language ID (see appropriate *.ldefs file for defined IDs)
 	 * @param compilerSpecId valid compiler spec ID which corresponds to the language ID.
-	 * @param updateOption indicates how variable storage data should be transitioned.  If {@link #isProgramArchitectureMissing()}
-	 * is true and {@link LanguageUpdateOption#TRANSLATE} specified, the translator will be based on whatever language version can 
-	 * be found.  In this situation it may be best to force a  {@link LanguageUpdateOption#CLEAR}.
+	 * @param updateOption indicates how variable storage data should be transitioned.  If 
+	 * {@link #isProgramArchitectureMissing()} is true and {@link LanguageUpdateOption#TRANSLATE} 
+	 * specified, the translator will be based on whatever language version can  be found.  In this 
+	 * situation it may be best to force a  {@link LanguageUpdateOption#CLEAR}.
 	 * @param monitor task monitor (cancel not permitted to avoid corrupt state)
 	 * @throws CompilerSpecNotFoundException if invalid compilerSpecId specified for language
 	 * @throws LanguageNotFoundException if current language is not found (if required for data transition)

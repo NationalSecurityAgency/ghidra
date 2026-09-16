@@ -23,7 +23,7 @@ import ghidra.framework.data.OpenMode;
 import ghidra.framework.model.DomainFile;
 import ghidra.program.database.dtarchive.ProjectDtArchiveDB;
 import ghidra.program.model.data.ArchiveType;
-import ghidra.program.model.data.FileDataTypeManager;
+import ghidra.program.model.dtarchive.DataTypeArchive;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.Language;
 import ghidra.util.Lock;
@@ -45,7 +45,7 @@ public class ProjectDataTypeManagerDB extends ArchiveDataTypeManagerDB {
 	 * prevent the archive from being opened.  Such a warning condition will ne logged and may 
 	 * result in missing or stale information for existing datatypes which have architecture related
 	 * data.  In some case it may be appropriate to 
-	 * {@link FileDataTypeManager#getWarning() check for warnings} on the returned archive
+	 * {@link DataTypeArchive#getWarning() check for warnings} on the returned archive
 	 * object prior to its use.
 	 * 
 	 * @param handle open database  handle
