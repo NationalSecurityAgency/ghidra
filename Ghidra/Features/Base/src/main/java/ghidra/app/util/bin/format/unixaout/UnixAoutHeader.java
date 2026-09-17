@@ -63,6 +63,7 @@ public class UnixAoutHeader implements StructConverter {
 	private long strOffset;
 
 	private long txtAddr;
+	private final Long textAddrOverride;
 	private long txtEndAddr;
 	private long datAddr;
 	private long bssAddr;
@@ -85,6 +86,21 @@ public class UnixAoutHeader implements StructConverter {
 	 * @throws IOException if an IO-related error occurred
 	 */
 	public UnixAoutHeader(ByteProvider provider, boolean isLittleEndian) throws IOException {
+		this(provider, isLittleEndian, null);
+	}
+
+	/**
+	 * Same, with the .text load address given rather than derived. The machine type names a
+	 * processor and not an operating system, so it cannot always settle where text loads.
+	 *
+	 * @param provider Source of header binary data
+	 * @param isLittleEndian Flag indicating whether to interpret the data as little-endian.
+	 * @param textLoadAddr address .text loads at, or null to derive it
+	 * @throws IOException if an IO-related error occurred
+	 */
+	public UnixAoutHeader(ByteProvider provider, boolean isLittleEndian, Long textLoadAddr)
+			throws IOException {
+		textAddrOverride = textLoadAddr;
 		reader = new BinaryReader(provider, isLittleEndian);
 
 		a_magic = reader.readNextUnsignedInt();
@@ -499,6 +515,10 @@ public class UnixAoutHeader implements StructConverter {
 	 * base address of the .text segment when loaded.
 	 */
 	private void determineTextAddr() {
+		if (textAddrOverride != null) {
+			txtAddr = textAddrOverride;
+			return;
+		}
 		final long textStartAddr = isSparc || isNetBSD ? pageSize : 0;
 		final boolean isSunOs = isSparc && !isNetBSD;
 		txtAddr = switch (exeType) {
