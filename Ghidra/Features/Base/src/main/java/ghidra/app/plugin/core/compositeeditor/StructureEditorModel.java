@@ -1049,12 +1049,21 @@ class StructureEditorModel extends CompEditorModel<Structure> {
 
 	@Override
 	protected void replaceOriginalComponents() {
-		if (originalComposite != null) {
-			originalComposite.replaceWith(viewComposite);
-		}
-		else {
+		if (originalComposite == null) {
 			throw new RuntimeException("ERROR: Couldn't replace structure components in " +
 				getOriginalDataTypeName() + ".");
+		}
+		if (originalDTM instanceof ghidra.program.database.data.DataTypeManagerDB origDtmDB) {
+			try (AutoCloseable hintScope =
+				origDtmDB.withResolveIdentityHint(viewDTM::findOriginalDataTypeFromViewDataType)) {
+				originalComposite.replaceWith(viewComposite);
+			}
+			catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
+		else {
+			originalComposite.replaceWith(viewComposite);
 		}
 	}
 

@@ -78,10 +78,12 @@ class ParentChildDBAdapterV0 extends ParentChildAdapter {
 	@Override
 	void removeRecord(long parentID, long childID) throws IOException {
 
-		Field[] ids = table.findRecords(new LongField(childID), CHILD_COL);
+		// search by parent, not child: fan-in on a shared child can be far larger than a
+		// parent's own component count
+		Field[] ids = table.findRecords(new LongField(parentID), PARENT_COL);
 		for (Field id : ids) {
 			DBRecord rec = table.getRecord(id);
-			if (rec.getLongValue(PARENT_COL) == parentID) {
+			if (rec.getLongValue(CHILD_COL) == childID) {
 				table.deleteRecord(id);
 				return;
 			}
