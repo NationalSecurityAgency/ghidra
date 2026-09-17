@@ -109,6 +109,7 @@ public class ItemSerializer {
 			itemOut.flush();
 
 			zipOut.closeEntry();
+			zipOut.finish();
 			zipOut.flush();
 			success = true;
 		}
