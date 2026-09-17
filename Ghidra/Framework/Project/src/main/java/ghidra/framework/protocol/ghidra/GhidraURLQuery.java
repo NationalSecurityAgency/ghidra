@@ -165,11 +165,12 @@ public class GhidraURLQuery {
 			c.setReadOnly(readOnly); // writable repository connection
 			obj = c.getContent(); // read-only access
 			status = c.getStatusCode();
+			if (status == StatusCode.CANCELLED) {
+				throw new CancelledException();
+			}
 		}
 		catch (IOException e) {
-			if (status == null) {
-				status = StatusCode.UNAVAILABLE;
-			}
+			status = StatusCode.UNAVAILABLE;
 			resultHandler.handleError("URL Connection Error", e.getMessage(), ghidraUrl, e);
 		}
 

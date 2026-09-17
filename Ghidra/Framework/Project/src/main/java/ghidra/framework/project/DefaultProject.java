@@ -259,7 +259,10 @@ public class DefaultProject implements Project {
 		StatusCode responseCode = c.getStatusCode();
 		switch (responseCode) {
 			case OK:
-				break;
+				break; // project data is established below 
+
+			case CANCELLED:
+				return null; // e.g., user cancelled password request
 
 			case UNAUTHORIZED:
 				throw new IOException("Authorization failure");

@@ -72,6 +72,7 @@ public class DefaultGhidraProtocolConnector extends GhidraProtocolConnector {
 			ClientUtil.getRepositoryServer(url.getHost(), url.getPort(), true);
 		if (!repositoryServerAdapter.isConnected()) {
 			if (repositoryServerAdapter.isCancelled()) {
+				statusCode = StatusCode.CANCELLED;
 				return statusCode;
 			}
 			Throwable t = repositoryServerAdapter.getLastConnectError();
