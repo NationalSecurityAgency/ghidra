@@ -2731,8 +2731,10 @@ operations. These are listed in <xref linkend="branchref.htmltable"/>, in the Ap
 </para>
 <para>
 There are six forms covering the gamut of typical assembly language
-branches, but in terms of actual semantics there are really only
-three. With p-code,
+branches: <emphasis>BRANCH</emphasis>, <emphasis>CBRANCH</emphasis>,
+<emphasis>BRANCHIND</emphasis>, <emphasis>CALL</emphasis>,
+<emphasis>CALLIND</emphasis>, and <emphasis>RETURN</emphasis>.
+In terms of actual semantics there are really only three. With p-code,
 <informalexample>
 <itemizedlist mark='bullet' spacing='compact'>
   <listitem>
@@ -2746,7 +2748,12 @@ three. With p-code,
   </listitem>
 </itemizedlist>
 </informalexample>
-The reason for this is that calls and returns imply the presence of
+Those two <emphasis>BRANCHIND</emphasis> bullets are not a duplication
+error: both <emphasis>CALLIND</emphasis> and <emphasis>RETURN</emphasis>
+are indirect. <emphasis>CBRANCH</emphasis> is the remaining form; it is
+the conditional branch and is not equivalent to any of the other five.
+The reason <emphasis>CALL</emphasis>, <emphasis>CALLIND</emphasis>, and
+<emphasis>RETURN</emphasis> are kept as distinct operations is that calls and returns imply the presence of
 some sort of a stack. Typically an assembly language call instruction
 does several separate actions, manipulating a stack pointer, storing a
 return value, and so on. When translating the call instruction into
