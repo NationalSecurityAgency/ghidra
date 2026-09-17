@@ -29,11 +29,6 @@ Ghidra 12.2 is fully backward compatible with project data from previous release
 and data type archives which are created or modified in 12.2 may not be usable by an earlier Ghidra
 version.
 
-**IMPORTANT:** Jython support is not supported by default but is included with the release as an 
-extension. An extra step is required to install it.  If you have Ghidra Jython scripts, you must 
-either install the Jython Extension, convert your scripts to Python and run with PyGhidra, or 
-convert your scripts to JAVA.
-
 **IMPORTANT:** Ghidra 12.2 requires, at minimum, JDK 25 to run.
 
 **IMPORTANT:** To use the Debugger or do a full source distribution build, you will need Python3
@@ -195,6 +190,12 @@ Support has been added for integer datatypes in the C99 standard: `int8_t`, `uin
 `int16_t`, `uint16_t`, `int64_t`, `uint64_t`, `intptr_t`, `uintptr_t`. The CParser, PDB and DWARF 
 now leverage these new BuiltIn datatypes as well as related typedefs for improved portability across
 target architectures.
+
+Additionally, a new interactive Structure/Union/Enum merger has been created. Previously, when users
+discovered that two partially recovered structures/unions/enums actually represented the same
+datatype, their only option was to pick one or the other and manually edit it to include information
+from the other datatype. Now, users can see them side by side and pick and choose each element in 
+either datatype to include in the resulting combined datatype.
 
 ## Beta support for "Timeless Debugging"
 We've completed several enhancements to the Debugger to better support "timeless" or "time-travel" 
