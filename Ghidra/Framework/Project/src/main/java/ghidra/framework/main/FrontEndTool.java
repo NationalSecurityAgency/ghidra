@@ -788,14 +788,15 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		addHelpActions();
 
 		// our log file action
-		DockingAction action = new DockingAction("Show Log", ToolConstants.TOOL_OWNER) {
+		DockingAction action = new DockingAction("View Log", ToolConstants.TOOL_OWNER) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				showGhidraUserLogFile();
 			}
 		};
 		action.setMenuBarData(
-			new MenuData(new String[] { ToolConstants.MENU_HELP, "Show Log" }, null, "BBB"));
+			new MenuData(new String[] { ToolConstants.MENU_HELP, "Show Log" }, null,
+				ToolConstants.HELP_RUNTIME_MENU_GROUP));
 
 		action.setEnabled(true);
 		addAction(action);

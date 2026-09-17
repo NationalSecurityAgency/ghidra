@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -80,6 +80,9 @@ public interface ToolConstants extends DockingToolConstants {
 
 	/** A group for actions that link directly to help content */
 	public static final String HELP_CONTENTS_MENU_GROUP = "AAAHelpContents";
+
+	/** A group for actions that show system runtime information */
+	public static final String HELP_RUNTIME_MENU_GROUP = "RRRHelpContents";
 
 	/**
 	 * Constant for the options menu group for the Tool Options menu item
