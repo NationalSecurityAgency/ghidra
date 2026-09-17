@@ -402,7 +402,7 @@ public class ClientUtil {
 		if (hdl == null) {
 			Exception e = connectTask.getException();
 			if (e == null) {
-				return null; // cancelled by user
+				throw new CancelledException();
 			}
 			if (e instanceof IOException) {
 				throw (IOException) e;

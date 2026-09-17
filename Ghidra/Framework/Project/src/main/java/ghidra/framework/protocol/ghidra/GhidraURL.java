@@ -608,8 +608,9 @@ public class GhidraURL {
 	 * 
 	 * @param ghidraUrl Ghidra local or remote file/folder URL (server-only URL not permitted)
 	 * @return pathname of file or folder
+	 * @throws IllegalArgumentException if an invalid URL is specified
 	 */
-	public static String getProjectPathname(URL ghidraUrl) {
+	public static String getProjectPathname(URL ghidraUrl) throws IllegalArgumentException {
 
 		try {
 			URI uri = ghidraUrl.toURI();

@@ -111,41 +111,55 @@ public class URLAnnotatedStringHandler implements AnnotatedStringHandler {
 		}
 	}
 
+	private boolean isUnsupportedGhidraURL(URL url) {
+		try {
+			return GhidraURL.isGhidraURL(url) && GhidraURL.getProjectPathname(url) == null;
+		}
+		catch (Exception e) {
+			return true;
+		}
+	}
+
 	@Override
 	public boolean handleMouseClick(String[] annotationParts, Navigatable navigatable,
 			ServiceProvider serviceProvider) {
+
 		String urlString = annotationParts[1];
 		URL url = getURLForString(urlString);
-		if (url != null) {
-
-			String protocol = url.getProtocol();
-			if (!allowedProtocols.contains(protocol)) {
-				Msg.showError(this, null, "URL Access Not Allowed",
-					"Unsupported URL annotation protocol - " + allowedProtocolsStr +
-						" required:\n\n" +
-						urlString);
-				return false;
-			}
-
-			if (!ClientUtil.getAllowListProvider().isAllowed(url)) {
-				Msg.showError(this, null, "URL Access Not Allowed",
-					"Access denied by Server Allow List");
-				return false;
-			}
-
-			if (GhidraURL.PROTOCOL.equals(url.getProtocol())) {
-				ProgramManager programManager = serviceProvider.getService(ProgramManager.class);
-				return programManager.openProgram(url, ProgramManager.OPEN_CURRENT) != null;
-			}
-
-			BrowserLoader.display(url, null, serviceProvider);
-			return true;
+		if (url == null) {
+			Msg.showError(this, null, "Invalid URL",
+				"Invalid URL annotation: " + urlString);
+			return false;
 		}
 
-		Msg.showError(this, null, "Invalid URL",
-			"Invalid URL annotation - not a valid URL: " + urlString);
+		String protocol = url.getProtocol();
+		if (!allowedProtocols.contains(protocol)) {
+			Msg.showError(this, null, "URL Access Not Allowed",
+				"Unsupported URL annotation protocol - " + allowedProtocolsStr +
+					" required:\n" + urlString);
+			return false;
+		}
 
-		return false;
+		if (isUnsupportedGhidraURL(url)) {
+			Msg.showError(this, null, "Invalid Ghidra URL",
+				"Unsupported Ghidra URL annotation:\n" + urlString);
+			return false;
+		}
+
+		if (!GhidraURL.isLocalURL(url) && !ClientUtil.getAllowListProvider().isAllowed(url)) {
+			Msg.showError(this, null, "URL Access Not Allowed",
+				"Access denied by Server Allow List");
+			return false;
+		}
+
+		if (GhidraURL.isGhidraURL(url)) {
+
+			ProgramManager programManager = serviceProvider.getService(ProgramManager.class);
+			return programManager.openProgram(url, ProgramManager.OPEN_CURRENT) != null;
+		}
+
+		BrowserLoader.display(url, null, serviceProvider);
+		return true;
 	}
 
 	@Override
