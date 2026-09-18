@@ -1,0 +1,33 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+  <!--
+      seed_hi_only (0x1129):  call make_value ; shr rax,32 ; mov rax,rdx
+                              xor with a global dword ; ret
+      main         (0x114a):  call seed_hi_only ; mov eax,<global> ; ret
+      make_value   (0x115b):  64-bit LCG over a static ; returns 8 bytes in RAX
+
+      The caller consumes ONLY the high 32 bits of make_value's 64-bit return
+      value.  No prototype is supplied for make_value: return value recovery in
+      the caller must deduce the output from the read of RAX after the CALL.
+      The read is real (the machine code performs SHR RAX,32 and stores the
+      result), so the call must not be recovered as void, and no variable may
+      be read without ever being written.
+  -->
+<bytechunk space="ram" offset="0x1129" readonly="true">
+554889e5e82900000048c1e8204889c28b05a52f000031d089059d2f0000905dc3
+554889e5e8d6ffffff8b058b2f00005dc3
+554889e5488b05aa2e000048ba2d7f954c2df45158480fafc24883c001488905912e0000488b058a2e00005dc3
+</bytechunk>
+</binaryimage>
+<script>
+  <com>map fun r0x1129 seed_hi_only</com>
+  <com>map fun r0x115b make_value</com>
+  <com>lo fu seed_hi_only</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Return high half #1" min="1" max="1">= make_value\(\)</stringmatch>
+<stringmatch name="Return high half #2" min="0" max="0">extraout</stringmatch>
+<stringmatch name="Return high half #3" min="1" max="1">&gt;&gt; 0x20</stringmatch>
+</decompilertest>
