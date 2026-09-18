@@ -142,6 +142,7 @@ public:
   static const string KEYWORD_RETURN;	///< "return" keyword
   static const string KEYWORD_NEW;	///< "new" keyword
   static const string typePointerRelToken;	///< The token to print indicating PTRSUB relative to a TypePointerRel
+  static const string typePointerOffToken;	///< The token to print indicating PTRADD+PTRSUB relative to a TypePointerOff
 protected:
   bool option_NULL;		///< Set to \b true if we should emit NULL keyword
   bool option_inplace_ops;	///< Set to \b true if we should use '+=' '&=' etc.
