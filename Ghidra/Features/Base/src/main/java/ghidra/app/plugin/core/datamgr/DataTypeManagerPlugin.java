@@ -33,7 +33,7 @@ import docking.action.*;
 import docking.action.builder.ActionBuilder;
 import docking.actions.PopupActionProvider;
 import docking.widgets.OptionDialog;
-import docking.widgets.tree.GTreeNode;
+import docking.widgets.tree.*;
 import generic.jar.ResourceFile;
 import generic.util.Path;
 import ghidra.app.CorePluginPackage;
@@ -44,12 +44,12 @@ import ghidra.app.plugin.core.datamgr.actions.associate.*;
 import ghidra.app.plugin.core.datamgr.archive.DuplicateIdException;
 import ghidra.app.plugin.core.datamgr.archive.InvalidArchive;
 import ghidra.app.plugin.core.datamgr.editor.DataTypeEditorManager;
-import ghidra.app.plugin.core.datamgr.tree.DataTypeStoreNode;
-import ghidra.app.plugin.core.datamgr.tree.DtFilterState;
+import ghidra.app.plugin.core.datamgr.tree.*;
 import ghidra.app.plugin.core.datamgr.util.*;
 import ghidra.app.services.*;
 import ghidra.app.util.datatype.DataTypeSelectionDialog;
 import ghidra.framework.Application;
+import ghidra.framework.data.DomainFileProxy;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginInfo;
@@ -101,6 +101,8 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	private ArchiveManager archiveManager;
 	private DataTypesProvider provider;
+	private DataTypesTableProvider tableProvider;
+	private List<DataTypesTableProvider> disconnectedTableProviders = new ArrayList<>();
 
 	private Map<String, DockingAction> recentlyOpenedArchiveMap;
 	private Map<String, DockingAction> installArchiveMap;
@@ -129,6 +131,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 		archiveManager = new ArchiveManager(this);
 		dataTypePropertyManager = new DataTypePropertyManager();
 		provider = new DataTypesProvider(this, "DataTypes Provider");
+		tableProvider = new DataTypesTableProvider(this);
 		createActions();
 
 		archiveManager.addArchiveManagerListener(new ArchiveManagerListener() {
@@ -458,6 +461,8 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 		program.addListener(this);
 		provider.programActivated(program);
 		archiveManager.setProgram(program);
+		tableProvider.programActivated(program);
+
 		dataTypePropertyManager.programOpened(program);
 	}
 
@@ -467,6 +472,13 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 		// have to perform any cleanup that is done by that method.
 		provider.programClosed(program);
 		editorManager.dismissEditors(program.getDataTypeManager());
+
+		List<DataTypesTableProvider> snapshots = new LinkedList<>(disconnectedTableProviders);
+		for (DataTypesTableProvider snapshot : snapshots) {
+			if (program.equals(snapshot.getProgram())) {
+				snapshot.closeComponent();
+			}
+		}
 	}
 
 	@Override
@@ -533,6 +545,10 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	public DataTypesProvider getProvider() {
 		return provider;
+	}
+
+	DataTypesTableProvider getTableProvider() {
+		return tableProvider;
 	}
 
 	public Clipboard getClipboard() {
@@ -666,8 +682,100 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	}
 
 	@Override
-	public void edit(DataType dt) {
-		editorManager.edit(dt);
+	public void edit(DataType dataType) {
+
+		dataType = DataTypeUtils.getBaseDataType(dataType);
+
+		dataType = getEditableDataType(dataType);
+
+		if (dataType != null) {
+			getEditorManager().edit(dataType);
+		}
+	}
+
+	private DataType getEditableDataType(DataType dataType) {
+
+		DataTypeManager dtm = dataType.getDataTypeManager();
+		DataTypeStore dataStore = dtm.getDataStore();
+		if (dataStore.isChangeable()) {
+			return dataType;
+		}
+
+		if (isUnmodifiableProjectArchive(dataStore)) {
+			return null;
+		}
+
+		if (dataStore instanceof FileDataTypeArchive fileArchive) {
+			if (!fileArchive.isChangeable()) {
+				if (!askToOpenArchiveForUpdate()) {
+					return null;
+				}
+
+				fileArchive = openForUpdate(fileArchive);
+
+				CategoryPath path = dataType.getCategoryPath();
+				String dataTypeName = dataType.getName();
+				return updateDataType(path, dataTypeName, fileArchive);
+			}
+		}
+
+		return null;
+	}
+
+	private boolean isUnmodifiableProjectArchive(DataTypeStore dataStore) {
+		if (!(dataStore instanceof ProjectDataTypeArchive projectArchive)) {
+			return false;
+		}
+
+		if (dataStore.isChangeable()) {
+			return false;
+		}
+
+		DomainFile domainFile = projectArchive.getDomainFile();
+		DomainFile originalDomainFile = getOriginalDomainFile(domainFile);
+		if (domainFile.getVersion() == originalDomainFile.getLatestVersion() &&
+			originalDomainFile.canCheckout()) {
+			Msg.showInfo(getClass(), null, "Archive Not Checked Out",
+				"You must checkout this archive before you may edit data types.");
+		}
+		else {
+			Msg.showInfo(getClass(), null, "Archive Opened Read-Only",
+				"You may not edit data type within a read-only project archive.");
+		}
+		return true;
+	}
+
+	private DomainFile getOriginalDomainFile(DomainFile domainFile) {
+		if (domainFile instanceof DomainFileProxy proxy) {
+			DomainFile originalDomainFile = proxy.getOriginalDomainFile();
+			if (originalDomainFile != null) {
+				return originalDomainFile;
+			}
+		}
+		return domainFile;
+	}
+
+	private FileDataTypeArchive openForUpdate(FileDataTypeArchive archive) {
+		GTree tree = getProvider().getGTree();
+		GTreeState state = tree.getTreeState();
+		archive = getArchiveManager().reopenFileArchive(archive, true);
+		tree.restoreTreeState(state);
+		return archive;
+	}
+
+	private static DataType updateDataType(CategoryPath path, String dataTypeName,
+			PersistentDataTypeArchive archive) {
+		if (archive == null) {
+			return null;
+		}
+		DataTypeManager dataTypeManager = archive.getDataTypeManager();
+		Category category = dataTypeManager.getCategory(path);
+		return category.getDataType(dataTypeName);
+	}
+
+	private boolean askToOpenArchiveForUpdate() {
+		return (OptionDialog.showYesNoDialog(null, "Open Archive for Edit?",
+			"Archive file is not modifiable.\nDo you want to open for edit?") == OptionDialog.OPTION_ONE);
 	}
 
 	@Override
@@ -865,6 +973,15 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 		}
 	}
 
+	public void setDataTypeSelected(Collection<DataType> types) {
+		provider.clearSelection();
+		if (provider.isVisible()) {
+			for (DataType dt : types) {
+				provider.setDataTypeSelected(dt, true);
+			}
+		}
+	}
+
 	@Override
 	public void setCategorySelected(Category category) {
 		if (provider.isVisible()) {
@@ -960,6 +1077,22 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	public AddressSetView getCurrentSelection() {
 		return currentSelection;
+	}
+
+	public DtFilterState getTreeFilterState() {
+		return provider.getFilterState();
+	}
+
+	void showDataTypesTable() {
+		tableProvider.setVisible(true);
+	}
+
+	public void addDisconnectedTableProvider(DataTypesTableProvider dataTypesTableProvider) {
+		disconnectedTableProviders.add(dataTypesTableProvider);
+	}
+
+	public void removeDisconnectedTableProvider(DataTypesTableProvider dataTypesTableProvider) {
+		disconnectedTableProviders.remove(dataTypesTableProvider);
 	}
 
 	@Override

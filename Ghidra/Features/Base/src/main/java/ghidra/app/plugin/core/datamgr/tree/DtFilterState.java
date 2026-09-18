@@ -157,7 +157,7 @@ public class DtFilterState {
 				// built-in base "pointer" data type ("pointer" does not have a target type).
 				// Returning 'true' here allows this data type to bypass the filter just like
 				// builtin int/float types will at the bottom of this method.
-				return true;
+				return passes(otherFilter, dt);
 			}
 			return passes(pointersFilter, dt);
 		}

@@ -16,17 +16,13 @@
 package ghidra.app.plugin.core.datamgr.actions.associate;
 
 import javax.swing.Icon;
-import javax.swing.tree.TreePath;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.OptionDialog;
-import docking.widgets.tree.GTree;
-import docking.widgets.tree.GTreeNode;
 import generic.theme.GIcon;
 import ghidra.app.plugin.core.datamgr.*;
-import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.program.model.data.*;
 import resources.MultiIcon;
@@ -50,26 +46,17 @@ public class UpdateSingleDataTypeAction extends DockingAction {
 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
-		if (!(context instanceof DataTypesActionContext)) {
+		if (!(context instanceof DataTypeContext dtContext)) {
 			return false;
 		}
 
-		Object contextObject = context.getContextObject();
-		GTree gTree = (GTree) contextObject;
-		TreePath[] selectionPaths = gTree.getSelectionPaths();
-		if (selectionPaths == null || selectionPaths.length != 1) {
+		DataType dt = dtContext.getSelectedDataType();
+		if (dt == null) {
 			return false;
 		}
 
-		GTreeNode node = (GTreeNode) selectionPaths[0].getLastPathComponent();
-		if (!(node instanceof DataTypeNode)) {
-			return false;
-		}
-		DataTypeNode dataTypeNode = (DataTypeNode) node;
-		DataType dataType = dataTypeNode.getDataType();
 		ArchiveManager archiveManager = plugin.getArchiveManager();
-		DataTypeSyncState syncStatus = DataTypeSynchronizer.getSyncStatus(archiveManager, dataType);
-
+		DataTypeSyncState syncStatus = DataTypeSynchronizer.getSyncStatus(archiveManager, dt);
 		switch (syncStatus) {
 			case UNKNOWN:
 				return false;
@@ -86,37 +73,32 @@ public class UpdateSingleDataTypeAction extends DockingAction {
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		GTree gTree = (GTree) context.getContextObject();
 
-		TreePath[] selectionPaths = gTree.getSelectionPaths();
-		if (selectionPaths == null || selectionPaths.length != 1) {
-			return;
-		}
+		DataTypeContext dtContext = (DataTypeContext) context;
+		DataType dt = dtContext.getSelectedDataType();
 
-		GTreeNode node = (GTreeNode) selectionPaths[0].getLastPathComponent();
-		if (!(node instanceof DataTypeNode)) {
-			return;
-		}
-		DataTypeNode dataTypeNode = (DataTypeNode) node;
-		DataType dataType = dataTypeNode.getDataType();
-		DataTypeManager dtm = dataType.getDataTypeManager();
+		DataTypeManager dtm = dt.getDataTypeManager();
 		ArchiveManager archiveManager = plugin.getArchiveManager();
-		SourceArchive sourceArchive = dataType.getSourceArchive();
-		DataTypeSyncState syncStatus = DataTypeSynchronizer.getSyncStatus(archiveManager, dataType);
+		SourceArchive sourceArchive = dt.getSourceArchive();
+		DataTypeSyncState syncStatus = DataTypeSynchronizer.getSyncStatus(archiveManager, dt);
 		if (syncStatus == DataTypeSyncState.CONFLICT) {
-			int result = OptionDialog.showOptionDialog(gTree, "Lose Local Changes?",
-				"This data type has local changes that will be\n" +
-					"overwritten if you update this data type",
-				"Continue?", OptionDialog.WARNING_MESSAGE);
+			int result =
+				OptionDialog.showOptionDialog(context.getSourceComponent(), "Lose Local Changes?",
+					"This data type has local changes that will be\n" +
+						"overwritten if you update this data type",
+					"Continue?", OptionDialog.WARNING_MESSAGE);
 			if (result == OptionDialog.CANCEL_OPTION) {
 				return;
 			}
 		}
+
 		if (!dtm.isUpdatable()) {
-			DataTypeUtils.showUnmodifiableArchiveErrorMessage(gTree, "Update Failed", dtm);
+			DataTypeUtils.showUnmodifiableArchiveErrorMessage(context.getSourceComponent(),
+				"Update Failed", dtm);
 			return;
 		}
-		plugin.update(dataType);
+
+		plugin.update(dt);
 
 		DataTypeManager sourceDTM = archiveManager.getDataTypeManager(sourceArchive);
 		if (sourceDTM != null) {

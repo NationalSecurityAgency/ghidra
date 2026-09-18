@@ -18,8 +18,6 @@ package ghidra.app.plugin.core.datamgr;
 import java.io.File;
 import java.io.IOException;
 
-import javax.swing.SwingUtilities;
-
 import docking.ActionContext;
 import docking.action.DockingActionIf;
 import docking.widgets.tree.GTree;
@@ -34,6 +32,7 @@ import ghidra.program.model.data.Category;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.dtarchive.*;
 import ghidra.program.model.listing.Program;
+import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.task.TaskMonitor;
@@ -222,13 +221,14 @@ public class DataTypeTestUtils {
 
 	public static void performAction(DockingActionIf action, Program program, GTree tree,
 			boolean wait) {
+		DataTypeArchiveGTree dtTree = (DataTypeArchiveGTree) tree;
+		DataTypesProvider provider = dtTree.getProvider();
 		AbstractGuiTest.runSwing(() -> {
-			ActionContext context =
-				new DataTypesActionContext(null, program, (DataTypeArchiveGTree) tree, null, true);
+			ActionContext context = provider.getActionContext(null);
 			action.actionPerformed(context);
 		}, wait);
 
-		if (!SwingUtilities.isEventDispatchThread()) {
+		if (!Swing.isSwingThread()) {
 			AbstractGuiTest.waitForSwing();
 		}
 	}
@@ -238,26 +238,23 @@ public class DataTypeTestUtils {
 	}
 
 	public static void performAction(DockingActionIf action, GTree tree, boolean wait) {
+		DataTypeArchiveGTree dtTree = (DataTypeArchiveGTree) tree;
+		DataTypesProvider provider = dtTree.getProvider();
 		AbstractGuiTest.runSwing(() -> {
-			ActionContext context =
-				new DataTypesActionContext(null, null, (DataTypeArchiveGTree) tree, null, true);
+			ActionContext context = provider.getActionContext(null);
 			action.actionPerformed(context);
 		}, wait);
 
-		if (!SwingUtilities.isEventDispatchThread()) {
+		if (!Swing.isSwingThread()) {
 			AbstractGuiTest.waitForSwing();
 		}
 	}
 
 	public static void createCategory(Category parent, String categoryName) throws Exception {
 		DataTypeManager dtm = parent.getDataTypeManager();
-		int id = dtm.startTransaction("create category");
-		try {
+		AbstractGhidraHeadlessIntegrationTest.tx(dtm, () -> {
 			parent.createCategory(categoryName);
-		}
-		finally {
-			dtm.endTransaction(id, true);
-		}
+		});
 
 	}
 

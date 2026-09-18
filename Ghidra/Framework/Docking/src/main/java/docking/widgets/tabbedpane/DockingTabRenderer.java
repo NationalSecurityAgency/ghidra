@@ -126,8 +126,8 @@ public class DockingTabRenderer extends JPanel {
 		return title;
 	}
 
-	public void installPopupMenu(JPopupMenu popupMenu) {
-		this.popupMenu = popupMenu;
+	public void installPopupMenu(JPopupMenu menu) {
+		this.popupMenu = menu;
 	}
 
 	public void setIcon(Icon icon) {
@@ -135,7 +135,9 @@ public class DockingTabRenderer extends JPanel {
 	}
 
 	public void setTitle(String tabText, String fullTitle) {
-		titleLabel.setText(getShortenedTitle(tabText));
+		String clippedTabText = getShortenedTitle(tabText);
+		titleLabel.setText(clippedTabText);
+
 		String trimmedTabText = tabText.trim();
 		String trimmedTitleText = fullTitle.trim();
 		if (trimmedTabText.equals(trimmedTitleText)) {

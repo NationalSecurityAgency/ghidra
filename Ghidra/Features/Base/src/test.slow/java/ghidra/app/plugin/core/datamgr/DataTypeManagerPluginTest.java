@@ -65,6 +65,7 @@ import ghidra.program.model.data.Enum;
 import ghidra.program.model.dtarchive.DataTypeStore;
 import ghidra.program.model.listing.Program;
 import ghidra.test.*;
+import ghidra.util.Msg;
 import util.CollectionUtils;
 import utilities.util.FileUtilities;
 
@@ -1042,7 +1043,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		assertType("TypeDefToMyStruct", true);
 
 		// press the filter button
-		DockingActionIf action = getAction(plugin, "Show Filter");
+		DockingActionIf action = getLocalAction(provider, "Show Filter");
 		performAction(action, provider, false);
 
 		DtFilterDialog dialog = waitForDialogComponent(DtFilterDialog.class);
@@ -1071,7 +1072,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		assertType("TypeDefToMyStruct", true);
 
 		// press the filter button
-		DockingActionIf action = getAction(plugin, "Show Filter");
+		DockingActionIf action = getLocalAction(provider, "Show Filter");
 		performAction(action, provider, false);
 		DtFilterDialog dialog = waitForDialogComponent(DtFilterDialog.class);
 
@@ -1349,7 +1350,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		expandNode(programNode);
 		GTreeNode child = programNode.getChild(name);
 		selectNode(child);
-		final DockingActionIf action = getAction(plugin, "Edit");
+		final DockingActionIf action = getLocalAction(provider, "Edit");
 		assertTrue(action.isEnabledForContext(treeContext));
 		performAction(action, treeContext, false);
 
@@ -1526,8 +1527,8 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 			}
 			DataTypeNode dtNode = (DataTypeNode) node;
 			DataType dt = dtNode.getDataType();
-			if (dt instanceof Structure) {
-				map.put(dt.getName(), (Structure) dt);
+			if (dt instanceof Structure struct) {
+				map.put(dt.getName(), struct);
 			}
 		}
 
@@ -1559,7 +1560,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 	private void disablePointerFilter() {
 
 		// press the filter button
-		DockingActionIf action = getAction(plugin, "Show Filter");
+		DockingActionIf action = getLocalAction(provider, "Show Filter");
 		performAction(action, provider, false);
 
 		DtFilterDialog dialog = waitForDialogComponent(DtFilterDialog.class);
@@ -1668,7 +1669,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 			}
 		}
 		catch (FileNotFoundException e) {
-			System.err.println("Unable to delete test dir?: " + e.getMessage());
+			Msg.error(this, "Unable to delete test dir?: " + e);
 		}
 	}
 
