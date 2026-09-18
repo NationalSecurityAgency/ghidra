@@ -35,8 +35,7 @@ import docking.widgets.label.GDLabel;
 import docking.widgets.table.columnfilter.ColumnBasedTableFilter;
 import docking.widgets.table.columnfilter.ColumnFilterManager;
 import ghidra.framework.options.PreferenceState;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.SwingUpdateManager;
 import help.HelpService;
@@ -93,7 +92,7 @@ import utility.function.Callback;
  *     <li>The {@link TableFilter} used by this class will be passed the empty string ("") when
  *     {@link TableFilter#acceptsRow(Object)} is called.</li>
  *     <li><b>You cannot rely on {@link JTable#getRowCount()} to access all of the table data,
- *     since the data may be filtered.</b> To get a row count that is always all of the model's \
+ *     since the data may be filtered.</b> To get a row count that is always all of the model's 
  *     data, call {@link #getUnfilteredRowCount()}.</li>
  * </ul>
  *
@@ -551,6 +550,10 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 		return rowObjectFilterModel;
 	}
 
+	/**
+	 * Disposes this filter panel and it's internal widgets.  Clients that call this method do not
+	 * have to call {@link GTable#dispose()}, as this call will do that for them.
+	 */
 	public void dispose() {
 
 		DockingWindowManager dwm = DockingWindowManager.getInstance(this);
@@ -832,6 +835,26 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 		return uniquePreferenceKey;
 	}
 
+	/**
+	 * Transfers this filter panel's settings to the other filter panel.  This is useful when making
+	 * snapshots of tables when the client wishes to apply the same filter settings to the new 
+	 * window.  This will copy the current filter text, filter type settings and the column filter. 
+	 * @param other the other filter panel to receive this panel's settings
+	 */
+	public void transferSettings(GTableFilterPanel<ROW_OBJECT> other) {
+
+		Swing.runLater(() -> {
+			PreferenceState state = createPreferenceState();
+			other.loadFromPreferenceState(state);
+
+			String filterText = getFilterText();
+			other.setFilterText(filterText);
+
+			ColumnBasedTableFilter<ROW_OBJECT> columnFilter = getColumnTableFilter();
+			other.setColumnTableFilter(columnFilter);
+		});
+	}
+
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
@@ -969,7 +992,7 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 			}
 		}
 
-		return getInceptionInformationFromTheFirstClassThatIsNotUs();
+		return getInceptionInformationFromTheFirstClassThatIsNotUs() + extension;
 	}
 
 	private static String getInceptionInformationFromTheFirstClassThatIsNotUs() {

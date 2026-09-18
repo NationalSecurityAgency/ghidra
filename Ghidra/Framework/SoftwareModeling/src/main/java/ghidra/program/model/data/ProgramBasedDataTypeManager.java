@@ -32,7 +32,7 @@ public interface ProgramBasedDataTypeManager extends DataTypeManager {
 	 * Get the program instance associated with this datatype manager
 	 * @return program instance associated with this datatype manager
 	 */
-	Program getProgram();
+	public Program getProgram();
 
 	/**
 	 * Determine if a settings change is permitted for the specified settingsDefinition.

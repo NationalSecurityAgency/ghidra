@@ -712,13 +712,30 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 	private static <T extends ComponentProvider> T getComponentProvider(
 			DockingWindowManager windowManager, Class<T> clazz) {
 
+		/*
+			// Note: this code doesn't really make sense anymore.  If test pass, then delete this
+			// and getDetachedWindowProvider() 
+		
 		T detached = getDetachedWindowProvider(clazz, windowManager);
 		if (detached != null) {
 			return detached;
 		}
+		*/
 
 		T t = windowManager.getComponentProvider(clazz);
 		return t;
+	}
+
+	private static <T extends ComponentProvider> T getComponentProvider(
+			DockingWindowManager windowManager, Class<T> clazz, String title) {
+
+		List<T> allProviders = windowManager.getComponentProviders(clazz);
+		for (T t : allProviders) {
+			if (t.getTitle().equals(title)) {
+				return t;
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -809,7 +826,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 		int totalTime = 0;
 		while (totalTime <= DEFAULT_WAIT_TIMEOUT) {
 
-			T t = getComponentProvider(windowManager, clazz);
+			T t = getComponentProvider(windowManager, clazz, title);
 			if (Objects.deepEquals(title, t.getTitle())) {
 				return t;
 			}
@@ -2125,14 +2142,15 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 		if (!rootNode.getName().equals(rootName)) {
 			throw new RuntimeException(
 				"When selecting paths by name the first path element must be the " +
-					"name of the root node - path: " + StringUtils.join(path, '.'));
+					"name of the root node '" + rootNode.getName() + "' - path: " +
+					StringUtils.join(path, '.'));
 		}
 		GTreeNode node = rootNode;
 		for (int i = 1; i < path.length; i++) {
 			GTreeNode child = node.getChild(path[i]);
 			if (child == null) {
 				throw new RuntimeException(
-					"Can't find path " + StringUtils.join(path, '.') + "   failed at " + path[i]);
+					"Can't find path " + StringUtils.join(path, '/') + "   failed at " + path[i]);
 			}
 			node = child;
 		}

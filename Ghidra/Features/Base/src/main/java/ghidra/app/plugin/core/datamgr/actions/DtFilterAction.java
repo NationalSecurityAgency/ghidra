@@ -59,7 +59,6 @@ public class DtFilterAction extends DockingAction {
 		DtFilterDialog dialog = new DtFilterDialog(currentFilterState);
 		plugin.getTool().showDialog(dialog, provider.getComponent());
 
-		// if not cancelled
 		if (dialog.isCancelled()) {
 			return;
 		}

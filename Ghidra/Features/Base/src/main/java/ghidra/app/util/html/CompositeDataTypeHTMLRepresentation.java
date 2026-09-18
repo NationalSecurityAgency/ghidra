@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -200,14 +200,19 @@ public class CompositeDataTypeHTMLRepresentation extends HTMLDataTypeRepresentat
                                                    TT_CLOSE,
                                                    BR);
 		
+		String coloredFooterText = wrapStringInColor(footerText.getText(), 
+			footerText.getTextColor());
+		String coloredAlignmentValue = wrapStringInColor(alignmentValueText.getText(),
+			alignmentValueText.getTextColor());
+		
 		append(fullHtml, truncatedHtml, lineCount++, 
 			   INDENT_OPEN,
 			   LENGTH_PREFIX,
-			   footerText.getText(),  // length
+			   coloredFooterText,  // length
 			   HTML_SPACE,
 			   HTML_SPACE,
 			   ALIGNMENT_PREFIX,
-			   alignmentValueText.getText(), 
+			   coloredAlignmentValue, // alignment value number
 			   INDENT_CLOSE);
 		
 		append(fullHtml, truncatedHtml, lineCount++,
@@ -381,11 +386,16 @@ public class CompositeDataTypeHTMLRepresentation extends HTMLDataTypeRepresentat
 		List<ValidatableLine> header = copyLines(headerContent);
 		List<ValidatableLine> body = copyLines(bodyContent);
 		TextLine name = new TextLine(displayName.getText());
+		TextLine footer = new TextLine(footerText.getText());
+		TextLine alignmentValue = new TextLine(alignmentValueText.getText());
 		List<ValidatableLine> alignment = copyLines(alignmentText);
 
 		List<ValidatableLine> otherHeader = copyLines(compositeRepresentation.headerContent);
 		List<ValidatableLine> otherBody = copyLines(compositeRepresentation.bodyContent);
 		TextLine otherName = new TextLine(compositeRepresentation.displayName.getText());
+		TextLine otherFooter = new TextLine(compositeRepresentation.footerText.getText());
+		TextLine otherAlignmentValue =
+			new TextLine(compositeRepresentation.alignmentValueText.getText());
 		List<ValidatableLine> otherAlignment = copyLines(compositeRepresentation.alignmentText);
 
 		DataTypeDiff headerDiff =
@@ -395,16 +405,18 @@ public class CompositeDataTypeHTMLRepresentation extends HTMLDataTypeRepresentat
 			DataTypeDiffBuilder.diffBody(getDiffInput(body), getDiffInput(otherBody));
 
 		diffTextLine(name, otherName);
+		diffTextLine(footer, otherFooter); // size text
+		diffTextLine(alignmentValue, otherAlignmentValue); // alignment number value
 		diffAlignment(alignment, otherAlignment);
 
 		List<String> noWarnings = Collections.emptyList();
 
 		return new HTMLDataTypeRepresentation[] {
 			new CompositeDataTypeHTMLRepresentation(noWarnings, headerDiff.getLeftLines(),
-				bodyDiff.getLeftLines(), alignment, footerText, name, alignmentValueText),
+				bodyDiff.getLeftLines(), alignment, footer, name, alignmentValue),
 			new CompositeDataTypeHTMLRepresentation(noWarnings, headerDiff.getRightLines(),
-				bodyDiff.getRightLines(), otherAlignment, compositeRepresentation.footerText,
-				otherName, compositeRepresentation.alignmentValueText), };
+				bodyDiff.getRightLines(), otherAlignment, otherFooter,
+				otherName, otherAlignmentValue) };
 	}
 
 	protected void diffAlignment(List<ValidatableLine> myLines, List<ValidatableLine> otherLines) {

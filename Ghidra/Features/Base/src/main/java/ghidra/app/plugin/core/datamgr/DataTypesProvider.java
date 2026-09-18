@@ -30,26 +30,23 @@ import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
 import docking.event.mouse.GMouseListenerAdapter;
 import docking.menu.MultiActionDockingAction;
-import docking.widgets.OptionDialog;
 import docking.widgets.textpane.GHtmlTextPane;
-import docking.widgets.tree.*;
+import docking.widgets.tree.GTreeNode;
+import docking.widgets.tree.GTreeState;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.datamgr.actions.*;
 import ghidra.app.plugin.core.datamgr.actions.associate.*;
 import ghidra.app.plugin.core.datamgr.tree.*;
-import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.app.util.datatype.DataTypeUrl;
 import ghidra.framework.main.projectdata.actions.*;
-import ghidra.framework.model.DomainFile;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataTypeConflictHandler.ConflictResolutionPolicy;
 import ghidra.program.model.dtarchive.PersistentDataTypeArchive;
-import ghidra.program.model.dtarchive.FileDataTypeArchive;
 import ghidra.program.model.listing.Program;
 import ghidra.util.*;
 import ghidra.util.task.SwingUpdateManager;
@@ -198,6 +195,8 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		addLocalAction(new FindEnumsByValueAction(plugin, "3"));
 		addLocalAction(new FindStructuresByOffsetAction(plugin, "4"));
 		addLocalAction(new FindStructuresBySizeAction(plugin, "5"));
+		addLocalAction(new ShowDataTypesTableAction(plugin, "6"));
+
 		includeDataMembersInSearchAction = new IncludeDataTypesInFilterAction(plugin, this, "6");
 		addLocalAction(includeDataMembersInSearchAction);
 
@@ -376,7 +375,10 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 					return;
 				}
 
-				editNode(clickedNode);
+				if (clickedNode instanceof DataTypeNode dtNode) {
+					DataType dt = dtNode.getDataType();
+					plugin.edit(dt);
+				}
 			}
 
 			@Override
@@ -557,89 +559,9 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		return helpLocation;
 	}
 
-	private static DataType updateDataType(CategoryPath path, String dataTypeName,
-			PersistentDataTypeArchive archive) {
-		if (archive == null) {
-			return null;
-		}
-		DataTypeManager dataTypeManager = archive.getDataTypeManager();
-		Category category = dataTypeManager.getCategory(path);
-		return category.getDataType(dataTypeName);
-	}
-
-	private boolean askToOpenArchiveForUpdate() {
-		return (OptionDialog.showYesNoDialog(archiveGTree, "Open Archive for Edit?",
-			"Archive file is not modifiable.\nDo you want to open for edit?") == OptionDialog.OPTION_ONE);
-	}
-
 //==================================================================================================
 // Helper Methods
 //==================================================================================================
-
-	public void editNode(GTreeNode node) {
-		if (!(node instanceof DataTypeNode)) {
-			return;
-		}
-		DataTypeNode dataTypeNode = (DataTypeNode) node;
-
-		if (!dataTypeNode.hasCustomEditor()) {
-			return;
-		}
-
-		DataType dataType = dataTypeNode.getDataType();
-		dataType = DataTypeUtils.getBaseDataType(dataType);
-		CategoryPath path = dataType.getCategoryPath();
-		String dataTypeName = dataType.getName();
-		DataTypeStoreNode archiveNode = dataTypeNode.getArchiveNode();
-
-		if (isUnmodifiableProjectArchive(archiveNode)) {
-			return;
-		}
-
-		if (archiveNode instanceof FileArchiveNode fileNode) {
-			FileDataTypeArchive archive = fileNode.getArchive();
-			if (!archive.isChangeable()) {
-				if (!askToOpenArchiveForUpdate()) {
-					return;
-				}
-				archive = openForUpdate(archive);
-				dataType = updateDataType(path, dataTypeName, archive);
-			}
-		}
-		if (dataType != null) {
-			plugin.getEditorManager().edit(dataType);
-		}
-	}
-
-	private FileDataTypeArchive openForUpdate(FileDataTypeArchive archive) {
-		GTree tree = plugin.getProvider().getGTree();
-		GTreeState state = tree.getTreeState();
-		archive = plugin.getArchiveManager().reopenFileArchive(archive, true);
-		tree.restoreTreeState(state);
-		return archive;
-	}
-
-	private boolean isUnmodifiableProjectArchive(DataTypeStoreNode archiveNode) {
-		if (!(archiveNode instanceof ProjectArchiveNode projectNode)) {
-			return false;
-		}
-
-		if (archiveNode.isModifiable()) {
-			return false;
-		}
-		DomainFile domainFile = projectNode.getDomainFile();
-		DomainFile originalDomainFile = projectNode.getOriginalDomainFile();
-		if (domainFile.getVersion() == originalDomainFile.getLatestVersion() &&
-			originalDomainFile.canCheckout()) {
-			Msg.showInfo(getClass(), archiveGTree, "Archive Not Checked Out",
-				"You must checkout this archive before you may edit data types.");
-		}
-		else {
-			Msg.showInfo(getClass(), archiveGTree, "Archive Opened Read-Only",
-				"You may not edit data type within a read-only project archive.");
-		}
-		return true;
-	}
 
 	void restore(SaveState saveState) {
 
@@ -724,6 +646,15 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 	 * @param dataType the data type to select; may be null
 	 */
 	public void setDataTypeSelected(DataType dataType) {
+		setDataTypeSelected(dataType, false);
+	}
+
+	public void clearSelection() {
+		DataTypeArchiveGTree gTree = getGTree();
+		gTree.getSelectionModel().clearSelection();
+	}
+
+	public void setDataTypeSelected(DataType dataType, boolean addToSelection) {
 		DataTypeArchiveGTree gTree = getGTree();
 		if (dataType == null) { // clear the selection
 			gTree.getSelectionModel().clearSelection();
@@ -761,8 +692,14 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 			return;
 		}
 
+		if (addToSelection) {
+			gTree.addSelectedNode(dataTypeNode);
+		}
+		else {
+			gTree.setSelectedNode(dataTypeNode);
+		}
+
 		TreePath treePath = dataTypeNode.getTreePath();
-		gTree.setSelectedNode(dataTypeNode);
 		gTree.scrollPathToVisible(treePath);
 		contextChanged();
 	}
@@ -1056,4 +993,5 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 			}
 		}
 	}
+
 }

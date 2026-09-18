@@ -56,10 +56,10 @@ public class DataTypeArchiveGTree extends GTree {
 	private MyFolderListener folderListener;
 	private DataTypeTreeExpansionListener cleanupListener = new DataTypeTreeExpansionListener();
 
-	public DataTypeArchiveGTree(DataTypeManagerPlugin dataTypeManagerPlugin) {
-		super(new ArchiveRootNode(dataTypeManagerPlugin.getArchiveManager()));
+	public DataTypeArchiveGTree(DataTypeManagerPlugin plugin) {
+		super(new ArchiveRootNode(plugin.getArchiveManager()));
 
-		this.plugin = dataTypeManagerPlugin;
+		this.plugin = plugin;
 		setDragNDropHandler(new DataTypeDragNDropHandler(plugin, this));
 		DataTypeTreeRenderer renderer = new DataTypeTreeRenderer();
 
@@ -81,6 +81,10 @@ public class DataTypeArchiveGTree extends GTree {
 		setAccessibleNamePrefix("Data Type Manager");
 
 		initializeKeyEvents();
+	}
+
+	public DataTypesProvider getProvider() {
+		return plugin.getProvider();
 	}
 
 	private void initializeKeyEvents() {

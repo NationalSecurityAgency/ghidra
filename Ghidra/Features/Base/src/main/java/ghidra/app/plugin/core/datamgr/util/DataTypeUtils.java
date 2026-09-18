@@ -258,6 +258,22 @@ public class DataTypeUtils {
 	}
 
 	/**
+	 * {@return descriptive text for the given data type's icon}
+	 * @param dataType the data type
+	 */
+	public static String getIconTextForDataType(DataType dataType) {
+		loadImages();
+
+		for (DataTypeIconWrapper element : dataTypeIconWrappers) {
+			Icon icon = element.getIcon(dataType, false);
+			if (icon != null) {
+				return element.getDescription(dataType);
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Returns an icon that adds highlighting to the provided icon.
 	 *
 	 * @param baseIcon The icon to highlight.
@@ -530,6 +546,10 @@ class DataTypeIconWrapper {
 		this.dataTypeClass = dataTypeClass;
 		this.defaultIcon = defaultIcon;
 		this.disabledIcon = disabledIcon;
+	}
+
+	public String getDescription(DataType dataType) {
+		return dataTypeClass.getSimpleName();
 	}
 
 	Icon getIcon(DataType dataType, boolean disabled) {

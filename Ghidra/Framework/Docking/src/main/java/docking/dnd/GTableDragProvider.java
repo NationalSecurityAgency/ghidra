@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,9 +45,13 @@ public abstract class GTableDragProvider<ROW_OBJECT>
 		// install table mouse selection fixing listener
 		new DragDropTableSelectionMouseListener(table);
 
-		int actions = DnDConstants.ACTION_COPY;
+		int actions = getDragActions();
 		DragSource dragSource = DragSource.getDefaultDragSource();
 		dragSource.createDefaultDragGestureRecognizer(table, actions, this);
+	}
+
+	protected int getDragActions() {
+		return DnDConstants.ACTION_COPY;
 	}
 
 	/**
@@ -77,18 +81,17 @@ public abstract class GTableDragProvider<ROW_OBJECT>
 	}
 
 	private void setCursor(int action, DragSourceContext dragSourceContext) {
-		Cursor cursor = DragSource.DefaultCopyNoDrop;
-		switch (action) {
-			case DnDConstants.ACTION_COPY:
-				cursor = DragSource.DefaultCopyDrop;
-				break;
-			case DnDConstants.ACTION_MOVE:
-				cursor = DragSource.DefaultMoveDrop;
-				break;
-			case DnDConstants.ACTION_LINK:
-				cursor = DragSource.DefaultLinkDrop;
-		}
+		Cursor cursor = getCursor(action);
 		dragSourceContext.setCursor(cursor);
+	}
+
+	private Cursor getCursor(int action) {
+		return switch (action) {
+			case DnDConstants.ACTION_COPY -> DragSource.DefaultCopyDrop;
+			case DnDConstants.ACTION_MOVE -> DragSource.DefaultMoveDrop;
+			case DnDConstants.ACTION_LINK -> DragSource.DefaultLinkDrop;
+			default -> DragSource.DefaultCopyNoDrop;
+		};
 	}
 
 	@Override
@@ -127,7 +130,7 @@ public abstract class GTableDragProvider<ROW_OBJECT>
 		}
 
 		try {
-			dragEvent.startDrag(DragSource.DefaultMoveDrop, null, new Point(0, 0), transferable,
+			dragEvent.startDrag(DragSource.DefaultMoveNoDrop, null, new Point(0, 0), transferable,
 				this);
 		}
 		catch (InvalidDnDOperationException exc) {
