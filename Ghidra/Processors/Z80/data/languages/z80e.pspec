@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <programcounter register="PC"/>
+  
+  <segmentop space="ram" userop="segment" farpointer="yes">
+    <pcode>
+      <input name="base" size="2"/>
+      <input name="inner" size="2"/>
+      <output name="res" size="2"/>
+      <body><![CDATA[
+        res = (base << 12) + inner;
+      ]]></body>
+    </pcode>
+    <constresolve>
+      <register name="rBBR"/>
+    </constresolve>
+  </segmentop>
+  <context_data>
+    <tracked_set space="ram">
+      <set name="DECOMPILE_MODE" val="1"/>
+    </tracked_set>
+  </context_data>
+  
+  <default_symbols>
+    <symbol name="RST0" address="ram:0000" entry="true"/>
+    <symbol name="RST1" address="ram:0008" entry="true"/>
+  </default_symbols>
+</processor_spec>
