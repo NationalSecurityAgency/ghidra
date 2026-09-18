@@ -1,0 +1,29 @@
+<decompilertest>
+<!--
+  An unjustified 2-byte stack input shares its 4-byte parameter container with
+  a second input that starts inside the container and extends past its end.
+  ActionUnjustifiedParams must include the full overlapping input before
+  adjusting the parameter Varnodes.
+
+  This is the minimized MC68000 reproducer from #9218.  With the overlap
+  closure fixed, both stack inputs are rebuilt as SUBPIECEs of one enclosing
+  input instead of aborting in Funcdata::adjustInputVarnodes().
+-->
+<binaryimage arch="68000:BE:32:default:default">
+<bytechunk space="ram" offset="0x1000" readonly="true">
+4e560000226e000a0c6e000100086f0e
+2069000410280001b015670265ea4e5e
+4e75
+</bytechunk>
+<symbol space="ram" offset="0x1000" name="adjust_input_overlap"/>
+</binaryimage>
+<script>
+  <com>lo fu adjust_input_overlap</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Overlapping input parameter decompiles" min="1" max="1">adjust_input_overlap\(</stringmatch>
+<stringmatch name="Overlapping inputs are subpieces of one enclosing input" min="1" max="10">\._2_4_</stringmatch>
+<stringmatch name="No input adjustment error" min="0" max="0">Cannot properly adjust input varnodes</stringmatch>
+</decompilertest>
