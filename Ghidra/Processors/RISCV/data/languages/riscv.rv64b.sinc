@@ -3,7 +3,7 @@
 #TODO  fix op2031
 :addiwu rd, rs1, op2031 is op0006=0x1b & op1214=0x4 & rd & op2031 & rs1 unimpl
 
-:addu.w rd, rs1, rs2 is op0006=0x3b & op1214=0x0 & op2531=0x4 & rd & rs1 & rs2 unimpl
+:add.unshflw rd, rs1, rs2 is op0006=0x3b & op1214=0x0 & op2531=0x4 & rd & rs1 & rs2 unimpl
 
 :addwu rd, rs1, rs2 is op0006=0x3b & op1214=0x0 & op2531=0x5 & rd & rs1 & rs2 unimpl
 
@@ -52,9 +52,9 @@
 
 :packuw rd, rs1, rs2 is op0006=0x3b & op1214=0x4 & op2531=0x24 & rd & rs1 & rs2 unimpl
 
-:packw  rd, rs1, rs2 is op0006=0x3b & op1214=0x4 & op2531=0x4 & rd & rs1 & rs2 unimpl
+:zext.h  rd, rs1, rs2 is op0006=0x3b & op1214=0x4 & op2531=0x4 & rd & rs1 & rs2 unimpl
 
-:pcntw rd, rs1 is op0006=0x1b & op1214=0x1 & op2024=0x2 & op2531=0x30 & rd & rs1 unimpl
+:cpopw rd, rs1 is op0006=0x1b & op1214=0x1 & op2024=0x2 & op2531=0x30 & rd & rs1 unimpl
 
 :rolw  rd, rs1, rs2 is op0006=0x3b & op1214=0x1 & op2531=0x30 & rd & rs1 & rs2 unimpl
 
@@ -80,11 +80,11 @@
 
 :sbsetw  rd, rs1, rs2 is op0006=0x3b & op1214=0x1 & op2531=0x14 & rd & rs1 & rs2 unimpl
 
-:sh1addu.w rd, rs1, rs2 is op0006=0x3b & op1214=0x2 & op2531=0x10 & rd & rs1 & rs2 unimpl
+:sh1add.uw rd, rs1, rs2 is op0006=0x3b & op1214=0x2 & op2531=0x10 & rd & rs1 & rs2 unimpl
 
-:sh2addu.w rd, rs1, rs2 is op0006=0x3b & op1214=0x4 & op2531=0x10 & rd & rs1 & rs2 unimpl
+:sh2add.uw rd, rs1, rs2 is op0006=0x3b & op1214=0x4 & op2531=0x10 & rd & rs1 & rs2 unimpl
 
-:sh3addu.w rd, rs1, rs2 is op0006=0x3b & op1214=0x6 & op2531=0x10 & rd & rs1 & rs2 unimpl
+:sh3add.uw rd, rs1, rs2 is op0006=0x3b & op1214=0x6 & op2531=0x10 & rd & rs1 & rs2 unimpl
 
 :shflw    rd, rs1, rs2 is op0006=0x3b & op1214=0x1 & op2531=0x4 & rd & rs1 & rs2 unimpl
 
