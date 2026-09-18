@@ -110,6 +110,11 @@ public class FixedSizeIntegerTextField extends AbstractIntegerTextField {
 		minSignedValue = BigInteger.TWO.pow(bitSize - 1).negate();
 		maxSignedValue = BigInteger.TWO.pow(bitSize - 1).subtract(BigInteger.ONE);
 
+		// special case for bitSize == 1, signed makes no sense, so use unsigned min/max for both
+		if (bitSize == 1) {
+			minSignedValue = minUnsignedValue;
+			maxSignedValue = maxUnsignedValue;
+		}
 		BigInteger value = getValue();
 		this.bitSize = bitSize;
 		updateMinMax();
