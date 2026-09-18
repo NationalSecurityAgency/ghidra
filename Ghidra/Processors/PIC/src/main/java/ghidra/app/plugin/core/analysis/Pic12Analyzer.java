@@ -633,14 +633,9 @@ public class Pic12Analyzer extends AbstractAnalyzer {
 			if (instr.getNumOperands() == 2) {
 				List<?> repObjs = instr.getDefaultOperandRepresentationList(1);
 				if (repObjs.size() == 1 && DEST_FREG.equals(repObjs.get(0))) {
-					if ("INCF".equals(mnemonic)) {
-						// do nothing - assume this will not affect high-order FSR<6:5> bits
-					}
-					else {
-						// Unhandled FSR modification
-						fsrContext.setValueUnknown();
-						Msg.warn(this, "Unhandled FSR change at: " + instr.getMinAddress());
-					}
+					// Unhandled FSR modification
+					fsrContext.setValueUnknown();
+					Msg.warn(this, "Unhandled FSR change at: " + instr.getMinAddress());
 				}
 			}
 			else if (instr.getNumOperands() == 1) {
