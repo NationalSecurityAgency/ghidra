@@ -64,7 +64,7 @@
         <register name="sp"/>
         <register name="gp"/>
         <register name="tp"/>
-        <register name="ctbp"/>
+        <register name="CTBP"/>
       </unaffected>
     
     </prototype>
