@@ -5311,6 +5311,12 @@ define pcodeop xrstors64;
 :XSAVES64  Mem    is $(LONGMODE_ON) & vexMode=0 & $(REX_W) & byte=0x0F; byte=0xC7; ( mod != 0b11 & reg_opcode=5 ) ... & Mem { tmp:4 = 512; xsaves64(Mem, tmp); }
 @endif
 
+define pcodeop xsusldtrk;
+:XSUSLDTRK is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x01; byte=0xE8 { xsusldtrk(); }
+
+define pcodeop xresldtrk;
+:XRESLDTRK is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x01; byte=0xE9 { xresldtrk(); }
+
 define pcodeop xtest;
 :XTEST          is byte=0x0F; byte=0x01; byte=0xD6       { ZF = xtest(); }
 
