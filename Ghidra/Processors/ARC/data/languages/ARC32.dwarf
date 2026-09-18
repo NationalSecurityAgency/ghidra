@@ -1,0 +1,15 @@
+<dwarf>
+  <!-- FIXME: These mappings are guessed, so we need to reference the GCC sources to determine what the real ones are. -->
+  <register_mappings>
+    <register_mapping dwarf="0" ghidra="r0" auto_count="26" /> <!-- r0..r25 -->
+    <register_mapping dwarf="26" ghidra="gp" />
+    <register_mapping dwarf="27" ghidra="fp" />
+    <register_mapping dwarf="28" ghidra="sp" stackpointer="true" />
+    <register_mapping dwarf="29" ghidra="ilink1" />
+    <register_mapping dwarf="30" ghidra="ilink2" />
+    <register_mapping dwarf="31" ghidra="blink" />
+    <register_mapping dwarf="32" ghidra="r32" auto_count="28" /> <!-- r32..r59 -->
+    <register_mapping dwarf="60" ghidra="lp_count" />
+    <register_mapping dwarf="61" ghidra="r61" auto_count="3" /> <!-- r61..r63 -->
+  </register_mappings>
+</dwarf>
