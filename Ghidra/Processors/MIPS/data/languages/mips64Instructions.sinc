@@ -146,7 +146,8 @@
 }
 # 0000 00ss ssst tttt dddd d000 0001 0100
 :dsllv RD, RTsrc, RSsrc         is $(AMODE) & prime=0 & fct=20 & RSsrc & RTsrc & RD & sa=0 {
-    RD = RTsrc << RSsrc;
+    local shift:1 = RSsrc[0,6];
+    RD = RTsrc << shift;
 }
 # 0000 0000 000t tttt dddd daaa aa11 1011
 :dsra RD, RTsrc, sa             is $(AMODE) & prime=0 & fct=59 & rs=0 & RTsrc & RD & sa {
@@ -158,7 +159,8 @@
 }
 # 0000 00ss ssst tttt dddd d000 0001 0111
 :dsrav RD, RTsrc, RSsrc         is $(AMODE) & prime=0 & fct=23 & RSsrc & RTsrc & RD & sa=0 {
-    RD = RTsrc s>> RSsrc;
+    local shift:1 = RSsrc[0,6];
+    RD = RTsrc s>> shift;
 }
 # 0000 0000 000t tttt dddd daaa aa11 1010
 :dsrl RD, RTsrc, sa             is $(AMODE) & prime=0 & fct=58 & rs=0 & RTsrc & RD & sa {
@@ -170,7 +172,8 @@
 }
 # 0000 00ss ssst tttt dddd d000 0101 0110
 :dsrlv RD, RTsrc, RSsrc         is $(AMODE) & prime=0 & fct=22 & RSsrc & RTsrc & RD & sa=0 {
-    RD = RTsrc >> RSsrc;
+    local shift:1 = RSsrc[0,6];
+    RD = RTsrc >> shift;
 }
 
 # 0000 00ss ssst tttt dddd d000 0010 1110
