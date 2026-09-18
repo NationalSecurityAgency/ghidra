@@ -27,6 +27,7 @@ import generic.test.AbstractGenericTest;
 import ghidra.framework.client.*;
 import ghidra.framework.model.ProjectLocator;
 import ghidra.framework.protocol.ghidra.GhidraURLConnection.StatusCode;
+import ghidra.util.NamingUtilities;
 
 public class GhidraURLTest extends AbstractGenericTest {
 
@@ -107,6 +108,19 @@ public class GhidraURLTest extends AbstractGenericTest {
 		assertTrue(loc.isWindowsOnlyLocation());
 		ghidraUrl = GhidraURL.makeURL(loc);
 		url = toGhidraLocalURL("////a/b/Test", null);
+		assertEquals(url, ghidraUrl);
+		assertEquals(loc, GhidraURL.getProjectStorageLocator(ghidraUrl));
+
+		StringBuilder specialChars = new StringBuilder();
+		for (Character c : NamingUtilities.VALID_NAME_CHARSET) {
+			specialChars.append(c);
+		}
+
+		loc = new ProjectLocator("/a/b" + specialChars, "Test" + specialChars);
+		assertEquals("/a/b" + specialChars + "/", loc.getLocation());
+		assertFalse(loc.isWindowsOnlyLocation());
+		ghidraUrl = GhidraURL.makeURL(loc);
+		url = toGhidraLocalURL("/a/b" + specialChars + "/Test" + specialChars, null);
 		assertEquals(url, ghidraUrl);
 		assertEquals(loc, GhidraURL.getProjectStorageLocator(ghidraUrl));
 
