@@ -22,6 +22,7 @@ public enum eBPF_ElfRelocationType implements ElfRelocationType {
 	R_BPF_64_ABS64(2),		// S + A
 	R_BPF_64_ABS32(3),		// S + A
 	R_BPF_64_NODYLD32(4),	// S + A
+	R_BPF_64_RELATIVE(8),	// Adjust by program base
 
 	R_BPF_64_32(10),		// (S + A) / 8 - 1
 
