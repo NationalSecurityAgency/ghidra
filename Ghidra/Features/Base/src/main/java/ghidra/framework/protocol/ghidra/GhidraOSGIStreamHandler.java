@@ -35,4 +35,9 @@ public class GhidraOSGIStreamHandler extends AbstractURLStreamHandlerService {
     public URLConnection openConnection(URL url) throws IOException {
 		return ghidraProtocolHandler.openConnection(url);
     }
+
+	@Override
+	public int getDefaultPort() {
+		return ghidraProtocolHandler.getDefaultPort();
+	}
 }
