@@ -250,6 +250,7 @@ src/main/help/help/TOC_Source.xml||GHIDRA||||END|
 src/main/help/help/topics/About/About_Ghidra.htm||GHIDRA||||END|
 src/main/help/help/topics/About/About_Program_File.htm||GHIDRA||||END|
 src/main/help/help/topics/About/images/About_Program.png||GHIDRA||||END|
+src/main/help/help/topics/Accessibility/AccessibilityOverview.html||GHIDRA||||END|
 src/main/help/help/topics/Annotations/Annotations.html||GHIDRA||||END|
 src/main/help/help/topics/Annotations/images/CommentDialogURLExample.png||GHIDRA||||END|
 src/main/help/help/topics/Annotations/images/InvalidAnnotationsDialogExample.png||GHIDRA||||END|
