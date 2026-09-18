@@ -153,6 +153,7 @@
     <symbol name="PUR0" address="RAM:03FC"/>
     <symbol name="PUR1" address="RAM:03FD"/>
     <symbol name="PUR2" address="RAM:03FE"/>
+    <symbol name="PCR" address="RAM:03FF"/>
     <symbol name="UNDEFINED_INSTRUCTION_INT_VECTOR" address="RAM:FFFDC" entry="true" type="code_ptr"/>
     <symbol name="OVERFLOW_INT_VECTOR" address="RAM:FFFE0" entry="true" type="code_ptr"/>
     <symbol name="BRK_INSTRUCTION_INT_VECTOR" address="RAM:FFFE4" entry="true" type="code_ptr"/>
@@ -164,6 +165,6 @@
     <symbol name="RESET_INT_VECTOR" address="RAM:FFFFC" entry="true" type="code_ptr"/>
   </default_symbols>
   <default_memory_blocks>
-    <memory_block name="SFR" start_address="RAM:0000" mode="rw" length="0x03FF" initialized="false"/>
+    <memory_block name="SFR" start_address="RAM:0000" mode="rw" length="0x0400" initialized="false"/>
   </default_memory_blocks>
 </processor_spec>
