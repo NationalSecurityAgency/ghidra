@@ -1,0 +1,21 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+  <!--
+      A pointer is used by LOADs of two different widths.  The inferred uint8
+      pointer must be cast before the one-byte LOAD; casting its result would
+      retain an incorrect eight-byte dereference in the emitted C.
+  -->
+<bytechunk space="ram" offset="0x100000" readonly="true">
+85f67404488b07c30fb607c3
+</bytechunk>
+</binaryimage>
+<script>
+  <com>map fun r0x100000 mixed_width_load</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Mixed-width load #1" min="1" max="1">return \(uint8\)\*\(uint1 \*\)param_1;</stringmatch>
+<stringmatch name="Mixed-width load #2" min="1" max="1">return \*param_1;</stringmatch>
+<stringmatch name="Mixed-width load #3" min="0" max="0">return \(uint8\)\(uint1\)\*param_1;</stringmatch>
+</decompilertest>
