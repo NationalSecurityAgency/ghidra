@@ -1510,23 +1510,19 @@ irf: AN7    is irf_0_4 = 0x13 & AN7 { export AN7; }
 }
 
 :SK flag_ is flag_ & ... op3_7 = 0x1 [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
-    if flag_ == 0 goto inst_next;
-    $(SK_flag) = 1;
+    $(SK_flag) = flag_;
 }
 
 :SKN flag_ is flag_ & ... op3_7 = 0x3 [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
-    if flag_ == 1 goto inst_next;
-    $(SK_flag) = 1;
+    $(SK_flag) = !flag_;
 }
 
 :SKIT irf is op0_7 = 0x48; op5_7 = 0x2 & irf [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
-    if irf == 0 goto inst_next;
-    $(SK_flag) = 1;
+    $(SK_flag) = irf != 0;
 }
 
 :SKNIT irf is op0_7 = 0x48; op5_7 = 0x3 & irf [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
-    if irf == 1 goto inst_next;
-    $(SK_flag) = 1;
+    $(SK_flag) = irf == 0;
 }
 
 
