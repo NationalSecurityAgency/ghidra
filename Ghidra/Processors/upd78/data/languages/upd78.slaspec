@@ -409,8 +409,6 @@ flag: "CY" is f_0_2 = 0x2 { f:1 = $(CY_flag); export f; }
 flag: "HC" is f_0_2 = 0x3 { f:1 = $(HC_flag); export f; }
 flag: "Z"  is f_0_2 = 0x4 { f:1 = $(Z_flag); export f; }
 
-flag_: flag is op0_7 = 0x48; f_0_2 != 0 & flag { export flag; }
-
 # Interrupt request flags
 irf: NMI    is irf_0_4 = 0x0 & NMI  { export NMI; }
 irf: FT0    is irf_0_4 = 0x1 & FT0  { export FT0; }
@@ -1509,12 +1507,12 @@ irf: AN7    is irf_0_4 = 0x13 & AN7 { export AN7; }
     $(SK_flag) = 1;
 }
 
-:SK flag_ is flag_ & ... op3_7 = 0x1 [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
-    $(SK_flag) = flag_;
+:SK flag is op0_7 = 0x48; op3_7 = 0x1 & flag [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
+    $(SK_flag) = flag;
 }
 
-:SKN flag_ is flag_ & ... op3_7 = 0x3 [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
-    $(SK_flag) = !flag_;
+:SKN flag is op0_7 = 0x48; op3_7 = 0x3 & flag [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
+    $(SK_flag) = !flag;
 }
 
 :SKIT irf is op0_7 = 0x48; op5_7 = 0x2 & irf [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
