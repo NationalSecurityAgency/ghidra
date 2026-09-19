@@ -1359,8 +1359,8 @@ irf: AN7    is irf_0_4 = 0x13 & AN7 { export AN7; }
 }
 
 :RLR r2_48 is r2_48 & ... op2_7 = 0x0c {
-    local nextCY = r2_48 & 1;
-    r2_48 = (r2_48 >> 1) | (nextCY << 7);
+    local nextCY:1 = r2_48 & 1;
+    r2_48 = (r2_48 >> 1) | ($(CY_flag) << 7);
     $(CY_flag) = nextCY;
 }
 
@@ -1387,27 +1387,25 @@ irf: AN7    is irf_0_4 = 0x13 & AN7 { export AN7; }
 }
 
 :DRLL EA is op0_7 = 0x48; op0_7 = 0xb4 & EA {
-    local nextCY:2 = EA >> 15;
-    EA = (EA << 1) | nextCY;
-    $(CY_flag) = nextCY:1;
+    local nextCY:1 = EA[15,1];
+    EA = (EA << 1) | zext($(CY_flag));
+    $(CY_flag) = nextCY;
 }
 
 :DRLR EA is op0_7 = 0x48; op0_7 = 0xb0 & EA {
-    local nextCY:2 = EA & 1;
-    EA = (EA >> 1) | (nextCY << 15);
-    $(CY_flag) = nextCY:1;
+    local nextCY:1 = EA[0,1];
+    EA = (EA >> 1) | (zext($(CY_flag)) << 15);
+    $(CY_flag) = nextCY;
 }
 
 :DSLL EA is op0_7 = 0x48; op0_7 = 0xa4 & EA {
-    local nextCY:2 = EA >> 15;
+    $(CY_flag) = EA[15,1];
     EA = EA << 1;
-    $(CY_flag) = nextCY:1;
 }
 
 :DSLR EA is op0_7 = 0x48; op0_7 = 0xa0 & EA {
-    local nextCY:2 = EA & 1;
+    $(CY_flag) = EA[0,1];
     EA = EA >> 1;
-    $(CY_flag) = nextCY:1;
 }
 
 ################################################################
