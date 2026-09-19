@@ -52,6 +52,39 @@ public class EditFunctionSignatureDialogTest extends AbstractGhidraHeadedIntegra
 	}
 
 	@Test
+	public void testParseSignature_GoodSingleArray() throws Exception {
+
+		String signature = "void test(int [12] a)";
+		Function f = function("test", signature);
+		EditFunctionSignatureDialog dialog = new EditFunctionSignatureDialog(tool, "Title", f);
+		FunctionDefinitionDataType definition = dialog.parseSignature();
+		assertNotNull(definition);
+		assertEquals(signature, definition.getPrototypeString());
+	}
+
+	@Test
+	public void testParseSignature_GoodMultiArray() throws Exception {
+
+		String signature = "void test(int [9][4] a, char [30][10] b)";
+		Function f = function("test", signature);
+		EditFunctionSignatureDialog dialog = new EditFunctionSignatureDialog(tool, "Title", f);
+		FunctionDefinitionDataType definition = dialog.parseSignature();
+		assertNotNull(definition);
+		assertEquals(signature, definition.getPrototypeString());
+	}
+
+	@Test
+	public void testParseSignature_GoodMixedSizePointers() throws Exception {
+
+		String signature = "void *32 test(int *32 a, int *24 b)";
+		Function f = function("test", signature);
+		EditFunctionSignatureDialog dialog = new EditFunctionSignatureDialog(tool, "Title", f);
+		FunctionDefinitionDataType definition = dialog.parseSignature();
+		assertNotNull(definition);
+		assertEquals(signature, definition.getPrototypeString());
+	}
+
+	@Test
 	public void testParseSignature_Good() throws Exception {
 
 		String signature = "void bob(int a)";

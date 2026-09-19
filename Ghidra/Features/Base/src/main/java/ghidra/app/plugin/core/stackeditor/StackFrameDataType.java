@@ -80,7 +80,7 @@ class StackFrameDataType implements Structure {
 	/**
 	 * Constructor for an editable stack frame for use with the editor.
 	 * The specified stack will be copied into this new instance.
-	 * 
+	 *
 	 * @param function the function whose stack frame will be edited
 	 */
 	StackFrameDataType(Function function) {
@@ -93,7 +93,7 @@ class StackFrameDataType implements Structure {
 	/**
 	 * Constructor for an editable stack frame for use with the editor.
 	 * The specified {@link StackFrameDataType} instance will be copied into this new instance
-	 * 
+	 *
 	 * @param stackDt stack frame editor datatype
 	 * @param dtm dtm datatype manager (required)
 	 */
@@ -101,7 +101,7 @@ class StackFrameDataType implements Structure {
 		this.dtm = dtm;
 
 		// NOTE: It is assumed that the program architecture will not change!
-		// Replicate state from specified stackDt instance 
+		// Replicate state from specified stackDt instance
 
 		this.returnAddressOffset = stackDt.returnAddressOffset;
 		this.growsNegative = stackDt.growsNegative;
@@ -228,7 +228,7 @@ class StackFrameDataType implements Structure {
 	 * NOTE: It is required that this stack frame datatype instance be instantiated or copied
 	 * using the original function's datyatype manager and that the editor's datatype manager
 	 * has the same data organization.
-	 *  
+	 *
 	 * @param viewDTM stack editor's datatype manager
 	 */
 	void resolveWrappedComposite(CompositeViewerDataTypeManager<StackFrameDataType> viewDTM) {
@@ -314,7 +314,7 @@ class StackFrameDataType implements Structure {
 
 	/**
 	 * Deletes the indicated range of bytes from this stack frame data type.
-	 * 
+	 *
 	 * @param minOffset the range's minimum offset on the stack frame
 	 * @param maxOffset the range's maximum offset on the stack frame
 	 */
@@ -356,7 +356,7 @@ class StackFrameDataType implements Structure {
 	/**
 	 * Effectively moves a component for a defined stack variable if it will fit where it is being
 	 * moved to in the stack frame.
-	 * 
+	 *
 	 * @param ordinal the ordinal of the component to move by changing its offset.
 	 * @param newOffset the offset to move the variable to.
 	 * @return the component representing the stack variable at the new offset.
@@ -416,7 +416,7 @@ class StackFrameDataType implements Structure {
 
 	/**
 	 * Sets the name of the component at the specified ordinal.
-	 * 
+	 *
 	 * @param ordinal the ordinal
 	 * @param name the new name. Null indicates the default name.
 	 * @return true if name change was successful, else false
@@ -492,7 +492,7 @@ class StackFrameDataType implements Structure {
 
 	/**
 	 * Sets the comment at the specified ordinal.
-	 * 
+	 *
 	 * @param ordinal the ordinal
 	 * @param comment the new comment.
 	 * @return true if comment change was successful, else false
@@ -551,7 +551,7 @@ class StackFrameDataType implements Structure {
 
 	/**
 	 * Sets a stack component/variable data type
-	 * 
+	 *
 	 * @param ordinal the ordinal
 	 * @param dataType the data type
 	 * @param length the length or size of this variable.
@@ -566,7 +566,7 @@ class StackFrameDataType implements Structure {
 
 	/**
 	 * Get the maximum variable size that will fit at the indicated offset if a replace is done.
-	 * 
+	 *
 	 * @param stackOffset stack offset
 	 * @return the maximum size
 	 */
@@ -615,7 +615,7 @@ class StackFrameDataType implements Structure {
 
 	/**
 	 * Returns the default name for the indicated stack offset.
-	 * 
+	 *
 	 * @param stackComponent stack element
 	 * @return the default stack variable name.
 	 */
@@ -680,7 +680,7 @@ class StackFrameDataType implements Structure {
 
 	/**
 	 * Returns true if a stack variable is defined at the specified ordinal.
-	 * 
+	 *
 	 * @param ordinal stack frame ordinal
 	 * @return true if variable is defined at ordinal or false if undefined.
 	 */
@@ -700,13 +700,13 @@ class StackFrameDataType implements Structure {
 	}
 
 	/**
-	 * Determine if the specified stackOffset corresponds to a parameter which should not be 
+	 * Determine if the specified stackOffset corresponds to a parameter which should not be
 	 * modified via the stack editor other than its name and comment.  This is neccessary when
 	 * (i.e., custom storage is disabled) in which case the function signature should be adjusted
 	 * using the Function Editor.
-	 * 
+	 *
 	 * @param stackOffset stack frame offset
-	 * @return true if the specified stackOffset corresponds to a protected parameter with 
+	 * @return true if the specified stackOffset corresponds to a protected parameter with
 	 * an auto storage assignment.
 	 */
 	boolean isProtectedParameterOffset(int stackOffset) {
@@ -743,7 +743,7 @@ class StackFrameDataType implements Structure {
 	 * If a stack variable is defined in the editor at the specified offset, this retrieves the
 	 * editor element containing that stack variable <BR>
 	 * Note: if a stack variable isn't defined at the indicated offset then null is returned.
-	 * 
+	 *
 	 * @param stackOffset the stack offset
 	 * @return the stack editor's element at the stackOffset. Otherwise, null.
 	 */
@@ -758,7 +758,7 @@ class StackFrameDataType implements Structure {
 	/**
 	 * If a stack variable is defined in the editor at the specified ordinal, this retrieves the
 	 * editor element containing that stack variable. <BR>
-	 * 
+	 *
 	 * @param ordinal the ordinal
 	 * @return the stack editor's element at the ordinal or null if an undefined location within
 	 * the bounds of the stack.
@@ -782,7 +782,7 @@ class StackFrameDataType implements Structure {
 
 	/**
 	 * {@link StackComponentWrapper} wraps and standard {@link Structure}
-	 * {@link DataTypeComponent} and provides the neccessary stack offset 
+	 * {@link DataTypeComponent} and provides the neccessary stack offset
 	 * translation.
 	 */
 	class StackComponentWrapper implements DataTypeComponent {
@@ -837,12 +837,12 @@ class StackFrameDataType implements Structure {
 		}
 
 		/**
-		 * Determine if this component corresponds to a parameter which should not be 
+		 * Determine if this component corresponds to a parameter which should not be
 		 * modified via the stack editor other than its name and comment.  This is neccessary when
 		 * (i.e., custom storage is disabled) in which case the function signature should be adjusted
 		 * using the Function Editor.
-		 * 
-		 * @return true if this component corresponds to a protected parameter with 
+		 *
+		 * @return true if this component corresponds to a protected parameter with
 		 * an auto storage assignment.
 		 */
 		boolean isProtectedParameter() {
@@ -1183,7 +1183,7 @@ class StackFrameDataType implements Structure {
 	/**
 	 * Check for possible stack growth and adjust positiveLength as needed.
 	 * This method shuold be invoked if changes are made to the wrapped structure by the
-	 * datatype manager in response to datatype dependency changes they may trigger positive 
+	 * datatype manager in response to datatype dependency changes they may trigger positive
 	 * growth.
 	 */
 	void checkForStackGrowth() {
@@ -1608,6 +1608,16 @@ class StackFrameDataType implements Structure {
 
 	@Override
 	public DataTypeComponent getDataTypeAt(int offset) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public AddressModel getAddressModel() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void setAddressModel(AddressModel addressModel) {
 		throw new UnsupportedOperationException();
 	}
 
