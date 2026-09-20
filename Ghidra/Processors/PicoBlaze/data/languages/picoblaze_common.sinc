@@ -1,0 +1,21 @@
+define endian=big;
+define alignment=3;
+
+# This should be rom_space but thats not actually supported in the sleigh compiler
+define space rom            type=ram_space      size=3   wordsize=1 default;
+define space scratchpad     type=ram_space      size=1   wordsize=1;
+define space stack_buffer   type=ram_space      size=1   wordsize=1;
+define space register       type=register_space size=1;
+
+define register offset=0x00 size=1 [
+	s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 sA sB sC sD sE sF 
+    SP
+    flags
+];
+
+define bitrange Z=flags[0,1]
+                C=flags[1,1]
+;
+
+define pcodeop enable_interrupt;
+define pcodeop disable_interrupt;
