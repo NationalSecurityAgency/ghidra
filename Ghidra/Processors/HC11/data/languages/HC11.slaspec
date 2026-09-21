@@ -1,0 +1,2464 @@
+# sleigh specification file for Freescale HC11 (68HC11)
+
+define endian=big;
+
+define alignment=1;
+
+define space RAM      type=ram_space      size=2  default;
+define space register type=register_space size=2;
+
+@define VECTOR_SWI 	"0xFFF6"
+
+################################################################
+# Registers
+################################################################
+
+define register offset=0x00 size=1 [ A B ];
+define register offset=0x00 size=2 [ D ];
+
+# IX also referred to as X or x; but must be distinct from X bit in CCR
+# IY also referred to as Y or y; made IY to be consistent with IX
+define register offset=0x10 size=2 [ IX      IY      ];
+define register offset=0x10 size=1 [ IXH IXL IYH IYL ];
+
+define register offset=0x20 size=2 [ PC      SP      ];
+define register offset=0x20 size=1 [ PCH PCL SPH SPL ];
+
+define register offset=0x30 size=1 [ CCR ];
+
+# Define context bits
+# WARNING: when adjusting context keep compiler packing in mind
+# and make sure fields do not span a 32-bit boundary before or 
+# after context packing
+define register offset=0x40 size=4   contextreg;
+define context contextreg
+	Prebyte = (0,8) # Set to one of the 0x18, 0x1A or 0xCD prebytes
+;
+
+# individual status bits within CCR
+@define S		"CCR[7,1]"		# STOP Enable
+@define X		"CCR[6,1]"		# Non-maskable interrupt control bit
+@define H		"CCR[5,1]"		# Half Carry Flag
+@define I		"CCR[4,1]"		# Maskable interrupt control bit
+@define N		"CCR[3,1]"		# Negative Flag
+@define Z		"CCR[2,1]"		# Zero Flag
+@define V		"CCR[1,1]"		# Two's complement overflow Flag
+@define C		"CCR[0,1]" # Carry/Borrow Flag
+################################################################
+# Tokens
+################################################################
+define token opbyte8 (8)
+	op8 = (0,7)
+;
+
+define token data8 (8)
+	imm8  = (0,7)
+	simm8 = (0,7) signed
+	rel   = (0,7) signed
+;
+
+define token data16 (16)
+	imm16  = (0,15)
+	simm16 = (0,15) signed
+;
+
+################################################################
+# Pseudo Instructions
+################################################################
+define pcodeop LoadStack;
+define pcodeop decimalAdjustAccumulator;
+define pcodeop decimalAdjustCarry;
+define pcodeop stop;
+define pcodeop WaitForInterrupt;
+
+################################################################
+# Addressing tables
+################################################################
+opr8a:			imm8  is imm8 { local addr:1 = imm8; export addr; }
+opr8a_8:		imm8  is imm8 { export *:1 imm8; }
+opr8a_16:		imm8  is imm8 { export *:2 imm8; }
+
+opr16a:			imm16  is imm16 { local addr:2 = imm16; export addr; }
+opr16a_8:		imm16  is imm16 { export *:1 imm16; }
+opr16a_16:		imm16  is imm16 { export *:2 imm16; }
+
+iopr8i:			"#"imm8  is imm8 { export *[const]:1 imm8; }
+iopr16i:		"#"imm16  is imm16 { export *[const]:2 imm16; }
+
+msk8:			imm8  is imm8 { export *[const]:1 imm8; }
+
+# INDX / INDY
+oprx8_X:		imm8,IX  is imm8 & IX { addr:2 = IX + zext(imm8:1); export addr; }
+oprx8_Y:		imm8,IX  is imm8 & IX { addr:2 = IY + zext(imm8:1); export addr; }
+
+oprx8_8_X:		imm8,IX  is imm8 & IX { addr:2 = IX + zext(imm8:1); export *:1 addr; }
+oprx8_8_Y:		imm8,IY  is imm8 & IY { addr:2 = IY + zext(imm8:1); export *:1 addr; }
+
+oprx8_16_X:		imm8,IX  is imm8 & IX { addr:2 = IX + zext(imm8:1); export *:2 addr; }
+oprx8_16_Y:		imm8,IY  is imm8 & IY { addr:2 = IY + zext(imm8:1); export *:2 addr; }
+
+# range -128 through +127
+rel8: reloc  is rel    [ reloc = inst_next + rel; ] { export *:1 reloc; }
+
+################################################################
+# Macros
+################################################################
+macro additionWithCarry(operand1, operand2, result) {
+	local Ccopy = zext($(C));
+	local AFmask = -1 >> 4;
+	$(H) = (((operand1 & AFmask) + (operand2 & AFmask) + Ccopy) & (AFmask + 1)) != 0;
+	$(C) = carry(operand1, operand2);
+	local tempResult = operand1 + operand2;
+	$(C) = $(C) || carry(tempResult, Ccopy);
+	$(V) = $(V) ^^ scarry(tempResult, Ccopy);
+	result = tempResult + Ccopy;
+	$(N) = (result s< 0);
+	$(Z) = (result == 0);
+}
+
+macro addition_flags1(operand1, operand2, result) {
+	local AFmask = -1 >> 4;
+	$(H) = (((operand1 & AFmask) + (operand2 & AFmask)) & (AFmask + 1)) != 0;
+
+	$(N) = (result s< 0);
+	$(Z) = (result == 0);
+	$(V) = scarry(operand1,operand2);
+	$(C) = carry(operand1,operand2);
+}
+
+macro addition_flags2(operand1, operand2, result) {
+	$(N) = (result s< 0);
+	$(Z) = (result == 0);
+	$(V) = scarry(operand1,operand2);
+	$(C) = carry(operand1,operand2);
+}
+
+macro subtraction_flags1(register, operand, result) {
+	$(V) = sborrow(register,operand);
+	$(N) = (result s< 0);
+	$(Z) = (result == 0);
+	$(C) = register < operand;
+}
+
+macro subtraction_flags2(register, operand, result) {
+	$(V) = sborrow(register,operand);
+	$(N) = (result s< 0);
+	$(Z) = (result == 0);
+	$(C) = register < operand;
+}
+
+macro Pull1(operand) {
+	paddr:2 = SP;
+	operand = *paddr;
+	SP = SP + 1;
+}
+
+macro Pull2(operand) {
+	paddr:2 = SP;
+	operand = *paddr;
+	SP = SP + 2;
+}
+
+macro Push1(operand) {
+	SP = SP - 1;
+	paddr:2 = SP;
+	*paddr = operand;
+}
+
+macro Push2(operand) {
+	SP = SP - 2;
+	paddr:2 = SP;
+	*paddr = operand;
+}
+
+macro setCCR(operand) {
+	# when CCR is the destination, cannot set the X bit unless it is already set in CCR
+	CCR = operand & (CCR | 0b10111111);
+}
+
+################################################################
+# Constructors
+################################################################
+:^instruction              is op8=0x18; instruction  [ Prebyte=0x18; ] {}
+:^instruction              is op8=0x1A; instruction  [ Prebyte=0x1A; ] {}
+:^instruction              is op8=0xCD; instruction  [ Prebyte=0xCD; ] {}
+
+:ABA                       is Prebyte=0 & op8=0x1B {
+	local result:1 = A + B;
+	addition_flags1(A, B, result);
+	A = result;
+}
+
+:ABX                       is Prebyte=0 & op8=0x3A {
+	IX = zext(B) + IX;
+}
+
+:ABY                       is Prebyte=0x18 & op8=0x3A {
+	IY = zext(B) + IY;
+}
+
+:ADCA iopr8i               is Prebyte=0 & op8=0x89; iopr8i {
+	local op1:1 = iopr8i;
+
+	local result:1;
+	additionWithCarry(A, op1, result);
+	A = result;
+}
+
+:ADCA opr8a_8              is Prebyte=0 & op8=0x99; opr8a_8 {
+	local op1:1 = opr8a_8;
+
+	local result:1;
+	additionWithCarry(A, op1, result);
+	A = result;
+}
+
+:ADCA opr16a_8             is Prebyte=0 & op8=0xB9; opr16a_8 {
+	local op1:1 = opr16a_8;
+
+	local result:1;
+	additionWithCarry(A, op1, result);
+	A = result;
+}
+
+:ADCA oprx8_8_X            is Prebyte=0 & op8=0xA9; oprx8_8_X {
+	local op1:1 = oprx8_8_X;
+
+	local result:1;
+	additionWithCarry(A, op1, result);
+	A = result;
+}
+
+:ADCA oprx8_8_Y            is Prebyte=0x18 & op8=0xA9; oprx8_8_Y {
+	local op1:1 = oprx8_8_Y;
+
+	local result:1;
+	additionWithCarry(A, op1, result);
+	A = result;
+}
+
+:ADCB iopr8i               is Prebyte=0 & op8=0xC9; iopr8i {
+	local op1:1 = iopr8i;
+
+	local result:1;
+	additionWithCarry(B, op1, result);
+	B = result;
+}
+
+:ADCB opr8a_8              is Prebyte=0 & op8=0xD9; opr8a_8 {
+	local op1:1 = opr8a_8;
+
+	local result:1;
+	additionWithCarry(B, op1, result);
+	B = result;
+}
+
+:ADCB opr16a_8             is Prebyte=0 & op8=0xF9; opr16a_8 {
+	local op1:1 = opr16a_8;
+
+	local result:1;
+	additionWithCarry(B, op1, result);
+	B = result;
+}
+
+:ADCB oprx8_8_X            is Prebyte=0 & op8=0xE9; oprx8_8_X {
+	local op1:1 = oprx8_8_X;
+
+	local result:1;
+	additionWithCarry(B, op1, result);
+	B = result;
+}
+
+:ADCB oprx8_8_Y            is Prebyte=0x18 & op8=0xE9; oprx8_8_Y {
+	local op1:1 = oprx8_8_Y;
+
+	local result:1;
+	additionWithCarry(B, op1, result);
+	B = result;
+}
+
+:ADDA iopr8i               is Prebyte=0 & op8=0x8B; iopr8i {
+	local op1:1 = iopr8i;
+
+	local result:1 = A + op1;
+	addition_flags1(A, op1, result);
+	A = result;
+}
+
+:ADDA opr8a_8              is Prebyte=0 & op8=0x9B; opr8a_8 {
+	local op1:1 = opr8a_8;
+
+	local result:1 = A + op1;
+	addition_flags1(A, op1, result);
+	A = result;
+}
+
+:ADDA opr16a_8             is Prebyte=0 & op8=0xBB; opr16a_8 {
+	local op1:1 = opr16a_8;
+
+	local result:1 = A + op1;
+	addition_flags1(A, op1, result);
+	A = result;
+}
+
+:ADDA oprx8_8_X            is Prebyte=0 & op8=0xAB; oprx8_8_X {
+	local op1:1 = oprx8_8_X;
+
+	local result:1 = A + op1;
+	addition_flags1(A, op1, result);
+	A = result;
+}
+
+:ADDA oprx8_8_Y            is Prebyte=0x18 & op8=0xAB; oprx8_8_Y {
+	local op1:1 = oprx8_8_Y;
+
+	local result:1 = A + op1;
+	addition_flags1(A, op1, result);
+	A = result;
+}
+
+:ADDB iopr8i               is Prebyte=0 & op8=0xCB; iopr8i {
+	local op1:1 = iopr8i;
+
+	local result:1 = B + op1;
+	addition_flags1(B, op1, result);
+	B = result;
+}
+
+:ADDB opr8a_8              is Prebyte=0 & op8=0xDB; opr8a_8 {
+	local op1:1 = opr8a_8;
+
+	local result:1 = B + op1;
+	addition_flags1(B, op1, result);
+	B = result;
+}
+
+:ADDB opr16a_8             is Prebyte=0 & op8=0xFB; opr16a_8 {
+	local op1:1 = opr16a_8;
+
+	local result:1 = B + op1;
+	addition_flags1(B, op1, result);
+	B = result;
+}
+
+:ADDB oprx8_8_X            is Prebyte=0 & op8=0xEB; oprx8_8_X {
+	local op1:1 = oprx8_8_X;
+
+	local result:1 = B + op1;
+	addition_flags1(B, op1, result);
+	B = result;
+}
+
+:ADDB oprx8_8_Y            is Prebyte=0x18 & op8=0xEB; oprx8_8_Y {
+	local op1:1 = oprx8_8_Y;
+
+	local result:1 = B + op1;
+	addition_flags1(B, op1, result);
+	B = result;
+}
+
+:ADDD iopr16i              is Prebyte=0 & op8=0xC3; iopr16i {
+	local op1:2 = iopr16i;
+
+	local result:2 = D + op1;
+	addition_flags2(D, op1, result);
+	D = result;
+}
+
+:ADDD opr8a_16             is Prebyte=0 & op8=0xD3; opr8a_16 {
+	local op1:2 = opr8a_16;
+
+	local result:2 = D + op1;
+	addition_flags2(D, op1, result);
+	D = result;
+}
+
+:ADDD opr16a_16            is Prebyte=0 & op8=0xF3; opr16a_16 {
+	local op1:2 = opr16a_16;
+
+	local result:2 = D + op1;
+	addition_flags2(D, op1, result);
+	D = result;
+}
+
+:ADDD oprx8_16_X           is Prebyte=0 & op8=0xE3; oprx8_16_X {
+	local op1:2 = oprx8_16_X;
+
+	local result:2 = D + op1;
+	addition_flags2(D, op1, result);
+	D = result;
+}
+
+:ADDD oprx8_16_Y           is Prebyte=0x18 & op8=0xE3; oprx8_16_Y {
+	local op1:2 = oprx8_16_Y;
+
+	local result:2 = D + op1;
+	addition_flags2(D, op1, result);
+	D = result;
+}
+
+:ANDA iopr8i               is Prebyte=0 & op8=0x84; iopr8i {
+	A = A & iopr8i;
+	$(V) = 0;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+}
+
+:ANDA opr8a_8              is Prebyte=0 & op8=0x94; opr8a_8 {
+	A = A & opr8a_8;
+	$(V) = 0;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+}
+
+:ANDA opr16a_8             is Prebyte=0 & op8=0xB4; opr16a_8 {
+	A = A & opr16a_8;
+	$(V) = 0;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+}
+
+:ANDA oprx8_8_X            is Prebyte=0 & op8=0xA4; oprx8_8_X {
+	A = A & oprx8_8_X;
+	$(V) = 0;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+}
+
+:ANDA oprx8_8_Y            is Prebyte=0x18 & op8=0xA4; oprx8_8_Y {
+	A = A & oprx8_8_Y;
+	$(V) = 0;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+}
+
+:ANDB iopr8i               is Prebyte=0 & op8=0xC4; iopr8i {
+	B = B & iopr8i;
+	$(V) = 0;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+}
+
+:ANDB opr8a_8              is Prebyte=0 & op8=0xD4; opr8a_8 {
+	B = B & opr8a_8;
+	$(V) = 0;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+}
+
+:ANDB opr16a_8             is Prebyte=0 & op8=0xF4; opr16a_8 {
+	B = B & opr16a_8;
+	$(V) = 0;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+}
+
+:ANDB oprx8_8_X            is Prebyte=0 & op8=0xE4; oprx8_8_X {
+	B = B & oprx8_8_X;
+	$(V) = 0;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+}
+
+:ANDB oprx8_8_Y            is Prebyte=0x18 & op8=0xE4; oprx8_8_Y {
+	B = B & oprx8_8_Y;
+	$(V) = 0;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+}
+
+:ASLA                      is Prebyte=0 & op8=0x48 {
+	$(C) = A[7,1];
+	A = A << 1;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(V) = $(N) ^ $(C);
+}
+
+:ASLB                      is Prebyte=0 & op8=0x58 {
+	$(C) = B[7,1];
+	B = B << 1;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(V) = $(N) ^ $(C);
+}
+
+:ASL opr16a_8              is Prebyte=0 & op8=0x78; opr16a_8 {
+	local tmp:1 = opr16a_8;
+	$(C) = tmp[7,1];
+	tmp = tmp << 1;
+	opr16a_8 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(V) = $(N) ^ $(C);
+}
+
+:ASL oprx8_8_X             is Prebyte=0 & op8=0x68; oprx8_8_X {
+	local tmp:1 = oprx8_8_X;
+	$(C) = tmp[7,1];
+	tmp = tmp << 1;
+	oprx8_8_X = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(V) = $(N) ^ $(C);
+}
+
+:ASL oprx8_8_Y             is Prebyte=0x18 & op8=0x68; oprx8_8_Y {
+	local tmp:1 = oprx8_8_Y;
+	$(C) = tmp[7,1];
+	tmp = tmp << 1;
+	oprx8_8_Y = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(V) = $(N) ^ $(C);
+}
+
+:ASLD                      is Prebyte=0 & op8=0x05 {
+	$(C) = D[15,1];
+	D = D << 1;
+	$(Z) = (D == 0);
+	$(N) = (D s< 0);
+	$(V) = $(N) ^ $(C);
+}
+
+:ASRA                      is Prebyte=0 & op8=0x47 {
+	$(C) = A[0,1];
+	A = A s>> 1;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(V) = $(N) ^ $(C);
+}
+
+:ASRB                      is Prebyte=0 & op8=0x57 {
+	$(C) = B[0,1];
+	B = B s>> 1;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(V) = $(N) ^ $(C);
+}
+
+:ASR opr16a_8              is Prebyte=0 & op8=0x77; opr16a_8 {
+	local tmp:1 = opr16a_8;
+	$(C) = tmp[0,1];
+	tmp = tmp s>> 1;
+	opr16a_8 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(V) = $(N) ^ $(C);
+}
+
+:ASR oprx8_8_X             is Prebyte=0 & op8=0x67; oprx8_8_X {
+	local tmp:1 = oprx8_8_X;
+	$(C) = tmp[0,1];
+	tmp = tmp s>> 1;
+	oprx8_8_X = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(V) = $(N) ^ $(C);
+}
+
+:ASR oprx8_8_Y             is Prebyte=0x18 & op8=0x67; oprx8_8_Y {
+	local tmp:1 = oprx8_8_Y;
+	$(C) = tmp[0,1];
+	tmp = tmp s>> 1;
+	oprx8_8_Y = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(V) = $(N) ^ $(C);
+}
+
+:BCC rel8                  is Prebyte=0 & op8=0x24; rel8 {
+	if ($(C) == 0) goto rel8;
+}
+
+:BCLR opr8a_8, msk8        is Prebyte=0 & op8=0x15; opr8a_8; msk8 {
+	local op1:1 = opr8a_8;
+	op1 = op1 & ~msk8;
+	opr8a_8 = op1;
+	$(N) = (op1 s< 0);
+	$(Z) = (op1 == 0);
+	$(V) = 0;
+}
+
+:BCLR oprx8_8_X, msk8      is Prebyte=0 & op8=0x1D; oprx8_8_X; msk8 {
+	local op1:1 = oprx8_8_X;
+	op1 = op1 & ~msk8;
+	oprx8_8_X = op1;
+	$(N) = (op1 s< 0);
+	$(Z) = (op1 == 0);
+	$(V) = 0;
+}
+
+:BCLR oprx8_8_Y, msk8      is Prebyte=0x18 & op8=0x1D; oprx8_8_Y; msk8 {
+	local op1:1 = oprx8_8_Y;
+	op1 = op1 & ~msk8;
+	oprx8_8_Y = op1;
+	$(N) = (op1 s< 0);
+	$(Z) = (op1 == 0);
+	$(V) = 0;
+}
+
+:BCS rel8                  is Prebyte=0 & op8=0x25; rel8 {
+	if ($(C) == 1) goto rel8;
+}
+
+:BEQ rel8                  is Prebyte=0 & op8=0x27; rel8 {
+	if ($(Z) == 1) goto rel8;
+}
+
+:BGE rel8                  is Prebyte=0 & op8=0x2C; rel8 {
+	if (($(N) ^ $(V)) == 1) goto rel8;
+}
+
+:BGT rel8                  is Prebyte=0 & op8=0x2E; rel8 {
+	if (($(Z) | ($(N) ^ $(V))) == 0) goto rel8;
+}
+
+:BHI rel8                  is Prebyte=0 & op8=0x22; rel8 {
+	if (($(C) | $(Z)) == 0) goto rel8;
+}
+
+#:BHS rel8	is op8=0x24; rel8		See BCC
+
+:BITA iopr8i               is Prebyte=0 & op8=0x85; iopr8i {
+	local result:1 = A & iopr8i;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	$(V) = 0;
+}
+
+:BITA opr8a_8              is Prebyte=0 & op8=0x95; opr8a_8 {
+	local result:1 = A & opr8a_8;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	$(V) = 0;
+}
+
+:BITA opr16a_8             is Prebyte=0 & op8=0xB5; opr16a_8 {
+	local result:1 = A & opr16a_8;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	$(V) = 0;
+}
+
+:BITA oprx8_8_X            is Prebyte=0 & op8=0xA5; oprx8_8_X {
+	local result:1 = A & oprx8_8_X;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	$(V) = 0;
+}
+
+:BITA oprx8_8_Y            is Prebyte=0x18 & op8=0xA5; oprx8_8_Y {
+	local result:1 = B & oprx8_8_Y;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	$(V) = 0;
+}
+
+:BITB iopr8i               is Prebyte=0 & op8=0xC5; iopr8i {
+	local result:1 = B & iopr8i;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	$(V) = 0;
+}
+
+:BITB opr8a_8              is Prebyte=0 & op8=0xD5; opr8a_8 {
+	local result:1 = B & opr8a_8;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	$(V) = 0;
+}
+
+:BITB opr16a_8             is Prebyte=0 & op8=0xF5; opr16a_8 {
+	local result:1 = B & opr16a_8;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	$(V) = 0;
+}
+
+:BITB oprx8_8_X            is Prebyte=0 & op8=0xE5; oprx8_8_X {
+	local result:1 = B & oprx8_8_X;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	$(V) = 0;
+}
+
+:BITB oprx8_8_Y            is Prebyte=0x18 & op8=0xE5; oprx8_8_Y {
+	local result:1 = B & oprx8_8_Y;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	$(V) = 0;
+}
+
+:BLE rel8                  is Prebyte=0 & op8=0x2F; rel8 {
+	if ($(Z) | ($(N) ^ $(V))) goto rel8;
+}
+
+#:BLO rel8	is op8=0x25; rel8		see BCS
+
+:BLS rel8                  is Prebyte=0 & op8=0x23; rel8 {
+	if (($(C) | $(Z)) == 1) goto rel8;
+}
+
+:BLT rel8                  is Prebyte=0 & op8=0x2D; rel8 {
+	if (($(N) ^ $(V)) ==1) goto rel8;
+}
+
+:BMI rel8                  is Prebyte=0 & op8=0x2B; rel8 {
+	if ($(N) == 1) goto rel8;
+}
+
+:BNE rel8                  is Prebyte=0 & op8=0x26; rel8 {
+	if ($(Z) == 0) goto rel8;
+}
+
+:BPL rel8                  is Prebyte=0 & op8=0x2A; rel8 {
+	if ($(N) == 0) goto rel8;
+}
+
+:BRA rel8                  is Prebyte=0 & op8=0x20; rel8 {
+	goto rel8;
+}
+
+:BRCLR opr8a_8, msk8, rel8 is Prebyte=0 & op8=0x13; opr8a_8; msk8; rel8 {
+	local result:1 = opr8a_8 & msk8;
+	if (result == 0) goto rel8;
+}
+
+:BRCLR oprx8_8_X, msk8, rel8  is Prebyte=0 & op8=0x1F; oprx8_8_X; msk8; rel8 {
+	local result:1 = oprx8_8_X & msk8;
+	if (result == 0) goto rel8;
+}
+
+:BRCLR oprx8_8_Y, msk8, rel8  is Prebyte=0x18 & op8=0x1F; oprx8_8_Y; msk8; rel8 {
+	local result:1 = oprx8_8_Y & msk8;
+	if (result == 0) goto rel8;
+}
+
+# branch never is a two-byte nop
+SkipNextInstr: dest  is epsilon [ dest = inst_next + 1; ] { export *[RAM]:1 dest; }
+
+:BRN SkipNextInstr         is Prebyte=0 & op8=0x21 & SkipNextInstr {
+	goto SkipNextInstr;
+}
+
+:BRSET opr8a_8, msk8, rel8 is Prebyte=0 & op8=0x12; opr8a_8; msk8; rel8 {
+	local result:1 = ~opr8a_8 & msk8;
+	if (result != 0) goto rel8;
+}
+
+:BRSET oprx8_8_X, msk8, rel8  is Prebyte=0 & op8=0x1E; oprx8_8_X; msk8; rel8 {
+	local result:1 = ~oprx8_8_X & msk8;
+	if (result != 0) goto rel8;
+}
+
+:BRSET oprx8_8_Y, msk8, rel8  is Prebyte=0x18 & op8=0x1E; oprx8_8_Y; msk8; rel8 {
+	local result:1 = ~oprx8_8_Y & msk8;
+	if (result != 0) goto rel8;
+}
+
+:BSET opr8a_8, msk8        is Prebyte=0 & op8=0x14; opr8a_8; msk8 {
+	local result:1 = opr8a_8 | msk8;
+	opr8a_8 = result;
+	$(N) = (result s< 0);
+	$(Z) = (result == 0);
+	$(V) = 0;
+}
+
+:BSET oprx8_8_X, msk8      is Prebyte=0 & op8=0x1C; oprx8_8_X; msk8 {
+	local result:1 = oprx8_8_X | msk8;
+	oprx8_8_X = result;
+	$(N) = (result s< 0);
+	$(Z) = (result == 0);
+	$(V) = 0;
+}
+
+:BSET oprx8_8_Y, msk8      is Prebyte=0x18 & op8=0x1C; oprx8_8_Y; msk8 {
+	local result:1 = oprx8_8_Y | msk8;
+	oprx8_8_Y = result;
+	$(N) = (result s< 0);
+	$(Z) = (result == 0);
+	$(V) = 0;
+}
+
+:BSR rel8                  is Prebyte=0 & op8=0x8D; rel8 {
+	local tmp:2 = inst_next;
+	Push2(tmp);
+
+	call rel8;
+}
+
+:BVC rel8                  is Prebyte=0 & op8=0x28; rel8 {
+	if ($(V) == 0) goto rel8;
+}
+
+:BVS rel8                  is Prebyte=0 & op8=0x29; rel8 {
+	if ($(V) == 1) goto rel8;
+}
+
+:CBA                       is Prebyte=0 & op8=0x11 {
+	local tmp:1 = A - B;
+	$(N) = (tmp s< 0);
+	$(Z) = (tmp == 0);
+	$(V) = sborrow(A, B);
+	$(C) = (B > A);
+}
+
+:CLC                       is Prebyte=0 & op8=0x0C {
+	$(C) = 0;
+}
+
+:CLI                       is Prebyte=0 & op8=0x0E {
+	$(I) = 0;
+}
+
+:CLRA                      is Prebyte=0 & op8=0x4F {
+	A = 0;
+	$(N) = 0;
+	$(Z) = 1;
+	$(V) = 0;
+	$(C) = 0;
+}
+
+:CLRB                      is Prebyte=0 & op8=0x5F {
+	B = 0;
+	$(N) = 0;
+	$(Z) = 1;
+	$(V) = 0;
+	$(C) = 0;
+}
+
+:CLR opr16a_8              is Prebyte=0 & op8=0x7F; opr16a_8 {
+	opr16a_8 = 0;
+	$(N) = 0;
+	$(Z) = 1;
+	$(V) = 0;
+	$(C) = 0;
+}
+
+:CLR oprx8_8_X             is Prebyte=0 & op8=0x6F; oprx8_8_X {
+	oprx8_8_X = 0;
+	$(N) = 0;
+	$(Z) = 1;
+	$(V) = 0;
+	$(C) = 0;
+}
+
+:CLR oprx8_8_Y             is Prebyte=0x18 & op8=0x6F; oprx8_8_Y {
+	oprx8_8_Y = 0;
+	$(N) = 0;
+	$(Z) = 1;
+	$(V) = 0;
+	$(C) = 0;
+}
+
+:CLV                       is Prebyte=0 & op8=0x0A {
+	$(V) = 0;
+}
+
+:CMPA iopr8i               is Prebyte=0 & op8=0x81; iopr8i {
+	local op1:1 = iopr8i;
+	local tmp:1 = A - op1;
+	$(N) = (tmp s< 0);
+	$(Z) = (tmp == 0);
+	$(V) = sborrow(A, op1);
+	$(C) = (op1 > A);
+}
+
+:CMPA opr8a_8              is Prebyte=0 & op8=0x91; opr8a_8 {
+	local op1:1 = opr8a_8;
+	local tmp:1 = A - op1;
+	$(N) = (tmp s< 0);
+	$(Z) = (tmp == 0);
+	$(V) = sborrow(A, op1);
+	$(C) = (op1 > A);
+}
+
+:CMPA opr16a_8             is Prebyte=0 & op8=0xB1; opr16a_8 {
+	local op1:1 = opr16a_8;
+	local tmp:1 = A - op1;
+	$(N) = (tmp s< 0);
+	$(Z) = (tmp == 0);
+	$(V) = sborrow(A, op1);
+	$(C) = (op1 > A);
+}
+
+:CMPA oprx8_8_X            is Prebyte=0 & op8=0xA1; oprx8_8_X {
+	local op1:1 = oprx8_8_X;
+	local tmp:1 = A - op1;
+	$(N) = (tmp s< 0);
+	$(Z) = (tmp == 0);
+	$(V) = sborrow(A, op1);
+	$(C) = (op1 > A);
+}
+
+:CMPA oprx8_8_Y            is Prebyte=0x18 & op8=0xA1; oprx8_8_Y {
+	local op1:1 = oprx8_8_Y;
+	local tmp:1 = A - op1;
+	$(N) = (tmp s< 0);
+	$(Z) = (tmp == 0);
+	$(V) = sborrow(A, op1);
+	$(C) = (op1 > A);
+}
+
+:CMPB iopr8i               is Prebyte=0 & op8=0xC1; iopr8i {
+	local op1:1 = iopr8i;
+	local tmp:1 = B - op1;
+	$(N) = (tmp s< 0);
+	$(Z) = (tmp == 0);
+	$(V) = sborrow(B, op1);
+	$(C) = (op1 > B);
+}
+
+:CMPB opr8a_8              is Prebyte=0 & op8=0xD1; opr8a_8 {
+	local op1:1 = opr8a_8;
+	local tmp:1 = B - op1;
+	$(N) = (tmp s< 0);
+	$(Z) = (tmp == 0);
+	$(V) = sborrow(B, op1);
+	$(C) = (op1 > B);
+}
+
+:CMPB opr16a_8             is Prebyte=0 & op8=0xF1; opr16a_8 {
+	local op1:1 = opr16a_8;
+	local tmp:1 = B - op1;
+	$(N) = (tmp s< 0);
+	$(Z) = (tmp == 0);
+	$(V) = sborrow(B, op1);
+	$(C) = (op1 > B);
+}
+
+:CMPB oprx8_8_X            is Prebyte=0 & op8=0xE1; oprx8_8_X {
+	local op1:1 = oprx8_8_X;
+	local tmp:1 = B - op1;
+	$(N) = (tmp s< 0);
+	$(Z) = (tmp == 0);
+	$(V) = sborrow(B, op1);
+	$(C) = (op1 > B);
+}
+
+:CMPB oprx8_8_Y            is Prebyte=0x18 & op8=0xE1; oprx8_8_Y {
+	local op1:1 = oprx8_8_Y;
+	local tmp:1 = B - op1;
+	$(N) = (tmp s< 0);
+	$(Z) = (tmp == 0);
+	$(V) = sborrow(B, op1);
+	$(C) = (op1 > B);
+}
+
+:COMA                      is Prebyte=0 & op8=0x43 {
+	A = ~A;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(C) = 1;
+	$(V) = 0;
+}
+
+:COMB                      is Prebyte=0 & op8=0x53 {
+	B = ~B;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(C) = 1;
+	$(V) = 0;
+}
+
+
+:COM opr16a_8              is Prebyte=0 & op8=0x73; opr16a_8 {
+	local tmp:1 = ~opr16a_8;
+	opr16a_8 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = 1;
+	$(V) = 0;
+}
+
+:COM oprx8_8_X             is Prebyte=0 & op8=0x63; oprx8_8_X {
+	local tmp:1 = ~oprx8_8_X;
+	oprx8_8_X = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = 1;
+	$(V) = 0;
+}
+
+:COM oprx8_8_Y             is Prebyte=0x18 & op8=0x63; oprx8_8_Y {
+	local tmp:1 = ~oprx8_8_Y;
+	oprx8_8_Y = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = 1;
+	$(V) = 0;
+}
+
+:CPD iopr16i               is Prebyte=0x1A & op8=0x83; iopr16i {
+	local op1:2 = iopr16i;
+	local tmp:2 = D - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > D);
+	$(V) = sborrow(D, op1);
+}
+
+:CPD opr8a_16              is Prebyte=0x1A & op8=0x93; opr8a_16 {
+	local op1:2 = opr8a_16;
+	local tmp:2 = D - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > D);
+	$(V) = sborrow(D, op1);
+}
+
+:CPD opr16a_16             is Prebyte=0x1A & op8=0xB3; opr16a_16 {
+	local op1:2 = opr16a_16;
+	local tmp:2 = D - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > D);
+	$(V) = sborrow(D, op1);
+}
+
+:CPD oprx8_16_X            is Prebyte=0x1A & op8=0xA3; oprx8_16_X {
+	local op1:2 = oprx8_16_X;
+	local tmp:2 = D - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > D);
+	$(V) = sborrow(D, op1);
+}
+
+:CPD oprx8_16_Y            is Prebyte=0xCD & op8=0xA3; oprx8_16_Y {
+	local op1:2 = oprx8_16_Y;
+	local tmp:2 = D - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > D);
+	$(V) = sborrow(D, op1);
+}
+
+:CPX iopr16i               is Prebyte=0 & op8=0x8C; iopr16i {
+	local op1:2 = iopr16i;
+	local tmp:2 = IX - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > IX);
+	$(V) = sborrow(IX, op1);
+}
+
+:CPX opr8a_16              is Prebyte=0 & op8=0x9C; opr8a_16 {
+	local op1:2 = opr8a_16;
+	local tmp:2 = IX - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > IX);
+	$(V) = sborrow(IX, op1);
+}
+
+:CPX opr16a_16             is Prebyte=0 & op8=0xBC; opr16a_16 {
+	local op1:2 = opr16a_16;
+	local tmp:2 = IX - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > IX);
+	$(V) = sborrow(IX, op1);
+}
+
+:CPX oprx8_16_X            is Prebyte=0 & op8=0xAC; oprx8_16_X {
+	local op1:2 = oprx8_16_X;
+	local tmp:2 = IX - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > IX);
+	$(V) = sborrow(IX, op1);
+}
+
+:CPX oprx8_16_Y            is Prebyte=0xCD & op8=0xAC; oprx8_16_Y {
+	local op1:2 = oprx8_16_Y;
+	local tmp:2 = IX - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > IX);
+	$(V) = sborrow(IX, op1);
+}
+
+:CPY iopr16i               is Prebyte=0x18 & op8=0x8C; iopr16i {
+	local op1:2 = iopr16i;
+	local tmp:2 = IY - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > IY);
+	$(V) = sborrow(IY, op1);
+}
+
+:CPY opr8a_16              is Prebyte=0x18 & op8=0x9C; opr8a_16 {
+	local op1:2 = opr8a_16;
+	local tmp:2 = IY - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > IY);
+	$(V) = sborrow(IY, op1);
+}
+
+:CPY opr16a_16             is Prebyte=0x18 & op8=0xBC; opr16a_16 {
+	local op1:2 = opr16a_16;
+	local tmp:2 = IY - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > IY);
+	$(V) = sborrow(IY, op1);
+}
+
+:CPY oprx8_16_X            is Prebyte=0x1A & op8=0xAC; oprx8_16_X {
+	local op1:2 = oprx8_16_X;
+	local tmp:2 = IY - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > IY);
+	$(V) = sborrow(IY, op1);
+}
+
+:CPY oprx8_16_Y            is Prebyte=0x18 & op8=0xAC; oprx8_16_Y {
+	local op1:2 = oprx8_16_Y;
+	local tmp:2 = IY - op1;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(C) = (op1 > IY);
+	$(V) = sborrow(IY, op1);
+}
+
+:DAA                       is Prebyte=0 & op8=0x19 {
+	A = decimalAdjustAccumulator(A, $(C), $(H));
+	$(C) = decimalAdjustCarry(A, $(C), $(H));
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+#V is undefined
+}
+
+:DECA                      is Prebyte=0 & op8=0x4A {
+	local tmp:1 = A;
+	A = tmp - 1;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(V) = sborrow(tmp, 1);
+}
+
+:DECB                      is Prebyte=0 & op8=0x5A {
+	local tmp:1 = B;
+	B = tmp - 1;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(V) = sborrow(tmp, 1);
+}
+
+:DEC opr16a_8              is Prebyte=0 & op8=0x7A; opr16a_8 {
+	local tmp:1 = opr16a_8;
+	local result:1 = tmp - 1;
+	opr16a_8 = result;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	$(V) = sborrow(tmp, 1);
+}
+
+:DEC oprx8_8_X             is Prebyte=0 & op8=0x6A; oprx8_8_X {
+	local tmp:1 = oprx8_8_X;
+	local result:1 = tmp - 1;
+	oprx8_8_X = result;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	$(V) = sborrow(tmp, 1);
+}
+
+:DEC oprx8_8_Y             is Prebyte=0x18 & op8=0x6A; oprx8_8_Y {
+	local tmp:1 = oprx8_8_Y;
+	local result:1 = tmp - 1;
+	oprx8_8_Y = result;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	$(V) = sborrow(tmp, 1);
+}
+
+:DES                       is Prebyte=0 & op8=0x34 {
+	SP = SP - 1;
+}
+
+:DEX                       is Prebyte=0 & op8=0x09 {
+	IX = IX - 1;
+	$(Z) = (IX == 0);
+}
+
+:DEY                       is Prebyte=0x18 & op8=0x09 {
+	IY = IY - 1;
+	$(Z) = (IY == 0);
+}
+
+:EORA iopr8i               is Prebyte=0 & op8=0x88; iopr8i {
+	local op1:1 = iopr8i;
+	A = A ^ op1;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(V) = 0;
+}
+
+:EORA opr8a_8              is Prebyte=0 & op8=0x98; opr8a_8 {
+	local op1:1 = opr8a_8;
+	A = A ^ op1;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(V) = 0;
+}
+
+:EORA opr16a_8             is Prebyte=0 & op8=0xB8; opr16a_8 {
+	local op1:1 = opr16a_8;
+	A = A ^ op1;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(V) = 0;
+}
+
+:EORA oprx8_8_X            is Prebyte=0 & op8=0xA8; oprx8_8_X {
+	local op1:1 = oprx8_8_X;
+	A = A ^ op1;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(V) = 0;
+}
+
+:EORA oprx8_8_Y            is Prebyte=0x18 & op8=0xA8; oprx8_8_Y {
+	local op1:1 = oprx8_8_Y;
+	A = A ^ op1;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(V) = 0;
+}
+
+:EORB iopr8i               is Prebyte=0 & op8=0xC8; iopr8i {
+	local op1:1 = iopr8i;
+	B = B ^ op1;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(V) = 0;
+}
+
+:EORB opr8a_8              is Prebyte=0 & op8=0xD8; opr8a_8 {
+	local op1:1 = opr8a_8;
+	B = B ^ op1;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(V) = 0;
+}
+
+:EORB opr16a_8             is Prebyte=0 & op8=0xF8; opr16a_8 {
+	local op1:1 = opr16a_8;
+	B = B ^ op1;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(V) = 0;
+}
+
+:EORB oprx8_8_X            is Prebyte=0 & op8=0xE8; oprx8_8_X {
+	local op1:1 = oprx8_8_X;
+	B = B ^ op1;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(V) = 0;
+}
+
+:EORB oprx8_8_Y            is Prebyte=0x18 & op8=0xE8; oprx8_8_Y {
+	local op1:1 = oprx8_8_Y;
+	B = B ^ op1;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(V) = 0;
+}
+
+:FDIV                      is Prebyte=0 & op8=0x03 {
+	$(V) = (IX <= D);
+	$(C) = (IX == 0);
+	local tmp:4 = (zext(D) << 16);
+	local resultQ:4 = tmp / zext(IX);
+	local resultR:4 = tmp % zext(IX);
+	IX = resultQ:2;
+	D  = resultR:2;
+	$(Z) = (IX == 0);
+}
+
+:IDIV                      is Prebyte=0 & op8=0x02 {
+	$(C) = (IX == 0);
+	local resultQ:2 = D / IX;
+	local resultR:2 = D % IX;
+	IX = resultQ;
+	D  = resultR;
+	$(Z) = (IX == 0);
+	$(V) = 0;
+}
+
+:INCA                      is Prebyte=0 & op8=0x4C {
+	local tmp:1 = A;
+	A = tmp + 1;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(V) = scarry(tmp, 1);
+}
+
+:INCB                      is Prebyte=0 & op8=0x5C {
+	local tmp:1 = B;
+	B = tmp + 1;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(V) = scarry(tmp, 1);
+}
+
+:INC opr16a_8              is Prebyte=0 & op8=0x7C; opr16a_8 {
+	local tmp:1 = opr16a_8;
+	local result:1 = tmp + 1;
+	opr16a_8 = result;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	$(V) = scarry(tmp, 1);
+}
+
+:INC oprx8_8_X             is Prebyte=0 & op8=0x6C; oprx8_8_X {
+	local tmp:1 = oprx8_8_X;
+	local result:1 = tmp + 1;
+	oprx8_8_X = result;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	$(V) = scarry(tmp, 1);
+}
+
+:INC oprx8_8_Y             is Prebyte=0x18 & op8=0x6C; oprx8_8_Y {
+	local tmp:1 = oprx8_8_Y;
+	local result:1 = tmp + 1;
+	oprx8_8_Y = result;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	$(V) = scarry(tmp, 1);
+}
+
+:INS                       is Prebyte=0 & op8=0x31 {
+	SP = SP + 1;
+}
+
+:INX                       is Prebyte=0 & op8=0x08 {
+	IX = IX + 1;
+	$(Z) = (IX == 0);
+}
+
+:INY                       is Prebyte=0x18 & op8=0x08 {
+	IY = IY + 1;
+	$(Z) = (IY == 0);
+}
+
+:JMP opr16a                is Prebyte=0 & op8=0x7E; opr16a {
+	goto [opr16a];
+}
+
+:JMP oprx8_X               is Prebyte=0 & op8=0x6E; oprx8_X {
+	goto [oprx8_X];
+}
+
+:JMP oprx8_Y               is Prebyte=0x18 & op8=0x6E; oprx8_Y {
+	goto [oprx8_Y];
+}
+
+:JSR opr8a                 is Prebyte=0 & op8=0x9D; opr8a {
+	local Rtn:2 = inst_next;
+	Push2(Rtn);
+
+	call [opr8a];
+}
+
+:JSR opr16a                is Prebyte=0 & op8=0xBD; opr16a {
+	local Rtn:2 = inst_next;
+	Push2(Rtn);
+
+	call [opr16a];
+}
+
+:JSR oprx8_X               is Prebyte=0 & op8=0xAD; oprx8_X {
+	local tmp:2 = inst_next;
+	Push2(tmp);
+
+	call [oprx8_X];
+}
+
+:JSR oprx8_Y               is Prebyte=0x18 & op8=0xAD; oprx8_Y {
+	local tmp:2 = inst_next;
+	Push2(tmp);
+
+	call [oprx8_Y];
+}
+
+:LDAA iopr8i               is Prebyte=0 & op8=0x86; iopr8i {
+	A = iopr8i;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(V) = 0;
+}
+
+:LDAA opr8a_8              is Prebyte=0 & op8=0x96; opr8a_8 {
+	A = opr8a_8;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(V) = 0;
+}
+
+:LDAA opr16a_8             is Prebyte=0 & op8=0xB6; opr16a_8 {
+	A = opr16a_8;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(V) = 0;
+}
+
+:LDAA oprx8_8_X            is Prebyte=0 & op8=0xA6; oprx8_8_X {
+	A = oprx8_8_X;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(V) = 0;
+}
+
+:LDAA oprx8_8_Y            is Prebyte=0x18 & op8=0xA6; oprx8_8_Y {
+	A = oprx8_8_Y;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(V) = 0;
+}
+
+:LDAB iopr8i               is Prebyte=0 & op8=0xC6; iopr8i {
+	B = iopr8i;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(V) = 0;
+}
+
+:LDAB opr8a_8              is Prebyte=0 & op8=0xD6; opr8a_8 {
+	B = opr8a_8;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(V) = 0;
+}
+
+:LDAB opr16a_8             is Prebyte=0 & op8=0xF6; opr16a_8 {
+	B = opr16a_8;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(V) = 0;
+}
+
+:LDAB oprx8_8_X            is Prebyte=0 & op8=0xE6; oprx8_8_X {
+	B = oprx8_8_X;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(V) = 0;
+}
+
+:LDAB oprx8_8_Y            is Prebyte=0x18 & op8=0xE6; oprx8_8_Y {
+	B = oprx8_8_Y;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(V) = 0;
+}
+
+:LDD iopr16i               is Prebyte=0 & op8=0xCC; iopr16i {
+	D = iopr16i;
+	$(Z) = (D == 0);
+	$(N) = (D s< 0);
+	$(V) = 0;
+}
+
+:LDD opr8a_16              is Prebyte=0 & op8=0xDC; opr8a_16 {
+	D = opr8a_16;
+	$(Z) = (D == 0);
+	$(N) = (D s< 0);
+	$(V) = 0;
+}
+
+:LDD opr16a_16             is Prebyte=0 & op8=0xFC; opr16a_16 {
+	D = opr16a_16;
+	$(Z) = (D == 0);
+	$(N) = (D s< 0);
+	$(V) = 0;
+}
+
+:LDD oprx8_16_X            is Prebyte=0 & op8=0xEC; oprx8_16_X {
+	D = oprx8_16_X;
+	$(Z) = (D == 0);
+	$(N) = (D s< 0);
+	$(V) = 0;
+}
+
+:LDD oprx8_16_Y            is Prebyte=0x18 & op8=0xEC; oprx8_16_Y {
+	D = oprx8_16_Y;
+	$(Z) = (D == 0);
+	$(N) = (D s< 0);
+	$(V) = 0;
+}
+
+:LDS iopr16i               is Prebyte=0 & op8=0x8E; iopr16i {
+	SP = LoadStack(iopr16i);
+	$(Z) = (SP == 0);
+	$(N) = (SP s< 0);
+	$(V) = 0;
+}
+
+:LDS opr8a_16              is Prebyte=0 & op8=0x9E; opr8a_16 {
+	SP = LoadStack(opr8a_16);
+	$(Z) = (SP == 0);
+	$(N) = (SP s< 0);
+	$(V) = 0;
+}
+
+:LDS opr16a_16             is Prebyte=0 & op8=0xBE; opr16a_16 {
+	SP = LoadStack(opr16a_16);
+	$(Z) = (SP == 0);
+	$(N) = (SP s< 0);
+	$(V) = 0;
+}
+
+:LDS oprx8_16_X            is Prebyte=0 & op8=0xAE; oprx8_16_X {
+	SP = LoadStack(oprx8_16_X);
+	$(Z) = (SP == 0);
+	$(N) = (SP s< 0);
+	$(V) = 0;
+}
+
+:LDS oprx8_16_Y            is Prebyte=0x18 & op8=0xAE; oprx8_16_Y {
+	SP = LoadStack(oprx8_16_Y);
+	$(Z) = (SP == 0);
+	$(N) = (SP s< 0);
+	$(V) = 0;
+}
+
+:LDX iopr16i               is Prebyte=0 & op8=0xCE; iopr16i {
+	IX = iopr16i;
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+	$(V) = 0;
+}
+
+:LDX opr8a_16              is Prebyte=0 & op8=0xDE; opr8a_16 {
+	IX = opr8a_16;
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+	$(V) = 0;
+}
+
+:LDX opr16a_16             is Prebyte=0 & op8=0xFE; opr16a_16 {
+	IX = opr16a_16;
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+	$(V) = 0;
+}
+
+:LDX oprx8_16_X            is Prebyte=0 & op8=0xEE; oprx8_16_X {
+	IX = oprx8_16_X;
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+	$(V) = 0;
+}
+
+:LDX oprx8_16_Y            is Prebyte=0xCD & op8=0xEE; oprx8_16_Y {
+	IX = oprx8_16_Y;
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+	$(V) = 0;
+}
+
+:LDY iopr16i               is Prebyte=0x18 & op8=0xCE; iopr16i {
+	IY = iopr16i;
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+	$(V) = 0;
+}
+
+:LDY opr8a_16              is Prebyte=0x18 & op8=0xDE; opr8a_16 {
+	IY = opr8a_16;
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+	$(V) = 0;
+}
+
+:LDY opr16a_16             is Prebyte=0x18 & op8=0xFE; opr16a_16 {
+	IY = opr16a_16;
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+	$(V) = 0;
+}
+
+:LDY oprx8_16_X            is Prebyte=0x1A & op8=0xEE; oprx8_16_X {
+	IY = oprx8_16_X;
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+	$(V) = 0;
+}
+
+:LDY oprx8_16_Y            is Prebyte=0x18 & op8=0xEE; oprx8_16_Y {
+	IY = oprx8_16_Y;
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+	$(V) = 0;
+}
+
+## Logical Shift left is same as arithmetic shift left
+#:LSLA
+#:LSLB
+#:LSL
+#:LSLD
+
+:LSRA                      is Prebyte=0 & op8=0x44 {
+	$(C) = A[0,1];
+	A = (A >> 1);
+	$(Z) = (A == 0);
+	$(N) = 0;
+	$(V) = $(C);
+}
+
+:LSRB                      is Prebyte=0 & op8=0x54 {
+	$(C) = B[0,1];
+	B = (B >> 1);
+	$(Z) = (B == 0);
+	$(N) = 0;
+	$(V) = $(C);
+}
+
+:LSR opr16a_8              is Prebyte=0 & op8=0x74; opr16a_8 {
+	local tmp:1 = opr16a_8;
+	$(C) = tmp & 1;
+	tmp = tmp >> 1;
+	opr16a_8 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = 0;
+	$(V) = $(C);
+}
+
+:LSR oprx8_8_X             is Prebyte=0 & op8=0x64; oprx8_8_X {
+	local tmp:1 = oprx8_8_X;
+	$(C) = tmp & 1;
+	tmp = tmp >> 1;
+	oprx8_8_X = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = 0;
+	$(V) = $(C);
+}
+
+:LSR oprx8_8_Y             is Prebyte=0x18 & op8=0x64; oprx8_8_Y {
+	local tmp:1 = oprx8_8_Y;
+	$(C) = tmp & 1;
+	tmp = tmp >> 1;
+	oprx8_8_Y = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = 0;
+	$(V) = $(C);
+}
+
+:LSRD                      is Prebyte=0 & op8=0x04 {
+	$(C) = D[0,1];
+	D = (D >> 1);
+	$(Z) = (D == 0);
+	$(N) = 0;
+	$(V) = $(C);
+}
+
+:MUL                       is Prebyte=0 & op8=0x3D {
+	D = zext(A) * zext(B);
+	$(C) = B[7,1];
+}
+
+:NEGA                      is Prebyte=0 & op8=0x40 {
+	local tmp:1 = A;
+	A = -tmp;
+	$(C) = (A != 0);
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(V) = sborrow(0, tmp);
+}
+
+:NEGB                      is Prebyte=0 & op8=0x50 {
+	local tmp:1 = B;
+	B = -tmp;
+	$(C) = (B != 0);
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(V) = sborrow(0, tmp);
+}
+
+:NEG opr16a_8              is Prebyte=0 & op8=0x70; opr16a_8 {
+	local tmp:1 = opr16a_8;
+	local result:1 = -tmp;
+	opr16a_8 = result;
+	$(C) = (result != 0);
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	$(V) = sborrow(0, tmp);
+}
+
+:NEG oprx8_8_X             is Prebyte=0 & op8=0x60; oprx8_8_X {
+	local tmp:1 = oprx8_8_X;
+	local result:1 = -tmp;
+	oprx8_8_X = result;
+	$(C) = (result != 0);
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	$(V) = sborrow(0, tmp);
+}
+
+:NEG oprx8_8_Y             is Prebyte=0x18 & op8=0x60; oprx8_8_Y {
+	local tmp:1 = oprx8_8_Y;
+	local result:1 = -tmp;
+	oprx8_8_Y = result;
+	$(C) = (result != 0);
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	$(V) = sborrow(0, tmp);
+}
+
+:NOP                       is Prebyte=0 & op8=0x01 {
+}
+
+:ORAA iopr8i               is Prebyte=0 & op8=0x8A; iopr8i {
+	A = A | iopr8i;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(V) = 0;
+}
+
+:ORAA opr8a_8              is Prebyte=0 & op8=0x9A; opr8a_8 {
+	A = A | opr8a_8;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(V) = 0;
+}
+
+:ORAA opr16a_8             is Prebyte=0 & op8=0xBA; opr16a_8 {
+	A = A | opr16a_8;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(V) = 0;
+}
+
+:ORAA oprx8_8_X            is Prebyte=0 & op8=0xAA; oprx8_8_X {
+	A = A | oprx8_8_X;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(V) = 0;
+}
+
+:ORAA oprx8_8_Y            is Prebyte=0x18 & op8=0xAA; oprx8_8_Y {
+	A = A | oprx8_8_Y;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(V) = 0;
+}
+
+:ORAB iopr8i               is Prebyte=0 & op8=0xCA; iopr8i {
+	B = B | iopr8i;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(V) = 0;
+}
+
+:ORAB opr8a_8              is Prebyte=0 & op8=0xDA; opr8a_8 {
+	B = B | opr8a_8;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(V) = 0;
+}
+
+:ORAB opr16a_8             is Prebyte=0 & op8=0xFA; opr16a_8 {
+	B = B | opr16a_8;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(V) = 0;
+}
+
+:ORAB oprx8_8_X            is Prebyte=0 & op8=0xEA; oprx8_8_X {
+	B = B | oprx8_8_X;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(V) = 0;
+}
+
+:ORAB oprx8_8_Y            is Prebyte=0x18 & op8=0xEA; oprx8_8_Y {
+	B = B | oprx8_8_Y;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(V) = 0;
+}
+
+:PSHA                      is Prebyte=0 & op8=0x36 {
+	Push1(A);
+}
+
+:PSHB                      is Prebyte=0 & op8=0x37 {
+	Push1(B);
+}
+
+:PSHX                      is Prebyte=0 & op8=0x3C {
+	Push2(IX);
+}
+
+:PSHY                      is Prebyte=0x18 & op8=0x3C {
+	Push2(IY);
+}
+
+:PULA                      is Prebyte=0 & op8=0x32 {
+	Pull1(A);
+}
+
+:PULB                      is Prebyte=0 & op8=0x33 {
+	Pull1(B);
+}
+
+:PULX                      is Prebyte=0 & op8=0x38 {
+	Pull2(IX);
+}
+
+:PULY                      is Prebyte=0x18 & op8=0x38 {
+	Pull2(IY);
+}
+
+:ROLA                      is Prebyte=0 & op8=0x49 {
+	local tmpC:1 = $(C);
+	$(C) = A >> 7;
+	A = A << 1;
+	A = A | tmpC;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(V) = $(N) ^ $(C);
+}
+
+:ROLB                      is Prebyte=0 & op8=0x59 {
+	local tmpC:1 = $(C);
+	$(C) = B >> 7;
+	B = B << 1;
+	B = B | tmpC;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(V) = $(N) ^ $(C);
+}
+
+:ROL opr16a_8              is Prebyte=0 & op8=0x79; opr16a_8 {
+	local tmpC:1 = $(C);
+	local op1:1 = opr16a_8;
+	$(C) = op1 >> 7;
+	local result:1 = op1 << 1;
+	result = result | tmpC;
+	opr16a_8 = result;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	$(V) = $(N) ^ $(C);
+}
+
+:ROL oprx8_8_X             is Prebyte=0 & op8=0x69; oprx8_8_X {
+	local tmpC:1 = $(C);
+	local op1:1 = oprx8_8_X;
+	$(C) = op1 >> 7;
+	local result:1 = op1 << 1;
+	result = result | tmpC;
+	oprx8_8_X = result;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	$(V) = $(N) ^ $(C);
+}
+
+:ROL oprx8_8_Y             is Prebyte=0x18 & op8=0x69; oprx8_8_Y {
+	local tmpC:1 = $(C);
+	local op1:1 = oprx8_8_Y;
+	$(C) = op1 >> 7;
+	local result:1 = op1 << 1;
+	result = result | tmpC;
+	oprx8_8_Y = result;
+	$(Z) = (result == 0);
+	$(N) = (result s< 0);
+	$(V) = $(N) ^ $(C);
+}
+
+:RORA                      is Prebyte=0 & op8=0x46 {
+	local tmpC:1 = $(C) << 7;
+	$(C) = A & 1;
+	A = A >> 1;
+	A = A | tmpC;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(V) = $(N) ^ $(C);
+}
+
+:RORB                      is Prebyte=0 & op8=0x56 {
+	local tmpC:1 = $(C) << 7;
+	$(C) = B & 1;
+	B = B >> 1;
+	B = B | tmpC;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(V) = $(N) ^ $(C);
+}
+
+:ROR opr16a_8              is Prebyte=0 & op8=0x76; opr16a_8 {
+	local tmpC:1 = $(C) << 7;
+	local tmp:1 = opr16a_8;
+	$(C) = tmp & 1;
+	tmp = tmp >> 1;
+	tmp = tmp | tmpC;
+	opr16a_8 = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(V) = $(N) ^ $(C);
+}
+
+:ROR oprx8_8_X             is Prebyte=0 & op8=0x66; oprx8_8_X {
+	local tmpC:1 = $(C) << 7;
+	local tmp:1 = oprx8_8_X;
+	$(C) = tmp & 1;
+	tmp = tmp >> 1;
+	tmp = tmp | tmpC;
+	oprx8_8_X = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(V) = $(N) ^ $(C);
+}
+
+:ROR oprx8_8_Y             is Prebyte=0x18 & op8=0x66; oprx8_8_Y {
+	local tmpC:1 = $(C) << 7;
+	local tmp:1 = oprx8_8_Y;
+	$(C) = tmp & 1;
+	tmp = tmp >> 1;
+	tmp = tmp | tmpC;
+	oprx8_8_Y = tmp;
+	$(Z) = (tmp == 0);
+	$(N) = (tmp s< 0);
+	$(V) = $(N) ^ $(C);
+}
+
+:RTI                       is Prebyte=0 & op8=0x3B {
+	local Rtn:2 = 0;
+	Pull1(CCR);
+	Pull1(B);
+	Pull1(A);
+	Pull2(IX);
+	Pull2(IY);
+	Pull2(Rtn);
+
+	return [Rtn];
+}
+
+:RTS                       is Prebyte=0 & op8=0x39 {
+	local Rtn:2 = 0;
+	Pull2(Rtn);
+
+	return [Rtn];
+}
+
+:SBA                       is Prebyte=0 & op8=0x10 {
+	local result:1 = A - B;
+	subtraction_flags1(A, B, result);
+	A = result;
+}
+
+:SBCA iopr8i               is Prebyte=0 & op8=0x82; iopr8i {
+	local op1:1 = iopr8i;
+
+	local result:1 = A - op1 - $(C);
+	subtraction_flags1(A, op1, result);
+	A = result;
+}
+
+:SBCA opr8a_8              is Prebyte=0 & op8=0x92; opr8a_8 {
+	local op1:1 = opr8a_8;
+
+	local result:1 = A - op1 - $(C);
+	subtraction_flags1(A, op1, result);
+	A = result;
+}
+
+:SBCA opr16a_8             is Prebyte=0 & op8=0xB2; opr16a_8 {
+	local op1:1 = opr16a_8;
+
+	local result:1 = A - op1 - $(C);
+	subtraction_flags1(A, op1, result);
+	A = result;
+}
+
+:SBCA oprx8_8_X            is Prebyte=0 & op8=0xA2; oprx8_8_X {
+	local op1:1 = oprx8_8_X;
+
+	local result:1 = A - op1 - $(C);
+	subtraction_flags1(A, op1, result);
+	A = result;
+}
+
+:SBCA oprx8_8_Y            is Prebyte=0x18 & op8=0xA2; oprx8_8_Y {
+	local op1:1 = oprx8_8_Y;
+
+	local result:1 = A - op1 - $(C);
+	subtraction_flags1(A, op1, result);
+	A = result;
+}
+
+:SBCB iopr8i               is Prebyte=0 & op8=0xC2; iopr8i {
+	local op1:1 = iopr8i;
+
+	local result:1 = B - op1 - $(C);
+	subtraction_flags1(B, op1, result);
+	B = result;
+}
+
+:SBCB opr8a_8              is Prebyte=0 & op8=0xD2; opr8a_8 {
+	local op1:1 = opr8a_8;
+
+	local result:1 = B - op1 - $(C);
+	subtraction_flags1(B, op1, result);
+	B = result;
+}
+
+:SBCB opr16a_8             is Prebyte=0 & op8=0xF2; opr16a_8 {
+	local op1:1 = opr16a_8;
+
+	local result:1 = B - op1 - $(C);
+	subtraction_flags1(B, op1, result);
+	B = result;
+}
+
+:SBCB oprx8_8_X            is Prebyte=0 & op8=0xE2; oprx8_8_X {
+	local op1:1 = oprx8_8_X;
+
+	local result:1 = B - op1 - $(C);
+	subtraction_flags1(B, op1, result);
+	B = result;
+}
+
+:SBCB oprx8_8_Y            is Prebyte=0x18 & op8=0xE2; oprx8_8_Y {
+	local op1:1 = oprx8_8_Y;
+
+	local result:1 = B - op1 - $(C);
+	subtraction_flags1(B, op1, result);
+	B = result;
+}
+
+:SEC                       is Prebyte=0 & op8=0x0D {
+	$(C) = 1;
+}
+
+:SEI                       is Prebyte=0 & op8=0x0F {
+	$(I) = 1;
+}
+
+:SEV                       is Prebyte=0 & op8=0x0B {
+	$(V) = 1;
+}
+
+:STAA opr8a_8              is Prebyte=0 & op8=0x97; opr8a_8 {
+	opr8a_8 = A;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(V) = 0;
+}
+
+:STAA opr16a_8             is Prebyte=0 & op8=0xB7; opr16a_8 {
+	opr16a_8 = A;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(V) = 0;
+}
+
+:STAA oprx8_8_X            is Prebyte=0 & op8=0xA7; oprx8_8_X {
+	oprx8_8_X = A;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(V) = 0;
+}
+
+:STAA oprx8_8_Y            is Prebyte=0x18 & op8=0xA7; oprx8_8_Y {
+	oprx8_8_Y = A;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(V) = 0;
+}
+
+:STAB opr8a_8              is Prebyte=0 & op8=0xD7; opr8a_8 {
+	opr8a_8 = B;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(V) = 0;
+}
+
+:STAB opr16a_8             is Prebyte=0 & op8=0xF7; opr16a_8 {
+	opr16a_8 = B;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(V) = 0;
+}
+
+:STAB oprx8_8_X            is Prebyte=0 & op8=0xE7; oprx8_8_X {
+	oprx8_8_X = B;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(V) = 0;
+}
+
+:STAB oprx8_8_Y            is Prebyte=0x18 & op8=0xE7; oprx8_8_Y {
+	oprx8_8_Y = B;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(V) = 0;
+}
+
+:STD opr8a_16              is Prebyte=0 & op8=0xDD; opr8a_16 {
+	opr8a_16 = D;
+	$(Z) = (D == 0);
+	$(N) = (D s< 0);
+	$(V) = 0;
+}
+
+:STD opr16a_16             is Prebyte=0 & op8=0xFD; opr16a_16 {
+	opr16a_16 = D;
+	$(Z) = (D == 0);
+	$(N) = (D s< 0);
+	$(V) = 0;
+}
+
+:STD oprx8_16_X            is Prebyte=0 & op8=0xED; oprx8_16_X {
+	oprx8_16_X = D;
+	$(Z) = (D == 0);
+	$(N) = (D s< 0);
+	$(V) = 0;
+}
+
+:STD oprx8_16_Y            is Prebyte=0x18 & op8=0xED; oprx8_16_Y {
+	oprx8_16_Y = D;
+	$(Z) = (D == 0);
+	$(N) = (D s< 0);
+	$(V) = 0;
+}
+
+:STOP                      is Prebyte=0 & op8=0xCF {
+	if ($(S) == 0) goto <continue>;
+	local tmp:2 = inst_next;
+	Push2(tmp);
+	Push2(IY);
+	Push2(IX);
+	Push1(A);
+	Push1(B);
+	Push1(CCR);
+	stop();
+	<continue>
+}
+
+:STS opr8a_16              is Prebyte=0 & op8=0x9F; opr8a_16 {
+	opr8a_16 = SP;
+	$(Z) = (SP == 0);
+	$(N) = (SP s< 0);
+	$(V) = 0;
+}
+
+:STS opr16a_16             is Prebyte=0 & op8=0xBF; opr16a_16 {
+	opr16a_16 = SP;
+	$(Z) = (SP == 0);
+	$(N) = (SP s< 0);
+	$(V) = 0;
+}
+
+:STS oprx8_16_X            is Prebyte=0 & op8=0xAF; oprx8_16_X {
+	oprx8_16_X = SP;
+	$(Z) = (SP == 0);
+	$(N) = (SP s< 0);
+	$(V) = 0;
+}
+
+:STS oprx8_16_Y            is Prebyte=0x18 & op8=0xAF; oprx8_16_Y {
+	oprx8_16_Y = SP;
+	$(Z) = (SP == 0);
+	$(N) = (SP s< 0);
+	$(V) = 0;
+}
+
+:STX opr8a_16              is Prebyte=0 & op8=0xDF; opr8a_16 {
+	opr8a_16 = IX;
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+	$(V) = 0;
+}
+
+:STX opr16a_16             is Prebyte=0 & op8=0xFF; opr16a_16 {
+	opr16a_16 = IX;
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+	$(V) = 0;
+}
+
+:STX oprx8_16_X            is Prebyte=0 & op8=0xEF; oprx8_16_X {
+	oprx8_16_X = IX;
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+	$(V) = 0;
+}
+
+:STX oprx8_16_Y            is Prebyte=0xCD & op8=0xEF; oprx8_16_Y {
+	oprx8_16_Y = IX;
+	$(Z) = (IX == 0);
+	$(N) = (IX s< 0);
+	$(V) = 0;
+}
+
+:STY opr8a_16              is Prebyte=0x18 & op8=0xDF; opr8a_16 {
+	opr8a_16 = IY;
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+	$(V) = 0;
+}
+
+:STY opr16a_16             is Prebyte=0x18 & op8=0xFF; opr16a_16 {
+	opr16a_16 = IY;
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+	$(V) = 0;
+}
+
+:STY oprx8_16_X            is Prebyte=0x1A & op8=0xEF; oprx8_16_X {
+	oprx8_16_X = IY;
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+	$(V) = 0;
+}
+
+:STY oprx8_16_Y            is Prebyte=0x18 & op8=0xEF; oprx8_16_Y {
+	oprx8_16_Y = IY;
+	$(Z) = (IY == 0);
+	$(N) = (IY s< 0);
+	$(V) = 0;
+}
+
+:SUBA iopr8i               is Prebyte=0 & op8=0x80; iopr8i {
+	local op1:1 = iopr8i;
+
+	local result:1 = A - op1;
+	subtraction_flags1(A, op1, result);
+	A = result;
+}
+
+:SUBA opr8a_8              is Prebyte=0 & op8=0x90; opr8a_8 {
+	local op1:1 = opr8a_8;
+
+	local result:1 = A - op1;
+	subtraction_flags1(A, op1, result);
+	A = result;
+}
+
+:SUBA opr16a_8             is Prebyte=0 & op8=0xB0; opr16a_8 {
+	local op1:1 = opr16a_8;
+
+	local result:1 = A - op1;
+	subtraction_flags1(A, op1, result);
+	A = result;
+}
+
+:SUBA oprx8_8_X            is Prebyte=0 & op8=0xA0; oprx8_8_X {
+	local op1:1 = oprx8_8_X;
+
+	local result:1 = A - op1;
+	subtraction_flags1(A, op1, result);
+	A = result;
+}
+
+:SUBA oprx8_8_Y            is Prebyte=0x18 & op8=0xA0; oprx8_8_Y {
+	local op1:1 = oprx8_8_Y;
+
+	local result:1 = A - op1;
+	subtraction_flags1(A, op1, result);
+	A = result;
+}
+
+:SUBB iopr8i               is Prebyte=0 & op8=0xC0; iopr8i {
+	local op1:1 = iopr8i;
+
+	local result:1 = B - op1;
+	subtraction_flags1(B, op1, result);
+	B = result;
+}
+
+:SUBB opr8a_8              is Prebyte=0 & op8=0xD0; opr8a_8 {
+	local op1:1 = opr8a_8;
+
+	local result:1 = B - op1;
+	subtraction_flags1(B, op1, result);
+	B = result;
+}
+
+:SUBB opr16a_8             is Prebyte=0 & op8=0xF0; opr16a_8 {
+	local op1:1 = opr16a_8;
+
+	local result:1 = B - op1;
+	subtraction_flags1(B, op1, result);
+	B = result;
+}
+
+:SUBB oprx8_8_X            is Prebyte=0 & op8=0xE0; oprx8_8_X {
+	local op1:1 = oprx8_8_X;
+
+	local result:1 = B - op1;
+	subtraction_flags1(B, op1, result);
+	B = result;
+}
+
+:SUBB oprx8_8_Y            is Prebyte=0x18 & op8=0xE0; oprx8_8_Y {
+	local op1:1 = oprx8_8_Y;
+
+	local result:1 = B - op1;
+	subtraction_flags1(B, op1, result);
+	B = result;
+}
+
+:SUBD iopr16i              is Prebyte=0 & op8=0x83; iopr16i {
+	local op1:2 = iopr16i;
+
+	local result:2 = D - op1;
+	subtraction_flags2(D, op1, result);
+	D = result;
+}
+
+:SUBD opr8a_16             is Prebyte=0 & op8=0x93; opr8a_16 {
+	local op1:2 = opr8a_16;
+
+	local result:2 = D - op1;
+	subtraction_flags2(D, op1, result);
+	D = result;
+}
+
+:SUBD opr16a_16            is Prebyte=0 & op8=0xB3; opr16a_16 {
+	local op1:2 = opr16a_16;
+
+	local result:2 = D - op1;
+	subtraction_flags2(D, op1, result);
+	D = result;
+}
+
+:SUBD oprx8_16_X           is Prebyte=0 & op8=0xA3; oprx8_16_X {
+	local op1:2 = oprx8_16_X;
+
+	local result:2 = D - op1;
+	subtraction_flags2(D, op1, result);
+	D = result;
+}
+
+:SUBD oprx8_16_Y           is Prebyte=0x18 & op8=0xA3; oprx8_16_Y {
+	local op1:2 = oprx8_16_Y;
+
+	local result:2 = D - op1;
+	subtraction_flags2(D, op1, result);
+	D = result;
+}
+
+:SWI                       is Prebyte=0 & op8=0x3F {
+	local Rtn:2 = inst_next;
+	Push2(Rtn);
+	Push2(IY);
+	Push2(IX);
+	Push1(A);
+	Push1(B);
+	Push1(CCR);
+
+	$(I) = 1;
+
+	local addr:2 = $(VECTOR_SWI);
+	call [addr];
+}
+
+:TAB                       is Prebyte=0 & op8=0x16 {
+	B = A;
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(V) = 0;
+}
+
+:TAP                       is Prebyte=0 & op8=0x06 {
+	setCCR(A);
+}
+
+:TBA                       is Prebyte=0 & op8=0x17 {
+	A = B;
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(V) = 0;
+}
+
+# TEST not implemented here
+
+:TPA                       is Prebyte=0 & op8=0x07 {
+	A = CCR;
+}
+
+:TSTA                      is Prebyte=0 & op8=0x4D {
+	$(Z) = (A == 0);
+	$(N) = (A s< 0);
+	$(V) = 0;
+	$(C) = 0;
+}
+
+:TSTB                      is Prebyte=0 & op8=0x5D {
+	$(Z) = (B == 0);
+	$(N) = (B s< 0);
+	$(V) = 0;
+	$(C) = 0;
+}
+
+:TST opr16a_8              is Prebyte=0 & op8=0x7D; opr16a_8 {
+	local op1:1 = opr16a_8;
+	$(Z) = (op1 == 0);
+	$(N) = (op1 s< 0);
+	$(V) = 0;
+	$(C) = 0;
+}
+
+:TST oprx8_8_X             is Prebyte=0 & op8=0x6D; oprx8_8_X {
+	local op1:1 = oprx8_8_X;
+	$(Z) = (op1 == 0);
+	$(N) = (op1 s< 0);
+	$(V) = 0;
+	$(C) = 0;
+}
+
+:TST oprx8_8_Y             is Prebyte=0x18 & op8=0x6D; oprx8_8_Y {
+	local op1:1 = oprx8_8_Y;
+	$(Z) = (op1 == 0);
+	$(N) = (op1 s< 0);
+	$(V) = 0;
+	$(C) = 0;
+}
+
+:TSX                       is Prebyte=0 & op8=0x30 {
+	IX = SP;
+}
+
+:TSY                       is Prebyte=0x18 & op8=0x30 {
+	IY = SP;
+}
+
+:TXS                       is Prebyte=0 & op8=0x35 {
+	SP = IX;
+}
+
+:TYS                       is Prebyte=0x18 & op8=0x35 {
+	SP = IY;
+}
+
+:WAI                       is Prebyte=0 & op8=0x3E {
+	local Rtn:2 = inst_next;
+	Push2(Rtn);
+	Push2(IY);
+	Push2(IX);
+	Push1(A);
+	Push1(B);
+	Push1(CCR);
+
+	WaitForInterrupt();
+}
+
+:XGDX                      is Prebyte=0 & op8=0x8F {
+	local tmp:2 = IX;
+	IX = D;
+	D = tmp;
+}
+
+:XGDY                      is Prebyte=0x18 & op8=0x8F {
+	local tmp:2 = IY;
+	IY = D;
+	D = tmp;
+}
