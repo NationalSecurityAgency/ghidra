@@ -16,6 +16,7 @@
 package ghidra.app.util.bin.format.dwarf.external;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.zip.CRC32;
 
 import ghidra.util.Msg;
@@ -24,7 +25,8 @@ import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
 
 /**
- * Searches for DWARF external debug files specified via a debug-link filename / crc in a directory.
+ * Searches for DWARF external debug files specified via a debug-link filename / crc
+ * recursively in a directory.
  */
 public class LocalDirDebugLinkProvider implements DebugFileProvider {
 
@@ -89,10 +91,10 @@ public class LocalDirDebugLinkProvider implements DebugFileProvider {
 	@Override
 	public File getFile(ExternalDebugInfo debugInfo, TaskMonitor monitor)
 			throws CancelledException, IOException {
-		if (!debugInfo.hasDebugLink() || !isValid()) {
+		if (!(debugInfo instanceof DebugLinkDebugInfo debugLink) || !isValid()) {
 			return null;
 		}
-		ensureSafeFilename(debugInfo.getFilename());
+		ensureSafeFilename(debugLink.getFilename()); // ensures there are no shenanigans in debugLink filename
 		return findFile(searchDir, debugInfo, monitor);
 	}
 
@@ -105,13 +107,13 @@ public class LocalDirDebugLinkProvider implements DebugFileProvider {
 
 	File findFile(File dir, ExternalDebugInfo debugInfo, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		if (!debugInfo.hasDebugLink()) {
+		if (!(debugInfo instanceof DebugLinkDebugInfo debugLink)) {
 			return null;
 		}
-		File file = new File(dir, debugInfo.getFilename());
+		File file = new File(dir, debugLink.getFilename());
 		if (file.isFile()) {
 			int fileCRC = calcCRC(file);
-			if (fileCRC == debugInfo.getCrc()) {
+			if (fileCRC == debugLink.getCrc()) {
 				return file; // success
 			}
 			Msg.info(this,
@@ -119,8 +121,8 @@ public class LocalDirDebugLinkProvider implements DebugFileProvider {
 						.formatted(file, fileCRC));
 		}
 		File[] subDirs;
-		if ((subDirs = dir.listFiles(f -> f.isDirectory())) != null) {
-			// TODO: prevent recursing into symlinks?
+		if ((subDirs =
+			dir.listFiles(f -> f.isDirectory() && !Files.isSymbolicLink(f.toPath()))) != null) {
 			for (File subDir : subDirs) {
 				File result = findFile(subDir, debugInfo, monitor);
 				if (result != null) {

@@ -30,31 +30,32 @@ import com.sun.net.httpserver.HttpServer;
 import generic.hash.HashUtilities;
 import generic.test.AbstractGenericTest;
 import ghidra.app.util.bin.format.dwarf.external.DebugStreamProvider.StreamInfo;
+import ghidra.util.NumericUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class HttpDebugInfoDProviderTest extends AbstractGenericTest {
 	private TaskMonitor monitor = TaskMonitor.DUMMY;
 
+	BuildIdDebugInfo id = new BuildIdDebugInfo(new byte[20] /* all 00's */);
+
 	@Test
 	public void testNoConnect() throws IOException, CancelledException {
 		InetSocketAddress unusedAddr = nextLoopbackServerAddr();
 		HttpDebugInfoDProvider httpProvider = new HttpDebugInfoDProvider(getURI(unusedAddr));
-		StreamInfo stream = httpProvider.getStream(
-			ExternalDebugInfo.forBuildId("0000000000000000000000000000000000000000"), monitor);
+		StreamInfo stream = httpProvider.getStream(id, monitor);
 		assertNull(stream);
 	}
 
 	@Test
 	public void testGet() throws IOException, CancelledException {
-		String buildId = "0000000000000000000000000000000000000000";
 
 		HttpServer server = createMockHttpServer();
-		server.createContext("/buildid/" + buildId + "/debuginfo",
+		server.createContext("/buildid/" + id.getBuildIdHexString() + "/debuginfo",
 			createStaticResponseHandler("application/octet-stream", "result1".getBytes()));
-		server.createContext("/buildid/" + buildId + "/executable",
+		server.createContext("/buildid/" + id.getBuildIdHexString() + "/executable",
 			createStaticResponseHandler("application/octet-stream", "result2".getBytes()));
-		server.createContext("/buildid/" + buildId + "/source/usr/include/stdio.h",
+		server.createContext("/buildid/" + id.getBuildIdHexString() + "/source/usr/include/stdio.h",
 			createStaticResponseHandler("application/octet-stream", "result3".getBytes()));
 
 		HttpDebugInfoDProvider httpProvider =
@@ -62,7 +63,6 @@ public class HttpDebugInfoDProviderTest extends AbstractGenericTest {
 		try {
 			server.start();
 
-			ExternalDebugInfo id = ExternalDebugInfo.forBuildId(buildId);
 			assertStreamResult("result1", httpProvider.getStream(id, monitor));
 			assertStreamResult("result2",
 				httpProvider.getStream(id.withType(ObjectType.EXECUTABLE, null), monitor));
@@ -80,10 +80,9 @@ public class HttpDebugInfoDProviderTest extends AbstractGenericTest {
 
 	@Test
 	public void testGetWithRetry() throws IOException, CancelledException {
-		String buildId = "0000000000000000000000000000000000000000";
 
 		HttpServer server = createMockHttpServer();
-		server.createContext("/buildid/" + buildId + "/debuginfo",
+		server.createContext("/buildid/" + id.getBuildIdHexString() + "/debuginfo",
 			wrapHandlerWithRetryError(
 				createStaticResponseHandler("application/octet-stream", "result1".getBytes()), 3,
 				HTTP_INTERNAL_ERROR));
@@ -93,7 +92,6 @@ public class HttpDebugInfoDProviderTest extends AbstractGenericTest {
 		try {
 			server.start();
 
-			ExternalDebugInfo id = ExternalDebugInfo.forBuildId(buildId);
 			assertStreamResult("result1", httpProvider.getStream(id, monitor));
 			assertEquals(3, httpProvider.getRetriedCount());
 		}
@@ -104,10 +102,9 @@ public class HttpDebugInfoDProviderTest extends AbstractGenericTest {
 
 	@Test
 	public void testTimeout() throws IOException, CancelledException {
-		String buildId = "0000000000000000000000000000000000000000";
 
 		HttpServer server = createMockHttpServer();
-		server.createContext("/buildid/" + buildId + "/debuginfo", wrapHandlerWithDelay(
+		server.createContext("/buildid/" + id.getBuildIdHexString() + "/debuginfo", wrapHandlerWithDelay(
 			createStaticResponseHandler("application/octet-stream", "result1".getBytes()), 3000));
 
 		HttpDebugInfoDProvider httpProvider =
@@ -118,9 +115,8 @@ public class HttpDebugInfoDProviderTest extends AbstractGenericTest {
 			server.start();
 
 			long startms = System.currentTimeMillis();
-			ExternalDebugInfo id = ExternalDebugInfo.forBuildId(buildId);
-			long elapsed = System.currentTimeMillis() - startms;
 			assertNull(httpProvider.getStream(id, monitor));
+			long elapsed = System.currentTimeMillis() - startms;
 			assertTrue("Request took too long", elapsed < (1000 * 2)); // make sure request time was approx same as timeout setting
 		}
 		finally {
@@ -130,6 +126,7 @@ public class HttpDebugInfoDProviderTest extends AbstractGenericTest {
 
 	@Test
 	public void testGetNotFound() throws IOException, CancelledException {
+
 		HttpServer server = createMockHttpServer();
 
 		HttpDebugInfoDProvider httpProvider =
@@ -137,8 +134,6 @@ public class HttpDebugInfoDProviderTest extends AbstractGenericTest {
 		try {
 			server.start();
 
-			ExternalDebugInfo id =
-				ExternalDebugInfo.forBuildId("0000000000000000000000000000000000000000");
 			assertNull(httpProvider.getStream(id, monitor));
 			assertEquals(0, httpProvider.getRetriedCount());
 			assertEquals(1, httpProvider.getNotFoundCount());
@@ -150,9 +145,9 @@ public class HttpDebugInfoDProviderTest extends AbstractGenericTest {
 
 	@Test
 	public void testServerError() throws IOException, CancelledException {
-		String buildId = "0000000000000000000000000000000000000000";
+
 		HttpServer server = createMockHttpServer();
-		server.createContext("/buildid/" + buildId + "/debuginfo",
+		server.createContext("/buildid/" + id.getBuildIdHexString() + "/debuginfo",
 			createStaticResponseHandler(HTTP_INTERNAL_ERROR, "text/plain", "".getBytes()));
 
 		HttpDebugInfoDProvider httpProvider =
@@ -160,8 +155,6 @@ public class HttpDebugInfoDProviderTest extends AbstractGenericTest {
 		try {
 			server.start();
 
-			ExternalDebugInfo id =
-				ExternalDebugInfo.forBuildId("0000000000000000000000000000000000000000");
 			assertNull(httpProvider.getStream(id, monitor));
 			assertEquals(4, httpProvider.getRetriedCount());
 			assertEquals(0, httpProvider.getNotFoundCount());
@@ -178,10 +171,10 @@ public class HttpDebugInfoDProviderTest extends AbstractGenericTest {
 		// The specified buildId may stop being present at some point of time in the future 
 		HttpDebugInfoDProvider httpProvider =
 			new HttpDebugInfoDProvider(URI.create("https://debuginfod.elfutils.org/"));
-		ExternalDebugInfo id =
-			ExternalDebugInfo.forBuildId("421e1abd8faf1cb290df755a558377c5d7def3b1");
+		BuildIdDebugInfo eu_id = new BuildIdDebugInfo(
+			NumericUtilities.convertStringToBytes("421e1abd8faf1cb290df755a558377c5d7def3b1"));
 		assertStreamHash("f5894783abae9084e531b8da76bbb2444a688d18",
-			httpProvider.getStream(id, monitor));
+			httpProvider.getStream(eu_id, monitor));
 	}
 
 	private void assertStreamResult(String expectedResult, StreamInfo stream) throws IOException {

@@ -91,13 +91,13 @@ public class HttpDebugInfoDProvider implements DebugStreamProvider {
 		return DebugInfoProviderStatus.UNKNOWN;
 	}
 
-	private HttpRequest.Builder request(ExternalDebugInfo id) throws IOException {
+	private HttpRequest.Builder request(BuildIdDebugInfo id) throws IOException {
 		try {
 			String extra = "";
 			if (id.getObjectType() == ObjectType.SOURCE) {
 				extra = "/" + Objects.requireNonNullElse(id.getExtra(), "");
 			}
-			String requestPath = "buildid/%s/%s%s".formatted(id.getBuildId(),
+			String requestPath = "buildid/%s/%s%s".formatted(id.getBuildIdHexString(),
 				id.getObjectType().getPathString(), extra);
 			return HttpRequest.newBuilder(serverURI.resolve(requestPath))
 					.setHeader("User-Agent", GHIDRA_USER_AGENT);
@@ -110,14 +110,14 @@ public class HttpDebugInfoDProvider implements DebugStreamProvider {
 	@Override
 	public StreamInfo getStream(ExternalDebugInfo id, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		if (!id.hasBuildId()) {
+		if (!(id instanceof BuildIdDebugInfo buildIdInfo)) {
 			return null;
 		}
 
 		monitor.setIndeterminate(true);
 		monitor.setMessage("Connecting to " + serverURI);
 
-		HttpRequest request = request(id).GET().build();
+		HttpRequest request = request(buildIdInfo).GET().build();
 
 		retryLoop: for (int retryNum = 0; retryNum < maxRetryCount; retryNum++) {
 			if (retryNum > 0) {
