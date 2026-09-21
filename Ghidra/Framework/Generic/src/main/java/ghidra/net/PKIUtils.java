@@ -511,18 +511,24 @@ public class PKIUtils {
 				try {
 					pemObject = reader.readPemObject();
 				}
-				catch (DecoderException e) {
-					// Base64 decoding failure is reported by BouncyCastle as an unchecked
-					// exception.  The offending block has already been consumed through its end
-					// marker, so reading is able to continue with the block which follows it.
-					++blockNumber;
-					String msg = "Invalid PEM certificate data within " + pemFile.getName() + ": " +
-						e.getMessage();
-					if (unusableBlockConsumer == null) {
-						throw new CertificateException(msg);
+				catch (IOException e) {
+					if (e.getCause() instanceof DecoderException ||
+						e.getMessage().contains("malformed")) {
+						// Base64 decoding failure is reported by BouncyCastle as an IOException
+						// (although checking cause or message for malformed entry is needed).
+						// The offending block has already been consumed through its end
+						// marker, so reading is able to continue with the block which follows it.
+						++blockNumber;
+						String msg =
+							"Invalid PEM certificate data within " + pemFile.getName() + ": " +
+								e.getMessage();
+						if (unusableBlockConsumer == null) {
+							throw new CertificateException(msg);
+						}
+						unusableBlockConsumer.accept(msg + " (PEM block " + blockNumber + ")");
+						continue;
 					}
-					unusableBlockConsumer.accept(msg + " (PEM block " + blockNumber + ")");
-					continue;
+					throw e;
 				}
 				if (pemObject == null) {
 					break;		// end of file
