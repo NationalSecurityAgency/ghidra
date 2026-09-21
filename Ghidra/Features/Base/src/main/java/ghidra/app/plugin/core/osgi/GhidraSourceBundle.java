@@ -838,11 +838,12 @@ public class GhidraSourceBundle extends GhidraBundle {
 		for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics()) {
 			String error = diagnostic.toString() + "\n";
 			writer.write(error);
-			ResourceFileJavaFileObject sourceFileObject =
-				(ResourceFileJavaFileObject) diagnostic.getSource();
-			ResourceFile sourceFile = sourceFileObject.getFile();
-			buildError(sourceFile, error); // remember all errors for this file
-			filesWithErrors.add(sourceFileObject);
+			JavaFileObject obj = diagnostic.getSource();
+			if (obj instanceof ResourceFileJavaFileObject sourceFileObject) {
+				ResourceFile sourceFile = sourceFileObject.getFile();
+				buildError(sourceFile, error); // remember all errors for this file
+				filesWithErrors.add(sourceFileObject);
+			}
 		}
 		for (ResourceFileJavaFileObject sourceFileObject : filesWithErrors) {
 			if (sourceFiles.remove(sourceFileObject)) {

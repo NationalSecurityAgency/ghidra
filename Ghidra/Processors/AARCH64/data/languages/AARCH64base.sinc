@@ -6355,7 +6355,7 @@ is sf=0 & op=1 & S=1 & b_2428=0xb & opt=0 & b_2121=1 & ExtendRegShift32 & Rn_GPR
 # AUNIT --inst xeb000000/mask=xffc00000 --status pass --comment "flags"
 
 :subs Rd_GPR64, Rn_GPR64xsp, ExtendRegShift64
-is sf=1 & op=1 & S=1 & b_2428=0xb & opt=0 & ExtendRegShift64 & Rn_GPR64xsp & Rd_GPR64
+is sf=1 & op=1 & S=1 & b_2428=0xb & opt=0 & b_2121=1 & ExtendRegShift64 & Rn_GPR64xsp & Rd_GPR64
 {
 	tmp_2:8 = ExtendRegShift64;
 	subflags(Rn_GPR64xsp, tmp_2);

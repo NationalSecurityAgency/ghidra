@@ -841,6 +841,15 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			}
 
 			if (results.isEmpty() && isAbsoluteLibraryPath(library)) {
+				if (library.startsWith("\\\\")) {
+					log.appendMsg("Skipping library '%s' with UNC path".formatted(library));
+					return results;
+				}
+				if (library.chars().anyMatch(Character::isISOControl)) {
+					log.appendMsg("Skipping library '%s' that contains control characters"
+							.formatted(library));
+					return results;
+				}
 				LocalFileSystem localFS = FileSystemService.getInstance().getLocalFS();
 				GFile file = lookupLibraryInFs(library, localFS);
 				Optional.ofNullable(file).ifPresent(results::add);

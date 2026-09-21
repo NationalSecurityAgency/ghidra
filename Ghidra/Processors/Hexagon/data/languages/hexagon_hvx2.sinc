@@ -1,0 +1,1065 @@
+# Qualcomm Hexagon HVX-v2 Instruction Set (V73 additions)
+#
+# V73 HVX "version 2" additions layered on the V69 HVX base in hexagon_hvx.sinc:
+# IEEE/Qualcomm floating-point element ops (hf/sf/bf/f8), qf16/qf32 fixed-format
+# conversions, and vrmpy(Rtt) reductions. Conventions follow hexagon_hvx.sinc
+# (typed Vd/Vu/Vv lane wrappers, vs5/vss5 accumulate shadows, pcodeop stubs).
+#
+# NOTE: Quad-Vector support has been omitted
+#
+# Reuses hexagon.sinc / hexagon_hvx.sinc definitions; @include'd from hexagon.slaspec.
+
+#
+# Quad-Vector Operands (e.g., V0V3 )
+# TODO: Addition of HVX-v2 quad-vector support has been deferred
+
+# Quad-Vector destination unconditional write (2,4)
+#Vdddd3: vdddd3  is cond=0 & vdddd3 & vdddd3_ {
+#   export vdddd3_; # must be updated unconditionally
+# <<COMMIT>>
+#   vdddd3 =  vdddd3_;
+#}
+
+# source quad-vector (2,4) - read-only use
+#Vssss_0004:vssss3  is vssss3 {
+#	tmp:$(HVX_VECTOR_QUAD_SIZE) = vssss3;
+#	export tmp;
+#}
+
+# Auto-generated HVX-v2 subtables
+RtHF_1620: rx5^".hf"  is rx5 { tmp:4 = rx5; export tmp; }
+RtSF_1620: rx5^".sf"  is rx5 { tmp:4 = rx5; export tmp; }
+RttUB_1620: rxx5^".ub"  is rxx5 { tmp:8 = rxx5; export tmp; }
+VdBF_0004: Vd5^".bf"  is Vd5 { export Vd5; }
+VdF8_0004: Vd5^".f8"  is Vd5 { export Vd5; }
+VdX_0004: Vd5^".x"  is Vd5 { export Vd5; }
+VddHF_0004: Vdd5^".hf"  is Vdd5 { export Vdd5; }
+VddQF16_0004: Vdd5^".qf16"  is Vdd5 { export Vdd5; }
+VddSF_0004: Vdd5^".sf"  is Vdd5 { export Vdd5; }
+VuBF_0812: Vu_0812^".bf"  is Vu_0812 { export Vu_0812; }
+VuF8_0812: Vu_0812^".f8"  is Vu_0812 { export Vu_0812; }
+VuX_0812: Vu_0812^".x"  is Vu_0812 { export Vu_0812; }
+VvBF_1620: Vv_1620^".bf"  is Vv_1620 { export Vv_1620; }
+VvF8_1620: Vv_1620^".f8"  is Vv_1620 { export Vv_1620; }
+
+define pcodeop v_vgetqfext_Vux_Rt;
+define pcodeop v_vgetqfext_Vux_Rt_acc;
+define pcodeop v_vsetqfext_Vu_Rt;
+define pcodeop v_vabs_Vuf8;
+define pcodeop v_vabs_Vuhf;
+define pcodeop v_vabs_Vuqf16;
+define pcodeop v_vabs_Vuqf32;
+define pcodeop v_vabs_Vusf;
+define pcodeop v_vadd_Vuf8_Vvf8;
+define pcodeop v_vadd_Vuhf_Vvhf;
+define pcodeop v_vadd_Vubf_Vvbf;
+define pcodeop v_vadd_Vusf_Vvsf;
+define pcodeop v_vfmv_Vuw;
+define pcodeop Vbf_equals_Vqf32;
+define pcodeop Vf8_equals_Vqf16;
+define pcodeop Vh_equals_Vhf;
+define pcodeop Vhf_equals_Vh;
+define pcodeop Vqf16_equals_Vf8;
+define pcodeop Vqf16_equals_Vhf;
+define pcodeop Vqf16_equals_Vqf16;
+define pcodeop Vqf32_equals_Vqf32;
+define pcodeop Vqf32_equals_Vsf;
+define pcodeop Vsf_equals_Vw;
+define pcodeop Vw_equals_Vsf;
+define pcodeop v_vcvt2_Vuhf_Vvhf;
+define pcodeop v_vcvt2_Vub;
+define pcodeop v_vcvt2_Vuub;
+define pcodeop v_vcvt_Vuhf_Vvhf;
+define pcodeop v_vcvt_Vusf_Vvsf;
+define pcodeop v_vcvt_Vuhf;
+define pcodeop v_vcvt_Vub;
+define pcodeop v_vcvt_Vuf8;
+define pcodeop v_vcvt_Vuh;
+define pcodeop v_vcvt_Vuub;
+define pcodeop v_vcvt_Vuuh;
+define pcodeop v_vdmpy_Vuhf_Vvhf;
+define pcodeop v_vdmpy_Vuhf_Vvhf_acc;
+define pcodeop v_vfmax_Vuf8_Vvf8;
+define pcodeop v_vfmax_Vuhf_Vvhf;
+define pcodeop v_vfmax_Vusf_Vvsf;
+define pcodeop v_vfmin_Vuf8_Vvf8;
+define pcodeop v_vfmin_Vuhf_Vvhf;
+define pcodeop v_vfmin_Vusf_Vvsf;
+define pcodeop v_vfneg_Vuf8;
+define pcodeop v_vfneg_Vuhf;
+define pcodeop v_vfneg_Vusf;
+define pcodeop v_vilog2_Vuhf;
+define pcodeop v_vilog2_Vuqf16;
+define pcodeop v_vilog2_Vuqf32;
+define pcodeop v_vilog2_Vusf;
+define pcodeop v_vmax_Vubf_Vvbf;
+define pcodeop v_vmerge_Vux_Vvw;
+define pcodeop v_vmin_Vubf_Vvbf;
+define pcodeop v_vmpy_Vuf8_Vvf8;
+define pcodeop v_vmpy_Vuf8_Vvf8_acc;
+define pcodeop v_vmpy_Vuhf_Vvhf;
+define pcodeop v_vmpy_Vuhf_Vvhf_acc;
+define pcodeop v_vmpy_Vuhf_Rthf;
+define pcodeop v_vmpy_Vuqf16_Rthf;
+define pcodeop v_vmpy_Vusf_Rtsf;
+define pcodeop v_vmpy_Vubf_Vvbf;
+define pcodeop v_vmpy_Vubf_Vvbf_acc;
+define pcodeop v_vmpy_Vusf_Vvsf;
+define pcodeop v_vneg_Vuhf;
+define pcodeop v_vneg_Vuqf16;
+define pcodeop v_vneg_Vuqf32;
+define pcodeop v_vneg_Vusf;
+define pcodeop v_vrmpy_Vub_Rttub;
+define pcodeop v_vrmpy_Vub_Rttub_acc;
+define pcodeop v_vrmpy_Vuub_Rttub;
+define pcodeop v_vrmpy_Vuub_Rttub_acc;
+define pcodeop v_vsub_Vuf8_Vvf8;
+define pcodeop v_vsub_Vuhf_Vvhf;
+define pcodeop v_vsub_Vuhf_Vvqf16;
+define pcodeop v_vsub_Vubf_Vvbf;
+define pcodeop v_vsub_Vusf_Vvqf32;
+define pcodeop v_vsub_Vusf_Vvsf;
+define pcodeop v_zextract_Rt;
+
+# (v73,1) V6_get_qfext  --  "Vd32 = vgetqfext(Vu32.x,Rt32)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  0  t  t  t  t  t  P  P  0  u  u  u  u  u  1  1  1  d  d  d  d  d
+:vgetqfext Vd5,VuX_0812,rx5 EndPacket  is iclass=1 & op2127=0x4e & op13=0 & op0507=0x7 & Vd5 & VuX_0812 & rx5 & $(END_PACKET) {
+   Vd5 = v_vgetqfext_Vux_Rt(VuX_0812,rx5);
+   build EndPacket;
+}
+
+# (v73,1) V6_get_qfext_oracc  --  "Vx32 |= vgetqfext(Vu32.x,Rt32)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  0  t  t  t  t  t  P  P  0  u  u  u  u  u  1  1  0  x  x  x  x  x
+:vgetqfext|= Vd5,VuX_0812,rx5 EndPacket  is iclass=1 & op2127=0x4e & op13=0 & op0507=0x6 & vs5 & Vd5 & VuX_0812 & rx5 & $(END_PACKET) {
+   Vd5 = v_vgetqfext_Vux_Rt_acc(vs5,VuX_0812,rx5);
+   build EndPacket;
+}
+
+# (v73,1) V6_set_qfext  --  "Vd32.x = vsetqfext(Vu32,Rt32)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  0  t  t  t  t  t  P  P  0  u  u  u  u  u  0  1  1  d  d  d  d  d
+:vsetqfext VdX_0004,Vu_0812,rx5 EndPacket  is iclass=1 & op2127=0x4e & op13=0 & op0507=0x3 & VdX_0004 & Vu_0812 & rx5 & $(END_PACKET) {
+   VdX_0004 = v_vsetqfext_Vu_Rt(Vu_0812,rx5);
+   build EndPacket;
+}
+
+# (v73,1) V6_vabs_f8  --  "Vd32.f8 = vabs(Vu32.f8)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  0  1  1  0  0  1  1  0  P  P  1  u  u  u  u  u  1  1  0  d  d  d  d  d
+:vabs VdF8_0004,VuF8_0812 EndPacket  is iclass=1 & op2127=0x63 & op1620=0x6 & op13=1 & op0507=0x6 & VdF8_0004 & VuF8_0812 & $(END_PACKET) {
+   VdF8_0004 = v_vabs_Vuf8(VuF8_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vabs_hf  --  "Vd32.hf = vabs(Vu32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  0  1  1  0  P  P  1  u  u  u  u  u  1  0  0  d  d  d  d  d
+:vabs VdHF_0004,VuHF_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0x6 & op13=1 & op0507=0x4 & VdHF_0004 & VuHF_0812 & $(END_PACKET) {
+   VdHF_0004 = v_vabs_Vuhf(VuHF_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vabs_qf16_hf  --  "Vd32.qf16 = vabs(Vu32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  1  1  1  0  P  P  1  u  u  u  u  u  1  1  0  d  d  d  d  d
+:vabs VdQF16_0004,VuHF_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0xe & op13=1 & op0507=0x6 & VdQF16_0004 & VuHF_0812 & $(END_PACKET) {
+   VdQF16_0004 = v_vabs_Vuhf(VuHF_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vabs_qf16_qf16  --  "Vd32.qf16 = vabs(Vu32.qf16)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  1  1  1  0  P  P  1  u  u  u  u  u  1  1  1  d  d  d  d  d
+:vabs VdQF16_0004,VuQF16_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0xe & op13=1 & op0507=0x7 & VdQF16_0004 & VuQF16_0812 & $(END_PACKET) {
+   VdQF16_0004 = v_vabs_Vuqf16(VuQF16_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vabs_qf32_qf32  --  "Vd32.qf32 = vabs(Vu32.qf32)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  1  1  1  0  P  P  1  u  u  u  u  u  1  0  1  d  d  d  d  d
+:vabs VdQF32_0004,VuQF32_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0xe & op13=1 & op0507=0x5 & VdQF32_0004 & VuQF32_0812 & $(END_PACKET) {
+   VdQF32_0004 = v_vabs_Vuqf32(VuQF32_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vabs_qf32_sf  --  "Vd32.qf32 = vabs(Vu32.sf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  1  1  1  0  P  P  1  u  u  u  u  u  1  0  0  d  d  d  d  d
+:vabs VdQF32_0004,VuSF_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0xe & op13=1 & op0507=0x4 & VdQF32_0004 & VuSF_0812 & $(END_PACKET) {
+   VdQF32_0004 = v_vabs_Vusf(VuSF_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vabs_sf  --  "Vd32.sf = vabs(Vu32.sf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  0  1  1  0  P  P  1  u  u  u  u  u  1  0  1  d  d  d  d  d
+:vabs VdSF_0004,VuSF_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0x6 & op13=1 & op0507=0x5 & VdSF_0004 & VuSF_0812 & $(END_PACKET) {
+   VdSF_0004 = v_vabs_Vusf(VuSF_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vadd_hf_f8  --  "Vdd32.hf = vadd(Vu32.f8,Vv32.f8)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  1  1  0  0  v  v  v  v  v  P  P  0  u  u  u  u  u  1  0  0  d  d  d  d  d
+:vadd VddHF_0004,VuF8_0812,VvF8_1620 EndPacket  is iclass=1 & op2127=0x7c & op13=0 & op0507=0x4 & VddHF_0004 & VuF8_0812 & VvF8_1620 & $(END_PACKET) {
+   VddHF_0004 = v_vadd_Vuf8_Vvf8(VuF8_0812,VvF8_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vadd_hf_hf  --  "Vd32.hf = vadd(Vu32.hf,Vv32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  1  1  0  1  v  v  v  v  v  P  P  1  u  u  u  u  u  1  1  1  d  d  d  d  d
+:vadd VdHF_0004,VuHF_0812,VvHF_1620 EndPacket  is iclass=1 & op2127=0x7d & op13=1 & op0507=0x7 & VdHF_0004 & VuHF_0812 & VvHF_1620 & $(END_PACKET) {
+   VdHF_0004 = v_vadd_Vuhf_Vvhf(VuHF_0812,VvHF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vadd_sf_bf  --  "Vdd32.sf = vadd(Vu32.bf,Vv32.bf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  1  0  1  0  v  v  v  v  v  P  P  1  u  u  u  u  u  1  1  0  d  d  d  d  d
+:vadd VddSF_0004,VuBF_0812,VvBF_1620 EndPacket  is iclass=1 & op2127=0x6a & op13=1 & op0507=0x6 & VddSF_0004 & VuBF_0812 & VvBF_1620 & $(END_PACKET) {
+   VddSF_0004 = v_vadd_Vubf_Vvbf(VuBF_0812,VvBF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vadd_sf_hf  --  "Vdd32.sf = vadd(Vu32.hf,Vv32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  1  1  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  1  0  0  d  d  d  d  d
+:vadd VddSF_0004,VuHF_0812,VvHF_1620 EndPacket  is iclass=1 & op2127=0x7c & op13=1 & op0507=0x4 & VddSF_0004 & VuHF_0812 & VvHF_1620 & $(END_PACKET) {
+   VddSF_0004 = v_vadd_Vuhf_Vvhf(VuHF_0812,VvHF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vadd_sf_sf  --  "Vd32.sf = vadd(Vu32.sf,Vv32.sf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  1  1  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  1  1  0  d  d  d  d  d
+:vadd VdSF_0004,VuSF_0812,VvSF_1620 EndPacket  is iclass=1 & op2127=0x7c & op13=1 & op0507=0x6 & VdSF_0004 & VuSF_0812 & VvSF_1620 & $(END_PACKET) {
+   VdSF_0004 = v_vadd_Vusf_Vvsf(VuSF_0812,VvSF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vassign_fp  --  "Vd32.w = vfmv(Vu32.w)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  0  1  1  0  P  P  1  u  u  u  u  u  0  0  1  d  d  d  d  d
+:vfmv VdW_0004,VuW_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0x6 & op13=1 & op0507=0x1 & VdW_0004 & VuW_0812 & $(END_PACKET) {
+   VdW_0004 = v_vfmv_Vuw(VuW_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vconv_bf_qf32  --  "Vd32.bf = Vuu32.qf32"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  0  1  1  0  P  P  1  u  u  u  u  u  1  1  1  d  d  d  d  d
+:assign VdBF_0004,VuuQF32_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0x6 & op13=1 & op0507=0x7 & VdBF_0004 & VuuQF32_0812 & $(END_PACKET) {
+   VdBF_0004 = Vbf_equals_Vqf32(VuuQF32_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vconv_f8_qf16  --  "Vd32.f8 = Vu32.qf16"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  1  1  0  0  P  P  1  u  u  u  u  u  1  1  1  d  d  d  d  d
+:assign VdF8_0004,VuQF16_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0xc & op13=1 & op0507=0x7 & VdF8_0004 & VuQF16_0812 & $(END_PACKET) {
+   VdF8_0004 = Vf8_equals_Vqf16(VuQF16_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vconv_h_hf  --  "Vd32.h = Vu32.hf"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  -  -  0  -  -  1  0  1  P  P  1  u  u  u  u  u  0  1  0  d  d  d  d  d
+:assign VdH_0004,VuHF_0812 EndPacket  is iclass=1 & op2427=0xe & op21=0 & op1618=0x5 & op13=1 & op0507=0x2 & VdH_0004 & VuHF_0812 & $(END_PACKET) {
+   VdH_0004 = Vh_equals_Vhf(VuHF_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vconv_h_hf_rnd  --  "Vd32.h = Vu32.hf:rnd"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  0  1  1  0  P  P  1  u  u  u  u  u  1  1  0  d  d  d  d  d
+:assign^":rnd" VdH_0004,VuHF_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0x6 & op13=1 & op0507=0x6 & VdH_0004 & VuHF_0812 & $(END_PACKET) {
+   VdH_0004 = Vh_equals_Vhf(VuHF_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vconv_hf_h  --  "Vd32.hf = Vu32.h"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  -  -  0  -  -  1  0  1  P  P  1  u  u  u  u  u  1  0  0  d  d  d  d  d
+:assign VdHF_0004,VuH_0812 EndPacket  is iclass=1 & op2427=0xe & op21=0 & op1618=0x5 & op13=1 & op0507=0x4 & VdHF_0004 & VuH_0812 & $(END_PACKET) {
+   VdHF_0004 = Vhf_equals_Vh(VuH_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vconv_qf16_f8  --  "Vdd32.qf16 = Vu32.f8"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  1  1  0  0  P  P  1  u  u  u  u  u  1  0  1  d  d  d  d  d
+:assign VddQF16_0004,VuF8_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0xc & op13=1 & op0507=0x5 & VddQF16_0004 & VuF8_0812 & $(END_PACKET) {
+   VddQF16_0004 = Vqf16_equals_Vf8(VuF8_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vconv_qf16_hf  --  "Vd32.qf16 = Vu32.hf"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  1  1  0  0  P  P  1  u  u  u  u  u  1  0  0  d  d  d  d  d
+:assign VdQF16_0004,VuHF_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0xc & op13=1 & op0507=0x4 & VdQF16_0004 & VuHF_0812 & $(END_PACKET) {
+   VdQF16_0004 = Vqf16_equals_Vhf(VuHF_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vconv_qf16_qf16  --  "Vd32.qf16 = Vu32.qf16"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  1  1  0  0  P  P  1  u  u  u  u  u  1  1  0  d  d  d  d  d
+:assign VdQF16_0004,VuQF16_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0xc & op13=1 & op0507=0x6 & VdQF16_0004 & VuQF16_0812 & $(END_PACKET) {
+   VdQF16_0004 = Vqf16_equals_Vqf16(VuQF16_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vconv_qf32_qf32  --  "Vd32.qf32 = Vu32.qf32"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  1  1  0  1  P  P  1  u  u  u  u  u  1  1  1  d  d  d  d  d
+:assign VdQF32_0004,VuQF32_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0xd & op13=1 & op0507=0x7 & VdQF32_0004 & VuQF32_0812 & $(END_PACKET) {
+   VdQF32_0004 = Vqf32_equals_Vqf32(VuQF32_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vconv_qf32_sf  --  "Vd32.qf32 = Vu32.sf"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  1  1  0  1  P  P  1  u  u  u  u  u  1  1  0  d  d  d  d  d
+:assign VdQF32_0004,VuSF_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0xd & op13=1 & op0507=0x6 & VdQF32_0004 & VuSF_0812 & $(END_PACKET) {
+   VdQF32_0004 = Vqf32_equals_Vsf(VuSF_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vconv_sf_w  --  "Vd32.sf = Vu32.w"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  -  -  0  -  -  1  0  1  P  P  1  u  u  u  u  u  0  1  1  d  d  d  d  d
+:assign VdSF_0004,VuW_0812 EndPacket  is iclass=1 & op2427=0xe & op21=0 & op1618=0x5 & op13=1 & op0507=0x3 & VdSF_0004 & VuW_0812 & $(END_PACKET) {
+   VdSF_0004 = Vsf_equals_Vw(VuW_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vconv_w_sf  --  "Vd32.w = Vu32.sf"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  -  -  0  -  -  1  0  1  P  P  1  u  u  u  u  u  0  0  1  d  d  d  d  d
+:assign VdW_0004,VuSF_0812 EndPacket  is iclass=1 & op2427=0xe & op21=0 & op1618=0x5 & op13=1 & op0507=0x1 & VdW_0004 & VuSF_0812 & $(END_PACKET) {
+   VdW_0004 = Vw_equals_Vsf(VuSF_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vcvt2_b_hf  --  "Vd32.b = vcvt2(Vu32.hf,Vv32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  1  0  1  1  0  v  v  v  v  v  P  P  1  u  u  u  u  u  1  1  0  d  d  d  d  d
+:vcvt2 VdB_0004,VuHF_0812,VvHF_1620 EndPacket  is iclass=1 & op2127=0x56 & op13=1 & op0507=0x6 & VdB_0004 & VuHF_0812 & VvHF_1620 & $(END_PACKET) {
+   VdB_0004 = v_vcvt2_Vuhf_Vvhf(VuHF_0812,VvHF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vcvt2_hf_b  --  "Vdd32.hf = vcvt2(Vu32.b)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  1  1  0  1  0  1  0  1  P  P  1  u  u  u  u  u  1  1  0  d  d  d  d  d
+:vcvt2 VddHF_0004,VuB_0812 EndPacket  is iclass=1 & op2127=0x76 & op1620=0x15 & op13=1 & op0507=0x6 & VddHF_0004 & VuB_0812 & $(END_PACKET) {
+   VddHF_0004 = v_vcvt2_Vub(VuB_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vcvt2_hf_ub  --  "Vdd32.hf = vcvt2(Vu32.ub)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  1  1  0  1  0  1  0  1  P  P  1  u  u  u  u  u  1  1  1  d  d  d  d  d
+:vcvt2 VddHF_0004,VuUB_0812 EndPacket  is iclass=1 & op2127=0x76 & op1620=0x15 & op13=1 & op0507=0x7 & VddHF_0004 & VuUB_0812 & $(END_PACKET) {
+   VddHF_0004 = v_vcvt2_Vuub(VuUB_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vcvt2_ub_hf  --  "Vd32.ub = vcvt2(Vu32.hf,Vv32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  1  0  1  1  0  v  v  v  v  v  P  P  1  u  u  u  u  u  1  1  1  d  d  d  d  d
+:vcvt2 VdUB_0004,VuHF_0812,VvHF_1620 EndPacket  is iclass=1 & op2127=0x56 & op13=1 & op0507=0x7 & VdUB_0004 & VuHF_0812 & VvHF_1620 & $(END_PACKET) {
+   VdUB_0004 = v_vcvt2_Vuhf_Vvhf(VuHF_0812,VvHF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vcvt_b_hf  --  "Vd32.b = vcvt(Vu32.hf,Vv32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  1  1  1  0  v  v  v  v  v  P  P  1  u  u  u  u  u  1  1  0  d  d  d  d  d
+:vcvt VdB_0004,VuHF_0812,VvHF_1620 EndPacket  is iclass=1 & op2127=0x7e & op13=1 & op0507=0x6 & VdB_0004 & VuHF_0812 & VvHF_1620 & $(END_PACKET) {
+   VdB_0004 = v_vcvt_Vuhf_Vvhf(VuHF_0812,VvHF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vcvt_bf_sf  --  "Vd32.bf = vcvt(Vu32.sf,Vv32.sf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  1  0  1  0  v  v  v  v  v  P  P  1  u  u  u  u  u  0  1  1  d  d  d  d  d
+:vcvt VdBF_0004,VuSF_0812,VvSF_1620 EndPacket  is iclass=1 & op2127=0x6a & op13=1 & op0507=0x3 & VdBF_0004 & VuSF_0812 & VvSF_1620 & $(END_PACKET) {
+   VdBF_0004 = v_vcvt_Vusf_Vvsf(VuSF_0812,VvSF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vcvt_f8_hf  --  "Vd32.f8 = vcvt(Vu32.hf,Vv32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  1  1  1  1  v  v  v  v  v  P  P  1  u  u  u  u  u  0  1  0  d  d  d  d  d
+:vcvt VdF8_0004,VuHF_0812,VvHF_1620 EndPacket  is iclass=1 & op2127=0x7f & op13=1 & op0507=0x2 & VdF8_0004 & VuHF_0812 & VvHF_1620 & $(END_PACKET) {
+   VdF8_0004 = v_vcvt_Vuhf_Vvhf(VuHF_0812,VvHF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vcvt_h_hf  --  "Vd32.h = vcvt(Vu32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  0  1  1  0  P  P  1  u  u  u  u  u  0  0  0  d  d  d  d  d
+:vcvt VdH_0004,VuHF_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0x6 & op13=1 & op0507=0x0 & VdH_0004 & VuHF_0812 & $(END_PACKET) {
+   VdH_0004 = v_vcvt_Vuhf(VuHF_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vcvt_hf_b  --  "Vdd32.hf = vcvt(Vu32.b)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  0  1  0  0  P  P  1  u  u  u  u  u  0  1  0  d  d  d  d  d
+:vcvt VddHF_0004,VuB_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0x4 & op13=1 & op0507=0x2 & VddHF_0004 & VuB_0812 & $(END_PACKET) {
+   VddHF_0004 = v_vcvt_Vub(VuB_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vcvt_hf_f8  --  "Vdd32.hf = vcvt(Vu32.f8)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  0  1  0  1  P  P  1  u  u  u  u  u  1  0  1  d  d  d  d  d
+:vcvt VddHF_0004,VuF8_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0x5 & op13=1 & op0507=0x5 & VddHF_0004 & VuF8_0812 & $(END_PACKET) {
+   VddHF_0004 = v_vcvt_Vuf8(VuF8_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vcvt_hf_h  --  "Vd32.hf = vcvt(Vu32.h)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  0  1  0  0  P  P  1  u  u  u  u  u  1  1  1  d  d  d  d  d
+:vcvt VdHF_0004,VuH_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0x4 & op13=1 & op0507=0x7 & VdHF_0004 & VuH_0812 & $(END_PACKET) {
+   VdHF_0004 = v_vcvt_Vuh(VuH_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vcvt_hf_sf  --  "Vd32.hf = vcvt(Vu32.sf,Vv32.sf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  1  0  1  1  v  v  v  v  v  P  P  1  u  u  u  u  u  0  0  1  d  d  d  d  d
+:vcvt VdHF_0004,VuSF_0812,VvSF_1620 EndPacket  is iclass=1 & op2127=0x7b & op13=1 & op0507=0x1 & VdHF_0004 & VuSF_0812 & VvSF_1620 & $(END_PACKET) {
+   VdHF_0004 = v_vcvt_Vusf_Vvsf(VuSF_0812,VvSF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vcvt_hf_ub  --  "Vdd32.hf = vcvt(Vu32.ub)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  0  1  0  0  P  P  1  u  u  u  u  u  0  0  1  d  d  d  d  d
+:vcvt VddHF_0004,VuUB_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0x4 & op13=1 & op0507=0x1 & VddHF_0004 & VuUB_0812 & $(END_PACKET) {
+   VddHF_0004 = v_vcvt_Vuub(VuUB_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vcvt_hf_uh  --  "Vd32.hf = vcvt(Vu32.uh)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  0  1  0  0  P  P  1  u  u  u  u  u  1  0  1  d  d  d  d  d
+:vcvt VdHF_0004,VuUH_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0x4 & op13=1 & op0507=0x5 & VdHF_0004 & VuUH_0812 & $(END_PACKET) {
+   VdHF_0004 = v_vcvt_Vuuh(VuUH_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vcvt_sf_hf  --  "Vdd32.sf = vcvt(Vu32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  0  1  0  0  P  P  1  u  u  u  u  u  1  0  0  d  d  d  d  d
+:vcvt VddSF_0004,VuHF_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0x4 & op13=1 & op0507=0x4 & VddSF_0004 & VuHF_0812 & $(END_PACKET) {
+   VddSF_0004 = v_vcvt_Vuhf(VuHF_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vcvt_ub_hf  --  "Vd32.ub = vcvt(Vu32.hf,Vv32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  1  1  1  0  v  v  v  v  v  P  P  1  u  u  u  u  u  1  0  1  d  d  d  d  d
+:vcvt VdUB_0004,VuHF_0812,VvHF_1620 EndPacket  is iclass=1 & op2127=0x7e & op13=1 & op0507=0x5 & VdUB_0004 & VuHF_0812 & VvHF_1620 & $(END_PACKET) {
+   VdUB_0004 = v_vcvt_Vuhf_Vvhf(VuHF_0812,VvHF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vcvt_uh_hf  --  "Vd32.uh = vcvt(Vu32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  0  1  0  1  P  P  1  u  u  u  u  u  0  0  0  d  d  d  d  d
+:vcvt VdUH_0004,VuHF_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0x5 & op13=1 & op0507=0x0 & VdUH_0004 & VuHF_0812 & $(END_PACKET) {
+   VdUH_0004 = v_vcvt_Vuhf(VuHF_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vdmpy_sf_hf  --  "Vd32.sf = vdmpy(Vu32.hf,Vv32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  1  1  0  1  v  v  v  v  v  P  P  1  u  u  u  u  u  1  1  0  d  d  d  d  d
+:vdmpy VdSF_0004,VuHF_0812,VvHF_1620 EndPacket  is iclass=1 & op2127=0x7d & op13=1 & op0507=0x6 & VdSF_0004 & VuHF_0812 & VvHF_1620 & $(END_PACKET) {
+   VdSF_0004 = v_vdmpy_Vuhf_Vvhf(VuHF_0812,VvHF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vdmpy_sf_hf_acc  --  "Vx32.sf += vdmpy(Vu32.hf,Vv32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  0  1  0  v  v  v  v  v  P  P  1  u  u  u  u  u  0  1  1  x  x  x  x  x
+:vdmpy+= VdSF_0004,VuHF_0812,VvHF_1620 EndPacket  is iclass=1 & op2127=0x62 & op13=1 & op0507=0x3 & vs5 & VdSF_0004 & VuHF_0812 & VvHF_1620 & $(END_PACKET) {
+   VdSF_0004 = v_vdmpy_Vuhf_Vvhf_acc(vs5,VuHF_0812,VvHF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vfmax_f8  --  "Vd32.f8 = vfmax(Vu32.f8,Vv32.f8)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  0  1  1  v  v  v  v  v  P  P  1  u  u  u  u  u  1  0  1  d  d  d  d  d
+:vfmax VdF8_0004,VuF8_0812,VvF8_1620 EndPacket  is iclass=1 & op2127=0x63 & op13=1 & op0507=0x5 & VdF8_0004 & VuF8_0812 & VvF8_1620 & $(END_PACKET) {
+   VdF8_0004 = v_vfmax_Vuf8_Vvf8(VuF8_0812,VvF8_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vfmax_hf  --  "Vd32.hf = vfmax(Vu32.hf,Vv32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  0  1  1  v  v  v  v  v  P  P  1  u  u  u  u  u  0  1  0  d  d  d  d  d
+:vfmax VdHF_0004,VuHF_0812,VvHF_1620 EndPacket  is iclass=1 & op2127=0x63 & op13=1 & op0507=0x2 & VdHF_0004 & VuHF_0812 & VvHF_1620 & $(END_PACKET) {
+   VdHF_0004 = v_vfmax_Vuhf_Vvhf(VuHF_0812,VvHF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vfmax_sf  --  "Vd32.sf = vfmax(Vu32.sf,Vv32.sf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  0  1  1  v  v  v  v  v  P  P  1  u  u  u  u  u  0  1  1  d  d  d  d  d
+:vfmax VdSF_0004,VuSF_0812,VvSF_1620 EndPacket  is iclass=1 & op2127=0x63 & op13=1 & op0507=0x3 & VdSF_0004 & VuSF_0812 & VvSF_1620 & $(END_PACKET) {
+   VdSF_0004 = v_vfmax_Vusf_Vvsf(VuSF_0812,VvSF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vfmin_f8  --  "Vd32.f8 = vfmin(Vu32.f8,Vv32.f8)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  0  1  1  v  v  v  v  v  P  P  1  u  u  u  u  u  1  0  0  d  d  d  d  d
+:vfmin VdF8_0004,VuF8_0812,VvF8_1620 EndPacket  is iclass=1 & op2127=0x63 & op13=1 & op0507=0x4 & VdF8_0004 & VuF8_0812 & VvF8_1620 & $(END_PACKET) {
+   VdF8_0004 = v_vfmin_Vuf8_Vvf8(VuF8_0812,VvF8_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vfmin_hf  --  "Vd32.hf = vfmin(Vu32.hf,Vv32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  0  1  1  v  v  v  v  v  P  P  1  u  u  u  u  u  0  0  0  d  d  d  d  d
+:vfmin VdHF_0004,VuHF_0812,VvHF_1620 EndPacket  is iclass=1 & op2127=0x63 & op13=1 & op0507=0x0 & VdHF_0004 & VuHF_0812 & VvHF_1620 & $(END_PACKET) {
+   VdHF_0004 = v_vfmin_Vuhf_Vvhf(VuHF_0812,VvHF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vfmin_sf  --  "Vd32.sf = vfmin(Vu32.sf,Vv32.sf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  0  1  1  v  v  v  v  v  P  P  1  u  u  u  u  u  0  0  1  d  d  d  d  d
+:vfmin VdSF_0004,VuSF_0812,VvSF_1620 EndPacket  is iclass=1 & op2127=0x63 & op13=1 & op0507=0x1 & VdSF_0004 & VuSF_0812 & VvSF_1620 & $(END_PACKET) {
+   VdSF_0004 = v_vfmin_Vusf_Vvsf(VuSF_0812,VvSF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vfneg_f8  --  "Vd32.f8 = vfneg(Vu32.f8)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  0  1  1  0  0  1  1  0  P  P  1  u  u  u  u  u  1  1  1  d  d  d  d  d
+:vfneg VdF8_0004,VuF8_0812 EndPacket  is iclass=1 & op2127=0x63 & op1620=0x6 & op13=1 & op0507=0x7 & VdF8_0004 & VuF8_0812 & $(END_PACKET) {
+   VdF8_0004 = v_vfneg_Vuf8(VuF8_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vfneg_hf  --  "Vd32.hf = vfneg(Vu32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  0  1  1  0  P  P  1  u  u  u  u  u  0  1  0  d  d  d  d  d
+:vfneg VdHF_0004,VuHF_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0x6 & op13=1 & op0507=0x2 & VdHF_0004 & VuHF_0812 & $(END_PACKET) {
+   VdHF_0004 = v_vfneg_Vuhf(VuHF_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vfneg_sf  --  "Vd32.sf = vfneg(Vu32.sf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  0  1  1  0  P  P  1  u  u  u  u  u  0  1  1  d  d  d  d  d
+:vfneg VdSF_0004,VuSF_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0x6 & op13=1 & op0507=0x3 & VdSF_0004 & VuSF_0812 & $(END_PACKET) {
+   VdSF_0004 = v_vfneg_Vusf(VuSF_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vilog2_hf  --  "Vd32.w = vilog2(Vu32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  1  1  0  0  P  P  1  u  u  u  u  u  0  1  1  d  d  d  d  d
+:vilog2 VdW_0004,VuHF_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0xc & op13=1 & op0507=0x3 & VdW_0004 & VuHF_0812 & $(END_PACKET) {
+   VdW_0004 = v_vilog2_Vuhf(VuHF_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vilog2_qf16  --  "Vd32.w = vilog2(Vu32.qf16)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  1  1  0  0  P  P  1  u  u  u  u  u  0  0  1  d  d  d  d  d
+:vilog2 VdW_0004,VuQF16_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0xc & op13=1 & op0507=0x1 & VdW_0004 & VuQF16_0812 & $(END_PACKET) {
+   VdW_0004 = v_vilog2_Vuqf16(VuQF16_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vilog2_qf32  --  "Vd32.w = vilog2(Vu32.qf32)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  1  1  0  0  P  P  1  u  u  u  u  u  0  0  0  d  d  d  d  d
+:vilog2 VdW_0004,VuQF32_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0xc & op13=1 & op0507=0x0 & VdW_0004 & VuQF32_0812 & $(END_PACKET) {
+   VdW_0004 = v_vilog2_Vuqf32(VuQF32_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vilog2_sf  --  "Vd32.w = vilog2(Vu32.sf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  1  1  0  0  P  P  1  u  u  u  u  u  0  1  0  d  d  d  d  d
+:vilog2 VdW_0004,VuSF_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0xc & op13=1 & op0507=0x2 & VdW_0004 & VuSF_0812 & $(END_PACKET) {
+   VdW_0004 = v_vilog2_Vusf(VuSF_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vmax_bf  --  "Vd32.bf = vmax(Vu32.bf,Vv32.bf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  1  0  1  0  v  v  v  v  v  P  P  1  u  u  u  u  u  1  1  1  d  d  d  d  d
+:vmax VdBF_0004,VuBF_0812,VvBF_1620 EndPacket  is iclass=1 & op2127=0x6a & op13=1 & op0507=0x7 & VdBF_0004 & VuBF_0812 & VvBF_1620 & $(END_PACKET) {
+   VdBF_0004 = v_vmax_Vubf_Vvbf(VuBF_0812,VvBF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vmerge_qf  --  "Vd32 = vmerge(Vu32.x,Vv32.w)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  1  0  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  1  1  1  d  d  d  d  d
+:vmerge Vd5,VuX_0812,VvW_1620 EndPacket  is iclass=1 & op2127=0x78 & op13=1 & op0507=0x7 & Vd5 & VuX_0812 & VvW_1620 & $(END_PACKET) {
+   Vd5 = v_vmerge_Vux_Vvw(VuX_0812,VvW_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vmin_bf  --  "Vd32.bf = vmin(Vu32.bf,Vv32.bf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  1  0  1  0  v  v  v  v  v  P  P  1  u  u  u  u  u  0  0  0  d  d  d  d  d
+:vmin VdBF_0004,VuBF_0812,VvBF_1620 EndPacket  is iclass=1 & op2127=0x6a & op13=1 & op0507=0x0 & VdBF_0004 & VuBF_0812 & VvBF_1620 & $(END_PACKET) {
+   VdBF_0004 = v_vmin_Vubf_Vvbf(VuBF_0812,VvBF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vmpy_hf_f8  --  "Vdd32.hf = vmpy(Vu32.f8,Vv32.f8)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  1  1  0  0  v  v  v  v  v  P  P  0  u  u  u  u  u  1  1  0  d  d  d  d  d
+:vmpy VddHF_0004,VuF8_0812,VvF8_1620 EndPacket  is iclass=1 & op2127=0x7c & op13=0 & op0507=0x6 & VddHF_0004 & VuF8_0812 & VvF8_1620 & $(END_PACKET) {
+   VddHF_0004 = v_vmpy_Vuf8_Vvf8(VuF8_0812,VvF8_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vmpy_hf_f8_acc  --  "Vxx32.hf += vmpy(Vu32.f8,Vv32.f8)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  1  1  0  0  v  v  v  v  v  P  P  0  u  u  u  u  u  1  1  1  x  x  x  x  x
+:vmpy+= VddHF_0004,VuF8_0812,VvF8_1620 EndPacket  is iclass=1 & op2127=0x7c & op13=0 & op0507=0x7 & Vss_0004 & VddHF_0004 & VuF8_0812 & VvF8_1620 & $(END_PACKET) {
+   VddHF_0004 = v_vmpy_Vuf8_Vvf8_acc(Vss_0004,VuF8_0812,VvF8_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vmpy_hf_hf  --  "Vd32.hf = vmpy(Vu32.hf,Vv32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  1  1  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  0  1  1  d  d  d  d  d
+:vmpy VdHF_0004,VuHF_0812,VvHF_1620 EndPacket  is iclass=1 & op2127=0x7c & op13=1 & op0507=0x3 & VdHF_0004 & VuHF_0812 & VvHF_1620 & $(END_PACKET) {
+   VdHF_0004 = v_vmpy_Vuhf_Vvhf(VuHF_0812,VvHF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vmpy_hf_hf_acc  --  "Vx32.hf += vmpy(Vu32.hf,Vv32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  0  1  0  v  v  v  v  v  P  P  1  u  u  u  u  u  0  1  0  x  x  x  x  x
+:vmpy+= VdHF_0004,VuHF_0812,VvHF_1620 EndPacket  is iclass=1 & op2127=0x62 & op13=1 & op0507=0x2 & vs5 & VdHF_0004 & VuHF_0812 & VvHF_1620 & $(END_PACKET) {
+   VdHF_0004 = v_vmpy_Vuhf_Vvhf_acc(vs5,VuHF_0812,VvHF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vmpy_rt_hf  --  "Vd32.qf16 = vmpy(Vu32.hf,Rt32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  1  0  0  0  0  t  t  t  t  t  P  P  1  u  u  u  u  u  0  1  1  d  d  d  d  d
+:vmpy VdQF16_0004,VuHF_0812,RtHF_1620 EndPacket  is iclass=1 & op2127=0x50 & op13=1 & op0507=0x3 & VdQF16_0004 & VuHF_0812 & RtHF_1620 & $(END_PACKET) {
+   VdQF16_0004 = v_vmpy_Vuhf_Rthf(VuHF_0812,RtHF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vmpy_rt_qf16  --  "Vd32.qf16 = vmpy(Vu32.qf16,Rt32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  1  0  0  0  0  t  t  t  t  t  P  P  1  u  u  u  u  u  0  1  0  d  d  d  d  d
+:vmpy VdQF16_0004,VuQF16_0812,RtHF_1620 EndPacket  is iclass=1 & op2127=0x50 & op13=1 & op0507=0x2 & VdQF16_0004 & VuQF16_0812 & RtHF_1620 & $(END_PACKET) {
+   VdQF16_0004 = v_vmpy_Vuqf16_Rthf(VuQF16_0812,RtHF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vmpy_rt_sf  --  "Vd32.qf32 = vmpy(Vu32.sf,Rt32.sf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  1  0  0  0  0  t  t  t  t  t  P  P  1  u  u  u  u  u  0  0  1  d  d  d  d  d
+:vmpy VdQF32_0004,VuSF_0812,RtSF_1620 EndPacket  is iclass=1 & op2127=0x50 & op13=1 & op0507=0x1 & VdQF32_0004 & VuSF_0812 & RtSF_1620 & $(END_PACKET) {
+   VdQF32_0004 = v_vmpy_Vusf_Rtsf(VuSF_0812,RtSF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vmpy_sf_bf  --  "Vdd32.sf = vmpy(Vu32.bf,Vv32.bf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  1  0  1  0  v  v  v  v  v  P  P  1  u  u  u  u  u  1  0  0  d  d  d  d  d
+:vmpy VddSF_0004,VuBF_0812,VvBF_1620 EndPacket  is iclass=1 & op2127=0x6a & op13=1 & op0507=0x4 & VddSF_0004 & VuBF_0812 & VvBF_1620 & $(END_PACKET) {
+   VddSF_0004 = v_vmpy_Vubf_Vvbf(VuBF_0812,VvBF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vmpy_sf_bf_acc  --  "Vxx32.sf += vmpy(Vu32.bf,Vv32.bf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  1  0  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  0  0  0  x  x  x  x  x
+:vmpy+= VddSF_0004,VuBF_0812,VvBF_1620 EndPacket  is iclass=1 & op2127=0x68 & op13=1 & op0507=0x0 & Vss_0004 & VddSF_0004 & VuBF_0812 & VvBF_1620 & $(END_PACKET) {
+   VddSF_0004 = v_vmpy_Vubf_Vvbf_acc(Vss_0004,VuBF_0812,VvBF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vmpy_sf_hf  --  "Vdd32.sf = vmpy(Vu32.hf,Vv32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  1  1  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  0  1  0  d  d  d  d  d
+:vmpy VddSF_0004,VuHF_0812,VvHF_1620 EndPacket  is iclass=1 & op2127=0x7c & op13=1 & op0507=0x2 & VddSF_0004 & VuHF_0812 & VvHF_1620 & $(END_PACKET) {
+   VddSF_0004 = v_vmpy_Vuhf_Vvhf(VuHF_0812,VvHF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vmpy_sf_hf_acc  --  "Vxx32.sf += vmpy(Vu32.hf,Vv32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  0  1  0  v  v  v  v  v  P  P  1  u  u  u  u  u  0  0  1  x  x  x  x  x
+:vmpy+= VddSF_0004,VuHF_0812,VvHF_1620 EndPacket  is iclass=1 & op2127=0x62 & op13=1 & op0507=0x1 & Vss_0004 & VddSF_0004 & VuHF_0812 & VvHF_1620 & $(END_PACKET) {
+   VddSF_0004 = v_vmpy_Vuhf_Vvhf_acc(Vss_0004,VuHF_0812,VvHF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vmpy_sf_sf  --  "Vd32.sf = vmpy(Vu32.sf,Vv32.sf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  1  1  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  0  0  1  d  d  d  d  d
+:vmpy VdSF_0004,VuSF_0812,VvSF_1620 EndPacket  is iclass=1 & op2127=0x7c & op13=1 & op0507=0x1 & VdSF_0004 & VuSF_0812 & VvSF_1620 & $(END_PACKET) {
+   VdSF_0004 = v_vmpy_Vusf_Vvsf(VuSF_0812,VvSF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vneg_qf16_hf  --  "Vd32.qf16 = vneg(Vu32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  1  1  1  0  P  P  1  u  u  u  u  u  0  1  0  d  d  d  d  d
+:vneg VdQF16_0004,VuHF_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0xe & op13=1 & op0507=0x2 & VdQF16_0004 & VuHF_0812 & $(END_PACKET) {
+   VdQF16_0004 = v_vneg_Vuhf(VuHF_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vneg_qf16_qf16  --  "Vd32.qf16 = vneg(Vu32.qf16)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  1  1  1  0  P  P  1  u  u  u  u  u  0  1  1  d  d  d  d  d
+:vneg VdQF16_0004,VuQF16_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0xe & op13=1 & op0507=0x3 & VdQF16_0004 & VuQF16_0812 & $(END_PACKET) {
+   VdQF16_0004 = v_vneg_Vuqf16(VuQF16_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vneg_qf32_qf32  --  "Vd32.qf32 = vneg(Vu32.qf32)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  1  1  1  0  P  P  1  u  u  u  u  u  0  0  1  d  d  d  d  d
+:vneg VdQF32_0004,VuQF32_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0xe & op13=1 & op0507=0x1 & VdQF32_0004 & VuQF32_0812 & $(END_PACKET) {
+   VdQF32_0004 = v_vneg_Vuqf32(VuQF32_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vneg_qf32_sf  --  "Vd32.qf32 = vneg(Vu32.sf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  0  0  0  0  0  1  1  1  0  P  P  1  u  u  u  u  u  0  0  0  d  d  d  d  d
+:vneg VdQF32_0004,VuSF_0812 EndPacket  is iclass=1 & op2127=0x70 & op1620=0xe & op13=1 & op0507=0x0 & VdQF32_0004 & VuSF_0812 & $(END_PACKET) {
+   VdQF32_0004 = v_vneg_Vusf(VuSF_0812);
+   build EndPacket;
+}
+
+# (v73,1) V6_vrmpybub_rtt  --  "Vdd32.w = vrmpy(Vu32.b,Rtt32.ub)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  0  t  t  t  t  t  P  P  0  u  u  u  u  u  1  0  1  d  d  d  d  d
+:vrmpy VddW_0004,VuB_0812,RttUB_1620 EndPacket  is iclass=1 & op2127=0x4e & op13=0 & op0507=0x5 & VddW_0004 & VuB_0812 & RttUB_1620 & $(END_PACKET) {
+   VddW_0004 = v_vrmpy_Vub_Rttub(VuB_0812,RttUB_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vrmpybub_rtt_acc  --  "Vxx32.w += vrmpy(Vu32.b,Rtt32.ub)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  0  1  t  t  t  t  t  P  P  1  u  u  u  u  u  0  0  0  x  x  x  x  x
+:vrmpy+= VddW_0004,VuB_0812,RttUB_1620 EndPacket  is iclass=1 & op2127=0x4d & op13=1 & op0507=0x0 & Vss_0004 & VddW_0004 & VuB_0812 & RttUB_1620 & $(END_PACKET) {
+   VddW_0004 = v_vrmpy_Vub_Rttub_acc(Vss_0004,VuB_0812,RttUB_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vrmpyub_rtt  --  "Vdd32.uw = vrmpy(Vu32.ub,Rtt32.ub)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  1  0  t  t  t  t  t  P  P  0  u  u  u  u  u  1  0  0  d  d  d  d  d
+:vrmpy VddUW_0004,VuUB_0812,RttUB_1620 EndPacket  is iclass=1 & op2127=0x4e & op13=0 & op0507=0x4 & VddUW_0004 & VuUB_0812 & RttUB_1620 & $(END_PACKET) {
+   VddUW_0004 = v_vrmpy_Vuub_Rttub(VuUB_0812,RttUB_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vrmpyub_rtt_acc  --  "Vxx32.uw += vrmpy(Vu32.ub,Rtt32.ub)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  0  1  t  t  t  t  t  P  P  1  u  u  u  u  u  1  1  1  x  x  x  x  x
+:vrmpy+= VddUW_0004,VuUB_0812,RttUB_1620 EndPacket  is iclass=1 & op2127=0x4d & op13=1 & op0507=0x7 & Vss_0004 & VddUW_0004 & VuUB_0812 & RttUB_1620 & $(END_PACKET) {
+   VddUW_0004 = v_vrmpy_Vuub_Rttub_acc(Vss_0004,VuUB_0812,RttUB_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vsub_hf_f8  --  "Vdd32.hf = vsub(Vu32.f8,Vv32.f8)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  1  1  0  0  v  v  v  v  v  P  P  0  u  u  u  u  u  1  0  1  d  d  d  d  d
+:vsub VddHF_0004,VuF8_0812,VvF8_1620 EndPacket  is iclass=1 & op2127=0x7c & op13=0 & op0507=0x5 & VddHF_0004 & VuF8_0812 & VvF8_1620 & $(END_PACKET) {
+   VddHF_0004 = v_vsub_Vuf8_Vvf8(VuF8_0812,VvF8_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vsub_hf_hf  --  "Vd32.hf = vsub(Vu32.hf,Vv32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  1  0  1  1  v  v  v  v  v  P  P  1  u  u  u  u  u  0  0  0  d  d  d  d  d
+:vsub VdHF_0004,VuHF_0812,VvHF_1620 EndPacket  is iclass=1 & op2127=0x7b & op13=1 & op0507=0x0 & VdHF_0004 & VuHF_0812 & VvHF_1620 & $(END_PACKET) {
+   VdHF_0004 = v_vsub_Vuhf_Vvhf(VuHF_0812,VvHF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vsub_hf_mix  --  "Vd32.qf16 = vsub(Vu32.hf,Vv32.qf16)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  1  0  0  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  1  0  0  d  d  d  d  d
+:vsub VdQF16_0004,VuHF_0812,VvQF16_1620 EndPacket  is iclass=1 & op2127=0x50 & op13=1 & op0507=0x4 & VdQF16_0004 & VuHF_0812 & VvQF16_1620 & $(END_PACKET) {
+   VdQF16_0004 = v_vsub_Vuhf_Vvqf16(VuHF_0812,VvQF16_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vsub_sf_bf  --  "Vdd32.sf = vsub(Vu32.bf,Vv32.bf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  1  0  1  0  v  v  v  v  v  P  P  1  u  u  u  u  u  1  0  1  d  d  d  d  d
+:vsub VddSF_0004,VuBF_0812,VvBF_1620 EndPacket  is iclass=1 & op2127=0x6a & op13=1 & op0507=0x5 & VddSF_0004 & VuBF_0812 & VvBF_1620 & $(END_PACKET) {
+   VddSF_0004 = v_vsub_Vubf_Vvbf(VuBF_0812,VvBF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vsub_sf_hf  --  "Vdd32.sf = vsub(Vu32.hf,Vv32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  1  1  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  1  0  1  d  d  d  d  d
+:vsub VddSF_0004,VuHF_0812,VvHF_1620 EndPacket  is iclass=1 & op2127=0x7c & op13=1 & op0507=0x5 & VddSF_0004 & VuHF_0812 & VvHF_1620 & $(END_PACKET) {
+   VddSF_0004 = v_vsub_Vuhf_Vvhf(VuHF_0812,VvHF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vsub_sf_mix  --  "Vd32.qf32 = vsub(Vu32.sf,Vv32.qf32)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  1  0  0  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  0  0  0  d  d  d  d  d
+:vsub VdQF32_0004,VuSF_0812,VvQF32_1620 EndPacket  is iclass=1 & op2127=0x50 & op13=1 & op0507=0x0 & VdQF32_0004 & VuSF_0812 & VvQF32_1620 & $(END_PACKET) {
+   VdQF32_0004 = v_vsub_Vusf_Vvqf32(VuSF_0812,VvQF32_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vsub_sf_sf  --  "Vd32.sf = vsub(Vu32.sf,Vv32.sf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  1  1  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  1  1  1  d  d  d  d  d
+:vsub VdSF_0004,VuSF_0812,VvSF_1620 EndPacket  is iclass=1 & op2127=0x7c & op13=1 & op0507=0x7 & VdSF_0004 & VuSF_0812 & VvSF_1620 & $(END_PACKET) {
+   VdSF_0004 = v_vsub_Vusf_Vvsf(VuSF_0812,VvSF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_zextract  --  "Vd32 = zextract(Rt32)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  0  0  1  1  0  1  t  t  t  t  t  P  P  0  0  0  0  0  1  0  0  1  d  d  d  d  d
+:zextract Vd5,rx5 EndPacket  is iclass=1 & op2127=0x4d & op13=0 & op0812=0x1 & op0507=0x1 & Vd5 & rx5 & $(END_PACKET) {
+   Vd5 = v_zextract_Rt(rx5);
+   build EndPacket;
+}
+
+
+# --- HVX-v2 floating-point vector predicate compares (vcmp.eq/vcmp.gt) ---
+define pcodeop vcmp_eq_QVhfVhf;
+define pcodeop vcmp_eqand_QVhfVhf;
+define pcodeop vcmp_eqor_QVhfVhf;
+define pcodeop vcmp_eqxacc_QVhfVhf;
+define pcodeop vcmp_eq_QVsfVsf;
+define pcodeop vcmp_eqand_QVsfVsf;
+define pcodeop vcmp_eqor_QVsfVsf;
+define pcodeop vcmp_eqxacc_QVsfVsf;
+define pcodeop vcmp_gt_QVbfVbf;
+define pcodeop vcmp_gtand_QVbfVbf;
+define pcodeop vcmp_gtor_QVbfVbf;
+define pcodeop vcmp_gtxacc_QVbfVbf;
+
+# (v73,1) V6_veqhf  --  "Qd4 = vcmp.eq(Vu32.hf,Vv32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  1  1  0  0  v  v  v  v  v  P  P  0  u  u  u  u  u  0  0  0  1  1  1  d  d
+:vcmp.eq Qd2,VuHF_0812,VvHF_1620 EndPacket  is iclass=0x1 & op2127=0x7c & op13=0x0 & op0207=0x7 & Qd2 & VuHF_0812 & VvHF_1620 & $(END_PACKET) {
+   Qd2 = vcmp_eq_QVhfVhf(VuHF_0812,VvHF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_veqhf_and  --  "Qx4 &= vcmp.eq(Vu32.hf,Vv32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  1  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  0  0  0  1  1  1  d  d
+:vcmp.eq&= Qd2,VuHF_0812,VvHF_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x7 & Qd2 & VuHF_0812 & VvHF_1620 & $(END_PACKET) {
+   Qd2 = vcmp_eqand_QVhfVhf(Qd2,VuHF_0812,VvHF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_veqhf_or  --  "Qx4 |= vcmp.eq(Vu32.hf,Vv32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  1  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  0  1  0  1  1  1  d  d
+:vcmp.eq|= Qd2,VuHF_0812,VvHF_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x17 & Qd2 & VuHF_0812 & VvHF_1620 & $(END_PACKET) {
+   Qd2 = vcmp_eqor_QVhfVhf(Qd2,VuHF_0812,VvHF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_veqhf_xor  --  "Qx4 ^= vcmp.eq(Vu32.hf,Vv32.hf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  1  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  1  0  0  1  1  1  d  d
+:vcmp.eq^"^=" Qd2,VuHF_0812,VvHF_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x27 & Qd2 & VuHF_0812 & VvHF_1620 & $(END_PACKET) {
+   Qd2 = vcmp_eqxacc_QVhfVhf(Qd2,VuHF_0812,VvHF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_veqsf  --  "Qd4 = vcmp.eq(Vu32.sf,Vv32.sf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  1  1  1  0  0  v  v  v  v  v  P  P  0  u  u  u  u  u  0  0  0  0  1  1  d  d
+:vcmp.eq Qd2,VuSF_0812,VvSF_1620 EndPacket  is iclass=0x1 & op2127=0x7c & op13=0x0 & op0207=0x3 & Qd2 & VuSF_0812 & VvSF_1620 & $(END_PACKET) {
+   Qd2 = vcmp_eq_QVsfVsf(VuSF_0812,VvSF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_veqsf_and  --  "Qx4 &= vcmp.eq(Vu32.sf,Vv32.sf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  1  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  0  0  0  0  1  1  d  d
+:vcmp.eq&= Qd2,VuSF_0812,VvSF_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x3 & Qd2 & VuSF_0812 & VvSF_1620 & $(END_PACKET) {
+   Qd2 = vcmp_eqand_QVsfVsf(Qd2,VuSF_0812,VvSF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_veqsf_or  --  "Qx4 |= vcmp.eq(Vu32.sf,Vv32.sf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  1  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  0  1  0  0  1  1  d  d
+:vcmp.eq|= Qd2,VuSF_0812,VvSF_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x13 & Qd2 & VuSF_0812 & VvSF_1620 & $(END_PACKET) {
+   Qd2 = vcmp_eqor_QVsfVsf(Qd2,VuSF_0812,VvSF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_veqsf_xor  --  "Qx4 ^= vcmp.eq(Vu32.sf,Vv32.sf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  1  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  1  0  0  0  1  1  d  d
+:vcmp.eq^"^=" Qd2,VuSF_0812,VvSF_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x23 & Qd2 & VuSF_0812 & VvSF_1620 & $(END_PACKET) {
+   Qd2 = vcmp_eqxacc_QVsfVsf(Qd2,VuSF_0812,VvSF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vgtbf  --  "Qd4 = vcmp.gt(Vu32.bf,Vv32.bf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  1  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  0  1  1  1  1  0  d  d
+:vcmp.gt Qd2,VuBF_0812,VvBF_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x1e & Qd2 & VuBF_0812 & VvBF_1620 & $(END_PACKET) {
+   Qd2 = vcmp_gt_QVbfVbf(VuBF_0812,VvBF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vgtbf_and  --  "Qx4 &= vcmp.gt(Vu32.bf,Vv32.bf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  1  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  1  1  0  1  0  0  d  d
+:vcmp.gt&= Qd2,VuBF_0812,VvBF_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x34 & Qd2 & VuBF_0812 & VvBF_1620 & $(END_PACKET) {
+   Qd2 = vcmp_gtand_QVbfVbf(Qd2,VuBF_0812,VvBF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vgtbf_or  --  "Qx4 |= vcmp.gt(Vu32.bf,Vv32.bf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  1  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  0  0  1  1  1  0  d  d
+:vcmp.gt|= Qd2,VuBF_0812,VvBF_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0xe & Qd2 & VuBF_0812 & VvBF_1620 & $(END_PACKET) {
+   Qd2 = vcmp_gtor_QVbfVbf(Qd2,VuBF_0812,VvBF_1620);
+   build EndPacket;
+}
+
+# (v73,1) V6_vgtbf_xor  --  "Qx4 ^= vcmp.gt(Vu32.bf,Vv32.bf)"
+#  _________________________________________________________________________________________________
+#  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
+#    0  0  0  1  1  1  0  0  1  0  0  v  v  v  v  v  P  P  1  u  u  u  u  u  1  1  1  1  0  0  d  d
+:vcmp.gt^"^=" Qd2,VuBF_0812,VvBF_1620 EndPacket  is iclass=0x1 & op2127=0x64 & op13=0x1 & op0207=0x3c & Qd2 & VuBF_0812 & VvBF_1620 & $(END_PACKET) {
+   Qd2 = vcmp_gtxacc_QVbfVbf(Qd2,VuBF_0812,VvBF_1620);
+   build EndPacket;
+}
+

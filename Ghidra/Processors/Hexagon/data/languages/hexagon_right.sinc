@@ -23,12 +23,12 @@
 	build EndPackedRight;
 }
 
-# (v4,right,2) add   --  "Rd16 = add ( Sp , #u6:2 )"
+# (v4,right,2,3) add   --  "Rd16 = add ( Sp , #u6:2 )"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  0  1  0  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  0  1  1  i  i  i  i  i  i  d  d  d  d  
+#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  0  1  1  i  i  i  i  i  i  d  d  d  d  
 
-:add Rd4r,SP,Uimm8_0409_shift2 EndPackedRight	is iclass=2 & op1013=11 & Rd4r & SP & Uimm8_0409_shift2 & $(END_PACKED_RIGHT) {
+:add Rd4r,SP,Uimm8_0409_shift2 EndPackedRight	is iclass2931=1 & op1013=11 & Rd4r & SP & Uimm8_0409_shift2 & $(END_PACKED_RIGHT) {
 	Rd4r = SP + zext(Uimm8_0409_shift2);
 	build EndPackedRight;
 }
@@ -43,12 +43,12 @@
 	build EndPackedRight;
 }
 
-# (v4,right,2) add   --  "Rx16 = add ( Rx16 , #s7 )"
+# (v4,right,2,3) add   --  "Rx16 = add ( Rx16 , #s7 )"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  0  1  0  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  0  0  i  i  i  i  i  i  i  x  x  x  x  
+#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  0  0  i  i  i  i  i  i  i  x  x  x  x  
 
-:add Rd4r,rd4r,Simm8_0410 EndPackedRight	is iclass=2 & op1113=4 & Rd4r & rd4r & Simm8_0410 & $(END_PACKED_RIGHT) {
+:add Rd4r,rd4r,Simm8_0410 EndPackedRight	is iclass2931=1 & op1113=4 & Rd4r & rd4r & Simm8_0410 & $(END_PACKED_RIGHT) {
 	Rd4r = rd4r + sext(Simm8_0410);
 	build EndPackedRight;
 }
@@ -56,35 +56,35 @@
 # (v4,right,6,7) allocframe   --  "allocframe ( #u5:3 )"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  1  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  0  i  i  i  i  i  -  -  -  -  
+#    0  1  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  0  i  i  i  i  i  0  0  0  0  
 #
 # (v4,right,10,11) allocframe   --  "allocframe ( #u5:3 )"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    1  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  0  i  i  i  i  i  -  -  -  -  
+#    1  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  0  i  i  i  i  i  0  0  0  0  
 
-:allocframe Uimm8_0408_shift3 EndPackedRight	is (iclass2931=3 | iclass2931=5) & op0913=0x1e & Uimm8_0408_shift3 & $(END_PACKED_RIGHT) {
-	allocframe(SP, Uimm8_0408_shift3);
+:allocframe Uimm8_0408_shift3 EndPackedRight	is op0913=0x1e & op3=0 & op0002=0 & (iclass2931=3 | iclass2931=5) & Uimm8_0408_shift3 & AllocFrameSPU5x8Right & $(END_PACKED_RIGHT) {
+	build AllocFrameSPU5x8Right; # allocframe(SP, Uimm8_0408_shift3)
 	build EndPackedRight;
 }
 
 # (v4,right,12,13) allocframe   --  "allocframe ( #u5:3 )"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    1  1  0  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  0  i  i  i  i  i  -  -  -  -  
+#    1  1  0  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  0  i  i  i  i  i  0  0  0  0  
 
-:allocframe Uimm8_0408_shift3 EndPackedRight	is iclass2931=6 & op0912=14 & Uimm8_0408_shift3 & $(END_PACKED_RIGHT) {
-	allocframe(SP, Uimm8_0408_shift3);
+:allocframe Uimm8_0408_shift3 EndPackedRight	is iclass2931=6 & op0912=14 & op3=0 & op0002=0 & Uimm8_0408_shift3 & AllocFrameSPU5x8Right & $(END_PACKED_RIGHT) {
+	build AllocFrameSPU5x8Right; # allocframe(SP, Uimm8_0408_shift3)
 	build EndPackedRight;
 }
 
 # (v4,right,14,15) allocframe   --  "allocframe ( #u5:3 )"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    1  1  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  0  1  1  1  0  i  i  i  i  i  -  -  -  -  
+#    1  1  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  0  1  1  1  0  i  i  i  i  i  0  0  0  0  
 
-:allocframe Uimm8_0408_shift3 EndPackedRight	is iclass2931=7 & op0913=0x0e & Uimm8_0408_shift3 & $(END_PACKED_RIGHT) {
-	allocframe(SP, Uimm8_0408_shift3);
+:allocframe Uimm8_0408_shift3 EndPackedRight	is iclass2931=7 & op0913=0x0e & op3=0 & op0002=0 & Uimm8_0408_shift3 & AllocFrameSPU5x8Right & $(END_PACKED_RIGHT) {
+	build AllocFrameSPU5x8Right; # allocframe(SP, Uimm8_0408_shift3);
 	build EndPackedRight;
 }
 
@@ -111,19 +111,19 @@
 # (v4,right,2,3) assign   --  "Rd16 = #-1"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  0  1  +  +  0  +  +  d  d  d  d  
+#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  0  1  0  0  0  0  0  d  d  d  d  
 
 :assign Rd4r,MinusOne EndPackedRight	is iclass2931=1 & op13=1 & op0412=0x1a0 & Rd4r & MinusOne & $(END_PACKED_RIGHT) {
 	Rd4r = -1;
 	build EndPackedRight;
 }
 
-# (v4,right,2) assign   --  "Rd16 = #u6"
+# (v4,right,2,3) assign   --  "Rd16 = #u6"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  0  1  0  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  0  1  0  i  i  i  i  i  i  d  d  d  d  
+#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  0  1  0  i  i  i  i  i  i  d  d  d  d  
 
-:assign Rd4r,Uimm8_0409 EndPackedRight	is iclass=2 & op1013=10 & Rd4r & Uimm8_0409 & $(END_PACKED_RIGHT) {
+:assign Rd4r,Uimm8_0409 EndPackedRight	is iclass2931=1 & op1013=10 & Rd4r & Uimm8_0409 & $(END_PACKED_RIGHT) {
 	Rd4r = zext(Uimm8_0409);
 	build EndPackedRight;
 }
@@ -141,27 +141,28 @@
 # (v4,right,2,3) assign   --  "if ( ! p0 ) Rd16 = #0"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  0  1  +  +  1  1  1  d  d  d  d  
+#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  0  1  0  0  1  1  1  d  d  d  d  
 #
 # (v4,right,2,3) assign   --  "if ( ! p0 .new ) Rd16 = #0"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  0  1  +  +  1  0  1  d  d  d  d  
+#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  0  1  0  0  1  0  1  d  d  d  d  
 #
 # (v4,right,2,3) assign   --  "if ( p0 ) Rd16 = #0"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  0  1  +  +  1  1  0  d  d  d  d  
+#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  0  1  0  0  1  1  0  d  d  d  d  
 #
 # (v4,right,2,3) assign   --  "if ( p0 .new ) Rd16 = #0"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  0  1  +  +  1  0  0  d  d  d  d  
+#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  0  1  0  0  1  0  0  d  d  d  d  
 
 :assign^P0Cond_N05_S04 rd4r,Zero EndPackedRight	is iclass2931=1 & op13=1 & op0612=0x69 & rd4r & Zero & P0Cond_N05_S04 & $(END_PACKED_RIGHT) {
 	build P0Cond_N05_S04;
 	build EndPackedRight;
  <<COMMIT_COND>>
+	build P0Cond_N05_S04;
 	if (ConditionReg == 0) goto <nocommit>;
 	rd4r = 0;
   <nocommit>
@@ -183,9 +184,9 @@
 # (v4,right,2,3) combine   --  "Rdd8 = combine ( #n2 , #u2 )"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  +  0  -  i  i  n  n  d  d  d  
+#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  0  0  -  i  i  n  n  d  d  d  
 
-:combine Rdd3r,Uimm2_0304,Uimm2_0506     EndPackedRight	is iclass2931=1 & op0813=0x3c & Uimm2_0304 & Uimm2_0506 & Rdd3r & Zero & $(END_PACKED_RIGHT) {
+:combine Rdd3r,Uimm2_0304,Uimm2_0506     EndPackedRight	is iclass2931=1 & op0813=0x3c & Uimm2_0304 & Uimm2_0506 & Rdd3r & $(END_PACKED_RIGHT) {
 	Rdd3r = (zext(Uimm2_0304) << 32) + zext(Uimm2_0506);
 	build EndPackedRight;
 }
@@ -193,7 +194,7 @@
 # (v4,right,2,3) combine   --  "Rdd8 = combine ( #0 , Rs16 )"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  +  1  s  s  s  s  0  d  d  d  
+#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  0  1  s  s  s  s  0  d  d  d  
 
 :combine Rdd3r,Zero,rs4r     EndPackedRight	is iclass2931=1 & op0813=0x3d & op3=0 & rs4r & Rdd3r & Zero & $(END_PACKED_RIGHT) {
 	Rdd3r = zext(rs4r);
@@ -203,7 +204,7 @@
 # (v4,right,2,3) combine   --  "Rdd8 = combine ( Rs16 , #0 )"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  +  1  s  s  s  s  1  d  d  d  
+#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  0  1  s  s  s  s  1  d  d  d  
 
 :combine Rdd3r,rs4r,Zero     EndPackedRight	is iclass2931=1 & op0813=0x3d & op3=1 & rs4r & Rdd3r & Zero & $(END_PACKED_RIGHT) {
 	Rdd3r = zext(rs4r) << 32;
@@ -213,53 +214,54 @@
 # (v4,right,0,1,4,5) dealloc_return   --  "dealloc_return"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  -  0  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  1  1  0  1  -  -  -  0  -  -  
+#    0  -  0  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  1  1  0  1  0  0  0  0  0  0  
 
-:dealloc_return  EndPackedRight	is iclass31=0 & iclass29=0 & op13=1 & op0612=0x7d & op2=0 & $(END_PACKED_RIGHT) {
+:dealloc_return  EndPackedRight	is iclass31=0 & iclass29=0 & op0013=0x3F40 & DeallocFrameRaw & $(END_PACKED_RIGHT) {
+	build DeallocFrameRaw;
 	build EndPackedRight;
  <<FLOW>>
-	deallocframe(FP);
 	return [LR];
 }
 
 # (v4,right,2,3) dealloc_return   --  "dealloc_return"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  0  1  1  1  1  1  0  1  -  -  -  0  -  -  
+#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  0  1  1  1  1  1  0  1  0  0  0  0  0  0  
 
-:dealloc_return  EndPackedRight	is iclass2931=1 & op13=0 & op0612=0x7d & op2=0 & $(END_PACKED_RIGHT) {
+:dealloc_return  EndPackedRight	is iclass2931=1 & op0013=0x1F40 & DeallocFrameRaw & $(END_PACKED_RIGHT) {
+	build DeallocFrameRaw;
 	build EndPackedRight;
  <<FLOW>>
-	deallocframe(FP);
 	return [LR];
 }
 
 # (v4,right,0,1,4,5) dealloc_return   --  "if ( ! p0 ) dealloc_return"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  -  0  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  1  1  0  1  -  -  -  1  0  1  
+#    0  -  0  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  1  1  0  1  0  0  0  1  0  1  
 #
 # (v4,right,0,1,4,5) dealloc_return:nt   --  "if ( ! p0 .new ) dealloc_return:nt"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  -  0  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  1  1  0  1  -  -  -  1  1  1  
+#    0  -  0  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  1  1  0  1  0  0  0  1  1  1  
 #
 # (v4,right,0,1,4,5) dealloc_return   --  "if ( p0 ) dealloc_return"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  -  0  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  1  1  0  1  -  -  -  1  0  0  
+#    0  -  0  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  1  1  0  1  0  0  0  1  0  0  
 #
 # (v4,right,0,1,4,5) dealloc_return:nt   --  "if ( p0 .new ) dealloc_return:nt"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  -  0  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  1  1  0  1  -  -  -  1  1  0  
+#    0  -  0  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  1  1  0  1  0  0  0  1  1  0  
 
-:dealloc_return^FlowP0Cond_N01_S00^NotTaken01  EndPackedRight	is iclass31=0 & iclass29=0 & op13=1 & op0612=0x7d & op2=1 & FlowP0Cond_N01_S00 & NotTaken01 & $(END_PACKED_RIGHT) {
+:dealloc_return^FlowP0Cond_N01_S00^NotTaken01  EndPackedRight	is iclass31=0 & iclass29=0 & op0213=0xFD1 & FlowP0Cond_N01_S00 & NotTaken01 & DeallocFrameRawCond & $(END_PACKED_RIGHT) {
 	build FlowP0Cond_N01_S00;
+	build DeallocFrameRawCond;
 	build EndPackedRight;
  <<FLOW>>
+	build FlowP0Cond_N01_S00;
 	if (ConditionReg == 0) goto <non_flow>;
-	deallocframe(FP);
 	return [LR];
   <non_flow>
 }
@@ -267,29 +269,30 @@
 # (v4,right,2,3) dealloc_return   --  "if ( ! p0 ) dealloc_return"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  0  1  1  1  1  1  0  1  -  -  -  1  0  1  
+#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  0  1  1  1  1  1  0  1  0  0  0  1  0  1  
 #
 # (v4,right,2,3) dealloc_return:nt   --  "if ( ! p0 .new ) dealloc_return:nt"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  0  1  1  1  1  1  0  1  -  -  -  1  1  1  
+#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  0  1  1  1  1  1  0  1  0  0  0  1  1  1  
 #
 # (v4,right,2,3) dealloc_return   --  "if ( p0 ) dealloc_return"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  0  1  1  1  1  1  0  1  -  -  -  1  0  0  
+#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  0  1  1  1  1  1  0  1  0  0  0  1  0  0  
 #
 # (v4,right,2,3) dealloc_return:nt   --  "if ( p0 .new ) dealloc_return:nt"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  0  1  1  1  1  1  0  1  -  -  -  1  1  0  
+#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  0  1  1  1  1  1  0  1  0  0  0  1  1  0  
 
-:dealloc_return^FlowP0Cond_N01_S00^NotTaken01  EndPackedRight	is iclass2931=1 & op13=0 & op0612=0x7d & op2=1 & FlowP0Cond_N01_S00 & NotTaken01 & $(END_PACKED_RIGHT) {
+:dealloc_return^FlowP0Cond_N01_S00^NotTaken01  EndPackedRight	is iclass2931=1 & op0213=0x7D1 & FlowP0Cond_N01_S00 & NotTaken01 & DeallocFrameRawCond & $(END_PACKED_RIGHT) {
 	build FlowP0Cond_N01_S00;
+	build DeallocFrameRawCond;
 	build EndPackedRight;
  <<FLOW>>
+	build FlowP0Cond_N01_S00;
 	if (ConditionReg == 0) goto <non_flow>;
-	deallocframe(FP);
 	return [LR];
   <non_flow>
 }
@@ -297,31 +300,29 @@
 # (v4,right,0,1,4,5) deallocframe   --  "deallocframe"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  -  0  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  1  1  0  0  -  -  -  0  -  -  
+#    0  -  0  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  1  1  0  0  0  0  0  0  0  0  
 
-:deallocframe  EndPackedRight	is iclass31=0 & iclass29=0 & op13=1 & op0612=0x7c & op2=0 & $(END_PACKED_RIGHT) {
+:deallocframe  EndPackedRight	is iclass31=0 & iclass29=0 & op0013=0x3F00 & DeallocFrameRaw & $(END_PACKED_RIGHT) {
+	build DeallocFrameRaw;
 	build EndPackedRight;
- <<COMMIT>>
-	deallocframe(FP);
 }
 
 # (v4,right,2,3) deallocframe   --  "deallocframe"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  0  1  1  1  1  1  0  0  -  -  -  0  -  -  
+#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  0  1  1  1  1  1  0  0  0  0  0  0  0  0  
 
-:deallocframe  EndPackedRight	is iclass2931=1 & op13=0 & op0612=0x7c & op2=0 & $(END_PACKED_RIGHT) {
+:deallocframe  EndPackedRight	is iclass2931=1 & op0013=0x1F00 & DeallocFrameRaw & $(END_PACKED_RIGHT) {
+	build DeallocFrameRaw;
 	build EndPackedRight;
- <<COMMIT>>
-	deallocframe(FP);
 }
 
 # (v4,right,0,1,4,5) jumpr   --  "jumpr Lr"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  -  0  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  1  1  1  1  -  -  -  0  -  -  
+#    0  -  0  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  1  1  1  1  0  0  0  0  0  0  
 
-:jumpr LR EndPackedRight	is iclass31=0 & iclass29=0 & op13=1 & op0612=0x7f & op2=0 & LR & $(END_PACKED_RIGHT) {
+:jumpr LR EndPackedRight	is iclass31=0 & iclass29=0 & op0013=0x3FC0 & LR & $(END_PACKED_RIGHT) {
  	dest:4 = LR;
 	build EndPackedRight;
  <<FLOW>>
@@ -331,9 +332,9 @@
 # (v4,right,2,3) jumpr   --  "jumpr Lr"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  0  1  1  1  1  1  1  1  -  -  -  0  -  -  
+#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  0  1  1  1  1  1  1  1  0  0  0  0  0  0  
 
-:jumpr LR EndPackedRight	is iclass2931=1 & op13=0 & op0612=0x7f & op2=0 & LR & $(END_PACKED_RIGHT) {
+:jumpr LR EndPackedRight	is iclass2931=1 & op0013=0x1FC0 & LR & $(END_PACKED_RIGHT) {
  	dest:4 = LR;
 	build EndPackedRight;
  <<FLOW>>
@@ -343,29 +344,30 @@
 # (v4,right,0,1,4,5) jumpr   --  "if ( ! p0 ) jumpr Lr"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  -  0  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  1  1  1  1  -  -  -  1  0  1  
+#    0  -  0  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  1  1  1  1  0  0  0  1  0  1  
 #
 # (v4,right,0,1,4,5) jumpr:nt   --  "if ( ! p0 .new ) jumpr:nt Lr"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  -  0  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  1  1  1  1  -  -  -  1  1  1  
+#    0  -  0  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  1  1  1  1  0  0  0  1  1  1  
 #
 # (v4,right,0,1,4,5) jumpr   --  "if ( p0 ) jumpr Lr"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  -  0  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  1  1  1  1  -  -  -  1  0  0  
+#    0  -  0  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  1  1  1  1  0  0  0  1  0  0  
 #
 # (v4,right,0,1,4,5) jumpr:nt   --  "if ( p0 .new ) jumpr:nt Lr"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  -  0  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  1  1  1  1  -  -  -  1  1  0  
+#    0  -  0  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  1  1  1  1  1  1  0  0  0  1  1  0  
 
 # Conditional Return
-:jumpr^FlowP0Cond_N01_S00^NotTaken01 LR EndPackedRight	is iclass31=0 & iclass29=0 & op13=1 & op0612=0x7f & op2=1 & FlowP0Cond_N01_S00 & NotTaken01 & LR & $(END_PACKED_RIGHT) {
+:jumpr^FlowP0Cond_N01_S00^NotTaken01 LR EndPackedRight	is iclass31=0 & iclass29=0 & op0213=0xFF1 & FlowP0Cond_N01_S00 & NotTaken01 & LR & $(END_PACKED_RIGHT) {
  	dest:4 = LR;
  	build FlowP0Cond_N01_S00;
 	build EndPackedRight;
  <<FLOW>>
+	build FlowP0Cond_N01_S00;
 	if (ConditionReg == 0) goto <non_flow>;
 	return [dest];
   <non_flow>
@@ -374,28 +376,29 @@
 # (v4,right,2,3) jumpr   --  "if ( ! p0 ) jumpr Lr"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  0  1  1  1  1  1  1  1  -  -  -  1  0  1  
+#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  0  1  1  1  1  1  1  1  0  0  0  1  0  1  
 #
 # (v4,right,2,3) jumpr:nt   --  "if ( ! p0 .new ) jumpr:nt Lr"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  0  1  1  1  1  1  1  1  -  -  -  1  1  1  
+#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  0  1  1  1  1  1  1  1  0  0  0  1  1  1  
 #
 # (v4,right,2,3) jumpr   --  "if ( p0 ) jumpr Lr"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  0  1  1  1  1  1  1  1  -  -  -  1  0  0  
+#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  0  1  1  1  1  1  1  1  0  0  0  1  0  0  
 #
 # (v4,right,2,3) jumpr:nt   --  "if ( p0 .new ) jumpr:nt Lr"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  0  1  1  1  1  1  1  1  -  -  -  1  1  0  
+#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  0  1  1  1  1  1  1  1  0  0  0  1  1  0  
 
-:jumpr^FlowP0Cond_N01_S00^NotTaken01 LR EndPackedRight	is iclass2931=1 & op13=0 & op0612=0x7f & op2=1 & FlowP0Cond_N01_S00 & NotTaken01 & LR & $(END_PACKED_RIGHT) {
+:jumpr^FlowP0Cond_N01_S00^NotTaken01 LR EndPackedRight	is iclass2931=1 & op0213=0x7F1 & FlowP0Cond_N01_S00 & NotTaken01 & LR & $(END_PACKED_RIGHT) {
  	dest:4 = LR;
  	build FlowP0Cond_N01_S00;
 	build EndPackedRight;
  <<FLOW>>
+	build FlowP0Cond_N01_S00;
 	if (ConditionReg == 0) goto <non_flow>;
 	return [dest];
   <non_flow>
@@ -431,7 +434,7 @@
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    1  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  0  0  1  n  s  s  s  s  i  i  i  i  
 
-:memb MemRsRelU4Rnb,Uimm1_08 EndPackedRight	is (iclass2931=3 | iclass2931=5) & op0913=0x19 & MemRsRelU4Rnb & Uimm1_08  & $(END_PACKED_RIGHT) {
+:memb MemRsRelU4Rnb,Uimm1_08 EndPackedRight	is op0913=0x19 & (iclass2931=3 | iclass2931=5) & MemRsRelU4Rnb & Uimm1_08 & $(END_PACKED_RIGHT) {
  	MemRsRelU4Rnb = Uimm1_08;
 	build EndPackedRight;
 }
@@ -466,7 +469,7 @@
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    1  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  0  1  i  i  i  i  s  s  s  s  t  t  t  t  
 
-:memb MemRsRelU4Rb,rt4r EndPackedRight	is (iclass2931=3 | iclass2931=5) & op1213=1 & MemRsRelU4Rb & rt4r  & $(END_PACKED_RIGHT) {
+:memb MemRsRelU4Rb,rt4r EndPackedRight	is op1213=1 & (iclass2931=3 | iclass2931=5) & MemRsRelU4Rb & rt4r & $(END_PACKED_RIGHT) {
  	MemRsRelU4Rb = rt4r:1;
 	build EndPackedRight;
 }
@@ -510,7 +513,7 @@
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    1  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  0  1  0  1  i  i  i  i  i  i  t  t  t  
 
-:memd MemSpRelS6Rd,rtt3r EndPackedRight	is (iclass2931=3 | iclass2931=5) & op0913=0x15 & MemSpRelS6Rd & rtt3r  & $(END_PACKED_RIGHT) {
+:memd MemSpRelS6Rd,rtt3r EndPackedRight	is op0913=0x15 & (iclass2931=3 | iclass2931=5) & MemSpRelS6Rd & rtt3r & $(END_PACKED_RIGHT) {
  	MemSpRelS6Rd = rtt3r;
 	build EndPackedRight;
 }
@@ -545,12 +548,12 @@
 	build EndPackedRight;
 }
 
-# (v4,right,2) memh   --  "Rd16 = memh ( Rs16 + #u3:1 )"
+# (v4,right,2,3) memh   --  "Rd16 = memh ( Rs16 + #u3:1 )"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  0  1  0  -  -  -  -  -  -  -  -  -  -  -  -  -  -  0  0  0  i  i  i  s  s  s  s  d  d  d  d  
+#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  0  0  0  i  i  i  s  s  s  s  d  d  d  d  
 
-:memh Rd4r,MemRsRelU3Rh EndPackedRight	is iclass=2 & op1113=0 & MemRsRelU3Rh & Rd4r  & $(END_PACKED_RIGHT) {
+:memh Rd4r,MemRsRelU3Rh EndPackedRight	is iclass2931=1 & op1113=0 & MemRsRelU3Rh & Rd4r  & $(END_PACKED_RIGHT) {
  	Rd4r = sext(MemRsRelU3Rh);
 	build EndPackedRight;
 }
@@ -565,7 +568,7 @@
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    1  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  0  0  i  i  i  s  s  s  s  t  t  t  t  
 
-:memh MemRsRelU3Rh,rt4r EndPackedRight	is (iclass2931=3 | iclass2931=5) & op1113=4 & MemRsRelU3Rh & rt4r  & $(END_PACKED_RIGHT) {
+:memh MemRsRelU3Rh,rt4r EndPackedRight	is op1113=4 & (iclass2931=3 | iclass2931=5) & MemRsRelU3Rh & rt4r & $(END_PACKED_RIGHT) {
  	MemRsRelU3Rh = rt4r:2;
 	build EndPackedRight;
 }
@@ -610,12 +613,12 @@
 	build EndPackedRight;
 }
 
-# (v4,right,2) memuh   --  "Rd16 = memuh ( Rs16 + #u3:1 )"
+# (v4,right,2,3) memuh   --  "Rd16 = memuh ( Rs16 + #u3:1 )"
 #  _________________________________________________________________________________________________
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
-#    0  0  1  0  -  -  -  -  -  -  -  -  -  -  -  -  -  -  0  0  1  i  i  i  s  s  s  s  d  d  d  d  
+#    0  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  0  0  1  i  i  i  s  s  s  s  d  d  d  d  
 
-:memuh Rd4r,MemRsRelU3Rh EndPackedRight	is iclass=2 & op1113=1 & MemRsRelU3Rh & Rd4r  & $(END_PACKED_RIGHT) {
+:memuh Rd4r,MemRsRelU3Rh EndPackedRight	is iclass2931=1 & op1113=1 & MemRsRelU3Rh & Rd4r  & $(END_PACKED_RIGHT) {
  	Rd4r = zext(MemRsRelU3Rh);
 	build EndPackedRight;
 }
@@ -640,7 +643,7 @@
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    1  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  1  0  0  0  n  s  s  s  s  i  i  i  i  
 
-:memw StMemRsRelC15Rw,Uimm1_08 EndPackedRight	is (iclass2931=3 | iclass2931=5) & op13=1 & op0912=8 & StMemRsRelC15Rw & Uimm1_08 & $(END_PACKED_RIGHT) {
+:memw StMemRsRelC15Rw,Uimm1_08 EndPackedRight	is op13=1 & op0912=8 & (iclass2931=3 | iclass2931=5) & StMemRsRelC15Rw & Uimm1_08 & $(END_PACKED_RIGHT) {
  	StMemRsRelC15Rw = zext(Uimm1_08);
 	build EndPackedRight;
 }
@@ -685,7 +688,7 @@
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    1  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  0  0  i  i  i  i  s  s  s  s  t  t  t  t  
 
-:memw MemRsRelU4Rw,rt4r EndPackedRight	is (iclass2931=5 | iclass2931=3) & op1213=0 & MemRsRelU4Rw & rt4r & $(END_PACKED_RIGHT) {
+:memw MemRsRelU4Rw,rt4r EndPackedRight	is op1213=0 & (iclass2931=5 | iclass2931=3) & MemRsRelU4Rw & rt4r & $(END_PACKED_RIGHT) {
  	MemRsRelU4Rw = rt4r;
 	build EndPackedRight;
 }
@@ -720,7 +723,7 @@
 #  |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|09|08|07|06|05|04|03|02|01|00|
 #    1  0  1  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  1  0  1  0  0  i  i  i  i  i  t  t  t  t  
 
-:memw MemSpRelU5Rw,rt4r EndPackedRight	is (iclass2931=3 | iclass2931=5) & op0913=0x14 & MemSpRelU5Rw & rt4r & $(END_PACKED_RIGHT) {
+:memw MemSpRelU5Rw,rt4r EndPackedRight	is op0913=0x14 & (iclass2931=3 | iclass2931=5) & MemSpRelU5Rw & rt4r & $(END_PACKED_RIGHT) {
  	MemSpRelU5Rw = rt4r;
 	build EndPackedRight;
 }

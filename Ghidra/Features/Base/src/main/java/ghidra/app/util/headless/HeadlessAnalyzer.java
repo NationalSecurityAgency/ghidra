@@ -911,8 +911,16 @@ public class HeadlessAnalyzer {
 
 					// GhidraScriptProvider case
 					GhidraScriptProvider provider = GhidraScriptUtil.getProvider(currScriptFile);
-					PrintWriter errWriter = new PrintWriter(System.err);
-					currScript = provider.getScriptInstance(currScriptFile, errWriter);
+					StringWriter stringWriter = new StringWriter();
+					PrintWriter errorWriter = new PrintWriter(stringWriter);
+					try {
+						currScript = provider.getScriptInstance(currScriptFile, errorWriter);
+					}
+					catch (GhidraScriptLoadException e) {
+						errorWriter.flush();
+						Msg.error(this, stringWriter.toString());
+						throw e;
+					}
 					currScript.setScriptArgs(scriptArgs);
 
 					if (options.propertiesFilePaths.size() > 0) {

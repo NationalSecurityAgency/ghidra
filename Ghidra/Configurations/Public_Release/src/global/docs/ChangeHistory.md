@@ -1,3 +1,25 @@
+# Ghidra 12.1.4 Change History (September 2026)
+
+### Improvements
+* _Analysis_. The Swift Demangler Analyzer now requires the `GHIDRA_SWIFT_DEMANGLER` environment variable to be set to the full path of the native Swift demangler binary, if Ghidra cannot find it in a known location. (GP-7238)
+* _Basic Infrastructure_. Upgraded Apache commons-collections4 to 4.6.0. (GP-7171)
+* _Demangler_. The native Swift demangler is now called with `--` to specify where the command options (flags) end and the mangled string begins. (GP-7172)
+* _Importer_. Prevented Ghidra from loading libraries when binaries specified their location with a UNC path. (GP-7176)
+
+### Bugs
+* _Basic Infrastructure_. Fixed a potential `DomainObjectLockedException`. (GP-7190)
+* _Data Types_. `DialogResourceDataType` now correctly defines `DLGITEMTEMPLATE.id` as `DWORD`. (GP-7157, Issue #9500, #9501)
+* _Importer_. Fixed a potential stack overflow in the `OmfLoader`. (GP-7173)
+* _Importer:PE_. Fixed a potential stack overflow in the `PeLoader`. (GP-7205)
+* _Processors_. Corrected semantics for SuperH `shad` and `shld` instructions. (GP-6698)
+* _Processors_. Corrected AARCH64 load/store addressing operand formatting when shift is set but omitted. (GP-6951, Issue #9042, #9082, #9515)
+* _Processors_. Fixed issue with x86 where a handful of instructions were not zeroing out the upper word of 64-bit registers when writing to 32-bit partial registers. (GP-7027, Issue #9325)
+* _Processors_. Corrected disassembly for NDS32 `fdiv` and `fmul` instructions. (GP-7041, Issue #9345)
+* _Processors_. Corrected the calculation in x86 for 64-bit RIP-relative addressing. (GP-7052, Issue #6553)
+* _Processors_. Completed major revision to Hexagon processor module to correct: 1) inconsistent specification of reserved/don't-care instruction bits, 2) support for paired-vector swap mode, 3) unimplemented pcode, 4) missing instructions up to Hexagon V79.  Quad-vector instructions have not yet been implemented. (GP-7110)
+* _Processors_. A large number of Hexagon p-code fixes were made. (GP-7267, Issue #9163)
+* _Scripting_. Fixed an issue that resulted in the cause of GhidraScript compilation errors to be hidden from the user. (GP-7265, Issue #9551)
+
 # Ghidra 12.1.3 Change History (August 2026)
 
 ### Improvements
