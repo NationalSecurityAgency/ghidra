@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,7 +48,7 @@ public abstract class AbstractHtmlLabel extends JLabel
 
 	private static final String HTML_TAG = "<html>";
 	private boolean isUpdating;
-	private boolean isHtml;
+	private boolean expectsHtmlPrefix;
 
 	protected AbstractHtmlLabel() {
 		addPropertyChangeListener(this);
@@ -65,10 +65,10 @@ public abstract class AbstractHtmlLabel extends JLabel
 		// do not pass <html> up to the parent so that it does not install its own html rendering
 		if (text != null && text.toLowerCase().startsWith(HTML_TAG)) {
 			text = text.substring(HTML_TAG.length());
-			isHtml = true;
+			expectsHtmlPrefix = true;
 		}
 		else {
-			isHtml = false;
+			expectsHtmlPrefix = false;
 		}
 
 		super.setText(text);
@@ -85,7 +85,7 @@ public abstract class AbstractHtmlLabel extends JLabel
 	 * @return text of this label
 	 */
 	public String getOriginalText() {
-		return isHtml ? HTML_TAG + getText() : getText();
+		return expectsHtmlPrefix ? HTML_TAG + getText() : getText();
 	}
 
 	@Override
@@ -97,7 +97,7 @@ public abstract class AbstractHtmlLabel extends JLabel
 	private void updateHtmlView() {
 
 		String text = getText();
-		if (text == null || !isHtml || !isHTMLRenderingEnabled()) {
+		if (text == null || !isHTMLRenderingEnabled()) {
 			putClientProperty(BasicHTML.propertyKey, null);
 			return;
 		}
