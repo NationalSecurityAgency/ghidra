@@ -136,6 +136,7 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 				ghidraURL = new URI(args[0]).toURL();
 			}
 			catch (MalformedURLException e) {
+				// NOTE: Logging has not been initialized, use System instead
 				System.err.println("Invalid Ghidra URL: " + args[0]);
 				usage();
 			}

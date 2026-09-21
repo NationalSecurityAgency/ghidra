@@ -161,7 +161,7 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 
 	@After
 	public void tearDown() throws Exception {
-		System.err.println("tearDown() - " + testName.getMethodName() + "\n");
+		Msg.debug(this, "tearDown() - " + testName.getMethodName() + "\n");
 
 		for (PersistentDataTypeArchive archive : archivesToClose) {
 			closeArchive(archive);
@@ -540,7 +540,7 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 		File imageFile = new File(temp, name + ".img.png");
 		try {
 			ImageUtils.writeFile((RenderedImage) image, imageFile);
-			Msg.info(this, "Captured screenshot to " + imageFile.getCanonicalPath());
+			Msg.debug(this, "Captured screenshot to " + imageFile.getCanonicalPath());
 		}
 		catch (Exception e) {
 			Msg.error(this, "Unable to write debug image");

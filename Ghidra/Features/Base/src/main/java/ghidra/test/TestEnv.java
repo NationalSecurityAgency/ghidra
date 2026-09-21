@@ -1123,7 +1123,7 @@ public class TestEnv {
 				if (program.isClosed()) {
 					continue;
 				}
-				System.err.println("->" + projectName + " " + program.getName());
+				Msg.error(TestEnv.class, "->" + projectName + " " + program.getName());
 				printProgramConsumers(program);
 			}
 
@@ -1249,9 +1249,9 @@ public class TestEnv {
 
 	protected void printProgramConsumers(Program program) {
 		List<?> consumerList = (List<?>) AbstractGenericTest.getInstanceField("consumers", program);
-		System.err.println("\tConsumers for: " + program.getName());
+		Msg.error(this, "\tConsumers for: " + program.getName());
 		for (Object name : consumerList) {
-			System.err.println("\t->" + name);
+			Msg.error(this, "\t->" + name);
 		}
 	}
 

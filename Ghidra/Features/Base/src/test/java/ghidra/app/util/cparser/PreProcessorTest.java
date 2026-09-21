@@ -28,6 +28,7 @@ import ghidra.app.util.cparser.CPP.PreProcessor;
 import ghidra.program.database.data.TransientDataTypeManager;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
+import ghidra.util.Msg;
 
 public class PreProcessorTest extends AbstractGenericTest {
 	private static String resourceName = "PreProcessorTest.h";
@@ -64,7 +65,7 @@ public class PreProcessorTest extends AbstractGenericTest {
 		}
 		catch (ParseException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Msg.error(this, e, e);
 		}
 
 		parser.setOutputStream(baos);
@@ -86,13 +87,13 @@ public class PreProcessorTest extends AbstractGenericTest {
 			parser.parse(url.getFile());
 		}
 		catch (ParseException e) {
-			e.printStackTrace();
+			Msg.error(this, e, e);
 		}
 
 		System.out.println(parser.getParseMessages());
 
 		// Uncomment to print out parse results
-		//System.err.println(baos.toString());
+		//Msg.info(this, baos.toString());
 
 		dtMgr = new TransientDataTypeManager("parsed");
 		parser.getDefinitions().populateDefineEquates(null, dtMgr);
