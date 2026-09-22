@@ -15,7 +15,7 @@
  */
 
 rootProject.assembleDistribution {
-	from (ROOT_PROJECT_DIR + "/docker") {
+	from (rootProject.ROOT_PROJECT_DIR + "/docker") {
 		into "docker"
 		exclude "build.gradle"
 	}

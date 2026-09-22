@@ -35,8 +35,8 @@ dependencies {
 }
 
 CopySpec z3LibsCopySpec = copySpec {
-	File depsDir = file("${DEPS_DIR}/SymbolicSummaryZ3/os")
-	File binRepoDir = file("${BIN_REPO}/Ghidra/Extensions/SymbolicSummaryZ3/os")
+	File depsDir = file("${rootProject.DEPS_DIR}/SymbolicSummaryZ3/os")
+	File binRepoDir = file("${rootProject.BIN_REPO}/Ghidra/Extensions/SymbolicSummaryZ3/os")
 	from(depsDir.exists() ? depsDir : binRepoDir) {
 		into("os")
 	}
@@ -48,7 +48,7 @@ task z3DevLibsCopy(type: Copy) {
 	
 	onlyIf {
 		// Only need to do this if using dependencies directory
-		file("${DEPS_DIR}/SymbolicSummaryZ3/os").exists()
+		file("${rootProject.DEPS_DIR}/SymbolicSummaryZ3/os").exists()
 	}
 	
 	with z3LibsCopySpec
@@ -56,10 +56,10 @@ task z3DevLibsCopy(type: Copy) {
 }
 
 zipExtensions {
-	into(getBaseProjectName(this.project)) {
+	into(rootProject.getBaseProjectName(this.project)) {
 		with z3LibsCopySpec
 	}
-	into(getBaseProjectName(this.project)) {
+	into(rootProject.getBaseProjectName(this.project)) {
 		from(this.project.file(".")) {
 			include("README.md")
 		}

@@ -149,7 +149,7 @@ rootProject.prepDev.dependsOn(writeSleighDevBuild)
  *
  *****************************************************************************************/
 rootProject.assembleDistribution { 
-	into (getZipPath(this.project)  + "/data") {
+	into (rootProject.getZipPath(this.project)  + "/data") {
 		from (rootProject.projectDir.toString() + "/GhidraBuild/BuildFiles/sleighDistBuild.template") {
 	        rename { "build.xml" }
 	    }
@@ -272,7 +272,7 @@ def resolveSleighArg(String arg, boolean useDevPath) {
 	}
 	else {
 		// first path element is the Ghidra directory
-		modulePath =  getZipPath(moduleProject)
+		modulePath =  rootProject.getZipPath(moduleProject)
 	}
 	newArg += modulePath
 	newArg += tail

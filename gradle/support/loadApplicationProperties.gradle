@@ -39,8 +39,8 @@ file("Ghidra/application.properties").withReader { reader ->
 	project.ext.BUILD_DATE_SHORT = ghidraProps.getProperty('application.build.date.short')
 	project.ext.BUILD_DATES_NEEDED = false
 	if (BUILD_DATE == null) {
-		project.ext.BUILD_DATE = getCurrentDateTimeLong()
-		project.ext.BUILD_DATE_SHORT = getCurrentDate()
+		project.ext.BUILD_DATE = rootProject.getCurrentDateTimeLong()
+		project.ext.BUILD_DATE_SHORT = rootProject.getCurrentDate()
 		project.ext.BUILD_DATES_NEEDED = true
 	}
 	

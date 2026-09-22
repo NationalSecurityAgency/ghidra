@@ -26,7 +26,7 @@ model {
 
 	// Use the PLATFORMS list to create the platforms that Ghidra supports.
 	platforms {
-		project.PLATFORMS.each { platform ->
+		rootProject.PLATFORMS.each { platform ->
 			"${platform.name}" {
 				architecture platform.arch
 				operatingSystem platform.os

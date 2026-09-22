@@ -22,7 +22,7 @@ configurations {
 	protocArtifact
 }
 
-def platform = getCurrentPlatformName()
+def platform = rootProject.getCurrentPlatformName()
 
 def version = getProperty('ghidra.protobuf.java.version')
 
@@ -34,10 +34,10 @@ dependencies {
 	allProtocArtifacts "com.google.protobuf:protoc:${version}:osx-x86_64@exe"
 	allProtocArtifacts "com.google.protobuf:protoc:${version}:osx-aarch_64@exe"
 
-	if (isCurrentWindows()) {
+	if (rootProject.isCurrentWindows()) {
 		protocArtifact "com.google.protobuf:protoc:${version}:windows-x86_64@exe"
 	}
-	if (isCurrentLinux()) {
+	if (rootProject.isCurrentLinux()) {
 		if (platform.endsWith("x86_64")) {
 			protocArtifact "com.google.protobuf:protoc:${version}:linux-x86_64@exe"
 		}
@@ -45,7 +45,7 @@ dependencies {
 			protocArtifact "com.google.protobuf:protoc:${version}:linux-aarch_64@exe"
 		}
 	}
-	if (isCurrentMac()) {
+	if (rootProject.isCurrentMac()) {
 		if (platform.endsWith("x86_64")) {
 			protocArtifact "com.google.protobuf:protoc:${version}:osx-x86_64@exe"
 		}
@@ -53,7 +53,7 @@ dependencies {
 			protocArtifact "com.google.protobuf:protoc:${version}:osx-aarch_64@exe"
 		}
 	}
-	if (isCurrentOpenBSD()) {
+	if (rootProject.isCurrentOpenBSD()) {
 		protocArtifact files('/usr/local/bin/protoc')
 	}
 }

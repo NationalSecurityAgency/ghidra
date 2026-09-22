@@ -142,8 +142,8 @@ rootProject.combinedTestReport {
  *********************************************************************************/
 def initTestJVM(Task task, String rootDirName) {
 
-	def testTempDir = file(rootTestDir).getAbsolutePath()
-	def testReportDir = file(reportDir).getAbsolutePath()
+	def testTempDir = file(rootProject.rootTestDir).getAbsolutePath()
+	def testReportDir = file(rootProject.reportDir).getAbsolutePath()
 
 	task.doFirst {
 		println "Test Machine Name: " + machineName
@@ -172,8 +172,8 @@ def initTestJVM(Task task, String rootDirName) {
 	task.testLogging.showStandardStreams = true
 
     // Min/Max heap size.  These are passed in.
-    task.minHeapSize = xms
-    task.maxHeapSize = xmx
+    task.minHeapSize = rootProject.xms
+    task.maxHeapSize = rootProject.xmx
     	
     task.doFirst {
 

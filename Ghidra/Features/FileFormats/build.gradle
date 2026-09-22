@@ -62,7 +62,7 @@ dependencies {
 rootProject.assembleDistribution {
 	from (this.project.projectDir.toString()) {
 		include "src/lzfse/**"
-		into  { getZipPath(this.project) }
+		into  { rootProject.getZipPath(this.project) }
 	}
 }
 

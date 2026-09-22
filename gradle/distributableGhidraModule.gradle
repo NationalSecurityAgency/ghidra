@@ -28,7 +28,7 @@ apply from: "$rootProject.projectDir/gradle/support/distributionCommon.gradle"
 
 rootProject.assembleDistribution {
 	def p = this.project
-	def zipPath = getZipPath(p)
+	def zipPath = rootProject.getZipPath(p)
 	
 	from ("${p.projectDir}/Module.manifest") {
 		into  { zipPath }
@@ -44,7 +44,7 @@ rootProject.assembleDistribution {
 		exclude '**/*.sla.lock' // associated with language modules
 	}
 	
-	from ("${BIN_REPO}/${getGhidraRelativePath(p)}/data") {
+	from ("${rootProject.BIN_REPO}/${rootProject.getGhidraRelativePath(p)}/data") {
 		into { "${zipPath}/data" }
 	}
 	
@@ -121,10 +121,10 @@ rootProject.PLATFORMS.each { platform ->
 		t.from (p.projectDir.toString() + "/build/os/${platform.name}") {
 			exclude '*.lib'
 			exclude '*.exp'
-			into getZipPath(p)	+ "/os/${platform.name}"
+			into rootProject.getZipPath(p)	+ "/os/${platform.name}"
 		}
 		t.from (p.projectDir.toString() + "/os/${platform.name}") {
-			into getZipPath(p) + "/os/${platform.name}"
+			into rootProject.getZipPath(p) + "/os/${platform.name}"
 		}
 	}	
 }
@@ -132,7 +132,7 @@ rootProject.PLATFORMS.each { platform ->
 // For win_x86_64 build, we have to also include any win_x86_32 binaries in the final zip.
 rootProject.assembleDistribution_win_x86_64 {
 	from (this.project.projectDir.toString() + "/build/os/win_x86_32") {
-		into getZipPath(this.project)	+ "/os/win_x86_32"
+		into rootProject.getZipPath(this.project)	+ "/os/win_x86_32"
 	}
 }
 
@@ -180,14 +180,14 @@ plugins.withType(JavaPlugin) {
 
 	rootProject.assembleSource {
 		from (this.project.zipSourceSubproject) {
-			into  rootProject.ext.ZIP_DIR_PREFIX + "/" +  getZipPath(this.project) + "/lib" 
+			into  rootProject.ext.ZIP_DIR_PREFIX + "/" +  rootProject.getZipPath(this.project) + "/lib" 
 		}
 	}
 	
 	rootProject.assembleDistribution {
 		dependsOn assemble
 		def p = this.project
-		def zipPath = getZipPath(p)
+		def zipPath = rootProject.getZipPath(p)
 		
 		from (p.jar) {
 			// use closures for getting zip path to delay evaluation. See note at top of file.
@@ -201,7 +201,7 @@ plugins.withType(JavaPlugin) {
 		
 		// External Libraries
 		gradle.taskGraph.whenReady { taskGraph ->
-			List<String> externalPaths = getExternalRuntimeDependencies(p)
+			List<String> externalPaths = rootProject.getExternalRuntimeDependencies(p)
 			externalPaths.each { path ->
 				from (path) {
 					into {zipPath + "/lib" }
@@ -213,7 +213,7 @@ plugins.withType(JavaPlugin) {
 
 rootProject.assembleMarkdownToHtml {
 	def p = this.project
-	def zipPath = getZipPath(p)
+	def zipPath = rootProject.getZipPath(p)
 	
 	from ("${p.projectDir}/README.md") {
 		into { zipPath }

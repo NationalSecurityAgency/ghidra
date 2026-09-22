@@ -19,13 +19,13 @@
  */
 
 // Enable the Python Nature in the Eclipse project
-eclipse.project {
+rootProject.eclipse.project {
 	natures 'org.python.pydev.pythonNature'
 }
 
 ext.findPyDep = { name ->
-	File inDeps = file("${DEPS_DIR}/${project.name}/${name}")
-	File inRepo = file("${BIN_REPO}/ExternalPyWheels/${name}")
+	File inDeps = file("${rootProject.DEPS_DIR}/${project.name}/${name}")
+	File inRepo = file("${rootProject.BIN_REPO}/ExternalPyWheels/${name}")
 	if (inDeps.exists()) {
 		return inDeps
 	}
@@ -97,7 +97,7 @@ task buildPyPackage {
 rootProject.assembleDistribution {
 	dependsOn(buildPyPackage)
 	def p = this.project
-	def zipPath = getZipPath(p)
+	def zipPath = rootProject.getZipPath(p)
 	from (p.assemblePyPackage) {
 		exclude '**/*.pyc'
 		exclude '**/*.pyo'
@@ -110,14 +110,14 @@ rootProject.assembleDistribution {
 }
 
 ext.distributePyDep = { name ->
-	Set<File> wheelFiles = PYTHON_DEPS.get(project)
+	Set<File> wheelFiles = rootProject.PYTHON_DEPS.get(project)
 	if (wheelFiles == null) {
 		wheelFiles = new HashSet<>()
-		PYTHON_DEPS.put(project, wheelFiles)
+		rootProject.PYTHON_DEPS.put(project, wheelFiles)
 	}
 	File dep = findPyDep(name)
 	wheelFiles.add(dep)
-	def zipPath = getZipPath(project) 
+	def zipPath = rootProject.getZipPath(project) 
 	rootProject.assembleDistribution {
 		into ("${zipPath}/pypkg/dist") {
 			from dep

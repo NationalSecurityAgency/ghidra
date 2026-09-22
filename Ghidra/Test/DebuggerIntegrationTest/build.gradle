@@ -219,13 +219,13 @@ integrationTest {
 	dependsOn { project(':Debugger-agent-drgn').assemblePyPackage }
 	dependsOn { project(':Debugger-agent-x64dbg').assemblePyPackage }
 
-	if ("linux_x86_64".equals(getCurrentPlatformName())) {
+	if ("linux_x86_64".equals(rootProject.getCurrentPlatformName())) {
 		dependsOn("testSpecimenLinux_x86_64")
 	}
-	if ("mac_x86_64".equals(getCurrentPlatformName())) {
+	if ("mac_x86_64".equals(rootProject.getCurrentPlatformName())) {
 		dependsOn("testSpecimenMac_x86_64")
 	}
-	if ("win_x86_64".equals(getCurrentPlatformName())) {
+	if ("win_x86_64".equals(rootProject.getCurrentPlatformName())) {
 		dependsOn("testSpecimenWin_x86_64")
 	}
 }

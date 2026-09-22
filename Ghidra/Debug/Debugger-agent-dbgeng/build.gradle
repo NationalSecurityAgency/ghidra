@@ -29,8 +29,8 @@ dependencies {
 }
 
 def tlb = file("build/os/win_x86_64/dbgmodel.tlb")
-def depsFile = file("${DEPS_DIR}/Debugger-agent-dbgeng/dbgmodel.tlb")
-def binRepoFile = file("${BIN_REPO}/${getGhidraRelativePath(project)}/os/win_x86_64/dbgmodel.tlb")
+def depsFile = file("${rootProject.DEPS_DIR}/Debugger-agent-dbgeng/dbgmodel.tlb")
+def binRepoFile = file("${rootProject.BIN_REPO}/${rootProject.getGhidraRelativePath(project)}/os/win_x86_64/dbgmodel.tlb")
 
 tasks.assemblePyPackage {
 	def prebuiltTlb = depsFile.exists() ? depsFile : (binRepoFile.exists() ? binRepoFile : null)
@@ -80,7 +80,7 @@ task prebuildTlb(type: Copy) {
 	into binRepoFile.parentFile
 
 	doFirst {
-		assert file(BIN_REPO).exists() : "Bin repo doesn't exist"
+		assert file(rootProject.BIN_REPO).exists() : "Bin repo doesn't exist"
 		file(binRepoFile).parentFile.mkdirs()
 	}
 }

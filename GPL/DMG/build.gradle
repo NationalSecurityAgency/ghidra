@@ -9,7 +9,7 @@ if (findProject(':Generic') != null) {
 	rootProject.assembleDistribution {
 		doLast {
 			// eliminate standard module lib directory
-			def assemblePath = destinationDir.path + "/" + getZipPath(this.project)
+			def assemblePath = destinationDir.path + "/" + rootProject.getZipPath(this.project)
 			delete assemblePath + "/lib"
 		}
 	}
@@ -39,7 +39,10 @@ sourceSets {
 }
 
 repositories {
-	flatDir name: "flat", dirs:["data/lib"]
+	flatDir {
+		name = "flat"
+		dirs "data/lib"
+	}
 }
 
 dependencies {

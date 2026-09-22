@@ -8,7 +8,7 @@
  ******************************************************************************************/
 ext.getProjectLocationInBinRepo = { p ->
 	String relativePath = getGhidraRelativePath(p)	
-	File binRepoRootProject = new File("${BIN_REPO}")
+	File binRepoRootProject = new File("${rootProject.BIN_REPO}")
 	return new File(binRepoRootProject, relativePath)
 }
 /****************************************************************************************

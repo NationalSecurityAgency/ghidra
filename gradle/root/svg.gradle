@@ -43,8 +43,8 @@ task rasterizeSvg(type: JavaExec) {
 		// added these in the individual projects which use this task (eg: to the 'compile' 
 		// configuration) but since this is the only task which requires them, it seemed 
 		// appropriate to just add them here.
-		classpath = files (	BIN_REPO + "/ExternalLibraries/libsforBuild/batik-all-1.7.jar",
-							BIN_REPO + "/ExternalLibraries/libsforBuild/xml-apis-ext.jar")					
+		classpath = files (	rootProject.BIN_REPO + "/ExternalLibraries/libsforBuild/batik-all-1.7.jar",
+							rootProject.BIN_REPO + "/ExternalLibraries/libsforBuild/xml-apis-ext.jar")					
 					
 		// Now build a list of all SVG files in the project.  We have to do the isEmpty() check
 		// afterwards since Batik will choke if we don't pass it a valid input list.			

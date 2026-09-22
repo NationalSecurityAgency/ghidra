@@ -44,10 +44,10 @@ dependencies {
 
 rootProject.assembleDistribution { 
 	def p = this.project
-	def zipPath = getZipPath(p)
+	def zipPath = rootProject.getZipPath(p)
 	
-	String postgresqlDepsFile = "${DEPS_DIR}/BSim/${postgresql_distro}"
-	String postgresqlBinRepoFile = "${BIN_REPO}/Ghidra/Features/BSim/${postgresql_distro}"
+	String postgresqlDepsFile = "${rootProject.DEPS_DIR}/BSim/${postgresql_distro}"
+	String postgresqlBinRepoFile = "${rootProject.BIN_REPO}/Ghidra/Features/BSim/${postgresql_distro}"
 		
 	def postgresqlFile = file(postgresqlDepsFile).exists() ? postgresqlDepsFile : postgresqlBinRepoFile
 	
