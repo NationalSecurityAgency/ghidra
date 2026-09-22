@@ -22,7 +22,8 @@ import java.net.URL;
 import ghidra.framework.client.NotConnectedException;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.data.DefaultProjectData;
-import ghidra.framework.model.ProjectLocator;
+import ghidra.framework.main.AppInfo;
+import ghidra.framework.model.*;
 import ghidra.framework.protocol.ghidra.GhidraURLConnection.StatusCode;
 import ghidra.framework.store.LockException;
 import ghidra.util.NotOwnerException;
@@ -130,6 +131,16 @@ public class DefaultLocalGhidraProtocolConnector extends GhidraProtocolConnector
 	DefaultProjectData getLocalProjectData(boolean readOnlyAccess) throws IOException {
 		if (connect(readOnlyAccess) != StatusCode.OK) {
 			return null;
+		}
+
+		// Use active project if it matches project locator
+		Project activeProject = AppInfo.getActiveProject();
+		if (activeProject != null &&
+			localStorageLocator.equals(activeProject.getProjectLocator())) {
+			ProjectData activeProjectData = activeProject.getProjectData();
+			if (activeProjectData instanceof DefaultProjectData projectData) {
+				return projectData;
+			}
 		}
 
 		try {
