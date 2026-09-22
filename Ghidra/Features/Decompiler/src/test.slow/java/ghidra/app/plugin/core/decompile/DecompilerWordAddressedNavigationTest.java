@@ -20,6 +20,8 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 import ghidra.app.decompiler.component.ClangTextField;
+import ghidra.app.plugin.assembler.Assembler;
+import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -29,35 +31,43 @@ import ghidra.program.model.pcode.*;
 import ghidra.program.model.symbol.SourceType;
 
 /**
- * Navigation from the decompiler on a Harvard architecture, where code and data live in different
- * address spaces and a global's address is a constant relative to the data space.
+ * Navigation from the decompiler on a word-addressed language, where a global's address is a
+ * constant in words, not bytes.
  */
-public class DecompilerHarvardNavigationTest extends AbstractDecompilerTest {
+public class DecompilerWordAddressedNavigationTest extends AbstractDecompilerTest {
 
-	private static final String FILL = "code:0000";
-	private static final String CLEAR = "code:0006";
-	private static final String BUF = "mem:0101";
+	private static final String FILL = "0x0";
+	private static final String CLEAR = "0x10";
+	private static final long BUF = 0x100; // word offset
 
 	@Override
 	protected Program getProgram() throws Exception {
-		ProgramBuilder builder = new ProgramBuilder("avr", "avr8:LE:16:default", this);
-		builder.createMemory("code", FILL, 0x400); // large enough that code:0080 exists
-		builder.createMemory("sram", "mem:0100", 0x100);
+		ProgramBuilder builder = new ProgramBuilder("toy", ProgramBuilder._TOY_WORDSIZE2_BE, this);
+		builder.createMemory("ram", FILL, 0x400); // bytes; word 0x100 is inside
+		Program p = builder.getProgram();
 
-		// fill:  lds r24,0x101; ldi r24,lo8(0x101); ldi r25,hi8(0x101); rcall clear; ret
-		// clear: movw X,r25:r24; ldi r18,10; L: st X+,r1; subi r18,1; brne L; ret
-		builder.setBytes(FILL, "80 91 01 01 81 e0 91 e0 01 d0 08 95 " +
-			"dc 01 2a e0 1d 92 21 50 f1 f7 08 95", true);
+		int tx = p.startTransaction("assemble");
+		try {
+			Assembler asm = Assemblers.getAssembler(p);
+			// fill:  r12 = &buf; r0 = buf; clear(r12)
+			asm.assemble(builder.addr(FILL), "imm r12,#0x100", "load r0,[r12]",
+				"call 0x00000010", "ret");
+			// clear: *r12 = 0
+			asm.assemble(builder.addr(CLEAR), "imm r0,#0x0", "store [r12],r0", "ret");
+		}
+		finally {
+			p.endTransaction(tx, true);
+		}
 		builder.createFunction(FILL);
 		builder.createFunction(CLEAR);
-		return builder.getProgram();
+		return p;
 	}
 
 	@Test
-	public void testDoubleClickOnGlobalAddress_NavigatesToDataSpace() throws Exception {
+	public void testDoubleClickOnGlobalAddress_UsesWordOffset() throws Exception {
 
-		// give clear() a pointer parameter so fill() decompiles to clear(&DAT_mem_0101). No
-		// program symbol exists at mem:0101, so the decompiler names the location itself
+		// give clear() a pointer parameter so fill() decompiles to clear(&UNK_00000100). No
+		// program symbol exists there, so the decompiler names the location itself.
 		modifyProgram(p -> {
 			Function fill = p.getFunctionManager().getFunctionAt(addr(FILL));
 			fill.setName("fill", SourceType.USER_DEFINED);
@@ -66,45 +76,47 @@ public class DecompilerHarvardNavigationTest extends AbstractDecompilerTest {
 			clear.setReturnType(VoidDataType.dataType, SourceType.USER_DEFINED);
 			clear.replaceParameters(FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true,
 				SourceType.USER_DEFINED,
-				new ParameterImpl("p", new PointerDataType(ByteDataType.dataType), p));
+				new ParameterImpl("p", new PointerDataType(IntegerDataType.dataType), p));
 		});
 
 		decompile(FILL);
 
 		// the decompiler names the location (DAT_ or UNK_ prefix, depending on its type)
 		ClangTextField line = getLineContaining("&");
-		assertNotNull("fill() did not decompile to a call taking &..._mem_0101:\n" +
+		assertNotNull("fill() did not decompile to a call taking &..._00000100:\n" +
 			getDecompiledText(), line);
 		int lineNumber = line.getLineNumber();
-		int column = line.getText().indexOf("_mem_0101") + 1;
+		int column = line.getText().indexOf("_00000100") + 1;
 		setDecompilerLocation(lineNumber, column);
-		assertTrue(getCursorToken().getText().endsWith("_mem_0101"));
+		assertTrue(getCursorToken().getText().endsWith("_00000100"));
 
 		doubleClick();
 
-		// The constant 0x101 is an offset into the data space. Resolving it in the function's code
-		// space instead put the Listing at code:0080.1 (the code space is word addressed).
-		Address buf = program.getAddressFactory().getAddress(BUF);
-		assertNotNull(buf);
-		assertListingAddress(buf);
+		// The constant is a pointer value, in words. Treating it as a byte offset put the
+		// Listing at word 0x80 instead.
+		assertListingAddress(wordAddr(BUF));
 	}
 
 	@Test
-	public void testSpacebaseReference_ResolvesInDataSpace() {
+	public void testSpacebaseReference_WordAddressedSpace() {
 
-		// &global is encoded as PTRSUB(<spacebase>, #offset); the offset is relative to the data
-		// space, which on this language is 'mem', not the default 'code' space
 		AddressFactory addrFactory = program.getAddressFactory();
+		AddressSpace space = addrFactory.getDefaultAddressSpace();
+		assertEquals(2, space.getAddressableUnitSize());
 		AddressSpace constants = addrFactory.getConstantSpace();
-		Varnode spacebase = new Varnode(constants.getAddress(0), 2);
-		Varnode offset = new Varnode(constants.getAddress(0x101), 2);
+		Varnode spacebase = new Varnode(constants.getAddress(0), 4);
+		Varnode offset = new Varnode(constants.getAddress(BUF), 4);
 		PcodeOp ptrsub = new PcodeOp(addr(FILL), 0, PcodeOp.PTRSUB,
 			new Varnode[] { spacebase, offset });
 
 		Address addr = HighFunctionDBUtil.getSpacebaseReferenceAddress(addrFactory,
 			program.getLanguage(), ptrsub);
 
-		assertEquals(program.getAddressFactory().getAddress(BUF), addr);
+		assertEquals(wordAddr(BUF), addr);
+	}
+
+	private Address wordAddr(long wordOffset) {
+		return program.getAddressFactory().getDefaultAddressSpace().getAddress(wordOffset, true);
 	}
 
 }

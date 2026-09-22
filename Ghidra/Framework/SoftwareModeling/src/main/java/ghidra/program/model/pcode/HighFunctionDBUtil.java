@@ -17,6 +17,7 @@ package ghidra.program.model.pcode;
 
 import java.util.*;
 
+import ghidra.program.database.data.PointerTypedefInspector;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
@@ -824,16 +825,15 @@ public class HighFunctionDBUtil {
 
 	/**
 	 * Get the Address referred to by a spacebase reference. Address-of references are encoded in
-	 * the p-code syntax tree as: {@code vn = PTRSUB(<spacebase>, #const)}.  This decodes the reference and
-	 * returns the Address
+	 * the p-code syntax tree as: {@code vn = PTRSUB(<spacebase>, #const)}.  This decodes the
+	 * reference and returns the Address.
 	 * <p>
-	 * A global reference is resolved in the default address space. On a language whose default
-	 * data space differs from its default space, use
-	 * {@link #getSpacebaseReferenceAddress(AddressFactory, Language, PcodeOp)}, which resolves the
-	 * reference in the data space.
+	 * Equivalent to {@link #getSpacebaseReferenceAddress(AddressFactory, Language, PcodeOp)} with
+	 * a null language: the space comes from the spacebase's type if it has one, otherwise the
+	 * default address space is used.
 	 * @param addrFactory is the factory used to construct the Address
 	 * @param op is the PTRSUB op encoding the reference
-	 * @return the recovered Address (or null if not correct form)
+	 * @return the recovered Address (or null if not correct form or out of range)
 	 */
 	public static Address getSpacebaseReferenceAddress(AddressFactory addrFactory, PcodeOp op) {
 		return getSpacebaseReferenceAddress(addrFactory, null, op);
@@ -841,17 +841,19 @@ public class HighFunctionDBUtil {
 
 	/**
 	 * Get the Address referred to by a spacebase reference. Address-of references are encoded in
-	 * the p-code syntax tree as: {@code vn = PTRSUB(<spacebase>, #const)}.  This decodes the reference and
-	 * returns the Address
+	 * the p-code syntax tree as: {@code vn = PTRSUB(<spacebase>, #const)}.  This decodes the
+	 * reference and returns the Address.
 	 * <p>
-	 * The global spacebase is the language's default data space. On Harvard architectures (AVR8,
-	 * PIC, 8051, ...) that is not the default (code) space, and the decompiler's constant is an
-	 * offset, in addressable units, into the data space.
+	 * The constant is a pointer value: an offset in addressable units, not bytes, which matters
+	 * on word-addressed spaces. The space is, in order of preference: the space the decompiler
+	 * bound to the spacebase's pointer type (see {@link PcodeDataTypeManager}); the language's
+	 * default data space, which on Harvard architectures (AVR8, PIC, ...) differs from the
+	 * default (code) space; the default address space.
 	 * @param addrFactory is the factory used to construct the Address
-	 * @param language is the language, used to identify the default data space; if null the
-	 *            default address space is used
+	 * @param language is the language whose default data space applies when the spacebase carries
+	 *            no address space (may be null)
 	 * @param op is the PTRSUB op encoding the reference
-	 * @return the recovered Address (or null if not correct form)
+	 * @return the recovered Address (or null if not correct form or out of range)
 	 */
 	public static Address getSpacebaseReferenceAddress(AddressFactory addrFactory,
 			Language language, PcodeOp op) {
@@ -869,15 +871,12 @@ public class HighFunctionDBUtil {
 				}
 			}
 			else {
-				AddressSpace space = addrFactory.getDefaultAddressSpace();
-				AddressSpace dataSpace = getDataSpace(addrFactory, language);
-				if (dataSpace != null && !dataSpace.equals(space)) {
-					try {
-						return dataSpace.getAddress(cnode.getOffset(), true);
-					}
-					catch (AddressOutOfBoundsException e) {
-						return null;
-					}
+				AddressSpace space = getSpacebaseSpace(addrFactory, vnode);
+				if (space == null) {
+					space = getDataSpace(addrFactory, language);
+				}
+				if (space == null) {
+					space = addrFactory.getDefaultAddressSpace();
 				}
 				if (space instanceof SegmentedAddressSpace) {
 					// Assume this is a "full" encoding of the offset
@@ -887,11 +886,35 @@ public class HighFunctionDBUtil {
 					storageAddress = ((SegmentedAddressSpace) space).getAddress(base, off);
 				}
 				else {
-					storageAddress = space.getAddress(cnode.getOffset());
+					try {
+						storageAddress = space.getAddress(cnode.getOffset(), true);
+					}
+					catch (AddressOutOfBoundsException e) {
+						return null;
+					}
 				}
 			}
 		}
 		return storageAddress;
+	}
+
+	/**
+	 * Get the address space the decompiler bound to a spacebase pointer. The base of a global
+	 * reference is typed as a pointer into the space that holds the global, which the decoder
+	 * keeps as a pointer-typedef with an address space setting.
+	 * @param addrFactory is the program's address factory
+	 * @param spacebase is the base operand of the PTRSUB
+	 * @return the space, or null if the operand carries no such type
+	 */
+	private static AddressSpace getSpacebaseSpace(AddressFactory addrFactory, Varnode spacebase) {
+		HighVariable high = spacebase.getHigh();
+		if (high == null) {
+			return null;
+		}
+		if (high.getDataType() instanceof TypeDef typedef) {
+			return PointerTypedefInspector.getPointerAddressSpace(typedef, addrFactory);
+		}
+		return null;
 	}
 
 	/**
