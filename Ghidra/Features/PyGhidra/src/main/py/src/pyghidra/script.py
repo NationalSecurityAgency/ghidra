@@ -51,7 +51,8 @@ class _StaticMap(dict):
                 # this is necessary for completions on currentAddress, currentProgram, etc.
                 try:
                     return getattr(self.script, key)
-                except AttributeError:
+                except Exception:
+                    # getters like getFirstFunction() throw when there is no program
                     return res
             return res
         raise KeyError(key)
@@ -61,7 +62,9 @@ class _StaticMap(dict):
         return res if res is not _NO_ATTRIBUTE else default
 
     def __iter__(self):
-        yield from self.script
+        # Completions include the bean properties that regular iteration leaves out.
+        yield from dict.__iter__(self.script)
+        yield from dir(self.script._script)
 
     def keys(self):
         return KeysView(self)
@@ -194,7 +197,15 @@ class PyGhidraScript(dict):
 
     def __iter__(self):
         yield from super().__iter__()
-        yield from dir(self._script)
+        for name in dir(self._script):
+            attr = inspect.getattr_static(self._script, name, _NO_ATTRIBUTE)
+            # JPype bean properties may have no getter, or a getter that throws when
+            # there is no program (firstFunction, memoryBlocks, ...). Keep them out of
+            # iteration so debuggers inspecting globals don't evaluate them; they can
+            # still be read by name. Exposed fields use _JavaProperty and are kept.
+            if type(attr) is property:
+                continue
+            yield name
 
     def get_static(self, key):
         res = self.get(key, _NO_ATTRIBUTE)
