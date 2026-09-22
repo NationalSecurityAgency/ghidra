@@ -1665,16 +1665,7 @@ public class HeadlessAnalyzer {
 			return true;
 		}
 		catch (LoadException e) {
-			Msg.error(this, "The ProgramLoader could not successfully load " + fsrl +
-				" with the provided import parameters. Please ensure that any specified" +
-				" processor/cspec arguments are compatible with the loader that is used during" +
-				" import and try again.");
-			if (options.loaderClass != null && options.loaderClass != BinaryLoader.class) {
-				Msg.error(this,
-					"NOTE: Import failure may be due to missing opinion for \"" +
-						options.loaderClass.getSimpleName() +
-						"\". If so, please contact Ghidra team for assistance.");
-			}
+			Msg.error(this, "REPORT: " + e.getMessage());
 			return false;
 		}
 		catch (Exception e) {
