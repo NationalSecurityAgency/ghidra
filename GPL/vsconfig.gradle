@@ -79,9 +79,9 @@ if (!hasProperty("VISUAL_STUDIO_INSTALL_DIR") && isCurrentWindows()) {
 	def vcvarsPath = "${vsInstallDir}\\VC\\Auxiliary\\Build\\vcvarsall.bat"
 	def vcvarsCmd = "\"${vcvarsPath}\" x86_amd64"
 	def vcvarsEnvCmd = "cmd /v:ON /c ${vcvarsCmd} > nul && cmd /c echo"
-	def sdkDir = "${vcvarsEnvCmd} !WindowsSdkDir!".execute().text.trim()
+	def (sdkDir, sdkVersion) = "${vcvarsEnvCmd} !WindowsSdkDir!,!WindowsSDKVersion!".execute().text.trim().split(",")
+	sdkVersion = sdkVersion.replace('\\', '') // strip trailing backslash
 	println "  -> SDK Directory (default): ${sdkDir}"
-	def sdkVersion = "${vcvarsEnvCmd} !WindowsSDKVersion!".execute().text.trim().replace('\\', '')
 	println "  -> SDK Version (default): ${sdkVersion}"
 	
 	// Check Gradle properties for override values
