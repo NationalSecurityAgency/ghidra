@@ -601,6 +601,9 @@ public class DataTypesTableProvider extends ComponentProvider {
 		@Override
 		public void dataTypeAdded(DataTypeManager dtm, DataTypePath path) {
 			DataType dt = dtm.getDataType(path);
+			if (dt == null) {
+				return; // the type may have been changed by another thread
+			}
 			model.addObject(dt);
 		}
 

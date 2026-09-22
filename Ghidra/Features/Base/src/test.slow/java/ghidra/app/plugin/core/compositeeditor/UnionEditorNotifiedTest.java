@@ -36,7 +36,7 @@ public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 	public void setUp() throws Exception {
 		super.setUp();
 
-		// Create overlapping trasnaction to handle all changes
+		// Create overlapping transaction to handle all changes
 		persistentTxId = program.startTransaction("Modify Program");
 	}
 

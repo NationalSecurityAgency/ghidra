@@ -827,7 +827,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 		while (totalTime <= DEFAULT_WAIT_TIMEOUT) {
 
 			T t = getComponentProvider(windowManager, clazz, title);
-			if (Objects.deepEquals(title, t.getTitle())) {
+			if (t != null && title.equals(t.getTitle())) {
 				return t;
 			}
 			totalTime += sleep(DEFAULT_WAIT_DELAY);
