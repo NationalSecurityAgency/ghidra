@@ -15,10 +15,12 @@
  */
 package ghidra.program.model.lang.protorules;
 
+import static ghidra.program.model.pcode.MetaDataType.*;
+
 import java.util.ArrayList;
 
 import ghidra.program.model.data.*;
-import ghidra.program.model.pcode.PcodeDataTypeManager;
+import ghidra.program.model.pcode.MetaDataType;
 
 public class PrimitiveExtractor {
 
@@ -58,8 +60,7 @@ public class PrimitiveExtractor {
 			Primitive big) {
 		int endOff = big.offset + big.dt.getAlignedLength();
 		// If big data-type is a float, let smaller primitives override it, otherwise we keep the big primitive
-		boolean useSmall =
-			PcodeDataTypeManager.getMetatype(big.dt) == PcodeDataTypeManager.TYPE_FLOAT;
+		boolean useSmall = MetaDataType.get(big.dt) == TYPE_FLOAT;
 		while (point < small.size()) {
 			int curOff = small.get(point).offset;
 			if (curOff >= endOff) {
@@ -205,24 +206,24 @@ public class PrimitiveExtractor {
 		if (dt instanceof TypeDef) {
 			dt = ((TypeDef) dt).getBaseDataType();
 		}
-		int metaType = PcodeDataTypeManager.getMetatype(dt);
+		MetaDataType metaType = MetaDataType.get(dt);
 		switch (metaType) {
-			case PcodeDataTypeManager.TYPE_UNKNOWN:
+			case TYPE_UNKNOWN:
 				unknownElements = true;
 				// fall-thru
-			case PcodeDataTypeManager.TYPE_INT:
-			case PcodeDataTypeManager.TYPE_UINT:
-			case PcodeDataTypeManager.TYPE_BOOL:
-			case PcodeDataTypeManager.TYPE_CODE:
-			case PcodeDataTypeManager.TYPE_FLOAT:
-			case PcodeDataTypeManager.TYPE_PTR:
-			case PcodeDataTypeManager.TYPE_PTRREL:
+			case TYPE_INT:
+			case TYPE_UINT:
+			case TYPE_BOOL:
+			case TYPE_CODE:
+			case TYPE_FLOAT:
+			case TYPE_PTR:
+			case TYPE_PTRREL:
 				if (primitives.size() >= max) {
 					return false;
 				}
 				primitives.add(new Primitive(dt, offset));
 				return true;
-			case PcodeDataTypeManager.TYPE_ARRAY: {
+			case TYPE_ARRAY: {
 				if (arrayIsPrimitive && depth != 0) {
 					if (primitives.size() >= max) {
 						return false;
@@ -240,9 +241,9 @@ public class PrimitiveExtractor {
 				}
 				return true;
 			}
-			case PcodeDataTypeManager.TYPE_UNION:
+			case TYPE_UNION:
 				return handleUnion((Union) dt, max, offset);
-			case PcodeDataTypeManager.TYPE_STRUCT:
+			case TYPE_STRUCT:
 				break;
 			default:
 				return false;

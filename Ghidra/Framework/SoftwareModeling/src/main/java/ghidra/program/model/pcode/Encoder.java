@@ -146,4 +146,12 @@ public interface Encoder {
 	 * @throws IOException for errors in the underlying stream
 	 */
 	void writeOpcode(AttributeId attribId, int opcode) throws IOException;
+
+	/**
+	 * Write a data-type metatype (MetaDataType) into the encoding.
+	 * @param attribId is the attribute to associate with the metatype
+	 * @param metatype is the metatype
+	 * @throws IOException for errors in the underlying stream
+	 */
+	void writeDataTypeMeta(AttributeId attribId, MetaDataType metatype) throws IOException;
 }

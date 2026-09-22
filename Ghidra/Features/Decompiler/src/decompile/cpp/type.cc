@@ -474,9 +474,7 @@ void Datatype::encodeBasic(type_metatype meta,int4 align,Encoder &encoder) const
     encoder.writeUnsignedInteger(ATTRIB_ID, saveId);
   }
   encoder.writeSignedInteger(ATTRIB_SIZE, size);
-  string metastring;
-  metatype2string(meta,metastring);
-  encoder.writeString(ATTRIB_METATYPE,metastring);
+  encoder.writeDatatypeMeta(ATTRIB_METATYPE, meta);
   if (align > 0)
     encoder.writeSignedInteger(ATTRIB_ALIGNMENT, align);
   if ((flags & coretype)!=0)
@@ -749,7 +747,7 @@ void Datatype::decodeBasic(Decoder &decoder)
       size = decoder.readSignedInteger();
     }
     else if (attrib == ATTRIB_METATYPE) {
-      metatype = string2metatype(decoder.readString());
+      metatype = decoder.readDatatypeMeta();
     }
     else if (attrib == ATTRIB_CORE) {
       if (decoder.readBool())
@@ -5138,7 +5136,7 @@ Datatype *TypeFactory::decodeTypeNoRef(Decoder &decoder,bool forcecore)
     decoder.closeElement(elemId);
     return ct;
   }
-  type_metatype meta = string2metatype(decoder.readString(ATTRIB_METATYPE));
+  type_metatype meta = decoder.readDatatypeMeta(ATTRIB_METATYPE);
   switch(meta) {
   case TYPE_PTR:
     {
