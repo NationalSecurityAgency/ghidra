@@ -237,7 +237,8 @@ define pcodeop uncertain_fcsr;
 #la-fp-s.txt fscaleb.s mask=0x01108000	
 #0x01108000	0xffff8000	f0:5, f5:5, f10:5	['freg0_5_s0', 'freg5_5_s0', 'freg10_5_s0']
 :fscaleb.s  frD, frJ, frK            is op15_31=0x221 & frD & frJ & frK {
-	frD = f_scaleb(frJ, frK);
+    local bn:4 = 1 << frK;
+	frD = frJ f* int2float(bn);
 }
 
 
