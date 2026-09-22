@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,7 +51,7 @@ public class InputWithChoicesDialog extends DialogComponentProvider {
 	public InputWithChoicesDialog(String dialogTitle, String label, String[] optionValues,
 			String initialValue, Icon messageIcon) {
 
-		super(dialogTitle, true, false, true, false);
+		super(dialogTitle, true, true, true, false);
 
 		setTransient(true);
 		addOKButton();
@@ -80,7 +80,7 @@ public class InputWithChoicesDialog extends DialogComponentProvider {
 	public InputWithChoicesDialog(String dialogTitle, String label, String[] optionValues,
 			String initialValue, boolean allowEdits, Icon messageIcon) {
 
-		super(dialogTitle, true, false, true, false);
+		super(dialogTitle, true, true, true, false);
 
 		this.addOKButton();
 		this.addCancelButton();
