@@ -293,8 +293,9 @@ void ActionStackPtrFlow::analyzeExtraPop(Funcdata &data,AddrSpace *stackspace,in
       continue;
     }
     PcodeOp *op = vn->getDef();
+    OpCode opc = op->code();
 
-    if (op->code() == CPUI_INDIRECT) {
+    if (opc == CPUI_INDIRECT) {
       Varnode *iopvn = op->getIn(1);
       if (iopvn->getSpace()->getType()==IPTR_IOP) {
 	PcodeOp *iop = PcodeOp::getOpFromConst(iopvn->getAddr());
@@ -314,6 +315,11 @@ void ActionStackPtrFlow::analyzeExtraPop(Funcdata &data,AddrSpace *stackspace,in
     paramlist.push_back(data.newConstant(sz,soln&calc_mask(sz)));
     data.opSetOpcode(op,CPUI_INT_ADD);
     data.opSetAllInput(op,paramlist);
+    if (opc == CPUI_MULTIEQUAL) {
+      BlockBasic *bb = op->getParent();
+      data.opUninsert(op);
+      data.opInsertBegin(op, bb);
+    }
   }
   return;
 }
