@@ -1099,6 +1099,12 @@ class StackFrameDataType implements Structure {
 	}
 
 	@Override
+	public DataTypeComponent getDefinedComponent(int index) throws IndexOutOfBoundsException {
+		DataTypeComponent dtc = wrappedStruct.getDefinedComponent(index);
+		return new StackComponentWrapper(dtc);
+	}
+
+	@Override
 	public StackComponentWrapper getComponent(int ordinal) throws IndexOutOfBoundsException {
 		DataTypeComponent dtc = wrappedStruct.getComponent(ordinal);
 		return new StackComponentWrapper(dtc);

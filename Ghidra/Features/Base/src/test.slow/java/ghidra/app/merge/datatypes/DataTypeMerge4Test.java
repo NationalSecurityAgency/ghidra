@@ -1170,6 +1170,72 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
+	public void testMultiEdits14() throws Exception {
+
+		mtf.initialize("notepad2", new ProgramModifierListener() {
+			@Override
+			public void modifyLatest(ProgramDB program) {
+				DataTypeManager dtm = program.getDataTypeManager();
+				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
+
+				// Create a conflict while retaining Bar's original six-byte length.
+				assertEquals(6, bar.getLength());
+				bar.getComponent(0).setComment("Latest Bar component");
+
+				int junk = 0;
+			}
+
+			@Override
+			public void modifyPrivate(ProgramDB program) {
+				DataTypeManager dtm = program.getDataTypeManager();
+				CategoryPath path = new CategoryPath("/MISC");
+				Structure bar = (Structure) dtm.getDataType(path, "Bar");
+				bar.delete(1); // Remove the pointer, shrinking Bar from six bytes to two.
+				assertEquals(2, bar.getLength());
+
+				// Allocate the container before its target so that the merge records a fixup
+				// for the as-yet-unresolved target when processing the added container.
+				Structure container = (Structure) dtm.addDataType(
+					new StructureDataType(path, "FixupContainer", 0),
+					DataTypeConflictHandler.DEFAULT_HANDLER);
+				Structure target = new StructureDataType(path, "FixupTarget", 0);
+				target.add(ByteDataType.dataType);
+				target = (Structure) dtm.addDataType(target, DataTypeConflictHandler.DEFAULT_HANDLER);
+
+				container.add(bar, "bar", null);
+				container.growStructure(4);
+				container.add(target, "target", null);
+				assertFalse(container.isPackingEnabled());
+				assertEquals(6, container.getComponent(5).getOffset());
+
+				int junk = 0;
+			}
+		});
+
+		executeMerge();
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
+
+		// The added container initially uses Latest's six-byte Bar, so the placeholder
+		// at offset 6 has ordinal 1. Choosing MY Bar shrinks that component to two bytes,
+		// introducing four undefined components before the placeholder. Its ordinal is
+		// now 5, but FixUpInfo still records 1. The merge must not use that stale ordinal.
+		chooseOption(DataTypeMergeManager.OPTION_MY);
+		waitForCompletion();
+
+		Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
+		Structure container =
+			(Structure) dtm.getDataType(new CategoryPath("/MISC"), "FixupContainer");
+		DataType target = dtm.getDataType(new CategoryPath("/MISC"), "FixupTarget");
+		assertEquals(2, bar.getLength());
+		assertEquals(7, container.getLength());
+		assertEquals(2, container.getNumDefinedComponents());
+		assertEquals(bar, container.getComponent(0).getDataType());
+		assertEquals(6, container.getComponent(5).getOffset());
+		assertEquals(target, container.getComponent(5).getDataType());
+		checkConflictCount(0);
+	}
+
+	@Test
 	public void testDeletedBaseTypeDef() throws Exception {
 
 		mtf.initialize("notepad2", new ProgramModifierListener() {
