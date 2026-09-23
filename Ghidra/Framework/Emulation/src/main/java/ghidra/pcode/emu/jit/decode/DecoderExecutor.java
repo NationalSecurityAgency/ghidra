@@ -523,8 +523,7 @@ class DecoderExecutor extends FoldingExecutor implements DisassemblerContextAdap
 	 * @param the computed reachability of the source block. Use {@link CtxReach#WITHOUT_CTXMOD} for
 	 *            the seed.
 	 */
-	private void collectCtxReach(Map<JitBlock, CtxReach> into, JitBlock cur,
-			CtxReach how) {
+	private void collectCtxReach(Map<JitBlock, CtxReach> into, JitBlock cur, CtxReach how) {
 		CtxReach curHow = into.get(cur);
 
 		if (blockModifiesContext(cur)) {
