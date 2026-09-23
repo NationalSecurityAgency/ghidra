@@ -90,13 +90,42 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 			throw new ConcurrentModificationException("Component has been deleted.");
 		}
 
-		// Verify specified component instance is 
+		// Verify specified component instance is
 		DataTypeComponentDB myDtc = getComponent(component.getOrdinal());
 		if (myDtc != component) {
 			// supplied instance is stale - it should exist in our defined component list
 			myDtc = getComponent(rec.getIntValue(ComponentDBAdapter.COMPONENT_ORDINAL_COL));
 		}
 		return myDtc;
+	}
+
+	@Override
+	public DataTypeComponent getCurrentComponent(DataTypeComponent component) {
+		if (!(component instanceof DataTypeComponentDB dtcDB) || component.getParent() != this) {
+			return null;
+		}
+		long componentKey = dtcDB.getKey();
+		if (componentKey < 0) {
+			int ordinal = dtcDB.getOrdinal();
+			return ordinal >= 0 && ordinal < getNumComponents() ? getComponent(ordinal) : null;
+		}
+		lock.acquire();
+		try {
+			checkDeleted();
+			return getValidatedComponent(dtcDB);
+		}
+		catch (ConcurrentModificationException | IndexOutOfBoundsException e) {
+			// component's recorded ordinal is stale and no longer resolvable (e.g. the
+			// composite has since shrunk), or the component itself was removed
+			return null;
+		}
+		catch (IOException e) {
+			dataMgr.dbError(e);
+			return null;
+		}
+		finally {
+			lock.release();
+		}
 	}
 
 	/**

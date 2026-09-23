@@ -56,7 +56,22 @@ public interface Composite extends DataType {
 	public abstract DataTypeComponent getComponent(int ordinal) throws IndexOutOfBoundsException;
 
 	/**
-	 * Find the first component which has the specified case-sensitive field name.  
+	 * Re-resolve a component instance previously returned by this same composite to its
+	 * current state, in case the composite has since been modified (e.g. an unrelated
+	 * sibling's resize shifted this component's ordinal/offset).
+	 * <p>
+	 * The default implementation just returns the component unchanged; composites backed
+	 * by persistent storage should override this to give a precise answer.
+	 *
+	 * @param component a component previously returned by this composite
+	 * @return the current component, or null if it has since been removed
+	 */
+	public default DataTypeComponent getCurrentComponent(DataTypeComponent component) {
+		return component;
+	}
+
+	/**
+	 * Find the first component which has the specified case-sensitive field name.
 	 * Note that multiple components may be specified with the same name, if this is a possibility
 	 * the {@link #findComponents(String)} method should be used.  Only components with an explicit 
 	 * non-default field name will be considered.  The name specified may be sanitized to be 

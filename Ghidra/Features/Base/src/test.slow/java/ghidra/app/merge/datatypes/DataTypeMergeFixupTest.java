@@ -437,15 +437,112 @@ public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 		assertNotNull(outer);
 
 		//@formatter:off
-		assertEquals("/outer\n" + 
-			"pack(disabled)\n" + 
-			"Structure outer {\n" + 
-			"   0   other   6      \"\"\n" + 
-			"   20   inner[0]   0      \"\"\n" + 
-			"}\n" + 
+		assertEquals("/outer\n" +
+			"pack(disabled)\n" +
+			"Structure outer {\n" +
+			"   0   other   6      \"\"\n" +
+			"   20   inner[0]   0      \"\"\n" +
+			"}\n" +
 			"Length: 20 Alignment: 1\n", outer.toString());
 		//@formatter:on
 
+	}
+
+	@Test
+	public void testNonPackedFixupOrdinalInvalidatedBySiblingGrowth() throws Exception {
+
+		final CategoryPath rootPath = new CategoryPath("/");
+
+		mtf.initialize("notepad", new OriginalProgramModifierListener() {
+
+			@Override
+			public void modifyOriginal(ProgramDB program) throws Exception {
+				DataTypeManager dtm = program.getDataTypeManager();
+
+				Structure inner = new StructureDataType("inner", 0);
+				inner.add(new ByteDataType());
+				inner = (Structure) dtm.addDataType(inner, null);
+
+				Structure victim1 = new StructureDataType("victim1", 0);
+				victim1.add(new ByteDataType());
+				victim1 = (Structure) dtm.addDataType(victim1, null);
+
+				Structure victim2 = new StructureDataType("victim2", 0);
+				victim2.add(new ByteDataType());
+				victim2 = (Structure) dtm.addDataType(victim2, null);
+
+				assertEquals(1, inner.getLength());
+				assertEquals(1, victim1.getLength());
+				assertEquals(1, victim2.getLength());
+			}
+
+			@Override
+			public void modifyLatest(ProgramDB program) throws Exception {
+				DataTypeManager dtm = program.getDataTypeManager();
+
+				Structure inner = (Structure) dtm.getDataType(rootPath, "inner");
+				inner.add(new WordDataType());
+
+				Structure victim1 = (Structure) dtm.getDataType(rootPath, "victim1");
+				dtm.remove(victim1);
+				Structure victim2 = (Structure) dtm.getDataType(rootPath, "victim2");
+				dtm.remove(victim2);
+			}
+
+			@Override
+			public void modifyPrivate(ProgramDB program) throws Exception {
+				DataTypeManager dtm = program.getDataTypeManager();
+
+				Structure inner = (Structure) dtm.getDataType(rootPath, "inner");
+				inner.add(new DWordDataType());
+
+				Structure victim1 = (Structure) dtm.getDataType(rootPath, "victim1");
+				Structure victim2 = (Structure) dtm.getDataType(rootPath, "victim2");
+
+				Structure outer = new StructureDataType("outer", 0, dtm);
+				int off = 0;
+				outer.insertAtOffset(off, inner, -1, "innerField", "");
+				off += inner.getLength();
+				outer.insertAtOffset(off, victim1, -1, "victim1Field", "");
+				off += victim1.getLength();
+				outer.insertAtOffset(off, new ByteDataType(), 1, "mid1", "");
+				off += 1;
+				outer.insertAtOffset(off, new ByteDataType(), 1, "mid2", "");
+				off += 1;
+				outer.insertAtOffset(off, victim2, -1, "victim2Field", "");
+				off += victim2.getLength();
+				outer.insertAtOffset(off, new ByteDataType(), 1, "trailer1", "");
+				off += 1;
+				outer.insertAtOffset(off, new ByteDataType(), 1, "trailer2", "");
+				off += 1;
+				outer.insertAtOffset(off, new ByteDataType(), 1, "trailer3", "");
+
+				dtm.addDataType(outer, DataTypeConflictHandler.DEFAULT_HANDLER);
+			}
+		});
+
+		executeMerge();
+
+		chooseOption(DataTypeMergeManager.OPTION_MY);
+
+		dismissUnresolvedDataTypesPopup();
+
+		waitForCompletion();
+
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
+		StructureInternal outer = (StructureInternal) dtm.getDataType(rootPath, "outer");
+		assertNotNull(outer);
+
+		DataTypeComponent victim1Comp = outer.getComponentAt(5);
+		assertEquals(BadDataType.dataType, victim1Comp.getDataType());
+
+		DataTypeComponent victim2Comp = outer.getComponentAt(8);
+		assertEquals(BadDataType.dataType, victim2Comp.getDataType());
+
+		StructureInternal inner = (StructureInternal) dtm.getDataType(rootPath, "inner");
+		assertNotNull(inner);
+		assertEquals(inner, outer.getComponentAt(0).getDataType());
+		assertEquals(5, inner.getLength());
 	}
 
 }

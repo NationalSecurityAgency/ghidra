@@ -1124,8 +1124,28 @@ public class DataTypeMergeManager implements MergeResolver {
 		newDt.setLastChangeTime(oldLastChangeTime);
 		newDt.setLastChangeTimeInSourceArchive(oldLastChangeTimeInSourceArchive);
 		updateHashTables(id, newDt, resolvedDataTypes);
+		rebindFixUpPlaceholders(id, newDt);
 		return newDt;
 
+	}
+
+	private void rebindFixUpPlaceholders(long id, DataType resultDt) {
+		if (!(resultDt instanceof Structure resultStruct) || resultStruct.isPackingEnabled()) {
+			return;
+		}
+		for (FixUpInfo fixUpInfo : fixUpList) {
+			if (fixUpInfo.id != id || fixUpInfo.resultPlaceholder == null) {
+				continue;
+			}
+			int ordinal = fixUpInfo.resultOrdinal;
+			if (ordinal < 0 || ordinal >= resultStruct.getNumComponents()) {
+				continue;
+			}
+			DataTypeComponent comp = resultStruct.getComponent(ordinal);
+			if (comp.getDataType() == BadDataType.dataType) {
+				fixUpInfo.resultPlaceholder = comp;
+			}
+		}
 	}
 
 	private DataType addFunctionDef(long id, FunctionDefinition myDt,
@@ -1448,8 +1468,14 @@ public class DataTypeMergeManager implements MergeResolver {
 
 			if (fixupRequired) {
 				// Component datatype has not been added/resolved yet, put an entry in the fixup list
-				fixUpList.add(new FixUpInfo(sourceDtID, sourceComponentID,
-					resultComp.getOrdinal(), sourceComp, resolvedDataTypes));
+				FixUpInfo fixUpInfo = new FixUpInfo(sourceDtID, sourceComponentID,
+					resultComp.getOrdinal(), sourceComp, resolvedDataTypes);
+				if (!packed) {
+					// track the actual placeholder component so its ordinal can be
+					// re-read directly if the structure repacks before this fixup runs
+					fixUpInfo.resultPlaceholder = resultComp;
+				}
+				fixUpList.add(fixUpInfo);
 				fixUpIDSet.add(sourceDtID);
 			}
 		}
@@ -2579,13 +2605,12 @@ public class DataTypeMergeManager implements MergeResolver {
 		int ordinal = info.resultOrdinal;
 
 		DataTypeComponent dtc;
-		if (ordinal >= 0 || ordinal < struct.getNumComponents()) {
-			dtc = struct.getComponent(ordinal);
-		}
-		else {
-			throw new AssertException(
-				"Expected fixup component at ordinal " + ordinal + " in " + struct.getPathName());
-		}
+		if (ordinal < 0 || ordinal >= struct.getNumComponents()) {
+            throw new AssertException(
+                "Expected fixup component at ordinal " + ordinal + " in " + struct.getPathName());
+        }
+
+		dtc = struct.getComponent(ordinal);
 
 		long lastChangeTime = struct.getLastChangeTime(); // Don't let the time change.
 		try {
@@ -2675,13 +2700,24 @@ public class DataTypeMergeManager implements MergeResolver {
 
 		int ordinal = info.resultOrdinal;
 
-		DataTypeComponent dtc;
-		if (ordinal >= 0 || ordinal < struct.getNumComponents()) {
-			dtc = struct.getComponent(ordinal);
+		// The recorded ordinal can go stale if the structure repacked since this fixup was
+		// queued (e.g. a sibling resize shifted it). Re-resolve the placeholder by its
+		// stable identity instead of trusting the ordinal.
+		DataTypeComponent dtc = null;
+		if (info.resultPlaceholder != null) {
+			DataTypeComponent current = struct.getCurrentComponent(info.resultPlaceholder);
+			if (current != null && current.getDataType() == BadDataType.dataType) {
+				dtc = current;
+				ordinal = dtc.getOrdinal();
+			}
 		}
-		else {
-			throw new AssertException(
-				"Expected fixup component at ordinal " + ordinal + " in " + struct.getPathName());
+
+		if (dtc == null) {
+			if (ordinal < 0 || ordinal >= struct.getNumComponents()) {
+				throw new AssertException(
+					"Expected fixup component at ordinal " + ordinal + " in " + struct.getPathName());
+			}
+			dtc = struct.getComponent(ordinal);
 		}
 
 		long lastChangeTime = struct.getLastChangeTime(); // Don't let the time change.
@@ -3437,6 +3473,10 @@ public class DataTypeMergeManager implements MergeResolver {
 		// only meaningful for non-packed structure
 		// may not be unique (e.g., bitfields, 0-length components)
 		int offset = -1;
+
+		// The -BAD- placeholder component inserted for this fixup, used to re-resolve its
+		// current position if the structure repacks before the fixup runs.
+		DataTypeComponent resultPlaceholder;
 
 		// bitfield info
 		int bitOffset = -1;
