@@ -1297,10 +1297,10 @@ Before you can do anything else, you must first create a project. Projects are u
   <li>Types of annotations:</li>
   <ul>
 	<li>Address</li>
-	<li>Execute</li>
-    	<li>Program</li>
-    	<li>Symbol</li>    
-    	<li>URL</li>
+    <li>Program</li>
+    <li>Symbol</li>    
+    <li>HTTP-URL</li>
+	<li>GHIDRA-URL</li>
   </ul>
 </ul>
 <div role="note">
@@ -1309,14 +1309,14 @@ Before you can do anything else, you must first create a project. Projects are u
   <ul>
     <li><b>Annotations</b> To add comment annotations using the comment editor, use the pull-down menu, choose an annotation type, and then click the <b>Add Annotation</b> button.</li>
 	<ul>
-    <li><b>Address</b> Fill in the interesting address. The comment will display the given address as a hyperlink. Double-click the link to navigate to that address.</li>
-    <li><b>Execute</b> Fill in path to an executable. Double-click the resulting link to launch the specified executable in your OS with given optional parameters.</li>
-<li><b>Program</b> Fill in existing Ghidra program name (case-sensitive) to displays a hyperlink to the given Ghidra program name. Double-click the link to open the program in a new Listing tab. Optionally use the @symbol name after the program name to go to a specific symbol in the program.</li>
-    <li><b>Symbol</b> Fill in the address of the interesting symbol. The comment will display the given symbol as a hyperlink. Double-click to navigate to the symbol. Changes to the symbol in the Listing will automatically change the comment to display the new symbol.</li>
-    <li><b>URL</b> Displays the given URL as a hyperlink. Double-click to open what the link is pointing to. References to ghidra://, which refer to a program within a Ghidra Server repository, will be opened within the Listing display, while all other URL protocols (e.g., http://, https://, file://, etc.) will be launched via an external web browser. See HELP  command configuration for Processor Manuals for more information.</li>
-</ul>
-
-
+       <li><b>Address</b> Fill in the interesting address. The comment will display the given address as a hyperlink. Double-click the link to navigate to that address.</li>
+       <li><b>Program</b> Fill in existing Ghidra program name (case-sensitive) to displays a hyperlink to the given Ghidra program name. Double-click the link to open the program in a new Listing tab. Optionally use the @symbol name after the program name to go to a specific symbol in the program.</li>
+       <li><b>Symbol</b> Fill in the address of the interesting symbol. The comment will display the given symbol as a hyperlink. Double-click to navigate to the symbol. Changes to the symbol in the Listing will automatically change the comment to display the new symbol.</li>
+       <li><b>HTTP-URL</b> Displays the given URL as a hyperlink. Double-click to open what the link is pointing to
+		using your configured web browser. See HELP  command configuration for Processor Manuals for more information.</li>
+	   <li><b>GHIDRA-URL</b> References a local Ghidra project file or a remote Ghidra Server repository file.
+		The referenced Program file will be opened within the Listing display.</li>
+     </ul>
   </ul>
   </p>
 </div>

@@ -15,7 +15,7 @@
  */
 package ghidra.pcode.emu.jit.gen;
 
-import org.objectweb.asm.ClassVisitor;
+import java.lang.classfile.ClassBuilder;
 
 import ghidra.pcode.emu.jit.gen.util.Emitter;
 import ghidra.pcode.emu.jit.gen.util.Emitter.Ent;
@@ -31,7 +31,6 @@ public interface StaticFieldReq<T extends BNonVoid> extends FieldReq<T> {
 
 	/**
 	 * Emit the field declaration and its initialization bytecode
-	 * 
 	 * <p>
 	 * The declaration is emitted into the class definition, and the initialization code is emitted
 	 * into the class initializer.
@@ -39,11 +38,11 @@ public interface StaticFieldReq<T extends BNonVoid> extends FieldReq<T> {
 	 * @param <N> the incoming stack
 	 * @param em the emitter typed with the incoming stack
 	 * @param gen the code generator
-	 * @param cv the visitor for the class definition
+	 * @param clb the builder for the class definition
 	 * @return the emitter typed with the incoming stack
 	 */
 	<N extends Next> Emitter<N> genClInitCode(Emitter<N> em, JitCodeGenerator<?> gen,
-			ClassVisitor cv);
+			ClassBuilder clb);
 
 	/**
 	 * Emit code to load the field onto the JVM stack

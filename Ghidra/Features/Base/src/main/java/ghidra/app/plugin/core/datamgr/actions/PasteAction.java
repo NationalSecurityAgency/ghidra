@@ -30,9 +30,10 @@ import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeNodeTransferable;
 import ghidra.app.plugin.core.datamgr.*;
 import ghidra.app.plugin.core.datamgr.tree.*;
-import ghidra.app.plugin.core.datamgr.util.DataTypeTreeCopyMoveTask;
-import ghidra.app.plugin.core.datamgr.util.DataTypeTreeCopyMoveTask.ActionType;
+import ghidra.app.plugin.core.datamgr.util.DataTypesCopyMoveTask;
+import ghidra.app.plugin.core.datamgr.util.DataTypesCopyMoveTask.ActionType;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.model.data.Category;
 
 public class PasteAction extends DockingAction {
 	private PluginTool tool;
@@ -118,10 +119,10 @@ public class PasteAction extends DockingAction {
 		}
 
 		// can't cut nodes from one archive and paste into another
-		ArchiveNode destinationArchiveNode = destinationNode.getArchiveNode();
+		DataTypeStoreNode destinationArchiveNode = destinationNode.getArchiveNode();
 		for (GTreeNode cutNode : nodeList) {
 			DataTypeTreeNode dataTypeTreeNode = (DataTypeTreeNode) cutNode;
-			ArchiveNode archiveNode = dataTypeTreeNode.getArchiveNode();
+			DataTypeStoreNode archiveNode = dataTypeTreeNode.getArchiveNode();
 			if (!Objects.equals(archiveNode, destinationArchiveNode)) {
 				return true; // is invalid
 			}
@@ -155,9 +156,11 @@ public class PasteAction extends DockingAction {
 			clipboard.setContents(null, null);
 		}
 
+		Category destination = destinationNode.getCategory();
 		ActionType actionType = getActionType(dataTypeTreeNode);
-		DataTypeTreeCopyMoveTask task = new DataTypeTreeCopyMoveTask(destinationNode, nodeList,
-			actionType, (DataTypeArchiveGTree) gTree, plugin.getConflictHandler());
+		DataTypesCopyMoveTask task =
+			DataTypesCopyMoveTask.forNodes(plugin, gTree, destination, nodeList, actionType);
+
 		tool.execute(task, 250);
 	}
 

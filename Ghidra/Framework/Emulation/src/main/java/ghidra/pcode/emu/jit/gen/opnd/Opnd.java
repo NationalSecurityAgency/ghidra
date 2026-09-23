@@ -68,9 +68,7 @@ public interface Opnd<T extends JitType> {
 	 * @param <TT> the "to" JVM type
 	 * @param <TJT> the "to" p-code type
 	 */
-	interface StackToStackConv<
-		FT extends BPrim<?>, FJT extends SimpleJitType<FT, FJT>,
-		TT extends BPrim<?>, TJT extends SimpleJitType<TT, TJT>> {
+	interface StackToStackConv<FT extends BPrim<?>, FJT extends SimpleJitType<FT, FJT>, TT extends BPrim<?>, TJT extends SimpleJitType<TT, TJT>> {
 
 		/**
 		 * Convert a stack operand to another stack operand
@@ -83,8 +81,8 @@ public interface Opnd<T extends JitType> {
 		 * @param ext the kind of extension to apply
 		 * @return the emitter with ..., result
 		 */
-		<N1 extends Next, N0 extends Ent<N1, FT>> Emitter<Ent<N1, TT>>
-				convertStackToStack(Emitter<N0> em, FJT from, TJT to, Ext ext);
+		<N1 extends Next, N0 extends Ent<N1, FT>> Emitter<Ent<N1, TT>> convertStackToStack(
+				Emitter<N0> em, FJT from, TJT to, Ext ext);
 	}
 
 	/**
@@ -96,10 +94,7 @@ public interface Opnd<T extends JitType> {
 	 * @param <TLT> the "to" p-code type for each mp leg
 	 * @param <TJT> the "to" p-code type
 	 */
-	interface StackToMpConv<
-		FT extends BPrim<?>, FJT extends SimpleJitType<FT, FJT>,
-		TT extends BPrim<?>, TLT extends SimpleJitType<TT, TLT>,
-		TJT extends LeggedJitType<TT, TLT>> {
+	interface StackToMpConv<FT extends BPrim<?>, FJT extends SimpleJitType<FT, FJT>, TT extends BPrim<?>, TLT extends SimpleJitType<TT, TLT>, TJT extends LeggedJitType<TT, TLT>> {
 
 		/**
 		 * Convert a stack operand to an mp operand in locals
@@ -144,10 +139,7 @@ public interface Opnd<T extends JitType> {
 	 * @param <TT> the "to" JVM type
 	 * @param <TJT> the "to" p-code type
 	 */
-	interface MpToStackConv<
-		FT extends BPrim<?>, FLT extends SimpleJitType<FT, FLT>,
-		FJT extends LeggedJitType<FT, FLT>,
-		TT extends BPrim<?>, TJT extends SimpleJitType<TT, TJT>> {
+	interface MpToStackConv<FT extends BPrim<?>, FLT extends SimpleJitType<FT, FLT>, FJT extends LeggedJitType<FT, FLT>, TT extends BPrim<?>, TJT extends SimpleJitType<TT, TJT>> {
 
 		/**
 		 * Convert an mp operand in locals to a stack operand
@@ -173,8 +165,8 @@ public interface Opnd<T extends JitType> {
 		 * @param ext the kind of extension to apply
 		 * @return the emitter with ..., result
 		 */
-		<N1 extends Next, N0 extends Ent<N1, TRef<int[]>>> Emitter<Ent<N1, TT>>
-				convertArrayToStack(Emitter<N0> em, FJT from, TJT to, Ext ext);
+		<N1 extends Next, N0 extends Ent<N1, TRef<int[]>>> Emitter<Ent<N1, TT>> convertArrayToStack(
+				Emitter<N0> em, FJT from, TJT to, Ext ext);
 	}
 
 	/**
@@ -187,11 +179,7 @@ public interface Opnd<T extends JitType> {
 	 * @param <TLT> the "to" p-code type for each mp leg
 	 * @param <TJT> the "to" p-code type
 	 */
-	interface MpToMpConv<
-		FT extends BPrim<?>, FLT extends SimpleJitType<FT, FLT>,
-		FJT extends LeggedJitType<FT, FLT>,
-		TT extends BPrim<?>, TLT extends SimpleJitType<TT, TLT>,
-		TJT extends LeggedJitType<TT, TLT>> {
+	interface MpToMpConv<FT extends BPrim<?>, FLT extends SimpleJitType<FT, FLT>, FJT extends LeggedJitType<FT, FLT>, TT extends BPrim<?>, TLT extends SimpleJitType<TT, TLT>, TJT extends LeggedJitType<TT, TLT>> {
 
 		/**
 		 * Convert an operand in locals to another in locals
@@ -258,11 +246,8 @@ public interface Opnd<T extends JitType> {
 	 * @param ext the kind of extension to apply
 	 * @return the emitter with ..., result
 	 */
-	static <
-		N2 extends Next,
-		N1 extends Ent<N2, TLong>,
-		N0 extends Ent<N1, TInt>>
-			Emitter<Ent<N2, TLong>> lextshr(Emitter<N0> em, Ext ext) {
+	static <N2 extends Next, N1 extends Ent<N2, TLong>, N0 extends Ent<N1, TInt>> Emitter<Ent<N2, TLong>> lextshr(
+			Emitter<N0> em, Ext ext) {
 		return switch (ext) {
 			case ZERO -> em.emit(Op::lushr);
 			case SIGN -> em.emit(Op::lshr);
@@ -276,8 +261,8 @@ public interface Opnd<T extends JitType> {
 		INSTANCE;
 
 		@Override
-		public <N1 extends Next, N0 extends Ent<N1, TInt>> Emitter<Ent<N1, TInt>>
-				convertStackToStack(Emitter<N0> em, IntJitType from, IntJitType to, Ext ext) {
+		public <N1 extends Next, N0 extends Ent<N1, TInt>> Emitter<Ent<N1, TInt>> convertStackToStack(
+				Emitter<N0> em, IntJitType from, IntJitType to, Ext ext) {
 			if (!needsIntExt(from, to)) {
 				return em.emit(Misc::cast1);
 			}
@@ -308,8 +293,8 @@ public interface Opnd<T extends JitType> {
 		INSTANCE;
 
 		@Override
-		public <N1 extends Next, N0 extends Ent<N1, TInt>> Emitter<Ent<N1, TLong>>
-				convertStackToStack(Emitter<N0> em, IntJitType from, LongJitType to, Ext ext) {
+		public <N1 extends Next, N0 extends Ent<N1, TInt>> Emitter<Ent<N1, TLong>> convertStackToStack(
+				Emitter<N0> em, IntJitType from, LongJitType to, Ext ext) {
 			return switch (ext) {
 				case ZERO -> em
 						.emit(Op::invokestatic, GenConsts.TR_INTEGER, "toUnsignedLong",
@@ -358,9 +343,9 @@ public interface Opnd<T extends JitType> {
 		}
 
 		@Override
-		public <N1 extends Next, N0 extends Ent<N1, TInt>> OpndEm<MpIntJitType, N1>
-				convertStackToOpnd(Emitter<N0> em, IntJitType from, String name, MpIntJitType to,
-						Ext ext, Scope scope) {
+		public <N1 extends Next, N0 extends Ent<N1, TInt>> OpndEm<MpIntJitType, N1> convertStackToOpnd(
+				Emitter<N0> em, IntJitType from, String name, MpIntJitType to,
+				Ext ext, Scope scope) {
 			IntJitType typeLsl = to.legTypesLE().get(0);
 			var lsl = em
 					.emit(IntToInt.INSTANCE::convertStackToStack, from, typeLsl, ext)
@@ -370,9 +355,9 @@ public interface Opnd<T extends JitType> {
 		}
 
 		@Override
-		public <N1 extends Next, N0 extends Ent<N1, TInt>> Emitter<Ent<N1, TRef<int[]>>>
-				convertStackToArray(Emitter<N0> em, IntJitType from, String name, MpIntJitType to,
-						Ext ext, Scope scope, int slack) {
+		public <N1 extends Next, N0 extends Ent<N1, TInt>> Emitter<Ent<N1, TRef<int[]>>> convertStackToArray(
+				Emitter<N0> em, IntJitType from, String name, MpIntJitType to,
+				Ext ext, Scope scope, int slack) {
 			int legCount = to.legsAlloc();
 			Local<TRef<int[]>> arr = scope.decl(Types.T_INT_ARR, "%s_convArr".formatted(name));
 			try (SubScope ss = scope.sub()) {
@@ -420,8 +405,8 @@ public interface Opnd<T extends JitType> {
 		INSTANCE;
 
 		@Override
-		public <N1 extends Next, N0 extends Ent<N1, TInt>> Emitter<Ent<N1, TFloat>>
-				convertStackToStack(Emitter<N0> em, IntJitType from, FloatJitType to, Ext ext) {
+		public <N1 extends Next, N0 extends Ent<N1, TInt>> Emitter<Ent<N1, TFloat>> convertStackToStack(
+				Emitter<N0> em, IntJitType from, FloatJitType to, Ext ext) {
 			return em
 					.emit(Op::invokestatic, GenConsts.TR_FLOAT, "intBitsToFloat",
 						GenConsts.MDESC_FLOAT__INT_BITS_TO_FLOAT, false)
@@ -437,8 +422,8 @@ public interface Opnd<T extends JitType> {
 		INSTANCE; // In theory, should never happen, but if it does, truncate.
 
 		@Override
-		public <N1 extends Next, N0 extends Ent<N1, TInt>> Emitter<Ent<N1, TDouble>>
-				convertStackToStack(Emitter<N0> em, IntJitType from, DoubleJitType to, Ext ext) {
+		public <N1 extends Next, N0 extends Ent<N1, TInt>> Emitter<Ent<N1, TDouble>> convertStackToStack(
+				Emitter<N0> em, IntJitType from, DoubleJitType to, Ext ext) {
 			return em
 					.emit(IntToLong.INSTANCE::convertStackToStack, from, LongJitType.I8, ext)
 					.emit(LongToDouble.INSTANCE::convertStackToStack, LongJitType.I8, to, ext);
@@ -452,8 +437,8 @@ public interface Opnd<T extends JitType> {
 		INSTANCE;
 
 		@Override
-		public <N1 extends Next, N0 extends Ent<N1, TLong>> Emitter<Ent<N1, TInt>>
-				convertStackToStack(Emitter<N0> em, LongJitType from, IntJitType to, Ext ext) {
+		public <N1 extends Next, N0 extends Ent<N1, TLong>> Emitter<Ent<N1, TInt>> convertStackToStack(
+				Emitter<N0> em, LongJitType from, IntJitType to, Ext ext) {
 			return em
 					.emit(Op::l2i)
 					.emit(IntToInt.INSTANCE::convertStackToStack, IntJitType.I4, to, ext);
@@ -467,8 +452,8 @@ public interface Opnd<T extends JitType> {
 		INSTANCE;
 
 		@Override
-		public <N1 extends Next, N0 extends Ent<N1, TLong>> Emitter<Ent<N1, TLong>>
-				convertStackToStack(Emitter<N0> em, LongJitType from, LongJitType to, Ext ext) {
+		public <N1 extends Next, N0 extends Ent<N1, TLong>> Emitter<Ent<N1, TLong>> convertStackToStack(
+				Emitter<N0> em, LongJitType from, LongJitType to, Ext ext) {
 			if (!needsLongExt(from, to)) {
 				return em.emit(Misc::cast1);
 			}
@@ -493,9 +478,9 @@ public interface Opnd<T extends JitType> {
 		INSTANCE;
 
 		@Override
-		public <N1 extends Next, N0 extends Ent<N1, TLong>> OpndEm<MpIntJitType, N1>
-				convertStackToOpnd(Emitter<N0> em, LongJitType from, String name, MpIntJitType to,
-						Ext ext, Scope scope) {
+		public <N1 extends Next, N0 extends Ent<N1, TLong>> OpndEm<MpIntJitType, N1> convertStackToOpnd(
+				Emitter<N0> em, LongJitType from, String name, MpIntJitType to,
+				Ext ext, Scope scope) {
 			var upperOnStack = em
 					.emit(Op::dup2__2)
 					.emit(Op::ldc__i, Integer.SIZE)
@@ -533,9 +518,9 @@ public interface Opnd<T extends JitType> {
 		}
 
 		@Override
-		public <N1 extends Next, N0 extends Ent<N1, TLong>> Emitter<Ent<N1, TRef<int[]>>>
-				convertStackToArray(Emitter<N0> em, LongJitType from, String name, MpIntJitType to,
-						Ext ext, Scope scope, int slack) {
+		public <N1 extends Next, N0 extends Ent<N1, TLong>> Emitter<Ent<N1, TRef<int[]>>> convertStackToArray(
+				Emitter<N0> em, LongJitType from, String name, MpIntJitType to,
+				Ext ext, Scope scope, int slack) {
 			int legCount = to.legsAlloc();
 			Local<TRef<int[]>> arr = scope.decl(Types.T_INT_ARR, "%s_convArr".formatted(name));
 			try (SubScope ss = scope.sub()) {
@@ -598,8 +583,8 @@ public interface Opnd<T extends JitType> {
 		INSTANCE;
 
 		@Override
-		public <N1 extends Next, N0 extends Ent<N1, TLong>> Emitter<Ent<N1, TFloat>>
-				convertStackToStack(Emitter<N0> em, LongJitType from, FloatJitType to, Ext ext) {
+		public <N1 extends Next, N0 extends Ent<N1, TLong>> Emitter<Ent<N1, TFloat>> convertStackToStack(
+				Emitter<N0> em, LongJitType from, FloatJitType to, Ext ext) {
 			return em
 					.emit(LongToInt.INSTANCE::convertStackToStack, from, IntJitType.I4, ext)
 					.emit(IntToFloat.INSTANCE::convertStackToStack, IntJitType.I4, to, ext);
@@ -613,8 +598,8 @@ public interface Opnd<T extends JitType> {
 		INSTANCE;
 
 		@Override
-		public <N1 extends Next, N0 extends Ent<N1, TLong>> Emitter<Ent<N1, TDouble>>
-				convertStackToStack(Emitter<N0> em, LongJitType from, DoubleJitType to, Ext ext) {
+		public <N1 extends Next, N0 extends Ent<N1, TLong>> Emitter<Ent<N1, TDouble>> convertStackToStack(
+				Emitter<N0> em, LongJitType from, DoubleJitType to, Ext ext) {
 			if (to.size() != from.size()) {
 				throw new AssertionError("Size mismatch");
 			}
@@ -642,8 +627,8 @@ public interface Opnd<T extends JitType> {
 		}
 
 		@Override
-		public <N1 extends Next, N0 extends Ent<N1, TRef<int[]>>> Emitter<Ent<N1, TInt>>
-				convertArrayToStack(Emitter<N0> em, MpIntJitType from, IntJitType to, Ext ext) {
+		public <N1 extends Next, N0 extends Ent<N1, TRef<int[]>>> Emitter<Ent<N1, TInt>> convertArrayToStack(
+				Emitter<N0> em, MpIntJitType from, IntJitType to, Ext ext) {
 			var typeLsl = from.legTypesLE().get(0);
 			return em
 					.emit(Op::ldc__i, 0)
@@ -675,8 +660,8 @@ public interface Opnd<T extends JitType> {
 		}
 
 		@Override
-		public <N1 extends Next, N0 extends Ent<N1, TRef<int[]>>> Emitter<Ent<N1, TLong>>
-				convertArrayToStack(Emitter<N0> em, MpIntJitType from, LongJitType to, Ext ext) {
+		public <N1 extends Next, N0 extends Ent<N1, TRef<int[]>>> Emitter<Ent<N1, TLong>> convertArrayToStack(
+				Emitter<N0> em, MpIntJitType from, LongJitType to, Ext ext) {
 			return em
 					.emit(Op::dup)
 					.emit(Op::ldc__i, 1)
@@ -850,8 +835,8 @@ public interface Opnd<T extends JitType> {
 		}
 
 		@Override
-		public <N1 extends Next, N0 extends Ent<N1, TRef<int[]>>> Emitter<Ent<N1, TFloat>>
-				convertArrayToStack(Emitter<N0> em, MpIntJitType from, FloatJitType to, Ext ext) {
+		public <N1 extends Next, N0 extends Ent<N1, TRef<int[]>>> Emitter<Ent<N1, TFloat>> convertArrayToStack(
+				Emitter<N0> em, MpIntJitType from, FloatJitType to, Ext ext) {
 			return em
 					.emit(MpIntToInt.INSTANCE::convertArrayToStack, from, IntJitType.I4, ext)
 					.emit(IntToFloat.INSTANCE::convertStackToStack, IntJitType.I4, to, ext);
@@ -874,8 +859,8 @@ public interface Opnd<T extends JitType> {
 		}
 
 		@Override
-		public <N1 extends Next, N0 extends Ent<N1, TRef<int[]>>> Emitter<Ent<N1, TDouble>>
-				convertArrayToStack(Emitter<N0> em, MpIntJitType from, DoubleJitType to, Ext ext) {
+		public <N1 extends Next, N0 extends Ent<N1, TRef<int[]>>> Emitter<Ent<N1, TDouble>> convertArrayToStack(
+				Emitter<N0> em, MpIntJitType from, DoubleJitType to, Ext ext) {
 			return em
 					.emit(MpIntToLong.INSTANCE::convertArrayToStack, from, LongJitType.I8, ext)
 					.emit(LongToDouble.INSTANCE::convertStackToStack, LongJitType.I8, to, ext);
@@ -889,8 +874,8 @@ public interface Opnd<T extends JitType> {
 		INSTANCE;
 
 		@Override
-		public <N1 extends Next, N0 extends Ent<N1, TFloat>> Emitter<Ent<N1, TInt>>
-				convertStackToStack(Emitter<N0> em, FloatJitType from, IntJitType to, Ext ext) {
+		public <N1 extends Next, N0 extends Ent<N1, TFloat>> Emitter<Ent<N1, TInt>> convertStackToStack(
+				Emitter<N0> em, FloatJitType from, IntJitType to, Ext ext) {
 			if (to.size() != from.size()) {
 				throw new AssertionError("Size mismatch");
 			}
@@ -909,8 +894,8 @@ public interface Opnd<T extends JitType> {
 		INSTANCE;
 
 		@Override
-		public <N1 extends Next, N0 extends Ent<N1, TFloat>> Emitter<Ent<N1, TLong>>
-				convertStackToStack(Emitter<N0> em, FloatJitType from, LongJitType to, Ext ext) {
+		public <N1 extends Next, N0 extends Ent<N1, TFloat>> Emitter<Ent<N1, TLong>> convertStackToStack(
+				Emitter<N0> em, FloatJitType from, LongJitType to, Ext ext) {
 			return em
 					.emit(FloatToInt.INSTANCE::convertStackToStack, from, IntJitType.I4, ext)
 					.emit(IntToLong.INSTANCE::convertStackToStack, IntJitType.I4, to, ext);
@@ -925,9 +910,9 @@ public interface Opnd<T extends JitType> {
 		INSTANCE;
 
 		@Override
-		public <N1 extends Next, N0 extends Ent<N1, TFloat>> OpndEm<MpIntJitType, N1>
-				convertStackToOpnd(Emitter<N0> em, FloatJitType from, String name, MpIntJitType to,
-						Ext ext, Scope scope) {
+		public <N1 extends Next, N0 extends Ent<N1, TFloat>> OpndEm<MpIntJitType, N1> convertStackToOpnd(
+				Emitter<N0> em, FloatJitType from, String name, MpIntJitType to,
+				Ext ext, Scope scope) {
 			return em
 					.emit(FloatToInt.INSTANCE::convertStackToStack, from, IntJitType.I4, ext)
 					.emit(IntToMpInt.INSTANCE::convertStackToOpnd, IntJitType.I4, name, to, ext,
@@ -935,9 +920,9 @@ public interface Opnd<T extends JitType> {
 		}
 
 		@Override
-		public <N1 extends Next, N0 extends Ent<N1, TFloat>> Emitter<Ent<N1, TRef<int[]>>>
-				convertStackToArray(Emitter<N0> em, FloatJitType from, String name, MpIntJitType to,
-						Ext ext, Scope scope, int slack) {
+		public <N1 extends Next, N0 extends Ent<N1, TFloat>> Emitter<Ent<N1, TRef<int[]>>> convertStackToArray(
+				Emitter<N0> em, FloatJitType from, String name, MpIntJitType to,
+				Ext ext, Scope scope, int slack) {
 			return em
 					.emit(FloatToInt.INSTANCE::convertStackToStack, from, IntJitType.I4, ext)
 					.emit(IntToMpInt.INSTANCE::convertStackToArray, IntJitType.I4, name, to, ext,
@@ -952,8 +937,8 @@ public interface Opnd<T extends JitType> {
 		INSTANCE;
 
 		@Override
-		public <N1 extends Next, N0 extends Ent<N1, TFloat>> Emitter<Ent<N1, TFloat>>
-				convertStackToStack(Emitter<N0> em, FloatJitType from, FloatJitType to, Ext ext) {
+		public <N1 extends Next, N0 extends Ent<N1, TFloat>> Emitter<Ent<N1, TFloat>> convertStackToStack(
+				Emitter<N0> em, FloatJitType from, FloatJitType to, Ext ext) {
 			return em.emit(Misc::cast1);
 		}
 	}
@@ -965,8 +950,8 @@ public interface Opnd<T extends JitType> {
 		INSTANCE;
 
 		@Override
-		public <N1 extends Next, N0 extends Ent<N1, TFloat>> Emitter<Ent<N1, TDouble>>
-				convertStackToStack(Emitter<N0> em, FloatJitType from, DoubleJitType to, Ext ext) {
+		public <N1 extends Next, N0 extends Ent<N1, TFloat>> Emitter<Ent<N1, TDouble>> convertStackToStack(
+				Emitter<N0> em, FloatJitType from, DoubleJitType to, Ext ext) {
 			return em
 					.emit(FloatToInt.INSTANCE::convertStackToStack, from, IntJitType.I4, ext)
 					.emit(IntToDouble.INSTANCE::convertStackToStack, IntJitType.I4, to, ext);
@@ -980,8 +965,8 @@ public interface Opnd<T extends JitType> {
 		INSTANCE;
 
 		@Override
-		public <N1 extends Next, N0 extends Ent<N1, TDouble>> Emitter<Ent<N1, TInt>>
-				convertStackToStack(Emitter<N0> em, DoubleJitType from, IntJitType to, Ext ext) {
+		public <N1 extends Next, N0 extends Ent<N1, TDouble>> Emitter<Ent<N1, TInt>> convertStackToStack(
+				Emitter<N0> em, DoubleJitType from, IntJitType to, Ext ext) {
 			return em
 					.emit(DoubleToLong.INSTANCE::convertStackToStack, from, LongJitType.I8, ext)
 					.emit(LongToInt.INSTANCE::convertStackToStack, LongJitType.I8, to, ext);
@@ -995,8 +980,8 @@ public interface Opnd<T extends JitType> {
 		INSTANCE;
 
 		@Override
-		public <N1 extends Next, N0 extends Ent<N1, TDouble>> Emitter<Ent<N1, TLong>>
-				convertStackToStack(Emitter<N0> em, DoubleJitType from, LongJitType to, Ext ext) {
+		public <N1 extends Next, N0 extends Ent<N1, TDouble>> Emitter<Ent<N1, TLong>> convertStackToStack(
+				Emitter<N0> em, DoubleJitType from, LongJitType to, Ext ext) {
 			if (to.size() != from.size()) {
 				throw new AssertionError("Size mismatch");
 			}
@@ -1016,9 +1001,9 @@ public interface Opnd<T extends JitType> {
 		INSTANCE;
 
 		@Override
-		public <N1 extends Next, N0 extends Ent<N1, TDouble>> OpndEm<MpIntJitType, N1>
-				convertStackToOpnd(Emitter<N0> em, DoubleJitType from, String name, MpIntJitType to,
-						Ext ext, Scope scope) {
+		public <N1 extends Next, N0 extends Ent<N1, TDouble>> OpndEm<MpIntJitType, N1> convertStackToOpnd(
+				Emitter<N0> em, DoubleJitType from, String name, MpIntJitType to,
+				Ext ext, Scope scope) {
 			return em
 					.emit(DoubleToLong.INSTANCE::convertStackToStack, from, LongJitType.I8, ext)
 					.emit(LongToMpInt.INSTANCE::convertStackToOpnd, LongJitType.I8, name, to, ext,
@@ -1026,9 +1011,9 @@ public interface Opnd<T extends JitType> {
 		}
 
 		@Override
-		public <N1 extends Next, N0 extends Ent<N1, TDouble>> Emitter<Ent<N1, TRef<int[]>>>
-				convertStackToArray(Emitter<N0> em, DoubleJitType from, String name,
-						MpIntJitType to, Ext ext, Scope scope, int slack) {
+		public <N1 extends Next, N0 extends Ent<N1, TDouble>> Emitter<Ent<N1, TRef<int[]>>> convertStackToArray(
+				Emitter<N0> em, DoubleJitType from, String name,
+				MpIntJitType to, Ext ext, Scope scope, int slack) {
 			return em
 					.emit(DoubleToLong.INSTANCE::convertStackToStack, from, LongJitType.I8, ext)
 					.emit(LongToMpInt.INSTANCE::convertStackToArray, LongJitType.I8, name, to, ext,
@@ -1043,8 +1028,8 @@ public interface Opnd<T extends JitType> {
 		INSTANCE;
 
 		@Override
-		public <N1 extends Next, N0 extends Ent<N1, TDouble>> Emitter<Ent<N1, TFloat>>
-				convertStackToStack(Emitter<N0> em, DoubleJitType from, FloatJitType to, Ext ext) {
+		public <N1 extends Next, N0 extends Ent<N1, TDouble>> Emitter<Ent<N1, TFloat>> convertStackToStack(
+				Emitter<N0> em, DoubleJitType from, FloatJitType to, Ext ext) {
 			return em
 					.emit(DoubleToInt.INSTANCE::convertStackToStack, from, IntJitType.I4, ext)
 					.emit(IntToFloat.INSTANCE::convertStackToStack, IntJitType.I4, to, ext);
@@ -1059,8 +1044,8 @@ public interface Opnd<T extends JitType> {
 		INSTANCE;
 
 		@Override
-		public <N1 extends Next, N0 extends Ent<N1, TDouble>> Emitter<Ent<N1, TDouble>>
-				convertStackToStack(Emitter<N0> em, DoubleJitType from, DoubleJitType to, Ext ext) {
+		public <N1 extends Next, N0 extends Ent<N1, TDouble>> Emitter<Ent<N1, TDouble>> convertStackToStack(
+				Emitter<N0> em, DoubleJitType from, DoubleJitType to, Ext ext) {
 			return em.emit(Misc::cast1);
 		}
 	}
@@ -1169,11 +1154,8 @@ public interface Opnd<T extends JitType> {
 	 * @return the emitter with ..., value (unchanged)
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public static <
-		TT extends BPrim<?>, TJT extends SimpleJitType<TT, TJT>,
-		FT extends BPrim<?>, FJT extends SimpleJitType<FT, FJT>,
-		N1 extends Next, N0 extends Ent<N1, FT>>
-			Emitter<Ent<N1, TT>> castStack1(Emitter<N0> em, FJT from, TJT to) {
+	public static <TT extends BPrim<?>, TJT extends SimpleJitType<TT, TJT>, FT extends BPrim<?>, FJT extends SimpleJitType<FT, FJT>, N1 extends Next, N0 extends Ent<N1, FT>> Emitter<Ent<N1, TT>> castStack1(
+			Emitter<N0> em, FJT from, TJT to) {
 		assert from == to;
 		return (Emitter) em;
 	}
@@ -1191,10 +1173,8 @@ public interface Opnd<T extends JitType> {
 	 * @param scope a scope for the local variable
 	 * @return the operand and emitter with ...
 	 */
-	public static <
-		T extends BPrim<?>, JT extends SimpleJitType<T, JT>,
-		N1 extends Next, N0 extends Ent<N1, T>>
-			SimpleOpndEm<T, JT, N1> create(Emitter<N0> em, JT type, String name, Scope scope) {
+	public static <T extends BPrim<?>, JT extends SimpleJitType<T, JT>, N1 extends Next, N0 extends Ent<N1, T>> SimpleOpndEm<T, JT, N1> create(
+			Emitter<N0> em, JT type, String name, Scope scope) {
 		return switch (type) {
 			case IntJitType t -> IntLocalOpnd.create(castStack1(em, type, t), t, name, scope)
 					.castBack(type);
@@ -1219,8 +1199,8 @@ public interface Opnd<T extends JitType> {
 	 * @param scope a scope for the local variable
 	 * @return the operand and emitter with ...
 	 */
-	public static <N1 extends Next, N0 extends Ent<N1, TInt>> SimpleOpndEm<TInt, IntJitType, N1>
-			createInt(Emitter<N0> em, IntJitType type, String name, Scope scope) {
+	public static <N1 extends Next, N0 extends Ent<N1, TInt>> SimpleOpndEm<TInt, IntJitType, N1> createInt(
+			Emitter<N0> em, IntJitType type, String name, Scope scope) {
 		return IntLocalOpnd.create(em, type, name, scope);
 	}
 
@@ -1236,8 +1216,8 @@ public interface Opnd<T extends JitType> {
 	 * @return the operand and emitter with ...
 	 * @see SimpleOpnd#ofIntReadOnly(IntJitType, Local)
 	 */
-	public static <N1 extends Next, N0 extends Ent<N1, TInt>> SimpleOpndEm<TInt, IntJitType, N1>
-			createIntReadOnly(Emitter<N0> em, IntJitType type, String name, Scope scope) {
+	public static <N1 extends Next, N0 extends Ent<N1, TInt>> SimpleOpndEm<TInt, IntJitType, N1> createIntReadOnly(
+			Emitter<N0> em, IntJitType type, String name, Scope scope) {
 		return IntReadOnlyLocalOpnd.create(em, type, name, scope);
 	}
 
@@ -1253,10 +1233,8 @@ public interface Opnd<T extends JitType> {
 	 * @return the converter
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	static <
-		FT extends BPrim<?>, FJT extends SimpleJitType<FT, FJT>,
-		TT extends BPrim<?>, TJT extends SimpleJitType<TT, TJT>>
-			StackToStackConv<FT, FJT, TT, TJT> getStackToStack(FJT from, TJT to) {
+	static <FT extends BPrim<?>, FJT extends SimpleJitType<FT, FJT>, TT extends BPrim<?>, TJT extends SimpleJitType<TT, TJT>> StackToStackConv<FT, FJT, TT, TJT> getStackToStack(
+			FJT from, TJT to) {
 		return (StackToStackConv) switch (from) {
 			case IntJitType ft -> switch (to) {
 				case IntJitType tt -> IntToInt.INSTANCE;
@@ -1305,11 +1283,8 @@ public interface Opnd<T extends JitType> {
 	 * @param ext the kind of extension to apply
 	 * @return the emitter with ..., result
 	 */
-	public static <
-		FT extends BPrim<?>, FJT extends SimpleJitType<FT, FJT>,
-		TT extends BPrim<?>, TJT extends SimpleJitType<TT, TJT>,
-		N1 extends Next, N0 extends Ent<N1, FT>>
-			Emitter<Ent<N1, TT>> convert(Emitter<N0> em, FJT from, TJT to, Ext ext) {
+	public static <FT extends BPrim<?>, FJT extends SimpleJitType<FT, FJT>, TT extends BPrim<?>, TJT extends SimpleJitType<TT, TJT>, N1 extends Next, N0 extends Ent<N1, FT>> Emitter<Ent<N1, TT>> convert(
+			Emitter<N0> em, FJT from, TJT to, Ext ext) {
 		return getStackToStack(from, to).convertStackToStack(em, from, to, ext);
 	}
 
@@ -1324,8 +1299,8 @@ public interface Opnd<T extends JitType> {
 	 * @param ext the kind of extension to apply
 	 * @return the emitter with ..., result
 	 */
-	public static <N1 extends Next, N0 extends Ent<N1, TInt>> Emitter<Ent<N1, TInt>>
-			convertIntToInt(Emitter<N0> em, IntJitType from, IntJitType to, Ext ext) {
+	public static <N1 extends Next, N0 extends Ent<N1, TInt>> Emitter<Ent<N1, TInt>> convertIntToInt(
+			Emitter<N0> em, IntJitType from, IntJitType to, Ext ext) {
 		return IntToInt.INSTANCE.convertStackToStack(em, from, to, ext);
 	}
 
@@ -1342,11 +1317,8 @@ public interface Opnd<T extends JitType> {
 	 * @return the converter
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	static <
-		FT extends BPrim<?>, FJT extends SimpleJitType<FT, FJT>,
-		TT extends BPrim<?>, TLT extends SimpleJitType<TT, TLT>,
-		TJT extends LeggedJitType<TT, TLT>>
-			StackToMpConv<FT, FJT, TT, TLT, TJT> getStackToMp(FJT from, TJT to) {
+	static <FT extends BPrim<?>, FJT extends SimpleJitType<FT, FJT>, TT extends BPrim<?>, TLT extends SimpleJitType<TT, TLT>, TJT extends LeggedJitType<TT, TLT>> StackToMpConv<FT, FJT, TT, TLT, TJT> getStackToMp(
+			FJT from, TJT to) {
 		return (StackToMpConv) switch (from) {
 			case IntJitType ft -> switch (to) {
 				case MpIntJitType tt -> IntToMpInt.INSTANCE;
@@ -1386,13 +1358,8 @@ public interface Opnd<T extends JitType> {
 	 * @param scope a scope for generated variables
 	 * @return the resulting operand and emitter with ...
 	 */
-	public static <
-		FT extends BPrim<?>, FJT extends SimpleJitType<FT, FJT>,
-		TT extends BPrim<?>, TLT extends SimpleJitType<TT, TLT>,
-		TJT extends LeggedJitType<TT, TLT>,
-		N1 extends Next, N0 extends Ent<N1, FT>>
-			OpndEm<TJT, N1>
-			convertToOpnd(Emitter<N0> em, FJT from, String name, TJT to, Ext ext, Scope scope) {
+	public static <FT extends BPrim<?>, FJT extends SimpleJitType<FT, FJT>, TT extends BPrim<?>, TLT extends SimpleJitType<TT, TLT>, TJT extends LeggedJitType<TT, TLT>, N1 extends Next, N0 extends Ent<N1, FT>> OpndEm<TJT, N1> convertToOpnd(
+			Emitter<N0> em, FJT from, String name, TJT to, Ext ext, Scope scope) {
 		return getStackToMp(from, to).convertStackToOpnd(em, from, name, to, ext, scope);
 	}
 
@@ -1415,13 +1382,9 @@ public interface Opnd<T extends JitType> {
 	 * @param slack the number of extra (more significant) elements to allocate in the array
 	 * @return the emitter with ..., arrayref
 	 */
-	public static <
-		FT extends BPrim<?>, FJT extends SimpleJitType<FT, FJT>,
-		TT extends BPrim<?>, TLT extends SimpleJitType<TT, TLT>,
-		TJT extends LeggedJitType<TT, TLT>,
-		N1 extends Next, N0 extends Ent<N1, FT>>
-			Emitter<Ent<N1, TRef<int[]>>> convertToArray(Emitter<N0> em, FJT from, String name,
-					TJT to, Ext ext, Scope scope, int slack) {
+	public static <FT extends BPrim<?>, FJT extends SimpleJitType<FT, FJT>, TT extends BPrim<?>, TLT extends SimpleJitType<TT, TLT>, TJT extends LeggedJitType<TT, TLT>, N1 extends Next, N0 extends Ent<N1, FT>> Emitter<Ent<N1, TRef<int[]>>> convertToArray(
+			Emitter<N0> em, FJT from, String name,
+			TJT to, Ext ext, Scope scope, int slack) {
 		return getStackToMp(from, to).convertStackToArray(em, from, name, to, ext, scope, slack);
 	}
 

@@ -26,6 +26,7 @@ import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraLaunchable;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationConfiguration;
+import ghidra.framework.client.HeadlessClientAuthenticator;
 import ghidra.util.Msg;
 import ghidra.util.NamingUtilities;
 
@@ -258,8 +259,8 @@ public class ServerAdmin implements GhidraLaunchable {
 		try {
 			while (true) {
 				System.out.println("Enter password for user '" + userSID + "'");
-				pwd1 = getPassword("New password: ", true);
-				pwd2 = getPassword("Retype new password: ", false);
+				pwd1 = HeadlessClientAuthenticator.getPassword(null, "New password:");
+				pwd2 = HeadlessClientAuthenticator.getPassword(null, "Retype new password:");
 				if (Arrays.equals(pwd1, pwd2)) {
 					break;
 				}
@@ -281,57 +282,6 @@ public class ServerAdmin implements GhidraLaunchable {
 			}
 			if (pwd2 != null) {
 				Arrays.fill(pwd2, (char) 0);
-			}
-		}
-	}
-
-	private char[] getPassword(String prompt, boolean echoWarn) throws IOException {
-
-		boolean success = false;
-		char[] password = null;
-		int c;
-		try {
-			Console cons = System.console();
-			if (cons != null) {
-				password = cons.readPassword(prompt);
-			}
-			else {
-				if (echoWarn) {
-					System.out.println("*** WARNING! Password entry will NOT be masked ***");
-				}
-
-				System.out.print(prompt);
-
-				while (true) {
-					c = System.in.read();
-					if (c <= 0 || c == '\n') {
-						break;
-					}
-					if (c == '\r') {
-						continue;
-					}
-					if (password == null) {
-						password = new char[1];
-					}
-					else {
-						char[] newPass = new char[password.length + 1];
-						// copy prior entry into expanded array and clear old array
-						for (int i = 0; i < password.length; i++) {
-							newPass[i] = password[i];
-							password[i] = 0;
-						}
-						password = newPass;
-					}
-					password[password.length - 1] = (char) c;
-				}
-			}
-			success = true;
-			return password;
-
-		}
-		finally {
-			if (!success && password != null) {
-				Arrays.fill(password, (char) 0);
 			}
 		}
 	}
@@ -539,7 +489,7 @@ public class ServerAdmin implements GhidraLaunchable {
 			System.err.println(msg);
 		}
 		String invocationName = System.getProperty(INVOCATION_NAME_PROPERTY);
-		System.err.println("Usage: " +
+		System.err.println("\nUsage: " +
 			(invocationName != null ? invocationName : "java " + ServerAdmin.class.getName()) +
 			(invocationName != null ? "" : " <configPath>") + " [<command>] [<command>] ...");
 		System.err.println("\nSupported commands:");

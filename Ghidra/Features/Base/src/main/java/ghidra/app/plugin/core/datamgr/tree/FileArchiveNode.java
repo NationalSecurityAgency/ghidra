@@ -19,45 +19,53 @@ import javax.swing.Icon;
 
 import generic.jar.ResourceFile;
 import generic.theme.GIcon;
-import ghidra.app.plugin.core.datamgr.archive.FileArchive;
+import ghidra.program.model.dtarchive.FileDataTypeArchive;
+import ghidra.util.HTMLUtilities;
 import resources.MultiIcon;
 import resources.icons.TranslateIcon;
 
+/**
+ * Nodes that represent FileDataTypeArchives
+ */
 public class FileArchiveNode extends ArchiveNode {
+	private static Icon CLOSED_ICON = new GIcon("icon.plugin.datatypes.archive.file.closed");
+	private static Icon OPEN_ICON = new GIcon("icon.plugin.datatypes.archive.file.open");
 
 	private static Icon CHECKED_OUT_EXCLUSIVE_ICON =
 		new GIcon("icon.plugin.datatypes.tree.node.archive.file.checked.out.exclusive");
 
-	FileArchive fileArchive; // casted reference for easy access
-
-	public FileArchiveNode(FileArchive archive, DtFilterState filterState) {
+	public FileArchiveNode(FileDataTypeArchive archive, DtFilterState filterState) {
 		super(archive, filterState);
-		this.fileArchive = archive;
 	}
 
 	@Override
 	public Icon getIcon(boolean expanded) {
 		DtBackgroundIcon bgIcon = new DtBackgroundIcon();
 		MultiIcon multiIcon = new MultiIcon(bgIcon);
-		boolean hasWriteLock = fileArchive.hasWriteLock();
-		Icon baseIcon = fileArchive.getIcon(expanded);
+		Icon baseIcon = expanded ? OPEN_ICON : CLOSED_ICON;
 		multiIcon.addIcon(baseIcon);
-		if (hasWriteLock) {
+		if (archive.isChangeable()) {
 			multiIcon.addIcon(new TranslateIcon(CHECKED_OUT_EXCLUSIVE_ICON, 8, -4));
 		}
-
-		// TODO: add program architecture state
 
 		return multiIcon;
 	}
 
 	@Override
 	public String getToolTip() {
-		ResourceFile file = fileArchive.getFile();
-		return buildTooltip(file != null ? file.getAbsolutePath() : "[Unsaved New Archive]");
+		ResourceFile file = ((FileDataTypeArchive) archive).getFile();
+		String path = file != null ? file.getAbsolutePath() : "[Unsaved New Archive]";
+
+		StringBuilder buf = new StringBuilder(HTMLUtilities.HTML);
+		buf.append(HTMLUtilities.escapeHTML(path));
+		buf.append(HTMLUtilities.BR);
+		buf.append(getArchitectureDetails());
+		buf.append(HTMLUtilities.HTML_CLOSE);
+		return buf.toString();
 	}
 
-	public boolean hasWriteLock() {
-		return fileArchive.hasWriteLock();
+	@Override
+	public FileDataTypeArchive getArchive() {
+		return (FileDataTypeArchive) super.getArchive();
 	}
 }

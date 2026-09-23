@@ -16,41 +16,79 @@
 package ghidra.pcode.emu.jit.decode;
 
 import java.util.*;
-import java.util.Map.Entry;
+import java.util.stream.Stream;
 
 import org.apache.commons.collections4.MapUtils;
 
+import ghidra.lifecycle.Internal;
 import ghidra.pcode.emu.jit.JitConfiguration;
 import ghidra.pcode.emu.jit.JitPassage;
 import ghidra.pcode.emu.jit.JitPassage.*;
+import ghidra.pcode.emu.jit.folding.*;
 import ghidra.pcode.exec.PcodeUseropLibrary;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.pcode.PcodeOp;
+import ghidra.program.model.pcode.Varnode;
 
 /**
  * The decoder for a single passage
- * 
  * <p>
  * This is a sort of "mutable" passage or passage "builder" that is used while the passage is being
- * decoded. Once complete, this provides an immutable (or at least it's supposed to be) decoded
- * {@link Passage}.
+ * decoded. Once complete, this provides an immutable decoded {@link JitPassage}.
  */
-class DecoderForOnePassage {
-	private final JitPassageDecoder decoder;
+@Internal
+public class DecoderForOnePassage {
+	public final JitPassageDecoder decoder;
 	private final AddrCtx seed;
 	private final int maxOps;
 	private final int maxInstrs;
 	private final int maxStrides;
 
-	final Map<PcodeOp, RIntBranch> internalBranches = new HashMap<>();
+	public final Map<PcodeOp, RIntBranch> internalBranches = new HashMap<>();
 	// Sequenced, because this is also the seed queue
-	final SequencedMap<PcodeOp, RExtBranch> externalBranches = new LinkedHashMap<>();
+	final TieredBranchQueue externalBranches = new TieredBranchQueue();
 	final Map<PcodeOp, PBranch> otherBranches = new HashMap<>();
-	final Map<AddrCtx, PcodeOp> firstOps = new HashMap<>();
-	final List<DecodedStride> strides = new ArrayList<>();
+	public final Map<AddrCtx, PcodeOp> firstOps = new HashMap<>();
+	public final List<DecodedStride> strides = new ArrayList<>();
+	public final Map<Operand, byte[]> folded = new HashMap<>();
+	final Map<PcodeOp, List<PcodeOp>> inlines = new HashMap<>();
 
 	private int opCount = 0;
 	private int instructionCount = 0;
+
+	static class TieredBranchQueue {
+		final SequencedMap<PcodeOp, RExtBranch> direct = new LinkedHashMap<>();
+		final SequencedMap<PcodeOp, RExtBranch> folded = new LinkedHashMap<>();
+
+		void put(PcodeOp op, RExtBranch branch) {
+			var which = switch (op.getOpcode()) {
+				case PcodeOp.BRANCHIND, PcodeOp.CALLIND -> folded;
+				default -> direct;
+			};
+			which.put(op, branch);
+		}
+
+		RExtBranch next() {
+			var first = direct.pollFirstEntry();
+			if (first != null) {
+				return first.getValue();
+			}
+			first = folded.pollFirstEntry();
+			if (first != null) {
+				return first.getValue();
+			}
+			return null;
+		}
+
+		Collection<RExtBranch> remaining() {
+			return Stream.concat(direct.values().stream(), folded.values().stream()).toList();
+		}
+
+		void clear() {
+			direct.clear();
+			folded.clear();
+		}
+	}
 
 	/**
 	 * Construct the decoder
@@ -67,7 +105,9 @@ class DecoderForOnePassage {
 		this.maxInstrs = config.maxPassageInstructions();
 		this.maxStrides = config.maxPassageStrides();
 		EntryPcodeOp entryOp = new EntryPcodeOp(seed);
-		externalBranches.put(entryOp, new RExtBranch(entryOp, seed, Reachability.WITHOUT_CTXMOD));
+		externalBranches.put(entryOp, new RExtBranch(entryOp, seed,
+			config.foldConstants() ? new FoldedState(decoder.thread.getLanguage()) : null,
+			CtxReach.WITHOUT_CTXMOD));
 	}
 
 	/**
@@ -76,11 +116,10 @@ class DecoderForOnePassage {
 	void decodePassage() {
 		while (opCount < maxOps && instructionCount < maxInstrs &&
 			strides.size() < maxStrides) {
-			Entry<PcodeOp, RExtBranch> nextEnt = externalBranches.pollFirstEntry();
-			if (nextEnt == null) {
+			RExtBranch next = externalBranches.next();
+			if (next == null) {
 				break;
 			}
-			RExtBranch next = nextEnt.getValue();
 			AddrCtx start = next.to();
 
 			if (decoder.thread.hasEntry(start)) {
@@ -90,7 +129,7 @@ class DecoderForOnePassage {
 				otherBranches.put(next.from(), next);
 			}
 			else {
-				decodeStride(start);
+				decodeStride(start, next.state());
 				PcodeOp to = Objects.requireNonNull(firstOps.get(start));
 				internalBranches.put(next.from(), next.toIntBranch(to));
 			}
@@ -99,17 +138,15 @@ class DecoderForOnePassage {
 
 	/**
 	 * Record that a direct branch was encountered.
-	 * 
 	 * <p>
 	 * If we've already decoded the target, we create an {@link IntBranch} record, and we're done.
-	 * Otherwise, we queue up an {@link ExtBranch} record. If multiple direct branches target the
+	 * Otherwise, we queue up the {@link ExtBranch} record. If multiple direct branches target the
 	 * same address, we still create separate entries. First, we note their {@link Branch#from()
 	 * from} fields will be different. Also, we ensure once we've terminated (probably because of a
 	 * quota), we must examine records still in the queue, but whose targets may have since been
 	 * decoded, and convert them to {@link IntBranch} records.
 	 * 
-	 * @param from the op representing or causing the control flow
-	 * @param to the target of the branch
+	 * @param eb the tentatively-external branch whose flow we may follow
 	 */
 	void flowTo(RExtBranch eb) {
 		if (!eb.reach().canReachWithoutCtxMod()) {
@@ -128,17 +165,23 @@ class DecoderForOnePassage {
 	 * Decode a stride starting at the given address.
 	 * 
 	 * @param start the starting address and context
+	 * @param state the constant-folding state at the given start
 	 */
-	private void decodeStride(AddrCtx start) {
-		DecodedStride stride = new DecoderForOneStride(decoder, this, start).decode();
+	private void decodeStride(AddrCtx start, FoldedState state) {
+		DecodedStride stride = new DecoderForOneStride(decoder, this, start, state).decode();
 		opCount += stride.ops().size();
 		instructionCount += stride.instructions().size();
 		strides.add(stride);
 	}
 
+	void revalidateFolded() {
+		if (decoder.thread.getMachine().getConfiguration().foldConstants()) {
+			new FoldRevalidator(this).revalidate();
+		}
+	}
+
 	/**
 	 * Sort out the result and create the decoded passage
-	 * 
 	 * <p>
 	 * The strides are sorted by their seeds (contextreg value then address), and their code
 	 * concatenated together. The various types of branches are also all combined. (They can still
@@ -154,7 +197,7 @@ class DecoderForOnePassage {
 			strides.stream().flatMap(b -> b.instructions().stream()).toList();
 		Map<PcodeOp, PBranch> branches = otherBranches;
 		branches.putAll(internalBranches);
-		for (RExtBranch eb : externalBranches.values()) {
+		for (RExtBranch eb : externalBranches.remaining()) {
 			if (!eb.reach().canReachWithoutCtxMod()) {
 				branches.put(eb.from(), eb);
 			}
@@ -167,7 +210,7 @@ class DecoderForOnePassage {
 			}
 		}
 		return new JitPassage(decoder.thread.getLanguage(), seed, code, decoder.library,
-			instructions, branches, MapUtils.invertMap(firstOps));
+			instructions, branches, MapUtils.invertMap(firstOps), folded);
 	}
 
 	/**
@@ -175,7 +218,78 @@ class DecoderForOnePassage {
 	 * 
 	 * @return the library
 	 */
-	PcodeUseropLibrary<Object> library() {
+	public PcodeUseropLibrary<MaskedBytes> library() {
 		return decoder.library;
+	}
+
+	static boolean vnArrsEquivalent(Varnode[] a, Varnode[] b) {
+		int n = a.length;
+		if (n != b.length) {
+			return false;
+		}
+		for (int i = 0; i < n; i++) {
+			if (!vnsEquivalent(a[i], b[i])) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	static boolean vnsEquivalent(Varnode a, Varnode b) {
+		if ((a == null) != (b == null)) {
+			return false;
+		}
+		if (a == null) {
+			return true;
+		}
+		return a.getOffset() == b.getOffset() && a.getSize() == b.getSize() &&
+			a.getSpace() == b.getSpace();
+	}
+
+	/**
+	 * Because {@link PcodeOp} does not override {@link Object#equals}, we define one here for our
+	 * specific purposes.
+	 * 
+	 * @param a the first op
+	 * @param b the second op
+	 * @return true if the ops have the same opcode, output, and inputs
+	 */
+	static boolean opsEquivalent(PcodeOp a, PcodeOp b) {
+		if ((a instanceof NopPcodeOp) != (b instanceof NopPcodeOp)) {
+			return false;
+		}
+		if (a.getOpcode() != b.getOpcode()) {
+			return false;
+		}
+		if (!vnsEquivalent(a.getOutput(), b.getOutput())) {
+			return false;
+		}
+		if (!vnArrsEquivalent(a.getInputs(), b.getInputs())) {
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Check if the given op was replaced with the same program as before
+	 * 
+	 * @param op the inlined op
+	 * @param revalidated the newly-observed replacement
+	 * @return true if the replacement observed during decode is the same as the one given
+	 */
+	public boolean checkSameInline(PcodeOp op, List<PcodeOp> revalidated) {
+		List<PcodeOp> original = inlines.get(op);
+		int n = original.size();
+		if (n != revalidated.size()) {
+			return false;
+		}
+		for (int i = 0; i < n; i++) {
+			PcodeOp oOp = original.get(i);
+			PcodeOp rOp = revalidated.get(i);
+			if (!opsEquivalent(oOp, rOp)) {
+				return false;
+			}
+		}
+		return true;
 	}
 }

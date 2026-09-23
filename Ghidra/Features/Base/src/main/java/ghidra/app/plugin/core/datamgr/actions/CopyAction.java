@@ -71,7 +71,7 @@ public class CopyAction extends DockingAction {
 			if (node instanceof ArchiveRootNode) {
 				return true;
 			}
-			else if (node instanceof ArchiveNode) {
+			else if (node instanceof DataTypeStoreNode) {
 				return true;
 			}
 			else if (node instanceof CategoryNode) {

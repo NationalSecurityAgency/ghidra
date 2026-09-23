@@ -45,7 +45,7 @@ public interface DynamicColumnTableModel<ROW_TYPE>
 	 * The preference key is used to save the column state of this configurable model.  All models
 	 * that share a preference key will share the same visible column state.  
 	 * The {@link GTableColumnModel} manages this state for the framework.  The column model will 
-	 * ask the table for its preference key, which will ask the model when not key has been set on
+	 * ask the table for its preference key, which will ask the model when no key has been set on
 	 * the table.  In the case that no key is set in the table or the model, a key will be created
 	 * based on the classname and default columns.
 	 * 

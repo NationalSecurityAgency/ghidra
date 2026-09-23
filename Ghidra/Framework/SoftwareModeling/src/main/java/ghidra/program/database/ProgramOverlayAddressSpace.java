@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,8 @@ public class ProgramOverlayAddressSpace extends OverlayAddressSpace {
 	 * @param baseSpace base address space (type should be restricted as neccessary by caller)
 	 * @param unique assigned unique ID
 	 * @param overlayRegionSupplier callback handler which supplies the defined address set 
-	 * for a specified overlay address space. 
+	 * for a specified overlay address space.  If memory is not yet available 
+	 * a null AddressSet may be returned by the supplier.  A null supplier may also be specified.
 	 * @param factory used to determine a suitable ordered overlay ordered-key used for
 	 * {@link #equals(Object)} and {@link #compareTo(AddressSpace)}.
 	 * @throws DuplicateNameException if specified name duplicates an existing address space name

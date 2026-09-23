@@ -34,7 +34,7 @@ public class CategoryNode extends DataTypeTreeNode {
 	private boolean isCut;
 	private DtFilterState filterState;
 
-	public CategoryNode(Category category, DtFilterState filterState) {
+	protected CategoryNode(Category category, DtFilterState filterState) {
 		this.filterState = filterState;
 		setCategory(category);
 	}
@@ -311,7 +311,7 @@ public class CategoryNode extends DataTypeTreeNode {
 	}
 
 	@Override
-	public ArchiveNode getArchiveNode() {
+	public DataTypeStoreNode getArchiveNode() {
 		GTreeNode parent = getParent();
 		if (parent == null) {
 			return null; // could happen during tree mutations
@@ -322,7 +322,7 @@ public class CategoryNode extends DataTypeTreeNode {
 
 	@Override
 	public boolean isModifiable() {
-		ArchiveNode archiveNode = getArchiveNode();
+		DataTypeStoreNode archiveNode = getArchiveNode();
 		if (archiveNode == null) {
 			return false;
 		}

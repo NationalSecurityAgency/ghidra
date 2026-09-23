@@ -25,9 +25,11 @@ import ghidra.pcode.emu.jit.JitPassage.*;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.*;
 import ghidra.pcode.emu.jit.analysis.JitDataFlowState;
+import ghidra.pcode.emu.jit.folding.*;
 import ghidra.pcode.emu.jit.op.JitNopOp;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
+import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropSymbolMap;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
@@ -39,18 +41,28 @@ import ghidra.util.Msg;
 
 /**
  * The p-code interpreter used during passage decode
- * 
  * <p>
  * Aside from branches, this interpreter simply logs each op, so that they get collected into the
  * greater stride and passage. It does "rewrite" the ops, so that we can easily recover the input
  * context, especially when the op is emitted from a user inject. For branches, this interpreter
  * creates the appropriate {@link Branch} records and notifies the passage decoder of new seeds.
- * 
  * <p>
  * This executor also implements the {@link DisassemblerContext} to track context changes, namely
  * uses of {@code globalset}. This is kept in {@link #futCtx}. <b>TODO</b>: Should {@link #futCtx}
  * be moved into the passage decoder to ensure it persists for more than a single instruction? I'm
  * not sure whether or not that is already taken care of by the {@link Disassembler}.
+ * <p>
+ * Some ops requiring special attention:
+ * <ul>
+ * <li>{@link PcodeOp#CALLOTHER callother} - in case we're able to inline a p-code userop. Note that
+ * if we inline the userop, we still retain the {@code callother} op, because internal jumps may
+ * target it. It is easier to leave it in the books and {@link JitNopOp nop} it out later than to
+ * try to substitute the first inlined op. Worse, if the inlined userop emits no p-code,
+ * substitution would get especially difficult.</li>
+ * <li>{@link PcodeOp#UNIMPLEMENTED unimplemented} - because that will require us to create an
+ * {@link ErrBranch} record. All other ops must still be added to the decoded passage, but not (yet)
+ * interpreted.</li>
+ * </ul>
  * 
  * @implNote I had considered using a {@link JitDataFlowState} here, but that's Not a Good Idea,
  *           because a stride is not generally a <em>basic block</em>. A "stride" is just a
@@ -66,10 +78,8 @@ import ghidra.util.Msg;
  * @implNote <b>WARNING</b>: This executor has no {@link PcodeExecutorState state} object. Care must
  *           be taken to ensure we override any method that assumes we have one, and that we don't
  *           invoke any method from the superclass that assumes we have one.
- * 
  */
-class DecoderExecutor extends PcodeExecutor<Object>
-		implements DisassemblerContextAdapter {
+class DecoderExecutor extends FoldingExecutor implements DisassemblerContextAdapter, CanDecode {
 	private final DecoderForOneStride stride;
 	final AddrCtx at;
 
@@ -82,25 +92,24 @@ class DecoderExecutor extends PcodeExecutor<Object>
 	final List<PcodeOp> opsForThisStep = new ArrayList<>();
 	private final List<SBranch> branchesForThisStep = new ArrayList<>();
 
-	private final Map<PcodeOp, DecodedPcodeOp> rewrites = new HashMap<>();
-
 	/**
 	 * Construct the interpreter
 	 * 
 	 * @param stride the stride being decoded
 	 * @param at the address and contextreg value of the instruction
+	 * @param state the constant-folding state
 	 * @param instruction the instruction, or {@code null}
 	 */
-	DecoderExecutor(DecoderForOneStride stride, AddrCtx at, PseudoInstruction instruction) {
-		super(stride.decoder.thread.getLanguage(), null, null, null);
+	DecoderExecutor(DecoderForOneStride stride, AddrCtx at, FoldedState state,
+			PseudoInstruction instruction) {
 		this.stride = stride;
 		this.at = at;
+		super(stride.passage, state);
 		setInstruction(instruction);
 	}
 
 	/**
 	 * Construct the interpreter without an instruction
-	 * 
 	 * <p>
 	 * This initializes the interpreter without an instruction. The decoder must set the instruction
 	 * via {@link #setInstruction(PseudoInstruction)} as soon as it becomes available, either 1)
@@ -109,23 +118,22 @@ class DecoderExecutor extends PcodeExecutor<Object>
 	 * 
 	 * @param stride the stride being decoded
 	 * @param at the address and contextreg value of the instruction
+	 * @param state the constant-folding state
 	 */
-	DecoderExecutor(DecoderForOneStride stride, AddrCtx at) {
-		this(stride, at, null);
+	DecoderExecutor(DecoderForOneStride stride, AddrCtx at, FoldedState state) {
+		this(stride, at, state, null);
 	}
 
 	/**
 	 * Re-write the given op as a {@link DecodedPcodeOp} with the given address/contextreg value
-	 * 
 	 * <p>
 	 * If the given op is already a {@link DecodedPcodeOp}, i.e., a {@link DecodeErrorPcodeOp} or
 	 * {@link NopPcodeOp}, just return the same op without re-writing.
 	 * 
-	 * @param at the address and decode context
 	 * @param op the original p-code op
 	 * @return the equivalent op, re-written
 	 */
-	static DecodedPcodeOp rewriteOp(AddrCtx at, PcodeOp op) {
+	DecodedPcodeOp rewriteOp(PcodeOp op) {
 		if (op instanceof DecodedPcodeOp dec) {
 			assert dec.getAt().equals(at);
 			return dec;
@@ -134,24 +142,17 @@ class DecoderExecutor extends PcodeExecutor<Object>
 	}
 
 	/**
-	 * Re-write the given op
+	 * Apply {@link #rewriteOp(PcodeOp)} over a list
 	 * 
-	 * <p>
-	 * Because we create an interpreter for each instruction step, we already know the target
-	 * address and decode context. We re-write the op to capture that target. If we've already
-	 * re-written the op, return the existing one to ensure we retain identity in the re-written
-	 * realm.
-	 * 
-	 * @param op the op to re-write
-	 * @return the equivalent op, re-written
+	 * @param ops the ops
+	 * @return the equivalent ops, re-written
 	 */
-	DecodedPcodeOp rewrite(PcodeOp op) {
-		return rewrites.computeIfAbsent(op, o -> rewriteOp(at, o));
+	List<PcodeOp> rewriteOps(List<PcodeOp> ops) {
+		return ops.stream().<PcodeOp> map(this::rewriteOp).toList();
 	}
 
 	/**
 	 * Set the current instruction.
-	 * 
 	 * <p>
 	 * This also pre-computes the resulting "flow" context from the given instruction. That is, the
 	 * input context for the next decode instruction, not accounting for {@code globalset}. It is
@@ -179,15 +180,15 @@ class DecoderExecutor extends PcodeExecutor<Object>
 
 	/**
 	 * Decode the instruction this executor is meant to interpret
-	 * 
 	 * <p>
 	 * This can be delayed if there is a user inject at the target address. In that case, this may
-	 * be invoked by {@link DecoderUseropLibrary#emu_exec_decoded(PcodeExecutor)} or
-	 * {@link DecoderUseropLibrary#emu_skip_decoded(PcodeExecutor)}.
+	 * be invoked by {@link DecoderUseropLibrary#emu_exec_decoded} or
+	 * {@link DecoderUseropLibrary#emu_skip_decoded}.
 	 * 
 	 * @return the decoded instruction, which may be a {@link DecodeErrorInstruction}
 	 */
-	PseudoInstruction decodeInstruction() {
+	@Override
+	public PseudoInstruction decodeInstruction() {
 		PseudoInstruction instruction = stride.decoder.decodeInstruction(at.address, at.rvCtx);
 		setInstruction(instruction);
 		return instruction;
@@ -204,13 +205,9 @@ class DecoderExecutor extends PcodeExecutor<Object>
 		}
 	}
 
-	/**
-	 * Interpret the given program with the passage decoder's userop library
-	 * 
-	 * @param program the p-code to interpret
-	 */
-	public void execute(PcodeProgram program) {
-		execute(program, stride.passage.library());
+	@Override
+	public PcodeFrame begin(List<PcodeOp> code, PcodeUseropSymbolMap userops) {
+		return super.begin(rewriteOps(code), userops);
 	}
 
 	/**
@@ -223,7 +220,7 @@ class DecoderExecutor extends PcodeExecutor<Object>
 	 *           proper, we have to add that nop.
 	 */
 	@Override
-	public void finish(PcodeFrame frame, PcodeUseropLibrary<Object> library) {
+	public void finish(PcodeFrame frame, PcodeUseropLibrary<MaskedBytes> library) {
 		super.finish(frame, library);
 		NopPcodeOp termNop = termNopsPerFrame.remove(frame);
 		if (termNop != null) {
@@ -233,49 +230,23 @@ class DecoderExecutor extends PcodeExecutor<Object>
 
 	/**
 	 * {@inheritDoc}
-	 * 
 	 * <p>
-	 * We only really need to interpret branching ops here. We also interpret
-	 * {@link PcodeOp#CALLOTHER callother}, in case wer're able to inline a p-code userop. Note that
-	 * if we inline the userop, we still retain the {@code callother} op, because internal jumps may
-	 * target it. It is easier to leave it in the books and {@link JitNopOp nop} it out later than
-	 * to try to substitute the first inlined op. Worse, if the inlined userop emits no p-code,
-	 * substitution would get especially difficult.
-	 * 
-	 * <p>
-	 * We also interpret {@link PcodeOp#UNIMPLEMENTED unimplemented}, because that will require us
-	 * to create an {@link ErrBranch} record. All other ops must still be added to the decoded
-	 * passage, but not (yet) interpreted.
+	 * We interpret all the ops here, as we hope to fold constants for simplification purposes, esp.
+	 * for re-writing {@link PcodeOp#BRANCHIND} and {@link PcodeOp#CALLIND} ops.
 	 */
 	@Override
-	public void stepOp(PcodeOp op, PcodeFrame frame, PcodeUseropLibrary<Object> library) {
+	public void stepOp(PcodeOp op, PcodeFrame frame, PcodeUseropLibrary<MaskedBytes> library) {
 		/**
 		 * NOTE: Must log every op, including inlined CALLOTHER's, because an internal jump may
 		 * refer to that CALLOTHER. It's easier, I think, to snuff the op later than it is to try to
 		 * substitute the refs.
 		 */
-		op = rewrite(op);
-		switch (op.getOpcode()) {
-			case PcodeOp.BRANCH, //
-					PcodeOp.CBRANCH, //
-					PcodeOp.CALL, //
-					PcodeOp.BRANCHIND, //
-					PcodeOp.CALLIND, //
-					PcodeOp.RETURN, //
-					PcodeOp.CALLOTHER, //
-					PcodeOp.UNIMPLEMENTED -> {
-				opsForThisStep.add(op);
-				super.stepOp(op, frame, library);
-			}
-			default -> {
-				opsForThisStep.add(op);
-			}
-		}
+		opsForThisStep.add(op);
+		super.stepOp(op, frame, library);
 	}
 
 	/**
 	 * {@inheritDoc}
-	 * 
 	 * <p>
 	 * We interpret this the same as an unconditional branch, because at this point, we need only
 	 * collect branch targets to seed additional strides.
@@ -283,11 +254,11 @@ class DecoderExecutor extends PcodeExecutor<Object>
 	@Override
 	public void executeConditionalBranch(PcodeOp op, PcodeFrame frame) {
 		doExecuteBranch(op, frame);
+		super.executeConditionalBranch(op, frame); // Try to fold the predicate
 	}
 
 	/**
 	 * {@inheritDoc}
-	 * 
 	 * <p>
 	 * We override this to prevent an attempt to write PC to the {@link #getState() state}, which is
 	 * {@code null}.
@@ -297,13 +268,12 @@ class DecoderExecutor extends PcodeExecutor<Object>
 	}
 
 	@Override
-	protected void branchToOffset(PcodeOp op, Object offset, PcodeFrame frame) {
+	protected void branchToOffset(PcodeOp op, MaskedBytes offset, PcodeFrame frame) {
 		throw new AssertionError();
 	}
 
 	/**
 	 * {@inheritDoc}
-	 * 
 	 * <p>
 	 * This creates an {@link ExtBranch} record and collects it for this instruction step. The
 	 * record will first be used to check for fall through. Then, the passage decoder is notified,
@@ -313,12 +283,12 @@ class DecoderExecutor extends PcodeExecutor<Object>
 	 */
 	@Override
 	protected void branchToAddress(PcodeOp op, Address target) {
-		branchesForThisStep.add(new SExtBranch(op, takeTargetContext(target)));
+		branchesForThisStep.add(
+			new SExtBranch(op, takeTargetContext(target), state == null ? null : state.fork()));
 	}
 
 	/**
 	 * {@inheritDoc}
-	 * 
 	 * <p>
 	 * This creates an {@link IntBranch} record and collects it for this instruction step. The
 	 * record will first be used to check for fall through. Then, the passage decoder is notified,
@@ -331,22 +301,22 @@ class DecoderExecutor extends PcodeExecutor<Object>
 		int tgtSeq = op.getSeqnum().getTime() + relative;
 		if (tgtSeq == frame.getCode().size()) {
 			NopPcodeOp termNop =
-				termNopsPerFrame.computeIfAbsent(frame, f -> new NopPcodeOp(at, tgtSeq));
+				termNopsPerFrame.computeIfAbsent(frame, _ -> new NopPcodeOp(at, tgtSeq));
 			branchesForThisStep.add(new SIntBranch(op, termNop, false));
 		}
 		else {
 			PcodeOp to = frame.getCode().get(op.getSeqnum().getTime() + relative);
-			branchesForThisStep.add(new SIntBranch(op, rewrite(to), false));
+			branchesForThisStep.add(new SIntBranch(op, to, false));
 		}
 	}
 
 	/**
 	 * {@inheritDoc}
-	 * 
 	 * <p>
-	 * This create an {@link IndBranch} record and collects it for this instruction step. The record
-	 * will first be used to check for fall through. Then, the passage decoder is notified, which
-	 * collects the records to later passage-wide control flow analysis.
+	 * This creates an {@link IndBranch} record and collects it for this instruction step. The
+	 * record will first be used to check for fall through. Then, the passage decoder is notified,
+	 * which collects the records for later passage-wide control flow analysis. The superclass only
+	 * delegates here if it wasn't able to fold the indirect branch to a direct one.
 	 * 
 	 * @see #checkFallthroughAndAccumulate(PcodeProgram)
 	 */
@@ -357,7 +327,6 @@ class DecoderExecutor extends PcodeExecutor<Object>
 
 	/**
 	 * {@inheritDoc}
-	 * 
 	 * <p>
 	 * This create an {@link ErrBranch} record and collects it for this instruction step. The record
 	 * will first be used to check for fall through. Then, the passage decoder is notified, which
@@ -382,7 +351,6 @@ class DecoderExecutor extends PcodeExecutor<Object>
 
 	/**
 	 * {@inheritDoc}
-	 * 
 	 * <p>
 	 * This create an {@link ErrBranch} record and collects it for this instruction step. The record
 	 * will first be used to check for fall through. Then, the passage decoder is notified, which
@@ -392,7 +360,7 @@ class DecoderExecutor extends PcodeExecutor<Object>
 	 */
 	@Override
 	protected void onMissingUseropDef(PcodeOp op, PcodeFrame frame, String opName,
-			PcodeUseropLibrary<Object> library) {
+			PcodeUseropLibrary<MaskedBytes> library) {
 		branchesForThisStep.add(
 			new ErrBranch(op, "Sleigh userop '%s' is not in the library".formatted(opName)));
 	}
@@ -402,12 +370,11 @@ class DecoderExecutor extends PcodeExecutor<Object>
 		if (!value.getRegister().isProcessorContext()) {
 			return;
 		}
-		futCtx.compute(address, (a, v) -> v == null ? value : v.combineValues(value));
+		futCtx.compute(address, (_, v) -> v == null ? value : v.combineValues(value));
 	}
 
 	/**
 	 * Derive the contextreg value at the given target address (branch or fall through).
-	 * 
 	 * <p>
 	 * An instruction's constructors may use {@code globalset} to place context changes at specific
 	 * addresses. Those changes are collected by
@@ -431,7 +398,6 @@ class DecoderExecutor extends PcodeExecutor<Object>
 	/**
 	 * After p-code interpretation, check if the instruction has fall through, notify the stride
 	 * decoder of the instruction's ops, and notify the passage of the instruction's branches.
-	 * 
 	 * <p>
 	 * To determine whether there's fall through, this performs a miniature control flow analysis on
 	 * just this step's p-code ops. This is required because a user inject can be very complex, and
@@ -439,7 +405,6 @@ class DecoderExecutor extends PcodeExecutor<Object>
 	 * In particular {@link Instruction#hasFallthrough()} is not sufficient, for at least two
 	 * reasons: 1) The aforementioned user inject possibilities, 2) We do not consider a
 	 * {@link PcodeOp#CALL call} or {@link PcodeOp#CALLIND callind} as having fall through.
-	 * 
 	 * <p>
 	 * To use control flow analysis as a means of checking for fall through, we append a special
 	 * "probe" {@link ExitPcodeOp} along with an {@link ExtBranch} record to {@link AddrCtx#NOWHERE
@@ -453,14 +418,14 @@ class DecoderExecutor extends PcodeExecutor<Object>
 	 * @param from the instruction's or inject's p-code
 	 * @return the reachability of the fall-through flow
 	 */
-	public Reachability checkFallthroughAndAccumulate(PcodeProgram from) {
+	public CtxReach checkFallthroughAndAccumulate(PcodeProgram from) {
 		if (opsForThisStep.isEmpty()) {
-			return Reachability.WITHOUT_CTXMOD;
+			return CtxReach.WITHOUT_CTXMOD;
 		}
 
 		ExitPcodeOp probeOp = ExitPcodeOp.exit(AddrCtx.NOWHERE);
 		opsForThisStep.add(probeOp);
-		SExtBranch probeBranch = new SExtBranch(probeOp, AddrCtx.NOWHERE);
+		SExtBranch probeBranch = new SExtBranch(probeOp, AddrCtx.NOWHERE, null);
 		branchesForThisStep.add(probeBranch);
 
 		PcodeProgram program = new PcodeProgram(from, opsForThisStep);
@@ -475,11 +440,11 @@ class DecoderExecutor extends PcodeExecutor<Object>
 		JitBlock entry = blocks.firstEntry().getValue();
 		JitBlock exit = blocks.lastEntry().getValue();
 
-		Map<JitBlock, Reachability> reachable = new HashMap<>();
-		collectReachable(reachable, entry, Reachability.WITHOUT_CTXMOD);
+		Map<JitBlock, CtxReach> reachable = new HashMap<>();
+		collectCtxReach(reachable, entry, CtxReach.WITHOUT_CTXMOD);
 
 		for (JitBlock block : blocks.values()) {
-			Reachability reach = reachable.get(block);
+			CtxReach reach = reachable.get(block);
 			if (reach == null) {
 				continue;
 			}
@@ -522,7 +487,7 @@ class DecoderExecutor extends PcodeExecutor<Object>
 			if (name == null) {
 				continue;
 			}
-			PcodeUseropDefinition<Object> userop = stride.passage.library().getUserops().get(name);
+			PcodeUseropDefinition<?> userop = stride.passage.library().getUserops().get(name);
 			if (userop == null) {
 				continue;
 			}
@@ -535,38 +500,36 @@ class DecoderExecutor extends PcodeExecutor<Object>
 
 	/**
 	 * The reachability test mentioned in {@link #checkFallthroughAndAccumulate(PcodeProgram)}
-	 * 
 	 * <p>
 	 * Collects the reachability of blocks reachable from {@code cur} into the given mutable map.
 	 * The value indicates whether or not context modifications can occur along the paths to the
 	 * block (key). If a block is not in the map, it is not reachable.
+	 * <p>
+	 * Context-modifying userops are all considered hazards, but we shouldn't abort until after the
+	 * instruction. If the exit is reachable without passing through a context modification, then
+	 * we're good to proceed. Otherwise, no. Additionally, we're going to check all branches, direct
+	 * or indirect, to see if they are reachable without context modification. If they are, then we
+	 * treat them as usual. If not, then they will be treated as indirect, and we'll neglect to
+	 * "retire" the context, because presumably, the userop will already have caused that retirement
+	 * and modified it in place.
+	 * <p>
+	 * If one branch is reachable by multiple paths where some require context modification and some
+	 * do not, we'll keep a local variable at runtime to track whether a context-modifying userop
+	 * has actually been executed. We'll generate code to check this variable at the branch site and
+	 * treat it as a hazard if it is set.
 	 * 
 	 * @param into a mutable map for collecting reachable blocks
 	 * @param cur the source block, or an intermediate during recursion
-	 * @param the computed reachability of the source block. Use {@link Reachability#WITHOUT_CTXMOD}
-	 *            for the seed.
+	 * @param the computed reachability of the source block. Use {@link CtxReach#WITHOUT_CTXMOD} for
+	 *            the seed.
 	 */
-	private void collectReachable(Map<JitBlock, Reachability> into, JitBlock cur,
-			Reachability how) {
-		Reachability curHow = into.get(cur);
+	private void collectCtxReach(Map<JitBlock, CtxReach> into, JitBlock cur,
+			CtxReach how) {
+		CtxReach curHow = into.get(cur);
 
-		/**
-		 * Context-modifying userops are all considered hazards, but we shouldn't abort until after
-		 * the instruction. If the exit is reachable without passing through a context modification,
-		 * then we're good to proceed. Otherwise, no. Additionally, we're going to check all
-		 * branches, direct or indirect, to see if they are reachable without context modification.
-		 * If they are, then we treat them as usual. If not, then they will be treated as indirect,
-		 * and we'll neglect to "retire" the context, because presumably, the userop will already
-		 * have caused that retirement and modified it in place.
-		 * 
-		 * If one branch is reachable by multiple paths where some require context modification and
-		 * some do not, we'll keep a local variable at runtime to track whether a context-modifying
-		 * userop has actually been executed. We'll generate code to check this variable at the
-		 * branch site and treat it as a hazard if it is set.
-		 */
 		if (blockModifiesContext(cur)) {
 			// Not combine. If we're MAYBE here, we still become WITH_CTX.
-			how = Reachability.WITH_CTXMOD;
+			how = CtxReach.WITH_CTXMOD;
 		}
 		else {
 			how = how.combine(curHow);
@@ -578,13 +541,12 @@ class DecoderExecutor extends PcodeExecutor<Object>
 		into.put(cur, how);
 
 		for (BlockFlow flow : cur.flowsFrom().values()) {
-			collectReachable(into, flow.to(), how);
+			collectCtxReach(into, flow.to(), how);
 		}
 	}
 
 	/**
 	 * Compute the fall-through address
-	 * 
 	 * <p>
 	 * This computes the "next" address whether or not the instruction actually has fall through.
 	 * The caller should check for fall through first.
@@ -607,7 +569,6 @@ class DecoderExecutor extends PcodeExecutor<Object>
 
 	/**
 	 * Notify the stride of an instruction
-	 * 
 	 * <p>
 	 * For addresses without injects, every decoded instruction ought to be included in the stride.
 	 * For an address with an inject, a decoded instruction should only be included if it is
@@ -617,5 +578,15 @@ class DecoderExecutor extends PcodeExecutor<Object>
 	 */
 	void addInstruction(PseudoInstruction instruction) {
 		stride.instructions.add(instruction);
+	}
+
+	/**
+	 * Notify the passage of an inlined userop
+	 * 
+	 * @param op the {@link PcodeOp#CALLOTHER} op
+	 * @param replacement the replacement ops
+	 */
+	void recordInline(PcodeOp op, List<PcodeOp> replacement) {
+		stride.passage.inlines.put(op, replacement);
 	}
 }

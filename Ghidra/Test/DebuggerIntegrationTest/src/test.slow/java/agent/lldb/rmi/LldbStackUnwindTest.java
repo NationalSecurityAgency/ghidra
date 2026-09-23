@@ -59,15 +59,18 @@ import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
+import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
+import ghidra.test.TestProgramManager;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.module.DBTraceStaticMappingManager;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.modules.TraceStaticMapping;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
 import junit.framework.AssertionFailedError;
 
 @Category(NightlyCategory.class) // this may actually be an @PortSensitive test
@@ -140,19 +143,11 @@ public class LldbStackUnwindTest extends AbstractLldbTraceRmiTest {
 
 	@Test
 	public void testBasicUnwind() throws Throwable {
-		List<String> files = Arrays.asList("kernel32.dll", "expSpin.exe", "ntdll.dll");
-
 		addPlugins();
 
-		DomainFile[] dfs = getDomainFiles(files);
-		tool.acceptDomainFiles(dfs);
-
-		DomainFile traceDF = getDomainFile("expSpin_lldb");
-		ManagedDomainObject<Trace> mdo = new ManagedDomainObject<>(traceDF, Trace.class, monitor);
-		resyncMappings(mdo.get());
-		tool.acceptDomainFiles(new DomainFile[] { traceDF });
-
-		programs = openPrograms(dfs);
+		List<String> files =
+			Arrays.asList("kernel32.dll", "expSpin.exe", "ntdll.dll");
+		ManagedDomainObject<Trace> mdo = initPrograms("expSpin_lldb", files);
 
 		try (LldbAndTrace conn = startAndSyncLldb(mdo)) {
 			traceManager.activateSnap(2);
@@ -170,19 +165,10 @@ public class LldbStackUnwindTest extends AbstractLldbTraceRmiTest {
 
 	@Test
 	public void testUnwindActivateMidStack() throws Throwable {
-		List<String> files = Arrays.asList("kernel32.dll", "expSpin.exe", "ntdll.dll");
-
 		addPlugins();
 
-		DomainFile[] dfs = getDomainFiles(files);
-		tool.acceptDomainFiles(dfs);
-
-		DomainFile traceDF = getDomainFile("expSpin_lldb");
-		ManagedDomainObject<Trace> mdo = new ManagedDomainObject<>(traceDF, Trace.class, monitor);
-		resyncMappings(mdo.get());
-		tool.acceptDomainFiles(new DomainFile[] { traceDF });
-
-		programs = openPrograms(dfs);
+		List<String> files = Arrays.asList("kernel32.dll", "expSpin.exe", "ntdll.dll");
+		ManagedDomainObject<Trace> mdo = initPrograms("expSpin_lldb", files);
 
 		try (LldbAndTrace conn = startAndSyncLldb(mdo)) {
 			traceManager.activateSnap(2);
@@ -202,19 +188,10 @@ public class LldbStackUnwindTest extends AbstractLldbTraceRmiTest {
 
 	@Test
 	public void testUnwindActivateHighFrame() throws Throwable {
-		List<String> files = Arrays.asList("kernel32.dll", "expSpin.exe", "ntdll.dll");
-
 		addPlugins();
 
-		DomainFile[] dfs = getDomainFiles(files);
-		tool.acceptDomainFiles(dfs);
-
-		DomainFile traceDF = getDomainFile("expSpin_lldb");
-		ManagedDomainObject<Trace> mdo = new ManagedDomainObject<>(traceDF, Trace.class, monitor);
-		resyncMappings(mdo.get());
-		tool.acceptDomainFiles(new DomainFile[] { traceDF });
-
-		programs = openPrograms(dfs);
+		List<String> files = Arrays.asList("kernel32.dll", "expSpin.exe", "ntdll.dll");
+		ManagedDomainObject<Trace> mdo = initPrograms("expSpin_lldb", files);
 
 		try (LldbAndTrace conn = startAndSyncLldb(mdo)) {
 			traceManager.activateSnap(2);
@@ -234,19 +211,10 @@ public class LldbStackUnwindTest extends AbstractLldbTraceRmiTest {
 
 	@Test
 	public void testBasicUnwindMissingLowFrame() throws Throwable {
-		List<String> files = Arrays.asList("expSpin.exe", "ntdll.dll");
-
 		addPlugins();
 
-		DomainFile[] dfs = getDomainFiles(files);
-		tool.acceptDomainFiles(dfs);
-
-		DomainFile traceDF = getDomainFile("expSpin_lldb");
-		ManagedDomainObject<Trace> mdo = new ManagedDomainObject<>(traceDF, Trace.class, monitor);
-		resyncMappings(mdo.get());
-		tool.acceptDomainFiles(new DomainFile[] { traceDF });
-
-		programs = openPrograms(dfs);
+		List<String> files = Arrays.asList("expSpin.exe", "ntdll.dll");
+		ManagedDomainObject<Trace> mdo = initPrograms("expSpin_lldb", files);
 
 		try (LldbAndTrace conn = startAndSyncLldb(mdo)) {
 			traceManager.activateSnap(2);
@@ -263,19 +231,10 @@ public class LldbStackUnwindTest extends AbstractLldbTraceRmiTest {
 
 	@Test
 	public void testBasicUnwindMissingMedFrame() throws Throwable {
-		List<String> files = Arrays.asList("kernel32.dll", "ntdll.dll");
-
 		addPlugins();
 
-		DomainFile[] dfs = getDomainFiles(files);
-		tool.acceptDomainFiles(dfs);
-
-		DomainFile traceDF = getDomainFile("expSpin_lldb");
-		ManagedDomainObject<Trace> mdo = new ManagedDomainObject<>(traceDF, Trace.class, monitor);
-		resyncMappings(mdo.get());
-		tool.acceptDomainFiles(new DomainFile[] { traceDF });
-
-		programs = openPrograms(dfs);
+		List<String> files = Arrays.asList("kernel32.dll", "ntdll.dll");
+		ManagedDomainObject<Trace> mdo = initPrograms("expSpin_lldb", files);
 
 		try (LldbAndTrace conn = startAndSyncLldb(mdo)) {
 			traceManager.activateSnap(2);
@@ -292,19 +251,10 @@ public class LldbStackUnwindTest extends AbstractLldbTraceRmiTest {
 
 	@Test
 	public void testBasicUnwindMissingHighFrame() throws Throwable {
-		List<String> files = Arrays.asList("kernel32.dll", "expSpin.exe");
-
 		addPlugins();
 
-		DomainFile[] dfs = getDomainFiles(files);
-		tool.acceptDomainFiles(dfs);
-
-		DomainFile traceDF = getDomainFile("expSpin_lldb");
-		ManagedDomainObject<Trace> mdo = new ManagedDomainObject<>(traceDF, Trace.class, monitor);
-		resyncMappings(mdo.get());
-		tool.acceptDomainFiles(new DomainFile[] { traceDF });
-
-		programs = openPrograms(dfs);
+		List<String> files = Arrays.asList("kernel32.dll", "expSpin.exe");
+		ManagedDomainObject<Trace> mdo = initPrograms("expSpin_lldb", files);
 
 		try (LldbAndTrace conn = startAndSyncLldb(mdo)) {
 			traceManager.activateSnap(2);
@@ -345,11 +295,11 @@ public class LldbStackUnwindTest extends AbstractLldbTraceRmiTest {
 			RowKey.FRAME,
 			"Frame: 1 FUN_140001000 pc=7ff6bd611040 sp=f900000000 base=f900000078",
 			RowKey.STORAGE, "Storage: Stack[-0x58]:4",
-			RowKey.TYPE, "Type: int",
+			RowKey.TYPE, "Type: int", // undefined4
 			RowKey.LOCATION, "Location: f900000020:4",
 			RowKey.BYTES, "Bytes: (UNKNOWN) 00 00 00 00",
 			RowKey.INTEGER, "Integer: (UNKNOWN) 0",
-			RowKey.VALUE, "Value: (UNKNOWN) 0h",
+			RowKey.VALUE, "Value: (UNKNOWN) 0h",  // 00000000h
 			RowKey.WARNINGS, "IGNORED"), table);
 	}
 
@@ -395,31 +345,47 @@ public class LldbStackUnwindTest extends AbstractLldbTraceRmiTest {
 		return getVariableValueTable(loc.pLoc, traceManager.getCurrent(), loc.fLoc, loc.field);
 	}
 
-	private DomainFile[] getDomainFiles(List<String> files)
-			throws InvalidNameException, CancelledException, IOException {
-		DomainFile[] dfs = new DomainFile[files.size()];
-		int i = 0;
-		for (String fname : files) {
-			dfs[i++] = getDomainFile(fname);
-		}
-		return dfs;
+	protected void addPlugins() throws Throwable {
+		codeBrowserPlugin = addPlugin(tool, CodeBrowserPlugin.class);
+		staticListing = codeBrowserPlugin.getProvider().getListingPanel();
+		listingPlugin = addPlugin(tool, DebuggerListingPlugin.class);
+		valuesPlugin = addPlugin(tool, VariableValueHoverPlugin.class);
+		mappingService = addPlugin(tool, DebuggerStaticMappingServicePlugin.class);
+		dynamicListing = listingPlugin.getProvider().getListingPanel();
+		//addPlugin(tool, DebuggerControlPlugin.class);
+		//addPlugin(tool, DebuggerStaticMappingPlugin.class);
+		//addPlugin(tool, DebuggerModelPlugin.class);
+		addPlugin(tool, DisassemblerPlugin.class);
+		addPlugin(tool, DecompilePlugin.class);
+		valuesService = valuesPlugin.getHoverService();
+
+		decompilerProvider = waitForComponentProvider(DecompilerProvider.class);
+		decompilerPanel = decompilerProvider.getDecompilerPanel();
+		tool.showComponentProvider(decompilerProvider, true);
 	}
 
-	private DomainFile getDomainFile(String fname)
-			throws InvalidNameException, CancelledException, IOException {
+	private ManagedDomainObject<Trace> initPrograms(String trace, List<String> files)
+			throws InvalidNameException, IOException, CancelledException, VersionException,
+			MalformedURLException, URISyntaxException {
+		TestProgramManager manager = new TestProgramManager();
 		DomainFolder rootFolder = tool.getProject()
 				.getProjectData()
 				.getRootFolder();
-		File f = getTestDataFile(fname + ".gzf");
-		return rootFolder.createFile(fname, f, monitor);
-	}
 
-	private List<Program> openPrograms(DomainFile[] files) {
-		List<Program> progs = new ArrayList<>();
-		for (int i = 0; i < files.length; i++) {
-			progs.add(programManager.openProgram(files[i]));
+		programs = new ArrayList<>();
+		for (String fname : files) {
+			ProgramDB pgm = manager.getProgram(fname);
+			DomainFile df = rootFolder.createFile(fname, pgm, monitor);
+			programs.add(programManager.openProgram(df));
+			manager.release(pgm);
 		}
-		return progs;
+
+		File f = getTestDataFile(trace + ".gzt");
+		DomainFile traceDF = rootFolder.createFile(trace, f, monitor);
+		ManagedDomainObject<Trace> mdo = new ManagedDomainObject<>(traceDF, Trace.class, monitor);
+		resyncMappings(mdo.get());
+		tool.acceptDomainFiles(new DomainFile[] { traceDF });
+		return mdo;
 	}
 
 	private void resyncMappings(Trace trace)
@@ -448,25 +414,6 @@ public class LldbStackUnwindTest extends AbstractLldbTraceRmiTest {
 					url, mapping.getStaticAddress());
 			}
 		}
-	}
-
-	protected void addPlugins() throws Throwable {
-		codeBrowserPlugin = addPlugin(tool, CodeBrowserPlugin.class);
-		staticListing = codeBrowserPlugin.getProvider().getListingPanel();
-		listingPlugin = addPlugin(tool, DebuggerListingPlugin.class);
-		valuesPlugin = addPlugin(tool, VariableValueHoverPlugin.class);
-		mappingService = addPlugin(tool, DebuggerStaticMappingServicePlugin.class);
-		dynamicListing = listingPlugin.getProvider().getListingPanel();
-		//addPlugin(tool, DebuggerControlPlugin.class);
-		//addPlugin(tool, DebuggerStaticMappingPlugin.class);
-		//addPlugin(tool, DebuggerModelPlugin.class);
-		addPlugin(tool, DisassemblerPlugin.class);
-		addPlugin(tool, DecompilePlugin.class);
-		valuesService = valuesPlugin.getHoverService();
-
-		decompilerProvider = waitForComponentProvider(DecompilerProvider.class);
-		decompilerPanel = decompilerProvider.getDecompilerPanel();
-		tool.showComponentProvider(decompilerProvider, true);
 	}
 
 	public record HoverLocation(ProgramLocation pLoc, FieldLocation fLoc, Field field,
@@ -601,6 +548,7 @@ public class LldbStackUnwindTest extends AbstractLldbTraceRmiTest {
 
 			@Override
 			public void dataChanged(BigInteger start, BigInteger end) {
+				// Ignore
 			}
 		});
 		tool.showComponentProvider(decompilerProvider, true);

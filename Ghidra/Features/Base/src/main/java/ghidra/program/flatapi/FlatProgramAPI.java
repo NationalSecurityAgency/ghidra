@@ -41,8 +41,10 @@ import ghidra.features.base.memsearch.searcher.MemorySearcher;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.database.dtarchive.DataTypeArchiveFactory;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
+import ghidra.program.model.dtarchive.*;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
@@ -2540,17 +2542,46 @@ public class FlatProgramAPI {
 	 * prevent the archive from being opened.  Such a warning condition will be logged and may 
 	 * result in missing or stale information for existing datatypes which have architecture related
 	 * data.  In some case it may be appropriate to 
-	 * {@link FileDataTypeManager#getWarning() check for warnings} on the returned archive
+	 * {@link DataTypeArchive#getWarning() check for warnings} on the returned archive
 	 * object prior to its use.
 	 * 
 	 * @param archiveFile the archive file to open
 	 * @param readOnly should file be opened read only
 	 * @return the data type manager
 	 * @throws Exception if there is any exception
+	 * @deprecated Use {@link #openFileDataTypeArchive(File, boolean)} instead. Then use 
+	 * {@link PersistentDataTypeArchive#getDataTypeManager()}
 	 */
+	@Deprecated(since = "12.2", forRemoval = true)
 	public final FileDataTypeManager openDataTypeArchive(File archiveFile, boolean readOnly)
 			throws Exception {
 		return FileDataTypeManager.openFileArchive(archiveFile, !readOnly);
+	}
+
+	/**
+	 * Opens an existing File Data Type Archive. When done using this archive, the script must call
+	 * archive.release(consumer) where consumer is the script that called this method (so typically,
+	 * use "this"  (i.e., achive.release(this))
+	 * <p>
+	 * <B>NOTE:</B> If archive has an assigned architecture, issues may arise due to a revised or
+	 * missing {@link Language}/{@link CompilerSpec} which will result in a warning but not
+	 * prevent the archive from being opened.  Such a warning condition will be logged and may 
+	 * result in missing or stale information for existing datatypes which have architecture related
+	 * data.  In some case it may be appropriate to 
+	 * {@link FileDataTypeArchive#getWarning() check for warnings} on the returned archive
+	 * object prior to its use.
+	 * 
+	 * @param archiveFile the archive file to open
+	 * @param readOnly should file be opened read only
+	 * @return the The file datatype archive
+	 * @throws Exception if there is any exception
+	 */
+	public final FileDataTypeArchive openFileDataTypeArchive(File archiveFile, boolean readOnly)
+			throws Exception {
+		if (readOnly) {
+			return DataTypeArchiveFactory.openReadOnly(archiveFile, this, TaskMonitor.DUMMY);
+		}
+		return DataTypeArchiveFactory.openForUpdate(archiveFile, true, this, TaskMonitor.DUMMY);
 	}
 
 	/**

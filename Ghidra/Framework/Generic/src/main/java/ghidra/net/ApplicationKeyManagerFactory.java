@@ -25,6 +25,7 @@ import java.util.*;
 import javax.net.ssl.*;
 
 import generic.hash.HashUtilities;
+import ghidra.framework.OperatingSystem;
 import ghidra.security.KeyStorePasswordProvider;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -189,7 +190,7 @@ public class ApplicationKeyManagerFactory {
 			throw new KeyStoreException("PKI X509 Certificate not found");
 		}
 		boolean[] keyUsage = x509Cert.getKeyUsage();
-		if (!keyUsage[0]) {
+		if (keyUsage != null && !keyUsage[0]) {
 			throw new KeyStoreException("PKI key store must contain Digital Signing certificate");
 		}
 
@@ -203,6 +204,97 @@ public class ApplicationKeyManagerFactory {
 			return (X509KeyManager) keyManagers[0];
 		}
 		throw new KeyStoreException("Unsupported keystore");
+	}
+
+	/**
+	 * Get a key manager backed by the OS-managed user keystore for the current platform
+	 * (<code>Windows-MY</code> on Windows, Apple <code>KeychainStore</code> on macOS).
+	 * Private key access is guarded by the OS, so no keystore password is used.
+	 * Alias selection from a multi-entry store is deferred to the platform
+	 * {@link X509KeyManager} which will filter by key type and requested CA issuers.
+	 * <p>
+	 * NOTE: The resulting key manager is intentionally not cached since OS keystore
+	 * contents may be changed externally; a fresh instance is produced on each call.
+	 *
+	 * @return X509 key manager, or null if the current platform has no OS-managed keystore
+	 *         or the store contains no usable private-key entry (i.e., no X509 certificate
+	 *         key entry whose keyUsage extension, if present, permits digitalSignature).
+	 * @throws KeyStoreException if a failure occurs while accessing the OS keystore
+	 */
+	static X509KeyManager getOSKeyManager() throws KeyStoreException {
+
+		KeyStore keyStore;
+		String storeName;
+		try {
+			if (OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS) {
+				storeName = "Windows-MY";
+				keyStore = KeyStore.getInstance(storeName);
+			}
+			else if (OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.MAC_OS_X) {
+				storeName = "KeychainStore";
+				keyStore = KeyStore.getInstance(storeName, "Apple");
+			}
+			else {
+				return null; // no OS-managed keystore for platform
+			}
+			keyStore.load(null, null); // populate from OS key store
+		}
+		catch (GeneralSecurityException | IOException e) {
+			throw new KeyStoreException("Failed to open OS key store", e);
+		}
+
+		if (!hasUsableKeyEntry(keyStore)) {
+			return null;
+		}
+
+		try {
+			KeyManagerFactory kmf =
+				KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+			try {
+				kmf.init(keyStore, null); // OS guards key access; no password
+			}
+			catch (GeneralSecurityException e) {
+				// some KeychainStore implementations reject a null password
+				kmf.init(keyStore, new char[0]);
+			}
+			for (KeyManager keyManager : kmf.getKeyManagers()) {
+				if (keyManager instanceof X509KeyManager x509KeyManager) {
+					Msg.info(ApplicationKeyManagerFactory.class,
+						"Using OS-managed key store: " + storeName);
+					return x509KeyManager;
+				}
+			}
+		}
+		catch (GeneralSecurityException e) {
+			throw new KeyStoreException("Failed to process OS key store: " + storeName, e);
+		}
+		return null;
+	}
+
+	/**
+	 * Determine if the specified keystore contains at least one usable identity:
+	 * a private-key entry whose X509 certificate keyUsage extension, if present,
+	 * permits digitalSignature.
+	 *
+	 * @param keyStore loaded keystore to be examined
+	 * @return true if a usable private-key entry was found
+	 * @throws KeyStoreException if a failure occurs while accessing the keystore
+	 */
+	private static boolean hasUsableKeyEntry(KeyStore keyStore) throws KeyStoreException {
+		Enumeration<String> aliases = keyStore.aliases();
+		while (aliases.hasMoreElements()) {
+			String alias = aliases.nextElement();
+			if (!keyStore.isKeyEntry(alias)) {
+				continue;
+			}
+			if (keyStore.getCertificate(alias) instanceof X509Certificate x509Cert) {
+				boolean[] keyUsage = x509Cert.getKeyUsage();
+				if (keyUsage == null || keyUsage[0]) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	private static void disposePassword(char[] password) {

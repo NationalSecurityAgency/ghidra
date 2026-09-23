@@ -257,13 +257,32 @@ public class DefaultProject implements Project {
 		c.setReadOnly(true);
 
 		StatusCode responseCode = c.getStatusCode();
-		if (responseCode == StatusCode.NOT_FOUND) {
-			throw new IOException(
-				"Project/repository not found: " + GhidraURL.getDisplayString(url));
-		}
-		if (responseCode == StatusCode.UNAUTHORIZED) {
-			// assume already informed
-			return null;
+		switch (responseCode) {
+			case OK:
+				break; // project data is established below 
+
+			case CANCELLED:
+				return null; // e.g., user cancelled password request
+
+			case UNAUTHORIZED:
+				throw new IOException("Authorization failure");
+
+			case NOT_FOUND:
+				throw new IOException("Project or repository not found");
+
+			case LOCKED:
+				// Local projects are only accessed read-only, this condition should not occur
+				throw new AssertionError("Unexpected local project lock condition");
+
+			case FORBIDDEN:
+				throw new IOException("Access denied by Server Allow List");
+
+			case UNAVAILABLE:
+				throw new IOException("Server connection error occured (see log files)");
+
+			default:
+				throw new IOException("Server connection error occured: " + responseCode);
+
 		}
 
 		DefaultProjectData veiwedProjectData = (DefaultProjectData) c.getProjectData();
@@ -623,7 +642,10 @@ public class DefaultProject implements Project {
 		TransientDataManager.getTransients(list);
 		for (DomainFile df : list) {
 			if (df != null && df.isOpen()) {
-				openFiles.add(df);
+				DomainObject openDomainObject = df.getOpenedDomainObject(this);
+				if (openDomainObject.isChangeable() && !openDomainObject.isTemporary()) {
+					openFiles.add(df);
+				}
 			}
 		}
 		return openFiles;

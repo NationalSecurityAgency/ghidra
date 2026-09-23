@@ -22,12 +22,31 @@ namespace ghidra {
 
 /// \class RuleEarlyRemoval
 /// \brief Get rid of unused PcodeOp objects where we can guarantee the output is unused
+void RuleEarlyRemoval::getOpList(vector<uint4> &oplist) const
+
+{
+  uint4 list[] = {
+      CPUI_COPY, CPUI_LOAD, CPUI_CALLOTHER,
+      CPUI_INT_EQUAL, CPUI_INT_NOTEQUAL, CPUI_INT_SLESS, CPUI_INT_SLESSEQUAL, CPUI_INT_LESS, CPUI_INT_LESSEQUAL,
+      CPUI_INT_ZEXT, CPUI_INT_SEXT, CPUI_INT_ADD, CPUI_INT_SUB, CPUI_INT_CARRY, CPUI_INT_SCARRY, CPUI_INT_SBORROW,
+      CPUI_INT_2COMP, CPUI_INT_NEGATE, CPUI_INT_XOR, CPUI_INT_AND, CPUI_INT_OR, CPUI_INT_LEFT, CPUI_INT_RIGHT,
+      CPUI_INT_SRIGHT, CPUI_INT_MULT, CPUI_INT_DIV, CPUI_INT_SDIV, CPUI_INT_REM, CPUI_INT_SREM,
+      CPUI_BOOL_NEGATE, CPUI_BOOL_XOR, CPUI_BOOL_AND, CPUI_BOOL_OR, CPUI_FLOAT_EQUAL, CPUI_FLOAT_NOTEQUAL,
+      CPUI_FLOAT_LESS, CPUI_FLOAT_LESSEQUAL, CPUI_FLOAT_NAN, CPUI_FLOAT_ADD, CPUI_FLOAT_DIV, CPUI_FLOAT_MULT,
+      CPUI_FLOAT_SUB, CPUI_FLOAT_NEG, CPUI_FLOAT_ABS, CPUI_FLOAT_SQRT, CPUI_FLOAT_INT2FLOAT, CPUI_FLOAT_FLOAT2FLOAT,
+      CPUI_FLOAT_TRUNC, CPUI_FLOAT_CEIL, CPUI_FLOAT_FLOOR, CPUI_FLOAT_ROUND,
+      CPUI_MULTIEQUAL, CPUI_PIECE, CPUI_SUBPIECE, CPUI_CAST, CPUI_PTRADD, CPUI_PTRSUB, CPUI_SEGMENTOP, CPUI_CPOOLREF,
+      CPUI_NEW, CPUI_INSERT, CPUI_ZPULL, CPUI_POPCOUNT, CPUI_LZCOUNT, CPUI_SPULL
+  };
+  oplist.insert(oplist.end(),list,list+65);
+}
+
 int4 RuleEarlyRemoval::applyOp(PcodeOp *op,Funcdata &data)
 
 {
   Varnode *vn;
 
-  if (op->isCall()) return 0;	// Functions automatically consumed
+  if (op->isCall()) return 0;		// CALLOTHER treated as a call is not removed
   if (op->isIndirectSource()) return 0;
   vn = op->getOut();
   if (vn == (Varnode *)0) return 0;
@@ -42,35 +61,6 @@ int4 RuleEarlyRemoval::applyOp(PcodeOp *op,Funcdata &data)
   data.opDestroy(op);		// Get rid of unused op
   return 1;
 }
-
-// void RuleAddrForceRelease::getOpList(vector<uint4> &oplist) const
-
-// {
-//   oplist.push_back(CPUI_COPY);
-// }
-
-// int4 RuleAddrForceRelease::applyOp(PcodeOp *op,Funcdata &data)
-
-// {				// Clear addrforce if op->Output is contained in input
-//   if (!op->Output()->isAddrForce()) return 0;
-//   Varnode *outvn,*invn;
-//   PcodeOp *subop;
-
-//   outvn = op->Input(0)();
-//   if (outvn->getAddr() != op->Output()->getAddr()) return 0;
-//   if (!outvn->isWritten()) return 0;
-//   subop = outvn->Def();
-//   invn = subop->Input(0);
-//   if (subop->code() == CPUI_SUBPIECE) {
-//     if (0!=invn->contains(*outvn)) return 0;
-//     if (!invn->terminated()) return 0; // Bigger thing is already terminated
-//   }
-//   else
-//     return 0;
-
-//   data.clear_addrforce(invn);	// Clear addrforce for anything contained by input
-//   return 1;
-// }
 
 /// Given a Varnode term in the expression, check if the last operation producing it
 /// is to multiply by a constant.  If so pass back the constant coefficient and
@@ -1006,11 +996,9 @@ int4 RulePullsubIndirect::applyOp(PcodeOp *op,Funcdata &data)
     if (small1 == (Varnode *)0)
       small1 = RulePullsubMulti::buildSubpiece(basevn,newSize,op->getIn(1)->getOffset(),data);
     // Create new indirect near original indirect
-    new_ind = data.newOp(2,indir->getAddr());
-    data.opSetOpcode(new_ind,CPUI_INDIRECT);
+    new_ind = data.newIndirect(targ_op);
     small2 = data.newVarnodeOut(newSize,smalladdr2,new_ind);
     data.opSetInput(new_ind,small1,0);
-    data.opSetInput(new_ind,data.newVarnodeIop(targ_op),1);
     data.opInsertBefore(new_ind,indir);
   }
 
@@ -3829,6 +3817,23 @@ int4 RuleShiftPiece::applyOp(PcodeOp *op,Funcdata &data)
 
 /// \class RuleCollapseConstants
 /// \brief Collapse constant expressions
+void RuleCollapseConstants::getOpList(vector<uint4> &oplist) const
+
+{
+  uint4 list[] = {
+      CPUI_INT_EQUAL, CPUI_INT_NOTEQUAL, CPUI_INT_SLESS, CPUI_INT_SLESSEQUAL, CPUI_INT_LESS, CPUI_INT_LESSEQUAL,
+      CPUI_INT_ZEXT, CPUI_INT_SEXT, CPUI_INT_ADD, CPUI_INT_SUB, CPUI_INT_CARRY, CPUI_INT_SCARRY, CPUI_INT_SBORROW,
+      CPUI_INT_2COMP, CPUI_INT_NEGATE, CPUI_INT_XOR, CPUI_INT_AND, CPUI_INT_OR, CPUI_INT_LEFT, CPUI_INT_RIGHT,
+      CPUI_INT_SRIGHT, CPUI_INT_MULT, CPUI_INT_DIV, CPUI_INT_SDIV, CPUI_INT_REM, CPUI_INT_SREM,
+      CPUI_BOOL_NEGATE, CPUI_BOOL_XOR, CPUI_BOOL_AND, CPUI_BOOL_OR, CPUI_FLOAT_EQUAL, CPUI_FLOAT_NOTEQUAL,
+      CPUI_FLOAT_LESS, CPUI_FLOAT_LESSEQUAL, CPUI_FLOAT_NAN, CPUI_FLOAT_ADD, CPUI_FLOAT_DIV, CPUI_FLOAT_MULT,
+      CPUI_FLOAT_SUB, CPUI_FLOAT_NEG, CPUI_FLOAT_ABS, CPUI_FLOAT_SQRT, CPUI_FLOAT_INT2FLOAT, CPUI_FLOAT_FLOAT2FLOAT,
+      CPUI_FLOAT_TRUNC, CPUI_FLOAT_CEIL, CPUI_FLOAT_FLOOR, CPUI_FLOAT_ROUND,
+      CPUI_PIECE, CPUI_SUBPIECE, CPUI_POPCOUNT, CPUI_LZCOUNT
+  };
+  oplist.insert(oplist.end(),list,list+52);
+}
+
 int4 RuleCollapseConstants::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -3837,15 +3842,8 @@ int4 RuleCollapseConstants::applyOp(PcodeOp *op,Funcdata &data)
 
   if (!op->isCollapsible()) return 0; // Expression must be collapsible
 
-  Address newval;
   bool markedInput = false;
-  try {
-    newval = data.getArch()->getConstant(op->collapse(markedInput));
-  }
-  catch(LowlevelError &err) {
-    data.opMarkNoCollapse(op); // Dont know how or dont want to collapse further
-    return 0;
-  }
+  Address newval = data.getArch()->getConstant(op->collapse(markedInput));
 
   vn = data.newVarnode(op->getOut()->getSize(),newval); // Create new collapsed constant
   if (markedInput) {
@@ -4712,62 +4710,6 @@ int4 RuleConcatCommute::applyOp(PcodeOp *op,Funcdata &data)
   }
   return 0;
 }
-
-// void RuleIndirectConcat::getOpList(vector<uint4> &oplist) const
-
-// {
-//   oplist.push_back(CPUI_INDIRECT);
-// }
-
-// int4 RuleIndirectConcat::applyOp(PcodeOp *op,Funcdata &data)
-
-// {
-//   Varnode *vn = op->getIn(0);
-//   if (!vn->isWritten()) return 0;
-//   PcodeOp *concatop = vn->getDef();
-//   if (concatop->code() != CPUI_PIECE) return 0;
-//   Varnode *vnhi = concatop->getIn(0);
-//   Varnode *vnlo = concatop->getIn(1);
-//   if (vnhi->isFree() || vnhi->isVolatile() || vnhi->isSpacebase()) return 0;
-//   if (vnlo->isFree() || vnlo->isVolatile() || vnlo->isSpacebase()) return 0;
-//   if (op->getIn(1)->getSpace()->getType() != IPTR_IOP) return 0;
-//   PcodeOp *indop = PcodeOp::getOpFromConst(op->getIn(1)->getAddr());
-//   Varnode *newvnhi,*newvnlo;
-//   Varnode *outvn = op->getOut();
-//   data.splitVarnode(outvn,vnlo->getSize(),newvnlo,newvnhi);
-//   PcodeOp *newophi,*newoplo;
-
-//   newophi = data.newOp(2,indop->getAddr());
-//   newoplo = data.newOp(2,indop->getAddr());
-//   data.opSetOpcode(newophi,CPUI_INDIRECT);
-//   data.opSetOpcode(newoplo,CPUI_INDIRECT);
-//   data.opSetOutput(newophi,newvnhi);
-//   data.opSetOutput(newoplo,newvnlo);
-//   data.opSetInput(newophi,vnhi,0);
-//   data.opSetInput(newoplo,vnlo,0);
-//   data.opSetInput(newophi,data.newVarnodeIop(indop),1);
-//   data.opSetInput(newoplo,data.newVarnodeIop(indop),1);
-//   data.opInsertBefore(newophi,indop);
-//   data.opInsertBefore(newoplo,indop);
-
-//   // The original INDIRECT is basically dead at this point, so we clear any addrforce so it can be
-//   // removed as deadcode
-//   outvn->clearAddrForce();
-//   if (outvn->hasNoDescend()) {	// If nobody else uses the value
-//     // Prepare op for deletion, and so that the same rule won't trigger again
-//     data.opSetOpcode(op,CPUI_COPY);
-//     data.opRemoveInput(op,1);
-//   }
-//   else { // If the original INDIRECT output was used by other ops
-//     // We recycle the op as the commuted concatenation
-//     data.opUninsert(op);	// Remove op from before (simultaneous) execution with indop
-//     data.opSetOpcode(op,CPUI_PIECE);
-//     data.opSetInput(op,newvnhi,0);
-//     data.opSetInput(op,newvnlo,1);
-//     data.opInsertAfter(op,indop); // Insert recycled PIECE after the indop
-//   }
-//   return 1;
-// }
 
 /// \class RuleConcatZext
 /// \brief Commute PIECE with INT_ZEXT:  `concat(zext(V),W)  =>  zext(concat(V,W))`
@@ -7834,7 +7776,7 @@ void RuleDivTermAdd::getOpList(vector<uint4> &oplist) const
 int4 RuleDivTermAdd::applyOp(PcodeOp *op,Funcdata &data)
 
 {
-  int4 n;
+  uint4 n;
   OpCode shiftopc;
   PcodeOp *subop = findSubshift(op,n,shiftopc);
   if (subop == (PcodeOp *)0) return 0;
@@ -7911,7 +7853,7 @@ int4 RuleDivTermAdd::applyOp(PcodeOp *op,Funcdata &data)
 /// \param n is the reference that will hold the total truncation
 /// \param shiftopc will hold the shift OpCode if used, CPUI_MAX otherwise
 /// \return the SUBPIECE op if present or NULL otherwise
-PcodeOp *RuleDivTermAdd::findSubshift(PcodeOp *op,int4 &n,OpCode &shiftopc)
+PcodeOp *RuleDivTermAdd::findSubshift(PcodeOp *op,uint4 &n,OpCode &shiftopc)
 
 { // SUB( .,#c) or SUB(.,#c)>>n  return baseop and n+c*8
   // make SUB is high
@@ -7930,7 +7872,7 @@ PcodeOp *RuleDivTermAdd::findSubshift(PcodeOp *op,int4 &n,OpCode &shiftopc)
     subop = op;
     n = 0;
   }
-  int4 c = subop->getIn(1)->getOffset();
+  uint4 c = subop->getIn(1)->getOffset();
   if (subop->getOut()->getSize() + c != subop->getIn(0)->getSize())
     return (PcodeOp *)0;	// SUB is not high
   n += 8*c;
@@ -7984,8 +7926,8 @@ int4 RuleDivTermAdd2::applyOp(PcodeOp *op,Funcdata &data)
   if (!z->isWritten()) return 0;
   PcodeOp *subpieceop = z->getDef();
   if (subpieceop->code() != CPUI_SUBPIECE) return 0;
-  int4 n = subpieceop->getIn(1)->getOffset() *8;
-  if (n!= 8*(subpieceop->getIn(0)->getSize() - z->getSize())) return 0;
+  uint4 n = subpieceop->getIn(1)->getOffset() *8;
+  if (n > 127 || n!= 8*(subpieceop->getIn(0)->getSize() - z->getSize())) return 0;
   Varnode *multvn = subpieceop->getIn(0);
   if (!multvn->isWritten()) return 0;
   PcodeOp *multop = multvn->getDef();
@@ -8052,7 +7994,7 @@ int4 RuleDivTermAdd2::applyOp(PcodeOp *op,Funcdata &data)
 /// \param xsize will hold the number of (non-zero) bits in the numerand
 /// \param extopc holds whether the extension is INT_ZEXT or INT_SEXT
 /// \return the extended numerand if possible, or the unextended numerand, or NULL
-Varnode *RuleDivOpt::findForm(PcodeOp *op,int4 &n,uint8 *y,int4 &xsize,OpCode &extopc)
+Varnode *RuleDivOpt::findForm(PcodeOp *op,uint4 &n,uint8 *y,uint4 &xsize,OpCode &extopc)
 
 {
   PcodeOp *curOp = op;
@@ -8140,7 +8082,7 @@ Varnode *RuleDivOpt::findForm(PcodeOp *op,int4 &n,uint8 *y,int4 &xsize,OpCode &e
 /// \param y is the (up to 128-bit) multiplicative coefficient
 /// \param xsize is the maximum power of 2
 /// \return the divisor or 0 if the checks fail
-uintb RuleDivOpt::calcDivisor(uintb n,uint8 *y,int4 xsize)
+uintb RuleDivOpt::calcDivisor(uint4 n,uint8 *y,uint4 xsize)
 
 {
   if (n > 127 || xsize > 64) return 0;		// Not enough precision
@@ -8255,7 +8197,7 @@ bool RuleDivOpt::checkFormOverlap(PcodeOp *op)
     if (opc != CPUI_INT_RIGHT && opc != CPUI_INT_SRIGHT) continue;
     Varnode *cvn = superOp->getIn(1);
     if (!cvn->isConstant()) return true;	// Might be a form where constant has propagated yet
-    int4 n,xsize;
+    uint4 n,xsize;
     uint8 y[2];
     OpCode extopc;
     Varnode *inVn = findForm(superOp, n, y, xsize, extopc);
@@ -8281,7 +8223,7 @@ void RuleDivOpt::getOpList(vector<uint4> &oplist) const
 int4 RuleDivOpt::applyOp(PcodeOp *op,Funcdata &data)
 
 {
-  int4 n,xsize;
+  uint4 n,xsize;
   uint8 y[2];
   OpCode extOpc;
   Varnode *inVn = findForm(op,n,y,xsize,extOpc);
@@ -9054,12 +8996,38 @@ void RulePtrFlow::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_LOAD);
   oplist.push_back(CPUI_COPY);
   oplist.push_back(CPUI_MULTIEQUAL);
-  oplist.push_back(CPUI_INDIRECT);
   oplist.push_back(CPUI_INT_ADD);
+  oplist.push_back(CPUI_CALL);
   oplist.push_back(CPUI_CALLIND);
   oplist.push_back(CPUI_BRANCHIND);
   oplist.push_back(CPUI_PTRSUB);
   oplist.push_back(CPUI_PTRADD);
+}
+
+/// Propagate \e ptrflow property across INDIRECTs for the given op
+///
+/// \param op is the op causing the indirect effects
+/// \return \b true if a change was made
+bool RulePtrFlow::walkIndirects(PcodeOp *op)
+
+{
+  list<PcodeOp *>::const_iterator iter = op->getBasicIter();
+  list<PcodeOp *>::const_iterator beginIter = op->getParent()->beginOp();
+  bool madeChange = false;
+  while(iter != beginIter) {
+    --iter;
+    PcodeOp *indop = *iter;
+    if (indop->code() != CPUI_INDIRECT) break;
+    if (!indop->isPtrFlow()) continue;
+    Varnode *vn = indop->getOut();
+    if (propagateFlowToReads(vn))
+      madeChange = true;
+    vn = indop->getIn(0);
+    if (propagateFlowToDef(vn))
+      madeChange = true;
+    break;
+  }
+  return madeChange;
 }
 
 /// Set \e ptrflow property on PcodeOp only if it is propagating
@@ -9169,7 +9137,6 @@ int4 RulePtrFlow::applyOp(PcodeOp *op,Funcdata &data)
 
   switch(op->code()) {
   case CPUI_LOAD:
-  case CPUI_STORE:
     vn = op->getIn(1);
     spc = op->getIn(0)->getSpaceFromConst();
     if (vn->getSize() > spc->getAddrSize()) {
@@ -9179,7 +9146,34 @@ int4 RulePtrFlow::applyOp(PcodeOp *op,Funcdata &data)
     if (propagateFlowToDef(vn))
       madeChange = 1;
     break;
+  case CPUI_STORE:
+    vn = op->getIn(1);
+    spc = op->getIn(0)->getSpaceFromConst();
+    if (vn->getSize() > spc->getAddrSize()) {
+      vn = truncatePointer(spc,op,vn,1,data);
+      madeChange = 1;
+    }
+    if (propagateFlowToDef(vn))
+      madeChange = 1;
+    if (walkIndirects(op))
+      madeChange = 1;
+    break;
+  case CPUI_CALL:
+    if (walkIndirects(op))
+      madeChange = 1;
+    break;
   case CPUI_CALLIND:
+    vn = op->getIn(0);
+    spc = data.getArch()->getDefaultCodeSpace();
+    if (vn->getSize() > spc->getAddrSize()) {
+      vn = truncatePointer(spc,op,vn,0,data);
+      madeChange = 1;
+    }
+    if (propagateFlowToDef(vn))
+      madeChange = 1;
+    if (walkIndirects(op))
+      madeChange = 1;
+    break;
   case CPUI_BRANCHIND:
     vn = op->getIn(0);
     spc = data.getArch()->getDefaultCodeSpace();
@@ -9193,15 +9187,6 @@ int4 RulePtrFlow::applyOp(PcodeOp *op,Funcdata &data)
   case CPUI_NEW:
     vn = op->getOut();
     if (propagateFlowToReads(vn))
-      madeChange = 1;
-    break;
-  case CPUI_INDIRECT:
-    if (!op->isPtrFlow()) return 0;
-    vn = op->getOut();
-    if (propagateFlowToReads(vn))
-      madeChange = 1;
-    vn = op->getIn(0);
-    if (propagateFlowToDef(vn))
       madeChange = 1;
     break;
   case CPUI_COPY:

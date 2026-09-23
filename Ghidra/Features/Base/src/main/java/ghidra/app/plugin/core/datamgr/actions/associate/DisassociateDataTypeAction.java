@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,21 +20,20 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import javax.swing.SwingConstants;
-import javax.swing.tree.TreePath;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.OptionDialog;
-import docking.widgets.tree.*;
+import docking.widgets.tree.GTreeNode;
+import docking.widgets.tree.GTreeState;
 import ghidra.app.plugin.core.datamgr.*;
 import ghidra.app.plugin.core.datamgr.archive.BuiltInSourceArchive;
-import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
-import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.program.model.data.*;
 import ghidra.util.HTMLUtilities;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 
@@ -53,91 +52,79 @@ public class DisassociateDataTypeAction extends DockingAction {
 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
-		if (!(context instanceof DataTypesActionContext)) {
+		if (!(context instanceof DataTypeContext dtc)) {
 			return false;
 		}
 
-		DataTypesActionContext dtContext = (DataTypesActionContext) context;
-		List<DataTypeNode> nodes = dtContext.getDisassociatableNodes();
-		return !nodes.isEmpty();
+		return dtc.hasSelectedDataTypes();
 	}
 
-	private List<DataTypeNode> getDisassociatableNodes(TreePath[] paths) {
-
-		List<DataTypeNode> nodes = new ArrayList<>();
-		for (TreePath treePath : paths) {
-			DataTypeNode node = getDisassociatableNode(treePath);
-			if (node != null) {
-				nodes.add(node);
+	private List<DataType> getDisassociatableTypes(DataTypeContext dtc) {
+		List<DataType> result = new ArrayList<>();
+		List<DataType> types = dtc.getSelectedDataTypes();
+		for (DataType dt : types) {
+			if (isDisassociatable(dt)) {
+				result.add(dt);
 			}
 		}
-		return nodes;
+		return result;
 	}
 
-	private DataTypeNode getDisassociatableNode(TreePath path) {
-		GTreeNode node = (GTreeNode) path.getLastPathComponent();
-		if (!(node instanceof DataTypeNode)) {
-			return null;
-		}
-
-		DataTypeNode dataTypeNode = (DataTypeNode) node;
-		DataType dataType = dataTypeNode.getDataType();
-		DataTypeManager dataTypeManager = dataType.getDataTypeManager();
-		SourceArchive sourceArchive = dataType.getSourceArchive();
+	private boolean isDisassociatable(DataType dt) {
+		DataTypeManager dataTypeManager = dt.getDataTypeManager();
+		SourceArchive sourceArchive = dt.getSourceArchive();
 		if (sourceArchive == null || dataTypeManager == null ||
 			sourceArchive.equals(BuiltInSourceArchive.INSTANCE) ||
 			sourceArchive.getSourceArchiveID().equals(dataTypeManager.getUniversalID())) {
-
-			return null;
+			return false;
 		}
-		return dataTypeNode;
+		return true;
 	}
 
 	@Override
 	public void actionPerformed(ActionContext context) {
 
-		Object contextObject = context.getContextObject();
-		GTree gTree = (GTree) contextObject;
-		TreePath[] selectionPaths = gTree.getSelectionPaths();
-		List<DataTypeNode> nodes = getDisassociatableNodes(selectionPaths);
+		DataTypeContext dtc = (DataTypeContext) context;
+		List<DataType> types = getDisassociatableTypes(dtc);
+
+		if (types.isEmpty()) {
+			Msg.showInfo(this, null, "No Disassociatable Types Selected",
+				"No disassociatable types selected");
+			return;
+		}
 
 		//@formatter:off
-		Optional<DataTypeManager> unmodifiableDtm = nodes
+		Optional<DataTypeManager> unmodifiableDtm = types
 			.stream()
-		    .map(node -> {
-				DataType dataType = node.getDataType();
-				DataTypeManager dtm = dataType.getDataTypeManager();
-				return dtm;
-		    })
-		    .filter(dtm -> {
-		     	return !dtm.isUpdatable();
-		    })
+		    .map(dt -> dt.getDataTypeManager())
+		    .filter(dtm -> !dtm.isUpdatable())
 		    .findAny();
 		//@formatter:on
 
 		if (unmodifiableDtm.isPresent()) {
 			DataTypeManager dtm = unmodifiableDtm.get();
-			DataTypeUtils.showUnmodifiableArchiveErrorMessage(gTree, "Disassociate Failed", dtm);
+			DataTypeUtils.showUnmodifiableArchiveErrorMessage(context.getSourceComponent(),
+				"Disassociate Failed", dtm);
 			return;
 		}
 
-		if (!confirmOperation(nodes)) {
+		if (!confirmOperation(types.size())) {
 			return;
 		}
 
 		//@formatter:off
 		MonitoredRunnable r =
-			monitor -> doDisassociate(nodes, monitor);
+			monitor -> doDisassociate(types, monitor);
 		new TaskBuilder("Disassociate From Archive", r)
 			.setStatusTextAlignment(SwingConstants.LEADING)
 			.launchModal();
 		//@formatter:on
 	}
 
-	private boolean confirmOperation(List<DataTypeNode> nodes) {
+	private boolean confirmOperation(int size) {
 		String message = "This will <b>permanently</b> disassociate these datatypes" +
 			" from the archive.<br><br>Are you sure you want to <b><u>disassociate</u></b> " +
-			nodes.size() + " datatype(s)?";
+			size + " datatype(s)?";
 		String asHtml = HTMLUtilities.wrapAsHTML(message);
 		int result = OptionDialog.showYesNoDialog(plugin.getTool().getToolFrame(),
 			"Confirm Disassociate", asHtml);
@@ -152,10 +139,7 @@ public class DisassociateDataTypeAction extends DockingAction {
 		archives.forEach(archive -> tree.collapseAll(archive));
 	}
 
-	private void doDisassociate(List<DataTypeNode> nodes, TaskMonitor monitor) {
-
-		List<DataType> dataTypes =
-			nodes.stream().map(node -> node.getDataType()).collect(Collectors.toList());
+	private void doDisassociate(List<DataType> types, TaskMonitor monitor) {
 
 		//
 		// Note: we collapse the node before performing this work because there is a
@@ -172,7 +156,7 @@ public class DisassociateDataTypeAction extends DockingAction {
 		collapseArchiveNodes(tree);
 
 		try {
-			disassociateTypes(dataTypes, monitor);
+			disassociateTypes(types, monitor);
 		}
 		catch (CancelledException e) {
 			// nothing to report
@@ -217,11 +201,12 @@ public class DisassociateDataTypeAction extends DockingAction {
 
 		monitor.setMessage("Disassociating types from " + dtm.getName());
 		monitor.initialize(dataTypes.size());
-		DataTypeManagerHandler handler = plugin.getDataTypeManagerHandler();
+		ArchiveManager archiveManager = plugin.getArchiveManager();
 		for (Entry<SourceArchive, List<DataType>> entry : sourceToTypes.entrySet()) {
 			SourceArchive source = entry.getKey();
 			List<DataType> types = entry.getValue();
-			DataTypeSynchronizer synchronizer = new DataTypeSynchronizer(handler, dtm, source);
+			DataTypeSynchronizer synchronizer =
+				new DataTypeSynchronizer(archiveManager, dtm, source);
 			disassociate(synchronizer, dtm, types, monitor);
 		}
 	}

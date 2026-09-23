@@ -36,8 +36,7 @@ import ghidra.app.util.importer.ProgramLoader;
 import ghidra.app.util.opinion.*;
 import ghidra.formats.gfilesystem.*;
 import ghidra.framework.*;
-import ghidra.framework.client.ClientUtil;
-import ghidra.framework.client.RepositoryAdapter;
+import ghidra.framework.client.*;
 import ghidra.framework.data.*;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.*;
@@ -259,10 +258,8 @@ public class HeadlessAnalyzer {
 			throws IOException, MalformedURLException, URISyntaxException {
 
 		if (options.readOnly && options.commit) {
-			Msg.error(this,
-				"Abort due to Headless analyzer error: The requested readOnly option is in conflict " +
+			throw new IllegalArgumentException("The requested readOnly option is in conflict " +
 					"with the commit option");
-			return;
 		}
 
 		if (!"ghidra".equals(ghidraURL.getProtocol())) {
@@ -270,9 +267,8 @@ public class HeadlessAnalyzer {
 		}
 
 		if (GhidraURL.isLocalURL(ghidraURL)) {
-			Msg.error(this,
+			throw new IllegalArgumentException(
 				"Ghidra URL command form does not supported local project URLs (ghidra:/path...)");
-			return;
 		}
 
 		String path = ghidraURL.getPath();
@@ -290,6 +286,22 @@ public class HeadlessAnalyzer {
 				options.preScripts.isEmpty() && options.postScripts.isEmpty()) {
 				Msg.warn(this, "REPORT: Nothing to do ... must specify files for import.");
 				return;
+			}
+		}
+
+		if (!options.allowAllAccess) {
+			// Check Server Allow List - add access if not already blocked
+			Boolean hasServerAccess = UrlAllowListManager.getAccess(ghidraURL);
+			if (hasServerAccess == null) {
+				ServerSpecification serverSpec = ServerSpecification.get(ghidraURL);
+				Msg.info(HeadlessAnalyzer.class,
+					"NOTICE: Adding server to allow list: " + serverSpec.toString());
+				UrlAllowListManager.updateAccess(ghidraURL, true);
+			}
+			else if (!hasServerAccess) {
+				ServerSpecification serverSpec = ServerSpecification.get(ghidraURL);
+				throw new IOException(
+					"Access denied by server allow list: " + serverSpec.toString());
 			}
 		}
 
@@ -911,8 +923,16 @@ public class HeadlessAnalyzer {
 
 					// GhidraScriptProvider case
 					GhidraScriptProvider provider = GhidraScriptUtil.getProvider(currScriptFile);
-					PrintWriter errWriter = new PrintWriter(System.err);
-					currScript = provider.getScriptInstance(currScriptFile, errWriter);
+					StringWriter stringWriter = new StringWriter();
+					PrintWriter errorWriter = new PrintWriter(stringWriter);
+					try {
+						currScript = provider.getScriptInstance(currScriptFile, errorWriter);
+					}
+					catch (GhidraScriptLoadException e) {
+						errorWriter.flush();
+						Msg.error(this, stringWriter.toString());
+						throw e;
+					}
 					currScript.setScriptArgs(scriptArgs);
 
 					if (options.propertiesFilePaths.size() > 0) {

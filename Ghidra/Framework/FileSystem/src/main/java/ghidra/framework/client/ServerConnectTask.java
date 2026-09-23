@@ -16,9 +16,11 @@
 package ghidra.framework.client;
 
 import java.io.Closeable;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.rmi.*;
 import java.rmi.registry.LocateRegistry;
@@ -26,6 +28,7 @@ import java.rmi.registry.Registry;
 import java.security.cert.Certificate;
 import java.util.HashSet;
 
+import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocket;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
@@ -156,6 +159,7 @@ class ServerConnectTask extends Task {
 			throws IOException, CancelledException {
 
 		GhidraServerHandle gsh = null;
+		Certificate[] clientCerts = null;
 		boolean canCancel = monitor.isCancelEnabled(); // original state
 		try {
 
@@ -163,7 +167,7 @@ class ServerConnectTask extends Task {
 			// This is intended to work around an RMI issue where a continuous
 			// retry condition can occur when a user cancels the password entry
 			// for their keystore which should cancel any connection attempt
-			testServerSSLConnection(server, monitor);
+			clientCerts = testServerSSLConnection(server, monitor);
 
 			monitor.setCancelEnabled(false);
 			monitor.setMessage("Connecting...");
@@ -196,6 +200,26 @@ class ServerConnectTask extends Task {
 					return null;
 				}
 			}
+			if (isConnectionRejectedByServer(e)) {
+				// Connection was established then terminated by the server immediately
+				// after a successful SSL test connection - assume TLS-level client
+				// authentication rejection (e.g., PKI authentication mode).
+				if (clientCerts != null) {
+					throw new IOException(
+						"Client PKI certificate was rejected - connection terminated by server: " +
+							server,
+						e);
+				}
+				if (DefaultKeyManagerFactory.getPreferredKeyStore() != null) {
+					// Keystore is configured but no certificate was presented -
+					// assume user cancelled keystore password entry
+					return null;
+				}
+				throw new IOException(
+					"User PKI Certificate not installed - connection terminated by server: " +
+						server,
+					e);
+			}
 			throw e;
 		}
 		finally {
@@ -203,6 +227,34 @@ class ServerConnectTask extends Task {
 			monitor.setMessage("");
 		}
 		return gsh;
+	}
+
+	/**
+	 * Determine if a remote exception corresponds to a connection which was successfully
+	 * established then immediately terminated by the server.  Following a successful
+	 * {@link #testServerSSLConnection}, this indicates a TLS-level rejection of the client
+	 * by the server (e.g., required client certificate missing or untrusted).  With TLS 1.3
+	 * such a rejection may surface as an abrupt connection abort/reset without a readable
+	 * SSL alert.  A connection refusal or timeout does not qualify.
+	 * @param e remote exception thrown during initial RMI interaction
+	 * @return true if connection was established then rejected by the server
+	 */
+	private static boolean isConnectionRejectedByServer(RemoteException e) {
+		Throwable cause = e.getCause();
+		while (cause != null) {
+			if (cause instanceof java.net.ConnectException) {
+				return false; // connection refused - server port not listening
+			}
+			if (cause instanceof SocketException || cause instanceof EOFException) {
+				return true;
+			}
+			if (cause instanceof SSLException && cause.getMessage() != null &&
+				cause.getMessage().contains("certificate_required")) {
+				return true; // TLS 1.3 client-auth alert survived the connection teardown
+			}
+			cause = cause.getCause();
+		}
+		return false;
 	}
 
 	private static class ConnectCancelledListener implements CancelledListener, Closeable {
@@ -376,11 +428,14 @@ class ServerConnectTask extends Task {
 
 	/**
 	 * Initiate an SSLSocket connection in order to ensure that any neccesary client/server
-	 * certificate validation is performed.
-	 * @param server server to which connection should be verified.  For the Ghidra Server 
+	 * certificate validation is performed.  NOTE: with TLS 1.3 a successful handshake does
+	 * not indicate that the server has accepted a required client certificate; server-side
+	 * rejection must be inferred if the subsequent RMI connection is terminated by the
+	 * server (see {@link #isConnectionRejectedByServer(RemoteException)}).
+	 * @param server server to which connection should be verified.  For the Ghidra Server
 	 * this should correspond to the RMI Registry port {@link GhidraServerHandle#DEFAULT_PORT}.
 	 * @param monitor connection task monitor
-	 * @return certificate chain of server
+	 * @return client certificate chain which was presented to the server, or null if none
 	 * @throws IOException if connection failure occurs
 	 * @throws CancelledException if connection attempt is cancelled
 	 */
@@ -410,10 +465,10 @@ class ServerConnectTask extends Task {
 				ConnectCancelledListener cancelListener =
 					new ConnectCancelledListener(monitor, () -> forceClose(socket))) {
 			// Complete SSL handshake to trigger client keystore access if required
-			// which will give user ability to cancel without involving RMI which 
+			// which will give user ability to cancel without involving RMI which
 			// will avoid RMI reconnect attempts
 			socket.startHandshake();
-			return socket.getSession().getPeerCertificates();
+			return socket.getSession().getLocalCertificates();
 		}
 		finally {
 			monitor.checkCancelled(); // circumvent any IOException which may have occured

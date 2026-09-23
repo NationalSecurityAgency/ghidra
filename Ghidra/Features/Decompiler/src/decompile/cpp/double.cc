@@ -1364,11 +1364,9 @@ void SplitVarnode::replaceIndirectOp(Funcdata &data,SplitVarnode &out,SplitVarno
   out.createJoinedWhole(data);
 
   in.findCreateWhole(data);
-  PcodeOp *newop = data.newOp(2,affector->getAddr());
-  data.opSetOpcode(newop,CPUI_INDIRECT);
+  PcodeOp *newop = data.newIndirect(affector);
   data.opSetOutput(newop,out.getWhole());
   data.opSetInput(newop,in.getWhole(),0);
-  data.opSetInput(newop,data.newVarnodeIop(affector),1);
   data.opInsertBefore(newop,affector);
   out.buildLoFromWhole(data);
   out.buildHiFromWhole(data);

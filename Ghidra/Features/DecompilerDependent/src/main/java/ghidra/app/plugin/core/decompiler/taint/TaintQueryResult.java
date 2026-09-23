@@ -20,7 +20,8 @@ import java.util.*;
 import com.contrastsecurity.sarif.LogicalLocation;
 import com.contrastsecurity.sarif.Run;
 
-import ghidra.app.decompiler.*;
+import ghidra.app.decompiler.ClangFunction;
+import ghidra.app.decompiler.ClangToken;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.pcode.*;
@@ -116,7 +117,7 @@ public record TaintQueryResult(String name,String fqname, Address iaddr, Address
 				if (fqname.endsWith(":"+ast.getUniqueId())) {
 					return hvName;
 				}
-				if (fqname.contains(":"+hvName)) {
+				if (fqname.contains(":" + hvName)) {
 					return hvName;
 				}
 				if (fqname.contains(":"+ast.getAddress())) {

@@ -49,6 +49,6 @@ set MAXMEM=128M
 set "SCRIPT_DIR=%~dp0"
 set "CONFIG=%SCRIPT_DIR%.\server.conf"
 
-set VMARGS=-DUserAdmin.invocation=%~n0
+set VMARGS=-DUserAdmin.invocation=%~n0 -Djava.awt.headless=true
 
 call "%~dp0\..\support\launch.bat" fg jre svrAdmin "%MAXMEM%" "%VMARGS%" ghidra.server.ServerAdmin "%CONFIG%" %*

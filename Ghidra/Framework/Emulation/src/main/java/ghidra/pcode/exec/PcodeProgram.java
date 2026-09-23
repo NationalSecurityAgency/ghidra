@@ -16,14 +16,13 @@
 package ghidra.pcode.exec;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.Map.Entry;
+import java.util.List;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.plugin.processors.sleigh.template.OpTpl;
 import ghidra.app.util.pcode.AbstractAppender;
 import ghidra.app.util.pcode.AbstractPcodeFormatter;
-import ghidra.pcodeCPort.slghsymbol.UserOpSymbol;
+import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropSymbolMap;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.Program;
@@ -68,7 +67,7 @@ public class PcodeProgram {
 			if (name != null) {
 				return name;
 			}
-			return program.useropNames.get(id);
+			return program.getUseropName(id);
 		}
 
 		@Override
@@ -141,7 +140,7 @@ public class PcodeProgram {
 			throw new IllegalArgumentException("Instruction must be parsed using Sleigh");
 		}
 		PcodeOp[] pcode = instruction.getPcode(includeOverrides);
-		return new PcodeProgram(slang, List.of(pcode), Map.of());
+		return new PcodeProgram(slang, List.of(pcode), PcodeUseropSymbolMap.EMPTY);
 	}
 
 	/**
@@ -163,35 +162,26 @@ public class PcodeProgram {
 		InjectContext ctx = library.buildInjectContext();
 		InjectPayload payload = library.getPayload(type, name);
 		PcodeOp[] pcode = payload.getPcode(program, ctx);
-		return new PcodeProgram((SleighLanguage) program.getLanguage(), List.of(pcode), Map.of());
+		return new PcodeProgram((SleighLanguage) program.getLanguage(), List.of(pcode),
+			PcodeUseropSymbolMap.EMPTY);
 	}
 
 	protected final SleighLanguage language;
 	protected final List<PcodeOp> code;
-	protected final Map<Integer, String> useropNames;
+	protected final PcodeUseropSymbolMap userops;
 
 	/**
 	 * Construct a p-code program with the given bindings
 	 * 
 	 * @param language the language that generated the p-code
 	 * @param code the list of p-code ops
-	 * @param useropSymbols a map of expected userop symbols
+	 * @param userops a map of expected userop symbols
 	 */
 	protected PcodeProgram(SleighLanguage language, List<PcodeOp> code,
-			Map<Integer, UserOpSymbol> useropSymbols) {
+			PcodeUseropSymbolMap userops) {
 		this.language = language;
 		this.code = code;
-		this.useropNames = new HashMap<>();
-		int langOpCount = language.getNumberOfUserDefinedOpNames();
-		for (Map.Entry<Integer, UserOpSymbol> ent : useropSymbols.entrySet()) {
-			int index = ent.getKey();
-			if (index < langOpCount) {
-				useropNames.put(index, language.getUserDefinedOpName(index));
-			}
-			else {
-				useropNames.put(index, ent.getValue().getName());
-			}
-		}
+		this.userops = userops;
 	}
 
 	/**
@@ -204,7 +194,7 @@ public class PcodeProgram {
 		assert !code.isEmpty();
 		this.language = program.language;
 		this.code = code;
-		this.useropNames = program.useropNames;
+		this.userops = program.userops;
 	}
 
 	/**
@@ -216,6 +206,9 @@ public class PcodeProgram {
 		return language;
 	}
 
+	/**
+	 * {@return the p-code ops of this program}
+	 */
 	public List<PcodeOp> getCode() {
 		return code;
 	}
@@ -245,40 +238,42 @@ public class PcodeProgram {
 		return format();
 	}
 
+	/**
+	 * For display purposes, list the code
+	 * 
+	 * @param numberOps true to include op numbers
+	 * @return the formatted listing
+	 */
 	public String format(boolean numberOps) {
 		return new MyFormatter(this, numberOps).formatOps(language, code);
 	}
 
+	/**
+	 * For display purposes, list the code without op numbers
+	 * 
+	 * @return the formatted listing
+	 */
 	public String format() {
 		return format(false);
 	}
 
+	/**
+	 * Get the name of a userop by number
+	 * 
+	 * @param opNo the userop number
+	 * @return the name
+	 */
 	public String getUseropName(int opNo) {
-		if (opNo < language.getNumberOfUserDefinedOpNames()) {
-			return language.getUserDefinedOpName(opNo);
-		}
-		return useropNames.get(opNo);
+		return userops.getUseropName(opNo);
 	}
 
 	/**
-	 * For testing/debug only: Get the userop number for a given name
+	 * Get the userop index for a given name
 	 * 
-	 * @implNote There is no index by name, so this exhaustively searches the language- and
-	 *           library-defined userops.
 	 * @param name the name
-	 * @return the number, or -1 if not found
+	 * @return the index, or -1 if not found
 	 */
 	public int getUseropNumber(String name) {
-		for (int i = 0; i < language.getNumberOfUserDefinedOpNames(); i++) {
-			if (name.equals(language.getUserDefinedOpName(i))) {
-				return i;
-			}
-		}
-		for (Entry<Integer, String> ent : useropNames.entrySet()) {
-			if (name.equals(ent.getValue())) {
-				return ent.getKey();
-			}
-		}
-		return -1;
+		return userops.getUseropIndex(name);
 	}
 }

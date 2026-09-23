@@ -20,18 +20,17 @@ import java.util.Map.Entry;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
-import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.script.GhidraScript;
 import ghidra.debug.api.emulation.EmulatorFactory;
 import ghidra.debug.api.emulation.PcodeDebuggerAccess;
 import ghidra.lifecycle.Unfinished;
 import ghidra.pcode.emu.*;
-import ghidra.pcode.emu.DefaultPcodeThread.PcodeThreadExecutor;
 import ghidra.pcode.emu.auxiliary.AuxEmulatorPartsFactory;
 import ghidra.pcode.emu.auxiliary.AuxPcodeEmulator;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
+import ghidra.pcode.exec.SleighPcodeUseropDefinition.BuilderStage1;
 import ghidra.pcode.exec.trace.TraceEmulationIntegration.AbstractSimplePropertyBasedPieceHandler;
 import ghidra.pcode.exec.trace.TraceEmulationIntegration.Writer;
 import ghidra.pcode.struct.StructuredSleigh;
@@ -53,7 +52,7 @@ public class ModelingScript extends GhidraScript {
 		private final Register regRDI;
 		private final Register regRSI;
 
-		public JavaStdLibPcodeUseropLibrary(SleighLanguage language) {
+		public JavaStdLibPcodeUseropLibrary(Language language) {
 			space = language.getDefaultSpace();
 			regRSP = language.getRegister("RSP");
 			regRAX = language.getRegister("RAX");
@@ -62,21 +61,18 @@ public class ModelingScript extends GhidraScript {
 		}
 
 		@PcodeUserop
-		public void __x86_64_RET(
-				@OpExecutor PcodeExecutor<T> executor,
-				@OpState PcodeExecutorState<T> state) {
+		public void __x86_64_POP(@OpExecutor PcodeExecutor<T> executor,
+				@OpState PcodeExecutorState<T> state, @OpOutput Varnode out) {
 			PcodeArithmetic<T> arithmetic = state.getArithmetic();
 			T tRSP = state.getVar(regRSP, Reason.EXECUTE_READ);
-			long lRSP = arithmetic.toLong(tRSP, Purpose.OTHER);
+			long lRSP = arithmetic.toLong(tRSP, Purpose.LOAD);
 			T tReturn = state.getVar(space, lRSP, 8, true, Reason.EXECUTE_READ);
-			long lReturn = arithmetic.toLong(tReturn, Purpose.BRANCH);
 			state.setVar(regRSP, arithmetic.fromConst(lRSP + 8, 8));
-			((PcodeThreadExecutor<T>) executor).getThread()
-					.overrideCounter(space.getAddress(lReturn));
+			state.setVar(out, tReturn);
 		}
 
 		@PcodeUserop
-		public void __libc_strlen(@OpState PcodeExecutorState<T> state) {
+		public void __libc_strnlen(@OpState PcodeExecutorState<T> state) {
 			PcodeArithmetic<T> arithmetic = state.getArithmetic();
 			T tStr = state.getVar(regRDI, Reason.EXECUTE_READ);
 			long lStr = arithmetic.toLong(tStr, Purpose.OTHER);
@@ -96,57 +92,32 @@ public class ModelingScript extends GhidraScript {
 	// ----------------------
 
 	public static class SleighStdLibPcodeUseropLibrary<T> extends AnnotatedPcodeUseropLibrary<T> {
-		private static final String SRC_RET = """
-				RIP = *:8 RSP;
-				RSP = RSP + 8;
-				return [RIP];
-				""";
-		private static final String SRC_STRLEN = """
-				__result = 0;
-				<loop>
-				if (*:1 (str+__result) == 0 || __result >= maxlen) goto <exit>;
-				__result = __result + 1;
-				goto <loop>;
-				<exit>
-				""";
-		private final Register regRAX;
-		private final Register regRDI;
-		private final Register regRSI;
-		private final Varnode vnRAX;
-		private final Varnode vnRDI;
-		private final Varnode vnRSI;
-
-		private PcodeProgram progRet;
-		private PcodeProgram progStrlen;
-
-		public SleighStdLibPcodeUseropLibrary(SleighLanguage language) {
-			regRAX = language.getRegister("RAX");
-			regRDI = language.getRegister("RDI");
-			regRSI = language.getRegister("RSI");
-			vnRAX = new Varnode(regRAX.getAddress(), regRAX.getMinimumByteSize());
-			vnRDI = new Varnode(regRDI.getAddress(), regRDI.getMinimumByteSize());
-			vnRSI = new Varnode(regRSI.getAddress(), regRSI.getMinimumByteSize());
+		@PcodeUserop
+		public SleighPcodeUseropDefinition __x86_64_POP(BuilderStage1 builder) {
+			return builder.params().body(_ -> """
+					__op_output = *:8 RSP;
+					RSP = RSP + 8;
+					""").build();
 		}
 
 		@PcodeUserop
-		public void __x86_64_RET(@OpExecutor PcodeExecutor<T> executor,
-				@OpLibrary PcodeUseropLibrary<T> library) {
-			if (progRet == null) {
-				progRet = SleighProgramCompiler.compileUserop(executor.getLanguage(),
-					"__x86_64_RET", List.of(), SRC_RET, PcodeUseropLibrary.nil(), List.of());
-			}
-			progRet.execute(executor, library);
+		public SleighPcodeUseropDefinition __libc_strnlen(BuilderStage1 builder) {
+			return builder.params().body(_ -> """
+					RAX = __libc_strnlen_generic(RDI, RSI);
+					""").build();
 		}
 
 		@PcodeUserop
-		public void __libc_strlen(@OpExecutor PcodeExecutor<T> executor,
-				@OpLibrary PcodeUseropLibrary<T> library) {
-			if (progStrlen == null) {
-				progStrlen = SleighProgramCompiler.compileUserop(executor.getLanguage(),
-					"__libc_strlen", List.of("__result", "str", "maxlen"),
-					SRC_STRLEN, PcodeUseropLibrary.nil(), List.of(vnRAX, vnRDI, vnRSI));
-			}
-			progStrlen.execute(executor, library);
+		public SleighPcodeUseropDefinition __libc_strnlen_generic(BuilderStage1 builder) {
+			return builder.params("str", "maxlen").body(_ -> """
+					local result = 0;
+					<loop>
+					if (*:1 (str+result) == 0 || result >= maxlen) goto <exit>;
+					result = result + 1;
+					goto <loop>;
+					<exit>
+					__op_output = result;
+					""").build();
 		}
 	}
 
@@ -163,24 +134,25 @@ public class ModelingScript extends GhidraScript {
 				super(cs);
 			}
 
-			@StructuredUserop
-			public void __x86_64_RET() {
-				Var RSP = lang("RSP", type("void **"));
-				Var RIP = lang("RIP", type("void *"));
-				RIP.set(RSP.deref());
+			@StructuredUserop(type = "undefined *")
+			public void __x86_64_POP() {
+				Var RSP = lang("RSP", type("undefined **"));
+				Var result = temp(type("undefined *"));
+				result.set(RSP.deref());
 				RSP.addiTo(8);
-				_return(RIP);
+				_result(result);
 			}
 
 			@StructuredUserop
-			public void __libc_strlen() {
+			public void __libc_strnlen() {
 				Var result = lang("RAX", type("long"));
 				Var str = lang("RDI", type("char *"));
 				Var maxlen = lang("RSI", type("long"));
 
-				_for(result.set(0), result.ltiu(maxlen).andb(str.index(result).deref().eq(0)),
-					result.inc(), () -> {
-					});
+				RVal inBounds = result.ltiu(maxlen);
+				RVal notTerm = str.index(result).deref().neq(0);
+				_for(result.set(0), inBounds.andb(notTerm), result.inc(), () -> {
+				});
 			}
 		}
 	}

@@ -47,14 +47,14 @@ public enum IntAddOpGen implements IntOpBinOpGen<JitIntAddOp> {
 	}
 
 	@Override
-	public <N2 extends Next, N1 extends Ent<N2, TInt>, N0 extends Ent<N1, TInt>>
-			Emitter<Ent<N2, TInt>> opForInt(Emitter<N0> em, IntJitType type) {
+	public <N2 extends Next, N1 extends Ent<N2, TInt>, N0 extends Ent<N1, TInt>> Emitter<Ent<N2, TInt>> opForInt(
+			Emitter<N0> em, IntJitType type) {
 		return Op.iadd(em);
 	}
 
 	@Override
-	public <N2 extends Next, N1 extends Ent<N2, TLong>, N0 extends Ent<N1, TLong>>
-			Emitter<Ent<N2, TLong>> opForLong(Emitter<N0> em, LongJitType type) {
+	public <N2 extends Next, N1 extends Ent<N2, TLong>, N0 extends Ent<N1, TLong>> Emitter<Ent<N2, TLong>> opForLong(
+			Emitter<N0> em, LongJitType type) {
 		return Op.ladd(em);
 	}
 

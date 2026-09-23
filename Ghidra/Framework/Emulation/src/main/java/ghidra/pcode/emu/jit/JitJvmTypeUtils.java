@@ -15,34 +15,34 @@
  */
 package ghidra.pcode.emu.jit;
 
+import java.lang.classfile.ClassBuilder;
+import java.lang.constant.ClassDesc;
 import java.lang.reflect.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.reflect.TypeLiteral;
-import org.objectweb.asm.ClassVisitor;
 
 /**
  * Some utilities for generating type signatures, suitable for use with
- * {@link ClassVisitor#visitField(int, String, String, String, Object)}.
- * 
+ * {@link ClassBuilder#withField(String, ClassDesc, int)}.
  * <p>
- * <b>WARNING:</b> It seems to me, the internal representation of signatures as accepted by the ASM
- * API is not fixed from version to version. In the future, these utilities may need to be updated
- * to work with multiple versions, if the representation changes in a newer classfile format.
- * Hopefully, the upcoming classfile API will obviate the need for any of this.
+ * <b>WARNING:</b> The internal representation of type signatures is defined by the JVM
+ * specification. While the standard Class-File API handles most descriptor generation, these
+ * utilities produce <em>generic</em> signatures (as in the {@code Signature} attribute), which
+ * still require manual construction.
  */
 public enum JitJvmTypeUtils {
 	;
 
 	/**
-	 * Get the internal name of a class as in {@link org.objectweb.asm.Type#getInternalName(Class)}.
-	 * 
+	 * Get the internal name of a class (e.g., {@code java.lang.String}).
+	 *
 	 * @param cls the class
 	 * @return the internal name
 	 */
 	public static String classToInternalName(Class<?> cls) {
-		return org.objectweb.asm.Type.getInternalName(cls);
+		return cls.getName().replace('.', '/');
 	}
 
 	/**
@@ -57,7 +57,6 @@ public enum JitJvmTypeUtils {
 
 	/**
 	 * Get the signature of the given wildcard type
-	 * 
 	 * <ul>
 	 * <li>{@code sig(?) = *}</li>
 	 * <li>{@code sig(? super MyType) = -sig(MyType)}</li>
@@ -84,14 +83,11 @@ public enum JitJvmTypeUtils {
 
 	/**
 	 * Get the signature of the given type
-	 * 
 	 * <p>
 	 * For the use case this supports, probably the best way to obtain a {@link Type} is via
 	 * {@link TypeLiteral}.
-	 * 
 	 * <p>
 	 * As of the JVM 21, internal type signatures are derived as:
-	 * 
 	 * <ul>
 	 * <li>{@code sig(my.MyType) = Lmy/MyType.class;}</li>
 	 * <li>{@code sig(my.MyType[]) = [sig(my.MyType)}</li>

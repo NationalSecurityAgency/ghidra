@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import docking.dnd.GenericDataFlavor;
-import ghidra.util.Msg;
 
 /**
  * Defines data that is available for drag/drop and clipboard transfers.
@@ -29,31 +28,38 @@ import ghidra.util.Msg;
  */
 public class DataTypeTransferable implements Transferable, ClipboardOwner {
 
-	// Flavor for this Transferable
+	/**
+	 * Used for drag/drop of a single data type
+	 */
 	public static final DataFlavor localDataTypeFlavor = createLocalDataTypeFlavor();
+
+	/**
+	 * Used for drag/drop of a single data type
+	 */
 	public static final DataFlavor localBuiltinDataTypeFlavor = createLocalBuiltinDataTypeFlavor();
 
-	// create a data flavor that is a tool button
+	/**
+	 * Used for drag/drop of a multiple data types
+	 */
+	public static final DataFlavor localDataTypeListFlavor = createLocalDataTypeListFlavor();
+
+	// create a data flavor for a single data type
 	private static DataFlavor createLocalDataTypeFlavor() {
-		try {
-			return new GenericDataFlavor(DataFlavor.javaJVMLocalObjectMimeType +
-				"; class=ghidra.program.model.data.DataTypeImpl", "Local data type object");
-		}
-		catch (Exception e) {
-			Msg.showError(DataTypeTransferable.class, null, null, null, e);
-		}
-		return null;
+		return new GenericDataFlavor(DataFlavor.javaJVMLocalObjectMimeType +
+			"; class=ghidra.program.model.data.DataType", "Local data type object");
 	}
 
+	// flavor for single built-in data type
 	private static DataFlavor createLocalBuiltinDataTypeFlavor() {
-		try {
-			return new GenericDataFlavor(DataFlavor.javaJVMLocalObjectMimeType +
-				"; class=ghidra.program.model.data.DataTypeImpl", "Local BuiltIn data type object");
-		}
-		catch (Exception e) {
-			Msg.showError(DataTypeTransferable.class, null, null, null, e);
-		}
-		return null;
+		return new GenericDataFlavor(DataFlavor.javaJVMLocalObjectMimeType +
+			"; class=ghidra.program.model.data.DataType", "Local BuiltIn data type object");
+	}
+
+	// create a data flavor that is a List of data types
+	private static DataFlavor createLocalDataTypeListFlavor() {
+		return new GenericDataFlavor(
+			DataFlavor.javaJVMLocalObjectMimeType + "; class=java.util.List",
+			"Local list of Drag/Drop DataType objects");
 	}
 
 	private static DataFlavor[] flavors = { localDataTypeFlavor, localBuiltinDataTypeFlavor };
@@ -69,25 +75,16 @@ public class DataTypeTransferable implements Transferable, ClipboardOwner {
 		dataType = dt;
 	}
 
-	/**
-	 * Return all data flavors that this class supports.
-	 */
 	@Override
 	public synchronized DataFlavor[] getTransferDataFlavors() {
 		return flavors;
 	}
 
-	/**
-	 * Return whether the specifed data flavor is supported.
-	 */
 	@Override
 	public boolean isDataFlavorSupported(DataFlavor f) {
 		return flavorList.contains(f);
 	}
 
-	/**
-	 * Return the transfer data with the given data flavor.
-	 */
 	@Override
 	public synchronized Object getTransferData(DataFlavor f) throws UnsupportedFlavorException,
 			IOException {
@@ -99,19 +96,14 @@ public class DataTypeTransferable implements Transferable, ClipboardOwner {
 
 	}
 
-	/**
-	 * Get the string representation for this transferable.
-	 */
 	@Override
 	public String toString() {
 		return "DataTypeTransferable";
 	}
 
-	/**
-	 * ClipboardOwner interface method.
-	 */
 	@Override
 	public void lostOwnership(Clipboard clipboard, Transferable contents) {
+		// stub
 	}
 
 }

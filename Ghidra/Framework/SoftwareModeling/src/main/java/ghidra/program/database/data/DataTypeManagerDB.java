@@ -15,7 +15,6 @@
  */
 package ghidra.program.database.data;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,15 +28,12 @@ import org.apache.commons.lang3.StringUtils;
 
 import db.*;
 import db.util.ErrorHandler;
-import generic.jar.ResourceFile;
 import generic.stl.Pair;
 import ghidra.app.plugin.core.datamgr.archive.BuiltInSourceArchive;
 import ghidra.docking.settings.*;
 import ghidra.framework.Application;
 import ghidra.framework.data.OpenMode;
 import ghidra.framework.model.RuntimeIOException;
-import ghidra.framework.store.db.PackedDBHandle;
-import ghidra.framework.store.db.PackedDatabase;
 import ghidra.graph.*;
 import ghidra.graph.algo.GraphNavigator;
 import ghidra.program.database.*;
@@ -79,9 +75,10 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * mode must always be allowed when opening older versions.
 	 *             - version  1 - Legacy prior to overall DTM versioning (not stored)
 	 * 12-Jan-2022 - version  2 - Introduced DataTypeManager data map table and overall DTM version.
-	 *                            Also added typedef flags and auto-naming support.
+	 *                            Also added typedef flags and auto-naming support
+	 * 22-Jun-2026 - version  3 - standardized on use of DtArchiveDB Domain Object for all archives.
 	 */
-	static final int DB_VERSION = 2;
+	static final int DB_VERSION = 3;
 
 	static long ROOT_CATEGORY_ID = 0;
 
@@ -133,7 +130,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	protected final boolean readOnlyMode;
 	protected final DBHandle dbHandle;
 	protected final String tablePrefix;
-	protected final ErrorHandler errHandler;
+
+	protected ErrorHandler errHandler;
+	protected Lock lock;
 
 	private DataTypeConflictHandler currentHandler;
 
@@ -177,195 +176,16 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	private ThreadLocal<EquivalenceCache> equivalenceCache = new ThreadLocal<>();
 
 	private IdentityHashMap<DataType, DataType> resolveCache;
-	private TreeSet<ResolvePair> resolveQueue; // Note: is TreeSet really needed?
+	private TreeSet<ResolvedDt> resolveQueue; // Note: is TreeSet really needed?
 	private LinkedList<DataType> conflictQueue = new LinkedList<>();
 
 	private boolean isBulkRemoving;
-
-	protected AddressMap addrMap;
 
 	private DataOrganization dataOrganization;
 	private ProgramArchitecture programArchitecture;
 	private VariableStorageManager variableStorageMgr;
 
-	protected final Lock lock;
-
-	private static class ResolvePair implements Comparable<ResolvePair> {
-
-		private final DataTypeDB resolvedDt;
-		private final DataType definitionDt;
-
-		ResolvePair(DataTypeDB resolvedDt, DataType definitionDt) {
-			this.resolvedDt = resolvedDt;
-			this.definitionDt = definitionDt;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (!(obj instanceof ResolvePair)) {
-				return false;
-			}
-			return resolvedDt.getKey() == ((ResolvePair) obj).resolvedDt.getKey();
-		}
-
-		@Override
-		public int hashCode() {
-			long value = resolvedDt.getKey();
-			return (int) (value ^ (value >>> 32));
-		}
-
-		@Override
-		public int compareTo(ResolvePair o) {
-			long r = resolvedDt.getKey() - o.resolvedDt.getKey();
-			if (r == 0) {
-				return 0;
-			}
-			if (r < 0) {
-				return -1;
-			}
-			return 1;
-		}
-	}
-
-	/**
-	 * Construct a new temporary data-type manager. Note that this manager does not
-	 * support the save or saveAs operation.  No Language is associated with instance.
-	 * 
-	 * @param dataOrganization applicable data organization
-	 * @throws RuntimeIOException if database error occurs during creation
-	 */
-	protected DataTypeManagerDB(DataOrganization dataOrganization) throws RuntimeIOException {
-		this.lock = new Lock("DataTypeManagerDB");
-		this.errHandler = new DbErrorHandler();
-		this.dataOrganization = dataOrganization;
-		this.tablePrefix = "";
-
-		try {
-			dbHandle = new DBHandle();
-			readOnlyMode = false;
-			long txId = dbHandle.startTransaction();
-			try {
-				init(OpenMode.CREATE, TaskMonitor.DUMMY);
-			}
-			catch (VersionException | CancelledException e) {
-				throw new AssertException(e); // unexpected
-			}
-			finally {
-				dbHandle.endTransaction(txId, true);
-			}
-		}
-		catch (IOException e) {
-			throw new RuntimeIOException(e);
-		}
-	}
-
-	/**
-	 * Constructor for a data-type manager backed by a packed database file. When
-	 * opening for UPDATE an automatic upgrade will be performed if required.
-	 * NOTE: Default DataOrganization will be used for new archive.
-	 * 
-	 * @param packedDBfile packed datatype archive file (i.e., *.gdt resource).
-	 * @param openMode     open mode CREATE, READ_ONLY or UPDATE 
-	 * @param monitor task monitor
-	 * @throws IOException a low-level IO error. This exception may also be thrown
-	 *                     when a version error occurs (cause is VersionException).
-	 * @throws CancelledException if task cancelled
-	 */
-	protected DataTypeManagerDB(ResourceFile packedDBfile, OpenMode openMode, TaskMonitor monitor)
-			throws IOException, CancelledException {
-
-		this.errHandler = new DbErrorHandler();
-		this.lock = new Lock("DataTypeManagerDB");
-		this.tablePrefix = "";
-		this.readOnlyMode = (openMode == OpenMode.IMMUTABLE);
-
-		File file = packedDBfile.getFile(false);
-		if (file == null && openMode != OpenMode.IMMUTABLE) {
-			throw new IOException("Unsupported mode (" + openMode +
-				") for read-only Datatype Archive: " + packedDBfile.getAbsolutePath());
-		}
-
-		// Open packed database archive
-		boolean openSuccess = false;
-		PackedDatabase pdb = null;
-		try {
-			if (openMode == OpenMode.CREATE) {
-				dbHandle = new PackedDBHandle(
-					DataTypeArchiveContentHandler.DATA_TYPE_ARCHIVE_CONTENT_TYPE);
-			}
-			else {
-				pdb = PackedDatabase.getPackedDatabase(packedDBfile, false, monitor);
-
-				if (openMode == OpenMode.IMMUTABLE) {
-					dbHandle = pdb.open(monitor);
-				}
-				else { // UPDATE mode (allows upgrade use)
-					dbHandle = pdb.openForUpdate(monitor);
-				}
-			}
-			openSuccess = true;
-		}
-		finally {
-			if (!openSuccess && pdb != null) {
-				pdb.dispose(); // dispose on error
-			}
-		}
-
-		// Initialize datatype manager and save new archive on CREATE
-		boolean initSuccess = false;
-		try {
-			initPackedDatabase(packedDBfile, openMode, monitor); // performs upgrade if needed
-			if (openMode == OpenMode.CREATE) {
-				// preserve UniversalID if it has been established
-				Long uid = universalID != null ? universalID.getValue() : null;
-				((PackedDBHandle) dbHandle).saveAs("Archive", file.getParentFile(),
-					packedDBfile.getName(), uid, monitor);
-			}
-			initSuccess = true;
-		}
-		finally {
-			if (!initSuccess) {
-				dbHandle.close(); // close on error (packed database will also be disposed)
-			}
-		}
-	}
-
-	private void initPackedDatabase(ResourceFile packedDBfile, OpenMode openMode,
-			TaskMonitor monitor) throws CancelledException, IOException {
-		Long txId = dbHandle.startTransaction();
-		try {
-			init(openMode, monitor);
-
-			if (openMode != OpenMode.CREATE && hasDataOrganizationChange(true)) {
-				// check for data organization change with possible upgrade
-				handleDataOrganizationChange(openMode, monitor);
-			}
-
-			if (openMode == OpenMode.UPGRADE) {
-				migrateOldFlexArrayComponentsIfRequired(monitor);
-
-				Msg.showInfo(this, null, "Archive Upgraded",
-					"Data type archive has been upgraded: " + packedDBfile.getName());
-			}
-		}
-		catch (VersionException e) {
-			if (openMode == OpenMode.UPDATE && e.isUpgradable()) {
-				// Try again with UPGRADE mode
-				dbHandle.endTransaction(txId, true);
-				txId = null;
-				initPackedDatabase(packedDBfile, OpenMode.UPGRADE, monitor);
-			}
-			else {
-				// Unable to handle required upgrade
-				throw new IOException(e);
-			}
-		}
-		finally {
-			if (txId != null) {
-				dbHandle.endTransaction(txId, true);
-			}
-		}
-	}
+	protected AddressMap addrMap;
 
 	/**
 	 * Constructor for a database-backed <code>DataTypeManagerDB</code> extension.
@@ -387,16 +207,54 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * @throws VersionException if any database handle's version doesn't match the expected version.
 	 *                   This exception will never be thrown in READ_ONLY mode.
 	 */
-	protected DataTypeManagerDB(DBHandle handle, AddressMap addrMap, OpenMode openMode,
+	protected DataTypeManagerDB(DBHandle handle, OpenMode openMode, AddressMap addrMap,
 			String tablePrefix, ErrorHandler errHandler, Lock lock, TaskMonitor monitor)
 			throws CancelledException, IOException, VersionException {
+		this.addrMap = addrMap;
 		this.tablePrefix = tablePrefix != null ? tablePrefix : "";
 		this.dbHandle = handle;
 		this.readOnlyMode = (openMode == OpenMode.IMMUTABLE);
-		this.addrMap = addrMap;
 		this.errHandler = errHandler;
 		this.lock = lock;
 		init(openMode, monitor);
+	}
+
+	/**
+	 * Constructor for a transient database-backed <code>DataTypeManagerDB</code> instance using
+	 * a new {@link DBHandle}.
+	 * 
+	 * @throws RuntimeIOException if there is a problem creating the database
+	 */
+	protected DataTypeManagerDB()
+			throws RuntimeIOException {
+		try {
+			this.tablePrefix = "";
+			this.dbHandle = new DBHandle();
+			this.readOnlyMode = false;
+			this.errHandler = new DbErrorHandler();
+			this.lock = new Lock("DTMLock");
+			long txId = dbHandle.startTransaction();
+			try {
+				init(OpenMode.CREATE, TaskMonitor.DUMMY);
+			}
+			finally {
+				dbHandle.endTransaction(txId, true);
+			}
+		}
+		catch (CancelledException | VersionException e) {
+			throw new AssertException(e);
+		}
+		catch (IOException e) {
+			throw new RuntimeIOException(e);
+		}
+	}
+
+	private static class DbErrorHandler implements ErrorHandler {
+
+		@Override
+		public void dbError(IOException e) throws RuntimeIOException {
+			throw new RuntimeIOException(e);
+		}
 	}
 
 	private void init(OpenMode openMode, TaskMonitor monitor)
@@ -831,6 +689,11 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 	}
 
+	protected void setDataOrganization(DataOrganization dataOrganization) {
+		this.dataOrganization = dataOrganization != null ? dataOrganization
+				: DataOrganizationImpl.getDefaultOrganization();
+	}
+
 	/**
 	 * Perform updates related to a compiler spec change, including:
 	 * <ul>
@@ -914,21 +777,10 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		return programArchitecture;
 	}
 
-	protected static String getProgramArchitectureSummary(LanguageID languageId,
-			int languageVersion, CompilerSpecID compilerSpecId) {
-		StringBuilder buf = new StringBuilder();
-		buf.append(languageId.getIdAsString());
-		buf.append(" / ");
-		buf.append(compilerSpecId.getIdAsString());
-		return buf.toString();
-	}
-
 	@Override
 	public String getProgramArchitectureSummary() {
 		if (programArchitecture != null) {
-			return getProgramArchitectureSummary(programArchitecture.getLanguage().getLanguageID(),
-				programArchitecture.getLanguage().getVersion(),
-				programArchitecture.getCompilerSpec().getCompilerSpecID());
+			return programArchitecture.getSummary();
 		}
 		return null;
 	}
@@ -960,9 +812,11 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		defaultListener.restored(this);
 	}
 
+	/**
+	 * {@return the ID associated this datatype manager's associated domain file storage if 
+	 * applicable, or null}
+	 */
 	abstract protected String getDomainFileID();
-
-	abstract protected String getPath();
 
 	private List<DataType> getSortedDataTypes() {
 		List<DataType> local = lazySortedDataTypes;
@@ -3462,11 +3316,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		enumValueMap = null;
 	}
 
-	@Override
-	public void close() {
-		dispose();
-	}
-
 	/**
 	 * Invalidates the cache.
 	 */
@@ -3879,11 +3728,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	}
 
 	@Override
-	public AddressMap getAddressMap() {
-		return addrMap;
-	}
-
-	@Override
 	public final DataOrganization getDataOrganization() {
 		if (dataOrganization == null) {
 			try {
@@ -4120,7 +3964,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				replaceSourceArchive(sourceArchive, mappedSourceArchive);
 			}
 		}
-		BuiltInDataTypeManager builtInDTM = BuiltInDataTypeManager.getDataTypeManager();
+		DataTypeManager builtInDTM = BuiltInDataTypeManager.getDataTypeManager();
 		for (String name : SourceArchiveUpgradeMap.getTypedefReplacements()) {
 			monitor.checkCancelled();
 			DataType dataType = getDataType(CategoryPath.ROOT, name);
@@ -4457,7 +4301,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		if (resolveQueue == null) {
 			resolveQueue = new TreeSet<>();
 		}
-		resolveQueue.add(new ResolvePair(resolvedDt, definitionDt));
+		resolveQueue.add(new ResolvedDt(resolvedDt, definitionDt));
 	}
 
 	/**
@@ -4500,7 +4344,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			if (resolveQueue != null) {
 				DataTypeConflictHandler handler = getDependencyConflictHandler();
 				while (!resolveQueue.isEmpty()) {
-					ResolvePair resolvePair = resolveQueue.pollFirst();
+					ResolvedDt resolvePair = resolveQueue.pollFirst();
 					DataTypeDB resolvedDt = resolvePair.resolvedDt;
 					try {
 						if (!resolvedDt.isDeleted()) {
@@ -4776,21 +4620,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 	}
 
-	private class DbErrorHandler implements ErrorHandler {
-
-		@Override
-		public void dbError(IOException e) throws RuntimeIOException {
-
-			String message = e.getMessage();
-			if (e instanceof ClosedException) {
-				message = "Data type archive is closed: " + getName();
-				Msg.showError(this, null, "IO ERROR", message, e);
-			}
-
-			throw new RuntimeIOException(e);
-		}
-	}
-
 	/**
 	 * Diagnostic method to determine actual number of datatype records which exist.  This
 	 * may differ from the total number of datatypes reported via {@link DataTypeManager#getAllDataTypes()}
@@ -4972,4 +4801,33 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 	}
 
+	private static record ResolvedDt(DataTypeDB resolvedDt, DataType definitionDt)
+			implements Comparable<ResolvedDt> {
+
+		@Override
+		public int hashCode() {
+			long value = resolvedDt.getKey();
+			return (int) (value ^ (value >>> 32));
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			ResolvedDt other = (ResolvedDt) obj;
+			return resolvedDt.getKey() == other.resolvedDt.getKey();
+		}
+
+		@Override
+		public int compareTo(ResolvedDt o) {
+			return Long.compare(resolvedDt.getKey(), o.resolvedDt.getKey());
+		}
+	}
 }

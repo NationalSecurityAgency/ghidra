@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,20 +19,26 @@ import static org.junit.Assert.*;
 
 import java.util.Iterator;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import generic.test.AbstractGenericTest;
 import ghidra.program.model.data.*;
 
 public class DataTypeDBReplaceTest extends AbstractGenericTest {
 
-	private DataTypeManagerDB dataMgr;
+	private TransientDataTypeManager dataMgr;
+	private int txId;
 
 	@Before
 	public void setUp() throws Exception {
-		dataMgr = new StandAloneDataTypeManager("dummyDTM");
-		dataMgr.startTransaction("Test");
+		dataMgr = new TransientDataTypeManager("dummyArchive");
+		txId = dataMgr.startTransaction("Test");
+	}
+
+	@After
+	public void tearDown() {
+		dataMgr.endTransaction(txId, false);
+		dataMgr.close();
 	}
 
 	@Test
@@ -257,7 +263,8 @@ public class DataTypeDBReplaceTest extends AbstractGenericTest {
 
 		// Compare count with actual record count to ensure both proper maps updates and
 		// potential datatype duplication not reflected in count above.
-		assertEquals("Incomplete datatype manager update", cnt, dataMgr.getDataTypeRecordCount());
+		assertEquals("Incomplete datatype manager update", cnt,
+			dataMgr.getDataTypeRecordCount());
 
 		return cnt;
 	}

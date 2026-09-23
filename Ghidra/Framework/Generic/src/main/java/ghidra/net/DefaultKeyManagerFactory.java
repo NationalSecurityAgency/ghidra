@@ -16,6 +16,7 @@
 package ghidra.net;
 
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -28,6 +29,7 @@ import javax.security.auth.x500.X500Principal;
 
 import org.apache.commons.lang3.StringUtils;
 
+import ghidra.framework.Application;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
@@ -36,11 +38,31 @@ import ghidra.util.exception.CancelledException;
 /**
  * {@link DefaultKeyManagerFactory} provides access to the default application key manager
  * associated with the preferred keystore file specified by the {@link #KEYSTORE_PATH_PROPERTY}
- * system property or set with {@link #setDefaultKeyStore(String, boolean)}.  
+ * system property or set with {@link #setDefaultKeyStore(String, boolean)}.
+ * <p>
+ * Keystore selection depends on the role established via {@link #initialize(boolean)}
+ * (client mode is the default for all lazy initialization paths):
+ * <ul>
+ * <li><b>Explicit keystore</b> (client or server) - a keystore file specified via the
+ * {@link #KEYSTORE_PATH_PROPERTY} system property, user preference, or
+ * {@link #setDefaultKeyStore(String, boolean)} is always used when set.  The
+ * {@link #KEYSTORE_PASSWORD_PROPERTY} applies to such file-based keystores only.  This is 
+ * treated as a default password to access the default keystore file if specified.  In the 
+ * absence of a configured password provider (e.g., server) it must be specified.
+ * </li>
+ * <li><b>Server</b> - without an explicit keystore, a self-signed certificate is generated
+ * using the identity established with {@link #setDefaultIdentity(X500Principal)}, otherwise
+ * a default name is used.  The server may impose use restrictions when an automatic self-signed
+ * certificate is used and will cause client-side server-authentication issues if accessed
+ * remotely.  The OS-managed keystore is never used by the Ghidra Server.</li>
+ * <li><b>Client</b> - without an explicit keystore, the OS-managed user keystore is used
+ * when available (<code>Windows-MY</code> on Windows, Apple <code>KeychainStore</code> on
+ * macOS).</li>
+ * </ul>
  * <p>
  * NOTE: Since {@link SslRMIClientSocketFactory} and {@link SSLServerSocketFactory} employ a
  * static cache of a default {@link SSLSocketFactory}, with its default {@link SSLContext}, we
- * must utilize a wrapped implementation of the associated {@link X509ExtendedKeyManager} so that 
+ * must utilize a wrapped implementation of the associated {@link X509ExtendedKeyManager} so that
  * an updated keystore is used by the existing default {@link SSLSocketFactory}.
  */
 public class DefaultKeyManagerFactory {
@@ -65,6 +87,10 @@ public class DefaultKeyManagerFactory {
 	// Certificate info when self-signed cert is used
 	private static X500Principal defaultIdentity;
 	private static List<String> defaultSubjectAlternativeNames;
+
+	// True if this JVM is acting as the Ghidra Server (see initialize(boolean)).
+	// Factory-level state so it survives key manager invalidation/re-init cycles.
+	private static boolean serverMode = false;
 
 	// Factory maintains a single X509 key manager
 	private static final DefaultX509KeyManager keyManagerWrapper = new DefaultX509KeyManager();
@@ -99,9 +125,11 @@ public class DefaultKeyManagerFactory {
 	 * 
 	 * @param path keystore file path or null to clear current key store and preference.
 	 * @param savePreference if true will be saved as user preference
-	 * @return true if successful else false if error occured (see log).
+	 * @return true if successful else false if error occurred (see log).
 	 */
 	public static synchronized boolean setDefaultKeyStore(String path, boolean savePreference) {
+
+		// NOTE: Should consider throwing exception instead of returning boolean
 
 		if (System.getProperty(KEYSTORE_PATH_PROPERTY) != null) {
 			Msg.showError(DefaultKeyManagerFactory.class, null, "Set KeyStore Failed",
@@ -112,27 +140,49 @@ public class DefaultKeyManagerFactory {
 		path = prunePath(path);
 
 		try {
-			boolean keyInitialized = keyManagerWrapper.init(path);
-
-			if (savePreference && (path == null || keyInitialized)) {
+			keyManagerWrapper.init(path);
+			if (savePreference) {
 				Preferences.setProperty(KEYSTORE_PATH_PROPERTY, path);
 				Preferences.store();
 			}
-			return keyInitialized;
+			return true;
 		}
 		catch (CancelledException e) {
-			// ignore - keystore left unchanged
-			return false;
+			// ignore
 		}
+		catch (GeneralSecurityException e) {
+			Msg.showError(DefaultKeyManagerFactory.class, null, "Set KeyStore Failed",
+				"Failed to create PKI key manager: " + e.getMessage());
+		}
+		return false; // keystore left unchanged
 	}
 
 	/**
-	 * Determine if active key manager is utilizing a generated self-signed certificate.
-	 * 
+	 * Determine if active key manager is utilizing a generated self-signed certificate (server only)
+	 * client certificate.
+	 *
 	 * @return true if using self-signed certificate.
 	 */
-	public static synchronized boolean usingGeneratedSelfSignedCertificate() {
+	public static boolean usingGeneratedSelfSignedCertificate() {
 		return keyManagerWrapper.usingGeneratedSelfSignedCertificate();
+	}
+
+	/**
+	 * Determine if active key manager is utilizing the OS-managed user keystore
+	 * (<code>Windows-MY</code> on Windows, Apple <code>KeychainStore</code> on macOS).
+	 *
+	 * @return true if using the OS-managed keystore.
+	 */
+	public static boolean usingOSManagedKeyStore() {
+		return keyManagerWrapper.usingOSManagedKeyStore();
+	}
+
+	/**
+	 * Determine if active key manager is utilizing the file-based user keystore.
+	 * @return true if using the file-based user keystore.
+	 */
+	public static boolean usingFileKeyStore() {
+		return keyManagerWrapper.usingFileKeyStore();
 	}
 
 	/**
@@ -140,7 +190,7 @@ public class DefaultKeyManagerFactory {
 	 * if no keystore defined.  Current application key manager will be invalidated.
 	 * (NOTE: this is intended for server use only when client will not be performing
 	 * CA validation).
-	 * 
+	 *
 	 * @param identity if not null and a KeyStore path has not be set, this
 	 * identity will be used to generate a self-signed certificate and private key
 	 */
@@ -175,17 +225,54 @@ public class DefaultKeyManagerFactory {
 	 * Initialize key manager if needed.  Doing this explicitly independent of an SSL connection
 	 * allows application to bail before initiating connection.  This will get handshake failure
 	 * if user forgets keystore password or other keystore problem.
+	 * <p>
+	 * The current role is retained (client mode unless {@link #initialize(boolean)} was
+	 * previously invoked with <code>true</code>).  In client mode, when no keystore has been
+	 * specified, the OS-managed keystore will be used if available.  Otherwise no keystore
+	 * is used.
+	 *
 	 * @return true if key manager initialized, otherwise false
 	 */
-	public synchronized static boolean initialize() {
+	public static boolean initialize() {
 		try {
-			return keyManagerWrapper.init();
+			keyManagerWrapper.init();
+			return true;
 		}
 		catch (CancelledException e) {
-			return false;
+			// ignore
 		}
+		catch (Exception e) {
+			logInitError(e);
+		}
+		return false; // keystore left unchanged
 	}
 
+	/**
+	 * Initialize key manager if needed, indicating whether this JVM is acting as a server
+	 * or client.  In server mode the OS-managed keystore is never used.  If server mode and
+	 * without an explicit keystore path, a self-signed certificate keystore will be generated 
+	 * using the specified {@link #setDefaultIdentity(X500Principal) identity} or a default identity.
+	 * If the role differs from the current mode any existing key manager will be invalidated and 
+	 * re-initialized.
+	 *
+	 * @param isServer true if initializing for the Ghidra Server, false for client use.
+	 * @return true if key manager initialized, otherwise false
+	 */
+	public synchronized static boolean initialize(boolean isServer) {
+		if (serverMode != isServer) {
+			serverMode = isServer;
+			keyManagerWrapper.invalidateKey();
+		}
+		return initialize();
+	}
+
+	/**
+	 * {@return true if key manager factory has been initialized for dedicated server use}
+	 */
+	public static boolean isServerMode() {
+		return serverMode;
+	}
+	
 	/**
 	 * Invalidate the existing default key manager.
 	 */
@@ -200,7 +287,7 @@ public class DefaultKeyManagerFactory {
 	 * @return active keystore path or null if currently not running with a keystore or
 	 * one has not been set.
 	 */
-	public static synchronized String getPreferredKeyStore() {
+	public static String getPreferredKeyStore() {
 		String path = prunePath(System.getProperty(KEYSTORE_PATH_PROPERTY));
 		if (path == null && !SystemUtilities.isInHeadlessMode()) {
 			path = prunePath(Preferences.getProperty(KEYSTORE_PATH_PROPERTY));
@@ -209,10 +296,10 @@ public class DefaultKeyManagerFactory {
 	}
 
 	/**
-	 * Get the default/preferred key store path.
-	 * @return default key store path or null if not set
+	 * Get the default/preferred key store file path.
+	 * @return default key store file path or null if not set
 	 */
-	public static synchronized String getKeyStore() {
+	public static String getKeyStore() {
 		return keyManagerWrapper.getKeyStore();
 	}
 
@@ -220,8 +307,13 @@ public class DefaultKeyManagerFactory {
 	 * Get the lazy default key manager associated with the preferred key store.
 	 * @return default key manager or null if not initialized
 	 */
-	public static synchronized X509ExtendedKeyManager getKeyManager() {
+	public static X509ExtendedKeyManager getKeyManager() {
 		return keyManagerWrapper;
+	}
+
+	private static void logInitError(Exception e) {
+		Msg.showError(DefaultKeyManagerFactory.class, null, "Key Manager Initialization Failure",
+			"Failed to create PKI key manager: " + e.getMessage());
 	}
 
 	/**
@@ -232,119 +324,253 @@ public class DefaultKeyManagerFactory {
 	 */
 	private static class DefaultX509KeyManager extends X509ExtendedKeyManager {
 
-		private X509KeyManager wrappedKeyManager;
-		private String keystorePath;
-		private boolean isSelfSigned = false;
+		private record KeyManagerRecord(X509KeyManager wrappedKeyManager, String keystorePath,
+				boolean isSelfSigned, boolean isOSManaged) {}
+
+		private static final KeyManagerRecord UNINITIALIZED =
+			new KeyManagerRecord(null, null, false, false);
+
+		// Data record is used to allow atomic switching of keystore data
+		private volatile KeyManagerRecord keyManagerRecord = UNINITIALIZED;
+
+		private DefaultX509KeyManager() {
+			invalidateKey();
+		}
 
 		@Override
 		public String chooseEngineServerAlias(String keyType, Principal[] issuers,
 				SSLEngine engine) {
-			return super.chooseEngineServerAlias(keyType, issuers, engine);
+			try {
+				KeyManagerRecord keyMgrRec = init();
+				String alias = null;
+				if (keyMgrRec.wrappedKeyManager instanceof X509ExtendedKeyManager extKeyMgr) {
+					alias = extKeyMgr.chooseEngineServerAlias(keyType, issuers, engine);
+				}
+				else if (keyMgrRec.wrappedKeyManager != null) {
+					alias = keyMgrRec.wrappedKeyManager.chooseServerAlias(keyType, issuers, null);
+				}
+				return alias;
+			}
+			catch (CancelledException e) {
+				// ignore
+			}
+			catch (Exception e) {
+				logInitError(e);
+			}
+			return null;
 		}
 
 		@Override
 		public String chooseEngineClientAlias(String[] keyType, Principal[] issuers,
 				SSLEngine engine) {
-			return super.chooseEngineClientAlias(keyType, issuers, engine);
-		}
-
-		@Override
-		public synchronized String chooseClientAlias(String[] keyType, Principal[] issuers,
-				Socket socket) {
 			try {
-				init();
+				KeyManagerRecord keyMgrRec = init();
+				String alias = null;
+				if (keyMgrRec.wrappedKeyManager instanceof X509ExtendedKeyManager extKeyMgr) {
+					alias = extKeyMgr.chooseEngineClientAlias(keyType, issuers, engine);
+				}
+				else if (keyMgrRec.wrappedKeyManager != null) {
+					alias = keyMgrRec.wrappedKeyManager.chooseClientAlias(keyType, issuers, null);
+				}
+				if (alias == null) {
+					warnNoClientCert(engine);
+				}
+				return alias;
 			}
 			catch (CancelledException e) {
 				// ignore
 			}
-			if (wrappedKeyManager == null) {
-				return null;
+			catch (Exception e) {
+				logInitError(e);
 			}
-			return wrappedKeyManager.chooseClientAlias(keyType, issuers, socket);
+			return null;
 		}
 
 		@Override
-		public synchronized String chooseServerAlias(String keyType, Principal[] issuers,
+		public String chooseClientAlias(String[] keyType, Principal[] issuers,
 				Socket socket) {
 			try {
-				init();
+				KeyManagerRecord keyMgrRec = init();
+				String alias = null;
+				if (keyMgrRec.wrappedKeyManager != null) {
+					alias = keyMgrRec.wrappedKeyManager.chooseClientAlias(keyType, issuers, socket);
+				}
+				if (alias == null) {
+					warnNoClientCert(socket);
+				}
+				return alias;
 			}
 			catch (CancelledException e) {
 				// ignore
 			}
-			if (wrappedKeyManager == null) {
-				return null;
+			catch (Exception e) {
+				logInitError(e);
 			}
-			return wrappedKeyManager.chooseServerAlias(keyType, issuers, socket);
+			return null;
+		}
+
+		@Override
+		public String chooseServerAlias(String keyType, Principal[] issuers,
+				Socket socket) {
+			try {
+				KeyManagerRecord keyMgrRec = init();
+				String alias = null;
+				if (keyMgrRec.wrappedKeyManager != null) {
+					alias = keyMgrRec.wrappedKeyManager.chooseServerAlias(keyType, issuers, socket);
+				}
+				return alias;
+			}
+			catch (CancelledException e) {
+				// ignore
+			}
+			catch (Exception e) {
+				logInitError(e);
+			}
+			return null;
+		}
+
+		private void warnNoClientCert(Socket socket) {
+			if (socket != null) {
+				Msg.warn(this,
+					"No suitable user PKI certificate available for authentication to server: " +
+						getPeerEndpoint(socket));
+			}
+		}
+
+		private void warnNoClientCert(SSLEngine engine) {
+			if (engine != null) {
+				Msg.warn(this,
+					"No suitable user PKI certificate available for authentication to server: " +
+						getPeerEndpoint(engine));
+			}
+		}
+
+		/**
+		 * Get remote endpoint description for the specified connected socket.
+		 * @param socket connection socket
+		 * @return remote endpoint description
+		 */
+		private static String getPeerEndpoint(Socket socket) {
+			SocketAddress addr = socket.getRemoteSocketAddress();
+			return addr != null ? addr.toString() : "<unknown>";
+		}
+
+		/**
+		 * Get remote endpoint description for the specified SSL engine.
+		 * @param engine SSL engine
+		 * @return remote endpoint description
+		 */
+		private static String getPeerEndpoint(SSLEngine engine) {
+			String host = engine.getPeerHost();
+			return host != null ? (host + ":" + engine.getPeerPort()) : "<unknown>";
 		}
 
 		@Override
 		public String[] getClientAliases(String keyType, Principal[] issuers) {
 			try {
-				init();
+				KeyManagerRecord keyMgrRec = init();
+				if (keyMgrRec.wrappedKeyManager != null) {
+					return keyMgrRec.wrappedKeyManager.getClientAliases(keyType, issuers);
+				}
 			}
 			catch (CancelledException e) {
 				// ignore
 			}
-			if (wrappedKeyManager == null) {
-				return null;
+			catch (Exception e) {
+				logInitError(e);
 			}
-			return wrappedKeyManager.getClientAliases(keyType, issuers);
+			return null;
 		}
 
 		@Override
 		public String[] getServerAliases(String keyType, Principal[] issuers) {
 			try {
-				init();
+				KeyManagerRecord keyMgrRec = init();
+				if (keyMgrRec.wrappedKeyManager != null) {
+					return keyMgrRec.wrappedKeyManager.getServerAliases(keyType, issuers);
+				}
 			}
 			catch (CancelledException e) {
 				// ignore
 			}
-			if (wrappedKeyManager == null) {
-				return null;
+			catch (Exception e) {
+				logInitError(e);
 			}
-			return wrappedKeyManager.getServerAliases(keyType, issuers);
+			return null;
 		}
 
 		@Override
 		public X509Certificate[] getCertificateChain(String alias) {
-			if (wrappedKeyManager == null) {
-				return null;
+			try {
+				KeyManagerRecord keyMgrRec = init();
+				if (keyMgrRec.wrappedKeyManager != null) {
+					return keyMgrRec.wrappedKeyManager.getCertificateChain(alias);
+				}
 			}
-			return wrappedKeyManager.getCertificateChain(alias);
+			catch (CancelledException e) {
+				// ignore
+			}
+			catch (Exception e) {
+				logInitError(e);
+			}
+			return null;
 		}
 
 		@Override
 		public PrivateKey getPrivateKey(String alias) {
-			if (wrappedKeyManager == null) {
-				return null;
+			try {
+				KeyManagerRecord keyMgrRec = init();
+				if (keyMgrRec.wrappedKeyManager != null) {
+					return keyMgrRec.wrappedKeyManager.getPrivateKey(alias);
+				}
 			}
-			return wrappedKeyManager.getPrivateKey(alias);
+			catch (CancelledException e) {
+				// ignore
+			}
+			catch (Exception e) {
+				logInitError(e);
+			}
+			return null;
 		}
 
 		/**
 		 * Invalidate the active keystore and key manager
 		 */
-		private synchronized void invalidateKey() {
-			wrappedKeyManager = null;
-			keystorePath = null;
-			isSelfSigned = false;
+		private void invalidateKey() {
+			keyManagerRecord = UNINITIALIZED;
 		}
 
 		/**
 		 * Return active keystore path or preferred keystore path if not yet initialized.
 		 * @return active keystore path or preferred keystore path if not yet initialized.
 		 */
-		private synchronized String getKeyStore() {
-			return keystorePath != null ? keystorePath : getPreferredKeyStore();
+		private String getKeyStore() {
+			String path = keyManagerRecord.keystorePath;
+			return path != null ? path : getPreferredKeyStore();
 		}
 
 		/**
 		 * Determine if active key manager is utilizing a generated self-signed certificate.
 		 * @return true if using self-signed certificate.
 		 */
-		private synchronized boolean usingGeneratedSelfSignedCertificate() {
-			return wrappedKeyManager != null && isSelfSigned;
+		private boolean usingGeneratedSelfSignedCertificate() {
+			return keyManagerRecord.isSelfSigned();
+		}
+
+		/**
+		 * Determine if active key manager is utilizing the OS-managed user keystore.
+		 * @return true if using the OS-managed keystore.
+		 */
+		private boolean usingOSManagedKeyStore() {
+			return keyManagerRecord.isOSManaged();
+		}
+
+		/**
+		 * Determine if active key manager is utilizing the file-based user keystore.
+		 * @return true if using the file-based user keystore.
+		 */
+		private boolean usingFileKeyStore() {
+			return keyManagerRecord.keystorePath() != null;
 		}
 
 		/**
@@ -353,18 +579,17 @@ public class DefaultKeyManagerFactory {
 		 * If the <code>x509KeyManager</code> already exists, this method has no affect.  If the
 		 * <code>keystorePath</code> has not already been set, the <code>getPreferredKeyStore()</code>
 		 * method will be invoked to obtain the keystore which should be used in establishing the
-		 * <code>wrappedKeyManager</code>.  If no keystore has been identified and the Default Identity
-		 * has been set, a self-signed certificate will be generated.  If nothing has been set, the
-		 * wrappedKeyManager will remain null and false will be returned.  If an error occurs it
+		 * <code>wrappedKeyManager</code>.  If no keystore has been identified, keystore selection
+		 * is based upon the current role (see {@link #init(String)}).  If an error occurs it
 		 * will be logged and key managers will remain uninitialized.
-		 * @return true if key manager initialized successfully or was previously initialized, else
-		 * false if keystore path has not been set and default identity for self-signed certificate
-		 * has not be established (see {@link DefaultKeyManagerFactory#setDefaultIdentity(X500Principal)}).
+		 * @return KeyManagerRecord key manager initialized successfully or was previously initialized
 		 * @throws CancelledException user cancelled keystore password entry request
+		 * @throws GeneralSecurityException if key manager initialization failed
 		 */
-		private synchronized boolean init() throws CancelledException {
-			if (wrappedKeyManager != null) {
-				return true;
+		private KeyManagerRecord init() throws GeneralSecurityException, CancelledException {
+			KeyManagerRecord keyMgrRec = keyManagerRecord;
+			if (keyMgrRec != UNINITIALIZED) {
+				return keyMgrRec;
 			}
 			return init(getPreferredKeyStore());
 		}
@@ -372,63 +597,106 @@ public class DefaultKeyManagerFactory {
 		/**
 		 * Initialize the default x509KeyManager singleton wrappedKeyManager using the specified path.
 		 * If the <code>x509KeyManager</code> already exists for the specified keystore path,
-		 * this method has no affect.  If no keystore has been identified and the Default Identity
-		 * has been set, a self-signed certificate will be generated.  If nothing has been set, the
-		 * wrappedKeyManager will remain null and false will be returned.  If an error occurs it
-		 * will be logged and key managers will remain uninitialized.
+		 * this method has no affect.  If no keystore has been identified, keystore selection
+		 * is based upon the current role:
+		 * <ul>
+		 * <li>Server mode: if the Default Identity has been set, a self-signed certificate
+		 * will be generated, otherwise the wrappedKeyManager will remain null and false will
+		 * be returned.</li>
+		 * <li>Client mode: the OS-managed user keystore (Windows/macOS) will be used if supported,
+		 * otherwise the default Java behavior will apply without a keystore.</li>
+		 * </ul>
+		 * If an error occurs it will be logged and key managers will remain uninitialized.
 		 * @param newKeystorePath specifies the keystore to be opened or null for no keystore
-		 * @return true if key manager initialized successfully or was previously initialized, else
-		 * false if new keystore path was not specified and default identity for self-signed certificate
-		 * has not be established (see {@link DefaultKeyManagerFactory#setDefaultIdentity(X500Principal)}).
+		 * @return KeyManagerRecord key manager initialized successfully or was previously initialized
 		 * @throws CancelledException user cancelled keystore password entry request
+		 * @throws GeneralSecurityException if key manager initialization failed
 		 */
-		private synchronized boolean init(String newKeystorePath) throws CancelledException {
+		private synchronized KeyManagerRecord init(String newKeystorePath)
+				throws CancelledException, GeneralSecurityException {
 
-			if (wrappedKeyManager != null) {
-				if (Objects.equals(keystorePath, newKeystorePath)) {
-					return true;
+			if (newKeystorePath != null) {
+				// Specified keystore is already being used
+				if (keyManagerRecord.wrappedKeyManager != null &&
+					Objects.equals(keyManagerRecord.keystorePath, newKeystorePath)) {
+					return keyManagerRecord;
 				}
-				invalidateKey();
 			}
-
-			isSelfSigned = false;
+			else if (keyManagerRecord != UNINITIALIZED && keyManagerRecord.keystorePath == null) {
+				// Assume we have already initialized using OS or default
+				return keyManagerRecord;
+			}
+			
+			KeyManagerRecord newKeyManagerRecord = null;
+			boolean failed = false;
 			try {
+				// Always use keystorePath is specified
 				if (!StringUtils.isBlank(newKeystorePath)) {
 					Msg.info(DefaultKeyManagerFactory.class,
 						"Using certificate keystore: " + newKeystorePath);
 					// Password optionally specified via property
 					String keystorePwd = System.getProperty(KEYSTORE_PASSWORD_PROPERTY);
-					wrappedKeyManager =
-						ApplicationKeyManagerFactory.getKeyManager(newKeystorePath, keystorePwd);
-					keystorePath = newKeystorePath; // update current keystore path
+					newKeyManagerRecord = new KeyManagerRecord(
+						ApplicationKeyManagerFactory.getKeyManager(newKeystorePath, keystorePwd),
+						newKeystorePath, false, false);
+					return newKeyManagerRecord;
 				}
-				else if (defaultIdentity != null) {
-					// use self-signed keystore as fallback (intended for server use only)
+
+				if (serverMode) {
+					// Server mode without a specified key store file will use self-signed certificate.
+					// A server should generally specify a default identify 
+					// Server may impose limitations.
+					if (defaultIdentity == null) {
+						defaultIdentity = getDefaultServerCertificateName();
+					}
 					Msg.info(this, "Using self-signed certificate: " + defaultIdentity.getName());
 					char[] pwd = DEFAULT_PASSWORD.toCharArray();
 					KeyStore selfSignedKeyStore = PKIUtils.createKeyStore("defaultSigKey",
-						defaultIdentity.getName(), SELF_SIGNED_DURATION_DAYS, null, null, "JKS",
-						defaultSubjectAlternativeNames, pwd);
-					wrappedKeyManager = ApplicationKeyManagerFactory
-							.getKeyManagerFromKeyStore(selfSignedKeyStore, pwd);
-					keystorePath = null;
-					isSelfSigned = true;
+						defaultIdentity.getName(), SELF_SIGNED_DURATION_DAYS, null, false, null,
+						"JKS", defaultSubjectAlternativeNames, pwd);
+					newKeyManagerRecord = new KeyManagerRecord(ApplicationKeyManagerFactory
+							.getKeyManagerFromKeyStore(selfSignedKeyStore, pwd),
+						null, true, false);
+					return newKeyManagerRecord;
 				}
-				else {
-					Msg.error(this,
-						"Failed to generate certificate without Distinguished Name (DN)");
-					return false;
+
+				// Client without a keystore: attempt to load OS-managed keystore 
+				X509KeyManager osKeyManager = ApplicationKeyManagerFactory.getOSKeyManager();
+				if (osKeyManager != null) {
+					newKeyManagerRecord = new KeyManagerRecord(osKeyManager, null, false, true);
+					return newKeyManagerRecord;
 				}
-				return true;
+				
+				// Rely on Java's default behavior - no need to use self-signed certificate for client.
+				// If PKI Client Authentication is used a real User Certification will be needed. 
+				newKeyManagerRecord = new KeyManagerRecord(null, null, false, false);
+				return newKeyManagerRecord;
 			}
 			catch (CancelledException e) {
+				failed = true;
 				throw e;
 			}
-			catch (Exception e) {
-				Msg.showError(this, null, "PKI Keystore Failure",
-					"Failed to create PKI key manager: " + e.getMessage(), e);
+			catch (GeneralSecurityException e) {
+				throw e;
 			}
-			return false;
+			catch (Throwable t) {
+				failed = true;
+				throw new KeyStoreException("Failed to create PKI key manager", t);
+			}
+			finally {
+				if (!failed) {
+					keyManagerRecord = newKeyManagerRecord;
+				}
+			}
+		}
+
+		/**
+		 * Get name to be used for the auto-generated self-signed server certificate
+		 * (e.g., "Ghidra_Server").
+		 * @return server certificate name
+		 */
+		private X500Principal getDefaultServerCertificateName() {
+			return new X500Principal("CN=" + (Application.isInitialized() ? Application.getName() : "Ghidra_Server"));
 		}
 	}
 
@@ -461,7 +729,6 @@ public class DefaultKeyManagerFactory {
 			if (privateKey == null || certificateChain == null) {
 				CertificateException e =
 					new CertificateException("suitable PKI certificate not found");
-				e.printStackTrace();
 				throw e;
 			}
 

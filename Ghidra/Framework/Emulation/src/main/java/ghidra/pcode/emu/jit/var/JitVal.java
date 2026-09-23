@@ -23,6 +23,7 @@ import ghidra.pcode.emu.jit.analysis.JitTypeBehavior;
 import ghidra.pcode.emu.jit.gen.var.ValGen;
 import ghidra.pcode.emu.jit.op.JitOp;
 import ghidra.pcode.emu.jit.op.JitPhiOp;
+import ghidra.program.model.lang.Language;
 
 /**
  * A p-code value use-def node.
@@ -53,6 +54,14 @@ public interface JitVal {
 	static JitConstVal constant(int size, BigInteger value) {
 		return new JitConstVal(size, value);
 	}
+
+	/**
+	 * Render this value using symbols for varnodes
+	 * 
+	 * @param language the language
+	 * @return the string
+	 */
+	String toString(Language language);
 
 	/**
 	 * The size in bytes.

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,20 +23,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JTextField;
+import javax.swing.tree.TreePath;
 
 import org.junit.*;
 
+import docking.ActionContext;
+import docking.DialogComponentProvider;
 import docking.action.DockingActionIf;
 import docking.menu.ActionState;
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeDragNDropHandler;
 import docking.widgets.tree.support.GTreeNodeTransferable;
-import ghidra.app.context.ProgramActionContext;
+import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.datamgr.actions.ConflictHandlerModesAction;
 import ghidra.app.plugin.core.datamgr.tree.*;
 import ghidra.app.services.ProgramManager;
+import ghidra.app.services.Upgrade;
 import ghidra.app.util.datatype.DataTypeSelectionDialog;
+import ghidra.framework.Application;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
@@ -46,6 +51,7 @@ import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Tests copy/paste/drag/drop operations
@@ -60,10 +66,9 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 	private DataTypesProvider provider;
 	private DockingActionIf pasteAction;
 	private ConflictHandlerModesAction conflictHandlerModesAction;
-	private ProgramActionContext treeContext;
 	private DataTypeArchiveGTree tree;
 	private ArchiveRootNode archiveRootNode;
-	private ArchiveNode programNode;
+	private DataTypeStoreNode programNode;
 
 	@Before
 	public void setUp() throws Exception {
@@ -88,13 +93,12 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		tree = provider.getGTree();
 		waitForTree();
 		archiveRootNode = (ArchiveRootNode) tree.getModelRoot();
-		programNode = (ArchiveNode) archiveRootNode.getChild(PROGRAM_FILENAME);
+		programNode = (DataTypeStoreNode) archiveRootNode.getChild(PROGRAM_FILENAME);
 		assertNotNull("Did not successfully wait for the program node to load", programNode);
 
 		tool.showComponentProvider(provider, true);
 
 		pasteAction = getAction(plugin, "Paste");
-		treeContext = new DataTypesActionContext(provider, program, tree, null);
 	}
 
 	private ProgramDB buildProgram() throws Exception {
@@ -118,6 +122,14 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		builder.addCategory(path);
 		path = new CategoryPath(path, "Category2");
 		builder.addCategory(path);
+
+		// Category1/Category2/Cat2Struct
+		StructureDataType cat2Struct = new StructureDataType("Cat2Struct", 0);
+		cat2Struct.add(new WordDataType());
+		cat2Struct.setCategoryPath(path);
+		builder.addDataType(cat2Struct);
+
+		// Category1/Category2/Category3/IntStruct
 		path = new CategoryPath(path, "Category3");
 		builder.addCategory(path);
 		StructureDataType dt = new StructureDataType("IntStruct", 0);
@@ -556,22 +568,29 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		selectNode(miscStructureNode);
 
 		DockingActionIf copyAction = getAction(plugin, "Copy");
+		ActionContext treeContext = getContext();
 		assertTrue(copyAction.isEnabledForContext(treeContext));
 		assertFalse(pasteAction.isEnabledForContext(treeContext));
 
 		DataTypeTestUtils.performAction(copyAction, tree);
 
 		selectNode(miscNode);
+		treeContext = getContext();
 		assertTrue(pasteAction.isEnabledForContext(treeContext));
 		DataTypeTestUtils.performAction(pasteAction, tree);
 		GTreeNode newNode = miscNode.getChild("Copy_1_of_" + dtName);
 		assertNotNull(newNode);
 
 		selectNode(miscNode);
+		treeContext = getContext();
 		assertTrue(pasteAction.isEnabledForContext(treeContext));
 		DataTypeTestUtils.performAction(pasteAction, tree);
 		newNode = miscNode.getChild("Copy_2_of_" + dtName);
 		assertNotNull(newNode);
+	}
+
+	private ActionContext getContext() {
+		return runSwing(() -> provider.getActionContext(null));
 	}
 
 	@Test
@@ -586,18 +605,21 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		selectNode(miscStructureNode);
 
 		DockingActionIf copyAction = getAction(plugin, "Copy");
+		ActionContext treeContext = getContext();
 		assertTrue(copyAction.isEnabledForContext(treeContext));
 		assertFalse(pasteAction.isEnabledForContext(treeContext));
 
 		DataTypeTestUtils.performAction(copyAction, tree);
 
 		selectNode(miscStructureNode);
+		treeContext = getContext();
 		assertTrue(pasteAction.isEnabledForContext(treeContext));
 		DataTypeTestUtils.performAction(pasteAction, tree);
 		GTreeNode newNode = miscNode.getChild("Copy_1_of_" + dtName);
 		assertNotNull(newNode);
 
 		selectNode(miscStructureNode);
+		treeContext = getContext();
 		assertTrue(pasteAction.isEnabledForContext(treeContext));
 
 		DataTypeTestUtils.performAction(pasteAction, tree);
@@ -618,6 +640,7 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		selectNode(miscStructureNode);
 
 		DockingActionIf copyAction = getAction(plugin, "Copy");
+		ActionContext treeContext = getContext();
 		assertTrue(copyAction.isEnabledForContext(treeContext));
 		assertFalse(pasteAction.isEnabledForContext(treeContext));
 
@@ -625,6 +648,7 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 
 		DataTypeNode miscUnionNode = (DataTypeNode) miscNode.getChild("ArrayUnion");
 		selectNode(miscUnionNode);
+		treeContext = getContext();
 		assertTrue(pasteAction.isEnabledForContext(treeContext));
 
 		DataTypeTestUtils.performAction(pasteAction, tree);
@@ -649,6 +673,7 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		selectNode(intStructureNode);
 
 		DockingActionIf copyAction = getAction(plugin, "Copy");
+		ActionContext treeContext = getContext();
 		assertTrue(copyAction.isEnabledForContext(treeContext));
 		assertFalse(pasteAction.isEnabledForContext(treeContext));
 
@@ -659,6 +684,7 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		expandNode(miscNode);
 		DataTypeNode miscUnionNode = (DataTypeNode) miscNode.getChild(existingDtName);
 		selectNode(miscUnionNode);
+		treeContext = getContext();
 		assertTrue(pasteAction.isEnabledForContext(treeContext));
 
 		DataTypeTestUtils.performAction(pasteAction, tree);
@@ -680,6 +706,7 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		selectNode(intStructureNode);
 
 		DockingActionIf copyAction = getAction(plugin, "Copy");
+		ActionContext treeContext = getContext();
 		assertTrue(copyAction.isEnabledForContext(treeContext));
 		assertFalse(pasteAction.isEnabledForContext(treeContext));
 
@@ -688,6 +715,7 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		String dtName = "ArrayStruct";
 		DataTypeNode miscStructureNode = (DataTypeNode) miscNode.getChild(dtName);
 		selectNode(miscStructureNode);
+		treeContext = getContext();
 		assertTrue(pasteAction.isEnabledForContext(treeContext));
 
 		DataTypeTestUtils.performAction(pasteAction, tree);
@@ -710,6 +738,7 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		selectNodes(miscStructureNode, miscUnionNode);
 
 		DockingActionIf copyAction = getAction(plugin, "Copy");
+		ActionContext treeContext = getContext();
 		assertTrue(copyAction.isEnabledForContext(treeContext));
 		assertFalse(pasteAction.isEnabledForContext(treeContext));
 
@@ -718,7 +747,7 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		DataTypeNode intStructureNode =
 			(DataTypeNode) getNotepadNode("Category1/Category2/Category3/IntStruct");
 		selectNode(intStructureNode);
-
+		treeContext = getContext();
 		assertTrue(pasteAction.isEnabledForContext(treeContext));
 		DataTypeTestUtils.performAction(pasteAction, tree);
 
@@ -739,7 +768,8 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		DataTypeNode miscStructureNode = (DataTypeNode) miscNode.getChild(originalDtName);
 		selectNode(miscStructureNode);
 
-		DockingActionIf replaceAction = getAction(plugin, "Replace");
+		DockingActionIf replaceAction = getLocalAction(provider, "Replace");
+		ActionContext treeContext = getContext();
 		assertTrue(replaceAction.isEnabledForContext(treeContext));
 		DataTypeTestUtils.performAction(replaceAction, tree, false);
 
@@ -750,9 +780,256 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		assertNotNull(updatedNode);
 	}
 
+	@Test
+	public void testDragCopy_Category_to_Category() throws Exception {
+
+		// Category1/Category2/Category3/NewFunStruct
+		// Drag Category3
+		String structName = "NewFunStruct";
+		DataTypeNode structureNode = createAndSelectStructure(structName);
+		CategoryNode category3Node = (CategoryNode) structureNode.getParent();
+
+		// drag/move NewFunStruct to MISC/NewFunStruct
+		CategoryNode miscNode = (CategoryNode) programNode.getChild("MISC");
+
+		copyDragNodeToNode(category3Node, miscNode);
+
+		//@formatter:off
+		assertNewNodes(
+			miscNode, 
+			category3Node.getName() + "/" + structName
+		);
+		//@formatter:on
+	}
+
+	@Test
+	public void testDragMove_Category_to_Category() throws Exception {
+
+		// Category1/Category2/Category3/NewFunStruct
+		// Drag Category3
+		String structName = "NewFunStruct";
+		DataTypeNode structureNode = createAndSelectStructure(structName);
+		CategoryNode category3Node = (CategoryNode) structureNode.getParent();
+
+		// drag/move NewFunStruct to MISC/NewFunStruct
+		CategoryNode miscNode = (CategoryNode) programNode.getChild("MISC");
+
+		moveDragNodeToNode(category3Node, miscNode);
+
+		//@formatter:off
+		assertNewNodes(
+			miscNode, 
+			category3Node.getName() + "/" + structName
+		);
+		//@formatter:on
+
+		CategoryNode oldCat3 = getCat3();
+		assertNull(oldCat3);
+	}
+
+	@Test
+	public void testDragCopy_Caterogy_to_Category_WithChildTypesSelected() throws Exception {
+
+		// Category1/Category2/Category3/NewFunStruct
+		// Drag Category3
+		String structName = "NewFunStruct";
+		DataTypeNode structureNode = createAndSelectStructure(structName);
+		CategoryNode category3Node = (CategoryNode) structureNode.getParent();
+
+		// drag/move NewFunStruct to MISC/NewFunStruct
+		CategoryNode miscNode = (CategoryNode) programNode.getChild("MISC");
+
+		List<GTreeNode> draggedNodes = List.of(category3Node, structureNode);
+		copyDragNodeToNode(draggedNodes, miscNode);
+
+		//@formatter:off
+		assertNewNodes(
+			miscNode, 
+			category3Node.getName() + "/" + structName
+		);
+		//@formatter:on
+	}
+
+	@Test
+	public void testDragCopy_Caterogy_to_Category_WithNonChildTypesSelected() throws Exception {
+
+		//
+		// test both category copy and dt copy in same request
+		//
+
+		// Category1/Category2/Cat2Struct
+		DataTypeNode cat2Struct = getCat2Struct();
+
+		// Category1/Category2/Category3/NewFunStruct
+		// Drag Category3
+		String funStructName = "NewFunStruct";
+		DataTypeNode structureNode = createAndSelectStructure(funStructName);
+		CategoryNode category3Node = (CategoryNode) structureNode.getParent();
+
+		CategoryNode miscNode = (CategoryNode) programNode.getChild("MISC");
+
+		// Selected
+		// Category1/Category2/Cat2Struct
+		// Category1/Category2/Category3/		
+		List<GTreeNode> draggedNodes = List.of(category3Node, cat2Struct);
+		copyDragNodeToNode(draggedNodes, miscNode);
+
+		// Copied
+		// MISC/Cat2Struct
+		// MISC/Category3/NewFunStruct
+		//@formatter:off
+		assertNewNodes(
+			miscNode, 
+			category3Node.getName() + "/" + funStructName, 
+			"Cat2Struct");
+		//@formatter:on
+	}
+
+	@Test
+	public void testDragCopy_DataType_to_Category_Associate() throws Exception {
+
+		ArchiveNode clibNode = openArchive("generic_clib.gdt");
+		expandNode(clibNode);
+
+		// Category1/Category2/Cat2Struct
+		DataTypeNode cat2Struct = getCat2Struct();
+
+		// arbitrarily picked a node; this may change as we update the archive
+		// _G_config.h 
+
+		GTreeNode configFolder = clibNode.getChild("_G_config.h");
+		expandNode(configFolder);
+
+		copyDragNodeToNode(cat2Struct, configFolder, true);
+
+		//@formatter:off
+		assertNewNodes(
+			configFolder, 
+			cat2Struct.getName()
+		);
+		//@formatter:on
+	}
+
+	@Test
+	public void testDragCopy_Category_to_Category_Associate() throws Exception {
+
+		ArchiveNode clibNode = openArchive("generic_clib.gdt");
+		expandNode(clibNode);
+
+		// Category1/Category2/Cat2Struct
+		DataTypeNode cat2Struct = getCat2Struct();
+
+		// arbitrarily picked a node; this may change as we update the archive
+		// _G_config.h 
+
+		GTreeNode configFolder = clibNode.getChild("_G_config.h");
+		expandNode(configFolder);
+
+		CategoryNode category2 = (CategoryNode) cat2Struct.getParent();
+		copyDragNodeToNode(category2, configFolder, true);
+
+		//@formatter:off
+		assertNewNodes(
+			configFolder, 
+			category2.getName(),
+			category2.getName() + "/Category3",
+			category2.getName() + '/' + cat2Struct.getName()
+		);
+		//@formatter:on
+	}
+
+	@Test
+	public void testDragCopy_DataType_to_Category_Associate_Cancel() throws Exception {
+
+		ArchiveNode clibNode = openArchive("generic_clib.gdt");
+		expandNode(clibNode);
+
+		// Category1/Category2/Cat2Struct
+		DataTypeNode cat2Struct = getCat2Struct();
+
+		// arbitrarily picked a node; this may change as we update the archive
+		// _G_config.h 
+
+		GTreeNode configFolder = clibNode.getChild("_G_config.h");
+		expandNode(configFolder);
+
+		copyDragNodeToNode_Cancel(cat2Struct, configFolder, true);
+
+		//@formatter:off
+		assertNoNewNodes(
+			configFolder, 
+			cat2Struct.getName()
+		);
+		//@formatter:on
+	}
+
+	// More paths we could test:
+	// 	1) test mixed archives throws cancelled exception 
+	// 	2) test copy already associated type
+	// 	3) task.setPromptToAssociateTypes(false)
+
 //==================================================================================================
 // Private Methods
 //==================================================================================================
+
+	private ArchiveNode openArchive(String archiveName) throws Exception {
+		ResourceFile clibGdt = Application.getModuleDataFile("typeinfo/generic/" + archiveName);
+
+		ArchiveManager archiveManager = plugin.getArchiveManager();
+		archiveManager.openFileArchive(clibGdt, true, Upgrade.YES, false, TaskMonitor.DUMMY);
+		waitForTree();
+
+		GTreeNode rootNode = tree.getViewRoot();
+		if (archiveName.endsWith(".gdt")) {
+			archiveName = archiveName.substring(0, archiveName.length() - 4);
+		}
+		return (ArchiveNode) rootNode.getChild(archiveName);
+	}
+
+	private void assertNewNodes(GTreeNode parent, String... newNames) {
+
+		tree.expandTree(parent);
+		waitForTree();
+
+		// name may be of the form: grandparent/parent/nodeName
+		for (String name : newNames) {
+			String[] path = toPath(parent, name);
+			GTreeNode newNode = getNode(tree, path);
+			assertNotNull("Unable to find new node '%s/%s".formatted(parent.getName(), name),
+				newNode);
+		}
+	}
+
+	private void assertNoNewNodes(GTreeNode parent, String... newNames) {
+
+		tree.expandTree(parent);
+		waitForTree();
+
+		// name may be of the form: grandparent/parent/nodeName
+		for (String name : newNames) {
+			GTreeNode child = parent.getChild(name);
+			assertNull("Node should not have been copied '%s/%s".formatted(parent.getName(), name),
+				child);
+		}
+	}
+
+	private String[] toPath(GTreeNode parent, String path) {
+
+		List<String> allParts = new ArrayList<>();
+		TreePath treePath = parent.getTreePath();
+		Object[] objectPath = treePath.getPath();
+		for (Object object : objectPath) {
+			GTreeNode node = (GTreeNode) object;
+			allParts.add(node.getName());
+		}
+
+		String[] parts = path.split("/");
+		for (String part : parts) {
+			allParts.add(part);
+		}
+
+		return allParts.toArray(String[]::new);
+	}
 
 	private void chooseDataType(String dtName) {
 
@@ -783,16 +1060,31 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		waitForProgram();
 	}
 
+	private DataTypeNode getCat2Struct() {
+
+		// Category1/Category2/Cat2Struct
+		CategoryNode category1Node = (CategoryNode) programNode.getChild("Category1");
+		expandNode(category1Node);
+		CategoryNode category2Node = (CategoryNode) category1Node.getChild("Category2");
+		expandNode(category2Node);
+		return (DataTypeNode) category2Node.getChild("Cat2Struct");
+	}
+
+	private CategoryNode getCat3() {
+		CategoryNode category1Node = (CategoryNode) programNode.getChild("Category1");
+		expandNode(category1Node);
+		CategoryNode category2Node = (CategoryNode) category1Node.getChild("Category2");
+		expandNode(category2Node);
+		return (CategoryNode) category2Node.getChild("Category3");
+	}
+
 	/**
 	 * In the program, rename Category1/Category2/Category3/IntStruct to <structureName>
 	 */
 	private DataTypeNode createAndSelectStructure(String structureName)
 			throws InvalidNameException, DuplicateNameException, Exception {
-		CategoryNode category1Node = (CategoryNode) programNode.getChild("Category1");
-		expandNode(category1Node);
-		CategoryNode category2Node = (CategoryNode) category1Node.getChild("Category2");
-		expandNode(category2Node);
-		CategoryNode category3Node = (CategoryNode) category2Node.getChild("Category3");
+
+		CategoryNode category3Node = getCat3();
 		expandNode(category3Node);
 		DataTypeNode structureNode = (DataTypeNode) category3Node.getChild("IntStruct");
 		Structure structure = (Structure) structureNode.getDataType();
@@ -832,7 +1124,7 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		return miscNode;
 	}
 
-	private void moveDragNodeToNode(GTreeNode fromNode, final GTreeNode toNode) {
+	private void moveDragNodeToNode(GTreeNode fromNode, GTreeNode toNode) {
 		final GTreeDragNDropHandler dragNDropHandler = tree.getDragNDropHandler();
 		List<GTreeNode> dropList = new ArrayList<>();
 		dropList.add(fromNode);
@@ -843,11 +1135,52 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		waitForTasks();
 	}
 
-	private void copyDragNodeToNode(GTreeNode fromNode, final GTreeNode toNode) throws Exception {
+	private void copyDragNodeToNode(GTreeNode fromNode, GTreeNode toNode) throws Exception {
+		copyDragNodeToNode(fromNode, toNode, BATCH_MODE);
+	}
+
+	private void copyDragNodeToNode(GTreeNode fromNode, GTreeNode toNode, boolean promptToAssociate)
+			throws Exception {
 		final GTreeDragNDropHandler dragNDropHandler = tree.getDragNDropHandler();
 		List<GTreeNode> dropList = new ArrayList<>();
 		dropList.add(fromNode);
 		Transferable transferable = new GTreeNodeTransferable(dragNDropHandler, dropList);
+		runSwing(() -> dragNDropHandler.drop(toNode, transferable, DnDConstants.ACTION_COPY),
+			false);
+
+		if (promptToAssociate) {
+			DialogComponentProvider dialog = waitForDialogComponent("Associate Data Types?");
+			pressButtonByText(dialog, "Yes");
+		}
+		else {
+			waitForTasks();
+		}
+	}
+
+	private void copyDragNodeToNode_Cancel(GTreeNode fromNode, GTreeNode toNode,
+			boolean promptToAssociate) throws Exception {
+		final GTreeDragNDropHandler dragNDropHandler = tree.getDragNDropHandler();
+		List<GTreeNode> dropList = new ArrayList<>();
+		dropList.add(fromNode);
+		Transferable transferable = new GTreeNodeTransferable(dragNDropHandler, dropList);
+		runSwing(() -> dragNDropHandler.drop(toNode, transferable, DnDConstants.ACTION_COPY),
+			false);
+
+		DialogComponentProvider dialog = waitForDialogComponent("Associate Data Types?");
+		pressButtonByText(dialog, "Cancel");
+		waitForTasks();
+	}
+
+	private void copyDragNodeToNode(List<GTreeNode> draggedNodes, GTreeNode toNode)
+			throws Exception {
+
+		expandNode(toNode);
+
+		GTreeNode[] array = draggedNodes.toArray(GTreeNode[]::new);
+		selectNodes(array);
+
+		GTreeDragNDropHandler dragNDropHandler = tree.getDragNDropHandler();
+		Transferable transferable = new GTreeNodeTransferable(dragNDropHandler, draggedNodes);
 		runSwing(() -> dragNDropHandler.drop(toNode, transferable, DnDConstants.ACTION_COPY),
 			false);
 		waitForTasks();
@@ -856,6 +1189,7 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 //==================================================================================================
 // Private Helper Methods
 //==================================================================================================
+
 	private void expandNode(GTreeNode node) {
 		tree.expandPath(node);
 		waitForTree();

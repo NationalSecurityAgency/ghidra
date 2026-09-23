@@ -453,6 +453,7 @@ public:
   PcodeOp *newOp(int4 inputs,const SeqNum &sq);			/// Allocate a new PcodeOp with sequence number
   PcodeOp *newOpBefore(PcodeOp *follow,OpCode opc,Varnode *in1,Varnode *in2,Varnode *in3=(Varnode *)0);
   PcodeOp *cloneOp(const PcodeOp *op,const SeqNum &seq);	/// Clone a PcodeOp into \b this function
+  PcodeOp *newIndirect(PcodeOp *target);			///< Allocate a new CPUI_INDIRECT
   PcodeOp *getFirstReturnOp(void) const;			/// Find a representative CPUI_RETURN op for \b this function
   PcodeOp *newIndirectOp(PcodeOp *indeffect,const Address &addr,int4 sz,uint4 extraFlags);
   PcodeOp *newIndirectCreation(PcodeOp *indeffect,const Address &addr,int4 sz,bool possibleout);
@@ -525,19 +526,20 @@ public:
   /// \brief End of PcodeOp objects in the \e dead list
   list<PcodeOp *>::const_iterator endOpDead(void) const { return obank.endDead(); }
 
-  /// \brief Start of all (alive) PcodeOp objects sorted by sequence number
-  PcodeOpTree::const_iterator beginOpAll(void) const { return obank.beginAll(); }
+  /// \brief Start of PcodeOp objects sorted by sequence number, excluding CPUI_INDIRECT
+  PcodeOpTree::const_iterator beginOpMain(void) const { return obank.beginMain(); }
 
-  /// \brief End of all (alive) PcodeOp objects sorted by sequence number
-  PcodeOpTree::const_iterator endOpAll(void) const { return obank.endAll(); }
+  /// \brief End of PcodeOp objects sorted by sequence number, excluding CPUI_INDIRECT
+  PcodeOpTree::const_iterator endOpMain(void) const { return obank.endMain(); }
 
   /// \brief Start of all (alive) PcodeOp objects attached to a specific Address
-  PcodeOpTree::const_iterator beginOp(const Address &addr) const { return obank.begin(addr); }
+  PcodeOpTree::const_iterator beginOpMain(const Address &addr) const { return obank.beginMain(addr); }
 
   /// \brief End of all (alive) PcodeOp objects attached to a specific Address
-  PcodeOpTree::const_iterator endOp(const Address &addr) const { return obank.end(addr); }
+  PcodeOpTree::const_iterator endOpMain(const Address &addr) const { return obank.endMain(addr); }
 
   PcodeOp *findPrimaryBranch(const Address &addr,bool findBranch,bool findCall,bool findCallother,bool findReturn);
+  void listOps(vector<PcodeOp *> &res,const Address &addr) const;
 
   bool moveRespectingCover(PcodeOp *op,PcodeOp *lastOp);	///< Move given op past \e lastOp respecting covers if possible
 

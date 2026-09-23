@@ -65,7 +65,7 @@ public class BpsSearchItem {
 	 * Constructor.
 	 * 
 	 * @param patternName name of pattern
-	 * @param key unique key to facilitate skipping patterns at the <SearchItem> level
+	 * @param key unique key to facilitate skipping patterns at the {@code <SearchItem>} level
 	 * @param wordSize word size for pattern bytes (e.g. byte-8, word-16, dword-32, qword-64)
 	 * @param searchType how the bytes should be searched
 	 */

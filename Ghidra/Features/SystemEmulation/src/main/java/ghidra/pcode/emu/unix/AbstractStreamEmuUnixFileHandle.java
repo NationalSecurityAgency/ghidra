@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,8 +30,6 @@ public abstract class AbstractStreamEmuUnixFileHandle<T> implements EmuUnixFileD
 	protected final PcodeArithmetic<T> arithmetic;
 	protected final int offsetBytes;
 
-	private final T offset;
-
 	/**
 	 * Construct a new handle
 	 * 
@@ -42,17 +40,36 @@ public abstract class AbstractStreamEmuUnixFileHandle<T> implements EmuUnixFileD
 	public AbstractStreamEmuUnixFileHandle(PcodeMachine<T> machine, CompilerSpec cSpec) {
 		this.arithmetic = machine.getArithmetic();
 		this.offsetBytes = cSpec.getDataOrganization().getLongSize(); // off_t's fundamental type
-		this.offset = arithmetic.fromConst(0, offsetBytes);
 	}
 
 	@Override
-	public T getOffset() {
-		return offset;
+	public T getAbstractOffset() {
+		return arithmetic.fromConst(0, offsetBytes);
+	}
+
+	@Override
+	public long getOffset() {
+		return 0;
 	}
 
 	@Override
 	public void seek(T offset) throws EmuIOException {
 		// No effect
+	}
+
+	@Override
+	public void seek(long offset) throws EmuIOException {
+		// No effect
+	}
+
+	@Override
+	public T readAbstract(T buf) throws EmuIOException {
+		return arithmetic.fromConst(read(buf), offsetBytes);
+	}
+
+	@Override
+	public T writeAbstract(T buf) throws EmuIOException {
+		return arithmetic.fromConst(write(buf), offsetBytes);
 	}
 
 	@Override

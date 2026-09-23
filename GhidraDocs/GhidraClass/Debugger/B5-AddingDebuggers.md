@@ -216,7 +216,7 @@ Both user- and kernel-mode require privileges to run the debugger, and, for test
 ### Documentation
 
 The principal piece of documentation for all new debuggers is a description of the launchers.
-Right now, the [`TraceRmiLauncherServicePlugin.html`](../../../Ghidra/Debug/Debugger-rmi-trace/src/main/help/help/topics/TraceRmiConnectionManagerPlugin/TraceRmiLauncherServicePlugin.html) file in `Debug/Debugger-rmi-trace` contains all of this information.
+Right now, the [`TraceRmiLauncherServicePlugin.html`](../../../Ghidra/Debug/Debugger-rmi-trace/src/main/help/help/topics/TraceRmiLauncherServicePlugin/TraceRmiLauncherServicePlugin.html) file in `Debug/Debugger-rmi-trace` contains all of this information.
 Detail to note: the `#@help` locations in the launchers themselves ought to match the HTML tags in the file, as should the launcher names.
 
 ### Extended features

@@ -15,7 +15,7 @@
  */
 package ghidra.pcode.emu.jit.gen;
 
-import org.objectweb.asm.ClassVisitor;
+import java.lang.classfile.ClassBuilder;
 
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
 import ghidra.pcode.emu.jit.gen.util.Emitter;
@@ -33,7 +33,6 @@ import ghidra.pcode.emu.jit.gen.util.Types.TRef;
 public interface InstanceFieldReq<T extends BNonVoid> extends FieldReq<T> {
 	/**
 	 * Emit the field declaration and its initialization bytecode
-	 * 
 	 * <p>
 	 * The declaration is emitted into the class definition, and the initialization code is emitted
 	 * into the class constructor.
@@ -43,11 +42,11 @@ public interface InstanceFieldReq<T extends BNonVoid> extends FieldReq<T> {
 	 * @param em the emitter typed with the incoming stack
 	 * @param localThis a handle to the local holding the {@code this} reference
 	 * @param gen the code generator
-	 * @param cv the visitor for the class definition
+	 * @param clb the builder for the class definition
 	 * @return the emitter typed with the incoming stack
 	 */
 	<THIS extends JitCompiledPassage, N extends Next> Emitter<N> genInit(Emitter<N> em,
-			Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, ClassVisitor cv);
+			Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, ClassBuilder clb);
 
 	/**
 	 * Emit code to load the field onto the JVM stack

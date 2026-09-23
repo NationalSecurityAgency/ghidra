@@ -21,4 +21,8 @@ protocol descriptor for SwiftUI.View
 The resulting tree is parsed by the Ghidra Swift Demangler to form and apply a demangled symbol 
 name.
 
-The `Demangler Swift` Analyzer assumes that the native Swift Demangler is on the `PATH`.
+The `Demangler Swift` Analyzer looks for the path to the native Swift Demangler binary 
+in the `GHIDRA_SWIFT_DEMANGLER` environment variable. If that environment variable is not set, the
+following paths will be tried on non-Windows platforms:
+* `/usr/bin/swift-demangle`
+* `/usr/bin/swift`

@@ -19,10 +19,12 @@ import java.math.BigInteger;
 
 import ghidra.program.model.pcode.PcodeOp;
 
-public class OpBehaviorPopcount extends UnaryOpBehavior {
+public enum OpBehaviorPopcount implements UnaryOpBehavior {
+	OP_POPCOUNT;
 
-	public OpBehaviorPopcount() {
-		super(PcodeOp.POPCOUNT);
+	@Override
+	public int opcode() {
+		return PcodeOp.POPCOUNT;
 	}
 
 	@Override
@@ -34,5 +36,4 @@ public class OpBehaviorPopcount extends UnaryOpBehavior {
 	public BigInteger evaluateUnary(int sizeout, int sizein, BigInteger unsignedIn1) {
 		return BigInteger.valueOf(unsignedIn1.bitCount());
 	}
-
 }

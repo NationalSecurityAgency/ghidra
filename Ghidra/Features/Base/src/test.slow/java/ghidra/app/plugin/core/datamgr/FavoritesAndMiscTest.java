@@ -52,9 +52,9 @@ public class FavoritesAndMiscTest extends AbstractGhidraHeadedIntegrationTest {
 	private DataTypesProvider provider;
 	private DataTypeArchiveGTree tree;
 	private ArchiveRootNode archiveRootNode;
-	private ArchiveNode builtInNode;
+	private DataTypeStoreNode builtInNode;
 	private ToggleDockingAction favoritesAction;
-	private ArchiveNode programNode;
+	private DataTypeStoreNode programNode;
 
 	@Before
 	public void setUp() throws Exception {
@@ -70,8 +70,8 @@ public class FavoritesAndMiscTest extends AbstractGhidraHeadedIntegrationTest {
 		waitForTree();
 
 		archiveRootNode = (ArchiveRootNode) tree.getModelRoot();
-		builtInNode = (ArchiveNode) archiveRootNode.getChild("BuiltInTypes");
-		programNode = (ArchiveNode) archiveRootNode.getChild(PROGRAM_NAME);
+		builtInNode = (DataTypeStoreNode) archiveRootNode.getChild("BuiltInTypes");
+		programNode = (DataTypeStoreNode) archiveRootNode.getChild(PROGRAM_NAME);
 
 		tool.showComponentProvider(provider, true);
 		favoritesAction = (ToggleDockingAction) getAction(plugin, "Set Favorite Data Type");
@@ -348,7 +348,7 @@ public class FavoritesAndMiscTest extends AbstractGhidraHeadedIntegrationTest {
 		waitForTree(gtree);
 
 		ArchiveRootNode root = (ArchiveRootNode) gtree.getModelRoot();
-		ArchiveNode programNode1 = (ArchiveNode) root.getChild(PROGRAM_NAME);
+		DataTypeStoreNode programNode1 = (DataTypeStoreNode) root.getChild(PROGRAM_NAME);
 
 		assertNotNull("could not find " + PROGRAM_NAME + " in " + root, programNode1);
 		expandNode(programNode1);

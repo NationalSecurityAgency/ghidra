@@ -74,6 +74,7 @@ for common use cases.
         [<a href="#-processor-languageid">-processor &lt;languageID&gt;</a>]
         [<a href="#-cspec-compilerspecid">-cspec &lt;compilerSpecID&gt;</a>]
         [<a href="#-analysistimeoutperfile-timeout-in-seconds">-analysisTimeoutPerFile &lt;timeout in seconds&gt;</a>]
+        [<a href="#-allowAllAccess">-allowAllAccess</a>]
         [<a href="#-keystore-keystorepath">-keystore &lt;KeystorePath&gt;</a>]
         [<a href="#-connect-userid">-connect [&lt;userID&gt;]</a>]
         [<a href="#-p">-p</a>]
@@ -340,6 +341,19 @@ analysis is interrupted and processing continues as scheduled (i.e., to the
 completed processing prior to timeout will still be saved with the program. Post-scripts can be used
 to detect that analysis has timed out (in Headless processing ONLY) by calling the 
 `getHeadlessAnalysisTimeoutStatus()` method. 
+
+### `-allowAllAccess`
+When using Ghidra URLs to access a GhidraServer and this option has been omitted, and if server
+access has not already disallowed, the stored `Server Allow List` will be updated to allow access.  
+If access has previously been disallowed, the analyze headless process will fail.  
+
+The use of the `Server Allow List` can be bypassed by including the `-allowAllAccess` option.  
+Alternatively, the `updateServerAllowList` command within the Ghidra installation may be used to examine 
+and update the server allow list.  Running the `updateServerAllowList` with no argument will provide 
+usage details.
+
+In general, there should be no need to deal with this server access concern unless access was
+previously disallowed or other Ghidra URLs are obtained and utilized from other sources.
 
 ### `-keystore <KeystorePath>`
 When connecting to a Ghidra Server using PKI or SSH authentication, this option allows 
@@ -1033,6 +1047,7 @@ Below are some general guidelines for wildcard usage:
 [processor]: #-processor-languageid
 [cspec]: #-cspec-compilerspecid
 [timeout]: #-analysistimeoutperfile-timeout-in-seconds
+[-allowAllAccess]: #-allowAllAccess
 [keystore]: #-keystore-keystorepath
 [connect]: #-connect-userid
 [password]: #-p

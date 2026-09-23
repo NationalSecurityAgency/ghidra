@@ -37,8 +37,7 @@ public class SourceArchiveDB extends DbObject implements SourceArchive {
 	 * @param adapter the source archive database adapter
 	 * @param record the source archive record
 	 */
-	SourceArchiveDB(DataTypeManagerDB dtMgr, SourceArchiveAdapter adapter,
-			DBRecord record) {
+	SourceArchiveDB(DataTypeManagerDB dtMgr, SourceArchiveAdapter adapter, DBRecord record) {
 		super(record.getKey());
 		this.dtMgr = dtMgr;
 		this.adapter = adapter;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,20 +15,21 @@
  */
 package ghidra.pty.windows;
 
-import com.sun.jna.LastErrorException;
-import com.sun.jna.platform.win32.Kernel32;
-import com.sun.jna.platform.win32.WinBase.SECURITY_ATTRIBUTES;
-import com.sun.jna.platform.win32.WinNT.HANDLEByReference;
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
+
+import com.microsoft.win32.win32_h;
 
 public class Pipe {
 	public static Pipe createPipe() {
-		HANDLEByReference pRead = new HANDLEByReference();
-		HANDLEByReference pWrite = new HANDLEByReference();
-
-		if (!Kernel32.INSTANCE.CreatePipe(pRead, pWrite, new SECURITY_ATTRIBUTES(), 0)) {
-			throw new LastErrorException(Kernel32.INSTANCE.GetLastError());
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment cs = arena.allocate(Win32Err.LAYOUT);
+			HandlePtr pRead = new HandlePtr(arena);
+			HandlePtr pWrite = new HandlePtr(arena);
+			Win32Err.checkFalse(win32_h.CreatePipe(cs, pRead.asSegment(), pWrite.asSegment(),
+				MemorySegment.NULL, 0), cs);
+			return new Pipe(new Handle(pRead.get()), new Handle(pWrite.get()));
 		}
-		return new Pipe(new Handle(pRead.getValue()), new Handle(pWrite.getValue()));
 	}
 
 	private final Handle readHandle;

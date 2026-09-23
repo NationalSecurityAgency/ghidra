@@ -17,9 +17,8 @@ package ghidra.app.plugin.core.analysis;
 
 import ghidra.app.services.*;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.opinion.ElfLoader;
-import ghidra.app.util.opinion.MachoLoader;
 import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.listing.Library;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ExternalSymbolResolver;
 import ghidra.util.Msg;
@@ -27,7 +26,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * {@link Analyzer} to link unresolved symbols
+ * {@link Analyzer} to link unresolved external symbols
  * 
  * @see ExternalSymbolResolver
  */
@@ -56,8 +55,7 @@ public class ExternalSymbolResolverAnalyzer extends AbstractAnalyzer {
 			return false;
 		}
 
-		String format = program.getExecutableFormat();
-		return ElfLoader.isElf(format) || MachoLoader.MACH_O_NAME.equals(format);
+		return program.getSymbolTable().getLibrarySymbol(Library.UNKNOWN) != null;
 	}
 
 	@Override

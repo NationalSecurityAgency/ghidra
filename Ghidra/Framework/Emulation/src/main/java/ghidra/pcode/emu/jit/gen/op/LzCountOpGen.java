@@ -103,7 +103,7 @@ public enum LzCountOpGen implements IntCountUnOpGen<JitLzCountOp> {
 		 * right before the last.
 		 */
 		int legCount = type.legsAlloc();
-		Lbl<Ent<Bot, TInt>> lblDone = Lbl.create();
+		Lbl<Ent<Bot, TInt>> lblDone = Lbl.create(em);
 
 		var emCount = em
 				.emit(gen::genReadLegToStack, localThis, op.u(), type, legCount - 1, ext())

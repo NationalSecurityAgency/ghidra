@@ -716,8 +716,8 @@ public abstract class AbstractGhidraHeadedDebuggerTest
 				tb.close();
 			}
 
+			programManager.closeAllPrograms(true);
 			if (program != null) {
-				programManager.closeAllPrograms(true);
 				program.release(this);
 			}
 

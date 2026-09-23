@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ import java.util.NoSuchElementException;
 import org.junit.*;
 
 import generic.test.AbstractGenericTest;
+import ghidra.program.database.data.TransientDataTypeManager;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -30,11 +31,18 @@ import ghidra.util.task.TaskMonitor;
 public class EnumTest extends AbstractGenericTest {
 
 	private DataTypeManager dataMgr;
+	private int txId;
 
 	@Before
 	public void setUp() throws Exception {
-		dataMgr = new StandAloneDataTypeManager("Test");
-		dataMgr.startTransaction("");
+		dataMgr = new TransientDataTypeManager("Test");
+		txId = dataMgr.startTransaction("");
+	}
+
+	@After
+	public void tearDown() {
+		dataMgr.endTransaction(txId, false);
+		dataMgr.close();
 	}
 
 	@Test
@@ -129,7 +137,7 @@ public class EnumTest extends AbstractGenericTest {
 		Category c = root.createCategory("enumms");
 		Enum enummDT = (Enum) c.addDataType(enumm, DataTypeConflictHandler.DEFAULT_HANDLER);
 
-		Enum copyDT = (Enum) enummDT.clone(null);
+		Enum copyDT = enummDT.clone(null);
 		assertNotNull(copyDT);
 
 		Enum c2 = (Enum) root.addDataType(copyDT, DataTypeConflictHandler.DEFAULT_HANDLER);

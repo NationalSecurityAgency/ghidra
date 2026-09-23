@@ -23,7 +23,7 @@ import org.apache.commons.collections4.map.LRUMap;
 import db.*;
 import db.util.ErrorHandler;
 import ghidra.framework.data.OpenMode;
-import ghidra.program.database.ManagerDB;
+import ghidra.program.database.ProgramDBModule;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.database.util.AddressRangeMapDB;
@@ -39,7 +39,7 @@ import ghidra.util.task.TaskMonitor;
  * Class to manage namespaces.
  */
 
-public class NamespaceManager implements ManagerDB {
+public class NamespaceManager implements ProgramDBModule {
 	private static final String NAMESPACE_MAP_NAME = "SCOPE ADDRESSES";
 	private AddressRangeMapDB namespaceMap;
 	private ErrorHandler errHandler;
@@ -94,13 +94,13 @@ public class NamespaceManager implements ManagerDB {
 	}
 
 	@Override
-	public void setProgram(ProgramDB program) {
+	public void setDomainObject(ProgramDB program) {
 		this.symbolMgr = program.getSymbolTable();
 		globalNamespace = program.getGlobalNamespace();
 	}
 
 	@Override
-	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
+	public void domainObjectReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		// Nothing to do
 	}

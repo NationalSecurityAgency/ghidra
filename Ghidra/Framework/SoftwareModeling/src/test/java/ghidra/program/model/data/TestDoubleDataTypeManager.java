@@ -18,10 +18,11 @@ package ghidra.program.model.data;
 import java.util.*;
 
 import db.Transaction;
-import ghidra.program.database.map.AddressMap;
+import ghidra.program.model.dtarchive.DataTypeStore;
 import ghidra.program.model.lang.ProgramArchitecture;
 import ghidra.program.model.lang.PrototypeModel;
-import ghidra.util.*;
+import ghidra.util.UniversalID;
+import ghidra.util.UniversalIdGenerator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -40,11 +41,6 @@ public class TestDoubleDataTypeManager implements DataTypeManager {
 	@Override
 	public UniversalID getUniversalID() {
 		return id;
-	}
-
-	@Override
-	public AddressMap getAddressMap() {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -217,11 +213,6 @@ public class TestDoubleDataTypeManager implements DataTypeManager {
 
 	@Override
 	public String getName() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void setName(String name) throws InvalidNameException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -402,6 +393,11 @@ public class TestDoubleDataTypeManager implements DataTypeManager {
 
 	@Override
 	public PrototypeModel getCallingConvention(String name) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public DataTypeStore getDataStore() {
 		throw new UnsupportedOperationException();
 	}
 }

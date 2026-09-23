@@ -212,7 +212,7 @@ void Funcdata::printRaw(ostream &s) const
       throw RecovError("No operations to print");
     PcodeOpTree::const_iterator iter;
     s << "Raw operations: \n";
-    for(iter=obank.beginAll();iter!=obank.endAll();++iter) {
+    for(iter=obank.beginMain();iter!=obank.endMain();++iter) {
       s << (*iter).second->getSeqNum() << ":\t";
       (*iter).second->printRaw(s);
       s << endl;

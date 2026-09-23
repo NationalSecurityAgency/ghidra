@@ -15,9 +15,7 @@
  */
 package ghidra.pty.windows;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Arrays;
@@ -50,6 +48,8 @@ public class AnsiBufferedInputStream extends InputStream {
 	private ByteBuffer titleBuf = ByteBuffer.allocate(255);
 
 	private Mode mode = Mode.CHARS;
+
+	private int savePosition;  // For ESC 7/8
 
 	public AnsiBufferedInputStream(InputStream in) {
 		if (in instanceof HandleInputStream) {
@@ -121,7 +121,7 @@ public class AnsiBufferedInputStream extends InputStream {
 			return -1;
 		}
 		byte c = (byte) ci;
-//		printDebugChar(c);
+		//printDebugChar(c);
 		switch (mode) {
 			case CHARS -> processChars(c);
 			case ESC -> processEsc(c);
@@ -134,7 +134,8 @@ public class AnsiBufferedInputStream extends InputStream {
 			default -> throw new AssertionError();
 		}
 		countIn++;
-		return c;
+		// Don't return a potentially negative number
+		return ci;
 	}
 
 	/**
@@ -189,7 +190,21 @@ public class AnsiBufferedInputStream extends InputStream {
 		switch (c) {
 			case '[' -> mode = Mode.CSI;
 			case ']' -> mode = Mode.OSC;
-			default -> throw new AssertionError("Saw 'ESC " + c + "' at " + countIn);
+			// At some point, these may be replaced with the more current ESC[s and ESC[u
+			case '7' -> {
+				savePosition = lineBuf.position();
+				mode = Mode.CHARS;
+			}
+			case '8' -> {
+				// Check limits
+				int pos = Math.min(savePosition, lineBuf.limit());
+				lineBuf.position(pos);
+				mode = Mode.CHARS;
+			}
+			default -> {
+				//mode = Mode.CHARS;
+				Msg.debug(this, "Saw 'ESC " + c + "' at " + countIn + " pos=" + lineBuf.position());
+			}
 		}
 	}
 
@@ -202,7 +217,14 @@ public class AnsiBufferedInputStream extends InputStream {
 
 	protected void processCsiParamOrCommand(byte c) {
 		switch (c) {
-			default -> escBuf.put(c);
+			default -> {
+				if ((c >= 0x30 && c <= 0x39) || c == (byte) ';') {
+					escBuf.put(c);
+				}
+				else {
+					Msg.debug(this, "Unexpected esc buffer entry: " + c);
+				}
+			}
 			case 'A' -> {
 				execCursorUp();
 				mode = Mode.CHARS;
@@ -249,6 +271,18 @@ public class AnsiBufferedInputStream extends InputStream {
 			}
 			case 'l' -> {
 				execPrivateSequence(false);
+				mode = Mode.CHARS;
+			}
+			case 'f' -> {
+				// Need to flush escBuf at a minimum
+				readAndClearEscBuf();
+				Msg.debug(this, "TODO: f (Horizontal and Vertical Position - HVP)");
+				mode = Mode.CHARS;
+			}
+			case 'r' -> {
+				// Need to flush escBuf at a minimum
+				readAndClearEscBuf();
+				Msg.debug(this, "TODO: r (Set Top and Bottom Margins - DECSTBM)");
 				mode = Mode.CHARS;
 			}
 		}
@@ -352,11 +386,13 @@ public class AnsiBufferedInputStream extends InputStream {
 	}
 
 	protected void execCursorUp() {
-		throw new UnsupportedOperationException("Cursor Up");
+		readAndClearEscBuf();
+		//throw new UnsupportedOperationException("Cursor Up");
 	}
 
 	protected void execCursorDown() {
-		throw new UnsupportedOperationException("Cursor Down");
+		readAndClearEscBuf();
+		//throw new UnsupportedOperationException("Cursor Down");
 	}
 
 	protected void setPosition(int newPosition) {
@@ -377,8 +413,9 @@ public class AnsiBufferedInputStream extends InputStream {
 	}
 
 	protected void execCursorCharAbsolute() {
-		int abs = parseNumericBuffer();
-		lineBuf.position(abs - 1);
+		int[] abset = parseNumericListBuffer();
+		int abs = Math.min(abset[0] - 1, lineBuf.limit());
+		lineBuf.position(abs);
 	}
 
 	protected void execCursorPosition() {
@@ -442,7 +479,9 @@ public class AnsiBufferedInputStream extends InputStream {
 	}
 
 	protected void execEraseInLine() {
-		switch (parseNumericBuffer()) {
+		int[] abset = parseNumericListBuffer();
+		int abs = abset.length == 0 ? 0 : abset[0];
+		switch (abs) {
 			case 0 -> Arrays.fill(lineBuf.array(), lineBuf.position(), lineBuf.capacity(),
 				(byte) 0);
 			case 1 -> Arrays.fill(lineBuf.array(), 0, lineBuf.position() + 1, (byte) 0);

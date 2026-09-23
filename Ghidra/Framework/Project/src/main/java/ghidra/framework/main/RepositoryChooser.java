@@ -241,8 +241,11 @@ class RepositoryChooser extends ReusableDialogComponentProvider {
 
 		listModel.clear();
 
+		String serverName = serverInfoComponent.getServerName();
+		int port = serverInfoComponent.getPortNumber();
+
 		RepositoryServerAdapter repositoryServer = ClientUtil.getRepositoryServer(
-			serverInfoComponent.getServerName(), serverInfoComponent.getPortNumber(), true);
+			serverName, port, true);
 
 		if (repositoryServer == null) {
 			return;

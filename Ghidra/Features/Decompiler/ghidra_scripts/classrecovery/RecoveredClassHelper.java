@@ -5698,7 +5698,26 @@ public class RecoveredClassHelper {
 					if (!areVftablesInSameClass(vftableReferenceList)) {
 						recoveredClass.addIndeterminateInline(indeterminateFunction);
 						indeterminateIterator.remove();
+						continue;
 					}
+				}
+				// Next try identifying non-constructor/destructor but contains inline 
+				// using decompiler return type
+				DataType decompilerReturnType =
+					decompilerUtils.getDecompilerReturnType(indeterminateFunction);
+
+				if (decompilerReturnType != null) {
+
+					String returnDataName = decompilerReturnType.getDisplayName();
+					if (returnDataName.contains("*") &&
+						!isFidFunction(indeterminateFunction)) {
+						continue;
+					}
+					if (returnDataName.equals("void")) {
+						continue;
+					}
+					recoveredClass.addIndeterminateInline(indeterminateFunction);
+					indeterminateIterator.remove();
 				}
 			}
 		}
@@ -6293,7 +6312,7 @@ public class RecoveredClassHelper {
 
 					// otherwise, use pcode info to figure out if inlined constructor or destructor
 					//If not already, make function a this call
-					makeFunctionThiscall(inlineFunction);
+					//	makeFunctionThiscall(inlineFunction);
 
 					List<OffsetPcodeOpPair> loads = getLoadPcodeOpPairs(inlineFunction);
 					List<OffsetPcodeOpPair> stores = getStorePcodeOpPairs(inlineFunction);

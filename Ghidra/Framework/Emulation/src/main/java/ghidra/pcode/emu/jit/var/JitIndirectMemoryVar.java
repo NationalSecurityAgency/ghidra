@@ -22,11 +22,11 @@ import ghidra.pcode.emu.jit.analysis.JitDataFlowState;
 import ghidra.pcode.emu.jit.op.JitLoadOp;
 import ghidra.pcode.emu.jit.op.JitOp;
 import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.lang.Language;
 import ghidra.program.model.pcode.PcodeOp;
 
 /**
  * A dummy variable node representing an indirect memory access.
- * 
  * <p>
  * These are caused by {@link PcodeOp#LOAD}, since that is the only manner in which the
  * {@link JitDataFlowState} can be accessed with a non-constant offset. However, the node is
@@ -67,5 +67,10 @@ public enum JitIndirectMemoryVar implements JitMemoryVar {
 	@Override
 	public AddressSpace space() {
 		return null;
+	}
+
+	@Override
+	public String toString(Language language) {
+		return "<INDIRECT>";
 	}
 }

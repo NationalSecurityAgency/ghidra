@@ -15,15 +15,17 @@
  */
 package ghidra.pcode.emu.jit.gen.util;
 
+import java.lang.classfile.ClassBuilder;
+import java.lang.classfile.attribute.ConstantValueAttribute;
+import java.lang.classfile.attribute.SignatureAttribute;
+
 import org.apache.commons.lang3.reflect.TypeLiteral;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.Type;
 
 import ghidra.pcode.emu.jit.JitJvmTypeUtils;
 import ghidra.pcode.emu.jit.gen.util.Types.*;
 
 /**
- * Utilities for declaring fields in an ASM {@link ClassVisitor}
+ * Utilities for declaring fields in a {@link ClassBuilder}
  * <p>
  * LATER: We do not yet return a "field handle." Ideally, we would and that would be the required
  * argument for {@link Op#getfield(Emitter, TRef, String, BNonVoid)} and related ops.
@@ -31,100 +33,114 @@ import ghidra.pcode.emu.jit.gen.util.Types.*;
 public interface Fld {
 	/**
 	 * Declare an initialized boolean field
-	 * 
-	 * @param cv the class visitor
-	 * @param flags the flags as in
-	 *            {@link ClassVisitor#visitField(int, String, String, String, Object)}
+	 *
+	 * @param clb the class builder
+	 * @param flags the access flags
 	 * @param type the type
 	 * @param name the name
 	 * @param init the initial value
 	 */
-	static void decl(ClassVisitor cv, int flags, TBool type, String name, boolean init) {
-		cv.visitField(flags, name, type.type().getDescriptor(), null, init);
+	static void decl(ClassBuilder clb, int flags, TBool type, String name, boolean init) {
+		clb.withField(name, type.classDesc(), fb -> {
+			fb.withFlags(flags);
+			fb.with(ConstantValueAttribute.of(init ? 1 : 0));
+		});
 	}
 
 	/**
 	 * Declare an initialized byte field
-	 * 
-	 * @param cv the class visitor
-	 * @param flags the flags as in
-	 *            {@link ClassVisitor#visitField(int, String, String, String, Object)}
+	 *
+	 * @param clb the class builder
+	 * @param flags the access flags
 	 * @param type the type
 	 * @param name the name
 	 * @param init the initial value
 	 */
-	static void decl(ClassVisitor cv, int flags, TByte type, String name, byte init) {
-		cv.visitField(flags, name, type.type().getDescriptor(), null, init);
+	static void decl(ClassBuilder clb, int flags, TByte type, String name, byte init) {
+		clb.withField(name, type.classDesc(), fb -> {
+			fb.withFlags(flags);
+			fb.with(ConstantValueAttribute.of((int) init));
+		});
 	}
 
 	/**
 	 * Declare an initialized short field
-	 * 
-	 * @param cv the class visitor
-	 * @param flags the flags as in
-	 *            {@link ClassVisitor#visitField(int, String, String, String, Object)}
+	 *
+	 * @param clb the class builder
+	 * @param flags the access flags
 	 * @param type the type
 	 * @param name the name
 	 * @param init the initial value
 	 */
-	static void decl(ClassVisitor cv, int flags, TShort type, String name, short init) {
-		cv.visitField(flags, name, type.type().getDescriptor(), null, init);
+	static void decl(ClassBuilder clb, int flags, TShort type, String name, short init) {
+		clb.withField(name, type.classDesc(), fb -> {
+			fb.withFlags(flags);
+			fb.with(ConstantValueAttribute.of((int) init));
+		});
 	}
 
 	/**
 	 * Declare an initialized int field
-	 * 
-	 * @param cv the class visitor
-	 * @param flags the flags as in
-	 *            {@link ClassVisitor#visitField(int, String, String, String, Object)}
+	 *
+	 * @param clb the class builder
+	 * @param flags the access flags
 	 * @param type the type
 	 * @param name the name
 	 * @param init the initial value
 	 */
-	static void decl(ClassVisitor cv, int flags, TInt type, String name, int init) {
-		cv.visitField(flags, name, type.type().getDescriptor(), null, init);
+	static void decl(ClassBuilder clb, int flags, TInt type, String name, int init) {
+		clb.withField(name, type.classDesc(), fb -> {
+			fb.withFlags(flags);
+			fb.with(ConstantValueAttribute.of(init));
+		});
 	}
 
 	/**
 	 * Declare an initialized long field
-	 * 
-	 * @param cv the class visitor
-	 * @param flags the flags as in
-	 *            {@link ClassVisitor#visitField(int, String, String, String, Object)}
+	 *
+	 * @param clb the class builder
+	 * @param flags the access flags
 	 * @param type the type
 	 * @param name the name
 	 * @param init the initial value
 	 */
-	static void decl(ClassVisitor cv, int flags, TLong type, String name, long init) {
-		cv.visitField(flags, name, type.type().getDescriptor(), null, init);
+	static void decl(ClassBuilder clb, int flags, TLong type, String name, long init) {
+		clb.withField(name, type.classDesc(), fb -> {
+			fb.withFlags(flags);
+			fb.with(ConstantValueAttribute.of(init));
+		});
 	}
 
 	/**
 	 * Declare an initialized float field
-	 * 
-	 * @param cv the class visitor
-	 * @param flags the flags as in
-	 *            {@link ClassVisitor#visitField(int, String, String, String, Object)}
+	 *
+	 * @param clb the class builder
+	 * @param flags the access flags
 	 * @param type the type
 	 * @param name the name
 	 * @param init the initial value
 	 */
-	static void decl(ClassVisitor cv, int flags, TFloat type, String name, float init) {
-		cv.visitField(flags, name, type.type().getDescriptor(), null, init);
+	static void decl(ClassBuilder clb, int flags, TFloat type, String name, float init) {
+		clb.withField(name, type.classDesc(), fb -> {
+			fb.withFlags(flags);
+			fb.with(ConstantValueAttribute.of(init));
+		});
 	}
 
 	/**
 	 * Declare an initialized double field
-	 * 
-	 * @param cv the class visitor
-	 * @param flags the flags as in
-	 *            {@link ClassVisitor#visitField(int, String, String, String, Object)}
+	 *
+	 * @param clb the class builder
+	 * @param flags the access flags
 	 * @param type the type
 	 * @param name the name
 	 * @param init the initial value
 	 */
-	static void decl(ClassVisitor cv, int flags, TDouble type, String name, double init) {
-		cv.visitField(flags, name, type.type().getDescriptor(), null, init);
+	static void decl(ClassBuilder clb, int flags, TDouble type, String name, double init) {
+		clb.withField(name, type.classDesc(), fb -> {
+			fb.withFlags(flags);
+			fb.with(ConstantValueAttribute.of(init));
+		});
 	}
 
 	/**
@@ -133,45 +149,53 @@ public interface Fld {
 	 * Note that only certain types of fields can have initial values specified in this manner. A
 	 * {@link String} is one such type. For other types, the initializer must be provided in a
 	 * generated class initializer (for static fields) or constructor (for instance fields).
-	 * 
-	 * @param cv the class visitor
-	 * @param flags the flags as in
-	 *            {@link ClassVisitor#visitField(int, String, String, String, Object)}
+	 *
+	 * @param clb the class builder
+	 * @param flags the access flags
 	 * @param type the type
 	 * @param name the name
 	 * @param init the initial value
 	 */
-	static <T> void decl(ClassVisitor cv, int flags, TRef<T> type, String name, T init) {
-		cv.visitField(flags, name, type.type().getDescriptor(), null, init);
+	static <T> void decl(ClassBuilder clb, int flags, TRef<T> type, String name, T init) {
+		clb.withField(name, type.classDesc(), fb -> {
+			fb.withFlags(flags);
+			if (init instanceof String s) {
+				fb.with(ConstantValueAttribute.of(s));
+			}
+		});
 	}
 
 	/**
 	 * Declare an uninitialized field of any type
-	 * 
-	 * @param cv the class visitor
-	 * @param flags the flags as in
-	 *            {@link ClassVisitor#visitField(int, String, String, String, Object)}
+	 *
+	 * @param clb the class builder
+	 * @param flags the access flags
 	 * @param type the type
 	 * @param name the name
 	 */
-	static <T> void decl(ClassVisitor cv, int flags, SNonVoid type, String name) {
-		cv.visitField(flags, name, type.type().getDescriptor(), null, null);
+	static <T> void decl(ClassBuilder clb, int flags, SNonVoid type, String name) {
+		clb.withField(name, type.classDesc(), flags);
 	}
 
 	/**
 	 * Declare an uninitialized field of any type with a type signature
-	 * 
-	 * @param cv the class visitor
-	 * @param flags the flags as in
-	 *            {@link ClassVisitor#visitField(int, String, String, String, Object)}
+	 *
+	 * @param clb the class builder
+	 * @param flags the access flags
 	 * @param type the type with signature
 	 * @param name the name
 	 */
-	static <T> void decl(ClassVisitor cv, int flags, TypeLiteral<T> type, String name) {
+	static <T> void decl(ClassBuilder clb, int flags, TypeLiteral<T> type, String name) {
 		Class<?> erased = JitJvmTypeUtils.erase(type.value);
 		String signature = erased == type.value
 				? null
 				: JitJvmTypeUtils.typeToSignature(type.value);
-		cv.visitField(flags, name, Type.getDescriptor(erased), signature, null);
+		clb.withField(name, erased.describeConstable().orElseThrow(), fb -> {
+			fb.withFlags(flags);
+			if (signature != null) {
+				fb.with(SignatureAttribute.of(
+					fb.constantPool().utf8Entry(signature)));
+			}
+		});
 	}
 }

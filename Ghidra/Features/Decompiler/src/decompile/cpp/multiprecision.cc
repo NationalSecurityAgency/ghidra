@@ -23,8 +23,8 @@ extern int4 count_leading_zeros(uintb val);		///< Return the number of leading z
 ///
 /// \b in and \b out arrays are specified and can point to the same storage.
 /// \param num is the number 64-bit words in the extended precision integers
-/// \param in is the 128-bit value to shift
-/// \param out is the container for the 128-bit result
+/// \param in is the value to shift
+/// \param out is the container for the result
 /// \param sa is the number of bits to shift
 static void leftshift(int4 num,uint8 *in,uint8 *out,int4 sa)
 

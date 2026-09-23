@@ -17,6 +17,7 @@ package ghidra.app.util.demangler;
 
 import java.util.Objects;
 
+import generic.json.Json;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 
@@ -77,4 +78,8 @@ public class MangledContext {
 		return address;
 	}
 
+	@Override
+	public String toString() {
+		return Json.toString(this);
+	}
 }

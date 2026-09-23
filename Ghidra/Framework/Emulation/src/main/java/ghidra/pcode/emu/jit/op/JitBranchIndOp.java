@@ -17,9 +17,10 @@ package ghidra.pcode.emu.jit.op;
 
 import java.util.List;
 
-import ghidra.pcode.emu.jit.JitPassage.RIndBranch;
+import ghidra.pcode.emu.jit.JitPassage.RBranch;
 import ghidra.pcode.emu.jit.analysis.JitTypeBehavior;
 import ghidra.pcode.emu.jit.var.JitVal;
+import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropSymbolMap;
 import ghidra.program.model.pcode.PcodeOp;
 
 /**
@@ -29,7 +30,15 @@ import ghidra.program.model.pcode.PcodeOp;
  * @param target the use-def node for the target offset
  * @param branch the branch record created for the p-code op
  */
-public record JitBranchIndOp(PcodeOp op, JitVal target, RIndBranch branch) implements JitOp {
+public record JitBranchIndOp(PcodeOp op, JitVal target, RBranch branch) implements JitOp {
+	@Override
+	public String toString(PcodeUseropSymbolMap symbols) {
+		return "%s[op=%s, target=%s, branch=%s]".formatted(
+			getClass().getSimpleName(),
+			JitOp.toString(op, symbols),
+			target.toString(symbols.language()),
+			branch);
+	}
 
 	@Override
 	public boolean canBeRemoved() {

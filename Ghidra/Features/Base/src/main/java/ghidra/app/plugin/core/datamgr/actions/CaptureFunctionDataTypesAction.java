@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -78,8 +78,8 @@ public class CaptureFunctionDataTypesAction extends DockingAction {
 	public void actionPerformed(ActionContext context) {
 		GTree gTree = (GTree) context.getContextObject();
 		TreePath selectionPath = gTree.getSelectionPath();
-		ArchiveNode node = (ArchiveNode) selectionPath.getLastPathComponent();
-		if (!node.getArchive().isModifiable()) {
+		DataTypeStoreNode node = (DataTypeStoreNode) selectionPath.getLastPathComponent();
+		if (!node.getDataTypeStore().isChangeable()) {
 			informNotModifiable(node);
 			return;
 		}
@@ -89,7 +89,7 @@ public class CaptureFunctionDataTypesAction extends DockingAction {
 		if (currentSelection == null || currentSelection.isEmpty()) {
 			currentSelection = program.getMemory();
 		}
-		final DataTypeManager manager = node.getArchive().getDataTypeManager();
+		final DataTypeManager manager = node.getDataTypeManager();
 		final PluginTool tool = plugin.getTool();
 		CaptureFunctionDataTypesCmd cmd =
 			new CaptureFunctionDataTypesCmd(manager, currentSelection,
@@ -105,7 +105,7 @@ public class CaptureFunctionDataTypesAction extends DockingAction {
 		tool.executeBackgroundCommand(cmd, program);
 	}
 
-	private void informNotModifiable(ArchiveNode node) {
+	private void informNotModifiable(DataTypeStoreNode node) {
 		String message;
 		if (node instanceof ProgramArchiveNode) {
 			message = "The program \"" + node.getName() + "\" isn't modifiable.";

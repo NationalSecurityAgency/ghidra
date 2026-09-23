@@ -27,7 +27,7 @@ of how you might be impacted.
 
 ## Install
 To install an official pre-built multi-platform Ghidra release:  
-* Install [JDK 21 64-bit][jdk]
+* Install [JDK 25 64-bit][jdk]
 * Download a Ghidra [release file][releases]
   - **NOTE:** The official multi-platform release file is named 
     `ghidra_<version>_<release>_<date>.zip` which can be found under the "Assets" drop-down.

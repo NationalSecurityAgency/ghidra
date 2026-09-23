@@ -33,10 +33,9 @@ import docking.widgets.tree.internal.DefaultGTreeDataTransformer;
 import docking.widgets.tree.support.GTreeRenderer;
 import generic.theme.GIcon;
 import ghidra.app.plugin.core.datamgr.*;
-import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
-import ghidra.app.plugin.core.datamgr.archive.FileArchive;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.database.dtarchive.FileDtArchiveDB;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.Enum;
@@ -57,10 +56,10 @@ public class DataTypeArchiveGTree extends GTree {
 	private MyFolderListener folderListener;
 	private DataTypeTreeExpansionListener cleanupListener = new DataTypeTreeExpansionListener();
 
-	public DataTypeArchiveGTree(DataTypeManagerPlugin dataTypeManagerPlugin) {
-		super(new ArchiveRootNode(dataTypeManagerPlugin.getDataTypeManagerHandler()));
+	public DataTypeArchiveGTree(DataTypeManagerPlugin plugin) {
+		super(new ArchiveRootNode(plugin.getArchiveManager()));
 
-		this.plugin = dataTypeManagerPlugin;
+		this.plugin = plugin;
 		setDragNDropHandler(new DataTypeDragNDropHandler(plugin, this));
 		DataTypeTreeRenderer renderer = new DataTypeTreeRenderer();
 
@@ -82,6 +81,10 @@ public class DataTypeArchiveGTree extends GTree {
 		setAccessibleNamePrefix("Data Type Manager");
 
 		initializeKeyEvents();
+	}
+
+	public DataTypesProvider getProvider() {
+		return plugin.getProvider();
 	}
 
 	private void initializeKeyEvents() {
@@ -274,13 +277,13 @@ public class DataTypeArchiveGTree extends GTree {
 			return null;
 		}
 
-		DataTypeManagerHandler handler = plugin.getDataTypeManagerHandler();
-		DataTypeSyncState status = DataTypeSynchronizer.getSyncStatus(handler, dataType);
+		ArchiveManager archiveManager = plugin.getArchiveManager();
+		DataTypeSyncState status = DataTypeSynchronizer.getSyncStatus(archiveManager, dataType);
 		switch (status) {
 			case CONFLICT:
 			case UPDATE:
 			case COMMIT:
-				return DataTypeSynchronizer.getDiffToolTip(handler, dataType);
+				return DataTypeSynchronizer.getDiffToolTip(archiveManager, dataType);
 			case ORPHAN:
 			case UNKNOWN:
 			case IN_SYNC:
@@ -430,9 +433,8 @@ public class DataTypeArchiveGTree extends GTree {
 				String displayText = ((DataTypeNode) value).getDisplayText();
 				label.setText(displayText);
 			}
-			else if (value instanceof DomainFileArchiveNode) {
-				DomainFileArchiveNode node = (DomainFileArchiveNode) value;
-				String info = node.getDomainObjectInfo();
+			else if (value instanceof VersionedNode versionedNode) {
+				String info = versionedNode.getDomainObjectInfo();
 				if (info.length() > 0) {
 					label.setText(label.getText() + info);
 				}
@@ -440,8 +442,8 @@ public class DataTypeArchiveGTree extends GTree {
 
 			decorateWithArchiveCharacteristics(value, label, multiIcon);
 
-			if (value instanceof ArchiveNode) {
-				updateIconForChangeIndicator((ArchiveNode) value, multiIcon);
+			if (value instanceof DataTypeStoreNode) {
+				updateIconForChangeIndicator((DataTypeStoreNode) value, multiIcon);
 			}
 
 			setIcon(multiIcon);
@@ -453,7 +455,7 @@ public class DataTypeArchiveGTree extends GTree {
 
 			if (value instanceof FileArchiveNode) {
 				FileArchiveNode archiveNode = (FileArchiveNode) value;
-				FileArchive archive = (FileArchive) archiveNode.getArchive();
+				FileDtArchiveDB archive = (FileDtArchiveDB) archiveNode.getArchive();
 				if (archive.isChanged()) {
 					label.setText(label.getText() + " *");
 				}
@@ -473,8 +475,8 @@ public class DataTypeArchiveGTree extends GTree {
 				return;
 			}
 
-			DataTypeManagerHandler handler = plugin.getDataTypeManagerHandler();
-			DataTypeSyncState status = DataTypeSynchronizer.getSyncStatus(handler, dataType);
+			ArchiveManager archiveManager = plugin.getArchiveManager();
+			DataTypeSyncState status = DataTypeSynchronizer.getSyncStatus(archiveManager, dataType);
 			switch (status) {
 				case CONFLICT:
 					multiIcon.addIcon(new TranslateIcon(CONFLICT_ICON, 10, 5));
@@ -494,8 +496,8 @@ public class DataTypeArchiveGTree extends GTree {
 			}
 		}
 
-		private void updateIconForChangeIndicator(ArchiveNode node, MultiIcon multiIcon) {
-			DataTypeManager dtm = node.getArchive().getDataTypeManager();
+		private void updateIconForChangeIndicator(DataTypeStoreNode node, MultiIcon multiIcon) {
+			DataTypeManager dtm = node.getDataTypeManager();
 			if (dtm == null) {
 				return; // for InvalidArchiveNodes
 			}
@@ -521,7 +523,7 @@ public class DataTypeArchiveGTree extends GTree {
 		private boolean checkforUpdates(List<SourceArchive> sourceArchives) {
 			for (SourceArchive sourceArchive : sourceArchives) {
 				DataTypeManager sourceDTM =
-					plugin.getDataTypeManagerHandler().getDataTypeManager(sourceArchive);
+					plugin.getArchiveManager().getDataTypeManager(sourceArchive);
 				if (sourceDTM != null &&
 					sourceArchive.getLastSyncTime() != sourceDTM.getLastChangeTimeForMyManager()) {
 					return true;
@@ -547,9 +549,8 @@ public class DataTypeArchiveGTree extends GTree {
 		public void domainFileStatusChanged(DomainFile file, boolean fileIDset) {
 			List<GTreeNode> archiveNodes = getModelRoot().getChildren();
 			for (GTreeNode treeNode : archiveNodes) {
-				if (treeNode instanceof ProjectArchiveNode) {
-					ProjectArchiveNode projectArchiveNode = (ProjectArchiveNode) treeNode;
-					DomainFile nodesDomainFile = projectArchiveNode.getDomainFile();
+				if (treeNode instanceof ProjectArchiveNode projectArchiveNode) {
+					DomainFile nodesDomainFile = projectArchiveNode.getOriginalDomainFile();
 					if (file.equals(nodesDomainFile)) {
 						projectArchiveNode.nodeChanged();
 						return;
@@ -559,8 +560,18 @@ public class DataTypeArchiveGTree extends GTree {
 		}
 
 		@Override
-		public void domainFileRemoved(DomainFolder parentFolder, String name, String fileID) {
-			// DT What if anything needs to be done here?
+		public void domainFileObjectOpenedForUpdate(DomainFile file, DomainObject doa) {
+			// When a saveAs is performed the existing becomes associated with a new DomainFile.
+			// If this corresponds to an archive in the tree we need to invoke nodeChanged on it
+			List<GTreeNode> archiveNodes = getModelRoot().getChildren();
+			for (GTreeNode treeNode : archiveNodes) {
+				if (treeNode instanceof ProjectArchiveNode projectArchiveNode) {
+					if (projectArchiveNode.getDomainObject() == doa) {
+						projectArchiveNode.nodeChanged();
+						return;
+					}
+				}
+			}
 		}
 	}
 }

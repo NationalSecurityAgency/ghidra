@@ -15,7 +15,7 @@
  */
 package ghidra.pcode.exec;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 
@@ -84,7 +84,7 @@ public class PcodeFrameTest extends AbstractGTest {
 
 	private PcodeFrame frame(String sample) {
 		PcodeProgram program = compile(sample);
-		return new PcodeFrame(language, program.code, program.useropNames);
+		return new PcodeFrame(language, program.code, program.userops);
 	}
 
 	@Test
@@ -169,14 +169,14 @@ public class PcodeFrameTest extends AbstractGTest {
 		PcodeFrame frame = frame(SAMPLE_ADD);
 		assertEquals("""
 				<p-code frame: index=0 {
-				 -> r0 = INT_ADD r0, r1
+				 -> NO ADDRESS.0: r0 = INT_ADD r0, r1
 				}>""",
 			frame.toString());
 
 		frame.advance();
 		assertEquals("""
 				<p-code frame: index=1 {
-				    r0 = INT_ADD r0, r1
+				    NO ADDRESS.0: r0 = INT_ADD r0, r1
 				 *> fall-through
 				}>""",
 			frame.toString());
@@ -187,9 +187,9 @@ public class PcodeFrameTest extends AbstractGTest {
 		PcodeFrame frame = frame(SAMPLE_IF);
 		assertEquals("""
 				<p-code frame: index=0 {
-				 -> $U200:1 = INT_EQUAL r0, r1
-				    CBRANCH <0>, $U200:1
-				    r2 = INT_ADD r2, 1:8
+				 -> NO ADDRESS.0: $U200:1 = INT_EQUAL r0, r1
+				    NO ADDRESS.1: CBRANCH <0>, $U200:1
+				    NO ADDRESS.2: r2 = INT_ADD r2, 1:8
 				  <0>
 				}>""",
 			frame.toString());
@@ -199,9 +199,9 @@ public class PcodeFrameTest extends AbstractGTest {
 		frame.advance();
 		assertEquals("""
 				<p-code frame: index=3 {
-				    $U200:1 = INT_EQUAL r0, r1
-				    CBRANCH <0>, $U200:1
-				    r2 = INT_ADD r2, 1:8
+				    NO ADDRESS.0: $U200:1 = INT_EQUAL r0, r1
+				    NO ADDRESS.1: CBRANCH <0>, $U200:1
+				    NO ADDRESS.2: r2 = INT_ADD r2, 1:8
 				  <0>
 				 *> fall-through
 				}>""",
@@ -214,9 +214,9 @@ public class PcodeFrameTest extends AbstractGTest {
 		assertEquals("""
 				<p-code frame: index=0 {
 				  <0>
-				 -> r0 = INT_ADD r0, 1:8
-				    $U300:1 = INT_EQUAL r0, r1
-				    CBRANCH <0>, $U300:1
+				 -> NO ADDRESS.0: r0 = INT_ADD r0, 1:8
+				    NO ADDRESS.1: $U300:1 = INT_EQUAL r0, r1
+				    NO ADDRESS.2: CBRANCH <0>, $U300:1
 				}>""",
 			frame.toString());
 	}
@@ -226,7 +226,7 @@ public class PcodeFrameTest extends AbstractGTest {
 		PcodeFrame frame = frame(SAMPLE_BRANCH);
 		assertEquals("""
 				<p-code frame: index=0 {
-				 -> BRANCH *[NO ADDRESS]0x1234
+				 -> NO ADDRESS.0: BRANCH *[NO ADDRESS]0x1234
 				}>""",
 			frame.toString());
 
@@ -234,7 +234,7 @@ public class PcodeFrameTest extends AbstractGTest {
 		frame.finishAsBranch();
 		assertEquals("""
 				<p-code frame: index=-1 branched=0 {
-				 *> BRANCH *[NO ADDRESS]0x1234
+				 *> NO ADDRESS.0: BRANCH *[NO ADDRESS]0x1234
 				}>""",
 			frame.toString());
 	}
@@ -244,7 +244,7 @@ public class PcodeFrameTest extends AbstractGTest {
 		PcodeFrame frame = frame(SAMPLE_LANG_USEROP);
 		assertEquals("""
 				<p-code frame: index=0 {
-				 -> CALLOTHER "pcodeop_one", r0
+				 -> NO ADDRESS.0: CALLOTHER "pcodeop_one", r0
 				}>""",
 			frame.toString());
 	}
@@ -254,7 +254,7 @@ public class PcodeFrameTest extends AbstractGTest {
 		PcodeFrame frame = frame(SAMPLE_LIB_USEROP);
 		assertEquals("""
 				<p-code frame: index=0 {
-				 -> CALLOTHER "__lib_userop", r0
+				 -> NO ADDRESS.0: CALLOTHER "__lib_userop", r0
 				}>""",
 			frame.toString());
 	}

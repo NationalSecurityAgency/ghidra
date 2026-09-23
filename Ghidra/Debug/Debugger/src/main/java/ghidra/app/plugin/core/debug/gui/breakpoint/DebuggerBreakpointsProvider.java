@@ -851,9 +851,6 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 		}
 
 		private void locationDeleted(TraceBreakpointLocation location) {
-			if (!isVisible(location)) {
-				return;
-			}
 			breakpointLocationRemoved(location);
 		}
 

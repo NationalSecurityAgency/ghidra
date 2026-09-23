@@ -21,7 +21,6 @@ import static org.junit.Assert.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 import javax.swing.*;
 
@@ -47,19 +46,11 @@ import utilities.util.FileUtilities;
 public class SharedProjectUtil {
 
 	public static final int SERVER_PORT = ServerTestUtil.GHIDRA_TEST_SERVER_PORT;
-	public static String LOCALHOST = createLocalhostString();
-	private static final String USER = ClientUtil.getUserName();
+	public static String LOCALHOST = ServerTestUtil.LOCALHOST;
+	public static final String USER = ClientUtil.getUserName();
+	
 	private static File serverRoot;
 	private static RepositoryServerAdapter repositoryServer;
-
-	private static String createLocalhostString() {
-		try {
-			return InetAddress.getLocalHost().getHostName();
-		}
-		catch (UnknownHostException e) {
-			return "127.0.0.1";
-		}
-	}
 
 	public static boolean createSharedProject(FrontEndTool frontEndTool, final String projectName)
 			throws Exception {

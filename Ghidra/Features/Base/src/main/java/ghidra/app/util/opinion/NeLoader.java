@@ -834,4 +834,9 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 		return List.of("exe", "dll");
 	}
 
+	@Override
+	protected List<String> getCompatibleLibraryFormats() {
+		return List.of(NE_NAME, MzLoader.MZ_NAME);
+	}
+
 }

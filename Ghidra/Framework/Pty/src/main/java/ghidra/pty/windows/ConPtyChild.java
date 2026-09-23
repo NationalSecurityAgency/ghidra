@@ -17,22 +17,17 @@ package ghidra.pty.windows;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
+import java.nio.charset.Charset;
 import java.util.*;
 
-import com.sun.jna.*;
-import com.sun.jna.platform.win32.Kernel32;
-import com.sun.jna.platform.win32.WinBase;
-import com.sun.jna.platform.win32.WinBase.PROCESS_INFORMATION;
-import com.sun.jna.platform.win32.WinDef.*;
-import com.sun.jna.platform.win32.WinNT.HANDLE;
+import com.microsoft.win32.*;
 
 import ghidra.pty.PtyChild;
 import ghidra.pty.ShellUtils;
 import ghidra.pty.ShellUtils.Shell;
 import ghidra.pty.local.LocalWindowsNativeProcessPtySession;
-import ghidra.pty.windows.jna.ConsoleApiNative;
-import ghidra.pty.windows.jna.ConsoleApiNative.STARTUPINFOEX;
-import ghidra.pty.windows.jna.JobApiNative;
 
 public class ConPtyChild extends ConPtyEndpoint implements PtyChild {
 
@@ -41,39 +36,29 @@ public class ConPtyChild extends ConPtyEndpoint implements PtyChild {
 		super(writeHandle, readHandle, pseudoConsoleHandle);
 	}
 
-	protected STARTUPINFOEX prepareStartupInfo() {
-		STARTUPINFOEX si = new STARTUPINFOEX();
-		si.StartupInfo.cb = new DWORD(si.size());
-		si.StartupInfo.hStdOutput = new HANDLE();
-		si.StartupInfo.hStdError = new HANDLE();
-		si.StartupInfo.hStdInput = new HANDLE();
-		si.StartupInfo.dwFlags = WinBase.STARTF_USESTDHANDLES;
+	protected MemorySegment prepareStartupInfo(Arena arena, MemorySegment cs) {
+		MemorySegment sie = _STARTUPINFOEXW.allocate(arena);
+		MemorySegment si = _STARTUPINFOEXW.StartupInfo(sie);
+		_STARTUPINFOW.cb(si, (int) sie.byteSize());
+		_STARTUPINFOW.hStdOutput(si, arena.allocate(win32_h.HANDLE));
+		_STARTUPINFOW.hStdError(si, arena.allocate(win32_h.HANDLE));
+		_STARTUPINFOW.hStdInput(si, arena.allocate(win32_h.HANDLE));
+		_STARTUPINFOW.dwFlags(si, win32_h.STARTF_USESTDHANDLES());
 
 		// Discover the size required for the thread attrs list and allocate
-		UINTByReference bytesRequired = new UINTByReference();
+		MemorySegment bytesRequired = arena.allocate(win32_h.UINT);
 		// NB. This will "fail." See Remarks on MSDN.
-		ConsoleApiNative.INSTANCE.InitializeProcThreadAttributeList(
-			null, ConPty.DW_ONE, ConPty.DW_ZERO, bytesRequired);
-		// NB. Memory frees itself in .finalize()
-		si.lpAttributeList = new Memory(bytesRequired.getValue().intValue());
+		win32_h.InitializeProcThreadAttributeList(cs, MemorySegment.NULL, 1, 0, bytesRequired);
+		MemorySegment attrs = arena.allocate(bytesRequired.get(win32_h.UINT, 0));
+		_STARTUPINFOEXW.lpAttributeList(sie, attrs);
 		// Initialize it
-		if (!ConsoleApiNative.INSTANCE.InitializeProcThreadAttributeList(
-			si.lpAttributeList, ConPty.DW_ONE, ConPty.DW_ZERO, bytesRequired)
-				.booleanValue()) {
-			throw new LastErrorException(Kernel32.INSTANCE.GetLastError());
-		}
-
+		Win32Err.checkFalse(
+			win32_h.InitializeProcThreadAttributeList(cs, attrs, 1, 0, bytesRequired), cs);
 		// Set the pseudoconsole information into the list
-		if (!ConsoleApiNative.INSTANCE.UpdateProcThreadAttribute(
-			si.lpAttributeList, ConPty.DW_ZERO,
-			ConPty.PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE,
-			new PVOID(pseudoConsoleHandle.getNative().getPointer()),
-			new DWORD(Native.POINTER_SIZE),
-			null, null).booleanValue()) {
-			throw new LastErrorException(Kernel32.INSTANCE.GetLastError());
-		}
-
-		return si;
+		Win32Err.checkFalse(win32_h.UpdateProcThreadAttribute(cs, attrs, 0,
+			win32_h.PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE(), pseudoConsoleHandle.asSegment(),
+			win32_h.HANDLE.byteSize(), MemorySegment.NULL, MemorySegment.NULL), cs);
+		return sie;
 	}
 
 	private boolean isImplicitCmd(String[] args) {
@@ -123,41 +108,45 @@ public class ConPtyChild extends ConPtyEndpoint implements PtyChild {
 		/**
 		 * TODO: How to control local echo?
 		 */
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment cs = arena.allocate(Win32Err.LAYOUT);
+			Handle hJob = new Handle(Win32Err.checkNull(
+				win32_h.CreateJobObjectW(cs, MemorySegment.NULL, MemorySegment.NULL), cs));
+			MemorySegment sie = prepareStartupInfo(arena, cs);
+			MemorySegment pi = _PROCESS_INFORMATION.allocate(arena);
 
-		HANDLE hJob = JobApiNative.INSTANCE.CreateJobObjectW(null, null);
-		if (hJob == null) {
-			throw new LastErrorException(Kernel32.INSTANCE.GetLastError());
+			Shell shell = isImplicitCmd(args) ? Shell.WINDOWS_CMD : Shell.WINDOWS;
+			String commandLine = ShellUtils.generateLine(Arrays.asList(args), shell);
+
+			Charset utf16le = Charset.forName("UTF-16LE");
+			Win32Err.checkFalse(win32_h.CreateProcessW(cs,
+				MemorySegment.NULL, // lpApplicationName
+				arena.allocateFrom(commandLine, utf16le), // lpCommandLine
+				MemorySegment.NULL, // lpProcessAttributes
+				MemorySegment.NULL, // lpThreadAttributes
+				0, // bInheritHandles = false
+				win32_h.EXTENDED_STARTUPINFO_PRESENT() |
+					win32_h.CREATE_UNICODE_ENVIRONMENT(), // dwCreationFlags
+				env == null ? MemorySegment.NULL
+						: arena.allocateFrom(ShellUtils.generateEnvBlock(env),
+							utf16le), // lpEnvironment
+				workingDirectory == null ? MemorySegment.NULL
+						: arena.allocateFrom(workingDirectory.getAbsolutePath(),
+							utf16le), // lpCurrentDirectory
+				sie, // lpStartupInfo
+				pi), cs); // lpProcessInformation
+
+			Win32Err.checkFalse(win32_h.AssignProcessToJobObject(cs, hJob.asSegment(),
+				_PROCESS_INFORMATION.hProcess(pi)), cs);
+
+			return new LocalWindowsNativeProcessPtySession(
+				_PROCESS_INFORMATION.dwProcessId(pi),
+				_PROCESS_INFORMATION.dwThreadId(pi),
+				new Handle(_PROCESS_INFORMATION.hProcess(pi)),
+				new Handle(_PROCESS_INFORMATION.hThread(pi)),
+				"ConPTY",
+				hJob);
 		}
-
-		STARTUPINFOEX si = prepareStartupInfo();
-		PROCESS_INFORMATION pi = new PROCESS_INFORMATION();
-
-		Shell shell = isImplicitCmd(args) ? Shell.WINDOWS_CMD : Shell.WINDOWS;
-		String commandLine = ShellUtils.generateLine(Arrays.asList(args), shell);
-
-		if (!ConsoleApiNative.INSTANCE.CreateProcessW(
-			null /*lpApplicationName*/,
-			new WString(commandLine),
-			null /*lpProcessAttributes*/,
-			null /*lpThreadAttributes*/,
-			false /*bInheritHandles*/,
-			new DWORD(Kernel32.EXTENDED_STARTUPINFO_PRESENT |
-				Kernel32.CREATE_UNICODE_ENVIRONMENT) /*dwCreationFlags*/,
-			env == null ? null : new WString(ShellUtils.generateEnvBlock(env)),
-			workingDirectory == null ? null
-					: new WString(workingDirectory.getAbsolutePath()) /*lpCurrentDirectory*/,
-			si /*lpStartupInfo*/,
-			pi /*lpProcessInformation*/).booleanValue()) {
-			throw new LastErrorException(Kernel32.INSTANCE.GetLastError());
-		}
-
-		if (!JobApiNative.INSTANCE.AssignProcessToJobObject(hJob, pi.hProcess).booleanValue()) {
-			throw new LastErrorException(Kernel32.INSTANCE.GetLastError());
-		}
-
-		return new LocalWindowsNativeProcessPtySession(pi.dwProcessId.intValue(),
-			pi.dwThreadId.intValue(), new Handle(pi.hProcess), new Handle(pi.hThread), "ConPTY",
-			new Handle(hJob));
 	}
 
 	@Override

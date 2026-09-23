@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,7 @@
  */
 package ghidra.app.util.datatype;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,14 +23,14 @@ import java.util.List;
 import org.junit.*;
 
 import docking.widgets.*;
+import ghidra.app.plugin.core.datamgr.ArchiveManager;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.archive.Archive;
-import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.framework.ApplicationConfiguration;
 import ghidra.framework.GhidraApplicationConfiguration;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
+import ghidra.program.model.dtarchive.PersistentDataTypeArchive;
 import ghidra.program.model.listing.Program;
 import ghidra.test.*;
 
@@ -82,10 +81,10 @@ public class DataTypeSelectionTextFieldTest extends AbstractDropDownTextFieldTes
 	// close all archives but the builtin and the program archive
 	private void closeUndesiredArchives() {
 		DataTypeManagerPlugin plugin = env.getPlugin(DataTypeManagerPlugin.class);
-		DataTypeManagerHandler dataTypeManagerHandler = plugin.getDataTypeManagerHandler();
-		List<Archive> archivesToClose = dataTypeManagerHandler.getAllFileOrProjectArchives();
-		for (Archive archive : archivesToClose) {
-			dataTypeManagerHandler.closeArchive(archive);
+		ArchiveManager archiveManager = plugin.getArchiveManager();
+		List<PersistentDataTypeArchive> archivesToClose = archiveManager.getOpenArchives();
+		for (PersistentDataTypeArchive archive : archivesToClose) {
+			archiveManager.closeArchive(archive);
 		}
 	}
 

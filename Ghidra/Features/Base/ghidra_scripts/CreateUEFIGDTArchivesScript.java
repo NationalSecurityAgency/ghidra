@@ -35,12 +35,14 @@ import ghidra.app.script.GhidraScript;
 import ghidra.app.util.cparser.C.CParserUtils;
 import ghidra.app.util.cparser.C.ParseException;
 import ghidra.program.model.data.DataTypeManager;
-import ghidra.program.model.data.FileDataTypeManager;
+import ghidra.program.model.dtarchive.FileDataTypeArchive;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 public class CreateUEFIGDTArchivesScript extends GhidraScript {
 
 	private File outputDirectory;
-	
+
 	private static String headerFilePath = "/data/HeaderFiles/git/edk2";
 
 	@Override
@@ -49,41 +51,49 @@ public class CreateUEFIGDTArchivesScript extends GhidraScript {
 
 		parseUEFIHeaders("X64", "x86:LE:64:default", "windows");
 		parseUEFIHeaders("Ia32", "x86:LE:32:default", "windows");
-		
+
 		parseUEFIHeaders("AArch64", "AARCH64:LE:64:v8A", "windows");
 		parseUEFIHeaders("Arm", "ARM:LE:32:v8", "default");
-		
+
 		parseUEFIHeaders("RiscV64", "RISCV:LE:64:RV64G", "gcc");
 		parseUEFIHeaders("LoongArch64", "Loongarch:LE:64:lp64d", "default");
 	}
-	
-	private void parseHeaderFilesToGDT(File outputDir, String gdtName, String languageID, String compiler,
-			String[] filenames, String includePaths[], String[] args)
+
+	private void parseHeaderFilesToGDT(File outputDir, String gdtName, String languageID,
+			String compiler, String[] filenames, String includePaths[], String[] args)
 			throws ParseException, ghidra.app.util.cparser.CPP.ParseException, IOException {
 		DataTypeManager openTypes[] = null;
-		
-		parseHeaderFilesToGDT(openTypes, outputDir, gdtName, languageID, compiler, filenames, includePaths, args);
+
+		parseHeaderFilesToGDT(openTypes, outputDir, gdtName, languageID, compiler, filenames,
+			includePaths, args);
 	}
 
-	private void parseHeaderFilesToGDT(DataTypeManager openTypes[], File outputDir, String gdtName, String languageID, String compiler,
-			String[] filenames, String[] includePaths, String[] args)
+	private void parseHeaderFilesToGDT(DataTypeManager openTypes[], File outputDir, String gdtName,
+			String languageID, String compiler, String[] filenames, String[] includePaths,
+			String[] args)
 			throws ParseException, ghidra.app.util.cparser.CPP.ParseException, IOException {
-		
-		String dataTypeFile = outputDir + File.separator + gdtName + ".gdt";
-		
-		File f = getArchiveFile(dataTypeFile);
-        
-		FileDataTypeManager dtMgr = CParserUtils.parseHeaderFiles(openTypes, filenames,
-			includePaths, args, f.getAbsolutePath(), languageID, compiler, monitor);
 
-		dtMgr.save();
-		dtMgr.close();
+		String dataTypeFile = outputDir + File.separator + gdtName + ".gdt";
+
+		File f = getArchiveFile(dataTypeFile);
+
+		FileDataTypeArchive archive = CParserUtils.parseHeaderFiles(filenames,
+			includePaths, args, f.getAbsolutePath(), languageID, compiler, openTypes, this,
+			monitor);
+
+		try {
+			archive.save(null, TaskMonitor.DUMMY);
+		}
+		catch (CancelledException e) {
+			// can't happen since a DUMMY monitor was used
+		}
+		archive.release(this);
 	}
 
 	/**
 	 * Turn string into a file, delete old archive if it exists
 	 * 
-	 * @param dataTypeFile
+	 * @param dataTypeFile the file name of the stored archive
 	 * 
 	 * @return file
 	 */
@@ -99,9 +109,9 @@ public class CreateUEFIGDTArchivesScript extends GhidraScript {
 		}
 		return f;
 	}
-	
+
 	public void parseUEFIHeaders(String name, String languageID, String compiler) throws Exception {
-		
+
 		String filenames[] = {
 			"ProcessorBind.h",
 			"Uefi/UefiBaseType.h",
@@ -116,22 +126,23 @@ public class CreateUEFIGDTArchivesScript extends GhidraScript {
 			"Library/StandaloneMmDriverEntryPoint.h",
 			"Library/UefiApplicationEntryPoint.h",
 			"Library/UefiDriverEntryPoint.h",
-			headerFilePath+"/MdePkg/Include/Pi/",
-			headerFilePath+"/MdePkg/Include/Ppi/",
-			headerFilePath+"/MdePkg/Include/Protocol/",
-			headerFilePath+"/MdePkg/Include/IndustryStandard/",
+			headerFilePath + "/MdePkg/Include/Pi/",
+			headerFilePath + "/MdePkg/Include/Ppi/",
+			headerFilePath + "/MdePkg/Include/Protocol/",
+			headerFilePath + "/MdePkg/Include/IndustryStandard/",
 		};
-		
+
 		String includePaths[] = {
-			headerFilePath+"/MdePkg/Include/"+name,
-			headerFilePath+"/MdePkg/Include",
+			headerFilePath + "/MdePkg/Include/" + name,
+			headerFilePath + "/MdePkg/Include",
 		};
-		
+
 		String args[] = {
 			"-DSTATIC_ASSERT=static_assert"
 		};
-		
-		parseHeaderFilesToGDT(outputDirectory, "uefi_"+name, languageID, compiler, filenames, includePaths, args);
+
+		parseHeaderFilesToGDT(outputDirectory, "uefi_" + name, languageID, compiler, filenames,
+			includePaths, args);
 	}
 
 }

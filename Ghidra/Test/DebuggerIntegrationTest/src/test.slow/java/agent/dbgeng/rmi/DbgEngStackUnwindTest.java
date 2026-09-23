@@ -59,15 +59,18 @@ import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
+import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
+import ghidra.test.TestProgramManager;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.module.DBTraceStaticMappingManager;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.modules.TraceStaticMapping;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
 import junit.framework.AssertionFailedError;
 
 @Category(NightlyCategory.class) // this may actually be an @PortSensitive test
@@ -136,19 +139,10 @@ public class DbgEngStackUnwindTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testBasicUnwind() throws Throwable {
-		List<String> files = Arrays.asList("kernel32.dll", "expSpin.exe", "ntdll.dll");
-
 		addPlugins();
 
-		DomainFile[] dfs = getDomainFiles(files);
-		tool.acceptDomainFiles(dfs);
-
-		DomainFile traceDF = getDomainFile("expSpin_dbgeng");
-		ManagedDomainObject<Trace> mdo = new ManagedDomainObject<>(traceDF, Trace.class, monitor);
-		resyncMappings(mdo.get());
-		tool.acceptDomainFiles(new DomainFile[] { traceDF });
-
-		programs = openPrograms(dfs);
+		List<String> files = Arrays.asList("kernel32.dll", "expSpin.exe", "ntdll.dll");
+		ManagedDomainObject<Trace> mdo = initPrograms("expSpin_dbgeng", files);
 
 		try (PythonAndTrace conn = startAndSyncPython(mdo)) {
 			traceManager.activateSnap(2);
@@ -164,19 +158,10 @@ public class DbgEngStackUnwindTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testUnwindActivateMidStack() throws Throwable {
-		List<String> files = Arrays.asList("kernel32.dll", "expSpin.exe", "ntdll.dll");
-
 		addPlugins();
 
-		DomainFile[] dfs = getDomainFiles(files);
-		tool.acceptDomainFiles(dfs);
-
-		DomainFile traceDF = getDomainFile("expSpin_dbgeng");
-		ManagedDomainObject<Trace> mdo = new ManagedDomainObject<>(traceDF, Trace.class, monitor);
-		resyncMappings(mdo.get());
-		tool.acceptDomainFiles(new DomainFile[] { traceDF });
-
-		programs = openPrograms(dfs);
+		List<String> files = Arrays.asList("kernel32.dll", "expSpin.exe", "ntdll.dll");
+		ManagedDomainObject<Trace> mdo = initPrograms("expSpin_dbgeng", files);
 
 		try (PythonAndTrace conn = startAndSyncPython(mdo)) {
 			traceManager.activateSnap(2);
@@ -194,19 +179,10 @@ public class DbgEngStackUnwindTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testUnwindActivateHighFrame() throws Throwable {
-		List<String> files = Arrays.asList("kernel32.dll", "expSpin.exe", "ntdll.dll");
-
 		addPlugins();
 
-		DomainFile[] dfs = getDomainFiles(files);
-		tool.acceptDomainFiles(dfs);
-
-		DomainFile traceDF = getDomainFile("expSpin_dbgeng");
-		ManagedDomainObject<Trace> mdo = new ManagedDomainObject<>(traceDF, Trace.class, monitor);
-		resyncMappings(mdo.get());
-		tool.acceptDomainFiles(new DomainFile[] { traceDF });
-
-		programs = openPrograms(dfs);
+		List<String> files = Arrays.asList("kernel32.dll", "expSpin.exe", "ntdll.dll");
+		ManagedDomainObject<Trace> mdo = initPrograms("expSpin_dbgeng", files);
 
 		try (PythonAndTrace conn = startAndSyncPython(mdo)) {
 			traceManager.activateSnap(2);
@@ -224,19 +200,10 @@ public class DbgEngStackUnwindTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testBasicUnwindMissingLowFrame() throws Throwable {
-		List<String> files = Arrays.asList("expSpin.exe", "ntdll.dll");
-
 		addPlugins();
 
-		DomainFile[] dfs = getDomainFiles(files);
-		tool.acceptDomainFiles(dfs);
-
-		DomainFile traceDF = getDomainFile("expSpin_dbgeng");
-		ManagedDomainObject<Trace> mdo = new ManagedDomainObject<>(traceDF, Trace.class, monitor);
-		resyncMappings(mdo.get());
-		tool.acceptDomainFiles(new DomainFile[] { traceDF });
-
-		programs = openPrograms(dfs);
+		List<String> files = Arrays.asList("expSpin.exe", "ntdll.dll");
+		ManagedDomainObject<Trace> mdo = initPrograms("expSpin_dbgeng", files);
 
 		try (PythonAndTrace conn = startAndSyncPython(mdo)) {
 			traceManager.activateSnap(2);
@@ -251,19 +218,10 @@ public class DbgEngStackUnwindTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testBasicUnwindMissingMedFrame() throws Throwable {
-		List<String> files = Arrays.asList("kernel32.dll", "ntdll.dll");
-
 		addPlugins();
 
-		DomainFile[] dfs = getDomainFiles(files);
-		tool.acceptDomainFiles(dfs);
-
-		DomainFile traceDF = getDomainFile("expSpin_dbgeng");
-		ManagedDomainObject<Trace> mdo = new ManagedDomainObject<>(traceDF, Trace.class, monitor);
-		resyncMappings(mdo.get());
-		tool.acceptDomainFiles(new DomainFile[] { traceDF });
-
-		programs = openPrograms(dfs);
+		List<String> files = Arrays.asList("kernel32.dll", "ntdll.dll");
+		ManagedDomainObject<Trace> mdo = initPrograms("expSpin_dbgeng", files);
 
 		try (PythonAndTrace conn = startAndSyncPython(mdo)) {
 			traceManager.activateSnap(2);
@@ -278,19 +236,10 @@ public class DbgEngStackUnwindTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testBasicUnwindMissingHighFrame() throws Throwable {
-		List<String> files = Arrays.asList("kernel32.dll", "expSpin.exe");
-
 		addPlugins();
 
-		DomainFile[] dfs = getDomainFiles(files);
-		tool.acceptDomainFiles(dfs);
-
-		DomainFile traceDF = getDomainFile("expSpin_dbgeng");
-		ManagedDomainObject<Trace> mdo = new ManagedDomainObject<>(traceDF, Trace.class, monitor);
-		resyncMappings(mdo.get());
-		tool.acceptDomainFiles(new DomainFile[] { traceDF });
-
-		programs = openPrograms(dfs);
+		List<String> files = Arrays.asList("kernel32.dll", "expSpin.exe");
+		ManagedDomainObject<Trace> mdo = initPrograms("expSpin_dbgeng", files);
 
 		try (PythonAndTrace conn = startAndSyncPython(mdo)) {
 			traceManager.activateSnap(2);
@@ -379,63 +328,6 @@ public class DbgEngStackUnwindTest extends AbstractDbgEngTraceRmiTest {
 		return getVariableValueTable(loc.pLoc, traceManager.getCurrent(), loc.fLoc, loc.field);
 	}
 
-	private DomainFile[] getDomainFiles(List<String> files)
-			throws InvalidNameException, CancelledException, IOException {
-		DomainFile[] dfs = new DomainFile[files.size()];
-		int i = 0;
-		for (String fname : files) {
-			dfs[i++] = getDomainFile(fname);
-		}
-		return dfs;
-	}
-
-	private DomainFile getDomainFile(String fname)
-			throws InvalidNameException, CancelledException, IOException {
-		DomainFolder rootFolder = tool.getProject()
-				.getProjectData()
-				.getRootFolder();
-		File f = getTestDataFile(fname + ".gzf");
-		return rootFolder.createFile(fname, f, monitor);
-	}
-
-	private List<Program> openPrograms(DomainFile[] files) {
-		List<Program> progs = new ArrayList<>();
-		for (int i = 0; i < files.length; i++) {
-			progs.add(programManager.openProgram(files[i]));
-		}
-		return progs;
-	}
-
-	private void resyncMappings(Trace trace)
-			throws MalformedURLException, URISyntaxException {
-		DomainFolder rootFolder = tool.getProject()
-				.getProjectData()
-				.getRootFolder();
-		DBTraceStaticMappingManager staticMappingManager =
-			(DBTraceStaticMappingManager) trace.getStaticMappingManager();
-		Collection<? extends TraceStaticMapping> allEntries =
-			staticMappingManager.getAllEntries();
-		Collection<TraceStaticMapping> newEntries = new HashSet<TraceStaticMapping>();
-		for (TraceStaticMapping mapping : allEntries) {
-			newEntries.add(mapping);
-		}
-		try (Transaction tx = trace.openTransaction("Remove .text mapping")) {
-			for (TraceStaticMapping mapping : newEntries) {
-				mapping.delete();
-			}
-		}
-		for (TraceStaticMapping mapping : newEntries) {
-			String previousRoot = mapping.getStaticProgramURL().toString();
-			String fileName = previousRoot.substring(previousRoot.lastIndexOf("?/") + 2);
-			URL localProjectURL = rootFolder.getLocalProjectURL();
-			URL url = new URI(localProjectURL + fileName).toURL();
-			try (Transaction tx = trace.openTransaction("Remove .text mapping")) {
-				staticMappingManager.add(mapping.getTraceAddressRange(), mapping.getLifespan(),
-					url, mapping.getStaticAddress());
-			}
-		}
-	}
-
 	protected void addPlugins() throws Throwable {
 		codeBrowserPlugin = addPlugin(tool, CodeBrowserPlugin.class);
 		staticListing = codeBrowserPlugin.getProvider().getListingPanel();
@@ -453,6 +345,60 @@ public class DbgEngStackUnwindTest extends AbstractDbgEngTraceRmiTest {
 		decompilerProvider = waitForComponentProvider(DecompilerProvider.class);
 		decompilerPanel = decompilerProvider.getDecompilerPanel();
 		tool.showComponentProvider(decompilerProvider, true);
+	}
+
+	private ManagedDomainObject<Trace> initPrograms(String trace, List<String> files)
+			throws InvalidNameException, IOException, CancelledException, VersionException,
+			MalformedURLException, URISyntaxException {
+		TestProgramManager manager = new TestProgramManager();
+		DomainFolder rootFolder = tool.getProject()
+				.getProjectData()
+				.getRootFolder();
+
+		programs = new ArrayList<>();
+		for (String fname : files) {
+			ProgramDB pgm = manager.getProgram(fname);
+			DomainFile df = rootFolder.createFile(fname, pgm, monitor);
+			programs.add(programManager.openProgram(df));
+			manager.release(pgm);
+		}
+
+		File f = getTestDataFile(trace + ".gzt");
+		DomainFile traceDF = rootFolder.createFile(trace, f, monitor);
+		ManagedDomainObject<Trace> mdo = new ManagedDomainObject<>(traceDF, Trace.class, monitor);
+		resyncMappings(mdo.get());
+		tool.acceptDomainFiles(new DomainFile[] { traceDF });
+		return mdo;
+	}
+
+	private void resyncMappings(Trace trace)
+			throws MalformedURLException, URISyntaxException {
+		DomainFolder rootFolder = tool.getProject()
+				.getProjectData()
+				.getRootFolder();
+		DBTraceStaticMappingManager staticMappingManager =
+			(DBTraceStaticMappingManager) trace.getStaticMappingManager();
+		Collection<? extends TraceStaticMapping> allEntries =
+			staticMappingManager.getAllEntries();
+		Collection<TraceStaticMapping> newEntries = new HashSet<TraceStaticMapping>();
+		for (TraceStaticMapping mapping : allEntries) {
+			newEntries.add(mapping);
+		}
+		try (Transaction _ = trace.openTransaction("Remove .text mapping")) {
+			for (TraceStaticMapping mapping : newEntries) {
+				mapping.delete();
+			}
+		}
+		for (TraceStaticMapping mapping : newEntries) {
+			String previousRoot = mapping.getStaticProgramURL().toString();
+			String fileName = previousRoot.substring(previousRoot.lastIndexOf("?/") + 2);
+			URL localProjectURL = rootFolder.getLocalProjectURL();
+			URL url = new URI(localProjectURL + fileName).toURL();
+			try (Transaction _ = trace.openTransaction("Remove .text mapping")) {
+				staticMappingManager.add(mapping.getTraceAddressRange(), mapping.getLifespan(),
+					url, mapping.getStaticAddress());
+			}
+		}
 	}
 
 	public record HoverLocation(ProgramLocation pLoc, FieldLocation fLoc, Field field,
@@ -587,6 +533,7 @@ public class DbgEngStackUnwindTest extends AbstractDbgEngTraceRmiTest {
 
 			@Override
 			public void dataChanged(BigInteger start, BigInteger end) {
+				// IGNORE
 			}
 		});
 		tool.showComponentProvider(decompilerProvider, true);

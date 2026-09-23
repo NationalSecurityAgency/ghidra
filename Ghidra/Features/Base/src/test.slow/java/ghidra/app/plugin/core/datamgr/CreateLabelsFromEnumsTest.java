@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -61,7 +61,7 @@ public class CreateLabelsFromEnumsTest extends AbstractGhidraHeadedIntegrationTe
 	private DataTypesProvider provider;
 	private DataTypeArchiveGTree tree;
 	private ArchiveRootNode archiveRootNode;
-	private ArchiveNode programNode;
+	private DataTypeStoreNode programNode;
 
 	@Before
 	public void setUp() throws Exception {
@@ -85,7 +85,7 @@ public class CreateLabelsFromEnumsTest extends AbstractGhidraHeadedIntegrationTe
 		tree = provider.getGTree();
 		waitForTree();
 		archiveRootNode = (ArchiveRootNode) tree.getModelRoot();
-		programNode = (ArchiveNode) archiveRootNode.getChild(testName.getMethodName());
+		programNode = (DataTypeStoreNode) archiveRootNode.getChild(testName.getMethodName());
 		assertNotNull("Did not successfully wait for the program node to load", programNode);
 
 		tool.showComponentProvider(provider, true);

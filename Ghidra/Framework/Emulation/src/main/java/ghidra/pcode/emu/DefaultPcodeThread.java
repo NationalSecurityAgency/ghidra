@@ -22,6 +22,7 @@ import ghidra.app.emulator.Emulator;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.plugin.processors.sleigh.SleighParserContext;
 import ghidra.app.util.PseudoInstruction;
+import ghidra.pcode.emu.jit.decode.CanDecode;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
@@ -36,13 +37,11 @@ import ghidra.util.Msg;
 
 /**
  * The default implementation of {@link PcodeThread} suitable for most applications
- * 
  * <p>
  * When emulating on concrete state, consider using {@link ModifiedPcodeThread}, so that state
  * modifiers from the older {@link Emulator} are incorporated. In either case, it may be worthwhile
  * to examine existing state modifiers to ensure they are appropriately represented in any abstract
  * state. It may be necessary to port them.
- * 
  * <p>
  * This class implements the control-flow logic of the target machine, cooperating with the p-code
  * program flow implemented by the {@link PcodeExecutor}. This implementation exists primarily in
@@ -54,7 +53,6 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 	/**
 	 * A userop library exporting some methods for emulated thread control
-	 *
 	 * <p>
 	 * TODO: Since p-code userops can now receive the executor, it may be better to receive it, cast
 	 * it, and obtain the thread, rather than binding a library to each thread.
@@ -75,7 +73,6 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 		/**
 		 * Execute the actual machine instruction at the current program counter
-		 * 
 		 * <p>
 		 * Because "injects" override the machine instruction, injects which need to defer to the
 		 * machine instruction must invoke this userop.
@@ -98,7 +95,6 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 		/**
 		 * Advance the program counter beyond the current machine instruction
-		 * 
 		 * <p>
 		 * Because "injects" override the machine instruction, they must specify the effect on the
 		 * program counter, lest the thread become caught in an infinite loop on the inject. To
@@ -117,21 +113,19 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 		/**
 		 * Interrupt execution
-		 * 
 		 * <p>
 		 * This immediately throws an {@link InterruptPcodeExecutionException}. To implement
 		 * out-of-band breakpoints, inject an invocation of this userop at the desired address.
 		 * 
 		 * @see PcodeMachine#addBreakpoint(Address, String)
 		 */
-		@PcodeUserop(functional = true)
+		@PcodeUserop(functional = true, canInterrupt = true)
 		public void emu_swi() {
 			thread.swi();
 		}
 
 		/**
 		 * Notify the client of a failed Sleigh inject compilation.
-		 * 
 		 * <p>
 		 * To avoid pestering the client during emulator set-up, a service may effectively defer
 		 * notifying the user of Sleigh compilation errors by replacing the erroneous injects with
@@ -139,21 +133,20 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		 * the client be notified.
 		 */
 		@PcodeUserop(functional = true)
-		public void emu_injection_err() {
+		public static void emu_injection_err() {
 			throw new InjectionErrorPcodeExecutionException(null, null);
 		}
 	}
 
 	/**
 	 * An executor for the p-code thread
-	 * 
 	 * <p>
 	 * This executor checks for thread suspension and updates the program counter register upon
 	 * execution of (external) branches.
 	 * 
 	 * @param <T> the type of variables in the emulator
 	 */
-	public static class PcodeThreadExecutor<T> extends PcodeExecutor<T> {
+	public static class PcodeThreadExecutor<T> extends PcodeExecutor<T> implements CanDecode {
 		volatile boolean suspended = false;
 		protected final DefaultPcodeThread<T> thread;
 
@@ -233,6 +226,11 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		 */
 		public DefaultPcodeThread<T> getThread() {
 			return thread;
+		}
+
+		@Override
+		public PseudoInstruction decodeInstruction() {
+			return thread.decoder.decodeInstruction(thread.counter, thread.context);
 		}
 	}
 
@@ -316,7 +314,6 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 	/**
 	 * A factory method to create the complete userop library for this thread
-	 * 
 	 * <p>
 	 * The returned library must compose the containing machine's shared userop library. See
 	 * {@link PcodeUseropLibrary#compose(PcodeUseropLibrary)}.
@@ -607,7 +604,6 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 	/**
 	 * Extension point: Extra behavior before executing an instruction
-	 * 
 	 * <p>
 	 * This is currently used for incorporating state modifiers from the older {@link Emulator}
 	 * framework. There is likely utility here when porting those to this framework.
@@ -617,7 +613,6 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 	/**
 	 * Extension point: Extra behavior after executing an instruction
-	 * 
 	 * <p>
 	 * This is currently used for incorporating state modifiers from the older {@link Emulator}
 	 * framework. There is likely utility here when porting those to this framework.
@@ -724,7 +719,6 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 	/**
 	 * Check for a p-code injection (override) at the given address
-	 * 
 	 * <p>
 	 * This checks this thread's particular injects and then defers to the machine's injects.
 	 * 
@@ -762,7 +756,6 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 	/**
 	 * Perform checks on a requested LOAD
-	 * 
 	 * <p>
 	 * Throw an exception if the LOAD should cause an interrupt.
 	 * 
@@ -776,7 +769,6 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 	/**
 	 * Perform checks on a requested STORE
-	 * 
 	 * <p>
 	 * Throw an exception if the STORE should cause an interrupt.
 	 * 

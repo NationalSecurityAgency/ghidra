@@ -16,11 +16,14 @@
 package ghidra.app.util.viewer.field;
 
 import java.net.*;
+import java.util.Set;
+import java.util.TreeSet;
 
 import docking.widgets.fieldpanel.field.AttributedString;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.ProgramManager;
+import ghidra.framework.client.ClientUtil;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.program.model.listing.Program;
@@ -33,8 +36,23 @@ import ghidra.util.Msg;
  * The first string will be treated as a Java {@link URL} and the optional second string will
  * be treated as display text.  If there is not display text, then the URL will be
  * displayed.
+ * <p>
+ * See {@link GhidraServerURLAnnotatedStringHandler} and {@link GhidraLocalURLAnnotatedStringHandler}
+ * for GHIDRA URL dummy handlers that are used to facilitate supported Comment Editor annotation types.
  */
 public class URLAnnotatedStringHandler implements AnnotatedStringHandler {
+
+	private static final Set<String> allowedProtocols = new TreeSet<>();
+	static {
+		// Set maintains alphabetical order or protocols
+		// The 'ghidra' protocol must be included here since only one shared 
+		// annotation handler is used to process all supported URL protocols.
+		allowedProtocols.add("ghidra");
+		allowedProtocols.add("http");
+		allowedProtocols.add("https");
+	}
+
+	private static String allowedProtocolsStr = "ghidra, https or http";
 
 	private static final String INVALID_SYMBOL_TEXT =
 		"@url annotation must have a URL string optionally followed by a display string";
@@ -53,7 +71,15 @@ public class URLAnnotatedStringHandler implements AnnotatedStringHandler {
 		URL url = getURLForString(text[1]);
 
 		if (url == null) {
-			return new AttributedString("Invalid URL annotations - not a URL: " + text[1],
+			return new AttributedString("Invalid URL annotation - not a valid URL: " + text[1],
+				Messages.ERROR, prototypeString.getFontMetrics(0), false, Messages.ERROR);
+		}
+
+		String protocol = url.getProtocol();
+		if (!allowedProtocols.contains(protocol)) {
+			return new AttributedString(
+				"Unsupported URL annotation protocol - " + allowedProtocolsStr + " required:\n" +
+					text[1],
 				Messages.ERROR, prototypeString.getFontMetrics(0), false, Messages.ERROR);
 		}
 
@@ -85,34 +111,65 @@ public class URLAnnotatedStringHandler implements AnnotatedStringHandler {
 		}
 	}
 
+	private boolean isUnsupportedGhidraURL(URL url) {
+		try {
+			return GhidraURL.isGhidraURL(url) && GhidraURL.getProjectPathname(url) == null;
+		}
+		catch (Exception e) {
+			return true;
+		}
+	}
+
 	@Override
 	public boolean handleMouseClick(String[] annotationParts, Navigatable navigatable,
 			ServiceProvider serviceProvider) {
+
 		String urlString = annotationParts[1];
 		URL url = getURLForString(urlString);
-		if (url != null) {
-			if (GhidraURL.PROTOCOL.equals(url.getProtocol())) {
-				ProgramManager programManager = serviceProvider.getService(ProgramManager.class);
-				return programManager.openProgram(url, ProgramManager.OPEN_CURRENT) != null;
-			}
-			BrowserLoader.display(url, null, serviceProvider);
-			return true;
+		if (url == null) {
+			Msg.showError(this, null, "Invalid URL",
+				"Invalid URL annotation: " + urlString);
+			return false;
 		}
 
-		Msg.showError(this, null, "Invalid URL",
-			"Unable to create a Java URL object from string: " + urlString);
+		String protocol = url.getProtocol();
+		if (!allowedProtocols.contains(protocol)) {
+			Msg.showError(this, null, "URL Access Not Allowed",
+				"Unsupported URL annotation protocol - " + allowedProtocolsStr +
+					" required:\n" + urlString);
+			return false;
+		}
 
-		return false;
+		if (isUnsupportedGhidraURL(url)) {
+			Msg.showError(this, null, "Invalid Ghidra URL",
+				"Unsupported Ghidra URL annotation:\n" + urlString);
+			return false;
+		}
+
+		if (!GhidraURL.isLocalURL(url) && !ClientUtil.getAllowListProvider().isAllowed(url)) {
+			Msg.showError(this, null, "URL Access Not Allowed",
+				"Access denied by Server Allow List");
+			return false;
+		}
+
+		if (GhidraURL.isGhidraURL(url)) {
+
+			ProgramManager programManager = serviceProvider.getService(ProgramManager.class);
+			return programManager.openProgram(url, ProgramManager.OPEN_CURRENT) != null;
+		}
+
+		BrowserLoader.display(url, null, serviceProvider);
+		return true;
 	}
 
 	@Override
 	public String getDisplayString() {
-		return "URL";
+		return "HTTP-URL";
 	}
 
 	@Override
 	public String getPrototypeString() {
-		return "{@url http://www.example.com}";
+		return "{@url https://www.example.com}";
 	}
 
 	@Override

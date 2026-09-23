@@ -410,7 +410,7 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 	@Override
 	protected Settings doGetDefaultSettings() {
 		DataTypeSettingsDB settings = new DataTypeSettingsDB(dataMgr, this, key);
-		settings.setLock(dataMgr instanceof BuiltInDataTypeManager);
+		settings.setLock(dataMgr instanceof BuiltInDataTypeManagerDB);
 		settings.setAllowedSettingPredicate(n -> isAllowedSetting(n));
 		settings.setDefaultSettings(getDataType().getDefaultSettings());
 		return settings;

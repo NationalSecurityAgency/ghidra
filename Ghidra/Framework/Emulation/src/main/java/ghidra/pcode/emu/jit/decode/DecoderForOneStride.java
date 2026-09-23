@@ -20,13 +20,13 @@ import java.util.List;
 
 import ghidra.app.util.PseudoInstruction;
 import ghidra.pcode.emu.jit.JitPassage.*;
+import ghidra.pcode.emu.jit.folding.FoldedState;
 import ghidra.pcode.exec.PcodeProgram;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.pcode.PcodeOp;
 
 /**
  * The decoder for a single stride.
- * 
  * <p>
  * This starts at a given seed and proceeds linearly until it hits an instruction without fall
  * through. It may also stop if it encounters an existing entry point or an erroneous user inject.
@@ -37,7 +37,6 @@ public class DecoderForOneStride {
 
 	/**
 	 * The result of decoding an instruction
-	 * 
 	 * <p>
 	 * This may also represent an error encountered while trying to decode an instruction.
 	 * 
@@ -53,13 +52,12 @@ public class DecoderForOneStride {
 		 * @return the reachability of the fall-through flow
 		 * @see DecoderExecutor#checkFallthroughAndAccumulate(PcodeProgram)
 		 */
-		Reachability checkFallthroughAndAccumulate() {
+		CtxReach checkFallthroughAndAccumulate() {
 			return executor.checkFallthroughAndAccumulate(program);
 		}
 
 		/**
 		 * Compute the fall-through target
-		 * 
 		 * <p>
 		 * <b>NOTE</b>: This should only be called after checking if the result actually has fall
 		 * through; otherwise, this will blindly compute the address and context immediately after
@@ -75,6 +73,7 @@ public class DecoderForOneStride {
 	final JitPassageDecoder decoder;
 	final DecoderForOnePassage passage;
 	private final AddrCtx start;
+	private final FoldedState state;
 
 	final List<Instruction> instructions = new ArrayList<>();
 	final List<PcodeOp> opsForStride = new ArrayList<>();
@@ -85,12 +84,14 @@ public class DecoderForOneStride {
 	 * @param decoder the thread's passage decoder
 	 * @param passage the decoder for this specific passage
 	 * @param start the seed to start this stride
+	 * @param state the constant-folding state
 	 */
 	public DecoderForOneStride(JitPassageDecoder decoder, DecoderForOnePassage passage,
-			AddrCtx start) {
+			AddrCtx start, FoldedState state) {
 		this.decoder = decoder;
 		this.passage = passage;
 		this.start = start;
+		this.state = state;
 	}
 
 	/**
@@ -104,7 +105,6 @@ public class DecoderForOneStride {
 
 	/**
 	 * "Step" the decoder an instruction
-	 * 
 	 * <p>
 	 * This will attempt to decode the instruction at the given address (and contextreg value). If
 	 * the given address is already a known entry point (for the entire emulator), then this returns
@@ -126,11 +126,11 @@ public class DecoderForOneStride {
 			ExitPcodeOp exitOp = ExitPcodeOp.exit(at);
 			opsForStride.add(exitOp);
 			passage.otherBranches.put(exitOp,
-				new RExtBranch(exitOp, at, Reachability.WITHOUT_CTXMOD));
+				new RExtBranch(exitOp, at, null, CtxReach.WITHOUT_CTXMOD));
 			return null;
 		}
 
-		DecoderExecutor executor = new DecoderExecutor(this, at);
+		DecoderExecutor executor = new DecoderExecutor(this, at, state);
 		PcodeProgram program = decoder.thread.getInject(at.address);
 		if (program == null) {
 			PseudoInstruction instruction = executor.decodeInstruction();
@@ -168,7 +168,7 @@ public class DecoderForOneStride {
 				return toStride();
 			}
 
-			Reachability reach = result.checkFallthroughAndAccumulate();
+			CtxReach reach = result.checkFallthroughAndAccumulate();
 			if (reach == null) {
 				return toStride();
 			}
@@ -178,7 +178,7 @@ public class DecoderForOneStride {
 				// Would happen because of inject without control flow
 				ExitPcodeOp exitOp = ExitPcodeOp.exit(at);
 				opsForStride.add(exitOp);
-				passage.otherBranches.put(exitOp, new RExtBranch(exitOp, at, reach));
+				passage.otherBranches.put(exitOp, new RExtBranch(exitOp, at, null, reach));
 				return toStride();
 			}
 			at = next;
@@ -191,13 +191,13 @@ public class DecoderForOneStride {
 					// Looks like the without-control-flow case, but at has advanced
 					ExitPcodeOp exitOp = ExitPcodeOp.exit(at);
 					opsForStride.add(exitOp);
-					passage.otherBranches.put(exitOp, new RExtBranch(exitOp, at, reach));
+					passage.otherBranches.put(exitOp, new RExtBranch(exitOp, at, null, reach));
 					return toStride();
 				}
 				case MAYBE_CTXMOD -> {
 					ExitPcodeOp exitOp = ExitPcodeOp.cond(at);
 					opsForStride.add(exitOp);
-					passage.otherBranches.put(exitOp, new RExtBranch(exitOp, at, reach));
+					passage.otherBranches.put(exitOp, new RExtBranch(exitOp, at, null, reach));
 					continue;
 				}
 			}

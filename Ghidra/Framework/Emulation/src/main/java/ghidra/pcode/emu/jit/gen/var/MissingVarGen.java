@@ -18,7 +18,7 @@ package ghidra.pcode.emu.jit.gen.var;
 import static ghidra.pcode.emu.jit.gen.GenConsts.MDESC_ASSERTION_ERROR__$INIT;
 import static ghidra.pcode.emu.jit.gen.GenConsts.T_ASSERTION_ERROR;
 
-import org.objectweb.asm.Opcodes;
+import java.lang.classfile.CodeBuilder;
 
 import ghidra.pcode.emu.jit.analysis.JitType.MpIntJitType;
 import ghidra.pcode.emu.jit.analysis.JitType.SimpleJitType;
@@ -53,8 +53,8 @@ import ghidra.pcode.emu.jit.var.JitMissingVar;
  * <p>
  * To answer the second, we note that the ASM library has a built-in control-flow analyzer, and it
  * ought to detect the unreachable code. In my observation, it replaces that code with
- * {@link Opcodes#NOP nop} and/or {@link Opcodes#ATHROW athrow}. Still, in case it doesn't, or in
- * case something changes in a later version (or if/when we port this to the JDK's upcoming
+ * {@link CodeBuilder#nop nop} and/or {@link CodeBuilder#athrow athrow}. Still, in case it doesn't,
+ * or in case something changes in a later version (or if/when we port this to the JDK's upcoming
  * classfile API), we emit our own bytecode to throw an {@link AssertionError}.
  */
 public enum MissingVarGen implements VarGen<JitMissingVar> {

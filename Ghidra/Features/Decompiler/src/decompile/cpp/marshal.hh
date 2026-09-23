@@ -110,7 +110,6 @@ public:
   /// Called once before any decoding.  Currently this is assumed to make an internal copy of the stream data,
   /// i.e. the input stream is cleared before any decoding takes place.
   /// \param s is the given input stream to be decode
-  /// \return \b true if the stream was fully ingested
   virtual void ingestStream(istream &s)=0;
 
   /// \brief Peek at the next child element of the current parent, without traversing in (opening) it.

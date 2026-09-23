@@ -27,8 +27,12 @@ import org.junit.Test;
 import generic.jar.ResourceFile;
 import generic.test.AbstractGenericTest;
 import ghidra.framework.Application;
-import ghidra.program.model.data.FileDataTypeManager;
-import ghidra.program.model.data.StandAloneDataTypeManager.ArchiveWarning;
+import ghidra.program.database.dtarchive.DataTypeArchiveFactory;
+import ghidra.program.model.dtarchive.ArchiveWarning;
+import ghidra.program.model.dtarchive.FileDataTypeArchive;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskMonitor;
 
 public class RustDataTypeArchiveIDTest extends AbstractGenericTest {
 
@@ -45,17 +49,18 @@ public class RustDataTypeArchiveIDTest extends AbstractGenericTest {
 	}
 
 	private String getGdtUniversalId(ResourceFile gdtFile) {
-		FileDataTypeManager dtm = null;
+		FileDataTypeArchive archive = null;
 		try {
-			dtm = FileDataTypeManager.openFileArchive(gdtFile, false);
-			assertEquals(dtm.getWarningMessage(true), ArchiveWarning.NONE, dtm.getWarning());
-			return dtm.getUniversalID().toString();
+			archive = DataTypeArchiveFactory.openReadOnly(gdtFile, this, TaskMonitor.DUMMY);
+			assertEquals(archive.getWarningMessage(true), ArchiveWarning.NONE,
+				archive.getWarning());
+			return archive.getUniversalID().toString();
 		}
-		catch (IOException e) {
+		catch (IOException | CancelledException | VersionException e) {
 			return "failed to read " + gdtFile.getName();
 		}
 		finally {
-			dtm.close();
+			archive.release(this);
 		}
 	}
 

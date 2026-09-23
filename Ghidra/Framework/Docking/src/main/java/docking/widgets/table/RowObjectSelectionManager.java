@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,11 +15,10 @@
  */
 package docking.widgets.table;
 
-import java.util.*;
-
 import java.awt.Rectangle;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.*;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -316,6 +315,8 @@ public class RowObjectSelectionManager<T> extends DefaultListSelectionModel
 			}
 
 			int[] updatedViewRows = translateSavedObjectSelectionToRowIndexes();
+
+			trace("\ttranslated view rows: " + Arrays.toString(updatedViewRows));
 			selectRows(updatedViewRows);
 		});
 	}
@@ -369,6 +370,8 @@ public class RowObjectSelectionManager<T> extends DefaultListSelectionModel
 		// duplicate entries, which we have to keep at separate indices in order to restore selection
 		int rowCount = modelAdapter.getRowCount();
 		if (rowCount > ARTIFICIAL_ROW_COUNT_THRESHOLD) {
+			trace("\ttoo many rows to map %s > %s: ".formatted(rowCount,
+				ARTIFICIAL_ROW_COUNT_THRESHOLD));
 			return Collections.emptyMap();
 		}
 

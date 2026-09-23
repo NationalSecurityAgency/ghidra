@@ -17,13 +17,17 @@ package ghidra.framework.main;
 
 import java.io.File;
 
-import docking.ActionContext;
+import javax.swing.event.ChangeListener;
+
 import docking.action.DockingAction;
-import docking.action.MenuData;
+import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
+import ghidra.framework.OperatingSystem;
+import ghidra.framework.client.UrlAllowListManager;
+import ghidra.framework.main.certs.CertificateManagerLauncher;
 import ghidra.net.DefaultKeyManagerFactory;
 import ghidra.net.PKIUtils;
 import ghidra.util.HelpLocation;
@@ -42,64 +46,88 @@ class EditActionManager {
 
 	private FrontEndPlugin plugin;
 	private FrontEndTool tool;
-	private DockingAction editPluginPathAction;
-	private DockingAction editCertPathAction;
+
+	private ChangeListener serverAllowListListener = e -> serverAllowListChanged();
+
+	private DockingAction clearServerAllowList;
 	private DockingAction clearCertPathAction;
 
 	EditActionManager(FrontEndPlugin plugin) {
 		this.plugin = plugin;
 		tool = (FrontEndTool) plugin.getTool();
 		createActions();
+
+		UrlAllowListManager.addChangeListener(serverAllowListListener);
+	}
+
+	void dispose() {
+		UrlAllowListManager.removeChangeListener(serverAllowListListener);
+	}
+
+	private void serverAllowListChanged() {
+		clearServerAllowList.setEnabled(!UrlAllowListManager.getAccessMap().isEmpty());
 	}
 
 	/**
 	 * Create the menu items.
 	 */
+	@SuppressWarnings("unused")
 	private void createActions() {
 
-		// window.addSeparator(Ghidra.MENU_FILE);
-
-		editPluginPathAction = new DockingAction("Edit Plugin Path", plugin.getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				editPluginPath();
-			}
-		};
-// ACTIONS - auto generated
-		editPluginPathAction.setEnabled(true);
-
-		editPluginPathAction.setMenuBarData(
-			new MenuData(new String[] { ToolConstants.MENU_EDIT, "Plugin Path..." }, "GEdit"));
-
-		editCertPathAction = new DockingAction("Set PKI Certificate", plugin.getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				editCertPath();
-			}
-		};
-// ACTIONS - auto generated
-		editCertPathAction.setEnabled(true);
-
-		editCertPathAction.setMenuBarData(new MenuData(
-			new String[] { ToolConstants.MENU_EDIT, "Set PKI Certificate..." }, "PKI"));
-
-		clearCertPathAction = new DockingAction("Clear PKI Certificate", plugin.getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				clearCertPath();
-			}
-		};
-// ACTIONS - auto generated
-		clearCertPathAction.setEnabled(DefaultKeyManagerFactory.getKeyStore() != null);
-
-		clearCertPathAction.setMenuBarData(new MenuData(
-			new String[] { ToolConstants.MENU_EDIT, "Clear PKI Certificate..." }, "PKI"));
-
-		clearCertPathAction
-				.setHelpLocation(new HelpLocation("FrontEndPlugin", "Set_PKI_Certificate"));
-		tool.addAction(editCertPathAction);
-		tool.addAction(clearCertPathAction);
+		DockingAction editPluginPathAction =
+			new ActionBuilder("Edit Plugin Path", plugin.getName()).menuGroup("GEdit")
+					.menuPath(ToolConstants.MENU_EDIT, "Plugin Path...")
+					.onAction(c -> editPluginPath())
+					.enabled(true)
+					.build();
 		tool.addAction(editPluginPathAction);
+
+		OperatingSystem currentOS = OperatingSystem.CURRENT_OPERATING_SYSTEM;
+		if (currentOS == OperatingSystem.WINDOWS || currentOS == OperatingSystem.MAC_OS_X) {
+			DockingAction manageCaCertsAction =
+				new ActionBuilder("Manage Certificates", plugin.getName()).menuGroup("PKI", "A")
+						.menuPath(ToolConstants.MENU_EDIT, "Manage Certificates...")
+						.helpLocation(new HelpLocation("FrontEndPlugin", "Manage_Certificates"))
+						.onAction(c -> CertificateManagerLauncher.launchOrFocus())
+						.enabled(true)
+						.build();
+			tool.addAction(manageCaCertsAction);
+		}
+
+		DockingAction editCertPathAction =
+			new ActionBuilder("Set PKI Certificate", plugin.getName()).menuGroup("PKI", "B")
+					.menuPath(ToolConstants.MENU_EDIT, "Set PKI Certificate...")
+					.helpLocation(new HelpLocation("FrontEndPlugin", "Set_PKI_Certificate"))
+					.onAction(c -> editCertPath())
+					.enabled(true)
+					.build();
+		tool.addAction(editCertPathAction);
+
+		clearCertPathAction =
+			new ActionBuilder("Clear PKI Certificate", plugin.getName()).menuGroup("PKI", "C")
+					.menuPath(ToolConstants.MENU_EDIT, "Clear PKI Certificate...")
+					.onAction(c -> clearCertPath())
+					.enabledWhen(c -> DefaultKeyManagerFactory.getKeyStore() != null)
+					.enabled(true)
+					.build();
+		tool.addAction(clearCertPathAction);
+
+		clearServerAllowList =
+			new ActionBuilder("Clear Server Allow List", plugin.getName()).menuGroup("SvrAllowList")
+					.menuPath(ToolConstants.MENU_EDIT, "Clear Server Allow List...")
+					.helpLocation(new HelpLocation("FrontEndPlugin", "Clear_Server_Allow_List"))
+					.onAction(c -> clearServerAllowList())
+					.enabledWhen(c -> !UrlAllowListManager.getAccessMap().isEmpty())
+					.enabled(true)
+					.build();
+		tool.addAction(clearServerAllowList);
+	}
+
+	private void clearServerAllowList() {
+		if (OptionDialog.YES_OPTION == OptionDialog.showYesNoDialog(tool.getToolFrame(),
+			"Clear Server Allow List", "Clear all Server Allow List entries?\n")) {
+			UrlAllowListManager.clearAll();
+		}
 	}
 
 	/**
@@ -119,8 +147,16 @@ class EditActionManager {
 			return;
 		}
 
+		OperatingSystem os = OperatingSystem.CURRENT_OPERATING_SYSTEM;
+		String revertMsg =
+			(os == OperatingSystem.WINDOWS || os == OperatingSystem.MAC_OS_X)
+					? "The OS-managed certificate store, or an auto-generated certificate\n" +
+						"if no suitable OS certificate is found, will be used instead."
+					: "An auto-generated certificate will be used instead.";
+
 		if (OptionDialog.YES_OPTION != OptionDialog.showYesNoDialog(tool.getToolFrame(),
-			"Clear PKI Certificate", "Clear PKI certificate setting?\n(" + path + ")")) {
+			"Clear PKI Certificate",
+			"Clear PKI certificate setting?\n(" + path + ")\n\n" + revertMsg)) {
 			return;
 		}
 
@@ -174,11 +210,19 @@ class EditActionManager {
 	private GhidraFileChooser createCertFileChooser() {
 
 		GhidraFileChooser fileChooser = new GhidraFileChooser(tool.getToolFrame());
-		fileChooser.setTitle("Select Certificate (req'd for PKI authentication only)");
+		String title = "Select Certificate (req'd for PKI authentication only)";
+		if (DefaultKeyManagerFactory.usingOSManagedKeyStore()) {
+			title = "Select Certificate (currently using OS certificate store)";
+		}
+		else {
+			title = "Select Certificate";
+		}
+		fileChooser.setTitle(title);
 		fileChooser.setApproveButtonText("Set Certificate");
 		fileChooser.setFileFilter(CERTIFICATE_FILE_FILTER);
 		fileChooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
 		fileChooser.setHelpLocation(new HelpLocation(plugin.getName(), "Set_PKI_Certificate"));
 		return fileChooser;
 	}
+
 }

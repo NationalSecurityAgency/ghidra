@@ -283,9 +283,9 @@ public class GuidUtil {
 		// retVal = retVal.toUpperCase();
 
 		guidString += " v";
-		versionData[0] = (bytes[17] << 8) + bytes[16];
+		versionData[0] = (Byte.toUnsignedInt(bytes[17]) << 8) | Byte.toUnsignedInt(bytes[16]);
 		guidString += Integer.toString(versionData[0]) + ".";
-		versionData[1] = (bytes[19] << 8) + bytes[18];
+		versionData[1] = (Byte.toUnsignedInt(bytes[19]) << 8) | Byte.toUnsignedInt(bytes[18]);
 		guidString += Integer.toString(versionData[1]);
 
 		if (validate && !NewGuid.isOKForGUID(bytes, 0)) {

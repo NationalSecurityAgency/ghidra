@@ -19,11 +19,22 @@ import java.util.List;
 
 import ghidra.pcode.emu.jit.analysis.JitTypeBehavior;
 import ghidra.pcode.emu.jit.var.JitVal;
+import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropSymbolMap;
 
 /**
  * A p-code operator use-def node with two inputs and one output.
  */
 public interface JitBinOp extends JitDefOp {
+	@Override
+	default String toString(PcodeUseropSymbolMap symbols) {
+		return "%s[op=%s, out=%s, l=%s, r=%s]".formatted(
+			getClass().getSimpleName(),
+			JitOp.toString(op(), symbols),
+			out().toString(symbols.language()),
+			l().toString(symbols.language()),
+			r().toString(symbols.language()));
+	}
+
 	/**
 	 * The use-def node for the left input operand
 	 * 

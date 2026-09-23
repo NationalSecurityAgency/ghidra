@@ -410,7 +410,7 @@ public class ConvertConstantEquateTask implements Callback {
 			Scalar scalar) {
 		NearMatchValues values = new NearMatchValues(scalar);
 		int count = 0;
-		ScalarMatch scalarMatch = null;
+		ScalarMatch match = null;
 		Instruction curInst = program.getListing().getInstructionAt(startAddress);
 		if (curInst == null) {
 			return null;
@@ -432,13 +432,13 @@ public class ConvertConstantEquateTask implements Callback {
 			count += 1;
 			ScalarMatch newMatch = findScalarInInstruction(curInst, values);
 			if (newMatch != null) {
-				if (scalarMatch != null) {
+				if (match != null) {
 					return null;		// Matches at more than one address
 				}
 				if (newMatch.opIndex < 0) {
 					return null;		// Matches at more than one operand
 				}
-				scalarMatch = newMatch;
+				match = newMatch;
 			}
 			curInst = curInst.getPrevious();
 			if (curInst == null) {
@@ -448,13 +448,25 @@ public class ConvertConstantEquateTask implements Callback {
 				break;
 			}
 		}
-		return scalarMatch;
+		if (match != null) {
+			if (match.scalar.bitLength() < 8 || match.scalar.isSigned() != scalar.isSigned()) {
+				int size = match.scalar.bitLength();
+				if (size < 8)
+					size = 8;
+				match.scalar = new Scalar(size, match.scalar.getUnsignedValue(), scalar.isSigned());
+			}
+		}
+		return match;
 	}
 
 	private static ConvertConstantEquateTask convertExistingSymbol(DecompilerActionContext context,
 			ConvertConstantAction action, EquateSymbol convertSymbol, Scalar scalar) {
 		Address convertAddr = convertSymbol.getPCAddress();
+		SymbolEntry entry = convertSymbol.getFirstWholeMap();
 		long convertHash = 0;
+		if (entry instanceof DynamicEntry) {
+			convertHash = ((DynamicEntry) entry).getHash();
+		}
 		int convertIndex = -1;
 		boolean foundEquate = false;
 		Program program = context.getProgram();
@@ -465,20 +477,21 @@ public class ConvertConstantEquateTask implements Callback {
 			if (!values.isMatch(equate.getValue()))
 				continue;
 			for (EquateReference equateRef : equate.getReferences(convertAddr)) {
-				convertHash = equateRef.getDynamicHashValue();
+				if (convertHash != equateRef.getDynamicHashValue())
+					continue;
 				convertIndex = equateRef.getOpIndex();
 				foundEquate = true;
 				break;
 			}
-			break;
+			if (foundEquate)
+				break;
 		}
 		if (!foundEquate) {
 			Msg.error(action, "Symbol does not have matching entry in equate table");
 			return null;
 		}
 
-		String equateName =
-			action.getEquateName(scalar, context.getProgram());
+		String equateName = action.getEquateName(scalar, context.getProgram());
 		if (equateName == null) {		// A null is a user cancel
 			return null;
 		}
@@ -509,10 +522,12 @@ public class ConvertConstantEquateTask implements Callback {
 		DynamicHash dynamicHash = new DynamicHash(varnode, 0);
 		long convertHash = dynamicHash.getHash();
 		Program program = context.getProgram();
-		ScalarMatch scalarMatch = findScalarMatch(program, convertAddr, scalar);
-		if (scalarMatch == null) {
-			String equateName =
-				action.getEquateName(scalar, program);
+		ScalarMatch match = findScalarMatch(program, convertAddr, scalar);
+		// Don't create a named equate if the varnode and the instruction operand differ
+		// as the name was selected specifically for the varnode
+		if (match == null || (action.convertType == EquateSymbol.FORMAT_DEFAULT &&
+			match.scalar.getValue() != scalar.getValue())) {
+			String equateName = action.getEquateName(scalar, program);
 			if (equateName == null) {
 				return null; // A null is a user cancel
 			}
@@ -520,29 +535,17 @@ public class ConvertConstantEquateTask implements Callback {
 				convertHash, -1);
 		}
 
-		Scalar matchScalar = scalarMatch.scalar;
-		if (matchScalar.bitLength() < 8 || matchScalar.isSigned() != scalar.isSigned()) {
-			int size = matchScalar.bitLength();
-			if (size < 8)
-				size = 8;
-			matchScalar = new Scalar(size, matchScalar.getUnsignedValue(), scalar.isSigned());
-		}
-		String equateName = action.getEquateName(matchScalar, program);
+		String equateName = action.getEquateName(match.scalar, program);
 		if (equateName == null) {
 			return null; // user cancelled
 		}
 
 		ConvertConstantEquateTask task =
-			new ConvertConstantEquateTask(context, equateName, convertAddr, scalar, convertHash,
-				-1);
+			new ConvertConstantEquateTask(context, equateName, convertAddr, match.scalar,
+				convertHash, -1);
 
-		// Don't create a named equate if the varnode and the instruction operand differ
-		// as the name was selected specifically for the varnode
-		if (action.convertType != EquateSymbol.FORMAT_DEFAULT ||
-			matchScalar.getValue() == scalar.getValue()) {
-			task.setAlternate(equateName, scalarMatch.refAddr, scalarMatch.opIndex,
-				matchScalar.getValue());
-		}
+		// Try to set the equate on the instruction
+		task.setAlternate(equateName, match.refAddr, match.opIndex, match.scalar.getValue());
 		return task;
 	}
 }

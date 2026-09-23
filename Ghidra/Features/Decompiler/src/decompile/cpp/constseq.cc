@@ -453,10 +453,8 @@ void StringSequence::removeCopyOps(PcodeOp *replaceOp)
     Varnode *vn = op->getIn((*iter).slot);
     if (vn->getDef()->code() != CPUI_INDIRECT) {
       Varnode *newIn = data.newConstant(vn->getSize(),0);
-      PcodeOp *indOp = data.newOp(2, replaceOp->getAddr());
-      data.opSetOpcode(indOp,CPUI_INDIRECT);
+      PcodeOp *indOp = data.newIndirect(replaceOp);
       data.opSetInput(indOp,newIn,0);
-      data.opSetInput(indOp,data.newVarnodeIop(replaceOp),1);
       data.opSetOutput(indOp, vn);
       data.markIndirectCreation(indOp, false);
       data.opInsertBefore(indOp,replaceOp);
@@ -911,11 +909,9 @@ void HeapSequence::removeStoreOps(vector<PcodeOp *> &indirects,vector<IndirectPa
   }
   for(int4 i=0;i<indirectPairs.size();++i) {
     if (indirectPairs[i].isDuplicate()) continue;
-    PcodeOp *newInd = data.newOp(2,replaceOp->getAddr());
-    data.opSetOpcode(newInd, CPUI_INDIRECT);
+    PcodeOp *newInd = data.newIndirect(replaceOp);
     data.opSetOutput(newInd,indirectPairs[i].outVn);
     data.opSetInput(newInd,indirectPairs[i].inVn,0);
-    data.opSetInput(newInd,data.newVarnodeIop(replaceOp),1);
     data.opInsertBefore(newInd, replaceOp);
   }
 }

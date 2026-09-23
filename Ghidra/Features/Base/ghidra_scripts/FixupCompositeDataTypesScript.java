@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,10 +29,11 @@ import ghidra.app.script.GhidraScript;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.database.ProjectDataTypeManager;
-import ghidra.program.database.data.*;
+import ghidra.program.database.data.DataTypeManagerDB;
+import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.model.data.BuiltInDataTypeManager;
 import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.dtarchive.ProjectDataTypeArchive;
 import ghidra.program.model.listing.Program;
 
 public class FixupCompositeDataTypesScript extends GhidraScript {
@@ -50,33 +51,30 @@ public class FixupCompositeDataTypesScript extends GhidraScript {
 			popup("This script requires the DataTypeManagerService");
 			return;
 		}
-		
+
 		ArrayList<DTMWrapper> dtms = new ArrayList<>();
 
 		for (DataTypeManager dtm : service.getDataTypeManagers()) {
 			if (dtm instanceof BuiltInDataTypeManager) {
 				continue;
 			}
-			if (dtm instanceof ProgramDataTypeManager) {
-				dtms.add(0, new DTMWrapper((ProgramDataTypeManager) dtm));
-			}
-			else if (dtm instanceof DataTypeManagerDB) {
-				dtms.add(new DTMWrapper((DataTypeManagerDB) dtm));
+			if (dtm instanceof DataTypeManagerDB dtmDB) {
+				dtms.add(new DTMWrapper(dtmDB));
 			}
 		}
 
 		DataTypeManagerDB dtm =
 			askChoice("Fixup All Composites", "Select Data Type Manager: ", dtms, dtms.get(0)).dtm;
 
-		if (dtm instanceof ProgramDataTypeManager) {
-			Program program = ((ProgramDataTypeManager) dtm).getProgram();
+		if (dtm instanceof ProgramDataTypeManager programDtm) {
+			Program program = programDtm.getProgram();
 			if (!program.hasExclusiveAccess()) {
 				popup("Shared program must have an exclusive checkout.");
 				return;
 			}
 		}
-		else if (dtm instanceof ProjectDataTypeManager) {
-			DomainFile df = ((ProjectDataTypeManager) dtm).getDomainFile();
+		else if (dtm.getDataStore() instanceof ProjectDataTypeArchive projectArchive) {
+			DomainFile df = projectArchive.getDomainFile();
 			if (df.isVersioned() && !df.isCheckedOutExclusive()) {
 				popup("Shared project archive must have an exclusive checkout.");
 				return;
@@ -87,7 +85,6 @@ public class FixupCompositeDataTypesScript extends GhidraScript {
 			popup("Selected archive must be open for update.");
 			return;
 		}
-
 		dtm.fixupComposites(monitor);
 	}
 

@@ -40,6 +40,7 @@ import ghidra.launch.AppConfig;
 import ghidradev.Activator;
 import ghidradev.EclipseMessageUtils;
 import ghidradev.ghidraprojectcreator.utils.PyDevUtils.ProjectPythonInterpreter;
+import ghidradev.ghidraprojectcreator.utils.PyDevUtils.ProjectPythonInterpreterType;
 import utility.module.ModuleUtilities;
 
 /**
@@ -484,13 +485,15 @@ public class GhidraProjectUtils {
 		GhidraModuleUtils.writeAntProperties(javaProject.getProject(), ghidraLayout);
 
 		// Setup Python for the project
-		try {
-			PyDevUtils.setupPythonForProject(javaProject, libraryClasspathEntries,
-				pythonInterpreter, monitor);
-		}
-		catch (OperationNotSupportedException e) {
-			EclipseMessageUtils.showErrorDialog("PyDev error",
-				"Failed to setup Python for the project.  PyDev version is not supported.");
+		if (!pythonInterpreter.type().equals(ProjectPythonInterpreterType.NONE)) {
+			try {
+				PyDevUtils.setupPythonForProject(javaProject, libraryClasspathEntries,
+					pythonInterpreter, monitor);
+			}
+			catch (OperationNotSupportedException e) {
+				EclipseMessageUtils.showErrorDialog("PyDev error",
+					"Failed to setup Python for the project.  PyDev version is not supported.");
+			}
 		}
 	}
 

@@ -18,7 +18,6 @@ package ghidra.app.util.task;
 import java.io.IOException;
 import java.net.URL;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 
 import docking.widgets.OptionDialog;
 import ghidra.app.plugin.core.progmgr.ProgramLocator;
@@ -177,15 +176,19 @@ public class ProgramOpener {
 			msg += "Please contact the Ghidra team for assistance.";
 			Msg.showError(this, null, "Error Opening " + filename, msg);
 		}
-		catch (Exception e) {
-			if (domainFile.isInWritableProject() && (e instanceof IOException)) {
-				RepositoryAdapter repo = domainFile.getParent().getProjectData().getRepository();
+		catch (IOException e) {
+			RepositoryAdapter repo = domainFile.getParent().getProjectData().getRepository();
+			if (repo != null && domainFile.isInWritableProject()) {
 				ClientUtil.handleException(repo, e, "Open File", null);
 			}
 			else {
 				Msg.showError(this, null, "Error Opening " + filename,
-					"Getting domain object failed.\n" + e.getMessage(), e);
+					"Getting domain object failed.\n" + e.getMessage());
 			}
+		}
+		catch (Exception e) {
+			Msg.showError(this, null, "Error Opening " + filename,
+					"Getting domain object failed.\n" + e.getMessage(), e);
 		}
 		return null;
 	}

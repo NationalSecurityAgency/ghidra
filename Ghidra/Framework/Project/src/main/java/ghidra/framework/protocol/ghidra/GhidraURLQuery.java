@@ -165,8 +165,12 @@ public class GhidraURLQuery {
 			c.setReadOnly(readOnly); // writable repository connection
 			obj = c.getContent(); // read-only access
 			status = c.getStatusCode();
+			if (status == StatusCode.CANCELLED) {
+				throw new CancelledException();
+			}
 		}
 		catch (IOException e) {
+			status = StatusCode.UNAVAILABLE;
 			resultHandler.handleError("URL Connection Error", e.getMessage(), ghidraUrl, e);
 		}
 
@@ -183,24 +187,35 @@ public class GhidraURLQuery {
 					return;
 
 				case NOT_FOUND:
-					generatedErr = new IOException("Project or repository not found");
+					generatedErr = new IOException(
+						"Project or repository not found: " + getGhidraUrlDetail(ghidraUrl));
 					break;
 
 				case LOCKED:
 					// Local projects are only accessed read-only, this condition should not occur
-					throw new AssertionError("Unexpected local project lock condition");
+					throw new AssertionError("Unexpected local project lock condition: " +
+						getGhidraUrlDetail(ghidraUrl));
+
+				case FORBIDDEN:
+					generatedErr = new IOException(
+						"Access denied by Server Allow List: " + getGhidraUrlDetail(ghidraUrl));
+					break;
 
 				case UNAVAILABLE:
 					generatedErr =
-						new IOException("Server connection error occured (see log files)");
+						new IOException("Server connection error occured (see log files): " +
+							getGhidraUrlDetail(ghidraUrl));
 					break;
 
 				default:
+					generatedErr = new IOException("Server connection error occured (" + status +
+						": " + getGhidraUrlDetail(ghidraUrl));
+					break;
 			}
 
 			if (generatedErr != null) {
-				resultHandler.handleError("Content Not Found", generatedErr.getMessage(), ghidraUrl,
-					generatedErr);
+				resultHandler.handleError("Content Access Failure", generatedErr.getMessage(),
+					ghidraUrl, generatedErr);
 				return;
 			}
 
@@ -231,6 +246,15 @@ public class GhidraURLQuery {
 				wrappedContent.release(content, resultHandler);
 			}
 			monitor.checkCancelled();
+		}
+	}
+
+	private String getGhidraUrlDetail(URL ghidraUrl) {
+		try {
+			return GhidraURL.getProjectURL(ghidraUrl).toString();
+		}
+		catch (Exception e) {
+			return ghidraUrl.toString();
 		}
 	}
 

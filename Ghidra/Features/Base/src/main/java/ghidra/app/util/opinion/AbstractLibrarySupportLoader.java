@@ -160,7 +160,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			// Load (or get) the primary program
 			Program program = null;
 			if (!shouldLoadOnlyLibraries(settings)) {
-				program = doLoad(libraryNameList, settings);
+				program = doLoad(this, libraryNameList, settings);
 				loadedProgramList.add(new Loaded<>(program, settings));
 				settings.log().appendMsg("------------------------------------------------\n");
 			}
@@ -726,9 +726,10 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 
 				try (ByteProvider provider = createLibraryByteProvider(candidateLibraryFsrl,
 					desiredLoadSpec, log, monitor)) {
-					LoadSpec libLoadSpec = matchSupportedLoadSpec(settings.loadSpec(), provider);
+					LoadSpec libLoadSpec =
+						matchSupportedLoadSpec(settings.loadSpec(), provider, monitor);
 					if (libLoadSpec == null) {
-						log.appendMsg("Skipping library which is the wrong architecture: " +
+						log.appendMsg("Skipping library which is the wrong format/architecture: " +
 							candidateLibraryFsrl);
 						continue;
 					}
@@ -739,7 +740,8 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 						new ImporterSettings(provider, library, settings.project(),
 							libraryDestFolderPath, isMirroredLayout(settings), libLoadSpec, options,
 							consumer, log, monitor);
-					libraryProgram = doLoad(newLibraryList, librarySettings);
+					libraryProgram = doLoad((AbstractLibrarySupportLoader) libLoadSpec.getLoader(),
+						newLibraryList, librarySettings);
 					for (String newLibraryName : newLibraryList) {
 						unprocessed.add(new UnprocessedLibrary(newLibraryName, depth - 1, false));
 					}
@@ -914,6 +916,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	/**
 	 * Loads the given provider
 	 * 
+	 * @param loader The {@link AbstractLibrarySupportLoader} to perform the load with
 	 * @param libraryNameList A {@link List} to be populated with the loaded program's dependent
 	 *   library names
 	 * @param settings The {@link Loader.ImporterSettings}
@@ -921,18 +924,18 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @throws CancelledException if the user cancelled the load operation
 	 * @throws IOException if there was an IO-related error during the load
 	 */
-	private Program doLoad(List<String> libraryNameList, ImporterSettings settings)
-			throws CancelledException, IOException {
+	private Program doLoad(AbstractLibrarySupportLoader loader, List<String> libraryNameList,
+			ImporterSettings settings) throws CancelledException, IOException {
 		MessageLog log = settings.log();
 
-		Program program = createProgram(settings);
+		Program program = loader.createProgram(settings);
 
 		int transactionID = program.startTransaction("Loading");
 		boolean success = false;
 		try {
 			log.appendMsg("Loading %s...".formatted(settings.provider().getFSRL()));
-			load(program, settings);
-			createDefaultMemoryBlocks(program, settings);
+			loader.load(program, settings);
+			loader.createDefaultMemoryBlocks(program, settings);
 			libraryNameList.addAll(getLibraryNames(settings.provider(), program));
 			success = true;
 			return program;
@@ -1002,8 +1005,8 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 								program, settings);
 						}
 						else {
-							log.appendMsg(
-								"  [%s] -> found wrong architecture".formatted(externalLibName));
+							log.appendMsg("  [%s] -> found wrong format/architecture"
+									.formatted(externalLibName));
 						}
 						found = true;
 						break;
@@ -1185,16 +1188,21 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * 
 	 * @param desiredLoadSpec The desired {@link LoadSpec}
 	 * @param provider The provider
-	 * @return A supported {@link LoadSpec} that matches the desired one, or null of none matched
+	 * @param monitor A cancelable task monitor
+	 * @return A supported {@link LoadSpec} that matches the desired one, or null of none matched.
+	 *   The returned {@link LoadSpec}'s associated {@link Loader} is guaranteed to be an instance
+	 *   of {@link AbstractLibrarySupportLoader}.
 	 * @throws IOException if there was an IO-related error
 	 */
-	protected LoadSpec matchSupportedLoadSpec(LoadSpec desiredLoadSpec, ByteProvider provider)
-			throws IOException {
+	protected LoadSpec matchSupportedLoadSpec(LoadSpec desiredLoadSpec, ByteProvider provider,
+			TaskMonitor monitor) throws IOException {
 		LanguageCompilerSpecPair desiredPair = desiredLoadSpec.getLanguageCompilerSpec();
-		Collection<LoadSpec> supportedLoadSpecs = findSupportedLoadSpecs(provider);
-		if (supportedLoadSpecs != null) { // shouldn't be null, but protect against rogue loaders
-			for (LoadSpec supportedLoadSpec : supportedLoadSpecs) {
-				if (desiredPair.equals(supportedLoadSpec.getLanguageCompilerSpec())) {
+		LoaderMap loaderMap = LoaderService.getSupportedLoadSpecs(provider,
+			loader -> getCompatibleLibraryFormats().contains(loader.getName()), monitor);
+		for (Loader loader : loaderMap.keySet()) {
+			for (LoadSpec supportedLoadSpec : loaderMap.get(loader)) {
+				if (matchLanguageIdIgnoringVariant(desiredPair.getLanguageID().getIdAsString(),
+					supportedLoadSpec.getLanguageCompilerSpec().getLanguageID().getIdAsString())) {
 					return supportedLoadSpec;
 				}
 			}
@@ -1214,14 +1222,38 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 */
 	protected boolean matchSupportedLoadSpec(LoadSpec desiredLoadSpec, DomainFile df) {
 		String fileLangId = df.getMetadata().getOrDefault("Language ID", "");
+		String fileFormat = df.getMetadata().getOrDefault("Executable Format", "");
+
 		String desiredLangId =
 			desiredLoadSpec.getLanguageCompilerSpec().getLanguageID().getIdAsString();
 
-		String[] fileParts = fileLangId.split(":");
-		String[] desiredParts = desiredLangId.split(":");
+		return getCompatibleLibraryFormats().contains(fileFormat) &&
+			matchLanguageIdIgnoringVariant(fileLangId, desiredLangId);
+	}
 
-		return fileParts.length >= 3 && desiredParts.length >= 3 &&
-			Arrays.equals(fileParts, 0, 3, desiredParts, 0, 3);
+	/**
+	 * {@return whether or not the given language ID strings are equal, not taking the variant into 
+	 * account}
+	 * 
+	 * @param id1 The first language ID to compare
+	 * @param id2 The second language ID to compare
+	 */
+	protected boolean matchLanguageIdIgnoringVariant(String id1, String id2) {
+		String[] parts1 = id1.split(":");
+		String[] parts2 = id2.split(":");
+		return parts1.length >= 3 && parts2.length >= 3 &&
+			Arrays.equals(parts1, 0, 3, parts2, 0, 3);
+	}
+
+	/**
+	 * {@return a {@link List} of file formats that this {@link AbstractLibrarySupportLoader}
+	 * supports loading as a library}
+	 * <p>
+	 * By default, an {@link AbstractLibrarySupportLoader} is compatible with loading its own file
+	 * format as a library.
+	 */
+	protected List<String> getCompatibleLibraryFormats() {
+		return List.of(getName());
 	}
 
 	/**

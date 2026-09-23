@@ -29,6 +29,7 @@ import ghidra.framework.Application;
 import ghidra.framework.ApplicationConfiguration;
 import ghidra.pcode.emu.PcodeEmulator;
 import ghidra.pcode.emu.PcodeThread;
+import ghidra.pcode.emu.jit.JitConfiguration.Opt;
 import ghidra.pcode.exec.DecodePcodeExecutionException;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
@@ -295,8 +296,51 @@ public class JitMpIntPerformanceExperiment {
 				goto 0xdeadbeef;
 				""".formatted(N);
 
-		JitPcodeEmulator emu =
-			new JitPcodeEmulator(toy, new JitConfiguration(), MethodHandles.lookup());
+		JitPcodeEmulator emu = new JitPcodeEmulator(toy,
+			new JitConfiguration(), MethodHandles.lookup());
+		JitPcodeThread thread = emu.newThread();
+
+		Address address = toy.getDefaultSpace().getAddress(0x00400000);
+		thread.inject(address, sleigh);
+		thread.overrideCounter(address);
+		thread.reInitialize();
+
+		try {
+			thread.run();
+		}
+		catch (DecodePcodeExecutionException e) {
+			if (e.getProgramCounter().getOffset() != 0xdeadbeefL) {
+				throw e;
+			}
+		}
+		System.out.println("fib(%d) = %016x%016x".formatted(N,
+			thread.getArithmetic()
+					.toLong(thread.getState().getVar(toy.getRegister("r1"), Reason.INSPECT),
+						Purpose.INSPECT),
+			thread.getArithmetic()
+					.toLong(thread.getState().getVar(toy.getRegister("r0"), Reason.INSPECT),
+						Purpose.INSPECT)));
+	}
+
+	@Test
+	public void testSpeedJitEmuNoCount() {
+		String sleigh = """
+				counter:4 = 0;
+				prev:16 = 0;
+				curr:16 = 1;
+				<loop>
+				  next:16 = prev + curr;
+				  prev = curr;
+				  curr = next;
+				  counter = counter + 1;
+				if (counter < 0x%08x) goto <loop>;
+				r0 = curr(0);
+				r1 = curr(8);
+				goto 0xdeadbeef;
+				""".formatted(N);
+
+		JitPcodeEmulator emu = new JitPcodeEmulator(toy,
+			new JitConfiguration().disable(Opt.EMIT_COUNTERS), MethodHandles.lookup());
 		JitPcodeThread thread = emu.newThread();
 
 		Address address = toy.getDefaultSpace().getAddress(0x00400000);

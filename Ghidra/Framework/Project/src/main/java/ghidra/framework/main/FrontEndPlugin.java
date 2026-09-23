@@ -129,10 +129,13 @@ public class FrontEndPlugin extends Plugin
 
 	private FrontEndProvider frontEndProvider;
 
+	private EditActionManager editActionManager;
+
 	private ProjectRepoConnectAction repoConnectAction;
 	private ProjectDataCutAction cutAction;
 	private ClearCutAction clearCutAction;
 	private ProjectDataCopyAction copyAction;
+	private ProjectDataCopyGhidraURLAction copyGhidraURLAction;
 	private ProjectDataPasteAction pasteAction;
 	private ProjectDataPasteLinkAction pasteLinkAction;
 	private ProjectDataPasteLinkAction pasteRelativeLinkAction;
@@ -179,7 +182,7 @@ public class FrontEndPlugin extends Plugin
 		tool.addComponentProvider(frontEndProvider, true);
 		tool.setDefaultComponent(frontEndProvider);
 
-		new EditActionManager(this);
+		editActionManager = new EditActionManager(this);
 		buildGui();
 
 		toolChestChangeListener = new MyToolChestChangeListener();
@@ -235,6 +238,9 @@ public class FrontEndPlugin extends Plugin
 		newFolderAction = new FrontEndProjectDataNewFolderAction(owner, groupName);
 
 		groupName = "Cut/copy/paste/new2";
+		copyGhidraURLAction = new ProjectDataCopyGhidraURLAction(owner, groupName);
+
+		groupName = "Cut/copy/paste/new3";
 		cutAction = new ProjectDataCutAction(owner, groupName);
 		clearCutAction = new ClearCutAction(owner);
 		copyAction = new ProjectDataCopyAction(owner, groupName);
@@ -262,6 +268,7 @@ public class FrontEndPlugin extends Plugin
 		tool.addAction(cutAction);
 		tool.addAction(clearCutAction);
 		tool.addAction(copyAction);
+		tool.addAction(copyGhidraURLAction);
 		tool.addAction(pasteAction);
 		tool.addAction(pasteLinkAction);
 		tool.addAction(pasteRelativeLinkAction);
@@ -835,6 +842,7 @@ public class FrontEndPlugin extends Plugin
 		dataTablePanel.dispose();
 		dataTreePanel.dispose();
 		projectActionManager.dispose();
+		editActionManager.dispose();
 	}
 
 	private void buildPanels() {

@@ -15,10 +15,15 @@
  */
 package ghidra.pcode.emu.jit.gen.util;
 
-import org.objectweb.asm.*;
+import java.lang.classfile.TypeKind;
+import java.lang.constant.ClassDesc;
+import java.lang.constant.ConstantDescs;
 
 /**
  * A namespace for types describing Java types
+ * <p>
+ * Type descriptors are represented using {@link ClassDesc} from the {@code java.lang.constant}
+ * package (the standard Class-File API), replacing the third-party ASM {@code Type} class.
  */
 public interface Types {
 	/** The {@code void} type */
@@ -59,7 +64,7 @@ public interface Types {
 
 	/**
 	 * Create a type describing a reference of the given class (or interface) type
-	 * 
+	 *
 	 * @param <T> the type of the Java class
 	 * @param cls the class
 	 * @return the type
@@ -77,17 +82,18 @@ public interface Types {
 	 * any number of classes and methods which support that generation, esp., since this is almost
 	 * always required to describe the type of {@code this}, and {@code this} is frequently accessed
 	 * in generated code. Conventionally, the type variable is called {@code THIS}:
-	 * 
+	 *
 	 * <pre>
 	 * class MyGenerator&lt;THIS extends MyIf&gt; {
 	 * 	private final TRef&lt;THIS&gt; typeThis = refExtends(MyIf.class, generateDesc());
 	 * }
 	 * </pre>
-	 * 
+	 *
 	 * @param <ST> the super type
 	 * @param <T> the type variable used to refer to the extension
 	 * @param cls the class of the super type
-	 * @param desc the internal name of the actual generated extension type
+	 * @param desc the JVM type descriptor (e.g., {@code "Lmy/pkg/MyClass;"}) of the actual
+	 *            generated extension type
 	 * @return the type
 	 */
 	static <ST, T extends ST> TRef<T> refExtends(Class<ST> cls, String desc) {
@@ -96,11 +102,11 @@ public interface Types {
 
 	/**
 	 * See {@link #refExtends(Class, String)}
-	 * 
+	 *
 	 * @param <ST> the super type
 	 * @param <T> the type variable used to refer to the extension
 	 * @param st the super type
-	 * @param desc the internal name of the actual generated extension type
+	 * @param desc the JVM type descriptor of the actual generated extension type
 	 * @return the type
 	 */
 	static <ST, T extends ST> TRef<T> refExtends(TRef<ST> st, String desc) {
@@ -113,7 +119,7 @@ public interface Types {
 	 * This is used when the type is only known through reflection, but it is at least known to
 	 * extend some other fixed type. This is best used with a type variable on the method that
 	 * generates code wrt. the reflected class.
-	 * 
+	 *
 	 * @param <ST> the super type
 	 * @param <T> the type variable used to refer to the extension
 	 * @param st the super type
@@ -121,7 +127,34 @@ public interface Types {
 	 * @return the type
 	 */
 	static <ST, T extends ST> TRef<T> refExtends(TRef<ST> st, Class<?> reflected) {
-		return TRef.ofExtends(st.cls, Type.getDescriptor(reflected));
+		return TRef.ofExtends(st.cls,
+			reflected.describeConstable().orElseThrow().descriptorString());
+	}
+
+	/**
+	 * See {@link #refExtends(Class, String)}
+	 *
+	 * @param <ST> the super type
+	 * @param <T> the type variable used to refer to the extension
+	 * @param cls the super type
+	 * @param desc the class descriptor of the actual generated extension type
+	 * @return the type
+	 */
+	static <ST, T extends ST> TRef<T> refExtends(Class<ST> cls, ClassDesc desc) {
+		return TRef.ofExtends(cls, desc.descriptorString());
+	}
+
+	/**
+	 * See {@link #refExtends(Class, String)}
+	 *
+	 * @param <ST> the super type
+	 * @param <T> the type variable used to refer to the extension
+	 * @param st the super type
+	 * @param desc the class descriptor of the actual generated extension type
+	 * @return the type
+	 */
+	static <ST, T extends ST> TRef<T> refExtends(TRef<ST> st, ClassDesc desc) {
+		return TRef.ofExtends(st.cls, desc.descriptorString());
 	}
 
 	/**
@@ -131,17 +164,17 @@ public interface Types {
 	 */
 	public interface SType {
 		/**
-		 * Get the ASM type for this type
-		 * 
-		 * @return the type
+		 * Get the {@link ClassDesc} for this type
+		 *
+		 * @return the class descriptor
 		 */
-		Type type();
+		ClassDesc classDesc();
 
 		/**
 		 * Get the Java class to describe this type
 		 * <p>
 		 * For generated types, this may instead be a suitable super type.
-		 * 
+		 *
 		 * @return the class
 		 */
 		Class<?> cls();
@@ -159,17 +192,17 @@ public interface Types {
 	 * The primitive types that may be ascribed to a variable in Java source
 	 * <p>
 	 * This is essentially "all non-reference types" as far as Java is concerned.
-	 * 
+	 *
 	 * @param <A> the array type for which this primitive is the element type
 	 */
 	public interface SPrim<A> extends SNonVoid {
 		/**
-		 * The type id, as in {@link MethodVisitor#visitIntInsn(int, int)} for
-		 * {@link Opcodes#NEWARRAY}, e.g., {@link Opcodes#T_INT}.
-		 * 
-		 * @return the type id
+		 * The {@link TypeKind} for this primitive type, used with
+		 * {@link java.lang.classfile.CodeBuilder#newarray(TypeKind)}.
+		 *
+		 * @return the type kind
 		 */
-		int t();
+		TypeKind typeKind();
 	}
 
 	/**
@@ -181,15 +214,22 @@ public interface Types {
 	 */
 	public interface BType extends SType {
 		@Override
-		Type type();
+		ClassDesc classDesc();
 
 		/**
-		 * Get the internal name of the type
-		 * 
+		 * Get the internal name of the type (e.g., {@code java.lang.Object})
+		 * <p>
+		 * This is only meaningful for reference types. For primitive types, the descriptor string
+		 * is returned as-is.
+		 *
 		 * @return the internal name
 		 */
 		default String internalName() {
-			return type().getInternalName();
+			String d = classDesc().descriptorString();
+			if (d.startsWith("L") && d.endsWith(";")) {
+				return d.substring(1, d.length() - 1);
+			}
+			return d;
 		}
 	}
 
@@ -207,12 +247,12 @@ public interface Types {
 	 * The primitive types that may be ascribed to local variables in JVM bytecode
 	 * <p>
 	 * This includes only {@code int}, {@code float}, {@code long}, and {@code double}.
-	 * 
+	 *
 	 * @param <A> the array type for which this primitive is the element type
 	 */
 	public interface BPrim<A> extends BNonVoid, SPrim<A> {
 		@Override
-		int t();
+		TypeKind typeKind();
 	}
 
 	/**
@@ -223,8 +263,8 @@ public interface Types {
 		INSTANCE;
 
 		@Override
-		public Type type() {
-			return Type.VOID_TYPE;
+		public ClassDesc classDesc() {
+			return ConstantDescs.CD_void;
 		}
 
 		@Override
@@ -247,19 +287,19 @@ public interface Types {
 
 	/**
 	 * Reference types
-	 * 
+	 *
 	 * @param <T> the type
 	 * @param cls the class for the type. For generated types, this may be a super type.
-	 * @param type the ASM type
+	 * @param classDesc the class descriptor
 	 */
-	public record TRef<T>(Class<? super T> cls, Type type) implements TCat1 {
+	public record TRef<T>(Class<? super T> cls, ClassDesc classDesc) implements TCat1 {
 
 		static <T> TRef<T> of(Class<T> cls) {
-			return new TRef<>(cls, Type.getType(cls));
+			return new TRef<>(cls, cls.describeConstable().orElseThrow());
 		}
 
 		static <ST, T extends ST> TRef<T> ofExtends(Class<ST> cls, String desc) {
-			return new TRef<T>(cls, Type.getType(desc));
+			return new TRef<T>(cls, ClassDesc.ofDescriptor(desc));
 		}
 	}
 
@@ -271,13 +311,13 @@ public interface Types {
 		INSTANCE;
 
 		@Override
-		public int t() {
-			return Opcodes.T_BOOLEAN;
+		public TypeKind typeKind() {
+			return TypeKind.BOOLEAN;
 		}
 
 		@Override
-		public Type type() {
-			return Type.BOOLEAN_TYPE;
+		public ClassDesc classDesc() {
+			return ConstantDescs.CD_boolean;
 		}
 
 		@Override
@@ -294,13 +334,13 @@ public interface Types {
 		INSTANCE;
 
 		@Override
-		public int t() {
-			return Opcodes.T_BYTE;
+		public TypeKind typeKind() {
+			return TypeKind.BYTE;
 		}
 
 		@Override
-		public Type type() {
-			return Type.BYTE_TYPE;
+		public ClassDesc classDesc() {
+			return ConstantDescs.CD_byte;
 		}
 
 		@Override
@@ -317,13 +357,13 @@ public interface Types {
 		INSTANCE;
 
 		@Override
-		public int t() {
-			return Opcodes.T_CHAR;
+		public TypeKind typeKind() {
+			return TypeKind.CHAR;
 		}
 
 		@Override
-		public Type type() {
-			return Type.CHAR_TYPE;
+		public ClassDesc classDesc() {
+			return ConstantDescs.CD_char;
 		}
 
 		@Override
@@ -340,13 +380,13 @@ public interface Types {
 		INSTANCE;
 
 		@Override
-		public int t() {
-			return Opcodes.T_SHORT;
+		public TypeKind typeKind() {
+			return TypeKind.SHORT;
 		}
 
 		@Override
-		public Type type() {
-			return Type.SHORT_TYPE;
+		public ClassDesc classDesc() {
+			return ConstantDescs.CD_short;
 		}
 
 		@Override
@@ -363,13 +403,13 @@ public interface Types {
 		INSTANCE;
 
 		@Override
-		public int t() {
-			return Opcodes.T_INT;
+		public TypeKind typeKind() {
+			return TypeKind.INT;
 		}
 
 		@Override
-		public Type type() {
-			return Type.INT_TYPE;
+		public ClassDesc classDesc() {
+			return ConstantDescs.CD_int;
 		}
 
 		@Override
@@ -386,13 +426,13 @@ public interface Types {
 		INSTANCE;
 
 		@Override
-		public int t() {
-			return Opcodes.T_FLOAT;
+		public TypeKind typeKind() {
+			return TypeKind.FLOAT;
 		}
 
 		@Override
-		public Type type() {
-			return Type.FLOAT_TYPE;
+		public ClassDesc classDesc() {
+			return ConstantDescs.CD_float;
 		}
 
 		@Override
@@ -421,13 +461,13 @@ public interface Types {
 		INSTANCE;
 
 		@Override
-		public int t() {
-			return Opcodes.T_LONG;
+		public TypeKind typeKind() {
+			return TypeKind.LONG;
 		}
 
 		@Override
-		public Type type() {
-			return Type.LONG_TYPE;
+		public ClassDesc classDesc() {
+			return ConstantDescs.CD_long;
 		}
 
 		@Override
@@ -444,13 +484,13 @@ public interface Types {
 		INSTANCE;
 
 		@Override
-		public int t() {
-			return Opcodes.T_DOUBLE;
+		public TypeKind typeKind() {
+			return TypeKind.DOUBLE;
 		}
 
 		@Override
-		public Type type() {
-			return Type.DOUBLE_TYPE;
+		public ClassDesc classDesc() {
+			return ConstantDescs.CD_double;
 		}
 
 		@Override

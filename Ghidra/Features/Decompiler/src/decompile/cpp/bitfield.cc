@@ -1695,7 +1695,6 @@ void RuleBitFieldOut::getOpList(vector<uint4> &oplist) const
 
 {
   oplist.insert(oplist.end(),BitFieldInsertTransform::allowedFinalWrites.begin(),BitFieldInsertTransform::allowedFinalWrites.end());
-  oplist.push_back(CPUI_INDIRECT);
 }
 
 int4 RuleBitFieldOut::applyOp(PcodeOp *op,Funcdata &data)
@@ -1703,12 +1702,28 @@ int4 RuleBitFieldOut::applyOp(PcodeOp *op,Funcdata &data)
 {
   Varnode *outvn = op->getOut();
   Datatype *dt = outvn->getTypeDefFacing();
-  if (!dt->hasBitfields()) return 0;
-  BitFieldInsertTransform transform(&data,op,dt,0);
-  if (!transform.doTrace())
-    return 0;
-  transform.apply();
-  return 1;
+  if (dt->hasBitfields()) {
+    BitFieldInsertTransform transform(&data,op,dt,0);
+    if (transform.doTrace()) {
+      transform.apply();
+      return 1;
+    }
+  }
+  list<PcodeOp *>::const_iterator iter = outvn->beginDescend();
+  while(iter != outvn->endDescend()) {
+    PcodeOp *indOp = *iter;
+    ++iter;
+    if (indOp->code() != CPUI_INDIRECT) continue;
+    dt = indOp->getOut()->getTypeDefFacing();
+    if (dt->hasBitfields()) {
+      BitFieldInsertTransform transform(&data,indOp,dt,0);
+      if (transform.doTrace()) {
+	transform.apply();
+	return 1;
+      }
+    }
+  }
+  return 0;
 }
 
 void RuleBitFieldLoad::getOpList(vector<uint4> &oplist) const

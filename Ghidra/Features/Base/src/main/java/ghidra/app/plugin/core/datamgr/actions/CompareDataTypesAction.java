@@ -16,16 +16,12 @@
 package ghidra.app.plugin.core.datamgr.actions;
 
 import javax.swing.*;
-import javax.swing.tree.TreePath;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.label.GLabel;
-import docking.widgets.tree.GTree;
 import ghidra.app.plugin.core.datamgr.*;
-import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
-import ghidra.app.plugin.core.datamgr.tree.DataTypeTreeNode;
 import ghidra.app.util.datatype.DataTypeSelectionDialog;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
 import ghidra.framework.plugintool.PluginTool;
@@ -49,42 +45,11 @@ public class CompareDataTypesAction extends DockingAction {
 	}
 
 	@Override
-	public boolean isAddToPopup(ActionContext context) {
-		DataTypeTreeNode node = getSelectedDataTypeTreeNode(context);
-		return node instanceof DataTypeNode;
-	}
-
-	@Override
 	public boolean isEnabledForContext(ActionContext context) {
-		DataTypeTreeNode node = getSelectedDataTypeTreeNode(context);
-		if (node == null) {
+		if (!(context instanceof DataTypeContext dtc)) {
 			return false;
 		}
-
-		if (!(node instanceof DataTypeNode)) {
-			return false;
-		}
-
-		return true;
-	}
-
-	private DataTypeTreeNode getSelectedDataTypeTreeNode(ActionContext context) {
-		if (!(context instanceof DataTypesActionContext)) {
-			return null;
-		}
-
-		GTree gTree = (GTree) context.getContextObject();
-		TreePath[] selectionPaths = gTree.getSelectionPaths();
-		if (selectionPaths == null || selectionPaths.length == 0) {
-			return null;
-		}
-
-		if (selectionPaths.length > 1) {
-			return null;
-		}
-
-		DataTypeTreeNode node = (DataTypeTreeNode) selectionPaths[0].getLastPathComponent();
-		return node;
+		return dtc.getSelectedDataType() != null;
 	}
 
 	@Override
@@ -121,8 +86,7 @@ public class CompareDataTypesAction extends DockingAction {
 			return; // cancelled
 		}
 
-		DataTypeTreeNode node = getSelectedDataTypeTreeNode(context);
-		DataType selectedDt = ((DataTypeNode) node).getDataType();
+		DataType selectedDt = ((DataTypeContext) context).getSelectedDataType();
 		DataTypeCompareProvider provider =
 			new DataTypeCompareProvider(tool, plugin.getName(), selectedDt, otherDt);
 		provider.setVisible(true);

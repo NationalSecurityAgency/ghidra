@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,6 @@ import ghidra.pcode.exec.PcodeArithmetic;
 
 /**
  * A simulated UNIX file
- *
  * <p>
  * Contrast this with {@link EmuUnixFileDescriptor}, which is a process's handle to an open file,
  * not the file itself.
@@ -31,7 +30,6 @@ public interface EmuUnixFile<T> {
 
 	/**
 	 * Get the original pathname of this file
-	 * 
 	 * <p>
 	 * Depending on the fidelity of the file system simulator, and the actions taken by the target
 	 * program, the file may no longer actually exist at this path, but it ought be have been the
@@ -43,7 +41,6 @@ public interface EmuUnixFile<T> {
 
 	/**
 	 * Read contents from the file starting at the given offset into the given buffer
-	 * 
 	 * <p>
 	 * This roughly follows the semantics of the UNIX {@code read()}. While the offset and return
 	 * value may depend on the arithmetic, the actual contents read from the file should not.
@@ -56,8 +53,19 @@ public interface EmuUnixFile<T> {
 	T read(PcodeArithmetic<T> arithmetic, T offset, T buf);
 
 	/**
-	 * Write contents into the file starting at the given offset from the given buffer
+	 * Read contents from the file starting at the given offset into the given buffer
+	 * <p>
+	 * This roughly follows the semantics of the UNIX {@code read()}. While the offset and return
+	 * value may depend on the arithmetic, the actual contents read from the file should not.
 	 * 
+	 * @param offset the offset
+	 * @param buf the buffer
+	 * @return the number of bytes read
+	 */
+	int read(long offset, T buf);
+
+	/**
+	 * Write contents into the file starting at the given offset from the given buffer
 	 * <p>
 	 * This roughly follows the semantics of the UNIX {@code write()}. While the offset and return
 	 * value may depend on the arithmetic, the actual contents written to the file should not.
@@ -68,6 +76,18 @@ public interface EmuUnixFile<T> {
 	 * @return the number of bytes written
 	 */
 	T write(PcodeArithmetic<T> arithmetic, T offset, T buf);
+
+	/**
+	 * Write contents into the file starting at the given offset from the given buffer
+	 * <p>
+	 * This roughly follows the semantics of the UNIX {@code write()}. While the offset and return
+	 * value may depend on the arithmetic, the actual contents written to the file should not.
+	 * 
+	 * @param offset the offset
+	 * @param buf the buffer
+	 * @return the number of bytes written
+	 */
+	int write(long offset, T buf);
 
 	/**
 	 * Erase the contents of the file

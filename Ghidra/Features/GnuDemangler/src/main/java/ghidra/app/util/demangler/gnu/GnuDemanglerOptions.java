@@ -15,6 +15,7 @@
  */
 package ghidra.app.util.demangler.gnu;
 
+import generic.json.Json;
 import ghidra.app.util.demangler.DemanglerOptions;
 
 /**
@@ -83,7 +84,7 @@ public class GnuDemanglerOptions extends DemanglerOptions {
 	public GnuDemanglerOptions(GnuDemanglerFormat format, boolean isDeprecated) {
 		this(format, isDeprecated, GnuDemanglerOptions.DEFAULT_TIMEOUT_SECONDS);
 	}
-	
+
 	/**
 	 * Constructor to specify the format to use, whether to prefer the deprecated format when
 	 * both deprecated and modern are available, and the timeout
@@ -219,16 +220,6 @@ public class GnuDemanglerOptions extends DemanglerOptions {
 
 	@Override
 	public String toString() {
-		//@formatter:off
-		return "{\n" +
-			"\tdoDisassembly: " + doDisassembly() + ",\n" +
-			"\tapplySignature: " + applySignature() + ",\n" +
-			"\tuseStandardReplacements: " + useStandardReplacements + ",\n" +
-			"\tdemangleOnlyKnownPatterns: " + demangleOnlyKnownPatterns() + ",\n" +
-			"\ttimeout (sec): " + timeout + ",\n" +
-			"\tdemanglerName: " + getDemanglerName() + ",\n" +
-			"\tdemanglerApplicationArguments: " + getDemanglerApplicationArguments() + ",\n" +
-		"}";
-		//@formatter:on
+		return Json.toString(this);
 	}
 }

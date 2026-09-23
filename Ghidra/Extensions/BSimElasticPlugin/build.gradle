@@ -93,7 +93,7 @@ task elasticPluginZip(type: Zip) {
 }
 
 // Currently targeting elasticsearch-8.19.7 which by default runs with java 25
-compileElasticPluginJava.options.release = 21
+compileElasticPluginJava.options.release = 25
 
 compileElasticPluginJava.dependsOn copyGenericTask
 compileElasticPluginJava.dependsOn copyUtilityTask

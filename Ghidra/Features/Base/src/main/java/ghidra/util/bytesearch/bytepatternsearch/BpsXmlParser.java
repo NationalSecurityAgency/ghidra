@@ -68,7 +68,6 @@ public class BpsXmlParser {
 	 * <P>
 	 * All pattern files must have surrounding {@code<BytePatternSearchLibrary>} tags and adhere to
 	 * the structure outlined in the Byte pattern Search help file.
-	 * <P>
 	 * 
 	 * @param searchFile XML file to be parsed
 	 * @param monitor the task monitor

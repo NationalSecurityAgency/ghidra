@@ -82,11 +82,13 @@ public class DWARFStringOffsetTableHeader extends DWARFIndirectTableHeader {
 	}
 
 	@Override
-	public long getOffset(int index, BinaryReader reader) throws IOException {
-		if (index < 0 || count <= index) {
+	public long getOffset(int index, long baseOffset, BinaryReader reader) throws IOException {
+		int localIndex = index + (int) ((baseOffset - firstElementOffset) / intSize);
+
+		if (localIndex < 0 || count <= localIndex) {
 			throw new IOException(
-				"Invalid indirect string index: %d [0x%x]".formatted(index, index));
+				"Invalid indirect string index: %d [0x%x]".formatted(localIndex, localIndex));
 		}
-		return reader.readUnsignedValue(firstElementOffset + (index * intSize), intSize);
+		return reader.readUnsignedValue(firstElementOffset + (localIndex * intSize), intSize);
 	}
 }

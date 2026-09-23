@@ -38,17 +38,20 @@ import help.HelpService;
 /** 
  * Top level object that manages each step of the merge/resolve conflicts
  * process.
+ * @param <T> domain object implementation class
+ * @param <C> domain object change set implementation class
  */
-public abstract class MergeManager implements DomainObjectMergeManager {
+public abstract class MergeManager<T extends DomainObject, C extends DomainObjectChangeSet>
+		implements DomainObjectMergeManager {
 
 	protected MergeResolver[] mergeResolvers;
 
-	protected DomainObject resultDomainObject; // where changes will be merged to
-	protected DomainObject myDomainObject; // source of changes to be applied
-	protected DomainObject originalDomainObject; // original version that was checked out
-	protected DomainObject latestDomainObject; // latest version of the program
-	protected DomainObjectChangeSet latestChangeSet;
-	protected DomainObjectChangeSet myChangeSet;
+	protected T resultDomainObject; // where changes will be merged to
+	protected T myDomainObject; // source of changes to be applied
+	protected T originalDomainObject; // original version that was checked out
+	protected T latestDomainObject; // latest version of the program
+	protected C latestChangeSet;
+	protected C myChangeSet;
 
 	protected MergeManagerPlugin mergePlugin;
 //	protected ListingMergePanelPlugin listingPlugin;
@@ -69,9 +72,9 @@ public abstract class MergeManager implements DomainObjectMergeManager {
 
 //	protected boolean isShowingListingMergePanel = false;
 
-	public MergeManager(DomainObject resultDomainObject, DomainObject myDomainObject,
-			DomainObject originalDomainObject, DomainObject latestDomainObject,
-			DomainObjectChangeSet latestChangeSet, DomainObjectChangeSet myChangeSet) {
+	public MergeManager(T resultDomainObject, T myDomainObject,
+			T originalDomainObject, T latestDomainObject,
+			C latestChangeSet, C myChangeSet) {
 		this.resultDomainObject = resultDomainObject;
 		this.myDomainObject = myDomainObject;
 		this.originalDomainObject = originalDomainObject;
@@ -95,7 +98,7 @@ public abstract class MergeManager implements DomainObjectMergeManager {
 	 * @return the indicated program version or null if a valid version isn't specified.
 	 * @see MergeConstants
 	 */
-	public DomainObject getDomainObject(int version) {
+	public T getDomainObject(int version) {
 		switch (version) {
 			case MergeConstants.LATEST:
 				return latestDomainObject;
@@ -208,7 +211,7 @@ public abstract class MergeManager implements DomainObjectMergeManager {
 	}
 
 	protected abstract MergeManagerPlugin createMergeManagerPlugin(ModalPluginTool mergePluginTool,
-			MergeManager multiUserMergeManager, DomainObject modifiableDomainObject);
+			MergeManager<T, C> multiUserMergeManager, T modifiableDomainObject);
 
 	protected abstract void initializeMerge();
 

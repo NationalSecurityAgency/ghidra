@@ -782,7 +782,7 @@ public class BulkSignatures implements AutoCloseable {
 
 	/**
 	 * Prints the metadata.
-	 * 
+	 *
 	 * @throws IOException if there's an error establishing the database connection
 	 */
 	public void printMetadata() throws IOException {
@@ -791,6 +791,45 @@ public class BulkSignatures implements AutoCloseable {
 		Msg.info(this, "   Database:     " + info.databasename);
 		Msg.info(this, "   Owner:        " + info.owner);
 		Msg.info(this, "   Description:  " + info.description);
+	}
+
+	/**
+	 * Connect to the BSim database identified by this instance's server info and print the
+	 * database information which was originally specified at creation time (see
+	 * {@code bsim createdatabase}).  This is intended for use by command-line clients listing
+	 * BSim databases.
+	 *
+	 * @throws IOException if there's an error establishing the database connection or the
+	 * referenced database does not appear to be a BSim database
+	 */
+	public void printDatabaseInfo() throws IOException {
+		DatabaseInformation info = establishQueryServerConnection(false);
+		Msg.info(this, formatDatabaseInfo(bsimServerInfo, info));
+	}
+
+	/**
+	 * Format the creation-time details of a BSim database for display.
+	 *
+	 * @param serverInfo the BSim server info identifying the database
+	 * @param info the database information
+	 * @return a formatted multi-line description
+	 */
+	private String formatDatabaseInfo(BSimServerInfo serverInfo, DatabaseInformation info) {
+		// TODO: Verify / consolidate with printMetadata above
+		StringBuilder buf = new StringBuilder();
+		buf.append("BSim Database: ");
+		buf.append(serverInfo.getShortDBName());
+		buf.append("\n");
+		buf.append(" Name:            ");
+		buf.append(info.databasename);
+		buf.append("\n");
+		buf.append(" Owner:           ");
+		buf.append(info.owner);
+		buf.append("\n");
+		buf.append(" Description:     ");
+		buf.append(info.description);
+		buf.append("\n");
+		return buf.toString();
 	}
 
 	/**

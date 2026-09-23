@@ -15,10 +15,10 @@
  */
 package ghidra.pcode.emu.jit.gen;
 
-import static org.objectweb.asm.Opcodes.ACC_FINAL;
-import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
+import static java.lang.classfile.ClassFile.ACC_FINAL;
+import static java.lang.classfile.ClassFile.ACC_PRIVATE;
 
-import org.objectweb.asm.ClassVisitor;
+import java.lang.classfile.ClassBuilder;
 
 import ghidra.pcode.emu.jit.JitBytesPcodeExecutorStatePiece.JitBytesPcodeExecutorStateSpace;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
@@ -65,8 +65,8 @@ public record FieldForArrDirect(Address address) implements InstanceFieldReq<TRe
 	 */
 	@Override
 	public <THIS extends JitCompiledPassage, N extends Next> Emitter<N> genInit(Emitter<N> em,
-			Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, ClassVisitor cv) {
-		Fld.decl(cv, ACC_PRIVATE | ACC_FINAL, Types.T_BYTE_ARR, name());
+			Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, ClassBuilder clb) {
+		Fld.decl(clb, ACC_PRIVATE | ACC_FINAL, Types.T_BYTE_ARR, name());
 		return em
 				.emit(Op::aload, localThis)
 				.emit(gen::genLoadJitStateSpace, localThis, address.getAddressSpace())

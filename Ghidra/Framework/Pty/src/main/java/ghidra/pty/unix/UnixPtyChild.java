@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,17 +17,18 @@ package ghidra.pty.unix;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
 import java.util.*;
+
+import org.unix.*;
 
 import ghidra.pty.PtyChild;
 import ghidra.pty.PtySession;
 import ghidra.pty.local.LocalProcessPtySession;
-import ghidra.pty.unix.PosixC.*;
 import ghidra.util.Msg;
 
 public class UnixPtyChild extends UnixPtyEndpoint implements PtyChild {
-	static final PosixC LIB_POSIX = PosixC.INSTANCE;
-
 	private final String name;
 
 	UnixPtyChild(Ioctls ioctls, int fd, String name) {
@@ -101,23 +102,28 @@ public class UnixPtyChild extends UnixPtyEndpoint implements PtyChild {
 	}
 
 	private void disableEcho() {
-		Termios.ByReference tmios = new Termios.ByReference();
-		LIB_POSIX.tcgetattr(fd, tmios);
-		tmios.c_lflag &= ~Termios.ECHO;
-		LIB_POSIX.tcsetattr(fd, Termios.TCSANOW, tmios);
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment cs = arena.allocate(UnixErr.LAYOUT);
+			MemorySegment t = termios.allocate(arena);
+			UnixErr.checkLt0(termios_h.tcgetattr(cs, fd, t), cs);
+			termios.c_lflag(t, termios.c_lflag(t) & ~termios_h.ECHO());
+			UnixErr.checkLt0(termios_h.tcsetattr(cs, fd, termios_h.TCSANOW(), t), cs);
+		}
 	}
 
 	@Override
 	public void setWindowSize(short cols, short rows) {
-		Winsize.ByReference ws = new Winsize.ByReference();
-		ws.ws_col = cols;
-		ws.ws_row = rows;
-		ws.write();
-		try {
-			PosixC.INSTANCE.ioctl(fd, ioctls.TIOCSWINSZ(), ws.getPointer());
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment cs = arena.allocate(UnixErr.LAYOUT);
+			MemorySegment ws = winsize.allocate(arena);
+			winsize.ws_col(ws, cols);
+			winsize.ws_row(ws, rows);
+			UnixErr.checkLt0(
+				ioctl_h.ioctl.makeInvoker(winsize.layout()).apply(cs, fd, ioctls.TIOCSWINSZ(), ws),
+				cs);
 		}
 		catch (Exception e) {
-			Msg.error(this, "Could not set terminal window size: " + e);
+			Msg.error(this, "Could not set terminal windows size: " + e);
 		}
 	}
 }

@@ -15,8 +15,10 @@
  */
 package ghidra.pcode.emu.jit.gen.util;
 
-import org.objectweb.asm.Label;
+import java.lang.classfile.CodeBuilder;
+import java.lang.classfile.Label;
 
+import ghidra.pcode.emu.jit.JitCompiler.Diag;
 import ghidra.pcode.emu.jit.gen.util.Emitter.Dead;
 import ghidra.pcode.emu.jit.gen.util.Emitter.Next;
 import ghidra.pcode.emu.jit.gen.util.Methods.RetReq;
@@ -48,7 +50,7 @@ import ghidra.pcode.emu.jit.gen.util.Methods.RetReq;
  * in non-overloaded methods {@link #place(Emitter, Lbl)} and {@link #placeDead(Emitter, Lbl)}.
  * <p>
  * As an example, we show an {@code if-else} construct:
- * 
+ *
  * <pre>
  * var lblLess = em
  * 		.emit(Op::iload, params.a)
@@ -65,7 +67,7 @@ import ghidra.pcode.emu.jit.gen.util.Methods.RetReq;
  * </pre>
  * <p>
  * This would be equivalent to
- * 
+ *
  * <pre>
  * int myFunc(int a) {
  * 	if (a &lt;= 20) {
@@ -100,14 +102,28 @@ import ghidra.pcode.emu.jit.gen.util.Methods.RetReq;
  * we get that wrong, the compiler reports it as inconsistent, anyway. One drawback to using type
  * inference is that the label's name does not appear in the jump instruction that targets it. We do
  * not currently have a solution to that complaint.
- * 
+ *
  * @param <N> the stack contents where the label is placed (or must be placed)
- * @param label the wrapped ASM label
+ * @param id if {@link Diag#DEEP_TRACE} is enabled, a globally-unique 0-up counter, or -1
+ * @param label the wrapped Class-File API label
  */
-public record Lbl<N extends Next>(Label label) {
+public record Lbl<N extends Next>(int id, Label label) {
+	static int nextId = 0; // for diagnostics only
+
+	public Lbl(Label label) {
+		final int id;
+		if (Op.DEEP_TRACE) {
+			id = nextId++;
+		}
+		else {
+			id = -1;
+		}
+		this(id, label);
+	}
+
 	/**
 	 * A tuple providing both a (new) label and a resulting emitter
-	 * 
+	 *
 	 * @param <LN> the label's stack contents
 	 * @param <N> the emitter's stack contents, which will be the same as the label's, unless it is
 	 *            {@link Dead}.
@@ -119,31 +135,46 @@ public record Lbl<N extends Next>(Label label) {
 	/**
 	 * Create a fresh label with any expected stack contents
 	 * <p>
-	 * Using this to forward declare labels requires the user to explicate the expected stack, which
-	 * may not be ideal, as it may require updating during refactoring. Consider using
-	 * {@link Lbl#place(Emitter)} instead, which facilitates inference of the stack contents.
-	 * 
+	 * The label is allocated from the given code builder.
+	 *
 	 * @param <N> the expected stack contents
+	 * @param cb the code builder (needed to allocate the label)
 	 * @return the label
 	 */
-	public static <N extends Next> Lbl<N> create() {
-		return new Lbl<>(new Label());
+	public static <N extends Next> Lbl<N> create(CodeBuilder cb) {
+		return new Lbl<>(cb.newLabel());
 	}
 
 	/**
-	 * Generate a place a label where execution could already reach
+	 * Create a fresh label with any expected stack contents
+	 * <p>
+	 * The label is allocated from the given emitter's code builder.
+	 *
+	 * @param <N> the expected stack contents
+	 * @param em the emitter (needed to allocate the label from its code builder)
+	 * @return the label
+	 */
+	public static <N extends Next> Lbl<N> create(Emitter<?> em) {
+		return create(em.cb);
+	}
+
+	/**
+	 * Generate and place a label where execution could already reach
 	 * <p>
 	 * The returned label's stack will match this emitter's stack, since the code could be reached
 	 * by multiple paths, likely fall-through and a jump to the returned label.
-	 * 
+	 *
 	 * @param <N> the emitter's and the label's stack, i.e., as where the returned label is
 	 *            referenced
 	 * @param em the emitter
 	 * @return the label and emitter
 	 */
 	public static <N extends Next> LblEm<N, N> place(Emitter<N> em) {
-		Lbl<N> lbl = create();
-		em.mv.visitLabel(lbl.label);
+		Lbl<N> lbl = create(em);
+		if (Op.DEEP_TRACE) {
+			System.err.println("    jvm<%s>".formatted(lbl));
+		}
+		em.cb.labelBinding(lbl.label);
 		return new LblEm<>(lbl, em);
 	}
 
@@ -152,14 +183,17 @@ public record Lbl<N extends Next>(Label label) {
 	 * <p>
 	 * The emitter's stack and the label's stack must agree, since the code is reachable by multiple
 	 * paths, likely fallthrough and a jump to the given label.
-	 * 
+	 *
 	 * @param <N> the emitter's and the label's stack, i.e., as where the given label is referenced
 	 * @param em the emitter
 	 * @param lbl the label to place
 	 * @return the same emitter
 	 */
 	public static <N extends Next> Emitter<N> place(Emitter<N> em, Lbl<N> lbl) {
-		em.mv.visitLabel(lbl.label);
+		if (Op.DEEP_TRACE) {
+			System.err.println("    jvm<%s>".formatted(lbl));
+		}
+		em.cb.labelBinding(lbl.label);
 		return em;
 	}
 
@@ -172,7 +206,7 @@ public record Lbl<N extends Next>(Label label) {
 	 * the label has not yet been referenced, it must be forward declared with the expected stack.
 	 * There is no equivalent of {@link #place(Emitter)} for a dead emitter, because there is no way
 	 * to know the resulting stack.
-	 * 
+	 *
 	 * @param <N> the stack where the given label is referenced
 	 * @param em the emitter for otherwise-unreachable code
 	 * @param lbl the label to place
@@ -180,7 +214,10 @@ public record Lbl<N extends Next>(Label label) {
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static <N extends Next> Emitter<N> placeDead(Emitter<Dead> em, Lbl<N> lbl) {
-		em.mv.visitLabel(lbl.label);
+		if (Op.DEEP_TRACE) {
+			System.err.println("    jvm<%s>".formatted(lbl));
+		}
+		em.cb.labelBinding(lbl.label);
 		return (Emitter) em;
 	}
 }

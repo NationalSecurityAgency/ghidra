@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,17 +15,18 @@
  */
 package ghidra.app.plugin.core.datamgr;
 
-import ghidra.program.model.data.*;
-import ghidra.program.model.listing.Program;
-import ghidra.util.SystemUtilities;
-import ghidra.util.datastruct.WeakDataStructureFactory;
-import ghidra.util.datastruct.WeakSet;
-
 import java.awt.event.KeyEvent;
 
 import javax.swing.KeyStroke;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+
+import ghidra.program.model.data.*;
+import ghidra.program.model.dtarchive.PersistentDataTypeArchive;
+import ghidra.program.model.listing.Program;
+import ghidra.util.SystemUtilities;
+import ghidra.util.datastruct.WeakDataStructureFactory;
+import ghidra.util.datastruct.WeakSet;
 
 /**
  * Manages the attributes for data types; used by the manage data types
@@ -110,8 +110,8 @@ public class DataTypePropertyManager {
 		programDataTypesManager = null;
 	}
 
-	void domainObjectRestored(DataTypeManagerDomainObject domainObject) {
-		DataTypeManager dataTypeManager = domainObject.getDataTypeManager();
+	void domainObjectRestored(PersistentDataTypeArchive archive) {
+		DataTypeManager dataTypeManager = archive.getDataTypeManager();
 		if (dataTypeManager != programDataTypesManager) {
 			return; // Ignore since not our program data type manager.
 		}

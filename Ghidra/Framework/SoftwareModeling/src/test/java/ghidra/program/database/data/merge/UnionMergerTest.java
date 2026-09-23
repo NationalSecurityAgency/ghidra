@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 import org.junit.*;
 
 import generic.test.AbstractGenericTest;
+import ghidra.program.database.data.TransientDataTypeManager;
 import ghidra.program.model.data.*;
 import ghidra.util.UniversalIdGenerator;
 
@@ -27,7 +28,7 @@ public class UnionMergerTest extends AbstractGenericTest {
 	private DataType wordDt;
 	private DataType dwordDt;
 	private IntegerDataType intDt;
-	private StandAloneDataTypeManager dataTypeManager;
+	private DataTypeManager dataTypeManager;
 	private int txId;
 
 	@Before
@@ -36,13 +37,14 @@ public class UnionMergerTest extends AbstractGenericTest {
 		wordDt = new WordDataType();
 		dwordDt = new DWordDataType();
 		intDt = new IntegerDataType();
-		dataTypeManager = new StandAloneDataTypeManager("Test");
+		dataTypeManager = new TransientDataTypeManager("Test");
 		txId = dataTypeManager.startTransaction("Test");
 	}
 
 	@After
 	public void tearDown() {
 		dataTypeManager.endTransaction(txId, false);
+		dataTypeManager.close();
 	}
 
 	@Test

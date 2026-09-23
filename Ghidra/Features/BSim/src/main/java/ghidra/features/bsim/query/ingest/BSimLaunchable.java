@@ -17,6 +17,7 @@ package ghidra.features.bsim.query.ingest;
 
 import java.io.*;
 import java.net.*;
+import java.sql.SQLException;
 import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
@@ -25,7 +26,11 @@ import org.xml.sax.SAXException;
 import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraLaunchable;
 import ghidra.features.bsim.query.*;
+import ghidra.features.bsim.query.BSimServerInfo.DBType;
+import ghidra.features.bsim.query.client.PostgresFunctionDatabase;
 import ghidra.features.bsim.query.description.ExecutableRecord;
+import ghidra.features.bsim.query.elastic.ElasticDatabase;
+import ghidra.features.bsim.query.elastic.ElasticException;
 import ghidra.features.bsim.query.protocol.ExeSpecifier;
 import ghidra.features.bsim.query.protocol.QueryName;
 import ghidra.framework.*;
@@ -72,8 +77,10 @@ public class BSimLaunchable implements GhidraLaunchable {
 	private static final String COMMAND_DELETE = defineCommand("delete");
 	private static final String COMMAND_LIST_FUNCTIONS = defineCommand("listfuncs");
 	private static final String COMMAND_LIST_EXES = defineCommand("listexes");
+	private static final String COMMAND_LIST_DATABASES = defineCommand("listdatabases");
 	private static final String COMMAND_GET_EXE_COUNT = defineCommand("getexecount");
 	private static final String COMMAND_DUMP_SIGS = defineCommand("dumpsigs");
+	private static final String COMMAND_CHANGE_PASSWORD = defineCommand("changepassword");
 
 	private static Set<String> COMMANDS_WITH_REPO_ACCESS =
 		Set.of(COMMAND_GENERATE_SIGS, COMMAND_GENERATE_UPDATES);
@@ -121,6 +128,7 @@ public class BSimLaunchable implements GhidraLaunchable {
 		SHORTCUT_OPTION_MAP.put("-b", BSIM_URL_OPTION);
 		SHORTCUT_OPTION_MAP.put("-c", CONFIG_OPTION);
 		SHORTCUT_OPTION_MAP.put("-d", DESCRIPTION_OPTION);
+		SHORTCUT_OPTION_MAP.put("-f", DROP_DATABASE_FORCE_OPTION);
 		SHORTCUT_OPTION_MAP.put("-l", LIMIT_OPTION);
 		SHORTCUT_OPTION_MAP.put("-m", MD5_OPTION);
 		SHORTCUT_OPTION_MAP.put("-n", NAME_OPTION);
@@ -130,7 +138,7 @@ public class BSimLaunchable implements GhidraLaunchable {
 		//SHORTCUT_OPTION_MAP.put("", OVERRIDE_OPTION);
 		//SHORTCUT_OPTION_MAP.put("", MAX_FUNC_OPTION);
 		//SHORTCUT_OPTION_MAP.put("", COMPILER_OPTION);
-		//SHORTCUT_OPTION_MAP.put("", CERT_OPTION);
+		// NOTE: CERT_OPTION intentionally has no shortcut ("-c" is used by CONFIG_OPTION)
 	}
 
 	//@formatter:off
@@ -161,8 +169,10 @@ public class BSimLaunchable implements GhidraLaunchable {
 			Set.of(MD5_OPTION, NAME_OPTION, ARCH_OPTION, COMPILER_OPTION, PRINT_SELF_SIGNIFICANCE_OPTION, CALL_GRAPH_OPTION, PRINT_JUST_EXE_OPTION, MAX_FUNC_OPTION);
 	private static final Set<String> GET_EXECUTABLES_OPTIONS = 
 			Set.of(MD5_OPTION, NAME_OPTION, ARCH_OPTION, COMPILER_OPTION, SORT_COL_OPTION, LIMIT_OPTION, INCLUDE_LIBS_OPTION);
-	private static final Set<String> GET_EXECUTABLES_COUNT_OPTIONS = 
+	private static final Set<String> GET_EXECUTABLES_COUNT_OPTIONS =
 			Set.of(MD5_OPTION, NAME_OPTION, ARCH_OPTION, COMPILER_OPTION, INCLUDE_LIBS_OPTION);
+	private static final Set<String> LIST_DATABASES_OPTIONS = Set.of(); // global options only
+	private static final Set<String> CHANGE_PASSWORD_OPTIONS = Set.of(); // global options only
 	//@formatter:on
 
 	private static final Map<String, Set<String>> ALLOWED_OPTION_MAP = new HashMap<>();
@@ -183,8 +193,10 @@ public class BSimLaunchable implements GhidraLaunchable {
 		ALLOWED_OPTION_MAP.put(COMMAND_DELETE, DELETE_OPTIONS);
 		ALLOWED_OPTION_MAP.put(COMMAND_LIST_FUNCTIONS, LIST_FUNCTIONS_OPTIONS);
 		ALLOWED_OPTION_MAP.put(COMMAND_LIST_EXES, GET_EXECUTABLES_OPTIONS);
+		ALLOWED_OPTION_MAP.put(COMMAND_LIST_DATABASES, LIST_DATABASES_OPTIONS);
 		ALLOWED_OPTION_MAP.put(COMMAND_GET_EXE_COUNT, GET_EXECUTABLES_COUNT_OPTIONS);
 		ALLOWED_OPTION_MAP.put(COMMAND_DUMP_SIGS, DUMP_SIGS_OPTIONS);
+		ALLOWED_OPTION_MAP.put(COMMAND_CHANGE_PASSWORD, CHANGE_PASSWORD_OPTIONS);
 	}
 
 	private URL ghidraURL;
@@ -480,6 +492,11 @@ public class BSimLaunchable implements GhidraLaunchable {
 			bsimURL = BSimClientFactory.deriveBSimURL(urlstring);
 			doListExes(subParams);
 		}
+		else if (COMMAND_LIST_DATABASES.equals(command)) {
+			// NOTE: URL parsing is handled within doListDatabases since a host-only URL
+			// (no database name) is permitted for the postgresql and elasticsearch protocols.
+			doListDatabases(urlstring, subParams);
+		}
 		else if (COMMAND_GET_EXE_COUNT.equals(command)) {
 			bsimURL = BSimClientFactory.deriveBSimURL(urlstring);
 			doGetCount(subParams);
@@ -487,6 +504,10 @@ public class BSimLaunchable implements GhidraLaunchable {
 		else if (COMMAND_DUMP_SIGS.equals(command)) {
 			bsimURL = BSimClientFactory.deriveBSimURL(urlstring);
 			doDumpSigs(subParams);
+		}
+		else if (COMMAND_CHANGE_PASSWORD.equals(command)) {
+			bsimURL = BSimClientFactory.deriveBSimURL(urlstring);
+			doChangePassword(subParams);
 		}
 		else {
 			throw new IllegalArgumentException("Unknown command: " + command);
@@ -864,8 +885,88 @@ public class BSimLaunchable implements GhidraLaunchable {
 	}
 
 	/**
+	 * Display the BSim databases discovered for a given BSim URL.  For the postgresql and
+	 * elasticsearch (elastic/https) protocols the URL may specify only a host, in which case all
+	 * databases/named-indexes on that host which appear to be BSim databases are listed.  If the
+	 * URL includes a specific database name, only that database is listed.  An H2 (file) URL must
+	 * always specify a specific database.  For each discovered database the creation-time details
+	 * (see {@code createdatabase}) are displayed.
+	 *
+	 * @param urlstring the BSim URL, which may be host-only for postgresql/elasticsearch
+	 * @param params the command-line params (none expected)
+	 * @throws IOException if there's an error establishing a connection or querying the server
+	 */
+	private void doListDatabases(String urlstring, List<String> params) throws IOException {
+		if (!params.isEmpty()) {
+			throw new IllegalArgumentException("Unexpected parameter: " + params.get(0));
+		}
+
+		URI uri;
+		try {
+			uri = new URI(urlstring);
+		}
+		catch (URISyntaxException e) {
+			throw new MalformedURLException("Invalid BSim URL: " + urlstring);
+		}
+
+		// If the URL specifies a database name (path element) simply list that database.  For the
+		// postgresql and elasticsearch (elastic/https) protocols a host-only URL is also permitted,
+		// in which case all BSim databases hosted by the server are enumerated.  An H2 (file) URL
+		// must always specify a specific database.  See the "BSim Database URLs" section of the
+		// command-line reference for details.
+		String path = uri.getPath();
+		if (!StringUtils.isBlank(path) && !path.equals("/")) {
+			listSingleDatabase(new BSimServerInfo(uri.toURL()));
+			return;
+		}
+
+		String connectingUserName = optionValueMap.get(USER_OPTION);
+		String protocol = uri.getScheme();
+		List<BSimServerInfo> databases;
+		try {
+			if ("postgresql".equals(protocol)) {
+				databases = PostgresFunctionDatabase.getBSimServerInfos(uri, connectingUserName);
+			}
+			else if ("elastic".equals(protocol) || "https".equals(protocol)) {
+				databases = ElasticDatabase.getBSimServerInfos(uri, connectingUserName);
+			}
+			else {
+				throw new IllegalArgumentException(
+					"A specific database must be specified within the BSim URL for protocol: " +
+						protocol);
+			}
+		}
+		catch (SQLException | ElasticException e) {
+			throw new IOException("Failed to enumerate BSim databases: " + e.getMessage());
+		}
+
+		Msg.info(this, "Found " + databases.size() + " BSim database(s) on " + uri.getHost());
+		for (BSimServerInfo serverInfo : databases) {
+			listSingleDatabase(serverInfo);
+		}
+	}
+
+	/**
+	 * Connect to a single BSim database and display its creation-time details.  Any failure to
+	 * connect or read the database (e.g., it is not a BSim database or access is restricted) is
+	 * reported as a warning so that enumeration of remaining databases can continue.
+	 *
+	 * @param serverInfo the BSim server info identifying the database
+	 */
+	private void listSingleDatabase(BSimServerInfo serverInfo) {
+		String connectingUserName = optionValueMap.get(USER_OPTION);
+		try (BulkSignatures bsim = new BulkSignatures(serverInfo, connectingUserName)) {
+			bsim.printDatabaseInfo();
+		}
+		catch (IOException e) {
+			Msg.warn(this, "Unable to read BSim database " + serverInfo.getShortDBName() + ": " +
+				e.getMessage());
+		}
+	}
+
+	/**
 	 * Print the number of records in the database that match the filter criteria.
-	 * 
+	 *
 	 * @param params the command-line params
 	 * @throws IOException if there's an error establishing the database connection
 	 * @throws LSHException if there's an error issuing the query
@@ -1000,6 +1101,109 @@ public class BSimLaunchable implements GhidraLaunchable {
 		}
 	}
 
+	/**
+	 * Change the password of the user which is used to establish the BSim database connection.
+	 * The user must first successfully authenticate with the server using their current
+	 * credentials, since the password change is issued over the resulting connection.  Only the
+	 * {@link DBType#postgres postgresql} and {@link DBType#elastic elastic}/https database types
+	 * support a password change.  The new password is prompted for twice on the console and must
+	 * match.
+	 *
+	 * @param params the command-line params (none expected)
+	 * @throws IOException if there's an error establishing the database connection, obtaining the
+	 * new password, or if the password change is rejected by the server
+	 */
+	private void doChangePassword(List<String> params) throws IOException {
+		if (!params.isEmpty()) {
+			throw new IllegalArgumentException("Unexpected parameter: " + params.get(0));
+		}
+
+		BSimServerInfo serverInfo = getServerInfoWithUserOption(new BSimServerInfo(bsimURL));
+
+		DBType dbType = serverInfo.getDBType();
+		if (dbType != DBType.postgres && dbType != DBType.elastic) {
+			throw new IllegalArgumentException(
+				"Password change not supported for BSim DB type: " + dbType);
+		}
+
+		try (FunctionDatabase db = BSimClientFactory.buildClient(bsimURL, true)) {
+			if (!db.initialize()) {
+				throw new IOException(db.getLastError().message);
+			}
+			if (!db.isPasswordChangeAllowed()) {
+				throw new IOException("Password change not supported by BSim DB: " + serverInfo);
+			}
+
+			String userName = db.getUserName();
+			char[] newPassword = requestNewPassword(userName);
+			try {
+				String errorMessage = db.changePassword(newPassword);
+				if (errorMessage != null) {
+					throw new IOException("Password change failed: " + errorMessage);
+				}
+			}
+			finally {
+				Arrays.fill(newPassword, '\0');
+			}
+			Msg.info(this, "Password changed for user '" + userName + "' on " + serverInfo);
+		}
+	}
+
+	/**
+	 * Apply the global {@code --user} option to the specified BSim server info.  If the BSim URL
+	 * already stipulates a user name the option is ignored with a warning, mirroring the behavior
+	 * of {@link BulkSignatures}.
+	 *
+	 * @param serverInfo BSim server info derived from the specified BSim URL
+	 * @return server info which reflects the connecting user name to be used
+	 */
+	private BSimServerInfo getServerInfoWithUserOption(BSimServerInfo serverInfo) {
+		String connectingUserName = optionValueMap.get(USER_OPTION);
+		if (StringUtils.isBlank(connectingUserName)) {
+			return serverInfo;
+		}
+		if (!serverInfo.hasDefaultLogin()) {
+			String userName = serverInfo.getUserName();
+			if (!userName.equals(connectingUserName)) {
+				Msg.warn(this, "BSim DB server info specifies user '" + userName +
+					"'.  Ignoring user name option: '" + connectingUserName + "'");
+			}
+			return serverInfo;
+		}
+		return new BSimServerInfo(serverInfo.getDBType(), connectingUserName,
+			serverInfo.getServerName(), serverInfo.getPort(), serverInfo.getDBName());
+	}
+
+	/**
+	 * Prompt the user on the console for a new database password.  The password must be entered
+	 * twice and both entries must match, otherwise the user is prompted again.
+	 *
+	 * @param userName name of the user whose password is being changed
+	 * @return the new password which must be cleared by the caller when done using it
+	 * @throws IOException if a password entry could not be obtained
+	 */
+	private char[] requestNewPassword(String userName) throws IOException {
+		for (;;) {
+			char[] newPassword = HeadlessClientAuthenticator.getPassword(null,
+				"New BSim DB password for user '" + userName + "':");
+			if (newPassword == null) {
+				throw new IOException("Failed to obtain new password");
+			}
+			char[] repeatPassword =
+				HeadlessClientAuthenticator.getPassword(null, "Please re-enter new DB password:");
+			boolean match = newPassword.length != 0 && Arrays.equals(newPassword, repeatPassword);
+			if (repeatPassword != null) {
+				Arrays.fill(repeatPassword, '\0');
+			}
+			if (match) {
+				return newPassword;
+			}
+			Arrays.fill(newPassword, '\0');
+			System.out.println(
+				newPassword.length == 0 ? "Password may not be blank" : "Passwords do not match");
+		}
+	}
+
 	private static void printMaxMemory() {
 		// division is used since default case may not use even multiples of 1024
 		long maxMemoryBytes = Runtime.getRuntime().maxMemory();
@@ -1022,7 +1226,8 @@ public class BSimLaunchable implements GhidraLaunchable {
 		System.err.println("\n" +
 			"USAGE: bsim [command]       required-args... [OPTIONS...]\n" + 
 			"            createdatabase  <bsimURL> <config_template> [--name|-n \"<name>\"] [--owner|-o \"<owner>\"] [--description|-d \"<text>\"] [--nocallgraph]\n" + 
-			"            dropdatabase    <bsimURL> [--force]\n" + 
+			"            dropdatabase    <bsimURL> [--force|-f]\n" +
+			"            listdatabases   <bsimURL>\n" +
 			"            setmetadata     <bsimURL> [--name|-n \"<name>\"] [--owner|-o \"<owner>\"] [--description|-d \"<text>\"]\n" + 
 			"            getmetadata     <bsimURL>\n" + 
 			"            addexecategory  <bsimURL> <category_name> [--date]\n" + 
@@ -1038,11 +1243,12 @@ public class BSimLaunchable implements GhidraLaunchable {
 			"            generateupdates <ghidraURL> </xmldirectory> --bsim|-b <bsimURL> [--commit] [--overwrite]\n" + 
 			"            generateupdates <ghidraURL> --bsim|-b <bsimURL>\n" +  
 			"            commitupdates   <bsimURL> </xmldirectory>\n" + 
-			"            listexes        <bsimURL> [--md5|-m <hash>] [--name|-n <exe_name>] [--arch|-a <languageID>] [--compiler <cspecID>] [--sortcol|-s md5|name] [--limit|-l <exe_count>] [--includelibs]\n" + 
-			"            getexecount     <bsimURL> [--md5|-m <hash>] [--name|-n <exe_name>] [--arch|-a <languageID>] [--compiler <cspecID>] [--includelibs]\n" + 
+			"            listexes        <bsimURL> [--md5|-m <hash>] [--name|-n <exe_name>] [--arch|-a <languageID>] [--compiler <cspecID>] [--sortcol|-s md5|name] [--limit|-l <exe_count>] [--includelibs]\n" +
+			"            getexecount     <bsimURL> [--md5|-m <hash>] [--name|-n <exe_name>] [--arch|-a <languageID>] [--compiler <cspecID>] [--includelibs]\n" +
 			"            delete          <bsimURL> [--md5|-m <hash>] [--name|-n <exe_name> [--arch|-a <languageID>] [--compiler <cspecID>]]\n" + 
 			"            listfuncs       <bsimURL> [--md5|-m <hash>] [--name|-n <exe_name> [--arch|-a <languageID>] [--compiler <cspecID>]] [--printselfsig] [--callgraph] [--printjustexe] [--maxfunc <max_count>]\n" + 
-			"            dumpsigs        <bsimURL> </xmldirectory> [--md5|-m <hash>] [--name|-n <exe_name> [--arch|-a <languageID>] [--compiler <cspecID>]]\n" + 
+			"            dumpsigs        <bsimURL> </xmldirectory> [--md5|-m <hash>] [--name|-n <exe_name> [--arch|-a <languageID>] [--compiler <cspecID>]]\n" +
+			"            changepassword  <bsimURL>\n" +
 			"\n" +
 			"Global options:\n" +
 			"    --user|-u <username>\n" +
@@ -1056,6 +1262,16 @@ public class BSimLaunchable implements GhidraLaunchable {
 			"    elastic://[username@]<hostname>[:<port>]/<dbname>\n" +
 			"    https://[username@]<hostname>[:<port>]/<dbname>\n" +
 			"    file:/[<local-dirpath>/]<dbname>\n" +
+			"\n" +
+			"    NOTE: For the 'listdatabases' command the '/<dbname>' is optional for the postgresql,\n" +
+			"          elastic, and https URL forms.  When omitted, all BSim databases hosted by the\n" +
+			"          server are listed; when dbname is supplied, only the named database is listed.\n" +
+			"          A file (H2) URL must always specify a <dbname>.\n" +
+			"\n" +
+			"    NOTE: The 'changepassword' command is only supported for the postgresql, elastic and\n" +
+			"          https URL forms and requires that the server be configured for password\n" +
+			"          authentication.  The password changed is that of the connecting user (see the\n" +
+			"          --user option) and the new password is prompted for on the console.\n" +
 			"\n" +
 			"Ghidra URL Forms (ghidraURL):\n" +
 			"    ghidra://<hostname>[:<port>]/<repo-name>[/<folder-path>]\n" +

@@ -20,24 +20,28 @@ import static org.junit.Assert.*;
 import org.junit.*;
 
 import generic.test.AbstractGenericTest;
-import ghidra.program.model.data.*;
+import ghidra.program.database.data.TransientDataTypeManager;
+import ghidra.program.model.data.CategoryPath;
 import ghidra.program.model.data.Enum;
+import ghidra.program.model.data.EnumDataType;
 import ghidra.util.UniversalIdGenerator;
 
 public class EnumMergerTest extends AbstractGenericTest {
-	private StandAloneDataTypeManager dataTypeManager;
+
+	private TransientDataTypeManager dataTypeManager;
 	private int txId;
 
 	@Before
 	public void setUp() throws Exception {
 		UniversalIdGenerator.initialize();
-		dataTypeManager = new StandAloneDataTypeManager("Test");
+		dataTypeManager = new TransientDataTypeManager("test");
 		txId = dataTypeManager.startTransaction("Test");
 	}
 
 	@After
 	public void tearDown() {
 		dataTypeManager.endTransaction(txId, false);
+		dataTypeManager.close();
 	}
 
 	@Test

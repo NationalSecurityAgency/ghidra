@@ -16,6 +16,7 @@
 package ghidra.pcode.emu.jit.var;
 
 import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.lang.Language;
 import ghidra.program.model.pcode.Varnode;
 
 /**
@@ -51,5 +52,11 @@ public abstract class AbstractJitVarnodeVar extends AbstractJitVar implements Ji
 	@Override
 	public String toString() {
 		return "%s[id=%d,varnode=%s]".formatted(getClass().getSimpleName(), id, varnode);
+	}
+
+	@Override
+	public String toString(Language language) {
+		return "%s[id=%s, varnode=%s]".formatted(getClass().getSimpleName(), id,
+			varnode.toString(language));
 	}
 }

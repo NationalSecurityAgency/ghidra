@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.script.GhidraScript;
 import ghidra.pcode.exec.FixedSleighPcodeUseropDefinition;
-import ghidra.pcode.exec.SleighPcodeUseropDefinition;
+import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
 import ghidra.pcode.exec.SleighPcodeUseropDefinition.SignatureDef;
 import ghidra.pcode.struct.StructuredSleigh;
 import ghidra.program.model.lang.LanguageID;
@@ -61,7 +61,7 @@ public class StandAloneStructuredSleighScript extends GhidraScript {
 		 */
 		language = (SleighLanguage) getLanguage(new LanguageID("DATA:BE:64:default"));
 
-		Map<String, SleighPcodeUseropDefinition<Object>> ops = new LookupStructuredSleigh() {
+		Map<String, PcodeUseropDefinition<Object>> ops = new LookupStructuredSleigh() {
 			/**
 			 * Add two in-memory vectors of 16 longs and store the result in memory
 			 * 
@@ -101,8 +101,8 @@ public class StandAloneStructuredSleighScript extends GhidraScript {
 		/*
 		 * Now, dump the generated Sleigh source
 		 */
-		for (SleighPcodeUseropDefinition<?> userop : ops.values()) {
-			if (!(userop instanceof FixedSleighPcodeUseropDefinition<?> fixed)) {
+		for (PcodeUseropDefinition<?> userop : ops.values()) {
+			if (!(userop instanceof FixedSleighPcodeUseropDefinition fixed)) {
 				println("WARN: Unexpected userop type for " + userop.getName());
 				continue;
 			}
