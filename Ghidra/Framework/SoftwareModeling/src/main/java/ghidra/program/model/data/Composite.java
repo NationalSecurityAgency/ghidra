@@ -48,6 +48,17 @@ public interface Composite extends DataType {
 	public abstract int getNumDefinedComponents();
 
 	/**
+	 * Returns the defined component of this data type at the specified index
+	 * within the ordered sequence of {@link #getDefinedComponents() defined components}.
+	 * See {@link #getNumDefinedComponents()}.
+	 * @param index the index of the defined component (numbering starts at 0).
+	 * @return the data type component.
+	 * @throws IndexOutOfBoundsException if the index is out of bounds
+	 */
+	public abstract DataTypeComponent getDefinedComponent(int index)
+			throws IndexOutOfBoundsException;
+
+	/**
 	 * Returns the component of this data type with the indicated ordinal.
 	 * @param ordinal the component's ordinal (numbering starts at 0).
 	 * @return the data type component.

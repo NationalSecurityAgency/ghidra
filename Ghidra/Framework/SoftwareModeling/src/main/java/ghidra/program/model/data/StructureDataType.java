@@ -449,6 +449,14 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 	}
 
 	@Override
+	public DataTypeComponentImpl getDefinedComponent(int index) throws IndexOutOfBoundsException {
+		if (index < 0 || index >= components.size()) {
+			throw new IndexOutOfBoundsException(index);
+		}
+		return components.get(index);
+	}
+
+	@Override
 	public DataTypeComponentImpl getComponent(int ordinal) {
 		if (ordinal < 0 || ordinal >= numComponents) {
 			throw new IndexOutOfBoundsException(ordinal);
