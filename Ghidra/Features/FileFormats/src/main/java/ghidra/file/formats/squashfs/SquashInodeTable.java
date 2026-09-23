@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,6 +23,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class SquashInodeTable {
+	private static final int MAX_SANE_INODE_COUNT = 500_000;
 
 	// An array of inodes indexed by their inode number
 	private final SquashInode[] inodes;
@@ -43,6 +44,9 @@ public class SquashInodeTable {
 	 */
 	public SquashInodeTable(BinaryReader reader, SquashSuperBlock superBlock, TaskMonitor monitor)
 			throws IOException, CancelledException {
+		if (superBlock.getInodeCount() > MAX_SANE_INODE_COUNT) {
+			throw new IOException("Inode count large: " + superBlock.getInodeCount());
+		}
 
 		// Read from the start of the inode table
 		reader.setPointerIndex(superBlock.getInodeTableStart());
@@ -52,7 +56,7 @@ public class SquashInodeTable {
 			decompressInodeTable(reader, superBlock.getDirectoryTableStart(), superBlock, monitor);
 
 		// Create inode array. inode count is off by one
-		inodes = new SquashInode[(int) superBlock.getInodeCount() + 1];
+		inodes = new SquashInode[superBlock.getInodeCount() + 1];
 
 		// inodes begin indexing at 1, so 0th inode is null
 		inodes[0] = null;

@@ -89,14 +89,17 @@ public class BuildIdDebugFileProvider implements DebugFileProvider {
 	@Override
 	public File getFile(ExternalDebugInfo debugInfo, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		String buildId = debugInfo.getBuildId();
-		if (buildId == null || buildId.length() < 4 /* 2 bytes = 4 hex digits */ ) {
+		if (!(debugInfo instanceof BuildIdDebugInfo buildIdInfo)) {
 			return null;
 		}
-		File bucketDir = new File(rootDir, buildId.substring(0, 2));
-		File file = new File(bucketDir, buildId.substring(2) + ".debug");
+		String buildIdStr = buildIdInfo.getBuildIdHexString();
+		if (buildIdStr == null || buildIdStr.length() < 4 /* 2 bytes = 4 hex digits */ ) {
+			return null;
+		}
+		File bucketDir = new File(rootDir, buildIdStr.substring(0, 2));
+		File file = new File(bucketDir, buildIdStr.substring(2) + ".debug");
 		if (!rootDir.equals(bucketDir.getParentFile()) || !bucketDir.equals(file.getParentFile())) {
-			throw new IOException("Bad buildid: " + buildId);
+			throw new IOException("Bad buildid: " + buildIdStr);
 		}
 		return file.isFile() ? file : null;
 	}

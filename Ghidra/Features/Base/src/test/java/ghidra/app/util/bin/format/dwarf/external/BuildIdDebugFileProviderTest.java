@@ -32,6 +32,7 @@ import utilities.util.FileUtilities;
 public class BuildIdDebugFileProviderTest extends AbstractGenericTest {
 	private TaskMonitor monitor = TaskMonitor.DUMMY;
 	private File tmpDir;
+	BuildIdDebugInfo id = new BuildIdDebugInfo(new byte[20] /* all 00's */);
 
 	@Before
 	public void setUp() throws Exception {
@@ -42,14 +43,13 @@ public class BuildIdDebugFileProviderTest extends AbstractGenericTest {
 	public void testGet() throws IOException, CancelledException {
 		BuildIdDebugFileProvider provider = new BuildIdDebugFileProvider(tmpDir);
 
-		String buildId = "0000000000000000000000000000000000000000";
-
+		String buildIdStr = id.getBuildIdHexString();
 		File f = new File(tmpDir,
-			"%s/%s.debug".formatted(buildId.substring(0, 2), buildId.substring(2)));
+			"%s/%s.debug".formatted(buildIdStr.substring(0, 2), buildIdStr.substring(2)));
 		FileUtilities.checkedMkdirs(f.getParentFile());
 		FileUtilities.writeStringToFile(f, "test1");
 
-		File result = provider.getFile(ExternalDebugInfo.forBuildId(buildId), monitor);
+		File result = provider.getFile(id, monitor);
 
 		assertEquals("test1", Files.readString(result.toPath()));
 		assertEquals(5, result.length());
