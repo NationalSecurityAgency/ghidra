@@ -18,8 +18,7 @@ package ghidra.framework.main.projectdata.actions;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.net.URL;
-
-import org.apache.commons.collections4.CollectionUtils;
+import java.util.List;
 
 import docking.action.MenuData;
 import docking.dnd.GClipboard;
@@ -39,32 +38,35 @@ public class ProjectDataCopyGhidraURLAction extends ProjectDataCopyCutBaseAction
 
 	@Override
 	protected void actionPerformed(FrontEndProjectTreeContext context) {
-		Clipboard clipboard = GClipboard.getSystemClipboard();
-		
+
+		List<DomainFile> files = context.getSelectedFiles();
+		DomainFile df = files.getFirst();
+		LinkFileInfo linkInfo = df.getLinkInfo();
+		if (linkInfo != null && linkInfo.isFolderLink()) {
+			return; // folder-link not supported
+		}
+
+		URL url = df.getSharedProjectURL(null);
+		if (url == null) {
+			url = df.getLocalProjectURL(null);
+		}
+
+		if (url == null) {
+			Msg.showError(ProjectDataCopyGhidraURLAction.class, null,
+				"Copy GhidraURL Failed",
+				"Failed to create file URL for: " + df.getPathname());
+			return;
+		}
+
 		try {
-			if(CollectionUtils.isNotEmpty(context.getSelectedFiles())) {
-				DomainFile df = context.getSelectedFiles().getFirst();
-				LinkFileInfo linkInfo = df.getLinkInfo();
-				if (linkInfo != null && linkInfo.isFolderLink()) {
-					return; // folder-link not supported
-				}
-				URL url = df.getSharedProjectURL(null);
-				if(url == null) {
-					url = df.getLocalProjectURL(null);
-				}
-				if (url != null) {
-					clipboard.setContents(new StringSelection(url.toString()), null);
-				}
-				else {
-					Msg.showError(ProjectDataCopyGhidraURLAction.class, null,
-						"Copy GhidraURL Failed",
-						"Failed to create file URL for: " + df.getPathname());
-				}
-			}
+			Clipboard clipboard = GClipboard.getSystemClipboard();
+			String urlString = url.toString();
+			clipboard.setContents(new StringSelection(urlString), null);
 		}
 		catch (IllegalStateException ise) {
 			// this can happen when other applications are accessing the system clipboard
-			Msg.showError(ProjectDataCopyGhidraURLAction.class, null, "Unable to Access Clipboard",
+			Msg.showError(ProjectDataCopyGhidraURLAction.class, null,
+				"Unable to Access Clipboard",
 				"Unable to perform cut/copy operation on the system clipboard.  The " +
 					"clipboard may just be busy at this time. Please try again.");
 		}
@@ -72,10 +74,13 @@ public class ProjectDataCopyGhidraURLAction extends ProjectDataCopyCutBaseAction
 
 	@Override
 	protected boolean isEnabledForContext(FrontEndProjectTreeContext context) {
-		if (context.hasExactlyOneFileOrFolder() && context.getFileCount() != 1) {
+
+		List<DomainFile> files = context.getSelectedFiles();
+		if (files.size() != 1) {
 			return false;
 		}
-		DomainFile df = context.getSelectedFiles().getFirst();
+
+		DomainFile df = files.getFirst();
 		LinkFileInfo linkInfo = df.getLinkInfo();
 		if (linkInfo != null && linkInfo.isFolderLink()) {
 			return false;
