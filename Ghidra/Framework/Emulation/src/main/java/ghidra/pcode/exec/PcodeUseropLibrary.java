@@ -51,17 +51,10 @@ public interface PcodeUseropLibrary<T> {
 	 */
 	record PcodeUseropSymbolMap(SleighLanguage language, Map<Integer, UserOpSymbol> byIndex,
 			Map<String, UserOpSymbol> byName) {
-		public PcodeUseropSymbolMap {
-			if (!byIndex.isEmpty() || !byName.isEmpty()) {
-				Objects.requireNonNull(language);
-			}
-		}
 
-		/**
-		 * The empty set of symbols
-		 */
-		public static final PcodeUseropSymbolMap EMPTY =
-			new PcodeUseropSymbolMap(null, Map.of(), Map.of());
+		public static PcodeUseropSymbolMap empty(SleighLanguage language) {
+			return new PcodeUseropSymbolMap(language, Map.of());
+		}
 
 		private static Map<String, UserOpSymbol> byName(Map<Integer, UserOpSymbol> byIndex) {
 			return byIndex.values()
