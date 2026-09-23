@@ -1136,7 +1136,7 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 	}
 
 	private void copyDragNodeToNode(GTreeNode fromNode, GTreeNode toNode) throws Exception {
-		copyDragNodeToNode(fromNode, toNode, BATCH_MODE);
+		copyDragNodeToNode(fromNode, toNode, false);
 	}
 
 	private void copyDragNodeToNode(GTreeNode fromNode, GTreeNode toNode, boolean promptToAssociate)
