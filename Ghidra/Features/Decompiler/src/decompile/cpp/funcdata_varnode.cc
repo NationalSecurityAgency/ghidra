@@ -913,6 +913,7 @@ void Funcdata::calcNZMask(void)
       }
       // Traverse edge indicated by slot
       Varnode *vn = node.op->getIn(oldslot);
+      if (vn == (Varnode *)0) continue;
       if (!vn->isWritten()) {
 	if (vn->isConstant())
 	  vn->nzm = vn->getOffset();
