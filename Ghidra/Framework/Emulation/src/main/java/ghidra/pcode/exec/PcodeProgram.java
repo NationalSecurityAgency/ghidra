@@ -140,7 +140,7 @@ public class PcodeProgram {
 			throw new IllegalArgumentException("Instruction must be parsed using Sleigh");
 		}
 		PcodeOp[] pcode = instruction.getPcode(includeOverrides);
-		return new PcodeProgram(slang, List.of(pcode), PcodeUseropSymbolMap.EMPTY);
+		return new PcodeProgram(slang, List.of(pcode), PcodeUseropSymbolMap.empty(slang));
 	}
 
 	/**
@@ -162,8 +162,8 @@ public class PcodeProgram {
 		InjectContext ctx = library.buildInjectContext();
 		InjectPayload payload = library.getPayload(type, name);
 		PcodeOp[] pcode = payload.getPcode(program, ctx);
-		return new PcodeProgram((SleighLanguage) program.getLanguage(), List.of(pcode),
-			PcodeUseropSymbolMap.EMPTY);
+		SleighLanguage language = (SleighLanguage) program.getLanguage();
+		return new PcodeProgram(language, List.of(pcode), PcodeUseropSymbolMap.empty(language));
 	}
 
 	protected final SleighLanguage language;
