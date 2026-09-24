@@ -45,6 +45,7 @@ public class VTMatchTableModel extends AbstractVTMatchTableModel {
 		descriptor.addVisibleColumn(new MatchTypeTableColumn());
 		descriptor.addVisibleColumn(new ScoreTableColumn());
 		descriptor.addVisibleColumn(new ConfidenceScoreTableColumn());
+		descriptor.addVisibleColumn(new BulkBBSimilarityTableColumn());
 		descriptor.addVisibleColumn(new ImpliedMatchCountColumn());
 		descriptor.addVisibleColumn(new RelatedMatchCountColumn());
 		descriptor.addVisibleColumn(new MultipleSourceLabelsTableColumn());

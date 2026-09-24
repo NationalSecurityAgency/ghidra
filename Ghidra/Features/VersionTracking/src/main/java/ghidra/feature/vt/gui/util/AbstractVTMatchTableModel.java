@@ -508,6 +508,70 @@ public abstract class AbstractVTMatchTableModel extends AddressBasedTableModel<V
 		}
 	}
 
+	// Bulk Basic Block Similarity — reads the precomputed PDiff score from the DB.
+	// Previously this column computed hashes on-the-fly for every render; now it just
+	// reads the stored value, making table scrolling and sorting instant.
+	public static class BulkBBSimilarityTableColumn
+			extends AbstractProgramBasedDynamicTableColumn<VTMatch, VTScore> {
+
+		@Override
+		public String getColumnName() {
+			return "Similarity";
+		}
+
+		@Override
+		public String getColumnDescription() {
+			return "Similarity - basic block mnemonic similarity between matched functions";
+		}
+
+		/** Returns the precomputed PDiff score, or null (renders as "N/A") for DATA matches. */
+		@Override
+		public VTScore getValue(VTMatch rowObject, Settings settings, Program program,
+				ServiceProvider serviceProvider) throws IllegalArgumentException {
+			return rowObject.getPdiffSimilarityScore();
+		}
+
+		@Override
+		public int getColumnPreferredWidth() {
+			return 55;
+		}
+
+		private GColumnRenderer<VTScore> renderer = new AbstractGColumnRenderer<>() {
+			@Override
+			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+
+				JLabel label = (JLabel) super.getTableCellRendererComponent(data);
+
+				Object value = data.getValue();
+
+				VTScore score = (VTScore) value;
+				if (score == null) {
+					label.setText("N/A");
+				}
+				else {
+					label.setText(score.getFormattedScore());
+				}
+
+				label.setOpaque(true);
+
+				return label;
+			}
+
+			@Override
+			public String getFilterString(VTScore t, Settings settings) {
+				if (t == null) {
+					return "N/A";
+				}
+				return t.getFormattedScore();
+			}
+		};
+
+		@Override
+		public GColumnRenderer<VTScore> getColumnRenderer() {
+			return renderer;
+		}
+	}
+
 	// Multiple Source Labels Indicator
 	public static class MultipleSourceLabelsTableColumn
 			extends AbstractProgramBasedDynamicTableColumn<VTMatch, Symbol[]> {
