@@ -1,7 +1,7 @@
 # Ghidra 12.2 Change History (September 2026)
 
 ### New Features
-* _Assembler_. Added multi-line assembly action. Patch actions now `go-to` the following address upon completion. Added __Assembly Code__ to __Copy Special__ action. (GP-6902)
+* _Assembler_. Added multi-line assembly action. Patch actions now `go-to` the following address upon completion. Added __Copy Special -> Assembly Code__ action. (GP-6902)
 * _Debugger_. Added `GTreeTable`. Added `BreakpointTimelineActions` for quickly navigating snaps in a trace. Added `TraceCallTreePlugin` for viewing a call tree of the given trace. Added `TenetPlusPlusLoader` for ingesting Tenet++ trace files. (GP-5893)
 * _Debugger_. Added a __Variables Viewer__ view to the Debugger. (GP-5894)
 * _Debugger_. Added a Tenet++ pin tracing tool. (GP-7021)
@@ -32,7 +32,7 @@
 * _CParser_. Added C23 enum types and packing attribute support to the C Parser. (GP-6304, Issue #4518, #6780, #8202, #8495, #8539)
 * _Data Types_. Added a Structure Editor action to jump to a specified offset. (GP-5253)
 * _Data Types_. Created an interactive structure merge dialog that is used by the merge datatypes action when the datatypes are a structure type. The dialog will eventually be used in other situations where the merging of structures is needed. (GP-6453)
-* _Data Types_. Added additional BuiltIn integer datatypes in support of C99 standard types: `int8_t`, `uint8_t`, `int16_t`, `uint16_t`, `int64_t`, `uint64_t`, `intptr_t`, `uintptr_t`.  Updated CParser, PDB and DWARF to leverage these new BuiltIn datatypes for these as well as related typedefs for improved portability across target architectures. (GP-6846)
+* _Data Types_. Added additional BuiltIn integer datatypes in support of C99 standard types: `int8_t`, `uint8_t`, `int16_t`, `uint16_t`, `int64_t`, `uint64_t`, `intptr_t`, and `uintptr_t`.  Updated CParser, PDB, and DWARF to leverage these new BuiltIn datatypes for these as well as related typedefs for improved portability across target architectures. (GP-6846)
 * _Data Types_. Added Structure Editor actions to jump to the next row with defined data. (GP-7075, Issue #9376)
 * _Data Types_. Added a Refresh action to the Data Type Compare window. (GP-7200, Issue #9502)
 * _Debugger_. Added a __Save Trace As__ action. (GP-6782)
@@ -40,7 +40,7 @@
 * _Debugger_. Added help for `BreakpointTimelinePlugin`. (GP-6990)
 * _Debugger_. Added help menu docs for `TraceCallTreePlugin`. (GP-6992)
 * _Debugger_. Added help docs for `DebuggerVariableViewerPlugin`. (GP-6993)
-* _Debugger_. Adds a DAP server for access to debuggers. (GP-7009)
+* _Debugger_. Added a DAP server for access to debuggers. (GP-7009)
 * _Debugger_. Added support for OpenBSD debuggers. (GP-7047, Issue #9338)
 * _Debugger:Agents_. Added a `typeCheckPyPackage` task to run `mypy`. (GP-6744)
 * _Debugger:Breakpoints_. Addressed a rare issue with stale breakpoints causing _"File is closed"_ errors. (GP-6396, Issue #8904)
@@ -99,7 +99,7 @@
 ### Bugs
 * _Analysis_. Changed `OperandReferenceAnalyzer` to recognize all forms of undefined data types, including arrays of undefined data created by the ELF importer. (GP-7084, Issue #9401)
 * _Analysis_. Fixed Address Table Analyzer to create tables on arrays of undefined bytes/words. (GP-7090, Issue #9407)
-* _Analysis_. Fixed issue where `setMinStoreLoadOffset` was assigning the wrong field in `ConstantPropagationContextEvaluator`. (GP-7150, Issue #9513)
+* _Analysis_. Fixed an issue where `setMinStoreLoadOffset` was assigning the wrong field in `ConstantPropagationContextEvaluator`. (GP-7150, Issue #9513)
 * _Analysis_. Fix signedness of SymbolicPropogator constant folds for `INT_RIGHT`, `INT_SRIGHT`, `INT_DIV`, and `INT_REM` pcode op evaluation. (GP-7151, Issue #9516)
 * _Basic Infrastructure_. Improved path-traversal vulnerabillity checking. (GP-7132, Issue #9482)
 * _Basic Infrastructure_. Improved the security of unzipping theme and extension archives, preventing "zip-bomb"-style attacks. (GP-7206)
@@ -109,13 +109,14 @@
 * _CParser_. Removed unnecessary `-DSTRSAFE_LIB` and `-DSTRSAFE_LIB_IMPL` from Windows C-Header parsing configuration files. (GP-6555, Issue #4749)
 * _CParser_. Fixed a java stack trace in the PreProcessor when parsing a degenerate `#define`. (GP-6556, Issue #5884, #6701, #6702)
 * _Data Types_. Updated the __Export C Header...__ action to avoid a potential infinite loop with a large number of composites. (GP-6801, Issue #9161)
+* _Data Types_. Corrected data type merge conflict handling that was presenting the _"Expected bad datatype placeholder"_ error. (GP-7307, Issue #9370, #9659)
 * _Debugger_. Fixed a broken drag-and-drop action in the Dynamic Listing. (GP-6107)
 * _Debugger_. Fixed reliability issue with __Save Trace By Default__ (related to garbage-collection of listeners occurring on Windows). (GP-6582)
 * _Debugger_. Navigating to a snapshot now generally also navigates to its event thread. (GP-6603)
 * _Debugger_. Fixed autosetup logic for Windows agents. (GP-6966)
-* _Debugger:GDB_. Fixed issue with some configurations of gdb-17.2 involving `unavailable` register values. (GP-6974, Issue #9254)
+* _Debugger:GDB_. Fixed an issue with some configurations of gdb-17.2 involving `unavailable` register values. (GP-6974, Issue #9254)
 * _Debugger:Listing_. Fixed issues with Variable hovers in the Listing and Decompiler. (GP-4914)
-* _Debugger:Modules_. Fixed hang on Debugger startup / server connection caused by module indexing on the Swing thread. This is now a background task. (GP-7004, Issue #8145, #8910, #9299)
+* _Debugger:Modules_. Fixed hang that occurred on Debugger startup / server connection caused by module indexing on the Swing thread. This is now a background task. (GP-7004, Issue #8145, #8910, #9299)
 * _Debugger:Stack_. Fixed an issue where unwind analysis got stuck interpreting `TZCNT` or other instructions with internal p-code loops. (GP-6707)
 * _Debugger:Time_. Background filtering and sorting is now used for the Debugger's Snapshot/Time table. (GP-6607)
 * _Debugger:Trace_. Fixed a bug in DebuggerBreakpointsProvider that was causing BreakpointLocations to not be removed from the table. (GP-6439)
@@ -123,15 +124,19 @@
 * _Debugger:Trace_. Fixed several issues in R*-Tree and Snapshot indices to speed up Debugger UI when populated with extremely large traces. (GP-6550)
 * _Decompiler_. Fixed a highlight bug in the Decompiler's snapshot that was introduced in 12.0.5/12.1. (GP-6751)
 * _Decompiler_. Added a limit to the number of _"bad data"_ exceptions the Decompiler can catch before aborting the function. (GP-6945, Issue #9086)
-* _Decompiler_. Fixed regression where the Decompiler did not recover function pointer names for ARM/THUMB code. (GP-6979, Issue #8471, #8990)
+* _Decompiler_. Fixed a regression where the Decompiler did not recover function pointer names for ARM/THUMB code. (GP-6979, Issue #8471, #8990)
 * _Decompiler_. Fixed a bug causing a _"Conditional execution: Illegal op in iblock"_ exception. (GP-7058, Issue #9282)
 * _Decompiler_. Fixed a symbol resolution bug in the Decompiler, eliminating tokens similar to `stack0xffffffffffffff30`. (GP-7080, Issue #6722)
 * _Documentation_. Fixed broken links and examples in GhidraDocs. (GP-7091, Issue #9366)
 * _DWARF_. Fixed an issue with reading DWARF v5 indirect-indexed addresses in golang 1.25+ binaries. (GP-7204)
+* _DWARF_. Now preventing the dereferencing of sym-linked DWARF debug files found in the same directory that a binary was imported from. (GP-7242)
+* _FileSystems_. The squashfs inode table is now limited to a sane, max size when reading. (GP-7232)
+* _FileSystems_. The number of files that will be indexed when opening a file system container is now limited to a max size. (GP-7239)
+* _FileSystems_. Added validation for FSRL MD5 values being read. (GP-7241)
 * _Function_. The function editor now applies storage assignment rules specific to varargs functions (when appropriate). (GP-6776, Issue #9091, #9101)
 * _GhidraURL_. Corrected issues related to '+' character presence in local project path/name or in project content pathnames. (GP-7043, Issue #9373)
 * _Graphing_. Fixed the broken append graph option. (GP-6761)
-* _GUI_. Fixed a minor listing selection display bug where inter-field selections were selecting areas below the line containing the selection. (GP-6522)
+* _GUI_. Fixed a minor Listing selection display bug where inter-field selections were selecting areas below the line containing the selection. (GP-6522)
 * _GUI_. Fixed a Symbol Tree bug related to group nodes that prevented new namespaces and classes from being correctly added to the tree. (GP-6606, Issue #9054)
 * _GUI_. Fixed a bug in GTab panel that was leaving an orphaned, highlighted tab. (GP-6760)
 * _GUI_. Added a theming fix to allow FlatLaf border colors to be changed. (GP-6828, Issue #9178)
@@ -142,6 +147,7 @@
 * _Importer_. The Batch Importer now allows any language/compiler spec to be chosen, not just preferred languages. (GP-6732, Issue #1934)
 * _Importer_. Fixed a bug that caused PE and NE binaries to match on the `MzLoader`. (GP-6991)
 * _Importer_. Corrected incorrect symbol placement by the `UnixAoutLoader`. (GP-7284, Issue #9646)
+* _Importer_. The `ProgramLoader` and `ImportBatchTask` now properly validate loader options. (GP-7298, Issue #9658)
 * _Importer:ELF_. Corrected ELF import to respect Program Header `PT_LOAD` execute permission when Section Headers are present. (GP-7283, Issue #9644)
 * _Importer:PE_. The PeLoader now rounds `PointerToRawData` down to the proper address. (GP-7036, Issue #9170, #9176)
 * _Logging_. Added default log file values to prevent bad log files from getting created during testing. (GP-7142, Issue #9468)
@@ -150,11 +156,12 @@
 * _Terminal_. Fixed an issue with Terminal content updates by now using Unicode code point instead of java characters. (GP-6938)
 
 ### Notable API Changes
-* _API_. (GP-6539) In the `ghidra.util.datastruct` package, we changed the Accumulator interface to be write-only.  For clients that create their own accumulators to read data when processing is finished, they can use ListAccumulator or SetAccumulator, both of which have methods for retrieving the data added to the accumulator.  Any clients that wish to implement the Accumulator interface should make sure that the implementation is thread-safe. The Accumulator interface's `size()` method was replaced with `getProgress()`.
+* _API_. (GP-6539) In the `ghidra.util.datastruct` package, the Accumulator interface was changed to be write-only.  For clients that create their own accumulators to read data when processing is finished, they can use ListAccumulator or SetAccumulator, both of which have methods for retrieving the data added to the accumulator.  Any clients that wish to implement the Accumulator interface should make sure that the implementation is thread-safe. The Accumulator interface's `size()` method was replaced with `getProgress()`.
 * _Assembler_. (GP-6902) `AssemblyBuffer` now attends to context changes. Added `AssemblyParseSymbolToken` to distinguish literal ints from labels. Added `AssemblyPatternBlock.toRegisterValue`. Corrected spelling of `ReDisassembler.disassemble` method. Various other GUI action-related code for patching.
 * _Basic Infrastructure_. (GP-7104) Removed classes and methods that have been deprecated since Ghidra 10.x and before.
 * _BSim_. (GP-6041) The static method `BSimServerManager.getBSimServerManager()` is now public. Some methods in `BSimServerManager` were only able to be invoked on the Swing thread; this restriction has been removed.
 * _Data Types_. (GP-6846) Added the following BuiltIn integer datatypes in support of C99 standard: `Int8TDataType`, `UInt8TDataType`, `Int16TDataType`, `UInt16TDataType`, `Int64TDataType`, `UInt64TDataType`, `PointerSizedIntegerDataType`, `UnsignedPointerSizedIntegerDataType`.  Added utility method `DataTypeUtilities.getTypedefReplacement` to assist parsers with the conversion of related typedefs to leverage certain BuiltIn datatypes for improved portability across target architectures.
+* _Data Types_. (GP-7307) Added method `Structure.getDefinedComponent(int index)`.
 * _Debugger_. (GP-6680) Created `DebuggerStaticMappingContext`, by factoring logic from the static mapping service, making mapper logic accessible in headless scripts.
 * _Debugger_. (GP-6782) Added `DebuggerTraceManagerService.saveTraceAs()`.
 * _Debugger:Agents_. (GP-4562) Connector developers should now compose their schemas from provided fragments at build time.
