@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Fairchild F8 - Generic Processor Specification
+
+    Minimal pspec for unknown or generic F8-family firmware.
+    Only defines RESET vector and CPU ports.
+
+    For specific variants with correct interrupt vectors, use:
+    - MK3870.pspec: Timer ($020) + External ($0A0) vectors
+    - MK3873.pspec: Timer + Serial RX ($060) + External + Serial TX ($0E0)
+    - F3850.pspec:  Multi-chip with programmable vectors
+-->
+<processor_spec>
+
+    <programcounter register="PC0"/>
+
+    <volatile outputop="OUT" inputop="IN">
+        <range space="io" first="0x0" last="0xFF"/>
+    </volatile>
+
+    <default_symbols>
+        <!-- Reset vector - the only universally fixed entry point -->
+        <symbol name="RESET" address="ram:0x0000" entry="true"/>
+
+        <!-- CPU I/O ports (common to all F8 variants) -->
+        <symbol name="PORT0" address="io:0x00"/>
+        <symbol name="PORT1" address="io:0x01"/>
+    </default_symbols>
+
+</processor_spec>
