@@ -24,8 +24,8 @@ import db.util.ErrorHandler;
 import ghidra.framework.data.OpenMode;
 import ghidra.framework.model.RuntimeIOException;
 import ghidra.program.database.DBStringMapAdapter;
-import ghidra.program.database.dtarchive.DataTypeStoreDBModule;
 import ghidra.program.database.dtarchive.DataTypeArchiveDB;
+import ghidra.program.database.dtarchive.DataTypeStoreDBModule;
 import ghidra.program.model.data.*;
 import ghidra.program.model.dtarchive.DataTypeArchive;
 import ghidra.program.model.lang.LanguageVersionException;
@@ -325,8 +325,9 @@ public abstract class ArchiveDataTypeManagerDB extends DataTypeManagerDB
 	}
 
 	@Override
-	protected void dataTypeDeleted(long deletedID, DataTypePath deletedDataTypePath) {
-		super.dataTypeDeleted(deletedID, deletedDataTypePath);
+	protected void dataTypeDeleted(long deletedID, DataType dataType) {
+		super.dataTypeDeleted(deletedID, dataType);
+		DataTypePath deletedDataTypePath = dataType.getDataTypePath();
 		archive.dataTypeChanged(deletedID, ProgramEvent.DATA_TYPE_REMOVED, false,
 			deletedDataTypePath, null);
 	}
