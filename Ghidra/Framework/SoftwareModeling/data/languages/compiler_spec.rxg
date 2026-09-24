@@ -556,6 +556,21 @@
       </element>
 
       <!--
+          farpointerjoin declares that two adjacent input pentries (identified
+          by hislot, the 0-based index of the more-significant piece) should be
+          fused by the decompiler into a single joined pointer value of total
+          size joinsize bytes, for calling conventions where two independently-
+          bound stack arguments are combined only by the callee's own opaque
+          convention, with no caller-side dataflow to detect the join.
+      -->
+      <optional>
+        <element name="farpointerjoin">
+          <attribute name="hislot"/>
+          <attribute name="joinsize"/>
+        </element>
+      </optional>
+
+      <!--
           returnaddress describes where the return address is stored upon entry to
           a function with this prototype.
       -->
