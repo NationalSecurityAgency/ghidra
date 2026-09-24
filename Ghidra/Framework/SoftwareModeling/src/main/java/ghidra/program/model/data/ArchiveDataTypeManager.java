@@ -42,7 +42,7 @@ public interface ArchiveDataTypeManager extends DataTypeManager {
 	 * @return path name or null if not applicable
 	 * @deprecated use {@link DataTypeStore#getPath()} instead. (After calling getDataStore())
 	 */
-	@Deprecated(since = "12.2", forRemoval = true)
+	@Deprecated(since = "12.3", forRemoval = true)
 	public default String getPath() {
 		return null;
 	}
@@ -70,7 +70,7 @@ public interface ArchiveDataTypeManager extends DataTypeManager {
 	 * @deprecated use {@link PersistentDataTypeArchive#setProgramArchitecture(Language, CompilerSpecID, LanguageUpdateOption, TaskMonitor)}
 	 * on the associated archive.
 	 */
-	@Deprecated(since = "12.2", forRemoval = true)
+	@Deprecated(since = "12.3", forRemoval = true)
 	public default void setProgramArchitecture(Language language, CompilerSpecID compilerSpecId,
 			LanguageUpdateOption updateOption, TaskMonitor monitor)
 			throws CompilerSpecNotFoundException, LanguageNotFoundException, IOException,

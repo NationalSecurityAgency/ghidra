@@ -274,7 +274,7 @@ public class CParserUtils {
 	 *
 	 * @deprecated Use {@link #parseHeaderFiles(String[], String[], String[],String, DataTypeManager[], TaskMonitor)} instead.
 	 */
-	@Deprecated(since = "12.2", forRemoval = true)
+	@Deprecated(since = "12.3", forRemoval = true)
 	public static FileDataTypeManager parseHeaderFiles(DataTypeManager[] openDTMgrs,
 			String[] filenames, String[] args, String dataFileName,
 			TaskMonitor monitor) throws ghidra.app.util.cparser.C.ParseException,
@@ -356,7 +356,7 @@ public class CParserUtils {
 	 *
 	 * @deprecated Use {@link #parseHeaderFiles(String[], String[], String[],String, DataTypeManager[], TaskMonitor)} instead.
 	 */
-	@Deprecated(since = "12.2", forRemoval = true)
+	@Deprecated(since = "12.3", forRemoval = true)
 	public static FileDataTypeManager parseHeaderFiles(DataTypeManager[] openDTMgrs,
 			String[] filenames, String[] includePaths, String[] args, String dataFileName,
 			TaskMonitor monitor) throws ghidra.app.util.cparser.C.ParseException,
@@ -445,7 +445,7 @@ public class CParserUtils {
 	 * @throws IOException    if there io are errors saving the archive
 	 * @deprecated Use {@link #parseHeaderFiles(String[], String[], String[], String, String, String, DataTypeManager[], Object,TaskMonitor)} instead.
 	 */
-	@Deprecated(since = "12.2", forRemoval = true)
+	@Deprecated(since = "12.3", forRemoval = true)
 	public static FileDataTypeManager parseHeaderFiles(DataTypeManager[] openDTMgrs,
 			String[] filenames, String[] includePaths, String[] args, String dataFileName,
 			String languageId, String compileSpecId, TaskMonitor monitor)

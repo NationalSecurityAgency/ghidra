@@ -23,7 +23,7 @@ import ghidra.program.model.data.FileDataTypeManager;
  * can specifically look for DefaultConsumer and safely close them. This class can be removed
  * when the deprecated FileDataTypeManager interface is deleted.
  */
-@Deprecated(since = "12.2", forRemoval = true)
+@Deprecated(since = "12.3", forRemoval = true)
 public class DefaultConsumer {
 	// marker class
 }
