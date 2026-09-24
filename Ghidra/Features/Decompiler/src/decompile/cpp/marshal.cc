@@ -648,7 +648,7 @@ void PackedDecode::skipAttribute(void)
   uint1 attribType = typeByte >> TYPECODE_SHIFT;
   if (attribType == TYPECODE_BOOLEAN || attribType == TYPECODE_SPECIALSPACE)
     return;				// has no additional data
-  uint4 length = readLengthCode(typeByte);	// Length of data in bytes
+  uint8 length = readLengthCode(typeByte);	// Length of data in bytes
   if (attribType == TYPECODE_STRING) {
     length = readInteger(length);	// Read length field to get final length of string
   }
@@ -664,7 +664,7 @@ void PackedDecode::skipAttributeRemaining(uint1 typeByte)
   uint1 attribType = typeByte >> TYPECODE_SHIFT;
   if (attribType == TYPECODE_BOOLEAN || attribType == TYPECODE_SPECIALSPACE)
     return;				// has no additional data
-  uint4 length = readLengthCode(typeByte);	// Length of data in bytes
+  uint8 length = readLengthCode(typeByte);	// Length of data in bytes
   if (attribType == TYPECODE_STRING) {
     length = readInteger(length);	// Read length field to get final length of string
   }

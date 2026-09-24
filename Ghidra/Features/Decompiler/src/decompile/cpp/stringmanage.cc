@@ -40,7 +40,7 @@ bool StringManager::writeUnicode(ostream &s,const uint1 *buffer,int4 size,int4 c
   int4 count=0;
   int4 skip = charsize;
   while(i<size) {
-    int4 codepoint = getCodepoint(buffer+i,charsize,bigend,skip);
+    int4 codepoint = getCodepoint(buffer+i,size-i,charsize,bigend,skip);
     if (codepoint < 0) return false;
     if (codepoint == 0) break;		// Terminator
     writeUtf8(s, codepoint);
@@ -329,7 +329,7 @@ int4 StringManager::checkCharacters(const uint1 *buf,int4 size,int4 charsize,boo
   int4 count=0;
   int4 skip = charsize;
   while(i<size) {
-    int4 codepoint = getCodepoint(buf+i,charsize,bigend,skip);
+    int4 codepoint = getCodepoint(buf+i,size-i,charsize,bigend,skip);
     if (codepoint < 0) return -1;
     if (codepoint == 0) break;
     count += 1;
@@ -340,19 +340,23 @@ int4 StringManager::checkCharacters(const uint1 *buf,int4 size,int4 charsize,boo
 
 /// One or more bytes is consumed from the array, and the number of bytes used is passed back.
 /// \param buf is a pointer to the bytes in the character array
+/// \param len is the number of bytes in the array
 /// \param charsize is 1 for UTF8, 2 for UTF16, or 4 for UTF32
 /// \param bigend is \b true for big endian encoding of the UTF element
 /// \param skip is a reference for passing back the number of bytes consumed
 /// \return the codepoint or -1 if the encoding is invalid
-int4 StringManager::getCodepoint(const uint1 *buf,int4 charsize,bool bigend,int4 &skip)
+int4 StringManager::getCodepoint(const uint1 *buf,int4 len,int4 charsize,bool bigend,int4 &skip)
 
 {
+  if (len < charsize)
+    return -1;
   int4 codepoint;
   int4 sk = 0;
   if (charsize==2) {		// UTF-16
     codepoint = readUtf16(buf,bigend);
     sk += 2;
     if ((codepoint>=0xD800)&&(codepoint<=0xDBFF)) { // high surrogate
+      if (len < 4) return -1;
       int4 trail=readUtf16(buf+2,bigend);
       sk += 2;
       if ((trail<0xDC00)||(trail>0xDFFF)) return -1; // Bad trail
@@ -367,12 +371,14 @@ int4 StringManager::getCodepoint(const uint1 *buf,int4 charsize,bool bigend,int4
       sk = 1;
     }
     else if ((val&0xe0)==0xc0) {
+      if (len < 2) return -1;
       int4 val2 = buf[1];
       sk = 2;
       if ((val2&0xc0)!=0x80) return -1; // Not a valid UTF8-encoding
       codepoint = ((val&0x1f)<<6) | (val2 & 0x3f);
     }
     else if ((val&0xf0)==0xe0) {
+      if (len < 3) return -1;
       int4 val2 = buf[1];
       int4 val3 = buf[2];
       sk = 3;
@@ -380,6 +386,7 @@ int4 StringManager::getCodepoint(const uint1 *buf,int4 charsize,bool bigend,int4
       codepoint = ((val&0xf)<<12) | ((val2&0x3f)<<6) | (val3 & 0x3f);
     }
     else if ((val&0xf8)==0xf0) {
+      if (len < 4) return -1;
       int4 val2 = buf[1];
       int4 val3 = buf[2];
       int4 val4 = buf[3];
