@@ -1,0 +1,75 @@
+# unofficial Intel 8085 opcodes, described at https://shop-pdp.net/ashtml/as8085.htm
+
+# double subtraction
+:DSUB HL,BC		is op0_8=0x08 & HL & BC {
+	setSubtractFlags(HL,BC);
+	HL = HL - BC;
+	setResultFlags(HL);
+}
+
+# arithmetic shift of H and L to the right
+:ARHL	is op0_8=0x10 {
+    #(H7=H7);(Hn-1)=(Hn)
+    #(L7=H0);(Ln-1)=(Ln);(CY)=(L0)	
+	CY_flag = HL:1 & 0x01;
+	HL = HL s>> 1;
+}
+
+# rotate D and E left through carry
+:RDEL 	is op0_8=0x18 {
+	#(Dn+1)=(Dn);(D0)=(E7)
+	#(CY)=(D7);(En+1)=(En);(E0)=(CY)
+	local carry = DE >> 15;
+	DE = (DE << 1) | carry;
+	CY_flag = carry:1;
+}
+
+# load D and E with H and L plus immediate byte
+:LDHI DE, (HL, imm8)	is op0_8=0x28 & DE & HL ; imm8 {
+	# (D)(E)=((H)(L)+(byte 2)
+	local ptr:2 = HL + imm8;
+	DE = *:2 ptr;
+}
+
+# load D and E with SP plus immediate byte
+:LDSI DE, (SP, imm8)	is op0_8=0x38 & DE & SP ; imm8 {
+	# TODO there is some confusion in documentation
+	local ptr:2 = SP + imm8;
+	DE = *:2 ptr;
+}
+
+# restart on overflow
+:RSTV	is op0_8=0xCB {
+	# TODO
+	# if (V):
+	#   ((SP)-1))=(PCH)
+	#   ((SP)-2))=(PCL)
+	#   (SP)=(SP)-2
+	#   (PC)=40 hex
+}
+
+# store H and L indirect through D and E
+:SHLX HL, (DE)	is op0_8=0xD9 & HL & DE {
+	ptr:2 = DE;
+	*:2 ptr = HL;
+}
+
+# load H and L indirect through D and E
+:LHLX HL, (DE)	is op0_8=0xED & HL & DE {
+	ptr:2 = DE;
+	HL = *:2 ptr;
+}
+
+# jump on not X5
+:JNX5 Addr16	is op0_8=0xDD ; Addr16 {
+	# TODO
+	# if (not X5)
+	#    (PC)=(byte 3)(byte 2)
+}
+
+# jump on X5
+:JX5 Addr16		is op0_8=0xFD ; Addr16 {
+	# TODO
+	# if (X5)
+	#    (PC)=(byte 3)(byte 2)
+}
