@@ -34,21 +34,22 @@ import ghidra.util.WebColors;
 import ghidra.util.exception.AssertException;
 
 /**
- * Base class for labels that render html using a custom rendering kit.
+ * Base class for labels that render HTML using a custom rendering kit.
  * <p>
  * This implementation uses custom html rendering.  This custom rendering allows for basic
- * formatting while eliminating potentially unsafe html tags.  If for some reason this custom
+ * formatting while eliminating potentially unsafe HTML tags.  If for some reason this custom
  * rendering is deficient, clients can instead use a standard Java {@link JLabel}.
  * <p>
- * Clients do not need to prefix label text with "&lt;html&gt;", as is required for a standard
- * JLabel.
+ * This abstract class supports rendering as HTML or non-HTML text.  The text set on this label 
+ * must include the "&lt;html&gt;" prefix to be rendered as html.  See subclasses for expected 
+ * usage.
  */
 public abstract class AbstractHtmlLabel extends JLabel
 		implements GComponent, PropertyChangeListener {
 
 	private static final String HTML_TAG = "<html>";
 	private boolean isUpdating;
-	private boolean expectsHtmlPrefix;
+	private boolean isHtml;
 
 	protected AbstractHtmlLabel() {
 		addPropertyChangeListener(this);
@@ -65,10 +66,10 @@ public abstract class AbstractHtmlLabel extends JLabel
 		// do not pass <html> up to the parent so that it does not install its own html rendering
 		if (text != null && text.toLowerCase().startsWith(HTML_TAG)) {
 			text = text.substring(HTML_TAG.length());
-			expectsHtmlPrefix = true;
+			isHtml = true;
 		}
 		else {
-			expectsHtmlPrefix = false;
+			isHtml = false;
 		}
 
 		super.setText(text);
@@ -85,7 +86,7 @@ public abstract class AbstractHtmlLabel extends JLabel
 	 * @return text of this label
 	 */
 	public String getOriginalText() {
-		return expectsHtmlPrefix ? HTML_TAG + getText() : getText();
+		return isHtml ? HTML_TAG + getText() : getText();
 	}
 
 	@Override
@@ -97,7 +98,7 @@ public abstract class AbstractHtmlLabel extends JLabel
 	private void updateHtmlView() {
 
 		String text = getText();
-		if (text == null || !isHTMLRenderingEnabled()) {
+		if (text == null || !isHtml || !isHTMLRenderingEnabled()) {
 			putClientProperty(BasicHTML.propertyKey, null);
 			return;
 		}
