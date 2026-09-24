@@ -192,17 +192,20 @@ public:
 /// 
 /// The decompiler can describe a logical value that is stored split across multiple
 /// physical memory locations.  This record describes such a split. The pieces must be listed
-/// from \e most \e significant to \e least \e significant.
+/// from \e most \e significant to \e least \e significant.  Pieces can be any addressable region in the
+/// processor model. Internally a zero constant with size represents formal padding (to model structures
+/// with aligned fields that are passed in registers).
 class JoinRecord {
   friend class AddrSpaceManager;
   vector<VarnodeData> pieces;	///< All the physical pieces of the symbol, most significant to least
   VarnodeData unified; ///< Special entry representing entire symbol in one chunk
 public:
   int4 numPieces(void) const { return pieces.size(); }	///< Get number of pieces in this record
-  bool isFloatExtension(void) const { return (pieces.size() == 1); }	///< Does this record extend a float varnode
+  bool isFloatExtension(void) const { return pieces.size() == 1 && pieces[0].space->getType() != IPTR_CONSTANT; }	///< Does this record extend a float varnode
+  bool isPurePadding(void) const { return pieces.size() == 1 && pieces[0].space->getType() == IPTR_CONSTANT; }	///< Is \b this only padding
   const VarnodeData &getPiece(int4 i) const { return pieces[i]; }	///< Get the i-th piece
   const VarnodeData &getUnified(void) const { return unified; }		///< Get the Varnode whole
-  Address getEquivalentAddress(uintb offset,int4 &pos) const;	///< Given offset in \e join space, get equivalent address of piece
+  Address getEquivalentAddress(uintb offset,int4 &pos,int4 &trunc) const;	///< Given offset in \e join space, get equivalent address of piece
   bool operator<(const JoinRecord &op2) const; ///< Compare records lexigraphically by pieces
   static void mergeSequence(vector<VarnodeData> &seq,const Translate *trans);	///< Merge any contiguous ranges in a sequence
 };
@@ -272,6 +275,9 @@ public:
   AddrSpace *getNextSpaceInOrder(AddrSpace *spc) const; ///< Get the next \e contiguous address space
   JoinRecord *findAddJoin(const vector<VarnodeData> &pieces,uint4 logicalsize) const; ///< Get (or create) JoinRecord for \e pieces
   JoinRecord *findJoin(uintb offset) const; ///< Find JoinRecord for \e offset in the join space
+  Address joinPieces(vector<VarnodeData> &pieces,const Translate *trans) const;	///< Create an Address representing given \e pieces
+  set<JoinRecord *,JoinRecordCompare>::const_iterator beginJoinPadding(void) const;	///< Beginning of pure padding JoinRecords
+  set<JoinRecord *,JoinRecordCompare>::const_iterator endJoin(void) const { return splitset.end(); }	///< End of JoinRecord list
   void setDeadcodeDelay(AddrSpace *spc,int4 delaydelta); ///< Set the deadcodedelay for a specific space
   void truncateSpace(const TruncationTag &tag);	///< Mark a space as truncated from its original size
 

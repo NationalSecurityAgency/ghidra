@@ -467,13 +467,16 @@ JoinSpace::JoinSpace(AddrSpaceManager *m,const Translate *t,int4 ind)
 int4 JoinSpace::overlapJoin(uintb offset,int4 size,AddrSpace *pointSpace,uintb pointOffset,int4 pointSkip) const
 
 {
+
   if (this == pointSpace) {
-    // If the point is in the join space, translate the point into the piece address space
-    JoinRecord *pieceRecord = manage->findJoin(pointOffset);
-    int4 pos;
-    Address addr = pieceRecord->getEquivalentAddress(pointOffset + pointSkip, pos);
-    pointSpace = addr.getSpace();
-    pointOffset = addr.getOffset();
+    // If the point is in the join space, we can treat it as a normal overlap
+    pointOffset = pointSpace->wrapOffset(pointOffset + pointSkip);
+    if (pointOffset < offset)
+      return -1;
+    uintb diff = pointOffset - offset;
+    if (diff >= size)
+      return -1;
+    return (int4)diff;
   }
   else {
     if (pointSpace->getType() == IPTR_CONSTANT)
@@ -612,7 +615,10 @@ void JoinSpace::printRaw(ostream &s,uintb offset) const
     szsum += vdat.size;
     if (i!=0)
       s << ',';
-    vdat.space->printRaw(s,vdat.offset);
+    if (vdat.space->getType() == IPTR_CONSTANT)
+      s << "pad:" << dec << vdat.size;
+    else
+      vdat.printRaw(s);
   }
   if (num == 1) {
     szsum = rec->getUnified().size;

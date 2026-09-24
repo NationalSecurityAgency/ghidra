@@ -726,37 +726,6 @@ Address Varnode::getUsePoint(const Funcdata &fd) const
   //  return loc.getSpace()->getTrans()->constant(0);
 }
 
-/// Print to the stream either the name of the Varnode, such as a register name, if it exists
-/// or print a shortcut character representing the AddrSpace and a hex representation of the offset.
-/// This function also computes and returns the \e expected size of the identifier it prints
-/// to facilitate the printing of size modifiers by other print routines
-/// \param s is the output stream
-/// \return the expected size
-int4 Varnode::printRawNoMarkup(ostream &s) const
-
-{
-  AddrSpace *spc = loc.getSpace();
-  const Translate *trans = spc->getTrans();
-  string name;
-  int4 expect;
-
-  name = trans->getRegisterName(spc,loc.getOffset(),size);
-  if (name.size()!=0) {
-    const VarnodeData &point(trans->getRegister(name));
-    uintb off = loc.getOffset()-point.offset;
-    s << name;
-    expect = point.size;
-    if (off != 0)
-      s << '+' << dec << off;
-  }
-  else {
-    s << loc.getShortcut();	// Print type shortcut character
-    expect = trans->getDefaultSize();
-    loc.printRaw(s);
-  }
-  return expect;
-}
-
 /// Print textual information about this Varnode including a base identifier along with enough
 /// size and attribute information to uniquely identify the Varnode within a text SSA listing
 /// In particular, the identifiers have either "i" or defining op SeqNum information appended

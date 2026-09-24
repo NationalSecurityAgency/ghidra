@@ -430,7 +430,7 @@ void ScopeLocal::collectNameRecs(void)
 	    // If the "this" pointer points to a class, try to preserve the data-type
 	    // even though the symbol is not preserved.
 	    SymbolEntry *entry = sym->getFirstWholeMap();
-	    if (!entry->isDynamic())
+	    if (entry->isMapEntry())
 	      addTypeRecommendation(((MapEntry *)entry)->getAddr(), dt);
 	  }
 	}
@@ -1594,7 +1594,7 @@ SymbolEntry *ScopeLocal::remapSymbol(Symbol *sym,const Address &addr,const Addre
 {
   SymbolEntry *entry = sym->getFirstWholeMap();
   int4 size = entry->getSize();
-  if (!entry->isDynamic()) {
+  if (entry->isMapEntry()) {
     if (((MapEntry *)entry)->getAddr() == addr) {
       if (usepoint.isInvalid() && entry->getFirstUseAddress().isInvalid())
 	return entry;
@@ -1744,7 +1744,7 @@ void ScopeLocal::addRecommendName(Symbol *sym)
   if (entry->isDynamic()) {
     dynRecommend.emplace_back(entry->getFirstUseAddress(), ((DynamicEntry *)entry)->getHash(), sym->getName(), sym->getId());
   }
-  else {
+  else if (entry->isMapEntry()) {
     Address usepoint((AddrSpace *)0,0);
     if (!entry->getUseLimit().empty()) {
       const Range *range = entry->getUseLimit().getFirstRange();

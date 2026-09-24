@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import ghidra.program.database.SpecExtension;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.protorules.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.*;
 import ghidra.util.SystemUtilities;
@@ -46,6 +47,7 @@ public class PrototypeModel {
 	// due to call mechanism
 	private ParamList inputParams; // (possible) parameter locations
 	private ParamList outputParams;
+	private SharedAction[] sharedActions;
 	private Varnode[] unaffected;	// Memory ranges unaffected by calls
 	private Varnode[] killedbycall;	// Memory ranges definitely affected by calls
 	private Varnode[] returnaddress;	// Memory used to store the return address
@@ -78,6 +80,10 @@ public class PrototypeModel {
 		inputListType = model.inputListType;
 		inputParams = model.inputParams;
 		outputParams = model.outputParams;
+		sharedActions = new SharedAction[model.sharedActions.length];
+		for (int i = 0; i < sharedActions.length; ++i) {
+			sharedActions[i] = model.sharedActions[i].clone(this);
+		}
 		unaffected = model.unaffected;
 		killedbycall = model.killedbycall;
 		returnaddress = model.returnaddress;
@@ -99,6 +105,7 @@ public class PrototypeModel {
 		stackshift = -1;
 		inputParams = null;
 		outputParams = null;
+		sharedActions = null;
 		unaffected = null;
 		killedbycall = null;
 		returnaddress = null;
@@ -111,6 +118,20 @@ public class PrototypeModel {
 		isConstruct = false;
 		hasUponEntry = false;
 		hasUponReturn = false;
+	}
+
+	/**
+	 * @return object describing resources available for passing input parameters
+	 */
+	public ParamList getInputResource() {
+		return inputParams;
+	}
+
+	/**
+	 * @return object describing resources available for passing output parameters
+	 */
+	public ParamList getOutputResource() {
+		return outputParams;
 	}
 
 	/**
@@ -253,7 +274,8 @@ public class PrototypeModel {
 		DataType clone = dataType.clone(program.getDataTypeManager());
 		PrototypePieces proto = new PrototypePieces(this, clone);
 		ArrayList<ParameterPieces> res = new ArrayList<>();
-		outputParams.assignMap(proto, program.getDataTypeManager(), res, false);
+		int[] status = outputParams.allocateStatus();
+		outputParams.assignMap(proto, program.getDataTypeManager(), status, res, false);
 		if (res.size() > 0) {
 			return res.get(0).getVariableStorage(program);
 		}
@@ -365,21 +387,15 @@ public class PrototypeModel {
 	 */
 	public void assignParameterStorage(PrototypePieces proto, DataTypeManager dtManager,
 			ArrayList<ParameterPieces> res, boolean addAutoParams) {
-		outputParams.assignMap(proto, dtManager, res, addAutoParams);
-		inputParams.assignMap(proto, dtManager, res, addAutoParams);
-
-		if (hasThis && addAutoParams && res.size() > 1) {
-			int thisIndex = 1;
-			if (res.get(1).hiddenReturnPtr && res.size() > 2) {
-				if (inputParams.isThisBeforeRetPointer()) {
-					// pointer has been bumped by auto-return-storage
-					res.get(1).swapMarkup(res.get(2));	// must swap storage and position for slots 1 and 2
-				}
-				else {
-					thisIndex = 2;
-				}
-			}
-			res.get(thisIndex).isThisPointer = true;
+		int[] inputStatus = inputParams.allocateStatus();
+		int[] outputStatus = outputParams.allocateStatus();
+		outputParams.assignMap(proto, dtManager, outputStatus, res, addAutoParams);
+		for (SharedAction action : sharedActions) {
+			action.applyBefore(proto, dtManager, addAutoParams, res, inputStatus, outputStatus);
+		}
+		inputParams.assignMap(proto, dtManager, inputStatus, res, addAutoParams);
+		for (SharedAction action : sharedActions) {
+			action.applyAfter(proto, dtManager, addAutoParams, res, inputStatus, outputStatus);
 		}
 	}
 
@@ -476,7 +492,8 @@ public class PrototypeModel {
 		return false;
 	}
 
-	private void buildParamList(String strategy) throws XmlParseException {
+	private void buildParamList(String strategy)
+			throws XmlParseException {
 		if (strategy == null || strategy.equals("standard")) {
 			inputParams = new ParamListStandard();
 			outputParams = new ParamListStandardOut();
@@ -526,6 +543,9 @@ public class PrototypeModel {
 		}
 		inputParams.encode(encoder, true);
 		outputParams.encode(encoder, false);
+		for (SharedAction action : sharedActions) {
+			action.encode(encoder);
+		}
 		if (hasUponEntry || hasUponReturn) {
 			InjectPayload payload =
 				injectLibrary.getPayload(InjectPayload.CALLMECHANISM_TYPE, getInjectName());
@@ -693,7 +713,11 @@ public class PrototypeModel {
 			isConstruct = SpecXmlUtils.decodeBoolean(constructString);
 		}
 
+		ArrayList<SharedAction> actions = new ArrayList<>();
 		buildParamList(protoElement.getAttribute(ATTRIB_STRATEGY.name()));
+		if (inputParams instanceof ParamListStandard) {
+			actions.add(new HiddenReturnAction(this));
+		}
 		while (parser.peek().isStart()) {
 			XmlElement subel = parser.peek();
 			String elName = subel.getName();
@@ -737,12 +761,19 @@ public class PrototypeModel {
 			else if (elName.equals(ELEM_PARAMRANGE.name())) {
 				paramRange = readAddressSet(parser, cspec);
 			}
+			else if (elName.equals(ELEM_SHARESTACK.name())) {
+				ShareStackAction action = new ShareStackAction(this);
+				action.restoreXml(parser);
+				actions.add(action);
+			}
 			else {
 				subel = parser.start();
 				parser.discardSubTree(subel);
 			}
 		}
 		parser.end(protoElement);
+		sharedActions = new SharedAction[actions.size()];
+		actions.toArray(sharedActions);
 	}
 
 	/**
@@ -829,6 +860,13 @@ public class PrototypeModel {
 		}
 		if (!outputParams.isEquivalent(obj.outputParams)) {
 			return false;
+		}
+		if (sharedActions.length != obj.sharedActions.length) {
+			return false;
+		}
+		for (int i = 0; i < sharedActions.length; ++i) {
+			if (!sharedActions[i].isEquivalent(obj.sharedActions[i]))
+				return false;
 		}
 		if (!SystemUtilities.isArrayEqual(unaffected, obj.unaffected)) {
 			return false;

@@ -58,7 +58,7 @@ public class MultiSlotDualAssign extends AssignAction {
 	private void initializeEntries() throws InvalidInputException {
 		baseTiles = resource.extractTiles(baseType);
 		altTiles = resource.extractTiles(altType);
-		stackEntry = resource.extractStack();
+		stackEntry = resource.getStackEntry();
 		if (baseTiles.length == 0 || altTiles.length == 0) {
 			throw new InvalidInputException(
 				"Could not find matching resources for action: join_dual_class");
@@ -235,7 +235,7 @@ public class MultiSlotDualAssign extends AssignAction {
 	@Override
 	public int assignAddress(DataType dt, PrototypePieces proto, int pos, DataTypeManager dtManager,
 			int[] status, ParameterPieces res) {
-		PrimitiveExtractor primitives = new PrimitiveExtractor(dt, false, 0, 1024);
+		PrimitiveExtractor primitives = new PrimitiveExtractor(dt, false, false, 0, 1024);
 		if (!primitives.isValid() || primitives.size() == 0 || primitives.containsHoles()) {
 			return FAIL;
 		}

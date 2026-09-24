@@ -102,6 +102,8 @@ public class AbstractProtoModelTest extends AbstractGenericTest {
 			dtManager.addDataType(new Float16DataType(), null);
 			dtManager.addDataType(new Undefined4DataType(), null);
 			dtManager.addDataType(new Undefined8DataType(), null);
+			dtManager.addDataType(new BooleanDataType(), null);
+			dtManager.addDataType(new Int32TDataType(), null);
 		}
 		finally {
 			dtManager.endTransaction(txID, true);
@@ -166,6 +168,18 @@ public class AbstractProtoModelTest extends AbstractGenericTest {
 			parseJoin(name, res);
 			return res;
 		}
+		else if (name.startsWith("pad")) {
+			int pos = name.indexOf(':');
+			int size = 1;
+			if (pos != -1) {
+				String sizeString = name.substring(pos + 1);
+				size = Integer.parseInt(sizeString);
+			}
+			AddressSpace spc = cspec.getAddressSpace("const");
+			Varnode vn = new Varnode(spc.getAddress(0), size);
+			res.add(vn);
+			return res;
+		}
 		String regname;
 		int pos = name.indexOf(':');
 		int sz = 0;
@@ -204,7 +218,7 @@ public class AbstractProtoModelTest extends AbstractGenericTest {
 	protected void parseStores(ArrayList<ArrayList<Varnode>> res, String names) {
 		String[] split = names.split(",");
 		for (String el : split) {
-			ArrayList<Varnode> vnList = parseStore(el);
+			ArrayList<Varnode> vnList = parseStore(el.trim());
 			res.add(vnList);
 		}
 	}

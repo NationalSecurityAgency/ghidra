@@ -2591,7 +2591,7 @@ void SplitDatatype::buildOutConcats(Varnode *rootVn,PcodeOp *previousOp,vector<V
       if (i<=0) break;
       preOp = concatOp;
       int4 sz = vn->getSize() + outVarnodes[i]->getSize();
-      Address addr = outVarnodes[i]->getAddr();
+      Address addr = baseAddr + (rootVn->getSize() - sz);
       addr.renormalize(sz);
       vn = data.newVarnodeOut(sz,addr,concatOp);
       if (!addressTied)

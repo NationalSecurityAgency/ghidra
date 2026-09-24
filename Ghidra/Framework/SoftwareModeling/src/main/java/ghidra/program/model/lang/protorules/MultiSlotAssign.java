@@ -59,7 +59,7 @@ public class MultiSlotAssign extends AssignAction {
 	 */
 	private void initializeEntries() throws InvalidInputException {
 		tiles = resource.extractTiles(resourceType);
-		stackEntry = resource.extractStack();
+		stackEntry = resource.getStackEntry();
 		if (tiles.length == 0) {
 			throw new InvalidInputException("Could not find matching resources for action: join");
 		}

@@ -270,6 +270,7 @@ public record ElementId(String name, int id) {
 	public static final ElementId ELEM_RETURNSYM = new ElementId("returnsym", 172);
 	public static final ElementId ELEM_UNAFFECTED = new ElementId("unaffected", 173);
 	public static final ElementId ELEM_INTERNAL_STORAGE = new ElementId("internal_storage", 286);
+	public static final ElementId ELEM_SHARESTACK = new ElementId("sharestack", 291);
 
 	// options
 	public static final ElementId ELEM_ALIASBLOCK = new ElementId("aliasblock", 174);
@@ -461,5 +462,5 @@ public record ElementId(String name, int id) {
 	public static final ElementId ELEM_EXTRA_STACK = new ElementId("extra_stack", 287);
 	public static final ElementId ELEM_CONSUME_REMAINING = new ElementId("consume_remaining", 288);
 
-	public static final ElementId ELEM_UNKNOWN = new ElementId("XMLunknown", 291);
+	public static final ElementId ELEM_UNKNOWN = new ElementId("XMLunknown", 292);
 }

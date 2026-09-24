@@ -59,6 +59,7 @@ extern ElementId ELEM_RETPARAM;		///< Marshaling element \<retparam>
 extern ElementId ELEM_RETURNSYM;	///< Marshaling element \<returnsym>
 extern ElementId ELEM_UNAFFECTED;	///< Marshaling element \<unaffected>
 extern ElementId ELEM_INTERNAL_STORAGE;	///< Marshaling element \<internal_storage>
+extern ElementId ELEM_SHARESTACK;	///< Marshaling element \<sharestack>
 
 /// \brief Exception thrown when a prototype can't be modeled properly
 struct ParamUnassignedError : public LowlevelError {
@@ -95,7 +96,8 @@ public:
     extracheck_low = 0x100,	///< Perform extra checks during parameter recovery on least sig portion of the double
     is_grouped = 0x200,		///< This entry is grouped with other entries
     overlapping = 0x400,	///< Overlaps an earlier entry (and doesn't consume additional resource slots)
-    first_storage = 0x800	///< Entry is first in its storage class
+    first_storage = 0x800,	///< Entry is first in its storage class
+    is_stackspill = 0x1000	///< Is the \e stack entry that parameter assignments spill over into
   };
   enum {
     no_containment,		///< Range neither contains nor is contained by a ParamEntry
@@ -131,6 +133,7 @@ public:
   int4 getAlign(void) const { return alignment; }	///< Get the alignment of \b this entry
   JoinRecord *getJoinRecord(void) const { return joinrec; }	///< Get record describing joined pieces (or null if only 1 piece)
   type_class getType(void) const { return type; }	///< Get the data-type class associated with \b this
+  bool isStackSpill(void) const { return ((flags & is_stackspill)!=0); }	///< Return \b true if \b this is the \e stack entry holding spill
   bool isExclusion(void) const { return (alignment==0); }	///< Return \b true if this holds a single parameter exclusively
   bool isReverseStack(void) const { return ((flags & reverse_stack)!=0); }	///< Return \b true if parameters are allocated in reverse order
   bool isGrouped(void) const { return ((flags & is_grouped)!=0); }	///< Return \b true if \b this is grouped with other entries
@@ -293,7 +296,7 @@ class ParamActive {
   bool isfullychecked;		///< True if all trials are fully examined (and no new trials are expected)
   bool needsfinalcheck;		///< Should a final pass be made on trials (to take into account control-flow changes)
   bool recoversubcall;		///< True if \b this is being used to recover prototypes of a sub-function call
-  bool joinReverse;		///< True if varnodes should be joined in reverse order
+  bool joinMostSigFirst;	///< True if trials are joined starting with the most significant piece first
 public:
   ParamActive(bool recoversub);	///< Construct an empty container
   void clear(void);		///< Reset to an empty container
@@ -305,8 +308,8 @@ public:
   int4 whichTrial(const Address &addr,int4 sz) const;		///< Get the trial overlapping with the given memory range
   bool needsFinalCheck(void) const { return needsfinalcheck; }	///< Is a final check required
   void markNeedsFinalCheck(void) { needsfinalcheck = true; }	///< Mark that a final check is required
-  bool isJoinReverse(void) const { return joinReverse; }	///< Do Varnodes need to be joined in reverse order
-  void setJoinReverse(void) { joinReverse = true; }		///< Mark that varnodes need to be joined in reverse order
+  bool isJoinMostSigFirst(void) const { return joinMostSigFirst; }	///< Return \b true if pieces are joined starting with most significant
+  void setJoinMostSigFirst(void) { joinMostSigFirst = true; }		///< Mark that pieces are joined starting with the most significant
   bool isRecoverSubcall(void) const { return recoversubcall; }	///< Are these trials for a call to a sub-function
   bool isFullyChecked(void) const { return isfullychecked; }	///< Are all trials checked with no new trials expected
   void markFullyChecked(void) { isfullychecked = true; }	///< Mark that all trials are checked
@@ -437,13 +440,20 @@ public:
   virtual ~ParamList(void) {}			///< Destructor
   virtual uint4 getType(void) const=0;		///< Get the type of parameter list
 
+  /// \brief Initialized the resource state for \b this to indicate all resources are available
+  ///
+  /// \param status is the state object
+  virtual void allocateStatus(vector<int4> &status) const=0;
+
   /// \brief Given list of data-types, map the list positions to storage locations
   ///
   /// If we know the function prototype, recover how parameters are actually stored using the model.
   /// \param proto is the ordered list of data-types
   /// \param typefactory is the TypeFactory (for constructing pointers)
+  /// \param status is the state of consumption for \b this resource
   /// \param res will contain the storage locations corresponding to the datatypes
-  virtual void assignMap(const PrototypePieces &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const=0;
+  virtual void assignMap(const PrototypePieces &proto,TypeFactory &typefactory,vector<int4> &status,
+			 vector<ParameterPieces> &res) const=0;
 
   /// \brief Given an unordered list of storage locations, calculate a function prototype
   ///
@@ -599,7 +609,6 @@ protected:
   list<ParamEntry> entry;		///< The ordered list of parameter entries
   vector<ParamEntryResolver *> resolverMap;	///< Map from space id to resolver
   list<ModelRule> modelRules;		///< Rules to apply when assigning addresses
-  AddrSpace *spacebase;			///< Address space containing relative offset parameters
   const AddrSpaceManager *glb;		///< Owning manager
   const ParamEntry *findEntry(const Address &loc,int4 size,bool just) const;	///< Given storage location find matching ParamEntry
   const ParamEntry *selectUnreferenceEntry(int4 grp,type_class prefType) const;	///< Select entry to fill an unreferenced param
@@ -631,7 +640,9 @@ public:
   uint4 assignAddress(Datatype *dt,const PrototypePieces &proto,int4 pos,TypeFactory &tlst,
 		      vector<int4> &status,ParameterPieces &res) const;
   virtual uint4 getType(void) const { return p_standard; }
-  virtual void assignMap(const PrototypePieces &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const;
+  virtual void allocateStatus(vector<int4> &status) const;
+  virtual void assignMap(const PrototypePieces &proto,TypeFactory &typefactory,vector<int4> &status,
+			 vector<ParameterPieces> &res) const;
   virtual void fillinMap(ParamActive *active) const;
   virtual bool checkJoin(const Address &hiaddr,int4 hisize,const Address &loaddr,int4 losize) const;
   virtual bool checkSplit(const Address &loc,int4 size,int4 splitpoint) const;
@@ -641,7 +652,7 @@ public:
   virtual bool getBiggestContainedParam(const Address &loc,int4 size,VarnodeData &res) const;
   virtual bool unjustifiedContainer(const Address &loc,int4 size,VarnodeData &res) const;
   virtual OpCode assumedExtension(const Address &addr,int4 size,VarnodeData &res) const;
-  virtual AddrSpace *getSpacebase(void) const { return spacebase; }
+  virtual AddrSpace *getSpacebase(void) const;
   virtual bool isThisBeforeRetPointer(void) const { return thisbeforeret; }
   virtual void getRangeList(AddrSpace *spc,RangeList &res) const;
   virtual int4 getMaxDelay(void) const { return maxdelay; }
@@ -667,7 +678,8 @@ public:
     useFillinFallback = op2.useFillinFallback; }	///< Copy constructor
   void fillinMapFallback(ParamActive *active,bool firstOnly) const;
   virtual uint4 getType(void) const { return p_standard_out; }
-  virtual void assignMap(const PrototypePieces &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const;
+  virtual void assignMap(const PrototypePieces &proto,TypeFactory &typefactory,vector<int4> &status,
+			 vector<ParameterPieces> &res) const;
   virtual void fillinMap(ParamActive *active) const;
   virtual bool possibleParam(const Address &loc,int4 size) const;
   virtual void decode(Decoder &decoder,vector<EffectRecord> &effectlist,bool normalstack);
@@ -686,7 +698,8 @@ public:
   ParamListRegisterOut(void) : ParamListStandardOut() {}		///< Constructor
   ParamListRegisterOut(const ParamListRegisterOut &op2) : ParamListStandardOut(op2) {}	///< Copy constructor
   virtual uint4 getType(void) const { return p_register_out; }
-  virtual void assignMap(const PrototypePieces &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const;
+  virtual void assignMap(const PrototypePieces &proto,TypeFactory &typefactory,vector<int4> &status,
+			 vector<ParameterPieces> &res) const;
   virtual ParamList *clone(void) const;
 };
 
@@ -721,7 +734,8 @@ public:
   void foldIn(const ParamListStandard &op2);				///< Add another model to the union
   void finalize(void) { populateResolver(); }				///< Fold-ins are finished, finalize \b this
   virtual uint4 getType(void) const { return p_merged; }
-  virtual void assignMap(const PrototypePieces &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const {
+  virtual void assignMap(const PrototypePieces &proto,TypeFactory &typefactory,vector<int4> &status,
+			 vector<ParameterPieces> &res) const {
     throw LowlevelError("Cannot assign prototype before model has been resolved"); }
   virtual void fillinMap(ParamActive *active) const {
     throw LowlevelError("Cannot determine prototype before model has been resolved"); }
@@ -757,6 +771,7 @@ class ProtoModel {
   int4 extrapop;		///< Extra bytes popped from stack
   ParamList *input;		///< Resource model for input parameters
   ParamList *output;		///< Resource model for output parameters
+  vector<const SharedAction *> sharedActions;	///< Actions invoked during parameter assignment
   const ProtoModel *compatModel;	///< The model \b this is a copy of
   vector<EffectRecord> effectlist; ///< List of side-effects
   vector<VarnodeData> likelytrash;	///< Storage locations potentially carrying \e trash values
@@ -781,6 +796,8 @@ public:
   virtual ~ProtoModel(void);				///< Destructor
   const string &getName(void) const { return name; }	///< Get the name of the prototype model
   Architecture *getArch(void) const { return glb; }	///< Get the owning Architecture
+  const ParamList *getInputResource(void) const { return input; }	///< Get input parameter resources
+  const ParamList *getOutputResource(void) const { return output; }	///< Get output parameter resources
   const ProtoModel *getAliasParent(void) const { return compatModel; }	///< Return \e model \b this is an alias of (or null)
   uint4 hasEffect(const Address &addr,int4 size) const;	///< Determine side-effect of \b this on the given memory range
   int4 getExtraPop(void) const { return extrapop; }	///< Get the stack-pointer \e extrapop for \b this model
@@ -1110,6 +1127,7 @@ public:
   virtual Datatype *getType(void) const=0;		///< Get the data-type associate with \b this
   virtual Address getAddress(void) const=0;		///< Get the storage address for \b this parameter
   virtual int4 getSize(void) const=0;			///< Get the number of bytes occupied by \b this parameter
+  virtual bool hasStorage(void) const=0;		///< Does \b this have assigned storage
   virtual bool isTypeLocked(void) const=0;		///< Is the parameter data-type locked
   virtual bool isNameLocked(void) const=0;		///< Is the parameter name locked
   virtual bool isSizeTypeLocked(void) const=0;		///< Is the size of the parameter locked
@@ -1179,6 +1197,7 @@ public:
   virtual Datatype *getType(void) const { return type; }
   virtual Address getAddress(void) const { return addr; }
   virtual int4 getSize(void) const { return type->getSize(); }
+  virtual bool hasStorage(void) const { return !addr.isInvalid(); }
   virtual bool isTypeLocked(void) const { return ((flags&ParameterPieces::typelock)!=0); }
   virtual bool isNameLocked(void) const { return ((flags&ParameterPieces::namelock)!=0); }
   virtual bool isSizeTypeLocked(void) const { return ((flags&ParameterPieces::sizelock)!=0); }
@@ -1267,6 +1286,7 @@ public:
   virtual Datatype *getType(void) const;
   virtual Address getAddress(void) const;
   virtual int4 getSize(void) const;
+  virtual bool hasStorage(void) const;
   virtual bool isTypeLocked(void) const;
   virtual bool isNameLocked(void) const;
   virtual bool isSizeTypeLocked(void) const;

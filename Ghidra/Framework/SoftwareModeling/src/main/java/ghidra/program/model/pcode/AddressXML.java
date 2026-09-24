@@ -592,7 +592,7 @@ public class AddressXML {
 	 */
 	public static void encode(Encoder encoder, Varnode[] varnodes, long logicalsize)
 			throws IOException {
-		if (varnodes == null) {
+		if (varnodes == null || varnodes.length == 0) {
 			encoder.openElement(ELEM_ADDR);
 			encoder.closeElement(ELEM_ADDR);
 			return;
