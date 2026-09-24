@@ -278,7 +278,9 @@ bool PrintLanguage::parentheses(const OpToken *op2)
   case OpToken::binary:
     if (topToken->precedence > op2->precedence) return true;
     if (topToken->precedence < op2->precedence) return false;
-    if (topToken->associative && (topToken == op2)) return false;
+    if (topToken->assoc == OpToken::none) return true;
+    if (topToken->assoc == OpToken::ltr && stage == 0) return false;
+    if (topToken->assoc == OpToken::rtl && stage == 1) return false;
     // If operators are adjacent to each other, the
     // operator printed first must be evaluated first
     // In this case op2 must be evaluated first, so we
