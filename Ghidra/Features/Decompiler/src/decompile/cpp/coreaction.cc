@@ -5184,6 +5184,20 @@ int4 ActionUnjustifiedParams::apply(Funcdata &data)
 	  vdata.size = endpoint - vdata.offset;
 	}
       }
+      // Also absorb input Varnodes that overlap the container and extend past its end.
+      VarnodeDefSet::const_iterator fiter = iter;
+      while(fiter != enditer) {
+	Varnode *fvn = *fiter;
+	++fiter;
+	if (fvn->getSpace() != vdata.space) continue;
+	uintb endpoint = vdata.offset + vdata.size;
+	if (fvn->getOffset() >= endpoint) break;
+	uintb fendpoint = fvn->getOffset() + fvn->getSize();
+	if (fendpoint > endpoint) {
+	  overlaps = true;
+	  vdata.size = fendpoint - vdata.offset;
+	}
+      }
       if (!overlaps) break;	// Found no additional overlaps, go with current justified container
       // If there were overlaps, container may no longer be justified
       newcontainer = proto.unjustifiedInputParam(vdata.getAddr(),vdata.size,vdata);
