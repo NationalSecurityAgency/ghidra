@@ -145,8 +145,10 @@ public class DBTraceDataTypeManager extends ProgramBasedDataTypeManagerDB
 	}
 
 	@Override
-	protected void dataTypeDeleted(long deletedID, DataTypePath deletedPath) {
-		super.dataTypeDeleted(deletedID, deletedPath);
+	protected void dataTypeDeleted(long deletedID, DataType dataType) {
+		super.dataTypeDeleted(deletedID, dataType);
+
+		DataTypePath deletedPath = dataType.getDataTypePath();
 		trace.dataTypeDeleted(deletedID, deletedPath);
 	}
 

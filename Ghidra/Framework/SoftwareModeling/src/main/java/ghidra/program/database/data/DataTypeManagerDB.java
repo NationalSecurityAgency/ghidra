@@ -2425,7 +2425,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		// possible updates to other datatypes that would need to trigger such a modification time.
 
 		if (notify) {
-			dataTypeDeleted(dataTypeID, dataType.getDataTypePath());
+			dataTypeDeleted(dataTypeID, dataType);
 		}
 	}
 
@@ -3592,13 +3592,15 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			replacementDt.getDataTypePath(), replacementDt);
 	}
 
-	protected void dataTypeDeleted(long deletedID, DataTypePath deletedDataTypePath) {
-		CategoryDB category = (CategoryDB) getCategory(deletedDataTypePath.getCategoryPath());
-		category.dataTypeRemoved(deletedDataTypePath.getDataTypeName());
-		removeDataTypeFromSortedList(deletedDataTypePath);
+	protected void dataTypeDeleted(long deletedID, DataType dataType) {
+
+		DataTypePath deletedDtPath = dataType.getDataTypePath();
+		CategoryDB category = (CategoryDB) getCategory(deletedDtPath.getCategoryPath());
+		category.dataTypeRemoved(deletedDtPath.getDataTypeName());
+		removeDataTypeFromSortedList(deletedDtPath);
 		enumValueMap = null;
 		updateLastChangeTime();
-		defaultListener.dataTypeRemoved(this, deletedDataTypePath);
+		defaultListener.dataTypeRemoved(this, dataType);
 	}
 
 	protected void dataTypeMoved(DataType dt, DataTypePath oldDataTypePath,

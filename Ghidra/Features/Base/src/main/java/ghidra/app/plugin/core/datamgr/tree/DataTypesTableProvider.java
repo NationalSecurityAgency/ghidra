@@ -126,6 +126,7 @@ public class DataTypesTableProvider extends ComponentProvider {
 		if (!isConnected) {
 			plugin.addDisconnectedTableProvider(this);
 		}
+
 	}
 
 	private static DtFilterState getDtFilterState(DataTypeManagerPlugin plugin) {
@@ -582,9 +583,13 @@ public class DataTypesTableProvider extends ComponentProvider {
 		}
 
 		@Override
-		public void dataTypeRemoved(DataTypeManager dtm, DataTypePath path) {
-			DataType dt = dtm.getDataType(path);
+		public void dataTypeRemoved(DataTypeManager dtm, DataType dt) {
 			model.removeObject(dt);
+		}
+
+		@Override
+		public void dataTypeRemoved(DataTypeManager dtm, DataTypePath path) {
+			// stub; use other version of dataTypeRemoved()
 		}
 
 		@Override
@@ -670,6 +675,7 @@ public class DataTypesTableProvider extends ComponentProvider {
 			ArchiveManager archiveManager = plugin.getArchiveManager();
 			List<PersistentDataTypeArchive> archives = archiveManager.getOpenArchives();
 			for (PersistentDataTypeArchive archive : archives) {
+
 				DataTypeManager dtm = archive.getDataTypeManager();
 				if (dtm instanceof ProgramBasedDataTypeManager) {
 					continue;
