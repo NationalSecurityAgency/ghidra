@@ -1,0 +1,11 @@
+##VERSION: 2.0
+##MODULE IP: Apache License 2.0
+Module.manifest||GHIDRA||||END|
+data/languages/SCORE7.cspec||GHIDRA||||END|
+data/languages/SCORE7.dwarf||GHIDRA||||END|
+data/languages/SCORE7.ldefs||GHIDRA||||END|
+data/languages/SCORE7.opinion||GHIDRA||||END|
+data/languages/SCORE7.pspec||GHIDRA||||END|
+data/languages/SCORE7.sinc||GHIDRA||||END|
+data/languages/SCORE7_be.slaspec||GHIDRA||||END|
+data/languages/SCORE7_le.slaspec||GHIDRA||||END|
