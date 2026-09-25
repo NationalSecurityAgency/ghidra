@@ -1,4 +1,4 @@
-/* ###
+﻿/* ###
  * IP: GHIDRA
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1918,6 +1918,139 @@ bool PrintC::pushEquate(uintb val,int4 sz,const EquateSymbol *sym,const Varnode 
     return true;
   }
   return false;
+}
+
+/// \brief Push a self-referential register-arithmetic Varnode as a binary
+/// expression using the base register's real name, falling back to the
+/// register0x0e-style annotation fallback if no Symbol can be found.
+///
+/// Looks up an existing Symbol for the register's storage address, keyed
+/// at the CONSUMING op's address as usepoint (matching pushAnnotation's
+/// own queryContainer call above) rather than vn's own address. Fails
+/// safe (returns false) if no such Symbol is found, letting the caller
+/// fall back to pushAnnotation().
+/// \param vn is the self-referential-arithmetic annotation Varnode
+/// \param op is the PcodeOp (expected CPUI_SEGMENTOP) consuming it
+/// \return \b true if the expression form was successfully pushed
+bool PrintC::pushSegmentRegisterExpression(const Varnode *vn,const PcodeOp *op)
+
+{
+  const PcodeOp *def = vn->getDef();		// already confirmed non-null
+						// by isSelfReferentialRegisterArithmetic
+  Funcdata *fd = const_cast<Funcdata *>(op->getParent()->getFuncdata());
+  Varnode *mutvn = const_cast<Varnode *>(vn);
+
+  // vn is an annotation Varnode -- it deliberately never gets a
+  // HighVariable (Funcdata::assignHigh skips isAnnotation() Varnodes by
+  // design), so linkSymbol()/linkSymbolAtUsepoint() cannot be used here:
+  // both dereference vn->getHigh() unconditionally. Use the dedicated
+  // annotation-safe variant instead.
+  //
+  // CHANGED 2026-08-25: linkAnnotationSymbolAtUsepoint no longer mints a
+  // new Symbol (see its comment in funcdata_varnode.cc for why -- it was
+  // colliding with stack-frame-layout recovery and causing a widespread
+  // "auStack_NNN [128]" regression). It now only returns an EXISTING
+  // Symbol, or NULL. On NULL, fall back to pushing the register's real
+  // name as plain text via pushAtom -- same mechanism pushAnnotation's own
+  // fallback already uses below in this file -- rather than failing back
+  // to the register0x0e-style placeholder this whole fix was written to
+  // eliminate.
+  Symbol *sym = fd->linkAnnotationSymbolAtUsepoint(mutvn, op->getAddr());
+
+  const Varnode *amt = def->getIn(1);		// already confirmed constant
+  OpCode opc = def->code();
+  uintb rawval = amt->getOffset();
+  int4 sz = amt->getSize();
+  uintb mask = calc_mask(sz);
+  uintb signbit = (mask >> 1) + 1;
+  bool showAsSubtract = (opc == CPUI_INT_SUB);
+  uintb dispval = rawval;
+  // An H8 "SP = SP - 2" instruction pcode-lowers to INT_ADD(SP, 0xfffe)
+  // (the two's-complement wraparound constant), not a genuine INT_SUB --
+  // confirmed via analyze_dataflow. Detect that shape
+  // here and print it as a subtraction of the true magnitude instead of
+  // a raw unsigned "+ 0xfffe", matching how a human reads the intent.
+  if (opc == CPUI_INT_ADD && (rawval & signbit) != 0) {
+    showAsSubtract = true;
+    dispval = (~rawval + 1) & mask;	// two's-complement negate to get the magnitude
+  }
+  const OpToken &tok = showAsSubtract ? binary_minus : binary_plus;
+
+  pushOp(&tok,op);
+  if (sym != (Symbol *)0)
+    pushSymbol(sym,vn,op);			// pushes "SP" via an existing Symbol
+  else {
+    string regname = glb->translate->getRegisterName(vn->getSpace(),vn->getOffset(),vn->getSize());
+    if (regname.empty()) return false;		// truly no name available -- let caller fall back
+    pushAtom(Atom(regname,vartoken,EmitMarkup::special_color,op,vn));
+  }
+  push_integer(dispval,sz,false,syntax,amt,op,amt->getType()->getDisplayFormat());
+  return true;
+}
+
+/// \brief Push a cross-register-arithmetic annotation Varnode (e.g. H8's
+/// "FP = SP - 2") as a binary expression printed in terms of the base
+/// register it was actually derived from.
+///
+/// Same mechanism as pushSegmentRegisterExpression, but the Symbol is
+/// created/looked-up for \b base (the register actually holding the value,
+/// e.g. SP) rather than \b vn (the annotation Varnode consumed by the
+/// SEGMENTOP, e.g. FP) -- vn itself has no independent hardware meaning
+/// for this shape (see isCrossRegisterArithmetic), so naming the Symbol
+/// after vn would print the wrong register.
+/// \param vn is the cross-register-arithmetic annotation Varnode (e.g. FP)
+/// \param base is the register vn was derived from (e.g. SP)
+/// \param op is the PcodeOp (expected CPUI_SEGMENTOP) consuming vn
+/// \return \b true if the expression form was successfully pushed
+bool PrintC::pushCrossRegisterExpression(const Varnode *vn,const Varnode *base,const PcodeOp *op)
+
+{
+  const PcodeOp *def = vn->getDef();		// already confirmed non-null
+						// by isCrossRegisterArithmetic
+  Funcdata *fd = const_cast<Funcdata *>(op->getParent()->getFuncdata());
+  Varnode *mutbase = const_cast<Varnode *>(base);
+
+  // Key the Symbol to base's storage (e.g. SP), not vn's (e.g. FP) -- see
+  // function comment above. base is a genuine register Varnode (confirmed
+  // by isCrossRegisterArithmetic), not necessarily an annotation Varnode,
+  // so it may already have a HighVariable/Symbol of its own; fall back to
+  // the annotation-safe linker only if it doesn't.
+  //
+  // CHANGED 2026-08-25: as in pushSegmentRegisterExpression above,
+  // linkAnnotationSymbolAtUsepoint no longer mints a new Symbol -- it only
+  // returns an existing one, or NULL. On NULL, fall back to the register's
+  // plain-text name rather than failing back to register0x0e.
+  Symbol *sym = mutbase->getHigh() != (HighVariable *)0 ? mutbase->getHigh()->getSymbol()
+							 : (Symbol *)0;
+  if (sym == (Symbol *)0)
+    sym = fd->linkAnnotationSymbolAtUsepoint(mutbase, op->getAddr());
+
+  const Varnode *amt = def->getIn(1);		// already confirmed constant
+  OpCode opc = def->code();
+  uintb rawval = amt->getOffset();
+  int4 sz = amt->getSize();
+  uintb mask = calc_mask(sz);
+  uintb signbit = (mask >> 1) + 1;
+  bool showAsSubtract = (opc == CPUI_INT_SUB);
+  uintb dispval = rawval;
+  // Same two's-complement wraparound detection as pushSegmentRegisterExpression --
+  // see that function's comment for the H8 "SP - 2" -> INT_ADD(SP, 0xfffe) rationale.
+  if (opc == CPUI_INT_ADD && (rawval & signbit) != 0) {
+    showAsSubtract = true;
+    dispval = (~rawval + 1) & mask;
+  }
+  const OpToken &tok = showAsSubtract ? binary_minus : binary_plus;
+
+  pushOp(&tok,op);
+  if (sym != (Symbol *)0)
+    pushSymbol(sym,base,op);			// pushes "SP" via an existing Symbol
+  else {
+    string regname = glb->translate->getRegisterName(base->getSpace(),base->getOffset(),base->getSize());
+    if (regname.empty()) return false;		// truly no name available -- let caller fall back
+    pushAtom(Atom(regname,vartoken,EmitMarkup::special_color,op,base));
+  }
+  push_integer(dispval,sz,false,syntax,amt,op,amt->getType()->getDisplayFormat());
+  return true;
 }
 
 void PrintC::pushAnnotation(const Varnode *vn,const PcodeOp *op)

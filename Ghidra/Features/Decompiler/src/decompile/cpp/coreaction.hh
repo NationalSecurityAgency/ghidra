@@ -1,4 +1,4 @@
-/* ###
+﻿/* ###
  * IP: GHIDRA
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -368,7 +368,7 @@ public:
     if (!grouplist.contains(getGroup())) return (Action *)0;
     return new ActionMergeRequired(getGroup());
   }
-  virtual int4 apply(Funcdata &data) { 
+  virtual int4 apply(Funcdata &data) {
     data.getMerge().mergeAddrTied(); data.getMerge().groupPartials(); data.getMerge().mergeMarker(); return 0; }
 };
 
@@ -413,7 +413,7 @@ public:
     if (!grouplist.contains(getGroup())) return (Action *)0;
     return new ActionMergeType(getGroup());
   }
-  virtual int4 apply(Funcdata &data) { 
+  virtual int4 apply(Funcdata &data) {
     data.getMerge().mergeByDatatype(data.beginLoc(),data.endLoc()); return 0; }
 };
 
