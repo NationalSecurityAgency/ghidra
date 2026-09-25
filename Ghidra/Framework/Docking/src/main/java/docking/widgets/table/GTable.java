@@ -271,25 +271,15 @@ public class GTable extends JTable {
 		selectionModel.setSelectionMode(selectionMode);
 	}
 
-	protected <T> SelectionManager createSelectionManager() {
-		RowObjectTableModel<Object> rowModel = getRowObjectTableModel();
+	protected SelectionManager createSelectionManager() {
+		RowObjectTableModel<?> rowModel = getRowObjectTableModel();
 		if (rowModel != null) {
 			return new RowObjectSelectionManager<>(this, rowModel);
 		}
 		return null;
 	}
 
-	/**
-	 * @param <T> the type of the row object
-	 * @return the model
-	 * @implNoteThe The cast to {@code RowObjectTableModel<T>} is safe, since we are create a new
-	 *              {@link SelectionManager} of an arbitrary type T defined here. So, T doesn't
-	 *              really exist and therefore the cast isn't really casting to anything. The
-	 *              {@link SelectionManager} will take on the type of the given model. The T is just
-	 *              there on the {@link SelectionManager} to make its internal methods consistent.
-	 */
-	@SuppressWarnings("unchecked")
-	private <T> RowObjectTableModel<T> getRowObjectTableModel() {
+	private RowObjectTableModel<?> getRowObjectTableModel() {
 		if (getModel() instanceof RowObjectTableModel model) {
 			return model;
 		}
@@ -1242,37 +1232,14 @@ public class GTable extends JTable {
 	 *           makes the data almost unreadable/unusable.
 	 */
 	@Override
-	public Object getValueAt(int row, int column) {
+	public Object getValueAt(int viewRow, int viewColumn) {
 		if (!copying) {
-			return super.getValueAt(row, column);
+			return super.getValueAt(viewRow, viewColumn);
 		}
 
-		Object value = getCellValue(row, column);
-		Object updated = maybeConvertValue(value);
-		return updated;
-	}
-
-	private Object getCellValue(int row, int viewColumn) {
-		RowObjectTableModel<Object> rowModel = getRowObjectTableModel();
-		if (rowModel == null) {
-			Object value = super.getValueAt(row, viewColumn);
-			return maybeConvertValue(value);
-		}
-
-		Object rowObject = rowModel.getRowObject(row);
+		int modelRow = convertRowIndexToModel(viewRow);
 		int modelColumn = convertColumnIndexToModel(viewColumn);
-		String stringValue = TableUtils.getTableCellStringValue(rowModel, rowObject, modelColumn);
-		return maybeConvertValue(stringValue);
-	}
-
-	private Object maybeConvertValue(Object value) {
-		if (value == null) {
-			return null;
-		}
-
-		String asString = value.toString();
-		String converted = HTMLUtilities.fromHTML(asString);
-		return converted;
+		return TableUtils.getTableCellStringValue(this, modelRow, modelColumn);
 	}
 
 	/**
