@@ -115,6 +115,9 @@ public class SameDirDebugInfoProvider implements DebugFileProvider {
 		}
 
 		if (debugInfo instanceof BuildIdDebugInfo buildId) {
+			if (buildId.getObjectType() != ObjectType.DEBUGINFO) {
+				return null;
+			}
 			// this probe is a w.a.g for what people might do when co-locating a build-id debug
 			// file with the original binary
 			File debugFile = ensureSafeFilename(buildId.getBuildIdHexString() + ".debug");
