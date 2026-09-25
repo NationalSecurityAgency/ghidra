@@ -602,6 +602,7 @@ protected:
   AddrSpace *spacebase;			///< Address space containing relative offset parameters
   const AddrSpaceManager *glb;		///< Owning manager
   const ParamEntry *findEntry(const Address &loc,int4 size,bool just) const;	///< Given storage location find matching ParamEntry
+  bool hasDirectStackAssignment(void) const;	///< Return \b true if a rule can assign stack storage while skipping registers
   const ParamEntry *selectUnreferenceEntry(int4 grp,type_class prefType) const;	///< Select entry to fill an unreferenced param
   void buildTrialMap(ParamActive *active) const;	///< Build map from parameter trials to model ParamEntrys
   void separateSections(ParamActive *active,vector<int4> &trialStart) const;
