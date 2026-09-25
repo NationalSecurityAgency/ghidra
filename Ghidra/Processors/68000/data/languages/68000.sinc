@@ -589,6 +589,11 @@ e2b: (d16)".w" is savmod2=7 & regsan=0; d16	{ export *:1 d16; }
 e2b: (d32)".l" is savmod2=7 & regsan=1; d32	{ export *:1 d32; }
 e2b: "#"^d8 is savmod2=7 & regsan=4; d8		{ export *[const]:1 d8; }
 
+e2bPostSP: (regsan)+ is savmod2=3 & regsan & regsan=7	{ export regsan; }
+e2bPost: (regsan)+ is savmod2=3 & regtsan!=7 & regsan	{ export regsan; }
+e2wPost: (regsan)+ is savmod2=3 & regsan			{ export regsan; }
+e2lPost: (regsan)+ is savmod2=3 & regsan			{ export regsan; }
+
 # For instructions like lea and pea that manipulative the effective address
 # itself rather than the data the address is pointing at
 eaptr: (regan)			is mode=2 & regan					{ export regan; }
@@ -1650,9 +1655,18 @@ macro shiftCXFlags(cntreg) {
 	XF = CF;
 }
 
-:move.b eab,e2b			is (op=1 & $(DAT_ALTER_ADDR_MODES2))... & eab ; e2b	{ build eab; local tmp = eab; build e2b; e2b = tmp; resflags(tmp); logflags(); }
-:move.w eaw,e2w			is (op=3 & $(DAT_ALTER_ADDR_MODES2))... & eaw ; e2w	{ build eaw; local tmp = eaw; build e2w; e2w = tmp; resflags(tmp); logflags(); }
-:move.l eal,e2l			is (op=2 & $(DAT_ALTER_ADDR_MODES2))... & eal ; e2l	{ build eal; local tmp = eal; build e2l; e2l = tmp; resflags(tmp); logflags(); }
+:move.b eab,e2bPostSP		is (op=1 & mode2=3 & reg9an=7 & reg9an)... & eab ; e2bPostSP
+			{ build eab; local tmp = eab; build e2bPostSP; *:1 e2bPostSP = tmp; e2bPostSP = e2bPostSP + 2; resflags(tmp); logflags(); }
+:move.b eab,e2bPost		is (op=1 & mode2=3 & reg9an!=7 & reg9an)... & eab ; e2bPost
+			{ build eab; local tmp = eab; build e2bPost; *:1 e2bPost = tmp; e2bPost = e2bPost + 1; resflags(tmp); logflags(); }
+:move.w eaw,e2wPost		is (op=3 & mode2=3 & reg9an)... & eaw ; e2wPost
+			{ build eaw; local tmp = eaw; build e2wPost; *:2 e2wPost = tmp; e2wPost = e2wPost + 2; resflags(tmp); logflags(); }
+:move.l eal,e2lPost		is (op=2 & mode2=3 & reg9an)... & eal ; e2lPost
+			{ build eal; local tmp = eal; build e2lPost; *:4 e2lPost = tmp; e2lPost = e2lPost + 4; resflags(tmp); logflags(); }
+
+:move.b eab,e2b			is (op=1 & (mode2=0 | mode2=2 | mode2=4 | mode2=5 | mode2=6 | mode2=7))... & eab ; e2b	{ build eab; local tmp = eab; build e2b; e2b = tmp; resflags(tmp); logflags(); }
+:move.w eaw,e2w			is (op=3 & (mode2=0 | mode2=2 | mode2=4 | mode2=5 | mode2=6 | mode2=7))... & eaw ; e2w	{ build eaw; local tmp = eaw; build e2w; e2w = tmp; resflags(tmp); logflags(); }
+:move.l eal,e2l			is (op=2 & (mode2=0 | mode2=2 | mode2=4 | mode2=5 | mode2=6 | mode2=7))... & eal ; e2l	{ build eal; local tmp = eal; build e2l; e2l = tmp; resflags(tmp); logflags(); }
 
 :move "CCR",eaw			is (opbig=0x42 & op67=3 & $(DAT_ALTER_ADDR_MODES))... & eaw				{ packflags(SR); eaw = SR; }
 :move eaw,"CCR"			is (opbig=0x44 & op67=3 & $(DAT_ALTER_ADDR_MODES))... & eaw				{ unpackflags(eaw); }
