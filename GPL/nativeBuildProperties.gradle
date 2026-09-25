@@ -38,25 +38,25 @@ model {
 	// scenarios. These checks, can be removed when Gradle fixes them, and we advertise a
 	// minimum Gradle version that includes the fix.
 	toolChains {
-		def current = getCurrentPlatformName()
-		if (isLinux(current)) {
+		def current = rootProject.getCurrentPlatformName()
+		if (rootProject.isLinux(current)) {
 			// https://github.com/gradle/gradle/issues/17660 (fixed in Gradle 8.11)
 			gcc(Gcc).target(current)
 			clang(Clang).target(current)
 		}
-		if (isFreeBSD(current)) {
+		if (rootProject.isFreeBSD(current)) {
 			// https://github.com/gradle/gradle/issues/32895
 			gcc(Gcc).target(current)
 			clang(Clang).target(current)
 		}
-		if (isOpenBSD(current)) {
+		if (rootProject.isOpenBSD(current)) {
 			gcc(Gcc).target(current)
 			clang(Clang).target(current)
 		}
-		if (isWindows(current) && VISUAL_STUDIO_INSTALL_DIR) {
+		if (rootProject.isWindows(current) && rootProject.VISUAL_STUDIO_INSTALL_DIR) {
 			// https://github.com/gradle/gradle-native/issues/617#issuecomment-575735288
 			visualCpp(VisualCpp) {
-				installDir = VISUAL_STUDIO_INSTALL_DIR
+				installDir = rootProject.VISUAL_STUDIO_INSTALL_DIR
 			}
 		}
 	}
@@ -68,9 +68,9 @@ model {
 task CheckToolChain {
 	// Native C/Cpp plugins will trigger failure if no tool chain found
 	doFirst {
-		if (isCurrentWindows()) {
+		if (rootProject.isCurrentWindows()) {
 			// ensure that required MS Visual Studio is installed
-			if (!VISUAL_STUDIO_INSTALL_DIR) {
+			if (!rootProject.VISUAL_STUDIO_INSTALL_DIR) {
 				throw new GradleException("Supported Windows native toolchain not found!");
 			}	
 		}
@@ -131,7 +131,7 @@ def shouldSkipNative(task) {
 tasks.addRule("Pattern: buildNatives[_PlatformName]: build all natives for given platform") { String taskName ->
 
 	if (taskName.startsWith("buildNatives")) {
-		String currentPlatform = getCurrentPlatformName()
+		String currentPlatform = rootProject.getCurrentPlatformName()
 		String platform = taskName - "buildNatives"
 		if (platform.length() == 0) {
 			platform = currentPlatform

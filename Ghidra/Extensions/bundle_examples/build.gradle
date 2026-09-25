@@ -137,7 +137,7 @@ task zipExtensions(type: Zip, dependsOn:jarTasks) {
 rootProject.createInstallationZip {
 	from (this.project.zipExtensions) {
 		into  {
-			ZIP_DIR_PREFIX + "/Extensions/Ghidra"
+			rootProject.ZIP_DIR_PREFIX + "/Extensions/Ghidra"
 		}
 	}
 	doLast {

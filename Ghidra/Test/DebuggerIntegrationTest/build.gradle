@@ -194,7 +194,7 @@ model {
 				linker.args("/SUBSYSTEM:windows", "/DYNAMICBASE", "/NXCOMPAT")
 				linker.args("shell32.lib");
 			}
-			if (isWindows(targetPlatform.name)) {
+			if (rootProject.isWindows(targetPlatform.name)) {
 				cppCompiler.define("WIN32")
 				cCompiler.define("WIN32")
 

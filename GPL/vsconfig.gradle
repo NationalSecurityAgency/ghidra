@@ -9,7 +9,7 @@
  * and SDKs are installed.
  ****************************************************************************/
  
-if (!hasProperty("VISUAL_STUDIO_INSTALL_DIR") && isCurrentWindows()) {
+if (!hasProperty("VISUAL_STUDIO_INSTALL_DIR") && rootProject.isCurrentWindows()) {
 
 	// Initialize variables
 	rootProject.ext.VISUAL_STUDIO_INSTALL_DIR = ""

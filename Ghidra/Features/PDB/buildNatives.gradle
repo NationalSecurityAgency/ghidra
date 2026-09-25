@@ -35,13 +35,13 @@ if ("win_x86_64".equals(rootProject.getCurrentPlatformName())) {
 		doFirst {
 			file("build/os/win_x86_64").mkdirs()
 			
-			def windowsTargetPlatformVersion = VISUAL_STUDIO_SDK_VERSION_OVERRIDE ?: VISUAL_STUDIO_SDK_VERSION_DEFAULT		
+			def windowsTargetPlatformVersion = rootProject.VISUAL_STUDIO_SDK_VERSION_OVERRIDE ?: rootProject.VISUAL_STUDIO_SDK_VERSION_DEFAULT		
 			def msbuildCmd = "msbuild ${solutionPathWindows} /p:Configuration=Release /p:WindowsTargetPlatformVersion=${windowsTargetPlatformVersion}"
 			
 			println "Executing: " + msbuildCmd
 			
 			new File(solutionBatchFilePath).withWriter { out ->
-				out.println "call " + VISUAL_STUDIO_VCVARS_CMD
+				out.println "call " + rootProject.VISUAL_STUDIO_VCVARS_CMD
 				out.println msbuildCmd
 			}
 		}

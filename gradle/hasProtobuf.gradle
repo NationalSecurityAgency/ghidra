@@ -69,7 +69,7 @@ task configureGenerateProto {
 
 	doLast {
 		def exe = configurations.protocArtifact.first()
-		if (!isCurrentWindows()) {
+		if (!rootProject.isCurrentWindows()) {
 			exe.setExecutable(true)
 		}
 		generateProto.commandLine exe, "--java_out=${generateProto.outdir}", "-I${generateProto.srcdir}"

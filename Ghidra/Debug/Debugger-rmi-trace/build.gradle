@@ -42,7 +42,7 @@ task configureGenerateProtoPy {
 
 	doLast {
 		def exe = configurations.protocArtifact.first()
-		if (!isCurrentWindows()) {
+		if (!rootProject.isCurrentWindows()) {
 			exe.setExecutable(true)
 		}
 		generateProtoPy.commandLine exe

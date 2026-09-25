@@ -478,7 +478,7 @@ String generateLibraryDependencyMapping() {
 	libsFile.withWriter { out ->
 		subprojects { p ->
 			p.plugins.withType(JavaPlugin) {
-				List<String> libs = getExternalRuntimeDependencies(p);
+				List<String> libs = rootProject.getExternalRuntimeDependencies(p);
 				if (libs != null) {
 					out.println "Module: $p.name"
 					libs.each { path ->

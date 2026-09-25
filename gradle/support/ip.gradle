@@ -115,7 +115,7 @@ def checkExternalLibsInMap(Map<String, String> map, Project project) {
  * the map from the Module.manifest file
  *********************************************************************************/
 def checkExternalPythonWheelsInMap(Map<String, String> map, Project project) {
-	PYTHON_DEPS.getOrDefault(project, List.of()).each { dep ->
+	rootProject.PYTHON_DEPS.getOrDefault(project, List.of()).each { dep ->
 		String name = dep.getName()  // get just the filename without the path
 		String relativePath = "pypkg/dist/"+name;
 		assert map.containsKey(relativePath) : "No License specified for external python wheel: "+relativePath+ " in module "+project.projectDir

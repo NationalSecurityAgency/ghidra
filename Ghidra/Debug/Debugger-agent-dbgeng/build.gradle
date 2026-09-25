@@ -54,7 +54,7 @@ task buildTlb(type: Exec) {
 	outputs.file(tlb)
 
 	doFirst {
-		assert isCurrentX86_64() && isCurrentWindows() : "Can only build TLB on Windows x86"
+		assert rootProject.isCurrentX86_64() && rootProject.isCurrentWindows() : "Can only build TLB on Windows x86"
 		file(tlb).parentFile.mkdirs()
 		def midlCmd = "midl /tlb \"${tlb}\" \"${idl}\""
 		println "Executing: " + midlCmd
