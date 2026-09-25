@@ -63,8 +63,6 @@ ADDRIX: (imm16,X) is X; imm16     { addr:2 = imm16 + zext(X); tmp:2 = *:2 addr; 
 :BIT "#"imm8                   is op=0x89; imm8
 {
     local value:1 = imm8;
-    N = (value & 0x80) == 0x80;
-    V = (value & 0x40) == 0x40;
     value = A & value;
     Z = (value == 0);
 }
