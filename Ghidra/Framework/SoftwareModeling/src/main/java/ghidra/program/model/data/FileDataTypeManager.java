@@ -35,14 +35,28 @@ import ghidra.util.task.TaskMonitor;
  * Create or open a {@link FileDataTypeArchive}, then call 
  * {@link PersistentDataTypeArchive#getDataTypeManager()}.
  */
-@Deprecated(since = "12.2", forRemoval = true)
+@Deprecated(since = "12.3", forRemoval = true)
 public interface FileDataTypeManager extends ArchiveDataTypeManager, AutoCloseable {
 
-	@Deprecated(since = "12.2", forRemoval = true)
+	@Deprecated(since = "12.3", forRemoval = true)
 	final static String OLD_EXTENSION = "dtf";
 
-	@Deprecated(since = "12.2", forRemoval = true)
+	@Deprecated(since = "12.3", forRemoval = true)
 	final static String OLD_SUFFIX = "." + OLD_EXTENSION;
+
+	/**
+	 * File extension for a datatype archive file. "gdt"
+	 * @deprecated use {@link FileDataTypeArchive#EXTENSION} instead
+	 */
+	@Deprecated(since = "12.3", forRemoval = true)
+	public final static String EXTENSION = FileDataTypeArchive.EXTENSION;
+
+	/**
+	 * Filename suffix for a datatype archive file. ".gdt"
+	 * @deprecated use {@link FileDataTypeArchive#SUFFIX} instead
+	 */
+	@Deprecated(since = "12.3", forRemoval = true)
+	public final static String SUFFIX = FileDataTypeArchive.SUFFIX;
 
 	/**
 	 * Create a new data-type file archive using the default data organization
@@ -52,7 +66,7 @@ public interface FileDataTypeManager extends ArchiveDataTypeManager, AutoCloseab
 	 * @deprecated Use {@link DataTypeArchiveFactory#createFileArchive(File, Object)} to create a 
 	 * file base archive, then call {@link PersistentDataTypeArchive#getDataTypeManager()}
 	 */
-	@Deprecated(since = "12.2", forRemoval = true)
+	@Deprecated(since = "12.3", forRemoval = true)
 	public static FileDataTypeManager createFileArchive(File packedDbfile) throws IOException {
 		FileDataTypeArchive archive =
 			DataTypeArchiveFactory.createFileArchive(packedDbfile, new DefaultConsumer());
@@ -74,7 +88,7 @@ public interface FileDataTypeManager extends ArchiveDataTypeManager, AutoCloseab
 	 * {@link DataTypeArchiveFactory#createFileArchive(File, LanguageID, CompilerSpecID, Object)} to
 	 * create a file based archive, then call {@link PersistentDataTypeArchive#getDataTypeManager()}
 	 */
-	@Deprecated(since = "12.2", forRemoval = true)
+	@Deprecated(since = "12.3", forRemoval = true)
 	public static FileDataTypeManager createFileArchive(File packedDbFile, LanguageID languageId,
 			CompilerSpecID compilerSpecId)
 			throws LanguageNotFoundException, CompilerSpecNotFoundException, IOException {
@@ -101,7 +115,7 @@ public interface FileDataTypeManager extends ArchiveDataTypeManager, AutoCloseab
 	 * {@link DataTypeArchiveFactory#createFileArchive(File, String, String, Object)} to create
 	 * a file based archive, then call {@link PersistentDataTypeArchive#getDataTypeManager()}
 	 */
-	@Deprecated(since = "12.2", forRemoval = true)
+	@Deprecated(since = "12.3", forRemoval = true)
 	public static FileDataTypeManager createFileArchive(File packedDbfile, String languageId,
 			String compilerSpecId) throws IOException {
 		FileDataTypeArchive archive =
@@ -127,7 +141,7 @@ public interface FileDataTypeManager extends ArchiveDataTypeManager, AutoCloseab
 	 * {@link DataTypeArchiveFactory#openForUpdate(File, boolean, Object, TaskMonitor)} to open
 	 * a file based archive, then call {@link PersistentDataTypeArchive#getDataTypeManager()}
 	 */
-	@Deprecated(since = "12.2", forRemoval = true)
+	@Deprecated(since = "12.3", forRemoval = true)
 	public static FileDataTypeManager openFileArchive(File file, boolean openForUpdate)
 			throws IOException {
 		return openFileArchive(new ResourceFile(file), openForUpdate);
@@ -150,7 +164,7 @@ public interface FileDataTypeManager extends ArchiveDataTypeManager, AutoCloseab
 	 * or {@link DataTypeArchiveFactory#openForUpdate(ResourceFile, boolean, Object, TaskMonitor)} 
 	 * to open a file based archive, then call {@link PersistentDataTypeArchive#getDataTypeManager()}
 	 */
-	@Deprecated(since = "12.2", forRemoval = true)
+	@Deprecated(since = "12.3", forRemoval = true)
 	public static FileDataTypeManager openFileArchive(ResourceFile file,
 			boolean openForUpdate) throws IOException {
 		FileDataTypeArchive archive;
@@ -185,14 +199,14 @@ public interface FileDataTypeManager extends ArchiveDataTypeManager, AutoCloseab
 	 * {@return true if the archive has changed}
 	 * @deprecated Use {@link PersistentDataTypeArchive#isChanged}
 	 */
-	@Deprecated(since = "12.2", forRemoval = true)
+	@Deprecated(since = "12.3", forRemoval = true)
 	public boolean isChanged();
 
 	/**
 	 * {@return true if the archive containing this datatype manager has been closed}
 	 * @deprecated Use {@link PersistentDataTypeArchive#isClosed()}
 	 */
-	@Deprecated(since = "12.2", forRemoval = true)
+	@Deprecated(since = "12.3", forRemoval = true)
 	public boolean isClosed();
 
 	/**
@@ -200,7 +214,7 @@ public interface FileDataTypeManager extends ArchiveDataTypeManager, AutoCloseab
 	 * @throws IOException if IO error occurs
 	 * @deprecated Use {@link FileDataTypeArchive#save(String, TaskMonitor)}
 	 */
-	@Deprecated(since = "12.2", forRemoval = true)
+	@Deprecated(since = "12.3", forRemoval = true)
 	public void save() throws IOException;
 
 	/**
@@ -212,7 +226,7 @@ public interface FileDataTypeManager extends ArchiveDataTypeManager, AutoCloseab
 	 * @throws IOException if IO error occurs
 	 * @deprecated Use {@link FileDataTypeArchive#saveAs(File, UniversalID)}
 	 */
-	@Deprecated(since = "12.2", forRemoval = true)
+	@Deprecated(since = "12.3", forRemoval = true)
 	public void saveAs(File outFile, UniversalID newFileID)
 			throws DuplicateFileException, IOException;
 
@@ -223,7 +237,7 @@ public interface FileDataTypeManager extends ArchiveDataTypeManager, AutoCloseab
 	 * @throws DuplicateFileException if a file with that name already exists.
 	 * @deprecated Use {@link FileDataTypeArchive#saveAs(File, TaskMonitor)}
 	 */
-	@Deprecated(since = "12.2", forRemoval = true)
+	@Deprecated(since = "12.3", forRemoval = true)
 	public void saveAs(File outFile) throws DuplicateFileException, IOException;
 
 }

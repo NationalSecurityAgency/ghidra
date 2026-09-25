@@ -15,8 +15,6 @@
  */
 package ghidra.program.database.data;
 
-import static ghidra.program.model.dtarchive.FileDataTypeArchive.*;
-
 import java.io.File;
 import java.io.IOException;
 
@@ -173,7 +171,7 @@ public class FileDataTypeManagerDB extends ArchiveDataTypeManagerDB
 	}
 
 	@Override
-	@Deprecated(since = "12.2", forRemoval = true)
+	@Deprecated(since = "12.3", forRemoval = true)
 	public void close() {
 		if (!archive.isClosed()) {
 			getDataStore().releaseDefaultConsumers();

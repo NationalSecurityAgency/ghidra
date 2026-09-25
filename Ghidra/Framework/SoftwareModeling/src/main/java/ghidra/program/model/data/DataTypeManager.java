@@ -20,8 +20,8 @@ import java.util.*;
 import db.Transaction;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.database.SpecExtension;
-import ghidra.program.model.dtarchive.PersistentDataTypeArchive;
 import ghidra.program.model.dtarchive.DataTypeStore;
+import ghidra.program.model.dtarchive.PersistentDataTypeArchive;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
@@ -515,7 +515,7 @@ public interface DataTypeManager {
 	 * archive closed out from under it, can add a consumer to the archive which then would need
 	 * to be released when done with it.
 	 */
-	@Deprecated(since = "12.2", forRemoval = true)
+	@Deprecated(since = "12.3", forRemoval = true)
 	public void close();
 
 	/**
