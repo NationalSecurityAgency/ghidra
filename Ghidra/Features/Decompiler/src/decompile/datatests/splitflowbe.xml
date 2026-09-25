@@ -1,0 +1,26 @@
+<decompilertest>
+<binaryimage arch="6809:BE:16:default">
+<!--
+  A split of the big-endian D register must preserve the consume mask of the
+  significant A byte.  If A inherits B's mask, the count becomes zero and
+  the reachable store at 0x0410 is removed.
+-->
+<bytechunk space="ram" offset="0x400">
+cc0000f610004cf7100126f781072303b7100239
+</bytechunk>
+<bytechunk space="ram" offset="0x1000">
+000000
+</bytechunk>
+<symbol space="ram" offset="0x400" name="splitflow_be"/>
+<symbol space="ram" offset="0x1000" name="loop_input"/>
+<symbol space="ram" offset="0x1001" name="loop_output"/>
+<symbol space="ram" offset="0x1002" name="count_output"/>
+</binaryimage>
+<script>
+  <com>lo fu splitflow_be</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Big-endian splitflow keeps live high byte" min="1" max="1">count_output</stringmatch>
+</decompilertest>
