@@ -413,6 +413,10 @@ PcodeOp *Merge::allocateCopyTrim(Varnode *inVn,const Address &addr,PcodeOp *trim
 {
   PcodeOp *copyOp = data.newOp(1,addr);
   data.opSetOpcode(copyOp,CPUI_COPY);
+  if (inVn->getDef() != 0 && inVn->getDef()->code() == CPUI_COPY && 		// Propagate constant if one exists 
+  !inVn->isStackStore() && inVn->getDef()->getIn(0)->isConstant() && 
+  inVn->getDef()->getIn(0)->isHeritageKnown()) 
+    inVn = inVn->getDef()->getIn(0);
   Datatype *ct = inVn->getType();
   if (ct->needsResolution()) {		// If the data-type needs resolution
     if (inVn->isWritten()) {
