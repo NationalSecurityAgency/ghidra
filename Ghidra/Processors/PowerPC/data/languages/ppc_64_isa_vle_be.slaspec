@@ -7,6 +7,8 @@
 @define NoLegacyIntegerMultiplyAccumulate "1"
 
 @define REGISTER_SIZE "8"
+@define HREGSIZE "4"
+@define HREGBITS "32"
 @define BIT_64 "64"
 
 @define EATRUNC "ea"
