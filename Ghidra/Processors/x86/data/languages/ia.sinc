@@ -1107,6 +1107,10 @@ addr64: [Base64 + Index64*ss]			is mod=2 & r_m=4; Index64 & Base64 & ss; imm32=0
 
 currentCS: CS is protectedMode=0 & CS { tmp:4 = (inst_next >> 4) & 0xf000; CS = tmp:2; export CS; }
 currentCS: CS is protectedMode=1 & CS { tmp:4 = (inst_next >> 16) & 0xffff; CS = tmp:2; export CS; }
+
+# The 16-bit return address a near or far call pushes: the offset of inst_next from the CS base.
+# The returns compute segment(CS,IP) from it, so it must be built before the call changes CS.
+retOffset16: is epsilon { local csBase:$(SIZE) = segment(CS, 0:2); local nextOff:$(SIZE) = inst_next - csBase; local ret:2 = nextOff:2; export ret; }
  
 segWide: is segover=0		        { export 0:$(SIZE); }
 segWide: CS: is segover=1 & CS	{ export 0:$(SIZE); }
@@ -2910,15 +2914,15 @@ with : lockprefx=0 {
 :BTS Rmr64,imm8     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0xba; mod=3 & Rmr64 & reg_opcode=5; imm8   { local bit=imm8&0x3f; local val=(Rmr64>>bit)&1; Rmr64=Rmr64 | (1<<bit); CF=(val!=0); }
 @endif
 
-:CALL rel16     is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=0 & byte=0xe8; rel16     { push22(&:2 inst_next); call rel16; }
-:CALL rel16     is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & byte=0xe8; rel16     { push42(&:2 inst_next); call rel16; }
+:CALL rel16     is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=0 & byte=0xe8 & retOffset16; rel16     { push22(retOffset16); call rel16; }
+:CALL rel16     is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & byte=0xe8 & retOffset16; rel16     { push42(retOffset16); call rel16; }
 @ifdef IA64
 :CALL rel16     is $(LONGMODE_ON) & vexMode=0 & opsize=0 & byte=0xe8; rel16     { push88(&:8 inst_next); call rel16; }
 @endif
 
 #  When is a Call a Jump, when it jumps right after.  Not always the case but...
-:CALL rel16     is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=0 & byte=0xe8; simm16=0 & rel16      { push22(&:2 inst_next); goto rel16; }
-:CALL rel16     is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & byte=0xe8; simm16=0 & rel16      { push42(&:2 inst_next); goto rel16; }
+:CALL rel16     is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=0 & byte=0xe8 & retOffset16; simm16=0 & rel16      { push22(retOffset16); goto rel16; }
+:CALL rel16     is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & byte=0xe8 & retOffset16; simm16=0 & rel16      { push42(retOffset16); goto rel16; }
 @ifdef IA64
 :CALL rel16     is $(LONGMODE_ON) & vexMode=0 & opsize=0 & byte=0xe8; simm16=0 & rel16      { push88(&:8 inst_next); goto rel16; }
 @endif
@@ -2936,8 +2940,8 @@ with : lockprefx=0 {
 :CALL rel32     is $(LONGMODE_ON) & vexMode=0 & (opsize=1 | opsize=2) & byte=0xe8; simm32=0 & rel32      { push88(&:8 inst_next); goto rel32; }
 @endif
 
-:CALL rm16	    is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=0 & byte=0xff & currentCS; rm16 & reg_opcode=2 ...	{ local dest:4 = segment(currentCS,rm16); push22(&:2 inst_next); call [dest]; }
-:CALL rm16      is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & byte=0xff; rm16 & reg_opcode=2 ...   { local dest:2 = rm16; push42(&:2 inst_next); call [dest]; }
+:CALL rm16	    is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=0 & byte=0xff & currentCS & retOffset16; rm16 & reg_opcode=2 ...	{ local dest:4 = segment(currentCS,rm16); build retOffset16; push22(retOffset16); call [dest]; }
+:CALL rm16      is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & byte=0xff & retOffset16; rm16 & reg_opcode=2 ...   { local dest:2 = rm16; push42(retOffset16); call [dest]; }
 @ifdef IA64
 :CALL rm16      is $(LONGMODE_ON) & vexMode=0 & opsize=0 & byte=0xff; rm16 & reg_opcode=2 ...   { local dest:8 = inst_next + zext(rm16); push88(&:8 inst_next); call [dest]; }
 @endif
@@ -2949,19 +2953,26 @@ with : lockprefx=0 {
 @endif
 
 # direct far calls generate an opcode undefined exception in x86-64
-:CALLF ptr1616      is vexMode=0 & addrsize=0 & opsize=0 & byte=0x9a; ptr1616           { push22(CS); build ptr1616; push22(&:2 inst_next); call ptr1616; }
-:CALLF ptr1616      is vexMode=0 & addrsize=1 & opsize=0 & byte=0x9a; ptr1616           { push42(CS); build ptr1616; push42(&:2 inst_next); call ptr1616; }
+:CALLF ptr1616      is vexMode=0 & addrsize=0 & opsize=0 & byte=0x9a & retOffset16; ptr1616           { push22(CS); build retOffset16; build ptr1616; push22(retOffset16); call ptr1616; }
+:CALLF ptr1616      is vexMode=0 & addrsize=1 & opsize=0 & byte=0x9a & retOffset16; ptr1616           { push42(CS); build retOffset16; build ptr1616; push42(retOffset16); call ptr1616; }
 :CALLF ptr1632      is vexMode=0 & addrsize=0 & opsize=1 & byte=0x9a; ptr1632           { push22(CS); build ptr1632; push24(&:4 inst_next); call ptr1632; }
 :CALLF ptr1632      is vexMode=0 & addrsize=1 & opsize=1 & byte=0x9a; ptr1632           { pushseg44(CS); build ptr1632; push44(&:4 inst_next); call ptr1632; }
-:CALLF addr16       is vexMode=0 & addrsize=0 & opsize=0 & byte=0xff; addr16 & reg_opcode=3 ... { local ptr:$(SIZE) = segment(DS,addr16); local sel:2 = *:2 (ptr+2); local addrptr:$(SIZE) = segment(sel,*:2 ptr);
-                                                                                                  push22(CS); push22(&:2 inst_next); CS = sel; call [addrptr]; }
-:CALLF addr32       is vexMode=0 & addrsize=1 & opsize=0 & byte=0xff; addr32 & reg_opcode=3 ... { local dest:4 = addr32; push42(CS); push42(&:2 inst_next); call [dest]; }
+# Indirect far calls load CS from the far pointer. The emulator stops at the call, and the callee's
+# RETF pops the caller's CS. The p-code after the call models that return for static analysis by
+# writing the caller's CS back.
+:CALLF Mem          is vexMode=0 & addrsize=0 & opsize=0 & byte=0xff & retOffset16; Mem & reg_opcode=3 ... { local off:2 = *:2 Mem; local sel:2 = *:2 (Mem+2); local callerCS = CS;
+                                                                                                  push22(CS); push22(retOffset16); CS = sel; local dest:$(SIZE) = segment(CS,off); call [dest]; CS = callerCS; }
+:CALLF Mem          is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & byte=0xff & retOffset16; Mem & reg_opcode=3 ... { local off:2 = *:2 Mem; local sel:2 = *:2 (Mem+2); local callerCS = CS;
+                                                                                                  push42(CS); push42(retOffset16); CS = sel; local dest:$(SIZE) = segment(CS,off); call [dest]; CS = callerCS; }
 @ifdef IA64
+:CALLF addr32       is $(LONGMODE_ON) & vexMode=0 & addrsize=1 & opsize=0 & byte=0xff; addr32 & reg_opcode=3 ... { local dest:4 = addr32; push42(CS); push42(&:2 inst_next); call [dest]; }
 :CALLF addr64       is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & opsize=0 & byte=0xff; addr64 & reg_opcode=3 ... { local dest:8 = addr64; push82(CS); push82(&:2 inst_next); call [dest]; }
 @endif
 
 
-:CALLF addr16       is vexMode=0 & addrsize=0 & opsize=1 & byte=0xff; addr16 & reg_opcode=3 ... { local dest:2 = addr16; push22(CS); push24(&:4 inst_next); call [dest]; }
+# The m16:32 pointer's offset is 32 bits, wider than the segment userop's inner operand
+:CALLF Mem          is vexMode=0 & addrsize=0 & opsize=1 & byte=0xff; Mem & reg_opcode=3 ... { local off:4 = *:4 Mem; local sel:2 = *:2 (Mem+4); local callerCS = CS;
+                                                                                                  push22(CS); push24(&:4 inst_next); CS = sel; local csBase:4 = segment(CS,0:2); local dest:4 = csBase + off; call [dest]; CS = callerCS; }
 :CALLF addr32       is vexMode=0 & addrsize=1 & opsize=1 & byte=0xff; addr32 & reg_opcode=3 ... { local dest:4 = addr32; pushseg44(CS); push44(&:4 inst_next); call [dest]; }
 @ifdef IA64
 :CALLF addr32       is $(LONGMODE_ON) &vexMode=0 & addrsize=1 & opsize=2 & byte=0xff; addr32 & reg_opcode=3 ... { local dest:4 = addr32; pushseg88(CS); push88(&:8 inst_next); call [dest]; }
@@ -3722,7 +3733,7 @@ define pcodeop ibhf;
 @endif
 
 :IRET           is vexMode=0 & addrsize=0 & opsize=0 & byte=0xcf            { pop22(IP); pop22(CS); pop22(flags); EIP=segment(CS,IP); return [EIP]; }    
-:IRET           is vexMode=0 & addrsize=1 & opsize=0 & byte=0xcf            { pop42(IP); EIP=zext(IP); pop42(CS); pop42(flags); return [EIP]; }    
+:IRET           is vexMode=0 & addrsize=1 & opsize=0 & byte=0xcf            { pop42(IP); pop42(CS); pop42(flags); EIP=segment(CS,IP); return [EIP]; }    
 @ifdef IA64
 :IRET           is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & opsize=0 & byte=0xcf            { pop82(IP); RIP=zext(IP); pop82(CS); pop82(flags); return [RIP]; }    
 @endif
@@ -3776,8 +3787,10 @@ jccRel32: rel32, "bt"  is segover=3 & rel32 { export rel32; }
 
 :JMPF ptr1616   is vexMode=0 & opsize=0 & byte=0xea; ptr1616                    { goto ptr1616; }
 :JMPF ptr1632   is vexMode=0 & opsize=1 & byte=0xea; ptr1632                    { goto ptr1632; }
-:JMPF Mem       is vexMode=0 & addrsize=0 & opsize=0 & byte=0xff; Mem & reg_opcode=5 ... { local off:2 = *:2 Mem; CS = *:2 (Mem+2); target:$(SIZE) = segment(CS,off); goto [target]; }
-:JMPF Mem       is vexMode=0 & opsize=0 & byte=0xff; Mem & reg_opcode=5 ...     { target:$(SIZE) = zext(*:2 Mem); goto [target]; }
+:JMPF Mem       is $(LONGMODE_OFF) & vexMode=0 & opsize=0 & byte=0xff; Mem & reg_opcode=5 ... { local off:2 = *:2 Mem; CS = *:2 (Mem+2); target:$(SIZE) = segment(CS,off); goto [target]; }
+@ifdef IA64
+:JMPF Mem       is $(LONGMODE_ON) & vexMode=0 & opsize=0 & byte=0xff; Mem & reg_opcode=5 ...     { target:$(SIZE) = zext(*:2 Mem); goto [target]; }
+@endif
 :JMPF Mem       is vexMode=0 & opsize=1 & byte=0xff; Mem & reg_opcode=5 ...     {
 @ifdef IA64
     target:$(SIZE) = zext(*:4 Mem);
@@ -4594,7 +4607,7 @@ define pcodeop rdtsc;
 :RDTSC          is vexMode=0 & byte=0xf; byte=0x31                  { tmp:8 = rdtsc(); EDX = tmp(4); EAX = tmp(0); }
 
 :RET            is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=0 & byte=0xc3            { pop22(IP); EIP=segment(CS,IP); return [EIP]; }
-:RET            is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & byte=0xc3            { pop42(IP); EIP=zext(IP); return [EIP]; }
+:RET            is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & byte=0xc3            { pop42(IP); EIP=segment(CS,IP); return [EIP]; }
 :RET            is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=1 & byte=0xc3            { pop24(EIP); return [EIP]; }
 :RET            is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=1 & byte=0xc3            { pop44(EIP); return [EIP]; }
 @ifdef IA64
@@ -4602,7 +4615,7 @@ define pcodeop rdtsc;
 @endif
 
 :RETF           is vexMode=0 & addrsize=0 & opsize=0 & byte=0xcb            { pop22(IP); pop22(CS); EIP = segment(CS,IP); return [EIP]; }
-:RETF           is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & byte=0xcb            { pop42(IP); EIP=zext(IP); pop42(CS); return [EIP]; }        
+:RETF           is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & byte=0xcb            { pop42(IP); pop42(CS); EIP=segment(CS,IP); return [EIP]; }        
 @ifdef IA64
 :RETF           is $(LONGMODE_ON) & vexMode=0 & addrsize=1 & opsize=0 & byte=0xcb            { pop82(IP); RIP=zext(IP); pop82(CS); return [RIP]; }        
 :RETF           is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & opsize=0 & byte=0xcb            { pop82(IP); RIP=zext(IP); pop82(CS); return [RIP]; }        
@@ -4615,7 +4628,7 @@ define pcodeop rdtsc;
 @endif
 
 :RET imm16      is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=0 & byte=0xc2; imm16     { pop22(IP); EIP=segment(CS,IP); SP=SP+imm16; return [EIP]; }      
-:RET imm16      is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & byte=0xc2; imm16     { pop42(IP); EIP=zext(IP); ESP=ESP+imm16; return [EIP]; }        
+:RET imm16      is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & byte=0xc2; imm16     { pop42(IP); EIP=segment(CS,IP); ESP=ESP+imm16; return [EIP]; }        
 :RET imm16      is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=1 & byte=0xc2; imm16     { pop24(EIP); SP=SP+imm16; return [EIP]; }
 :RET imm16      is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=1 & byte=0xc2; imm16     { pop44(EIP); ESP=ESP+imm16; return [EIP]; }
 @ifdef IA64
@@ -4623,7 +4636,7 @@ define pcodeop rdtsc;
 @endif
 
 :RETF imm16     is vexMode=0 & addrsize=0 & opsize=0 & byte=0xca; imm16     { pop22(IP); pop22(CS); EIP=segment(CS,IP); SP=SP+imm16; return [EIP]; }       
-:RETF imm16     is vexMode=0 & addrsize=1 & opsize=0 & byte=0xca; imm16     { pop42(IP); EIP=zext(IP); pop42(CS); ESP=ESP+imm16; return [EIP]; }         
+:RETF imm16     is vexMode=0 & addrsize=1 & opsize=0 & byte=0xca; imm16     { pop42(IP); pop42(CS); EIP=segment(CS,IP); ESP=ESP+imm16; return [EIP]; }         
 @ifdef IA64
 :RETF imm16     is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & opsize=0 & byte=0xca; imm16     { pop82(IP); RIP=zext(IP); pop82(CS); RSP=RSP+imm16; return [RIP]; }         
 @endif

@@ -15,25 +15,30 @@
  */
 package ghidra.program.emulation;
 
+import java.util.List;
+
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeUseropLibraryFactory.UseropLibrary;
 import ghidra.pcode.exec.SleighPcodeUseropDefinition.BuilderStage1;
-import ghidra.program.model.address.*;
+import ghidra.program.model.lang.InjectPayloadSegment;
+import ghidra.program.model.lang.InjectPayloadSleigh;
 
 @UseropLibrary(id = "x86")
 public class X86PcodeUseropLibraryFactory implements PcodeUseropLibraryFactory {
 	@Override
 	public <T> PcodeUseropLibrary<T> create(SleighLanguage language,
 			PcodeArithmetic<T> arithmetic) {
-		AddressSpace space = language.getDefaultSpace();
-		if (space instanceof ProtectedAddressSpace) {
-			return new X86ProtectedModePcodeUseropLibrary<>();
+		if (hasSegmentop(language)) {
+			// SegmentopPcodeUseropLibraryFactory provides segment from the pspec
+			return new X86PcodeUseropLibrary<>();
 		}
-		if (space instanceof SegmentedAddressSpace) {
-			return new X86RealModePcodeUseropLibrary<>();
-		}
-		return new X86PcodeUseropLibrary<>();
+		return new X86FlatPcodeUseropLibrary<>();
+	}
+
+	static boolean hasSegmentop(SleighLanguage language) {
+		List<InjectPayloadSleigh> injects = language.getAdditionalInject();
+		return injects != null && injects.stream().anyMatch(InjectPayloadSegment.class::isInstance);
 	}
 
 	public static class X86PcodeUseropLibrary<T> extends AnnotatedPcodeUseropLibrary<T> {
@@ -53,27 +58,18 @@ public class X86PcodeUseropLibraryFactory implements PcodeUseropLibraryFactory {
 	}
 
 	/**
-	 * The x86 library for 16-bit real mode, where {@code segment} computes the same address as
-	 * the {@code segmentop} in {@code x86-16-real.pspec}
+	 * The x86 library for the 32- and 64-bit languages, which declare no {@code segmentop}
+	 * 
+	 * <p>
+	 * Instructions with 16-bit operand or address size still call {@code segment}. These languages
+	 * model a flat address space, so {@code segment} ignores the segment register and zero-extends
+	 * the offset.
 	 */
-	public static class X86RealModePcodeUseropLibrary<T> extends X86PcodeUseropLibrary<T> {
+	public static class X86FlatPcodeUseropLibrary<T> extends X86PcodeUseropLibrary<T> {
 		@PcodeUserop
 		public SleighPcodeUseropDefinition segment(BuilderStage1 builder) {
 			return builder.params("base", "inner").body(_ -> """
-					__op_output = (zext(base) << 4) + zext(inner);
-					""").build();
-		}
-	}
-
-	/**
-	 * The x86 library for 16-bit protected mode, where {@code segment} computes the same address
-	 * as the {@code segmentop} in {@code x86-16.pspec}
-	 */
-	public static class X86ProtectedModePcodeUseropLibrary<T> extends X86PcodeUseropLibrary<T> {
-		@PcodeUserop
-		public SleighPcodeUseropDefinition segment(BuilderStage1 builder) {
-			return builder.params("base", "inner").body(_ -> """
-					__op_output = (zext(base) << 16) + zext(inner);
+					__op_output = zext(inner);
 					""").build();
 		}
 	}
