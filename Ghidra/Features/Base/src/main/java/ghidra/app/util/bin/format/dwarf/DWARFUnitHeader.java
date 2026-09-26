@@ -29,12 +29,17 @@ public class DWARFUnitHeader {
 	 * @param dieContainer {@link DIEContainer}
 	 * @param reader {@link BinaryReader} stream
 	 * @param unitNumber ordinal of this item
-	 * @return a unit header (only comp units for now), or null if at end-of-list
+	 * @return a unit header, or null if at end-of-list
 	 * @throws DWARFException if invalid dwarf data
 	 * @throws IOException if error reading data
 	 */
 	public static DWARFUnitHeader read(DIEContainer dieContainer, BinaryReader reader,
 			int unitNumber) throws DWARFException, IOException {
+		return read(dieContainer, reader, unitNumber, false);
+	}
+
+	public static DWARFUnitHeader read(DIEContainer dieContainer, BinaryReader reader,
+			int unitNumber, boolean typeSection) throws DWARFException, IOException {
 		// unit_length : dwarf_length
 		// version : 2 bytes
 		// unit type : 1 byte [ version >= 5 ]
@@ -56,17 +61,27 @@ public class DWARFUnitHeader {
 			lengthInfo.intSize(), version, unitNumber);
 
 		if (2 <= version && version <= 4) {
-			return DWARFCompilationUnit.readV4(partial, reader);
+			if (typeSection && version != 4) {
+				throw new DWARFException("Unsupported .debug_types version [%d]".formatted(version));
+			}
+			return typeSection ? DWARFCompilationUnit.readTypeV4(partial, reader)
+					: DWARFCompilationUnit.readV4(partial, reader);
+		}
+		if (typeSection) {
+			throw new DWARFException("DWARF 5 type units belong in .debug_info");
 		}
 		int unitType = reader.readNextUnsignedByte();
 		switch (unitType) {
 			case DWARFUnitType.DW_UT_compile:
 				return DWARFCompilationUnit.readV5(partial, reader);
 			case DWARFUnitType.DW_UT_type:
-			case DWARFUnitType.DW_UT_partial:
+				return DWARFCompilationUnit.readTypeV5(partial, reader, unitType);
 			case DWARFUnitType.DW_UT_skeleton:
 			case DWARFUnitType.DW_UT_split_compile:
+				return DWARFCompilationUnit.readSplitV5(partial, reader, unitType);
 			case DWARFUnitType.DW_UT_split_type:
+				return DWARFCompilationUnit.readTypeV5(partial, reader, unitType);
+			case DWARFUnitType.DW_UT_partial:
 			default:
 				throw new DWARFException("Unsupported unitType %d, %s".formatted(unitType,
 					DWARFUtil.toString(DWARFUnitType.class, unitType)));

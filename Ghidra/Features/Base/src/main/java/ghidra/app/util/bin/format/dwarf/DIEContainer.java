@@ -18,6 +18,7 @@ package ghidra.app.util.bin.format.dwarf;
 import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.*;
 import static ghidra.app.util.bin.format.dwarf.sectionprovider.DWARFSectionId.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.Charset;
@@ -67,6 +68,8 @@ public class DIEContainer implements Iterable<DebugInfoEntry> {
 	// the compunit for that DIE.
 	protected TreeMap<Integer, DWARFCompilationUnit> compUnitDieIndex = new TreeMap<>();
 	protected List<DWARFCompilationUnit> compUnits = new ArrayList<>();
+	protected Map<Long, Long> typeSignatureToDIEOffset = new HashMap<>();
+	protected Map<Long, DWARFCompilationUnit> skeletonsByDwoId = Map.of();
 
 	// Indirect tables, added with dwarf v5, provide an index -> offset lookup feature for 
 	// index values such as DW_FORM_addrx or DW_FORM_strx and other similar 'x' attribute values.
@@ -103,6 +106,7 @@ public class DIEContainer implements Iterable<DebugInfoEntry> {
 	protected BinaryReader debugRanges;
 	protected BinaryReader debugRngLists; // v5+
 	protected BinaryReader debugInfoBR;
+	protected long debugInfoSectionSize;
 	protected BinaryReader debugLineBR;
 	protected BinaryReader debugAbbrBR;
 	protected BinaryReader debugAddr; // v5+
@@ -117,6 +121,21 @@ public class DIEContainer implements Iterable<DebugInfoEntry> {
 		this.importSummary = dprog.getImportSummary();
 	}
 
+	public void setSkeletonsByDwoId(Map<Long, DWARFCompilationUnit> skeletonsByDwoId) {
+		this.skeletonsByDwoId = skeletonsByDwoId;
+	}
+
+	public Map<Long, DWARFCompilationUnit> getSkeletonsByDwoId() {
+		Map<Long, DWARFCompilationUnit> result = new HashMap<>();
+		for (DWARFCompilationUnit cu : compUnits) {
+			if (cu.getUnitType() == DWARFUnitType.DW_UT_skeleton ||
+				(cu.getDWARFVersion() <= 4 && cu.hasDWO())) {
+				result.put(cu.getDwoId(), cu);
+			}
+		}
+		return result;
+	}
+
 	/**
 	 * Fetches required sections and sets up variables.
 	 * 
@@ -125,6 +144,14 @@ public class DIEContainer implements Iterable<DebugInfoEntry> {
 	 */
 	public void init(TaskMonitor monitor) throws IOException {
 		this.debugInfoBR = getReader(DEBUG_INFO, monitor);
+		BinaryReader originalInfoBR = debugInfoBR;
+		this.debugInfoSectionSize = debugInfoBR.length();
+		BinaryReader debugTypesBR = getReader(DEBUG_TYPES, monitor);
+		if (debugTypesBR != null && debugTypesBR.length() > 0) {
+			debugInfoBR = new BinaryReader(new CombinedInfoProvider(
+				debugInfoBR.getByteProvider(), debugTypesBR.getByteProvider()),
+				dprog.isLittleEndian());
+		}
 		this.debugAbbrBR = getReader(DEBUG_ABBREV, monitor);
 
 		this.debugLocation = getReader(DEBUG_LOC, monitor);
@@ -156,7 +183,7 @@ public class DIEContainer implements Iterable<DebugInfoEntry> {
 		// debuginfo or debugrange sections, then we don't need to manually fix up addresses
 		// extracted from DWARF data.
 		// TODO: probably only needed for local section provider
-		boolean hasRelocations = hasRelocations(debugInfoBR) || hasRelocations(debugRanges);
+		boolean hasRelocations = hasRelocations(originalInfoBR) || hasRelocations(debugRanges);
 		if (!hasRelocations) {
 			Program prog = dprog.getGhidraProgram();
 			Long oib = ElfLoader.getElfOriginalImageBase(prog);
@@ -179,14 +206,20 @@ public class DIEContainer implements Iterable<DebugInfoEntry> {
 		bootstrapCompilationUnits(monitor);
 
 		int defaultIntSize = dprog.getDefaultIntSize();
+		boolean gnuSplitV4 = !skeletonsByDwoId.isEmpty() && !compUnits.isEmpty() &&
+			compUnits.get(0).getDWARFVersion() <= 4;
 		rangeListTable.bootstrap("DWARF: Bootstrapping Range Lists",
 			reader -> DWARFRangeListHeader.read(reader, defaultIntSize), monitor);
 		locationListTable.bootstrap("DWARF: Bootstrapping Location Lists",
 			reader -> DWARFLocationListHeader.read(reader, defaultIntSize), monitor);
 		addressListTable.bootstrap("DWARF: Bootstrapping Address Lists",
-			reader -> DWARFAddressListHeader.read(reader, defaultIntSize), monitor);
+			reader -> gnuSplitV4
+					? DWARFAddressListHeader.readV4Raw(reader, compUnits.get(0).getPointerSize())
+					: DWARFAddressListHeader.read(reader, defaultIntSize), monitor);
 		stringsOffsetTable.bootstrap("DWARF: Bootstrapping String Offset Lists",
-			reader -> DWARFStringOffsetTableHeader.readV5(reader, defaultIntSize), monitor);
+			reader -> gnuSplitV4
+					? DWARFStringOffsetTableHeader.readV4Raw(reader, compUnits.get(0).getIntSize())
+					: DWARFStringOffsetTableHeader.readV5(reader, defaultIntSize), monitor);
 
 		indexDIEs(monitor);
 		indexDIEATypeRefs(monitor);
@@ -204,6 +237,8 @@ public class DIEContainer implements Iterable<DebugInfoEntry> {
 			lineStrings = null;
 		}
 		compUnits.clear();
+		typeSignatureToDIEOffset.clear();
+		skeletonsByDwoId = Map.of();
 
 		debugAbbrBR = null;
 		debugInfoBR = null;
@@ -256,7 +291,7 @@ public class DIEContainer implements Iterable<DebugInfoEntry> {
 
 		debugInfoBR.setPointerIndex(0);
 		monitor.initialize(debugInfoBR.length(), "DWARF: Bootstrapping Compilation Units");
-		while (debugInfoBR.hasNext()) {
+		while (debugInfoBR.getPointerIndex() < debugInfoSectionSize) {
 			monitor.checkCancelled();
 			monitor.setProgress(debugInfoBR.getPointerIndex());
 			monitor.setMessage("DWARF: Bootstrapping Compilation Unit #" + compUnits.size());
@@ -268,7 +303,14 @@ public class DIEContainer implements Iterable<DebugInfoEntry> {
 
 			debugInfoBR.setPointerIndex(unitHeader.getEndOffset());
 			if (unitHeader instanceof DWARFCompilationUnit cu) {
+				if (cu.getUnitType() == DWARFUnitType.DW_UT_split_compile) {
+					cu.setSkeleton(skeletonsByDwoId.get(cu.getDwoId()));
+				}
 				compUnits.add(cu);
+				if (cu.isTypeUnit()) {
+					typeSignatureToDIEOffset.putIfAbsent(cu.getTypeSignature(),
+						cu.getTypeDIEOffset());
+				}
 				importSummary.dwarfVers.add((int) cu.getDWARFVersion());
 			}
 			else {
@@ -276,7 +318,94 @@ public class DIEContainer implements Iterable<DebugInfoEntry> {
 					unitHeader.getStartOffset());
 			}
 		}
+		if (debugInfoBR.length() > debugInfoSectionSize) {
+			debugInfoBR.setPointerIndex(debugInfoSectionSize);
+			while (debugInfoBR.hasNext()) {
+				monitor.checkCancelled();
+				monitor.setProgress(debugInfoBR.getPointerIndex());
+				DWARFUnitHeader unitHeader = DWARFUnitHeader.read(this, debugInfoBR,
+					compUnits.size(), true);
+				if (unitHeader == null) {
+					break;
+				}
+				debugInfoBR.setPointerIndex(unitHeader.getEndOffset());
+				if (unitHeader instanceof DWARFCompilationUnit cu) {
+					compUnits.add(cu);
+					importSummary.dwarfVers.add((int) cu.getDWARFVersion());
+					typeSignatureToDIEOffset.putIfAbsent(cu.getTypeSignature(),
+						cu.getTypeDIEOffset());
+				}
+			}
+		}
 		importSummary.compUnitCount = compUnits.size();
+	}
+
+	/** Gives .debug_types its own offset range without copying either section. */
+	private static class CombinedInfoProvider implements ByteProvider {
+		private final ByteProvider info;
+		private final ByteProvider types;
+		private final long split;
+
+		CombinedInfoProvider(ByteProvider info, ByteProvider types) {
+			this.info = info;
+			this.types = types;
+			this.split = info.length();
+		}
+
+		@Override
+		public File getFile() {
+			return null;
+		}
+
+		@Override
+		public String getName() {
+			return "DWARF info and types";
+		}
+
+		@Override
+		public String getAbsolutePath() {
+			return null;
+		}
+
+		@Override
+		public long length() {
+			return split + types.length();
+		}
+
+		@Override
+		public boolean isValidIndex(long index) {
+			return index >= 0 && index < length();
+		}
+
+		@Override
+		public byte readByte(long index) throws IOException {
+			return index < split ? info.readByte(index) : types.readByte(index - split);
+		}
+
+		@Override
+		public byte[] readBytes(long index, long count) throws IOException {
+			if (index < 0 || count < 0 || count > Integer.MAX_VALUE ||
+				index > length() - count) {
+				throw new IOException("Invalid DWARF section read");
+			}
+			if (index >= split) {
+				return types.readBytes(index - split, count);
+			}
+			if (index + count <= split) {
+				return info.readBytes(index, count);
+			}
+			int infoCount = (int) (split - index);
+			byte[] result = new byte[(int) count];
+			System.arraycopy(info.readBytes(index, infoCount), 0, result, 0, infoCount);
+			System.arraycopy(types.readBytes(0, count - infoCount), 0, result, infoCount,
+				(int) count - infoCount);
+			return result;
+		}
+
+		@Override
+		public void close() {
+			// The section provider owns both input providers.
+		}
 	}
 
 	private void indexDIEs(TaskMonitor monitor) throws CancelledException, IOException {
@@ -381,6 +510,9 @@ public class DIEContainer implements Iterable<DebugInfoEntry> {
 
 				if (die.getOffset() == cu.getFirstDIEOffset()) {
 					cu.init(die);
+					if (cu.getDWARFVersion() <= 4) {
+						cu.setSkeleton(skeletonsByDwoId.get(cu.getDwoId()));
+					}
 				}
 
 				DIEAggregate diea = DIEAggregate.createSingle(die);
@@ -451,6 +583,10 @@ public class DIEContainer implements Iterable<DebugInfoEntry> {
 	 */
 	public DebugInfoEntry getDIE(DWARFForm form, long rawOffset, DWARFCompilationUnit cu)
 			throws IOException {
+		if (form == DWARFForm.DW_FORM_ref_sig8) {
+			Long typeDIEOffset = typeSignatureToDIEOffset.get(rawOffset);
+			return typeDIEOffset != null ? getDIEByOffset(typeDIEOffset) : null;
+		}
 		return getDIEByOffset(getLocalDIEOffset(form, rawOffset, cu));
 	}
 
@@ -690,6 +826,7 @@ public class DIEContainer implements Iterable<DebugInfoEntry> {
 			throws IOException {
 		DWARFIndirectTable table = switch (form) {
 			case DW_FORM_addrx:
+			case DW_FORM_gnu_addr_index:
 			case DW_FORM_addrx1:
 			case DW_FORM_addrx2:
 			case DW_FORM_addrx3:
@@ -700,6 +837,7 @@ public class DIEContainer implements Iterable<DebugInfoEntry> {
 			case DW_FORM_loclistx:
 				yield locationListTable;
 			case DW_FORM_strx:
+			case DW_FORM_gnu_str_index:
 			case DW_FORM_strx1:
 			case DW_FORM_strx2:
 			case DW_FORM_strx3:
@@ -726,6 +864,7 @@ public class DIEContainer implements Iterable<DebugInfoEntry> {
 			case DW_FORM_udata:
 				return value;
 			case DW_FORM_addrx:
+			case DW_FORM_gnu_addr_index:
 			case DW_FORM_addrx1:
 			case DW_FORM_addrx2:
 			case DW_FORM_addrx3:
@@ -733,7 +872,6 @@ public class DIEContainer implements Iterable<DebugInfoEntry> {
 				long addr = addressListTable.getOffset((int) value, cu);
 				return addr;
 			}
-			case DW_FORM_gnu_addr_index:
 			default:
 				throw new IOException("Unsupported form %s".formatted(form));
 		}
@@ -815,7 +953,8 @@ public class DIEContainer implements Iterable<DebugInfoEntry> {
 				return debugStrings.getStringAtOffset(offset);
 			case DW_FORM_gnu_strp_alt:
 			case DW_FORM_gnu_str_index:
-				throw new IOException("Unsupported DWARF string attribute form " + form);
+				long gnuStrOffset = stringsOffsetTable.getOffset((int) offset, cu);
+				return debugStrings.getStringAtOffset(gnuStrOffset);
 			case DW_FORM_strx, DW_FORM_strx1, DW_FORM_strx2, DW_FORM_strx3, DW_FORM_strx4:
 				long strOffset = stringsOffsetTable.getOffset((int) offset, cu);
 				return debugStrings.getStringAtOffset(strOffset);

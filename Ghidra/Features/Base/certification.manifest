@@ -1096,6 +1096,12 @@ src/test.slow/resources/filterTestDirList.txt||GHIDRA||||END|
 src/test.slow/resources/ghidra/app/plugin/core/datamgr/TestDataType.txt||GHIDRA||||END|
 src/test.slow/resources/ghidra/app/script/GhidraScriptAsk.properties||GHIDRA||||END|
 src/test/resources/defaultTools/TestCodeBrowser.tool||GHIDRA||||END|
+src/test/resources/ghidra/app/util/bin/format/dwarf/split/sample.dwo||GHIDRA||||END|
+src/test/resources/ghidra/app/util/bin/format/dwarf/split/sample.o||GHIDRA||||END|
+src/test/resources/ghidra/app/util/bin/format/dwarf/split/sample_compressed.dwo||GHIDRA||||END|
+src/test/resources/ghidra/app/util/bin/format/dwarf/split/split_v4.dwo||GHIDRA||||END|
+src/test/resources/ghidra/app/util/bin/format/dwarf/split/split_v4.o||GHIDRA||||END|
+src/test/resources/ghidra/app/util/bin/format/dwarf/split/type_sample.o||GHIDRA||||END|
 src/test/resources/ghidra/app/util/opinion/decompile_debug_test.xml||GHIDRA||||END|
 src/test/resources/ghidra/app/util/opinion/test.ord||GHIDRA||||END|
 src/test/resources/ghidra/util/bytesearch/bytepatternsearch/basic_search_collection.xml||GHIDRA||||END|
