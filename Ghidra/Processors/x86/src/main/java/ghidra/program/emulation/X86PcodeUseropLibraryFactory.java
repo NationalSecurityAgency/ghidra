@@ -18,12 +18,21 @@ package ghidra.program.emulation;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeUseropLibraryFactory.UseropLibrary;
+import ghidra.pcode.exec.SleighPcodeUseropDefinition.BuilderStage1;
+import ghidra.program.model.address.*;
 
 @UseropLibrary(id = "x86")
 public class X86PcodeUseropLibraryFactory implements PcodeUseropLibraryFactory {
 	@Override
 	public <T> PcodeUseropLibrary<T> create(SleighLanguage language,
 			PcodeArithmetic<T> arithmetic) {
+		AddressSpace space = language.getDefaultSpace();
+		if (space instanceof ProtectedAddressSpace) {
+			return new X86ProtectedModePcodeUseropLibrary<>();
+		}
+		if (space instanceof SegmentedAddressSpace) {
+			return new X86RealModePcodeUseropLibrary<>();
+		}
 		return new X86PcodeUseropLibrary<>();
 	}
 
@@ -40,6 +49,32 @@ public class X86PcodeUseropLibraryFactory implements PcodeUseropLibraryFactory {
 
 		@PcodeUserop(functional = true)
 		public void UNLOCK() {
+		}
+	}
+
+	/**
+	 * The x86 library for 16-bit real mode, where {@code segment} computes the same address as
+	 * the {@code segmentop} in {@code x86-16-real.pspec}
+	 */
+	public static class X86RealModePcodeUseropLibrary<T> extends X86PcodeUseropLibrary<T> {
+		@PcodeUserop
+		public SleighPcodeUseropDefinition segment(BuilderStage1 builder) {
+			return builder.params("base", "inner").body(_ -> """
+					__op_output = (zext(base) << 4) + zext(inner);
+					""").build();
+		}
+	}
+
+	/**
+	 * The x86 library for 16-bit protected mode, where {@code segment} computes the same address
+	 * as the {@code segmentop} in {@code x86-16.pspec}
+	 */
+	public static class X86ProtectedModePcodeUseropLibrary<T> extends X86PcodeUseropLibrary<T> {
+		@PcodeUserop
+		public SleighPcodeUseropDefinition segment(BuilderStage1 builder) {
+			return builder.params("base", "inner").body(_ -> """
+					__op_output = (zext(base) << 16) + zext(inner);
+					""").build();
 		}
 	}
 }
