@@ -66,7 +66,14 @@ macro subtraction_flags1(register, operand, result) {
 	V = ( ((register & ~operand & ~result) | (complement_register & operand & result)) & 0b10000000 ) != 0;
 	N = (result s< 0);
 	Z = (result == 0);
-	C = ( ((complement_register & operand) | (operand & result) | (result & complement_register)) & 0b10000000 ) != 0;
+	C = ( ((complement_register & operand) | (operand & result) | (result & complement_register)) & 0b10000000 ) == 0;
+}
+
+macro readZpPointer(ptr, zp) {
+	local lo:2 = zext(zp);
+	local zp1:1 = zp + 1;
+	local hi:2 = zext(zp1);
+	ptr = zext(*:1 lo) | (zext(*:1 hi) << 8);
 }
 
 
@@ -92,9 +99,9 @@ OP1: imm16,X    is bbb=7 & X; imm16		{ tmp:2 = imm16 + zext(X); export *:1 tmp; 
 # Absolute Indexed Y
 OP1: imm16,Y    is bbb=6 & Y; imm16		{ tmp:2 = imm16 + zext(Y); export *:1 tmp; }
 # Indirect X
-OP1: (imm8,X)   is bbb=0 & X; imm8		{ addr:2 = zext(imm8 + X); tmp:2 = *:2 addr; export *:1 tmp; }
+OP1: (imm8,X)   is bbb=0 & X; imm8		{ local zp:1 = imm8 + X; tmp:2 = 0; readZpPointer(tmp, zp); export *:1 tmp; }
 # Indirect Y
-OP1: (imm8),Y   is bbb=4 & Y; imm8		{ addr:2 = imm8; tmp:2 = *:2 addr; tmp = tmp + zext(Y); export *:1 tmp; }
+OP1: (imm8),Y   is bbb=4 & Y; imm8		{ local zp:1 = imm8; tmp:2 = 0; readZpPointer(tmp, zp); tmp = tmp + zext(Y); export *:1 tmp; }
 
 # Immediate
 OP2: "#"imm8    is bbb=0; imm8			{ tmp:1 = imm8; export tmp; }
@@ -128,13 +135,15 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 {
 	local op1 = OP1;
 	local tmpC = C;
+	local oldA = A;
 	
 	C = carry(A, op1);
-	
-	A = A + op1 + tmpC;
+	A = A + op1;
+	C = C || carry(A, tmpC);
+	A = A + tmpC;
 
 	resultFlags(A);
-	V = C;
+	V = ((oldA ^ A) & (op1 ^ A) & 0x80) != 0;
 }
 
 :AND OP1     is (cc=1 & aaa=1) ... & OP1
