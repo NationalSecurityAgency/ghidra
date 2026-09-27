@@ -20,9 +20,9 @@ import java.util.Collection;
 import javax.swing.Icon;
 
 import generic.theme.GIcon;
+import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.data.DataTypeManager;
-import ghidra.program.model.data.DataTypeManagerDomainObject;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.Program;
@@ -60,7 +60,7 @@ import ghidra.util.LockHold;
  * specific snapshot and/or manipulate the trace as if it were a program, use
  * {@link #getProgramView()}.
  */
-public interface Trace extends DataTypeManagerDomainObject {
+public interface Trace extends DomainObject {
 	Icon TRACE_ICON = new GIcon("icon.content.handler.trace");
 
 	public interface TraceProgramViewListener {
@@ -86,13 +86,9 @@ public interface Trace extends DataTypeManagerDomainObject {
 	TraceCodeManager getCodeManager();
 
 	/**
-	 * {@inheritDoc}
-	 * 
-	 * <p>
-	 * For traces, this gets the "base" or "host" {@link DataTypeManager}. For platform-specific
-	 * managers, see {@link TracePlatform#getDataTypeManager()}.
+	 * {@return the "base" or "host" {@link DataTypeManager} for traces. For platform-specific
+	 * managers, see {@link TracePlatform#getDataTypeManager()}}
 	 */
-	@Override
 	default TraceBasedDataTypeManager getDataTypeManager() {
 		return getBaseDataTypeManager();
 	}

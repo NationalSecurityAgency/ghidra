@@ -42,10 +42,12 @@ import ghidra.pcode.emu.EmulatorUtilities;
 import ghidra.pcode.floatformat.FloatFormat;
 import ghidra.pcode.floatformat.FloatFormatFactory;
 import ghidra.program.database.ProgramDB;
+import ghidra.program.database.dtarchive.DataTypeArchiveFactory;
 import ghidra.program.disassemble.DisassemblerContextImpl;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
-import ghidra.program.model.data.StandAloneDataTypeManager.ArchiveWarning;
+import ghidra.program.model.dtarchive.ArchiveWarning;
+import ghidra.program.model.dtarchive.FileDataTypeArchive;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
@@ -207,7 +209,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 	private Collection<ResourceFile> applicationRootDirectories;
 	private File resourcesTestDataDir;
 
-	private FileDataTypeManager archiveDtMgr;
+	private FileDataTypeArchive fileArchive;
 	private Structure testInfoStruct;
 	private Structure groupInfoStruct;
 
@@ -967,16 +969,18 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 		}
 
 		ResourceFile emuTestingArchive = Application.getModuleDataFile("pcodetest/EmuTesting.gdt");
-		archiveDtMgr = FileDataTypeManager.openFileArchive(emuTestingArchive, false);
-		assertEquals(ArchiveWarning.NONE, archiveDtMgr.getWarning());
-		DataType dt = archiveDtMgr.getDataType(CategoryPath.ROOT, TEST_INFO_STRUCT_NAME);
+		fileArchive =
+			DataTypeArchiveFactory.openReadOnly(emuTestingArchive, this, TaskMonitor.DUMMY);
+		assertEquals(ArchiveWarning.NONE, fileArchive.getWarning());
+		DataTypeManager dtm = fileArchive.getDataTypeManager();
+		DataType dt = dtm.getDataType(CategoryPath.ROOT, TEST_INFO_STRUCT_NAME);
 		if (dt == null || !(dt instanceof Structure)) {
 			fail(TEST_INFO_STRUCT_NAME +
 				" structure data-type not found in resource EmuTesting.gdt");
 		}
 		testInfoStruct = (Structure) dt;
 
-		dt = archiveDtMgr.getDataType(CategoryPath.ROOT, GROUP_INFO_STRUCT_NAME);
+		dt = dtm.getDataType(CategoryPath.ROOT, GROUP_INFO_STRUCT_NAME);
 		if (dt == null || !(dt instanceof Structure)) {
 			fail(GROUP_INFO_STRUCT_NAME +
 				" structure data-type not found in resource EmuTesting.gdt");
@@ -1074,8 +1078,8 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 			logData.traceLog.close();
 			logData.traceLog = null;
 		}
-		if (archiveDtMgr != null) {
-			archiveDtMgr.close();
+		if (fileArchive != null) {
+			fileArchive.release(this);
 		}
 		if (env != null) {
 			env.dispose();
@@ -1601,7 +1605,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 		// Apply known function signatures
 		// Signatures with Float types have been excluded due to limited calling convention support
 		ArrayList<DataTypeManager> dtMgrList = new ArrayList<>();
-		dtMgrList.add(archiveDtMgr);
+		dtMgrList.add(fileArchive.getDataTypeManager());
 		ApplyFunctionDataTypesCmd cmd =
 			new ApplyFunctionDataTypesCmd(dtMgrList, null, SourceType.ANALYSIS, true, false);
 		cmd.applyTo(program);

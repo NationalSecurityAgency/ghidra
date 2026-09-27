@@ -33,10 +33,12 @@ import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraLaunchable;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationConfiguration;
+import ghidra.program.database.dtarchive.DataTypeArchiveFactory;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.Enum;
-import ghidra.program.model.data.StandAloneDataTypeManager.ArchiveWarning;
+import ghidra.program.model.dtarchive.ArchiveWarning;
+import ghidra.program.model.dtarchive.FileDataTypeArchive;
 import ghidra.util.*;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.*;
@@ -54,58 +56,61 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 
 	public static void transform(File oldFile, File newFile, File destinationFile,
 			boolean useOldFileID, TaskMonitor monitor)
-			throws InvalidInputException, DuplicateFileException, IOException, CancelledException {
+			throws InvalidInputException, DuplicateFileException, IOException, CancelledException,
+			VersionException {
 
 		monitor.setMessage("Beginning transformation...");
 		validate(oldFile, newFile, destinationFile);
-
-		FileDataTypeManager oldFileArchive = null;
-		FileDataTypeManager newFileArchive = null;
+		FileDataTypeArchive oldArchive = null;
+		FileDataTypeArchive newArchive = null;
+		Object consumer = new Object();
 		try {
 			monitor.initialize(100);
-
-			oldFileArchive = FileDataTypeManager.openFileArchive(oldFile, false);
-			ArchiveWarning warning = oldFileArchive.getWarning();
+			oldArchive = DataTypeArchiveFactory.openReadOnly(oldFile, consumer, TaskMonitor.DUMMY);
+			DataTypeManager oldFileDtManager = oldArchive.getDataTypeManager();
+			ArchiveWarning warning = oldArchive.getWarning();
 			if (warning == ArchiveWarning.LANGUAGE_UPGRADE_REQURED) {
 				throw new IOException("Archive requires language upgrade: " + oldFile);
 			}
 			if (warning != ArchiveWarning.NONE) {
 				throw new IOException("Archive language error occured: " + oldFile,
-					oldFileArchive.getWarningDetail());
+					oldArchive.getWarningDetail());
 			}
+			newArchive =
+				DataTypeArchiveFactory.openForUpdate(newFile, true, consumer, TaskMonitor.DUMMY);
 
-			newFileArchive = FileDataTypeManager.openFileArchive(newFile, true);
-			warning = newFileArchive.getWarning();
+			DataTypeManager newFileDtManager = newArchive.getDataTypeManager();
+			warning = newArchive.getWarning();
 			if (warning == ArchiveWarning.LANGUAGE_UPGRADE_REQURED) {
 				throw new IOException("Archive requires language upgrade: " + newFile);
 			}
 			if (warning != ArchiveWarning.NONE) {
 				throw new IOException("Archive language error occured: " + newFile,
-					newFileArchive.getWarningDetail());
+					newArchive.getWarningDetail());
 			}
 
-			UniversalID oldUniversalID = oldFileArchive.getUniversalID();
-			UniversalID newUniversalID = newFileArchive.getUniversalID();
+			UniversalID oldUniversalID = oldFileDtManager.getUniversalID();
+			UniversalID newUniversalID = newFileDtManager.getUniversalID();
 			Msg.info(DataTypeArchiveTransformer.class, "Old file ID = " + oldUniversalID);
 			Msg.info(DataTypeArchiveTransformer.class, "New file ID = " + newUniversalID);
-			transformEachDataType(oldFileArchive, newFileArchive, monitor);
+			transformEachDataType(oldFileDtManager, newFileDtManager, monitor);
 			monitor.setProgress(50);
-			fixEachDataTypeTimestamp(oldFileArchive, newFileArchive, monitor);
+			fixEachDataTypeTimestamp(oldFileDtManager, newFileDtManager, monitor);
 			monitor.setProgress(100);
 			monitor.setMessage("Saving " + destinationFile.getAbsolutePath());
 			if (useOldFileID) {
-				saveNewArchive(oldFileArchive, newFileArchive, destinationFile);
+				saveNewArchive(oldArchive, newArchive, destinationFile);
 			}
 			else {
-				saveNewArchive(newFileArchive, destinationFile);
+				saveNewArchive(newArchive, destinationFile);
 			}
 		}
 		finally {
-			if (oldFileArchive != null) {
-				oldFileArchive.close();
+			if (oldArchive != null) {
+				oldArchive.release(consumer);
 			}
-			if (newFileArchive != null) {
-				newFileArchive.close();
+			if (newArchive != null) {
+				newArchive.release(consumer);
 			}
 		}
 	}
@@ -124,13 +129,13 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 				"Destination data type archive file must be specified.");
 		}
 
-		if (!oldFile.getPath().endsWith(FileDataTypeManager.SUFFIX)) {
+		if (!oldFile.getPath().endsWith(FileDataTypeArchive.SUFFIX)) {
 			throw new InvalidInputException("Old data type archive file must end with .gdt");
 		}
-		if (!newFile.getPath().endsWith(FileDataTypeManager.SUFFIX)) {
+		if (!newFile.getPath().endsWith(FileDataTypeArchive.SUFFIX)) {
 			throw new InvalidInputException("New data type archive file must end with .gdt");
 		}
-		if (!destinationFile.getPath().endsWith(FileDataTypeManager.SUFFIX)) {
+		if (!destinationFile.getPath().endsWith(FileDataTypeArchive.SUFFIX)) {
 			throw new InvalidInputException(
 				"Destination data type archive file must end with .gdt");
 		}
@@ -163,18 +168,18 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 
 	}
 
-	private static void transformEachDataType(FileDataTypeManager oldFileArchive,
-			FileDataTypeManager newFileArchive, TaskMonitor monitor) throws CancelledException {
+	private static void transformEachDataType(DataTypeManager oldDtm,
+			DataTypeManager newDtm, TaskMonitor monitor) throws CancelledException {
 		boolean commit = false;
-		int transactionID = newFileArchive.startTransaction("Transforming Data Type Archive");
+		int transactionID = newDtm.startTransaction("Transforming Data Type Archive");
 		try {
 			// Guarantee that the data type IDs won't already match those in the old archive.
 			// This is necessary if we re-run the transformer for an archive.
-			assignNewUniversalIDs(newFileArchive, monitor);
+			assignNewUniversalIDs(newDtm, monitor);
 
 			// Perform an initial pass to match by path name if possible and check for
 			// anonymous data types that matched by matching components.
-			Iterator<DataType> allDataTypes = newFileArchive.getAllDataTypes();
+			Iterator<DataType> allDataTypes = newDtm.getAllDataTypes();
 			while (allDataTypes.hasNext()) {
 				monitor.checkCancelled();
 				DataType newDataType = allDataTypes.next();
@@ -188,26 +193,26 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 					continue; // Skip pointer array or builtin.
 				}
 				DataType oldDataType =
-					transformDataType(newDataType, oldFileArchive, newFileArchive);
+					transformDataType(newDataType, oldDtm, newDtm);
 
 				// Now process children anonymous data types for composites.
-				processAnonymous(oldDataType, newDataType, oldFileArchive, newFileArchive);
+				processAnonymous(oldDataType, newDataType, oldDtm, newDtm);
 
 //				monitor.incrementProgress(1);
 				monitor.setMessage("Transforming ID for " + newDataType.getPathName());
 			}
 
 			// Process any unmatched enums by trying to match within each matching category.
-			processUnmatchedEnums(oldFileArchive, newFileArchive, monitor);
+			processUnmatchedEnums(oldDtm, newDtm, monitor);
 
 			commit = true;
 		}
 		finally {
-			newFileArchive.endTransaction(transactionID, commit);
+			newDtm.endTransaction(transactionID, commit);
 		}
 	}
 
-	private static void assignNewUniversalIDs(FileDataTypeManager newFileArchive,
+	private static void assignNewUniversalIDs(DataTypeManager newFileArchive,
 			TaskMonitor monitor) throws CancelledException {
 
 		Iterator<DataType> allDataTypes = newFileArchive.getAllDataTypes();
@@ -220,13 +225,13 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 		}
 	}
 
-	private static void processUnmatchedEnums(FileDataTypeManager oldFileArchive,
-			FileDataTypeManager newFileArchive, TaskMonitor monitor) throws CancelledException {
+	private static void processUnmatchedEnums(DataTypeManager oldDtm,
+			DataTypeManager newDtm, TaskMonitor monitor) throws CancelledException {
 
 		// Find all anonymous enums and if not already matched to a data type in the old
 		// archive, then try to match with an anonymous enum in the same category of the
 		// old archive.
-		Iterator<DataType> allDataTypes = newFileArchive.getAllDataTypes();
+		Iterator<DataType> allDataTypes = newDtm.getAllDataTypes();
 		while (allDataTypes.hasNext()) {
 			monitor.checkCancelled();
 			DataType newDataType = allDataTypes.next();
@@ -234,25 +239,25 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 
 				// Does this new data type already match one in the old archive?
 				UniversalID newDtUniversalID = newDataType.getUniversalID();
-				DataType matchingDt = oldFileArchive.findDataTypeForID(newDtUniversalID);
+				DataType matchingDt = oldDtm.findDataTypeForID(newDtUniversalID);
 				if (matchingDt != null) {
 					continue; // Already matched.
 				}
 
 				// Find the matching anonymous in the old archive under the same category.
-				Enum oldEnum = findMatchingAnonEnum((Enum) newDataType, oldFileArchive);
+				Enum oldEnum = findMatchingAnonEnum((Enum) newDataType, oldDtm);
 				if (oldEnum != null && areSameClassType(newDataType, oldEnum)) {
 					// Found a match so set the ID.
-					transformDataType(newDataType, newFileArchive, oldEnum);
+					transformDataType(newDataType, newDtm, oldEnum);
 				}
 			}
 		}
 	}
 
-	private static Enum findMatchingAnonEnum(Enum newEnum, FileDataTypeManager oldFileArchive) {
+	private static Enum findMatchingAnonEnum(Enum newEnum, DataTypeManager oldDtm) {
 
 		CategoryPath categoryPath = newEnum.getCategoryPath();
-		Category category = oldFileArchive.getCategory(categoryPath);
+		Category category = oldDtm.getCategory(categoryPath);
 		if (category == null) {
 			return null;
 		}
@@ -306,7 +311,7 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 	}
 
 	private static void processAnonymous(DataType oldDataType, DataType newDataType,
-			FileDataTypeManager oldFileArchive, FileDataTypeManager newFileArchive) {
+			DataTypeManager oldDtm, DataTypeManager newDtm) {
 
 		// If we have composites, then get any component with an anonymous data type in the
 		// newDataType, and look for it by matching field name in the old composite.
@@ -326,7 +331,7 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 			}
 			DataTypeComponent[] newComponents = newComposite.getComponents();
 			for (DataTypeComponent newComp : newComponents) {
-				transformAnonymousComponent(oldFileArchive, newFileArchive, oldComposite,
+				transformAnonymousComponent(oldDtm, newDtm, oldComposite,
 					newComposite, newComp);
 			}
 		}
@@ -335,14 +340,14 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 			TypeDef oldTypeDef = (TypeDef) oldDataType;
 			TypeDef newTypeDef = (TypeDef) newDataType;
 			transformInnerAnonymousDataType(oldTypeDef.getDataType(), newTypeDef.getDataType(),
-				oldFileArchive, newFileArchive);
+				oldDtm, newDtm);
 		}
 		else if (newDataType instanceof Pointer && oldDataType instanceof Pointer) {
 			// Is this pointer to an anonymous?
 			Pointer oldPointer = (Pointer) oldDataType;
 			Pointer newPointer = (Pointer) newDataType;
 			transformInnerAnonymousDataType(oldPointer.getDataType(), newPointer.getDataType(),
-				oldFileArchive, newFileArchive);
+				oldDtm, newDtm);
 		}
 		else if (newDataType instanceof Array && oldDataType instanceof Array) {
 			// Is this an array of anonymous?
@@ -350,13 +355,13 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 			Array newArray = (Array) newDataType;
 			if (oldArray.getNumElements() == newArray.getNumElements()) {
 				transformInnerAnonymousDataType(oldArray.getDataType(), newArray.getDataType(),
-					oldFileArchive, newFileArchive);
+					oldDtm, newDtm);
 			}
 		}
 	}
 
-	private static void transformAnonymousComponent(FileDataTypeManager oldFileArchive,
-			FileDataTypeManager newFileArchive, Composite oldComposite, Composite newComposite,
+	private static void transformAnonymousComponent(DataTypeManager oldDtm,
+			DataTypeManager newDtm, Composite oldComposite, Composite newComposite,
 			DataTypeComponent newComponent) {
 
 		DataType newCompDt = newComponent.getDataType();
@@ -407,27 +412,27 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 
 				if (areSameClassType(newCompDt, oldCompDt) && isAnonymousType(oldCompDt)) {
 					// Got a match so set the ID.
-					transformDataType(newCompDt, newFileArchive, oldCompDt);
+					transformDataType(newCompDt, newDtm, oldCompDt);
 
 					// Now process children anonymous data types for anonymous composites.
-					processAnonymous(oldCompDt, newCompDt, oldFileArchive, newFileArchive);
+					processAnonymous(oldCompDt, newCompDt, oldDtm, newDtm);
 				}
 			}
 		}
 	}
 
 	private static void transformInnerAnonymousDataType(DataType oldDataType, DataType newDataType,
-			FileDataTypeManager oldFileArchive, FileDataTypeManager newFileArchive) {
+			DataTypeManager oldDtm, DataTypeManager newDtm) {
 
 		boolean isOldAnonymous = isAnonymousType(oldDataType);
 		boolean isNewAnonymous = isAnonymousType(newDataType);
 		if (isOldAnonymous && isNewAnonymous && areSameClassType(newDataType, oldDataType)) {
 			// Got a match on the anonymous data type, so set the ID.
-			transformDataType(newDataType, newFileArchive, oldDataType);
+			transformDataType(newDataType, newDtm, oldDataType);
 		}
 
 		// Now process children anonymous data types for anonymous composites.
-		processAnonymous(oldDataType, newDataType, oldFileArchive, newFileArchive);
+		processAnonymous(oldDataType, newDataType, oldDtm, newDtm);
 	}
 
 	private static DataTypeComponent getAnonymousMatch(Composite oldComposite,
@@ -501,15 +506,14 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 	}
 
 	private static DataType transformDataType(DataType newDataType,
-			FileDataTypeManager oldFileArchive, FileDataTypeManager newFileArchive) {
+			DataTypeManager oldDtm, DataTypeManager newDtm) {
 
-		DataType matchingDataType =
-			getMatchingDataType(newDataType, oldFileArchive, newFileArchive);
-		transformDataType(newDataType, newFileArchive, matchingDataType);
+		DataType matchingDataType = getMatchingDataType(newDataType, oldDtm, newDtm);
+		transformDataType(newDataType, newDtm, matchingDataType);
 		return matchingDataType;
 	}
 
-	private static void transformDataType(DataType newDataType, FileDataTypeManager newFileArchive,
+	private static void transformDataType(DataType newDataType, DataTypeManager newFileArchive,
 			DataType matchingDataType) {
 
 		// If we got a data type with the same name that is the same kind of data type then transform it.
@@ -571,7 +575,7 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 		}
 	}
 
-	private static boolean dataTypeIDExists(FileDataTypeManager newFileArchive,
+	private static boolean dataTypeIDExists(DataTypeManager newFileArchive,
 			DataType newDataType, SourceArchive newSourceArchive, UniversalID oldUniversalID) {
 		if (oldUniversalID != null) {
 			return false;
@@ -590,23 +594,23 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 	}
 
 	private static DataType getMatchingDataType(DataType newDataType,
-			FileDataTypeManager oldFileArchive, FileDataTypeManager newFileArchive) {
+			DataTypeManager oldDtm, DataTypeManager newDtm) {
 
 		// Try to get data type with same full path name.
 		DataType oldDataType =
-			oldFileArchive.getDataType(newDataType.getCategoryPath(), newDataType.getName());
+			oldDtm.getDataType(newDataType.getCategoryPath(), newDataType.getName());
 		if (oldDataType != null) {
 			return oldDataType;
 		}
 		// Get all the old data types with the same name.
 		ArrayList<DataType> oldDataTypeList = new ArrayList<>();
-		oldFileArchive.findDataTypes(newDataType.getName(), oldDataTypeList);
+		oldDtm.findDataTypes(newDataType.getName(), oldDataTypeList);
 		if (oldDataTypeList.isEmpty()) {
 			return null;
 		}
 		// Get all new data types with the same name.
 		ArrayList<DataType> newDataTypeList = new ArrayList<>();
-		newFileArchive.findDataTypes(newDataType.getName(), newDataTypeList);
+		newDtm.findDataTypes(newDataType.getName(), newDataTypeList);
 		// If there is a one to one match then assume a match.
 		if (oldDataTypeList.size() == 1 && newDataTypeList.size() == 1) {
 			DataType oldArchiveDataType = oldDataTypeList.get(0);
@@ -689,8 +693,8 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 		return dataTypeManager.getLocalSourceArchive();
 	}
 
-	private static void fixEachDataTypeTimestamp(FileDataTypeManager oldFileArchive,
-			FileDataTypeManager newFileArchive, TaskMonitor monitor) throws CancelledException {
+	private static void fixEachDataTypeTimestamp(DataTypeManager oldFileArchive,
+			DataTypeManager newFileArchive, TaskMonitor monitor) throws CancelledException {
 		boolean commit = false;
 		int transactionID = newFileArchive.startTransaction("Fixing Data Type Archive Timestamps");
 		try {
@@ -710,7 +714,7 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 	}
 
 	private static void fixDataTypeTimestamp(DataType newDataType,
-			FileDataTypeManager oldFileArchive, FileDataTypeManager newFileArchive) {
+			DataTypeManager oldFileArchive, DataTypeManager newFileArchive) {
 		UniversalID universalID = newDataType.getUniversalID();
 		SourceArchive sourceArchive = newDataType.getSourceArchive();
 		if (sourceArchive == newFileArchive.getLocalSourceArchive()) {
@@ -743,23 +747,24 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 		return sourceArchiveID == universalID;
 	}
 
-	private static void saveNewArchive(FileDataTypeManager oldFileArchive,
-			FileDataTypeManager newFileArchive, File destinationFile)
+	private static void saveNewArchive(FileDataTypeArchive oldFileArchive,
+			FileDataTypeArchive newFileArchive, File destinationFile)
 			throws DuplicateFileException, IOException {
-		UniversalID oldUniversalID = oldFileArchive.getUniversalID();
+		UniversalID oldUniversalID = oldFileArchive.getDataTypeManager().getUniversalID();
 		newFileArchive.saveAs(destinationFile, oldUniversalID);
 		Msg.info(DataTypeArchiveTransformer.class,
-			"Resulting file ID = " + newFileArchive.dbHandle.getDatabaseId());
+			"Resulting file ID = " + oldUniversalID.getValue());
 	}
 
-	private static void saveNewArchive(FileDataTypeManager newFileArchive, File destinationFile)
-			throws DuplicateFileException, IOException {
-		newFileArchive.saveAs(destinationFile);
-
-		FileDataTypeManager destinationFileArchive =
-			FileDataTypeManager.openFileArchive(destinationFile, false);
-		UniversalID destinationUniversalID = destinationFileArchive.getUniversalID();
-		destinationFileArchive.close();
+	private static void saveNewArchive(FileDataTypeArchive newFileArchive, File destinationFile)
+			throws DuplicateFileException, IOException, CancelledException, VersionException {
+		newFileArchive.saveAs(destinationFile, TaskMonitor.DUMMY);
+		Object consumer = new Object();
+		FileDataTypeArchive destinationFileArchive =
+			DataTypeArchiveFactory.openReadOnly(destinationFile, consumer, TaskMonitor.DUMMY);
+		UniversalID destinationUniversalID =
+			destinationFileArchive.getDataTypeManager().getUniversalID();
+		destinationFileArchive.release(consumer);
 		Msg.info(DataTypeArchiveTransformer.class,
 			"Resulting file ID = " + destinationUniversalID.getValue());
 	}

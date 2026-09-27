@@ -146,10 +146,19 @@ public class ImportBatchTask extends Task {
 			try {
 				MessageLog messageLog = new MessageLog();
 				Project project = AppInfo.getActiveProject();
+				List<Option> options = getOptionsFor(batchLoadConfig, loadSpec, byteProvider);
+				if (options != null) {
+					Loader loader = batchLoadConfig.getLoader();
+					String error = loader.validateOptions(byteProvider, loadSpec, options, null);
+					if (error != null) {
+						Msg.error(this, "Options are not valid for %s: %s"
+								.formatted(loader.getClass().getSimpleName(), error));
+						return;
+					}
+				}
 				ImporterSettings settings = new ImporterSettings(byteProvider,
 					fixupProjectFilename(destInfo.second), project, destInfo.first.getPathname(),
-					mirrorFs, loadSpec, getOptionsFor(batchLoadConfig, loadSpec, byteProvider),
-					this, messageLog, monitor);
+					mirrorFs, loadSpec, options, this, messageLog, monitor);
 				try (LoadResults<? extends DomainObject> loadResults =
 					loadSpec.getLoader().load(settings)) {
 

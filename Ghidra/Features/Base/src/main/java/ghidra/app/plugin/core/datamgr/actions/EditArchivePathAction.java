@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,8 +21,8 @@ import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.pathmanager.PathManager;
+import ghidra.app.plugin.core.datamgr.ArchiveManager;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.HelpLocation;
 
@@ -61,8 +61,8 @@ public class EditArchivePathAction extends DockingAction {
 				false, null);
 			setHelpLocation(new HelpLocation("DataTypeManagerPlugin", "Edit_Archive_Paths_Dialog"));
 
-			pathManager.restoreFromPreferences(DataTypeManagerHandler.DATA_TYPE_ARCHIVE_PATH_KEY,
-				null, DataTypeManagerHandler.DISABLED_DATA_TYPE_ARCHIVE_PATH_KEY);
+			pathManager.restoreFromPreferences(ArchiveManager.DATA_TYPE_ARCHIVE_PATH_KEY,
+				null, ArchiveManager.DISABLED_DATA_TYPE_ARCHIVE_PATH_KEY);
 			addWorkPanel(pathManager.getComponent());
 			addOKButton();
 			addCancelButton();
@@ -70,8 +70,8 @@ public class EditArchivePathAction extends DockingAction {
 
 		@Override
 		protected void okCallback() {
-			pathManager.saveToPreferences(DataTypeManagerHandler.DATA_TYPE_ARCHIVE_PATH_KEY,
-				DataTypeManagerHandler.DISABLED_DATA_TYPE_ARCHIVE_PATH_KEY);
+			pathManager.saveToPreferences(ArchiveManager.DATA_TYPE_ARCHIVE_PATH_KEY,
+				ArchiveManager.DISABLED_DATA_TYPE_ARCHIVE_PATH_KEY);
 			close();
 		}
 

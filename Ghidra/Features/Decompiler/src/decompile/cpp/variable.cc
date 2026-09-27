@@ -260,6 +260,8 @@ void HighVariable::setSymbol(Varnode *vn) const
   }
   else if (entry->isDynamic())	// Dynamic symbols (that aren't partials) match whole variable
     symboloffset = -1;
+  else if (!entry->isMapEntry())
+    symboloffset = -1;
   else if (symbol->getCategory() == Symbol::equate)
     symboloffset = -1;			// For equates, we don't care about size
   else if (symbol->getType()->getSize() == vn->getSize() &&

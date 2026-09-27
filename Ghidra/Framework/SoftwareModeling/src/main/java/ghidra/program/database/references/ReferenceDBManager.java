@@ -43,7 +43,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Reference manager implementation for the database.
  */
-public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHandler {
+public class ReferenceDBManager implements ReferenceManager, ProgramDBModule, ErrorHandler {
 	private static final Reference[] NO_REFS = new Reference[0];
 
 	private LRUMap<Function, VariableReferences> variablesCache = new LRUMap<>(10);
@@ -126,13 +126,13 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 	}
 
 	@Override
-	public void setProgram(ProgramDB program) {
+	public void setDomainObject(ProgramDB program) {
 		this.program = program;
 		symbolMgr = program.getSymbolTable();
 	}
 
 	@Override
-	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
+	public void domainObjectReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		if (openMode == OpenMode.UPGRADE) {
 

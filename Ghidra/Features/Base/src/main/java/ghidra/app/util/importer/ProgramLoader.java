@@ -629,8 +629,9 @@ public class ProgramLoader {
 			LoadSpec loadSpec = loadSpecChooser.choose(loaderMap);
 			if (loadSpec == null) {
 				String name = Objects.requireNonNullElse(p.getName(), "???");
-				Msg.info(ProgramLoader.class, "No load spec found for import file: " + name);
-				throw new LoadException("No load spec found");
+				throw new LoadException(
+					"No load spec found. Loader/processor/cspec not compatible with import file: " +
+						name);
 			}
 			return loadSpec;
 		}
@@ -642,12 +643,12 @@ public class ProgramLoader {
 		 * @param loadSpec The {@link LoadSpec}
 		 * @return The {@link Loader} {@link Option}s, with any loader arguments applied
 		 * @throws LanguageNotFoundException if there was a problem getting the language
-		 * @throws LoadException if the {@link Loader} had {@code null} options
+		 * @throws LoadException if the {@link Loader} had {@code null} or invalid options
 		 */
 		private List<Option> getLoaderOptions(ByteProvider p, LoadSpec loadSpec)
 				throws LanguageNotFoundException, LoadException {
-			List<Option> options =
-				loadSpec.getLoader().getDefaultOptions(p, loadSpec, null, false, mirror);
+			Loader loader = loadSpec.getLoader();
+			List<Option> options = loader.getDefaultOptions(p, loadSpec, null, false, mirror);
 			if (options == null) {
 				throw new LoadException("Cannot load with null options");
 			}
@@ -673,15 +674,14 @@ public class ProgramLoader {
 					if (option.getArg() != null && arg.equalsIgnoreCase(option.getArg())) {
 						Object oldVal = option.getValue();
 						if (option.parseAndSetValueByType(val, addrFactory)) {
-							Msg.info(ProgramLoader.class, String.format(
-								"Successfully applied \"%s\" to \"%s\" (old: \"%s\", new: \"%s\")",
-								arg, option.getName(), oldVal, val));
+							Msg.info(ProgramLoader.class,
+								"Applied \"%s\" to \"%s\" (old: \"%s\", new: \"%s\")".formatted(arg,
+									option.getName(), oldVal, val));
 						}
 						else {
-							Msg.error(ProgramLoader.class, String.format(
-								"Failed to apply \"%s\" to \"%s\" (old: \"%s\", bad: \"%s\")", arg,
-								option.getName(), oldVal, val));
-							return null;
+							throw new LoadException(
+								"Failed to apply \"%s\" to \"%s\" (old: \"%s\", bad: \"%s\")"
+										.formatted(arg, option.getName(), oldVal, val));
 						}
 						foundIt = true;
 						break;
@@ -691,6 +691,13 @@ public class ProgramLoader {
 					Msg.warn(ProgramLoader.class, "Skipping unsupported " + arg + " argument");
 				}
 			}
+
+			String error = loader.validateOptions(p, loadSpec, options, null);
+			if (error != null) {
+				throw new LoadException("Options are not valid for %s: %s"
+						.formatted(loader.getClass().getSimpleName(), error));
+			}
+
 			return options;
 		}
 	}

@@ -103,9 +103,16 @@ def getGitRev(repoPath) {
  * 		completion of the build.
  *
  *********************************************************************************/
+tasks.register("configureJavadocs") {
+	ext.snippets = []
+	doLast {
+		tasks.createJavadocs.options.addStringOption "-snippet-path", snippets.join(File.pathSeparator)
+	}
+}
 task createJavadocs(type: Javadoc, description: 'Generate javadocs for all projects', group: 'Documentation') {
 	
 	destinationDir = file(rootProject.projectDir.toString() + "/build/tmp/javadoc")
+	dependsOn configureJavadocs
 	
 	failOnError = false
 
@@ -140,7 +147,6 @@ task createJavadocs(type: Javadoc, description: 'Generate javadocs for all proje
 		'implNote:a:Implementation Notes:'
     ]
 }
-
 
  /*********************************************************************************
  * JSONDOCS - RAW

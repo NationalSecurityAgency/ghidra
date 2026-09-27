@@ -25,6 +25,7 @@ import org.junit.*;
 import generic.test.AbstractGenericTest;
 import ghidra.app.util.cparser.CPP.ParseException;
 import ghidra.app.util.cparser.CPP.PreProcessor;
+import ghidra.program.database.data.TransientDataTypeManager;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 
@@ -32,12 +33,12 @@ public class PreProcessorTest extends AbstractGenericTest {
 	private static String resourceName = "PreProcessorTest.h";
 	private static CategoryPath path =
 		new CategoryPath(new CategoryPath("/PreProcessorTest.h"), "defines");
-	
+
 	private static CategoryPath definedPath =
-			new CategoryPath(new CategoryPath("/defined.h"), "defines");
-	
+		new CategoryPath(new CategoryPath("/defined.h"), "defines");
+
 	// must get rid of after all tests
-	private static StandAloneDataTypeManager dtMgr;
+	private static TransientDataTypeManager dtMgr;
 	private static ByteArrayOutputStream baos = new ByteArrayOutputStream();
 	private static PreProcessor parser;
 
@@ -87,18 +88,20 @@ public class PreProcessorTest extends AbstractGenericTest {
 		catch (ParseException e) {
 			e.printStackTrace();
 		}
-		
+
 		System.out.println(parser.getParseMessages());
 
 		// Uncomment to print out parse results
 		//System.err.println(baos.toString());
 
-		dtMgr = new StandAloneDataTypeManager("parsed");
+		dtMgr = new TransientDataTypeManager("parsed");
 		parser.getDefinitions().populateDefineEquates(null, dtMgr);
 	}
 
 	@AfterClass
 	public static void destroy() {
+		dtMgr.close();
+		dtMgr = null;
 		dtMgr = null;
 		baos = null;
 		parser = null;
@@ -111,54 +114,54 @@ public class PreProcessorTest extends AbstractGenericTest {
 		int end = results.lastIndexOf(";") + 1;
 		String endStr = results.substring(end - 9, end);
 		assertEquals("theEnd();", endStr);
-		
+
 		assertTrue("macro expansion _fpl(bob) failed ", results
 				.indexOf("extern int __declspec(\"fp(\\\"l\\\", \" #bob \")\") __ifplbob;") != -1);
-		
+
 		assertTrue("Expanded protected macro with args", results.contains("int (getc)(FILE * );"));
 		assertTrue("Expanded protected macro with args", results.contains("int (getchar)(void);"));
 
 		assertTrue("multi line string macro args failed ", results
-			.indexOf("0x1 = multi_line_worked(\"Some text first line\"\n" + 
-				"\"More text second line\")") != -1);
-		
+				.indexOf("0x1 = multi_line_worked(\"Some text first line\"\n" +
+					"\"More text second line\")") != -1);
+
 		assertTrue("multi line string macro args failed ", results
-			.indexOf("D = dual_line_worked(2,\"Caution: First line\"\n" + 
-				"\" second line\"\n" + 
-				"\" third line\"\n" + 
-				"\" fourth line\")") != -1);
+				.indexOf("D = dual_line_worked(2,\"Caution: First line\"\n" +
+					"\" second line\"\n" +
+					"\" third line\"\n" +
+					"\" fourth line\")") != -1);
 
 		assertTrue("multi line #pragma failed ", results
-			.indexOf("#pragma multiple lines pragma") != -1);
-		
+				.indexOf("#pragma multiple lines pragma") != -1);
+
 		assertTrue("#pragma with comment failed ", results
-			.indexOf("#pragma no comment here") != -1);
-		
+				.indexOf("#pragma no comment here") != -1);
+
 		assertTrue("#pragma with EOL comment failed ", results
-			.indexOf("#pragma with no EOL comment here") != -1);
+				.indexOf("#pragma with no EOL comment here") != -1);
 	}
-	
+
 	@Test
 	public void testCommenting() throws Exception {
 
 		String results = baos.toString("ASCII");
-		
+
 		assertTrue("IntShouldBeCommented", results
 				.indexOf("///- int IntShouldBeCommented;") != -1);
 		assertTrue("PragmaShouldBeCommented", results
-			.indexOf("///- #pragma PragmaShouldBeCommented") != -1);
-		
+				.indexOf("///- #pragma PragmaShouldBeCommented") != -1);
+
 		assertTrue("IntShouldNotBeCommented", results
-			.indexOf("int IntShouldBeCommented;") != -1);
+				.indexOf("int IntShouldBeCommented;") != -1);
 		assertTrue("PragmaShouldNotBeCommented", results
-			.indexOf("#pragma PragmaShouldNotBeCommented") != -1);
+				.indexOf("#pragma PragmaShouldNotBeCommented") != -1);
 	}
 
 	@Test
 	public void testDefines() throws Exception {
 		long value;
 		String defname;
-		
+
 		value = 32516;
 		defname = "DefVal1";
 		checkDefine(dtMgr, path, value, defname);
@@ -198,7 +201,7 @@ public class PreProcessorTest extends AbstractGenericTest {
 		value = ((0x7fff) * 900L / 1000);
 		defname = "DefVal10";
 		checkDefine(dtMgr, path, value, defname);
-		
+
 		value = 1;
 		defname = "DefVal_1L";
 		checkDefine(dtMgr, path, value, defname);
@@ -210,11 +213,11 @@ public class PreProcessorTest extends AbstractGenericTest {
 		value = 3;
 		defname = "DefVal_3U";
 		checkDefine(dtMgr, path, value, defname);
-		
+
 		value = 4;
 		defname = "DefVal_4u";
 		checkDefine(dtMgr, path, value, defname);
-		
+
 		value = 5;
 		defname = "DefVal_5UL";
 		checkDefine(dtMgr, path, value, defname);
@@ -238,7 +241,7 @@ public class PreProcessorTest extends AbstractGenericTest {
 		value = 10;
 		defname = "DefVal_10ll";
 		checkDefine(dtMgr, path, value, defname);
-		
+
 		value = 1;
 		defname = "DefVal_P_1L";
 		checkDefine(dtMgr, path, value, defname);
@@ -250,11 +253,11 @@ public class PreProcessorTest extends AbstractGenericTest {
 		value = 3;
 		defname = "DefVal_P_3U";
 		checkDefine(dtMgr, path, value, defname);
-		
+
 		value = 4;
 		defname = "DefVal_P_4u";
 		checkDefine(dtMgr, path, value, defname);
-		
+
 		value = 5;
 		defname = "DefVal_P_5UL";
 		checkDefine(dtMgr, path, value, defname);
@@ -278,7 +281,7 @@ public class PreProcessorTest extends AbstractGenericTest {
 		value = 10;
 		defname = "DefVal_P_10ll";
 		checkDefine(dtMgr, path, value, defname);
-		
+
 		value = 0;
 		defname = "TOO_MANY_FISH";
 		checkDefine(dtMgr, path, value, defname);
@@ -345,7 +348,7 @@ public class PreProcessorTest extends AbstractGenericTest {
 		String defval = parser.getDef(defname);
 		assertEquals(defval, "QUOTED('\"')");
 	}
-	
+
 	@Test
 	public void testDefinesArgDef() {
 		defname = "DID_ARG_DEF";
@@ -439,24 +442,24 @@ public class PreProcessorTest extends AbstractGenericTest {
 		// if a define is not defined, getDef() returns name of define as value
 		assertEquals("No INCLUDE5 define", "INCLUDE5", defval);
 	}
-	
+
 	@Test
 	public void testDefinedInclude() {
 		defname = "DID_INCLUDE_DEFINED_INCLUDED";
 		value = 1;
 		checkDefine(dtMgr, definedPath, value, defname);
 	}
-	
+
 	@Test
 	public void testVarags() {
 		defname = "EPRINTF_VARARGS";
 		String defval = parser.getDef(defname);
 		assertEquals("fprintf (stderr, \"%s:%d: \", input_file, lineno)", defval);
-		  
+
 		defname = "VPRINTF_NO_ARGS";
 		defval = parser.getDef(defname);
 		assertEquals("fprintf (stderr, \"no args!\\n\"  )", defval);
-		
+
 		defname = "VPRINTF_ARGS";
 		defval = parser.getDef(defname);
 		assertEquals("fprintf (stderr, \"%s!\\n\" , \"I have args\")", defval);
@@ -468,70 +471,69 @@ public class PreProcessorTest extends AbstractGenericTest {
 		value = 1;
 		int length = 1;
 		checkDefineEnumLength(dtMgr, path, value, defname, length);
-		
+
 		defname = "BYTE_LEN_8";
 		value = 8;
 		length = 1;
 		checkDefineEnumLength(dtMgr, path, value, defname, length);
-		
+
 		defname = "BYTE_LEN_1F";
 		value = 0x1f;
 		length = 1;
 		checkDefineEnumLength(dtMgr, path, value, defname, length);
-		
+
 		defname = "BYTE_LEN_FF";
 		value = 0xff;
 		length = 1;
 		checkDefineEnumLength(dtMgr, path, value, defname, length);
-		
+
 		defname = "BYTE_LEN_1FF";
 		value = 0x1ff;
 		length = 2;
 		checkDefineEnumLength(dtMgr, path, value, defname, length);
-		
+
 		defname = "BYTE_LEN_7FFF";
 		value = 0x7fff;
 		length = 2;
 		checkDefineEnumLength(dtMgr, path, value, defname, length);
-		
+
 		defname = "BYTE_LEN_10000";
 		value = 0x10000;
 		length = 4;
 		checkDefineEnumLength(dtMgr, path, value, defname, length);
-		
+
 		defname = "BYTE_LEN_1000000";
 		value = 0x1000000;
 		length = 4;
 		checkDefineEnumLength(dtMgr, path, value, defname, length);
-		
+
 		defname = "BYTE_LEN_100000000";
 		value = 0x100000000L;
 		length = 8;
 		checkDefineEnumLength(dtMgr, path, value, defname, length);
-		
+
 		defname = "BYTE_LEN_10000000000";
 		value = 0x10000000000L;
 		length = 8;
 		checkDefineEnumLength(dtMgr, path, value, defname, length);
-		
+
 		defname = "BYTE_LEN_1000000000000";
 		value = 0x1000000000000L;
 		length = 8;
 		checkDefineEnumLength(dtMgr, path, value, defname, length);
-		
+
 		defname = "BYTE_LEN_100000000000000";
 		value = 0x100000000000000L;
 		length = 8;
 		checkDefineEnumLength(dtMgr, path, value, defname, length);
-		
+
 		defname = "BYTE_LEN_neg1";
 		value = -1;
 		length = 1;
 		checkDefineEnumLength(dtMgr, path, value, defname, length);
 	}
-	
-	
-	private DataType checkDefine(StandAloneDataTypeManager dtMgr, CategoryPath path, long value,
+
+	private DataType checkDefine(DataTypeManager dtMgr, CategoryPath path, long value,
 			String defname) {
 		DataType dataType = dtMgr.getDataType(path, "define_" + defname);
 		String msg = "Define Enum " + defname;
@@ -540,14 +542,15 @@ public class PreProcessorTest extends AbstractGenericTest {
 		assertEquals(msg, value, ((Enum) dataType).getValue(defname));
 		return dataType;
 	}
-	
-	private void checkDefineEnumLength(StandAloneDataTypeManager dtMgr, CategoryPath path, long value,
+
+	private void checkDefineEnumLength(DataTypeManager dtMgr, CategoryPath path,
+			long value,
 			String defname, int length) {
 		DataType dt = checkDefine(dtMgr, path, value, defname);
 		assertEquals("Expected " + defname + " length " + length, length, dt.getLength());
 	}
 
-	private void checkNotDefine(StandAloneDataTypeManager dtMgr, CategoryPath path,
+	private void checkNotDefine(DataTypeManager dtMgr, CategoryPath path,
 			String defname) {
 		DataType dataType = dtMgr.getDataType(path, "define_" + defname);
 		assertNull(dataType);

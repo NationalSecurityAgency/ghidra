@@ -20,7 +20,6 @@ import java.util.List;
 
 import javax.swing.Icon;
 
-import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import ghidra.framework.model.*;
 import ghidra.util.*;
@@ -53,11 +52,15 @@ public class DomainFolderNode extends DataTreeNode {
 		this.domainFolder = domainFolder;
 		this.filter = filter;
 
-		// TODO: how can the folder be null?...doesn't really make sense...I don't think it ever is
 		if (domainFolder != null) {
 			setToolTipText();
 			isEditable = domainFolder.isInWritableProject();
 		}
+	}
+
+	@Override
+	protected NodeType getNodeType() {
+		return NodeType.FOLDER;
 	}
 
 	@Override
@@ -162,7 +165,7 @@ public class DomainFolderNode extends DataTreeNode {
 
 	@Override
 	public int compareTo(GTreeNode node) {
-		return DATA_NODE_SORT_COMPARATOR.compare(this, node);
+		return DATA_NODE_COMPARATOR.compare(this, node);
 	}
 
 	@Override

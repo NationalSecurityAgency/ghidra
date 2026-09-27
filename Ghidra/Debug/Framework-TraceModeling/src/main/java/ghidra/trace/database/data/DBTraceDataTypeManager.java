@@ -18,7 +18,6 @@ package ghidra.trace.database.data;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
 import db.Transaction;
@@ -27,13 +26,14 @@ import ghidra.framework.model.DomainFile;
 import ghidra.program.database.data.ProgramBasedDataTypeManagerDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
+import ghidra.program.model.dtarchive.DataTypeStore;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceManager;
 import ghidra.trace.database.guest.DBTraceGuestPlatform;
 import ghidra.trace.database.guest.DBTracePlatformManager.DBTraceHostPlatform;
 import ghidra.trace.database.guest.InternalTracePlatform;
 import ghidra.trace.model.data.TraceBasedDataTypeManager;
-import ghidra.util.InvalidNameException;
+import ghidra.util.Lock;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
@@ -42,17 +42,6 @@ import ghidra.util.task.TaskMonitor;
 public class DBTraceDataTypeManager extends ProgramBasedDataTypeManagerDB
 		implements TraceBasedDataTypeManager, DBTraceManager {
 
-	/**
-	 * NOTE: This "read-write" lock is actually just a compatibility wrapper around the
-	 * {@link ghidra.util.Lock} for the entire trace database. There was a time when I dreamed of
-	 * using an actual read-write lock (though it's not known if that'd actually achieve any
-	 * appreciable speed up); however, inheriting the existing DataTypeManager implementation
-	 * required its lock to be used throughout the database. Rather than convert all my code (and
-	 * lose the distinction of where I need write vs. read locks), I just wrapped the API. So no,
-	 * this code does not refer to the wrapper, but it does still use the lock. I keep a reference
-	 * to it here in case I ever need it.
-	 */
-	protected final ReadWriteLock lock;
 	protected final DBTrace trace;
 	protected final InternalTracePlatform platform;
 
@@ -64,11 +53,10 @@ public class DBTraceDataTypeManager extends ProgramBasedDataTypeManagerDB
 		};
 	}
 
-	public DBTraceDataTypeManager(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
+	public DBTraceDataTypeManager(DBHandle dbh, OpenMode openMode, Lock lock,
 			TaskMonitor monitor, DBTrace trace, InternalTracePlatform platform)
 			throws CancelledException, VersionException, IOException {
-		super(dbh, null, openMode, computePrefix(platform), trace, trace.getLock(), monitor);
-		this.lock = lock; // TODO: nothing uses this local lock - not sure what its purpose is
+		super(dbh, null, openMode, computePrefix(platform), trace, lock, monitor);
 		this.trace = trace;
 		this.platform = platform;
 
@@ -77,6 +65,11 @@ public class DBTraceDataTypeManager extends ProgramBasedDataTypeManagerDB
 		if (openMode == OpenMode.CREATE) {
 			saveDataOrganization();
 		}
+	}
+
+	@Override
+	public DataTypeStore getDataStore() {
+		return trace.getProgramView();
 	}
 
 	@Override
@@ -97,16 +90,6 @@ public class DBTraceDataTypeManager extends ProgramBasedDataTypeManagerDB
 	@Override
 	public String getName() {
 		return trace.getName();
-	}
-
-	@Override
-	public void setName(String name) throws InvalidNameException {
-		if (name == null || name.length() == 0) {
-			throw new InvalidNameException("Name must be at least one character long: " + name);
-		}
-
-		trace.setName(name);
-		categoryRenamed(CategoryPath.ROOT, getCategory(CategoryPath.ROOT));
 	}
 
 	@Override
@@ -240,20 +223,9 @@ public class DBTraceDataTypeManager extends ProgramBasedDataTypeManagerDB
 	}
 
 	@Override
-	public DomainFile getDomainFile() {
-		return trace.getDomainFile();
-	}
-
-	@Override
 	protected String getDomainFileID() {
 		DomainFile domainFile = trace.getDomainFile(); // Can be null if never saved
 		return domainFile == null ? null : domainFile.getFileID();
-	}
-
-	@Override
-	public String getPath() {
-		DomainFile domainFile = trace.getDomainFile(); // Can be null if never saved
-		return domainFile == null ? null : domainFile.getPathname();
 	}
 
 	@Override

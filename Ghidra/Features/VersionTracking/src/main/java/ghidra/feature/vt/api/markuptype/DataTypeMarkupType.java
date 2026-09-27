@@ -25,6 +25,7 @@ import ghidra.feature.vt.api.stringable.DataTypeStringable;
 import ghidra.feature.vt.api.util.Stringable;
 import ghidra.feature.vt.api.util.VersionTrackingApplyException;
 import ghidra.feature.vt.gui.util.VTMatchApplyChoices;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.DataTypeConflictChoices;
 import ghidra.feature.vt.gui.util.VTMatchApplyChoices.ReplaceDataChoices;
 import ghidra.feature.vt.gui.util.VTOptionDefines;
 import ghidra.framework.options.Options;
@@ -206,7 +207,8 @@ public class DataTypeMarkupType extends VTMarkupType {
 	}
 
 	private boolean setDataType(Program program, Address startAddress, DataType dataType,
-			int dataLength, VTMatchApplyChoices.ReplaceDataChoices replaceChoice)
+			int dataLength, VTMatchApplyChoices.ReplaceDataChoices replaceChoice,
+			DataTypeConflictHandler conflictHandler)
 			throws CodeUnitInsertionException, VersionTrackingApplyException {
 
 		Listing listing = program.getListing();
@@ -260,15 +262,26 @@ public class DataTypeMarkupType extends VTMarkupType {
 		}
 
 		if (replaceFirstOnly && hasOtherDefinedData) {
-			// Just return since we are only replacing first data and this has some defined 
+			// Just return since we are only replacing first data and this has some defined
 			// data that would be overwritten following the first data in the destination.
 			return false;
 		}
 
+		/*
+		 	Note: the resolve may add a .conflict type.  That will not be removed if an exception is
+		 	thrown.  Also if an unapply is executed, .conflict types will not be removed.  For now,
+		 	we leave this up to the user to fix, should they care.  Trying to remove .conflict types
+		 	during an unapply may have unintended side-effects if the user added new uses of that 
+		 	conflict type.
+		 */
+
+		ProgramBasedDataTypeManager dtm = program.getDataTypeManager();
+		DataType resolvedDataType = dtm.resolve(dataType, conflictHandler);
+
 		listing.clearCodeUnits(startAddress, endAddress, false);
 
 		try {
-			listing.createData(startAddress, dataType, dataLength);
+			listing.createData(startAddress, resolvedDataType, dataLength);
 		}
 		catch (CodeUnitInsertionException e) {
 			tryToRestoreOriginalData(listing, startAddress, originalDataType, originalDataLength);
@@ -334,9 +347,17 @@ public class DataTypeMarkupType extends VTMarkupType {
 			sourceDataLength = sourceData.getLength();
 		}
 
+		DataTypeConflictChoices conflictChoice = markupOptions.getEnum(
+			VTOptionDefines.DATA_TYPE_CONFLICT_HANDLER,
+			VTOptionDefines.DEFAULT_OPTION_FOR_DATA_TYPE_CONFLICT_HANDLER);
+		DataTypeConflictHandler conflictHandler = switch (conflictChoice) {
+			case USE_EXISTING -> DataTypeConflictHandler.KEEP_HANDLER;
+			case RENAME_AND_ADD -> DataTypeConflictHandler.DEFAULT_HANDLER;
+		};
+
 		try {
 			return setDataType(destinationProgram, destinationAddress, sourceDataType,
-				sourceDataLength, replaceChoice);
+				sourceDataLength, replaceChoice, conflictHandler);
 		}
 		catch (CodeUnitInsertionException e) {
 			throw new VersionTrackingApplyException(getApplyFailedMessage(sourceAddress,
@@ -404,7 +425,8 @@ public class DataTypeMarkupType extends VTMarkupType {
 
 		try {
 			setDataType(destinationProgram, destinationAddress, originalDataType,
-				originalDataLength, VTMatchApplyChoices.ReplaceDataChoices.REPLACE_ALL_DATA);
+				originalDataLength, VTMatchApplyChoices.ReplaceDataChoices.REPLACE_ALL_DATA,
+				DataTypeConflictHandler.DEFAULT_HANDLER);
 		}
 		catch (CodeUnitInsertionException e) {
 			throw new VersionTrackingApplyException("Couldn't unapply data type markup @ " +

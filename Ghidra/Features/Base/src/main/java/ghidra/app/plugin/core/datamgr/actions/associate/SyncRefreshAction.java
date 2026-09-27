@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,7 @@ import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.tree.GTreeState;
 import ghidra.app.plugin.core.datamgr.*;
-import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
-import ghidra.app.plugin.core.datamgr.tree.ArchiveNode;
+import ghidra.app.plugin.core.datamgr.tree.DataTypeStoreNode;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.SourceArchive;
@@ -31,16 +30,16 @@ import ghidra.util.Msg;
 public class SyncRefreshAction extends DockingAction {
 
 	public static final String MENU_NAME = "Refresh Sync Indicators For";
-	private DataTypeManagerHandler dataTypeManagerHandler;
+	private ArchiveManager dataTypeManagerHandler;
 	private final DataTypeManager dtm;
 	private final SourceArchive sourceArchive;
 	private final DataTypeManagerPlugin plugin;
 	private DataTypeSynchronizer synchronizer;
-	private ArchiveNode archiveNode;
+	private DataTypeStoreNode archiveNode;
 
 	public SyncRefreshAction(DataTypeManagerPlugin plugin,
-			DataTypeManagerHandler dataTypeManagerHandler, DataTypeManager dtm,
-			ArchiveNode archiveNode, SourceArchive sourceArchive, boolean isEnabled) {
+			ArchiveManager dataTypeManagerHandler, DataTypeManager dtm,
+			DataTypeStoreNode archiveNode, SourceArchive sourceArchive, boolean isEnabled) {
 
 		super("Refresh The Sync Indicators For Archive", plugin.getName());
 		this.plugin = plugin;

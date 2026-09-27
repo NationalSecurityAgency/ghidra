@@ -35,13 +35,8 @@ import ghidra.program.model.lang.protorules.AssignAction;
 public class ParamListStandardOut extends ParamListStandard {
 
 	@Override
-	public void assignMap(PrototypePieces proto, DataTypeManager dtManager,
+	public void assignMap(PrototypePieces proto, DataTypeManager dtManager, int[] status,
 			ArrayList<ParameterPieces> res, boolean addAutoParams) {
-
-		int[] status = new int[numgroup];
-		for (int i = 0; i < numgroup; ++i) {
-			status[i] = 0;
-		}
 
 		ParameterPieces store = new ParameterPieces();
 		res.add(store);

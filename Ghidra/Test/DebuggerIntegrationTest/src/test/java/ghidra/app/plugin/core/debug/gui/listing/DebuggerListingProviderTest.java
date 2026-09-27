@@ -54,7 +54,6 @@ import ghidra.debug.api.action.AutoReadMemorySpec;
 import ghidra.debug.api.control.ControlMode;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.*;
-import ghidra.pcode.exec.DebuggerPcodeUtils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.lang.Register;
@@ -76,6 +75,7 @@ import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.schema.SchemaContext;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.util.Msg;
 
 @Category(NightlyCategory.class)
 public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerIntegrationTest {
@@ -1304,9 +1304,9 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerInt
 		DomainObjectListener spyListener = new DomainObjectListener() {
 			@Override
 			public void domainObjectChanged(DomainObjectChangedEvent ev) {
-				System.err.println(ev);
+				Msg.info(this, ev);
 				for (DomainObjectChangeRecord rec : ev) {
-					System.err.println("  " + rec);
+					Msg.info(this, "  " + rec);
 				}
 			}
 		};

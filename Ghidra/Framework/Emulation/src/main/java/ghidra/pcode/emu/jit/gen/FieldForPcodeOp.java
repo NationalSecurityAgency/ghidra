@@ -16,13 +16,12 @@
 package ghidra.pcode.emu.jit.gen;
 
 import static ghidra.pcode.emu.jit.gen.GenConsts.*;
-import static org.objectweb.asm.Opcodes.*;
+import static java.lang.classfile.ClassFile.*;
 
+import java.lang.classfile.ClassBuilder;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import org.objectweb.asm.ClassVisitor;
 
 import ghidra.pcode.emu.jit.gen.util.*;
 import ghidra.pcode.emu.jit.gen.util.Emitter.Ent;
@@ -66,8 +65,8 @@ public class FieldForPcodeOp implements StaticFieldReq<TRef<PcodeOp>> {
 
 	@Override
 	public <N extends Next> Emitter<N> genClInitCode(Emitter<N> em, JitCodeGenerator<?> gen,
-			ClassVisitor cv) {
-		Fld.decl(cv, ACC_PRIVATE | ACC_STATIC | ACC_FINAL, GenConsts.T_PCODE_OP, name());
+			ClassBuilder clb) {
+		Fld.decl(clb, ACC_PRIVATE | ACC_STATIC | ACC_FINAL, GenConsts.T_PCODE_OP, name());
 
 		var emIns = em
 				.emit(gen::genAddress, op.getSeqnum().getTarget())

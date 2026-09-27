@@ -54,18 +54,19 @@ public class ParamListStandard implements ParamList {
 	 * Find the (first) entry containing range
 	 * @param loc  is base address of the range
 	 * @param size is the size of the range in bytes
-	 * @return the index of entry or -1 if we didn't find container
+	 * @param just is true if caller wants to test if range is justified
+	 * @return the containing entry or null
 	 */
-	private int findEntry(Address loc, int size) {
-		for (int i = 0; i < entry.length; ++i) {
-			if (entry[i].getMinSize() > size) {
+	public ParamEntry findEntry(Address loc, int size, boolean just) {
+		for (ParamEntry cur : entry) {
+			if (cur.getMinSize() > size) {
 				continue;
 			}
-			if (entry[i].justifiedContain(loc, size) == 0) {
-				return i;
-			}
+			int res = cur.justifiedContain(loc, size);
+			if (res == 0 || (!just && res != 1))
+				return cur;
 		}
-		return -1;
+		return null;
 	}
 
 	/**
@@ -133,7 +134,11 @@ public class ParamListStandard implements ParamList {
 
 	{
 		if (dt.isZeroLength()) {
-			return AssignAction.NO_ASSIGNMENT;
+			if (dt.isNotYetDefined())
+				return AssignAction.NO_ASSIGNMENT;
+			res.address = Address.NO_ADDRESS;
+			res.type = dt;
+			return AssignAction.SUCCESS;
 		}
 		if (dt == DataType.DEFAULT) {
 			return AssignAction.NO_ASSIGNMENT;
@@ -175,13 +180,19 @@ public class ParamListStandard implements ParamList {
 	}
 
 	@Override
-	public void assignMap(PrototypePieces proto, DataTypeManager dtManager,
-			ArrayList<ParameterPieces> res, boolean addAutoParams) {
+	public int[] allocateStatus() {
 		int[] status = new int[numgroup];
 		for (int i = 0; i < numgroup; ++i) {
 			status[i] = 0;
 		}
+		return status;
+	}
 
+	@Override
+	public void assignMap(PrototypePieces proto, DataTypeManager dtManager, int[] status,
+			ArrayList<ParameterPieces> res, boolean addAutoParams) {
+/*
+<<<<<<< HEAD
 		boolean hiddenParam = (addAutoParams && res.size() == 2);
 		
 		if (hiddenParam && proto.model.isRightToLeft()) {	// Check for hidden parameters defined by the output list
@@ -196,6 +207,9 @@ public class ParamListStandard implements ParamList {
 			}
 			last.hiddenReturnPtr = true;
 		}
+=======
+>>>>>>> master
+*/
 		for (int i = 0; i < proto.intypes.size(); ++i) {
 			ParameterPieces store = new ParameterPieces();
 			res.add(store);
@@ -211,6 +225,8 @@ public class ParamListStandard implements ParamList {
 				return;
 			}
 		}
+/*
+<<<<<<< HEAD
 		if (hiddenParam && !proto.model.isRightToLeft()) {	// Check for hidden parameters defined by the output list
 			ParameterPieces last = res.get(1);
 			if (last.hiddenReturnPtr) {
@@ -223,6 +239,9 @@ public class ParamListStandard implements ParamList {
 			}
 			last.hiddenReturnPtr = true;
 		}
+=======
+>>>>>>> master
+*/
 	}
 
 	@Override
@@ -461,11 +480,10 @@ public class ParamListStandard implements ParamList {
 		if (loc == null) {
 			return false;
 		}
-		int num = findEntry(loc, size);
-		if (num == -1) {
+		ParamEntry curentry = findEntry(loc, size, true);
+		if (curentry == null) {
 			return false;
 		}
-		ParamEntry curentry = entry[num];
 		res.slot = curentry.getSlot(loc, 0);
 		if (curentry.isExclusion()) {
 			res.slotsize = curentry.getAllGroups().length;
@@ -552,12 +570,11 @@ public class ParamListStandard implements ParamList {
 	 * If there is a ParamEntry corresponding to the stack resource in this list, return it.
 	 * @return the stack ParamEntry or null
 	 */
-	public ParamEntry extractStack() {
-		for (int i = entry.length - 1; i >= 0; --i) {
-			ParamEntry pentry = entry[i];
-			if (!pentry.isExclusion() && pentry.getSpace().isStackSpace()) {
-				return pentry;
-			}
+	public ParamEntry getStackEntry() {
+		if (entry.length > 0) {
+			ParamEntry res = entry[entry.length - 1];
+			if (res.isStackSpill())
+				return res;
 		}
 		return null;
 	}

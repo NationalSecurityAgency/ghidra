@@ -44,6 +44,7 @@ import ghidra.util.task.TaskMonitor;
 public class DomainFileProxy implements DomainFile {
 
 	private DomainObjectAdapter domainObj;
+	private DomainFile originalDomainFile;
 	private ProjectLocator projectLocation;
 	private String name;
 	private int version;
@@ -51,7 +52,7 @@ public class DomainFileProxy implements DomainFile {
 	private long lastModified = 0;
 	private String fileID;
 
-	public DomainFileProxy(String name, DomainObjectAdapter doa) {
+	DomainFileProxy(String name, DomainObjectAdapter doa) {
 		domainObj = doa;
 		this.name = name;
 		doa.setDomainFile(this);
@@ -59,14 +60,15 @@ public class DomainFileProxy implements DomainFile {
 		version = DomainFile.DEFAULT_VERSION;
 	}
 
-	DomainFileProxy(String name, String parentPath, DomainObjectAdapter doa, int version,
-			String fileID, ProjectLocator projectLocation) throws IOException {
-
-		this(name, doa);
-		this.parentPath = parentPath;
+	DomainFileProxy(DomainFile originalDomainFile, DomainObjectAdapter doa, int version)
+			throws IOException {
+		this(originalDomainFile.getName(), doa);
+		this.originalDomainFile = originalDomainFile;
+		DomainFolder parent = originalDomainFile.getParent();
+		this.parentPath = parent.getPathname();
 		this.version = version;
-		this.fileID = fileID;
-		this.projectLocation = projectLocation;
+		this.fileID = originalDomainFile.getFileID();
+		this.projectLocation = parent.getProjectLocator();
 	}
 
 	@Override
@@ -580,6 +582,13 @@ public class DomainFileProxy implements DomainFile {
 			dobj.getMetadata();
 		}
 		return new HashMap<>();
+	}
+
+	/**
+	 * {@return the original DomainFile which was used to open the associated domain object or null}
+	 */
+	public DomainFile getOriginalDomainFile() {
+		return originalDomainFile;
 	}
 
 }

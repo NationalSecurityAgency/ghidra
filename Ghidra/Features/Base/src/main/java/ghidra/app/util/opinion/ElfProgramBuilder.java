@@ -3214,8 +3214,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		long loadSizeBytes = elfProgramHeader.getAdjustedLoadSize();
 		long fullSizeBytes = elfProgramHeader.getAdjustedMemorySize();
 
-		boolean maintainExecuteBit = elf.getSectionHeaderCount() == 0;
-
 		if (fullSizeBytes <= 0) {
 			if (!space.isLoadedMemorySpace() && loadSizeBytes > 0) {
 				fullSizeBytes = loadSizeBytes;
@@ -3239,16 +3237,12 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 			String comment = getSectionComment(addr, fullSizeBytes, space.getAddressableUnitSize(),
 				elfProgramHeader.getDescription(), address.isLoadedMemoryAddress());
-			if (!maintainExecuteBit && elfProgramHeader.isExecute()) {
-				comment += " (disabled execute bit)";
-			}
 
 			String blockName = getSegmentName(elfProgramHeader, segmentNumber);
 			if (loadSizeBytes != 0) {
 				addInitializedMemorySection(elfProgramHeader, elfProgramHeader.getOffset(),
 					loadSizeBytes, address, blockName, elfProgramHeader.isRead(),
-					elfProgramHeader.isWrite(),
-					maintainExecuteBit ? elfProgramHeader.isExecute() : false, comment,
+					elfProgramHeader.isWrite(), elfProgramHeader.isExecute(), comment,
 					isFragmentationOK,
 					elfProgramHeader.getType() == ElfProgramHeaderConstants.PT_LOAD);
 			}
@@ -3435,11 +3429,11 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 
 		Address address = null;
+		ElfProgramHeader loadHeader = elf.getProgramLoadHeaderContaining(addr);
 
 		if (sectionByteLength == 0 &&
 			elfSectionToLoad.getType() == ElfSectionHeaderConstants.SHT_PROGBITS) {
 			// Check for and consume uninitialized portion of PT_LOAD segment if possible
-			ElfProgramHeader loadHeader = elf.getProgramLoadHeaderContaining(addr);
 			if (loadHeader != null) {
 				// NOTE: should never apply to relocatable ELF
 				Address segmentStart = getSegmentLoadAddress(loadHeader);
@@ -3478,6 +3472,19 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 		final String blockName = elfSectionToLoad.getNameAsString();
 
+		boolean isExecute = elfSectionToLoad.isExecutable();
+		boolean isWrite = elfSectionToLoad.isWritable();
+		boolean isRead = true;
+
+		if (loadHeader != null) {
+			// If PT_LOAD exists, defer to it for permissions
+			// NOTE: This does not handle a section not fully contained within a program 
+			// header loaded region
+			isExecute = loadHeader.isExecute();
+			isWrite = loadHeader.isWrite();
+			isRead = loadHeader.isRead();
+		}
+
 		try {
 			if (loadOffset == -1 ||
 				elfSectionToLoad.getType() == ElfSectionHeaderConstants.SHT_NOBITS) {
@@ -3489,7 +3496,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					getSectionComment(addr, sectionByteLength, space.getAddressableUnitSize(),
 						elfSectionToLoad.getTypeAsString(), address.isLoadedMemoryAddress());
 				addUninitializedMemorySection(elfSectionToLoad, sectionByteLength, address,
-					blockName, true, elfSectionToLoad.isWritable(), elfSectionToLoad.isExecutable(),
+					blockName, isRead, isWrite, isExecute,
 					comment, false);
 			}
 			else {
@@ -3497,8 +3504,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					getSectionComment(addr, sectionByteLength, space.getAddressableUnitSize(),
 						elfSectionToLoad.getTypeAsString(), address.isLoadedMemoryAddress());
 				addInitializedMemorySection(elfSectionToLoad, loadOffset, sectionByteLength,
-					address, blockName, elfSectionToLoad.isAlloc(), elfSectionToLoad.isWritable(),
-					elfSectionToLoad.isExecutable(), comment, false, elfSectionToLoad.isAlloc());
+					address, blockName, isRead, isWrite,
+					isExecute, comment, false, elfSectionToLoad.isAlloc());
 			}
 		}
 		catch (AddressOverflowException e) {

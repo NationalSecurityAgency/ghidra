@@ -194,7 +194,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals(0x5600, blockTwoLength.getValue().longValue());
 		assertTrue(okButton.isEnabled());
 
-		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));
+		pressButton(okButton);
 
 		program.flushEvents();
 		waitForSwing();
@@ -238,7 +238,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals(0x45ff, blockTwoLength.getValue().longValue());
 		assertTrue(okButton.isEnabled());
 
-		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));
+		pressButton(okButton);
 
 		program.flushEvents();
 		waitForSwing();
@@ -284,7 +284,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals(0x4600, blockTwoLength.getValue().longValue());
 		assertTrue(okButton.isEnabled());
 
-		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));
+		pressButton(okButton);
 
 		program.flushEvents();
 		waitForSwing();
@@ -326,7 +326,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals(0x2000, blockTwoLength.getValue().longValue());
 		assertTrue(okButton.isEnabled());
 
-		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));
+		pressButton(okButton);
 
 		program.flushEvents();
 		waitForSwing();
@@ -428,7 +428,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 			blockTwoName.setText("split\t");
 		});
 		assertTrue(okButton.isEnabled());
-		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));
+		pressButton(okButton);
 
 		assertTrue(findLabelStr(d.getComponent(), "statusLabel").startsWith("Invalid Block Name"));
 		close(d);
@@ -535,7 +535,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals("0x1005600", length.getText());
 
 		assertTrue(okButton.isEnabled());
-		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));
+		pressButton(okButton);
 		waitForBusyTool(tool);
 
 		assertEquals(".text", model.getValueAt(0, MemoryMapModel.NAME));
@@ -609,7 +609,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals("010075ff", end.getText());
 
 		assertTrue(okButton.isEnabled());
-		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));
+		pressButton(okButton);
 
 		waitForBusyTool(tool);
 
@@ -685,7 +685,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals("0100f3ff", end.getText());
 		assertTrue(okButton.isEnabled());
 
-		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));
+		pressButton(okButton);
 		waitForSwing();
 		assertFalse(okButton.isEnabled());
 		assertEquals("Part of range (01008000, 01009fff) already exists in memory.",
@@ -744,7 +744,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals("0x6701", length.getText());
 		assertTrue(okButton.isEnabled());
 
-		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));
+		pressButton(okButton);
 
 		waitForBusyTool(tool);
 
@@ -773,7 +773,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals(getAddr(0x10076ff), end.getAddress());
 		assertTrue(okButton.isEnabled());
 
-		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));
+		pressButton(okButton);
 
 		waitForBusyTool(tool);
 
@@ -842,7 +842,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 
 		runSwing(() -> length.setText("0x7600"));
 		assertTrue(okButton.isEnabled());
-		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));
+		pressButton(okButton);
 		waitForSwing();
 
 		assertFalse(okButton.isEnabled());

@@ -21,11 +21,13 @@ import java.net.URL;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.go.ipc.GhidraGoListener;
+import ghidra.framework.client.ClientUtil;
 import ghidra.framework.main.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.util.Msg;
+import ghidra.util.Swing;
 
 //@formatter:off
 @PluginInfo(
@@ -50,49 +52,68 @@ public class GhidraGoPlugin extends Plugin implements ApplicationLevelOnlyPlugin
 	}
 
 	@Override
-	protected void init() {
-		super.init();
+	protected void dispose() {
+		projectClosed();
+		super.dispose();
 	}
 
-	@Override
-	protected void dispose() {
+	private void processUrl(URL url) {
+		
+		FrontEndTool frontEndTool = AppInfo.getFrontEndTool();
+
+		try {
+			URL projectUrl = GhidraURL.getProjectURL(url);
+
+			// Check for case where remote server access has already been blocked to 
+			// launching tool and then failing to access program. 
+			if (!GhidraURL.isLocalURL(url) && !ClientUtil.getAllowListProvider().isAllowed(url)) {
+				Msg.showError(this, frontEndTool.getActiveWindow(), "URL Access Not Allowed",
+					"Access denied by Server Allow List:\n" + projectUrl);
+				return;
+			}
+
+			Msg.info(this, "GhidraGo accepting the resource at " + projectUrl);
+		}
+		catch (Exception e) {
+			Msg.showError(this, frontEndTool.getActiveWindow(), "GhidraGo Failed",
+				"GhidraGo rejected invalid URL: " + url);
+			return;
+		}
+
+		Swing.runLater(() -> {
+			frontEndTool.toFront();
+			frontEndTool.accept(url);
+		});
+	}
+
+	private void projectOpened() {
+		projectClosed();
+		try {
+			listener = new GhidraGoListener((url) -> processUrl(url));
+		}
+		catch (IOException e) {
+			Msg.showError(this, null, "GhidraGoPlugin Exception",
+				"Unable to create GhidraGoListener", e);
+		}
+	}
+
+	private void projectClosed() {
 		if (this.listener != null) {
 			listener.dispose();
 			listener = null;
 		}
-		super.dispose();
 	}
 
 	@Override
 	public void processEvent(PluginEvent event) {
 		if (event instanceof ProjectPluginEvent) {
 			if (((ProjectPluginEvent) event).getProject() == null) {
-				dispose();
+				projectClosed();
 			}
 			else {
-				try {
-					listener = new GhidraGoListener((url) -> {
-						accept(url);
-					});
-				}
-				catch (IOException e) {
-					Msg.showError(this, null, "GhidraGoPlugin Exception",
-						"Unable to create Listener", e);
-				}
+				projectOpened();
 			}
 		}
 	}
 
-	/**
-	 * Accept the given url, which is then passed to the FrontEndTool to process.
-	 * @param url a {@link GhidraURL}
-	 * @return true if handled successfully, false otherwise.
-	 */
-	@Override
-	public boolean accept(URL url) {
-		Msg.info(this, "GhidraGo accepting the resource at " + GhidraURL.getProjectURL(url));
-		FrontEndTool frontEndTool = AppInfo.getFrontEndTool();
-		frontEndTool.toFront();
-		return frontEndTool.accept(url);
-	}
 }

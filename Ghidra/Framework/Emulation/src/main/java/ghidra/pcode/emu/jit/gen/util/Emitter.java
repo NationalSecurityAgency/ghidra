@@ -16,11 +16,11 @@
 package ghidra.pcode.emu.jit.gen.util;
 
 import java.lang.System.Logger;
+import java.lang.classfile.ClassBuilder;
+import java.lang.classfile.CodeBuilder;
 import java.util.ArrayList;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-
-import org.objectweb.asm.*;
 
 import ghidra.pcode.emu.jit.gen.util.Methods.*;
 import ghidra.pcode.emu.jit.gen.util.Types.*;
@@ -31,21 +31,8 @@ import ghidra.pcode.emu.jit.gen.util.Types.*;
  * This is either genius or a sign of some deep pathology. On one hand it allows the type-safe
  * generation of bytecode in Java classfiles. On the other, it requires an often onerous type
  * signature on any method of appreciable sophistication that uses it. The justification for this
- * utility library stems from our difficulties with error reporting in the ASM library. We certainly
- * appreciate the effort that has gone into that library, and must recognize its success in that it
- * has been used by the OpenJDK itself and eventually prompted them to devise an official classfile
- * API. Nevertheless, its analyses (e.g., max-stack computation) fail with inscrutable messages.
- * Admittedly, this only happens when we have generated invalid bytecode. For example, popping too
- * many items off the stack usually results in an {@link ArrayIndexOutOfBoundsException} instead of,
- * "Hey, you can't pop that here: [offset]". Similarly, if you push a long and then pop an int, you
- * typically get a {@link NullPointerException}. Unfortunately, these errors do not occur with the
- * offending {@code visitXInstruction()} call on the stack, but instead during
- * {@link MethodVisitor#visitMaxs(int, int)}, and so we could not easily debug and identify the
- * cause. We did find some ways to place breakpoints and at least derive the bytecode offset. We
- * then used additional dumps and instrumentation to map that back to our source that generated the
- * offending instruction. This has been an extremely onerous process. Additionally, when refactoring
- * bytecode generation, we are left with little if any assistance from the compiler or IDE. These
- * utilities seek to improve the situation.
+ * utility library stems from our difficulties with error reporting in bytecode generation
+ * libraries.
  * <p>
  * Our goal is to devise a way leverage Java's Generics and its type checker to enforce stack
  * consistency of generated JVM bytecode. We want the Java compiler to reject code that tries, for
@@ -71,7 +58,7 @@ import ghidra.pcode.emu.jit.gen.util.Types.*;
  * <p>
  * This presents a different problem. We'd like to provide a syntax where the ops appear in the
  * order they are emitted. Usually, we'd chain instance methods, like such:
- * 
+ *
  * <pre>
  * em
  * 		.ldc(1)
@@ -80,27 +67,27 @@ import ghidra.pcode.emu.jit.gen.util.Types.*;
  * <p>
  * However, we've already ruled out instance methods. Were we to use static methods, we'd get
  * something like:
- * 
+ *
  * <pre>
  * Op.pop(Op.ldc(em, 1));
  * </pre>
- * 
+ *
  * <p>
  * However, that fails to display the ops in order. We could instead use:
- * 
+ *
  * <pre>
  * var em1 = Op.ldc(em, 1);
  * var em2 = Op.pop(em1);
  * </pre>
- * 
+ * <p>
  * However, that requires more syntactic kruft, not to mention the manual bookkeeping to ensure we
- * use the previous {@code em}<em>n</em> at each step. To work around this, we define instance
+ * use the previous <code>em<em>n</em></code> at each step. To work around this, we define instance
  * methods, e.g., {@link #emit(Function)}, that can accept references to static methods we provide,
  * each representing a JVM bytecode instruction. This allows those static methods to impose a
  * required structure on the stack. The static method can then return an emitter with a type
  * encoding the new stack contents. (See the {@link Op} class for examples.) Thus, we have a syntax
  * like:
- * 
+ *
  * <pre>
  * em
  * 		.emit(Op::ldc__i, 1)
@@ -110,92 +97,46 @@ import ghidra.pcode.emu.jit.gen.util.Types.*;
  * While not ideal, it is succinct, allows method chaining, and displays the ops in order of
  * emission. (Note that we use this pattern even for pure pushes, where restricting {@code <N>} is
  * not necessary, just for syntactic consistency.) There are some rubs for operators that have
- * different forms, e.g., {@link Op#ldc__i(Emitter, int)}, but as a matter of opinion, having to
- * specify the intended form here is a benefit. The meat of this class is just the specification of
- * the many arities of {@code emit}. It also includes some utilities for declaring local variables,
- * and the entry points for generating and defining methods.
+ * different forms, e.g., {@link Op#ldc__i}, but as a matter of opinion, having to specify the
+ * intended form here is a benefit. The meat of this class is just the specification of the many
+ * arities of {@link #emit}. It also includes some utilities for declaring local variables, and the
+ * entry points for generating and defining methods.
  * <p>
  * To give an overall taste of using this utility library, here is an example for dynamically
  * generating a class that implements an interface. Note that the interface is <em>not</em>
  * dynamically generated. This is a common pattern as it allows the generated method to be invoked
  * without reflection.
  * 
- * <pre>
- * interface MyIf {
- * 	int myMethod(int a, String b);
- * }
+ * {@snippet class = ghidra.pcode.emu.jit.gen.util.MyMethodExample region = MyIf}
  * 
- * &lt;THIS extends MyIf&gt; void doGenerate(ClassVisitor cv) {
- * 	var mdescMyMethod = MthDesc.derive(MyIf::myMethod)
- * 			.check(MthDesc::returns, Types.T_INT)
- * 			.check(MthDesc::param, Types.T_INT)
- * 			.check(MthDesc::param, Types.refOf(String.class))
- * 			.check(MthDesc::build);
- * 	TRef&lt;THIS&gt; typeThis = Types.refExtends(MyIf.class, "Lmy.pkg.ImplMyIf;");
- * 	var paramsMyMethod = new Object() {
- * 		Local&lt;TRef&lt;THIS&gt;&gt; this_;
- * 		Local&lt;TInt&gt; a;
- * 		Local&lt;TRef&lt;String&gt;&gt; b;
- * 	};
- * 	var retMyMethod = Emitter.start(typeThis, cv, ACC_PUBLIC, "myMethod", mdescMyMethod)
- * 			.param(Def::param, Types.refOf(String.class), l -> paramsMyMethod.b = l)
- * 			.param(Def::param, Types.T_INT, l -> paramsMyMethod.a = l)
- * 			.param(Def::done, typeThis, l -> paramsMyMethod.this_ = l);
- * 	retMyMethod.em()
- * 			.emit(Op::iload, paramsMyMethod.a)
- * 			.emit(Op::ldc__i, 10)
- * 			.emit(Op::imul)
- * 			.emit(Op::ireturn, retMyMethod.ret())
- * 			.emit(Misc::finish);
- * }
- * </pre>
- * <p>
- * Yes, there is a bit of repetition; however, this accomplishes all our goals and a little more.
- * Note that the generated bytecode is essentially type checked all the way through to the method
- * definition in the {@code MyIf} interface. Here is the key: <em>We were to change the {@code MyIf}
- * interface, the compiler (and our IDE) would point out the inconsistency.</em> The first such
- * errors would be on {@code mdescMyMethod}. So, we would adjust it to match the new definition. The
- * compiler would then point out issues at {@code retMyMethod} -- assuming the parameters to
- * {@code myMethod} changed, and not just the return type. We would adjust it, along with the
- * contents of {@code paramsMyMethod} to accept the new parameter handles. If the return type of
- * {@code myMethod} changed, then the inferred type of {@code retMyMethod} will change accordingly.
- * <p>
- * Now for the generated bytecode. The {@link Op#iload(Emitter, Local)} requires the given variable
- * handle to have type {@link TInt}, and so if the parameter "{@code a}" changed type, the compiler
- * will point out that the opcode must also change. Similarly, the {@link Op#imul(Emitter)} requires
- * two ints and pushes an int result, so any resulting inconsistency will be caught. Finally, when
- * calling {@link Op#ireturn(Emitter, RetReq)}, two things are checked: 1) there is indeed an int on
- * the stack, and 2) the return type of the method, witnessed by {@code retMyMethod.ret()}, is also
- * an int. There are some occasional wrinkles, but for the most part, once we resolve all the
- * compilation errors, we are assured of type consistency in the generated code, both internally and
- * in its interface to other compiled code.
+ * {@snippet class = ghidra.pcode.emu.jit.gen.util.MyMethodExample region = gen}
  * 
  * @param <N> the contents of the stack after having emitted all the previous bytecodes
  */
 public class Emitter<N> {
 	static final Logger LOGGER = System.getLogger("Emitter");
 
-	/** The wrapped ASM method visitor */
-	final MethodVisitor mv;
+	/** The wrapped Class-File API code builder */
+	final CodeBuilder cb;
 	/** The root scope of local declarations */
 	final Scope rootScope;
 
 	/**
-	 * Create a new emitter by wrapping the given method visitor.
+	 * Create a new emitter by wrapping the given code builder.
 	 * <p>
 	 * Direct use of this constructor is not recommended, but is useful during transition from
 	 * unchecked to checked bytecode generation.
-	 * 
-	 * @param mv the ASM method visitor
+	 *
+	 * @param cb the Class-File API code builder
 	 */
-	public Emitter(MethodVisitor mv) {
-		this.mv = mv;
+	public Emitter(CodeBuilder cb) {
+		this.cb = cb;
 		rootScope = new RootScope<>(this, 0);
 	}
 
 	/**
 	 * Stack contents
-	 * 
+	 *
 	 * <p>
 	 * There is really only one instance of {@link Next} and that is {@link SingletonEnt#INSTANCE}.
 	 * We just cast it to the various types. Otherwise, these interfaces just exist as a means of
@@ -210,7 +151,7 @@ public class Emitter<N> {
 
 	/**
 	 * An entry on the stack
-	 * 
+	 *
 	 * @param <N> the tail (portions below) of the stack
 	 * @param <T> the top entry of this stack (or portion)
 	 */
@@ -234,7 +175,7 @@ public class Emitter<N> {
 
 	/**
 	 * Defines the singleton instance of {@link Next}
-	 * 
+	 *
 	 * @param <N> the tail
 	 * @param <T> the top entry
 	 */
@@ -244,7 +185,7 @@ public class Emitter<N> {
 
 	/**
 	 * Get the root scope for declaring local variables
-	 * 
+	 *
 	 * @return the root scope
 	 */
 	public Scope rootScope() {
@@ -255,7 +196,7 @@ public class Emitter<N> {
 	 * Emit a 0-argument operator
 	 * <p>
 	 * This can also be used to invoke generator subroutines whose only argument is the emitter.
-	 * 
+	 *
 	 * @param <R> the return type
 	 * @param func the method reference, e.g., {@link Op#pop(Emitter)}.
 	 * @return the value returned by {@code func}
@@ -268,7 +209,7 @@ public class Emitter<N> {
 	 * Emit a 1-argument operator
 	 * <p>
 	 * This can also be used to invoke generator subroutines.
-	 * 
+	 *
 	 * @param <R> the return type
 	 * @param func the method reference, e.g., {@link Op#ldc__i(Emitter, int)}.
 	 * @param arg1 the argument (other than the emitter) to pass to {@code func}
@@ -280,7 +221,7 @@ public class Emitter<N> {
 
 	/**
 	 * A 3-argument function
-	 * 
+	 *
 	 * @param <A0> the first argument type
 	 * @param <A1> the next argument type
 	 * @param <A2> the next argument type
@@ -289,7 +230,7 @@ public class Emitter<N> {
 	public interface A3Function<A0, A1, A2, R> {
 		/**
 		 * Invoke the function
-		 * 
+		 *
 		 * @param arg0 the first argument
 		 * @param arg1 the next argument
 		 * @param arg2 the next argument
@@ -300,7 +241,7 @@ public class Emitter<N> {
 
 	/**
 	 * A 3-argument consumer
-	 * 
+	 *
 	 * @param <A0> the first argument type
 	 * @param <A1> the next argument type
 	 * @param <A2> the next argument type
@@ -308,7 +249,7 @@ public class Emitter<N> {
 	public interface A3Consumer<A0, A1, A2> {
 		/**
 		 * Invoke the consumer
-		 * 
+		 *
 		 * @param arg0 the first argument
 		 * @param arg1 the next argument
 		 * @param arg2 the next argument
@@ -320,7 +261,7 @@ public class Emitter<N> {
 	 * Emit a 2-argument operator
 	 * <p>
 	 * This can also be used to invoke generator subroutines.
-	 * 
+	 *
 	 * @param <R> the return type
 	 * @param func the method reference
 	 * @param arg1 an argument (other than the emitter) to pass to {@code func}
@@ -333,7 +274,7 @@ public class Emitter<N> {
 
 	/**
 	 * A 4-argument function
-	 * 
+	 *
 	 * @param <A0> the first argument type
 	 * @param <A1> the next argument type
 	 * @param <A2> the next argument type
@@ -343,7 +284,7 @@ public class Emitter<N> {
 	public interface A4Function<A0, A1, A2, A3, R> {
 		/**
 		 * Invoke the function
-		 * 
+		 *
 		 * @param arg0 the first argument
 		 * @param arg1 the next argument
 		 * @param arg2 the next argument
@@ -355,7 +296,7 @@ public class Emitter<N> {
 
 	/**
 	 * A 4-argument consumer
-	 * 
+	 *
 	 * @param <A0> the first argument type
 	 * @param <A1> the next argument type
 	 * @param <A2> the next argument type
@@ -364,7 +305,7 @@ public class Emitter<N> {
 	public interface A4Consumer<A0, A1, A2, A3> {
 		/**
 		 * Invoke the consumer
-		 * 
+		 *
 		 * @param arg0 the first argument
 		 * @param arg1 the next argument
 		 * @param arg2 the next argument
@@ -377,7 +318,7 @@ public class Emitter<N> {
 	 * Emit a 3-argument operator
 	 * <p>
 	 * This can also be used to invoke generator subroutines.
-	 * 
+	 *
 	 * @param <R> the return type
 	 * @param func the method reference
 	 * @param arg1 an argument (other than the emitter) to pass to {@code func}
@@ -392,7 +333,7 @@ public class Emitter<N> {
 
 	/**
 	 * A 5-argument function
-	 * 
+	 *
 	 * @param <A0> the first argument type
 	 * @param <A1> the next argument type
 	 * @param <A2> the next argument type
@@ -403,7 +344,7 @@ public class Emitter<N> {
 	public interface A5Function<A0, A1, A2, A3, A4, R> {
 		/**
 		 * Invoke the function
-		 * 
+		 *
 		 * @param arg0 the first argument
 		 * @param arg1 the next argument
 		 * @param arg2 the next argument
@@ -418,7 +359,7 @@ public class Emitter<N> {
 	 * Emit a 4-argument operator
 	 * <p>
 	 * This can also be used to invoke generator subroutines.
-	 * 
+	 *
 	 * @param <R> the return type
 	 * @param func the method reference
 	 * @param arg1 an argument (other than the emitter) to pass to {@code func}
@@ -434,7 +375,7 @@ public class Emitter<N> {
 
 	/**
 	 * A 6-argument function
-	 * 
+	 *
 	 * @param <A0> the first argument type
 	 * @param <A1> the next argument type
 	 * @param <A2> the next argument type
@@ -446,7 +387,7 @@ public class Emitter<N> {
 	public interface A6Function<A0, A1, A2, A3, A4, A5, R> {
 		/**
 		 * Invoke the function
-		 * 
+		 *
 		 * @param arg0 the first argument
 		 * @param arg1 the next argument
 		 * @param arg2 the next argument
@@ -462,7 +403,7 @@ public class Emitter<N> {
 	 * Emit a 5-argument operator
 	 * <p>
 	 * This can also be used to invoke generator subroutines.
-	 * 
+	 *
 	 * @param <R> the return type
 	 * @param func the method reference
 	 * @param arg1 an argument (other than the emitter) to pass to {@code func}
@@ -480,7 +421,7 @@ public class Emitter<N> {
 
 	/**
 	 * A 7-argument function
-	 * 
+	 *
 	 * @param <A0> the first argument type
 	 * @param <A1> the next argument type
 	 * @param <A2> the next argument type
@@ -493,7 +434,7 @@ public class Emitter<N> {
 	public interface A7Function<A0, A1, A2, A3, A4, A5, A6, R> {
 		/**
 		 * Invoke the function
-		 * 
+		 *
 		 * @param arg0 the first argument
 		 * @param arg1 the next argument
 		 * @param arg2 the next argument
@@ -510,7 +451,7 @@ public class Emitter<N> {
 	 * Emit a 6-argument operator
 	 * <p>
 	 * This can also be used to invoke generator subroutines.
-	 * 
+	 *
 	 * @param <R> the return type
 	 * @param func the method reference
 	 * @param arg1 an argument (other than the emitter) to pass to {@code func}
@@ -528,8 +469,8 @@ public class Emitter<N> {
 	}
 
 	/**
-	 * A 7-argument function
-	 * 
+	 * A 8-argument function
+	 *
 	 * @param <A0> the first argument type
 	 * @param <A1> the next argument type
 	 * @param <A2> the next argument type
@@ -543,7 +484,7 @@ public class Emitter<N> {
 	public interface A8Function<A0, A1, A2, A3, A4, A5, A6, A7, R> {
 		/**
 		 * Invoke the function
-		 * 
+		 *
 		 * @param arg0 the first argument
 		 * @param arg1 the next argument
 		 * @param arg2 the next argument
@@ -561,7 +502,7 @@ public class Emitter<N> {
 	 * Emit a 7-argument operator
 	 * <p>
 	 * This can also be used to invoke generator subroutines.
-	 * 
+	 *
 	 * @param <R> the return type
 	 * @param func the method reference
 	 * @param arg1 an argument (other than the emitter) to pass to {@code func}
@@ -580,69 +521,75 @@ public class Emitter<N> {
 	}
 
 	/**
-	 * (Not recommended) Wrap the given method visitor with assumed stack contents
+	 * (Not recommended) Wrap the given code builder with assumed stack contents
 	 * <p>
-	 * {@link #start(ClassVisitor, int, String, MthDesc)} or
-	 * {@link #start(TRef, ClassVisitor, int, String, MthDesc)} is recommended instead.
-	 * 
+	 * Use {@link #instanceWithBody} or {@link #staticWithBody} instead.
+	 *
 	 * @param <N> the stack contents
-	 * @param mv the ASM method visitor
+	 * @param cb the code builder
 	 * @param assumedStack the assumed stack contents
 	 * @return the emitter
 	 */
-	public static <N extends Next> Emitter<N> assume(MethodVisitor mv, N assumedStack) {
-		return new Emitter<>(mv);
+	static <N extends Next> Emitter<N> assume(CodeBuilder cb, N assumedStack) {
+		return new Emitter<>(cb);
 	}
 
 	/**
-	 * Wrap the given method visitor assuming an empty stack
+	 * Wrap the given code builder assuming an empty stack
 	 * <p>
-	 * {@link #start(ClassVisitor, int, String, MthDesc)} or
-	 * {@link #start(TRef, ClassVisitor, int, String, MthDesc)} is recommended instead.
-	 * 
-	 * @param mv the ASM method visitor
+	 * Use {@link #instanceWithBody} or {@link #staticWithBody} instead.
+	 *
+	 * @param cb the code builder
 	 * @return the emitter
 	 */
-	public static Emitter<Bot> start(MethodVisitor mv) {
-		mv.visitCode();
-		return assume(mv, Next.BOTTOM);
+	static Emitter<Bot> start(CodeBuilder cb) {
+		return assume(cb, Next.BOTTOM);
 	}
 
 	/**
 	 * Define a static method
 	 * 
-	 * @param <MR> the type returned by the method
-	 * @param <N> the parameter types of the method
-	 * @param cv the ASM class visitor
-	 * @param access the access flags (static is added automatically)
+	 * @param clb The builder for the class to which this method definition is added.
 	 * @param name the name of the method
-	 * @param desc the method descriptor
-	 * @return an object to aid further definition of the method
+	 * @param desc the method descriptor (signature)
+	 * @param flags the flags (e.g., access modifiers)
+	 * @param handler a lambda method to handle specification and code generation
 	 */
-	public static <MR extends BType, N extends Next> Def<MR, N> start(ClassVisitor cv, int access,
-			String name, MthDesc<MR, N> desc) {
-		access |= Opcodes.ACC_STATIC;
-		MethodVisitor mv = cv.visitMethod(access, name, desc.desc(), null, null);
-		return new Def<>(start(mv), new ArrayList<>());
+	public static <MR extends BType, N extends Next> void staticWithBody(ClassBuilder clb,
+			String name, MthDesc<MR, N> desc, int flags,
+			Function<StaticMethodBuilder<MR, N>, Emitter<Dead>> handler) {
+		clb.withMethodBody(name, desc.desc(), flags, cb -> {
+			var dead = handler.apply(new StaticMethodBuilder<>(cb, name, desc, flags));
+			Misc.finish(dead);
+		});
+	}
+
+	static <MR extends BType, N extends Next> Def<MR, N> startStatic(CodeBuilder cb,
+			MthDesc<MR, N> desc) {
+		return new Def<>(start(cb), new ArrayList<>());
 	}
 
 	/**
 	 * Define an instance method
 	 * 
-	 * @param <MR> the type returned by the method
-	 * @param <OT> the type owning the method
-	 * @param <N> the parameter types of the method
-	 * @param owner the owner type (as a reference type)
-	 * @param cv the ASM class visitor
-	 * @param access the access flags (static is forcibly removed)
+	 * @param clb the builder for the class to which this method definition is added.
+	 * @param owner the owning type (must be same as that for the builder)
 	 * @param name the name of the method
-	 * @param desc the method descriptor
-	 * @return an object to aid further definition of the method
+	 * @param desc the method descriptor (signature)
+	 * @param flags the flags (e.g., access modifiers)
+	 * @param handler a lambda method to handle specification and code generation
 	 */
-	public static <MR extends BType, OT, N extends Next> ObjDef<MR, OT, N> start(TRef<OT> owner,
-			ClassVisitor cv, int access, String name, MthDesc<MR, N> desc) {
-		access &= ~Opcodes.ACC_STATIC;
-		MethodVisitor mv = cv.visitMethod(access, name, desc.desc(), null, null);
-		return new ObjDef<>(start(mv), new ArrayList<>());
+	public static <OT, MR extends BType, N extends Next> void instanceWithBody(ClassBuilder clb,
+			TRef<OT> owner, String name, MthDesc<MR, N> desc, int flags,
+			Function<InstanceMethodBuilder<OT, MR, N>, Emitter<Dead>> handler) {
+		clb.withMethodBody(name, desc.desc(), flags, cb -> {
+			var dead = handler.apply(new InstanceMethodBuilder<>(cb, owner, name, desc, flags));
+			Misc.finish(dead);
+		});
+	}
+
+	static <MR extends BType, OT, N extends Next> ObjDef<MR, OT, N> startInstance(
+			TRef<OT> owner, CodeBuilder cb, MthDesc<MR, N> desc) {
+		return new ObjDef<>(start(cb), new ArrayList<>());
 	}
 }

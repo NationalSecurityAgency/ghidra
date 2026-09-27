@@ -16,10 +16,10 @@
 package ghidra.pcode.emu.jit.gen;
 
 import static ghidra.pcode.emu.jit.gen.GenConsts.*;
-import static org.objectweb.asm.Opcodes.ACC_FINAL;
-import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
+import static java.lang.classfile.ClassFile.ACC_FINAL;
+import static java.lang.classfile.ClassFile.ACC_PRIVATE;
 
-import org.objectweb.asm.ClassVisitor;
+import java.lang.classfile.ClassBuilder;
 
 import ghidra.pcode.emu.jit.analysis.JitDataFlowUseropLibrary;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
@@ -32,14 +32,13 @@ import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
 
 /**
  * A field request for a pre-fetched userop definition
- * 
  * <p>
  * These are used to invoke userops using the Standard or Direct strategies.
  * 
  * @param userop the definition to pre-fetch
  * @see JitDataFlowUseropLibrary
  */
-public record FieldForUserop(PcodeUseropDefinition<byte[]> userop)
+public record FieldForUserop(PcodeUseropDefinition<?> userop)
 		implements InstanceFieldReq<TRef<PcodeUseropDefinition<byte[]>>> {
 	@Override
 	public String name() {
@@ -48,14 +47,12 @@ public record FieldForUserop(PcodeUseropDefinition<byte[]> userop)
 
 	/**
 	 * {@inheritDoc}
-	 * 
 	 * <p>
 	 * Consider the userop {@code syscall()}. The declaration is equivalent to:
 	 * 
 	 * <pre>
 	 * private final {@link PcodeUseropDefinition} userop_syscall;
 	 * </pre>
-	 * 
 	 * <p>
 	 * And the initialization is equivalent to:
 	 * 
@@ -65,8 +62,8 @@ public record FieldForUserop(PcodeUseropDefinition<byte[]> userop)
 	 */
 	@Override
 	public <THIS extends JitCompiledPassage, N extends Next> Emitter<N> genInit(Emitter<N> em,
-			Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, ClassVisitor cv) {
-		Fld.decl(cv, ACC_PRIVATE | ACC_FINAL, T_PCODE_USEROP_DEFINITION, name());
+			Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, ClassBuilder clb) {
+		Fld.decl(clb, ACC_PRIVATE | ACC_FINAL, T_PCODE_USEROP_DEFINITION, name());
 		return em
 				.emit(Op::aload, localThis)
 				.emit(Op::dup)

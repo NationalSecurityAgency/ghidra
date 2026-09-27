@@ -26,6 +26,7 @@ import ghidra.app.services.DataTypeManagerService;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.util.HelpLocation;
+import resources.Icons;
 
 /**
  * A provider that shows a comparison between two data types.
@@ -60,6 +61,11 @@ public class DataTypeCompareProvider extends ComponentProvider {
 				.popupMenuPath("Show Data Type")
 				.onAction(this::showType)
 				.buildAndInstallLocal(this);
+
+		new ActionBuilder("Refresh", getOwner())
+				.toolBarIcon(Icons.REFRESH_ICON)
+				.onAction(this::refresh)
+				.buildAndInstallLocal(this);
 	}
 
 	private void showType(ActionContext context) {
@@ -72,6 +78,15 @@ public class DataTypeCompareProvider extends ComponentProvider {
 		DataTypeManagerService service =
 			getTool().getService(DataTypeManagerService.class);
 		service.setDataTypeSelected(dt);
+	}
+
+	private void refresh(ActionContext context) {
+		DataTypeManager leftDtm = leftDt.getDataTypeManager();
+		DataTypeManager rightDtm = rightDt.getDataTypeManager();
+		leftDt = leftDtm.resolve(leftDt, null);
+		rightDt = rightDtm.resolve(rightDt, null);
+
+		compareComponent.setDataTypes(leftDt, rightDt);
 	}
 
 	private void build() {

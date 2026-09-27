@@ -192,17 +192,20 @@ public:
 /// 
 /// The decompiler can describe a logical value that is stored split across multiple
 /// physical memory locations.  This record describes such a split. The pieces must be listed
-/// from \e most \e significant to \e least \e significant.
+/// from \e most \e significant to \e least \e significant.  Pieces can be any addressable region in the
+/// processor model. Internally a zero constant with size represents formal padding (to model structures
+/// with aligned fields that are passed in registers).
 class JoinRecord {
   friend class AddrSpaceManager;
   vector<VarnodeData> pieces;	///< All the physical pieces of the symbol, most significant to least
   VarnodeData unified; ///< Special entry representing entire symbol in one chunk
 public:
   int4 numPieces(void) const { return pieces.size(); }	///< Get number of pieces in this record
-  bool isFloatExtension(void) const { return (pieces.size() == 1); }	///< Does this record extend a float varnode
+  bool isFloatExtension(void) const { return pieces.size() == 1 && pieces[0].space->getType() != IPTR_CONSTANT; }	///< Does this record extend a float varnode
+  bool isPurePadding(void) const { return pieces.size() == 1 && pieces[0].space->getType() == IPTR_CONSTANT; }	///< Is \b this only padding
   const VarnodeData &getPiece(int4 i) const { return pieces[i]; }	///< Get the i-th piece
   const VarnodeData &getUnified(void) const { return unified; }		///< Get the Varnode whole
-  Address getEquivalentAddress(uintb offset,int4 &pos) const;	///< Given offset in \e join space, get equivalent address of piece
+  Address getEquivalentAddress(uintb offset,int4 &pos,int4 &trunc) const;	///< Given offset in \e join space, get equivalent address of piece
   bool operator<(const JoinRecord &op2) const; ///< Compare records lexigraphically by pieces
   static void mergeSequence(vector<VarnodeData> &seq,const Translate *trans);	///< Merge any contiguous ranges in a sequence
 };
@@ -230,9 +233,10 @@ class AddrSpaceManager {
   AddrSpace *joinspace;		///< Space for unifying split variables
   AddrSpace *stackspace;	///< Stack space associated with processor
   AddrSpace *uniqspace;		///< Temporary space associated with processor
-  uintb joinallocate;		///< Next offset to be allocated in join space
-  set<JoinRecord *,JoinRecordCompare> splitset;	///< Different splits that have been defined in join space
-  vector<JoinRecord *> splitlist; ///< JoinRecords indexed by join address
+  RangeList nohighptr;       	///< Ranges for which high-level pointers are not possible
+  mutable uintb joinallocate;	///< Next offset to be allocated in join space
+  mutable set<JoinRecord *,JoinRecordCompare> splitset;	///< Different splits that have been defined in join space
+  mutable vector<JoinRecord *> splitlist; ///< JoinRecords indexed by join address
 protected:
   AddrSpace *decodeSpace(Decoder &decoder,const Translate *trans); ///< Add a space to the model based an on XML tag
   void decodeSpaces(Decoder &decoder,const Translate *trans); ///< Restore address spaces in the model from a stream
@@ -244,6 +248,7 @@ protected:
   void insertSpace(AddrSpace *spc); ///< Add a new address space to the model
   void copySpaces(const AddrSpaceManager *op2);	///< Copy spaces from another manager
   void addSpacebasePointer(SpacebaseSpace *basespace,const VarnodeData &ptrdata,int4 truncSize,bool stackGrowth); ///< Set the base register of a spacebase space
+  void addNoHighPtr(const Range &rng); ///< Add a new region where pointers do not exist
   void insertResolver(AddrSpace *spc,AddressResolver *rsolv); ///< Override the base resolver for a space
   void setInferPtrBounds(const Range &range);		///< Set the range of addresses that can be inferred as pointers
   JoinRecord *findJoinInternal(uintb offset) const; ///< Find JoinRecord for \e offset in the join space
@@ -262,33 +267,38 @@ public:
   AddrSpace *getDefaultDataSpace(void) const; ///< Get the default address space where data is stored
   AddrSpace *getConstantSpace(void) const; ///< Get the constant space
   Address getConstant(uintb val) const; ///< Get a constant encoded as an Address
+  bool highPtrPossible(const Address &loc,int4 size) const; ///< Are pointers possible to the given location?
   Address createConstFromSpace(AddrSpace *spc) const; ///< Create a constant address encoding an address space
   Address resolveConstant(AddrSpace *spc,uintb val,int4 sz,const Address &point,uintb &fullEncoding) const;
   int4 numSpaces(void) const; ///< Get the number of address spaces for this processor
   AddrSpace *getSpace(int4 i) const; ///< Get an address space via its index
   AddrSpace *getNextSpaceInOrder(AddrSpace *spc) const; ///< Get the next \e contiguous address space
-  JoinRecord *findAddJoin(const vector<VarnodeData> &pieces,uint4 logicalsize); ///< Get (or create) JoinRecord for \e pieces
+  JoinRecord *findAddJoin(const vector<VarnodeData> &pieces,uint4 logicalsize) const; ///< Get (or create) JoinRecord for \e pieces
   JoinRecord *findJoin(uintb offset) const; ///< Find JoinRecord for \e offset in the join space
+  Address joinPieces(vector<VarnodeData> &pieces,const Translate *trans) const;	///< Create an Address representing given \e pieces
+  set<JoinRecord *,JoinRecordCompare>::const_iterator beginJoinPadding(void) const;	///< Beginning of pure padding JoinRecords
+  set<JoinRecord *,JoinRecordCompare>::const_iterator endJoin(void) const { return splitset.end(); }	///< End of JoinRecord list
   void setDeadcodeDelay(AddrSpace *spc,int4 delaydelta); ///< Set the deadcodedelay for a specific space
   void truncateSpace(const TruncationTag &tag);	///< Mark a space as truncated from its original size
 
   /// \brief Build a logically lower precision storage location for a bigger floating point register
-  Address constructFloatExtensionAddress(const Address &realaddr,int4 realsize,int4 logicalsize);
+  Address constructFloatExtensionAddress(const Address &realaddr,int4 realsize,int4 logicalsize) const;
 
   /// \brief Build a logical whole from register pairs
-  Address constructJoinAddress(const Translate *translate,const Address &hiaddr,int4 hisz,const Address &loaddr,int4 losz);
+  Address constructJoinAddress(const Translate *translate,const Address &hiaddr,int4 hisz,
+			       const Address &loaddr,int4 losz) const;
 
   /// \brief Build a logical whole representing a range that \e wraps from a high address to a low address
-  Address constructWrappingAddress(const Address &addr,int4 size);
+  Address constructWrappingAddress(const Address &addr,int4 size)const ;
 
   /// \brief Make sure a possibly offset \e join address has a proper JoinRecord
-  void renormalizeJoinAddress(Address &addr,int4 size);
+  void renormalizeJoinAddress(Address &addr,int4 size) const;
 
   /// \brief Create an Address by stripping a piece from a JoinRecord
-  const VarnodeData &stripJoinPiece(JoinRecord *join,int4 index);
+  const VarnodeData &stripJoinPiece(JoinRecord *join,int4 index) const;
 
   /// \brief Parse a string with just an \e address \e space name and a hex offset
-  Address parseAddressSimple(const string &val);
+  Address parseAddressSimple(const string &val) const;
 };
 
 /// \brief The interface to a translation engine for a processor.
@@ -537,6 +547,21 @@ inline AddrSpace *AddrSpaceManager::getConstantSpace(void) const {
 /// \return the \e constant address
 inline Address AddrSpaceManager::getConstant(uintb val) const {
   return Address(constantspace,val);
+}
+
+/// The Translate object keeps track of address ranges for which
+/// it is effectively impossible to have a pointer into. This is
+/// used for pointer aliasing calculations.  This routine returns
+/// \b true if it is \e possible to have pointers into the indicated
+/// range.
+/// \param loc is the starting address of the range
+/// \param size is the size of the range in bytes
+/// \return \b true if pointers are possible
+inline bool AddrSpaceManager::highPtrPossible(const Address &loc,int4 size) const {
+  uint4 fl = loc.getSpace()->flags & (AddrSpace::addressable_all | AddrSpace::addressable_none);
+  if (fl != 0)
+    return (fl == AddrSpace::addressable_all);
+  return !nohighptr.inRange(loc,size);
 }
 
 /// This routine is used to encode a pointer to an address space

@@ -104,7 +104,7 @@ public record PlaceEmuBreakpointActionItem(Trace trace, long snap, Address addre
 		try (Transaction tx = trace.openTransaction("Place Emulated Breakpoint")) {
 			// Defaults with emuEnable=true
 			TraceBreakpointLocation loc = trace.getBreakpointManager()
-					.addBreakpoint(computePath(), Lifespan.at(snap),
+					.addBreakpoint(computePath(), Lifespan.ALL,
 						BreakpointActionItem.range(address, length), Set.of(), kinds, false, null);
 			loc.setName(snap, createName(address));
 			loc.setEmuSleigh(snap, emuSleigh);

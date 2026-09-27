@@ -58,6 +58,7 @@ public class LaunchSupport {
 
 		// Validate command line arguments
 		if (args.length < 2 || args.length > 4) {
+			// Logging has not been initialized and is not available to use
 			System.err.println("LaunchSupport expected 2 to 4 arguments but got " + args.length);
 			System.exit(exitCode);
 		}

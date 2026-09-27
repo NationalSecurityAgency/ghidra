@@ -3,6 +3,7 @@
 ##MODULE IP: Copyright Distribution Permitted
 ##MODULE IP: Public Domain
 ghidraRun||GHIDRA||||END|
+server/certTool||GHIDRA||||END|
 server/ghidraSvr||GHIDRA||||END|
 server/jaas.conf||GHIDRA||||END|
 server/server.conf||GHIDRA||||END|
@@ -30,3 +31,4 @@ support/jshellRun||GHIDRA||||END|
 support/launch.properties||GHIDRA||||END|
 support/pyghidraRun||GHIDRA||||END|
 support/sleigh||GHIDRA||||END|
+support/updateServerAllowList||GHIDRA||||END|

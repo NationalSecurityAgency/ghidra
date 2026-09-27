@@ -15,9 +15,8 @@
  */
 package ghidra.pcode.emu.jit.gen.var;
 
+import java.lang.classfile.CodeBuilder;
 import java.math.BigInteger;
-
-import org.objectweb.asm.Opcodes;
 
 import ghidra.pcode.emu.jit.analysis.JitType.*;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
@@ -36,7 +35,7 @@ import ghidra.pcode.emu.jit.var.JitConstVal;
  * 
  * <p>
  * This can load directly the requested constant as the required JVM type onto the JVM stack. It
- * simply emits an {@link Opcodes#LDC ldc} bytecode.
+ * simply emits an {@link CodeBuilder#ldc ldc} bytecode.
  */
 public enum ConstValGen implements ValGen<JitConstVal> {
 	/** Singleton */

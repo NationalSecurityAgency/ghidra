@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,12 +66,12 @@ public class DemoPcodeUseropLibrary extends AnnotatedPcodeUseropLibrary<byte[]> 
 	 * 
 	 * <p>
 	 * Because we want to dereference start, we will need access to the emulator's state, so we
-	 * employ the {@link OpState} annotation. {@code start} takes the one input we expect. Because
-	 * its type is the value type rather than {@link Varnode}, we will get the input's value.
-	 * Similarly, we can just return the resulting value, and the emulator will place that into the
-	 * output variable for us.
+	 * employ the {@link ghidra.pcode.exec.AnnotatedPcodeUseropLibrary.OpExecutor} annotation.
+	 * {@code start} takes the one input we expect. Because its type is the value type rather than
+	 * {@link Varnode}, we will get the input's value. Similarly, we can just return the resulting
+	 * value, and the emulator will place that into the output variable for us.
 	 * 
-	 * @param state the calling thread's state
+	 * @param executor the calling thread's executor
 	 * @param start the offset of the first character
 	 * @return the length of the string in bytes
 	 */
@@ -108,11 +108,9 @@ public class DemoPcodeUseropLibrary extends AnnotatedPcodeUseropLibrary<byte[]> 
 
 		/**
 		 * Not really a syscall dispatcher
-		 * 
 		 * <p>
 		 * In cases where the userop expects parameters, you would annotate them with {@link Param}
 		 * and use them just like other {@link Var}s. See the javadocs.
-		 * 
 		 * <p>
 		 * This is just a cheesy demo: If RAX is 1, then this method computes the number of bytes in
 		 * the C-style string pointed to by RCX and stores the result in RAX. Otherwise, interrupt

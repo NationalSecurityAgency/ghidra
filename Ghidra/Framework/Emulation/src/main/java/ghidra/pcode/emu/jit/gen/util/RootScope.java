@@ -43,7 +43,8 @@ class RootScope<N extends Next> implements Scope {
 		this.em = (Emitter<N>) em;
 		this.nextLocal = nextLocal;
 
-		this.start = Lbl.place(this.em).lbl();
+		this.start = Lbl.create(this.em);
+		this.em.cb.labelBinding(this.start.label());
 	}
 
 	@Override

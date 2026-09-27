@@ -35,7 +35,6 @@ import ghidra.util.Msg;
 
 /**
  * An implementation of {@link PcodeExecutorState} for per-block data flow interpretation
- * 
  * <p>
  * In p-code interpretation, this interface's purpose is to store the current value of varnodes in
  * the emulation/interpretation state. Here we implement it using {@code T:=}{@link JitVal}, and
@@ -48,7 +47,6 @@ import ghidra.util.Msg;
  * part of a varnode) access, this state will synthesize {@link JitPhiOp phi} ops. See
  * {@link #setVar(AddressSpace, JitVal, int, boolean, JitVal) setVar} and
  * {@link #getVar(AddressSpace, JitVal, int, boolean, Reason) getVar} for details.
- * 
  * <p>
  * This state only serves to analyze data flow through register and unique variables. Because we
  * know these are only accessible to the thread, we stand to save much execution time by bypassing
@@ -97,7 +95,6 @@ public class JitDataFlowState implements PcodeExecutorState<JitVal> {
 
 		/**
 		 * Clear all definition entries in the given per-space map for the given varnode
-		 * 
 		 * <p>
 		 * Any entries completely covered by the given varnode (including an exact match) are
 		 * removed from the map. Those partially covered will be replaced by subpieces of their
@@ -194,7 +191,6 @@ public class JitDataFlowState implements PcodeExecutorState<JitVal> {
 		/**
 		 * Set one or more definition entries in the given map for the given varnode to the given
 		 * value
-		 * 
 		 * <p>
 		 * Ordinary, this just sets the one varnode to the given value; however, if the given value
 		 * is the output of a {@link JitCatenateOp catenation}, then each input part is entered into
@@ -275,12 +271,10 @@ public class JitDataFlowState implements PcodeExecutorState<JitVal> {
 
 		/**
 		 * Get an ordered list of all values involved in the latest definition of the given varnode.
-		 * 
 		 * <p>
 		 * In the simplest case, the list consists of exactly one SSA variable whose varnode exactly
 		 * matches that requested. In other cases, e.g., when only a subregister is defined, the
 		 * list may have several entries, some of which may be {@link JitMissingVar missing}.
-		 * 
 		 * <p>
 		 * The list is ordered according to machine endianness. That is for little endian, the
 		 * values are ordered from least to most significant parts of the varnode defined. This is
@@ -348,7 +342,6 @@ public class JitDataFlowState implements PcodeExecutorState<JitVal> {
 
 		/**
 		 * Get the value of the given varnode
-		 * 
 		 * <p>
 		 * This is the implementation of
 		 * {@link JitDataFlowState#getVar(AddressSpace, JitVal, int, boolean, Reason)}, but only for
@@ -417,7 +410,6 @@ public class JitDataFlowState implements PcodeExecutorState<JitVal> {
 
 	/**
 	 * {@inheritDoc}
-	 * 
 	 * <p>
 	 * This and {@link #getVar(AddressSpace, JitVal, int, boolean, Reason)} are where we connect the
 	 * interpretation to the maps of definitions we keep in this state. We examine the varnode's
@@ -427,23 +419,29 @@ public class JitDataFlowState implements PcodeExecutorState<JitVal> {
 	 * such variables are handled by {@link JitMemoryOutVar}. Such output variables are actually
 	 * passed in as {@code val} here, but need only be stored in a map if they are register or
 	 * unique variables.
+	 * 
+	 * @implNote We use this only to log possible storage bypasses. All uniques will be bypassed.
+	 *           Registers must be written, but it is safe to bypass subsequent loads. Actually,
+	 *           with a pre-load of register values and a try-finally to write them, we optimize
+	 *           register access, too. Turns out registers and uniques get the same treatment, at
+	 *           least for now, partly for debugging purposes, but also because with crossbuilds,
+	 *           uniques must outlive their generating instruction. LATER: Can we examine an
+	 *           instruction's named blocks to determine which uniques need saving? LATER: It might
+	 *           also be possible (with significant changes to the strategy in
+	 *           {@link JitVarScopeModel}) to be more selective in which variables become live and
+	 *           are retired. But we must avoid the situation where we might "save" a variable that
+	 *           was never restored or written. That would effectively erase a variable that should
+	 *           have been left unmodified.
+	 *           <p>
+	 *           Memory must be written. Unless we can determine for sure the memory is
+	 *           non-volatile, we must presume volatile, so no bypassing is allowed. LATER: We might
+	 *           consider assuming stack-based accesses are non-volatile, but I'm not sure that is
+	 *           appropriate either. Technically one thread may launch another, providing a ref to a
+	 *           stack variable it knows will live for the entire thread's life.
 	 */
 	@Override
 	public void setVar(AddressSpace space, JitVal offset, int size, boolean quantize,
 			JitVal val) {
-		/**
-		 * We use this only to log possible storage bypasses. All uniques will be bypassed.
-		 * Registers must be written, but it is safe to bypass subsequent loads. Actually, perhaps
-		 * with a pre-load of register values and a try-finally to write them, we can optimize
-		 * register access, too. Might also make sense to do that for uniques, just for debugging
-		 * purposes.
-		 * 
-		 * Memory must be written. Unless we can determine for sure the memory is non-volatile, we
-		 * must presume volatile, so no bypassing is allowed. TODO: We might consider assuming
-		 * stack-based accesses are non-volatile, but I'm not sure that is appropriate either.
-		 * Technically one thread may launch another, providing a ref to a stack variable it knows
-		 * will live for the entire thread's life.
-		 */
 		if (space.isConstantSpace()) {
 			Msg.warn(this, "Witnessed write to constant space! Ignoring.");
 			return;
@@ -499,7 +497,6 @@ public class JitDataFlowState implements PcodeExecutorState<JitVal> {
 
 	/**
 	 * {@inheritDoc}
-	 * 
 	 * <p>
 	 * This and {@link #setVar(AddressSpace, JitVal, int, boolean, JitVal)} are where we connect the
 	 * interpretation to the maps of definitions we keep in this state. We examine the varnode's
@@ -584,7 +581,6 @@ public class JitDataFlowState implements PcodeExecutorState<JitVal> {
 
 	/**
 	 * Capture the current state of intra-block analysis.
-	 * 
 	 * <p>
 	 * This may be required for follow-up op-use analysis by a {@link JitCallOtherOpIf} invoked
 	 * using the standard strategy. All live varnodes <em>at the time of the call</em> must be

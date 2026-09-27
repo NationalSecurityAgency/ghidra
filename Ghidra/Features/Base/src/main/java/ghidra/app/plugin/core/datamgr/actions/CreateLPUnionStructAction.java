@@ -27,6 +27,7 @@ import ghidra.app.plugin.core.datamgr.tree.ArchiveNode;
 import ghidra.app.plugin.core.datamgr.tree.BuiltInArchiveNode;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
+import ghidra.app.plugin.core.datamgr.tree.DataTypeStoreNode;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeTreeNode;
 import ghidra.program.model.data.BuiltInDataTypeManager;
 import ghidra.program.model.data.CategoryPath;
@@ -153,7 +154,7 @@ public class CreateLPUnionStructAction extends DockingAction implements DataType
 			return false;
 		}
 
-		ArchiveNode archiveNode = node.getArchiveNode();
+		DataTypeStoreNode archiveNode = node.getArchiveNode();
 		if (archiveNode == null) {
 			// this can happen as the tree is changing
 			return false;

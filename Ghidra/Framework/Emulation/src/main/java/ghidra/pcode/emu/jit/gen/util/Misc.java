@@ -15,11 +15,6 @@
  */
 package ghidra.pcode.emu.jit.gen.util;
 
-import java.lang.System.Logger.Level;
-
-import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodVisitor;
-
 import ghidra.pcode.emu.jit.gen.util.Emitter.*;
 import ghidra.pcode.emu.jit.gen.util.Types.BNonVoid;
 import ghidra.pcode.emu.jit.gen.util.Types.TRef;
@@ -35,7 +30,7 @@ public interface Misc {
 	 * <p>
 	 * This may be necessary when a code generating method is typed to pop then push something of
 	 * the same type, but in some conditions actually just leaves the stack as is.
-	 * 
+	 *
 	 * @param <T1> the type at the top of the stack
 	 * @param <N1> the tail of the stack
 	 * @param <N0> the full stack
@@ -51,7 +46,7 @@ public interface Misc {
 
 	/**
 	 * A handle to an (incomplete) {@code try-catch} block
-	 * 
+	 *
 	 * @param <T> the type caught by the block
 	 * @param <N> the stack contents at the start and end of the {@code try} block
 	 * @param end the label to place at the end of the {@code try} block
@@ -73,12 +68,12 @@ public interface Misc {
 	 * correctly placed, it cannot check if placement is altogether forgotten. Ideally, the handler
 	 * label is placed where code is otherwise unreachable, i.e., using
 	 * {@code Lbl#placeDead(Emitter, Lbl)}.
-	 * 
+	 *
 	 * @param <T> the type caught by the block
 	 * @param <N> the stack contents at the bounds of the {@code try} block
 	 * @param em the emitter
-	 * @param end the end label, often just {@link Lbl#create()}.
-	 * @param handler the handler label, often just {@link Lbl#create()}
+	 * @param end the end label, often just {@link Lbl#create(Emitter)}.
+	 * @param handler the handler label, often just {@link Lbl#create(Emitter)}
 	 * @param type the exception type. If multiple types are caught, this must be the join of those
 	 *            types, and the user must emit code to distinguish each, possibly re-throwing if
 	 *            the join is larger than the union.
@@ -86,36 +81,41 @@ public interface Misc {
 	 */
 	static <T extends Throwable, N extends Next> TryCatchBlock<T, N> tryCatch(Emitter<N> em,
 			Lbl<N> end, Lbl<Ent<N, TRef<T>>> handler, TRef<T> type) {
-		Lbl<N> start = Lbl.create();
+		Lbl<N> start = Lbl.create(em);
 		em = em.emit(Lbl::place, start);
-		em.mv.visitTryCatchBlock(start.label(), end.label(), handler.label(),
-			type.internalName());
+		if (Op.DEEP_TRACE) {
+			System.err.println(
+				"    jvm<try-catch> %s handler=%s, end=%s".formatted(type, handler, end));
+		}
+		em.cb.exceptionCatch(start.label(), end.label(), handler.label(), type.classDesc());
 		return new TryCatchBlock<>(end, handler, em);
 	}
 
 	/**
 	 * Place a line number
-	 * 
+	 *
 	 * @param <N> any live stack
 	 * @param em the emitter
 	 * @param number the (non zero) line number
 	 * @return the emitter
 	 */
 	static <N extends Next> Emitter<N> lineNumber(Emitter<N> em, int number) {
-		Label label = new Label();
-		em.mv.visitLabel(label);
-		em.mv.visitLineNumber(number, label);
+		if (Op.DEEP_TRACE) {
+			System.err.println("    jvm<Line %d>".formatted(number));
+		}
+		em.cb.lineNumber(number);
 		return em;
 	}
 
 	/**
 	 * Finish emitting bytecode
 	 * <p>
-	 * This is where we invoke {@link MethodVisitor#visitMaxs(int, int)}. Frameworks that require
-	 * bytecode generation can try to enforce this by requiring bytecode generation methods to
-	 * return {@link Void}. Sure, a user can just return null, but this will at least remind them
+	 * With the Class-File API, stack map frames and max values are computed automatically, so this
+	 * method only needs to close the root scope for local variable declarations. Frameworks that
+	 * require bytecode generation can try to enforce this by requiring bytecode generation methods
+	 * to return {@link Void}. Sure, a user can just return null, but this will at least remind them
 	 * that they should call this method, as convention is to use a pattern like:
-	 * 
+	 *
 	 * <pre>
 	 * return em
 	 * 		.emit(Op::ldc__i, 0)
@@ -125,19 +125,12 @@ public interface Misc {
 	 * <p>
 	 * A user of this pattern would be reminded were {@code finish} missing. Provided the generation
 	 * method returns {@link Void}, this pattern should compile.
-	 * 
-	 * @param em the emittter
+	 *
+	 * @param em the emitter
 	 * @return null
 	 */
 	static Void finish(Emitter<Dead> em) {
 		em.rootScope.close();
-		try {
-			em.mv.visitMaxs(0, 0);
-		}
-		catch (Exception e) {
-			Emitter.LOGGER.log(Level.WARNING, "Failed to compute Maxs", e);
-		}
-		em.mv.visitEnd();
 		return null;
 	}
 }

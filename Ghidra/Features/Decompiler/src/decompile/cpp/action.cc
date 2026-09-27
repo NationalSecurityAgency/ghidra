@@ -700,18 +700,6 @@ void Rule::printStatistics(ostream &s) const
   s << name << dec << " Tested=" << count_tests << " Applied=" << count_apply << endl;
 }
 
-/// Populate the given array with all possible OpCodes this Rule might apply to.
-/// By default, this method returns all possible OpCodes
-/// \param oplist is the array to populate
-void Rule::getOpList(vector<uint4> &oplist) const
-
-{
-  uint4 i;
-
-  for(i=0;i<CPUI_MAX;++i)
-    oplist.push_back(i);
-}
-
 /// This method is called every time the Rule successfully applies. If it returns
 /// \b true, this indicates to the system that an action breakpoint has occurred.
 /// \return true if an action breakpoint should occur because of this Rule
@@ -878,11 +866,11 @@ int4 ActionPool::apply(Funcdata &data)
 
 {
   if (status != status_mid) {
-    op_state = data.beginOpAll();	// Initialize the derived action
+    op_state = data.beginOpMain();	// Initialize the derived action
     rule_index = 0;
   }
-  for(;op_state!=data.endOpAll();)
-	  if (0!=processOp((*op_state).second,data)) return -1;
+  for(;op_state!=data.endOpMain();)
+    if (0!=processOp((*op_state).second,data)) return -1;
 
   return 0;			// Indicate successful completion
 }

@@ -88,7 +88,7 @@ public class ProjectDataTreePanel extends JPanel {
 
 	/**
 	 * Construct an empty data tree panel that is going to be used for the active project tree 
-	 * within the frontend tool.
+	 * within the front end tool.
 	 * 
 	 * @param plugin front end plugin
 	 */
@@ -124,6 +124,20 @@ public class ProjectDataTreePanel extends JPanel {
 
 	public TreeSelectionModel getTreeSelectionModel() {
 		return tree.getSelectionModel();
+	}
+
+	public void reload() {
+		if (projectData == null) {
+			return;
+		}
+
+		ProjectLocator locator = projectData.getProjectLocator();
+		String projectName = locator.getName();
+
+		GTreeNode oldRoot = root;
+		root = createRootNode(projectName);
+		tree.setRootNode(root);
+		oldRoot.dispose();
 	}
 
 	/**
@@ -528,6 +542,7 @@ public class ProjectDataTreePanel extends JPanel {
 	 * Create the root node for this data tree.
 	 */
 	private GTreeNode createRootNode(String projectName) {
+
 		if (projectData == null) {
 			return new NoProjectNode();
 		}

@@ -24,9 +24,13 @@ import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.cparser.CPP.PreProcessor;
 import ghidra.framework.Application;
 import ghidra.framework.plugintool.ServiceProvider;
+import ghidra.program.database.dtarchive.DataTypeArchiveFactory;
 import ghidra.program.model.data.*;
+import ghidra.program.model.dtarchive.DataTypeStore;
+import ghidra.program.model.dtarchive.FileDataTypeArchive;
 import ghidra.program.model.listing.Program;
 import ghidra.util.*;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
@@ -240,7 +244,48 @@ public class CParserUtils {
 
 	/**
 	 * Parse a set of C Header files and associated parsing arguments, returning a new File 
-	 * Data TypeManager with in the provided dataFileName.  The resulting archive
+	 * Data TypeManager with the provided dataFileName.  The resulting archive
+	 * will not be associated with a specific language/compiler and will use the default 
+	 * data organization.
+	 * 
+	 * Note: Using another open archive while parsing will cause:
+	 * - a dependence on the other archive
+	 * - any missing data types while parsing are supplied if present from an openDTMgr
+	 * - after parsing all data types parsed with an equivalent data type in any openDTMgr
+	 *     replaced by the data type from the openDTMgr
+	 *     
+	 * NOTE: This will only occur if the data type from the openDTMgr's is equivalent.
+	 * 
+	 * @param openDTMgrs array of datatypes managers to use for undefined data types
+	 * 
+	 * @param filenames names of files in order to parse, could include strings with
+	 *        "#" at start, which are ignored as comments
+	 * @param args arguments for parsing, {@code -D<defn>=, -I<includepath>}
+	 * 
+	 * @param dataFileName name of data type archive file (include the .gdt extension)
+	 * 
+	 * @param monitor  used to cancel or provide results
+	 * 
+	 * @return the data types in the ghidra .gdt archive file
+	 * 
+	 * @throws ghidra.app.util.cparser.C.ParseException for catastrophic errors in C parsing
+	 * @throws ghidra.app.util.cparser.CPP.ParseException for catastrophic errors in Preprocessor macro parsing
+	 * @throws IOException    if there io are errors saving the archive
+	 *
+	 * @deprecated Use {@link #parseHeaderFiles(String[], String[], String[],String, DataTypeManager[], TaskMonitor)} instead.
+	 */
+	@Deprecated(since = "12.2", forRemoval = true)
+	public static FileDataTypeManager parseHeaderFiles(DataTypeManager[] openDTMgrs,
+			String[] filenames, String[] args, String dataFileName,
+			TaskMonitor monitor) throws ghidra.app.util.cparser.C.ParseException,
+			ghidra.app.util.cparser.CPP.ParseException, IOException {
+
+		return parseHeaderFiles(openDTMgrs, filenames, null, args, dataFileName, monitor);
+	}
+
+	/**
+	 * Parse a set of C Header files and associated parsing arguments, returning a new 
+	 * {@link FileDataTypeArchive} with the provided dataFileName.  The resulting archive
 	 * will not be associated with a specific language/compiler and will use the default 
 	 * data organization.
 	 * 
@@ -269,18 +314,61 @@ public class CParserUtils {
 	 * @throws IOException    if there io are errors saving the archive
 	 *
 	 */
-
-	public static FileDataTypeManager parseHeaderFiles(DataTypeManager[] openDTMgrs,
-			String[] filenames, String[] args, String dataFileName,
-			TaskMonitor monitor) throws ghidra.app.util.cparser.C.ParseException,
+	public static FileDataTypeArchive parseHeaderFiles(String[] filenames, String[] args,
+			String dataFileName, DataTypeManager[] openDTMgrs, TaskMonitor monitor)
+			throws ghidra.app.util.cparser.C.ParseException,
 			ghidra.app.util.cparser.CPP.ParseException, IOException {
 
-		return parseHeaderFiles(openDTMgrs, filenames, null, args, dataFileName, monitor);
+		return parseHeaderFiles(filenames, null, args, dataFileName, openDTMgrs, monitor);
 	}
 
 	/**
 	 * Parse a set of C Header files and associated parsing arguments, returning a new 
-	 * File Data TypeManager with in the provided dataFileName.  The resulting archive
+	 * FileDataTypeManager with the provided dataFileName.  The resulting archive
+	 * will not be associated with a specific language/compiler and will use the default 
+	 * data organization.
+	 * 
+	 * Note: Using another open archive while parsing will cause:
+	 * - a dependence on the other archive
+	 * - any missing data types while parsing are supplied if present from an openDTMgr
+	 * - after parsing all data types parsed with an equivalent data type in any openDTMgr
+	 *     replaced by the data type from the openDTMgr
+	 *     
+	 * NOTE: This will only occur if the data type from the openDTMgr's is equivalent.
+	 * 
+	 * @param openDTMgrs array of datatypes managers to use for undefined data types
+	 * 
+	 * @param filenames names of files in order to parse, could include strings with
+	 *        "#" at start, which are ignored as comments
+	 * @param includePaths paths to include files, instead of using {@code -I<includepath>} in args
+	 * @param args arguments for parsing, {@code -D<defn>=}, ( {@code -I<includepath>} use 
+	 *        includePaths parm instead)
+	 * 
+	 * @param dataFileName name of data type archive file (include the .gdt extension)
+	 * 
+	 * @param monitor  used to cancel or provide results
+	 * 
+	 * @return the data types in the ghidra .gdt archive file
+	 * 
+	 * @throws ghidra.app.util.cparser.C.ParseException for catastrophic errors in C parsing
+	 * @throws ghidra.app.util.cparser.CPP.ParseException for catastrophic errors in Preprocessor macro parsing
+	 * @throws IOException    if there io are errors saving the archive
+	 *
+	 * @deprecated Use {@link #parseHeaderFiles(String[], String[], String[],String, DataTypeManager[], TaskMonitor)} instead.
+	 */
+	@Deprecated(since = "12.2", forRemoval = true)
+	public static FileDataTypeManager parseHeaderFiles(DataTypeManager[] openDTMgrs,
+			String[] filenames, String[] includePaths, String[] args, String dataFileName,
+			TaskMonitor monitor) throws ghidra.app.util.cparser.C.ParseException,
+			ghidra.app.util.cparser.CPP.ParseException, IOException {
+
+		return parseHeaderFiles(openDTMgrs, filenames, includePaths, args, dataFileName, null, null,
+			monitor);
+	}
+
+	/**
+	 * Parse a set of C Header files and associated parsing arguments, returning a new 
+	 * {@link FileDataTypeArchive} with the provided dataFileName.  The resulting archive
 	 * will not be associated with a specific language/compiler and will use the default 
 	 * data organization.
 	 * 
@@ -311,14 +399,12 @@ public class CParserUtils {
 	 * @throws IOException    if there io are errors saving the archive
 	 *
 	 */
-
-	public static FileDataTypeManager parseHeaderFiles(DataTypeManager[] openDTMgrs,
-			String[] filenames, String[] includePaths, String[] args, String dataFileName,
-			TaskMonitor monitor) throws ghidra.app.util.cparser.C.ParseException,
+	public static FileDataTypeArchive parseHeaderFiles(String[] filenames, String[] includePaths,
+			String[] args, String dataFileName, DataTypeManager[] openDTMgrs, TaskMonitor monitor)
+			throws ghidra.app.util.cparser.C.ParseException,
 			ghidra.app.util.cparser.CPP.ParseException, IOException {
-
-		return parseHeaderFiles(openDTMgrs, filenames, includePaths, args, dataFileName, null, null,
-			monitor);
+		return parseHeaderFiles(filenames, includePaths, args, dataFileName, null, null, openDTMgrs,
+			new Object(), monitor);
 	}
 
 	/**
@@ -357,17 +443,71 @@ public class CParserUtils {
 	 * @throws ghidra.app.util.cparser.C.ParseException for catastrophic errors in C parsing
 	 * @throws ghidra.app.util.cparser.CPP.ParseException for catastrophic errors in Preprocessor macro parsing
 	 * @throws IOException    if there io are errors saving the archive
-	 *
+	 * @deprecated Use {@link #parseHeaderFiles(String[], String[], String[], String, String, String, DataTypeManager[], Object,TaskMonitor)} instead.
 	 */
+	@Deprecated(since = "12.2", forRemoval = true)
 	public static FileDataTypeManager parseHeaderFiles(DataTypeManager[] openDTMgrs,
 			String[] filenames, String[] includePaths, String[] args, String dataFileName,
 			String languageId, String compileSpecId, TaskMonitor monitor)
 			throws ghidra.app.util.cparser.C.ParseException,
 			ghidra.app.util.cparser.CPP.ParseException, IOException {
 
+		FileDataTypeArchive archive =
+			parseHeaderFiles(filenames, includePaths, args, dataFileName, languageId, compileSpecId,
+				openDTMgrs, new Object(), monitor);
+		return (FileDataTypeManager) archive.getDataTypeManager();
+	}
+
+	/**
+	 * Parse a set of C Header files and associated parsing arguments, returning a new 
+	 * {@link FileDataTypeArchive} with the provided dataFileName.
+	 * 
+	 * When parsing is complete any parser messages will be logged.
+	 * 
+	 * Note: Using another open archive while parsing will cause:
+	 * - a dependence on the other archive
+	 * - any missing data types while parsing are supplied if present from an openDTMgr
+	 * - after parsing all data types parsed with an equivalent data type in any openDTMgr
+	 *     replaced by the data type from the openDTMgr
+	 *     
+	 * NOTE: This will only occur if the data type from the openDTMgr's is equivalent.
+	 * 
+	 * NOTE: Providing the correct languageId and compileSpecId is very important for header files that might use sizeof()
+	 * 
+	 * 
+	 * @param filenames names of files in order to parse, could include strings with
+	 *        "#" at start, which are ignored as comments
+	 * @param includePaths path to include files, could also be in args with {@code -I<includepath>}
+	 * @param args arguments for parsing, {@code -D<defn>=, -I<includepath>}
+	 * 
+	 * @param dataFileName name of data type archive file (include the .gdt extension)
+	 * 
+	 * @param languageId language identification to use for data type organization definitions (int, long, ptr size)
+	 * @param compileSpecId compiler specification to use for parsing
+	 * 
+	 * @param openDTMgrs array of datatypes managers to use for undefined data types
+	 * @param consumer the user of the archive. The archive will be closed when all consumers are
+	 * released
+	 * @param monitor  used to cancel or provide results
+	 * 
+	 * @return the FileDataTypeManager corresponding to the Ghidra .gdt archive file.
+	 * The caller is responsible for closing the instance.
+	 * 
+	 * @throws ghidra.app.util.cparser.C.ParseException for catastrophic errors in C parsing
+	 * @throws ghidra.app.util.cparser.CPP.ParseException for catastrophic errors in Preprocessor macro parsing
+	 * @throws IOException    if there io are errors saving the archive
+	 *
+	 */
+	public static FileDataTypeArchive parseHeaderFiles(String[] filenames, String[] includePaths,
+			String[] args, String dataFileName, String languageId, String compileSpecId,
+			DataTypeManager[] openDTMgrs, Object consumer, TaskMonitor monitor)
+			throws ghidra.app.util.cparser.C.ParseException,
+			ghidra.app.util.cparser.CPP.ParseException, IOException {
+
 		File file = new File(dataFileName);
-		FileDataTypeManager dtMgr =
-			FileDataTypeManager.createFileArchive(file, languageId, compileSpecId);
+		FileDataTypeArchive archive =
+			DataTypeArchiveFactory.createFileArchive(file, languageId, compileSpecId, consumer);
+		DataTypeManager dtMgr = archive.getDataTypeManager();
 		boolean success = false;
 		try {
 			CParseResults results =
@@ -376,10 +516,14 @@ public class CParserUtils {
 			String messages = results.getFormattedParseMessage(null);
 			Msg.info(CParserUtils.class, messages);
 
-			dtMgr.save();
-
+			try {
+				archive.save(null, TaskMonitor.DUMMY);
+			}
+			catch (CancelledException e) {
+				// can't happen since we used a dummy
+			}
 			success = true;
-			return dtMgr;
+			return archive;
 		}
 		finally {
 			if (!success) {
@@ -478,8 +622,9 @@ public class CParserUtils {
 		// make a path to tmpdir with name of data type manager
 		String path = new File(Application.getUserTempDirectory(), fName).getAbsolutePath();
 		// if file data type manager, use path to .gdt file
-		if (dtMgr instanceof FileDataTypeManager) {
-			path = ((FileDataTypeManager) dtMgr).getPath();
+		DataTypeStore archive = dtMgr.getDataStore();
+		if (archive instanceof FileDataTypeArchive fileArchive) {
+			path = fileArchive.getPath();
 		}
 		path = path + "_CParser.out";
 
@@ -567,7 +712,7 @@ public class CParserUtils {
 				parserMessages = cParser.getParseMessages();
 			}
 		}
-		
+
 		return new CParseResults(cpp, cppMessages, parserMessages, cparseSucceeded);
 	}
 
@@ -750,13 +895,15 @@ public class CParserUtils {
 		File iFile = null;
 
 		iFile = new File(parent + File.separator + filename);
-		if (iFile.exists())
+		if (iFile.exists()) {
 			return iFile;
+		}
 
 		// try just in this directory
 		File sameiFile = new File(parent + File.separator + (new File(filename)).getName());
-		if (sameiFile.exists())
+		if (sameiFile.exists()) {
 			return sameiFile;
+		}
 
 		// try all files in this directory doing to-lower on both input file and output file
 		// if match return it

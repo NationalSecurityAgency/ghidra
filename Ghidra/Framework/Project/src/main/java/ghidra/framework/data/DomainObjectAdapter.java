@@ -147,6 +147,11 @@ public abstract class DomainObjectAdapter implements DomainObject {
 	}
 
 	@Override
+	public String getPath() {
+		return domainFile.getPathname();
+	}
+
+	@Override
 	public String toString() {
 		String classname = getClass().getName();
 		classname = classname.substring(classname.lastIndexOf('.'));
@@ -499,5 +504,4 @@ public abstract class DomainObjectAdapter implements DomainObject {
 		throw new DomainObjectException(e);
 
 	}
-
 }

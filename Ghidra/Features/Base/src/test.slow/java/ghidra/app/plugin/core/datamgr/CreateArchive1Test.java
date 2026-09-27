@@ -28,12 +28,13 @@ import org.junit.Test;
 import docking.action.DockingActionIf;
 import docking.widgets.OptionDialog;
 import docking.widgets.tree.GTreeNode;
-import ghidra.app.plugin.core.datamgr.archive.Archive;
-import ghidra.app.plugin.core.datamgr.archive.FileArchive;
 import ghidra.app.plugin.core.datamgr.tree.ArchiveNode;
+import ghidra.app.plugin.core.datamgr.tree.DataTypeStoreNode;
 import ghidra.framework.GenericRunInfo;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.data.*;
+import ghidra.program.model.dtarchive.PersistentDataTypeArchive;
+import ghidra.program.model.dtarchive.FileDataTypeArchive;
 import ghidra.program.model.lang.ProgramArchitecture;
 import ghidra.util.Msg;
 
@@ -48,7 +49,7 @@ public class CreateArchive1Test extends AbstractCreateArchiveTest {
 		assertNotNull(archiveNode);
 
 		// verify that the archive is checked out
-		assertTrue(((FileArchive) archiveNode.getArchive()).hasWriteLock());
+		assertTrue(archiveNode.getArchive().isChangeable());
 
 	}
 
@@ -61,11 +62,10 @@ public class CreateArchive1Test extends AbstractCreateArchiveTest {
 		// reopen the archive
 		// check that the changes are there.
 		String string = "MyArchive";
-		createNewArchive(string + FileDataTypeManager.SUFFIX, true);
+		createNewArchive(string + FileDataTypeArchive.SUFFIX, true);
 
-		ArchiveNode archiveNode = (ArchiveNode) archiveRootNode.getChild("MyArchive");
-		StandAloneDataTypeManager dtm =
-			(StandAloneDataTypeManager) archiveNode.getCategory().getDataTypeManager();
+		DataTypeStoreNode archiveNode = (DataTypeStoreNode) archiveRootNode.getChild("MyArchive");
+		DataTypeManager dtm = archiveNode.getCategory().getDataTypeManager();
 		assertNull(dtm.getProgramArchitecture());
 
 		createCategory(archiveNode.getCategory(), "bob");
@@ -85,7 +85,7 @@ public class CreateArchive1Test extends AbstractCreateArchiveTest {
 		DataTypeTestUtils.performAction(action, tree);
 		waitForTree();
 
-		archiveNode = (ArchiveNode) archiveRootNode.getChild("MyArchive");
+		archiveNode = (DataTypeStoreNode) archiveRootNode.getChild("MyArchive");
 		assertNull(archiveNode);
 
 		archiveNode =
@@ -101,13 +101,14 @@ public class CreateArchive1Test extends AbstractCreateArchiveTest {
 	public void testCreateAndPopulateWithArchitecture() throws Exception {
 
 		String string = "MyArchive";
-		createNewArchive(string + FileDataTypeManager.SUFFIX, true);
+		createNewArchive(string + FileDataTypeArchive.SUFFIX, true);
 
 		ArchiveNode archiveNode = (ArchiveNode) archiveRootNode.getChild("MyArchive");
-		StandAloneDataTypeManager dtm =
-			(StandAloneDataTypeManager) archiveNode.getCategory().getDataTypeManager();
+		PersistentDataTypeArchive archive = archiveNode.getArchive();
+		DataTypeManager dtm = archive.getDataTypeManager();
+
 		assertNull(dtm.getProgramArchitecture());
-		setArchitecture(dtm, ProgramBuilder._TOY64_LE, "default");
+		setArchitecture(archive, ProgramBuilder._TOY64_LE, "default");
 
 		assertEquals(8, dtm.getPointer(DataType.DEFAULT).getLength());
 
@@ -142,7 +143,7 @@ public class CreateArchive1Test extends AbstractCreateArchiveTest {
 		assertNotNull(archiveNode.getChild("bob"));
 		assertNotNull(archiveNode.getChild("joe"));
 
-		dtm = (StandAloneDataTypeManager) archiveNode.getCategory().getDataTypeManager();
+		dtm = archiveNode.getCategory().getDataTypeManager();
 		ProgramArchitecture arch = dtm.getProgramArchitecture();
 		assertNotNull("Expected architecture to be set", arch);
 		assertEquals(ProgramBuilder._TOY64_LE, arch.getLanguage().getLanguageID().toString());
@@ -179,7 +180,7 @@ public class CreateArchive1Test extends AbstractCreateArchiveTest {
 		pressButton(button);
 		waitForTree();
 
-		ArchiveNode archiveNode = (ArchiveNode) archiveRootNode.getChild("MyArchive");
+		DataTypeStoreNode archiveNode = (DataTypeStoreNode) archiveRootNode.getChild("MyArchive");
 		assertNotNull(archiveNode);
 
 	}
@@ -240,7 +241,7 @@ public class CreateArchive1Test extends AbstractCreateArchiveTest {
 		try {
 			archiveNode = DataTypeTestUtils.openArchive(GenericRunInfo.getProjectsDirPath(),
 				"MyArchive.gdt", false, plugin);
-			Archive archive = archiveNode.getArchive();
+			PersistentDataTypeArchive archive = archiveNode.getArchive();
 			Assert.fail("Should not have been able to open this archive " + archive.getName());
 		}
 		catch (Exception e) {
@@ -270,14 +271,14 @@ public class CreateArchive1Test extends AbstractCreateArchiveTest {
 		waitForSwing();
 		waitForTree();
 
-		ArchiveNode archiveNode = (ArchiveNode) archiveRootNode.getChild("MyArchive");
+		DataTypeStoreNode archiveNode = (DataTypeStoreNode) archiveRootNode.getChild("MyArchive");
 
 		// debug
 		if (archiveNode == null) {
 			Msg.trace(this, "Did not find a newly created node!!!!");
 			// ...try waiting some more, to see if we beat the update
 			waitForTree();
-			archiveNode = (ArchiveNode) archiveRootNode.getChild("MyArchive");
+			archiveNode = (DataTypeStoreNode) archiveRootNode.getChild("MyArchive");
 			Msg.trace(this, "\tand after waiting some more did we?: " + archiveNode);
 		}
 

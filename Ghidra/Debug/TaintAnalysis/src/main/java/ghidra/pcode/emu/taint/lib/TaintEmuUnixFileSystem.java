@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,13 +31,13 @@ public class TaintEmuUnixFileSystem extends AbstractEmuUnixFileSystem<Pair<byte[
 	 */
 	public static class UntaintedFileContents implements EmuFileContents<TaintVec> {
 		@Override
-		public long read(long offset, TaintVec buf, long fileSize) {
+		public int read(long offset, TaintVec buf, long fileSize) {
 			buf.setEmpties();
 			return buf.length;
 		}
 
 		@Override
-		public long write(long offset, TaintVec buf, long curSize) {
+		public int write(long offset, TaintVec buf, long curSize) {
 			return 0; // I don't care
 		}
 
@@ -57,13 +57,13 @@ public class TaintEmuUnixFileSystem extends AbstractEmuUnixFileSystem<Pair<byte[
 		}
 
 		@Override
-		public long read(long offset, TaintVec buf, long fileSize) {
+		public int read(long offset, TaintVec buf, long fileSize) {
 			buf.setArray(filename, offset);
 			return buf.length;
 		}
 
 		@Override
-		public long write(long offset, TaintVec buf, long curSize) {
+		public int write(long offset, TaintVec buf, long curSize) {
 			return 0; // I don't care
 		}
 

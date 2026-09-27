@@ -23,8 +23,8 @@ import ghidra.app.util.DomainObjectService;
 import ghidra.app.util.Option;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainObject;
-import ghidra.program.database.DataTypeArchiveDB;
 import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.dtarchive.ProjectDataTypeArchive;
 import ghidra.util.HelpLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -42,7 +42,7 @@ public class GdtExporter extends Exporter {
 
 	@Override
 	public boolean canExportDomainObject(Class<? extends DomainObject> domainObjectClass) {
-		return DataTypeArchiveDB.class.isAssignableFrom(domainObjectClass);
+		return ProjectDataTypeArchive.class.isAssignableFrom(domainObjectClass);
 	}
 
 	@Override

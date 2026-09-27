@@ -26,6 +26,7 @@ import ghidra.app.util.SymbolPath;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.pdb.*;
 import ghidra.app.util.pdb.classtype.*;
+import ghidra.program.database.data.TransientDataTypeManager;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
@@ -75,8 +76,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 
 	ClearDataMode clearMode = ClearDataMode.CLEAR_ALL_CONFLICT_DATA;
 
-	private DataTypeManager dtm32 = new StandAloneDataTypeManager("32-bit win", dataOrg32);
-	private DataTypeManager dtm64 = new StandAloneDataTypeManager("64-bit win", dataOrg64);
+	private DataTypeManager dtm32 = new TransientDataTypeManager("32-bit win", dataOrg32);
+	private DataTypeManager dtm64 = new TransientDataTypeManager("64-bit win", dataOrg64);
 
 	private static MyTestDummyDataTypeManager dtm32old = new MyTestDummyDataTypeManager(dataOrg32);
 	private static MyTestDummyDataTypeManager dtm64old = new MyTestDummyDataTypeManager(dataOrg64);
@@ -2698,12 +2699,12 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			Map<Long, VXT> tables = new TreeMap<>();
 			if (vbts != null) {
 				for (VirtualBaseTable vbt : vbts) {
-					tables.put(((ProgramVirtualBaseTable) vbt).getPtrOffsetInClass(), vbt);
+					tables.put(vbt.getPtrOffsetInClass(), vbt);
 				}
 			}
 			if (vfts != null) {
 				for (VirtualFunctionTable vft : vfts) {
-					tables.put(((ProgramVirtualFunctionTable) vft).getPtrOffsetInClass(), vft);
+					tables.put(vft.getPtrOffsetInClass(), vft);
 				}
 			}
 			StringBuilder builder2 = new StringBuilder();

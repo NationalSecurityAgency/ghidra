@@ -225,7 +225,7 @@ public class MakeUnionsForLPs extends GhidraScript {
 		Map<String,Union> lpTypeNames = new HashMap<>();
 		Iterator<Composite> allCompositeTypes = dtMgr.getAllComposites();
 		while (allCompositeTypes.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Composite dataType = allCompositeTypes.next();
 			if (!dataType.getCategoryPath().equals(GHIDRA_LP_UNION_CATEGORY)) continue;
 			if (!(dataType instanceof Union)) continue;
@@ -296,7 +296,7 @@ public class MakeUnionsForLPs extends GhidraScript {
 		Iterator<DataType> allDataTypes = dtMgr.getAllDataTypes();
 
 		while (allDataTypes.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DataType dataType = allDataTypes.next();
 			if (dataType.getName().startsWith("Dgn1210_0756_0x1a_t")) {
 				System.out.println(dataType.getName());
@@ -381,7 +381,7 @@ System.out.println("");
 			throws Exception {
 		Iterator<DataType> allTypes = dtMgr.getAllDataTypes();
 		while (allTypes.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DataType dataType = allTypes.next();
 			if (dataType.getCategoryPath().equals(GHIDRA_LP_UNION_CATEGORY)) continue;
 			if (dataType instanceof Composite) {
@@ -514,7 +514,7 @@ if("DgnDFileStream_vtable".equals(dtBase.getName())) {
 			throws CancelledException {
 int count=0; int stop[] = {2299}; int restart[] = {3001}; int stopstart=0;
 		while ( functionIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Function fnType = functionIterator.next();
 System.out.println(fnType.getSignature(false));
 

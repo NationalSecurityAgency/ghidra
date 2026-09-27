@@ -20,11 +20,11 @@ import java.util.*;
 import db.Transaction;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.database.SpecExtension;
-import ghidra.program.database.map.AddressMap;
+import ghidra.program.model.dtarchive.PersistentDataTypeArchive;
+import ghidra.program.model.dtarchive.DataTypeStore;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
-import ghidra.util.InvalidNameException;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -33,6 +33,16 @@ import utility.function.ExceptionalSupplier;
 
 /**
  * Interface for Managing data types.
+ * <P>
+ * DatatypeManagers have different implementations depending on where the datatype manager resides.
+ * Currently, data type managers exist in either a {@link Program} or a {@link PersistentDataTypeArchive}. 
+ * (There are also some debugger flavors as well.)
+ * <P>
+ * There are different types of data type archives (project, file, built-in, and
+ * transient). Each of these returns a variant subclass of DataTypeManager. This is mostly for
+ * legacy reasons where non-program datatype managers where stand-alone and not part of some
+ * larger concept such as a data type archive.
+ * 
  */
 public interface DataTypeManager {
 
@@ -373,13 +383,6 @@ public interface DataTypeManager {
 	public String getName();
 
 	/**
-	 * Sets this data type manager's name
-	 * @param name the new name
-	 * @throws InvalidNameException if the given name is invalid (such as when null or empty)
-	 */
-	public void setName(String name) throws InvalidNameException;
-
-	/**
 	 * Returns true if this DataTypeManager can be modified.
 	 * @return true if this DataTypeMangaer can be modified.
 	 */
@@ -501,7 +504,18 @@ public interface DataTypeManager {
 
 	/**
 	 * Closes this dataType manager
+	 * @deprecated In previous versions, this was only supported for DataTypeManagers that came
+	 * from stand-alone file datatype archives. This was problematic for archives that were 
+	 * opened via the service since using the service means that the archive may be shared with
+	 * other clients and it would be bad to close it out from under them. We have moved to the 
+	 * consumer approach where the archive is not closed until all consumers are released.
+	 * <P>
+	 * If the datatype archive is opened using the service, the service will add its own consumer
+	 * and it can be closed by calling the service to close it. Any clients that don't want the
+	 * archive closed out from under it, can add a consumer to the archive which then would need
+	 * to be released when done with it.
 	 */
+	@Deprecated(since = "12.2", forRemoval = true)
 	public void close();
 
 	/**
@@ -666,13 +680,6 @@ public interface DataTypeManager {
 	public DataOrganization getDataOrganization();
 
 	/**
-	 * Returns the associated AddressMap used by this datatype manager.
-	 * @return the AddressMap used by this datatype manager or null if 
-	 * one has not be established.
-	 */
-	public AddressMap getAddressMap();
-
-	/**
 	 * Returns a list of source archives not including the builtin or the program's archive.
 	 * @return a list of source archives not including the builtin or the program's archive.
 	 */
@@ -762,5 +769,10 @@ public interface DataTypeManager {
 	 * @return the named function calling convention prototype model or null.
 	 */
 	public PrototypeModel getCallingConvention(String name);
+
+	/**
+	 * {@return the archive this DataTypeManager belongs to}
+	 */
+	public DataTypeStore getDataStore();
 
 }

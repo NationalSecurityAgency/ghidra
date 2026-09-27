@@ -46,9 +46,8 @@ import generic.test.AbstractGTest;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import generic.util.WindowUtilities;
 import generic.util.image.ImageUtils;
+import ghidra.app.plugin.core.datamgr.ArchiveManager;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.archive.Archive;
-import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
 import ghidra.app.plugin.core.datamgr.util.DataTypeChooserDialog;
@@ -60,6 +59,7 @@ import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.model.data.*;
+import ghidra.program.model.dtarchive.PersistentDataTypeArchive;
 import ghidra.program.model.listing.Program;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
@@ -77,7 +77,7 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 
 	private ReportingDataListener reportingListener = new ReportingDataListener();
 
-	private Set<Archive> archivesToClose = new HashSet<>();
+	private Set<PersistentDataTypeArchive> archivesToClose = new HashSet<>();
 
 	private SpyDropDownSelectionTextField spyTextField;
 
@@ -152,10 +152,10 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 	// close all archives but the builtin and the program archive
 	private void closeUndesiredArchives() {
 		DataTypeManagerPlugin plugin = env.getPlugin(DataTypeManagerPlugin.class);
-		DataTypeManagerHandler dataTypeManagerHandler = plugin.getDataTypeManagerHandler();
-		List<Archive> archives = dataTypeManagerHandler.getAllFileOrProjectArchives();
-		for (Archive archive : archives) {
-			dataTypeManagerHandler.closeArchive(archive);
+		ArchiveManager archiveManager = plugin.getArchiveManager();
+		List<PersistentDataTypeArchive> archives = archiveManager.getOpenArchives();
+		for (PersistentDataTypeArchive archive : archives) {
+			archiveManager.closeArchive(archive);
 		}
 	}
 
@@ -163,7 +163,7 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 	public void tearDown() throws Exception {
 		System.err.println("tearDown() - " + testName.getMethodName() + "\n");
 
-		for (Archive archive : archivesToClose) {
+		for (PersistentDataTypeArchive archive : archivesToClose) {
 			closeArchive(archive);
 		}
 
@@ -556,7 +556,7 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 
 	@Test
 	public void testPickFromListThenAddPointerChar() {
-		Archive archive = createTestFileArchive();
+		PersistentDataTypeArchive archive = createTestFileArchive();
 
 		String structureName = "foo";
 		Structure structure = createStructure(archive, structureName);
@@ -605,7 +605,7 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 		//
 		//
 
-		Archive archive = createTestFileArchive();
+		PersistentDataTypeArchive archive = createTestFileArchive();
 
 		String structureName = "foo";
 		Structure structure = createStructure(archive, structureName);
@@ -641,8 +641,8 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 		//
 		// Same as the above test, but with multiple archives form which to choose
 		//
-		Archive archive1 = createTestFileArchive();
-		Archive archive2 = createTestFileArchive();
+		PersistentDataTypeArchive archive1 = createTestFileArchive();
+		PersistentDataTypeArchive archive2 = createTestFileArchive();
 
 		String structureName = "foo";
 		Structure structure = createStructure(archive1, structureName);
@@ -680,7 +680,7 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 // Support methods
 //==================================================================================================
 
-	private void addType(final Archive archive, final DataType dt) {
+	private void addType(PersistentDataTypeArchive archive, DataType dt) {
 		runSwing(() -> {
 			DataTypeManager dtm = archive.getDataTypeManager();
 			int txID = dtm.startTransaction("Test Add Data Type");
@@ -693,7 +693,7 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 		});
 	}
 
-	private Structure createStructure(Archive archive, String name) {
+	private Structure createStructure(PersistentDataTypeArchive archive, String name) {
 		StructureDataType structure = new StructureDataType(name, 0);
 		structure.add(IntegerDataType.dataType, "field1", "Comment 1");
 		structure.add(IntegerDataType.dataType, "field2", "Comment 2");
@@ -704,23 +704,23 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 		return structure;
 	}
 
-	private TypeDef createTypeDef(Archive archive, Structure structure, String name) {
+	private TypeDef createTypeDef(PersistentDataTypeArchive archive, Structure structure, String name) {
 		TypedefDataType dt = new TypedefDataType(name, structure);
 		addType(archive, dt);
 		return dt;
 	}
 
-	private Pointer createPointer(Archive archive, DataType dt) {
+	private Pointer createPointer(PersistentDataTypeArchive archive, DataType dt) {
 		PointerDataType pointer = new PointerDataType(dt);
 		addType(archive, pointer);
 		return pointer;
 	}
 
-	private Archive createTestFileArchive() {
-		final AtomicReference<Archive> ref = new AtomicReference<>();
+	private PersistentDataTypeArchive createTestFileArchive() {
+		final AtomicReference<PersistentDataTypeArchive> ref = new AtomicReference<>();
 		runSwing(() -> {
 			DataTypeManagerPlugin plugin = env.getPlugin(DataTypeManagerPlugin.class);
-			DataTypeManagerHandler dataTypeManagerHandler = plugin.getDataTypeManagerHandler();
+			ArchiveManager archiveManager = plugin.getArchiveManager();
 			File tempArchiveFile;
 			try {
 				tempArchiveFile = Application.createTempFile("TestFileArchive", ".gdt");
@@ -734,21 +734,21 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 				tempArchiveFile.delete();
 			}
 			tempArchiveFile.deleteOnExit();
-			Archive archive = dataTypeManagerHandler.createArchive(tempArchiveFile);
+			PersistentDataTypeArchive archive = archiveManager.createFileArchive(tempArchiveFile);
 			ref.set(archive);
 		});
 
-		Archive archive = ref.get();
+		PersistentDataTypeArchive archive = ref.get();
 		assertNotNull(archive);
 		archivesToClose.add(archive);
 		return archive;
 	}
 
-	private void closeArchive(final Archive archive) {
+	private void closeArchive(PersistentDataTypeArchive archive) {
 		runSwing(() -> {
 			DataTypeManagerPlugin plugin = env.getPlugin(DataTypeManagerPlugin.class);
-			DataTypeManagerHandler dataTypeManagerHandler = plugin.getDataTypeManagerHandler();
-			dataTypeManagerHandler.closeArchive(archive);
+			ArchiveManager archiveManager = plugin.getArchiveManager();
+			archiveManager.closeArchive(archive);
 		});
 	}
 

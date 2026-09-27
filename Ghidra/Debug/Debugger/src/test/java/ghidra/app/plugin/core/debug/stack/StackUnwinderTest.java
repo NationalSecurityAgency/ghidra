@@ -21,8 +21,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.function.Predicate;
 
 import org.junit.Ignore;
@@ -75,6 +74,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
 import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.pcode.SequenceNumber;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.SourceType;
@@ -89,6 +89,7 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.Scheduler;
 import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
+import ghidra.util.exception.CancelledException;
 import junit.framework.AssertionFailedError;
 
 public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
@@ -101,7 +102,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 				byte[] ins = res.getInstruction().getVals();
 				// HACK to avoid 16-bit CALL.... TODO: Why does this happen?
 				if (ins.length >= 2 && ins[0] == (byte) 0x66 && ins[1] == (byte) 0xe8) {
-					System.err.println(
+					Msg.error(StackUnwinderTest.class,
 						"Filtered 16-bit call " + NumericUtilities.convertBytesToString(ins));
 					continue;
 				}
@@ -146,7 +147,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 	protected Function createSumSquaresProgramX86_32() throws Throwable {
 		createProgram("x86:LE:32:default", "gcc");
 		intoProject(program);
-		try (Transaction tx = program.openTransaction("Assemble")) {
+		try (Transaction _ = program.openTransaction("Assemble")) {
 			Address entry = addr(program, 0x00400000);
 			program.getMemory()
 					.createInitializedBlock(".text", entry, 0x1000, (byte) 0, monitor, false);
@@ -209,7 +210,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 	protected Function createFibonacciProgramX86_32() throws Throwable {
 		createProgram("x86:LE:32:default", "gcc");
 		intoProject(program);
-		try (Transaction tx = program.openTransaction("Assemble")) {
+		try (Transaction _ = program.openTransaction("Assemble")) {
 			Address entry = addr(program, 0x00400000);
 			program.getMemory()
 					.createInitializedBlock(".text", entry, 0x1000, (byte) 0, monitor, false);
@@ -284,7 +285,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		createProgram("x86:LE:32:default", "gcc");
 		intoProject(program);
 		Address entry;
-		try (Transaction tx = program.openTransaction("Assemble")) {
+		try (Transaction _ = program.openTransaction("Assemble")) {
 			entry = addr(program, 0x00400000);
 			Address externs = addr(program, 0x00700000);
 			program.getMemory()
@@ -346,7 +347,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		createProgram("x86:LE:32:default", "gcc");
 		intoProject(program);
 		Address entry;
-		try (Transaction tx = program.openTransaction("Assemble")) {
+		try (Transaction _ = program.openTransaction("Assemble")) {
 			entry = addr(program, 0x00400000);
 			program.getMemory()
 					.createInitializedBlock(".text", entry, 0x1000, (byte) 0, monitor, false);
@@ -401,7 +402,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		createProgram("x86:LE:32:default", "gcc");
 		intoProject(program);
 
-		try (Transaction tx = program.openTransaction("Assemble")) {
+		try (Transaction _ = program.openTransaction("Assemble")) {
 			Address entry = addr(program, 0x00400000);
 			program.getMemory()
 					.createInitializedBlock(".text", entry, 0x1000, (byte) 0, monitor, false);
@@ -438,7 +439,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		createProgram("x86:LE:32:default", "gcc");
 		intoProject(program);
 
-		try (Transaction tx = program.openTransaction("Assemble")) {
+		try (Transaction _ = program.openTransaction("Assemble")) {
 			ProgramBasedDataTypeManager dtm = program.getDataTypeManager();
 			Structure structure = new StructureDataType("MyStruct", 0, dtm);
 			structure.add(WordDataType.dataType, "y", "");
@@ -520,7 +521,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		createProgram("x86:LE:64:default", "gcc");
 		intoProject(program);
 
-		try (Transaction tx = program.openTransaction("Assemble")) {
+		try (Transaction _ = program.openTransaction("Assemble")) {
 			ProgramBasedDataTypeManager dtm = program.getDataTypeManager();
 			Structure structure = new StructureDataType("MyStruct", 0, dtm);
 			structure.add(DWordDataType.dataType, "f1", "");
@@ -568,7 +569,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		createProgram("x86:LE:32:default", "gcc");
 		intoProject(program);
 
-		try (Transaction tx = program.openTransaction("Assemble")) {
+		try (Transaction _ = program.openTransaction("Assemble")) {
 			ProgramBasedDataTypeManager dtm = program.getDataTypeManager();
 			Structure structure = new StructureDataType("MyStruct", 0, dtm);
 			structure.add(WordDataType.dataType, "y", "");
@@ -768,6 +769,73 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 			infoAtBody);
 	}
 
+	/**
+	 * This test is interesting because it involves an instruction with an internal p-code loop
+	 * 
+	 * @throws Throwable because
+	 */
+	@Test
+	public void testComputeUnwindInfoWithTzcnt() throws Throwable {
+		addPlugin(tool, CodeBrowserPlugin.class);
+		addPlugin(tool, DecompilePlugin.class);
+
+		createProgram("x86:LE:64:default", "gcc");
+		intoProject(program);
+		Address entry;
+		Function function;
+		try (Transaction _ = program.openTransaction("Assemble")) {
+			entry = addr(program, 0x00400000);
+			program.getMemory()
+					.createInitializedBlock(".text", entry, 0x1000, (byte) 0, monitor, false);
+			Assembler asm = Assemblers.getAssembler(program.getLanguage(), NO_16BIT_CALLS);
+			AssemblyBuffer buf = new AssemblyBuffer(asm, entry);
+
+			buf.assemble("TZCNT EAX, EDI");
+			buf.assemble("RET");
+
+			byte[] bytes = buf.getBytes();
+			program.getMemory().setBytes(entry, bytes);
+
+			Disassembler dis = Disassembler.getDisassembler(program, monitor, null);
+			dis.disassemble(entry, null);
+
+			function = program.getFunctionManager()
+					.createFunction("tzcnt", entry,
+						new AddressSet(entry, entry.add(bytes.length - 1)),
+						SourceType.USER_DEFINED);
+			function.updateFunction("default",
+				new ReturnParameterImpl(IntegerDataType.dataType, program),
+				List.of(new ParameterImpl("n", IntegerDataType.dataType, program)),
+				FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS, true, SourceType.ANALYSIS);
+		}
+
+		programManager.openProgram(program);
+
+		UnwindAnalysis ua = new UnwindAnalysis(program);
+
+		CompletableFuture<UnwindInfo> futureInfo = CompletableFuture.supplyAsync(() -> {
+			try {
+				return ua.computeUnwindInfo(entry, monitor);
+			}
+			catch (CancelledException e) {
+				throw new AssertionError(e);
+			}
+		});
+		try {
+			futureInfo.get(1, TimeUnit.SECONDS);
+		}
+		catch (TimeoutException e) {
+			monitor.cancel();
+		}
+		UnwindInfo infoAtEntry =
+			Objects.requireNonNull(futureInfo.getNow(null), "Probably timed out");
+		assertEquals(new UnwindInfo(function, 0L, 8L, stack(0), -1,
+			Map.of(), new StackUnwindWarningSet(
+				// NOTE: A bit brittle, since the TZCNT p-code may change
+				new IgnoredInternalFlowStackUnwindWarning(new SequenceNumber(entry, 8))),
+			null), infoAtEntry);
+	}
+
 	@Test
 	public void testComputeUnwindInfoWithArmBx() throws Throwable {
 		addPlugin(tool, CodeBrowserPlugin.class);
@@ -830,7 +898,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		waitOn(frameAtSetup.setValue(editor, param1, BigInteger.valueOf(4)));
 		waitForTasks();
 
-		try (Transaction tx = tb.startTransaction()) {
+		try (Transaction _ = tb.startTransaction()) {
 			tb.trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr, Set.of(),
 						CommonSet.SWX.kinds(), true, "capture return value");
@@ -892,7 +960,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		waitForTasks();
 
 		TraceBreakpointLocation bptUnwind;
-		try (Transaction tx = tb.startTransaction()) {
+		try (Transaction _ = tb.startTransaction()) {
 			bptUnwind = tb.trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr, Set.of(),
 						CommonSet.SWX.kinds(), true, "unwind stack");
@@ -929,7 +997,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 			}
 		}
 
-		try (Transaction tx = tb.startTransaction()) {
+		try (Transaction _ = tb.startTransaction()) {
 			bptUnwind.delete();
 		}
 
@@ -981,7 +1049,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		long spAtSetup = regs.getValue(0, sp).getUnsignedValue().longValueExact();
 
 		TraceBreakpointLocation bptUnwind;
-		try (Transaction tx = tb.startTransaction()) {
+		try (Transaction _ = tb.startTransaction()) {
 			bptUnwind = tb.trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), entry, Set.of(),
 						CommonSet.SWX.kinds(), true, "unwind stack");
@@ -1063,7 +1131,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		waitForSwing();
 
 		DebuggerCoordinates atSetup = traceManager.getCurrent();
-		try (Transaction tx = tb.startTransaction()) {
+		try (Transaction _ = tb.startTransaction()) {
 			new UnwindStackCommand(tool, atSetup).applyTo(tb.trace, monitor);
 		}
 		waitForDomainObject(tb.trace);
@@ -1124,7 +1192,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		waitOn(frameAtSetup.setReturnAddress(editor, tb.addr(0xdeadbeef)));
 		waitForTasks();
 
-		try (Transaction tx = tb.startTransaction()) {
+		try (Transaction _ = tb.startTransaction()) {
 			tb.trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr, Set.of(),
 						CommonSet.SWX.kinds(), true, "unwind stack");
@@ -1137,7 +1205,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		traceManager.activateTime(result.schedule());
 		waitForTasks();
 		DebuggerCoordinates tallest = traceManager.getCurrent();
-		try (Transaction tx = tb.startTransaction()) {
+		try (Transaction _ = tb.startTransaction()) {
 			new UnwindStackCommand(tool, tallest).applyTo(tb.trace, monitor);
 		}
 		waitForDomainObject(tb.trace);
@@ -1164,7 +1232,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		Register sp = program.getCompilerSpec().getStackPointer();
 		waitOn(editor.setRegister(new RegisterValue(sp, BigInteger.valueOf(0x4ff0))));
 
-		try (Transaction tx = tb.startTransaction()) {
+		try (Transaction _ = tb.startTransaction()) {
 			tb.trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr, Set.of(),
 						CommonSet.SWX.kinds(), true, "unwind stack");
@@ -1178,7 +1246,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		traceManager.activateTime(result.schedule());
 		waitForTasks();
 		DebuggerCoordinates atRet = traceManager.getCurrent();
-		try (Transaction tx = tb.startTransaction()) {
+		try (Transaction _ = tb.startTransaction()) {
 			new UnwindStackCommand(tool, atRet).applyTo(tb.trace, monitor);
 		}
 		waitForDomainObject(tb.trace);
@@ -1205,7 +1273,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		Register sp = program.getCompilerSpec().getStackPointer();
 		waitOn(editor.setRegister(new RegisterValue(sp, BigInteger.valueOf(0x4ff0))));
 
-		try (Transaction tx = tb.startTransaction()) {
+		try (Transaction _ = tb.startTransaction()) {
 			tb.trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr, Set.of(),
 						CommonSet.SWX.kinds(), true, "unwind stack");
@@ -1219,7 +1287,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		traceManager.activateTime(result.schedule());
 		waitForTasks();
 		DebuggerCoordinates atRet = traceManager.getCurrent();
-		try (Transaction tx = tb.startTransaction()) {
+		try (Transaction _ = tb.startTransaction()) {
 			new UnwindStackCommand(tool, atRet).applyTo(tb.trace, monitor);
 		}
 		waitForDomainObject(tb.trace);
@@ -1246,7 +1314,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		Register sp = program.getCompilerSpec().getStackPointer();
 		waitOn(editor.setRegister(new RegisterValue(sp, BigInteger.valueOf(0x4ff0))));
 
-		try (Transaction tx = tb.startTransaction()) {
+		try (Transaction _ = tb.startTransaction()) {
 			tb.trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr, Set.of(),
 						CommonSet.SWX.kinds(), true, "unwind stack");
@@ -1260,7 +1328,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		traceManager.activateTime(result.schedule());
 		waitForTasks();
 		DebuggerCoordinates atRet = traceManager.getCurrent();
-		try (Transaction tx = tb.startTransaction()) {
+		try (Transaction _ = tb.startTransaction()) {
 			new UnwindStackCommand(tool, atRet).applyTo(tb.trace, monitor);
 		}
 		waitForDomainObject(tb.trace);
@@ -1448,7 +1516,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		TraceLocation dynLoc = mappingService.getOpenMappedLocation(tb.trace,
 			new ProgramLocation(program, stIns.getAddress()), current.getSnap());
 		Address dynamicAddress = dynLoc.getAddress();
-		try (Transaction tx = tb.startTransaction()) {
+		try (Transaction _ = tb.startTransaction()) {
 			int length = stIns.getLength();
 			assertEquals(length,
 				tb.trace.getMemoryManager()

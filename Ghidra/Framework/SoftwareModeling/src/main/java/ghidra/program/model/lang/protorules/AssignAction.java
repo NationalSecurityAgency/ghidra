@@ -127,7 +127,8 @@ public abstract class AssignAction {
 			action = new HiddenReturnAssign(res, HIDDENRET_SPECIALREG);
 		}
 		else if (nm.equals(ELEM_JOIN_PER_PRIMITIVE.name())) {
-			action = new MultiMemberAssign(StorageClass.GENERAL, false, res.isBigEndian(), res);
+			action =
+				new MultiMemberAssign(StorageClass.GENERAL, true, false, res.isBigEndian(), res);
 		}
 		else if (nm.equals(ELEM_JOIN_DUAL_CLASS.name())) {
 			action = new MultiSlotDualAssign(res);

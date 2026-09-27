@@ -133,7 +133,7 @@ public class StructureEditorArchiveTest extends AbstractStructureEditorTest {
 		invoke(manageDts);
 
 		createNewArchive("New Archive.gdt", true);
-		openForEditing = getAction(plugin, "Lock Archive");
+		openForEditing = getAction(plugin, "Open Archive For Editing");
 //		checkOut = getDockingAction(plugin, "Check Out");
 //		openArchive = getDockingAction(plugin, "Open Data Type Archive");
 		closeArchive = getAction(plugin, "Close Archive");

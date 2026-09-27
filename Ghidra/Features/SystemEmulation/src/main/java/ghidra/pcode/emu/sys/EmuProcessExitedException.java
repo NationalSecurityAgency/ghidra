@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 public class EmuProcessExitedException extends EmuSystemException {
 
 	/**
-	 * Attempt to concretize a value and convert it to hex
+	 * Attempt to concretize a value and convert it to decimal
 	 * 
 	 * @param <T> the type of the status
 	 * @param arithmetic the arithmetic to operate on the value
@@ -51,17 +51,26 @@ public class EmuProcessExitedException extends EmuSystemException {
 
 	/**
 	 * Construct a process-exited exception with the given status code
-	 * 
 	 * <p>
 	 * This will attempt to concretize the status according to the given arithmetic, for display
 	 * purposes. The original status remains accessible via {@link #getStatus()}
 	 * 
 	 * @param <T> the type values processed by the library
 	 * @param arithmetic the machine's arithmetic
-	 * @param status
+	 * @param status the status code
 	 */
 	public <T> EmuProcessExitedException(PcodeArithmetic<T> arithmetic, T status) {
 		super("Process exited with status " + tryConcereteToString(arithmetic, status));
+		this.status = status;
+	}
+
+	/**
+	 * Construct a process-exited exception with the given status code
+	 * 
+	 * @param status the status code
+	 */
+	public EmuProcessExitedException(long status) {
+		super("Process exited with status %d".formatted(status));
 		this.status = status;
 	}
 

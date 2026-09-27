@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,15 +26,14 @@ import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import generic.jar.ResourceFile;
-import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.DataTypesProvider;
-import ghidra.app.plugin.core.datamgr.archive.Archive;
-import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
+import ghidra.app.plugin.core.datamgr.*;
 import ghidra.app.plugin.core.datamgr.tree.ArchiveNode;
+import ghidra.app.services.Upgrade;
 import ghidra.framework.Application;
 import ghidra.framework.GenericRunInfo;
 import ghidra.framework.preferences.Preferences;
-import ghidra.program.model.data.FileDataTypeManager;
+import ghidra.program.model.dtarchive.PersistentDataTypeArchive;
+import ghidra.program.model.dtarchive.FileDataTypeArchive;
 import ghidra.util.Msg;
 
 public class OpenArchiveAction extends DockingAction {
@@ -58,47 +57,43 @@ public class OpenArchiveAction extends DockingAction {
 		GhidraFileChooser fileChooser = new GhidraFileChooser(tree);
 
 		File archiveDirectory = getArchiveDirectory();
-		fileChooser.setFileFilter(FileDataTypeManager.GDT_FILEFILTER);
+		fileChooser.setFileFilter(FileDataTypeArchive.GDT_FILEFILTER);
 		fileChooser.setCurrentDirectory(archiveDirectory);
 		fileChooser.setApproveButtonText("Open DataType Archive File");
 		fileChooser.setApproveButtonToolTipText("Open DataType Archive File");
 
-		DataTypeManagerHandler manager = plugin.getDataTypeManagerHandler();
+		ArchiveManager manager = plugin.getArchiveManager();
 		File file = fileChooser.getSelectedFile();
 		fileChooser.dispose();
 		if (file == null) {
 			return;
 		}
-		if (!file.getName().endsWith(FileDataTypeManager.EXTENSION)) {
-			file = new File(file.getParent(), file.getName() + "." + FileDataTypeManager.EXTENSION);
+		if (!file.getName().endsWith(FileDataTypeArchive.EXTENSION)) {
+			file = new File(file.getParent(), file.getName() + "." + FileDataTypeArchive.EXTENSION);
 		}
 
 		File lastOpenedDir = file.getParentFile();
 		Preferences.setProperty(Preferences.LAST_OPENED_ARCHIVE_DIRECTORY,
 			lastOpenedDir.getAbsolutePath());
-
-		try {
-			Archive archive = manager.openArchive(file, false, true);
+		ResourceFile resourceFile = new ResourceFile(file);
+		PersistentDataTypeArchive archive =
+			manager.openFileArchiveInTask(resourceFile, false, Upgrade.ASK, true);
+		if (archive != null) {
 			GTreeNode node = getNodeForArchive(tree, archive);
-			if (node != null) {
-				tree.setSelectedNode(node);
-			}
-		}
-		catch (Throwable t) {
-			DataTypeManagerHandler.handleArchiveFileException(plugin, new ResourceFile(file), t);
+			tree.setSelectedNode(node);
 		}
 	}
 
-	private GTreeNode getNodeForArchive(GTree tree, Archive archive) {
+	private GTreeNode getNodeForArchive(GTree tree, PersistentDataTypeArchive archive) {
 		GTreeNode rootNode = tree.getModelRoot();
 		List<GTreeNode> allChildren = rootNode.getChildren();
 		for (GTreeNode node : allChildren) {
-			ArchiveNode archiveNode = (ArchiveNode) node;
-			if (archiveNode.getArchive() == archive) {
-				return archiveNode;
+			if (node instanceof ArchiveNode archiveNode) {
+				if (archiveNode.getArchive() == archive) {
+					return archiveNode;
+				}
 			}
 		}
-
 		return null;
 	}
 
