@@ -203,6 +203,7 @@ protected:
   bool printCharacterConstant(ostream &s,const Address &addr,Datatype *charType) const;
   int4 getHiddenThisSlot(const PcodeOp *op,FuncProto *fc);	///< Get position of "this" pointer needing to be hidden
   void resetDefaultsPrintC(void);			///< Set default values for options specific to PrintC
+  static EmitMarkup::syntax_highlight getSymbolHighlight(const Symbol *sym);
   virtual void pushConstant(uintb val,const Datatype *ct,tagtype tag,
 			    const Varnode *vn,const PcodeOp *op,uint4 displayFormat);
   virtual bool pushEquate(uintb val,int4 sz,const EquateSymbol *sym,
