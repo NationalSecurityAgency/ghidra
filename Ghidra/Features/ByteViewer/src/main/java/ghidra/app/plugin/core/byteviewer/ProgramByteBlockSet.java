@@ -183,7 +183,6 @@ public class ProgramByteBlockSet implements ByteBlockSet {
 		provider.notifyEdit(edit);
 	}
 
-	///////////////////////////////////////////////////////////////////////
 	SaveState getUndoRedoState() {
 		return bbcm.getUndoRedoState();
 	}
