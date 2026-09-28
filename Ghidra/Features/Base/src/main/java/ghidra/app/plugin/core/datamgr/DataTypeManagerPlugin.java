@@ -292,6 +292,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 		restoreRecentlyOpenedArchiveNames(saveState);
 		restoreFavorites(saveState);
 		provider.restore(saveState);
+		tableProvider.restore(saveState);
 	}
 
 	@Override
@@ -300,6 +301,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 		saveRecentlyOpenedArchiveNames(saveState);
 		saveFavorites(saveState);
 		provider.save(saveState);
+		tableProvider.save(saveState);
 	}
 
 	private void restoreRecentlyOpenedArchiveNames(SaveState saveState) {

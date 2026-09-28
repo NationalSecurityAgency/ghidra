@@ -44,6 +44,7 @@ import ghidra.app.plugin.core.datamgr.archive.InvalidArchive;
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.options.PreferenceState;
+import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.data.*;
@@ -69,6 +70,8 @@ import resources.Icons;
  */
 public class DataTypesTableProvider extends ComponentProvider {
 
+	private static final String SAVE_STATE_NAME = "DATA_TYPES_TABLE";
+
 	private static final String FILTER_STATE_PREF_KEY =
 		DataTypesTableProvider.class.getSimpleName() + ".DtFilterState";
 
@@ -88,15 +91,14 @@ public class DataTypesTableProvider extends ComponentProvider {
 	private ToggleDockingAction showOnlyProgramTypesAction;
 
 	public DataTypesTableProvider(DataTypeManagerPlugin plugin) {
-		this(plugin, getDtFilterState(plugin), plugin.getCurrentProgram(), true);
+		this(plugin, plugin.getCurrentProgram(), true);
 	}
 
-	private DataTypesTableProvider(DataTypeManagerPlugin plugin, DtFilterState filterState,
-			Program program, boolean isConnected) {
+	private DataTypesTableProvider(DataTypeManagerPlugin plugin, Program program,
+			boolean isConnected) {
 
 		super(plugin.getTool(), "Data Types Table", plugin.getName());
 		this.plugin = plugin;
-		this.filterState = filterState;
 		this.program = program;
 
 		if (!isConnected) {
@@ -129,23 +131,31 @@ public class DataTypesTableProvider extends ComponentProvider {
 
 	}
 
-	private static DtFilterState getDtFilterState(DataTypeManagerPlugin plugin) {
+	public void restore(SaveState saveState) {
 
-		PreferenceState preferenceState = getPreferenceState(plugin);
-		if (preferenceState != null) {
-			DtFilterState filterState = new DtFilterState();
-			filterState.restore(preferenceState);
-			return filterState;
+		SaveState subSaveState = saveState.getSaveState(SAVE_STATE_NAME);
+		if (subSaveState == null) {
+			// Special case: the first time this provider is shown, there will not be any saved
+			// state, so use the filter settings of the data type tree.
+			filterState = plugin.getTreeFilterState();
+			return;
 		}
 
-		// use the tree's current filter state as a default
-		return plugin.getTreeFilterState();
+		filterState.restore(subSaveState);
+
+		boolean onlyProgram = subSaveState.getBoolean(SHOW_ONLY_PROGRAM_TYPES_KEY, false);
+		showOnlyProgramTypesAction.setSelected(onlyProgram);
 	}
 
-	private static PreferenceState getPreferenceState(DataTypeManagerPlugin plugin) {
-		PluginTool tool = plugin.getTool();
-		DockingWindowManager dwm = tool.getWindowManager();
-		return dwm.getPreferenceState(FILTER_STATE_PREF_KEY);
+	public void save(SaveState saveState) {
+
+		SaveState subSaveState = new SaveState();
+
+		filterState.save(subSaveState);
+		subSaveState.putBoolean(SHOW_ONLY_PROGRAM_TYPES_KEY,
+			showOnlyProgramTypesAction.isSelected());
+
+		saveState.putSaveState(SAVE_STATE_NAME, subSaveState);
 	}
 
 	private void saveDtFilterState() {
@@ -327,12 +337,6 @@ public class DataTypesTableProvider extends ComponentProvider {
 					.onAction(c -> reload())
 					.buildAndInstallLocal(this);
 
-		PreferenceState preferenceState = getPreferenceState(plugin);
-		if (preferenceState != null) {
-			boolean onlyProgram = preferenceState.getBoolean(SHOW_ONLY_PROGRAM_TYPES_KEY, false);
-			showOnlyProgramTypesAction.setSelected(onlyProgram);
-		}
-
 		// Show in Tree / Select in Tree (select all items)
 		new ActionBuilder("Select Data Types in Tree", plugin.getName())
 				.popupMenuPath("Select in Tree")
@@ -365,12 +369,13 @@ public class DataTypesTableProvider extends ComponentProvider {
 	}
 
 	private void clone(ActionContext context) {
-		DtFilterState newFilterState = filterState.copy();
+
 		DataTypesTableProvider newProvider =
-			new DataTypesTableProvider(plugin, newFilterState, program, false);
+			new DataTypesTableProvider(plugin, program, false);
+
+		newProvider.filterState = filterState.copy();
 
 		filterPanel.transferSettings(newProvider.filterPanel);
-
 		newProvider.showOnlyProgramTypesAction.setSelected(showOnlyProgramTypesAction.isSelected());
 
 		newProvider.setVisible(true);
@@ -1139,5 +1144,4 @@ public class DataTypesTableProvider extends ComponentProvider {
 			}
 		}
 	}
-
 }
