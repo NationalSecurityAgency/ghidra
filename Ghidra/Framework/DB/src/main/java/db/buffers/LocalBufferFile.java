@@ -42,8 +42,8 @@ public class LocalBufferFile implements BufferFile {
 
 	private static final String STRING_ENCODING = "UTF-8";
 
-// ?? Should be changed !!
-	private static final int MINIMUM_BLOCK_SIZE = 128;
+	private static final int MINIMUM_BLOCK_SIZE = 512;
+	private static final int MAXIMUM_BLOCK_SIZE = DataBuffer.MAX_BUFFER_SIZE;
 
 	private static final Random random = new Random();
 
@@ -196,6 +196,9 @@ public class LocalBufferFile implements BufferFile {
 	LocalBufferFile(int bufferSize, String tmpPrefix, String tmpExtension) throws IOException {
 		this.bufferSize = bufferSize;
 		this.blockSize = bufferSize + BUFFER_PREFIX_SIZE;
+		if (blockSize < MINIMUM_BLOCK_SIZE || blockSize > MAXIMUM_BLOCK_SIZE) {
+			throw new IllegalArgumentException("Unsupported buffer size: " + bufferSize);
+		}
 		this.readOnly = false;
 		this.temporary = true;
 		file = Application.createTempFile(tmpPrefix, tmpExtension);
@@ -219,6 +222,12 @@ public class LocalBufferFile implements BufferFile {
 		this.file = file;
 		this.bufferSize = bufferSize;
 		this.blockSize = bufferSize + BUFFER_PREFIX_SIZE;
+
+		if (blockSize < MINIMUM_BLOCK_SIZE || blockSize > MAXIMUM_BLOCK_SIZE) {
+			throw new IllegalArgumentException(
+				"Unsupported buffer size: " + bufferSize);
+		}
+
 		this.readOnly = false;
 		raf = new RandomAccessFile(file, "rw");
 
@@ -452,8 +461,12 @@ public class LocalBufferFile implements BufferFile {
 			throw new IOException("Unrecognized file format");
 		}
 
-		// Read buffer size, free buffer count, and first free buffer index
+		// Read block size, free buffer count, and first free buffer index
 		blockSize = raf.readInt();
+		if (blockSize < MINIMUM_BLOCK_SIZE || blockSize > MAXIMUM_BLOCK_SIZE) {
+			throw new IOException("Unsupported block size: " + blockSize);
+		}
+
 		bufferSize = blockSize - BUFFER_PREFIX_SIZE;
 		int firstFreeBufferIndex = raf.readInt();
 		long len = raf.length();
@@ -686,7 +699,8 @@ public class LocalBufferFile implements BufferFile {
 
 		byte[] data = buf.data;
 		boolean empty = buf.isEmpty();
-		if (!empty && data.length != bufferSize) {
+
+		if (data != null && data.length != bufferSize) {
 			throw new IllegalArgumentException("Bad buffer size");
 		}
 
