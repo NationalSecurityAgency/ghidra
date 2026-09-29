@@ -1,4 +1,4 @@
-MODULE FILE LICENSE: lib/lisa-analyses-0.1.jar MIT
-MODULE FILE LICENSE: lib/lisa-program-0.1.jar MIT
-MODULE FILE LICENSE: lib/lisa-sdk-0.1.jar MIT
-MODULE FILE LICENSE: lib/joda-time-2.14.0.jar Apache License 2.0
+MODULE FILE INFO: lib/lisa-analyses-0.1.jar 13e230ec88a47d9fd14f924f098b97838878ef0ddbef36605c693c2734ab5fb8 MIT
+MODULE FILE INFO: lib/lisa-program-0.1.jar 5d2dabdf71bed6d81466b65f1f912de833c5f6c3ab4650a4f37d47877d8350a6 MIT
+MODULE FILE INFO: lib/lisa-sdk-0.1.jar ee5bd69277445488f83cf050a78ea88a1eba5b3cf144fd8cad233776852e1ac4 MIT
+MODULE FILE INFO: lib/joda-time-2.14.0.jar 1e2da6f9eb65f20a25d9a3186831ed2b3fb14f7a48e1ef8206135ee58cb143d3 Apache License 2.0

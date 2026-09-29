@@ -1,17 +1,17 @@
-MODULE FILE LICENSE: pypkg/dist/capstone-5.0.6-py3-none-win_amd64.whl BSD-3-CAPSTONE
-MODULE FILE LICENSE: pypkg/dist/comtypes-1.4.13-py3-none-any.whl MIT
-MODULE FILE LICENSE: pypkg/dist/pybag-2.2.16-py3-none-any.whl MIT
-MODULE FILE LICENSE: pypkg/dist/pywin32-311-cp39-cp39-win_amd64.whl Python Software Foundation License
-MODULE FILE LICENSE: pypkg/dist/pywin32-311-cp310-cp310-win_amd64.whl Python Software Foundation License
-MODULE FILE LICENSE: pypkg/dist/pywin32-311-cp311-cp311-win_amd64.whl Python Software Foundation License
-MODULE FILE LICENSE: pypkg/dist/pywin32-311-cp312-cp312-win_amd64.whl Python Software Foundation License
-MODULE FILE LICENSE: pypkg/dist/pywin32-311-cp313-cp313-win_amd64.whl Python Software Foundation License
-MODULE FILE LICENSE: pypkg/dist/pywin32-311-cp314-cp314-win_amd64.whl Python Software Foundation License
-MODULE FILE LICENSE: pypkg/dist/win32more-0.7.0-py3-none-any.whl MIT
-MODULE FILE LICENSE: pypkg/dist/win32more_appsdk-0.7.3-py2.py3-none-any.whl MIT
-MODULE FILE LICENSE: pypkg/dist/win32more_core-0.7.0-py2.py3-none-any.whl MIT
-MODULE FILE LICENSE: pypkg/dist/win32more_microsoft_graphics_win2d-0.7.1.3.2-py2.py3-none-any.whl MIT
-MODULE FILE LICENSE: pypkg/dist/win32more_microsoft_web_webview2-0.7.1.0.3650.58-py2.py3-none-any.whl MIT
-MODULE FILE LICENSE: pypkg/dist/win32more_microsoft_windows_sdk_contracts-0.7.10.0.26100.6901-py2.py3-none-any.whl MIT
-MODULE FILE LICENSE: pypkg/dist/win32more_microsoft_windows_sdk_win32metadata-0.7.68.0.4-py2.py3-none-any.whl MIT
-MODULE FILE LICENSE: pypkg/dist/win32more_microsoft_windowsappsdk-0.7.1.8.251106002-py2.py3-none-any.whl MIT
+MODULE FILE INFO: pypkg/dist/capstone-5.0.6-py3-none-win_amd64.whl 761c3deae00b22ac697081cdae1383bb90659dd0d79387a09cf5bdbb22b17064 BSD-3-CAPSTONE
+MODULE FILE INFO: pypkg/dist/comtypes-1.4.13-py3-none-any.whl 21546210748ba52e839e52112124b16ffab7d7fb68096493165fbc249e9023ad MIT
+MODULE FILE INFO: pypkg/dist/pybag-2.2.16-py3-none-any.whl cef631e87d0bb12163c8cb11ca756ddfa8924a6eacdbd746683ed58948a2bfdf MIT
+MODULE FILE INFO: pypkg/dist/pywin32-311-cp39-cp39-win_amd64.whl e0c4cfb0621281fe40387df582097fd796e80430597cb9944f0ae70447bacd91 Python Software Foundation License
+MODULE FILE INFO: pypkg/dist/pywin32-311-cp310-cp310-win_amd64.whl 797c2772017851984b97180b0bebe4b620bb86328e8a884bb626156295a63b3b Python Software Foundation License
+MODULE FILE INFO: pypkg/dist/pywin32-311-cp311-cp311-win_amd64.whl 3ce80b34b22b17ccbd937a6e78e7225d80c52f5ab9940fe0506a1a16f3dab503 Python Software Foundation License
+MODULE FILE INFO: pypkg/dist/pywin32-311-cp312-cp312-win_amd64.whl b8c095edad5c211ff31c05223658e71bf7116daa0ecf3ad85f3201ea3190d067 Python Software Foundation License
+MODULE FILE INFO: pypkg/dist/pywin32-311-cp313-cp313-win_amd64.whl 718a38f7e5b058e76aee1c56ddd06908116d35147e133427e59a3983f703a20d Python Software Foundation License
+MODULE FILE INFO: pypkg/dist/pywin32-311-cp314-cp314-win_amd64.whl 3aca44c046bd2ed8c90de9cb8427f581c479e594e99b5c0bb19b29c10fd6cb87 Python Software Foundation License
+MODULE FILE INFO: pypkg/dist/win32more-0.7.0-py3-none-any.whl ba586b8a5997d1410de5d934e34aefdce8d15ef8d766d6a6b1cda8762d46b05e MIT
+MODULE FILE INFO: pypkg/dist/win32more_appsdk-0.7.3-py2.py3-none-any.whl 707cdd2db3f07dfd7d22b5aa2adffd13dbd316a5eed779ca272feaa6ebc22f88 MIT
+MODULE FILE INFO: pypkg/dist/win32more_core-0.7.0-py2.py3-none-any.whl a501666b44bd36ceebbcff7656e7ec75f92813d23761d0f49f14c79b3a406bd9 MIT
+MODULE FILE INFO: pypkg/dist/win32more_microsoft_graphics_win2d-0.7.1.3.2-py2.py3-none-any.whl 548f65fcebe72c19ae9c797dd9351c0d0bd20010856a4928f755f6d4ec01b16a MIT
+MODULE FILE INFO: pypkg/dist/win32more_microsoft_web_webview2-0.7.1.0.3650.58-py2.py3-none-any.whl c11d2f04a0a50a64d0ee60d159ced1a5e16a739e43c578e2cb909f169a39458b MIT
+MODULE FILE INFO: pypkg/dist/win32more_microsoft_windows_sdk_contracts-0.7.10.0.26100.6901-py2.py3-none-any.whl 392a62a6ec7b0025f1e5d6f55dbfb55191f0088db8f6a2fc769413ab36b2bbcf MIT
+MODULE FILE INFO: pypkg/dist/win32more_microsoft_windows_sdk_win32metadata-0.7.68.0.4-py2.py3-none-any.whl d9e8ab3a7c4efb1dabb18d1b988c32648f317468da8e89bb649fdb6e1a97aa3f MIT
+MODULE FILE INFO: pypkg/dist/win32more_microsoft_windowsappsdk-0.7.1.8.251106002-py2.py3-none-any.whl d37c42d0e6ac87f71a4a1209af8a6adadde19d4b6df44ab3375195f5f41c462c MIT

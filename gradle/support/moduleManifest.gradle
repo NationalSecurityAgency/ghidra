@@ -1,0 +1,79 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*********************************************************************************
+ * moduleManifest.gradle
+ *
+ * This file defines functions for parsing the "MODULE FILE INFO:" lines of a project's
+ * Module.manifest file.  Each such line has the form:
+ *
+ *     MODULE FILE INFO: <path> <sha256> <license>
+ *
+ * where <sha256> may be NO_HASH if the file's hash is not tracked.
+ *
+ * Each line is validated when parsed.  A line is invalid if it is missing any of the 3
+ * parts, if its hash is not a lowercase hex sha256 or NO_HASH, or if its path is listed
+ * again with a different hash or license.
+ *********************************************************************************/
+
+/*********************************************************************************
+ * Returns a mapping of path to sha256 hash (or NO_HASH) from the Module.manifest file
+ *********************************************************************************/
+ext.getModuleFileHashes = { ->
+	return parseModuleFileInfo(project).collectEntries { path, parts -> [path, parts[1]] }
+}
+
+/*********************************************************************************
+ * Returns a mapping of path to license from the Module.manifest file
+ *********************************************************************************/
+ext.getModuleFileLicenses = { ->
+	return parseModuleFileInfo(project).collectEntries { path, parts -> [path, parts[2]] }
+}
+
+/*********************************************************************************
+ * Parses and validates the "MODULE FILE INFO:" lines in the Module.manifest file, and
+ * creates a mapping of path to the line's 3 parts: path, hash, and license
+ *********************************************************************************/
+def Map<String, String[]> parseModuleFileInfo(Project project) {
+	Map<String, String[]> map = new LinkedHashMap<>()
+	File moduleManifest = new File(project.projectDir, "Module.manifest")
+	if (!moduleManifest.exists()) {
+		return map
+	}
+
+	String key = "MODULE FILE INFO:"
+	for (line in moduleManifest.readLines()) {
+		if (!line.startsWith(key)) {
+			continue
+		}
+		String[] parts = line.substring(key.length()).trim().split("\\s+", 3)
+		if (parts.length != 3) {
+			throw new GradleException("Invalid Module.manifest entry (expected <path> <sha256> <license>): " +
+				line + " in module " + project.projectDir)
+		}
+		String path = parts[0]
+		String hash = parts[1]
+		if (hash != "NO_HASH" && !(hash ==~ /[0-9a-f]{64}/)) {
+			throw new GradleException("Invalid sha256 hash '" + hash + "' for Module.manifest entry: " +
+				path + " in module " + project.projectDir)
+		}
+		String[] previous = map.put(path, parts)
+		if (previous != null && !Arrays.equals(previous, parts)) {
+			throw new GradleException("Conflicting duplicate Module.manifest entries for: " +
+				path + " in module " + project.projectDir)
+		}
+	}
+	return map
+}

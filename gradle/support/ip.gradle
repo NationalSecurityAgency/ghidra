@@ -55,7 +55,65 @@ task ip {
 		writeLicenseInfo(p, ipToFileMap)
 	}
 }
+rootProject.prepDev.dependsOn ip
 rootProject.assembleDistribution.dependsOn ip
+
+/*********************************************************************************
+ * Verifies the ip of each external jar when the classpath is resolved
+ *********************************************************************************/
+plugins.withType(JavaPlugin) {
+	def p = project
+	Throwable failure = null
+	configurations.matching { it.name in ['compileClasspath', 'runtimeClasspath'] }.configureEach { c ->
+		c.incoming.afterResolve { ResolvableDependencies rd ->
+			if (failure == null) {
+				try {
+					checkExternalLibIp(p, rd)
+				}
+				catch (Throwable t) {
+					failure = t
+				}
+			}
+			if (failure != null) {
+				throw failure
+			}
+		}
+	}
+
+	// The root project forces classpaths to be resolved when the task graph is ready, and
+	// ignores any exceptions when it does, so rethrow any failure that occurred then
+	gradle.taskGraph.whenReady {
+		if (failure != null) {
+			throw failure
+		}
+	}
+}
+
+/*********************************************************************************
+ * Verifies that each external jar in the resolved classpath that is directly declared
+ * as a dependency of the project has an allowed ip in the Module.manifest file
+ *********************************************************************************/
+def checkExternalLibIp(Project project, ResolvableDependencies rd) {
+
+	// reads the ip info from the Module.manifest file and verifies each ip
+	def moduleManifestIpMap = getModuleManifestIp(project)
+
+	Set<String> declared = new HashSet<>()
+	['api', 'implementation', 'runtimeOnly'].each { name ->
+		project.configurations.findByName(name)?.dependencies?.withType(ExternalDependency)?.each { dep ->
+			declared.add((dep.group ?: "") + ":" + dep.name)
+		}
+	}
+
+	rd.artifacts.artifacts.each { artifact ->
+		def id = artifact.id.componentIdentifier
+		if (id instanceof org.gradle.api.artifacts.component.ModuleComponentIdentifier &&
+				declared.contains((id.group ?: "") + ":" + id.module)) {
+			String relativePath = "lib/" + artifact.file.name
+			assert moduleManifestIpMap.containsKey(relativePath) : "No License specified for external library: "+relativePath+ " in module "+project.projectDir
+		}
+	}
+}
 
 
 /*********************************************************************************
@@ -72,25 +130,11 @@ def addModuleManifestIp(Map<String, List<String>> ipToFileMap, Map<String, Strin
  * Reads the ip info in the Module.manifest file and creates a mapping of path to ip
  *********************************************************************************/
 def Map<String, String> getModuleManifestIp(Project project) {
-	Map<String, String> map = new HashMap<String, String>();
-	File moduleManifest = new File(project.projectDir, "Module.manifest")
-	if (!moduleManifest.exists()) {
-		return map
-	} 
+	Map<String, String> map = project.getModuleFileLicenses()
 	def allowedIP = getAllowedIP(project)
-
-	def lines = moduleManifest.readLines();
-	String key = "MODULE FILE LICENSE:"
-	for(line in lines) {
-		if (line.startsWith(key)) {
-			String s = line.substring(key.length()).trim()
-			int index = s.indexOf(' ')
-			String path = s.substring(0, index).trim()
-			String ip = s.substring(index+1).trim()
-			def ipString = ip.replace(' ','_')
-			assert allowedIP.contains(ipString) : "Encountered Non-allowed IP: "+ip+ " for Module.manifest entry: "+path
-			map.put(path, ip)
-		}
+	map.each { path, ip ->
+		def ipString = ip.replace(' ','_')
+		assert allowedIP.contains(ipString) : "Encountered Non-allowed IP: "+ip+ " for Module.manifest entry: "+path
 	}
 	return map
 }

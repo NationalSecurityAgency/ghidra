@@ -1,5 +1,4 @@
-MODULE FILE LICENSE: lib/org.eclipse.lsp4j-1.0.0.jar Eclipse Public License 2.0
-MODULE FILE LICENSE: lib/org.eclipse.lsp4j.debug-1.0.0.jar Eclipse Public License 2.0
-MODULE FILE LICENSE: lib/org.eclipse.lsp4j.jsonrpc-1.0.0.jar Eclipse Public License 2.0
-MODULE FILE LICENSE: lib/org.eclipse.lsp4j.jsonrpc.debug-1.0.0.jar Eclipse Public License 2.0
-MODULE FILE LICENSE: lib/org.eclipse.lsp4j-1.0.0.jar Eclipse Public License 2.0
+MODULE FILE INFO: lib/org.eclipse.lsp4j-1.0.0.jar ccd78893facc6bfcc359d56cba05d3d5b85eb41e4c40d4b4215ca45db5f416d9 Eclipse Public License 2.0
+MODULE FILE INFO: lib/org.eclipse.lsp4j.debug-1.0.0.jar 7f4e543b7be46ac929a58e49c5c5af14d9f0558a458f21d39648b2e36a985dec Eclipse Public License 2.0
+MODULE FILE INFO: lib/org.eclipse.lsp4j.jsonrpc-1.0.0.jar 9647feb0524bf763c878e12ab878a684102b81cccb3f77feecbec709d54f9bbb Eclipse Public License 2.0
+MODULE FILE INFO: lib/org.eclipse.lsp4j.jsonrpc.debug-1.0.0.jar 056b4f729bfd960462d2ad533e3975ff976d67b37a5f8e5d659a60542c8aab8d Eclipse Public License 2.0

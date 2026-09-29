@@ -1,15 +1,15 @@
-MODULE FILE LICENSE: lib/commons-compress-1.27.1.jar Apache License 2.0
-MODULE FILE LICENSE: lib/commons-codec-1.18.0.jar Apache License 2.0
-MODULE FILE LICENSE: lib/guava-32.1.3-jre.jar Apache License 2.0
-MODULE FILE LICENSE: lib/failureaccess-1.0.1.jar Apache License 2.0
-MODULE FILE LICENSE: lib/jdom2-2.0.6.1.jar JDOM License
-MODULE FILE LICENSE: lib/log4j-api-2.26.1.jar Apache License 2.0
-MODULE FILE LICENSE: lib/log4j-core-2.26.1.jar Apache License 2.0
-MODULE FILE LICENSE: lib/commons-collections4-4.6.0.jar Apache License 2.0
-MODULE FILE LICENSE: lib/commons-lang3-3.20.0.jar Apache License 2.0
-MODULE FILE LICENSE: lib/commons-io-2.19.0.jar Apache License 2.0
-MODULE FILE LICENSE: lib/commons-text-1.10.0.jar Apache License 2.0
-MODULE FILE LICENSE: lib/gson-2.13.2.jar Apache License 2.0
-MODULE FILE LICENSE: lib/bcpkix-jdk18on-1.86.jar Bouncy Castle License
-MODULE FILE LICENSE: lib/bcprov-jdk18on-1.86.jar Bouncy Castle License
-MODULE FILE LICENSE: lib/bcutil-jdk18on-1.86.jar Bouncy Castle License
+MODULE FILE INFO: lib/commons-compress-1.27.1.jar 293d80f54b536b74095dcd7ea3cf0a29bbfc3402519281332495f4420d370d16 Apache License 2.0
+MODULE FILE INFO: lib/commons-codec-1.18.0.jar ba005f304cef92a3dede24a38ad5ac9b8afccf0d8f75839d6c1338634cf7f6e4 Apache License 2.0
+MODULE FILE INFO: lib/guava-32.1.3-jre.jar 6d4e2b5a118aab62e6e5e29d185a0224eed82c85c40ac3d33cf04a270c3b3744 Apache License 2.0
+MODULE FILE INFO: lib/failureaccess-1.0.1.jar a171ee4c734dd2da837e4b16be9df4661afab72a41adaf31eb84dfdaf936ca26 Apache License 2.0
+MODULE FILE INFO: lib/jdom2-2.0.6.1.jar 0b20f45e3a0fd8f0d12cdc5316b06776e902b1365db00118876f9175c60f302c JDOM License
+MODULE FILE INFO: lib/log4j-api-2.26.1.jar f1810a4704ccce019d02bba029dc02a4f2ac0c997f647b465e7d409c1927f822 Apache License 2.0
+MODULE FILE INFO: lib/log4j-core-2.26.1.jar 2ec8c3bf5a6d7c89be8620116a2fc973f7dda1ad0261ad393c4d4726edfd3dcb Apache License 2.0
+MODULE FILE INFO: lib/commons-collections4-4.6.0.jar 4e0d0896bac5356cead277bac0283f09813e14417e3e84e0c86b573b54d218a3 Apache License 2.0
+MODULE FILE INFO: lib/commons-lang3-3.20.0.jar 69e5c9fa35da7a51a5fd2099dfe56a2d8d32cf233e2f6d770e796146440263f4 Apache License 2.0
+MODULE FILE INFO: lib/commons-io-2.19.0.jar 824268919b4b62f9f40f08c54381de5993b078f58667e332d17348ae019d72b9 Apache License 2.0
+MODULE FILE INFO: lib/commons-text-1.10.0.jar 770cd903fa7b604d1f7ef7ba17f84108667294b2b478be8ed1af3bffb4ae0018 Apache License 2.0
+MODULE FILE INFO: lib/gson-2.13.2.jar dd0ce1b55a3ed2080cb70f9c655850cda86c206862310009dcb5e5c95265a5e0 Apache License 2.0
+MODULE FILE INFO: lib/bcpkix-jdk18on-1.86.jar 8d8b41a4b149bdae8d331f059a578870954d1e3ff29f8269a9eb3ee19a7e4ef7 Bouncy Castle License
+MODULE FILE INFO: lib/bcprov-jdk18on-1.86.jar 2af190b300cbb0b35e248ccf5f4a06b6072030aeb3da7a98ec73abe5b4cb371f Bouncy Castle License
+MODULE FILE INFO: lib/bcutil-jdk18on-1.86.jar 1c268e15f785aafb1e4670d8d6e5f856f69475e96c162dadcd1ff9b350e9139f Bouncy Castle License

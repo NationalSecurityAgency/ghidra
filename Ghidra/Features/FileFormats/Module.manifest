@@ -1,18 +1,18 @@
-MODULE FILE LICENSE: lib/dex-ir-2.4.24.jar Apache License 2.0
-MODULE FILE LICENSE: lib/dex-reader-2.4.24.jar Apache License 2.0
-MODULE FILE LICENSE: lib/dex-reader-api-2.4.24.jar Apache License 2.0
-MODULE FILE LICENSE: lib/dex-translator-2.4.24.jar Apache License 2.0
-MODULE FILE LICENSE: lib/asm-9.7.1.jar INRIA License
-MODULE FILE LICENSE: lib/asm-analysis-9.7.1.jar INRIA License
-MODULE FILE LICENSE: lib/asm-commons-9.7.1.jar INRIA License
-MODULE FILE LICENSE: lib/asm-tree-9.7.1.jar INRIA License
-MODULE FILE LICENSE: lib/asm-util-9.7.1.jar INRIA License
-MODULE FILE LICENSE: lib/baksmali-2.5.2.jar BSD-3-GRUVER
-MODULE FILE LICENSE: lib/dexlib2-2.5.2.jar BSD-3-GRUVER
-MODULE FILE LICENSE: lib/util-2.5.2.jar BSD-3-GRUVER
-MODULE FILE LICENSE: lib/zip4j-2.11.6.jar Apache License 2.0
-MODULE FILE LICENSE: lib/AXMLPrinter2.jar Apache License 2.0
-MODULE FILE LICENSE: os/win_86_64/lzfse.exe BSD-3-APPLE
-MODULE FILE LICENSE: os/mac_86_64/lzfse BSD-3-APPLE
-MODULE FILE LICENSE: os/mac_arm_64/lzfse BSD-3-APPLE
-MODULE FILE LICENSE: os/linux_x86_64/lzfse BSD-3-APPLE
+MODULE FILE INFO: lib/dex-ir-2.4.24.jar e700750b790658fab0d5c782f68a1fbdc587ef8a29f8b32c816bf925d2945900 Apache License 2.0
+MODULE FILE INFO: lib/dex-reader-2.4.24.jar 4a1f0b119ee853fdbb2b9e57cc10738ac906d111a8b6b0234da78f48dceb1ab2 Apache License 2.0
+MODULE FILE INFO: lib/dex-reader-api-2.4.24.jar 809bcd19dcacd699ba0482c274d320b69d2e147109875b8c557729aae593c4ac Apache License 2.0
+MODULE FILE INFO: lib/dex-translator-2.4.24.jar d54bf195ae04defd4a6cc401bf58644d34ce29c700b953a5f00f7f1d7b03da55 Apache License 2.0
+MODULE FILE INFO: lib/asm-9.7.1.jar 8cadd43ac5eb6d09de05faecca38b917a040bb9139c7edeb4cc81c740b713281 INRIA License
+MODULE FILE INFO: lib/asm-analysis-9.7.1.jar 85b29371884ba31bb76edf22323c2c24e172c3267a67152eba3d1ccc2e041ef2 INRIA License
+MODULE FILE INFO: lib/asm-commons-9.7.1.jar 9a579b54d292ad9be171d4313fd4739c635592c2b5ac3a459bbd1049cddec6a0 INRIA License
+MODULE FILE INFO: lib/asm-tree-9.7.1.jar 9929881f59eb6b840e86d54570c77b59ce721d104e6dfd7a40978991c2d3b41f INRIA License
+MODULE FILE INFO: lib/asm-util-9.7.1.jar f885be71b5c90556f5f1ad1c4f9276b29b96057c497d46666fe4ddbec3cb43c6 INRIA License
+MODULE FILE INFO: lib/baksmali-2.5.2.jar 1ed236266d7dc4907aade0b19a34f77efac25342b63c8ace52e579039941b389 BSD-3-GRUVER
+MODULE FILE INFO: lib/dexlib2-2.5.2.jar 5a5c8982d8bd7d6e3bb1a0713049e3c78b719ec32b20f6b619885cec30a0dd61 BSD-3-GRUVER
+MODULE FILE INFO: lib/util-2.5.2.jar 4f580a9cff3ebb83cb3fd20bec88e37e4f183796ca652732992611620282daea BSD-3-GRUVER
+MODULE FILE INFO: lib/zip4j-2.11.6.jar 5f1eb1e9d67cfee200a695e4079751b49e73a226b154193e13f7c602efbe72fb Apache License 2.0
+MODULE FILE INFO: lib/AXMLPrinter2.jar 00ed038eb6abaf6ddec8d202a3ed7a81b521458f4cd459948115cfd02ff59d6d Apache License 2.0
+MODULE FILE INFO: os/win_86_64/lzfse.exe NO_HASH BSD-3-APPLE
+MODULE FILE INFO: os/mac_86_64/lzfse NO_HASH BSD-3-APPLE
+MODULE FILE INFO: os/mac_arm_64/lzfse NO_HASH BSD-3-APPLE
+MODULE FILE INFO: os/linux_x86_64/lzfse NO_HASH BSD-3-APPLE

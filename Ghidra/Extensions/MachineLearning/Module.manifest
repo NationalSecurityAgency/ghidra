@@ -1,9 +1,9 @@
-MODULE FILE LICENSE: lib/olcut-config-protobuf-5.3.1.jar BSD-2-ORACLE
-MODULE FILE LICENSE: lib/olcut-core-5.3.1.jar BSD-2-ORACLE
-MODULE FILE LICENSE: lib/tribuo-classification-core-4.3.2.jar Apache License 2.0
-MODULE FILE LICENSE: lib/tribuo-classification-tree-4.3.2.jar Apache License 2.0
-MODULE FILE LICENSE: lib/tribuo-common-tree-4.3.2.jar Apache License 2.0
-MODULE FILE LICENSE: lib/tribuo-core-4.3.2.jar Apache License 2.0
-MODULE FILE LICENSE: lib/tribuo-data-4.3.2.jar Apache License 2.0
-MODULE FILE LICENSE: lib/tribuo-math-4.3.2.jar Apache License 2.0
-MODULE FILE LICENSE: lib/tribuo-util-onnx-4.3.2.jar Apache License 2.0
+MODULE FILE INFO: lib/olcut-config-protobuf-5.3.1.jar 14818cc3a94ae7521414d4845666ab821044278eec199b9c8f08b7118b745af5 BSD-2-ORACLE
+MODULE FILE INFO: lib/olcut-core-5.3.1.jar 40ad9bed027d6558776893c2a059134ee7f744d38cdea678f5931241764ebf87 BSD-2-ORACLE
+MODULE FILE INFO: lib/tribuo-classification-core-4.3.2.jar 43e55b77975c5efa591167220e68e44de04058ba330c7cc0a2eed881341329b5 Apache License 2.0
+MODULE FILE INFO: lib/tribuo-classification-tree-4.3.2.jar 244589be0368eed20ca8bdf420d3fea060665630c204d50a774cdce6b65661b7 Apache License 2.0
+MODULE FILE INFO: lib/tribuo-common-tree-4.3.2.jar 82adc93249fef88675bd698465a84d5cde0d208cb9de3b9944afed6231ac13d5 Apache License 2.0
+MODULE FILE INFO: lib/tribuo-core-4.3.2.jar f8ef43aa36f37aca4c346cd1e62e29e49e9c13860b4e56c9cd05e2a35fd85f34 Apache License 2.0
+MODULE FILE INFO: lib/tribuo-data-4.3.2.jar 255a57773f5ead386d9125681116e6d4d1f7fc08338e141e6d7746a61390b013 Apache License 2.0
+MODULE FILE INFO: lib/tribuo-math-4.3.2.jar 69f5d872c32c1564497051bb859c888153ca961c6fc459555553a07d5c38db72 Apache License 2.0
+MODULE FILE INFO: lib/tribuo-util-onnx-4.3.2.jar 86093d6da1cb4e18b720ec345c076e6ef5d9a52ad1208536c84eb0e70f07c14f Apache License 2.0
