@@ -22,7 +22,7 @@ import java.io.IOException;
 
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.pcode.Encoder;
-import ghidra.program.model.pcode.PcodeDataTypeManager;
+import ghidra.program.model.pcode.MetaDataType;
 import ghidra.xml.*;
 
 /**
@@ -31,13 +31,13 @@ import ghidra.xml.*;
  */
 public class MetaTypeFilter extends SizeRestrictedFilter {
 
-	protected int metaType;	// The meta-type this filter lets through
+	protected MetaDataType metaType;	// The meta-type this filter lets through
 
 	/**
 	 * Constructor for use with decode().
 	 * @param meta is the data-type metatype to filter on
 	 */
-	public MetaTypeFilter(int meta) {
+	public MetaTypeFilter(MetaDataType meta) {
 		metaType = meta;
 	}
 
@@ -47,7 +47,7 @@ public class MetaTypeFilter extends SizeRestrictedFilter {
 	 * @param min is the minimum size in bytes
 	 * @param max is the maximum size in bytes
 	 */
-	public MetaTypeFilter(int meta, int min, int max) {
+	public MetaTypeFilter(MetaDataType meta, int min, int max) {
 		super(min, max);
 		metaType = meta;
 	}
@@ -83,7 +83,7 @@ public class MetaTypeFilter extends SizeRestrictedFilter {
 
 	@Override
 	public boolean filter(DataType dt) {
-		if (PcodeDataTypeManager.getMetatype(dt) != metaType) {
+		if (MetaDataType.get(dt) != metaType) {
 			return false;
 		}
 		return filterOnSize(dt);
@@ -92,8 +92,7 @@ public class MetaTypeFilter extends SizeRestrictedFilter {
 	@Override
 	public void encode(Encoder encoder) throws IOException {
 		encoder.openElement(ELEM_DATATYPE);
-		String meta = PcodeDataTypeManager.getMetatypeString(metaType);
-		encoder.writeString(ATTRIB_NAME, meta);
+		encoder.writeString(ATTRIB_NAME, metaType.toString());
 		encodeAttributes(encoder);
 		encoder.closeElement(ELEM_DATATYPE);
 	}
@@ -101,7 +100,11 @@ public class MetaTypeFilter extends SizeRestrictedFilter {
 	@Override
 	public void restoreXml(XmlPullParser parser) throws XmlParseException {
 		XmlElement elem = parser.start(ELEM_DATATYPE.name());
-		metaType = PcodeDataTypeManager.getMetatype(elem.getAttribute(ATTRIB_NAME.name()));
+		String nm = elem.getAttribute(ATTRIB_NAME.name());
+		metaType = MetaDataType.get(nm);
+		if (metaType == null) {
+			throw new XmlParseException("Unknown meta-type: " + nm);
+		}
 		restoreAttributesXml(elem);
 		parser.end(elem);
 	}

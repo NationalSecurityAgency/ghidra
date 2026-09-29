@@ -77,7 +77,7 @@ extern void print_data(ostream &s,uint1 *buffer,int4 size,const Address &baseadd
 
 /// The core meta-types supported by the decompiler. These are sizeless templates
 /// for the elements making up the type algebra.  Index is important for Datatype::base2sub array.
-enum type_metatype {
+enum type_metatype : int4 {
   TYPE_VOID = 17,		///< Standard "void" type, absence of type
   TYPE_SPACEBASE = 16,		///< Placeholder for symbol/type look-up calculations
   TYPE_UNKNOWN = 15,		///< An unknown low-level type. Treated as an unsigned integer.

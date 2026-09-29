@@ -19,6 +19,7 @@ import static ghidra.program.model.pcode.PackedDecode.*;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 import ghidra.pcodeCPort.opcodes.OpCode;
 import ghidra.program.model.address.AddressSpace;
@@ -159,7 +160,11 @@ public class PackedEncode implements Encoder {
 
 	@Override
 	public void writeString(AttributeId attribId, String val) throws IOException {
-		byte[] bytes = val.getBytes();
+		byte[] bytes = val.getBytes(StandardCharsets.UTF_8);
+		for (int i = 0; i < bytes.length; ++i) {
+			if (bytes[i] == 0)
+				throw new IOException("PackedEncode: String with null character");
+		}
 		writeHeader(ATTRIBUTE, attribId.id());
 		writeInteger((TYPECODE_STRING << TYPECODE_SHIFT), bytes.length);
 		outStream.write(bytes);
@@ -167,7 +172,11 @@ public class PackedEncode implements Encoder {
 
 	@Override
 	public void writeStringIndexed(AttributeId attribId, int index, String val) throws IOException {
-		byte[] bytes = val.getBytes();
+		byte[] bytes = val.getBytes(StandardCharsets.UTF_8);
+		for (int i = 0; i < bytes.length; ++i) {
+			if (bytes[i] == 0)
+				throw new IOException("PackedEncode: String with null character");
+		}
 		writeHeader(ATTRIBUTE, attribId.id() + index);
 		writeInteger((TYPECODE_STRING << TYPECODE_SHIFT), bytes.length);
 		outStream.write(bytes);
@@ -211,6 +220,12 @@ public class PackedEncode implements Encoder {
 	public void writeOpcode(AttributeId attribId, int opcode) throws IOException {
 		writeHeader(ATTRIBUTE, attribId.id());
 		writeInteger((TYPECODE_SIGNEDINT_POSITIVE << TYPECODE_SHIFT), opcode);
+	}
+
+	@Override
+	public void writeDataTypeMeta(AttributeId attribId, MetaDataType metatype) throws IOException {
+		writeHeader(ATTRIBUTE, attribId.id());
+		writeInteger((TYPECODE_SIGNEDINT_POSITIVE << TYPECODE_SHIFT), metatype.getValue());
 	}
 
 	/**
