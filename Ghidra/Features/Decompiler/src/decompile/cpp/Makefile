@@ -83,7 +83,7 @@ EXTERNAL_CONSOLEEXT_NAMES=$(subst .cc,,$(notdir $(EXTERNAL_CONSOLEEXT_SOURCE)))
 
 # The following macros partition all the source files, there should be no overlaps
 # Some core source files used in all projects
-CORE=	xml marshal space float address pcoderaw translate opcodes globalcontext
+CORE=	xml marshal space float address pcoderaw translate opcodes metatype globalcontext
 # Additional core files for any projects that decompile
 DECCORE=capability architecture options graph cover block cast typeop database cpool \
 	comment stringmanage modelrules fspec action loadimage grammar varnode op type \
