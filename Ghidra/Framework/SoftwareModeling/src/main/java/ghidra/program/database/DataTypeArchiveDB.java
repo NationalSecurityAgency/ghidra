@@ -17,7 +17,8 @@ package ghidra.program.database;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Date;
+import java.util.Map;
 
 import db.*;
 import ghidra.framework.Application;
@@ -29,7 +30,6 @@ import ghidra.framework.options.Options;
 import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.data.StandAloneDataTypeManager;
 import ghidra.program.model.listing.DataTypeArchive;
-import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramChangeRecord;
 import ghidra.program.util.ProgramEvent;
 import ghidra.util.InvalidNameException;
@@ -540,31 +540,14 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 
 	@Override
 	public Map<String, String> getMetadata() {
+		try (Closeable c = lock.write()) {
+			metadata.clear();
+			metadata.put("Data Type Archive Name", getName());
+			metadata.put("# of Data Types", "" + getDataTypeManager().getDataTypeCount(true));
+			metadata.put("# of Data Type Categories", "" + getDataTypeManager().getCategoryCount());
 
-		metadata.clear();
-		metadata.put("Data Type Archive Name", getName());
-		metadata.put("# of Data Types", "" + getDataTypeManager().getDataTypeCount(true));
-		metadata.put("# of Data Type Categories", "" + getDataTypeManager().getCategoryCount());
-
-		Options propList = getOptions(Program.PROGRAM_INFO);
-		List<String> propNames = propList.getOptionNames();
-		Collections.sort(propNames);
-		for (String propName : propNames) {
-			if (propName.indexOf(Options.DELIMITER) >= 0) {
-				continue; // ignore second tier options
-			}
-			String valueAsString = propList.getValueAsString(propName);
-			if (valueAsString != null) {
-				metadata.put(propName, propList.getValueAsString(propName));
-			}
+			return super.getMetadata();
 		}
-		return metadata;
-	}
-
-	@Override
-	protected void updateMetadata() throws IOException {
-		getMetadata(); // updates metadata map
-		super.updateMetadata();
 	}
 
 	@Override
