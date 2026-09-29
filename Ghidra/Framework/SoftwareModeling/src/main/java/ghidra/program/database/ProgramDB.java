@@ -2030,7 +2030,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			setLanguage(languageTranslator, newCompilerSpecID, forceRedisassembly, monitor);
 		}
 		try {
-			updateMetadata();
+			saveMetadata();
 		}
 		catch (IOException e) {
 			dbError(e);
@@ -2373,38 +2373,40 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 
 	@Override
 	public Map<String, String> getMetadata() {
-		metadata.clear();
-		metadata.put("Program Name", getName());
-		metadata.put("Language ID",
-			languageID + " (" + languageVersion + "." + languageMinorVersion + ")");
-		metadata.put("Compiler ID", compilerSpecID.getIdAsString());
-		metadata.put("Processor", language.getProcessor().toString());
-		metadata.put("Endian", memoryManager.isBigEndian() ? "Big" : "Little");
-		metadata.put("Address Size", "" + addressFactory.getDefaultAddressSpace().getSize());
-		metadata.put("Minimum Address", getString(getMinAddress()));
-		metadata.put("Maximum Address", getString(getMaxAddress()));
-		metadata.put("# of Bytes", "" + getNumberOfBytes());
-		metadata.put("# of Memory Blocks", "" + memoryManager.getBlocks().length);
-		metadata.put("# of Instructions", "" + listing.getNumInstructions());
-		metadata.put("# of Defined Data", "" + listing.getNumDefinedData());
-		metadata.put("# of Functions", "" + getFunctionManager().getFunctionCount());
-		metadata.put("# of Symbols", "" + getSymbolTable().getNumSymbols());
-		metadata.put("# of Data Types", "" + getDataTypeManager().getDataTypeCount(true));
-		metadata.put("# of Data Type Categories", "" + getDataTypeManager().getCategoryCount());
+		try (Closeable c = lock.write()) {
+			metadata.clear();
+			metadata.put("Program Name", getName());
+			metadata.put("Language ID",
+				languageID + " (" + languageVersion + "." + languageMinorVersion + ")");
+			metadata.put("Compiler ID", compilerSpecID.getIdAsString());
+			metadata.put("Processor", language.getProcessor().toString());
+			metadata.put("Endian", memoryManager.isBigEndian() ? "Big" : "Little");
+			metadata.put("Address Size", "" + addressFactory.getDefaultAddressSpace().getSize());
+			metadata.put("Minimum Address", getString(getMinAddress()));
+			metadata.put("Maximum Address", getString(getMaxAddress()));
+			metadata.put("# of Bytes", "" + getNumberOfBytes());
+			metadata.put("# of Memory Blocks", "" + memoryManager.getBlocks().length);
+			metadata.put("# of Instructions", "" + listing.getNumInstructions());
+			metadata.put("# of Defined Data", "" + listing.getNumDefinedData());
+			metadata.put("# of Functions", "" + getFunctionManager().getFunctionCount());
+			metadata.put("# of Symbols", "" + getSymbolTable().getNumSymbols());
+			metadata.put("# of Data Types", "" + getDataTypeManager().getDataTypeCount(true));
+			metadata.put("# of Data Type Categories", "" + getDataTypeManager().getCategoryCount());
 
-		Options propList = getOptions(Program.PROGRAM_INFO);
-		List<String> propNames = propList.getOptionNames();
-		Collections.sort(propNames);
-		for (String propName : propNames) {
-			if (propName.indexOf(Options.DELIMITER) >= 0) {
-				continue; // ignore second tier options
+			Options propList = getOptions(Program.PROGRAM_INFO);
+			List<String> propNames = propList.getOptionNames();
+			Collections.sort(propNames);
+			for (String propName : propNames) {
+				if (propName.indexOf(Options.DELIMITER) >= 0) {
+					continue; // ignore second tier options
+				}
+				String valueAsString = propList.getValueAsString(propName);
+				if (valueAsString != null) {
+					metadata.put(propName, propList.getValueAsString(propName));
+				}
 			}
-			String valueAsString = propList.getValueAsString(propName);
-			if (valueAsString != null) {
-				metadata.put(propName, propList.getValueAsString(propName));
-			}
+			return super.getMetadata();
 		}
-		return metadata;
 	}
 
 	private static String getString(Object obj) {
@@ -2421,12 +2423,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			size += block.getSize();
 		}
 		return "" + size;
-	}
-
-	@Override
-	protected void updateMetadata() throws IOException {
-		getMetadata(); // updates metadata map
-		super.updateMetadata();
 	}
 
 	@Override
