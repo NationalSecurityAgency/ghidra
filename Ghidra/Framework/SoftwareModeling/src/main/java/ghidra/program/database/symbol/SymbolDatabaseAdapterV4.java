@@ -341,17 +341,17 @@ class SymbolDatabaseAdapterV4 extends SymbolDatabaseAdapter {
 		//
 
 		if (symbolTypeId == SYMBOL_TYPE_LABEL || symbolTypeId == SYMBOL_TYPE_FUNCTION) {
-			record.setString(SYMBOL_EXTERNAL_PROG_ADDR_COL,
+			rec.setString(SYMBOL_EXTERNAL_PROG_ADDR_COL,
 				record.getString(V4_SYMBOL_EXTERNAL_PROG_ADDR_COL));
-			record.setString(SYMBOL_ORIGINAL_IMPORTED_NAME_COL,
+			rec.setString(SYMBOL_ORIGINAL_IMPORTED_NAME_COL,
 				record.getString(V4_SYMBOL_ORIGINAL_IMPORTED_NAME_COL));
 		}
 		else if (symbolTypeId == SYMBOL_TYPE_LOCAL_VAR || symbolTypeId == SYMBOL_TYPE_PARAMETER) {
-			record.setString(SYMBOL_COMMENT_COL, record.getString(V4_SYMBOL_COMMENT_COL));
+			rec.setString(SYMBOL_COMMENT_COL, record.getString(V4_SYMBOL_COMMENT_COL));
 		}
 		else if (symbolTypeId == SYMBOL_TYPE_LIBRARY) {
 			// NOTE: don't set new sparse ordinal column
-			record.setString(SYMBOL_LIBPATH_COL, record.getString(V4_SYMBOL_LIBPATH_COL));
+			rec.setString(SYMBOL_LIBPATH_COL, record.getString(V4_SYMBOL_LIBPATH_COL));
 		}
 
 		Field hash = record.getFieldValue(V4_SYMBOL_HASH_COL);
