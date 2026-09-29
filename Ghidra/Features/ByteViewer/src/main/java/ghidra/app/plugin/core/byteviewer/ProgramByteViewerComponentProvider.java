@@ -245,6 +245,10 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 
 		program = newProgram;
 		clipboardProvider.setProgram(newProgram);
+
+		if (newProgram != null) {
+			newProgram.addListener(this);
+		}
 		for (ByteViewerComponent byteViewerComponent : viewMap.values()) {
 			DataFormatModel dataModel = byteViewerComponent.getDataModel();
 			if (dataModel instanceof ProgramDataFormatModel pdfm) {
@@ -252,9 +256,6 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 			}
 		}
 
-		if (newProgram != null) {
-			newProgram.addListener(this);
-		}
 		setByteBlocks(null);
 		updateTitle();
 		contextChanged();

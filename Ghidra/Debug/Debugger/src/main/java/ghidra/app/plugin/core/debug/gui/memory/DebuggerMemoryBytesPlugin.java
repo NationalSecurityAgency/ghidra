@@ -39,6 +39,7 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.util.ProgramSelection;
+import ghidra.trace.model.Trace;
 import ghidra.trace.model.program.TraceProgramView;
 
 @PluginInfo(
@@ -149,14 +150,16 @@ public class DebuggerMemoryBytesPlugin
 	public void processEvent(PluginEvent event) {
 		// do not delegate to super
 		if (event instanceof TraceActivatedPluginEvent ev) {
-			current = ev.getActiveCoordinates();
-			allProviders(p -> p.coordinatesActivated(current));
+			DebuggerCoordinates coords = ev.getActiveCoordinates();
+			current = coords;
+			allProviders(p -> p.coordinatesActivated(coords));
 		}
 		else if (event instanceof TraceClosedPluginEvent ev) {
-			if (current.getTrace() == ev.getTrace()) {
+			Trace trace = ev.getTrace();
+			if (current.getTrace() == trace) {
 				current = DebuggerCoordinates.NOWHERE;
 			}
-			allProviders(p -> p.traceClosed(ev.getTrace()));
+			allProviders(p -> p.traceClosed(trace));
 		}
 		else if (event instanceof TraceLocationPluginEvent ev) {
 			currentLocation = ev.getLocation();
@@ -171,7 +174,9 @@ public class DebuggerMemoryBytesPlugin
 		if (provider == null || traceManager == null) {
 			return;
 		}
-		provider.coordinatesActivated(current = traceManager.getCurrent());
+		DebuggerCoordinates coords = traceManager.getCurrent();
+		this.current = coords;
+		allProviders(p -> p.coordinatesActivated(coords));
 	}
 
 	@Override
