@@ -18,6 +18,7 @@
 
 #include "xml.hh"
 #include "opcodes.hh"
+#include "metatype.hh"
 #include <list>
 #include <unordered_map>
 
@@ -25,8 +26,6 @@ namespace ghidra {
 
 using std::list;
 using std::unordered_map;
-
-enum type_metatype : int4;		// Forward declaration
 
 /// \brief An annotation for a data element to being transferred to/from a stream
 ///
