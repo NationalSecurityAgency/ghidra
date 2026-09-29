@@ -149,7 +149,7 @@ public class OverlayHelpTree {
 
 		try {
 			writer.println("<?xml version='1.0' encoding='ISO-8859-1' ?>");
-			writer.println("<!-- Auto-generated on " + (new Date()).toString() + " -->");
+			writer.println("<!-- Auto-generated -->");
 			writer.println();
 			writer.println("<toc version=\"2.0\">");
 
