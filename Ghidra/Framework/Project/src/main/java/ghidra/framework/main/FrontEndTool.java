@@ -33,7 +33,6 @@ import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.XMLOutputter;
 
-import db.buffers.DataBuffer;
 import docking.*;
 import docking.action.DockingAction;
 import docking.action.MenuData;
@@ -93,13 +92,9 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	public static final String AUTOMATICALLY_SAVE_TOOLS = "Automatically Save Tools";
 	public static final String DEFAULT_TOOL_LAUNCH_MODE = "Default Tool Launch Mode";
 	private static final String SHOW_TOOLTIPS_OPTION_NAME = "Show Tooltips";
-	private static final String USE_COMPRESSED_DATABUFFER_OUTPUT =
-		"Use DataBuffer Output Compression";
 	private static final String USE_NATURAL_SORT = "Use Natural File Sort";
 	private static final String USE_COMBINED_ALT_GRAPH_OPTION_NAME = "Use Combined Alt Keys";
 	private static final String USE_ALERT_ANIMATION_OPTION_NAME = "Use Notification Animation";
-
-	private static final Boolean ENABLE_COMPRESSED_DATABUFFER_OUTPUT_DEFAULT = true;
 
 	private static final String RESTORE_PREVIOUS_PROJECT_NAME = "Restore Previous Project";
 	private boolean shouldRestorePreviousProject;
@@ -358,10 +353,6 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 		options.registerOption(SHOW_TOOLTIPS_OPTION_NAME, true, help,
 			"Controls the display of tooltip popup windows.");
-		options.registerOption(USE_COMPRESSED_DATABUFFER_OUTPUT,
-			ENABLE_COMPRESSED_DATABUFFER_OUTPUT_DEFAULT, help,
-			"When enabled data buffers sent to Ghidra Server are compressed (see server " +
-				"configuration for other direction)");
 
 		options.registerOption(BLINKING_CURSORS_OPTION_NAME, true, help,
 			"This controls whether" + " text cursors blink when focused");
@@ -385,11 +376,6 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 		boolean showToolTips = options.getBoolean(SHOW_TOOLTIPS_OPTION_NAME, true);
 		DockingUtils.setGlobalTooltipEnabledOption(showToolTips);
-
-		boolean compressDataBuffers =
-			options.getBoolean(USE_COMPRESSED_DATABUFFER_OUTPUT,
-				ENABLE_COMPRESSED_DATABUFFER_OUTPUT_DEFAULT);
-		DataBuffer.enableCompressedSerializationOutput(compressDataBuffers);
 
 		shouldRestorePreviousProject = options.getBoolean(RESTORE_PREVIOUS_PROJECT_NAME, true);
 
@@ -419,9 +405,6 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		}
 		else if (SHOW_TOOLTIPS_OPTION_NAME.equals(optionName)) {
 			DockingUtils.setGlobalTooltipEnabledOption((Boolean) newValue);
-		}
-		else if (USE_COMPRESSED_DATABUFFER_OUTPUT.equals(optionName)) {
-			DataBuffer.enableCompressedSerializationOutput((Boolean) newValue);
 		}
 		else if (RESTORE_PREVIOUS_PROJECT_NAME.equals(optionName)) {
 			shouldRestorePreviousProject = (Boolean) newValue;
