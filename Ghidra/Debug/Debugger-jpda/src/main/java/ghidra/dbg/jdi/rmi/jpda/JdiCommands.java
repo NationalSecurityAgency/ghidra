@@ -272,15 +272,15 @@ public class JdiCommands {
 
 	public void ghidraTraceInfo() {
 		if (state.client == null) {
-			Msg.error(this, "Not connected to Ghidra");
+			Msg.debug(this, "Not connected to Ghidra");
 			return;
 		}
-		Msg.info(this, "Connected to " + state.client.getDescription());
+		Msg.debug(this, "Connected to " + state.client.getDescription());
 		if (state.trace == null) {
 			Msg.error(this, "No trace");
 		}
 		else {
-			Msg.info(this, "Trace active");
+			Msg.debug(this, "Trace active");
 		}
 	}
 
@@ -288,8 +288,8 @@ public class JdiCommands {
 		JdiArch arch = connector.getArch();
 		LanguageID language = arch.computeGhidraLanguage();
 		CompilerSpecID compiler = arch.computeGhidraCompiler(language);
-		Msg.info(this, "Selected Ghidra language: " + language);
-		Msg.info(this, "Selected Ghidra compiler: " + compiler);
+		Msg.debug(this, "Selected Ghidra language: " + language);
+		Msg.debug(this, "Selected Ghidra compiler: " + compiler);
 	}
 
 	public void ghidraTraceTxStart(String description) {
@@ -304,7 +304,7 @@ public class JdiCommands {
 
 	public void ghidraTraceTxAbort() {
 		RmiTransaction tx = state.requireTx();
-		Msg.info(this, "Aborting trace transaction!");
+		Msg.debug(this, "Aborting trace transaction!");
 		tx.abort();
 		state.resetTx();
 	}
@@ -377,7 +377,7 @@ public class JdiCommands {
 		try (RmiTransaction tx = state.trace.startTx("ghidraTraceInsertObj", false)) {
 			Lifespan span = state.trace.proxyObjectPath(path)
 					.insert(state.trace.getSnap(), Resolution.CR_ADJUST);
-			System.out.println("Inserted object: lifespan=" + span);
+			Msg.debug(this, "Inserted object: lifespan=" + span);
 		}
 	}
 
@@ -385,7 +385,7 @@ public class JdiCommands {
 		state.requireTx();
 		try (RmiTransaction tx = state.trace.startTx("ghidraTraceRemoveObj", false)) {
 			Lifespan span = state.trace.proxyObjectPath(path).remove(state.trace.getSnap(), false);
-			System.out.println("Removed object: lifespan=" + span);
+			Msg.debug(this, "Removed object: lifespan=" + span);
 		}
 	}
 
@@ -534,7 +534,7 @@ public class JdiCommands {
 				}
 			}
 			catch (VMDisconnectedException discExc) {
-				Msg.info(this, "Activate failed - VM disconnected");
+				Msg.debug(this, "Activate failed - VM disconnected");
 			}
 		}
 		state.trace.activate(path);
@@ -781,7 +781,7 @@ public class JdiCommands {
 			insertObject(mrpath);
 		}
 		catch (UnsupportedOperationException e) {
-			//Msg.info(this, e.getMessage());
+			//Msg.error(this, e.getMessage());
 		}
 
 		if (reftype instanceof ArrayType at) {
@@ -1191,7 +1191,7 @@ public class JdiCommands {
 			}
 		}
 		catch (UnsupportedOperationException e) {
-			// Msg.info(this,  e.getMessage());
+			// Msg.error(this,  e.getMessage());
 		}
 		retainKeys(ppath, keys);
 	}
@@ -1419,7 +1419,7 @@ public class JdiCommands {
 			}
 		}
 		catch (Exception e) {
-			Msg.info(this, e.getMessage());
+			Msg.error(this, e.getMessage());
 		}
 		retainKeys(path, keys);
 	}
@@ -2187,7 +2187,7 @@ public class JdiCommands {
 			int options) {
 		try {
 			Value val = ct.invokeMethod(thread, method, args, options);
-			System.err.println(val);
+			Msg.debug(this, val);
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e.getMessage());
@@ -2198,7 +2198,7 @@ public class JdiCommands {
 			List<Value> args, int options) {
 		try {
 			Value val = ref.invokeMethod(thread, method, args, options);
-			System.out.println(val);
+			Msg.debug(this, val);
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e.getMessage());

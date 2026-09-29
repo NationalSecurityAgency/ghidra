@@ -142,6 +142,7 @@ public class VtParser {
 
 	protected void debugChar(char c) {
 		if (!Character.isISOControl(c)) {
+			// Logging may not have been initialized yet, use System 
 			System.err.println("\\x%02x (%c)".formatted(c & 0xff, c));
 		}
 		else {
