@@ -27,6 +27,8 @@ import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.reloc.RelocationResult;
 
+// See llvm.org/docs/doxygen/hexagon_8h_source.html
+
 public class Hexagon_ElfRelocationHandler
 		extends AbstractElfRelocationHandler<Hexagon_ElfRelocationType, ElfRelocationContext<?>> {
 
@@ -45,141 +47,6 @@ public class Hexagon_ElfRelocationHandler
 	@Override
 	public int getRelrRelocationType() {
 		return Hexagon_ElfRelocationType.R_HEXAGON_RELATIVE.typeId;
-	}
-	
-	/*
-	 * Is the given Hexagon sub-instruction a Duplex instruction 
-	 */
-	private boolean isDuplex(long ins) {
-		return ((ins >>> 14) & 0b11) == 0b00;
-	}
-	
-	/*
-	 * Spread the bits of a value to be relocated based on a mask representing the positions containing the bits of that value.
-	 */
-	private int applyMask(int mask, int val) {
-		int res = 0;
-		int off = 0;
-		for(int i = 0; i < 32; i++) {
-			int valBit = (val >> off) & 1;
-			// If mask[n] is set, fill with next bit from val
-			if (((mask >> i) & 1) != 0) {
-				res |= (valBit << i);
-				off++;
-			}
-			
-		}
-		return res;
-	}
-	
-	/* 
-	 * Find the mask for R_HEX_8_X type relocations
-	 */
-	private int findMaskR8(int ins) {
-		if (isDuplex(ins)) {
-			return 0x03F00000;
-		}
-		switch (ins & 0xFF000000) {
-		case 0xDE000000:
-			return 0x00E020E8;
-		case 0x3C000000:
-			return 0x0000207F;
-		default:
-			return 0x00001FE0;
-		}
-	}
-	
-	/* 
-	 * Find the mask for R_HEX_11_X type relocations
-	 */
-	private int findMaskR11(int ins) {
-		if (isDuplex(ins)) {
-			return 0x03F00000;
-		}
-		switch (ins & 0xFF000000) {
-		case 0xA1000000:
-			return 0x060020FF;
-		default:
-			return 0x06003FE0;
-		}
-	}
-	
-	private record InstructionMask(int compareMask, int valueMask) {}
-	
-	private InstructionMask r6Masks[] = new InstructionMask[] {
-		new InstructionMask(0x38000000, 0x0000201f),
-		new InstructionMask(0x39000000, 0x0000201f),
-		new InstructionMask(0x3e000000, 0x00001f80),
-		new InstructionMask(0x3f000000, 0x00001f80),
-		new InstructionMask(0x40000000, 0x000020f8),
-		new InstructionMask(0x41000000, 0x000007e0),
-		new InstructionMask(0x42000000, 0x000020f8),
-		new InstructionMask(0x43000000, 0x000007e0),
-		new InstructionMask(0x44000000, 0x000020f8),
-		new InstructionMask(0x45000000, 0x000007e0),
-		new InstructionMask(0x46000000, 0x000020f8),
-		new InstructionMask(0x47000000, 0x000007e0),
-		new InstructionMask(0x6a000000, 0x00001f80),
-		new InstructionMask(0x7c000000, 0x001f2000),
-		new InstructionMask(0x9a000000, 0x00000f60),
-		new InstructionMask(0x9b000000, 0x00000f60),
-		new InstructionMask(0x9c000000, 0x00000f60),
-		new InstructionMask(0x9d000000, 0x00000f60),
-		new InstructionMask(0x9f000000, 0x001f0100),
-		new InstructionMask(0xab000000, 0x0000003f),
-		new InstructionMask(0xad000000, 0x0000003f),
-		new InstructionMask(0xaf000000, 0x00030078),
-		new InstructionMask(0xd7000000, 0x006020e0),
-		new InstructionMask(0xd8000000, 0x006020e0),
-		new InstructionMask(0xdb000000, 0x006020e0),
-		new InstructionMask(0xdf000000, 0x006020e0),
-	};
-	
-	private Optional<Integer> findMaskR6Common(int ins) {
-		return Stream.of(r6Masks)
-				.filter(i -> i.compareMask() == (ins & 0xFF000000))
-				.map(i -> i.valueMask())
-				.findAny();
-	}
-	
-	/* 
-	 * Find the mask for R_HEX_6_X type relocations
-	 */
-	private Optional<Integer> findMaskR6(int ins) {
-		if (isDuplex(ins)) {
-			return Optional.of(0x03F00000);
-		}
-		return findMaskR6Common(ins);
-	}
-	
-	/* 
-	 * Find the mask for R_HEX_16_X type relocations
-	 */
-	private Optional<Integer> findMaskR16(int ins) {
-		if (isDuplex(ins)) {
-			return Optional.of(0x03F00000);
-		}
-		int maskedIns = ins & ~(0b11 << 14);
-		
-		switch((0xff000000 & maskedIns)) {
-		case 0x48000000:
-			return Optional.of(0x061f20ff);
-		case 0x49000000:
-			return Optional.of(0x061f3fe0);
-		case 0x78000000:
-			return Optional.of(0x00df3fe0);
-		case 0xb0000000:
-			return Optional.of(0x0fe03fe0);
-		}
-		switch((0xff802000 & maskedIns)) {
-		case 0x74000000:
-		case 0x74002000:
-		case 0x74800000:
-		case 0x74802000:
-			return Optional.of(0x00001fe0);
-		}
-		  
-		  return findMaskR6Common(maskedIns);
 	}
 
 	@Override
@@ -223,7 +90,8 @@ public class Hexagon_ElfRelocationHandler
 		}
 
 		int value = (int) (symbolValue + addend);
-		int pcRelativeValue = (int) (Integer.toUnsignedLong(value) - Integer.toUnsignedLong((int) offset));
+		int pcRelativeValue =
+			(int) (Integer.toUnsignedLong(value) - Integer.toUnsignedLong((int) offset));
 		int memValue = memory.getInt(relocationAddress);
 
 		switch (type) {
@@ -231,30 +99,31 @@ public class Hexagon_ElfRelocationHandler
 				if ((pcRelativeValue < -0x00800000) || (pcRelativeValue >= 0x00800000)) {
 					return RelocationResult.FAILURE;
 				}
-				memValue &= ~0x01ff3ffe;
-				int dist = pcRelativeValue >>> 2;
-				memValue |= 0x00003ffe & (dist << 1);
-				memValue |= 0x01ff0000 & (dist << 3);
+				int mask = 0x01ff3ffe;
+				memValue &= ~mask;
+				memValue |= applyMask(mask, pcRelativeValue >> 2);
 				memory.setInt(relocationAddress, memValue);
 				break;
 			case R_HEXAGON_B15_PCREL:
-				int mask = 0x00DF20FE;
+				mask = 0x00DF20FE;
+				memValue &= ~mask;
 				memValue |= applyMask(mask, pcRelativeValue >> 2);
 				memory.setInt(relocationAddress, memValue);
 				break;
 			case R_HEXAGON_B7_PCREL:
 				mask = 0x00001F18;
+				memValue &= ~mask;
 				memValue |= applyMask(mask, pcRelativeValue >> 2);
 				memory.setInt(relocationAddress, memValue);
 				break;
 
 			case R_HEXAGON_HI16:
-				value = (value >> 16) & 0xffff;
+				value = (value >>> 16) & 0xffff;
 				/* fallthrough */
 			case R_HEXAGON_LO16:
-				memValue &= ~0x00c03fff;
-				memValue |= value & 0x3fff;
-				memValue |= (value & 0xc000) << 8;
+				mask = 0x00c03fff;
+				memValue &= ~mask;
+				memValue |= applyMask(mask, value);
 				memory.setInt(relocationAddress, memValue);
 				break;
 
@@ -289,104 +158,115 @@ public class Hexagon_ElfRelocationHandler
 //				break;
 			case R_HEXAGON_B13_PCREL:
 				mask = 0x00202FFE;
+				memValue &= ~mask;
 				memValue |= applyMask(mask, pcRelativeValue >> 2);
 				memory.setInt(relocationAddress, memValue);
 				break;
 			case R_HEXAGON_B9_PCREL:
 				mask = 0x003000FE;
+				memValue &= ~mask;
 				memValue |= applyMask(mask, pcRelativeValue >> 2);
 				memory.setInt(relocationAddress, memValue);
 				break;
 			case R_HEXAGON_B32_PCREL_X:
 				// (S + A - P) >> 6
-				dist = pcRelativeValue >>> 6;
-				memValue &= ~0x0fff3fff;
-				memValue |= dist & 0x3fff;
-				dist = dist >>> 14;
-				memValue |= ((dist & 0xFFF) << 16);
+				mask = 0x0fff3fff;
+				memValue &= ~mask;
+				memValue |= applyMask(mask, pcRelativeValue >> 6);
 				memory.setInt(relocationAddress, memValue);
-				byteLength = 4;
 				break;
 			case R_HEXAGON_32_6_X:
 				// This relocation is used to handle extended immediate values
-				int c = (value >>> 6);
-				memValue &= ~0x0fff3fff;
-				memValue |= (c & 0x3FFF);
-				memValue |= ((c >> 14) & 0xFFF) << 16;
+				mask = 0x0fff3fff;
+				memValue &= ~mask;
+				memValue |= applyMask(mask, value >>> 6);
 				memory.setInt(relocationAddress, memValue);
 				break;
 			case R_HEXAGON_B22_PCREL_X:
 				mask = 0x01FF3FFE;
+				memValue &= ~mask;
 				memValue |= applyMask(mask, pcRelativeValue & 0x3F);
 				memory.setInt(relocationAddress, memValue);
 				break;
 			case R_HEXAGON_B15_PCREL_X:
 				mask = 0x00DF20FE;
+				memValue &= ~mask;
 				memValue |= applyMask(mask, pcRelativeValue & 0x3F);
 				memory.setInt(relocationAddress, memValue);
 				break;
 			case R_HEXAGON_B13_PCREL_X:
 				mask = 0x00202FFE;
+				memValue &= ~mask;
 				memValue |= applyMask(mask, pcRelativeValue & 0x3F);
 				memory.setInt(relocationAddress, memValue);
 				break;
 			case R_HEXAGON_B9_PCREL_X:
 				mask = 0x003000FE;
+				memValue &= ~mask;
 				memValue |= applyMask(mask, pcRelativeValue & 0x3F);
 				memory.setInt(relocationAddress, memValue);
 				break;
 			case R_HEXAGON_B7_PCREL_X:
 				mask = 0x00001F18;
+				memValue &= ~mask;
 				memValue |= applyMask(mask, pcRelativeValue & 0x3F);
 				memory.setInt(relocationAddress, memValue);
 				break;
 			case R_HEXAGON_16_X:
 				Optional<Integer> r6Mask = findMaskR16(memValue);
-				if(r6Mask.isEmpty()) {
+				if (r6Mask.isEmpty()) {
 					markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName, log);
 					return RelocationResult.UNSUPPORTED;
 				}
 				mask = r6Mask.get();
+				memValue &= ~mask;
 				memValue |= applyMask(mask, value & 0x3F);
 				memory.setInt(relocationAddress, memValue);
 				break;
 			case R_HEXAGON_12_X:
 				mask = 0x000F1FE0;
+				memValue &= ~mask;
 				memValue |= applyMask(mask, value & 0x3F);
 				memory.setInt(relocationAddress, memValue);
 				break;
 			case R_HEXAGON_11_X:
 				mask = findMaskR11(memValue);
+				memValue &= ~mask;
 				memValue |= applyMask(mask, value & 0x3F);
 				memory.setInt(relocationAddress, memValue);
 				break;
 			case R_HEXAGON_10_X:
 				mask = 0x0020EFE0;
+				memValue &= ~mask;
 				memValue |= applyMask(mask, value & 0x3F);
 				memory.setInt(relocationAddress, memValue);
 				break;
 			case R_HEXAGON_9_X:
 				mask = 0x00003FE0;
-				memValue |= applyMask(mask, value  & 0x3F);
+				memValue &= ~mask;
+				memValue |= applyMask(mask, value & 0x3F);
 				memory.setInt(relocationAddress, memValue);
 				break;
 			case R_HEXAGON_8_X:
 				mask = findMaskR8(memValue);
+				memValue &= ~mask;
 				memValue |= applyMask(mask, value & 0x3F);
 				memory.setInt(relocationAddress, memValue);
 				break;
 			case R_HEXAGON_7_X:
 				mask = 0x00000FE0;
+				memValue &= ~mask;
 				memValue |= applyMask(mask, value & 0x3F);
 				memory.setInt(relocationAddress, memValue);
 				break;
 			case R_HEXAGON_6_X:
 				r6Mask = findMaskR6(memValue);
-				if(r6Mask.isEmpty()) {
+				if (r6Mask.isEmpty()) {
 					markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName, log);
 					return RelocationResult.UNSUPPORTED;
 				}
 				mask = r6Mask.get();
+				memValue &= ~mask;
 				memValue |= applyMask(mask, value & 0x3F);
 				memory.setInt(relocationAddress, memValue);
 				break;
@@ -417,21 +297,157 @@ public class Hexagon_ElfRelocationHandler
 //			case R_HEXAGON_GOT_16:
 //				break;
 			case R_HEXAGON_6_PCREL_X:
-				int opcode = memValue >> 16;
-				// bitmap depends on instruction opcode
-				if (opcode == 0x6a49) { // add Rd5,PacketPC,Uimm32_0712x
-					dist = pcRelativeValue & 0x3f;
-					memValue &= ~(0x3f << 7);
-					memValue |= (dist << 7);
-					memory.setInt(relocationAddress, memValue);
-					break;
-				} // otherwise fall through
+				r6Mask = findMaskR6(memValue);
+				if (r6Mask.isEmpty()) {
+					markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName, log);
+					return RelocationResult.UNSUPPORTED;
+				}
+				mask = r6Mask.get();
+				memValue &= ~mask;
+				memValue |= applyMask(mask, pcRelativeValue & 0x3F);
+				memory.setInt(relocationAddress, memValue);
+				break;
 			default:
 				markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName, log);
 				return RelocationResult.UNSUPPORTED;
 		}
 
 		return new RelocationResult(Status.APPLIED, byteLength);
+	}
+
+	/*
+	 * Is the given Hexagon sub-instruction a Duplex instruction 
+	 */
+	private boolean isDuplex(long ins) {
+		return ((ins >>> 14) & 0b11) == 0b00;
+	}
+
+	/*
+	 * Spread the bits of a value to be relocated based on a mask representing the positions 
+	 * containing the bits of that value.
+	 */
+	private int applyMask(int mask, int val) {
+		int res = 0;
+		int off = 0;
+		for (int i = 0; i < 32; i++) {
+			// If mask[n] is set, fill with next bit from val
+			if (((mask >>> i) & 1) != 0) {
+				int valBit = (val >>> off) & 1;
+				res |= (valBit << i);
+				off++;
+			}
+		}
+		return res;
+	}
+
+	/* 
+	 * Find the mask for R_HEX_8_X type relocations
+	 */
+	private int findMaskR8(int ins) {
+		if (isDuplex(ins)) {
+			return 0x03F00000;
+		}
+		switch (ins & 0xFF000000) {
+			case 0xDE000000:
+				return 0x00E020E8;
+			case 0x3C000000:
+				return 0x0000207F;
+			default:
+				return 0x00001FE0;
+		}
+	}
+
+	/* 
+	 * Find the mask for R_HEX_11_X type relocations
+	 */
+	private int findMaskR11(int ins) {
+		if (isDuplex(ins)) {
+			return 0x03F00000;
+		}
+		switch (ins & 0xFF000000) {
+			case 0xA1000000:
+				return 0x060020FF;
+			default:
+				return 0x06003FE0;
+		}
+	}
+
+	private record InstructionMask(int compareMask, int valueMask) {}
+
+	private InstructionMask r6Masks[] = new InstructionMask[] {
+		new InstructionMask(0x38000000, 0x0000201f),
+		new InstructionMask(0x39000000, 0x0000201f),
+		new InstructionMask(0x3e000000, 0x00001f80),
+		new InstructionMask(0x3f000000, 0x00001f80),
+		new InstructionMask(0x40000000, 0x000020f8),
+		new InstructionMask(0x41000000, 0x000007e0),
+		new InstructionMask(0x42000000, 0x000020f8),
+		new InstructionMask(0x43000000, 0x000007e0),
+		new InstructionMask(0x44000000, 0x000020f8),
+		new InstructionMask(0x45000000, 0x000007e0),
+		new InstructionMask(0x46000000, 0x000020f8),
+		new InstructionMask(0x47000000, 0x000007e0),
+		new InstructionMask(0x6a000000, 0x00001f80),
+		new InstructionMask(0x7c000000, 0x001f2000),
+		new InstructionMask(0x9a000000, 0x00000f60),
+		new InstructionMask(0x9b000000, 0x00000f60),
+		new InstructionMask(0x9c000000, 0x00000f60),
+		new InstructionMask(0x9d000000, 0x00000f60),
+		new InstructionMask(0x9f000000, 0x001f0100),
+		new InstructionMask(0xab000000, 0x0000003f),
+		new InstructionMask(0xad000000, 0x0000003f),
+		new InstructionMask(0xaf000000, 0x00030078),
+		new InstructionMask(0xd7000000, 0x006020e0),
+		new InstructionMask(0xd8000000, 0x006020e0),
+		new InstructionMask(0xdb000000, 0x006020e0),
+		new InstructionMask(0xdf000000, 0x006020e0),
+	};
+
+	private Optional<Integer> findMaskR6Common(int ins) {
+		return Stream.of(r6Masks)
+				.filter(i -> i.compareMask() == (ins & 0xFF000000))
+				.map(i -> i.valueMask())
+				.findAny();
+	}
+
+	/* 
+	 * Find the mask for R_HEX_6_X type relocations
+	 */
+	private Optional<Integer> findMaskR6(int ins) {
+		if (isDuplex(ins)) {
+			return Optional.of(0x03F00000);
+		}
+		return findMaskR6Common(ins);
+	}
+
+	/* 
+	 * Find the mask for R_HEX_16_X type relocations
+	 */
+	private Optional<Integer> findMaskR16(int ins) {
+		if (isDuplex(ins)) {
+			return Optional.of(0x03F00000);
+		}
+		int maskedIns = ins & ~(0b11 << 14);
+
+		switch ((0xff000000 & maskedIns)) {
+			case 0x48000000:
+				return Optional.of(0x061f20ff);
+			case 0x49000000:
+				return Optional.of(0x061f3fe0);
+			case 0x78000000:
+				return Optional.of(0x00df3fe0);
+			case 0xb0000000:
+				return Optional.of(0x0fe03fe0);
+		}
+		switch ((0xff802000 & maskedIns)) {
+			case 0x74000000:
+			case 0x74002000:
+			case 0x74800000:
+			case 0x74802000:
+				return Optional.of(0x00001fe0);
+		}
+
+		return findMaskR6Common(maskedIns);
 	}
 
 }
