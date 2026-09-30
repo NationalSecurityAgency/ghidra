@@ -53,7 +53,13 @@
 
 			<tocdef id="DebuggerListingPlugin" text="Dynamic Listing"
 				sortgroup="k"
-				target="help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html" />
+				target="help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html">
+
+				<tocdef id="DebuggerDecompilerTrackLocationPlugin"
+					text="Tracked Location in the Decompiler"
+					sortgroup="a"
+					target="help/topics/DebuggerDecompilerTrackLocationPlugin/DebuggerDecompilerTrackLocationPlugin.html" />
+			</tocdef>
 
 			<tocdef id="DebuggerDisassemblerPlugin"
 				text="Disassembly and Assembly"

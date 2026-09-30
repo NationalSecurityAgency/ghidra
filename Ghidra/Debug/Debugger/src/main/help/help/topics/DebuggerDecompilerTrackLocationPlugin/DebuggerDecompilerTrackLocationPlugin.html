@@ -1,0 +1,41 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger: Tracked Location in the Decompiler</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="plugin"></A>Debugger: Tracked Location in the Decompiler</H1>
+
+    <P>When active in the Debugger, the <A href=
+    "help/topics/DecompilePlugin/DecompilerIntro.html">Decompiler</A> marks the tracked location,
+    usually the program counter, the same way the static listing does. The location is mapped from
+    the current trace into the decompiled program using the <A href=
+    "help/topics/DebuggerStaticMappingPlugin/DebuggerStaticMappingPlugin.html">Static Mappings</A>.
+    Each token generated from the instruction at that location is given the tracked-register
+    background color, and each line containing one of those tokens has the tracked-register marker
+    in the Debugger's margin. That margin is shared with the <A href=
+    "help/topics/DebuggerBreakpointMarkerPlugin/DebuggerBreakpointMarkerPlugin.html">breakpoint</A>
+    markers. Keep in mind, the relationship between machine instructions and the decompiled code is
+    not always so simple. One instruction may contribute to many lines, or to none at all. If the
+    tracked location is not in the decompiled function, or it cannot be mapped to the program,
+    nothing is marked.</P>
+
+    <P>These marks are independent of the Decompiler's cursor. They follow the debugger as it
+    executes, while the cursor and its highlights remain under the user's control.</P>
+
+    <P>The location tracked is the same as in the primary <A href=
+    "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html">Dynamic Listing</A>, and is
+    configured using its <A href=
+    "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html#track_location">Track
+    Location</A> action. For example, if that listing tracks the stack pointer, or a watch
+    expression, the Decompiler will mark that location instead. If it tracks nothing, the
+    Decompiler marks nothing.</P>
+  </BODY>
+</HTML>
