@@ -13,21 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.gui.memview;
+package ghidra.app.plugin.core.bento;
 
-import ghidra.app.plugin.core.bento.BentoService;
 import ghidra.framework.plugintool.ServiceInfo;
 
 /**
- * The MemviewService provides a general service for displaying objects
- * on time vs. memory axes (a la Boxes)
+ * The BentoService provides a general service for displaying objects (a la Boxes)
  */
-@ServiceInfo(
-	defaultProvider = DebuggerMemviewPlugin.class,
-	description = "Display memory vs. time events"
-)
-public interface MemviewService extends BentoService {
+@ServiceInfo(defaultProvider = BentoServicePlugin.class, description = "Display X vs. Y data")
+public interface BentoService {
 
-	// No additonal members
+	public BentoProvider getDefaultProvider();
+
+	public BentoProvider createProvider();
 
 }
