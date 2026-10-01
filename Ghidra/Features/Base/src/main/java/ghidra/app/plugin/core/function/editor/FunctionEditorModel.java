@@ -1041,13 +1041,19 @@ public class FunctionEditorModel {
 			parser.parseWithNamespace(getFunctionSignature(), signatureFieldText);
 		FunctionDefinitionDataType f = result.functionDefinition();
 
-		// Preserve calling convention and noreturn flag from current model
+		// Preserve no return flag from current model
 		f.setNoReturn(functionData.hasNoReturn());
-		try {
-			f.setCallingConvention(getCallingConventionName());
-		}
-		catch (InvalidInputException e) {
-			// ignore
+
+		// if the parsing did not apply a calling convention, then use the value from the combo box
+		String newName = f.getCallingConventionName();
+		if (newName == null) {
+			try {
+				String ccName = getCallingConventionName();
+				f.setCallingConvention(ccName);
+			}
+			catch (InvalidInputException e) {
+				// ignore
+			}
 		}
 
 		// We allow the user to omit the namespace when parsing the signature.   If the value is 

@@ -25,6 +25,7 @@ import ghidra.app.util.SymbolPath;
 import ghidra.app.util.cparser.C.ParseException;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.listing.FunctionSignature;
 import ghidra.util.data.DataTypeParser;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
@@ -67,18 +68,15 @@ public class FunctionSignatureParser {
 	 * Constructs a SignatureParser for a program.  The destDataTypeManager and/or
 	 * service must be specified.
 	 * 
-	 * @param destDataTypeManager the destination datatype maanger.
+	 * @param destDataTypeManager the destination datatype manager; cannot be null
 	 * @param service the DataTypeManagerService to use for resolving datatypes that
 	 *                can't be found in the given program. Can be null to utilize
 	 *                program based types only.
 	 */
 	public FunctionSignatureParser(DataTypeManager destDataTypeManager,
 			DataTypeQueryService service) {
-		this.destDataTypeManager = destDataTypeManager;
-		if (destDataTypeManager == null && service == null) {
-			throw new IllegalArgumentException(
-				"Destination DataTypeManager or DataTypeManagerService provider required");
-		}
+
+		this.destDataTypeManager = Objects.requireNonNull(destDataTypeManager);
 		if (service != null) {
 			dtmService = new ParserDataTypeManagerService(service);
 		}
@@ -126,20 +124,34 @@ public class FunctionSignatureParser {
 		FunctionDefinitionDataType function =
 			new FunctionDefinitionDataType(name, destDataTypeManager);
 
+		boolean hasCallingConvention = false;
 		String callingConvention = extractCallingConvention(signatureText);
 		if (callingConvention != null) {
-			try {
-				function.setCallingConvention(callingConvention);
-			}
-			catch (InvalidInputException e) {
-				throw new ParseException("Invalid calling convention: " + callingConvention);
-			}
+			doSetCallingConvention(function, callingConvention);
+			hasCallingConvention = true;
 		}
-		function.setReturnType(extractReturnType(signatureText));
-		function.setArguments(extractArguments(signatureText));
-		function.setVarArgs(hasVarArgs(signatureText));
+
+		DataType returnType = extractReturnType(signatureText, hasCallingConvention);
+		function.setReturnType(returnType);
+
+		ParameterDefinition[] args = extractArguments(signatureText);
+		function.setArguments(args);
+
+		boolean hasVarArgs = hasVarArgs(signatureText);
+		function.setVarArgs(hasVarArgs);
 
 		return new FsParseResult(nsPath, function);
+	}
+
+	private void doSetCallingConvention(FunctionDefinitionDataType f, String callingConvention)
+			throws ParseException {
+		try {
+			f.setCallingConvention(callingConvention);
+		}
+		catch (InvalidInputException e) {
+			// should not happen since we validate the calling convention when we extract it
+			throw new ParseException("Invalid calling convention: " + callingConvention);
+		}
 	}
 
 	private void initDataTypeMap(FunctionSignature signature) {
@@ -275,24 +287,26 @@ public class FunctionSignatureParser {
 		return substitute(text, name, replacementName);
 	}
 
-	DataType extractReturnType(String signatureText) throws ParseException, CancelledException {
+	DataType extractReturnType(String signatureText, boolean hasCallingConvention)
+			throws ParseException, CancelledException {
+
 		int parenIndex = signatureText.indexOf('(');
 		if (parenIndex < 0) {
 			throw new ParseException("Can't find return type");
 		}
-		String[] split = StringUtils.split(signatureText.substring(0, parenIndex));
-		if (split.length < 2) {
-			throw new ParseException("Can't find return type");
-		}
-		int endIndex = split.length - 1;
-		if (extractCallingConvention(signatureText) != null) {
-			--endIndex;
-		}
-		if (endIndex == 0) {
-			throw new ParseException("Can't find return type");
-		}
-		String returnTypeName = StringUtils.join(split, " ", 0, endIndex);
 
+		String beforeParens = signatureText.substring(0, parenIndex);
+		String[] parts = StringUtils.split(beforeParens);
+		if (parts.length < 2) {
+			throw new ParseException("Can't find return type");
+		}
+
+		// The function name is the last item.  If there is a calling convention, it will just 
+		// before the function name.
+		int len = parts.length;
+		int end = hasCallingConvention ? len - 2 : len - 1; // exclusive 
+
+		String returnTypeName = StringUtils.join(parts, " ", 0, end);
 		DataType dt = resolveDataType(returnTypeName);
 		if (dt == null) {
 			throw new ParseException("Can't resolve return type: " + returnTypeName);
@@ -305,19 +319,21 @@ public class FunctionSignatureParser {
 		if (parenIndex < 0) {
 			throw new ParseException("Can't find calling convention");
 		}
-		String[] split = StringUtils.split(signatureText.substring(0, parenIndex));
-		if (split.length < 3) {
+
+		String beforeParens = signatureText.substring(0, parenIndex);
+		String[] parts = StringUtils.split(beforeParens);
+		if (parts.length < 3) {
 			return null;
 		}
 
-		String candidate = split[split.length - 2];
-		GenericCallingConvention genericConvention =
-			GenericCallingConvention.getGenericCallingConvention(candidate);
-		if (genericConvention != GenericCallingConvention.unknown) {
-			return genericConvention.getDeclarationName();
-		}
-		if (destDataTypeManager != null &&
-			destDataTypeManager.getKnownCallingConventionNames().contains(candidate)) {
+		// The function name is the last item.  If there is a calling convention, it will be just
+		// before the function name.
+		String candidate = parts[parts.length - 2];
+		Collection<String> dtmCcNames = destDataTypeManager.getKnownCallingConventionNames();
+		Set<String> allNames = new HashSet<>(dtmCcNames);
+		allNames.add(CompilerSpec.CALLING_CONVENTION_unknown);
+		allNames.add(CompilerSpec.CALLING_CONVENTION_default);
+		if (allNames.contains(candidate)) {
 			return candidate;
 		}
 		return null;
