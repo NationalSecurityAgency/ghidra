@@ -1929,24 +1929,24 @@ void PrintC::pushAnnotation(const Varnode *vn,const PcodeOp *op)
     int4 userind = (int4)op->getIn(0)->getOffset();
     size = glb->userops.getOp(userind)->extractAnnotationSize(vn, op);
   }
-  MapEntry *entry;
-  if (size != 0)
-    entry = symScope->queryContainer(vn->getAddr(),size,op->getAddr());
-  else {
-    entry = symScope->queryContainer(vn->getAddr(),1,op->getAddr());
-    if (entry != (MapEntry *)0)
+  MapEntry *entry = symScope->queryContainer(vn->getAddr(),1,op->getAddr());
+  if (size == 0) {
+    if (entry != (MapEntry *)0 && entry->getFirst() == vn->getOffset())
       size = entry->getSize();
     else
       size = vn->getSize();
   }
   
   if (entry != (MapEntry *)0) {
-    if (entry->getSize() == size)
+    int4 symboloff = vn->getOffset() - entry->getFirst();
+    if (symboloff == 0 && entry->getSize() == size) {
       pushSymbol(entry->getSymbol(),vn,op);
-    else {
-      int4 symboloff = vn->getOffset() - entry->getFirst();
+    }
+    else if (symboloff + size <= entry->getSize()) {
       pushPartialSymbol(entry->getSymbol(),symboloff,size,vn,op,-1,false);
     }
+    else
+      pushMismatchSymbol(entry->getSymbol(), symboloff, size, vn, op);
   }
   else {
     string regname = glb->translate->getRegisterName(vn->getSpace(),vn->getOffset(),size);
@@ -1964,11 +1964,15 @@ void PrintC::pushAnnotation(const Varnode *vn,const PcodeOp *op)
   }
 }
 
-void PrintC::pushSymbol(const Symbol *sym,const Varnode *vn,const PcodeOp *op)
+/// \brief Get the standard display color associated with a Symbol
+///
+/// \param sym is the Symbol
+/// \return the display color
+EmitMarkup::syntax_highlight PrintC::getSymbolHighlight(const Symbol *sym)
 
 {
   EmitMarkup::syntax_highlight tokenColor;
-  if (sym->isVolatile())
+ if (sym->isVolatile())
     tokenColor = EmitMarkup::special_color;
   else if (sym->getScope()->isGlobal())
     tokenColor = EmitMarkup::global_color;
@@ -1978,6 +1982,13 @@ void PrintC::pushSymbol(const Symbol *sym,const Varnode *vn,const PcodeOp *op)
     tokenColor = EmitMarkup::const_color;
   else
     tokenColor = EmitMarkup::var_color;
+  return tokenColor;
+}
+
+void PrintC::pushSymbol(const Symbol *sym,const Varnode *vn,const PcodeOp *op)
+
+{
+  EmitMarkup::syntax_highlight tokenColor = getSymbolHighlight(sym);
   pushSymbolScope(sym);
   if (sym->hasMergeProblems() && vn != (Varnode *)0) {
     HighVariable *high = vn->getHigh();
@@ -2132,6 +2143,7 @@ void PrintC::pushMismatchSymbol(const Symbol *sym,int4 off,int4 sz,
 				const Varnode *vn,const PcodeOp *op)
 {
   if (off==0) {
+    EmitMarkup::syntax_highlight tokenColor = getSymbolHighlight(sym);
   // The most common situation is when a user sees a reference
   // to a variable and forces a symbol to be there but guesses
   // the type (or size) incorrectly
@@ -2140,7 +2152,7 @@ void PrintC::pushMismatchSymbol(const Symbol *sym,int4 off,int4 sz,
   // We prepend an underscore to indicate a close
   // but not quite match
     string nm = '_'+sym->getDisplayName();
-    pushAtom(Atom(nm,vartoken,EmitMarkup::var_color,op,vn));
+    pushAtom(Atom(nm,vartoken,tokenColor,op,vn));
   }
   else
     pushUnnamedLocation(vn->getAddr(),vn,op);
