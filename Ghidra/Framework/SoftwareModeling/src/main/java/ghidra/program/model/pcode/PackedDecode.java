@@ -120,9 +120,6 @@ public class PackedDecode implements Decoder, Closeable {
 		curPos = new LinkedByteBuffer.Position();
 		endPos = new LinkedByteBuffer.Position();
 		open(Integer.MAX_VALUE, desc);
-		startPos.buffer = inStream;
-		curPos.buffer = inStream;
-		endPos.buffer = inStream;
 		inStream.ingestStreamAsNeeded(stream, endPos);
 	}
 
@@ -224,6 +221,9 @@ public class PackedDecode implements Decoder, Closeable {
 	@Override
 	public void open(int max, String desc) {
 		inStream = new LinkedByteBuffer(max, ELEMENT_END, desc);
+		startPos.buffer = inStream;
+		curPos.buffer = inStream;
+		endPos.buffer = inStream;
 	}
 
 	/**
