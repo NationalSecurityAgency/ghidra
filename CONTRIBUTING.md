@@ -85,6 +85,10 @@ first, consider the following tips to ensure a smooth process when submitting a 
   your patch, and may even propose changes. Please accept this feedback constructively, and not as a
   rejection of your proposed change.
 
+- If you want to update your pull request branch with the latest commits to `master`, please rebase
+  your branch onto `master`, rather than merging it into your branch. Then, force-push your rebased
+  branch. Note that a simple push will fail after a rebase, it has to be a "force-push".
+
 ## Review
 - We welcome code reviews from anyone. A committer is required to formally accept and merge the 
   changes.
