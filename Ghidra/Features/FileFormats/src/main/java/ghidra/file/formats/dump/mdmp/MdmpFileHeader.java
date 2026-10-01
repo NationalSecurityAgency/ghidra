@@ -29,7 +29,7 @@ public class MdmpFileHeader implements StructConverter {
 	private int signature;
 	private int version;
 	private int numberOfStreams;
-	private long streamDirectoryRVA;
+	private int streamDirectoryRVA;
 	private int checkSum;
 	private int timeDateStamp;
 	private long flags;
@@ -54,6 +54,19 @@ public class MdmpFileHeader implements StructConverter {
 		setCheckSum(reader.readNextInt());
 		setTimeDateStamp(reader.readNextInt());
 		setFlags(reader.readNextLong());
+		validateNumberOfStreams();
+	}
+
+	private void validateNumberOfStreams() throws IOException {
+		long numberOfStreamsUnsigned = Integer.toUnsignedLong(numberOfStreams);
+		long streamDirectoryRvaUnsigned = Integer.toUnsignedLong(streamDirectoryRVA);
+
+		long requiredBytes = numberOfStreamsUnsigned * Directory.STRUCTURE_SIZE;
+		long requiredOffset = streamDirectoryRvaUnsigned + requiredBytes;
+
+		if (requiredOffset < streamDirectoryRvaUnsigned || requiredOffset > reader.length()) {
+			throw new IOException("Invalid MDMP header: Number of streams exceeds file bounds.");
+		}
 	}
 
 	/**
@@ -105,7 +118,7 @@ public class MdmpFileHeader implements StructConverter {
 		return numberOfStreams;
 	}
 
-	public void setStreamDirectoryRVA(long streamDirectoryRVA) {
+	public void setStreamDirectoryRVA(int streamDirectoryRVA) {
 		this.streamDirectoryRVA = streamDirectoryRVA;
 	}
 
