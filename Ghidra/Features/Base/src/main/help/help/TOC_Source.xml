@@ -334,6 +334,7 @@
                 <tocdef id="Scalars" sortgroup="e" text="Scalars" target="help/topics/ScalarSearchPlugin/The_Scalar_Table.htm" />
                 <tocdef id="Instruction Patterns" sortgroup="f" text="Instruction Patterns" target="help/topics/Search/Search_Instruction_Patterns.htm" />
                 <tocdef id="Address Tables" sortgroup="g" text="Address Tables" target="help/topics/Search/Search_for_AddressTables.htm" />
+        		<tocdef id="Bento View" text="Bento View"  target="help/topics/BentoServicePlugin/BentoServicePlugin.html" />
                 <tocdef id="Direct References" sortgroup="h" text="Direct References" target="help/topics/Search/Search_for_DirectReferences.htm" />
                 <tocdef id="Search Results Window" sortgroup="i" text="Query Results Window" target="help/topics/Search/Query_Results_Dialog.htm" />
             </tocdef>

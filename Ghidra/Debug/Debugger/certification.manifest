@@ -9,6 +9,7 @@ README.md||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
 data/debugger.theme.properties||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
+src/main/help/help/topics/BentoServicePlugin/BentoServicePlugin.html||GHIDRA||||END|
 src/main/help/help/topics/BreakpointTimelinePlugin/BreakpointTimelinePlugin.html||GHIDRA||||END|
 src/main/help/help/topics/BreakpointTimelinePlugin/images/BreakpointTimelinePlugin.png||GHIDRA||||END|
 src/main/help/help/topics/BreakpointTimelinePlugin/images/BreakpointTimelinePluginNoGrid.png||GHIDRA||||END|

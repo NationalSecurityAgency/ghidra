@@ -15,19 +15,14 @@
  */
 package ghidra.app.plugin.core.debug.gui.memview;
 
-import ghidra.app.plugin.core.bento.BentoService;
-import ghidra.framework.plugintool.ServiceInfo;
+import ghidra.app.plugin.core.bento.BoundedObject;
+import ghidra.trace.model.Lifespan;
 
-/**
- * The MemviewService provides a general service for displaying objects
- * on time vs. memory axes (a la Boxes)
- */
-@ServiceInfo(
-	defaultProvider = DebuggerMemviewPlugin.class,
-	description = "Display memory vs. time events"
-)
-public interface MemviewService extends BentoService {
+public class LifespanBoundedObject extends BoundedObject {
 
-	// No additonal members
+	public LifespanBoundedObject(Lifespan span) {
+		super(span.lmin(), span.lmax());
+		this.obj = span;
+	}
 
 }
