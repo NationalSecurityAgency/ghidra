@@ -1,0 +1,115 @@
+<!DOCTYPE doctype>
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Accessibility</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+    <META name="generator" content="Microsoft FrontPage 4.0">
+  </HEAD>
+
+  <BODY>
+    <H1 align="center">Ghidra Accessibility</H1>
+
+	<BLOCKQUOTE>
+    <P>Ghidra strives to be as accessible as possible to all users, including those relying on
+    keyboard-only operation and screen readers. This document summarizes built-in accessibility
+    features, recommended usage patterns, and known limitations.</P>
+
+    <H2>Screen-Reader Guidance</H2>
+
+	<BLOCKQUOTE>
+    <P>Most of Ghidra's UI is built in Java/Swing, so screen reader behavior may differ from a web
+    browser. To get the best results:</P>
+
+    <UL>
+      <LI>Use a modern Java-aware screen reader (e.g. NVDA on Windows).</LI>
+
+      <LI>Enable "focus following caret" or "announce focus changes" so you hear when UI components
+      gain keyboard focus.</LI>
+
+      <LI>Pause briefly after opening new dialogs or views, as Swing can sometimes batch
+      events.</LI>
+    </UL>
+	</BLOCKQUOTE>
+
+    <H2>Keyboard Navigation</H2>
+
+	<BLOCKQUOTE>
+    <P>Ghidra provides comprehensive keyboard navigation support to traverse UI components,
+    windows, and providers. For full details, including focus traversal and navigation shortcuts,
+    see the <A href="help/topics/KeyboardNavigation/KeyboardNavigation.html">Keyboard
+    Navigation</A> topic.</P>
+	</BLOCKQUOTE>
+	
+	
+    <H2>Quick Action Dialog (Ctrl-3)</H2>
+
+	<BLOCKQUOTE>
+    <P>Ghidra's 
+		<A href="help/topics/KeyboardNavigation/KeyboardNavigation.html#ActionChooserDialog">
+		Quick Action Dialog</A> provides a fast, keyboard-first way to find and run any action.
+    Press <B>Ctrl-3</B> to open it, then:</P>
+
+    <UL>
+      <LI>Begin typing any portion of an action name</LI>
+
+      <LI>Use <B>Up</B>/<B>Down</B> arrows to navigate the list.</LI>
+
+	  <LI>Repeat <B>Ctrl + 3</B> to expand from local to global actions.</LI>
+	  
+      <LI>Press <B>Enter</B> to execute the selected command.</LI>
+    </UL>
+
+    <P>The dialog remembers recently used actions across sessions for quick recall.  This feature is 
+	invaluable for screen-reader users or anyone who prefers keyboard navigation over menus.</P>
+	</BLOCKQUOTE>
+
+    <H2>Script Launcher (Ctrl-Shift-S)</H2>
+
+	<BLOCKQUOTE>
+    <P>Ghidra's 
+		<A href="help/topics/GhidraScriptMgrPlugin/GhidraScriptMgrPlugin.htm#Script_Quick_Launch">
+		Script Quick Launcher</A> provides a quick way to run desired scripts. 
+		Press <B>Ctrl-Shift-S</B> to open it, then: 
+	</P>
+
+    <UL>
+      <LI>Begin typing your script's name (wildcards and substrings allowed).</LI>
+
+      <LI>Navigate the filtered list with Up/Down, then Enter to run.</LI>
+
+    </UL>
+	
+	<P>The dialog remembers recentlyl used scripts for quick recall.</P>
+	
+	</BLOCKQUOTE>
+	
+
+
+    <H2>Known Limitations</H2>
+
+	<BLOCKQUOTE>
+    <UL>
+      <LI>Swing's accessibility support is not as mature as HTML/ARIA. You may encounter missing or
+      stale descriptions, focus swapping, or limited screen-reader gestures.</LI>
+
+      <LI>Browser-style reporting (tabular UI state summaries) is not available.</LI>
+    </UL>
+	</BLOCKQUOTE>
+
+	</BLOCKQUOTE>
+
+	<P class="relatedtopic">Related Topics:</P>
+    <UL>
+      <LI><A href="help/topics/KeyboardNavigation/KeyboardNavigation.html">Keyboard
+      Navigation</A></LI>
+
+      <LI><A href="help/topics/GhidraScriptMgrPlugin/GhidraScriptMgrPlugin.htm">Script
+      Manager</A></LI>
+    </UL><BR>
+  </BODY>
+</HTML>

@@ -284,21 +284,21 @@ public abstract class AbstractToolSavingTest extends AbstractGhidraHeadedIntegra
 	protected void dumpToolFile(String name) throws IOException {
 		File file = ToolUtils.getToolFile(name);
 		List<String> lines = FileUtilities.getLines(file);
-		System.err.println("Tool contents '" + name + "': ");
+		Msg.debug(this, "Tool contents '" + name + "': ");
 		for (String line : lines) {
-			System.err.println(line);
+			Msg.debug(this, line);
 		}
 	}
 
 	protected void printToolXmlContainting(String name, String text) throws IOException {
 		File file = ToolUtils.getToolFile(name);
 		List<String> lines = FileUtilities.getLines(file);
-		System.err.println("Tool '" + file + "'\n\t- lines containing '" + text + "': ");
+		Msg.debug(this, "Tool '" + file + "'\n\t- lines containing '" + text + "': ");
 		Pattern p = Pattern.compile(".*" + Pattern.quote(text) + ".*");
 		for (String line : lines) {
 			Matcher m = p.matcher(line);
 			if (m.matches()) {
-				System.err.println(line);
+				Msg.debug(this, line);
 			}
 		}
 	}

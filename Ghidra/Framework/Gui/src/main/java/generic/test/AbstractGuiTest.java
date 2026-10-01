@@ -574,7 +574,6 @@ public class AbstractGuiTest extends AbstractGenericTest {
 	public static void moveMouse(Component comp, int x, int y) {
 		postEvent(new MouseEvent(comp, MouseEvent.MOUSE_MOVED, System.currentTimeMillis(), 0, x, y,
 			0, false));
-
 	}
 
 	@SuppressWarnings("deprecation")
@@ -1109,12 +1108,19 @@ public class AbstractGuiTest extends AbstractGenericTest {
 		System.gc();
 
 		Runtime runTime = Runtime.getRuntime();
-		System.out.println("----------------------");
-		System.out.printf("Max:   %,10dK\n", runTime.maxMemory() / 1000);
-		System.out.printf("Total: %,10dK\n", runTime.totalMemory() / 1000);
-		System.out.printf("Free:  %,10dK\n", runTime.freeMemory() / 1000);
-		System.out.printf("Used:  %,10dK\n",
-			((runTime.totalMemory() - runTime.freeMemory()) / 1000));
+		long max = runTime.maxMemory() / 1000;
+		long total = runTime.totalMemory() / 1000;
+		long free = runTime.freeMemory() / 1000;
+		long used = (runTime.totalMemory() - runTime.freeMemory()) / 1000;
+
+		String msg = """
+				----------------------
+				Max:   %,10dK
+				Total: %,10dK
+				Free:  %,10dK
+				Used:  %,10dK
+				""".formatted(max, total, free, used);
+		Msg.debug(AbstractGuiTest.class, msg);
 	}
 
 //==================================================================================================
@@ -1181,7 +1187,7 @@ public class AbstractGuiTest extends AbstractGenericTest {
 		long start = System.nanoTime();
 		boolean wasEverBusy = waitForSwing(set, true);
 		long end = System.nanoTime();
-		Msg.out("\twaitForSwing() - " +
+		Msg.debug(AbstractGuiTest.class, "\twaitForSwing() - " +
 			TimeUnit.MILLISECONDS.convert(end - start, TimeUnit.NANOSECONDS));
 		*/
 

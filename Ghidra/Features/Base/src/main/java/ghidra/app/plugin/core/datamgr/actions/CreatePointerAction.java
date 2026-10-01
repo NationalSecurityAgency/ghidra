@@ -96,7 +96,7 @@ public class CreatePointerAction extends DockingAction {
 			return false;
 		}
 
-		ArchiveNode archiveNode = node.getArchiveNode();
+		DataTypeStoreNode archiveNode = node.getArchiveNode();
 		if (archiveNode == null) {
 			// this can happen as the tree is changing
 			return false;

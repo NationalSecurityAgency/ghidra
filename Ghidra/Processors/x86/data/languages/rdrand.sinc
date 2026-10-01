@@ -12,11 +12,12 @@ macro rdflags(){
 	rdflags();
 	
 }
-:RDRAND Rmr32     is vexMode=0 & opsize=1 & byte=0x0f; byte=0xC7; mod=3 & Rmr32 & reg_opcode=6 
+:RDRAND Rmr32     is vexMode=0 & opsize=1 & byte=0x0f; byte=0xC7; mod=3 & Rmr32 & check_Reg32_dest & reg_opcode=6 
 { 
 	Rmr32 = rdrand(); 
 	CF=rdrandIsValid();
 	rdflags();
+	build check_Reg32_dest;
 }
 @ifdef IA64
 :RDRAND Rmr64     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & $(REX_W) & byte=0x0f; byte=0xC7; mod=3 & Rmr64 & reg_opcode=6 
@@ -35,11 +36,12 @@ define pcodeop rdseedIsValid;
 	CF=rdseedIsValid();
 	rdflags();
 }
-:RDSEED Rmr32     is vexMode=0 & opsize=1 & byte=0x0f; byte=0xC7; mod=3 & Rmr32 & reg_opcode=7 
+:RDSEED Rmr32     is vexMode=0 & opsize=1 & byte=0x0f; byte=0xC7; mod=3 & Rmr32 & check_Rmr32_dest & reg_opcode=7 
 { 
 	Rmr32 = rdseed(); 
 	CF=rdseedIsValid();
 	rdflags();
+	build check_Rmr32_dest;
 }
 @ifdef IA64
 :RDSEED Rmr64     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & $(REX_W) & byte=0x0f; byte=0xC7; mod=3 & Rmr64 & reg_opcode=7 

@@ -231,7 +231,7 @@ public class DataTypeNode extends DataTypeTreeNode {
 	}
 
 	@Override
-	public ArchiveNode getArchiveNode() {
+	public DataTypeStoreNode getArchiveNode() {
 		GTreeNode parent = getParent();
 		if (parent == null) {
 			return null; // could happen during tree mutations
@@ -242,7 +242,7 @@ public class DataTypeNode extends DataTypeTreeNode {
 
 	@Override
 	public boolean isModifiable() {
-		ArchiveNode archiveNode = getArchiveNode();
+		DataTypeStoreNode archiveNode = getArchiveNode();
 		return archiveNode != null && archiveNode.isModifiable();
 	}
 

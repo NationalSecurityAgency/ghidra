@@ -42,16 +42,6 @@ public interface TraceRmiLaunchOpinion extends ExtensionPoint {
 	}
 
 	/**
-	 * Check if a change in the given option requires a refresh of offers
-	 * 
-	 * @param optionName the name of the option that changed
-	 * @return true to refresh, false otherwise
-	 */
-	default boolean requiresRefresh(String optionName) {
-		return false;
-	}
-
-	/**
 	 * Generate or retrieve a collection of offers based on the current program.
 	 * 
 	 * <p>

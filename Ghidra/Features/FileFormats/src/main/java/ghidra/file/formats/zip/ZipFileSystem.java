@@ -187,7 +187,7 @@ public class ZipFileSystem extends AbstractFileSystem<ZipArchiveEntry> {
 			}, monitor);
 	}
 
-	private void indexFiles(TaskMonitor monitor) throws CancelledException {
+	private void indexFiles(TaskMonitor monitor) throws CancelledException, IOException {
 		int zipIndex = 0;
 		for (ZipArchiveEntry zipEntry : entries) {
 			monitor.checkCancelled();

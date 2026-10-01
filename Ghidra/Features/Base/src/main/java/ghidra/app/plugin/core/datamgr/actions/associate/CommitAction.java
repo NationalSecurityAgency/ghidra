@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,8 +19,7 @@ import java.util.List;
 
 import docking.action.MenuData;
 import ghidra.app.plugin.core.datamgr.*;
-import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
-import ghidra.app.plugin.core.datamgr.tree.ArchiveNode;
+import ghidra.app.plugin.core.datamgr.tree.DataTypeStoreNode;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.SourceArchive;
 import ghidra.util.HelpLocation;
@@ -29,11 +28,11 @@ public class CommitAction extends SyncAction {
 
 	public static final String MENU_NAME = "Commit Data Types To";
 
-	public CommitAction(DataTypeManagerPlugin plugin, DataTypeManagerHandler dataTypeManagerHandler,
-			DataTypeManager dtm, ArchiveNode archiveNode, SourceArchive sourceArchive,
+	public CommitAction(DataTypeManagerPlugin plugin, ArchiveManager archiveManager,
+			DataTypeManager dtm, DataTypeStoreNode archiveNode, SourceArchive sourceArchive,
 			boolean isEnabled) {
 
-		super("Commit Changes To Archive", plugin, dataTypeManagerHandler, dtm, archiveNode,
+		super("Commit Changes To Archive", plugin, archiveManager, dtm, archiveNode,
 			sourceArchive, isEnabled);
 		setPopupMenuData(new MenuData(new String[] { MENU_NAME, sourceArchive.getName() }));
 		setHelpLocation(new HelpLocation(plugin.getName(), getHelpTopic()));

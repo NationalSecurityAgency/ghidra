@@ -233,10 +233,6 @@ public class MemviewPanel extends JPanel implements MouseListener, MouseMotionLi
 			provider.refresh();
 		}
 
-		if (e.getButton() == MouseEvent.BUTTON2) {
-			System.err.println("BUTTON2");
-		}
-
 		if (e.getButton() == MouseEvent.BUTTON3) {
 			ctrlPressed = true;
 			enableDrag = true;

@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,9 +15,9 @@
  */
 package ghidra.app.util.bin.format.xcoff;
 
-import ghidra.app.util.bin.BinaryReader;
-
 import java.io.IOException;
+
+import ghidra.app.util.bin.BinaryReader;
 
 public class XCoffSymbol {
 	private final static char NL = '\n';
@@ -59,10 +58,7 @@ public class XCoffSymbol {
 	}
 
 	public boolean isLongName() {
-		return (n_name[0] == 0 && 
-				n_name[1] == 0 &&
-				n_name[2] == 0 &&
-				n_name[3] == 0);
+		return n_name[0] == 0 && n_name[1] == 0 && n_name[2] == 0 && n_name[3] == 0;
 	}
 
 	public String getName() {
@@ -70,29 +66,38 @@ public class XCoffSymbol {
 	}
 
 	public boolean isFunction() {
-		return ((n_sclass == XCoffSymbolStorageClass.C_EXT || n_sclass == XCoffSymbolStorageClass.C_HIDEXT || n_sclass == XCoffSymbolStorageClass.C_WEAKEXT) && 
-				n_scnum == _optionalHeader.getSectionNumberForText() &&
-				!n_name.equals(XCoffSectionHeaderNames._TEXT));
+		String name = getName();
+		return (n_sclass == XCoffSymbolStorageClass.C_EXT ||
+			n_sclass == XCoffSymbolStorageClass.C_HIDEXT ||
+			n_sclass == XCoffSymbolStorageClass.C_WEAKEXT) &&
+			n_scnum == _optionalHeader.getSectionNumberForText() &&
+			!name.equals(XCoffSectionHeaderNames._TEXT);
 	}
 
 	public boolean isVariable() {
-		return ((n_sclass == XCoffSymbolStorageClass.C_EXT || n_sclass == XCoffSymbolStorageClass.C_HIDEXT || n_sclass == XCoffSymbolStorageClass.C_WEAKEXT) &&
-				(n_scnum == _optionalHeader.getSectionNumberForBss() || n_scnum == _optionalHeader.getSectionNumberForData()) &&
-				x_smclas != XCoffSymbolStorageClassCSECT.XMC_TC0 && x_smclas != XCoffSymbolStorageClassCSECT.XMC_TC && x_smclas != XCoffSymbolStorageClassCSECT.XMC_DS &&
-				!n_name.equals(XCoffSectionHeaderNames._BSS) &&
-				!n_name.equals(XCoffSectionHeaderNames._DATA));
+		String name = getName();
+		return (n_sclass == XCoffSymbolStorageClass.C_EXT ||
+			n_sclass == XCoffSymbolStorageClass.C_HIDEXT ||
+			n_sclass == XCoffSymbolStorageClass.C_WEAKEXT) &&
+			(n_scnum == _optionalHeader.getSectionNumberForBss() ||
+				n_scnum == _optionalHeader.getSectionNumberForData()) &&
+			x_smclas != XCoffSymbolStorageClassCSECT.XMC_TC0 &&
+			x_smclas != XCoffSymbolStorageClassCSECT.XMC_TC &&
+			x_smclas != XCoffSymbolStorageClassCSECT.XMC_DS &&
+			!name.equals(XCoffSectionHeaderNames._BSS) &&
+			!name.equals(XCoffSectionHeaderNames._DATA);
 	}
 
 	@Override
     public String toString() {
-		StringBuffer buffer = new StringBuffer();
-		buffer.append("SYMBOL TABLE ENTRY").append(NL);
-		buffer.append("n_value = ").append(n_value).append(NL);
-		buffer.append("n_scnum = ").append(n_scnum).append(NL);
-		buffer.append("n_type = ").append(n_type).append(NL);
-		buffer.append("n_sclass = ").append(n_sclass).append(NL);
-		buffer.append("n_numaux = ").append(n_numaux).append(NL);
-		return buffer.toString();
+		StringBuilder sb = new StringBuilder();
+		sb.append("SYMBOL TABLE ENTRY").append(NL);
+		sb.append("n_value = ").append(n_value).append(NL);
+		sb.append("n_scnum = ").append(n_scnum).append(NL);
+		sb.append("n_type = ").append(n_type).append(NL);
+		sb.append("n_sclass = ").append(n_sclass).append(NL);
+		sb.append("n_numaux = ").append(n_numaux).append(NL);
+		return sb.toString();
 	}
 
 }

@@ -19,17 +19,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.io.*;
+import java.lang.classfile.*;
+import java.lang.classfile.instruction.*;
 import java.lang.invoke.MethodHandles;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import org.objectweb.asm.*;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.util.TraceClassVisitor;
 
 import generic.Unique;
 import ghidra.app.plugin.assembler.*;
@@ -52,8 +50,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.util.DefaultLanguageService;
-import ghidra.util.NumericUtilities;
-import ghidra.util.SystemUtilities;
+import ghidra.util.*;
 
 @SuppressWarnings("javadoc")
 public abstract class AbstractJitCodeGeneratorTest extends AbstractJitTest {
@@ -69,7 +66,7 @@ public abstract class AbstractJitCodeGeneratorTest extends AbstractJitTest {
 		if (!DEBUG_ENABLED) {
 			return;
 		}
-		System.out.println(program);
+		Msg.debug(AbstractJitCodeGeneratorTest.class, program.format(true));
 	}
 
 	public static void dumpClass(byte[] classbytes) throws Exception {
@@ -83,9 +80,9 @@ public abstract class AbstractJitCodeGeneratorTest extends AbstractJitTest {
 		new ProcessBuilder("javap", "-c", "-l", tmp.getPath()).inheritIO().start().waitFor();
 	}
 
-	record Translation(PcodeProgram program, MethodNode init, MethodNode run, JitPcodeThread thread,
-			TestUseropLibrary library, JitBytesPcodeExecutorState state,
-			JitCompiledPassageClass passageCls, JitCompiledPassage passage) {
+	record Translation(PcodeProgram program, MethodModel init, MethodModel run,
+			JitPcodeThread thread, TestUseropLibrary library, JitBytesPcodeExecutorState state,
+			byte[] classbytes, JitCompiledPassageClass passageCls, JitCompiledPassage passage) {
 
 		public void runErr(Class<? extends Throwable> excType, String message) {
 			try {
@@ -174,6 +171,36 @@ public abstract class AbstractJitCodeGeneratorTest extends AbstractJitTest {
 				int blockId) {
 			return Map.entry(new AddrCtx(ctx, addr), new EntryPointPrototype(passageCls, blockId));
 		}
+
+		public PcodeOp uniqueOp(Predicate<PcodeOp> predicate) {
+			return Unique.assertOne(program.getCode().stream().filter(predicate));
+		}
+
+		public PcodeOp uniqueOp(int opcode) {
+			return uniqueOp(op -> op.getOpcode() == opcode);
+		}
+
+		public PcodeOp uniqueCopyTo(String regname) {
+			return uniqueOp(op -> op.getOpcode() == PcodeOp.COPY &&
+				op.getOutput().toString(program.getLanguage()).equals(regname));
+		}
+
+		public List<CodeElement> codeForOp(ClassModel cm, PcodeOp op) {
+			int idx = program.getCode().indexOf(op);
+			if (idx == -1) {
+				throw new AssertionError("Op %s not part of program %s".formatted(op, program));
+			}
+			int lineno = idx + 1;
+			return cm.methods()
+					.stream()
+					.filter(m -> "run".equals(m.methodName().stringValue()))
+					.limit(1)
+					.flatMap(rm -> rm.code().stream())
+					.flatMap(code -> code.elementStream())
+					.dropWhile(ce -> !(ce instanceof LineNumber l) || l.line() != lineno)
+					.takeWhile(ce -> !(ce instanceof LineNumber l) || l.line() == lineno)
+					.toList();
+		}
 	}
 
 	public Translation translateProgram(PcodeProgram program, JitPcodeThread thread)
@@ -184,22 +211,20 @@ public abstract class AbstractJitCodeGeneratorTest extends AbstractJitTest {
 		JitAnalysisContext context = makeContext(program, thread);
 		JitControlFlowModel cfm = new JitControlFlowModel(context);
 		JitDataFlowModel dfm = new JitDataFlowModel(context, cfm);
-		JitVarScopeModel vsm = new JitVarScopeModel(cfm, dfm);
-		JitTypeModel tm = new JitTypeModel(dfm);
-		JitAllocationModel am = new JitAllocationModel(context, dfm, vsm, tm);
-		JitOpUseModel oum = new JitOpUseModel(context, cfm, dfm, vsm);
+		JitReachabilityModel rm = new JitReachabilityModel(context, cfm, dfm);
+		JitVarScopeModel vsm = new JitVarScopeModel(cfm, dfm, rm);
+		JitOpUseModel oum = new JitOpUseModel(context, cfm, dfm, rm, vsm);
+		JitTypeModel tm = new JitTypeModel(dfm, oum);
+		JitAllocationModel am = new JitAllocationModel(context, dfm, vsm, oum, tm);
 
 		JitCodeGenerator<?> gen =
-			new JitCodeGenerator<>(MethodHandles.lookup(), context, cfm, dfm, vsm, tm, am, oum);
+			new JitCodeGenerator<>(MethodHandles.lookup(), context, cfm, dfm, rm, vsm, tm, am, oum);
 
 		byte[] classbytes = gen.generate();
 
 		dumpClass(classbytes);
 
-		ClassNode cn = new ClassNode(Opcodes.ASM9);
-		ClassReader cr = new ClassReader(classbytes);
-		ClassVisitor cv = DEBUG_ENABLED ? new TraceClassVisitor(cn, DEBUG_WRITER) : cn;
-		cr.accept(cv, 0);
+		ClassModel cm = ClassFile.of().parse(classbytes);
 
 		// Have the JVM validate this thing
 		JitBytesPcodeExecutorState state = thread.getState();
@@ -207,16 +232,18 @@ public abstract class AbstractJitCodeGeneratorTest extends AbstractJitTest {
 			JitCompiledPassageClass.load(MethodHandles.lookup(), classbytes);
 		JitCompiledPassage passage = passageCls.createInstance(thread);
 
-		assertEquals(Set.of(
-			"<clinit>", "<init>", "run", "thread"),
-			cn.methods.stream().map(m -> m.name).collect(Collectors.toSet()));
+		assertEquals(Set.of("<clinit>", "<init>", "run", "thread"), cm.methods()
+				.stream()
+				.map(m -> m.methodName().stringValue())
+				.collect(Collectors.toSet()));
 
-		MethodNode initMethod =
-			Unique.assertOne(cn.methods.stream().filter(m -> "<init>".equals(m.name)));
-		MethodNode runMethod =
-			Unique.assertOne(cn.methods.stream().filter(m -> "run".equals(m.name)));
+		MethodModel initMethod = Unique.assertOne(
+			cm.methods().stream().filter(m -> "<init>".equals(m.methodName().stringValue())));
+		MethodModel runMethod = Unique.assertOne(
+			cm.methods().stream().filter(m -> "run".equals(m.methodName().stringValue())));
 		return new Translation(program, initMethod, runMethod, thread,
-			(TestUseropLibrary) thread.getMachine().getUseropLibrary(), state, passageCls, passage);
+			(TestUseropLibrary) thread.getMachine().getUseropLibrary(), state, classbytes,
+			passageCls, passage);
 	}
 
 	public static class TestUseropLibrary extends AnnotatedPcodeUseropLibrary<byte[]> {
@@ -287,19 +314,33 @@ public abstract class AbstractJitCodeGeneratorTest extends AbstractJitTest {
 
 		@PcodeUserop(functional = true)
 		public int tap_int(int a) {
-			System.err.println("tap: %x".formatted(a));
 			return a;
 		}
 	}
 
-	public static class TestJitPcodeEmulator extends JitPcodeEmulator {
+	record CountInvocation(String threadName, int instructions, int trailingOps) {}
+
+	protected final List<CountInvocation> countInvocations = new ArrayList<>();
+
+	public class TestJitPcodeEmulator extends JitPcodeEmulator {
 		public TestJitPcodeEmulator(Language language) {
-			super(language, new JitConfiguration(), MethodHandles.lookup());
+			super(language, createConfiguration(), MethodHandles.lookup());
 		}
 
 		@Override
 		protected PcodeUseropLibrary<byte[]> createUseropLibrary() {
 			return new TestUseropLibrary();
+		}
+
+		@Override
+		protected JitPcodeThread createThread(String name) {
+			return new JitPcodeThread(name, this) {
+				@Override
+				public void count(int instructions, int trailingOps) {
+					super.count(instructions, trailingOps);
+					countInvocations.add(new CountInvocation(name, instructions, trailingOps));
+				}
+			};
 		}
 	}
 
@@ -437,5 +478,16 @@ public abstract class AbstractJitCodeGeneratorTest extends AbstractJitTest {
 			}
 		}
 		return translateBuffer(buf, buf.getEntry(), injects);
+	}
+
+	public static Instruction firstControlFlowInstruction(List<CodeElement> code) {
+		return (Instruction) code.stream()
+				.filter(ce -> ce instanceof BranchInstruction ||
+					ce instanceof ReturnInstruction ||
+					ce instanceof ThrowInstruction ||
+					ce instanceof LookupSwitchInstruction ||
+					ce instanceof TableSwitchInstruction)
+				.findFirst()
+				.orElseThrow();
 	}
 }

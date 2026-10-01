@@ -58,7 +58,7 @@ public class DomainFileNode extends DataTreeNode {
 	private volatile String toolTipText;
 	private AtomicInteger refreshCount = new AtomicInteger();
 
-	private DomainFileFilter filter; // relavent when expand folder-link which is a file
+	private DomainFileFilter filter; // relevant when expand folder-link which is a file
 
 	private static final SimpleDateFormat formatter = new SimpleDateFormat("yyyy MMM dd hh:mm aaa");
 
@@ -112,6 +112,11 @@ public class DomainFileNode extends DataTreeNode {
 	 */
 	public boolean isFolderLink() {
 		return isFolderLink;
+	}
+
+	@Override
+	protected NodeType getNodeType() {
+		return isFolderLink ? NodeType.FOLDER_LINK : NodeType.FILE;
 	}
 
 	/**
@@ -403,7 +408,7 @@ public class DomainFileNode extends DataTreeNode {
 
 	@Override
 	public int compareTo(GTreeNode node) {
-		return DATA_NODE_SORT_COMPARATOR.compare(this, node);
+		return DATA_NODE_COMPARATOR.compare(this, node);
 	}
 
 	@Override

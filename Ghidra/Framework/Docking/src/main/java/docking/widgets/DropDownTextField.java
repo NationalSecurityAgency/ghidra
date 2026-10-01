@@ -974,6 +974,7 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 //=================================================================================================
 
 	protected class DropDownList extends GList<T> {
+
 		@Override
 		public void setFont(Font f) {
 			super.setFont(f);
@@ -982,18 +983,18 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 
 		private void updateCellDimensions(Font font) {
 
-			if (font == null || list == null) {
+			if (font == null) {
 				return; // UI is initializing
 			}
 
-			FontMetrics fontMetrics = list.getFontMetrics(font);
+			FontMetrics fontMetrics = getFontMetrics(font);
 			int padding = 2; // top and bottom border height
 			int lineHeight = fontMetrics.getHeight() + padding;
 			int iconAndPaddingHeight = 16 + padding;
 			int cellHeight = Math.max(lineHeight, iconAndPaddingHeight);
 
-			list.setFixedCellHeight(cellHeight);
-			list.setFixedCellWidth(MIN_WIDTH - 20); // add some fudge for scrollbars
+			setFixedCellHeight(cellHeight);
+			setFixedCellWidth(MIN_WIDTH - 20); // add some fudge for scrollbars
 		}
 	}
 

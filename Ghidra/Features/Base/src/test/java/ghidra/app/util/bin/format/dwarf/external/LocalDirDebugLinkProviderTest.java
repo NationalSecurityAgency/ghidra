@@ -48,7 +48,7 @@ public class LocalDirDebugLinkProviderTest extends AbstractGenericTest {
 
 		LocalDirDebugLinkProvider provider = new LocalDirDebugLinkProvider(tmpDir);
 		File result =
-			provider.getFile(ExternalDebugInfo.forDebugLink("debugfile.abc", crc), monitor);
+			provider.getFile(new DebugLinkDebugInfo("debugfile.abc", crc), monitor);
 
 		assertEquals("test_debuglink", Files.readString(result.toPath()));
 	}

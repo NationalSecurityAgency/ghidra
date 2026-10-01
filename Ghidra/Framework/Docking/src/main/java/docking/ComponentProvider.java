@@ -401,7 +401,9 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
-	 * Convenience method to indicate if this provider is showing.
+	 * Convenience method to indicate if this provider is in a tool window.  This will return true
+	 * even if the provider is hidden behind another provider, such as when in a tabbed pane and
+	 * not the active tab.
 	 * @return true if this provider is showing.
 	 */
 	public boolean isVisible() {
@@ -410,7 +412,9 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 
 	/**
 	 * Returns true if this provider is visible and is showing.  See {@link Component#isShowing()}.
-	 * @return true if this provider is visible and is showing.
+	 * Unlike {@link #isVisible()}, this method will return false if the component is hidden 
+	 * behind another component, such as when in a tabbed pane and not the active tab.
+	 * @return true if this provider is visible and is showing. 
 	 */
 	public boolean isShowing() {
 		return isVisible() && getComponent().isShowing();

@@ -261,11 +261,11 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter implemen
 
 	/**
 	 * Prepare to save and store any last minute DB data.  The default behavior is to invoke
-	 * {@link #updateMetadata()}.
+	 * {@link #saveMetadata()}.
 	 */
 	protected void prepareToSave() {
 		try (Transaction tx = openForcedTransaction("Update Metadata")) {
-			updateMetadata();
+			saveMetadata();
 		}
 		catch (IOException e) {
 			dbError(e);
@@ -585,12 +585,20 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter implemen
 	}
 
 	/**
-	 * This method is called before a save, saveAs, or saveToPackedFile
-	 * to update common meta data
-	 * @throws IOException
+	 * Load previously stored metadata map from database.
+	 * @throws IOException if a database IO error occurs
 	 */
-	protected void updateMetadata() throws IOException {
-		saveMetadata();
+	protected final void loadMetadata() throws IOException {
+		MetadataManager.loadData(this, metadata);
+	}
+
+	/**
+	 * Store updated metadata map to the database. This method should be called 
+	 * when preparing to save this instance (e.g., save, saveAs, saveToPackedFile).
+	 * @throws IOException if a database IO error occurs
+	 */
+	protected final void saveMetadata() throws IOException {
+		MetadataManager.saveData(this, getMetadata());
 	}
 
 	@Override
@@ -636,11 +644,4 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter implemen
 		return transactionMgr.hasTerminatedTransaction();
 	}
 
-	protected void loadMetadata() throws IOException {
-		MetadataManager.loadData(this, metadata);
-	}
-
-	protected void saveMetadata() throws IOException {
-		MetadataManager.saveData(this, metadata);
-	}
 }

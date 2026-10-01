@@ -488,7 +488,14 @@ public class DialogComponentProvider
 		okButton.setMnemonic('K');
 		okButton.setName("OK");
 		okButton.getAccessibleContext().setAccessibleName("OK");
-		okButton.addActionListener(e -> okCallback());
+		okButton.addActionListener(e -> {
+
+			int mods = e.getModifiers();
+			// Note: action event does not use extended modifiers; use the deprecated values
+			@SuppressWarnings("deprecation")
+			boolean isMouseClick = (mods & InputEvent.BUTTON1_MASK) == InputEvent.BUTTON1_MASK;
+			okCallback(isMouseClick);
+		});
 		addButton(okButton);
 	}
 
@@ -921,6 +928,15 @@ public class DialogComponentProvider
 	 */
 	protected void okCallback() {
 		Msg.debug(this, "Ok button pressed");
+	}
+
+	/**
+	 * A version of the OK callback that allows clients to know if the action is a result of a 
+	 * mouse click or the Enter key.
+	 * @param mouseClick true if the mouse clicked the OK button
+	 */
+	protected void okCallback(boolean mouseClick) {
+		okCallback();
 	}
 
 	/**

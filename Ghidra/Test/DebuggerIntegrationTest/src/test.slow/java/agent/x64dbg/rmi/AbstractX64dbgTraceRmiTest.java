@@ -16,7 +16,7 @@
 package agent.x64dbg.rmi;
 
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assume.*;
 
 import java.io.*;
 import java.net.*;
@@ -160,6 +160,7 @@ public abstract class AbstractX64dbgTraceRmiTest extends AbstractGhidraHeadedDeb
 			}
 		}
 		catch (RuntimeException e) {
+			// Should not happen since we maintain library on host test machine
 		}
 		return Paths.get(DummyProc.which("python"));
 	}
@@ -208,10 +209,6 @@ public abstract class AbstractX64dbgTraceRmiTest extends AbstractGhidraHeadedDeb
 			if (stderr.contains("Error") || (0 != exitCode && 1 != exitCode && 143 != exitCode)) {
 				throw new PythonError(exitCode, stdout, stderr);
 			}
-			System.out.println("--stdout--");
-			System.out.println(stdout);
-			System.out.println("--stderr--");
-			System.out.println(stderr);
 			return stdout;
 		}
 	}

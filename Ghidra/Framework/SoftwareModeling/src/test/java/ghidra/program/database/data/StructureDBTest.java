@@ -31,13 +31,13 @@ import ghidra.util.exception.DuplicateNameException;
 public class StructureDBTest extends AbstractGenericTest {
 
 	private StructureDB struct;
-	private StandAloneDataTypeManager dataMgr;
+	private TransientDataTypeManager dataMgr;
 	private int txId;
 
 	@Before
 	public void setUp() throws Exception {
 
-		dataMgr = new StandAloneDataTypeManager("dummyDTM");
+		dataMgr = new TransientDataTypeManager("dummyDTM");
 
 		// default data organization is little-endian
 		// default BitFieldPackingImpl uses gcc conventions with type alignment enabled
@@ -592,7 +592,7 @@ public class StructureDBTest extends AbstractGenericTest {
 		// Clear structure and set length to 8 with only zero-length components
 		struct.setLength(0);
 		struct.setLength(8);
-		
+
 		struct.insertAtOffset(2, zeroArray, -1, "z4", null);
 		struct.insertAtOffset(0, zeroArray, -1, "z1", null);
 		struct.insertAtOffset(0, zeroArray, -1, "z2", null);
@@ -1799,7 +1799,7 @@ public class StructureDBTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDeleteMany() {
+	public void testDeleteMany() throws Exception {
 
 		struct.growStructure(20);
 		struct.insertAtOffset(12, WordDataType.dataType, -1, "A", null);
@@ -1822,8 +1822,8 @@ public class StructureDBTest extends AbstractGenericTest {
 
 		// Verify that records were properly updated by comitting and performing an undo/redo
 		dataMgr.endTransaction(txId, true);
-		dataMgr.undo();
-		dataMgr.redo();
+		dataMgr.getDataStore().undo();
+		dataMgr.getDataStore().redo();
 		txId = dataMgr.startTransaction("Continue Test");
 
 		assertEquals(28, struct.getLength());

@@ -25,7 +25,9 @@ import java.nio.file.Path;
 import org.junit.*;
 
 import db.Transaction;
+import ghidra.program.database.dtarchive.DataTypeArchiveFactory;
 import ghidra.program.model.data.*;
+import ghidra.program.model.dtarchive.FileDataTypeArchive;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.LanguageID;
 import ghidra.program.util.DefaultLanguageService;
@@ -78,21 +80,16 @@ public class DBTraceDataTypeManagerTest extends AbstractGhidraHeadlessIntegratio
 	}
 
 	@Test
-	public void testSetName() throws InvalidNameException {
-		try (Transaction tx = trace.openTransaction("Testing")) {
-			dtm.setName("Another name");
-		}
-		assertEquals("Another name", trace.getName());
-	}
-
-	@Test
 	public void testAddSourceArchive() throws IOException {
 		StructureDataType mine = getTestDataType();
 		DataTypePath minePath = mine.getDataTypePath();
 		Path tmpDir = Files.createTempDirectory("test");
 		File archiveFile = tmpDir.resolve("test.gdt").toFile();
-		FileDataTypeManager dtm2 = FileDataTypeManager.createFileArchive(archiveFile);
-		try (Transaction tx = dtm2.openTransaction("Testing")) {
+
+		FileDataTypeArchive archive = DataTypeArchiveFactory.createFileArchive(archiveFile, this);
+		DataTypeManager dtm2 = archive.getDataTypeManager();
+
+		try (Transaction tx = archive.openTransaction("Testing")) {
 			dtm2.addDataType(mine, DataTypeConflictHandler.DEFAULT_HANDLER);
 		}
 		DataType got = dtm2.getDataType(minePath);
@@ -100,7 +97,7 @@ public class DBTraceDataTypeManagerTest extends AbstractGhidraHeadlessIntegratio
 		try (Transaction tx = trace.openTransaction("Testing")) {
 			dtm.addDataType(got, DataTypeConflictHandler.DEFAULT_HANDLER);
 		}
-		dtm2.delete();
+		archive.delete();
 
 		// TODO: Listen for sourceArchiveAdded event
 

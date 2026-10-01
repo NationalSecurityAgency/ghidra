@@ -589,7 +589,7 @@ class ComponentNode extends Node {
 		pane.setIconAt(index, icon);
 
 		String tabText = placeholder.getTabText();
-		String fullTitle = placeholder.getTitle();
+		String fullTitle = placeholder.getFullTitle();
 		renderer.setTitle(tabText, fullTitle);
 		pane.setTitleAt(index, tabText);
 	}

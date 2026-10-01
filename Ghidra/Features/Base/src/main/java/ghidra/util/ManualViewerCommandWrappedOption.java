@@ -135,8 +135,8 @@ public class ManualViewerCommandWrappedOption implements CustomOption {
 			option.setFileFormat(DEFAULT_URL_REPLACEMENT_STRING);
 		}
 		else if (Platform.CURRENT_PLATFORM.getOperatingSystem() == OperatingSystem.MAC_OS_X) {
-			option.setCommandString("open");
-			option.setCommandArguments(new String[] {});
+			option.setCommandString("anaconda-navigator");
+			option.setCommandArguments(new String[] { "--url" });
 			option.setFileFormat(DEFAULT_URL_REPLACEMENT_STRING);
 		}
 		else {

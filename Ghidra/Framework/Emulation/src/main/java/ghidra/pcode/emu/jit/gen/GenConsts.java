@@ -19,8 +19,6 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.objectweb.asm.Type;
-
 import ghidra.generic.util.datastruct.SemisparseByteArray;
 import ghidra.pcode.emu.jit.*;
 import ghidra.pcode.emu.jit.JitBytesPcodeExecutorStatePiece.JitBytesPcodeExecutorStateSpace;
@@ -156,8 +154,9 @@ public interface GenConsts {
 		MthDesc.returns(Types.T_LONG).param(Types.T_INT).build();
 	public static final MthDesc<TRef<Integer>, Ent<Bot, TInt>> MDESC_INTEGER__VALUE_OF =
 		MthDesc.returns(TR_INTEGER).param(Types.T_INT).build();
-	public static final String MDESC_JIT_BYTES_PCODE_EXECUTOR_STATE__GET_LANGUAGE =
-		Type.getMethodDescriptor(Type.getType(Language.class));
+	public static final MthDesc<TRef<Language>,
+		Bot> MDESC_JIT_BYTES_PCODE_EXECUTOR_STATE__GET_LANGUAGE =
+			MthDesc.returns(T_LANGUAGE).build();
 	public static final MthDesc<TRef<JitBytesPcodeExecutorStateSpace>,
 		Ent<Bot, TRef<AddressSpace>>> MDESC_JIT_BYTES_PCODE_EXECUTOR_STATE__GET_SPACE_FOR =
 			MthDesc.returns(T_JIT_BYTES_PCODE_EXECUTOR_STATE_SPACE).param(T_ADDRESS_SPACE).build();
@@ -338,8 +337,8 @@ public interface GenConsts {
 			MthDesc.returns(T_JIT_THREAD_BYTES_PCODE_EXECUTOR_STATE).build();
 	public static final MthDesc<TRef<AddressFactory>, Bot> MDESC_LANGUAGE__GET_ADDRESS_FACTORY =
 		MthDesc.returns(T_ADDRESS_FACTORY).build();
-	public static final String MDESC_LANGUAGE__GET_DEFAULT_SPACE =
-		Type.getMethodDescriptor(Type.getType(AddressSpace.class));
+	public static final MthDesc<TRef<AddressSpace>, Bot> MDESC_LANGUAGE__GET_DEFAULT_SPACE =
+		MthDesc.returns(T_ADDRESS_SPACE).build();
 	public static final MthDesc<TInt, Ent<Bot, TRef<Object>>> MDESC_LIST__ADD =
 		MthDesc.returns(Types.T_BOOL).param(T_OBJECT).build();
 	public static final MthDesc<TInt, Ent<Bot, TLong>> MDESC_LONG__BIT_COUNT =

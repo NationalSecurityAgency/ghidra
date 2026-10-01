@@ -17,6 +17,7 @@ package ghidra.server;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 import javax.security.auth.login.FailedLoginException;
@@ -35,6 +36,9 @@ import ghidra.util.exception.DuplicateNameException;
  * <code>UserManager</code> manages the set of users associated with a running GhidraServer.
  * Support is also provided for managing and authenticating local user passwords when 
  * needed.
+ * <p>
+ * User names are managed in a case-sensitive manner, however user lookups occur in a
+ * case-insensitive manner.  Duplicate names with different case are not supported. 
  */
 public class UserManager {
 
@@ -65,7 +69,7 @@ public class UserManager {
 
 	private PrintWriter dnLogOut;
 
-	private LinkedHashMap<String, UserEntry> userList = new LinkedHashMap<>();
+	private UserMap<UserEntry> userMap = new UserMap<>();
 	private HashMap<X500Principal, UserEntry> dnLookupMap = new HashMap<>();
 	private long lastUserListChange;
 
@@ -92,8 +96,8 @@ public class UserManager {
 		try {
 			readUserListIfNeeded();
 			clearExpiredPasswords();
-			int size = userList.size();
-			log.info("User file contains " + size + (size == 1 ? "entry" : "entries"));
+			int size = userMap.size();
+			log.info("User file contains " + size + (size == 1 ? " entry" : " entries"));
 		}
 		catch (FileNotFoundException e) {
 			log.error("Existing User file not found.");
@@ -103,13 +107,13 @@ public class UserManager {
 		}
 
 		log.info("Known Users:");
-		Iterator<String> iter = userList.keySet().iterator();
+		Iterator<String> iter = userMap.keySet().iterator();
 		while (iter.hasNext()) {
 			String name = iter.next();
 			String dnStr = "";
-			UserEntry entry = userList.get(name);
+			UserEntry entry = userMap.get(name);
 			if (entry != null) {
-				X500Principal x500User = entry.x500User;
+				X500Principal x500User = entry.x500Name;
 				if (x500User != null) {
 					dnStr = " DN={" + x500User.getName() + "}";
 				}
@@ -136,7 +140,7 @@ public class UserManager {
 		log.info("Users with stored SSH public key:");
 		for (String fname : list) {
 			String user = fname.substring(0, fname.length() - SSH_PUBKEY_EXT.length());
-			if (!userList.containsKey(user)) {
+			if (!userMap.containsKey(user)) {
 				continue; // ignore invalid user
 			}
 			log.info("   " + user);
@@ -144,20 +148,52 @@ public class UserManager {
 	}
 
 	/**
-	 * Get the SSH public key file for the specified user
-	 * if it exists.
+	 * Get the SSH public key file for the specified user if it exists.
 	 * @param username user name/SID
 	 * @return SSH public key file or null if key unavailable
 	 */
 	public File getSSHPubKeyFile(String username) {
-		if (!userList.containsKey(username)) {
+		if (username == null) {
 			return null;
 		}
-		File f = new File(sshDir, username + SSH_PUBKEY_EXT);
-		if (f.isFile()) {
-			return f;
+		username = username.toLowerCase();
+		if (!userMap.containsKey(username)) {
+			return null;
 		}
-		return null;
+
+		List<File> sshFiles = findFilesCaseInsensitive(sshDir, username + SSH_PUBKEY_EXT);
+		if (sshFiles.isEmpty()) {
+			return null;
+		}
+
+		if (sshFiles.size() != 1) {
+			log.error(sshDir + " contains multiple SSH public key files for: " + username);
+			return null;
+		}
+
+		return sshFiles.get(0);
+	}
+
+	public static List<File> findFilesCaseInsensitive(File directory, String targetLowerCase) {
+		List<File> result = new ArrayList<>();
+
+		if (directory == null || !directory.isDirectory()) {
+			return result;
+		}
+
+		File[] files = directory.listFiles();
+		if (files == null) {
+			return result;
+		}
+
+		for (File file : files) {
+			// Only match files, skip directories
+			if (file.isFile() && file.getName().toLowerCase().equals(targetLowerCase)) {
+				result.add(file);
+			}
+		}
+
+		return result;
 	}
 
 	/**
@@ -174,15 +210,12 @@ public class UserManager {
 			throw new IllegalArgumentException();
 		}
 		synchronized (repositoryMgr) {
-			if (userList.containsKey(username)) {
+			if (userMap.containsKey(username)) {
 				throw new DuplicateNameException("User " + username + " already exists");
 			}
-			UserEntry entry = new UserEntry();
-			entry.username = username;
-			entry.passwordHash = passwordHash;
-			entry.passwordTime = (new Date()).getTime();
-			entry.x500User = x500User;
-			userList.put(username, entry);
+			UserEntry entry =
+				new UserEntry(username, x500User, passwordHash, (new Date()).getTime());
+			userMap.put(username, entry);
 			if (x500User != null) {
 				dnLookupMap.put(x500User, entry);
 			}
@@ -236,9 +269,9 @@ public class UserManager {
 	 */
 	public X500Principal getDistinguishedName(String username) {
 		synchronized (repositoryMgr) {
-			UserEntry entry = userList.get(username);
+			UserEntry entry = userMap.get(username);
 			if (entry != null) {
-				return entry.x500User;
+				return entry.x500Name;
 			}
 			return null;
 		}
@@ -266,16 +299,14 @@ public class UserManager {
 	public boolean setDistinguishedName(String username, X500Principal x500User)
 			throws IOException {
 		synchronized (repositoryMgr) {
-			UserEntry oldEntry = userList.remove(username);
+			UserEntry oldEntry = userMap.get(username);
 			if (oldEntry != null) {
-				if (oldEntry.x500User != null) {
-					dnLookupMap.remove(oldEntry.x500User);
+				if (oldEntry.x500Name != null) {
+					dnLookupMap.remove(oldEntry.x500Name);
 				}
-				UserEntry entry = new UserEntry();
-				entry.username = username;
-				entry.passwordHash = oldEntry.passwordHash;
-				entry.x500User = x500User;
-				userList.put(username, entry);
+				UserEntry entry =
+					new UserEntry(username, x500User, oldEntry.passwordHash, oldEntry.passwordTime);
+				userMap.put(username, entry);
 				if (x500User != null) {
 					dnLookupMap.put(x500User, entry);
 				}
@@ -347,16 +378,13 @@ public class UserManager {
 		checkValidPasswordHash(saltedSHA256PasswordHash);
 
 		synchronized (repositoryMgr) {
-			UserEntry oldEntry = userList.remove(username);
+			UserEntry oldEntry = userMap.get(username);
 			if (oldEntry != null) {
-				UserEntry entry = new UserEntry();
-				entry.username = username;
-				entry.passwordHash = saltedSHA256PasswordHash;
-				entry.passwordTime = isTemporary ? (new Date()).getTime() : NO_EXPIRATION;
-				entry.x500User = oldEntry.x500User;
-				userList.put(username, entry);
-				if (entry.x500User != null) {
-					dnLookupMap.put(entry.x500User, entry);
+				UserEntry entry = new UserEntry(username, oldEntry.x500Name,
+					saltedSHA256PasswordHash, isTemporary ? (new Date()).getTime() : NO_EXPIRATION);
+				userMap.put(username, entry);
+				if (entry.x500Name != null) {
+					dnLookupMap.put(entry.x500Name, entry);
 				}
 				writeUserList();
 				return true;
@@ -373,7 +401,7 @@ public class UserManager {
 	 */
 	public boolean canSetPassword(String username) {
 		synchronized (repositoryMgr) {
-			UserEntry userEntry = userList.get(username);
+			UserEntry userEntry = userMap.get(username);
 			return (enableLocalPasswords && userEntry != null && userEntry.passwordHash != null);
 		}
 	}
@@ -386,7 +414,7 @@ public class UserManager {
 	 */
 	public long getPasswordExpiration(String username) {
 		synchronized (repositoryMgr) {
-			UserEntry userEntry = userList.get(username);
+			UserEntry userEntry = userMap.get(username);
 
 			// indicate immediate expiration for users with short hash (non salted SHA-256)
 			if (userEntry != null && userEntry.passwordHash != null &&
@@ -448,10 +476,10 @@ public class UserManager {
 	 */
 	public boolean removeUser(String username) throws IOException {
 		synchronized (repositoryMgr) {
-			UserEntry oldEntry = userList.remove(username);
+			UserEntry oldEntry = userMap.remove(username);
 			if (oldEntry != null) {
-				if (oldEntry.x500User != null) {
-					dnLookupMap.remove(oldEntry.x500User);
+				if (oldEntry.x500Name != null) {
+					dnLookupMap.remove(oldEntry.x500Name);
 				}
 				writeUserList();
 				repositoryMgr.userRemoved(username);
@@ -468,8 +496,8 @@ public class UserManager {
 	 */
 	public String[] getUsers() {
 		synchronized (repositoryMgr) {
-			String[] names = new String[userList.size()];
-			Iterator<String> iter = userList.keySet().iterator();
+			String[] names = new String[userMap.size()];
+			Iterator<String> iter = userMap.keySet().iterator();
 			int i = 0;
 			while (iter.hasNext()) {
 				names[i++] = iter.next();
@@ -483,22 +511,23 @@ public class UserManager {
 	 * @throws IOException if error occurs while updating user file
 	 */
 	void clearExpiredPasswords() throws IOException {
-		if (defaultPasswordExpirationMS == 0) {
+
+		if (defaultPasswordExpirationMS == 0 || !enableLocalPasswords) {
 			return;
 		}
-		boolean dataChanged = false;
-		Iterator<UserEntry> it = userList.values().iterator();
-		while (it.hasNext()) {
-			UserEntry entry = it.next();
+
+		AtomicBoolean dataChanged = new AtomicBoolean();
+		userMap.replaceAll((name, entry) -> {
 			if (entry.passwordHash != null && enableLocalPasswords &&
 				getPasswordExpiration(entry) == 0) {
-				entry.passwordHash = null;
-				entry.passwordTime = 0;
-				dataChanged = true;
+				dataChanged.set(true);
 				log.warn("Default password expired for user '" + entry.username + "'");
+				return new UserEntry(name, entry.x500Name, null, 0);
 			}
-		}
-		if (dataChanged) {
+			return entry; // Keep the original record
+		});
+
+		if (dataChanged.get()) {
 			writeUserList();
 		}
 	}
@@ -519,14 +548,18 @@ public class UserManager {
 			return;
 		}
 
-		LinkedHashMap<String, UserEntry> list = new LinkedHashMap<>();
+		UserMap<UserEntry> map = new UserMap<>();
 		HashMap<X500Principal, UserEntry> lookupMap = new HashMap<>();
 
-		readUserList(userFile, list, lookupMap);
+		boolean userMapMutated = readUserList(userFile, map, lookupMap);
 
-		userList = list;
+		userMap = map;
 		dnLookupMap = lookupMap;
 		lastUserListChange = lastMod;
+
+		if (userMapMutated) {
+			writeUserList();
+		}
 	}
 
 	/**
@@ -537,7 +570,7 @@ public class UserManager {
 	static void listUsers(File repositoriesRootDir) {
 		File userFile = new File(repositoriesRootDir, USER_PASSWORD_FILE);
 
-		LinkedHashMap<String, UserEntry> list = new LinkedHashMap<>();
+		UserMap<UserEntry> list = new UserMap<>();
 		HashMap<X500Principal, UserEntry> lookupMap = new HashMap<>();
 
 		try {
@@ -567,71 +600,81 @@ public class UserManager {
 	static Set<String> getUsers(File repositoriesRootDir) throws IOException {
 		File userFile = new File(repositoriesRootDir, USER_PASSWORD_FILE);
 
-		LinkedHashMap<String, UserEntry> list = new LinkedHashMap<>();
+		UserMap<UserEntry> map = new UserMap<>();
 		HashMap<X500Principal, UserEntry> lookupMap = new HashMap<>();
 
-		readUserList(userFile, list, lookupMap);
-		return list.keySet();
+		readUserList(userFile, map, lookupMap);
+		return map.keySet();
 	}
 
-	private static void readUserList(File file, Map<String, UserEntry> usersIndexByName,
+	private static boolean readUserList(File file, UserMap<UserEntry> usersIndexByName,
 			Map<X500Principal, UserEntry> x500LookupMap) throws IOException {
+		boolean userMapMutated = false;
 		try (BufferedReader br = new BufferedReader(new FileReader(file))) {
 			String line;
 			while ((line = br.readLine()) != null) {
 				if (line.startsWith("#")) {
 					continue;
 				}
-				try {
-					StringTokenizer st = new StringTokenizer(line, ":");
-					UserEntry entry = new UserEntry();
-					entry.username = st.nextToken();
-					if (!isValidUserName(entry.username)) {
-						log.error("Invalid user name, skipping: " + entry.username);
-						continue;
-					}
 
-					// Password Hash
+				X500Principal x500Name = null;
+				char[] passwordHash = null;
+				long passwordTime = 0;
+
+				StringTokenizer st = new StringTokenizer(line, ":");
+				String username = st.nextToken();
+				if (!isValidUserName(username)) {
+					log.error("Invalid user name, skipping: " + username);
+					userMapMutated = true;
+					continue;
+				}
+
+				if (usersIndexByName.containsKey(username)) {
+					log.error("Duplicate (case-insenstive) user name discarded: " + username);
+					userMapMutated = true;
+					continue;
+				}
+
+				// Password Hash
+				if (st.hasMoreTokens()) {
+					passwordHash = st.nextToken().toCharArray();
+
+					// Password Time
 					if (st.hasMoreTokens()) {
-						entry.passwordHash = st.nextToken().toCharArray();
-
-						// Password Time
-						if (st.hasMoreTokens()) {
-							try {
-								String timeStr = st.nextToken();
-								if ("*".equals(timeStr)) {
-									entry.passwordTime = NO_EXPIRATION;
-								}
-								else {
-									entry.passwordTime = NumericUtilities.parseHexLong(timeStr);
-								}
+						try {
+							String timeStr = st.nextToken();
+							if ("*".equals(timeStr)) {
+								passwordTime = NO_EXPIRATION;
 							}
-							catch (NumberFormatException e) {
-								log.error(
-									"Invalid password time - forced expiration: " + entry.username);
-								entry.passwordTime = 0;
-							}
-
-							// Distinguished Name
-							if (st.hasMoreTokens()) {
-								String dn = st.nextToken();
-								if (dn.length() > 0) {
-									entry.x500User = new X500Principal(dn);
-								}
-
+							else {
+								passwordTime = NumericUtilities.parseHexLong(timeStr);
 							}
 						}
-					}
-					usersIndexByName.put(entry.username, entry);
-					if (entry.x500User != null) {
-						x500LookupMap.put(entry.x500User, entry);
+						catch (NumberFormatException e) {
+							log.error(
+								"Invalid password time - forced expiration: " + username);
+							userMapMutated = true;
+							passwordTime = 0;
+						}
+
+						// Distinguished Name
+						if (st.hasMoreTokens()) {
+							String dn = st.nextToken();
+							if (dn.length() > 0) {
+								x500Name = new X500Principal(dn);
+							}
+
+						}
 					}
 				}
-				catch (NoSuchElementException e) {
-					// skip entry
+				UserEntry entry = new UserEntry(username, x500Name, passwordHash, passwordTime);
+				usersIndexByName.put(username, entry);
+				if (x500Name != null) {
+					x500LookupMap.put(x500Name, entry);
 				}
 			}
 		}
+		return userMapMutated;
 	}
 
 	/**
@@ -640,7 +683,7 @@ public class UserManager {
 	 */
 	private void writeUserList() throws IOException {
 		try (BufferedWriter bw = new BufferedWriter(new FileWriter(userFile))) {
-			for (UserEntry entry : userList.values()) {
+			for (UserEntry entry : userMap.values()) {
 				bw.write(entry.username);
 				bw.write(":");
 				if (entry.passwordHash != null) {
@@ -656,9 +699,9 @@ public class UserManager {
 				else {
 					bw.write("*:*");
 				}
-				if (entry.x500User != null) {
+				if (entry.x500Name != null) {
 					bw.write(":");
-					bw.write(entry.x500User.getName());
+					bw.write(entry.x500Name.getName());
 				}
 				bw.newLine();
 			}
@@ -673,7 +716,7 @@ public class UserManager {
 	 */
 	public boolean isValidUser(String username) {
 		synchronized (repositoryMgr) {
-			return userList.containsKey(username);
+			return userMap.containsKey(username);
 		}
 	}
 
@@ -692,7 +735,7 @@ public class UserManager {
 		}
 		synchronized (repositoryMgr) {
 			clearExpiredPasswords();
-			UserEntry entry = userList.get(username);
+			UserEntry entry = userMap.get(username);
 			if (entry == null) {
 				throw new FailedLoginException("Unknown user: " + username);
 			}
@@ -734,14 +777,10 @@ public class UserManager {
 	}
 
 	/**
-	 * <code>UserEntry</code> class used to hold user data
+	 * <code>UserEntry</code> record used to hold user file data
 	 */
-	private static class UserEntry {
-		private String username;
-		private X500Principal x500User;
-		private char[] passwordHash;
-		private long passwordTime;
-	}
+	private record UserEntry(String username, X500Principal x500Name, char[] passwordHash,
+			long passwordTime) {}
 
 	private PrintWriter getDNLog() throws IOException {
 		if (dnLogOut == null) {
@@ -780,6 +819,12 @@ public class UserManager {
 	 */
 	public static boolean isValidUserName(String s) {
 		return VALID_USERNAME_REGEX.matcher(s).matches();
+	}
+
+	private static class UserMap<V extends Object> extends TreeMap<String, V> {
+		UserMap() {
+			super(String.CASE_INSENSITIVE_ORDER);
+		}
 	}
 
 }

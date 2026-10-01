@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,7 +67,6 @@ public class IOStreamEmuUnixFileHandle extends AbstractStreamEmuUnixFileHandle<b
 
 	/**
 	 * Construct a proxy for a host resource
-	 * 
 	 * <p>
 	 * <b>WARNING:</b> Think carefully before proxying any host resource to a temperamental target
 	 * program.
@@ -85,13 +84,12 @@ public class IOStreamEmuUnixFileHandle extends AbstractStreamEmuUnixFileHandle<b
 	}
 
 	@Override
-	public byte[] read(byte[] buf) throws EmuIOException {
+	public int read(byte[] buf) throws EmuIOException {
 		if (input == null) {
-			return arithmetic.fromConst(0, offsetBytes);
+			return 0;
 		}
 		try {
-			int result = input.read(buf);
-			return arithmetic.fromConst(result, offsetBytes);
+			return input.read(buf);
 		}
 		catch (IOException e) {
 			throw new EmuIOException("Could not read host input stream", e);
@@ -99,13 +97,13 @@ public class IOStreamEmuUnixFileHandle extends AbstractStreamEmuUnixFileHandle<b
 	}
 
 	@Override
-	public byte[] write(byte[] buf) throws EmuIOException {
+	public int write(byte[] buf) throws EmuIOException {
 		if (output == null) {
-			return arithmetic.fromConst(0, offsetBytes);
+			return 0;
 		}
 		try {
 			output.write(buf);
-			return arithmetic.fromConst(buf.length, offsetBytes);
+			return buf.length;
 		}
 		catch (IOException e) {
 			throw new EmuIOException("Could not write host output stream", e);

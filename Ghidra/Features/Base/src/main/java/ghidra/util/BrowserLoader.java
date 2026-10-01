@@ -21,8 +21,7 @@ import java.io.File;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import docking.options.OptionsService;
 import ghidra.framework.options.OptionsChangeListener;
@@ -39,15 +38,6 @@ public class BrowserLoader {
 	/**
 	 * Display the content specified by url in a web browser window.  This call will launch 
 	 * a new thread and then immediately return.
-	 * @param url The URL to show.
-	 */
-	public static void display(URL url) {
-		display(url, null, null);
-	}
-
-	/**
-	 * Display the content specified by url in a web browser window.  This call will launch 
-	 * a new thread and then immediately return.
 	 * 
 	 * @param url The web URL to show (e.g., http://localhost...).
 	 * @param fileURL The file URL to show (e.g., file:///path/to/file).
@@ -57,6 +47,8 @@ public class BrowserLoader {
 		if (url == null) {
 			return;
 		}
+		
+		Objects.requireNonNull(serviceProvider, "serviceProvider instance is required");
 
 		// open the browser in a new thread because the call may block
 		(new Thread(new BrowserRunner(url, fileURL, serviceProvider))).start();
@@ -65,26 +57,12 @@ public class BrowserLoader {
 	private static void displayFromBrowserRunner(URL url, URL fileURL,
 			ServiceProvider serviceProvider) {
 		try {
-			if (serviceProvider == null) {
-				displayBrowserForExternalURL(url);
-			}
-			else {
-				displayBrowser(url, fileURL, serviceProvider);
-			}
+			displayBrowser(url, fileURL, serviceProvider);
 		}
 		catch (Exception e) {
 			Msg.showError(BrowserLoader.class, null, "Error Loading Browser",
 				"Error loading browser for URL: " + url, e);
 		}
-	}
-
-	private static void displayBrowserForExternalURL(URL url) throws Exception {
-		String[] arguments =
-			generateCommandArguments(url, null,
-				ManualViewerCommandWrappedOption.getDefaultBrowserLoaderOptions());
-		Process p = Runtime.getRuntime().exec(arguments);
-		p.waitFor();
-		p.exitValue();  // thought to help memory problems on some versions of windows
 	}
 
 	private static void displayBrowser(URL url, URL fileURL, ServiceProvider serviceProvider) {

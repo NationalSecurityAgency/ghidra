@@ -23,6 +23,16 @@ import java.util.Comparator;
  */
 public class AlphaNumericComparator implements Comparator<String> {
 
+	private boolean caseSensitive;
+
+	public AlphaNumericComparator() {
+		this.caseSensitive = true;
+	}
+
+	public AlphaNumericComparator(boolean caseSensitive) {
+		this.caseSensitive = caseSensitive;
+	}
+
 	@Override
 	public int compare(String s1, String s2) {
 		if (s1 == null || s2 == null) {
@@ -66,9 +76,11 @@ public class AlphaNumericComparator implements Comparator<String> {
 			}
 			else {
 				// Compare standard characters alphabetically
-				if (c1 != c2) {
-					return Character.compare(c1, c2);
+				int result = compare(c1, c2);
+				if (result != 0) {
+					return result;
 				}
+
 				i++;
 				j++;
 			}
@@ -96,6 +108,19 @@ public class AlphaNumericComparator implements Comparator<String> {
 
 		// Default to a string compare
 		return s1.compareTo(s2);
+	}
+
+	private int compare(char c1, char c2) {
+		if (c1 == c2) {
+			return 0;
+		}
+
+		if (!caseSensitive) {
+			c1 = Character.toLowerCase(c1);
+			c2 = Character.toLowerCase(c2);
+		}
+
+		return Character.compare(c1, c2);
 	}
 
 	private long parseNumber(String s, int i) {

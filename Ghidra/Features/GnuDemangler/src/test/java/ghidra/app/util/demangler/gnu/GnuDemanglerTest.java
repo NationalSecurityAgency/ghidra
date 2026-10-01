@@ -150,7 +150,9 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 
 		GnuDemanglerOptions options = new GnuDemanglerOptions();
 		options.setUseStandardReplacements(true);
-		DemangledFunction dobj = (DemangledFunction) demangler.demangle(mangled, options);
+		MangledContext context = new MangledContext(program, options, mangled, null);
+
+		DemangledFunction dobj = (DemangledFunction) demangler.demangle(context);
 		assertNotNull(dobj);
 
 		String signature = dobj.getSignature();
@@ -172,7 +174,8 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		// Now disable demangled string replacement
 		// 
 		options.setUseStandardReplacements(false);
-		dobj = (DemangledFunction) demangler.demangle(mangled, options);
+		context = new MangledContext(program, options, mangled, null);
+		dobj = (DemangledFunction) demangler.demangle(context);
 		assertNotNull(dobj);
 
 		String fullSignature = dobj.getSignature();
@@ -231,6 +234,29 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		Data d = program.getListing().getDefinedDataAt(addr("01001000"));
 		assertNotNull(d);
 		assertTrue(d.isPointer());
+	}
+
+	@Test
+	public void testGlobalInitializationFunction() throws Exception {
+
+		/*
+		 	Mangled: _GLOBAL__sub_I__ZN6ghidra8ATTRIB_AE
+		 	
+		 	We parse this as a  DemangledVariable.    We then us the '_GLOBAL__sub_I_' prefix as 
+		 	a signal that the symbol represents a global initialization constructor.  We then 
+		 	convert the variable to a DemangledFunction.
+		 	
+		 	Signature: ghidra::global_init_constructor_ATTRIB_A(void)
+		 	
+		 */
+
+		String mangled = "_GLOBAL__sub_I__ZN6ghidra8ATTRIB_AE";
+
+		GnuDemangler demangler = new GnuDemangler();
+		DemangledFunction obj = (DemangledFunction) demangler.demangle(mangled);
+
+		String signature = obj.getSignature();
+		assertEquals("ghidra::global_init_constructor_ATTRIB_A(void)", signature);
 	}
 
 	@Test

@@ -40,7 +40,7 @@ public class OmfIteratedData extends OmfData {
 		dataOffset = OmfUtils.readInt2Or4(dataReader, hasBigFields);
 		ArrayList<DataBlock> blocklist = new ArrayList<>();
 		while (dataReader.getPointerIndex() < dataEnd) {
-			DataBlock block = DataBlock.read(dataReader, hasBigFields);
+			DataBlock block = DataBlock.read(dataReader, hasBigFields, 0);
 			blocklist.add(block);
 		}
 		datablock = new DataBlock[blocklist.size()];
@@ -84,12 +84,19 @@ public class OmfIteratedData extends OmfData {
 	 * Contain the definition of one part of a datablock with possible recursion
 	 */
 	public static class DataBlock {
+
+		private static final int DEPTH_LIMIT = 100;
+
 		private int repeatCount;
 		private int blockCount;
 		private byte[] simpleBlock = null;
 		private DataBlock[] nestedBlock = null;
 
-		public static DataBlock read(BinaryReader reader, boolean hasBigFields) throws IOException {
+		public static DataBlock read(BinaryReader reader, boolean hasBigFields, int depth)
+				throws IOException {
+			if (depth > DEPTH_LIMIT) {
+				throw new IOException("DataBlock read exceeded depth limit: " + DEPTH_LIMIT);
+			}
 			DataBlock subblock = new DataBlock();
 			subblock.repeatCount = (int) OmfUtils.readInt2Or4(reader, hasBigFields).value();
 			if (subblock.repeatCount < 0) {
@@ -106,7 +113,7 @@ public class OmfIteratedData extends OmfData {
 			else {
 				subblock.nestedBlock = new DataBlock[subblock.blockCount];
 				for (int i = 0; i < subblock.blockCount; ++i) {
-					subblock.nestedBlock[i] = read(reader, hasBigFields);		// Recursive definition
+					subblock.nestedBlock[i] = read(reader, hasBigFields, depth + 1);		// Recursive definition
 				}
 			}
 			return subblock;

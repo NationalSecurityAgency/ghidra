@@ -236,9 +236,9 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 //	}
 //
 //	private void runRTTIAnalyzer() throws Exception {
-////		Analyzer analyzer = new RttiAnalyzer();
-////		analyzer.added(program, program.getAddressFactory().getAddressSet(), monitor,
-////			new MessageLog());
+	//// Analyzer analyzer = new RttiAnalyzer(); / analyzer.added(program,
+	/// program.getAddressFactory().getAddressSet(), monitor, /
+	/// new MessageLog());
 //	}
 //
 //	/**

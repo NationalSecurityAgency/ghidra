@@ -33,9 +33,9 @@ import ghidra.framework.model.*;
 import ghidra.framework.options.OptionType;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.data.DataTypeManager;
-import ghidra.program.model.data.FileDataTypeManager;
-import ghidra.program.model.listing.DataTypeArchive;
+import ghidra.program.model.data.*;
+import ghidra.program.model.dtarchive.FileDataTypeArchive;
+import ghidra.program.model.dtarchive.ProjectDataTypeArchive;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.Msg;
@@ -132,11 +132,11 @@ public class ApplyDataArchiveAnalyzer extends AbstractAnalyzer {
 
 		options.registerOption(OPTION_NAME_GDT_FILEPATH, OptionType.FILE_TYPE, null, null,
 			OPTION_DESCRIPTION_GDT_FILEPATH,
-			() -> new FileChooserEditor(FileDataTypeManager.GDT_FILEFILTER));
+			() -> new FileChooserEditor(FileDataTypeArchive.GDT_FILEFILTER));
 		options.registerOption(OPTION_NAME_PROJECT_PATH, OptionType.STRING_TYPE, null, null,
 			OPTION_DESCRIPTION_PROJECT_PATH,
 			() -> new ProjectPathChooserEditor("Choose Data Type Archive",
-				new DefaultDomainFileFilter(DataTypeArchive.class, false)));
+				new DefaultDomainFileFilter(ProjectDataTypeArchive.class, false)));
 	}
 
 	@Override
@@ -293,7 +293,7 @@ public class ApplyDataArchiveAnalyzer extends AbstractAnalyzer {
 			log.appendMsg("Missing project archive: %s".formatted(filename));
 			return List.of();
 		}
-		if (!DataTypeArchive.class.isAssignableFrom(gdtDomainFile.getDomainObjectClass())) {
+		if (!ProjectDataTypeArchive.class.isAssignableFrom(gdtDomainFile.getDomainObjectClass())) {
 			log.appendMsg("Bad project file type: %s".formatted(filename));
 			return List.of();
 		}

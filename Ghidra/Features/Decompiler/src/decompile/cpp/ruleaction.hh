@@ -89,15 +89,9 @@ public:
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleEarlyRemoval(getGroup());
   }
-  // This rule applies to all ops
+  virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
-// class RuleAddrForceRelease : public Rule {
-// public:
-//   RuleAddrForceRelease(const string &g) : Rule(g, 0, "addrforcerelease") {}	///< Constructor
-//   virtual void getOpList(vector<uint4> &oplist) const;
-//   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
-// };
 class RuleCollectTerms : public Rule {
   static Varnode *getMultCoeff(Varnode *vn,uintb &coef);	///< Get the multiplicative coefficient
 public:
@@ -598,12 +592,12 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
-class RuleIndirectCollapse : public Rule {
+class RuleAliasUpdate : public Rule {
 public:
-  RuleIndirectCollapse(const string &g) : Rule(g, 0, "indirectcollapse") {}	///< Constructor
+  RuleAliasUpdate(const string &g) : Rule(g, 0, "aliasupdate") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
-    return new RuleIndirectCollapse(getGroup());
+    return new RuleAliasUpdate(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
@@ -690,6 +684,7 @@ public:
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
 class RuleShiftPiece : public Rule {
+  static int4 multPowerOf2(PcodeOp *op);	///< Verify that op multiplies by a power of 2
 public:
   RuleShiftPiece(const string &g) : Rule(g, 0, "shiftpiece") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
@@ -706,7 +701,7 @@ public:
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleCollapseConstants(getGroup());
   }
-  // applies to all opcodes
+  virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
 class RuleTransformCpool : public Rule {
@@ -726,7 +721,7 @@ public:
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RulePropagateCopy(getGroup());
   }
-  // applies to all opcodes
+  virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
 class Rule2Comp2Mult : public Rule {
@@ -855,16 +850,6 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
-// class RuleIndirectConcat : public Rule {
-// public:
-//   RuleIndirectConcat(const string &g) : Rule(g, 0, "indirectconcat") {}	///< Constructor
-//   virtual Rule *clone(const ActionGroupList &grouplist) const {
-//     if (!grouplist.contains(getGroup())) return (Rule *)0;
-//     return new RuleIndirectConcat(getGroup());
-//   }
-//   virtual void getOpList(vector<uint4> &oplist) const;
-//   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
-// };
 class RuleConcatZext : public Rule {
 public:
   RuleConcatZext(const string &g) : Rule(g, 0, "concatzext") {}	///< Constructor
@@ -1265,7 +1250,7 @@ public:
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
-  static PcodeOp *findSubshift(PcodeOp *op,int4 &n,OpCode &shiftopc);
+  static PcodeOp *findSubshift(PcodeOp *op,uint4 &n,OpCode &shiftopc);
 };
 
 class RuleDivTermAdd2 : public Rule {
@@ -1280,7 +1265,7 @@ public:
 };
 
 class RuleDivOpt : public Rule {
-  static uintb calcDivisor(uintb n,uint8 *y,int4 xsize);		///< Calculate the divisor
+  static uintb calcDivisor(uint4 n,uint8 *y,uint4 xsize);		///< Calculate the divisor
   static void moveSignBitExtraction(Varnode *firstVn,Varnode *replaceVn,Funcdata &data);
   static bool checkFormOverlap(PcodeOp *op);	///< If form rooted at given PcodeOp is superseded by an overlapping form
 public:
@@ -1291,7 +1276,7 @@ public:
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
-  static Varnode *findForm(PcodeOp *op,int4 &n,uint8 *y,int4 &xsize,OpCode &extopc);
+  static Varnode *findForm(PcodeOp *op,uint4 &n,uint8 *y,uint4 &xsize,OpCode &extopc);
 };
 
 class RuleSignDiv2 : public Rule {
@@ -1410,6 +1395,7 @@ public:
 class RulePtrFlow : public Rule {
   Architecture *glb;			///< The address space manager
   bool hasTruncations;			///< \b true if this architecture needs truncated pointers
+  bool walkIndirects(PcodeOp *op);
   bool trialSetPtrFlow(PcodeOp *op);
   bool propagateFlowToDef(Varnode *vn);
   bool propagateFlowToReads(Varnode *vn);

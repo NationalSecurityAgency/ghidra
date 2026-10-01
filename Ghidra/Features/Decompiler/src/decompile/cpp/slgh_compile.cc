@@ -1487,7 +1487,7 @@ void ConsistencyChecker::optimizeGather2(Constructor *ct,UniqueState &state,int4
     if ((hand->getPtrSpace().getType() == ConstTpl::real)&&
 	(hand->getPtrOffset().getType() == ConstTpl::real)) {
       uintb offset = hand->getPtrOffset().getReal();
-      int4 size = hand->getPtrSize().getReal();
+      int4 size = hand->getSize().getReal();
       vector<OptimizeRecord*> defs;
       state.getDefinitions(defs,offset,size);
       for (vector<OptimizeRecord*>::iterator iter=defs.begin();iter!=defs.end();++iter) {

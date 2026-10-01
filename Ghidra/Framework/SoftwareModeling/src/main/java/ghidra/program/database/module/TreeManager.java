@@ -21,7 +21,7 @@ import java.util.*;
 import db.*;
 import db.util.ErrorHandler;
 import ghidra.framework.data.OpenMode;
-import ghidra.program.database.ManagerDB;
+import ghidra.program.database.ProgramDBModule;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.*;
@@ -40,7 +40,7 @@ import ghidra.util.task.TaskMonitor;
  *
  *
  */
-public class TreeManager implements ManagerDB {
+public class TreeManager implements ProgramDBModule {
 	/**
 	 * The name of the default tree that is created when a program is created.
 	 */
@@ -83,7 +83,7 @@ public class TreeManager implements ManagerDB {
 	}
 
 	@Override
-	public void setProgram(ProgramDB program) {
+	public void setDomainObject(ProgramDB program) {
 		this.program = program;
 
 		if (treeMap.isEmpty()) {
@@ -92,7 +92,7 @@ public class TreeManager implements ManagerDB {
 	}
 
 	@Override
-	public void programReady(OpenMode openMode1, int currentRevision, TaskMonitor monitor)
+	public void domainObjectReady(OpenMode openMode1, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		// Nothing to do
 	}

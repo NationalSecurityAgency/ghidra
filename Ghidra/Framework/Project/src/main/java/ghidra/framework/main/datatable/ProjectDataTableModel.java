@@ -27,11 +27,14 @@ import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.datastruct.Accumulator;
+import ghidra.util.datastruct.AlphaNumericComparator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateFileException;
 import ghidra.util.task.TaskMonitor;
 
 public class ProjectDataTableModel extends ThreadedTableModel<DomainFileInfo, ProjectData> {
+
+	private static boolean useNaturalSort = true;
 
 	private ProjectData projectData;
 	private volatile int modCount;
@@ -41,6 +44,10 @@ public class ProjectDataTableModel extends ThreadedTableModel<DomainFileInfo, Pr
 
 	protected ProjectDataTableModel(ServiceProvider serviceProvider) {
 		super("Project Data Table", serviceProvider);
+	}
+
+	public static void setUseNaturalSort(boolean b) {
+		useNaturalSort = b;
 	}
 
 	boolean loadWasCancelled() {
@@ -189,6 +196,9 @@ public class ProjectDataTableModel extends ThreadedTableModel<DomainFileInfo, Pr
 	private class DomainFileNameColumn
 			extends AbstractDynamicTableColumn<DomainFileInfo, String, ProjectData> {
 
+		private static AlphaNumericComparator alphaNumericComparator =
+			new AlphaNumericComparator(false);
+
 		@Override
 		public String getColumnName() {
 			return "Name";
@@ -204,6 +214,14 @@ public class ProjectDataTableModel extends ThreadedTableModel<DomainFileInfo, Pr
 		@Override
 		public int getColumnPreferredWidth() {
 			return 200;
+		}
+
+		@Override
+		public Comparator<String> getComparator() {
+			if (useNaturalSort) {
+				return alphaNumericComparator;
+			}
+			return super.getComparator();
 		}
 	}
 

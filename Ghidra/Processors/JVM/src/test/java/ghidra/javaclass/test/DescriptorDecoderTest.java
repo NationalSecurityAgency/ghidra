@@ -21,30 +21,40 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import generic.test.AbstractGenericTest;
 import ghidra.app.util.pcodeInject.*;
 import ghidra.javaclass.format.DescriptorDecoder;
 import ghidra.javaclass.format.constantpool.AbstractConstantPoolInfoJava;
+import ghidra.program.database.data.TransientDataTypeManager;
 import ghidra.program.model.data.*;
 
 public class DescriptorDecoderTest extends AbstractGenericTest {
-	DataTypeManager dtm;
-	DataType dtInteger;
+
+	private DataTypeManager dtm;
+	private DataType dtInteger;
 
 	@Before
 	public void setUp() {
-		dtm = new StandAloneDataTypeManager("");
-		int transactionID = dtm.startTransaction(null);
-		dtInteger = DescriptorDecoder.resolveClassForString("java/lang/Integer", dtm,
-			DWordDataType.dataType);
-		DescriptorDecoder.resolveClassForString("JVM_primitives/byte", dtm,
-			SignedByteDataType.dataType);
-		DescriptorDecoder.resolveClassForString("JVM_primitives/boolean", dtm,
-			BooleanDataType.dataType);
-		dtm.endTransaction(transactionID, true);
+		dtm = new TransientDataTypeManager("test");
+		int transactionID = dtm.startTransaction("test");
+		try {
+			dtInteger = DescriptorDecoder.resolveClassForString("java/lang/Integer", dtm,
+				DWordDataType.dataType);
+			DescriptorDecoder.resolveClassForString("JVM_primitives/byte", dtm,
+				SignedByteDataType.dataType);
+			DescriptorDecoder.resolveClassForString("JVM_primitives/boolean", dtm,
+				BooleanDataType.dataType);
+		}
+		finally {
+			dtm.endTransaction(transactionID, true);
+		}
+	}
+
+	@After
+	public void tearDown() {
+		dtm.close();
 	}
 
 	@Test

@@ -26,8 +26,7 @@ import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.emu.*;
 import ghidra.pcode.exec.*;
-import ghidra.pcode.exec.PcodeArithmetic.Purpose;
-import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
+import ghidra.pcode.exec.SleighPcodeUseropDefinition.BuilderStage1;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataTypeConflictHandler;
 import ghidra.program.model.data.PointerDataType;
@@ -44,26 +43,25 @@ public class EmuAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadlessInte
 
 	/**
 	 * A library with two 4-argument syscalls.
-	 * 
 	 * <p>
 	 * For x86:LE:64:default:gcc, the storage for the 4th argument varies by calling convention. For
-	 * __stdcall, it's RCX. For syscall, it's R10. Both syscalls just return the 4th argument. Thus,
-	 * it's possible to detect whether the emulator heeds conventions by binding each to a different
-	 * convention, then invoking them with distinct values placed in RCX and R10 and verifying that
-	 * the correct value shows in RAX, the return register.
+	 * {@code __stdcall}, it's RCX. For syscall, it's R10. Both syscalls just return the 4th
+	 * argument. Thus, it's possible to detect whether the emulator heeds conventions by binding
+	 * each to a different convention, then invoking them with distinct values placed in RCX and R10
+	 * and verifying that the correct value shows in RAX, the return register.
 	 */
-	protected final class SyscallTestUseropLibrary
+	protected static final class SyscallTestUseropLibrary
 			extends AnnotatedEmuSyscallUseropLibrary<byte[]> {
-		protected final Register regRAX;
 
 		public SyscallTestUseropLibrary(PcodeMachine<byte[]> machine, Program program) {
 			super(machine, program);
-			regRAX = machine.getLanguage().getRegister("RAX");
 		}
 
-		@Override
-		public long readSyscallNumber(PcodeExecutorState<byte[]> state, Reason reason) {
-			return machine.getArithmetic().toLong(state.getVar(regRAX, reason), Purpose.OTHER);
+		@PcodeUserop
+		public SleighPcodeUseropDefinition syscall(BuilderStage1 builder) {
+			return builder.params().body(_ -> """
+					RAX = emu_syscall(RAX);
+					""").build();
 		}
 
 		@PcodeUserop
@@ -76,11 +74,6 @@ public class EmuAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadlessInte
 		@EmuSyscall("syscall1")
 		public byte[] test_syscall1(byte[] arg0, byte[] arg1, byte[] arg2, byte[] arg3) {
 			return arg3;
-		}
-
-		@Override
-		public boolean handleError(PcodeExecutor<byte[]> executor, PcodeExecutionException err) {
-			return false;
 		}
 	}
 
@@ -129,7 +122,7 @@ public class EmuAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadlessInte
 		start = space.getAddress(0x00400000);
 		size = 0x1000;
 
-		try (Transaction tx = program.openTransaction("Initialize")) {
+		try (Transaction _ = program.openTransaction("Initialize")) {
 			block = program.getMemory()
 					.createInitializedBlock(".text", start, size, (byte) 0, TaskMonitor.DUMMY,
 						false);
@@ -178,7 +171,7 @@ public class EmuAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadlessInte
 
 	@Test
 	public void testSyscallWithStdcallConvention() throws Exception {
-		try (Transaction tx = program.openTransaction("Initialize")) {
+		try (Transaction _ = program.openTransaction("Initialize")) {
 			asm.assemble(start,
 				"MOV RAX,0",
 				"MOV RCX,0xbeef", // Will be clobbered with RIP by SYSCALL
@@ -204,7 +197,7 @@ public class EmuAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadlessInte
 
 	@Test
 	public void testSyscallWithSyscallConvention() throws Exception {
-		try (Transaction tx = program.openTransaction("Initialize")) {
+		try (Transaction _ = program.openTransaction("Initialize")) {
 			asm.assemble(start,
 				"MOV RAX,1",
 				"MOV RCX,0xdead", // Will be clobbered with RIP by SYSCALL

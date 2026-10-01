@@ -17,12 +17,13 @@ package ghidra.pcode.emu.jit.analysis;
 
 import static org.junit.Assert.assertEquals;
 
+import java.lang.classfile.ClassFile;
+import java.lang.constant.ClassDesc;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
 
 import org.junit.Test;
-import org.objectweb.asm.ClassWriter;
 
 import generic.Unique;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
@@ -30,13 +31,40 @@ import ghidra.app.plugin.processors.sleigh.SleighLanguageHelper;
 import ghidra.pcode.emu.jit.AbstractJitTest;
 import ghidra.pcode.emu.jit.alloc.AlignedMpIntHandler;
 import ghidra.pcode.emu.jit.analysis.JitType.DoubleJitType;
-import ghidra.pcode.emu.jit.gen.util.Emitter;
+import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.jit.gen.util.*;
+import ghidra.pcode.emu.jit.gen.util.Emitter.Bot;
+import ghidra.pcode.emu.jit.gen.util.Methods.Def;
+import ghidra.pcode.emu.jit.gen.util.Methods.MthDesc;
+import ghidra.pcode.emu.jit.gen.util.Types.TRef;
+import ghidra.pcode.emu.jit.gen.util.Types.TVoid;
 import ghidra.pcode.emu.jit.var.JitVar;
 import ghidra.pcode.emu.jit.var.JitVarnodeVar;
 import ghidra.pcode.exec.*;
 import junit.framework.AssertionFailedError;
 
 public class JitAllocationModelTest extends AbstractJitTest {
+
+	static class Models {
+		final JitControlFlowModel cfm;
+		final JitDataFlowModel dfm;
+		final JitReachabilityModel rm;
+		final JitVarScopeModel vsm;
+		final JitOpUseModel oum;
+		final JitTypeModel tm;
+		final JitAllocationModel am;
+
+		public Models(JitAnalysisContext context) {
+			cfm = new JitControlFlowModel(context);
+			dfm = new JitDataFlowModel(context, cfm);
+			rm = new JitReachabilityModel(context, cfm, dfm);
+			vsm = new JitVarScopeModel(cfm, dfm, rm);
+			oum = new JitOpUseModel(context, cfm, dfm, rm, vsm);
+			tm = new JitTypeModel(dfm, oum);
+			am = new JitAllocationModel(context, dfm, vsm, oum, tm);
+		}
+	}
+
 	public static <T> Stream<T> filterByType(Stream<?> in, Class<T> cls) {
 		return in.<T> mapMulti((e, d) -> {
 			if (cls.isInstance(e)) {
@@ -50,65 +78,68 @@ public class JitAllocationModelTest extends AbstractJitTest {
 	}
 
 	@Test
-	public void testMultiPrecisionInt() throws Exception {
+	public <THIS extends JitCompiledPassage> void testMultiPrecisionInt() throws Exception {
 		SleighLanguage language = SleighLanguageHelper.getMockBE64Language();
-
 		PcodeProgram program = SleighProgramCompiler.compileProgram(language, "test", """
 				temp:32 = zext(0x1234:2);
 				goto 0x1234;
 				""", PcodeUseropLibrary.NIL);
-
 		JitAnalysisContext context = makeContext(program);
-		JitControlFlowModel cfm = new JitControlFlowModel(context);
-		JitDataFlowModel dfm = new JitDataFlowModel(context, cfm);
-		JitVarScopeModel vsm = new JitVarScopeModel(cfm, dfm);
-		JitTypeModel tm = new JitTypeModel(dfm);
-		JitAllocationModel am = new JitAllocationModel(context, dfm, vsm, tm);
-
-		JitVarnodeVar tempVar = Unique.assertOne(varnodeVars(dfm)
+		Models m = new Models(context);
+		JitVarnodeVar tempVar = Unique.assertOne(varnodeVars(m.dfm)
 				.filter(v -> v.varnode().isUnique()));
 
-		ClassWriter cw = new ClassWriter(0);
-		Emitter<?> em = Emitter.start(cw.visitMethod(0, "none", "()V", null, null));
-		am.allocate(em.rootScope());
+		TRef<THIS> typeThis =
+			Types.refExtends(Types.refOf(JitCompiledPassage.class), JitCompiledPassage.class);
+		ClassFile.of().build(ClassDesc.of("Test"), clb -> {
+			MthDesc<TVoid, Bot> mdescVoid = MthDesc.returns(Types.T_VOID).build();
+			Emitter.instanceWithBody(clb, typeThis, "none", mdescVoid, 0, mb -> {
+				var spec = mb.startSpec()
+						.param(Def::done, typeThis, Def::ignore);
+				m.am.allocate(spec.em().rootScope());
+				return spec.em()
+						.emit(Op::return_, spec.ret());
+			});
+		});
 
-		if (!(am.getHandler(tempVar) instanceof AlignedMpIntHandler handler)) {
+		if (!(m.am.getHandler(tempVar) instanceof AlignedMpIntHandler handler)) {
 			throw new AssertionFailedError();
 		}
-
 		/**
-		 * TODO: Might like to assert more details, but this mp-int aspect of the JIT-based emulator
-		 * is still a work in progress.
+		 * LATER: Might like to assert more details, but this mp-int aspect of the JIT-based
+		 * emulator is still a work in progress.
 		 */
 		assertEquals(8, handler.legs().size());
 	}
 
 	@Test
-	public void testVarnodeReuse() throws Exception {
+	public <THIS extends JitCompiledPassage> void testVarnodeReuse() throws Exception {
 		SleighLanguage language = SleighLanguageHelper.getMockBE64Language();
-
 		PcodeProgram program = SleighProgramCompiler.compileProgram(language, "test", """
 				r0 = r1 + r2;
 				r0 = r0 f+ r2;
 				r0 = r0 f+ r2;
 				goto 0x1234;
 				""", PcodeUseropLibrary.NIL);
-
 		JitAnalysisContext context = makeContext(program);
-		JitControlFlowModel cfm = new JitControlFlowModel(context);
-		JitDataFlowModel dfm = new JitDataFlowModel(context, cfm);
-		JitVarScopeModel vsm = new JitVarScopeModel(cfm, dfm);
-		JitTypeModel tm = new JitTypeModel(dfm);
-		JitAllocationModel am = new JitAllocationModel(context, dfm, vsm, tm);
-
-		List<JitVarnodeVar> r0Vars = varnodeVars(dfm)
+		Models m = new Models(context);
+		List<JitVarnodeVar> r0Vars = varnodeVars(m.dfm)
 				.filter(v -> v.varnode().toString(language).equals("r0"))
 				.sorted(Comparator.comparing(JitVar::id))
 				.toList();
 
-		ClassWriter cw = new ClassWriter(0);
-		Emitter<?> em = Emitter.start(cw.visitMethod(0, "none", "()V", null, null));
-		am.allocate(em.rootScope());
+		TRef<THIS> typeThis =
+			Types.refExtends(Types.refOf(JitCompiledPassage.class), JitCompiledPassage.class);
+		ClassFile.of().build(ClassDesc.of("Test"), clb -> {
+			MthDesc<TVoid, Bot> mdescVoid = MthDesc.returns(Types.T_VOID).build();
+			Emitter.instanceWithBody(clb, typeThis, "none", mdescVoid, 0, mb -> {
+				var spec = mb.startSpec()
+						.param(Def::done, typeThis, Def::ignore);
+				m.am.allocate(spec.em().rootScope());
+				return spec.em()
+						.emit(Op::return_, spec.ret());
+			});
+		});
 
 		/**
 		 * NOTE: Variables are coalesced by varnode, so all of these will receive the same handler,
@@ -116,6 +147,6 @@ public class JitAllocationModelTest extends AbstractJitTest {
 		 * allocation models to choose F8 for that handler.
 		 */
 		assertEquals(List.of(DoubleJitType.F8, DoubleJitType.F8, DoubleJitType.F8),
-			r0Vars.stream().map(v -> am.getHandler(v).type()).toList());
+			r0Vars.stream().map(v -> m.am.getHandler(v).type()).toList());
 	}
 }

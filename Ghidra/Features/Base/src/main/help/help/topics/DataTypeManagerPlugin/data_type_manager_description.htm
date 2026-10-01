@@ -94,7 +94,7 @@
       <I>Data Type Manager</I> window. When a data type archive is open, it
       is displayed as a node in the <I>Data Type Manager</I>
       tree. Archives can be opened by the user or automatically when a program is opened which
-      references that archive. Data type archives can be <A href="#open_for_editing">open for
+      references that archive. Data type archives can be <A href="#Open_Archive_For_Editing">open for
       modification</A> or as read-only. Within the <I>Data Type Manager</I> window there are
       actions for opening, closing, renaming, and making archives modifiable.</P>
     </BLOCKQUOTE>
@@ -243,17 +243,6 @@
         the program</B>.</P>
       </BLOCKQUOTE>
 
-      <H3><A name="Update_Source_Archive_Names">Update Source Archive Names</A></H3>
-
-      <BLOCKQUOTE>
-        <P>When new releases of Ghidra are installed, old datatype archives may be dropped. In some
-        cases these old archives may be replaced with a differently named archive. When this
-        happens, this popup action can be used on a client archive to update the old source archive
-        references. This popup action is only available when such an archive name change has
-        occurred. Any programs or other client archives which reference the old archive will have 
-        this popup action available to update the source archive name reference.</P>
-      </BLOCKQUOTE>
-
       <H3>Committing Changes To Source Archive</H3>
 
       <BLOCKQUOTE>
@@ -349,7 +338,7 @@
         files are organized into directories in a filesystem. Archives are useful for sharing data
         types with other users, or making your data types available for use in other projects.
         Normally, file archives are opened in a read-only mode, but can optionally be <A href=
-        "#open_for_editing">opened</A> for editing. Project archives are normally opened for
+        "#Open_Archive_For_Editing">opened</A> for editing. Project archives are normally opened for
         editing, since they support sharing and version control and therefore allow more than one
         user to modify them at a time. Only one user at a time can have a file archive opened for
         editing.</P>
@@ -467,7 +456,7 @@
           Archive</B></I> action. The archive will be removed from the tree.</P>
         </BLOCKQUOTE>
 
-        <H3><A name="open_for_editing"></A>Opening a File Data Type Archive for Editing</H3>
+        <H3><A name="Open_Archive_For_Editing"></A>Opening a File Data Type Archive for Editing</H3>
 
         <BLOCKQUOTE>
           <P>When an archive is first opened, it is not editable. In order to make any changes to
@@ -479,13 +468,13 @@
         </BLOCKQUOTE>
 
         <DIV align="left">
-          <H3><A name="Unlock_Archive"></A> <A name="Lock_Archive"></A>Closing a File Data Type
+          <H3><A name></A> <A name="Close_Archive_For_Editing"></A>Closing a File Data Type
           Archive for Editing<BR>
           </H3>
         </DIV>
 
         <BLOCKQUOTE>
-          <P>When an archive that is <A href="#open_for_editing">open for editing</A> no longer
+          <P>When an archive that is <A href="#Open_Archive_For_Editing">open for editing</A> no longer
           needs to be edited, then it should be put back to a read-only mode so that other users
           can then modify it. Select the data type archive to close for editing, right-click on it
           and select the <I><B>Close for Editing</B></I> action. If the archive has unsaved
@@ -502,7 +491,6 @@
           changes will be saved and the name will be updated to not show a '*'.</P>
         </BLOCKQUOTE>
 
-<!-- Unimplemented Action
         <H3><A name="Save_As"></A>Saving a File Data Type Archive to a New File<BR>
         </H3>
 
@@ -512,7 +500,6 @@
           and filename for the new archive that will be created. The tree will be updated to show
           the new name for the archive (the filename). The original archive file is unaffected.</P>
         </BLOCKQUOTE>
--->
 
 	<H3><A name="Undo_Archive_Change"></A>Undo Unsaved Archive Change</H3>
 
@@ -523,7 +510,7 @@
       stack of unsaved changes.  The next change which may be reverted is described by the archive's
       Undo Change popup menu item.  If this action is used and a change is reverted it may be re-applied by using the
       <A href="#Redo_Archive_Change">Redo Change</A> action.  When the data type archive is 
-      <A href="#Save">saved</A> or <A href="#Lock_Archive">closed for editing</A> the undo/redo stack is 
+      <A href="#Save">saved</A> or <A href="#Close_Archive_For_Editing">closed for editing</A> the undo/redo stack is 
       cleared.
       </P>
 
@@ -538,7 +525,7 @@
       The next reverted change which may be re-applied is described by the archive's
       Redo Change popup menu item.  If this action is used and a change is re-applied it may again be reverted by using the
       <A href="#Undo_Archive_Change">Undo Change</A> action.  When the data type archive is
-      <A href="#Save">saved</A> or <A href="#Lock_Archive">closed for editing</A> the undo/redo stack is 
+      <A href="#Save">saved</A> or <A href="#Close_Archive_For_Editing">closed for editing</A> the undo/redo stack is 
       cleared.
       </P>
 
@@ -550,7 +537,7 @@
           <P>Deleting an archive will not only remove the archive from the tree, but will
           permanently remove it from the filesystem. To delete an archive, right-click on it and
           select the <I><B>Delete Archive</B></I> action. An archive file must be open for editing
-          before this action will appear (see <A href="#open_for_editing">Opening a Data Type
+          before this action will appear (see <A href="#Open_Archive_For_Editing">Opening a Data Type
           Archive for Editing</A>).</P>
         </BLOCKQUOTE>
 
@@ -615,7 +602,7 @@
 
           <P><IMG alt="" src="help/shared/note.png">
           The source archive must be editable in order to commit.  File archives must be <A href=
-          "data_type_manager_description.htm#open_for_editing">open for editing</A> and project
+          "data_type_manager_description.htm#Open_Archive_For_Editing">open for editing</A> and project
           archives that are under version control must be checked-out.</P>
           
           <P><IMG alt="" src="help/shared/note.png">Any data type dependencies for a comitted 

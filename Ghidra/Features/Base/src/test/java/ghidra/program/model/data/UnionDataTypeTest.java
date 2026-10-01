@@ -22,6 +22,7 @@ import org.junit.*;
 import com.google.common.collect.Sets;
 
 import generic.test.AbstractGenericTest;
+import ghidra.program.database.data.TransientDataTypeManager;
 
 public class UnionDataTypeTest extends AbstractGenericTest {
 
@@ -650,6 +651,6 @@ public class UnionDataTypeTest extends AbstractGenericTest {
 	protected DataTypeManager createBigEndianDataTypeManager() {
 		DataOrganizationImpl dataOrg = DataOrganizationImpl.getDefaultOrganization(null);
 		dataOrg.setBigEndian(true);
-		return new StandAloneDataTypeManager("BEdtm", dataOrg);
+		return new TransientDataTypeManager("BEdtm", dataOrg);
 	}
 }

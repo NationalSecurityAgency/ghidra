@@ -97,32 +97,36 @@ public class ProjectDataPasteLinkAction extends ProjectTreeAction {
 		if (!context.isInActiveProject() || !context.hasExactlyOneFileOrFolder()) {
 			return false;
 		}
+
 		GTreeNode node = (GTreeNode) context.getContextObject();
 		DomainFolder destFolder = DataTree.getRealInternalFolderForNode(node);
 		if (!ProjectDataPasteAction.checkNodeForPaste(destFolder)) {
 			return false;
 		}
+
 		Project activeProject = AppInfo.getActiveProject();
 		DataTreeNode copyNode = getFolderOrFileCopyNode();
-		if (copyNode != null) {
-			if (relative && copyNode.getProjectData() != activeProject.getProjectData()) {
+		if (copyNode == null) {
+			return false;
+		}
+
+		if (relative && copyNode.getProjectData() != activeProject.getProjectData()) {
+			return false;
+		}
+
+		if (copyNode instanceof DomainFileNode fileNode) {
+			// Only enable action if a LinkHandler exists for the file
+			DomainFile domainFile = fileNode.getDomainFile();
+			try {
+				ContentHandler<?> contentHandler =
+					DomainObjectAdapter.getContentHandler(domainFile.getContentType());
+				return contentHandler.getLinkHandler() != null;
+			}
+			catch (IOException e) {
 				return false;
 			}
-			if (copyNode instanceof DomainFileNode fileNode) {
-				// Only enable action if a LinkHandler exists for the file
-				DomainFile domainFile = fileNode.getDomainFile();
-				try {
-					ContentHandler<?> contentHandler =
-						DomainObjectAdapter.getContentHandler(domainFile.getContentType());
-					return contentHandler.getLinkHandler() != null;
-				}
-				catch (IOException e) {
-					return false;
-				}
-			}
-			return true;
 		}
-		return false;
+		return true;
 	}
 
 	private DataTreeNode getFolderOrFileCopyNode() {

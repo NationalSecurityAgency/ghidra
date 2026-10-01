@@ -18,7 +18,7 @@ package agent.lldb.rmi;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assume.*;
 
 import java.util.*;
 
@@ -45,6 +45,7 @@ import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.target.path.PathFilter;
 import ghidra.trace.model.target.path.PathPattern;
+import ghidra.util.Msg;
 
 @Category(NightlyCategory.class) // this may actually be an @PortSensitive test
 public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
@@ -688,7 +689,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				stepToCall(conn, step_over, thread);
 
 				String dis2 = conn.executeCapture("dis -c2 -s '$pc'");
-				System.err.println(dis2);
+				Msg.info(this, dis2);
 				CallInstr instr = CallInstr.parse(dis2);
 
 				// This winds up a step_into if lldb can't place its breakpoint

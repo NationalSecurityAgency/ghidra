@@ -250,7 +250,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 						super.provider.close();
 					}
 				};
-				LoadSpec libLoadSpec = matchSupportedLoadSpec(loadSpec, bp);
+				LoadSpec libLoadSpec = matchSupportedLoadSpec(loadSpec, bp, monitor);
 				if (libLoadSpec != null) {
 					return bp;
 				}

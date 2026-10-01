@@ -172,7 +172,7 @@ public class FSRL {
 			String params = path.substring(paramStart + 1);
 			path = path.substring(0, paramStart);
 			Map<String, String> paramMap = getParamMapFromString(params);
-			md5 = paramMap.get(FSRL.PARAM_MD5);
+			md5 = getValidatedMD5(paramMap);
 		}
 
 		FSRLRoot fsRoot = FSRLRoot.nestedFS(containerFile, proto);
@@ -198,6 +198,21 @@ public class FSRL {
 			paramMap.put(name, value);
 		}
 		return paramMap;
+	}
+
+	private static final int MD5_DIGEST_LEN = 16;
+	private static String getValidatedMD5(Map<String, String> params) {
+		String md5 = params.get(FSRL.PARAM_MD5);
+		if (md5 != null && md5.length() == MD5_DIGEST_LEN * 2) {
+			try {
+				byte[] digestBytes = HexFormat.of().parseHex(md5);
+				return HexFormat.of().formatHex(digestBytes);
+			}
+			catch (IllegalArgumentException e) {
+				// not a valid hex string
+			}
+		}
+		return null;
 	}
 
 	protected final FSRL parent;

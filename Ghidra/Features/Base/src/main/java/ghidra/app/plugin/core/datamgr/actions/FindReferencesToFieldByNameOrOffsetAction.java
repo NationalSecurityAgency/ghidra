@@ -15,15 +15,17 @@
  */
 package ghidra.app.plugin.core.datamgr.actions;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
+import javax.swing.Icon;
 import javax.swing.tree.TreePath;
 
 import org.apache.commons.lang3.StringUtils;
 
 import docking.ActionContext;
+import docking.DockingWindowManager;
 import docking.widgets.OptionDialog;
+import docking.widgets.dialogs.InputWithChoicesDialog;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
@@ -32,6 +34,7 @@ import ghidra.app.services.FieldMatcher;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
+import ghidra.util.MessageType;
 import ghidra.util.NumericUtilities;
 
 /**
@@ -81,19 +84,67 @@ public class FindReferencesToFieldByNameOrOffsetAction extends AbstractFindRefer
 	@Override
 	protected FieldMatcher createFieldMatcher(DataTypeAndFields typeAndFields) {
 
-		DataType dt = typeAndFields.dataType();
-		String message = "Find uses of '" + dt.getName() + "' field by name or offset";
-		String userChoice = OptionDialog.showEditableInputChoiceDialog(null, "Choose Field",
-			message, typeAndFields.fieldNames(), null, OptionDialog.QUESTION_MESSAGE);
-		if (userChoice == null) {
-			return null; // cancelled
+		FieldInputDialog dialog = new FieldInputDialog(typeAndFields);
+		return dialog.show();
+	}
+
+	private class FieldInputDialog extends InputWithChoicesDialog {
+
+		private static final Icon ICON =
+			OptionDialog.getIconForMessageType(OptionDialog.QUESTION_MESSAGE);
+		private DataTypeAndFields typeAndFields;
+
+		public FieldInputDialog(DataTypeAndFields typeAndFields) {
+			super("Choose Field", createTitle(typeAndFields), typeAndFields.fieldNames(), null,
+				true, ICON);
+			this.typeAndFields = typeAndFields;
 		}
 
-		try {
-			return new FieldMatcher(dt, NumericUtilities.parseInt(userChoice));
+		private static String createTitle(DataTypeAndFields typeAndFields) {
+			DataType dt = typeAndFields.dataType();
+			return "Find uses of '" + dt.getName() + "' field by name or offset";
 		}
-		catch (NumberFormatException e) {
-			return new FieldMatcher(dt, userChoice);
+
+		@Override
+		protected void okCallback() {
+
+			String userChoice = getValue();
+			if (!isValid(userChoice)) {
+				setStatusText("Invalid field name or number", MessageType.ERROR);
+				return;
+			}
+
+			super.okCallback();
+		}
+
+		private boolean isValid(String userValue) {
+			try {
+				NumericUtilities.parseInt(userValue);
+				return true;
+			}
+			catch (NumberFormatException e) {
+				// check the field name
+			}
+
+			List<String> list = Arrays.asList(typeAndFields.fieldNames());
+			return list.contains(userValue);
+		}
+
+		FieldMatcher show() {
+			DockingWindowManager.showDialog(null, this);
+
+			if (isCanceled()) {
+				return null; // cancelled
+			}
+
+			DataType dt = typeAndFields.dataType();
+			String userChoice = getValue();
+			try {
+				return new FieldMatcher(dt, NumericUtilities.parseInt(userChoice));
+			}
+			catch (NumberFormatException e) {
+				return new FieldMatcher(dt, userChoice);
+			}
 		}
 	}
 

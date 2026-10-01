@@ -539,10 +539,8 @@ void Funcdata::adjustInputVarnodes(const Address &addr,int4 sz)
   // Now that all the intersecting inputs have been pulled out, we can create the new input
   Varnode *invn = newVarnode(sz,addr);
   invn = setInputVarnode(invn);
-  // The new input may cause new heritage and "Heritage AFTER dead removal" errors
-  // So tell heritage to ignore it
-  // FIXME: It would probably be better to insert this directly into heritage's globaldisjoint
-  invn->setWriteMask();
+  // Treat full range as if it has already been heritaged
+  heritage.markRangeHeritaged(invn->getAddr(), invn->getSize());
   // Now change all old inputs to be created as SUBPIECE from the new input
   for(uint4 i=0;i<inlist.size();++i) {
     PcodeOp *op = inlist[i]->getDef();
@@ -1021,6 +1019,19 @@ bool Funcdata::syncVarnodesWithSymbols(const ScopeLocal *lm,bool updateDatatypes
   return updateoccurred;
 }
 
+/// If the Varnode is defined by an INDIRECT, mark PcodeOp causing the effect as having updated alias information
+/// \param vn is the given Varnode
+void Funcdata::markIndirectAliasUpdate(Varnode *vn)
+
+{
+  PcodeOp *indop = vn->def;
+  if (indop == (PcodeOp *)0) return;
+  if (indop->code() != CPUI_INDIRECT) return;
+  if (indop->getIn(1)->getSpace()->getType()!=IPTR_IOP) return ;
+  PcodeOp *effectOp = PcodeOp::getOpFromConst(indop->getIn(1)->getAddr());
+  effectOp->setAliasUpdate();
+}
+
 /// \brief Update properties (and the data-type) for a set of Varnodes associated with one Symbol
 ///
 /// The set of Varnodes with the same size and address all have their boolean properties
@@ -1072,12 +1083,14 @@ bool Funcdata::syncVarnodesWithSymbol(VarnodeLocSet::const_iterator &iter,uint4 
 	updateoccurred = true;
 	vn->setFlags(localFlags);
 	vn->clearFlags((~localFlags)&localMask);
+	markIndirectAliasUpdate(vn);
       }
     }
     else if ((vnflags & mask) != fl) { // We have a change
       updateoccurred = true;
       vn->setFlags(fl);
       vn->clearFlags((~fl)&mask);
+      markIndirectAliasUpdate(vn);
     }
     if (ct != (Datatype *)0) {
       if (vn->updateType(ct))
@@ -1281,6 +1294,8 @@ Varnode *Funcdata::findLinkedVarnode(SymbolEntry *entry) const
       return (Varnode *)0;
     return vn;
   }
+  if (!entry->isMapEntry())
+    return (Varnode *)0;
 
   MapEntry *mapentry = (MapEntry *)entry;
   VarnodeLocSet::const_iterator iter,enditer;
@@ -1320,7 +1335,7 @@ void Funcdata::findLinkedVarnodes(SymbolEntry *entry,vector<Varnode *> &res) con
     if (vn != (Varnode *)0)
       res.push_back(vn);
   }
-  else {
+  else if (entry->isMapEntry()) {
     VarnodeLocSet::const_iterator iter = beginLoc(entry->getSize(),((MapEntry *)entry)->getAddr());
     VarnodeLocSet::const_iterator enditer = endLoc(entry->getSize(),((MapEntry *)entry)->getAddr());
     for(;iter!=enditer;++iter) {

@@ -303,18 +303,12 @@ public class MatchFunctionsTask extends Task {
 	private GenSignatures generateSignatures(Program program, Iterator<Function> funcs,
 			LSHVectorFactory vectorFactory, TaskMonitor monitor)
 			throws LSHException, DecompileException {
-		GenSignatures gensig = null;
-		try {
-			int count = program.getFunctionManager().getFunctionCount();
-			gensig = new GenSignatures(false);
-			gensig.setVectorFactory(vectorFactory);
-			gensig.openProgram(program, null, null, null, null, null);
-			gensig.scanFunctions(funcs, count, monitor);
-			return gensig;
-		}
-		finally {
-			gensig.dispose();
-		}
+		int count = program.getFunctionManager().getFunctionCount();
+		GenSignatures gensig = new GenSignatures(false);
+		gensig.setVectorFactory(vectorFactory);
+		gensig.openProgram(program, null, null, null, null, null);
+		gensig.scanFunctions(funcs, count, monitor);
+		return gensig;
 	}
 
 }

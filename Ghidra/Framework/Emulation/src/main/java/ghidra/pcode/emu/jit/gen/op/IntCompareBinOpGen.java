@@ -195,7 +195,7 @@ public interface IntCompareBinOpGen<T extends JitIntTestOp> extends IntPredBinOp
 		int legCount = type.legsAlloc();
 		Local<TInt> localLLeg = scope.decl(Types.T_INT, "lLeg");
 		Local<TInt> localRLeg = scope.decl(Types.T_INT, "rLeg");
-		Lbl<Bot> lblDone = Lbl.create();
+		Lbl<Bot> lblDone = Lbl.create(em);
 		for (int i = legCount - 1; i > 0; i--) { // Yes, stop one before 0, so use >, not >=
 			em = em
 					.emit(gen::genReadLegToStack, localThis, op.l(), type, i, ext())

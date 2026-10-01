@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,10 +22,14 @@ import generic.jar.ResourceFile;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.MemoryByteProvider;
 import ghidra.app.util.bin.format.dwarf.DWARFDataTypeConflictHandler;
+import ghidra.program.database.dtarchive.DataTypeArchiveFactory;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
+import ghidra.program.model.dtarchive.FileDataTypeArchive;
 import ghidra.program.model.listing.Program;
 import ghidra.util.DataConverter;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -72,6 +76,7 @@ import ghidra.util.task.TaskMonitor;
 public class DataTypeMapper implements AutoCloseable {
 	protected Program program;
 	protected DataTypeManager programDTM;
+	protected FileDataTypeArchive archive;
 	protected DataTypeManager archiveDTM;
 	protected List<CategoryPath> programSearchCPs = new ArrayList<>();
 	protected List<CategoryPath> archiveSearchCPs = new ArrayList<>();
@@ -88,15 +93,26 @@ public class DataTypeMapper implements AutoCloseable {
 	protected DataTypeMapper(Program program, ResourceFile archiveGDT) throws IOException {
 		this.program = program;
 		this.programDTM = program.getDataTypeManager();
-		this.archiveDTM =
-			archiveGDT != null ? FileDataTypeManager.openFileArchive(archiveGDT, false) : null;
+		try {
+			this.archive =
+				archiveGDT != null
+						? DataTypeArchiveFactory.openReadOnly(archiveGDT, this, TaskMonitor.DUMMY)
+						: null;
+		}
+		catch (CancelledException e) {
+			// can't happen since we are using a DUMMY
+		}
+		catch (VersionException e) {
+			throw new IOException(e);
+		}
+		archiveDTM = archive != null ? archive.getDataTypeManager() : null;
 	}
 
 	@Override
 	public void close() {
-		if (archiveDTM != null) {
-			archiveDTM.close();
-			archiveDTM = null;
+		if (archive != null) {
+			archive.release(this);
+			archive = null;
 		}
 	}
 

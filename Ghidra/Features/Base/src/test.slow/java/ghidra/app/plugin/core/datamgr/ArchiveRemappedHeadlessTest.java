@@ -27,7 +27,7 @@ import ghidra.app.services.DataTypeManagerService;
 import ghidra.framework.Application;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
-import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.dtarchive.FileDataTypeArchive;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.util.task.TaskMonitor;
@@ -75,26 +75,26 @@ public class ArchiveRemappedHeadlessTest extends AbstractGhidraHeadlessIntegrati
 	@Test
 	public void testGetRemappedArchive() throws Exception {
 
-		DataTypeManager vs9dtm = service.openDataTypeArchive("windows_VS9");
-		assertNotNull(vs9dtm);
+		FileDataTypeArchive vs9Archive = service.openFileArchive("windows_VS9", TaskMonitor.DUMMY);
+		assertNotNull(vs9Archive);
 		try {
-			assertEquals("windows_VS9", vs9dtm.getName());
+			assertEquals("windows_VS9", vs9Archive.getName());
 		}
 		finally {
-			vs9dtm.close();
+			service.closeArchive(vs9Archive);
 		}
 
 		// Remove archive to force use of remapping
 		vs9ArchiveFile.delete();
 		assertFalse("windows_VS9.gdt should not exist", vs9ArchiveFile.exists());
 
-		DataTypeManager vs12dtm = service.openDataTypeArchive("windows_VS9");
-		assertNotNull(vs12dtm);
+		FileDataTypeArchive vs12Archive = service.openFileArchive("windows_VS9", TaskMonitor.DUMMY);
+		assertNotNull(vs12Archive);
 		try {
-			assertEquals("windows_vs12_32", vs12dtm.getName());
+			assertEquals("windows_vs12_32", vs12Archive.getName());
 		}
 		finally {
-			vs12dtm.close();
+			service.closeArchive(vs12Archive);
 		}
 	}
 

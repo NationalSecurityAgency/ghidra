@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.macho.MachException;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.bin.format.macho.commands.DyldInfoCommandConstants;
 import ghidra.program.model.data.LEB128;
@@ -31,9 +32,10 @@ import ghidra.program.model.data.LEB128;
  */
 public class BindingTable extends OpcodeTable {
 
+	private static final int COUNT_LIMIT = 100_000;
+
 	private List<Binding> bindings = new ArrayList<>();
 	private List<Binding> threadedBindings;
-
 
 	/**
 	 * Creates an empty {@link BindingTable}
@@ -50,9 +52,10 @@ public class BindingTable extends OpcodeTable {
 	 * @param tableSize The size of the table, in bytes
 	 * @param lazy True if this is a lazy binding table; otherwise, false
 	 * @throws IOException if an IO-related error occurs while parsing
+	 * @throws MachException if the {@link BindingTable} is invalid
 	 */
 	public BindingTable(BinaryReader reader, MachHeader header, long tableSize, boolean lazy)
-			throws IOException {
+			throws IOException, MachException {
 		this();
 
 		int pointerSize = header.getAddressSize();
@@ -143,6 +146,10 @@ public class BindingTable extends OpcodeTable {
 				case BIND_OPCODE_DO_BIND_ULEB_TIMES_SKIPPING_ULEB: { // 0xC0
 					ulebOffsets.add(reader.getPointerIndex() - origIndex);
 					long count = reader.readNext(LEB128::unsigned);
+					if (count < 0 || count > COUNT_LIMIT) {
+						throw new MachException("BIND_OPCODE count exceeds limit (%d): %d"
+								.formatted(COUNT_LIMIT, count));
+					}
 					ulebOffsets.add(reader.getPointerIndex() - origIndex);
 					long skip = reader.readNext(LEB128::unsigned);
 					for ( int i = 0 ; i < count ; ++i ) {

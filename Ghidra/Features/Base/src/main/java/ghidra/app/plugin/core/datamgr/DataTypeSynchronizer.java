@@ -25,7 +25,6 @@ import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.Strings;
 
 import docking.widgets.label.GDHtmlLabel;
-import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.app.util.html.HTMLDataTypeRepresentation;
 import ghidra.app.util.html.MissingArchiveDataTypeHTMLRepresentation;
@@ -48,17 +47,17 @@ public class DataTypeSynchronizer {
 	/**
 	 * Creates a DataTypeSynchronizer to be used for synchronizing data types between a program
 	 * and an archive.
-	 * @param dataTypeManagerHandler the handler that manages all the open data type managers
+	 * @param archiveManager the handler that manages all the open data type managers
 	 * whether built-in, program, project data type archive or file data type archive.
 	 * @param dataTypeManager the program data type manager.
 	 * @param source the data type source archive information indicating the associated archive for
 	 * synchronizing.
 	 */
-	public DataTypeSynchronizer(DataTypeManagerHandler dataTypeManagerHandler,
-			DataTypeManager dataTypeManager, SourceArchive source) {
+	public DataTypeSynchronizer(ArchiveManager archiveManager, DataTypeManager dataTypeManager,
+			SourceArchive source) {
 		this.dataTypeManager = dataTypeManager;
 		this.sourceArchive = source;
-		this.sourceDTM = dataTypeManagerHandler.getDataTypeManager(source);
+		this.sourceDTM = archiveManager.getDataTypeManager(source);
 	}
 
 	public List<DataTypeSyncInfo> findOutOfSynchDataTypes() {
@@ -150,13 +149,13 @@ public class DataTypeSynchronizer {
 	/**
 	 * Commits a single program data type's changes to the associated source data type in the
 	 * archive.
-	 * @param dtmHandler the handler that manages data types
+	 * @param archiveManager the archive manager
 	 * @param dt the program data type
 	 * @return true if the commit succeeds
 	 */
-	public static boolean commit(DataTypeManagerHandler dtmHandler, DataType dt) {
+	public static boolean commit(ArchiveManager archiveManager, DataType dt) {
 		SourceArchive sourceArchive = dt.getSourceArchive();
-		DataTypeManager sourceDTM = dtmHandler.getDataTypeManager(sourceArchive);
+		DataTypeManager sourceDTM = archiveManager.getDataTypeManager(sourceArchive);
 		if (sourceDTM == null) {
 			return false;
 		}
@@ -167,14 +166,14 @@ public class DataTypeSynchronizer {
 	/**
 	 * Updates a single data type in the program to match the associated source data type from the
 	 * archive.
-	 * @param dtmHandler the handler that manages data types
+	 * @param archiveManager the handler that manages data types
 	 * @param dt the data type
 	 * @return true if the update succeeds
 	 */
-	public static boolean update(DataTypeManagerHandler dtmHandler, DataType dt) {
+	public static boolean update(ArchiveManager archiveManager, DataType dt) {
 		DataTypeManager dataTypeManager = dt.getDataTypeManager();
 		SourceArchive sourceArchive = dt.getSourceArchive();
-		DataTypeManager sourceDtm = dtmHandler.getDataTypeManager(sourceArchive);
+		DataTypeManager sourceDtm = archiveManager.getDataTypeManager(sourceArchive);
 		if (dataTypeManager == null || sourceDtm == null) {
 			return false;
 		}
@@ -275,7 +274,7 @@ public class DataTypeSynchronizer {
 
 	}
 
-	public static DataTypeSyncState getSyncStatus(DataTypeManagerHandler handler,
+	public static DataTypeSyncState getSyncStatus(ArchiveManager archiveManager,
 			DataType dataType) {
 		DataTypeManager dataTypeManager = dataType.getDataTypeManager();
 		SourceArchive sourceArchive = dataType.getSourceArchive();
@@ -287,7 +286,7 @@ public class DataTypeSynchronizer {
 		boolean hasChangedLocally =
 			dataType.getLastChangeTime() != dataType.getLastChangeTimeInSourceArchive();
 
-		DataTypeManager sourceDTM = handler.getDataTypeManager(sourceArchive);
+		DataTypeManager sourceDTM = archiveManager.getDataTypeManager(sourceArchive);
 		DataTypeSyncInfo syncInfo = new DataTypeSyncInfo(dataType, sourceDTM);
 		if (sourceDTM == null) {
 			return hasChangedLocally ? DataTypeSyncState.COMMIT : DataTypeSyncState.IN_SYNC;
@@ -295,7 +294,7 @@ public class DataTypeSynchronizer {
 		return syncInfo.getSyncState();
 	}
 
-	public static String getDiffToolTip(DataTypeManagerHandler handler, DataType dataType) {
+	public static String getDiffToolTip(ArchiveManager archiveManager, DataType dataType) {
 		DataTypeManager dataTypeManager = dataType.getDataTypeManager();
 		SourceArchive sourceArchive = dataType.getSourceArchive();
 		UniversalID dataTypeID = dataType.getUniversalID();
@@ -304,7 +303,7 @@ public class DataTypeSynchronizer {
 			return null;
 		}
 
-		DataTypeManager sourceDTM = handler.getDataTypeManager(sourceArchive);
+		DataTypeManager sourceDTM = archiveManager.getDataTypeManager(sourceArchive);
 		boolean hasChangedLocally =
 			dataType.getLastChangeTime() != dataType.getLastChangeTimeInSourceArchive();
 		DataType sourceDT = null;

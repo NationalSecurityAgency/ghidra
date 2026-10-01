@@ -38,13 +38,20 @@ public interface ParamList {
 	}
 
 	/**
-	 * Given a list of datatypes, calculate the storage locations used for passing those data-types
-	 * @param proto is the list of datatypes
+	 * Allocate an initialized resource state object for this resource set
+	 * @return the state object
+	 */
+	public int[] allocateStatus();
+
+	/**
+	 * Given a list of data-types, calculate the storage locations used for passing those data-types
+	 * @param proto is the list of data-types
 	 * @param dtManage is the data-type manager
+	 * @param status is the state (which resources are consumed) for this resource set
 	 * @param res is the vector for holding the storage locations and other parameter properties
 	 * @param addAutoParams if true add/process auto-parameters
 	 */
-	public void assignMap(PrototypePieces proto, DataTypeManager dtManage,
+	public void assignMap(PrototypePieces proto, DataTypeManager dtManage, int[] status,
 			ArrayList<ParameterPieces> res, boolean addAutoParams);
 
 	public void encode(Encoder encoder, boolean isInput) throws IOException;

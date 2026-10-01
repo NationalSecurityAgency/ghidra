@@ -41,7 +41,8 @@ public class ParamEntry {
 	//private static final int EXTRACHECK_HIGH = 128;
 	//private static final int EXTRACHECK_LOW = 256;
 	private static final int IS_GROUPED = 512;			// The entry is grouped with other entries
-	private static final int OVERLAPPING = 0x100;		// This overlaps an earlier entry
+	private static final int OVERLAPPING = 0x400;		// This overlaps an earlier entry
+	private static final int IS_STACKSPILL = 0x1000;	// This is the final stack entry holding parameter spill
 
 	private int flags;
 	private StorageClass type;		// Restriction on DataType this entry must match
@@ -85,6 +86,10 @@ public class ParamEntry {
 
 	public StorageClass getType() {
 		return type;
+	}
+
+	public boolean isStackSpill() {
+		return ((flags & IS_STACKSPILL) != 0);
 	}
 
 	public boolean isExclusion() {
@@ -616,9 +621,10 @@ public class ParamEntry {
 			flags |= IS_BIG_ENDIAN;
 		}
 		if (alignment != 0) {
-//			if ((addressbase % alignment) != 0)
-//				throw new XmlParseException("Stack <pentry> address must match alignment");
 			numslots = size / alignment;
+			if (spaceid.isStackSpace()) {
+				flags |= IS_STACKSPILL;
+			}
 		}
 		if (spaceid.isStackSpace() && (!cspec.isStackRightJustified()) && isbigendian) {
 			flags |= FORCE_LEFT_JUSTIFY;

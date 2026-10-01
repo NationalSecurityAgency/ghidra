@@ -25,9 +25,11 @@ import org.junit.Test;
 
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.markuptype.DataTypeMarkupType;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.DataTypeConflictChoices;
 import ghidra.feature.vt.gui.util.VTMatchApplyChoices.ReplaceDataChoices;
 import ghidra.feature.vt.gui.util.VTOptionDefines;
 import ghidra.framework.options.ToolOptions;
+import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
@@ -83,6 +85,57 @@ public class DataTypeMarkupItemTest extends AbstractVTMarkupItemTest {
 		DataTypeValidator validator = new DataTypeValidator(sourceData, destinationData,
 			ReplaceDataChoices.REPLACE_FIRST_DATA_ONLY);
 		doTestFindAndApplyMarkupItem(validator);
+	}
+
+	@Test
+	public void testReplace_ConflictInDtm_ChooseExistingType() throws Exception {
+
+		Address srcAddr = addr("0x010074e6", sourceProgram);
+		StructureDataType coolStruct1 = createCoolStruct1();
+		Data sourceData = setDataType(sourceProgram, srcAddr, coolStruct1, coolStruct1.getLength());
+
+		// Add a type to the destination that has the same data type path, but is not equivalent
+		StructureDataType coolStruct2 = createCoolStruct2();
+		addToDestinationDtm(coolStruct2);
+
+		// make room for the type to be applied
+		Address destAddr = addr("0x010074e6", destinationProgram);
+		clear(destinationProgram, destAddr, coolStruct2.getLength());
+
+		StringDataType destDt = new StringDataType();
+		Data destData = setDataType(destinationProgram, destAddr, destDt, 4);
+
+		DataTypeValidator validator = new DataTypeValidator(sourceData, destData,
+			ReplaceDataChoices.REPLACE_FIRST_DATA_ONLY);
+		validator.setConflictChoice(DataTypeConflictChoices.USE_EXISTING);
+		validator.setKeepExistingType(true);
+		doTestFindAndApplyMarkupItem(validator);
+
+		assertConflictTypeInDestinationDtm(coolStruct1, false);
+	}
+
+	@Test
+	public void testReplace_ConflictInDtm_ChooseRenameAndAdd() throws Exception {
+
+		Address srcAddr = addr("0x010074e6", sourceProgram);
+		StructureDataType coolStruct1 = createCoolStruct1();
+		Data sourceData = setDataType(sourceProgram, srcAddr, coolStruct1, coolStruct1.getLength());
+
+		// Add a type to the destination that has the same data type path, but is not equivalent
+		StructureDataType coolStruct2 = createCoolStruct2();
+		addToDestinationDtm(coolStruct2);
+
+		Address destAddr = addr("0x010074e6", destinationProgram);
+		StringDataType destDt = new StringDataType();
+		Data destData = setDataType(destinationProgram, destAddr, destDt, 4);
+		setDataType(destinationProgram, destAddr.add(4), destDt, 6);
+
+		DataTypeValidator validator = new DataTypeValidator(sourceData, destData,
+			ReplaceDataChoices.REPLACE_FIRST_DATA_ONLY);
+		validator.setConflictChoice(DataTypeConflictChoices.RENAME_AND_ADD);
+		doTestFindAndApplyMarkupItem(validator);
+
+		assertConflictTypeInDestinationDtm(coolStruct1, true);
 	}
 
 	@Test
@@ -306,6 +359,38 @@ public class DataTypeMarkupItemTest extends AbstractVTMarkupItemTest {
 	}
 
 	@Test
+	public void testRejectedApplyDoesNotMutateDestinationDataTypeManager() throws Exception {
+
+		Address sourceAddress = addr("0x010074e6", sourceProgram); // LoadCursorW
+		StructureDataType sourceDataType = new StructureDataType("RejectedApplyStruct", 0);
+		sourceDataType.add(new DWordDataType());
+		Data sourceData =
+			setDataType(sourceProgram, sourceAddress, sourceDataType, sourceDataType.getLength());
+
+		Address destinationAddress = addr("0x010074e6", destinationProgram); // LoadCursorW
+		StringDataType destinationDataType = new StringDataType();
+		Data destinationData =
+			setDataType(destinationProgram, destinationAddress, destinationDataType, 4); // Get "Load".
+		setDataType(destinationProgram, destinationAddress.add(4), destinationDataType, 6); // Get "Cursor".
+
+		DataTypeManager destinationDTM = destinationProgram.getDataTypeManager();
+		assertNull("Test setup invalid - destination should not already have this data type",
+			destinationDTM.getDataType(sourceDataType.getCategoryPath(),
+				sourceDataType.getName()));
+
+		DataTypeValidator validator = new DataTypeValidator(sourceData, destinationData,
+			ReplaceDataChoices.REPLACE_UNDEFINED_DATA_ONLY);
+		validator.setConflictChoice(DataTypeConflictChoices.RENAME_AND_ADD);
+		doTestFindAndApplyMarkupItem_NoEffect(validator);
+
+		assertNull(
+			"Rejected apply must not add the source data type to the destination data type " +
+				"manager",
+			destinationDTM.getDataType(sourceDataType.getCategoryPath(),
+				sourceDataType.getName()));
+	}
+
+	@Test
 	public void testReplaceUndefinedOnlyWithLargerWhenBlockedByInstruction() throws Exception {
 
 		Address sourceAddress = addr("0x010074e6", sourceProgram); // LoadCursorW
@@ -413,6 +498,48 @@ public class DataTypeMarkupItemTest extends AbstractVTMarkupItemTest {
 // Private Methods
 //==================================================================================================
 
+	private void addToDestinationDtm(StructureDataType struct) {
+		ProgramDataTypeManager destDtm = destinationProgram.getDataTypeManager();
+		tx(destDtm, () -> {
+			destDtm.resolve(struct, null);
+		});
+
+		DataTypePath dtp = struct.getDataTypePath();
+		DataType resolvedDtm = destDtm.getDataType(dtp);
+		assertNotNull(resolvedDtm);
+	}
+
+	private StructureDataType createCoolStruct1() {
+		StructureDataType struct = new StructureDataType("CoolStructure", 0);
+		struct.add(new DWordDataType());
+		return struct;
+	}
+
+	// 'CoolStructure' that is slightly different than that made in createCoolStruct1()
+	private StructureDataType createCoolStruct2() {
+		StructureDataType struct = new StructureDataType("CoolStructure", 0);
+		struct.add(new DWordDataType());
+		struct.add(new DWordDataType());
+		return struct;
+	}
+
+	private void assertConflictTypeInDestinationDtm(DataType dt, boolean expectConflict) {
+
+		DataTypePath dtp = dt.getDataTypePath();
+		String name = dt.getName() + ".conflict";
+		CategoryPath cp = dtp.getCategoryPath();
+		DataTypePath conflictPath = new DataTypePath(cp, name);
+
+		ProgramDataTypeManager destDtm = destinationProgram.getDataTypeManager();
+		DataType conflictType = destDtm.getDataType(conflictPath);
+		if (expectConflict) {
+			assertNotNull(conflictType);
+		}
+		else {
+			assertNull(conflictType);
+		}
+	}
+
 	private Structure createGadgetStruct() {
 
 		Structure gadgetStruct = new StructureDataType("Gadget", 0);
@@ -428,14 +555,13 @@ public class DataTypeMarkupItemTest extends AbstractVTMarkupItemTest {
 
 	private Data setDataType(Program program, Address address, DataType dataType, int length) {
 
-		int txID = program.startTransaction("Change Data Type");
-		boolean commit = false;
-		try {
+		return tx(program, () -> {
 			Listing listing = program.getListing();
 			Data sourceData = listing.getDataAt(address);
 			if (sourceData == null) {
 				return null;
 			}
+
 			listing.clearCodeUnits(address, sourceData.getMaxAddress(), false);
 			Data data;
 			if (length > 0) {
@@ -444,23 +570,20 @@ public class DataTypeMarkupItemTest extends AbstractVTMarkupItemTest {
 			else {
 				data = listing.createData(address, dataType);
 			}
-			commit = true;
 			return data;
-		}
-		catch (Exception e) {
-			// Commit is false by default so nothing else to do.
-			return null;
-		}
-		finally {
-			program.endTransaction(txID, commit);
-		}
+		});
+	}
+
+	private void clear(Program p, Address a, int length) {
+		tx(p, () -> {
+			Listing listing = p.getListing();
+			listing.clearCodeUnits(a, a.add(length), false);
+		});
 	}
 
 	private Instruction createInstruction(Program program, Address atAddress) {
 
-		int txID = program.startTransaction("Create Instruction");
-		boolean commit = false;
-		try {
+		return tx(program, () -> {
 			Listing listing = program.getListing();
 			Memory memory = program.getMemory();
 			MemBuffer buf = new DumbMemBufferImpl(memory, atAddress);
@@ -469,16 +592,8 @@ public class DataTypeMarkupItemTest extends AbstractVTMarkupItemTest {
 			InstructionPrototype proto = program.getLanguage().parse(buf, context, false);
 			Instruction createdInstruction =
 				listing.createInstruction(atAddress, proto, buf, context, 0);
-			commit = true;
 			return createdInstruction;
-		}
-		catch (Exception e) {
-			// Commit is false by default so nothing else to do.
-			return null;
-		}
-		finally {
-			program.endTransaction(txID, commit);
-		}
+		});
 	}
 
 //==================================================================================================
@@ -494,6 +609,8 @@ public class DataTypeMarkupItemTest extends AbstractVTMarkupItemTest {
 		private int sourceLength;
 		private int originalDestinationLength;
 		private ReplaceDataChoices dataTypeChoice;
+		private DataTypeConflictChoices conflictChoice;
+		private boolean keepExistingType;
 
 		DataTypeValidator(Data sourceData, Data destinationData,
 				ReplaceDataChoices dataTypeChoice) {
@@ -508,6 +625,14 @@ public class DataTypeMarkupItemTest extends AbstractVTMarkupItemTest {
 			this.originalDestinationDataType =
 				originalDestinationDataType.clone(originalDestinationDataType.getDataTypeManager());
 			this.originalDestinationLength = destinationData.getLength();
+		}
+
+		void setConflictChoice(DataTypeConflictChoices conflictChoice) {
+			this.conflictChoice = conflictChoice;
+		}
+
+		void setKeepExistingType(boolean keep) {
+			this.keepExistingType = keep;
 		}
 
 		@Override
@@ -549,10 +674,19 @@ public class DataTypeMarkupItemTest extends AbstractVTMarkupItemTest {
 			Data currentDestinationData = listing.getDataAt(getDestinationApplyAddress());
 			DataType currentDestinationDataType = currentDestinationData.getDataType();
 			int currentDestinationLength = currentDestinationData.getLength();
-			assertTrue("Data type was not applied",
-				sourceDataType.isEquivalent(currentDestinationDataType));
-			assertTrue("Data type was not set to the source data type's size",
-				sourceLength == currentDestinationLength);
+
+			if (keepExistingType) {
+				// guilty knowledge: keeping the existing type is used when the types have the same
+				// data type path, but are not equivalent
+				assertEquals(sourceDataType.getDataTypePath(),
+					currentDestinationDataType.getDataTypePath());
+			}
+			else {
+				assertTrue("Data type was not applied",
+					sourceDataType.isEquivalent(currentDestinationDataType));
+				assertTrue("Data type was not set to the source data type's size",
+					sourceLength == currentDestinationLength);
+			}
 		}
 
 		@Override
@@ -571,6 +705,9 @@ public class DataTypeMarkupItemTest extends AbstractVTMarkupItemTest {
 		public ToolOptions getOptions() {
 			ToolOptions vtOptions = super.getOptions();
 			vtOptions.setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE, dataTypeChoice);
+			if (conflictChoice != null) {
+				vtOptions.setEnum(VTOptionDefines.DATA_TYPE_CONFLICT_HANDLER, conflictChoice);
+			}
 
 			return vtOptions;
 		}

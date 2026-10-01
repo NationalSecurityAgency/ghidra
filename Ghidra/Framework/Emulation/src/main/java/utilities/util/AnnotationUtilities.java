@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,8 +42,7 @@ public enum AnnotationUtilities {
 	}
 
 	private static void collectAnnotatedMethods(Class<? extends Annotation> annotCls, Class<?> cls,
-			Set<Method> defs,
-			Set<Class<?>> visited) {
+			Set<Method> defs, Set<Class<?>> visited) {
 		if (!visited.add(cls)) {
 			return;
 		}

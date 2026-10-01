@@ -255,8 +255,10 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerInt
 
 		Settings settings = dialog.getSettings();
 		FormatSettingsDefinition format = FormatSettingsDefinition.DEF;
-		format.setChoice(settings, FormatSettingsDefinition.DECIMAL);
-		runSwing(() -> dialog.okCallback());
+		runSwing(() -> {
+			format.setChoice(settings, FormatSettingsDefinition.DECIMAL);
+		});
+		pressButtonByText(dialog, "OK");
 
 		assertEquals("4194304", row.getValueString());
 	}

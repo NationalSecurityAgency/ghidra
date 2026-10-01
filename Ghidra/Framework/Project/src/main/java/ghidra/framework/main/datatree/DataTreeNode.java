@@ -17,11 +17,15 @@ package ghidra.framework.main.datatree;
 
 import java.util.*;
 
+import javax.swing.Icon;
+
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.GTreeSlowLoadingNode;
+import docking.widgets.tree.internal.InProgressGTreeNode;
 import ghidra.framework.data.LinkHandler;
 import ghidra.framework.data.LinkHandler.LinkStatus;
 import ghidra.framework.model.*;
+import ghidra.util.datastruct.AlphaNumericComparator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -36,44 +40,33 @@ public abstract class DataTreeNode extends GTreeSlowLoadingNode implements Cutta
 	 * sort order is based upon the following comparisons in order of significance:
 	 * <ol>
 	 * <li>Node type weighting.  Folder and Folder-Links have equal weighting.</li>
-	 * <li>Node comparison by name (see {@link DataTreeNode#compareNodeNames(String, String)}).</li>
+	 * <li>Node comparison by name.</li>
 	 * <li>Node type ordinal (e.g., ensures that a Folder-Link with the same name as a Folder 
 	 * will be placed after the Folder.</li>
 	 * </ol>
 	 */
 	enum NodeType {
 
-		FOLDER(1), FOLDER_LINK(1), FILE(2), OTHER(3);
+		FOLDER(1),
+		FOLDER_LINK(1),
+		FILE(2);
 
-		int weight;
+		private int weight;
 
 		NodeType(int weight) {
 			this.weight = weight;
 		}
-
-		static NodeType getNodeType(GTreeNode node) {
-			if (node instanceof DomainFolderNode) {
-				return FOLDER;
-			}
-			if (node instanceof DomainFileNode fileNode) {
-				return fileNode.isFolderLink() ? FOLDER_LINK : FILE;
-			}
-			return OTHER;
-		}
 	}
 
-	/**
-	 * Sort {@link Comparator} for use with sorting children and node comparison
-	 */
-	static final Comparator<GTreeNode> DATA_NODE_SORT_COMPARATOR = new DataNodeSortComparator();
+	static final Comparator<GTreeNode> DATA_NODE_COMPARATOR = new DataNodeSortComparator();
 
-	/**
-	 *  Search {@link Comparator} for use by {@link #getChild(String, NodeType)} only
-	 */
-	private static final DataNodeSearchComparator DATA_NODE_SEARCH_COMPARATOR =
-		new DataNodeSearchComparator();
+	private static boolean useNaturalSort = true;
 
 	private volatile boolean isCut; // true if this node is marked as cut
+
+	public static void setUseNaturalSort(boolean b) {
+		useNaturalSort = b;
+	}
 
 	@Override
 	public final void setIsCut(boolean isCut) {
@@ -87,6 +80,8 @@ public abstract class DataTreeNode extends GTreeSlowLoadingNode implements Cutta
 	public final boolean isCut() {
 		return isCut;
 	}
+
+	protected abstract NodeType getNodeType();
 
 	/**
 	 * Get the project data instance to which this file or folder belongs.
@@ -113,8 +108,9 @@ public abstract class DataTreeNode extends GTreeSlowLoadingNode implements Cutta
 		if (!isLoaded()) {
 			return;
 		}
+
 		List<GTreeNode> allChildren = getChildren();
-		int index = Collections.binarySearch(allChildren, newNode, DATA_NODE_SORT_COMPARATOR);
+		int index = Collections.binarySearch(allChildren, newNode, DATA_NODE_COMPARATOR);
 		if (index < 0) {
 			index = -index - 1;
 		}
@@ -181,82 +177,11 @@ public abstract class DataTreeNode extends GTreeSlowLoadingNode implements Cutta
 	 * @param type node type
 	 * @return matching tree node or null if not found
 	 */
-	@SuppressWarnings("unchecked")
 	static GTreeNode getChild(List<GTreeNode> children, String name, NodeType type) {
-		ChildSearchRecord childSearchRecord = new ChildSearchRecord(name, type);
-		int index =
-			Collections.binarySearch(children, childSearchRecord, DATA_NODE_SEARCH_COMPARATOR);
+
+		SearchNode key = new SearchNode(name, type);
+		int index = Collections.binarySearch(children, key, DATA_NODE_COMPARATOR);
 		return index >= 0 ? children.get(index) : null;
-	}
-
-	private record ChildSearchRecord(String name, NodeType type) {
-	}
-
-	@SuppressWarnings("rawtypes")
-	private static class DataNodeSearchComparator implements Comparator {
-		@Override
-		public int compare(Object o1, Object o2) {
-
-			GTreeNode node = (GTreeNode) o1;
-			ChildSearchRecord childSearchRecord = (ChildSearchRecord) o2;
-
-			NodeType type1 = NodeType.getNodeType(node);
-			NodeType type2 = childSearchRecord.type;
-
-			int comp = type1.weight - type2.weight;
-			if (comp != 0) {
-				return comp;
-			}
-
-			// NOTE: This name comparison is consistent with the sort order and
-			// will provide a case-senstive name-match
-			comp = compareNodeNames(node.getName(), childSearchRecord.name);
-			if (comp == 0) {
-				return type1.ordinal() - type2.ordinal();
-			}
-			return comp;
-		}
-	}
-
-	private static class DataNodeSortComparator implements Comparator<GTreeNode> {
-		@Override
-		public int compare(GTreeNode o1, GTreeNode o2) {
-
-			//
-			// Goal is to have folders appear before files except for folder-links
-			// which should be grouped with folders but come after a folder with 
-			// the same name
-
-			NodeType type1 = NodeType.getNodeType(o1);
-			NodeType type2 = NodeType.getNodeType(o2);
-
-			int comp = type1.weight - type2.weight;
-			if (comp != 0) {
-				return comp;
-			}
-
-			// NOTE: This name comparison is consistent with compareTo implementaions
-			comp = compareNodeNames(o1.getName(), o2.getName());
-			if (comp == 0) {
-				return type1.ordinal() - type2.ordinal();
-			}
-			return comp;
-		}
-	}
-
-	/**
-	 * Name comparison to be used for DataTreeNode comparators and node comparison.
-	 * @param n1 first name
-	 * @param n2 second name
-	 * @return comparison result consistent with {@link String#compareTo(String) n1.compareTo(n2)}
-	 */
-	static int compareNodeNames(String n1, String n2) {
-		int c = n1.compareToIgnoreCase(n2);
-		if (c == 0) {
-			// disambiguate for deterministic sort
-			c = n1.compareTo(n2);
-		}
-		return c;
 	}
 
 	/**
@@ -264,55 +189,190 @@ public abstract class DataTreeNode extends GTreeSlowLoadingNode implements Cutta
 	 * @param domainFolder folder
 	 * @param filter filter
 	 * @param monitor load task monitor
-	 * @return list of filtered chidren
+	 * @return list of filtered children
 	 * @throws CancelledException if load task is cancelled
 	 */
 	static List<GTreeNode> generateChildren(DomainFolder domainFolder, DomainFileFilter filter,
 			TaskMonitor monitor) throws CancelledException {
 
-		boolean hideFolderLinks = false;
-		boolean hideBroken = false;
-		boolean hideExternal = false;
-		if (filter != null) {
-			hideFolderLinks = filter.ignoreFolderLinks();
-			hideBroken = filter.ignoreBrokenLinks();
-			hideExternal = filter.ignoreExternalLinks();
-		}
-
 		List<GTreeNode> children = new ArrayList<>();
-		if (domainFolder != null) {
-
-			DomainFolder[] folders = domainFolder.getFolders();
-			for (DomainFolder folder : folders) {
-				monitor.checkCancelled();
-				children.add(new DomainFolderNode(folder, filter));
-			}
-
-			DomainFile[] files = domainFolder.getFiles();
-			for (DomainFile df : files) {
-				monitor.checkCancelled();
-				if (filter != null) {
-					boolean isFolderLink = df.isLink() && df.getLinkInfo().isFolderLink();
-					if (hideFolderLinks && isFolderLink) {
-						continue;
-					}
-					if ((hideBroken || hideExternal) && df.isLink()) {
-						LinkStatus linkStatus = LinkHandler.getLinkFileStatus(df, null);
-						if (hideBroken && linkStatus == LinkStatus.BROKEN) {
-							continue;
-						}
-						if (hideExternal && linkStatus == LinkStatus.EXTERNAL) {
-							continue;
-						}
-					}
-					if (!isFolderLink && !filter.accept(df)) {
-						continue;
-					}
-				}
-				children.add(new DomainFileNode(df, filter));
-			}
+		if (domainFolder == null) {
+			return children;
 		}
-		Collections.sort(children, DATA_NODE_SORT_COMPARATOR);
+
+		DomainFolder[] folders = domainFolder.getFolders();
+		for (DomainFolder folder : folders) {
+			monitor.checkCancelled();
+			children.add(new DomainFolderNode(folder, filter));
+		}
+
+		DomainFile[] files = domainFolder.getFiles();
+		for (DomainFile df : files) {
+			monitor.checkCancelled();
+			if (skip(df, filter)) {
+				continue;
+			}
+			children.add(new DomainFileNode(df, filter));
+		}
+
+		Collections.sort(children, DATA_NODE_COMPARATOR);
 		return children;
 	}
+
+	private static boolean skip(DomainFile df, DomainFileFilter filter) {
+
+		if (filter == null) {
+			return false;
+		}
+
+		boolean hideFolderLinks = filter.ignoreFolderLinks();
+		boolean hideBroken = filter.ignoreBrokenLinks();
+		boolean hideExternal = filter.ignoreExternalLinks();
+
+		boolean isFolderLink = df.isLink() && df.getLinkInfo().isFolderLink();
+		if (hideFolderLinks && isFolderLink) {
+			return true;
+		}
+
+		if ((hideBroken || hideExternal) && df.isLink()) {
+			LinkStatus linkStatus = LinkHandler.getLinkFileStatus(df, null);
+			if (hideBroken && linkStatus == LinkStatus.BROKEN) {
+				return true;
+			}
+			if (hideExternal && linkStatus == LinkStatus.EXTERNAL) {
+				return true;
+			}
+		}
+
+		if (!isFolderLink && !filter.accept(df)) {
+			return true;
+		}
+
+		return false;
+	}
+
+//=================================================================================================
+// Inner Classes
+//=================================================================================================	
+
+	private static class DataNodeSortComparator implements Comparator<GTreeNode> {
+
+		private static AlphaNumericComparator alphaNumericComparator =
+			new AlphaNumericComparator(false);
+
+		@Override
+		public int compare(GTreeNode o1, GTreeNode o2) {
+
+			if (o1 instanceof InProgressGTreeNode) {
+				return -1; // loading
+			}
+
+			// We want folders appear before files except for folder-links which should be grouped 
+			// with folders but come after a folder with the same name
+			DataTreeNode dtn1 = (DataTreeNode) o1;
+			DataTreeNode dtn2 = (DataTreeNode) o2;
+			NodeType type1 = dtn1.getNodeType();
+			NodeType type2 = dtn2.getNodeType();
+
+			int result = type1.weight - type2.weight;
+			if (result != 0) {
+				return result;
+			}
+
+			String n1 = o1.getName();
+			String n2 = o2.getName();
+			result = compareNames(n1, n2);
+			if (result == 0) {
+				return type1.ordinal() - type2.ordinal();
+			}
+			return result;
+		}
+
+		private int compareNames(String n1, String n2) {
+			if (useNaturalSort) {
+				return alphaNumericComparator.compare(n1, n2);
+			}
+
+			int result = n1.compareToIgnoreCase(n2);
+			if (result != 0) {
+				return result;
+			}
+			return n1.compareTo(n2);
+		}
+	}
+
+	/**
+	 * A dummy search node used to find a child node by the given name and type.
+	 */
+	private static class SearchNode extends DataTreeNode {
+
+		private String name;
+		private NodeType nodeType;
+
+		SearchNode(String name, NodeType nodeType) {
+			this.name = name;
+			this.nodeType = nodeType;
+		}
+
+		@Override
+		public String getName() {
+			return name;
+		}
+
+		@Override
+		protected NodeType getNodeType() {
+			return nodeType;
+		}
+
+		@Override
+		public ProjectData getProjectData() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public String getPathname() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public int compareTo(GTreeNode node) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public int hashCode() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public GTreeNode getChild(String childName, NodeType type) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public List<GTreeNode> generateChildren(TaskMonitor monitor) throws CancelledException {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Icon getIcon(boolean expanded) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public String getToolTip() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean isLeaf() {
+			throw new UnsupportedOperationException();
+		}
+	}
+
 }
