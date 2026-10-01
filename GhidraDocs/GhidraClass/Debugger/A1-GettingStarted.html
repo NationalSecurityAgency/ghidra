@@ -129,9 +129,6 @@ icon in my Tool Chest</a></li>
 <li><a href="#there-is-no-debug-launch-icon-in-the-global-toolbar"
 id="toc-there-is-no-debug-launch-icon-in-the-global-toolbar">There is no
 Debug / Launch icon in the global toolbar</a></li>
-<li><a href="#there-is-no-gdb-option-in-the-launch-drop-down"
-id="toc-there-is-no-gdb-option-in-the-launch-drop-down">There is no
-<strong>gdb</strong> option in the launch drop-down</a></li>
 <li><a
 href="#the-launch-hangs-for-several-seconds-and-then-i-get-prompted-with-a-wall-of-text"
 id="toc-the-launch-hangs-for-several-seconds-and-then-i-get-prompted-with-a-wall-of-text">The
@@ -234,8 +231,7 @@ open</figcaption>
 </figure></li>
 <li><p>In the Debugger tool, click the dropdown ▾ for the debug <img
 src="images/debugger.png" alt="debug button" /> icon in the global tool
-bar, and select <strong>Configure and Launch termmines using… →
-gdb</strong>.</p>
+bar, and select <strong>Launch termmines … → gdb</strong>.</p>
 <figure>
 <img src="images/GettingStarted_LaunchGDBDialog.png"
 alt="Launch GDB Dialog" />
@@ -263,7 +259,7 @@ specimen. This is the engine that backs WinDbg. You may choose an
 alternative Minesweeper, since terminal applications are less
 representative of Windows executables. Follow the same process as for
 Linux, except import <code>termmines.exe</code> and select
-<strong>Configure and Launch termmines.exe using… → dbgeng</strong>.</p>
+<strong>Launch termmines.exe … → dbgeng</strong>.</p>
 </section>
 <section id="launching-on-macos" class="level2">
 <h2>Launching on macOS</h2>
@@ -300,19 +296,6 @@ tool. If it is still not there, then you may need to re-import the
 default Debugger tool as under the previous heading. If it is still not
 there, your installation may be corrupt.</p>
 </section>
-<section id="there-is-no-gdb-option-in-the-launch-drop-down"
-class="level3">
-<h3>There is no <strong>gdb</strong> option in the launch drop-down</h3>
-<p>You may have an older Debugger tool still configured for
-Recorder-based targets. We are transitioning to TraceRmi-based targets.
-Delete your Debugger tool and re-import the default one using the
-instructions above. If it is still not there, it’s possible your
-installation is corrupt. Search for a file called
-<code>local-gdb.sh</code> in your installation. Unlike the previous
-system, Trace RMI will not probe your system for dependencies nor hide
-incompatible launchers. All installed launchers should be present in the
-menus, even though some may not work on your configuration.</p>
-</section>
 <section
 id="the-launch-hangs-for-several-seconds-and-then-i-get-prompted-with-a-wall-of-text"
 class="level3">
@@ -329,9 +312,11 @@ you are missing <code>gdb</code>, or you need to tell Ghidra where to
 find it.</p>
 <p>If it is just missing, then install it and try again. If you need to
 tell Ghidra where it is, then in the launcher drop-down, select
-<strong>Configure and Launch termmines using… → gdb</strong>. DO NOT
-select <strong>Re-launch termmines using gdb</strong>, since this will
-not allow you to correct the configuration.</p>
+<strong>Launch termmines … → gdb</strong>. Alternatively, hold
+<strong><code>SHIFT</code></strong> and select <strong>Re-launch
+termmines in gdb</strong>. If you forget to hold
+<strong><code>SHIFT</code></strong>, it will not prompt you before
+launching.</p>
 <p>If it looks like there’s an error about importing python packages,
 e.g., “google protobuf,” then you need to install some dependencies.
 These are listed in the launcher’s description. For your convenience,
@@ -365,12 +350,13 @@ class="level4">
 specimen has a <code>main</code> symbol. <strong>NOTE</strong>: It is
 not sufficient to place a <code>main</code> label in Ghidra. The
 original file must have a <code>main</code> symbol.</p>
-<p>Alternatively, in the menus try <strong>Debugger → Configure and
-Launch termmines using → gdb</strong>, and select “starti” for
-<strong>Run Command</strong>. This will break at the system entry point.
-If you have labeled <code>main</code> in Ghidra, then you can place a
-breakpoint there and continue — these features are covered later in the
-course.</p>
+<p>Alternatively, from the launcher drop-down, hold
+<strong><code>SHIFT</code></strong> and click <strong>Re-launch
+termmines in gdb</strong>. Try selecting “starti” for <strong>Run
+Command</strong>, then launch. This will break at the system entry
+point. If you have labeled <code>main</code> in Ghidra, then you can
+place a breakpoint there and continue — these features are covered later
+in the course.</p>
 <p>Alternatively, try debugging the target in GDB from a separate
 terminal completely outside of Ghidra to see if things work as
 expected.</p>
@@ -426,16 +412,16 @@ exercise. Disconnect before proceeding to the next exercise.</p>
 <h2>Customized Launching</h2>
 <p>For this specimen, you may occasionally need to provide custom
 command-line parameters. By default, Ghidra attempts to launch the
-target without any parameters. In the <strong>Debugger</strong> menu, or
-the <strong>Launch</strong> button’s drop-down menu, use
-<strong>Configure and Launch termmmines → gdb</strong> to adjust your
-configuration. This is where you can specify the image path and
-command-line parameters of your target. Ghidra will remember this
-configuration the next time you launch using the drop-down button from
-the toolbar. Launchers with memorized configurations are presented as
-<strong>Re-launch termmines using…</strong> options. Using one of those
-entries will re-launch with the saved configuration rather than
-prompting.</p>
+target without any parameters. In the <strong>Launch</strong> button’s
+drop-down menu, select <strong>Launch termmmines … → gdb</strong> to
+adjust your configuration. This is where you can specify the image path
+and command-line parameters of your target. Ghidra will save this
+configuration when you launch. Launchers with saved configurations are
+presented as entries in the <strong>Re-launch [program] …</strong>
+submenu. The most-recently saved entry is also presented at the top of
+the launch menu. Selecting one of those entries will re-launch that
+configuration. To adjust a saved configuration, hold
+<strong><code>SHIFT</code></strong> while selecting its entry.</p>
 </section>
 <section id="exercise-launch-with-command-line-help" class="level2">
 <h2>Exercise: Launch with Command-line Help</h2>
@@ -449,18 +435,14 @@ its usage, and as a result, the rest of the UI will be mostly empty.</p>
 <p>Attaching is slightly more advanced, but can be useful if the target
 is part of a larger system, and it needs to be running <em>in situ</em>.
 For this section, we will just run <code>termmines</code> in a separate
-terminal and then attach to it from Ghidra. This used to be required,
-because the older Recorder-based system did not provide target I/O, but
-this limitation is overcome by the new <strong>Terminal</strong> window
-when using Trace RMI. Note this technique is only possible because the
-target waits for input.</p>
+terminal and then attach to it from Ghidra. Note this technique is only
+possible because the target waits for input.</p>
 <ol type="1">
 <li>Run <code>termmines</code> in a terminal outside of Ghidra with the
 desired command-line parameters.</li>
 <li>In the Ghidra Debugger, use the <strong>Launch</strong> button
-drop-down and select <strong>Configure and Launch termmines using… →
-gdb</strong>.</li>
-<li>Clear the <strong>Image</strong> field to configure a GDB session
+drop-down and select <strong>Empty session … → gdb</strong>. The
+<strong>Image</strong> field should be blank to configure a GDB session
 without a target.</li>
 <li>Ghidra needs to know the location of gdb and the architecture of the
 intended target. The defaults are correct for 64-bit x86 targets using

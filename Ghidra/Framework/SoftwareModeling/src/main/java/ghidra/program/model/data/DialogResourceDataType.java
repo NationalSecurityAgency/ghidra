@@ -340,7 +340,7 @@ public class DialogResourceDataType extends DynamicDataType {
 		struct.add(ShortDataType.dataType, "y", "y-coordinate of upper-left corner of control");
 		struct.add(ShortDataType.dataType, "cx", "width of control");
 		struct.add(ShortDataType.dataType, "cy", "height of control");
-		struct.add(DWordDataType.dataType, "id", "control identifier");
+		struct.add(WordDataType.dataType, "id", "control identifier");
 		return struct;
 	}
 

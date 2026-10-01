@@ -26,11 +26,14 @@ import org.apache.commons.lang3.Strings;
 import ghidra.app.merge.*;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.data.DomainObjectMergeManager;
+import ghidra.framework.model.DomainObject;
 import ghidra.program.database.data.DataTypeManagerDB;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
+import ghidra.program.model.dtarchive.ProjectDataTypeArchive;
 import ghidra.program.model.listing.DataTypeChangeSet;
+import ghidra.program.model.listing.Program;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -54,7 +57,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	static final int OPTION_ORIGINAL = 2; // Original
 
 	private DomainObjectMergeManager mergeManager;
-	private DataTypeManagerDomainObject[] domainObjects = new DataTypeManagerDomainObject[4];
+	private DomainObject[] domainObjects = new DomainObject[4];
 	private DataTypeManager[] dtms = new DataTypeManager[4];
 	private TaskMonitor currentMonitor;
 	private int originalConflictOption;
@@ -93,30 +96,55 @@ public class DataTypeMergeManager implements MergeResolver {
 	/**
 	 * Manager for merging the data types using the four programs.
 	 * @param mergeManager overall merge manager for domain object
-	 * @param resultDomainObject the program to be updated with the result of the merge.
+	 * @param resultArchive the program to be updated with the result of the merge.
 	 * This is the program that will actually get checked in.
-	 * @param myDomainObject the program requesting to be checked in.
-	 * @param originalDomainObject the program that was checked out.
-	 * @param latestDomainObject the latest checked-in version of the program.
+	 * @param myArchive the program requesting to be checked in.
+	 * @param originalArchive the program that was checked out.
+	 * @param latestArchive the latest checked-in version of the program.
 	 * @param latestChanges the address set of changes between original and latest versioned program.
 	 * @param myChanges the address set of changes between original and my modified program.
 	 */
 	public DataTypeMergeManager(DomainObjectMergeManager mergeManager,
-			DataTypeManagerDomainObject resultDomainObject,
-			DataTypeManagerDomainObject myDomainObject,
-			DataTypeManagerDomainObject originalDomainObject,
-			DataTypeManagerDomainObject latestDomainObject, DataTypeChangeSet latestChanges,
+			ProjectDataTypeArchive resultArchive,
+			ProjectDataTypeArchive myArchive,
+			ProjectDataTypeArchive originalArchive,
+			ProjectDataTypeArchive latestArchive,
+			DataTypeChangeSet latestChanges,
 			DataTypeChangeSet myChanges) {
-		this.mergeManager = mergeManager;
-		domainObjects[RESULT] = resultDomainObject;
-		domainObjects[ORIGINAL] = originalDomainObject;
-		domainObjects[LATEST] = latestDomainObject;
-		domainObjects[MY] = myDomainObject;
-		dtms[RESULT] = resultDomainObject.getDataTypeManager();
-		dtms[ORIGINAL] = originalDomainObject.getDataTypeManager();
-		dtms[LATEST] = latestDomainObject.getDataTypeManager();
-		dtms[MY] = myDomainObject.getDataTypeManager();
 
+		this.mergeManager = mergeManager;
+		domainObjects[RESULT] = resultArchive;
+		domainObjects[ORIGINAL] = originalArchive;
+		domainObjects[LATEST] = latestArchive;
+		domainObjects[MY] = myArchive;
+		dtms[RESULT] = resultArchive.getDataTypeManager();
+		dtms[ORIGINAL] = originalArchive.getDataTypeManager();
+		dtms[LATEST] = latestArchive.getDataTypeManager();
+		dtms[MY] = myArchive.getDataTypeManager();
+		init(latestChanges, myChanges);
+	}
+
+	public DataTypeMergeManager(DomainObjectMergeManager mergeManager,
+			Program resultProgram,
+			Program myProgram,
+			Program originalProgram,
+			Program latestProgram,
+			DataTypeChangeSet latestChanges,
+			DataTypeChangeSet myChanges) {
+
+		this.mergeManager = mergeManager;
+		domainObjects[RESULT] = resultProgram;
+		domainObjects[ORIGINAL] = originalProgram;
+		domainObjects[LATEST] = latestProgram;
+		domainObjects[MY] = myProgram;
+		dtms[RESULT] = resultProgram.getDataTypeManager();
+		dtms[ORIGINAL] = originalProgram.getDataTypeManager();
+		dtms[LATEST] = latestProgram.getDataTypeManager();
+		dtms[MY] = myProgram.getDataTypeManager();
+		init(latestChanges, myChanges);
+	}
+
+	private void init(DataTypeChangeSet latestChanges, DataTypeChangeSet myChanges) {
 		totalConflictCount = 0;
 		setupSourceArchiveChanges(latestChanges, myChanges);
 		setupDataTypeChanges(latestChanges, myChanges);
@@ -529,7 +557,7 @@ public class DataTypeMergeManager implements MergeResolver {
 			}
 			sb.append(dt.getDisplayName());
 			sb.append(", ");
-			if (info.resultOrdinal < 0) {
+			if (info.resultIndex < 0) {
 				if (dt instanceof FunctionDefinition) {
 					sb.append("return-type");
 				}
@@ -540,25 +568,25 @@ public class DataTypeMergeManager implements MergeResolver {
 			else {
 				if (dt instanceof FunctionDefinition) {
 					sb.append("param-");
-					sb.append(info.resultOrdinal);
+					sb.append(info.resultIndex);
 				}
 				else if (dt instanceof Union) {
 					sb.append("component-");
-					sb.append(info.resultOrdinal);
+					sb.append(info.resultIndex);
 				}
 				else if (dt instanceof Structure) {
 					Structure resultStruct = (Structure) info.ht.get(info.id);
-					sb.append("component-");
-					sb.append(info.resultOrdinal);
+					sb.append("defined-component-");
+					sb.append(info.resultIndex);
 					if (!resultStruct.isPackingEnabled()) {
-						sb.append(", offset-");
+						sb.append(", source-offset-");
 						sb.append("0x");
 						sb.append(Integer.toHexString(info.offset));
 					}
 				}
 				else {
-					sb.append("resultOrdinal-"); // unknown use case
-					sb.append(info.resultOrdinal);
+					sb.append("resultIndex-"); // unknown use case
+					sb.append(info.resultIndex);
 				}
 
 			}
@@ -1234,6 +1262,38 @@ public class DataTypeMergeManager implements MergeResolver {
 		return nextOrdinal;
 	}
 
+	/**
+	 * Get the index of a defined component in the structure's defined-component sequence.
+	 * Unlike its ordinal, this index is unaffected by changes to implicit undefined bytes.
+	 * @param struct destination structure
+	 * @param component newly inserted defined component
+	 * @return index in the destination's defined-component sequence
+	 */
+	private static int getDefinedComponentIndex(Structure struct, DataTypeComponent component) {
+		if (component.getDataType() == DataType.DEFAULT) {
+			throw new IllegalArgumentException("Expected defined component");
+		}
+		int ordinal = component.getOrdinal();
+		int low = 0;
+		int high = struct.getNumDefinedComponents() - 1;
+		// Defined components have unique, increasing ordinals even when offsets overlap.
+		while (low <= high) {
+			int mid = low + (high - low) / 2;
+			int midOrdinal = struct.getDefinedComponent(mid).getOrdinal();
+			if (midOrdinal < ordinal) {
+				low = mid + 1;
+			}
+			else if (midOrdinal > ordinal) {
+				high = mid - 1;
+			}
+			else {
+				return mid;
+			}
+		}
+		throw new AssertException(
+			"Expected defined component at ordinal " + ordinal + " in " + struct.getPathName());
+	}
+
 	private void updateStructure(long sourceDtID, Structure sourceDt, Structure destStruct,
 			MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
 
@@ -1315,7 +1375,7 @@ public class DataTypeMergeManager implements MergeResolver {
 						try {
 							resultComp =
 								destStruct.addBitField(resultCompDt, bfDt.getDeclaredBitSize(),
-								sourceComp.getFieldName(), comment);
+									sourceComp.getFieldName(), comment);
 						}
 						catch (InvalidDataTypeException e) {
 							displayError(destStruct, e);
@@ -1338,14 +1398,14 @@ public class DataTypeMergeManager implements MergeResolver {
 							// If I have compDt, it should now be from result DTM.
 							resultComp =
 								destStruct.add(resultCompDt, length, sourceComp.getFieldName(),
-								comment);
+									comment);
 						}
 						catch (IllegalArgumentException e) {
 							comment =
 								buildDataTypeFailureComment(sourceCompDt, e.getMessage(), comment);
 							resultComp =
 								destStruct.add(BadDataType.dataType, sourceComp.getLength(),
-								sourceComp.getFieldName(), comment);
+									sourceComp.getFieldName(), comment);
 							if (e.getCause() instanceof DataTypeDependencyException) {
 								badIdDtMsgs.put(dtId, e.getMessage());
 							}
@@ -1364,8 +1424,8 @@ public class DataTypeMergeManager implements MergeResolver {
 					try {
 						resultComp = destStruct
 								.insertBitFieldAt(sourceComp.getOffset(), sourceComp.getLength(),
-							bfDt.getBitOffset(), resultCompDt, bfDt.getDeclaredBitSize(),
-							sourceComp.getFieldName(), comment);
+									bfDt.getBitOffset(), resultCompDt, bfDt.getDeclaredBitSize(),
+									sourceComp.getFieldName(), comment);
 					}
 					catch (InvalidDataTypeException e) {
 						displayError(destStruct, e);
@@ -1376,7 +1436,7 @@ public class DataTypeMergeManager implements MergeResolver {
 						try {
 							resultComp =
 								destStruct.addBitField(primitiveBaseDt, bfDt.getDeclaredBitSize(),
-								sourceComp.getFieldName(), comment);
+									sourceComp.getFieldName(), comment);
 						}
 						catch (InvalidDataTypeException exc) {
 							throw new RuntimeException(exc); // unexpected
@@ -1429,20 +1489,19 @@ public class DataTypeMergeManager implements MergeResolver {
 						comment = buildDataTypeFailureComment(sourceCompDt, badMsg, comment);
 						resultComp =
 							destStruct.insertAtOffset(sourceComp.getOffset(), BadDataType.dataType,
-							sourceComp.getLength(), sourceComp.getFieldName(), comment);
+								sourceComp.getLength(), sourceComp.getFieldName(), comment);
 					}
 				}
 			}
 			else if (packed) {
-				// Add fixup placeholder to prevent the ordinal values and component sizes from 
-				// changing.  Nothing we can do about packing which may be affected.
-				// These should get fixed-up later.
+				// Preserve a defined component for later fixup. Packing and dependency size
+				// changes may alter its offset and ordinal, but not its defined-component index.
 				resultComp = destStruct.add(BadDataType.dataType, sourceComp.getLength(),
 					sourceComp.getFieldName(), comment);
 			}
 			else {
-				// Add fixup placeholder to prevent the ordinal values and component sizes from 
-				// changing.  These should get fixed-up later.
+				// Preserve a defined component and its reserved space for later fixup.
+				// Changes to preceding undefined bytes may alter its ordinal.
 				resultComp = destStruct.insertAtOffset(sourceComp.getOffset(), BadDataType.dataType,
 					sourceComp.getLength(), sourceComp.getFieldName(), comment);
 			}
@@ -1450,7 +1509,7 @@ public class DataTypeMergeManager implements MergeResolver {
 			if (fixupRequired) {
 				// Component datatype has not been added/resolved yet, put an entry in the fixup list
 				fixUpList.add(new FixUpInfo(sourceDtID, sourceComponentID,
-					resultComp.getOrdinal(), sourceComp, resolvedDataTypes));
+					getDefinedComponentIndex(destStruct, resultComp), sourceComp, resolvedDataTypes));
 				fixUpIDSet.add(sourceDtID);
 			}
 		}
@@ -1607,7 +1666,7 @@ public class DataTypeMergeManager implements MergeResolver {
 				}
 			}
 			else {
-				// Add fixup placeholder to prevent the ordinal values and component sizes from 
+				// Add fixup placeholder to prevent the ordinal values and component sizes from
 				// changing.  Nothing we can do about packing which may be affected.
 				// These should get fixed-up later.
 				destUnion.add(BadDataType.dataType, sourceComp.getLength(),
@@ -2470,7 +2529,7 @@ public class DataTypeMergeManager implements MergeResolver {
 
 		/**
 		 * NOTE: It is important that fixups for a Structure are processed bottom-up
-		 * (i.e., last-ordinal to first-ordinal) to ensure that subsequent fixup ordinal
+		 * (i.e., last defined-component index to first) to ensure that subsequent fixup
 		 * indexes remain valid even after components are removed as a result of processing
 		 * a Structure fixup. 
 		 */
@@ -2542,22 +2601,22 @@ public class DataTypeMergeManager implements MergeResolver {
 		long lastChangeTime = fd.getLastChangeTime(); // Don't let the time change.
 		try {
 			if (dt != null) {
-				if (info.resultOrdinal < 0) { // -1 for return type
+				if (info.resultIndex < 0) { // -1 for return type
 					fd.setReturnType(dt);
 				}
 				else {
 					ParameterDefinition[] args = fd.getArguments();
-					args[info.resultOrdinal].setDataType(dt);
+					args[info.resultIndex].setDataType(dt);
 				}
 				return true;
 			}
 
-			if (info.resultOrdinal < 0) { // -1 for return type
+			if (info.resultIndex < 0) { // -1 for return type
 				// nowhere to set error comment
 			}
 			else {
 				ParameterDefinition[] args = fd.getArguments();
-				ParameterDefinition arg = args[info.resultOrdinal];
+				ParameterDefinition arg = args[info.resultIndex];
 				String comment =
 					buildDataTypeFailureComment(info.componentDataType, null, arg.getComment());
 				arg.setComment(comment);
@@ -2577,16 +2636,8 @@ public class DataTypeMergeManager implements MergeResolver {
 	 * @return false if component not found, else true
 	 */
 	private boolean fixUpPackedStructureComponent(FixUpInfo info, Structure struct, DataType dt) {
-		int ordinal = info.resultOrdinal;
-
-		DataTypeComponent dtc;
-		if (ordinal >= 0 || ordinal < struct.getNumComponents()) {
-			dtc = struct.getComponent(ordinal);
-		}
-		else {
-			throw new AssertException(
-				"Expected fixup component at ordinal " + ordinal + " in " + struct.getPathName());
-		}
+		DataTypeComponent dtc = getStructureFixupComponent(info, struct);
+		int ordinal = dtc.getOrdinal();
 
 		long lastChangeTime = struct.getLastChangeTime(); // Don't let the time change.
 		try {
@@ -2674,16 +2725,8 @@ public class DataTypeMergeManager implements MergeResolver {
 	private boolean fixUpNonPackedStructureComponent(FixUpInfo info, Structure struct,
 			DataType dt) {
 
-		int ordinal = info.resultOrdinal;
-
-		DataTypeComponent dtc;
-		if (ordinal >= 0 || ordinal < struct.getNumComponents()) {
-			dtc = struct.getComponent(ordinal);
-		}
-		else {
-			throw new AssertException(
-				"Expected fixup component at ordinal " + ordinal + " in " + struct.getPathName());
-		}
+		DataTypeComponent dtc = getStructureFixupComponent(info, struct);
+		int ordinal = dtc.getOrdinal();
 
 		long lastChangeTime = struct.getLastChangeTime(); // Don't let the time change.
 		try {
@@ -2761,6 +2804,21 @@ public class DataTypeMergeManager implements MergeResolver {
 	}
 
 	/**
+	 * Locate a fixup after dependency resolution, which may have changed the structure's layout.
+	 * Do not retain component instances or ordinals across fixups or packing changes.
+	 * @param info fixup identifying a defined component
+	 * @param struct current result structure
+	 * @return current component to fix up
+	 */
+	private static DataTypeComponent getStructureFixupComponent(FixUpInfo info, Structure struct) {
+		if (info.resultIndex < 0 || info.resultIndex >= struct.getNumDefinedComponents()) {
+			throw new AssertException("Expected fixup component at defined-component index " +
+				info.resultIndex + " in " + struct.getPathName());
+		}
+		return struct.getDefinedComponent(info.resultIndex);
+	}
+
+	/**
 	 * Fix up the structure using the fix up info for a component.
 	 * @param info fixup info
 	 * @param struct structure to be fixed-up
@@ -2780,10 +2838,11 @@ public class DataTypeMergeManager implements MergeResolver {
 
 		String loc;
 		if (struct.isPackingEnabled()) {
-			loc = "ordinal " + info.resultOrdinal;
+			loc = "defined-component index " + info.resultIndex;
 		}
 		else {
-			loc = "offset 0x" + Integer.toHexString(info.offset);
+			loc = "defined-component index " + info.resultIndex + " (source offset 0x" +
+				Integer.toHexString(info.offset) + ")";
 		}
 		Msg.warn(this, "Structure Merge: Failed to resolve data type '" +
 			info.componentDataType.getName() + "' at " + loc + " in " + struct.getPathName());
@@ -2794,7 +2853,7 @@ public class DataTypeMergeManager implements MergeResolver {
 
 		DataType compDt = resolve(info.compID, info.getDataTypeManager(), info.ht);
 
-		int ordinal = info.resultOrdinal;
+		int ordinal = info.resultIndex;
 
 		DataTypeComponent dtc = null;
 		if (ordinal >= 0 && ordinal <= union.getNumComponents()) {
@@ -2865,7 +2924,7 @@ public class DataTypeMergeManager implements MergeResolver {
 		}
 		Msg.warn(this,
 			"Union Merge: Failed to resolve data type '" + info.componentDataType.getName() +
-				"' at ordinal " + info.resultOrdinal + " in " + union.getPathName());
+				"' at ordinal " + info.resultIndex + " in " + union.getPathName());
 		return false;
 	}
 
@@ -2889,7 +2948,7 @@ public class DataTypeMergeManager implements MergeResolver {
 				FixUpInfo info = fixUpList.get(i); // assume info applies to union
 				if (!fixUpUnionComponent(union, info)) {
 					Msg.warn(this, "Union Merge: Failed to apply data type at ordinal " +
-						info.resultOrdinal + " in " + union.getPathName());
+						info.resultIndex + " in " + union.getPathName());
 					unresolvedFixups.add(info);
 				}
 			}
@@ -3427,10 +3486,12 @@ public class DataTypeMergeManager implements MergeResolver {
 		final long compID;					// Source datatype ID for component
 		final DataType componentDataType;	// Source component datatype
 
-		// Result ordinal when id represents a container such as a structure/union or
-		// function definition.  In such cases, 'compID' corresponds to the component datatype.
-		// A -1 may be used when not applicable.
-		final int resultOrdinal;
+		// Result defined-component index for a structure, component ordinal for a union,
+		// or parameter index for a function definition. A -1 denotes a return type or
+		// a dependency without a component index. Structure indexes exclude implicit
+		// undefined bytes and survive layout changes, but must be regenerated when the
+		// selected definition is rebuilt (see removeFixUps).
+		final int resultIndex;
 
 		final MyIdentityHashMap<Long, DataType> ht;
 
@@ -3449,16 +3510,16 @@ public class DataTypeMergeManager implements MergeResolver {
 		 * @param id source data type ID needing to be fixed up
 		 * @param compID source datatype ID of either param/component or bitfield base type
 		 * @param componentDataType source component/dependency datatype
-		 * @param resultOrdinal the result ordinal into a structure/union; or 
-		 *              parameter/return ordinal; or -1 for other cases where index is not used
+		 * @param resultIndex result defined-component index for a structure, union component
+		 *              ordinal, function parameter index, or -1 for a return type/other dependency
 		 * @param resolvedDataTypes hashtable used for resolving the data type
 		 */
-		FixUpInfo(long id, long compID, DataType componentDataType, int resultOrdinal,
+		FixUpInfo(long id, long compID, DataType componentDataType, int resultIndex,
 				MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
 			this.id = id;
 			this.compID = compID;
 			this.componentDataType = componentDataType;
-			this.resultOrdinal = resultOrdinal;
+			this.resultIndex = resultIndex;
 			this.ht = resolvedDataTypes;
 
 			if (componentDataType instanceof BitFieldDataType) {
@@ -3472,13 +3533,13 @@ public class DataTypeMergeManager implements MergeResolver {
 		 * or components were resolved.
 		 * @param id id of data type needing to be fixed up
 		 * @param compID datatype ID of either param/component or bitfield base type
-		 * @param resultOrdinal component ordinal within result composite
+		 * @param resultIndex defined-component index within a result structure or ordinal in a union
 		 * @param sourceDtc associated composite datatype component
 		 * @param resolvedDataTypes hashtable used for resolving the data type
 		 */
-		FixUpInfo(long id, long compID, int resultOrdinal, DataTypeComponent sourceDtc,
+		FixUpInfo(long id, long compID, int resultIndex, DataTypeComponent sourceDtc,
 				MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
-			this(id, compID, getDataType(sourceDtc), resultOrdinal, resolvedDataTypes);
+			this(id, compID, getDataType(sourceDtc), resultIndex, resolvedDataTypes);
 			offset = sourceDtc.getOffset();
 			if (sourceDtc.isBitFieldComponent()) {
 				BitFieldDataType bfDt = (BitFieldDataType) sourceDtc.getDataType();
@@ -3497,11 +3558,11 @@ public class DataTypeMergeManager implements MergeResolver {
 
 		@Override
 		public int compareTo(FixUpInfo o) {
-			// Compare such that items are grouped by id and sort such that the greatest resultOrdinal
+			// Compare such that items are grouped by id and sort such that the greatest resultIndex
 			// is first within that group.
 			long c = id - o.id;
 			if (c == 0) {
-				c = Integer.toUnsignedLong(o.resultOrdinal) - Integer.toUnsignedLong(resultOrdinal);
+				c = Integer.toUnsignedLong(o.resultIndex) - Integer.toUnsignedLong(resultIndex);
 			}
 			if (c == 0) {
 				return 0;
@@ -3527,7 +3588,7 @@ public class DataTypeMergeManager implements MergeResolver {
 			}
 			return "\n" + "ID = " + Long.toHexString(id) + ",\ndt = " + dtm.getDataType(id) +
 				",\ncomponent ID = " + Long.toHexString(compID) + ",\ncomponent dt = " +
-				dtm.getDataType(compID) + ",\nresultOrdinal = " + resultOrdinal + ",\n" + bitInfo +
+				dtm.getDataType(compID) + ",\nresultIndex = " + resultIndex + ",\n" + bitInfo +
 				"ht = " +
 				htStr + "\n";
 		}

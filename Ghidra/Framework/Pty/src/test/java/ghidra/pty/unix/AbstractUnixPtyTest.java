@@ -15,14 +15,15 @@
  */
 package ghidra.pty.unix;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
+import org.hamcrest.Matchers;
 import org.junit.Test;
 
 import ghidra.pty.AbstractPtyTest;
@@ -76,17 +77,39 @@ public abstract class AbstractUnixPtyTest extends AbstractPtyTest {
 		}
 	}
 
+	static String readAllToErr(BufferedReader reader) {
+		StringBuffer buf = new StringBuffer();
+		while (true) {
+			int c;
+			try {
+				c = reader.read();
+			}
+			catch (IOException e) {
+				return buf.toString();
+			}
+			if (c == -1) {
+				return buf.toString();
+			}
+			buf.append((char) c);
+		}
+	}
+
 	@Test
 	public void testForkIntoNonExistent()
-			throws IOException, InterruptedException, TimeoutException {
+			throws IOException, InterruptedException, TimeoutException, ExecutionException {
+		CompletableFuture<String> future;
 		try (UnixPty pty = openpty()) {
 			PtySession dies =
 				pty.getChild().session(new String[] { "thisHadBetterNotExist" }, null);
 			/**
 			 * Choice of 127 is based on bash setting "exit code" to 127 for "command not found"
 			 */
+			BufferedReader reader = loggingReader(pty.getParent().getInputStream());
+			future = CompletableFuture.supplyAsync(() -> readAllToErr(reader));
 			assertEquals(127, dies.waitExited(2, TimeUnit.SECONDS));
 		}
+		String output = future.get(1, TimeUnit.SECONDS);
+		assertThat(output, Matchers.containsString("No such file or directory"));
 	}
 
 	@Test

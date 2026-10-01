@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,14 +34,15 @@ import ghidra.util.WebColors;
 import ghidra.util.exception.AssertException;
 
 /**
- * Base class for labels that render html using a custom rendering kit.
+ * Base class for labels that render HTML using a custom rendering kit.
  * <p>
  * This implementation uses custom html rendering.  This custom rendering allows for basic
- * formatting while eliminating potentially unsafe html tags.  If for some reason this custom
+ * formatting while eliminating potentially unsafe HTML tags.  If for some reason this custom
  * rendering is deficient, clients can instead use a standard Java {@link JLabel}.
  * <p>
- * Clients do not need to prefix label text with "&lt;html&gt;", as is required for a standard
- * JLabel.
+ * This abstract class supports rendering as HTML or non-HTML text.  The text set on this label 
+ * must include the "&lt;html&gt;" prefix to be rendered as html.  See subclasses for expected 
+ * usage.
  */
 public abstract class AbstractHtmlLabel extends JLabel
 		implements GComponent, PropertyChangeListener {

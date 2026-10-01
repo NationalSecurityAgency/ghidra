@@ -145,6 +145,17 @@ void ParamStoreEnvironment::parseStore(ProtoModel *model,const string &name,Varn
     parseJoin(model,name,res);
     return;
   }
+  else if (name.compare(0,4,"pad:",4) == 0) {
+    int4 sz = 0;
+    istringstream s(name.substr(4));
+    s >> dec >> sz;
+    if (sz != 0) {
+      res.space = model->getArch()->getConstantSpace();
+      res.offset = 0;
+      res.size = sz;
+      return;
+    }
+  }
   string regname;
   size_t pos = name.find(':');
   int4 sz = 0;
@@ -168,6 +179,14 @@ void ParamStoreEnvironment::parseStores(ProtoModel *model,vector<VarnodeData> &r
 {
   size_t pos = 0;
   for(;;) {
+    while(pos < names.size()) {
+      char c = names[pos];
+      if (c != ' ' && c != '\t' && c != '\n')
+	break;
+      pos += 1;
+    }
+    if (pos >= names.size())
+      return;
     size_t nextpos = names.find(',',pos);
     string el;
     if (nextpos == string::npos)
@@ -256,6 +275,30 @@ TEST(paramstore_x64) {
   ASSERT(theEnviron.test(model, "intintintintint func(void);", "RAX,RDI"));
   theEnviron.parseType(model, "struct doubleintintint { float8 a; int4 b; int4 c; int4 d; };");
   ASSERT(theEnviron.test(model, "doubleintintint func(void);", "RAX,RDI"));
+}
+
+TEST(paramstore_x64_go) {
+  ProtoModel *model = theEnviron.getModel("x86:LE:64:default:golang","abi-internal");
+  ASSERT(theEnviron.test(model, "void func(int2 a,int8 b,char c);", "void,AX,RBX,CL"));
+  ASSERT(theEnviron.test(model, "void func(float4 a,float4 b);", "void,XMM0:4,XMM1:4"));
+  ASSERT(theEnviron.test(model, "void func(float4 a,float8 c);", "void,XMM0:4,XMM1:8"));
+  ASSERT(theEnviron.test(model,
+		"void func(int8 a,int8 b,int8 c,int8 d,int8 e,float4 f,float4 g,int8 h,int8 i,int8 j,int8 k,int8 l);",
+		"void,RAX,RBX,RCX,RDI,RSI,XMM0:4,XMM1:4,R8,R9,R10,R11,stack8:8"));
+  ASSERT(theEnviron.test(model,
+		"void func(float4 a,float4 b,float4 c,float4 d,float4 e,float4 f,float4 g,float4 h, \
+			float4 i,float4 j,float4 k,float4 l,float4 m,float4 n,float4 o,float4 p);",
+		"void,XMM0:4,XMM1:4,XMM2:4,XMM3:4,XMM4:4,XMM5:4,XMM6:4,XMM7:4,XMM8:4,XMM9:4,XMM10:4,\
+		XMM11:4,XMM12:4,XMM13:4,XMM14:4,stack8:4"));
+  ASSERT(theEnviron.test(model, "void func(int8 a,int8 b[3],int8 c);", "void,RAX,stack8:24,RBX"));
+  theEnviron.parseType(model,"struct Person { bool a; int4 b; };");
+  theEnviron.parseType(model,"struct Myriad { int8 a; bool b; Person c; float4 d; };");
+  ASSERT(theEnviron.test(model, "void func(Person a);", "void,join EBX pad:3 AL"));
+  ASSERT(theEnviron.test(model, "void func(bool a,Myriad b);", "void,AL,join XMM0:4 ESI pad:3 DIL pad:3 CL RBX"));
+  ASSERT(theEnviron.test(model, "Person func(void);", "join EBX pad:3 AL"));
+  ASSERT(theEnviron.test(model, "float8 func(int8 a,int8 b[10])[5];", "stack58:40,RAX,stack8:80"));
+  ASSERT(theEnviron.test(model, "char func(char a[3],char b[7],int8 c)[5];", "stack18:5,stack8:3,stackb:7,RAX"));
+  ASSERT(theEnviron.test(model, "void func(float4 a,int8 b[1],int8 c[2]);","void,XMM0:4,RAX,stack8:16"));
 }
 
 TEST(paramstore_ppc64be_stdcall) {

@@ -91,7 +91,7 @@ public class GhidraScriptRunner implements GhidraLaunchable {
 	}
 
 	private static void usage() {
-		System.out.println("usage: GhidraScriptRunner <scriptName>.java");
+		Msg.info(GhidraScriptRunner.class, "usage: GhidraScriptRunner <scriptName>.java");
 	}
 
 	private GhidraScript getGhidraScript(String scriptName) throws Exception {

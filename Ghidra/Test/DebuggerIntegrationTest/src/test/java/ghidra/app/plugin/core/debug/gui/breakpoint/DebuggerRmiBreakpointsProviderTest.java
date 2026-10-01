@@ -140,6 +140,20 @@ public class DebuggerRmiBreakpointsProviderTest
 	}
 
 	@Override
+	protected void handleDeleteBreakpointInvocation(TraceRmiTarget target,
+			TraceBreakpointLocation expectedLoc) throws Throwable {
+		Map<String, Object> args = rmiMethodDeleteBreak.expect();
+		try (Transaction tx = tb.startTransaction()) {
+			expectedLoc.getObject().removeTree(Lifespan.nowOn(target.getSnap()));
+		}
+		waitForDomainObject(tb.trace);
+		rmiMethodDeleteBreak.result(null);
+		assertEquals(
+				Map.ofEntries(Map.entry("breakpoint", expectedLoc.getSpecification().getObject())),
+				args);
+	}
+
+	@Override
 	protected void handleToggleBreakpointInvocation(TraceBreakpointLocation expectedLoc,
 			boolean expectedEn) throws Throwable {
 		Map<String, Object> args = rmiMethodToggleBreak.expect();

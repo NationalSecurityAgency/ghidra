@@ -59,8 +59,9 @@ public class SkeletonFileSystem implements GFileSystem {
 	 * Mounts (opens) the file system.
 	 * 
 	 * @param monitor A cancellable task monitor.
+	 * @throws IOException 
 	 */
-	public void mount(TaskMonitor monitor) {
+	public void mount(TaskMonitor monitor) throws IOException {
 		monitor.setMessage("Opening " + SkeletonFileSystem.class.getSimpleName() + "...");
 
 		// Customize how things in the file system are stored.  The following should be 

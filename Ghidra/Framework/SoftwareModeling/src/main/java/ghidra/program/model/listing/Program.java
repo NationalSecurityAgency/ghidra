@@ -19,6 +19,7 @@ import java.util.Date;
 import java.util.Set;
 
 import ghidra.app.util.sourcelanguage.SourceLanguageID;
+import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.IntRangeMap;
 import ghidra.program.database.ProgramOverlayAddressSpace;
@@ -26,6 +27,7 @@ import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
+import ghidra.program.model.dtarchive.DataTypeStore;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.pcode.Varnode;
@@ -38,6 +40,8 @@ import ghidra.util.InvalidNameException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
+import utility.function.ExceptionalCallback;
+import utility.function.ExceptionalSupplier;
 
 /**
  * This interface represents the main entry point into an object which
@@ -52,7 +56,7 @@ import ghidra.util.task.TaskMonitor;
  * For example, the createCodeUnit() method of listing will fail if memory is
  * undefined at the address where the codeUnit is to be created.
  */
-public interface Program extends DataTypeManagerDomainObject, ProgramArchitecture {
+public interface Program extends DomainObject, ProgramArchitecture, DataTypeStore {
 
 	public static final String ANALYSIS_PROPERTIES = "Analyzers";
 	public static final String DISASSEMBLER_PROPERTIES = "Disassembler";
@@ -87,6 +91,20 @@ public interface Program extends DataTypeManagerDomainObject, ProgramArchitectur
 	/** Name of cold entry point addresses property map **/
 	public static final String COLD_ENTRY_MAP_NAME = "ColdEntries";
 
+	@Override
+	default ProgramArchitecture getProgramArchitecture() {
+		return this;
+	}
+
+	@Override
+	default String getProgramArchitectureSummary() {
+		StringBuilder buf = new StringBuilder();
+		buf.append(getLanguage().getLanguageID().getIdAsString());
+		buf.append(" / ");
+		buf.append(getCompilerSpec().getCompilerSpecID().getIdAsString());
+		return buf.toString();
+	}
+
 	/**
 	 * Get the listing object.
 	 * @return the Listing interface to the listing object.
@@ -104,6 +122,7 @@ public interface Program extends DataTypeManagerDomainObject, ProgramArchitectur
 
 	/**
 	 * Returns the program's datatype manager.
+	 * @return the datatypeManager
 	 */
 	@Override
 	public ProgramBasedDataTypeManager getDataTypeManager();
@@ -594,4 +613,36 @@ public interface Program extends DataTypeManagerDomainObject, ProgramArchitectur
 	 */
 	public long getUniqueProgramID();
 
+	@Override
+	public default <E extends Exception> void withTransaction(String description,
+			ExceptionalCallback<E> callback) throws E {
+		int id = startTransaction(description);
+		try {
+			callback.call();
+		}
+		finally {
+			endTransaction(id, true);
+		}
+	}
+
+	@Override
+	public default <E extends Exception, T> T withTransaction(String description,
+			ExceptionalSupplier<T, E> supplier) throws E {
+		T t = null;
+		boolean success = false;
+		int id = startTransaction(description);
+		try {
+			t = supplier.get();
+			success = true;
+		}
+		finally {
+			endTransaction(id, success);
+		}
+		return t;
+	}
+
+	@Override
+	public default String getPath() {
+		return getDomainFile().getPathname();
+	}
 }

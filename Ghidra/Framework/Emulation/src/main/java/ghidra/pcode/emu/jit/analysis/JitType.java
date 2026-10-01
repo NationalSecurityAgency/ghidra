@@ -15,9 +15,8 @@
  */
 package ghidra.pcode.emu.jit.analysis;
 
+import java.lang.classfile.CodeBuilder;
 import java.util.*;
-
-import org.objectweb.asm.Opcodes;
 
 import ghidra.lifecycle.Unfinished;
 import ghidra.pcode.emu.jit.gen.opnd.Opnd;
@@ -27,7 +26,6 @@ import ghidra.pcode.emu.jit.gen.util.Types.*;
 
 /**
  * The p-code type of an operand.
- * 
  * <p>
  * A type is an integer of floating-point value of a specific size in bytes. All values and
  * variables in p-code are just bit vectors. The operators interpret those vectors according to a
@@ -96,7 +94,6 @@ public interface JitType {
 
 	/**
 	 * Identify the p-code type that is exactly represented by the given JVM type.
-	 * 
 	 * <p>
 	 * This is used during Direct userop invocation to convert the arguments and return value.
 	 * 
@@ -146,7 +143,6 @@ public interface JitType {
 
 		/**
 		 * Identify the p-code type that is exactly represented by the given JVM type.
-		 * 
 		 * <p>
 		 * This is used during Direct userop invocation to convert the arguments and return value.
 		 * 
@@ -190,7 +186,6 @@ public interface JitType {
 
 		/**
 		 * Re-apply the {@link JitTypeBehavior#INTEGER integer} behavior to this type
-		 * 
 		 * <p>
 		 * This may be slightly faster than {@code JitTypeBehavior.INTEGER.resolve(this)}, because
 		 * each type can pick its int type directly, and integer types can just return {@code this}.
@@ -466,7 +461,6 @@ public interface JitType {
 
 	/**
 	 * The p-code types for integers of size 9 and greater.
-	 * 
 	 * <p>
 	 * We take the strategy of inlined manipulation of int locals, composed to form the full
 	 * variable. When stored on the stack, the least-significant portion is always toward the top,
@@ -630,11 +624,10 @@ public interface JitType {
 
 	/**
 	 * Extend this p-code type to the p-code type that fills its entire host JVM type.
-	 * 
 	 * <p>
 	 * This is useful, e.g., when multiplying two {@link IntJitType#I3 int3} values using
-	 * {@link Opcodes#IMUL imul} that the result might be an {@link IntJitType#I4 int4} and so may
-	 * need additional conversion.
+	 * {@link CodeBuilder#imul imul} that the result might be an {@link IntJitType#I4 int4} and so
+	 * may need additional conversion.
 	 * 
 	 * @return the extended type
 	 */
@@ -642,7 +635,6 @@ public interface JitType {
 
 	/**
 	 * Get the p-code type that describes the part of the variable in each leg
-	 * 
 	 * <p>
 	 * Each whole leg will have the type {@link IntJitType#I4}, and the partial leg, if applicable,
 	 * will have its appropriate smaller integer type.
@@ -653,7 +645,6 @@ public interface JitType {
 
 	/**
 	 * Get the p-code type that describes the part of the variable in each leg
-	 * 
 	 * <p>
 	 * Each whole leg will have the type {@link IntJitType#I4}, and the partial leg, if applicable,
 	 * will have its appropriate smaller integer type.

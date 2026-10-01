@@ -511,11 +511,11 @@ define pcodeop vcvtps2pd_avx512f ;
 
 # CVTSD2SI 3-253 PAGE 823 LINE 44320
 define pcodeop vcvtsd2si_avx512f ;
-:VCVTSD2SI Reg32, XmmReg2_m64  is $(EVEX_NONE) & $(VEX_LIG) & $(VEX_PRE_F2) & $(VEX_0F) & $(VEX_W0); byte=0x2D; Reg32 ... & XmmReg2_m64
+:VCVTSD2SI Reg32, XmmReg2_m64  is $(EVEX_NONE) & $(VEX_LIG) & $(VEX_PRE_F2) & $(VEX_0F) & $(VEX_W0); byte=0x2D; (Reg32 & check_Reg32_dest) ... & XmmReg2_m64
 [ evexD8Type = 1; evexTType = 5; ] # (TupleType T1F)
 {
 	Reg32 = vcvtsd2si_avx512f( XmmReg2_m64 );
-	# TODO Reg64 = zext(Reg32)
+	build check_Reg32_dest;
 }
 
 # CVTSD2SI 3-253 PAGE 823 LINE 44322
@@ -591,11 +591,11 @@ define pcodeop vcvtss2sd_avx512f ;
 
 # CVTSS2SI 3-263 PAGE 833 LINE 44839
 define pcodeop vcvtss2si_avx512f ;
-:VCVTSS2SI Reg32, XmmReg2_m32  is $(EVEX_NONE) & $(VEX_LIG) & $(VEX_PRE_F3) & $(VEX_0F) & $(VEX_W0); byte=0x2D; Reg32 ... & XmmReg2_m32
+:VCVTSS2SI Reg32, XmmReg2_m32  is $(EVEX_NONE) & $(VEX_LIG) & $(VEX_PRE_F3) & $(VEX_0F) & $(VEX_W0); byte=0x2D; (Reg32 & check_Reg32_dest) ... & XmmReg2_m32
 [ evexD8Type = 1; evexTType = 5; ] # (TupleType T1F)
 {
 	Reg32 = vcvtss2si_avx512f( XmmReg2_m32 );
-	# TODO Reg64 = zext(Reg32)
+	build check_Reg32_dest;
 }
 
 # CVTSS2SI 3-263 PAGE 833 LINE 44841
@@ -673,11 +673,11 @@ define pcodeop vcvttps2dq_avx512f ;
 
 # CVTTSD2SI 3-274 PAGE 844 LINE 45385
 define pcodeop vcvttsd2si_avx512f ;
-:VCVTTSD2SI Reg32, XmmReg2_m64  is $(EVEX_NONE) & $(VEX_LIG) & $(VEX_PRE_F2) & $(VEX_0F) & $(VEX_W0); byte=0x2C; Reg32 ... & XmmReg2_m64
+:VCVTTSD2SI Reg32, XmmReg2_m64  is $(EVEX_NONE) & $(VEX_LIG) & $(VEX_PRE_F2) & $(VEX_0F) & $(VEX_W0); byte=0x2C; (Reg32 & check_Reg32_dest) ... & XmmReg2_m64
 [ evexD8Type = 1; evexTType = 5; ] # (TupleType T1F)
 {
 	Reg32 = vcvttsd2si_avx512f( XmmReg2_m64 );
-	# TODO Reg64 = zext(Reg32)
+	build check_Reg32_dest;
 }
 
 # CVTTSD2SI 3-274 PAGE 844 LINE 45388
@@ -691,11 +691,11 @@ define pcodeop vcvttsd2si_avx512f ;
 
 # CVTTSS2SI 3-276 PAGE 846 LINE 45479
 define pcodeop vcvttss2si_avx512f ;
-:VCVTTSS2SI Reg32, XmmReg2_m32  is $(EVEX_NONE) & $(VEX_LIG) & $(VEX_PRE_F3) & $(VEX_0F) & $(VEX_W0); byte=0x2C; Reg32 ... & XmmReg2_m32
+:VCVTTSS2SI Reg32, XmmReg2_m32  is $(EVEX_NONE) & $(VEX_LIG) & $(VEX_PRE_F3) & $(VEX_0F) & $(VEX_W0); byte=0x2C; (Reg32 & check_Reg32_dest) ... & XmmReg2_m32
 [ evexD8Type = 1; evexTType = 5; ] # (TupleType T1F)
 {
 	Reg32 = vcvttss2si_avx512f( XmmReg2_m32 );
-	# TODO Reg64 = zext(Reg32)
+	build check_Reg32_dest;
 }
 
 # CVTTSS2SI 3-276 PAGE 846 LINE 45482
@@ -1175,10 +1175,11 @@ define pcodeop vmovaps_avx512f ;
 @endif
 
 # MOVD/MOVQ 4-55 PAGE 1175 LINE 61370
-:VMOVD rm32, XmmReg1  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_W0); byte=0x7E; XmmReg1 ... & rm32
+:VMOVD rm32, XmmReg1  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_W0); byte=0x7E; (XmmReg1 & check_rm32_dest) ... & rm32
 [ evexD8Type = 1; evexTType = 3; ] # (TupleType T1S-MR)
 {
 	rm32 = XmmReg1[0,32];
+	build check_rm32_dest;
 }
 
 # MOVD/MOVQ 4-55 PAGE 1175 LINE 61372
@@ -3146,14 +3147,13 @@ define pcodeop vpcmpgtq_avx512f ;
 }
 
 # PEXTRB/PEXTRD/PEXTRQ 4-274 PAGE 1394 LINE 72334
-:VPEXTRB Reg32, XmmReg1, imm8  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG); byte=0x14; XmmReg1 & mod=3 & Reg32 & check_Reg32_dest; imm8
+:VPEXTRB Rmr32, XmmReg1, imm8  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG); byte=0x14; XmmReg1 & mod=3 & Rmr32 & check_Rmr32_dest; imm8
 {
 	local tmp8:1 = imm8 & 0xf;
 	local tmp = XmmReg1 >> (tmp8*8);
-	Reg32 = zext(tmp[0,8]);
-	build check_Reg32_dest;
+	Rmr32 = zext(tmp[0,8]);
+	build check_Rmr32_dest;
 }
-
 
 :VPEXTRB m8, XmmReg1, imm8  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG); byte=0x14; XmmReg1 ... & m8; imm8
 {
@@ -3163,11 +3163,12 @@ define pcodeop vpcmpgtq_avx512f ;
 }
 
 # PEXTRB/PEXTRD/PEXTRQ 4-274 PAGE 1394 LINE 72339
-:VPEXTRD rm32, XmmReg1, imm8  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0); byte=0x16; XmmReg1 ... & rm32; imm8
+:VPEXTRD rm32, XmmReg1, imm8  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0); byte=0x16; XmmReg1 ... & (rm32 & check_rm32_dest); imm8
 {
 	local tmp8:1 = imm8 & 0x3;
 	local tmp = XmmReg1 >> (tmp8*32);
 	rm32 = tmp[0,32];
+	build check_rm32_dest;
 }
 
 # PEXTRB/PEXTRD/PEXTRQ 4-274 PAGE 1394 LINE 72343
@@ -3190,11 +3191,11 @@ define pcodeop vpcmpgtq_avx512f ;
 
 
 # PEXTRW 4-277 PAGE 1397 LINE 72494
-:VPEXTRW Reg32, XmmReg1, imm8  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG); byte=0x15; XmmReg1 & mod=3 & Reg32 & check_Reg32_dest; imm8
+:VPEXTRW Rmr32, XmmReg1, imm8  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG); byte=0x15; XmmReg1 & mod=3 & Rmr32 & check_Rmr32_dest; imm8
 {
 	local tmp = XmmReg1 >> (imm8*16);
-	Reg32 = zext(tmp[0,16]);
-	build check_Reg32_dest;
+	Rmr32 = zext(tmp[0,16]);
+	build check_Rmr32_dest;
 }
 
 :VPEXTRW m16, XmmReg1, imm8  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG); byte=0x15; XmmReg1 ... & m16; imm8
@@ -6910,11 +6911,11 @@ define pcodeop vcvtqq2ps_avx512dq ;
 
 # VCVTSD2USI 5-54 PAGE 1878 LINE 96907
 define pcodeop vcvtsd2usi_avx512f ;
-:VCVTSD2USI Reg32, XmmReg2_m64  is $(EVEX_NONE) & $(VEX_LIG) & $(VEX_PRE_F2) & $(VEX_0F) & $(VEX_W0); byte=0x79; Reg32 ... & XmmReg2_m64
+:VCVTSD2USI Reg32, XmmReg2_m64  is $(EVEX_NONE) & $(VEX_LIG) & $(VEX_PRE_F2) & $(VEX_0F) & $(VEX_W0); byte=0x79; (Reg32 & check_Reg32_dest) ... & XmmReg2_m64
 [ evexD8Type = 1; evexTType = 5; ] # (TupleType T1F)
 {
 	Reg32 = vcvtsd2usi_avx512f( XmmReg2_m64 );
-	# TODO Reg64 = zext(Reg32)
+	build check_Reg32_dest;
 }
 
 # VCVTSD2USI 5-54 PAGE 1878 LINE 96909
@@ -6928,11 +6929,11 @@ define pcodeop vcvtsd2usi_avx512f ;
 
 # VCVTSS2USI 5-55 PAGE 1879 LINE 96967
 define pcodeop vcvtss2usi_avx512f ;
-:VCVTSS2USI Reg32, XmmReg2_m32  is $(EVEX_NONE) & $(VEX_LIG) & $(VEX_PRE_F3) & $(VEX_0F) & $(VEX_W0); byte=0x79; Reg32 ... & XmmReg2_m32
+:VCVTSS2USI Reg32, XmmReg2_m32  is $(EVEX_NONE) & $(VEX_LIG) & $(VEX_PRE_F3) & $(VEX_0F) & $(VEX_W0); byte=0x79; (Reg32 & check_Reg32_dest) ... & XmmReg2_m32
 [ evexD8Type = 1; evexTType = 5; ] # (TupleType T1F)
 {
 	Reg32 = vcvtss2usi_avx512f( XmmReg2_m32 );
-	# TODO Reg64 = zext(Reg32)
+	build check_Reg32_dest;
 }
 
 # VCVTSS2USI 5-55 PAGE 1879 LINE 96969
@@ -7138,11 +7139,11 @@ define pcodeop vcvttps2uqq_avx512dq ;
 
 # VCVTTSD2USI 5-70 PAGE 1894 LINE 97722
 define pcodeop vcvttsd2usi_avx512f ;
-:VCVTTSD2USI Reg32, XmmReg2_m64  is $(EVEX_NONE) & $(VEX_LIG) & $(VEX_PRE_F2) & $(VEX_0F) & $(VEX_W0); byte=0x78; Reg32 ... & XmmReg2_m64
+:VCVTTSD2USI Reg32, XmmReg2_m64  is $(EVEX_NONE) & $(VEX_LIG) & $(VEX_PRE_F2) & $(VEX_0F) & $(VEX_W0); byte=0x78; (Reg32 & check_Reg32_dest) ... & XmmReg2_m64
 [ evexD8Type = 1; evexTType = 5; ] # (TupleType T1F)
 {
 	Reg32 = vcvttsd2usi_avx512f( XmmReg2_m64 );
-	# TODO Reg64 = zext(Reg32)
+	build check_Reg32_dest;
 }
 
 # VCVTTSD2USI 5-70 PAGE 1894 LINE 97725
@@ -7156,11 +7157,11 @@ define pcodeop vcvttsd2usi_avx512f ;
 
 # VCVTTSS2USI 5-71 PAGE 1895 LINE 97782
 define pcodeop vcvttss2usi_avx512f ;
-:VCVTTSS2USI Reg32, XmmReg2_m32  is $(EVEX_NONE) & $(VEX_LIG) & $(VEX_PRE_F3) & $(VEX_0F) & $(VEX_W0); byte=0x78; Reg32 ... & XmmReg2_m32
+:VCVTTSS2USI Reg32, XmmReg2_m32  is $(EVEX_NONE) & $(VEX_LIG) & $(VEX_PRE_F3) & $(VEX_0F) & $(VEX_W0); byte=0x78; (Reg32 & check_Reg32_dest) ... & XmmReg2_m32
 [ evexD8Type = 1; evexTType = 5; ] # (TupleType T1F)
 {
 	Reg32 = vcvttss2usi_avx512f( XmmReg2_m32 );
-	# TODO Reg64 = zext(Reg32)
+	build check_Reg32_dest;
 }
 
 # VCVTTSS2USI 5-71 PAGE 1895 LINE 97785
@@ -14356,9 +14357,10 @@ define pcodeop vcvtsh2sd_avx512fp16 ;
 
 # VCVTSH2SI 5-86 PAGE 1910 LINE 105738
 define pcodeop vcvtsh2si_avx512fp16 ;
-:VCVTSH2SI Reg32, XmmReg2_m16 is $(EVEX_NONE) & $(EVEX_LLIG) & $(VEX_PRE_F3) & $(VEX_MAP5) & $(VEX_W0); byte=0x2D; Reg32 ... & XmmReg2_m16
+:VCVTSH2SI Reg32, XmmReg2_m16 is $(EVEX_NONE) & $(EVEX_LLIG) & $(VEX_PRE_F3) & $(VEX_MAP5) & $(VEX_W0); byte=0x2D; (Reg32 & check_Reg32_dest) ... & XmmReg2_m16
 {
 	Reg32 = vcvtsh2si_avx512fp16( XmmReg2_m16 );
+	build check_Reg32_dest;
 }
 
 # VCVTSH2SI 5-86 PAGE 1910 LINE 105740
@@ -14383,9 +14385,10 @@ define pcodeop vcvtsh2ss_avx512fp16 ;
 
 # VCVTSH2USI 5-88 PAGE 1912 LINE 105851
 define pcodeop vcvtsh2usi_avx512fp16 ;
-:VCVTSH2USI Reg32, XmmReg2_m16 is $(EVEX_NONE) & $(EVEX_LLIG) & $(VEX_PRE_F3) & $(VEX_MAP5) & $(VEX_W0); byte=0x79; Reg32 ... & XmmReg2_m16
+:VCVTSH2USI Reg32, XmmReg2_m16 is $(EVEX_NONE) & $(EVEX_LLIG) & $(VEX_PRE_F3) & $(VEX_MAP5) & $(VEX_W0); byte=0x79; (Reg32 & check_Reg32_dest) ... & XmmReg2_m16
 {
 	Reg32 = vcvtsh2usi_avx512fp16( XmmReg2_m16 );
+	build check_Reg32_dest;
 }
 
 # VCVTSH2USI 5-88 PAGE 1912 LINE 105853
@@ -14607,9 +14610,10 @@ define pcodeop vcvttph2w_avx512fp16 ;
 
 # VCVTTSH2SI 5-119 PAGE 1943 LINE 107355
 define pcodeop vcvttsh2si_avx512fp16 ;
-:VCVTTSH2SI Reg32, XmmReg2_m16 is $(EVEX_NONE) & $(EVEX_LLIG) & $(VEX_PRE_F3) & $(VEX_MAP5) & $(VEX_W0); byte=0x2C; Reg32 ... & XmmReg2_m16
+:VCVTTSH2SI Reg32, XmmReg2_m16 is $(EVEX_NONE) & $(EVEX_LLIG) & $(VEX_PRE_F3) & $(VEX_MAP5) & $(VEX_W0); byte=0x2C; (Reg32 & check_Reg32_dest)... & XmmReg2_m16
 {
 	Reg32 = vcvttsh2si_avx512fp16( XmmReg2_m16 );
+	build check_Reg32_dest;
 }
 
 # VCVTTSH2SI 5-119 PAGE 1943 LINE 107358
@@ -14622,9 +14626,10 @@ define pcodeop vcvttsh2si_avx512fp16 ;
 
 # VCVTTSH2USI 5-120 PAGE 1944 LINE 107409
 define pcodeop vcvttsh2usi_avx512fp16 ;
-:VCVTTSH2USI Reg32, XmmReg2_m16 is $(EVEX_NONE) & $(EVEX_LLIG) & $(VEX_PRE_F3) & $(VEX_MAP5) & $(VEX_W0); byte=0x78; Reg32 ... & XmmReg2_m16
+:VCVTTSH2USI Reg32, XmmReg2_m16 is $(EVEX_NONE) & $(EVEX_LLIG) & $(VEX_PRE_F3) & $(VEX_MAP5) & $(VEX_W0); byte=0x78; (Reg32 & check_Reg32_dest) ... & XmmReg2_m16
 {
 	Reg32 = vcvttsh2usi_avx512fp16( XmmReg2_m16 );
+	build check_Reg32_dest;
 }
 
 # VCVTTSH2USI 5-120 PAGE 1944 LINE 107412

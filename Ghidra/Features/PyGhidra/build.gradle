@@ -64,8 +64,8 @@ distributePyDep("typing_extensions-4.16.0-py3-none-any.whl")
 task installJPype(type: Exec) {
 	dependsOn(":createPythonVirtualEnvironment")
 	
-	File depsDir = file("${DEPS_DIR}/PyGhidra")
-	File binRepoDir = file("${BIN_REPO}/ExternalPyWheels")
+	File depsDir = file("${rootProject.DEPS_DIR}/PyGhidra")
+	File binRepoDir = file("${rootProject.BIN_REPO}/ExternalPyWheels")
 	def dir = depsDir.exists() ? depsDir : binRepoDir
 	
 	doFirst {
@@ -78,8 +78,8 @@ task installGhidraStubs(type: Exec) {
 	dependsOn(":createGhidraStubsWheel")
 	dependsOn(":createPythonVirtualEnvironment")
 	
-	File depsDir = file("${DEPS_DIR}/PyGhidra")
-	File binRepoDir = file("${BIN_REPO}/ExternalPyWheels")
+	File depsDir = file("${rootProject.DEPS_DIR}/PyGhidra")
+	File binRepoDir = file("${rootProject.BIN_REPO}/ExternalPyWheels")
 	def dir = depsDir.exists() ? depsDir : binRepoDir
 
 	doFirst {
@@ -93,8 +93,8 @@ task prepPyGhidra(type: Exec) {
 	dependsOn("installJPype")
 	dependsOn("installGhidraStubs")
 	
-	File depsDir = file("${DEPS_DIR}/PyGhidra")
-	File binRepoDir = file("${BIN_REPO}/ExternalPyWheels")
+	File depsDir = file("${rootProject.DEPS_DIR}/PyGhidra")
+	File binRepoDir = file("${rootProject.BIN_REPO}/ExternalPyWheels")
 	def dir = depsDir.exists() ? depsDir : binRepoDir
 
 	doFirst {
@@ -104,7 +104,7 @@ task prepPyGhidra(type: Exec) {
 
 rootProject.assembleMarkdownToHtml {
 	def p = this.project
-	def zipPath = getZipPath(p)
+	def zipPath = rootProject.getZipPath(p)
 	
 	from ("${p.projectDir}/src/main/py/README.md") {
 		into { "${zipPath}/pypkg" }

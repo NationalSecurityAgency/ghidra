@@ -16,9 +16,9 @@
 package ghidra.pcode.emu.jit.gen;
 
 import static ghidra.pcode.emu.jit.gen.GenConsts.*;
-import static org.objectweb.asm.Opcodes.*;
+import static java.lang.classfile.ClassFile.*;
 
-import org.objectweb.asm.ClassVisitor;
+import java.lang.classfile.ClassBuilder;
 
 import ghidra.pcode.emu.jit.analysis.JitDataFlowUseropLibrary;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
@@ -61,8 +61,8 @@ public record FieldForVarnode(Varnode vn) implements StaticFieldReq<TRef<Varnode
 	 */
 	@Override
 	public <N extends Next> Emitter<N> genClInitCode(Emitter<N> em, JitCodeGenerator<?> gen,
-			ClassVisitor cv) {
-		Fld.decl(cv, ACC_PRIVATE | ACC_STATIC | ACC_FINAL, T_VARNODE, name());
+			ClassBuilder clb) {
+		Fld.decl(clb, ACC_PRIVATE | ACC_STATIC | ACC_FINAL, T_VARNODE, name());
 		return em
 				.emit(Op::getstatic, gen.typeThis, "ADDRESS_FACTORY", T_ADDRESS_FACTORY)
 				.emit(Op::ldc__a, vn.getAddress().getAddressSpace().getName())

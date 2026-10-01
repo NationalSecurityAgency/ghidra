@@ -17,6 +17,7 @@ package ghidra.program.model.lang.protorules;
 
 import static ghidra.program.model.pcode.AttributeId.*;
 import static ghidra.program.model.pcode.ElementId.*;
+import static ghidra.program.model.pcode.MetaDataType.*;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -24,7 +25,7 @@ import java.util.Map.Entry;
 
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.pcode.Encoder;
-import ghidra.program.model.pcode.PcodeDataTypeManager;
+import ghidra.program.model.pcode.MetaDataType;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.*;
 
@@ -37,7 +38,7 @@ public class HomogeneousAggregate extends SizeRestrictedFilter {
 	public static final String NAME_FLOAT = "homogeneous-float-aggregate";
 	public static final int DEFAULT_MAX_PRIMITIVES = 4;		// Maximum number of primitives in aggregate data-type
 	private String name;
-	private int metaType;		// The expected meta-type
+	private MetaDataType metaType;		// The expected meta-type
 	private int maxPrimitives;	// Maximum number of primitives in the aggregate
 
 	/**
@@ -45,13 +46,14 @@ public class HomogeneousAggregate extends SizeRestrictedFilter {
 	 * @param nm is the name attribute associated with the tag
 	 * @param meta is the expected element meta-type
 	 */
-	public HomogeneousAggregate(String nm, int meta) {
+	public HomogeneousAggregate(String nm, MetaDataType meta) {
 		name = nm;
 		metaType = meta;
 		maxPrimitives = DEFAULT_MAX_PRIMITIVES;
 	}
 
-	public HomogeneousAggregate(String nm, int meta, int maxPrim, int minSize, int maxSize) {
+	public HomogeneousAggregate(String nm, MetaDataType meta, int maxPrim, int minSize,
+			int maxSize) {
 		super(minSize, maxSize);
 		name = nm;
 		metaType = meta;
@@ -75,18 +77,39 @@ public class HomogeneousAggregate extends SizeRestrictedFilter {
 	}
 
 	@Override
-	public boolean filter(DataType dt) {
-		int meta = PcodeDataTypeManager.getMetatype(dt);
-		if (meta != PcodeDataTypeManager.TYPE_ARRAY && meta != PcodeDataTypeManager.TYPE_STRUCT) {
+	public boolean isEquivalent(DatatypeFilter op) {
+		if (this.getClass() != op.getClass()) {
 			return false;
 		}
-		PrimitiveExtractor primitives = new PrimitiveExtractor(dt, true, 0, maxPrimitives);
+		HomogeneousAggregate otherFilter = (HomogeneousAggregate) op;
+		if (!super.isEquivalent(otherFilter)) {
+			return false;
+		}
+		if (!name.equals(otherFilter.name)) {
+			return false;
+		}
+		if (metaType != otherFilter.metaType) {
+			return false;
+		}
+		if (maxPrimitives != otherFilter.maxPrimitives) {
+			return false;
+		}
+		return true;
+	}
+
+	@Override
+	public boolean filter(DataType dt) {
+		MetaDataType meta = MetaDataType.get(dt);
+		if (meta != TYPE_ARRAY && meta != TYPE_STRUCT) {
+			return false;
+		}
+		PrimitiveExtractor primitives = new PrimitiveExtractor(dt, true, false, 0, maxPrimitives);
 		if (!primitives.isValid() || primitives.size() == 0 || primitives.containsUnknown() ||
 			!primitives.isAligned() || primitives.containsHoles()) {
 			return false;
 		}
 		DataType base = primitives.get(0).dt;
-		int baseMeta = PcodeDataTypeManager.getMetatype(base);
+		MetaDataType baseMeta = MetaDataType.get(base);
 		if (baseMeta != metaType) {
 			return false;
 		}

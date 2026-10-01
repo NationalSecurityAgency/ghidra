@@ -78,7 +78,6 @@ public:
   static void findCopies(const SplitVarnode &in,vector<SplitVarnode> &splitvec);
   static void getTrueFalse(PcodeOp *boolop,bool flip,BlockBasic *&trueout,BlockBasic *&falseout);
   static bool otherwiseEmpty(PcodeOp *branchop);
-  static bool verifyMultNegOne(PcodeOp *op);
   static PcodeOp *prepareBinaryOp(SplitVarnode &out,SplitVarnode &in1,SplitVarnode &in2);
   static void createBinaryOp(Funcdata &data,SplitVarnode &out,SplitVarnode &in1,SplitVarnode &in2,
 			     PcodeOp *existop,OpCode opc);

@@ -20,12 +20,14 @@ import java.util.*;
 
 import ghidra.app.util.Option;
 import ghidra.app.util.OptionException;
+import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.unixaout.UnixAoutHeader;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
-import ghidra.program.model.lang.LanguageCompilerSpecPair;
+import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 
 /**
@@ -43,6 +45,8 @@ public class UnixAoutLoader extends AbstractProgramWrapperLoader {
 	public final static String UNIX_AOUT_NAME = "UNIX A.out";
 
 	public static final String OPTION_NAME_BASE_ADDR = "Base Address";
+
+	public static final String OPTION_NAME_TEXT_ADDR = "Text Load Address";
 
 	@Override
 	public Collection<LoadSpec> findSupportedLoadSpecs(ByteProvider provider) throws IOException {
@@ -74,7 +78,8 @@ public class UnixAoutLoader extends AbstractProgramWrapperLoader {
 	protected void load(Program program, ImporterSettings settings)
 			throws CancelledException, IOException {
 		final boolean isLittleEndian = !program.getLanguage().isBigEndian();
-		final UnixAoutHeader header = new UnixAoutHeader(settings.provider(), isLittleEndian);
+		final UnixAoutHeader header = new UnixAoutHeader(settings.provider(), isLittleEndian,
+			getAddrOption(settings.options(), OPTION_NAME_TEXT_ADDR));
 
 		final UnixAoutProgramLoader loader =
 			new UnixAoutProgramLoader(program, header, settings.monitor(), settings.log());
@@ -129,6 +134,18 @@ public class UnixAoutLoader extends AbstractProgramWrapperLoader {
 				.commandLineArgument(createArg("-baseAddr"))
 				.build());
 
+		try {
+			Language language = loadSpec.getLanguageCompilerSpec().getLanguage();
+			UnixAoutHeader header = new UnixAoutHeader(provider, !language.isBigEndian());
+			list.add(Option.newAddress(OPTION_NAME_TEXT_ADDR)
+					.value(language.getDefaultSpace().getAddress(header.getTextAddr()))
+					.commandLineArgument(createArg("-textAddr"))
+					.build());
+		}
+		catch (Exception e) {
+			Msg.error(this, "Error while generating A.out import options", e);
+		}
+
 		list.addAll(super.getDefaultOptions(provider, loadSpec, domainObject, loadIntoProgram,
 			mirrorFsLayout));
 		return list;
@@ -144,22 +161,16 @@ public class UnixAoutLoader extends AbstractProgramWrapperLoader {
 	 * Returns 0 if the option could not be found or contains an invalid value.
 	 */
 	private long getBaseAddrOffset(List<Option> options) {
-		Address baseAddr = null;
+		Long offset = getAddrOption(options, OPTION_NAME_BASE_ADDR);
+		return offset != null ? offset : 0;
+	}
 
-		if (options != null) {
-			for (Option option : options) {
-				String optName = option.getName();
-				if (optName.equals(OPTION_NAME_BASE_ADDR)) {
-					baseAddr = (Address) option.getValue();
-				}
-			}
-		}
-
-		long offset = 0;
-		if (baseAddr != null) {
-			offset = baseAddr.getOffset();
-		}
-
-		return offset;
+	/**
+	 * Retrieves the offset of the Address given in the named option, or null if the option is
+	 * absent or holds no value.
+	 */
+	private static Long getAddrOption(List<Option> options, String name) {
+		Address addr = OptionUtils.getOption(name, options, (Address) null);
+		return addr != null ? addr.getOffset() : null;
 	}
 }

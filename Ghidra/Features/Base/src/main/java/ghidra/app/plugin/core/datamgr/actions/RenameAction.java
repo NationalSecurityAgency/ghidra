@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,9 @@ import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
 import ghidra.app.plugin.core.datamgr.tree.*;
 
+/**
+ * Renames objects in the datatypes tree if they support being renamed
+ */
 public class RenameAction extends DockingAction {
 
 	public RenameAction(DataTypeManagerPlugin plugin) {
@@ -37,7 +40,8 @@ public class RenameAction extends DockingAction {
 	@Override
 	public boolean isAddToPopup(ActionContext context) {
 		GTreeNode node = getSelectedNode(context);
-		if (node == null || node instanceof ArchiveRootNode || node instanceof ArchiveNode) {
+		if (node == null || node instanceof ArchiveRootNode || node instanceof DataTypeStoreNode ||
+			node instanceof InvalidArchiveNode) {
 			return false;
 		}
 		return true;

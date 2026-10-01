@@ -33,7 +33,6 @@ import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.XMLOutputter;
 
-import db.buffers.DataBuffer;
 import docking.*;
 import docking.action.DockingAction;
 import docking.action.MenuData;
@@ -88,16 +87,14 @@ import help.HelpService;
  * manner.
  */
 public class FrontEndTool extends PluginTool implements OptionsChangeListener {
-	public static final String DEFAULT_TOOL_LAUNCH_MODE = "Default Tool Launch Mode";
-	public static final String AUTOMATICALLY_SAVE_TOOLS = "Automatically Save Tools";
-	private static final String USE_ALERT_ANIMATION_OPTION_NAME = "Use Notification Animation";
-	private static final String USE_COMBINED_ALT_GRAPH_OPTION_NAME = "Use Combined Alt Keys";
-	private static final String SHOW_TOOLTIPS_OPTION_NAME = "Show Tooltips";
-	private static final String BLINKING_CURSORS_OPTION_NAME = "Allow Blinking Cursors";
 
-	private static final String ENABLE_COMPRESSED_DATABUFFER_OUTPUT =
-		"Use DataBuffer Output Compression";
-	private static final Boolean ENABLE_COMPRESSED_DATABUFFER_OUTPUT_DEFAULT = true;
+	private static final String BLINKING_CURSORS_OPTION_NAME = "Allow Blinking Cursors";
+	public static final String AUTOMATICALLY_SAVE_TOOLS = "Automatically Save Tools";
+	public static final String DEFAULT_TOOL_LAUNCH_MODE = "Default Tool Launch Mode";
+	private static final String SHOW_TOOLTIPS_OPTION_NAME = "Show Tooltips";
+	private static final String USE_NATURAL_SORT = "Use Natural File Sort";
+	private static final String USE_COMBINED_ALT_GRAPH_OPTION_NAME = "Use Combined Alt Keys";
+	private static final String USE_ALERT_ANIMATION_OPTION_NAME = "Use Notification Animation";
 
 	private static final String RESTORE_PREVIOUS_PROJECT_NAME = "Restore Previous Project";
 	private boolean shouldRestorePreviousProject;
@@ -356,16 +353,15 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 		options.registerOption(SHOW_TOOLTIPS_OPTION_NAME, true, help,
 			"Controls the display of tooltip popup windows.");
-		options.registerOption(ENABLE_COMPRESSED_DATABUFFER_OUTPUT,
-			ENABLE_COMPRESSED_DATABUFFER_OUTPUT_DEFAULT, help,
-			"When enabled data buffers sent to Ghidra Server are compressed (see server " +
-				"configuration for other direction)");
 
 		options.registerOption(BLINKING_CURSORS_OPTION_NAME, true, help,
 			"This controls whether" + " text cursors blink when focused");
 
 		options.registerOption(RESTORE_PREVIOUS_PROJECT_NAME, true, help,
 			"Restore the previous project when Ghidra starts.");
+
+		options.registerOption(USE_NATURAL_SORT, true, help,
+			"Use a natural sort for program files with numeric digits treated as numeric values.");
 
 		defaultLaunchMode = options.getEnum(DEFAULT_TOOL_LAUNCH_MODE, defaultLaunchMode);
 
@@ -381,15 +377,13 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		boolean showToolTips = options.getBoolean(SHOW_TOOLTIPS_OPTION_NAME, true);
 		DockingUtils.setGlobalTooltipEnabledOption(showToolTips);
 
-		boolean compressDataBuffers =
-			options.getBoolean(ENABLE_COMPRESSED_DATABUFFER_OUTPUT,
-				ENABLE_COMPRESSED_DATABUFFER_OUTPUT_DEFAULT);
-		DataBuffer.enableCompressedSerializationOutput(compressDataBuffers);
-
 		shouldRestorePreviousProject = options.getBoolean(RESTORE_PREVIOUS_PROJECT_NAME, true);
 
 		boolean blink = options.getBoolean(BLINKING_CURSORS_OPTION_NAME, true);
 		Gui.setBlinkingCursors(blink);
+
+		boolean useNaturalSort = options.getBoolean(USE_NATURAL_SORT, true);
+		plugin.setUseNaturalSort(useNaturalSort);
 
 		options.addOptionsChangeListener(this);
 	}
@@ -412,14 +406,14 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		else if (SHOW_TOOLTIPS_OPTION_NAME.equals(optionName)) {
 			DockingUtils.setGlobalTooltipEnabledOption((Boolean) newValue);
 		}
-		else if (ENABLE_COMPRESSED_DATABUFFER_OUTPUT.equals(optionName)) {
-			DataBuffer.enableCompressedSerializationOutput((Boolean) newValue);
-		}
 		else if (RESTORE_PREVIOUS_PROJECT_NAME.equals(optionName)) {
 			shouldRestorePreviousProject = (Boolean) newValue;
 		}
 		else if (BLINKING_CURSORS_OPTION_NAME.equals(optionName)) {
 			Gui.setBlinkingCursors((Boolean) newValue);
+		}
+		else if (USE_NATURAL_SORT.equals(optionName)) {
+			plugin.setUseNaturalSort((Boolean) newValue);
 		}
 	}
 
@@ -777,14 +771,15 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		addHelpActions();
 
 		// our log file action
-		DockingAction action = new DockingAction("Show Log", ToolConstants.TOOL_OWNER) {
+		DockingAction action = new DockingAction("View Log", ToolConstants.TOOL_OWNER) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				showGhidraUserLogFile();
 			}
 		};
 		action.setMenuBarData(
-			new MenuData(new String[] { ToolConstants.MENU_HELP, "Show Log" }, null, "BBB"));
+			new MenuData(new String[] { ToolConstants.MENU_HELP, "Show Log" }, null,
+				ToolConstants.HELP_RUNTIME_MENU_GROUP));
 
 		action.setEnabled(true);
 		addAction(action);

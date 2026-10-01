@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,73 +16,108 @@
 package ghidra.app.plugin.core.datamgr;
 
 import java.awt.*;
+import java.awt.event.MouseEvent;
 
 import javax.swing.*;
 
-import docking.widgets.label.GDHtmlLabel;
+import docking.widgets.label.GDLabel;
+import docking.widgets.textpane.GHtmlTextPane;
 import generic.theme.GThemeDefaults.Colors;
+import generic.theme.Gui;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.app.util.html.HTMLDataTypeRepresentation;
-import ghidra.program.model.data.DataType;
-import ghidra.util.HTMLUtilities;
+import ghidra.program.model.data.*;
 
 /**
  * Panel that displays two data types side by side.
  */
 class DataTypeComparePanel extends JPanel {
 
-	private JLabel dtLabel1;
-	private JLabel dtLabel2;
+	private static final String NAME_FONT_ID = "font.plugin.datamgr.compare.name";
+	private GHtmlTextPane leftDtPane;
+	private GHtmlTextPane rightDtPane;
 	private JPanel leftPanel;
 	private JPanel rightPanel;
-	private JLabel leftPanelLabel;
-	private JLabel rightPanelLabel;
-	private String clientName;
+	private JLabel leftNameLabel;
+	private JLabel rightNameLabel;
+	private JLabel leftDescriptionLabel;
+	private JLabel rightDescriptionLabel;
+	private String localName;
 	private String sourceName;
 
-	DataTypeComparePanel(String clientName, String sourceName) {
+	DataTypeComparePanel(String localName, String sourceName) {
 		super(new GridLayout(0, 2));
-		this.clientName = clientName;
+		this.localName = localName;
 		this.sourceName = sourceName;
 		init();
 	}
 
 	private void init() {
-		setPreferredSize(new Dimension(500, 200));
+		setPreferredSize(new Dimension(600, 400));
+
 		leftPanel = new JPanel(new BorderLayout());
 		rightPanel = new JPanel(new BorderLayout());
 
-		leftPanelLabel = new GDHtmlLabel();
-		rightPanelLabel = new GDHtmlLabel();
-		leftPanelLabel.setBorder(BorderFactory.createEmptyBorder(2, 8, 2, 0));
-		rightPanelLabel.setBorder(BorderFactory.createEmptyBorder(2, 8, 2, 0));
+		leftNameLabel = createLabelWidet();
+		rightNameLabel = createLabelWidet();
+		leftDescriptionLabel = createLabelWidet();
+		rightDescriptionLabel = createLabelWidet();
 
-		setLabelText(leftPanelLabel, HTMLUtilities.escapeHTML(clientName) + ":");
-		setLabelText(rightPanelLabel, HTMLUtilities.escapeHTML(sourceName) + ":");
+		leftNameLabel.setText(localName + ":");
+		rightNameLabel.setText(sourceName + ":");
+
+		JPanel leftLabelPanel = new JPanel();
+		leftLabelPanel.setLayout(new BoxLayout(leftLabelPanel, BoxLayout.PAGE_AXIS));
+		leftLabelPanel.add(leftNameLabel);
+		leftLabelPanel.add(leftDescriptionLabel);
+
+		JPanel rightLabelPanel = new JPanel();
+		rightLabelPanel.setLayout(new BoxLayout(rightLabelPanel, BoxLayout.PAGE_AXIS));
+		rightLabelPanel.add(rightNameLabel);
+		rightLabelPanel.add(rightDescriptionLabel);
 
 		add(leftPanel);
 		add(rightPanel);
-		dtLabel1 = new GDHtmlLabel();
-		dtLabel1.setOpaque(true);
-		dtLabel1.setBackground(Colors.BACKGROUND);
-		dtLabel1.setBorder(BorderFactory.createEmptyBorder(2, 8, 0, 0));
-		dtLabel1.setVerticalAlignment(SwingConstants.TOP);
-		dtLabel2 = new GDHtmlLabel();
-		dtLabel2.setOpaque(true);
-		dtLabel2.setBackground(Colors.BACKGROUND);
-		dtLabel2.setBorder(BorderFactory.createEmptyBorder(2, 8, 0, 0));
-		dtLabel2.setVerticalAlignment(SwingConstants.TOP);
+		leftDtPane = new GHtmlTextPane();
+		leftDtPane.setOpaque(true);
+		leftDtPane.setBackground(Colors.BACKGROUND);
+		leftDtPane.setBorder(BorderFactory.createEmptyBorder(2, 8, 0, 0));
+		rightDtPane = new GHtmlTextPane();
+		rightDtPane.setOpaque(true);
+		rightDtPane.setBackground(Colors.BACKGROUND);
+		rightDtPane.setBorder(BorderFactory.createEmptyBorder(2, 8, 0, 0));
 
-		JScrollPane leftScrollPane = new JScrollPane(dtLabel1);
-		JScrollPane rightScrollPane = new JScrollPane(dtLabel2);
+		JScrollPane leftScrollPane = new JScrollPane(leftDtPane);
+		JScrollPane rightScrollPane = new JScrollPane(rightDtPane);
 		leftScrollPane.getVerticalScrollBar().setUnitIncrement(9);
 		rightScrollPane.getVerticalScrollBar().setUnitIncrement(9);
 		leftPanel.add(leftScrollPane);
 		rightPanel.add(rightScrollPane);
-		leftPanel.add(leftPanelLabel, BorderLayout.NORTH);
-		rightPanel.add(rightPanelLabel, BorderLayout.NORTH);
+		leftPanel.add(leftLabelPanel, BorderLayout.NORTH);
+		rightPanel.add(rightLabelPanel, BorderLayout.NORTH);
 		syncScrollers(leftScrollPane, rightScrollPane);
+	}
 
+	private JLabel createLabelWidet() {
+		JLabel label = new GDLabel() {
+			@Override
+			public String getToolTipText(MouseEvent e) {
+				FontMetrics fm = getFontMetrics(getFont());
+				int textWidth = fm.stringWidth(getText());
+				int availableWidth = getWidth() - getInsets().left - getInsets().right;
+				if (textWidth > availableWidth) {
+					return getText();
+				}
+				return null;
+			}
+		};
+		ToolTipManager.sharedInstance().registerComponent(label);
+		label.setBorder(BorderFactory.createEmptyBorder(2, 8, 2, 0));
+
+		Font font = Gui.getFont(NAME_FONT_ID);
+		label.setFont(font);
+
+		return label;
 	}
 
 	private void syncScrollers(JScrollPane leftScrollPane, JScrollPane rightScrollPane) {
@@ -104,11 +139,17 @@ class DataTypeComparePanel extends JPanel {
 	 * @param dataType2 the second data type to display.
 	 */
 	void setDataTypes(DataType dataType1, DataType dataType2) {
-		String path1 = dataType1 != null ? dataType1.getPathName() : "";
-		String path2 = dataType2 != null ? dataType2.getPathName() : "";
 
-		setLabelText(leftPanelLabel, clientName + ": " + path1);
-		setLabelText(rightPanelLabel, sourceName + ": " + path2);
+		DataTypePath path1 = dataType1 != null ? dataType1.getDataTypePath() : null;
+		DataTypePath path2 = dataType2 != null ? dataType2.getDataTypePath() : null;
+
+		CategoryPath catPath1 = path1.getCategoryPath();
+		CategoryPath catPath2 = path2.getCategoryPath();
+		leftNameLabel.setText(localName + ':' + catPath1.getPath());
+		rightNameLabel.setText(sourceName + ':' + catPath2.getPath());
+
+		leftDescriptionLabel.setText(path1.getDataTypeName());
+		rightDescriptionLabel.setText(path2.getDataTypeName());
 
 		HTMLDataTypeRepresentation representation1 = ToolTipUtils.getHTMLRepresentation(dataType1);
 		HTMLDataTypeRepresentation representation2 = ToolTipUtils.getHTMLRepresentation(dataType2);
@@ -119,12 +160,11 @@ class DataTypeComparePanel extends JPanel {
 		String dt1Text = (dataType1 != null) ? diffs[0].getFullHTMLString() : "";
 		String dt2Text = (dataType2 != null) ? diffs[1].getFullHTMLString()
 				: (dataType1 != null) ? "<Removed>" : "";
-		dtLabel1.setText(dt1Text);
-		dtLabel2.setText(dt2Text);
+		leftDtPane.setText(dt1Text);
+		rightDtPane.setText(dt2Text);
 	}
 
-	private void setLabelText(JLabel label, String text) {
-		label.setText(HTMLUtilities.wrapAsHTML(HTMLUtilities.bold(text)));
-
+	public boolean isLeft(Component component) {
+		return SwingUtilities.isDescendingFrom(component, leftPanel);
 	}
 }

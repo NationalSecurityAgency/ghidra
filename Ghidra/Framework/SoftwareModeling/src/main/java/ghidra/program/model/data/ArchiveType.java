@@ -15,14 +15,24 @@
  */
 package ghidra.program.model.data;
 
+/**
+ * Enum used to indicate what type of DataTypeStore is associated with a SourceArchive or
+ * DataTypeStore
+ */
 public enum ArchiveType {
 	//@formatter:off
-	BUILT_IN,
-	FILE,
-	PROJECT,
-	PROGRAM,
-	TEMPORARY;
+	BUILT_IN(0),
+	FILE(3),
+	PROJECT(2),
+	PROGRAM(1),
+	TEMPORARY(4);
 	//@formatter:on
+
+	public final int sortOrder;
+
+	private ArchiveType(int sortOrder) {
+		this.sortOrder = sortOrder;
+	}
 
 	public boolean isBuiltIn() {
 		return this == BUILT_IN;
@@ -34,4 +44,5 @@ public enum ArchiveType {
 	public boolean isValidSourceArchive() {
 		return this == FILE || this == PROJECT;
 	}
+
 }

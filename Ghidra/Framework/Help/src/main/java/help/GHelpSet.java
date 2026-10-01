@@ -224,7 +224,7 @@ public class GHelpSet extends HelpSet {
 			try {
 				url = new URI(id).toURL();
 			}
-			catch (MalformedURLException | URISyntaxException e) {
+			catch (IllegalArgumentException | MalformedURLException | URISyntaxException e) {
 				LOG.trace("ID is not a URL; tried to make URL from string: " + id);
 				return null;
 			}

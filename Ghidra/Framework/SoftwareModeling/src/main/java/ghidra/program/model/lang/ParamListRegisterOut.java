@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,12 +30,8 @@ import ghidra.program.model.data.VoidDataType;
 public class ParamListRegisterOut extends ParamListStandardOut {
 
 	@Override
-	public void assignMap(PrototypePieces proto, DataTypeManager dtManager,
+	public void assignMap(PrototypePieces proto, DataTypeManager dtManager, int[] status,
 			ArrayList<ParameterPieces> res, boolean addAutoParams) {
-		int[] status = new int[numgroup];
-		for (int i = 0; i < numgroup; ++i) {
-			status[i] = 0;
-		}
 		ParameterPieces store = new ParameterPieces();
 		res.add(store);
 		if (VoidDataType.isVoidDataType(proto.outtype)) {

@@ -53,14 +53,14 @@ public enum Int2CompOpGen implements IntOpUnOpGen<JitInt2CompOp> {
 	}
 
 	@Override
-	public <N1 extends Next, N0 extends Ent<N1, TInt>> Emitter<Ent<N1, TInt>>
-			opForInt(Emitter<N0> em) {
+	public <N1 extends Next, N0 extends Ent<N1, TInt>> Emitter<Ent<N1, TInt>> opForInt(
+			Emitter<N0> em) {
 		return Op.ineg(em);
 	}
 
 	@Override
-	public <N1 extends Next, N0 extends Ent<N1, TLong>> Emitter<Ent<N1, TLong>>
-			opForLong(Emitter<N0> em) {
+	public <N1 extends Next, N0 extends Ent<N1, TLong>> Emitter<Ent<N1, TLong>> opForLong(
+			Emitter<N0> em) {
 		return Op.lneg(em);
 	}
 

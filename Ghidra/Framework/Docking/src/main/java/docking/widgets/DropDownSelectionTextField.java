@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,6 +46,21 @@ public class DropDownSelectionTextField<T> extends DropDownTextField<T> {
 
 	public DropDownSelectionTextField(DropDownTextFieldDataModel<T> dataModel) {
 		super(dataModel);
+	}
+
+	/**
+	 * This constructor allows you to control the delay between keystrokes before the items in the
+	 * view get updated.  A reasonable delay allows users to type multiple characters before the UI 
+	 * updates.  For large data, this prevents the UI from feeling sluggish, since the UI is does 
+	 * not have to process each keystroke.  For small data, the UI can update in real time, which 
+	 * feels responsive.  The tradeoff is between feeling the most responsive vs adding a small 
+	 * delay to prevent apparent freezing.  The default value is #DEFAULT_MIN_UPDATE_DELAY.
+	 * 
+	 * @param dataModel the data model
+	 * @param updateMinDelay the min update delay
+	 */
+	public DropDownSelectionTextField(DropDownTextFieldDataModel<T> dataModel, int updateMinDelay) {
+		super(dataModel, updateMinDelay);
 	}
 
 	@Override

@@ -22,7 +22,6 @@ import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.GTreeState;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypesProvider;
-import ghidra.app.plugin.core.datamgr.archive.Archive;
 import ghidra.app.plugin.core.datamgr.tree.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
@@ -36,7 +35,7 @@ public class DataTypeTreeDeleteTask extends Task {
 	// if the total number of nodes is small, we won't need to collapse the tree before deleting
 	// the nodes to avoid excess tree events
 	private static final int NODE_COUNT_FOR_COLLAPSING_TREE = 100;
-	private Map<ArchiveNode, List<GTreeNode>> nodesByArchive;
+	private Map<DataTypeStoreNode, List<GTreeNode>> nodesByArchive;
 	private DataTypeManagerPlugin plugin;
 	private int nodeCount;
 
@@ -51,11 +50,11 @@ public class DataTypeTreeDeleteTask extends Task {
 		nodesByArchive = groupNodeByArchive(nodes);
 	}
 
-	private Map<ArchiveNode, List<GTreeNode>> groupNodeByArchive(List<GTreeNode> nodes) {
+	private Map<DataTypeStoreNode, List<GTreeNode>> groupNodeByArchive(List<GTreeNode> nodes) {
 
-		Map<ArchiveNode, List<GTreeNode>> archiveNodeMap = new HashMap<>();
+		Map<DataTypeStoreNode, List<GTreeNode>> archiveNodeMap = new HashMap<>();
 		for (GTreeNode node : nodes) {
-			ArchiveNode archiveNode = ((DataTypeTreeNode) node).getArchiveNode();
+			DataTypeStoreNode archiveNode = ((DataTypeTreeNode) node).getArchiveNode();
 			List<GTreeNode> archiveNodeList = archiveNodeMap.computeIfAbsent(archiveNode,
 				n -> new ArrayList<>());
 
@@ -128,10 +127,10 @@ public class DataTypeTreeDeleteTask extends Task {
 				collapseArchives(tree);
 			}
 
-			Set<Entry<ArchiveNode, List<GTreeNode>>> entries = nodesByArchive.entrySet();
-			for (Entry<ArchiveNode, List<GTreeNode>> entry : entries) {
+			Set<Entry<DataTypeStoreNode, List<GTreeNode>>> entries = nodesByArchive.entrySet();
+			for (Entry<DataTypeStoreNode, List<GTreeNode>> entry : entries) {
 				List<GTreeNode> list = entry.getValue();
-				ArchiveNode node = entry.getKey();
+				DataTypeStoreNode node = entry.getKey();
 				deleteNodes(node, list, monitor);
 			}
 		}
@@ -160,11 +159,10 @@ public class DataTypeTreeDeleteTask extends Task {
 		}
 	}
 
-	private void deleteNodes(ArchiveNode archiveNode, List<GTreeNode> list, TaskMonitor monitor)
+	private void deleteNodes(DataTypeStoreNode archiveNode, List<GTreeNode> list,
+			TaskMonitor monitor)
 			throws CancelledException {
-
-		Archive archive = archiveNode.getArchive();
-		DataTypeManager dtm = archive.getDataTypeManager();
+		DataTypeManager dtm = archiveNode.getDataTypeManager();
 		dtm.withTransaction("Delete Category/DataType", () -> {
 			for (GTreeNode node : list) {
 				monitor.checkCancelled();

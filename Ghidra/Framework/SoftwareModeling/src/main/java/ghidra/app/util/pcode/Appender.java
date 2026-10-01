@@ -21,7 +21,6 @@ import ghidra.program.model.lang.Register;
 
 /**
  * An appender to receive formatted p-code ops.
- * 
  * <p>
  * Using {@link AbstractAppender} is highly recommended, as it makes available methods for
  * displaying elements according to established Ghidra conventions.
@@ -30,9 +29,7 @@ import ghidra.program.model.lang.Register;
  */
 interface Appender<T> {
 	/**
-	 * Get the language of the p-code being formatted
-	 * 
-	 * @return
+	 * {@return the language of the p-code being formatted}
 	 */
 	Language getLanguage();
 
@@ -85,7 +82,6 @@ interface Appender<T> {
 
 	/**
 	 * Append a character
-	 * 
 	 * <p>
 	 * <b>NOTE:</b> if extra spacing is desired, esp., surrounding the equals sign, it must be
 	 * appended manually.

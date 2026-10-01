@@ -41,7 +41,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * The database memory map manager.
  */
-public class MemoryMapDB implements Memory, ManagerDB {
+public class MemoryMapDB implements Memory, ProgramDBModule {
 
 	private ProgramDB program;
 	private AddressMapDB addrMap;
@@ -215,7 +215,7 @@ public class MemoryMapDB implements Memory, ManagerDB {
 	 * Set the program.
 	 */
 	@Override
-	public void setProgram(ProgramDB program) {
+	public void setDomainObject(ProgramDB program) {
 		this.program = program;
 		try {
 			reloadAll();
@@ -226,7 +226,7 @@ public class MemoryMapDB implements Memory, ManagerDB {
 	}
 
 	@Override
-	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
+	public void domainObjectReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		if (openMode == OpenMode.UPGRADE) {
 			// Ensure that the key has been generated for the end address of each block

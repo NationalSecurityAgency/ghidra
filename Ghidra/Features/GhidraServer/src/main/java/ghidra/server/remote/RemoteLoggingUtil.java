@@ -15,17 +15,24 @@
  */
 package ghidra.server.remote;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 import ghidra.server.RepositoryManager;
 
 public class RemoteLoggingUtil {
 
 	private static Logger log = LogManager.getLogger(GhidraServer.class);
+	
+	/**
+	 * Dump an exception stack trace to the server log as an error
+	 * @param e exception
+	 */
+	public static void logException(Exception e) {
+		log.catching(Level.ERROR, e);
+	}
 
 	/**
-	 * Generate log message that contains inforamtion message.
+	 * Generate log message that contains information message.
 	 * 
 	 * General format where client host may be omitted if unable to determine:
 	 * <pre>

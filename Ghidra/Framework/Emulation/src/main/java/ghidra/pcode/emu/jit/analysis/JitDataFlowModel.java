@@ -17,6 +17,7 @@ package ghidra.pcode.emu.jit.analysis;
 
 import java.io.*;
 import java.util.*;
+import java.util.stream.Stream;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.lifecycle.Internal;
@@ -38,7 +39,6 @@ import ghidra.program.model.pcode.Varnode;
 
 /**
  * The data flow analysis for JIT-accelerated emulation.
- * 
  * <p>
  * This implements the Data Flow Analysis phase of the {@link JitCompiler}. The result is a use-def
  * graph. The graph follows Static Single Assignment (SSA) form, in that each definition of a
@@ -55,7 +55,6 @@ import ghidra.program.model.pcode.Varnode;
  * ADD RAX, RDX
  * MOV qword ptr [...], RAX
  * </pre>
- * 
  * <p>
  * Ignoring RAM, there are two varnodes at play, named for the registers they represent: {@code RAX}
  * and {@code RDX}. However, there are three variables. The first is an instance of {@code RAX},
@@ -67,7 +66,6 @@ import ghidra.program.model.pcode.Varnode;
  * define {@code RAX}<sub>2</sub>. The last {@code MOV} instruction uses {@code RAX}<sub>2</sub>. If
  * we plot each instruction and variable in a graph, drawing edges for each use and definition, we
  * get a use-def graph.
- * 
  * <p>
  * Our analysis produces a use-def graph for the passage's p-code (not instructions) in two steps:
  * First, we analyze each basic block independently. There are a lot of nuts and bolts in the
@@ -83,7 +81,6 @@ import ghidra.program.model.pcode.Varnode;
  * fresh {@link JitDataFlowState}, so that its result has no dependency on the interpretation of any
  * other block, except in the numbering of variable identifiers; those must be unique across the
  * model.
- * 
  * <p>
  * During interpretation, varnode accesses generate value nodes. When a constant varnode is
  * accessed, it simply creates a {@link JitConstVal}. When an op produces an output, it generates a
@@ -111,7 +108,6 @@ import ghidra.program.model.pcode.Varnode;
  * encountered, or we encounter a block with no inward flows, we do not recurse. An
  * {@link JitInputVar input} variable is generated whenever we encounter a passage entry, indicating
  * the variable could be defined outside the passage.
- *
  * <p>
  * Note that the resulting phi ops may not adhere precisely to the formal definition of <em>phi
  * node</em>. A phi op may have only one option. The recursive part of the option seeking algorithm
@@ -123,16 +119,6 @@ import ghidra.program.model.pcode.Varnode;
  * used for analysis.
  */
 public class JitDataFlowModel {
-
-	/**
-	 * Create a list of {@link JitTypeBehavior#ANY ANY}s having the same size as the list of values.
-	 * 
-	 * @param inVals the values, e.g., of each parameter to a userop
-	 * @return the list
-	 */
-	static List<JitTypeBehavior> allAny(List<JitVal> inVals) {
-		return inVals.stream().map(v -> JitTypeBehavior.ANY).toList();
-	}
 
 	private final JitAnalysisContext context;
 	private final JitControlFlowModel cfm;
@@ -153,7 +139,6 @@ public class JitDataFlowModel {
 
 	/**
 	 * Construct the data flow model.
-	 * 
 	 * <p>
 	 * Analysis is performed as part of constructing the model.
 	 * 
@@ -292,7 +277,6 @@ public class JitDataFlowModel {
 
 	/**
 	 * Get the use-def op node for the given p-code op
-	 * 
 	 * <p>
 	 * NOTE: When used in testing, if the passage is manufactured from a {@link PcodeProgram}, the
 	 * decoder will re-write the p-code ops as {@link DecodedPcodeOp}s. Be sure to pass an op to
@@ -307,16 +291,14 @@ public class JitDataFlowModel {
 	}
 
 	/**
-	 * Get all the op nodes, whether from a p-code op or synthesized.
+	 * {@return all the op nodes, whether from a p-code op or synthesized.}
 	 * 
-	 * @return the ops.
 	 * @see JitDataFlowModel
 	 */
-	Collection<JitOp> allOps() {
-		Set<JitOp> all = new LinkedHashSet<>();
-		all.addAll(ops.values());
-		all.addAll(synthNodes);
-		return all;
+	Stream<JitOp> allOps() {
+		return Stream.concat(
+			ops.values().stream(),
+			synthNodes.stream());
 	}
 
 	/**
@@ -327,8 +309,8 @@ public class JitDataFlowModel {
 	 */
 	protected class ValCollector extends HashSet<JitVal> implements JitOpUpwardVisitor {
 		public ValCollector() {
-			for (PcodeOp op : passage.getCode()) {
-				JitOp jitOp = getJitOp(op);
+			// Don't just use passage ops, because we need synthetic (phi) outputs, too.
+			for (JitOp jitOp : (Iterable<JitOp>) allOps()::iterator) {
 				visitOp(jitOp);
 				if (jitOp instanceof JitDefOp defOp) {
 					visitVal(defOp.out());
@@ -390,29 +372,25 @@ public class JitDataFlowModel {
 
 	/**
 	 * Construct the use-def graph
+	 * 
+	 * @implNote Just visit the blocks in any order. Use input placeholders and glue them together
+	 *           afterward.
+	 *           <p>
+	 *           I considered unrolling each loop at least once to avoid certain multi-equals stuff.
+	 *           I don't think that'll be necessary. If we pre-load the registers into local
+	 *           variables, then we'll always be reading and writing to those locals, so no worries
+	 *           about multi-equals.
 	 */
 	protected void analyze() {
-		/**
-		 * Just visit the blocks in any order. Use input placeholders and glue them together
-		 * afterward.
-		 * 
-		 * I considered unrolling each loop at least once to avoid certain multi-equals stuff. I
-		 * don't think that'll be necessary. If we pre-load the registers into local variables, then
-		 * we'll always be reading and writing to those locals, so no worries about multi-equals.
-		 */
 		for (JitBlock block : cfm.getBlocks()) {
 			getOrCreateAnalyzer(block).doIntrablock();
 		}
 
-		/**
-		 * Now, work out the inter-block flows.
-		 */
 		analyzeInterblock(phiNodes);
 	}
 
 	/**
 	 * Perform the inter-block analysis.
-	 * 
 	 * <p>
 	 * This is called by {@link #analyze()} after intra-block analysis.
 	 * 
@@ -474,7 +452,6 @@ public class JitDataFlowModel {
 
 	/**
 	 * A diagnostic tool for visualizing the use-def graph.
-	 * 
 	 * <p>
 	 * NOTE: This is only as complete as it needed to be for me to diagnose whatever issue I was
 	 * having at the time.
@@ -634,7 +611,6 @@ public class JitDataFlowModel {
 
 	/**
 	 * Generate a graphviz .dot file to visualize the use-def graph.
-	 * 
 	 * <p>
 	 * <b>WARNING:</b> This is an internal diagnostic that is only as complete as it needed to be.
 	 * 

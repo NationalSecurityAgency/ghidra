@@ -35,6 +35,8 @@ import ghidra.util.Msg;
 public class FileSystemIndexHelper<METADATATYPE> {
 
 	private static final int MAX_SYMLINK_RECURSE_DEPTH = 10;
+	public static final int MAX_FILEENTRY_COUNT = 500_000;
+
 	private FileData<METADATATYPE> rootDir;
 	
 	static class FileData<METADATATYPE> {
@@ -336,9 +338,10 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	 * @param metadata opaque blob that will be stored and associated with the new
 	 * GFile instance
 	 * @return new GFile instance
+	 * @throws IOException if error adding files (too many files)
 	 */
 	public synchronized GFile storeFile(String path, long fileIndex, boolean isDirectory,
-			long length, METADATATYPE metadata) {
+			long length, METADATATYPE metadata) throws IOException {
 
 		String[] nameparts = FSUtilities.splitPath(path);
 		if (nameparts.length == 0) {
@@ -370,9 +373,10 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	 * @param metadata opaque blob that will be stored and associated with the new
 	 * GFile instance
 	 * @return new GFile instance
+	 * @throws IOException if error adding files (too many files)
 	 */
 	public synchronized GFile storeFileWithParent(String filename, GFile parent, long fileIndex,
-			boolean isDirectory, long length, METADATATYPE metadata) {
+			boolean isDirectory, long length, METADATATYPE metadata) throws IOException {
 		FileData<METADATATYPE> fileData =
 			doStoreFile(filename, parent, fileIndex, isDirectory, length, null, metadata);
 		return fileData.file;
@@ -397,9 +401,10 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	 * @param metadata opaque blob that will be stored and associated with the new
 	 * GFile instance
 	 * @return new GFile instance
+	 * @throws IOException if error adding files (too many files)
 	 */
 	public synchronized GFile storeSymlink(String path, long fileIndex, String symlinkPath,
-			long length, METADATATYPE metadata) {
+			long length, METADATATYPE metadata) throws IOException {
 		String[] nameparts = FSUtilities.splitPath(path);
 		if (nameparts.length == 0) {
 			Msg.warn(this,
@@ -434,9 +439,10 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	 * @param metadata opaque blob that will be stored and associated with the new
 	 * GFile instance
 	 * @return new GFile instance
+	 * @throws IOException if error adding files (too many files)
 	 */
 	public synchronized GFile storeSymlinkWithParent(String filename, GFile parent, long fileIndex,
-			String symlinkPath, long length, METADATATYPE metadata) {
+			String symlinkPath, long length, METADATATYPE metadata) throws IOException {
 		length = length != 0 ? length : symlinkPath.length();
 		FileData<METADATATYPE> fileData =
 			doStoreFile(filename, parent, fileIndex, false, length, symlinkPath, metadata);
@@ -458,7 +464,13 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	}
 
 	private FileData<METADATATYPE> doStoreFile(String filename, GFile parent, long fileIndex,
-			boolean isDirectory, long length, String symlinkPath, METADATATYPE metadata) {
+			boolean isDirectory, long length, String symlinkPath, METADATATYPE metadata)
+			throws IOException {
+
+		if (fileToEntryMap.size() > MAX_FILEENTRY_COUNT) {
+			throw new IOException("Too many file entries: " + fileToEntryMap.size());
+		}
+
 		parent = (parent == null) ? rootDir.file : parent;
 		long fileNum = (fileIndex != -1) ? fileIndex : fileToEntryMap.size();
 		if (fileIndexToEntryMap.containsKey(fileNum)) {

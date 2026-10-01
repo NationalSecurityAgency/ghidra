@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,16 +15,18 @@
  */
 package ghidra.pcode.opbehavior;
 
+import java.math.BigInteger;
+
 import ghidra.pcode.error.LowlevelError;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.pcode.PcodeOp;
 
-import java.math.BigInteger;
+public enum OpBehaviorIntSrem implements BinaryOpBehavior {
+	OP_INT_SREM;
 
-public class OpBehaviorIntSrem extends BinaryOpBehavior {
-
-	public OpBehaviorIntSrem() {
-		super(PcodeOp.INT_SREM);
+	@Override
+	public int opcode() {
+		return PcodeOp.INT_SREM;
 	}
 
 	@Override
@@ -53,5 +54,4 @@ public class OpBehaviorIntSrem extends BinaryOpBehavior {
 		in2 = Utils.convertToSignedValue(in2, sizein);
 		return in1.remainder(in2);
 	}
-
 }

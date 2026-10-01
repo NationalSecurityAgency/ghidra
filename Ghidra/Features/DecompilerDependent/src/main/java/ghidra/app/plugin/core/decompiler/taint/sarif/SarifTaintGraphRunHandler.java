@@ -38,7 +38,8 @@ public class SarifTaintGraphRunHandler extends SarifGraphRunHandler {
 			service = tool.getService(TaintService.class);
 		}
 		Address addr = controller.locationToAddress(run, n.getLocation());
-		vertex.setName(addr.toString());
+		String addrStr = addr == null ? "NULL" : addr.toString(true);
+		vertex.setName(addrStr);
 		String text = n.getLabel().getText();
 		PropertyBag properties = n.getProperties();
 		if (properties != null) {
@@ -50,7 +51,7 @@ public class SarifTaintGraphRunHandler extends SarifGraphRunHandler {
 			}
 		}
 		vertex.setAttribute("Label", text);
-		vertex.setAttribute("Address", addr.toString(true));
+		vertex.setAttribute("Address", addrStr);
 		LogicalLocation ll = SarifUtils.getLogicalLocation(run, n.getLocation());
 		if (ll != null) {
 			String name = ll.getName();

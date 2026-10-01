@@ -43,6 +43,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.asn1.x509.GeneralName;
 
+import db.buffers.DataBuffer;
 import generic.jar.ResourceFile;
 import generic.random.SecureRandomFactory;
 import ghidra.framework.Application;
@@ -53,7 +54,6 @@ import ghidra.server.RepositoryManager;
 import ghidra.server.UserManager;
 import ghidra.server.security.*;
 import ghidra.server.stream.BlockStreamServer;
-import ghidra.server.stream.RemoteBlockStreamHandle;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.DuplicateNameException;
@@ -73,6 +73,8 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 	private static final String TLS_SERVER_PROTOCOLS_PROPERTY = "ghidra.tls.server.protocols";
 	private static final String TLS_ENABLED_CIPHERS_PROPERTY = "jdk.tls.server.cipherSuites";
 
+	private static final String LOCALHOST_ADDRESS = "127.0.0.1";
+
 	private static SslRMIServerSocketFactory serverSocketFactory;
 	private static SslRMIClientSocketFactory clientSocketFactory;
 	private static InetAddress bindAddress;
@@ -81,7 +83,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 
 	private static String HELP_FILE = "ServerHelp.txt";
 	private static String USAGE_ARGS =
-		"[-ip <hostname>] [-ipAlt <hostname>[,...]] [-i #.#.#.#] [-p#] [-n] [-a#] [-d<ad_domain>]" +
+		"[-ip <hostname>] [-i #.#.#.#] [-p#] [-n] [-a#] [-d<ad_domain>]" +
 			" [-e<days>] [-jaas <config_file>] [-u] [-autoProvision] [-anonymous] [-ssh] <repository_path>";
 
 	private static final String RMI_SERVER_PROPERTY = "java.rmi.server.hostname";
@@ -382,7 +384,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			RemoteLoggingUtil.log(
 				"Failed to instantiate RepositoryServerHandleImpl: " + e.getMessage(),
 				username);
-			e.printStackTrace();
+			RemoteLoggingUtil.logException(e);
 			throw new RemoteException("Remote server handle error (see server log)");
 		}
 	}
@@ -543,7 +545,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 		int defaultPasswordExpiration = -1;
 		boolean autoProvision = false;
 		File jaasConfigFile = null;
-		Set<String> altNames = new TreeSet<>();
+		String hostname = null;
 
 		// Network name resolution disabled by default
 		InetNameLookup.setLookupEnabled(false);
@@ -593,27 +595,8 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 					System.exit(-1);
 				}
 			}
-			else if (s.startsWith("-ipAlt")) { // self-signed cert alt subject names
-				int nextArgIndex = i + 1;
-				String hostname;
-				if (s.length() == 6 && nextArgIndex < args.length) {
-					hostname = args[++i];
-				}
-				else {
-					hostname = s.substring(6);
-				}
-				for (String h : hostname.trim().split(";")) {
-					h = h.trim();
-					if (h.length() == 0 || h.startsWith("-")) {
-						displayUsage("Missing -ipAlt altName");
-						System.exit(-1);
-					}
-					altNames.add(h);
-				}
-			}
 			else if (s.startsWith("-ip")) { // setting server remote access hostname
 				int nextArgIndex = i + 1;
-				String hostname;
 				if (s.length() == 3 && nextArgIndex < args.length) {
 					hostname = args[++i];
 				}
@@ -744,6 +727,13 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			}
 		}
 
+		if (authMode == PKI_LOGIN && StringUtils.isBlank(
+			System.getProperty(DefaultTrustManagerFactory.GHIDRA_CACERTS_PATH_PROPERTY))) {
+			displayUsage("PKI authentication (-a2) requires the trusted CA certificates file " +
+				"to be specified with the 'ghidra.cacerts' VM property");
+			System.exit(-1);
+		}
+
 		try {
 			serverRoot = serverRoot.getCanonicalFile();
 		}
@@ -792,32 +782,51 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 		// }
 
 		try {
-			// Ensure that remote access hostname is properly set for RMI registration
-			String hostname = initRemoteAccessHostname();
 
 			log.info("Ghidra Server " + Application.getApplicationVersion());
-			log.info("   Server remote access address: " + hostname);
-			if (bindAddress == null) {
-				log.info("   Server listening on all interfaces");
-			}
-			else {
-				log.info("   Server listening on interface: " + bindAddress.getHostAddress());
-			}
 
 			String preferredKeyStore = DefaultKeyManagerFactory.getPreferredKeyStore();
 			if (StringUtils.isBlank(preferredKeyStore)) {
-				// keystore has not been identified - use self-signed certificate
+				// When keystore has not been specified - use self-signed certificate with localhost/127.0.0.1 only
+				log.warn("Ghidra Server keystore not identified.");
+				log.warn("Server will bind to 127.0.0.1 listening to localhost requests only.");
+
+				if (hostname != null) {
+					log.warn("   -ip hostname option ignored when self-signed certificate is used");
+				}
+				hostname = LOCALHOST_ADDRESS;
+
+				if (bindAddress != null && !bindAddress.isLoopbackAddress()) {
+					log.warn(
+						"   -i non-loopback interface bind address ignored: " + bindAddress);
+				}
+				bindAddress = InetAddress.getByName(LOCALHOST_ADDRESS);
+
+				System.setProperty(RMI_SERVER_PROPERTY, hostname);
+
+				// Setup for self-signed server certificate generation bound to localhost
 				log.info("   Generating self-signed certificate...");
-				initSelfSignedCertificateData(hostname, altNames);
+				DefaultKeyManagerFactory.setDefaultIdentity(new X500Principal("CN=GhidraServer"));
+				DefaultKeyManagerFactory.addSubjectAlternativeName(hostname);
+				if (!hostname.equals(bindAddress.getHostAddress())) {
+					DefaultKeyManagerFactory
+							.addSubjectAlternativeName(bindAddress.getHostAddress());
+				}
 			}
 			else {
 				log.info("   Using server certificate keystore: " + preferredKeyStore);
-				if (!altNames.isEmpty()) {
-					log.warn("   -ipAlt use ignored with installed server certificate");
+				hostname = initRemoteAccessHostname();
+
+				log.info("   Server remote access address: " + hostname);
+				if (bindAddress == null) {
+					log.info("   Server listening on all interfaces");
+				}
+				else {
+					log.info("   Server listening on interface: " + bindAddress.getHostAddress());
 				}
 			}
 
-			if (!DefaultKeyManagerFactory.initialize()) {
+			if (!DefaultKeyManagerFactory.initialize(true)) {
 				log.fatal("Failed to initialize PKI/SSL keystore");
 				System.exit(0);
 			}
@@ -832,8 +841,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			log.info("   RMI SSL port: " + ServerPortFactory.getRMISSLPort());
 			log.info("   Block Stream port: " + ServerPortFactory.getStreamPort());
 			log.info("   Block Stream compression: " +
-				(RemoteBlockStreamHandle.enableCompressedSerializationOutput ? "enabled"
-						: "disabled"));
+				(DataBuffer.isCompressedSerializationOutputEnabled() ? "enabled" : "disabled"));
 			log.info("   Root: " + serverRoot.getAbsolutePath());
 			log.info("   Auth: " + authMode.getDescription());
 			if (authMode == PASSWORD_FILE_LOGIN && defaultPasswordExpiration >= 0) {
@@ -902,32 +910,8 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 		}
 	}
 	
-	private static void initSelfSignedCertificateData(String preferredHostname,
-			Set<String> altNames) throws SocketException {
-
-		DefaultKeyManagerFactory.setDefaultIdentity(new X500Principal("CN=GhidraServer"));
-		DefaultKeyManagerFactory.addSubjectAlternativeName(preferredHostname);
-
-		// Collect alternate hostnames for inclusion in certificate
-		Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
-		while (nets.hasMoreElements()) {
-			NetworkInterface netint = nets.nextElement();
-			Enumeration<InetAddress> addrs = netint.getInetAddresses();
-			while (addrs.hasMoreElements()) {
-				InetAddress addr = addrs.nextElement();
-				altNames.add(addr.getHostAddress());
-				altNames.add(addr.getHostName());
-				altNames.add(addr.getCanonicalHostName());
-			}
-		}
-		altNames.remove(preferredHostname); // already added as first entry
-		for (String name : altNames) {
-			DefaultKeyManagerFactory.addSubjectAlternativeName(name);
-		}
-	}
-
 	/**
-	 * Log server certiifcates
+	 * Log server certificates
 	 * @param keyType
 	 * @return number of certificates that support signing
 	 */

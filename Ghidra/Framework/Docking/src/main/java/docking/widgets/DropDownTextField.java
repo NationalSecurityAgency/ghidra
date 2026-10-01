@@ -72,6 +72,7 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 
 	private static final Cursor CURSOR_HAND = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
 	private static final Cursor CURSOR_DEFAULT = Cursor.getDefaultCursor();
+	protected static final int DEFAULT_MIN_UPDATE_DELAY = 350;
 	private static final int DEFAULT_MAX_UPDATE_DELAY = 2000;
 	private static final int MIN_HEIGHT = 300;
 	private static final int MIN_WIDTH = 200;
@@ -136,7 +137,7 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 	* @param dataModel provides element storage and search capabilities to this component.
 	*/
 	public DropDownTextField(DropDownTextFieldDataModel<T> dataModel) {
-		this(dataModel, 350);
+		this(dataModel, DEFAULT_MIN_UPDATE_DELAY);
 	}
 
 	/**
@@ -973,6 +974,7 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 //=================================================================================================
 
 	protected class DropDownList extends GList<T> {
+
 		@Override
 		public void setFont(Font f) {
 			super.setFont(f);
@@ -981,18 +983,18 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 
 		private void updateCellDimensions(Font font) {
 
-			if (font == null || list == null) {
+			if (font == null) {
 				return; // UI is initializing
 			}
 
-			FontMetrics fontMetrics = list.getFontMetrics(font);
+			FontMetrics fontMetrics = getFontMetrics(font);
 			int padding = 2; // top and bottom border height
 			int lineHeight = fontMetrics.getHeight() + padding;
 			int iconAndPaddingHeight = 16 + padding;
 			int cellHeight = Math.max(lineHeight, iconAndPaddingHeight);
 
-			list.setFixedCellHeight(cellHeight);
-			list.setFixedCellWidth(MIN_WIDTH - 20); // add some fudge for scrollbars
+			setFixedCellHeight(cellHeight);
+			setFixedCellWidth(MIN_WIDTH - 20); // add some fudge for scrollbars
 		}
 	}
 

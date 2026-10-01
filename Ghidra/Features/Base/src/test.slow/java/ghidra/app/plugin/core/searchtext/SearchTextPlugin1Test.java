@@ -56,6 +56,7 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
+import ghidra.util.Msg;
 import ghidra.util.table.AddressBasedTableModel;
 import ghidra.util.table.PreviewTableCellData;
 import ghidra.util.table.field.*;
@@ -1009,7 +1010,7 @@ public class SearchTextPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		int rowCount = model.getRowCount();
 		rowCount = Math.min(rowCount, 20);
 		for (int i = 0; i < rowCount; i++) {
-			System.err.println("preview for row " + i + ": " + getPreviewString(model, i));
+			Msg.debug(this, "preview for row " + i + ": " + getPreviewString(model, i));
 		}
 	}
 

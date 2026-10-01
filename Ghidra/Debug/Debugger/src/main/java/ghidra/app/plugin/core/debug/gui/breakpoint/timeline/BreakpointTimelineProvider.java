@@ -287,15 +287,17 @@ public class BreakpointTimelineProvider extends ComponentProvider {
 		for (final TraceReference reference : currentTrace.getReferenceManager()
 				.getReferencesToRange(Lifespan.ALL, range)) {
 
-			if ((reference.getReferenceType() == RefType.READ) &&
-				(kind == TraceBreakpointKind.READ)) {
+			if ((reference.getReferenceType() == RefType.READ &&
+			     kind == TraceBreakpointKind.READ) ||
+			    (reference.getReferenceType() == RefType.READ_WRITE)) {
 				breakpointHits.add(
 					new BreakpointHitEvent(reference.getStartSnap(), TraceBreakpointKind.READ,
 						breakpointLocation.getName(reference.getStartSnap())));
 			}
 
-			if ((reference.getReferenceType() == RefType.WRITE) &&
-				(kind == TraceBreakpointKind.WRITE)) {
+			if ((reference.getReferenceType() == RefType.WRITE &&
+			     kind == TraceBreakpointKind.WRITE) ||
+			    (reference.getReferenceType() == RefType.READ_WRITE)) {
 				breakpointHits.add(
 					new BreakpointHitEvent(reference.getStartSnap(), TraceBreakpointKind.WRITE,
 						breakpointLocation.getName(reference.getStartSnap())));

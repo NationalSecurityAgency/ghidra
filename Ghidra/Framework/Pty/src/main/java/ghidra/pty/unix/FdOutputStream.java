@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,21 +17,20 @@ package ghidra.pty.unix;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.foreign.*;
 
-import com.sun.jna.LastErrorException;
-import com.sun.jna.Memory;
+import org.unix.unistd_h;
+
+import ghidra.pty.unix.UnixErr.ErrnoException;
 
 /**
  * An output stream that wraps a native POSIX file descriptor
- * 
  * <p>
- * <b>WARNING:</b> This class makes use of jnr-ffi to invoke native functions. An invalid file
+ * <b>WARNING:</b> This class uses java.lang.foreign to invoke native functions. An invalid file
  * descriptor is generally detected, but an incorrect, but valid file descriptor may cause undefined
  * behavior.
  */
 public class FdOutputStream extends OutputStream {
-	private static final PosixC LIB_POSIX = PosixC.INSTANCE;
-
 	private final int fd;
 	private boolean closed = false;
 
@@ -59,21 +58,24 @@ public class FdOutputStream extends OutputStream {
 		if (closed) {
 			throw new IOException("Stream closed");
 		}
-		Memory buf = new Memory(len);
-		buf.write(0, b, off, len);
-		try {
+		if (len == 0) {
+			return;
+		}
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment cs = arena.allocate(UnixErr.LAYOUT);
+			MemorySegment buf = arena.allocate(len);
+			MemorySegment.copy(b, off, buf, ValueLayout.JAVA_BYTE, 0, len);
 			int total = 0;
 			do {
-				int ret = LIB_POSIX.write(fd, buf, len - total);
+				MemorySegment slice = buf.asSlice(total);
+				int ret = (int) UnixErr.checkLt0(unistd_h.write(cs, fd, slice, len - total), cs);
 				total += ret;
 			}
 			while (total < len);
 		}
-		catch (LastErrorException e) {
-			if (e.getErrorCode() == 5 || e.getErrorCode() == 9) {
-				throw new IOException(e);
-			}
-			throw e;
+		catch (ErrnoException e) {
+			// LATER: Should select specific error numbers?
+			throw new IOException(e);
 		}
 	}
 

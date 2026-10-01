@@ -73,6 +73,15 @@ allprojects {
 	}
 }
 
+/*********************************************************************************
+ *  Gradle 9+ by default gives every archived file a timestamp of Feb 1 1980.
+ *  We prefer to preserve the real timestamp of each file in the release.
+ **********************************************************************************/
+allprojects {
+	tasks.withType(AbstractArchiveTask).configureEach {
+		preserveFileTimestamps = true
+	}
+}
 
 /*********************************************************************************
  *  Use flat directory-style repository if flatRepo directory is present.
@@ -83,14 +92,17 @@ if (flatRepo.isDirectory()) {
 		repositories {
 			mavenLocal()
 			mavenCentral()
-			flatDir name: "flat", dirs:["$flatRepo"]
+			flatDir {
+				name = "flat"
+				dirs flatRepo
+			}
 		}
 	}
 }
-else {	
+else {
 	File f = file("ghidra.repos.config")
 	if (!f.exists()) {
-		throw new GradleException("\n\n\n\tUnable to find the local maven repo." +  
+		throw new GradleException("\n\n\n\tUnable to find the local maven repo." +
 			"  Ensure you have created the ${flatRepo.getName()} directory or ${f.getName()} file.\n\n\n");
 	}
 }
@@ -466,7 +478,7 @@ String generateLibraryDependencyMapping() {
 	libsFile.withWriter { out ->
 		subprojects { p ->
 			p.plugins.withType(JavaPlugin) {
-				List<String> libs = getExternalRuntimeDependencies(p);
+				List<String> libs = rootProject.getExternalRuntimeDependencies(p);
 				if (libs != null) {
 					out.println "Module: $p.name"
 					libs.each { path ->

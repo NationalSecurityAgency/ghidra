@@ -19,8 +19,9 @@ import java.io.Closeable;
 import java.util.Iterator;
 
 import ghidra.program.database.data.DataTypeUtilities;
+import ghidra.program.database.data.TransientDataTypeManager;
 import ghidra.program.model.data.*;
-import ghidra.program.model.data.StandAloneDataTypeManager.LanguageUpdateOption;
+import ghidra.program.model.dtarchive.DataTypeArchive.LanguageUpdateOption;
 import ghidra.program.model.lang.ProgramArchitecture;
 import ghidra.util.task.TaskMonitor;
 
@@ -40,7 +41,7 @@ public class DataTypeCleaner implements Closeable {
 
 	private final DataTypeManager targetDtm;
 	private final boolean retainExistingComposites;
-	private final StandAloneDataTypeManager cleanerDtm;
+	private final TransientDataTypeManager cleanerDtm;
 
 	private int txId;
 
@@ -56,7 +57,7 @@ public class DataTypeCleaner implements Closeable {
 	public DataTypeCleaner(DataTypeManager targetDtm, boolean retainExistingComposites) {
 		this.targetDtm = targetDtm;
 		this.retainExistingComposites = retainExistingComposites;
-		this.cleanerDtm = new StandAloneDataTypeManager("CleanerDTM");
+		cleanerDtm = new TransientDataTypeManager("CleanerDTM");
 		txId = cleanerDtm.startTransaction("Clean Datatypes");
 
 		ProgramArchitecture arch = targetDtm.getProgramArchitecture();

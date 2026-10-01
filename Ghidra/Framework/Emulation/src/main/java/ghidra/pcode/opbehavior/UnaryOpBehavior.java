@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,26 +15,26 @@
  */
 package ghidra.pcode.opbehavior;
 
-import ghidra.pcode.utils.Utils;
-
 import java.math.BigInteger;
 
-public abstract class UnaryOpBehavior extends OpBehavior {
+import ghidra.pcode.utils.Utils;
 
-	UnaryOpBehavior(int opcode) {
-		super(opcode);
-	}
-
+/**
+ * The implementation of a unary (1 input arg, 1 output) p-code operator
+ */
+public interface UnaryOpBehavior extends OpBehavior {
 	/**
 	 * Evaluate the unary operation using long data
+	 * <p>
+	 * NOTE: if the operation overflows bits may be set beyond the specified sizeout. Even though
+	 * results should be treated as unsigned it may be returned as a signed long value. It is
+	 * expected that the returned result always be properly truncated by the caller since the
+	 * evaluation may not - this is done to conserve emulation cycles.
+	 * 
 	 * @param sizeout intended output size (bytes)
 	 * @param sizein in1 size (bytes)
 	 * @param unsignedIn1 unsigned input 1
-	 * @return operation result.  NOTE: if the operation overflows bits may be
-	 * set beyond the specified sizeout.  Even though results should be treated
-	 * as unsigned it may be returned as a signed long value.  It is expected that the 
-	 * returned result always be properly truncated by the caller since the evaluation
-	 * may not - this is done to conserve emulation cycles.
+	 * @return operation result.
 	 * @see Utils#longToBytes(long, int, boolean)
 	 * @see Utils#bytesToLong(byte[], int, boolean)
 	 */
@@ -43,16 +42,18 @@ public abstract class UnaryOpBehavior extends OpBehavior {
 
 	/**
 	 * Evaluate the unary operation using BigInteger data
+	 * <p>
+	 * NOTE: if the operation overflows bits may be set beyond the specified sizeout. Even though
+	 * results should be treated as unsigned it may be returned as a signed value. It is expected
+	 * that the returned result always be properly truncated by the caller since the evaluation may
+	 * not - this is done to conserve emulation cycles.
+	 * 
 	 * @param sizeout intended output size (bytes)
 	 * @param sizein in1 size (bytes)
 	 * @param unsignedIn1 unsigned input 1
-	 * @return operation result.  NOTE: if the operation overflows bits may be
-	 * set beyond the specified sizeout.  Even though results should be treated
-	 * as unsigned it may be returned as a signed value.  It is expected that the 
-	 * returned result always be properly truncated by the caller since the evaluation
-	 * may not - this is done to conserve emulation cycles.
+	 * @return operation result.
 	 * @see Utils#bigIntegerToBytes(BigInteger, int, boolean)
-	 * @see Utils#bytesToBigInteger(byte[], int, boolean, boolean) 
+	 * @see Utils#bytesToBigInteger(byte[], int, boolean, boolean)
 	 */
 	public abstract BigInteger evaluateUnary(int sizeout, int sizein, BigInteger unsignedIn1);
 }

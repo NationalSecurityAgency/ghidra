@@ -194,9 +194,10 @@ public interface TraceEvents {
 
 	/**
 	 * The {@link Trace}'s memory or register values were changed.
-	 * 
 	 * <p>
-	 * Note the given byte arrays may be larger than the actual change.
+	 * Note the given byte arrays may be larger than the actual change. Do not modify the byte
+	 * arrays. They may be references to internal working copies. Changing them could cause
+	 * undefined behavior.
 	 */
 	TraceBytesEvent BYTES_CHANGED = TraceBytesEvent.BYTES_CHANGED;
 

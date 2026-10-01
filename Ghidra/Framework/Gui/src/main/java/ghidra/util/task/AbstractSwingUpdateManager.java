@@ -319,13 +319,13 @@ public abstract class AbstractSwingUpdateManager {
 
 		// if past maximum delay, always do work
 		long timeSinceBufferingStart = now - bufferingStartTime;
-		if (timeSinceBufferingStart > maxDelay) {
+		if (timeSinceBufferingStart >= maxDelay) {
 			return true;
 		}
 
 		// if no new requests have come in since the last time we checked, do work
 		long timeSinceLastRequest = now - requestTime;
-		if (timeSinceLastRequest > minDelay) {
+		if (timeSinceLastRequest >= minDelay) {
 			return true;
 		}
 

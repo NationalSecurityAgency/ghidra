@@ -36,9 +36,4 @@ public abstract class AbstractJitVar extends AbstractJitVal implements JitVar {
 	public int id() {
 		return id;
 	}
-
-	@Override
-	public String toString() {
-		return "%s[id=%d]".formatted(getClass().getSimpleName(), id);
-	}
 }

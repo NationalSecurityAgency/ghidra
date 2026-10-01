@@ -18,7 +18,6 @@ package help;
 import java.io.*;
 import java.nio.file.*;
 import java.util.Collection;
-import java.util.Date;
 
 import ghidra.util.exception.AssertException;
 import help.validator.LinkDatabase;
@@ -132,7 +131,7 @@ public class JavaHelpFilesBuilder {
 			out.println("<?xml version='1.0' encoding='ISO-8859-1' ?>");
 			out.println(
 				"<!doctype MAP public \"-//Sun Microsystems Inc.//DTD JavaHelp Map Version 1.0//EN\">");
-			out.println("<!-- Auto-generated on " + (new Date()).toString() + " : Do Not Edit -->");
+			out.println("<!-- Auto-generated : Do Not Edit -->");
 			out.println("<map version=\"1.0\">");
 
 			Collection<AnchorDefinition> anchors = help.getAllAnchorDefinitions();

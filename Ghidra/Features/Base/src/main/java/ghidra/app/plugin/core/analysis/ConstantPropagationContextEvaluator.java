@@ -119,13 +119,13 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 	}
 
 	/**
-	 * Set maximum speculative memory offset for references
+	 * Set minimum offset from the start or end of memory for computed store/load references
 	 * 
-	 * @param minStoreLoadRefAddress maximum address offset
+	 * @param minStoreLoadRefAddress minimum address offset
 	 * @return this
 	 */
 	public ConstantPropagationContextEvaluator setMinStoreLoadOffset(long minStoreLoadRefAddress) {
-		maxSpeculativeOffset = minStoreLoadRefAddress;
+		minStoreLoadOffset = minStoreLoadRefAddress;
 		return this;
 	}
 

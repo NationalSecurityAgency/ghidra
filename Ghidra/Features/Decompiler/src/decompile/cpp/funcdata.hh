@@ -103,6 +103,7 @@ class Funcdata {
 				// Low level Varnode functions
   void setVarnodeProperties(Varnode *vn) const;	///< Look-up boolean properties and data-type information
   HighVariable *assignHigh(Varnode *vn);	///< Assign a new HighVariable to a Varnode
+  static void markIndirectAliasUpdate(Varnode *vn);	///< Inform defining INDIRECT of update in alias status for given Varnode
   bool syncVarnodesWithSymbol(VarnodeLocSet::const_iterator &iter,uint4 fl,Datatype *ct);
   bool descend2Undef(Varnode *vn);		///< Transform all reads of the given Varnode to a special \b undefined constant
 
@@ -452,6 +453,7 @@ public:
   PcodeOp *newOp(int4 inputs,const SeqNum &sq);			/// Allocate a new PcodeOp with sequence number
   PcodeOp *newOpBefore(PcodeOp *follow,OpCode opc,Varnode *in1,Varnode *in2,Varnode *in3=(Varnode *)0);
   PcodeOp *cloneOp(const PcodeOp *op,const SeqNum &seq);	/// Clone a PcodeOp into \b this function
+  PcodeOp *newIndirect(PcodeOp *target);			///< Allocate a new CPUI_INDIRECT
   PcodeOp *getFirstReturnOp(void) const;			/// Find a representative CPUI_RETURN op for \b this function
   PcodeOp *newIndirectOp(PcodeOp *indeffect,const Address &addr,int4 sz,uint4 extraFlags);
   PcodeOp *newIndirectCreation(PcodeOp *indeffect,const Address &addr,int4 sz,bool possibleout);
@@ -503,6 +505,8 @@ public:
   static int4 opFlipInPlaceTest(PcodeOp *op,vector<PcodeOp *> &fliplist,bool allowOpRemoval);
   void opFlipInPlaceExecute(vector<PcodeOp *> &fliplist);
   bool opNormalizeFlip(PcodeOp *cbranch);
+  void opCollapseIndirectsForCopy(PcodeOp *copyOp);	///< Convert INDIRECTs associated with the given COPY op
+  void opCollapseIndirectsForAlias(PcodeOp *effectOp);	///< Eliminate INDIRECTs for addresses with no alias
 
   /// \brief Start of PcodeOp objects with the given op-code
   list<PcodeOp *>::const_iterator beginOp(OpCode opc) const { return obank.begin(opc); }
@@ -522,19 +526,20 @@ public:
   /// \brief End of PcodeOp objects in the \e dead list
   list<PcodeOp *>::const_iterator endOpDead(void) const { return obank.endDead(); }
 
-  /// \brief Start of all (alive) PcodeOp objects sorted by sequence number
-  PcodeOpTree::const_iterator beginOpAll(void) const { return obank.beginAll(); }
+  /// \brief Start of PcodeOp objects sorted by sequence number, excluding CPUI_INDIRECT
+  PcodeOpTree::const_iterator beginOpMain(void) const { return obank.beginMain(); }
 
-  /// \brief End of all (alive) PcodeOp objects sorted by sequence number
-  PcodeOpTree::const_iterator endOpAll(void) const { return obank.endAll(); }
+  /// \brief End of PcodeOp objects sorted by sequence number, excluding CPUI_INDIRECT
+  PcodeOpTree::const_iterator endOpMain(void) const { return obank.endMain(); }
 
   /// \brief Start of all (alive) PcodeOp objects attached to a specific Address
-  PcodeOpTree::const_iterator beginOp(const Address &addr) const { return obank.begin(addr); }
+  PcodeOpTree::const_iterator beginOpMain(const Address &addr) const { return obank.beginMain(addr); }
 
   /// \brief End of all (alive) PcodeOp objects attached to a specific Address
-  PcodeOpTree::const_iterator endOp(const Address &addr) const { return obank.end(addr); }
+  PcodeOpTree::const_iterator endOpMain(const Address &addr) const { return obank.endMain(addr); }
 
   PcodeOp *findPrimaryBranch(const Address &addr,bool findBranch,bool findCall,bool findCallother,bool findReturn);
+  void listOps(vector<PcodeOp *> &res,const Address &addr) const;
 
   bool moveRespectingCover(PcodeOp *op,PcodeOp *lastOp);	///< Move given op past \e lastOp respecting covers if possible
 

@@ -17,10 +17,9 @@ package ghidra.pcode.emu.jit.gen.op;
 
 import static ghidra.pcode.emu.jit.gen.GenConsts.*;
 
+import java.lang.classfile.CodeBuilder;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import org.objectweb.asm.Opcodes;
 
 import ghidra.pcode.emu.jit.analysis.*;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
@@ -28,7 +27,6 @@ import ghidra.pcode.emu.jit.analysis.JitType.IntJitType;
 import ghidra.pcode.emu.jit.analysis.JitType.MpIntJitType;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
 import ghidra.pcode.emu.jit.gen.opnd.Opnd;
-import ghidra.pcode.emu.jit.gen.opnd.Opnd.Ext;
 import ghidra.pcode.emu.jit.gen.opnd.SimpleOpnd;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.EntryPoint;
@@ -40,7 +38,8 @@ import ghidra.pcode.emu.jit.gen.util.Types.TInt;
 import ghidra.pcode.emu.jit.gen.util.Types.TRef;
 import ghidra.pcode.emu.jit.gen.var.VarGen;
 import ghidra.pcode.emu.jit.op.*;
-import ghidra.pcode.emu.jit.var.*;
+import ghidra.pcode.emu.jit.var.JitOutVar;
+import ghidra.pcode.emu.jit.var.JitVal;
 import ghidra.pcode.exec.PcodeExecutor;
 import ghidra.pcode.exec.PcodeUseropLibrary;
 import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
@@ -48,13 +47,11 @@ import ghidra.program.model.pcode.PcodeOp;
 
 /**
  * The bytecode generator for a specific p-code op
- * 
  * <p>
  * The {@link JitCodeGenerator} selects the correct generator for each {@link PcodeOp} using
  * {@link JitDataFlowModel#getJitOp(PcodeOp)} and {@link #lookup(JitOp)}. The following table lists
  * each p-code op, its use-def class, its generator class, and a brief strategy for its bytecode
  * implementation.
- * 
  * <table border="1">
  * <tr>
  * <th>P-code Op</th>
@@ -69,7 +66,7 @@ import ghidra.program.model.pcode.PcodeOp;
  * <td>{@link PcodeOp#UNIMPLEMENTED unimplemented}</td>
  * <td>{@link JitUnimplementedOp}</td>
  * <td>{@link UnimplementedOpGen}</td>
- * <td>{@link Opcodes#NEW new}, {@link Opcodes#ATHROW athrow}</td>
+ * <td>{@link CodeBuilder#new_ new}, {@link CodeBuilder#athrow athrow}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#COPY copy}</td>
@@ -97,14 +94,14 @@ import ghidra.program.model.pcode.PcodeOp;
  * {@link PcodeOp#CALL call}</td>
  * <td>{@link JitBranchOp}</td>
  * <td>{@link BranchOpGen}</td>
- * <td>{@link Opcodes#GOTO goto}, {@link Opcodes#ARETURN areturn}</td>
+ * <td>{@link CodeBuilder#goto_ goto}, {@link CodeBuilder#areturn areturn}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#CBRANCH cbranch}</td>
  * <td>{@link JitCBranchOp}</td>
  * <td>{@link CBranchOpGen}</td>
- * <td>{@link Opcodes#IFEQ ifeq}, {@link Opcodes#IFEQ ifne}, {@link Opcodes#GOTO goto},
- * {@link Opcodes#ARETURN areturn}</td>
+ * <td>{@link CodeBuilder#ifeq ifeq}, {@link CodeBuilder#ifne ifne}, {@link CodeBuilder#goto_ goto},
+ * {@link CodeBuilder#areturn areturn}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#BRANCHIND branchind},<br/>
@@ -112,7 +109,7 @@ import ghidra.program.model.pcode.PcodeOp;
  * {@link PcodeOp#RETURN return}</td>
  * <td>{@link JitBranchIndOp}</td>
  * <td>{@link BranchIndOpGen}</td>
- * <td>{@link Opcodes#ARETURN areturn}</td>
+ * <td>{@link CodeBuilder#areturn areturn}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#CALLOTHER callother}</td>
@@ -128,8 +125,8 @@ import ghidra.program.model.pcode.PcodeOp;
  * <li><b>Standard</b>:
  * {@link PcodeUseropDefinition#execute(PcodeExecutor, PcodeUseropLibrary, PcodeOp)}</li>
  * <li><b>Inlining</b>: userop's p-code</li>
- * <li><b>Direct</b>: {@link Opcodes#INVOKEVIRTUAL invokevirtual}</li>
- * <li><b>Missing</b>: {@link Opcodes#NEW new}, {@link Opcodes#ATHROW athrow}</li>
+ * <li><b>Direct</b>: {@link CodeBuilder#invokevirtual invokevirtual}</li>
+ * <li><b>Missing</b>: {@link CodeBuilder#new_ new}, {@link CodeBuilder#athrow athrow}</li>
  * </ul>
  * </td>
  * </tr>
@@ -140,37 +137,37 @@ import ghidra.program.model.pcode.PcodeOp;
  * <td>{@link PcodeOp#INT_EQUAL int_equal}</td>
  * <td>{@link JitIntEqualOp}</td>
  * <td>{@link IntEqualOpGen}</td>
- * <td>{@link Opcodes#IF_ICMPEQ if_icmpeq}, {@link Opcodes#IFEQ ifeq}</td>
+ * <td>{@link CodeBuilder#if_icmpeq if_icmpeq}, {@link CodeBuilder#ifeq ifeq}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#INT_NOTEQUAL int_notequal}</td>
  * <td>{@link JitIntNotEqualOp}</td>
  * <td>{@link IntNotEqualOpGen}</td>
- * <td>{@link Opcodes#IF_ICMPNE if_icmpne}, {@link Opcodes#IFNE ifne}</td>
+ * <td>{@link CodeBuilder#if_icmpne if_icmpne}, {@link CodeBuilder#ifne ifne}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#INT_SLESS int_sless}</td>
  * <td>{@link JitIntSLessOp}</td>
  * <td>{@link IntSLessOpGen}</td>
- * <td>{@link Opcodes#IF_ICMPLT if_icmplt}, {@link Opcodes#IFLT iflt}</td>
+ * <td>{@link CodeBuilder#if_icmplt if_icmplt}, {@link CodeBuilder#iflt iflt}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#INT_SLESSEQUAL int_slessequal}</td>
  * <td>{@link JitIntSLessEqualOp}</td>
  * <td>{@link IntSLessEqualOpGen}</td>
- * <td>{@link Opcodes#IF_ICMPLE if_icmple}, {@link Opcodes#IFLE ifle}</td>
+ * <td>{@link CodeBuilder#if_icmple if_icmple}, {@link CodeBuilder#ifle ifle}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#INT_LESS int_less}</td>
  * <td>{@link JitIntLessOp}</td>
  * <td>{@link IntLessOpGen}</td>
- * <td>{@link Integer#compareUnsigned(int, int)}, {@link Opcodes#IFLT iflt}, etc.</td>
+ * <td>{@link Integer#compareUnsigned(int, int)}, {@link CodeBuilder#iflt iflt}, etc.</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#INT_LESSEQUAL int_lessequal}</td>
  * <td>{@link JitIntLessEqualOp}</td>
  * <td>{@link IntLessEqualOpGen}</td>
- * <td>{@link Integer#compareUnsigned(int, int)}, {@link Opcodes#IFLE ifle}, etc.</td>
+ * <td>{@link Integer#compareUnsigned(int, int)}, {@link CodeBuilder#ifle ifle}, etc.</td>
  * </tr>
  * <tr>
  * <td colspan="4"><em>Integer Arithmetic</em></td>
@@ -191,62 +188,62 @@ import ghidra.program.model.pcode.PcodeOp;
  * <td>{@link PcodeOp#INT_ADD int_add}</td>
  * <td>{@link JitIntAddOp}</td>
  * <td>{@link IntAddOpGen}</td>
- * <td>{@link Opcodes#IADD iadd}, {@link Opcodes#LADD ladd}</td>
+ * <td>{@link CodeBuilder#iadd iadd}, {@link CodeBuilder#ladd ladd}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#INT_SUB int_sub}</td>
  * <td>{@link JitIntSubOp}</td>
  * <td>{@link IntSubOpGen}</td>
- * <td>{@link Opcodes#ISUB isub}, {@link Opcodes#LSUB lsub}</td>
+ * <td>{@link CodeBuilder#isub isub}, {@link CodeBuilder#lsub lsub}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#INT_CARRY int_carry}</td>
  * <td>{@link JitIntCarryOp}</td>
  * <td>{@link IntCarryOpGen}</td>
- * <td>{@link Integer#compareUnsigned(int, int)}, {@link Opcodes#IADD iadd}, {@link Opcodes#ISHR
- * ishr}, etc.</td>
+ * <td>{@link Integer#compareUnsigned(int, int)}, {@link CodeBuilder#iadd iadd},
+ * {@link CodeBuilder#ishr ishr}, etc.</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#INT_SCARRY int_scarry}</td>
  * <td>{@link JitIntSCarryOp}</td>
  * <td>{@link IntSCarryOpGen}</td>
- * <td>{@link JitCompiledPassage#sCarryIntRaw(int, int)}, {@link Opcodes#ISHR ishr}, etc.</td>
+ * <td>{@link JitCompiledPassage#sCarryIntRaw(int, int)}, {@link CodeBuilder#ishr ishr}, etc.</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#INT_SBORROW int_sborrow}</td>
  * <td>{@link JitIntSBorrowOp}</td>
  * <td>{@link IntSBorrowOpGen}</td>
- * <td>{@link JitCompiledPassage#sBorrowIntRaw(int, int)}, {@link Opcodes#ISHR ishr}, etc.</td>
+ * <td>{@link JitCompiledPassage#sBorrowIntRaw(int, int)}, {@link CodeBuilder#ishr ishr}, etc.</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#INT_2COMP int_2comp}</td>
  * <td>{@link JitInt2CompOp}</td>
  * <td>{@link Int2CompOpGen}</td>
- * <td>{@link Opcodes#INEG ineg}, {@link Opcodes#LNEG lneg}</td>
+ * <td>{@link CodeBuilder#ineg ineg}, {@link CodeBuilder#lneg lneg}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#INT_NEGATE int_negate}</td>
  * <td>{@link JitIntNegateOp}</td>
  * <td>{@link IntNegateOpGen}</td>
- * <td>{@link Opcodes#ICONST_M1 iconst_m1}, {@link Opcodes#IXOR ixor}, etc.</td>
+ * <td>{@link CodeBuilder#iconst_m1 iconst_m1}, {@link CodeBuilder#ixor ixor}, etc.</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#INT_XOR int_xor}</td>
  * <td>{@link JitIntXorOp}</td>
  * <td>{@link IntXorOpGen}</td>
- * <td>{@link Opcodes#IXOR ixor}, {@link Opcodes#LXOR lxor}</td>
+ * <td>{@link CodeBuilder#ixor ixor}, {@link CodeBuilder#lxor lxor}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#INT_AND int_and}</td>
  * <td>{@link JitIntAndOp}</td>
  * <td>{@link IntAndOpGen}</td>
- * <td>{@link Opcodes#IAND iand}, {@link Opcodes#LAND land}</td>
+ * <td>{@link CodeBuilder#iand iand}, {@link CodeBuilder#land land}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#INT_OR int_or}</td>
  * <td>{@link JitIntOrOp}</td>
  * <td>{@link IntOrOpGen}</td>
- * <td>{@link Opcodes#IOR ior}, {@link Opcodes#LOR lor}</td>
+ * <td>{@link CodeBuilder#ior ior}, {@link CodeBuilder#lor lor}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#INT_LEFT int_left}</td>
@@ -270,7 +267,7 @@ import ghidra.program.model.pcode.PcodeOp;
  * <td>{@link PcodeOp#INT_MULT int_mult}</td>
  * <td>{@link JitIntMultOp}</td>
  * <td>{@link IntMultOpGen}</td>
- * <td>{@link Opcodes#IMUL imul}, {@link Opcodes#LMUL lmul}</td>
+ * <td>{@link CodeBuilder#imul imul}, {@link CodeBuilder#lmul lmul}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#INT_DIV int_div}</td>
@@ -282,7 +279,7 @@ import ghidra.program.model.pcode.PcodeOp;
  * <td>{@link PcodeOp#INT_SDIV int_sdiv}</td>
  * <td>{@link JitIntSDivOp}</td>
  * <td>{@link IntSDivOpGen}</td>
- * <td>{@link Opcodes#IDIV idiv}, {@link Opcodes#LDIV ldiv}</td>
+ * <td>{@link CodeBuilder#idiv idiv}, {@link CodeBuilder#ldiv ldiv}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#INT_REM int_rem}</td>
@@ -294,7 +291,7 @@ import ghidra.program.model.pcode.PcodeOp;
  * <td>{@link PcodeOp#INT_SREM int_srem}</td>
  * <td>{@link JitIntSRemOp}</td>
  * <td>{@link IntSRemOpGen}</td>
- * <td>{@link Opcodes#IREM irem}, {@link Opcodes#LREM lrem}</td>
+ * <td>{@link CodeBuilder#irem irem}, {@link CodeBuilder#lrem lrem}</td>
  * </tr>
  * <tr>
  * <td colspan="4"><em>Boolean Logic</em></td>
@@ -303,25 +300,25 @@ import ghidra.program.model.pcode.PcodeOp;
  * <td>{@link PcodeOp#BOOL_NEGATE bool_negate}</td>
  * <td>{@link JitBoolNegateOp}</td>
  * <td>{@link BoolNegateOpGen}</td>
- * <td>Conditional jumps to {@link Opcodes#LDC ldc} 0 or 1</td>
+ * <td>Conditional jumps to {@link CodeBuilder#ldc ldc} 0 or 1</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#BOOL_XOR bool_xor}</td>
  * <td>{@link JitBoolXorOp}</td>
  * <td>{@link BoolXorOpGen}</td>
- * <td>Conditional jumps to {@link Opcodes#LDC ldc} 0 or 1</td>
+ * <td>Conditional jumps to {@link CodeBuilder#ldc ldc} 0 or 1</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#BOOL_AND bool_and}</td>
  * <td>{@link JitBoolAndOp}</td>
  * <td>{@link BoolAndOpGen}</td>
- * <td>Conditional jumps to {@link Opcodes#LDC ldc} 0 or 1</td>
+ * <td>Conditional jumps to {@link CodeBuilder#ldc ldc} 0 or 1</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#BOOL_OR bool_or}</td>
  * <td>{@link JitBoolOrOp}</td>
  * <td>{@link BoolOrOpGen}</td>
- * <td>Conditional jumps to {@link Opcodes#LDC ldc} 0 or 1</td>
+ * <td>Conditional jumps to {@link CodeBuilder#ldc ldc} 0 or 1</td>
  * </tr>
  * <tr>
  * <td colspan="4"><em>Float Comparison</em></td>
@@ -330,25 +327,29 @@ import ghidra.program.model.pcode.PcodeOp;
  * <td>{@link PcodeOp#FLOAT_EQUAL float_equal}</td>
  * <td>{@link JitFloatEqualOp}</td>
  * <td>{@link FloatEqualOpGen}</td>
- * <td>{@link Opcodes#FCMPL fcmpl}, {@link Opcodes#FCMPL dcmpl}, {@link Opcodes#IFNE ifeq}</td>
+ * <td>{@link CodeBuilder#fcmpl fcmpl}, {@link CodeBuilder#dcmpl dcmpl}, {@link CodeBuilder#ifne
+ * ifeq}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#FLOAT_NOTEQUAL float_notequal}</td>
  * <td>{@link JitFloatNotEqualOp}</td>
  * <td>{@link FloatNotEqualOpGen}</td>
- * <td>{@link Opcodes#FCMPL fcmpl}, {@link Opcodes#FCMPL dcmpl}, {@link Opcodes#IFEQ ifne}</td>
+ * <td>{@link CodeBuilder#fcmpl fcmpl}, {@link CodeBuilder#dcmpl dcmpl}, {@link CodeBuilder#ifne
+ * ifne}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#FLOAT_LESS float_less}</td>
  * <td>{@link JitFloatLessOp}</td>
  * <td>{@link FloatLessOpGen}</td>
- * <td>{@link Opcodes#FCMPG fcmpg}, {@link Opcodes#FCMPL dcmpg}, {@link Opcodes#IFGE iflt}</td>
+ * <td>{@link CodeBuilder#fcmpg fcmpg}, {@link CodeBuilder#dcmpl dcmpg}, {@link CodeBuilder#iflt
+ * iflt}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#FLOAT_LESSEQUAL float_lessequal}</td>
  * <td>{@link JitFloatLessEqualOp}</td>
  * <td>{@link FloatLessEqualOpGen}</td>
- * <td>{@link Opcodes#FCMPG fcmpg}, {@link Opcodes#FCMPL dcmpg}, {@link Opcodes#IFGT ifle}</td>
+ * <td>{@link CodeBuilder#fcmpg fcmpg}, {@link CodeBuilder#dcmpg dcmpg}, {@link CodeBuilder#ifle
+ * ifle}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#FLOAT_NAN float_nan}</td>
@@ -363,31 +364,31 @@ import ghidra.program.model.pcode.PcodeOp;
  * <td>{@link PcodeOp#FLOAT_ADD float_add}</td>
  * <td>{@link JitFloatAddOp}</td>
  * <td>{@link FloatAddOpGen}</td>
- * <td>{@link Opcodes#FADD fadd}, {@link Opcodes#DADD dadd}</td>
+ * <td>{@link CodeBuilder#fadd fadd}, {@link CodeBuilder#dadd dadd}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#FLOAT_DIV float_div}</td>
  * <td>{@link JitFloatDivOp}</td>
  * <td>{@link FloatDivOpGen}</td>
- * <td>{@link Opcodes#FDIV fdiv}, {@link Opcodes#DDIV ddiv}</td>
+ * <td>{@link CodeBuilder#fdiv fdiv}, {@link CodeBuilder#ddiv ddiv}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#FLOAT_MULT float_mult}</td>
  * <td>{@link JitFloatMultOp}</td>
  * <td>{@link FloatMultOpGen}</td>
- * <td>{@link Opcodes#FMUL fmul}, {@link Opcodes#DMUL dmul}</td>
+ * <td>{@link CodeBuilder#fmul fmul}, {@link CodeBuilder#dmul dmul}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#FLOAT_SUB float_sub}</td>
  * <td>{@link JitFloatSubOp}</td>
  * <td>{@link FloatSubOpGen}</td>
- * <td>{@link Opcodes#FSUB fsub}, {@link Opcodes#DSUB dsub}</td>
+ * <td>{@link CodeBuilder#fsub fsub}, {@link CodeBuilder#dsub dsub}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#FLOAT_NEG float_neg}</td>
  * <td>{@link JitFloatNegOp}</td>
  * <td>{@link FloatNegOpGen}</td>
- * <td>{@link Opcodes#FNEG fneg}, {@link Opcodes#DNEG dneg}</td>
+ * <td>{@link CodeBuilder#fneg fneg}, {@link CodeBuilder#dneg dneg}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#FLOAT_ABS float_abs}</td>
@@ -405,21 +406,21 @@ import ghidra.program.model.pcode.PcodeOp;
  * <td>{@link PcodeOp#FLOAT_INT2FLOAT float_int2float}</td>
  * <td>{@link JitFloatInt2FloatOp}</td>
  * <td>{@link FloatInt2FloatOpGen}</td>
- * <td>{@link Opcodes#I2F i2f}, {@link Opcodes#I2D i2d}, {@link Opcodes#L2F l2f}, {@link Opcodes#L2D
- * l2d}</td>
+ * <td>{@link CodeBuilder#i2f i2f}, {@link CodeBuilder#i2d i2d}, {@link CodeBuilder#l2f l2f},
+ * {@link CodeBuilder#l2d l2d}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#FLOAT_FLOAT2FLOAT float_float2float}</td>
  * <td>{@link JitFloatFloat2FloatOp}</td>
  * <td>{@link FloatFloat2FloatOpGen}</td>
- * <td>{@link Opcodes#F2D f2d}, {@link Opcodes#D2F d2f}</td>
+ * <td>{@link CodeBuilder#f2d f2d}, {@link CodeBuilder#d2f d2f}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#FLOAT_TRUNC float_trunc}</td>
  * <td>{@link JitFloatTruncOp}</td>
  * <td>{@link FloatTruncOpGen}</td>
- * <td>{@link Opcodes#F2I f2i}, {@link Opcodes#F2L f2l}, {@link Opcodes#D2I d2i}, {@link Opcodes#D2L
- * d2l}</td>
+ * <td>{@link CodeBuilder#f2i f2i}, {@link CodeBuilder#f2l f2l}, {@link CodeBuilder#d2i d2i},
+ * {@link CodeBuilder#d2l d2l}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#FLOAT_CEIL float_ceil}</td>
@@ -446,7 +447,7 @@ import ghidra.program.model.pcode.PcodeOp;
  * <td>{@link PcodeOp#SUBPIECE subpiece}</td>
  * <td>{@link JitSubPieceOp}</td>
  * <td>{@link SubPieceOpGen}</td>
- * <td>{@link Opcodes#IUSHR iushr}, {@link Opcodes#LUSHR lushr}</td>
+ * <td>{@link CodeBuilder#iushr iushr}, {@link CodeBuilder#lushr lushr}</td>
  * </tr>
  * <tr>
  * <td>{@link PcodeOp#POPCOUNT popcount}</td>
@@ -479,17 +480,14 @@ import ghidra.program.model.pcode.PcodeOp;
  * <td>{@link PhiOpGen}</td>
  * </tr>
  * </table>
- * 
  * <p>
  * There are other p-code ops. Some are only used in "high" p-code, and so we need not implement
  * them here. Others are used in abstract virtual machines, e.g., {@link PcodeOp#NEW} or are just
  * not yet implemented, e.g., {@link PcodeOp#SEGMENTOP}.
- * 
  * <p>
  * The mapping from {@link PcodeOp} opcode to {@link JitOp} is done in, e.g.,
  * {@link JitOp#binOp(PcodeOp, JitOutVar, JitVal, JitVal)}, and the mapping from {@link JitOp} to
  * {@link OpGen} is done in {@link #lookup(JitOp)}.
- * 
  * <p>
  * The synthetic use-def nodes do not correspond to any p-code op. They are synthesized based on
  * access patterns to the {@link JitDataFlowState}. Their generators do not emit any bytecode. See
@@ -508,71 +506,71 @@ public interface OpGen<T extends JitOp> {
 	@SuppressWarnings("unchecked")
 	static <T extends JitOp> OpGen<T> lookup(T op) {
 		return (OpGen<T>) switch (op) {
-			case JitBoolAndOp andOp -> BoolAndOpGen.GEN;
-			case JitBoolNegateOp negOp -> BoolNegateOpGen.GEN;
-			case JitBoolOrOp andOp -> BoolOrOpGen.GEN;
-			case JitBoolXorOp andOp -> BoolXorOpGen.GEN;
-			case JitBranchIndOp branchIndOp -> BranchIndOpGen.GEN;
-			case JitBranchOp branchOp -> BranchOpGen.GEN;
-			case JitCallOtherOp callOtherOp -> CallOtherOpGen.GEN;
-			case JitCallOtherDefOp callOtherOp -> CallOtherOpGen.GEN;
-			case JitCallOtherMissingOp callOtherOp -> CallOtherMissingOpGen.GEN;
-			case JitCatenateOp catenateOp -> CatenateOpGen.GEN;
-			case JitCBranchOp cBranchOp -> CBranchOpGen.GEN;
-			case JitCopyOp copyOp -> CopyOpGen.GEN;
-			case JitFloatAbsOp absOp -> FloatAbsOpGen.GEN;
-			case JitFloatAddOp addOp -> FloatAddOpGen.GEN;
-			case JitFloatCeilOp ceilOp -> FloatCeilOpGen.GEN;
-			case JitFloatDivOp divOp -> FloatDivOpGen.GEN;
-			case JitFloatEqualOp eqOp -> FloatEqualOpGen.GEN;
-			case JitFloatFloat2FloatOp f2fOp -> FloatFloat2FloatOpGen.GEN;
-			case JitFloatFloorOp floorOp -> FloatFloorOpGen.GEN;
-			case JitFloatInt2FloatOp int2FloatOp -> FloatInt2FloatOpGen.GEN;
-			case JitFloatLessEqualOp leqOp -> FloatLessEqualOpGen.GEN;
-			case JitFloatLessOp lessOp -> FloatLessOpGen.GEN;
-			case JitFloatMultOp multOp -> FloatMultOpGen.GEN;
-			case JitFloatNaNOp nanOp -> FloatNaNOpGen.GEN;
-			case JitFloatNegOp negOp -> FloatNegOpGen.GEN;
-			case JitFloatNotEqualOp neqOp -> FloatNotEqualOpGen.GEN;
-			case JitFloatRoundOp roundOp -> FloatRoundOpGen.GEN;
-			case JitFloatSqrtOp sqrtOp -> FloatSqrtOpGen.GEN;
-			case JitFloatSubOp subOp -> FloatSubOpGen.GEN;
-			case JitFloatTruncOp truccOp -> FloatTruncOpGen.GEN;
-			case JitInt2CompOp twoCompOp -> Int2CompOpGen.GEN;
-			case JitIntAddOp addOp -> IntAddOpGen.GEN;
-			case JitIntAndOp andOp -> IntAndOpGen.GEN;
-			case JitIntCarryOp carryOp -> IntCarryOpGen.GEN;
-			case JitIntDivOp divOp -> IntDivOpGen.GEN;
-			case JitIntEqualOp eqOp -> IntEqualOpGen.GEN;
-			case JitIntNegateOp negOp -> IntNegateOpGen.GEN;
-			case JitIntLeftOp leftOp -> IntLeftOpGen.GEN;
-			case JitIntLessEqualOp leqOp -> IntLessEqualOpGen.GEN;
-			case JitIntLessOp lessOp -> IntLessOpGen.GEN;
-			case JitIntMultOp multOp -> IntMultOpGen.GEN;
-			case JitIntNotEqualOp neqOp -> IntNotEqualOpGen.GEN;
-			case JitIntOrOp orOp -> IntOrOpGen.GEN;
-			case JitIntRemOp remOp -> IntRemOpGen.GEN;
-			case JitIntRightOp rightOp -> IntRightOpGen.GEN;
-			case JitIntSBorrowOp sborrowOp -> IntSBorrowOpGen.GEN;
-			case JitIntSCarryOp scarryOp -> IntSCarryOpGen.GEN;
-			case JitIntSExtOp sExtOp -> IntSExtOpGen.GEN;
-			case JitIntSLessEqualOp sleqOp -> IntSLessEqualOpGen.GEN;
-			case JitIntSLessOp sleqOp -> IntSLessOpGen.GEN;
-			case JitIntSDivOp sdivOp -> IntSDivOpGen.GEN;
-			case JitIntSRemOp sremOp -> IntSRemOpGen.GEN;
-			case JitIntSRightOp srightOp -> IntSRightOpGen.GEN;
-			case JitIntSubOp subOp -> IntSubOpGen.GEN;
-			case JitIntXorOp xorOp -> IntXorOpGen.GEN;
-			case JitIntZExtOp sExtOp -> IntZExtOpGen.GEN;
-			case JitLoadOp loadOp -> LoadOpGen.GEN;
-			case JitLzCountOp lzCountOp -> LzCountOpGen.GEN;
-			case JitPhiOp phiOp -> PhiOpGen.GEN;
-			case JitPopCountOp popCountOp -> PopCountOpGen.GEN;
-			case JitNopOp nopOp -> NopOpGen.GEN;
-			case JitStoreOp storeOp -> StoreOpGen.GEN;
-			case JitSubPieceOp spOp -> SubPieceOpGen.GEN;
-			case JitSynthSubPieceOp subPieceOp -> SynthSubPieceOpGen.GEN;
-			case JitUnimplementedOp unimplOp -> UnimplementedOpGen.GEN;
+			case JitBoolAndOp _ -> BoolAndOpGen.GEN;
+			case JitBoolNegateOp _ -> BoolNegateOpGen.GEN;
+			case JitBoolOrOp _ -> BoolOrOpGen.GEN;
+			case JitBoolXorOp _ -> BoolXorOpGen.GEN;
+			case JitBranchIndOp _ -> BranchIndOpGen.GEN;
+			case JitBranchOp _ -> BranchOpGen.GEN;
+			case JitCallOtherOp _ -> CallOtherOpGen.GEN;
+			case JitCallOtherDefOp _ -> CallOtherOpGen.GEN;
+			case JitCallOtherMissingOp _ -> CallOtherMissingOpGen.GEN;
+			case JitCatenateOp _ -> CatenateOpGen.GEN;
+			case JitCBranchOp _ -> CBranchOpGen.GEN;
+			case JitCopyOp _ -> CopyOpGen.GEN;
+			case JitFloatAbsOp _ -> FloatAbsOpGen.GEN;
+			case JitFloatAddOp _ -> FloatAddOpGen.GEN;
+			case JitFloatCeilOp _ -> FloatCeilOpGen.GEN;
+			case JitFloatDivOp _ -> FloatDivOpGen.GEN;
+			case JitFloatEqualOp _ -> FloatEqualOpGen.GEN;
+			case JitFloatFloat2FloatOp _ -> FloatFloat2FloatOpGen.GEN;
+			case JitFloatFloorOp _ -> FloatFloorOpGen.GEN;
+			case JitFloatInt2FloatOp _ -> FloatInt2FloatOpGen.GEN;
+			case JitFloatLessEqualOp _ -> FloatLessEqualOpGen.GEN;
+			case JitFloatLessOp _ -> FloatLessOpGen.GEN;
+			case JitFloatMultOp _ -> FloatMultOpGen.GEN;
+			case JitFloatNaNOp _ -> FloatNaNOpGen.GEN;
+			case JitFloatNegOp _ -> FloatNegOpGen.GEN;
+			case JitFloatNotEqualOp _ -> FloatNotEqualOpGen.GEN;
+			case JitFloatRoundOp _ -> FloatRoundOpGen.GEN;
+			case JitFloatSqrtOp _ -> FloatSqrtOpGen.GEN;
+			case JitFloatSubOp _ -> FloatSubOpGen.GEN;
+			case JitFloatTruncOp _ -> FloatTruncOpGen.GEN;
+			case JitInt2CompOp _ -> Int2CompOpGen.GEN;
+			case JitIntAddOp _ -> IntAddOpGen.GEN;
+			case JitIntAndOp _ -> IntAndOpGen.GEN;
+			case JitIntCarryOp _ -> IntCarryOpGen.GEN;
+			case JitIntDivOp _ -> IntDivOpGen.GEN;
+			case JitIntEqualOp _ -> IntEqualOpGen.GEN;
+			case JitIntNegateOp _ -> IntNegateOpGen.GEN;
+			case JitIntLeftOp _ -> IntLeftOpGen.GEN;
+			case JitIntLessEqualOp _ -> IntLessEqualOpGen.GEN;
+			case JitIntLessOp _ -> IntLessOpGen.GEN;
+			case JitIntMultOp _ -> IntMultOpGen.GEN;
+			case JitIntNotEqualOp _ -> IntNotEqualOpGen.GEN;
+			case JitIntOrOp _ -> IntOrOpGen.GEN;
+			case JitIntRemOp _ -> IntRemOpGen.GEN;
+			case JitIntRightOp _ -> IntRightOpGen.GEN;
+			case JitIntSBorrowOp _ -> IntSBorrowOpGen.GEN;
+			case JitIntSCarryOp _ -> IntSCarryOpGen.GEN;
+			case JitIntSExtOp _ -> IntSExtOpGen.GEN;
+			case JitIntSLessEqualOp _ -> IntSLessEqualOpGen.GEN;
+			case JitIntSLessOp _ -> IntSLessOpGen.GEN;
+			case JitIntSDivOp _ -> IntSDivOpGen.GEN;
+			case JitIntSRemOp _ -> IntSRemOpGen.GEN;
+			case JitIntSRightOp _ -> IntSRightOpGen.GEN;
+			case JitIntSubOp _ -> IntSubOpGen.GEN;
+			case JitIntXorOp _ -> IntXorOpGen.GEN;
+			case JitIntZExtOp _ -> IntZExtOpGen.GEN;
+			case JitLoadOp _ -> LoadOpGen.GEN;
+			case JitLzCountOp _ -> LzCountOpGen.GEN;
+			case JitPhiOp _ -> PhiOpGen.GEN;
+			case JitPopCountOp _ -> PopCountOpGen.GEN;
+			case JitNopOp _ -> NopOpGen.GEN;
+			case JitStoreOp _ -> StoreOpGen.GEN;
+			case JitSubPieceOp _ -> SubPieceOpGen.GEN;
+			case JitSynthSubPieceOp _ -> SynthSubPieceOpGen.GEN;
+			case JitUnimplementedOp _ -> UnimplementedOpGen.GEN;
 			default -> throw new AssertionError("Unrecognized op: " + op);
 		};
 	}
@@ -587,7 +585,7 @@ public interface OpGen<T extends JitOp> {
 	 */
 	static <N extends Next> Emitter<N> generateSyserrInts(Emitter<N> em, Opnd<MpIntJitType> opnd) {
 		List<SimpleOpnd<TInt, IntJitType>> legs = opnd.type().castLegsLE(opnd);
-		String fmt = legs.stream().map(l -> "%08x").collect(Collectors.joining(":"));
+		String fmt = legs.stream().map(_ -> "%08x").collect(Collectors.joining(":"));
 		var emArr = em
 				.emit(Op::getstatic, T_SYSTEM, "err", T_PRINT_STREAM)
 				.emit(Op::ldc__a, fmt)
@@ -621,6 +619,12 @@ public interface OpGen<T extends JitOp> {
 	 * The result of emitting code for a p-code op
 	 */
 	sealed interface OpResult {
+		/**
+		 * {@return the emitter with unknown stack}
+		 * <p>
+		 * Switch on the actual type to ascertain the stack's actual contents.
+		 */
+		Emitter<?> em();
 	}
 
 	/**
@@ -638,22 +642,19 @@ public interface OpGen<T extends JitOp> {
 	record DeadOpResult(Emitter<Dead> em) implements OpResult {}
 
 	/**
-	 * Emit bytecode into the {@link JitCompiledPassage#run(int) run} method.
-	 * 
+	 * Emit bytecode into the {@link JitCompiledPassage#run run} method.
 	 * <p>
 	 * This method must emit the code needed to load any input operands, convert them to the
 	 * appropriate type, perform the actual operation, and then if applicable, store the output
-	 * operand. The implementations should delegate to
-	 * {@link JitCodeGenerator#genReadToStack(Emitter, Local, JitVal, ghidra.pcode.emu.jit.analysis.JitType.SimpleJitType, Ext)},
-	 * {@link JitCodeGenerator#genWriteFromStack(Emitter, Local, JitVar, ghidra.pcode.emu.jit.analysis.JitType.SimpleJitType, Ext, Scope)}
-	 * or similar for mp-int types.
+	 * operand. The implementations should delegate to {@link JitCodeGenerator#genReadToStack},
+	 * {@link JitCodeGenerator#genWriteFromStack} or similar for mp-int types.
 	 * 
 	 * @param <THIS> the type of the generated passage
 	 * @param em the emitter typed with the empty stack
 	 * @param localThis a handle to the local holding the {@code this} reference
 	 * @param localCtxmod a handle to the local holding {@code ctxmod}
-	 * @param retReq an indication of what must be returned by this
-	 *            {@link JitCompiledPassage#run(int)} method.
+	 * @param retReq an indication of what must be returned by this {@link JitCompiledPassage#run}
+	 *            method.
 	 * @param gen the code generator
 	 * @param op the p-code op (use-def node) to translate
 	 * @param block the basic block containing the p-code op

@@ -142,10 +142,13 @@ public class GTreeTableModel<T extends GTreeTableNode> extends ThreadedTableMode
 	 *
 	 * @param node
 	 * 		Root node to set
+	 * @return True if node is different, false otherwise
 	 */
-	public void setRootNode(GTreeTableNode node) {
+	public boolean setRootNode(GTreeTableNode node) {
+		boolean ret = rootNode != node;
 		rootNode = node;
 		reload();
+		return ret;
 	}
 
 	/**

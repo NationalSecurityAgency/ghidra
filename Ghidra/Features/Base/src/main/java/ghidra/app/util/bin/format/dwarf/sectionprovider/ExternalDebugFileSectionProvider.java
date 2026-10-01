@@ -55,14 +55,14 @@ public class ExternalDebugFileSectionProvider extends BaseSectionProvider {
 	public static DWARFSectionProvider createExternalSectionProviderFor(Program program,
 			TaskMonitor monitor) {
 		try {
-			ExternalDebugInfo extDebugInfo = ExternalDebugInfo.fromProgram(program);
-			if (extDebugInfo == null) {
+			List<ExternalDebugInfo> extDebugInfos = ExternalDebugInfo.fromProgram(program);
+			if (extDebugInfos.isEmpty()) {
 				return null;
 			}
 			Msg.info(ExternalDebugFileSectionProvider.class,
-				"DWARF external debug information found: " + extDebugInfo);
+				"DWARF external debug information found: " + extDebugInfos);
 			ExternalDebugFilesService edfs = ExternalDebugFilesService.forProgram(program);
-			File extDebugFile = edfs.find(extDebugInfo, monitor);
+			File extDebugFile = edfs.find(extDebugInfos, monitor);
 			if (extDebugFile == null) {
 				return null;
 			}

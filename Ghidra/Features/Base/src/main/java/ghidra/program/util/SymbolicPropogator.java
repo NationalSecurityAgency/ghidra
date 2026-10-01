@@ -1400,7 +1400,7 @@ public class SymbolicPropogator {
 						longVal1 = vContext.getConstant(val1, evaluator);
 						longVal2 = vContext.getConstant(val2, evaluator);
 						if (longVal1 != null && longVal2 != null) {
-							lresult = longVal1 >> longVal2;
+							lresult = longVal1 >>> longVal2;
 							result = vContext.createConstantVarnode(lresult, val1.getSize());
 						}
 						vContext.putValue(out, result, mustClearAll);
@@ -1412,7 +1412,7 @@ public class SymbolicPropogator {
 						longVal1 = vContext.getConstant(val1, evaluator);
 						longVal2 = vContext.getConstant(val2, evaluator);
 						if (longVal1 != null && longVal2 != null) {
-							lresult = longVal1 >>> longVal2;
+							lresult = longVal1 >> longVal2;
 							result = vContext.createConstantVarnode(lresult, val1.getSize());
 						}
 						vContext.putValue(out, result, mustClearAll);
@@ -1437,7 +1437,7 @@ public class SymbolicPropogator {
 						longVal2 = vContext.getConstant(val2, evaluator);
 						if (longVal1 != null & longVal2 != null) {
 							if (longVal2 != 0) {
-								lresult = longVal1 / longVal2;
+								lresult = Long.divideUnsigned(longVal1, longVal2);
 								result = vContext.createConstantVarnode(lresult, val1.getSize());
 							}
 						}
@@ -1465,7 +1465,7 @@ public class SymbolicPropogator {
 						longVal2 = vContext.getConstant(val2, evaluator);
 						if (longVal1 != null && longVal2 != null) {
 							if (longVal2 != 0) {
-								lresult = longVal1 % longVal2;
+								lresult = Long.remainderUnsigned(longVal1, longVal2);
 								result = vContext.createConstantVarnode(lresult, val1.getSize());
 							}
 						}

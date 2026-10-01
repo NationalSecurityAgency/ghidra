@@ -18,13 +18,12 @@ package ghidra.pcode.emu.jit.gen;
 import static ghidra.lifecycle.Unfinished.TODO;
 import static org.junit.Assert.*;
 
+import java.lang.classfile.instruction.InvokeInstruction;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
 import org.junit.Ignore;
 import org.junit.Test;
-import org.objectweb.asm.tree.MethodInsnNode;
 
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator.PcodeOpKey;
 import ghidra.pcode.exec.InterruptPcodeExecutionException;
@@ -3669,6 +3668,49 @@ public abstract class AbstractToyJitCodeGeneratorTest extends AbstractJitCodeGen
 	}
 
 	@Test
+	public void testEmuInjectionAtEntry() throws Exception {
+		Translation tr = translateLang(getLanguageID(), 0x00400000, """
+				imm r0,#123
+				add r0,#7
+				""", Map.ofEntries(
+			Map.entry(0x00400000L, """
+					r1 = 0xbeef;
+					emu_exec_decoded();
+					""")));
+
+		tr.runDecodeErr(0x00400004);
+		assertEquals(123 + 7, tr.getLongRegVal("r0"));
+		assertEquals(0xbeef, tr.getLongRegVal("r1"));
+	}
+
+	@Test
+	public void testEmuInjectionAtEntrySkip() throws Exception {
+		Translation tr = translateLang(getLanguageID(), 0x00400000, """
+				imm r0,#123
+				add r0,#7
+				""", Map.ofEntries(
+			Map.entry(0x00400000L, """
+					r1 = 0xbeef;
+					emu_skip_decoded();
+					""")));
+
+		tr.runDecodeErr(0x00400004);
+		assertEquals(7, tr.getLongRegVal("r0"));
+		assertEquals(0xbeef, tr.getLongRegVal("r1"));
+	}
+
+	@Test
+	public void testEmuInjectionAtEntryEmpty() throws Exception {
+		Translation tr = translateLang(getLanguageID(), 0x00400000, """
+				imm r0,#123
+				add r0,#7
+				""", Map.ofEntries(
+			Map.entry(0x00400000L, """
+					""")));
+		// Can't run, or else it loops. Just verify it doesn't crash.
+	}
+
+	@Test
 	public void testEmuInjectionCallEmuSkipDecoded() throws Exception {
 		Translation tr = translateLang(getLanguageID(), 0x00400000, """
 				imm r0,#123
@@ -3694,12 +3736,14 @@ public abstract class AbstractToyJitCodeGeneratorTest extends AbstractJitCodeGen
 		tr.runDecodeErr(0x00400004);
 		assertEquals(13, tr.getLongRegVal("r0"));
 
-		long countSCarrys = Stream.of(tr.run().instructions.toArray()).filter(i -> {
-			if (!(i instanceof MethodInsnNode mi)) {
+		long countSCarrys = tr.run().code().orElseThrow().elementStream().filter(c -> {
+			if (!(c instanceof InvokeInstruction ii)) {
 				return false;
 			}
-			return "sCarryLongRaw".equals(mi.name);
+			return "sCarryLongRaw".equals(ii.name().stringValue());
 		}).count();
-		assertEquals(1, countSCarrys);
+		long expected =
+			tr.thread().getMachine().getConfiguration().removeUnusedOperations() ? 1 : 2;
+		assertEquals(expected, countSCarrys);
 	}
 }

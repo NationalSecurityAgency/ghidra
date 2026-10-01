@@ -686,6 +686,11 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 			null,
 			"The default apply action <b>for the data type on a data match</b> when performing bulk apply operations");
 
+		vtOptions.registerOption(DATA_TYPE_CONFLICT_HANDLER,
+			DEFAULT_OPTION_FOR_DATA_TYPE_CONFLICT_HANDLER, null,
+			"How to resolve a conflict when the data type being applied already exists but " +
+				"differs in the destination program");
+
 		vtOptions.registerOption(LABELS, DEFAULT_OPTION_FOR_LABELS, null,
 			"The default apply action <b>for labels</b> when performing bulk apply operations");
 

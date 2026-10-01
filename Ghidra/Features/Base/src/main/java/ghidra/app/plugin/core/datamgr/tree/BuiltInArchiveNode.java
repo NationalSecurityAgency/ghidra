@@ -17,19 +17,25 @@ package ghidra.app.plugin.core.datamgr.tree;
 
 import javax.swing.Icon;
 
-import ghidra.app.plugin.core.datamgr.archive.BuiltInArchive;
+import generic.theme.GIcon;
+import ghidra.program.model.dtarchive.DataTypeStore;
 import ghidra.util.HTMLUtilities;
 import resources.MultiIcon;
 
-public class BuiltInArchiveNode extends ArchiveNode {
+/**
+ * Node that represents the Built-in datatype archive.
+ */
+public class BuiltInArchiveNode extends DataTypeStoreNode {
+	private static Icon CLOSED_ICON = new GIcon("icon.plugin.datatypes.archive.built.in.closed");
+	private static Icon OPEN_ICON = new GIcon("icon.plugin.datatypes.archive.built.in.open");
 
-	public BuiltInArchiveNode(BuiltInArchive archive, DtFilterState filterState) {
-		super(archive, filterState);
+	public BuiltInArchiveNode(DataTypeStore store, DtFilterState filterState) {
+		super(store, filterState);
 	}
 
 	@Override
 	public Icon getIcon(boolean expanded) {
-		Icon baseIcon = archive.getIcon(expanded);
+		Icon baseIcon = expanded ? OPEN_ICON : CLOSED_ICON;
 		MultiIcon multiIcon = new MultiIcon(baseIcon);
 		return multiIcon;
 	}

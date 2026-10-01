@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,10 +16,9 @@
 package ghidra.pcode.exec;
 
 import java.util.List;
-import java.util.Map;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
-import ghidra.pcodeCPort.slghsymbol.UserOpSymbol;
+import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropSymbolMap;
 import ghidra.program.model.pcode.PcodeOp;
 
 /**
@@ -55,11 +54,11 @@ public class PcodeExpression extends PcodeProgram {
 	 * 
 	 * @param language the language that generated the p-code
 	 * @param code the list of p-code ops
-	 * @param useropSymbols a map of expected userop symbols
+	 * @param userops a map of expected userop symbols
 	 */
 	protected PcodeExpression(SleighLanguage language, List<PcodeOp> code,
-			Map<Integer, UserOpSymbol> useropSymbols) {
-		super(language, code, useropSymbols);
+			PcodeUseropSymbolMap userops) {
+		super(language, code, userops);
 	}
 
 	// TODO: One that can take a library, and compose the result into it

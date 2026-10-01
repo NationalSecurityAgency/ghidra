@@ -35,7 +35,9 @@ public class SwiftDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 
 	private static final String NAME = "Demangler Swift";
 	private static final String DESCRIPTION =
-		"Demangles Swift symbols and applies appropriate datatype and calling conventions where possible. Requires Swift to be on the PATH.";
+		"Demangles Swift symbols and applies appropriate datatype and calling conventions where " +
+			"possible. Requires native Swift demangler to be on system in known location or " +
+			"pointed to by the GHIDRA_SWIFT_DEMANGLER environment variable.";
 
 	private static final String OPTION_NAME_INCOMPLETE_PREFIX =
 		"Use incomplete demangle label prefix (%s)"
@@ -105,7 +107,8 @@ public class SwiftDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 			catch (IOException e) {
 				log.appendMsg(e.getMessage());
 				log.appendMsg("You must have Swift installed to demangle Swift symbols.\n" +
-					"See the \"Demangler Swift\" analyzer options to configure.");
+					"  * If installed but not found, set the GHIDRA_SWIFT_DEMANGLER environment\n" +
+					"    variable to the full path of the native Swift demangler (swift/swift-demangle)");
 			}
 		}
 		return false;

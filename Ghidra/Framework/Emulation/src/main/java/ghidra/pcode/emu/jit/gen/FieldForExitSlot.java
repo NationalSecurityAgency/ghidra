@@ -16,10 +16,10 @@
 package ghidra.pcode.emu.jit.gen;
 
 import static ghidra.pcode.emu.jit.gen.GenConsts.*;
-import static org.objectweb.asm.Opcodes.ACC_FINAL;
-import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
+import static java.lang.classfile.ClassFile.ACC_FINAL;
+import static java.lang.classfile.ClassFile.ACC_PRIVATE;
 
-import org.objectweb.asm.ClassVisitor;
+import java.lang.classfile.ClassBuilder;
 
 import ghidra.pcode.emu.jit.JitPassage.AddrCtx;
 import ghidra.pcode.emu.jit.JitPassage.ExtBranch;
@@ -76,9 +76,9 @@ public record FieldForExitSlot(AddrCtx target) implements InstanceFieldReq<TRef<
 	 */
 	@Override
 	public <THIS extends JitCompiledPassage, N extends Next> Emitter<N> genInit(Emitter<N> em,
-			Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, ClassVisitor cv) {
+			Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, ClassBuilder clb) {
 		FieldForContext ctxField = gen.requestStaticFieldForContext(target.rvCtx);
-		Fld.decl(cv, ACC_PRIVATE | ACC_FINAL, T_EXIT_SLOT, name());
+		Fld.decl(clb, ACC_PRIVATE | ACC_FINAL, T_EXIT_SLOT, name());
 		return em
 				.emit(Op::aload, localThis)
 				.emit(Op::dup)

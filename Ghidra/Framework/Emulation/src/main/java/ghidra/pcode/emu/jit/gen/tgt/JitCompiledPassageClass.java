@@ -27,7 +27,6 @@ import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.EntryPointPrototype;
 
 /**
  * A compiled passage that is not yet bound/instantiated to a thread.
- * 
  * <p>
  * This is the output of {@link JitCompiler#compilePassage(Lookup, JitPassage)}, and it will be
  * cached (indirectly) by {@link JitPcodeEmulator}. The emulator actually caches the various entry
@@ -35,7 +34,6 @@ import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.EntryPointPrototype;
  * An {@link EntryPointPrototype} pairs this with a entry block ID. That prototype can then be
  * instantiated/bound to a thread, producing an {@link EntryPoint}. That bound entry point is
  * produced by invoking {@link #createInstance(JitPcodeThread)} and just copying the block id.
- * 
  * <p>
  * This object wraps the generated (and now loaded) class and provides the mechanisms for reflecting
  * and processing the {@code ENTRIES} field, and for reflecting and invoking the generated
@@ -57,7 +55,6 @@ public record JitCompiledPassageClass(Lookup lookup, Class<? extends JitCompiled
 
 	/**
 	 * Load the generated class from the given bytes
-	 * 
 	 * <p>
 	 * The bytes must define a class that implements {@link JitCompiledPassage}. It must define a
 	 * constructor having the signature {@link #CONSTRUCTOR_TYPE}, and it must define a static field
@@ -99,7 +96,6 @@ public record JitCompiledPassageClass(Lookup lookup, Class<? extends JitCompiled
 
 	/**
 	 * Get the entry points for this compiled passage
-	 * 
 	 * <p>
 	 * This processes the {@code ENTRIES} field, which is just a list of targets. The position of
 	 * each target in the list corresponds to the block id accepted by the generated
