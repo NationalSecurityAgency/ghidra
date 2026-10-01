@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -212,27 +212,23 @@ public class PackedDatabaseCache {
 	}
 
 	private CachedDB createCachedDb(ResourceFile packedDbFile) throws IOException {
+		if (!packedDbFile.isFile()) {
+			throw new FileNotFoundException("File not found: " + packedDbFile);
+		}
 		File dbDir = createCachedDir();
-		ItemDeserializer itemDeserializer = null;
 		boolean success = false;
-		try {
-			if (!packedDbFile.isFile()) {
-				throw new FileNotFoundException("File not found: " + packedDbFile);
-			}
-			itemDeserializer = new ItemDeserializer(packedDbFile);
-			if (itemDeserializer.getFileType() != FolderItem.DATABASE_FILE_TYPE) {
+		try (ItemDeserializer itemDeserializer = new ItemDeserializer(packedDbFile)) {
+			String contentType = itemDeserializer.getContentType();
+			if (itemDeserializer.getFileType() != FolderItem.DATABASE_FILE_TYPE ||
+				contentType == null) {
 				throw new IOException("Incorrect file type");
 			}
-			String contentType = itemDeserializer.getContentType();
 			String itemName = itemDeserializer.getItemName();
 			CachedDB cachedDb = new CachedDB(packedDbFile, dbDir, contentType, itemName, 0, true);
 			success = true;
 			return cachedDb;
 		}
 		finally {
-			if (itemDeserializer != null) {
-				itemDeserializer.dispose();
-			}
 			if (!success) {
 				FileUtilities.deleteDir(dbDir);
 			}
