@@ -92,14 +92,17 @@ if (flatRepo.isDirectory()) {
 		repositories {
 			mavenLocal()
 			mavenCentral()
-			flatDir name: "flat", dirs:["$flatRepo"]
+			flatDir {
+				name = "flat"
+				dirs flatRepo
+			}
 		}
 	}
 }
-else {	
+else {
 	File f = file("ghidra.repos.config")
 	if (!f.exists()) {
-		throw new GradleException("\n\n\n\tUnable to find the local maven repo." +  
+		throw new GradleException("\n\n\n\tUnable to find the local maven repo." +
 			"  Ensure you have created the ${flatRepo.getName()} directory or ${f.getName()} file.\n\n\n");
 	}
 }
@@ -475,7 +478,7 @@ String generateLibraryDependencyMapping() {
 	libsFile.withWriter { out ->
 		subprojects { p ->
 			p.plugins.withType(JavaPlugin) {
-				List<String> libs = getExternalRuntimeDependencies(p);
+				List<String> libs = rootProject.getExternalRuntimeDependencies(p);
 				if (libs != null) {
 					out.println "Module: $p.name"
 					libs.each { path ->

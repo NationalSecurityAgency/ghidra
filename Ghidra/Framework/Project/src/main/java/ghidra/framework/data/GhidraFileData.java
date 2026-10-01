@@ -18,8 +18,8 @@ package ghidra.framework.data;
 import java.awt.*;
 import java.io.*;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.Icon;
@@ -309,9 +309,23 @@ public class GhidraFileData {
 	 * @throws FileInUseException if file is in-use or busy
 	 */
 	void checkInUse() throws FileInUseException {
+
 		synchronized (fileSystem) {
+
+			// Check for object open for update
 			if (busy.get() || getOpenedDomainObject() != null) {
 				throw new FileInUseException(name + " is in use");
+			}
+
+			// Check for read-only object use
+			GhidraFile domainFile = getDomainFile();
+			List<DomainFile> proxyObjs = new ArrayList<>();
+			TransientDataManager.getTransients(proxyObjs);
+			for (DomainFile df : proxyObjs) {
+				DomainFileProxy proxy = (DomainFileProxy) df;
+				if (domainFile.equals(proxy.getOriginalDomainFile())) {
+					throw new FileInUseException(name + " is in use");
+				}
 			}
 		}
 	}
@@ -641,6 +655,7 @@ public class GhidraFileData {
 				domainObj = getOpenedDomainObject();
 				if (domainObj != null) {
 					if (!domainObj.addConsumer(consumer)) {
+						// cleanup stale object reference
 						domainObj = null;
 						projectData.clearDomainObject(getPathname());
 					}
@@ -650,20 +665,9 @@ public class GhidraFileData {
 				}
 				ContentHandler<?> contentHandler = getContentHandler();
 				if (folderItem == null) {
-					DomainObjectAdapter doa = contentHandler.getReadOnlyObject(versionedFolderItem,
-						DomainFile.DEFAULT_VERSION, true, consumer, monitor);
-					doa.setChanged(false);
-					DomainFileProxy proxy = new DomainFileProxy(name, parent.getPathname(), doa,
-						DomainFile.DEFAULT_VERSION, fileID, parent.getProjectLocator());
-					proxy.setLastModified(getLastModifiedTime());
 
-					// Notify file manager of in-use domain object.
-					// A link-file object is indirect with tracking intiated by the URL-referenced file.
-					if (!isLink()) {
-						projectData.trackDomainFileInUse(doa);
-					}
-
-					return doa;
+					openInProgress = false;
+					return getReadOnlyDomainObject(consumer, DomainFile.DEFAULT_VERSION, monitor);
 				}
 				myFolderItem = folderItem;
 
@@ -732,10 +736,18 @@ public class GhidraFileData {
 			openInProgress = true;
 			try {
 				FolderItem item = getFolderItem(version);
-
+				long lastModified = 0;
 				DomainObjectAdapter doa;
 				ContentHandler<?> contentHandler = getContentHandler();
 				if (contentHandler instanceof LinkHandler linkHandler) {
+
+					// NOTE: Links can only be used to access current version
+					if (version != DomainFile.DEFAULT_VERSION && version != 1) {
+						throw new FileNotFoundException(
+							"Link versions are not supported: " + version);
+					}
+					version = DomainFile.DEFAULT_VERSION; // only latest version of linked content may be accessed
+
 					String resolvedLinkPath = getLinkPath(true);
 
 					if (!GhidraURL.isGhidraURL(resolvedLinkPath)) {
@@ -744,13 +756,15 @@ public class GhidraFileData {
 							throw new FileNotFoundException(
 								"Linked file not found: " + resolvedLinkPath);
 						}
-						return file.getReadOnlyDomainObject(consumer, version, monitor);
+						return file.getReadOnlyDomainObject(consumer, DomainFile.DEFAULT_VERSION,
+							monitor);
 					}
 
 					// Handle link to Ghidra URL
 					try {
 						URL ghidraUrl = GhidraURL.toURL(resolvedLinkPath);
-						doa = linkHandler.getObject(ghidraUrl, version, consumer, monitor, false);
+						doa = linkHandler.getObject(ghidraUrl, DomainFile.DEFAULT_VERSION, consumer,
+							monitor, false);
 					}
 					catch (IllegalArgumentException e) {
 						// Bad URL from link path
@@ -759,26 +773,54 @@ public class GhidraFileData {
 					}
 				}
 				else {
-					doa = contentHandler.getReadOnlyObject(item, version, true, consumer, monitor);
+					Version versionData = getVersion(version);
+					//version = versionData.getVersion();
+					lastModified = versionData.getCreateTime();
+					doa = contentHandler.getReadOnlyObject(item, version, true,
+						consumer, monitor);
 				}
 
 				doa.setChanged(false);
 
 				// Notify file manager of in-use domain object.
-				// A link-file object is indirect with tracking intiated by the URL-referenced file.
+				// A link-file object is indirect with tracking initiated by the URL-referenced file.
 				if (!isLink()) {
 					projectData.trackDomainFileInUse(doa);
 				}
 
-				DomainFileProxy proxy = new DomainFileProxy(name, getParent().getPathname(), doa,
-					version, fileID, parent.getProjectLocator());
-				proxy.setLastModified(getLastModifiedTime());
+				DomainFileProxy proxy = new DomainFileProxy(getDomainFile(), doa, version);
+				proxy.setLastModified(lastModified);
 				return doa;
 			}
 			finally {
 				openInProgress = false;
 			}
 		}
+	}
+
+	private Version getVersion(int version) throws IOException {
+		if (version == DomainFile.DEFAULT_VERSION) {
+			if (folderItem != null) {
+				return new Version(DomainFile.DEFAULT_VERSION,
+					folderItem.lastModified(), null, null);
+			}
+			return new Version(versionedFolderItem.getCurrentVersion(),
+				versionedFolderItem.lastModified(), null, null);
+		}
+		if (versionedFolderItem == null) {
+			if (isVersioned()) {
+				throw new IOException(
+					"Must be connected to repository to access specific version: " + version);
+			}
+			throw new IOException("Cannot access version for non-versioned file: " + version);
+		}
+		for (Version v : versionedFolderItem.getVersions()) {
+			if (v.getVersion() == version) {
+				return v;
+			}
+		}
+		throw new FileNotFoundException(
+			"Version " + version + " not found for " + getPathname());
 	}
 
 	/**
@@ -808,9 +850,18 @@ public class GhidraFileData {
 			openInProgress = true;
 			try {
 				FolderItem item = getFolderItem(version);
+				long lastModified = 0;
 				DomainObjectAdapter doa;
 				ContentHandler<?> contentHandler = getContentHandler();
 				if (contentHandler instanceof LinkHandler linkHandler) {
+
+					// NOTE: Links can only be used to access current version
+					if (version != DomainFile.DEFAULT_VERSION && version != 1) {
+						throw new FileNotFoundException(
+							"Link versions are not supported: " + version);
+					}
+					version = DomainFile.DEFAULT_VERSION; // only latest version of linked content may be accessed
+
 					String resolvedLinkPath = getLinkPath(true);
 
 					if (!GhidraURL.isGhidraURL(resolvedLinkPath)) {
@@ -819,13 +870,15 @@ public class GhidraFileData {
 							throw new FileNotFoundException(
 								"Linked file not found: " + resolvedLinkPath);
 						}
-						return file.getImmutableDomainObject(consumer, version, monitor);
+						return file.getImmutableDomainObject(consumer, DomainFile.DEFAULT_VERSION,
+							monitor);
 					}
 
 					// Handle link to Ghidra URL
 					try {
 						URL ghidraUrl = GhidraURL.toURL(resolvedLinkPath);
-						doa = linkHandler.getObject(ghidraUrl, version, consumer, monitor, true);
+						doa = linkHandler.getObject(ghidraUrl, DomainFile.DEFAULT_VERSION, consumer,
+							monitor, true);
 					}
 					catch (IllegalArgumentException e) {
 						// Bad URL from link path
@@ -834,6 +887,9 @@ public class GhidraFileData {
 					}
 				}
 				else {
+					Version versionData = getVersion(version);
+					//version = versionData.getVersion();
+					lastModified = versionData.getCreateTime();
 					doa = contentHandler.getImmutableObject(item, consumer, version, -1, monitor);
 				}
 
@@ -843,9 +899,8 @@ public class GhidraFileData {
 					projectData.trackDomainFileInUse(doa);
 				}
 
-				DomainFileProxy proxy = new DomainFileProxy(name, getParent().getPathname(), doa,
-					version, fileID, parent.getProjectLocator());
-				proxy.setLastModified(getLastModifiedTime());
+				DomainFileProxy proxy = new DomainFileProxy(getDomainFile(), doa, version);
+				proxy.setLastModified(lastModified);
 				return doa;
 			}
 			finally {
@@ -1133,7 +1188,7 @@ public class GhidraFileData {
 	/**
 	 * Return either the latest version if the file is not checked-out or the version that
 	 * was checked-out or a specific version that was requested.
-	 * @return the version
+	 * @return the version 
 	 */
 	int getVersion() {
 		synchronized (fileSystem) {
@@ -1154,8 +1209,7 @@ public class GhidraFileData {
 	}
 
 	/**
-	 * Returns true if this file represents the latest version of the associated domain object.
-	 * @return true if the latest version
+	 * {@return the latest repository version or 0 if not versioned or offline}
 	 */
 	int getLatestVersion() {
 		synchronized (fileSystem) {
@@ -1643,9 +1697,8 @@ public class GhidraFileData {
 
 				DomainObjectAdapter checkinObj = contentHandler.getDomainObject(versionedFolderItem,
 					null, folderItem.getCheckoutId(), false, false, this, monitor);
-				checkinObj.setDomainFile(new DomainFileProxy(name, getParent().getPathname(),
-					checkinObj, versionedFolderItem.getCurrentVersion() + 1, fileID,
-					parent.getProjectLocator()));
+				checkinObj.setDomainFile(new DomainFileProxy(getDomainFile(), checkinObj,
+					versionedFolderItem.getCurrentVersion() + 1));
 
 				DomainObject sourceObj = null;
 				DomainObject originalObj = null;
@@ -1714,9 +1767,9 @@ public class GhidraFileData {
 									// On error disassociate open domain object from this file
 									projectData.clearDomainObject(getPathname());
 									// An invalid version (-2) is specified to avoid file match
-									inUseDomainObj.setDomainFile(new DomainFileProxy(name,
-										parent.getPathname(), inUseDomainObj, -2, fileID,
-										parent.getProjectLocator()));
+									inUseDomainObj
+											.setDomainFile(new DomainFileProxy(getDomainFile(),
+												inUseDomainObj, -2));
 									inUseDomainObj.setTemporary(true);
 								}
 								undoCheckout(false, true);
@@ -2296,7 +2349,9 @@ public class GhidraFileData {
 
 	/**
 	 * Get the appropriate folder item (private or versioned) based upon the current state and
-	 * targeted file version.
+	 * targeted file version.  Link files do not support versioning so result is not affected 
+	 * in such cases by specified version.  With file-links only the latest referenced file 
+	 * is supported.
 	 * @param version file version
 	 * @return folder item to be used
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,8 +27,7 @@ import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
 import ghidra.app.plugin.core.datamgr.tree.*;
-import ghidra.program.model.data.DataTypeManager;
-import ghidra.program.model.data.StandAloneDataTypeManager;
+import ghidra.program.model.dtarchive.PersistentDataTypeArchive;
 
 public abstract class AbstractUndoRedoArchiveTransactionAction extends DockingAction {
 
@@ -62,28 +61,28 @@ public abstract class AbstractUndoRedoArchiveTransactionAction extends DockingAc
 		}
 
 		TreePath[] selectionPaths = getSelectionPaths(context);
-		return getModifiableProjectOrFileDTM(selectionPaths) != null;
+		return getModifiableProjectOrFileArchive(selectionPaths) != null;
 	}
 
 	/**
 	 * Determine if the corresponding undo/redo can be performed
-	 * @param dtm archive datatype manager
+	 * @param archive datatype archive
 	 * @return true if action can be performed on archive
 	 */
-	abstract protected boolean canExecute(StandAloneDataTypeManager dtm);
+	abstract protected boolean canExecute(PersistentDataTypeArchive archive);
 
 	/**
 	 * Determine the next undo/redo transaction name
-	 * @param dtm archive datatype manager
+	 * @param archive datatype archive
 	 * @return next undo/redo transaction name
 	 */
-	abstract protected String getNextName(StandAloneDataTypeManager dtm);
+	abstract protected String getNextName(PersistentDataTypeArchive archive);
 
 	/**
-	 * Execute the undo/redo operation on the specified archive datatype manager.
-	 * @param dtm archive datatype manager
+	 * Execute the undo/redo operation on the specified archive.
+	 * @param archive datatype archive
 	 */
-	abstract protected void execute(StandAloneDataTypeManager dtm);
+	abstract protected void execute(PersistentDataTypeArchive archive);
 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
@@ -92,9 +91,9 @@ public abstract class AbstractUndoRedoArchiveTransactionAction extends DockingAc
 		}
 
 		TreePath[] selectionPaths = getSelectionPaths(context);
-		StandAloneDataTypeManager dtm = getModifiableProjectOrFileDTM(selectionPaths);
-		if (dtm != null && canExecute(dtm)) {
-			setPopupMenuData(getMenuData(getNextName(dtm)));
+		PersistentDataTypeArchive dta = getModifiableProjectOrFileArchive(selectionPaths);
+		if (dta != null && canExecute(dta)) {
+			setPopupMenuData(getMenuData(getNextName(dta)));
 			return true;
 		}
 		setPopupMenuData(getMenuData(null));
@@ -109,9 +108,9 @@ public abstract class AbstractUndoRedoArchiveTransactionAction extends DockingAc
 		}
 
 		TreePath[] selectionPaths = getSelectionPaths(context);
-		StandAloneDataTypeManager dtm = getModifiableProjectOrFileDTM(selectionPaths);
-		if (dtm != null && canExecute(dtm)) {
-			execute(dtm);
+		PersistentDataTypeArchive dta = getModifiableProjectOrFileArchive(selectionPaths);
+		if (dta != null && canExecute(dta)) {
+			execute(dta);
 		}
 	}
 
@@ -122,7 +121,7 @@ public abstract class AbstractUndoRedoArchiveTransactionAction extends DockingAc
 		return selectionPaths;
 	}
 
-	private StandAloneDataTypeManager getModifiableProjectOrFileDTM(TreePath[] selectionPaths) {
+	private PersistentDataTypeArchive getModifiableProjectOrFileArchive(TreePath[] selectionPaths) {
 		// only valid if single file or project archive node is selected
 		if (selectionPaths.length != 1) {
 			return null;
@@ -140,9 +139,9 @@ public abstract class AbstractUndoRedoArchiveTransactionAction extends DockingAc
 
 		ArchiveNode archiveNode = (ArchiveNode) node;
 		if (archiveNode.isModifiable()) {
-			DataTypeManager dtm = archiveNode.getArchive().getDataTypeManager();
-			if (dtm instanceof StandAloneDataTypeManager archiveDtm) {
-				return archiveDtm;
+			PersistentDataTypeArchive archive = archiveNode.getArchive();
+			if (archive instanceof PersistentDataTypeArchive dta) {
+				return dta;
 			}
 		}
 		return null;

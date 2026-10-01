@@ -45,6 +45,7 @@ import ghidra.program.database.external.ExternalManagerDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.*;
+import ghidra.program.model.dtarchive.ProjectDataTypeArchive;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
@@ -1902,9 +1903,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 		FrontEndTool frontEndTool = env.showFrontEndTool();
 		DomainFolder rootFolder = frontEndTool.getProject().getProjectData().getRootFolder();
-		TaskMonitor dummyMonitor = TaskMonitor.DUMMY;
 		DomainFile myTestArchiveDF = env.restoreDataTypeArchive("MyTestArchive.gdt", rootFolder);
-		final DataTypeArchive myTestArchive = (DataTypeArchiveDB) myTestArchiveDF
+		final ProjectDataTypeArchive myTestArchive = (ProjectDataTypeArchive) myTestArchiveDF
 				.getDomainObject(this, true, false, TaskMonitor.DUMMY);
 
 		final CategoryPath sourceCatPath = new CategoryPath("/Category1/Category2/Category5");

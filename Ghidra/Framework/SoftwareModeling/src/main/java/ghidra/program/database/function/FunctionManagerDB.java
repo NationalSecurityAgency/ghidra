@@ -590,7 +590,7 @@ public class FunctionManagerDB implements FunctionManager {
 	}
 
 	@Override
-	public void setProgram(ProgramDB program) {
+	public void setDomainObject(ProgramDB program) {
 		this.program = program;
 		namespaceMgr = program.getNamespaceManager();
 		codeMgr = program.getCodeManager();
@@ -601,7 +601,7 @@ public class FunctionManagerDB implements FunctionManager {
 	}
 
 	@Override
-	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
+	public void domainObjectReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
 		if (openMode == OpenMode.UPGRADE) {

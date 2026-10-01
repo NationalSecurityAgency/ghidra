@@ -36,6 +36,10 @@ struct VarnodeData {
   AddrSpace *space;		///< The address space
   uintb offset;			///< The offset within the space
   uint4 size;                   ///< The number of bytes in the location
+
+  VarnodeData(void) {}		///< Construct uninitialized
+  VarnodeData(AddrSpace *spc,uintb off,uint4 sz) { space = spc; offset = off; size = sz; }	///< Constructor
+  VarnodeData(const Address &addr,int4 sz) { space = addr.getSpace(); offset = addr.getOffset(); size = sz; }	///< Construct from Address
   bool operator<(const VarnodeData &op2) const;  ///< An ordering for VarnodeData
   bool operator==(const VarnodeData &op2) const; ///< Compare for equality
   bool operator!=(const VarnodeData &op2) const; ///< Compare for inequality
@@ -57,6 +61,9 @@ struct VarnodeData {
 
   /// Is \b this contiguous (as the most significant piece) with the given VarnodeData
   bool isContiguous(const VarnodeData &lo) const;
+
+  /// Print a description of \b this memory region to a stream for debugging/logging
+  void printRaw(ostream &s) const;
 };
 
 /// VarnodeData can be sorted in terms of the space its in
@@ -100,6 +107,12 @@ inline Address VarnodeData::getAddr(void) const {
 /// \return the encoded AddrSpace
 inline AddrSpace *VarnodeData::getSpaceFromConst(void) const {
   return (AddrSpace *)(uintp)offset;
+}
+
+/// \param s is the stream
+inline void VarnodeData::printRaw(ostream &s) const {
+  Address addr(space,offset);
+  addr.printRaw(s,size);
 }
 
 /// \brief A low-level representation of a single pcode operation

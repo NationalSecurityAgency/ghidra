@@ -33,11 +33,12 @@ import docking.widgets.filter.FilterOptions;
 import docking.widgets.filter.TextFilterStrategy;
 import docking.widgets.label.GDLabel;
 import docking.widgets.tree.*;
+import ghidra.app.plugin.core.datamgr.ArchiveManager;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.plugin.core.datamgr.tree.*;
 import ghidra.app.util.datatype.DataTypeSelectionDialog;
 import ghidra.program.model.data.*;
+import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -124,17 +125,17 @@ public class DataTypeChooserDialog extends DialogComponentProvider {
 	}
 
 	public void setShowProgramArchiveOnly(boolean programOnly) {
-		DataTypeManagerHandler handler = plugin.getDataTypeManagerHandler();
+		ArchiveManager archiveManager = plugin.getArchiveManager();
 		if (programOnly) {
-			DataTypeManager programDtm = handler.getProgramDataTypeManager();
-			if (programDtm != null) {
-				ArchiveRootNode root = new ArchiveRootNode(handler, true);
+			Program program = archiveManager.getProgram();
+			if (program != null) {
+				ArchiveRootNode root = new ArchiveRootNode(archiveManager, true);
 				tree.setRootNode(root);
 				return;
 			}
 		}
 
-		ArchiveRootNode root = new ArchiveRootNode(handler);
+		ArchiveRootNode root = new ArchiveRootNode(archiveManager);
 		tree.setRootNode(root);
 	}
 

@@ -56,6 +56,7 @@ public class DtFilterDialog extends DialogComponentProvider {
 
 		initCheckBoxes();
 		setRememberSize(false);
+		setRememberLocation(false);
 	}
 
 	@Override

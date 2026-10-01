@@ -120,10 +120,10 @@ public class ToolPluginOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 		List<String> diffs = getDiffs(initialValues, latestValues);
 
 		if (diffs.size() != 0) {
-			System.err.println(
+			Msg.info(this,
 				"Options values are not restored back to the original settings - diffs");
 			for (String diff : diffs) {
-				System.err.println("\tdiff: " + diff);
+				Msg.info(this, "\tdiff: " + diff);
 			}
 			Assert.fail("Options values not restored (see error output)");
 		}

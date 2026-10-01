@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,19 +18,21 @@ package ghidra.app.plugin.core.datamgr;
 import java.io.File;
 import java.io.IOException;
 
-import javax.swing.SwingUtilities;
-
 import docking.ActionContext;
 import docking.action.DockingActionIf;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
+import generic.jar.ResourceFile;
 import generic.test.AbstractGenericTest;
 import generic.test.AbstractGuiTest;
-import ghidra.app.plugin.core.datamgr.archive.*;
-import ghidra.app.plugin.core.datamgr.tree.ArchiveNode;
-import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
-import ghidra.program.model.data.*;
+import ghidra.app.plugin.core.datamgr.tree.*;
+import ghidra.app.services.Upgrade;
+import ghidra.program.database.dtarchive.DataTypeArchiveFactory;
+import ghidra.program.model.data.Category;
+import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.dtarchive.*;
 import ghidra.program.model.listing.Program;
+import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.task.TaskMonitor;
@@ -38,7 +40,7 @@ import utilities.util.FileUtilities;
 
 public class DataTypeTestUtils {
 
-	private static final String ARCHIVE_FILE_EXTENSION = FileDataTypeManager.SUFFIX;
+	private static final String ARCHIVE_FILE_EXTENSION = FileDataTypeArchive.SUFFIX;
 	private static File tempArchiveDir;
 	static DataTypeArchiveGTree archiveTree;
 
@@ -83,11 +85,11 @@ public class DataTypeTestUtils {
 		File tempDbFile = new File(tempDir, "copy." + existingFilename);
 		tempDbFile.deleteOnExit();
 		FileUtilities.copyFile(packedDbFile, tempDbFile, false, TaskMonitor.DUMMY);
-
-		boolean openForUpdate = true; // open for update to allow auto-upgrade to occur if needed
-		FileDataTypeManager fm = FileDataTypeManager.openFileArchive(tempDbFile, openForUpdate);
-		fm.saveAs(scratchFile);
-		fm.close();
+		Object consumer = new Object();
+		FileDataTypeArchive archive =
+			DataTypeArchiveFactory.openForUpdate(tempDbFile, true, consumer, TaskMonitor.DUMMY);
+		archive.saveAs(scratchFile, TaskMonitor.DUMMY);
+		archive.release(consumer);
 
 		Msg.debug(DataTypeTestUtils.class, "Created test archive: " + scratchFile);
 
@@ -98,10 +100,11 @@ public class DataTypeTestUtils {
 			boolean checkout, DataTypeManagerPlugin plugin) throws Exception {
 
 		File file = new File(archiveDirPath, archiveName);
-		DataTypeManagerHandler dataTypeManagerHandler = plugin.getDataTypeManagerHandler();
+		ArchiveManager archiveManager = plugin.getArchiveManager();
 
 		// this opens the archive and triggers the tree to rebuild
-		dataTypeManagerHandler.openArchive(file, checkout, false);
+		archiveManager.openFileArchive(new ResourceFile(file), checkout, Upgrade.NO, false,
+			TaskMonitor.DUMMY);
 		waitForTree(plugin);
 
 		GTree tree = plugin.getProvider().getGTree();
@@ -134,10 +137,12 @@ public class DataTypeTestUtils {
 
 		File tempDir = getTempDir();
 		File file = new File(tempDir, archiveName);
-		DataTypeManagerHandler dataTypeManagerHandler = plugin.getDataTypeManagerHandler();
+		ResourceFile resourceFile = new ResourceFile(file);
+		ArchiveManager archiveManager = plugin.getArchiveManager();
 
 		// this opens the archive and triggers the tree to rebuild
-		dataTypeManagerHandler.openArchive(file, checkout, isUserAction);
+		archiveManager.openFileArchive(resourceFile, checkout, Upgrade.NO, isUserAction,
+			TaskMonitor.DUMMY);
 
 		archiveTree = plugin.getProvider().getGTree();
 		GTreeNode rootNode = archiveTree.getViewRoot();
@@ -145,12 +150,13 @@ public class DataTypeTestUtils {
 		return (ArchiveNode) rootNode.getChild(trimFullArchiveName(archiveName));
 	}
 
-	public static void closeArchive(final ArchiveNode archiveNode, final boolean deleteFile)
+	public static void closeArchive(ArchiveNode archiveNode, boolean deleteFile,
+			DataTypeManagerPlugin plugin)
 			throws Exception {
 
 		Exception exception = Swing.runNow(() -> {
 			try {
-				doCloseArchive(archiveNode, deleteFile);
+				doCloseArchive(archiveNode, deleteFile, plugin);
 				return null;
 			}
 			catch (Exception e) {
@@ -163,50 +169,25 @@ public class DataTypeTestUtils {
 		}
 	}
 
-	private static void doCloseArchive(ArchiveNode archiveNode, boolean deleteFile)
+	private static void doCloseArchive(ArchiveNode archiveNode, boolean deleteFile,
+			DataTypeManagerPlugin plugin)
 			throws Exception {
 
 		if (archiveNode == null) {
 			return;
 		}
-
-		Archive archive = archiveNode.getArchive();
-		File file = null;
-		if ((archive instanceof FileArchive) && deleteFile) {
-			file = ((FileArchive) archive).getFile().getFile(false);
+		ArchiveManager archiveManager = plugin.getArchiveManager();
+		PersistentDataTypeArchive archive = archiveNode.getArchive();
+		if (archive instanceof FileDataTypeArchive fileArchive) {
+			File file = fileArchive.getFile().getFile(false);
+			archiveManager.closeArchive(fileArchive);
+			if (deleteFile) {
+				fileArchive.delete();
+			}
 		}
-
-		archiveNode.getArchive().close();
-
-		if (file != null) {
-			FileDataTypeManager.delete(file);
+		if (archive instanceof ProjectDataTypeArchive projectArchive) {
+			archiveManager.closeArchive(projectArchive);
 		}
-	}
-
-	/**
-	 * Checks out the archive by the given name.
-	 *
-	 * @param archiveName The name of the archive to open.  This must be a child off of the root node.
-	 * @param plugin The plugin that contains the tree and actions under test
-	 * @return The archive node associated with the open archive
-	 * @throws Exception If there is any problem finding or opening the archive for the given name
-	 */
-	public static ArchiveNode checkOutArchive(String archiveName,
-			final DataTypeManagerPlugin plugin) throws Exception {
-
-		String archiveNodeName = trimFullArchiveName(archiveName);
-		GTree tree = plugin.getProvider().getGTree();
-		GTreeNode rootNode = tree.getModelRoot();
-		ArchiveNode archiveNode = (ArchiveNode) rootNode.getChild(archiveNodeName);
-		if (archiveNode == null) {
-			throw new IllegalArgumentException(
-				"Unable to locate an archive by the name: " + archiveNodeName);
-		}
-
-		ArchiveUtils.lockArchive((FileArchive) archiveNode.getArchive());
-
-		// checking out the archive causes the trees nodes to be recreated
-		return (ArchiveNode) rootNode.getChild(archiveNodeName);
 	}
 
 	/**
@@ -228,7 +209,7 @@ public class DataTypeTestUtils {
 		return openArchive(archiveName, true, plugin);
 	}
 
-	public static ArchiveNode copyOpenAndCheckoutArchive(String archiveName,
+	public static DataTypeStoreNode copyOpenAndCheckoutArchive(String archiveName,
 			DataTypeManagerPlugin plugin) throws Exception {
 		copyArchive(archiveName);
 		return openArchive(archiveName, true, plugin);
@@ -240,13 +221,14 @@ public class DataTypeTestUtils {
 
 	public static void performAction(DockingActionIf action, Program program, GTree tree,
 			boolean wait) {
+		DataTypeArchiveGTree dtTree = (DataTypeArchiveGTree) tree;
+		DataTypesProvider provider = dtTree.getProvider();
 		AbstractGuiTest.runSwing(() -> {
-			ActionContext context =
-				new DataTypesActionContext(null, program, (DataTypeArchiveGTree) tree, null, true);
+			ActionContext context = provider.getActionContext(null);
 			action.actionPerformed(context);
 		}, wait);
 
-		if (!SwingUtilities.isEventDispatchThread()) {
+		if (!Swing.isSwingThread()) {
 			AbstractGuiTest.waitForSwing();
 		}
 	}
@@ -256,26 +238,23 @@ public class DataTypeTestUtils {
 	}
 
 	public static void performAction(DockingActionIf action, GTree tree, boolean wait) {
+		DataTypeArchiveGTree dtTree = (DataTypeArchiveGTree) tree;
+		DataTypesProvider provider = dtTree.getProvider();
 		AbstractGuiTest.runSwing(() -> {
-			ActionContext context =
-				new DataTypesActionContext(null, null, (DataTypeArchiveGTree) tree, null, true);
+			ActionContext context = provider.getActionContext(null);
 			action.actionPerformed(context);
 		}, wait);
 
-		if (!SwingUtilities.isEventDispatchThread()) {
+		if (!Swing.isSwingThread()) {
 			AbstractGuiTest.waitForSwing();
 		}
 	}
 
 	public static void createCategory(Category parent, String categoryName) throws Exception {
 		DataTypeManager dtm = parent.getDataTypeManager();
-		int id = dtm.startTransaction("create category");
-		try {
+		AbstractGhidraHeadlessIntegrationTest.tx(dtm, () -> {
 			parent.createCategory(categoryName);
-		}
-		finally {
-			dtm.endTransaction(id, true);
-		}
+		});
 
 	}
 

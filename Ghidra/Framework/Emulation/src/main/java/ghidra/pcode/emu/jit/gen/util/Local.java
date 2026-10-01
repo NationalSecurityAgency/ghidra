@@ -17,8 +17,6 @@ package ghidra.pcode.emu.jit.gen.util;
 
 import java.util.function.Consumer;
 
-import org.objectweb.asm.MethodVisitor;
-
 import ghidra.pcode.emu.jit.gen.util.Methods.Def;
 import ghidra.pcode.emu.jit.gen.util.Methods.Def.ParamFunction;
 import ghidra.pcode.emu.jit.gen.util.Methods.ObjDef;
@@ -36,7 +34,7 @@ import ghidra.pcode.emu.jit.gen.util.Types.*;
  * {@link Def#param(ParamFunction, BNonVoid, String, Consumer)}, and
  * {@link Def#done(ObjDef, TRef, Consumer)}. For the most part, the user need not worry at all about
  * indices, only types.
- * 
+ *
  * @param <T> the (machine) type of the variable.
  * @param type the type
  * @param name the name
@@ -48,7 +46,7 @@ public record Local<T extends BNonVoid>(T type, String name, int index) {
 	 * Construct a local variable handle
 	 * <p>
 	 * Direct use of this method is not recommended. It may be made private later.
-	 * 
+	 *
 	 * @param <T> the type of the variable
 	 * @param type the type
 	 * @param name the name
@@ -61,18 +59,17 @@ public record Local<T extends BNonVoid>(T type, String name, int index) {
 
 	/**
 	 * Declare a given local variable
-	 * 
+	 *
 	 * @param <N> the stack contents of the emitter
-	 * @param em the emitter (Nothing is actually emitted, but we need the wrapped ASM
-	 *            {@link MethodVisitor}.)
+	 * @param em the emitter (needed to access the code builder for local variable declaration)
 	 * @param local the handle to the local
 	 * @param start the start of the scope
 	 * @param end the end of the scope
 	 * @return the same emitter
 	 */
 	static <N> Emitter<N> decl(Emitter<N> em, Local<?> local, Lbl<?> start, Lbl<?> end) {
-		em.mv.visitLocalVariable(local.name, local.type.type().getDescriptor(), null,
-			start.label(), end.label(), local.index);
+		em.cb.localVariable(local.index, local.name, local.type.classDesc(),
+			start.label(), end.label());
 		return em;
 	}
 }

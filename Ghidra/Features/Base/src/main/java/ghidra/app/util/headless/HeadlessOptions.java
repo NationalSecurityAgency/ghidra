@@ -95,6 +95,10 @@ public class HeadlessOptions {
 	// -p
 	boolean allowPasswordPrompt;
 
+	// -allowAllAccess - Server Allow List will allow all remote server access, otherwise
+	// access may be restricted based upon previously allowed server access.
+	boolean allowAllAccess;
+
 	// -commit
 	boolean commit;
 	String commitComment;
@@ -143,6 +147,7 @@ public class HeadlessOptions {
 		keystore = null;
 		connectUserID = null;
 		allowPasswordPrompt = false;
+		allowAllAccess = false;
 		commit = false;
 		commitComment = null;
 		okToDelete = false;
@@ -390,6 +395,17 @@ public class HeadlessOptions {
 	 */
 	public void enableAnalysis(boolean enabled) {
 		this.analyze = enabled;
+	}
+
+	/**
+	 * Remote Ghidra Server access relies on Server Allow List established by GUI application.
+	 * This method can be used to allow all access and ignore Server Allow List.
+	 * 
+	 * @param allowAccess True if all server access should be allowed, otherwise rely on 
+	 * Allow List previously cached by GUI application.
+	 */
+	public void setAllowAllAccess(boolean allowAccess) {
+		this.allowAllAccess = allowAccess;
 	}
 
 	/**

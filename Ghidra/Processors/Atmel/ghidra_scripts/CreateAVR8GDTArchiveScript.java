@@ -34,9 +34,11 @@ import ghidra.app.script.GhidraScript;
 import ghidra.app.util.cparser.C.CParserUtils;
 import ghidra.app.util.cparser.C.CParserUtils.CParseResults;
 import ghidra.app.util.cparser.CPP.*;
+import ghidra.program.database.dtarchive.DataTypeArchiveFactory;
 import ghidra.program.model.data.DataTypeManager;
-import ghidra.program.model.data.FileDataTypeManager;
+import ghidra.program.model.dtarchive.FileDataTypeArchive;
 import ghidra.util.Msg;
+import ghidra.util.task.TaskMonitor;
 
 public class CreateAVR8GDTArchiveScript extends GhidraScript {
 
@@ -115,7 +117,9 @@ public class CreateAVR8GDTArchiveScript extends GhidraScript {
 		//
 		ResourceFile clib64ArchiveFile = DataTypeArchiveUtility.findArchiveFile("generic_clib.gdt");
 		File file = new File(clib64ArchiveFile.getAbsolutePath());
-		DataTypeManager vsDTMgr = FileDataTypeManager.openFileArchive(file, false);
+		FileDataTypeArchive clibArchive =
+			DataTypeArchiveFactory.openReadOnly(file, this, TaskMonitor.DUMMY);
+		DataTypeManager vsDTMgr = clibArchive.getDataTypeManager();
 		DataTypeManager openTypes[] = { vsDTMgr };
 		// by defaults, don't want to be dependent on other archives if have all necessary definitions
 		// comment out if missing data types
@@ -125,19 +129,20 @@ public class CreateAVR8GDTArchiveScript extends GhidraScript {
 
 		File f = getArchiveFile(dataTypeFile);
 
-		FileDataTypeManager dtMgr =
-			FileDataTypeManager.createFileArchive(f, "avr8:LE:16:atmega256", "gcc");
+		FileDataTypeArchive archive =
+			DataTypeArchiveFactory.createFileArchive(f, "avr8:LE:16:atmega256", "gcc", this);
+		DataTypeManager dtm = archive.getDataTypeManager();
 
 		// Parse each processor variant as an individual parse that gets added to the data
 		// type manager.  If all header files were parsed at once, there are conflicting
 		// macro definitions that will cause the parse to fail.
 		//
 		for (String variantName : processorVariants) {
-			parseProcessorDefs(variantName, dtMgr, openTypes);
+			parseProcessorDefs(variantName, dtm, openTypes);
 		}
-
-		dtMgr.save();
-		dtMgr.close();
+		clibArchive.release(this);
+		archive.save(null, TaskMonitor.DUMMY);
+		archive.release(this);
 	}
 
 	/**
@@ -170,7 +175,7 @@ public class CreateAVR8GDTArchiveScript extends GhidraScript {
 	 * @throws ghidra.app.util.cparser.C.ParseException
 	 * @throws IOException io exception
 	 */
-	private void parseProcessorDefs(String procName, FileDataTypeManager dtMgr,
+	private void parseProcessorDefs(String procName, DataTypeManager dtMgr,
 			DataTypeManager[] openTypes)
 			throws ParseException, ghidra.app.util.cparser.C.ParseException, IOException {
 
@@ -191,7 +196,7 @@ public class CreateAVR8GDTArchiveScript extends GhidraScript {
 	 * @param dtMgr add data types to dtMgr
 	 * @param cpp pre-processor holds macros/defines from parsing
 	 */
-	private void storeExtraDefinitions(String procName, FileDataTypeManager dtMgr,
+	private void storeExtraDefinitions(String procName, DataTypeManager dtMgr,
 			DataTypeManager[] openTypes, PreProcessor cpp) {
 		int transactionID = dtMgr.startTransaction("Add Extra Equates");
 		try {

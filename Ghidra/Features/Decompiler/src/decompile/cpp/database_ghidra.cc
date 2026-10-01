@@ -142,7 +142,7 @@ Symbol *ScopeGhidra::dump2Cache(Decoder &decoder) const
   }
   if (sym != (Symbol *)0) {
     SymbolEntry *ent = sym->getFirstWholeMap();
-    if (ent != (SymbolEntry *)0  && !ent->isDynamic()) {
+    if (ent != (SymbolEntry *)0  && ent->isMapEntry()) {
       MapEntry *entry = (MapEntry *)ent;
       if (scope != cache) {	// We have a namespace cache
 	// With a global namespace, mark the address range as a "hole", so the same query won't

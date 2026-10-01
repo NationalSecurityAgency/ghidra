@@ -124,7 +124,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 	public void testBytesViewIsRegionsActivateThenAdd() throws Exception {
 		createAndOpenTrace();
 		traceManager.activateTrace(tb.trace);
-		try (Transaction tx = tb.startTransaction()) {
+		try (Transaction _ = tb.startTransaction()) {
 			tb.createRootObject(buildContext(), "Target");
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			memory.addRegion("Memory[exe:.text]", Lifespan.nowOn(0),

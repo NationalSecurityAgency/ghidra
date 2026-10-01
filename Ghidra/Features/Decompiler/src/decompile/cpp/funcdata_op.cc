@@ -335,6 +335,20 @@ PcodeOp *Funcdata::newOp(int4 inputs,const SeqNum &sq)
   return obank.create(inputs,sq);
 }
 
+/// The new INDIRECT is registered in alternate storage, quarantined from the
+/// main sequence number sort.  The first input and output to the INDIRECT, need to be filled in.
+/// The second input is populated with a Varnode that points to the \b target op.
+/// \param target is the PcodeOp causing the indirect effect
+/// \return the new INDIRECT op
+PcodeOp *Funcdata::newIndirect(PcodeOp *target)
+
+{
+  PcodeOp *op = obank.createIndirect(2,target->getAddr());
+  obank.changeOpcode(op, glb->inst[CPUI_INDIRECT]);
+  opSetInput(op,newVarnodeIop(target),1);
+  return op;
+}
+
 /// The given PcodeOp is inserted \e immediately before the \e follow op except:
 ///  - MULTIEQUALS in a basic block all occur first
 ///  - INDIRECTs occur immediately before their op
@@ -687,12 +701,10 @@ PcodeOp *Funcdata::newIndirectOp(PcodeOp *indeffect,const Address &addr,int4 sz,
   PcodeOp *newop;
 
   newin = newVarnode(sz,addr);
-  newop = newOp(2,indeffect->getAddr());
+  newop = newIndirect(indeffect);
   newop->flags |= extraFlags;
   newVarnodeOut(sz,addr,newop);
-  opSetOpcode(newop,CPUI_INDIRECT);
   opSetInput(newop,newin,0);
-  opSetInput(newop,newVarnodeIop(indeffect),1);
   opInsertBefore(newop,indeffect);
   return newop;
 }
@@ -714,15 +726,13 @@ PcodeOp *Funcdata::newIndirectCreation(PcodeOp *indeffect,const Address &addr,in
   PcodeOp *newop;
 
   newin = newConstant(sz,0);
-  newop = newOp(2,indeffect->getAddr());
+  newop = newIndirect(indeffect);
   newop->flags |= PcodeOp::indirect_creation;
   newout = newVarnodeOut(sz,addr,newop);
   if (!possibleout)
     newin->flags |= Varnode::indirect_creation;
   newout->flags |= Varnode::indirect_creation;
-  opSetOpcode(newop,CPUI_INDIRECT);
   opSetInput(newop,newin,0);
-  opSetInput(newop,newVarnodeIop(indeffect),1);
   opInsertBefore(newop,indeffect);
   return newop;
 }
@@ -927,8 +937,8 @@ int4 Funcdata::inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop)
 /// \return the first branching PcodeOp that matches the criteria or NULL
 PcodeOp *Funcdata::findPrimaryBranch(const Address &addr,bool findBranch,bool findCall,bool findCallother,bool findReturn)
 {
-  PcodeOpTree::const_iterator iter = beginOp(addr);
-  PcodeOpTree::const_iterator enditer = endOp(addr);
+  PcodeOpTree::const_iterator iter = beginOpMain(addr);
+  PcodeOpTree::const_iterator enditer = endOpMain(addr);
   while(iter != enditer) {
     PcodeOp *op = (*iter).second;
     if (op->isCallOrBranch() || op->isFlowBreak()) {
@@ -949,6 +959,33 @@ PcodeOp *Funcdata::findPrimaryBranch(const Address &addr,bool findBranch,bool fi
     ++iter;
   }
   return (PcodeOp *)0;
+}
+
+/// \brief Collect all ops at the given Address in one container
+///
+/// All ops at the address, including INDIRECTs, that are currently alive are placed in the container.
+/// \param res is the container to hold the ops
+/// \param addr is the given Address
+void Funcdata::listOps(vector<PcodeOp *> &res,const Address &addr) const
+
+{
+  PcodeOpTree::const_iterator iter,enditer;
+  iter = obank.beginMain(addr);
+  enditer = obank.endMain(addr);
+  while(iter != enditer) {
+    PcodeOp *op = (*iter).second;
+    ++iter;
+    if (!op->isDead())
+      res.push_back(op);
+  }
+  iter = obank.beginIndirect(addr);
+  enditer = obank.endIndirect(addr);
+  while(iter != enditer) {
+    PcodeOp *op = (*iter).second;
+    ++iter;
+    if (!op->isDead())
+      res.push_back(op);
+  }
 }
 
 /// Do in-place replacement of

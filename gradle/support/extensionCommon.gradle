@@ -39,7 +39,7 @@ task zipExtensions (type: Zip) {
 	from (propFile) {
 		String version = "${rootProject.RELEASE_VERSION}"
 		filter (ReplaceTokens, tokens: [extversion: version])
-		into { getBaseProjectName(p) }
+		into { rootProject.getBaseProjectName(p) }
 	}
 
 
@@ -65,11 +65,11 @@ task zipExtensions (type: Zip) {
 		// included in standard zip
 		exclude 'contribZipExclude/**'			
 		
-		into { getBaseProjectName(p) }
+		into { rootProject.getBaseProjectName(p) }
 	}
 	
 	from (p.file('build/os')) {
-		into { getBaseProjectName(p) + "/os" }
+		into { rootProject.getBaseProjectName(p) + "/os" }
 		exclude "**/*.exp"
 		exclude "**/*.lib"
 	}
@@ -79,10 +79,10 @@ task zipExtensions (type: Zip) {
 	/////////////////
 	gradle.taskGraph.whenReady { taskGraph ->
 		if (project.plugins.withType(JavaPlugin)) {
-			List<String> externalPaths = getExternalRuntimeDependencies(p)
+			List<String> externalPaths = rootProject.getExternalRuntimeDependencies(p)
 			externalPaths.each { path ->
 				from (path) {
-					into { getBaseProjectName(p) + "/lib" }
+					into { rootProject.getBaseProjectName(p) + "/lib" }
 				}
 			}
 		}
@@ -111,19 +111,19 @@ task zipExtensions (type: Zip) {
 	
 	// handle special case where modules build data artifacts into the build dir
 	from (p.projectDir.toString() + "/build/data") {
-		into { getBaseProjectName(p) + "/data" }
+		into { rootProject.getBaseProjectName(p) + "/data" }
 	}
 	
 	from (p.projectDir.toString() + "/build/LICENSE.txt") {
-		into { getBaseProjectName(p) }
+		into { rootProject.getBaseProjectName(p) }
 	}
 	
 	/////////////////
 	// NATIVES
 	/////////////////		
-	project.PLATFORMS.each { platform ->													
+	rootProject.PLATFORMS.each { platform ->
 		from (p.projectDir.toString() + "/os/${platform.name}") {
-			into  { getBaseProjectName(p) + "/os/${platform.name}"	}
+			into  { rootProject.getBaseProjectName(p) + "/os/${platform.name}"	}
 		}
 	}
 }	
@@ -133,10 +133,10 @@ plugins.withType(JavaPlugin) {
 		def p = this.project
 		from (p.jar) {
 			// use closures for getting zip path to delay evaluation. See note at top of file.
-			into { getBaseProjectName(p) + "/lib" }
+			into { rootProject.getBaseProjectName(p) + "/lib" }
 		}
 		from (p.tasks["zipSourceSubproject"]) {
-			into { getBaseProjectName(p) + "/lib" }
+			into { rootProject.getBaseProjectName(p) + "/lib" }
 		}
 	}
 }

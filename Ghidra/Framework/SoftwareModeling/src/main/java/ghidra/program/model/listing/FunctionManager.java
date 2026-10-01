@@ -18,7 +18,7 @@ package ghidra.program.model.listing;
 import java.util.Collection;
 import java.util.Iterator;
 
-import ghidra.program.database.ManagerDB;
+import ghidra.program.database.ProgramDBModule;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
@@ -33,7 +33,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * The manager for functions
  */
-public interface FunctionManager extends ManagerDB {
+public interface FunctionManager extends ProgramDBModule {
 
 	/**
 	 * Returns this manager's program

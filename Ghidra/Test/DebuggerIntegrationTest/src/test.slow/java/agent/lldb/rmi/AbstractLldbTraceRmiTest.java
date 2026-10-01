@@ -16,7 +16,7 @@
 package agent.lldb.rmi;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.startsWith;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
 import java.io.*;
@@ -453,7 +453,7 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 		String[] split = out.replace("\r", "").split("\n");
 		String xout = "";
 		for (String s : split) {
-			if (!s.startsWith("(lldb)") && !s.contains("script print(") && !s.equals("")) {
+			if (!s.contains("script print(") && !s.equals("")) {
 				xout += s + "\n";
 			}
 		}

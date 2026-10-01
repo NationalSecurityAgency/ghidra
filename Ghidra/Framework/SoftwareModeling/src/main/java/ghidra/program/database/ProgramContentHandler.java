@@ -29,6 +29,7 @@ import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.*;
 import ghidra.framework.store.local.LocalDatabaseItem;
 import ghidra.program.model.lang.LanguageNotFoundException;
+import ghidra.program.model.listing.Program;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -370,8 +371,8 @@ public class ProgramContentHandler extends DBWithUserDataContentHandler<ProgramD
 	@Override
 	public DomainObjectMergeManager getMergeManager(DomainObject resultsObj, DomainObject sourceObj,
 			DomainObject originalObj, DomainObject latestObj) {
-		return ProgramMultiUserMergeManagerFactory.getMergeManager(resultsObj, sourceObj,
-			originalObj, latestObj);
+		return ProgramMultiUserMergeManagerFactory.getMergeManager((Program) resultsObj,
+			(Program) sourceObj, (Program) originalObj, (Program) latestObj);
 	}
 
 	@Override

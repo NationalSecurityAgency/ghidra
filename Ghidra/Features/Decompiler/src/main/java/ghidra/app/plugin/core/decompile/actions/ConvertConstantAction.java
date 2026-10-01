@@ -51,11 +51,13 @@ public abstract class ConvertConstantAction extends AbstractDecompilerAction {
 	public static class NearMatchValues {
 		private long[] values;
 		private long mask;
+		private int unusedBits = 0;
 
 		public NearMatchValues(long value, int size) {
 			mask = -1;
 			if (size < 8) {
 				mask = mask >>> (8 - size) * 8;
+				unusedBits = (8 - size) * 8;
 			}
 			values = new long[4];
 			values[0] = value & mask;
@@ -69,10 +71,32 @@ public abstract class ConvertConstantAction extends AbstractDecompilerAction {
 		}
 
 		/**
+		 * Test if value is an extension of the expected size
+		 * @param value is the value to test
+		 * @return true if the value is an extension
+		 */
+		private boolean isExtension(long value) {
+			if (unusedBits == 0) {
+				return true;		// No bits to test
+			}
+			long tmp = value << unusedBits;
+			if (value < 0) {
+				tmp >>= unusedBits;
+			}
+			else {
+				tmp >>>= unusedBits;
+			}
+			return (tmp == value);
+		}
+
+		/**
 		 * @param value is the value to match
 		 * @return true if the value matches
 		 */
 		public boolean isMatch(long value) {
+			if (!isExtension(value)) {
+				return false;
+			}
 			value = value & mask;
 			for (long match : values) {
 				if (match == value) {

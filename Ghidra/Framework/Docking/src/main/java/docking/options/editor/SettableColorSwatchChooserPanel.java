@@ -173,8 +173,8 @@ public class SettableColorSwatchChooserPanel extends AbstractColorChooserPanel {
 		recentPanel.add(recentSwatchPanel, BorderLayout.CENTER);
 
 		historySwatchPanel = new HistorySwatchPanel(historyColors);
-		historySwatchPanel.addMouseListener(historySwatchListener);
 		historySwatchListener = new HistorySwatchListener();
+		historySwatchPanel.addMouseListener(historySwatchListener);
 		historySwatchPanel.setBorder(border);
 
 		JPanel historyPanel = new JPanel(new BorderLayout());
@@ -270,7 +270,7 @@ public class SettableColorSwatchChooserPanel extends AbstractColorChooserPanel {
 		colorValueLabel.setText("    "); // this creates the correct vertical spacing when empty
 
 		ColorSelectionModel model = getColorSelectionModel();
-		colorValueUpdateListener = e -> {
+		colorValueUpdateListener = _ -> {
 
 			Color color = getColorFromModel();
 			recentSwatchPanel.setMostRecentColor(color);

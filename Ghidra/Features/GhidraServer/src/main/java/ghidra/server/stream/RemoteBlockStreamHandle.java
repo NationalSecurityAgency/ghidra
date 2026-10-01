@@ -51,9 +51,6 @@ public abstract class RemoteBlockStreamHandle<T extends BlockStream> implements 
 
 	public static final long serialVersionUID = 1L;
 
-	public static boolean enableCompressedSerializationOutput = Boolean.parseBoolean(
-		System.getProperty(DataBuffer.COMPRESSED_SERIAL_OUTPUT_PROPERTY, "false"));
-
 	public static final String HEADER_PREFIX = "@stream:";
 	public static final String HEADER_SUFFIX = "@";
 	public static final int HEADER_LENGTH =
@@ -70,7 +67,7 @@ public abstract class RemoteBlockStreamHandle<T extends BlockStream> implements 
 	private final int blockCount;
 	private final int blockSize;
 
-	protected final boolean compressed = enableCompressedSerializationOutput;
+	protected final boolean compressed = DataBuffer.isCompressedSerializationOutputEnabled();
 
 	private boolean connectionPending = true;
 

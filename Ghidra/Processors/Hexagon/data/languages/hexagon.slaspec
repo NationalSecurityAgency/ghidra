@@ -1,12 +1,14 @@
 # Qualcomm Hexagon (V79) and HVX (V79)
 
 ## KNOWN ISSUES
-# 1. Shift amounts may be positive or negative, however in some cases no special handling 
-#    is provided for negative shift amounts.
+# 1. Shift amounts may be positive or negative.  The register-form shifts model the
+#    7-bit signed shift amount explicitly; other forms may still assume a positive amount.
 # 2. There are many complex instructions with unimplemented pcode or simple custom pcodeops
 #
 ## NOTES
-# 1. Implementation includes V73 system registers, instruction set may be incomplete
+# 1. Implementation includes V73 system registers, instruction set may be incomplete.
+#    Decode additionally covers the V66 ZReg matrix extension and V81 valign4 as
+#    decode-only stubs (unimpl pcode).
 # 2. HVX register pairs may be access with a vector-swap mode (lsb of 5-bit field is 1)
 #    introduced with Hexagon v67.
 # 3. HVX vector register size is 128-bytes (see defines below), paired size is 256-bytes,

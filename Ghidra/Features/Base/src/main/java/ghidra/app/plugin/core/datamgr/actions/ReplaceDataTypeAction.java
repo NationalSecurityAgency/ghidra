@@ -16,23 +16,18 @@
 package ghidra.app.plugin.core.datamgr.actions;
 
 import javax.swing.*;
-import javax.swing.tree.TreePath;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.label.GLabel;
-import docking.widgets.tree.GTree;
-import docking.widgets.tree.GTreeNode;
+import ghidra.app.plugin.core.datamgr.DataTypeContext;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
-import ghidra.app.plugin.core.datamgr.archive.Archive;
-import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
-import ghidra.app.plugin.core.datamgr.tree.*;
 import ghidra.app.util.datatype.DataTypeSelectionDialog;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
+import ghidra.program.model.dtarchive.DataTypeStore;
 import ghidra.util.Msg;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 import ghidra.util.layout.VerticalLayout;
@@ -53,24 +48,32 @@ public class ReplaceDataTypeAction extends DockingAction {
 
 	@Override
 	public boolean isAddToPopup(ActionContext context) {
-		DataTypeTreeNode node = getSelectedDataTypeTreeNode(context);
-		return node instanceof DataTypeNode;
+		if (!(context instanceof DataTypeContext dtc)) {
+			return false;
+		}
+
+		DataType dataType = dtc.getSelectedDataType();
+		return dataType != null;
 	}
 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
-		DataTypeTreeNode node = getSelectedDataTypeTreeNode(context);
-		if (node == null) {
+		if (!(context instanceof DataTypeContext dtc)) {
 			return false;
 		}
 
-		if (!(node instanceof DataTypeNode dtNode)) {
+		DataType dataType = dtc.getSelectedDataType();
+		if (dataType == null) {
 			return false;
 		}
-		if (!dtNode.isModifiable()) {
+
+		DataTypeManager dtm = dataType.getDataTypeManager();
+		DataTypeStore dtStore = dtm.getDataStore();
+		if (!dtStore.isChangeable()) {
 			return false;
 		}
-		if (dtNode.getDataType() instanceof BadDataType) {
+
+		if (dataType instanceof BadDataType) {
 			// Although BAD datatype should not appear in tree, if it does replace is
 			// not supported.  Delete should be used instead.
 			return false;
@@ -78,30 +81,12 @@ public class ReplaceDataTypeAction extends DockingAction {
 		return true;
 	}
 
-	private DataTypeTreeNode getSelectedDataTypeTreeNode(ActionContext context) {
-		if (!(context instanceof DataTypesActionContext)) {
-			return null;
-		}
-
-		GTree gTree = (GTree) context.getContextObject();
-		TreePath[] selectionPaths = gTree.getSelectionPaths();
-		if (selectionPaths == null || selectionPaths.length == 0) {
-			return null;
-		}
-
-		if (selectionPaths.length > 1) {
-			return null;
-		}
-
-		DataTypeTreeNode node = (DataTypeTreeNode) selectionPaths[0].getLastPathComponent();
-		return node;
-	}
-
 	@Override
 	public void actionPerformed(ActionContext context) {
 
-		DataTypeTreeNode node = getSelectedDataTypeTreeNode(context);
-		String name = node.getName();
+		DataTypeContext dtc = (DataTypeContext) context;
+		DataType oldDt = dtc.getSelectedDataType();
+		String name = oldDt.getName();
 
 		PluginTool tool = plugin.getTool();
 		int noSizeRestriction = -1;
@@ -134,14 +119,13 @@ public class ReplaceDataTypeAction extends DockingAction {
 			return; // cancelled
 		}
 
-		DataTypeManagerHandler dtmHandler = plugin.getDataTypeManagerHandler();
 		DataTypeManager newDtm = newDt.getDataTypeManager();
-		Archive sourceArchive = dtmHandler.getArchive(newDtm);
-		Archive destinationArchive = findArchive(node);
+		DataTypeStore sourceStore = newDtm.getDataStore();
+		DataTypeManager oldDtm = oldDt.getDataTypeManager();
+		DataTypeStore destinationStore = oldDtm.getDataStore();
 
-		DataType oldDt = ((DataTypeNode) node).getDataType();
 		DataTypeManager dtm = oldDt.getDataTypeManager();
-		if (sourceArchive != destinationArchive) {
+		if (sourceStore != destinationStore) {
 			oldDt = oldDt.clone(oldDt.getDataTypeManager());
 		}
 
@@ -156,15 +140,5 @@ public class ReplaceDataTypeAction extends DockingAction {
 		finally {
 			dtm.endTransaction(txId, true);
 		}
-	}
-
-	private Archive findArchive(GTreeNode node) {
-		while (node != null) {
-			if (node instanceof ArchiveNode) {
-				return ((ArchiveNode) node).getArchive();
-			}
-			node = node.getParent();
-		}
-		return null;
 	}
 }

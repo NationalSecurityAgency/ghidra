@@ -18,16 +18,11 @@ package ghidra.app.plugin.core.datamgr;
 import static org.junit.Assert.*;
 
 import java.io.File;
+import java.util.List;
 
 import org.junit.*;
 
-import docking.ActionContext;
-import docking.action.DockingActionIf;
-import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
-import ghidra.app.plugin.core.datamgr.actions.UpdateSourceArchiveNamesAction;
-import ghidra.app.plugin.core.datamgr.archive.Archive;
-import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.plugin.core.datamgr.tree.*;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.services.ProgramManager;
@@ -36,6 +31,8 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.data.*;
+import ghidra.program.model.dtarchive.PersistentDataTypeArchive;
+import ghidra.program.model.dtarchive.DataTypeStore;
 import ghidra.test.*;
 import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
@@ -54,6 +51,7 @@ public class ArchiveRemappedHeadedTest extends AbstractGhidraHeadedIntegrationTe
 	private File win32ArchiveDir;
 	private File vs12ArchiveFile;
 	private File vs9ArchiveFile;
+	private ArchiveManager archiveManager;
 
 	@Before
 	public void setUp() throws Exception {
@@ -80,10 +78,11 @@ public class ArchiveRemappedHeadedTest extends AbstractGhidraHeadedIntegrationTe
 		assertNotNull(service);
 
 		// Close any archives which may have opened with tool
-		for (DataTypeManager dtm : service.getDataTypeManagers()) {
-			System.out.println("Closing " + dtm.getName());
-			dtm.close();
+		List<PersistentDataTypeArchive> dataTypeArchives = service.getDataTypeArchives();
+		for (PersistentDataTypeArchive archive : dataTypeArchives) {
+			service.closeArchive(archive);
 		}
+		archiveManager = plugin.getArchiveManager();
 
 		program = buildProgram();
 
@@ -115,19 +114,8 @@ public class ArchiveRemappedHeadedTest extends AbstractGhidraHeadedIntegrationTe
 		return builder.getProgram();
 	}
 
-	private Archive getArchive(DataTypeManager dtm) {
-		DataTypeManagerHandler dtmHandler = plugin.getDataTypeManagerHandler();
-		for (Archive archive : dtmHandler.getAllArchives()) {
-			if (dtm == archive.getDataTypeManager()) {
-				return archive;
-			}
-		}
-		return null;
-	}
-
-	private Archive getArchive(String achiveName) {
-		DataTypeManagerHandler dtmHandler = plugin.getDataTypeManagerHandler();
-		for (Archive archive : dtmHandler.getAllArchives()) {
+	private PersistentDataTypeArchive getArchive(String achiveName) {
+		for (PersistentDataTypeArchive archive : archiveManager.getOpenArchives()) {
 			if (achiveName.equals(archive.getName())) {
 				return archive;
 			}
@@ -144,20 +132,16 @@ public class ArchiveRemappedHeadedTest extends AbstractGhidraHeadedIntegrationTe
 		return null;
 	}
 
-	private ActionContext createContext(GTreeNode node) {
-		return new DataTypesActionContext(provider, program, tree, node);
-	}
-
 	@Test
 	public void testGetRemappedArchive() throws Exception {
 
-		DataTypeManager vs9dtm = service.openDataTypeArchive("windows_VS9");
-		assertNotNull(vs9dtm);
+		PersistentDataTypeArchive vs9Archive = service.openFileArchive("windows_VS9", TaskMonitor.DUMMY);
+		assertNotNull(vs9Archive);
 		try {
-			assertEquals("windows_VS9", vs9dtm.getName());
+			assertEquals("windows_VS9", vs9Archive.getName());
 		}
 		finally {
-			close(vs9dtm);
+			service.closeArchive(vs9Archive);
 		}
 
 		waitForTree(tree);// archive does NOT appear in tree
@@ -166,37 +150,41 @@ public class ArchiveRemappedHeadedTest extends AbstractGhidraHeadedIntegrationTe
 		vs9ArchiveFile.delete();
 		assertFalse("windows_VS9.gdt should not exist", vs9ArchiveFile.exists());
 
-		DataTypeManager vs12dtm = service.openDataTypeArchive("windows_VS9");
-		assertNotNull(vs12dtm);
+		PersistentDataTypeArchive vs12Archive = service.openFileArchive("windows_VS9", TaskMonitor.DUMMY);
+		assertNotNull(vs12Archive);
 		try {
-			assertEquals("windows_vs12_32", vs12dtm.getName());
+			assertEquals("windows_vs12_32", vs12Archive.getName());
 		}
 		finally {
-			close(vs12dtm);
+			service.closeArchive(vs12Archive);
 		}
 
 		waitForTree(tree);// archive does NOT appear in tree
 	}
 
 	private void close(DataTypeManager dtm) {
-		runSwing(() -> getArchive(dtm).close());
+
+		runSwing(() -> {
+			DataTypeStore dataStore = dtm.getDataStore();
+			if (dataStore instanceof PersistentDataTypeArchive archive) {
+				archiveManager.closeArchive(archive);
+			}
+		});
 	}
 
 	@Test
 	public void testGetProgramRemappedArchive() throws Exception {
 
-		DataTypeManagerHandler handler = plugin.getDataTypeManagerHandler();
-
 		DataTypeManager programDtm = program.getDataTypeManager();
 
 		// Add datatype from vs9 archive into program
 		// which reference to vs9 archive
-		DataTypeManager vs9dtm = service.openDataTypeArchive("windows_VS9");
-		assertNotNull(vs9dtm);
+		PersistentDataTypeArchive vs9Archive = service.openFileArchive("windows_VS9", TaskMonitor.DUMMY);
+		assertNotNull(vs9Archive);
 		int txId = program.startTransaction("Add vs9 types");
 		try {
-			assertEquals("windows_VS9", vs9dtm.getName());
-
+			assertEquals("windows_VS9", vs9Archive.getName());
+			DataTypeManager vs9dtm = vs9Archive.getDataTypeManager();
 			DataType dataType = vs9dtm.getDataType(new CategoryPath("/winnt.h"), "_PRIVILEGE_SET");
 			assertNotNull("winnt.h/_PRIVILEGE_SET type not found", dataType);
 
@@ -207,13 +195,13 @@ public class ArchiveRemappedHeadedTest extends AbstractGhidraHeadedIntegrationTe
 		}
 		finally {
 			program.endTransaction(txId, true);
-			close(vs9dtm);
+			service.closeArchive(vs9Archive);
 		}
 
 		SourceArchive sourceArchive = getSourceArchive(programDtm, "windows_VS9");
 		assertNotNull(sourceArchive);
 
-		DataTypeManager archiveDtm = handler.getDataTypeManager(sourceArchive);
+		DataTypeManager archiveDtm = archiveManager.getDataTypeManager(sourceArchive);
 		assertNull(archiveDtm);// archive not yet opened
 
 		// Remove archive to force use of re-mapping
@@ -230,32 +218,21 @@ public class ArchiveRemappedHeadedTest extends AbstractGhidraHeadedIntegrationTe
 		assertNull(getArchive("windows_vs12"));
 		assertNotNull(getArchive("windows_vs12_32"));
 
-		archiveDtm = handler.getDataTypeManager(sourceArchive);
+		archiveDtm = archiveManager.getDataTypeManager(sourceArchive);
 		assertNotNull(archiveDtm);
 		assertEquals("windows_vs12_32", archiveDtm.getName());
 
 		ArchiveRootNode archiveRootNode = (ArchiveRootNode) tree.getModelRoot();
-		ArchiveNode archiveNode = (ArchiveNode) archiveRootNode.getChild("windows_vs12_32");
+		DataTypeStoreNode archiveNode =
+			(DataTypeStoreNode) archiveRootNode.getChild("windows_vs12_32");
 		assertNotNull(archiveNode);
-		ArchiveNode programNode = (ArchiveNode) archiveRootNode.getChild(program.getName());
+		DataTypeStoreNode programNode =
+			(DataTypeStoreNode) archiveRootNode.getChild(program.getName());
 		assertNotNull(programNode);
 
-		// Popup action instantiated on-the-fly and does not persist within tool
-		DockingActionIf updateSourceArchiveNameActionForProgram =
-			new UpdateSourceArchiveNamesAction(plugin, programDtm);
-		assertTrue(updateSourceArchiveNameActionForProgram.isEnabledForContext(
-			createContext(programNode)));
-		DockingActionIf updateSourceArchiveNameActionForArchive =
-			new UpdateSourceArchiveNamesAction(plugin, archiveDtm);
-		assertFalse(updateSourceArchiveNameActionForArchive.isEnabledForContext(
-			createContext(programNode)));
-
-		updateSourceArchiveNameActionForProgram.actionPerformed(null);// action does not rely on context - relies on construction instead
-
-		assertFalse(updateSourceArchiveNameActionForProgram.isEnabledForContext(
-			createContext(programNode)));
-		assertFalse(updateSourceArchiveNameActionForArchive.isEnabledForContext(
-			createContext(programNode)));
+		List<SourceArchive> archives = program.getDataTypeManager().getSourceArchives();
+		assertEquals(1, archives.size());
+		assertEquals("windows_vs12_32", archives.get(0).getName());
 
 	}
 }

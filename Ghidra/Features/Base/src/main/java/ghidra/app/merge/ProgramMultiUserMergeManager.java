@@ -33,7 +33,6 @@ import ghidra.app.nav.*;
 import ghidra.app.plugin.core.navigation.GoToAddressLabelPlugin;
 import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.util.FieldNavigator;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.ModalPluginTool;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.util.PluginException;
@@ -50,7 +49,7 @@ import help.HelpService;
 /**
  * Top level object that manages each step of the merge/resolve conflicts process.
  */
-public class ProgramMultiUserMergeManager extends MergeManager {
+public class ProgramMultiUserMergeManager extends MergeManager<Program, ProgramChangeSet> {
 
 	private ListingMergePanelPlugin listingPlugin;
 	private GoToAddressLabelPlugin goToPlugin;
@@ -73,10 +72,10 @@ public class ProgramMultiUserMergeManager extends MergeManager {
 
 	@Override
 	protected void createMergeResolvers() {
-		Program resultProgram = (Program) resultDomainObject;
-		Program myProgram = (Program) myDomainObject;
-		Program originalProgram = (Program) originalDomainObject;
-		Program latestProgram = (Program) latestDomainObject;
+		Program resultProgram = resultDomainObject;
+		Program myProgram = myDomainObject;
+		Program originalProgram = originalDomainObject;
+		Program latestProgram = latestDomainObject;
 		// create the merge resolvers
 		int idx = 0;
 		mergeResolvers = new MergeResolver[8];
@@ -85,28 +84,28 @@ public class ProgramMultiUserMergeManager extends MergeManager {
 
 		mergeResolvers[idx++] =
 			new ProgramTreeMergeManager(this, resultProgram, myProgram, originalProgram,
-				latestProgram, (ProgramChangeSet) latestChangeSet, (ProgramChangeSet) myChangeSet);
+				latestProgram, latestChangeSet, myChangeSet);
 
 		mergeResolvers[idx++] =
 			new DataTypeMergeManager(this, resultProgram, myProgram, originalProgram, latestProgram,
-				(ProgramChangeSet) latestChangeSet, (ProgramChangeSet) myChangeSet);
+				latestChangeSet, myChangeSet);
 
 		mergeResolvers[idx++] =
 			new ProgramContextMergeManager(this, resultProgram, originalProgram, latestProgram,
-				myProgram, (ProgramChangeSet) latestChangeSet, (ProgramChangeSet) myChangeSet);
+				myProgram, latestChangeSet, myChangeSet);
 
 		mergeResolvers[idx++] =
 			new FunctionTagMerger(this, resultProgram, originalProgram, latestProgram, myProgram,
-				(ProgramChangeSet) latestChangeSet, (ProgramChangeSet) myChangeSet);
+				latestChangeSet, myChangeSet);
 
 		ListingMergeManager listingMergeManager =
 			new ListingMergeManager(this, resultProgram, originalProgram, latestProgram, myProgram,
-				(ProgramChangeSet) latestChangeSet, (ProgramChangeSet) myChangeSet);
+				latestChangeSet, myChangeSet);
 		mergeResolvers[idx++] = listingMergeManager;
 
 		mergeResolvers[idx++] =
 			new ExternalProgramMerger(this, resultProgram, originalProgram, latestProgram,
-				myProgram, (ProgramChangeSet) latestChangeSet, (ProgramChangeSet) myChangeSet);
+				myProgram, latestChangeSet, myChangeSet);
 
 		mergeResolvers[idx++] = new PropertyListMergeManager(this, resultProgram, myProgram,
 			originalProgram, latestProgram);
@@ -122,13 +121,13 @@ public class ProgramMultiUserMergeManager extends MergeManager {
 	public Program getProgram(int version) {
 		switch (version) {
 			case MergeConstants.LATEST:
-				return (Program) resultDomainObject;
+				return resultDomainObject;
 			case MergeConstants.MY:
-				return (Program) myDomainObject;
+				return myDomainObject;
 			case MergeConstants.ORIGINAL:
-				return (Program) originalDomainObject;
+				return originalDomainObject;
 			case MergeConstants.RESULT:
-				return (Program) latestDomainObject;
+				return latestDomainObject;
 			default:
 				return null;
 		}
@@ -136,15 +135,16 @@ public class ProgramMultiUserMergeManager extends MergeManager {
 
 	@Override
 	protected MergeManagerPlugin createMergeManagerPlugin(ModalPluginTool mergePluginTool,
-			MergeManager multiUserMergeManager, DomainObject modifiableDomainObject) {
+			MergeManager<Program, ProgramChangeSet> multiUserMergeManager,
+			Program modifiableDomainObject) {
 		return new ProgramMergeManagerPlugin(mergeTool, ProgramMultiUserMergeManager.this,
-			(Program) resultDomainObject);
+			resultDomainObject);
 	}
 
 	@Override
 	protected void initializeMerge() {
-		mergePanel = new ListingMergePanel(mergeTool, (Program) originalDomainObject,
-			(Program) resultDomainObject, (Program) myDomainObject, (Program) latestDomainObject,
+		mergePanel = new ListingMergePanel(mergeTool, originalDomainObject,
+			resultDomainObject, myDomainObject, latestDomainObject,
 			showListingPanels);
 		mergePanel.removeDomainObjectListener();
 		navigatable = new MergeNavigatable(mergePanel);

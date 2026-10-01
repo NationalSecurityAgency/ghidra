@@ -15,7 +15,7 @@
  */
 package ghidra.pcode.emu.jit.gen.var;
 
-import org.objectweb.asm.Opcodes;
+import java.lang.classfile.CodeBuilder;
 
 import ghidra.pcode.emu.jit.alloc.VarHandler;
 import ghidra.pcode.emu.jit.analysis.JitType.MpIntJitType;
@@ -35,8 +35,8 @@ import ghidra.pcode.emu.jit.var.JitVarnodeVar;
  * 
  * <p>
  * These variables are presumed to be allocated as JVM locals. The generator emits
- * {@link Opcodes#ILOAD iload} and {@link Opcodes#ISTORE istore} and or depending on the assigned
- * type.
+ * {@link CodeBuilder#iload iload} and {@link CodeBuilder#istore istore} and or depending on the
+ * assigned type.
  * 
  * @param <V> the class of p-code variable node in the use-def graph
  */

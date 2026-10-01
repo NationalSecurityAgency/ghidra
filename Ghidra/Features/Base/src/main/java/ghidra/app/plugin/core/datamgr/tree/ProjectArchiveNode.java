@@ -15,53 +15,86 @@
  */
 package ghidra.app.plugin.core.datamgr.tree;
 
-import ghidra.app.plugin.core.datamgr.archive.ProjectArchive;
+import javax.swing.Icon;
+
+import generic.theme.GIcon;
+import ghidra.framework.data.DomainFileProxy;
 import ghidra.framework.model.DomainFile;
+import ghidra.framework.model.DomainObject;
+import ghidra.program.model.dtarchive.ProjectDataTypeArchive;
+import ghidra.util.HTMLUtilities;
 
-public class ProjectArchiveNode extends DomainFileArchiveNode {
+/**
+ * Tree node for representing open project datatype archives.
+ */
+public class ProjectArchiveNode extends ArchiveNode implements VersionedNode {
+	private static Icon CLOSED_ICON = new GIcon("icon.plugin.datatypes.archive.project.closed");
+	private static Icon OPEN_ICON = new GIcon("icon.plugin.datatypes.archive.project.open");
+	private VersionState versionState;
 
-	public ProjectArchiveNode(ProjectArchive archive, DtFilterState filterState) {
+	public ProjectArchiveNode(ProjectDataTypeArchive archive, DtFilterState filterState) {
 		super(archive, filterState);
-	}
-
-	@Override
-	protected void dataTypeManagerChanged() {
-		setChildren(null); // old children are no longer valid.
-		installDataTypeManagerListener();
-		nodeChanged();
+		versionState = new VersionState(archive);
 	}
 
 	@Override
 	public String getToolTip() {
-		DomainFile file = ((ProjectArchive) archive).getDomainFile();
-		return buildTooltip(file != null ? file.getPathname() : "[Unsaved New Project Archive]");
+		DomainFile file = getDomainObject().getDomainFile();
+		DomainFile originalFile = file;
+		if (file instanceof DomainFileProxy proxy) {
+			originalFile = proxy.getOriginalDomainFile();
+		}
+		StringBuilder buf = new StringBuilder(HTMLUtilities.HTML);
+		if (originalFile != null) {
+			buf.append(HTMLUtilities.escapeHTML(originalFile.toString()));
+		}
+		else {
+			buf.append("[Unsaved Project Archive]");
+		}
+		buf.append(HTMLUtilities.BR);
+		buf.append(getArchitectureDetails());
+		buf.append(HTMLUtilities.HTML_CLOSE);
+		return buf.toString();
 	}
 
 	public boolean hasWriteLock() {
 		return false;
 	}
 
-	/**
-	 * Overridden to avoid path conflicts that arise in CategoryNode.equals()
-	 *
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
-	public boolean equals(Object o) {
-		if (this == o) {
-			return true;
-		}
-		if (getClass() != o.getClass()) {
-			return false;
-		}
-
-		if (super.equals(o)) {
-			DomainFile myFile = ((ProjectArchive) archive).getDomainFile();
-			DomainFile otherFile =
-				((ProjectArchive) ((ProjectArchiveNode) o).archive).getDomainFile();
-			return myFile.equals(otherFile);
-		}
-		return false;
+	public void nodeChanged() {
+		super.nodeChanged();
+		versionState.updateDomainFileInfo();
 	}
 
+	@Override
+	public DomainObject getDomainObject() {
+		return getArchive();
+	}
+
+	@Override
+	public Icon getIcon(boolean expanded) {
+		Icon baseIcon = expanded ? OPEN_ICON : CLOSED_ICON;
+		return versionState.getIcon(baseIcon);
+	}
+
+	@Override
+	public ProjectDataTypeArchive getArchive() {
+		return (ProjectDataTypeArchive) super.getArchive();
+	}
+
+	@Override
+	public String getDomainObjectInfo() {
+		return versionState.getDomainObjectInfo();
+	}
+
+	@Override
+	public DomainFile getOriginalDomainFile() {
+		return versionState.getOriginalDomainFile();
+	}
+
+	@Override
+	public DomainFile getDomainFile() {
+		return archive.getDomainFile();
+	}
 }

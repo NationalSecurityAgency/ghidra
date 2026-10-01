@@ -26,6 +26,7 @@ import ghidra.framework.model.*;
 import ghidra.framework.store.FileSystem;
 import ghidra.framework.store.LockException;
 import ghidra.util.Lock;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.datastruct.ListenerSet;
@@ -61,12 +62,14 @@ public abstract class DomainObjectAdapter implements DomainObject {
 		new ListenerSet<>(DomainObjectFileListener.class, false);
 
 	private ArrayList<Object> consumers;
+
+	// A linked-map is used to retain metadata insertion order during iteration
 	protected Map<String, String> metadata = new LinkedHashMap<String, String>();
 
 	// FIXME: (see GP-2003) "changed" flag is improperly manipulated by various methods.  
-	// In general, comitted transactions will trigger all valid cases of setting flag to true, 
-	// there may be a few cases where setting it to false may be appropriate.  Without a transation 
-	// it's unclear why it should ever need to get set true.
+	// In general, committed transactions will trigger all valid cases of setting flag to true, 
+	// there may be a few cases where setting it to false may be appropriate.  Without a 
+	// transaction, it's unclear why it should ever need to get set true.
 
 	// A flag indicating whether the domain object has changed.
 	protected boolean changed = false;
@@ -144,6 +147,11 @@ public abstract class DomainObjectAdapter implements DomainObject {
 	@Override
 	public String getName() {
 		return name;
+	}
+
+	@Override
+	public String getPath() {
+		return domainFile.getPathname();
 	}
 
 	@Override
@@ -481,9 +489,22 @@ public abstract class DomainObjectAdapter implements DomainObject {
 		contentHandlerTypeMap = typeMap;
 	}
 
+	/**
+	 * Get updated unmodifiable copy of ordered-metadata map.
+	 * <p>
+	 * NOTE: The method implementation must guard against concurrent access
+	 * and iterations over returned map instance.
+	 *  
+	 * @return unmodifiable copy of metadata map
+	 */
 	@Override
 	public Map<String, String> getMetadata() {
-		return metadata;
+		// NOTE: This method must guard against concurrent invocations of this method and
+		// iteration over the resulting map.  A linked-map copy is used to retain insertion
+		// order and avoid concurrent modification/iterator issues..
+		try (Closeable c = lock.read()) {
+			return Collections.unmodifiableMap(new LinkedHashMap<>(metadata));
+		}
 	}
 
 	@Override
@@ -499,5 +520,4 @@ public abstract class DomainObjectAdapter implements DomainObject {
 		throw new DomainObjectException(e);
 
 	}
-
 }

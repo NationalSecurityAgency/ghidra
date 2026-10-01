@@ -793,12 +793,14 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 
 	@Override
 	public ProgramFragment getFragment(String treeName, String name) {
-		RegionEntry entry = program.memory.getRegionsByName().get(name);
-		if (entry == null) {
-			return null;
+		try (LockHold _ = program.trace.lockRead()) {
+			RegionEntry entry = program.memory.getRegionsByName().get(name);
+			if (entry == null) {
+				return null;
+			}
+			return fragmentsByRegion.computeIfAbsent(entry.region,
+				r -> new DBTraceProgramViewFragment(this, r, entry.snap));
 		}
-		return fragmentsByRegion.computeIfAbsent(entry.region,
-			r -> new DBTraceProgramViewFragment(this, r, entry.snap));
 	}
 
 	@Override

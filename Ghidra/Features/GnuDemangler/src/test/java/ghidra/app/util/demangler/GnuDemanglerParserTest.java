@@ -1410,7 +1410,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		//
 		//
-		// Mangled: _ZN12_GLOBAL__N_120decode_charset_iconvEPKc
+		// Mangled: _ZNK17GCC_IndicationPDUcvRK31GCC_ApplicationInvokeIndicationEv
 		//
 		// Demangled: GCC_IndicationPDU::operator GCC_ApplicationInvokeIndication const&() const
 		//

@@ -125,7 +125,7 @@ public class StackEditorModel extends CompositeEditorModel<StackFrameDataType> {
 		}
 
 		// Establish editor's datatype manager which will manage datatype dependencies.
-		viewDTM = new CompositeViewerDataTypeManager<>(originalDTM.getName(), originalDTM);
+		viewDTM = CompositeViewerDataTypeManager.createNonUndoableInstance(originalDTM);
 
 		// Create a copy of the original stack frame datatype and force the resolving of its
 		// datatype dependencies.  A round-about approach is used since the StackFrameDataType

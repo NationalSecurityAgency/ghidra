@@ -33,7 +33,7 @@ import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Composite;
-import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.Msg;
 
 public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 
@@ -1461,7 +1461,7 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 
 		JPanel rightPanel = new JPanel(new BorderLayout());
 		String rightHtml = right.getHTMLString();
-		System.err.println("Right HTML: " + rightHtml);
+		Msg.info(HTMLDataTypeRepresentation.class, "Right HTML: " + rightHtml);
 		StringBuffer buffy1 = new StringBuffer(rightHtml);
 		JLabel rightLabel = new GDHtmlLabel();
 		rightLabel.setOpaque(true);
@@ -1471,7 +1471,7 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 
 		JPanel leftPanel = new JPanel(new BorderLayout());
 		String leftHtml = left.getHTMLString();
-		System.err.println("Left HTML: " + leftHtml);
+		Msg.info(HTMLDataTypeRepresentation.class, "Left HTML: " + leftHtml);
 		StringBuffer buffy2 = new StringBuffer(leftHtml);
 		JLabel leftLabel = new GDHtmlLabel();
 		leftLabel.setOpaque(true);

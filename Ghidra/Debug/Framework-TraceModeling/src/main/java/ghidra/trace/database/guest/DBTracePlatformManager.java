@@ -17,7 +17,6 @@ package ghidra.trace.database.guest;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
 import ghidra.framework.data.OpenMode;
@@ -33,6 +32,7 @@ import ghidra.trace.model.data.TraceBasedDataTypeManager;
 import ghidra.trace.model.guest.*;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.trace.util.TraceEvents;
+import ghidra.util.Lock;
 import ghidra.util.LockHold;
 import ghidra.util.database.DBCachedObjectStore;
 import ghidra.util.database.DBCachedObjectStoreFactory;
@@ -49,7 +49,7 @@ import ghidra.util.task.TaskMonitor;
  */
 public class DBTracePlatformManager implements DBTraceManager, TracePlatformManager {
 	protected final DBHandle dbh;
-	protected final ReadWriteLock lock;
+	protected final Lock lock;
 	protected final Language baseLanguage;
 	protected final CompilerSpec baseCompilerSpec;
 	protected final DBTrace trace;
@@ -157,7 +157,7 @@ public class DBTracePlatformManager implements DBTraceManager, TracePlatformMana
 
 	protected final InternalTracePlatform hostPlatform = new DBTraceHostPlatform();
 
-	public DBTracePlatformManager(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
+	public DBTracePlatformManager(DBHandle dbh, OpenMode openMode, Lock lock,
 			TaskMonitor monitor, CompilerSpec baseCompilerSpec, DBTrace trace)
 			throws VersionException, IOException, CancelledException {
 		this.dbh = dbh;

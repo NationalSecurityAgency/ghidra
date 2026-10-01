@@ -746,7 +746,19 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	@Override
 	public int getNumDefinedComponents() {
 		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			return components.size();
+		}
+	}
+
+	@Override
+	public DataTypeComponentDB getDefinedComponent(int index) throws IndexOutOfBoundsException {
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
+			if (index < 0 || index >= components.size()) {
+				throw new IndexOutOfBoundsException(index);
+			}
+			return components.get(index);
 		}
 	}
 

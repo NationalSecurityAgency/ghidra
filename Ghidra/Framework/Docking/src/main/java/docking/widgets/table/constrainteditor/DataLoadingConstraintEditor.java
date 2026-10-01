@@ -339,12 +339,7 @@ public abstract class DataLoadingConstraintEditor<T> extends AbstractColumnConst
 				monitor.setMessage(
 					"Loading column data... (" + getElapsedTimeString(elapsed) + ")");
 				monitor.incrementProgress(1);
-
 			}
-// 		Keep until 2019
-//			Msg.info(this, "Load of " + limit + " rows from '" + columnDataSource.getColumnName() +
-//				"' took " + getElapsedTimeString(System.nanoTime() - start));
-
 		}
 	}
 }

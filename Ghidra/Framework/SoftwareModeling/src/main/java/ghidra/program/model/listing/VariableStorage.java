@@ -30,12 +30,17 @@ import ghidra.util.exception.InvalidInputException;
  * function parameter or local variable.  For big-endian the first element corresponds 
  * to the most-significant varnode, while for little-endian the first element 
  * corresponds to the least-significant varnode.
+ * 
+ * Portions of the variable that are not actively being stored, such as structure padding
+ * or alignment bytes, are represented by constant varnodes in order to maintain 
+ * correspondence between the varnodes and the data-type layout.
  */
 public class VariableStorage implements Comparable<VariableStorage> {
 
 	private static final String BAD = "<BAD>";
 	private static final String UNASSIGNED = "<UNASSIGNED>";
 	private static final String VOID = "<VOID>";
+	private static final String PADDING = "pad";
 
 	/**
 	 * <code>BAD_STORAGE</code> used to identify variable storage which is no longer
@@ -198,13 +203,12 @@ public class VariableStorage implements Comparable<VariableStorage> {
 					"Unsupported varnode size: " + varnode.getSize());
 			}
 
-			boolean isRegister = false;
+			boolean isRegisterOrPad = false;
 			Address storageAddr = varnode.getAddress();
-			if (storageAddr.isHashAddress() || storageAddr.isUniqueAddress() ||
-				storageAddr.isConstantAddress()) {
+			if (storageAddr.isHashAddress() || storageAddr.isUniqueAddress()) {
 				if (varnodes.length != 1) {
 					throw new InvalidInputException(
-						"Hash, Unique and Constant storage may only use a single varnode");
+						"Hash and Unique storage may only use a single varnode");
 				}
 			}
 			else {
@@ -217,11 +221,21 @@ public class VariableStorage implements Comparable<VariableStorage> {
 				}
 			}
 
-			if (!storageAddr.isStackAddress()) {
+			if (storageAddr.isConstantAddress()) {
+				// Any single constant is allowed
+				if (varnodes.length != 1) {
+					// A constant with other varnodes is considered padding and must be zero
+					if (storageAddr.getOffset() != 0) {
+						throw new InvalidInputException("Constant not allowed as VariableStorage");
+					}
+					isRegisterOrPad = true;
+				}
+			}
+			else if (!storageAddr.isStackAddress()) {
 				Register reg =
 					programArch.getLanguage().getRegister(storageAddr, varnode.getSize());
 				if (reg != null && !(reg instanceof UnknownRegister)) {
-					isRegister = true;
+					isRegisterOrPad = true;
 					if (registers == null) {
 						registers = new ArrayList<Register>();
 					}
@@ -245,13 +259,13 @@ public class VariableStorage implements Comparable<VariableStorage> {
 				}
 			}
 			if (programArch.getLanguage().isBigEndian()) {
-				if (i < (varnodes.length - 1) && !isRegister) {
+				if (i < (varnodes.length - 1) && !isRegisterOrPad) {
 					throw new InvalidInputException(
 						"Compound storage must use registers except for last BE varnode");
 				}
 			}
 			else {
-				if (i > 0 && !isRegister) {
+				if (i > 0 && !isRegisterOrPad) {
 					throw new InvalidInputException(
 						"Compound storage must use registers except for first LE varnode");
 				}
@@ -259,6 +273,9 @@ public class VariableStorage implements Comparable<VariableStorage> {
 			size += varnode.getSize();
 		}
 		for (int i = 0; i < varnodes.length; i++) {
+			if (varnodes[i].isConstant()) {
+				continue;
+			}
 			for (int j = i + 1; j < varnodes.length; j++) {
 				if (varnodes[i].intersects(varnodes[j])) {
 					throw new InvalidInputException("One or more conflicting storage varnodes");
@@ -345,6 +362,9 @@ public class VariableStorage implements Comparable<VariableStorage> {
 			if (register != null) {
 				return register.toString();
 			}
+		}
+		if (address.isConstantAddress() && varnodes.length != 1) {
+			return PADDING;
 		}
 		return address.toString();
 	}

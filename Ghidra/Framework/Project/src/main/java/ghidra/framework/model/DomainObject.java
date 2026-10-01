@@ -246,6 +246,11 @@ public interface DomainObject {
 	public String getName();
 
 	/**
+	 * {@return the full path of the DomainFile associated with this domain object}
+	 */
+	public String getPath();
+
+	/**
 	 * Set the name for this domain object.
 	 * @param name object name
 	 */
@@ -378,8 +383,10 @@ public interface DomainObject {
 	public boolean hasExclusiveAccess();
 
 	/**
-	 * Returns a map containing all the stored metadata associated with this domain object.  The map
-	 * contains key,value pairs and are ordered by their insertion order.
+	 * Returns an ordered unmodifiable map containing all the stored metadata associated with this 
+	 * domain object.  The map contains key,value pairs and are ordered by their insertion order.
+	 * Any attempt to modify the map will result in a {@link UnsupportedOperationException}.
+	 * 
 	 * @return a map containing all the stored metadata associated with this domain object.
 	 */
 	public Map<String, String> getMetadata();
@@ -454,6 +461,7 @@ public interface DomainObject {
 	 * @return the result returned by the supplier
 	 * @throws E any exception that may be thrown in the given callback
 	 */
+
 	public default <E extends Exception, T> T withTransaction(String description,
 			ExceptionalSupplier<T, E> supplier) throws E {
 		T t = null;

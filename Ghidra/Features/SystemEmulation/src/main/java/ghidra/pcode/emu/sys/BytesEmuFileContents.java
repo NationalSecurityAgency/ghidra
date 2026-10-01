@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,6 @@ package ghidra.pcode.emu.sys;
 
 /**
  * A concrete in-memory bytes store for simulated file contents
- * 
  * <p>
  * Note that currently, the total contents cannot exceed a Java array, so the file must remain less
  * than 2GB in size.
@@ -28,21 +27,21 @@ public class BytesEmuFileContents implements EmuFileContents<byte[]> {
 	protected byte[] content = new byte[INIT_CONTENT_SIZE];
 
 	@Override
-	public synchronized long read(long offset, byte[] buf, long fileSize) {
+	public synchronized int read(long offset, byte[] buf, long fileSize) {
 		// We're using an in-memory array, so limited to int offsets
 		if (offset > Integer.MAX_VALUE) {
 			throw new EmuIOException("Offset is past end of file");
 		}
-		long len = Math.min(buf.length, fileSize - offset);
+		int len = (int) Math.min(buf.length, fileSize - offset);
 		if (len < 0) {
 			throw new EmuIOException("Offset is past end of file");
 		}
-		System.arraycopy(content, (int) offset, buf, 0, (int) len);
+		System.arraycopy(content, (int) offset, buf, 0, len);
 		return len;
 	}
 
 	@Override
-	public synchronized long write(long offset, byte[] buf, long curSize) {
+	public synchronized int write(long offset, byte[] buf, long curSize) {
 		long newSize = offset + buf.length;
 		if (newSize > Integer.MAX_VALUE || newSize < 0) {
 			throw new EmuIOException("File size cannot exceed " + Integer.MAX_VALUE + " bytes");

@@ -234,7 +234,10 @@ public:
   /// \param grouplist is the list of groups being cloned
   /// \return the cloned Rule or NULL
   virtual Rule *clone(const ActionGroupList &grouplist) const=0;
-  virtual void getOpList(vector<uint4> &oplist) const;		///< List of op codes this rule operates on
+
+  /// Populate the given array with all possible OpCodes this Rule might apply to.
+  /// \param oplist is the array to populate
+  virtual void getOpList(vector<uint4> &oplist) const=0;		///< Provide OpCodes \b this rule operates on
 
   /// \brief Attempt to apply \b this Rule
   ///

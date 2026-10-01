@@ -35,7 +35,6 @@ import utilities.util.AnnotationUtilities;
 
 /**
  * A syscall library wherein Java methods are exported via a special annotated
- * 
  * <p>
  * This library is both a system call and a sleigh userop library. To export a system call, it must
  * also be exported as a sleigh userop. This is more conventional, as the system call dispatcher
@@ -55,9 +54,38 @@ public abstract class AnnotatedEmuSyscallUseropLibrary<T> extends AnnotatedPcode
 		return AnnotationUtilities.collectAnnotatedMethods(EmuSyscall.class, cls);
 	}
 
+	private static Method chooseOrThrow(Method m1, Method m2) {
+		Class<?> cls1 = m1.getDeclaringClass();
+		Class<?> cls2 = m2.getDeclaringClass();
+		if (cls1 != cls2) {
+			EmuSyscall an1 = m1.getAnnotation(EmuSyscall.class);
+			EmuSyscall an2 = m2.getAnnotation(EmuSyscall.class);
+			if (cls1.isAssignableFrom(cls2) && an2.override()) {
+				return m2;
+			}
+			if (cls2.isAssignableFrom(cls1) && an1.override()) {
+				return m1;
+			}
+		}
+		throw new IllegalArgumentException("Duplicate @" +
+			EmuSyscall.class.getSimpleName() + " annotated methods with name " + m1.getName());
+	}
+
+	private static Map<String, Method> resolveOverrides(Set<Method> methods) {
+		Map<String, Method> result = new HashMap<>();
+		for (Method method : methods) {
+			String name = method.getName();
+			Method exists = result.get(name);
+			if (exists != null) {
+				method = chooseOrThrow(exists, method);
+			}
+			result.put(name, method);
+		}
+		return result;
+	}
+
 	/**
 	 * An annotation to export a method as a system call in the library.
-	 * 
 	 * <p>
 	 * The method must also be exported in the userop library, likely via
 	 * {@link ghidra.pcode.exec.AnnotatedPcodeUseropLibrary.PcodeUserop @PcodeUserop}.
@@ -65,11 +93,25 @@ public abstract class AnnotatedEmuSyscallUseropLibrary<T> extends AnnotatedPcode
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.METHOD)
 	public @interface EmuSyscall {
+		/**
+		 * The name of the syscall, which must match the actual name given in the syscall map.
+		 * 
+		 * @return the name
+		 * @see EmuSyscallLibrary#loadSyscallNumberMap(String)
+		 */
 		String value();
-	}
 
-	private final SyscallPcodeUseropDefinition<T> syscallUserop =
-		new SyscallPcodeUseropDefinition<>(this);
+		/**
+		 * Set to indicate this name overrides the same name inherited from any
+		 * superclass/interface.
+		 * <p>
+		 * If names collide from the same class, or that from the extension class does not have this
+		 * flag, an error occurs at library construction.
+		 * 
+		 * @return true to allow overrides.
+		 */
+		boolean override() default false;
+	}
 
 	protected final PcodeMachine<T> machine;
 	protected final CompilerSpec cSpec;
@@ -81,7 +123,11 @@ public abstract class AnnotatedEmuSyscallUseropLibrary<T> extends AnnotatedPcode
 	protected final Collection<DataTypeManager> additionalArchives;
 
 	/**
-	 * Construct a new library including the "syscall" userop
+	 * Construct a new library including the "emu_syscall" userop
+	 * <p>
+	 * Note that the final library must export the system call entry point. Often, this is the
+	 * "syscall" userop. That userop must read the system call number, pass it as an argument to
+	 * "emu_syscall," and store the result according to the ABI of the target platform.
 	 * 
 	 * @param machine the machine using this library
 	 * @param program a program from which to derive syscall configuration, conventions, etc.
@@ -121,12 +167,12 @@ public abstract class AnnotatedEmuSyscallUseropLibrary<T> extends AnnotatedPcode
 	/**
 	 * Export a userop as a system call
 	 * 
-	 * @param number the opIndex assigned to the userop
+	 * @param number the syscall number
 	 * @param opdef the userop
 	 * @param convention the syscall calling convention for the emulated platform
 	 * @return the syscall definition
 	 */
-	public UseropEmuSyscallDefinition<T> newBoundSyscall(long number,
+	protected UseropEmuSyscallDefinition<T> newBoundSyscall(long number,
 			PcodeUseropDefinition<T> opdef, PrototypeModel convention) {
 		return new UseropEmuSyscallDefinition<>(number, opdef, program, convention, dtMachineWord);
 	}
@@ -136,8 +182,8 @@ public abstract class AnnotatedEmuSyscallUseropLibrary<T> extends AnnotatedPcode
 			new DualHashBidiMap<>(EmuSyscallLibrary.loadSyscallNumberMap(program));
 		Map<Long, PrototypeModel> mapConventions =
 			EmuSyscallLibrary.loadSyscallConventionMap(program);
-		Set<Method> methods = collectSyscalls(cls);
-		for (Method m : methods) {
+		Map<String, Method> methods = resolveOverrides(collectSyscalls(cls));
+		for (Method m : methods.values()) {
 			String name = m.getAnnotation(EmuSyscall.class).value();
 			Long number = mapNames.getKey(name);
 			if (number == null) {
@@ -151,22 +197,12 @@ public abstract class AnnotatedEmuSyscallUseropLibrary<T> extends AnnotatedPcode
 					" must also be a p-code userop");
 			}
 			PrototypeModel convention = mapConventions.get(number);
-			EmuSyscallDefinition<T> existed =
-				syscallMap.put(number, newBoundSyscall(number, opdef, convention));
-			if (existed != null) {
-				throw new IllegalArgumentException("Duplicate @" +
-					EmuSyscall.class.getSimpleName() + " annotated methods with name " + name);
-			}
+			syscallMap.put(number, newBoundSyscall(number, opdef, convention));
 		}
 	}
 
 	protected void mapAndBindSyscalls() {
 		mapAndBindSyscalls(this.getClass());
-	}
-
-	@Override
-	public PcodeUseropDefinition<T> getSyscallUserop() {
-		return syscallUserop;
 	}
 
 	@Override

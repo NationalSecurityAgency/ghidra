@@ -18,6 +18,7 @@
 
 #include "xml.hh"
 #include "opcodes.hh"
+#include "metatype.hh"
 #include <list>
 #include <unordered_map>
 
@@ -110,7 +111,6 @@ public:
   /// Called once before any decoding.  Currently this is assumed to make an internal copy of the stream data,
   /// i.e. the input stream is cleared before any decoding takes place.
   /// \param s is the given input stream to be decode
-  /// \return \b true if the stream was fully ingested
   virtual void ingestStream(istream &s)=0;
 
   /// \brief Peek at the next child element of the current parent, without traversing in (opening) it.
@@ -285,6 +285,21 @@ public:
   /// \return the OpCode associated with the attribute
   virtual OpCode readOpcode(AttributeId &attribId)=0;
 
+  /// \brief Parse the current attribute as a metatype
+  ///
+  /// The last attribute, as returned by getNextAttributeId, is returned as a data-type metatype.
+  /// \return the metatype associated with the current attribute
+  virtual type_metatype readDatatypeMeta(void)=0;
+
+  /// \brief Find the specific attribute in the current element and return it as a metatype
+  ///
+  /// Search attributes from the current element for a match to the given attribute id.
+  /// Return this attribute as a metatype. If there is no matching attribute id, an exception is thrown.
+  /// Parse via getNextAttributeId is reset.
+  /// \param attribId is the specific attribute id to match
+  /// \return the metatype associated with the attribute
+  virtual type_metatype readDatatypeMeta(AttributeId &attribId)=0;
+
   /// \brief Skip parsing of the next element
   ///
   /// The element skipped is the one that would be opened by the next call to openElement.
@@ -373,6 +388,11 @@ public:
   /// \param opc is the opcode
   virtual void writeOpcode(const AttributeId &attribId,OpCode opc)=0;
 
+  /// \brief Write a metatype into the encoding, associating it with the given attribute
+  ///
+  /// \param attribId is the given attribute
+  /// \param metatype is the data-type metatype
+  virtual void writeDatatypeMeta(const AttributeId &attribId,type_metatype metatype)=0;
 };
 
 /// \brief An XML based decoder
@@ -418,6 +438,8 @@ public:
   virtual AddrSpace *readSpace(const AttributeId &attribId);
   virtual OpCode readOpcode(void);
   virtual OpCode readOpcode(AttributeId &attribId);
+  virtual type_metatype readDatatypeMeta(void);
+  virtual type_metatype readDatatypeMeta(AttributeId &attribId);
 };
 
 /// \brief An XML based encoder
@@ -449,6 +471,7 @@ public:
   virtual void writeStringIndexed(const AttributeId &attribId,uint4 index,const string &val);
   virtual void writeSpace(const AttributeId &attribId,const AddrSpace *spc);
   virtual void writeOpcode(const AttributeId &attribId,OpCode opc);
+  virtual void writeDatatypeMeta(const AttributeId &attribId,type_metatype metatype);
 };
 
 /// \brief Protocol format for PackedEncode and PackedDecode classes
@@ -536,7 +559,7 @@ private:
   uint1 getByte(Position &pos) { return *pos.current; }	///< Get the byte at the current position, do not advance
   uint1 getBytePlus1(Position &pos);	///< Get the byte following the current byte, do not advance position
   uint1 getNextByte(Position &pos);	///< Get the byte at the current position and advance to the next byte
-  void advancePosition(Position &pos,uint4 skip);	///< Advance the position by the given number of bytes
+  void advancePosition(Position &pos,uint8 skip);	///< Advance the position by the given number of bytes
   uint8 readInteger(int4 len);		///< Read an integer from the \e current position given its length in bytes
   uint4 readLengthCode(uint1 typeByte) { return ((uint4)typeByte & PackedFormat::LENGTHCODE_MASK); }	///< Extract length code from type byte
   void findMatchingAttribute(const AttributeId &attribId);	///< Find attribute matching the given id in open element
@@ -571,6 +594,8 @@ public:
   virtual AddrSpace *readSpace(const AttributeId &attribId);
   virtual OpCode readOpcode(void);
   virtual OpCode readOpcode(AttributeId &attribId);
+  virtual type_metatype readDatatypeMeta(void);
+  virtual type_metatype readDatatypeMeta(AttributeId &attribId);
 };
 
 /// \brief A byte-based encoder designed to marshal from the decompiler efficiently
@@ -591,6 +616,7 @@ public:
   virtual void writeStringIndexed(const AttributeId &attribId,uint4 index,const string &val);
   virtual void writeSpace(const AttributeId &attribId,const AddrSpace *spc);
   virtual void writeOpcode(const AttributeId &attribId,OpCode opc);
+  virtual void writeDatatypeMeta(const AttributeId &attribId,type_metatype metatype);
 };
 
 /// An exception is thrown if the position currently points to the last byte in the stream
@@ -631,7 +657,7 @@ inline uint1 PackedDecode::getNextByte(Position &pos)
 /// An exception is thrown of position is advanced past the end of the stream
 /// \param pos is the position being advanced
 /// \param skip is the number of bytes to advance
-inline void PackedDecode::advancePosition(Position &pos,uint4 skip)
+inline void PackedDecode::advancePosition(Position &pos,uint8 skip)
 
 {
   while(pos.end - pos.current <= skip) {

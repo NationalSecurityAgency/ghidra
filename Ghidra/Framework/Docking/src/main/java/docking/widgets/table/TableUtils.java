@@ -15,6 +15,7 @@
  */
 package docking.widgets.table;
 
+import java.awt.Component;
 import java.awt.Graphics;
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -29,6 +30,7 @@ import org.jdesktop.animation.timing.Animator;
 import docking.util.AnimationPainter;
 import docking.util.AnimationRunner;
 import ghidra.docking.settings.Settings;
+import ghidra.util.HTMLUtilities;
 import ghidra.util.bean.GGlassPane;
 import ghidra.util.table.column.GColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer.ColumnConstraintFilterMode;
@@ -98,22 +100,84 @@ public class TableUtils {
 	}
 
 	/**
+	 * Uses the given row-based table model, row and column index to determine what the
+	 * String value should be for that cell.
+	 *
+	 * <P>
+	 * This is used to provide a means for filtering on the text that is displayed to the user.
+	 * As such, if the value is HTML, it will be converted to non-HTML.
+	 *
+	 * @param <ROW_OBJECT> The model's row object type
+	 * @param table the table
+	 * @param modelRow the model's row index 
+	 * @param modelColumn the model's column index
+	 * @return the string value; null if no value can be fabricated
+	 */
+	public static <ROW_OBJECT> String getTableCellStringValue(JTable table, int modelRow,
+			int modelColumn) {
+
+		TableModel model = table.getModel();
+		if (model instanceof RowObjectTableModel) {
+			RowObjectFilterModel<?> rowModel = (RowObjectFilterModel<?>) model;
+			return getTableCellStringValue(rowModel, modelRow, modelColumn);
+		}
+
+		Object value = model.getValueAt(modelRow, modelColumn);
+		int viewRow = table.convertColumnIndexToView(modelRow);
+		int viewColumn = table.convertRowIndexToView(modelColumn);
+		TableCellRenderer renderer = table.getCellRenderer(modelRow, modelColumn);
+		Component c =
+			renderer.getTableCellRendererComponent(table, value, false, false, viewRow, viewColumn);
+		if (c instanceof JLabel label) {
+			String text = label.getText();
+			return convertFromHtml(text);
+		}
+
+		return null;
+	}
+
+	private static <ROW_OBJECT> String getTableCellStringValue(
+			RowObjectTableModel<ROW_OBJECT> model, int modelRow, int modelColumn) {
+
+		ROW_OBJECT rowObject = model.getRowObject(modelRow);
+		return getTableCellStringValue(model, rowObject, modelColumn);
+	}
+
+	/**
 	 * Uses the given row-based table model, row object and column index to determine what the
 	 * String value should be for that cell.
 	 *
-	 * <P>This is used to provide a means for filtering on the text that is displayed to the user.
+	 * <P>
+	 * This is used to provide a means for filtering on the text that is displayed to the user.
+	 * As such, if the value is HTML, it will be converted to non-HTML.
 	 *
 	 * @param <ROW_OBJECT> The model's row object type
 	 * @param model the model
-	 * @param rowObject the row object for the row being queried
-	 * @param column the column index <b>in the table model</b>
+	 * @param rowObject the row object 
+	 * @param modelColumn the model's column index
 	 * @return the string value; null if no value can be fabricated
 	 */
 	public static <ROW_OBJECT> String getTableCellStringValue(RowObjectTableModel<ROW_OBJECT> model,
-			ROW_OBJECT rowObject, int column) {
+			ROW_OBJECT rowObject, int modelColumn) {
+
+		String rawString = doGetTableCellStringValue(model, rowObject, modelColumn);
+		return convertFromHtml(rawString);
+	}
+
+	private static String convertFromHtml(Object value) {
+		if (value == null) {
+			return null;
+		}
+
+		String asString = value.toString();
+		return HTMLUtilities.fromHTML(asString);
+	}
+
+	private static <ROW_OBJECT> String doGetTableCellStringValue(
+			RowObjectTableModel<ROW_OBJECT> model, ROW_OBJECT rowObject, int modelColumn) {
 
 		// note: this call can be slow when columns dynamically calculate values from the database
-		Object value = model.getColumnValueForRow(rowObject, column);
+		Object value = model.getColumnValueForRow(rowObject, modelColumn);
 		if (value == null) {
 			return null;
 		}
@@ -130,7 +194,7 @@ public class TableUtils {
 		 */
 
 		// 1)
-		String renderedString = getRenderedColumnValue(model, value, column);
+		String renderedString = getRenderedColumnValue(model, value, modelColumn);
 		if (renderedString != null) {
 			return renderedString;
 		}
@@ -138,7 +202,7 @@ public class TableUtils {
 		// 2) special plug-in point where clients can specify a value object that can return
 		// its display string
 		if (value instanceof DisplayStringProvider) {
-			return ((DisplayStringProvider) value).toString();
+			return value.toString();
 		}
 
 		// 3

@@ -80,7 +80,7 @@ public class DebuggerEmuExampleScript extends GhidraScript implements FlatDebugg
 					.getProjectData()
 					.getRootFolder()
 					.createFile("emu_example", program, monitor);
-			try (Transaction tx = program.openTransaction("Init")) {
+			try (Transaction _ = program.openTransaction("Init")) {
 				AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
 				entry = space.getAddress(0x00400000);
 				Address dataEntry = space.getAddress(0x00600000);
@@ -167,7 +167,7 @@ public class DebuggerEmuExampleScript extends GhidraScript implements FlatDebugg
 		 */
 		TraceTimeManager time = trace.getTimeManager();
 		TraceSnapshot snapshot = time.getSnapshot(0, true);
-		try (Transaction tx = trace.openTransaction("Emulate")) {
+		try (Transaction _ = trace.openTransaction("Emulate")) {
 			for (int i = 0; i < 10; i++) {
 				println("Executing: " + thread.getCounter());
 				thread.stepInstruction();

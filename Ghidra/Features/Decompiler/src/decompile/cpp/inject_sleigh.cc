@@ -306,7 +306,7 @@ InjectPayloadDynamic::~InjectPayloadDynamic(void)
 ///
 /// Decode the Address for a specific context and then elements for the specific p-code ops.
 /// \param decoder is the stream to pull from
-void InjectPayloadDynamic::decodeEntry(Decoder &decoder)
+void InjectPayloadDynamic::decode(Decoder &decoder)
 
 {
   Address addr = Address::decode(decoder);
@@ -340,6 +340,39 @@ void InjectPayloadDynamic::inject(InjectContext &context,PcodeEmit &emit) const
   decoder.closeElement(rootId);
 }
 
+ExecutablePcodeDynamic::ExecutablePcodeDynamic(Architecture *g,InjectPayload *base)
+  : ExecutablePcode(g,base->getSource(),base->getName())
+{
+  dynamic = true;
+  dynamicPayload = new InjectPayloadDynamic(g,base);
+
+  // Clone basic properties of the original payload
+  incidentalCopy = base->isIncidentalCopy();
+  paramshift = base->getParamShift();
+  for(int4 i=0;i<base->sizeInput();++i)
+    inputlist.push_back(base->getInput(i));
+  for(int4 i=0;i<base->sizeOutput();++i)
+    output.push_back(base->getOutput(i));
+}
+
+ExecutablePcodeDynamic::~ExecutablePcodeDynamic(void)
+
+{
+  delete dynamicPayload;
+}
+
+void ExecutablePcodeDynamic::inject(InjectContext &context,PcodeEmit &emit) const
+
+{
+  dynamicPayload->inject(context,emit);
+}
+
+void ExecutablePcodeDynamic::decode(Decoder &decoder)
+
+{
+  dynamicPayload->decode(decoder);
+}
+
 PcodeInjectLibrarySleigh::PcodeInjectLibrarySleigh(Architecture *g)
   : PcodeInjectLibrary(g,g->translate->getUniqueStart(Translate::INJECT))
 {
@@ -347,20 +380,33 @@ PcodeInjectLibrarySleigh::PcodeInjectLibrarySleigh(Architecture *g)
   contextCache.glb = g;
 }
 
-/// \brief Force a payload to be dynamic for debug purposes
+/// \brief Decode a dynamic inject payload
 ///
 /// Debug information may include inject information for payloads that aren't dynamic.
 /// We substitute a dynamic payload so that analysis uses the debug info to inject, rather
 /// than the hard-coded payload information.
-/// \param injectid is the id of the payload to treat dynamic
+/// \param decoder is the stream to read the dynamic injection from
 /// \return the new dynamic payload object
-InjectPayloadDynamic *PcodeInjectLibrarySleigh::forceDebugDynamic(int4 injectid)
+InjectPayload *PcodeInjectLibrarySleigh::decodeDynamic(Decoder &decoder)
 
 {
-  InjectPayload *oldPayload = injection[injectid];
-  InjectPayloadDynamic *newPayload = new InjectPayloadDynamic(glb,oldPayload);
+  uint4 subId = decoder.openElement(ELEM_INJECT);
+  string name = decoder.readString(ATTRIB_NAME);
+  int4 type = decoder.readSignedInteger(ATTRIB_TYPE);
+  int4 id = getPayloadId(type,name);
+  if (id < 0 || id >= injection.size())
+    throw DecoderError("Invalid dynamic injection");
+  InjectPayload *oldPayload = injection[id];
+  InjectPayload *newPayload;
+  if (oldPayload->getType() == InjectPayload::EXECUTABLEPCODE_TYPE) {
+    newPayload = new ExecutablePcodeDynamic(glb,oldPayload);
+  }
+  else
+    newPayload = new InjectPayloadDynamic(glb,oldPayload);
+  injection[id] = newPayload;
   delete oldPayload;
-  injection[injectid] = newPayload;
+  newPayload->decode(decoder);
+  decoder.closeElement(subId);
   return newPayload;
 }
 
@@ -467,17 +513,9 @@ void PcodeInjectLibrarySleigh::decodeDebug(Decoder &decoder)
 {
   uint4 elemId = decoder.openElement(ELEM_INJECTDEBUG);
   for(;;) {
-    uint4 subId = decoder.openElement();
+    uint4 subId = decoder.peekElement();
     if (subId != ELEM_INJECT) break;
-    string name = decoder.readString(ATTRIB_NAME);
-    int4 type = decoder.readSignedInteger(ATTRIB_TYPE);
-    int4 id = getPayloadId(type,name);
-    InjectPayloadDynamic *payload = dynamic_cast<InjectPayloadDynamic *>(getPayload(id));
-    if (payload == (InjectPayloadDynamic *)0) {
-      payload = forceDebugDynamic(id);
-    }
-    payload->decodeEntry(decoder);
-    decoder.closeElement(subId);
+    decodeDynamic(decoder);
   }
   decoder.closeElement(elemId);
 }
