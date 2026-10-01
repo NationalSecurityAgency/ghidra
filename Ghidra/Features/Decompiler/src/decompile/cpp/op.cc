@@ -1010,6 +1010,22 @@ PcodeOp *PcodeOpBank::create(int4 inputs,const SeqNum &sq)
   return op;
 }
 
+/// A new PcodeOp is allocated, in alternate storage, with the indicated number
+/// of input slots, which start out empty.  A sequence number is assigned, and
+/// the op is added to the end of the \e dead list.
+/// \param inputs is the number of input slots
+/// \param pc is the Address to associate with the PcodeOp
+/// \return the newly allocated PcodeOp
+PcodeOp *PcodeOpBank::createIndirect(int4 inputs,const Address &addr)
+
+{
+  PcodeOp *op = new PcodeOp(2,SeqNum(addr,uniqid++));
+  alttree[op->getSeqNum()] = op;
+  op->setFlag(PcodeOp::dead);		// Start out life as dead
+  op->insertiter = deadlist.insert(deadlist.end(),op);
+  return op;
+}
+
 void PcodeOpBank::destroyDead(void)
 
 {
@@ -1034,7 +1050,10 @@ void PcodeOpBank::destroy(PcodeOp *op)
   if (!op->isDead())
     throw LowlevelError("Deleting integrated op");
 
-  optree.erase(op->getSeqNum());
+  if (op->code() == CPUI_INDIRECT)
+    alttree.erase(op->getSeqNum());
+  else
+    optree.erase(op->getSeqNum());
   deadlist.erase(op->insertiter);
   removeFromCodeList(op);
   deadandgone.push_back(op);
@@ -1047,8 +1066,13 @@ void PcodeOpBank::destroy(PcodeOp *op)
 void PcodeOpBank::changeOpcode(PcodeOp *op,TypeOp *newopc)
 
 {
-  if (op->opcode != (TypeOp *)0)
+  if (op->opcode != (TypeOp *)0) {
     removeFromCodeList(op);
+    if (op->code() == CPUI_INDIRECT) {
+      alttree.erase(op->start);
+      optree[op->start] = op;
+    }
+  }
   op->setOpcode( newopc );
   addToCodeList(op);
 }
@@ -1142,8 +1166,9 @@ PcodeOp *PcodeOpBank::findOp(const SeqNum &num) const
 
 {
   PcodeOpTree::const_iterator iter = optree.find(num);
-  if (iter == optree.end()) return (PcodeOp *)0;
-  return (*iter).second;
+  if (iter != optree.end())
+    return (*iter).second;
+  return (PcodeOp *)0;
 }
 
 /// If PcodeOps exist at the address, the one with the biggest getTime() is returned.
@@ -1201,16 +1226,28 @@ PcodeOp *PcodeOpBank::fallthru(const PcodeOp *op) const
     return op->nextOp();
 }
 
-PcodeOpTree::const_iterator PcodeOpBank::begin(const Address &addr) const
+PcodeOpTree::const_iterator PcodeOpBank::beginMain(const Address &addr) const
 
 {
   return optree.lower_bound(SeqNum(addr,0));
 }
 
-PcodeOpTree::const_iterator PcodeOpBank::end(const Address &addr) const
+PcodeOpTree::const_iterator PcodeOpBank::endMain(const Address &addr) const
 
 {
   return optree.upper_bound(SeqNum(addr,~((uintm)0)));
+}
+
+PcodeOpTree::const_iterator PcodeOpBank::beginIndirect(const Address &addr) const
+
+{
+  return alttree.lower_bound(SeqNum(addr,0));
+}
+
+PcodeOpTree::const_iterator PcodeOpBank::endIndirect(const Address &addr) const
+
+{
+  return alttree.upper_bound(SeqNum(addr,~((uintm)0)));
 }
 
 list<PcodeOp *>::const_iterator PcodeOpBank::begin(OpCode opc) const
@@ -1261,6 +1298,7 @@ void PcodeOpBank::clear(void)
   for(iter=deadandgone.begin();iter!=deadandgone.end();++iter)
     delete *iter;
   optree.clear();
+  alttree.clear();
   alivelist.clear();
   deadlist.clear();
   clearCodeLists();

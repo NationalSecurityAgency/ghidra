@@ -24,11 +24,11 @@ import ghidra.app.plugin.core.compositeeditor.*;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.actions.AbstractFindReferencesToFieldAction;
 import ghidra.app.plugin.core.function.AbstractEditFunctionSignatureDialog;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.FunctionSignature;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 
@@ -456,21 +456,6 @@ public class DataTypeEditorManager implements EditorListener {
 	 */
 	void close() {
 		dismissEditors(null);
-	}
-
-	/**
-	 * Determines whether the indicated domain object can be closed. The user will be prompted
-	 * to save any editor changes. If the user cancels when prompted to save then the domain
-	 * object should not close.
-	 * @param dObj the domain object
-	 * @return true if it can close.
-	 */
-	protected boolean canCloseDomainObject(DomainObject dObj) {
-		if (dObj instanceof Program) {
-			Program p = (Program) dObj;
-			return checkEditors(p.getListing().getDataTypeManager(), true);
-		}
-		return true;
 	}
 
 	public boolean showStructureNumbersInHex() {

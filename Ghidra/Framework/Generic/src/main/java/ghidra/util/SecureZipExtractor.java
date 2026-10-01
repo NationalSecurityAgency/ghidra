@@ -35,7 +35,7 @@ import utilities.util.FileUtilities;
  * <ul>
  * <li><a href="https://en.wikipedia.org/wiki/Directory_traversal_attack">Zip Slip</a></li>
  * <li><a href="https://en.wikipedia.org/wiki/Zip_bomb">Zip Bomb</a></li>
- * 
+ * </ul>
  */
 public class SecureZipExtractor {
 

@@ -34,20 +34,17 @@ import ghidra.program.model.pcode.Varnode;
 
 /**
  * A p-code arithmetic for interpreting p-code and constructing a use-def graph
- * 
  * <p>
  * This is used for intra-block data flow analysis. We leverage the same API as is used for concrete
  * p-code interpretation, but we use it for an abstraction. The type of the interpretation is
  * {@code T:=}{@link JitVal}, which can consist of constants and variables in the use-def graph. The
  * arithmetic must be provided to the {@link JitDataFlowExecutor}. The intra-block portions of the
  * use-def graph are populated as each block is interpreted by the executor.
- * 
  * <p>
  * The general strategy for each of the arithmetic operations is to 1) generate the output SSA
  * variable for the op, 2) generate the op node for the generated output and given inputs, 3) enter
  * the op into the use-def graph as the definition of its output, 4) record the inputs and used by
  * the new op, and finally 5) return the generated output.
- * 
  * <p>
  * There should only need to be one of these per data flow model, not per block.
  */
@@ -92,7 +89,6 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 
 	/**
 	 * Remove {@code amt} bytes from the right of the <em>varnode</em>.
-	 * 
 	 * <p>
 	 * "Right" is considered with respect to the machine endianness. If it is little endian, then
 	 * the byte are shaved from the <em>left</em> of the value. This should be used when getting
@@ -122,7 +118,6 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 
 	/**
 	 * Remove {@code amt} bytes from the left of the <em>varnode</em>.
-	 * 
 	 * <p>
 	 * "Left" is considered with respect to the machine endianness. If it is little endian, then the
 	 * byte are shaved from the <em>right</em> of the value. This should be used when getting values
@@ -177,13 +172,12 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 
 	/**
 	 * Try to produce a simplified {@link JitSynthSubPieceOp} or {@link JitCatenateOp}
-	 * 
 	 * <p>
 	 * This takes an input, subpiece offset, and output variable. If the input variable is the
 	 * result of another subpiece, the result can be a single simplified subpiece. Similarly, if the
 	 * input is the result of a catenation, then the result can be a simplified catenation, or
 	 * possibly subpiece.
-	 * 
+	 * <p>
 	 * If either of these situations applies, and simplification is possible, this returns a
 	 * non-null result, and that result is added to the use-def graph specifying the given output
 	 * variable as the simplified output. Otherwise, the result is null and the caller should create
@@ -221,7 +215,6 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 
 	/**
 	 * Construct the result of taking the subpiece
-	 * 
 	 * <p>
 	 * If the input is another subpiece or a catenation, the result may be simplified. In
 	 * particular, the subpiece of a catenation may be a smaller catenation. No matter the case, the
@@ -265,7 +258,6 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 
 	/**
 	 * Remove {@code amt} bytes from the right of the value.
-	 * 
 	 * <p>
 	 * The value is unaffected by the machine endianness, except to designate the output varnode.
 	 * 
@@ -279,7 +271,6 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 
 	/**
 	 * Remove {@code amt} bytes from the left of the value.
-	 * 
 	 * <p>
 	 * The value is unaffected by the machine endianness, except to designate the output varnode.
 	 * 
@@ -293,7 +284,6 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 
 	/**
 	 * Compute the subpiece of a value.
-	 * 
 	 * <p>
 	 * The result is added to the use-def graph. The output varnode is computed from the input
 	 * varnode and the subpiece parameters. This is used to handle variable retrieval when an access
@@ -303,7 +293,6 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 	 * MOV RAX, qword ptr [...]
 	 * MOV dword ptr [...], EAX
 	 * </pre>
-	 * 
 	 * <p>
 	 * The second line reads {@code EAX}, which consists of only the lower part of {@code RAX}.
 	 * Thus, we synthesize a subpiece op. These are distinct from an actual {@link PcodeOp#SUBPIECE}
@@ -329,7 +318,6 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 
 	/**
 	 * Construct the catenation of the given values to form the given output varnode.
-	 * 
 	 * <p>
 	 * The result is added to the use-def graph. This is used to handle variable retrieval when the
 	 * pattern of accesses indicates catenation. Consider the x86 assembly:
@@ -339,7 +327,6 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 	 * MOV AL, byte ptr [...]
 	 * MOV word ptr [...], AX
 	 * </pre>
-	 * 
 	 * <p>
 	 * On the third line, the value in {@code AX} is the catenation of whatever values were written
 	 * into {@code AH} and {@code AL}. Thus, we synthesize a catenation op node in the use-def
@@ -377,7 +364,6 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 
 	/**
 	 * {@inheritDoc}
-	 * 
 	 * <p>
 	 * We override this to record the {@link JitStoreOp store} op into the use-def graph. As
 	 * "output" we just return {@code inValue}. The executor will call
@@ -397,7 +383,6 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 
 	/**
 	 * {@inheritDoc}
-	 * 
 	 * <p>
 	 * We override this to record the {@link JitLoadOp load} op into the use-def graph. For our
 	 * {@code inValue}, the {@link JitDataFlowState state} will have just returned the

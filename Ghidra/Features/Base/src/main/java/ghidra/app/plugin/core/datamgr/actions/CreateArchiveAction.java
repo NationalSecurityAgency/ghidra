@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,10 +22,10 @@ import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.OptionDialog;
 import docking.widgets.tree.GTreeNode;
+import ghidra.app.plugin.core.datamgr.ArchiveFileChooser;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.archive.Archive;
-import ghidra.app.plugin.core.datamgr.archive.ArchiveFileChooser;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
+import ghidra.program.model.dtarchive.FileDataTypeArchive;
 import ghidra.util.Msg;
 
 public class CreateArchiveAction extends DockingAction {
@@ -71,14 +71,14 @@ public class CreateArchiveAction extends DockingAction {
 			Msg.trace(this, "\toverwriting file!");
 			file.delete();
 		}
-		Archive newArchive = plugin.getDataTypeManagerHandler().createArchive(file);
+		FileDataTypeArchive newArchive = plugin.getArchiveManager().createFileArchive(file);
 		if (newArchive != null) {
 			Msg.trace(this, "Created new archive: " + newArchive.getName());
 			selectNewArchive(newArchive, gTree);
 		}
 	}
 
-	private void selectNewArchive(final Archive archive, final DataTypeArchiveGTree gTree) {
+	private void selectNewArchive(FileDataTypeArchive archive, DataTypeArchiveGTree gTree) {
 		GTreeNode rootNode = gTree.getModelRoot();
 		gTree.setSelectedNodeByNamePath(new String[] { rootNode.getName(), archive.getName() });
 	}

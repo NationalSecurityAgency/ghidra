@@ -50,7 +50,7 @@ public class ManagedDomainObject<T extends DomainObject> implements AutoCloseabl
 
 	public ManagedDomainObject(DomainFile file, Class<T> type, TaskMonitor monitor)
 			throws VersionException, CancelledException, IOException {
-		state.obj = type.cast(file.getDomainObject(state, false, false, monitor));
+		state.obj = type.cast(file.getDomainObject(state, true, false, monitor));
 		CLEANER.register(this, state);
 	}
 

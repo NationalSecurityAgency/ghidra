@@ -177,6 +177,10 @@ public class OpenVersionedFileDialog<T extends DomainObject> extends AbstractDat
 		return super.getDomainFolder();
 	}
 
+	public void showHistory() {
+		showHistoryPanel(true);
+	}
+
 	protected JPanel buildMainPanel() {
 		historyButton = new JButton("History>>");
 		historyButton.addActionListener(e -> showHistoryPanel(!historyIsShowing));
@@ -448,4 +452,5 @@ public class OpenVersionedFileDialog<T extends DomainObject> extends AbstractDat
 		}
 
 	}
+
 }

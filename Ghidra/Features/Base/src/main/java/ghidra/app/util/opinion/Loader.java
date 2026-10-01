@@ -62,7 +62,7 @@ public interface Loader extends ExtensionPoint, Comparable<Loader> {
 		SystemUtilities.getBooleanProperty("disable.loader.logging", false);
 
 	/**
-	 * A {@link Loader} configuration
+	 * Generic settings acquired from the importer, used to configure the load.
 	 * 
 	 * @param provider The bytes to load.
 	 * @param importName The name for the primary {@link Loaded} {@link DomainObject}. Path 
@@ -79,7 +79,7 @@ public interface Loader extends ExtensionPoint, Comparable<Loader> {
 	 * @param mirrorFsLayout True if the filesystem layout should be mirrored when 
 	 *   {@link LoadResults#save(TaskMonitor) saving}; otherwise, false
 	 * @param loadSpec The {@link LoadSpec} to use during load.
-	 * @param options The load options.
+	 * @param options Loader-specific options (could be null).
 	 * @param consumer A reference to the object "consuming" the returned {@link LoadResults}, used
 	 *   to ensure the underlying {@link Program}s are only closed when every consumer is done
 	 *   with it (see {@link LoadResults#close()}).

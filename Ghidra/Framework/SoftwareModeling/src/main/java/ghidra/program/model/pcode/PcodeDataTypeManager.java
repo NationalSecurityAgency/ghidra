@@ -17,6 +17,7 @@ package ghidra.program.model.pcode;
 
 import static ghidra.program.model.pcode.AttributeId.*;
 import static ghidra.program.model.pcode.ElementId.*;
+import static ghidra.program.model.pcode.MetaDataType.*;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -34,7 +35,6 @@ import ghidra.program.model.lang.DecompilerLanguage;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.NameTransformer;
 import ghidra.util.UniversalID;
-import ghidra.xml.XmlParseException;
 
 /**
  *
@@ -53,32 +53,18 @@ public class PcodeDataTypeManager {
 	private static final long DEFAULT_DECOMPILER_ID = 0xC000000000000000L;	// ID for "undefined" (decompiler side)
 	private static final long CODE_DECOMPILER_ID = 0xE000000000000001L;		// ID for internal "code" data-type
 
-	public static final int TYPE_VOID = 14;		// Standard "void" type, absence of type
-	public static final int TYPE_UNKNOWN = 12;		// An unknown low-level type. Treated as an unsigned integer.
-	public static final int TYPE_INT = 11;		// Signed integer. Signed is considered less specific than unsigned in C
-	public static final int TYPE_UINT = 10;		// Unsigned integer
-	public static final int TYPE_BOOL = 9;		// Boolean
-	public static final int TYPE_CODE = 8;		// Data is actual executable code
-	public static final int TYPE_FLOAT = 7;		// Floating-point
-
-	public static final int TYPE_PTR = 6;		// Pointer data-type
-	public static final int TYPE_PTRREL = 5;	// Pointer relative to another data-type (specialization of TYPE_PTR)
-	public static final int TYPE_ARRAY = 4;		// Array data-type, made up of a sequence of "element" datatype
-	public static final int TYPE_STRUCT = 3;	// Structure data-type, made up of component datatypes
-	public static final int TYPE_UNION = 2;		// An overlapping union of multiple datatypes
-
 	/**
 	 * A mapping between a DataType and its (name,id) on the decompiler side
 	 */
 	private static class TypeMap {
 		public DataType dt;			// Full datatype object
 		public String name;			// Name of the datatype on decompiler side
-		public String metatype;		// extra decompiler metatype information for the type
+		public MetaDataType metatype;		// extra decompiler metatype information for the type
 		public boolean isChar;		// Is this a character data-type
 		public boolean isUtf;		// Is this a UTF encoded character data-type
 		public long id;				// Calculated id for type
 
-		public TypeMap(DecompilerLanguage lang, BuiltIn d, String meta, boolean isChar,
+		public TypeMap(DecompilerLanguage lang, BuiltIn d, MetaDataType meta, boolean isChar,
 				boolean isUtf, DataTypeManager manager) {
 			dt = d;
 			name = d.getDecompilerDisplayName(lang);
@@ -88,7 +74,8 @@ public class PcodeDataTypeManager {
 			id = manager.getID(d.clone(manager)) | BUILTIN_ID_HEADER;
 		}
 
-		public TypeMap(DataType d, String nm, String meta, boolean isChar, boolean isUtf, long id) {
+		public TypeMap(DataType d, String nm, MetaDataType meta, boolean isChar, boolean isUtf,
+				long id) {
 			dt = d;
 			name = nm;
 			metatype = meta;
@@ -246,9 +233,9 @@ public class PcodeDataTypeManager {
 			decoder.closeElementSkipping(el);
 			return findBaseType(name, id);
 		}
-		String meta = decoder.readString(ATTRIB_METATYPE);
+		MetaDataType meta = decoder.readDataTypeMeta(ATTRIB_METATYPE);
 		DataType restype = null;
-		if (meta.equals("ptr")) {
+		if (meta == TYPE_PTR) {
 			int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
 			if (decoder.peekElement() != 0) {
 				DataType dt = decodeDataType(decoder);
@@ -257,7 +244,7 @@ public class PcodeDataTypeManager {
 				restype = new PointerDataType(dt, useDefaultSize ? -1 : size, progDataTypes);
 			}
 		}
-		else if (meta.equals("array")) {
+		else if (meta == TYPE_ARRAY) {
 			int arrsize = (int) decoder.readSignedInteger(ATTRIB_ARRAYSIZE);
 			if (decoder.peekElement() != 0) {
 				DataType dt = decodeDataType(decoder);
@@ -267,11 +254,11 @@ public class PcodeDataTypeManager {
 				restype = new ArrayDataType(dt, arrsize, dt.getLength(), progDataTypes);
 			}
 		}
-		else if (meta.equals("spacebase")) {		// Typically the type of "the whole stack"
+		else if (meta == TYPE_SPACEBASE) {		// Typically the type of "the whole stack"
 			decoder.closeElementSkipping(el);  		// get rid of unused "addr" element
 			return voidDt;
 		}
-		else if (meta.equals("struct")) {
+		else if (meta == TYPE_STRUCT) {
 			// We reach here if the decompiler invents a structure, apparently
 			// this is a band-aid so that we don't blow up
 			// just make an undefined data type of the appropriate size
@@ -279,30 +266,30 @@ public class PcodeDataTypeManager {
 			decoder.closeElementSkipping(el);
 			return Undefined.getUndefinedDataType(size);
 		}
-		else if (meta.equals("int")) {
+		else if (meta == TYPE_INT) {
 			int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
 			decoder.closeElement(el);
 			return AbstractIntegerDataType.getSignedDataType(size, progDataTypes);
 		}
-		else if (meta.equals("uint")) {
+		else if (meta == TYPE_UINT) {
 			int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
 			decoder.closeElement(el);
 			return AbstractIntegerDataType.getUnsignedDataType(size, progDataTypes);
 		}
-		else if (meta.equals("float")) {
+		else if (meta == TYPE_FLOAT) {
 			int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
 			decoder.closeElement(el);
 			// NOTE: Float lookup by length must use "raw" encoding size since
 			return AbstractFloatDataType.getFloatDataType(size, progDataTypes);
 		}
-		else if (meta.equals("partunion")) {
+		else if (meta == TYPE_PARTIALUNION) {
 			int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
 			int offset = (int) decoder.readSignedInteger(ATTRIB_OFFSET);
 			DataType dt = decodeDataType(decoder);
 			decoder.closeElement(el);
 			return new PartialUnion(progDataTypes, dt, offset, size);
 		}
-		else if (meta.equals("partenum")) {
+		else if (meta == TYPE_PARTIALENUM) {
 			int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
 //			int offset = (int) decoder.readSignedInteger(ATTRIB_OFFSET);
 //			DataType dt = decodeDataType(decoder);
@@ -377,7 +364,7 @@ public class PcodeDataTypeManager {
 		else {
 			encodeNameIdAttributes(encoder, typeDef);	// Use the typedef name and id
 		}
-		encoder.writeString(ATTRIB_METATYPE, "ptr");
+		encoder.writeDataTypeMeta(ATTRIB_METATYPE, TYPE_PTR);
 		int ptrLen = type.getLength();
 		if (ptrLen <= 0) {
 			ptrLen = size;
@@ -445,7 +432,7 @@ public class PcodeDataTypeManager {
 			AddressSpace space) throws IOException {
 		Pointer pointer = (Pointer) type.getBaseDataType();
 		encoder.openElement(ELEM_TYPE);
-		encoder.writeString(ATTRIB_METATYPE, "ptrrel");
+		encoder.writeDataTypeMeta(ATTRIB_METATYPE, TYPE_PTRREL);
 		encodeNameIdAttributes(encoder, type);
 		encoder.writeSignedInteger(ATTRIB_SIZE, pointer.getLength());
 		if (pointerWordSize != 1) {
@@ -483,7 +470,7 @@ public class PcodeDataTypeManager {
 		if (sz == 0) {
 			sz = size;
 		}
-		encoder.writeString(ATTRIB_METATYPE, "array");
+		encoder.writeDataTypeMeta(ATTRIB_METATYPE, TYPE_ARRAY);
 		encoder.writeSignedInteger(ATTRIB_SIZE, sz);
 		encoder.writeSignedInteger(ATTRIB_ARRAYSIZE, type.getNumElements());
 		encodeTypeRef(encoder, type.getDataType(), type.getElementLength());
@@ -505,7 +492,7 @@ public class PcodeDataTypeManager {
 			type = new StructureDataType(type.getCategoryPath(), type.getName(), 1);
 			sz = type.getLength();
 		}
-		encoder.writeString(ATTRIB_METATYPE, "struct");
+		encoder.writeDataTypeMeta(ATTRIB_METATYPE, TYPE_STRUCT);
 		encoder.writeSignedInteger(ATTRIB_SIZE, sz);
 		encoder.writeSignedInteger(ATTRIB_ALIGNMENT, type.getAlignment());
 		type = ClassUtils.getReplacementType(type, TYPE_REPLACEMENT_ENABLED);
@@ -551,7 +538,7 @@ public class PcodeDataTypeManager {
 	public void encodeUnion(Encoder encoder, Union unionType) throws IOException {
 		encoder.openElement(ELEM_TYPE);
 		encodeNameIdAttributes(encoder, unionType);
-		encoder.writeString(ATTRIB_METATYPE, "union");
+		encoder.writeDataTypeMeta(ATTRIB_METATYPE, TYPE_UNION);
 		encoder.writeSignedInteger(ATTRIB_SIZE, unionType.getLength());
 		encoder.writeSignedInteger(ATTRIB_ALIGNMENT, unionType.getAlignment());
 		DataTypeComponent[] comps = unionType.getDefinedComponents();
@@ -584,9 +571,9 @@ public class PcodeDataTypeManager {
 	private void encodeEnum(Encoder encoder, Enum type, int size) throws IOException {
 		encoder.openElement(ELEM_TYPE);
 		encodeNameIdAttributes(encoder, type);
-		String metatype = type.isSigned() ? "enum_int" : "enum_uint";
+		MetaDataType metatype = type.isSigned() ? TYPE_ENUM_INT : TYPE_ENUM_UINT;
 		String[] names = type.getNames();
-		encoder.writeString(ATTRIB_METATYPE, metatype);
+		encoder.writeDataTypeMeta(ATTRIB_METATYPE, metatype);
 		encoder.writeSignedInteger(ATTRIB_SIZE, type.getLength());
 		for (String name : names) {
 			encoder.openElement(ELEM_VAL);
@@ -613,7 +600,7 @@ public class PcodeDataTypeManager {
 		if (sz <= 0) {
 			sz = size;
 		}
-		encoder.writeString(ATTRIB_METATYPE, signed ? "int" : "uint");
+		encoder.writeDataTypeMeta(ATTRIB_METATYPE, signed ? TYPE_INT : TYPE_UINT);
 		encoder.writeSignedInteger(ATTRIB_SIZE, sz);
 		if (sz == 1) {
 			encoder.writeBool(ATTRIB_CHAR, true);
@@ -633,7 +620,7 @@ public class PcodeDataTypeManager {
 	private void encodeWideCharDataType(Encoder encoder, DataType type) throws IOException {
 		encoder.openElement(ELEM_TYPE);
 		encodeNameIdAttributes(encoder, type);
-		encoder.writeString(ATTRIB_METATYPE, "int");
+		encoder.writeDataTypeMeta(ATTRIB_METATYPE, TYPE_INT);
 		encoder.writeSignedInteger(ATTRIB_SIZE, type.getLength());
 		encoder.writeBool(ATTRIB_UTF, true);
 		encoder.closeElement(ELEM_TYPE);
@@ -648,7 +635,7 @@ public class PcodeDataTypeManager {
 	private void encodeStringDataType(Encoder encoder, int size) throws IOException {
 		encoder.openElement(ELEM_TYPE);
 		encoder.writeString(ATTRIB_NAME, "");
-		encoder.writeString(ATTRIB_METATYPE, "array");
+		encoder.writeDataTypeMeta(ATTRIB_METATYPE, TYPE_ARRAY);
 		encoder.writeSignedInteger(ATTRIB_SIZE, size);
 		encoder.writeSignedInteger(ATTRIB_ARRAYSIZE, size);
 		encodeCharTypeRef(encoder, dataOrganization.getCharSize());
@@ -664,7 +651,7 @@ public class PcodeDataTypeManager {
 	private void encodeStringUTF8DataType(Encoder encoder, int size) throws IOException {
 		encoder.openElement(ELEM_TYPE);
 		encoder.writeString(ATTRIB_NAME, "");
-		encoder.writeString(ATTRIB_METATYPE, "array");
+		encoder.writeDataTypeMeta(ATTRIB_METATYPE, TYPE_ARRAY);
 		encoder.writeSignedInteger(ATTRIB_SIZE, size);
 		encoder.writeSignedInteger(ATTRIB_ARRAYSIZE, size);
 		encodeCharTypeRef(encoder, 1); // TODO: Need to ensure that UTF8 decoding applies
@@ -680,7 +667,7 @@ public class PcodeDataTypeManager {
 	private void encodeUnicodeDataType(Encoder encoder, int size) throws IOException {
 		encoder.openElement(ELEM_TYPE);
 		encoder.writeString(ATTRIB_NAME, "");
-		encoder.writeString(ATTRIB_METATYPE, "array");
+		encoder.writeDataTypeMeta(ATTRIB_METATYPE, TYPE_ARRAY);
 		encoder.writeSignedInteger(ATTRIB_SIZE, size);
 		encoder.writeSignedInteger(ATTRIB_ARRAYSIZE, size / 2);
 		encodeCharTypeRef(encoder, 2);
@@ -696,7 +683,7 @@ public class PcodeDataTypeManager {
 	private void encodeUnicode32DataType(Encoder encoder, int size) throws IOException {
 		encoder.openElement(ELEM_TYPE);
 		encoder.writeString(ATTRIB_NAME, "");
-		encoder.writeString(ATTRIB_METATYPE, "array");
+		encoder.writeDataTypeMeta(ATTRIB_METATYPE, TYPE_ARRAY);
 		encoder.writeSignedInteger(ATTRIB_SIZE, size);
 		encoder.writeSignedInteger(ATTRIB_ARRAYSIZE, size / 4);
 		encodeCharTypeRef(encoder, 4);
@@ -713,7 +700,7 @@ public class PcodeDataTypeManager {
 			throws IOException {
 		encoder.openElement(ELEM_TYPE);
 		encodeNameIdAttributes(encoder, type);
-		encoder.writeString(ATTRIB_METATYPE, "code");
+		encoder.writeDataTypeMeta(ATTRIB_METATYPE, TYPE_CODE);
 		encoder.writeSignedInteger(ATTRIB_SIZE, 1);		// Force size of 1
 		CompilerSpec cspec = program.getCompilerSpec();
 		FunctionPrototype fproto = new FunctionPrototype(type, cspec, voidInputIsVarargs);
@@ -730,7 +717,7 @@ public class PcodeDataTypeManager {
 	private void encodeBooleanDataType(Encoder encoder, DataType type) throws IOException {
 		encoder.openElement(ELEM_TYPE);
 		encodeNameIdAttributes(encoder, type);
-		encoder.writeString(ATTRIB_METATYPE, "bool");
+		encoder.writeDataTypeMeta(ATTRIB_METATYPE, TYPE_BOOL);
 		encoder.writeSignedInteger(ATTRIB_SIZE, type.getLength());
 		encoder.closeElement(ELEM_TYPE);
 	}
@@ -751,7 +738,7 @@ public class PcodeDataTypeManager {
 			sz = size;
 		}
 		encodeNameIdAttributes(encoder, type);
-		encoder.writeString(ATTRIB_METATYPE, signed ? "int" : "uint");
+		encoder.writeDataTypeMeta(ATTRIB_METATYPE, signed ? TYPE_INT : TYPE_UINT);
 		encoder.writeSignedInteger(ATTRIB_SIZE, sz);
 		encoder.closeElement(ELEM_TYPE);
 	}
@@ -765,7 +752,7 @@ public class PcodeDataTypeManager {
 	private void encodeAbstractFloatDataType(Encoder encoder, DataType type) throws IOException {
 		encoder.openElement(ELEM_TYPE);
 		encodeNameIdAttributes(encoder, type);
-		encoder.writeString(ATTRIB_METATYPE, "float");
+		encoder.writeDataTypeMeta(ATTRIB_METATYPE, TYPE_FLOAT);
 		encoder.writeSignedInteger(ATTRIB_SIZE, type.getLength());
 		encoder.closeElement(ELEM_TYPE);
 	}
@@ -787,11 +774,11 @@ public class PcodeDataTypeManager {
 		}
 		encodeNameIdAttributes(encoder, type);
 		if (sz < 16) {
-			encoder.writeString(ATTRIB_METATYPE, "unknown");
+			encoder.writeDataTypeMeta(ATTRIB_METATYPE, TYPE_UNKNOWN);
 		}
 		else {
 			// Build an "opaque" structure with no fields
-			encoder.writeString(ATTRIB_METATYPE, "struct");
+			encoder.writeDataTypeMeta(ATTRIB_METATYPE, TYPE_STRUCT);
 		}
 		encoder.writeSignedInteger(ATTRIB_SIZE, sz);
 		if (isVarLength) {
@@ -810,7 +797,7 @@ public class PcodeDataTypeManager {
 	private void encodeOpaqueString(Encoder encoder, DataType type, int size) throws IOException {
 		encoder.openElement(ELEM_TYPE);
 		encodeNameIdAttributes(encoder, type);
-		encoder.writeString(ATTRIB_METATYPE, "struct");
+		encoder.writeDataTypeMeta(ATTRIB_METATYPE, TYPE_STRUCT);
 		encoder.writeSignedInteger(ATTRIB_SIZE, size);
 		encoder.writeBool(ATTRIB_OPAQUESTRING, true);
 		encoder.writeBool(ATTRIB_VARLENGTH, true);
@@ -828,7 +815,7 @@ public class PcodeDataTypeManager {
 		encoder.writeSignedInteger(ATTRIB_OFFSET, 1);
 		encoder.openElement(ELEM_TYPE);
 		encoder.writeString(ATTRIB_NAME, "");
-		encoder.writeString(ATTRIB_METATYPE, "array");
+		encoder.writeDataTypeMeta(ATTRIB_METATYPE, TYPE_ARRAY);
 		encoder.writeSignedInteger(ATTRIB_SIZE, size);
 		encoder.writeSignedInteger(ATTRIB_ARRAYSIZE, size);
 		encoder.openElement(ELEM_TYPEREF);
@@ -848,12 +835,12 @@ public class PcodeDataTypeManager {
 	 */
 	public void encodeCompositePlaceholder(Encoder encoder, DataType type)
 			throws IOException {
-		String metaString;
+		MetaDataType metatype;
 		if (type instanceof Structure) {
-			metaString = "struct";
+			metatype = TYPE_STRUCT;
 		}
 		else if (type instanceof Union) {
-			metaString = "union";
+			metatype = TYPE_UNION;
 		}
 		else {
 			return; //empty.  Could throw AssertException.
@@ -861,7 +848,7 @@ public class PcodeDataTypeManager {
 		encoder.openElement(ELEM_TYPE);
 		encoder.writeString(ATTRIB_NAME, type.getDisplayName());
 		encoder.writeUnsignedInteger(ATTRIB_ID, progDataTypes.getID(type));
-		encoder.writeString(ATTRIB_METATYPE, metaString);
+		encoder.writeDataTypeMeta(ATTRIB_METATYPE, metatype);
 		encoder.writeSignedInteger(ATTRIB_SIZE, type.getLength());
 		encoder.writeSignedInteger(ATTRIB_ALIGNMENT, type.getAlignment());
 		encoder.writeBool(ATTRIB_INCOMPLETE, true);
@@ -1189,41 +1176,41 @@ public class PcodeDataTypeManager {
 	private void generateCoreTypes() {
 		voidDt = new VoidDataType(progDataTypes);
 		coreBuiltin = new HashMap<Long, TypeMap>();
-		TypeMap type = new TypeMap(displayLanguage, VoidDataType.dataType, "void", false, false,
+		TypeMap type = new TypeMap(displayLanguage, VoidDataType.dataType, TYPE_VOID, false, false,
 			builtInDataTypes);
 		coreBuiltin.put(type.id, type);
 
 		for (BuiltIn dt : Undefined.getUndefinedDataTypes()) {
-			type = new TypeMap(displayLanguage, dt, "unknown", false, false, builtInDataTypes);
+			type = new TypeMap(displayLanguage, dt, TYPE_UNKNOWN, false, false, builtInDataTypes);
 			coreBuiltin.put(type.id, type);
 		}
 		for (BuiltIn dt : AbstractIntegerDataType.getSignedDataTypes(progDataTypes)) {
-			type = new TypeMap(displayLanguage, dt, "int", false, false, builtInDataTypes);
+			type = new TypeMap(displayLanguage, dt, TYPE_INT, false, false, builtInDataTypes);
 			coreBuiltin.put(type.id, type);
 		}
 		for (BuiltIn dt : AbstractIntegerDataType.getUnsignedDataTypes(progDataTypes)) {
-			type = new TypeMap(displayLanguage, dt, "uint", false, false, builtInDataTypes);
+			type = new TypeMap(displayLanguage, dt, TYPE_UINT, false, false, builtInDataTypes);
 			coreBuiltin.put(type.id, type);
 		}
 		for (BuiltIn dt : AbstractFloatDataType.getFloatDataTypes(progDataTypes)) {
-			type = new TypeMap(displayLanguage, dt, "float", false, false, builtInDataTypes);
+			type = new TypeMap(displayLanguage, dt, TYPE_FLOAT, false, false, builtInDataTypes);
 			coreBuiltin.put(type.id, type);
 		}
 
-		type = new TypeMap(DataType.DEFAULT, "code", "code", false, false, CODE_DECOMPILER_ID);
+		type = new TypeMap(DataType.DEFAULT, "code", TYPE_CODE, false, false, CODE_DECOMPILER_ID);
 		coreBuiltin.put(type.id, type);
 
 		// Set "char" datatype
 		BuiltIn charDataType = new CharDataType(progDataTypes);
 
-		String charMetatype = null;
+		MetaDataType charMetatype;
 		boolean isChar = false;
 		boolean isUtf = false;
 		if (charDataType instanceof CharDataType && ((CharDataType) charDataType).isSigned()) {
-			charMetatype = "int";
+			charMetatype = TYPE_INT;
 		}
 		else {
-			charMetatype = "uint";
+			charMetatype = TYPE_UINT;
 		}
 		if (charDataType.getLength() == 1) {
 			isChar = true;
@@ -1237,20 +1224,21 @@ public class PcodeDataTypeManager {
 
 		// Set up the "wchar_t" datatype
 		WideCharDataType wideDataType = new WideCharDataType(progDataTypes);
-		wCharMap = new TypeMap(displayLanguage, wideDataType, "int", false, true, builtInDataTypes);
+		wCharMap =
+			new TypeMap(displayLanguage, wideDataType, TYPE_INT, false, true, builtInDataTypes);
 		coreBuiltin.put(wCharMap.id, wCharMap);
 
 		if (wideDataType.getLength() != 2) {
-			wChar16Map = new TypeMap(displayLanguage, new WideChar16DataType(progDataTypes), "int",
-				false, true, builtInDataTypes);
+			wChar16Map = new TypeMap(displayLanguage, new WideChar16DataType(progDataTypes),
+				TYPE_INT, false, true, builtInDataTypes);
 			coreBuiltin.put(wChar16Map.id, wChar16Map);
 		}
 		else {
 			wChar16Map = wCharMap;
 		}
 		if (wideDataType.getLength() != 4) {
-			wChar32Map = new TypeMap(displayLanguage, new WideChar32DataType(progDataTypes), "int",
-				false, true, builtInDataTypes);
+			wChar32Map = new TypeMap(displayLanguage, new WideChar32DataType(progDataTypes),
+				TYPE_INT, false, true, builtInDataTypes);
 			coreBuiltin.put(wChar32Map.id, wChar32Map);
 		}
 		else {
@@ -1258,7 +1246,8 @@ public class PcodeDataTypeManager {
 		}
 
 		BuiltIn boolDataType = new BooleanDataType(progDataTypes);
-		type = new TypeMap(displayLanguage, boolDataType, "bool", false, false, builtInDataTypes);
+		type =
+			new TypeMap(displayLanguage, boolDataType, TYPE_BOOL, false, false, builtInDataTypes);
 		coreBuiltin.put(type.id, type);
 
 		// Set aside the "byte" builtin for encoding byte references
@@ -1278,7 +1267,7 @@ public class PcodeDataTypeManager {
 			encoder.openElement(ELEM_TYPE);
 			encoder.writeString(ATTRIB_NAME, typeMap.name);
 			encoder.writeSignedInteger(ATTRIB_SIZE, typeMap.dt.getLength());
-			encoder.writeString(ATTRIB_METATYPE, typeMap.metatype);
+			encoder.writeDataTypeMeta(ATTRIB_METATYPE, typeMap.metatype);
 			if (typeMap.isChar) {
 				encoder.writeBool(ATTRIB_CHAR, true);
 			}
@@ -1289,161 +1278,5 @@ public class PcodeDataTypeManager {
 			encoder.closeElement(ELEM_TYPE);
 		}
 		encoder.closeElement(ELEM_CORETYPES);
-	}
-
-	/**
-	 * Get the decompiler meta-type associated with a data-type.
-	 * @param tp is the data-type
-	 * @return the meta-type
-	 */
-	public static int getMetatype(DataType tp) {
-		if (tp instanceof TypeDef) {
-			tp = ((TypeDef) tp).getBaseDataType();
-		}
-		if (tp instanceof Undefined) {
-			return TYPE_UNKNOWN;
-		}
-		if (tp instanceof AbstractFloatDataType) {
-			return TYPE_FLOAT;
-		}
-		if (tp instanceof Pointer) {
-			return TYPE_PTR;
-		}
-		if (tp instanceof BooleanDataType) {
-			return TYPE_BOOL;
-		}
-		if (tp instanceof AbstractSignedIntegerDataType) {
-			return TYPE_INT;
-		}
-		if (tp instanceof AbstractUnsignedIntegerDataType) {
-			return TYPE_UINT;
-		}
-		if (tp instanceof Structure) {
-			return TYPE_STRUCT;
-		}
-		if (tp instanceof Union) {
-			return TYPE_UNION;
-		}
-		if (tp instanceof Array) {
-			return TYPE_ARRAY;
-		}
-		if (tp instanceof CharDataType) {
-			return ((CharDataType) tp).isSigned() ? TYPE_INT : TYPE_UINT;
-		}
-		if (tp instanceof WideCharDataType || tp instanceof WideChar16DataType ||
-			tp instanceof WideChar32DataType) {
-			return TYPE_INT;
-		}
-		if (tp instanceof Enum) {
-			return ((Enum) tp).isSigned() ? TYPE_INT : TYPE_UINT;
-		}
-		if (tp instanceof FunctionDefinition) {
-			return TYPE_CODE;
-		}
-		return TYPE_UNKNOWN;
-	}
-
-	/**
-	 * Convert an XML marshaling string to a metatype code
-	 * @param metaString is the string
-	 * @return the metatype code
-	 * @throws XmlParseException if the string does not represent a valid metatype
-	 */
-	public static int getMetatype(String metaString) throws XmlParseException {
-		switch (metaString.charAt(0)) {
-			case 'p':
-				if (metaString.equals("ptr")) {
-					return TYPE_PTR;
-				}
-				else if (metaString.equals("ptrrel")) {
-					return TYPE_PTRREL;
-				}
-				break;
-			case 'a':
-				if (metaString.equals("array")) {
-					return TYPE_ARRAY;
-				}
-				break;
-			case 's':
-				if (metaString.equals("struct")) {
-					return TYPE_STRUCT;
-				}
-				break;
-			case 'u':
-				if (metaString.equals("unknown")) {
-					return TYPE_UNKNOWN;
-				}
-				else if (metaString.equals("uint")) {
-					return TYPE_UINT;
-				}
-				else if (metaString.equals("union")) {
-					return TYPE_UNION;
-				}
-				break;
-			case 'i':
-				if (metaString.equals("int")) {
-					return TYPE_INT;
-				}
-				break;
-			case 'f':
-				if (metaString.equals("float")) {
-					return TYPE_FLOAT;
-				}
-				break;
-			case 'b':
-				if (metaString.equals("bool")) {
-					return TYPE_BOOL;
-				}
-				break;
-			case 'c':
-				if (metaString.equals("code")) {
-					return TYPE_CODE;
-				}
-				break;
-			case 'v':
-				if (metaString.equals("void")) {
-					return TYPE_VOID;
-				}
-				break;
-			default:
-				break;
-		}
-		throw new XmlParseException("Unknown metatype: " + metaString);
-	}
-
-	/**
-	 * Convert a decompiler metatype code to a string for XML marshaling
-	 * @param meta is the metatype
-	 * @return the marshaling string
-	 * @throws IOException is the metatype is invalid
-	 */
-	public static String getMetatypeString(int meta) throws IOException {
-		switch (meta) {
-			case TYPE_VOID:
-				return "void";
-			case TYPE_UNKNOWN:
-				return "unknown";
-			case TYPE_INT:
-				return "int";
-			case TYPE_UINT:
-				return "uint";
-			case TYPE_BOOL:
-				return "bool";
-			case TYPE_CODE:
-				return "code";
-			case TYPE_FLOAT:
-				return "float";
-			case TYPE_PTR:
-				return "ptr";
-			case TYPE_PTRREL:
-				return "ptrrel";
-			case TYPE_ARRAY:
-				return "array";
-			case TYPE_STRUCT:
-				return "struct";
-			case TYPE_UNION:
-				return "union";
-		}
-		throw new IOException("Unknown metatype");
 	}
 }

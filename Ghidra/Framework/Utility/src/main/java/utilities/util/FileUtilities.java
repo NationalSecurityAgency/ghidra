@@ -19,9 +19,12 @@ import java.awt.Desktop;
 import java.io.*;
 import java.net.URI;
 import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.FileSystem;
+import java.nio.file.attribute.*;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.*;
@@ -385,8 +388,37 @@ public final class FileUtilities {
 	}
 
 	/**
+	 * Create {@code file} with owner-only permissions and return a stream for writing.
+	 * The stream is opened on the same file handle used to create the file
+	 * (O_CREAT|O_EXCL on POSIX / CREATE_NEW on Windows), so there is no second path
+	 * lookup between creation and write.
+	 * @param file file to be created and written
+	 * @return file output stream
+	 * @throws IOException if operation fails
+	 */
+	public static OutputStream newOwnerPrivateFileOutputStream(File file) throws IOException {
+		Path path = file.toPath();
+
+		if (file.exists() && !file.canWrite()) {
+			file.setWritable(true, true);
+		}
+		Files.deleteIfExists(path);
+
+		Set<OpenOption> opts = Set.of(StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+		try {
+			FileAttribute<Set<PosixFilePermission>> perms =
+				PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------"));
+			return Channels.newOutputStream(FileChannel.open(path, opts, perms));
+		}
+		catch (UnsupportedOperationException e) {
+			// Non-POSIX (Windows): rely on parent-directory ACL, as documented
+			return Channels.newOutputStream(FileChannel.open(path, opts));
+		}
+	}
+
+	/**
 	 * Delete a file or directory and all of its contents
-	 * 
+	 *
 	 * @param dir the directory to delete
 	 * @return true if delete was successful. If false is returned, a partial
 	 *         delete may have occurred.

@@ -27,7 +27,6 @@ import ghidra.program.model.pcode.PcodeOp;
 
 /**
  * An interface that defines arithmetic p-code operations on values of type {@code T}.
- *
  * <p>
  * See {@link BytesPcodeArithmetic} for the typical pattern when implementing an arithmetic. There
  * are generally two cases: 1) Where endianness matters, 2) Where endianness does not matter. The
@@ -90,13 +89,11 @@ public interface PcodeArithmetic<T> {
 
 	/**
 	 * Get the endianness of this arithmetic
-	 * 
 	 * <p>
 	 * Often T is a byte array, or at least represents one abstractly. Ideally, it is an array where
 	 * each element is an abstraction of a byte. If that is the case, then the arithmetic likely has
 	 * to interpret those bytes as integral values according to an endianness. This should return
 	 * that endianness.
-	 * 
 	 * <p>
 	 * If the abstraction has no notion of endianness, return null. In that case, the both
 	 * {@link #fromConst(BigInteger, int, boolean)} and {@link #fromConst(long, int)} must be
@@ -110,7 +107,6 @@ public interface PcodeArithmetic<T> {
 
 	/**
 	 * Apply a unary operator to the given input
-	 * 
 	 * <p>
 	 * Note the sizes of variables are given, because values don't necessarily have an intrinsic
 	 * size. For example, a {@link BigInteger} may have a minimum encoding size, but that does not
@@ -129,7 +125,6 @@ public interface PcodeArithmetic<T> {
 
 	/**
 	 * Apply a unary operator to the given input
-	 * 
 	 * <p>
 	 * This provides the full p-code op, allowing deeper inspection of the code. For example, an
 	 * arithmetic may wish to distinguish immediate (constant) values from variables. By default,
@@ -148,7 +143,6 @@ public interface PcodeArithmetic<T> {
 
 	/**
 	 * Apply a binary operator to the given inputs
-	 * 
 	 * <p>
 	 * Note the sizes of variables are given, because values don't necessarily have an intrinsic
 	 * size. For example, a {@link BigInteger} may have a minimum encoding size, but that does not
@@ -169,7 +163,6 @@ public interface PcodeArithmetic<T> {
 
 	/**
 	 * Apply a binary operator to the given input
-	 * 
 	 * <p>
 	 * This provides the full p-code op, allowing deeper inspection of the code. For example, an
 	 * arithmetic may wish to distinguish immediate (constant) values from variables. By default,
@@ -190,7 +183,6 @@ public interface PcodeArithmetic<T> {
 
 	/**
 	 * Apply the {@link PcodeOp#PTRADD} operator to the given inputs
-	 * 
 	 * <p>
 	 * The "pointer add" op takes three operands: base, index, size; and is used as a more compact
 	 * representation of array index address computation. The {@code size} operand must be constant.
@@ -198,7 +190,6 @@ public interface PcodeArithmetic<T> {
 	 * of its first element is {@code base}. The decompiler would likely render the
 	 * {@link PcodeOp#PTRADD} op as {@code &arr[index]}. An equivalent SLEIGH expression is
 	 * {@code base + index*size}.
-	 * 
 	 * <p>
 	 * NOTE: This op is always a result of decompiler simplification, not low p-code generation, and
 	 * so are not ordinarily used by a {@link PcodeExecutor}.
@@ -221,7 +212,6 @@ public interface PcodeArithmetic<T> {
 
 	/**
 	 * Apply the {@link PcodeOp#PTRSUB} operator to the given inputs
-	 * 
 	 * <p>
 	 * The "pointer subfield" op takes two operands: base, offset; and is used as a more specific
 	 * representation of structure field address computation. Its behavior is exactly equivalent to
@@ -229,7 +219,6 @@ public interface PcodeArithmetic<T> {
 	 * located {@code inOffset} bytes into the structure, and {@code st} has the value {@code base}.
 	 * The decompiler would likely render the {@link PcodeOp#PTRSUB} op as {@code &st->f}. An
 	 * equivalent SLEIGH expression is {@code base + offset}.
-	 * 
 	 * <p>
 	 * NOTE: This op is always a result of decompiler simplification, not low p-code generation, and
 	 * so are not ordinarily used by a {@link PcodeExecutor}.
@@ -247,7 +236,6 @@ public interface PcodeArithmetic<T> {
 
 	/**
 	 * Apply any modifications before a value is stored
-	 * 
 	 * <p>
 	 * This implements any abstractions associated with {@link PcodeOp#STORE}. This is called on the
 	 * offset and the value before the value is actually stored into the state. <b>NOTE:</b> STORE
@@ -264,7 +252,6 @@ public interface PcodeArithmetic<T> {
 
 	/**
 	 * Apply any modifications before a value is stored
-	 * 
 	 * <p>
 	 * This provides the full p-code op, allowing deeper inspection of the code. <b>NOTE:</b> STORE
 	 * ops always quantize the offset.
@@ -282,7 +269,6 @@ public interface PcodeArithmetic<T> {
 
 	/**
 	 * Apply any modifications after a value is loaded
-	 * 
 	 * <p>
 	 * This implements any abstractions associated with {@link PcodeOp#LOAD}. This is called on the
 	 * address/offset and the value after the value is actually loaded from the state. <b>NOTE:</b>
@@ -299,7 +285,6 @@ public interface PcodeArithmetic<T> {
 
 	/**
 	 * Apply any modifications after a value is loaded
-	 * 
 	 * <p>
 	 * This provides the full p-code op, allowing deeper inspection of the code. <b>NOTE:</b> LOAD
 	 * ops always quantize the offset.
@@ -335,6 +320,17 @@ public interface PcodeArithmetic<T> {
 	}
 
 	/**
+	 * Convert a {@code byte} to {@code T}, with signed extension
+	 * 
+	 * @param value the constant value
+	 * @param size the size in bytes
+	 * @return the value
+	 */
+	default T fromConstSigned(byte value, int size) {
+		return fromConstSigned((long) value, size);
+	}
+
+	/**
 	 * Convert a {@code short} to {@code T}, with unsigned extension
 	 * 
 	 * @param value the constant value
@@ -343,6 +339,17 @@ public interface PcodeArithmetic<T> {
 	 */
 	default T fromConst(short value, int size) {
 		return fromConst(Short.toUnsignedLong(value), size);
+	}
+
+	/**
+	 * Convert a {@code short} to {@code T}, with signed extension
+	 * 
+	 * @param value the constant value
+	 * @param size the size in bytes
+	 * @return the value
+	 */
+	default T fromConstSigned(short value, int size) {
+		return fromConst((long) value, size);
 	}
 
 	/**
@@ -357,8 +364,19 @@ public interface PcodeArithmetic<T> {
 	}
 
 	/**
-	 * Convert the given constant concrete value to type {@code T} having the given size.
+	 * Convert an {@code int} to {@code T}, with signed extension
 	 * 
+	 * @param value the constant value
+	 * @param size the size in bytes
+	 * @return the value
+	 */
+	default T fromConstSigned(int value, int size) {
+		return fromConst((long) value, size);
+	}
+
+	/**
+	 * Convert the given constant concrete value to type {@code T} having the given size, with
+	 * unsigned extension.
 	 * <p>
 	 * Note that the size may not be applicable to {@code T}. It is given to ensure the value can be
 	 * held in a variable of that size when passed to downstream operators or stored in the executor
@@ -373,10 +391,28 @@ public interface PcodeArithmetic<T> {
 	}
 
 	/**
-	 * Convert a {@code float} to {@code T}
-	 * 
+	 * Convert the given constant concrete value to type {@code T} having the given size, with
+	 * signed extension.
 	 * <p>
-	 * If size is not {@value Float#BYTES}, bytes are truncated or passed with 0s, according to
+	 * Note that the size may not be applicable to {@code T}. It is given to ensure the value can be
+	 * held in a variable of that size when passed to downstream operators or stored in the executor
+	 * state.
+	 * 
+	 * @param value the constant value
+	 * @param size the size (in bytes) of the variable into which the value is to be stored
+	 * @return the value as a {@code T}
+	 */
+	default T fromConstSigned(long value, int size) {
+		byte[] arr8 = Utils.longToBytes(value, Long.BYTES, getEndian().isBigEndian());
+		byte[] arrFull = BytesPcodeArithmetic.forEndian(getEndian().isBigEndian())
+				.unaryOp(PcodeOp.INT_SEXT, size, Long.BYTES, arr8);
+		return fromConst(arrFull);
+	}
+
+	/**
+	 * Convert a {@code float} to {@code T}
+	 * <p>
+	 * If size is not {@value Float#BYTES}, bytes are truncated or padded with 0s, according to
 	 * machine endianness.
 	 * 
 	 * @param value the constant value
@@ -389,9 +425,8 @@ public interface PcodeArithmetic<T> {
 
 	/**
 	 * Convert a {@code double} to {@code T}
-	 * 
 	 * <p>
-	 * If size is not {@value Double#BYTES}, bytes are truncated or passed with 0s, according to
+	 * If size is not {@value Double#BYTES}, bytes are truncated or padded with 0s, according to
 	 * machine endianness.
 	 * 
 	 * @param value the constant value
@@ -404,9 +439,8 @@ public interface PcodeArithmetic<T> {
 
 	/**
 	 * Convert a {@code boolean} to {@code T}
-	 * 
 	 * <p>
-	 * {@code true} is represented as 1, and {@code false} as 0, padded to the given size.
+	 * {@code true} is represented as 1, and {@code false} as 0, zero extended to the given size.
 	 * 
 	 * @param value the constant value
 	 * @param size the size in bytes
@@ -417,8 +451,8 @@ public interface PcodeArithmetic<T> {
 	}
 
 	/**
-	 * Convert the given constant concrete value to type {@code T} having the given size.
-	 * 
+	 * Convert the given constant concrete value to type {@code T} having the given size, using
+	 * signed extension.
 	 * <p>
 	 * Note that the size may not be applicable to {@code T}. It is given to ensure the value can be
 	 * held in a variable of that size when passed to downstream operators or stored in the executor
@@ -437,7 +471,8 @@ public interface PcodeArithmetic<T> {
 	}
 
 	/**
-	 * Convert the given constant concrete register value to type {@code T}
+	 * Convert the given constant concrete register value to type {@code T}, using unsigned
+	 * extension
 	 * 
 	 * @param value the register value
 	 * @return the value as a {@code T}
@@ -448,8 +483,8 @@ public interface PcodeArithmetic<T> {
 	}
 
 	/**
-	 * Convert the given constant concrete value to type {@code T} having the given size.
-	 * 
+	 * Convert the given constant concrete value to type {@code T} having the given size, using
+	 * signed extension.
 	 * <p>
 	 * The value is assumed <em>not</em> to be for the disassembly context register.
 	 * 
@@ -463,8 +498,7 @@ public interface PcodeArithmetic<T> {
 	}
 
 	/**
-	 * Convert the given concrete address to type {@code T}.
-	 * 
+	 * Convert the given concrete address to type {@code T}, using unsigned extension.
 	 * <p>
 	 * The value will have the pointer size of the address' space. Other than deriving that size,
 	 * the returned value has nothing to do with the address space.
@@ -521,7 +555,6 @@ public interface PcodeArithmetic<T> {
 
 	/**
 	 * Convert, if possible, the given abstract value to a concrete big integer
-	 * 
 	 * <p>
 	 * If the conversion is not possible, throw an exception.
 	 * 
@@ -537,8 +570,7 @@ public interface PcodeArithmetic<T> {
 	}
 
 	/**
-	 * Convert, if possible, the given abstract value to a concrete long
-	 * 
+	 * Convert, if possible, the given abstract value to a concrete long, using unsigned extension.
 	 * <p>
 	 * If the conversion is not possible, throw an exception.
 	 * 
@@ -554,8 +586,28 @@ public interface PcodeArithmetic<T> {
 	}
 
 	/**
-	 * Convert, if possible, the given abstract value to a concrete float
+	 * Convert, if possible, the given abstract value to a concrete long, using signed extension.
+	 * <p>
+	 * If the conversion is not possible, throw an exception.
 	 * 
+	 * @param value the abstract value
+	 * @param purpose the reason why the emulator needs a concrete value
+	 * @return the concrete value
+	 * @throws ConcretionError if the value cannot be made concrete
+	 */
+	default long toLongSigned(T value, Purpose purpose) {
+		byte[] concrete = toConcrete(value, purpose);
+		long u = Utils.bytesToLong(concrete, concrete.length,
+			purpose == Purpose.CONTEXT || getEndian().isBigEndian());
+		int shamt = (Long.BYTES - concrete.length) * 8;
+		if (shamt <= 0) {
+			return u;
+		}
+		return (u << shamt) >> shamt;
+	}
+
+	/**
+	 * Convert, if possible, the given abstract value to a concrete float
 	 * <p>
 	 * If value does not have size {@value Float#BYTES}, it is truncated or padded, according to
 	 * machine endianness, before the raw bits are converted to a float.
@@ -571,7 +623,6 @@ public interface PcodeArithmetic<T> {
 
 	/**
 	 * Convert, if possible, the given abstract value to a concrete double
-	 * 
 	 * <p>
 	 * If value does not have size {@value Double#BYTES}, it is truncated or padded, according to
 	 * machine endianness, before the raw bits are converted to a double.
@@ -599,7 +650,6 @@ public interface PcodeArithmetic<T> {
 
 	/**
 	 * Get the size in bytes, if possible, of the given abstract value
-	 * 
 	 * <p>
 	 * If the abstract value does not conceptually have a size, throw an exception.
 	 * 
@@ -610,7 +660,6 @@ public interface PcodeArithmetic<T> {
 
 	/**
 	 * Get the size in bytes, if possible, of the given abstract value, as an abstract value
-	 * 
 	 * <p>
 	 * The returned size should have a size of {@link #SIZEOF_SIZEOF}.
 	 * 

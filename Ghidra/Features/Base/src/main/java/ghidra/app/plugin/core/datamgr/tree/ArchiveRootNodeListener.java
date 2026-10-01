@@ -24,11 +24,11 @@ public interface ArchiveRootNodeListener {
 	 * Called when a node has been added to the root node
 	 * @param node the added node
 	 */
-	public void archiveNodeAdded(ArchiveNode node);
+	public void archiveNodeAdded(DataTypeStoreNode node);
 
 	/**
 	 * Called when a node is about to be removed from the root node
 	 * @param node the node that is about to be removed
 	 */
-	public void archiveNodeRemoved(ArchiveNode node);
+	public void archiveNodeRemoved(DataTypeStoreNode node);
 }

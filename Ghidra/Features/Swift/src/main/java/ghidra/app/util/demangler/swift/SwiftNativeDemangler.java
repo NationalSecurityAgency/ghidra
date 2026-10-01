@@ -20,6 +20,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
+
+import ghidra.framework.Application;
+import ghidra.framework.OperatingSystem;
+
 /**
  * A class used to launch the Swift native demangler.
  * <p>
@@ -34,7 +39,7 @@ import java.util.stream.Collectors;
  */
 public class SwiftNativeDemangler {
 
-	private String nativeDemanglerCmd;
+	private String nativeDemanglerPath;
 	private boolean standaloneDemanglerBinary;
 	
 	/**
@@ -57,18 +62,25 @@ public class SwiftNativeDemangler {
 	 * @throws IOException if there was a problem finding or running the Swift native demangler
 	 */
 	public SwiftNativeDemangler() throws IOException {
-		List<String> demanglerNames = List.of("swift-demangle", "swift");
+		List<String> demanglerPaths = new ArrayList<>();
+		String envVar = System.getenv("GHIDRA_SWIFT_DEMANGLER");
+		if (StringUtils.isNotBlank(envVar)) {
+			demanglerPaths.add(envVar);
+		}
+		if (OperatingSystem.CURRENT_OPERATING_SYSTEM != OperatingSystem.WINDOWS) {
+			demanglerPaths.add("/usr/bin/swift-demangle");
+			demanglerPaths.add("/usr/bin/swift");
+		}
 		IOException ioe = null;
-		for (String demanglerName : demanglerNames) {
-			nativeDemanglerCmd = demanglerName; // expect swift demangler to be on the PATH
+		for (String path : demanglerPaths) {
 			try {
-				int exitCode =
-					new ProcessBuilder(List.of(nativeDemanglerCmd, "--version")).start().waitFor();
+				Process p = new ProcessBuilder(List.of(path, "--version")).start();
+				int exitCode = p.waitFor();
 				if (exitCode == 0) {
 					ioe = null;
-					standaloneDemanglerBinary =
-						new File(nativeDemanglerCmd).getName().contains("-demangle");
-					break;
+					nativeDemanglerPath = path;
+					standaloneDemanglerBinary = new File(path).getName().contains("-demangle");
+					return;
 				}
 				ioe = new IOException("Native Swift demangler exited with code: " + exitCode);
 			}
@@ -79,9 +91,10 @@ public class SwiftNativeDemangler {
 				ioe = new IOException(e);
 			}
 		}
-		if (ioe != null) {
-			throw ioe;
+		if (ioe == null) {
+			ioe = new IOException("Native Swift demangler not found.");
 		}
+		throw ioe;
 	}
 
 	/**
@@ -139,14 +152,15 @@ public class SwiftNativeDemangler {
 	 */
 	private BufferedReader demangle(String mangled, List<String> options) throws IOException {
 		List<String> command = new ArrayList<>();
-		command.add(nativeDemanglerCmd);
+		command.add(nativeDemanglerPath);
 		if (!standaloneDemanglerBinary) {
 			command.add("demangle");
 		}
 		command.addAll(options);
 		command.add("--"); // indicate end of flags
 		command.add(mangled);
-		Process p = new ProcessBuilder(command).redirectErrorStream(true).start();
+		File dir = Application.getInstallationDirectory().getFile(false);
+		Process p = new ProcessBuilder(command).redirectErrorStream(true).directory(dir).start();
 		return new BufferedReader(new InputStreamReader(p.getInputStream()));
 	}
 }

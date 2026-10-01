@@ -32,12 +32,12 @@ dependencies {
 	api project(":DB")
 	api project(":Generic")
 	
-	runGhidraServer project
+	runGhidraServer project(":GhidraServer")
 }
 
 CopySpec yajswCopySpec = copySpec {
-	File depsFile = file("${DEPS_DIR}/GhidraServer/${yajswRelease}.zip")
-	File binRepoFile = file("${BIN_REPO}/Ghidra/Features/GhidraServer/${yajswRelease}.zip")
+	File depsFile = file("${rootProject.DEPS_DIR}/GhidraServer/${yajswRelease}.zip")
+	File binRepoFile = file("${rootProject.BIN_REPO}/Ghidra/Features/GhidraServer/${yajswRelease}.zip")
 
 	// First check if the file is in the dependencies repo.  If not, check in the bin repo.
 	def yajswZipTree = depsFile.exists() ? zipTree(depsFile) : zipTree(binRepoFile)
@@ -114,11 +114,11 @@ task generateGhidraServerClasspath {
  * GhidraServer.
  */
 rootProject.assembleDistribution { 
-	into (getZipPath(this.project)  + "/data") {
+	into (rootProject.getZipPath(this.project)  + "/data") {
 		with yajswCopySpec
 		from generateGhidraServerClasspath
 	}
-	into (getZipPath(this.project) + "/os") {
+	into (rootProject.getZipPath(this.project) + "/os") {
 		from (projectDir.toString() + "/os")
 	}
 }
@@ -157,7 +157,7 @@ task generateDevGhidraServerClasspath {
 				// There might be dependencies in the gradle cache, which could be anywhere
 				// (including a different drive). We can only use relative paths if the jar is in 
 				// the root project repo or bin repo. 
-				if (JAR_PATH.startsWith(rootProject.getProjectDir().absolutePath) || JAR_PATH.startsWith(BIN_REPO)) {
+				if (JAR_PATH.startsWith(rootProject.getProjectDir().absolutePath) || JAR_PATH.startsWith(rootProject.BIN_REPO)) {
 					JAR_PATH = "\${ghidra_home}/" + rootProject.relativePath(JAR_PATH)
 				}
 				JAR_PATH = JAR_PATH.replace('\\','/') // necessary for windows

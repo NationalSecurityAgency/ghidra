@@ -49,6 +49,7 @@ public class JunitTestScan {
 	public static void main(String[] args) {
 		
 		if (args.length != 1) {
+			// NOTE: logging has not been initialized, use System instead
 			System.err.println("Incorrect usage!");	
 			System.exit(-1);
 		}

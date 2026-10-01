@@ -13,19 +13,17 @@
   <BODY lang="EN-US">
     <H1><A name="plugin"></A>Debugger: Launchers</H1>
 
-    <P>The Debugger has an updated and simplified launcher system. A nice collection of basic
-    launchers for our supported platforms are provided out of the box. For Linux, we provide a
-    suite of GDB-based launchers. For macOS, we provide a suite of LLDB-based launchers (though,
-    these work on Linux, too). For Windows, we provide a launcher based on the Windows Debugger
-    (<TT>dbgeng.dll</TT> and <TT>dbgmodel.dll</TT>). Help is available for each in its respective
-    sub-topic.</P>
+    <P>A nice collection of basic launchers for our supported platforms are provided out of the
+    box. For Linux, we provide a suite of GDB-based launchers. For macOS, we provide a suite of
+    LLDB-based launchers (though, these work on Linux, too). For Windows, we provide a launcher
+    based on the Windows Debugger (<TT>dbgeng.dll</TT> and <TT>dbgmodel.dll</TT>). Help is
+    available for each in its respective sub-topic.</P>
 
     <P>Each launcher automates the creation of a Trace RMI <A href=
     "help/topics/TraceRmiConnectionManagerPlugin/TraceRmiConnectionManagerPlugin.html#connect_accept">acceptor</A>,
-    executes the back-end shell script in a Terminal, then waits for the resulting target trace. In
-    contrast to the previous system, the Terminal is the first and most basic interface presented.
-    Even if just about everything else goes wrong, the terminal should still be faithfully
-    operational:</P>
+    executes the back-end shell script in a Terminal, then waits for the resulting target trace.
+    The Terminal is the first and most basic interface presented. Even if just about everything
+    else goes wrong, the terminal should still operate faithfully:</P>
 
     <DIV class="image">
       <IMG alt="" src="images/GdbTerminal.png">
@@ -35,28 +33,23 @@
     the rest of Ghidra's windows. It provides fairly robust VT-100 emulation. Thus, the user
     experience from the Terminal is nearly identical to using the same debugger outside of Ghidra.
     This terminal-first approach also ensures that you interact with the target application's
-    standard I/O. This was not possible in the previous system, as we re-implemented the CLI using
-    the back end's <TT>execute</TT> method. The debugger's (and so also the target's) actual I/O
-    streams were hidden away within a GDB/MI wrapper.</P>
+    standard I/O.</P>
 
-    <P>Each launcher script sets up a &mdash; usually Python &mdash; environment, launches the
-    actual debugger, and provides a sequence of commands for it to load the Trace RMI plugin,
-    connect back to Ghidra, launch the actual target process, and start the target trace. At this
-    point, the plugin generally takes over, reacting to user and target events, accepting front-end
-    requests, and generally keeping Ghidra and the back end synchronized.</P>
+    <P>Each launcher script sets up an environment, launches the actual debugger, and provides a
+    sequence of commands for it to load the Trace RMI plugin, connect back to Ghidra, launch the
+    actual target process, and start the target trace. At this point, the plugin generally takes
+    over, reacting to user and target events, accepting front-end requests, and generally keeping
+    Ghidra and the back end synchronized.</P>
 
-    <P><A name="launch_tracermi"></A>The list of launchers can be accessed in either of two places:
-    1) In the <B>Debugger &rarr; Configure and Launch ...</B> menu or more conveniently from the
-    <B>Launch</B> button in the main toolbar. This is the blue bug <IMG alt="" src="icon.debugger">
-    button near the top center. The <B>Configure and Launch ...</B> menu lists all available
-    launchers. Selecting one will prompt for its options then launch. To re-launch quickly, use the
-    <B>Launch</B> button. Clicking it will re-launch using the most recent launcher and
-    configuration for the current program. If this is the first launch of the given program, the
-    button will instead activate its drop-down menu. The drop-down is also accessible by clicking
-    the down arrow next to the <B>Launch</B> button. The drop-down lists all launchers that have
-    been previously configured for the current program. Clicking one will immediately launch the
-    program without prompting. The <B>Configure and Launch ...</B> sub-menu of the drop-down
-    functions exactly like in the <B>Debugger</B> menu.</P>
+    <P><A name="launch_tracermi"></A>The list of launchers can be accessed conveniently from the
+    <B>Launch</B> button's drop-down menu in the main toolbar. This is the blue bug <IMG alt=""
+    src="icon.debugger"> button near the top center. The <B>Launch [program] ...</B> submenus list
+    all available launchers for each open program. There is also an <B>Empty session ...</B>
+    submenu which lists all launchers that can operate without a program. Selecting one will prompt
+    for its options then launch. To quickly re-launch using the most recent configuration, click
+    the <B>Launch</B> button &mdash; not its drop-down. The drop-down menu also lists the most
+    recent launch configuration. Clicking it will immediately launch without prompting, unless you
+    hold <B>SHIFT</B>.</P>
 
     <P>The Terminal provides some fairly standard actions. Other keyboard control sequences,
     notably <B>CTRL-C</B>, are interpreted by the terminal, rather than Ghidra's action system, to
@@ -134,7 +127,7 @@
     <UL style="list-style-type: none">
       <LI>
 <PRE>
-python3 -m pip install protobuf>=3.20.3
+python3 -m pip install protobuf&gt;=3.20.3
 </PRE>
       </LI>
     </UL>

@@ -51,6 +51,7 @@ import ghidra.program.database.sourcemap.SourceFileManagerDB;
 import ghidra.program.database.symbol.*;
 import ghidra.program.database.util.AddressSetPropertyMapDB;
 import ghidra.program.model.address.*;
+import ghidra.program.model.data.ArchiveType;
 import ghidra.program.model.data.CategoryPath;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
@@ -201,7 +202,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 
 	private static final int NUM_MANAGERS = 15;
 
-	private ManagerDB[] managers = new ManagerDB[NUM_MANAGERS];
+	private ProgramDBModule[] managers = new ProgramDBModule[NUM_MANAGERS];
 	private OldFunctionManager oldFunctionMgr;
 	private MemoryMapDB memoryManager;
 	private GlobalNamespace globalNamespace;
@@ -1834,7 +1835,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		globalNamespace = new GlobalNamespace(getMemory());
 		for (int i = 0; i < NUM_MANAGERS; i++) {
 			monitor.checkCancelled();
-			managers[i].setProgram(this);
+			managers[i].setDomainObject(this);
 		}
 		listing.setProgram(this);
 
@@ -1853,7 +1854,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 
 		for (int i = 0; i < NUM_MANAGERS; i++) {
 			monitor.checkCancelled();
-			managers[i].programReady(openMode, getStoredVersion(), monitor);
+			managers[i].domainObjectReady(openMode, getStoredVersion(), monitor);
 		}
 
 	}
@@ -2029,7 +2030,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			setLanguage(languageTranslator, newCompilerSpecID, forceRedisassembly, monitor);
 		}
 		try {
-			updateMetadata();
+			saveMetadata();
 		}
 		catch (IOException e) {
 			dbError(e);
@@ -2130,8 +2131,8 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 				getDataTypeManager().languageChanged(monitor);
 
 				// Force function manager to reconcile calling conventions
-				managers[FUNCTION_MGR].setProgram(this);
-				managers[FUNCTION_MGR].programReady(OpenMode.UPDATE, getStoredVersion(), monitor);
+				managers[FUNCTION_MGR].setDomainObject(this);
+				managers[FUNCTION_MGR].domainObjectReady(OpenMode.UPDATE, getStoredVersion(), monitor);
 
 				if (translator != null) {
 					// allow complex language upgrades to transform instructions/context
@@ -2361,7 +2362,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		super.close();
 		intRangePropertyMap.clear();
 		addrSetPropertyMap.clear();
-		for (ManagerDB manager : managers) {
+		for (ProgramDBModule manager : managers) {
 			// have to check for null in case we are closing after a failed open. This happens during
 			// testing where we first try to open a program and if it fails, we upgrade and re-open.
 			if (manager != null) {
@@ -2372,38 +2373,40 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 
 	@Override
 	public Map<String, String> getMetadata() {
-		metadata.clear();
-		metadata.put("Program Name", getName());
-		metadata.put("Language ID",
-			languageID + " (" + languageVersion + "." + languageMinorVersion + ")");
-		metadata.put("Compiler ID", compilerSpecID.getIdAsString());
-		metadata.put("Processor", language.getProcessor().toString());
-		metadata.put("Endian", memoryManager.isBigEndian() ? "Big" : "Little");
-		metadata.put("Address Size", "" + addressFactory.getDefaultAddressSpace().getSize());
-		metadata.put("Minimum Address", getString(getMinAddress()));
-		metadata.put("Maximum Address", getString(getMaxAddress()));
-		metadata.put("# of Bytes", "" + getNumberOfBytes());
-		metadata.put("# of Memory Blocks", "" + memoryManager.getBlocks().length);
-		metadata.put("# of Instructions", "" + listing.getNumInstructions());
-		metadata.put("# of Defined Data", "" + listing.getNumDefinedData());
-		metadata.put("# of Functions", "" + getFunctionManager().getFunctionCount());
-		metadata.put("# of Symbols", "" + getSymbolTable().getNumSymbols());
-		metadata.put("# of Data Types", "" + getDataTypeManager().getDataTypeCount(true));
-		metadata.put("# of Data Type Categories", "" + getDataTypeManager().getCategoryCount());
+		try (Closeable c = lock.write()) {
+			metadata.clear();
+			metadata.put("Program Name", getName());
+			metadata.put("Language ID",
+				languageID + " (" + languageVersion + "." + languageMinorVersion + ")");
+			metadata.put("Compiler ID", compilerSpecID.getIdAsString());
+			metadata.put("Processor", language.getProcessor().toString());
+			metadata.put("Endian", memoryManager.isBigEndian() ? "Big" : "Little");
+			metadata.put("Address Size", "" + addressFactory.getDefaultAddressSpace().getSize());
+			metadata.put("Minimum Address", getString(getMinAddress()));
+			metadata.put("Maximum Address", getString(getMaxAddress()));
+			metadata.put("# of Bytes", "" + getNumberOfBytes());
+			metadata.put("# of Memory Blocks", "" + memoryManager.getBlocks().length);
+			metadata.put("# of Instructions", "" + listing.getNumInstructions());
+			metadata.put("# of Defined Data", "" + listing.getNumDefinedData());
+			metadata.put("# of Functions", "" + getFunctionManager().getFunctionCount());
+			metadata.put("# of Symbols", "" + getSymbolTable().getNumSymbols());
+			metadata.put("# of Data Types", "" + getDataTypeManager().getDataTypeCount(true));
+			metadata.put("# of Data Type Categories", "" + getDataTypeManager().getCategoryCount());
 
-		Options propList = getOptions(Program.PROGRAM_INFO);
-		List<String> propNames = propList.getOptionNames();
-		Collections.sort(propNames);
-		for (String propName : propNames) {
-			if (propName.indexOf(Options.DELIMITER) >= 0) {
-				continue; // ignore second tier options
+			Options propList = getOptions(Program.PROGRAM_INFO);
+			List<String> propNames = propList.getOptionNames();
+			Collections.sort(propNames);
+			for (String propName : propNames) {
+				if (propName.indexOf(Options.DELIMITER) >= 0) {
+					continue; // ignore second tier options
+				}
+				String valueAsString = propList.getValueAsString(propName);
+				if (valueAsString != null) {
+					metadata.put(propName, propList.getValueAsString(propName));
+				}
 			}
-			String valueAsString = propList.getValueAsString(propName);
-			if (valueAsString != null) {
-				metadata.put(propName, propList.getValueAsString(propName));
-			}
+			return super.getMetadata();
 		}
-		return metadata;
 	}
 
 	private static String getString(Object obj) {
@@ -2420,12 +2423,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			size += block.getSize();
 		}
 		return "" + size;
-	}
-
-	@Override
-	protected void updateMetadata() throws IOException {
-		getMetadata(); // updates metadata map
-		super.updateMetadata();
 	}
 
 	@Override
@@ -2501,5 +2498,10 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	protected void domainObjectRestored() {
 		super.domainObjectRestored();
 		getDataTypeManager().notifyRestored();
+	}
+
+	@Override
+	public ArchiveType getArchiveType() {
+		return ArchiveType.PROGRAM;
 	}
 }

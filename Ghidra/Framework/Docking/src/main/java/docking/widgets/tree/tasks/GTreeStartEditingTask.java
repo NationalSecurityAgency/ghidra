@@ -54,6 +54,11 @@ public class GTreeStartEditingTask extends GTreeTask {
 
 	private void edit() {
 
+		// add a model listener to re-select the newly edited node
+		GTreeModel model = tree.getModel();
+		SelectNodeListener listener = new SelectNodeListener(model);
+		model.addTreeModelListener(listener);
+
 		GTreeNode viewEditNode = tree.getViewNode(modelEditNode);
 		TreePath path = viewEditNode.getTreePath();
 		CellEditor cellEditor = tree.getCellEditor();
@@ -62,14 +67,14 @@ public class GTreeStartEditingTask extends GTreeTask {
 			public void editingCanceled(ChangeEvent e) {
 				cellEditor.removeCellEditorListener(this);
 				tree.setSelectedNode(viewEditNode); // reselect the node on cancel
+				listener.dispose();
 			}
 
 			@Override
 			public void editingStopped(ChangeEvent e) {
 				String newName = Objects.toString(cellEditor.getCellEditorValue());
+				listener.setNewName(newName);
 				cellEditor.removeCellEditorListener(this);
-
-				new SelectNodeListener(tree.getModel(), newName);
 			}
 		});
 
@@ -83,22 +88,33 @@ public class GTreeStartEditingTask extends GTreeTask {
 		private String newName;
 		private GTreeModel model;
 
-		SelectNodeListener(GTreeModel model, String newName) {
+		SelectNodeListener(GTreeModel model) {
 			this.model = model;
-			this.newName = newName;
 			model.addTreeModelListener(this);
+		}
+
+		void setNewName(String newName) {
+			this.newName = newName;
+		}
+
+		void dispose() {
+			// do later to avoid mutating the model during notification					
+			Swing.runLater(() -> model.removeTreeModelListener(this));
 		}
 
 		@Override
 		public void treeNodesInserted(TreeModelEvent e) {
+			if (newName == null) {
+				return; // editing cancelled
+			}
+
 			Object[] children = e.getChildren();
 			for (Object object : children) {
 				GTreeNode node = (GTreeNode) object;
 				String nodeName = node.getName();
 				if (nodeName.equals(newName) || nodeName.contains(newName)) {
-					// do later to avoid mutating the model during notification
-					Swing.runLater(() -> model.removeTreeModelListener(this));
 					tree.setSelectedNode(node);
+					dispose();
 					break;
 				}
 			}

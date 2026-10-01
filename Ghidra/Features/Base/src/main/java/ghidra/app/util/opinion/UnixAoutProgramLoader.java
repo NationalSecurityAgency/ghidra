@@ -252,19 +252,20 @@ public class UnixAoutProgramLoader {
 
 		for (UnixAoutSymbol symbol : symtab) {
 			Address address = null;
+			long blockOffset = 0;
 			MemoryBlock block = null;
 
 			switch (symbol.type) {
 				case N_TEXT:
-					address = textBlock != null ? textBlock.getStart().add(symbol.value) : null;
+					blockOffset = symbol.value - header.getTextAddr();
 					block = textBlock;
 					break;
 				case N_DATA:
-					address = dataBlock != null ? dataBlock.getStart().add(symbol.value) : null;
+					blockOffset = symbol.value - header.getDataAddr();
 					block = dataBlock;
 					break;
 				case N_BSS:
-					address = bssBlock != null ? bssBlock.getStart().add(symbol.value) : null;
+					blockOffset = symbol.value - header.getBssAddr();
 					block = bssBlock;
 					break;
 				case N_UNDF:
@@ -290,8 +291,12 @@ public class UnixAoutProgramLoader {
 					break;
 			}
 
-			if (address == null || block == null) {
+			if (block == null) {
 				continue;
+			}
+
+			if (address == null) {
+				address = block.getStart().add(blockOffset);
 			}
 
 			switch (symbol.kind) {

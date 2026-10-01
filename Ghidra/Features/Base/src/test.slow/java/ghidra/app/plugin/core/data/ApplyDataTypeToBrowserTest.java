@@ -22,6 +22,7 @@ import static org.junit.Assert.*;
 import javax.swing.*;
 
 import org.apache.commons.lang3.StringUtils;
+import org.hamcrest.MatcherAssert;
 import org.junit.*;
 
 import docking.*;
@@ -63,7 +64,7 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 	private ConflictHandlerModesAction conflictHandlerModesAction;
 	private DataTypeArchiveGTree tree;
 	private ArchiveRootNode archiveRootNode;
-	private ArchiveNode programNode;
+	private DataTypeStoreNode programNode;
 	private CodeViewerProvider codeViewerProvider;
 
 	@Before
@@ -92,7 +93,7 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 		tree = provider.getGTree();
 		waitForTree();
 		archiveRootNode = (ArchiveRootNode) tree.getViewRoot();
-		programNode = (ArchiveNode) archiveRootNode.getChild(PROGRAM_FILENAME);
+		programNode = (DataTypeStoreNode) archiveRootNode.getChild(PROGRAM_FILENAME);
 		assertNotNull("Did not successfully wait for the program node to load", programNode);
 
 		tool.showComponentProvider(provider, true);
@@ -738,7 +739,7 @@ public class ApplyDataTypeToBrowserTest extends AbstractGhidraHeadedIntegrationT
 		Object rootNode = TestUtils.invokeInstanceMethod("getRootNode", windowManager);
 		StatusBar statusBar = (StatusBar) TestUtils.getInstanceField("statusBar", rootNode);
 		String actualMessage = runSwing(() -> statusBar.getStatusText());
-		assertThat("The tool's status text was not set", actualMessage,
+		MatcherAssert.assertThat("The tool's status text was not set", actualMessage,
 			containsString(expectedMessage));
 	}
 

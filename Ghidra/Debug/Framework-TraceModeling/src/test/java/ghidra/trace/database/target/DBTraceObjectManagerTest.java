@@ -16,7 +16,7 @@
 package ghidra.trace.database.target;
 
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.*;
 
 import java.io.File;
 import java.math.BigInteger;
@@ -42,6 +42,7 @@ import ghidra.trace.model.target.schema.SchemaContext;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.thread.TraceThreadManager;
+import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.database.DBAnnotatedObject;
 import ghidra.util.database.DBCachedObjectStore;
@@ -938,9 +939,9 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 	}
 
 	protected <T extends DBAnnotatedObject> void dumpStore(DBCachedObjectStore<T> store) {
-		/*System.err.println("Contents of " + store);
+		/*Msg.info(this, "Contents of " + store);
 		for (T t : store.asMap().values()) {
-			System.err.println(
+			Msg.info(this, 
 				"   " + t.getClass().getSimpleName() + "(key=" + t.getKey() + ",obj=" + t + ")");
 		}*/
 	}
@@ -1191,7 +1192,7 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 			}
 			long current = System.currentTimeMillis();
 			double ticksPerSecond = 1000.0 * TICKS / (current - start);
-			System.err.println("%f/s".formatted(ticksPerSecond));
+			Msg.info(this, "%f/s".formatted(ticksPerSecond));
 		}
 	}
 }

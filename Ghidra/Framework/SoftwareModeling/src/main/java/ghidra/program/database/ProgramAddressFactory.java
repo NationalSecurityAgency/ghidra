@@ -46,7 +46,7 @@ public class ProgramAddressFactory extends DefaultAddressFactory {
 	 * @param compilerSpec compiler specification
 	 * @param overlayRegionSupplier overlay space defined region supplier which will be invoked when 
 	 * specific queries are performed on overlay address spaces.  If memory is not yet available 
-	 * a null AddressSet may be returned by the supplier.
+	 * a null AddressSet may be returned by the supplier.  A null supplier may also be specified.
 	 */
 	public ProgramAddressFactory(Language language, CompilerSpec compilerSpec,
 			OverlayRegionSupplier overlayRegionSupplier) {
@@ -224,7 +224,7 @@ public class ProgramAddressFactory extends DefaultAddressFactory {
 
 	/**
 	 * Remove an overlay space.
-	 * It may be neccessary to invoke {@link #refreshStaleOverlayStatus()} when an overlay is
+	 * It may be necessary to invoke {@link #refreshStaleOverlayStatus()} when an overlay is
 	 * removed.
 	 * @param name overlay space name
 	 */

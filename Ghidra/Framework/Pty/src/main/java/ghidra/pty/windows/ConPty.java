@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,23 +16,15 @@
 package ghidra.pty.windows;
 
 import java.io.IOException;
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
 
-import com.sun.jna.platform.win32.Kernel32;
-import com.sun.jna.platform.win32.WinDef.DWORD;
-import com.sun.jna.platform.win32.WinNT.HANDLEByReference;
-import com.sun.jna.platform.win32.COM.COMUtils;
+import com.microsoft.win32._COORD;
+import com.microsoft.win32.win32_h;
 
 import ghidra.pty.*;
-import ghidra.pty.windows.jna.ConsoleApiNative;
-import ghidra.pty.windows.jna.ConsoleApiNative.COORD;
 
 public class ConPty implements Pty {
-	static final DWORD DW_ZERO = new DWORD(0);
-	static final DWORD DW_ONE = new DWORD(1);
-	static final DWORD PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE = new DWORD(0x20016);
-	static final DWORD EXTENDED_STARTUPINFO_PRESENT =
-		new DWORD(Kernel32.EXTENDED_STARTUPINFO_PRESENT);
-
 	private final Pipe pipeToChild;
 	private final Pipe pipeFromChild;
 	private final PseudoConsoleHandle pseudoConsoleHandle;
@@ -50,19 +42,18 @@ public class ConPty implements Pty {
 		// Close the child-connected ends after creating the pseudoconsole
 		// Keep the parent-connected ends, because we're the parent
 
-		HANDLEByReference lphPC = new HANDLEByReference();
-
-		COORD.ByValue size = new COORD.ByValue();
-		size.X = cols;
-		size.Y = rows;
-		COMUtils.checkRC(ConsoleApiNative.INSTANCE.CreatePseudoConsole(
-			size,
-			pipeToChild.getReadHandle().getNative(),
-			pipeFromChild.getWriteHandle().getNative(),
-			DW_ZERO,
-			lphPC));
-
-		return new ConPty(pipeToChild, pipeFromChild, new PseudoConsoleHandle(lphPC.getValue()));
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment cs = arena.allocate(Win32Err.LAYOUT);
+			HandlePtr phPC = new HandlePtr(arena);
+			MemorySegment size = _COORD.allocate(arena);
+			_COORD.X(size, cols);
+			_COORD.Y(size, rows);
+			Win32Err.checkHResult(win32_h.CreatePseudoConsole(cs, size,
+				pipeToChild.getReadHandle().asSegment(),
+				pipeFromChild.getWriteHandle().asSegment(),
+				0, phPC.asSegment()), cs);
+			return new ConPty(pipeToChild, pipeFromChild, new PseudoConsoleHandle(phPC.get()));
+		}
 	}
 
 	public ConPty(Pipe pipeToChild, Pipe pipeFromChild, PseudoConsoleHandle pseudoConsoleHandle) {

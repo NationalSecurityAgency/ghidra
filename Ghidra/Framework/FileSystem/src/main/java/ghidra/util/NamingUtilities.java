@@ -37,7 +37,7 @@ public final class NamingUtilities {
 
 	public final static Set<Character> VALID_NAME_CHARSET =
 		Collections.unmodifiableSet(
-			Set.of('.', '-', '=', '@', ' ', '_', '(', ')', '[', ']', '~'));
+			Set.of('.', '-', '=', '@', ' ', '_', '(', ')', '[', ']', '~', '+'));
 
 	private NamingUtilities() {
 	}

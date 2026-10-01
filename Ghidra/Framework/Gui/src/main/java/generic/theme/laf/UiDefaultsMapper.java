@@ -656,6 +656,14 @@ public class UiDefaultsMapper {
 		ids = getLookAndFeelIdsForType(Icon.class);
 		for (String id : ids) {
 			Icon icon = defaults.getIcon(id);
+
+			if (icon == null) {
+				// The icon may be null here if the UIManager initiates a background thread to load
+				// the icon.  If we call getIcon() again after that, it will wait for thread to 
+				// finish. 
+				icon = defaults.getIcon(id);
+			}
+
 			values.addIcon(new IconValue(id, icon));
 		}
 		return values;

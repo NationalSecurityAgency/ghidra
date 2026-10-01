@@ -25,10 +25,10 @@ import javax.swing.*;
 import docking.ActionContext;
 import docking.PopupMenuHandler;
 import docking.action.*;
-import docking.action.builder.ActionBuilder;
 import docking.menu.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.tracermi.launcher.TraceRmiLauncherServicePlugin.ConfigLast;
+import ghidra.app.services.ProgramManager;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
@@ -50,49 +50,192 @@ public class LaunchAction extends MultiActionDockingAction {
 		setHelpLocation(new HelpLocation(plugin.getName(), HELP_ANCHOR));
 	}
 
-	protected String[] prependConfigAndLaunch(List<String> menuPath) {
-		Program program = plugin.currentProgram;
-		String title = program == null
-				? "Configure and Launch ..."
-				: "Configure and Launch %s using...".formatted(getProgramName(program));
-		return Stream.concat(Stream.of(title), menuPath.stream()).toArray(String[]::new);
+	protected static String[] prependMenuPath(String pre, List<String> menuPath) {
+		return Stream.concat(Stream.of(pre), menuPath.stream()).toArray(String[]::new);
+	}
+
+	static abstract class AbstractLaunchOfferAction extends DockingAction {
+		final TraceRmiLauncherServicePlugin plugin;
+		final TraceRmiLaunchOffer offer;
+
+		public AbstractLaunchOfferAction(TraceRmiLauncherServicePlugin plugin,
+				TraceRmiLaunchOffer offer) {
+			this.plugin = plugin;
+			this.offer = offer;
+			super(offer.getConfigName(), plugin.getName());
+			setHelpLocation(offer.getHelpLocation());
+			setPopupMenuData(computeMenuData());
+		}
+
+		abstract MenuData computeMenuData();
+
+		String getTopGroup(Program currentProgram) {
+			return "";
+		}
+
+		String getTopOrder(Program currentProgram) {
+			return "";
+		}
+
+		@Override
+		public boolean isEnabledForContext(ActionContext context) {
+			return true;
+		}
+
+		@Override
+		public void actionPerformed(ActionContext context) {
+			plugin.configureAndLaunch(offer);
+		}
+	}
+
+	static class ProgramLaunchOfferAction extends AbstractLaunchOfferAction {
+		final Program program;
+
+		public ProgramLaunchOfferAction(TraceRmiLauncherServicePlugin plugin,
+				TraceRmiLaunchOffer offer, Program program) {
+			this.program = program;
+			super(plugin, offer);
+		}
+
+		@Override
+		MenuData computeMenuData() {
+			return new MenuData(
+				prependMenuPath("Launch %s ...".formatted(getProgramName(program)),
+					offer.getMenuPath()),
+				offer.getIcon(), offer.getMenuGroup(), 0, offer.getMenuOrder());
+		}
+
+		@Override
+		String getTopGroup(Program currentProgram) {
+			return "2";
+		}
+
+		@Override
+		String getTopOrder(Program currentProgram) {
+			return program == currentProgram ? "1" : "2";
+		}
+	}
+
+	static class EmptyLaunchOfferAction extends AbstractLaunchOfferAction {
+		public EmptyLaunchOfferAction(TraceRmiLauncherServicePlugin plugin,
+				TraceRmiLaunchOffer offer) {
+			super(plugin, offer);
+		}
+
+		@Override
+		MenuData computeMenuData() {
+			return new MenuData(
+				prependMenuPath("Empty session ...", offer.getMenuPath()),
+				offer.getIcon(), offer.getMenuGroup(), 0, offer.getMenuOrder());
+		}
+
+		@Override
+		String getTopGroup(Program currentProgram) {
+			return "2";
+		}
+
+		@Override
+		String getTopOrder(Program currentProgram) {
+			return "3";
+		}
+	}
+
+	static abstract class AbstractReLaunchOfferAction extends AbstractLaunchOfferAction {
+		public AbstractReLaunchOfferAction(TraceRmiLauncherServicePlugin plugin,
+				TraceRmiLaunchOffer offer) {
+			super(plugin, offer);
+		}
+
+		@Override
+		public void actionPerformed(ActionContext context) {
+			plugin.relaunchOrConfigure(context, offer);
+		}
+	}
+
+	static class TopReLaunchOfferAction extends AbstractReLaunchOfferAction {
+		final Program program;
+
+		public TopReLaunchOfferAction(TraceRmiLauncherServicePlugin plugin,
+				TraceRmiLaunchOffer offer, Program program) {
+			this.program = program;
+			super(plugin, offer);
+		}
+
+		@Override
+		MenuData computeMenuData() {
+			String title = program == null
+					? "Empty %s session".formatted(offer.getTitle())
+					: "Re-launch %s in %s".formatted(getProgramName(program), offer.getTitle());
+			return new MenuData(new String[] { title }, offer.getIcon(), "0: top");
+		}
+
+		@Override
+		String getTopGroup(Program currentProgram) {
+			return "0";
+		}
+	}
+
+	static class ProgramReLaunchOfferAction extends AbstractReLaunchOfferAction {
+		final Program program;
+
+		public ProgramReLaunchOfferAction(TraceRmiLauncherServicePlugin plugin,
+				TraceRmiLaunchOffer offer, Program program) {
+			this.program = program;
+			super(plugin, offer);
+		}
+
+		@Override
+		MenuData computeMenuData() {
+			return new MenuData(
+				prependMenuPath("Re-launch %s ...".formatted(getProgramName(program)),
+					offer.getMenuPath()),
+				offer.getIcon(), offer.getMenuGroup(), 0, offer.getMenuOrder());
+		}
+
+		@Override
+		String getTopGroup(Program currentProgram) {
+			return "1";
+		}
+
+		@Override
+		String getTopOrder(Program currentProgram) {
+			return program == currentProgram ? "1" : "2";
+		}
+	}
+
+	public void collectActionsForProgram(List<DockingActionIf> actions, Program program) {
+		Collection<TraceRmiLaunchOffer> offers = plugin.getOffers(program);
+		Map<String, Long> saved = plugin.loadSavedConfigs(program);
+		for (TraceRmiLaunchOffer offer : offers) {
+			if (program != null) {
+				actions.add(new ProgramLaunchOfferAction(plugin, offer, program));
+			}
+			else if (!offer.requiresImage()) {
+				actions.add(new EmptyLaunchOfferAction(plugin, offer));
+			}
+			Long last = saved.get(offer.getConfigName());
+			if (last == null) {
+				continue;
+			}
+			if (program != null) {
+				actions.add(new ProgramReLaunchOfferAction(plugin, offer, program));
+			}
+		}
 	}
 
 	@Override
 	public List<DockingActionIf> getActionList(ActionContext context) {
-		Program program = plugin.currentProgram;
-		Collection<TraceRmiLaunchOffer> offers = plugin.getOffers(program);
-
+		ProgramManager programManager = plugin.getTool().getService(ProgramManager.class);
+		List<Program> allPrograms = List.of(programManager.getAllOpenPrograms());
 		List<DockingActionIf> actions = new ArrayList<>();
-
-		Map<String, Long> saved = plugin.loadSavedConfigs(program);
-
-		for (TraceRmiLaunchOffer offer : offers) {
-			actions.add(new ActionBuilder(offer.getConfigName(), plugin.getName())
-					.popupMenuPath(prependConfigAndLaunch(offer.getMenuPath()))
-					.popupMenuGroup(offer.getMenuGroup(), offer.getMenuOrder())
-					.popupMenuIcon(offer.getIcon())
-					.helpLocation(offer.getHelpLocation())
-					.enabledWhen(ctx -> !offer.requiresImage() || program != null)
-					.onAction(ctx -> plugin.configureAndLaunch(offer))
-					.build());
-			Long last = saved.get(offer.getConfigName());
-			if (last == null) {
-				// NB. If program == null, this will always happen.
-				// Thus, no worries about getProgramName(program) below.
-				continue;
-			}
-			String title = program == null
-					? "Re-launch " + offer.getTitle()
-					: "Re-launch %s using %s".formatted(getProgramName(program), offer.getTitle());
-			actions.add(new ActionBuilder(offer.getConfigName(), plugin.getName())
-					.popupMenuPath(title)
-					.popupMenuGroup("0", "%016x".formatted(Long.MAX_VALUE - last))
-					.popupMenuIcon(offer.getIcon())
-					.helpLocation(offer.getHelpLocation())
-					.enabledWhen(ctx -> true)
-					.onAction(ctx -> plugin.relaunch(ctx, offer))
-					.build());
+		for (Program program : allPrograms) {
+			collectActionsForProgram(actions, program);
+		}
+		collectActionsForProgram(actions, null);
+		ConfigLast last = plugin.findMostRecentConfig();
+		TraceRmiLaunchOffer offer = plugin.findOffer(last);
+		if (offer != null) {
+			actions.add(new TopReLaunchOfferAction(plugin, offer, last.program()));
 		}
 		return actions;
 	}
@@ -104,13 +247,24 @@ public class LaunchAction extends MultiActionDockingAction {
 
 		@Override
 		protected JPopupMenu doCreateMenu() {
+			ProgramManager programManager = plugin.getTool().getService(ProgramManager.class);
+			Program currentProgram =
+				programManager == null ? null : programManager.getCurrentProgram();
 			ActionContext context = getActionContext();
 			List<DockingActionIf> actionList = getActionList(context);
 			MenuHandler handler =
 				new PopupMenuHandler(plugin.getTool().getWindowManager(), context);
+			MenuGroupMap groupMap = new MenuGroupMap();
 			MenuManager manager =
-				new MenuManager("Launch", (char) 0, GROUP, true, handler, null);
+				new MenuManager("Launch", (char) 0, GROUP, true, handler, groupMap);
 			for (DockingActionIf action : actionList) {
+				if (action instanceof AbstractLaunchOfferAction loa) {
+					String[] path = action.getPopupMenuData().getMenuPath();
+					String[] topPath = Arrays.copyOf(path, 1);
+					groupMap.setMenuGroup(topPath,
+						loa.getTopGroup(currentProgram),
+						loa.getTopOrder(currentProgram));
+				}
 				action.setEnabled(action.isEnabledForContext(context));
 				manager.addAction(action);
 			}
@@ -136,35 +290,31 @@ public class LaunchAction extends MultiActionDockingAction {
 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
-		return !plugin.getOffers(plugin.currentProgram).isEmpty();
+		return true;
 	}
 
 	@Override
 	public void actionPerformed(ActionContext context) {
 		// See comment on super method about use of runLater
-		ConfigLast last = plugin.findMostRecentConfig(plugin.currentProgram);
+		ConfigLast last = plugin.findMostRecentConfig();
 		TraceRmiLaunchOffer offer = plugin.findOffer(last);
 		if (offer == null) {
 			Swing.runLater(() -> button.showPopup());
 			return;
 		}
-		plugin.relaunch(context, offer);
+		plugin.relaunchOrConfigure(context, offer);
 	}
 
 	@Override
 	public String getDescription() {
-		Program program = plugin.currentProgram;
-		ConfigLast last = plugin.findMostRecentConfig(program);
+		ConfigLast last = plugin.findMostRecentConfig();
 		TraceRmiLaunchOffer offer = plugin.findOffer(last);
-		if (offer == null && program == null) {
-			return "Configure and launch";
-		}
 		if (offer == null) {
-			return "Configure and launch " + getProgramName(program);
+			return "Launch ...";
 		}
-		if (program == null) {
-			return "Re-launch " + offer.getTitle();
+		if (last.program() == null) {
+			return "Empty %s session".formatted(offer.getTitle());
 		}
-		return "Re-launch %s using %s".formatted(getProgramName(program), offer.getTitle());
+		return "Re-launch %s in %s".formatted(getProgramName(last.program()), offer.getTitle());
 	}
 }

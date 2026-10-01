@@ -3069,7 +3069,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			// Currently no good way to do this since this is in Decompiler package and GnuDemangler
 			// is in its own package. Once no longer a script but an analyzer in Base, update to 
 			// do !(options instanceof GnuDemanglerOptions)
-			if (!options.toString().contains("gnu")) {
+			if (!options.getClass().getName().contains("Gnu")) {
 				continue;
 			}
 

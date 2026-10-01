@@ -539,10 +539,8 @@ void Funcdata::adjustInputVarnodes(const Address &addr,int4 sz)
   // Now that all the intersecting inputs have been pulled out, we can create the new input
   Varnode *invn = newVarnode(sz,addr);
   invn = setInputVarnode(invn);
-  // The new input may cause new heritage and "Heritage AFTER dead removal" errors
-  // So tell heritage to ignore it
-  // FIXME: It would probably be better to insert this directly into heritage's globaldisjoint
-  invn->setWriteMask();
+  // Treat full range as if it has already been heritaged
+  heritage.markRangeHeritaged(invn->getAddr(), invn->getSize());
   // Now change all old inputs to be created as SUBPIECE from the new input
   for(uint4 i=0;i<inlist.size();++i) {
     PcodeOp *op = inlist[i]->getDef();
@@ -1296,6 +1294,8 @@ Varnode *Funcdata::findLinkedVarnode(SymbolEntry *entry) const
       return (Varnode *)0;
     return vn;
   }
+  if (!entry->isMapEntry())
+    return (Varnode *)0;
 
   MapEntry *mapentry = (MapEntry *)entry;
   VarnodeLocSet::const_iterator iter,enditer;
@@ -1335,7 +1335,7 @@ void Funcdata::findLinkedVarnodes(SymbolEntry *entry,vector<Varnode *> &res) con
     if (vn != (Varnode *)0)
       res.push_back(vn);
   }
-  else {
+  else if (entry->isMapEntry()) {
     VarnodeLocSet::const_iterator iter = beginLoc(entry->getSize(),((MapEntry *)entry)->getAddr());
     VarnodeLocSet::const_iterator enditer = endLoc(entry->getSize(),((MapEntry *)entry)->getAddr());
     for(;iter!=enditer;++iter) {

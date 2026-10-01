@@ -102,7 +102,7 @@ public class ArrayValuesFieldFactory extends FieldFactory {
 
 		List<FieldElement> elements = new ArrayList<>();
 		for (int i = 0; i < itemCount; i++) {
-			Data child = parent.getComponent(index);
+			Data child = parent.getComponent(index++);
 			boolean isLastItem = isLastLine && (i == itemCount - 1);
 			String value = getDisplayValue(child, !isLastItem);
 			AttributedString as =

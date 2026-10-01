@@ -17,6 +17,7 @@ package ghidra.app.util.bin.format.dwarf.external;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -28,6 +29,12 @@ import utilities.util.FileUtilities;
 /**
  * A {@link DebugFileProvider} that only looks in the program's original import directory for
  * matching debug files.
+ * <p>
+ * A debug-link (filename+crc) specified debug file must exist in the binary's original import
+ * directory and must have a matching crc.
+ * <p>
+ * A build-id (20'ish byte hash) specified debug file must exist in the binary's original import
+ * directory, named "aabbcc...ff.debug"
  */
 public class SameDirDebugInfoProvider implements DebugFileProvider {
 
@@ -92,13 +99,13 @@ public class SameDirDebugInfoProvider implements DebugFileProvider {
 	@Override
 	public File getFile(ExternalDebugInfo debugInfo, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		if (debugInfo.hasDebugLink()) {
+		if (debugInfo instanceof DebugLinkDebugInfo debugLink) {
 			// This differs from the LocalDirDebugLinkProvider in that it does NOT recursively search
 			// for the file
-			File debugFile = ensureSafeFilename(debugInfo.getFilename());
+			File debugFile = ensureSafeFilename(debugLink.getFilename());
 			if (debugFile.isFile()) {
 				int fileCRC = LocalDirDebugLinkProvider.calcCRC(debugFile);
-				if (fileCRC == debugInfo.getCrc()) {
+				if (fileCRC == debugLink.getCrc()) {
 					return debugFile; // success
 				}
 				Msg.info(this,
@@ -107,10 +114,10 @@ public class SameDirDebugInfoProvider implements DebugFileProvider {
 			}
 		}
 
-		if (debugInfo.hasBuildId()) {
+		if (debugInfo instanceof BuildIdDebugInfo buildId) {
 			// this probe is a w.a.g for what people might do when co-locating a build-id debug
 			// file with the original binary
-			File debugFile = ensureSafeFilename(debugInfo.getBuildId() + ".debug");
+			File debugFile = ensureSafeFilename(buildId.getBuildIdHexString() + ".debug");
 			if (debugFile.isFile()) {
 				return debugFile;
 			}
@@ -123,6 +130,9 @@ public class SameDirDebugInfoProvider implements DebugFileProvider {
 		File testFile = FileUtilities.getSecureFile(progDir, filename);
 		if (!progDir.equals(testFile.getParentFile())) {
 			throw new IOException("Unsupported path specified in debug file: " + filename);
+		}
+		if (Files.isSymbolicLink(testFile.toPath())) {
+			throw new IOException("Unsupported symlink specified as debug file: " + filename);
 		}
 		return testFile;
 	}

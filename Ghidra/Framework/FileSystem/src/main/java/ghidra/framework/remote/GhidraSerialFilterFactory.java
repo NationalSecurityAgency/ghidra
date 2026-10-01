@@ -23,7 +23,7 @@ import java.util.function.BinaryOperator;
  * {@link GhidraSerialFilterFactory} provides the serial filter factory which imposes
  * {@link GhidraObjectInputFilter} as a global serial input filter.
  * <p>
- * NOTE: With the use of Gradle test JVM instances it may be neccessary for those instances
+ * NOTE: With the use of Gradle test JVM instances it may be necessary for those instances
  * to specify this class as the serial filter factory and rely on lazy initialization of the
  * {@link GhidraObjectInputFilter global serial filter}.
  * <pre>
@@ -38,7 +38,7 @@ public class GhidraSerialFilterFactory implements BinaryOperator<ObjectInputFilt
 	private final GhidraObjectInputFilter globalFilter;
 
 	/**
-	 * Constructor.  Caller is reposponsible for installation.
+	 * Constructor.  Caller is responsible for installation.
 	 * See {@link ObjectInputFilter.Config#setSerialFilterFactory}.
 	 */
 	public GhidraSerialFilterFactory() {
@@ -71,7 +71,7 @@ public class GhidraSerialFilterFactory implements BinaryOperator<ObjectInputFilt
 	}
 
 	/**
-	 * Get, and install if neccessary, the serial filter factory instance. If a new factory is
+	 * Get, and install if necessary, the serial filter factory instance. If a new factory is
 	 * installed it will have an uninitialized {@link GhidraObjectInputFilter} instance.
 	 * <p>
 	 * See {@link java.io.ObjectInputFilter.Config#setSerialFilterFactory(java.util.function.BinaryOperator)}.

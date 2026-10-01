@@ -154,12 +154,12 @@ public class LocalDirDebugInfoDProvider implements DebugFileStorage {
 	@Override
 	public File getFile(ExternalDebugInfo debugInfo, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		if (!isValid() || !debugInfo.hasBuildId()) {
+		if (!isValid() || !(debugInfo instanceof BuildIdDebugInfo buildIdInfo)) {
 			return null;
 		}
 		performInitMaintIfNeeded();
 
-		File f = getCachePath(debugInfo);
+		File f = getCachePath(buildIdInfo);
 		if (f.isFile()) {
 			f.setLastModified(System.currentTimeMillis());
 			return f;
@@ -175,26 +175,26 @@ public class LocalDirDebugInfoDProvider implements DebugFileStorage {
 		return dir;
 	}
 
-	private File getCachePath(ExternalDebugInfo id) throws IOException {
+	private File getCachePath(BuildIdDebugInfo id) throws IOException {
 		String suffix = "";
 		if (id.getObjectType() == ObjectType.SOURCE) {
 			suffix = "-" + escapePath(Objects.requireNonNullElse(id.getExtra(), ""));
 		}
 
-		return new File(getBuildidDir(id.getBuildId()),
+		return new File(getBuildidDir(id.getBuildIdHexString()),
 			id.getObjectType().getPathString() + suffix);
 	}
 
 	@Override
-	public File putStream(ExternalDebugInfo id, StreamInfo stream, TaskMonitor monitor)
+	public File putStream(ExternalDebugInfo debugInfo, StreamInfo stream, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		assertValid();
-		if (!id.hasBuildId()) {
-			throw new IOException("Can't store debug file without BuildId value: " + id);
+		if (!(debugInfo instanceof BuildIdDebugInfo buildId)) {
+			throw new IOException("Can't store debug file without BuildId value");
 		}
 		performInitMaintIfNeeded();
 
-		File f = getCachePath(id);
+		File f = getCachePath(buildId);
 		File tmpF = new File(f.getParentFile(), ".tmp_" + f.getName());
 		FileUtilities.checkedMkdirs(f.getParentFile());
 		try (stream; FileOutputStream fos = new FileOutputStream(tmpF)) {

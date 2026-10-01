@@ -106,7 +106,7 @@ public class DWARFMacroEnumCreator {
 							ExpressionEvaluator evaluator =
 								new ExpressionEvaluator(s -> macrosToValues.get(s));
 							long value = evaluator.parseAsLong(macroInfo.definition());
-							macrosToValues.put(symbolName, new LongExpressionValue(value));
+							macrosToValues.put(symbolName, new BigIntegerExpressionValue(value));
 							EnumDataType enumDT =
 								new EnumDataType(catPath, "define_" + symbolName, 8,
 									dtManager);

@@ -82,14 +82,14 @@ public class DependentServiceResolver<T> {
 					throw new IllegalArgumentException(
 						"Overridden constructor must return same or subclass of original");
 				}
-				depsByDependents.computeIfAbsent(override, o -> new HashSet<>()).add(rCls);
+				depsByDependents.computeIfAbsent(override, _ -> new HashSet<>()).add(rCls);
 				constructors.put(override, m);
 			}
 			constructors.put(rCls, m);
 			m.setAccessible(true);
 
 			for (Class<?> pType : m.getParameterTypes()) {
-				depsByDependents.computeIfAbsent(rCls, c -> new HashSet<>()).add(pType);
+				depsByDependents.computeIfAbsent(rCls, _ -> new HashSet<>()).add(pType);
 			}
 		}
 		for (Field f : cls.getDeclaredFields()) {
@@ -98,7 +98,7 @@ public class DependentServiceResolver<T> {
 				continue;
 			}
 			Class<?> fCls = f.getType();
-			fieldsByClass.computeIfAbsent(fCls, c -> new HashSet<>()).add(f);
+			fieldsByClass.computeIfAbsent(fCls, _ -> new HashSet<>()).add(f);
 			f.setAccessible(true);
 		}
 	}
@@ -141,6 +141,10 @@ public class DependentServiceResolver<T> {
 			Object service = constructed.get(cons.method);
 			if (service == null) {
 				service = cons.construct(obj, instancesByClass);
+				if (service == null) {
+					throw new NullPointerException(
+						"ServiceConstructor %s returned null".formatted(cons.method));
+				}
 				constructed.put(cons.method, service);
 			}
 			instancesByClass.put(cons.cls, service);

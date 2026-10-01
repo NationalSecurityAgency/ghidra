@@ -233,7 +233,7 @@ public class ExtensionManagerIntegrationTest extends AbstractGhidraHeadedIntegra
 		// 1. Get the system Java compiler
 		JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 		if (compiler == null) {
-			System.err.println("JDK not found. Make sure you are running a JDK, not a JRE.");
+			Msg.error(this, "JDK not found. Make sure you are running a JDK, not a JRE.");
 			fail();
 			return null;
 		}
@@ -292,12 +292,12 @@ public class ExtensionManagerIntegrationTest extends AbstractGhidraHeadedIntegra
 
 		// 7. Process the diagnostics
 		if (success) {
-			System.out.println("Compilation successful.");
+			Msg.info(this, "Compilation successful.");
 		}
 		else {
-			System.out.println("Compilation failed.");
+			Msg.error(this, "Compilation failed.");
 			for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics()) {
-				System.out.println(diagnostic.getKind() + ": " + diagnostic.getMessage(null) +
+				Msg.error(this, diagnostic.getKind() + ": " + diagnostic.getMessage(null) +
 					" (Line: " + diagnostic.getLineNumber() + ")");
 			}
 		}

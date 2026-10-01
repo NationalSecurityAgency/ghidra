@@ -256,6 +256,24 @@ public class XmlEncode implements CachedEncoder {
 	}
 
 	@Override
+	public void writeDataTypeMeta(AttributeId attribId, MetaDataType metatype) throws IOException {
+		String name = metatype.toString();
+		if (attribId == ATTRIB_CONTENT) {
+			if (tagStatus == TAG_START) {
+				buffer.append('>');
+			}
+			buffer.append(name);
+			tagStatus = TAG_CONTENT;
+			return;
+		}
+		buffer.append(' ');
+		buffer.append(attribId.name());
+		buffer.append("=\"");
+		buffer.append(name);
+		buffer.append("\"");
+	}
+
+	@Override
 	public void writeTo(OutputStream stream) throws IOException {
 		byte[] res = buffer.toString().getBytes();
 		stream.write(res);

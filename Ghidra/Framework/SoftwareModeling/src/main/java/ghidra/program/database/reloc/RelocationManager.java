@@ -21,7 +21,7 @@ import java.util.*;
 import db.*;
 import ghidra.framework.data.OpenMode;
 import ghidra.framework.options.Options;
-import ghidra.program.database.ManagerDB;
+import ghidra.program.database.ProgramDBModule;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.database.mem.AddressSourceInfo;
@@ -44,7 +44,7 @@ import ghidra.util.task.TaskMonitor;
  * 
  * 
  */
-public class RelocationManager implements RelocationTable, ManagerDB {
+public class RelocationManager implements RelocationTable, ProgramDBModule {
 
 	private ProgramDB program;
 	private AddressMap addrMap;
@@ -80,12 +80,12 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 	}
 
 	@Override
-	public void setProgram(ProgramDB p) {
+	public void setDomainObject(ProgramDB p) {
 		this.program = p;
 	}
 
 	@Override
-	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
+	public void domainObjectReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
 		if (openMode == OpenMode.UPGRADE &&

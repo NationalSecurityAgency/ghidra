@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,6 @@ import ghidra.util.MathUtilities;
 
 /**
  * An abstract file contained in an emulated file system
- *
  * <p>
  * Contrast this with {@link DefaultEmuUnixFileHandle}, which is a particular process's handle when
  * opening the file, not the file itself.
@@ -37,7 +36,6 @@ public abstract class AbstractEmuUnixFile<T> implements EmuUnixFile<T> {
 
 	/**
 	 * Construct a new file
-	 * 
 	 * <p>
 	 * TODO: Technically, a file can be hardlinked to several pathnames, but for simplicity, or for
 	 * diagnostics, we let the file know its own original name.
@@ -80,17 +78,30 @@ public abstract class AbstractEmuUnixFile<T> implements EmuUnixFile<T> {
 	}
 
 	@Override
+	public int read(long offset, T buf) {
+		return contents.read(offset, buf, stat.st_size);
+	}
+
+	@Override
 	public T read(PcodeArithmetic<T> arithmetic, T offset, T buf) {
 		long off = arithmetic.toLong(offset, Purpose.OTHER);
-		long len = contents.read(off, buf, stat.st_size);
+		long len = read(off, buf); // Assure signed extension
 		return arithmetic.fromConst(len, (int) arithmetic.sizeOf(offset));
+	}
+
+	@Override
+	public int write(long offset, T buf) {
+		int len = contents.write(offset, buf, stat.st_size);
+		if (len > 0) {
+			stat.st_size = MathUtilities.unsignedMax(stat.st_size, offset + len);
+		}
+		return len;
 	}
 
 	@Override
 	public T write(PcodeArithmetic<T> arithmetic, T offset, T buf) {
 		long off = arithmetic.toLong(offset, Purpose.OTHER);
-		long len = contents.write(off, buf, stat.st_size);
-		stat.st_size = MathUtilities.unsignedMax(stat.st_size, off + len);
+		long len = write(off, buf); // Assure signed extension
 		return arithmetic.fromConst(len, (int) arithmetic.sizeOf(offset));
 	}
 

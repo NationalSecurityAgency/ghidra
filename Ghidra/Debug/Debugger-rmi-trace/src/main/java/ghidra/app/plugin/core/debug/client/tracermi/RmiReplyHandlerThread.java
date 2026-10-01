@@ -56,7 +56,7 @@ public class RmiReplyHandlerThread extends Thread {
 
 				RequestResult result = client.pollRequest();
 				if (result == null) {
-					System.err.println("REPLY without request: " + msg);
+					Msg.warn(this, "REPLY without request: " + msg);
 					continue;
 				}
 				RootMessage request = result.request;

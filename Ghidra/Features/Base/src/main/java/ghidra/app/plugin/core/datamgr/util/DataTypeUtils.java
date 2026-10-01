@@ -28,6 +28,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.Enum;
+import ghidra.program.model.dtarchive.*;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
@@ -257,6 +258,22 @@ public class DataTypeUtils {
 	}
 
 	/**
+	 * {@return descriptive text for the given data type's icon}
+	 * @param dataType the data type
+	 */
+	public static String getIconTextForDataType(DataType dataType) {
+		loadImages();
+
+		for (DataTypeIconWrapper element : dataTypeIconWrappers) {
+			Icon icon = element.getIcon(dataType, false);
+			if (icon != null) {
+				return element.getDescription(dataType);
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Returns an icon that adds highlighting to the provided icon.
 	 *
 	 * @param baseIcon The icon to highlight.
@@ -433,29 +450,26 @@ public class DataTypeUtils {
 
 	public static void showUnmodifiableArchiveErrorMessage(Component parent, String title,
 			DataTypeManager dtm) {
-		String msg;
-		if (dtm instanceof ProgramBasedDataTypeManager) {
-			msg = "The Program is not modifiable!\n";
-		}
-		else if (dtm instanceof FileArchiveBasedDataTypeManager) {
-			msg = "The archive file is not modifiable!\nYou must open the archive for editing\n" +
-				"before performing this operation.\n" + dtm.getName();
-		}
-		else if (dtm instanceof ProjectArchiveBasedDataTypeManager) {
-			ProjectArchiveBasedDataTypeManager projectDtm =
-				(ProjectArchiveBasedDataTypeManager) dtm;
-			if (!projectDtm.isUpdatable() && !projectDtm.getDomainFile().canCheckout()) {
-				msg = "The project archive is not modifiable!\n" + dtm.getName();
-			}
-			else {
-				msg = "The project archive is not modifiable!\nYou must check out the archive\n" +
-					"before performing this operation.\n" + dtm.getName();
-			}
-		}
-		else {
-			msg = "The Archive is not modifiable!\n";
-		}
+		String msg = getUnmodifiableArchiveMessage(dtm.getDataStore());
 		Msg.showInfo(DataTypeUtils.class, parent, title, msg);
+	}
+
+	private static String getUnmodifiableArchiveMessage(DataTypeStore dataStore) {
+		if (dataStore instanceof Program) {
+			return "The Program is not modifiable!\n";
+		}
+		else if (dataStore instanceof FileDataTypeArchive) {
+			return "The archive file is not modifiable!\nYou must open the archive for editing\n" +
+				"before performing this operation.\n" + dataStore.getName();
+		}
+		else if (dataStore instanceof ProjectDataTypeArchive projectArchive) {
+			if (!projectArchive.isUpdatable() && !projectArchive.getDomainFile().canCheckout()) {
+				return "The project archive is not modifiable!\n" + projectArchive.getName();
+			}
+			return "The project archive is not modifiable!\nYou must check out the archive\n" +
+				"before performing this operation.\n" + projectArchive.getName();
+		}
+		return "The Archive is not modifiable!\n";
 	}
 
 	public static int binarySearchWithDuplicates(List<DataType> data,
@@ -532,6 +546,10 @@ class DataTypeIconWrapper {
 		this.dataTypeClass = dataTypeClass;
 		this.defaultIcon = defaultIcon;
 		this.disabledIcon = disabledIcon;
+	}
+
+	public String getDescription(DataType dataType) {
+		return dataTypeClass.getSimpleName();
 	}
 
 	Icon getIcon(DataType dataType, boolean disabled) {

@@ -15,12 +15,18 @@
  */
 package ghidra.trace.database.memory;
 
+import static org.junit.Assert.*;
+import static org.junit.Assume.*;
+
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.Map.Entry;
+
+import org.junit.Ignore;
+import org.junit.Test;
 
 import db.DBHandle;
 import db.Transaction;
@@ -34,14 +40,10 @@ import ghidra.trace.model.memory.*;
 import ghidra.trace.model.memory.TraceMemoryOperations.StatePredicate;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.thread.TraceThreadManager;
+import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.task.ConsoleTaskMonitor;
 import ghidra.util.task.TaskMonitor;
-import org.junit.Ignore;
-import org.junit.Test;
-
-import static org.junit.Assert.*;
-import static org.junit.Assume.assumeFalse;
 
 public abstract class AbstractDBTraceMemoryManagerMemoryTest
 		extends AbstractDBTraceMemoryManagerTest {
@@ -738,11 +740,11 @@ public abstract class AbstractDBTraceMemoryManagerMemoryTest
 	}
 
 	protected void dumpStates() {
-		System.err.println("STATES");
+		Msg.debug(this, "STATES");
 		for (DBTraceMemorySpace space : memory.getActiveSpaces()) {
 			for (Entry<TraceAddressSnapRange, TraceMemoryState> entry : space.stateMapSpace
 					.entries()) {
-				System.err.println("  " + entry);
+				Msg.debug(this, "  " + entry);
 			}
 		}
 	}
@@ -1139,7 +1141,7 @@ public abstract class AbstractDBTraceMemoryManagerMemoryTest
 			}
 			long current = System.currentTimeMillis();
 			double ticksPerSecond = 1000.0 * TICKS / (current - start);
-			System.err.println("%f/s".formatted(ticksPerSecond));
+			Msg.debug(this, "%f/s".formatted(ticksPerSecond));
 		}
 	}
 }

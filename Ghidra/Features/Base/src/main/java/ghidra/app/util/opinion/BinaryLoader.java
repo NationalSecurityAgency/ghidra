@@ -99,6 +99,7 @@ public class BinaryLoader extends AbstractProgramLoader {
 			String optName = option.getName();
 			try {
 				if (optName.equals(OPTION_NAME_BASE_ADDR)) {
+					// NOTE: null is valid (it later gets converted to 0 when a program is available)
 					baseAddr = (Address) option.getValue();
 				}
 			}
@@ -108,9 +109,6 @@ public class BinaryLoader extends AbstractProgramLoader {
 				}
 				return "Invalid value for " + optName + " - " + option.getValue();
 			}
-		}
-		if (baseAddr == null) {
-			return "Invalid base address";
 		}
 
 		for (Option option : options) {
@@ -143,19 +141,21 @@ public class BinaryLoader extends AbstractProgramLoader {
 							origFileLength + " (0x" + Long.toHexString(origFileLength) + ")";
 					}
 
-					long baseOffset = baseAddr.getOffset();
-					AddressSpace space = baseAddr.getAddressSpace();
-					long maxLength = Memory.MAX_BINARY_SIZE;
-					if (space.getSize() < 64) {
-						maxLength =
-							Math.min(maxLength, space.getMaxAddress().getOffset() + 1 - baseOffset);
-					}
-					else if (baseOffset < 0 && baseOffset > -Memory.MAX_BINARY_SIZE) {
-						maxLength = -baseAddr.getOffset();
-					}
-					if (length > maxLength) {
-						return "Length must not exceed maximum allowed size of " + maxLength +
-							" (0x" + Long.toHexString(maxLength) + ") bytes";
+					if (baseAddr != null) {
+						long baseOffset = baseAddr.getOffset();
+						AddressSpace space = baseAddr.getAddressSpace();
+						long maxLength = Memory.MAX_BINARY_SIZE;
+						if (space.getSize() < 64) {
+							maxLength = Math.min(maxLength,
+								space.getMaxAddress().getOffset() + 1 - baseOffset);
+						}
+						else if (baseOffset < 0 && baseOffset > -Memory.MAX_BINARY_SIZE) {
+							maxLength = -baseAddr.getOffset();
+						}
+						if (length > maxLength) {
+							return "Length must not exceed maximum allowed size of " + maxLength +
+								" (0x" + Long.toHexString(maxLength) + ") bytes";
+						}
 					}
 				}
 				else if (optName.equals(OPTION_NAME_BLOCK_NAME)) {
@@ -202,6 +202,7 @@ public class BinaryLoader extends AbstractProgramLoader {
 				String optName = option.getName();
 				if (optName.equals(OPTION_NAME_BASE_ADDR)) {
 					baseAddr = (Address) option.getValue();
+					break;
 				}
 			}
 		}
@@ -215,6 +216,7 @@ public class BinaryLoader extends AbstractProgramLoader {
 				String optName = option.getName();
 				if (optName.equals(OPTION_NAME_LEN)) {
 					length = parseLong(option);
+					break;
 				}
 			}
 		}
@@ -228,6 +230,7 @@ public class BinaryLoader extends AbstractProgramLoader {
 				String optName = option.getName();
 				if (optName.equals(OPTION_NAME_FILE_OFFSET)) {
 					fileOffset = parseLong(option);
+					break;
 				}
 			}
 		}
@@ -241,6 +244,7 @@ public class BinaryLoader extends AbstractProgramLoader {
 				String optName = option.getName();
 				if (optName.equals(OPTION_NAME_BLOCK_NAME)) {
 					blockName = (String) option.getValue();
+					break;
 				}
 			}
 		}
@@ -254,6 +258,7 @@ public class BinaryLoader extends AbstractProgramLoader {
 				String optName = option.getName();
 				if (optName.equals(OPTION_NAME_IS_OVERLAY)) {
 					isOverlay = (Boolean) option.getValue();
+					break;
 				}
 			}
 		}
@@ -351,8 +356,7 @@ public class BinaryLoader extends AbstractProgramLoader {
 		boolean isOverlay = false;
 		String blockName = "";
 		Address baseAddr = null;
-		if (domainObject instanceof Program) {
-			Program program = (Program) domainObject;
+		if (domainObject instanceof Program program) {
 			AddressFactory addressFactory = program.getAddressFactory();
 			if (addressFactory != null) {
 				AddressSpace defaultAddressSpace = addressFactory.getDefaultAddressSpace();
@@ -366,7 +370,7 @@ public class BinaryLoader extends AbstractProgramLoader {
 		long len = Math.min(tempLength, origFileLength);
 		len = Math.min(length, len);
 		length = len;
-		List<Option> list = new ArrayList<Option>();
+		List<Option> list = new ArrayList<>();
 
 		if (loadIntoProgram) {
 			list.add(Option.newBoolean(OPTION_NAME_IS_OVERLAY)

@@ -18,21 +18,28 @@ package ghidra.pcode.emu.jit.decode;
 import ghidra.pcode.emu.jit.JitPassage;
 import ghidra.pcode.emu.jit.JitPassage.AddrCtx;
 import ghidra.pcode.emu.jit.JitPcodeThread;
+import ghidra.pcode.emu.jit.folding.FoldedState;
 import ghidra.pcode.exec.PcodeProgram;
 
 public class JitPassageDecoderTestAccess {
 
 	public static JitPassage simulateFromPcode(PcodeProgram program, JitPcodeThread thread) {
+		boolean foldConstants = thread.getMachine().getConfiguration().foldConstants();
+
 		JitPassageDecoder decoder = new JitPassageDecoder(thread);
 		DecoderForOnePassage d4passage = new DecoderForOnePassage(decoder, AddrCtx.NOWHERE, 0);
 		d4passage.externalBranches.clear();
-		DecoderForOneStride d4stride = new DecoderForOneStride(decoder, d4passage, AddrCtx.NOWHERE);
-		DecoderExecutor exec = new DecoderExecutor(d4stride, AddrCtx.NOWHERE);
-		d4passage.firstOps.put(AddrCtx.NOWHERE, exec.rewrite(program.getCode().getFirst()));
+		FoldedState state = foldConstants ? new FoldedState(program.getLanguage()) : null;
+		DecoderForOneStride d4stride =
+			new DecoderForOneStride(decoder, d4passage, AddrCtx.NOWHERE, state);
+		DecoderExecutor exec = new DecoderExecutor(d4stride, AddrCtx.NOWHERE, state);
+		program = new PcodeProgram(program, exec.rewriteOps(program.getCode()));
 
+		d4passage.firstOps.put(AddrCtx.NOWHERE, program.getCode().getFirst());
 		exec.execute(program);
 		exec.checkFallthroughAndAccumulate(program);
 		d4passage.strides.add(d4stride.toStride());
+		d4passage.revalidateFolded();
 
 		return d4passage.finish();
 	}

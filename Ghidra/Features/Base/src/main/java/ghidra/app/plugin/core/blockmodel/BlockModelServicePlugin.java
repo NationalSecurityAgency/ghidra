@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,11 +43,10 @@ import ghidra.util.exception.NotFoundException;
  * A new model instance is always provided since the internal cache will quickly become
  * stale based upon program changes.  The current model implementations do not handle
  * program changes which would invalidate the cached blocks stored within the model.
- * 
+ * <p>
  * A single basic/sub model list is maintained since it is possible that some uses
  * may utilize either type of block model.
  */
-//@formatter:off
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
@@ -57,16 +56,13 @@ import ghidra.util.exception.NotFoundException;
 			+ "and subroutine models via the block model service.",
 	servicesProvided = { BlockModelService.class }
 )
-//@formatter:on
 public class BlockModelServicePlugin extends ProgramPlugin
 		implements BlockModelService, OptionsChangeListener {
 
 	private static final String SUB_OPTION = "Subroutine Block Model";
 
-	private TreeMap<String, BlockModelInfo> basicModelsByName =
-		new TreeMap<>();
-	private TreeMap<String, BlockModelInfo> subroutineModelsByName =
-		new TreeMap<>();
+	private TreeMap<String, BlockModelInfo> basicModelsByName = new TreeMap<>();
+	private TreeMap<String, BlockModelInfo> subroutineModelsByName = new TreeMap<>();
 	private BlockModelInfo activeBasicModel;
 	private BlockModelInfo activeSubroutineModel;
 
@@ -182,9 +178,6 @@ public class BlockModelServicePlugin extends ProgramPlugin
 
 	}
 
-	/**
-	 * @see ghidra.app.services.BlockModelService#registerModel(java.lang.Class, java.lang.String)
-	 */
 	@Override
 	public void registerModel(Class<? extends CodeBlockModel> modelClass, String modelName) {
 		if (SubroutineBlockModel.class.isAssignableFrom(modelClass)) {
@@ -200,9 +193,6 @@ public class BlockModelServicePlugin extends ProgramPlugin
 		}
 	}
 
-	/**
-	 * @see ghidra.app.services.BlockModelService#unregisterModel(java.lang.Class)
-	 */
 	@Override
 	public void unregisterModel(Class<? extends CodeBlockModel> modelClass) {
 		if (SubroutineBlockModel.class.isAssignableFrom(modelClass)) {
@@ -241,9 +231,6 @@ public class BlockModelServicePlugin extends ProgramPlugin
 		return null;
 	}
 
-	/**
-	 * @see ghidra.app.services.BlockModelService#getActiveBlockModel()
-	 */
 	@Override
 	public CodeBlockModel getActiveBlockModel() {
 		if (currentProgram == null) {
@@ -252,9 +239,6 @@ public class BlockModelServicePlugin extends ProgramPlugin
 		return getModelInstance(activeBasicModel.modelClass, currentProgram, false);
 	}
 
-	/**
-	 * @see ghidra.app.services.BlockModelService#getActiveBlockModel(boolean)
-	 */
 	@Override
 	public CodeBlockModel getActiveBlockModel(boolean includeExternals) {
 		if (currentProgram == null) {
@@ -263,9 +247,6 @@ public class BlockModelServicePlugin extends ProgramPlugin
 		return getModelInstance(activeBasicModel.modelClass, currentProgram, includeExternals);
 	}
 
-	/**
-	 * @see ghidra.app.services.BlockModelService#getActiveBlockModel(ghidra.program.model.listing.Program)
-	 */
 	@Override
 	public CodeBlockModel getActiveBlockModel(Program program) {
 		if (program == null) {
@@ -274,9 +255,6 @@ public class BlockModelServicePlugin extends ProgramPlugin
 		return getModelInstance(activeBasicModel.modelClass, program, false);
 	}
 
-	/**
-	 * @see ghidra.app.services.BlockModelService#getActiveBlockModel(ghidra.program.model.listing.Program, boolean)
-	 */
 	@Override
 	public CodeBlockModel getActiveBlockModel(Program program, boolean includeExternals) {
 		if (program == null) {
@@ -285,9 +263,6 @@ public class BlockModelServicePlugin extends ProgramPlugin
 		return getModelInstance(activeBasicModel.modelClass, program, includeExternals);
 	}
 
-	/**
-	 * @see ghidra.app.services.BlockModelService#getActiveSubroutineModel()
-	 */
 	@Override
 	public CodeBlockModel getActiveSubroutineModel() {
 		if (currentProgram == null) {
@@ -296,9 +271,6 @@ public class BlockModelServicePlugin extends ProgramPlugin
 		return getModelInstance(activeSubroutineModel.modelClass, currentProgram, false);
 	}
 
-	/**
-	 * @see ghidra.app.services.BlockModelService#getActiveSubroutineModel(boolean)
-	 */
 	@Override
 	public CodeBlockModel getActiveSubroutineModel(boolean includeExternals) {
 		if (currentProgram == null) {
@@ -307,9 +279,6 @@ public class BlockModelServicePlugin extends ProgramPlugin
 		return getModelInstance(activeSubroutineModel.modelClass, currentProgram, includeExternals);
 	}
 
-	/**
-	 * @see ghidra.app.services.BlockModelService#getActiveSubroutineModel(ghidra.program.model.listing.Program)
-	 */
 	@Override
 	public CodeBlockModel getActiveSubroutineModel(Program program) {
 		if (program == null) {
@@ -318,9 +287,6 @@ public class BlockModelServicePlugin extends ProgramPlugin
 		return getModelInstance(activeSubroutineModel.modelClass, program, false);
 	}
 
-	/**
-	 * @see ghidra.app.services.BlockModelService#getActiveSubroutineModel(ghidra.program.model.listing.Program, boolean)
-	 */
 	@Override
 	public CodeBlockModel getActiveSubroutineModel(Program program, boolean includeExternals) {
 		if (program == null) {
@@ -329,17 +295,11 @@ public class BlockModelServicePlugin extends ProgramPlugin
 		return getModelInstance(activeSubroutineModel.modelClass, program, includeExternals);
 	}
 
-	/**
-	 * @see ghidra.app.services.BlockModelService#getActiveBlockModelName()
-	 */
 	@Override
 	public String getActiveBlockModelName() {
 		return activeBasicModel.modelName;
 	}
 
-	/**
-	 * @see ghidra.app.services.BlockModelService#getActiveSubroutineModelName()
-	 */
 	@Override
 	public String getActiveSubroutineModelName() {
 		return activeSubroutineModel.modelName;
@@ -353,6 +313,7 @@ public class BlockModelServicePlugin extends ProgramPlugin
 			return c.newInstance(new Object[] { program, Boolean.valueOf(includeExternals) });
 		}
 		catch (Exception e) {
+			// do nothing
 		}
 
 		try {
@@ -361,6 +322,7 @@ public class BlockModelServicePlugin extends ProgramPlugin
 			return c.newInstance(new Object[] { program });
 		}
 		catch (Exception e) {
+			// do nothing
 		}
 
 		Msg.error(this, "ERROR! Failed to instantiate model: " + modelClass.getName());
@@ -368,35 +330,23 @@ public class BlockModelServicePlugin extends ProgramPlugin
 		return null;
 	}
 
-	/**
-	 * @see ghidra.app.services.BlockModelService#getNewModelByName(java.lang.String)
-	 */
 	@Override
 	public CodeBlockModel getNewModelByName(String modelName) throws NotFoundException {
 		return getNewModelByName(modelName, currentProgram, false);
 	}
 
-	/**
-	 * @see ghidra.app.services.BlockModelService#getNewModelByName(java.lang.String, boolean)
-	 */
 	@Override
 	public CodeBlockModel getNewModelByName(String modelName, boolean includeExtenernals)
 			throws NotFoundException {
 		return getNewModelByName(modelName, currentProgram, includeExtenernals);
 	}
 
-	/**
-	 * @see ghidra.app.services.BlockModelService#getNewModelByName(java.lang.String, ghidra.program.model.listing.Program)
-	 */
 	@Override
 	public CodeBlockModel getNewModelByName(String modelName, Program program)
 			throws NotFoundException {
 		return getNewModelByName(modelName, program, false);
 	}
 
-	/**
-	 * @see ghidra.app.services.BlockModelService#getNewModelByName(java.lang.String, ghidra.program.model.listing.Program, boolean)
-	 */
 	@Override
 	public CodeBlockModel getNewModelByName(String modelName, Program program,
 			boolean includeExternals) throws NotFoundException {
@@ -414,9 +364,6 @@ public class BlockModelServicePlugin extends ProgramPlugin
 		throw new NotFoundException("Block model not found: " + modelName);
 	}
 
-	/**
-	 * @see ghidra.app.services.BlockModelService#getAvailableModelNames(int)
-	 */
 	@Override
 	public String[] getAvailableModelNames(int modelType) {
 
@@ -440,17 +387,11 @@ public class BlockModelServicePlugin extends ProgramPlugin
 		return modelNames;
 	}
 
-	/**
-	 * @see ghidra.app.services.BlockModelService#addListener(ghidra.app.services.BlockModelServiceListener)
-	 */
 	@Override
 	public void addListener(BlockModelServiceListener listener) {
 		listenerList.add(listener);
 	}
 
-	/**
-	 * @see ghidra.app.services.BlockModelService#removeListener(ghidra.app.services.BlockModelServiceListener)
-	 */
 	@Override
 	public void removeListener(BlockModelServiceListener listener) {
 		listenerList.remove(listener);
@@ -479,8 +420,8 @@ public class BlockModelServicePlugin extends ProgramPlugin
 
 		@Override
 		public boolean equals(Object obj) {
-			if (obj instanceof BlockModelInfo) {
-				return modelName == ((BlockModelInfo) obj).modelName;
+			if (obj instanceof BlockModelInfo info) {
+				return modelName.equals(info.modelName);
 			}
 			return false;
 		}

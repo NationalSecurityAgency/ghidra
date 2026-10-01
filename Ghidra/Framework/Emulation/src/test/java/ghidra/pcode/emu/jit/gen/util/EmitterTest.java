@@ -15,11 +15,13 @@
  */
 package ghidra.pcode.emu.jit.gen.util;
 
+import static java.lang.classfile.ClassFile.ACC_PUBLIC;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.lang.invoke.*;
+import java.lang.classfile.ClassFile;
+import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.net.URI;
 import java.util.ArrayList;
@@ -30,8 +32,6 @@ import javax.tools.Diagnostic.Kind;
 import javax.tools.JavaCompiler.CompilationTask;
 
 import org.junit.Test;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Opcodes;
 
 import generic.Unique;
 import ghidra.pcode.emu.jit.gen.util.Emitter.*;
@@ -64,48 +64,47 @@ public class EmitterTest<THIS extends Generated> {
 	}
 
 	public void generateAndRun(RunGenerator<THIS, TVoid> gen) throws Throwable {
-		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
-		cw.visit(Opcodes.V21, Opcodes.ACC_PUBLIC, typeThis.internalName(), null,
-			T_OBJECT.internalName(), new String[] { T_GENERATED.internalName() });
+		byte[] classfile = ClassFile.of().build(typeThis.classDesc(), clb -> {
+			clb.withFlags(ACC_PUBLIC);
+			clb.withSuperclass(T_OBJECT.classDesc());
+			clb.withInterfaceSymbols(T_GENERATED.classDesc());
 
-		var paramsInit = new Object() {
-			Local<TRef<THIS>> this_;
-		};
-		var retInit = Emitter.start(typeThis, cw, Opcodes.ACC_PUBLIC, "<init>", MDESC_CONS)
-				.param(Def::done, typeThis, l -> paramsInit.this_ = l);
-		retInit.em()
-				.emit(Op::aload, paramsInit.this_)
-				.emit(Op::invokespecial, T_OBJECT, "<init>", MDESC_CONS, false)
-				.step(Inv::takeObjRef)
-				.step(Inv::retVoid)
-				.emit(Op::return_, retInit.ret())
-				.emit(Misc::finish);
+			Emitter.instanceWithBody(clb, typeThis, "<init>", MDESC_CONS, ACC_PUBLIC, mb -> {
+				var p = new Object() {
+					Local<TRef<THIS>> this_;
+				};
+				var spec = mb.startSpec()
+						.param(Def::done, typeThis, t -> p.this_ = t);
+				return spec.em()
+						.emit(Op::aload, p.this_)
+						.emit(Op::invokespecial, T_OBJECT, "<init>", MDESC_CONS, false)
+						.step(Inv::takeObjRef)
+						.step(Inv::retVoid)
+						.emit(Op::return_, spec.ret());
+			});
 
-		var paramsRun = new Object() {
-			Local<TRef<THIS>> this_;
-		};
-		var retRun = Emitter.start(typeThis, cw, Opcodes.ACC_PUBLIC, "run", MDESC_RUN)
-				.param(Def::done, typeThis, l -> paramsRun.this_ = l);
-		retRun.em()
-				.emit(gen::gen, paramsRun.this_, retRun.ret())
-				.emit(Misc::finish);
-
-		cw.visitEnd();
-		byte[] classfile = cw.toByteArray();
+			Emitter.instanceWithBody(clb, typeThis, "run", MDESC_RUN, ACC_PUBLIC, mb -> {
+				var p = new Object() {
+					Local<TRef<THIS>> this_;
+				};
+				var spec = mb.startSpec()
+						.param(Def::done, typeThis, t -> p.this_ = t);
+				return spec.em()
+						.emit(gen::gen, p.this_, spec.ret());
+			});
+		});
 
 		Lookup lookup = MethodHandles.lookup();
 		Lookup defLookup = lookup.defineHiddenClass(classfile, true);
 		@SuppressWarnings("unchecked")
 		Class<? extends Generated> cls = (Class<? extends Generated>) defLookup.lookupClass();
-		MethodHandle constructor =
-			defLookup.findConstructor(cls, MethodType.methodType(void.class));
-		Generated hw = (Generated) constructor.invoke();
-		hw.run();
+		Generated instance = cls.getConstructor().newInstance();
+		instance.run();
 	}
 
 	@Test
 	public void testHelloWorld() throws Throwable {
-		generateAndRun((em, localThis, ret) -> em
+		generateAndRun((em, _, ret) -> em
 				.emit(Op::getstatic, T_SYSTEM, "out", T_PRINT_STREAM)
 				.emit(Op::ldc__a, "Hello, World")
 				.emit(Op::invokevirtual, T_PRINT_STREAM, "println", MDESC_PRINTLN, false)
@@ -117,7 +116,7 @@ public class EmitterTest<THIS extends Generated> {
 
 	@Test
 	public void testArrayLengthPrim() throws Throwable {
-		generateAndRun((em, localThis, ret) -> em
+		generateAndRun((em, _, ret) -> em
 				.emit(Op::ldc__i, 6)
 				.emit(Op::newarray, Types.T_INT)
 				.emit(Op::arraylength__prim, Types.T_INT)
@@ -127,7 +126,7 @@ public class EmitterTest<THIS extends Generated> {
 
 	@Test
 	public void testArrayLengthRef() throws Throwable {
-		generateAndRun((em, localThis, ret) -> em
+		generateAndRun((em, _, ret) -> em
 				.emit(Op::ldc__i, 6)
 				.emit(Op::anewarray, Types.refOf(String.class))
 				.emit(Op::arraylength__ref)
@@ -160,7 +159,7 @@ public class EmitterTest<THIS extends Generated> {
 	// @Test // Because it won't actually run. Just a syntax check.
 	public void syntaxTestAreturn() throws Throwable {
 		RetReq<TRef<Object>> ret = null;
-		generateAndRun((em, localThis, ignore) -> em
+		generateAndRun((em, _, _) -> em
 				.emit(Op::new_, Types.refOf(String.class))
 				.emit(Op::areturn, ret));
 	}

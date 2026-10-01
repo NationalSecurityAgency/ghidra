@@ -233,7 +233,7 @@ public:
 ///
 /// Some logical variables are split across non-contiguous regions of memory. This space
 /// creates a virtual place for these logical variables to exist.  Any memory location within this
-/// space is backed by 2 or more memory locations in other spaces that physically hold the pieces
+/// space is backed (usually by 2 or more) memory locations in other spaces that physically hold the pieces
 /// of the logical value. The database controlling symbols is responsible for keeping track of
 /// mapping the logical address in this space to its physical pieces.  Offsets into this space do not
 /// have an absolute meaning, the database may vary what offset is assigned to what set of pieces.

@@ -81,20 +81,21 @@ PARSER_BEGIN(CParser)
 
 package ghidra.app.util.cparser.C;
 
-import ghidra.program.database.data.DataTypeUtilities;
-import ghidra.program.model.data.*;
-import ghidra.program.model.data.Enum;
-import ghidra.program.model.lang.CompilerSpec;
-import ghidra.util.Msg;
-import ghidra.util.task.TaskMonitor;
-import ghidra.util.InvalidNameException;
-import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.exception.InvalidInputException;
-
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.util.*;
+
+import ghidra.program.database.data.DataTypeUtilities;
+import ghidra.program.database.data.TransientDataTypeManager;
+import ghidra.program.model.data.*;
+import ghidra.program.model.data.Enum;
+import ghidra.program.model.lang.CompilerSpec;
+import ghidra.util.InvalidNameException;
+import ghidra.util.Msg;
+import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.exception.InvalidInputException;
+import ghidra.util.task.TaskMonitor;
 
 @SuppressWarnings("all")  // ignore warnings from generated code
 public class CParser {
@@ -992,7 +993,7 @@ public class CParser {
 
     public CParser() {
         this(System.in);
-        dtMgr= new StandAloneDataTypeManager("parsed");
+        dtMgr= new TransientDataTypeManager("parsed");
     }
 
     public CParser(DataTypeManager dtmgr) {

@@ -74,7 +74,8 @@ public:
   bool isInvalid(void) const;  ///< Is the address invalid?
   int4 getAddrSize(void) const; ///< Get the number of bytes in the address
   bool isBigEndian(void) const;	///< Is data at this address big endian encoded
-  void printRaw(ostream &s) const; ///< Write a raw version of the address to a stream
+  void printRaw(ostream &s) const; ///< Write a raw version of the address to a stream for debugging/logging
+  int4 printRaw(ostream &s,int4 size) const;	///< Write a (small) region to a stream for debugging/logging
   int4 read(const string &s); ///< Read in the address from a string
   AddrSpace *getSpace(void) const; ///< Get the address space
   uintb getOffset(void) const;  ///< Get the address offset

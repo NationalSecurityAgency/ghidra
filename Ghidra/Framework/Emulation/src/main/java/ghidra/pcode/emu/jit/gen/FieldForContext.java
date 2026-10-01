@@ -16,9 +16,9 @@
 package ghidra.pcode.emu.jit.gen;
 
 import static ghidra.pcode.emu.jit.gen.GenConsts.*;
-import static org.objectweb.asm.Opcodes.*;
+import static java.lang.classfile.ClassFile.*;
 
-import org.objectweb.asm.ClassVisitor;
+import java.lang.classfile.ClassBuilder;
 
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
 import ghidra.pcode.emu.jit.gen.util.*;
@@ -50,11 +50,11 @@ record FieldForContext(RegisterValue ctx) implements StaticFieldReq<TRef<Registe
 	 */
 	@Override
 	public <N extends Next> Emitter<N> genClInitCode(Emitter<N> em, JitCodeGenerator<?> gen,
-			ClassVisitor cv) {
+			ClassBuilder clb) {
 		if (ctx == null) {
 			return em;
 		}
-		Fld.decl(cv, ACC_PRIVATE | ACC_STATIC | ACC_FINAL, T_REGISTER_VALUE, name());
+		Fld.decl(clb, ACC_PRIVATE | ACC_STATIC | ACC_FINAL, T_REGISTER_VALUE, name());
 		return em
 				.emit(Op::getstatic, gen.typeThis, "LANGUAGE", T_LANGUAGE)
 				.emit(Op::ldc__a, ctx.getUnsignedValue().toString(16))

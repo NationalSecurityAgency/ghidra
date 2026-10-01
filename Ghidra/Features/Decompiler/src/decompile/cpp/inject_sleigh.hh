@@ -101,11 +101,24 @@ class InjectPayloadDynamic : public InjectPayload {
 public:
   InjectPayloadDynamic(Architecture *g,InjectPayload *base);
   virtual ~InjectPayloadDynamic(void);
-  void decodeEntry(Decoder &decoder);
   virtual void inject(InjectContext &context,PcodeEmit &emit) const;
-  virtual void decode(Decoder &decoder) { throw LowlevelError("decode not supported for InjectPayloadDynamic"); }
+  virtual void decode(Decoder &decoder);
   virtual void printTemplate(ostream &s) const { s << "dynamic"; }
   virtual string getSource(void) const { return "dynamic"; }
+};
+
+/// \brief Dynamic form of executable p-code
+///
+/// The p-code script for the underlying ExecutablePcode is dynamically replaced.
+/// This wraps a standard InjectPayloadDynamic and feeds its p-code inject to an emulator.
+class ExecutablePcodeDynamic : public ExecutablePcode {
+  InjectPayloadDynamic *dynamicPayload;		///< Dynamic payload wrapped as executable
+public:
+  ExecutablePcodeDynamic(Architecture *g,InjectPayload *base);	///< Constructor
+  virtual ~ExecutablePcodeDynamic(void);
+  virtual void inject(InjectContext &context,PcodeEmit &emit) const;
+  virtual void decode(Decoder &decoder);
+  virtual void printTemplate(ostream &s) const { s << "dynamic_executable"; }
 };
 
 /// \brief An implementation of an injection library using the internal SLEIGH engine to build payloads
@@ -116,7 +129,7 @@ class PcodeInjectLibrarySleigh : public PcodeInjectLibrary {
   const SleighBase *slgh;		///< The SLEIGH engine for parsing payloads
   vector<OpBehavior *> inst;		///< P-code behaviors used for p-code scripts
   InjectContextSleigh contextCache;	///< Reusable context for emitting p-code payloads
-  InjectPayloadDynamic *forceDebugDynamic(int4 injectid);
+  InjectPayload *decodeDynamic(Decoder &decoder);
   void parseInject(InjectPayload *payload);
 protected:
   virtual int4 allocateInject(const string &sourceName,const string &name,int4 type);

@@ -27,7 +27,7 @@ import docking.action.MenuData;
  * Class to manage a hierarchy of menus.
  */
 public class MenuManager implements ManagedMenuItem {
-	private static String NULL_GROUP_NAME = "<null group>";
+	private static final String NULL_GROUP_NAME = "<null group>";
 
 	private Set<ManagedMenuItem> managedMenuItems = new HashSet<>();
 	private Map<String, MenuManager> subMenus = new HashMap<>();
