@@ -92,6 +92,9 @@ public class BuildIdDebugFileProvider implements DebugFileProvider {
 		if (!(debugInfo instanceof BuildIdDebugInfo buildIdInfo)) {
 			return null;
 		}
+		if (buildIdInfo.getObjectType() != ObjectType.DEBUGINFO) {
+			return null;
+		}
 		String buildIdStr = buildIdInfo.getBuildIdHexString();
 		if (buildIdStr == null || buildIdStr.length() < 4 /* 2 bytes = 4 hex digits */ ) {
 			return null;
