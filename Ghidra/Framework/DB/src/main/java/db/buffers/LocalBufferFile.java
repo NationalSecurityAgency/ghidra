@@ -312,6 +312,14 @@ public class LocalBufferFile implements BufferFile {
 
 	@Override
 	public void setParameter(String name, int value) {
+		try {
+			if (name.getBytes(STRING_ENCODING).length > MAX_PARAM_NAME_LENGTH) {
+				throw new IllegalArgumentException("Parameter name is too long");
+			}
+		}
+		catch (UnsupportedEncodingException e) {
+			throw new IllegalArgumentException("Unsupported parameter name", e);
+		}
 		userParms.put(name, value);
 	}
 
