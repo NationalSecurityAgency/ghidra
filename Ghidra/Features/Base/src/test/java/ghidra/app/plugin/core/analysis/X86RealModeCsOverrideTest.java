@@ -34,13 +34,6 @@ import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.Reference;
 import ghidra.util.task.TaskMonitor;
 
-/**
- * Real-mode x86 code reads CS where a CS: override or a near indirect CALL or JMP needs it. The
- * MZ loader sets CS for each block. Where no loader sets it, the processor spec supplies
- * (address >> 4) & 0xf000, the value these instructions computed before they read CS. Constant
- * propagation treats a segment register holding zero as segment 0, which COM files and code
- * reading the BIOS data area use.
- */
 public class X86RealModeCsOverrideTest extends AbstractGenericTest {
 
 	private ProgramBuilder builder;
@@ -73,14 +66,14 @@ public class X86RealModeCsOverrideTest extends AbstractGenericTest {
 		}
 	}
 
-	/** Disassembles one instruction at {@code at}, propagates constants through it and
-	 * returns the linear addresses it references. */
 	private Set<Long> references(String at, String bytes) throws Exception {
 		return references(at, bytes, at);
 	}
 
-	/** Disassembles {@code bytes} at {@code at} as one function, propagates constants through
-	 * it and returns the linear addresses the instruction at {@code from} references. */
+	/**
+	 * Disassembles {@code bytes} at {@code at} as one function, runs constant propagation and
+	 * returns the linear addresses referenced from {@code from}.
+	 */
 	private Set<Long> references(String at, String bytes, String from) throws Exception {
 		int length = bytes.split(" ").length;
 		builder.setBytes(at, bytes);
@@ -172,7 +165,7 @@ public class X86RealModeCsOverrideTest extends AbstractGenericTest {
 		assertEquals(Set.of(), zeroDataSegmentReferences());
 	}
 
-	/** References from the last instruction of XOR AX,AX; MOV DS,AX; MOV AX,[0x46c]. */
+	// XOR AX,AX; MOV DS,AX; MOV AX,[0x46c]
 	private Set<Long> zeroDataSegmentReferences() throws Exception {
 		builder.setBytes("1234:0000", "31 c0 8e d8 a1 6c 04");
 		builder.disassemble("1234:0000", 7);
