@@ -831,7 +831,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 				System.exit(0);
 			}
 			
-			int signingKeyCount = logServerCertificates("RSA") + logServerCertificates("ECDSA");
+			int signingKeyCount = logServerCertificates("RSA") + logServerCertificates("EC_EC");
 			if (signingKeyCount == 0) {
 				log.fatal("Failed to locate a certificate with digital-signature usage");
 				System.exit(0);
