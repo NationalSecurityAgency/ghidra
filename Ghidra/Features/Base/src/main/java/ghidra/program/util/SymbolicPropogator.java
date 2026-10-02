@@ -1902,11 +1902,20 @@ public class SymbolicPropogator {
 			return null;
 		}
 
+		AddressSpace space = instr.getAddress().getAddressSpace();
+		boolean isRealModeSegment = payload.getName().equals("segment_pcode") &&
+			space instanceof SegmentedAddressSpace && !(space instanceof ProtectedAddressSpace);
 		ArrayList<Varnode> inputs = new ArrayList<Varnode>();
 		for (int i = 1; i < ins.length; i++) {
 			Varnode vval = context.getValue(ins[i], evaluator);
 			if (vval == null || !context.isConstant(vval)) {
 				return checkSegmentCallOther(payload, instr, ins, out);
+			}
+			// in real mode a segment register holding zero selects segment 0, it is not a null
+			// pointer; in protected mode selector 0 is the null selector
+			if (isRealModeSegment && i == 1 && context.isRegister(ins[i]) &&
+				context.isSuspectConstant(vval) && vval.getOffset() == 0) {
+				vval = context.createConstantVarnode(0, vval.getSize());
 			}
 			inputs.add(vval);
 		}
