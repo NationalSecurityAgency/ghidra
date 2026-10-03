@@ -4590,7 +4590,11 @@ define pcodeop rdpmc;
 :RDPMC          is vexMode=0 & byte=0xf; byte=0x33 { tmp:8 = rdpmc(ECX); EDX = tmp(4); EAX = tmp:4; }
 
 define pcodeop rdtsc;
-:RDTSC          is vexMode=0 & byte=0xf; byte=0x31                  { tmp:8 = rdtsc(); EDX = tmp(4); EAX = tmp(0); }
+:RDTSC          is vexMode=0 & byte=0xf; byte=0x31 & check_EAX_dest & check_EDX_dest {
+    tmp:8 = rdtsc();
+    EDX = tmp(4); build check_EDX_dest;
+    EAX = tmp(0); build check_EAX_dest;
+}
 
 :RET            is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=0 & byte=0xc3            { pop22(IP); EIP=segment(CS,IP); return [EIP]; }
 :RET            is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & byte=0xc3            { pop42(IP); EIP=zext(IP); return [EIP]; }
