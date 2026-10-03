@@ -1724,7 +1724,17 @@ macro move16(src, dst)
 
 :mov3q "#"^d911, eal	is (op=0xa & op68=5 & d911 )  ... & eal		{ eal = d911; }
 
-:sats.l regdn			is opbig=0x4c & op37=0x10 & regdn	{ if (VF == 0) goto inst_next; regdn = (zext(regdn == 0 ) * 0x80000000) + (zext(regdn != 0) * 0x7fffffff); VF=0; CF=0; }
+:sats.l regdn			is opbig=0x4c & op37=0x10 & regdn	{
+	if (VF == 0) goto inst_next;
+	if (regdn s< 0) goto <wasneg>;
+	regdn = 0x80000000;
+	goto <satdone>;
+	<wasneg>
+	regdn = 0x7fffffff;
+	<satdone>
+	VF = 0;
+	CF = 0;
+}
 
 skip_addr: skipAddr		is op02=2 [skipAddr = inst_next + 2;] { export *[ram]:4 skipAddr; }
 skip_addr: skipAddr		is op02=3 [skipAddr = inst_next + 4;] { export *[ram]:4 skipAddr; }
