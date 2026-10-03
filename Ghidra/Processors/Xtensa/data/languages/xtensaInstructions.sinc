@@ -1356,12 +1356,25 @@ rfi_eps: ptr is op_s	[ ptr = $(EPS_BASE) + (4 * op_s); ] { export *[register]:4 
 
 # UTRUNC.S - Truncate Single to Fixed Unsigned (RRR), pg. 555.
 :utrunc.s ar, fs, op_t is op2 = 0b1110 & op1 = 0b1010 & ar & fs & op_t & op0 = 0 {
-    local scale:4 = int2float(1:2 << op_t:2);
-    local tmp:8 = trunc(fs f* scale);
-    local posof = nan(fs) || (tmp >> 16) != 0;
-    local negof = tmp s< 0;
-    local noof  = !posof && !negof;
-    ar = zext(posof)*0xffffffff + zext(negof)*0x80000000 + zext(noof)*tmp:4;
+    local pow:4 = 1 << op_t;
+    local scale:4 = int2float(pow);
+    local scaled:4 = fs f* scale;
+    local wide:8 = trunc(scaled);
+    if (nan(fs)) goto <bad>;
+    if (scaled f< 0) goto <neg>;
+    if (wide > 0xffffffff) goto <bad>;
+    ar = wide:4;
+    goto <end>;
+    <neg>
+    if (wide s< -0x80000000) goto <sovf>;
+    ar = wide:4;
+    goto <end>;
+    <sovf>
+    ar = 0x80000000;
+    goto <end>;
+    <bad>
+    ar = 0xffffffff;
+    <end>
 }
 
 # WAITI - Wait Interrupt (RRR), pg. 556.
