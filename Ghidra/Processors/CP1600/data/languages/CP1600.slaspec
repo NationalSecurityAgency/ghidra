@@ -151,7 +151,7 @@ macro comparison(first, second) {
 macro subtraction(first_w, first_r, second) {
 	local __val__ = first_r - second;
 	O = sborrow(first_r, second);
-	C = first_r < second; 
+	C = first_r >= second;
 	resultFlags(__val__);
 	first_w = __val__;
 }
