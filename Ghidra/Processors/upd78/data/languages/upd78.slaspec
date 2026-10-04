@@ -1462,7 +1462,7 @@ irf: AN7    is irf_0_4 = 0x13 & AN7 { export AN7; }
 
 :CALT loc is op5_7 = 0x4 & ta_0_4 [ loc = 0x0080 + (ta_0_4 << 1); possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
     local tmp:2 = inst_next;
-    local ptr:2 = 0x0080 + (ta_0_4 << 2);
+    local ptr:2 = 0x0080 + (ta_0_4 << 1);
     local dest = *:2 ptr;
     push16(tmp);
     call [dest];
