@@ -41,6 +41,10 @@ define register offset=0xA0 size=1 [NMI FT0 FT1 F1 F2 FE0 FE1 FEIN FAD FSR FST E
 
 define register offset=0xF0 size=4 contextreg;
 define context contextreg
+    # Set on an instruction that the preceding instruction may skip, so that the
+    # SK flag check is emitted for it. The call instructions set it on their
+    # fall-through, since the next instruction is the one that would be skipped 
+    # in the case that a RETS instruction was executed.
     possibleSkip = (0,0) noflow
 ;
 
@@ -1438,25 +1442,25 @@ irf: AN7    is irf_0_4 = 0x13 & AN7 { export AN7; }
 # 14.6.13 Call instructions                                    #
 ################################################################
 
-:CALL Addr16 is op0_7 = 0x40; Addr16 {
+:CALL Addr16 is op0_7 = 0x40; Addr16 [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
     local tmp:2 = inst_next;
     push16(tmp);
     call Addr16;
 }
 
-:CALB is op0_7 = 0x48; op0_7 = 0x29 {
+:CALB is op0_7 = 0x48; op0_7 = 0x29 [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
     local tmp:2 = inst_next;
     push16(tmp);
     call [BC];
 }
 
-:CALF faAddr is op3_7 = 0x0f ... & faAddr {
+:CALF faAddr is op3_7 = 0x0f ... & faAddr [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
     local tmp:2 = inst_next;
     push16(tmp);
     call faAddr;
 }
 
-:CALT loc is op5_7 = 0x4 & ta_0_4 [ loc = 0x0080 + (ta_0_4 << 1); ] {
+:CALT loc is op5_7 = 0x4 & ta_0_4 [ loc = 0x0080 + (ta_0_4 << 1); possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
     local tmp:2 = inst_next;
     local ptr:2 = 0x0080 + (ta_0_4 << 2);
     local dest = *:2 ptr;
@@ -1464,7 +1468,7 @@ irf: AN7    is irf_0_4 = 0x13 & AN7 { export AN7; }
     call [dest];
 }
 
-:SOFTI is op0_7 = 0x72 {
+:SOFTI is op0_7 = 0x72 [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
     local tmp:2 = inst_next;
     push8(PSW);
     push16(tmp);
@@ -1481,7 +1485,7 @@ irf: AN7    is irf_0_4 = 0x13 & AN7 { export AN7; }
     return [tmp];
 }
 
-:RETS is op0_7 = 0xb9 [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
+:RETS is op0_7 = 0xb9 {
     local tmp:2 = 0;
     pop16(tmp);
     $(SK_flag) = 1;
