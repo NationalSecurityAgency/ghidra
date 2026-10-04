@@ -108,6 +108,12 @@ regval0_2:    is reg0_2=7 {
 	export tmp;
 }
 regval0_2:    is reg0_2 { export reg0_2; }
+# R7 source operands read the next instruction's word address.
+srcval3_5:    is reg3_5=7 {
+	local tmp:2 = inst_next / 2;
+	export tmp;
+}
+srcval3_5:    is reg3_5 { export reg3_5; }
 
 cc: ""    is branch_external=0 & branch_condition=0  { local tmp:1 = 1; export tmp; }
 cc: "C"   is branch_external=0 & branch_condition=1  { export C; }
@@ -180,8 +186,8 @@ define pcodeop SoftwareInterrupt;
 	build checkbranch;
 }
 
-:ADDR reg3_5, reg0_2 is opcode6_9=0x0003 & reg3_5 & reg0_2 & regval0_2 & checkbranch {
-	addition(reg0_2, regval0_2, reg3_5);
+:ADDR reg3_5, reg0_2 is opcode6_9=0x0003 & reg3_5 & srcval3_5 & reg0_2 & regval0_2 & checkbranch {
+	addition(reg0_2, regval0_2, srcval3_5);
 	build checkbranch;
 }
 
@@ -198,8 +204,8 @@ define pcodeop SoftwareInterrupt;
 	build checkbranch;
 }
 
-:ANDR reg3_5, reg0_2 is opcode6_9=0x0006 & reg3_5 & reg0_2 & regval0_2 & checkbranch {
-	reg0_2 = regval0_2 & reg3_5;
+:ANDR reg3_5, reg0_2 is opcode6_9=0x0006 & reg3_5 & srcval3_5 & reg0_2 & regval0_2 & checkbranch {
+	reg0_2 = regval0_2 & srcval3_5;
 	resultFlags(reg0_2);
 	build checkbranch;
 }
@@ -231,8 +237,8 @@ define pcodeop SoftwareInterrupt;
 	comparison(reg0_2, impliedval16);
 }
 
-:CMPR reg3_5, reg0_2 is opcode6_9=0x0005 & reg3_5 & reg0_2 {
-	comparison(reg0_2, reg3_5);
+:CMPR reg3_5, reg0_2 is opcode6_9=0x0005 & reg3_5 & srcval3_5 & reg0_2 {
+	comparison(reg0_2, srcval3_5);
 }
 
 :COMR reg0_2 is opcode3_9=0x0003 & reg0_2 & regval0_2 & checkbranch {
@@ -284,8 +290,8 @@ define pcodeop SoftwareInterrupt;
 	goto jmpdest16;
 }
 
-:JR reg3_5 is opcode6_9=0x0002 & reg3_5 & reg0_2 & reg0_2=7 {
-	reg0_2 = reg3_5;
+:JR reg3_5 is opcode6_9=0x0002 & reg3_5 & srcval3_5 & reg0_2 & reg0_2=7 {
+	reg0_2 = srcval3_5;
 	resultFlags(reg0_2);
 	return [reg0_2];
 }
@@ -307,8 +313,8 @@ define pcodeop SoftwareInterrupt;
 	call jmpdest16;
 }
 
-:MOVR reg3_5, reg0_2 is opcode6_9=0x0002 & reg0_2 & reg3_5 & checkbranch {
-	reg0_2 = reg3_5;
+:MOVR reg3_5, reg0_2 is opcode6_9=0x0002 & reg0_2 & reg3_5 & srcval3_5 & checkbranch {
+	reg0_2 = srcval3_5;
 	resultFlags(reg0_2);
 	build checkbranch;
 }
@@ -403,8 +409,8 @@ define pcodeop SoftwareInterrupt;
 	build checkbranch;
 }
 
-:SUBR reg3_5, reg0_2 is opcode6_9=0x0004 & reg3_5 & reg0_2 & regval0_2 & checkbranch {
-	subtraction(reg0_2, regval0_2, reg3_5);
+:SUBR reg3_5, reg0_2 is opcode6_9=0x0004 & reg3_5 & srcval3_5 & reg0_2 & regval0_2 & checkbranch {
+	subtraction(reg0_2, regval0_2, srcval3_5);
 	build checkbranch;
 }
 
@@ -429,8 +435,8 @@ define pcodeop SoftwareInterrupt;
 	build checkbranch;
 }
 
-:XORR reg3_5, reg0_2 is opcode6_9=0x0007 & reg3_5 & reg0_2 & regval0_2 & checkbranch {
-	reg0_2 = regval0_2 ^ reg3_5;
+:XORR reg3_5, reg0_2 is opcode6_9=0x0007 & reg3_5 & srcval3_5 & reg0_2 & regval0_2 & checkbranch {
+	reg0_2 = regval0_2 ^ srcval3_5;
 	resultFlags(reg0_2);
 	build checkbranch;
 }
