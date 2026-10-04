@@ -370,6 +370,12 @@ define pcodeop SoftwareInterrupt;
 	reg3_5 = reg3_5 + 1;
 }
 
+# A stack pop into the program counter is a return.
+:PULR reg0_2 is opcode6_9=0x000A & impliedval16 & reg0_2 & reg0_2=7 & reg3_5=6 {
+	R7 = impliedval16;
+	return [R7];
+}
+
 :PULR reg0_2 is opcode6_9=0x000A & impliedval16 & reg0_2 & reg3_5=6 {
 	reg0_2 = impliedval16;
 }
