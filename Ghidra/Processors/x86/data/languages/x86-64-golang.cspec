@@ -63,6 +63,27 @@
 				<pentry minsize="4" maxsize="8" metatype="float">
 					<register name="XMM7_Qa"/>
 				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="XMM8_Qa"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="XMM9_Qa"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="XMM10_Qa"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="XMM11_Qa"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="XMM12_Qa"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="XMM13_Qa"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="XMM14_Qa"/>
+				</pentry>
 				
 				<pentry minsize="1" maxsize="8">
 					<register name="RAX"/>
@@ -92,44 +113,139 @@
 					<register name="R11"/>
 				</pentry>
 		        
-				<pentry minsize="1" maxsize="500" align="8">
+				<pentry minsize="1" maxsize="500" align="1">
 					<addr offset="8" space="stack"/>
 				</pentry>
+				<rule>
+					<datatype name="int" minsize="9" maxsize="16"/>
+					<join/>
+				</rule>
+				<rule>
+					<datatype name="uint" minsize="9" maxsize="16"/>
+					<join/>
+				</rule>
+				<rule>
+					<datatype name="float"/>
+					<consume storage="float"/>
+				</rule>
+				<rule>
+					<datatype name="float"/>
+					<goto_stack/>			<!-- Once float registers are used don't use general purpose-->
+				</rule>
+				<rule>
+					<datatype name="array" minelements="2"/>	<!-- Array with 1 element treated like structure -->
+					<goto_stack/>
+				</rule>
+        		<rule>
+          			<datatype name="any"/>
+          			<join_per_primitive/>
+        		</rule>
 			</input>
 	      
 			<output>
 				<pentry minsize="4" maxsize="8" metatype="float">
 					<register name="XMM0_Qa"/>
 				</pentry>
-		        
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="XMM1_Qa"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="XMM2_Qa"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="XMM3_Qa"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="XMM4_Qa"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="XMM5_Qa"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="XMM6_Qa"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="XMM7_Qa"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="XMM8_Qa"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="XMM9_Qa"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="XMM10_Qa"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="XMM11_Qa"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="XMM12_Qa"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="XMM13_Qa"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="XMM14_Qa"/>
+				</pentry>
+				
 				<pentry minsize="1" maxsize="8">
 					<register name="RAX"/>
 				</pentry>
-				<pentry minsize="9" maxsize="16">
-					<addr space="join" piece2="RAX" piece1="RBX"/>
+				<pentry minsize="1" maxsize="8">
+					<register name="RBX"/>
 				</pentry>
-				<pentry minsize="17" maxsize="24">
-					<addr space="join" piece3="RAX" piece2="RBX" piece1="RCX"/>
+				<pentry minsize="1" maxsize="8">
+					<register name="RCX"/>
 				</pentry>
-				<pentry minsize="25" maxsize="32">
-					<addr space="join" piece4="RAX" piece3="RBX" piece2="RCX" piece1="RDI"/>
+				<pentry minsize="1" maxsize="8">
+					<register name="RDI"/>
 				</pentry>
-				<pentry minsize="33" maxsize="40">
-					<addr space="join" piece5="RAX" piece4="RBX" piece3="RCX" piece2="RDI" piece1="RSI"/>
+				<pentry minsize="1" maxsize="8">
+					<register name="RSI"/>
 				</pentry>
-				<pentry minsize="41" maxsize="48">
-					<addr space="join" piece6="RAX" piece5="RBX" piece4="RCX" piece3="RDI" piece2="RSI" piece1="R8"/>
+				<pentry minsize="1" maxsize="8">
+					<register name="R8"/>
 				</pentry>
-				<pentry minsize="49" maxsize="56">
-					<addr space="join" piece7="RAX" piece6="RBX" piece5="RCX" piece4="RDI" piece3="RSI" piece2="R8" piece1="R9"/>
+				<pentry minsize="1" maxsize="8">
+					<register name="R9"/>
 				</pentry>
-				<pentry minsize="57" maxsize="64">
-					<addr space="join" piece8="RAX" piece7="RBX" piece6="RCX" piece5="RDI" piece4="RSI" piece3="R8" piece2="R9" piece1="R10"/>
+				<pentry minsize="1" maxsize="8">
+					<register name="R10"/>
 				</pentry>
-				<pentry minsize="65" maxsize="72">
-					<addr space="join" piece9="RAX" piece8="RBX" piece7="RCX" piece6="RDI" piece5="RSI" piece4="R8" piece3="R9" piece2="R10" piece1="R11"/>
+				<pentry minsize="1" maxsize="8">
+					<register name="R11"/>
 				</pentry>
+		        
+				<pentry minsize="1" maxsize="500" align="1">
+					<addr offset="8" space="stack"/>
+				</pentry>
+				<rule>
+					<datatype name="int" minsize="9" maxsize="16"/>
+					<join/>
+				</rule>
+				<rule>
+					<datatype name="uint" minsize="9" maxsize="16"/>
+					<join/>
+				</rule>
+				<rule>
+					<datatype name="float"/>
+					<consume storage="float"/>
+				</rule>
+				<rule>
+					<datatype name="float"/>
+					<goto_stack/>
+				</rule>
+				<rule>
+					<datatype name="array" minelements="2"/>
+					<goto_stack/>
+				</rule>
+        		<rule>
+          			<datatype name="any"/>
+          			<join_per_primitive/>
+        		</rule>
 			</output>
+			<sharestack first="input" align="8"/>
 	      
 			<killedbycall>
 				<register name="RAX"/>

@@ -33,7 +33,19 @@ sourceSets {
 }
 
 configurations {
-   ghidraClassImplementation.extendsFrom implementation
+	ghidraClassImplementation.extendsFrom implementation
+	ghidraClassArtifacts {
+		canBeConsumed = true
+	}
+}
+
+task ghidraClassJar(type:Jar) {
+	from sourceSets.ghidraClass.output
+	archiveFileName = 'GhidraDocs-Examples.jar'
+}
+
+artifacts {
+	ghidraClassArtifacts(ghidraClassJar)
 }
 
 dependencies {

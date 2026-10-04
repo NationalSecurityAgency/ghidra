@@ -15,13 +15,17 @@
  */
 package generic.expressions;
 
-import static generic.expressions.ExpressionGrouper.*;
+import static generic.expressions.ExpressionGrouper.LEFT_PAREN;
+import static generic.expressions.ExpressionGrouper.RIGHT_PAREN;
 
-import java.util.*;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import ghidra.util.NumericUtilities;
 
 /**
  * Class for evaluating numeric expressions. See 
@@ -118,10 +122,25 @@ public class ExpressionEvaluator {
 	 */
 	public long parseAsLong(String input) throws ExpressionException {
 		ExpressionValue expressionValue = parse(input);
-		if (expressionValue instanceof LongExpressionValue longValue) {
-			return longValue.getLongValue();
+		if (expressionValue instanceof BigIntegerExpressionValue bitIntValue) {
+			return bitIntValue.getValue().longValue();
 		}
 		throw new ExpressionException("Expression did not evalute to a long! Got a " +
+			expressionValue.getClass() + " instead.");
+	}
+
+	/**
+	 * Parses the given expression input, expecting the result to be BigInteger value.
+	 * @param input the expression string
+	 * @return the long value result.
+	 * @throws ExpressionException if the expression could not be evaluated to a BigInteger
+	 */
+	public BigInteger parseAsBigInteger(String input) throws ExpressionException {
+		ExpressionValue expressionValue = parse(input);
+		if (expressionValue instanceof BigIntegerExpressionValue bigIntValue) {
+			return bigIntValue.getValue();
+		}
+		throw new ExpressionException("Expression did not evalute to a BigInteger! Got a " +
 			expressionValue.getClass() + " instead.");
 	}
 
@@ -457,11 +476,8 @@ public class ExpressionEvaluator {
 	}
 
 	private boolean processNumber(List<ExpressionElement> list, String token) {
-		int radix = 10;
+		int radix = assumeHex ? 16 : 10;
 
-		if (assumeHex && processAsHexNumber(list, token)) {
-			return true;
-		}
 		token = toLowerAndRemoveEndNumberDecorators(token);
 		if (token.startsWith("0x")) {
 			radix = 16;
@@ -469,10 +485,8 @@ public class ExpressionEvaluator {
 		}
 
 		try {
-			long value = (radix == 10) ? NumericUtilities.parseLong(token)
-					: NumericUtilities.parseHexLong(token);
-
-			list.add(new LongExpressionValue(value));
+			BigInteger value = new BigInteger(token, radix);
+			list.add(new BigIntegerExpressionValue(value));
 			return true;
 		}
 		catch (Exception e) {
@@ -494,16 +508,4 @@ public class ExpressionEvaluator {
 		return token;
 	}
 
-	// parses values as a hex value (e.g. parsing "10" returns 16 instead of 10)
-	private boolean processAsHexNumber(List<ExpressionElement> list, String token) {
-		try {
-			long value = NumericUtilities.parseHexLong(token);
-			list.add(new LongExpressionValue(value));
-			return true;
-		}
-		catch (NumberFormatException e) {
-			// ignore
-		}
-		return false;
-	}
 }

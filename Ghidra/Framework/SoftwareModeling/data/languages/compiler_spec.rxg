@@ -348,6 +348,8 @@
     <optional><attribute name="minsize"/></optional>
     <optional><attribute name="maxsize"/></optional>
     <optional><attribute name="sizes"/></optional>
+    <optional><attribute name="minelements"/></optional>
+    <optional><attribute name="maxelements"/></optional>
   </define>
   
   <define name="modelrule_type">
@@ -620,6 +622,15 @@
       <optional>
         <element name="localrange">
           <ref name="rangelist_type"/>
+        </element>
+      </optional>
+      
+      <optional>
+        <element name="sharestack">
+          <optional>
+            <attribute name="first"/>
+            <attribute name="align"/>
+          </optional>
         </element>
       </optional>
       

@@ -49,13 +49,7 @@ public class ExtraStack extends AssignAction {
 	 * @throws InvalidInputException if there is no stack entry
 	 */
 	private void initializeEntry() throws InvalidInputException {
-		for (int i = 0; i < resource.getNumParamEntry(); ++i) {
-			ParamEntry entry = resource.getEntry(i);
-			if (!entry.isExclusion() && entry.getSpace().isStackSpace()) {
-				stackEntry = entry;
-				break;
-			}
-		}
+		stackEntry = resource.getStackEntry();
 		if (stackEntry == null) {
 			throw new InvalidInputException(
 				"Cannot find matching <pentry> for action: extra_stack");

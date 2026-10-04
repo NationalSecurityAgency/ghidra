@@ -37,7 +37,8 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.data.*;
-import ghidra.program.model.data.StandAloneDataTypeManager.LanguageUpdateOption;
+import ghidra.program.model.dtarchive.PersistentDataTypeArchive;
+import ghidra.program.model.dtarchive.DataTypeArchive.LanguageUpdateOption;
 import ghidra.program.model.lang.*;
 import ghidra.test.*;
 import ghidra.util.InvalidNameException;
@@ -95,7 +96,7 @@ public abstract class AbstractCreateArchiveTest extends AbstractGhidraHeadedInte
 		waitForTree();
 	}
 
-	protected DataType resolveDataType(StandAloneDataTypeManager archiveDtm, DataType dt)
+	protected DataType resolveDataType(DataTypeManager archiveDtm, DataType dt)
 			throws Exception {
 		int id = archiveDtm.startTransaction("resolve datatype");
 		try {
@@ -107,29 +108,29 @@ public abstract class AbstractCreateArchiveTest extends AbstractGhidraHeadedInte
 		}
 	}
 
-	protected void setArchitecture(StandAloneDataTypeManager archiveDtm, String languageId,
+	protected void setArchitecture(PersistentDataTypeArchive archive, String languageId,
 			String compilerSpecId) throws Exception {
 		LanguageService languageService = getLanguageService();
 		Language language = languageService.getLanguage(new LanguageID(languageId));
 
-		int id = archiveDtm.startTransaction("set architecture");
+		int id = archive.startTransaction("set architecture");
 		try {
-			archiveDtm.setProgramArchitecture(language, new CompilerSpecID(compilerSpecId),
+			archive.setProgramArchitecture(language, new CompilerSpecID(compilerSpecId),
 				LanguageUpdateOption.CLEAR, TaskMonitor.DUMMY);
 		}
 		finally {
-			archiveDtm.endTransaction(id, true);
+			archive.endTransaction(id, true);
 		}
 		waitForTree();
 	}
 
-	protected void removeArchitecture(StandAloneDataTypeManager archiveDtm) throws Exception {
-		int id = archiveDtm.startTransaction("remove architecture");
+	protected void removeArchitecture(PersistentDataTypeArchive archive) throws Exception {
+		int id = archive.startTransaction("remove architecture");
 		try {
-			archiveDtm.clearProgramArchitecture(TaskMonitor.DUMMY);
+			archive.clearProgramArchitecture(TaskMonitor.DUMMY);
 		}
 		finally {
-			archiveDtm.endTransaction(id, true);
+			archive.endTransaction(id, true);
 		}
 		waitForTree();
 	}

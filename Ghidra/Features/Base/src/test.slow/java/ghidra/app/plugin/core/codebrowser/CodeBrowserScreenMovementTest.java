@@ -52,6 +52,7 @@ import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.*;
 import ghidra.test.AbstractProgramBasedTest;
+import ghidra.util.Msg;
 
 public class CodeBrowserScreenMovementTest extends AbstractProgramBasedTest {
 
@@ -533,12 +534,12 @@ public class CodeBrowserScreenMovementTest extends AbstractProgramBasedTest {
 			cursorRight(fp);
 
 			if (!codeBrowser.getCurrentFieldText().equals(cb2.getCurrentFieldText())) {
-				System.err.println("text not equal at cursor move: " + i);
+				Msg.error(this, "text not equal at cursor move: " + i);
 			}
 			assertEquals(codeBrowser.getCurrentFieldText(), cb2.getCurrentFieldText());
 
 			if (!codeBrowser.getCurrentFieldLoction().equals(cb2.getCurrentFieldLoction())) {
-				System.err.println("location not equal at cursor move: " + i);
+				Msg.error(this, "location not equal at cursor move: " + i);
 			}
 
 			assertEquals(codeBrowser.getCurrentFieldLoction(), cb2.getCurrentFieldLoction());

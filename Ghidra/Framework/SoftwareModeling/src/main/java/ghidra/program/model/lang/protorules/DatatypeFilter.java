@@ -16,12 +16,13 @@
 package ghidra.program.model.lang.protorules;
 
 import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.MetaDataType.*;
 
 import java.io.IOException;
 
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.pcode.Encoder;
-import ghidra.program.model.pcode.PcodeDataTypeManager;
+import ghidra.program.model.pcode.MetaDataType;
 import ghidra.xml.*;
 
 /**
@@ -80,12 +81,17 @@ public interface DatatypeFilter {
 		}
 		else if (nm.equals(HomogeneousAggregate.NAME_FLOAT)) {
 			filter = new HomogeneousAggregate(HomogeneousAggregate.NAME_FLOAT,
-				PcodeDataTypeManager.TYPE_FLOAT, HomogeneousAggregate.DEFAULT_MAX_PRIMITIVES, 0, 0);
+				TYPE_FLOAT, HomogeneousAggregate.DEFAULT_MAX_PRIMITIVES, 0, 0);
 		}
 		else {
 			// If no other name matches, assume this is a decompiler metatype
-			int meta = PcodeDataTypeManager.getMetatype(nm);
-			filter = new MetaTypeFilter(meta);
+			MetaDataType meta = MetaDataType.get(nm);
+			if (meta == TYPE_ARRAY) {
+				filter = new ArrayFilter();
+			}
+			else {
+				filter = new MetaTypeFilter(meta);
+			}
 		}
 		filter.restoreXml(parser);
 		return filter;

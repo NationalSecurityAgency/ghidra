@@ -123,6 +123,8 @@ void IfaceDecompCapability::registerCommands(IfaceStatus *status)
   status->registerCom(new IfcLockPrototype(),"prototype","lock");
   status->registerCom(new IfcUnlockPrototype(),"prototype","unlock");
   status->registerCom(new IfcCommentInstr(),"comment","instruction");
+  status->registerCom(new IfcFindVarnodeHash(),"find","varnode","hash");
+  status->registerCom(new IfcFindOpHash(),"find","op","hash");
   status->registerCom(new IfcDuplicateHash(),"duplicate","hash");
   status->registerCom(new IfcCallGraphBuild(),"callgraph","build");
   status->registerCom(new IfcCallGraphBuildQuick(),"callgraph","build","quick");
@@ -2694,6 +2696,55 @@ void IfcDuplicateHash::check(Funcdata *fd,ostream &s)
       op->printRaw(s);
       s << endl;
     }
+  }
+}
+
+/// \class IfcFindVarnodeHash
+/// \brief Find a Varnode in the current function given a hash and address
+///
+/// If a matching Varnode is found, info is displayed. Otherwise "Varnode not found" is displayed.
+void IfcFindVarnodeHash::execute(istream &s)
+
+{
+  if (dcp->conf == (Architecture *)0)
+    throw IfaceExecutionError("Image not loaded");
+  if (dcp->fd == (Funcdata *)0)
+    throw IfaceExecutionError("No function selected");
+  int4 size;
+  Address addr = parse_machaddr(s,size,*dcp->conf->types); // Read required address
+  uint8 hash = 0;
+  s >> ws >> hex >> hash;
+  DynamicHash dynamic;
+  Varnode *vn = dynamic.findVarnode(dcp->fd,addr,hash);
+  if (vn == (Varnode *)0)
+    *status->optr << "Varnode not found" << endl;
+  else {
+    vn->printInfo(*status->optr);
+  }
+}
+
+/// \class IfcFindOpHash
+/// \brief Find a PcodeOp in the current function given a hash and address
+///
+/// If a matching PcodeOp is found, info is displayed. Otherwise "Op not found" is displayed.
+void IfcFindOpHash::execute(istream &s)
+
+{
+  if (dcp->conf == (Architecture *)0)
+    throw IfaceExecutionError("Image not loaded");
+  if (dcp->fd == (Funcdata *)0)
+    throw IfaceExecutionError("No function selected");
+  int4 size;
+  Address addr = parse_machaddr(s,size,*dcp->conf->types); // Read required address
+  uint8 hash = 0;
+  s >> ws >> hex >> hash;
+  DynamicHash dynamic;
+  PcodeOp *op = dynamic.findOp(dcp->fd,addr,hash);
+  if (op == (PcodeOp *)0)
+    *status->optr << "Op not found" << endl;
+  else {
+    op->printRaw(*status->optr);
+    *status->optr << endl;
   }
 }
 

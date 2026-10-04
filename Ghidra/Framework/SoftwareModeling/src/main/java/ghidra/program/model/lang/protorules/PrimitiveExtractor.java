@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,10 +15,12 @@
  */
 package ghidra.program.model.lang.protorules;
 
+import static ghidra.program.model.pcode.MetaDataType.*;
+
 import java.util.ArrayList;
 
 import ghidra.program.model.data.*;
-import ghidra.program.model.pcode.PcodeDataTypeManager;
+import ghidra.program.model.pcode.MetaDataType;
 
 public class PrimitiveExtractor {
 
@@ -38,6 +40,7 @@ public class PrimitiveExtractor {
 	private boolean unknownElements;			// True if at least one TYPE_UNKNOWN primitive
 	private boolean extraSpace;					// True if extra space not attributable to padding
 	private boolean unionInvalid;				// True if unions are treated as invalid primitive
+	private boolean arrayIsPrimitive;			// True if arrays are treated as primitive
 
 	/**
 	 * Check that a big Primitive properly overlaps smaller Primitives
@@ -57,8 +60,7 @@ public class PrimitiveExtractor {
 			Primitive big) {
 		int endOff = big.offset + big.dt.getAlignedLength();
 		// If big data-type is a float, let smaller primitives override it, otherwise we keep the big primitive
-		boolean useSmall =
-			PcodeDataTypeManager.getMetatype(big.dt) == PcodeDataTypeManager.TYPE_FLOAT;
+		boolean useSmall = MetaDataType.get(big.dt) == TYPE_FLOAT;
 		while (point < small.size()) {
 			int curOff = small.get(point).offset;
 			if (curOff >= endOff) {
@@ -159,7 +161,7 @@ public class PrimitiveExtractor {
 		DataTypeComponent curField = dt.getComponent(0);
 
 		PrimitiveExtractor common = new PrimitiveExtractor(curField.getDataType(), false,
-			offset + curField.getOffset(), max);
+			arrayIsPrimitive, offset + curField.getOffset(), max);
 		if (!common.isValid()) {
 			return false;
 		}
@@ -167,7 +169,7 @@ public class PrimitiveExtractor {
 			curField = dt.getComponent(i);
 
 			PrimitiveExtractor next = new PrimitiveExtractor(curField.getDataType(), false,
-				offset + curField.getOffset(), max);
+				arrayIsPrimitive, offset + curField.getOffset(), max);
 			if (!next.isValid()) {
 				return false;
 			}
@@ -197,43 +199,51 @@ public class PrimitiveExtractor {
 	 * @param dt is the given data-type to extract primitives from
 	 * @param max is the maximum number of primitives to extract before giving up
 	 * @param offset is the starting offset to associate with the first primitive
+	 * @param depth is the current depth of recursion
 	 * @return true if all primitives were extracted
 	 */
-	private boolean extract(DataType dt, int max, int offset) {
+	private boolean extract(DataType dt, int max, int offset, int depth) {
 		if (dt instanceof TypeDef) {
 			dt = ((TypeDef) dt).getBaseDataType();
 		}
-		int metaType = PcodeDataTypeManager.getMetatype(dt);
+		MetaDataType metaType = MetaDataType.get(dt);
 		switch (metaType) {
-			case PcodeDataTypeManager.TYPE_UNKNOWN:
+			case TYPE_UNKNOWN:
 				unknownElements = true;
 				// fall-thru
-			case PcodeDataTypeManager.TYPE_INT:
-			case PcodeDataTypeManager.TYPE_UINT:
-			case PcodeDataTypeManager.TYPE_BOOL:
-			case PcodeDataTypeManager.TYPE_CODE:
-			case PcodeDataTypeManager.TYPE_FLOAT:
-			case PcodeDataTypeManager.TYPE_PTR:
-			case PcodeDataTypeManager.TYPE_PTRREL:
+			case TYPE_INT:
+			case TYPE_UINT:
+			case TYPE_BOOL:
+			case TYPE_CODE:
+			case TYPE_FLOAT:
+			case TYPE_PTR:
+			case TYPE_PTRREL:
 				if (primitives.size() >= max) {
 					return false;
 				}
 				primitives.add(new Primitive(dt, offset));
 				return true;
-			case PcodeDataTypeManager.TYPE_ARRAY: {
+			case TYPE_ARRAY: {
+				if (arrayIsPrimitive && depth != 0) {
+					if (primitives.size() >= max) {
+						return false;
+					}
+					primitives.add(new Primitive(dt, offset));
+					return true;
+				}
 				int numEls = ((Array) dt).getNumElements();
 				DataType base = ((Array) dt).getDataType();
 				for (int i = 0; i < numEls; ++i) {
-					if (!extract(base, max, offset)) {
+					if (!extract(base, max, offset, depth + 1)) {
 						return false;
 					}
 					offset += base.getAlignedLength();
 				}
 				return true;
 			}
-			case PcodeDataTypeManager.TYPE_UNION:
+			case TYPE_UNION:
 				return handleUnion((Union) dt, max, offset);
-			case PcodeDataTypeManager.TYPE_STRUCT:
+			case TYPE_STRUCT:
 				break;
 			default:
 				return false;
@@ -258,7 +268,7 @@ public class PrimitiveExtractor {
 					extraSpace = true;
 				}
 			}
-			if (!extract(compDT, max, curOff)) {
+			if (!extract(compDT, max, curOff, depth + 1)) {
 				return false;
 			}
 			expectedOff = curOff + compDT.getAlignedLength();
@@ -269,17 +279,20 @@ public class PrimitiveExtractor {
 	/**
 	 * @param dt is data-type extract from
 	 * @param unionIllegal is true if unions encountered during extraction are considered illegal
+	 * @param arrayPrimitive is true if arrays should be treated as primitives
 	 * @param offset is the starting offset to associate with the data-type
 	 * @param max is the maximum number of primitives to extract before giving up
 	 */
-	public PrimitiveExtractor(DataType dt, boolean unionIllegal, int offset, int max) {
+	public PrimitiveExtractor(DataType dt, boolean unionIllegal, boolean arrayPrimitive,
+			int offset, int max) {
 		primitives = new ArrayList<>();
 		valid = true;
 		aligned = true;
 		unknownElements = false;
 		extraSpace = false;
 		unionInvalid = unionIllegal;
-		if (!extract(dt, max, offset)) {
+		arrayIsPrimitive = arrayPrimitive;
+		if (!extract(dt, max, offset, 0)) {
 			valid = false;
 		}
 	}

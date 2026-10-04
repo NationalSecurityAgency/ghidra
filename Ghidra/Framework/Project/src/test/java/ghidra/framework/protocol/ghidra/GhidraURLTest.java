@@ -27,6 +27,7 @@ import generic.test.AbstractGenericTest;
 import ghidra.framework.client.*;
 import ghidra.framework.model.ProjectLocator;
 import ghidra.framework.protocol.ghidra.GhidraURLConnection.StatusCode;
+import ghidra.util.NamingUtilities;
 
 public class GhidraURLTest extends AbstractGenericTest {
 
@@ -107,6 +108,19 @@ public class GhidraURLTest extends AbstractGenericTest {
 		assertTrue(loc.isWindowsOnlyLocation());
 		ghidraUrl = GhidraURL.makeURL(loc);
 		url = toGhidraLocalURL("////a/b/Test", null);
+		assertEquals(url, ghidraUrl);
+		assertEquals(loc, GhidraURL.getProjectStorageLocator(ghidraUrl));
+
+		StringBuilder specialChars = new StringBuilder();
+		for (Character c : NamingUtilities.VALID_NAME_CHARSET) {
+			specialChars.append(c);
+		}
+
+		loc = new ProjectLocator("/a/b" + specialChars, "Test" + specialChars);
+		assertEquals("/a/b" + specialChars + "/", loc.getLocation());
+		assertFalse(loc.isWindowsOnlyLocation());
+		ghidraUrl = GhidraURL.makeURL(loc);
+		url = toGhidraLocalURL("/a/b" + specialChars + "/Test" + specialChars, null);
 		assertEquals(url, ghidraUrl);
 		assertEquals(loc, GhidraURL.getProjectStorageLocator(ghidraUrl));
 
@@ -312,44 +326,19 @@ public class GhidraURLTest extends AbstractGenericTest {
 //	makeURL(String, String, String, String)
 	@Test
 	public void testMakeLocalProjectFileURL3() throws Exception {
-		ProjectLocator loc = new ProjectLocator("C:\\junk\\test.-=@ _()[]", "Test.-=@ _()[]");
+		ProjectLocator loc = new ProjectLocator("C:\\junk\\test.-=@ _()[]+", "Test.-=@ _()[]+");
 
 		// The ref field must allow pretty much any character
 
-		URL ghidraUrl = GhidraURL.makeURL("C:\\junk\\test.-=@ _()[]", "Test.-=@ _()[]",
-			"/a.-=@ _()[]", "ref .-=@ _()[]~!@#$%^&*+<>?/\\,`|\'\"");
+		URL ghidraUrl = GhidraURL.makeURL("C:\\junk\\test.-=@ _()[]+", "Test.-=@ _()[]+",
+			"/a.-=@ _()[]+", "ref .-=@ _()[]~!@#$%^&*+<>?/\\,`|\'\"");
 
-		URL url = toGhidraLocalURL("/C:/junk/test.-=@ _()[]/Test.-=@ _()[]", "/a.-=@ _()[]",
+		URL url = toGhidraLocalURL("/C:/junk/test.-=@ _()[]+/Test.-=@ _()[]+", "/a.-=@ _()[]+",
 			"ref .-=@ _()[]~!@#$%^&*+<>?/\\,`|\'\"");
 		assertEquals(url, ghidraUrl);
 		assertEquals("ref .-=@ _()[]~!@#$%^&*+<>?/\\,`|\'\"",
 			GhidraURL.getDecodedReference(ghidraUrl));
 		assertEquals(loc, GhidraURL.getProjectStorageLocator(ghidraUrl));
-
-		try {
-			GhidraURL.makeURL("C:\\junk\\test+", "Test", "/a", "ref");
-			fail("The '+' character is not permitted");
-		}
-		catch (IllegalArgumentException e) {
-			// expected
-		}
-
-		try {
-			GhidraURL.makeURL("C:\\junk\\test", "Test+", "/a", "ref");
-			fail("The '+' character is not permitted");
-		}
-		catch (IllegalArgumentException e) {
-			// expected
-		}
-
-		try {
-			GhidraURL.makeURL("C:\\junk\\test", "Test", "/a+", "ref");
-			fail("The '+' character is not permitted");
-		}
-		catch (IllegalArgumentException e) {
-			// expected
-		}
-
 	}
 
 	//	makeURL(String, int)
@@ -434,37 +423,22 @@ public class GhidraURLTest extends AbstractGenericTest {
 //	makeURL(String, int, String, String)
 	@Test
 	public void testMakeServerRepoFileURL4() throws Exception {
-		URL ghidraUrl = GhidraURL.makeURL("localhost", 123, "Test.-=@ _()[]", "/foo.-=@ _()[]");
-		URL url = toGhidraServerURL("localhost", 123, "Test.-=@ _()[]", "/foo.-=@ _()[]");
+		URL ghidraUrl = GhidraURL.makeURL("localhost", 123, "Test.-=@ _()[]+", "/foo.-=@ _()[]+");
+		URL url = toGhidraServerURL("localhost", 123, "Test.-=@ _()[]+", "/foo.-=@ _()[]+");
 		assertEquals(url, ghidraUrl);
 
-		ghidraUrl = GhidraURL.makeURL("localhost", 123, "Test.-=@ _()[]", "/foo.-=@ _()[]/");
-		url = toGhidraServerURL("localhost", 123, "Test.-=@ _()[]", "/foo.-=@ _()[]/");
+		ghidraUrl = GhidraURL.makeURL("localhost", 123, "Test.-=@ _()[]+", "/foo.-=@ _()[]+/");
+		url = toGhidraServerURL("localhost", 123, "Test.-=@ _()[]+", "/foo.-=@ _()[]+/");
 		assertEquals(url, ghidraUrl);
 
-		ghidraUrl = GhidraURL.makeURL("localhost", 123, "Test.-=@ _()[]", "/foo/bar.-=@ _()[]",
+		ghidraUrl = GhidraURL.makeURL("localhost", 123, "Test.-=@ _()[]+", "/foo/bar.-=@ _()[]+",
 			"ref .-=@ _()[]~!@#$%^&*+<>?/\\,`|\'\"");
-		url = toGhidraServerURL("localhost", 123, "Test.-=@ _()[]", "/foo/bar.-=@ _()[]",
+		url = toGhidraServerURL("localhost", 123, "Test.-=@ _()[]+", "/foo/bar.-=@ _()[]+",
 			"ref .-=@ _()[]~!@#$%^&*+<>?/\\,`|\'\"");
 		assertEquals(url, ghidraUrl);
 		assertEquals("ref .-=@ _()[]~!@#$%^&*+<>?/\\,`|\'\"",
 			GhidraURL.getDecodedReference(ghidraUrl));
 
-		try {
-			GhidraURL.makeURL("localhost", 123, "Test+", "/foo");
-			fail("The '+' character is not permitted");
-		}
-		catch (IllegalArgumentException e) {
-			// expected
-		}
-
-		try {
-			GhidraURL.makeURL("localhost", 123, "Test", "/foo+");
-			fail("The '+' character is not permitted");
-		}
-		catch (IllegalArgumentException e) {
-			// expected
-		}
 	}
 
 	//	getProjectStorageLocator(URL)

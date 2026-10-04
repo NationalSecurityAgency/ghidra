@@ -643,7 +643,7 @@
 }
 @endif
 
-:CMPXCHG8B^lockx  m64        is vexMode=0 & lockx & unlock & byte=0xf; byte=0xc7; ( mod != 0b11 & reg_opcode=1 ) ... & m64 
+:CMPXCHG8B^lockx  m64        is vexMode=0 & lockx & unlock & byte=0xf; byte=0xc7; ( mod != 0b11 & reg_opcode=1 & check_EAX_dest & check_EDX_dest ) ... & m64 
 {
     build lockx;
     local dest = m64;
@@ -651,6 +651,8 @@
     if (ZF == 1) goto <equal>;
     EDX = dest(4);
     EAX = dest:4;
+    build check_EAX_dest;
+    build check_EDX_dest;
     goto <done>;
 <equal>
     m64 = (zext(ECX) << 32) | zext(EBX);
@@ -1196,13 +1198,14 @@
     build unlock; 
 }
 
-:XADD^lockx m32,Reg32	is vexMode=0 & lockx & unlock & opsize=1 & byte=0x0F; byte=0xC1; m32 & Reg32 ... 
+:XADD^lockx m32,Reg32	is vexMode=0 & lockx & unlock & opsize=1 & byte=0x0F; byte=0xC1; (check_Reg32_dest & Reg32) ... & m32
 {
     build lockx;
     build m32;
     addflags(m32,Reg32);
     local tmp = m32 + Reg32;
     Reg32 = m32;
+    build check_Reg32_dest;
     m32 = tmp;
     resultflags(tmp);
     build unlock; 

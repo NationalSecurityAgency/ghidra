@@ -1192,7 +1192,7 @@ void Heritage::guard(const Address &addr,int4 size,bool addIndirects,
     fd->getScopeLocal()->queryProperties(addr,size,Address(),fl);
     guardCalls(fl,addr,size,write);
     guardReturns(fl,addr,size,write);
-    if (fd->getArch()->highPtrPossible(addr,size)) {
+    if (addr.highPtrPossible(size)) {
       guardStores(addr,size,write);
       guardLoads(fl,addr,size,write);
     }
@@ -1962,7 +1962,6 @@ void Heritage::guardInput(const Address &addr,int4 size,vector<Varnode *> &input
   int4 i = 0;
   uintb cur = addr.getOffset();	// Range that needs to be covered
   uintb end = cur + size;
-  //  bool seenunspliced = false;
   Varnode *vn;
   vector<Varnode *> newinput;
 
@@ -1974,11 +1973,8 @@ void Heritage::guardInput(const Address &addr,int4 size,vector<Varnode *> &input
 	int4 sz = vn->getOffset() - cur;
 	vn = fd->newVarnode(sz,Address(addr.getSpace(),cur));
 	vn = fd->setInputVarnode(vn);
-	//	seenunspliced = true;
       }
       else {
-	//	if (vn->hasNoDescend())
-	//	  seenunspliced = true;
 	i += 1;
       }
     }
@@ -1986,7 +1982,6 @@ void Heritage::guardInput(const Address &addr,int4 size,vector<Varnode *> &input
       int4 sz = end-cur;
       vn = fd->newVarnode(sz,Address(addr.getSpace(),cur));
       vn = fd->setInputVarnode(vn);
-      //      seenunspliced = true;
     }
     newinput.push_back(vn);
     cur += vn->getSize();
@@ -1995,17 +1990,6 @@ void Heritage::guardInput(const Address &addr,int4 size,vector<Varnode *> &input
   // Now we need to make sure that all the inputs get linked
   // together into a single input
   if (newinput.size()==1) return; // Will get linked in automatically
-  for(uint4 j=0;j<newinput.size();++j)
-    newinput[j]->setWriteMask();
-//   if (!seenunspliced) {
-//     // Check to see if a concatenation of inputs already exists
-//     // If it existed already it would be defined at fd->getAddress()
-//     // and it would have full size
-//     VarnodeLocSet::const_iterator iter,enditer;
-//     iter = fd->beginLoc(size,addr,fd->getAddress());
-//     enditer = fd->endLoc(size,addr,fd->getAddress());
-//     if (iter != enditer) return; // It already exists
-//   }
   Varnode *newout = fd->newVarnode(size,addr);
   concatPieces(newinput,(PcodeOp *)0,newout)->setActiveHeritage();
 }
@@ -2189,32 +2173,38 @@ void Heritage::splitJoinWrite(Varnode *vn,JoinRecord *joinrec)
       Varnode *mosthalf = nextlev[2*i];
       Varnode *leasthalf = nextlev[2*i+1];
       if (leasthalf == (Varnode *)0) continue; // Varnode didn't get split this level
-      PcodeOp *split;
-      if (vn->isInput())
-	split = fd->newOp(2,bb->getStart());
-      else
-	split = fd->newOp(2,op->getAddr());
-      fd->opSetOpcode(split,CPUI_SUBPIECE);
-      fd->opSetOutput(split,mosthalf);
-      fd->opSetInput(split,curvn,0);
-      fd->opSetInput(split,fd->newConstant(4,leasthalf->getSize()),1);
-      if (op == (PcodeOp *)0) 
-	fd->opInsertBegin(split,bb);
-      else
-	fd->opInsertAfter(split,op);
-      op = split;		// Keep -op- as the latest op in the split construction
-
-      split = fd->newOp(2,op->getAddr());
-      fd->opSetOpcode(split,CPUI_SUBPIECE);
-      fd->opSetOutput(split,leasthalf);
-      fd->opSetInput(split,curvn,0);
-      fd->opSetInput(split,fd->newConstant(4,0),1);
-      fd->opInsertAfter(split,op);
-      if (isPrimitive) {
-	mosthalf->setPrecisHi();	// Make sure we set the precision flags to trigger "double precision" rules
-	leasthalf->setPrecisLo();
+      if (!mosthalf->isConstant()) {
+	PcodeOp *split;
+	if (vn->isInput())
+	  split = fd->newOp(2,bb->getStart());
+	else
+	  split = fd->newOp(2,op->getAddr());
+	fd->opSetOpcode(split,CPUI_SUBPIECE);
+	fd->opSetOutput(split,mosthalf);
+	fd->opSetInput(split,curvn,0);
+	fd->opSetInput(split,fd->newConstant(4,leasthalf->getSize()),1);
+	if (op == (PcodeOp *)0)
+	  fd->opInsertBegin(split,bb);
+	else
+	  fd->opInsertAfter(split,op);
+	op = split;		// Keep -op- as the latest op in the split construction
       }
-      op = split;		// Keep -op- as the latest op in the split construction
+      if (!leasthalf->isConstant()) {
+	PcodeOp *split = fd->newOp(2,op->getAddr());
+	fd->opSetOpcode(split,CPUI_SUBPIECE);
+	fd->opSetOutput(split,leasthalf);
+	fd->opSetInput(split,curvn,0);
+	fd->opSetInput(split,fd->newConstant(4,0),1);
+	if (op == (PcodeOp *)0)
+	  fd->opInsertBegin(split,bb);
+	else
+	  fd->opInsertAfter(split,op);
+	if (isPrimitive) {
+	  mosthalf->setPrecisHi();	// Make sure we set the precision flags to trigger "double precision" rules
+	  leasthalf->setPrecisLo();
+	}
+	op = split;		// Keep -op- as the latest op in the split construction
+      }
     }
 
     lastcombo.clear();
@@ -2297,6 +2287,7 @@ void Heritage::processJoins(void)
     if (joinrec->getUnified().size != vn->getSize())
       throw LowlevelError("Joined varnode does not match size of record");
     if (vn->isFree()) {
+      if (vn->hasNoDescend()) continue;		// Its possible vn is dead
       if (joinrec->isFloatExtension())
 	floatExtensionRead(vn,joinrec);
       else
@@ -2747,8 +2738,10 @@ void Heritage::heritage(void)
       }
     }
   }
-  placeMultiequals();
-  rename();
+  if (!disjoint.empty()) {
+    placeMultiequals();
+    rename();
+  }
   if (reprocessStackCount > 0)
     reprocessFreeStores(stackSpace, freeStores);
   analyzeNewLoadGuards();
@@ -2849,6 +2842,17 @@ bool Heritage::deadRemovalAllowedSeen(AddrSpace *spc)
   if (res)
     info->deadremoved = 1;
   return res;
+}
+
+/// If no heritage has happened yet, do nothing.
+/// \param addr is the start of the range
+/// \param sz is the number of bytes in the range
+void Heritage::markRangeHeritaged(const Address &addr,int4 sz)
+
+{
+  int4 intersect;
+  if (pass > 0)
+    globaldisjoint.add(addr,sz,pass-1,intersect);
 }
 
 /// Reset all analysis as if no heritage passes have yet taken place for the function.

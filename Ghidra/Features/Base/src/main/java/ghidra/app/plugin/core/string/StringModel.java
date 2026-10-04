@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,8 @@ package ghidra.app.plugin.core.string;
 
 import java.io.*;
 import java.util.*;
+
+import ghidra.util.Msg;
 
 public class StringModel {
 
@@ -76,7 +78,8 @@ public class StringModel {
 					textReps[i] = asciiNumToDescription.get(i)[0];
 				}
 				else {
-					System.err.println("ERROR: Could not find character mapping for ASCII code " +
+					Msg.error(StringModel.class,
+						"ERROR: Could not find character mapping for ASCII code " +
 						i);
 				}
 			}
@@ -200,11 +203,11 @@ public class StringModel {
 			}
 		}
 		catch (UnsupportedEncodingException e) {
-			System.err.println("Error creating String Model file: " + e.toString());
+			Msg.error(this, "Error creating String Model file: " + e.toString());
 			System.exit(0);
 		}
 		catch (FileNotFoundException e) {
-			System.err.println("Error creating String Model file: " + e.toString());
+			Msg.error(this, "Error creating String Model file: " + e.toString());
 			System.exit(0);
 		}
 	}

@@ -18,6 +18,7 @@ package ghidra.features.bsim.query.elastic;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.*;
 import java.util.Map.Entry;
@@ -2083,6 +2084,79 @@ public class ElasticDatabase implements FunctionDatabase {
 	 */
 	public boolean isInitialized() {
 		return initialized;
+	}
+
+	/**
+	 * Enumerate all Elasticsearch repositories (BSim "named indexes") hosted on the server
+	 * identified by the given URL which appear to be BSim databases.  A repository is considered a
+	 * BSim database if it has both the {@code <repository>_vector} and
+	 * {@code <repository>_executable} indexes.  The connection details (host, port, and any user
+	 * information) are taken from the URL; any path (repository name) element is ignored.
+	 *
+	 * @param uri host URL identifying the Elasticsearch server to query
+	 * @param connectingUserName default user name to use when the URL does not specify one
+	 * (may be {@code null})
+	 * @return a list of BSim databases found on the server, as {@link BSimServerInfo} objects
+	 * @throws ElasticException if there is a problem communicating with the server
+	 */
+	public static List<BSimServerInfo> getBSimServerInfos(URI uri, String connectingUserName)
+			throws ElasticException {
+
+		String userInfo = uri.getUserInfo();
+		if ((userInfo == null || userInfo.isBlank()) && connectingUserName != null &&
+			!connectingUserName.isBlank()) {
+			userInfo = connectingUserName;
+		}
+
+		String host = uri.getHost();
+		int port = uri.getPort();
+		int effectivePort = port > 0 ? port : BSimServerInfo.DEFAULT_ELASTIC_PORT;
+		String baseURL = "https://" + host + ":" + effectivePort;
+
+		List<BSimServerInfo> bsimDatabases = new ArrayList<>();
+		for (String repository : getBSimRepositoryNames(baseURL)) {
+			bsimDatabases.add(new BSimServerInfo(DBType.elastic, userInfo, host, port, repository));
+		}
+		return bsimDatabases;
+	}
+
+	/**
+	 * Enumerate the names of all Elasticsearch repositories (BSim "named indexes") hosted on the
+	 * given server which appear to be BSim databases.  A repository is considered a BSim database
+	 * if it has both the {@code <repository>_vector} and {@code <repository>_executable} indexes.
+	 * No specific repository is contacted; only the server-wide index listing is examined.
+	 *
+	 * @param baseURL the base server URL (e.g. {@code https://hostname:9200}) without any repository
+	 * path element
+	 * @return a sorted list of BSim repository (named index) names found on the server
+	 * @throws ElasticException if there is a problem communicating with the server
+	 */
+	private static List<String> getBSimRepositoryNames(String baseURL) throws ElasticException {
+		ElasticConnection connection = new ElasticConnection(baseURL, "");
+		JsonObject resp = connection.executeRawURIOnly(ElasticConnection.GET, "/_aliases");
+
+		Set<String> indexNames = new HashSet<>();
+		for (String key : resp.keySet()) {
+			indexNames.add(key);
+		}
+
+		String vectorSuffix = "_vector";
+		List<String> repositories = new ArrayList<>();
+		for (String indexName : indexNames) {
+			if (!indexName.endsWith(vectorSuffix)) {
+				continue;
+			}
+			String repository = indexName.substring(0, indexName.length() - vectorSuffix.length());
+			if (repository.isEmpty()) {
+				continue;
+			}
+			// Spot check for a companion BSim index that always exists alongside the vector index
+			if (indexNames.contains(repository + "_executable")) {
+				repositories.add(repository);
+			}
+		}
+		Collections.sort(repositories);
+		return repositories;
 	}
 
 	/**

@@ -25,6 +25,10 @@ rootProject.createJavadocs {
 	source sourceSets.main.allJava
 }
 
+rootProject.configureJavadocs {
+	snippets.addAll(sourceSets.test.java.srcDirs)
+}
+
 rootProject.createJsondocs {
 	source sourceSets.main.allJava
 }

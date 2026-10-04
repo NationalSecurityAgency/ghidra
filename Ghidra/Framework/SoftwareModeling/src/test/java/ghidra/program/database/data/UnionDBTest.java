@@ -26,19 +26,18 @@ import ghidra.program.model.data.*;
 
 public class UnionDBTest extends AbstractGenericTest {
 
-	private StandAloneDataTypeManager dataMgr;
+	private TransientDataTypeManager dtm;
 	private UnionDB union;
 	private int txId;
 
 	@Before
 	public void setUp() throws Exception {
 
-		dataMgr = new StandAloneDataTypeManager("dummydataMgr");
-
+		dtm = new TransientDataTypeManager("dummyDTM");
 		// default data organization is little-endian
 		// default BitFieldPackingImpl uses gcc conventions
 
-		txId = dataMgr.startTransaction("Test");
+		txId = dtm.startTransaction("Test");
 
 		union = createUnion("TestUnion");
 		union.add(new ByteDataType(), "field1", "Comment1");
@@ -49,31 +48,31 @@ public class UnionDBTest extends AbstractGenericTest {
 
 	@After
 	public void tearDown() {
-		if (dataMgr != null) {
-			dataMgr.endTransaction(txId, true);
-			dataMgr.close();
+		if (dtm != null) {
+			dtm.endTransaction(txId, true);
+			dtm.close();
 		}
 	}
 
 	private void transitionToBigEndian() {
 
 		Union unionClone = union.clone(null);
-		dataMgr.remove(union);
+		dtm.remove(union);
 
-		DataOrganizationImpl dataOrg = (DataOrganizationImpl) dataMgr.getDataOrganization();
+		DataOrganizationImpl dataOrg = (DataOrganizationImpl) dtm.getDataOrganization();
 		dataOrg.setBigEndian(true);
 
 		// re-resolve with modified endianness
-		union = (UnionDB) dataMgr.resolve(unionClone, null);
+		union = (UnionDB) dtm.resolve(unionClone, null);
 	}
 
 	private UnionDB createUnion(String name) {
 		Union unionDt = new UnionDataType(name);
-		return (UnionDB) dataMgr.addDataType(unionDt, DataTypeConflictHandler.DEFAULT_HANDLER);
+		return (UnionDB) dtm.addDataType(unionDt, DataTypeConflictHandler.DEFAULT_HANDLER);
 	}
 
 	private Structure createStructure(String name, int size) {
-		return (Structure) dataMgr.addDataType(new StructureDataType(name, size),
+		return (Structure) dtm.addDataType(new StructureDataType(name, size),
 			DataTypeConflictHandler.DEFAULT_HANDLER);
 	}
 
@@ -252,7 +251,7 @@ public class UnionDBTest extends AbstractGenericTest {
 	public void testDeleteBitFieldDependency() throws InvalidDataTypeException {
 
 		TypeDef td = new TypedefDataType("Foo", IntegerDataType.dataType);
-		td = (TypeDef) dataMgr.resolve(td, null);
+		td = (TypeDef) dtm.resolve(td, null);
 
 		union.insertBitField(2, td, 4, "bf1", "bf1Comment");
 		union.insertBitField(3, td, 4, "bf2", "bf2Comment");
@@ -271,7 +270,7 @@ public class UnionDBTest extends AbstractGenericTest {
 			"Length: 4 Alignment: 1", union);
 		//@formatter:on
 
-		dataMgr.remove(td);
+		dtm.remove(td);
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" + 
@@ -293,7 +292,7 @@ public class UnionDBTest extends AbstractGenericTest {
 			throws InvalidDataTypeException, DataTypeDependencyException {
 
 		TypeDef td = new TypedefDataType("Foo", IntegerDataType.dataType);
-		td = (TypeDef) dataMgr.resolve(td, null);
+		td = (TypeDef) dtm.resolve(td, null);
 
 		union.insertBitField(2, td, 4, "bf1", "bf1Comment");
 		union.insertBitField(3, td, 4, "bf2", "bf2Comment");
@@ -312,7 +311,7 @@ public class UnionDBTest extends AbstractGenericTest {
 			"Length: 4 Alignment: 1", union);
 		//@formatter:on
 
-		dataMgr.replaceDataType(td, CharDataType.dataType, false);
+		dtm.replaceDataType(td, CharDataType.dataType, false);
 
 		//@formatter:off
 		CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" + 
@@ -404,10 +403,10 @@ public class UnionDBTest extends AbstractGenericTest {
 		assertEquals(2, comps[2].getOrdinal());
 
 		// Verify that records were properly updated by comitting and performing an undo/redo
-		dataMgr.endTransaction(txId, true);
-		dataMgr.undo();
-		dataMgr.redo();
-		txId = dataMgr.startTransaction("Continue Test");
+		dtm.endTransaction(txId, true);
+		dtm.getDataStore().undo();
+		dtm.getDataStore().redo();
+		txId = dtm.startTransaction("Continue Test");
 
 		assertEquals(2, union.getLength());
 
@@ -752,7 +751,7 @@ public class UnionDBTest extends AbstractGenericTest {
 		DataTypeComponent component = newUnion.add(new ByteDataType(), " name with spaces", null);
 		assertEquals("name_with_spaces", component.getFieldName());
 
-		union = (UnionDB) dataMgr.resolve(newUnion, null);
+		union = (UnionDB) dtm.resolve(newUnion, null);
 
 		component = union.getComponent(0);
 		component.setFieldName(" name in db with spaces ");
@@ -777,7 +776,7 @@ public class UnionDBTest extends AbstractGenericTest {
 		assertNull(component.getFieldName());
 		assertEquals("field0", component.getDefaultFieldName());
 
-		union = (UnionDB) dataMgr.resolve(newUnion, null);
+		union = (UnionDB) dtm.resolve(newUnion, null);
 
 		component = union.add(new ByteDataType(), null, null);
 		assertNull(component.getFieldName());

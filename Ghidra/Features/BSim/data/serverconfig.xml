@@ -1,10 +1,23 @@
 <serverconfig>                                              <!-- Runtime parameters for the query server -->
-  <config key="shared_buffers">2GB</config>                 <!-- Amount of memory the server will use -->
-  <config key="work_mem">16MB</config>                      <!-- Max memory to use for hash tables and sorts -->
-  <config key="checkpoint_timeout">30min</config>           <!-- Amount of time before all database records are flushed to disk -->
+  <!-- Performance-tuning settings (tunable="true").  These are written to a clearly-marked,
+       user-editable block in postgresql.conf at 'init' and are PRESERVED by 'configure'.  Edit
+       them here (before init) to change installation-wide defaults, or edit the tunable block in
+       an existing data directory's postgresql.conf (then restart). -->
+  <config key="shared_buffers" tunable="true">2GB</config>       <!-- RAM used for the shared page cache -->
+  <config key="work_mem" tunable="true">16MB</config>            <!-- Max memory per hash/sort operation -->
+  <config key="checkpoint_timeout" tunable="true">30min</config> <!-- Time between forced flushes to disk -->
   <config key="listen_addresses">'*'</config>               <!-- '*' = all available, '0.0.0.0' just IPv4, 'localhost' -->
-  <config key="ssl">on</config>                             <!-- Enable server to connect via SSL -->
-  <!--  <config key="ssl_min_protocol_version">TLSv1.3</config>  -->
+  <config key="ssl">on</config>                             <!-- SSL required for all connections (hostssl entries only) -->
+  <config key="ssl_cert_file">'server.crt'</config>         <!-- Server certificate (generated/imported by bsim_ctl init) -->
+  <config key="ssl_key_file">'server.key'</config>          <!-- Server private key (owner-read-only) -->
+  <config key="ssl_min_protocol_version">'TLSv1.2'</config> <!-- Min TLS protocol (permits TLSv1.2+TLSv1.3); matches Ghidra Server ghidra.tls.server.protocols -->
+  <!-- TLSv1.2 cipher suites (OpenSSL names) consistent with the Ghidra Server
+       jdk.tls.server.cipherSuites property.  TLSv1.3 cipher suites are not configurable in
+       PostgreSQL 15 and use the OpenSSL defaults, which include TLS_AES_256_GCM_SHA384. -->
+  <config key="ssl_ciphers">'ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384'</config>
+  <config key="ssl_prefer_server_ciphers">on</config>       <!-- Prefer the server's cipher order -->
+  <config key="logging_collector">on</config>               <!-- Capture server logs into log_directory (Q3) -->
+  <config key="log_directory">'log'</config>                <!-- Log directory (relative to the data directory) (Q3) -->
   <config key="password_encryption">scram-sha-256</config>
  
 <!--   <connect db="all" user="all"                     type="local"   method="trust"/> -->

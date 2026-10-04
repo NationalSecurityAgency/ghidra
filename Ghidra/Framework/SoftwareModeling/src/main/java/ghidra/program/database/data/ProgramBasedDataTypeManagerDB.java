@@ -64,7 +64,7 @@ public abstract class ProgramBasedDataTypeManagerDB extends DataTypeManagerDB
 	protected ProgramBasedDataTypeManagerDB(DBHandle handle, AddressMap addrMap, OpenMode openMode,
 			String tablePrefix, ErrorHandler errHandler, Lock lock, TaskMonitor monitor)
 			throws CancelledException, VersionException, IOException {
-		super(handle, addrMap, openMode, tablePrefix, errHandler, lock, monitor);
+		super(handle, openMode, addrMap, tablePrefix, errHandler, lock, monitor);
 	}
 
 	@Override
@@ -190,6 +190,15 @@ public abstract class ProgramBasedDataTypeManagerDB extends DataTypeManagerDB
 
 		}
 		return false;
+	}
+
+	/**
+	 * Returns the associated AddressMap used by this datatype manager.
+	 * @return the AddressMap used by this datatype manager or null if 
+	 * one has not be established.
+	 */
+	public AddressMap getAddressMap() {
+		return addrMap;
 	}
 
 	@Override

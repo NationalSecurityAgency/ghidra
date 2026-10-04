@@ -171,6 +171,71 @@ def test_import_script(capsys, shared_datadir: Path):
     assert captured.out.rstrip() == "imported successfully"
 
 
+def test_script_globals_iteration():
+    pyghidra.start()
+    from pyghidra.core import _setup_script
+
+    # no program is open, which is when getters like getFirstFunction() throw
+    script = _setup_script(None, None)
+    script["user_variable"] = 42
+    names = list(script)
+
+    # a debugger reads every name it iterates
+    for name in names:
+        script[name]
+
+    for name in ("potentialPropertiesFileLocations", "propertiesFile", "referencePrimary"):
+        assert name not in names
+        with pytest.raises(KeyError):
+            script[name]
+
+    for name in ("firstFunction", "memoryBlocks", "scriptName"):
+        assert name not in names
+    assert script["scriptName"] is not None
+
+    for name in ("user_variable", "currentProgram", "currentAddress", "monitor", "getCurrentProgram"):
+        assert name in names
+    assert script["user_variable"] == 42
+    assert script["currentProgram"] is None
+    assert script["currentAddress"] is None
+    assert script["monitor"] is not None
+    assert callable(script["getCurrentProgram"])
+
+
+def test_script_static_view_includes_bean_properties():
+    pyghidra.start()
+    from pyghidra.script import PyGhidraScript
+
+    view = PyGhidraScript().get_static_view()
+    names = list(view)
+    for name in ("potentialPropertiesFileLocations", "propertiesFile", "referencePrimary"):
+        assert name in names
+        assert isinstance(view[name], property)
+    for name in ("firstFunction", "scriptName"):
+        assert name in names
+
+
+def test_script_completion_without_program():
+    pyghidra.start()
+    from rlcompleter import Completer
+    from pyghidra.core import _setup_script
+
+    # rlcompleter reads every value in the namespace, including firstFunction
+    view = _setup_script(None, None).get_static_view()
+    assert Completer(view).complete("currentPr", 0) == "currentProgram"
+
+
+def test_script_write_only_property_assignment():
+    pyghidra.start()
+    from java.util import ArrayList
+    from pyghidra.script import PyGhidraScript
+
+    script = PyGhidraScript()
+    locations = ArrayList()
+    script["potentialPropertiesFileLocations"] = locations
+    assert script["potentialPropertiesFileLocs"] == locations
+
+
 def test_import_ghidra_base_java_packages():
 
     def get_runtime_top_level_java_packages(launcher) -> set:

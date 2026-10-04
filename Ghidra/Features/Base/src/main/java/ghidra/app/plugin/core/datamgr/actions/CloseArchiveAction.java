@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,19 +18,15 @@ package ghidra.app.plugin.core.datamgr.actions;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.tree.TreePath;
-
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
-import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
-import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
-import ghidra.app.plugin.core.datamgr.archive.Archive;
-import ghidra.app.plugin.core.datamgr.archive.ArchiveUtils;
+import ghidra.app.plugin.core.datamgr.*;
 import ghidra.app.plugin.core.datamgr.editor.DataTypeEditorManager;
 import ghidra.app.plugin.core.datamgr.tree.*;
+import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.dtarchive.PersistentDataTypeArchive;
 
 public class CloseArchiveAction extends DockingAction {
 
@@ -42,28 +38,25 @@ public class CloseArchiveAction extends DockingAction {
 
 		setPopupMenuData(new MenuData(new String[] { "Close Archive" }, null, "File"));
 
-		setDescription("Closes a data type archive and removes it from the tool "
-			+ "(does not affect program file associations).");
+		setDescription("Closes a data type archive and removes it from the tool " +
+			"(does not affect program file associations).");
 		setEnabled(true);
 
 	}
 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
-		if (!(context instanceof DataTypesActionContext)) {
+		if (!(context instanceof DataTypesActionContext dtac)) {
 			return false;
 		}
 
-		Object contextObject = context.getContextObject();
-		GTree gtree = (GTree) contextObject;
-		TreePath[] selectionPaths = gtree.getSelectionPaths();
+		List<GTreeNode> selectedNodes = dtac.getSelectedNodes();
 
-		if (selectionPaths.length == 0) {
+		if (selectedNodes.isEmpty()) {
 			return false;
 		}
 
-		for (TreePath path : selectionPaths) {
-			GTreeNode node = (GTreeNode) path.getLastPathComponent();
+		for (GTreeNode node : selectedNodes) {
 			if (!(node instanceof FileArchiveNode) && !(node instanceof InvalidArchiveNode) &&
 				!(node instanceof ProjectArchiveNode)) {
 				return false;
@@ -74,38 +67,40 @@ public class CloseArchiveAction extends DockingAction {
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		GTree gtree = (GTree) context.getContextObject();
-		TreePath[] selectionPaths = gtree.getSelectionPaths();
-		DataTypeEditorManager editorManager = plugin.getEditorManager();
-		List<Archive> archives = new ArrayList<Archive>();
-		for (TreePath path : selectionPaths) {
-			Object pathComponent = path.getLastPathComponent();
-			if (pathComponent instanceof InvalidArchiveNode) {
-				InvalidArchiveNode invalidArchiveNode = (InvalidArchiveNode) pathComponent;
-				Archive archive = invalidArchiveNode.getArchive();
-				archive.close();
-				continue;
-			}
+		DataTypesActionContext dtac = (DataTypesActionContext) context;
+		ArchiveManager archiveManager = plugin.getArchiveManager();
 
-			Archive archive = null;
-			Object node = path.getLastPathComponent();
-			if (node instanceof ArchiveNode) {
-				ArchiveNode archiveNode = (ArchiveNode) node;
-				archive = archiveNode.getArchive();
+		List<PersistentDataTypeArchive> archives = new ArrayList<>();
+		List<GTreeNode> selectedNodes = dtac.getSelectedNodes();
+		for (GTreeNode node : selectedNodes) {
+			if (node instanceof InvalidArchiveNode invalidNode) {
+				archiveManager.closeInvalidArchive(invalidNode.getInvalidArchive());
 			}
-			if (archive != null) {
+			else if (node instanceof ArchiveNode archiveNode) {
+				PersistentDataTypeArchive archive = archiveNode.getArchive();
 				archives.add(archive);
-				if (!editorManager.checkEditors(archive.getDataTypeManager(), true)) {
-					return;
-				}
 			}
 		}
-		if (ArchiveUtils.canClose(archives, gtree)) {
-			for (Archive archive : archives) {
-				editorManager.dismissEditors(archive.getDataTypeManager());
-				archive.close();
+		if (checkEditors(archives)) {
+			return;
+		}
+		for (PersistentDataTypeArchive archive : archives) {
+			if (!plugin.resolveModifiedArchive(archive)) {
+				return;
+			}
+			archiveManager.closeArchive(archive);
+		}
+	}
+
+	private boolean checkEditors(List<PersistentDataTypeArchive> archives) {
+		DataTypeEditorManager editorManager = plugin.getEditorManager();
+		for (PersistentDataTypeArchive archive : archives) {
+			DataTypeManager dtm = archive.getDataTypeManager();
+			if (!editorManager.checkEditors(dtm, true)) {
+				return true;
 			}
 		}
+		return false;
 	}
 
 }

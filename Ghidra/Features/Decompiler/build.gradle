@@ -38,7 +38,7 @@ dependencies {
 rootProject.assembleDistribution {
 	from (this.project.projectDir.toString()) {
 		include "src/decompile/**"
-		into  { getZipPath(this.project) }
+		into  { rootProject.getZipPath(this.project) }
 	}
 }
 
@@ -239,7 +239,7 @@ task buildDecompilerHelpPdf(type: Exec) {
  */
 task buildDecompilerDocumentationPdfs(type: Exec) {
 	// Check the OS before enabling task.
-	if (!(isCurrentLinux() || isCurrentMac())) {
+	if (!(rootProject.isCurrentLinux() || rootProject.isCurrentMac())) {
 		it.enabled = false
 	}
 

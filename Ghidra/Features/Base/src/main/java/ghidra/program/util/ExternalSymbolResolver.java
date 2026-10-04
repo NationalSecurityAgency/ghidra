@@ -212,6 +212,9 @@ public class ExternalSymbolResolver implements Closeable {
 			logger.accept("\t%d external symbols resolved, %d remain unresolved"
 					.formatted(getResolvedSymbolCount(), unresolvedExternalFunctionIds.size()));
 			for (ExtLibInfo extLib : extLibs) {
+				if (Library.UNKNOWN.equals(extLib.getName())) {
+					continue;
+				}
 				String libPath = extLib.getAssociatedProgramPath();
 				String loggedLibPath = libPath != null ? libPath : "missing";
 				if (extLib.problem != null) {
@@ -269,7 +272,9 @@ public class ExternalSymbolResolver implements Closeable {
 				try (Transaction tx = program.openTransaction("Resolve External Symbols")) {
 					for (ExtLibInfo extLib : extLibs) {
 						monitor.checkCancelled();
-						resolveSymbolsToLibrary(extLib);
+						if (extLib.libProgram != null) {
+							resolveSymbolsToLibrary(extLib);
+						}
 					}
 				}
 			}
@@ -292,7 +297,7 @@ public class ExternalSymbolResolver implements Closeable {
 				Program libProg = libPath != null ? getLibraryProgram(libPath) : null;
 				Throwable problem =
 					libProg == null && libPath != null ? problemLibraries.get(libPath) : null;
-				result.add(new ExtLibInfo(lib, problem));
+				result.add(new ExtLibInfo(lib, libProg, problem));
 			}
 			return result;
 		}
@@ -322,7 +327,7 @@ public class ExternalSymbolResolver implements Closeable {
 				ExternalLocation extLoc = externalManager.getExternalLocation(s);
 				String extLocName =
 					Objects.requireNonNullElse(extLoc.getOriginalImportedName(), extLoc.getLabel());
-				if (isExportedSymbol(program, extLocName)) {
+				if (isExportedSymbol(extLib.libProgram, extLocName)) {
 					try {
 						s.setNamespace(extLib.lib);
 						idIterator.remove();
@@ -360,6 +365,7 @@ public class ExternalSymbolResolver implements Closeable {
 		private class ExtLibInfo {
 
 			final Library lib;
+			final Program libProgram; // may be null
 			final List<String> resolvedSymbols = new ArrayList<>();
 			final Throwable problem;
 
@@ -367,13 +373,15 @@ public class ExternalSymbolResolver implements Closeable {
 			 * Define external Library dependency associated with {@link ProgramSymbolResolver}
 			 * instance.
 			 * @param lib external library dependency
-			 * @param problem exception which occured while accessing Library
+			 * @param libProgram imported or discovered program which corresponds to lib, or null if not found
+			 * @param problem exception which occurred while accessing Library
 			 */
-			ExtLibInfo(Library lib, Throwable problem) {
+			ExtLibInfo(Library lib, Program libProgram, Throwable problem) {
 				if (program != lib.getSymbol().getProgram()) {
 					throw new AssertionError("Program mismatch");
 				}
 				this.lib = lib;
+				this.libProgram = libProgram;
 				this.problem = problem;
 			}
 
@@ -416,7 +424,9 @@ public class ExternalSymbolResolver implements Closeable {
 	 * @return true if program publishes a symbol the specified name
 	 */
 	private static boolean isExportedSymbol(Program program, String name) {
-
+		if (program == null) {
+			return false;
+		}
 		for (Symbol s : program.getSymbolTable().getLabelOrFunctionSymbols(name, null)) {
 			if (s.isExternalEntryPoint()) {
 				return true;

@@ -90,6 +90,7 @@ public:
   iterator begin(void) { return tasklist.begin(); }			///< Get iterator to beginning of \b this list
   iterator end(void) { return tasklist.end(); }				///< Get iterator to end of \b this list
   void clear(void) { tasklist.clear(); }				///< Clear all ranges in the list
+  bool empty(void) { return tasklist.empty(); }				///< Return \b true if the list is empty
 };
 
 /// \brief Priority queue for the phi-node (MULTIEQUAL) placement algorithm
@@ -329,6 +330,7 @@ public:
   void setDeadCodeDelay(AddrSpace *spc,int4 delay); ///< Set delay for a specific space
   bool deadRemovalAllowed(AddrSpace *spc) const;    ///< Return \b true if it is \e safe to remove dead code
   bool deadRemovalAllowedSeen(AddrSpace *spc);
+  void markRangeHeritaged(const Address &addr,int4 sz);	///< Mark range as heritaged (on previous pass)
   void buildInfoList(void);	                    ///< Initialize information for each space
   void forceRestructure(void) { maxdepth = -1; }    ///< Force regeneration of basic block structures
   void clear(void);				    ///< Reset all analysis of heritage

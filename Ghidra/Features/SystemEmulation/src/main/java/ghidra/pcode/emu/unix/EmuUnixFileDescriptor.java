@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,7 @@
  */
 package ghidra.pcode.emu.unix;
 
+import ghidra.lifecycle.Experimental;
 import ghidra.pcode.emu.sys.EmuIOException;
 
 /**
@@ -22,6 +23,7 @@ import ghidra.pcode.emu.sys.EmuIOException;
  *
  * @param <T> the type of values stored in the file
  */
+@Experimental
 public interface EmuUnixFileDescriptor<T> {
 	/**
 	 * The default file descriptor for stdin (standard input)
@@ -37,19 +39,30 @@ public interface EmuUnixFileDescriptor<T> {
 	int FD_STDERR = 2;
 
 	/**
-	 * Get the current offset of the file, or 0 if not applicable
-	 * 
-	 * @return the offset
+	 * {@return the current offset of the file, or 0 if not applicable}
 	 */
-	T getOffset();
+	T getAbstractOffset();
 
 	/**
-	 * See to the given offset
+	 * {@return the current offset of the file, or 0 if not applicable}
+	 */
+	long getOffset();
+
+	/**
+	 * Seek to the given offset
 	 * 
 	 * @param offset the desired offset
 	 * @throws EmuIOException if an error occurred
 	 */
 	void seek(T offset) throws EmuIOException;
+
+	/**
+	 * Seek to the given offset
+	 * 
+	 * @param offset the desired offset
+	 * @throws EmuIOException if an error occurred
+	 */
+	void seek(long offset) throws EmuIOException;
 
 	/**
 	 * Read from the file opened by this handle
@@ -58,19 +71,37 @@ public interface EmuUnixFileDescriptor<T> {
 	 * @return the number of bytes read
 	 * @throws EmuIOException if an error occurred
 	 */
-	T read(T buf) throws EmuIOException;
+	T readAbstract(T buf) throws EmuIOException;
 
 	/**
-	 * Read into the file opened by this handle
+	 * Read from the file opened by this handle
+	 * 
+	 * @param buf the destination buffer
+	 * @return the number of bytes read
+	 * @throws EmuIOException if an error occurred
+	 */
+	int read(T buf) throws EmuIOException;
+
+	/**
+	 * Write into the file opened by this handle
 	 * 
 	 * @param buf the source buffer
 	 * @return the number of bytes written
 	 * @throws EmuIOException if an error occurred
 	 */
-	T write(T buf) throws EmuIOException;
+	T writeAbstract(T buf) throws EmuIOException;
 
 	/**
-	 * Obtain the {@code stat} structure of the file opened by this handle
+	 * Write into the file opened by this handle
+	 * 
+	 * @param buf the source buffer
+	 * @return the number of bytes written
+	 * @throws EmuIOException if an error occurred
+	 */
+	int write(T buf) throws EmuIOException;
+
+	/**
+	 * {@return the {@code stat} structure of the file opened by this handle}
 	 */
 	EmuUnixFileStat stat();
 

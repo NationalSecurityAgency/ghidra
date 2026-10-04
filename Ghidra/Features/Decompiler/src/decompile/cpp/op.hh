@@ -295,6 +295,7 @@ typedef map<SeqNum,PcodeOp *> PcodeOpTree;
 /// Several lists group PcodeOps with important op-codes (like STORE and RETURN).
 class PcodeOpBank {
   PcodeOpTree optree;			///< The main sequence number sort
+  PcodeOpTree alttree;			///< Sequence number sort of the quarantined CPUI_INDIRECT ops
   list<PcodeOp *> deadlist;		///< List of \e dead PcodeOps
   list<PcodeOp *> alivelist;		///< List of \e alive PcodeOps
   list<PcodeOp *> storelist;		///< List of STORE PcodeOps
@@ -314,6 +315,7 @@ public:
   uintm getUniqId(void) const { return uniqid; }	///< Get the next unique id
   PcodeOp *create(int4 inputs,const Address &pc);	///< Create a PcodeOp with at a given Address
   PcodeOp *create(int4 inputs,const SeqNum &sq);	///< Create a PcodeOp with a given sequence number
+  PcodeOp *createIndirect(int4 inputs,const Address &pc);	///< Create a PcodeOp in alternate storage
   void destroy(PcodeOp *op);				///< Destroy/retire the given PcodeOp
   void destroyDead(void);				///< Destroy/retire all PcodeOps in the \e dead list
   void changeOpcode(PcodeOp *op,TypeOp *newopc);	///< Change the op-code for the given PcodeOp
@@ -328,17 +330,29 @@ public:
   PcodeOp *findLastOp(const Address &addr) const;	///< Find the last PcodeOp in sequence for the given address
   PcodeOp *fallthru(const PcodeOp *op) const;		///< Find the PcodeOp considered a \e fallthru of the given PcodeOp
 
-  /// \brief Start of all PcodeOps in sequence number order
-  PcodeOpTree::const_iterator beginAll(void) const { return optree.begin(); }
+  /// \brief Start of PcodeOps in sequence number order (excluding CPUI_INDIRECT)
+  PcodeOpTree::const_iterator beginMain(void) const { return optree.begin(); }
 
-  /// \brief End of all PcodeOps in sequence number order
-  PcodeOpTree::const_iterator endAll(void) const { return optree.end(); }
+  /// \brief End of PcodeOps in sequence number order (excluding CPUI_INDIRECT)
+  PcodeOpTree::const_iterator endMain(void) const { return optree.end(); }
 
-  /// \brief Start of all PcodeOps at one Address
-  PcodeOpTree::const_iterator begin(const Address &addr) const;
+  /// \brief Start of PcodeOps at one Address (excluding CPUI_INDIRECT)
+  PcodeOpTree::const_iterator beginMain(const Address &addr) const;
 
-  /// \brief End of all PcodeOps at one Address
-  PcodeOpTree::const_iterator end(const Address &addr) const;
+  /// \brief End of PcodeOps at one Address (excluding CPUI_INDIRECT)
+  PcodeOpTree::const_iterator endMain(const Address &addr) const;
+
+  /// \brief Start of INDIRECT ops in sequence number order
+  PcodeOpTree::const_iterator beginIndirect(void) const { return alttree.begin(); }
+
+  /// \brief End of INDIRECT ops in sequence number order
+  PcodeOpTree::const_iterator endIndirect(void) const { return alttree.end(); }
+
+  /// \brief Start of INDIRECT ops at one Address
+  PcodeOpTree::const_iterator beginIndirect(const Address &addr) const;
+
+  /// \brief End of INDIRECT ops at one Address
+  PcodeOpTree::const_iterator endIndirect(const Address &addr) const;
 
   /// \brief Start of all PcodeOps marked as \e alive
   list<PcodeOp *>::const_iterator beginAlive(void) const { return alivelist.begin(); }

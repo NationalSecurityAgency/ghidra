@@ -15,15 +15,15 @@
  */
 package ghidra.pcode.emu.jit;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.io.InputStream;
+import java.lang.classfile.*;
 import java.util.*;
 
 import org.apache.commons.lang3.reflect.TypeLiteral;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.objectweb.asm.*;
 
 import ghidra.pcode.emu.jit.JitPassage.AddrCtx;
 
@@ -40,20 +40,19 @@ public class JitJvmTypeUtilsTest {
 	@Test
 	public void testTypeToSignature() throws Exception {
 		Map<String, String> signatures = new HashMap<>();
-		String filename = Type.getInternalName(HasFieldTypeSignatures.class) + ".class";
-		try (InputStream is = getClass().getClassLoader().getResourceAsStream(filename)) {
-			ClassReader cr = new ClassReader(is);
-			//ClassNode cn = new ClassNode(Opcodes.ASM9);
-			//ClassVisitor trace = new TraceClassVisitor(cn, new PrintWriter(System.out));
-			ClassVisitor trace = null;
-			cr.accept(new ClassVisitor(Opcodes.ASM9, trace) {
-				@Override
-				public FieldVisitor visitField(int access, String name, String descriptor,
-						String signature, Object value) {
-					signatures.put(name, signature);
-					return super.visitField(access, filename, descriptor, signature, value);
-				}
-			}, 0);
+		String internalName =
+			HasFieldTypeSignatures.class.getName().replace('.', '/') + ".class";
+		byte[] bytes;
+		try (InputStream is = getClass().getClassLoader().getResourceAsStream(internalName)) {
+			bytes = is.readAllBytes();
+		}
+		ClassModel cm = ClassFile.of().parse(bytes);
+		for (FieldModel fm : cm.fields()) {
+			String signature = fm.findAttribute(
+				Attributes.signature())
+					.map(sa -> sa.signature().stringValue())
+					.orElse(null);
+			signatures.put(fm.fieldName().stringValue(), signature);
 		}
 
 		assertEquals(signatures.get("RECS"), JitJvmTypeUtils

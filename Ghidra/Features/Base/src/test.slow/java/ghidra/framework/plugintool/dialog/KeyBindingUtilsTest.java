@@ -689,7 +689,7 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 
 			// short-circuit if there are any data that don't match
 			if (!match) {
-				System.err.println("Found non-matching option: propertyName " + propertyName +
+				Msg.error(this, "Found non-matching option: propertyName " + propertyName +
 					", value 1 = " + value + ", value 2 = " + value2);
 				Assert.fail(message);
 			}

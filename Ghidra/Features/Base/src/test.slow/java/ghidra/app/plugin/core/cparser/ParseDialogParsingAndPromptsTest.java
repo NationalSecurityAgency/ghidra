@@ -35,10 +35,13 @@ import ghidra.app.plugin.core.navigation.GoToAddressLabelPlugin;
 import ghidra.app.plugin.core.processors.SetLanguageDialog;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.plugin.importer.NewLanguagePanel;
+import ghidra.program.database.dtarchive.DataTypeArchiveFactory;
 import ghidra.program.model.data.*;
+import ghidra.program.model.dtarchive.FileDataTypeArchive;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
 import ghidra.test.*;
+import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
 
 public class ParseDialogParsingAndPromptsTest extends AbstractGhidraHeadedIntegrationTest {
@@ -439,16 +442,16 @@ public class ParseDialogParsingAndPromptsTest extends AbstractGhidraHeadedIntegr
 
 		waitForBusyTool(tool);
 
-		// open the file archive		
-		FileDataTypeManager fileArchive =
-			FileDataTypeManager.openFileArchive(GDTarchiveFile, false);
+		// open the file archive	
+		FileDataTypeArchive archive =
+			DataTypeArchiveFactory.openReadOnly(GDTarchiveFile, this, TaskMonitor.DUMMY);
+		DataTypeManager dtm = archive.getDataTypeManager();
 		try {
-			DataType dataType =
-				fileArchive.getDataType("/" + dummyHeader.getName() + "/" + "mystruct");
+			DataType dataType = dtm.getDataType("/" + dummyHeader.getName() + "/" + "mystruct");
 			assertNotNull("mystruct parsed into program", dataType);
 		}
 		finally {
-			fileArchive.close();
+			archive.release(this);
 		}
 	}
 
@@ -511,11 +514,11 @@ public class ParseDialogParsingAndPromptsTest extends AbstractGhidraHeadedIntegr
 		pressButtonByText(waitForDialogComponent("C-Parse Completed"), "OK", false);
 
 		// open the file archive		
-		FileDataTypeManager fileArchive =
-			FileDataTypeManager.openFileArchive(GDTarchiveFile, false);
+		FileDataTypeArchive archive =
+			DataTypeArchiveFactory.openReadOnly(GDTarchiveFile, this, TaskMonitor.DUMMY);
+		DataTypeManager dtm = archive.getDataTypeManager();
 		try {
-			DataType dataType =
-				fileArchive.getDataType("/" + dummyHeader.getName() + "/" + "mystruct");
+			DataType dataType = dtm.getDataType("/" + dummyHeader.getName() + "/" + "mystruct");
 
 			assertNotNull("mystruct parsed into program", dataType);
 
@@ -525,7 +528,7 @@ public class ParseDialogParsingAndPromptsTest extends AbstractGhidraHeadedIntegr
 			assertEquals(component.getDataType().getName(), "wint_t");
 		}
 		finally {
-			fileArchive.close();
+			archive.release(this);
 		}
 	}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,15 +27,18 @@ import docking.widgets.tree.GTree;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
-import ghidra.app.plugin.core.datamgr.archive.FileArchive;
 import ghidra.app.plugin.core.datamgr.tree.*;
+import ghidra.program.model.dtarchive.FileDataTypeArchive;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.Msg;
 
 public class DeleteArchiveAction extends DockingAction {
 
+	private DataTypeManagerPlugin plugin;
+
 	public DeleteArchiveAction(DataTypeManagerPlugin plugin) {
 		super("Delete Archive", plugin.getName());
+		this.plugin = plugin;
 
 		setPopupMenuData(new MenuData(new String[] { "Delete Archive" }, null, "File"));
 
@@ -61,7 +64,7 @@ public class DeleteArchiveAction extends DockingAction {
 		if (!(node instanceof FileArchiveNode)) {
 			return false;
 		}
-		return ((ArchiveNode) node).isModifiable();
+		return ((DataTypeStoreNode) node).isModifiable();
 	}
 
 	@Override
@@ -102,7 +105,9 @@ public class DeleteArchiveAction extends DockingAction {
 		}
 
 		try {
-			((FileArchive) node.getArchive()).delete();
+			FileDataTypeArchive archive = node.getArchive();
+			plugin.getArchiveManager().closeArchive(archive);
+			archive.delete();
 		}
 		catch (IOException e1) {
 			Msg.showError(this, null, "Error", "Error deleting data type archive.", e1);

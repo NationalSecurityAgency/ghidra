@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,10 @@ namespace ghidra {
 
 ElementId ELEM_PREFERSPLIT = ElementId("prefersplit",225);
 
+/// \brief Comparator putting bigger records first
+///
+/// \param op2 is the record to compare with \b this
+/// \return \b true if \b this should come before \b op2
 bool PreferSplitRecord::operator<(const PreferSplitRecord &op2) const
 
 {
@@ -30,45 +34,55 @@ bool PreferSplitRecord::operator<(const PreferSplitRecord &op2) const
   return storage.offset < op2.storage.offset;
 }
 
-void PreferSplitManager::fillinInstance(SplitInstance *inst,bool bigendian,bool sethi,bool setlo)
+/// \brief Create the two Varnode pieces
+///
+/// \param data is the function
+/// \param sethi is \b true if a most significant piece should be created
+/// \param setlo is \b true if a least significant piece should be created
+void PreferSplitManager::SplitInstance::createPieces(Funcdata *data,bool sethi,bool setlo)
 
-{ // Define the varnode pieces of -inst-
-  Varnode *vn = inst->vn;
+{
+  bool bigendian = vn->getSpace()->isBigEndian();
   int4 losize;
   if (bigendian)
-    losize = vn->getSize() - inst->splitoffset;
+    losize = vn->getSize() - splitoffset;
   else
-    losize = inst->splitoffset;
+    losize = splitoffset;
   int4 hisize = vn->getSize() - losize;
   if (vn->isConstant()) {
     uintb origval = vn->getOffset();
     
     uintb loval = origval & calc_mask( losize );// Split the constant into two pieces
     uintb hival = (origval >> 8*losize) & calc_mask( hisize );
-    if (setlo && (inst->lo == (Varnode *)0))
-      inst->lo = data->newConstant(losize,loval);
-    if (sethi && (inst->hi == (Varnode *)0))
-      inst->hi = data->newConstant(hisize,hival);
+    if (setlo && (lo == (Varnode *)0))
+      lo = data->newConstant(losize,loval);
+    if (sethi && (hi == (Varnode *)0))
+      hi = data->newConstant(hisize,hival);
   }
   else {
     if (bigendian) {
-      if (setlo && (inst->lo == (Varnode *)0))
-	inst->lo = data->newVarnode(losize,vn->getAddr() + inst->splitoffset);
-      if (sethi && (inst->hi == (Varnode *)0))
-	inst->hi = data->newVarnode(hisize,vn->getAddr());
+      if (setlo && (lo == (Varnode *)0))
+	lo = data->newVarnode(losize,vn->getAddr() + splitoffset);
+      if (sethi && (hi == (Varnode *)0))
+	hi = data->newVarnode(hisize,vn->getAddr());
     }
     else {
-      if (setlo && (inst->lo == (Varnode *)0))
-	inst->lo = data->newVarnode(losize,vn->getAddr());
-      if (sethi && (inst->hi == (Varnode *)0))
-	inst->hi = data->newVarnode(hisize,vn->getAddr() + inst->splitoffset);
+      if (setlo && (lo == (Varnode *)0))
+	lo = data->newVarnode(losize,vn->getAddr());
+      if (sethi && (hi == (Varnode *)0))
+	hi = data->newVarnode(hisize,vn->getAddr() + splitoffset);
     }
   }
 }
 
-void PreferSplitManager::createCopyOps(SplitInstance *ininst,SplitInstance *outinst,PcodeOp *op,bool istemp)
+/// \brief Create COPY ops based on input \b ininst and output \b outinst to replace \b op
+///
+/// \param ininst is the input to the COPY
+/// \param outinst is the output to the COPY
+/// \param op is the COPY being split
+void PreferSplitManager::createCopyOps(SplitInstance &ininst,SplitInstance &outinst,PcodeOp *op)
 
-{ // Create COPY ops based on input -ininst- and output -outinst- to replace -op-
+{
   PcodeOp *hiop = data->newOp(1,op->getAddr()); // Create two new COPYs
   PcodeOp *loop = data->newOp(1,op->getAddr());
   data->opSetOpcode(hiop,CPUI_COPY);
@@ -78,98 +92,124 @@ void PreferSplitManager::createCopyOps(SplitInstance *ininst,SplitInstance *outi
   data->opInsertAfter(hiop,op);
   data->opUnsetInput(op,0);	// Unset input so we can reassign free inputs to new ops
 
-  data->opSetOutput(hiop,outinst->hi); // Outputs
-  data->opSetOutput(loop,outinst->lo);
-  data->opSetInput(hiop,ininst->hi,0);
-  data->opSetInput(loop,ininst->lo,0);
+  data->opSetOutput(hiop,outinst.hi); // Outputs
+  data->opSetOutput(loop,outinst.lo);
+  data->opSetInput(hiop,ininst.hi,0);
+  data->opSetInput(loop,ininst.lo,0);
   tempsplits.push_back(hiop);
   tempsplits.push_back(loop);
 }
 
-bool PreferSplitManager::testDefiningCopy(SplitInstance *inst,PcodeOp *def,bool &istemp)
+/// \brief Check that \b inst defined by a COPY is really splittable
+///
+/// The COPY is not splittable unless the input is \e unique or has another matching split record.
+/// \param inst is the output of the COPY
+/// \param def is the COPY op
+/// \return \b true if the COPY is splittable
+bool PreferSplitManager::testDefiningCopy(SplitInstance &inst,PcodeOp *def)
 
-{ // Check that -inst- defined by -def- is really splittable
+{
   Varnode *invn = def->getIn(0);
-  istemp = false;
   if (!invn->isConstant()) {
     if (invn->getSpace()->getType() != IPTR_INTERNAL) {
       const PreferSplitRecord *inrec = findRecord(invn);
       if (inrec == (const PreferSplitRecord *)0) return false;
-      if (inrec->splitoffset != inst->splitoffset) return false;
+      if (inrec->splitoffset != inst.splitoffset) return false;
       if (!invn->isFree()) return false;
     }
-    else
-      istemp = true;
   }
   return true;
 }
 
-void PreferSplitManager::splitDefiningCopy(SplitInstance *inst,PcodeOp *def,bool istemp)
+/// \brief Do preferred split of Varnode defined by a COPY
+///
+/// \param inst is the Varnode
+/// \param def is the defining COPY
+void PreferSplitManager::splitDefiningCopy(SplitInstance &inst,PcodeOp *def)
 
-{ // Do split of prefered split varnode that is defined by a COPY
+{
   Varnode *invn = def->getIn(0);
-  SplitInstance ininst(invn,inst->splitoffset);
-  bool bigendian = inst->vn->getSpace()->isBigEndian();
-  fillinInstance(inst,bigendian,true,true);
-  fillinInstance(&ininst,bigendian,true,true);
-  createCopyOps(&ininst,inst,def,istemp);
+  SplitInstance ininst(invn,inst.splitoffset);
+  inst.createPieces(data,true,true);
+  ininst.createPieces(data,true,true);
+  createCopyOps(ininst,inst,def);
 }
 
-bool PreferSplitManager::testReadingCopy(SplitInstance *inst,PcodeOp *readop,bool &istemp)
+/// \brief Check that \b inst read by COPY is really splittable
+///
+/// Don't split the COPY unless its output is \e unique or has a matching split record
+/// \param inst is the Varnode being read
+/// \param readop is the reading COPY
+/// \return \b true if the COPY is splittable
+bool PreferSplitManager::testReadingCopy(SplitInstance &inst,PcodeOp *readop)
 
-{ // Check that -inst- read by -readop- is really splittable
+{
   Varnode *outvn = readop->getOut();
-  istemp = false;
+  if (!outvn->hasNoDescend())
+    return false;		// Already linked in
   if (outvn->getSpace()->getType() != IPTR_INTERNAL) {
     const PreferSplitRecord *outrec = findRecord(outvn);
     if (outrec == (const PreferSplitRecord *)0) return false;
-    if (outrec->splitoffset != inst->splitoffset) return false;
+    if (outrec->splitoffset != inst.splitoffset) return false;
   }
-  else
-    istemp = true;
   return true;
 }
 
-void PreferSplitManager::splitReadingCopy(SplitInstance *inst,PcodeOp *readop,bool istemp)
+/// \brief Do preferred split of Varnode that is read by a COPY
+///
+/// \param inst is the Varnode read by the COPY
+/// \param readop is the reading COPY
+void PreferSplitManager::splitReadingCopy(SplitInstance &inst,PcodeOp *readop)
 
-{ // Do split of varnode that is read by a COPY
+{
   Varnode *outvn = readop->getOut();
-  SplitInstance outinst(outvn,inst->splitoffset);
-  bool bigendian = inst->vn->getSpace()->isBigEndian();
-  fillinInstance(inst,bigendian,true,true);
-  fillinInstance(&outinst,bigendian,true,true);
-  createCopyOps(inst,&outinst,readop,istemp);
+  SplitInstance outinst(outvn,inst.splitoffset);
+  inst.createPieces(data,true,true);
+  outinst.createPieces(data,true,true);
+  createCopyOps(inst,outinst,readop);
 }
 
-bool PreferSplitManager::testZext(SplitInstance *inst,PcodeOp *op)
+/// \brief Check that \b inst defined by INT_ZEXT is really splittable
+///
+/// The size of the input to the INT_ZEXT must match the desired piece size.
+/// \param inst is the output of the INT_ZEXT
+/// \param op is the INT_ZEXT
+/// \return \b true if the INT_ZEXT is splittable
+bool PreferSplitManager::testZext(SplitInstance &inst,PcodeOp *op)
 
-{ // Check that -inst- defined by ZEXT is really splittable
+{
   Varnode *invn = op->getIn(0);
   if (invn->isConstant())
     return true;
-  bool bigendian = inst->vn->getSpace()->isBigEndian();
+  bool bigendian = inst.vn->getSpace()->isBigEndian();
   int4 losize;
   if (bigendian)
-    losize = inst->vn->getSize() - inst->splitoffset;
+    losize = inst.vn->getSize() - inst.splitoffset;
   else
-    losize = inst->splitoffset;
+    losize = inst.splitoffset;
   if (invn->getSize() != losize) return false;
   return true;
 }
 
-void PreferSplitManager::splitZext(SplitInstance *inst,PcodeOp *op)
+/// \brief Do preferred split of Varnode defined by a INT_ZEXT
+///
+/// The input to the INT_ZEXT becomes a COPY directly to the low piece of the split.
+/// The high piece has a 0 copied to it.
+/// \param inst is the Varnode to split
+/// \param op is the defining INT_ZEXT
+void PreferSplitManager::splitZext(SplitInstance &inst,PcodeOp *op)
 
 {
-  SplitInstance ininst(op->getIn(0),inst->splitoffset);
+  SplitInstance ininst(op->getIn(0),inst.splitoffset);
   int4 losize,hisize;
-  bool bigendian = inst->vn->getSpace()->isBigEndian();
+  bool bigendian = inst.vn->getSpace()->isBigEndian();
   if (bigendian) {
-    hisize = inst->splitoffset;
-    losize = inst->vn->getSize() - inst->splitoffset;
+    hisize = inst.splitoffset;
+    losize = inst.vn->getSize() - inst.splitoffset;
   }
   else {
-    losize = inst->splitoffset;
-    hisize = inst->vn->getSize() - inst->splitoffset;
+    losize = inst.splitoffset;
+    hisize = inst.vn->getSize() - inst.splitoffset;
   }
   if (ininst.vn->isConstant()) {
     uintb origval = ininst.vn->getOffset();
@@ -183,35 +223,46 @@ void PreferSplitManager::splitZext(SplitInstance *inst,PcodeOp *op)
     ininst.hi = data->newConstant(hisize,0);
   }
 
-  fillinInstance(inst,bigendian,true,true);
-  createCopyOps(&ininst,inst,op,false);
+  inst.createPieces(data,true,true);
+  createCopyOps(ininst,inst,op);
 }
 
-bool PreferSplitManager::testPiece(SplitInstance *inst,PcodeOp *op)
+/// \brief Check that \b inst defined by a PIECE is really splittable
+///
+/// The size of inputs to the PIECE must match the desired split.
+/// \param inst is the Varnode
+/// \param op is the defining PIECE
+/// \return \b true if the PIECE is splittable
+bool PreferSplitManager::testPiece(SplitInstance &inst,PcodeOp *op)
 
-{ // Check that -inst- defined by PIECE is really splittable
-  if (inst->vn->getSpace()->isBigEndian()) {
-    if (op->getIn(0)->getSize() != inst->splitoffset) return false;
+{
+  if (inst.vn->getSpace()->isBigEndian()) {
+    if (op->getIn(0)->getSize() != inst.splitoffset) return false;
   }
   else {
-    if (op->getIn(1)->getSize() != inst->splitoffset) return false;
+    if (op->getIn(1)->getSize() != inst.splitoffset) return false;
   }
   return true;
 }
 
-void PreferSplitManager::splitPiece(SplitInstance *inst,PcodeOp *op)
+/// \brief Do the preferred split of a Varnode defined by a PIECE
+///
+/// Create a COPY from the first input to the PIECE to the most significant piece.
+/// Create a COPY from the second input to the PIECE to the least significant piece.
+/// \param inst is the Varnode to split
+/// \param op is the defining PIECE
+void PreferSplitManager::splitPiece(SplitInstance &inst,PcodeOp *op)
 
 {
   Varnode *loin = op->getIn(1);
   Varnode *hiin = op->getIn(0);
-  bool bigendian = inst->vn->getSpace()->isBigEndian();
-  fillinInstance(inst,bigendian,true,true);
+  inst.createPieces(data,true,true);
   PcodeOp *hiop = data->newOp(1,op->getAddr());
   PcodeOp *loop = data->newOp(1,op->getAddr());
   data->opSetOpcode(hiop,CPUI_COPY);
   data->opSetOpcode(loop,CPUI_COPY);
-  data->opSetOutput(hiop,inst->hi); // Outputs are the pieces of the original
-  data->opSetOutput(loop,inst->lo);
+  data->opSetOutput(hiop,inst.hi); // Outputs are the pieces of the original
+  data->opSetOutput(loop,inst.lo);
 
   data->opInsertAfter(loop,op);
   data->opInsertAfter(hiop,op);
@@ -226,53 +277,72 @@ void PreferSplitManager::splitPiece(SplitInstance *inst,PcodeOp *op)
   data->opSetInput(loop,loin,0);	// Input for the COPY of the least significant part comes from low part of PIECE
 }
 
-bool PreferSplitManager::testSubpiece(SplitInstance *inst,PcodeOp *op)
+/// \brief Check that \b inst read by a SUBPIECE is really splittable
+///
+/// The Varnode defined by the SUBPIECE must match the size of the least significant Varnode created by the split.
+/// \param inst is the Varnode being read
+/// \param op is the reading SUBPIECE
+/// \return \b true if the SUBPIECE is splittable
+bool PreferSplitManager::testSubpiece(SplitInstance &inst,PcodeOp *op)
 
-{ // Check that -inst- read by SUBPIECE is really splittable
-  Varnode *vn = inst->vn;
+{
   Varnode *outvn = op->getOut();
+  bool bigendian = inst.vn->getSpace()->isBigEndian();
+  int4 losize = bigendian ? (inst.vn->getSize() - inst.splitoffset) : inst.splitoffset;
   int4 suboff = (int4)op->getIn(1)->getOffset();
   if (suboff == 0) {
-    if (vn->getSize() - inst->splitoffset != outvn->getSize())
+    if (losize != outvn->getSize())
       return false;
   }
   else {
-    if (vn->getSize() - suboff != inst->splitoffset)
+    if (losize != suboff)
       return false;
-    if (outvn->getSize() != inst->splitoffset)
+    if (outvn->getSize() + losize != inst.vn->getSize())
       return false;
   }
   return true;
 }
 
-void PreferSplitManager::splitSubpiece(SplitInstance *inst,PcodeOp *op)
+/// \brief Rewrite SUBPIECE as a COPY to the least significant piece
+///
+/// \param inst the Varnode being split
+/// \param op is the reading SUBPIECE
+void PreferSplitManager::splitSubpiece(SplitInstance &inst,PcodeOp *op)
 
-{ // Knowing -op- is a CPUI_SUBPIECE that extracts a logical piece from -inst-, rewrite it to a copy
-  Varnode *vn = inst->vn;
+{
   int4 suboff = (int4)op->getIn(1)->getOffset();
   bool grabbinglo = (suboff==0);
 
-  bool bigendian = vn->getSpace()->isBigEndian();
-  fillinInstance(inst,bigendian,!grabbinglo,grabbinglo);
+  inst.createPieces(data,!grabbinglo,grabbinglo);
   data->opSetOpcode(op,CPUI_COPY); // Change SUBPIECE to a copy
   data->opRemoveInput(op,1);
 
   // Input is most/least significant piece, depending on which the SUBPIECE extracts
-  Varnode *invn = grabbinglo ? inst->lo : inst->hi;
+  Varnode *invn = grabbinglo ? inst.lo : inst.hi;
   data->opSetInput(op,invn,0);
 }
 
-bool PreferSplitManager::testLoad(SplitInstance *inst,PcodeOp *op)
+/// \brief Check that \b inst defined by a LOAD can be split
+///
+/// Current nothing prevents this split.
+/// \param inst is the Varnode being defined
+/// \param op is the LOAD
+/// \return \b true if the LOAD can be split
+bool PreferSplitManager::testLoad(SplitInstance &inst,PcodeOp *op)
 
 {
   return true;
 }
 
-void PreferSplitManager::splitLoad(SplitInstance *inst,PcodeOp *op)
+/// \brief Do preferred split of LOAD
+///
+/// Create two separate LOADs, one for each piece.
+/// \param inst is the output of the LOAD
+/// \param op is the LOAD
+void PreferSplitManager::splitLoad(SplitInstance &inst,PcodeOp *op)
 
-{ // Knowing -op- is a CPUI_LOAD that defines the -inst- varnode, split it into two pieces
-  bool bigendian = inst->vn->getSpace()->isBigEndian();
-  fillinInstance(inst,bigendian,true,true);
+{
+  inst.createPieces(data,true,true);
   PcodeOp *hiop = data->newOp(2,op->getAddr());	// Create two new LOAD ops
   PcodeOp *loop = data->newOp(2,op->getAddr());
   PcodeOp *addop = data->newOp(2,op->getAddr());
@@ -290,10 +360,10 @@ void PreferSplitManager::splitLoad(SplitInstance *inst,PcodeOp *op)
 
   Varnode *addvn = data->newUniqueOut(ptrvn->getSize(),addop);
   data->opSetInput(addop,ptrvn,0);
-  data->opSetInput(addop,data->newConstant(ptrvn->getSize(),inst->splitoffset),1);
+  data->opSetInput(addop,data->newConstant(ptrvn->getSize(),inst.splitoffset),1);
 
-  data->opSetOutput(hiop,inst->hi); // Outputs are the pieces of the original
-  data->opSetOutput(loop,inst->lo);
+  data->opSetOutput(hiop,inst.hi); // Outputs are the pieces of the original
+  data->opSetOutput(loop,inst.lo);
   Varnode *spaceid = op->getIn(0);
   AddrSpace *spc = spaceid->getSpaceFromConst();
   spaceid = data->newConstant(spaceid->getSize(),spaceid->getOffset()); // Duplicate original spaceid into new LOADs
@@ -313,16 +383,26 @@ void PreferSplitManager::splitLoad(SplitInstance *inst,PcodeOp *op)
   }
 }
 
-bool PreferSplitManager::testStore(SplitInstance *inst,PcodeOp *op)
+/// \brief Check that \b inst read by a STORE can be split
+///
+/// Current nothing prevents this split.
+/// \param inst is the Varnode being read
+/// \param op is the STORE
+/// \return \b true if the STORE can be split
+bool PreferSplitManager::testStore(SplitInstance &inst,PcodeOp *op)
 
 {
   return true;
 }
 
-void PreferSplitManager::splitStore(SplitInstance *inst,PcodeOp *op)
+/// \brief Do preferred split of STORE
+///
+/// \param inst is the Varnode being stored
+/// \param op is the STORE
+void PreferSplitManager::splitStore(SplitInstance &inst,PcodeOp *op)
 
-{ // Knowing -op- stores the value -inst-, split it in two
-  fillinInstance(inst,inst->vn->getSpace()->isBigEndian(),true,true);
+{
+  inst.createPieces(data,true,true);
   PcodeOp *hiop = data->newOp(3,op->getAddr());	// Create 2 new STOREs
   PcodeOp *loop = data->newOp(3,op->getAddr());
   PcodeOp *addop = data->newOp(2,op->getAddr());
@@ -341,10 +421,10 @@ void PreferSplitManager::splitStore(SplitInstance *inst,PcodeOp *op)
 
   Varnode *addvn = data->newUniqueOut(ptrvn->getSize(),addop);
   data->opSetInput(addop,ptrvn,0);
-  data->opSetInput(addop,data->newConstant(ptrvn->getSize(),inst->splitoffset),1);
+  data->opSetInput(addop,data->newConstant(ptrvn->getSize(),inst.splitoffset),1);
 
-  data->opSetInput(hiop,inst->hi,2); // Varnodes "being stored" are the pieces of the original
-  data->opSetInput(loop,inst->lo,2);
+  data->opSetInput(hiop,inst.hi,2); // Varnodes "being stored" are the pieces of the original
+  data->opSetInput(loop,inst.lo,2);
   Varnode *spaceid = op->getIn(0);
   AddrSpace *spc = spaceid->getSpaceFromConst();
   spaceid = data->newConstant(spaceid->getSize(),spaceid->getOffset()); // Duplicate original spaceid into new STOREs
@@ -364,19 +444,21 @@ void PreferSplitManager::splitStore(SplitInstance *inst,PcodeOp *op)
   }
 }
 
-bool PreferSplitManager::splitVarnode(SplitInstance *inst)
+/// \brief Test if \b inst can be readily split, if so, do the split
+///
+/// \param inst is the Varnode to split
+/// \return \b true if the Varnode was successfully split
+bool PreferSplitManager::splitVarnode(SplitInstance &inst)
 
-{ // Test if -vn- can be readily split, if so, do the split
-  Varnode *vn = inst->vn;
-  bool istemp;
-  if (vn->isWritten()) {
-    if (!vn->hasNoDescend()) return false; // Already linked in
-    PcodeOp *op = vn->getDef();
+{
+  if (inst.vn->isWritten()) {
+    if (!inst.vn->hasNoDescend()) return false; // Already linked in
+    PcodeOp *op = inst.vn->getDef();
     switch (op->code()) {
     case CPUI_COPY:
-      if (!testDefiningCopy(inst,op,istemp))
+      if (!testDefiningCopy(inst,op))
 	return false;
-      splitDefiningCopy(inst,op,istemp);
+      splitDefiningCopy(inst,op);
       break;
     case CPUI_PIECE:
       if (!testPiece(inst,op))
@@ -399,15 +481,15 @@ bool PreferSplitManager::splitVarnode(SplitInstance *inst)
     data->opDestroy(op);
   }
   else {
-    if (!vn->isFree()) return false;	// Make sure vn is not already a marked input
-    PcodeOp *op = vn->loneDescend();
+    if (!inst.vn->isFree()) return false;	// Make sure vn is not already a marked input
+    PcodeOp *op = inst.vn->loneDescend();
     if (op == (PcodeOp *)0)	// vn must be read exactly once
       return false;
     switch(op->code()) {
     case CPUI_COPY:
-      if (!testReadingCopy(inst,op,istemp))
+      if (!testReadingCopy(inst,op))
 	return false;
-      splitReadingCopy(inst,op,istemp);
+      splitReadingCopy(inst,op);
       break;
     case CPUI_SUBPIECE:
       if (!testSubpiece(inst,op))
@@ -427,6 +509,9 @@ bool PreferSplitManager::splitVarnode(SplitInstance *inst)
   return true;
 }
 
+/// \brief For a given split record, try to split matching Varnodes
+///
+/// \param rec is the split record
 void PreferSplitManager::splitRecord(const PreferSplitRecord &rec)
 
 {
@@ -441,17 +526,22 @@ void PreferSplitManager::splitRecord(const PreferSplitRecord &rec)
     ++iter;
     inst.lo = (Varnode *)0;
     inst.hi = (Varnode *)0;
-    if (splitVarnode(&inst)) {	// If we found something, regenerate iterators, as they may be stale
+    if (splitVarnode(inst)) {	// If we found something, regenerate iterators, as they may be stale
       iter = data->beginLoc(rec.storage.size,addr);
       enditer = data->endLoc(rec.storage.size,addr);
     }
   }
 }
 
-bool PreferSplitManager::testTemporary(SplitInstance *inst)
+/// \brief Test if a \e unique Varnode can be split after heritage
+///
+/// If the defining PcodeOp and all descendant ops can be split (without creating new free Varnodes), return \b true.
+/// \param inst is the \e uniqe Varnode to split
+/// \return \b true if it is splittable
+bool PreferSplitManager::testTemporary(SplitInstance &inst)
 
 {
-  PcodeOp *op = inst->vn->getDef();
+  PcodeOp *op = inst.vn->getDef();
   switch(op->code()) {
   case CPUI_PIECE:
     if (!testPiece(inst,op))
@@ -469,8 +559,8 @@ bool PreferSplitManager::testTemporary(SplitInstance *inst)
     return false;
   }
   list<PcodeOp *>::const_iterator iter,enditer;
-  iter = inst->vn->beginDescend();
-  enditer = inst->vn->endDescend();
+  iter = inst.vn->beginDescend();
+  enditer = inst.vn->endDescend();
   while(iter != enditer) {
     PcodeOp *readop = *iter;
     ++iter;
@@ -490,11 +580,13 @@ bool PreferSplitManager::testTemporary(SplitInstance *inst)
   return true;
 }
 
-void PreferSplitManager::splitTemporary(SplitInstance *inst)
+/// \brief Do preferred split of the defining op and all descendant ops of a \e unique Varnode
+///
+/// \param inst is the \e unique Varnode
+void PreferSplitManager::splitTemporary(SplitInstance &inst)
 
 {
-  Varnode *vn = inst->vn;
-  PcodeOp *op = vn->getDef();
+  PcodeOp *op = inst.vn->getDef();
   switch(op->code()) {
   case CPUI_PIECE:
     splitPiece(inst,op);
@@ -509,8 +601,8 @@ void PreferSplitManager::splitTemporary(SplitInstance *inst)
     break;
   }
 
-  while(vn->beginDescend() != vn->endDescend()) {
-    PcodeOp *readop = *vn->beginDescend();
+  while(inst.vn->beginDescend() != inst.vn->endDescend()) {
+    PcodeOp *readop = *inst.vn->beginDescend();
     switch(readop->code()) {
     case CPUI_SUBPIECE:
       splitSubpiece(inst,readop);
@@ -526,6 +618,10 @@ void PreferSplitManager::splitTemporary(SplitInstance *inst)
   data->opDestroy(op);
 }
 
+/// \brief Initialize \b this manager with a function and split records
+///
+/// \param fd is the function
+/// \param rec is the set of split records
 void PreferSplitManager::init(Funcdata *fd,const vector<PreferSplitRecord> *rec)
 
 {
@@ -533,9 +629,13 @@ void PreferSplitManager::init(Funcdata *fd,const vector<PreferSplitRecord> *rec)
   records = rec;
 }
 
+/// \brief Find the split record that applies to given Varnode, otherwise return null
+///
+/// \param vn is the given Varnode
+/// \return the split record that matches or null
 const PreferSplitRecord *PreferSplitManager::findRecord(Varnode *vn) const
 
-{ // Find the split record that applies to -vn-, otherwise return null
+{
   PreferSplitRecord templ;
   templ.storage.space = vn->getSpace();
   templ.storage.size = vn->getSize();
@@ -549,12 +649,17 @@ const PreferSplitRecord *PreferSplitManager::findRecord(Varnode *vn) const
   return &(*iter);
 }
 
+/// \brief Prepare split records for use by the PreferSplitManager
+///
+/// Sort records by size so that big Varnodes can be split more than once.
+/// \param records is the set of split records
 void PreferSplitManager::initialize(vector<PreferSplitRecord> &records)
 
 {
   sort(records.begin(),records.end());
 }
 
+/// \brief Do split of all Varnodes matching a registered split record
 void PreferSplitManager::split(void)
 
 {
@@ -562,6 +667,7 @@ void PreferSplitManager::split(void)
     splitRecord((*records)[i]);
 }
 
+/// \brief Do splitting of additional Varnodes linked via \e unique COPYs to the original splits
 void PreferSplitManager::splitAdditional(void)
 
 {
@@ -602,8 +708,8 @@ void PreferSplitManager::splitAdditional(void)
       else
 	splitoff = op->getIn(1)->getSize();
       SplitInstance inst(vn,splitoff);
-      if (testTemporary(&inst))
-	splitTemporary(&inst);
+      if (testTemporary(inst))
+	splitTemporary(inst);
     }
     else if (op->code() == CPUI_SUBPIECE) {
       int4 splitoff;
@@ -622,8 +728,8 @@ void PreferSplitManager::splitAdditional(void)
 	  splitoff = (int4)suboff;
       }
       SplitInstance inst(vn,splitoff);
-      if (testTemporary(&inst))
-	splitTemporary(&inst);
+      if (testTemporary(inst))
+	splitTemporary(inst);
     }
   }
 }

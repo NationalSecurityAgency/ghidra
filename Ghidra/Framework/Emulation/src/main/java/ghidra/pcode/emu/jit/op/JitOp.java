@@ -16,20 +16,46 @@
 package ghidra.pcode.emu.jit.op;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import ghidra.pcode.emu.jit.JitPassage.NopPcodeOp;
 import ghidra.pcode.emu.jit.analysis.JitTypeBehavior;
 import ghidra.pcode.emu.jit.gen.op.OpGen;
 import ghidra.pcode.emu.jit.var.*;
+import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropSymbolMap;
 import ghidra.program.model.pcode.PcodeOp;
+import ghidra.program.model.pcode.Varnode;
 
 /**
  * A p-code operator use-def node.
- * 
  * <p>
  * For a table of p-code ops, use-def nodes, and code generators, see {@link OpGen}.
  */
 public interface JitOp {
+
+	static String toString(PcodeOp op, PcodeUseropSymbolMap symbols) {
+		Varnode out = op.getOutput();
+		if (op.getOpcode() == PcodeOp.CALLOTHER) {
+			Varnode opIndex = op.getInput(0);
+			String opName = symbols.getUseropName((int) opIndex.getOffset());
+			return "%s = %s '%s' %s".formatted(
+				out == null ? " --- " : out.toString(symbols.language()),
+				op.getMnemonic(),
+				opName == null ? "<unk>" : opName,
+				Stream.of(op.getInputs())
+						.skip(1)
+						.map(in -> in.toString(symbols.language()))
+						.collect(Collectors.joining(", ")));
+		}
+		return "%s = %s %s".formatted(
+			out == null ? " --- " : out.toString(symbols.language()),
+			op.getMnemonic(),
+			Stream.of(op.getInputs())
+					.map(in -> in.toString(symbols.language()))
+					.collect(Collectors.joining(", ")));
+	}
+
 	/**
 	 * Create a use-def node for a nop or unimplemented op.
 	 * 
@@ -141,6 +167,14 @@ public interface JitOp {
 				"Unrecognized bin op: " + op.getMnemonic());
 		};
 	}
+
+	/**
+	 * Render this op using symbols for varnodes and userop names
+	 * 
+	 * @param symbols the userop symbols and language
+	 * @return the string
+	 */
+	String toString(PcodeUseropSymbolMap symbols);
 
 	/**
 	 * The p-code op represented by this use-def node

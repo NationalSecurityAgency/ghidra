@@ -389,14 +389,19 @@ class UnionDB extends CompositeDB implements UnionInternal {
 	}
 
 	@Override
-	public DataTypeComponentDB getComponent(int ordinal) {
+	public DataTypeComponentDB getDefinedComponent(int index) throws IndexOutOfBoundsException {
 		try (Closeable c = lock.read()) {
 			refreshIfNeeded();
-			if (ordinal < 0 || ordinal >= components.size()) {
-				return null;
+			if (index < 0 || index >= components.size()) {
+				throw new IndexOutOfBoundsException(index);
 			}
-			return components.get(ordinal);
+			return components.get(index);
 		}
+	}
+
+	@Override
+	public DataTypeComponentDB getComponent(int ordinal) {
+		return getDefinedComponent(ordinal);
 	}
 
 	@Override

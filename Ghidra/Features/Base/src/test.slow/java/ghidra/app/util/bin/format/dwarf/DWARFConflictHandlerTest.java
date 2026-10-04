@@ -21,6 +21,7 @@ import org.junit.*;
 
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
+import ghidra.program.database.data.TransientDataTypeManager;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataTypeConflictHandler.ConflictResult;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
@@ -443,7 +444,9 @@ public class DWARFConflictHandlerTest extends AbstractGhidraHeadedIntegrationTes
 
 	@Test
 	public void testResolveDataTypeStructConflict() throws Exception {
-		DataTypeManager dtm = new StandAloneDataTypeManager("Test");
+
+		DataTypeManager dtm = new TransientDataTypeManager("Test");
+
 		int id = dtm.startTransaction("");
 		Category otherRoot = dataMgr.getRootCategory();
 		Category subc = otherRoot.createCategory("subc");
@@ -475,7 +478,8 @@ public class DWARFConflictHandlerTest extends AbstractGhidraHeadedIntegrationTes
 
 	@Test
 	public void testResolveDataTypeNonStructConflict() throws Exception {
-		DataTypeManager dtm = new StandAloneDataTypeManager("Test");
+
+		DataTypeManager dtm = new TransientDataTypeManager("Test");
 		int id = dtm.startTransaction("");
 		Category otherRoot = dataMgr.getRootCategory();
 		Category subc = otherRoot.createCategory("subc");

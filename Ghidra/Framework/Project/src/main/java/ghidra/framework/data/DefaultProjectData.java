@@ -26,6 +26,7 @@ import generic.timer.GhidraSwinglessTimer;
 import ghidra.framework.client.*;
 import ghidra.framework.model.*;
 import ghidra.framework.protocol.ghidra.GhidraURL;
+import ghidra.framework.remote.GhidraServerHandle;
 import ghidra.framework.remote.User;
 import ghidra.framework.store.*;
 import ghidra.framework.store.FileSystem;
@@ -111,8 +112,7 @@ public class DefaultProjectData implements ProjectData {
 	 * @throws FileNotFoundException if project directory not found
 	 */
 	public DefaultProjectData(ProjectLocator localStorageLocator, boolean isInWritableProject,
-			boolean resetOwner)
-			throws NotFoundException, NotOwnerException, IOException, LockException {
+			boolean resetOwner)	throws NotFoundException, NotOwnerException, IOException, LockException {
 		localStorageLocator.checkProjectExistence();
 		this.localStorageLocator = localStorageLocator;
 		boolean success = false;
@@ -466,7 +466,13 @@ public class DefaultProjectData implements ProjectData {
 				versionedFileSystemDir.getAbsolutePath(), create, true, !isInWritableProject, true);
 		}
 		else {
-			int port = properties.getInt(PORT_NUMBER, -1);
+			int port = properties.getInt(PORT_NUMBER, GhidraServerHandle.DEFAULT_PORT);
+
+			if (isInWritableProject) {
+				// Ensure that future server access is allowed since it has been deliberately accessed
+				UrlAllowListManager.updateAccess("ghidra", serverName, port, true);
+			}
+
 			repository = getRepositoryAdapter(serverName, port, isInWritableProject);
 			versionedFileSystem = new RemoteFileSystem(repository);
 		}

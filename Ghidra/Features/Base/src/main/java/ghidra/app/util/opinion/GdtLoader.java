@@ -20,19 +20,14 @@ import java.util.*;
 
 import org.apache.commons.io.FilenameUtils;
 
-import db.DBHandle;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.framework.Application;
-import ghidra.framework.data.OpenMode;
 import ghidra.framework.model.DomainObject;
-import ghidra.framework.store.db.PackedDatabase;
 import ghidra.framework.store.local.ItemSerializer;
-import ghidra.program.database.DataTypeArchiveContentHandler;
-import ghidra.program.database.DataTypeArchiveDB;
-import ghidra.program.model.data.FileDataTypeManager;
+import ghidra.program.database.dtarchive.*;
+import ghidra.program.model.dtarchive.ProjectDataTypeArchive;
 import ghidra.program.model.lang.LanguageNotFoundException;
-import ghidra.program.model.listing.DataTypeArchive;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
@@ -54,15 +49,16 @@ public class GdtLoader implements Loader {
 	public LoadResults<? extends DomainObject> load(ImporterSettings settings)
 			throws IOException, CancelledException, VersionException {
 
-		DataTypeArchive dtArchive = loadPackedProgramDatabase(settings.provider(),
+		ProjectDataTypeArchive dtArchive = loadPackedDtArchiveDatabase(settings.provider(),
 			settings.importName(), settings.consumer(), settings.monitor());
 		return new LoadResults<>(new Loaded<>(dtArchive, settings));
 	}
 
-	private DataTypeArchive loadPackedProgramDatabase(ByteProvider provider, String programName,
+	private ProjectDataTypeArchive loadPackedDtArchiveDatabase(ByteProvider provider,
+			String archiveName,
 			Object consumer, TaskMonitor monitor)
 			throws IOException, CancelledException, VersionException, LanguageNotFoundException {
-		DataTypeArchive dtArchive;
+		ProjectDtArchiveDB dtArchive;
 		File file = provider.getFile();
 		File tmpFile = null;
 		if (file == null) {
@@ -70,32 +66,8 @@ public class GdtLoader implements Loader {
 		}
 
 		try {
-			PackedDatabase packedDatabase = PackedDatabase.getPackedDatabase(file, true, monitor);
-			boolean success = false;
-			DBHandle dbh = null;
-			try {
-				if (!DataTypeArchiveContentHandler.DATA_TYPE_ARCHIVE_CONTENT_TYPE
-						.equals(packedDatabase.getContentType())) {
-					throw new IOException("File imported is not a Program: " + programName);
-				}
-
-				monitor.setMessage("Restoring " + provider.getName());
-
-				dbh = packedDatabase.open(monitor);
-				dtArchive = new DataTypeArchiveDB(dbh, OpenMode.UPGRADE, monitor, consumer);
-				success = true;
-			}
-			finally {
-				if (!success) {
-					if (dbh != null) {
-						dbh.close(); // also disposes packed database object
-					}
-					else {
-						packedDatabase.dispose();
-					}
-				}
-			}
-			return dtArchive;
+			return DataTypeArchiveFactory.importProjectArchive(file, archiveName, consumer,
+				monitor);
 		}
 		finally {
 			if (tmpFile != null) {
@@ -144,7 +116,7 @@ public class GdtLoader implements Loader {
 	}
 
 	private static boolean isGDTFile(ByteProvider provider) {
-		if (!provider.getName().toLowerCase().endsWith(FileDataTypeManager.SUFFIX)) {
+		if (!provider.getName().toLowerCase().endsWith(FileDtArchiveDB.SUFFIX)) {
 			return false;
 		}
 		boolean isGDT = false;

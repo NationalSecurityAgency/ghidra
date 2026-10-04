@@ -1043,7 +1043,8 @@ public:
     if (!grouplist.contains(getGroup())) return (Action *)0;
     return new ActionCopyMarker(getGroup());
   }
-  virtual int4 apply(Funcdata &data) { data.getMerge().markInternalCopies(); return 0; }
+  virtual int4 apply(Funcdata &data) {
+    data.getMerge().markInternalCopies(); data.getMerge().markPurePaddingCopies(); return 0; }
 };
 
 /// \brief Attach \e dynamically mapped symbols to Varnodes in time for data-type propagation

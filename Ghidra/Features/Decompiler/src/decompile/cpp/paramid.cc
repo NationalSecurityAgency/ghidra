@@ -192,6 +192,7 @@ ParamIDAnalysis::ParamIDAnalysis( Funcdata *fd_in, bool justproto )
     int4 num = fproto.numParams();
     for(int4 i=0;i<num;++i) {
       ProtoParameter *param = fproto.getParam(i);
+      if (!param->hasStorage()) continue;
       InputParamMeasures.push_back( ParamMeasure(param->getAddress(),param->getSize(),
 						 param->getType(),ParamMeasure::INPUT) );
       Varnode *vn = fd->findVarnodeInput(param->getSize(),param->getAddress());
@@ -200,7 +201,7 @@ ParamIDAnalysis::ParamIDAnalysis( Funcdata *fd_in, bool justproto )
     }
 
     ProtoParameter *outparam = fproto.getOutput();
-    if (!outparam->getAddress().isInvalid()) { // If we don't have a void type
+    if (outparam->hasStorage()) { // If we don't have a void type
       OutputParamMeasures.push_back( ParamMeasure( outparam->getAddress(),outparam->getSize(),
 						   outparam->getType(),ParamMeasure::OUTPUT) );
       list<PcodeOp *>::const_iterator rtn_iter = fd->beginOp( CPUI_RETURN );

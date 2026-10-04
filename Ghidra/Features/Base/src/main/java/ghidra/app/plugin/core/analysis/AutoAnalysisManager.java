@@ -649,10 +649,13 @@ public class AutoAnalysisManager {
 
 		private long timeAccumulator;
 		private long startTime;
+		private MessageLog messageLog;
 
-		AnalysisTaskWrapper(BackgroundCommand<Program> task, int taskPriority) {
+		AnalysisTaskWrapper(BackgroundCommand<Program> task, int taskPriority,
+				MessageLog messageLog) {
 			this.task = task;
 			this.taskPriority = taskPriority;
+			this.messageLog = messageLog;
 		}
 
 		void run(Program p, TaskMonitor monitor) {
@@ -665,12 +668,7 @@ public class AutoAnalysisManager {
 					throw th;
 				}
 				if (!p.isClosed() && !p.hasTerminatedTransaction()) {
-					String msg = th.getMessage();
-					if (msg == null) {
-						msg = "";
-					}
-					Msg.showError(this, null, "Analyzer Error",
-						"Analysis Task: " + task.getName() + " - " + msg, th);
+					messageLog.appendException(th);
 				}
 			}
 			long timeDiff = timeAccumulator + (System.currentTimeMillis() - startTime);
@@ -806,7 +804,7 @@ public class AutoAnalysisManager {
 			return null;
 		}
 		int nextTaskPriority = queue.getFirstPriority();
-		return new AnalysisTaskWrapper(queue.removeFirst(), nextTaskPriority);
+		return new AnalysisTaskWrapper(queue.removeFirst(), nextTaskPriority, log);
 	}
 
 	public void addListener(AutoAnalysisManagerListener listener) {

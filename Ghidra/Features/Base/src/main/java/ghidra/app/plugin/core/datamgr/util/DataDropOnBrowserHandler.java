@@ -26,14 +26,13 @@ import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeTransferable;
 
 /**
- *  Handles datatype drops in the codebrowser.  Installed by the dataTypeManagerPlugin
- *
+ * Handles datatype drops in the Listing.  Installed by the DataTypeManagerPlugin.
  */
-public class DataDropOnBrowserHandler implements ProgramDropProvider { 
-	
+public class DataDropOnBrowserHandler implements ProgramDropProvider {
+
 	private static final DataFlavor[] ACCEPTABLE_FLAVORS = new DataFlavor[] {
-	    DataTypeTransferable.localDataTypeFlavor,
-	    DataTypeTransferable.localBuiltinDataTypeFlavor
+		DataTypeTransferable.localDataTypeFlavor,
+		DataTypeTransferable.localBuiltinDataTypeFlavor
 	};
 	private DataService curService;
 	private final DataTypeManagerPlugin plugin;
@@ -41,48 +40,46 @@ public class DataDropOnBrowserHandler implements ProgramDropProvider {
 	public DataDropOnBrowserHandler(DataTypeManagerPlugin plugin) {
 		this.plugin = plugin;
 	}
-	
+
 	@Override
 	public int getPriority() {
 		return 20;
 	}
-	
+
 	@Override
 	public DataFlavor[] getDataFlavors() {
 		return ACCEPTABLE_FLAVORS;
 	}
 
-	/**
-	 * @see ghidra.app.util.ProgramDropProvider#isDropOk(java.lang.Object, java.awt.dnd.DropTargetDragEvent)
-	 */
 	@Override
 	public boolean isDropOk(Object contextObj, DropTargetDragEvent evt) {
 		curService = null;
 
 		if (!evt.isDataFlavorSupported(DataTypeTransferable.localDataTypeFlavor) &&
-		    !evt.isDataFlavorSupported(DataTypeTransferable.localBuiltinDataTypeFlavor) )
+			!evt.isDataFlavorSupported(DataTypeTransferable.localBuiltinDataTypeFlavor)) {
 			return false;
+		}
 
-		if (contextObj != null  &&  contextObj instanceof ListingActionContext) {
-			ListingActionContext pl = (ListingActionContext)contextObj;
-			DataService[] services = plugin.getTool().getServices(DataService.class); 
-			for (int i=0; i<services.length; i++) {
+		if (contextObj != null && contextObj instanceof ListingActionContext) {
+			ListingActionContext pl = (ListingActionContext) contextObj;
+			DataService[] services = plugin.getTool().getServices(DataService.class);
+			for (int i = 0; i < services.length; i++) {
 				if (services[i].isCreateDataAllowed(pl)) {
 					curService = services[i];
 					return true;
 				}
 			}
 		}
-		
+
 		return false;
 	}
 
 	@Override
 	public void add(Object contextObj, Object data, DataFlavor flavor) {
 		if (curService != null) {
-			DataType dt = (DataType)data;
+			DataType dt = (DataType) data;
 			curService.createData(dt, (ListingActionContext) contextObj, true, true);
 		}
 	}
-	
+
 }

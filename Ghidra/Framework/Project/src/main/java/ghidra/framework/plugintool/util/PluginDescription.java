@@ -119,14 +119,15 @@ public class PluginDescription implements Comparable<PluginDescription> {
 	public String getSourceLocation() {
 		try {
 			return convertToSourceLocation(url);
-		} catch (URISyntaxException e) {
+		}
+		catch (URISyntaxException e) {
 			Msg.error(this, "Unexpected bad url: " + url);
 			return "<bad source location>";
 		}
 	}
 
 	private static String convertToSourceLocation(URL url) throws URISyntaxException {
-		
+
 		URI uri;
 		if ("jar".equals(url.getProtocol())) {
 
@@ -139,16 +140,16 @@ public class PluginDescription implements Comparable<PluginDescription> {
 		}
 
 		String parent = Path.of(uri).getParent().toString();
-		
+
 		// Check for a file:/ path pointing to a class inside of a jar file
 		String jarSeparator = ".jar!";
 		int index = parent.indexOf(jarSeparator);
 		if (index != -1) {
 			// we want to return just the path to the jar file without the package path
-			int bangIndex = index + jarSeparator.length() -1;
+			int bangIndex = index + jarSeparator.length() - 1;
 			parent = parent.substring(0, bangIndex);
 		}
-				
+
 		return parent;
 	}
 
@@ -186,19 +187,10 @@ public class PluginDescription implements Comparable<PluginDescription> {
 	 * {@return true if this plugin is provided by an extension}
 	 */
 	public boolean isInExtension() {
-		
-		Path myPath = null;
-		try {
-			myPath = Path.of(url.toURI());
-		} 
-		catch (URISyntaxException e) {
-			Msg.error(this, "Invalid URL for PluginDescription: " + url, e);
-			return false;
-		}
-		
+		String myPath = getSourceLocation();
 		ApplicationLayout layout = Application.getApplicationLayout();
 		List<ResourceFile> extDirs = layout.getExtensionInstallationDirs();
-		return FileUtilities.startsWith(extDirs, myPath.toString());
+		return FileUtilities.startsWith(extDirs, myPath);
 	}
 
 	/**

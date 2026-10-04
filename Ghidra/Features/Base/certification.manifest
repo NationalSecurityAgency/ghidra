@@ -250,6 +250,7 @@ src/main/help/help/TOC_Source.xml||GHIDRA||||END|
 src/main/help/help/topics/About/About_Ghidra.htm||GHIDRA||||END|
 src/main/help/help/topics/About/About_Program_File.htm||GHIDRA||||END|
 src/main/help/help/topics/About/images/About_Program.png||GHIDRA||||END|
+src/main/help/help/topics/Accessibility/AccessibilityOverview.html||GHIDRA||||END|
 src/main/help/help/topics/Annotations/Annotations.html||GHIDRA||||END|
 src/main/help/help/topics/Annotations/images/CommentDialogURLExample.png||GHIDRA||||END|
 src/main/help/help/topics/Annotations/images/InvalidAnnotationsDialogExample.png||GHIDRA||||END|
@@ -348,6 +349,7 @@ src/main/help/help/topics/DataTypeEditors/images/UnionEditorPacked.png||GHIDRA||
 src/main/help/help/topics/DataTypeManagerPlugin/data_type_manager_archives.html||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/data_type_manager_description.htm||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/data_type_manager_window.html||GHIDRA||||END|
+src/main/help/help/topics/DataTypeManagerPlugin/data_types_table.html||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/CommitDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/DataTypeManager.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/DataTypeTreeWithAssociations.png||GHIDRA||||END|

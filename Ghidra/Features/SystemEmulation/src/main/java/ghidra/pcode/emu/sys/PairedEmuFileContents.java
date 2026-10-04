@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,15 +41,15 @@ public class PairedEmuFileContents<L, R> implements EmuFileContents<Pair<L, R>> 
 	}
 
 	@Override
-	public long read(long offset, Pair<L, R> buf, long fileSize) {
-		long result = left.read(offset, buf.getLeft(), fileSize);
+	public int read(long offset, Pair<L, R> buf, long fileSize) {
+		int result = left.read(offset, buf.getLeft(), fileSize);
 		right.read(offset, buf.getRight(), fileSize);
 		return result;
 	}
 
 	@Override
-	public long write(long offset, Pair<L, R> buf, long curSize) {
-		long result = left.write(offset, buf.getLeft(), curSize);
+	public int write(long offset, Pair<L, R> buf, long curSize) {
+		int result = left.write(offset, buf.getLeft(), curSize);
 		right.write(offset, buf.getRight(), curSize);
 		return result;
 	}

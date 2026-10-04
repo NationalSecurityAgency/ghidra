@@ -39,109 +39,358 @@
         <DIV class="informalexample">
 <PRE>
 <CODE class="computeroutput">
-    bsim_ctl start           &lt;/datadir-path&gt; [--auth|-a&nbsp;pki|password|trust] [--noLocalAuth] [--cafile&nbsp;&lt;/cacert-path&gt;] [--dn&nbsp;"&lt;distinguished-name&gt;"]
-    bsim_ctl stop            &lt;/datadir-path&gt; [--force]
-    bsim_ctl status          &lt;/datadir-path&gt;
-    bsim_ctl adduser         &lt;/datadir-path&gt; &lt;username&gt; [--dn&nbsp;"&lt;distinguished-name&gt;"]
-    bsim_ctl dropuser        &lt;/datadir-path&gt; &lt;username&gt;
-    bsim_ctl resetpassword   &lt;username&gt;
-    bsim_ctl changeauth      &lt;/datadir-path&gt; [--auth|-a&nbsp;pki|password|trust] [--noLocalAuth] [--cafile&nbsp;&lt;/cacert-path&gt;] [--dn&nbsp;"&lt;distinguished-name&gt;"]
-    bsim_ctl changeprivilege &lt;username&gt; admin|user
-    
-    Global Options:
-        --port|-p&nbsp;&lt;portnum&gt;
+    bsim_ctl init              &lt;/datadir-path&gt; [--keystore|-k&nbsp;"&lt;/keystore-path&gt;"] [--auth|-a&nbsp;password|pki|trust] [--noLocalAuth]
+                                               [--cafile|-ca&nbsp;"&lt;/cacert-path&gt;"] [--port|-p&nbsp;&lt;portnum&gt;] [--os-user&nbsp;&lt;account&gt;]
+    bsim_ctl configure         &lt;/datadir-path&gt; [--keystore|-k&nbsp;"&lt;/keystore-path&gt;"] [--auth|-a&nbsp;password|pki|trust] [--noLocalAuth]
+                                               [--cafile|-ca&nbsp;"&lt;/cacert-path&gt;"] [--port|-p&nbsp;&lt;portnum&gt;]
+    bsim_ctl start             &lt;/datadir-path&gt;
+    bsim_ctl stop              &lt;/datadir-path&gt; [--force|-f]
+    bsim_ctl restart           &lt;/datadir-path&gt; [--force|-f]
+    bsim_ctl status            &lt;/datadir-path&gt;
+    bsim_ctl install-service   &lt;/datadir-path&gt;   (root only)
+    bsim_ctl uninstall-service &lt;/datadir-path&gt;   (root only)
+    bsim_ctl adduser           &lt;/datadir-path&gt; &lt;username&gt; [--dn|-dn&nbsp;"&lt;distinguished-name&gt;"]
+    bsim_ctl dropuser          &lt;/datadir-path&gt; &lt;username&gt;
+    bsim_ctl listusers         &lt;/datadir-path&gt;
+    bsim_ctl resetpassword     &lt;username&gt; [--port|-p&nbsp;&lt;portnum&gt;]
+    bsim_ctl changeprivilege   &lt;username&gt; admin|user [--port|-p&nbsp;&lt;portnum&gt;]
+
+    Global options:
         --user|-u&nbsp;&lt;username&gt;
         --cert&nbsp;&lt;/certfile-path&gt;
+        --verbose|-v
+
+    NOTES:
+	
+    1. The server must be started for the following commands to work: 
+       'configure', 'adduser', 'dropuser', 'listusers', 'resetpassword', 'changeprivilege'
+	
+    2. Options with values may also be specified using the form: --option=value
+	
+    3. If the --port option is omitted or has a negative value the default PostgreSQL port 5432 will be used.
+	
+    4. A 'configure' change takes effect when the server is next restarted; the invoking user must be
+       able to authenticate with the admin role before any authentication change is permitted.
+	   
+    5. The --cert option is required by 'init' and 'configure' for PKI authentication; the admin user's
+       distinguished name (DN) and common name (CN) are obtained from that certificate and verified
+       against the --cafile certificate authorities.  The --dn option is only used by 'adduser', where it
+       is required when PKI authentication is used.
+	   
+    6. The --cafile file must be an unencrypted PEM file which provides a complete chain of trust for
+       every certificate authority it contains.  It is required by 'init' for PKI authentication, and
+       may be omitted by 'configure' to retain the authorities already installed.
+	   
+    7. A PKI server initialized by this version of Ghidra matches each user's full certificate
+       distinguished name (DN), whereas one initialized by Ghidra 12.1.x or older continues to match only
+       the common name (CN) which its existing user entries were registered with.  'configure' and
+       'adduser' follow whichever the server is configured for, and 'status'/'listusers' report it.
+       Specify --dn in RFC 2253 form, exactly as the certificate subject is rendered by the openssl command:
+          openssl x509 -noout -subject -nameopt RFC2253 -in &lt;certfile&gt;
+
 </CODE>
 </PRE>
         </DIV>
 
         <P><SPAN class="command"><STRONG>bsim_ctl</STRONG></SPAN> is a command-line utility for
-          starting and stopping a BSim server using the PostgreSQL back-end. The utility cannot be
-	  used with either an Elasticsearch server or a local H2 database.
-	  All commands must be run on the machine hosting the server.
+          initializing, configuring, and controlling a BSim server using the PostgreSQL back-end. The utility cannot be
+	      used with either an Elasticsearch server or a local H2 database.
+	      All commands must be run on the machine hosting the server.
           Optional parameters for a given command are indicated by square brackets '[' and ']'
           and always start with either '-' or '--' characters.  If an associated value is required
           and contains space characters it should be enclosed in double quotes.  Options which require
           a value may be separated by a space or a equal "=" character (e.g.,
-          <SPAN class="command"><STRONG>--auth=password</STRONG></SPAN>).
+          <SPAN class="command"><STRONG>--auth=password</STRONG></SPAN>).</P>
+
+        <P>All server configuration is performed through the <SPAN class=
+          "command"><STRONG>init</STRONG></SPAN> and <SPAN class=
+          "command"><STRONG>configure</STRONG></SPAN> commands, which manage the generated
+          <CODE>postgresql.conf</CODE>, <CODE>pg_hba.conf</CODE>, and <CODE>pg_ident.conf</CODE>
+          files on the operator's behalf.  The <SPAN class="command"><STRONG>start</STRONG></SPAN>
+          command performs no configuration and simply starts a previously initialized server.</P>
 
         <DIV class="informalexample">
           <DIV class="variablelist">
             <DL class="variablelist">
-              <DT><SPAN class="term"><SPAN class="bold"><STRONG>start</STRONG></SPAN></SPAN></DT>
+              <DT><SPAN class="term"><SPAN class="bold"><STRONG>init</STRONG></SPAN></SPAN></DT>
 
               <DD>
-                <P>Initializes and starts a PostgreSQL server. The command-line must include a path
-                to the data directory for the server, which must exist. If a server had run
-                previously and populated this directory, this command simply restarts the server
-                using the preexisting data and configuration; otherwise, a new database is
-                initialized. The user performing the initial start is automatically added to the
-                database with <SPAN class="emphasis"><EM>admin</EM></SPAN> privileges.</P>
+                <P>Initializes a new PostgreSQL data directory for BSim and prepares it for use. The
+                command-line must include a path to the data directory, which is created if it does
+                not already exist (an existing directory must be empty). The database is initialized,
+                the configuration and authentication files are tuned, the server certificate is
+                installed, and the BSim <SPAN class="emphasis"><EM>lshvector</EM></SPAN> extension is
+                enabled; the server is then left <SPAN class="emphasis"><EM>stopped</EM></SPAN>. Use
+                <SPAN class="command"><STRONG>start</STRONG></SPAN> to run it. The PostgreSQL
+                administrative role (the global <SPAN class="command"><STRONG>--user</STRONG></SPAN>
+                option, defaulting to the invoking user) is created with <SPAN class=
+                "emphasis"><EM>admin</EM></SPAN> privileges.</P>
 
-                <P>During a restart, any authentication options (with the exception of the global
-                <SPAN class="bold"><STRONG>--cert</STRONG></SPAN> option) are unnecessary and will
-                be ignored. The PostgreSQL server will be restarted with the already established
-                settings. To actually change the settings, use the <SPAN class=
-                "bold"><STRONG>changeauth</STRONG></SPAN> command before restarting.</P>
+                <P><SPAN class="command"><STRONG>--os-user&nbsp;</STRONG></SPAN><SPAN class=
+                "emphasis"><EM>&lt;account&gt;</EM></SPAN> - specifies the operating-system account that
+                will own the data directory and run the <SPAN class="emphasis"><EM>postgres</EM></SPAN>
+                process. This option may only be used when running as <SPAN class=
+                "emphasis"><EM>root</EM></SPAN> (via <SPAN class="command"><STRONG>sudo</STRONG></SPAN>)
+                and is <SPAN class="emphasis"><EM>required</EM></SPAN> in that case; all data-directory
+                files are created owned by this account. When not running as root the option must be
+                omitted and the invoking user becomes the owner. This OS account is distinct from the
+                PostgreSQL administrative role established by the <SPAN class=
+                "command"><STRONG>--user</STRONG></SPAN> option.</P>
+
+                <P><SPAN class="command"><STRONG>--keystore|-k&nbsp;</STRONG></SPAN><SPAN class=
+                "emphasis"><EM>&lt;/keystore-path&gt;</EM></SPAN> - specifies a password-protected
+                PKCS#12 (or JKS) key store containing a CA-signed server certificate and private key
+                (for example, one produced by the <SPAN class="command"><STRONG>certTool</STRONG></SPAN>
+                utility). The key store password is prompted for on the console; the certificate chain
+                and private key are extracted to <CODE>server.crt</CODE> and <CODE>server.key</CODE>
+                within the data directory. When a key store is supplied the server listens on all
+                interfaces and accepts remote connections. If <SPAN class=
+                "command"><STRONG>--keystore</STRONG></SPAN> is omitted, a self-signed certificate
+                restricted to the loopback interface is generated, the server binds to <SPAN class=
+                "emphasis"><EM>localhost</EM></SPAN> only, and remote client access is disabled (a
+                warning is issued for those options which only affect remote access and therefore
+                have no effect).  The authentication type given by <SPAN class=
+                "command"><STRONG>--auth</STRONG></SPAN> still applies to local (loopback)
+                connections and is recorded, so that it also applies to remote clients should
+                remote access be enabled later with <SPAN class=
+                "command"><STRONG>--keystore</STRONG></SPAN>.</P>
 
                 <P><SPAN class="command"><STRONG>--auth|-a&nbsp;</STRONG></SPAN><SPAN class=
-                "emphasis"><EM>&lt;type&gt;</EM></SPAN> - specifies the authentication type (<B>pki |
-                password | trust</B>) for a new database: <SPAN class=
-                "emphasis"><EM>trust</EM></SPAN> for no authentication, <SPAN class=
-                "emphasis"><EM>password</EM></SPAN> for password authentication, and <SPAN class=
-                "emphasis"><EM>pki</EM></SPAN> for authentication using public key certificates.
-                With the <SPAN class="emphasis"><EM>pki</EM></SPAN> setting, both the <SPAN class=
-                "bold"><STRONG>--cafile</STRONG></SPAN> and the <SPAN class=
-                "bold"><STRONG>--dn</STRONG></SPAN> options also need to be provided; additionally
-                the <SPAN class="bold"><STRONG>--cert</STRONG></SPAN> option must be provided unless
-                the <SPAN class="bold"><STRONG>--noLocalAuth</STRONG></SPAN> option is also
-                given.</P>
+                "emphasis"><EM>&lt;type&gt;</EM></SPAN> - specifies the authentication type (<B>
+                password | pki | trust</B>): <SPAN class="emphasis">
+                <EM>password</EM></SPAN> for password authentication (default mode), <SPAN class="emphasis">
+                <EM>pki</EM></SPAN> for authentication using public key certificates, and
+                <SPAN class="emphasis"><EM>trust</EM></SPAN> for no authentication. 
+                Use of <SPAN class="emphasis"><EM>trust</EM></SPAN> mode is highly discouraged.
+                With the <SPAN class="emphasis"><EM>pki</EM></SPAN> setting,
+                both the <SPAN class="bold"><STRONG>--cafile</STRONG></SPAN> and the global
+                <SPAN class="bold"><STRONG>--cert</STRONG></SPAN> options must also be provided; the
+                admin user's Distinguished Name (DN) and Common Name (CN) are obtained from the
+                <SPAN class="bold"><STRONG>--cert</STRONG></SPAN> certificate and no <SPAN class=
+                "bold"><STRONG>--dn</STRONG></SPAN> option is accepted.  The
+                authentication type is recorded within the data directory (in <SPAN class=
+                "emphasis"><EM>bsim-config.properties</EM></SPAN>, which must not be edited) so that
+                later commands such as <SPAN class="command"><STRONG>adduser</STRONG></SPAN> and
+                <SPAN class="command"><STRONG>status</STRONG></SPAN> can determine how the server
+                was configured.</P>
+
+                <P>A server initialized with <SPAN class=
+                "command"><STRONG>--auth&nbsp;pki</STRONG></SPAN> identifies each user by their
+                <SPAN class="emphasis"><EM>full Distinguished Name</EM></SPAN>, which is registered
+                within <CODE>pg_ident.conf</CODE> and matched against the certificate a client
+                presents. A Common Name alone is not a unique identity - it is chosen by whoever
+                issues a certificate, and two authorities within the same <SPAN class=
+                "emphasis"><EM>root.crt</EM></SPAN> may issue certificates carrying the same Common
+                Name to different people. A server which was initialized by Ghidra 12.1.x or older
+                continues to match only the Common Name, because the user entries it already
+                holds were registered that way; see <SPAN class=
+                "command"><STRONG>adduser</STRONG></SPAN>.</P>
 
                 <P><SPAN class="command"><STRONG>--noLocalAuth</STRONG></SPAN> - used together with
                 the <SPAN class="command"><STRONG>--auth</STRONG></SPAN> option causes
-                authentication to not be required for local connections, i.e. localhost.</P>
+                authentication to not be required for local (loopback) connections.</P>
 
-                <P><SPAN class="command"><STRONG>--cafile&nbsp;</STRONG></SPAN><SPAN class=
+                <P>Only local authentication is
+                affected &mdash; the <SPAN class="command"><STRONG>--auth</STRONG></SPAN> mode is
+                still recorded, still governs remote connections should a key store later enable
+                them, and still determines what <SPAN class=
+                "command"><STRONG>adduser</STRONG></SPAN> establishes for each user (a password, or
+                a certificate identity mapping). Those credentials are therefore already in place
+                if <SPAN class="command"><STRONG>configure</STRONG></SPAN> later enables remote
+                access; without them every user would be unable to authenticate at that point.
+                Local authentication becomes subject to the configured mode once a <SPAN class=
+                "command"><STRONG>--keystore</STRONG></SPAN> is supplied.</P>
+
+                <P><SPAN class="command"><STRONG>--cafile|-ca&nbsp;</STRONG></SPAN><SPAN class=
                 "emphasis"><EM>&lt;/cafile-path&gt;</EM></SPAN> - specifies an absolute path to a
                 certificate authority file and is required for <SPAN class=
-                "command"><STRONG>--auth&nbsp;pki</STRONG></SPAN>. This file should contain the
-                certificates the PostgreSQL server will use to authenticate in PEM format
-                concatenated together.</P>
+                "command"><STRONG>--auth&nbsp;pki</STRONG></SPAN>. This file contains the certificate
+                authorities used to verify client certificates and is installed within the data
+                directory as <SPAN class="emphasis"><EM>root.crt</EM></SPAN>. PostgreSQL requires it
+                to be an <SPAN class="emphasis"><EM>unencrypted PEM</EM></SPAN> file (Base64 encoded
+                certificates concatenated together) which itself provides a complete chain of trust,
+                since the server does not look beyond this file when verifying a certificate a client
+                presents. It is fully loaded and validated each time it is used:</P>
 
-                <P><SPAN class="command"><STRONG>--dn&nbsp;</STRONG></SPAN><SPAN class=
-                "emphasis"><EM>&lt;distinguished-name&gt;</EM></SPAN> - specifies the Distinguished 
-                Name for the admin user and is required for 
-                <SPAN class="command"><STRONG>--auth&nbsp;pki</STRONG></SPAN>.</P>
+                <UL>
+                  <LI>
+                    <P>a certificate which is not a certificate authority, or an authority whose
+                    chain of trust cannot be traced to a root certificate authority within the same
+                    file, is reported as an error (all such certificates are identified);</P>
+                  </LI>
+
+                  <LI>
+                    <P>an expired certificate authority is reported as a warning, as is an authority
+                    which is not permitted to sign certificates.</P>
+                  </LI>
+                </UL>
+
+                <P>The global <SPAN class="command"><STRONG>--cert</STRONG></SPAN> certificate is
+                verified against these same authorities, exactly as the server will verify it, so
+                that a certificate the server would reject is identified before the configuration
+                takes effect.</P>
 
                 <P><SPAN class="command"><STRONG>--port|-p&nbsp;</STRONG></SPAN><SPAN class=
-                "emphasis"><EM>&lt;portnum&gt;</EM></SPAN> - specifies the port the PostgreSQL server will
-                listen on. For port numbers other than the default 5432, URLs and other
-                command-lines must explicitly specify the port, when connecting to the server. This
-                option only effects the initial start of a server. For subsequent (re)starts this
-                option is ignored, and the server will continue to listen on the same port
-                specified in the initial start. Use <SPAN class=
-                "command"><STRONG>changeauth</STRONG></SPAN> to change the port of a server after
-                its initial start.</P>
+                "emphasis"><EM>&lt;portnum&gt;</EM></SPAN> - specifies the port that the PostgreSQL server
+                listens to (default 5432). For non-default ports, URLs and other command-lines
+                connecting to the server must explicitly specify the port. Use <SPAN class=
+                "command"><STRONG>configure</STRONG></SPAN> to change the port after
+                initialization if needed.  The default port 5432 will be used if a invalid 
+                value is specified.</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class="bold"><STRONG>configure</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Changes the configuration of a previously initialized server. The path to the data
+                directory must be specified and the server <SPAN class=
+                "emphasis"><EM>must be running</EM></SPAN>. Accepts the same options as <SPAN class=
+                "command"><STRONG>init</STRONG></SPAN> except <SPAN class=
+                "command"><STRONG>--os-user</STRONG></SPAN>: <SPAN class=
+                "command"><STRONG>--auth</STRONG></SPAN>, <SPAN class=
+                "command"><STRONG>--noLocalAuth</STRONG></SPAN>, <SPAN class=
+                "command"><STRONG>--cafile</STRONG></SPAN>, <SPAN class=
+                "command"><STRONG>--keystore</STRONG></SPAN>, and the global <SPAN class=
+                "command"><STRONG>--port</STRONG></SPAN>. Supplying <SPAN class=
+                "command"><STRONG>--keystore</STRONG></SPAN> installs a new server certificate and
+                enables remote access; omitting it preserves the current binding.</P>
+
+                <P>Supplying <SPAN class="command"><STRONG>--cafile</STRONG></SPAN> replaces the
+                installed certificate authorities (<SPAN class=
+                "emphasis"><EM>root.crt</EM></SPAN>) and, because every client certificate must then
+                be issued by one of the incoming authorities, requires the admin user's <SPAN class=
+                "command"><STRONG>--cert</STRONG></SPAN> so that it can be verified against them
+                first. Omitting the option retains the authorities already installed, which are
+                re-loaded and re-validated so that a chain which has become stale (an expired
+                authority) is reported.</P>
+
+                <P>The server is left running and the changes take effect when it is next
+                <SPAN class="command"><STRONG>restart</STRONG></SPAN>ed. The server must be running
+                because any change to the authentication requires that the invoking user first
+                authenticate with the <SPAN class="emphasis"><EM>admin</EM></SPAN> role (using the
+                authentication currently in effect, so the global <SPAN class=
+                "command"><STRONG>--user</STRONG></SPAN> and <SPAN class=
+                "command"><STRONG>--cert</STRONG></SPAN> options may be needed), and because any
+                credential the change requires must be put in place before the restart:</P>
+
+                <UL>
+                  <LI>
+                    <P>Changing to <SPAN class="command"><STRONG>--auth&nbsp;password</STRONG></SPAN>
+                    when the admin user has no database password established will prompt for a new
+                    password on the console and set it. Any other existing user may also lack a
+                    password and can be given one with <SPAN class=
+                    "command"><STRONG>resetpassword</STRONG></SPAN> after the restart.</P>
+                  </LI>
+
+                  <LI>
+                    <P>Changing to <SPAN class="command"><STRONG>--auth&nbsp;pki</STRONG></SPAN>
+                    requires the admin user's certificate (the global <SPAN class=
+                    "command"><STRONG>--cert</STRONG></SPAN> option) and establishes their
+                    PostgreSQL identity mapping from it. As with <SPAN class=
+                    "command"><STRONG>init</STRONG></SPAN>, no <SPAN class=
+                    "command"><STRONG>--dn</STRONG></SPAN> option is accepted: the Distinguished Name
+                    is taken from the certificate so that the mapping cannot disagree with the
+                    certificate which will be presented, and it is verified against the <SPAN class=
+                    "command"><STRONG>--cafile</STRONG></SPAN> certificate authority. Any other
+                    existing user requires a mapping too, which can be added with <SPAN class=
+                    "command"><STRONG>adduser</STRONG></SPAN> and its <SPAN class=
+                    "command"><STRONG>--dn</STRONG></SPAN> option after the restart.</P>
+                  </LI>
+                </UL>
+
+                <P>Older BSim PostgreSQL databases with PKI authentication relied on user's 
+				Common Name (CN), whereas newer databases rely on the user's Distinguished 
+				Name (DN) which is more unique and generally contains a CN. This is a property
+				of the server and <SPAN class="command"><STRONG>configure</STRONG></SPAN> preserves 
+				it: a server which already uses PKI keeps matching whichever it was configured for, 
+				since the identity mappings registered for its users cannot be re-derived (each 
+				user's certificate is held by that user). A server which is being changed 
+				<SPAN class="emphasis"><EM>to</EM></SPAN> PKI has no such mappings and so is 
+				configured to match the full Distinguished Name (DN).
+                The one in effect is reflected by the commands: <SPAN class=
+                "command"><STRONG>status</STRONG></SPAN>, and <SPAN class=
+                "command"><STRONG>listusers</STRONG></SPAN>.</P>
+
+                <P><SPAN class="bold"><STRONG>NOTE:</STRONG></SPAN> a change to <SPAN class=
+                "command"><STRONG>--auth&nbsp;trust</STRONG></SPAN> removes authentication entirely
+                and so does not require the admin role to be authenticated. This is the means of
+                recovering from a forgotten password or an unavailable certificate: change to
+                <SPAN class="emphasis"><EM>trust</EM></SPAN>, restart, re-establish the credential
+                (<SPAN class="command"><STRONG>resetpassword</STRONG></SPAN>), then change back.</P>
+
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class="bold"><STRONG>start</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Starts a previously initialized PostgreSQL server. The path to the data directory
+                must be provided and must already have been initialized with <SPAN class=
+                "command"><STRONG>init</STRONG></SPAN>; otherwise the command fails with guidance to run
+                <SPAN class="command"><STRONG>init</STRONG></SPAN>. This command takes no options and
+                performs no configuration. If a service has been installed for the data directory (see
+                <SPAN class="command"><STRONG>install-service</STRONG></SPAN>) the request is delegated
+                to <SPAN class="emphasis"><EM>systemctl</EM></SPAN> and must be run as root.</P>
               </DD>
 
               <DT><SPAN class="term"><SPAN class="bold"><STRONG>stop</STRONG></SPAN></SPAN></DT>
 
               <DD>
-                <P>Stops a currently running PostgreSQL server. The path to the actively used data
-                directory must be provided. By default, shutdown will wait until existing
-                connections to the database have been closed.</P>
+                <P>Stops a running PostgreSQL server. The path to the data directory must be
+                provided. By default, shutdown waits until existing connections are closed. If a
+                service is installed the request is delegated to <SPAN class=
+                "emphasis"><EM>systemctl</EM></SPAN> and must be run as root.</P>
 
-                <P><SPAN class="command"><STRONG>--force</STRONG></SPAN> - causes existing
-                connections to be forcibly closed and the PostgreSQL server to shut down
-                immediately.</P>
+                <P><SPAN class="command"><STRONG>--force|-f</STRONG></SPAN> - causes existing
+                connections to be forcibly closed and the server to shut down immediately.</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class="bold"><STRONG>restart</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Restarts a previously initialized PostgreSQL server (equivalent to a stop followed
+                by a start), performing no configuration. The path to the data directory must be
+                provided. If a service is installed the request is delegated to <SPAN class=
+                "emphasis"><EM>systemctl</EM></SPAN> and must be run as root.</P>
+
+                <P><SPAN class="command"><STRONG>--force|-f</STRONG></SPAN> - uses fast shutdown mode for
+                the stop phase (existing connections are forcibly closed).</P>
               </DD>
 
               <DT><SPAN class="term"><SPAN class="bold"><STRONG>status</STRONG></SPAN></SPAN></DT>
 
               <DD>
-                <P>Retrieves the status of a PostgreSQL server (running/down). The path to the
-                actively used data directory must be provided.</P>
+                <P>Reports the status of a server: the data directory owner, the port, the
+                authentication type in effect (and, for <SPAN class=
+                "command"><STRONG>--auth&nbsp;pki</STRONG></SPAN>, whether users are identified by
+                their full Distinguished Name or by their Common Name alone), whether remote access
+                is enabled, whether a service is installed (and enabled), and the running state. The
+                path to the data directory must be provided.</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>install-service</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Installs a <SPAN class="emphasis"><EM>systemd</EM></SPAN> service that supervises the
+                server for the specified (initialized) data directory, enabling it to start
+                automatically at boot. Only supported on Linux and must be run as <SPAN class=
+                "emphasis"><EM>root</EM></SPAN> (via <SPAN class="command"><STRONG>sudo</STRONG></SPAN>).
+                The service runs the <SPAN class="emphasis"><EM>postgres</EM></SPAN> process as the data
+                directory owner. The server must not be running when the service is installed. Once
+                installed, the <SPAN class="command"><STRONG>start</STRONG></SPAN>, <SPAN class=
+                "command"><STRONG>stop</STRONG></SPAN>, <SPAN class=
+                "command"><STRONG>restart</STRONG></SPAN>, and <SPAN class=
+                "command"><STRONG>status</STRONG></SPAN> commands operate through the service
+                (start/stop/restart then require root).</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>uninstall-service</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Stops, disables, and removes the <SPAN class="emphasis"><EM>systemd</EM></SPAN>
+                service previously installed for the specified data directory (Linux, root only). The
+                data directory and its contents are left intact.</P>
               </DD>
 
               <DT><SPAN class="term"><SPAN class="bold"><STRONG>adduser</STRONG></SPAN></SPAN></DT>
@@ -153,12 +402,30 @@
                 (read-only) privileges, unless a subsequent <SPAN class=
                 "command"><STRONG>changeprivilege</STRONG></SPAN> command is used.</P>
 
-                <P><SPAN class="command"><STRONG>--dn&nbsp;</STRONG></SPAN><SPAN class=
-                "emphasis"><EM>&lt;distinguished-name&gt;</EM></SPAN> - specifies the Distinguished Name of the new user,
-                which is required if the database enabled <SPAN class=
+                <P><SPAN class="command"><STRONG>--dn|-dn&nbsp;</STRONG></SPAN><SPAN class=
+                "emphasis"><EM>&lt;distinguished-name&gt;</EM></SPAN> - specifies the Distinguished Name (DN)
+                of the new user, which is required if the database enabled <SPAN class=
                 "command"><STRONG>--auth&nbsp;pki</STRONG></SPAN>. This option can be used to provide a
-                Distinguished Name to a preexisting user, if the PostgreSQL server's authentication
+                Distinguished Name to a pre-existing user, if the PostgreSQL server's authentication
                 strategy is changed.</P>
+
+                <P><B>IMPORTANT:</B> The specified DN must match <B>exactly</B> how it is specified within
+                the user's certificate that they will use when connecting to the PostgreSQL server. It is
+                case-senstive and any spaces must be preserved. Give it in <SPAN class=
+                "emphasis"><EM>RFC 2253</EM></SPAN> form - the form in which the server renders the
+                certificate subject - which for a given certificate is reported by:</P>
+
+                <P><CODE class="computeroutput">openssl x509 -noout -subject
+                -nameopt&nbsp;RFC2253 -in <SPAN class=
+                "emphasis"><EM>certfile</EM></SPAN></CODE></P>
+
+                <P>What is registered for the user depends upon how the server itself was configured
+                (see <SPAN class="command"><STRONG>init</STRONG></SPAN>). Normally the full
+                Distinguished Name is registered; for a server initialized by Ghidra 12.1.x or older
+                only the Common Name contained within the
+                supplied Distinguished Name is registered (and the Distinguished Name must
+                therefore contain one). Either way the name actually registered is reported, and can
+                be reviewed later with <SPAN class="command"><STRONG>listusers</STRONG></SPAN>.</P>
               </DD>
 
               <DT><SPAN class="term"><SPAN class=
@@ -171,38 +438,26 @@
               </DD>
 
               <DT><SPAN class="term"><SPAN class=
-              "bold"><STRONG>changeauth</STRONG></SPAN></SPAN></DT>
+              "bold"><STRONG>listusers</STRONG></SPAN></SPAN></DT>
 
               <DD>
-                <P>Change the configuration of a previously initialized PostgreSQL server. The path
-                to the server's data directory must be specified. The server must not currently be
-                running to use this command, which only takes effect after a restart. Options have
-                the same meaning as for the <SPAN class="command"><STRONG>start</STRONG></SPAN>
-                command.</P>
+                <P>List all users defined on the PostgreSQL server along with their role. The path
+                to the actively used data directory must be specified, and the server must be
+                running. Each user is reported as <SPAN class="emphasis"><EM>admin</EM></SPAN> if it
+                has administrative (superuser) privileges, or <SPAN class=
+                "emphasis"><EM>user</EM></SPAN> otherwise (see <SPAN class=
+                "command"><STRONG>changeprivilege</STRONG></SPAN>).</P>
 
-                <P><SPAN class="command"><STRONG>--port|-p&nbsp;</STRONG></SPAN><SPAN class=
-                "emphasis"><EM>&lt;portnum&gt;</EM></SPAN> - changes the port the PostgreSQL server will
-                listen on. If this option is not present, the server will continue to listen on the
-                same port.</P>
-
-                <P><SPAN class="command"><STRONG>--auth|-a&nbsp;</STRONG></SPAN><SPAN class=
-                "emphasis"><EM>&lt;type&gt;</EM></SPAN> - changes the authentication type (<B>pki |
-                password | trust</B>) used by the PostgreSQL server. No change is made if the
-                option is not present. If the option is present, omitting the <SPAN class=
-                "command"><STRONG>--noLocalAuth</STRONG></SPAN> causes local connections to require
-                authentication. This command does not affect the presence or absence of passwords
-                or Distinguished Names for existing users.</P>
-				
-				<P><SPAN class="command"><STRONG>--cafile&nbsp;</STRONG></SPAN><SPAN class=
-				"emphasis"><EM>&lt;/cafile-path&gt;</EM></SPAN> - specifies an absolute path to a
-				certificate authority file and is required for <SPAN class=
-				"command"><STRONG>--auth&nbsp;pki</STRONG></SPAN>. This file should contain the
-				certificates the PostgreSQL server will use to authenticate in PEM format
-				concatenated together.</P>
-
-                <P><SPAN class="command"><STRONG>--dn&nbsp;</STRONG></SPAN><SPAN class=
-                "emphasis"><EM>&lt;distinguished-name&gt;</EM></SPAN> - specifies the Distinguished Name for the admin
-                user and is required for <SPAN class="command"><STRONG>--auth&nbsp;pki</STRONG></SPAN>.</P>
+                <P>If the server is configured for <SPAN class=
+                "command"><STRONG>--auth&nbsp;pki</STRONG></SPAN>, the certificate name registered
+                for each user within <CODE>pg_ident.conf</CODE> is listed as well - their full
+                Distinguished Name, or their Common Name for a server which matches only that (see
+                <SPAN class="command"><STRONG>init</STRONG></SPAN>) - with the column heading
+                indicating which. A user shown as <SPAN class=
+                "emphasis"><EM>&lt;none registered&gt;</EM></SPAN> has no certificate mapping and
+                will be unable to authenticate; one can be established with <SPAN class=
+                "command"><STRONG>adduser</STRONG></SPAN> and its <SPAN class=
+                "command"><STRONG>--dn</STRONG></SPAN> option.</P>
               </DD>
 
               <DT><SPAN class="term"><SPAN class=
@@ -229,9 +484,10 @@
               <DD>
                 <P>These options apply to all the <SPAN class=
                 "command"><STRONG>bsim_ctl</STRONG></SPAN> commands that connect to an active
-                PostgreSQL server: <SPAN class="command"><STRONG>start</STRONG></SPAN>, <SPAN
+                PostgreSQL server: <SPAN class="command"><STRONG>init</STRONG></SPAN>, <SPAN
                 class="command"><STRONG>adduser</STRONG></SPAN>, <SPAN class=
                 "command"><STRONG>dropuser</STRONG></SPAN>, <SPAN class=
+                "command"><STRONG>listusers</STRONG></SPAN>, <SPAN class=
                 "command"><STRONG>resetpassword</STRONG></SPAN>, and <SPAN class=
                 "command"><STRONG>changeprivilege</STRONG></SPAN>.</P>
 
@@ -247,6 +503,9 @@
                 "emphasis"><EM>&lt;/certfile-path&gt;</EM></SPAN> - provides the absolute file path to the
                 user's certificate when connecting to a PostgreSQL server that requires PKI
                 authentication.</P>
+				
+				<P><SPAN class="command"><STRONG>--verbose|-v&nbsp;</STRONG></SPAN> - enable verbose logging
+				of all system commands executed during processing (e.g., <I>pg_ctl</I> execution).</P>
               </DD>
             </DL>
           </DIV>
@@ -265,11 +524,12 @@
 
         <DIV class="informalexample">
 <PRE>
-<CODE class&nbsp;"computeroutput">
+<CODE class="computeroutput">
     bsim createdatabase  &lt;bsimURL&gt; &lt;config_template&gt; [--name|-n&nbsp;"&lt;name&gt;"] [--owner|-o&nbsp;"&lt;owner&gt;"] [--description|-d&nbsp;"&lt;text&gt;"] [--nocallgraph]
+    bsim dropdatabase    &lt;bsimURL&gt; [--force|-f]
+    bsim listdatabases   &lt;bsimURL&gt;
     bsim setmetadata     &lt;bsimURL&gt; [--name|-n&nbsp;"&lt;name&gt;"] [--owner|-o&nbsp;"&lt;owner&gt;"] [--description|-d&nbsp;"&lt;text&gt;"]
     bsim getmetadata     &lt;bsimURL&gt;
-    bsim dropdatabase    &lt;bsimURL&gt; [--force]
     bsim addexecategory  &lt;bsimURL&gt; &lt;category_name&gt; [--date]
     bsim addfunctiontag  &lt;bsimURL&gt; &lt;tag_name&gt;
     bsim dropindex       &lt;bsimURL&gt;
@@ -288,7 +548,8 @@
     bsim delete          &lt;bsimURL&gt; [--md5|-m&nbsp;&lt;hash&gt;] [--name|-n&nbsp;&lt;exe_name&gt; [--arch|-a&nbsp;&lt;languageID&gt;] [--compiler&nbsp;&lt;cspecID&gt;]]
     bsim listfuncs       &lt;bsimURL&gt; [--md5|-m&nbsp;&lt;hash&gt;] [--name|-n&nbsp;&lt;exe_name&gt; [--arch|-a&nbsp;&lt;languageID&gt;] [--compiler&nbsp;&lt;cspecID&gt;]] [--printselfsig] [--callgraph] [--printjustexe] [--maxfunc&nbsp;&lt;max_count&gt;]
     bsim dumpsigs        &lt;bsimURL&gt; &lt;/xmldirectory&gt; [--md5|-m&nbsp;&lt;hash&gt;] [--name|-n&nbsp;&lt;exe_name&gt; [--arch|-a&nbsp;&lt;languageID&gt;] [--compiler&nbsp;&lt;cspecID&gt;]]
-    
+    bsim changepassword  &lt;bsimURL&gt;
+
     Global options:
         --user|-u&nbsp;&lt;username&gt;
         --cert&nbsp;&lt;certfile-path&gt;
@@ -362,7 +623,7 @@
                 <P>Deletes the specified repository. A BSim server URL is required. The database name
                 is taken from the path element of the URL.
 				
-				<P><SPAN class="command"><STRONG>--force</STRONG></SPAN> - skips the confirmation 
+				<P><SPAN class="command"><STRONG>--force|-f</STRONG></SPAN> - skips the confirmation
 				dialog and deletes the database. Default is to ask for confirmation.</P>
               </DD>
 
@@ -575,6 +836,29 @@
               </DD>
 
               <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>listdatabases</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>List all BSim databases hosted by a server. Every discovered database that
+                appears to be a BSim database (i.e., that contains the expected key BSim tables such
+                as <EM>vectable</EM> and <EM>archtable</EM>, or the equivalent Elasticsearch indexes)
+                is reported along with the details that were originally supplied when it was created
+                with <SPAN class="command"><STRONG>createdatabase</STRONG></SPAN>: its formal name,
+                owner, description, whether call-graph information is tracked, and any executable
+                categories, function tags, and date column that have been defined.</P>
+
+                <P>For the <SPAN class="command"><STRONG>postgresql</STRONG></SPAN>,
+                <SPAN class="command"><STRONG>elastic</STRONG></SPAN>, and
+                <SPAN class="command"><STRONG>https</STRONG></SPAN> URL forms the
+                <CODE class="computeroutput">/&lt;dbname&gt;</CODE> element is optional (see
+                <A class="xref" href="CommandLineReference.html#BSimURLs">&ldquo;BSim Database
+                URLs&rdquo;</A>). When it is omitted, all BSim databases hosted by the server are
+                listed; when a database name is supplied, only that single database is listed. A
+                <SPAN class="command"><STRONG>file</STRONG></SPAN> (H2) URL must always specify a
+                specific database.</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class=
               "bold"><STRONG>getexecount</STRONG></SPAN></SPAN></DT>
 
               <DD>
@@ -700,6 +984,32 @@
                 "command"><STRONG>--name</STRONG></SPAN> option is not enough to uniquely specify the
                 executable.</P>
 
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>changepassword</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Change the BSim database password of the connecting user. A BSim URL specifying
+                the repository must be provided. The user must first authenticate with the server
+                using their <EM>current</EM> credentials, since the password change is issued over
+                the resulting connection. The user whose password is changed is the one used to
+                establish that connection, which is the user named by the URL or by the <SPAN class=
+                "command"><STRONG>--user</STRONG></SPAN> option, and otherwise defaults to the
+                user name reported by the operating system.</P>
+
+                <P>Only the <SPAN class="command"><STRONG>postgresql</STRONG></SPAN>, <SPAN class=
+                "command"><STRONG>elastic</STRONG></SPAN>, and <SPAN class=
+                "command"><STRONG>https</STRONG></SPAN> URL forms are supported, and the server must
+                be configured for password authentication (see <A class="xref" href=
+                "DatabaseConfiguration.html#PostSecurityAuthentication" title=
+                "Security and Authentication">&ldquo;Security and Authentication&rdquo;</A>). A <SPAN class=
+                "command"><STRONG>file</STRONG></SPAN> (H2) database has no user password and is not
+                supported.</P>
+
+                <P>The new password is prompted for on the console and must be entered twice. If the
+                two entries do not match the prompt is repeated. A password may not be specified on
+                the command line.</P>
               </DD>
 
               <DT><SPAN class="term"><SPAN class="bold"><STRONG>--Global
@@ -847,7 +1157,16 @@
         </DIV>
 
         <P>The use of the <EM>https</EM> and <EM>elastic</EM> is equivalent.</P>
-        
+
+        <P><IMG border="0" src="help/shared/note.png" alt="Note: ">The trailing
+        <CODE class="computeroutput">/&lt;dbname&gt;</CODE> is required for all commands except
+        <SPAN class="command"><STRONG>listdatabases</STRONG></SPAN>, for which it is optional when
+        using the <EM>postgresql</EM>, <EM>elastic</EM>, or <EM>https</EM> protocols. Omitting the
+        database name with <SPAN class="command"><STRONG>listdatabases</STRONG></SPAN> lists every
+        BSim database hosted by the server, while supplying one lists only that database. A
+        <EM>file</EM> (H2) URL must always specify a specific <CODE class=
+        "computeroutput">&lt;dbname&gt;</CODE>.</P>
+
         <P><IMG border="0" src="help/shared/tip.png" alt="Tip: ">The inclusion of a 
 		<CODE class="computeroutput">&lt;username&gt;</CODE> within a BSim URL
         supercedes the concurrent use of the <SPAN class="command"><STRONG>--user</STRONG></SPAN> 

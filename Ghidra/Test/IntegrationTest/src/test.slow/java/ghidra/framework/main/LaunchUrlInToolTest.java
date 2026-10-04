@@ -15,31 +15,21 @@
  */
 package ghidra.framework.main;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.io.File;
 import java.net.URL;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import docking.DialogComponentProvider;
-import docking.test.AbstractDockingTest;
 import ghidra.app.services.CodeViewerService;
 import ghidra.app.services.ProgramManager;
+import ghidra.framework.client.*;
 import ghidra.framework.data.DomainFileProxy;
-import ghidra.framework.model.DomainFolder;
-import ghidra.framework.model.Project;
-import ghidra.framework.model.ProjectLocator;
-import ghidra.framework.model.ToolAssociationInfo;
-import ghidra.framework.model.ToolServices;
-import ghidra.framework.model.ToolTemplate;
+import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.framework.protocol.ghidra.Handler;
@@ -48,14 +38,10 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.symbol.Namespace;
-import ghidra.program.model.symbol.SourceType;
-import ghidra.program.model.symbol.SymbolTable;
+import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.server.remote.ServerTestUtil;
-import ghidra.test.AbstractGhidraHeadedIntegrationTest;
-import ghidra.test.TestEnv;
-import ghidra.test.ToyProgramBuilder;
+import ghidra.test.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
@@ -77,9 +63,15 @@ public class LaunchUrlInToolTest extends AbstractGhidraHeadedIntegrationTest {
 	private static final String REPO_NAME = "Test";
 
 	private URL remoteFileUrl;
+	private boolean allowNextServerAccess;
 
 	@Before
 	public void setUp() throws Exception {
+
+		ClientUtil.setAllowListProvider(new MyAllowListProvider());
+		UrlAllowListManager.alwaysAllowLocalAccess = false;
+		UrlAllowListManager.clearAll();
+		allowNextServerAccess = true;
 
 		env = new TestEnv();
 
@@ -143,10 +135,8 @@ public class LaunchUrlInToolTest extends AbstractGhidraHeadedIntegrationTest {
 
 		AtomicReference<PluginTool> ref = new AtomicReference<>();
 		runSwing(() -> {
-			boolean wasErrorGUIEnabled = AbstractDockingTest.isUseErrorGUI();
 			ToolServices toolServices = project.getToolServices();
 			ref.set(toolServices.launchDefaultToolWithURL(url));
-			AbstractDockingTest.setErrorGUIEnabled(wasErrorGUIEnabled);
 		});
 
 		verifyLaunch(ref.get());
@@ -162,10 +152,8 @@ public class LaunchUrlInToolTest extends AbstractGhidraHeadedIntegrationTest {
 
 		AtomicReference<PluginTool> ref = new AtomicReference<>();
 		runSwing(() -> {
-			boolean wasErrorGUIEnabled = AbstractDockingTest.isUseErrorGUI();
 			ToolServices toolServices = project.getToolServices();
 			ref.set(toolServices.launchToolWithURL(DEFAULT_TEST_TOOL_NAME, url));
-			AbstractDockingTest.setErrorGUIEnabled(wasErrorGUIEnabled);
 		});
 
 		verifyLaunch(ref.get());
@@ -181,9 +169,13 @@ public class LaunchUrlInToolTest extends AbstractGhidraHeadedIntegrationTest {
 
 		URL url = GhidraURL.makeURL(projectLocator, FOLDER, null);
 
-		ToolServices toolServices = project.getToolServices();
-		PluginTool tool = toolServices.launchDefaultToolWithURL(url);
-		assertNull(tool);
+		AtomicReference<PluginTool> ref = new AtomicReference<>();
+		runSwing(() -> {
+			ToolServices toolServices = project.getToolServices();
+			ref.set(toolServices.launchDefaultToolWithURL(url));
+		});
+
+		assertNull(ref.get()); // verify no tool launched
 
 		DialogComponentProvider dlg = waitForDialogComponent("Unsupported Content");
 		assertNotNull("Error dialog expected", dlg);
@@ -200,9 +192,13 @@ public class LaunchUrlInToolTest extends AbstractGhidraHeadedIntegrationTest {
 
 		URL url = GhidraURL.makeURL(projectLocator, "/x/y", null);
 
-		ToolServices toolServices = project.getToolServices();
-		PluginTool tool = toolServices.launchDefaultToolWithURL(url);
-		assertNull(tool);
+		AtomicReference<PluginTool> ref = new AtomicReference<>();
+		runSwing(() -> {
+			ToolServices toolServices = project.getToolServices();
+			ref.set(toolServices.launchDefaultToolWithURL(url));
+		});
+
+		assertNull(ref.get()); // verify no tool launched
 
 		DialogComponentProvider dlg = waitForDialogComponent("Content Not Found");
 		assertNotNull("Error dialog expected", dlg);
@@ -216,12 +212,26 @@ public class LaunchUrlInToolTest extends AbstractGhidraHeadedIntegrationTest {
 		Project project = env.getProject();
 		setupDefaultTestTool(project);
 
+		allowNextServerAccess = false; // deny first attempt
+		
 		AtomicReference<PluginTool> ref = new AtomicReference<>();
 		runSwing(() -> {
-			boolean wasErrorGUIEnabled = AbstractDockingTest.isUseErrorGUI();
 			ToolServices toolServices = project.getToolServices();
 			ref.set(toolServices.launchDefaultToolWithURL(remoteFileUrl));
-			AbstractDockingTest.setErrorGUIEnabled(wasErrorGUIEnabled);
+		});
+		
+		assertNull(ref.get()); // verify no tool launched
+		
+		DialogComponentProvider dlg = waitForDialogComponent("Content Access Failure");
+		runSwing(() -> dlg.close());
+
+		//Clear allow list cache and allow next attempt
+		UrlAllowListManager.clearAll();
+		allowNextServerAccess = true;
+
+		runSwing(() -> {
+			ToolServices toolServices = project.getToolServices();
+			ref.set(toolServices.launchDefaultToolWithURL(remoteFileUrl));
 		});
 
 		verifyLaunch(ref.get());
@@ -236,10 +246,8 @@ public class LaunchUrlInToolTest extends AbstractGhidraHeadedIntegrationTest {
 
 		AtomicReference<PluginTool> ref = new AtomicReference<>();
 		runSwing(() -> {
-			boolean wasErrorGUIEnabled = AbstractDockingTest.isUseErrorGUI();
 			ToolServices toolServices = project.getToolServices();
 			ref.set(toolServices.launchToolWithURL(DEFAULT_TEST_TOOL_NAME, remoteFileUrl));
-			AbstractDockingTest.setErrorGUIEnabled(wasErrorGUIEnabled);
 		});
 
 		verifyLaunch(ref.get());
@@ -255,9 +263,13 @@ public class LaunchUrlInToolTest extends AbstractGhidraHeadedIntegrationTest {
 		URL badUrl = GhidraURL.makeURL(ServerTestUtil.LOCALHOST,
 			ServerTestUtil.GHIDRA_TEST_SERVER_PORT, REPO_NAME, FOLDER);
 
-		ToolServices toolServices = project.getToolServices();
-		PluginTool tool = toolServices.launchDefaultToolWithURL(badUrl);
-		assertNull(tool);
+		AtomicReference<PluginTool> ref = new AtomicReference<>();
+		runSwing(() -> {
+			ToolServices toolServices = project.getToolServices();
+			ref.set(toolServices.launchDefaultToolWithURL(badUrl));
+		});
+
+		assertNull(ref.get()); // verify no tool launched
 
 		DialogComponentProvider dlg = waitForDialogComponent("Unsupported Content");
 		assertNotNull("Error dialog expected", dlg);
@@ -274,9 +286,13 @@ public class LaunchUrlInToolTest extends AbstractGhidraHeadedIntegrationTest {
 		URL badUrl = GhidraURL.makeURL(ServerTestUtil.LOCALHOST,
 			ServerTestUtil.GHIDRA_TEST_SERVER_PORT, REPO_NAME, FOLDER, "x", REF);
 
-		ToolServices toolServices = project.getToolServices();
-		PluginTool tool = toolServices.launchDefaultToolWithURL(badUrl);
-		assertNull(tool);
+		AtomicReference<PluginTool> ref = new AtomicReference<>();
+		runSwing(() -> {
+			ToolServices toolServices = project.getToolServices();
+			ref.set(toolServices.launchDefaultToolWithURL(badUrl));
+		});
+
+		assertNull(ref.get()); // verify no tool launched
 
 		DialogComponentProvider dlg = waitForDialogComponent("Content Not Found");
 		assertNotNull("Error dialog expected", dlg);
@@ -353,6 +369,21 @@ public class LaunchUrlInToolTest extends AbstractGhidraHeadedIntegrationTest {
 
 		ServerTestUtil.startServer(serverRoot.getAbsolutePath(),
 			ServerTestUtil.GHIDRA_TEST_SERVER_PORT, -1, false, false, false);
+
+	}
+
+	private class MyAllowListProvider extends AbstractUrlAllowListProvider {
+
+		@Override
+		public boolean isAllowed(URL url) {
+			Boolean allowed = accessAllowed(url);
+			if (allowed != null) {
+				return allowed;
+			}
+			allowed = allowNextServerAccess;
+			UrlAllowListManager.updateAccess(url, allowed);
+			return allowed;
+		}
 
 	}
 

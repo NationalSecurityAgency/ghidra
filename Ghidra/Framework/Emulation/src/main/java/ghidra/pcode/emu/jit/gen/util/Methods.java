@@ -15,13 +15,14 @@
  */
 package ghidra.pcode.emu.jit.gen.util;
 
+import java.lang.classfile.CodeBuilder;
+import java.lang.constant.ClassDesc;
+import java.lang.constant.MethodTypeDesc;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.*;
-
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Type;
 
 import ghidra.pcode.emu.jit.gen.util.Emitter.*;
 import ghidra.pcode.emu.jit.gen.util.Methods.Def.ParamFunction;
@@ -94,10 +95,9 @@ public interface Methods {
 	 * @param <MR> the (machine) type returned by the method
 	 * @param <N> the parameter types encoded as in {@link Emitter} where the top corresponds to the
 	 *            right-most parameter.
-	 * @param desc the descriptor as a string, as in
-	 *            {@link MethodVisitor#visitMethodInsn(int, String, String, String, boolean)}.
+	 * @param desc the method type descriptor
 	 */
-	public record MthDesc<MR extends BType, N extends Next>(String desc) {
+	public record MthDesc<MR extends BType, N extends Next>(MethodTypeDesc desc) {
 
 		/**
 		 * Begin building a method descriptor that returns the given (machine) type
@@ -107,7 +107,7 @@ public interface Methods {
 		 * @return the builder
 		 */
 		public static <MR extends BType> MthDescBuilder<MR, Bot> returns(MR retType) {
-			return new MthDescBuilder<>(retType.type());
+			return new MthDescBuilder<>(retType.classDesc());
 		}
 
 		/**
@@ -117,7 +117,7 @@ public interface Methods {
 		 * @return the builder
 		 */
 		public static MthDescBuilder<TInt, Bot> returns(SType retType) {
-			return new MthDescBuilder<>(retType.type());
+			return new MthDescBuilder<>(retType.classDesc());
 		}
 
 		/**
@@ -130,7 +130,9 @@ public interface Methods {
 		 * @return the untyped descriptor
 		 */
 		public static MthDesc<?, ?> reflect(Method method) {
-			return new MthDesc<>(Type.getMethodDescriptor(method));
+			MethodType mt =
+				MethodType.methodType(method.getReturnType(), method.getParameterTypes());
+			return new MthDesc<>(mt.describeConstable().orElseThrow());
 		}
 
 		/**
@@ -198,6 +200,23 @@ public interface Methods {
 		public static <R, A0, A1, A2>
 				MthDescCheckedBuilderR<R, CkEnt<CkEnt<CkEnt<CkBot, A2>, A1>, A0>>
 				derive(A3Function<A0, A1, A2, R> func) {
+			return new MthDescCheckedBuilderR<>();
+		}
+
+		/**
+		 * Begin building a method descriptor derived from the given method reference
+		 * 
+		 * @see #derive(Function)
+		 * @param <R> the return type, boxed
+		 * @param <A0> the first argument type, boxed
+		 * @param <A1> another argument type, boxed
+		 * @param <A2> another argument type, boxed
+		 * @param func the method reference
+		 * @return the checked builder
+		 */
+		public static <R, A0, A1, A2>
+				MthDescCheckedBuilderR<R, CkEnt<CkEnt<CkBot, A2>, A1>>
+				deriveInst(A3Function<A0, A1, A2, R> func) {
 			return new MthDescCheckedBuilderR<>();
 		}
 
@@ -336,7 +355,7 @@ public interface Methods {
 		 */
 		public static <R, CN extends CkNext> MthDescCheckedBuilderP<TRef<R>, Bot, CN>
 				returns(MthDescCheckedBuilderR<R, CN> builder, TRef<R> retType) {
-			return new MthDescCheckedBuilderP<>(retType.type());
+			return new MthDescCheckedBuilderP<>(retType.classDesc());
 		}
 
 		/**
@@ -349,7 +368,7 @@ public interface Methods {
 		 */
 		public static <CN extends CkNext> MthDescCheckedBuilderP<TVoid, Bot, CN>
 				returns(MthDescCheckedBuilderR<Void, CN> builder, TVoid retType) {
-			return new MthDescCheckedBuilderP<>(retType.type());
+			return new MthDescCheckedBuilderP<>(retType.classDesc());
 		}
 
 		/**
@@ -362,7 +381,7 @@ public interface Methods {
 		 */
 		public static <CN extends CkNext> MthDescCheckedBuilderP<TInt, Bot, CN>
 				returns(MthDescCheckedBuilderR<Boolean, CN> builder, TBool retType) {
-			return new MthDescCheckedBuilderP<>(retType.type());
+			return new MthDescCheckedBuilderP<>(retType.classDesc());
 		}
 
 		/**
@@ -375,7 +394,7 @@ public interface Methods {
 		 */
 		public static <CN extends CkNext> MthDescCheckedBuilderP<TInt, Bot, CN>
 				returns(MthDescCheckedBuilderR<Boolean, CN> builder, TByte retType) {
-			return new MthDescCheckedBuilderP<>(retType.type());
+			return new MthDescCheckedBuilderP<>(retType.classDesc());
 		}
 
 		/**
@@ -388,7 +407,7 @@ public interface Methods {
 		 */
 		public static <CN extends CkNext> MthDescCheckedBuilderP<TInt, Bot, CN>
 				returns(MthDescCheckedBuilderR<Boolean, CN> builder, TChar retType) {
-			return new MthDescCheckedBuilderP<>(retType.type());
+			return new MthDescCheckedBuilderP<>(retType.classDesc());
 		}
 
 		/**
@@ -401,7 +420,7 @@ public interface Methods {
 		 */
 		public static <CN extends CkNext> MthDescCheckedBuilderP<TInt, Bot, CN>
 				returns(MthDescCheckedBuilderR<Boolean, CN> builder, TShort retType) {
-			return new MthDescCheckedBuilderP<>(retType.type());
+			return new MthDescCheckedBuilderP<>(retType.classDesc());
 		}
 
 		/**
@@ -414,7 +433,7 @@ public interface Methods {
 		 */
 		public static <CN extends CkNext> MthDescCheckedBuilderP<TInt, Bot, CN>
 				returns(MthDescCheckedBuilderR<Integer, CN> builder, TInt retType) {
-			return new MthDescCheckedBuilderP<>(retType.type());
+			return new MthDescCheckedBuilderP<>(retType.classDesc());
 		}
 
 		/**
@@ -427,7 +446,7 @@ public interface Methods {
 		 */
 		public static <CN extends CkNext> MthDescCheckedBuilderP<TLong, Bot, CN>
 				returns(MthDescCheckedBuilderR<Long, CN> builder, TLong retType) {
-			return new MthDescCheckedBuilderP<>(retType.type());
+			return new MthDescCheckedBuilderP<>(retType.classDesc());
 		}
 
 		/**
@@ -440,7 +459,7 @@ public interface Methods {
 		 */
 		public static <CN extends CkNext> MthDescCheckedBuilderP<TFloat, Bot, CN>
 				returns(MthDescCheckedBuilderR<Integer, CN> builder, TFloat retType) {
-			return new MthDescCheckedBuilderP<>(retType.type());
+			return new MthDescCheckedBuilderP<>(retType.classDesc());
 		}
 
 		/**
@@ -453,7 +472,7 @@ public interface Methods {
 		 */
 		public static <CN extends CkNext> MthDescCheckedBuilderP<TDouble, Bot, CN>
 				returns(MthDescCheckedBuilderR<Long, CN> builder, TDouble retType) {
-			return new MthDescCheckedBuilderP<>(retType.type());
+			return new MthDescCheckedBuilderP<>(retType.classDesc());
 		}
 
 		/**
@@ -472,7 +491,7 @@ public interface Methods {
 		public static <MR extends BType, N extends Next, P, CN1 extends CkNext,
 			CN0 extends CkEnt<CN1, P>> MthDescCheckedBuilderP<MR, Ent<N, TRef<P>>, CN1>
 				param(MthDescCheckedBuilderP<MR, N, CN0> builder, TRef<P> paramType) {
-			builder.paramTypes.add(paramType.type());
+			builder.paramTypes.add(paramType.classDesc());
 			return (MthDescCheckedBuilderP) builder;
 		}
 
@@ -491,7 +510,7 @@ public interface Methods {
 		public static <MR extends BType, N extends Next, CN1 extends CkNext,
 			CN0 extends CkEnt<CN1, Integer>> MthDescCheckedBuilderP<MR, Ent<N, TInt>, CN1>
 				param(MthDescCheckedBuilderP<MR, N, CN0> builder, TBool paramType) {
-			builder.paramTypes.add(paramType.type());
+			builder.paramTypes.add(paramType.classDesc());
 			return (MthDescCheckedBuilderP) builder;
 		}
 
@@ -510,7 +529,7 @@ public interface Methods {
 		public static <MR extends BType, N extends Next, CN1 extends CkNext,
 			CN0 extends CkEnt<CN1, Integer>> MthDescCheckedBuilderP<MR, Ent<N, TInt>, CN1>
 				param(MthDescCheckedBuilderP<MR, N, CN0> builder, TByte paramType) {
-			builder.paramTypes.add(paramType.type());
+			builder.paramTypes.add(paramType.classDesc());
 			return (MthDescCheckedBuilderP) builder;
 		}
 
@@ -529,7 +548,7 @@ public interface Methods {
 		public static <MR extends BType, N extends Next, CN1 extends CkNext,
 			CN0 extends CkEnt<CN1, Integer>> MthDescCheckedBuilderP<MR, Ent<N, TInt>, CN1>
 				param(MthDescCheckedBuilderP<MR, N, CN0> builder, TChar paramType) {
-			builder.paramTypes.add(paramType.type());
+			builder.paramTypes.add(paramType.classDesc());
 			return (MthDescCheckedBuilderP) builder;
 		}
 
@@ -548,7 +567,7 @@ public interface Methods {
 		public static <MR extends BType, N extends Next, CN1 extends CkNext,
 			CN0 extends CkEnt<CN1, Integer>> MthDescCheckedBuilderP<MR, Ent<N, TInt>, CN1>
 				param(MthDescCheckedBuilderP<MR, N, CN0> builder, TShort paramType) {
-			builder.paramTypes.add(paramType.type());
+			builder.paramTypes.add(paramType.classDesc());
 			return (MthDescCheckedBuilderP) builder;
 		}
 
@@ -567,7 +586,7 @@ public interface Methods {
 		public static <MR extends BType, N extends Next, CN1 extends CkNext,
 			CN0 extends CkEnt<CN1, Integer>> MthDescCheckedBuilderP<MR, Ent<N, TInt>, CN1>
 				param(MthDescCheckedBuilderP<MR, N, CN0> builder, TInt paramType) {
-			builder.paramTypes.add(paramType.type());
+			builder.paramTypes.add(paramType.classDesc());
 			return (MthDescCheckedBuilderP) builder;
 		}
 
@@ -586,7 +605,7 @@ public interface Methods {
 		public static <MR extends BType, N extends Next, CN1 extends CkNext,
 			CN0 extends CkEnt<CN1, Long>> MthDescCheckedBuilderP<MR, Ent<N, TLong>, CN1>
 				param(MthDescCheckedBuilderP<MR, N, CN0> builder, TLong paramType) {
-			builder.paramTypes.add(paramType.type());
+			builder.paramTypes.add(paramType.classDesc());
 			return (MthDescCheckedBuilderP) builder;
 		}
 
@@ -605,7 +624,7 @@ public interface Methods {
 		public static <MR extends BType, N extends Next, CN1 extends CkNext,
 			CN0 extends CkEnt<CN1, Float>> MthDescCheckedBuilderP<MR, Ent<N, TFloat>, CN1>
 				param(MthDescCheckedBuilderP<MR, N, CN0> builder, TFloat paramType) {
-			builder.paramTypes.add(paramType.type());
+			builder.paramTypes.add(paramType.classDesc());
 			return (MthDescCheckedBuilderP) builder;
 		}
 
@@ -624,7 +643,7 @@ public interface Methods {
 		public static <MR extends BType, N extends Next, CN1 extends CkNext,
 			CN0 extends CkEnt<CN1, Double>> MthDescCheckedBuilderP<MR, Ent<N, TDouble>, CN1>
 				param(MthDescCheckedBuilderP<MR, N, CN0> builder, TDouble paramType) {
-			builder.paramTypes.add(paramType.type());
+			builder.paramTypes.add(paramType.classDesc());
 			return (MthDescCheckedBuilderP) builder;
 		}
 
@@ -640,8 +659,8 @@ public interface Methods {
 		 */
 		public static <MR extends BType, N extends Next> MthDesc<MR, N>
 				build(MthDescCheckedBuilderP<MR, N, CkBot> builder) {
-			return new MthDesc<>(
-				Type.getMethodDescriptor(builder.retType, builder.paramTypes.toArray(Type[]::new)));
+			return new MthDesc<>(MethodTypeDesc.of(builder.retType,
+				builder.paramTypes.toArray(ClassDesc[]::new)));
 		}
 	}
 
@@ -652,10 +671,10 @@ public interface Methods {
 	 * @param <N> the parameter (machine) types specified so far, encoded as in {@link Emitter}.
 	 */
 	public static class MthDescBuilder<MR extends BType, N extends Next> {
-		private final Type retType;
-		private final List<Type> paramTypes = new ArrayList<>();
+		private final ClassDesc retType;
+		private final List<ClassDesc> paramTypes = new ArrayList<>();
 
-		MthDescBuilder(Type retType) {
+		MthDescBuilder(ClassDesc retType) {
 			this.retType = retType;
 		}
 
@@ -668,7 +687,7 @@ public interface Methods {
 		 */
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		public <P extends BNonVoid> MthDescBuilder<MR, Ent<N, P>> param(P paramType) {
-			paramTypes.add(paramType.type());
+			paramTypes.add(paramType.classDesc());
 			return (MthDescBuilder) this;
 		}
 
@@ -680,7 +699,7 @@ public interface Methods {
 		 */
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		public MthDescBuilder<MR, Ent<N, TInt>> param(SType paramType) {
-			paramTypes.add(paramType.type());
+			paramTypes.add(paramType.classDesc());
 			return (MthDescBuilder) this;
 		}
 
@@ -691,7 +710,7 @@ public interface Methods {
 		 */
 		public MthDesc<MR, N> build() {
 			return new MthDesc<>(
-				Type.getMethodDescriptor(retType, paramTypes.toArray(Type[]::new)));
+				MethodTypeDesc.of(retType, paramTypes.toArray(ClassDesc[]::new)));
 		}
 	}
 
@@ -757,10 +776,10 @@ public interface Methods {
 	 */
 	public static class MthDescCheckedBuilderP<MR extends BType, N extends Next,
 		CN extends CkNext> {
-		private final Type retType;
-		private final List<Type> paramTypes = new ArrayList<>();
+		private final ClassDesc retType;
+		private final List<ClassDesc> paramTypes = new ArrayList<>();
 
-		MthDescCheckedBuilderP(Type retType) {
+		MthDescCheckedBuilderP(ClassDesc retType) {
 			this.retType = retType;
 		}
 
@@ -1213,6 +1232,15 @@ public interface Methods {
 		}
 
 		/**
+		 * Drop a parameter handle
+		 * 
+		 * @param <T> the type of the parameter
+		 * @param param the parameter handle
+		 */
+		public static <T extends BNonVoid> void ignore(Local<T> param) {
+		}
+
+		/**
 		 * A syntactic workaround for static method chaining
 		 * 
 		 * @param <R> the return type of {@code func}
@@ -1301,4 +1329,44 @@ public interface Methods {
 	 * @param <T> the required return type
 	 */
 	record RetReqEm<T extends BType>(RetReq<T> ret, Emitter<Bot> em) {}
+
+	public static class AbstractMethodBuilder<MR extends BType, N extends Next> {
+		final CodeBuilder cb;
+		final String name;
+		final MthDesc<MR, N> desc;
+		final int flags;
+
+		AbstractMethodBuilder(CodeBuilder cb, String name, MthDesc<MR, N> desc, int flags) {
+			this.name = name;
+			this.cb = cb;
+			this.desc = desc;
+			this.flags = flags;
+		}
+	}
+
+	public static class InstanceMethodBuilder<OT, MR extends BType, N extends Next>
+			extends AbstractMethodBuilder<MR, N> {
+		final TRef<OT> owner;
+
+		InstanceMethodBuilder(CodeBuilder cb, TRef<OT> owner, String name, MthDesc<MR, N> desc,
+				int flags) {
+			this.owner = owner;
+			super(cb, name, desc, flags);
+		}
+
+		public ObjDef<MR, OT, N> startSpec() {
+			return Emitter.startInstance(owner, cb, desc);
+		}
+	}
+
+	public static class StaticMethodBuilder<MR extends BType, N extends Next>
+			extends AbstractMethodBuilder<MR, N> {
+		StaticMethodBuilder(CodeBuilder cb, String name, MthDesc<MR, N> desc, int flags) {
+			super(cb, name, desc, flags);
+		}
+
+		public Def<MR, N> startSpec() {
+			return Emitter.startStatic(cb, desc);
+		}
+	}
 }

@@ -41,7 +41,7 @@ import ghidra.util.Lock.Closeable;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
-public class BookmarkDBManager implements BookmarkManager, ErrorHandler, ManagerDB {
+public class BookmarkDBManager implements BookmarkManager, ErrorHandler, ProgramDBModule {
 	final static Icon DEFAULT_ICON = new GIcon("icon.plugin.bookmark.type.default");
 
 	private ProgramDB program;
@@ -80,7 +80,7 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 	}
 
 	@Override
-	public void setProgram(ProgramDB program) {
+	public void setDomainObject(ProgramDB program) {
 		if (this.program != null) {
 			throw new AssertException();
 		}
@@ -114,7 +114,7 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 	}
 
 	@Override
-	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
+	public void domainObjectReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		// Nothing to do
 	}

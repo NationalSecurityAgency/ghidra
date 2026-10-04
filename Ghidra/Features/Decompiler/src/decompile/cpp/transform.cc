@@ -208,12 +208,6 @@ void TransformVar::createReplacement(Funcdata *fd)
       fd->transferVarnodeProperties(vn,replacement,bytePos);
       break;
     }
-    case TransformVar::constant_iop:
-    {
-      PcodeOp *indeffect = PcodeOp::getOpFromConst(Address(fd->getArch()->getIopSpace(),val));
-      replacement = fd->newVarnodeIop(indeffect);
-      break;
-    }
     default:
       throw LowlevelError("Bad TransformVar type");
   }
@@ -234,6 +228,12 @@ void TransformOp::createReplacement(Funcdata *fd)
       fd->opUnsetInput(op,i);			// Clear any remaining inputs
     while(op->numInput() < input.size())
       fd->opInsertInput(op, (Varnode *)0, op->numInput()-1);
+  }
+  else if ((special & TransformOp::op_indirect)!=0) {
+    PcodeOp *target = PcodeOp::getOpFromConst(op->getIn(1)->getAddr());
+    replacement = fd->newIndirect(target);
+    output->createReplacement(fd);
+    fd->opInsertBefore(replacement,op);
   }
   else {
     replacement = fd->newOp(input.size(),op->getAddr());
@@ -266,19 +266,6 @@ bool TransformOp::attemptInsertion(Funcdata *fd)
     return false;
   }
   return true;		// Already inserted
-}
-
-/// Prepare to build the transformed INDIRECT PcodeOp based on settings from the given INDIRECT.
-/// \param indOp is the given INDIRECT
-void TransformOp::inheritIndirect(PcodeOp *indOp)
-
-{
-  if (indOp->isIndirectCreation()) {
-    if (indOp->getIn(0)->isIndirectZero())
-      special |= TransformOp::indirect_creation;
-    else
-      special |= TransformOp::indirect_creation_possible_out;
-  }
 }
 
 void LanedRegister::LanedIterator::normalize(void)
@@ -405,18 +392,6 @@ TransformVar *TransformManager::newConstant(int4 size,int4 lsbOffset,uintb val)
   return res;
 }
 
-/// Used for creating INDIRECT placeholders.
-/// \param vn is the original iop parameter to the INDIRECT
-/// \return the new placeholder node
-TransformVar *TransformManager::newIop(Varnode *vn)
-
-{
-  newVarnodes.emplace_back();
-  TransformVar *res = &newVarnodes.back();
-  res->initialize(TransformVar::constant_iop,(Varnode *)0,vn->getSize()*8,vn->getSize(),vn->getOffset());
-  return res;
-}
-
 /// Given a single logical value within a larger Varnode, create a placeholder for
 /// that logical value.
 /// \param vn is the large Varnode
@@ -524,6 +499,33 @@ TransformOp *TransformManager::newOpReplace(int4 numParams,OpCode opc,PcodeOp *r
   rop.output = (TransformVar *)0;
   rop.follow = (TransformOp *)0;
   rop.input.resize(numParams,(TransformVar *)0);
+  return &rop;
+}
+
+/// \brief Create a new placeholder op to replace an existing INDIRECT op
+///
+/// A placeholder for the new op is created. The replacement will have the same
+/// target op as the original.
+/// \param replace is the existing INDIRECT the new op will replace
+/// \return the new placeholder node
+TransformOp *TransformManager::newIndirectReplace(PcodeOp *replace)
+
+{
+  newOps.emplace_back();
+  TransformOp &rop(newOps.back());
+  rop.op = replace;
+  rop.replacement = (PcodeOp *)0;
+  rop.opc = CPUI_INDIRECT;
+  rop.special = TransformOp::op_replacement | TransformOp::op_indirect;
+  if (replace->isIndirectCreation()) {
+    if (replace->getIn(0)->isIndirectZero())
+      rop.special |= TransformOp::indirect_creation;
+    else
+      rop.special |= TransformOp::indirect_creation_possible_out;
+  }
+  rop.output = (TransformVar *)0;
+  rop.follow = (TransformOp *)0;
+  rop.input.resize(1,(TransformVar *)0);
   return &rop;
 }
 

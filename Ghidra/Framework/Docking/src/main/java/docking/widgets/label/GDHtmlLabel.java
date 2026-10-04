@@ -24,8 +24,9 @@ import docking.widgets.checkbox.GHtmlCheckBox;
 /**
  * A 'dynamic' label (the text can be changed), with HTML rendering allowed.
  * <p>
- * Clients do not need to prefix label text with "&lt;html&gt;", as is required for a standard
- * JLabel.
+ * Since HTML rendering is optional, the "&lt;html&gt;" prefix must be added this label's text in
+ * order to be rendered as HTML.  Supporting both HTML and non-HTML allows clients to change how 
+ * this label gets used over time without having to switch to a {@link GLabel}.
  * <p>
  * See also:
  * <table border=1>

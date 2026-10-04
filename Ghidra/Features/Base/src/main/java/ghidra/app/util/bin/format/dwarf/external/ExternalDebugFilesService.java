@@ -78,6 +78,24 @@ public class ExternalDebugFilesService {
 	/**
 	 * Searches for the specified external debug file.
 	 * 
+	 * @param debugInfos list of information about the external debug file
+	 * @param monitor {@link TaskMonitor}
+	 * @return first found file, or {@code null} if not found
+	 * @throws IOException if error
+	 */
+	public File find(List<ExternalDebugInfo> debugInfos, TaskMonitor monitor) throws IOException {
+		for (ExternalDebugInfo debugInfo : debugInfos) {
+			File result = find(debugInfo, monitor);
+			if (result != null) {
+				return result;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Searches for the specified external debug file.
+	 * 
 	 * @param debugInfo information about the external debug file
 	 * @param monitor {@link TaskMonitor}
 	 * @return found file, or {@code null} if not found
