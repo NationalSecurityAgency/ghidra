@@ -193,19 +193,18 @@ void TransformVar::createReplacement(Funcdata *fd)
       break;
     case TransformVar::piece:
     {
-      int4 bytePos = (int4)val;
-      if ((bytePos & 7) != 0)
+      int4 lsbOffset = (int4)val;	// Least significant bits to truncate
+      if ((lsbOffset & 7) != 0)
 	throw LowlevelError("Varnode piece is not byte aligned");
-      bytePos >>= 3;
-      if (vn->getSpace()->isBigEndian())
-	bytePos = vn->getSize() - bytePos - byteSize;
-      Address addr = vn->getAddr() + bytePos;
+      lsbOffset >>= 3;			// Least significant bytes to truncate
+      int4 addrOff = (vn->getSpace()->isBigEndian()) ? (vn->getSize() - lsbOffset - byteSize) : lsbOffset;
+      Address addr = vn->getAddr() + addrOff;
       addr.renormalize(byteSize);
       if (def == (TransformOp *)0)
 	replacement = fd->newVarnode(byteSize,addr);
       else
 	replacement = fd->newVarnodeOut(byteSize, addr, def->replacement);
-      fd->transferVarnodeProperties(vn,replacement,bytePos);
+      fd->transferVarnodeProperties(vn,replacement,lsbOffset);
       break;
     }
     case TransformVar::constant_iop:
