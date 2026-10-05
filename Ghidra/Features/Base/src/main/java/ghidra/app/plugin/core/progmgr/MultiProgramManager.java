@@ -140,11 +140,10 @@ class MultiProgramManager implements TransactionListener {
 		}
 
 		if (info.owner != null) {
-			// persist program
 			info.setVisible(false);
 			if (info == currentInfo) {
 				ProgramInfo newCurrent = findNextCurrent();
-				setCurrentProgram(newCurrent);
+				doSetCurrentProgram(newCurrent, true);
 			}
 		}
 		else {
@@ -153,7 +152,7 @@ class MultiProgramManager implements TransactionListener {
 			p.removeListener(domainObjectListener);
 			if (info == currentInfo) {
 				ProgramInfo newCurrent = findNextCurrent();
-				setCurrentProgram(newCurrent);
+				doSetCurrentProgram(newCurrent, true);
 			}
 			fireCloseEvents(p);
 			p.release(tool);
@@ -190,7 +189,20 @@ class MultiProgramManager implements TransactionListener {
 		return null;
 	}
 
+	void programActivated(Program p) {
+
+		// When we respond to a fired event, we cannot tell if we got the event before other
+		// plugins.  This means that we can't ask plugins to save their state, as their program
+		// may have changed.
+		boolean saveState = false;
+		setCurrentProgram(p, saveState);
+	}
+
 	void setCurrentProgram(Program p) {
+		setCurrentProgram(p, true);
+	}
+
+	private void setCurrentProgram(Program p, boolean saveState) {
 		if (currentInfo != null) {
 			if (currentInfo.program.equals(p)) {
 				return; // already active
@@ -203,7 +215,7 @@ class MultiProgramManager implements TransactionListener {
 
 		ProgramInfo info = getInfo(p);
 		if (info != null) {
-			setCurrentProgram(info);
+			doSetCurrentProgram(info, saveState);
 		}
 	}
 
@@ -239,18 +251,17 @@ class MultiProgramManager implements TransactionListener {
 
 	}
 
-	private void setCurrentProgram(ProgramInfo info) {
+	private void doSetCurrentProgram(ProgramInfo info, boolean saveState) {
 		if (currentInfo == info) {
 			return;
 		}
 
-		Program newProgram = info == null ? null : info.program;
-
 		if (currentInfo != null) {
-			currentInfo.lastState = tool.getTransientState();
+			currentInfo.lastState = saveState ? tool.getTransientState() : null;
 			tool.setSubTitle("");
 			txMonitor.setProgram(null);
 		}
+
 		currentInfo = info;
 		TransientToolState toolState = null;
 		if (currentInfo != null) {
@@ -261,10 +272,14 @@ class MultiProgramManager implements TransactionListener {
 				toolState = currentInfo.lastState;
 			}
 		}
+
+		Program newProgram = info == null ? null : info.program;
 		fireActivatedEvent(newProgram);
+
 		if (toolState != null) {
 			toolState.restoreTool();
 		}
+
 		// only fire the post activated event when a program is activated (we send activated with
 		// null program to represent a phantom de-activated event)
 		if (newProgram != null) {
@@ -280,9 +295,9 @@ class MultiProgramManager implements TransactionListener {
 	private void fireCloseEvents(Program program) {
 		plugin.firePluginEvent(new ProgramClosedPluginEvent(pluginName, program));
 		plugin.firePluginEvent(new CloseProgramPluginEvent(pluginName, program, true));
-//		tool.contextChanged();
 	}
 
+	@SuppressWarnings("deprecation") // Ignore the deprecation; we are the authority of this event
 	private void fireActivatedEvent(Program newProgram) {
 		plugin.firePluginEvent(new ProgramActivatedPluginEvent(pluginName, newProgram));
 	}
