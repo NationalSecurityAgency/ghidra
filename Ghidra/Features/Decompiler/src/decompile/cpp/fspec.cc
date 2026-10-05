@@ -2383,6 +2383,8 @@ ProtoModel::~ProtoModel(void)
     delete input;
   if (output != (ParamList *)0)
     delete output;
+  for(int4 i=0;i<sharedActions.size();++i)
+    delete sharedActions[i];
 }
 
 /// Test whether one ProtoModel can substituted for another during FuncCallSpecs::deindirect

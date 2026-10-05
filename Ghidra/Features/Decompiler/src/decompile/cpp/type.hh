@@ -76,7 +76,7 @@ extern void print_data(ostream &s,uint1 *buffer,int4 size,const Address &baseadd
 //extern void print_char(ostream &s,int4 onechar);
 //extern bool print_string(ostream &s,uint1 *buffer,int4 size);
 
-/// Specializations of the core meta-types.  Each enumeration is associated with a specific #type_metatype.
+/// Specializations of the core meta-types.  Each enumeration is associated with a specific type_metatype.
 /// Ordering is important: The lower the number, the more \b specific the data-type, affecting propagation.
 enum sub_metatype {
   SUB_VOID = 23,		///< Compare as a TYPE_VOID
