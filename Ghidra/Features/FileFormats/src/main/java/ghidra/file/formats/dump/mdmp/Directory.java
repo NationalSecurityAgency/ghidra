@@ -39,6 +39,8 @@ public class Directory implements StructConverter {
 	public final static int MEMORY_INFO_LIST_STREAM = 0x10;
 	public final static int TOKEN_LIST_STREAM = 0x13;
 
+	protected static final int STRUCTURE_SIZE = 12;
+
 	private final static String[] names = {
 		"UnusedStream", "ReservedStream0", "ReservedStream1", "ThreadListStream",
 		"ModuleListStream", "MemoryListStream", "ExceptionStream", "SystemInfoStream ",
