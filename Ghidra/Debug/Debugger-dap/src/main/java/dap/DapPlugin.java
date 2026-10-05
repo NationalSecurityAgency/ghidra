@@ -75,6 +75,7 @@ public class DapPlugin extends ProgramPlugin {
 	private DapServer server;
 	private final Map<Trace, ListenerForChanges> listeners = new HashMap<>();
 	private IDebugProtocolClient client;
+	private long lastSnap = -1L;
 
 	public DapPlugin(PluginTool tool) {
 		super(tool);
@@ -282,8 +283,11 @@ public class DapPlugin extends ProgramPlugin {
 							trace.getTimeManager().getSnapshot(currentSnap, false);
 						args.setDescription(
 							snapshot == null ? "STOPPED" : snapshot.getDescription());
-						args.setReason(ThreadEventArgumentsReason.STARTED);
-						client.stopped(args);
+						args.setReason(StoppedEventArgumentsReason.STEP);
+						if (lastSnap != currentSnap) {
+							client.stopped(args);
+							lastSnap = currentSnap;
+						}
 					}
 					case RUNNING -> {
 						ContinuedEventArguments args = new ContinuedEventArguments();

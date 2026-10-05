@@ -49,6 +49,7 @@ import ghidra.program.model.symbol.SymbolIterator;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
 import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
@@ -415,6 +416,15 @@ public class DapDebugAdapter implements IDebugProtocolServer {
 		//  unclear whether it receives/filters client.breakpoint messages. Until it does, seems
 		//  unwise to clear breakpoints possible only know to Ghidra
 		List<CompletableFuture<Void>> deletionFutures = new ArrayList<>();
+		Collection<? extends TraceBreakpointLocation> locations =
+			manager.getCurrentTrace().getBreakpointManager().getAllBreakpointLocations();
+		for (TraceBreakpointLocation loc : locations) {
+			Set<TraceBreakpointKind> kinds = loc.getKinds(manager.getCurrentSnap());
+			if ((kinds.equals(CommonSet.HWX.kinds()) && dataBreakpoints) ||
+				(kinds.equals(CommonSet.SWX.kinds()) && !dataBreakpoints)) {
+				target.deleteBreakpointAsync(loc);
+			}
+		}
 		return CompletableFuture.allOf(deletionFutures.toArray(new CompletableFuture[0]));
 	}
 
@@ -767,7 +777,8 @@ public class DapDebugAdapter implements IDebugProtocolServer {
 	}
 
 	private TraceBreakpointKindSet kind(String mode) {
-		return mode.equals("hardware") ? CommonSet.HWX.kinds() : CommonSet.SWX.kinds();
+		return mode == null || !mode.equals("hardware") ? CommonSet.SWX.kinds()
+				: CommonSet.HWX.kinds();
 	}
 
 	private TraceBreakpointKindSet kinds(DataBreakpointAccessType accessType) {
