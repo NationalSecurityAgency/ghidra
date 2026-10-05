@@ -44,7 +44,7 @@ public final class FileUtilities {
 	private static final ThreadLocal<NumberFormat> SIZE_FORMAT_THREAD_LOCAL =
 		ThreadLocal.withInitial(() -> new DecimalFormat("#,###,###.##"));
 
-	private static final FileFilter ACCEPT_ALL_FILE_FILTER = pathname -> true;
+	private static final FileFilter ACCEPT_ALL_FILE_FILTER = _ -> true;
 
 	private FileUtilities() {
 		// utils class; can't create
@@ -454,6 +454,10 @@ public final class FileUtilities {
 	 * @throws CancelledException if the operation is cancelled
 	 */
 	public final static boolean deleteDir(File dir, TaskMonitor monitor) throws CancelledException {
+		if (Files.isSymbolicLink(dir.toPath())) {
+			return dir.delete();
+		}
+
 		File[] files = dir.listFiles();
 		if (files == null) {
 			return dir.delete();
@@ -463,7 +467,7 @@ public final class FileUtilities {
 
 		for (int i = 0; i < files.length; i++) {
 			monitor.checkCancelled();
-			if (files[i].isDirectory()) {
+			if (files[i].isDirectory() && !Files.isSymbolicLink(files[i].toPath())) {
 				// use a dummy monitor as not to ruin our progress
 				if (!doDeleteDir(files[i], monitor)) {
 					printDebug("Unable to delete directory: " + files[i]);
@@ -498,7 +502,7 @@ public final class FileUtilities {
 
 		for (File file : files) {
 			monitor.checkCancelled();
-			if (file.isDirectory()) {
+			if (file.isDirectory() && !Files.isSymbolicLink(file.toPath())) {
 				// use a dummy monitor as not to ruin our progress
 				if (!doDeleteDir(file, monitor)) {
 					printDebug("Unable to delete directory: " + file);
