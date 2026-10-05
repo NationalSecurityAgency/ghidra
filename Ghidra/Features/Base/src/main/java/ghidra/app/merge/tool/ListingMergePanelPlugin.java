@@ -17,13 +17,14 @@ package ghidra.app.merge.tool;
 
 import docking.ComponentProvider;
 import ghidra.app.CorePluginPackage;
-import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.app.merge.MergeConstants;
 import ghidra.app.plugin.PluginCategoryNames;
+import ghidra.app.services.ProgramManager;
 import ghidra.framework.main.ProgramaticUseOnly;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 
 //@formatter:off
@@ -48,8 +49,11 @@ public class ListingMergePanelPlugin extends Plugin implements ProgramaticUseOnl
 	public ListingMergePanelPlugin(PluginTool tool, ListingMergePanel mergePanel) {
 		super(tool);
 		createProvider(mergePanel);
-		firePluginEvent(new ProgramActivatedPluginEvent(this.getName(),
-			mergePanel.getProgram(MergeConstants.RESULT)));
+
+		Program p = mergePanel.getProgram(MergeConstants.RESULT);
+		ProgramManager pm = tool.getService(ProgramManager.class);
+		pm.setCurrentProgram(p);
+
 		createActions();
 	}
 
@@ -62,14 +66,12 @@ public class ListingMergePanelPlugin extends Plugin implements ProgramaticUseOnl
 		return provider;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.framework.plugintool.Plugin#dispose()
-	 */
 	@Override
 	public void dispose() {
 		if (provider != null) {
 			provider.dispose();
-			firePluginEvent(new ProgramActivatedPluginEvent(this.getName(), null));
+			ProgramManager pm = tool.getService(ProgramManager.class);
+			pm.setCurrentProgram(null);
 		}
 	}
 

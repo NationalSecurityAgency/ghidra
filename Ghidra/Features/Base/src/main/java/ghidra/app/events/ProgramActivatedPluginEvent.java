@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@ package ghidra.app.events;
 
 import java.lang.ref.WeakReference;
 
+import ghidra.app.services.ProgramManager;
 import ghidra.framework.plugintool.PluginEvent;
 import ghidra.program.model.listing.Program;
 
@@ -35,7 +36,10 @@ public class ProgramActivatedPluginEvent extends PluginEvent {
 	 * Construct a new plugin event.
 	 * @param source name of the plugin that created this event
 	 * @param activeProgram the program associated with this event
+	 * @deprecated Clients should not be constructing and firing this event.  Instead clients should
+	 *             be using {@link ProgramManager#setCurrentProgram(Program)}.
 	 */
+	@Deprecated(since = "12.3")
 	public ProgramActivatedPluginEvent(String source, Program activeProgram) {
 		super(source, NAME);
 		this.newProgramRef = new WeakReference<Program>(activeProgram);
