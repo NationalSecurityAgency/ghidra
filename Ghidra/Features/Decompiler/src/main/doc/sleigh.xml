@@ -1560,9 +1560,10 @@ literal characters of the mnemonic.
 In the above example, “bra” is treated as literal characters in the
 resulting display string followed immediately, with no intervening
 spaces, by the display string of the local
-symbol <emphasis>cc</emphasis> (resulting in an output like braeq or brane). Thus, even though <emphasis>cc</emphasis> is attached to the initial part of the mnemonic "bra",
-the whole constructor actually has three operands, denoted by the three
-identifiers <emphasis>cc</emphasis>, <emphasis>op1</emphasis>,
+symbol <emphasis>cc</emphasis> (resulting in an output like braeq or brane).
+Thus, even though <emphasis>cc</emphasis> is attached to the initial part of 
+the mnemonic "bra", the whole constructor actually has three operands, denoted 
+by the three identifiers <emphasis>cc</emphasis>, <emphasis>op1</emphasis>,
 and <emphasis>op2</emphasis>.
 </para>
 <para>
