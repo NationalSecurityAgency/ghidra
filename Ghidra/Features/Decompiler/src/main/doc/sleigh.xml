@@ -692,7 +692,7 @@ define space <emphasis role="bold">spacename attributes</emphasis> ;
 </programlisting>
 </informalexample>
 The <emphasis>spacename</emphasis> is the name of the new space,
-and <emphasis>attributes</emphasis> looks like zero or more of the
+and <emphasis>attributes</emphasis> looks like one or more of the
 following lines:
 <informalexample>
 <programlisting>
@@ -1545,8 +1545,8 @@ no such requirement.
 <sect3 id="sleigh_caret">
 <title>The '^' character</title>
 <para>
-The ‘^’ character in the display section is used to separate
-identifiers from other characters where there shouldn’t be white space
+The ‘^’ character in the display section is used to concatenate
+identifiers and character literals without inserting additional whitespace
 in the disassembly display. This can be used in any manner but is
 usually used to attach display characters from a local symbol to the
 literal characters of the mnemonic.
@@ -1560,9 +1560,10 @@ literal characters of the mnemonic.
 In the above example, “bra” is treated as literal characters in the
 resulting display string followed immediately, with no intervening
 spaces, by the display string of the local
-symbol <emphasis>cc</emphasis>. Thus the whole constructor actually
-has three operands, denoted by the three
-identifiers <emphasis>cc</emphasis>, <emphasis>op1</emphasis>,
+symbol <emphasis>cc</emphasis> (resulting in an output like braeq or brane).
+Thus, even though <emphasis>cc</emphasis> is attached to the initial part of 
+the mnemonic "bra", the whole constructor actually has three operands, denoted 
+by the three identifiers <emphasis>cc</emphasis>, <emphasis>op1</emphasis>,
 and <emphasis>op2</emphasis>.
 </para>
 <para>
