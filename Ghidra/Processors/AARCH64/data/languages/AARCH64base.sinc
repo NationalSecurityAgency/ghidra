@@ -8574,3 +8574,12 @@ is sf=1 & b_30=0 & S=0 & b_2428=0x1a & b_2123=0x6 & b_1015=0x1b & Rd_GPR64 & Rn_
 	local test = tmp <= tmp2;
 	Rd_GPR64 = (zext(test)*tmp) + (zext(!test)*(tmp2));
 }
+
+# FEAT_DGH
+
+define pcodeop Hint_dgh;
+
+:dgh
+is b_0031=0xd50320df {
+	Hint_dgh();
+}
