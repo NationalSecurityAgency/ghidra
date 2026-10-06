@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -141,14 +141,14 @@ public class DyldChainedFixupsCommand extends LinkEditDataCommand {
 	 * @param symbolTable The {@link SymbolTable}, or null if not available
 	 * @param log The log
 	 * @param monitor A cancellable monitor
-	 * @return A {@link List} of {@link DyldFixup}s
+	 * @return A {@link Set} of {@link DyldFixup}s
 	 * @throws IOException If there was an IO-related issue
 	 * @throws CancelledException If the user cancelled the operation
 	 */
-	public List<DyldFixup> getChainedFixups(BinaryReader reader, long imagebase,
+	public Set<DyldFixup> getChainedFixups(BinaryReader reader, long imagebase,
 			SymbolTable symbolTable, MessageLog log, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		List<DyldFixup> result = new ArrayList<>();
+		Set<DyldFixup> result = new HashSet<>();
 		Map<DyldChainType, Integer> countMap = new HashMap<>();
 		for (DyldChainedStartsInSegment chainStart : chainHeader.getChainedStartsInImage()
 				.getChainedStarts()) {
@@ -169,7 +169,7 @@ public class DyldChainedFixupsCommand extends LinkEditDataCommand {
 					if (pageEntry == DYLD_CHAINED_PTR_START_NONE) {
 						continue;
 					}
-					List<DyldFixup> fixups =
+					Set<DyldFixup> fixups =
 						DyldChainedFixups.getChainedFixups(reader, chainHeader.getChainedImports(),
 							ptrFormat, page, pageEntry, 0, imagebase, symbolTable, log, monitor);
 					result.addAll(fixups);
