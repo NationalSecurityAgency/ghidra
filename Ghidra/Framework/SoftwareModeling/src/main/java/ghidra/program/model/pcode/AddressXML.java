@@ -21,8 +21,7 @@ import static ghidra.program.model.pcode.ElementId.*;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.VariableStorage;
@@ -476,11 +475,15 @@ public class AddressXML {
 			}
 		}
 		decoder.closeElement(el);
-		if (spc == null) {
-			// EXTERNAL_SPACE is currently a placeholder for an unsupported decompiler address space
-			return Address.NO_ADDRESS;
+		if (spc != null) {
+			try {
+				return spc.getAddress(offset);
+			}
+			catch (AddressOutOfBoundsException ex) {
+				// Not a valid address
+			}
 		}
-		return spc.getAddress(offset);
+		return Address.NO_ADDRESS;
 	}
 
 	/**

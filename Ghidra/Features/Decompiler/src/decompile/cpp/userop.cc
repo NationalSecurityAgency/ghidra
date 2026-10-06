@@ -183,7 +183,30 @@ int4 VolatileWriteOp::extractAnnotationSize(const Varnode *vn,const PcodeOp *op)
 SegmentOp::SegmentOp(const string &nm,Architecture *g,int4 ind)
   : TermPatternOp(nm,g,segment,ind)
 {
+  spc = (AddrSpace *)0;
+  baseinsize = 0;
+  innerinsize = 0;
+  supportsfarpointer = false;
+  injectId = -1;
+  concatState = -1;
   constresolve.space = (AddrSpace *)0;
+}
+
+/// Test if this op can be treated like a CPUI_PIECE
+/// \return \b true if the op concatenates its inputs
+bool SegmentOp::isConcatenation(void) const
+
+{
+  if (concatState >= 0)
+    return (concatState == 1);
+  uintb high = 0xabababababababab & calc_mask(baseinsize);
+  uintb low = 0x1234567812345678 & calc_mask(innerinsize);
+  uintb whole = (high << innerinsize * 8) | low;
+  vector<uintb> in;
+  in.push_back(high);
+  in.push_back(low);
+  concatState = (whole == execute(in)) ? 1 : 0;
+  return (concatState == 1);
 }
 
 bool SegmentOp::unify(Funcdata &data,PcodeOp *op,
@@ -231,6 +254,7 @@ void SegmentOp::decode(Decoder &decoder)
   baseinsize = 0;
   innerinsize = 0;
   supportsfarpointer = false;
+  concatState = -1;
   name = "segment"; 		// Default name, might be overridden by userop attribute
   for(;;) {
     uint4 attribId = decoder.getNextAttributeId();
