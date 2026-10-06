@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,14 +36,16 @@ public class FunctionMatchProgramCorrelator extends VTAbstractProgramCorrelator 
 
 	private final boolean oneToOne;
 	private final FunctionHasher hasher;
+	private final boolean mustMatchSize;
 
 	public FunctionMatchProgramCorrelator(Program sourceProgram, AddressSetView sourceAddressSet,
 			Program destinationProgram, AddressSetView destinationAddressSet, ToolOptions options,
-			String name, boolean oneToOne, FunctionHasher hasher) {
+			String name, boolean oneToOne, FunctionHasher hasher, boolean mustMatchSize) {
 		super(sourceProgram, sourceAddressSet, destinationProgram, destinationAddressSet, options);
 		this.name = name;
 		this.oneToOne = oneToOne;
 		this.hasher = hasher;
+		this.mustMatchSize = mustMatchSize;
 	}
 
 	@Override
@@ -98,7 +100,7 @@ public class FunctionMatchProgramCorrelator extends VTAbstractProgramCorrelator 
 		int sourceLength = (int) sourceFunction.getBody().getNumAddresses();
 		int destinationLength = (int) destinationFunction.getBody().getNumAddresses();
 
-		if (sourceLength != destinationLength) {
+		if (mustMatchSize && sourceLength != destinationLength) {
 			return null;
 		}
 
