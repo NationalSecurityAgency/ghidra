@@ -39,7 +39,7 @@ public class ConvertToSignedHexAction extends AbstractConvertAction {
 			return null; // unsupported
 		}
 		long v = scalar.getSignedValue();
-		String valueStr = Long.toString(v, 16).toUpperCase();
+		String valueStr = Long.toString(v, 16);
 		if (v < 0) {
 			// use of substring removes '-' prefix for negative value
 			return "-0x" + valueStr.substring(1);
