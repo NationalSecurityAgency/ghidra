@@ -1051,6 +1051,9 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		IsolateVariableAction isolateVarAction = new IsolateVariableAction();
 		setGroupInfo(isolateVarAction, variableGroup, subGroupPosition++);
 
+		IsolateExpressionAction isolateExprAction = new IsolateExpressionAction();
+		setGroupInfo(isolateExprAction, functionGroup, subGroupPosition++);
+
 		DecompilerStructureVariableAction decompilerCreateStructureAction =
 			new DecompilerStructureVariableAction(owner, tool, controller);
 		setGroupInfo(decompilerCreateStructureAction, variableGroup, subGroupPosition++);
@@ -1253,6 +1256,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		addLocalAction(retypeReturnAction);
 		addLocalAction(retypeFieldAction);
 		addLocalAction(isolateVarAction);
+		addLocalAction(isolateExprAction);
 		addLocalAction(decompilerCreateStructureAction);
 		tool.addAction(listingCreateStructureAction);
 		addLocalAction(editDataTypeAction);

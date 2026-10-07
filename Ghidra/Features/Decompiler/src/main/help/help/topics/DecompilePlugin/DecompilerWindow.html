@@ -151,14 +151,15 @@
   
   <p>
   	For very large functions, the decompile window can take a significant amount of time to re-decompile
-  	and update the display as changes are made to the program. This makes using some actions
-  	frustrating, such as renaming or retyping variables. 
+  	and update the display as changes are made to the program. This makes some actions frustrating,
+  	such as renaming or retyping variables.
   </p>
   <p>
-  	As a work around, you may use the lock toggle action 
-  	<img src="images/lock.gif" width="16" height="16">. When selected, this action will prevent
-  	the decompiler from auto refreshing for each change. This may make the display appear to be
-  	broken since any changes will not appear to take effect until the display is manually refreshed.
+  	As a work around, you may use the lock toggle action
+  	<img src="images/lock.gif" width="16" height="16"> .
+	When selected, this action will prevent the decompiler from auto refreshing for each change.
+	This may make the display appear to be broken since any changes will not appear to
+	take effect until the display is manually refreshed.
 	</p>
 </div>
 
@@ -209,7 +210,8 @@
   	Normally, snapshot windows are completely disconnected from the location and selection 
   	events that synchronize the main components in the tool. To allow the snapshot window
   	to export its location and selection, select the 
-  	<img src="images/locationOut.gif" width="16" height="16"> toolbar action.
+  	<img src="images/locationOut.gif" width="16" height="16"> 
+	toolbar action.
   </p>
   	
 </div>
@@ -1588,6 +1590,43 @@
     been speculatively merged.  The part of the variable that is directly represented by the
     token is split out as its own variable, retaining the name of the original variable.
     Any other pieces become a separate variable with a new name.
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ActionIsolateExpr"></a>Split Out As New Expression</h3></div></div></div>
+  
+  <p>
+    Split a high-level expression so that the selected <a class="link" href="DecompilerConcepts.html#ConceptOperatorTokens" title="Operator Tokens">P-code Operator Token</a>
+	becomes encapsulated in a new variable.
+  </p>
+  <p>
+    The output <a class="link" href="DecompilerConcepts.html#ConceptVarnode" title="Varnodes">varnode</a> becomes encapsulated in the new variable.
+    So, splitting on the <code class="code">*</code> in
+  </p>
+  <div class="informalexample">
+    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: none; "><li class="listitem" style="list-style-type: none">
+		<code class="code">a * b + c</code>
+      </li></ul></div>
+  </div>
+  <p>
+	and renaming it to <code class="code">d</code> becomes
+  </p>
+  <div class="informalexample">
+    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: none; ">
+<li class="listitem" style="list-style-type: none">
+		<code class="code">d = a * b</code>
+      </li>
+<li class="listitem" style="list-style-type: none">
+		<code class="code">d + c</code>
+      </li>
+</ul></div>
+  </div>
+  <p>
+    This command is only available if the selected operation does not already have a designated
+	<a class="xref" href="DecompilerConcepts.html#ConceptHighVariable" title="HighVariable">HighVariable</a> which, for most cases, means the output varnode is in
+	the unique or register <a class="xref" href="DecompilerConcepts.html#ConceptAddressSpace" title="Address Space">Address Space</a>.
   </p>
 </div>
 
