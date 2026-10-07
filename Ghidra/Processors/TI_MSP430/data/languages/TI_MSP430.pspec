@@ -9,7 +9,7 @@
 
   <context_data>
     <context_set space="RAM" first="0x0000" last="0xFFFF">
-      <set name="ctx_isHi" val="1" description="1 instruction starts > 64K"/>
+      <set name="ctx_al" val="1" description="A/L feild of the instruction"/>
     </context_set>
   </context_data>
   <volatile outputop="ioWrite" inputop="ioRead">
