@@ -92,11 +92,17 @@ public:
     space,			///< No explicitly printed token
     hiddenfunction		///< Operation that isn't explicitly printed
   };
+  enum tokenassoc {
+    unspec,			///< Unspecified associativity (for where it doesn't make sense)
+    none,			///< Associativity disallowed (parentheses always required)
+    ltr,			///< Left-to-right associativity (parentheses required for right subexpression)
+    rtl,			///< Right-to-left associativity (parentheses required for left subexpression)
+  };
   string print1;		///< Printing characters for the token
   string print2;		///< (terminating) characters for the token
   int4 stage;			///< Additional elements consumed from the RPN stack when emitting this token
   int4 precedence;		///< Precedence level of this token (higher binds more tightly)
-  bool associative;		///< True if the operator is associative
+  tokenassoc assoc;		///< The token's associativity
   tokentype type;		///< The basic token type
   int4 spacing;			///< Spaces to print around operator
   int4 bump;			///< Spaces to indent if we break here
