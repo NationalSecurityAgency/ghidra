@@ -51,13 +51,13 @@
         </pentry>
        </output>
       <unaffected>
-        <varnode space="ram" offset="8" size="8"/>
-        <register name="R6"/>       
-	    <register name="R7"/>
+        <varnode space="ram" offset="0" size="8"/>
+        <register name="R6"/>
+        <register name="R7"/>
         <register name="R8"/>
-        <register name="R9"/>       
-		<register name="R10"/> 	
-      </unaffected> 
+        <register name="R9"/>
+        <register name="R10"/>
+      </unaffected>
     </prototype>
   </default_proto>
  </compiler_spec>
