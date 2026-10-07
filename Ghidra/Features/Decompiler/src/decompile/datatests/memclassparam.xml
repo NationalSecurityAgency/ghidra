@@ -1,0 +1,68 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+  Compiled from (gcc -O0, x86-64 System V):
+
+    const char *to_human(long double size, char *buf) {
+      const char units[] = "\0KMGTPEZY";
+      unsigned i = 0;
+      while (size >= 1024) { size /= 1024; i++; }
+      sprintf(buf, "%.2Lf%c", size, units[i]);
+      return buf;
+    }
+    struct desc { void *ptr; unsigned long len; unsigned long long off; }; /* 24 bytes */
+    unsigned long long sum_desc(struct desc d, int tag) {
+      return (unsigned long long)d.len + d.off + (unsigned)tag;
+    }
+
+  Both functions take a SysV MEMORY-class parameter (long double / 24-byte
+  aggregate) passed on the stack while a LATER parameter still occupies the
+  first integer register.  The register sequence therefore has a "hole"
+  (RSI-R9 unused, stack used), which the chain heuristic must not treat as
+  evidence against the stack trials: the model's <goto_stack> rule says
+  MEMORY-class parameters consume no registers.
+  to_human @0x1149, sum_desc @0x11c9, main @0x11e5, sprintf@plt @0x1040,
+  printf@plt @0x1030, rodata (format strings, 1024.0L, 1234567.0L) @0x2000.
+-->
+<bytechunk space="ram" offset="0x1020" readonly="true">
+ff35ca2f0000ff25cc2f00000f1f4000ff25ca2f00006800000000e9e0ffffffff25c22f00006801000000e9d0ffffffff258a2f000066900000000000000000
+31ed4989d15e4889e24883e4f050544531c031c9488d3d6a010000ff153f2f0000f4662e0f1f8400000000000f1f4000488d3d892f0000488d05822f00004839
+f87415488b051e2f00004885c07409ffe00f1f8000000000c30f1f8000000000488d3d592f0000488d35522f00004829fe4889f048c1ee3f48c1f8034801c648
+d1fe7414488b05ed2e00004885c07408ffe0660f1f440000c30f1f8000000000f30f1efa803d152f000000752b5548833dca2e0000004889e5740c488b3df62e
+0000e829ffffffe864ffffffc605ed2e0000015dc30f1f00c30f1f8000000000f30f1efae977ffffff554889e54883ec2048897de848b8004b4d475450455a48
+8945f266c745fa5900c745fc00000000eb12db6d10db2db50e0000def9db7d108345fc01db2da60e0000db6d10dff1ddd873df8b45fc0fb64405f20fbed0488b
+45e8ff7518ff7510488d0d610e00004889ce4889c7b800000000e881feffff4883c410488b45e8c9c3554889e5897dfc488b5518488b45204801d08b55fc89d2
+4801d05dc3554889e5534883ec48488d45d0488945b048c745b80700000048c745c0090000004883ec184889e1488b45b0488b55b848890148895108488b45c0
+48894110bf03000000e89bffffff4883c4184889c3488d45d0db2d010e0000488d6424f0db3c244889c7e8fafeffff4883c4104889da4889c6488d05b80d0000
+4889c7b800000000e8c3fdffffb800000000488b5df8c9c3
+</bytechunk>
+<bytechunk space="ram" offset="0x2000" readonly="true">
+01000200000000000000000000000000252e324c66256300257320256c6c750a0000000000000000000000000000000000000000000000800940000000000000
+000000000038b4961340000000000000
+</bytechunk>
+</binaryimage>
+<script>
+  <com>map fun r0x1030 printf</com>
+  <com>map fun r0x1040 sprintf</com>
+  <com>map fun r0x1149 to_human</com>
+  <com>map fun r0x11c9 sum_desc</com>
+  <com>map fun r0x11e5 main</com>
+  <com>parse line extern int4 printf(char * format,...);</com>
+  <com>parse line extern int4 sprintf(char * s,char * format,...);</com>
+  <com>lo fu to_human</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu sum_desc</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu main</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Memory-class param #1" min="0" max="0">in_stack_</stringmatch>
+<stringmatch name="Memory-class param #2" min="1" max="1">char \* to_human\(char \*param_1,xunknown8 param_2,xunknown2 param_3\)</stringmatch>
+<stringmatch name="Memory-class param #3" min="1" max="1">int8 sum_desc\(uint4 param_1,xunknown8 param_2,int8 param_3,int8 param_4\)</stringmatch>
+<stringmatch name="Memory-class param #4" min="1" max="1">return param_4 \+ param_3 \+ \(uint8\)param_1;</stringmatch>
+<stringmatch name="Memory-class param #5" min="1" max="1">param_2 = SUB108\(fVar1,0\);</stringmatch>
+</decompilertest>
