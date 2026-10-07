@@ -284,8 +284,10 @@ class UnionDB extends CompositeDB implements UnionInternal {
 			throw new IllegalArgumentException();
 		}
 		boolean isResolveCacheOwner = false;
+		boolean isEquivalenceCacheOwner = false;
 		try (Closeable c = lock.write()) {
 			isResolveCacheOwner = dataMgr.activateResolveCache();
+			isEquivalenceCacheOwner = dataMgr.activateEquivalenceCache();
 			checkDeleted();
 			doReplaceWith((UnionInternal) dataType, true);
 		}
@@ -298,6 +300,9 @@ class UnionDB extends CompositeDB implements UnionInternal {
 		finally {
 			if (isResolveCacheOwner) {
 				dataMgr.processResolveQueue(true);
+			}
+			if (isEquivalenceCacheOwner) {
+				dataMgr.clearEquivalenceCache();
 			}
 		}
 	}
