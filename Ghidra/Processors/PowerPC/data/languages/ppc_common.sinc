@@ -39,6 +39,11 @@ define register offset=0 size=4 [
 
 # XER flags
 define register offset=0x400 size=1 [ xer_so xer_ov xer_ov32 xer_ca xer_ca32 xer_count ];
+
+# XER[41:43] "TGCC" (Tag Condition Code) bits used by the PowerPC AS tagged-memory
+# extensions (see powerpcas.sinc for sourcing): T02, T07 and TAG respectively.
+# Not part of the standard (published) architecture.
+define register offset=0x406 size=1 [ xer_t02 xer_t07 xer_tag ];
 	
 define register offset=0x500 size=1 [ fp_fx fp_fex fp_vx fp_ox
 				      fp_ux fp_zx fp_xx fp_vxsnan
@@ -1035,7 +1040,14 @@ define token instr(32)
 	XOP_12_VLE=(12,15)
 	
 	XOP_VLE=(22,25)
-;	
+
+# PowerPC AS (IBM i / AS/400 tagged-memory extensions, see powerpcas.sinc)
+	AS_TXER_MINOR=(1,6)
+	AS_SEL_OP=(0,4)
+	AS_SEL_IS=(21,25) signed
+	AS_SEL_IB=(11,15) signed
+	AS_LTPTR_IMM=(2,3)
+;
 
 define token instrvle(16)
 	OP4_VLE=(12,15)
