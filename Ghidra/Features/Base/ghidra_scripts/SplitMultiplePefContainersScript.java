@@ -33,6 +33,7 @@ import ghidra.app.util.bin.format.macos.rm.*;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
 import ghidra.util.Msg;
+import utilities.util.FileUtilities;
 
 public class SplitMultiplePefContainersScript extends GhidraScript {
 	private static final int BUFFER = 4096;
@@ -73,7 +74,7 @@ public class SplitMultiplePefContainersScript extends GhidraScript {
 					break;
 				}
 
-				File memberFile = new File(outputDirectory, member.getName());
+				File memberFile = FileUtilities.getSecureFile(outputDirectory, member.getName());
 
 				if (memberFile.exists()) {
 					boolean overwrite =
