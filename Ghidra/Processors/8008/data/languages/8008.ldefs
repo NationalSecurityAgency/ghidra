@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="8008"
+            endian="little"
+            size="16"
+            variant="default"
+            version="1.0"
+            slafile="8008.sla"
+            processorspec="8008.pspec"
+            id="8008:LE:16:default">
+    <description>Intel 8008</description>
+    <compiler name="default" spec="8008.cspec" id="default"/>
+  </language>
+</language_definitions>
