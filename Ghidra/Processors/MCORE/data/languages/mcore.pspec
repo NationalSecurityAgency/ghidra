@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <default_symbols>
+    <symbol name="reset" address="000" entry="true"/>
+    <symbol name="missalign" address="004"/>
+    <symbol name="access" address="008"/>
+    <symbol name="divzero" address="00c"/>
+    <symbol name="illegal" address="010"/>
+    <symbol name="privilege" address="014"/>
+    <symbol name="trace" address="018"/>
+    <symbol name="bkpt" address="01c"/>
+    <symbol name="unrecov" address="020"/>
+    <symbol name="softrst" address="024"/>
+    <symbol name="intautovector" address="028"/>
+    <symbol name="fintautovector" address="02c"/>
+    <symbol name="hwaccel" address="030"/>
+
+    <symbol name="reserved_0" address="034"/>
+    <symbol name="reserved_1" address="038"/>
+    <symbol name="reserved_2" address="03c"/>
+
+    <symbol name="trap0" address="040"/>
+    <symbol name="trap1" address="044"/>
+    <symbol name="trap2" address="048"/>
+    <symbol name="trap3" address="04c"/>
+  </default_symbols>
+</processor_spec>
