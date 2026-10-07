@@ -1,0 +1,269 @@
+# l3r
+
+define pcodeop dvld;
+:dvld rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; op0_15=0b1010111111101110 {
+	dvld(rus2_op1r, rus2_op2r, r3_op3r);
+}
+
+define pcodeop dvst;
+:dvst rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; op0_15=0b1010111111101101 {
+	dvst(rus2_op1r, rus2_op2r, r3_op3r);
+}
+
+:fadd rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; op0_15=0b1011011111101110 {
+	rus2_op1r = rus2_op2r f+ r3_op3r;
+}
+
+:feq rus2_op1r, rus2_op2r, r3_op3r is  rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; op0_15=0b1100011111101110 {
+	rus2_op1r = zext(rus2_op2r f== r3_op3r);
+}
+
+:fgt rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; op0_15=0b1011111111101110 {
+	rus2_op1r = zext(rus2_op2r f> r3_op3r);
+}
+
+:flt rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; op0_15=0b1011111111101111 {
+	rus2_op1r = zext(rus2_op2r f< r3_op3r);
+}
+
+:fmul rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; op0_15=0b1011011111101101 {
+	rus2_op1r = rus2_op2r f* r3_op3r;
+}
+
+define pcodeop fsexp;
+:fsexp rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; op0_15=0b1011111111101101 {
+	rus2_op1r = fsexp(rus2_op2r, r3_op3r);
+}
+
+:fsub rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; op0_15=0b1011011111101111 {
+	rus2_op1r = rus2_op2r f- r3_op3r;
+}
+
+define pcodeop fun;
+:fun rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; op0_15=0b1100011111101101 {
+	rus2_op1r = fun(rus2_op2r, r3_op3r);
+}
+
+# 2r
+define pcodeop cls;
+:cls r2_op1, r2_op2 is rus_op0=0b00100 & rus_op1=0 & r2_op1 & r2_op2 & $(IS_R2R_FMT) {
+	r2_op1 = cls(r2_op2);
+}
+
+# l2r
+
+define pcodeop fmant;
+:fmant r2_op1, r2_op2 is rus_op0=0b11111 & rus_op1=1 & r2_op1 & r2_op2 & $(IS_R2R_FMT) ; op0_15=0b0001111111101110 {
+	r2_op1 = fmant(r2_op2);
+}
+
+define pcodeop fspec;
+:fspec r2_op1, r2_op2 is rus_op0=0b11111 & rus_op1=1 & r2_op1 & r2_op2 & $(IS_R2R_FMT) ; op0_15=0b0001111111101101 {
+	r2_op1 = fspec(r2_op2);
+}
+
+define pcodeop vlashr;
+:vlashr r2_op1, r2_op2 is rus_op0=0b11111 & rus_op1=1 & r2_op1 & r2_op2 & $(IS_R2R_FMT) ; op0_15=0b0011111111101100 {
+	vlashr(r2_op1, r2_op2);
+}
+
+define pcodeop vstrpv;
+:vstrpv r2_op1, r2_op2 is rus_op0=0b11111 & rus_op1=0 & r2_op1 & r2_op2 & $(IS_R2R_FMT) ; op0_15=0b0011111111101100 {
+	vstrpv(r2_op1, r2_op2);
+}
+
+# 1r
+
+define pcodeop fenan;
+:fenan r1_r is r1_op0=0b10110 & r1_op1=0b111111 & r1_op2=1 & r1_r {
+	fenan(r1_r);
+}
+
+define pcodeop vladd;
+:vladd r1_r is r1_op0=0b10101 & r1_op1=0b111111 & r1_op2=0 & r1_r {
+	vladd(r1_r);
+}
+
+define pcodeop vladsb;
+:vladsb r1_r is r1_op0=0b10100 & r1_op1=0b111111 & r1_op2=0 & r1_r {
+	vladsb(r1_r);
+}
+
+define pcodeop vldc;
+:vldc r1_r is r1_op0=0b10010 & r1_op1=0b111111 & r1_op2=0 & r1_r {
+	vldc(r1_r);
+}
+
+define pcodeop vldd;
+:vldd r1_r is r1_op0=0b10010 & r1_op1=0b111111 & r1_op2=1 & r1_r {
+	vldd(r1_r);
+}
+
+define pcodeop vlmacc;
+:vlmacc r1_r is r1_op0=0b10111 & r1_op1=0b111111 & r1_op2=0 & r1_r {
+	vlmacc(r1_r);
+}
+
+define pcodeop vlmaccr;
+:vlmaccr r1_r is r1_op0=0b10100 & r1_op1=0b111111 & r1_op2=1 & r1_r {
+	vlmaccr(r1_r);
+}
+
+define pcodeop vlmaccr1;
+:vlmaccr1 r1_r is r1_op0=0b11000 & r1_op1=0b111111 & r1_op2=0 & r1_r {
+	vlmaccr1(r1_r);
+}
+
+define pcodeop vlmul;
+:vlmul r1_r is r1_op0=0b10110 & r1_op1=0b111111 & r1_op2=0 & r1_r {
+	vlmul(r1_r);
+}
+
+define pcodeop vlsat;
+:vlsat r1_r is r1_op0=0b10111 & r1_op1=0b111111 & r1_op2=1 & r1_r {
+	vlsat(r1_r);
+}
+
+define pcodeop vlsub;
+:vlsub r1_r is r1_op0=0b10101 & r1_op1=0b111111 & r1_op2=1 & r1_r {
+	vlsub(r1_r);
+}
+
+define pcodeop vstd;
+:vstd r1_r is r1_op0=0b10011 & r1_op1=0b111111 & r1_op2=0 & r1_r {
+	vstd(r1_r);
+}
+
+define pcodeop vstr;
+:vstr r1_r is r1_op0=0b10011 & r1_op1=0b111111 & r1_op2=1 & r1_r {
+	vstr(r1_r);
+}
+
+# 0r
+
+define pcodeop flush;
+:flush is op0_15=0b0011011111101111 {
+	flush();
+}
+
+define pcodeop invalidate;
+:invalidate is op0_15=0b0011011111111111 {
+	invalidate();
+}
+
+define pcodeop vclrdr;
+:vclrdr is op0_15=0b0010011111101111 {
+	vclrdr();
+}
+
+define pcodeop vadddr;
+:vadddr is op0_15=0b0011111111101100 {
+	vadddr();
+}
+
+define pcodeop vcmci;
+:vcmci is op0_15=0b0001111111111101 {
+	vcmci();
+}
+
+define pcodeop vcmcr;
+:vcmcr is op0_15=0b0001111111111100 {
+	vcmcr();
+}
+
+define pcodeop vcmi;
+:vcmi is op0_15=0b0001111111101111 {
+	vcmi();
+}
+
+define pcodeop vcmr;
+:vcmr is op0_15=0b0001111111101110 {
+	vcmr();
+}
+
+define pcodeop vdepth1;
+:vdepth1 is op0_15=0b0010011111101100 {
+	vdepth1();
+}
+
+define pcodeop vdepth16;
+:vdepth16 is op0_15=0b0010011111111101 {
+	vdepth16();
+}
+
+define pcodeop vdepth8;
+:vdepth8 is op0_15=0b0010011111101101 {
+	vdepth8();
+}
+
+define pcodeop veqcr;
+:veqcr is op0_15=0b0011011111101101 {
+	veqcr();
+}
+
+define pcodeop veqdr;
+:veqdr is op0_15=0b0011011111101110 {
+	veqdr();
+}
+
+define pcodeop vftfb;
+:vftfb is op0_15=0b0010111111111100 {
+	vftfb();
+}
+
+define pcodeop vftff;
+:vftff is op0_15=0b0010111111101100 {
+	vftff();
+}
+
+define pcodeop vfttb;
+:vfttb is op0_15=0b0010111111111101 {
+	vfttb();
+}
+
+define pcodeop vfttf;
+:vfttf is op0_15=0b0010111111101101 {
+	vfttf();
+}
+
+define pcodeop vgetc;
+:vgetc is op0_15=0b0001111111101101 {
+	vgetc();
+}
+
+define pcodeop vladdd;
+:vladdd is op0_15=0b0011011111111101 {
+	vladdd();
+}
+
+define pcodeop vldr;
+:vldr is op0_15=0b0001111111111110 {
+	vldr();
+}
+
+define pcodeop vpos;
+:vpos is op0_15=0b0010011111111110 {
+	vpos();
+}
+
+define pcodeop vsetc;
+:vsetc is op0_15=0b0001111111101100 {
+	vsetc();
+}
+
+define pcodeop vsign;
+:vsign is op0_15=0b0010011111101110 {
+	vsign();
+}
+
+define pcodeop vstc;
+:vstc is op0_15=0b0001111111111111 {
+	vstc();
+}
+
+# l5r
+define pcodeop fmake;
+:fmake rus2_op1r, l5r_op4, rus2_op2r, r3_op3r, l5r_op5 is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; rus2_op=0b00010 & r1_op2=0 & l5r_op4 & l5r_op5 & $(IS_R2R_FMT) {
+	rus2_op1r = fmake(l5r_op4, rus2_op2r, r3_op3r, l5r_op5);
+}
+
