@@ -51,3 +51,66 @@ define pcodeop sha256msg2_sha ;
 	XmmReg1 = sha256msg2_sha( XmmReg1, XmmReg2_m128 );
 }
 
+define pcodeop vsha512msg1;
+:VSHA512MSG1 YmmReg1, vexVVVV_XmmReg is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xCC; YmmReg1 ... {
+    YmmReg1 = vsha512msg1(vexVVVV_XmmReg);
+}
+
+define pcodeop vsha512msg2;
+:VSHA512MSG2 YmmReg1, vexVVVV_YmmReg is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0xCD; YmmReg1 ... {
+    YmmReg1 = vsha512msg2(vexVVVV_YmmReg);
+}
+
+define pcodeop vsha512rnds2;
+:VSHA512RNDS2 YmmReg1, vexVVVV_YmmReg, XmmReg2 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0xCB; YmmReg1 ... & XmmReg2 ... {
+    YmmReg1 = vsha512rnds2(YmmReg1, vexVVVV_YmmReg, XmmReg2);
+}
+
+define pcodeop vsm3msg1;
+:VSM3MSG1 XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xDA; XmmReg1 ... & XmmReg2_m128 {
+    XmmReg1 = vsm3msg1(XmmReg1, vexVVVV_XmmReg, XmmReg2_m128);
+}
+
+define pcodeop vsm3msg2;
+:VSM3MSG2 XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xDA; XmmReg1 ... & XmmReg2_m128 {
+    XmmReg1 = vsm3msg2(XmmReg1, vexVVVV_XmmReg, XmmReg2_m128);
+}
+
+define pcodeop vsm3rnds2;
+:VSM3RNDS2 XmmReg1, vexVVVV_XmmReg, XmmReg2_m128, imm8 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xDE; XmmReg1 ... & XmmReg2_m128; imm8 {
+    XmmReg1 = vsm3rnds2(XmmReg1, vexVVVV_XmmReg, XmmReg2_m128, imm8:1);
+}
+
+define pcodeop vsm4key4;
+:VSM4KEY4 XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xDA; XmmReg1 ... & XmmReg2_m128 {
+    XmmReg1 = vsm4key4(vexVVVV_XmmReg, XmmReg2_m128);
+}
+:VSM4KEY4 XmmReg1, evexV5_XmmReg, XmmReg2_m128 is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & evexV5_XmmReg; byte=0xDA; XmmReg1 ... & XmmReg2_m128 {
+    XmmReg1 = vsm4key4(evexV5_XmmReg, XmmReg2_m128);
+}
+:VSM4KEY4 YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0xDA; YmmReg1 ... & YmmReg2_m256 {
+    YmmReg1 = vsm4key4(vexVVVV_YmmReg, YmmReg2_m256);
+}
+:VSM4KEY4 YmmReg1, evexV5_YmmReg, YmmReg2_m256 is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & evexV5_YmmReg; byte=0xDA; YmmReg1 ... & YmmReg2_m256 {
+    YmmReg1 = vsm4key4(evexV5_YmmReg, YmmReg2_m256);
+}
+:VSM4KEY4 ZmmReg1, evexV5_ZmmReg, ZmmReg2_m512 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & evexV5_ZmmReg; byte=0xDA; ZmmReg1 ... & ZmmReg2_m512 {
+    ZmmReg1 = vsm4key4(evexV5_ZmmReg, ZmmReg2_m512);
+}
+
+define pcodeop vsm4rnds4;
+:VSM4RNDS4 XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xDA; XmmReg1 ... & XmmReg2_m128 {
+    XmmReg1 = vsm4rnds4(vexVVVV_XmmReg, XmmReg2_m128);
+}
+:VSM4RNDS4 XmmReg1, evexV5_XmmReg, XmmReg2_m128 is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & evexV5_XmmReg; byte=0xDA; XmmReg1 ... & XmmReg2_m128 {
+    XmmReg1 = vsm4rnds4(evexV5_XmmReg, XmmReg2_m128);
+}
+:VSM4RNDS4 YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0xDA; YmmReg1 ... & YmmReg2_m256 {
+    YmmReg1 = vsm4rnds4(vexVVVV_YmmReg, YmmReg2_m256);
+}
+:VSM4RNDS4 YmmReg1, evexV5_YmmReg, YmmReg2_m256 is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & evexV5_YmmReg; byte=0xDA; YmmReg1 ... & YmmReg2_m256 {
+    YmmReg1 = vsm4rnds4(evexV5_YmmReg, YmmReg2_m256);
+}
+:VSM4RNDS4 ZmmReg1, evexV5_ZmmReg, ZmmReg2_m512 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & evexV5_ZmmReg; byte=0xDA; ZmmReg1 ... & ZmmReg2_m512 {
+    ZmmReg1 = vsm4rnds4(evexV5_ZmmReg, ZmmReg2_m512);
+}
