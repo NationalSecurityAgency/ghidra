@@ -110,7 +110,7 @@
     shift:8 = RSsrc & 0x3f;
     tmp:8 = RTsrc;
     tmp1:8 = tmp >> shift;
-    tmp2:8 = tmp << (32 - shift);
+    tmp2:8 = tmp << (64 - shift);
     RD = tmp1 + tmp2;
 }
 
