@@ -16,6 +16,7 @@
 package ghidra.app.util.bin.format.dwarf;
 
 import static ghidra.app.util.bin.format.dwarf.DWARFSourceLanguage.*;
+import static ghidra.app.util.bin.format.dwarf.DWARFTag.*;
 import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.*;
 import static ghidra.app.util.bin.format.dwarf.expression.DWARFExpressionOpCode.*;
 import static org.junit.Assert.*;
@@ -369,5 +370,111 @@ public class DWARFFunctionImporterTest extends DWARFTestBase {
 		Parameter[] parameters = fooFunc.getParameters();
 		assertEquals("param_1", parameters[0].getName());
 		assertEquals("param_2", parameters[1].getName());
+	}
+
+	@Test
+	public void testNoSignatureInfoFunc_SignatureNotLocked()
+			throws CancelledException, IOException, DWARFException {
+		// A subprogram DIE with no formal parameters, no DW_AT_prototyped flag and a
+		// DW_TAG_unspecified_type return type carries no information about the function's
+		// signature.  This is the shape gas emits for functions defined in assembly source.
+		// Test that the signature is not committed as an IMPORTED "void foo(void)", which
+		// would lock parameter storage and prevent later analyzers from recovering the
+		// real parameters and return value.
+		ensureCompUnit();
+		DebugInfoEntry unspecifiedDIE =
+			new DIECreator(dwarfProg, DW_TAG_unspecified_type).create();
+		newSubprogram("foo", unspecifiedDIE, 0x410, 10).create();
+
+		importFunctions();
+
+		Function fooFunc = program.getListing().getFunctionAt(addr(0x410));
+		assertNotNull(fooFunc);
+		assertEquals("foo", fooFunc.getName());
+		assertEquals(SourceType.DEFAULT, fooFunc.getSignatureSource());
+		assertEquals(0, fooFunc.getParameterCount());
+		assertEquals("undefined", fooFunc.getReturnType().getName());
+	}
+
+	@Test
+	public void testNoSignatureInfoFunc_inverse_Prototyped()
+			throws CancelledException, IOException, DWARFException {
+		// Same DIE shape as testNoSignatureInfoFunc_SignatureNotLocked, plus a
+		// DW_AT_prototyped flag: the empty parameter list is now asserted by the
+		// producer, so the signature must still be committed.
+		ensureCompUnit();
+		DebugInfoEntry unspecifiedDIE =
+			new DIECreator(dwarfProg, DW_TAG_unspecified_type).create();
+		newSubprogram("foo", unspecifiedDIE, 0x410, 10)
+				.addBoolean(DW_AT_prototyped, true)
+				.create();
+
+		importFunctions();
+
+		Function fooFunc = program.getListing().getFunctionAt(addr(0x410));
+		assertNotNull(fooFunc);
+		assertEquals(SourceType.IMPORTED, fooFunc.getSignatureSource());
+		assertEquals(0, fooFunc.getParameterCount());
+	}
+
+	@Test
+	public void testNoSignatureInfoFunc_inverse_ConcreteReturnType()
+			throws CancelledException, IOException, DWARFException {
+		// A concrete return type is real signature info, even without DW_AT_prototyped
+		// and without formal parameters (e.g. C89 "int foo()"): the signature must
+		// still be committed.
+		DebugInfoEntry intDIE = addInt();
+		newSubprogram("foo", intDIE, 0x410, 10).create();
+
+		importFunctions();
+
+		Function fooFunc = program.getListing().getFunctionAt(addr(0x410));
+		assertNotNull(fooFunc);
+		assertEquals(SourceType.IMPORTED, fooFunc.getSignatureSource());
+		assertEquals(0, fooFunc.getParameterCount());
+		assertEquals("int", fooFunc.getReturnType().getName());
+	}
+
+	@Test
+	public void testNoSignatureInfoFunc_inverse_HasParams()
+			throws CancelledException, IOException, DWARFException {
+		// Formal parameters are real signature info, even without DW_AT_prototyped
+		// (e.g. K&R-style C) and with a DW_TAG_unspecified_type return type: the
+		// signature must still be committed.
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry unspecifiedDIE =
+			new DIECreator(dwarfProg, DW_TAG_unspecified_type).create();
+		DebugInfoEntry fooDIE = newSubprogram("foo", unspecifiedDIE, 0x410, 10).create();
+		newFormalParam(fooDIE, "param1", intDIE, instr(DW_OP_fbreg, 0x6c)).create();
+
+		importFunctions();
+
+		Function fooFunc = program.getListing().getFunctionAt(addr(0x410));
+		assertNotNull(fooFunc);
+		assertEquals(SourceType.IMPORTED, fooFunc.getSignatureSource());
+		assertEquals(1, fooFunc.getParameterCount());
+		assertEquals("param1", fooFunc.getParameter(0).getName());
+	}
+
+	@Test
+	public void testPrototypedVoidFunc_SignatureLocked()
+			throws CancelledException, IOException, DWARFException {
+		// A properly prototyped "void foo(void)" (no DW_AT_type, DW_AT_prototyped
+		// present) must still be committed as an IMPORTED void signature.
+		ensureCompUnit();
+		new DIECreator(dwarfProg, DW_TAG_subprogram)
+				.addString(DW_AT_name, "foo")
+				.addBoolean(DW_AT_prototyped, true)
+				.addUInt(DW_AT_low_pc, 0x410)
+				.addUInt(DW_AT_high_pc, 10)
+				.create();
+
+		importFunctions();
+
+		Function fooFunc = program.getListing().getFunctionAt(addr(0x410));
+		assertNotNull(fooFunc);
+		assertEquals(SourceType.IMPORTED, fooFunc.getSignatureSource());
+		assertEquals(0, fooFunc.getParameterCount());
+		assertEquals("void", fooFunc.getReturnType().getName());
 	}
 }
