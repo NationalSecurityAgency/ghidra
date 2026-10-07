@@ -16,8 +16,7 @@
 package ghidra.app.util.bin.format.macho.commands.chained;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.bin.BinaryReader;
@@ -52,21 +51,27 @@ public class DyldChainedFixups {
 	 * @param symbolTable The {@link SymbolTable}, or null if not available
 	 * @param log The log
 	 * @param monitor A cancellable monitor
-	 * @return A {@link List} of {@link DyldFixup}s
+	 * @return A {@link Set} of {@link DyldFixup}s
 	 * @throws IOException If there was an IO-related issue
 	 * @throws CancelledException If the user cancelled the operation
 	 */
-	public static List<DyldFixup> getChainedFixups(BinaryReader reader,
+	public static Set<DyldFixup> getChainedFixups(BinaryReader reader,
 			DyldChainedImports chainedImports, DyldChainType pointerFormat, long page, long nextOff,
 			long auth_value_add, long imagebase, SymbolTable symbolTable, MessageLog log,
 			TaskMonitor monitor) throws IOException, CancelledException {
-		List<DyldFixup> fixups = new ArrayList<>();
+		Set<DyldFixup> fixups = new HashSet<>();
+		Set<Long> visited = new HashSet<>();
 
 		long next = -1;
 		while (next != 0) {
 			monitor.checkCancelled();
 
 			long chainLoc = page + nextOff;
+
+			if (!visited.add(chainLoc)) {
+				break;
+			}
+
 			final long chainValue = DyldChainedPtr.getChainValue(reader, chainLoc, pointerFormat);
 			Long newChainValue = chainValue;
 			boolean isAuthenticated = DyldChainedPtr.isAuthenticated(pointerFormat, chainValue);
@@ -79,12 +84,12 @@ public class DyldChainedFixups {
 					log.appendMsg(
 						"Error: dyld_chained_import array required to process bound chain fixup at " +
 							chainLoc);
-					return List.of();
+					return Set.of();
 				}
 				if (symbolTable == null) {
 					log.appendMsg(
 						"Error: symbol table required to process bound chain fixup at " + chainLoc);
-					return List.of();
+					return Set.of();
 				}
 				int chainOrdinal = (int) DyldChainedPtr.getOrdinal(pointerFormat, chainValue);
 				long addend = DyldChainedPtr.getAddend(pointerFormat, chainValue);
@@ -125,7 +130,7 @@ public class DyldChainedFixups {
 	/**
 	 * Fixes up the program's chained pointers
 	 * 
-	 * @param fixups A {@link List} of the fixups
+	 * @param fixups A {@link Set} of the fixups
 	 * @param program The {@link Program}
 	 * @param imagebase The image base
 	 * @param libraryPaths A {@link List} of library paths
@@ -134,7 +139,7 @@ public class DyldChainedFixups {
 	 * @return A {@link List} of fixed up {@link Address}'s
 	 * @throws CancelledException If the user cancelled the operation
 	 */
-	public static List<Address> fixupChainedPointers(List<DyldFixup> fixups, Program program,
+	public static List<Address> fixupChainedPointers(Set<DyldFixup> fixups, Program program,
 			Address imagebase, List<String> libraryPaths, MessageLog log, TaskMonitor monitor)
 			throws CancelledException {
 		if (fixups.isEmpty()) {
@@ -247,8 +252,9 @@ public class DyldChainedFixups {
 		final long BIT62 = (0x1L << 62);
 
 		List<DyldFixup> fixups = new ArrayList<>();
+		Set<Long> visited = new HashSet<>();
 
-		while (true) {
+		while (visited.add(chainStart)) {
 			monitor.checkCancelled();
 
 			long chainValue = reader.readLong(chainStart);
