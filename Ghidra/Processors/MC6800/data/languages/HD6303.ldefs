@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<language_definitions>
+  <language processor="HD6303"
+    endian="big"
+    size="16"
+    variant="default"
+    version="1.0"
+    slafile="HD6303.sla"
+    processorspec="HD6303.pspec"
+    manualindexfile=""
+    id="HD6303:BE:16:default">
+    <description>Hitachi HD6303 Microcontroller</description>
+    <compiler name="default" spec="HD6303.cspec" id="default"/>
+  </language>
+</language_definitions>
