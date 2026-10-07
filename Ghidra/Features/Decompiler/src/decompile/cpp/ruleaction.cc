@@ -8466,6 +8466,7 @@ int4 RuleSignForm::applyOp(PcodeOp *op,Funcdata &data)
   if (sextop->code() != CPUI_INT_SEXT)
     return 0;
   a = sextop->getIn(0);
+  if (a->getSize() != op->getOut()->getSize()) return 0;
   int4 c = op->getIn(1)->getOffset();
   if (c < a->getSize()) return 0;
   if (a->isFree()) return 0;
