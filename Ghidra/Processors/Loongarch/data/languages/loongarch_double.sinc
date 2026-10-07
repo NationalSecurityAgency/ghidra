@@ -72,7 +72,8 @@
 #la-fp-d.txt fscaleb.d mask=0x01110000	
 #0x01110000	0xffff8000	f0:5, f5:5, f10:5	['freg0_5_s0', 'freg5_5_s0', 'freg10_5_s0']
 :fscaleb.d  drD, drJ, drK       is op15_31=0x222 & drD & drJ & drK {
-	drD = f_scaleb(drJ, drK);
+    local bn:8 = 1 << drK;
+	drD = drJ f* int2float(bn);
 }
 
 
