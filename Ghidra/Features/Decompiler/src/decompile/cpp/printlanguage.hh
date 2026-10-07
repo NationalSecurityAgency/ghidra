@@ -360,9 +360,10 @@ protected:
   /// If there is no Symbol or other name source for an explicit variable,
   /// this method is used to print something to represent the variable based on its storage address.
   /// \param addr is the storage address
+  /// \param size is the number of storage bytes
   /// \param vn is the Varnode representing the variable (if present)
   /// \param op is a PcodeOp associated with the variable
-  virtual void pushUnnamedLocation(const Address &addr,const Varnode *vn,const PcodeOp *op)=0;
+  virtual void pushUnnamedLocation(const Address &addr,int4 size,const Varnode *vn,const PcodeOp *op)=0;
 
   /// \brief Push a variable that represents only part of a symbol onto the RPN stack
   ///
