@@ -1,0 +1,81 @@
+# Vector bitmanip extension
+
+define pcodeop vandn_vv;
+define pcodeop vandn_vx;
+# vandn.[vv,vx] Bitwise And-Not
+# vand.vv vd, vs2, vs1, vm   # Vector-vector
+:vandn.vv  vd, vs2, vs1         is op2631=0x1 & op2525=1 & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57 {vd=vandn_vv(vs2,vs1);}
+:vandn.vv  vd, vs2, vs1, "v0.t" is op2631=0x1 & op2525=0 & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57 {vd=vandn_vv(vs2,vs1,v0);}
+# vand.vv vd, vs2, vs1, vm   # Vector-scalar
+:vandn.vx  vd, vs2, rs1         is op2631=0x1 & op2525=1 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 {vd=vandn_vx(vs2,rs1);}
+:vandn.vx  vd, vs2, rs1, "v0.t" is op2631=0x1 & op2525=0 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 {vd=vandn_vx(vs2,rs1,v0);}
+
+define pcodeop vbrev_v;
+# vbrev vbrev.v vd, vs2, vm # Vector Reverse Bits in Elements
+:vbrev.v  vd, vs2         is op2631=0x12 & op2525=1 & vs2 & op1519=0xa & op1214=0x2 & vd & op0006=0x57 {vd=vbrev_v(vs2);}
+:vbrev.v  vd, vs2, "v0.t" is op2631=0x12 & op2525=0 & vs2 & op1519=0xa & op1214=0x2 & vd & op0006=0x57 {vd=vbrev_v(vs2,v0);}
+
+define pcodeop vbrev8_v;
+# vbrev8.v vbrev8.v vd, vs2, vm # Vector Reverse Bits in Bytes
+:vbrev8.v  vd, vs2         is op2631=0x12 & op2525=1 & vs2 & op1519=0x8 & op1214=0x2 & vd & op0006=0x57 {vd=vbrev8_v(vs2);}
+:vbrev8.v  vd, vs2, "v0.t" is op2631=0x12 & op2525=0 & vs2 & op1519=0x8 & op1214=0x2 & vd & op0006=0x57 {vd=vbrev8_v(vs2,v0);}
+
+define pcodeop vrev8_v;
+# vrev8.v vd, vs2, vm # Vector Reverse Bytes
+:vrev8.v  vd, vs2         is op2631=0x12 & op2525=1 & vs2 & op1519=0x9 & op1214=0x2 & vd & op0006=0x57 {vd=vrev8_v(vs2);}
+:vrev8.v  vd, vs2, "v0.t" is op2631=0x12 & op2525=0 & vs2 & op1519=0x9 & op1214=0x2 & vd & op0006=0x57 {vd=vrev8_v(vs2,v0);}
+
+define pcodeop vclz_v;
+# vclz.v vd, vs2, vm # Vector Count Leading Zeros
+:vclz.v  vd, vs2         is op2631=0x12 & op2525=1 & vs2 & op1519=0xc & op1214=0x2 & vd & op0006=0x57 {vd=vclz_v(vs2);}
+:vclz.v  vd, vs2, "v0.t" is op2631=0x12 & op2525=0 & vs2 & op1519=0xc & op1214=0x2 & vd & op0006=0x57 {vd=vclz_v(vs2,v0);}
+
+define pcodeop vctz_v;
+# vctz.v vd, vs2, vm # Vector Count Trailing Zeros
+:vctz.v  vd, vs2         is op2631=0x12 & op2525=1 & vs2 & op1519=0xd & op1214=0x2 & vd & op0006=0x57 {vd=vctz_v(vs2);}
+:vctz.v  vd, vs2, "v0.t" is op2631=0x12 & op2525=0 & vs2 & op1519=0xd & op1214=0x2 & vd & op0006=0x57 {vd=vctz_v(vs2,v0);}
+
+define pcodeop vcpop_v;
+# vcpop.v vd, vs2, vm # Count the number of bits set in each element
+:vcpop.v  vd, vs2         is op2631=0x12 & op2525=1 & vs2 & op1519=0xe & op1214=0x2 & vd & op0006=0x57 {vd=vcpop_v(vs2);}
+:vcpop.v  vd, vs2, "v0.t" is op2631=0x12 & op2525=0 & vs2 & op1519=0xe & op1214=0x2 & vd & op0006=0x57 {vd=vcpop_v(vs2,v0);}
+
+define pcodeop vrol_vv;
+define pcodeop vrol_vx;
+# vrol.[vv,vx] # Vector rotate left by vector/scalar
+# vrol.vv vd, vs2, vs1, vm
+:vrol.vv vd, vs2, vs1         is op2631=0x15 & op2525=0x1 & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57 {vd=vrol_vv(vs2,vs1);}
+:vrol.vv vd, vs2, vs1, "v0.t" is op2631=0x15 & op2525=0x0 & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57 {vd=vrol_vv(vs2,vs1,v0);}
+# vrol.vx vd, vs2, rs1, vm
+:vrol.vx vd, vs2, rs1         is op2631=0x15 & op2525=0x1 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 {vd=vrol_vx(vs2,rs1);}
+:vrol.vx vd, vs2, rs1, "v0.t" is op2631=0x15 & op2525=0x0 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 {vd=vrol_vx(vs2,rs1,v0);}
+
+define pcodeop vror_vv;
+define pcodeop vror_vx;
+# vror.[vv,vx]Vector rotate right by vector/scalar
+# vror.vv vd, vs2, vs1, vm
+:vror.vv vd, vs2, vs1         is op2631=0x14 & op2525=0x1 & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57 {vd=vror_vv(vs2,vs1);}
+:vror.vv vd, vs2, vs1, "v0.t" is op2631=0x14 & op2525=0x0 & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57 {vd=vror_vv(vs2,vs1,v0);}
+# vror.vx vd, vs2, rs1, vm
+:vror.vx vd, vs2, rs1         is op2631=0x14 & op2525=0x1 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 {vd=vror_vx(vs2,rs1);}
+:vror.vx vd, vs2, rs1, "v0.t" is op2631=0x14 & op2525=0x0 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 {vd=vror_vx(vs2,rs1,v0);}
+
+define pcodeop vror_vi;
+# vror.vi vd, vs2, uimm, vm
+#  NOTE: the following takes a 6 bit immediate value where uimm5 is the low order and op2626 provides the high order bit
+:vror.vi vd, vs2, uimm6         is op2731=0x0a & op2525=0x1 & op2626 & vs2 & op1519 & op1214=0x3 & vd & op0006=0x57 [ uimm6= op1519 | (op2626<<5); ] {vd=vror_vi(vs2,uimm6:6);}
+:vror.vi vd, vs2, uimm6, "v0.t" is op2731=0x0a & op2525=0x0 & op2626 & vs2 & op1519 & op1214=0x3 & vd & op0006=0x57 [ uimm6= op1519 | (op2626<<5); ] {vd=vror_vi(vs2,uimm6:6,v0);}
+
+define pcodeop vwsll_vv;
+define pcodeop vwsll_vx;
+define pcodeop vwsll_vi;
+# vwsll.[vv,vx,vi] Vector widening shift left logical by vector/scalar/immediate.
+# vwsll.vv vd, vs2, vs1, vm
+:vwsll.vv   vd, vs2, vs1           is op2631=0x35 & op2525=1 & vs2 & vs1   & op1214=0x0 & vd & op0006=0x57 {vd=vwsll_vv(vs2,vs1);}
+:vwsll.vv   vd, vs2, vs1, "v0.t"   is op2631=0x35 & op2525=0 & vs2 & vs1   & op1214=0x0 & vd & op0006=0x57 {vd=vwsll_vv(vs2,vs1,v0);}
+# vwsll.vx vd, vs2, rs1, vm
+:vwsll.vx   vd, vs2, rs1           is op2631=0x35 & op2525=1 & vs2 & rs1   & op1214=0x4 & vd & op0006=0x57 {vd=vwsll_vx(vs2,rs1);}
+:vwsll.vx   vd, vs2, rs1, "v0.t"   is op2631=0x35 & op2525=0 & vs2 & rs1   & op1214=0x4 & vd & op0006=0x57 {vd=vwsll_vx(vs2,rs1,v0);}
+# vwsll.vi vd, vs2, uimm, vm
+:vwsll.vi   vd, vs2, uimm5         is op2631=0x35 & op2525=1 & vs2 & uimm5 & op1214=0x3 & vd & op0006=0x57 {vd=vwsll_vi(vs2,uimm5);}
+:vwsll.vi   vd, vs2, uimm5, "v0.t" is op2631=0x35 & op2525=0 & vs2 & uimm5 & op1214=0x3 & vd & op0006=0x57 {vd=vwsll_vi(vs2,uimm5,v0);}

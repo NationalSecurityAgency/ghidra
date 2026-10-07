@@ -16,7 +16,7 @@
 
 
 # add64 rt, ra, rb 	 ; a64 = r[aU].r[aL]; b64 = r[bU].r[bL]; + ; + ; t64 = a64 + b64; + ; + ; r[tU].r[tL] = t64;
-:add64 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x60
+:add64 rd,rs1,rs2 is op0006=0x77 & rd & rs1 & rs2 & funct3=0x1 & funct7=0x60
 {
 @if ADDRSIZE == "32"
 	local dst:$(XLEN) = &rd;
@@ -122,9 +122,12 @@
 # crsa16 rt, ra, rb 	 ; rt.H[_x_] = ra.H[_x_] - rb.H[_x-1_]; + ; rt.H[_x-1_] = ra.H[_x-1_] + rb.H[_x_]; ; (RV32: __x__=1, RV64: __x__=1,3)
 :crsa16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x23  unimpl
 
-
+imm2u: imm2021 is imm2021 { local tmp:$(XLEN) = imm2021; export tmp; }
 # insb rt, ra, imm3u 	 ; byte_idx = imm2u; // RV32 ; byte_idx = imm3u; // RV64 ; rt.B[byte_idx] = ra.B[0];
-:insb rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x56 & subf5=0x00  unimpl
+define pcodeop insb;
+:insb rd,rs1,imm2u is op0006=0x77 & rd & funct3=0x0 & rs1  & imm2u & op2222=0x0 & op2324=0x0 & funct7=0x56 {
+    insb(rd, rs1, imm2u);
+}
 
 
 # kabs16 rt, ra 	 ; rt.H[_x_] = SAT.Q15(ABS(ra.H[_x_])); ; (RV32: __x__=1..0, RV64: __x__=3..0)
@@ -415,7 +418,10 @@
 
 
 # maxw rt, ra, rb 	 ; if (ra.W[0] >= rb.W[0]) \{ ; rt = SE(ra.W[0]); ; else \{ ; rt = SE(rb.W[0]); ; }
-:maxw rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x79  unimpl
+define pcodeop maxw;
+:maxw rd,rs1,rs2 is op0006=0x77 & rd & rs1 & rs2 & funct3=0x0 & funct7=0x79  {
+    maxw(rd, rs1, rs2);
+}
 
 
 # minw rt, ra, rb 	 ; if (ra.W[0] >= rb.W[0]) \{ ; rt = SE(rb.W[0]); ; else \{ ; rt = SE(ra.W[0]); ; }
@@ -433,7 +439,10 @@
 
 
 # mulr64 rt, ra, rb 	 ; RV32: ; mres[63:0] = ra u* rb; ; r[tU] = mres.W[1]; ; r[tL] = mres.W[0]; ; RV64: ; rt = ra.W[0] u* rb.W[0];
-:mulr64 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x78  unimpl
+define pcodeop mulr64;
+:mulr64 rd,rs1,rs2 is op0006=0x77 & rd & funct3=0x1 & rs1 & rs2 &  funct7=0x78  {
+    mulr64(rd,rs1,rs2);
+}
 
 
 # mulsr64 rt, ra, rb 	 ; RV32: ; mres[63:0] = ra s* rb; ; r[tU] = mres.W[1]; ; r[tL] = mres.W[0]; ; RV64: ; rt = ra.W[0] s* rb.W[0];
@@ -455,11 +464,17 @@
 
 
 # pkbb16 rt, ra, rb 	 ; rt.W[_x_] = CONCAT(ra.W[_x_].H[0], rb.W[_x_].H[0]); ; (RV32: __x__=0, RV64: __x__=1..0)
-:pkbb16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x07  unimpl
+define pcodeop pkbb16;
+:pkbb16 rd,rs1,rs2 is op0006=0x77 & rd & rs1 & rs2 & funct3=0x1 & funct7=0x07  {
+    pkbb16(rd, rs1, rs2);
+}
 
 
 # pkbt16 rt, ra, rb 	 ; rt.W[_x_] = CONCAT(ra.W[_x_].H[0], rb.W[_x_].H[1]); ; (RV32: __x__=0, RV64: __x__=1..0)
-:pkbt16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x0f  unimpl
+define pcodeop pkbt16;
+:pkbt16 rd,rs1,rs2 is op0006=0x77 & rd & rs1 & rs2 & funct3=0x1 & funct7=0x0f {
+        pkbt16(rd, rs1, rs2);
+}
 
 
 # pktb16 rt, ra, rb 	 ; rt.W[_x_] = CONCAT(ra.W[_x_].H[1], rb.W[_x_].H[0]); ; (RV32: __x__=0, RV64: __x__=1..0)
@@ -769,7 +784,10 @@
 
 
 # sub64 rt, ra, rb 	 ; a64 = r[aU].r[aL]; b64 = r[bU].r[bL]; + ; + ; t64 = a64 - b64; + ; + ; r[tU].r[tL] = t64;
-:sub64 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x61  unimpl
+define pcodeop sub64;
+:sub64 rd,rs1,rs2 is op0006=0x77 & rd & funct3=0x1 & rs1 & rs2 &  funct7=0x61  {
+    sub64(rd, rs1, rs2);
+}
 
 
 # sub8 rt, ra, rb 	 ; rt.B[_x_] = ra.B[_x_] - rb.B[_x_]; ; (RV32: __x__=3..0, RV64: __x__=7..0)
@@ -801,7 +819,10 @@
 
 
 # swap8 rt, ra 	 ; === ; <<< ; ==== 8-bit Unpacking Instructions ; There are 8 instructions here. ; .8-bit Unpacking Instructions ; [cols="^.^1,<.^2,<.^2,<.^4",options="header",]
-:swap8 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x56 & subf5=0x18  unimpl
+define pcodeop swap8;
+:swap8 rd,rs1 is op0006=0x77 & rd & funct3=0x0 & rs1 & op2024=0x18 & funct7=0x56 {
+    swap8(rd, rs1);
+}
 
 
 # uclip32 rt, ra, imm5u 	 ; m = imm5u; + ; rt = SAT.Um(ra.W[_x_]); ; (RV32: __x__=0, RV64: __x__=1..0)
@@ -971,7 +992,10 @@
 
 
 # wexti rt, ra, imm5u 	 ; a64 = r[aU].r[aL]; // RV32 ; a64 = ra; // RV64 ; lsb = imm5u; ; exword = a64[(31+lsb):lsb]; ; rt = SE(exword);
-:wexti rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x6f  unimpl
+define pcodeop wexti;
+:wexti rd,rs1,rs2 is op0006=0x77 & rd & rs1 & rs2 & funct3=0x0 & funct7=0x6f  {
+    wexti(rd, rs1, rs2);
+}
 
 
 # zunpkd810 rt, ra 	 ; rt.H[_x_] = ZE16(ra.B[_y_]); ; RV32: (_x,y_) = (1,1), (0,0) ; RV64: (_x,y_) = (3,5),(2,4),(1,1), (0,0)
