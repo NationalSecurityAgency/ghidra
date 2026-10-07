@@ -364,6 +364,17 @@ define register offset=0x1200 size=64  [
 	ZMM30	ZMM31
 ];
 
+define register offset=0x3000 size=1024  [
+	TMM0
+	TMM1
+	TMM2
+	TMM3
+	TMM4
+	TMM5
+	TMM6
+	TMM7
+];
+
 # Define context bits
 define register offset=0x2000 size=8   contextreg;
 
@@ -444,6 +455,7 @@ define context contextreg
   vexVVVV=(25,28)       # value of vex byte for matching
   vexVVVV_r32=(25,28)   # value of vex byte for matching a normal 32 bit register
   vexVVVV_r64=(25,28)   # value of vex byte for matching a normal 64 bit register
+  vexVVVV_tmm=(25,28)   # value of vex byte for matching a tmm register
   vexVVVV_XmmReg=(25,28)       # value of vex byte for matching XmmReg
   vexVVVV_YmmReg=(25,28)       # value of vex byte for matching YmmReg
   vexVVVV_ZmmReg=(25,28)       # value of vex byte for matching ZmmReg
@@ -556,6 +568,8 @@ define token modrm (8)
   debugreg      = (3,5)
   debugreg_x    = (3,5)
   testreg       = (3,5)
+  tmmreg        = (3,5)
+  tmmreg1       = (0,2)
   r8            = (0,2)
   r16           = (0,2)
   r32           = (0,2)
@@ -736,12 +750,16 @@ attach variables [ evexV5_YmmReg ] [ YMM0  YMM1  YMM2  YMM3  YMM4  YMM5  YMM6  Y
 attach variables [ evexV5_ZmmReg ] [ ZMM0  ZMM1  ZMM2  ZMM3  ZMM4  ZMM5  ZMM6  ZMM7  ZMM8  ZMM9  ZMM10 ZMM11 ZMM12 ZMM13 ZMM14 ZMM15
 	                                 ZMM16 ZMM17 ZMM18 ZMM19 ZMM20 ZMM21 ZMM22 ZMM23 ZMM24 ZMM25 ZMM26 ZMM27 ZMM28 ZMM29 ZMM30 ZMM31 ];
 
+attach variables [ tmmreg tmmreg1 ] [ TMM0 TMM1 TMM2 TMM3 TMM4 TMM5 TMM6 TMM7 ];
+
 @ifdef IA64
 attach variables [ vexVVVV_r32 ] [ EAX  ECX  EDX  EBX  ESP  EBP  ESI  EDI R8D  R9D  R10D R11D R12D R13D R14D R15D ];
 attach variables [ vexVVVV_r64 ] [ RAX  RCX  RDX  RBX  RSP  RBP  RSI  RDI R8   R9   R10  R11  R12  R13  R14  R15 ];
 @else
 attach variables [ vexVVVV_r32 ] [ EAX  ECX  EDX  EBX  ESP  EBP  ESI  EDI _    _    _    _    _    _    _    _ ];
 @endif
+
+attach variables [ vexVVVV_tmm ] [ TMM0  TMM1  TMM2  TMM3  TMM4  TMM5  TMM6  TMM7 _    _    _    _    _    _    _    _ ];
 
 attach variables [ evexOpmask opmaskreg opmaskrm evexVopmask ] [ K0  K1  K2  K3  K4  K5  K6  K7 ];
 
