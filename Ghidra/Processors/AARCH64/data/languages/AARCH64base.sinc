@@ -821,7 +821,7 @@ is ImmS_LT_ImmR=0 & sf=1 & opc=1 & b_2428=0x13 & b_2323=0 & n=1 & ImmRConst64 & 
 is sf=0 & opc=0 & b_2428=0xa & N=1 & RegShift32Log & Rn_GPR32 & Rd_GPR32 & Rd_GPR64
 {
 	tmp_3:4 = RegShift32Log;
-	tmp_2:4 = tmp_3 ^ -1:4;
+	tmp_2:4 = ~tmp_3;
 	tmp_1:4 = Rn_GPR32 & tmp_2;
 	Rd_GPR64 = zext(tmp_1);
 }
@@ -834,7 +834,7 @@ is sf=0 & opc=0 & b_2428=0xa & N=1 & RegShift32Log & Rn_GPR32 & Rd_GPR32 & Rd_GP
 is sf=1 & opc=0 & b_2428=0xa & N=1 & RegShift64Log & Rn_GPR64 & Rd_GPR64
 {
 	tmp_3:8= RegShift64Log;
-	tmp_2:8 = tmp_3 ^ -1:8;
+	tmp_2:8 = ~tmp_3;
 	tmp_1:8 = Rn_GPR64 & tmp_2;
 	Rd_GPR64 = tmp_1;
 }
@@ -847,7 +847,7 @@ is sf=1 & opc=0 & b_2428=0xa & N=1 & RegShift64Log & Rn_GPR64 & Rd_GPR64
 is sf=0 & opc=3 & b_2428=0xa & N=1 & RegShift32Log & Rn_GPR32 & Rd_GPR32 & Rd_GPR64
 {
 	tmp_3:4 = RegShift32Log;
-	tmp_2:4 = tmp_3 ^ -1:4;
+	tmp_2:4 = ~tmp_3;
 	tmp_1:4 = Rn_GPR32 & tmp_2;
 	resultflags(tmp_1);
 	Rd_GPR64 = zext(tmp_1);
@@ -862,7 +862,7 @@ is sf=0 & opc=3 & b_2428=0xa & N=1 & RegShift32Log & Rn_GPR32 & Rd_GPR32 & Rd_GP
 is sf=1 & opc=3 & b_2428=0xa & N=1 & RegShift64Log & Rn_GPR64 & Rd_GPR64
 {
 	tmp_3:8= RegShift64Log;
-	tmp_2:8 = tmp_3 ^ -1:8;
+	tmp_2:8 = ~tmp_3;
 	tmp_1:8 = Rn_GPR64 & tmp_2;
 	resultflags(tmp_1);
 	Rd_GPR64 = tmp_1;
@@ -4510,7 +4510,7 @@ is b_2431=0xd5 & b_2223=0 & l=0 & Op0=0 & Op1=3 & CRn=0x2 & imm7Low=0 & Rt=0x1f
 is sf=0 & opc=1 & b_2428=0xa & N=1 & RegShift32Log & Rn_GPR32 & Rd_GPR32 & Rd_GPR64
 {
 	tmp_3:4 = RegShift32Log;
-	tmp_2:4 = tmp_3 ^ -1:4;
+	tmp_2:4 = ~tmp_3;
 	tmp_1:4 = Rn_GPR32 | tmp_2;
 	Rd_GPR64 = zext(tmp_1);
 }
@@ -4524,7 +4524,7 @@ is sf=0 & opc=1 & b_2428=0xa & N=1 & RegShift32Log & Rn_GPR32 & Rd_GPR32 & Rd_GP
 is sf=1 & opc=1 & b_2428=0xa & N=1 & RegShift64Log & Rn_GPR64 & Rd_GPR64
 {
 	tmp_3:8= RegShift64Log;
-	tmp_2:8 = tmp_3 ^ -1:8;
+	tmp_2:8 = ~tmp_3;
 	tmp_1:8 = Rn_GPR64 | tmp_2;
 	Rd_GPR64 = tmp_1;
 }
