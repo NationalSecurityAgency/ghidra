@@ -58,6 +58,7 @@ public class CompareExecutablesScript extends GhidraScript {
 			askString("Enter name of executable to compare against database", "Name: ");
 		URL url = BSimClientFactory.deriveBSimURL(urlString);
 		try (FunctionDatabase database = BSimClientFactory.buildClient(url, true)) {
+			database.initialize();
 			QueryExeInfo exeInfo = new QueryExeInfo();
 			exeInfo.filterExeName = execName;
 			ResponseExe exeResult = exeInfo.execute(database);
