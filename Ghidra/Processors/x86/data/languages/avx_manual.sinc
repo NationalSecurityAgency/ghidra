@@ -318,3 +318,153 @@
 }
 @endif
 
+# AVX_NE_CONVERT
+define pcodeop vcvtneebf162ps;
+:VCVTNEEBF162PS XmmReg1, m128 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0); byte=0xB0; XmmReg1 ... & m128 {
+    XmmReg1 = vcvtneebf162ps(m128);
+}
+:VCVTNEEBF162PS YmmReg1, m256 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0); byte=0xB0; YmmReg1 ... & m256 {
+    YmmReg1 = vcvtneebf162ps(m256);
+}
+
+define pcodeop vbcstnebf162ps;
+:VBCSTNEBF162PS XmmReg1, m128 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0); byte=0xB1; XmmReg1 ... & m128 {
+    XmmReg1 = vbcstnebf162ps(m128);
+}
+:VBCSTNEBF162PS YmmReg1, m256 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0); byte=0xB1; YmmReg1 ... & m256 {
+    YmmReg1 = vbcstnebf162ps(m256);
+}
+
+define pcodeop vcvtneeph2ps;
+:VCVTNEEPH2PS XmmReg1, m128 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0xB0; XmmReg1 ... & m128 {
+    XmmReg1 = vcvtneeph2ps(m128);
+}
+:VCVTNEEPH2PS YmmReg1, m256 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0xB0; YmmReg1 ... & m256 {
+    YmmReg1 = vcvtneeph2ps(m256);
+}
+
+define pcodeop vcvtneobf162ps;
+:VCVTNEOBF162PS XmmReg1, m128 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0); byte=0xB0; XmmReg1 ... & m128 {
+    XmmReg1 = vcvtneobf162ps(m128);
+}
+:VCVTNEOBF162PS YmmReg1, m256 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0); byte=0xB0; YmmReg1 ... & m256 {
+    YmmReg1 = vcvtneobf162ps(m256);
+}
+
+define pcodeop vcvtneoph2ps;
+:VCVTNEOPH2PS XmmReg1, m128 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0); byte=0xB0; XmmReg1 ... & m128 {
+    XmmReg1 = vcvtneoph2ps(m128);
+}
+:VCVTNEOPH2PS YmmReg1, m256 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0); byte=0xB0; YmmReg1 ... & m256 {
+    YmmReg1 = vcvtneoph2ps(m256);
+}
+
+define pcodeop vbcstnesh2ps;
+:VBCSTNESH2PS XmmReg1, m128 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0xB1; XmmReg1 ... & m128 {
+    XmmReg1 = vbcstnesh2ps(m128);
+}
+:VBCSTNESH2PS YmmReg1, m256 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0xB1; YmmReg1 ... & m256 {
+    YmmReg1 = vbcstnesh2ps(m256);
+}
+
+# AVX_VNNI_INT8
+
+define pcodeop vpdpbssd;
+:VPDPBSSD XmmReg1, vexVVVV_XmmReg, XmmReg2_m128  is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0x50; XmmReg1 ... & XmmReg2_m128 {
+    XmmReg1 = vpdpbssd(XmmReg1, vexVVVV_XmmReg, XmmReg2_m128);
+}
+:VPDPBSSD YmmReg1, vexVVVV_YmmReg, YmmReg2_m256  is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0x50; YmmReg1 ... & YmmReg2_m256 {
+    YmmReg1 = vpdpbssd(YmmReg1, vexVVVV_YmmReg, YmmReg2_m256);
+}
+
+define pcodeop vpdpbsud;
+:VPDPBSUD XmmReg1, vexVVVV_XmmReg, XmmReg2_m128  is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0x50; XmmReg1 ... & XmmReg2_m128 {
+    XmmReg1 = vpdpbsud(XmmReg1, vexVVVV_XmmReg, XmmReg2_m128);
+}
+:VPDPBSUD YmmReg1, vexVVVV_YmmReg, YmmReg2_m256  is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0x50; YmmReg1 ... & YmmReg2_m256 {
+    YmmReg1 = vpdpbsud(YmmReg1, vexVVVV_YmmReg, YmmReg2_m256);
+}
+
+define pcodeop vpdpbuud;
+:VPDPBUUD XmmReg1, vexVVVV_XmmReg, XmmReg2_m128  is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0x50; XmmReg1 ... & XmmReg2_m128 {
+    XmmReg1 = vpdpbuud(XmmReg1, vexVVVV_XmmReg, XmmReg2_m128);
+}
+:VPDPBUUD YmmReg1, vexVVVV_YmmReg, YmmReg2_m256  is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0x50; YmmReg1 ... & YmmReg2_m256 {
+    YmmReg1 = vpdpbuud(YmmReg1, vexVVVV_YmmReg, YmmReg2_m256);
+}
+
+define pcodeop vpdpbssds;
+:VPDPBSSDS XmmReg1, vexVVVV_XmmReg, XmmReg2_m128  is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0x51; XmmReg1 ... & XmmReg2_m128 {
+    XmmReg1 = vpdpbssds(XmmReg1, vexVVVV_XmmReg, XmmReg2_m128);
+}
+:VPDPBSSDS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256  is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0x51; YmmReg1 ... & YmmReg2_m256 {
+    YmmReg1 = vpdpbssds(YmmReg1, vexVVVV_YmmReg, YmmReg2_m256);
+}
+
+define pcodeop vpdpbsuds;
+:VPDPBSUDS XmmReg1, vexVVVV_XmmReg, XmmReg2_m128  is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0x51; XmmReg1 ... & XmmReg2_m128 {
+    XmmReg1 = vpdpbsuds(XmmReg1, vexVVVV_XmmReg, XmmReg2_m128);
+}
+:VPDPBSUDS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256  is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0x51; YmmReg1 ... & YmmReg2_m256 {
+    YmmReg1 = vpdpbsuds(YmmReg1, vexVVVV_YmmReg, YmmReg2_m256);
+}
+
+define pcodeop vpdpbuuds;
+:VPDPBUUDS XmmReg1, vexVVVV_XmmReg, XmmReg2_m128  is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0x51; XmmReg1 ... & XmmReg2_m128 {
+    XmmReg1 = vpdpbuuds(XmmReg1, vexVVVV_XmmReg, XmmReg2_m128);
+}
+:VPDPBUUDS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256  is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0x51; YmmReg1 ... & YmmReg2_m256 {
+    YmmReg1 = vpdpbuuds(YmmReg1, vexVVVV_YmmReg, YmmReg2_m256);
+}
+
+# AVX_VNNI_INT16
+
+define pcodeop vpdpwsud;
+:VPDPWSUD XmmReg1, vexVVVV_XmmReg, XmmReg2_m128  is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xD2; XmmReg1 ... & XmmReg2_m128 {
+    XmmReg1 = vpdpwsud(XmmReg1, vexVVVV_XmmReg, XmmReg2_m128);
+}
+:VPDPWSUD YmmReg1, vexVVVV_YmmReg, YmmReg2_m256  is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0xD2; YmmReg1 ... & YmmReg2_m256 {
+    YmmReg1 = vpdpwsud(YmmReg1, vexVVVV_YmmReg, YmmReg2_m256);
+}
+
+define pcodeop vpdpwsuds;
+:VPDPWSUDS XmmReg1, vexVVVV_XmmReg, XmmReg2_m128  is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xD3; XmmReg1 ... & XmmReg2_m128 {
+    XmmReg1 = vpdpwsuds(XmmReg1, vexVVVV_XmmReg, XmmReg2_m128);
+}
+:VPDPWSUDS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256  is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0xD3; YmmReg1 ... & YmmReg2_m256 {
+    YmmReg1 = vpdpwsuds(YmmReg1, vexVVVV_YmmReg, YmmReg2_m256);
+}
+
+define pcodeop vpdpwusd;
+:VPDPWUSD XmmReg1, vexVVVV_XmmReg, XmmReg2_m128  is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xD2; XmmReg1 ... & XmmReg2_m128 {
+    XmmReg1 = vpdpwusd(XmmReg1, vexVVVV_XmmReg, XmmReg2_m128);
+}
+:VPDPWUSD YmmReg1, vexVVVV_YmmReg, YmmReg2_m256  is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0xD2; YmmReg1 ... & YmmReg2_m256 {
+    YmmReg1 = vpdpwusd(YmmReg1, vexVVVV_YmmReg, YmmReg2_m256);
+}
+
+define pcodeop vpdpwusds;
+:VPDPWUSDS XmmReg1, vexVVVV_XmmReg, XmmReg2_m128  is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xD3; XmmReg1 ... & XmmReg2_m128 {
+    XmmReg1 = vpdpwusds(XmmReg1, vexVVVV_XmmReg, XmmReg2_m128);
+}
+:VPDPWUSDS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256  is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0xD3; YmmReg1 ... & YmmReg2_m256 {
+    YmmReg1 = vpdpwusds(YmmReg1, vexVVVV_YmmReg, YmmReg2_m256);
+}
+
+define pcodeop vpdpwuud;
+:VPDPWUUD XmmReg1, vexVVVV_XmmReg, XmmReg2_m128  is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xD2; XmmReg1 ... & XmmReg2_m128 {
+    XmmReg1 = vpdpwuud(XmmReg1, vexVVVV_XmmReg, XmmReg2_m128);
+}
+:VPDPWUUD YmmReg1, vexVVVV_YmmReg, YmmReg2_m256  is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0xD2; YmmReg1 ... & YmmReg2_m256 {
+    YmmReg1 = vpdpwuud(YmmReg1, vexVVVV_YmmReg, YmmReg2_m256);
+}
+
+define pcodeop vpdpwuuds;
+:VPDPWUUDS XmmReg1, vexVVVV_XmmReg, XmmReg2_m128  is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0xD3; XmmReg1 ... & XmmReg2_m128 {
+    XmmReg1 = vpdpwuuds(XmmReg1, vexVVVV_XmmReg, XmmReg2_m128);
+}
+:VPDPWUUDS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256  is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0xD3; YmmReg1 ... & YmmReg2_m256 {
+    YmmReg1 = vpdpwuuds(YmmReg1, vexVVVV_YmmReg, YmmReg2_m256);
+}
+
+
