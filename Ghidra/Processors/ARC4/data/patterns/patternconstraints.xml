@@ -1,0 +1,5 @@
+<patternconstraints>
+  <language id="ARC4:LE:32:*">
+    <patternfile>ARC4_LE_patterns.xml</patternfile>
+  </language>
+</patternconstraints>
