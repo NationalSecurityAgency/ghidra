@@ -1,0 +1,3 @@
+@define Z80e ""
+
+@include "z80.slaspec"
