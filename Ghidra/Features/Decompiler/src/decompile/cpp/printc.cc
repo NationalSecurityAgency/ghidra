@@ -132,6 +132,14 @@ PrintC::PrintC(Architecture *g,const string &nm) : PrintLanguage(g,nm)
   greater_equal.negate = &less_than;
   equal.negate = &not_equal;
   not_equal.negate = &equal;
+  
+  // Set the swap tokens
+  less_than.lrswap = &greater_than;
+  less_equal.lrswap = &greater_equal;
+  greater_than.lrswap = &less_than;
+  greater_equal.lrswap = &less_equal;
+  equal.lrswap = &equal;
+  not_equal.lrswap = &not_equal;
 
   castStrategy = new CastStrategyC();
   resetDefaultsPrintC();
