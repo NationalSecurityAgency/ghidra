@@ -1,0 +1,1959 @@
+# i960 / 80960
+
+define alignment=4;
+
+define space ram type=ram_space size=4 default;
+
+define space register type=register_space size=4;
+
+#TODO  slaspec or context value instead?
+@define SALIGN 4
+
+# Local Registers
+# r0  - pfp - previous frame pointer
+# r1  - sp  - stack pointer
+# r2  - rip - return instruction pointer
+define register offset=0x00 size=4 [ pfp sp rip r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 ];
+
+# Global Registers
+# g15 - fp  - frame pointer
+define register offset=0x40 size=4 [ g0 g1 g2 g3 g4 g5 g6 g7 g8 g9 g10 g11 g12 g13 g14 fp ];
+
+# SF
+define register offset=0x100 size=4 [ sf0 sf1 sf2 sf3 sf4 sf5 sf6 sf7 sf8 sf9 sf10 sf11 sf12 sf13 sf14 sf15 sf16 sf17 sf18 sf19 sf20 sf21 sf22 sf23 sf24 sf25 sf26 sf27 sf28 sf29 sf30 sf31 ];
+
+# 80-bit registers  extended-real format
+define register offset=0x300 size=10 [ fp0 fp1 fp2 fp3 ];
+
+define register offset=0x200 size=4 [ pc ac ip tc ];
+
+
+# PFP return status
+# 000 - local/super call from super, local return
+# 001 - fault call, fault return
+# 011 - super call from user, trace enabled, super return, trace enable, PC=0 mode=0
+# 100 - reserved
+# 101 - reserved
+# 110 - stopped-interrupt call, stopped-interrupt return
+# 111 - interrupt call, interrupt return
+
+
+# PC  Process Controls Register
+# PC [0,1] # Trace-Enable Bit
+# PC [1,1] # Execution-Mode Flag
+# PC [9,1] # Resume
+# PC [10,1] # Trace-Fault-Pending
+# PC [13,1] # State Flag
+# PC [16,5] # Priority Field
+# PC [21,11] # internal state
+
+# AC  Arithmetic Controls Register
+# AC [0,3] # Condition Code Bits
+# AC [3,4] # Arithmetic status
+# AC [8,1] # Integer-Overflow Flag
+# AC [12,1] # Integer Overflow Mask Bit
+# AC [15,1] # No-Imprecise-Faults Bit
+# AC [16,1] # Floating overflow flag
+# AC [17,1] # Floating underflow flag
+# AC [18,1] # Floating invalid-op flag
+# AC [19,1] # Floating zero-divide flag
+# AC [20,1] # Floating inexct flag
+# AC [24,1] # Floating overflow mask
+# AC [25,1] # Floating underflow mask
+# AC [26,1] # Floating invalid-op mask
+# AC [27,1] # Floating zero-divide mask
+# AC [28,1] # Floating inexact mask
+# AC [29,1] # Floating-Point Normalizing Mode
+# AC [30,2] # Floating-Point Rounding Control
+
+# TC Trace-Controls
+# TC[1,1] # instruction trace mode
+# TC[2,1] # branch trace mode
+# TC[3,1] # call trace mode
+# TC[4,1] # return trace mode
+# TC[5,1] # prereturn trace mode
+# TC[6,1] # supervise trace mode
+# TC[7,1] # breakpoint trace mode
+# TC[17,1] # instruction trace event
+# TC[18,1] # branch trace event
+# TC[19,1] # call trace event
+# TC[20,1] # return trace event
+# TC[21,1] # prereturn trace event
+# TC[22,1] # supervisor trace event
+# TC[23,1] # breakpoint trace event
+
+# condition codes
+# 010 true
+# 000 false
+# 000 unordered
+# 001 gt
+# 010 eq
+# 011 gte
+# 100 lt
+# 101 ne
+# 110 lte
+# 111 ordered
+# 01X carry out
+# 0X1 overflow
+
+# arithmetic status, s=sign
+# s000 Zero
+# s001 Denom
+# s010 Normal
+# s011 inf
+# s100 quiet
+# s101 signal
+# s110 resv
+
+
+define token instr (32)
+  op2731=(27,31)
+  op2431=(24,31)
+  op2426=(24,26)
+  op1923=(19,23)
+  freg1923=(19,23)
+  reg1923=(19,23)
+  sfr1923=(19,23)
+  freg1418=(14,18)
+  reg1418=(14,18)
+  sfr1418=(14,18)
+  op1418=(14,18)
+  M1=(13,13)
+  m3=(13,13)
+  m2=(12,12)
+  m1=(11,11)
+  op0710=(7,10)
+  s2=(6,6)
+  s1=(5,5)
+  freg0004=(0,4)
+  reg0004=(0,4)
+  sfr0004=(0,4)
+  op0004=(0,4)
+  sop0212=(2,12) signed
+  t=(1,1)
+  S2=(0,0)
+  sop0223=(2,23) signed
+  op0000=(0,0)
+  mode1213=(12,13)
+  mode1011=(10,11)
+  offset0011=(0,11)
+  op0709=(7,9)
+  op0506=(5,6)
+;
+
+
+define token instr2 (32)
+  sop3263=(0,31) signed
+  op3263=(0,31)
+;
+
+attach variables [ reg0004 reg1418 reg1923 ]
+                 [ pfp sp rip r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 g0 g1 g2 g3 g4 g5 g6 g7 g8 g9 g10 g11 g12 g13 g14 fp ];
+
+attach variables [ sfr0004 sfr1418 sfr1923 ]
+                 [ sf0 sf1 sf2 sf3 sf4 sf5 sf6 sf7 sf8 sf9 sf10 sf11 sf12 sf13 sf14 sf15 sf16 sf17 sf18 sf19 sf20 sf21 sf22 sf23 sf24 sf25 sf26 sf27 sf28 sf29 sf30 sf31 ];
+
+attach variables [ freg0004 freg1418 freg1923 ]
+                 [ fp0 fp1 fp2 fp3 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
+
+
+macro f_cmp_set_ac(v0, v1) {
+	ac[2,1] = v0 f< v1;
+	ac[1,1] = v0 f== v1;
+	ac[0,1] = v0 f> v1;
+}
+
+macro s_cmp_set_ac(v0, v1) {
+	ac[2,1] = v0 s< v1;
+	ac[1,1] = v0 == v1;
+	ac[0,1] = v0 s> v1;
+}
+
+macro cmp_set_ac(v0, v1) {
+	ac[2,1] = v0 <  v1;
+	ac[1,1] = v0 == v1;
+	ac[0,1] = v0 >  v1;
+}
+
+#TODO  does it make sense to make macros for 4-byte?
+
+macro l_copy_efa_to_reg(sefa, dreg) {
+	*[register]:4 (dreg + 0x0) = *[ram]:4 (sefa + 0x0);
+	*[register]:4 (dreg + 0x4) = *[ram]:4 (sefa + 0x4);
+}
+
+macro t_copy_efa_to_reg(sefa, dreg) {
+	l_copy_efa_to_reg(sefa, dreg);
+	*[register]:4 (dreg + 0x8) = *[ram]:4 (sefa + 0x8);
+}
+
+macro q_copy_efa_to_reg(sefa, dreg) {
+	t_copy_efa_to_reg(sefa, dreg);
+	*[register]:4 (dreg + 0xc) = *[ram]:4 (sefa + 0xc);
+}
+
+macro l_copy_reg_to_efa(sreg, defa) {
+	*[ram]:4 (defa + 0x0) = *[register]:4 (sreg + 0x0);
+	*[ram]:4 (defa + 0x4) = *[register]:4 (sreg + 0x4);
+}
+
+macro t_copy_reg_to_efa(sreg, defa) {
+	l_copy_reg_to_efa(sreg, defa);
+	*[ram]:4 (defa + 0x8) = *[register]:4 (sreg + 0x8);
+}
+
+macro q_copy_reg_to_efa(sreg, defa) {
+	t_copy_reg_to_efa(sreg, defa);
+	*[ram]:4 (defa + 0xc) = *[register]:4 (sreg + 0xc);
+}
+
+macro l_copy_reg_to_reg(sreg, dreg) {
+	*[register]:4 (dreg + 0x0) = *[register]:4 (sreg + 0x0);
+	*[register]:4 (dreg + 0x4) = *[register]:4 (sreg + 0x4);
+}
+
+macro t_copy_reg_to_reg(sreg, dreg) {
+	l_copy_reg_to_reg(sreg, dreg);
+	*[register]:4 (dreg + 0x8) = *[register]:4 (sreg + 0x8);
+}
+
+macro q_copy_reg_to_reg(sreg, dreg) {
+	t_copy_reg_to_reg(sreg, dreg);
+	*[register]:4 (dreg + 0xc) = *[register]:4 (sreg + 0xc);
+}
+
+macro l_copy_efa_to_efa(sefa, defa) {
+	*[ram]:4 (defa + 0x0) = *[ram]:4 (sefa + 0x0);
+	*[ram]:4 (defa + 0x4) = *[ram]:4 (sefa + 0x4);
+}
+
+macro t_copy_efa_to_efa(sefa, defa) {
+	l_copy_efa_to_efa(sefa, defa);
+	*[ram]:4 (defa + 0x8) = *[ram]:4 (sefa + 0x8);
+}
+
+macro q_copy_efa_to_efa(sefa, defa) {
+	t_copy_efa_to_efa(sefa, defa);
+	*[ram]:4 (defa + 0xc) = *[ram]:4 (sefa + 0xc);
+}
+
+macro l_copy_lit_to_reg(slit, dreg) {
+	*[register]:4 (dreg + 0x0) = slit[0,32];
+	*[register]:4 (dreg + 0x4) = slit[32,32];
+}
+
+macro t_copy_lit_to_reg(slit, dreg) {
+	l_copy_lit_to_reg(slit, dreg);
+	*[register]:4 (dreg + 0x8) = slit[64,32];
+}
+
+macro q_copy_lit_to_reg(slit, dreg) {
+	t_copy_lit_to_reg(slit, dreg);
+	*[register]:4 (dreg + 0xc) = slit[96,32];
+}
+
+macro l_copy_reg_to_lit(sreg, dlit) {
+	dlit = zext(*[register]:4 (sreg + 0x0));
+	dlit = dlit | zext((*[register]:4 (sreg + 0x0)) << 32);
+}
+
+macro t_copy_reg_to_lit(sreg, dlit) {
+	l_copy_reg_to_lit(sreg, dlit);
+	dlit = dlit | zext((*[register]:4 (sreg + 0x0)) << 64);
+}
+
+macro q_copy_reg_to_lit(sreg, dlit) {
+	t_copy_reg_to_lit(sreg, dlit);
+	dlit = dlit | zext((*[register]:4 (sreg + 0x0)) << 96);
+}
+
+
+
+regS1:  op0004  is op0004  & m1=1 & s1=0 { local tmp:4 = op0004; export tmp; }
+regS1:  reg0004 is reg0004 & m1=0 & s1=0 { export reg0004; }
+regS1:  sfr0004 is sfr0004 & m1=0 & s1=1 { export sfr0004; }
+
+regS2:  op1418  is op1418  & m2=1 & s2=0 { local tmp:4 = op1418; export tmp; }
+regS2:  reg1418 is reg1418 & m2=0 & s2=0 { export reg1418; }
+regS2:  sfr1418 is sfr1418 & m2=0 & s2=1 { export sfr1418; }
+
+regS2l: op1418  is op1418  & m2=1 & s2=0 { local tmp:8 = op1418; export tmp; }
+regS2l: reg1418 is reg1418 & m2=0 & s2=0 { local tmp:4 = &reg1418; export *[register]:8 tmp; }
+regS2l: sfr1418 is sfr1418 & m2=0 & s2=1 { local tmp:4 = &sfr1418; export *[register]:8 tmp; }
+
+regSD:  reg1923 is reg1923 & m3=0 { export reg1923; }
+#TODO  This looks awful to handle
+# regSDl: reg1923 is reg1923 & m3=0 { local tmp:4 = &reg1923; export *[register]:8 tmp; }
+# regSDq: reg1923 is reg1923 & m3=0 { local tmp:4 = &reg1923; export *[register]:12 tmp; }
+
+#SEE  Encoding of Src1 and Src2 Fields in REG Format
+#     Same encoding is used for COBR
+#TODO The FP encoding still looks off and probably needs the same table look ups
+#     as fregS1
+cobrS1: reg1923 is reg1923 & M1=0 & S2=0 { export reg1923; }
+cobrS2: reg1418 is reg1418 & M1=0 & S2=0 { export reg1418; }
+cobrSD: reg1923 is reg1923 & M1=0 & S2=0 { export reg1923; }
+
+cobrS1: op1923  is op1923  & M1=1 & S2=0 { local tmp:4 = op1923; export tmp; }
+cobrS2: reg1418 is reg1418 & M1=1 & S2=0 { export reg1418; }
+
+cobrS1: sfr1923 is sfr1923 & M1=0 & S2=1 { export sfr1923; }
+cobrS2: sfr1418 is sfr1418 & M1=0 & S2=1 { export sfr1418; }
+#TODO  not sure if this can happend
+cobrSD: sfr1923 is sfr1923 & M1=0 & S2=1 { export sfr1923; }
+
+cobrS1: op1923  is op1923  & M1=1 & S2=1 & t=0 { local tmp:4 = op1923; export tmp; }
+cobrS2: sfr1418 is sfr1418 & M1=1 & S2=1 & t=0 { export sfr1418; }
+
+
+# reals: 1 reg (Real), 2 regs (Long Real), or 3 regs (Extended Real)
+
+#TODO  int2float is not correct, maybe float2float?
+fregS1:  reg0004 is  reg0004 & m1=0 & s1=0 { local tmp:10 = int2float(reg0004); export tmp; }
+fregS1: freg0004 is freg0004 & m1=1 & s1=0 & op0004 < 4 { local tmp:10 = freg0004; export tmp; }
+fregS1: "+0.0" is m1=1 & s1=0 & op0004=0x10 { local tmp:10 = int2float(0:1); export tmp; }
+fregS1: "+1.0" is m1=1 & s1=0 & op0004=0x16 { local tmp:10 = int2float(1:1); export tmp; }
+fregS1l:  reg0004 is  reg0004 & m1=0 & s1=0 { local reg:4 = &reg0004; local val:8 = *[register]:8 reg; local tmp:10 = int2float(val); export tmp; }
+fregS1l: freg0004 is freg0004 & m1=1 & s1=0 & op0004 < 4 { local tmp:10 = freg0004; export tmp; }
+fregS1l: "+0.0" is m1=1 & s1=0 & op0004=0x10 { local tmp:10 = int2float(0:1); export tmp; }
+fregS1l: "+1.0" is m1=1 & s1=0 & op0004=0x16 { local tmp:10 = int2float(1:1); export tmp; }
+fregS1e:  reg0004 is  reg0004 & m1=0 & s1=0 { local reg:4 = &reg0004; local val:12 = *[register]:12 reg; local tmp:10 = int2float(val); export tmp; }
+fregS1e: freg0004 is freg0004 & m1=1 & s1=0 & op0004 < 4 { local tmp:10 = freg0004; export tmp; }
+fregS1e: "+0.0" is m1=1 & s1=0 & op0004=0x10 { local tmp:10 = int2float(0:1); export tmp; }
+fregS1e: "+1.0" is m1=1 & s1=0 & op0004=0x16 { local tmp:10 = int2float(1:1); export tmp; }
+
+
+fregS2:  reg1418 is  reg1418 & m2=0 & s2=0 { local tmp:10 = int2float(reg1418); export tmp; }
+fregS2: freg1418 is freg1418 & m2=1 & s2=0 & op1418 < 4 { local tmp:10 = freg1418; export tmp; }
+fregS2: "+0.0" is m2=1 & s2=0 & op1418=0x10 { local tmp:10 = int2float(0:1); export tmp; }
+fregS2: "+1.0" is m2=1 & s2=0 & op1418=0x16 { local tmp:10 = int2float(1:1); export tmp; }
+fregS2l:  reg1418 is  reg1418 & m2=0 & s2=0 { local reg:4 = &reg1418; local val:8 = *[register]:8 reg; local tmp:10 = int2float(val); export tmp; }
+fregS2l: freg1418 is freg1418 & m2=1 & s2=0 & op1418 < 4 { local tmp:10 = freg1418; export tmp; }
+fregS2l: "+0.0" is m2=1 & s2=0 & op1418=0x10 { local tmp:10 = int2float(0:1); export tmp; }
+fregS2l: "+1.0" is m2=1 & s2=0 & op1418=0x16 { local tmp:10 = int2float(1:1); export tmp; }
+fregS2e:  reg1418 is  reg1418 & m2=0 & s2=0 { local reg:4 = &reg1418; local val:12 = *[register]:12 reg; local tmp:10 = int2float(val); export tmp; }
+fregS2e: freg1418 is freg1418 & m2=1 & s2=0 & op1418 < 4 { local tmp:10 = freg1418; export tmp; }
+fregS2e: "+0.0" is m2=1 & s2=0 & op1418=0x10 { local tmp:10 = int2float(0:1); export tmp; }
+fregS2e: "+1.0" is m2=1 & s2=0 & op1418=0x16 { local tmp:10 = int2float(1:1); export tmp; }
+
+#TODO  This looks awful to handle
+fregSD:  reg1923 is  reg1923 & m3=0 { local tmp:4 = &reg1923; export *[register]:10 tmp; }
+fregSD: freg1923 is freg1923 & m3=1 & op1923 < 4 { export freg1923; }
+
+fregSDl:  reg1923 is  reg1923 & m3=0 { local tmp:10 = int2float(reg1923); export tmp; }
+fregSDl: freg1923 is freg1923 & m3=1 & op1923 < 4 { local tmp:10 = freg1923; export tmp; }
+
+fregSDe:  reg1923 is  reg1923 & m3=0 { local tmp:10 = int2float(reg1923); export tmp; }
+fregSDe: freg1923 is freg1923 & m3=1 & op1923 < 4 { local tmp:10 = freg1923; export tmp; }
+
+
+scale: imm is (op0709=0|op0709=1|op0709=2|op0709=3|op0709=4) & op0709 [ imm = 1 << op0709; ] { export *[const]:4 imm; }
+
+efa: offset0011 is offset0011 & mode1213=0 { local tmp:4 = offset0011; export tmp;}
+efa: op3263 is mode1213=3 & mode1011=0 & op0506=0 ; op3263 { local tmp:4 = op3263; export tmp; }
+
+efa: offset0011 (reg1418) is offset0011 & reg1418 & mode1213=2 { local tmp:4 = reg1418 + offset0011; export tmp; }
+efa: (reg1418) is reg1418 & mode1213=1 & mode1011=0 & op0506=0 { local tmp:4 = reg1418; export tmp; }
+efa: reloc (ip) is ip & mode1213=1 & mode1011=1 & op0506=0 ; sop3263 [ reloc = sop3263 + 8; ] { local tmp:4 = reloc + inst_start; export tmp; }
+efa: (reg1418) [reg0004 * scale] is scale & reg0004 & reg1418  & mode1213=1 & mode1011=3 & op0506=0 { local tmp:4 = (scale * reg0004) + reg1418; export tmp; }
+efa: sop3263 (reg1418) is reg1418 & mode1213=3 & mode1011=1 & op0506=0 ; sop3263 { local tmp:4 = sop3263 + reg1418; export tmp; }
+efa: sop3263 [reg0004 * scale] is reg0004 & scale & mode1213=3 & mode1011=2 & op0506=0 ; sop3263 { local tmp:4 = sop3263 + (reg0004 * scale); export tmp; }
+efa: sop3263 (reg1418) [reg0004 * scale] is reg1418 & reg0004 & scale & mode1213=3 & mode1011=3 & op0506=0 ; sop3263 { local tmp:4 = sop3263 + reg1418 + (reg0004 * scale); export tmp; }
+
+
+
+disp0212: reloc is sop0212 [ reloc = ((sop0212 << 2) + inst_start) & 0xfffffffc; ] { export *[ram]:4 reloc; }
+
+disp0223: reloc is sop0223 [ reloc = ((sop0223 << 2) + inst_start) & 0xfffffffc; ] { export *[ram]:4 reloc; }
+
+# conditions
+cc: "no" is op2426=0 { local tmp:1 = 0; export tmp; }
+cc: "g"  is op2426=1 { local tmp:1 = (ac[0,1] == 1); export tmp; }
+cc: "e"  is op2426=2 { local tmp:1 = (ac[1,1] == 1); export tmp; }
+cc: "ge" is op2426=3 { local tmp:1 = ((ac[0,1] | ac[1,1]) == 1); export tmp; }
+cc: "l"  is op2426=4 { local tmp:1 = (ac[2,1] == 1); export tmp; }
+cc: "ne" is op2426=5 { local tmp:1 = ((ac[0,1] | ac[2,1]) == 1); export tmp; }
+cc: "le" is op2426=6 { local tmp:1 = ((ac[1,1] | ac[2,1]) == 1); export tmp; }
+cc: "o"  is op2426=7 { local tmp:1 = 1; export tmp; }
+
+
+define pcodeop atan;
+define pcodeop cos;
+define pcodeop sin;
+define pcodeop tan;
+define pcodeop log2;
+define pcodeop flushreg;
+define pcodeop syscall;
+define pcodeop syncf;
+define pcodeop scanbit;
+define pcodeop spanbit;
+define pcodeop send;
+define pcodeop fault;
+
+# addc
+:addc regS1, regS2, regSD is op2431=0x5b & op0710=0x0 & regS1 & regS2 & regSD
+{
+	local tmp:5 = zext(regS1) + zext(regS2) + zext(ac[1,1]);
+	ac[0,3] = 0;
+	ac[0,1] = (regS1[31,1] == regS2[31,1]) & (regS2[31,1] != tmp[31,1]);
+	ac[1,1] = tmp[32,1];
+	regSD = tmp:4;
+}
+
+
+# addi
+:addi regS1, regS2, regSD is op2431=0x59 & op0710=0x1 & regS1 & regS2 & regSD
+{
+	ac[8,1] = scarry(regS1, regS2);
+	regSD = regS1 + regS2;
+}
+
+
+# addino      op2431=0x78
+# addig       op2431=0x79
+# addie       op2431=0x7a
+# addige      op2431=0x7b
+# addil       op2431=0x7c
+# addine      op2431=0x7d
+# addile      op2431=0x7e
+# addio       op2431=0x7f
+:addi^cc regS1, regS2, regSD is op2731=0b01111 & cc & op0710=0x1 & regS1 & regS2 & regSD
+{
+	if (!cc) goto inst_next;
+	ac[8,1] = scarry(regS1, regS2);
+	regSD = regS1 + regS2;
+}
+
+
+# addo
+:addo regS1, regS2, regSD is op2431=0x59 & op0710=0x0 & regS1 & regS2 & regSD
+{
+	regSD = regS1 + regS2;
+}
+
+
+# addono      op2431=0x78
+# addog       op2431=0x79
+# addoe       op2431=0x7a
+# addoge      op2431=0x7b
+# addol       op2431=0x7c
+# addone      op2431=0x7d
+# addole      op2431=0x7e
+# addoo       op2431=0x7f
+:addo^cc regS1, regS2, regSD is op2731=0b01111 & cc & op0710=0x0 & regS1 & regS2 & regSD
+{
+	if (!cc) goto inst_next;
+	regSD = regS1 + regS2;
+}
+
+
+# addr
+:addr fregS1, fregS2, fregSD is op2431=0x78 & op0710=0xf & fregS1 & fregS2 & fregSD
+{
+	fregSD = fregS1 f+ fregS2;
+}
+
+
+# addrl  8,8,8
+:addrl fregS1l, fregS2l, fregSDl is op2431=0x79 & op0710=0xf & fregS1l & fregS2l & fregSDl
+{
+	fregSDl = fregS1l f+ fregS2l;
+}
+
+
+# alterbit
+:alterbit regS1, regS2, regSD is op2431=0x58 & op0710=0xf & regS1 & regS2 & regSD
+{
+	local bitpos = 1 << regS1;
+	local tmp0:4 = regS2 & ~bitpos;
+	local tmp1:4 = regS2 | bitpos;
+	regSD = tmp1;
+	if (ac[1,1]) goto inst_next;
+	regSD = tmp0;
+}
+
+
+# and
+:and regS1, regS2, regSD is op2431=0x58 & op0710=0x1 & regS1 & regS2 & regSD
+{
+	regSD = regS2 & regS1;
+}
+
+
+# andnot
+:andnot regS1, regS2, regSD is op2431=0x58 & op0710=0x2 & regS1 & regS2 & regSD
+{
+	regSD = regS2 & ~regS1;
+}
+
+
+# atadd
+:atadd regS1, regS2, regSD is op2431=0x61 & op0710=0x2 & regS1 & regS2 & regSD
+{
+	local addr:4 = regS1 & 0xfffffffc;
+	local tmp:4 = *[ram]:4 addr;
+	*[ram]:4 addr = (tmp + regS2);
+	regSD = tmp;
+}
+
+
+# atanr
+:atanr fregS1, fregS2, fregSD is op2431=0x68 & op0710=0x0 & fregS1 & fregS2 & fregSD
+{
+	local tmp:10 = fregS2 f/ fregS1;
+	fregSD = atan(tmp);
+}
+
+
+# atanrl  8,8,8
+:atanrl fregS1l, fregS2l, fregSDl is op2431=0x69 & op0710=0x0 & fregS1l & fregS2l & fregSDl
+{
+	local tmp:10 = fregS2l f/ fregS1l;
+	fregSDl = atan(tmp);
+}
+
+
+# atmod
+:atmod regS1, regS2, regSD is op2431=0x61 & op0710=0x0 & regS1 & regS2 & regSD
+{
+	local addr = regS1 & 0xfffffffc;
+	local tmp:4 = *[ram]:4 addr;
+	*[ram]:4 addr = (tmp & ~regS2) | (regSD & regS2);
+	regSD = tmp;
+}
+
+
+# b
+:b disp0223 is op2431=0x8 & op0000=0x0 & disp0223
+{
+	goto disp0223;
+}
+
+
+# bal
+:bal disp0223 is op2431=0xb & op0000=0x0 & disp0223
+{
+	g14 = inst_next;
+	goto disp0223;
+}
+
+
+# balx
+:balx efa, reg1923 is ( op2431=0x85 & reg1923 ) ... & efa
+{
+	local ea:4 = efa;
+	reg1923 = inst_next;
+	goto [ea];
+}
+
+
+# bbc
+:bbc cobrS1, cobrS2, disp0212 is op2431=0x30 & cobrS1 & cobrS2 & disp0212
+{
+	ac[0,3] = 2;
+	if (((1<<cobrS1) & cobrS2) != 0) goto disp0212;
+	ac[1,1] = 0;
+}
+
+
+# bbs
+:bbs cobrS1, cobrS2, disp0212 is op2431=0x37 & cobrS1 & cobrS2 & disp0212
+{
+	ac[0,3] = 2;
+	if (((1<<cobrS1) & cobrS2) == 0) goto disp0212;
+	ac[1,1] = 0;
+}
+
+
+# bno      op2431=0x10
+# bg       op2431=0x11
+# be       op2431=0x12
+# bge      op2431=0x13
+# bl       op2431=0x14
+# bne      op2431=0x15
+# ble      op2431=0x16
+# bo       op2431=0x17
+:b^cc disp0223 is op2731=0b00010 & cc & op0000=0x0 & disp0223
+{
+	if (cc) goto disp0223;
+}
+
+
+# bswap
+:bswap regS1, regSD is op2431=0x5a & op0710=0xd & regS1 & regSD
+{
+	local tmp:4 = regS1;
+	regSD = ((tmp & 0xff) << 24) | ((tmp & 0xff00) << 8) | ((tmp & 0xff0000) >> 8) | ((tmp & 0xff000000) >> 24);
+}
+
+
+# bx
+:bx efa is ( op2431=0x84 ) ... & efa
+{
+	goto [efa];
+}
+
+# Local Call Operation  ( call or callx )
+# 1. Stores the RIP in current local-register r2.
+# 2. Allocates a new set of local registers for the called procedure.
+# 3. Allocates a new frame on the procedure stack.
+# 4. Changes the instruction pointer to point to the first instruction in the called procedure.
+# 5. Stores the PFP in new local-register rOo
+# 6. Stores the FP for the new frame in global register g15.
+# 7. Allocates a save area for the new local registers in the new stack frame.
+# 8. Stores the SP in new local-register r1
+
+# Local Return Operation
+# 1. Sets the FP in global register g15 to the value of the PFP in current local-register rOo
+# 2. Deallocates the current local registers for the procedure that initiated the return and
+#    switches to the local registers assigned to the procedure being returned to.
+# 3. Deallocates the stack frame for the procedure that initiated the return.
+# 4. Sets the IP to the value of the RIP in new local~register r2.
+
+macro alloc_register_set() {
+	local regtmp = &pfp;
+	local alignfp = fp & 0xffffffc0;
+	*[ram]:0x40 alignfp = *[register]:0x40 regtmp;
+}
+
+macro dealloc_register_set() {
+	local regtmp = &pfp;
+	local alignfp = fp & 0xffffffc0;
+	*[register]:0x40 regtmp = *[ram]:0x40 alignfp;
+}
+
+
+# call
+:call disp0223 is op2431=0x9 & op0000=0x0 & disp0223
+{
+	local temp:4 = (sp + ($(SALIGN) * 16 - 1)) & ~($(SALIGN) * 16 - 1);
+	rip = inst_next;
+	alloc_register_set();
+	ip = disp0223;
+	pfp = fp;
+	fp = temp;
+	sp = temp + 64;
+	call disp0223;
+}
+
+
+# calls
+:calls regS1 is op2431=0x66 & op0710=0x0 & regS1
+{
+	#TODO  impl
+	syscall(regS1);
+}
+
+
+# callx
+:callx efa is ( op2431=0x86 ) ... & efa
+{
+	local temp:4 = (sp + ($(SALIGN) * 16 - 1)) & ~($(SALIGN) * 16 - 1);
+	local targ:4 = efa;
+	rip = inst_next;
+	alloc_register_set();
+	ip = targ;
+	pfp = fp;
+	fp = temp;
+	sp = temp + 64;
+	call [targ];
+}
+
+
+# chkbit
+:chkbit regS1, regS2 is op2431=0x5a & op0710=0xe & regS1 & regS2
+{
+	ac[0,3] = 0;
+	ac[1,1] = 0 != (regS2 & (1 << regS1));
+}
+
+
+# arithmetic-status bits 3 to 6
+# s -sign
+# classr
+:classr fregS1 is op2431=0x68 & op0710=0xf & fregS1 unimpl
+
+
+# classrl  8
+:classrl fregS1l is op2431=0x69 & op0710=0xf & fregS1l unimpl
+
+
+# clrbit
+:clrbit regS1, regS2, regSD is op2431=0x58 & op0710=0xc & regS1 & regS2 & regSD
+{
+	regSD = regS2 & ~(1 << regS1);
+}
+
+
+# cmpdeci
+:cmpdeci regS1, regS2, regSD is op2431=0x5a & op0710=0x7 & regS1 & regS2 & regSD
+{
+	s_cmp_set_ac(regS1, regS2);
+	regSD = regS2 - 1;
+}
+
+
+# cmpdeco
+:cmpdeco regS1, regS2, regSD is op2431=0x5a & op0710=0x6 & regS1 & regS2 & regSD
+{
+	cmp_set_ac(regS1, regS2);
+	regSD = regS2 - 1;
+}
+
+
+# cmpi
+:cmpi regS1, regS2 is op2431=0x5a & op0710=0x1 & regS1 & regS2
+{
+	s_cmp_set_ac(regS1, regS2);
+}
+
+
+# cmpib
+:cmpib regS1, regS2 is op2431=0x59 & op0710=0x5 & regS1 & regS2
+{
+	s_cmp_set_ac(regS1:1, regS2:1);
+}
+
+
+# cmpibno      op2431=0x38
+# cmpibg       op2431=0x39
+# cmpibe       op2431=0x3a
+# cmpibge      op2431=0x3b
+# cmpibl       op2431=0x3c
+# cmpibne      op2431=0x3d
+# cmpible      op2431=0x3e
+# cmpibo       op2431=0x3f
+:cmpib^cc cobrS1, cobrS2, disp0212 is op2731=0b00111 & cc & cobrS1 & cobrS2 & disp0212
+{
+	s_cmp_set_ac(cobrS1, cobrS2);
+	build cc;
+	if (cc) goto disp0212;
+}
+
+
+# cmpinci
+:cmpinci regS1, regS2, regSD is op2431=0x5a & op0710=0x5 & regS1 & regS2 & regSD
+{
+	s_cmp_set_ac(regS1, regS2);
+	regSD = regS2 + 1;
+}
+
+
+# cmpinco
+:cmpinco regS1, regS2, regSD is op2431=0x5a & op0710=0x4 & regS1 & regS2 & regSD
+{
+	cmp_set_ac(regS1, regS2);
+	regSD = regS2 + 1;
+}
+
+
+# cmpis
+:cmpis regS1, regS2 is op2431=0x59 & op0710=0x7 & regS1 & regS2
+{
+	s_cmp_set_ac(regS1:2, regS2:2);
+}
+
+
+# cmpo
+:cmpo regS1, regS2 is op2431=0x5a & op0710=0x0 & regS1 & regS2
+{
+	cmp_set_ac(regS1, regS2);
+}
+
+
+# cmpob
+:cmpob regS1, regS2 is op2431=0x59 & op0710=0x4 & regS1 & regS2
+{
+	cmp_set_ac(regS1:1, regS2:1);
+}
+
+
+# cmpobno      op2431=0x30
+# cmpobg       op2431=0x31
+# cmpobe       op2431=0x32
+# cmpobge      op2431=0x33
+# cmpobl       op2431=0x34
+# cmpobne      op2431=0x35
+# cmpoble      op2431=0x36
+# cmpobo       op2431=0x37
+:cmpob^cc cobrS1, cobrS2, disp0212 is op2731=0b00110 & cc & cobrS1 & cobrS2 & disp0212
+{
+	cmp_set_ac(cobrS1, cobrS2);
+	build cc;
+	if (cc) goto disp0212;
+}
+
+
+# cmpor
+:cmpor fregS1, fregS2 is op2431=0x68 & op0710=0x4 & fregS1 & fregS2
+{
+	ac[0,3] = 0;
+	if (nan(fregS1) || nan(fregS2)) goto inst_next;
+	f_cmp_set_ac(fregS1, fregS2);
+}
+
+
+# cmporl  8,8
+:cmporl fregS1l, fregS2l is op2431=0x69 & op0710=0x4 & fregS1l & fregS2l
+{
+	ac[0,3] = 0;
+	if (nan(fregS1l) || nan(fregS2l)) goto inst_next;
+	f_cmp_set_ac(fregS1l, fregS2l);
+}
+
+
+# cmpos
+:cmpos regS1, regS2 is op2431=0x59 & op0710=0x6 & regS1 & regS2
+{
+	s_cmp_set_ac(regS1:2, regS2:2);
+}
+
+
+# cmpr
+:cmpr fregS1, fregS2 is op2431=0x68 & op0710=0x5 & fregS1 & fregS2
+{
+	#TODO  figure out the difference between cmpor
+	ac[0,3] = 0;
+	if (nan(fregS1) || nan(fregS2)) goto inst_next;
+	f_cmp_set_ac(fregS1, fregS2);
+}
+
+
+# cmprl  8,8
+:cmprl fregS1l, fregS2l is op2431=0x69 & op0710=0x5 & fregS1l & fregS2l
+{
+	#TODO  figure out the difference between cmpor
+	ac[0,3] = 0;
+	if (nan(fregS1l) || nan(fregS2l)) goto inst_next;
+	f_cmp_set_ac(fregS1l, fregS2l);
+}
+
+
+# cmpstr
+:cmpstr regS1, regS2, regSD is op2431=0x60 & op0710=0x3 & regS1 & regS2 & regSD
+{
+	local length:4 = regSD;
+	local pos:4 = 0;
+	ac[0,3] = 2;
+    <next_byte>
+	if (length == pos) goto inst_next;
+	pos = pos + 1;
+	local tmpA:1 = *[ram]:1 (regS1 + pos);
+	local tmpB:1 = *[ram]:1 (regS2 + pos);
+	if (tmpA == tmpB) goto <next_byte>;
+	ac[0,1] = tmpA > tmpB;
+	ac[2,1] = tmpA < tmpB;
+}
+
+
+# concmpi
+:concmpi regS1, regS2 is op2431=0x5a & op0710=0x3 & regS1 & regS2
+{
+	if (ac[2,1]) goto inst_next;
+	ac[2,1] = 0;
+	ac[1,1] = regS1 s<= regS2;
+	ac[0,1] = regS1 s> regS2;
+}
+
+
+# concmpo
+:concmpo regS1, regS2 is op2431=0x5a & op0710=0x2 & regS1 & regS2
+{
+	if (ac[2,1]) goto inst_next;
+	ac[2,1] = 0;
+	ac[1,1] = regS1 <= regS2;
+	ac[0,1] = regS1 > regS2;
+}
+
+
+# condrec
+:condrec regS1, regSD is op2431=0x64 & op0710=0x6 & regS1 & regSD unimpl
+
+
+# condwait
+:condwait regS1 is op2431=0x66 & op0710=0x8 & regS1 unimpl
+
+
+# cosr
+:cosr fregS1, fregSD is op2431=0x68 & op0710=0xd & fregS1 & fregSD
+{
+	fregSD = cos(fregS1);
+}
+
+
+# cosrl  8,8
+:cosrl fregS1l, fregSDl is op2431=0x69 & op0710=0xd & fregS1l & fregSDl
+{
+	fregSDl = cos(fregS1l);
+}
+
+
+# cpyrsre
+:cpyrsre fregS1e, fregS2e, fregSDe is op2431=0x6e & op0710=0x3 & fregS1e & fregS2e & fregSDe
+{
+	local tmp = fregS2e;
+	fregSDe = abs(fregS1e);
+	if (tmp f< 0) goto inst_next;
+	fregSDe = f- fregSDe;
+}
+
+
+# cpysre
+:cpysre fregS1e, fregS2e, fregSDe is op2431=0x6e & op0710=0x2 & fregS1e & fregS2e & fregSDe
+{
+	local tmp = fregS2e;
+	fregSDe = abs(fregS1e);
+	if (tmp f> 0) goto inst_next;
+	fregSDe = f- fregSDe;
+}
+
+
+# cvtadr  4,8
+:cvtadr regS1, regSD is op2431=0x67 & op0710=0x2 & regS1 & regSD unimpl
+
+
+# cvtilr
+:cvtilr regS1, fregSDl is op2431=0x67 & op0710=0x5 & regS1 & fregSDl & m1=0
+{
+	local tmp:8 = 0;
+	l_copy_reg_to_lit(regS1, tmp);
+	fregSDl = int2float(tmp);
+}
+:cvtilr op0004, fregSDl is op2431=0x67 & op0710=0x5 & op0004 & fregSDl & m1=1
+{
+	local tmp:8 = op0004;
+	fregSDl = int2float(tmp);
+}
+
+
+# cvtir
+:cvtir regS1, fregSD is op2431=0x67 & op0710=0x4 & regS1 & fregSD
+{
+	fregSD = int2float(regS1);
+}
+
+
+# cvtri
+:cvtri fregS1, regSD is op2431=0x6c & op0710=0x0 & fregS1 & regSD
+{
+	#TODO  rounding
+	#TODO  same sizes
+	local tmp:10 = floor(fregS1);
+	regSD = tmp:4;
+}
+
+
+# cvtril  4,8
+:cvtril fregS1l, regSD is op2431=0x6c & op0710=0x1 & fregS1l & regSD
+{
+	#TODO  rounding
+	#TODO  same sizes
+	local tmp:10 = floor(fregS1l);
+	regSD = tmp:4;
+}
+
+# cvtzri
+:cvtzri fregS1, regSD is op2431=0x6c & op0710=0x2 & fregS1 & regSD
+{
+	regSD = trunc(fregS1);
+}
+
+
+# cvtzril  4,8
+:cvtzril fregS1l, regSD is op2431=0x6c & op0710=0x3 & fregS1l & regSD
+{
+	regSD = trunc(fregS1l);
+}
+
+
+# daddc
+:daddc regS1, regS2, regSD is op2431=0x64 & op0710=0x2 & regS1 & regS2 & regSD
+{
+	local tmp:4 = (0xf & regS1) + (0xf & regS2) + zext(ac[1,1]);
+	regSD = (0xfffffff0 & regS2) | (0xf & tmp);
+	ac[2,1] = 0;
+	ac[1,1] = tmp[4,1];
+	ac[0,1] = 0;
+}
+
+
+# dcctl
+:dcctl regS1, regS2, regSD is op2431=0x65 & op0710=0xc & regS1 & regS2 & regSD unimpl
+
+
+# dcinva  1
+:dcinva efa is ( op2431=0xac ) ... & efa unimpl
+
+
+# divi
+:divi regS1, regS2, regSD is op2431=0x74 & op0710=0xb & regS1 & regS2 & regSD
+{
+	#TODO  flags
+	regSD = regS2 s/ regS1;
+}
+
+
+# divo
+:divo regS1, regS2, regSD is op2431=0x70 & op0710=0xb & regS1 & regS2 & regSD
+{
+	regSD = regS2 / regS1;
+}
+
+
+# divr
+:divr fregS1, fregS2, fregSD is op2431=0x78 & op0710=0xb & fregS1 & fregS2 & fregSD
+{
+	fregSD = fregS2 f/ fregS1;
+}
+
+
+# divrl  8,8,8
+:divrl fregS1l, fregS2l, fregSDl is op2431=0x79 & op0710=0xb & fregS1l & fregS2l & fregSDl
+{
+	fregSDl = fregS2l f/ fregS1l;
+}
+
+
+# dmovt
+:dmovt regS1, regSD is op2431=0x64 & op0710=0x4 & regS1 & regSD
+{
+	regSD = regS1;
+	ac[2,1] = 0;
+	ac[1,1] = (regSD[0,8] < 0x30 && regSD[0,8] > 0x39);
+	ac[0,1] = 0;
+}
+
+
+# dsubc
+:dsubc regS1, regS2, regSD is op2431=0x64 & op0710=0x3 & regS1 & regS2 & regSD
+{
+	local tmp:4 = (0xf & regS2) - (0xf & regS1) - 1 + zext(ac[1,1]);
+	regSD = (0xfffffff0 & regS2) | (0xf & tmp);
+	ac[2,1] = 0;
+	ac[1,1] = tmp[31,1];
+	ac[0,1] = 0;
+}
+
+
+# ediv  4,8,4
+:ediv regS1, regS2l, regSD is op2431=0x67 & op0710=0x1 & regS1 & regS2l & regSD
+{
+	local dividend:8 = regS2l;
+	local divisor:8 = zext(regS1);
+	local remainder:8 = dividend % divisor;
+	local quotient:8 = dividend / divisor;
+	regSD = remainder:4;
+	local dst:4 = &regSD;
+	*[register]:4 (dst + 4) = quotient:4;
+}
+
+
+# emul  4,4,8
+:emul regS1, regS2, regSD is op2431=0x67 & op0710=0x0 & regS1 & regS2 & regSD
+{
+	local tmp:8 = zext(regS1) * zext(regS2);
+	local dst:4 = &regSD;
+	*[register]:8 dst = tmp;
+}
+
+
+# eshro
+:eshro regS1, regS2l, regSD is op2431=0x5d & op0710=0x8 & regS1 & regS2l & regSD
+{
+	local tmp:8 = regS2l >> regS1[0,5];
+	regSD = tmp:4;
+}
+
+# expr
+:expr fregS1, fregSD is op2431=0x68 & op0710=0x9 & fregS1 & fregSD unimpl
+
+
+# exprl  8,8
+:exprl fregS1l, fregSDl is op2431=0x69 & op0710=0x9 & fregS1l & fregSDl unimpl
+
+
+# extract
+:extract regS1, regS2, regSD is op2431=0x65 & op0710=0x1 & regS1 & regS2 & regSD unimpl
+
+
+
+
+# faultno      op2431=0x18
+# faultg       op2431=0x19
+# faulte       op2431=0x1a
+# faultge      op2431=0x1b
+# faultl       op2431=0x1c
+# faultne      op2431=0x1d
+# faultle      op2431=0x1e
+# faulto       op2431=0x1f
+:fault^cc is op2731=0b00011 & cc & op0000=0x0
+{
+	#TODO  this is probably super broken
+	if (!cc) goto inst_next;
+	fault();
+}
+
+
+# fill
+:fill regS1, regS2, regSD is op2431=0x61 & op0710=0x7 & regS1 & regS2 & regSD unimpl
+
+
+# flushreg
+:flushreg  is op2431=0x66 & op0710=0xd
+{
+	# all local-register sets except the current, written to associate stack frame
+	flushreg();
+}
+
+
+# fmark
+:fmark  is op2431=0x66 & op0710=0xc unimpl
+
+
+# halt
+:halt regS1 is op2431=0x65 & op0710=0xd & regS1 unimpl
+
+
+# icctl
+:icctl regS1, regS2, regSD is op2431=0x65 & op0710=0xb & regS1 & regS2 & regSD unimpl
+
+
+# inspacc
+:inspacc regS1, regSD is op2431=0x61 & op0710=0x3 & regS1 & regSD unimpl
+
+
+# intctl
+:intctl regS1, regSD is op2431=0x65 & op0710=0x8 & regS1 & regSD unimpl
+
+
+# intdis
+:intdis  is op2431=0x5b & op0710=0x4 unimpl
+
+
+# inten
+:inten  is op2431=0x5b & op0710=0x5 unimpl
+
+
+# ld
+:ld efa, reg1923 is ( op2431=0x90 & reg1923 ) ... & efa
+{
+	reg1923 = *[ram]:4 efa;
+}
+
+
+# lda
+:lda efa, reg1923 is ( op2431=0x8c & reg1923 ) ... & efa
+{
+	reg1923 = efa;
+}
+
+
+# ldib
+:ldib efa, reg1923 is ( op2431=0xc0 & reg1923 ) ... & efa
+{
+	reg1923 = sext(*[ram]:1 efa);
+}
+
+
+# ldis
+:ldis efa, reg1923 is ( op2431=0xc8 & reg1923 ) ... & efa
+{
+	reg1923 = sext(*[ram]:2 efa);
+}
+
+
+# ldl
+:ldl efa, reg1923 is ( op2431=0x98 & reg1923 ) ... & efa
+{
+	local dst:4 = &reg1923;
+	l_copy_efa_to_reg(efa, dst);
+}
+
+
+# ldob
+:ldob efa, reg1923 is ( op2431=0x80 & reg1923 ) ... & efa
+{
+	reg1923 = zext(*[ram]:1 efa);
+}
+
+
+# ldos
+:ldos efa, reg1923 is ( op2431=0x88 & reg1923 ) ... & efa
+{
+	reg1923 = zext(*[ram]:2 efa);
+}
+
+
+# ldphy
+:ldphy regS1, regSD is op2431=0x61 & op0710=0x4 & regS1 & regSD unimpl
+
+
+# ldq
+:ldq efa, reg1923 is ( op2431=0xb0 & reg1923 ) ... & efa
+{
+	local dst:4 = &reg1923;
+	q_copy_efa_to_reg(efa, dst);
+}
+
+
+# ldt
+:ldt efa, reg1923 is ( op2431=0xa0 & reg1923 ) ... & efa
+{
+	local dst:4 = &reg1923;
+	t_copy_efa_to_reg(efa, dst);
+}
+
+
+# ldtime  8
+:ldtime regSD is op2431=0x67 & op0710=0x3 & regSD unimpl
+
+
+# logbnr
+:logbnr fregS1, fregSD is op2431=0x68 & op0710=0xa & fregS1 & fregSD
+{
+	fregSD = log2(fregS1);
+}
+
+
+# logbnrl  8,8
+:logbnrl fregS1l, fregSDl is op2431=0x69 & op0710=0xa & fregS1l & fregSDl
+{
+	fregSDl = log2(fregS1l);
+}
+
+
+# logepr
+:logepr fregS1, fregS2, fregSD is op2431=0x68 & op0710=0x1 & fregS1 & fregS2 & fregSD
+{
+	fregSD = fregS2 f* log2(fregS1 f+ 1);
+}
+
+
+# logeprl  8,8,8
+:logeprl fregS1l, fregS2l, fregSDl is op2431=0x69 & op0710=0x1 & fregS1l & fregS2l & fregSDl
+{
+	fregSDl = fregS2l f* log2(fregS1l f+ 1);
+}
+
+
+# logr
+:logr fregS1, fregS2, fregSD is op2431=0x68 & op0710=0x2 & fregS1 & fregS2 & fregSD
+{
+	fregSD = fregS2 f* log2(fregS1);
+}
+
+
+# logrl  8,8,8
+:logrl fregS1l, fregS2l, fregSDl is op2431=0x69 & op0710=0x2 & fregS1l & fregS2l & fregSDl
+{
+	fregSDl = fregS2l f* log2(fregS1l);
+}
+
+
+# mark
+:mark  is op2431=0x66 & op0710=0xb unimpl
+
+
+# modac
+:modac regS1, regS2, regSD is op2431=0x64 & op0710=0x5 & regS1 & regS2 & regSD
+{
+	local tmp:4 = ac;
+	ac = (regS2 & regS1) | (ac & ~regS1);
+	regSD = tmp;
+}
+
+
+# modi
+:modi regS1, regS2, regSD is op2431=0x74 & op0710=0x9 & regS1 & regS2 & regSD
+{
+	#TODO  flags
+	regSD = regS2 s/ regS1;
+}
+
+
+# modify
+:modify regS1, regS2, regSD is op2431=0x65 & op0710=0x0 & regS1 & regS2 & regSD
+{
+	regSD = (regS2 & regS1) | (regSD & ~regS1);
+}
+
+
+# modpc
+:modpc regS1, regS2, regSD is op2431=0x65 & op0710=0x5 & regS1 & regS2 & regSD
+{
+	local mask = regS2;
+	local src_dest = regS1;
+	regSD = inst_next;
+	if (0 == mask) goto inst_next;
+	regSD = (mask & src_dest) | (regSD & ~mask);
+	goto [regSD];
+}
+
+
+# modtc
+:modtc regS1, regS2, regSD is op2431=0x65 & op0710=0x4 & regS1 & regS2 & regSD
+{
+	local mode_bits:4 = 0x000000FE;
+	local event_flags:4 = 0x0F000000;
+	local temp:4 = tc;
+	local tempa:4 = (event_flags & tc & regS1) | (mode_bits & regS1);
+	tc = (tempa & regS2) | (tc & ~tempa);
+	regSD = temp;
+}
+
+
+# mov
+:mov regS1, regSD is op2431=0x5c & op0710=0xc & regS1 & regSD
+{
+	regSD = regS1;
+}
+
+
+# movl
+:movl regS1, regSD is op2431=0x5d & op0710=0xc & regS1 & regSD & m1=0
+{
+	#TODO  better handle lit vs reg
+	local dst:4 = &regSD;
+	local src:4 = &regS1;
+	l_copy_reg_to_reg(src, dst);
+}
+:movl op0004, regSD is op2431=0x5d & op0710=0xc & op0004 & regSD & m1=1
+{
+	#TODO  better handle lit vs reg
+	local dst:4 = &regSD;
+	local src:8 = op0004;
+	l_copy_lit_to_reg(src, dst);
+}
+
+
+# movq
+:movq regS1, regSD is op2431=0x5f & op0710=0xc & regS1 & regSD & m1=0
+{
+	#TODO  better handle lit vs reg
+	local dst:4 = &regSD;
+	local src:4 = &regS1;
+	q_copy_reg_to_reg(src, dst);
+}
+:movq op0004, regSD is op2431=0x5f & op0710=0xc & op0004 & regSD & m1=1
+{
+	#TODO  better handle lit vs reg
+	local dst:4 = &regSD;
+	local src:16 = op0004;
+	q_copy_lit_to_reg(src, dst);
+}
+
+
+# movqstr
+:movqstr regS1, regS2, regSD is op2431=0x60 & op0710=0x4 & regS1 & regS2 & regSD
+{
+	local length:4 = regSD;
+	local pos:4 = 0;
+    <next_byte>
+	if (pos == length) goto inst_next;
+	*[ram]:1 (regS1 + pos) = *[ram]:1 (regS2 + pos);
+	pos = pos + 1;
+	goto <next_byte>;
+}
+
+
+# movr
+:movr fregS1, fregSD is op2431=0x6c & op0710=0x9 & fregS1 & fregSD
+{
+	fregSD = fregS1;
+}
+
+
+# movre
+:movre fregS1e, fregSDe is op2431=0x6e & op0710=0x1 & fregS1e & fregSDe
+{
+	fregSDe = fregS1e;
+}
+
+
+# movrl  8,8
+:movrl fregS1l, fregSDl is op2431=0x6d & op0710=0x9 & fregS1l & fregSDl
+{
+	fregSDl = fregS1l;
+}
+
+
+# movstr
+:movstr regS1, regS2, regSD is op2431=0x60 & op0710=0x5 & regS1 & regS2 & regSD
+{
+	local length:4 = regSD;
+	local pos:4 = 0;
+	if (regS2 > regS1) goto <prev_byte>;
+    <next_byte>
+	if (pos == length) goto inst_next;
+	*[ram]:1 (regS1 + pos) = *[ram]:1 (regS2 + pos);
+	pos = pos + 1;
+	goto <next_byte>;
+    <prev_byte>
+	if (length == 0) goto inst_next;
+	length = length - 1;
+	*[ram]:1 (regS1 + length) = *[ram]:1 (regS2 + length);
+	goto <prev_byte>;
+}
+
+
+# movt
+:movt regS1, regSD is op2431=0x5e & op0710=0xc & regS1 & regSD & m1=0
+{
+	#TODO  better handle lit vs reg
+	local dst:4 = &regSD;
+	local src:4 = &regS1;
+	t_copy_reg_to_reg(src, dst);
+}
+:movt op0004, regSD is op2431=0x5e & op0710=0xc & op0004 & regSD & m1=1
+{
+	#TODO  better handle lit vs reg
+	local dst:4 = &regSD;
+	local src:12 = op0004;
+	t_copy_lit_to_reg(src, dst);
+}
+
+
+# muli
+:muli regS1, regS2, regSD is op2431=0x74 & op0710=0x1 & regS1 & regS2 & regSD
+{
+	#TODO  flags
+	regSD = regS1 * regS2;
+}
+
+
+# mulo
+:mulo regS1, regS2, regSD is op2431=0x70 & op0710=0x1 & regS1 & regS2 & regSD
+{
+	regSD = regS1 * regS2;
+}
+
+
+# mulr
+:mulr fregS1, fregS2, fregSD is op2431=0x78 & op0710=0xc & fregS1 & fregS2 & fregSD
+{
+	fregSD = fregS2 f* fregS1;
+}
+
+
+# mulrl  8,8,8
+:mulrl fregS1l, fregS2l, fregSDl is op2431=0x79 & op0710=0xc & fregS1l & fregS2l & fregSDl
+{
+	fregSDl = fregS2l f* fregS1l;
+}
+
+
+# nand
+:nand regS1, regS2, regSD is op2431=0x58 & op0710=0xe & regS1 & regS2 & regSD
+{
+	regSD = ~regS1 | ~regS2;
+}
+
+
+# nor
+:nor regS1, regS2, regSD is op2431=0x58 & op0710=0x8 & regS1 & regS2 & regSD
+{
+	regSD = ~regS2 & ~regS1;
+}
+
+
+# not
+:not regS1, regSD is op2431=0x58 & op0710=0xa & regS1 & regSD
+{
+	regSD = ~regS1;
+}
+
+
+# notand
+:notand regS1, regS2, regSD is op2431=0x58 & op0710=0x4 & regS1 & regS2 & regSD
+{
+	regSD = ~regS2 & regS1;
+}
+
+
+# notbit
+:notbit regS1, regS2, regSD is op2431=0x58 & op0710=0x0 & regS1 & regS2 & regSD
+{
+	regSD = regS2 ^ (1 << regS1);
+}
+
+
+# notor
+:notor regS1, regS2, regSD is op2431=0x58 & op0710=0xd & regS1 & regS2 & regSD
+{
+	regSD = ~regS2 | regS1;
+}
+
+
+# or
+:or regS1, regS2, regSD is op2431=0x58 & op0710=0x7 & regS1 & regS2 & regSD
+{
+	regSD = regS2 | regS1;
+}
+
+
+# ornot
+:ornot regS1, regS2, regSD is op2431=0x58 & op0710=0xb & regS1 & regS2 & regSD
+{
+	regSD = regS2 | ~regS1;
+}
+
+
+# receive
+:receive regS1, regSD is op2431=0x65 & op0710=0x6 & regS1 & regSD unimpl
+
+
+# remi
+:remi regS1, regS2, regSD is op2431=0x74 & op0710=0x8 & regS1 & regS2 & regSD
+{
+	#TODO  flags
+	regSD = regS2 s% regS2;
+}
+
+
+# remo
+:remo regS1, regS2, regSD is op2431=0x70 & op0710=0x8 & regS1 & regS2 & regSD
+{
+	regSD = regS2 % regS1;
+}
+
+
+# remr
+:remr fregS1, fregS2, fregSD is op2431=0x68 & op0710=0x3 & fregS1 & fregS2 & fregSD unimpl
+
+
+# remrl  8,8,8
+:remrl fregS1l, fregS2l, fregSDl is op2431=0x69 & op0710=0x3 & fregS1l & fregS2l & fregSDl unimpl
+
+
+# resumprcs
+:resumprcs regS1 is op2431=0x66 & op0710=0x4 & regS1 unimpl
+
+
+# ret
+:ret  is op2431=0xa & op0000=0x0
+{
+	#TODO  handle return status
+	fp = pfp;
+	dealloc_register_set();
+	ip = rip;
+	return [ip];
+}
+
+
+# rotate
+:rotate regS1, regS2, regSD is op2431=0x59 & op0710=0xd & regS1 & regS2 & regSD
+{
+	local length = regS1 % 32;
+	regSD = (regS2 << (32 - length)) | (regS2 >> length);
+}
+
+
+# roundr
+:roundr fregS1, fregSD is op2431=0x68 & op0710=0xb & fregS1 & fregSD
+{
+	fregSD = int2float(round(fregS1));
+}
+
+
+# roundrl  8,8
+:roundrl fregS1l, fregSDl is op2431=0x69 & op0710=0xb & fregS1l & fregSDl
+{
+	fregSDl = int2float(round(fregS1l));
+}
+
+
+# saveprcs
+:saveprcs  is op2431=0x66 & op0710=0x6 unimpl
+
+
+# scaler
+:scaler regS1, fregS2, fregSD is op2431=0x67 & op0710=0x7 & regS1 & fregS2 & fregSD
+{
+	local tmp:4 = 1 << regS1;
+	fregSD = fregS2 f* int2float(tmp);
+}
+
+
+# scalerl  4,8,8
+:scalerl regS1, fregS2l, fregSDl is op2431=0x67 & op0710=0x6 & regS1 & fregS2l & fregSDl
+{
+	local tmp:4 = 1 << regS1;
+	fregSDl = fregS2l f* int2float(tmp);
+}
+
+
+# scanbit
+:scanbit regS1, regSD is op2431=0x64 & op0710=0x1 & regS1 & regSD
+{
+	#TODO  this is probably similar to other count leading zero type instructions
+	regSD = 0xffffffff;
+	ac[0,3] = 0;
+	if (regS1 == 0) goto inst_next;
+	regSD = scanbit(regS1);
+	ac[0,3] = 2;
+}
+
+
+# scanbyte
+:scanbyte regS1, regS2 is op2431=0x5a & op0710=0xc & regS1 & regS2
+{
+	ac[0,3] = 0;
+	local code = (regS1[24,8] == regS2[24,8]) ||
+		     (regS1[16,8] == regS2[16,8]) ||
+		     (regS1[8,8] == regS2[8,8]) ||
+		     (regS1[0,8] == regS2[0,8]);
+	ac[1,1] = code;
+}
+
+
+# schedprcs
+:schedprcs regS1 is op2431=0x66 & op0710=0x5 & regS1 unimpl
+
+
+# sdma
+:sdma regS1, regS2, regSD is op2431=0x63 & op0710=0x0 & regS1 & regS2 & regSD unimpl
+
+
+# selno      op2431=0x78
+# selg       op2431=0x79
+# sele       op2431=0x7a
+# selge      op2431=0x7b
+# sell       op2431=0x7c
+# selne      op2431=0x7d
+# selle      op2431=0x7e
+# selo       op2431=0x7f
+:sel^cc regS1, regS2, regSD is op2731=0b01111 & cc & op0710=0x4 & regS1 & regS2 & regSD
+{
+	regSD = regS1;
+	if (!cc) goto inst_next;
+	regSD = regS2;
+}
+
+
+# send
+:send regS1, regS2, regSD is op2431=0x66 & op0710=0x2 & regS1 & regS2 & regSD
+{
+	#TODO  not sure
+	send(regS1, regS2, regSD);
+}
+
+
+# sendserv
+:sendserv regS1 is op2431=0x66 & op0710=0x3 & regS1 unimpl
+
+
+# setbit
+:setbit regS1, regS2, regSD is op2431=0x58 & op0710=0x3 & regS1 & regS2 & regSD
+{
+	regSD = regS2 | (1 << regS1);
+}
+
+
+# shli
+:shli regS1, regS2, regSD is op2431=0x59 & op0710=0xe & regS1 & regS2 & regSD
+{
+	#TODO  overflow
+	regSD = regS2 << regS1;
+}
+
+
+# shlo
+:shlo regS1, regS2, regSD is op2431=0x59 & op0710=0xc & regS1 & regS2 & regSD
+{
+	regSD = regS2 << regS1;
+}
+
+
+# shrdi
+:shrdi regS1, regS2, regSD is op2431=0x59 & op0710=0xa & regS1 & regS2 & regSD
+{
+	#TODO  are there flags here?
+	regSD = regS2 / (1 << regS1);
+}
+
+
+# shri
+:shri regS1, regS2, regSD is op2431=0x59 & op0710=0xb & regS1 & regS2 & regSD
+{
+	#TODO  flags
+	regSD = regS2 s>> regS1;
+}
+
+
+# shro
+:shro regS1, regS2, regSD is op2431=0x59 & op0710=0x8 & regS1 & regS2 & regSD
+{
+	regSD = regS2 >> regS1;
+}
+
+
+# signal
+:signal regS1 is op2431=0x66 & op0710=0xa & regS1 unimpl
+
+
+# sinr
+:sinr fregS1, fregSD is op2431=0x68 & op0710=0xc & fregS1 & fregSD
+{
+	fregSD = sin(fregS1);
+}
+
+
+# sinrl  8,8
+:sinrl fregS1l, fregSDl is op2431=0x69 & op0710=0xc & fregS1l & fregSDl
+{
+	fregSDl = sin(fregS1l);
+}
+
+
+# spanbit
+:spanbit regS1, regSD is op2431=0x64 & op0710=0x0 & regS1 & regSD
+{
+	ac[0,3] = 0;
+	regSD = 0xffffffff;
+	if (regS1 == 0xffffffff) goto inst_next;
+	regSD = spanbit(regS1);
+	ac[0,3] = 2;
+}
+
+
+# sqrtr
+:sqrtr fregS1, fregSD is op2431=0x68 & op0710=0x8 & fregS1 & fregSD
+{
+	fregSD = sqrt(fregS1);
+}
+
+
+# sqrtrl  8,8
+:sqrtrl fregS1l, fregSDl is op2431=0x69 & op0710=0x8 & fregS1l & fregSDl
+{
+	fregSDl = sqrt(fregS1l);
+}
+
+
+# st
+:st reg1923, efa is ( op2431=0x92 & reg1923 ) ... & efa
+{
+	*[ram]:4 efa = reg1923;
+}
+
+
+# stib
+:stib reg1923, efa is ( op2431=0xc2 & reg1923 ) ... & efa
+{
+	*[ram]:1 efa = reg1923:1;
+}
+
+
+# stis
+:stis reg1923, efa is ( op2431=0xca & reg1923 ) ... & efa
+{
+	*[ram]:2 efa = reg1923:2;
+}
+
+
+# stl
+:stl reg1923, efa is ( op2431=0x9a & reg1923 ) ... & efa
+{
+	local src:4 = &reg1923;
+	l_copy_reg_to_efa(src, efa);
+}
+
+
+# stob
+:stob reg1923, efa is ( op2431=0x82 & reg1923 ) ... & efa
+{
+	*[ram]:1 efa = reg1923:1;
+}
+
+
+# stos
+:stos reg1923, efa is ( op2431=0x8a & reg1923 ) ... & efa
+{
+	*[ram]:2 efa = reg1923:2;
+}
+
+
+# stq
+:stq reg1923, efa is ( op2431=0xb2 & reg1923 ) ... & efa
+{
+	local src:4 = &reg1923;
+	q_copy_reg_to_efa(src, efa);
+}
+
+
+# stt
+:stt reg1923, efa is ( op2431=0xa2 & reg1923 ) ... & efa
+{
+	local src:4 = &reg1923;
+	t_copy_reg_to_efa(src, efa);
+}
+
+
+# subc
+:subc regS1, regS2, regSD is op2431=0x5b & op0710=0x2 & regS1 & regS2 & regSD
+{
+	local tmp:4 = zext(ac[1,1]);
+	ac[2,1] = 0;
+	ac[1,1] = ((regS1 - 1) + tmp) > regS2;
+	ac[0,1] = ((regS1 - 1) + tmp) s> regS2;
+	regSD = regS2 + (regS1 - 1) + tmp;
+}
+
+
+# subi
+:subi regS1, regS2, regSD is op2431=0x59 & op0710=0x3 & regS1 & regS2 & regSD
+{
+	#TODO  flags
+	regSD = regS2 - regS1;
+}
+
+
+# subino      op2431=0x78
+# subig       op2431=0x79
+# subie       op2431=0x7a
+# subige      op2431=0x7b
+# subil       op2431=0x7c
+# subine      op2431=0x7d
+# subile      op2431=0x7e
+# subio       op2431=0x7f
+:subi^cc regS1, regS2, regSD is op2731=0b01111 & cc & op0710=0x3 & regS1 & regS2 & regSD
+{
+	if (!cc) goto inst_next;
+	ac[8,1] = sborrow(regS2, regS1);
+	regSD = regS2 - regS1;
+}
+
+
+# subo
+:subo regS1, regS2, regSD is op2431=0x59 & op0710=0x2 & regS1 & regS2 & regSD
+{
+	regSD = regS2 - regS1;
+}
+
+
+# subono      op2431=0x78
+# subog       op2431=0x79
+# suboe       op2431=0x7a
+# suboge      op2431=0x7b
+# subol       op2431=0x7c
+# subone      op2431=0x7d
+# subole      op2431=0x7e
+# suboo       op2431=0x7f
+:subo^cc regS1, regS2, regSD is op2731=0b01111 & cc & op0710=0x2 & regS1 & regS2 & regSD
+{
+	if (!cc) goto inst_next;
+	regSD = regS2 - regS1;
+}
+
+
+# subr
+:subr fregS1, fregS2, fregSD is op2431=0x78 & op0710=0xd & fregS1 & fregS2 & fregSD
+{
+	fregSD = fregS2 f- fregS1;
+}
+
+
+# subrl  8,8,8
+:subrl fregS1l, fregS2l, fregSDl is op2431=0x79 & op0710=0xd & fregS1l & fregS2l & fregSDl
+{
+	fregSDl = fregS2l f- fregS1l;
+}
+
+
+# syncf
+:syncf  is op2431=0x66 & op0710=0xf
+{
+	syncf();
+}
+
+
+# synld
+:synld regS1, regSD is op2431=0x61 & op0710=0x5 & regS1 & regSD
+{
+	#TODO  this might need work
+	regSD = *[ram]:4 regS1;
+	ac[0,3] = 2;
+}
+
+
+# synmov
+:synmov regS1, regS2 is op2431=0x60 & op0710=0x0 & regS1 & regS2
+{
+	#TODO  this might need work
+	*[ram]:4 regS1 = *[ram]:4 regS2;
+}
+
+
+# synmovl
+:synmovl regS1, regS2 is op2431=0x60 & op0710=0x1 & regS1 & regS2
+{
+	#TODO  this might need work
+	l_copy_efa_to_efa(regS2, regS1);
+}
+
+
+# synmovq
+:synmovq regS1, regS2 is op2431=0x60 & op0710=0x2 & regS1 & regS2
+{
+	#TODO  this might need work
+	q_copy_efa_to_efa(regS2, regS1);
+}
+
+
+# syscall
+:syscall  is op2431=0x1 & op0000=0x0 unimpl
+
+
+# sysctl
+:sysctl regS1, regS2, regSD is op2431=0x65 & op0710=0x9 & regS1 & regS2 & regSD unimpl
+
+
+# tanr
+:tanr fregS1, fregSD is op2431=0x68 & op0710=0xe & fregS1 & fregSD
+{
+	fregSD = tan(fregS1);
+}
+
+
+# tanrl  8,8
+:tanrl fregS1l, fregSDl is op2431=0x69 & op0710=0xe & fregS1l & fregSDl
+{
+	fregSDl = tan(fregS1l);
+}
+
+
+# testno      op2431=0x20
+# testg       op2431=0x21
+# teste       op2431=0x22
+# testge      op2431=0x23
+# testl       op2431=0x24
+# testne      op2431=0x25
+# testle      op2431=0x26
+# testo       op2431=0x27
+:test^cc cobrSD is op2731=0b00100 & cc & cobrSD
+{
+	cobrSD = zext(cc);
+}
+
+
+# udma
+:udma  is op2431=0x63 & op0710=0x1 unimpl
+
+
+# wait
+:wait regS1 is op2431=0x66 & op0710=0x9 & regS1 unimpl
+
+
+# xnor
+:xnor regS1, regS2, regSD is op2431=0x58 & op0710=0x9 & regS1 & regS2 & regSD
+{
+	regSD = ~(regS1 ^ regS2);
+}
+
+
+# xor
+:xor regS1, regS2, regSD is op2431=0x58 & op0710=0x6 & regS1 & regS2 & regSD
+{
+	regSD = regS1 ^ regS2;
+}
+
