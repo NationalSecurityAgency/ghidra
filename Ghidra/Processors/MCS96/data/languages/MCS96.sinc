@@ -1242,6 +1242,7 @@ cc: "E"    is cond=15 { tmp:1 = ($(Z) == 1); export tmp; }
 :SUBB breg, oper8                   is op6=0x1e ... & oper8; breg {
 	local tmp = breg - oper8;
 	subtractFlags(breg, oper8, tmp);
+	breg = tmp;
 }
 
 :SUBB dbreg, breg, oper8            is op6=0x16 ... & oper8; breg; dbreg {

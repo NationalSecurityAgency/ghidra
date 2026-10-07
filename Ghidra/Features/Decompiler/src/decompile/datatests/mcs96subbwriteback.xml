@@ -1,0 +1,27 @@
+<decompilertest>
+<binaryimage arch="MCS96:LE:16:default">
+<!--
+   The 2-op form of SUBB (SUBB breg, oper8) computed its subtraction into a
+   local and fed that local into subtractFlags for the flag bits, but never
+   wrote the result back to breg. Every other arithmetic constructor in
+   MCS96.sinc (SUB, ADD, ADDB, DEC, DECB, ...) writes its result back;
+   this one silently dropped it, so the destination register was left
+   unmodified by an instruction whose whole purpose is to modify it.
+
+   782005f0 is SUBB HSI_timehi, R20 (op6=0x1e, oper8=R20, breg=HSI_timehi)
+   followed by RET (0xf0). Before the fix this decompiled to just
+   "return;", with the subtraction computed and its result discarded.
+-->
+<bytechunk space="RAM" offset="0x2000">
+782005f0
+</bytechunk>
+<symbol space="RAM" offset="0x2000" name="subbtest"/>
+</binaryimage>
+<script>
+  <com>lo fu subbtest</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="SUBB writeback #1" min="1" max="1">HSI_timehi = HSI_timehi - R20;</stringmatch>
+</decompilertest>
