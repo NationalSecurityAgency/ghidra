@@ -56,6 +56,15 @@ public class StartInstructionValueSolver extends AbstractExpressionSolver<StartI
 	@Override
 	public MaskedLong valueForResolution(StartInstructionValue exp, Map<String, Long> vals,
 			AssemblyResolvedPatterns rc) {
-		return MaskedLong.fromLong(vals.get(AssemblyTreeResolver.INST_START));
+		Long instStart = vals.get(AssemblyTreeResolver.INST_START);
+		if (instStart == null) {
+			/*
+			 * This method is used in forward state construction, so just leave unknown. This may
+			 * cause unresolvable trees to get generated, but we cannot know that until we try to
+			 * resolve them.
+			 */
+			return MaskedLong.UNKS;
+		}
+		return MaskedLong.fromLong(instStart);
 	}
 }

@@ -1,0 +1,4 @@
+# Sunplus S+CORE 7 / SCORE7 little-endian language wrapper.
+@define ENDIAN "little"
+
+@include "SCORE7.sinc"
