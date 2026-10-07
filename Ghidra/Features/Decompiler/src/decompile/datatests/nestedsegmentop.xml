@@ -1,0 +1,32 @@
+<decompilertest>
+<binaryimage arch="H8:BE:32:H8539F">
+<!--
+    A stack parameter accessed through a SEGMENTOP nested inside an
+    INT_ADD (a SEGMENTOP-derived base plus an additional constant offset)
+    previously failed to resolve through RuleLoadVarnode::vnSpacebase,
+    which only unwrapped a SEGMENTOP when it was the direct operand of a
+    LOAD/STORE. The unresolved access fell back to generic alias analysis
+    and was folded into a large open stack array (e.g. "auStack_102[128]")
+    accessed through pointer-cast arithmetic, rather than resolving as an
+    individual, correctly-typed stack variable.
+-->
+<bytechunk space="ram" offset="0x14000" readonly="true">
+17008806ee0820240358ffff0f1119
+</bytechunk>
+<symbol space="ram" offset="0x14000" name="sat_add_u16"/>
+</binaryimage>
+<script>
+  <com>option readonly on</com>
+  <com>parse line extern uint2 sat_add_u16(uint2 a,uint2 b);</com>
+  <com>lo fu sat_add_u16</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Canary function name" min="1" max="1">sat_add_u16</stringmatch>
+<stringmatch name="Canary param a" min="1" max="1">uint2 a</stringmatch>
+<stringmatch name="Canary param b" min="1" max="1">uint2 b</stringmatch>
+<stringmatch name="ABSENT merged stack array" min="0" max="0">auStack</stringmatch>
+<stringmatch name="PRESENT uint2 local" min="1" max="99">uint2 uVar1</stringmatch>
+<stringmatch name="PRESENT sum expression" min="1" max="99">uVar1 =</stringmatch>
+</decompilertest>

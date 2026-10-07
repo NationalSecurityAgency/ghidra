@@ -761,7 +761,7 @@ void AliasChecker::gatherInternal(void) const
 /// For the given function and address space, gather all Varnodes that are pointers into the
 /// address space.  The actual calculation can be deferred until the first time
 /// hasLocalAlias() is called.
-/// \param f is the given function
+/// \param f is the function being analyzed
 /// \param spc is the given address space
 /// \param defer is \b true is gathering is deferred
 void AliasChecker::gather(const Funcdata *f,AddrSpace *spc,bool defer)
@@ -779,10 +779,10 @@ void AliasChecker::gather(const Funcdata *f,AddrSpace *spc,bool defer)
 }
 
 /// This is gives a rough analysis of whether the given Varnode might be aliased by another pointer in
-/// the function. If \b false is returned, the Varnode is not likely to have an alias. If \b true is returned,
-/// the Varnode might have an alias.
+/// the function. If \b false is returned, the Varnode is not likely to have an alias. If \b true is
+/// returned, the Varnode may still have no aliases, but it is harder to rule out.
 /// \param vn is the given Varnode
-/// \return \b true if the Varnode might have a pointer alias
+/// \return \b true if the Varnode may have aliases
 bool AliasChecker::hasLocalAlias(Varnode *vn) const
 
 {
@@ -806,8 +806,7 @@ void AliasChecker::sortAlias(void) const
 
 /// \brief Gather result Varnodes for all \e sums that the given starting Varnode is involved in
 ///
-/// For every sum that involves \b startvn, collect the final result Varnode of the sum.
-/// A sum is any expression involving only the additive operators
+/// For every sum that involves \b startvn, this method traces forward through additive
 /// INT_ADD, INT_SUB, PTRADD, PTRSUB, and SEGMENTOP.  The routine traverses forward recursively
 /// through all descendants of \b vn that are additive operations and collects all the roots
 /// of the traversed trees.

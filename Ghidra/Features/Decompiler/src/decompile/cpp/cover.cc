@@ -41,9 +41,18 @@ uintm CoverBlock::getUIndex(const PcodeOp *op)
   if (op->isMarker()) {
     if (op->code() == CPUI_MULTIEQUAL) // MULTIEQUALs are considered very beginning
       return (uintm)0;
-    else if (op->code() == CPUI_INDIRECT) // INDIRECTs are considered to be at
+    else if (op->code() == CPUI_INDIRECT) { // INDIRECTs are considered to be at
 				// the location of the op they are indirect for
-      return PcodeOp::getOpFromConst(op->getIn(1)->getAddr())->getSeqNum().getOrder();
+      PcodeOp *targOp = PcodeOp::getOpFromConst(op->getIn(1)->getAddr());
+      // If the op the INDIRECT is indirect for has already been removed from the
+      // function, its stored order is stale and no longer reflects any real
+      // position. Fall back to the INDIRECT's own order rather than corrupting
+      // the Cover comparison with a meaningless value (see opInsertAfter/
+      // trimOpOutput for the analogous guard on this same stale-pointer hazard).
+      if (targOp->isDead())
+	return op->getSeqNum().getOrder();
+      return targOp->getSeqNum().getOrder();
+    }
   }
   return op->getSeqNum().getOrder();
 }
