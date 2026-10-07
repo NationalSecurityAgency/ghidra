@@ -8574,3 +8574,103 @@ is sf=1 & b_30=0 & S=0 & b_2428=0x1a & b_2123=0x6 & b_1015=0x1b & Rd_GPR64 & Rn_
 	local test = tmp <= tmp2;
 	Rd_GPR64 = (zext(test)*tmp) + (zext(!test)*(tmp2));
 }
+
+# FEAT_CMPBR
+
+Cmpbr_Dest:dest is cmpbr_imm9 [ dest = inst_start + (cmpbr_imm9<<2);] { export *[const]:8 dest; }
+
+with Cmpbr_bcc: {
+	:"gt" is b_2123=0b000 & Rt_GPR32 & Rm_GPR32 { local flag = (Rt_GPR32:1) s> (Rm_GPR32:1); export *[const]:1 flag; }
+	:"ge" is b_2123=0b001 & Rt_GPR32 & Rm_GPR32 { local flag = (Rt_GPR32:1) s>= (Rm_GPR32:1); export *[const]:1 flag; }
+	:"hi" is b_2123=0b010 & Rt_GPR32 & Rm_GPR32 { local flag = (Rt_GPR32:1) > (Rm_GPR32:1); export *[const]:1 flag; }
+	:"hs" is b_2123=0b011 & Rt_GPR32 & Rm_GPR32 { local flag = (Rt_GPR32:1) >= (Rm_GPR32:1); export *[const]:1 flag; }
+	:"eq" is b_2123=0b110 & Rt_GPR32 & Rm_GPR32 { local flag = (Rt_GPR32:1) == (Rm_GPR32:1); export *[const]:1 flag; }
+	:"ne" is b_2123=0b111 & Rt_GPR32 & Rm_GPR32 { local flag = (Rt_GPR32:1) != (Rm_GPR32:1); export *[const]:1 flag; }
+}
+
+with Cmpbr_hcc: {
+	:"gt" is b_2123=0b000 & Rt_GPR32 & Rm_GPR32 { local flag = (Rt_GPR32:2) s> (Rm_GPR32:2); export *[const]:1 flag; }
+	:"ge" is b_2123=0b001 & Rt_GPR32 & Rm_GPR32 { local flag = (Rt_GPR32:2) s>= (Rm_GPR32:2); export *[const]:1 flag; }
+	:"hi" is b_2123=0b010 & Rt_GPR32 & Rm_GPR32 { local flag = (Rt_GPR32:2) > (Rm_GPR32:2); export *[const]:1 flag; }
+	:"hs" is b_2123=0b011 & Rt_GPR32 & Rm_GPR32 { local flag = (Rt_GPR32:2) >= (Rm_GPR32:2); export *[const]:1 flag; }
+	:"eq" is b_2123=0b110 & Rt_GPR32 & Rm_GPR32 { local flag = (Rt_GPR32:2) == (Rm_GPR32:2); export *[const]:1 flag; }
+	:"ne" is b_2123=0b111 & Rt_GPR32 & Rm_GPR32 { local flag = (Rt_GPR32:2) != (Rm_GPR32:2); export *[const]:1 flag; }
+}
+
+with Cmpbr_cc32: {
+	:"gt" is b_2123=0b000 & Rt_GPR32 & Rm_GPR32 { local flag = Rt_GPR32 s> Rm_GPR32; export *[const]:1 flag; }
+	:"ge" is b_2123=0b001 & Rt_GPR32 & Rm_GPR32 { local flag = Rt_GPR32 s>= Rm_GPR32; export *[const]:1 flag; }
+	:"hi" is b_2123=0b010 & Rt_GPR32 & Rm_GPR32 { local flag = Rt_GPR32 > Rm_GPR32; export *[const]:1 flag; }
+	:"hs" is b_2123=0b011 & Rt_GPR32 & Rm_GPR32 { local flag = Rt_GPR32 >= Rm_GPR32; export *[const]:1 flag; }
+	:"eq" is b_2123=0b110 & Rt_GPR32 & Rm_GPR32 { local flag = Rt_GPR32 == Rm_GPR32; export *[const]:1 flag; }
+	:"ne" is b_2123=0b111 & Rt_GPR32 & Rm_GPR32 { local flag = Rt_GPR32 != Rm_GPR32; export *[const]:1 flag; }
+}
+
+with Cmpbr_cc64: {
+	:"gt" is b_2123=0b000 & Rt_GPR64 & Rm_GPR64 { local flag = Rt_GPR64 s> Rm_GPR64; export *[const]:1 flag; }
+	:"ge" is b_2123=0b001 & Rt_GPR64 & Rm_GPR64 { local flag = Rt_GPR64 s>= Rm_GPR64; export *[const]:1 flag; }
+	:"hi" is b_2123=0b010 & Rt_GPR64 & Rm_GPR64 { local flag = Rt_GPR64 > Rm_GPR64; export *[const]:1 flag; }
+	:"hs" is b_2123=0b011 & Rt_GPR64 & Rm_GPR64 { local flag = Rt_GPR64 >= Rm_GPR64; export *[const]:1 flag; }
+	:"eq" is b_2123=0b110 & Rt_GPR64 & Rm_GPR64 { local flag = Rt_GPR64 == Rm_GPR64; export *[const]:1 flag; }
+	:"ne" is b_2123=0b111 & Rt_GPR64 & Rm_GPR64 { local flag = Rt_GPR64 != Rm_GPR64; export *[const]:1 flag; }
+}
+
+with Cmpbr_cci32: {
+	:"gt" is b_2123=0b000 & Rt_GPR32 & cmpbr_imm6 { local flag = Rt_GPR32 s> cmpbr_imm6; export *[const]:1 flag; }
+	:"ge" is b_2123=0b001 & Rt_GPR32 & cmpbr_imm6 { local flag = Rt_GPR32 s>= cmpbr_imm6; export *[const]:1 flag; }
+	:"hi" is b_2123=0b010 & Rt_GPR32 & cmpbr_imm6 { local flag = Rt_GPR32 > cmpbr_imm6; export *[const]:1 flag; }
+	:"hs" is b_2123=0b011 & Rt_GPR32 & cmpbr_imm6 { local flag = Rt_GPR32 >= cmpbr_imm6; export *[const]:1 flag; }
+	:"eq" is b_2123=0b110 & Rt_GPR32 & cmpbr_imm6 { local flag = Rt_GPR32 == cmpbr_imm6; export *[const]:1 flag; }
+	:"ne" is b_2123=0b111 & Rt_GPR32 & cmpbr_imm6 { local flag = Rt_GPR32 != cmpbr_imm6; export *[const]:1 flag; }
+}
+
+with Cmpbr_cci64: {
+	:"gt" is b_2123=0b000 & Rt_GPR64 & cmpbr_imm6 { local flag = Rt_GPR64 s> cmpbr_imm6; export *[const]:1 flag; }
+	:"ge" is b_2123=0b001 & Rt_GPR64 & cmpbr_imm6 { local flag = Rt_GPR64 s>= cmpbr_imm6; export *[const]:1 flag; }
+	:"hi" is b_2123=0b010 & Rt_GPR64 & cmpbr_imm6 { local flag = Rt_GPR64 > cmpbr_imm6; export *[const]:1 flag; }
+	:"hs" is b_2123=0b011 & Rt_GPR64 & cmpbr_imm6 { local flag = Rt_GPR64 >= cmpbr_imm6; export *[const]:1 flag; }
+	:"eq" is b_2123=0b110 & Rt_GPR64 & cmpbr_imm6 { local flag = Rt_GPR64 == cmpbr_imm6; export *[const]:1 flag; }
+	:"ne" is b_2123=0b111 & Rt_GPR64 & cmpbr_imm6 { local flag = Rt_GPR64 != cmpbr_imm6; export *[const]:1 flag; }
+}
+
+:cbb^Cmpbr_bcc Rt_GPR32, Rm_GPR32, Cmpbr_Dest
+is b_2431=0x74 & Cmpbr_bcc & Rm_GPR32 & b_15=1 & b_14=0 & Cmpbr_Dest & Rt_GPR32
+{
+	if(!Cmpbr_bcc) goto inst_next;
+	goto [Cmpbr_Dest];
+}
+
+:cbh^Cmpbr_hcc Rt_GPR32, Rm_GPR32, Cmpbr_Dest
+is b_2431=0x74 & Cmpbr_hcc & Rm_GPR32 & b_15=1 & b_14=1 & Cmpbr_Dest & Rt_GPR32
+{
+	if(!Cmpbr_hcc) goto inst_next;
+	goto [Cmpbr_Dest];
+}
+
+:cb^Cmpbr_cc32 Rt_GPR32, Rm_GPR32, Cmpbr_Dest
+is b_2431=0x74 & Cmpbr_cc32 & Rm_GPR32 & b_15=0 & b_14=0 & Cmpbr_Dest & Rt_GPR32
+{
+	if(!Cmpbr_cc32) goto inst_next;
+	goto [Cmpbr_Dest];
+}
+
+:cb^Cmpbr_cc64 Rt_GPR64, Rm_GPR64, Cmpbr_Dest
+is b_2431=0xf4 & Cmpbr_cc64 & Rm_GPR64 & b_15=0 & b_14=0 & Cmpbr_Dest & Rt_GPR64
+{
+	if(!Cmpbr_cc64) goto inst_next;
+	goto [Cmpbr_Dest];
+}
+
+:cb^Cmpbr_cci32 Rt_GPR32, "#"^cmpbr_imm6, Cmpbr_Dest
+is b_2431=0x75 & Cmpbr_cci32 & cmpbr_imm6 & b_14=0 & Cmpbr_Dest & Rt_GPR32
+{
+	if(!Cmpbr_cci32) goto inst_next;
+	goto [Cmpbr_Dest];
+}
+
+:cb^Cmpbr_cci64 Rt_GPR64, "#"^cmpbr_imm6, Cmpbr_Dest
+is b_2431=0xf5 & Cmpbr_cci64 & cmpbr_imm6 & b_14=0 & Cmpbr_Dest & Rt_GPR64
+{
+	if(!Cmpbr_cci64) goto inst_next;
+	goto [Cmpbr_Dest];
+}
