@@ -15,6 +15,7 @@ src/decompile/cpp/Makefile||GHIDRA||||END|
 src/decompile/datatests/bitfields.xml||GHIDRA||||END|
 src/decompile/datatests/bitfields2.xml||GHIDRA||||END|
 src/decompile/datatests/boolless.xml||GHIDRA||||END|
+src/decompile/datatests/callwhole.xml||GHIDRA||||END|
 src/decompile/datatests/ccmp.xml||GHIDRA||||END|
 src/decompile/datatests/concat.xml||GHIDRA||||END|
 src/decompile/datatests/concatsplit.xml||GHIDRA||||END|

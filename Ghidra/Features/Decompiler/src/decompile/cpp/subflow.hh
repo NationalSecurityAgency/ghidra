@@ -446,6 +446,10 @@ class LaneDivide : public TransformManager {
   bool buildMultiequal(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 skipLanes);
   bool buildIndirect(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 skipLanes);
   bool buildStore(PcodeOp *op,int4 numLanes,int4 skipLanes);
+  set<PcodeOp *> wholeInputOps;		///< Ops consuming a traced value whole that have already been reattached
+  bool laneProgress;			///< Set if the trace met an op the lanes change: a lane read, a store, or a lane-wise op
+  bool buildWholeInput(PcodeOp *op,TransformVar *rvn,int4 numLanes,int4 skipLanes);
+  static bool isWholeReassembly(Varnode *vn,PcodeOp *op);
   bool buildLoad(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 skipLanes);
   bool buildRightShift(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 skipLanes);
   bool buildLeftShift(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 skipLanes);
