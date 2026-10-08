@@ -4337,12 +4337,14 @@ define pcodeop pconfig;
 :POP FS         is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & byte=0xf; byte=0xa1 & FS    { pop22(FS); }
 :POP FS         is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & byte=0xf; byte=0xa1 & FS    { popseg44(FS); }
 @ifdef IA64
-:POP FS         is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & byte=0xf; byte=0xa1 & FS    { popseg88(FS); }
+:POP FS         is $(LONGMODE_ON) & vexMode=0 & opsize=0 & byte=0xf; byte=0xa1 & FS    { pop82(FS); }
+:POP FS         is $(LONGMODE_ON) & vexMode=0 &            byte=0xf; byte=0xa1 & FS    { popseg88(FS); }
 @endif
-:POP GS         is vexMode=0 & addrsize=0 & byte=0xf; byte=0xa9 & GS    { pop22(GS); }
-:POP GS         is vexMode=0 & addrsize=1 & byte=0xf; byte=0xa9 & GS    { popseg44(GS); }
+:POP GS         is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & byte=0xf; byte=0xa9 & GS    { pop22(GS); }
+:POP GS         is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & byte=0xf; byte=0xa9 & GS    { popseg44(GS); }
 @ifdef IA64
-:POP GS         is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & byte=0xf; byte=0xa9 & GS    { popseg88(GS); }
+:POP GS         is $(LONGMODE_ON) & vexMode=0 & opsize=0 & byte=0xf; byte=0xa9 & GS    { pop82(GS); }
+:POP GS         is $(LONGMODE_ON) & vexMode=0 &            byte=0xf; byte=0xa9 & GS    { popseg88(GS); }
 @endif
 
 :POPA           is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=0 & byte=0x61            { pop22(DI); pop22(SI); pop22(BP); tmp:2=0; pop22(tmp); pop22(BX); pop22(DX); pop22(CX); pop22(AX); }
