@@ -77,6 +77,7 @@ src/decompile/datatests/pointercmp.xml||GHIDRA||||END|
 src/decompile/datatests/pointerrel.xml||GHIDRA||||END|
 src/decompile/datatests/pointersub.xml||GHIDRA||||END|
 src/decompile/datatests/promotecompare.xml||GHIDRA||||END|
+src/decompile/datatests/pslldq.xml||GHIDRA||||END|
 src/decompile/datatests/ptrtoarray.xml||GHIDRA||||END|
 src/decompile/datatests/readvolatile.xml||GHIDRA||||END|
 src/decompile/datatests/retspecial.xml||GHIDRA||||END|

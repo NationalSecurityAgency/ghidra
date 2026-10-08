@@ -9099,21 +9099,10 @@ define pcodeop psignd;
 :PSIGND         XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x38; byte=0x0a; xmmmod = 3 & XmmReg1 & XmmReg2 { XmmReg1=psignd(XmmReg1,XmmReg2); }
 
 #break into two 64-bit chunks so decompiler can follow constants
-:PSLLDQ         XmmReg2, imm8    is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x73; xmmmod = 3 & reg_opcode=7 & XmmReg2; imm8 
-{ 
-	if (imm8:1 > 15:1) goto <zero>;
-    local low64copy:8 = XmmReg2[0,64];
-    XmmReg2[0,64] = XmmReg2[0,64] << (8:1 * imm8:1);
-    if (imm8:1 > 8:1)  goto <greater>;
-    XmmReg2[64,64] = (XmmReg2[64,64] << (8:1 * imm8:1)) | (low64copy >> (8:1 * (8 - imm8:1)));
-    goto <end>;
-<greater>
-    XmmReg2[64,64] = low64copy << (8:1 * (imm8 - 8));
-    goto <end>;
-<zero>
-    XmmReg2[0,64] = 0:8;
-    XmmReg2[64,64] = 0:8;
-<end>
+:PSLLDQ         XmmReg2, imm8    is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x73; xmmmod = 3 & reg_opcode=7 & XmmReg2; imm8
+{
+# a count greater than 15 just clears all the bits
+    XmmReg2 = XmmReg2 << (imm8 * 8);
 }
 
 define pcodeop psllw;
