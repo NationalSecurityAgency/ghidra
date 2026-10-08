@@ -1837,6 +1837,76 @@ ParamList *ParamListStandardOut::clone(void) const
   return res;
 }
 
+ParamList* ParamListPascalOut::clone(void) const
+
+{
+  ParamList* res = new ParamListPascalOut(*this);
+  return res;
+}
+
+void ParamListPascal::assignMap(const PrototypePieces& proto, TypeFactory& typefactory, vector<int4>& status,
+				vector<ParameterPieces>& res) const
+
+{
+  const bool addAutoParams(true);
+  bool hiddenParam = (addAutoParams && res.size() == 2);
+  int paramStart = res.size();
+  ParameterPieces &hiddenPtr = res.back();//get(res.size() - 1);
+
+  for (int4 i=proto.intypes.size()-1;i>0;--i) { // Don't do i==0, could be a 'this' and may need allocating after 'hiddenPtr'
+    vector<ParameterPieces>::iterator iter = res.emplace(res.begin()+paramStart);
+    Datatype* dt = proto.intypes[i];
+    uint4 responseCode = assignAddress(dt, proto, i, typefactory, status, *iter);
+    if (responseCode == AssignAction::fail || responseCode == AssignAction::no_assignment)
+      throw ParamUnassignedError("Cannot assign parameter address for " + dt->getName());
+  }
+
+  if (proto.intypes.size() == 0) {
+    allocateHiddenReturn(proto, typefactory, status, hiddenParam, hiddenPtr);
+    return;
+  }
+
+  int thisOrFirstParamPos = paramStart;
+  ParameterPieces *store = new ParameterPieces();
+  if (proto.model->hasThisPointer()) {
+    store->flags |= ParameterPieces::isthis; // here, proto.intypes.get(0) is a 'this'
+  }
+  if (proto.model->getInputResource()->isThisBeforeRetPointer()) { // implies 'hasThis'
+    allocateHiddenReturn(proto, typefactory, status, hiddenParam, hiddenPtr);
+    assignAddress(proto.intypes[0], proto, 0, typefactory, status, *store);
+    --thisOrFirstParamPos;
+  }
+  else {
+    assignAddress(proto.intypes[0], proto, 0, typefactory, status, *store);
+    allocateHiddenReturn(proto, typefactory, status, hiddenParam, hiddenPtr);
+  }
+  res.emplace(res.begin()+thisOrFirstParamPos, *store);
+}
+
+void ParamListPascal::allocateHiddenReturn(const PrototypePieces& proto, TypeFactory& typefactory, vector<int>& status,
+					   bool hiddenParam, ParameterPieces& hiddenPtr) const
+
+{
+  if (hiddenParam) {	// Check for hidden parameters defined by the output list
+    if (hiddenPtr.flags & ParameterPieces::hiddenretparm) {
+      // Need to pull from registers marked as hiddenret
+      assignAddressFallback(TYPECLASS_HIDDENRET, hiddenPtr.type, false, status, hiddenPtr);
+    }
+    else {
+      // Assign as a regular first input pointer parameter
+      assignAddress(hiddenPtr.type, proto, 0, typefactory, status, hiddenPtr);
+    }
+    hiddenPtr.flags |= ParameterPieces::hiddenretparm;
+  }
+}
+
+ParamList* ParamListPascal::clone(void) const
+
+{
+  ParamList* res = new ParamListPascal(*this);
+  return res;
+}
+
 /// The given set of parameter entries are folded into \b this set.
 /// Duplicate entries are eliminated. Containing entries subsume what
 /// they contain.
@@ -2371,6 +2441,10 @@ void ProtoModel::buildParamList(const string &strategy)
     input = new ParamListRegister();
     output = new ParamListRegisterOut();
   }
+  else if (strategy == "pascal") {
+    input = new ParamListPascal();
+    output = new ParamListPascalOut();
+  }
   else
     throw LowlevelError("Unknown strategy type: "+strategy);
 }
@@ -2500,7 +2574,7 @@ void ProtoModel::assignParameterStorage(const PrototypePieces &proto,vector<Para
   // Deal with left-to-right (PASCAL convention) parameter ordering
   if (!isRightToLeft) {
     // swap around the datatypes to map variable storage high-to-low
-    reverse(pieces.intypes.begin(), pieces.intypes.end());
+//    reverse(pieces.intypes.begin(), pieces.intypes.end());
   }
 
   //input->assignMap(proto,*glb->types,inputStatus,res);
@@ -2511,7 +2585,7 @@ void ProtoModel::assignParameterStorage(const PrototypePieces &proto,vector<Para
     int inputOffset = (res.size() - proto.intypes.size());
     // no need to swap back the input datatypes, just use proto
     // swap back the resulting input only storage to be ordered correctly
-    reverse(res.begin()+inputOffset, res.end());
+//    reverse(res.begin()+inputOffset, res.end());
   }
 
   for (int4 i=0;i<sharedActions.size();++i)
@@ -2686,7 +2760,8 @@ void ProtoModel::decode(Decoder &decoder)
     throw LowlevelError("Missing prototype attributes");
 
   buildParamList(strategystring); // Allocate input and output ParamLists
-  sharedActions.push_back(new HiddenReturnAction(this));
+  if (strategystring != "pascal")
+  	  sharedActions.push_back(new HiddenReturnAction(this));
   for(;;) {
     uint4 subId = decoder.peekElement();
     if (subId == 0) break;

@@ -606,6 +606,11 @@ public class PrototypeModel {
 			outputParams = new ParamListRegisterOut();
 			inputListType = InputListType.REGISTER;
 		}
+		else if (strategy.equals("pascal")) {
+			inputParams = new ParamListPascal();
+			outputParams = new ParamListPascalOut();
+			inputListType = InputListType.PASCAL;
+		}
 		else {
 			throw new XmlParseException("Unknown assign strategy: " + strategy);
 		}
@@ -825,7 +830,7 @@ public class PrototypeModel {
 
 		ArrayList<SharedAction> actions = new ArrayList<>();
 		buildParamList(protoElement.getAttribute(ATTRIB_STRATEGY.name()));
-		if (inputParams instanceof ParamListStandard) {
+		if (inputParams instanceof ParamListStandard && inputListType != InputListType.PASCAL) {
 			actions.add(new HiddenReturnAction(this));
 		}
 		while (parser.peek().isStart()) {

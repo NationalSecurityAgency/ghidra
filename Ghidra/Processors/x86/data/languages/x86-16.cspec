@@ -31,7 +31,6 @@
     <range space="ram"/>
   </global>
   <stackpointer register="SP" space="ram"/>
-
   <default_proto>
     <prototype name="__stdcall16near" extrapop="unknown" stackshift="2">
       <input>
@@ -66,224 +65,6 @@
     <input>
       <pentry minsize="1" maxsize="500" align="2">
         <addr offset="2" space="stack"/>
-      </pentry>
-    </input>
-    <output>
-        <pentry minsize="1" maxsize="2">
-          <register name="AX"/>
-        </pentry>
-        <pentry minsize="3" maxsize="4">
-          <addr space="join" piece1="DX" piece2="AX"/>
-        </pentry>
-    </output>
-    <unaffected>
-      <register name="SP"/>
-      <register name="BP"/>
-      <register name="SI"/>
-      <register name="DI"/>
-      <register name="DS"/>
-      <register name="CS"/>
-      <register name="ES"/>
-      <register name="FS"/>
-      <register name="GS"/>
-      <register name="SS"/>
-      <register name="DF"/>
-    </unaffected>
-  </prototype>
-  <prototype name="__pascal16near" extrapop="unknown" stackshift="2" isrighttoleft="false">
-    <input>
-      <pentry minsize="1" maxsize="500" align="2">
-        <addr offset="2" space="stack"/>
-      </pentry>
-    </input>
-    <output>
-      <pentry minsize="1" maxsize="2">
-        <register name="AX"/>
-      </pentry>
-      <pentry minsize="3" maxsize="4">
-        <addr space="join" piece1="DX" piece2="AX"/>
-      </pentry>
-    </output>
-    <unaffected>
-      <register name="SP"/>
-      <register name="BP"/>
-      <register name="SI"/>
-      <register name="DI"/>
-      <register name="DS"/>
-      <register name="CS"/>
-      <register name="ES"/>
-      <register name="FS"/>
-      <register name="GS"/>
-      <register name="SS"/>
-      <register name="DF"/>
-    </unaffected>
-  </prototype>
-  <prototype name="__pascal16far" extrapop="unknown" stackshift="4" isrighttoleft="false">
-    <input>
-      <pentry minsize="1" maxsize="500" align="2">
-        <addr offset="4" space="stack"/>
-      </pentry>
-    </input>
-    <output>
-        <pentry minsize="1" maxsize="2">
-          <register name="AX"/>
-        </pentry>
-        <pentry minsize="3" maxsize="4">
-          <addr space="join" piece1="DX" piece2="AX"/>
-        </pentry>
-    </output>
-    <unaffected>
-      <register name="SP"/>
-      <register name="BP"/>
-      <register name="SI"/>
-      <register name="DI"/>
-      <register name="DS"/>
-      <register name="CS"/>
-      <register name="ES"/>
-      <register name="FS"/>
-      <register name="GS"/>
-      <register name="SS"/>
-      <register name="DF"/>
-    </unaffected>
-  </prototype>
-
-  <prototype name="__thispascal16near" extrapop="unknown" stackshift="2" hasthis="true" isrighttoleft="false">
-    <input>
-      <pentry minsize="1" maxsize="500" align="2">
-        <addr offset="2" space="stack"/>
-      </pentry>
-    </input>
-    <output>
-      <pentry minsize="1" maxsize="2">
-        <register name="AX"/>
-      </pentry>
-      <pentry minsize="3" maxsize="4">
-        <addr space="join" piece1="DX" piece2="AX"/>
-      </pentry>
-    </output>
-    <unaffected>
-      <register name="SP"/>
-      <register name="BP"/>
-      <register name="SI"/>
-      <register name="DI"/>
-      <register name="DS"/>
-      <register name="CS"/>
-      <register name="ES"/>
-      <register name="FS"/>
-      <register name="GS"/>
-      <register name="SS"/>
-      <register name="DF"/>
-    </unaffected>
-  </prototype>
-
-  <prototype name="__thispascal16far" extrapop="unknown" stackshift="4" hasthis="true" isrighttoleft="false">
-    <input>
-      <pentry minsize="1" maxsize="500" align="2">
-        <addr offset="4" space="stack"/>
-      </pentry>
-    </input>
-    <output>
-        <pentry minsize="1" maxsize="2">
-          <register name="AX"/>
-        </pentry>
-        <pentry minsize="3" maxsize="4">
-          <addr space="join" piece1="DX" piece2="AX"/>
-        </pentry>
-    </output>
-    <unaffected>
-      <register name="SP"/>
-      <register name="BP"/>
-      <register name="SI"/>
-      <register name="DI"/>
-      <register name="DS"/>
-      <register name="CS"/>
-      <register name="ES"/>
-      <register name="FS"/>
-      <register name="GS"/>
-      <register name="SS"/>
-      <register name="DF"/>
-    </unaffected>
-  </prototype>
-
-  <prototype name="__thiscall16far" extrapop="unknown" stackshift="4" hasthis="true">
-    <input>
-      <pentry minsize="1" maxsize="500" align="2">
-        <addr offset="4" space="stack"/>
-      </pentry>
-    </input>
-    <output>
-        <pentry minsize="1" maxsize="2">
-          <register name="AX"/>
-        </pentry>
-        <pentry minsize="3" maxsize="4">
-          <addr space="join" piece1="DX" piece2="AX"/>
-        </pentry>
-    </output>
-    <unaffected>
-      <register name="SP"/>
-      <register name="BP"/>
-      <register name="SI"/>
-      <register name="DI"/>
-      <register name="DS"/>
-      <register name="CS"/>
-      <register name="ES"/>
-      <register name="FS"/>
-      <register name="GS"/>
-      <register name="SS"/>
-      <register name="DF"/>
-    </unaffected>
-  </prototype>
-  
-  <prototype name="__fastcall16near" extrapop="unknown" stackshift="2">
-    <input>
-      <pentry minsize="1" maxsize="2">
-        <register name="AX"/>
-      </pentry>
-      <pentry minsize="1" maxsize="2">
-        <register name="DX"/>
-      </pentry>
-      <pentry minsize="1" maxsize="2">
-        <register name="CX"/>
-      </pentry>
-      <pentry minsize="1" maxsize="500" align="2">
-        <addr offset="2" space="stack"/>
-      </pentry>
-    </input>
-    <output>
-      <pentry minsize="1" maxsize="2">
-        <register name="AX"/>
-      </pentry>
-      <pentry minsize="3" maxsize="4">
-        <addr space="join" piece1="DX" piece2="AX"/>
-      </pentry>
-    </output>
-    <unaffected>
-      <register name="SP"/>
-      <register name="BP"/>
-      <register name="SI"/>
-      <register name="DI"/>
-      <register name="DS"/>
-      <register name="CS"/>
-      <register name="ES"/>
-      <register name="FS"/>
-      <register name="GS"/>
-      <register name="SS"/>
-      <register name="DF"/>
-    </unaffected>
-  </prototype>
-  <prototype name="__fastcall16far" extrapop="unknown" stackshift="4">
-    <input>
-      <pentry minsize="1" maxsize="2">
-        <register name="AX"/>
-      </pentry>
-      <pentry minsize="1" maxsize="2">
-        <register name="DX"/>
-      </pentry>
-      <pentry minsize="1" maxsize="2">
-        <register name="CX"/>
-      </pentry>
-      <pentry minsize="1" maxsize="500" align="2">
-        <addr offset="4" space="stack"/>
       </pentry>
     </input>
     <output>
@@ -403,8 +184,197 @@
       <register name="DF"/>
     </unaffected>
   </prototype>
+  <prototype name="__fastcall16near" extrapop="unknown" stackshift="2">
+    <input>
+      <pentry minsize="1" maxsize="2">
+        <register name="AX"/>
+      </pentry>
+      <pentry minsize="1" maxsize="2">
+        <register name="DX"/>
+      </pentry>
+      <pentry minsize="1" maxsize="2">
+        <register name="CX"/>
+      </pentry>
+      <pentry minsize="1" maxsize="500" align="2">
+        <addr offset="2" space="stack"/>
+      </pentry>
+    </input>
+    <output>
+      <pentry minsize="1" maxsize="2">
+        <register name="AX"/>
+      </pentry>
+      <pentry minsize="3" maxsize="4">
+        <addr space="join" piece1="DX" piece2="AX"/>
+      </pentry>
+    </output>
+    <unaffected>
+      <register name="SP"/>
+      <register name="BP"/>
+      <register name="SI"/>
+      <register name="DI"/>
+      <register name="DS"/>
+      <register name="CS"/>
+      <register name="ES"/>
+      <register name="FS"/>
+      <register name="GS"/>
+      <register name="SS"/>
+      <register name="DF"/>
+    </unaffected>
+  </prototype>
+  <prototype name="__fastcall16far" extrapop="unknown" stackshift="4">
+    <input>
+      <pentry minsize="1" maxsize="2">
+        <register name="AX"/>
+      </pentry>
+      <pentry minsize="1" maxsize="2">
+        <register name="DX"/>
+      </pentry>
+      <pentry minsize="1" maxsize="2">
+        <register name="CX"/>
+      </pentry>
+      <pentry minsize="1" maxsize="500" align="2">
+        <addr offset="4" space="stack"/>
+      </pentry>
+    </input>
+    <output>
+        <pentry minsize="1" maxsize="2">
+          <register name="AX"/>
+        </pentry>
+        <pentry minsize="3" maxsize="4">
+          <addr space="join" piece1="DX" piece2="AX"/>
+        </pentry>
+    </output>
+    <unaffected>
+      <register name="SP"/>
+      <register name="BP"/>
+      <register name="SI"/>
+      <register name="DI"/>
+      <register name="DS"/>
+      <register name="CS"/>
+      <register name="ES"/>
+      <register name="FS"/>
+      <register name="GS"/>
+      <register name="SS"/>
+      <register name="DF"/>
+    </unaffected>
+  </prototype>
 
-  <prototype name="__thiscdecl16near" extrapop="2" stackshift="2" hasthis="true">
+  <prototype name="__pascal16near" extrapop="unknown" stackshift="2" strategy="pascal">
+    <input>
+      <pentry minsize="1" maxsize="500" align="2">
+        <addr offset="2" space="stack"/>
+      </pentry>
+    </input>
+    <output>
+      <pentry minsize="1" maxsize="2">
+        <register name="AX"/>
+      </pentry>
+      <pentry minsize="3" maxsize="4">
+        <addr space="join" piece1="DX" piece2="AX"/>
+      </pentry>
+    </output>
+    <unaffected>
+      <register name="SP"/>
+      <register name="BP"/>
+      <register name="SI"/>
+      <register name="DI"/>
+      <register name="DS"/>
+      <register name="CS"/>
+      <register name="ES"/>
+      <register name="FS"/>
+      <register name="GS"/>
+      <register name="SS"/>
+      <register name="DF"/>
+    </unaffected>
+  </prototype>
+  <prototype name="__pascal16far" extrapop="unknown" stackshift="4" strategy="pascal">
+    <input>
+      <pentry minsize="1" maxsize="500" align="2">
+        <addr offset="4" space="stack"/>
+      </pentry>
+    </input>
+    <output>
+        <pentry minsize="1" maxsize="2">
+          <register name="AX"/>
+        </pentry>
+        <pentry minsize="3" maxsize="4">
+          <addr space="join" piece1="DX" piece2="AX"/>
+        </pentry>
+    </output>
+    <unaffected>
+      <register name="SP"/>
+      <register name="BP"/>
+      <register name="SI"/>
+      <register name="DI"/>
+      <register name="DS"/>
+      <register name="CS"/>
+      <register name="ES"/>
+      <register name="FS"/>
+      <register name="GS"/>
+      <register name="SS"/>
+      <register name="DF"/>
+    </unaffected>
+  </prototype>
+
+  <prototype name="__thiscallpascal16near" extrapop="unknown" stackshift="2" hasthis="true" strategy="pascal">
+    <input>
+      <pentry minsize="1" maxsize="500" align="2">
+        <addr offset="2" space="stack"/>
+      </pentry>
+    </input>
+    <output>
+      <pentry minsize="1" maxsize="2">
+        <register name="AX"/>
+      </pentry>
+      <pentry minsize="3" maxsize="4">
+        <addr space="join" piece1="DX" piece2="AX"/>
+      </pentry>
+    </output>
+    <unaffected>
+      <register name="SP"/>
+      <register name="BP"/>
+      <register name="SI"/>
+      <register name="DI"/>
+      <register name="DS"/>
+      <register name="CS"/>
+      <register name="ES"/>
+      <register name="FS"/>
+      <register name="GS"/>
+      <register name="SS"/>
+      <register name="DF"/>
+    </unaffected>
+  </prototype>
+
+  <prototype name="__thiscallpascal16far" extrapop="unknown" stackshift="4" hasthis="true" strategy="pascal">
+    <input>
+      <pentry minsize="1" maxsize="500" align="2">
+        <addr offset="4" space="stack"/>
+      </pentry>
+    </input>
+    <output>
+        <pentry minsize="1" maxsize="2">
+          <register name="AX"/>
+        </pentry>
+        <pentry minsize="3" maxsize="4">
+          <addr space="join" piece1="DX" piece2="AX"/>
+        </pentry>
+    </output>
+    <unaffected>
+      <register name="SP"/>
+      <register name="BP"/>
+      <register name="SI"/>
+      <register name="DI"/>
+      <register name="DS"/>
+      <register name="CS"/>
+      <register name="ES"/>
+      <register name="FS"/>
+      <register name="GS"/>
+      <register name="SS"/>
+      <register name="DF"/>
+    </unaffected>
+  </prototype>
+
+  <prototype name="__thiscallcdecl16near" extrapop="2" stackshift="2" hasthis="true">
     <input>
       <pentry minsize="1" maxsize="500" align="2">
         <addr offset="4" space="stack"/>
@@ -432,7 +402,7 @@
       <register name="DF"/>
     </unaffected>
   </prototype>
-  <prototype name="__thiscdecl16far" extrapop="4" stackshift="4" hasthis="true">
+  <prototype name="__thiscallcdecl16far" extrapop="4" stackshift="4" hasthis="true">
     <input>
       <pentry minsize="1" maxsize="500" align="2">
         <addr offset="4" space="stack"/>
