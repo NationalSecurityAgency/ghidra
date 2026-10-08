@@ -56,29 +56,34 @@ struct PcodeData {
 /// The class acts as a pool of memory for PcodeData and VarnodeData objects
 /// that can be reused repeatedly to emit multiple instructions.
 class PcodeCacher {
-  VarnodeData *poolstart;		///< Start of the pool of VarnodeData objects
+  static constexpr uint4 PAGE_SIZE = 512;///< Initial size of VarnodeData pool
+  static constexpr uint4 MAX_ALLOCATION = 4096;	///< Maximum VarnodeData in a single instruction
   VarnodeData *curpool;			///< First unused VarnodeData
   VarnodeData *endpool;			///< End of the pool of VarnodeData objects
   deque<PcodeData> issued;		///< P-code ops issued for the current instruction
   list<RelativeRecord> label_refs;	///< References to labels
   vector<uintb> labels;			///< Locations of labels
-  VarnodeData *expandPool(uint4 size);	///< Expand the memory pool
+  void expandPool(uint4 size);		///< Expand the memory pool
+  list<VarnodeData *> pools;		///< All allocated arrays of VarnodeData
 public:
   PcodeCacher(void);		///< Constructor
   ~PcodeCacher(void);		///< Destructor
 
   /// \brief Allocate data objects for a new set of Varnodes
   ///
+  /// Allocate an array of VarnodeData as parameters to a single p-code op.
+  /// Allocation size may not exceed MAX_ALLOCATION objects.
   /// \param size is the number of objects to allocate
   /// \return a pointer to the array of available VarnodeData objects
   VarnodeData *allocateVarnodes(uint4 size) {
     VarnodeData *newptr = curpool + size;
-    if (newptr <= endpool) {
-      VarnodeData *res = curpool;
-      curpool = newptr;
-      return res;
+    if (newptr > endpool) {
+      expandPool(size);
+      newptr = curpool + size;
     }
-    return expandPool(size);
+    VarnodeData *res = curpool;
+    curpool = newptr;
+    return res;
   }
 
   /// \brief Allocate a data object for a new p-code operation
