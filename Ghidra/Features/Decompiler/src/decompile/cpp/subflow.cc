@@ -4012,9 +4012,21 @@ bool LaneDivide::traceForward(TransformVar *rvn,int4 numLanes,int4 skipLanes)
 	break;
       }
       case CPUI_INT_RIGHT:
+      case CPUI_INT_LEFT:
       {
 	if (!op->getIn(1)->isConstant()) return false;	// Trace must come through op->getIn(0)
 	TransformVar *outRvn = setReplacement(outvn, numLanes, skipLanes);
+	if (outRvn == (TransformVar *)0) return false;
+	// Don't create the placeholder ops, let traceBackward make them
+	break;
+      }
+      case CPUI_INT_ZEXT:
+      {
+	// The traced lanes are the low lanes of the extension; the rest are zero lanes, which traceBackward builds
+	int4 outLanes,outSkip;
+	if (!description.extension(numLanes, skipLanes, 0, outvn->getSize(), outLanes, outSkip))
+	  return false;
+	TransformVar *outRvn = setReplacement(outvn,outLanes,outSkip);
 	if (outRvn == (TransformVar *)0) return false;
 	// Don't create the placeholder ops, let traceBackward make them
 	break;
