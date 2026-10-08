@@ -84,6 +84,10 @@ class DecoderExecutor extends FoldingExecutor implements DisassemblerContextAdap
 	final AddrCtx at;
 
 	private PseudoInstruction instruction;
+	/**
+	 * The length of {@link #instruction}, including any delay-slotted instructions
+	 */
+	private int lengthWithDelays;
 	private final Map<PcodeFrame, NopPcodeOp> termNopsPerFrame = new HashMap<>();
 
 	private RegisterValue flow;
@@ -164,6 +168,7 @@ class DecoderExecutor extends FoldingExecutor implements DisassemblerContextAdap
 	 */
 	void setInstruction(PseudoInstruction instruction) {
 		this.instruction = instruction;
+		this.lengthWithDelays = instruction == null ? 0 : instruction.getLength();
 		if (at.rvCtx == null || instruction == null ||
 			instruction instanceof DecodeErrorInstruction) {
 			this.flow = at.rvCtx;
@@ -191,6 +196,9 @@ class DecoderExecutor extends FoldingExecutor implements DisassemblerContextAdap
 	public PseudoInstruction decodeInstruction() {
 		PseudoInstruction instruction = stride.decoder.decodeInstruction(at.address, at.rvCtx);
 		setInstruction(instruction);
+		if (instruction.getDelaySlotDepth() > 0) {
+			lengthWithDelays = stride.decoder.getLastLengthWithDelays();
+		}
 		return instruction;
 	}
 
@@ -560,6 +568,14 @@ class DecoderExecutor extends FoldingExecutor implements DisassemblerContextAdap
 	 */
 	Address getAdvancedAddress() {
 		if (instruction != null) {
+			/**
+			 * The p-code of an instruction with delay slots already includes that of its
+			 * delay-slotted instruction(s), so fall through must skip them, too. This mirrors
+			 * DefaultPcodeThread, which advances by InstructionDecoder#getLastLengthWithDelays().
+			 */
+			if (lengthWithDelays > instruction.getLength()) {
+				return instruction.getAddress().addWrap(lengthWithDelays);
+			}
 			return instruction.getMaxAddress().next();
 		}
 		Msg.warn(this, "An inject may have forgotten control flow.");

@@ -46,6 +46,7 @@ public abstract class AbstractPcodeEmulatorTest extends AbstractGTest {
 	public static final LanguageID LANGID_TOY_LE = new LanguageID("Toy:BE:64:default");
 	public static final LanguageID LANGID_X64 = new LanguageID("x86:LE:64:default");
 	public static final LanguageID LANGID_ARMV8 = new LanguageID("ARM:LE:32:v8");
+	public static final LanguageID LANGID_MIPS_BE = new LanguageID("MIPS:BE:32:default");
 
 	public static final int FIB_ITER_N = 100000;
 	public static final long FIB_ITER_VAL = 2754320626097736315L;
@@ -233,6 +234,73 @@ public abstract class AbstractPcodeEmulatorTest extends AbstractGTest {
 
 		assertEquals(getFibRecVal(),
 			arithmetic.toLong(thread.getState().getVar(rax, Reason.INSPECT), Purpose.INSPECT));
+	}
+
+	/**
+	 * Run raw MIPS code at 0x00400000 until a breakpoint at {@code brkOffset}, then return t0.
+	 * 
+	 * <p>
+	 * The MIPS assembler cannot (yet) assemble delay-slotted instructions, so these tests take
+	 * encoded instructions.
+	 */
+	protected long runMipsToBreakpoint(int[] code, int brkOffset) throws Exception {
+		PcodeEmulator emu = createEmulator(getLanguage(LANGID_MIPS_BE));
+		PcodeArithmetic<byte[]> arithmetic = emu.getArithmetic();
+		AddressSpace space = emu.getLanguage().getDefaultSpace();
+		Address entry = space.getAddress(0x00400000);
+		Address brk = entry.add(brkOffset);
+
+		byte[] bytes = new byte[code.length * 4];
+		for (int i = 0; i < code.length; i++) {
+			bytes[i * 4] = (byte) (code[i] >> 24);
+			bytes[i * 4 + 1] = (byte) (code[i] >> 16);
+			bytes[i * 4 + 2] = (byte) (code[i] >> 8);
+			bytes[i * 4 + 3] = (byte) code[i];
+		}
+		emu.getSharedState().setVar(entry, bytes.length, false, bytes);
+		PcodeThread<byte[]> thread = emu.newThread();
+		thread.overrideCounter(entry);
+
+		emu.addBreakpoint(brk, "1:1");
+
+		try {
+			thread.run();
+			fail("Should have interrupted on breakpoint");
+		}
+		catch (InterruptPcodeExecutionException e) {
+		}
+		assertEquals(brk, thread.getCounter());
+
+		Register t0 = emu.getLanguage().getRegister("t0");
+		return arithmetic.toLong(thread.getState().getVar(t0, Reason.INSPECT), Purpose.INSPECT);
+	}
+
+	/**
+	 * A delay-slotted branch that is not taken falls through to the instruction after its delay
+	 * slot. The delay-slotted instruction must execute exactly once.
+	 */
+	@Test
+	public void testDelaySlotBranchNotTaken() throws Exception {
+		assertEquals(1, runMipsToBreakpoint(new int[] {
+			0x24080000, // addiu  t0,zero,0x0
+			0x14000002, // bne    zero,zero,0x00400010   (never taken)
+			0x25080001, // _addiu t0,t0,0x1              (delay slot)
+			0x24090000, // addiu  t1,zero,0x0            <- breakpoint
+		}, 0xc));
+	}
+
+	/**
+	 * A delay-slotted branch that is taken executes its delay slot once, then the target.
+	 */
+	@Test
+	public void testDelaySlotBranchTaken() throws Exception {
+		assertEquals(1, runMipsToBreakpoint(new int[] {
+			0x24080000, // addiu  t0,zero,0x0
+			0x10000002, // beq    zero,zero,0x00400010   (always taken)
+			0x25080001, // _addiu t0,t0,0x1              (delay slot)
+			0x25080010, // addiu  t0,t0,0x10             (skipped)
+			0x24090000, // addiu  t1,zero,0x0            <- breakpoint
+		}, 0x10));
 	}
 
 	@Test
