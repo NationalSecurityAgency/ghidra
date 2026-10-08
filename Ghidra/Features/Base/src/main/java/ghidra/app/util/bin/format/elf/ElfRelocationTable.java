@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,9 +15,12 @@
  */
 package ghidra.app.util.bin.format.elf;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.help.UnsupportedOperationException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.data.*;
@@ -44,6 +47,8 @@ public class ElfRelocationTable implements ElfFileSection {
 	private final long length;
 	private final long entrySize;
 
+	private boolean relocTableTruncated = false;
+
 	private final boolean addendTypeReloc;
 
 	private final ElfHeader elfHeader;
@@ -57,18 +62,20 @@ public class ElfRelocationTable implements ElfFileSection {
 	 * @param relocTableSection relocation table section header or null if associated with a dynamic table entry
 	 * @param fileOffset relocation table file offset
 	 * @param addrOffset memory address of relocation table (should already be adjusted for prelink)
-	 * @param length length of relocation table in bytes
+	 * @param length length of relocation table in bytes (must be greater than 0)
 	 * @param entrySize size of each relocation entry in bytes
 	 * @param addendTypeReloc true if addend type relocation table
 	 * @param symbolTable associated symbol table (may be null if not applicable)
 	 * @param sectionToBeRelocated or null for dynamic relocation table
 	 * @param format table format
+	 * @throws ElfException if an invalid relocation entry size is specified
 	 * @throws IOException if an IO or parse error occurs
 	 */
 	public ElfRelocationTable(BinaryReader reader, ElfHeader header,
 			ElfSectionHeader relocTableSection, long fileOffset, long addrOffset, long length,
 			long entrySize, boolean addendTypeReloc, ElfSymbolTable symbolTable,
-			ElfSectionHeader sectionToBeRelocated, TableFormat format) throws IOException {
+			ElfSectionHeader sectionToBeRelocated, TableFormat format)
+			throws ElfException, IOException {
 
 		this.elfHeader = header;
 		this.relocTableSection = relocTableSection;
@@ -83,6 +90,12 @@ public class ElfRelocationTable implements ElfFileSection {
 		this.sectionToBeRelocated = sectionToBeRelocated;
 		this.symbolTable = symbolTable;
 
+		if (format != TableFormat.ANDROID && this.entrySize != getSupportedRelocationEntrySize()) {
+			throw new ElfException(
+				"Relocation table has unsupported entry size: 0x" +
+					Long.toHexString(this.entrySize));
+		}
+
 		BinaryReader relocReader = reader.clone(fileOffset);
 		List<ElfRelocation> relocList;
 		if (format == TableFormat.RELR) {
@@ -96,6 +109,20 @@ public class ElfRelocationTable implements ElfFileSection {
 		}
 		relocs = new ElfRelocation[relocList.size()];
 		relocList.toArray(relocs);
+	}
+
+	private int getSupportedRelocationEntrySize() {
+		if (format == TableFormat.RELR) {
+			return elfHeader.is32Bit() ? 4 : 8;
+		}
+		if (format == TableFormat.DEFAULT) {
+			if (elfHeader.is32Bit()) {
+				return addendTypeReloc ? 12 : 8;
+			}
+			return addendTypeReloc ? 24 : 16;
+		}
+		throw new UnsupportedOperationException(
+			"Unsupported format for entry size check: " + format);
 	}
 
 	/**
@@ -114,17 +141,28 @@ public class ElfRelocationTable implements ElfFileSection {
 	}
 
 	private List<ElfRelocation> parseStandardRelocations(BinaryReader reader) throws IOException {
+		
 		List<ElfRelocation> relocations = new ArrayList<>();
-		int nRelocs = (int) (length / entrySize);
-		for (int relocationIndex = 0; relocationIndex < nRelocs; ++relocationIndex) {
-			relocations.add(ElfRelocation.createElfRelocation(reader, elfHeader, relocationIndex,
-				addendTypeReloc));
+		long expectedCount = length / entrySize;
+		
+		long hardLimit = Integer.toUnsignedLong(Integer.MAX_VALUE) / entrySize;
+		int count = (int) elfHeader.constrainHeaderCount(expectedCount, fileOffset, entrySize,
+			hardLimit, "Relocation Table");
+		relocTableTruncated = elfHeader.hasHeaderFragment(expectedCount, fileOffset, entrySize,
+			hardLimit, "Relocation Table") || count != expectedCount;
+
+		try {
+			for (int relocationIndex = 0; relocationIndex < count; ++relocationIndex) {
+				relocations.add(ElfRelocation.createElfRelocation(reader, elfHeader, relocationIndex,
+					addendTypeReloc));
+			}
+		}
+		catch (EOFException e) {
+			// return truncated list
+			relocTableTruncated = true;
+			elfHeader.logError("Truncated ELF Relocation table due to unexpected EOF");
 		}
 		return relocations;
-	}
-
-	private long readNextRelrEntry(BinaryReader reader) throws IOException {
-		return entrySize == 8 ? reader.readNextLong() : reader.readNextUnsignedInt();
 	}
 
 	private long addRelrEntry(long offset, List<ElfRelocation> relocList) throws IOException {
@@ -151,30 +189,63 @@ public class ElfRelocationTable implements ElfFileSection {
 	private List<ElfRelocation> parseRelrRelocations(BinaryReader reader) throws IOException {
 
 		// NOTE: Current implementation supports an entrySize of 8 or 4.  This could be 
-		// made more flexable if needed (applies to ElfRelrRelocationTableDataType as well)
+		// made more flexible if needed (applies to ElfRelrRelocationTableDataType as well)
 
 		List<ElfRelocation> relocList = new ArrayList<>();
+		if (length == 0) {
+			return relocList;
+		}
 		long remaining = length; // limit to number of bytes specified for RELR table
 
-		long offset = readNextRelrEntry(reader);
-		offset = addRelrEntry(offset, relocList);
-		remaining -= entrySize;
-
-		while (remaining > 0) {
-			long nextValue = readNextRelrEntry(reader);
-			if ((nextValue & 1) == 1) {
-				offset = addRelrEntries(offset, nextValue, relocList);
-			}
-			else {
-				offset = addRelrEntry(nextValue, relocList);
-			}
+		try {
+			long offset = readNextRelrEntry(reader);
+			offset = addRelrEntry(offset, relocList);
 			remaining -= entrySize;
+
+			while (remaining > 0) {
+				long nextValue = readNextRelrEntry(reader);
+				if ((nextValue & 1) == 1) {
+					offset = addRelrEntries(offset, nextValue, relocList);
+				}
+				else {
+					offset = addRelrEntry(nextValue, relocList);
+				}
+				remaining -= entrySize;
+			}
+		}
+		catch (EOFException e) {
+			// return truncated/incomplete relocation list
+			relocTableTruncated = true;
+			elfHeader.logError("Truncated ELF RELR Relocation table due to unexpected EOF");
 		}
 		return relocList;
 	}
 
+	private long readNextRelrEntry(BinaryReader reader) throws EOFException, IOException {
+		if (!isValidNextFileOffset(reader, entrySize == 8 ? 8 : 4)) {
+			throw new EOFException("Insufficient data");
+		}
+		return entrySize == 8 ? reader.readNextLong() : reader.readNextUnsignedInt();
+	}
+
+	static boolean isValidFileOffset(BinaryReader reader, long offset, long len) {
+		if (len <= 0) {
+			throw new IllegalArgumentException();
+		}
+		long endOffset = offset + len - 1;
+		return offset >= 0 && endOffset >= offset && endOffset < reader.length();
+	}
+
+	static boolean isValidNextFileOffset(BinaryReader reader, long len) {
+		return isValidFileOffset(reader, reader.getPointerIndex(), len);
+	}
+
 	private List<ElfRelocation> parseAndroidRelocations(BinaryReader reader) throws IOException {
 
+		if (!isValidNextFileOffset(reader, 4)) {
+			throw new IOException(
+				"Android relocation table not found at file offset " + reader.getPointerIndex());
+		}
 		String identifier = reader.readNextAsciiString(4);
 		if (!"APS2".equals(identifier)) {
 			throw new IOException("Unsupported Android relocation table format");
@@ -185,6 +256,11 @@ public class ElfRelocationTable implements ElfFileSection {
 		try {
 			int relocationIndex = 0;
 			long remainingRelocations = reader.readNext(LEB128::signed); // reloc_count
+			if (remainingRelocations <= 0) {
+				elfHeader.logError(
+					"Unexpected ELF Android APS2 relocation count " + remainingRelocations);
+				return relocations;
+			}
 			long offset = reader.readNext(LEB128::signed); // reloc_baseOffset
 			long addend = 0;
 
@@ -194,8 +270,13 @@ public class ElfRelocationTable implements ElfFileSection {
 
 				// group_size
 				long groupSize = reader.readNext(LEB128::signed);
+				if (groupSize <= 0) {
+					elfHeader.logError(
+						"Unexpected ELF Android APS2 Group relocation count " + groupSize);
+					break;
+				}
 				if (groupSize > remainingRelocations) {
-					elfHeader.logError("Group relocation count " + groupSize +
+					elfHeader.logError("ELF Android APS2 Group relocation count " + groupSize +
 						" exceeded total count " + remainingRelocations);
 					break;
 				}
@@ -220,7 +301,7 @@ public class ElfRelocationTable implements ElfFileSection {
 				if (groupHasAddend && groupedByAddend) {
 					if (!addendTypeReloc) {
 						elfHeader.logError(
-							"ELF Android Relocation processing failed.  Unexpected r_addend in android.rel section");
+							"ELF Android APS2 Relocation processing failed.  Unexpected r_addend in android.rel section");
 						return List.of();
 					}
 					// group_addend (optional)
@@ -253,7 +334,13 @@ public class ElfRelocationTable implements ElfFileSection {
 				remainingRelocations -= groupSize;
 			}
 		}
+		catch (EOFException e) {
+			// return truncated/incomplete relocation list
+			relocTableTruncated = true;
+			elfHeader.logError("Truncated Android relocation table due to unexpected EOF");
+		}
 		catch (IOException e) {
+			elfHeader.logError("Error reading Android relocation table: " + e.getMessage());
 			Msg.error(this, "Error reading relocations.", e);
 		}
 
@@ -293,6 +380,14 @@ public class ElfRelocationTable implements ElfFileSection {
 	 */
 	public int getRelocationCount() {
 		return relocs.length;
+	}
+
+	/**
+	 * {@return true if {@link #getRelocationCount()} was reduced or table entries were truncated 
+	 * during parse due to constraints}
+	 */
+	public boolean isParsedRelocationCountReduced() {
+		return relocTableTruncated;
 	}
 
 	/**
@@ -340,6 +435,9 @@ public class ElfRelocationTable implements ElfFileSection {
 
 	@Override
 	public DataType toDataType() throws IOException {
+		if (length > Integer.MAX_VALUE) {
+			return null;
+		}
 		if (format == TableFormat.RELR) {
 			String relrStructureName = "Elf_RelrRelocationTable_" + Long.toHexString(addrOffset);
 			return new ElfRelrRelocationTableDataType(relrStructureName, (int) length,
@@ -352,7 +450,7 @@ public class ElfRelocationTable implements ElfFileSection {
 		ElfRelocation relocationRepresentative =
 			ElfRelocation.createElfRelocation(elfHeader, -1, addendTypeReloc, 0, 0, 0);
 		DataType relocEntryDataType = relocationRepresentative.toDataType();
-		return new ArrayDataType(relocEntryDataType, (int) (length / entrySize), (int) entrySize);
+		return new ArrayDataType(relocEntryDataType, relocs.length, -1);
 	}
 
 }
