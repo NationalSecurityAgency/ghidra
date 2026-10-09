@@ -3969,6 +3969,7 @@ bool LaneDivide::traceForward(TransformVar *rvn,int4 numLanes,int4 skipLanes)
 	    if (description.getSize(laneIndex) <= outvn->getSize())		// Is the piece smaller than a lane?
 	      return false;
 	    // Treat SUBPIECE as terminating
+	    laneProgress = true;
 	    TransformOp *rop = newPreexistingOp(2, CPUI_SUBPIECE, op);
 	    opSetInput(rop, rvn + (laneIndex - skipLanes), 0);
 	    opSetInput(rop, newConstant(4, 0, 0), 1);
@@ -3977,6 +3978,7 @@ bool LaneDivide::traceForward(TransformVar *rvn,int4 numLanes,int4 skipLanes)
 	  return false;
 	}
 	if (outLanes == 1) {
+	  laneProgress = true;
 	  TransformOp *rop = newPreexistingOp(1, CPUI_COPY, op);
 	  opSetInput(rop,rvn + (outSkip-skipLanes), 0);
 	}
@@ -4023,10 +4025,83 @@ bool LaneDivide::traceForward(TransformVar *rvn,int4 numLanes,int4 skipLanes)
 	if (op->getIn(2) != origvn) return false;	// Can only propagate through value being stored
 	if (!buildStore(op,numLanes,skipLanes))
 	  return false;
+	laneProgress = true;
+	break;
+      case CPUI_CALL:
+      case CPUI_CALLIND:
+      case CPUI_CALLOTHER:
+      case CPUI_RETURN:
+	if (isWholeReassembly(rvn->getOriginal(),op))
+	  return false;		// Already lanes PIECEd together for this op: dividing again changes nothing
+	if (wholeInputOps.find(op) != wholeInputOps.end())
+	  break;		// The value feeds this op in more than one slot: reassembled once, every slot set
+	if (!buildWholeInput(op,rvn,numLanes,skipLanes))
+	  return false;
+	wholeInputOps.insert(op);
 	break;
       default:
 	return false;
     }
+  }
+  return true;
+}
+
+/// \brief Determine if a Varnode is already the reassembly of lanes feeding one consuming op
+///
+/// After buildWholeInput, the consuming op reads a value defined by a PIECE and read by nothing else,
+/// possibly in more than one of its input slots. Dividing such a value again would only rebuild the
+/// same PIECEs before the same op, and since the reassembled value is itself of a laned size, the
+/// division would otherwise repeat on every pass.
+/// \param vn is the Varnode being traced
+/// \param op is the op consuming it whole
+/// \return \b true if the Varnode is a PIECE result read only by the given op
+bool LaneDivide::isWholeReassembly(Varnode *vn,PcodeOp *op)
+
+{
+  if (!vn->isWritten()) return false;
+  if (vn->getDef()->code() != CPUI_PIECE) return false;
+  list<PcodeOp *>::const_iterator iter;
+  for(iter=vn->beginDescend();iter!=vn->endDescend();++iter) {
+    if (*iter != op)
+      return false;		// Read by another op as well: the reassembly is not for this op alone
+  }
+  return true;
+}
+
+/// \brief Reassemble the lanes into one value for a PcodeOp that consumes it whole
+///
+/// A CALL, CALLIND, CALLOTHER, or RETURN takes the original Varnode as an input it cannot split.
+/// The lanes are concatenated back together with PIECE ops placed just before the op, and the op's
+/// inputs are reattached with the reassembled value in place of the original. A vector that is built
+/// or used lane by lane and then passed whole to a call is thus still divided into its lanes.
+/// \param op is the consuming PcodeOp
+/// \param rvn is the first lane placeholder of the value
+/// \param numLanes is the number of lanes making up the value
+/// \param skipLanes is the index of the first lane within the global description
+/// \return \b true if the op was reattached
+bool LaneDivide::buildWholeInput(PcodeOp *op,TransformVar *rvn,int4 numLanes,int4 skipLanes)
+
+{
+  Varnode *origvn = rvn->getOriginal();
+  TransformOp *rop = newPreexistingOp(op->numInput(), op->code(), op);
+  TransformVar *whole = rvn;			// Least significant lane first
+  int4 size = description.getSize(skipLanes);
+  for(int4 i=1;i<numLanes;++i) {
+    int4 laneSize = description.getSize(skipLanes + i);
+    TransformVar *next = newUnique(size + laneSize);
+    TransformOp *pieceOp = newOp(2, CPUI_PIECE, rop);
+    opSetOutput(pieceOp, next);
+    opSetInput(pieceOp, rvn + i, 0);		// More significant lane on top
+    opSetInput(pieceOp, whole, 1);
+    whole = next;
+    size += laneSize;
+  }
+  for(int4 i=0;i<op->numInput();++i) {
+    Varnode *vn = op->getIn(i);
+    if (vn == origvn)
+      opSetInput(rop, whole, i);
+    else
+      opSetInput(rop, getPreexistingVarnode(vn), i);
   }
   return true;
 }
@@ -4053,6 +4128,8 @@ bool LaneDivide::traceBackward(TransformVar *rvn,int4 numLanes,int4 skipLanes)
       TransformVar *inVars = setReplacement(op->getIn(0),numLanes,skipLanes);
       if (inVars == (TransformVar *)0) return false;
       buildUnaryOp(op->code(), op, inVars, rvn, numLanes);
+      if (op->code() != CPUI_COPY)
+	laneProgress = true;
       break;
     }
     case CPUI_INT_AND:
@@ -4064,6 +4141,7 @@ bool LaneDivide::traceBackward(TransformVar *rvn,int4 numLanes,int4 skipLanes)
       TransformVar *in1Vars = setReplacement(op->getIn(1),numLanes,skipLanes);
       if (in1Vars == (TransformVar *)0) return false;
       buildBinaryOp(op->code(),op,in0Vars,in1Vars,rvn,numLanes);
+      laneProgress = true;
       break;
     }
     case CPUI_MULTIEQUAL:
@@ -4097,14 +4175,17 @@ bool LaneDivide::traceBackward(TransformVar *rvn,int4 numLanes,int4 skipLanes)
     case CPUI_INT_RIGHT:
       if (!buildRightShift(op, rvn, numLanes, skipLanes))
 	return false;
+      laneProgress = true;
       break;
     case CPUI_INT_LEFT:
       if (!buildLeftShift(op, rvn, numLanes, skipLanes))
 	return false;
+      laneProgress = true;
       break;
     case CPUI_INT_ZEXT:
       if (!buildZext(op, rvn, numLanes, skipLanes))
 	return false;
+      laneProgress = true;
       break;
     default:
       return false;
@@ -4134,6 +4215,7 @@ LaneDivide::LaneDivide(Funcdata *f,Varnode *root,const LaneDescription &desc,boo
   : TransformManager(f), description(desc)
 {
   allowSubpieceTerminator = allowDowncast;
+  laneProgress = false;
   setReplacement(root, desc.getNumLanes(), 0);
 }
 
@@ -4155,6 +4237,8 @@ bool LaneDivide::doTrace(void)
 
   clearVarnodeMarks();
   if (!retval) return false;
+  if (!laneProgress && !wholeInputOps.empty())
+    return false;		// The lanes are only reassembled for ops that consume the value whole: nothing is gained
   return true;
 }
 
