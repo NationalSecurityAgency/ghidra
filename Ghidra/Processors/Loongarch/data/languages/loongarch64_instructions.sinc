@@ -598,22 +598,18 @@
 #la-bitops-64.txt revh.2w mask=0x00004000	
 #0x00004000	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
 :revh.2w RD, RJsrc                    is op10_31=0x10 & RD & RJsrc {
-	tmp0:8 = (zext(RJsrc[0,16]) << 16) + zext(RJsrc[16,16]);
-	tmp1:8 = (zext(RJsrc[32,16]) << 8) + zext(RJsrc[48,16]);
-
-	RD = (tmp1 << 32) + tmp0;
+	RD = ((RJsrc & 0x0000ffff0000ffff) << 16) |
+	     ((RJsrc & 0xffff0000ffff0000) >> 16);
 }
 
 
 #la-bitops-64.txt revh.d mask=0x00004400	
 #0x00004400	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
 :revh.d RD, RJsrc                     is op10_31=0x11 & RD & RJsrc {
-	tmp0:8 = zext(RJsrc[0,16]);
-	tmp1:8 = zext(RJsrc[16,16]);
-	tmp2:8 = zext(RJsrc[32,16]);
-	tmp3:8 = zext(RJsrc[48,16]);
-
-	RD = (tmp3 << 48) + (tmp2 << 32) + (tmp1 << 16) + tmp0;
+	RD = ((RJsrc & 0x000000000000ffff) << 48) |
+	     ((RJsrc & 0x00000000ffff0000) << 16) |
+	     ((RJsrc & 0x0000ffff00000000) >> 16) |
+	     ((RJsrc & 0xffff000000000000) >> 48);
 }
 
 
