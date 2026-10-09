@@ -1817,9 +1817,9 @@ void ParamListPascal::assignMap(const PrototypePieces& proto, TypeFactory& typef
     store->flags |= ParameterPieces::isthis; // here, proto.intypes.get(0) is a 'this'
   }
   if (proto.model->getInputResource()->isThisBeforeRetPointer()) { // implies 'hasThis'
-    allocateHiddenReturn(proto, typefactory, status, hiddenParam, hiddenPtr);
+    if (allocateHiddenReturn(proto, typefactory, status, hiddenParam, hiddenPtr))
+      --thisOrFirstParamPos;
     assignAddress(proto.intypes[0], proto, 0, typefactory, status, *store);
-    --thisOrFirstParamPos;
   }
   else {
     assignAddress(proto.intypes[0], proto, 0, typefactory, status, *store);
@@ -1828,7 +1828,7 @@ void ParamListPascal::assignMap(const PrototypePieces& proto, TypeFactory& typef
   res.emplace(res.begin()+thisOrFirstParamPos, *store);
 }
 
-void ParamListPascal::allocateHiddenReturn(const PrototypePieces& proto, TypeFactory& typefactory, vector<int>& status,
+bool ParamListPascal::allocateHiddenReturn(const PrototypePieces& proto, TypeFactory& typefactory, vector<int>& status,
 					   bool hiddenParam, ParameterPieces& hiddenPtr) const
 
 {
@@ -1843,6 +1843,7 @@ void ParamListPascal::allocateHiddenReturn(const PrototypePieces& proto, TypeFac
     }
     hiddenPtr.flags |= ParameterPieces::hiddenretparm;
   }
+  return hiddenParam;
 }
 
 ParamList* ParamListPascal::clone(void) const

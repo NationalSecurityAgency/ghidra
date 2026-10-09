@@ -750,7 +750,7 @@ public:
   virtual uint4 getType(void) const { return p_pascal; }
   virtual void assignMap(const PrototypePieces &proto,TypeFactory &typefactory,vector<int4> &status,
 			 vector<ParameterPieces> &res) const;
-  void allocateHiddenReturn(const PrototypePieces &proto, TypeFactory& typefactory, vector<int> &status,
+  bool allocateHiddenReturn(const PrototypePieces &proto, TypeFactory& typefactory, vector<int> &status,
 			    bool hiddenParam, ParameterPieces& hiddenPtr) const;
   virtual ParamList* clone(void) const;
 };
