@@ -8574,3 +8574,31 @@ is sf=1 & b_30=0 & S=0 & b_2428=0x1a & b_2123=0x6 & b_1015=0x1b & Rd_GPR64 & Rn_
 	local test = tmp <= tmp2;
 	Rd_GPR64 = (zext(test)*tmp) + (zext(!test)*(tmp2));
 }
+
+# FEAT_CPA
+cpa_imm3_shift: is cpa_imm3=0 { export 0:8; }
+cpa_imm3_shift:, "lsl #"^cpa_imm3 is cpa_imm3 { export *[const]:8 cpa_imm3; }
+
+:addpt Rd_GPR64xsp, Rn_GPR64xsp, Rm_GPR64^cpa_imm3_shift
+is sf=1 & b_30=0 & S=0 & b_2428=0b11010 & b_2123=0x0 & Rm_GPR64 & b_1315=0x1 & cpa_imm3_shift & Rn_GPR64xsp & Rd_GPR64xsp
+{
+	Rd_GPR64xsp = Rn_GPR64xsp + (Rm_GPR64 << cpa_imm3_shift);
+}
+
+:subpt Rd_GPR64xsp, Rn_GPR64xsp, Rm_GPR64^cpa_imm3_shift
+is sf=1 & b_30=1 & S=0 & b_2428=0b11010 & b_2123=0x0 & Rm_GPR64 & b_1315=0x1 & cpa_imm3_shift & Rn_GPR64xsp & Rd_GPR64xsp
+{
+	Rd_GPR64xsp = Rn_GPR64xsp - (Rm_GPR64 << cpa_imm3_shift);
+}
+
+:maddpt Rd_GPR64, Rn_GPR64, Rm_GPR64, Ra_GPR64
+is sf=1 & b_30=0 & S=0 & b_2428=0b11011 & b_2123=0b011 & Rm_GPR64 & b_15=0 & Ra_GPR64 & Rn_GPR64 & Rd_GPR64
+{
+	Rd_GPR64 = Ra_GPR64 + (Rn_GPR64 * Rm_GPR64);
+}
+
+:msubpt Rd_GPR64, Rn_GPR64, Rm_GPR64, Ra_GPR64
+is sf=1 & b_30=0 & S=0 & b_2428=0b11011 & b_2123=0b011 & Rm_GPR64 & b_15=1 & Ra_GPR64 & Rn_GPR64 & Rd_GPR64
+{
+	Rd_GPR64 = Ra_GPR64 - (Rn_GPR64 * Rm_GPR64);
+}
