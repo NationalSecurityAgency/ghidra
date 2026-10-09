@@ -1,0 +1,47 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+#include <emmintrin.h>
+#include <math.h>
+/* three rows of a matrix built in a vector register (a scalar zero-extended, then slid a lane at a time) and stored whole to
+   the stack; the matrix's address escapes to a call, and after it the rows are read back a float at a time */
+void fill(float *m);
+float rotate(float a, float s) {
+  float m[12] __attribute__((aligned(16)));
+  __m128 e = _mm_set_ss(s);
+  _mm_store_ps(m, e);
+  _mm_store_ps(m + 4, _mm_castsi128_ps(_mm_slli_si128(_mm_castps_si128(e), 4)));
+  _mm_store_ps(m + 8, _mm_castsi128_ps(_mm_slli_si128(_mm_castps_si128(e), 8)));
+  fill(m);
+  float sn = sinf(a), cs = cosf(a);
+  return m[0] * cs + m[5] * sn + m[10];
+}
+
+  The three calls are to one-byte RET stubs placed after the function.
+-->
+<bytechunk space="ram" offset="0x100000" readonly="true">
+554889e54883ec40f30f1145fc0f57c00f57d2f30f10d10f2955c00f16c2660f73fa04660f7f55d00f2945e0488d7dc0e83b000000f30f1045fce841000000f30f1145f8f30f1045fce842000000f30f104df8f30f594dd4f30f5945c0f30f58c1f30f5845e84883c4405dc390909090c3909090909090909090909090909090c3909090909090909090909090909090c3909090909090909090909090909090
+</bytechunk>
+<symbol space="ram" offset="0x100000" name="rotate"/>
+<symbol space="ram" offset="0x100070" name="fill"/>
+<symbol space="ram" offset="0x100080" name="sinf"/>
+<symbol space="ram" offset="0x100090" name="cosf"/>
+</binaryimage>
+<script>
+  <com>parse line extern float4 rotate(float4 a, float4 s);</com>
+  <com>parse line extern void fill(float4 *m);</com>
+  <com>parse line extern float4 sinf(float4 a);</com>
+  <com>parse line extern float4 cosf(float4 a);</com>
+  <com>lo fu rotate</com>
+  <com>decompile</com>
+  <com>print C</com>
+</script>
+<stringmatch name="StackLanes #1" min="1" max="1">fStack_48 = s;</stringmatch>
+<stringmatch name="StackLanes #2" min="1" max="1">fStack_34 = s;</stringmatch>
+<stringmatch name="StackLanes #3" min="1" max="1">fStack_20 = s;</stringmatch>
+<stringmatch name="StackLanes #4" min="1" max="1">fill\(&amp;fStack_48\);</stringmatch>
+<stringmatch name="StackLanes #5" min="1" max="1">return fVar1 \* fStack_48 \+ fStack_10 \* fStack_34 \+ fStack_20;</stringmatch>
+<stringmatch name="StackLanes #6" min="0" max="0">&lt;&lt; 0x20</stringmatch>
+<stringmatch name="StackLanes #7" min="0" max="0">ZEXT416</stringmatch>
+<stringmatch name="StackLanes #8" min="0" max="0">_4_4_</stringmatch>
+</decompilertest>
