@@ -484,7 +484,14 @@ public class DIEAggregate {
 	}
 
 	public DIEAggregate getTypeRef() {
-		return getRef(DW_AT_type);
+		DIEAggregate type = getRef(DW_AT_type);
+		if (type != null && type.hasAttribute(DW_AT_signature)) {
+			DIEAggregate definition = type.getRef(DW_AT_signature);
+			if (definition != null) {
+				return definition;
+			}
+		}
+		return type;
 	}
 
 	/**
