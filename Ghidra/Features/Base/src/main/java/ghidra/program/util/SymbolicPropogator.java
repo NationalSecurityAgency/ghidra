@@ -81,6 +81,8 @@ public class SymbolicPropogator {
 	/* maximum instructions along to continue along a path that has been followed already */
 	private static final int MAX_EXTRA_INSTRUCTION_FLOW = 16;
 
+	private static final String SEGMENT_PAYLOAD_NAME = "segment_pcode";
+
 	private static int LRU_SIZE = 4096;
 
 	/** NOTE: most of these caches are to reduce contention on the program lock to enable better threading.
@@ -1902,11 +1904,19 @@ public class SymbolicPropogator {
 			return null;
 		}
 
+		AddressSpace space = instr.getAddress().getAddressSpace().getPhysicalSpace();
+		boolean isRealModeSegment = payload.getName().equals(SEGMENT_PAYLOAD_NAME) &&
+			space instanceof SegmentedAddressSpace && !(space instanceof ProtectedAddressSpace);
 		ArrayList<Varnode> inputs = new ArrayList<Varnode>();
 		for (int i = 1; i < ins.length; i++) {
 			Varnode vval = context.getValue(ins[i], evaluator);
 			if (vval == null || !context.isConstant(vval)) {
 				return checkSegmentCallOther(payload, instr, ins, out);
+			}
+			// segment 0 is valid in real mode, unlike the null selector in protected mode
+			if (isRealModeSegment && i == 1 && context.isRegister(ins[i]) &&
+				context.isSuspectConstant(vval) && vval.getOffset() == 0) {
+				vval = context.createConstantVarnode(0, vval.getSize());
 			}
 			inputs.add(vval);
 		}
@@ -1932,7 +1942,7 @@ public class SymbolicPropogator {
 
 	private PcodeOp[] checkSegmentCallOther(InjectPayload payload, Instruction instr, Varnode[] ins,
 			Varnode out) {
-		if (!payload.getName().equals("segment_pcode")) {
+		if (!payload.getName().equals(SEGMENT_PAYLOAD_NAME)) {
 			return null;
 		}
 		if (ins.length != 3) {
@@ -1973,7 +1983,7 @@ public class SymbolicPropogator {
 		// segment is special named injection
 		if ("segment".equals(opName)) {
 			payload =
-				snippetLibrary.getPayload(InjectPayload.EXECUTABLEPCODE_TYPE, "segment_pcode");
+				snippetLibrary.getPayload(InjectPayload.EXECUTABLEPCODE_TYPE, SEGMENT_PAYLOAD_NAME);
 		}
 		else {
 			payload = snippetLibrary.getPayload(InjectPayload.CALLOTHERFIXUP_TYPE, opName);

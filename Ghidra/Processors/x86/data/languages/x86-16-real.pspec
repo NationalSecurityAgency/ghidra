@@ -30,5 +30,57 @@
     <tracked_set space="ram">
       <set name="DF" val="0"/>
     </tracked_set>
+    <!-- Default CS for each 64K of the address space, used where a loader sets none -->
+    <tracked_set space="ram" first="0x00000" last="0x0ffff">
+      <set name="CS" val="0x0000"/>
+    </tracked_set>
+    <tracked_set space="ram" first="0x10000" last="0x1ffff">
+      <set name="CS" val="0x1000"/>
+    </tracked_set>
+    <tracked_set space="ram" first="0x20000" last="0x2ffff">
+      <set name="CS" val="0x2000"/>
+    </tracked_set>
+    <tracked_set space="ram" first="0x30000" last="0x3ffff">
+      <set name="CS" val="0x3000"/>
+    </tracked_set>
+    <tracked_set space="ram" first="0x40000" last="0x4ffff">
+      <set name="CS" val="0x4000"/>
+    </tracked_set>
+    <tracked_set space="ram" first="0x50000" last="0x5ffff">
+      <set name="CS" val="0x5000"/>
+    </tracked_set>
+    <tracked_set space="ram" first="0x60000" last="0x6ffff">
+      <set name="CS" val="0x6000"/>
+    </tracked_set>
+    <tracked_set space="ram" first="0x70000" last="0x7ffff">
+      <set name="CS" val="0x7000"/>
+    </tracked_set>
+    <tracked_set space="ram" first="0x80000" last="0x8ffff">
+      <set name="CS" val="0x8000"/>
+    </tracked_set>
+    <tracked_set space="ram" first="0x90000" last="0x9ffff">
+      <set name="CS" val="0x9000"/>
+    </tracked_set>
+    <tracked_set space="ram" first="0xa0000" last="0xaffff">
+      <set name="CS" val="0xa000"/>
+    </tracked_set>
+    <tracked_set space="ram" first="0xb0000" last="0xbffff">
+      <set name="CS" val="0xb000"/>
+    </tracked_set>
+    <tracked_set space="ram" first="0xc0000" last="0xcffff">
+      <set name="CS" val="0xc000"/>
+    </tracked_set>
+    <tracked_set space="ram" first="0xd0000" last="0xdffff">
+      <set name="CS" val="0xd000"/>
+    </tracked_set>
+    <tracked_set space="ram" first="0xe0000" last="0xeffff">
+      <set name="CS" val="0xe000"/>
+    </tracked_set>
+    <tracked_set space="ram" first="0xf0000" last="0xfffff">
+      <set name="CS" val="0xf000"/>
+    </tracked_set>
+    <tracked_set space="ram" first="0x100000" last="0x10ffef">
+      <set name="CS" val="0x0"/>
+    </tracked_set>
   </context_data>
 </processor_spec>
