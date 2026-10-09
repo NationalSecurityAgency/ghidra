@@ -167,10 +167,9 @@ public class JitPassageDecoder {
 	}
 
 	/**
-	 * Get the length of the last instruction decoded by {@link #decodeInstruction(Address,
-	 * RegisterValue)}, including any delay-slotted instructions
+	 * {@return the length of the last instruction decoded by
+	 * {@link #decodeInstruction(Address, RegisterValue)}, including any delay-slotted instructions}
 	 * 
-	 * @return the length
 	 * @see InstructionDecoder#getLastLengthWithDelays()
 	 */
 	public int getLastLengthWithDelays() {

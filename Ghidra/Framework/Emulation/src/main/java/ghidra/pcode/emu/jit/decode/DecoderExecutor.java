@@ -84,10 +84,7 @@ class DecoderExecutor extends FoldingExecutor implements DisassemblerContextAdap
 	final AddrCtx at;
 
 	private PseudoInstruction instruction;
-	/**
-	 * The length of {@link #instruction}, including any delay-slotted instructions
-	 */
-	private int lengthWithDelays;
+	private int lengthWithDelays; // If no delays, this is the length of the one instruction
 	private final Map<PcodeFrame, NopPcodeOp> termNopsPerFrame = new HashMap<>();
 
 	private RegisterValue flow;
@@ -196,9 +193,7 @@ class DecoderExecutor extends FoldingExecutor implements DisassemblerContextAdap
 	public PseudoInstruction decodeInstruction() {
 		PseudoInstruction instruction = stride.decoder.decodeInstruction(at.address, at.rvCtx);
 		setInstruction(instruction);
-		if (instruction.getDelaySlotDepth() > 0) {
-			lengthWithDelays = stride.decoder.getLastLengthWithDelays();
-		}
+		lengthWithDelays = stride.decoder.getLastLengthWithDelays();
 		return instruction;
 	}
 
@@ -556,7 +551,8 @@ class DecoderExecutor extends FoldingExecutor implements DisassemblerContextAdap
 	 * Compute the fall-through address
 	 * <p>
 	 * This computes the "next" address whether or not the instruction actually has fall through.
-	 * The caller should check for fall through first.
+	 * The caller should check for fall through first. If the instruction has a delay slots, this
+	 * will compute the address after the <em>last</em> delay slot.
 	 * 
 	 * @return the next address
 	 * @implNote If no instruction was actually decoded during this step, and the decoder is asking
@@ -568,15 +564,7 @@ class DecoderExecutor extends FoldingExecutor implements DisassemblerContextAdap
 	 */
 	Address getAdvancedAddress() {
 		if (instruction != null) {
-			/**
-			 * The p-code of an instruction with delay slots already includes that of its
-			 * delay-slotted instruction(s), so fall through must skip them, too. This mirrors
-			 * DefaultPcodeThread, which advances by InstructionDecoder#getLastLengthWithDelays().
-			 */
-			if (lengthWithDelays > instruction.getLength()) {
-				return instruction.getAddress().addWrap(lengthWithDelays);
-			}
-			return instruction.getMaxAddress().next();
+			return instruction.getAddress().addWrap(lengthWithDelays);
 		}
 		Msg.warn(this, "An inject may have forgotten control flow.");
 		return at.address;

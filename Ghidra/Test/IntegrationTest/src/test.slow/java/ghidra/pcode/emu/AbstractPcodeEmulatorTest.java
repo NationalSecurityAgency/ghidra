@@ -20,6 +20,7 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -236,27 +237,30 @@ public abstract class AbstractPcodeEmulatorTest extends AbstractGTest {
 			arithmetic.toLong(thread.getState().getVar(rax, Reason.INSPECT), Purpose.INSPECT));
 	}
 
+	final static String BREAK_PREFIX = "<break>";
+
 	/**
-	 * Run raw MIPS code at 0x00400000 until a breakpoint at {@code brkOffset}, then return t0.
-	 * 
-	 * <p>
-	 * The MIPS assembler cannot (yet) assemble delay-slotted instructions, so these tests take
-	 * encoded instructions.
+	 * Run raw MIPS code at 0x00400000 until a breakpoint denoted by {@value #BREAK_PREFIX}, then
+	 * return t0.
 	 */
-	protected long runMipsToBreakpoint(int[] code, int brkOffset) throws Exception {
+	protected long runMipsToBreakpoint(List<String> lines) throws Exception {
 		PcodeEmulator emu = createEmulator(getLanguage(LANGID_MIPS_BE));
 		PcodeArithmetic<byte[]> arithmetic = emu.getArithmetic();
 		AddressSpace space = emu.getLanguage().getDefaultSpace();
 		Address entry = space.getAddress(0x00400000);
-		Address brk = entry.add(brkOffset);
+		Address brk = null;
 
-		byte[] bytes = new byte[code.length * 4];
-		for (int i = 0; i < code.length; i++) {
-			bytes[i * 4] = (byte) (code[i] >> 24);
-			bytes[i * 4 + 1] = (byte) (code[i] >> 16);
-			bytes[i * 4 + 2] = (byte) (code[i] >> 8);
-			bytes[i * 4 + 3] = (byte) code[i];
+		AssemblyBuffer asm = new AssemblyBuffer(Assemblers.getAssembler(emu.getLanguage()), entry);
+		for (String l : lines) {
+			l = l.trim();
+			if (l.startsWith(BREAK_PREFIX)) {
+				brk = asm.getNext();
+				l = l.substring(BREAK_PREFIX.length()).trim();
+			}
+			asm.assemble(l);
 		}
+
+		byte[] bytes = asm.getBytes();
 		emu.getSharedState().setVar(entry, bytes.length, false, bytes);
 		PcodeThread<byte[]> thread = emu.newThread();
 		thread.overrideCounter(entry);
@@ -281,12 +285,12 @@ public abstract class AbstractPcodeEmulatorTest extends AbstractGTest {
 	 */
 	@Test
 	public void testDelaySlotBranchNotTaken() throws Exception {
-		assertEquals(1, runMipsToBreakpoint(new int[] {
-			0x24080000, // addiu  t0,zero,0x0
-			0x14000002, // bne    zero,zero,0x00400010   (never taken)
-			0x25080001, // _addiu t0,t0,0x1              (delay slot)
-			0x24090000, // addiu  t1,zero,0x0            <- breakpoint
-		}, 0xc));
+		assertEquals(1, runMipsToBreakpoint(List.of(
+			"        li  t0,0x0",
+			"        bne t0,zero,0x00400010", // never taken
+			"        li  t0,0x1",             // delay slot
+			"<break> li  t1,0x0"              // TODO: nop
+		)));
 	}
 
 	/**
@@ -294,13 +298,13 @@ public abstract class AbstractPcodeEmulatorTest extends AbstractGTest {
 	 */
 	@Test
 	public void testDelaySlotBranchTaken() throws Exception {
-		assertEquals(1, runMipsToBreakpoint(new int[] {
-			0x24080000, // addiu  t0,zero,0x0
-			0x10000002, // beq    zero,zero,0x00400010   (always taken)
-			0x25080001, // _addiu t0,t0,0x1              (delay slot)
-			0x25080010, // addiu  t0,t0,0x10             (skipped)
-			0x24090000, // addiu  t1,zero,0x0            <- breakpoint
-		}, 0x10));
+		assertEquals(1, runMipsToBreakpoint(List.of(
+			"        li    t0,0x0",
+			"        beq   t0,zero,0x00400010", // always taken
+			"        li    t0,0x1",             // delay slot, executed
+			"        addiu t0,t0,0x10",         // skipped
+			"<break> li    t1,0x0"              // TODO: nop
+		)));
 	}
 
 	@Test
