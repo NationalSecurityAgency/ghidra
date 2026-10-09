@@ -643,7 +643,7 @@ macro setSignedShiftRightCarryFlag(shiftee,amount) {
 	local den = oper16;
 	local div = num s/ sext(den);
 	local rem = num s% sext(den);
-	lreg = zext(div:2 << 16) | rem;
+	lreg = (zext(rem:2) << 16) | zext(div:2);
 @if defined(C196KB) || defined(C196KC)
 	$(V) = ((div s> 0x7fff) | (div s< 0x8001));
 @endif
@@ -655,7 +655,7 @@ macro setSignedShiftRightCarryFlag(shiftee,amount) {
 	local den = oper8;
 	local div = num s/ sext(den);
 	local rem = num s% sext(den);
-	wreg = zext(div:1 << 8) | rem;
+	wreg = (zext(rem:1) << 8) | zext(div:1);
 @if defined(C196KB) || defined(C196KC)
 	$(V) = ((div s> 0x7f) | (div s< 0x81));
 @endif
@@ -667,7 +667,7 @@ macro setSignedShiftRightCarryFlag(shiftee,amount) {
 	local den = oper16;
 	local div = num / zext(den);
 	local rem = num % zext(den);
-	lreg = zext(div:2 << 16) | rem;
+	lreg = (zext(rem:2) << 16) | zext(div:2);
 	$(V) = (div > 0xffff);
 	$(VT) = $(VT) | $(V);
 }
@@ -677,7 +677,7 @@ macro setSignedShiftRightCarryFlag(shiftee,amount) {
 	local den = oper8;
 	local div = num / zext(den);
 	local rem = num % zext(den);
-	wreg = zext(div:1 << 8) | rem;
+	wreg = (zext(rem:1) << 8) | zext(div:1);
 	$(V) = (div > 0xff);
 	$(VT) = $(VT) | $(V);
 }
