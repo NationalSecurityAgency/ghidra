@@ -1,0 +1,53 @@
+<decompilertest>
+<binaryimage arch="H8:BE:32:H8539F:default">
+<!--
+   Regression test for the cross-register "register0x0e" print-layer bug:
+   a register (e.g. FP) is derived from a DIFFERENT base register via the
+   H8 "link FP,#-2" prologue idiom (pcode-lowered to FP = INT_ADD(CAST(SP),
+   0xfffe)), then FP itself is later used as a SEGMENTOP's third input for
+   a far-pointer memory access. This is distinct from the plain
+   self-referential case (see register0x0e_segmentop_fix.xml)  here the
+   Varnode consuming the SEGMENTOP (FP) is NOT the same storage location as
+   the arithmetic's base operand (SP), so isSelfReferentialRegisterArithmetic
+   correctly declines it, and a separate isCrossRegisterArithmetic helper is
+   required to still resolve it to a real expression ("SP - 2") instead of
+   falling through to the "register0x0e" placeholder fallback.
+
+   FP has no independent hardware meaning on this target  the H8/300 GCC
+   ABI's -fomit-frame-pointer option documents FP as eliminable "in favor
+   of the stack pointer", and this project's own H8 .cspec declares only
+   SP as <stackpointer>, with FP listed in <unaffected> alongside ordinary
+   general registers  so resolving FP's SEGMENTOP-consumed value back to
+   "SP - 2" is the ABI-correct decompilation, not an approximation.
+
+   This exact function (status_word_bit3_conditional_update_via_table) is
+   also the one that surfaced a real regression during whole-ROM testing:
+   an earlier version of the self-referential fix's CAST-unwrap guard
+   caused the SECOND FP-relative access (the "tst.w @(-2,FP)" read at
+   0x23301) to regress from an imprecise-but-non-broken "&stack0xfffe + -2"
+   form into the actual "register0x0e" placeholder, even though the FIRST
+   FP-relative access (the "clr.w @(-2,FP)" write at 0x232d5) printed
+   correctly. This test exercises both sites in the same function so any
+   future regression on either one is caught automatically. See
+   review16.md for the full investigation history (Ghidra-H8-Processor
+   project, printc.cc/printlanguage.cc/funcdata_varnode.cc changes).
+
+   Binary excerpt taken directly from
+   status_word_bit3_conditional_update_via_table, extracted from the real
+   ROM disassembly (RVR_1998_x3 4g63t 21000011 md352553.hex), read via a
+   live MCP read_memory call and hex-encoded programmatically from the raw
+   byte array (not manually transcribed) to avoid transcription errors.
+-->
+<bytechunk space="ram" offset="0x232c3" readonly="true">17febf938806e80a81d9831502f51637004feefe131df1f2f426141d0d60800c0014a8a8131def6a712202a80898fe1df20ef4262c8806e80281d9fb2623eefe16261e1df20ef0271a1df10e801d0d5870230e1df118801d0d5a702304abc32002abd38806e80a81d993cf830f1119
+</bytechunk>
+<symbol space="ram" offset="0x232c3" name="status_word_bit3_conditional_update_via_table"/>
+</binaryimage>
+<script>
+  <com>lo fu status_word_bit3_conditional_update_via_table</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="No register0x0e placeholder text" min="0" max="0">register0x[0-9a-f]+</stringmatch>
+<stringmatch name="FP-derived write and read sites both print as SP - 2" min="2" max="2">SP - 2</stringmatch>
+</decompilertest>

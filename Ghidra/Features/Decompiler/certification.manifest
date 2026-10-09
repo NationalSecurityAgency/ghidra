@@ -79,6 +79,8 @@ src/decompile/datatests/pointersub.xml||GHIDRA||||END|
 src/decompile/datatests/promotecompare.xml||GHIDRA||||END|
 src/decompile/datatests/ptrtoarray.xml||GHIDRA||||END|
 src/decompile/datatests/readvolatile.xml||GHIDRA||||END|
+src/decompile/datatests/register0x0e_crossregister_fix.xml||GHIDRA||||END|
+src/decompile/datatests/register0x0e_segmentop_fix.xml||GHIDRA||||END|
 src/decompile/datatests/retspecial.xml||GHIDRA||||END|
 src/decompile/datatests/retstruct.xml||GHIDRA||||END|
 src/decompile/datatests/revisit.xml||GHIDRA||||END|
