@@ -18,6 +18,21 @@ Embeds a Claude-powered AI assistant inside Ghidra.
   program, optionally runs each through Claude for cleanup, and writes a
   directory containing one `.c` file per function, a shared `program.h`
   header, and a `Makefile` skeleton. See the honest limits below.
+- **Apple binaries (Mach-O, Apple Silicon, iOS)**:
+  - *What Ghidra already does on its own*: the `MachoLoader`, the
+    `DyldCacheLoader`, the `AARCH64:LE:64:AppleSilicon` processor variant,
+    and the Objective-C and Swift feature modules all ship with Ghidra
+    out of the box. Mach-O / Apple Silicon / iOS binaries decompile with
+    no help from this extension.
+  - *What GhidrAssist adds on top*: when the current program is Mach-O,
+    the Explain and Reconstruct prompts prepend a short preamble telling
+    Claude about `objc_msgSend` dispatch, Swift mangling and metadata
+    sections, Darwin AAPCS64 conventions, and the presence of pointer
+    authentication on arm64e. There is also a one-click
+    `Tools → GhidrAssist → Prepare Apple Binary…` action that enables the
+    Objective-C and Swift analyzers on the current program and schedules
+    a re-analysis. It adds no new decompilation capability; it just
+    toggles analyzers that are off by default on non-Apple binaries.
 
 ## Setup
 

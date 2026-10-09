@@ -23,6 +23,7 @@ import ghidra.ghidrassist.ClaudeOptions;
 import ghidra.ghidrassist.DecompilerHelper;
 import ghidra.ghidrassist.GhidrAssistPlugin;
 import ghidra.ghidrassist.GhidrAssistProvider;
+import ghidra.ghidrassist.apple.AppleBinaryContext;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.util.task.Task;
@@ -54,8 +55,9 @@ public class ReconstructFunctionAction extends GhidrAssistAction {
 							"[reconstruct] Could not decompile " + fn.getName() + ".");
 						return;
 					}
+					String applePreamble = AppleBinaryContext.from(program).promptPreamble();
 					String prompt = """
-						Rewrite the following decompiler output as idiomatic, portable C. \
+						%sRewrite the following decompiler output as idiomatic, portable C. \
 						Preserve semantics exactly; do not invent calls, structs, or \
 						behavior. Keep the same function name and signature unless the \
 						decompiler produced something clearly nonsensical. Prefer named \
@@ -66,7 +68,7 @@ public class ReconstructFunctionAction extends GhidrAssistAction {
 						```c
 						%s
 						```
-						""".formatted(c);
+						""".formatted(applePreamble, c);
 
 					ClaudeOptions opts = plugin.options();
 					GhidrAssistProvider.StreamHandle out =

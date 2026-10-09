@@ -23,6 +23,7 @@ import ghidra.ghidrassist.ClaudeOptions;
 import ghidra.ghidrassist.DecompilerHelper;
 import ghidra.ghidrassist.GhidrAssistPlugin;
 import ghidra.ghidrassist.GhidrAssistProvider;
+import ghidra.ghidrassist.apple.AppleBinaryContext;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.util.task.Task;
@@ -54,8 +55,9 @@ public class ExplainFunctionAction extends GhidrAssistAction {
 					return;
 				}
 				monitor.setMessage("Asking Claude");
+				String applePreamble = AppleBinaryContext.from(program).promptPreamble();
 				String prompt = """
-					Explain the following decompiled C function. Be concise.
+					%sExplain the following decompiled C function. Be concise.
 
 					Report:
 					- One-line purpose
@@ -69,7 +71,7 @@ public class ExplainFunctionAction extends GhidrAssistAction {
 					```c
 					%s
 					```
-					""".formatted(fn.getName(), fn.getEntryPoint(), c);
+					""".formatted(applePreamble, fn.getName(), fn.getEntryPoint(), c);
 
 				ClaudeOptions opts = plugin.options();
 				GhidrAssistProvider.StreamHandle out =

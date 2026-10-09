@@ -23,6 +23,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.ghidrassist.actions.ExplainFunctionAction;
 import ghidra.ghidrassist.actions.ExportProjectAction;
+import ghidra.ghidrassist.actions.PrepareAppleBinaryAction;
 import ghidra.ghidrassist.actions.ReconstructFunctionAction;
 import ghidra.ghidrassist.actions.SuggestRenamesAction;
 import ghidra.ghidrassist.actions.SuggestSignatureAction;
@@ -59,6 +60,7 @@ public class GhidrAssistPlugin extends ProgramPlugin {
 		tool.addAction(new SuggestSignatureAction(this));
 		tool.addAction(new ReconstructFunctionAction(this));
 		tool.addAction(new ExportProjectAction(this));
+		tool.addAction(new PrepareAppleBinaryAction(this));
 	}
 
 	@Override
