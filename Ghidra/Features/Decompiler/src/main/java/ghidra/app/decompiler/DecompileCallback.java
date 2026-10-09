@@ -783,6 +783,9 @@ public class DecompileCallback {
 	 * @throws IOException for errors in the underlying stream writing the result
 	 */
 	public void getTrackedRegisters(Address addr, Encoder resultEncoder) throws IOException {
+		if (addr == Address.NO_ADDRESS) {
+			return;
+		}
 		ProgramContext context = program.getProgramContext();
 
 		encodeTrackedPointSet(resultEncoder, addr, context);

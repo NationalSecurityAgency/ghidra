@@ -1215,7 +1215,7 @@ int4 ActionConstantPtr::apply(Funcdata &data)
     if (opc == CPUI_INT_ADD) {
       if (op->getIn(1-slot)->isSpacebase()) continue; // Make sure other side is not a spacebase already
     }
-    else if ((opc == CPUI_PTRSUB)||(opc==CPUI_PTRADD))
+    else if (opc == CPUI_PTRSUB || opc==CPUI_PTRADD || opc == CPUI_SEGMENTOP)
       continue;
     Address rampoint;
     uintb fullEncoding;
