@@ -680,6 +680,7 @@ ctlreg: "UNK_CTL_"^ctl   is ctl     { tmp:4 = 0xffffffff; export tmp; }
 # Relative jump destinations
 addr8: reloc    is d8base [ reloc=inst_start+2+d8base; ]	{ export *[ram]:4 reloc; }
 addr16: reloc	is d16    [ reloc=inst_start+2+d16; ]		{ export *[ram]:4 reloc; }
+addr16DBcc: reloc is d16  [ reloc=inst_start+4+d16; ]		{ export *[ram]:4 reloc; }
 addr32: reloc	is d32    [ reloc=inst_start+2+d32; ]		{ export *[ram]:4 reloc; }
 # Jump locations for coprocessor instructions
 #caddr16: reloc is d16	[ reloc=inst_next-2+d16; ]		{ export *[ram]:4 reloc; }
@@ -2508,11 +2509,11 @@ faddrnd: "d"	is fdst & fopmode=0x66	{ tmp:8 = float2float(fdst); fdst = float2fl
 									[ savmod2=savmod1; regtsan=regtfan; ] { fdst = cosh(f_mem);}
 :fcosh			fsrc, fdst		is op=15 & $(FP_COP) & op68=0 & mode=0 & regan=0; frm=0 & f1515=0 & f1313=0 & fsrc & fdst & fopmode=0x19	{ fdst = cos(fsrc);}
 
-:fdb^fcc fcnt, addr16		is fop=15 & $(FP_FCOP) & f0308=9 & fcnt; f0615=0 & fcc; addr16
+:fdb^fcc fcnt, addr16DBcc		is fop=15 & $(FP_FCOP) & f0308=9 & fcnt; f0615=0 & fcc; addr16DBcc
       { if (fcc) goto inst_next;
         fcnt = fcnt - 1;
         local tst = (fcnt == -1);
-        if (!tst) goto addr16;
+        if (!tst) goto addr16DBcc;
       }
 
 :fdiv.^fprec f_mem, fdst	is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); (frm=1 & f1515=0 & f1313=0 & fdst & fprec & fopmode=0x20) ... & f_mem
