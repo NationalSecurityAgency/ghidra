@@ -24,5 +24,6 @@ eclipse.project.name = 'Processors x86'
 
 dependencies {
 	api project(':Base')
+	testImplementation project(path: ':Emulation', configuration: 'testArtifacts')
 }
 
