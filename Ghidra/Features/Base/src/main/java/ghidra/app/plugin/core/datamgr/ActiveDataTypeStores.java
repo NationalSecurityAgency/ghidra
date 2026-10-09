@@ -501,6 +501,14 @@ class ActiveDataTypeStores {
 		}
 
 		@Override
+		public void dataTypeRemoved(DataTypeManager dtm, DataType dt) {
+			modCount++;
+			for (DataTypeManagerChangeListener listener : dataTypeManagerListeners) {
+				listener.dataTypeRemoved(dtm, dt);
+			}
+		}
+
+		@Override
 		public void dataTypeRemoved(DataTypeManager dtm, DataTypePath path) {
 			modCount++;
 			for (DataTypeManagerChangeListener listener : dataTypeManagerListeners) {

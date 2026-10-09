@@ -310,9 +310,6 @@ public class DefineTable {
 				pos++;
 			}
 		}
-		if (replaceCount >= ARBITRARY_MAX_REPLACEMENTS) {
-			System.err.println(" replace " + image + " hit limit");
-		}
 		return buf.toString();
 	}
 
@@ -383,7 +380,7 @@ public class DefineTable {
 		if (argv == null && sublist.contains(currKey)) {
 			if (!initialList) {
 				// stop recursion of replacement
-				System.err.println("DONT Replace " + currKey + " in: " + buf);
+				Msg.warn(this, "DONT Replace " + currKey + " in: " + buf);
 			}
 			return -1;
 		}
@@ -779,7 +776,7 @@ public class DefineTable {
 	public String expandDefine(String defName) {
 		// don't worry about macros
 		if (isArg(defName)) {
-			//System.err.println(defName + " = " + getValue(defName));
+			//Msg.info(this, defName + " = " + getValue(defName));
 			return null;
 		}
 

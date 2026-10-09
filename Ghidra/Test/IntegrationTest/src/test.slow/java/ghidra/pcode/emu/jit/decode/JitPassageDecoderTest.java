@@ -15,7 +15,7 @@
  */
 package ghidra.pcode.emu.jit.decode;
 
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 import java.util.Map.Entry;
 
@@ -30,6 +30,7 @@ import ghidra.pcode.emu.jit.op.JitOp;
 import ghidra.pcode.exec.PcodeUseropLibrary;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.pcode.PcodeOp;
+import ghidra.util.Msg;
 
 public class JitPassageDecoderTest extends AbstractJitTest {
 	void dumpFolded(JitAnalysisContext context) {
@@ -37,7 +38,7 @@ public class JitPassageDecoderTest extends AbstractJitTest {
 		for (Entry<Operand, byte[]> ent : context.getPassage().allFoldedOperands().entrySet()) {
 			byte[] v = ent.getValue();
 			Operand k = ent.getKey();
-			System.err.println("%s %s=0x%s".formatted(k.op().getSeqnum(), k,
+			Msg.debug(this, "%s %s=0x%s".formatted(k.op().getSeqnum(), k,
 				Utils.bytesToBigInteger(v, v.length, language.isBigEndian(), false).toString(16)));
 		}
 	}

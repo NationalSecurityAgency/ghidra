@@ -81,7 +81,8 @@ import ghidra.util.task.*;
 	},
 	servicesRequired = {
 		DebuggerStaticMappingService.class,
-	})
+	}
+)
 public class DynamicStaticSynchronizationPlugin extends Plugin {
 
 	interface SyncLocationsAction {
@@ -414,7 +415,8 @@ public class DynamicStaticSynchronizationPlugin extends Plugin {
 		}
 		if (currentStatic != staticLoc.getProgram()) {
 			currentStatic = staticLoc.getProgram();
-			firePluginEvent(new ProgramActivatedPluginEvent(getName(), staticLoc.getProgram()));
+			ProgramManager pm = tool.getService(ProgramManager.class);
+			pm.setCurrentProgram(staticLoc.getProgram());
 		}
 		currentStaticLocation = staticLoc;
 		firePluginEvent(

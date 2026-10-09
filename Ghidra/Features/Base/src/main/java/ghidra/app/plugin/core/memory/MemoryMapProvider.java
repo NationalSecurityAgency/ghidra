@@ -810,7 +810,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		}
 
 		@Override
-		protected <T> SelectionManager createSelectionManager() {
+		protected SelectionManager createSelectionManager() {
 			return null;
 		}
 	}

@@ -8410,6 +8410,7 @@ int4 RuleSignForm::applyOp(PcodeOp *op,Funcdata &data)
   if (sextop->code() != CPUI_INT_SEXT)
     return 0;
   a = sextop->getIn(0);
+  if (a->getSize() != op->getOut()->getSize()) return 0;
   int4 c = op->getIn(1)->getOffset();
   if (c < a->getSize()) return 0;
   if (a->isFree()) return 0;
@@ -10688,8 +10689,8 @@ int4 RuleLzcountShiftBool::applyOp(PcodeOp *op,Funcdata &data)
 /// \brief Convert floating-point \e sign bit manipulation into FLOAT_ABS or FLOAT_NEG
 ///
 /// Transform floating-point specific operations
-///   -- `x & 0x7fffffff  =>  ABS(f)`
-///   -- 'x ^ 0x80000000  =>  -f`
+///   - `x & 0x7fffffff  =>  ABS(f)`
+///   - `x ^ 0x80000000  =>  -f`
 ///
 /// A Varnode is determined to be floating-point by participation in other floating-point operations,
 /// not based on the data-type of the Varnode.
@@ -10776,8 +10777,8 @@ int4 RuleFloatSignCleanup::applyOp(PcodeOp *op,Funcdata &data)
 /// \class RuleOrCompare
 /// \brief Simplify INT_OR in comparisons with 0.
 ///
-/// `(V | W) == 0` => '(V == 0) && (W == 0)'
-/// `(V | W) != 0` => '(V != 0) || (W != 0)'
+///   - `(V | W) == 0 => (V == 0) && (W == 0)`
+///   - `(V | W) != 0 => (V != 0) || (W != 0)`
 void RuleOrCompare::getOpList(vector<uint4> &oplist) const
 
 {

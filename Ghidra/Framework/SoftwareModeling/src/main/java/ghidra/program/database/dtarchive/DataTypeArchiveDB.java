@@ -17,6 +17,7 @@ package ghidra.program.database.dtarchive;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.Map;
 
 import javax.help.UnsupportedOperationException;
 
@@ -576,6 +577,17 @@ public abstract class DataTypeArchiveDB extends DomainObjectAdapterDB
 
 	public VariableStorageManager getVariableStorageManager() {
 		return variableStorageMgr;
+	}
+
+	@Override
+	public Map<String, String> getMetadata() {
+		try (Closeable c = lock.write()) {
+			metadata.clear();
+			metadata.put("Data Type Archive Name", getName());
+			metadata.put("# of Data Types", "" + getDataTypeManager().getDataTypeCount(true));
+			metadata.put("# of Data Type Categories", "" + getDataTypeManager().getCategoryCount());
+			return super.getMetadata();
+		}
 	}
 
 	/**

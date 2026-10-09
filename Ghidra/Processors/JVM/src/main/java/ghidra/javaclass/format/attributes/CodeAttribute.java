@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -77,6 +77,10 @@ public class CodeAttribute extends AbstractAttributeInfo {
 		maxStack = reader.readNextShort();
 		maxLocals = reader.readNextShort();
 		codeLength = reader.readNextInt();
+		if (codeLength <= 0 || codeLength > 65536) {
+			throw new IOException(
+				"Code_attribute.code_length is invalid: %d".formatted(codeLength));
+		}
 		_codeOffset = reader.getPointerIndex();
 		code = reader.readNextByteArray(codeLength);
 		exceptionTableLength = reader.readNextShort();

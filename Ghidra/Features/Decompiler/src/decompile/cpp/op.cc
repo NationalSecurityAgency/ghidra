@@ -1014,7 +1014,7 @@ PcodeOp *PcodeOpBank::create(int4 inputs,const SeqNum &sq)
 /// of input slots, which start out empty.  A sequence number is assigned, and
 /// the op is added to the end of the \e dead list.
 /// \param inputs is the number of input slots
-/// \param pc is the Address to associate with the PcodeOp
+/// \param addr is the Address to associate with the PcodeOp
 /// \return the newly allocated PcodeOp
 PcodeOp *PcodeOpBank::createIndirect(int4 inputs,const Address &addr)
 

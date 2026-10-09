@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -91,6 +91,42 @@ public class DockingErrorDisplayTest extends AbstractDockingTest {
 
 		close(dialog);
 	}
+
+	@Test
+	public void testErrLogDialog_Html_AngleBracketIsEscaped() {
+		String result = ErrLogExpandableDialog.addBR("a < b");
+		assertTrue("'<' must be escaped to '&lt;' so it is not interpreted as an HTML tag",
+			result.contains("&lt;"));
+		assertFalse("raw '<' must not appear in HTML output", result.contains("< b"));
+	}
+
+	@Test
+	public void testErrLogDialog_Html_AmpersandIsEscaped() {
+		String result = ErrLogExpandableDialog.addBR("foo & bar");
+		assertTrue("'&' must be escaped to '&amp;'", result.contains("&amp;"));
+	}
+
+	@Test
+	public void testErrLogDialog_Html_HtmlTagsInPlainTextAreEscaped() {
+		// addBR is only invoked for non-HTML messages (getHTML handles <html>-prefixed
+		// messages separately), so if an angle-bracket tag appears in plain text it must
+		// be treated as literal characters, not markup.
+		String result = ErrLogExpandableDialog.addBR("<b>bold?</b>");
+		assertFalse("HTML tag must not be rendered as markup", result.contains("<b>"));
+		assertTrue("escaped opening tag must appear", result.contains("&lt;b&gt;"));
+	}
+
+	@Test
+	public void testErrLogDialog_Html_NewlinesConvertedToBreakTags() {
+		String result = ErrLogExpandableDialog.addBR("line1\nline2");
+		assertTrue("newline must be converted to a <BR> tag", result.contains("<br>"));
+		assertTrue("first line content must be present", result.contains("line1"));
+		assertTrue("second line content must be present", result.contains("line2"));
+	}
+
+//=================================================================================================
+// Private Methods
+//=================================================================================================	
 
 	private void assertExceptionCount(AbstractErrDialog errDialog, int n) {
 

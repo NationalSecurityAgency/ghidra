@@ -39,7 +39,10 @@ public class DataBufferTest extends AbstractGenericTest {
 	@After
 	public void tearDown() throws Exception {
 		// restore default compression: enabled
-		DataBuffer.enableCompressedSerializationOutput(true);
+		DataBuffer.enableCompressedSerializationOutput(
+			Boolean.parseBoolean(
+				System.getProperty(DataBuffer.COMPRESSED_SERIAL_OUTPUT_PROPERTY,
+					"true")));
 	}
 
 	private void transferData(boolean useRandomFill) throws Exception {

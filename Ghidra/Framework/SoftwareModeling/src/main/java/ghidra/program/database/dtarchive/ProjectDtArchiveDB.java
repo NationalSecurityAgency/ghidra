@@ -16,7 +16,7 @@
 package ghidra.program.database.dtarchive;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Date;
 
 import javax.help.UnsupportedOperationException;
 
@@ -32,7 +32,6 @@ import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.dtarchive.ProjectDataTypeArchive;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.IncompatibleLanguageException;
-import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramEvent;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Lock.Closeable;
@@ -264,35 +263,6 @@ public class ProjectDtArchiveDB extends DataTypeArchiveDB
 	@Override
 	protected void setChanged(boolean b) {
 		super.setChanged(b);
-	}
-
-	@Override
-	public Map<String, String> getMetadata() {
-
-		metadata.clear();
-		metadata.put("Data Type Archive Name", getName());
-		metadata.put("# of Data Types", "" + getDataTypeManager().getDataTypeCount(true));
-		metadata.put("# of Data Type Categories", "" + getDataTypeManager().getCategoryCount());
-
-		Options propList = getOptions(Program.PROGRAM_INFO);
-		List<String> propNames = propList.getOptionNames();
-		Collections.sort(propNames);
-		for (String propName : propNames) {
-			if (propName.indexOf(Options.DELIMITER) >= 0) {
-				continue; // ignore second tier options
-			}
-			String valueAsString = propList.getValueAsString(propName);
-			if (valueAsString != null) {
-				metadata.put(propName, propList.getValueAsString(propName));
-			}
-		}
-		return metadata;
-	}
-
-	@Override
-	protected void updateMetadata() throws IOException {
-		getMetadata(); // updates metadata map
-		super.updateMetadata();
 	}
 
 	@Override

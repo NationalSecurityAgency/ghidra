@@ -1669,7 +1669,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 			}
 		}
 		catch (FileNotFoundException e) {
-			Msg.error(this, "Unable to delete test dir?: " + e);
+			Msg.error(this, "Unable to delete test dir?: " + e.getMessage(), e);
 		}
 	}
 

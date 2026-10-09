@@ -423,8 +423,16 @@ void Varnode::setDef(PcodeOp *op)
     setFlags(Varnode::coverdirty);
     clearFlags(Varnode::written);
   }
-  else
+  else {
+    if (isConstant()) {
+      ostringstream s;
+      const Address &addr(op->getAddr());
+      s << "Assignment to constant at " << addr.getShortcut();
+      addr.printRaw(s);
+      throw LowlevelError(s.str());
+    }
     setFlags(Varnode::coverdirty|Varnode::written);
+  }
 }
 
 /// The given Symbol's data-type and flags are inherited by \b this Varnode.
@@ -1377,13 +1385,6 @@ Varnode *VarnodeBank::setDef(Varnode *vn,PcodeOp *op)
     ostringstream s;
     const Address &addr(op->getAddr());
     s << "Defining varnode which is not free at " << addr.getShortcut();
-    addr.printRaw(s);
-    throw LowlevelError(s.str());
-  }
-  if (vn->isConstant()) {
-    ostringstream s;
-    const Address &addr(op->getAddr());
-    s << "Assignment to constant at " << addr.getShortcut();
     addr.printRaw(s);
     throw LowlevelError(s.str());
   }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -120,9 +120,6 @@ public class PackedDecode implements Decoder, Closeable {
 		curPos = new LinkedByteBuffer.Position();
 		endPos = new LinkedByteBuffer.Position();
 		open(Integer.MAX_VALUE, desc);
-		startPos.buffer = inStream;
-		curPos.buffer = inStream;
-		endPos.buffer = inStream;
 		inStream.ingestStreamAsNeeded(stream, endPos);
 	}
 
@@ -224,6 +221,9 @@ public class PackedDecode implements Decoder, Closeable {
 	@Override
 	public void open(int max, String desc) {
 		inStream = new LinkedByteBuffer(max, ELEMENT_END, desc);
+		startPos.buffer = inStream;
+		curPos.buffer = inStream;
+		endPos.buffer = inStream;
 	}
 
 	/**
@@ -253,7 +253,7 @@ public class PackedDecode implements Decoder, Closeable {
 
 	@Override
 	public void endIngest() {
-		inStream.pad();
+		inStream.endIngest();
 		inStream.getStartPosition(endPos);
 	}
 
@@ -514,7 +514,7 @@ public class PackedDecode implements Decoder, Closeable {
 		length = (int) readInteger(length);
 
 		attributeRead = true;
-		int curLen = curPos.array.length - curPos.current;
+		int curLen = curPos.length - curPos.current;
 		if (curLen >= length) {
 			String res = new String(curPos.array, curPos.current, length);
 			curPos.advancePosition(length);
@@ -526,7 +526,7 @@ public class PackedDecode implements Decoder, Closeable {
 		length -= curLen;
 		curPos.advancePosition(curLen);
 		while (length > 0) {
-			curLen = curPos.array.length - curPos.current;
+			curLen = curPos.length - curPos.current;
 			if (curLen > length) {
 				curLen = length;
 			}
@@ -613,5 +613,23 @@ public class PackedDecode implements Decoder, Closeable {
 		int opcode = readOpcode();
 		curPos.copy(startPos);
 		return opcode;
+	}
+
+	@Override
+	public MetaDataType readDataTypeMeta() throws DecoderException {
+		int val = (int) readSignedInteger();
+		MetaDataType meta = MetaDataType.getById(val);
+		if (meta == null) {
+			throw new DecoderException("PackedDecoder: bad meta-type");
+		}
+		return meta;
+	}
+
+	@Override
+	public MetaDataType readDataTypeMeta(AttributeId attribId) throws DecoderException {
+		findMatchingAttribute(attribId);
+		MetaDataType metatype = readDataTypeMeta();
+		curPos.copy(startPos);
+		return metatype;
 	}
 }

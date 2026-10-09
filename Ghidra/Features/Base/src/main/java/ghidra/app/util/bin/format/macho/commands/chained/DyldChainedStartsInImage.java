@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,6 +54,13 @@ public class DyldChainedStartsInImage implements StructConverter {
 		long ptrIndex = reader.getPointerIndex();
 
 		segCount = reader.readNextInt();
+
+		long arraySize = (long) segCount * BinaryReader.SIZEOF_INT;
+		if (segCount < 0 || !reader.isValidIndex(reader.getPointerIndex() + arraySize - 1)) {
+			throw new IOException(
+				"dyld_chained_starts_in_image.seg_count is too large: %d".formatted(segCount));
+		}
+
 		segInfoOffset = reader.readNextIntArray(segCount);
 
 		chainedStarts = new ArrayList<>();

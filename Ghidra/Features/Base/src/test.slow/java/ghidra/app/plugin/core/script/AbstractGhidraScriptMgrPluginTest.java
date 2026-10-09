@@ -680,7 +680,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		String fileText = readFileContents(file);
 
 		if (!expectedContents.trim().equals(fileText.trim())) {
-			System.err.println(
+			Msg.error(this,
 				"Contents of file on disk do not match that of the editor after performing " +
 					"a save operation: " + file);
 			printChars(expectedContents, fileText);
@@ -698,7 +698,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		String fileText = readFileContents(file);
 
 		if (!expectedContents.trim().equals(fileText.trim())) {
-			System.err.println("Contents of file on disk have been unexpectedly changed: " + file);
+			Msg.error(this, "Contents of file on disk have been unexpectedly changed: " + file);
 			printChars(expectedContents, fileText);
 			Assert.fail("Contents of file on disk have been unexpectedly changed: " + file);
 		}
@@ -800,7 +800,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		if (!expectedText.equals(box[0])) {
 //			// let's examine these strings a bit closer, as something in the error reporting
 //			// is not quite right
-//			System.err.println("length of strings: " + expectedText.length() + " and " +
+//			Msg.error(this, "length of strings: " + expectedText.length() + " and " +
 //				box[0].length());
 //
 //			int start = 0;
@@ -808,19 +808,19 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 //			for (StringDiff diff : diffs) {
 //				boolean isInsert = diff.insertData != null;
 //				if (isInsert) {
-//					System.err.println("\n\n>>>\t\tdiff context:\t\t<<<\n" +
+//					Msg.error(this, "\n\n>>>\t\tdiff context:\t\t<<<\n" +
 //						box[0].substring(start, diff.pos1 - diff.insertData.length()));
-//					System.err.println("\n\n>>>>\tinserted value:\t\t<<<\n" + diff.insertData);
+//					Msg.error(this, "\n\n>>>>\tinserted value:\t\t<<<\n" + diff.insertData);
 //				}
 //				else {
-//					System.err.println("\n\n>>>\t\tdiff context:\t\t<<<\n" +
+//					Msg.error(this, "\n\n>>>\t\tdiff context:\t\t<<<\n" +
 //						box[0].substring(start, diff.pos1));
-//					System.err.println("\n\n>>>>\tdeleted value:\t\t<<<\n" +
+//					Msg.error(this, "\n\n>>>>\tdeleted value:\t\t<<<\n" +
 //						expectedText.substring(diff.pos1, diff.pos2));
 //				}
 //			}
 //
-			System.err.println("The editor's text does not contain the expected text");
+			Msg.error(this, "The editor's text does not contain the expected text");
 			printChars(expectedText, box[0]);
 			Assert.fail("The editor's text does not contain the expected text");
 		}
@@ -830,16 +830,16 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 	protected void printChars(String expected, String found) {
 		// maybe there is a whitespace issue...print each char code
-		System.err.println("chars for expected string: ");
+		Msg.error(this, "chars for expected string: ");
 		for (int i = 0; i < expected.length(); i++) {
 			char c = expected.charAt(i);
-			System.err.println(c + " and value: " + ((int) c));
+			Msg.error(this, c + " and value: " + ((int) c));
 		}
 
-		System.err.println("chars for found string: ");
+		Msg.error(this, "chars for found string: ");
 		for (int i = 0; i < found.length(); i++) {
 			char c = found.charAt(i);
-			System.err.println(c + " and value: " + ((int) c));
+			Msg.error(this, c + " and value: " + ((int) c));
 		}
 	}
 

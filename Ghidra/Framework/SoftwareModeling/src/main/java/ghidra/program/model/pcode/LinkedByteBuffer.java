@@ -33,6 +33,7 @@ public class LinkedByteBuffer {
 		public LinkedByteBuffer buffer;		// The buffer object
 		public ArrayIter seqIter;			// Linked-list node of the current page
 		public byte[] array;				// The byte data of the current page
+		public int length;					// Number of bytes stored in the array
 		public int current;					// Position within page of current byte
 
 		/**
@@ -42,6 +43,7 @@ public class LinkedByteBuffer {
 		public void copy(Position pos) {
 			seqIter = pos.seqIter;
 			array = pos.array;
+			length = pos.length;
 			current = pos.current;
 		}
 
@@ -60,7 +62,7 @@ public class LinkedByteBuffer {
 		 */
 		public final byte getBytePlus1() throws DecoderException {
 			int plus1 = current + 1;
-			if (plus1 == array.length) {
+			if (plus1 == length) {
 				ArrayIter iter = seqIter.next;
 				if (iter == null) {
 					iter = buffer.readNextPage(seqIter);
@@ -78,7 +80,7 @@ public class LinkedByteBuffer {
 		public final byte getNextByte() throws DecoderException {
 			byte res = array[current];
 			current += 1;
-			if (current != array.length) {
+			if (current != length) {
 				return res;
 			}
 			if (seqIter.next == null) {
@@ -88,6 +90,7 @@ public class LinkedByteBuffer {
 				seqIter = seqIter.next;
 			}
 			array = seqIter.array;
+			length = seqIter.length;
 			current = 0;
 			return res;
 		}
@@ -98,8 +101,8 @@ public class LinkedByteBuffer {
 		 * @throws DecoderException if the end of stream is reached
 		 */
 		public final void advancePosition(int skip) throws DecoderException {
-			while (array.length - current <= skip) {
-				skip -= (array.length - current);
+			while (length - current <= skip) {
+				skip -= (length - current);
 				if (seqIter.next == null) {
 					seqIter = buffer.readNextPage(seqIter);
 				}
@@ -107,6 +110,7 @@ public class LinkedByteBuffer {
 					seqIter = seqIter.next;
 				}
 				array = seqIter.array;
+				length = seqIter.length;
 				current = 0;
 			}
 			current += skip;
@@ -119,6 +123,7 @@ public class LinkedByteBuffer {
 	public static class ArrayIter {
 		public ArrayIter next;		// The next-node in the list
 		public byte[] array;		// Byte data contained in this page
+		public int length;			// Number of bytes stored in the buffer
 	}
 
 	public final static int BUFFER_SIZE = 1024;
@@ -140,6 +145,7 @@ public class LinkedByteBuffer {
 		padValue = pad;
 		maxCount = max;
 		initialBuffer.array = new byte[BUFFER_SIZE];
+		initialBuffer.length = BUFFER_SIZE;
 		initialBuffer.next = null;
 		description = desc;
 	}
@@ -165,7 +171,7 @@ public class LinkedByteBuffer {
 		asNeededStream = stream;
 		currentPos = readPage(stream, initialBuffer);
 		if (currentPos < BUFFER_SIZE) {
-			pad();
+			endIngest();
 		}
 		getStartPosition(start);
 		initialBuffer = null;		// Let garbage collection pick up pages that are already parsed
@@ -202,6 +208,7 @@ public class LinkedByteBuffer {
 			currentBuffer.next = new ArrayIter();
 			currentBuffer = currentBuffer.next;
 			currentBuffer.array = new byte[BUFFER_SIZE];
+			currentBuffer.length = BUFFER_SIZE;
 			currentPos = 0;
 		}
 	}
@@ -250,6 +257,7 @@ public class LinkedByteBuffer {
 			currentBuffer.next = new ArrayIter();
 			currentBuffer = currentBuffer.next;
 			currentBuffer.array = new byte[BUFFER_SIZE];
+			currentBuffer.length = BUFFER_SIZE;
 			currentPos = 0;
 		}
 	}
@@ -272,6 +280,7 @@ public class LinkedByteBuffer {
 				currentBuffer.next = new ArrayIter();
 				currentBuffer = currentBuffer.next;
 				currentBuffer.array = new byte[BUFFER_SIZE];
+				currentBuffer.length = BUFFER_SIZE;
 				currentPos = 0;
 			}
 			currentBuffer.array[currentPos++] = tok;
@@ -283,22 +292,25 @@ public class LinkedByteBuffer {
 	}
 
 	/**
-	 * Add the padValue to the end of the buffer
+	 * Add the padValue to the end of the buffer and mark valid bytes in the last buffer
 	 */
-	public void pad() {
+	public void endIngest() {
 		if (currentPos == BUFFER_SIZE) {
 			byteCount += currentPos;
 			currentBuffer.next = new ArrayIter();
 			currentBuffer = currentBuffer.next;
 			currentBuffer.array = new byte[1];
+			currentBuffer.length = 1;
 			currentPos = 0;
 		}
 
 		currentBuffer.array[currentPos++] = (byte) padValue;
+		currentBuffer.length = currentPos;	// Any bytes after are not in the buffer
 	}
 
 	public void getStartPosition(Position position) {
 		position.array = initialBuffer.array;
+		position.length = initialBuffer.length;
 		position.current = 0;
 		position.seqIter = initialBuffer;
 	}
@@ -318,6 +330,7 @@ public class LinkedByteBuffer {
 		currentBuffer = new ArrayIter();
 		buffer.next = currentBuffer;
 		currentBuffer.array = new byte[BUFFER_SIZE];
+		currentBuffer.length = BUFFER_SIZE;
 		try {
 			currentPos = readPage(asNeededStream, currentBuffer);
 		}
@@ -325,7 +338,7 @@ public class LinkedByteBuffer {
 			throw new DecoderException(e.getMessage());
 		}
 		if (currentPos < BUFFER_SIZE) {
-			pad();
+			endIngest();
 		}
 		return buffer.next;
 	}

@@ -163,7 +163,7 @@ public class JdiEventHandler implements Runnable {
 	}
 
 	private DebugStatus processUnknown(Event event) {
-		System.err.println("Unknown event: " + event);
+		Msg.debug(this, "Unknown event: " + event);
 		return null;
 	}
 

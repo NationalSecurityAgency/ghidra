@@ -19,7 +19,7 @@
 namespace ghidra {
 
 /// The base propagation ordering associated with each meta-type.
-/// The array elements correspond to the ordering of #type_metatype.
+/// The array elements correspond to the ordering of type_metatype.
 sub_metatype Datatype::base2sub[18] = {
     SUB_PARTIALUNION, SUB_PARTIALSTRUCT, SUB_UINT_PARTIALENUM, SUB_UNION, SUB_STRUCT, SUB_INT_ENUM, SUB_UINT_ENUM,
     SUB_ARRAY, SUB_PTRREL, SUB_PTR, SUB_FLOAT, SUB_CODE, SUB_BOOL, SUB_UINT_PLAIN, SUB_INT_PLAIN, SUB_UNKNOWN,
@@ -249,139 +249,6 @@ int4 Datatype::compareDependency(const Datatype &op) const
   return 0;
 }
 
-/// Convert a type \b meta-type into the string name of the meta-type
-/// \param metatype is the encoded type meta-type
-/// \param res will hold the resulting string
-void metatype2string(type_metatype metatype,string &res)
-
-{
-  switch(metatype) {
-  case TYPE_VOID:
-    res = "void";
-    break;
-  case TYPE_PTR:
-    res = "ptr";
-    break;
-  case TYPE_PTRREL:
-    res = "ptrrel";
-    break;
-  case TYPE_ARRAY:
-    res = "array";
-    break;
-  case TYPE_PARTIALENUM:
-    res = "partenum";
-    break;
-  case TYPE_PARTIALSTRUCT:
-    res = "partstruct";
-    break;
-  case TYPE_PARTIALUNION:
-    res = "partunion";
-    break;
-  case TYPE_ENUM_INT:
-    res = "enum_int";
-    break;
-  case TYPE_ENUM_UINT:
-    res = "enum_uint";
-    break;
-  case TYPE_STRUCT:
-    res = "struct";
-    break;
-  case TYPE_UNION:
-    res = "union";
-    break;
-  case TYPE_SPACEBASE:
-    res = "spacebase";
-    break;
-  case TYPE_UNKNOWN:
-    res = "unknown";
-    break;
-  case TYPE_UINT:
-    res = "uint";
-    break;
-  case TYPE_INT:
-    res = "int";
-    break;
-  case TYPE_BOOL:
-    res = "bool";
-    break;
-  case TYPE_CODE:
-    res = "code";
-    break;
-  case TYPE_FLOAT:
-    res = "float";
-    break;
-  default:
-    throw LowlevelError("Unknown metatype");
-  }
-}
-
-/// Given a string description of a type \b meta-type. Return the meta-type.
-/// \param metastring is the description of the meta-type
-/// \return the encoded type meta-type
-type_metatype string2metatype(const string &metastring)
-
-{
-  switch(metastring[0]) {
-  case 'p':
-    if (metastring=="ptr")
-      return TYPE_PTR;
-    else if (metastring=="ptrrel")
-      return TYPE_PTRREL;
-    else if (metastring=="partunion")
-      return TYPE_PARTIALUNION;
-    else if (metastring=="partstruct")
-      return TYPE_PARTIALSTRUCT;
-    break;
-  case 'a':
-    if (metastring=="array")
-      return TYPE_ARRAY;
-    break;
-  case 'e':
-    if (metastring=="enum_int")
-      return TYPE_ENUM_INT;
-    else if (metastring == "enum_uint")
-      return TYPE_ENUM_UINT;
-    break;
-  case 's':
-    if (metastring=="struct")
-      return TYPE_STRUCT;
-    if (metastring=="spacebase")
-      return TYPE_SPACEBASE;
-    break;
-  case 'u':
-    if (metastring=="unknown")
-      return TYPE_UNKNOWN;
-    else if (metastring=="uint")
-      return TYPE_UINT;
-    else if (metastring=="union")
-      return TYPE_UNION;
-    break;
-  case 'i':
-    if (metastring == "int")
-      return TYPE_INT;
-    break;
-  case 'f':
-    if (metastring == "float")
-      return TYPE_FLOAT;
-    break;
-  case 'b':
-    if (metastring == "bool")
-      return TYPE_BOOL;
-    break;
-  case 'c':
-    if (metastring == "code")
-      return TYPE_CODE;
-    break;
-  case 'v':
-    if (metastring == "void")
-      return TYPE_VOID;
-    break;
-  default:
-    break;
-  }
-  throw LowlevelError("Unknown metatype: "+metastring);
-}
-
 /// Given a description of a data-type \e class, return the \b type_class.
 /// \param classstring is the description of the class
 /// \return the encoded type_class
@@ -474,9 +341,7 @@ void Datatype::encodeBasic(type_metatype meta,int4 align,Encoder &encoder) const
     encoder.writeUnsignedInteger(ATTRIB_ID, saveId);
   }
   encoder.writeSignedInteger(ATTRIB_SIZE, size);
-  string metastring;
-  metatype2string(meta,metastring);
-  encoder.writeString(ATTRIB_METATYPE,metastring);
+  encoder.writeDatatypeMeta(ATTRIB_METATYPE, meta);
   if (align > 0)
     encoder.writeSignedInteger(ATTRIB_ALIGNMENT, align);
   if ((flags & coretype)!=0)
@@ -749,7 +614,7 @@ void Datatype::decodeBasic(Decoder &decoder)
       size = decoder.readSignedInteger();
     }
     else if (attrib == ATTRIB_METATYPE) {
-      metatype = string2metatype(decoder.readString());
+      metatype = decoder.readDatatypeMeta();
     }
     else if (attrib == ATTRIB_CORE) {
       if (decoder.readBool())
@@ -5138,7 +5003,7 @@ Datatype *TypeFactory::decodeTypeNoRef(Decoder &decoder,bool forcecore)
     decoder.closeElement(elemId);
     return ct;
   }
-  type_metatype meta = string2metatype(decoder.readString(ATTRIB_METATYPE));
+  type_metatype meta = decoder.readDatatypeMeta(ATTRIB_METATYPE);
   switch(meta) {
   case TYPE_PTR:
     {

@@ -631,6 +631,12 @@ public class ServerTestUtil {
 
 		TransientProjectManager.getTransientProjectManager().dispose();
 
+		// restore default compression: enabled
+		DataBuffer.enableCompressedSerializationOutput(
+			Boolean.parseBoolean(
+				System.getProperty(DataBuffer.COMPRESSED_SERIAL_OUTPUT_PROPERTY,
+					"true")));
+
 		if (serverProcess != null) {
 
 			cmdOut.dispose();

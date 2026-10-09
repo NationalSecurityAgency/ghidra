@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,9 +32,9 @@ import docking.widgets.label.GHtmlLabel;
 import docking.widgets.tree.*;
 import docking.widgets.tree.support.GTreeDragNDropHandler;
 import generic.theme.GIcon;
-import ghidra.util.*;
+import ghidra.util.HTMLUtilities;
+import ghidra.util.Msg;
 import ghidra.util.exception.MultipleCauses;
-import ghidra.util.html.HTMLElement;
 import util.CollectionUtils;
 
 public class ErrLogExpandableDialog extends AbstractErrDialog {
@@ -178,37 +178,23 @@ public class ErrLogExpandableDialog extends AbstractErrDialog {
 
 	private String getHTML(String msg, Collection<Throwable> report) {
 
-		// 
-		// Usage question: The content herein will be escaped unless you call addHTMLContenet().
-		//                 Further, clients can provide messages that contain HTML.  Is there a
-		//                 use case where we want to show escaped HTML content?
-		//
-		//                 For now, I will assume no such use case exists, and allow HTML to go 
-		//                 through.
-		//
-		//                 If no such use case exists, then we should update HTMLElement to 
-		//                 not escape HTML.  If it does exist, then we should put the onus on
-		//                 the client.
-		//
-
 		HTMLElement html = new HTMLElement("html");
 		HTMLElement body = html.addElement("body");
 
 		if (msg != null) {
 			if (msg.startsWith(HTMLUtilities.HTML)) {
-				// already HTML from the user
-				body.addHTMLContent(msg);
+				body.addHTMLContent(msg); // already HTML from the user
 			}
 			else {
 				String withBRs = addBR(msg);
-				body./*addElement("h3").*/addHTMLContent(withBRs);
+				body.addHTMLContent(withBRs);
 			}
 		}
 
 		for (Throwable t : report) {
 			String tMsg = getMessage(t);
 
-			if (SystemUtilities.isEqual(msg, tMsg)) {
+			if (Objects.equals(msg, tMsg)) {
 				// Don't put the same message on twice.  Some clients call this dialog with
 				// the message as simply Throwable.getMessage().
 				continue;
@@ -220,9 +206,9 @@ public class ErrLogExpandableDialog extends AbstractErrDialog {
 		return html.toString();
 	}
 
-	private String addBR(String text) {
-		String withBRs = HTMLUtilities.lineWrapWithHTMLLineBreaks(text, 0);
-		return withBRs;
+	static String addBR(String text) {
+		String escaped = HTMLUtilities.escapeHTML(text);
+		return HTMLUtilities.lineWrapWithHTMLLineBreaks(escaped, 0);
 	}
 
 	private String getMessage(Throwable t) {
@@ -713,6 +699,78 @@ class TransferActionListener implements ActionListener, PropertyChangeListener {
 		Action a = focusOwner.getActionMap().get(action);
 		if (a != null) {
 			a.actionPerformed(new ActionEvent(focusOwner, ActionEvent.ACTION_PERFORMED, null));
+		}
+	}
+}
+
+class HTMLElement {
+
+	// this contains content and elements
+	private List<Object> contents = new ArrayList<>();
+
+	private String name;
+	private Map<String, String> attributes = new HashMap<>();
+
+	HTMLElement(String name) {
+		this.name = name;
+	}
+
+	String getAttribute(String key) {
+		return attributes.get(key);
+	}
+
+	String putAttribute(String key, String value) {
+		return attributes.put(key, value);
+	}
+
+	String removeAttribute(String key) {
+		return attributes.remove(key);
+	}
+
+	HTMLElement addElement(String elementName) {
+		HTMLElement newElement = new HTMLElement(elementName);
+		contents.add(newElement);
+		return newElement;
+	}
+
+	void addHTMLContent(String htmlContent) {
+		HTMLContent html = new HTMLContent(htmlContent);
+		contents.add(html);
+	}
+
+	@Override
+	public String toString() {
+		// this element's opening tag
+		StringBuilder sb = new StringBuilder("<" + name);
+		for (Map.Entry<String, String> ent : attributes.entrySet()) {
+			sb.append(" ");
+			sb.append(ent.getKey());
+			sb.append("=\"");
+			sb.append(ent.getValue());
+			sb.append("\"");
+		}
+		sb.append(">");
+
+		for (Object obj : contents) {
+			// either an HTMLElement or an HTMLContent
+			sb.append(obj.toString());
+		}
+
+		// closing tag
+		sb.append("</" + name + ">");
+		return sb.toString();
+	}
+
+	private class HTMLContent {
+		private String content;
+
+		HTMLContent(String content) {
+			this.content = content;
+		}
+
+		@Override
+		public String toString() {
+			return content;
 		}
 	}
 }

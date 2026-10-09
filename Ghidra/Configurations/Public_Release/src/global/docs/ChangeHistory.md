@@ -1,4 +1,4 @@
-# Ghidra 12.2 Change History (September 2026)
+# Ghidra 12.2 Change History (October 2026)
 
 ### New Features
 * _Assembler_. Added multi-line assembly action. Patch actions now `go-to` the following address upon completion. Added __Copy Special -> Assembly Code__ action. (GP-6902)
@@ -101,6 +101,7 @@
 * _Analysis_. Fixed Address Table Analyzer to create tables on arrays of undefined bytes/words. (GP-7090, Issue #9407)
 * _Analysis_. Fixed an issue where `setMinStoreLoadOffset` was assigning the wrong field in `ConstantPropagationContextEvaluator`. (GP-7150, Issue #9513)
 * _Analysis_. Fix signedness of SymbolicPropogator constant folds for `INT_RIGHT`, `INT_SRIGHT`, `INT_DIV`, and `INT_REM` pcode op evaluation. (GP-7151, Issue #9516)
+* _API_. Corrected `ConcurrentModificationException` which could occur while accessing/iterating over `DomainObject.getMetadata()`. (GP-7318)
 * _Basic Infrastructure_. Improved path-traversal vulnerabillity checking. (GP-7132, Issue #9482)
 * _Basic Infrastructure_. Improved the security of unzipping theme and extension archives, preventing "zip-bomb"-style attacks. (GP-7206)
 * _Calling Conventions_. Updated Hexagon cspec to model variadic functions correctly. (GP-7024, Issue #9246)
@@ -144,6 +145,7 @@
 * _GUI_. Fixed bug that occurred when deleting a function with multiple function tags. (GP-7092, Issue #9386, #9387)
 * _GUI_. Fixed searching for text in Plate Field comments.  Fixed searching in text that has been clipped in the Listing. (GP-7114)
 * _GUI_. Fixed an AddressOutOfBoundsException encountered when entering a large negative number Address into the __Go To ...__ dialog. (GP-7119)
+* _GUI_. Fixed Color Chooser bug that prevented the History colors from being selectable. (GP-7330, Issue #9691)
 * _Importer_. The Batch Importer now allows any language/compiler spec to be chosen, not just preferred languages. (GP-6732, Issue #1934)
 * _Importer_. Fixed a bug that caused PE and NE binaries to match on the `MzLoader`. (GP-6991)
 * _Importer_. Corrected incorrect symbol placement by the `UnixAoutLoader`. (GP-7284, Issue #9646)
@@ -151,6 +153,7 @@
 * _Importer:ELF_. Corrected ELF import to respect Program Header `PT_LOAD` execute permission when Section Headers are present. (GP-7283, Issue #9644)
 * _Importer:PE_. The PeLoader now rounds `PointerToRawData` down to the proper address. (GP-7036, Issue #9170, #9176)
 * _Logging_. Added default log file values to prevent bad log files from getting created during testing. (GP-7142, Issue #9468)
+* _Multi-User_. Removed Ghidra UI option to control data buffer compression with Ghidra Server communications.  Compression is enabled by default.  Imposed 64KB size restriction for `DataBuffer` to prevent malicious attempts to serialize very large compressed buffers to the Ghidra Server. (GP-7328)
 * _Networking_. Disabled Felix framework URL handler support which was interfering with URL connection error handling. (GP-7269)
 * _Scripting_. Fixed a bug that prevented the GhidraScript `ask()` methods from consuming script arguments in GUI mode. (GP-7125, Issue #9463)
 * _Terminal_. Fixed an issue with Terminal content updates by now using Unicode code point instead of java characters. (GP-6938)

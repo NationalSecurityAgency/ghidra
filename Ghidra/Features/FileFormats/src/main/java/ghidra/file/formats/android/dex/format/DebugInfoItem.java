@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,8 @@
 package ghidra.file.formats.android.dex.format;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.app.util.bin.*;
 import ghidra.program.model.data.*;
@@ -27,8 +29,8 @@ public class DebugInfoItem implements StructConverter {
 	private int lineStartLength;// in bytes
 	private int parametersSize;
 	private int parametersSizeLength;// in bytes
-	private int[] parameterNames;
-	private int[] parameterNamesLengths;
+	private List<Integer> parameterNames = new ArrayList<>();
+	private List<Integer> parameterNamesLengths = new ArrayList<>();
 	private byte[] stateMachineOpcodes;
 
 	public DebugInfoItem(BinaryReader reader) throws IOException {
@@ -40,14 +42,11 @@ public class DebugInfoItem implements StructConverter {
 		parametersSize = leb128.asUInt32();
 		parametersSizeLength = leb128.getLength();
 
-		parameterNames = new int[parametersSize];
-		parameterNamesLengths = new int[parametersSize];
-
 		for (int i = 0; i < parametersSize; ++i) {
 			leb128 = reader.readNext(LEB128Info::unsigned);
 
-			parameterNames[i] = leb128.asUInt32() - 1;// uleb128p1
-			parameterNamesLengths[i] = leb128.getLength();
+			parameterNames.add(leb128.asUInt32() - 1);// uleb128p1
+			parameterNamesLengths.add(leb128.getLength());
 		}
 
 		int count = DebugInfoStateMachineReader.computeLength(reader.clone());
@@ -55,33 +54,30 @@ public class DebugInfoItem implements StructConverter {
 	}
 
 	/**
-	 * <pre>
-	 * The initial value for the state machine's line register. 
+	 * {@return the initial value for the state machine's line register}
+	 * <p>
 	 * Does not represent an actual positions entry.
-	 * </pre>
 	 */
 	public int getLineStart() {
 		return lineStart;
 	}
 
 	/**
-	 * <pre>
-	 * The number of parameter names that are encoded. 
+	 * {@return the number of parameter names that are encoded}
+	 * <p>
 	 * There should be one per method parameter, excluding an instance method's this, if any.
-	 * </pre>
 	 */
 	public int getParametersSize() {
 		return parametersSize;
 	}
 
 	/**
-	 * <pre>
-	 * String index of the method parameter name. 
-	 * An encoded value of NO_INDEX indicates that no name is available for the associated parameter. 
-	 * The type descriptor and signature are implied from the method descriptor and signature.
-	 * </pre>
+	 * {@return a {@link List} of String indexes of the method parameter name}
+	 * <p>
+	 * An encoded value of NO_INDEX indicates that no name is available for the associated 
+	 * parameter. The type descriptor and signature are implied from the method descriptor and signature.
 	 */
-	public int[] getParameterNames() {
+	public List<Integer> getParameterNames() {
 		return parameterNames;
 	}
 
@@ -104,8 +100,8 @@ public class DebugInfoItem implements StructConverter {
 		structure.add(ULEB128, parametersSizeLength, "parameters_size", null);
 
 		for (int i = 0; i < parametersSize; ++i) {
-			structure.add(ULEB128, parameterNamesLengths[i], "parameter_" + i, null);
-			builder.append("%d".formatted(parameterNamesLengths[i]));
+			structure.add(ULEB128, parameterNamesLengths.get(i), "parameter_" + i, null);
+			builder.append("%d".formatted(parameterNamesLengths.get(i)));
 		}
 
 		ArrayDataType stateMachineArray =

@@ -455,6 +455,31 @@ OpCode XmlDecode::readOpcode(AttributeId &attribId)
   return opc;
 }
 
+type_metatype XmlDecode::readDatatypeMeta(void)
+
+{
+  const Element *el = elStack.back();
+  string nm = el->getAttributeValue(attributeIndex);
+  type_metatype meta = string2metatype(nm);
+  return meta;
+}
+
+type_metatype XmlDecode::readDatatypeMeta(AttributeId &attribId)
+
+{
+  const Element *el = elStack.back();
+  string nm;
+  if (attribId == ATTRIB_CONTENT) {
+    nm = el->getContent();
+  }
+  else {
+    int4 index = findMatchingAttribute(el, attribId.getName());
+    nm = el->getAttributeValue(index);
+  }
+ type_metatype meta = string2metatype(nm);
+ return meta;
+}
+
 void XmlEncode::newLine(void)
 
 {
@@ -597,6 +622,24 @@ void XmlEncode::writeOpcode(const AttributeId &attribId,OpCode opc)
   outStream << "\"";
 }
 
+void XmlEncode::writeDatatypeMeta(const AttributeId &attribId,type_metatype metatype)
+
+{
+  string name;
+  metatype2string(metatype, name);
+  if (attribId == ATTRIB_CONTENT) {
+    if (tagStatus == tag_start) {
+      outStream << '>';
+    }
+    outStream << name;
+    tagStatus = tag_content;
+    return;
+  }
+  outStream << ' ' << attribId.getName() << "=\"";
+  outStream << name;
+  outStream << "\"";
+}
+
 /// The integer is encoded, 7-bits per byte, starting with the most significant 7-bits.
 /// The integer is decode from the \e current position, and the position is advanced.
 /// \param len is the number of bytes to extract
@@ -676,10 +719,8 @@ void PackedDecode::skipAttributeRemaining(uint1 typeByte)
 void PackedDecode::endIngest(int4 bufPos)
 
 {
-  endPos.seqIter = inStream.begin();		// Set position to beginning of stream
+  endPos.seqIter = inStream.begin();		// Set position to first buffer
   if (endPos.seqIter != inStream.end()) {
-    endPos.current = (*endPos.seqIter).start;
-    endPos.end = (*endPos.seqIter).end;
     // Make sure there is at least one character after ingested buffer
     if (bufPos == BUFFER_SIZE) {
       // Last buffer was entirely filled
@@ -689,10 +730,12 @@ void PackedDecode::endIngest(int4 bufPos)
     }
     uint1 *buf = inStream.back().start;
     buf[bufPos] = ELEMENT_END;
+    inStream.back().end = buf + bufPos + 1;
+    endPos.current = (*endPos.seqIter).start;	// Set position to start of buffer
+    endPos.end = (*endPos.seqIter).end;
   } else {
     throw DecoderError("Ended ingestion without any input");
   }
-
 }
 
 PackedDecode::~PackedDecode(void)
@@ -1061,6 +1104,24 @@ OpCode PackedDecode::readOpcode(AttributeId &attribId)
   return opc;
 }
 
+type_metatype PackedDecode::readDatatypeMeta(void)
+
+{
+  int4 val = (int4)readSignedInteger();
+  if (val < 0 || val > TYPE_VOID)
+    throw DecoderError("Bad encoded metatype");
+  return (type_metatype)val;
+}
+
+type_metatype PackedDecode::readDatatypeMeta(AttributeId &attribId)
+
+{
+  findMatchingAttribute(attribId);
+  type_metatype metatype = readDatatypeMeta();
+  curPos = startPos;
+  return metatype;
+}
+
 /// The value is either an unsigned integer, an address space index, or (the absolute value of) a signed integer.
 /// A type header is passed in with the particular type code for the value already filled in.
 /// This method then fills in the length code, outputs the full type header and the encoded bytes of the integer.
@@ -1180,18 +1241,28 @@ void PackedEncode::writeString(const AttributeId &attribId,const string &val)
 
 {
   uint8 length = val.length();
+  const char *ptr = val.c_str();
+  for(uint8 i=0;i<length;++i) {
+    if (ptr[i] == '\0')
+      throw LowlevelError("PackedEncode: string with null character");
+  }
   writeHeader(ATTRIBUTE, attribId.getId());
   writeInteger((TYPECODE_STRING << TYPECODE_SHIFT), length);
-  outStream.write(val.c_str(), length);
+  outStream.write(ptr, length);
 }
 
 void PackedEncode::writeStringIndexed(const AttributeId &attribId,uint4 index,const string &val)
 
 {
   uint8 length = val.length();
+  const char *ptr = val.c_str();
+  for(uint8 i=0;i<length;++i) {
+    if (ptr[i] == '\0')
+      throw LowlevelError("PackedEncode: string with null character");
+  }
   writeHeader(ATTRIBUTE, attribId.getId() + index);
   writeInteger((TYPECODE_STRING << TYPECODE_SHIFT), length);
-  outStream.write(val.c_str(), length);
+  outStream.write(ptr, length);
 }
 
 void PackedEncode::writeSpace(const AttributeId &attribId,const AddrSpace *spc)
@@ -1226,6 +1297,13 @@ void PackedEncode::writeOpcode(const AttributeId &attribId,OpCode opc)
 {
   writeHeader(ATTRIBUTE, attribId.getId());
   writeInteger((TYPECODE_SIGNEDINT_POSITIVE << TYPECODE_SHIFT), opc);
+}
+
+void PackedEncode::writeDatatypeMeta(const AttributeId &attribId,type_metatype metatype)
+
+{
+  writeHeader(ATTRIBUTE, attribId.getId());
+  writeInteger((TYPECODE_SIGNEDINT_POSITIVE << TYPECODE_SHIFT), metatype);
 }
 
 // Common attributes.  Attributes with multiple uses

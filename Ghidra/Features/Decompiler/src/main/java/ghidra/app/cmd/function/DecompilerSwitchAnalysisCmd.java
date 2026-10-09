@@ -306,22 +306,27 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand<Program> {
 	 * Label switch table, cases, default with labels in namespace of the switch
 	 */
 	private void labelSwitch(JumpTable table, TaskMonitor monitor) throws CancelledException {
+
+		String labelName = "switchD";
+
 		AddLabelCmd tableNameLabel =
-			new AddLabelCmd(table.getSwitchAddress(), "switchD", SourceType.ANALYSIS);
+			new AddLabelCmd(table.getSwitchAddress(), labelName, SourceType.ANALYSIS);
 
 		// check if the table is already labeled
 		Symbol syms[] = program.getSymbolTable().getSymbols(table.getSwitchAddress());
 		for (Symbol sym : syms) {
-			if (sym.getName(false).startsWith(tableNameLabel.getLabelName())) {
+			if (sym.getName(false).startsWith(labelName)) {
 				return;
 			}
 		}
+
+		Function func = decompilerResults.getFunction();
 
 		// put switch table cases into a new switch namespace
 		Namespace space = null;
 		String switchName = "switchD_" + table.getSwitchAddress();
 		try {
-			space = program.getSymbolTable().createNameSpace(null, switchName, SourceType.ANALYSIS);
+			space = program.getSymbolTable().createNameSpace(func, switchName, SourceType.ANALYSIS);
 		}
 		catch (DuplicateNameException e) {
 			space = program.getSymbolTable().getNamespace(switchName, null);

@@ -198,8 +198,10 @@ public class ProgramDataTypeManager extends ProgramBasedDataTypeManagerDB
 	}
 
 	@Override
-	protected void dataTypeDeleted(long deletedID, DataTypePath deletedDataTypePath) {
-		super.dataTypeDeleted(deletedID, deletedDataTypePath);
+	protected void dataTypeDeleted(long deletedID, DataType dataType) {
+		super.dataTypeDeleted(deletedID, dataType);
+
+		DataTypePath deletedDataTypePath = dataType.getDataTypePath();
 		program.dataTypeChanged(deletedID, ProgramEvent.DATA_TYPE_REMOVED, false,
 			deletedDataTypePath, null);
 	}

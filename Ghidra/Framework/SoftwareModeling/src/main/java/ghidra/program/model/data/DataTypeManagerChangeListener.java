@@ -77,6 +77,23 @@ public interface DataTypeManagerChangeListener {
 	public void dataTypeRemoved(DataTypeManager dtm, DataTypePath path);
 
 	/**
+	 * Notification when data type is removed.
+	 * <P>	  
+	 * This method has been added to allow clients access the actual data type that was deleted. By
+	 * default this method simply calls the original 
+	 * {@link #dataTypeRemoved(DataTypeManager, DataTypePath)} so existing clients don't need to 
+	 * implement the new method.  
+	 * 
+	 * @param dtm data type manager for the given category paths.
+	 * @param dataType the removed datatype.
+	 * @since 12.3
+	 */
+	public default void dataTypeRemoved(DataTypeManager dtm, DataType dataType) {
+		DataTypePath dtPath = dataType.getDataTypePath();
+		dataTypeRemoved(dtm, dtPath);
+	}
+
+	/**
 	 * Notification when data type is renamed.
 	 * 
 	 * @param dtm data type manager for the given category paths.

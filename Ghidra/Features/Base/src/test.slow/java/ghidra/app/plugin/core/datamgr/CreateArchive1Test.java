@@ -206,15 +206,15 @@ public class CreateArchive1Test extends AbstractCreateArchiveTest {
 		// debug
 		if (archiveNode == null) {
 			List<GTreeNode> children = archiveRootNode.getChildren();
-			System.err.println("did not find new node - children: ");
+			Msg.debug(this, "did not find new node - children: ");
 			for (GTreeNode treeNode : children) {
-				System.err.println("\tchild: " + treeNode.getName());
+				Msg.debug(this, "\tchild: " + treeNode.getName());
 			}
 			sleep(5000);
 			children = archiveRootNode.getChildren();
-			System.err.println("did not find new node - children: ");
+			Msg.debug(this, "did not find new node - children: ");
 			for (GTreeNode treeNode : children) {
-				System.err.println("\tchild: " + treeNode.getName());
+				Msg.debug(this, "\tchild: " + treeNode.getName());
 			}
 
 		}

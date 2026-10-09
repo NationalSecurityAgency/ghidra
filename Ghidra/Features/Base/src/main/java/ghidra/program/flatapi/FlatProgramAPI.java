@@ -2552,7 +2552,7 @@ public class FlatProgramAPI {
 	 * @deprecated Use {@link #openFileDataTypeArchive(File, boolean)} instead. Then use 
 	 * {@link PersistentDataTypeArchive#getDataTypeManager()}
 	 */
-	@Deprecated(since = "12.2", forRemoval = true)
+	@Deprecated(since = "12.3", forRemoval = true)
 	public final FileDataTypeManager openDataTypeArchive(File archiveFile, boolean readOnly)
 			throws Exception {
 		return FileDataTypeManager.openFileArchive(archiveFile, !readOnly);

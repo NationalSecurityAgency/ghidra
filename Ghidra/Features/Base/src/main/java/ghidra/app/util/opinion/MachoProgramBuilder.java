@@ -809,7 +809,7 @@ public class MachoProgramBuilder {
 
 		SymbolTable symbolTable = program.getSymbolTable();
 		Address imagebase = getMachoBaseAddress();
-		List<DyldFixup> fixups = new ArrayList<>();
+		Set<DyldFixup> fixups = new HashSet<>();
 
 		// First look for a DyldChainedFixupsCommand
 		List<DyldChainedFixupsCommand> loadCommands =
@@ -916,7 +916,7 @@ public class MachoProgramBuilder {
 			monitor.initialize(threadedBindings.size(), "Processing threaded bindings...");
 			for (Binding threadedBinding : threadedBindings) {
 				monitor.increment();
-				List<DyldFixup> fixups = DyldChainedFixups.getChainedFixups(reader,
+				Set<DyldFixup> fixups = DyldChainedFixups.getChainedFixups(reader,
 					chainedImports, DyldChainType.DYLD_CHAINED_PTR_ARM64E,
 					segments.get(threadedBinding.getSegmentIndex()).getFileOffset(),
 					threadedBinding.getSegmentOffset(), 0, imagebase.getOffset(),

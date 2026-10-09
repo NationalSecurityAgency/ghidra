@@ -538,8 +538,8 @@ public class DefaultTrustManagerFactory {
 		}
 		catch (Exception e) {
 			wrappedTrustManager.caError = e;
-			Msg.error(DefaultTrustManagerFactory.class,
-				"OS trust store load failed: " + e.getMessage());
+			Msg.warn(DefaultTrustManagerFactory.class,
+				"OS Truststore load failed: " + e.getMessage());
 		}
 	}
 
@@ -575,7 +575,7 @@ public class DefaultTrustManagerFactory {
 				}
 			}
 		}
-		throw new KeyStoreException("X509 CA certificates not found");
+		throw new KeyStoreException("X509 trusted CA certificates not found");
 	}
 
 }
