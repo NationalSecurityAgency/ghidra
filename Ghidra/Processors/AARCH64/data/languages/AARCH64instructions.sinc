@@ -1462,6 +1462,9 @@ define token instrAARCH64 (32) endian = little
 	u = (29,29)
 	v = (26,26)
 
+	cmpbr_imm9 = (5,13) signed
+	cmpbr_imm6 = (15,20)
+
 	# SVE tokens
 
 	Zd = (0,4)
