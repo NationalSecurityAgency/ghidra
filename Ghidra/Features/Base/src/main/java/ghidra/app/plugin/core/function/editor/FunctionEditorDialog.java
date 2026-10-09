@@ -238,6 +238,10 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		rebuildNamespaces(ns);
 	}
 
+	String getSelectedCallingConvention() {
+		return (String) callingConventionComboBox.getSelectedItem();
+	}
+
 	Namespace getSelectedNamesapce() {
 		return namespaceChoices.getSelectedItem().getNamespace();
 	}
