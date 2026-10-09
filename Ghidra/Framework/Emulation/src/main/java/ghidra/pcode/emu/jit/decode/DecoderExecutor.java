@@ -84,6 +84,7 @@ class DecoderExecutor extends FoldingExecutor implements DisassemblerContextAdap
 	final AddrCtx at;
 
 	private PseudoInstruction instruction;
+	private int lengthWithDelays; // If no delays, this is the length of the one instruction
 	private final Map<PcodeFrame, NopPcodeOp> termNopsPerFrame = new HashMap<>();
 
 	private RegisterValue flow;
@@ -164,6 +165,7 @@ class DecoderExecutor extends FoldingExecutor implements DisassemblerContextAdap
 	 */
 	void setInstruction(PseudoInstruction instruction) {
 		this.instruction = instruction;
+		this.lengthWithDelays = instruction == null ? 0 : instruction.getLength();
 		if (at.rvCtx == null || instruction == null ||
 			instruction instanceof DecodeErrorInstruction) {
 			this.flow = at.rvCtx;
@@ -191,6 +193,7 @@ class DecoderExecutor extends FoldingExecutor implements DisassemblerContextAdap
 	public PseudoInstruction decodeInstruction() {
 		PseudoInstruction instruction = stride.decoder.decodeInstruction(at.address, at.rvCtx);
 		setInstruction(instruction);
+		lengthWithDelays = stride.decoder.getLastLengthWithDelays();
 		return instruction;
 	}
 
@@ -548,7 +551,8 @@ class DecoderExecutor extends FoldingExecutor implements DisassemblerContextAdap
 	 * Compute the fall-through address
 	 * <p>
 	 * This computes the "next" address whether or not the instruction actually has fall through.
-	 * The caller should check for fall through first.
+	 * The caller should check for fall through first. If the instruction has a delay slots, this
+	 * will compute the address after the <em>last</em> delay slot.
 	 * 
 	 * @return the next address
 	 * @implNote If no instruction was actually decoded during this step, and the decoder is asking
@@ -560,7 +564,7 @@ class DecoderExecutor extends FoldingExecutor implements DisassemblerContextAdap
 	 */
 	Address getAdvancedAddress() {
 		if (instruction != null) {
-			return instruction.getMaxAddress().next();
+			return instruction.getAddress().addWrap(lengthWithDelays);
 		}
 		Msg.warn(this, "An inject may have forgotten control flow.");
 		return at.address;
