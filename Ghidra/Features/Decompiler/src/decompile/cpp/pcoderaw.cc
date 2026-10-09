@@ -33,8 +33,11 @@ void VarnodeData::decode(Decoder &decoder)
 void VarnodeData::decodeFromAttributes(Decoder &decoder)
 
 {
+  string attribName, attribRename;
+
   space = (AddrSpace *)0;
   size = 0;
+
   for(;;) {
     uint4 attribId = decoder.getNextAttributeId();
     if (attribId == 0)
@@ -43,14 +46,24 @@ void VarnodeData::decodeFromAttributes(Decoder &decoder)
       space = decoder.readSpace();
       decoder.rewindAttributes();
       offset = space->decodeAttributes(decoder,size);
-      break;
+      return;
     }
     else if (attribId == ATTRIB_NAME) {
-      const Translate *trans = decoder.getAddrSpaceManager()->getDefaultCodeSpace()->getTrans();
-      const VarnodeData &point(trans->getRegister(decoder.readString()));
-      *this = point;
-      break;
+	  attribName = decoder.readString();
     }
+    else if (attribId == ATTRIB_RENAME) {
+	  attribRename = decoder.readString();
+	}
+  }
+
+  if (attribRename.size() > 0) {
+	attribName = attribRename;
+  }
+
+  if (attribName.size() > 0) {
+  	const Translate *trans = decoder.getAddrSpaceManager()->getDefaultCodeSpace()->getTrans();
+  	const VarnodeData &point(trans->getRegister(attribName));
+  	*this = point;
   }
 }
 
