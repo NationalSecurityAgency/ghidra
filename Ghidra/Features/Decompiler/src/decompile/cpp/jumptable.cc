@@ -1612,6 +1612,109 @@ bool JumpBasic::foldInGuards(Funcdata *fd,JumpTable *jump)
   return change;
 }
 
+/// \brief Bound an address table by the lowest address it dispatches to
+///
+/// A table cannot extend past its own lowest target: the bytes holding the table and the
+/// code that table jumps to cannot occupy the same memory.  Walk the entries in order,
+/// tracking the lowest target seen so far, and cut off at the first entry whose own table
+/// bytes would reach that target.  This recovers a true entry count for tables whose index
+/// is not bounded anywhere at the site -- where the count is an invariant of the caller and
+/// the value-range analysis can only supply an upper bound -- which is the normal situation
+/// for a scaled byte index on an 8-bit architecture.
+///
+/// This needs the \b loadpoints as collected, one per LOAD in execution order, so it must run
+/// before LoadTable::collapseTable.  The byte extent of each entry is taken from the LOADs
+/// that entry actually performed, so no assumption is made about the table's stride or about
+/// its entries being contiguous.
+///
+/// The idiom only holds for a table sitting below the code it dispatches to, so if the lowest
+/// target is not above the table nothing is recovered.  A caller that gets \b false must leave
+/// the table alone.
+/// \param addresstable is the recovered list of target addresses
+/// \param loadpoints holds one entry per LOAD performed, in execution order
+/// \param loadcounts gives the running number of LOADs consumed through each table entry
+/// \param cutoff will hold the recovered entry count
+/// \return \b true if a bound was recovered
+static bool boundByLowestTarget(const vector<Address> &addresstable,
+				const vector<LoadTable> &loadpoints,
+				const vector<int4> &loadcounts,int4 &cutoff)
+
+{
+  if (addresstable.empty()) return false;
+  if (loadcounts.size() != addresstable.size()) return false;
+  int4 num = addresstable.size();
+  if (num < 2) return false;		// Need two entries to tell a table from a fixed load
+
+  // Every entry emulates the same path, so it performs the same LOADs in the same order:
+  // the k-th LOAD of each entry is the same instruction, and its addresses across entries
+  // form one table.  Require that uniform shape, then consider only the slots whose address
+  // actually MOVES with the index.  A LOAD at a fixed address is not a table and must not
+  // contribute to the byte extent -- otherwise one unrelated fixed lookup at a high address
+  // bounds the table to nothing.
+  int4 nload = loadcounts[0];
+  if (nload < 1) return false;
+  if ((int4)loadpoints.size() < nload * num) return false;
+  for(int4 i=0;i<num;++i) {
+    if (loadcounts[i] != nload * (i+1))
+      return false;			// Non-uniform LOAD pattern; shape not understood
+  }
+  AddrSpace *spc = addresstable[0].getSpace();
+  vector<bool> isTable(nload,false);
+  int4 tablecount = 0;
+  for(int4 k=0;k<nload;++k) {
+    const Address &first(loadpoints[k].getAddr());
+    const Address &second(loadpoints[nload + k].getAddr());
+    if (first.getSpace() != spc || second.getSpace() != spc)
+      continue;				// Not in the space the targets live in
+    if (first == second)
+      continue;				// Fixed address: a lookup, not a table
+    isTable[k] = true;
+    tablecount += 1;
+  }
+  if (tablecount == 0) return false;
+
+  uintb minTarget = 0;
+  uintb tableStart = 0;
+  bool haveTarget = false;
+  bool haveStart = false;
+  int4 lo = 0;
+  int4 i;
+
+  for(i=0;i<num;++i) {
+    int4 hi = loadcounts[i];
+    uintb entryEnd = 0;
+    for(int4 j=lo;j<hi;++j) {
+      if (!isTable[j-lo]) continue;
+      if (loadpoints[j].getAddr().getSpace() != spc)
+	return false;		// Table and targets in different spaces
+      uintb beg = loadpoints[j].getAddr().getOffset();
+      uintb end = beg + loadpoints[j].getSize();
+      if (end > entryEnd)
+	entryEnd = end;
+      if (!haveStart || beg < tableStart) {
+	tableStart = beg;
+	haveStart = true;
+      }
+    }
+    lo = hi;
+    if (haveTarget && entryEnd > minTarget)
+      break;			// This entry's bytes would collide with the lowest target
+    if (addresstable[i].getSpace() != spc)
+      return false;
+    uintb target = addresstable[i].getOffset();
+    if (!haveTarget || target < minTarget) {
+      minTarget = target;
+      haveTarget = true;
+    }
+  }
+  if (i == 0 || !haveTarget || !haveStart)
+    return false;
+  if (minTarget <= tableStart)
+    return false;		// Table does not precede its targets; the idiom does not apply
+  cutoff = i;
+  return true;
+}
+
 bool JumpBasic::sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
 			    vector<LoadTable> &loadpoints,vector<int4> *loadcounts)
 {
@@ -1643,6 +1746,15 @@ bool JumpBasic::sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &address
   }
   if (i==0)
     return false;
+  if (loadcounts != (vector<int4> *)0) {
+    // A table cannot run into its own lowest target.  This is the only bound available when
+    // the switch index is unconstrained at the site, and it never widens the table.
+    int4 bound;
+    if (boundByLowestTarget(addresstable,loadpoints,*loadcounts,bound)) {
+      if (bound < i)
+	i = bound;
+    }
+  }
   if (i!=addresstable.size()) {
     addresstable.resize(i);
     jrange->truncate(i);
