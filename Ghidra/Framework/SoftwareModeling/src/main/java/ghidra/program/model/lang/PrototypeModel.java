@@ -59,7 +59,6 @@ public class PrototypeModel {
 	private InputListType inputListType = InputListType.STANDARD;
 	private boolean hasThis;		// Convention has a this (auto-parameter)
 	private boolean isConstruct;		// Convention is used for object construction
-	private boolean isRightToLeft;	// Parameter stacking convention
 	private boolean hasUponEntry;	// Does this have an uponentry injection
 	private boolean hasUponReturn;	// Does this have an uponreturn injection
 
@@ -95,7 +94,6 @@ public class PrototypeModel {
 		paramRange = new AddressSet(model.paramRange);
 		hasThis = model.hasThis || name.startsWith(CompilerSpec.CALLING_CONVENTION_thiscall);
 		isConstruct = model.isConstruct;
-		isRightToLeft = model.isRightToLeft;
 		hasUponEntry = model.hasUponEntry;
 		hasUponReturn = model.hasUponReturn;
 	}
@@ -118,7 +116,6 @@ public class PrototypeModel {
 		paramRange = null;
 		hasThis = false;
 		isConstruct = false;
-		isRightToLeft = true;	// the default
 		hasUponEntry = false;
 		hasUponReturn = false;
 	}
@@ -240,12 +237,6 @@ public class PrototypeModel {
 		return isConstruct;
 	}
 
-	/**
-	 * @return true if this model uses right-to-left parameter stacking
-	 */
-	public boolean isRightToLeft() {
-		return isRightToLeft;
-	}
 	/**
 	 * @return the allocation strategy for this model
 	 */
@@ -412,89 +403,14 @@ public class PrototypeModel {
 	 */
 	public void assignParameterStorage(PrototypePieces proto, DataTypeManager dtManager,
 			ArrayList<ParameterPieces> res, boolean addAutoParams) {
-/*
-<<<<<<< HEAD
-		
-		outputParams.assignMap(proto, dtManager, res, addAutoParams);
-		
-		// Deal with left-to-right (PASCAL convention) parameter ordering
-		if (!isRightToLeft) {
-			// swap around the datatypes to map variable storage high-to-low
-			for (int i = 0; i < proto.intypes.size() / 2; i++) {
-				DataType tmp = proto.intypes.get(proto.intypes.size()-1 - i);
-				proto.intypes.set(proto.intypes.size()-1 - i, proto.intypes.get(i));
-				proto.intypes.set(i, tmp);
-			}
-		}
-		
-		inputParams.assignMap(proto, dtManager, res, addAutoParams);
-
-		// Deal with left-to-right (PASCAL convention) parameter ordering
-		if (!isRightToLeft) {
-			int inputOffset = (res.size() - proto.intypes.size());
-			for (int i = 0; i < proto.intypes.size() / 2; i++) {
-				// swap back the input datatypes
-				DataType tmpDt = proto.intypes.get(proto.intypes.size()-1 - i);
-				proto.intypes.set(proto.intypes.size()-1 - i, proto.intypes.get(i));
-				proto.intypes.set(i, tmpDt);
-				// swap back the resulting input only storage to be ordered correctly
-				ParameterPieces tmpPiece = res.get(res.size()-1 - i);
-				res.set(res.size()-1 - i, res.get(inputOffset+i));
-				res.set(inputOffset+i, tmpPiece);
-			}
-		}
-
-		if (hasThis && addAutoParams && res.size() > 1) {
-			int thisIndex = 1;
-			if (res.get(1).hiddenReturnPtr && res.size() > 2) {
-				if (inputParams.isThisBeforeRetPointer()) {
-					// pointer has been bumped by auto-return-storage
-					res.get(1).swapMarkup(res.get(2));	// must swap storage and position for slots 1 and 2
-				}
-				else {
-					thisIndex = 2;
-				}
-			}
-			res.get(thisIndex).isThisPointer = true;
-=======
-*/
 		int[] inputStatus = inputParams.allocateStatus();
 		int[] outputStatus = outputParams.allocateStatus();
 		outputParams.assignMap(proto, dtManager, outputStatus, res, addAutoParams);
-		for (SharedAction action : sharedActions) {
+		for (SharedAction action : sharedActions)
 			action.applyBefore(proto, dtManager, addAutoParams, res, inputStatus, outputStatus);
-		}
-		
-		// Deal with left-to-right (PASCAL convention) parameter ordering
-		if (!isRightToLeft) {
-			// swap around the datatypes to map variable storage high-to-low
-			for (int i = 0; i < proto.intypes.size() / 2; i++) {
-				DataType tmp = proto.intypes.get(proto.intypes.size()-1 - i);
-				proto.intypes.set(proto.intypes.size()-1 - i, proto.intypes.get(i));
-				proto.intypes.set(i, tmp);
-			}
-		}
-		
 		inputParams.assignMap(proto, dtManager, inputStatus, res, addAutoParams);
-
-		// Deal with left-to-right (PASCAL convention) parameter ordering
-		if (!isRightToLeft) {
-			int inputOffset = (res.size() - proto.intypes.size());
-			for (int i = 0; i < proto.intypes.size() / 2; i++) {
-				// swap back the input datatypes
-				DataType tmpDt = proto.intypes.get(proto.intypes.size()-1 - i);
-				proto.intypes.set(proto.intypes.size()-1 - i, proto.intypes.get(i));
-				proto.intypes.set(i, tmpDt);
-				// swap back the resulting input only storage to be ordered correctly
-				ParameterPieces tmpPiece = res.get(res.size()-1 - i);
-				res.set(res.size()-1 - i, res.get(inputOffset+i));
-				res.set(inputOffset+i, tmpPiece);
-			}
-		}
-
 		for (SharedAction action : sharedActions) {
 			action.applyAfter(proto, dtManager, addAutoParams, res, inputStatus, outputStatus);
-//>>>>>>> master
 		}
 	}
 
@@ -645,10 +561,10 @@ public class PrototypeModel {
 		if (isConstruct) {
 			encoder.writeBool(ATTRIB_CONSTRUCTOR, true);
 		}
-		if (isRightToLeft) {
-			encoder.writeBool(ATTRIB_ISRIGHTTOLEFT, true);
+		if (inputListType == InputListType.PASCAL) {
+			encoder.writeString(ATTRIB_STRATEGY, "pascal");
 		}
-		if (inputListType != InputListType.STANDARD) {
+		else if (inputListType != InputListType.STANDARD) {
 			encoder.writeString(ATTRIB_STRATEGY, "register");
 		}
 		inputParams.encode(encoder, true);
@@ -811,7 +727,6 @@ public class PrototypeModel {
 		stackshift = SpecXmlUtils.decodeInt(protoElement.getAttribute(ATTRIB_STACKSHIFT.name()));
 		hasThis = false;
 		isConstruct = false;
-		isRightToLeft = true;
 		String thisString = protoElement.getAttribute(ATTRIB_HASTHIS.name());
 		if (thisString != null) {
 			hasThis = SpecXmlUtils.decodeBoolean(thisString);
@@ -822,10 +737,6 @@ public class PrototypeModel {
 		String constructString = protoElement.getAttribute(ATTRIB_CONSTRUCTOR.name());
 		if (constructString != null) {
 			isConstruct = SpecXmlUtils.decodeBoolean(constructString);
-		}
-		String isrighttoleftString = protoElement.getAttribute(ATTRIB_ISRIGHTTOLEFT.name());
-		if (isrighttoleftString != null) {
-			isRightToLeft = SpecXmlUtils.decodeBoolean(isrighttoleftString);
 		}
 
 		ArrayList<SharedAction> actions = new ArrayList<>();
@@ -959,9 +870,6 @@ public class PrototypeModel {
 			return false;
 		}
 		if (extrapop != obj.extrapop || stackshift != obj.stackshift) {
-			return false;
-		}
-		if (isRightToLeft != obj.isRightToLeft) {
 			return false;
 		}
 		if (hasThis != obj.hasThis || isConstruct != obj.isConstruct) {

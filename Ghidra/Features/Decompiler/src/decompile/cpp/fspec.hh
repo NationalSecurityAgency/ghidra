@@ -43,7 +43,6 @@ extern AttributeId ATTRIB_STACKSHIFT;	///< Marshaling attribute "stackshift"
 extern AttributeId ATTRIB_STRATEGY;	///< Marshaling attribute "strategy"
 extern AttributeId ATTRIB_THISBEFORERETPOINTER;	///< Marshaling attribute "thisbeforeretpointer"
 extern AttributeId ATTRIB_VOIDLOCK;	///< Marshaling attribute "voidlock"
-extern AttributeId ATTRIB_ISRIGHTTOLEFT;	///< Marshaling attribute "isrighttoleft"
 
 extern ElementId ELEM_GROUP;		///< Marshaling element \<group>
 extern ElementId ELEM_INTERNALLIST;	///< Marshaling element \<internallist>
@@ -820,7 +819,6 @@ class ProtoModel {
   bool stackgrowsnegative;	///< True if stack parameters have (normal) low address to high address ordering
   bool hasThis;			///< True if this model has a \b this parameter (auto-parameter)
   bool isConstruct;		///< True if this model is a constructor for a particular object
-  bool isRightToLeft;		///< True if parameters are stacked from right to left (default)
   bool isPrinted;		///< True if this model should be printed as part of function declarations
   void defaultLocalRange(void);	///< Set the default stack range used for local variables
   void defaultParamRange(void);	///< Set the default stack range used for input parameters
@@ -843,7 +841,6 @@ public:
   int4 getInjectUponEntry(void) const { return injectUponEntry; }	///< Get the inject \e uponentry id
   int4 getInjectUponReturn(void) const { return injectUponReturn; }	///< Get the inject \e uponreturn id
   bool isCompatible(const ProtoModel *op2) const;	///< Return \b true if other given model can be substituted for \b this
-  bool getRightToLeft(void) const { return isRightToLeft; }  ///< Return \b true if model uses right-to-left stacking of parameters
 
   /// \brief Given a list of input \e trials, derive the most likely input prototype
   ///

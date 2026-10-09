@@ -34,7 +34,6 @@ AttributeId ATTRIB_STACKSHIFT = AttributeId("stackshift",126);
 AttributeId ATTRIB_STRATEGY = AttributeId("strategy",127);
 AttributeId ATTRIB_THISBEFORERETPOINTER = AttributeId("thisbeforeretpointer",128);
 AttributeId ATTRIB_VOIDLOCK = AttributeId("voidlock",129);
-AttributeId ATTRIB_ISRIGHTTOLEFT = AttributeId("isrighttoleft",159);
 
 ElementId ELEM_GROUP = ElementId("group",160);
 ElementId ELEM_INTERNALLIST = ElementId("internallist",161);
@@ -791,13 +790,8 @@ void ParamListStandard::allocateStatus(vector<int4> &status) const
   status.resize(numgroup,0);
 }
 
-/*<<<<<<< HEAD
-void ParamListStandard::assignMapRtoL(const PrototypePieces &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const
-=======
-*/
 void ParamListStandard::assignMap(const PrototypePieces &proto,TypeFactory &typefactory,vector<int4> &status,
 				  vector<ParameterPieces> &res) const
-//>>>>>>> master
 {
   for(int4 i=0;i<proto.intypes.size();++i) {
     res.emplace_back();
@@ -807,54 +801,6 @@ void ParamListStandard::assignMap(const PrototypePieces &proto,TypeFactory &type
       throw ParamUnassignedError("Cannot assign parameter address for " + dt->getName());
   }
 }
-/* removed as part of GP-7136
-void ParamListStandard::assignMapLtoR(const PrototypePieces &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const
-
-{
-  ParameterPieces* hiddenpiece = (res.size() == 2) ? &res.back() : (ParameterPieces*)0;
-
-  vector<int4> status(numgroup,0);
-
-  // allocate storage backwards in temporary results
-  vector<ParameterPieces> tmpres;
-  for(int4 i=proto.intypes.size()-1;i>=0;--i) {
-    tmpres.emplace_back();
-    Datatype *dt = proto.intypes[i];
-    uint4 responseCode = assignAddress(dt,proto,proto.intypes.size()-1-i,typefactory,status,tmpres.back());
-    if (responseCode == AssignAction::fail || responseCode == AssignAction::no_assignment)
-      throw ParamUnassignedError("Cannot assign parameter address for " + dt->getName());
-  }
-  // add tmpres to res in reverse leaving the hiddenpiece at the end
-  res.resize(res.size() + tmpres.size());
-  reverse_copy(tmpres.begin(),tmpres.end(),res.begin()+1);
-
-  if (hiddenpiece) {	// Check for hidden parameters defined by the output list
-    Datatype *dt = hiddenpiece->type;
-    if ((hiddenpiece->flags & ParameterPieces::hiddenretparm) != 0) {
-      // Need to pull from registers marked as hiddenret
-      if (assignAddressFallback(TYPECLASS_HIDDENRET,dt,false,status,*hiddenpiece) == AssignAction::fail) {
-        throw ParamUnassignedError("Cannot assign parameter address for " + hiddenpiece->type->getName());
-      }
-    }
-    else {
-	  // Assign as a regular first input pointer parameter
-	  if (assignAddress(dt,proto,0,typefactory,status,*hiddenpiece) == AssignAction::fail) {
-        throw ParamUnassignedError("Cannot assign parameter address for " + hiddenpiece->type->getName());
-	  }
-	}
-    hiddenpiece->flags |= ParameterPieces::hiddenretparm;
-  }
-}
-
-void ParamListStandard::assignMap(const PrototypePieces &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const
-
-{
-  if (proto.model->getRightToLeft())
-    assignMapRtoL(proto, typefactory, res);
-  else
-    assignMapLtoR(proto, typefactory, res);
-}
-*/
 
 /// From among the ParamEntrys matching the given \e group, return the one that best matches
 /// the given \e metatype attribute. If there are no ParamEntrys in the group, null is returned.
@@ -1848,10 +1794,9 @@ void ParamListPascal::assignMap(const PrototypePieces& proto, TypeFactory& typef
 				vector<ParameterPieces>& res) const
 
 {
-  const bool addAutoParams(true);
-  bool hiddenParam = (addAutoParams && res.size() == 2);
+  bool hiddenParam = (res.size() == 2);
   int paramStart = res.size();
-  ParameterPieces &hiddenPtr = res.back();//get(res.size() - 1);
+  ParameterPieces &hiddenPtr = res.back();
 
   for (int4 i=proto.intypes.size()-1;i>0;--i) { // Don't do i==0, could be a 'this' and may need allocating after 'hiddenPtr'
     vector<ParameterPieces>::iterator iter = res.emplace(res.begin()+paramStart);
@@ -2462,7 +2407,6 @@ ProtoModel::ProtoModel(Architecture *g)
   injectUponReturn = -1;
   stackgrowsnegative = true;	// Normal stack parameter ordering
   hasThis = false;
-  isRightToLeft = true;
   isConstruct = false;
   isPrinted = true;
   defaultLocalRange();
@@ -2504,7 +2448,6 @@ ProtoModel::ProtoModel(const string &nm,const ProtoModel &op2)
   if (name == "__thiscall")
     hasThis = true;
   compatModel = &op2;
-  isRightToLeft = op2.isRightToLeft;
 }
 
 ProtoModel::~ProtoModel(void)
@@ -2568,26 +2511,7 @@ void ProtoModel::assignParameterStorage(const PrototypePieces &proto,vector<Para
   }
   for(int4 i=0;i<sharedActions.size();++i)
     sharedActions[i]->applyBefore(proto, *glb->types, res, inputStatus, outputStatus);
-
-  auto pieces = proto; // may need to reverse and proto is const
-
-  // Deal with left-to-right (PASCAL convention) parameter ordering
-  if (!isRightToLeft) {
-    // swap around the datatypes to map variable storage high-to-low
-//    reverse(pieces.intypes.begin(), pieces.intypes.end());
-  }
-
-  //input->assignMap(proto,*glb->types,inputStatus,res);
-  input->assignMap(pieces,*glb->types,inputStatus,res);
-
-  // Deal with left-to-right (PASCAL convention) parameter ordering
-  if (!isRightToLeft) {
-    int inputOffset = (res.size() - proto.intypes.size());
-    // no need to swap back the input datatypes, just use proto
-    // swap back the resulting input only storage to be ordered correctly
-//    reverse(res.begin()+inputOffset, res.end());
-  }
-
+  input->assignMap(proto,*glb->types,inputStatus,res);
   for (int4 i=0;i<sharedActions.size();++i)
     sharedActions[i]->applyAfter(proto, *glb->types, res, inputStatus, outputStatus);
 }
@@ -2720,7 +2644,6 @@ void ProtoModel::decode(Decoder &decoder)
   extrapop = -300;
   hasThis = false;
   isConstruct = false;
-  isRightToLeft = false;
   isPrinted = true;
   effectlist.clear();
   injectUponEntry = -1;
@@ -2748,9 +2671,6 @@ void ProtoModel::decode(Decoder &decoder)
     else if (attribId == ATTRIB_CONSTRUCTOR) {
       isConstruct = decoder.readBool();
     }
-    else if (attribId == ATTRIB_ISRIGHTTOLEFT) {
-      isRightToLeft = decoder.readBool();
-    }
     else
       throw LowlevelError("Unknown prototype attribute");
   }
@@ -2761,7 +2681,7 @@ void ProtoModel::decode(Decoder &decoder)
 
   buildParamList(strategystring); // Allocate input and output ParamLists
   if (strategystring != "pascal")
-  	  sharedActions.push_back(new HiddenReturnAction(this));
+    sharedActions.push_back(new HiddenReturnAction(this));
   for(;;) {
     uint4 subId = decoder.peekElement();
     if (subId == 0) break;

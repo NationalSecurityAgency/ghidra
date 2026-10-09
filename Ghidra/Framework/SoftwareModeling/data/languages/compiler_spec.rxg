@@ -517,7 +517,6 @@
     
     <optional> <attribute name="hasthis"/> </optional>
     <optional> <attribute name="constructor"/> </optional>
-    <optional> <attribute name="isrighttoleft"/> </optional>
 
     <interleave>
 

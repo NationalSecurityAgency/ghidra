@@ -1258,7 +1258,7 @@ AttributeId ATTRIB_WORDSIZE = AttributeId("wordsize",26);
 AttributeId ATTRIB_STORAGE = AttributeId("storage",149);
 AttributeId ATTRIB_STACKSPILL = AttributeId("stackspill",150);
 
-AttributeId ATTRIB_UNKNOWN = AttributeId("XMLunknown",162); // Number serves as next open index
+AttributeId ATTRIB_UNKNOWN = AttributeId("XMLunknown",161); // Number serves as next open index
 
 
 ElementId ELEM_DATA = ElementId("data",1);
