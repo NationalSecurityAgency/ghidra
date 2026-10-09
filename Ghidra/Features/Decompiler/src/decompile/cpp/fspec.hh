@@ -115,6 +115,7 @@ private:
   int4 minsize;			///< Minimum bytes allowed for the logical value
   int4 alignment;		///< How much alignment (0 means only 1 logical value is allowed)
   int4 numslots;		///< (Maximum) number of slots that can store separate parameters
+  int4 position;		///< Position of \b this within its owning list of entries
   JoinRecord *joinrec;		///< Non-null if this is logical variable from joined pieces
   static const ParamEntry *findEntryByStorage(const list<ParamEntry> &entryList,const VarnodeData &vn);
   void resolveFirst(list<ParamEntry> &curList);	///< Mark if \b this is the first ParamEntry in its storage class
@@ -126,6 +127,8 @@ private:
 public:
   ParamEntry(int4 grp) { groupSet.push_back(grp); }	///< Constructor for use with decode
   int4 getGroup(void) const { return groupSet[0]; }	///< Get the group id \b this belongs to
+  int4 getPosition(void) const { return position; }	///< Get the position of \b this within its list
+  void setPosition(int4 pos) { position = pos; }	///< Set the position of \b this within its list
   const vector<int4> &getAllGroups(void) const { return groupSet; }	///< Get all group numbers \b this overlaps
   bool groupOverlap(const ParamEntry &op2) const;	///< Check if \b this and op2 occupy any of the same groups
   int4 getSize(void) const { return size; }		///< Get the size of the memory range in bytes.
