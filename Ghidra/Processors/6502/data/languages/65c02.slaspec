@@ -1,4 +1,6 @@
-@include "6502.slaspec"
+@define 6502_VERSION "CMOS"
+
+@include "6502.sinc"
 
 define token bitopbyte (8)
     bitop           = (0,7)
@@ -31,13 +33,7 @@ ADDRIX: (imm16,X) is X; imm16     { addr:2 = imm16 + zext(X); tmp:2 = *:2 addr; 
 
 :ADC ZIOP                      is (cc=2 & aaa=3) ... & ZIOP
 {
-    local op1 = ZIOP;
-    local tmpC = C;
-
-    C = carry(A, op1);
-    A = A + op1 + tmpC;
-    resultFlags(A);
-    V = C;
+    adc(ZIOP);
 }
 
 :AND ZIOP                      is (cc=2 & aaa=1) ... & ZIOP
@@ -162,11 +158,7 @@ ADDRIX: (imm16,X) is X; imm16     { addr:2 = imm16 + zext(X); tmp:2 = *:2 addr; 
 
 :SBC ZIOP                      is (cc=2 & aaa=7) ... & ZIOP
 {
-    local op1 = ZIOP;
-    local result = A - op1 - !C;
-
-    subtraction_flags1(A, op1, result);
-    A = result;
+    adc(~ZIOP);
 }
 
 :SMB "#"bitindex, imm8         is (action=1 & optype=7) & bitindex ; imm8 {
