@@ -151,7 +151,7 @@
 #la-base-64.txt slli.d mask=0x00410000	[@qemu]
 #0x00410000	0xffff0000	r0:5,r5:5,u10:6	['reg0_5_s0', 'reg5_5_s0', 'imm10_6_s0']
 :slli.d RD, RJsrc, imm10_6            is op16_31=0x41 & RD & RJsrc & imm10_6 {
-	local shift:1 = imm10_6 & 0x1f;
+	local shift:1 = imm10_6 & 0x3f;
 	RD = RJsrc << shift;
 }
 
@@ -166,7 +166,7 @@
 #la-base-64.txt srai.d mask=0x00490000	[@qemu]
 #0x00490000	0xffff0000	r0:5,r5:5,u10:6	['reg0_5_s0', 'reg5_5_s0', 'imm10_6_s0']
 :srai.d RD, RJsrc, imm10_6            is op16_31=0x49 & RD & RJsrc & imm10_6 {
-	local shift:1 = imm10_6 & 0x1f;
+	local shift:1 = imm10_6 & 0x3f;
 	RD = RJsrc s>> shift;
 }
 
@@ -181,7 +181,7 @@
 #la-base-64.txt srli.d mask=0x00450000	[@qemu]
 #0x00450000	0xffff0000	r0:5,r5:5,u10:6	['reg0_5_s0', 'reg5_5_s0', 'imm10_6_s0']
 :srli.d RD, RJsrc, imm10_6            is op16_31=0x45 & RD & RJsrc & imm10_6 {
-	local shift:1 = imm10_6 & 0x1f;
+	local shift:1 = imm10_6 & 0x3f;
 	RD = RJsrc >> shift;
 }
 
