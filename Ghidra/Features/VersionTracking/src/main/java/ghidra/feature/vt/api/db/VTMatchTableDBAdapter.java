@@ -35,7 +35,11 @@ public abstract class VTMatchTableDBAdapter {
 		LENGTH_TYPE(StringField.INSTANCE),
 		SOURCE_LENGTH_COL(IntField.INSTANCE),
 		DESTINATION_LENGTH_COL(IntField.INSTANCE),
-		ASSOCIATION_COL(LongField.INSTANCE);
+		ASSOCIATION_COL(LongField.INSTANCE),
+
+		// Added in schema v1: stores the precomputed PDiff similarity score as a string.
+		// Empty string means "not yet computed"; actual scores are stored via VTScore.toStorageString().
+		PDIFF_SIMILARITY_SCORE_COL(StringField.INSTANCE);
 
 		private final Field columnField;
 
@@ -71,7 +75,10 @@ public abstract class VTMatchTableDBAdapter {
 	}
 
 	static String TABLE_NAME = "MatchTable";
-	static Schema TABLE_SCHEMA = new Schema(0, "Key", ColumnDescription.getColumnFields(),
+	// Schema version history:
+	//   v0 - Original schema (8 columns, no PDiff score)
+	//   v1 - Added PDIFF_SIMILARITY_SCORE_COL; auto-upgraded from v0 on session open
+	static Schema TABLE_SCHEMA = new Schema(1, "Key", ColumnDescription.getColumnFields(),
 		ColumnDescription.getColumnNames());
 
 	static VTMatchTableDBAdapter createAdapter(DBHandle dbHandle, long tableID) throws IOException {
