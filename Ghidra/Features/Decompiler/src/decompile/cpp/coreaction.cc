@@ -505,11 +505,42 @@ int4 ActionStackPtrFlow::apply(Funcdata &data)
   return 0;
 }
 
+/// \brief Register a lane size suggested by a piece of a laned register
+///
+/// If the piece's size is itself an allowed lane size, it is registered. Otherwise the piece
+/// is a run of smaller lanes (three floats taken from a four float vector, for instance) and
+/// the largest allowed lane size that tiles both the piece and its offset within the register
+/// is registered, provided the piece holds at least two such lanes.
+/// \param size is the size of the piece in bytes
+/// \param offset is the byte offset of the piece within the register
+/// \param allowedLanes is used to determine if a putative lane size is allowed
+/// \param checkLanes collects the possible lane sizes
+void ActionLaneDivide::addPieceLaneSize(int4 size,int4 offset,const LanedRegister &allowedLanes,LanedRegister &checkLanes)
+
+{
+  if (allowedLanes.allowedLane(size)) {
+    checkLanes.addLaneSize(size);			// Register this possible size
+    return;
+  }
+  int4 best = 0;
+  LanedRegister::const_iterator enditer = allowedLanes.end();
+  for(LanedRegister::const_iterator iter=allowedLanes.begin();iter!=enditer;++iter) {
+    int4 laneSize = *iter;
+    if (laneSize * 2 > size) break;			// Sizes come smallest first
+    if ((size % laneSize) == 0 && (offset % laneSize) == 0)
+      best = laneSize;
+  }
+  if (best > 0)
+    checkLanes.addLaneSize(best);
+}
+
 /// \brief Examine the PcodeOps using the given Varnode to determine possible lane sizes
 ///
 /// Run through the defining op and any descendant ops of the given Varnode, looking for
 /// CPUI_PIECE and CPUI_SUBPIECE. Use these to determine possible lane sizes and
-/// register them with the given LanedRegister object.
+/// register them with the given LanedRegister object. A piece whose size is not itself a lane
+/// size suggests the largest lane size that tiles it (addPieceLaneSize); so does the input of
+/// a defining CPUI_INT_ZEXT when it is not itself a lane size (a run of lanes under zero lanes).
 /// \param vn is the given Varnode
 /// \param allowedLanes is used to determine if a putative lane size is allowed
 /// \param checkLanes collects the possible lane sizes
@@ -517,32 +548,26 @@ void ActionLaneDivide::collectLaneSizes(Varnode *vn,const LanedRegister &allowed
 
 {
   list<PcodeOp *>::const_iterator iter = vn->beginDescend();
-  int4 step = 0;		// 0 = descendants, 1 = def, 2 = done
-  if (iter == vn->endDescend()) {
-    step = 1;
+  list<PcodeOp *>::const_iterator enditer = vn->endDescend();
+  while(iter != enditer) {
+    PcodeOp *op = *iter;
+    ++iter;
+    if (op->code() != CPUI_SUBPIECE) continue;	// Is the big register split into pieces
+    addPieceLaneSize(op->getOut()->getSize(),(int4)op->getIn(1)->getOffset(),allowedLanes,checkLanes);
   }
-  while(step < 2) {
-    int4 curSize;		// Putative lane size
-    if (step == 0) {
-      PcodeOp *op = *iter;
-      ++iter;
-      if (iter == vn->endDescend())
-	step = 1;
-      if (op->code() != CPUI_SUBPIECE) continue;	// Is the big register split into pieces
-      curSize = op->getOut()->getSize();
-    }
-    else {
-      step = 2;
-      if (!vn->isWritten()) continue;
-      PcodeOp *op = vn->getDef();
-      if (op->code() != CPUI_PIECE) continue;		// Is the big register formed from smaller pieces
-      curSize = op->getIn(0)->getSize();
-      int4 tmpSize = op->getIn(1)->getSize();
-      if (tmpSize < curSize)
-	curSize = tmpSize;
-    }
-    if (allowedLanes.allowedLane(curSize))
-      checkLanes.addLaneSize(curSize);			// Register this possible size
+  if (!vn->isWritten()) return;
+  PcodeOp *op = vn->getDef();
+  if (op->code() == CPUI_PIECE) {			// Is the big register formed from smaller pieces
+    int4 loSize = op->getIn(1)->getSize();
+    addPieceLaneSize(loSize,0,allowedLanes,checkLanes);
+    addPieceLaneSize(op->getIn(0)->getSize(),loSize,allowedLanes,checkLanes);
+  }
+  else if (op->code() == CPUI_INT_ZEXT) {
+    // Is the big register a run of lanes with zero lanes above it. A single lane extended is left alone:
+    // it suggests no lane size on its own.
+    int4 inSize = op->getIn(0)->getSize();
+    if (!allowedLanes.allowedLane(inSize))
+      addPieceLaneSize(inSize,0,allowedLanes,checkLanes);
   }
 }
 

@@ -111,6 +111,7 @@ public:
 /// if a particular lane scheme makes sense in terms of the function's data-flow, and then
 /// rewrites the data-flow so that the lanes become explicit Varnodes.
 class ActionLaneDivide : public Action {
+  static void addPieceLaneSize(int4 size,int4 offset,const LanedRegister &allowedLanes,LanedRegister &checkLanes);
   void collectLaneSizes(Varnode *vn,const LanedRegister &allowedLanes,LanedRegister &checkLanes);
   bool processVarnode(Funcdata &data,Varnode *vn,const LanedRegister &lanedRegister,int4 mode);
 public:
