@@ -29,6 +29,7 @@ src/main/help/help/topics/DebuggerConsolePlugin/images/DebuggerConsolePlugin.png
 src/main/help/help/topics/DebuggerControlPlugin/DebuggerControlPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerCopyActionsPlugin/DebuggerCopyActionsPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerCopyActionsPlugin/images/DebuggerCopyIntoProgramDialog.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerDecompilerTrackLocationPlugin/DebuggerDecompilerTrackLocationPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerDisassemblerPlugin/DebuggerDisassemblerPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerEmulationServicePlugin/DebuggerEmulationServicePlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerEmulationServicePlugin/images/DebuggerEmulateFunctionDialog.png||GHIDRA||||END|

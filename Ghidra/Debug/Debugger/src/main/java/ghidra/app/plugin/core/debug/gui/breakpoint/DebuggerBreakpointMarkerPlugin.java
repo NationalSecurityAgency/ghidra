@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.debug.gui.breakpoint;
 
 import java.awt.Color;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -38,6 +39,8 @@ import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
 import ghidra.app.plugin.core.debug.event.TraceOpenedPluginEvent;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
+import ghidra.app.plugin.core.debug.gui.decompiler.DebuggerDecompilerMarginService;
+import ghidra.app.plugin.core.debug.gui.decompiler.DecompilerMarginIconSource;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.plugin.core.functiongraph.FunctionGraphMarginService;
 import ghidra.app.plugin.core.marker.MarginProviderSupplier;
@@ -84,6 +87,7 @@ import ghidra.util.Msg;
 	},
 	servicesRequired = {
 		DebuggerLogicalBreakpointService.class,
+		DebuggerDecompilerMarginService.class,
 		MarkerService.class,
 	})
 public class DebuggerBreakpointMarkerPlugin extends Plugin {
@@ -507,6 +511,41 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin {
 		}
 	}
 
+	private class BreakpointsDecompilerMarginIconSource implements DecompilerMarginIconSource {
+		@Override
+		public Icon getIcon(Program program, ClangLine line) {
+			if (breakpointService == null) {
+				return null;
+			}
+			return computeState(getLocationsFromLine(program, line)).icon;
+		}
+
+		@Override
+		public int getPriority() {
+			return MarkerService.BREAKPOINT_PRIORITY;
+		}
+
+		@Override
+		public void marginPressed(Program program, int index, List<ClangLine> lines,
+				MouseEvent e) {
+			if (e.getClickCount() != 2 || e.getButton() != MouseEvent.BUTTON1 ||
+				breakpointService == null) {
+				return;
+			}
+			List<ProgramLocation> locs = nearestLocationsToLine(program, index, lines);
+			if (locs == null || locs.isEmpty()) {
+				return;
+			}
+			Set<LogicalBreakpoint> col = collectBreakpoints(locs);
+			breakpointService.toggleBreakpointsAt(col, locs.get(0), () -> {
+				placeBreakpointDialog.prompt(tool, breakpointService, "Set breakpoint",
+					locs.get(0), 1, CommonSet.SWX, "");
+				// Not great, but I'm not sticking around for the dialog
+				return CompletableFuture.completedFuture(Set.of());
+			});
+		}
+	}
+
 	private class DefaultMarginProviderSupplier implements MarginProviderSupplier {
 		@Override
 		public MarkerMarginProvider createMarginProvider() {
@@ -749,7 +788,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin {
 	@AutoServiceConsumed
 	private DebuggerControlService controlService;
 	// @AutoServiceConsumed via method
-	DecompilerMarginService decompilerMarginService;
+	private DebuggerDecompilerMarginService decompilerMarginService;
 	// @AutoServiceConsumed via method
 	private FunctionGraphMarginService functionGraphMarginService;
 	@SuppressWarnings("unused")
@@ -805,13 +844,13 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin {
 
 	DebuggerPlaceBreakpointDialog placeBreakpointDialog = new DebuggerPlaceBreakpointDialog();
 
-	BreakpointsDecompilerMarginProvider decompilerMarginProvider;
+	private final DecompilerMarginIconSource decompilerIconSource =
+		new BreakpointsDecompilerMarginIconSource();
 	private MarginProviderSupplier functionGraphMarginSupplier =
 		new DefaultMarginProviderSupplier();
 
 	public DebuggerBreakpointMarkerPlugin(PluginTool tool) {
 		super(tool);
-		this.decompilerMarginProvider = new BreakpointsDecompilerMarginProvider(this);
 		this.autoServiceWiring = AutoService.wireServicesProvidedAndConsumed(this);
 		this.autoOptionsWiring = AutoOptions.wireOptions(this);
 
@@ -1008,6 +1047,9 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin {
 			for (BreakpointMarkerSets markerSet : markersByProgram.values()) {
 				markerSet.clear();
 			}
+			if (decompilerMarginService != null) {
+				decompilerMarginService.iconsChanged();
+			}
 			if (breakpointService == null) {
 				return;
 			}
@@ -1051,13 +1093,14 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin {
 	}
 
 	@AutoServiceConsumed
-	private void setDecompilerMarginService(DecompilerMarginService decompilerMarginService) {
+	private void setDecompilerMarginService(
+			DebuggerDecompilerMarginService decompilerMarginService) {
 		if (this.decompilerMarginService != null) {
-			this.decompilerMarginService.removeMarginProvider(decompilerMarginProvider);
+			this.decompilerMarginService.removeIconSource(decompilerIconSource);
 		}
 		this.decompilerMarginService = decompilerMarginService;
 		if (this.decompilerMarginService != null) {
-			this.decompilerMarginService.addMarginProvider(decompilerMarginProvider);
+			this.decompilerMarginService.addIconSource(decompilerIconSource);
 		}
 	}
 
