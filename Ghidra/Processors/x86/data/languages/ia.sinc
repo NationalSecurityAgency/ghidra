@@ -7319,9 +7319,21 @@ define pcodeop divpd;
 :DIVPD        XmmReg, m128     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x5E; XmmReg ... & m128 { XmmReg = divpd(XmmReg, m128); }
 :DIVPD        XmmReg1, XmmReg2 is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x5E; xmmmod=3 & XmmReg1 & XmmReg2 { XmmReg1 = divpd(XmmReg1, XmmReg2); }
 
-define pcodeop divps;
-:DIVPS        XmmReg, m128     is vexMode=0 & mandover=0 & byte=0x0F; byte=0x5E; XmmReg ... & m128 { XmmReg = divps(XmmReg, m128); }
-:DIVPS        XmmReg1, XmmReg2 is vexMode=0 & mandover=0 & byte=0x0F; byte=0x5E; xmmmod=3 & XmmReg1 & XmmReg2 { XmmReg1 = divps(XmmReg1, XmmReg2); }
+:DIVPS        XmmReg, m128     is vexMode=0 & mandover=0 & byte=0x0F; byte=0x5E; XmmReg ... & m128
+{
+    local m:16 = m128;
+    XmmReg[0,32] = XmmReg[0,32] f/ m[0,32];
+    XmmReg[32,32] = XmmReg[32,32] f/ m[32,32];
+    XmmReg[64,32] = XmmReg[64,32] f/ m[64,32];
+    XmmReg[96,32] = XmmReg[96,32] f/ m[96,32];
+}
+:DIVPS        XmmReg1, XmmReg2 is vexMode=0 & mandover=0 & byte=0x0F; byte=0x5E; xmmmod=3 & XmmReg1 & XmmReg2
+{
+    XmmReg1[0,32] = XmmReg1[0,32] f/ XmmReg2[0,32];
+    XmmReg1[32,32] = XmmReg1[32,32] f/ XmmReg2[32,32];
+    XmmReg1[64,32] = XmmReg1[64,32] f/ XmmReg2[64,32];
+    XmmReg1[96,32] = XmmReg1[96,32] f/ XmmReg2[96,32];
+}
                 
 :DIVSD        XmmReg, m64      is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x5E; m64 & XmmReg ...
 {
@@ -7667,8 +7679,15 @@ define pcodeop movdq2q;
 define pcodeop movmskpd;
 :MOVMSKPD     Reg32, XmmReg2      is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x50; XmmReg2 & Reg32 & check_Reg32_dest { Reg32 = movmskpd(Reg32, XmmReg2); build check_Reg32_dest; }
 
-define pcodeop movmskps;
-:MOVMSKPS     Reg32, XmmReg2      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x50; XmmReg2 & Reg32 & check_Reg32_dest { Reg32 = movmskps(Reg32, XmmReg2); build check_Reg32_dest; }
+:MOVMSKPS     Reg32, XmmReg2      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x50; XmmReg2 & Reg32 & check_Reg32_dest
+{
+    local l0:4 = XmmReg2[0,32];
+    local l1:4 = XmmReg2[32,32];
+    local l2:4 = XmmReg2[64,32];
+    local l3:4 = XmmReg2[96,32];
+    Reg32 = (l0 >> 31) | ((l1 >> 31) << 1) | ((l2 >> 31) << 2) | ((l3 >> 31) << 3);
+    build check_Reg32_dest;
+}
 
 :MOVNTQ       m64, mmxreg      is vexMode=0 & mandover=0 & byte=0x0F; byte=0xE7; mmxreg ... & m64   { m64 = mmxreg; }
 
@@ -9939,9 +9958,21 @@ define pcodeop sqrtpd;
 :SQRTPD          XmmReg, m128     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x51; XmmReg ... & m128 { XmmReg = sqrtpd(XmmReg, m128); }
 :SQRTPD          XmmReg1, XmmReg2  is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x51; xmmmod=3 & XmmReg1 & XmmReg2 { XmmReg1 = sqrtpd(XmmReg1, XmmReg2); }
 
-define pcodeop sqrtps;
-:SQRTPS          XmmReg, m128     is vexMode=0 & mandover=0 & byte=0x0F; byte=0x51; XmmReg ... & m128 { XmmReg = sqrtps(XmmReg, m128); }
-:SQRTPS          XmmReg1, XmmReg2  is vexMode=0 & mandover=0 & byte=0x0F; byte=0x51; xmmmod=3 & XmmReg1 & XmmReg2 { XmmReg1 = sqrtps(XmmReg1, XmmReg2); }
+:SQRTPS          XmmReg, m128     is vexMode=0 & mandover=0 & byte=0x0F; byte=0x51; XmmReg ... & m128
+{
+    local m:16 = m128;
+    XmmReg[0,32] = sqrt(m[0,32]);
+    XmmReg[32,32] = sqrt(m[32,32]);
+    XmmReg[64,32] = sqrt(m[64,32]);
+    XmmReg[96,32] = sqrt(m[96,32]);
+}
+:SQRTPS          XmmReg1, XmmReg2  is vexMode=0 & mandover=0 & byte=0x0F; byte=0x51; xmmmod=3 & XmmReg1 & XmmReg2
+{
+    XmmReg1[0,32] = sqrt(XmmReg2[0,32]);
+    XmmReg1[32,32] = sqrt(XmmReg2[32,32]);
+    XmmReg1[64,32] = sqrt(XmmReg2[64,32]);
+    XmmReg1[96,32] = sqrt(XmmReg2[96,32]);
+}
 
 :SQRTSD          XmmReg, m64      is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x51; XmmReg ... & m64 { XmmReg[0,64] = sqrt(m64); }
 :SQRTSD          XmmReg1, XmmReg2  is vexMode=0 & $(PRE_F2) & byte=0x0F; byte=0x51; xmmmod=3 & XmmReg1 & XmmReg2 { XmmReg1[0,64] = sqrt(XmmReg2[0,64]); }
