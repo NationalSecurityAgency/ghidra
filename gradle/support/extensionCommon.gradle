@@ -24,6 +24,14 @@ task zipExtensions (type: Zip) {
 	it.description = "Creates a zip file for an extension module.  [gradle/support/extensionCommon.gradle]"
 	it.archiveFileName = "${rootProject.ext.ZIP_NAME_PREFIX}_${p.name}.zip"
 	it.destinationDirectory = rootProject.ext.DISTRIBUTION_DIR
+
+	doFirst {
+		destinationDirectory.get().asFile.eachFile { file ->
+			if (file.isFile() && file.name.endsWith("_${p.name}.zip")) {
+				file.delete()
+			}
+		}
+	}
 	
 	// Make sure that we don't try to copy the same file with the same path into the
 	// zip (this can happen!)
