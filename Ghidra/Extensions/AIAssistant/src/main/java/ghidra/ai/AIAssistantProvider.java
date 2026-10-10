@@ -16,11 +16,11 @@
 package ghidra.ai;
 
 import java.awt.*;
+import java.util.Map;
 
 import javax.swing.*;
 
-import com.anthropic.errors.RateLimitException;
-import com.anthropic.errors.UnauthorizedException;
+import com.google.gson.JsonObject;
 
 import docking.WindowPosition;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -37,10 +37,27 @@ class AIAssistantProvider extends ComponentProviderAdapter {
 
 	private static final ComponentOrientation RTL = ComponentOrientation.RIGHT_TO_LEFT;
 
+	/** Hebrew descriptions of the tools, shown while the AI works. */
+	private static final Map<String, String> TOOL_LABELS = Map.ofEntries(
+		Map.entry("get_program_info", "קורא מידע כללי על התוכנית"),
+		Map.entry("get_current_location", "בודק איפה הסמן נמצא"),
+		Map.entry("search_functions", "מחפש פונקציות"),
+		Map.entry("search_strings", "מחפש מחרוזות"),
+		Map.entry("search_symbols", "מחפש סמלים"),
+		Map.entry("list_imports", "בודק ייבואים"),
+		Map.entry("list_entry_points", "בודק נקודות כניסה"),
+		Map.entry("get_references_to", "מחפש הפניות אל"),
+		Map.entry("get_callers", "בודק מי קורא ל"),
+		Map.entry("get_callees", "בודק למי קוראת"),
+		Map.entry("decompile_function", "מפענח את"),
+		Map.entry("disassemble", "קורא אסמבלי ב"),
+		Map.entry("go_to", "מנווט אל"));
+
 	private final AIAssistantPlugin plugin;
 	private JPanel mainPanel;
 	private JTextArea chatArea;
 	private JTextField inputField;
+	private JLabel backendLabel;
 	private JButton sendButton;
 	private JButton explainButton;
 	private JButton renameButton;
@@ -52,7 +69,11 @@ class AIAssistantProvider extends ComponentProviderAdapter {
 		setTitle("עוזר AI");
 		setDefaultWindowPosition(WindowPosition.RIGHT);
 		buildPanel();
-		appendLine("עוזר AI מוכן. בחר פונקציה ולחץ \"הסבר פונקציה\", או כתוב שאלה ולחץ \"שלח\".");
+		appendLine("שלום! שאל אותי כל שאלה על התוכנית הפתוחה, למשל:\n" +
+			"  • איפה נמצא הקוד שבודק את הסיסמה?\n" +
+			"  • מה גורם להודעת השגיאה \"Access denied\"?\n" +
+			"  • מי קורא לפונקציה הזו ומה היא עושה?\n" +
+			"אני מחפש בתוכנית בעצמי, מסביר, ומעביר אותך למקום הנכון.");
 	}
 
 	private void buildPanel() {
@@ -67,22 +88,33 @@ class AIAssistantProvider extends ComponentProviderAdapter {
 
 		explainButton = new JButton("הסבר פונקציה");
 		explainButton.addActionListener(e -> askAboutCurrentFunction(
-			"הסבר מה הפונקציה הבאה עושה, שלב אחר שלב, וציין דברים חשודים או מעניינים:"));
+			"הסבר מה הפונקציה הבאה עושה, שלב אחר שלב, וציין דברים חשודים או מעניינים. " +
+				"אם צריך, בדוק גם את הפונקציות שהיא קוראת להן ומי קורא לה."));
 		renameButton = new JButton("הצע שמות");
 		renameButton.addActionListener(e -> askAboutCurrentFunction(
-			"הצע שם טוב לפונקציה הבאה ושמות למשתנים ולפרמטרים שלה, עם הסבר קצר לכל שם:"));
+			"הצע שם טוב לפונקציה הבאה ושמות למשתנים ולפרמטרים שלה, עם הסבר קצר לכל שם."));
 		resetButton = new JButton("שיחה חדשה");
 		resetButton.addActionListener(e -> {
-			plugin.getClaude().reset();
+			plugin.resetConversation();
 			chatArea.setText("");
 			appendLine("התחלנו שיחה חדשה.");
 		});
 
-		JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+		JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+		buttons.setComponentOrientation(RTL);
+		buttons.add(explainButton);
+		buttons.add(renameButton);
+		buttons.add(resetButton);
+
+		backendLabel = new JLabel();
+		backendLabel.setComponentOrientation(RTL);
+		backendLabel.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 6));
+		updateBackendLabel();
+
+		JPanel topPanel = new JPanel(new BorderLayout());
 		topPanel.setComponentOrientation(RTL);
-		topPanel.add(explainButton);
-		topPanel.add(renameButton);
-		topPanel.add(resetButton);
+		topPanel.add(buttons, BorderLayout.CENTER);
+		topPanel.add(backendLabel, BorderLayout.SOUTH);
 		mainPanel.add(topPanel, BorderLayout.NORTH);
 
 		inputField = new JTextField();
@@ -98,7 +130,12 @@ class AIAssistantProvider extends ComponentProviderAdapter {
 		mainPanel.add(bottomPanel, BorderLayout.SOUTH);
 
 		mainPanel.setComponentOrientation(RTL);
-		mainPanel.setPreferredSize(new Dimension(450, 500));
+		mainPanel.setPreferredSize(new Dimension(480, 560));
+	}
+
+	private void updateBackendLabel() {
+		// the trailing LRM keeps the closing parenthesis of "(model)" on the correct side
+		backendLabel.setText("ספק: " + plugin.describeBackend() + "\u200E");
 	}
 
 	private void sendFreeText() {
@@ -117,14 +154,14 @@ class AIAssistantProvider extends ComponentProviderAdapter {
 			appendLine("\nלא נבחרה פונקציה. מקם את הסמן בתוך פונקציה ונסה שוב.");
 			return;
 		}
-		appendLine("\nאתה: " + instruction + " " + function.getName());
+		appendLine("\nאתה: " + instruction + " (" + function.getName() + ")");
 		runRequest("מנתח את " + function.getName(), monitor -> {
 			monitor.setMessage("מבצע דה-קומפילציה...");
 			String code = plugin.decompile(function, monitor);
 			if (code == null) {
 				throw new IllegalStateException("הדה-קומפילציה של " + function.getName() + " נכשלה");
 			}
-			return instruction + "\n\nFunction: " + function.getName() + " @ " +
+			return instruction + "\n\nFunction: " + function.getName(true) + " @ " +
 				function.getEntryPoint() + "\n\n```c\n" + code + "\n```";
 		});
 	}
@@ -135,28 +172,33 @@ class AIAssistantProvider extends ComponentProviderAdapter {
 	}
 
 	private void runRequest(String title, PromptBuilder promptBuilder) {
-		String apiKey = plugin.getApiKey();
-		if (apiKey.isEmpty()) {
-			appendLine("\nחסר מפתח API. הגדר אותו ב-Edit > Tool Options > " +
-				AIAssistantPlugin.OPTIONS_CATEGORY + ", או במשתנה הסביבה ANTHROPIC_API_KEY.");
+		updateBackendLabel();
+		String problem = plugin.getConfigurationProblem();
+		if (problem != null) {
+			appendLine("\n" + problem);
 			return;
 		}
-		String model = plugin.getModel();
+		if (plugin.getProgram() == null) {
+			appendLine("\nאין תוכנית פתוחה. פתח תוכנית ונסה שוב.");
+			return;
+		}
 		setBusy(true);
 		Task task = new Task(title, true, false, false) {
 			@Override
 			public void run(TaskMonitor monitor) {
 				try {
 					String prompt = promptBuilder.build(monitor);
-					monitor.setMessage("ממתין לתשובה מ-Claude...");
-					String reply = plugin.getClaude().send(apiKey, model, prompt);
-					appendLine("\nClaude: " + reply);
+					monitor.setMessage("ממתין לתשובה מ-AI...");
+					String reply = plugin.ask(prompt, (name, args) -> {
+						String line = "  🔎 " + TOOL_LABELS.getOrDefault(name, name) + " " +
+							describeArgs(args);
+						appendLine(line);
+						monitor.setMessage(line.strip());
+					}, monitor);
+					appendLine("\nעוזר AI: " + reply);
 				}
-				catch (UnauthorizedException e) {
-					appendLine("\nשגיאה: מפתח ה-API אינו תקין. בדוק אותו באפשרויות של עוזר AI.");
-				}
-				catch (RateLimitException e) {
-					appendLine("\nשגיאה: חרגת ממגבלת הבקשות. נסה שוב בעוד מספר שניות.");
+				catch (AIProvider.AIException e) {
+					appendLine("\n" + friendlyError(e));
 				}
 				catch (Exception e) {
 					Msg.error(AIAssistantProvider.this, "AI request failed", e);
@@ -168,6 +210,30 @@ class AIAssistantProvider extends ComponentProviderAdapter {
 			}
 		};
 		new TaskLauncher(task, mainPanel);
+	}
+
+	private static String friendlyError(AIProvider.AIException e) {
+		return switch (e.getStatus()) {
+			case 401, 403 -> "שגיאה: מפתח ה-API אינו תקין או שאין לו הרשאה. בדוק אותו " +
+				"ב-Edit > Tool Options > " + AIAssistantPlugin.OPTIONS_CATEGORY + ".\n(" +
+				e.getMessage() + ")";
+			case 404 -> "שגיאה: המודל או הכתובת לא נמצאו. בדוק את שם המודל וכתובת השרת " +
+				"באפשרויות.\n(" + e.getMessage() + ")";
+			case 429 -> "שגיאה: חרגת ממגבלת הבקשות או מהמכסה. נסה שוב בעוד כמה שניות.\n(" +
+				e.getMessage() + ")";
+			default -> "שגיאה מהשרת: " + e.getMessage();
+		};
+	}
+
+	/** Shows the most informative argument (query/target) of a tool call. */
+	private static String describeArgs(String json) {
+		JsonObject args = HttpJson.parseArgs(json);
+		for (String key : new String[] { "query", "target" }) {
+			if (args.has(key) && !args.get(key).isJsonNull()) {
+				return "'" + args.get(key).getAsString() + "'";
+			}
+		}
+		return "";
 	}
 
 	private void setBusy(boolean busy) {

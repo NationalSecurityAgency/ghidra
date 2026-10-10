@@ -19,6 +19,7 @@ import javax.swing.*;
 
 import org.apache.commons.lang3.StringUtils;
 
+import docking.i18n.UiTranslator;
 import docking.widgets.GComponent;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.checkbox.GHtmlCheckBox;
@@ -63,7 +64,7 @@ public class GLabel extends JLabel implements GComponent {
 	 * @param text non-html string to be displayed by the label
 	 */
 	public GLabel(String text) {
-		super(text);
+		super(UiTranslator.translate(text));
 		init();
 	}
 
@@ -82,7 +83,7 @@ public class GLabel extends JLabel implements GComponent {
 	 *           {@link SwingConstants#TRAILING}
 	 */
 	public GLabel(String text, int horizontalAlignment) {
-		super(text, horizontalAlignment);
+		super(UiTranslator.translate(text), horizontalAlignment);
 		init();
 	}
 
@@ -102,7 +103,7 @@ public class GLabel extends JLabel implements GComponent {
 	 *           {@link SwingConstants#TRAILING} 
 	 */
 	public GLabel(String text, Icon icon, int horizontalAlignment) {
-		super(text, icon, horizontalAlignment);
+		super(UiTranslator.translate(text), icon, horizontalAlignment);
 		init();
 	}
 
