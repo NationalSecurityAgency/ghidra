@@ -1311,6 +1311,7 @@ define token cinstr (16)
   cop1112=(11,12)
   cop1212=(12,12)
   scop1212=(12,12) signed
+  cop1215=(12,15)
   cop1315=(13,15)
 ;
 

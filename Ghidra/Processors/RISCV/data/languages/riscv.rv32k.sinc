@@ -1,6 +1,11 @@
 # RV32 Crypto Extension
 # NOTE  0.6.2
 
+# All op0006=0x2b encodings here overlap Andes V5 CUSTOM1 GP-relative
+# loads/stores (nds.lwgp etc.).  Skip the entire extension when building
+# the Andes V5 plugin so the nds.* forms decode correctly.
+@ifndef XANDES_V5
+
 # bs 00001 rs2 rs1 010 rd 0101011 saes32.encs
 :saes32.encs   rd, rs1, rs2, bs is rd & rs1 & rs2 & bs & op0006=0x2b & op1214=0x2 & op2529=0x1  unimpl
 
@@ -57,3 +62,5 @@
 
 # 0000111 shamtw 01010 111 rd 0101011 pollentropy
 :pollentropy   rd, shamtw  is rd & shamtw & op0006=0x2b & op1214=0x7 & op1519=0x0a & op2531=0x07  unimpl
+
+@endif
