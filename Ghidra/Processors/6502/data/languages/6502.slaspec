@@ -9,7 +9,16 @@ define space register type=register_space size=1;
 define register offset=0x00  size=1 [ A X Y P ];
 define register offset=0x20 size=2  [ PC      SP   ];
 define register offset=0x20 size=1  [ PCL PCH S SH ];
-define register offset=0x30 size=1 [ N V B D I Z C ];	# status bits
+
+# P Status Flags
+@define N_FLAG  "P[7,1]" # Negative
+@define V_FLAG  "P[6,1]" # Overflow
+@define T_FLAG  "P[5,1]" # Constant
+@define B_FLAG  "P[4,1]" # Break
+@define D_FLAG  "P[3,1]" # Decimal
+@define I_FLAG  "P[2,1]" # Interrupt
+@define Z_FLAG  "P[1,1]" # Zero
+@define C_FLAG  "P[0,1]" # Carry
 
 #TOKENS
 
@@ -31,33 +40,50 @@ define token data (16)
 ;
 
 macro popSR() {
-	SP = SP + 1;
-	local ccr = *:1 SP;
-	N = ccr[7,1];
-	V = ccr[6,1];
-	B = ccr[4,1];
-	D = ccr[3,1];
-	I = ccr[2,1];
-	Z = ccr[1,1];
-	C = ccr[0,1];
+	S = S + 1;
+	local temp:2 = zext(S) + 0x0100;
+
+	local ccr = *:1 temp;
+	$(N_FLAG) = ccr[7,1];
+	$(V_FLAG) = ccr[6,1];
+	$(T_FLAG) = 1; # Constant flag always set to 1 in pop
+	$(B_FLAG) = 0; # Break flag always set to 0 in pop
+	$(D_FLAG) = ccr[3,1];
+	$(I_FLAG) = ccr[2,1];
+	$(Z_FLAG) = ccr[1,1];
+	$(C_FLAG) = ccr[0,1];
 }
 
 macro pushSR() {
+	local temp:2 = zext(S) + 0x0100;
 	local ccr:1 = 0xff;
-	ccr[7,1] = N;
-	ccr[6,1] = V;
-	ccr[4,1] = B;
-	ccr[3,1] = D;
-	ccr[2,1] = I;
-	ccr[1,1] = Z;
-	ccr[0,1] = C;
-	*:1 (SP) = ccr;
-	SP = SP -1;
+	ccr[7,1] = $(N_FLAG);
+	ccr[6,1] = $(V_FLAG);
+	ccr[5,1] = 1; # Constant flag always set to 1 in push
+	ccr[4,1] = 1; # Break flag always set to 1 in push
+	ccr[3,1] = $(D_FLAG);
+	ccr[2,1] = $(I_FLAG);
+	ccr[1,1] = $(Z_FLAG);
+	ccr[0,1] = $(C_FLAG);
+	*:1 (temp) = ccr;
+	S = S -1;
+}
+
+macro stackPush(value) {
+	local temp:2 = zext(S) + 0x0100;
+	*:1 (temp) = value:1 & 0xff;
+	S = S - 1;
+}
+
+macro stackPop(value) {
+	S = S + 1;
+	local temp:2 = zext(S) + 0x0100;
+	value = *:1 (temp);
 }
 
 macro resultFlags(value) {
-	Z = (value == 0);
-	N = (value s< 0);
+	$(Z_FLAG) = (value == 0);
+	$(N_FLAG) = (value s< 0);
 }
 
 macro subtraction_flags1(register, operand, result) {
@@ -69,6 +95,94 @@ macro subtraction_flags1(register, operand, result) {
 	C = ( ((complement_register & operand) | (operand & result) | (result & complement_register)) & 0b10000000 ) != 0;
 }
 
+macro adc(op1) {
+
+	if($(D_FLAG) == 0) goto <NOT_DECIMAL>;
+#<DECIMAL>
+
+	local decimalResult:2 = zext(A) + zext(op1) + zext($(C_FLAG));
+
+	local low_nibble:1 = (A & 0xf) + (op1 & 0xf) + zext($(C_FLAG));
+
+	local adjust_low:4 = zext(low_nibble >= 0xa);
+
+	low_nibble = (!adjust_low:1)*(low_nibble) + (adjust_low:1)*(((low_nibble + 0x6) & 0xF) + 0x10);
+
+	local result1:2 = zext(A & 0xf0) + zext(op1 & 0xf0) + zext(low_nibble);
+
+	$(N_FLAG) = (result1:1 & 0x80) != 0;
+	$(V_FLAG) = (((result1:1 ^ A) & (result1:1 ^ op1)) & 0x80) != 0;
+
+	local adjust_high:2 = zext(result1 >= 0xa0);
+
+	result1 = result1 + (adjust_high * 0x60);
+
+	$(C_FLAG) = (result1 >> 8) != 0;
+
+	A = result1:1;
+	$(Z_FLAG) = (decimalResult:1 == 0);
+
+	goto <END>;
+
+<NOT_DECIMAL>
+	local result:2 = zext(A) + zext(op1) + zext($(C_FLAG));
+	$(Z_FLAG) = (result:1 & 0xFF) == 0;
+
+	$(N_FLAG) = (result & 0x80) != 0;
+	$(V_FLAG) = (~(A ^ op1) & (A ^ result:1) & 0x80) != 0;
+	$(C_FLAG) = (result & 0xFF00) != 0;
+	A = (result:1 & 0xFF);
+<END>
+}
+
+# macro to handle SBC instruction in decimal mode
+macro sbc_decimal(op1) {
+
+	local notCarry:2 = zext(!$(C_FLAG));
+	local decimalResult:2 = zext(A) - zext(op1) - notCarry;
+
+	local tmp16:2 = zext(A & 0xf) - zext(op1 & 0xf) - notCarry;
+	local sub_6:2 = zext(tmp16 > 0xf);
+	local tmp16_2:2 = tmp16 - zext(sub_6 * 0x6);
+
+	local or_mask:2 = zext(tmp16_2 > 0xf);
+	local tmp16_3:2 = (tmp16_2 & 0xf) | zext(or_mask * 0xfff0);
+	local tmp16_4:2 =  tmp16_3 + zext(A & 0xf0) - zext(op1 & 0xf0);
+
+	$(V_FLAG) = ((decimalResult ^ zext(A)) & (~decimalResult ^ zext(op1)) & 0x80) != 0;
+	$(N_FLAG) = (tmp16_4:1 & 0x80) != 0;
+	$(Z_FLAG) = (decimalResult:1 == 0);
+
+	local sub_60:2 = zext(tmp16_4 > 0xff);
+	local tmp16_5:2 = tmp16_4 - zext(sub_60 * 0x60);
+	local X_2:2 = zext(tmp16_5 >> 8);
+
+	$(C_FLAG) = (tmp16_5 >> 8) == 0;
+
+	A = tmp16_5:1;
+}
+
+
+# reads two bytes from the specified address
+# if the address straddles a page boundary
+# Concrete example:
+# * JMP ($A0FD) constructs target address as low byte = $A0FD's value and high byte = $A0FF's value, however...
+# * JMP ($A0FF) constructs target address as low byte = $A0FF's value and high byte = $A000's value.
+macro read_page_safe(addr, value) {
+
+    local addr_high:1 = addr(1);
+    local addr_low:1 = addr(0);
+    local temp_addr:2 = (zext(addr_high) << 8) | zext(addr_low);
+
+    local result_low:1 = *:1 temp_addr;
+
+    addr_low = addr_low + 1;
+    temp_addr = (zext(addr_high) << 8) | zext(addr_low);
+    local result_high:1 = *:1 temp_addr;
+
+    value = (zext(result_high) << 8) | zext(result_low);
+
+}
 
 ################################################################
 # Pseudo Instructions
@@ -92,9 +206,28 @@ OP1: imm16,X    is bbb=7 & X; imm16		{ tmp:2 = imm16 + zext(X); export *:1 tmp; 
 # Absolute Indexed Y
 OP1: imm16,Y    is bbb=6 & Y; imm16		{ tmp:2 = imm16 + zext(Y); export *:1 tmp; }
 # Indirect X
-OP1: (imm8,X)   is bbb=0 & X; imm8		{ addr:2 = zext(imm8 + X); tmp:2 = *:2 addr; export *:1 tmp; }
+OP1: (imm8,X)   is bbb=0 & X; imm8		{
+	# When the first (low) byte of address to load is 0xff,
+	# the second (high) byte to load is at 0x0000, not 0x0100
+	addr8_lo:1 = imm8 + X;
+	addr8_hi:1 = addr8_lo + 1;
+	addr16_lo:2 = zext(addr8_lo);
+	addr16_hi:2 = zext(addr8_hi);
+	tmp:2 = zext(*:1 addr16_hi) << 8 | zext(*:1 addr16_lo);
+	export *:1 tmp;
+}
 # Indirect Y
-OP1: (imm8),Y   is bbb=4 & Y; imm8		{ addr:2 = imm8; tmp:2 = *:2 addr; tmp = tmp + zext(Y); export *:1 tmp; }
+OP1: (imm8),Y   is bbb=4 & Y; imm8		{
+	# When the first (low) byte of address to load is 0xff,
+	# the second (high) byte to load is at 0x0000, not 0x0100
+	addr8_lo:1 = imm8;
+	addr8_hi:1 = addr8_lo + 1;
+	addr16_lo:2 = zext(addr8_lo);
+	addr16_hi:2 = zext(addr8_hi);
+	tmp:2 = zext(*:1 addr16_hi) << 8 | zext(*:1 addr16_lo);
+	tmp = tmp + zext(Y);
+	export *:1 tmp;
+}
 
 # Immediate
 OP2: "#"imm8    is bbb=0; imm8			{ tmp:1 = imm8; export tmp; }
@@ -117,7 +250,7 @@ OP2LD: imm16,Y  is bbb=7 & Y; imm16		{ tmp:2 = imm16 + zext(Y); export *:1 tmp; 
 
 
 ADDR8:  imm8    is imm8		{ export *:1 imm8; }
-ADDR16: imm16   is imm16   	{ export *:1 imm16; }
+ADDR16: imm16   is imm16   	{ export *:2 imm16; }
 ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 
 
@@ -126,15 +259,7 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 
 :ADC OP1     is (cc=1 & aaa=3) ... & OP1
 {
-	local op1 = OP1;
-	local tmpC = C;
-	
-	C = carry(A, op1);
-	
-	A = A + op1 + tmpC;
-
-	resultFlags(A);
-	V = C;
+	adc(OP1);
 }
 
 :AND OP1     is (cc=1 & aaa=1) ... & OP1
@@ -146,7 +271,7 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 :ASL OP2     is (op=0x06 | op=0x0A | op=0x0E | op=0x16 | op=0x1E) ... & OP2
 {
 	local tmp = OP2;
-	C = tmp >> 7;
+	$(C_FLAG) = tmp >> 7;
 	tmp = tmp << 1;
 	OP2 = tmp;
 	resultFlags(tmp);	
@@ -154,81 +279,81 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 
 :BCC  REL			is op=0x90; REL
 {
-	if (C == 0) goto REL;
+	if ($(C_FLAG) == 0) goto REL;
 }
 
 :BCS  REL			is op=0xB0; REL
 {
-	if (C) goto REL;
+	if ($(C_FLAG)) goto REL;
 }
 
 :BEQ  REL			is op=0xF0; REL
 {
-	if (Z) goto REL;
+	if ($(Z_FLAG)) goto REL;
 }
 
 :BIT OP2     is (op=0x24 | op=0x2C) ... & OP2
 {
-	N = (OP2 & 0x80) == 0x80;
-	V = (OP2 & 0x40) == 0x40;
+	$(N_FLAG) = (OP2 & 0x80) == 0x80;
+	$(V_FLAG) = (OP2 & 0x40) == 0x40;
 	local value = A & OP2;
-	Z = (value == 0);
+	$(Z_FLAG) = (value == 0);
 }
 
 :BMI  REL			is op=0x30; REL
 {
-	if (N) goto REL;
+	if ($(N_FLAG)) goto REL;
 }
 
 :BNE  REL			is op=0xD0; REL
 {
-	if (Z == 0) goto REL;
+	if ($(Z_FLAG) == 0) goto REL;
 }
 
 :BPL  REL			is op=0x10; REL
 {
-	if (N == 0) goto REL;
+	if ($(N_FLAG) == 0) goto REL;
 }
 
 :BRK   is op=0x00
 {
-	*:2 (SP - 1) = inst_next;
-	SP = SP - 2;
-	B = 1;
+	local temp:2 = inst_next + 1;
+	stackPush((temp >> 8) & 0xFF);
+	stackPush(temp & 0xFF);
 	pushSR();
-	I = 1;
+	$(I_FLAG) = 1;
 	local target:2 = 0xFFFE;
 	goto [*:2 target];
 }
 
 :BVC  REL			is op=0x50; REL
 {
-	if (V == 0) goto REL;
+	if ($(V_FLAG) == 0) goto REL;
 }
 
 :BVS  REL			is op=0x70; REL
 {
-	if (V) goto REL;
+	if ($(V_FLAG)) goto REL;
 }
 
 :CLC     is op=0x18
 {
-	C = 0;
+	$(C_FLAG) = 0;
 }
 
 :CLD     is op=0xD8
 {
-	D = 0;
+	$(D_FLAG) = 0;
 }
 
 :CLI     is op=0x58
 {
-	I = 0;
+	$(I_FLAG) = 0;
 }
 
 :CLV     is op=0xB8
 {
-	V = 0;
+	$(V_FLAG) = 0;
 }
 
 :CMP OP1     is (cc=1 & aaa=6) ... & OP1
@@ -236,7 +361,7 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 	local op1 = OP1;
 	local tmp = A - op1;
 	resultFlags(tmp);
-	C = (A >= op1);
+	$(C_FLAG) = (A >= op1);
 }
 
 :CPX OP2     is (op=0xE0 | op=0xE4 | op=0xEC) ... & OP2
@@ -244,7 +369,7 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 	local op1 = OP2;
 	local tmp = X - op1;
 	resultFlags(tmp);
-	C = (X >= op1);
+	$(C_FLAG) = (X >= op1);
 }
 
 :CPY OP2     is (op=0xC0 | op=0xC4 | op=0xCC) ... & OP2
@@ -252,7 +377,7 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 	local op1 = OP2;
 	local tmp = Y - op1;
 	resultFlags(tmp);
-	C = (Y >= op1);
+	$(C_FLAG) = (Y >= op1);
 }
 
 :DEC OP2     is (op=0xC6 | op=0xCE | op=0xD6 | op=0xDE) ... & OP2
@@ -306,15 +431,20 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 	goto ADDR16;
 }
 
-:JMP ADDRI     is (op=0x6c); ADDRI
+:JMP imm16     is (op=0x6c); imm16
 {
-	goto [ADDRI];
+	local addr:2 = imm16;
+	local dest:2 = 0;
+
+	read_page_safe(addr, dest);
+	goto [dest];
 }
 
 :JSR   ADDR16    is op=0x20; ADDR16
 {
-	*:2 (SP-1) = inst_next;
-	SP=SP-2; 
+	local temp:2 = inst_next - 1;
+	stackPush((temp >> 8) & 0xFF);
+	stackPush(temp & 0xFF);
 	call ADDR16;
 }
 
@@ -339,11 +469,11 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 :LSR OP2     is (op=0x46 | op=0x4A | op=0x4E | op=0x56 | op=0x5E) ... & OP2
 {
 	local tmp = OP2;
-	C = tmp & 1;
+	$(C_FLAG) = tmp & 1;
 	tmp = tmp >> 1;
 	OP2 = tmp;
-	Z = (tmp == 0);
-	N = 0;	
+	$(Z_FLAG) = (tmp == 0);
+	$(N_FLAG) = 0;
 }
 
 :NOP     is op=0xEA
@@ -363,38 +493,40 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 
 :PLP     is op=0x28
 {
-	popSR();
+	stackPop(P);
+	$(B_FLAG) = 0;
+	$(T_FLAG) = 1;
 }
 
 :PHA     is op=0x48
 {
 	*:1 (SP) = A;
-	SP = SP - 1;
+	S = S - 1;
 }
 
 :PLA     is op=0x68
 {
-	SP = SP + 1;
+	S = S + 1;
 	A = *:1 (SP);
 	resultFlags(A);
 }
 
 :ROL OP2     is (op=0x26 | op=0x2A | op=0x2E | op=0x36 | op=0x3E) ... & OP2
 {
-	local tmpC = C;
+	local tmpC = $(C_FLAG);
 	local op2 = OP2;
-	C = op2 >> 7;
+	$(C_FLAG) = op2 >> 7;
 	local result = op2 << 1;
 	result = result | tmpC;
 	OP2 = result;
-	resultFlags(result);	
+	resultFlags(result);
 }
 
 :ROR OP2     is (op=0x66 | op=0x6A | op=0x6E | op=0x76 | op=0x7E) ... & OP2
 {
-	local tmpC = C << 7;
+	local tmpC = $(C_FLAG) << 7;
 	local tmp = OP2;
-	C = tmp & 1;
+	$(C_FLAG) = tmp & 1;
 	tmp = tmp >> 1;
 	tmp = tmp | tmpC;
 	OP2 = tmp;
@@ -404,49 +536,54 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 :RTI      is op=0x40
 {
 	popSR();
+
+	S = S + 1;
+	local temp:2 = zext(S) + 0x0100;
+	local dest:2 = zext(*:1 temp);
+	S = S + 1;
+	temp = zext(S) + 0x0100;
+	dest = dest + (zext(*:1 temp) << 8);
 	
-    SP = SP+1;
-	tmp:2 = *:2 SP;
-	SP = SP+1;
-	
-	return [tmp];
+	return [dest];
 }
 
 :RTS      is op=0x60
 {
-	SP = SP+1;
-	tmp:2 = *:2 SP;
-	SP = SP+1;
+	S = S + 1;
+	local temp:2 = zext(S) + 0x0100;
+	local dest:2 = zext(*:1 temp);
+	S = S + 1;
+	temp = zext(S) + 0x0100;
+	dest = dest + (zext(*:1 temp) << 8);
+
+	dest = dest + 1;
 	
-	return [tmp];
+	return [dest];
 }
 
 :SBC OP1     is (cc=1 & aaa=7) ... & OP1
 {
-	local op1 = OP1;
-	local result = A - op1 - !C;
-	
-	subtraction_flags1(A, op1, result);
-	A = result;	
-	
-	# resultFlags(tmp);
-	# C = ((A <= op1) * C) | (A < op1);
-	# A = tmp;
+	if($(D_FLAG) == 0) goto <NOT_DECIMAL>;
+	sbc_decimal(OP1);
+	goto <END>;
+<NOT_DECIMAL>
+	adc(~OP1);
+<END>
 }
 
 :SEC     is op=0x38
 {
-	C = 1;
+	$(C_FLAG) = 1;
 }
 
 :SED     is op=0xF8
 {
-	D = 1;	
+	$(D_FLAG) = 1;
 }
 
 :SEI     is op=0x78
 {
-	I = 1;
+	$(I_FLAG) = 1;
 }
 
 :STA OP1     is (cc=1 & aaa=4) ... & OP1
