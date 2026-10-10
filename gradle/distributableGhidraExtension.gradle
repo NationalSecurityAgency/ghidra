@@ -27,15 +27,6 @@
 apply from: "$rootProject.projectDir/gradle/support/distributionCommon.gradle"
 apply from: "$rootProject.projectDir/gradle/support/extensionCommon.gradle"
 
-rootProject.createInstallationZip {
-	from (this.project.zipExtensions) {
-		into  {
-			rootProject.ZIP_DIR_PREFIX + "/Extensions/Ghidra"
-		}
-	} 
-	doLast {
-		this.project.zipExtensions.outputs.each {
-			delete it
-		}
-	}
+this.project.tasks.named('zipExtensions', Zip) {
+	destinationDirectory = rootProject.file("${rootProject.ext.DISTRIBUTION_DIR}/${rootProject.ZIP_DIR_PREFIX}/Extensions/Ghidra")
 }

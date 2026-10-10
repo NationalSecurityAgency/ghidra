@@ -110,7 +110,7 @@ eclipse {
 task zipExtensions(type: Zip, dependsOn:jarTasks) {
 	def p = this.project
 	archiveFileName = "${rootProject.ext.ZIP_NAME_PREFIX}_${p.name}.zip"
-	destinationDirectory = rootProject.ext.DISTRIBUTION_DIR
+	destinationDirectory = file("${rootProject.ext.DISTRIBUTION_DIR}/${rootProject.ZIP_DIR_PREFIX}/Extensions/Ghidra")
 
 	duplicatesStrategy = 'exclude'
 
@@ -129,21 +129,3 @@ task zipExtensions(type: Zip, dependsOn:jarTasks) {
 
 	into p.name
 }
-
-// Registratino with rootProject.createInstallationZip is ususally done in
-// "$rootProject.projectDir/gradle/distributableGhidraExtension.gradle", but
-// since we define a custom zipExtensions task (and can't overwrite it), we do
-// the registration here.
-rootProject.createInstallationZip {
-	from (this.project.zipExtensions) {
-		into  {
-			rootProject.ZIP_DIR_PREFIX + "/Extensions/Ghidra"
-		}
-	}
-	doLast {
-		this.project.zipExtensions.outputs.each {
-			delete it
-		}
-	}
-}
-
