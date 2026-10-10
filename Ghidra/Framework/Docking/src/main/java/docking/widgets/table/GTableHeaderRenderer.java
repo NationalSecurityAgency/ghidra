@@ -23,6 +23,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.table.*;
 
+import docking.i18n.UiTranslator;
 import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.Gui;
@@ -86,6 +87,10 @@ public class GTableHeaderRenderer extends DefaultTableCellRenderer {
 			if (rendererComponent instanceof JLabel) {
 				((JLabel) rendererComponent).setText(text);
 			}
+		}
+
+		if (rendererComponent instanceof JLabel label) {
+			label.setText(UiTranslator.translate(label.getText()));
 		}
 
 		primaryIcon = getIcon(model, modelIndex);

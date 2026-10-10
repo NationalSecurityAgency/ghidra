@@ -26,6 +26,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import docking.framework.SplashScreen;
+import docking.i18n.UiTranslator;
 import generic.jar.ResourceFile;
 import ghidra.base.help.GhidraHelpService;
 import ghidra.framework.*;
@@ -96,6 +97,9 @@ public class GhidraRun implements GhidraLaunchable {
 			writeLastRun();
 
 			initializeTooltips();
+
+			// Translate the user interface (Hebrew by default; -Dghidra.ui.language=en disables)
+			UiTranslator.install();
 
 			updateSplashScreenStatusMessage("Populating Ghidra help...");
 			GhidraHelpService.install();
