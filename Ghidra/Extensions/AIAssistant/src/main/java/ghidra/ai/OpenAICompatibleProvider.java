@@ -66,7 +66,9 @@ class OpenAICompatibleProvider implements AIProvider {
 				JsonObject body = new JsonObject();
 				body.addProperty("model", model);
 				body.add("messages", messages);
-				body.add("tools", toolDefinitions(tools));
+				if (!tools.getSpecs().isEmpty()) {
+					body.add("tools", toolDefinitions(tools));
+				}
 
 				JsonObject response = HttpJson.post(baseUrl + "/chat/completions", headers, body);
 				JsonArray choices = response.getAsJsonArray("choices");

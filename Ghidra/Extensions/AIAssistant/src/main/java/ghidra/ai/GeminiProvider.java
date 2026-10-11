@@ -59,7 +59,9 @@ class GeminiProvider implements AIProvider {
 				JsonObject body = new JsonObject();
 				body.add("systemInstruction", content(null, textPart(SYSTEM_PROMPT)));
 				body.add("contents", contents);
-				body.add("tools", toolDeclarations(tools));
+				if (!tools.getSpecs().isEmpty()) {
+					body.add("tools", toolDeclarations(tools));
+				}
 
 				JsonObject response =
 					HttpJson.post(url, Map.of("x-goog-api-key", apiKey), body);

@@ -62,6 +62,11 @@ public class UiTranslator {
 	private static final Pattern DECORATED =
 		Pattern.compile("^(\\s*)(.*?)(\\s*(?:\\.\\.\\.|:|\\s-|\\s\\.\\.\\.)?\\s*)$", Pattern.DOTALL);
 
+	// "Copy (Ctrl+C)", "Delete Selected Symbols (Delete)": a key binding appended to a tooltip
+	private static final Pattern KEY_BINDING_SUFFIX = Pattern.compile(
+		"^(.+?)(\\s+\\((?:(?:Ctrl|Alt|Shift|Meta|Cmd|Command|Option)\\+[^)]*|F\\d{1,2}|Delete|" +
+			"Del|Enter|Escape|Insert|Home|End|Space|Tab|[A-Z0-9])\\))$");
+
 	private static volatile Map<String, String> dictionary = Map.of();
 	private static volatile List<PatternEntry> patterns = List.of();
 
@@ -170,6 +175,28 @@ public class UiTranslator {
 				}
 			}
 		}
+
+		// "Copy (Ctrl+C)": translate the text, keep the key binding
+		Matcher key = KEY_BINDING_SUFFIX.matcher(text);
+		if (key.matches()) {
+			String head = translate(key.group(1));
+			if (!head.equals(key.group(1))) {
+				return head + key.group(2);
+			}
+		}
+
+		// "Memory Map [CodeBrowser: /prog]" and "Functions - 2 items": translate the leading
+		// window or component name, keep the rest
+		for (String separator : new String[] { " [", " - " }) {
+			int i = text.indexOf(separator);
+			if (i > 0) {
+				String head = text.substring(0, i);
+				String translated = translate(head);
+				if (!translated.equals(head)) {
+					return translated + text.substring(i);
+				}
+			}
+		}
 		return text;
 	}
 
@@ -234,7 +261,8 @@ public class UiTranslator {
 			return;
 		}
 		for (String line : text.split("\\R")) {
-			if (line.isEmpty() || line.startsWith("#")) {
+			// a comment is a '#' line without a tab ("# Refs<TAB>..." is a real phrase)
+			if (line.isEmpty() || line.startsWith("#") && line.indexOf('\t') < 0) {
 				continue;
 			}
 			int tab = line.indexOf('\t');

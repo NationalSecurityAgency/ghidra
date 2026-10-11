@@ -15,20 +15,23 @@
  */
 package ghidra.ai;
 
+import java.io.File;
 import java.util.Objects;
 
+import docking.widgets.OptionDialog;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.decompiler.DecompInterface;
 import ghidra.app.decompiler.DecompileResults;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
+import ghidra.app.util.exporter.CppExporter;
+import ghidra.app.util.exporter.OriginalFileExporter;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.task.TaskMonitor;
 
@@ -58,6 +61,11 @@ public class AIAssistantPlugin extends ProgramPlugin {
 	static final String OPTION_OPENAI_KEY = "OpenAI - מפתח API";
 	static final String OPTION_OPENAI_MODEL = "OpenAI - מודל";
 	static final String OPTION_OPENAI_URL = "OpenAI - כתובת שרת (Base URL)";
+	static final String OPTION_ALLOW_EDITS = "אפשר ל-AI לערוך את התוכנית";
+	static final String OPTION_DOC_MAX = "תיעוד הכל - מספר פונקציות מקסימלי";
+
+	/** Marks comments written by the assistant, so re-running "document all" skips them. */
+	static final String AI_COMMENT_PREFIX = "[AI] ";
 
 	static final String DEFAULT_CLAUDE_MODEL = "claude-opus-5-5";
 	static final String DEFAULT_GEMINI_MODEL = "gemini-flash-latest";
@@ -67,7 +75,6 @@ public class AIAssistantPlugin extends ProgramPlugin {
 	private record ProviderConfig(ProviderType type, String key, String model, String url) {}
 
 	private AIAssistantProvider provider;
-	private final AITools tools;
 	private AIProvider backend;
 	private ProviderConfig backendConfig;
 	private DecompInterface decompiler;
@@ -76,7 +83,6 @@ public class AIAssistantPlugin extends ProgramPlugin {
 	public AIAssistantPlugin(PluginTool tool) {
 		super(tool);
 		registerOptions();
-		tools = new AITools(this);
 		provider = new AIAssistantProvider(this);
 		provider.addToTool();
 	}
@@ -103,6 +109,20 @@ public class AIAssistantPlugin extends ProgramPlugin {
 			"כתובת ה-API. דוגמאות: https://api.openai.com/v1, https://openrouter.ai/api/v1, " +
 				"https://api.deepseek.com/v1, http://localhost:11434/v1 (Ollama), " +
 				"http://localhost:1234/v1 (LM Studio)");
+		o.registerOption(OPTION_ALLOW_EDITS, true, null,
+			"אם מסומן, ה-AI יכול להציע שינויים (שינוי שמות, הערות, חתימות, Patch, מחיקת " +
+				"פונקציות). כל שינוי דורש את אישורך וניתן לביטול עם Ctrl+Z.");
+		o.registerOption(OPTION_DOC_MAX, 200, null,
+			"כמה פונקציות לכל היותר יתועדו בלחיצה על \"תעד הכל בעברית\" (כל פונקציה היא " +
+				"בקשה נפרדת ל-AI ועולה כסף)");
+	}
+
+	boolean isEditingAllowed() {
+		return tool.getOptions(OPTIONS_CATEGORY).getBoolean(OPTION_ALLOW_EDITS, true);
+	}
+
+	int getDocumentLimit() {
+		return Math.max(1, tool.getOptions(OPTIONS_CATEGORY).getInt(OPTION_DOC_MAX, 200));
 	}
 
 	ProviderType getProviderType() {
@@ -156,13 +176,95 @@ public class AIAssistantPlugin extends ProgramPlugin {
 	String ask(String question, AIProvider.ToolCallListener listener, TaskMonitor monitor)
 			throws Exception {
 		AIProvider ai = getBackend();
+		AITools tools = new AITools(this, isEditingAllowed());
 		tools.setMonitor(monitor);
-		try {
-			return ai.ask(question, tools, listener);
+		tools.setApprover(this::approveEdit);
+		return ai.ask(question, tools, listener);
+	}
+
+	/** Shows the approval dialog for a change the AI wants to make. */
+	private AITools.Approval approveEdit(String description) {
+		int choice = OptionDialog.showOptionDialog(tool.getActiveWindow(),
+			"עוזר AI מבקש לבצע שינוי",
+			description + "\n\nאפשר לבטל את השינוי אחר כך עם Ctrl+Z.",
+			"אשר", "אשר את כל השינויים בשאלה הזו", "דחה", OptionDialog.QUESTION_MESSAGE);
+		return switch (choice) {
+			case 1 -> AITools.Approval.YES;
+			case 2 -> AITools.Approval.YES_TO_ALL;
+			default -> AITools.Approval.NO;
+		};
+	}
+
+	/**
+	 * Writes a short Hebrew plate comment above every function that has none yet, using a
+	 * separate one-shot request per function.
+	 * @param listener receives progress lines for the chat window
+	 * @return a summary of what was done
+	 */
+	String documentAllFunctions(java.util.function.Consumer<String> listener,
+			TaskMonitor monitor) throws Exception {
+		Program program = currentProgram;
+		int limit = getDocumentLimit();
+		java.util.List<Function> todo = new java.util.ArrayList<>();
+		for (Function f : program.getFunctionManager().getFunctions(true)) {
+			String plate = f.getComment();
+			if (!f.isThunk() && (plate == null || plate.isBlank())) {
+				todo.add(f);
+			}
+			if (todo.size() >= limit) {
+				break;
+			}
 		}
-		finally {
-			tools.setMonitor(null);
+		monitor.initialize(todo.size(), "מתעד פונקציות בעברית");
+		int done = 0;
+		for (Function f : todo) {
+			if (monitor.isCancelled()) {
+				break;
+			}
+			monitor.setMessage("מתעד את " + f.getName() + " (" + (done + 1) + "/" + todo.size() +
+				")");
+			String code = decompile(f, monitor);
+			if (code == null) {
+				monitor.incrementProgress();
+				continue;
+			}
+			AIProvider oneShot = createBackend(readConfig());
+			String summary = oneShot.ask("""
+					Write a short documentation comment, in Hebrew, for the function below: 					one to three sentences on what it does and anything notable (inputs, 					outputs, side effects, security relevance). If its current name is 					generic (FUN_...), add a last line 'שם מוצע: <name>'. Reply with the 					comment text only, no markdown.
+
+					```c
+					""" + code + "\n```", AITools.none(this), (n, a) -> {});
+			String text = AI_COMMENT_PREFIX + summary.strip();
+			program.withTransaction("AI: תיעוד " + f.getName(), () -> f.setComment(text));
+			listener.accept("  📝 " + f.getName() + ": " + firstLine(summary));
+			done++;
+			monitor.incrementProgress();
 		}
+		return "תועדו " + done + " פונקציות" +
+			(todo.size() >= limit ? " (הגעת למגבלה של " + limit + "; אפשר להריץ שוב להמשך)" : "") +
+			". ההערות מופיעות מעל כל פונקציה ברישום ובדה-קומפיילר.";
+	}
+
+	private static String firstLine(String text) {
+		String line = text.strip().lines().findFirst().orElse("");
+		return line.length() > 120 ? line.substring(0, 120) + "..." : line;
+	}
+
+	/**
+	 * Exports the program's bytes, including all patches, in the original file format, so the
+	 * result can be run (or compared) like the original binary.
+	 */
+	boolean exportPatchedBinary(File file, TaskMonitor monitor) throws Exception {
+		return new OriginalFileExporter().export(file, currentProgram, null, monitor);
+	}
+
+	/**
+	 * Exports the whole program as decompiled C (with the Hebrew comments), as a starting point
+	 * for rebuilding it from source.
+	 */
+	boolean exportAllC(File file, TaskMonitor monitor) throws Exception {
+		CppExporter exporter = new CppExporter(null, true, true, true, true, false, null);
+		return exporter.export(file, currentProgram, null, monitor);
 	}
 
 	synchronized void resetConversation() {
@@ -174,16 +276,20 @@ public class AIAssistantPlugin extends ProgramPlugin {
 	private synchronized AIProvider getBackend() {
 		ProviderConfig config = readConfig();
 		if (backend == null || !Objects.equals(config, backendConfig)) {
-			backend = switch (config.type()) {
-				case CLAUDE -> new ClaudeProvider(config.key(), config.model(),
-					System.getenv("ANTHROPIC_BASE_URL"));
-				case GEMINI -> new GeminiProvider(config.key(), config.model(), null);
-				case OPENAI_COMPATIBLE -> new OpenAICompatibleProvider(config.key(),
-					config.model(), config.url());
-			};
+			backend = createBackend(config);
 			backendConfig = config;
 		}
 		return backend;
+	}
+
+	private static AIProvider createBackend(ProviderConfig config) {
+		return switch (config.type()) {
+			case CLAUDE -> new ClaudeProvider(config.key(), config.model(),
+				System.getenv("ANTHROPIC_BASE_URL"));
+			case GEMINI -> new GeminiProvider(config.key(), config.model(), null);
+			case OPENAI_COMPATIBLE -> new OpenAICompatibleProvider(config.key(), config.model(),
+				config.url());
+		};
 	}
 
 	private static String key(String configured, String... envVars) {
@@ -233,6 +339,14 @@ public class AIAssistantPlugin extends ProgramPlugin {
 	 * process is kept alive between calls, since a single question may decompile many functions.
 	 */
 	synchronized String decompile(Function function, TaskMonitor monitor) {
+		DecompileResults results = decompileResults(function, monitor);
+		return results == null ? null : results.getDecompiledFunction().getC();
+	}
+
+	/**
+	 * Decompiles a function, or returns null if decompilation fails.
+	 */
+	synchronized DecompileResults decompileResults(Function function, TaskMonitor monitor) {
 		Program program = function.getProgram();
 		if (decompiler == null || decompilerProgram != program) {
 			disposeDecompiler();
@@ -247,7 +361,7 @@ public class AIAssistantPlugin extends ProgramPlugin {
 		if (results == null || !results.decompileCompleted()) {
 			return null;
 		}
-		return results.getDecompiledFunction().getC();
+		return results;
 	}
 
 	private synchronized void disposeDecompiler() {

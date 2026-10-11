@@ -139,6 +139,66 @@ public class AIToolsTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
+	public void testEditsWithApproval() throws Exception {
+		AITools edit = new AITools(plugin, true);
+		java.util.List<String> asked = new java.util.ArrayList<>();
+		edit.setApprover(d -> {
+			asked.add(d);
+			return d.contains("REJECT") ? AITools.Approval.NO : AITools.Approval.YES;
+		});
+		tools = edit;
+
+		String unref = run("find_unreferenced_functions", null, null);
+		assertTrue(unref, unref.contains("main") && !unref.contains("check_password"));
+
+		String renamed = runArgs("rename_function", "target", "check_password", "new_name",
+			"verify_password");
+		assertTrue(renamed, renamed.startsWith("Done"));
+		assertNotNull(program.getListing().getGlobalFunctions("verify_password").get(0));
+
+		String rejected = runArgs("rename_function", "target", "main", "new_name", "REJECT");
+		assertTrue(rejected, rejected.contains("rejected"));
+		assertTrue(program.getListing().getGlobalFunctions("REJECT").isEmpty());
+
+		String comment = runArgs("set_comment", "target", "main", "comment",
+			"נקודת הכניסה של התוכנית", "type", "plate");
+		assertTrue(comment, comment.startsWith("Done"));
+		assertEquals("נקודת הכניסה של התוכנית",
+			program.getListing().getGlobalFunctions("main").get(0).getComment());
+
+		String sig = runArgs("set_function_signature", "target", "verify_password", "signature",
+			"int verify_password(char * pw)");
+		assertTrue(sig, sig.startsWith("Done"));
+
+		String label = runArgs("create_label", "address", "0x1080", "name", "msg_wrong");
+		assertTrue(label, label.startsWith("Done"));
+
+		String patch = runArgs("patch_bytes", "address", "0x1002", "bytes", "f4 00");
+		assertTrue(patch, patch.startsWith("Done"));
+
+		String deleted = runArgs("delete_function", "target", "main");
+		assertTrue(deleted, deleted.startsWith("Done"));
+		assertNull(program.getFunctionManager().getFunctionAt(program.getMinAddress()
+				.getNewAddress(0x1000)));
+
+		// every change is undoable
+		program.undo();
+		assertNotNull(program.getFunctionManager().getFunctionAt(program.getMinAddress()
+				.getNewAddress(0x1000)));
+		assertEquals(7, asked.size());
+	}
+
+	private String runArgs(String name, String... kv) {
+		JsonObject args = new JsonObject();
+		for (int i = 0; i < kv.length; i += 2) {
+			args.addProperty(kv[i], kv[i + 1]);
+		}
+		String result = tools.execute(name, args);
+		System.out.println("--- " + name + args + "\n" + result);
+		return result;
+	}
+
+	@Test
 	public void testToolMenusAreTranslated() {
 		UiTranslator.install();
 		// re-show a window so the translator sees freshly added components

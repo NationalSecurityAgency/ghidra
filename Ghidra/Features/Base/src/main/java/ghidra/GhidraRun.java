@@ -13,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+ * NOTICE: This file was modified from the original Ghidra source (2026) for the
+ * Hebrew UI / AI assistant edition: installs the Hebrew UI translator at startup.
+ */
 package ghidra;
 
 import java.io.File;

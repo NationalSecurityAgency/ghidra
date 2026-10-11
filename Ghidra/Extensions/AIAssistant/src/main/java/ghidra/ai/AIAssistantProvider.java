@@ -16,6 +16,7 @@
 package ghidra.ai;
 
 import java.awt.*;
+import java.io.File;
 import java.util.Map;
 
 import javax.swing.*;
@@ -23,6 +24,8 @@ import javax.swing.*;
 import com.google.gson.JsonObject;
 
 import docking.WindowPosition;
+import docking.widgets.OptionDialog;
+import docking.widgets.filechooser.GhidraFileChooser;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.listing.Function;
 import ghidra.util.Msg;
@@ -51,7 +54,16 @@ class AIAssistantProvider extends ComponentProviderAdapter {
 		Map.entry("get_callees", "בודק למי קוראת"),
 		Map.entry("decompile_function", "מפענח את"),
 		Map.entry("disassemble", "קורא אסמבלי ב"),
-		Map.entry("go_to", "מנווט אל"));
+		Map.entry("go_to", "מנווט אל"),
+		Map.entry("find_unreferenced_functions", "מחפש פונקציות שאף אחד לא קורא להן"),
+		Map.entry("rename_function", "מבקש לשנות שם פונקציה"),
+		Map.entry("rename_variable", "מבקש לשנות שם משתנה"),
+		Map.entry("set_function_signature", "מבקש לשנות חתימה של"),
+		Map.entry("set_comment", "מבקש להוסיף הערה ב"),
+		Map.entry("create_label", "מבקש ליצור תווית"),
+		Map.entry("patch_instruction", "מבקש לתקן פקודה ב"),
+		Map.entry("patch_bytes", "מבקש לכתוב בתים ב"),
+		Map.entry("delete_function", "מבקש למחוק את הפונקציה"));
 
 	private final AIAssistantPlugin plugin;
 	private JPanel mainPanel;
@@ -62,6 +74,9 @@ class AIAssistantProvider extends ComponentProviderAdapter {
 	private JButton explainButton;
 	private JButton renameButton;
 	private JButton resetButton;
+	private JButton documentButton;
+	private JButton exportBinaryButton;
+	private JButton exportCButton;
 
 	AIAssistantProvider(AIAssistantPlugin plugin) {
 		super(plugin.getTool(), "AI Assistant", plugin.getName());
@@ -73,7 +88,10 @@ class AIAssistantProvider extends ComponentProviderAdapter {
 			"  • איפה נמצא הקוד שבודק את הסיסמה?\n" +
 			"  • מה גורם להודעת השגיאה \"Access denied\"?\n" +
 			"  • מי קורא לפונקציה הזו ומה היא עושה?\n" +
-			"אני מחפש בתוכנית בעצמי, מסביר, ומעביר אותך למקום הנכון.");
+			"  • מה אפשר למחוק או לנטרל בתוכנית הזו?\n" +
+			"  • תשנה את השם של הפונקציה הזו ותוסיף לה הערה בעברית.\n" +
+			"אני מחפש בתוכנית בעצמי, מסביר, ומעביר אותך למקום הנכון. כל שינוי שאציע " +
+			"יבוצע רק באישורך, ואפשר לבטל אותו עם Ctrl+Z.");
 	}
 
 	private void buildPanel() {
@@ -100,11 +118,25 @@ class AIAssistantProvider extends ComponentProviderAdapter {
 			appendLine("התחלנו שיחה חדשה.");
 		});
 
-		JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+		documentButton = new JButton("תעד הכל בעברית");
+		documentButton.setToolTipText("כותב הערה בעברית מעל כל פונקציה שאין לה הערה");
+		documentButton.addActionListener(e -> documentAll());
+		exportBinaryButton = new JButton("ייצא קובץ מתוקן");
+		exportBinaryButton.setToolTipText(
+			"שומר את הקובץ הבינארי עם כל התיקונים (Patch) שבוצעו, כך שאפשר להריץ אותו");
+		exportBinaryButton.addActionListener(e -> export(true));
+		exportCButton = new JButton("ייצא את כל הקוד ל-C");
+		exportCButton.setToolTipText("שומר את כל התוכנית כקוד C מפוענח, כולל ההערות בעברית");
+		exportCButton.addActionListener(e -> export(false));
+
+		JPanel buttons = new JPanel(new GridLayout(2, 3, 4, 4));
 		buttons.setComponentOrientation(RTL);
 		buttons.add(explainButton);
 		buttons.add(renameButton);
 		buttons.add(resetButton);
+		buttons.add(documentButton);
+		buttons.add(exportBinaryButton);
+		buttons.add(exportCButton);
 
 		backendLabel = new JLabel();
 		backendLabel.setComponentOrientation(RTL);
@@ -212,6 +244,85 @@ class AIAssistantProvider extends ComponentProviderAdapter {
 		new TaskLauncher(task, mainPanel);
 	}
 
+	private void documentAll() {
+		String problem = plugin.getConfigurationProblem();
+		if (problem != null || plugin.getProgram() == null) {
+			appendLine("\n" + (problem != null ? problem : "אין תוכנית פתוחה."));
+			return;
+		}
+		int limit = plugin.getDocumentLimit();
+		int answer = OptionDialog.showYesNoDialog(mainPanel, "תיעוד כל הפונקציות",
+			"ה-AI יכתוב הערה בעברית מעל כל פונקציה שאין לה הערה (עד " + limit +
+				" פונקציות).\nכל פונקציה היא בקשה נפרדת לשירות ה-AI ועולה כסף.\n" +
+				"אפשר לעצור באמצע, ולבטל עם Ctrl+Z.\n\nלהמשיך?");
+		if (answer != OptionDialog.YES_OPTION) {
+			return;
+		}
+		appendLine("\nמתעד את הפונקציות בעברית...");
+		setBusy(true);
+		Task task = new Task("תיעוד כל הפונקציות", true, true, false) {
+			@Override
+			public void run(TaskMonitor monitor) {
+				try {
+					appendLine("\n" + plugin.documentAllFunctions(line -> appendLine(line),
+						monitor));
+				}
+				catch (AIProvider.AIException e) {
+					appendLine("\n" + friendlyError(e));
+				}
+				catch (Exception e) {
+					Msg.error(AIAssistantProvider.this, "Documenting functions failed", e);
+					appendLine("\nשגיאה: " + e.getMessage());
+				}
+				finally {
+					Swing.runLater(() -> setBusy(false));
+				}
+			}
+		};
+		new TaskLauncher(task, mainPanel);
+	}
+
+	private void export(boolean binary) {
+		if (plugin.getProgram() == null) {
+			appendLine("\nאין תוכנית פתוחה.");
+			return;
+		}
+		GhidraFileChooser chooser = new GhidraFileChooser(mainPanel);
+		chooser.setTitle(binary ? "שמירת הקובץ המתוקן" : "שמירת הקוד כ-C");
+		chooser.setApproveButtonText("שמור");
+		String name = plugin.getProgram().getName();
+		chooser.setSelectedFile(new File(binary ? patchedName(name) : name + ".c"));
+		File file = chooser.getSelectedFile();
+		chooser.dispose();
+		if (file == null) {
+			return;
+		}
+		Task task = new Task(binary ? "מייצא קובץ מתוקן" : "מייצא קוד C", true, false, false) {
+			@Override
+			public void run(TaskMonitor monitor) {
+				try {
+					boolean ok = binary ? plugin.exportPatchedBinary(file, monitor)
+							: plugin.exportAllC(file, monitor);
+					appendLine(ok ? "\nנשמר: " + file.getAbsolutePath() +
+						(binary ? "" : "\nשים לב: קוד מפוענח בדרך כלל דורש תיקונים ידניים " +
+							"לפני שאפשר לקמפל אותו מחדש.")
+							: "\nהייצוא נכשל.");
+				}
+				catch (Exception e) {
+					Msg.error(AIAssistantProvider.this, "Export failed", e);
+					appendLine("\nהייצוא נכשל: " + e.getMessage());
+				}
+			}
+		};
+		new TaskLauncher(task, mainPanel);
+	}
+
+	private static String patchedName(String name) {
+		int dot = name.lastIndexOf('.');
+		return dot > 0 ? name.substring(0, dot) + "_patched" + name.substring(dot)
+				: name + "_patched";
+	}
+
 	private static String friendlyError(AIProvider.AIException e) {
 		return switch (e.getStatus()) {
 			case 401, 403 -> "שגיאה: מפתח ה-API אינו תקין או שאין לו הרשאה. בדוק אותו " +
@@ -241,6 +352,7 @@ class AIAssistantProvider extends ComponentProviderAdapter {
 		explainButton.setEnabled(!busy);
 		renameButton.setEnabled(!busy);
 		resetButton.setEnabled(!busy);
+		documentButton.setEnabled(!busy);
 	}
 
 	private void appendLine(String text) {

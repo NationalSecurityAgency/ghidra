@@ -47,3 +47,17 @@ under the GPL directory that has the GPL license files.
 Consistent with the inbound=outbound model, contributions to any module must be
 made available, by the contributor, under the applicable license(s). Please read
 the Legal section of the CONTRIBUTING.md guide.
+
+
+Modifications: Hebrew UI and AI Assistant edition
+
+This distribution is a modified version of Ghidra. The modifications (2026) add a
+Hebrew user interface (docking.i18n.UiTranslator and the i18n/he.txt dictionary)
+and the AIAssistant extension (Ghidra/Extensions/AIAssistant). Files from the
+original Ghidra source that were changed carry a notice saying so. See HEBREW.md.
+The modifications are provided under the same Apache License, Version 2.0.
+
+The AIAssistant extension bundles third-party libraries under their own licenses,
+listed in Ghidra/Extensions/AIAssistant/Module.manifest (MIT and Apache 2.0; see
+the licenses directory). Use of an AI service (Anthropic, Google, OpenAI or any
+other) is subject to that service's terms; no AI service is bundled or included.

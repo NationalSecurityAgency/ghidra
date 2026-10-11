@@ -13,12 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+ * NOTICE: This file was modified from the original Ghidra source (2026) for the
+ * Hebrew UI / AI assistant edition: option category names are passed through the UI translator.
+ */
 package docking.options.editor;
 
 import java.util.*;
 
 import javax.swing.Icon;
 
+import docking.i18n.UiTranslator;
 import docking.widgets.tree.GTreeLazyNode;
 import docking.widgets.tree.GTreeNode;
 import generic.theme.GIcon;
@@ -114,6 +119,12 @@ class OptionsTreeNode extends GTreeLazyNode {
 	@Override
 	public String getName() {
 		return name;
+	}
+
+	@Override
+	public String getDisplayText() {
+		// option category names are UI text, so show them in the user's language
+		return UiTranslator.translate(getName());
 	}
 
 	@Override

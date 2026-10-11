@@ -13,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+ * NOTICE: This file was modified from the original Ghidra source (2026) for the
+ * Hebrew UI / AI assistant edition: labels are passed through the UI translator.
+ */
 package docking.widgets.label;
 
 import javax.swing.*;

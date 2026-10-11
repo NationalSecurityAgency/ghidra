@@ -20,22 +20,47 @@ import java.util.function.Function;
 
 import com.google.gson.JsonObject;
 
+import ghidra.app.cmd.disassemble.DisassembleCommand;
+import ghidra.app.cmd.function.ApplyFunctionSignatureCmd;
+import ghidra.app.decompiler.DecompileResults;
+import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.services.GoToService;
-import ghidra.program.model.address.Address;
+import ghidra.app.util.parser.FunctionSignatureParser;
+import ghidra.program.model.address.*;
+import ghidra.program.model.data.FunctionDefinitionDataType;
 import ghidra.program.model.data.StringDataInstance;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.pcode.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.DefinedStringIterator;
+import ghidra.util.NumericUtilities;
 import ghidra.util.Swing;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * The tools the AI can call to investigate the open program: searching functions, strings and
- * symbols, following references, decompiling, disassembling and navigating the listing. Every
- * tool is read-only except {@code go_to}, which only moves the cursor.
+ * The tools the AI can call on the open program. Investigation tools (searching functions,
+ * strings and symbols, following references, decompiling, disassembling, navigating) are
+ * read-only. Editing tools (renaming, comments, signatures, labels, patching, deleting) are only
+ * offered when editing is enabled, ask the user for approval through an {@link EditApprover},
+ * and run in a single undoable transaction each.
  */
 class AITools {
+
+	/** The user's answer to an edit request. */
+	enum Approval {
+		YES, YES_TO_ALL, NO
+	}
+
+	/** Asks the user whether the AI may make a change. */
+	interface EditApprover {
+		Approval approve(String description);
+	}
+
+	@FunctionalInterface
+	private interface Edit {
+		String apply(Program program) throws Exception;
+	}
 
 	/** Tool description in a provider-neutral form (JSON-schema style parameters). */
 	record ToolSpec(String name, String description, Map<String, Map<String, Object>> properties,
@@ -48,8 +73,28 @@ class AITools {
 	private final Map<String, Function<JsonObject, String>> handlers = new LinkedHashMap<>();
 	private final List<ToolSpec> specs = new ArrayList<>();
 	private TaskMonitor monitor = TaskMonitor.DUMMY;
+	private EditApprover approver;
+	private boolean approveAll;
+
+	/**
+	 * Creates a tool set with no tools at all, for one-shot requests that only need text.
+	 */
+	static AITools none(AIAssistantPlugin plugin) {
+		AITools tools = new AITools(plugin, false);
+		tools.specs.clear();
+		tools.handlers.clear();
+		return tools;
+	}
 
 	AITools(AIAssistantPlugin plugin) {
+		this(plugin, false);
+	}
+
+	/**
+	 * @param plugin the owning plugin
+	 * @param allowEdits true to also offer the editing tools
+	 */
+	AITools(AIAssistantPlugin plugin, boolean allowEdits) {
 		this.plugin = plugin;
 
 		add("get_program_info",
@@ -118,6 +163,77 @@ class AITools {
 				"this when you have found the place the user asked about.",
 			Map.of("target", str("Function name, symbol or address")),
 			List.of("target"), a -> goTo(s(a, "target")));
+		add("find_unreferenced_functions",
+			"List functions that nothing references (no calls, no pointers) and that are not " +
+				"entry points or exports. These are candidates for dead code. Note: functions " +
+				"reached only through computed jumps or callbacks may also appear here.",
+			Map.of("limit", num("Maximum results (default 100)")),
+			List.of(), a -> unreferencedFunctions(limit(a, 100)));
+
+		if (allowEdits) {
+			addEditTools();
+		}
+	}
+
+	private void addEditTools() {
+		String note = " This changes the program: the user is asked to approve it, and it can " +
+			"be undone with Ctrl+Z.";
+		add("rename_function", "Rename a function." + note,
+			Map.of("target", str("Function name or address"),
+				"new_name", str("The new name (a valid identifier)")),
+			List.of("target", "new_name"), a -> renameFunction(s(a, "target"), s(a, "new_name")));
+		add("rename_variable",
+			"Rename a parameter or local variable of a function, as seen in the decompiler." +
+				note,
+			Map.of("function", str("Function name or address"),
+				"old_name", str("Current variable name, e.g. param_1 or local_10"),
+				"new_name", str("The new name")),
+			List.of("function", "old_name", "new_name"),
+			a -> renameVariable(s(a, "function"), s(a, "old_name"), s(a, "new_name")));
+		add("set_function_signature",
+			"Set a function's prototype from C, e.g. 'int check_password(char *pw, int len)'." +
+				note,
+			Map.of("target", str("Function name or address"),
+				"signature", str("C function prototype")),
+			List.of("target", "signature"),
+			a -> setSignature(s(a, "target"), s(a, "signature")));
+		add("set_comment",
+			"Add or replace a comment. Use Hebrew. Types: plate (above a function, best for " +
+				"function summaries), pre, post, eol, repeatable." + note,
+			Map.of("target", str("Function name or address"),
+				"comment", str("The comment text (empty to remove)"),
+				"type", str("plate, pre, post, eol or repeatable (default eol)")),
+			List.of("target", "comment"),
+			a -> setComment(s(a, "target"), s(a, "comment"), s(a, "type")));
+		add("create_label", "Create a label (name) at an address." + note,
+			Map.of("address", str("Address"), "name", str("Label name")),
+			List.of("address", "name"), a -> createLabel(s(a, "address"), s(a, "name")));
+		add("patch_instruction",
+			"Replace the instruction at an address by assembling new assembly text, e.g. " +
+				"'NOP' or 'JMP 0x401020' (syntax of the program's processor)." + note,
+			Map.of("address", str("Address of the instruction"),
+				"assembly", str("One assembly instruction")),
+			List.of("address", "assembly"),
+			a -> patchInstruction(s(a, "address"), s(a, "assembly")));
+		add("patch_bytes",
+			"Overwrite bytes at an address with new hex bytes, e.g. '90 90' (code there is " +
+				"re-disassembled)." + note,
+			Map.of("address", str("Start address"), "bytes", str("Hex bytes, e.g. '90 90 c3'")),
+			List.of("address", "bytes"), a -> patchBytes(s(a, "address"), s(a, "bytes")));
+		add("delete_function",
+			"Delete a function definition (the bytes stay; only Ghidra's function is removed). " +
+				"Use only after recommending it and explaining why." + note,
+			Map.of("target", str("Function name or address")),
+			List.of("target"), a -> deleteFunction(s(a, "target")));
+	}
+
+	void setApprover(EditApprover approver) {
+		this.approver = approver;
+	}
+
+	/** Starts a new question: "approve all" applies only within a single question. */
+	void resetApprovals() {
+		approveAll = false;
 	}
 
 	List<ToolSpec> getSpecs() {
@@ -371,6 +487,175 @@ class AITools {
 		boolean[] ok = { false };
 		Swing.runNow(() -> ok[0] = service.goTo(addr, plugin.getProgram()));
 		return ok[0] ? "Moved the listing to " + addr : "Could not navigate to " + addr;
+	}
+
+	private String unreferencedFunctions(int limit) {
+		Program p = plugin.getProgram();
+		ReferenceManager refs = p.getReferenceManager();
+		SymbolTable symbols = p.getSymbolTable();
+		StringBuilder sb = new StringBuilder();
+		int n = 0;
+		for (ghidra.program.model.listing.Function f : p.getFunctionManager().getFunctions(true)) {
+			if (n >= limit || monitor.isCancelled()) {
+				break;
+			}
+			Address entry = f.getEntryPoint();
+			if (f.isThunk() || symbols.isExternalEntryPoint(entry) ||
+				refs.getReferenceCountTo(entry) > 0) {
+				continue;
+			}
+			sb.append(describe(f)).append("  [size ").append(f.getBody().getNumAddresses())
+					.append(" bytes]\n");
+			n++;
+		}
+		return n == 0 ? "No unreferenced functions found" : sb.toString();
+	}
+
+	// ---------------------------------------------------------------------------------------
+	// editing tools
+	// ---------------------------------------------------------------------------------------
+
+	/**
+	 * Asks for approval, then applies the edit in one undoable transaction.
+	 */
+	private String edit(String description, Edit edit) {
+		if (!approveAll) {
+			Approval answer = approver == null ? Approval.NO : approver.approve(description);
+			if (answer == Approval.NO) {
+				return "The user rejected this change: " + description;
+			}
+			if (answer == Approval.YES_TO_ALL) {
+				approveAll = true;
+			}
+		}
+		Program p = plugin.getProgram();
+		try {
+			String result = p.withTransaction("AI: " + description, () -> edit.apply(p));
+			return "Done: " + result;
+		}
+		catch (Exception e) {
+			return "Error: the change failed: " + e.getMessage();
+		}
+	}
+
+	private String renameFunction(String target, String newName) {
+		ghidra.program.model.listing.Function f = resolveFunction(target);
+		String old = f.getName(true);
+		return edit("שינוי שם הפונקציה " + old + " ל-" + newName, p -> {
+			f.setName(newName, SourceType.USER_DEFINED);
+			return "renamed " + old + " to " + newName;
+		});
+	}
+
+	private String renameVariable(String function, String oldName, String newName) {
+		ghidra.program.model.listing.Function f = resolveFunction(function);
+		for (Variable v : f.getAllVariables()) {
+			if (v.getName().equals(oldName)) {
+				return edit("שינוי שם המשתנה " + oldName + " ל-" + newName + " בפונקציה " +
+					f.getName(), p -> {
+						v.setName(newName, SourceType.USER_DEFINED);
+						return "renamed " + oldName + " to " + newName;
+					});
+			}
+		}
+		// not yet in the database: it exists only in the decompiler's view
+		DecompileResults results = plugin.decompileResults(f, monitor);
+		HighFunction high = results == null ? null : results.getHighFunction();
+		if (high == null) {
+			throw new IllegalArgumentException("Could not decompile " + f.getName());
+		}
+		Iterator<HighSymbol> it = high.getLocalSymbolMap().getSymbols();
+		while (it.hasNext()) {
+			HighSymbol sym = it.next();
+			if (sym.getName().equals(oldName)) {
+				return edit("שינוי שם המשתנה " + oldName + " ל-" + newName + " בפונקציה " +
+					f.getName(), p -> {
+						HighFunctionDBUtil.updateDBVariable(sym, newName, null,
+							SourceType.USER_DEFINED);
+						return "renamed " + oldName + " to " + newName;
+					});
+			}
+		}
+		throw new IllegalArgumentException(
+			"No variable named '" + oldName + "' in " + f.getName() + ". Decompile it first.");
+	}
+
+	private String setSignature(String target, String signature) {
+		ghidra.program.model.listing.Function f = resolveFunction(target);
+		return edit("שינוי החתימה של " + f.getName() + " ל: " + signature, p -> {
+			FunctionSignatureParser parser =
+				new FunctionSignatureParser(p.getDataTypeManager(), null);
+			FunctionDefinitionDataType def = parser.parse(f.getSignature(), signature);
+			ApplyFunctionSignatureCmd cmd = new ApplyFunctionSignatureCmd(f.getEntryPoint(),
+				def, SourceType.USER_DEFINED);
+			if (!cmd.applyTo(p, monitor)) {
+				throw new IllegalStateException(cmd.getStatusMsg());
+			}
+			return "signature is now " + f.getPrototypeString(false, false);
+		});
+	}
+
+	private String setComment(String target, String comment, String type) {
+		Address addr = resolveAddress(target);
+		CommentType commentType = switch (type.toLowerCase()) {
+			case "plate" -> CommentType.PLATE;
+			case "pre" -> CommentType.PRE;
+			case "post" -> CommentType.POST;
+			case "repeatable" -> CommentType.REPEATABLE;
+			default -> CommentType.EOL;
+		};
+		String text = comment.isBlank() ? null : comment;
+		return edit((text == null ? "מחיקת הערה ב-" : "הוספת הערה ב-") + addr + ": " +
+			(text == null ? "" : text), p -> {
+				p.getListing().setComment(addr, commentType, text);
+				return "comment set at " + addr;
+			});
+	}
+
+	private String createLabel(String address, String name) {
+		Address addr = resolveAddress(address);
+		return edit("יצירת התווית " + name + " בכתובת " + addr, p -> {
+			p.getSymbolTable().createLabel(addr, name, SourceType.USER_DEFINED);
+			return "label " + name + " created at " + addr;
+		});
+	}
+
+	private String patchInstruction(String address, String assembly) {
+		Address addr = resolveAddress(address);
+		CodeUnit before = plugin.getProgram().getListing().getCodeUnitAt(addr);
+		return edit("תיקון (Patch) הפקודה בכתובת " + addr + ": " +
+			(before == null ? "?" : before.toString()) + "  ←  " + assembly, p -> {
+				InstructionIterator it = Assemblers.getAssembler(p).assemble(addr, assembly);
+				return it.hasNext() ? "now: " + it.next() : "assembled";
+			});
+	}
+
+	private String patchBytes(String address, String hex) {
+		Address addr = resolveAddress(address);
+		byte[] bytes = NumericUtilities.convertStringToBytes(hex.replaceAll("[\\s,]|0x", ""));
+		if (bytes == null || bytes.length == 0) {
+			throw new IllegalArgumentException("Invalid hex bytes: " + hex);
+		}
+		return edit("כתיבת " + bytes.length + " בתים בכתובת " + addr + ": " + hex, p -> {
+			Address end = addr.add(bytes.length - 1);
+			boolean wasCode = p.getListing().getInstructionContaining(addr) != null;
+			p.getListing().clearCodeUnits(addr, end, false);
+			p.getMemory().setBytes(addr, bytes);
+			if (wasCode) {
+				new DisassembleCommand(new AddressSet(addr, end), null, true).applyTo(p, monitor);
+			}
+			return "wrote " + bytes.length + " bytes at " + addr;
+		});
+	}
+
+	private String deleteFunction(String target) {
+		ghidra.program.model.listing.Function f = resolveFunction(target);
+		String name = f.getName(true);
+		Address entry = f.getEntryPoint();
+		return edit("מחיקת הפונקציה " + name + " (" + entry + ")", p -> {
+			p.getFunctionManager().removeFunction(entry);
+			return "deleted function " + name;
+		});
 	}
 
 	// ---------------------------------------------------------------------------------------

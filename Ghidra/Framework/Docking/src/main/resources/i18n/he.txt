@@ -1,6 +1,8 @@
 # Hebrew UI dictionary: English<TAB>Hebrew, one phrase per line.
 # Lookup is by exact phrase; trailing "...", ":" and surrounding spaces are handled automatically.
 # A phrase may hold one placeholder: {0} is translated too, {name} is kept as-is.
+# Refs	מס' הפניות
+'Go To' in Current Program Only	'עבור אל' רק בתוכנית הנוכחית
 About	אודות
 About Ghidra	אודות Ghidra
 About Program	אודות התוכנית
@@ -31,8 +33,10 @@ Add Bookmark	הוסף סימנייה
 Add bundle(s)	הוסף חבילות
 Add Current Address	הוסף כתובת נוכחית
 Add Datatypes	הוסף סוגי נתונים
+Add Datatypes (Plus)	הוסף סוגי נתונים (Plus)
 Add Extension	הוסף הרחבה
 Add External Program	הוסף תוכנית חיצונית
+Add External Program Name	הוסף שם תוכנית חיצונית
 Add Field	הוסף שדה
 Add file to Version Control	הוסף קובץ לבקרת גרסאות
 Add filter	הוסף סינון
@@ -46,7 +50,9 @@ Add parameter	הוסף פרמטר
 Add Reference	הוסף הפניה
 Add Reference from	הוסף הפניה מ
 Add Region	הוסף אזור
+Add selected tags to the function	הוסף את התגיות הנבחרות לפונקציה
 Add Selection	הוסף לבחירה
+Add Space After Separator	הוסף רווח אחרי מפריד
 Add Spacer Field	הוסף שדה מרווח
 Add the range to the set of included addresses	הוסף את הטווח לקבוצת הכתובות הכלולות
 Add To Program	הוסף לתוכנית
@@ -63,21 +69,28 @@ Additional Comment Types	סוגי הערות נוספים
 Additional Locations	מיקומים נוספים
 Additional Search Paths	נתיבי חיפוש נוספים
 Address	כתובת
+Address Color	צבע כתובת
+Address Display	תצוגת כתובות
+Address Display Options	אפשרויות תצוגת כתובות
+Address Field	שדה כתובת
 Address History	היסטוריית כתובות
 Address not contained in memory.	הכתובת אינה נמצאת בזיכרון.
 Address Range	טווח כתובות
 Address Ranges	טווחי כתובות
 Address Set Options	אפשרויות קבוצת כתובות
 Address Space	מרחב כתובות
+Address Style	סגנון כתובת
 Address(es)	כתובות
 Adjust Filters	כוונן מסננים
 Adjust Pointer Offset	כוונן היסט מצביע
 Advanced	מתקדם
 Advanced >>	מתקדם >>
 Advanced Filters	מסננים מתקדמים
+After Initial Analysis	אחרי הניתוח הראשוני
 Aggressive Instruction Finder	מאתר פקודות אגרסיבי
 AI Assistant	עוזר AI
 Algorithm	אלגוריתם
+Alias Blocking	חסימת כינויים (Alias)
 Align start of string	יישר את תחילת המחרוזת
 Align To Record Size	יישר לגודל רשומה
 Alignment	יישור
@@ -99,6 +112,8 @@ Allows specifying control characters using escape sequences	מאפשר לציי�
 Allows user to select bytes of data.	מאפשר לבחור בתי נתונים.
 Allows user to select scoped flow from current location.	מאפשר לבחור זרימה מתוחמת מהמיקום הנוכחי.
 Allows user to select scoped flow to the current location.	מאפשר לבחור זרימה מתוחמת אל המיקום הנוכחי.
+Always Show Primary Reference	הצג תמיד את ההפניה הראשית
+Always Show the Automatic Comment	הצג תמיד את ההערה האוטומטית
 Analysis	ניתוח
 Analysis Bookmarks	סימניות ניתוח
 Analysis Options	אפשרויות ניתוח
@@ -127,6 +142,7 @@ Apply conflict resolution	החל פתרון התנגשות
 Apply Differences	החל הבדלים
 Apply Enum	החל Enum
 Apply Filter	החל סינון
+Apply Filter To Panel	החל סינון על החלונית
 Apply From Other Function	החל מפונקציה אחרת
 Apply Function Data Types	החל סוגי נתונים של פונקציות
 Apply Function Names	החל שמות פונקציות
@@ -144,10 +160,15 @@ Archive a Ghidra Project	העבר פרויקט Ghidra לארכיון
 Archive Current Project	העבר את הפרויקט הנוכחי לארכיון
 Archive File	קובץ ארכיון
 Array	מערך
+Array Display Options	אפשרויות תצוגת מערכים
+Array Index Format	תבנית אינדקס מערך
+Array Options	אפשרויות מערך
+Array Values Style	סגנון ערכי מערך
 Arrays	מערכים
 Artificial	מלאכותי
 As New Format	כתבנית חדשה
 ASCII Strings	מחרוזות ASCII
+Ask To Reposition Program	שאל לפני מיקום מחדש של התוכנית
 Assemble	הרכב (Assemble)
 Assign Key Binding	הקצה קיצור מקשים
 Assign Script Key Binding	הקצה קיצור מקשים לסקריפט
@@ -160,21 +181,31 @@ Author	מחבר
 Auto Analysis	ניתוח אוטומטי
 Auto Analyze	ניתוח אוטומטי
 Auto Analyze '{name}'	נתח אוטומטית את '{name}'
+Auto Comments	הערות אוטומטיות
 Auto Create Structure	צור מבנה אוטומטית
 Auto Label	תווית אוטומטית
 Auto Override	דריסה אוטומטית
 Auto Rename	שינוי שם אוטומטי
+Auto Reposition If Not Moved	מקם מחדש אוטומטית אם לא הוזז
+Auto Restrict Search on Selection	הגבל חיפוש לבחירה אוטומטית
 Automatic Version Tracking	מעקב גרסאות אוטומטי
+Automatically install GhidraDev	התקן GhidraDev אוטומטית
+Automatically Save Tools	שמור כלים אוטומטית
 Automatically Update Details	עדכן פרטים אוטומטית
 Available Registers	אוגרים זמינים
 Available Tools	כלים זמינים
 Back	אחורה
 Back Refs	הפניות אחורה
 Back...	אחורה...
+Background Color	צבע רקע
+Background Style	סגנון רקע
 Backward Operator Slice	פריסת אופרטור אחורה
 Backward Slice	פריסה אחורה (Slice)
+Bad Reference Address Color	צבע כתובת הפניה שגויה
+Bad Reference Address Style	סגנון כתובת הפניה שגויה
 Base Address	כתובת בסיס
 Base Datatype	סוג נתונים בסיסי
+BASE FONT	גופן בסיס
 Base Image Address	כתובת בסיס של התמונה
 Base Library	ספריית בסיס
 Base Space Name	שם מרחב בסיס
@@ -203,7 +234,12 @@ Bookmark Filter	סינון סימניות
 Bookmark Top of Each Selection	סמן את תחילת כל בחירה
 Bookmark Types	סוגי סימניות
 Bookmarks	סימניות
+Bookmarks - (0 bookmarks)	סימניות - (0 סימניות)
 Both	שניהם
+Brace format for function blocks	עיצוב סוגריים לבלוקי פונקציה
+Brace format for if/else blocks	עיצוב סוגריים לבלוקי if/else
+Brace format for loop blocks	עיצוב סוגריים לבלוקי לולאה
+Brace format for switch blocks	עיצוב סוגריים לבלוקי switch
 Breakpoints	נקודות עצירה
 Browse	עיון
 Browse Existing Category Paths	עיין בנתיבי קטגוריות קיימים
@@ -216,16 +252,21 @@ Bundle Type	סוג חבילה
 by Address	לפי כתובת
 By Method	לפי שיטה
 by Name	לפי שם
+Byte Group Size	גודל קבוצת בתים
 Byte Offset	היסט בבתים
 Byte Selection	בחירת בתים
 Byte Sequence	רצף בתים
+Byte Source	מקור הבתים
 Byte Value	ערך בית
 Byte Viewer	מציג בתים
 Byte Viewer Options	אפשרויות מציג הבתים
 Bytes	בתים
+Bytes Color	צבע בתים
 Bytes do not form a legal data item.	הבתים אינם יוצרים פריט נתונים חוקי.
 Bytes do not form a legal instruction.	הבתים אינם יוצרים פקודה חוקית.
+Bytes Field	שדה בתים
 Bytes Per Line	בתים בשורה
+Bytes Style	סגנון בתים
 Calculate Layout Locations	חשב מיקומי פריסה
 Call Convention ID	מזהה מוסכמת קריאה
 Call Count	מספר קריאות
@@ -258,6 +299,7 @@ Change Time	זמן שינוי
 Changes the order of search for plugins	משנה את סדר החיפוש של תוספים
 Changes: Unsaved	שינויים: לא נשמרו
 Character encoding for translating strings to bytes	קידוד תווים להמרת מחרוזות לבתים
+Character Limit	מגבלת תווים
 Charset	קידוד תווים
 Check All	סמן הכל
 Check In	הכנס (Check In)
@@ -297,6 +339,7 @@ Choose the data type you wish to use.	בחר את סוג הנתונים שברצ
 Choose the replacement data type	בחר סוג נתונים חלופי
 Choose Theme File	בחר קובץ ערכת נושא
 Choose Type to Compare	בחר סוג להשוואה
+Chunk size	גודל מקטע
 Class Name	שם מחלקה
 Classes	מחלקות
 Clean selected bundle build cache(s)	נקה מטמון בנייה של החבילות הנבחרות
@@ -365,6 +408,7 @@ Close Tool	סגור כלי
 Close View	סגור תצוגה
 Close Window	סגור חלון
 Close Window?	לסגור את החלון?
+Close {0}	סגור {0}
 Closes a data type archive and removes it from the tool (does not affect program file associations).	סוגר ארכיון סוגי נתונים ומסיר אותו מהכלי (לא משפיע על שיוכי קובצי התוכנית).
 Code	קוד
 Code Flow	זרימת קוד
@@ -381,16 +425,39 @@ Collapse All Data In Selection	כווץ את כל הנתונים בבחירה
 Collapse All Data Types for Program and Archives	כווץ את כל סוגי הנתונים של התוכנית והארכיונים
 Collapse All Nodes	כווץ את כל הצמתים
 Collapse Tree	כווץ עץ
+Collapsed Code Color	צבע קוד מכווץ
+Collapsed Code Style	סגנון קוד מכווץ
 Collect Garbage	אסוף זבל (GC)
 Color	צבע
+Color Default	צבע ברירת מחדל
 Color Editor	עורך צבעים
+Color for Comments	צבע להערות
+Color for Constants	צבע לקבועים
+Color for Current Variable Highlight	צבע להדגשת המשתנה הנוכחי
+Color for Globals	צבע למשתנים גלובליים
+Color for Highlighting Find Matches	צבע להדגשת תוצאות חיפוש
+Color for Keywords	צבע למילות מפתח
+Color for Middle Mouse	צבע ללחצן האמצעי בעכבר
+Color for Parameters	צבע לפרמטרים
+Color for Special	צבע למיוחדים
+Color for Types	צבע לסוגים
+Color for Variables	צבע למשתנים
 Color Name	שם צבע
 Colors	צבעים
+Column Filter: Create Column Filter	סינון עמודה: צור סינון עמודה
 Column Settings	הגדרות עמודה
 Comment	הערה
 Comment History	היסטוריית הערות
+Comment line indent level	רמת הזחה של שורת הערה
+Comment style	סגנון הערות
 Comment Type	סוג הערה
 Comment Window	חלון הערות
+Comment, Automatic Color	צבע הערה אוטומטית
+Comment, Automatic Style	סגנון הערה אוטומטית
+Comment, Referenced Repeatable Color	צבע הערה חוזרת מוזכרת
+Comment, Referenced Repeatable Style	סגנון הערה חוזרת מוזכרת
+Comment, Repeatable Color	צבע הערה חוזרת
+Comment, Repeatable Style	סגנון הערה חוזרת
 Comments	הערות
 Commit all return/parameter details	קבע את כל פרטי ערך ההחזרה והפרמטרים
 Commit Changes To Archive	שמור שינויים בארכיון
@@ -436,6 +503,8 @@ Connect Tools	חבר כלים
 Connection Status	מצב חיבור
 Connections	חיבורים
 Console	מסוף
+Constant Color	צבע קבוע
+Constant Style	סגנון קבוע
 Construct searches using selected instructions	בנה חיפושים מהפקודות הנבחרות
 Contains	מכיל
 Contents	תוכן העניינים
@@ -466,7 +535,9 @@ Copy GhidraURL	העתק GhidraURL
 Copy Into Program	העתק לתוכנית
 Copy Special	העתקה מיוחדת
 Copy Special Again	חזור על העתקה מיוחדת
+Copy Strings Without Quotes	העתק מחרוזות בלי מרכאות
 Correlator Options	אפשרויות מתאם
+Count	כמות
 Counting Files	סופר קבצים
 Create	צור
 Create a program selection from the selected rows	צור בחירה בתוכנית מהשורות הנבחרות
@@ -536,15 +607,20 @@ Current Address	כתובת נוכחית
 Current Conflict	ההתנגשות הנוכחית
 Current Flow	זרימה נוכחית
 Current Function	פונקציה נוכחית
+Current Instruction	הפקודה הנוכחית
 Current location	מיקום נוכחי
 Current Projects	פרויקטים נוכחיים
 Current selection	בחירה נוכחית
 Current view	תצוגה נוכחית
 Cursor	סמן
+Cursor Color - Focused	צבע סמן - בפוקוס
+Cursor Color - Unfocused	צבע סמן - ללא פוקוס
+Cursor Text Highlight	הדגשת טקסט תחת הסמן
 Custom	מותאם אישית
 Cut	גזור
 Cycle	מחזור
 Data	נתונים
+Data Color	צבע נתונים
 Data Field Name	שם שדה נתונים
 Data Flow Graph	גרף זרימת נתונים
 Data From	נתונים מ
@@ -568,6 +644,7 @@ Data Type Settings	הגדרות סוג נתונים
 Data Types	סוגי נתונים
 Data Types Filter	סינון סוגי נתונים
 Data Types Table	טבלת סוגי נתונים
+Data Types Table Snapshot	תמונת מצב של טבלת סוגי הנתונים
 Data Window	חלון נתונים
 Data-type	סוג נתונים
 Database	מסד נתונים
@@ -597,13 +674,21 @@ Decompiled Text	טקסט מפוענח
 Decompiler	דה-קומפיילר
 Decompiler Find	חיפוש בדה-קומפיילר
 Decompiler Parameter ID	זיהוי פרמטרים בדה-קומפיילר
+Decompiler Popups	חלוניות קופצות בדה-קומפיילר
+Decompiler Reference Viewer	מציג הפניות בדה-קומפיילר
 Decompiler Search	חיפוש בדה-קומפיילר
 Decompiler Switch Analysis	ניתוח Switch בדה-קומפיילר
+Decompiler Timeout (seconds)	זמן קצוב לדה-קומפיילר (שניות)
 Decompiling	מבצע דה-קומפילציה
+Decompiling function	מבצע דה-קומפילציה לפונקציה
 Def-use	הגדרה-שימוש (Def-use)
 Default	ברירת מחדל
+Default Charset	קידוד תווים ברירת מחדל
 Default References	הפניות ברירת מחדל
 Default Settings	הגדרות ברירת מחדל
+Default String Model Filename	קובץ מודל מחרוזות ברירת מחדל
+Default Tool Launch Mode	מצב הפעלת כלי ברירת מחדל
+Default Translation Service Name	שירות תרגום ברירת מחדל
 Define Array	הגדר מערך
 Defined Data	נתונים מוגדרים
 Defined Data Mnemonics	מנמוניקות של נתונים מוגדרים
@@ -621,6 +706,7 @@ Delete Bookmark	מחק סימנייה
 Delete Bookmarks	מחק סימניות
 Delete entry	מחק רשומה
 Delete External Program	מחק תוכנית חיצונית
+Delete External Program Name	מחק שם תוכנית חיצונית
 Delete Files	מחק קבצים
 Delete filter	מחק סינון
 Delete Function	מחק פונקציה
@@ -652,6 +738,7 @@ Delete VarArgs	מחק ארגומנטים משתנים
 Delete Version	מחק גרסה
 Deleted	נמחק
 Deletes the currently selected user configuration	מוחק את תצורת המשתמש הנבחרת
+Deletes the selected tags from the program	מוחק את התגיות הנבחרות מהתוכנית
 Delimiter	מפריד
 Demangle Symbol	פענח שם סמל (Demangle)
 Depth limit	מגבלת עומק
@@ -669,18 +756,22 @@ Details	פרטים
 Determines if search text is case sensitive	קובע אם טקסט החיפוש תלוי רישיות
 Determines program differences.	קובע הבדלים בין תוכניות.
 Developer	מפתח
+Dialog Height	גובה חלון
+Dialog Width	רוחב חלון
 Diamond	מעוין
 Did you know	הידעת
 Diff	השוואה (Diff)
 Dimension	ממד
 Directory	תיקייה
 Directory Location	מיקום תיקייה
+Directory Transform	המרת תיקייה
 Directory where your project files reside.	התיקייה שבה נמצאים קובצי הפרויקט.
 Disable	השבת
 Disable All Breakpoints	השבת את כל נקודות העצירה
 Disable Breakpoint	השבת נקודת עצירה
 Disable Breakpoints	השבת נקודות עצירה
 Disable Field	השבת שדה
+Disable printing of type casts	בטל הדפסת המרות סוג
 Disable selected bundle(s)	השבת את החבילות הנבחרות
 Disable Type Casts	השבת המרות סוג
 Disable Type Casts Display	השבת הצגת המרות סוג
@@ -718,6 +809,7 @@ Do not show this message again.	אל תציג הודעה זו שוב.
 Do Not Track	אל תעקוב
 Dock Satellite View	עגן תצוגת לוויין
 Docked Satellite Position	מיקום לוויין מעוגן
+Docking Windows On Top	חלונות מעוגנים תמיד למעלה
 Does not clear automatic comments.	לא מנקה הערות אוטומטיות.
 Dominance	שליטה (Dominance)
 Don't Care	לא משנה
@@ -726,9 +818,14 @@ Don't Save	אל תשמור
 Done	סיום
 Down	למטה
 Drag/Drop Data Types	גרור/שחרר סוגי נתונים
+Dummy Style	סגנון דמה
 DWARF External Debug Config	הגדרות קובצי ניפוי חיצוניים (DWARF)
 Dynamic	דינמי
+Dynamic Data Type Discovery	גילוי סוגי נתונים דינמי
 Dynamic labels	תוויות דינמיות
+Eclipse Installation Directory	תיקיית ההתקנה של Eclipse
+Eclipse Integration	שילוב עם Eclipse
+Eclipse Workspace Directory (optional)	תיקיית סביבת העבודה של Eclipse (אופציונלי)
 Edit	עריכה
 Edit Archive Paths	ערוך נתיבי ארכיונים
 Edit Bitfield	ערוך שדה ביטים
@@ -772,7 +869,9 @@ Edit with basic editor	ערוך בעורך בסיסי
 Edit with Eclipse	ערוך ב-Eclipse
 Edit with VSCode	ערוך ב-VSCode
 Editor messages appear here.	הודעות העורך יופיעו כאן.
+Editors	עורכים
 Elements	אלמנטים
+Eliminate unreachable code	הסר קוד שאינו נגיש
 Ellipse	אליפסה
 Embedded Media	מדיה מוטמעת
 Emulating	מדמה (אמולציה)
@@ -784,6 +883,7 @@ Enable Edits	אפשר עריכה
 Enable Field	הפעל שדה
 Enable Multi-Term Filtering	אפשר סינון מרובה מונחים
 Enable selected bundle(s)	הפעל את החבילות הנבחרות
+Enable simple GZF/GZT/GDT unpack	אפשר פריסה פשוטה של GZF/GZT/GDT
 Enable Word Wrapping	אפשר גלישת שורות
 Enabled	מופעל
 Enabled Data Types	סוגי נתונים מופעלים
@@ -792,6 +892,8 @@ Encoding	קידוד
 End	סוף
 End Address	כתובת סיום
 End of Line Comments	הערות סוף שורה
+End X	X סוף
+End Y	Y סוף
 Endian	סדר בתים
 Endianess	סדר בתים (Endianness)
 Ending Address	כתובת סיום
@@ -814,11 +916,22 @@ Entire Highlight	כל ההדגשה
 Entire program	כל התוכנית
 Entire Selection	כל הבחירה
 Entropy	אנטרופיה
+Entropy Range 1	טווח אנטרופיה 1
+Entropy Range 2	טווח אנטרופיה 2
+Entropy Range 3	טווח אנטרופיה 3
+Entropy Range 4	טווח אנטרופיה 4
+Entropy Range 5	טווח אנטרופיה 5
+Entry Count	מספר רשומות
 Entry Point	נקודת כניסה
+Entry Point Color	צבע נקודת כניסה
+Entry Point Style	סגנון נקודת כניסה
 Enum	Enum
 Enum From Selection	Enum מהבחירה
 Enum Values	ערכי Enum
 EOL Comment	הערת סוף שורה
+EOL Comment Color	צבע הערת סוף שורה
+EOL Comment Style	סגנון הערת סוף שורה
+EOL Comments Field	שדה הערות סוף שורה
 Equate	קבוע (Equate)
 Equate Reference	הפניית קבוע
 Equate References	הפניות קבועים
@@ -881,9 +994,15 @@ External	חיצוני
 External Entries	כניסות חיצוניות
 External Location	מיקום חיצוני
 External Name ID	מזהה שם חיצוני
+External Navigation	ניווט חיצוני
 External Program	תוכנית חיצונית
 External Programs	תוכניות חיצוניות
+External Reference Color	צבע הפניה חיצונית
 External Reference Data	נתוני הפניה חיצונית
+External Reference, Resolved Color	צבע הפניה חיצונית שנפתרה
+External Reference, Resolved Style	סגנון הפניה חיצונית שנפתרה
+External Reference, Unresolved Color	צבע הפניה חיצונית שלא נפתרה
+External Reference, Unresolved Style	סגנון הפניה חיצונית שלא נפתרה
 External References	הפניות חיצוניות
 Extract and Import	חלץ וייבא
 Extracting directory	מחלץ תיקייה
@@ -894,12 +1013,16 @@ Fallthrough Address	כתובת המשך רציף
 False	שקר
 Favorite	מועדף
 Field Name	שם שדה
+Field Name Color	צבע שם שדה
+Field Name Style	סגנון שם שדה
 Fields	שדות
 File	קובץ
 File Bytes	בתי קובץ
 File Chooser	בוחר קבצים
 File Chooser Options	אפשרויות בוחר הקבצים
+File Import	ייבוא קבצים
 File is closed	הקובץ סגור
+File Name	שם קובץ
 File Offset	היסט בקובץ
 Filename	שם קובץ
 Files to Import	קבצים לייבוא
@@ -916,6 +1039,7 @@ Filter Value	ערך סינון
 Filters	מסננים
 Filters Dialog	חלון מסננים
 Filters table so only specified types are displayed	מסנן את הטבלה כך שיוצגו רק הסוגים שצוינו
+Filters the contents of the table on symbol names that start with the given pattern	מסנן את הטבלה לפי שמות סמלים שמתחילים בתבנית שהוזנה
 Filters the trees to only show function call references	מסנן את העצים כך שיוצגו רק הפניות של קריאות לפונקציות
 Find	מצא
 Find All	מצא הכל
@@ -933,12 +1057,31 @@ Find Uses of Field	מצא שימושים בשדה
 Finish	סיום
 Fix	תקן
 Fixed Length	אורך קבוע
+Flag Function Entry	סמן כניסה לפונקציה
+Flag Function Exits	סמן יציאות מפונקציה
+Flag Jumps and Returns	סמן קפיצות וחזרות
+Flag Subroutine Entry	סמן כניסה לתת-שגרה
 Flags	דגלים
 Flat Dark Theme	ערכת נושא כהה שטוחה
 Flat Light Theme	ערכת נושא בהירה שטוחה
+Flow Arrow, Active Color	צבע חץ זרימה פעיל
+Flow Arrow, Active Style	סגנון חץ זרימה פעיל
+Flow Arrow, Not Active Color	צבע חץ זרימה לא פעיל
+Flow Arrow, Not Active Style	סגנון חץ זרימה לא פעיל
+Flow Arrow, Selected Color	צבע חץ זרימה נבחר
+Flow Arrow, Selected Style	סגנון חץ זרימה נבחר
 Flow Override	דריסת זרימה
 Folder Path	נתיב תיקייה
+Follow computed call	עקוב אחר קריאה מחושבת
+Follow computed jump	עקוב אחר קפיצה מחושבת
+Follow conditional call	עקוב אחר קריאה מותנית
+Follow conditional jump	עקוב אחר קפיצה מותנית
+Follow Indirection	עקוב אחר עקיפות
 Follow Link	עקוב אחר קישור
+Follow pointers	עקוב אחר מצביעים
+Follow Read or Indirect Pointer References	עקוב אחר הפניות קריאה או מצביעים עקיפים
+Follow unconditional call	עקוב אחר קריאה לא מותנית
+Follow unconditional jump	עקוב אחר קפיצה לא מותנית
 Font	גופן
 Font Editor	עורך גופנים
 Fonts	גופנים
@@ -966,32 +1109,60 @@ From	מ
 From Focused Edges	מהקשתות הממוקדות
 From Highlight	מההדגשה
 From Hovered Edges	מהקשתות שמתחת לעכבר
+From Location	ממיקום
+From Preview	מתצוגה מקדימה
 FrontEnd	חלון הפרויקט
 Fully Expand Selected Nodes	הרחב לגמרי את הצמתים הנבחרים
 Function	פונקציה
 Function Attributes	מאפייני פונקציה
+Function Auto-Parameters Color	צבע פרמטרים אוטומטיים של פונקציה
+Function Auto-Parameters Style	סגנון פרמטרים אוטומטיים של פונקציה
 Function Body	גוף הפונקציה
 Function Call Graph	גרף קריאות פונקציות
 Function Call Trees	עצי קריאות פונקציה
+Function Call-Fixup Color	צבע תיקון קריאה
+Function Call-Fixup Style	סגנון תיקון קריאה
+Function Color	צבע פונקציה
 Function Data	נתוני פונקציה
 Function Definition	הגדרת פונקציה
 Function Graph	גרף פונקציה
 Function ID	זיהוי פונקציות (Function ID)
 Function Local Variable	משתנה מקומי של פונקציה
 Function Name	שם פונקציה
+Function Name Color	צבע שם פונקציה
+Function Name Style	סגנון שם פונקציה
 Function nodes will include the function namespace when selected	צמתי פונקציות יכללו את מרחב השמות של הפונקציה כשהאפשרות נבחרת
 Function Overlap	חפיפת פונקציות
 Function overlaps another.	הפונקציה חופפת לפונקציה אחרת.
 Function Parameter	פרמטר פונקציה
+Function Parameter, Custom Storage Color	צבע פרמטר עם אחסון מותאם
+Function Parameter, Custom Storage Style	סגנון פרמטר עם אחסון מותאם
+Function Parameter, Dynamic Storage Color	צבע פרמטר עם אחסון דינמי
+Function Parameter, Dynamic Storage Style	סגנון פרמטר עם אחסון דינמי
 Function Parameters	פרמטרים של הפונקציה
+Function Parameters Color	צבע פרמטרים של פונקציה
+Function Parameters Style	סגנון פרמטרים של פונקציה
+Function Pointers	מצביעי פונקציות
 Function Reachability	נגישות פונקציות
 Function Remove	הסרת פונקציה
+Function Repeatable Comment Style	סגנון הערה חוזרת של פונקציה
 Function Return	ערך החזרה של פונקציה
+Function Return Type Color	צבע סוג ערך החזרה
+Function Return Type Style	סגנון סוג ערך החזרה
 Function Signature	חתימת פונקציה
 Function Signature and Data Types	חתימת פונקציה וסוגי נתונים
 Function Signature Display	תצוגת חתימת פונקציה
+Function Signature Field	שדה חתימת פונקציה
+Function Signature Style	סגנון חתימת פונקציה
+Function Size	גודל פונקציה
 Function Start Patterns	תבניות תחילת פונקציה
+Function Tag Color	צבע תגית פונקציה
+Function Tag Style	סגנון תגית פונקציה
 Function Tags	תגיות פונקציה
+Function Tags Applied Functions	פונקציות עם התגיות
+Function Tags Style	סגנון תגיות פונקציה
+Function Variable Color	צבע משתנה פונקציה
+Function Variable Style	סגנון משתנה פונקציה
 Function Variables	משתני פונקציה
 Functions	פונקציות
 Functions Table	טבלת פונקציות
@@ -1007,6 +1178,7 @@ Getting Started	צעדים ראשונים
 Ghidra API Help	עזרה ל-API של Ghidra
 Ghidra Core	ליבת Ghidra
 Ghidra Help	עזרה של Ghidra
+Ghidra Program	תוכנית Ghidra
 Ghidra Server	שרת Ghidra
 Ghidra User Agreement	הסכם המשתמש של Ghidra
 Ghidra User Log	יומן המשתמש של Ghidra
@@ -1051,6 +1223,7 @@ Go To Program	עבור לתוכנית
 Go To Source	עבור למקור
 Go to the next highlighted difference.	עבור להבדל המודגש הבא.
 Goto	עבור
+Goto Dialog Memory	זיכרון חלון 'עבור אל'
 GoTo External Location	עבור למיקום חיצוני
 Graph	גרף
 Graph AST	גרף AST
@@ -1064,8 +1237,10 @@ Graph PCode Control Flow	גרף זרימת בקרה של PCode
 Graph PCode Data Flow	גרף זרימת נתוני PCode
 Graph Program	גרף תוכנית
 Group By	קבץ לפי
+Group by Function	קבץ לפי פונקציה
 Group Selected Vertices	קבץ קודקודים נבחרים
 Group Selected Vertices - Add to Group	קבץ קודקודים נבחרים - הוסף לקבוצה
+Group Threshold	סף קיבוץ
 Grouping	קיבוץ
 GTK+ Theme	ערכת נושא GTK+‎
 Header and Footer	כותרת עליונה ותחתונה
@@ -1090,14 +1265,20 @@ Highlight Backward Operator Slice	הדגש פריסת אופרטור אחורה
 Highlight Backward Slice	הדגש פריסה אחורה
 Highlight bookmark differences.	הדגש הבדלי סימניות.
 Highlight byte differences.	הדגש הבדלי בתים.
+Highlight Color	צבע הדגשה
+Highlight Color for Current Match	צבע הדגשה להתאמה הנוכחית
 Highlight comment differences.	הדגש הבדלי הערות.
+Highlight Cursor Line	הדגש את שורת הסמן
+Highlight Cursor Line Color	צבע הדגשת שורת הסמן
 Highlight Defined Use	הדגש שימוש מוגדר
 Highlight Forward Operator Slice	הדגש פריסת אופרטור קדימה
 Highlight Forward Slice	הדגש פריסה קדימה
 Highlight function differences.	הדגש הבדלי פונקציות.
 Highlight label differences.	הדגש הבדלי תוויות.
+Highlight Match Color	צבע הדגשת התאמה
 Highlight Matches	הדגש התאמות
 Highlight matches in tool	הדגש התאמות בכלי
+Highlight Search Results	הדגש תוצאות חיפוש
 Highlight Selected	הדגש נבחרים
 Highlight Source Map Differences	הדגש הבדלי מפת מקור
 Highlight the program context register differences.	הדגש הבדלי אוגרי הקשר תוכנית.
@@ -1107,6 +1288,7 @@ Highlights the next program tab and then switches to that program	מדגיש א�
 Highlights the previous program tab and then switches to that program	מדגיש את לשונית התוכנית הקודמת ועובר אליה
 History	היסטוריה
 Home	בית
+Horizontal Scrolling	גלילה אופקית
 Host	מארח
 Icon	סמליל
 Icon Name	שם סמליל
@@ -1122,6 +1304,7 @@ Ignore Bytes As Differences	התעלם מבתים כהבדלים
 Ignore Operand Constants As Differences	התעלם מקבועי אופרנדים כהבדלים
 Ignore Operand Registers As Differences	התעלם מאוגרי אופרנדים כהבדלים
 Ignore Selection and Goto Next Difference	התעלם מהבחירה ועבור להבדל הבא
+Ignore unimplemented instructions	התעלם מפקודות שלא מומשו
 Image Base	בסיס התמונה
 Import	ייבוא
 Import Default Tools	ייבא כלי ברירת מחדל
@@ -1135,20 +1318,26 @@ Import References	הפניות מייבוא
 Import Sources	מקורות ייבוא
 Import Tool	ייבא כלי
 In Line	מוטבע
+In Tool	בכלי
 Include	כלול
 Include Alignment Nulls	כלול Null של יישור
 Include Bookmark Types	כלול סוגי סימניות
+Include bookmarks with Categories or Descriptions containing this text.	כלול סימניות שהקטגוריה או התיאור שלהן מכילים טקסט זה.
 Include Data Members in Filter	כלול איברי נתונים בסינון
 Include Defaults	כלול ברירות מחדל
 Include dynamic labels in the search (slower)	כלול תוויות דינמיות בחיפוש (איטי יותר)
+Include only table elements that match the given search text	כלול רק פריטים בטבלה שתואמים לטקסט החיפוש
 Include Operands	כלול אופרנדים
 Include Operands (except constants)	כלול אופרנדים (מלבד קבועים)
 Include OTHER overlay spaces	כלול מרחבי שכבה OTHER
 Include paths	נתיבי Include
+Include Scalar Reference Adjustment	כלול התאמת הפניה סקלרית
+Incoming	נכנס
 Incoming Calls	קריאות נכנסות
 Incoming References	הפניות נכנסות
 Index	אינדקס
 Indicates your privileges in the shared repository	מציין את ההרשאות שלך במאגר המשותף
+Infer constant pointers	הסק מצביעים קבועים
 Info	מידע
 Info Bookmarks	סימניות מידע
 Initial Value	ערך התחלתי
@@ -1163,6 +1352,7 @@ Install Extensions	התקן הרחבות
 Installed	מותקן
 Installed Processors	מעבדים מותקנים
 Instruction	פקודה
+Instruction Color	צבע פקודה
 Instruction Flow	זרימת פקודה
 Instruction Info	מידע על הפקודה
 Instruction Mnemonics	מנמוניקות של פקודות
@@ -1170,6 +1360,8 @@ Instruction Operands	אופרנדים של פקודות
 Instruction Pattern Search	חיפוש תבניות פקודות
 Instructions	פקודות
 Instructions From	פקודות מ
+Integer format	תבנית מספר שלם
+Integer Format	תבנית מספר שלם
 Interpreter	מפרש
 Interprets search and replace text as regular expressions	מפרש את טקסט החיפוש וההחלפה כביטויים רגולריים
 Interrupt	עצור
@@ -1197,16 +1389,29 @@ Jump To XRef	קפוץ להפניה צולבת
 Jython	Jython
 Keep	השאר
 Keep File Checked Out	השאר את הקובץ מוצא
+Key	מפתח
 Key Binding	קיצור מקשים
+Key Bindings	קיצורי מקשים
 Keybinding for action in tool	קיצור מקשים לפעולה בכלי
 Keybinding for script	קיצור מקשים לסקריפט
 Kill	הרוג תהליך
 Kind	סוג
 Known Users	משתמשים מוכרים
 Label	תווית
+Label Display	תצוגת תוויות
 Label History	היסטוריית תוויות
 Label History Search	חיפוש בהיסטוריית תוויות
+Label Style	סגנון תווית
 Labels	תוויות
+Labels Field	שדה תוויות
+Labels, Local Color	צבע תוויות מקומיות
+Labels, Local Style	סגנון תוויות מקומיות
+Labels, Non-primary Color	צבע תוויות משניות
+Labels, Non-primary Style	סגנון תוויות משניות
+Labels, Primary Color	צבע תוויות ראשיות
+Labels, Primary Style	סגנון תוויות ראשיות
+Labels, Unreferenced Color	צבע תוויות ללא הפניות
+Labels, Unreferenced Style	סגנון תוויות ללא הפניות
 Language	שפה
 Language Name	שם שפה
 Last Change Time	זמן שינוי אחרון
@@ -1230,9 +1435,15 @@ Limit To Selection	הגבל לבחירה
 Limited Flows From	זרימות מוגבלות מ
 Limited Flows To	זרימות מוגבלות אל
 Limits the Diff to the selection.	מגביל את ההשוואה לבחירה.
+Lines After Basic Blocks	שורות אחרי בלוקים בסיסיים
+Lines Before Functions	שורות לפני פונקציות
+Lines Before Labels	שורות לפני תוויות
+Lines Before Plates	שורות לפני כותרות
 Listing	רישום
 Listing Display	תצוגת הרישום
+Listing Fields	שדות הרישום
 Listing Merge Tool	כלי מיזוג רישום
+Listing Popups	חלוניות קופצות ברישום
 Little	Little Endian
 Load	טען
 Load column data	טען נתוני עמודה
@@ -1275,6 +1486,7 @@ Manage Properties	נהל מאפיינים
 Manage Script Directories	נהל תיקיות סקריפטים
 Manage Tags	נהל תגיות
 Manual	מדריך
+Manual Viewer Options	אפשרויות מציג המדריכים
 Map modules	מפה מודולים
 Map regions	מפה אזורים
 Map sections	מפה מקטעים
@@ -1283,6 +1495,9 @@ Mappings	מיפויים
 Mark and Select	סמן ובחר
 Mark Selection Start	סמן תחילת בחירה
 Mark this location as an external entry point.	סמן מיקום זה כנקודת כניסה חיצונית.
+Markup Inferred Variable References	סמן הפניות משתנים מוסקות
+Markup Register Variable References	סמן הפניות משתני אוגר
+Markup Stack Variable References	סמן הפניות משתני מחסנית
 Markup Status	מצב סימון
 Markup Type	סוג סימון
 Match Functions	התאם פונקציות
@@ -1292,14 +1507,28 @@ Match Table Filters	מסנני טבלת התאמות
 Match Type	סוג התאמה
 Matches Exactly	תואם במדויק
 Max	מקסימום
+Max Entries per Jumptable	מקסימום רשומות לטבלת קפיצות
+Max Goto Entries	מקסימום רשומות 'עבור אל'
+Max Instructions per Function	מקסימום פקודות לפונקציה
 Max Matches Per Function	מקסימום התאמות לפונקציה
 Max Memory	זיכרון מקסימלי
+Max Navigation History Size	גודל מקסימלי להיסטוריית ניווט
 Max Results	מקסימום תוצאות
+Max Template Depth	עומק תבנית מקסימלי
+Max Template Length	אורך תבנית מקסימלי
 Max Threads	מקסימום תהליכונים
 Maximum	מקסימום
+Maximum characters in a code line	מספר תווים מקסימלי בשורת קוד
+Maximum Length of String in Default Labels	אורך מחרוזת מקסימלי בתוויות ברירת מחדל
+Maximum Lines	מקסימום שורות
+Maximum Lines To Display	מקסימום שורות להצגה
+Maximum Number of Labels to Display	מספר תוויות מקסימלי להצגה
+Maximum Number of Source Map Entries to Display	מספר רשומות מפת מקור מקסימלי להצגה
+Maximum Number of XREFs to Display	מספר הפניות צולבות מקסימלי להצגה
 Maximum Offset	היסט מקסימלי
 Memory	זיכרון
 Memory Block	בלוק זיכרון
+Memory Block Start Style	סגנון תחילת בלוק זיכרון
 Memory Block Types	סוגי בלוקי זיכרון
 Memory Blocks	בלוקי זיכרון
 Memory Map	מפת זיכרון
@@ -1318,15 +1547,25 @@ Merge with Parent	מזג עם ההורה
 Metal Theme	ערכת נושא Metal
 Min	מינימום
 Min Length	אורך מינימלי
+Min Template Length	אורך תבנית מינימלי
 Minimum	מינימום
 Minimum Length	אורך מינימלי
+Minimum Length of Address Range in Range Table	אורך מינימלי של טווח כתובות בטבלת טווחים
 Minimum Offset	היסט מינימלי
 Minimum String Length	אורך מחרוזת מינימלי
 Mirror Filesystem	שקף מערכת קבצים
 Misc	שונות
 Miscellaneous	שונות
 Mnemonic	מנמוניק
+Mnemonic Color	צבע מנמוניק
+Mnemonic Field	שדה מנמוניק
+Mnemonic Style	סגנון מנמוניק
+Mnemonic, Override Color	צבע מנמוניק דרוס
+Mnemonic, Override Style	סגנון מנמוניק דרוס
+Mnemonic, Unimplemented  Color	צבע מנמוניק שלא מומש
+Mnemonic, Unimplemented  Style	סגנון מנמוניק שלא מומש
 Model	מודל
+Modified	שונה
 Modify Instruction Flow	שנה זרימת פקודה
 Modify Instruction Flow on Selection	שנה זרימת פקודות בבחירה
 Modify Instruction Length	שנה אורך פקודה
@@ -1338,7 +1577,9 @@ More	עוד
 More Filters	מסננים נוספים
 More Filters - no active filters	מסננים נוספים - אין מסננים פעילים
 Motif Theme	ערכת נושא Motif
+Mouse	עכבר
 Mouse Binding	קיצור עכבר
+Mouse Button To Activate	לחצן עכבר להפעלה
 Move a block to another address	הזז בלוק לכתובת אחרת
 Move Block	הזז בלוק
 Move Library Down	הזז ספרייה למטה
@@ -1361,9 +1602,12 @@ Namespace	מרחב שמות
 Namespace Chooser	בוחר מרחבי שמות
 Namespace Options	אפשרויות מרחב שמות
 Namespaces	מרחבי שמות
+NaN operations	פעולות NaN
+Navigate on Incoming Location Changes	נווט בשינויי מיקום נכנסים
 Navigate on Outgoing	נווט ביוצאות
 Navigation	ניווט
 Navigation History	היסטוריית ניווט
+Navigation Markers	סמני ניווט
 New	חדש
 New Block	בלוק חדש
 New Category	קטגוריה חדשה
@@ -1420,6 +1664,7 @@ Note	הערה
 Note Bookmarks	סימניות הערה
 Number	מספר
 Number of bytes to skip between found addresses in a table.	מספר הבתים לדילוג בין כתובות שנמצאו בטבלה.
+Number of characters per indent level	מספר תווים לכל רמת הזחה
 Number Of Components	מספר רכיבים
 Object has been deleted.	האובייקט נמחק.
 Object is read-only.	האובייקט לקריאה בלבד.
@@ -1430,6 +1675,7 @@ Obsolete	מיושן
 Octagon	מתומן
 Octal	אוקטלי
 Octal, Unsigned	אוקטלי, ללא סימן
+Offcut Ref Count	מספר הפניות לאמצע (Offcut)
 Offset	היסט
 Offset from the beginning of the selected table(s)	היסט מתחילת הטבלאות הנבחרות
 OK	אישור
@@ -1473,6 +1719,8 @@ Opens the options editor for adding paths that will be searched when attempting 
 Operand	אופרנד
 Operand Index	אינדקס אופרנד
 Operands	אופרנדים
+Operands Field	שדה אופרנדים
+Operands Style	סגנון אופרנדים
 Options	אפשרויות
 Options Dialog	חלון אפשרויות
 Options for '{name}'	אפשרויות עבור '{name}'
@@ -1483,6 +1731,7 @@ Original Bytes	בתים מקוריים
 Original File	קובץ מקורי
 Original Label	תווית מקורית
 Other Print Options	אפשרויות הדפסה נוספות
+Outgoing	יוצא
 Outgoing Calls	קריאות יוצאות
 Outgoing References	הפניות יוצאות
 Output File	קובץ פלט
@@ -1490,9 +1739,19 @@ Outputs	פלטים
 Overlapped Code	קוד חופף
 Overlay	שכבה (Overlay)
 Overlay Address	כתובת שכבה (Overlay)
+Overlayed Space	מרחב בשכבה
 Override default fallthrough address	דרוס כתובת המשך ברירת מחדל
 Override Signature	דרוס חתימה
+Overview	סקירה
 Overwrite existing equates	דרוס קבועים קיימים
+P-code Address Space Color	צבע מרחב כתובות P-code
+P-code Address Space Style	סגנון מרחב כתובות P-code
+P-code Line Label Color	צבע תווית שורת P-code
+P-code Line Label Style	סגנון תווית שורת P-code
+P-code Raw Varnode Color	צבע Varnode גולמי ב-P-code
+P-code Raw Varnode Style	סגנון Varnode גולמי ב-P-code
+P-code Userop Color	צבע Userop ב-P-code
+P-code Userop Style	סגנון Userop ב-P-code
 Pack	דחוס
 Page Numbers	מספרי עמודים
 Page Setup	הגדרת עמוד
@@ -1525,6 +1784,8 @@ Path	נתיב
 Pattern Evaluation	הערכת תבניות
 Pause	השהה
 PCode	PCode
+Pcode Field	שדה Pcode
+PCode Style	סגנון PCode
 PDB Location	מיקום PDB
 PDB Name	שם PDB
 PDB Search	חיפוש PDB
@@ -1537,7 +1798,10 @@ Pin Symbol	הצמד סמל
 Pinned	מוצמד
 Pins the symbol(s) to the address so that it is unaffected by memory block moves or image base changes.	מצמיד את הסמלים לכתובת כך שלא יושפעו מהזזת בלוקי זיכרון או משינוי בסיס התמונה.
 Plate Comment	הערת כותרת
+Plate Comment Color	צבע הערת כותרת
+Plate Comment Style	סגנון הערת כותרת
 Plate Comments	הערות כותרת
+Plate Comments Field	שדה הערות כותרת
 Platform	פלטפורמה
 Please Choose a Color	נא לבחור צבע
 Please Choose Output File	נא לבחור קובץ פלט
@@ -1559,11 +1823,22 @@ Possible matches	התאמות אפשריות
 Post Comment	הערה אחרי
 Post Comments	הערות אחרי
 Post-Comment	הערה אחרי
+Post-Comment Color	צבע הערה אחרי
+Post-Comment Style	סגנון הערה אחרי
+Post-comments Field	שדה הערות אחרי
 Pre Comment	הערה לפני
 Pre-Comment	הערה לפני
+Pre-Comment Color	צבע הערה לפני
+Pre-Comment Style	סגנון הערה לפני
 Pre-Comments	הערות לפני
+Pre-comments Field	שדה הערות לפני
+Pre-populate Memory Search	מלא מראש את חיפוש הזיכרון
 Precondition Checklist	רשימת בדיקות מקדימות
+Prefer Current Address Space	העדף את מרחב הכתובות הנוכחי
+Prepend Address to References	הוסף כתובת לפני הפניות
+Prepend Semicolon	הוסף נקודה-פסיק בהתחלה
 Press 'M' to toggle Hex or Decimal Mode	לחץ 'M' למעבר בין הקסדצימלי לעשרוני
+Press to show the primary application window	לחץ להצגת החלון הראשי של התוכנה
 Preview	תצוגה מקדימה
 Preview Window	חלון תצוגה מקדימה
 Previous	הקודם
@@ -1580,13 +1855,19 @@ Previous Location in History	המיקום הקודם בהיסטוריה
 Previous Selected Range	הטווח הנבחר הקודם
 Primary	ראשי
 Print	הדפס
+Print 'NULL' for null pointers	הדפס 'NULL' למצביעים ריקים
+Print calling convention name	הדפס את שם מוסכמת הקריאה
 Print Options	אפשרויות הדפסה
 Print Range	טווח הדפסה
 Processor	מעבד
 Processor Manual	מדריך המעבד
+Processor Manuals	מדריכי מעבדים
 Processor Options	אפשרויות מעבד
 Program	תוכנית
 Program Architecture	ארכיטקטורת התוכנית
+Program Cache	מטמון תוכניות
+Program Cache Size	גודל מטמון תוכניות
+Program Cache Time (minutes)	זמן מטמון תוכניות (דקות)
 Program Changes	שינויים בתוכנית
 Program Context	הקשר תוכנית
 Program Database	מסד נתוני התוכנית
@@ -1599,6 +1880,7 @@ Program Selection	בחירת תוכנית
 Program Text	טקסט התוכנית
 Program Tree	עץ התוכנית
 Program Trees	עצי תוכנית
+Program Types Filter	סינון סוגי תוכנית
 Project	פרויקט
 Project Data Table	טבלת נתוני הפרויקט
 Project Directory	תיקיית הפרויקט
@@ -1622,7 +1904,14 @@ Question	שאלה
 Quick Edit Field	עריכה מהירה של שדה
 Quick Launch	הפעלה מהירה
 Range	טווח
+Range 1 color	צבע טווח 1
+Range 2 color	צבע טווח 2
+Range 3 color	צבע טווח 3
+Range 4 color	צבע טווח 4
+Range 5 color	צבע טווח 5
+Range Navigation	ניווט בטווחים
 Ranges	טווחים
+Ranges From Selection Limit	מגבלת טווחים מבחירה
 Raw Bytes	בתים גולמיים
 Re-create Function	צור פונקציה מחדש
 Re-decompile and update the display	בצע דה-קומפילציה מחדש ועדכן את התצוגה
@@ -1634,7 +1923,9 @@ Recenter Image	מרכז תמונה
 Recently Opened Archive	ארכיון שנפתח לאחרונה
 Recently Used	בשימוש לאחרונה
 Record	הקלט
+Recover -for- loops	שחזר לולאות for
 Recover Structure Variable	שחזר משתנה מבנה
+Recovery	שחזור
 Rectangle	מלבן
 Recursively expand all selected nodes.	הרחב באופן רקורסיבי את כל הצמתים הנבחרים.
 Redo	בצע שוב
@@ -1642,11 +1933,15 @@ Redo Change	בצע שוב שינוי
 Redo last undone change made to data type archive	בצע שוב את השינוי האחרון שבוטל בארכיון סוגי הנתונים
 Redo Unavailable	אין פעולה לביצוע מחדש
 Redo {name}	בצע שוב ({name})
+Ref Addr	כתובת הפניה
+Ref Count	מספר הפניות
 Ref Data	נתוני הפניה
 Ref Type	סוג הפניה
 Ref-Type	סוג הפניה
 Reference	הפניה
+Reference Code Viewer	מציג קוד ההפניות
 Reference is invalid.	ההפניה אינה תקינה.
+Reference Search	חיפוש הפניות
 References	הפניות
 References to	הפניות אל
 Refresh	רענן
@@ -1662,10 +1957,16 @@ Refreshing	מרענן
 Region Map	מפת אזורים
 Regions	אזורים
 Register	אוגר
+Register Field	שדה אוגר
 Register Manager	מנהל אוגרים
 Register Parameters	פרמטרים באוגרים
+Register Style	סגנון אוגר
+Register Transition Style	סגנון מעבר אוגר
 Register Value	ערך אוגר
+Register Values	ערכי אוגרים
 Registers	אוגרים
+Registers Color	צבע אוגרים
+Registers Style	סגנון אוגרים
 Regular Expression	ביטוי רגולרי
 Regular expression	ביטוי רגולרי
 Reject	דחה
@@ -1705,6 +2006,7 @@ Remove selected bundle(s) from the list	הסר את החבילות הנבחרו�
 Remove selected path(s) from list	הסר את הנתיבים הנבחרים מהרשימה
 Remove Selected Patterns	הסר תבניות נבחרות
 Remove Selected Range(s)	הסר את הטווחים הנבחרים
+Remove selected tags from the function	הסר את התגיות הנבחרות מהפונקציה
 Remove Signature Override	הסר דריסת חתימה
 Remove Stack Depth Change	הסר שינוי עומק מחסנית
 Remove Tag	הסר תגית
@@ -1726,6 +2028,7 @@ Rename Function Variable	שנה שם משתנה פונקציה
 Rename Global	שנה שם משתנה גלובלי
 Rename is not allowed for this data type	שינוי שם אינו מותר עבור סוג נתונים זה
 Rename Label	שנה שם תווית
+Rename New or Moved Data Type	שנה שם לסוג נתונים חדש או שהוזז
 Rename Overlay Space	שנה שם מרחב שכבה
 Rename Results	שנה שמות תוצאות
 Rename Script	שנה שם סקריפט
@@ -1745,6 +2048,7 @@ Repeatable Comments	הערות חוזרות
 Replace	החלף
 Replace All	החלף הכל
 Replace Namespace	החלף מרחב שמות
+Replace View on Double-click	החלף תצוגה בלחיצה כפולה
 Replace with	החלף ב
 Report Bug	דווח על באג
 Repository	מאגר
@@ -1777,6 +2081,7 @@ Resolve External Location Conflict	פתור התנגשות מיקום חיצונ
 Resolve Program Tree Conflict	פתור התנגשות עץ תוכנית
 Resolve Property Name Conflict	פתור התנגשות שם מאפיין
 Resolve Tree Name Conflict	פתור התנגשות שם עץ
+Respect readonly flags	כבד דגלי קריאה בלבד
 Restore	שחזר
 Restore a Ghidra Project - Archive	שחזר פרויקט Ghidra - ארכיון
 Restore a Ghidra Project - Directory	שחזר פרויקט Ghidra - תיקייה
@@ -1797,6 +2102,7 @@ Retype Field	שנה סוג שדה
 Retype Global	שנה סוג משתנה גלובלי
 Retype Return	שנה סוג ערך החזרה
 Retype Variable	שנה סוג משתנה
+Reverse Instruction Byte Ordering	הפוך את סדר הבתים בפקודה
 Reverse Scoped Flow	זרימה מתוחמת אחורה
 Revert Changes	בטל שינויים
 Revert Data Type	שחזר סוג נתונים
@@ -1853,11 +2159,17 @@ Scan Values	סרוק ערכים
 Schedule	תזמון
 Schema	סכמה
 Scope	תחום
+Scope Register Operand	אופרנד אוגר מתוחם
+Scoped Default Color	צבע ברירת מחדל מתוחם
 Scoped Flow	זרימה מתוחמת
+Scoped Read Highlight Color	צבע הדגשת קריאה מתוחמת
+Scoped Write Highlight Color	צבע הדגשת כתיבה מתוחמת
 Score	ציון
 Script	כתב
 Script Directories	תיקיות סקריפטים
+Script Editor Port	פורט עורך הסקריפטים
 Script Manager	מנהל סקריפטים
+Script Manager - {name} scripts	מנהל סקריפטים - {name} סקריפטים
 Script Paths	נתיבי סקריפטים
 Scripts	סקריפטים
 Scroll Lock	נעילת גלילה
@@ -1872,6 +2184,7 @@ Search for Scalars	חפש ערכים סקלריים
 Search For Strings	חפש מחרוזות
 Search Format: how to interpret search text	תבנית חיפוש: כיצד לפרש את טקסט החיפוש
 Search forward	חפש קדימה
+Search Limit	מגבלת חיפוש
 Search Memory for byte sequence	חפש רצף בתים בזיכרון
 Search Next	חפש הבא
 Search only the current selection	חפש רק בבחירה הנוכחית
@@ -1952,9 +2265,15 @@ Selected Instructions	פקודות נבחרות
 Selected instructions (no spaces)	פקודות נבחרות (ללא רווחים)
 Selected Instructions (with comments)	פקודות נבחרות (עם הערות)
 Selection	בחירה
+Selection by Flow	בחירה לפי זרימה
+Selection Color	צבע בחירה
+Selection Colors	צבעי בחירה
 Selection Only	בחירה בלבד
 Selection Scope	תחום הבחירה
+Selection Tables	טבלאות בחירה
 Selects the endianess	בוחר את סדר הבתים
+Separator Color	צבע מפריד
+Separator Style	סגנון מפריד
 Server Name	שם שרת
 Set	קבע
 Set All To Ignore	קבע הכל להתעלמות
@@ -2020,43 +2339,57 @@ Show Action Chooser Dialog	הצג חלון בחירת פעולות
 Show advanced options.	הצג אפשרויות מתקדמות.
 Show All	הצג הכל
 Show All History	הצג את כל ההיסטוריה
+Show Analysis Options	הצג אפשרויות ניתוח
 Show Base Data Type	הצג סוג נתונים בסיסי
+Show Block Names	הצג שמות בלוקים
 Show Byte Offsets in Hexadecimal	הצג היסטי בתים בהקסדצימלי
 Show Call Tree for	הצג עץ קריאות עבור
 Show Call Trees	הצג עצי קריאות
 Show Comment History	הצג היסטוריית הערות
 Show Console (Refresh Open Console)	הצג מסוף (רענן מסוף פתוח)
+Show Data Mutability	הצג יכולת שינוי של נתונים
 Show Data Types Table	הצג טבלת סוגי נתונים
 Show Default Values	הצג ערכי ברירת מחדל
 Show details	הצג פרטים
 Show Diff Apply Settings	הצג הגדרות החלת השוואה
 Show Enum	הצג Enum
+Show External Entry Plates	הצג כותרות לכניסות חיצוניות
+Show Filename Only	הצג שם קובץ בלבד
 Show Filter	הצג סינון
 Show Focus Info	הצג מידע מיקוד
+Show Function Plates	הצג כותרות פונקציות
 Show History	הצג היסטוריה
+Show Identifier	הצג מזהה
 Show Info	הצג מידע
 Show Instruction Info	הצג מידע על הפקודה
 Show Label History	הצג היסטוריית תוויות
 Show list of supported format/loaders	הצג רשימת תבניות/טוענים נתמכים
 Show Location Info	הצג מידע על המיקום
 Show Namespace	הצג מרחב שמות
+Show Numbers In Hex	הצג מספרים בהקסדצימלי
+Show Offcut Information	הצג מידע על הפניות לאמצע
 Show Only Recommended Language/Compiler Specs	הצג רק מפרטי שפה/מהדר מומלצים
 Show Preview Window	הצג חלון תצוגה מקדימה
 Show Processor Manual	הצג מדריך מעבד
 Show Program Differences	הצג הבדלים בין תוכניות
+Show Program Tabs Always	הצג תמיד לשוניות תוכניות
 Show References to	הצג הפניות אל
 Show References To Address	הצג הפניות לכתובת
 Show Selection	הצג בחירה
 Show Slice Tree	הצג עץ פריסה
+Show Source Info at Every Address	הצג מידע מקור בכל כתובת
 Show Source Map Entries	הצג רשומות מפת מקור
+Show Subroutine Plates	הצג כותרות תת-שגרות
 Show Tab List	הצג רשימת לשוניות
 Show table of selected functions	הצג טבלת פונקציות נבחרות
 Show the Function Call Tree window for the function selected in the call tree	הצג את חלון עץ הקריאות עבור הפונקציה הנבחרת בעץ
 Show the Xrefs to the code unit containing the cursor	הצג את ההפניות הצולבות ליחידת הקוד שבה נמצא הסמן
 Show Tips on Startup?	להציג טיפים בהפעלה?
 Show Tooltips	הצג תיאורי כלים
+Show Transition Plates	הצג כותרות מעבר
 Show Variables By Default	הצג משתנים כברירת מחדל
 Show version history	הצג היסטוריית גרסאות
+Show {0}	הצג {0}
 Show/Hide Variables	הצג/הסתר משתנים
 Shows all uses of the selected data type	מציג את כל השימושים בסוג הנתונים הנבחר
 Shows references to the current address	מציג הפניות לכתובת הנוכחית
@@ -2070,6 +2403,10 @@ Signed	עם סימן
 Signed Data Value(s)	ערכי נתונים עם סימן
 Similarity Threshold	סף דמיון
 Similarity Threshold (0-1)	סף דמיון (0-1)
+Simplify bitfield access	פשט גישה לשדות ביטים
+Simplify extended integer operations	פשט פעולות על מספרים שלמים מורחבים
+Simplify predication	פשט פרדיקציה
+Simplify Templated Names	פשט שמות עם תבניות
 Sink	יעד (Sink)
 Size	גודל
 Size of decimal values in bytes	גודל ערכים עשרוניים בבתים
@@ -2077,32 +2414,42 @@ Sizes	גדלים
 Skip	דלג
 Skip Length	אורך דילוג
 Slice Tree	עץ פריסה
+Snapshot period (minutes, 0=disabled)	תדירות תמונת מצב (דקות, 0=מושבת)
 Snapshots	תמונות מצב
 Sort	מיין
 Sort Order	סדר מיון
+Sort References by	מיין הפניות לפי
 Source	מקור
 Source Address	כתובת מקור
 Source Archive ID	מזהה ארכיון מקור
 Source Data Type ID	מזהה סוג נתונים במקור
+Source Files	קובצי מקור
 Source Files and Transforms	קובצי מקור והמרות
 Source files to parse	קובצי מקור לניתוח
 Source Language Support	תמיכה בשפות מקור
 Source Languages	שפות מקור
+Source Map Style	סגנון מפת מקור
 Source Name	שם מקור
 Source Offset	היסט מקור
 Source Program	תוכנית מקור
 Source Sync Time	זמן סנכרון מקור
 Space	מרחב
+Space Style	סגנון מרחב
 Spacer	מרווח
+Spacer Style	סגנון מרווח
 Specific Scalar	ערך סקלרי מסוים
 Specify Repository Name from server	ציין שם מאגר מהשרת
 Specify Server Information	ציין פרטי שרת
 Specify Users for Repository	ציין משתמשים למאגר
 Split a block	פצל בלוק
 Split Block	פצל בלוק
+Split combined array elements	פצל אלמנטים משולבים של מערכים
+Split combined structure fields	פצל שדות משולבים של מבנים
 Split Out As New Variable	פצל למשתנה חדש
+Split pointers to combined elements	פצל מצביעים לאלמנטים משולבים
 Stack	מחסנית
 Stack Depth Change or Function Purge?	שינוי עומק מחסנית או ניקוי פונקציה?
+Stack Editor	עורך מחסנית
 Stack Offset	היסט מחסנית
 Stack References	הפניות מחסנית
 Stack Variables	משתני מחסנית
@@ -2110,8 +2457,13 @@ Standard Archive	ארכיון סטנדרטי
 Star	כוכב
 Start	התחלה
 Start Address	כתובת התחלה
+Start At	התחל ב
 Start Server	הפעל שרת
+Start Symbols	סמלי התחלה
+Start X	X התחלה
+Start Y	Y התחלה
 Starting Offset	היסט התחלתי
+Starting Program Location	מיקום התחלתי בתוכנית
 Starts With	מתחיל ב
 State	מצב
 Static Mappings	מיפויים סטטיים
@@ -2128,6 +2480,7 @@ Storage Address Editor	עורך כתובות אחסון
 Storage Locations	מיקומי אחסון
 String	מחרוזת
 String Data	נתוני מחרוזת
+String Representation	ייצוג מחרוזת
 String Value	ערך מחרוזת
 Strings	מחרוזות
 Strings Table	טבלת מחרוזות
@@ -2137,10 +2490,12 @@ Structure	מבנה
 Structure Changed	המבנה שונה
 Structure Comment	הערת מבנה
 Structure Description	תיאור המבנה
+Structure Editor	עורך מבנים
 Structure Name	שם מבנה
 Structure recovery	שחזור מבנים
 Styles	סגנונות
 Subroutine	תת-שגרה
+Subroutine Block Model	מודל בלוקים של תת-שגרות
 Subtract Selection	הפחת מהבחירה
 Summary	סיכום
 Swap	החלף
@@ -2148,6 +2503,7 @@ Switch	החלף
 Switch Table Recovery	שחזור טבלאות Switch
 Symbol	סמל
 Symbol ID	מזהה סמל
+Symbol Lookup Port	פורט חיפוש סמלים
 Symbol Name	שם סמל
 Symbol References	הפניות לסמל
 Symbol Server Search Config	הגדרות חיפוש בשרת סמלים
@@ -2159,16 +2515,20 @@ Symbol Tree Clone	שכפל עץ סמלים
 Symbol Type	סוג סמל
 Symbol Types	סוגי סמלים
 Symbols	סמלים
+Sync	סנכרון
 Synchronize Scrolling	סנכרן גלילה
 Synchronize Scrolling of Dual View	סנכרן גלילה של תצוגה כפולה
 Table Column	עמודת טבלה
 Table Column Filters	מסנני עמודות טבלה
+Table From Selection Limit	מגבלת טבלה מבחירה
 Table View	תצוגת טבלה
 Table Viewer	מציג טבלה
 Tables	טבלאות
 Tag Chooser	בוחר תגיות
 Tag Editor	עורך תגיות
 Tags	תגיות
+Target	יעד
+Templates	תבניות
 Terminate Checkout	סיים הוצאה
 Terminate Session	סיים הפעלה
 Text Editor	עורך טקסט
@@ -2190,6 +2550,7 @@ Thunk Destination Function/Address	פונקציה/כתובת יעד של Thunk
 Thunk Function	פונקציית Thunk
 Thunk Functions	פונקציות Thunk
 Thunk functions will not be shown in the tree when selected	פונקציות Thunk לא יוצגו בעץ כשהאפשרות נבחרת
+Thunked-Function Style	סגנון פונקציית Thunk
 Time	זמן
 Tip of the Day	טיפ היום
 Title	כותרת
@@ -2204,6 +2565,7 @@ Toggle Expand/Collapse Data	הרחב/כווץ נתונים
 Toggle Field	הפעל/כבה שדה
 Toggle Format Header	הצג/הסתר כותרת תבנית
 Toggle Header	הצג/הסתר כותרת
+Toggle Layout	החלף פריסה
 Toggle Make Strings Panel On/Off	הצג/הסתר חלונית יצירת מחרוזות
 Toggle Mouse Hover Popups	הפעל/כבה חלוניות ריחוף עכבר
 Toggle off to eliminate unreachable code	כבה כדי להסיר קוד שאינו נגיש
@@ -2239,6 +2601,8 @@ Transfer focus to the next major component in this windows	העבר את המי�
 Transfer focus to the previous major component in this windows	העבר את המיקוד לרכיב הראשי הקודם בחלון זה
 Transform	המרה
 Transform Directory	המר תיקייה
+Transformed Path	נתיב לאחר המרה
+Transforms	המרות
 Translate	תרגם
 Translate strings after creation.	תרגם מחרוזות לאחר יצירתן.
 Translation	תרגום
@@ -2251,6 +2615,8 @@ True	אמת
 Truncate at ref	קצץ בהפניה
 Truncate If Needed	קצץ במידת הצורך
 Truncate strings at references.	קצץ מחרוזות בהפניות.
+Truncated Text Display	תצוגת טקסט קטוע
+Truncation Factor	מקדם קיצוץ
 Type	סוג
 Type is not supported.	הסוג אינו נתמך.
 Typedef	Typedef
@@ -2259,7 +2625,12 @@ Typedefs	הגדרות Typedef
 Unable to Launch Manual Viewer	לא ניתן להפעיל את מציג המדריך
 Undefined	לא מוגדר
 Undefined bits	ביטים לא מוגדרים
+Undefined Color	צבע לא מוגדר
 Undefined Data	נתונים לא מוגדרים
+Underline Color	צבע קו תחתון
+Underline Fields With References	הוסף קו תחתון לשדות עם הפניות
+Underline References	הוסף קו תחתון להפניות
+Underline Style	סגנון קו תחתון
 Undo	בטל
 Undo any changes and close the dialog	בטל את השינויים וסגור את החלון
 Undo Change	בטל שינוי
@@ -2275,8 +2646,10 @@ Unexpected Error	שגיאה לא צפויה
 Ungroup All Vertices	פרק את כל קבוצות הקודקודים
 Ungroup Selected Vertices	פרק קבוצת קודקודים נבחרים
 Uninitialized	לא מאותחל
+Uninitialized Color	צבע לא מאותחל
 Uninstall	הסר התקנה
 Union	איחוד (Union)
+Union Editor	עורך איחודים
 Universal	אוניברסלי
 Unpins symbol(s) so that the symbol moves with memory block moves or image base changes.	מבטל הצמדת סמלים כך שיזוזו עם הזזת בלוקי זיכרון או שינוי בסיס התמונה.
 Unsigned	ללא סימן
@@ -2293,19 +2666,26 @@ Update Shared Project Info	עדכן מידע פרויקט משותף
 Updating Strings Table	מעדכן טבלת מחרוזות
 Use	השתמש
 Use Advanced Filters	השתמש במסננים מתקדמים
+Use C-like Numeric Formatting for Addresses	השתמש בתבנית מספרים בסגנון C לכתובות
 Use Char Alignment	השתמש ביישור תווים
+Use Combined Alt Keys	השתמש במקשי Alt משולבים
 Use comments from	השתמש בהערות מ
 Use Custom Storage	השתמש באחסון מותאם
 Use default fallthrough address	השתמש בכתובת המשך ברירת מחדל
 Use Empty Composite Types	השתמש בסוגים מורכבים ריקים
 Use Existing	השתמש בקיים
+Use Existing Path as Default	השתמש בנתיב הקיים כברירת מחדל
+Use inplace assignment operators	השתמש באופרטורי השמה מקוצרים
 Use Latest	השתמש באחרון
 Use Local Namespace Override	השתמש בדריסת מרחב שמות מקומי
 Use Monochrome	שחור-לבן
 Use My Version	השתמש בגרסה שלי
+Use Natural File Sort	מיון קבצים טבעי
+Use Notification Animation	השתמש באנימציית התראה
 Use Original	השתמש במקורי
 Use Original Name	השתמש בשם המקורי
 Use Path	השתמש בנתיב
+Use Underscores	השתמש בקווים תחתונים
 Used Memory	זיכרון בשימוש
 User	משתמש
 User (optional)	משתמש (אופציונלי)
@@ -2323,6 +2703,7 @@ Varargs	ארגומנטים משתנים
 Variable Name	שם משתנה
 Variable Offset	היסט משתנה
 Variable Storage	אחסון משתנים
+Variable Style	סגנון משתנה
 Variable Type	סוג משתנה
 Variant	גרסה
 Verify strings against the string model.	אמת מחרוזות מול מודל המחרוזות.
@@ -2348,8 +2729,13 @@ View Source	הצג מקור
 View Source File	הצג קובץ מקור
 View the Source File	הצג את קובץ המקור
 View, add, remove, or edit all types of references from a code unit	הצג, הוסף, הסר או ערוך את כל סוגי ההפניות מיחידת קוד
+Viewer for Source Files	מציג לקובצי מקור
 Views	תצוגות
 Virtual Disassembler - Current Instruction	מפרק וירטואלי - הפקודה הנוכחית
+Visual Studio Code Executable Path	נתיב קובץ ההפעלה של Visual Studio Code
+Visual Studio Code Integration	שילוב עם Visual Studio Code
+Visual Studio Code Launch Argument 1 (optional)	ארגומנט הפעלה 1 ל-Visual Studio Code (אופציונלי)
+Visual Studio Code Launch Argument 2 (optional)	ארגומנט הפעלה 2 ל-Visual Studio Code (אופציונלי)
 Volatile	נדיף (Volatile)
 Wait	המתן
 Warning	אזהרה
@@ -2368,9 +2754,21 @@ Windows Classic Theme	ערכת נושא Windows קלאסית
 Windows Theme	ערכת נושא Windows
 Word Model	מודל מילים
 Workspace	סביבת עבודה
+Wrap on Semicolons	שבור שורה בנקודה-פסיק
 Wrap search	חיפוש מעגלי
 Write	כתיבה
+XRef Color	צבע הפניה צולבת
+XRef Other Color	צבע הפניה צולבת אחרת
+XRef Other Style	סגנון הפניה צולבת אחרת
+XRef Read Color	צבע הפניה צולבת לקריאה
+XRef Read Style	סגנון הפניה צולבת לקריאה
+XRef Style	סגנון הפניה צולבת
+XRef Write Color	צבע הפניה צולבת לכתיבה
+XRef Write Style	סגנון הפניה צולבת לכתיבה
+XRef, Offcut Color	צבע הפניה צולבת לאמצע
+XRef, Offcut Style	סגנון הפניה צולבת לאמצע
 XRefs	הפניות צולבות
+XREFs Field	שדה הפניות צולבות
 Yes	כן
 Zoom In	הגדל
 Zoom In (X)	הגדל (X)
@@ -2380,3 +2778,4 @@ Zoom Out (X)	הקטן (X)
 Zoom Out (Y)	הקטן (Y)
 Zoom to Vertex	התמקד בקודקוד
 Zoom to Window	התאם לחלון
+{name} (double-click to go to function entry)	{name} (לחיצה כפולה למעבר לתחילת הפונקציה)
