@@ -47,3 +47,25 @@ under the GPL directory that has the GPL license files.
 Consistent with the inbound=outbound model, contributions to any module must be
 made available, by the contributor, under the applicable license(s). Please read
 the Legal section of the CONTRIBUTING.md guide.
+
+
+HexToCode
+
+HexToCode is a modified version of Ghidra.
+Copyright (c) 2026 Shmuel Sinay <g47ben@gmail.com>. All rights reserved.
+
+The HexToCode name and logo, the Hebrew user interface (docking.i18n.UiTranslator
+and the i18n dictionaries), the AIAssistant extension (Ghidra/Extensions/AIAssistant)
+and all modifications to Ghidra source files are licensed under the HexToCode
+Restricted License (see LICENSE). Ghidra source files that were changed carry a
+notice saying so.
+
+The original Ghidra code keeps its Apache License, Version 2.0
+(licenses/Ghidra_Apache_License_2.0.txt), and the notices above this section are
+reproduced from Ghidra as that license requires. Other third-party components
+keep their own licenses (see the licenses directory and each module's
+Module.manifest).
+
+HexToCode is not affiliated with or endorsed by the U.S. National Security Agency
+or by any AI service provider. Use of an AI service (Anthropic, Google, OpenAI or
+any other) is subject to that service's terms; no AI service is bundled.

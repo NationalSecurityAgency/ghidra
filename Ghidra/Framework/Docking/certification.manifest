@@ -40,6 +40,7 @@ src/main/java/docking/dnd/package.html||GHIDRA||reviewed||END|
 src/main/java/docking/options/editor/package.html||GHIDRA||reviewed||END|
 src/main/java/docking/widgets/fieldpanel/package.html||GHIDRA||reviewed||END|
 src/main/java/docking/widgets/filechooser/package.html||GHIDRA||reviewed||END|
+src/main/resources/i18n/he.txt||HexToCode_License||||END|
 src/main/resources/images/Minus.png||GHIDRA||||END|
 src/main/resources/images/Plus.png||GHIDRA||reviewed||END|
 src/main/resources/images/StackFrameElement.png||GHIDRA||reviewed||END|

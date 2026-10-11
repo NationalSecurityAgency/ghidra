@@ -1,3 +1,13 @@
+# HexToCode
+
+**HexToCode** – a reverse engineering tool with a Hebrew user interface and a built-in AI assistant,
+based on Ghidra. Copyright (c) 2026 Shmuel Sinay <g47ben@gmail.com>. All rights reserved;
+see [LICENSE](LICENSE) and [HEBREW.md](HEBREW.md) (בעברית).
+
+HexToCode is not affiliated with or endorsed by the NSA. The original Ghidra README follows.
+
+---
+
 <img src="Ghidra/Features/Base/src/main/resources/images/GHIDRA_3.png" width="400">
 
 # Ghidra Software Reverse Engineering Framework

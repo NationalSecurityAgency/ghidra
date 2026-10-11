@@ -1,0 +1,27 @@
+MODULE FILE LICENSE: lib/anthropic-java-2.34.0.jar MIT
+MODULE FILE LICENSE: lib/anthropic-java-client-okhttp-2.34.0.jar MIT
+MODULE FILE LICENSE: lib/anthropic-java-core-2.34.0.jar MIT
+MODULE FILE LICENSE: lib/jackson-annotations-2.18.2.jar Apache License 2.0
+MODULE FILE LICENSE: lib/jackson-core-2.18.2.jar Apache License 2.0
+MODULE FILE LICENSE: lib/jackson-databind-2.18.2.jar Apache License 2.0
+MODULE FILE LICENSE: lib/jackson-datatype-jdk8-2.18.2.jar Apache License 2.0
+MODULE FILE LICENSE: lib/jackson-datatype-jsr310-2.18.2.jar Apache License 2.0
+MODULE FILE LICENSE: lib/jackson-module-kotlin-2.18.2.jar Apache License 2.0
+MODULE FILE LICENSE: lib/classmate-1.7.0.jar Apache License 2.0
+MODULE FILE LICENSE: lib/jsonschema-generator-4.38.0.jar Apache License 2.0
+MODULE FILE LICENSE: lib/jsonschema-module-jackson-4.38.0.jar Apache License 2.0
+MODULE FILE LICENSE: lib/jsonschema-module-swagger-2-4.38.0.jar Apache License 2.0
+MODULE FILE LICENSE: lib/okhttp-4.12.0.jar Apache License 2.0
+MODULE FILE LICENSE: lib/okio-jvm-3.6.0.jar Apache License 2.0
+MODULE FILE LICENSE: lib/standardwebhooks-1.1.0.jar MIT
+MODULE FILE LICENSE: lib/swagger-annotations-2.2.31.jar Apache License 2.0
+MODULE FILE LICENSE: lib/httpclient5-5.3.1.jar Apache License 2.0
+MODULE FILE LICENSE: lib/httpcore5-h2-5.2.4.jar Apache License 2.0
+MODULE FILE LICENSE: lib/httpcore5-5.2.4.jar Apache License 2.0
+MODULE FILE LICENSE: lib/kotlin-reflect-1.8.10.jar Apache License 2.0
+MODULE FILE LICENSE: lib/kotlin-stdlib-common-1.9.10.jar Apache License 2.0
+MODULE FILE LICENSE: lib/kotlin-stdlib-jdk7-1.9.10.jar Apache License 2.0
+MODULE FILE LICENSE: lib/kotlin-stdlib-jdk8-1.9.10.jar Apache License 2.0
+MODULE FILE LICENSE: lib/kotlin-stdlib-1.9.10.jar Apache License 2.0
+MODULE FILE LICENSE: lib/annotations-13.0.jar Apache License 2.0
+MODULE FILE LICENSE: lib/slf4j-api-2.0.16.jar MIT

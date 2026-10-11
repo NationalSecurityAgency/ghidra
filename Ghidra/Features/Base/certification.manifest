@@ -860,6 +860,15 @@ src/main/resources/images/GHIDRA_1.png||GHIDRA||||END|
 src/main/resources/images/GHIDRA_2.png||GHIDRA||||END|
 src/main/resources/images/GHIDRA_3.png||GHIDRA||||END|
 src/main/resources/images/GHIDRA_Splash.png||GHIDRA||||END|
+src/main/resources/images/HexToCodeIcon16.png||HexToCode_License||||END|
+src/main/resources/images/HexToCodeIcon24.png||HexToCode_License||||END|
+src/main/resources/images/HexToCodeIcon32.png||HexToCode_License||||END|
+src/main/resources/images/HexToCodeIcon40.png||HexToCode_License||||END|
+src/main/resources/images/HexToCodeIcon48.png||HexToCode_License||||END|
+src/main/resources/images/HexToCodeIcon64.png||HexToCode_License||||END|
+src/main/resources/images/HexToCodeIcon128.png||HexToCode_License||||END|
+src/main/resources/images/HexToCodeIcon256.png||HexToCode_License||||END|
+src/main/resources/images/HexToCode_Splash.png||HexToCode_License||||END|
 src/main/resources/images/I.gif||GHIDRA||||END|
 src/main/resources/images/L.gif||GHIDRA||||END|
 src/main/resources/images/LocalVariable.gif||GHIDRA||||END|

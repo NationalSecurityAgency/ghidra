@@ -13,6 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+ * NOTICE: This file was modified from the original Ghidra source for HexToCode
+ * (2026): adds the HexToCode launchers. The modifications are
+ * Copyright (c) 2026 Shmuel Sinay <g47ben@gmail.com>, licensed under the HexToCode
+ * Restricted License (see LICENSE). The rest of this file remains under the Apache
+ * License, Version 2.0.
+ */
 apply plugin: 'eclipse'
 
 eclipse.project.name = '_Runtime Scripts'
@@ -29,6 +36,8 @@ rootProject.assembleDistribution {
 	
 	from (this.project.file("ghidraRun"))
 	from (this.project.file("ghidraRun.bat"))
+	from (this.project.file("HexToCode"))
+	from (this.project.file("HexToCode.bat"))
 	
 	from (rootProject.projectDir) {
 		include "gradlew"

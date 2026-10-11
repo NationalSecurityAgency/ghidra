@@ -13,6 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+ * NOTICE: This file was modified from the original Ghidra source for HexToCode
+ * (2026): table headers are passed through the UI translator. The modifications are
+ * Copyright (c) 2026 Shmuel Sinay <g47ben@gmail.com>, licensed under the HexToCode
+ * Restricted License (see LICENSE). The rest of this file remains under the Apache
+ * License, Version 2.0, as stated above.
+ */
 package docking.widgets.table;
 
 import java.awt.*;
@@ -23,6 +30,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.table.*;
 
+import docking.i18n.UiTranslator;
 import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.Gui;
@@ -86,6 +94,10 @@ public class GTableHeaderRenderer extends DefaultTableCellRenderer {
 			if (rendererComponent instanceof JLabel) {
 				((JLabel) rendererComponent).setText(text);
 			}
+		}
+
+		if (rendererComponent instanceof JLabel label) {
+			label.setText(UiTranslator.translate(label.getText()));
 		}
 
 		primaryIcon = getIcon(model, modelIndex);

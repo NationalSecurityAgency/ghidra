@@ -13,12 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+ * NOTICE: This file was modified from the original Ghidra source for HexToCode
+ * (2026): labels are passed through the UI translator. The modifications are
+ * Copyright (c) 2026 Shmuel Sinay <g47ben@gmail.com>, licensed under the HexToCode
+ * Restricted License (see LICENSE). The rest of this file remains under the Apache
+ * License, Version 2.0, as stated above.
+ */
 package docking.widgets.label;
 
 import javax.swing.*;
 
 import org.apache.commons.lang3.StringUtils;
 
+import docking.i18n.UiTranslator;
 import docking.widgets.GComponent;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.checkbox.GHtmlCheckBox;
@@ -63,7 +71,7 @@ public class GLabel extends JLabel implements GComponent {
 	 * @param text non-html string to be displayed by the label
 	 */
 	public GLabel(String text) {
-		super(text);
+		super(UiTranslator.translate(text));
 		init();
 	}
 
@@ -82,7 +90,7 @@ public class GLabel extends JLabel implements GComponent {
 	 *           {@link SwingConstants#TRAILING}
 	 */
 	public GLabel(String text, int horizontalAlignment) {
-		super(text, horizontalAlignment);
+		super(UiTranslator.translate(text), horizontalAlignment);
 		init();
 	}
 
@@ -102,7 +110,7 @@ public class GLabel extends JLabel implements GComponent {
 	 *           {@link SwingConstants#TRAILING} 
 	 */
 	public GLabel(String text, Icon icon, int horizontalAlignment) {
-		super(text, icon, horizontalAlignment);
+		super(UiTranslator.translate(text), icon, horizontalAlignment);
 		init();
 	}
 

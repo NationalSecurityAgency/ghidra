@@ -1,0 +1,101 @@
+# HexToCode
+# Copyright (c) 2026 Shmuel Sinay <g47ben@gmail.com>. All rights reserved.
+# Licensed under the HexToCode Restricted License; see LICENSE.
+#
+# Builds HexToCode on Linux, Windows and macOS (each platform compiles its own native
+# decompiler), merges them into one package, and publishes a GitHub Release.
+#
+# Start a release by pushing a tag:      git tag v1.0.0 && git push origin v1.0.0
+# or from GitHub: Actions > Release HexToCode > Run workflow (enter the tag).
+
+name: Release HexToCode
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag, for example v1.0.0'
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
+
+jobs:
+  build:
+    strategy:
+      fail-fast: true
+      matrix:
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Read JDK version
+        shell: bash
+        run: echo "JDK_VER=$(awk -F'=' '$1=="application.java.min" {print $2}' Ghidra/application.properties)" >> $GITHUB_ENV
+
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '${{ env.JDK_VER }}'
+
+      - name: Fetch dependencies
+        run: ./gradlew -I gradle/support/fetchDependencies.gradle -DhideDownloadProgress -DnoEclipse
+
+      - name: Build HexToCode
+        run: ./gradlew buildGhidra --parallel
+
+      - name: Upload platform build
+        uses: actions/upload-artifact@v7
+        with:
+          name: hextocode-${{ matrix.platform }}
+          path: build/dist/hextocode_*.zip
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Download platform builds
+        uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+          skip-decompress: true
+          merge-multiple: true
+
+      - name: Merge into one package for all platforms
+        run: |
+          mkdir -p merged
+          for file in artifacts/*; do
+            rm -rf artifacts/tmp
+            unzip -o "$file" -d artifacts/tmp
+            inner="$(ls artifacts/tmp/*.zip)"
+            unzip -n "$inner" -d merged
+          done
+          cd merged
+          zip -qr "../HexToCode-${RELEASE_TAG}.zip" .
+          cd ..
+          sha256sum "HexToCode-${RELEASE_TAG}.zip" > "HexToCode-${RELEASE_TAG}.zip.sha256"
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${RELEASE_TAG}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --target "${GITHUB_SHA}" \
+            --title "HexToCode ${RELEASE_TAG}" \
+            --notes-file .github/RELEASE_NOTES.md \
+            "HexToCode-${RELEASE_TAG}.zip" \
+            "HexToCode-${RELEASE_TAG}.zip.sha256" \
+            LICENSE

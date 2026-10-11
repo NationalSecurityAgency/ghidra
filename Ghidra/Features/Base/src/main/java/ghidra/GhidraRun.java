@@ -13,6 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+ * NOTICE: This file was modified from the original Ghidra source for HexToCode
+ * (2026): installs the Hebrew UI translator at startup. The modifications are
+ * Copyright (c) 2026 Shmuel Sinay <g47ben@gmail.com>, licensed under the HexToCode
+ * Restricted License (see LICENSE). The rest of this file remains under the Apache
+ * License, Version 2.0, as stated above.
+ */
 package ghidra;
 
 import java.io.File;
@@ -26,6 +33,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import docking.framework.SplashScreen;
+import docking.i18n.UiTranslator;
 import generic.jar.ResourceFile;
 import ghidra.base.help.GhidraHelpService;
 import ghidra.framework.*;
@@ -96,6 +104,9 @@ public class GhidraRun implements GhidraLaunchable {
 			writeLastRun();
 
 			initializeTooltips();
+
+			// Translate the user interface (Hebrew by default; -Dghidra.ui.language=en disables)
+			UiTranslator.install();
 
 			updateSplashScreenStatusMessage("Populating Ghidra help...");
 			GhidraHelpService.install();

@@ -36,21 +36,21 @@ jobs:
         if: matrix.platform == 'ubuntu-latest'
         with:
           name: ghidra-linux
-          path: build/dist/ghidra_*.zip
+          path: build/dist/hextocode_*.zip
 
       - name: Upload Windows Artifact
         uses: actions/upload-artifact@v7
         if: matrix.platform == 'windows-latest'
         with:
           name: ghidra-windows
-          path: build/dist/ghidra_*.zip
+          path: build/dist/hextocode_*.zip
 
       - name: Upload macOS Artifact
         uses: actions/upload-artifact@v7      
         if: matrix.platform == 'macos-latest'
         with:
           name: ghidra-macos
-          path: build/dist/ghidra_*.zip
+          path: build/dist/hextocode_*.zip
 
   merge-artifacts:
     needs: build
@@ -78,6 +78,6 @@ jobs:
       - name: Upload Merged Artifact
         uses: actions/upload-artifact@v7
         with:
-          path: merged/ghidra_*.zip
+          path: merged/hextocode_*.zip
           archive: false
 
