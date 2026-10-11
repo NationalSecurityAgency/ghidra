@@ -3,7 +3,9 @@
 # Licensed under the HexToCode Restricted License; see LICENSE.
 #
 # Builds HexToCode on Linux, Windows and macOS (each platform compiles its own native
-# decompiler), merges them into one package, and publishes a GitHub Release.
+# decompiler) and publishes a GitHub Release with:
+#   - HexToCode-<tag>.zip                       one package for all platforms; needs Java 25
+#   - HexToCode-<tag>-<platform>-with-java.zip  standalone, Java included
 #
 # Start a release by pushing a tag:      git tag v1.0.0 && git push origin v1.0.0
 # or from GitHub: Actions > Release HexToCode > Run workflow (enter the tag).
@@ -59,6 +61,21 @@ jobs:
           name: hextocode-${{ matrix.platform }}
           path: build/dist/hextocode_*.zip
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Package with Java included
+        shell: bash
+        run: python .github/scripts/package_with_java.py "${RELEASE_TAG}" "${{ runner.os }}"
+
+      - name: Upload package with Java
+        uses: actions/upload-artifact@v7
+        with:
+          name: with-java-${{ matrix.platform }}
+          path: HexToCode-*-with-java.zip
+
   release:
     needs: build
     runs-on: ubuntu-latest
@@ -69,8 +86,16 @@ jobs:
       - name: Download platform builds
         uses: actions/download-artifact@v8
         with:
+          pattern: hextocode-*
           path: artifacts
           skip-decompress: true
+          merge-multiple: true
+
+      - name: Download packages with Java
+        uses: actions/download-artifact@v8
+        with:
+          pattern: with-java-*
+          path: with-java
           merge-multiple: true
 
       - name: Merge into one package for all platforms
@@ -85,7 +110,8 @@ jobs:
           cd merged
           zip -qr "../HexToCode-${RELEASE_TAG}.zip" .
           cd ..
-          sha256sum "HexToCode-${RELEASE_TAG}.zip" > "HexToCode-${RELEASE_TAG}.zip.sha256"
+          mv with-java/HexToCode-*-with-java.zip .
+          sha256sum HexToCode-${RELEASE_TAG}*.zip > "HexToCode-${RELEASE_TAG}.sha256"
 
       - name: Publish GitHub Release
         env:
@@ -96,6 +122,6 @@ jobs:
             --target "${GITHUB_SHA}" \
             --title "HexToCode ${RELEASE_TAG}" \
             --notes-file .github/RELEASE_NOTES.md \
-            "HexToCode-${RELEASE_TAG}.zip" \
-            "HexToCode-${RELEASE_TAG}.zip.sha256" \
+            HexToCode-${RELEASE_TAG}*.zip \
+            "HexToCode-${RELEASE_TAG}.sha256" \
             LICENSE

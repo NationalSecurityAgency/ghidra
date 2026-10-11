@@ -14,6 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
+#
+# NOTICE: modified from the original Ghidra source for HexToCode (2026): prefers a Java
+# bundled in the installation's "jdk" folder. The modifications are Copyright (c) 2026
+# Shmuel Sinay <g47ben@gmail.com>, licensed under the HexToCode Restricted License (see
+# LICENSE). The rest of this file remains under the Apache License, Version 2.0.
 
 umask 027
 
@@ -124,46 +129,52 @@ else
 	DEBUG_LOG4J="${INSTALL_DIR}/Ghidra/RuntimeScripts/support/debug.log4j.xml"
 fi
 
-# Identify java command from either JAVA_HOME or PATH, try PATH first
-JAVA_CMD=
-if [ -x "$(command -v java)" ] ; then
-	JAVA_CMD=java
-elif [ -n "${JAVA_HOME}" ] ; then
-	JAVA_CMD="${JAVA_HOME}/bin/java"
-	if [ ! -x "${JAVA_CMD}" ] ; then
-		echo "WARNING: JAVA_HOME environment variable is set to an invalid directory: ${JAVA_HOME}"
-		JAVA_CMD=
+# HexToCode: a "with Java" package bundles its own Java in the "jdk" folder of the
+# installation; use it so nothing else needs to be installed. Otherwise find Java as usual.
+if [ -x "${INSTALL_DIR}/jdk/bin/java" ]; then
+	LS_JAVA_HOME="${INSTALL_DIR}/jdk"
+else
+	# Identify java command from either JAVA_HOME or PATH, try PATH first
+	JAVA_CMD=
+	if [ -x "$(command -v java)" ] ; then
+		JAVA_CMD=java
+	elif [ -n "${JAVA_HOME}" ] ; then
+		JAVA_CMD="${JAVA_HOME}/bin/java"
+		if [ ! -x "${JAVA_CMD}" ] ; then
+			echo "WARNING: JAVA_HOME environment variable is set to an invalid directory: ${JAVA_HOME}"
+			JAVA_CMD=
+		fi
 	fi
-fi
 
-if [ "${JAVA_CMD}" == "" ]; then
-	echo
-	echo "ERROR: The 'java' command could not be found in your PATH or with JAVA_HOME."
-	echo "Please refer to the Getting Started document's Troubleshooting section."
-	exit 1
-fi
-
-# Get the JDK that will be used to launch Ghidra
-LS_JAVA_HOME="$("${JAVA_CMD}" -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" ${JAVA_TYPE_ARG} -save)"
-if [ ! $? -eq 0 ]; then
-	# If fd 0 (stdin) isn't a tty, fail because we can't prompt the user
-	if [ ! -t 0 ]; then
+	if [ "${JAVA_CMD}" == "" ]; then
 		echo
-		echo "ERROR: Unable to prompt user for JDK path, no TTY detected."
+		echo "ERROR: The 'java' command could not be found in your PATH or with JAVA_HOME."
 		echo "Please refer to the Getting Started document's Troubleshooting section."
 		exit 1
 	fi
-	
-	# No JDK has been setup yet.  Let the user choose one.
-	"${JAVA_CMD}" -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" ${JAVA_TYPE_ARG} -ask
-	
-	# Now that the user chose one, try again to get the JDK that will be used to launch Ghidra
+
+	# Get the JDK that will be used to launch Ghidra
 	LS_JAVA_HOME="$("${JAVA_CMD}" -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" ${JAVA_TYPE_ARG} -save)"
 	if [ ! $? -eq 0 ]; then
-		echo
-		echo "ERROR: Failed to find a supported JDK."
-		echo "Please refer to the Getting Started document's Troubleshooting section."
-		exit 1
+		# If fd 0 (stdin) isn't a tty, fail because we can't prompt the user
+		if [ ! -t 0 ]; then
+			echo
+			echo "ERROR: Unable to prompt user for JDK path, no TTY detected."
+			echo "Please refer to the Getting Started document's Troubleshooting section."
+			exit 1
+		fi
+	
+		# No JDK has been setup yet.  Let the user choose one.
+		"${JAVA_CMD}" -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" ${JAVA_TYPE_ARG} -ask
+	
+		# Now that the user chose one, try again to get the JDK that will be used to launch Ghidra
+		LS_JAVA_HOME="$("${JAVA_CMD}" -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" ${JAVA_TYPE_ARG} -save)"
+		if [ ! $? -eq 0 ]; then
+			echo
+			echo "ERROR: Failed to find a supported JDK."
+			echo "Please refer to the Getting Started document's Troubleshooting section."
+			exit 1
+		fi
 	fi
 fi
 JAVA_CMD="${LS_JAVA_HOME}/bin/java"
