@@ -13,6 +13,12 @@
 :: See the License for the specific language governing permissions and
 :: limitations under the License.
 :: ##
+::
+:: NOTICE: modified from the original Ghidra source for HexToCode (2026): prefers a Java
+:: bundled in the installation's "jdk" folder. The modifications are Copyright (c) 2026
+:: Shmuel Sinay ^<g47ben@gmail.com^>, licensed under the HexToCode Restricted License (see
+:: LICENSE). The rest of this file remains under the Apache License, Version 2.0.
+
 @echo off
 goto continue
 
@@ -130,6 +136,13 @@ if exist "%USERPROFILE%" (
 	set VMARGS_FROM_LAUNCH_BAT=%VMARGS_FROM_LAUNCH_BAT% -Duser.home="%USERPROFILE%"
 )
 
+:: HexToCode: a "with Java" package bundles its own Java in the "jdk" folder of the
+:: installation; use it so nothing else needs to be installed. Otherwise find Java as usual.
+if exist "%INSTALL_DIR%\jdk\bin\java.exe" (
+	set "LS_JAVA_HOME=%INSTALL_DIR%\jdk"
+	goto bundledJava
+)
+
 :: check for java based upon PATH
 set JAVA_CMD=java.exe
 java.exe -version >NUL 2>&1
@@ -169,6 +182,7 @@ if "%LS_JAVA_HOME%" == "" (
 		goto exit1
 	)
 )
+:bundledJava
 set "JAVA_CMD=%LS_JAVA_HOME%\bin\java"
 
 :: Get the configurable environment variables from the launch properties
