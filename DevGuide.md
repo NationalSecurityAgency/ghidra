@@ -8,11 +8,11 @@
 * Source Control: [Git][git]
 
 For specific information on required versions and download links please see the 
-[README.md](README.md) file.
+[README-Ghidra.md](README-Ghidra.md) file.
 
 ## Quickstart
-Follow the [Advanced Development](README.md#advanced-development) instructions in the [
-README.md](README.md) file to get your development environment setup quickly. 
+Follow the [Advanced Development](README-Ghidra.md#advanced-development) instructions in the [
+README-Ghidra.md](README-Ghidra.md) file to get your development environment setup quickly. 
 
 ## Licensing and Copyright
 * Primary License: [Apache License 2.0][apache]
