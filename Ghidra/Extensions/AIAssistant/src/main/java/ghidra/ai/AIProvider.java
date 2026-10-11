@@ -1,17 +1,12 @@
 /* ###
- * IP: GHIDRA
+ * IP: HexToCode_License
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * HexToCode
+ * Copyright (c) 2026 Shmuel Sinay <g47ben@gmail.com>. All rights reserved.
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Licensed under the HexToCode Restricted License; see the LICENSE file at the
+ * root of this distribution. You may not use, copy, modify or distribute this
+ * file except as that license allows.
  */
 package ghidra.ai;
 
@@ -26,8 +21,8 @@ interface AIProvider {
 	int MAX_TOOL_ROUNDS = 25;
 
 	String SYSTEM_PROMPT = """
-			You are an expert reverse engineer built into Ghidra. The user is analyzing the \
-			program that is open in Ghidra and asks you questions about it, such as "where is \
+			You are an expert reverse engineer built into HexToCode (a reverse engineering tool \
+			based on Ghidra). The user is analyzing the program that is open in HexToCode and asks you questions about it, such as "where is \
 			the code that does X", "what causes Y", "who calls this", "what does this function \
 			do", or "where is the password checked".
 

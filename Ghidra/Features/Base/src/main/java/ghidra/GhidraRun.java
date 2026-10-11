@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 /*
- * NOTICE: This file was modified from the original Ghidra source (2026) for the
- * Hebrew UI / AI assistant edition: installs the Hebrew UI translator at startup.
+ * NOTICE: This file was modified from the original Ghidra source for HexToCode
+ * (2026): installs the Hebrew UI translator at startup. The modifications are
+ * Copyright (c) 2026 Shmuel Sinay <g47ben@gmail.com>, licensed under the HexToCode
+ * Restricted License (see LICENSE). The rest of this file remains under the Apache
+ * License, Version 2.0, as stated above.
  */
 package ghidra;
 

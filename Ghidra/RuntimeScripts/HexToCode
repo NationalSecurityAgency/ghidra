@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+#  IP: HexToCode_License
+#
+#  HexToCode
+#  Copyright (c) 2026 Shmuel Sinay <g47ben@gmail.com>. All rights reserved.
+#  Licensed under the HexToCode Restricted License; see LICENSE.
+#
+# Starts HexToCode (same as ghidraRun).
+SCRIPT_FILE="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
+exec "$(dirname -- "$SCRIPT_FILE")/ghidraRun" "$@"

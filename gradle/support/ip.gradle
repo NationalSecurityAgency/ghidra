@@ -13,6 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+ * NOTICE: This file was modified from the original Ghidra source for HexToCode
+ * (2026): license text names HexToCode. The modifications are
+ * Copyright (c) 2026 Shmuel Sinay <g47ben@gmail.com>, licensed under the HexToCode
+ * Restricted License (see LICENSE). The rest of this file remains under the Apache
+ * License, Version 2.0.
+ */
 /*********************************************************************************
  * ip.gradle
  *
@@ -345,7 +352,9 @@ def addLicenseProlog(Project project, StringBuffer buf) {
 		buf.append("\nThe 3rd party files in this module are as follows:\n\n\n")
 	}
 	else {
-		buf.append("Ghidra software is released under the Apache 2.0 license. In addition, \n")
+		buf.append("HexToCode is Copyright (c) 2026 Shmuel Sinay <g47ben@gmail.com> and is released\n")
+		buf.append("under the HexToCode Restricted License (see LICENSE). It is based on Ghidra,\n")
+		buf.append("whose code is released under the Apache 2.0 license. In addition, \n")
 		buf.append("there are numerous 3rd party components that each have their \n")
 		buf.append("own license. The license file for each of these licenses can be found\n")
 		buf.append("in the licenses directory in the installation root directory.\n")

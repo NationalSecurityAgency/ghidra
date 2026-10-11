@@ -1,17 +1,12 @@
 /* ###
- * IP: GHIDRA
+ * IP: HexToCode_License
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * HexToCode
+ * Copyright (c) 2026 Shmuel Sinay <g47ben@gmail.com>. All rights reserved.
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Licensed under the HexToCode Restricted License; see the LICENSE file at the
+ * root of this distribution. You may not use, copy, modify or distribute this
+ * file except as that license allows.
  */
 package docking.i18n;
 
@@ -33,6 +28,7 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.TreeCellRenderer;
 
 import docking.widgets.label.GLabel;
+import ghidra.framework.Application;
 import ghidra.util.Msg;
 
 /**
@@ -77,6 +73,10 @@ public class UiTranslator {
 	private record PatternEntry(Pattern pattern, String template, boolean translateArg) {}
 	private static volatile boolean installed;
 	private static volatile boolean rightToLeft;
+
+	// The product name shown instead of "Ghidra" (the application.name property), or null
+	private static volatile String brand;
+	private static final Pattern GHIDRA_WORD = Pattern.compile("\\bGhidra\\b");
 	private static final Set<Window> HOOKED_WINDOWS =
 		Collections.newSetFromMap(new WeakHashMap<>());
 	private static final ThreadLocal<Boolean> UPDATING = ThreadLocal.withInitial(() -> false);
@@ -104,16 +104,16 @@ public class UiTranslator {
 			return;
 		}
 		String language = getLanguage();
-		if (language.isEmpty() || language.equals("en")) {
-			return;
+		if (!language.isEmpty() && !language.equals("en")) {
+			dictionary = loadDictionary(language);
 		}
-		dictionary = loadDictionary(language);
-		if (dictionary.isEmpty()) {
+		brand = findBrand();
+		if (dictionary.isEmpty() && brand == null) {
 			return;
 		}
 		installed = true;
-		rightToLeft = !ComponentOrientation.getOrientation(Locale.forLanguageTag(language))
-				.isLeftToRight();
+		rightToLeft = !dictionary.isEmpty() &&
+			!ComponentOrientation.getOrientation(Locale.forLanguageTag(language)).isLeftToRight();
 
 		Toolkit.getDefaultToolkit()
 				.addAWTEventListener(UiTranslator::eventDispatched,
@@ -124,6 +124,16 @@ public class UiTranslator {
 				translateTree(w);
 			}
 		});
+	}
+
+	private static String findBrand() {
+		try {
+			String name = Application.isInitialized() ? Application.getName() : null;
+			return name == null || name.isBlank() || name.equals("Ghidra") ? null : name;
+		}
+		catch (RuntimeException e) {
+			return null;
+		}
 	}
 
 	/**
@@ -147,6 +157,16 @@ public class UiTranslator {
 	 * @return the translated text
 	 */
 	public static String translate(String text) {
+		String result = doTranslate(text);
+		String name = brand;
+		if (name != null && result != null && result.contains("Ghidra")) {
+			// the product is shown under its own name; "GhidraScript" etc. are left alone
+			result = GHIDRA_WORD.matcher(result).replaceAll(name);
+		}
+		return result;
+	}
+
+	private static String doTranslate(String text) {
 		Map<String, String> dict = dictionary;
 		if (text == null || text.isEmpty() || dict.isEmpty()) {
 			return text;

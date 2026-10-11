@@ -13,6 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+ * NOTICE: This file was modified from the original Ghidra source for HexToCode
+ * (2026): distribution name is hextocode. The modifications are
+ * Copyright (c) 2026 Shmuel Sinay <g47ben@gmail.com>, licensed under the HexToCode
+ * Restricted License (see LICENSE). The rest of this file remains under the Apache
+ * License, Version 2.0.
+ */
 /*****************************************************************************************
  *
  * Reads the Ghidra/application.properties file and sets properties for the version, 
@@ -29,7 +36,7 @@ file("Ghidra/application.properties").withReader { reader ->
 	project.ext.GRADLE_MIN = ghidraProps.getProperty('application.gradle.min')
 	project.ext.GRADLE_MAX = ghidraProps.getProperty('application.gradle.max')
 	project.ext.PYTHON_SUPPORTED = ghidraProps.getProperty('application.python.supported')
-	project.ext.DISTRO_PREFIX = "ghidra_${version}_${RELEASE_NAME}"
+	project.ext.DISTRO_PREFIX = "hextocode_${version}_${RELEASE_NAME}"
 	
 	// Build dates may or may not be already present in the application.properties file.
 	// If they are not present, we will set the dates so Gradle can use them, and we will

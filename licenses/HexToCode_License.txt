@@ -1,0 +1,138 @@
+HexToCode – רישיון שימוש מוגבל / Restricted License
+=====================================================
+
+Copyright (c) 2026 Shmuel Sinay (שמואל סיני) <g47ben@gmail.com>
+All rights reserved. כל הזכויות שמורות.
+
+The English text below is the binding version. A Hebrew summary follows it.
+הנוסח האנגלי שלהלן הוא הנוסח המחייב. אחריו מופיע תקציר בעברית.
+
+
+1. DEFINITIONS
+
+"Software" means HexToCode, in source and binary form, including its
+documentation, images and translations.
+
+"Author Material" means every part of the Software created by or for Shmuel
+Sinay, including without limitation: the HexToCode name and logo; the Hebrew user
+interface (docking.i18n.UiTranslator and the i18n dictionaries); the AIAssistant
+extension (Ghidra/Extensions/AIAssistant); all modifications made to third-party
+source files; and the selection, arrangement and compilation of the Software as a
+whole.
+
+"Third-Party Components" means the parts of the Software that come from other
+authors, as listed in section 6.
+
+
+2. OWNERSHIP
+
+The Author Material is owned by Shmuel Sinay and is protected by copyright and
+other intellectual property laws. No ownership is transferred by this license.
+
+
+3. LIMITED PERMISSION
+
+Subject to full compliance with this license, you are granted a personal,
+non-exclusive, non-transferable, non-sublicensable, revocable permission to
+download, install and run unmodified copies of official releases of the Software
+obtained from the author's official distribution channels, for your own use.
+
+No other right is granted, by implication, estoppel or otherwise.
+
+
+4. RESTRICTIONS
+
+Except where the license of a Third-Party Component expressly allows it for that
+component only, you may not, without the prior written permission of Shmuel Sinay:
+
+  a. copy the Author Material, except as strictly necessary to run the Software;
+  b. modify, translate, adapt or create derivative works of the Author Material;
+  c. distribute, publish, share, sell, rent, lease, lend or sublicense the
+     Software or any part of the Author Material, including forks or mirrors
+     outside the platform that hosts the official repository;
+  d. use the Author Material, or any part of it, in another product or service;
+  e. offer the Software, or any part of the Author Material, as a hosted or
+     online service;
+  f. remove, alter or obscure any copyright, license, attribution or
+     notice text, including this file and the NOTICE file;
+  g. use the HexToCode name or logo, or the author's name, to identify any
+     other product, or to suggest endorsement.
+
+Any use outside this license automatically ends your permission under section 3.
+
+
+5. HOSTING PLATFORMS
+
+Where the Software is published in a public repository, the hosting platform's
+terms of service may give its users limited rights (for example, to view or fork
+the repository on that platform). Those rights exist only to the extent the
+platform's terms require, and do not extend to any use outside the platform.
+
+
+6. THIRD-PARTY COMPONENTS
+
+The Software is based on Ghidra and includes other open source software. These
+components are NOT covered by sections 3–4 of this license. Each remains under its
+own license, and nothing in this license limits the rights that license gives you
+for that component:
+
+  - Ghidra (by the National Security Agency and contributors): Apache License,
+    Version 2.0. See licenses/Ghidra_Apache_License_2.0.txt and the NOTICE file.
+    Portions created by U.S. Government employees are not subject to copyright
+    in the United States.
+  - Components in the GPL directory: their GPL or LGPL license (see GPL/licenses).
+  - Other bundled libraries (for example the Anthropic Java SDK, Jackson, OkHttp,
+    Kotlin): their own licenses, listed in each module's Module.manifest and
+    found in the licenses directory.
+
+"Ghidra" is a name used by the U.S. National Security Agency. HexToCode is an
+independent product. It is not affiliated with, or endorsed by, the NSA or by any
+AI service provider whose service it can connect to.
+
+
+7. AI SERVICES
+
+The Software can send data to third-party AI services chosen and configured by
+the user. Use of those services is subject to their own terms. The author is not
+responsible for those services or for the data you send to them.
+
+
+8. NO WARRANTY
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE AND NON-INFRINGEMENT. RESULTS PRODUCED BY THE SOFTWARE OR BY ANY AI
+SERVICE MAY BE WRONG.
+
+
+9. LIMITATION OF LIABILITY
+
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE AUTHOR SHALL NOT BE LIABLE FOR ANY
+DAMAGES ARISING FROM THE USE OF, OR INABILITY TO USE, THE SOFTWARE.
+
+
+10. GOVERNING LAW
+
+This license is governed by the laws of the State of Israel. The competent courts
+in Israel have exclusive jurisdiction.
+
+
+11. CONTACT
+
+Permission requests: Shmuel Sinay <g47ben@gmail.com>
+
+
+-----------------------------------------------------------------------------
+תקציר בעברית (לנוחות בלבד)
+
+* כל הזכויות בחומרים של HexToCode שמורות לשמואל סיני (g47ben@gmail.com).
+  החומרים האלה הם: השם והלוגו, הממשק בעברית, עוזר ה-AI, כל השינויים בקוד, והאוסף
+  כולו.
+* מותר רק להוריד, להתקין ולהריץ גרסאות רשמיות ולא משונות, לשימוש עצמי.
+* בלי אישור בכתב אסור להעתיק, לשנות, להפיץ, למכור, להשכיר, לפרסם, להציע כשירות,
+  לשלב במוצר אחר או להסיר הודעות זכויות יוצרים.
+* רכיבי צד שלישי לא נכללים בהגבלות האלה, וכל אחד מהם נשאר תחת הרישיון שלו: קוד
+  Ghidra תחת Apache 2.0, רכיבי GPL תחת GPL, וספריות אחרות לפי הרישיונות שלהן.
+* HexToCode אינו קשור ל-NSA או לספקי ה-AI, ולא מקבל מהם חסות.
+* התוכנה ניתנת "כמו שהיא", בלי אחריות.
+* הדין החל: הדין הישראלי.

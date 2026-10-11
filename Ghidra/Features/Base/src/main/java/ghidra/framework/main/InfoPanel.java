@@ -13,6 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+ * NOTICE: This file was modified from the original Ghidra source for HexToCode
+ * (2026): shows the HexToCode splash image. The modifications are
+ * Copyright (c) 2026 Shmuel Sinay <g47ben@gmail.com>, licensed under the HexToCode
+ * Restricted License (see LICENSE). The rest of this file remains under the Apache
+ * License, Version 2.0.
+ */
 package ghidra.framework.main;
 
 import java.awt.*;
@@ -43,7 +50,7 @@ class InfoPanel extends JPanel {
 
 	private final static String SPLASH_FILENAME = "splash.txt";
 	private final static String CLOUD_REV_FILENAME = "images/cloudbarReversed.jpg";
-	private final static String GHIDRA_FILENAME = "images/GHIDRA_Splash.png";
+	private final static String GHIDRA_FILENAME = "images/HexToCode_Splash.png";
 	private final static String CLOUD_FILENAME = "images/cloudbar.jpg";
 
 	private static final String FONT_ID = "font.splash.infopanel";

@@ -13,6 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+ * NOTICE: This file was modified from the original Ghidra source for HexToCode
+ * (2026): window titles use the product name. The modifications are
+ * Copyright (c) 2026 Shmuel Sinay <g47ben@gmail.com>, licensed under the HexToCode
+ * Restricted License (see LICENSE). The rest of this file remains under the Apache
+ * License, Version 2.0.
+ */
 package ghidra.framework.main;
 
 import java.awt.Image;
@@ -50,12 +57,12 @@ public class GhidraApplicationInformationDisplayFactory
 
 	@Override
 	protected String doCreateSplashScreenTitle() {
-		return "Welcome To Ghidra";
+		return "Welcome To " + ghidra.framework.Application.getName();
 	}
 
 	@Override
 	protected String doCreateAboutTitle() {
-		return "About Ghidra";
+		return "About " + ghidra.framework.Application.getName();
 	}
 
 	@Override

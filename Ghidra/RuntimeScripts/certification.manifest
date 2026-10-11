@@ -2,6 +2,8 @@
 ##MODULE IP: Apache License 2.0
 ##MODULE IP: Copyright Distribution Permitted
 ##MODULE IP: Public Domain
+HexToCode||HexToCode_License||||END|
+HexToCode.bat||HexToCode_License||||END|
 ghidraRun||GHIDRA||||END|
 server/certTool||GHIDRA||||END|
 server/ghidraSvr||GHIDRA||||END|
