@@ -17,14 +17,22 @@ Copyright (c) 2026 שמואל סיני (Shmuel Sinay) <g47ben@gmail.com>. כל �
   * ספקים: Anthropic Claude, Google AI Studio (Gemini), וכל שירות שתואם ל-OpenAI
     (OpenAI, OpenRouter, DeepSeek, Ollama, LM Studio ועוד).
 
-## התקנה
+## הורדה והתקנה
 
-1. התקן Java (JDK) גרסה 25, למשל מ-https://adoptium.net
-2. הורד את `HexToCode-<גרסה>.zip` ופתח אותו.
-3. הפעל את `HexToCode.bat` (Windows) או את `HexToCode` (Linux/macOS).
-4. לעוזר ה-AI: עריכה > אפשרויות הכלי > עוזר AI, ובחר ספק והדבק מפתח API.
+יש שני סוגי הורדות:
 
-אפשר לוודא שהקובץ תקין לפי קובץ ה-`.sha256` שמצורף.
+| קובץ | למי | צריך Java? |
+|---|---|---|
+| `HexToCode-<גרסה>-windows-with-java.zip` | Windows | **לא**, Java כלולה בפנים |
+| `HexToCode-<גרסה>-linux-with-java.zip` | Linux | **לא**, Java כלולה בפנים |
+| `HexToCode-<גרסה>-macos-with-java.zip` | macOS | **לא**, Java כלולה בפנים |
+| `HexToCode-<גרסה>.zip` | כל המערכות, קובץ קטן יותר | כן, JDK 25 ([Adoptium](https://adoptium.net)) |
+
+1. הורד את הקובץ המתאים ופתח אותו לתיקייה.
+2. הפעל את `HexToCode.bat` (Windows) או את `./HexToCode` (Linux/macOS).
+3. לעוזר ה-AI: עריכה > אפשרויות הכלי > עוזר AI. בחר ספק והדבק מפתח API.
+
+אפשר לוודא שההורדה תקינה לפי הקובץ `HexToCode-<גרסה>.sha256`.
 
 ## רישיון
 
@@ -37,6 +45,6 @@ HexToCode אינו קשור ל-NSA או לספקי ה-AI, ולא מקבל מהם
 ---
 
 **English:** HexToCode is a Hebrew-language reverse engineering tool with a built-in AI
-assistant, based on Ghidra. Requires JDK 25. Run `HexToCode.bat` (Windows) or `HexToCode`
-(Linux/macOS). Licensed under the HexToCode Restricted License (see LICENSE); Ghidra and
+assistant, based on Ghidra. The `-with-java` packages include Java; the all-platform package
+requires JDK 25. Run `HexToCode.bat` (Windows) or `HexToCode` (Linux/macOS). Licensed under the HexToCode Restricted License (see LICENSE); Ghidra and
 other third-party components keep their own licenses.

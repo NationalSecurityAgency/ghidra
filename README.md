@@ -51,9 +51,14 @@
 
 ## התקנה
 
-1. התקן **Java (JDK) גרסה 25, 64 ביט**, למשל מ-[Adoptium](https://adoptium.net).
-2. הורד את `HexToCode-<גרסה>.zip` מ[דף ההורדות](https://github.com/shmuel-sinay/HexToCode/releases) ופתח אותו לתיקייה.
-3. הפעל:
+ב[דף ההורדות](https://github.com/shmuel-sinay/HexToCode/releases) יש שני סוגי קבצים:
+
+* **עם Java בפנים, הכי פשוט:** `HexToCode-<גרסה>-windows-with-java.zip`, או הגרסאות ל-`linux` ול-`macos`. לא צריך להתקין שום דבר נוסף.
+* **בלי Java, קובץ קטן יותר לכל המערכות:** `HexToCode-<גרסה>.zip`. צריך להתקין קודם **Java (JDK) גרסה 25, 64 ביט**, למשל מ-[Adoptium](https://adoptium.net).
+
+אחרי ההורדה:
+1. פתח את הקובץ לתיקייה.
+2. הפעל:
    * **Windows:** `HexToCode.bat`
    * **Linux / macOS:** `./HexToCode`
 
