@@ -1,160 +1,111 @@
+<div dir="rtl">
+
+<p align="center"><img src="Ghidra/Features/Base/src/main/resources/images/HexToCode_Splash.png" width="320" alt="HexToCode"></p>
+
 # HexToCode
 
-**HexToCode** – a reverse engineering tool with a Hebrew user interface and a built-in AI assistant,
-based on Ghidra. Copyright (c) 2026 Shmuel Sinay <g47ben@gmail.com>. All rights reserved;
-see [LICENSE](LICENSE) and [HEBREW.md](HEBREW.md) (בעברית).
+**HexToCode** הוא כלי להנדסה לאחור (Reverse Engineering) של תוכנות מחשב, עם **ממשק מלא בעברית** ו**עוזר AI מובנה**.
+הכלי מבוסס על [Ghidra](https://github.com/NationalSecurityAgency/ghidra).
 
-HexToCode is not affiliated with or endorsed by the NSA. The original Ghidra README follows.
+במקום לחטט שעות בקוד, אפשר פשוט לשאול: *"איפה נבדקת הסיסמה?"*, *"מה גורם להודעת השגיאה הזו?"*, *"איזה חלק בתוכנה אחראי על המנויים?"*. העוזר חוקר את הקובץ בעצמו, עונה בעברית ומעביר אותך למקום הנכון בקוד.
 
----
+**[⬇️ להורדת הגרסה האחרונה](https://github.com/shmuel-sinay/HexToCode/releases)**
 
-<img src="Ghidra/Features/Base/src/main/resources/images/GHIDRA_3.png" width="400">
+## במה זה שונה מ-Ghidra?
 
-# Ghidra Software Reverse Engineering Framework
-Ghidra is a software reverse engineering (SRE) framework created and maintained by the 
-[National Security Agency][nsa] Research Directorate. This framework includes a suite of 
-full-featured, high-end software analysis tools that enable users to analyze compiled code on a 
-variety of platforms including Windows, macOS, and Linux. Capabilities include disassembly, 
-assembly, decompilation, graphing, and scripting, along with hundreds of other features. Ghidra 
-supports a wide variety of processor instruction sets and executable formats and can be run in both 
-user-interactive and automated modes. Users may also develop their own Ghidra extension components 
-and/or scripts using Java or Python.
+| | Ghidra | HexToCode |
+|---|---|---|
+| כל יכולות ההנדסה לאחור של Ghidra | ✅ | ✅ |
+| ממשק בעברית, מימין לשמאל | – | ✅ |
+| עוזר AI מובנה (בלי להתקין תוספים) | – | ✅ |
+| שאלות ותשובות בעברית על הקוד | – | ✅ |
+| תיעוד אוטומטי של כל הפונקציות בעברית | – | ✅ |
+| המלצות על קוד מת ועריכה באישור המשתמש | – | ✅ |
 
-In support of NSA's Cybersecurity mission, Ghidra was built to solve scaling and teaming problems 
-on complex SRE efforts, and to provide a customizable and extensible SRE research platform. NSA has 
-applied Ghidra SRE capabilities to a variety of problems that involve analyzing malicious code and 
-generating deep insights for SRE analysts who seek a better understanding of potential 
-vulnerabilities in networks and systems.
+## יכולות
 
-If you are a U.S. citizen interested in projects like this, to develop Ghidra and other 
-cybersecurity tools for NSA to help protect our nation and its allies, consider applying for a 
-[career with us][career].
+### הבסיס: Ghidra
+* דה-קומפילציה מאסמבלי לקוד C קריא
+* תמיכה בארכיטקטורות רבות: x86/x64, ARM/AArch64, MIPS, PowerPC, RISC-V ועוד
+* ניתוח קבצי PE (Windows), ELF (Linux), Mach-O (macOS) וקושחות
+* ניתוח אוטומטי: זיהוי פונקציות, מחרוזות, סמלים והפניות צולבות
+* גרפים של זרימת קוד ושל קריאות בין פונקציות
+* עריכת סוגי נתונים ומבנים, Patching ברמת הבתים והפקודות
+* דיבאגר, וסקריפטים ב-Java וב-Python
 
-## Security Warning
-**WARNING:** There are known security vulnerabilities within certain versions of Ghidra.  Before 
-proceeding, please read through Ghidra's [Security Advisories][security] for a better understanding 
-of how you might be impacted.
+### ממשק בעברית
+* תפריטים, חלונות, כפתורים, הגדרות ותיאורי כלים בעברית. התפריטים מוצגים מימין לשמאל.
+* מידע מהקובץ שמנתחים (שמות פונקציות, כתובות, מחרוזות) נשאר כמו שהוא ולא מתורגם.
+* אפשר לחזור לאנגלית בכל רגע. הפרטים ב-[HEBREW.md](HEBREW.md).
 
-## Install
-To install an official pre-built multi-platform Ghidra release:  
-* Install [JDK 25 64-bit][jdk]
-* Download a Ghidra [release file][releases]
-  - **NOTE:** The official multi-platform release file is named 
-    `ghidra_<version>_<release>_<date>.zip` which can be found under the "Assets" drop-down.
-    Downloading either of the files named "Source Code" is not correct for this step.
-* Extract the Ghidra release file
-  - **NOTE:** Do not extract on top of an existing installation
-* Launch Ghidra: `./ghidraRun` (`ghidraRun.bat` for Windows)
-  - or launch [PyGhidra][pyghidra]: `./support/pyghidraRun` (`support\pyghidraRun.bat` for Windows)
+### עוזר AI (חלון > עוזר AI)
+* **שאלות בעברית:** העוזר מחפש פונקציות, מחרוזות וסמלים, עוקב אחרי הפניות ואחרי מי קורא למי, מפענח לקוד C ומנווט אותך למקום שמצא. בזמן העבודה הוא מציג כל צעד שהוא עושה.
+* **הסבר פונקציה** ו**הצעת שמות** לפונקציה שבה נמצא הסמן.
+* **זיהוי קוד מת:** פונקציות שאף אחד לא קורא להן, והמלצות מה אפשר למחוק או לנטרל.
+* **עריכה באישורך:** שינוי שמות, חתימות, הערות בעברית, תוויות, Patch ומחיקת פונקציות. כל שינוי מוצג לאישור, ואפשר לבטל אותו עם Ctrl+Z.
+* **"תעד הכל בעברית":** כותב הערה בעברית מעל כל פונקציה.
+* **ייצוא:** קובץ מתוקן שאפשר להריץ מיד, או את כל התוכנית כקוד C.
+* **ספקים:** Anthropic Claude, Google AI Studio (Gemini), OpenAI, וכל שירות שתואם ל-OpenAI (OpenRouter, DeepSeek ועוד). אפשר גם להשתמש ב**מודל מקומי** (Ollama, LM Studio), וכך הקוד לא יוצא מהמחשב שלך.
 
-For additional information and troubleshooting tips about installing and running a Ghidra release, 
-please refer to the [Getting Started][gettingstarted] document which can be found at the root of a 
-Ghidra installation directory. 
+פירוט מלא: [Ghidra/Extensions/AIAssistant/README.md](Ghidra/Extensions/AIAssistant/README.md).
 
-## Build
-[![Build Ghidra][build-ghidra-badge]][build-ghidra-action]
+## התקנה
 
-To create the latest development build for your platform from this source repository:
+1. התקן **Java (JDK) גרסה 25, 64 ביט**, למשל מ-[Adoptium](https://adoptium.net).
+2. הורד את `HexToCode-<גרסה>.zip` מ[דף ההורדות](https://github.com/shmuel-sinay/HexToCode/releases) ופתח אותו לתיקייה.
+3. הפעל:
+   * **Windows:** `HexToCode.bat`
+   * **Linux / macOS:** `./HexToCode`
 
-##### Install build tools:
-* [JDK 25 64-bit][jdk]
-* [Gradle 9.1.0+][gradle] (or provided Gradle wrapper if Internet connection is available)
-* [Python3][python3] (version 3.9 to 3.14) with bundled pip
-* GCC or Clang, and make (Linux/macOS-only)
-* [Microsoft Visual Studio][vs] 2017+ or [Microsoft C++ Build Tools][vcbuildtools] with the
-  following components installed (Windows-only):
-  - MSVC
-  - Windows SDK
-  - C++ ATL
+אפשר לוודא שההורדה תקינה לפי קובץ ה-`.sha256` שמצורף.
 
-##### Download and extract the source:
-[Download from GitHub][master]
-```
-unzip ghidra-master
-cd ghidra-master
-```
-**NOTE:** Instead of downloading the compressed source, you may instead want to clone the GitHub 
-repository: `git clone https://github.com/NationalSecurityAgency/ghidra.git`
+## הגדרת עוזר ה-AI
 
-##### Download additional build dependencies into source repository:
-**NOTE:** If an Internet connection is available and you did not install Gradle, the 
-`./gradlew` (or `gradlew.bat`) command may be used in place of the `gradle` command in the following
-instructions.
+1. פתח קובץ לניתוח: **קובץ > ייבא קובץ**. אחר כך פתח אותו בדפדפן הקוד ואשר את הניתוח האוטומטי.
+2. **עריכה > אפשרויות הכלי > עוזר AI**:
+   * בחר **ספק AI**.
+   * הדבק **מפתח API**. אפשר גם להגדיר משתנה סביבה במקום: `ANTHROPIC_API_KEY`, `GEMINI_API_KEY` או `OPENAI_API_KEY`.
+   * לשרת מקומי: בחר "OpenAI / שרת תואם OpenAI" וכתוב את הכתובת, למשל `http://localhost:11434/v1` ל-Ollama. לשרת מקומי לא צריך מפתח.
+3. **חלון > עוזר AI**, ושאל.
 
-```
+| ספק | מאיפה מקבלים מפתח |
+|---|---|
+| Claude | [console.anthropic.com](https://console.anthropic.com) |
+| Gemini | [aistudio.google.com](https://aistudio.google.com/apikey) |
+| OpenAI | [platform.openai.com](https://platform.openai.com/api-keys) |
+
+> **שים לב:** אם משתמשים בשירות AI בענן, הקוד שמנתחים נשלח לשרתים שלו. לקבצים רגישים עדיף להשתמש במודל מקומי.
+
+## בנייה מקוד המקור
+
+נדרשים: JDK 25 ו-Gradle 9.1 ומעלה.
+
+```bash
 gradle -I gradle/support/fetchDependencies.gradle
-```
-
-##### Create development build: 
-```
 gradle buildGhidra
 ```
-The compressed development build will be located at `build/dist/`.
 
-For more detailed information on building Ghidra, please read the [Developer's Guide][devguide].
+קובץ ההפצה ייווצר בתיקייה `build/dist`. הוראות מפורטות יותר נמצאות ב-[README-Ghidra.md](README-Ghidra.md).
 
-For issues building, please check the [Known Issues][known-issues] section for possible solutions.
+כדי לפרסם מהדורה חדשה, דוחפים תג `v*` (למשל `v1.1.0`), או מפעילים את **Actions > Release HexToCode > Run workflow**. GitHub בונה את התוכנה ל-Windows, ל-Linux ול-macOS ומפרסם את המהדורה.
 
-## Develop
+## רישיון וזכויות יוצרים
 
-### User Scripts and Extensions
-Ghidra installations support users writing custom scripts and extensions via the *GhidraDev* plugin 
-for Eclipse.  The plugin and its corresponding instructions can be found within a Ghidra release at
-`Extensions/Eclipse/GhidraDev/` or at [this link][ghidradev].  Alternatively, Visual Studio Code may
-be used to edit scripts by clicking the Visual Studio Code icon in the Script Manager.
-Fully-featured Visual Studio Code projects can be created from a Ghidra CodeBrowser window at 
-_Tools -> Create VSCode Module project_.
+**Copyright © 2026 שמואל סיני (Shmuel Sinay) &lt;g47ben@gmail.com&gt;. כל הזכויות שמורות.**
 
-**NOTE:** Both the *GhidraDev* plugin for Eclipse and Visual Studio Code integrations only support 
-developing against fully built Ghidra installations which can be downloaded from the
-[Releases][releases] page.
+* HexToCode מופץ תחת **רישיון שימוש מוגבל**, שמפורט בקובץ [LICENSE](LICENSE). מותר להוריד, להתקין ולהריץ גרסאות רשמיות לשימוש עצמי. כל שימוש אחר, כמו הפצה, שינוי או שימוש מסחרי, דורש אישור בכתב.
+* קוד Ghidra המקורי נשאר תחת רישיון Apache 2.0, ורכיבי צד שלישי נשארים תחת הרישיונות שלהם. ראה [NOTICE](NOTICE) ואת התיקייה [licenses](licenses).
+* HexToCode אינו קשור ל-NSA או לספקי ה-AI, ולא מקבל מהם חסות.
 
-### Advanced Development
-To develop the Ghidra tool itself, it is highly recommended to use Eclipse, which the Ghidra 
-development process has been highly customized for.
+## אחריות ושימוש מותר
 
-##### Install build and development tools:
-* Follow the above [build instructions](#build) so the build completes without errors
-* Install [Eclipse IDE for Java Developers][eclipse]
+התוכנה ניתנת "כמו שהיא" (AS IS), בלי אחריות מכל סוג. המפתח אינו אחראי לכל נזק או שימוש לרעה.
+השימוש בתוכנה מותר רק לפי החוק ולפי תנאי הרישיון של התוכנות שמנתחים. תשובות של עוזר ה-AI עלולות להיות שגויות, ולכן חשוב לבדוק אותן.
 
-##### Prepare the development environment:
-``` 
-gradle prepdev eclipse buildNatives
-```
+## יצירת קשר
 
-##### Import Ghidra projects into Eclipse:
-* *File* -> *Import...*
-* *General* | *Existing Projects into Workspace*
-* Select root directory to be your downloaded or cloned ghidra source repository
-* Check *Search for nested projects*
-* Click *Finish*
+הצעות, באגים ופידבק: דרך [Issues](https://github.com/shmuel-sinay/HexToCode/issues), או במייל g47ben@gmail.com.
 
-When Eclipse finishes building the projects, Ghidra can be launched and debugged with the provided
-**Ghidra** Eclipse *run configuration*.
+אם הפרויקט עזר לך, אשמח ל-⭐ במאגר!
 
-For more detailed information on developing Ghidra, please read the [Developer's Guide][devguide].
-
-## Contribute
-If you would like to contribute bug fixes, improvements, and new features back to Ghidra, please 
-take a look at our [Contributor's Guide][contrib] to see how you can participate in this open 
-source project.
-
-[build-ghidra-action]: https://github.com/NationalSecurityAgency/ghidra/actions/workflows/build-ghidra.yml
-[build-ghidra-badge]: https://github.com/NationalSecurityAgency/ghidra/actions/workflows/build-ghidra.yml/badge.svg
-[nsa]: https://www.nsa.gov
-[contrib]: CONTRIBUTING.md
-[devguide]: DevGuide.md
-[gettingstarted]: GhidraDocs/GettingStarted.md
-[known-issues]: DevGuide.md#known-issues
-[career]: https://www.intelligencecareers.gov/nsa
-[releases]: https://github.com/NationalSecurityAgency/ghidra/releases
-[jdk]: https://adoptium.net/temurin/releases
-[gradle]: https://gradle.org/releases/
-[python3]: https://www.python.org/downloads/
-[vs]: https://visualstudio.microsoft.com/vs/community/
-[vcbuildtools]: https://visualstudio.microsoft.com/visual-cpp-build-tools/
-[eclipse]: https://www.eclipse.org/downloads/packages/
-[master]: https://github.com/NationalSecurityAgency/ghidra/archive/refs/heads/master.zip
-[security]: https://github.com/NationalSecurityAgency/ghidra/security/advisories
-[ghidradev]: GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/README.md
-[pyghidra]: Ghidra/Features/PyGhidra/README.md
+</div>
