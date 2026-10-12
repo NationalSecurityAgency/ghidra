@@ -137,19 +137,14 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 	 */
 	private boolean isPeOrNe(ByteProvider provider) {
 		try {
-			new PortableExecutable(provider, SectionLayout.FILE, false, false);
-			return true;
+			PortableExecutable pe =
+				new PortableExecutable(provider, SectionLayout.FILE, false, false);
+			return pe.getNTHeader() != null ||
+				new NewExecutable(provider, null).getWindowsHeader() != null;
 		}
 		catch (IOException e) {
-			try {
-				new NewExecutable(provider, null);
-				return true;
-			}
-			catch (IOException e2) {
-				// fall through
-			}
+			return false;
 		}
-		return false;
 	}
 
 	/**
