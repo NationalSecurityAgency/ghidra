@@ -55,7 +55,10 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 
 	private final static String ENTRY_NAME = "entry";
 	private final static int INITIAL_SEGMENT_VAL = 0x1000;
-	private final static int FAR_RETURN_OPCODE = 0xCB;
+	private final static int PARAGRAPH_SIZE = 0x10;
+	private final static int FAR_CALL_OPCODE = 0x9a;
+	private final static int FAR_RETURN_OPCODE = 0xcb;
+	private final static int FAR_JUMP_OPCODE = 0xea;
 	private final static byte MOVW_DS_OPCODE = (byte) 0xba;
 	private static final long MIN_BYTE_LENGTH = 4;
 
@@ -103,7 +106,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 			Set<RelocationFixup> relocationFixups = getRelocationFixups(space, mz, log, monitor);
 
 			processMemoryBlocks(program, fileBytes, space, mz, relocationFixups, log, monitor);
-			adjustSegmentStarts(program, monitor);
+			adjustSegmentStarts(program, mz, relocationFixups, monitor);
 			processRelocations(program, space, mz, relocationFixups, log, monitor);
 			processEntryPoint(program, space, mz, log, monitor);
 			processRegisters(program, mz, log, monitor);
@@ -309,52 +312,109 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 		}
 	}
 
-	private void adjustSegmentStarts(Program program, TaskMonitor monitor) throws Exception {
+	/**
+	 * Moves bytes at the start of each segment's block that belong to the previous segment to the
+	 * previous block. The cut goes after the last FAR RETURN in the block's first paragraph, but
+	 * not past the segment's lowest far CALL/JMP target; if that target lies in the paragraph and
+	 * no FAR RETURN precedes it, the cut goes at the target.
+	 *
+	 * @param program The program
+	 * @param mz The {@link MzExecutable}
+	 * @param relocationFixups The relocation fixups
+	 * @param monitor A monitor
+	 * @throws Exception If a block could not be split or joined
+	 */
+	private void adjustSegmentStarts(Program program, MzExecutable mz,
+			Set<RelocationFixup> relocationFixups, TaskMonitor monitor) throws Exception {
 		monitor.setMessage("Adjusting segments...");
 
 		if (!program.hasExclusiveAccess()) {
 			return;
 		}
 
+		Map<Integer, Integer> farTargets = getFarTargets(mz, relocationFixups);
 		Memory memory = program.getMemory();
 		MemoryBlock[] blocks = memory.getBlocks();
 
 		for (int i = 1; i < blocks.length; i++) {
 			monitor.checkCancelled();
 			MemoryBlock block = blocks[i];
-			if (!block.isInitialized()) {
+			if (!block.isInitialized() ||
+				!(block.getStart() instanceof SegmentedAddress start)) {
 				continue;
 			}
-			//scan the first 0x10 bytes of this block
-			//if a FAR RETURN exists, then move that code
-			//to the preceding block...
-			int mIndex = 15;
-			if (block.getSize() <= 16) {
-				mIndex = (int) block.getSize() - 2;
+			int farTarget = farTargets.getOrDefault(start.getSegment(), PARAGRAPH_SIZE);
+			int limit = Math.min(farTarget, PARAGRAPH_SIZE);
+			int cut = farReturnEnd(block, limit);
+			if (cut == 0 && limit < PARAGRAPH_SIZE) {
+				cut = limit;
 			}
-			for (; mIndex >= 0; mIndex--) {
-				monitor.checkCancelled();
-				Address offAddr = block.getStart().add(mIndex);
-				int val = block.getByte(offAddr);
-				val &= 0xff;
-				if (val == FAR_RETURN_OPCODE) {
-					// split here and join to previous
-					Address splitAddr = offAddr.add(1);
-					String oldName = block.getName();
-					String oldSourceName = block.getSourceName();
-					memory.split(block, splitAddr);
-					memory.join(blocks[i - 1], blocks[i]);
-					blocks = memory.getBlocks();
-					blocks[i].setName(oldName);
-					blocks[i].setSourceName(oldSourceName);
-					break;
-				}
+			if (cut == 0 || cut >= block.getSize()) {
+				continue;
 			}
+			// split here and join to previous
+			String oldName = block.getName();
+			String oldSourceName = block.getSourceName();
+			memory.split(block, start.add(cut));
+			memory.join(blocks[i - 1], blocks[i]);
+			blocks = memory.getBlocks();
+			blocks[i].setName(oldName);
+			blocks[i].setSourceName(oldSourceName);
 		}
 
 		// Recreate the Program Tree since it may now be out of sync
 		program.getListing().removeTree(TreeManager.DEFAULT_TREE_NAME);
 		program.getListing().createRootModule(TreeManager.DEFAULT_TREE_NAME);
+	}
+
+	/**
+	 * {@return the lowest far CALL/JMP (ptr16:16) target offset in each relocated segment}
+	 *
+	 * @param mz The {@link MzExecutable}
+	 * @param relocationFixups The relocation fixups
+	 */
+	private Map<Integer, Integer> getFarTargets(MzExecutable mz,
+			Set<RelocationFixup> relocationFixups) {
+		Map<Integer, Integer> farTargets = new HashMap<>();
+		BinaryReader reader = mz.getBinaryReader();
+		int imageStart = paragraphsToBytes(Short.toUnsignedInt(mz.getHeader().e_cparhdr()));
+		for (RelocationFixup fixup : relocationFixups) {
+			// the opcode (9a/ea), then the 2-byte target offset, precede the relocated segment word
+			int opcodeOffset = fixup.fileOffset() - 3;
+			if (!fixup.valid() || opcodeOffset < imageStart) {
+				continue;
+			}
+			try {
+				int opcode = reader.readUnsignedByte(opcodeOffset);
+				if (opcode == FAR_CALL_OPCODE || opcode == FAR_JUMP_OPCODE) {
+					farTargets.merge(fixup.segment(), reader.readUnsignedShort(opcodeOffset + 1),
+						Math::min);
+				}
+			}
+			catch (IOException e) {
+				// not readable, so no evidence
+			}
+		}
+		return farTargets;
+	}
+
+	/**
+	 * {@return the offset just past the last FAR RETURN in the first {@code limit} bytes of the
+	 * block, leaving at least one byte in the block, or 0 if there is none}
+	 *
+	 * @param block The block
+	 * @param limit How many bytes to scan
+	 * @throws MemoryAccessException If the block's bytes cannot be read
+	 */
+	private int farReturnEnd(MemoryBlock block, int limit) throws MemoryAccessException {
+		int last = (int) Math.min(limit, block.getSize() - 1) - 1;
+		for (int index = last; index >= 0; index--) {
+			int val = block.getByte(block.getStart().add(index)) & 0xff;
+			if (val == FAR_RETURN_OPCODE) {
+				return index + 1;
+			}
+		}
+		return 0;
 	}
 
 	private void processRelocations(Program program, SegmentedAddressSpace space, MzExecutable mz,
