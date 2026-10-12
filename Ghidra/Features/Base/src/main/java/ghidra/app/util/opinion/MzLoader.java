@@ -512,6 +512,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 		Register sp = context.getRegister("sp");
 		Register ds = context.getRegister("ds");
 		Register cs = context.getRegister("cs");
+		Register cseg = context.getRegister("cseg");
 
 		try {
 			context.setValue(sp, entry.getAddress(), entry.getAddress(),
@@ -532,13 +533,20 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 						.valueOf(Integer.toUnsignedLong(((SegmentedAddress) start).getSegment()));
 				
 				context.setValue(cs, start, end, csValue);
+				if (cseg != null) {
+					// a block may run past seg:FFFF, which this CS cannot reach
+					int reach = 0x10000 - ((SegmentedAddress) start).getSegmentOffset();
+					Address csegEnd = start.add(Math.min(block.getSize(), reach) - 1);
+					context.setValue(cseg, start, csegEnd, csValue);
+				}
 				if (shouldSetDS) {
 					context.setValue(ds, start, end, BigInteger.valueOf(dsValue));
 				}
 			}
 		}
 		catch (ContextChangeException e) {
-			// ignore since segment registers should never cause this error
+			// only a context register write over an instruction throws; cs and ds are
+			// plain registers, and the loader has created no instructions for cseg to hit
 		}
 	}
 
