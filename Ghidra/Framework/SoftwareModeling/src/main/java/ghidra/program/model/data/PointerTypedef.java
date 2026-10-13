@@ -283,7 +283,7 @@ public class PointerTypedef extends GenericDataType implements TypeDef {
 	public PointerTypedef copy(DataTypeManager dtm) {
 		Pointer ptrType = (Pointer) getDataType();
 		String n = isAutoNamed ? null : getName();
-		PointerTypedef td = new PointerTypedef(n, ptrType, getDataTypeManager());
+		PointerTypedef td = new PointerTypedef(n, ptrType, dtm);
 		TypedefDataType.copyTypeDefSettings(this, td, false);
 		return td;
 	}
