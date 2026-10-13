@@ -24,6 +24,7 @@ import java.util.*;
 
 import docking.widgets.OptionDialog;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
+import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.client.ClientUtil;
@@ -32,6 +33,7 @@ import ghidra.framework.main.DataTreeDialog;
 import ghidra.framework.main.SaveDataDialog;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.model.dtarchive.ProjectDataTypeArchive;
 import ghidra.program.model.listing.Program;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
@@ -117,9 +119,16 @@ class ProgramSaveManager {
 	}
 
 	/**
-	 * Saves all programs that have changes
+	 * Returns whether an open project datatype archive has unsaved changes
 	 *
 	 */
+	boolean hasUnsavedProjectArchives() {
+		DataTypeManagerService service = tool.getService(DataTypeManagerService.class);
+		return service != null && service.getDataTypeArchives().stream()
+			.anyMatch(archive -> archive instanceof ProjectDataTypeArchive && archive.isChanged());
+	}
+
+	/** Saves all changed programs and project datatype archives. */
 	public void saveChangedPrograms() {
 		int saveCnt = 0;
 		int unsavedCnt = 0;
@@ -135,13 +144,48 @@ class ProgramSaveManager {
 				}
 			}
 		}
-		if (saveCnt != 0) {
-			Msg.showInfo(getClass(), tool.getToolFrame(), "Save All...",
-				"Saved " + saveCnt + " modified programs.");
+		int archiveSaveCnt = 0;
+		int archiveUnsavedCnt = 0;
+		DataTypeManagerService service = tool.getService(DataTypeManagerService.class);
+		if (service != null) {
+			// Take a snapshot because a save can invoke modal prompts and flush open editors.
+			List<ProjectDataTypeArchive> archives = service.getDataTypeArchives().stream()
+				.filter(ProjectDataTypeArchive.class::isInstance)
+				.map(ProjectDataTypeArchive.class::cast)
+				.toList();
+			for (ProjectDataTypeArchive archive : archives) {
+				if (!archive.isChanged()) {
+					continue;
+				}
+				if (archive.canSave() && service.saveArchive(archive) && !archive.isChanged()) {
+					++archiveSaveCnt;
+				}
+				else {
+					++archiveUnsavedCnt;
+				}
+			}
+		}
+		if (saveCnt != 0 || archiveSaveCnt != 0) {
+			String message;
+			if (saveCnt == 0) {
+				message = "Saved " + archiveSaveCnt + " modified data type archives.";
+			}
+			else if (archiveSaveCnt == 0) {
+				message = "Saved " + saveCnt + " modified programs.";
+			}
+			else {
+				message = "Saved " + saveCnt + " modified programs and " + archiveSaveCnt +
+					" modified data type archives.";
+			}
+			Msg.showInfo(getClass(), tool.getToolFrame(), "Save All...", message);
 		}
 		if (unsavedCnt != 0) {
 			Msg.showWarn(getClass(), tool.getToolFrame(), "Save All...",
 				"Unable to save " + unsavedCnt + " read-only programs!");
+		}
+		if (archiveUnsavedCnt != 0) {
+			Msg.showWarn(getClass(), tool.getToolFrame(), "Save All...",
+				"Unable to save " + archiveUnsavedCnt + " modified data type archives.");
 		}
 	}
 

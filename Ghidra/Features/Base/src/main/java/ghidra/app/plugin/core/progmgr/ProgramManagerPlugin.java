@@ -550,9 +550,10 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 
 		DockingAction saveAllAction = new ActionBuilder("Save All Files", getName())
 				.menuPath(ToolConstants.MENU_FILE, "Save All")
-				.description("Save All Programs")
+				.description("Save All Programs and Project Data Type Archives")
 				.menuGroup(SAVE_GROUP, Integer.toString(subMenuGroup++))
-				.enabledWhen(c -> programMgr.hasUnsavedPrograms())
+				.enabledWhen(c -> programMgr.hasUnsavedPrograms() ||
+					programSaveMgr.hasUnsavedProjectArchives())
 				.onAction(c -> programSaveMgr.saveChangedPrograms())
 				.buildAndInstall(tool);
 		saveAllAction.addToWindowWhen(ProgramActionContext.class);

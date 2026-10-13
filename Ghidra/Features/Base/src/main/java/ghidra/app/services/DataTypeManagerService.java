@@ -23,6 +23,7 @@ import javax.swing.tree.TreePath;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.framework.plugintool.ServiceInfo;
 import ghidra.program.model.data.*;
+import ghidra.program.model.dtarchive.PersistentDataTypeArchive;
 import ghidra.util.HelpLocation;
 
 /**
@@ -37,6 +38,17 @@ import ghidra.util.HelpLocation;
 )
 //@formatter:on
 public interface DataTypeManagerService extends DataTypeQueryService, DataTypeArchiveService {
+
+	/**
+	 * Saves an open archive using this service's user interface, including any prompts
+	 * needed to stop or roll back an active modification before saving.
+	 * @param archive the open archive to save
+	 * @return true if the archive has no unsaved changes after the operation; false if
+	 * saving is unsupported, cancelled, declined, or unsuccessful
+	 */
+	public default boolean saveArchive(PersistentDataTypeArchive archive) {
+		return false;
+	}
 
 	/**
 	 * Get the data types marked as favorites that will show up on

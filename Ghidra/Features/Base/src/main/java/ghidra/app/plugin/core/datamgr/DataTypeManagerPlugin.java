@@ -900,6 +900,12 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	}
 
 	@Override
+	public boolean saveArchive(PersistentDataTypeArchive archive) {
+		archiveManager.save(archive);
+		return !archive.isChanged();
+	}
+
+	@Override
 	public void closeArchive(DataTypeManager dtm) {
 		DataTypeStore dataStore = dtm.getDataStore();
 		if (dataStore instanceof PersistentDataTypeArchive archive) {
