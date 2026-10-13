@@ -137,16 +137,14 @@ public class SparseImageDecompressor {
 	private void processSkipChunk(int blocks, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		long length = (long) blocks * blockSize;
-		if (length > bufferSize) {
-			byte[] bytes = new byte[bufferSize];
-			for (int i = 0; i < length / bufferSize; i++) {
-				monitor.checkCancelled();
-				tempFos.write(bytes);
-			}
+		byte[] bytes = new byte[(int) Math.min(length, bufferSize)];
+		while (length > 0) {
+			monitor.checkCancelled();
+			int bytesToWrite = (int) Math.min(length, bytes.length);
+			crc.update(bytes, 0, bytesToWrite);
+			tempFos.write(bytes, 0, bytesToWrite);
+			length -= bytesToWrite;
 		}
-		int size = (int) length % bufferSize;
-		byte[] bytes = new byte[size];
-		tempFos.write(bytes);
 	}
 
 	/**
@@ -185,8 +183,8 @@ public class SparseImageDecompressor {
 		int fillBufferSize = (int) Math.min(length, bufferSize);
 		byte[] fillBuffer = new byte[fillBufferSize];
 
-		byte[] srcPattern = { (byte) (fillInt >> 24), (byte) (fillInt >> 16), (byte) (fillInt >> 8),
-			(byte) (fillInt & 0xff) };
+		byte[] srcPattern = { (byte) fillInt, (byte) (fillInt >> 8), (byte) (fillInt >> 16),
+			(byte) (fillInt >> 24) };
 		fillArray(srcPattern, fillBuffer);
 
 		while (length > 0) {
