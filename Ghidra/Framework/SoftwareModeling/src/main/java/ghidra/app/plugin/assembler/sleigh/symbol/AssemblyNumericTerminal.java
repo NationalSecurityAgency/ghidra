@@ -132,7 +132,7 @@ public class AssemblyNumericTerminal extends AssemblyTerminal {
 		int b = s;
 		while (b < buffer.length()) {
 			char c = buffer.charAt(b);
-			if (Character.isJavaIdentifierPart(c)) {
+			if (Character.isJavaIdentifierPart(c) || c == '.') {
 				b++;
 				continue;
 			}
