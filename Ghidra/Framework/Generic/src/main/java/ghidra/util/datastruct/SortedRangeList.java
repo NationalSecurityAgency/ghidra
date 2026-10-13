@@ -55,7 +55,7 @@ public class SortedRangeList implements Iterable<Range> {
 		SortedSet<Range> headSet = set.headSet(key);
 		if (!headSet.isEmpty()) {
 			Range last = headSet.last();
-			if (min <= last.max + 1) {
+			if (min <= (long) last.max + 1) {
 				last.max = Math.max(last.max, max);
 				coalesce(last, set.tailSet(key).iterator());
 				return;
@@ -68,7 +68,7 @@ public class SortedRangeList implements Iterable<Range> {
 		}
 		Iterator<Range> it = ss.iterator();
 		Range first = it.next();
-		if (max < first.min - 1) {
+		if (max < (long) first.min - 1) {
 			set.add(new Range(min, max));
 			return;
 		}
@@ -174,7 +174,7 @@ public class SortedRangeList implements Iterable<Range> {
 	void coalesce(Range range, Iterator<Range> it) {
 		while (it.hasNext()) {
 			Range next = it.next();
-			if (next.min > range.max + 1) {
+			if (next.min > (long) range.max + 1) {
 				break;
 			}
 			range.max = Math.max(range.max, next.max);
