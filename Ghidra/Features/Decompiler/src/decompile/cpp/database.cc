@@ -2936,8 +2936,9 @@ void ScopeInternal::decode(Decoder &decoder)
     decoder.closeElement(subId);
     rangeequalssymbols = true;
   }
-  subId = decoder.openElement(ELEM_SYMBOLLIST);
+  subId = decoder.peekElement();
   if (subId != 0) {
+    subId = decoder.openElement(ELEM_SYMBOLLIST);
     for(;;) {
       uint4 symId = decoder.peekElement();
       if (symId == 0) break;
