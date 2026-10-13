@@ -106,6 +106,11 @@ class GhidraClassDB implements GhidraClass {
 		return symbol.getName(includeNamespacePath);
 	}
 
+	@Override
+	public int hashCode() {
+		return symbol.hashCode();
+	}
+
 	/**
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
