@@ -712,6 +712,19 @@ public class CParser {
 		}
     }
     
+    private long getEnumConstantValue(Object obj, long defaultValue) {
+        if (obj instanceof Long) {
+            return ((Long) obj).longValue();
+        }
+        if (obj instanceof Integer) {
+            return ((Integer) obj).longValue();
+        }
+        if (obj instanceof Character) {
+            return ((Character) obj).charValue();
+        }
+        return defaultValue;
+    }
+
     private Integer getConstantValue (Object obj, int defaultValue) {
         int value = defaultValue;
         
@@ -2308,7 +2321,7 @@ DataType EnumSpecifier() : {
 }
 
 ArrayList<EnumMember> EnumeratorList() : {
-    int value= 0;
+    long value= 0;
     ArrayList<EnumMember> list= new ArrayList<EnumMember>();
 }
 {
@@ -2323,28 +2336,21 @@ ArrayList<EnumMember> EnumeratorList() : {
     }
 }
 
-int Enumerator(ArrayList<EnumMember> list, int value) : {
+long Enumerator(ArrayList<EnumMember> list, long value) : {
     Token t = null;
     Object obj = null;
-    Integer evalue;
 }
 {
     t = <IDENTIFIER> [ "=" obj = ConstantExpression() ] 
     {
-        evalue = getConstantValue(obj,value);
-        if (evalue != null) {
-            value = evalue;
-        }
+        value = getEnumConstantValue(obj, value);
         list.add(new EnumMember(t.image, value));
         return value;
     }
     |
     t = <INTEGER_LITERAL> [ "=" obj = ConstantExpression() ]
     {
-        evalue = getConstantValue(obj,value);
-        if (evalue != null) {
-            value = evalue;
-        }
+        value = getEnumConstantValue(obj, value);
         list.add(new EnumMember(t.image, value));
         return value;
     }
