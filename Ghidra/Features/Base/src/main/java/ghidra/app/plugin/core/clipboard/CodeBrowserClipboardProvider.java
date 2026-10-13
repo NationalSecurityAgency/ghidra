@@ -1033,11 +1033,11 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 
 		private static String combine(String[] text) {
 			StringBuilder buildy = new StringBuilder();
-			for (String string : text) {
-				if (buildy.length() > 0) {
+			for (int i = 0; i < text.length; i++) {
+				if (i > 0) {
 					buildy.append('\n');
 				}
-				buildy.append(string);
+				buildy.append(text[i]);
 			}
 			return buildy.toString();
 		}
