@@ -122,8 +122,11 @@ public class ExtraStack extends AssignAction {
 		// We assign the stack address (but ignore the actual address) updating the status for the stack,
 		// which consumes the stack resources.
 		ParameterPieces unused = new ParameterPieces();
-		status[grp] =
-			stackEntry.getAddrBySlot(status[grp], dt.getLength(), dt.getAlignment(), unused);
+		int next = stackEntry.getAllocationAddrBySlot(status[grp], dt.getLength(), dt.getAlignment(), unused);
+		if (stackEntry.isUnboundedAllocation() && next < 0) {
+			return FAIL;
+		}
+		status[grp] = next;
 		return SUCCESS;
 	}
 
