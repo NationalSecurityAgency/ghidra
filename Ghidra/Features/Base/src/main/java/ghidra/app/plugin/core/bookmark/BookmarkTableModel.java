@@ -43,6 +43,7 @@ class BookmarkTableModel extends AddressBasedTableModel<BookmarkRowObject> {
 	private BookmarkManager bookmarkMgr;
 	private Bookmark lastBookmark;
 	private Set<String> types = new HashSet<>();
+	private boolean hideAllTypes;
 	private PluginTool tool;
 
 	BookmarkTableModel(PluginTool tool, Program program) {
@@ -114,16 +115,17 @@ class BookmarkTableModel extends AddressBasedTableModel<BookmarkRowObject> {
 
 		BookmarkType[] programTypes = bookmarkMgr.getBookmarkTypes();
 		int allKnownTypesSize = programTypes.length;
-		return !types.isEmpty() && types.size() != allKnownTypesSize;
+		return types.size() != allKnownTypesSize;
 	}
 
 	FilterState getFilterState() {
-		return new FilterState(new HashSet<>(types));
+		return new FilterState(new HashSet<>(types), hideAllTypes);
 	}
 
 	void restoreFilterState(FilterState filterState) {
 		Set<String> newTypes = filterState.getBookmarkTypes();
 		types = newTypes;
+		hideAllTypes = filterState.isHidingAllTypes();
 	}
 
 	private void adjustTypeFilter(BookmarkType[] bmTypes) {
@@ -132,7 +134,7 @@ class BookmarkTableModel extends AddressBasedTableModel<BookmarkRowObject> {
 			defaultTypesSet.add(element.getTypeString());
 		}
 
-		if (types.isEmpty()) {
+		if (types.isEmpty() && !hideAllTypes) {
 			// no pre-existing types; use the program's types
 			types = defaultTypesSet;
 		}
@@ -170,6 +172,7 @@ class BookmarkTableModel extends AddressBasedTableModel<BookmarkRowObject> {
 
 	void showType(String type) {
 		types.add(type);
+		hideAllTypes = false;
 	}
 
 	boolean isShowingType(String type) {
@@ -178,6 +181,11 @@ class BookmarkTableModel extends AddressBasedTableModel<BookmarkRowObject> {
 
 	void hideAllTypes() {
 		types.clear();
+		hideAllTypes = true;
+	}
+
+	boolean isHidingAllTypes() {
+		return hideAllTypes;
 	}
 
 	public void typeAdded() {

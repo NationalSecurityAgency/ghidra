@@ -20,10 +20,16 @@ import java.util.Set;
 
 class FilterState {
 	private final Set<String> bookmarkTypes;
+	private final boolean hideAllTypes;
 
-	FilterState(Set<String> bookmarkTypes) {
+	FilterState(Set<String> bookmarkTypes, boolean hideAllTypes) {
 		this.bookmarkTypes = bookmarkTypes;
+		this.hideAllTypes = hideAllTypes;
 
+	}
+
+	boolean isHidingAllTypes() {
+		return hideAllTypes;
 	}
 
 	public Set<String> getBookmarkTypes() {

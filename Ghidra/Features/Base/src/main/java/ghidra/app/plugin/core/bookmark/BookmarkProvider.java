@@ -246,7 +246,7 @@ public class BookmarkProvider extends ComponentProviderAdapter {
 	}
 
 	private void loadBookmarkTypes(String[] names) {
-		if (names == null || names.length == 0) {
+		if (names == null) {
 			return;
 		}
 
@@ -261,6 +261,10 @@ public class BookmarkProvider extends ComponentProviderAdapter {
 	public void writeConfigState(SaveState saveState) {
 		// save the selected filters
 		Collection<String> allTypes = model.getAllTypes();
+		if (allTypes.isEmpty() && !model.isHidingAllTypes()) {
+			saveState.remove(BOOKMARK_TYPES_ELEMENT_NAME);
+			return;
+		}
 		List<String> showingTypes = new ArrayList<>();
 		for (String bookmarkType : allTypes) {
 			showingTypes.add(bookmarkType);
