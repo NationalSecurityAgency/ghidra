@@ -396,18 +396,21 @@ InjectPayload *PcodeInjectLibrarySleigh::decodeDynamic(Decoder &decoder)
   int4 id = getPayloadId(type,name);
   if (id < 0 || id >= injection.size())
     throw DecoderError("Invalid dynamic injection");
-  InjectPayload *oldPayload = injection[id];
-  InjectPayload *newPayload;
-  if (oldPayload->getType() == InjectPayload::EXECUTABLEPCODE_TYPE) {
-    newPayload = new ExecutablePcodeDynamic(glb,oldPayload);
+  InjectPayload *payload = injection[id];
+  if (!payload->isDynamic()) {
+    InjectPayload *newPayload;
+    if (payload->getType() == InjectPayload::EXECUTABLEPCODE_TYPE) {
+      newPayload = new ExecutablePcodeDynamic(glb,payload);
+    }
+    else
+      newPayload = new InjectPayloadDynamic(glb,payload);
+    injection[id] = newPayload;
+    delete payload;
+    payload = newPayload;
   }
-  else
-    newPayload = new InjectPayloadDynamic(glb,oldPayload);
-  injection[id] = newPayload;
-  delete oldPayload;
-  newPayload->decode(decoder);
+  payload->decode(decoder);
   decoder.closeElement(subId);
-  return newPayload;
+  return payload;
 }
 
 /// \brief Convert SLEIGH syntax to p-code templates for the given InjectPayload
