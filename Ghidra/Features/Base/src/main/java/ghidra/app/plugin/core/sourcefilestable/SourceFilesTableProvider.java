@@ -273,6 +273,7 @@ public class SourceFilesTableProvider extends ComponentProviderAdapter {
 				.description("Edit the transform")
 				.helpLocation(new HelpLocation(sourceFilesTablePlugin.getName(), "Edit_Transform"))
 				.withContext(TransformTableActionContext.class)
+				.enabledWhen(c -> c.getSelectedRowCount() == 1)
 				.onAction(c -> editTransform())
 				.buildAndInstallLocal(this);
 
