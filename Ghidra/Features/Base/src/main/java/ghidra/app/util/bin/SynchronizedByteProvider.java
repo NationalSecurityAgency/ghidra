@@ -65,6 +65,11 @@ public class SynchronizedByteProvider implements ByteProvider {
 	}
 
 	@Override
+	public synchronized boolean isValidRange(long startIndex, int count) {
+		return provider.isValidRange(startIndex, count);
+	}
+
+	@Override
 	public synchronized void close() throws IOException {
 		provider.close();
 	}

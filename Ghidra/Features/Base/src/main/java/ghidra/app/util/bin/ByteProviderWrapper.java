@@ -109,7 +109,13 @@ public class ByteProviderWrapper implements ByteProvider {
 
 	@Override
 	public boolean isValidIndex(long index) {
-		return (0 <= index && index < subLength) && provider.isValidIndex(subOffset + index);
+		return ByteProvider.super.isValidIndex(index) && provider.isValidIndex(subOffset + index);
+	}
+
+	@Override
+	public boolean isValidRange(long startIndex, int count) {
+		return ByteProvider.super.isValidRange(startIndex, count) &&
+			provider.isValidRange(subOffset + startIndex, count);
 	}
 
 	@Override

@@ -88,7 +88,28 @@ public interface ByteProvider extends Closeable {
 	 * @param index the index in the byte provider to check
 	 * @return true if the specified index is valid
 	 */
-	boolean isValidIndex(long index);
+	default boolean isValidIndex(long index) {
+		// Note: this default implementation can not correctly handle ByteProviders that use the
+		// full uint64 index range (because length() can not be accurate).  Override and provide
+		// a custom implementation.
+		return Long.compareUnsigned(index, length()) < 0;
+	}
+
+	/**
+	 * Returns true if the specified range is valid.
+	 * 
+	 * @param startIndex the starting index to check
+	 * @param count the number of bytes to check
+	 * @return boolean true if all bytes between startIndex to startIndex+count (exclusive) are 
+	 * valid
+	 */
+	default boolean isValidRange(long startIndex, int count) {
+		// Note: this default implementation can not correctly handle ByteProviders that use the
+		// full uint64 index range (because length() can not be accurate).  Override and provide
+		// a custom implementation.
+		return count >= 0 && isValidIndex(startIndex) &&
+			Long.compareUnsigned(startIndex + count, length()) <= 0;
+	}
 
 	/**
 	 * Releases any resources the {@link ByteProvider} may have occupied

@@ -134,11 +134,6 @@ public class RangeMappedByteProvider implements ByteProvider {
 	}
 
 	@Override
-	public boolean isValidIndex(long index) {
-		return 0 <= index && index < length;
-	}
-
-	@Override
 	public void close() throws IOException {
 		// do not close wrapped delegate ByteProvider
 	}
