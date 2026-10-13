@@ -94,19 +94,19 @@ class CommentTableModel extends AddressBasedTableModel<CommentRowObject> {
 				continue;
 			}
 
-			if (cu.getComment(CommentType.PRE) != null) {
+			if (listing.getComment(CommentType.PRE, commentAddr) != null) {
 				accumulator.add(new CommentRowObject(commentAddr, CommentType.PRE));
 			}
-			if (cu.getComment(CommentType.POST) != null) {
+			if (listing.getComment(CommentType.POST, commentAddr) != null) {
 				accumulator.add(new CommentRowObject(commentAddr, CommentType.POST));
 			}
-			if (cu.getComment(CommentType.EOL) != null) {
+			if (listing.getComment(CommentType.EOL, commentAddr) != null) {
 				accumulator.add(new CommentRowObject(commentAddr, CommentType.EOL));
 			}
-			if (cu.getComment(CommentType.PLATE) != null) {
+			if (listing.getComment(CommentType.PLATE, commentAddr) != null) {
 				accumulator.add(new CommentRowObject(commentAddr, CommentType.PLATE));
 			}
-			if (cu.getComment(CommentType.REPEATABLE) != null) {
+			if (listing.getComment(CommentType.REPEATABLE, commentAddr) != null) {
 				accumulator.add(new CommentRowObject(commentAddr, CommentType.REPEATABLE));
 			}
 		}
