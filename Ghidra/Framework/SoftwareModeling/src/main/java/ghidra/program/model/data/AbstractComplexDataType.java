@@ -19,6 +19,8 @@ import java.math.BigDecimal;
 
 import generic.complex.Complex;
 import ghidra.docking.settings.Settings;
+import ghidra.pcode.floatformat.BigFloat;
+import ghidra.pcode.floatformat.FloatFormatFactory;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.WrappedMemBuffer;
 
@@ -98,6 +100,10 @@ public abstract class AbstractComplexDataType extends BuiltIn {
 	}
 
 	private static double toDouble(Object obj) {
+		if (obj instanceof BigFloat) {
+			return Double.longBitsToDouble(
+				FloatFormatFactory.getFloatFormat(8).getEncoding((BigFloat) obj).longValue());
+		}
 		if (obj instanceof Double) {
 			return (Double) obj;
 		}
@@ -121,7 +127,7 @@ public abstract class AbstractComplexDataType extends BuiltIn {
 		MemBuffer wrp = new WrappedMemBuffer(buf, length / 2);
 		Object b = floatType.getValue(wrp, settings, length / 2);
 
-		return new Complex(toDouble(a), toDouble(b));
+		return a != null && b != null ? new Complex(toDouble(a), toDouble(b)) : null;
 	}
 
 	@Override
