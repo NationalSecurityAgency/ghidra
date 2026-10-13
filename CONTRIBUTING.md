@@ -37,7 +37,7 @@ first, consider the following tips to ensure a smooth process when submitting a 
 
 - If using "AI" to assist in development, please apply extra scrutiny to its suggestions, in terms
   of both correctness and adherence to our [legal](#legal) requirements. **Do not** include
-  AI-generated unit tests with your pull request.
+  AI-generated unit tests or an Architecture Decision Record (ADR) with your pull request.
 
 - Limit your patches to the smallest reasonable change to achieve your intended goal. For example, 
   do not make unnecessary indentation changes; but don't go out of your way to make the patch so 
