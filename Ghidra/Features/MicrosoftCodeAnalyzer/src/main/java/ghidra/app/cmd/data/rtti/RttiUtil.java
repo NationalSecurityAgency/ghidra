@@ -456,23 +456,25 @@ public class RttiUtil {
 		SymbolTable symbolTable = program.getSymbolTable();
 		Namespace typeinfoNamespace =
 			symbolTable.getNamespace(TYPE_INFO_NAMESPACE, program.getGlobalNamespace());
-		Symbol vftableSymbol =
-			symbolTable.getLocalVariableSymbol("vftable", typeinfoNamespace);
-		if (vftableSymbol != null) {
-			return vftableSymbol.getAddress();
+		if (typeinfoNamespace == null) {
+			return null;
 		}
 
-		vftableSymbol = symbolTable.getLocalVariableSymbol("`vftable'", typeinfoNamespace);
-		if (vftableSymbol != null) {
-			return vftableSymbol.getAddress();
+		Address vftableAddress = null;
+		for (String name : new String[] { "vftable", "`vftable'", "type_info" }) {
+			for (Symbol symbol : symbolTable.getLabelOrFunctionSymbols(name, typeinfoNamespace)) {
+				if (symbol.getSymbolType() != SymbolType.LABEL ||
+					!symbol.getAddress().isMemoryAddress()) {
+					continue;
+				}
+				Address address = symbol.getAddress();
+				if (vftableAddress != null && !vftableAddress.equals(address)) {
+					return null;
+				}
+				vftableAddress = address;
+			}
 		}
-
-		vftableSymbol = symbolTable.getLocalVariableSymbol("type_info", typeinfoNamespace);
-		if (vftableSymbol != null) {
-			return vftableSymbol.getAddress();
-		}
-
-		return null;
+		return vftableAddress;
 	}
 
 	/**
