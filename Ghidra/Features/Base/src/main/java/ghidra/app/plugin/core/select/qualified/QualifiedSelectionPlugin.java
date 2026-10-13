@@ -130,6 +130,9 @@ public class QualifiedSelectionPlugin extends Plugin {
 	 */
 	private void selectUndefined(TaskMonitor taskMonitor, NavigatableActionContext context) {
 		AddressSet undefAddressSet = getUndefined(taskMonitor, context);
+		if (taskMonitor.isCancelled()) {
+			return;
+		}
 		ProgramSelection selection = new ProgramSelection(undefAddressSet);
 		NavigationUtils.setSelection(tool, context.getNavigatable(), selection);
 	}
@@ -141,6 +144,9 @@ public class QualifiedSelectionPlugin extends Plugin {
 	 */
 	private void selectInstructions(TaskMonitor taskMonitor, NavigatableActionContext context) {
 		AddressSet instrAddressSet = getInstructions(context, getStartSet(context), taskMonitor);
+		if (taskMonitor.isCancelled()) {
+			return;
+		}
 		ProgramSelection selection = new ProgramSelection(instrAddressSet);
 		NavigationUtils.setSelection(tool, context.getNavigatable(), selection);
 	}
@@ -152,6 +158,9 @@ public class QualifiedSelectionPlugin extends Plugin {
 	 */
 	private void selectData(TaskMonitor taskMonitor, NavigatableActionContext context) {
 		AddressSet dataAddressSet = getDefinedData(context, getStartSet(context), taskMonitor);
+		if (taskMonitor.isCancelled()) {
+			return;
+		}
 		ProgramSelection selection = new ProgramSelection(dataAddressSet);
 		NavigationUtils.setSelection(tool, context.getNavigatable(), selection);
 	}
