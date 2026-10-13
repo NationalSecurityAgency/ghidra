@@ -106,7 +106,7 @@ public class SymbolPath implements Comparable<SymbolPath> {
 			parentPath = null;
 		}
 		else {
-			parentPath = new SymbolPath(parentNamespace.getSymbol());
+			parentPath = new SymbolPath(parentNamespace.getSymbol(), excludeLibrary);
 		}
 	}
 
