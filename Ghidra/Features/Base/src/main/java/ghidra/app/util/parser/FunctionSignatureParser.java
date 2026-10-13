@@ -111,9 +111,11 @@ public class FunctionSignatureParser {
 			dtmService.clearCache(); // clear datatype selection cache
 		}
 
+		String originalCallingConvention = null;
 		if (originalSignature != null) {
 			initDataTypeMap(originalSignature);
 			signatureText = cleanUpSignatureText(signatureText, originalSignature);
+			originalCallingConvention = originalSignature.getCallingConventionName();
 		}
 
 		String functionName = extractFunctionName(signatureText);
@@ -124,14 +126,17 @@ public class FunctionSignatureParser {
 		FunctionDefinitionDataType function =
 			new FunctionDefinitionDataType(name, destDataTypeManager);
 
-		boolean hasCallingConvention = false;
+		boolean hasParsedCallingConvention = false;
 		String callingConvention = extractCallingConvention(signatureText);
 		if (callingConvention != null) {
 			doSetCallingConvention(function, callingConvention);
-			hasCallingConvention = true;
+			hasParsedCallingConvention = true;
+		}
+		else {
+			doSetCallingConvention(function, originalCallingConvention);
 		}
 
-		DataType returnType = extractReturnType(signatureText, hasCallingConvention);
+		DataType returnType = extractReturnType(signatureText, hasParsedCallingConvention);
 		function.setReturnType(returnType);
 
 		ParameterDefinition[] args = extractArguments(signatureText);
