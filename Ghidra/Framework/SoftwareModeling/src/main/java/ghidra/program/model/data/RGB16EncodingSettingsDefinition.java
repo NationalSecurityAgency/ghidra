@@ -100,7 +100,7 @@ public class RGB16EncodingSettingsDefinition
 		for (int i = 0; i < choices.length; i++) {
 			if (choices[i].equals(encodingName)) {
 				setChoice(settings, i);
-				break;
+				return;
 			}
 		}
 		throw new AssertionError("Missing RGB Encoding choice: " + encoding);
