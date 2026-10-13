@@ -98,7 +98,7 @@ public class RGB16ColorDataType extends AbstractColorDataType {
 			case RGB_565:
 				argbValue = 0xff << 24; // Alpha (enabled)
 				argbValue |= scaleFieldValue(getFieldValue(value, 11, 0x1f), 5) << 16; // R
-				argbValue |= scaleFieldValue(getFieldValue(value, 6, 0x3f), 6) << 8; // G
+				argbValue |= scaleFieldValue(getFieldValue(value, 5, 0x3f), 6) << 8; // G
 				argbValue |= scaleFieldValue(getFieldValue(value, 0, 0x1f), 5); // B
 				break;
 			case RGB_555: {
@@ -142,7 +142,7 @@ public class RGB16ColorDataType extends AbstractColorDataType {
 		switch (rgbEncoding) {
 			case RGB_565:
 				list.add(new ComponentValue("R", getFieldValue(value, 11, 0x1f), 5));
-				list.add(new ComponentValue("G", getFieldValue(value, 6, 0x3f), 6));
+				list.add(new ComponentValue("G", getFieldValue(value, 5, 0x3f), 6));
 				list.add(new ComponentValue("B", getFieldValue(value, 0, 0x1f), 5));
 				break;
 			case RGB_555: {
