@@ -52,7 +52,7 @@ public class EnumValuePartitioner {
 
 		// now create a BitGroup for all bits not accounted for
 		int bits = size * 8;
-		long allEnumBits = ~(-1L << bits);
+		long allEnumBits = bits == Long.SIZE ? -1L : ~(-1L << bits);
 		long unusedBits = ~usedBits;
 		list.add(new BitGroup(unusedBits & allEnumBits));
 
