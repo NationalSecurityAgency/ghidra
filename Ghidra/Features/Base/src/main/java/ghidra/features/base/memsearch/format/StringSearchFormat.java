@@ -107,9 +107,8 @@ class StringSearchFormat extends SearchFormat {
 
 	private int bytesPerCharUTF8(byte zByte) {
 		// This method is intended for UTF-8 encoding.
-		// The first byte in a sequence of UTF-8 bytes can tell
-		// us how many bytes make up a char.
-		int offset = 1;
+		// The first byte in a sequence of UTF-8 bytes can tell us how many bytes make up a char.
+		int offset = 0;
 		// If the char is ascii, this loop will be skipped.
 		while ((zByte & 0x80) != 0x00) {
 			zByte <<= 1;
