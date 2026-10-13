@@ -98,38 +98,42 @@ def _setup_project(
     else:
         project_location.mkdir(exist_ok=True, parents=True)
         project = GhidraProject.createProject(project_location, project_name, False)      
-    if program_name is not None:
-        if project.getRootFolder().getFile(program_name):
-            program = project.openProgram("/", program_name, False)
+    try:
+        if program_name is not None:
+            if project.getRootFolder().getFile(program_name):
+                program = project.openProgram("/", program_name, False)
 
-    # NOTE: GhidraProject.importProgram behaves differently when a loader is provided
-    # loaderClass may not be null so we must use the correct method override
+        # NOTE: GhidraProject.importProgram behaves differently when a loader is provided
+        # loaderClass may not be null so we must use the correct method override
 
-    if binary_path is not None and program is None:
-        if language is None:
-            if loader is None:
-                program = project.importProgram(binary_path)
-            else:
-                program = project.importProgram(binary_path, loader)
-            if program is None:
-                raise RuntimeError(f"Ghidra failed to import '{binary_path}'. Try providing a language manually.")
-        else:
-            lang = _get_language(language)
-            comp = _get_compiler_spec(lang, compiler)
-            if loader is None:
-                program = project.importProgram(binary_path, lang, comp)
-            else:
-                program = project.importProgram(binary_path, loader, lang, comp)
-            if program is None:
-                message = f"Ghidra failed to import '{binary_path}'. "
-                if compiler:
-                    message += f"The provided language/compiler pair ({language} / {compiler}) may be invalid."
+        if binary_path is not None and program is None:
+            if language is None:
+                if loader is None:
+                    program = project.importProgram(binary_path)
                 else:
-                    message += f"The provided language ({language}) may be invalid."
-                raise ValueError(message)
-        project.saveAs(program, "/", program_name, True)
+                    program = project.importProgram(binary_path, loader)
+                if program is None:
+                    raise RuntimeError(f"Ghidra failed to import '{binary_path}'. Try providing a language manually.")
+            else:
+                lang = _get_language(language)
+                comp = _get_compiler_spec(lang, compiler)
+                if loader is None:
+                    program = project.importProgram(binary_path, lang, comp)
+                else:
+                    program = project.importProgram(binary_path, loader, lang, comp)
+                if program is None:
+                    message = f"Ghidra failed to import '{binary_path}'. "
+                    if compiler:
+                        message += f"The provided language/compiler pair ({language} / {compiler}) may be invalid."
+                    else:
+                        message += f"The provided language ({language}) may be invalid."
+                    raise ValueError(message)
+            project.saveAs(program, "/", program_name, True)
 
-    return project, program
+        return project, program
+    except:
+        project.close()
+        raise
 
 
 def _setup_script(project: "GhidraProject", program: "Program"):
