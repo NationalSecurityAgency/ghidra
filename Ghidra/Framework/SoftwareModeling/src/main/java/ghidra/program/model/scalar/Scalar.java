@@ -109,6 +109,9 @@ public class Scalar {
 	 * @return new BigInteger representation of the value
 	 */
 	public BigInteger getBigInteger() {
+		if (bitLength == 0) {
+			return BigInteger.ZERO;
+		}
 		int signum = (signed && testBit(bitLength - 1)) ? -1 : 1;
 
 		// Get magnitude
