@@ -3615,17 +3615,30 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		defaultListener.dataTypeMoved(this, oldDataTypePath, newDataTypePath);
 	}
 
-	protected void dataTypeNameChanged(DataType dt, String oldName) {
-		CategoryDB category = (CategoryDB) getCategory(dt.getCategoryPath());
-		category.dataTypeRenamed(dt, oldName);
-
+	/**
+	 * Move a renamed datatype to its new position within the name-sorted datatype list.
+	 * This must be invoked before the datatype's parents are notified of the name change
+	 * so that the renamed datatype is the only list entry which is out of order.
+	 * @param dt renamed datatype
+	 */
+	void sortedDataTypeRenamed(DataType dt) {
 		// we assume we have the write lock here
 		if (!lock.isWriteLockedByCurrentThread()) {
 			throw new AssertException("Attempted to modify sorted datatypes without write lock");
 		}
-		if (lazySortedDataTypes != null) {
-			Collections.sort(lazySortedDataTypes, nameComparator);
+		if (lazySortedDataTypes == null) {
+			return;
 		}
+		// the entry is still positioned by its old name, so it must be found by identity
+		if (lazySortedDataTypes.removeIf(sortedDt -> sortedDt == dt)) {
+			int index = Collections.binarySearch(lazySortedDataTypes, dt, nameComparator);
+			lazySortedDataTypes.add(index < 0 ? -index - 1 : index, dt);
+		}
+	}
+
+	protected void dataTypeNameChanged(DataType dt, String oldName) {
+		CategoryDB category = (CategoryDB) getCategory(dt.getCategoryPath());
+		category.dataTypeRenamed(dt, oldName);
 		updateLastChangeTime();
 		setDirtyFlag(dt);
 		defaultListener.dataTypeRenamed(this, new DataTypePath(dt.getCategoryPath(), oldName),
