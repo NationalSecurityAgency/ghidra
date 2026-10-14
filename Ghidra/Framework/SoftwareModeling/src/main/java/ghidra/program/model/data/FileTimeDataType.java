@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,8 +83,8 @@ public class FileTimeDataType extends BuiltIn {
 			long numMilliSeconds = numTicks / 10000;
 			long start = 0 - epochData.getTime();
 			Date date = new Date(numMilliSeconds - start);
-			long fractionalPartPlus1e8 = numTicks % 10000000 + 100000000;
-			String fractionalPart = Long.toString(fractionalPartPlus1e8).substring(1);
+			long fractionalPartPlus1e7 = numTicks % 10000000 + 10000000;
+			String fractionalPart = Long.toString(fractionalPartPlus1e7).substring(1);
 			return formatter.format(date) + "." + fractionalPart + " UTC";
 		}
 		catch (Exception e) {
