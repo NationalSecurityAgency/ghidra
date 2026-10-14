@@ -1,6 +1,6 @@
-MODULE FILE LICENSE: lib/jung-visualization-2.1.1.jar BSD-3-JUNG
-MODULE FILE LICENSE: lib/jung-algorithms-2.1.1.jar BSD-3-JUNG
-MODULE FILE LICENSE: lib/jung-api-2.1.1.jar BSD-3-JUNG
-MODULE FILE LICENSE: lib/jung-graph-impl-2.1.1.jar BSD-3-JUNG
-MODULE FILE LICENSE: lib/jgrapht-core-1.5.1.jar LGPL 2.1
-MODULE FILE LICENSE: lib/jgrapht-io-1.5.1.jar LGPL 2.1
+MODULE FILE INFO: lib/jung-visualization-2.1.1.jar 933ba26c2308c3bf4566c3828979b68ad7422724571712e5af0de876bdffa2ae BSD-3-JUNG
+MODULE FILE INFO: lib/jung-algorithms-2.1.1.jar ed138e2f6b2b2f13af61a13f1788bce6f1de8858c42ee70a7d41e6283937a30a BSD-3-JUNG
+MODULE FILE INFO: lib/jung-api-2.1.1.jar 6cb735963c36d5155d0de5f19a03485b9a26e67550e160b3dd89009a6f51694e BSD-3-JUNG
+MODULE FILE INFO: lib/jung-graph-impl-2.1.1.jar 4911da04d77b4f7bb465a65ae3cc3a000cae4d52b587911e3c0b4c4b643493c1 BSD-3-JUNG
+MODULE FILE INFO: lib/jgrapht-core-1.5.1.jar a4d810cb63e0a77a753d147094fea9dd42e82cfc57aa289f9f85229f26043bb4 LGPL 2.1
+MODULE FILE INFO: lib/jgrapht-io-1.5.1.jar 86c7fc66cc1907bfc26b366d4dd292cd0da286bde1fd088a11c0d9729d6dcc5c LGPL 2.1

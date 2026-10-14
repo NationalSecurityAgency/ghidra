@@ -1,7 +1,7 @@
 ##MODULE IP: Oxygen Icons - LGPL 3.0
-MODULE FILE LICENSE: postgresql-15.18.tar.gz Postgresql License
-MODULE FILE LICENSE: lib/postgresql-42.7.13.jar PostgresqlJDBC License
-MODULE FILE LICENSE: lib/commons-dbcp2-2.9.0.jar Apache License 2.0
-MODULE FILE LICENSE: lib/commons-pool2-2.11.1.jar Apache License 2.0
-MODULE FILE LICENSE: lib/commons-logging-1.2.jar Apache License 2.0
-MODULE FILE LICENSE: lib/h2-2.2.220.jar H2 Mozilla License 2.0
+MODULE FILE INFO: postgresql-15.18.tar.gz d32a533516edc688ebbb96ae221b605be2712edd94d7428b42a4af5644250943 Postgresql License
+MODULE FILE INFO: lib/postgresql-42.7.13.jar 6e0e4cc2d8cae902084f8a2b18728b073a6fd9d1f87c9d8bff8f298c18185b93 PostgresqlJDBC License
+MODULE FILE INFO: lib/commons-dbcp2-2.9.0.jar 887720912c5cbbcdff6e0e21d5034937555f8ffc597381eff8fa77f33ce6d64e Apache License 2.0
+MODULE FILE INFO: lib/commons-pool2-2.11.1.jar ea0505ee7515e58b1ac0e686e4d1a5d9f7d808e251a61bc371aa0595b9963f83 Apache License 2.0
+MODULE FILE INFO: lib/commons-logging-1.2.jar daddea1ea0be0f56978ab3006b8ac92834afeefbd9b7e4e6316fca57df0fa636 Apache License 2.0
+MODULE FILE INFO: lib/h2-2.2.220.jar 978ab863018d3f965e38880571c36293ea8b10a8086194159c4d5d20b50f0a57 H2 Mozilla License 2.0

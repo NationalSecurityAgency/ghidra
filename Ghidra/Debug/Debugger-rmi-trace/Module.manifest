@@ -1,4 +1,4 @@
-MODULE FILE LICENSE: pypkg/dist/protobuf-6.31.0-py3-none-any.whl BSD-3-GOOGLE
-MODULE FILE LICENSE: pypkg/dist/psutil-5.9.8.tar.gz BSD-3-PSUTIL
-MODULE FILE LICENSE: pypkg/dist/setuptools-80.9.0-py3-none-any.whl MIT
-MODULE FILE LICENSE: pypkg/dist/wheel-0.45.1-py3-none-any.whl MIT
+MODULE FILE INFO: pypkg/dist/protobuf-6.31.0-py3-none-any.whl 6ac2e82556e822c17a8d23aa1190bbc1d06efb9c261981da95c71c9da09e9e23 BSD-3-GOOGLE
+MODULE FILE INFO: pypkg/dist/psutil-5.9.8.tar.gz 6be126e3225486dff286a8fb9a06246a5253f4c7c53b475ea5f5ac934e64194c BSD-3-PSUTIL
+MODULE FILE INFO: pypkg/dist/setuptools-80.9.0-py3-none-any.whl 062d34222ad13e0cc312a4c02d73f059e86a4acbfbdea8f8f76b28c99f306922 MIT
+MODULE FILE INFO: pypkg/dist/wheel-0.45.1-py3-none-any.whl 708e7481cc80179af0e556bbf0cc00b8444c7321e2700b8d8580231d13017248 MIT

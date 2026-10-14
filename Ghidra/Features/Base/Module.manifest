@@ -1,7 +1,7 @@
-MODULE FILE LICENSE: lib/biz.aQute.bndlib-7.0.0.jar Apache License 2.0
-MODULE FILE LICENSE: lib/biz.aQute.bnd.util-7.0.0.jar Apache License 2.0
-MODULE FILE LICENSE: lib/slf4j-api-1.7.25.jar MIT
-MODULE FILE LICENSE: lib/slf4j-nop-1.7.25.jar MIT
-MODULE FILE LICENSE: lib/org.apache.felix.framework-7.0.5.jar Apache License 2.0
-MODULE FILE LICENSE: lib/org.osgi.util.promise-1.3.0.jar Apache License 2.0
-MODULE FILE LICENSE: lib/phidias-0.3.7.jar Apache License 2.0
+MODULE FILE INFO: lib/biz.aQute.bndlib-7.0.0.jar 80a569d006f32e925cee4ce8af926b7e6fdaaaab5ccbfd5fe4c9cdff9c4dd2df Apache License 2.0
+MODULE FILE INFO: lib/biz.aQute.bnd.util-7.0.0.jar 39575d150249962a9c6d46cce7e672e777c8a8620a1d2d220c7f2c0a799e7623 Apache License 2.0
+MODULE FILE INFO: lib/slf4j-api-1.7.25.jar 18c4a0095d5c1da6b817592e767bb23d29dd2f560ad74df75ff3961dbde25b79 MIT
+MODULE FILE INFO: lib/slf4j-nop-1.7.25.jar 6cb127138f41b5a869f9ecdd061ad17799a0e3fe7204600797154eb0432eeb12 MIT
+MODULE FILE INFO: lib/org.apache.felix.framework-7.0.5.jar aba72932c5ffe52d1ae9fb735415474bc8305fd04f050e851f3a8f67da1834fd Apache License 2.0
+MODULE FILE INFO: lib/org.osgi.util.promise-1.3.0.jar 7053c57e7d7d88fec6b90979a3af125e1d2bb847268a328a2f1ed65ad0a4c185 Apache License 2.0
+MODULE FILE INFO: lib/phidias-0.3.7.jar c8d0760ce3b0ed1453d435bcdd31e34f0be3ac09024e7e1a98b8a3cebf4a6bb5 Apache License 2.0
