@@ -741,11 +741,11 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		}
 		else {
 			glassPane.setVisible(false);
+			updateStatusText();
 			updateNameField();
 			updateCallingConventionCombo();
 			updatePreviewField();
 			updageVarArgs();
-			updateStatusText();
 			updateInLineCheckbox();
 			updateNoReturnCheckbox();
 			updateCallFixupCombo();
@@ -888,7 +888,8 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	private void updateStatusText() {
 		MessageType messageType = model.isValid() ? MessageType.WARNING : MessageType.ERROR;
 		messageType = model.isInParsingMode() ? MessageType.INFO : messageType;
-		setStatusText(model.getStatusText(), messageType);
+		String text = model.getStatusText();
+		setStatusText(text, messageType);
 	}
 
 	private void updageVarArgs() {
