@@ -48,17 +48,19 @@ public class SecureZipExtractor {
 	 * 
 	 * @param zipFile The zip {@link File} to extract
 	 * @param targetDir The directory to unzip to
+	 * @param maxFiles The maximum number of files that will be unzipped before an 
+	 *   {@link IOException} is thrown
 	 * @param monitor A cancellable {@link TaskMonitor}
 	 * @throws IOException if a zip slip, zip bomb, or other IO-related error occurred
 	 * @throws CancelledException if the operation was cancelled
 	 */
-	public static void extractSecurely(File zipFile, File targetDir, TaskMonitor monitor)
-			throws IOException, CancelledException {
+	public static void extractSecurely(File zipFile, File targetDir, int maxFiles,
+			TaskMonitor monitor) throws IOException, CancelledException {
+		int remaining = maxFiles;
 
 		try (ZipFile archive = ZipFile.builder().setFile(zipFile).get()) {
 			long total = 0;
 			Enumeration<ZipArchiveEntry> entries = archive.getEntries();
-
 			while (entries.hasMoreElements()) {
 				monitor.checkCancelled();
 
@@ -69,6 +71,11 @@ public class SecureZipExtractor {
 					outputFile.mkdirs();
 				}
 				else {
+					if (remaining-- <= 0) {
+						throw new IOException(
+							"Maximum number of extracted files (%d) has been exceeded!"
+									.formatted(maxFiles));
+					}
 					total += extractSecurely(archive, entry, outputFile.toPath(), total);
 				}
 			}

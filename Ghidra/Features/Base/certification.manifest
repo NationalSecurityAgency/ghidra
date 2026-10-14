@@ -263,6 +263,8 @@ src/main/help/help/topics/AutoAnalysisPlugin/images/AutoAnalysis.png||GHIDRA||||
 src/main/help/help/topics/AutoAnalysisPlugin/images/AutoAnalysisOptions.png||GHIDRA||||END|
 src/main/help/help/topics/AutoAnalysisPlugin/images/BackgroundAnalysisTasks.png||GHIDRA||||END|
 src/main/help/help/topics/AutoAnalysisPlugin/images/ProgramOptions.png||GHIDRA||||END|
+src/main/help/help/topics/BentoServicePlugin/BentoServicePlugin.html||GHIDRA||||END|
+src/main/help/help/topics/BentoServicePlugin/images/BentoServicePlugin.png||GHIDRA||||END|
 src/main/help/help/topics/BlockModel/Block_Model.htm||GHIDRA||||END|
 src/main/help/help/topics/BlockModel/images/BasicBlockCode.png||GHIDRA||||END|
 src/main/help/help/topics/BookmarkPlugin/Bookmarks.htm||GHIDRA||||END|

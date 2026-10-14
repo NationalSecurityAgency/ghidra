@@ -46,6 +46,18 @@ public class ExtensionUtils {
 	 */
 	private static final int ZIPFILE = 0x504b0304;
 
+	/**
+	 * The default maximum number of entries in an extension zip archive. Can be overriden with the
+	 * {@link #MAX_ZIP_ENTRIES_OVERRIDE_PROPERTY} property.
+	 */
+	private static final int MAX_ZIP_ENTRIES_DEFAULT = 3000;
+
+	/**
+	 * A property that is used to override the {@link #MAX_ZIP_ENTRIES_DEFAULT} value
+	 */
+	public static final String MAX_ZIP_ENTRIES_OVERRIDE_PROPERTY =
+		"ghidra.extensions.maxfiles.override";
+
 	public static String PROPERTIES_FILE_NAME = "extension.properties";
 	public static String PROPERTIES_FILE_NAME_UNINSTALLED = "extension.properties.uninstalled";
 
@@ -577,7 +589,9 @@ public class ExtensionUtils {
 		}
 
 		try {
-			SecureZipExtractor.extractSecurely(file, installDirRoot, monitor);
+			int max =
+				Integer.getInteger(MAX_ZIP_ENTRIES_OVERRIDE_PROPERTY, MAX_ZIP_ENTRIES_DEFAULT);
+			SecureZipExtractor.extractSecurely(file, installDirRoot, max, monitor);
 		}
 		catch (IOException e) {
 			if (!FileUtilities.deleteDir(destinationFolder)) {

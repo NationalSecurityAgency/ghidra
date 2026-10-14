@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -61,6 +61,34 @@ public class Msg {
 	 */
 	public static void out(Object message) {
 		System.err.println(message);
+	}
+
+	/**
+	 * Use this method to print temporary log messages that are not intended to be part of a source
+	 * code commit.  The messages will be output at the DEBUG log level.
+	 * 
+	 * @param originator
+	 *            a Logger instance, "this", or YourClass.class
+	 * @param message
+	 *            the details of the message
+	 */
+	public static void out(Object originator, Object message) {
+		errorLogger.debug(originator, message);
+	}
+
+	/**
+	 * Use this method to print temporary log messages that are not intended to be part of a source
+	 * code commit.  The messages will be output at the DEBUG log level.
+	 * 
+	 * @param originator
+	 *            a Logger instance, "this", or YourClass.class
+	 * @param message
+	 *            the details of the message
+	 * @param throwable
+	 *            the Throwable that describes the cause of the error
+	 */
+	public static void out(Object originator, Object message, Throwable throwable) {
+		errorLogger.debug(originator, message, throwable);
 	}
 
 	/**

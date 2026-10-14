@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.gui.memview.actions;
+package ghidra.app.plugin.core.bento.actions;
 
 import javax.swing.Icon;
 
@@ -21,24 +21,24 @@ import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
 import generic.theme.GIcon;
-import ghidra.app.plugin.core.debug.gui.memview.MemviewProvider;
+import ghidra.app.plugin.core.bento.BentoProvider;
 import ghidra.util.HelpLocation;
 
-public class ZoomInTAction extends DockingAction {
+public class ZoomInXAction extends DockingAction {
 
 	private static final Icon ICON = new GIcon("icon.widget.imagepanel.zoom.in");
 
-	private MemviewProvider provider;
+	private BentoProvider provider;
 
-	public ZoomInTAction(MemviewProvider provider) {
-		super("Zoom In (Time)", provider.getOwner());
+	public ZoomInXAction(BentoProvider provider) {
+		super("Zoom In (X)", provider.getOwner());
 		this.provider = provider;
 		setEnabled(true);
 
-		this.setToolBarData(new ToolBarData(ICON, "aoverview"));
+		this.setToolBarData(new ToolBarData(ICON, "xoverview"));
 
-		setDescription("Zoom In (T)");
-		setHelpLocation(new HelpLocation("DebuggerMemviewPlugin", "zoom"));
+		setDescription("Zoom In (X)");
+		setHelpLocation(new HelpLocation("BentoServicePlugin", "zoom"));
 	}
 
 	@Override
@@ -48,7 +48,7 @@ public class ZoomInTAction extends DockingAction {
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		provider.changeZoomT(1);
+		provider.changeZoom(0, 1);
 		provider.refresh();
 	}
 

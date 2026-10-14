@@ -31,6 +31,11 @@ import utilities.util.FileUtilities;
  */
 class ThemeReader extends AbstractThemeReader {
 
+	/**
+	 * The maximum number of allowed image files in a theme zip archive
+	 */
+	private static final int MAX_ZIP_ICON_ENTRIES = 3000;
+
 	private File file;
 	private GTheme theme;
 
@@ -72,7 +77,13 @@ class ThemeReader extends AbstractThemeReader {
 	private GTheme readZipTheme() throws IOException {
 		try (ZipFile archive = ZipFile.builder().setFile(file).get()) {
 			Enumeration<ZipArchiveEntry> entries = archive.getEntries();
+			int iconCount = 0;
 			while (entries.hasMoreElements()) {
+				if (iconCount > MAX_ZIP_ICON_ENTRIES) {
+					throw new IOException(
+						"Maximum number of extracted icon files (%d) has been exceeded!"
+								.formatted(MAX_ZIP_ICON_ENTRIES));
+				}
 				ZipArchiveEntry entry = entries.nextElement();
 				String name = entry.getName();
 				if (name.endsWith(".theme")) {
@@ -82,6 +93,7 @@ class ThemeReader extends AbstractThemeReader {
 				}
 				else {
 					processIconFile(name, entry, archive);
+					iconCount++;
 				}
 			}
 		}

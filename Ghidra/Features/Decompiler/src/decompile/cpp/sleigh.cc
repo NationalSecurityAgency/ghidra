@@ -22,62 +22,31 @@ PcodeCacher::PcodeCacher(void)
 
 {
   // We aim to allocate this array only once
-  uint4 maxsize = 600;
-  poolstart = new VarnodeData[ maxsize ];
-  endpool = poolstart + maxsize;
-  curpool = poolstart;
+  expandPool(PAGE_SIZE);
 }
 
 PcodeCacher::~PcodeCacher(void)
 
 {
-  delete [] poolstart;
+  for(list<VarnodeData *>::iterator iter=pools.begin();iter!=pools.end();++iter)
+    delete [] *iter;
 }
 
-/// Expand the VarnodeData pool so that \e size more elements fit, and return
-/// a pointer to first available element.
-/// \param size is the number of elements to expand the pool by
-/// \return the first available VarnodeData
-VarnodeData *PcodeCacher::expandPool(uint4 size)
+/// Expand the VarnodeData pool so that at least \b size more elements are available.
+/// \param size is the minimum number of elements to expand the pool by
+void PcodeCacher::expandPool(uint4 size)
 
 {
-  uint4 curmax = endpool - poolstart;
-  uint4 cursize = curpool - poolstart;
-  if (cursize + size <= curmax)
-    return curpool;		// No expansion necessary
-  uint4 increase = (cursize + size) - curmax;
-  if (increase < 100)		// Increase by at least 100
-    increase = 100;
-
-  uint4 newsize = curmax + increase;
-
-  VarnodeData *newpool = new VarnodeData[newsize];
-  for(uint4 i=0;i<cursize;++i)
-    newpool[i] = poolstart[i];	// Copy old data
-  // Update references to the old pool
-  for(deque<PcodeData>::iterator diter=issued.begin();diter!=issued.end();++diter) {
-    VarnodeData *outvar = (*diter).outvar;
-    if (outvar != (VarnodeData *)0) {
-      outvar = newpool + (outvar - poolstart);
-      (*diter).outvar = outvar;
-    }
-    VarnodeData *invar = (*diter).invar;
-    if (invar != (VarnodeData *)0) {
-      invar = newpool + (invar - poolstart);
-      (*diter).invar = invar;
-    }
+  if (size > PAGE_SIZE) {
+    if (size > MAX_ALLOCATION)
+      throw LowlevelError("Maximum parameters exceeded for a single p-code op");
   }
-  list<RelativeRecord>::iterator iter;
-  for(iter=label_refs.begin();iter!=label_refs.end();++iter) {
-    VarnodeData *ref = (*iter).dataptr;
-    (*iter).dataptr = newpool + (ref - poolstart);
-  }
-  
-  delete [] poolstart;		// Free up old pool
-  poolstart = newpool;
-  curpool = newpool + (cursize + size);
-  endpool = newpool + newsize;
-  return newpool + cursize;
+  else
+    size = PAGE_SIZE;
+  VarnodeData *poolstart = new VarnodeData[ size ];
+  pools.push_back(poolstart);
+  endpool = poolstart + size;
+  curpool = poolstart;
 }
 
 /// Store off a reference to the Varnode and the absolute index of the next
@@ -108,7 +77,14 @@ void PcodeCacher::addLabel(uint4 id)
 void PcodeCacher::clear(void)
 
 {
-  curpool = poolstart;
+  list<VarnodeData *>::iterator iter = pools.begin();
+  ++iter;
+  while(iter != pools.end()) {
+    delete [] *iter;
+    iter = pools.erase(iter);
+  }
+  curpool = pools.front();
+  endpool = curpool + PAGE_SIZE;
   issued.clear();
   label_refs.clear();
   labels.clear();

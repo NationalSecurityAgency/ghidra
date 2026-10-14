@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -266,12 +266,14 @@ class SegmentOp : public TermPatternOp {
   int4 injectId;		///< Id of InjectPayload that emulates \b this operation
   int4 baseinsize;		///< The size in bytes of the \e base or \e segment value
   int4 innerinsize;		///< The size in bytes of the \e near pointer value
+  mutable int4 concatState;	///< 0 = not a concatenation, 1 = is a concatenation, -1 = not tested yet
   bool supportsfarpointer;	///< Is \b true if the joined pair base:near acts as a \b far pointer
   VarnodeData constresolve;	///< How to resolve constant near pointers
 public:
   SegmentOp(const string &nm,Architecture *g,int4 ind);		///< Constructor
   AddrSpace *getSpace(void) const { return spc; }		///< Get the address space being pointed to
   bool hasFarPointerSupport(void) const { return supportsfarpointer; }	///< Return \b true, if \b this op supports far pointers
+  bool isConcatenation(void) const;				///< Return \b true if \b this is a concatenation
   int4 getBaseSize(void) const { return baseinsize; }		///< Get size in bytes of the base/segment value
   int4 getInnerSize(void) const { return innerinsize; }		///< Get size in bytes of the near value
   const VarnodeData &getResolve(void) const { return constresolve; }	///< Get the default register for resolving indirect segments

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,11 @@
  */
 package docking.widgets.tree;
 
+import java.awt.Point;
 import java.util.List;
 
+import javax.swing.JScrollPane;
+import javax.swing.JViewport;
 import javax.swing.tree.TreePath;
 
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
@@ -65,12 +68,9 @@ public class GTreeRestoreTreeStateTask extends GTreeTask {
 	private void selectPathsInThisTask(GTreeState treeState, TaskMonitor monitor,
 			boolean disableExpansion) {
 
-		List<TreePath> selectedPaths = treeState.getSelectedPaths();
-		if (selectedPaths.isEmpty()) {
-			restoreViewToFirstPathIn(treeState.getViewPaths(), monitor);
-			return;
-		}
+		restoreView(treeState.getViewPosition());
 
+		List<TreePath> selectedPaths = treeState.getSelectedPaths();
 		GTreeSelectPathsTask task =
 			new GTreeSelectPathsTask(tree, jTree, selectedPaths, EventOrigin.INTERNAL_GENERATED);
 
@@ -87,16 +87,11 @@ public class GTreeRestoreTreeStateTask extends GTreeTask {
 
 	}
 
-	private void restoreViewToFirstPathIn(TreePath[] viewPaths, TaskMonitor monitor) {
+	private void restoreView(Point viewPosition) {
 
-		for (TreePath path : viewPaths) {
-			TreePath currentPath = translatePath(path, monitor);
-			if (currentPath != null) {
-				Swing.runLater(() -> tree.scrollPathToVisible(currentPath));
-				break;
-			}
-		}
-
+		JScrollPane sp = tree.getScrollPane();
+		JViewport viewport = sp.getViewport();
+		Swing.runLater(() -> viewport.setViewPosition(viewPosition));
 	}
 
 	private void expandPathsInThisTask(GTreeState treeState, TaskMonitor monitor) {

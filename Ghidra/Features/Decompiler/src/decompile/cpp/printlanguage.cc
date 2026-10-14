@@ -242,7 +242,7 @@ void PrintLanguage::pushSymbolDetail(const Varnode *vn,const PcodeOp *op,bool is
   HighVariable *high = vn->getHigh();
   Symbol *sym = high->getSymbol();
   if (sym == (Symbol *)0) {
-    pushUnnamedLocation(high->getNameRepresentative()->getAddr(),vn,op);
+    pushUnnamedLocation(high->getNameRepresentative()->getAddr(),vn->getSize(),vn,op);
   }
   else {
     int4 symboloff = high->getSymbolOffset();

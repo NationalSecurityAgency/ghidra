@@ -778,7 +778,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 			}
 		};
 		action.setMenuBarData(
-			new MenuData(new String[] { ToolConstants.MENU_HELP, "Show Log" }, null,
+			new MenuData(new String[] { ToolConstants.MENU_HELP, "View Log" }, null,
 				ToolConstants.HELP_RUNTIME_MENU_GROUP));
 
 		action.setEnabled(true);

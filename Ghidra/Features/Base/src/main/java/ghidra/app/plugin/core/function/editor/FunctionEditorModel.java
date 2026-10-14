@@ -892,6 +892,15 @@ public class FunctionEditorModel {
 	private FunctionSignature getFunctionSignature() {
 		FunctionDefinitionDataType funDt = new FunctionDefinitionDataType(getName());
 		funDt.setReturnType(getFormalReturnType());
+
+		String ccName = getCallingConventionName();
+		try {
+			funDt.setCallingConvention(ccName);
+		}
+		catch (InvalidInputException e) {
+			// shouldn't happen; should already be validated
+		}
+
 		List<ParameterDefinition> params = new ArrayList<>();
 
 		for (ParamInfo paramInfo : getParameters()) {
@@ -1035,19 +1044,26 @@ public class FunctionEditorModel {
 	}
 
 	void parseSignatureFieldText() throws ParseException, CancelledException {
-		FunctionSignatureParser parser =
-			new FunctionSignatureParser(program.getDataTypeManager(), dataTypeManagerService);
-		FsParseResult result =
-			parser.parseWithNamespace(getFunctionSignature(), signatureFieldText);
+		ProgramBasedDataTypeManager dtm = program.getDataTypeManager();
+		FunctionSignatureParser parser = new FunctionSignatureParser(dtm, dataTypeManagerService);
+
+		FunctionSignature functionSignature = getFunctionSignature();
+		FsParseResult result = parser.parseWithNamespace(functionSignature, signatureFieldText);
 		FunctionDefinitionDataType f = result.functionDefinition();
 
-		// Preserve calling convention and noreturn flag from current model
+		// Preserve no return flag from current model
 		f.setNoReturn(functionData.hasNoReturn());
-		try {
-			f.setCallingConvention(getCallingConventionName());
-		}
-		catch (InvalidInputException e) {
-			// ignore
+
+		// if the parsing did not apply a calling convention, then use the value from the combo box
+		String newName = f.getCallingConventionName();
+		if (newName == null) {
+			try {
+				String ccName = getCallingConventionName();
+				f.setCallingConvention(ccName);
+			}
+			catch (InvalidInputException e) {
+				// ignore
+			}
 		}
 
 		// We allow the user to omit the namespace when parsing the signature.   If the value is 

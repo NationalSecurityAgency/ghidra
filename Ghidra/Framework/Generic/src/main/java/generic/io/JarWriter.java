@@ -131,6 +131,9 @@ public class JarWriter {
 	 * @return true if all files are recursively output to the jar file.
 	 */
 	public boolean outputRecursively(File baseFile, String jarPath, TaskMonitor monitor) {
+		if (monitor.isCancelled()) {
+			return false;
+		}
 
 		boolean succeeded = true;
 		File[] subFiles = new File[0];
@@ -139,7 +142,7 @@ public class JarWriter {
 			subFiles = baseFile.listFiles();
 			for (int i = 0; i < subFiles.length; i++) {
 				if (monitor.isCancelled()) {
-					break;
+					return false;
 				}
 				String newPath = jarPath + baseFile.getName() + File.separator;
 				succeeded = outputRecursively(subFiles[i], newPath, monitor) && succeeded;

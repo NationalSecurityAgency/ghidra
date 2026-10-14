@@ -749,9 +749,6 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 		Swing.runIfSwingOrRunLater(() -> programSaveMgr.saveAs(program));
 	}
 
-	/**
-	 * Write out my data state.
-	 */
 	@Override
 	public void writeDataState(SaveState saveState) {
 
@@ -781,15 +778,13 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 		}
 	}
 
-	/**
-	 * Read in my data state.
-	 */
 	@Override
 	public void readDataState(SaveState saveState) {
 		if (!programMgr.isEmpty()) {
 			currentLocation = null;
-			return; // don't do anything restoring toolstate
+			return; // don't do anything restoring tool state
 		}
+
 		loadPrograms(saveState);
 		String currentFile = saveState.getString("CURRENT_FILE", null);
 
@@ -950,7 +945,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 		}
 		else if (event instanceof ProgramActivatedPluginEvent) {
 			Program p = ((ProgramActivatedPluginEvent) event).getActiveProgram();
-			programMgr.setCurrentProgram(p);
+			programMgr.programActivated(p);
 		}
 		else if (event instanceof ProgramLocationPluginEvent) {
 			ProgramLocationPluginEvent ev = (ProgramLocationPluginEvent) event;

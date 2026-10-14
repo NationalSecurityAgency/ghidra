@@ -32,7 +32,7 @@ class FunctionData extends FunctionDataView {
 	}
 
 	/**
-	 * Determine if return/parameter datatype and/or storage has changed and should be comitted.
+	 * Determine if return/parameter datatype and/or storage has changed and should be committed.
 	 * Auto params and calling-convention imposed changes are not considered.
 	 * @param originalFunctionData original function data prior to edits
 	 * @return true if non-auto parameters have been modified, else false

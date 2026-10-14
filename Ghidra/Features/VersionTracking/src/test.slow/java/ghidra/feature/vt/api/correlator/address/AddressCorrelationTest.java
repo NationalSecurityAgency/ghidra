@@ -100,7 +100,8 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 
 	@Test
 	public void testExactMatchMnemonics() throws Exception {
-		// Test a function match created by the Exact Mnemonics Match correlator.
+		// Test a function match created by the Exact Mnemonics Match correlator where all
+		// the mnemonics are same name and same size so the functions are the same size
 		createSession(TEST_SOURCE_PROGRAM_NAME, TEST_DESTINATION_PROGRAM_NAME);
 		vtTestEnv.showTool();
 		addComment(CommentType.PRE, "0x00412988", "Exact mnemonics comment.");
@@ -111,6 +112,20 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 		validateCommentMarkupItems(PreCommentMarkupType.INSTANCE, "0x00412988",
 			"Exact mnemonics comment.", "0x00412968");
 		validateMarkupDestinationAddress(StraightLineCorrelation.NAME, false);
+	}
+
+	@Test
+	public void testExactMatchMnemonics_DifferentSizeFunctions() throws Exception {
+		// Test a function match created by the Exact Mnemonics Match correlator where one of
+		// the mnemonics is same name but different size making the function a different size
+
+		Program p1 = buildProgram_movInstruction5bytes("prog1"); // this has mov eax,1 with 5 bytes
+		Program p2 = buildProgram_movInstruction6bytes("prog2"); // this has mov eax,1 with 6 bytes
+		createSession(p1, p2);
+		vtTestEnv.showTool();
+
+		runCorrelator(new ExactMatchMnemonicsProgramCorrelatorFactory());
+		selectMatch("0x00401000", "0x00402000");
 	}
 
 	@Test
@@ -309,6 +324,48 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 			Function function = builder.createFunction("0x00402000");
 			p.withTransaction("Setting Function Name", () -> {
 				function.setName("MyFunctionZZ", SourceType.USER_DEFINED);
+			});
+
+			p.addConsumer(vtTestEnv);
+			return p;
+		}
+		finally {
+			builder.dispose();
+		}
+	}
+
+	// Program with one way to have function mov eax, 1; ret; that uses 6 bytes (plus enough nops
+	// to make it pass the default min function size 
+	private Program buildProgram_movInstruction5bytes(String name) throws Exception {
+		ProgramBuilder builder = new ProgramBuilder(name, ProgramBuilder._X64);
+		try {
+			Program p = builder.getProgram();
+			builder.setBytes("0x00401000", "b8 01 00 00 00 90 90 90 90 90 c3");
+			builder.disassemble("0x00401000", 11);
+			Function function = builder.createFunction("0x00401000");
+			p.withTransaction("Setting Function Name", () -> {
+				function.setName("MyFunction6", SourceType.USER_DEFINED);
+			});
+
+			p.addConsumer(vtTestEnv);
+			return p;
+		}
+		finally {
+			builder.dispose();
+		}
+	}
+
+	// Program with one way to have function mov eax, 1; ret; that uses 7 bytes (plus enough nops
+	// to make it pass the default min function size 
+	private Program buildProgram_movInstruction6bytes(String name) throws Exception {
+		ProgramBuilder builder = new ProgramBuilder(name, ProgramBuilder._X64);
+		try {
+			Program p = builder.getProgram();
+			builder.setBytes("0x00402000", "C7 C0 01 00 00 00 90 90 90 90 90 C3");
+			builder.disassemble("0x00402000", 12);
+			Function function = builder.createFunction("0x00402000");
+			p.withTransaction("Setting Function Name", () -> {
+				function.setName("MyFunction7", SourceType.USER_DEFINED);
 			});
 
 			p.addConsumer(vtTestEnv);

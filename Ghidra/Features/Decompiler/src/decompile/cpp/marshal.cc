@@ -15,7 +15,6 @@
  */
 #include "marshal.hh"
 #include "translate.hh"
-#include "type.hh"
 
 namespace ghidra {
 

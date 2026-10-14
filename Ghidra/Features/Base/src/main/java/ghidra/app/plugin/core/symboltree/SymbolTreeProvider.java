@@ -32,6 +32,7 @@ import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.TreePath;
 
 import docking.ActionContext;
+import docking.DockingWindowManager;
 import docking.action.DockingAction;
 import docking.widgets.tree.*;
 import docking.widgets.tree.support.GTreeNodeTransferable;
@@ -353,7 +354,10 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 
 		DisconnectedSymbolTreeProvider newProvider = plugin.createNewDisconnectedProvider(program);
 
-		Swing.runLater(() -> {
+		// Update the tree settings when the provider is visible so things like view position will
+		// get set correctly.
+		JComponent newComponent = newProvider.getComponent();
+		DockingWindowManager.registerComponentLoadedListener(newComponent, (dwm, provider) -> {
 			newProvider.setProgram(program);
 			transferSettings(newProvider);
 		});
@@ -387,6 +391,8 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		if (!isVisible()) {
 			return;
 		}
+
+		contextChanged();
 
 		if (program == null) {
 			return;

@@ -39,9 +39,9 @@ public class SlaFormat {
 	public static final int FORMAT_VERSION = 4;
 
 	/**
-	 * Absolute limit on the number of bytes in a .sla file
+	 * Absolute limit on the number of bytes in the (uncompressed) .sla file
 	 */
-	public static final int MAX_FILE_SIZE = 1 << 24;		// 16 Megabytes
+	public static final long MAX_FILE_SIZE = 1L << 31;		// 2 Gigabytes
 	// Attributes
 
 	// ATTRIB_CONTENT = 1 is reserved
@@ -261,7 +261,7 @@ public class SlaFormat {
 				throw new IOException("Missing SLA format header");
 			}
 			PackedDecode decoder = new PackedDecode();
-			decoder.open(MAX_FILE_SIZE, ".sla file loader");
+			decoder.open(MAX_FILE_SIZE, sleighFile.getName() + " (uncompressed)");
 
 			try (InflaterInputStream inflaterStream = new InflaterInputStream(stream)) {
 				decoder.ingestStream(inflaterStream);

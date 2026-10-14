@@ -27,6 +27,7 @@ import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.cparser.C.ParseException;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
+import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.FunctionSignature;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
@@ -138,8 +139,8 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 	@Test
 	public void testExtractReturnTypeName() throws Exception {
 		DataType voidDt = BuiltInDataTypeManager.getDataTypeManager().getDataType("/void");
-		assertEquals(voidDt, parser.extractReturnType("void bob(int a)"));
-		assertEquals(voidDt, parser.extractReturnType("void    bob    (int a)"));
+		assertEquals(voidDt, parser.extractReturnType("void bob(int a)", false));
+		assertEquals(voidDt, parser.extractReturnType("void    bob    (int a)", false));
 	}
 
 	@Test
@@ -478,6 +479,59 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 		FunctionDefinitionDataType dt = parser.parse(f, "int Bob(char[2] *bob, float)");
 		assertEquals("int Bob(char[2] * bob, float )", dt.getRepresentation(null, null, 0));
 	}
+
+	@Test
+	public void testParseCdeclPointerSignature() throws Exception {
+		FunctionDefinitionDataType function =
+			parser.parse(null, "void * __thiscall test(void * arg0)");
+
+		assertEquals("test", function.getName());
+		assertEquals("__thiscall", function.getCallingConventionName());
+		assertEquals("void * __thiscall test(void * arg0)", function.getPrototypeString(true));
+	}
+
+	@Test
+	public void testParseGenericCallingConventions() throws Exception {
+
+		ProgramDataTypeManager dtm = program.getDataTypeManager();
+		Collection<String> ccNames = dtm.getDefinedCallingConventionNames();
+		for (String convension : ccNames) {
+
+			FunctionDefinitionDataType function =
+				parser.parse(null, "int " + convension + " test(int arg0)");
+
+			assertEquals(convension, function.getCallingConventionName());
+			assertEquals("int " + convension + " test(int arg0)",
+				function.getPrototypeString(true));
+		}
+	}
+
+	@Test
+	public void testParseWithoutCallingConvention() throws Exception {
+		FunctionDefinitionDataType function = parser.parse(null, "int test(int arg0)");
+		assertEquals("int test(int arg0)", function.getPrototypeString());
+	}
+
+	@Test
+	public void testParseCallingConvention_Default() throws Exception {
+		FunctionDefinitionDataType function = parser.parse(null, "int default test(int arg0)");
+		assertEquals("int test(int arg0)", function.getPrototypeString());
+	}
+
+	@Test
+	public void testParseCallingConvention_Unknown() throws Exception {
+		FunctionDefinitionDataType function = parser.parse(null, "int unknown test(int arg0)");
+		assertEquals("int test(int arg0)", function.getPrototypeString());
+	}
+
+	@Test(expected = ParseException.class)
+	public void testParseWithInvalidCallingConvention() throws Exception {
+		parser.parse(null, "int __bob test(int arg0)");
+	}
+
+//=================================================================================================
+// Private Methods
+//=================================================================================================	
 
 	private DataType createDataType(String name) {
 		if (name.equals("int")) {

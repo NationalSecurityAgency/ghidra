@@ -76,7 +76,9 @@ generateGrammarSource {
 	doFirst {
 		// The ANTLR plugin's incremental compilation seems to cause issues, so clean out token
 		// files before any attempted compilation.
-		delete file("$buildDir/${genSrcDir}/ghidra/sleigh/grammar/*.tokens")
+		delete fileTree("$buildDir/${genSrcDir}/ghidra/sleigh/grammar/") {
+			include "*.tokens"
+		}
 	}
 
 	doLast {

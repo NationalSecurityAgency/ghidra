@@ -35,7 +35,6 @@ import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.FieldSelection;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.cmd.data.CreateStructureCmd;
-import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.core.bookmark.BookmarkEditCmd;
 import ghidra.app.plugin.core.bookmark.BookmarkPlugin;
@@ -439,7 +438,8 @@ public class MarkerTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void switchToProgram(Program p) {
-		tool.firePluginEvent(new ProgramActivatedPluginEvent("Test", p));
+		ProgramManager pm = tool.getService(ProgramManager.class);
+		pm.setCurrentProgram(p);
 	}
 
 	private void setupTool(PluginTool tool) throws Exception {

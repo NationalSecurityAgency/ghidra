@@ -2953,11 +2953,11 @@ with : lockprefx=0 {
 :CALLF ptr1616      is vexMode=0 & addrsize=1 & opsize=0 & byte=0x9a; ptr1616           { push42(CS); build ptr1616; push42(&:2 inst_next); call ptr1616; }
 :CALLF ptr1632      is vexMode=0 & addrsize=0 & opsize=1 & byte=0x9a; ptr1632           { push22(CS); build ptr1632; push24(&:4 inst_next); call ptr1632; }
 :CALLF ptr1632      is vexMode=0 & addrsize=1 & opsize=1 & byte=0x9a; ptr1632           { pushseg44(CS); build ptr1632; push44(&:4 inst_next); call ptr1632; }
-:CALLF addr16       is vexMode=0 & addrsize=0 & opsize=0 & byte=0xff; addr16 & reg_opcode=3 ... { local ptr:$(SIZE) = segment(DS,addr16); local addrptr:$(SIZE) = segment(*:2 (ptr+2),*:2 ptr);
-                                                                                                  push22(CS); push22(&:2 inst_next); call [addrptr]; }
-:CALLF addr32       is vexMode=0 & addrsize=1 & opsize=0 & byte=0xff; addr32 & reg_opcode=3 ... { local dest:4 = addr32; push42(CS); push42(&:2 inst_next); call [dest]; }
+:CALLF Mem          is vexMode=0 & addrsize=0 & opsize=0 & byte=0xff; Mem & reg_opcode=3 ... { local farptr:4 = * Mem; push22(CS); push22(&:2 inst_next);
+                                                                                               CS = farptr(2); local addrptr:$(SIZE) = segment(CS,farptr:2); call [addrptr]; }
+:CALLF Mem          is vexMode=0 & addrsize=1 & opsize=0 & byte=0xff; Mem & reg_opcode=3 ... { local dest:4 = * Mem; push42(CS); push42(&:2 inst_next); call [dest]; }
 @ifdef IA64
-:CALLF addr64       is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & opsize=0 & byte=0xff; addr64 & reg_opcode=3 ... { local dest:8 = addr64; push82(CS); push82(&:2 inst_next); call [dest]; }
+:CALLF Mem          is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & opsize=0 & byte=0xff; Mem & reg_opcode=3 ... { local dest:8 = * Mem; push82(CS); push82(&:2 inst_next); call [dest]; }
 @endif
 
 
@@ -3776,7 +3776,8 @@ jccRel32: rel32, "bt"  is segover=3 & rel32 { export rel32; }
 
 :JMPF ptr1616   is vexMode=0 & opsize=0 & byte=0xea; ptr1616                    { goto ptr1616; }
 :JMPF ptr1632   is vexMode=0 & opsize=1 & byte=0xea; ptr1632                    { goto ptr1632; }
-:JMPF Mem       is vexMode=0 & opsize=0 & byte=0xff; Mem & reg_opcode=5 ...     { target:$(SIZE) = zext(*:2 Mem); goto [target]; }
+:JMPF Mem       is vexMode=0 & addrsize=0 & opsize=0 & byte=0xff; Mem & reg_opcode=5 ...     { local farptr:4 = * Mem; CS = farptr(2); target:$(SIZE) = segment(CS,farptr:2); goto [target]; }
+:JMPF Mem       is vexMode=0 & addrsize=1 & opsize=0 & byte=0xff; Mem & reg_opcode=5 ...     { target:$(SIZE) = zext(*:2 Mem); goto [target]; }
 :JMPF Mem       is vexMode=0 & opsize=1 & byte=0xff; Mem & reg_opcode=5 ...     {
 @ifdef IA64
     target:$(SIZE) = zext(*:4 Mem);
@@ -4010,10 +4011,10 @@ define pcodeop TaskRegister;
 :MOV Rmr64,Sreg     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x8c; mod=3 & Rmr64 & Sreg    { Rmr64 = zext(Sreg); }
 @endif
 :MOV Sreg,m16       is vexMode=0 & byte=0x8e; (mod != 3 & Sreg) ... & m16                         { Sreg = m16; }
-:MOV Rmr16,Sreg     is vexMode=0 & opsize=0 & byte=0x8e; mod=3 & Rmr16 & Sreg                     { Sreg = Rmr16; }
-:MOV Rmr32,Sreg     is vexMode=0 & opsize=1 & byte=0x8e; mod=3 & Rmr32 & Sreg                     { Sreg = Rmr32(0); }
+:MOV Sreg,Rmr16     is vexMode=0 & opsize=0 & byte=0x8e; mod=3 & Rmr16 & Sreg                     { Sreg = Rmr16; }
+:MOV Sreg,Rmr32     is vexMode=0 & opsize=1 & byte=0x8e; mod=3 & Rmr32 & Sreg                     { Sreg = Rmr32(0); }
 @ifdef IA64
-:MOV Rmr64,Sreg     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x8e; mod=3 & Rmr64 & Sreg    { Sreg = Rmr64(0); }
+:MOV Sreg,Rmr64     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x8e; mod=3 & Rmr64 & Sreg    { Sreg = Rmr64(0); }
 @endif
 :MOV AL,moffs8      is vexMode=0 & byte=0xa0; AL & moffs8               { AL=moffs8; }
 :MOV AX,moffs16     is vexMode=0 & opsize=0 & byte=0xa1; AX & moffs16         { AX=moffs16; }
@@ -5133,8 +5134,8 @@ define pcodeop rmpupdate;
 :VMPTRLD m64    is $(LONGMODE_ON) & vexMode=0 & byte=0x0f; byte=0xc7; ( mod != 0b11 & reg_opcode=6 ) ... & m64 { vmptrld(m64); }
 #TODO: stores the current VMCS pointer into the specified 64-bit memory address; how to express this for analysis and emulation?
 :VMPTRST m64    is $(LONGMODE_ON) & vexMode=0 & byte=0x0f; byte=0xc7; ( mod != 0b11 & reg_opcode=7 ) ... & m64  { vmptrst(m64); }
-:VMREAD rm64, Reg64  is $(LONGMODE_ON) & $(PRE_NO) & vexMode=0 & opsize=2 & byte=0x0f; byte=0x78; rm64 & Reg64 ...     { rm64 = vmread(Reg64); }
-:VMWRITE Reg64, rm64 is $(LONGMODE_ON) & $(PRE_NO) & vexMode=0 & opsize=2 & byte=0x0f; byte=0x79; rm64 & Reg64 ...    { vmwrite(rm64,Reg64); }
+:VMREAD rm64, Reg64  is $(LONGMODE_ON) & $(PRE_NO) & vexMode=0 & byte=0x0f; byte=0x78; rm64 & Reg64 ...     { rm64 = vmread(Reg64); }
+:VMWRITE Reg64, rm64 is $(LONGMODE_ON) & $(PRE_NO) & vexMode=0 & byte=0x0f; byte=0x79; rm64 & Reg64 ...    { vmwrite(rm64,Reg64); }
 :VMXOFF         is $(LONGMODE_ON) & vexMode=0 & byte=0x0f; byte=0x01; byte=0xc4                           { vmxoff(); }
 :VMXON m64      is $(LONGMODE_ON) & vexMode=0 & $(PRE_F3) & byte=0x0f; byte=0xc7; ( mod != 0b11 & reg_opcode=6 ) ... & m64  { vmxon(m64); }
 @else
@@ -5281,34 +5282,34 @@ define pcodeop xrstor64;
 define pcodeop xrstors;
 define pcodeop xrstors64;
 
-:XRSTOR Mem    is vexMode=0 & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=5 ) ... & Mem { tmp:4 = 512; xrstor(Mem, tmp); }
+:XRSTOR Mem    is vexMode=0 & $(PRE_NO) & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=5 ) ... & Mem { tmp:4 = 512; xrstor(Mem, tmp); }
 @ifdef IA64
-:XRSTOR64 Mem    is $(LONGMODE_ON) & vexMode=0 & $(REX_W) & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=5 ) ... & Mem { tmp:4 = 512; xrstor64(Mem, tmp); }
+:XRSTOR64 Mem    is $(LONGMODE_ON) & $(PRE_NO) & vexMode=0 & $(REX_W) & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=5 ) ... & Mem { tmp:4 = 512; xrstor64(Mem, tmp); }
 @endif
 
-:XRSTORS Mem    is vexMode=0 & byte=0x0F; byte=0xC7; ( mod != 0b11 & reg_opcode=3 ) ... & Mem { tmp:4 = 512; xrstors(Mem, tmp); }
+:XRSTORS Mem    is vexMode=0 & $(PRE_NO) & byte=0x0F; byte=0xC7; ( mod != 0b11 & reg_opcode=3 ) ... & Mem { tmp:4 = 512; xrstors(Mem, tmp); }
 @ifdef IA64
-:XRSTORS64 Mem    is $(LONGMODE_ON) & vexMode=0 & $(REX_W) & byte=0x0F; byte=0xC7; ( mod != 0b11 & reg_opcode=3 ) ... & Mem { tmp:4 = 512; xrstors64(Mem, tmp); }
+:XRSTORS64 Mem    is $(LONGMODE_ON) & $(PRE_NO) & vexMode=0 & $(REX_W) & byte=0x0F; byte=0xC7; ( mod != 0b11 & reg_opcode=3 ) ... & Mem { tmp:4 = 512; xrstors64(Mem, tmp); }
 @endif
 
-:XSAVE  Mem    is vexMode=0 & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=4 ) ... & Mem { tmp:4 = 512; xsave(Mem, tmp); }
+:XSAVE  Mem    is vexMode=0 & $(PRE_NO) & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=4 ) ... & Mem { tmp:4 = 512; xsave(Mem, tmp); }
 @ifdef IA64
-:XSAVE64  Mem    is $(LONGMODE_ON) & vexMode=0 & $(REX_W) & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=4 ) ... & Mem { tmp:4 = 512; xsave64(Mem, tmp); }
+:XSAVE64  Mem    is $(LONGMODE_ON) & $(PRE_NO) & vexMode=0 & $(REX_W) & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=4 ) ... & Mem { tmp:4 = 512; xsave64(Mem, tmp); }
 @endif
 
-:XSAVEC  Mem    is vexMode=0 & byte=0x0F; byte=0xC7; ( mod != 0b11 & reg_opcode=4 ) ... & Mem { tmp:4 = 512; xsavec(Mem, tmp); }
+:XSAVEC  Mem    is vexMode=0 & $(PRE_NO) & byte=0x0F; byte=0xC7; ( mod != 0b11 & reg_opcode=4 ) ... & Mem { tmp:4 = 512; xsavec(Mem, tmp); }
 @ifdef IA64
-:XSAVEC64  Mem    is $(LONGMODE_ON) & vexMode=0 & $(REX_W) & byte=0x0F; byte=0xC7; ( mod != 0b11 & reg_opcode=4 ) ... & Mem { tmp:4 = 512; xsavec64(Mem, tmp); }
+:XSAVEC64  Mem    is $(LONGMODE_ON) & $(PRE_NO) & vexMode=0 & $(REX_W) & byte=0x0F; byte=0xC7; ( mod != 0b11 & reg_opcode=4 ) ... & Mem { tmp:4 = 512; xsavec64(Mem, tmp); }
 @endif
 
-:XSAVEOPT  Mem    is vexMode=0 & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=6 ) ... & Mem { tmp:4 = 512; xsaveopt(Mem, tmp); }
+:XSAVEOPT  Mem    is vexMode=0 & $(PRE_NO) & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=6 ) ... & Mem { tmp:4 = 512; xsaveopt(Mem, tmp); }
 @ifdef IA64
-:XSAVEOPT64  Mem    is $(LONGMODE_ON) & vexMode=0 & $(REX_W) & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=6 ) ... & Mem { tmp:4 = 512; xsaveopt64(Mem, tmp); }
+:XSAVEOPT64  Mem    is $(LONGMODE_ON) & $(PRE_NO) & vexMode=0 & $(REX_W) & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=6 ) ... & Mem { tmp:4 = 512; xsaveopt64(Mem, tmp); }
 @endif
 
-:XSAVES  Mem    is vexMode=0 & byte=0x0F; byte=0xC7; ( mod != 0b11 & reg_opcode=5 ) ... & Mem { tmp:4 = 512; xsaves(Mem, tmp); }
+:XSAVES  Mem    is vexMode=0 & $(PRE_NO) & byte=0x0F; byte=0xC7; ( mod != 0b11 & reg_opcode=5 ) ... & Mem { tmp:4 = 512; xsaves(Mem, tmp); }
 @ifdef IA64
-:XSAVES64  Mem    is $(LONGMODE_ON) & vexMode=0 & $(REX_W) & byte=0x0F; byte=0xC7; ( mod != 0b11 & reg_opcode=5 ) ... & Mem { tmp:4 = 512; xsaves64(Mem, tmp); }
+:XSAVES64  Mem    is $(LONGMODE_ON) & $(PRE_NO) & vexMode=0 & $(REX_W) & byte=0x0F; byte=0xC7; ( mod != 0b11 & reg_opcode=5 ) ... & Mem { tmp:4 = 512; xsaves64(Mem, tmp); }
 @endif
 
 define pcodeop xtest;
