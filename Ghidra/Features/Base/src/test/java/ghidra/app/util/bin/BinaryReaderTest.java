@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,11 +15,11 @@
  */
 package ghidra.app.util.bin;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -34,6 +34,10 @@ public class BinaryReaderTest {
 			bytes[i] = (byte) values[i];
 		}
 		return new BinaryReader(new ByteArrayProvider(bytes), isLE);
+	}
+
+	private BinaryReader staticValueBR(boolean isLE, long length, byte value) {
+		return new BinaryReader(new StaticValueByteProvider(length, value, null), isLE);
 	}
 
 	@Test
@@ -122,6 +126,31 @@ public class BinaryReaderTest {
 		}
 	}
 
+	@Test
+	public void testReadByteArray_oversize() {
+		BinaryReader br =
+			staticValueBR(true, NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG * 100, (byte) 0xaa);
+
+		try {
+			br.readNextByteArray(Integer.MAX_VALUE - 10);
+			fail();
+		}
+		catch (IOException e) {
+			// good
+		}
+
+		// commenting these next lines out as they will allocate a lot of ram
+//		try {
+//			byte[] bytes = br.readNextByteArray(Integer.MAX_VALUE - 1024);
+//			for (int i = 0; i < bytes.length; i++) {
+//				assertEquals((byte) 0xaa, bytes[i]);
+//			}
+//		}
+//		catch (IOException e) {
+//			fail();
+//		}
+	}
+
 	// ------------------------------------------------------------------------------------
 	// Shorts
 	// ------------------------------------------------------------------------------------
@@ -190,6 +219,20 @@ public class BinaryReaderTest {
 			fail("Should have triggered IOException");
 		}
 		catch (IOException ioe) {
+			// good
+		}
+	}
+
+	@Test
+	public void testReadShortArray_oversize() {
+		BinaryReader br =
+			staticValueBR(true, NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG * 100, (byte) 0xaa);
+
+		try {
+			br.readNextShortArray(Integer.MAX_VALUE - 10);
+			fail();
+		}
+		catch (IOException e) {
 			// good
 		}
 	}
@@ -285,6 +328,20 @@ public class BinaryReaderTest {
 		Assert.fail(
 			"Should not be able to read a value that is larger than what can fit in java 32 bit int: " +
 				Integer.toUnsignedString(value));
+	}
+
+	@Test
+	public void testReadIntArray_oversize() {
+		BinaryReader br =
+			staticValueBR(true, NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG * 100, (byte) 0xaa);
+
+		try {
+			br.readNextIntArray(Integer.MAX_VALUE - 10);
+			fail();
+		}
+		catch (IOException e) {
+			// good
+		}
 	}
 
 	// ------------------------------------------------------------------------------------
@@ -536,6 +593,19 @@ public class BinaryReaderTest {
 	public void test_ReadAsciiString_ToEof() throws IOException {
 		BinaryReader br = br(true, 'A', 'B', 'C');
 		br.readAsciiString(0);
+	}
+
+	@Test
+	public void test_ReadAsciiString_oversize() {
+		BinaryReader br =
+			staticValueBR(true, NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG * 100, (byte) 0xaa);
+		try {
+			br.readString(0, Integer.MAX_VALUE - 10, StandardCharsets.US_ASCII, 1);
+			fail();
+		}
+		catch (IOException e) {
+			// good
+		}
 	}
 
 	@Test

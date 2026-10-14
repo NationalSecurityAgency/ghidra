@@ -86,6 +86,11 @@ public class RefdByteProvider implements ByteProvider {
 	}
 
 	@Override
+	public boolean isValidRange(long startIndex, int count) {
+		return provider.isValidRange(startIndex, count);
+	}
+
+	@Override
 	public byte readByte(long index) throws IOException {
 		return provider.readByte(index);
 	}

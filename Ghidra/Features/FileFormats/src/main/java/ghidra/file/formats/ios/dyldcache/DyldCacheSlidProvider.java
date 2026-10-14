@@ -124,6 +124,11 @@ public class DyldCacheSlidProvider implements ByteProvider {
 	}
 
 	@Override
+	public boolean isValidRange(long startIndex, int count) {
+		return origProvider.isValidRange(startIndex, count);
+	}
+
+	@Override
 	public void close() throws IOException {
 		// This is a wrapper, so don't close
 	}

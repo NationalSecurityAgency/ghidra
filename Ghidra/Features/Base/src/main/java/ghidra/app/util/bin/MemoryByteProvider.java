@@ -98,7 +98,7 @@ public class MemoryByteProvider implements ByteProvider {
 	protected Memory memory;
 	protected Address baseAddress;
 	protected long maxOffset; // max valid offset, inclusive
-	protected boolean isEmtpy; // empty is tracked separately because maxOffset == 0 does not mean empty
+	protected boolean isEmpty; // empty is tracked separately because maxOffset == 0 does not mean empty
 
 	/**
 	 * Constructs a new {@link MemoryByteProvider} for a specific {@link AddressSpace}.  Bytes 
@@ -136,9 +136,10 @@ public class MemoryByteProvider implements ByteProvider {
 	 * if false, all memory blocks of the address space will be accessible
 	 */
 	public MemoryByteProvider(Memory memory, Address baseAddress, boolean firstBlockOnly) {
-		this(memory, baseAddress, firstBlockOnly
-				? findEndOfBlock(memory, baseAddress)
-				: findAddressSpaceMax(memory, baseAddress));
+		this(memory, baseAddress,
+			firstBlockOnly
+					? findEndOfBlock(memory, baseAddress)
+					: findAddressSpaceMax(memory, baseAddress));
 	}
 
 	/**
@@ -153,10 +154,8 @@ public class MemoryByteProvider implements ByteProvider {
 	public MemoryByteProvider(Memory memory, Address baseAddress, Address maxAddress) {
 		this.memory = memory;
 		this.baseAddress = baseAddress;
-		this.maxOffset = maxAddress != null
-				? maxAddress.subtract(baseAddress)
-				: 0;
-		this.isEmtpy = maxAddress == null;
+		this.maxOffset = maxAddress != null ? maxAddress.subtract(baseAddress) : 0;
+		this.isEmpty = maxAddress == null;
 	}
 
 	public Memory getMemory() {
@@ -204,7 +203,7 @@ public class MemoryByteProvider implements ByteProvider {
 
 	@Override
 	public boolean isEmpty() {
-		return isEmtpy;
+		return isEmpty;
 	}
 
 	@Override
@@ -224,7 +223,7 @@ public class MemoryByteProvider implements ByteProvider {
 
 	@Override
 	public long length() {
-		if (isEmtpy) {
+		if (isEmpty) {
 			return 0;
 		}
 
@@ -236,13 +235,58 @@ public class MemoryByteProvider implements ByteProvider {
 
 	@Override
 	public boolean isValidIndex(long index) {
-		// this method treats the index as an unsigned int64, and will give accurate results
-		// for the entire range of the underlying AddressSpace
 		try {
-			if (isEmtpy || Long.compareUnsigned(index, maxOffset) > 0) {
+			// this method treats the index as an unsigned int64, and will give accurate results
+			// for the entire range of the underlying AddressSpace
+			if (isEmpty || Long.compareUnsigned(index, maxOffset) > 0) {
 				return false;
 			}
-			return memory.contains(getAddress(index));
+			Address addr = getAddress(index);
+			MemoryBlock memBlock = memory.getBlock(addr);
+			return memBlock != null && memBlock.isInitialized();
+		}
+		catch (IOException | AddressOutOfBoundsException e) {
+			return false;
+		}
+	}
+
+	@Override
+	public boolean isValidRange(long startIndex, int count) {
+		// this method treats the index as an unsigned int64, and will give accurate results
+		// for the entire range of the underlying AddressSpace
+
+		if (isEmpty || // empty 
+			Long.compareUnsigned(startIndex, maxOffset) > 0 || // bad start index
+			count < 0 || // negative bad count or
+			(count > 0 && Long.compareUnsigned(count - 1, maxOffset - startIndex) > 0) // count too long(*)
+		) {
+			// Note(*): when evaluating count against the memory range we can't "+1" the expression
+			// "maxOffset - startIndex" because that could lead to an overflow, so we shift the +1
+			// from there to a "-1" on the count
+			return false;
+		}
+		if (count == 0) {
+			return true;
+		}
+
+		try {
+			for (long i = startIndex, endIndexInclusive = startIndex + (count - 1); Long
+					.compareUnsigned(i, endIndexInclusive) <= 0;) {
+				Address address = getAddress(i);
+				MemoryBlock block = memory.getBlock(address);
+				if (block == null || !block.isInitialized()) {
+					return false;
+				}
+				long delta = block.getEnd().subtract(address);
+				i += delta;
+				if (Long.compareUnsigned(i, endIndexInclusive) >= 0) {
+					// have to check before advancing past the end of the mem block as it might
+					// be the absolute end of memory and cause a wrap around
+					break;
+				}
+				i++;
+			}
+			return true;
 		}
 		catch (IOException | AddressOutOfBoundsException e) {
 			return false;
@@ -298,7 +342,7 @@ public class MemoryByteProvider implements ByteProvider {
 		}
 
 		// ensure read start index is valid
-		if (isEmtpy || Long.compareUnsigned(index, maxOffset) > 0) {
+		if (isEmpty || Long.compareUnsigned(index, maxOffset) > 0) {
 			throw new EOFException("Invalid index: %s".formatted(Long.toUnsignedString(index)));
 		}
 

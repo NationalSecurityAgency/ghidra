@@ -83,6 +83,11 @@ public class UnlimitedByteProviderWrapper extends ByteProviderWrapper {
 	}
 
 	@Override
+	public boolean isValidRange(long startIndex, int count) {
+		return startIndex >= 0 && count >= 0;
+	}
+
+	@Override
 	public byte readByte(long index) throws IOException {
 		if (index < 0) {
 			throw new IOException("Invalid index: " + index);
