@@ -65,6 +65,16 @@ public class StringSearchFormatTest extends AbstractSearchFormatTest {
 	}
 
 	@Test
+	public void testFoo() {
+		settings = settings.withStringCharset(StandardCharsets.UTF_8);
+		settings = settings.withCaseSensitive(false);
+		matcher = parse("éa");
+
+		assertBytes(0xc3, 0xa9, 0x41); // éA  upper-case the ASCII portion of the bytes
+		assertMask(0xff, 0xff, 0xdf);
+	}
+
+	@Test
 	public void testEscapeSequence() {
 		settings = settings.withUseEscapeSequence(false);
 		matcher = parse("a\\n");
