@@ -129,13 +129,13 @@ public class ModuleManifestFile {
 
 	private void processModuleFileInfo(String line) throws IOException {
 		String fileInfoLine = line.substring(MODULE_FILE_INFO.length()).trim();
-		String[] parts = fileInfoLine.split("\\s+", 4);
-		if (parts.length < 4) {
+		String[] parts = fileInfoLine.split("\\s+", 3);
+		if (parts.length < 3) {
 			fileInfoFail(line); // error
 		}
 
 		String filename = parts[0];
-		String IP = parts[3];
+		String IP = parts[2];
 		fileIPMap.put(filename, IP);
 	}
 
