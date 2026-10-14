@@ -6812,8 +6812,6 @@ int4 RulePtraddUndo::applyOp(PcodeOp *op,Funcdata &data)
   return 1;
 }
 
-const int4 RulePtrsubUndo::DEPTH_LIMIT = 8;
-
 /// \class RulePtrsubUndo
 /// \brief Remove PTRSUB operations with mismatched data-type information
 ///
@@ -6833,9 +6831,9 @@ void RulePtrsubUndo::getOpList(vector<uint4> &oplist) const
 /// formed with INT_MULT.
 /// \param vn is the given root Varnode of the additive tree
 /// \param multiplier will hold the biggest constant multiplier or 0, if no multiplier is present
-/// \param maxLevel is the maximum depth to search in the tree
+/// \param termCount holds the number of Varnodes traversed (for the entire expression)
 /// \return the sum of all constants in the additive expression
-int8 RulePtrsubUndo::getConstOffsetBack(Varnode *vn,int8 &multiplier,int4 maxLevel)
+int8 RulePtrsubUndo::getConstOffsetBack(Varnode *vn,int8 &multiplier,int4 &termCount)
 
 {
   multiplier = 0;
@@ -6844,17 +6842,17 @@ int8 RulePtrsubUndo::getConstOffsetBack(Varnode *vn,int8 &multiplier,int4 maxLev
     return vn->getOffset();
   if (!vn->isWritten())
     return 0;
-  maxLevel -= 1;
-  if (maxLevel < 0)
+  termCount += 1;
+  if (termCount > MAX_TERMS)	// Stop recursing if term count exceeded
     return 0;
   PcodeOp *op = vn->getDef();
   OpCode opc = op->code();
   int8 retval = 0;
   if (opc == CPUI_INT_ADD) {
-    retval += getConstOffsetBack(op->getIn(0),submultiplier,maxLevel);
+    retval += getConstOffsetBack(op->getIn(0),submultiplier,termCount);
     if (submultiplier > multiplier)
       multiplier = submultiplier;
-    retval += getConstOffsetBack(op->getIn(1), submultiplier, maxLevel);
+    retval += getConstOffsetBack(op->getIn(1), submultiplier, termCount);
     if (submultiplier > multiplier)
       multiplier = submultiplier;
   }
@@ -6862,7 +6860,7 @@ int8 RulePtrsubUndo::getConstOffsetBack(Varnode *vn,int8 &multiplier,int4 maxLev
     Varnode *cvn = op->getIn(1);
     if (!cvn->isConstant()) return 0;
     multiplier = cvn->getOffset();
-    getConstOffsetBack(op->getIn(0), submultiplier, maxLevel);
+    getConstOffsetBack(op->getIn(0), submultiplier, termCount);
     if (submultiplier > 0)
       multiplier *= submultiplier;		// Only contribute to the multiplier
   }
@@ -6888,7 +6886,12 @@ int8 RulePtrsubUndo::getExtraOffset(PcodeOp *op,int8 &multiplier)
     OpCode opc = op->code();
     if (opc == CPUI_INT_ADD) {
       int4 slot = op->getSlot(outvn);
-      extra += getConstOffsetBack(op->getIn(1-slot),submultiplier,DEPTH_LIMIT);	// Get any constants from other input
+      int4 termCount = 0;
+      extra += getConstOffsetBack(op->getIn(1-slot),submultiplier,termCount);	// Get any constants from other input
+      if (termCount > MAX_TERMS) {
+	multiplier = 0;
+	return 0;		// Completely disable extra offset calculation
+      }
       if (submultiplier > multiplier)
 	multiplier = submultiplier;
     }
@@ -6901,7 +6904,12 @@ int8 RulePtrsubUndo::getExtraOffset(PcodeOp *op,int8 &multiplier)
       Varnode *invn = op->getIn(1);
       if (invn->isConstant())					// Only contribute to the extra
 	extra += ptraddmult * (int8)invn->getOffset();		// if the index is constant
-      getConstOffsetBack(invn,submultiplier,DEPTH_LIMIT);	// otherwise just contribute to multiplier
+      int4 termCount = 0;
+      getConstOffsetBack(invn,submultiplier,termCount);	// otherwise just contribute to multiplier
+      if (termCount > MAX_TERMS) {
+	multiplier = 0;		// Completely disable extra offset calculation
+	return 0;
+      }
       if (submultiplier != 0)
 	ptraddmult *= submultiplier;
       if (ptraddmult > multiplier)
@@ -6923,10 +6931,9 @@ int8 RulePtrsubUndo::getExtraOffset(PcodeOp *op,int8 &multiplier)
 /// a COPY.  The INT_ADD must only contribute to the root expression.
 /// \param op is the given root PcodeOp
 /// \param slot is the input slot to walk back from
-/// \param maxLevel is the maximum depth to recurse
 /// \param data is the function containing the expression
 /// \return the sum of all constants that are removed
-int8 RulePtrsubUndo::removeLocalAddRecurse(PcodeOp *op,int4 slot,int4 maxLevel,Funcdata &data)
+int8 RulePtrsubUndo::removeLocalAddRecurse(PcodeOp *op,int4 slot,Funcdata &data)
 
 {
   Varnode *vn = op->getIn(slot);
@@ -6934,9 +6941,6 @@ int8 RulePtrsubUndo::removeLocalAddRecurse(PcodeOp *op,int4 slot,int4 maxLevel,F
     return 0;
   if (vn->loneDescend() != op)
     return 0;				// Varnode must not be used anywhere else
-  maxLevel -= 1;
-  if (maxLevel < 0)
-    return 0;
   op = vn->getDef();
   int8 retval = 0;
   if (op->code() == CPUI_INT_ADD) {
@@ -6946,8 +6950,8 @@ int8 RulePtrsubUndo::removeLocalAddRecurse(PcodeOp *op,int4 slot,int4 maxLevel,F
       data.opSetOpcode(op, CPUI_COPY);
     }
     else {
-      retval += removeLocalAddRecurse(op, 0, maxLevel, data);
-      retval += removeLocalAddRecurse(op, 1, maxLevel, data);
+      retval += removeLocalAddRecurse(op, 0, data);
+      retval += removeLocalAddRecurse(op, 1, data);
     }
   }
   return retval;
@@ -6977,7 +6981,7 @@ int8 RulePtrsubUndo::removeLocalAdds(Varnode *vn,Funcdata &data)
 	data.opSetOpcode(op, CPUI_COPY);
       }
       else {
-	extra += removeLocalAddRecurse(op,1-slot,DEPTH_LIMIT, data);	// Get any constants from other input
+	extra += removeLocalAddRecurse(op,1-slot, data);	// Get any constants from other input
       }
     }
     else if (opc == CPUI_PTRSUB) {
@@ -7000,7 +7004,7 @@ int8 RulePtrsubUndo::removeLocalAdds(Varnode *vn,Funcdata &data)
       }
       else {
 	data.opUndoPtradd(op, false);
-	extra += removeLocalAddRecurse(op,1,DEPTH_LIMIT, data);
+	extra += removeLocalAddRecurse(op,1, data);
       }
     }
     else {
