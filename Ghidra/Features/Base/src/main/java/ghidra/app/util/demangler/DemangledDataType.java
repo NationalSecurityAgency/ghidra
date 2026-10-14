@@ -133,7 +133,7 @@ public class DemangledDataType extends DemangledType {
 	 * @return the Ghidra datatype corresponding to the demangled datatype
 	 */
 	public DataType getDataType(DataTypeManager dataTypeManager) {
-		String name = getName();
+		String name = getDataTypeName();
 		if (name == null) {
 			return DataType.DEFAULT;
 		}
@@ -229,6 +229,21 @@ public class DemangledDataType extends DemangledType {
 		}
 
 		return dt;
+	}
+
+	/**
+	 * Returns the name to use for the Ghidra datatype.  Templates are held separately from the
+	 * name, so they are added back here.  The result is made safe in the same way as the name
+	 * of a templated namespace, so that the datatype matches the class structure of that
+	 * namespace.
+	 * @return the datatype name, including any template arguments
+	 */
+	private String getDataTypeName() {
+		if (template == null) {
+			return getName();
+		}
+		String templatedName = getDemangledName() + template.toTemplate();
+		return DemanglerUtil.stripSuperfluousSignatureSpaces(templatedName).replace(' ', '_');
 	}
 
 	private DataType getBuiltInType(DataTypeManager dataTypeManager) {

@@ -186,7 +186,9 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		demangledParameter = dobj.getParameters().get(0);
 		type = demangledParameter.getType();
 		dt = type.getDataType(program.getDataTypeManager());
-		assertEquals("typedef basic_string undefined", dt.toString());
+		assertEquals(
+			"typedef basic_string<char,std::char_traits<char>,std::allocator<char>> undefined",
+			dt.toString());
 
 	}
 
