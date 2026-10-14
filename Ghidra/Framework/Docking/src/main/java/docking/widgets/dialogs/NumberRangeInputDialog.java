@@ -164,7 +164,7 @@ public class NumberRangeInputDialog extends DialogComponentProvider {
 		}
 
 		// this must be a range
-		String[] startAndEnd = trimmed.split(RANGE_DELIMITER, -1);
+		String[] startAndEnd = trimmed.split(RANGE_DELIMITER);
 		if (startAndEnd.length != 2) {
 			setStatusText("Unable to parse as a number: '" + trimmed + "'");
 			return false;
@@ -174,8 +174,12 @@ public class NumberRangeInputDialog extends DialogComponentProvider {
 			int endInt = NumericUtilities.parseInt(startAndEnd[1]);
 			rangeList.addRange(startInt, endInt);
 		}
-		catch (IllegalArgumentException e) {
+		catch (NumberFormatException e) {
 			setStatusText("Unable to parse as a number: '" + trimmed + "'");
+			return false;
+		}
+		catch (IllegalArgumentException e) {  // e.g., 5:1,  a reversed range
+			setStatusText(e.getMessage());
 			return false;
 		}
 		return true;

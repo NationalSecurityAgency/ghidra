@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -106,13 +106,63 @@ public class NumberRangeInputDialogTest extends AbstractDockingTest {
 	}
 
 	@Test
-	public void testRangeInput_Range_InvalidNumber() {
+	public void testRangeInput_InvalidNumber() {
 
 		setText("100:0xBob");
 
 		ok();
 
 		assertStatusText("Unable to parse as a number: '100:0xBob'");
+		assertNoRanges();
+	}
+
+	@Test
+	public void testRangeInput_InvalidNumber_NoRangesMade() {
+
+		setText("1:x");
+
+		ok();
+
+		assertStatusText("Unable to parse as a number: '1:x'");
+		assertNoRanges();
+	}
+
+	@Test
+	public void testRangeInput_InvalidRange_NoException() {
+
+		setText("1: ");
+
+		ok();
+
+		assertStatusText("Unable to parse as a number: '1:'");
+		assertNoRanges();
+	}
+
+	@Test
+	public void testRangeInput_InvalidRange_TooManySections() {
+
+		setText("1:4:8");
+
+		ok();
+
+		assertStatusText("Unable to parse as a number: '1:4:8'");
+		assertNoRanges();
+	}
+
+	@Test
+	public void testRangeInput_InvalidRange_ReverseRange() {
+
+		setText("5:1");
+
+		ok();
+
+		assertStatusText("Range max (1) cannot be less than min (5).");
+		assertNoRanges();
+	}
+
+	private void assertNoRanges() {
+		SortedRangeList ranges = runSwing(() -> dialog.getValue());
+		assertTrue(ranges.isEmpty());
 	}
 
 	private void assertStatusText(String expected) {
@@ -121,13 +171,13 @@ public class NumberRangeInputDialogTest extends AbstractDockingTest {
 	}
 
 	private void assertValues(Range range) {
-		SortedRangeList ranges = dialog.getValue();
+		SortedRangeList ranges = runSwing(() -> dialog.getValue());
 		assertEquals(range.size(), ranges.getNumValues());
 		assertEquals(range, ranges.getRange(0));
 	}
 
 	private void assertValues(int... values) {
-		SortedRangeList ranges = dialog.getValue();
+		SortedRangeList ranges = runSwing(() -> dialog.getValue());
 		assertEquals(values.length, ranges.getNumValues());
 
 		Set<Integer> set = new HashSet<>();
