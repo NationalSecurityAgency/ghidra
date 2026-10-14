@@ -318,7 +318,7 @@ def main() -> None:
     else:
         py_args += ['pyghidra', '-g', '--install-dir', str(install_dir)]
     if args.console:
-        subprocess.call(py_args + remaining)
+        sys.exit(subprocess.call(py_args + remaining))
     else:
         creation_flags = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
         subprocess.Popen(py_args + remaining, creationflags=creation_flags, stdout=DEVNULL, stderr=DEVNULL)
