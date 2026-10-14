@@ -890,7 +890,8 @@ public class FunctionEditorModel {
 	}
 
 	private FunctionSignature getFunctionSignature() {
-		FunctionDefinitionDataType funDt = new FunctionDefinitionDataType(getName());
+		ProgramBasedDataTypeManager dtm = program.getDataTypeManager();
+		FunctionDefinitionDataType funDt = new FunctionDefinitionDataType(getName(), dtm);
 		funDt.setReturnType(getFormalReturnType());
 
 		String ccName = getCallingConventionName();
