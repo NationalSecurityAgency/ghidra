@@ -116,6 +116,7 @@
 * _Debugger_. Navigating to a snapshot now generally also navigates to its event thread. (GP-6603)
 * _Debugger_. Fixed autosetup logic for Windows agents. (GP-6966)
 * _Debugger:GDB_. Fixed an issue with some configurations of gdb-17.2 involving `unavailable` register values. (GP-6974, Issue #9254)
+* _Debugger:GDB_. Fixed issue where crafted __Image__ field could cause the __gdb+gdbserver via ssh__ connector to execute attacker-chosen shell commands locally. (GP-7332)
 * _Debugger:Listing_. Fixed issues with Variable hovers in the Listing and Decompiler. (GP-4914)
 * _Debugger:Modules_. Fixed hang that occurred on Debugger startup / server connection caused by module indexing on the Swing thread. This is now a background task. (GP-7004, Issue #8145, #8910, #9299)
 * _Debugger:Stack_. Fixed an issue where unwind analysis got stuck interpreting `TZCNT` or other instructions with internal p-code loops. (GP-6707)
@@ -155,6 +156,10 @@
 * _Logging_. Added default log file values to prevent bad log files from getting created during testing. (GP-7142, Issue #9468)
 * _Multi-User_. Removed Ghidra UI option to control data buffer compression with Ghidra Server communications.  Compression is enabled by default.  Imposed 64KB size restriction for `DataBuffer` to prevent malicious attempts to serialize very large compressed buffers to the Ghidra Server. (GP-7328)
 * _Networking_. Disabled Felix framework URL handler support which was interfering with URL connection error handling. (GP-7269)
+* _Processors_. Fixed disassembly of x86 instructions `CLWB` and `CLRSSBSY`. (GP-2336)
+* _Processors_. Corrected disassembly of x86 `VMREAD` and `VMWRITE` instructions in 64-bit. (GP-7217, Issue #9581)
+* _Processors_. Fixed regression in x86 `mov` segment instruction operand ordering. (GP-7279, Issue #9635, #9637)
+* _Processors_. Corrected AARCH64 `eor3`, `bcax`, `rax1`, and `xar` instructions to use `xor` instead of `or` operation. (GP-7313)
 * _Scripting_. Fixed a bug that prevented the GhidraScript `ask()` methods from consuming script arguments in GUI mode. (GP-7125, Issue #9463)
 * _Terminal_. Fixed an issue with Terminal content updates by now using Unicode code point instead of java characters. (GP-6938)
 
