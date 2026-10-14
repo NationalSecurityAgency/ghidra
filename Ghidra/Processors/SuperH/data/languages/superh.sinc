@@ -279,20 +279,23 @@ disppc2: @(disp,pc) is disp_00_07 & pc
 
 :mov.b  rm_04_07,@-rn_08_11  is opcode_12_15=0b0010 & rn_08_11 & rm_04_07 & opcode_00_03=0b0100 
 {
+    local value = rm_04_07:1;
     rn_08_11 = rn_08_11 -1;
-    *:1 rn_08_11 = rm_04_07:1;
+    *:1 rn_08_11 = value;
 }
 
 :mov.w  rm_04_07,@-rn_08_11  is opcode_12_15=0b0010 & rn_08_11 & rm_04_07 & opcode_00_03=0b0101 
 {
+    local value = rm_04_07:2;
     rn_08_11 = rn_08_11 -2;
-    *:2 rn_08_11 = rm_04_07:2;
+    *:2 rn_08_11 = value;
 }
 
 :mov.l  rm_04_07,@-rn_08_11  is opcode_12_15=0b0010 & rn_08_11 & rm_04_07 & opcode_00_03=0b0110 
 {
+    local value = rm_04_07;
     rn_08_11 = rn_08_11 -4;
-    *:4 rn_08_11 = rm_04_07;
+    *:4 rn_08_11 = value;
 }
 
 :mov.b  @(disp_00_03,rm_04_07),r0  is r0 & opcode_08_15=0b10000100 & rm_04_07 & disp_00_03  
