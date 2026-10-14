@@ -820,7 +820,7 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
 # NOTT                          0000000001101000    ~ T → T
 :nott is opcode_00_15=0b0000000001101000
 {
-    $(T_FLAG) = ~$(T_FLAG);
+    $(T_FLAG) = $(T_FLAG) ^ 1;
 }
 
 @endif
