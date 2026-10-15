@@ -138,7 +138,7 @@ public class MouseBinding {
 		int modifiers = 0;
 		for (Iterator<String> iterator = pieces.iterator(); iterator.hasNext();) {
 			String piece = iterator.next();
-			if (Strings.CI.indexOf(piece, SHIFT) != -1) {
+			if (isModifier(piece, SHIFT, InputEvent.SHIFT_DOWN_MASK)) {
 				modifiers |= InputEvent.SHIFT_DOWN_MASK;
 				iterator.remove();
 			}
@@ -147,17 +147,27 @@ public class MouseBinding {
 				modifiers |= Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
 				iterator.remove();
 			}
-			else if (Strings.CI.indexOf(piece, ALT) != -1) {
+			else if (Strings.CI.equals(piece,
+				InputEvent.getModifiersExText(InputEvent.CTRL_DOWN_MASK))) {
+				modifiers |= InputEvent.CTRL_DOWN_MASK;
+				iterator.remove();
+			}
+			else if (isModifier(piece, ALT, InputEvent.ALT_DOWN_MASK)) {
 				modifiers |= InputEvent.ALT_DOWN_MASK;
 				iterator.remove();
 			}
-			else if (Strings.CI.indexOf(piece, META) != -1) {
+			else if (isModifier(piece, META, InputEvent.META_DOWN_MASK)) {
 				modifiers |= InputEvent.META_DOWN_MASK;
 				iterator.remove();
 			}
 		}
 
 		return new MouseBinding(button, modifiers);
+	}
+
+	private static boolean isModifier(String piece, String name, int mask) {
+		return Strings.CI.indexOf(piece, name) != -1 ||
+			Strings.CI.equals(piece, InputEvent.getModifiersExText(mask));
 	}
 
 	private static int getButton(String mouseString) {
