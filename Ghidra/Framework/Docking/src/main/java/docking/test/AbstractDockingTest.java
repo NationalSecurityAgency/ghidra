@@ -32,6 +32,7 @@ import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import javax.swing.*;
+import javax.swing.event.CaretEvent;
 import javax.swing.text.JTextComponent;
 
 import org.apache.commons.io.FilenameUtils;
@@ -62,7 +63,6 @@ import ghidra.util.task.SwingUpdateManager;
 import ghidra.util.worker.Worker;
 import junit.framework.AssertionFailedError;
 import resources.icons.UrlImageIcon;
-import sun.awt.AppContext;
 import util.CollectionUtils;
 import utility.application.ApplicationLayout;
 
@@ -1542,10 +1542,19 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 
 		runSwing(() -> {
 
-			// Update Swing's notion of the focused component
-			Object contextKey = getInstanceField("FOCUSED_COMPONENT", tc);
-			AppContext context = AppContext.getAppContext();
-			context.put(contextKey, tc);
+			// Let JTextComponent update its focused-component state. Its caret event
+			// listener maintains this state across JDK versions; other focus listeners
+			// must not run here (in particular, look-and-feel select-all listeners).
+			boolean updated = false;
+			for (FocusListener listener : tc.getFocusListeners()) {
+				if (listener instanceof CaretEvent) {
+					listener.focusGained(new FocusEvent(tc, FocusEvent.FOCUS_GAINED));
+					updated = true;
+				}
+			}
+			if (!updated) {
+				throw new AssertionError("JTextComponent has no focused-component listener");
+			}
 
 			/*
 			 	The FlatLaf will select all text in a text field when it gains focus.  This will 
