@@ -92,7 +92,8 @@ public class SignatureCallback implements Callback, Serializable {
 	}
 
 	/**
-	 * {@return certificate chain used to sign token}
+	 * {@return certificate chain used to sign token, with the signing identity first and its
+	 * issuing CAs following it; the root certificate may be omitted}
 	 */
 	public X509Certificate[] getCertificateChain() {
 		return certChain;
@@ -101,7 +102,10 @@ public class SignatureCallback implements Callback, Serializable {
 	/**
 	 * Set token signature data.  Method must be invoked by 
 	 * callback handler.
-	 * @param sigCertChain certificate chain used to sign token.
+	 * @param sigCertChain certificate chain used to sign token, ordered with the signing identity
+	 * first and its issuing CAs following it. The root certificate may be omitted. The receiver
+	 * must validate the chain and verify the token signature using that same first certificate;
+	 * certificate positions must not be inferred from the presence of a self-signed CA.
 	 * @param certSignature token signature
 	 */
 	public void sign(X509Certificate[] sigCertChain, byte[] certSignature) {
