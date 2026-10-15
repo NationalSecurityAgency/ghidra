@@ -71,6 +71,21 @@ public class OverlayByteProvider implements ByteProvider {
 	}
 
 	@Override
+	public boolean isValidRange(long startIndex, int count) {
+		if (count < 0) {
+			return false;
+		}
+		long endIndexInclusive = startIndex + count - 1; // won't be used if count==0
+		for (OverlayRange range : overlayList) {
+			if (range.containsIndex(startIndex) &&
+				(count == 0 || range.containsIndex(endIndexInclusive))) {
+				return true;
+			}
+		}
+		return provider.isValidRange(startIndex, count);
+	}
+
+	@Override
 	public void close() throws IOException {
 		provider.close();
 	}

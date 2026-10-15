@@ -56,11 +56,6 @@ public class FileBytesProvider implements ByteProvider {
 	}
 
 	@Override
-	public boolean isValidIndex(long index) {
-		return 0 <= index && index < length();
-	}
-
-	@Override
 	public void close() throws IOException {
 		// do nothing
 	}

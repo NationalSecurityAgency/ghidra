@@ -20,6 +20,7 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -46,6 +47,7 @@ public abstract class AbstractPcodeEmulatorTest extends AbstractGTest {
 	public static final LanguageID LANGID_TOY_LE = new LanguageID("Toy:BE:64:default");
 	public static final LanguageID LANGID_X64 = new LanguageID("x86:LE:64:default");
 	public static final LanguageID LANGID_ARMV8 = new LanguageID("ARM:LE:32:v8");
+	public static final LanguageID LANGID_MIPS_BE = new LanguageID("MIPS:BE:32:default");
 
 	public static final int FIB_ITER_N = 100000;
 	public static final long FIB_ITER_VAL = 2754320626097736315L;
@@ -233,6 +235,76 @@ public abstract class AbstractPcodeEmulatorTest extends AbstractGTest {
 
 		assertEquals(getFibRecVal(),
 			arithmetic.toLong(thread.getState().getVar(rax, Reason.INSPECT), Purpose.INSPECT));
+	}
+
+	final static String BREAK_PREFIX = "<break>";
+
+	/**
+	 * Run raw MIPS code at 0x00400000 until a breakpoint denoted by {@value #BREAK_PREFIX}, then
+	 * return t0.
+	 */
+	protected long runMipsToBreakpoint(List<String> lines) throws Exception {
+		PcodeEmulator emu = createEmulator(getLanguage(LANGID_MIPS_BE));
+		PcodeArithmetic<byte[]> arithmetic = emu.getArithmetic();
+		AddressSpace space = emu.getLanguage().getDefaultSpace();
+		Address entry = space.getAddress(0x00400000);
+		Address brk = null;
+
+		AssemblyBuffer asm = new AssemblyBuffer(Assemblers.getAssembler(emu.getLanguage()), entry);
+		for (String l : lines) {
+			l = l.trim();
+			if (l.startsWith(BREAK_PREFIX)) {
+				brk = asm.getNext();
+				l = l.substring(BREAK_PREFIX.length()).trim();
+			}
+			asm.assemble(l);
+		}
+
+		byte[] bytes = asm.getBytes();
+		emu.getSharedState().setVar(entry, bytes.length, false, bytes);
+		PcodeThread<byte[]> thread = emu.newThread();
+		thread.overrideCounter(entry);
+
+		emu.addBreakpoint(brk, "1:1");
+
+		try {
+			thread.run();
+			fail("Should have interrupted on breakpoint");
+		}
+		catch (InterruptPcodeExecutionException e) {
+		}
+		assertEquals(brk, thread.getCounter());
+
+		Register t0 = emu.getLanguage().getRegister("t0");
+		return arithmetic.toLong(thread.getState().getVar(t0, Reason.INSPECT), Purpose.INSPECT);
+	}
+
+	/**
+	 * A delay-slotted branch that is not taken falls through to the instruction after its delay
+	 * slot. The delay-slotted instruction must execute exactly once.
+	 */
+	@Test
+	public void testDelaySlotBranchNotTaken() throws Exception {
+		assertEquals(1, runMipsToBreakpoint(List.of(
+			"        li  t0,0x0",
+			"        bne t0,zero,0x00400010", // never taken
+			"        li  t0,0x1",             // delay slot
+			"<break> li  t1,0x0"              // TODO: nop
+		)));
+	}
+
+	/**
+	 * A delay-slotted branch that is taken executes its delay slot once, then the target.
+	 */
+	@Test
+	public void testDelaySlotBranchTaken() throws Exception {
+		assertEquals(1, runMipsToBreakpoint(List.of(
+			"        li    t0,0x0",
+			"        beq   t0,zero,0x00400010", // always taken
+			"        li    t0,0x1",             // delay slot, executed
+			"        addiu t0,t0,0x10",         // skipped
+			"<break> li    t1,0x0"              // TODO: nop
+		)));
 	}
 
 	@Test

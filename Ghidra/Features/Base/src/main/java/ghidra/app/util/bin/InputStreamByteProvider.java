@@ -77,11 +77,6 @@ public class InputStreamByteProvider implements ByteProvider {
 	}
 
 	@Override
-	public boolean isValidIndex(long index) {
-		return (index >= 0L) && (index < length);
-	}
-
-	@Override
 	public byte readByte(long index) throws IOException {
 		if (index < currentIndex) {
 			throw new IOException("Attempted to read byte that was already read.");

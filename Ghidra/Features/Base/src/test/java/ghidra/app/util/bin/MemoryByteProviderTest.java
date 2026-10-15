@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,10 +15,9 @@
  */
 package ghidra.app.util.bin;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.io.EOFException;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import org.junit.*;
@@ -89,7 +88,7 @@ public class MemoryByteProviderTest extends AbstractGhidraHeadedIntegrationTest 
 	}
 
 	@Test
-	public void testNoMemory() throws IOException {
+	public void testNoMemory() {
 		MemoryByteProvider mbp = MemoryByteProvider.createProgramHeaderByteProvider(program, false);
 		assertEquals(0, mbp.length());
 
@@ -236,5 +235,50 @@ public class MemoryByteProviderTest extends AbstractGhidraHeadedIntegrationTest 
 
 		setBlockStartEndBytes(blk1, "blah", "fail");
 		reader.readAsciiString(blk1.getEnd().getOffset() - 3);
+	}
+
+	@Test
+	public void testIsValidIndex_IsRangeValid_Full64bitAddressSpace() throws Exception {
+		addRamEnd();
+		MemoryByteProvider mbp =
+			MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
+
+		assertEquals(Long.MAX_VALUE, mbp.length());
+		assertTrue(mbp.isValidIndex(0xffffffffffffffb0L));
+		assertTrue(mbp.isValidIndex(0xffffffffffffffffL));
+
+		assertTrue(mbp.isValidRange(0xffffffffffffffb0L, 0x50));
+		assertFalse(mbp.isValidRange(0xffffffffffffffb0L, 0x51));
+	}
+
+	@Test
+	public void testIsValidIndex_IsRangeValid() throws Exception {
+		addRam1();
+		MemoryByteProvider mbp =
+			MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
+
+		assertTrue(mbp.isValidIndex(0x50));
+		assertTrue(mbp.isValidIndex(0x50 + 0x50 - 1));
+		assertFalse(mbp.isValidIndex(0x50 + 0x50));
+
+		assertTrue(mbp.isValidRange(0x50, 0x50));
+		assertFalse(mbp.isValidRange(0x50, 0x51));
+	}
+
+	@Test
+	public void testIsValidIndex_IsRangeValid_adjacent_blocks() throws Exception {
+		addRam1();
+		addRam2();
+
+		MemoryByteProvider mbp =
+			MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
+
+		assertTrue(mbp.isValidIndex(0x50));
+		assertTrue(mbp.isValidIndex(0x50 + 0x50 - 1));
+		assertTrue(mbp.isValidIndex(0x50 + 0x50));
+		assertTrue(mbp.isValidIndex(0x50 + 0x50 + 0x50 - 1));
+
+		assertTrue(mbp.isValidRange(0x50, 0x50 + 0x50));
+		assertFalse(mbp.isValidRange(0x50, 0x50 + 0x50 + 1));
 	}
 }

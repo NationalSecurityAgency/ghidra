@@ -111,11 +111,6 @@ public class FileByteProvider implements MutableByteProvider {
 	}
 
 	@Override
-	public boolean isValidIndex(long index) {
-		return 0 <= index && index < currentLength;
-	}
-
-	@Override
 	public byte readByte(long index) throws IOException {
 		ensureBounds(index, 1);
 		Buffer fileBuffer = getBufferFor(index);

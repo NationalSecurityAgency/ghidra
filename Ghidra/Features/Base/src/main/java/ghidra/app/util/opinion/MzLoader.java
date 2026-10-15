@@ -68,7 +68,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 		}
 		MzExecutable mz = new MzExecutable(provider);
 		OldDOSHeader header = mz.getHeader();
-		if (header.isDosSignature() && !isPeOrNe(provider)) {
+		if (header.isDosSignature() && !isPe(provider) && !isNe(provider)) {
 			List<QueryResult> results =
 				QueryOpinionService.query(getName(), "" + header.e_magic(), null);
 			for (QueryResult result : results) {
@@ -131,25 +131,34 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 	}
 
 	/**
-	 * {@return true if the given {@link ByteProvider} contains a PE or NE binary}
+	 * {@return true if the given {@link ByteProvider} contains a PE binary}
 	 * 
 	 * @param provider The {@link ByteProvider} to check
 	 */
-	private boolean isPeOrNe(ByteProvider provider) {
+	private boolean isPe(ByteProvider provider) {
 		try {
-			new PortableExecutable(provider, SectionLayout.FILE, false, false);
-			return true;
+			PortableExecutable pe =
+				new PortableExecutable(provider, SectionLayout.FILE, false, false);
+			return pe.getNTHeader() != null;
 		}
 		catch (IOException e) {
-			try {
-				new NewExecutable(provider, null);
-				return true;
-			}
-			catch (IOException e2) {
-				// fall through
-			}
+			return false;
 		}
-		return false;
+	}
+
+	/**
+	 * {@return true if the given {@link ByteProvider} contains an NE binary}
+	 * 
+	 * @param provider The {@link ByteProvider} to check
+	 */
+	private boolean isNe(ByteProvider provider) {
+		try {
+			NewExecutable ne = new NewExecutable(provider, null);
+			return ne.getWindowsHeader() != null;
+		}
+		catch (IOException e) {
+			return false;
+		}
 	}
 
 	/**

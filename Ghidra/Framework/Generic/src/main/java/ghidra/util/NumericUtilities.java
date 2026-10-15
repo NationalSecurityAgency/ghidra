@@ -246,7 +246,7 @@ public final class NumericUtilities {
 
 	private static BigInteger decodeMagnitude(int p, String s) {
 		// Special case, so it doesn't get chewed by octal parser
-		if ("0".equals(s)) {
+		if (s.length() == p + 1 && s.charAt(p) == '0') {
 			return BigInteger.ZERO;
 		}
 		if (s.regionMatches(true, p, HEX_PREFIX_X, 0, HEX_PREFIX_X.length())) {

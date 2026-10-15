@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,8 @@
  */
 package ghidra.app.util.bin;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
@@ -62,11 +63,28 @@ public class MemBufferByteProvider implements ByteProvider {
 
 	@Override
 	public boolean isValidIndex(long index) {
-		if (index < 0 || index > Integer.MAX_VALUE) {
+		if (!ByteProvider.super.isValidIndex(index)) {
 			return false;
 		}
 		try {
 			buffer.getByte((int) index);
+			return true;
+		}
+		catch (MemoryAccessException e) {
+			return false;
+		}
+	}
+
+	@Override
+	public boolean isValidRange(long startIndex, int count) {
+		if (!ByteProvider.super.isValidRange(startIndex, count)) {
+			return false;
+		}
+		try {
+			buffer.getByte((int) startIndex);
+			if (count > 1) {
+				buffer.getByte((int) (startIndex + count - 1));
+			}
 			return true;
 		}
 		catch (MemoryAccessException e) {

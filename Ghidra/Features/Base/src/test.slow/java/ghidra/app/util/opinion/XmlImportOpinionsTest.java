@@ -218,6 +218,11 @@ public class XmlImportOpinionsTest extends AbstractGhidraHeadlessIntegrationTest
 			}
 
 			@Override
+			public boolean isValidRange(long startIndex, int count) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
 			public String getName() {
 				return name;
 			}

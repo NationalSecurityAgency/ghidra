@@ -34,6 +34,8 @@ public class BinaryReader {
 	// to reach exactly 2g elements
 	private static final int MAX_SANE_BUFFER = Integer.MAX_VALUE - 1024;
 
+	private static final int MAX_SANE_ARRAY_ELEMENT_COUNT = Integer.MAX_VALUE - 1024; // same as MAX_SANE_BUFFER for now
+
 	/**
 	 * The size of a BYTE in Java.
 	 */
@@ -237,29 +239,7 @@ public class BinaryReader {
 	 * valid (according to the underlying byte provider)
 	 */
 	public boolean isValidRange(long startIndex, int count) {
-		if (count < 0) {
-			return false;
-		}
-		if (count > 1) {
-			// check the end of the range first to fail fast
-
-			long endIndex = startIndex + (count - 1);
-			if (Long.compareUnsigned(endIndex, startIndex) < 0) {
-				// the requested range [startIndex..startIndex+count] wraps around the int64 to 0, so fail
-				return false;
-			}
-
-			if (!provider.isValidIndex(endIndex)) {
-				return false;
-			}
-			count--; // don't check the last element twice
-		}
-		for (int i = 0; i < count; i++) {
-			if (!provider.isValidIndex(startIndex + i)) {
-				return false;
-			}
-		}
-		return true;
+		return provider.isValidRange(startIndex, count);
 	}
 
 	/**
@@ -1167,9 +1147,8 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public byte[] readByteArray(long index, int nElements) throws IOException {
-		if (nElements < 0) {
-			throw new IOException("Invalid number of elements specified: " + nElements);
-		}
+		ensureArrayRead(index, nElements, SIZEOF_BYTE);
+
 		return provider.readBytes(index, nElements);
 	}
 
@@ -1182,9 +1161,7 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public short[] readShortArray(long index, int nElements) throws IOException {
-		if (nElements < 0) {
-			throw new IOException("Invalid number of elements specified: " + nElements);
-		}
+		ensureArrayRead(index, nElements, SIZEOF_SHORT);
 		short[] arr = new short[nElements];
 		for (int i = 0; i < nElements; ++i) {
 			arr[i] = readShort(index);
@@ -1202,9 +1179,7 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public int[] readIntArray(long index, int nElements) throws IOException {
-		if (nElements < 0) {
-			throw new IOException("Invalid number of elements specified: " + nElements);
-		}
+		ensureArrayRead(index, nElements, SIZEOF_INT);
 		int[] arr = new int[nElements];
 		for (int i = 0; i < nElements; ++i) {
 			arr[i] = readInt(index);
@@ -1222,9 +1197,7 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public long[] readLongArray(long index, int nElements) throws IOException {
-		if (nElements < 0) {
-			throw new IOException("Invalid number of elements specified: " + nElements);
-		}
+		ensureArrayRead(index, nElements, SIZEOF_LONG);
 		long[] arr = new long[nElements];
 		for (int i = 0; i < nElements; ++i) {
 			arr[i] = readLong(index);
@@ -1343,6 +1316,16 @@ public class BinaryReader {
 		if (value < Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
 			throw new InvalidDataException(
 				"Value out of range for java 32 bit signed int: %d".formatted(value));
+		}
+	}
+
+	private void ensureArrayRead(long index, int count, int elementSize) throws IOException {
+		if (count < 0 || count > MAX_SANE_ARRAY_ELEMENT_COUNT) {
+			throw new IOException("Invalid number of elements specified: " + count);
+		}
+		if (!isValidRange(index, count * elementSize)) {
+			throw new IOException("Unable to read array at 0x%x, count=%d, size=%d".formatted(index,
+				count, elementSize));
 		}
 	}
 

@@ -1,0 +1,184 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*********************************************************************************
+ * hash.gradle
+ *
+ * This file verifies the SHA-256 hashes recorded in the "MODULE FILE INFO:" lines of
+ * each module's Module.manifest file (see moduleManifest.gradle).  Files whose hash is
+ * NO_HASH are not verified.
+ *
+ * External jar dependencies ("lib/<name>.jar" entries) are verified whenever the
+ * project's compile or runtime classpath is resolved.  All other entries (python wheels,
+ * native libraries, source archives, etc) are verified by the "hash" task.
+ *********************************************************************************/
+
+import java.security.MessageDigest
+import java.util.concurrent.ConcurrentHashMap
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
+
+if (!rootProject.ext.has("FILE_HASH_CACHE")) {
+	rootProject.ext.FILE_HASH_CACHE = new ConcurrentHashMap<String, String>()
+}
+
+/*********************************************************************************
+ * Verifies external jar hashes when the classpath is resolved
+ *********************************************************************************/
+plugins.withType(JavaPlugin) {
+	def p = project
+	Throwable failure = null
+	configurations.matching { it.name in ['compileClasspath', 'runtimeClasspath'] }.configureEach { c ->
+		c.incoming.afterResolve { ResolvableDependencies rd ->
+			if (failure == null) {
+				try {
+					checkExternalLibHashes(p, rd)
+				}
+				catch (Throwable t) {
+					failure = t
+				}
+			}
+			if (failure != null) {
+				throw failure
+			}
+		}
+	}
+
+	// The root project forces classpaths to be resolved when the task graph is ready, and
+	// ignores any exceptions when it does, so rethrow any failure that occurred then
+	gradle.taskGraph.whenReady {
+		if (failure != null) {
+			throw failure
+		}
+	}
+}
+
+/*********************************************************************************
+ * Verifies the hash of each external jar in the resolved classpath that is listed in
+ * the Module.manifest file
+ *********************************************************************************/
+def checkExternalLibHashes(Project project, ResolvableDependencies rd) {
+	Map<String, String> hashes = project.getModuleFileHashes()
+	List<String> errors = new ArrayList<>()
+	rd.artifacts.artifacts.each { artifact ->
+		if (!(artifact.id.componentIdentifier instanceof ModuleComponentIdentifier)) {
+			return // not an external dependency
+		}
+		String path = "lib/" + artifact.file.name
+		String expected = hashes.get(path)
+		if (expected != null && expected != "NO_HASH") {
+			String error = verifyHash(path, expected, artifact.file)
+			if (error != null) {
+				errors.add(error)
+			}
+		}
+	}
+	failOnHashErrors(project, errors)
+}
+
+/*********************************************************************************
+ * Verifies the hashes of all non-jar files listed in the Module.manifest file
+ *********************************************************************************/
+task hash {
+	group = "Verification"
+	description = "Verifies the SHA-256 hashes of the files listed in Module.manifest"
+	def p = project
+
+	doLast {
+		Map<String, String> hashes = p.getModuleFileHashes()
+		List<String> errors = new ArrayList<>()
+		hashes.each { path, expected ->
+			if (expected == "NO_HASH" || isExternalJar(path)) {
+				return // jars are checked when the classpath is resolved
+			}
+			File file = findModuleFile(p, path)
+			if (file == null) {
+				logger.warn("Could not find ${path} to verify hash for module ${p.projectDir}")
+				return
+			}
+			String error = verifyHash(path, expected, file)
+			if (error != null) {
+				errors.add(error)
+			}
+		}
+		failOnHashErrors(p, errors)
+	}
+}
+rootProject.prepDev.dependsOn hash
+rootProject.assembleDistribution.dependsOn hash
+
+/*********************************************************************************
+ * Returns true if the given Module.manifest path refers to an external jar dependency
+ *********************************************************************************/
+def boolean isExternalJar(String path) {
+	return path.startsWith("lib/") && path.endsWith(".jar")
+}
+
+/*********************************************************************************
+ * Finds the source of the given Module.manifest path, or null if it could not be found.
+ * Build artifacts are not searched since they are not reproducible.
+ *********************************************************************************/
+def File findModuleFile(Project project, String path) {
+	String name = new File(path).getName()
+	if (path.startsWith("pypkg/dist/")) {
+		File wheel = rootProject.PYTHON_DEPS.getOrDefault(project, Set.of()).find { it.name == name }
+		if (wheel != null && wheel.exists()) {
+			return wheel
+		}
+	}
+	String relativeProjectDir = rootProject.projectDir.toPath().relativize(project.projectDir.toPath())
+	List<File> candidates = [
+		new File(rootProject.DEPS_DIR, "${project.name}/${path}"),
+		new File(rootProject.BIN_REPO, "${relativeProjectDir}/${path}"),
+		new File(project.projectDir, path)
+	]
+	return candidates.find { it.isFile() }
+}
+
+/*********************************************************************************
+ * Returns an error message if the given file's hash does not match the expected hash,
+ * or null if it matches
+ *********************************************************************************/
+def String verifyHash(String path, String expected, File file) {
+	String actual = rootProject.FILE_HASH_CACHE.computeIfAbsent(file.absolutePath) { sha256(file) }
+	if (actual == expected) {
+		return null
+	}
+	return "${path}\n\t  file:     ${file}\n\t  expected: ${expected}\n\t  actual:   ${actual}"
+}
+
+/*********************************************************************************
+ * Throws an exception listing the hash errors, if any
+ *********************************************************************************/
+def failOnHashErrors(Project project, List<String> errors) {
+	if (!errors.isEmpty()) {
+		throw new GradleException("SHA-256 hash mismatch for Module.manifest entries in module " +
+			project.projectDir + ":\n\t" + errors.join("\n\t"))
+	}
+}
+
+/*********************************************************************************
+ * Computes the sha256 hash of the given file as a lowercase hex string
+ *********************************************************************************/
+def String sha256(File file) {
+	MessageDigest digest = MessageDigest.getInstance("SHA-256")
+	file.withInputStream { is ->
+		byte[] buffer = new byte[65536]
+		int n
+		while ((n = is.read(buffer)) > 0) {
+			digest.update(buffer, 0, n)
+		}
+	}
+	return digest.digest().encodeHex().toString()
+}

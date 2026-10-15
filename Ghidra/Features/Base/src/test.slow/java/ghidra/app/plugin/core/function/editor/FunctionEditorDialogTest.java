@@ -17,8 +17,7 @@ package ghidra.app.plugin.core.function.editor;
 
 import static org.junit.Assert.*;
 
-import javax.swing.AbstractButton;
-import javax.swing.ComboBoxModel;
+import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 
 import org.junit.*;
@@ -179,9 +178,69 @@ public class FunctionEditorDialogTest extends AbstractGhidraHeadedIntegrationTes
 		assertEquals(expectedPath, actualPath);
 	}
 
+	@Test
+	public void testSetCallingConvention_ViaTextEditor() throws Exception {
+
+		Function function = createFunctionAtEntry();
+
+		String newCallingConvention = "__thiscall";
+		String currentCallingConventionName = function.getCallingConventionName();
+		assertNotEquals(newCallingConvention, currentCallingConventionName);
+
+		FunctionEditorDialog dialog = editFunction();
+
+		setCallingConventionUsingTextEditor(dialog, newCallingConvention);
+		assertCallingConventionNotVisibleInEditorAfterParsing(dialog, newCallingConvention);
+		assertCallingConventionComboIsShowingValue(dialog, newCallingConvention);
+
+		pressButtonByText(dialog, "OK");
+		waitForBusyTool(tool);
+
+		function = getFunction("0x1006420");
+		currentCallingConventionName = function.getCallingConventionName();
+		assertEquals(newCallingConvention, currentCallingConventionName);
+	}
+
+	@Test
+	public void testParsingRegression_IncorrectCallingConvention() throws Exception {
+
+		/*
+		 	There was a regression bug that caused the function's calling convention to be changed
+		 	when the dialog's text area triggered a parse.
+		 */
+
+		Function function = createFunctionAtEntry();
+
+		String callingConvention = "__thiscall";
+		setCallingConvention(function, callingConvention);
+		assertEquals(callingConvention, function.getCallingConventionName());
+
+		FunctionEditorDialog dialog = editFunction();
+
+		triggerParsingFromEnterKey(dialog);
+
+		// not enabled; no change; this was failing before the regression was fixed
+		JButton okButton = findButtonByText(dialog, "OK");
+		assertFalse(runSwing(() -> okButton.isEnabled()));
+	}
+
 //==================================================================================================
 // Private Methods
 //==================================================================================================
+
+	private void triggerParsingFromEnterKey(FunctionEditorDialog dialog) {
+		runSwing(() -> dialog.triggerSignatureParsing());
+	}
+
+	private void setCallingConvention(Function function, String callingConvention) {
+		tx(program, () -> function.setCallingConvention(callingConvention));
+	}
+
+	private void assertCallingConventionComboIsShowingValue(FunctionEditorDialog dialog,
+			String newCallingConvention) {
+		String callingConvention = dialog.getSelectedCallingConvention();
+		assertEquals(newCallingConvention, callingConvention);
+	}
 
 	private void assertNamespaceComboBoxIsShowingNamespace(FunctionEditorDialog dialog,
 			String expectedNsPath) {
@@ -190,11 +249,39 @@ public class FunctionEditorDialogTest extends AbstractGhidraHeadedIntegrationTes
 		assertEquals(expectedNsPath, actualNs.toString());
 	}
 
+	private void assertCallingConventionNotVisibleInEditorAfterParsing(
+			FunctionEditorDialog dialog, String newCallingConvention) {
+		FunctionSignatureTextField field = dialog.getSignatureField();
+		String signature = runSwing(() -> field.getText());
+		assertFalse("The calling convention should not be included in the signature field" +
+			"after parsing is finished", signature.contains(newCallingConvention));
+	}
+
 	private void assertNamespaceNotVisibleInEditorAfterParsing(FunctionEditorDialog dialog) {
 		FunctionSignatureTextField field = dialog.getSignatureField();
 		String signature = runSwing(() -> field.getText());
 		assertFalse("Namespace should not be visible in the editor after parsing",
 			signature.contains("::"));
+	}
+
+	private void setCallingConventionUsingTextEditor(FunctionEditorDialog dialog,
+			String newCallingConvention) {
+
+		FunctionSignatureTextField field = dialog.getSignatureField();
+		String signature = runSwing(() -> field.getText());
+
+		// Insert calling convention in front of name.  Format: 
+		// 		undefined __thiscall entry (void)
+		int paren = signature.indexOf('(');
+		int spaceBeforeParen = paren - 1;
+		int space = signature.lastIndexOf(' ', spaceBeforeParen - 1);
+		String beginning = signature.substring(0, space + 1);
+		String end = signature.substring(space);
+		String updated = beginning + newCallingConvention + end;
+
+		setText(field, updated);
+
+		runSwing(() -> dialog.triggerSignatureParsing());
 	}
 
 	private void setNamespaceUsingTextEditor(FunctionEditorDialog dialog, String ns) {
@@ -328,7 +415,7 @@ public class FunctionEditorDialogTest extends AbstractGhidraHeadedIntegrationTes
 		return fm.getFunctionAt(addr(addr));
 	}
 
-	private void createFunctionAtEntry() {
+	private Function createFunctionAtEntry() {
 		FunctionManager fm = program.getFunctionManager();
 		Function f = fm.getFunctionAt(addr("0x1006420"));
 		if (f != null) {
@@ -339,6 +426,7 @@ public class FunctionEditorDialogTest extends AbstractGhidraHeadedIntegrationTes
 		createFunctionAt("0x1006420");
 
 		assertEquals(1, program.getListing().getGlobalFunctions("entry").size());
+		return fm.getFunctionAt(addr("0x1006420"));
 	}
 
 	private Address addr(String address) {

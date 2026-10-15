@@ -1454,7 +1454,7 @@ Address SegmentedResolver::resolve(uintb val,int4 sz,const Address &point,uintb 
   // In this case the address offset is not fully specified
   // we check if the rest is stored in a context variable
   // (as with near pointers)
-    if (segop->getResolve().space != (AddrSpace *)0) {
+    if (segop->getResolve().space != (AddrSpace *)0 && !point.isInvalid()) {
       uintb base = glb->context->getTrackedValue(segop->getResolve(),point);
       fullEncoding = (base << 8 * innersz) + (val & calc_mask(innersz));
       vector<uintb> seginput;

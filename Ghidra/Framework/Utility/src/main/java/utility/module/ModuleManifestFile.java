@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ public class ModuleManifestFile {
 
 	private static final String NAME_IDENTIFIER = "MODULE NAME:";
 	private static final String DEPENDENCY_IDENTIFIER = "MODULE DEPENDENCY:";
-	private static final String MODULE_FILE_LICENSE = "MODULE FILE LICENSE:";
+	private static final String MODULE_FILE_INFO = "MODULE FILE INFO:";
 	private static final String EXCLUDE_FROM_GHIDRA_JAR = "EXCLUDE FROM GHIDRA JAR";
 	private static final String DATA_SEARCH_IGNORE_DIR = "DATA SEARCH IGNORE DIR:";
 	private static final String MODULE_DIR_IDENTIFIER = "MODULE DIR:";
@@ -99,8 +99,8 @@ public class ModuleManifestFile {
 			String value = tokens.length == 2 ? tokens[1].trim() : "";
 			excludeFromGhidraJar = Boolean.valueOf(value);
 		}
-		else if (trimmedLine.startsWith(MODULE_FILE_LICENSE)) {
-			processModuleFileLicense(trimmedLine);
+		else if (trimmedLine.startsWith(MODULE_FILE_INFO)) {
+			processModuleFileInfo(trimmedLine);
 		}
 		else if (trimmedLine.startsWith(COMMENT_IDENTIFIER)) {
 			// this is a comment line--ignore!
@@ -127,23 +127,23 @@ public class ModuleManifestFile {
 		dataSearchIgnoreDirs.add(ignoreDirName);
 	}
 
-	private void processModuleFileLicense(String line) throws IOException {
-		String fileAndIPLine = line.substring(MODULE_FILE_LICENSE.length()).trim();
-		int firstSpace = fileAndIPLine.indexOf(' ');
-		if (firstSpace < 0) {
-			fileIPFail(line); // error
+	private void processModuleFileInfo(String line) throws IOException {
+		String fileInfoLine = line.substring(MODULE_FILE_INFO.length()).trim();
+		String[] parts = fileInfoLine.split("\\s+", 3);
+		if (parts.length < 3) {
+			fileInfoFail(line); // error
 		}
 
-		String filename = fileAndIPLine.substring(0, firstSpace);
-		String IP = fileAndIPLine.substring(firstSpace + 1);
+		String filename = parts[0];
+		String IP = parts[2];
 		fileIPMap.put(filename, IP);
 	}
 
-	private void fileIPFail(String line) throws IOException {
+	private void fileInfoFail(String line) throws IOException {
 		throw new IOException("Invalid Module.manifest entry for identifier \"" +
-			MODULE_FILE_LICENSE + "\".\nThis line requires two parts: 1) " +
-			"the module-relative file path and filename, and 2) the IP of " +
-			"that file.\n  Found: " + line);
+			MODULE_FILE_INFO + "\".\nThis line requires three parts: 1) " +
+			"the module-relative file path and filename, 2) the SHA-256 hash of " +
+			"that file (or NO_HASH), and 3) the IP of that file.\n  Found: " + line);
 	}
 
 	private void processNameLine(String line) {

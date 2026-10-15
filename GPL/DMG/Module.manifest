@@ -1,2 +1,13 @@
 # GPL because we have linked to GPL hsfx.jar 
-MODULE FILE LICENSE: data/lib/dmg.jar GPL 3
+MODULE FILE INFO: data/lib/dmg.jar NO_HASH GPL 3
+MODULE FILE INFO: data/lib/csframework.jar da365f8feef3738fb8d99384e45e0f496eca5f1212ec7c4a100662f1b4c23d16 GPL 3
+MODULE FILE INFO: data/lib/hfsexplorer-0_21-src.zip e7323180df5d468e31a5053411c4f811b15a7ad140802c2f6a60b16f0534e0f9 GPL 3
+MODULE FILE INFO: data/lib/hfsx_dmglib.jar 1cbf7f83581b2935fb9a9c441fd5d9424455241a5f89b59352fef8c3757a90ea GPL 3
+MODULE FILE INFO: data/lib/hfsx.jar af3b06eefc2ebe7b5fb3e3102679eec5dec24caf5bf19ecbd5ece6e909fb91f7 GPL 3
+MODULE FILE INFO: data/lib/iharder-base64.jar 7d2f04c3818c3b18f80b8b550c64bcd35aa8e9cf386713be7a2d334f728b0f26 GPL 3
+MODULE FILE INFO: data/os/win_x86_32/llio_amd64.dll e489648829326402adb68d415be6b98c2d0e48a8602bca3764371f3a9058a6ef GPL 3
+MODULE FILE INFO: data/os/win_x86_32/llio_i386.dll e855478acf0d36f846befb48bfd239b7ef46e568e2408091591adec274ed0879 GPL 3
+MODULE FILE INFO: data/os/win_x86_32/llio_ia64.dll ac7e7e399072ee34d22d96bbc163a5dd6b3dcbba2d7f56e573344d9e1bc03c29 GPL 3
+MODULE FILE INFO: data/os/win_x86_64/llio_amd64.dll e489648829326402adb68d415be6b98c2d0e48a8602bca3764371f3a9058a6ef GPL 3
+MODULE FILE INFO: data/os/win_x86_64/llio_i386.dll e855478acf0d36f846befb48bfd239b7ef46e568e2408091591adec274ed0879 GPL 3
+MODULE FILE INFO: data/os/win_x86_64/llio_ia64.dll ac7e7e399072ee34d22d96bbc163a5dd6b3dcbba2d7f56e573344d9e1bc03c29 GPL 3

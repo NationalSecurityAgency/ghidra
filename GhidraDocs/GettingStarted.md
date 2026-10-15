@@ -55,9 +55,9 @@ a specific need.
   * Free long term support (LTS) versions of JDK 25 are provided by:
     * [Adoptium Temurin](https://adoptium.net/temurin/releases)
     * [Amazon Corretto](https://docs.aws.amazon.com/corretto/latest/corretto-25-ug/downloads-list.html)
-* Python3 (3.9 to 3.14)
+* Python3 (3.9 to 3.15)
   * Python 3.7 to 3.14 for [Debugger support](#debugger-notes)
-  * Python 3.9 to 3.14 for [PyGhidra support](#pyghidra-mode)
+  * Python 3.9 to 3.15 for [PyGhidra support](#pyghidra-mode)
   * This is available from [Python.org](https://python.org) or most operating system's app stores or
     software repositories.  For Linux it is recommended that the system's package repository be used
     to install a suitable version of Python with pip support.

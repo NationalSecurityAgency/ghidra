@@ -8962,7 +8962,7 @@ int4 RuleSegment::applyOp(PcodeOp *op,Funcdata &data)
     data.opSetOpcode(op,CPUI_COPY);
     return 1;
   }
-  else if (segdef->hasFarPointerSupport()) {
+  else if (segdef->hasFarPointerSupport() && segdef->isConcatenation()) {
     // If the hi and lo pieces come from a contigouous source
     if (!contiguous_test(vn1,vn2)) return 0;
     Varnode *whole = findContiguousWhole(data,vn1,vn2);

@@ -1,10 +1,7 @@
 EXCLUDE FROM GHIDRA JAR: true
 
-MODULE FILE LICENSE: lib/jungrapht-visualization-1.4.jar BSD-3-JUNG
-MODULE FILE LICENSE: lib/jungrapht-layout-1.4.jar BSD-3-JUNG
-MODULE FILE LICENSE: lib/jgrapht-core-1.5.1.jar LGPL 2.1
-MODULE FILE LICENSE: lib/jgrapht-io-1.5.1.jar LGPL 2.1
-MODULE FILE LICENSE: lib/jheaps-0.13.jar Apache License 2.0
-MODULE FILE LICENSE: lib/log4j-slf4j-impl-2.12.1.jar Apache License 2.0
-MODULE FILE LICENSE: lib/slf4j-api-1.7.25.jar MIT
-MODULE FILE LICENSE: lib/slf4j-nop-1.7.25.jar MIT
+MODULE FILE INFO: lib/jungrapht-visualization-1.4.jar 97053a1dd2cdab263fb5611f1bc82b862b3099f951e3cd0564e3e23d193f4dd8 BSD-3-JUNG
+MODULE FILE INFO: lib/jungrapht-layout-1.4.jar a3040129dc39ed2326b36ca15c634422ee579a46178668f99442e38b3e607099 BSD-3-JUNG
+MODULE FILE INFO: lib/jgrapht-core-1.5.1.jar a4d810cb63e0a77a753d147094fea9dd42e82cfc57aa289f9f85229f26043bb4 LGPL 2.1
+MODULE FILE INFO: lib/jgrapht-io-1.5.1.jar 86c7fc66cc1907bfc26b366d4dd292cd0da286bde1fd088a11c0d9729d6dcc5c LGPL 2.1
+MODULE FILE INFO: lib/jheaps-0.13.jar 63414290c3497f8ac0f102209207088dec46fd4747e0f56a26c69308e85c6415 Apache License 2.0

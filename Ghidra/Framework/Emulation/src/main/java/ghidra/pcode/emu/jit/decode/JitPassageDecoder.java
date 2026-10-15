@@ -165,4 +165,14 @@ public class JitPassageDecoder {
 			return JitPassage.decodeError(decoder.getLanguage(), address, ctx, e.getMessage());
 		}
 	}
+
+	/**
+	 * {@return the length of the last instruction decoded by
+	 * {@link #decodeInstruction(Address, RegisterValue)}, including any delay-slotted instructions}
+	 * 
+	 * @see InstructionDecoder#getLastLengthWithDelays()
+	 */
+	public int getLastLengthWithDelays() {
+		return decoder.getLastLengthWithDelays();
+	}
 }

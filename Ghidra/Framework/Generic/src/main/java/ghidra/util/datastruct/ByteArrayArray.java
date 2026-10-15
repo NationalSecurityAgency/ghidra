@@ -88,7 +88,7 @@ public class ByteArrayArray implements Array, Serializable {
      * @throws IndexOutOfBoundsException if the index is negative
      */
     public byte[] get(int index) {
-        if (index <= starts.length) {
+        if (index < starts.length) {
             int start = starts[index];
             int len = lengths[index];
             if (start > 0) {

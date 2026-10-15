@@ -244,7 +244,7 @@ public final class FileUtilities {
 
 		try (FileInputStream fin = new FileInputStream(fromFile)) {
 			if (monitor != null) {
-				monitor.initialize((int) fromFile.length());
+				monitor.initialize(fromFile.length());
 			}
 			return copyStreamToFile(fin, toFile, append, monitor);
 		}
@@ -266,7 +266,7 @@ public final class FileUtilities {
 
 		try (InputStream fin = fromFile.getInputStream()) {
 			if (monitor != null) {
-				monitor.initialize((int) fromFile.length());
+				monitor.initialize(fromFile.length());
 			}
 			copyStreamToFile(fin, toFile, append, monitor);
 		}
@@ -288,7 +288,7 @@ public final class FileUtilities {
 				OutputStream out = toFile.getOutputStream()) {
 
 			if (monitor != null) {
-				monitor.initialize((int) fromFile.length());
+				monitor.initialize(fromFile.length());
 			}
 			copyStreamToStream(fin, out, monitor);
 		}
@@ -665,7 +665,7 @@ public final class FileUtilities {
 
 		try (InputStream fin = new FileInputStream(fromFile)) {
 			if (monitor != null) {
-				monitor.initialize((int) fromFile.length());
+				monitor.initialize(fromFile.length());
 			}
 			copyStreamToStream(fin, out, monitor);
 		}

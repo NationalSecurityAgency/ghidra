@@ -1097,7 +1097,7 @@ void PrintC::opPtrsub(const PcodeOp *op)
     if (symbol == (Symbol *)0) {
       TypeSpacebase *sb = (TypeSpacebase *)ct;
       Address addr = sb->getAddress(in1const,in0->getSize(),op->getAddr());
-      pushUnnamedLocation(addr,(Varnode *)0,op);
+      pushUnnamedLocation(addr,1,(Varnode *)0,op);
     }
     else {
       int4 off = high->getSymbolOffset();
@@ -2008,12 +2008,17 @@ void PrintC::pushSymbol(const Symbol *sym,const Varnode *vn,const PcodeOp *op)
   pushAtom(Atom(sym->getDisplayName(),vartoken,tokenColor,op,vn));
 }
 
-void PrintC::pushUnnamedLocation(const Address &addr,
-				   const Varnode *vn,const PcodeOp *op)
+void PrintC::pushUnnamedLocation(const Address &addr,int4 size,const Varnode *vn,const PcodeOp *op)
+
 {
   ostringstream s;
-  s << addr.getSpace()->getName();
-  addr.printRaw(s);
+  AddrSpace *spc = addr.getSpace();
+  s << spc->getName();
+  string nm = spc->getTrans()->getExactRegisterName(spc, addr.getOffset(), size);
+  if (nm.size() != 0)
+    s << '_' << nm;
+  else
+    addr.printRaw(s);
   pushAtom(Atom(s.str(),vartoken,EmitMarkup::var_color,op,vn));
 }
 
@@ -2155,7 +2160,7 @@ void PrintC::pushMismatchSymbol(const Symbol *sym,int4 off,int4 sz,
     pushAtom(Atom(nm,vartoken,tokenColor,op,vn));
   }
   else
-    pushUnnamedLocation(vn->getAddr(),vn,op);
+    pushUnnamedLocation(vn->getAddr(),vn->getSize(),vn,op);
 }
 
 void PrintC::pushImpliedField(const Varnode *vn,const PcodeOp *op)

@@ -237,7 +237,7 @@ public class BSimServerInfo implements Comparable<BSimServerInfo> {
 		if (pwdSep == 0) {
 			throw new IllegalArgumentException("Invalid userinfo specified");
 		}
-		else if (pwdSep > 0 && (userinfo.length() - pwdSep) == 0) {
+		else if (pwdSep > 0 && pwdSep == userinfo.length() - 1) {
 			throw new IllegalArgumentException("Invalid userinfo specified");
 		}
 		return userinfo;
