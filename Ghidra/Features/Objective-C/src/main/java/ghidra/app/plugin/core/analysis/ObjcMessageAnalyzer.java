@@ -323,6 +323,11 @@ public class ObjcMessageAnalyzer extends AbstractAnalyzer {
 
 			int stretParamShift = isStructReturnCall(program, inputs[0], monitor) ? 1 : 0;
 			boolean isStub = isObjcMsgSendStub(program, callTarget);
+			// Decompilation may not recover all of the message's required arguments.
+			int requiredInputs = (isStub ? 2 : 3) + stretParamShift;
+			if (inputs.length < requiredInputs) {
+				continue;
+			}
 			Varnode receiverParam = inputs[1 + stretParamShift];
 			Varnode selectorParam = !isStub ? inputs[2 + stretParamShift] : null;
 			String receiver =
@@ -332,7 +337,7 @@ public class ObjcMessageAnalyzer extends AbstractAnalyzer {
 						monitor);
 			if (ObjectUtils.allNotNull(receiver, selector)) {
 				messages.add(new Message(ObjcUtils.stripClassPrefix(receiver), selector, function,
-					op, 3 + stretParamShift, callTarget));
+					op, requiredInputs, callTarget));
 			}
 		}
 		return messages;
