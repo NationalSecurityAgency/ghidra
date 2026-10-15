@@ -524,6 +524,7 @@
         <optional> <attribute name="thisbeforeretpointer"/> </optional>
         <optional> <attribute name="killedbycall"/> </optional>
         <optional> <attribute name="separatefloat"/> </optional>
+        <optional> <attribute name="stackltr"/> </optional>
         <interleave>
           <zeroOrMore>
             <element name="pentry">
