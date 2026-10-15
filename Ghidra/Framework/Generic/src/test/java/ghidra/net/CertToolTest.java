@@ -15,25 +15,19 @@
  */
 package ghidra.net;
 
+import static ghidra.net.PKITestUtils.certificate;
 import static org.junit.Assert.*;
 
 import java.io.*;
-import java.math.BigInteger;
 import java.nio.file.Files;
 import java.security.*;
+import java.security.cert.CertPath;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.*;
 
-import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.BasicConstraints;
-import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.asn1.x509.KeyUsage;
-import org.bouncycastle.cert.jcajce.JcaCertStore;
-import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
-import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
-import org.bouncycastle.cms.CMSAbsentContent;
-import org.bouncycastle.cms.CMSSignedDataGenerator;
-import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 
@@ -47,7 +41,6 @@ public class CertToolTest {
 	private static X509Certificate intermediate;
 	private static X509Certificate leaf;
 	private static X509Certificate otherRoot;
-	private static long serial;
 
 	@Rule
 	public TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -64,27 +57,6 @@ public class CertToolTest {
 		intermediate = certificate("Intermediate", intermediateKey, "Root", rootKey, true, false);
 		leaf = certificate("Leaf", leafKey, "Intermediate", intermediateKey, false, false);
 		otherRoot = certificate("Other", otherKey, "Other", otherKey, true, false);
-	}
-
-	private static X509Certificate certificate(String subject, KeyPair key, String issuer,
-			KeyPair signer, boolean ca, boolean expired) throws Exception {
-		return certificate(subject, key, issuer, signer, new BasicConstraints(ca),
-			ca ? KeyUsage.keyCertSign : KeyUsage.digitalSignature, expired);
-	}
-
-	private static X509Certificate certificate(String subject, KeyPair key, String issuer,
-			KeyPair signer, BasicConstraints constraints, int usage, boolean expired)
-			throws Exception {
-		long now = System.currentTimeMillis();
-		Date start = new Date(now - 86400000L);
-		Date end = new Date(now + (expired ? -3600000L : 86400000L));
-		JcaX509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(
-			new X500Name("CN=" + issuer), BigInteger.valueOf(++serial), start, end,
-			new X500Name("CN=" + subject), key.getPublic());
-		builder.addExtension(Extension.basicConstraints, true, constraints);
-		builder.addExtension(Extension.keyUsage, true, new KeyUsage(usage));
-		return new JcaX509CertificateConverter().getCertificate(builder.build(
-			new JcaContentSignerBuilder("SHA256withRSA").build(signer.getPrivate())));
 	}
 
 	private X509Certificate[] build(X509Certificate... certs) throws GeneralSecurityException {
@@ -271,9 +243,10 @@ public class CertToolTest {
 	@Test
 	public void testPkcs7BundleImport() throws Exception {
 		File file = temporaryFolder.newFile("bundle.p7b");
-		CMSSignedDataGenerator generator = new CMSSignedDataGenerator();
-		generator.addCertificates(new JcaCertStore(List.of(root, leaf, intermediate)));
-		Files.write(file.toPath(), generator.generate(new CMSAbsentContent()).getEncoded());
+		// PKCS#7 encodes a certificate set; the input need not be an ordered, validated path.
+		CertificateFactory factory = CertificateFactory.getInstance("X.509");
+		CertPath certificates = factory.generateCertPath(List.of(root, leaf, intermediate));
+		Files.write(file.toPath(), certificates.getEncoded("PKCS7"));
 		assertArrayEquals(new X509Certificate[] { leaf, intermediate, root },
 			build(CertTool.loadCertificates(file.getPath())));
 		assertArrayEquals(new X509Certificate[] { leaf, intermediate, root },
