@@ -20,16 +20,16 @@ This release includes new features, enhancements, performance improvements, quit
 and many pull-request contributions. Thanks to all those who have contributed their time, thoughts,
 and code. The Ghidra user community thanks you too!
 
-Major changes have been made to Ghidra Server and BSim PostgreSQL Server deployment and TLS/SSL
-certificate requirements.  TLS/SSL server authentication is now enforced for all client/server
-connections.  See __TLS/SSL Client/Server Changes__ below.
-
 ### The not-so-fine print: Please Read!
 Ghidra 12.2 is fully backward compatible with project data from previous releases. However, programs
 and data type archives which are created or modified in 12.2 may not be usable by an earlier Ghidra
 version.
 
 **IMPORTANT:** Ghidra 12.2 requires, at minimum, JDK 25 to run.
+
+**IMPORTANT:** Major changes have been made to Ghidra Server and BSim PostgreSQL Server deployment 
+and TLS/SSL certificate requirements.  TLS/SSL server authentication is now enforced for all 
+client/server connections.  See __TLS/SSL Client/Server Changes__ below.
 
 **IMPORTANT:** To use the Debugger or do a full source distribution build, you will need Python3
 (3.9 to 3.14 supported) installed on your system.
