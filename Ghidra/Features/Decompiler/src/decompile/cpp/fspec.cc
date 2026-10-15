@@ -2357,8 +2357,8 @@ ProtoModel::ProtoModel(const string &nm,const ProtoModel &op2)
     output = op2.output->clone();
   else
     output = (ParamList *)0;
-  for (int4 i=0;i <sharedActions.size(); ++i)
-    sharedActions[i] = op2.sharedActions[i]->clone(this);
+  for (int4 i=0;i<op2.sharedActions.size();++i)
+    sharedActions.push_back(op2.sharedActions[i]->clone(this));
 
   effectlist = op2.effectlist;
   likelytrash = op2.likelytrash;
@@ -5126,11 +5126,15 @@ void FuncCallSpecs::commitNewInputs(Funcdata &data,vector<Varnode *> &newinput)
   activeinput.clear();
 
   int4 numparams = numParams();
+  uint4 slot = 1;
   for(int4 i=0;i<numparams;++i) {
     ProtoParameter *param = getParam(i);
     if (!param->hasStorage()) continue;
-    Varnode *vn = buildParam(data,newinput[1+i],param,stackref);
-    newinput[1+i] = vn;
+    if (slot >= newinput.size())
+      throw LowlevelError("Mismatched Varnode and ProtoParameter");
+    Varnode *vn = buildParam(data,newinput[slot],param,stackref);
+    newinput[slot] = vn;
+    slot += 1;
     activeinput.registerTrial(param->getAddress(),param->getSize());
     activeinput.getTrial(i).markActive(); // Parameter is not optional
     if (noplacehold&&(param->getAddress().getSpace()->getType() == IPTR_SPACEBASE)) {
