@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,16 +16,18 @@
 package ghidra.util.datastruct;
 
 import java.util.Iterator;
-import java.util.stream.IntStream;
+import java.util.stream.LongStream;
+
+import ghidra.util.exception.AssertException;
 
 /**
  * A class for holding a minimum and maximum signed int values that define a range.
  */
-public class Range implements Comparable<Range>, Iterable<Integer> {
+public class Range implements Comparable<Range>, Iterable<Long> {
 	/** The range's minimum extent. */
-	public int min;
+	public long min;
 	/** The range's maximum extent (inclusive). */
-	public int max;
+	public long max;
 
 	/**
 	 * Creates a range whose extent is from min to max.
@@ -33,7 +35,7 @@ public class Range implements Comparable<Range>, Iterable<Integer> {
 	 * @param max the maximum extent (inclusive).
 	 * @throws IllegalArgumentException if max is less than min.
 	 */
-	public Range(int min, int max) {
+	public Range(long min, long max) {
 		if (max < min) {
 			throw new IllegalArgumentException(
 				"Range max (" + max + ") cannot be less than min (" + min + ").");
@@ -77,7 +79,7 @@ public class Range implements Comparable<Range>, Iterable<Integer> {
 	 * @param value the value to check.
 	 * @return true if the value is within the ranges extent.
 	 */
-	public boolean contains(int value) {
+	public boolean contains(long value) {
 		return value >= min && value <= max;
 	}
 
@@ -86,11 +88,54 @@ public class Range implements Comparable<Range>, Iterable<Integer> {
 	 * @return the size
 	 */
 	public long size() {
-		return (long) max - (long) min + 1;
+		return max - min + 1;
 	}
 
 	@Override
-	public Iterator<Integer> iterator() {
-		return IntStream.range(min, max + 1).iterator();
+	public Iterator<Long> iterator() {
+		return LongStream.range(min, max + 1).iterator();
 	}
+
+	/**
+	 * {@return the max value in this range}
+	 */
+	public long getMax() {
+		return max;
+	}
+
+	/**
+	 * {@return the min value in this range}
+	 */
+	public long getMin() {
+		return min;
+	}
+
+	/**
+	 * Returns the min value as in int value. This should only be used when you know that only
+	 * int values are possible. If the min value is not within the range of an int value,
+	 * an exception will be thrown.
+	 * @throws AssertException if the min value in not within the range of an int value.
+	 * @return the min value as an int value
+	 */
+	public int getMinAsInt() {
+		if (min > Integer.MAX_VALUE || min < Integer.MIN_VALUE) {
+			throw new AssertException("Expected min value to be in the integer range");
+		}
+		return (int) max;
+	}
+
+	/**
+	 * Returns the max value as in int value. This should only be used when you know that only
+	 * int values are possible. If the max value is not within the range of an int value,
+	 * an exception will be thrown.
+	 * @throws AssertException if the max value in not within the range of an int value.
+	 * @return the max value as an int value
+	 */
+	public int getMaxAsInt() {
+		if (max > Integer.MAX_VALUE || max < Integer.MIN_VALUE) {
+			throw new AssertException("Expected max value to be in the integer range");
+		}
+		return (int) max;
+	}
+
 }

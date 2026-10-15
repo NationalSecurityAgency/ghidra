@@ -603,7 +603,7 @@ public class DataVertexPanel extends JPanel {
 	private List<Address> getVisibleAddresses() {
 		Range visibleRows = gTrable.getVisibleRows();
 		List<Address> visiblePaths = new ArrayList<>((int) visibleRows.size());
-		for (int i = visibleRows.min; i <= visibleRows.max; i++) {
+		for (int i = visibleRows.getMinAsInt(); i <= visibleRows.max; i++) {
 			DataRowObject displayRow = model.getRow(i);
 			Data data = displayRow.getData();
 			visiblePaths.add(data.getAddress());
@@ -615,7 +615,7 @@ public class DataVertexPanel extends JPanel {
 	private List<int[]> getVisibleDataPaths() {
 		Range visibleRows = gTrable.getVisibleRows();
 		List<int[]> visiblePaths = new ArrayList<>((int) visibleRows.size());
-		for (int i = visibleRows.min; i <= visibleRows.max; i++) {
+		for (int i = visibleRows.getMinAsInt(); i <= visibleRows.max; i++) {
 			DataRowObject displayRow = model.getRow(i);
 			Data data = displayRow.getData();
 			visiblePaths.add(data.getComponentPath());

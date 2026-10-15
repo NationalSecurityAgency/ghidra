@@ -186,7 +186,7 @@ public class NumberRangeInputDialogTest extends AbstractDockingTest {
 		}
 
 		for (Range range : ranges) {
-			for (int value : range) {
+			for (long value : range) {
 				assertTrue("Range value not expected: " + value, set.contains(value));
 			}
 		}
