@@ -365,7 +365,9 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 			badBlocks.addRange(memoryBlock.getStart(), memoryBlock.getEnd());
 		}
 
-		addrSet = addrSet.subtract(badBlocks);
+		if (!badBlocks.isEmpty()) {
+			addrSet = addrSet.subtract(badBlocks);
+		}
 
 		return addrSet;
 	}
