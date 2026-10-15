@@ -137,6 +137,7 @@ public class NumberRangeInputDialog extends DialogComponentProvider {
 		//         -8, 0xc, 0x10:0x20
 		//         -0x20:-0x10
 
+		rangeList.clear();
 		String value = textField.getText();
 		String[] parts = value.split(",");
 		for (String rangeText : parts) {
@@ -164,6 +165,10 @@ public class NumberRangeInputDialog extends DialogComponentProvider {
 
 		// this must be a range
 		String[] startAndEnd = trimmed.split(RANGE_DELIMITER);
+		if (startAndEnd.length != 2) {
+			setStatusText("Unable to parse as a number: '" + trimmed + "'");
+			return false;
+		}
 		try {
 			int startInt = NumericUtilities.parseInt(startAndEnd[0]);
 			int endInt = NumericUtilities.parseInt(startAndEnd[1]);
@@ -171,6 +176,10 @@ public class NumberRangeInputDialog extends DialogComponentProvider {
 		}
 		catch (NumberFormatException e) {
 			setStatusText("Unable to parse as a number: '" + trimmed + "'");
+			return false;
+		}
+		catch (IllegalArgumentException e) {  // e.g., 5:1,  a reversed range
+			setStatusText(e.getMessage());
 			return false;
 		}
 		return true;
