@@ -30,7 +30,7 @@ public class ServerCertificateException extends CertificateException {
 
 	/**
 	 * Constructor
-	 * @param serverCertChain server certificate chain
+	 * @param serverCertChain TLS peer certificate chain, with the server identity first
 	 * @param cause underlying validation cause
 	 */
 	public ServerCertificateException(X509Certificate[] serverCertChain, CertificateException cause) {
@@ -48,6 +48,9 @@ public class ServerCertificateException extends CertificateException {
 	}
 
 	private static String getServerInfo(X509Certificate[] serverCertChain) {
+		if (serverCertChain == null || serverCertChain.length == 0 || serverCertChain[0] == null) {
+			return ": server certificate unavailable";
+		}
 
 		X500Principal subject = serverCertChain[0].getSubjectX500Principal();
 		X500Principal issuer = serverCertChain[0].getIssuerX500Principal();
@@ -56,7 +59,8 @@ public class ServerCertificateException extends CertificateException {
 		buf.append(subject.getName());
 		buf.append(" [");
 		if (issuer.equals(subject)) {
-			buf.append("self-signed");
+			// Equal names establish self-issued status, not a verified self-signature.
+			buf.append("self-issued");
 		}
 		else {
 			buf.append("issued by: ");

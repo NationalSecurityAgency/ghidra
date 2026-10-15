@@ -16,22 +16,83 @@
 package ghidra.net;
 
 import java.io.File;
+import java.math.BigInteger;
 import java.security.*;
 import java.security.KeyStore.PasswordProtection;
 import java.security.KeyStore.PrivateKeyEntry;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
+import java.util.Date;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.security.auth.DestroyFailedException;
 
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x509.BasicConstraints;
+import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.asn1.x509.KeyUsage;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
 import ghidra.util.exception.AssertException;
 
 public class PKITestUtils {
 
+	private static final AtomicLong CERTIFICATE_SERIAL = new AtomicLong();
+
 	private PKITestUtils() {
 		// no construct
+	}
+
+	/**
+	 * Generate a certificate fixture using existing keys. CA certificates permit certificate
+	 * signing; other certificates permit digital signatures. The issuer name and signing key
+	 * are independent so tests can deliberately construct invalid chains.
+	 *
+	 * @param subject subject common name
+	 * @param key subject key pair
+	 * @param issuer issuer common name
+	 * @param signer key pair used to sign the certificate
+	 * @param ca whether the certificate is a CA
+	 * @param expired whether the certificate expired an hour ago rather than expiring tomorrow
+	 * @return generated certificate
+	 * @throws Exception if certificate construction or signing fails
+	 */
+	public static X509Certificate certificate(String subject, KeyPair key, String issuer,
+			KeyPair signer, boolean ca, boolean expired) throws Exception {
+		return certificate(subject, key, issuer, signer, new BasicConstraints(ca),
+			ca ? KeyUsage.keyCertSign : KeyUsage.digitalSignature, expired);
+	}
+
+	/**
+	 * Generate a certificate fixture with explicit CA constraints and key usage. This permits
+	 * negative tests to construct certificates with inconsistent extensions or signing keys.
+	 * Serial numbers are unique within this helper's lifetime, including concurrent callers.
+	 *
+	 * @param subject subject common name
+	 * @param key subject key pair
+	 * @param issuer issuer common name
+	 * @param signer key pair used to sign the certificate
+	 * @param constraints CA indication and optional path-length constraint
+	 * @param usage bit mask of {@link KeyUsage} flags
+	 * @param expired whether the certificate expired an hour ago rather than expiring tomorrow
+	 * @return generated certificate, valid from yesterday until the selected expiration time
+	 * @throws Exception if certificate construction or signing fails
+	 */
+	public static X509Certificate certificate(String subject, KeyPair key, String issuer,
+			KeyPair signer, BasicConstraints constraints, int usage, boolean expired)
+			throws Exception {
+		long now = System.currentTimeMillis();
+		Date start = new Date(now - 86400000L);
+		Date end = new Date(now + (expired ? -3600000L : 86400000L));
+		JcaX509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(
+			new X500Name("CN=" + issuer), BigInteger.valueOf(CERTIFICATE_SERIAL.incrementAndGet()),
+			start, end, new X500Name("CN=" + subject), key.getPublic());
+		builder.addExtension(Extension.basicConstraints, true, constraints);
+		builder.addExtension(Extension.keyUsage, true, new KeyUsage(usage));
+		return new JcaX509CertificateConverter().getCertificate(builder.build(
+			new JcaContentSignerBuilder("SHA256withRSA").build(signer.getPrivate())));
 	}
 	
 	/**

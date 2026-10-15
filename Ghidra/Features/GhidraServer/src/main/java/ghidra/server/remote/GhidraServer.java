@@ -960,17 +960,17 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 				Collection<List<?>> sanList = x509Cert.getSubjectAlternativeNames();
 				if (sanList != null) {
 					for (List<?> sanEntry : sanList) {
-					Integer type = (Integer) sanEntry.get(0);
-					Object value = sanEntry.get(1);
-					if (type == GeneralName.iPAddress || type == GeneralName.dNSName) {
-						if (!foundSANEntries) {
-							log.info(pad + "Subject Alternative Names:");
+						Integer type = (Integer) sanEntry.get(0);
+						Object value = sanEntry.get(1);
+						if (type == GeneralName.iPAddress || type == GeneralName.dNSName) {
+							if (!foundSANEntries) {
+								log.info(pad + "Subject Alternative Names:");
+							}
+							foundSANEntries = true;
+							log.info(pad + "   " + value);
 						}
-						foundSANEntries = true;
-						log.info(pad + "   " + value);
 					}
 				}
-			}
 			}
 			catch (Exception e) {
 				log.fatal("Error reading certificate SANs: " + e.getMessage());

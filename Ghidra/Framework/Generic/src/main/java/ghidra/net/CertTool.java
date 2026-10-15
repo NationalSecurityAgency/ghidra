@@ -336,70 +336,23 @@ public class CertTool implements GhidraLaunchable {
 			return -1;
 		}
 
-		// Load the private key
-		// PrivateKey privateKey = loadPrivateKey(keyFile);
 		KeyPair keyPair = loadKeyPair(keyFile);
 
-		// Load the certificate
-		X509Certificate[] certChain = loadCertificateChain(certFile);
-
-		// Verify corresponding key
-		X509Certificate subjectCert = certChain[0];
-		if (!keyPair.getPublic().equals(subjectCert.getPublicKey())) {
-			System.err.println("Certificate file does not correspond to key file!");
-			return -1;
-		}
-
+		// Certificate files (especially PKCS#7) contain collections, not ordered chains.
+		List<X509Certificate> certificates = Arrays.asList(loadCertificates(certFile));
+		List<X509Certificate> caCertificates = Collections.emptyList();
 		if (caFile != null) {
-
-			if (certChain.length != 1) {
-				System.err.println(
-					"Expected only one certificate in -cert file when -caFile specified.");
-				return -1;
-			}
-
-			X509Certificate[] caChain = null;
-
-			// Try as simple concatenation of certificates
+			X509Certificate[] caCerts;
 			try {
-				caChain = loadCertificateChain(caFile);
+				caCerts = loadCertificates(caFile);
 			}
 			catch (Exception e) {
-				// ignore
+				caCerts = loadPkcs7Certificates(caFile);
 			}
-
-			if (caChain == null) {
-				try {
-					caChain = loadPkcs7CAChain(caFile);
-				}
-				catch (Exception e) {
-					// ignore
-				}
-			}
-
-			if (caChain == null) {
-				System.err.println("Failed to load CA Chain file.");
-				return -1;
-			}
-
-			// If supplied CA chain file contains subject certificate - certChain[0]
-			// use it as the complete certChain, otherwise concatenate.
-			if (caChain[0].getSubjectX500Principal()
-					.equals(certChain[0].getSubjectX500Principal()) &&
-				caChain[0].getSerialNumber().equals(certChain[0].getSerialNumber())) {
-				certChain = caChain;
-			}
-			else {
-				X509Certificate[] chain = new X509Certificate[caChain.length + 1];
-				chain[0] = certChain[0];
-				System.arraycopy(caChain, 0, chain, 1, caChain.length);
-				certChain = chain;
-			}
+			caCertificates = Arrays.asList(caCerts);
 		}
-
-		if (!verifyChainWithStrictRoot(certChain)) {
-			return -1;
-		}
+		X509Certificate[] certChain =
+			buildCertificateChain(keyPair.getPublic(), certificates, caCertificates);
 
 		char[] pwd = promptForNewPassword("Enter new keystore password:");
 		if (pwd == null) {
@@ -418,64 +371,85 @@ public class CertTool implements GhidraLaunchable {
 		return 0;
 	}
 
-	private static boolean verifyChainWithStrictRoot(X509Certificate[] fullChain) {
-		if (fullChain == null || fullChain.length <= 1) {
-			System.err.println("Incomplete certificate chain!");
-			System.err.println("Concatenate all CAs in chain with Root last.");
-			if (fullChain.length == 1) {
-				String issuerDN = fullChain[0].getIssuerX500Principal().getName();
-				System.err.println("Subject certificate issued by: " + issuerDN);
+	/**
+	 * Select the certificate matching the key and build a validated, leaf-first chain from
+	 * unordered certificate bundles. Identical certificates are deduplicated; distinct
+	 * certificates matching the key are ambiguous and require a more specific -cert file.
+	 * Unrelated certificates are ignored and any valid issuer path may be selected by PKIX.
+	 * <p>
+	 * This import operation requires an included, valid self-signed CA root. Using that root as
+	 * a path-building anchor checks chain consistency only; it does not establish external trust
+	 * in the supplied CA. Revocation checking remains disabled for this offline import operation.
+	 *
+	 * @param publicKey public key corresponding to the supplied private key
+	 * @param certificates certificates from the -cert file, including the desired identity
+	 * @param caCertificates optional additional certificates from the -cachain file
+	 * @return validated chain with the identity first and the self-signed root last
+	 * @throws GeneralSecurityException if the identity is missing or ambiguous, or no complete
+	 * validated path to an included self-signed CA root can be built
+	 */
+	static X509Certificate[] buildCertificateChain(PublicKey publicKey,
+			Collection<X509Certificate> certificates, Collection<X509Certificate> caCertificates)
+			throws GeneralSecurityException {
+		Set<X509Certificate> candidates = new LinkedHashSet<>(certificates);
+		X509Certificate subjectCert = null;
+		for (X509Certificate cert : candidates) {
+			if (publicKey.equals(cert.getPublicKey())) {
+				if (subjectCert != null) {
+					throw new CertificateException(
+						"Multiple certificates in -cert file correspond to key file; " +
+							"specify only the intended identity certificate.");
+				}
+				subjectCert = cert;
 			}
-			return false;
 		}
+		if (subjectCert == null) {
+			throw new CertificateException("Certificate file does not correspond to key file!");
+		}
+		subjectCert.checkValidity();
+		candidates.addAll(caCertificates);
 
-		try {
-			// Isolate and verify the assumed root certificate (end of chain)
-			X509Certificate rootCert = fullChain[fullChain.length - 1];
-			rootCert.checkValidity();
-			if (!rootCert.getSubjectX500Principal().equals(rootCert.getIssuerX500Principal())) {
-				System.err.println(
-					"Root verification failed: The last certificate is not self-signed.");
-				return false;
+		Set<TrustAnchor> anchors = new HashSet<>();
+		for (X509Certificate cert : candidates) {
+			// Do not allow the identity to become its own trust anchor and bypass validation.
+			if (cert.equals(subjectCert) || cert.getBasicConstraints() < 0 ||
+				!cert.getSubjectX500Principal().equals(cert.getIssuerX500Principal())) {
+				continue;
+			}
+			boolean[] usage = cert.getKeyUsage();
+			if (usage != null && !usage[5]) { // keyCertSign
+				continue;
 			}
 			try {
-				rootCert.verify(rootCert.getPublicKey()); // Check its signature
+				// PKIX does not validate the trust anchor itself.
+				cert.checkValidity();
+				cert.verify(cert.getPublicKey());
+				anchors.add(new TrustAnchor(cert, null));
 			}
-			catch (Exception e) {
-				System.err.println(
-					"Root verification failed: Signature does not match its public key.");
-				return false;
+			catch (GeneralSecurityException e) {
+				// An invalid or merely self-issued certificate is not a usable root.
 			}
-			if (rootCert.getBasicConstraints() < 0) {
-				System.err.println(
-					"Root verification failed: Certificate lacks CA basic constraints.");
-				return false;
-			}
-
-			// Isolate the remainder of the chain and establish trust root
-			// Subject certificate is first and must be removed from trust chain
-			List<X509Certificate> validationPath =
-				Arrays.asList(fullChain).subList(1, fullChain.length - 1);
-			TrustAnchor anchor = new TrustAnchor(rootCert, null);
-			Set<TrustAnchor> trustAnchors = new HashSet<>(Collections.singletonList(anchor));
-
-			// Run standard PKIX path validation on the remaining chain
-			PKIXParameters params = new PKIXParameters(trustAnchors);
-			params.setRevocationEnabled(false);
-
-			CertificateFactory factory = CertificateFactory.getInstance("X.509");
-			CertPath certPath = factory.generateCertPath(validationPath);
-
-			CertPathValidator validator = CertPathValidator.getInstance("PKIX");
-			validator.validate(certPath, params);
-
-			return true;
-
 		}
-		catch (Exception e) {
-			System.err.println("Incomplete or invalid certificate chain: " + e.getMessage());
-			return false;
+		if (anchors.isEmpty()) {
+			throw new CertificateException(
+				"Incomplete certificate chain: include a valid self-signed CA root.");
 		}
+
+		X509CertSelector target = new X509CertSelector();
+		target.setCertificate(subjectCert);
+		PKIXBuilderParameters params = new PKIXBuilderParameters(anchors, target);
+		params.setRevocationEnabled(false);
+		params.setMaxPathLength(-1);
+		params.addCertStore(CertStore.getInstance("Collection",
+			new CollectionCertStoreParameters(candidates)));
+
+		// Building validates the entire path, INCLUDING the subject certificate. Only the root
+		// is excluded from the PKIX path; append it to the chain stored in the key store.
+		PKIXCertPathBuilderResult result =
+			(PKIXCertPathBuilderResult) CertPathBuilder.getInstance("PKIX").build(params);
+		List<Certificate> chain = new ArrayList<>(result.getCertPath().getCertificates());
+		chain.add(result.getTrustAnchor().getTrustedCert());
+		return chain.toArray(new X509Certificate[0]);
 	}
 
 	private boolean savePrivateKey(String keyFile, PrivateKey privateKey) throws Exception {
@@ -537,7 +511,8 @@ public class CertTool implements GhidraLaunchable {
 		}
 	}
 
-	private X509Certificate[] loadCertificateChain(String certFile) throws Exception {
+	// Parsing preserves no chain-ordering contract; buildCertificateChain establishes the order.
+	static X509Certificate[] loadCertificates(String certFile) throws Exception {
 		try (FileInputStream fis = new FileInputStream(certFile)) {
 			CertificateFactory cf = CertificateFactory.getInstance("X.509", "BC");
 			Collection<? extends java.security.cert.Certificate> certs =
@@ -546,7 +521,7 @@ public class CertTool implements GhidraLaunchable {
 		}
 	}
 
-	private static X509Certificate[] loadPkcs7CAChain(String filePath) throws Exception {
+	static X509Certificate[] loadPkcs7Certificates(String filePath) throws Exception {
 		try (InputStream fis = new FileInputStream(filePath)) {
 			// Read the full stream bytes
 			byte[] p7bBytes = fis.readAllBytes();
@@ -763,7 +738,9 @@ public class CertTool implements GhidraLaunchable {
 			"  pkcs12 -inkey <key-filename> -cert <cert-filename> [-cachain <cachain-file>] -out <keystore-filename>");
 		System.err.println(
 			"      Generate a pkcs12 (p12) keystore from a private key and signed-certificate\n" +
-				"      chain (omit -out file extension)");
+				"      chain (omit -out file extension). Certificates may be in any order;\n" +
+				"      include all issuing CAs and a self-signed root. The -cert file must\n" +
+				"      contain exactly one distinct certificate matching the private key.");
 		System.err.println("  pkcs12 -self-signed -out <keystore/cert-filename>");
 		System.err.println(
 			"      Generate a new self-signed certificate and private key (omit -out file extension)");

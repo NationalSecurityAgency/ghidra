@@ -189,7 +189,8 @@ public class DefaultTrustManagerFactory {
 	/**
 	 * Validate a client certificate ensuring that it is not expired and is
 	 * trusted based upon the active trust managers.
-	 * @param certChain X509 certificate chain
+	 * @param certChain X509 certificate chain with the client identity first, followed by its
+	 * issuing CAs; the root certificate may be omitted
 	 * @param authType authentication type (i.e., "RSA")
 	 * @throws CertificateException if certificate validation fails
 	 */
