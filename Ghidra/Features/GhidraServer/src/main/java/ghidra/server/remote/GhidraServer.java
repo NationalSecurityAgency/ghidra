@@ -930,7 +930,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 		for (String alias : aliases) {
 
 			X509Certificate[] certificateChain = km.getCertificateChain(alias);
-			X509Certificate x509Cert = certificateChain[certificateChain.length - 1];
+			X509Certificate x509Cert = certificateChain[0]; // inspect server certificate
 
 			if (x509Cert.getKeyUsage()[0]) {
 				++signingCount;
@@ -955,7 +955,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 
 			log.info(pad + "Key Usage: " + PKIUtils.formatKeyUsage(x509Cert));
 
-			boolean foundEntries = false;
+			boolean foundSANEntries = false;
 			try {
 				Collection<List<?>> sanList = x509Cert.getSubjectAlternativeNames();
 				if (sanList != null) {
@@ -963,10 +963,10 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 					Integer type = (Integer) sanEntry.get(0);
 					Object value = sanEntry.get(1);
 					if (type == GeneralName.iPAddress || type == GeneralName.dNSName) {
-						if (!foundEntries) {
+						if (!foundSANEntries) {
 							log.info(pad + "Subject Alternative Names:");
 						}
-						foundEntries = true;
+						foundSANEntries = true;
 						log.info(pad + "   " + value);
 					}
 				}
@@ -978,8 +978,8 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			}
 
 			// Generally a server signing cert needs SAN entries
-			if (x509Cert.getKeyUsage()[0] && !foundEntries) {
-				log.warn(pad + "** No Hostname or IP Address SANs are defined **");
+			if (x509Cert.getKeyUsage()[0] && !foundSANEntries) {
+				log.warn(pad + "** No Hostname or IP Address SANs are defined by certificate **");
 			}
 		}
 		return signingCount;
