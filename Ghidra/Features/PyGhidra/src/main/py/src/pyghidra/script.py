@@ -104,6 +104,10 @@ class _PythonFieldExposer:
             logger.error("Failed to add property customizations for %s", self, exc_info=1)
 
 
+class _ScriptPath(str):
+    """A uniquely identifiable script-directory entry in sys.path."""
+
+
 class _GhidraScriptModule:
 
     def __init__(self, spec: ModuleSpec):
@@ -246,7 +250,7 @@ class PyGhidraScript(dict):
 
         orig_argv = sys.argv
         orig_modules = sys.modules.copy()
-        script_root = str(Path(script_path).parent)
+        script_root = _ScriptPath(Path(script_path).parent)
 
         # honor the python safe_path flag introduced in 3.11
         safe_path = bool(getattr(sys.flags, "safe_path", 0))
@@ -276,7 +280,12 @@ class PyGhidraScript(dict):
                     sys.modules.pop(k, None)
 
             if not safe_path:
-                sys.path.remove(script_root)
+                # The script may move or remove our entry, or add an equal path.
+                # Remove only the entry we inserted and preserve its other changes.
+                for index, entry in enumerate(sys.path):
+                    if entry is script_root:
+                        del sys.path[index]
+                        break
 
 
 def get_current_interpreter():
