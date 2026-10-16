@@ -1034,6 +1034,30 @@ bool Heritage::discoverIndexedStackPointers(AddrSpace *spc,vector<PcodeOp *> &fr
 	  }
 	  break;
 	}
+        case CPUI_INT_OR:
+        {
+          Varnode *otherVn = op->getIn(1-op->getSlot(curNode.vn));
+          uint4 traversals = curNode.traversals;
+          uintb newOffset = curNode.offset;
+          if (otherVn->isConstant()) {
+            if ((curNode.vn->getNZMask() & otherVn->getOffset()) == 0) {
+              newOffset = spc->wrapOffset(curNode.offset | otherVn->getOffset());
+            } else {
+              traversals |= StackNode::nonconstant_index;
+            }
+          } else {
+            traversals |= StackNode::nonconstant_index;
+          }
+          StackNode nextNode(outVn,newOffset,traversals);
+          if (nextNode.iter != nextNode.vn->endDescend()) {
+            outVn->setMark();
+            path.push_back(nextNode);
+            markedVn.push_back(outVn);
+          } else if (outVn->getSpace()->getType() == IPTR_SPACEBASE) {
+            unknownStackStorage = true;
+          }
+          break;
+        }
 	case CPUI_SEGMENTOP:
 	{
 	  if (op->getIn(2) != curNode.vn) break;	// Check that stackpointer comes in as inner pointer
