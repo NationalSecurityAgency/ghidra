@@ -91,6 +91,8 @@ class BitFieldInsertTransform : public BitFieldTransform {
   bool checkOriginalBase(Varnode *vn);			///< Check if the given Varnode is the original LOAD or mapped value
   bool isOriginalValue(BitFieldNodeState &state);	///< Is the given Varnode a (partial) copy of the original value being INSERTed into
   bool addConstantWrite(BitFieldNodeState &state);	///< Create InsertRecord writing a constant into the field
+  bool addConstantValue(BitFieldNodeState &state,uintb value);	///< Create InsertRecord writing the field's bits of a constant
+  bool maskedConstant(BitFieldNodeState &state,Varnode *other,uintb c,OpCode inner,uintb &value);	///< Recognize a constant written as an INT_AND/INT_OR mask pair
   bool addZeroOut(BitFieldNodeState &state);		///< Create InsertRecord writing 0 into the field
   void addFieldWrite(BitFieldNodeState &state);		///< Create InsertRecord writing Varnode into the field
   bool handleAndBack(BitFieldNodeState &state,PcodeOp *op);	///< Follow bitfield back through INT_AND with a mask
