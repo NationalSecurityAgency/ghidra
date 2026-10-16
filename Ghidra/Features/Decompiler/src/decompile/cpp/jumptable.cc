@@ -1206,16 +1206,23 @@ void JumpBasic::findSmallestNormal(const JumpBasic *previous)
   CircleRange rng;
   CircleRange expectedRange;
   uintb sz,maxsize;
+  bool expectedLoad = false;
+  validateByteTargets = false;
 
   if (previous != (const JumpBasic *)0 && previous->jrange != (JumpValuesRange *)0) {
     expectedRange = previous->jrange->getRange();
+    expectedLoad = previous->indexBeforeTableLoad;
+    validateByteTargets = previous->validateByteTargets;
   }
   varnodeIndex = 0;
+  indexBeforeTableLoad = pathMeld.isLoadInPath(varnodeIndex);
   calcRange(pathMeld.getVarnode(0),rng);
   jrange->setRange(rng,pathMeld.getVarnode(0),pathMeld.getOp(0));
   maxsize = rng.getSize();
   for(uint4 i=1;i<pathMeld.numCommonVarnode();++i) {
-    if (rng == expectedRange)	// Found variable that gives (already recovered) range
+    // Preserve whether the recovered index precedes a table load.  The loaded
+    // table value can have the same range without being the same switch input.
+    if (rng == expectedRange && (!expectedLoad || indexBeforeTableLoad))
       return;
     calcRange(pathMeld.getVarnode(i),rng);
     sz = rng.getSize();
@@ -1225,10 +1232,24 @@ void JumpBasic::findSmallestNormal(const JumpBasic *previous)
 	continue;
     }
     varnodeIndex = i;
+    indexBeforeTableLoad = pathMeld.isLoadInPath(varnodeIndex);
     maxsize = sz;
     jrange->setRange(rng,pathMeld.getVarnode(i),pathMeld.getEarliestOp(i));
   }
   if (maxsize == 256 && pathMeld.getVarnode(varnodeIndex)->getSize()==1 && !pathMeld.isLoadInPath(varnodeIndex)) {
+    // A byte loaded from the table can have the same range as the table index.
+    // Before rejecting it, look for an equally small input with a table load
+    // between it and the indirect jump.
+    for(uint4 i=varnodeIndex+1;i<pathMeld.numCommonVarnode();++i) {
+      if (!pathMeld.isLoadInPath(i)) continue;
+      calcRange(pathMeld.getVarnode(i),rng);
+      if (rng.getSize() > maxsize) continue;
+      varnodeIndex = i;
+      indexBeforeTableLoad = true;
+      validateByteTargets = true;
+      jrange->setRange(rng,pathMeld.getVarnode(i),pathMeld.getEarliestOp(i));
+      return;
+    }
     // Don't accept a 1-byte switch variable unless there is an explicit guard
     // or a table lookup between the byte and the indirect jump.
     // "goto *(#const + byteVar)" should not be interpreted as 256 case switch
@@ -1477,6 +1498,11 @@ bool JumpBasic::recoverModel(Funcdata *fd,PcodeOp *indop,const JumpModel *previo
 void JumpBasic::buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
 			       vector<LoadTable> *loadpoints,vector<int4> *loadcounts) const
 {
+  class PcodeDiscard : public PcodeEmit {
+  public:
+    virtual void dump(const Address &,OpCode,VarnodeData *,VarnodeData *,int4) {}
+  } discard;
+  set<Address> checkedTargets;
   uintb val,addr;
   addresstable.clear();		// Clear out any partial recoveries
 				// Build the emulation engine
@@ -1495,6 +1521,25 @@ void JumpBasic::buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addr
     addr = emul.emulatePath(val,pathMeld,jrange->getStartOp(),jrange->getStartVarnode());
     addr = AddrSpace::addressToByte(addr,spc->getWordSize());
     addr &= mask;
+    if (validateByteTargets && checkedTargets.insert(Address(spc,addr)).second) {
+      // A LOAD alone does not establish the extent of an unguarded byte table.
+      // Reject this speculative model before flow follows an invalid destination.
+      try {
+        Funcdata *destination = fd->getArch()->symboltab->getGlobalScope()->queryFunction(Address(spc,addr));
+        if (destination != (Funcdata *)0 && destination->getAddress() != fd->getAddress())
+          throw LowlevelError("Unbounded byte table crosses a known function boundary");
+        if (fd->getArch()->translate->oneInstruction(discard,Address(spc,addr)) <= 0)
+          throw LowlevelError("Unbounded byte table has an unverified target");
+      }
+      catch(UnimplError &err) {
+        // The instruction is recognized even if its p-code is unsupported.
+        if (err.instruction_length <= 0)
+          throw LowlevelError("Unbounded byte table has an unverified target");
+      }
+      catch(LowlevelError &err) {
+        throw LowlevelError("Unbounded byte table has an unverified target");
+      }
+    }
     addresstable.push_back(Address(spc,addr));
     if (loadcounts != (vector<int4> *)0)
       loadcounts->push_back(loadpoints->size());
@@ -1658,6 +1703,8 @@ JumpModel *JumpBasic::clone(JumpTable *jt) const
 {
   JumpBasic *res = new JumpBasic(jt);
   res->jrange = (JumpValuesRange *)jrange->clone();	// We only need to clone the JumpValues
+  res->indexBeforeTableLoad = indexBeforeTableLoad;
+  res->validateByteTargets = validateByteTargets;
   return res;
 }
 
@@ -1669,6 +1716,8 @@ void JumpBasic::clear(void)
     jrange = (JumpValuesRange *)0;
   }
   pathMeld.clear();
+  indexBeforeTableLoad = false;
+  validateByteTargets = false;
   selectguards.clear();
   normalvn = (Varnode *)0;
   switchvn = (Varnode *)0;
@@ -1684,6 +1733,7 @@ bool JumpBasic2::foldInOneGuard(Funcdata *fd,GuardRecord &guard,JumpTable *jump)
   //       the guard will disappear anyway because the normalization foldin will make all its blocks donothings
   //
   // So we don't make any special mods, in case there are extra statements in these blocks
+
 
   // The final block in the table is the single value produced by the model2 guard
   jump->setLastAsDefault();	// It should be the default block
@@ -1798,6 +1848,8 @@ JumpModel *JumpBasic2::clone(JumpTable *jt) const
 {
   JumpBasic2 *res = new JumpBasic2(jt);
   res->jrange = (JumpValuesRange *)jrange->clone();	// We only need to clone the JumpValues
+  res->indexBeforeTableLoad = indexBeforeTableLoad;
+  res->validateByteTargets = validateByteTargets;
   return res;
 }
 
@@ -1988,6 +2040,8 @@ void JumpBasicOverride::clearCopySpecific(void)
 {
   selectguards.clear();
   pathMeld.clear();
+  indexBeforeTableLoad = false;
+  validateByteTargets = false;
   normalvn = (Varnode *)0;
   switchvn = (Varnode *)0;
 }
@@ -2051,6 +2105,8 @@ JumpModel *JumpBasicOverride::clone(JumpTable *jt) const
 
 {
   JumpBasicOverride *res = new JumpBasicOverride(jt);
+  res->indexBeforeTableLoad = indexBeforeTableLoad;
+  res->validateByteTargets = validateByteTargets;
   res->adset = adset;
   res->values = values;
   res->addrtable = addrtable;
@@ -2070,6 +2126,8 @@ void JumpBasicOverride::clear(void)
   values.clear();
   addrtable.clear();
   istrivial = false;
+  indexBeforeTableLoad = false;
+  validateByteTargets = false;
 }
 
 void JumpBasicOverride::encode(Encoder &encoder) const
