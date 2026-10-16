@@ -61,6 +61,7 @@ src/decompile/datatests/multiret.xml||GHIDRA||||END|
 src/decompile/datatests/namespace.xml||GHIDRA||||END|
 src/decompile/datatests/nan.xml||GHIDRA||||END|
 src/decompile/datatests/nestedoffset.xml||GHIDRA||||END|
+src/decompile/datatests/nestedsegmentop.xml||GHIDRA||||END|
 src/decompile/datatests/noforloop_alias.xml||GHIDRA||||END|
 src/decompile/datatests/noforloop_globcall.xml||GHIDRA||||END|
 src/decompile/datatests/noforloop_iterused.xml||GHIDRA||||END|

@@ -4176,13 +4176,15 @@ AddrSpace *RuleLoadVarnode::correctSpacebase(Architecture *glb,Varnode *vn,AddrS
 /// \param val is the reference for passing back the constant
 /// \param spc is the space being loaded from
 /// \return the associated space or NULL
-AddrSpace *RuleLoadVarnode::vnSpacebase(Architecture *glb,Varnode *vn,uintb &val,AddrSpace *spc)
+AddrSpace *RuleLoadVarnode::vnSpacebase(Architecture *glb,Varnode *vn,uintb &val,AddrSpace *spc,int4 depth)
 
 {
   PcodeOp *op;
   Varnode *vn1,*vn2;
   AddrSpace *retspace;
-  
+
+  if (depth > 8) return (AddrSpace *)0;
+
   retspace = correctSpacebase(glb,vn,spc);
   if (retspace != (AddrSpace *)0) {
     val = 0;
@@ -4193,18 +4195,45 @@ AddrSpace *RuleLoadVarnode::vnSpacebase(Architecture *glb,Varnode *vn,uintb &val
   if (op->code() != CPUI_INT_ADD) return (AddrSpace *)0;
   vn1 = op->getIn(0);
   vn2 = op->getIn(1);
-  retspace = correctSpacebase(glb,vn1,spc);
+
+  // Unwrap a SEGMENTOP among the INT_ADD's inputs, recursing into vnSpacebase
+  // itself (rather than only calling correctSpacebase directly) so a chain of
+  // arbitrary depth -- SEGMENTOP nested inside INT_ADD nested inside further
+  // INT_ADDs -- resolves correctly. checkSpacebase already does an equivalent
+  // one-level unwrap when a SEGMENTOP is the *direct* pointer operand of a
+  // LOAD/STORE; this mirrors that same unwrap for a SEGMENTOP found among an
+  // INT_ADD's inputs instead, and applies it recursively.
+  Varnode *unwrapped1 = vn1;
+  if (unwrapped1->isWritten() && (unwrapped1->getDef()->code()==CPUI_SEGMENTOP) &&
+      (unwrapped1->getDef()->numInput() >= 3)) {
+    Varnode *segbase1 = unwrapped1->getDef()->getIn(2);
+    if (!segbase1->isConstant()) unwrapped1 = segbase1;
+  }
+  Varnode *unwrapped2 = vn2;
+  if (unwrapped2->isWritten() && (unwrapped2->getDef()->code()==CPUI_SEGMENTOP) &&
+      (unwrapped2->getDef()->numInput() >= 3)) {
+    Varnode *segbase2 = unwrapped2->getDef()->getIn(2);
+    if (!segbase2->isConstant()) unwrapped2 = segbase2;
+  }
+
+  retspace = (unwrapped1 == vn1) ? correctSpacebase(glb,unwrapped1,spc) : vnSpacebase(glb,unwrapped1,val,spc,depth+1);
   if (retspace != (AddrSpace *)0) {
+    uintb accum = (unwrapped1 == vn1) ? 0 : val;
     if (vn2->isConstant()) {
-      val = vn2->getOffset();
+      // Wrap the accumulated offset to the space's actual bit width at each
+      // level. Naive unsigned addition across multiple unwrap levels can
+      // produce an out-of-range composite offset (e.g. 0x10006 in a
+      // 2-byte/16-bit stack space), corrupting downstream Varnode creation.
+      val = retspace->wrapOffset(accum + vn2->getOffset());
       return retspace;
     }
     return (AddrSpace *)0;
   }
-  retspace = correctSpacebase(glb,vn2,spc);
+  retspace = (unwrapped2 == vn2) ? correctSpacebase(glb,unwrapped2,spc) : vnSpacebase(glb,unwrapped2,val,spc,depth+1);
   if (retspace != (AddrSpace *)0) {
+    uintb accum = (unwrapped2 == vn2) ? 0 : val;
     if (vn1->isConstant()) {
-      val = vn1->getOffset();
+      val = retspace->wrapOffset(accum + vn1->getOffset());
       return retspace;
     }
   }

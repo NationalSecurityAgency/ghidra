@@ -660,8 +660,17 @@ void Merge::trimOpOutput(PcodeOp *op)
   Varnode *uniq,*vn;
   PcodeOp *afterop;
   
-  if (op->code() == CPUI_INDIRECT)
-    afterop = PcodeOp::getOpFromConst(op->getIn(1)->getAddr()); // Insert copyop AFTER source of indirect
+  // A CPUI_INDIRECT's second input can be an IOP-space reference encoding
+  // the address of the PcodeOp that produced the indirect effect. That
+  // PcodeOp may have since been deleted or replaced by an earlier
+  // simplification pass without this INDIRECT being updated, leaving a
+  // stale/dangling reference. Validate liveness with isDead() before using
+  // the decoded pointer as an insertion point -- opInsertAfter() otherwise
+  // dereferences it unconditionally, which can crash on a stale reference.
+  if (op->code() == CPUI_INDIRECT && op->numInput() > 1 && op->getIn(1)->getSpace()->getType() == IPTR_IOP) {
+    PcodeOp *indirectSource = PcodeOp::getOpFromConst(op->getIn(1)->getAddr());
+    afterop = indirectSource->isDead() ? op : indirectSource; // Insert copyop AFTER source of indirect, unless stale
+  }
   else
     afterop = op;
   vn = op->getOut();
