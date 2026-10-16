@@ -57,6 +57,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 	private final static int INITIAL_SEGMENT_VAL = 0x1000;
 	private final static int PARAGRAPH_SIZE = 0x10;
 	private final static int FAR_CALL_OPCODE = 0x9a;
+	private final static int FAR_RETURN_IMM_OPCODE = 0xca;
 	private final static int FAR_RETURN_OPCODE = 0xcb;
 	private final static int FAR_JUMP_OPCODE = 0xea;
 	private final static byte MOVW_DS_OPCODE = (byte) 0xba;
@@ -399,19 +400,24 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 	}
 
 	/**
-	 * {@return the offset just past the last FAR RETURN in the first {@code limit} bytes of the
-	 * block, leaving at least one byte in the block, or 0 if there is none}
+	 * {@return the offset just past the last FAR RETURN (RETF or RETF imm16) in the first
+	 * {@code limit} bytes of the block, leaving at least one byte in the block, or 0 if there is
+	 * none}
 	 *
 	 * @param block The block
 	 * @param limit How many bytes to scan
 	 * @throws MemoryAccessException If the block's bytes cannot be read
 	 */
 	private int farReturnEnd(MemoryBlock block, int limit) throws MemoryAccessException {
-		int last = (int) Math.min(limit, block.getSize() - 1) - 1;
-		for (int index = last; index >= 0; index--) {
-			int val = block.getByte(block.getStart().add(index)) & 0xff;
-			if (val == FAR_RETURN_OPCODE) {
-				return index + 1;
+		int end = (int) Math.min(limit, block.getSize() - 1);
+		for (int index = end - 1; index >= 0; index--) {
+			int length = switch (block.getByte(block.getStart().add(index)) & 0xff) {
+				case FAR_RETURN_OPCODE -> 1;
+				case FAR_RETURN_IMM_OPCODE -> 3;
+				default -> 0;
+			};
+			if (length != 0 && index + length <= end) {
+				return index + length;
 			}
 		}
 		return 0;
