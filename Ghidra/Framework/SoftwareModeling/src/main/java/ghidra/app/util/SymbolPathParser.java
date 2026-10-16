@@ -93,6 +93,10 @@ public class SymbolPathParser {
 		int parenthesesLevel = 0;
 		int startIndex = 0;
 		for (int i = 0; i < name.length(); ++i) {
+			if (i == startIndex && templateLevel == 0 && parenthesesLevel == 0 &&
+				isTerminalAngleOperator(name.substring(i))) {
+				break;
+			}
 			if ((name.charAt(i) == ':') && (i != name.length() - 1) &&
 				(name.charAt(i + 1) == ':')) {
 				if ((templateLevel == 0) && (parenthesesLevel == 0)) {
@@ -136,6 +140,14 @@ public class SymbolPathParser {
 		list.add(name.substring(startIndex, name.length()));
 
 		return list;
+	}
+
+	private static boolean isTerminalAngleOperator(String component) {
+		return switch (component) {
+			case "operator<", "operator>", "operator<=", "operator>=", "operator<<",
+					"operator>>", "operator<<=", "operator>>=", "operator<=>" -> true;
+			default -> false;
+		};
 	}
 
 	// TODO: in progress.
