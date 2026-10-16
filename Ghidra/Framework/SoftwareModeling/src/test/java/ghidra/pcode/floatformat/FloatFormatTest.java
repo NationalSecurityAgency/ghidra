@@ -59,6 +59,114 @@ public class FloatFormatTest extends AbstractGenericTest {
 		Assert.assertEquals(trueEncoding, ffBigEncoding8);
 	}
 
+	// Binary32's minimum subnormal is exactly 2^-149. These dyadic values require
+	// no approximate decimal oracle: half ties to zero, values above half round to one.
+	private static final double[] MIN_SUBNORMAL_INPUTS = {
+		Math.scalb(0.25, -149), Math.nextDown(Math.scalb(0.5, -149)),
+		Math.scalb(0.5, -149), Math.nextUp(Math.scalb(0.5, -149)),
+		Math.scalb(0.75, -149), Math.scalb(1.0, -149),
+		Math.scalb(1.5, -149), Math.scalb(1.75, -149)
+	};
+	private static final long[] MIN_SUBNORMAL_ENCODINGS = { 0, 0, 0, 1, 1, 1, 2, 2 };
+
+	@Test
+	public void testDoubleEncodingBelowMinimumSubnormal() {
+		FloatFormat ff = new FloatFormat(4);
+		for (int sign : new int[] { 1, -1 }) {
+			for (int i = 0; i < MIN_SUBNORMAL_INPUTS.length; i++) {
+				long expected = MIN_SUBNORMAL_ENCODINGS[i] | (sign < 0 ? 0x80000000L : 0);
+				assertEquals("input " + i + ", sign " + sign, expected,
+					ff.getEncoding(sign * MIN_SUBNORMAL_INPUTS[i]));
+			}
+		}
+	}
+
+	@Test
+	public void testBigFloatEncodingBelowMinimumSubnormal() {
+		FloatFormat ff = new FloatFormat(4);
+		for (int sign : new int[] { 1, -1 }) {
+			for (int i = 0; i < MIN_SUBNORMAL_INPUTS.length; i++) {
+				long expected = MIN_SUBNORMAL_ENCODINGS[i] | (sign < 0 ? 0x80000000L : 0);
+				assertEquals("input " + i + ", sign " + sign, BigInteger.valueOf(expected),
+					ff.getEncoding(FloatFormat.toBigFloat(sign * MIN_SUBNORMAL_INPUTS[i])));
+			}
+		}
+	}
+
+	@Test
+	public void testFloatNarrowingBelowMinimumSubnormal() {
+		FloatFormat source = new FloatFormat(8);
+		FloatFormat target = new FloatFormat(4);
+		for (int sign : new int[] { 1, -1 }) {
+			for (int i = 0; i < MIN_SUBNORMAL_INPUTS.length; i++) {
+				long bits = Double.doubleToRawLongBits(sign * MIN_SUBNORMAL_INPUTS[i]);
+				long expected = MIN_SUBNORMAL_ENCODINGS[i] | (sign < 0 ? 0x80000000L : 0);
+				assertEquals("long input " + i + ", sign " + sign, expected,
+					source.opFloat2Float(bits, target));
+				assertEquals("BigInteger input " + i + ", sign " + sign,
+					BigInteger.valueOf(expected),
+					source.opFloat2Float(BigInteger.valueOf(bits), target));
+			}
+		}
+	}
+
+	@Test
+	public void testMultiplyBelowMinimumSubnormal() {
+		FloatFormat ff = new FloatFormat(4);
+		long[][] cases = { { 1, 0x3f400000L, 1 }, { 3, 0x3e800000L, 1 },
+			{ 1, 0x3f000000L, 0 }, { 1, 0x3e800000L, 0 }, { 1, 0x3f800000L, 1 } };
+		for (long[] c : cases) {
+			assertEquals(c[2], ff.opMult(c[0], c[1]));
+			assertEquals(c[2] | 0x80000000L, ff.opMult(c[0] | 0x80000000L, c[1]));
+		}
+	}
+
+	@Test
+	public void testHalfEncodingBelowMinimumSubnormal() {
+		FloatFormat ff = new FloatFormat(2);
+		// Binary16's minimum subnormal is 2^-24.
+		double halfMinimum = Math.scalb(0.5, -24);
+		double[] inputs = { Math.scalb(0.25, -24), Math.nextDown(halfMinimum), halfMinimum,
+			Math.nextUp(halfMinimum), Math.scalb(0.75, -24), Math.scalb(1.0, -24),
+			Math.scalb(1.5, -24) };
+		long[] encodings = { 0, 0, 0, 1, 1, 1, 2 };
+		for (int sign : new int[] { 1, -1 }) {
+			for (int i = 0; i < inputs.length; i++) {
+				long expected = encodings[i] | (sign < 0 ? 0x8000 : 0);
+				assertEquals("double input " + i + ", sign " + sign, expected,
+					ff.getEncoding(sign * inputs[i]));
+				assertEquals("BigFloat input " + i + ", sign " + sign,
+					BigInteger.valueOf(expected),
+					ff.getEncoding(FloatFormat.toBigFloat(sign * inputs[i])));
+			}
+		}
+	}
+
+	@Test
+	public void testQuadNarrowingBelowMinimumDoubleSubnormal() {
+		FloatFormat source = new FloatFormat(16);
+		FloatFormat target = new FloatFormat(8);
+		// Binary128 represents the binary64 underflow boundary exactly: the biased
+		// exponent of 2^-1075 is 16383 - 1075 = 15308, with 112 fraction bits.
+		BigInteger halfMinimum = BigInteger.valueOf(15308).shiftLeft(112);
+		BigInteger[] inputs = { BigInteger.valueOf(15307).shiftLeft(112),
+			halfMinimum.subtract(BigInteger.ONE), halfMinimum,
+			halfMinimum.add(BigInteger.ONE), halfMinimum.setBit(111),
+			BigInteger.valueOf(15309).shiftLeft(112) };
+		long[] encodings = { 0, 0, 0, 1, 1, 1 };
+		for (boolean negative : new boolean[] { false, true }) {
+			for (int i = 0; i < inputs.length; i++) {
+				BigInteger bits = negative ? inputs[i].setBit(127) : inputs[i];
+				BigInteger expected = BigInteger.valueOf(encodings[i]);
+				if (negative) {
+					expected = expected.setBit(63);
+				}
+				assertEquals("input " + i + ", negative " + negative, expected,
+					source.opFloat2Float(bits, target));
+			}
+		}
+	}
+
 	@Test
 	public void testGetEncodingMaxval() {
 		FloatFormat ff = new FloatFormat(4);

@@ -532,10 +532,15 @@ public class FloatFormat {
 			exp = 0;
 			int n = value.scale - value.fracbits + lb_unscaled + bias + frac_size;
 			if (n < 0) {
-				// XXX is it possible to round up to a non-zero in this situation?
-				return getZeroEncoding(value.sign < 0);
+				// Exactly half the minimum subnormal ties to even (zero).
+				if (n < -1 || Long.bitCount(value.unscaled) == 1) {
+					return getZeroEncoding(value.sign < 0);
+				}
+				fraction = 1;
 			}
-			fraction = roundToLeadBit(value.unscaled, n); // XXX round into normal case?
+			else {
+				fraction = roundToLeadBit(value.unscaled, n);
+			}
 		}
 		if (exp >= maxexponent) {
 			return getInfinityEncoding(value.sign < 0);
@@ -592,10 +597,15 @@ public class FloatFormat {
 			exp = 0;
 			int n = value.scale - value.fracbits + lb_unscaled + bias + frac_size;
 			if (n < 0) {
-				// XXX is it possible to round up to a non-zero in this situation?
-				return getBigZeroEncoding(value.sign < 0);
+				// Exactly half the minimum subnormal ties to even (zero).
+				if (n < -1 || value.unscaled.bitCount() == 1) {
+					return getBigZeroEncoding(value.sign < 0);
+				}
+				fraction = BigInteger.ONE;
 			}
-			fraction = roundToLeadBit(value.unscaled, n);
+			else {
+				fraction = roundToLeadBit(value.unscaled, n);
+			}
 		}
 		if (exp >= maxexponent) {
 			return getBigInfinityEncoding(value.sign < 0);
