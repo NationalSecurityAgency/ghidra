@@ -781,6 +781,16 @@ uint4 GotoStack::assignAddress(Datatype *dt,const PrototypePieces &proto,int4 po
 			       vector<int4> &status,ParameterPieces &res) const
 {
   int4 grp = stackEntry->getGroup();
+  if (stackEntry->isUnboundedAllocation()) {
+    int4 next = status[grp];
+    Address addr = stackEntry->getAllocationAddrBySlot(next,dt->getSize(),dt->getAlignment(),resource->getManager());
+    if (addr.isInvalid()) return fail;
+    status[grp] = next;
+    res.type = dt;
+    res.addr = addr;
+    res.flags = 0;
+    return success;
+  }
   res.type = dt;
   res.addr = stackEntry->getAddrBySlot(status[grp],dt->getSize(),dt->getAlignment(),resource->getManager());
   res.flags = 0;
@@ -970,7 +980,7 @@ uint4 MultiSlotAssign::assignAddress(Datatype *dt,const PrototypePieces &proto,i
       return fail;
     int4 grp = stackEntry->getGroup();
     // Consume all the space we need
-    Address addr = stackEntry->getAddrBySlot(tmpStatus[grp],sizeLeft,align,justifyRight,resource->getManager());
+    Address addr = stackEntry->getAllocationAddrBySlot(tmpStatus[grp],sizeLeft,align,justifyRight,resource->getManager());
     if (addr.isInvalid())
       return fail;
     pieces.emplace_back(addr,sizeLeft);
@@ -1368,7 +1378,7 @@ uint4 MultiSlotDualAssign::assignAddress(Datatype *dt,const PrototypePieces &pro
 	  return fail;
     int4 grp = stackEntry->getGroup();
     // Consume all the space we need
-    Address addr = stackEntry->getAddrBySlot(tmpStatus[grp],sizeLeft,align,justifyRight,resource->getManager());
+    Address addr = stackEntry->getAllocationAddrBySlot(tmpStatus[grp],sizeLeft,align,justifyRight,resource->getManager());
     if (addr.isInvalid())
       return fail;
     pieces.emplace_back(addr,sizeLeft);
@@ -1711,7 +1721,14 @@ uint4 ExtraStack::assignAddress(Datatype *dt,const PrototypePieces &proto,int4 p
   }
   // We assign the stack address (but ignore the actual address) updating the status for the stack,
   // which consumes the stack resources.
-  stackEntry->getAddrBySlot(status[grp],dt->getSize(),dt->getAlignment(),resource->getManager());
+  if (stackEntry->isUnboundedAllocation()) {
+    int4 next = status[grp];
+    Address addr = stackEntry->getAllocationAddrBySlot(next,dt->getSize(),dt->getAlignment(),resource->getManager());
+    if (addr.isInvalid()) return fail;
+    status[grp] = next;
+  }
+  else
+    stackEntry->getAddrBySlot(status[grp],dt->getSize(),dt->getAlignment(),resource->getManager());
   return success;
 }
 
@@ -1734,6 +1751,7 @@ void ExtraStack::decode(Decoder &decoder)
 ModelRule::ModelRule(const ModelRule &op2,const ParamListStandard *res)
 
 {
+  atomicAllocation = res->getStackEntry() != (const ParamEntry *)0 && res->getStackEntry()->isUnboundedAllocation();
   if (op2.filter != (DatatypeFilter *)0)
     filter = op2.filter->clone();
   else
@@ -1759,6 +1777,7 @@ ModelRule::ModelRule(const ModelRule &op2,const ParamListStandard *res)
 ModelRule::ModelRule(const DatatypeFilter &typeFilter,const AssignAction &action,const ParamListStandard *res)
 
 {
+  atomicAllocation = res->getStackEntry() != (const ParamEntry *)0 && res->getStackEntry()->isUnboundedAllocation();
   filter = typeFilter.clone();
   qualifier = (QualifierFilter *)0;
   assign = action.clone(res);
@@ -1801,6 +1820,23 @@ uint4 ModelRule::assignAddress(Datatype *dt,const PrototypePieces &proto,int4 po
   if (qualifier != (QualifierFilter *)0 && !qualifier->filter(proto,pos)) {
     return AssignAction::fail;
   }
+  if (atomicAllocation) {
+    vector<int4> stagedStatus = status;
+    ParameterPieces staged = res;
+    for(int4 i=0;i<preconditions.size();++i) {
+      if (preconditions[i]->assignAddress(dt,proto,pos,tlist,stagedStatus,staged) == AssignAction::fail)
+        return AssignAction::fail;
+    }
+    uint4 response = assign->assignAddress(dt,proto,pos,tlist,stagedStatus,staged);
+    if (response == AssignAction::fail) return response;
+    for(int4 i=0;i<sideeffects.size();++i) {
+      if (sideeffects[i]->assignAddress(dt,proto,pos,tlist,stagedStatus,staged) == AssignAction::fail)
+        return AssignAction::fail;
+    }
+    status = stagedStatus;
+    res = staged;
+    return response;
+  }
   vector<int4> tmpStatus = status;
   for(int4 i =0;i<preconditions.size();++i) {
 	preconditions[i]->assignAddress(dt,proto,pos,tlist,tmpStatus,res);
@@ -1820,6 +1856,7 @@ uint4 ModelRule::assignAddress(Datatype *dt,const PrototypePieces &proto,int4 po
 void ModelRule::decode(Decoder &decoder,const ParamListStandard *res)
 
 {
+  atomicAllocation = res->getStackEntry() != (const ParamEntry *)0 && res->getStackEntry()->isUnboundedAllocation();
   vector<QualifierFilter *> qualifiers;
   uint4 elemId = decoder.openElement(ELEM_RULE);
   filter = DatatypeFilter::decodeFilter(decoder);
@@ -1910,6 +1947,21 @@ ShareStackAction::ShareStackAction(const ProtoModel *m)
   extraAlign = 0;
 }
 
+int4 ShareStackAction::checkedSlot(int4 slotnum) const
+{
+  int4 align = inputStackEntry->getAlign();
+  if (slotnum < 0 || extraAlign < 0 || (extraAlign > align && extraAlign % align != 0))
+    throw ParamUnassignedError("Cannot align shared stack storage");
+  uintb bytes = (uintb)slotnum * align;
+  if (extraAlign > align && bytes % extraAlign != 0)
+    bytes += extraAlign - bytes % extraAlign;
+  uintb slot = bytes / align;
+  uintb limit = inputStackEntry->getSpace()->getHighest() >> 1;
+  if (slot > 0x7fffffff || bytes > limit - inputStackEntry->getBase())
+    throw ParamUnassignedError("Cannot align shared stack storage");
+  return (int4)slot;
+}
+
 void ShareStackAction::applyBefore(const PrototypePieces &proto,TypeFactory &tlist,vector<ParameterPieces> &params,
 				   vector<int4> &inputStatus,vector<int4> &outputStatus) const
 {
@@ -1917,7 +1969,9 @@ void ShareStackAction::applyBefore(const PrototypePieces &proto,TypeFactory &tli
     return;
   // Treat output consumed stack as input consumed stack
   int4 slotnum = outputStatus[outputStackEntry->getGroup()];
-  if (extraAlign > inputStackEntry->getAlign()) {
+  if (inputStackEntry->isUnboundedAllocation())
+    slotnum = checkedSlot(slotnum);
+  else if (extraAlign > inputStackEntry->getAlign()) {
     int4 tmp = (slotnum * inputStackEntry->getAlign()) % extraAlign;
     if (tmp != 0)
       slotnum += (extraAlign - tmp) / inputStackEntry->getAlign();
@@ -1937,12 +1991,21 @@ void ShareStackAction::applyAfter(const PrototypePieces &proto,TypeFactory &tlis
     return;
 
   int4 slotnum = inputStatus[inputStackEntry->getGroup()];
-  if (extraAlign > inputStackEntry->getAlign()) {
+  if (inputStackEntry->isUnboundedAllocation())
+    slotnum = checkedSlot(slotnum);
+  else if (extraAlign > inputStackEntry->getAlign()) {
     int4 tmp = (slotnum * inputStackEntry->getAlign()) % extraAlign;
     if (tmp != 0)
       slotnum += (extraAlign - tmp) / inputStackEntry->getAlign();
   }
-  outEntry.addr = inputStackEntry->getAddrBySlot(slotnum, outEntry.type->getSize(),outEntry.type->getAlignment(),
+  if (inputStackEntry->isUnboundedAllocation()) {
+    Address addr = inputStackEntry->getAllocationAddrBySlot(slotnum,outEntry.type->getSize(),outEntry.type->getAlignment(),model->getArch());
+    if (addr.isInvalid())
+      throw ParamUnassignedError("Cannot assign shared stack storage");
+    outEntry.addr = addr;
+  }
+  else
+    outEntry.addr = inputStackEntry->getAddrBySlot(slotnum, outEntry.type->getSize(),outEntry.type->getAlignment(),
 						 model->getArch());
 }
 

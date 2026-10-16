@@ -18,6 +18,7 @@
 
 namespace ghidra {
 
+AttributeId ATTRIB_ALLOCATION = AttributeId("allocation",162);
 AttributeId ATTRIB_CUSTOM = AttributeId("custom",114);
 AttributeId ATTRIB_DOTDOTDOT = AttributeId("dotdotdot",115);
 AttributeId ATTRIB_EXTENSION = AttributeId("extension",116);
@@ -500,6 +501,35 @@ Address ParamEntry::getAddrBySlot(int4 &slotnum,int4 sz,int4 typeAlign, bool jus
 /// \param normalstack is \b true if the parameters should be allocated from the front of the range
 /// \param grouped is \b true if \b this will be grouped with other entries
 /// \param curList is the list of ParamEntry defined up to this point
+Address ParamEntry::getAllocationAddrBySlot(int4 &slot,int4 sz,int4 typeAlign,const AddrSpaceManager *m) const
+{
+  return getAllocationAddrBySlot(slot,sz,typeAlign,!isLeftJustified(),m);
+}
+
+Address ParamEntry::getAllocationAddrBySlot(int4 &slot,int4 sz,int4 typeAlign,bool justifyRight,const AddrSpaceManager *m) const
+{
+  if (!isUnboundedAllocation())
+    return getAddrBySlot(slot,sz,typeAlign,justifyRight,m);
+  if (slot < 0 || sz < minsize || typeAlign <= 0 || alignment <= 0 ||
+      (typeAlign > alignment ? typeAlign % alignment : alignment % typeAlign) != 0)
+    return Address();
+  uintb start = (uintb)slot * alignment;
+  uintb remainder = start % typeAlign;
+  if (remainder != 0)
+    start += typeAlign - remainder;
+  uintb slots = ((uintb)sz + alignment - 1) / alignment;
+  uintb next = start / alignment + slots;
+  uintb span = slots * alignment;
+  uintb limit = spaceid->getHighest() >> 1;
+  if (next > 0x7fffffff || addressbase > limit || start > limit - addressbase ||
+      span - 1 > limit - addressbase - start)
+    return Address();
+  uintb offset = addressbase + start + (justifyRight ? span - sz : 0);
+  Address result(spaceid,offset);
+  slot = (int4)next;
+  return result;
+}
+
 void ParamEntry::decode(Decoder &decoder,bool normalstack,bool grouped,list<ParamEntry> &curList)
 
 {
@@ -527,6 +557,13 @@ void ParamEntry::decode(Decoder &decoder,bool normalstack,bool grouped,list<Para
     }
     else if (attribId == ATTRIB_STORAGE || attribId == ATTRIB_METATYPE)
       type = string2typeclass(decoder.readString());
+    else if (attribId == ATTRIB_ALLOCATION) {
+      string value = decoder.readString();
+      if (value == "unbounded")
+        flags |= unbounded_allocation;
+      else if (value != "bounded")
+        throw LowlevelError("Bad allocation attribute: " + value);
+    }
     else if (attribId == ATTRIB_EXTENSION) {
       flags &= ~((uint4)(smallsize_zext | smallsize_sext | smallsize_inttype));
       string ext = decoder.readString();
@@ -576,6 +613,10 @@ void ParamEntry::decode(Decoder &decoder,bool normalstack,bool grouped,list<Para
   resolveFirst(curList);
   resolveJoin(curList);
   resolveOverlap(curList);
+  if (isUnboundedAllocation() && (!isStackSpill() || isReverseStack() || isGrouped() ||
+      isOverlap() || joinrec != (JoinRecord *)0 || type != TYPECLASS_GENERAL ||
+      alignment <= 0 || minsize < 1 || size < minsize || addressbase > (spaceid->getHighest() >> 1)))
+    throw LowlevelError("Unbounded allocation requires an independent forward stack entry");
 }
 
 /// Entries within a group must be distinguishable by size or by type.
@@ -741,7 +782,16 @@ uint4 ParamListStandard::assignAddressFallback(type_class resource,Datatype *tp,
 	continue;			// Wrong type
     }
 
+    if (curEntry.isUnboundedAllocation()) {
+      int4 next = status[grp];
+      Address addr = curEntry.getAllocationAddrBySlot(next,tp->getAlignSize(),tp->getAlignment(),glb);
+      if (addr.isInvalid()) continue;
+      status[grp] = next;
+      param.addr = addr;
+    }
+    else {
     param.addr = curEntry.getAddrBySlot(status[grp],tp->getAlignSize(),tp->getAlignment(),glb);
+    }
     if (param.addr.isInvalid()) continue; // If -tp- doesn't fit an invalid address is returned
     if (curEntry.isExclusion()) {
       const vector<int4> &groupSet(curEntry.getAllGroups());
@@ -1493,6 +1543,11 @@ void ParamListStandard::decode(Decoder &decoder,vector<EffectRecord> &effectlist
     else {
       throw LowlevelError("<pentry> and <group> elements must come before any <modelrule>");
     }
+  }
+  for(list<ParamEntry>::const_iterator iter=entry.begin();iter!=entry.end();++iter) {
+    if ((*iter).isUnboundedAllocation() &&
+        (elemId != ELEM_INPUT || &(*iter) != &entry.back()))
+      throw LowlevelError("Unbounded allocation requires the terminal input entry");
   }
   decoder.closeElement(elemId);
   resourceStart.push_back(numgroup);
@@ -4210,6 +4265,29 @@ vector<VarnodeData>::const_iterator FuncProto::trashEnd(void) const
   if (likelytrash.empty())
     return model->trashEnd();
   return likelytrash.end();
+}
+
+/// Recover inferred arguments within the model, preserving declared fixed varargs parameters.
+/// Explicit allocation can put a locked parameter outside the model recognition range.
+/// Only trials whose position and storage exactly match the locked declaration are retained.
+/// The model range and its recovery of all other trials remain unchanged.
+/// \param active is the collection of input Varnode trials
+void FuncProto::deriveInputMap(ParamActive *active) const
+
+{
+  model->deriveInputMap(active);
+  if (!isDotdotdot() || !isInputLocked() || !model->getInputResource()->hasUnboundedAllocation())
+    return;
+  int4 count = numParams();
+  for(int4 i=0;i<active->getNumTrials();++i) {
+    ParamTrial &trial(active->getTrial(i));
+    int4 position = trial.getFixedPosition();
+    if (position < 0 || position >= count) continue;
+    ProtoParameter *param = getParam(position);
+    if (!param->isTypeLocked() || !param->hasStorage()) continue;
+    if (trial.getAddress() != param->getAddress() || trial.getSize() != param->getSize()) continue;
+    trial.markFixedUsed();
+  }
 }
 
 /// \brief Decide whether a given storage location could be, or could hold, an input parameter
