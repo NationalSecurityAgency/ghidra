@@ -568,7 +568,7 @@ public class PdbPrimitiveTypeApplicator {
 	}
 
 	DataType get32BitComplexType() {
-		return getComplexType(4);
+		return getComplexType(32);
 	}
 
 	DataType get32BitPartialPrecisionComplexType() {
@@ -580,11 +580,11 @@ public class PdbPrimitiveTypeApplicator {
 	}
 
 	DataType get64BitComplexType() {
-		return getComplexType(8);
+		return getComplexType(64);
 	}
 
 	DataType get80BitComplexType() {
-		return getComplexType(10);
+		return getComplexType(80);
 	}
 
 	DataType get128BitComplexType() {
