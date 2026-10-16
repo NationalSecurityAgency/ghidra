@@ -14,6 +14,39 @@ define space syscall type=ram_space size=4;
 
 define register offset=0 size=8 [ R0  R1  R2  R3  R4  R5  R6  R7  R8  R9  R10  PC ];
 
+# In Linux kernel, when a function calls another function, a new stack frame is allocated (to R10) and all registers
+# are reset (except R1, R2..., R5 holding parameters). All registers are restored when the function returns but R0.
+# To emulate this behavior in Ghidra, R10 is decreased by the maximum stack frame size and enough space to save the
+# registers. Linux kernel uses frames of at most 512 bytes and Solana eBPF VM uses 4096 bytes, so use the largest.
+# The frame layout is:
+#   R10             return address (saved PC)
+#   R10-8...-4096   local variables
+#   R10-4104        saved R1
+#   R10-4112        saved R2
+#   R10-4120        saved R3
+#   R10-4128        saved R4
+#   R10-4136        saved R5
+#   R10-4144        saved R6
+#   R10-4152        saved R7
+#   R10-4160        saved R8
+#   R10-4168        saved R9
+# When a function is called, R10 is decreased by $(BPF_FRAME_SIZE)
+@define BPF_FRAME_SIZE 4176
+
+macro save_regs_with_new_frame() {
+    R10 = R10 - $(BPF_FRAME_SIZE);
+    *:8 R10 = inst_next;
+    *:8 (R10 - 4104) = R1;
+    *:8 (R10 - 4112) = R2;
+    *:8 (R10 - 4120) = R3;
+    *:8 (R10 - 4128) = R4;
+    *:8 (R10 - 4136) = R5;
+    *:8 (R10 - 4144) = R6;
+    *:8 (R10 - 4152) = R7;
+    *:8 (R10 - 4160) = R8;
+    *:8 (R10 - 4168) = R9;
+}
+
 # Instruction encoding: Insop:8, dst_reg:4, src_reg:4, off:16, imm:32 - from lsb to msb
 @if ENDIAN == "little"
 define token instr(64)
@@ -437,11 +470,13 @@ SysCall:  imm is imm { export *[syscall]:1 imm; }
 disp32: reloc is imm [ reloc = inst_next + imm * 8; ] { export *:4 reloc; }
 
 :CALL disp32 is imm & src=1 & op_alu_jmp_opcode=0x8 & op_alu_jmp_source=0 & op_insn_class=0x5 & disp32 {
+    save_regs_with_new_frame();
     call disp32;
 }
 
 # GCC encoding and LLVM 19.1+ encoding
 :CALLX dst is op_alu_jmp_opcode=0x8 & op_alu_jmp_source=1 & op_insn_class=0x5 & src=0 & imm=0 & dst {
+    save_regs_with_new_frame();
     call [dst];
 }
 
@@ -449,11 +484,27 @@ disp32: reloc is imm [ reloc = inst_next + imm * 8; ] { export *:4 reloc; }
 # Introduced in https://github.com/llvm/llvm-project/commit/9a67245d881f4cf89fd8f897ae2cd0bccec49496
 # Modified in https://github.com/llvm/llvm-project/commit/c43ad6c0fddac0bbed5e881801dd2bc2f9eeba2d
 :CALLX llvm_reg_callx is op_alu_jmp_opcode=0x8 & op_alu_jmp_source=1 & op_insn_class=0x5 & dst=0 & src=0 & llvm_imm_callx_zero=0 & llvm_reg_callx {
+    save_regs_with_new_frame();
     call [llvm_reg_callx];
 }
 # Both CALLX encodings are matched when both dst and imm are zero
 :CALLX R0 is op_alu_jmp_opcode=0x8 & op_alu_jmp_source=1 & op_insn_class=0x5 & dst=0 & src=0 & imm=0 & R0 {
+    save_regs_with_new_frame();
     call [R0];
 }
 
-:EXIT is op_alu_jmp_opcode=0x9 & op_alu_jmp_source=0 & op_insn_class=0x5 { return [*:8 R10]; }
+:EXIT is op_alu_jmp_opcode=0x9 & op_alu_jmp_source=0 & op_insn_class=0x5 {
+    # Restore all registers except R0
+    R1 = *:8 (R10 - 4104);
+    R2 = *:8 (R10 - 4112);
+    R3 = *:8 (R10 - 4120);
+    R4 = *:8 (R10 - 4128);
+    R5 = *:8 (R10 - 4136);
+    R6 = *:8 (R10 - 4144);
+    R7 = *:8 (R10 - 4152);
+    R8 = *:8 (R10 - 4160);
+    R9 = *:8 (R10 - 4168);
+    PC = *:8 R10;
+    R10 = R10 + $(BPF_FRAME_SIZE);
+    return [PC];
+}
