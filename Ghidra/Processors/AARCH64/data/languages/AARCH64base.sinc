@@ -1061,18 +1061,11 @@ is b_3031=0b00 & b_2329=0b0010000 & b_21=1 & b_1014=0b11111 & b_16=0 & b_00=0 & 
 :casp^cas_var aa_Xs, aa_Xss, aa_Xt, aa_Xtt, [Rn_GPR64xsp]
 is b_3031=0b01 & b_2329=0b0010000 & b_21=1 & b_1014=0b11111 & b_16=0 & b_00=0 & cas_var & aa_Xs & aa_Xss & aa_Xt & aa_Xtt & Rn_GPR64xsp
 {
+	# Xs and Xt are at [Xn] in either byte order: comparevalue is s2:s1 little, s1:s2 big.
 	local tmp_s:8 = aa_Xs;
 	local tmp_ss:8 = aa_Xss;
 	local tmp_t:8 = aa_Xt;
 	local tmp_tt:8 = aa_Xtt;
-
-@if DATA_ENDIAN == "little"
-	# for little endian, swap Xss/Xs and Xtt/Xt
-	tmp_s = aa_Xss;
-	tmp_ss = aa_Xs;
-	tmp_t = aa_Xtt;
-	tmp_tt = aa_Xt;
-@endif
 
 	local tmp_addr:8 = Rn_GPR64xsp;
 	local tmp_d:8 = *:8 tmp_addr;
