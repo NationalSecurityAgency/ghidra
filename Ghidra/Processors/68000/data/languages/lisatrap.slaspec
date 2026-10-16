@@ -1,0 +1,2 @@
+@define LISATRAP ""
+@include "68000.sinc"
