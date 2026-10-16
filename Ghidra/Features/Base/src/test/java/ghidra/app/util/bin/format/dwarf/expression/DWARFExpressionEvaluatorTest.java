@@ -39,6 +39,21 @@ public class DWARFExpressionEvaluatorTest extends DWARFTestBase {
 	}
 
 	@Test
+	public void testTerminalRegisterLocation() throws DWARFExpressionException {
+		evaluator.evaluate(instr(DW_OP_reg0));
+		assertTrue(evaluator.popVarnode().isRegister());
+		assertTrue(evaluator.isEmpty());
+	}
+
+	@Test
+	public void testFrameBaseOffsetProducesOneResult() throws DWARFExpressionException {
+		evaluator.setFrameBaseStackLocation(-16);
+		evaluator.evaluate(instr(DW_OP_fbreg, 12));
+		assertEquals(-4, evaluator.popVarnode().getOffset());
+		assertTrue(evaluator.isEmpty());
+	}
+
+	@Test
 	public void fibTest() throws IOException, DWARFExpressionException {
 		// Test by executing a expr that calculates the fibonacci series.
 		// Calculates the Nth fibonacci number, with N being pushed on stack as 'arg' to the

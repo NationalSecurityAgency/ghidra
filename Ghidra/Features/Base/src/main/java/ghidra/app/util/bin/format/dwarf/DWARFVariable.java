@@ -373,10 +373,26 @@ public class DWARFVariable {
 				return false;
 			}
 
-			if (prog.getImportOptions().isUseStaticStackFrameRegisterValue()) {
-				exprEvaluator.setValReader(exprEvaluator.withStaticStackRegisterValues(null,
-					prog.getRegisterMappings().getStackFrameRegisterOffset()));
-			}
+			DWARFStackValueReader stackValues = dfunc.getStackValueReader(lexicalOffset, location.isWildcard());
+			DWARFExpressionEvaluator.ValueReader staticValues =
+				exprEvaluator.withStaticStackRegisterValues(null,
+					prog.getRegisterMappings().getStackFrameRegisterOffset());
+			exprEvaluator.setValReader(vn -> {
+				if (prog.getImportOptions().isUseStaticStackFrameRegisterValue()) {
+					try {
+						return staticValues.getValue(vn);
+					}
+					catch (DWARFExpressionValueException e) {
+						// No static mapping: try the bounded instruction prefix.
+					}
+				}
+				if (dfunc.funcEntryFrameBaseLoc != null &&
+					vn.equals(dfunc.funcEntryFrameBaseLoc.getResolvedValue()) &&
+					!stackValues.isFrameBaseValid(dfunc.funcEntryFrameBaseLoc)) {
+					throw new DWARFExpressionValueException(vn);
+				}
+				return stackValues.getValue(vn);
+			});
 
 			if (prog.getImportOptions().isShowVariableStorageInfo()) {
 				comment = expr.toString(cu);
