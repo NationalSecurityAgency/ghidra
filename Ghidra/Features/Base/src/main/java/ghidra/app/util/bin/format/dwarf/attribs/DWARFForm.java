@@ -211,7 +211,7 @@ public enum DWARFForm {
 		}
 	},
 	DW_FORM_line_strp(0x1f, DWARFForm.DWARF_INTSIZE, string),
-	DW_FORM_ref_sig8(0x20, 8, reference), // unimpl
+	DW_FORM_ref_sig8(0x20, 8, reference),
 	DW_FORM_implicit_const(0x21, 0) {
 		@Override
 		public DWARFAttributeValue readValue(DWARFFormContext context) throws IOException {
@@ -349,6 +349,10 @@ public enum DWARFForm {
 			case DW_FORM_ref_udata: {
 				long uoffset = context.reader().readNext(LEB128::unsigned);
 				return new DWARFNumericAttribute(64, uoffset, false);
+			}
+			case DW_FORM_ref_sig8: {
+				long signature = context.reader().readNextLong();
+				return new DWARFNumericAttribute(64, signature, false);
 			}
 
 			case DW_FORM_strx1:

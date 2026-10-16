@@ -26,13 +26,12 @@ import ghidra.app.util.bin.format.dwarf.line.DWARFLine;
 import ghidra.app.util.bin.format.dwarf.macro.DWARFMacroHeader;
 
 /**
- * A DWARF CompilationUnit is a contiguous block of {@link DebugInfoEntry DIE} records found
- * in a .debug_info section of an program.  The compilation unit block starts with a
- * header that has a few important values and flags, and is followed by the DIE records.
+ * A DWARFCompilationUnit is a contiguous block of {@link DebugInfoEntry DIE} records found
+ * in .debug_info or .debug_types. The unit starts with a header followed by DIE records.
  * <p>
- * The first DIE record must be a DW_TAG_compile_unit.
+ * The first DIE describes a compile, skeleton, or type unit.
  * <p>
- * DIE records are identified by their byte offset in the .debug_info section.
+ * DIE records are identified by their byte offset in the container's combined info stream.
  */
 public class DWARFCompilationUnit extends DWARFUnitHeader {
 	/**
@@ -74,6 +73,27 @@ public class DWARFCompilationUnit extends DWARFUnitHeader {
 
 		DWARFCompilationUnit cu =
 			new DWARFCompilationUnit(partial, pointerSize, firstDIEOffset, abbrevs);
+		return cu;
+	}
+
+	/** Reads a DWARF 4 type unit from .debug_types. */
+	public static DWARFCompilationUnit readTypeV4(DWARFUnitHeader partial, BinaryReader reader)
+			throws DWARFException, IOException {
+		long abbreviationOffset = reader.readNextUnsignedValue(partial.getIntSize());
+		byte pointerSize = reader.readNextByte();
+		long signature = reader.readNextLong();
+		long typeOffset = reader.readNextUnsignedValue(partial.getIntSize());
+		long firstDIEOffset = reader.getPointerIndex();
+		long typeDIEOffset = partial.startOffset + typeOffset;
+		if (firstDIEOffset >= partial.endOffset || typeDIEOffset < firstDIEOffset ||
+			typeDIEOffset >= partial.endOffset) {
+			throw new DWARFException("Invalid DWARF type unit at 0x%x".formatted(partial.startOffset));
+		}
+		Map<Integer, DWARFAbbreviation> abbrevs =
+			partial.getDIEContainer().getAbbrevs(abbreviationOffset);
+		DWARFCompilationUnit cu = new DWARFCompilationUnit(partial, pointerSize,
+			firstDIEOffset, abbrevs, signature, typeDIEOffset);
+		cu.unitType = DWARFUnitType.DW_UT_type;
 		return cu;
 	}
 
@@ -120,6 +140,49 @@ public class DWARFCompilationUnit extends DWARFUnitHeader {
 	}
 
 	/**
+	 * Reads a DWARF 5 type unit. Its signature identifies the type DIE at an offset relative
+	 * to the start of the unit header.
+	 */
+	public static DWARFCompilationUnit readTypeV5(DWARFUnitHeader partial, BinaryReader reader,
+			int unitType)
+			throws DWARFException, IOException {
+		byte pointerSize = reader.readNextByte();
+		long abbreviationOffset = reader.readNextUnsignedValue(partial.getIntSize());
+		long signature = reader.readNextLong();
+		long typeOffset = reader.readNextUnsignedValue(partial.getIntSize());
+		long firstDIEOffset = reader.getPointerIndex();
+		long typeDIEOffset = partial.startOffset + typeOffset;
+		if (firstDIEOffset >= partial.endOffset || typeDIEOffset < firstDIEOffset ||
+			typeDIEOffset >= partial.endOffset) {
+			throw new DWARFException("Invalid DWARF type unit at 0x%x".formatted(partial.startOffset));
+		}
+		Map<Integer, DWARFAbbreviation> abbrevs =
+			partial.getDIEContainer().getAbbrevs(abbreviationOffset);
+		DWARFCompilationUnit cu = new DWARFCompilationUnit(partial, pointerSize,
+			firstDIEOffset, abbrevs, signature, typeDIEOffset);
+		cu.unitType = unitType;
+		return cu;
+	}
+
+	public static DWARFCompilationUnit readSplitV5(DWARFUnitHeader partial, BinaryReader reader,
+			int unitType) throws DWARFException, IOException {
+		byte pointerSize = reader.readNextByte();
+		long abbreviationOffset = reader.readNextUnsignedValue(partial.getIntSize());
+		long dwoId = reader.readNextLong();
+		long firstDIEOffset = reader.getPointerIndex();
+		if (firstDIEOffset >= partial.endOffset) {
+			throw new DWARFException("Invalid DWARF split unit at 0x%x".formatted(partial.startOffset));
+		}
+		Map<Integer, DWARFAbbreviation> abbrevs =
+			partial.getDIEContainer().getAbbrevs(abbreviationOffset);
+		DWARFCompilationUnit cu =
+			new DWARFCompilationUnit(partial, pointerSize, firstDIEOffset, abbrevs);
+		cu.dwoId = dwoId;
+		cu.unitType = unitType;
+		return cu;
+	}
+
+	/**
 	 * Size of pointers that are held in DIEs in this compUnit. (from header)
 	 */
 	private final byte pointerSize;
@@ -128,6 +191,13 @@ public class DWARFCompilationUnit extends DWARFUnitHeader {
 	 * Offset in the debug_info section of the first DIE of this compUnit.
 	 */
 	private final long firstDIEOffset;
+
+	/** Offset of the defining type DIE, or -1 for a compilation unit. */
+	private final long typeDIEOffset;
+	private final long typeSignature;
+	private long dwoId;
+	private int unitType = DWARFUnitType.DW_UT_compile;
+	private DWARFCompilationUnit skeleton;
 
 	/**
 	 * Map of abbrevCode to {@link DWARFAbbreviation} instances.
@@ -143,11 +213,18 @@ public class DWARFCompilationUnit extends DWARFUnitHeader {
 
 	private DWARFCompilationUnit(DWARFUnitHeader partial, byte pointerSize, long firstDIEOffset,
 			Map<Integer, DWARFAbbreviation> abbrMap) {
+		this(partial, pointerSize, firstDIEOffset, abbrMap, 0, -1);
+	}
+
+	private DWARFCompilationUnit(DWARFUnitHeader partial, byte pointerSize, long firstDIEOffset,
+			Map<Integer, DWARFAbbreviation> abbrMap, long typeSignature, long typeDIEOffset) {
 		super(partial);
 
 		this.pointerSize = pointerSize;
 		this.firstDIEOffset = firstDIEOffset;
 		this.codeToAbbreviationMap = (abbrMap != null) ? abbrMap : new HashMap<>();
+		this.typeSignature = typeSignature;
+		this.typeDIEOffset = typeDIEOffset;
 	}
 
 	/**
@@ -171,6 +248,32 @@ public class DWARFCompilationUnit extends DWARFUnitHeader {
 		this.firstDIEOffset = firstDIEOffset;
 		this.codeToAbbreviationMap =
 			(codeToAbbreviationMap != null) ? codeToAbbreviationMap : new HashMap<>();
+		this.typeSignature = 0;
+		this.typeDIEOffset = -1;
+	}
+
+	public boolean isTypeUnit() {
+		return typeDIEOffset != -1;
+	}
+
+	public long getTypeSignature() {
+		return typeSignature;
+	}
+
+	public long getTypeDIEOffset() {
+		return typeDIEOffset;
+	}
+
+	public long getDwoId() {
+		return dwoId;
+	}
+
+	public int getUnitType() {
+		return unitType;
+	}
+
+	public void setSkeleton(DWARFCompilationUnit skeleton) {
+		this.skeleton = skeleton;
 	}
 
 	/**
@@ -182,6 +285,9 @@ public class DWARFCompilationUnit extends DWARFUnitHeader {
 	 */
 	public void init(DebugInfoEntry rootDIE) throws IOException {
 		diea = DIEAggregate.createSingle(rootDIE);
+		if (dwarfVersion <= 4) {
+			dwoId = diea.getUnsignedLong(DW_AT_GNU_dwo_id, 0);
+		}
 		line = getDIEContainer().getLine(diea, DW_AT_stmt_list);
 	}
 
@@ -263,11 +369,13 @@ public class DWARFCompilationUnit extends DWARFUnitHeader {
 	}
 
 	public boolean hasDWO() {
-		return diea.hasAttribute(DW_AT_GNU_dwo_id) && diea.hasAttribute(DW_AT_GNU_dwo_name);
+		return diea.hasAttribute(DW_AT_dwo_name) || diea.hasAttribute(DW_AT_GNU_dwo_name);
 	}
 
 	public long getAddrTableBase() {
-		return diea.getUnsignedLong(DW_AT_addr_base, 0);
+		long base = diea.getUnsignedLong(DW_AT_addr_base,
+			diea.getUnsignedLong(DW_AT_GNU_addr_base, -1));
+		return base >= 0 ? base : skeleton != null ? skeleton.getAddrTableBase() : 0;
 	}
 
 	public long getRangeListsBase() {
