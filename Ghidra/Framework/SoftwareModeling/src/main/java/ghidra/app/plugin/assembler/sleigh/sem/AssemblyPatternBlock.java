@@ -19,7 +19,6 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.concurrent.atomic.AtomicLong;
 
 import ghidra.app.plugin.assembler.sleigh.expr.MaskedLong;
 import ghidra.app.plugin.assembler.sleigh.expr.SolverException;
@@ -108,8 +107,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 	/**
 	 * Convert a string representation to a pattern block
 	 * 
-	 * @see NumericUtilities#convertHexStringToMaskedValue(AtomicLong, AtomicLong, String, int, int,
-	 *      String)
+	 * @see NumericUtilities#convertHexStringToMaskedValue(long[], String, int, int, int, int, String)
 	 * @param str the string to convert
 	 * @return the resulting pattern block
 	 */
@@ -140,17 +138,20 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 		}
 
 		// Convert the bytes
-		// TODO: Optimize this some
 		byte[] mask = new byte[length];
 		byte[] vals = new byte[length];
-		AtomicLong msk = new AtomicLong();
-		AtomicLong val = new AtomicLong();
-		int i = 0;
-		for (String hex : str.substring(pos).split(":")) {
-			NumericUtilities.convertHexStringToMaskedValue(msk, val, hex, 2, 0, null);
-			mask[i] = (byte) msk.get();
-			vals[i] = (byte) val.get();
-			i++;
+		long[] out = new long[2];
+
+		int p = pos;
+		for (int i = 0; i < length; i++) {
+			int newpos = str.indexOf(':', p);
+			if (newpos == -1) {
+				newpos = str.length();
+			}
+			NumericUtilities.convertHexStringToMaskedValue(out, str, p, newpos, 2, 0, null);
+			mask[i] = (byte) out[0];
+			vals[i] = (byte) out[1];
+			p = newpos + 1;
 		}
 
 		return new AssemblyPatternBlock(offset, mask, vals);
