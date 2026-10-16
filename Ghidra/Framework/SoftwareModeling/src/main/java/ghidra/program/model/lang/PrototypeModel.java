@@ -20,6 +20,7 @@ import static ghidra.program.model.pcode.ElementId.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.program.database.SpecExtension;
 import ghidra.program.model.address.*;
@@ -55,6 +56,26 @@ public class PrototypeModel {
 	private Varnode[] internalstorage;	// Registers holding internal compiler constants
 	private PrototypeModel compatModel;	// The model this is an alias of
 	private AddressSet localRange;	// Range on the stack considered for local storage
+
+	/**
+	 * A declared far-pointer call-argument join for this prototype.
+	 * Declares that two adjacent input parameter slots (hislot and hislot+1)
+	 * should always be fused into one joined value at call sites, even
+	 * without dataflow evidence that they are related.
+	 * Mirrors FuncProto::FarPointerJoinSpec on the C++ side (fspec.hh).
+	 */
+	public static class FarPointerJoinSpec {
+		public int hislot;    // 0-based index of the most significant piece,
+		                       // matching input <pentry> declaration order
+		public int joinsize;  // Total byte size of the fused value
+
+		public FarPointerJoinSpec(int hislot, int joinsize) {
+			this.hislot = hislot;
+			this.joinsize = joinsize;
+		}
+	}
+
+	private ArrayList<FarPointerJoinSpec> farPointerJoins = new ArrayList<>();	// Declared far-pointer call-argument joins
 	private AddressSet paramRange;	// Range on the stack considered for parameter storage
 	private InputListType inputListType = InputListType.STANDARD;
 	private boolean hasThis;		// Convention has a this (auto-parameter)
@@ -209,7 +230,7 @@ public class PrototypeModel {
 	 * Returns the number of extra bytes popped from the stack when a function that uses
 	 * this model returns to its caller. This is usually just the number of bytes used to
 	 * store the return value, but some conventions may do additional clean up of stack parameters.
-	 * A special value of UNKNOWN_EXTRAPOP indicates that the number of bytes is unknown.  
+	 * A special value of UNKNOWN_EXTRAPOP indicates that the number of bytes is unknown.
 	 * @return the number of extra bytes popped
 	 */
 	public int getExtrapop() {
@@ -247,7 +268,7 @@ public class PrototypeModel {
 	/**
 	 * Return true if this model has specific p-code injections associated with it
 	 * (either an "uponentry" or "uponreturn" payload),
-	 * which are used to decompile functions with this model. 
+	 * which are used to decompile functions with this model.
 	 * @return true if this model uses p-code injections
 	 */
 	public boolean hasInjection() {
@@ -263,7 +284,7 @@ public class PrototypeModel {
 	 * <br>
 	 * Note: storage will not be assigned to the {@link DataType#DEFAULT default undefined} datatype
 	 * or zero-length datatype.
-	 * 
+	 *
 	 * @param dataType first parameter dataType or null for an undefined type.
 	 * @param program is the Program
 	 * @return return location or {@link VariableStorage#UNASSIGNED_STORAGE} if
@@ -296,12 +317,12 @@ public class PrototypeModel {
 	 * conjunction with the {@link #getStorageLocations(Program, DataType[], boolean, boolean)}
 	 * method.  Parameter storage allocation may be affected by the return datatype
 	 * specified (e.g., hidden return storage parameter).
-	 *  
+	 *
 	 * @param params existing set parameters to which the next parameter will
-	 * be appended (may be null). Element-0 corresponds to the return datatype. 
+	 * be appended (may be null). Element-0 corresponds to the return datatype.
 	 * @param dataType dataType associated with next parameter location or null
 	 * for a default undefined type.  If null the speculative first parameter storage
-	 * is returned. 
+	 * is returned.
 	 * @param program is the Program
 	 * @return next parameter location or {@link VariableStorage#UNASSIGNED_STORAGE} if
 	 * unable to determine suitable location
@@ -328,20 +349,20 @@ public class PrototypeModel {
 	 * conjunction with the {@link #getStorageLocations(Program, DataType[], boolean)}
 	 * method.  Parameter storage allocation may be affected by the return datatype
 	 * specified (e.g., hidden return storage parameter).
-	 *  
+	 *
 	 * @param argIndex is the index (0: return storage, 1..n: parameter storage)
 	 * @param params existing set parameters to which the parameter specified by
 	 * argIndex will be added/inserted be appended. Element-0 corresponds to the return
-	 * datatype. Parameter elements prior to the argIndex are required for an accurate 
-	 * storage determination to be made.  Any preceeding parameters not specified will be assumed 
-	 * as a 1-byte integer type which could cause an erroneous storage result to be returned.  
+	 * datatype. Parameter elements prior to the argIndex are required for an accurate
+	 * storage determination to be made.  Any preceeding parameters not specified will be assumed
+	 * as a 1-byte integer type which could cause an erroneous storage result to be returned.
 	 * A null params list will cause all preceeding params to be assumed in a similar fashion.
 	 * @param dataType dataType associated with next parameter location or null
 	 * for a default undefined type.
 	 * @param program is the Program
 	 * @return parameter location or {@link VariableStorage#UNASSIGNED_STORAGE} if
 	 * unable to determine suitable location
-	 * @deprecated This method does not apply any storage rules specific to varags functions. 
+	 * @deprecated This method does not apply any storage rules specific to varags functions.
 	 * Use {@link #getStorageLocations(Program,DataType[],boolean,boolean)} instead.
 	 */
 	@Deprecated(since = "12.2")
@@ -349,7 +370,7 @@ public class PrototypeModel {
 			Program program) {
 		if (dataType != null) {
 			dataType = dataType.clone(program.getDataTypeManager());
-			// Identify next arg index based upon number of storage varnodes 
+			// Identify next arg index based upon number of storage varnodes
 			// already assigned to parameters - this may not work well if
 			// customized storage has been used
 		}
@@ -372,13 +393,13 @@ public class PrototypeModel {
 
 	/**
 	 * Calculate input and output storage locations given a function prototype
-	 * 
+	 *
 	 * The data-types of the function prototype are passed in. Based on this model, a
 	 * location is selected for each (input and output) parameter and passed back to the
 	 * caller.  The passed back storage locations are ordered with the output storage
 	 * as the first entry, followed by the input storage locations.  The model has the option
 	 * of inserting a hidden return value pointer in the input storage locations.
-	 * 
+	 *
 	 * If the model cannot assign storage, the ParameterPieces will have a null Address.
 	 * @param proto is the function prototype parameter data-types
 	 * @param dtManager is the manager used to create indirect data-types
@@ -400,24 +421,24 @@ public class PrototypeModel {
 	}
 
 	/**
-	 * Compute the variable storage for a given array of return/parameter datatypes.  
-	 * The first array element is the return datatype, which is followed by any input parameter 
-	 * datatypes in order. If addAutoParams is true, pointer datatypes will automatically be 
-	 * inserted for "this" or "hidden return"input parameters, if needed.  In this case, the 
-	 * dataTypes array should not include explicit entries for these parameters.  If addAutoParams 
-	 * is false, the dataTypes array is assumed to already contain explicit entries for any of 
+	 * Compute the variable storage for a given array of return/parameter datatypes.
+	 * The first array element is the return datatype, which is followed by any input parameter
+	 * datatypes in order. If addAutoParams is true, pointer datatypes will automatically be
+	 * inserted for "this" or "hidden return"input parameters, if needed.  In this case, the
+	 * dataTypes array should not include explicit entries for these parameters.  If addAutoParams
+	 * is false, the dataTypes array is assumed to already contain explicit entries for any of
 	 * these parameters.
 	 * <br>
 	 * Note: storage will not be assigned to the {@link DataType#DEFAULT default undefined} datatype
 	 * or zero-length datatypes or any subsequent parameter following such a parameter.
-	 * 
+	 *
 	 * @param program is the Program
-	 * @param dataTypes return/parameter datatypes (first element is always the return datatype, 
+	 * @param dataTypes return/parameter datatypes (first element is always the return datatype,
 	 * i.e., minimum array length is 1)
 	 * @param addAutoParams true if auto-parameter storage locations can be generated
 	 * @return dynamic storage locations orders by ordinal where first element corresponds to
-	 * return storage. The returned array may also include additional auto-parameter storage 
-	 * locations. 
+	 * return storage. The returned array may also include additional auto-parameter storage
+	 * locations.
 	 * @deprecated This method does not apply any storage rules specific to varags functions.
 	 * Use {@link #getStorageLocations(Program,DataType[],boolean,boolean)} instead.
 	 */
@@ -428,27 +449,27 @@ public class PrototypeModel {
 	}
 
 	/**
-	 * Compute the variable storage for a given array of return/parameter datatypes.  
-	 * The first array element is the return datatype, which is followed by any input parameter 
-	 * datatypes in order. If addAutoParams is true, pointer datatypes will automatically be 
-	 * inserted for "this" or "hidden return"input parameters, if needed.  In this case, the 
-	 * dataTypes array should not include explicit entries for these parameters.  If addAutoParams 
-	 * is false, the dataTypes array is assumed to already contain explicit entries for any of 
-	 * these parameters.  
+	 * Compute the variable storage for a given array of return/parameter datatypes.
+	 * The first array element is the return datatype, which is followed by any input parameter
+	 * datatypes in order. If addAutoParams is true, pointer datatypes will automatically be
+	 * inserted for "this" or "hidden return"input parameters, if needed.  In this case, the
+	 * dataTypes array should not include explicit entries for these parameters.  If addAutoParams
+	 * is false, the dataTypes array is assumed to already contain explicit entries for any of
+	 * these parameters.
 	 * <br>
 	 * Note: storage will not be assigned to the {@link DataType#DEFAULT default undefined} datatype
 	 * or zero-length datatypes or any subsequent parameter following such a parameter.
-	 * 
+	 *
 	 * @param program is the Program
-	 * @param dataTypes return/parameter datatypes (first element is always the return datatype, 
+	 * @param dataTypes return/parameter datatypes (first element is always the return datatype,
 	 * i.e., minimum array length is 1)
 	 * @param addAutoParams true if auto-parameter storage locations can be generated
 	 * @param isVarArgs If true, the last input parameter will be treated as the last fixed argument
 	 * of a varargs function (via {@link PrototypePieces#firstVarArgSlot}).
 	 * @return dynamic storage locations orders by ordinal where first element corresponds to
-	 * return storage. The returned array may also include additional auto-parameter storage 
-	 * locations. 
-	 * 
+	 * return storage. The returned array may also include additional auto-parameter storage
+	 * locations.
+	 *
 	 */
 	public VariableStorage[] getStorageLocations(Program program, DataType[] dataTypes,
 			boolean addAutoParams, boolean isVarArgs) {
@@ -585,6 +606,13 @@ public class PrototypeModel {
 			encoder.openElement(ELEM_PARAMRANGE);
 			encodeAddressSet(encoder, paramRange);
 			encoder.closeElement(ELEM_PARAMRANGE);
+		}
+
+		for (FarPointerJoinSpec spec : farPointerJoins) {
+			encoder.openElement(ELEM_FARPOINTERJOIN);
+			encoder.writeSignedInteger(ATTRIB_HISLOT, spec.hislot);
+			encoder.writeSignedInteger(ATTRIB_JOINSIZE, spec.joinsize);
+			encoder.closeElement(ELEM_FARPOINTERJOIN);
 		}
 		encoder.closeElement(ELEM_PROTOTYPE);
 	}
@@ -766,6 +794,25 @@ public class PrototypeModel {
 				action.restoreXml(parser);
 				actions.add(action);
 			}
+			else if (elName.equals(ELEM_FARPOINTERJOIN.name())) {
+				XmlElement farptrEl = parser.start();
+				int hislot = -1;
+				int joinsize = -1;
+				String hislotAttr = farptrEl.getAttribute(ATTRIB_HISLOT.name());
+				if (hislotAttr != null) {
+					hislot = SpecXmlUtils.decodeInt(hislotAttr);
+				}
+				String joinsizeAttr = farptrEl.getAttribute(ATTRIB_JOINSIZE.name());
+				if (joinsizeAttr != null) {
+					joinsize = SpecXmlUtils.decodeInt(joinsizeAttr);
+				}
+				parser.end(farptrEl);
+				if (hislot < 0 || joinsize <= 0) {
+					throw new XmlParseException(
+						"<farpointerjoin> requires hislot and joinsize attributes");
+				}
+				farPointerJoins.add(new FarPointerJoinSpec(hislot, joinsize));
+			}
 			else {
 				subel = parser.start();
 				parser.discardSubTree(subel);
@@ -787,6 +834,17 @@ public class PrototypeModel {
 	 */
 	public boolean possibleInputParamWithSlot(Address loc, int size, ParamList.WithSlotRec res) {
 		return inputParams.possibleParamWithSlot(loc, size, res);
+	}
+
+
+	/**
+	 * Get the far-pointer call-argument joins declared for this prototype
+	 * (via &lt;farpointerjoin&gt; elements in the cspec). Mirrors
+	 * FuncProto::getFarPointerJoins() on the C++ side.
+	 * @return the list of declared joins (empty if none declared)
+	 */
+	public List<FarPointerJoinSpec> getFarPointerJoins() {
+		return farPointerJoins;
 	}
 
 	/**
@@ -823,7 +881,7 @@ public class PrototypeModel {
 	}
 
 	/**
-	 * Get a list of all input storage locations consisting of a single register 
+	 * Get a list of all input storage locations consisting of a single register
 	 * @param prog is the current Program
 	 * @return a VariableStorage ojbect for each register
 	 */
