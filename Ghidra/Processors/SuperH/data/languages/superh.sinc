@@ -2283,7 +2283,8 @@ define pcodeop Sleep_Standby;
     is l_opcode_28_31=0b0011 & l_rn_24_27 & l_opcode_23_23=0b0 & l_imm3_20_22 & l_opcode_16_19=0b1001 & l_opcode_12_15=0b0100 & l_disp_00_11
 {
     local b = *:1 (l_disp_00_11 + l_rn_24_27);
-    $(T_FLAG) = ((b & (1 << l_imm3_20_22)) & $(T_FLAG) != 0);
+    local abit = (b & (1 << l_imm3_20_22)) != 0;
+    $(T_FLAG) = abit & $(T_FLAG);
 }
 
 # BANDNOT.B   #imm3, @(disp12,Rn)      0011nnnn0iii1001 1100dddddddddddd        ~ (imm of (disp+Rn)) & T → T
@@ -2291,7 +2292,8 @@ define pcodeop Sleep_Standby;
     is l_opcode_28_31=0b0011 & l_rn_24_27 & l_opcode_23_23=0b0 & l_imm3_20_22 & l_opcode_16_19=0b1001 & l_opcode_12_15=0b1100 & l_disp_00_11
 {
     local b = *:1 (l_disp_00_11 + l_rn_24_27);
-    $(T_FLAG) = ((~ (b & (1 << l_imm3_20_22)) & $(T_FLAG)) != 0);
+    local abit = (b & (1 << l_imm3_20_22)) == 0;
+    $(T_FLAG) = abit & $(T_FLAG);
 }
 
 # BCLR.B      #imm3, @(disp12,Rn)      0011nnnn0iii1001 0000dddddddddddd        0 → (imm of (disp+Rn))
