@@ -259,9 +259,9 @@
 #0x001b0000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
 :rotr.w  RD, RJ32src, RK32src  is op15_31=0x36 & RD & RJ32src & RK32src {
 	local shift:1 = RK32src(0) & 0x1f;
-	local tmp1:4 = RJ32src s>> shift;
+	local tmp1:4 = RJ32src >> shift;
 	local tmp2:4 = RJ32src << (32 - shift);
-	local result = tmp1 + tmp2;
+	local result = tmp1 | tmp2;
 
 	RD = sext(result);
 
@@ -271,9 +271,9 @@
 #0x004c8000	0xffff8000	r0:5,r5:5,u10:5	['reg0_5_s0', 'reg5_5_s0', 'imm10_5_s0']
 :rotri.w  RD, RJ32src, imm10_5 is op15_31=0x99 & RD & RJ32src & imm10_5 {
 	local shift:1 = imm10_5;
-	local tmp1:4 = RJ32src s>> shift;
+	local tmp1:4 = RJ32src >> shift;
 	local tmp2:4 = RJ32src << (32 - shift);
-	local result = tmp1 + tmp2;
+	local result = tmp1 | tmp2;
 
 	RD = sext(result);
 
