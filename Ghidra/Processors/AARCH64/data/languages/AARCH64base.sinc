@@ -4285,6 +4285,13 @@ is b_2431=0xd5 & b_2223=0 & l=1 & CopReg & Rt_GPR64
 	Rt_GPR64 = CopReg;
 }
 
+# MRS <Xt>, NZCV: Zeros(32):N:Z:C:V:Zeros(28)
+:mrs Rt_GPR64, CopReg
+is b_2431=0xd5 & b_2223=0 & l=1 & Op0=3 & Op1_uimm3=3 & CRn=4 & CRm=2 & Op2_uimm3=0 & CopReg & Rt_GPR64
+{
+	Rt_GPR64 = (zext(NG) << 31) | (zext(ZR) << 30) | (zext(CY) << 29) | (zext(OV) << 28);
+}
+
 # C6.2.229 MSR (immediate) page C6-1684 line 99649 MATCH xd500401f/mask=xfff8f01f
 # CONSTRUCT xd500401f/mask=xfff8f01f MATCHED 1 DOCUMENTED OPCODES
 # AUNIT --inst xd500401f/mask=xfff8f01f --status nodest
@@ -4301,6 +4308,17 @@ is b_2431=0xd5 & b_2223=0 & l=0 & Op0=0 & PState_pstate_op & CRn=0x4 & CRm_uimm4
 is b_2431=0xd5 & b_2223=0 & l=0 & CopReg & Rt_GPR64
 {
 	CopReg = Rt_GPR64;
+}
+
+# MSR NZCV, <Xt>: PSTATE.<N,Z,C,V> = X[t]<31:28>
+:msr CopReg, Rt_GPR64
+is b_2431=0xd5 & b_2223=0 & l=0 & Op0=3 & Op1_uimm3=3 & CRn=4 & CRm=2 & Op2_uimm3=0 & CopReg & Rt_GPR64
+{
+	local val:8 = Rt_GPR64;
+	NG = ((val >> 31) & 1) != 0;
+	ZR = ((val >> 30) & 1) != 0;
+	CY = ((val >> 29) & 1) != 0;
+	OV = ((val >> 28) & 1) != 0;
 }
 
 # C6.2.231 MSUB page C6-1689 line 99963 MATCH x1b008000/mask=x7fe08000
