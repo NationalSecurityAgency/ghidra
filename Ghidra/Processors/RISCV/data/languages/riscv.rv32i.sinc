@@ -122,6 +122,12 @@
 	fence();
 }
 
+define pcodeop fence_tso;
+# fence.tso
+:fence.tso is op0001=0x3 & op0204=0x3 & op0506=0x0 & funct3=0x0 & fm=0x8 & op0711=0x0 & op1519=0x0 {
+	fence_tso();
+}
+
 # jal d,a 0000006f 0000007f JSR (0, 0) 
 # call for rd = RA|T0 set to inst_next
 :jal rd,immUJ is immUJ & rd & (r0711=1 | r0711=5) & op0001=0x3 & op0204=0x3 & op0506=0x3
