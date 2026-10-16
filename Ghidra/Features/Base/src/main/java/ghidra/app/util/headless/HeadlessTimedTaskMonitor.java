@@ -18,6 +18,8 @@ package ghidra.app.util.headless;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import ghidra.util.datastruct.WeakDataStructureFactory;
+import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.CancelledListener;
 import ghidra.util.task.TaskMonitor;
@@ -29,6 +31,8 @@ public class HeadlessTimedTaskMonitor implements TaskMonitor {
 
 	private Timer timer = new Timer();
 	private volatile boolean isCancelled;
+	private WeakSet<CancelledListener> listeners =
+		WeakDataStructureFactory.createCopyOnWriteWeakSet();
 
 	HeadlessTimedTaskMonitor(int timeoutSecs) {
 		isCancelled = false;
@@ -112,17 +116,21 @@ public class HeadlessTimedTaskMonitor implements TaskMonitor {
 	@Override
 	public void cancel() {
 		timer.cancel(); // Terminate the timer thread
+		boolean wasCancelled = isCancelled;
 		isCancelled = true;
+		if (!wasCancelled) {
+			listeners.forEach(CancelledListener::cancelled);
+		}
 	}
 
 	@Override
 	public void addCancelledListener(CancelledListener listener) {
-		// stub
+		listeners.add(listener);
 	}
 
 	@Override
 	public void removeCancelledListener(CancelledListener listener) {
-		// stub
+		listeners.remove(listener);
 	}
 
 	@Override
