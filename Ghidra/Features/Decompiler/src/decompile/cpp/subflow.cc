@@ -4019,6 +4019,17 @@ bool LaneDivide::traceForward(TransformVar *rvn,int4 numLanes,int4 skipLanes)
 	// Don't create the placeholder ops, let traceBackward make them
 	break;
       }
+      case CPUI_INT_ZEXT:
+      {
+	// The traced lanes are the low lanes of the extension; the rest are zero lanes, which traceBackward builds
+	int4 outLanes,outSkip;
+	if (!description.extension(numLanes, skipLanes, 0, outvn->getSize(), outLanes, outSkip))
+	  return false;
+	TransformVar *outRvn = setReplacement(outvn,outLanes,outSkip);
+	if (outRvn == (TransformVar *)0) return false;
+	// Don't create the placeholder ops, let traceBackward make them
+	break;
+      }
       case CPUI_STORE:
 	if (op->getIn(2) != origvn) return false;	// Can only propagate through value being stored
 	if (!buildStore(op,numLanes,skipLanes))
