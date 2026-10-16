@@ -33,6 +33,48 @@ extern ElementId ELEM_MULTISTAGEJUMP;	///< Marshaling element \<multistagejump>
 extern ElementId ELEM_OVERRIDE;		///< Marshaling element \<override>
 extern ElementId ELEM_PROTOOVERRIDE;	///< Marshaling element \<protooverride>
 
+/// \brief An ephemeral unsigned range contract for one LOAD result in one invocation context
+///
+/// Addresses and scalar data survive a function restart without retaining graph pointers.
+/// Provenance is audit information only. A consumer must separately establish that this contract
+/// matches the current owner, SSA LOAD, use point, and (if present) required CBRANCH edge.
+class ValueDomainConstraint {
+  Address ownerEntry;
+  Address loadAddress;
+  int4 outputSize;
+  Address switchAddress;
+  uintb first;
+  uintb last;
+  Address descriptorAddress;
+  string provenance;
+  Address guardAddress;
+  bool guardTrue;
+  ValueDomainConstraint(const Address &owner,const Address &load,int4 size,const Address &use,
+      uintb lo,uintb hi,const Address &descriptor,const string &source,
+      const Address &guard,bool trueEdge,bool useRestricted);
+public:
+  ValueDomainConstraint(const Address &owner,const Address &load,int4 size,const Address &use,
+      uintb lo,uintb hi,const Address &descriptor,const string &source,
+      const Address &guard=Address(),bool trueEdge=false);
+  ValueDomainConstraint(const Address &owner,const Address &load,int4 size,uintb lo,uintb hi,
+      const Address &descriptor,const string &source,
+      const Address &guard=Address(),bool trueEdge=false);
+  const Address &getOwnerEntry(void) const { return ownerEntry; }
+  const Address &getLoadAddress(void) const { return loadAddress; }
+  int4 getOutputSize(void) const { return outputSize; }
+  const Address &getSwitchAddress(void) const { return switchAddress; }
+  bool isUseRestricted(void) const { return !switchAddress.isInvalid(); }
+  uintb getFirst(void) const { return first; }
+  uintb getLast(void) const { return last; }
+  const Address &getDescriptorAddress(void) const { return descriptorAddress; }
+  const string &getProvenance(void) const { return provenance; }
+  const Address &getGuardAddress(void) const { return guardAddress; }
+  bool isGuardTrue(void) const { return guardTrue; }
+  bool hasSameSelector(const ValueDomainConstraint &other) const;
+  void encode(Encoder &encoder) const;
+  static ValueDomainConstraint decodeFromElement(Decoder &decoder);
+};
+
 /// \brief A container of commands that override the decompiler's default behavior for a single function
 ///
 /// Information about a particular function that can be overridden includes:
@@ -154,10 +196,14 @@ private:
   map<Address,Address> deindirect;	///< Convert CALLIND into CALL with recovered direct \b addr
   map<Address,FuncProto *> protoover;	///< Override prototype at \b call-point
   vector<Address> multistagejump;	///< Addresses of indirect jumps that need multistage recovery
+  vector<ValueDomainConstraint> valueDomains;	///< Context-specific LOAD result/use contracts
   void clear(void);			///< Clear the entire set of overrides
   static string generateDeadcodeDelayMessage(int4 index,Architecture *glb);
 public:
   ~Override(void) { clear(); }		///< Destructor
+  void insertValueDomainConstraint(const ValueDomainConstraint &constraint);
+  const vector<ValueDomainConstraint> &getValueDomainConstraints(void) const { return valueDomains; }
+  void copyValueDomainConstraints(const Override &other) { valueDomains = other.valueDomains; }
   void insertForceGoto(const Address &targetpc,const Address &destpc);
   void insertDeadcodeDelay(AddrSpace *spc,int4 delay);
   bool hasDeadcodeDelay(AddrSpace *spc) const;

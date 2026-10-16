@@ -805,6 +805,9 @@ void Funcdata::truncatedFlow(const Funcdata *fd,const FlowInfo *flow)
   if (!obank.empty())
     throw LowlevelError("Trying to do truncated flow on pre-existing pcode");
 
+  // Range contracts contain addresses and scalars, never pointers into the original SSA graph.
+  localoverride.copyValueDomainConstraints(fd->localoverride);
+
   list<PcodeOp *>::const_iterator oiter; // Clone the raw pcode
   for(oiter=fd->obank.beginDead();oiter!=fd->obank.endDead();++oiter)
     cloneOp(*oiter,(*oiter)->getSeqNum());
