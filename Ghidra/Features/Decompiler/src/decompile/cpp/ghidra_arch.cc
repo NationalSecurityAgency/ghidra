@@ -23,6 +23,13 @@
 #include "cpool_ghidra.hh"
 #include "inject_ghidra.hh"
 
+#ifdef GDB_BT
+#include <execinfo.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#endif
+
 namespace ghidra {
 
 //AttributeId ATTRIB_BADDATA = AttributeId("baddata",145);
