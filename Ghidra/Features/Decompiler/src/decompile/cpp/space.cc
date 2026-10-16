@@ -41,6 +41,14 @@ void AddrSpace::calcScaleMask(void)
   uintb bufferSize = (addressSize < 3) ? 0x100 : 0x1000;
   pointerLowerBound += bufferSize;
   pointerUpperBound -= bufferSize;
+  if (type == IPTR_PROCESSOR) {
+    // A full-size processor space is modular, so an access running off its top end
+    // continues at its bottom.  A truncated space is only a logical window and does not.
+    if ((flags & truncated) == 0)
+      flags |= allows_wrapped_range;
+    else
+      flags &= ~allows_wrapped_range;
+  }
 }
 
 /// Initialize an address space with its basic attributes
