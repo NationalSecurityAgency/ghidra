@@ -1142,6 +1142,8 @@ define token instrAARCH64 (32) endian = little
 	simm19 = (5,23) signed
 	simm26 = (0,25) signed
 
+	cpa_imm3 = (10,12)
+
 	immlo = (29,30)
 	immhi = (5,23) signed
 
