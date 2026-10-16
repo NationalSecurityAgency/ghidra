@@ -1,0 +1,5 @@
+<patternconstraints>
+  <language id="i960:LE:*:*">
+    <patternfile>i960_patterns.xml</patternfile>
+  </language>
+</patternconstraints>
