@@ -30,6 +30,7 @@ AttributeId ATTRIB_MODELLOCK = AttributeId("modellock",122);
 AttributeId ATTRIB_NORETURN = AttributeId("noreturn",123);
 AttributeId ATTRIB_POINTERMAX = AttributeId("pointermax",124);
 AttributeId ATTRIB_SEPARATEFLOAT = AttributeId("separatefloat",125);
+AttributeId ATTRIB_STACKLTR = AttributeId("stackltr",161);
 AttributeId ATTRIB_STACKSHIFT = AttributeId("stackshift",126);
 AttributeId ATTRIB_STRATEGY = AttributeId("strategy",127);
 AttributeId ATTRIB_THISBEFORERETPOINTER = AttributeId("thisbeforeretpointer",128);
@@ -604,6 +605,7 @@ ParamListStandard::ParamListStandard(const ParamListStandard &op2)
   maxdelay = op2.maxdelay;
   thisbeforeret = op2.thisbeforeret;
   autoKilledByCall = op2.autoKilledByCall;
+  stackLtr = op2.stackLtr;
   resourceStart = op2.resourceStart;
   glb = op2.glb;
   for(list<ModelRule>::const_iterator iter=op2.modelRules.begin();iter!=op2.modelRules.end();++iter) {
@@ -799,6 +801,33 @@ void ParamListStandard::assignMap(const PrototypePieces &proto,TypeFactory &type
     uint4 responseCode = assignAddress(dt,proto,i,typefactory,status,res.back());
     if (responseCode == AssignAction::fail || responseCode == AssignAction::no_assignment)
       throw ParamUnassignedError("Cannot assign parameter address for " + dt->getName());
+  }
+  if (stackLtr)
+    mirrorStack(status,res);
+}
+
+/// Parameters have been assigned in right-to-left order. For a model that pushes parameters
+/// left-to-right, the stack slots occupied by the parameters are mirrored, so that the first
+/// parameter ends up at the highest address. The first element of \b res is the return value
+/// and is left untouched.
+/// \param status is the consumed resource status array, indicating the total number of stack slots used
+/// \param res is the list of assigned parameters
+void ParamListStandard::mirrorStack(const vector<int4> &status,vector<ParameterPieces> &res) const
+
+{
+  const ParamEntry *stackEntry = getStackEntry();
+  if (stackEntry == (const ParamEntry *)0) return;
+  int4 align = stackEntry->getAlign();
+  int4 totalSlots = status[stackEntry->getGroup()];
+  for(int4 i=1;i<res.size();++i) {
+    ParameterPieces &param(res[i]);
+    if (param.addr.isInvalid() || param.addr.getSpace() != stackEntry->getSpace()) continue;
+    int4 startSlot = (param.addr.getOffset() - stackEntry->getBase()) / align;
+    int4 numSlots = (param.type->getAlignSize() + align - 1) / align;
+    int4 newSlot = totalSlots - startSlot - numSlots;
+    // Keep any justification offset within the slot
+    uintb offset = param.addr.getOffset() + (uintb)(newSlot - startSlot) * align;
+    param.addr = Address(param.addr.getSpace(),offset);
   }
 }
 
@@ -1297,6 +1326,21 @@ void ParamListStandard::fillinMap(ParamActive *active) const
     if (paramtrial.isActive())
       paramtrial.markUsed();
   }
+
+  if (stackLtr) {
+    // Stack trials were ordered by ascending address, formal parameters go in descending order
+    const ParamEntry *stackEntry = getStackEntry();
+    int4 stackStart = -1;
+    int4 stackStop = -1;
+    for(int4 i=0;i<active->getNumTrials();++i) {
+      if (active->getTrial(i).getEntry() != stackEntry) continue;
+      if (stackStart < 0)
+	stackStart = i;
+      stackStop = i + 1;
+    }
+    if (stackStart >= 0)
+      active->reverseTrials(stackStart,stackStop);
+  }
 }
 
 bool ParamListStandard::checkJoin(const Address &hiaddr,int4 hisize,const Address &loaddr,int4 losize) const
@@ -1452,6 +1496,7 @@ void ParamListStandard::decode(Decoder &decoder,vector<EffectRecord> &effectlist
   int4 pointermax = 0;
   thisbeforeret = false;
   autoKilledByCall = false;
+  stackLtr = false;
   bool splitFloat = true;		// True if we should split FLOAT entries into their own resource section
   uint4 elemId = decoder.openElement();
   for(;;) {
@@ -1469,7 +1514,12 @@ void ParamListStandard::decode(Decoder &decoder,vector<EffectRecord> &effectlist
     else if (attribId == ATTRIB_SEPARATEFLOAT) {
       splitFloat = decoder.readBool();
     }
+    else if (attribId == ATTRIB_STACKLTR) {
+      stackLtr = decoder.readBool();
+    }
   }
+  if (stackLtr && !normalstack)
+    throw LowlevelError("Attribute stackltr is not supported with a positive growing stack");
   for(;;) {
     uint4 subId = decoder.peekElement();
     if (subId == 0) break;
