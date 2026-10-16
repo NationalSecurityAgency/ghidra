@@ -1,0 +1,7 @@
+<opinions>
+  <constraint loader="Executable and Linking Format (ELF)" compilerSpecID="default">
+    <!-- ELF e_machine = EM_SCORE7 (135). Select the language matching EI_DATA. -->
+    <constraint primary="135" processor="SCORE7" endian="big" size="32" variant="default"/>
+    <constraint primary="135" processor="SCORE7" endian="little" size="32" variant="default"/>
+  </constraint>
+</opinions>
