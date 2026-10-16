@@ -257,5 +257,4 @@ public record AttributeId(String name, int id) {
 	public static final AttributeId ATTRIB_MAXELEMENTS = new AttributeId("maxelements", 160);
 
 	public static final AttributeId ATTRIB_UNKNOWN = new AttributeId("XMLunknown", 161);
-
 }

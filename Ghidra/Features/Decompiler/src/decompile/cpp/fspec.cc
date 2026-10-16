@@ -1582,7 +1582,8 @@ void ParamListStandardOut::assignMap(const PrototypePieces &proto,TypeFactory &t
     AddrSpace *spc = getSpacebase();
     if (spc == (AddrSpace *)0)
       spc = typefactory.getArch()->getDefaultDataSpace();
-    int4 pointersize = spc->getAddrSize();
+//    int4 pointersize = spc->getAddrSize();
+    int4 pointersize = proto.model->getPointerSize(spc);
     int4 wordsize = spc->getWordSize();
     Datatype *pointertp = typefactory.getTypePointer(pointersize, proto.outtype, wordsize);
     if (responseCode == AssignAction::hiddenret_specialreg_void) {
@@ -1779,6 +1780,76 @@ ParamList *ParamListStandardOut::clone(void) const
 
 {
   ParamList *res = new ParamListStandardOut( *this );
+  return res;
+}
+
+ParamList* ParamListPascalOut::clone(void) const
+
+{
+  ParamList* res = new ParamListPascalOut(*this);
+  return res;
+}
+
+void ParamListPascal::assignMap(const PrototypePieces& proto, TypeFactory& typefactory, vector<int4>& status,
+				vector<ParameterPieces>& res) const
+
+{
+  bool hiddenParam = (res.size() == 2);
+  int paramStart = res.size();
+  ParameterPieces &hiddenPtr = res.back();
+
+  for (int4 i=proto.intypes.size()-1;i>0;--i) { // Don't do i==0, could be a 'this' and may need allocating after 'hiddenPtr'
+    vector<ParameterPieces>::iterator iter = res.emplace(res.begin()+paramStart);
+    Datatype* dt = proto.intypes[i];
+    uint4 responseCode = assignAddress(dt, proto, i, typefactory, status, *iter);
+    if (responseCode == AssignAction::fail || responseCode == AssignAction::no_assignment)
+      throw ParamUnassignedError("Cannot assign parameter address for " + dt->getName());
+  }
+
+  if (proto.intypes.size() == 0) {
+    allocateHiddenReturn(proto, typefactory, status, hiddenParam, hiddenPtr);
+    return;
+  }
+
+  int thisOrFirstParamPos = paramStart;
+  ParameterPieces *store = new ParameterPieces();
+  if (proto.model->hasThisPointer()) {
+    store->flags |= ParameterPieces::isthis; // here, proto.intypes.get(0) is a 'this'
+  }
+  if (proto.model->getInputResource()->isThisBeforeRetPointer()) { // implies 'hasThis'
+    if (allocateHiddenReturn(proto, typefactory, status, hiddenParam, hiddenPtr))
+      --thisOrFirstParamPos;
+    assignAddress(proto.intypes[0], proto, 0, typefactory, status, *store);
+  }
+  else {
+    assignAddress(proto.intypes[0], proto, 0, typefactory, status, *store);
+    allocateHiddenReturn(proto, typefactory, status, hiddenParam, hiddenPtr);
+  }
+  res.emplace(res.begin()+thisOrFirstParamPos, *store);
+}
+
+bool ParamListPascal::allocateHiddenReturn(const PrototypePieces& proto, TypeFactory& typefactory, vector<int>& status,
+					   bool hiddenParam, ParameterPieces& hiddenPtr) const
+
+{
+  if (hiddenParam) {	// Check for hidden parameters defined by the output list
+    if (hiddenPtr.flags & ParameterPieces::hiddenretparm) {
+      // Need to pull from registers marked as hiddenret
+      assignAddressFallback(TYPECLASS_HIDDENRET, hiddenPtr.type, false, status, hiddenPtr);
+    }
+    else {
+      // Assign as a regular first input pointer parameter
+      assignAddress(hiddenPtr.type, proto, 0, typefactory, status, hiddenPtr);
+    }
+    hiddenPtr.flags |= ParameterPieces::hiddenretparm;
+  }
+  return hiddenParam;
+}
+
+ParamList* ParamListPascal::clone(void) const
+
+{
+  ParamList* res = new ParamListPascal(*this);
   return res;
 }
 
@@ -2316,6 +2387,10 @@ void ProtoModel::buildParamList(const string &strategy)
     input = new ParamListRegister();
     output = new ParamListRegisterOut();
   }
+  else if (strategy == "pascal") {
+    input = new ParamListPascal();
+    output = new ParamListPascalOut();
+  }
   else
     throw LowlevelError("Unknown strategy type: "+strategy);
 }
@@ -2442,6 +2517,33 @@ void ProtoModel::assignParameterStorage(const PrototypePieces &proto,vector<Para
   input->assignMap(proto,*glb->types,inputStatus,res);
   for (int4 i=0;i<sharedActions.size();++i)
     sharedActions[i]->applyAfter(proto, *glb->types, res, inputStatus, outputStatus);
+}
+
+/// \brief Does \param str end with \param end
+template<typename TString>
+inline bool ends_with(const TString& str, const TString& end) {
+  if (end.size() > str.size()) return false;
+  return std::equal(end.rbegin(), end.rend(), str.rbegin());
+}
+
+/// \brief Used to return the size of a pointer for this model prototype.
+/// @param space is the default AddrSpace
+/// @return size of pointer
+/*
+*/
+int ProtoModel::getPointerSize(const AddrSpace* space) const
+
+{
+//  if (space == (const AddrSpace*)0)
+  //  return -1;
+  int4 pointerSize = (space == (const AddrSpace*)0) ? -1 : space->getAddrSize();
+  if (ends_with<string>(name, "16near")) {
+    pointerSize = 2;
+  }
+  else if (ends_with<string>(name, "16far")) {
+    pointerSize = 4;
+  }
+  return pointerSize;
 }
 
 /// \brief Look up an effect from the given EffectRecord list
@@ -2581,7 +2683,8 @@ void ProtoModel::decode(Decoder &decoder)
     throw LowlevelError("Missing prototype attributes");
 
   buildParamList(strategystring); // Allocate input and output ParamLists
-  sharedActions.push_back(new HiddenReturnAction(this));
+  if (strategystring != "pascal")
+    sharedActions.push_back(new HiddenReturnAction(this));
   for(;;) {
     uint4 subId = decoder.peekElement();
     if (subId == 0) break;
