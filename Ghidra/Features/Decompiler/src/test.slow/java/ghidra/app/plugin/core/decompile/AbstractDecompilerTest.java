@@ -29,6 +29,7 @@ import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.component.ClangTextField;
 import ghidra.app.decompiler.component.DecompilerPanel;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.test.AbstractProgramBasedTest;
@@ -213,4 +214,17 @@ public abstract class AbstractDecompilerTest extends AbstractProgramBasedTest {
 		return provider.getController().getFunction();
 	}
 
+	protected String getDecompiledText() {
+		StringBuilder buffy = new StringBuilder();
+		for (Field field : provider.getDecompilerPanel().getFields()) {
+			buffy.append(field.getText()).append('\n');
+		}
+		return buffy.toString();
+	}
+
+	protected void assertListingAddress(Address expected) {
+		waitForCondition(() -> expected.equals(codeBrowser.getCurrentLocation().getAddress()),
+			() -> "The Listing is not at the expected address " + expected + "; it is at " +
+				codeBrowser.getCurrentLocation().getAddress());
+	}
 }
