@@ -1551,13 +1551,13 @@ public class CodeUnitFormat {
 		InstructionScalarInfo(List<Object> representationList, Reference primaryRef) {
 
 			this.representationList = representationList;
-			boolean hasZeroScalar = false;
+			int zeroScalarCount = 0;
 			int size = representationList.size();
 			for (int i = 0; i < size; i++) {
 				Object obj = representationList.get(i);
 				if (obj instanceof Scalar) {
 					if (((Scalar) obj).getUnsignedValue() == 0) {
-						hasZeroScalar = true;
+						++zeroScalarCount;
 					}
 					else {
 						++scalarCount;
@@ -1573,8 +1573,11 @@ public class CodeUnitFormat {
 				}
 			}
 
-			if (hasZeroScalar && scalarCount == 0 && addressCount == 0 && primaryRef == null) {
-				// only process zero scalar when no other scalar or address found and no reference
+			if (zeroScalarCount > 0 && scalarCount == 0 && addressCount == 0 &&
+				(primaryRef == null ||
+					(zeroScalarCount == 1 && primaryRef.isMemoryReference()))) {
+				// Process a sole zero scalar for an explicit memory reference as well as the
+				// existing no-reference case. Other scalars or addresses remain preferred.
 				++scalarCount;
 				processZeroScalar = true;
 			}
