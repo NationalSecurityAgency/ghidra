@@ -599,23 +599,24 @@ class PyGhidraLauncher:
         jar_path = path / "lib" / (plugin_name + ".jar")
 
         if not jar_path.exists():
+            created_path = not path.exists()
             path.mkdir(parents=True, exist_ok=True)
 
             try:
                 java_compile(root, jar_path)
+                ext.write_text(str(details))
+
+                # required empty file
+                manifest.touch()
+
+                # Copy over ghidra_scripts if included.
+                ghidra_scripts = root / "ghidra_scripts"
+                if ghidra_scripts.exists():
+                    shutil.copytree(ghidra_scripts, path / "ghidra_scripts")
             except:
-                shutil.rmtree(path, ignore_errors=True)
+                if created_path:
+                    shutil.rmtree(path, ignore_errors=True)
                 raise
-
-            ext.write_text(str(details))
-
-            # required empty file
-            manifest.touch()
-
-            # Copy over ghidra_scripts if included.
-            ghidra_scripts = root / "ghidra_scripts"
-            if ghidra_scripts.exists():
-                shutil.copytree(ghidra_scripts, path / "ghidra_scripts")
 
             logger.info(f"Installed plugin: {plugin_name} {details.plugin_version}")
             return True
