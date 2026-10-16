@@ -595,7 +595,9 @@ bool ActionLaneDivide::processVarnode(Funcdata &data,Varnode *vn,const LanedRegi
 int4 ActionLaneDivide::apply(Funcdata &data)
 
 {
-  data.setLanedRegGenerated();
+  // Varnodes keep registering as laned accesses after this pass: a stack location of a laned size
+  // only appears once the stack analysis has turned its LOADs and STOREs into Varnodes, so the pass
+  // runs again on each round of the main loop over whatever registered since its last run.
   map<VarnodeData,const LanedRegister *>::const_iterator iter;
   for(int4 mode=0;mode<3;++mode) {
     bool allStorageProcessed = true;
