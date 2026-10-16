@@ -17,6 +17,7 @@ package ghidra.util;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Objects;
 
 import ghidra.util.exception.IOCancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -53,6 +54,9 @@ public class MonitoredOutputStream extends OutputStream {
 	 */
 	@Override
 	public void write(int b) throws IOException {
+		if (monitor.isCancelled()) {
+			throw new IOCancelledException();
+		}
 		out.write(b);
 		++smallCount;
 		if (smallCount >= PROGRESS_INCREMENT) {
@@ -108,6 +112,13 @@ public class MonitoredOutputStream extends OutputStream {
 	 */
 	@Override
 	public void write(byte b[], int off, int len) throws IOException {
+		Objects.checkFromIndexSize(off, len, b.length);
+		if (len == 0) {
+			return;
+		}
+		if (monitor.isCancelled()) {
+			throw new IOCancelledException();
+		}
 		out.write(b, off, len);
 		smallCount += len;
 
