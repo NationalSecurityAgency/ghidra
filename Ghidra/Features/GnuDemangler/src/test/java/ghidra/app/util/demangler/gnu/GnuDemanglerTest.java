@@ -89,6 +89,31 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testFoo() throws Exception {
+
+		//
+		// Mangled: ._ZNK8tinyxml211XMLDocument6AcceptEPNS_10XMLVisitorE
+		//
+		// Demangled: .tinyxml2::XMLDocument::Accept(tinyxml2::XMLVisitor *)
+		//
+		// Fix: remove the leading '.'
+		//
+		String mangled = "._ZNK8tinyxml211XMLDocument6AcceptEPNS_10XMLVisitorE";
+
+		GnuDemangler demangler = new GnuDemangler();
+		demangler.canDemangle(program);// this perform initialization
+
+		GnuDemanglerOptions options = new GnuDemanglerOptions();
+		MangledContext mangledContext =
+			demangler.createMangledContext(mangled, options, program, null);
+		DemangledObject dobj = demangler.demangle(mangledContext);
+		assertNotNull(dobj);
+
+		String signature = dobj.getSignature();
+		assertEquals("undefined tinyxml2::XMLDocument::Accept(tinyxml2::XMLVisitor *)", signature);
+	}
+
+	@Test
 	public void testUseStandardReplacements() throws Exception {
 
 		//
