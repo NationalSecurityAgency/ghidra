@@ -144,7 +144,7 @@ macro addition(first_w, first_r, second) {
 macro comparison(first, second) {
 	local __val__ = first - second;
 	O = sborrow(first, second);
-	C = first < second; 
+	C = first >= second;
 	resultFlags(__val__);
 }
 
