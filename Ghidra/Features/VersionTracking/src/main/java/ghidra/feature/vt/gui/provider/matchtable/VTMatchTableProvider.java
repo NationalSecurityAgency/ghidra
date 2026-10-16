@@ -395,6 +395,12 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		JComponent confidenceFilterPanel = createConfidenceFilterPanel();
 		innerPanel.add(confidenceFilterPanel);
 
+		JComponent similarityFilterPanel = createSimilarityFilterPanel();
+		innerPanel.add(similarityFilterPanel);
+
+		JComponent bestPDiffFilterPanel = createBestPDiffMatchFilterPanel();
+		innerPanel.add(bestPDiffFilterPanel);
+
 		JComponent lengthFilterPanel = createLengthFilterPanel();
 		innerPanel.add(lengthFilterPanel);
 
@@ -458,6 +464,18 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		ConfidenceFilter confidenceFilter = new ConfidenceFilter();
 		addFilter(confidenceFilter);
 		return confidenceFilter.getComponent();
+	}
+
+	private JComponent createSimilarityFilterPanel() {
+		SimilarityFilter similarityFilter = new SimilarityFilter();
+		addFilter(similarityFilter);
+		return similarityFilter.getComponent();
+	}
+
+	private JComponent createBestPDiffMatchFilterPanel() {
+		BestPDiffMatchFilter bestPDiffFilter = new BestPDiffMatchFilter();
+		addFilter(bestPDiffFilter);
+		return bestPDiffFilter.getComponent();
 	}
 
 	private void refilter() {
