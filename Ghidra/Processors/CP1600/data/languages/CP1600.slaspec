@@ -122,7 +122,7 @@ cc: "NOV" is branch_external=0 & branch_condition=10 { local tmp = !O; export tm
 cc: "MI"  is branch_external=0 & branch_condition=11 { export S; }
 cc: "NEQ" is branch_external=0 & branch_condition=12 { local tmp = !Z; export tmp; }
 cc: "GE"  is branch_external=0 & branch_condition=13 { local tmp = S == O; export tmp; }
-cc: "GT"  is branch_external=0 & branch_condition=14 { local tmp = (Z == 0) || (S == O); export tmp; }
+cc: "GT"  is branch_external=0 & branch_condition=14 { local tmp = (Z == 0) && (S == O); export tmp; }
 cc: "ESC" is branch_external=0 & branch_condition=15 { local tmp = S == C; export tmp; }
 
 ################################################################
