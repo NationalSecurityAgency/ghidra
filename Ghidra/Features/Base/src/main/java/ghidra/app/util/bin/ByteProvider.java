@@ -101,14 +101,15 @@ public interface ByteProvider extends Closeable {
 	 * @param startIndex the starting index to check
 	 * @param count the number of bytes to check
 	 * @return boolean true if all bytes between startIndex to startIndex+count (exclusive) are 
-	 * valid
+	 * valid.  Reading 0 bytes at EOF is also considered valid.
 	 */
 	default boolean isValidRange(long startIndex, int count) {
 		// Note: this default implementation can not correctly handle ByteProviders that use the
 		// full uint64 index range (because length() can not be accurate).  Override and provide
 		// a custom implementation.
-		return count >= 0 && isValidIndex(startIndex) &&
-			Long.compareUnsigned(startIndex + count, length()) <= 0;
+		return (count == 0 && startIndex == length()) || // allow reading 0 bytes at EOF
+			(count >= 0 && isValidIndex(startIndex) &&
+				Long.compareUnsigned(startIndex + count, length()) <= 0);
 	}
 
 	/**
