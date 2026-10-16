@@ -26,6 +26,9 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Background task to artificially kick off Auto analysis by
  * calling anything that analyzes bytes.
+ * <p>
+ * This command is single use. Its input address set is released when execution completes or the
+ * queued command is disposed. Completed or disposed commands must not be executed again.
  */
 public class OneShotAnalysisCommand extends BackgroundCommand<Program>
 		implements AutoAnalysisManagerListener {
@@ -52,6 +55,16 @@ public class OneShotAnalysisCommand extends BackgroundCommand<Program>
 		catch (CancelledException e) {
 			return false;
 		}
+		finally {
+			// The manager retains this command as an analysis-ended listener.
+			set = null;
+		}
+	}
+
+	@Override
+	public void dispose() {
+		set = null;
+		super.dispose();
 	}
 
 	@Override
