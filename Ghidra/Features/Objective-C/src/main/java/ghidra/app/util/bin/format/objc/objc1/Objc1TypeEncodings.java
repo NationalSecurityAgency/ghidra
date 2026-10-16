@@ -237,6 +237,13 @@ public final class Objc1TypeEncodings {
 		switch (buffer.charAt(0)) {
 			case _C_ID: {
 				buffer.deleteCharAt(0);
+				if (buffer.length() > 0 && buffer.charAt(0) == _C_UNDEF) {
+					buffer.deleteCharAt(0); // block pointer
+					if (buffer.length() > 0 && buffer.charAt(0) == '<') {
+						parseBlockSignature(buffer);
+					}
+					return createTypeDef("ID");
+				}
 				String quotedName = parseQuotedName(buffer);
 				if (quotedName != null) {
 					DataType quoteNameTypeDef = createTypeDef(quotedName);
@@ -433,6 +440,29 @@ public final class Objc1TypeEncodings {
 		throw new UnsupportedOperationException("Unsupported Objective C type encoding: " + buffer.charAt(0));
 	}
 
+	private void parseBlockSignature(StringBuffer buffer) {
+		buffer.deleteCharAt(0); // '<'
+		if (buffer.length() == 0) {
+			throw new IllegalArgumentException("Unterminated Objective-C block signature");
+		}
+		parseDataType(buffer); // return type
+		if (buffer.length() < 2 || buffer.charAt(0) != _C_ID ||
+			buffer.charAt(1) != _C_UNDEF) {
+			throw new IllegalArgumentException("Missing Objective-C block self parameter");
+		}
+		buffer.delete(0, 2); // implicit block self (@?)
+		while (buffer.length() > 0 && buffer.charAt(0) != '>') {
+			if (Character.isDigit(buffer.charAt(0))) {
+				throw new IllegalArgumentException("Invalid Objective-C block signature");
+			}
+			parseDataType(buffer);
+		}
+		if (buffer.length() == 0) {
+			throw new IllegalArgumentException("Unterminated Objective-C block signature");
+		}
+		buffer.deleteCharAt(0); // '>'
+	}
+
 	private Union parseBitFields(StringBuffer buffer) {
 		//
 		//NOTE:
@@ -566,8 +596,7 @@ public final class Objc1TypeEncodings {
 	}
 
 	private int parseNumber(StringBuffer buffer) {
-		// TODO: figure out why we see an ID (@) immediately followed by unknown (?) [as in @?]
-		// and then fix this the right way; for now we just discard the unknown whilst looking for the offset
+		// Retain support for an unknown marker preceding a numeric offset.
 		if (buffer.charAt(0) == _C_UNDEF) {
 			buffer.deleteCharAt(0);
 		}
