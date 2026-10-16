@@ -97,6 +97,9 @@ public class FindEnumsByValueAction extends DockingAction {
 			Enum enuum = (Enum) dataType;
 			OffsetIterator it = new OffsetIterator(enuum);
 			for (Long value : CollectionUtils.asIterable(it)) {
+				if (value < Integer.MIN_VALUE || value > 0xffffffffL) {
+					continue;
+				}
 				for (Range range : offsets) {
 					int offset = value.intValue();
 					if (range.contains(offset)) {
