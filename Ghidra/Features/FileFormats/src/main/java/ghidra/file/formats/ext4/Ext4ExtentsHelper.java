@@ -74,7 +74,12 @@ public class Ext4ExtentsHelper {
 					extentLen = expectedLength - ebp.length();
 				}
 
-				ebp.addRange(providerOfs, extentLen);
+				if (extent.isUnwritten()) {
+					ebp.addSparseRange(extentLen);
+				}
+				else {
+					ebp.addRange(providerOfs, extentLen);
+				}
 			}
 		}
 		else {
