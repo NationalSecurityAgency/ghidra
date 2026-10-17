@@ -138,7 +138,9 @@ def getModulePathFromJar(File file) {
 	}
 	
 	def moduleName = matcher.group(1);
-	def index = forwardSlashedPath.indexOf(moduleName) + moduleName.length()
+	// Use the match position, as the module name may also appear earlier in the path
+	// (e.g., in a parent workspace directory name)
+	def index = matcher.start(1) + moduleName.length()
 	return forwardSlashedPath.substring(0, index)
 }
 
