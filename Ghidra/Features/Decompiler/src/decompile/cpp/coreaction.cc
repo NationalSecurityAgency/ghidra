@@ -3621,7 +3621,11 @@ int4 ActionDoNothing::apply(Funcdata &data)
 	}
       }
       else if (bb->unblockedMulti(0)) {
-	if (data.isNormalizationOn() || bb->hasNoImmediateCopy(0)) {
+	PcodeOp *outLast = ((BlockBasic *)bb->getOut(0))->lastOp();
+	// Jump-table recovery (JumpBasic::analyzeGuards) needs the guarding CBRANCH to flow
+	// directly into the switch block, so don't delay removal of a block feeding a BRANCHIND.
+	bool feedsSwitch = (outLast != (PcodeOp *)0 && outLast->code() == CPUI_BRANCHIND);
+	if (data.isNormalizationOn() || feedsSwitch || bb->hasNoImmediateCopy(0)) {
 	  data.removeDoNothingBlock(bb);
 	  count += 1;
 	  return 0;
