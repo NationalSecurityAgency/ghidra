@@ -457,6 +457,7 @@ abstract class DataTypeDB extends DbObject implements DataType {
 	}
 
 	protected void notifyNameChanged(String oldName) {
+		dataMgr.updateSortedListOnRename(this, oldName);
 		for (DataType dt : dataMgr.getParentDataTypes(key)) {
 			dt.dataTypeNameChanged(this, oldName);
 		}

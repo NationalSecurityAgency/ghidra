@@ -3615,17 +3615,77 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		defaultListener.dataTypeMoved(this, oldDataTypePath, newDataTypePath);
 	}
 
+	void updateSortedListOnRename(DataType dt, String oldName) {
+		if (!lock.isWriteLockedByCurrentThread()) {
+			throw new AssertException("Attempted to modify sorted datatypes without write lock");
+		}
+		if (lazySortedDataTypes == null) {
+			return;
+		}
+		int size = lazySortedDataTypes.size();
+		if (size <= 1) {
+			return;
+		}
+		int low = 0;
+		int high = size - 1;
+		int found = -1;
+		while (low <= high) {
+			int mid = (low + high) >>> 1;
+			DataType midDt = lazySortedDataTypes.get(mid);
+			if (midDt == dt) {
+				found = mid;
+				break;
+			}
+			String midName = midDt.getName();
+			int c = midName.compareToIgnoreCase(oldName);
+			if (c < 0) {
+				low = mid + 1;
+			}
+			else if (c > 0) {
+				high = mid - 1;
+			}
+			else {
+				for (int i = mid - 1; i >= low; --i) {
+					DataType cand = lazySortedDataTypes.get(i);
+					if (cand == dt) {
+						found = i;
+						break;
+					}
+					if (!cand.getName().equalsIgnoreCase(oldName)) {
+						break;
+					}
+				}
+				if (found < 0) {
+					for (int i = mid + 1; i <= high; ++i) {
+						DataType cand = lazySortedDataTypes.get(i);
+						if (cand == dt) {
+							found = i;
+							break;
+						}
+						if (!cand.getName().equalsIgnoreCase(oldName)) {
+							break;
+						}
+					}
+				}
+				break;
+			}
+		}
+		if (found < 0) {
+			Collections.sort(lazySortedDataTypes, nameComparator);
+			return;
+		}
+		lazySortedDataTypes.remove(found);
+		int ins = Collections.binarySearch(lazySortedDataTypes, dt, nameComparator);
+		if (ins < 0) {
+			ins = -ins - 1;
+		}
+		lazySortedDataTypes.add(ins, dt);
+	}
+
 	protected void dataTypeNameChanged(DataType dt, String oldName) {
 		CategoryDB category = (CategoryDB) getCategory(dt.getCategoryPath());
 		category.dataTypeRenamed(dt, oldName);
 
-		// we assume we have the write lock here
-		if (!lock.isWriteLockedByCurrentThread()) {
-			throw new AssertException("Attempted to modify sorted datatypes without write lock");
-		}
-		if (lazySortedDataTypes != null) {
-			Collections.sort(lazySortedDataTypes, nameComparator);
-		}
 		updateLastChangeTime();
 		setDirtyFlag(dt);
 		defaultListener.dataTypeRenamed(this, new DataTypePath(dt.getCategoryPath(), oldName),
