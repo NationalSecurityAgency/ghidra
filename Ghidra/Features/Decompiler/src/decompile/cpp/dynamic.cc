@@ -429,13 +429,15 @@ void DynamicHash::uniqueHash(const Varnode *root,Funcdata *fd)
   vector<Varnode *> champion;
   uint4 method;
   uint8 tmphash;
+  uint8 champhash = 0;
   Address tmpaddr;
+  Address champaddr;
   uint4 maxduplicates = 8;
 
   for(method=0;method<4;++method) {
     clear();
     calcHash(root,method);
-    if (hash == 0) return;	// Can't get a good hash
+    if (hash == 0) break;	// Can't get a good hash at this depth; keep any earlier champion
     tmphash = hash;
     tmpaddr = addrresult;
     vnlist.clear();
@@ -453,6 +455,8 @@ void DynamicHash::uniqueHash(const Varnode *root,Funcdata *fd)
     if (vnlist2.size() <= maxduplicates) {
       if ((champion.size()==0)||(vnlist2.size() < champion.size())) {
 	champion = vnlist2;
+	champhash = tmphash;
+	champaddr = tmpaddr;
 	if (champion.size()==1) break; // Current hash is unique
       }
     }
@@ -471,9 +475,9 @@ void DynamicHash::uniqueHash(const Varnode *root,Funcdata *fd)
     addrresult = Address();
     return;
   }
-  hash = tmphash | ((uint8)pos << 49); // Store three bits for position with list of duplicate hashes
+  hash = champhash | ((uint8)pos << 49); // Store three bits for position with list of duplicate hashes
   hash |= ((uint8)total << 52);	// Store three bits for total number of duplicate hashes
-  addrresult = tmpaddr;
+  addrresult = champaddr;
 }
 
 /// Different hash methods are cycled through until a hash is found that distinguishes the given
@@ -490,7 +494,9 @@ void DynamicHash::uniqueHash(const PcodeOp *op,int4 slot,Funcdata *fd)
   vector<PcodeOp *> champion;
   uint4 method;
   uint8 tmphash;
+  uint8 champhash = 0;
   Address tmpaddr;
+  Address champaddr;
   uint4 maxduplicates = 8;
 
   moveOffSkip(op, slot);
@@ -503,14 +509,14 @@ void DynamicHash::uniqueHash(const PcodeOp *op,int4 slot,Funcdata *fd)
   for(method=4;method<7;++method) {
     clear();
     calcHash(op,slot,method);
-    if (hash == 0) return;	// Can't get a good hash
+    if (hash == 0) break;	// Can't get a good hash at this depth; keep any earlier champion
     tmphash = hash;
     tmpaddr = addrresult;
-    oplist.clear();
     oplist2.clear();
     for(uint4 i=0;i<oplist.size();++i) {
       PcodeOp *tmpop = oplist[i];
       if (slot >= tmpop->numInput()) continue;
+      if (slot < 0 && tmpop->getOut() == (const Varnode *)0) continue;
       clear();
       calcHash(tmpop,slot,method);
       if (getComparable(hash) == getComparable(tmphash)) {	// Hash collision
@@ -522,6 +528,8 @@ void DynamicHash::uniqueHash(const PcodeOp *op,int4 slot,Funcdata *fd)
     if (oplist2.size() <= maxduplicates) {
       if ((champion.size()==0)||(oplist2.size() < champion.size())) {
 	champion = oplist2;
+	champhash = tmphash;
+	champaddr = tmpaddr;
 	if (champion.size()==1)
 	  break; // Current hash is unique
       }
@@ -542,9 +550,9 @@ void DynamicHash::uniqueHash(const PcodeOp *op,int4 slot,Funcdata *fd)
     addrresult = Address();
     return;
   }
-  hash = tmphash | ((uint8)pos << 49); // Store three bits for position with list of duplicate hashes
+  hash = champhash | ((uint8)pos << 49); // Store three bits for position with list of duplicate hashes
   hash |= ((uint8)total << 52);	// Store three bits for total number of duplicate hashes
-  addrresult = tmpaddr;
+  addrresult = champaddr;
 }
 
 /// \brief Given an address and hash, find the unique matching Varnode
@@ -575,7 +583,7 @@ Varnode *DynamicHash::findVarnode(const Funcdata *fd,const Address &addr,uint8 h
     if (getComparable(hash) == getComparable(h))
       vnlist2.push_back(tmpvn);
   }
-  if (total != vnlist2.size()) return (Varnode *)0;
+  if (total != vnlist2.size() || pos >= total) return (Varnode *)0;
   return vnlist2[pos];
 }
 
@@ -604,12 +612,13 @@ PcodeOp *DynamicHash::findOp(const Funcdata *fd,const Address &addr,uint8 h)
   for(uint4 i=0;i<oplist.size();++i) {
     PcodeOp *tmpop = oplist[i];
     if (slot >= tmpop->numInput()) continue;
+    if (slot < 0 && tmpop->getOut() == (const Varnode *)0) continue;
     clear();
     calcHash(tmpop,slot,method);
     if (getComparable(hash) == getComparable(h))
       oplist2.push_back(tmpop);
   }
-  if (total != oplist2.size())
+  if (total != oplist2.size() || pos >= total)
     return (PcodeOp *)0;
   return oplist2[pos];
 }
