@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.analysis;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -74,6 +75,8 @@ public class ObjcMessageAnalyzer extends AbstractAnalyzer {
 	private DataTypes dataTypes;
 	private Map<String, List<Objc2Class>> classMap;
 	private Map<String, Integer> classExternalSymbolOffset = new HashMap<>();
+	private Map<Address, String> stubSelectors = new ConcurrentHashMap<>();
+	private Map<Address, Object> stubLocks = new ConcurrentHashMap<>();
 
 	private record DataTypes(DataType ptr, DataType id, DataType sel, DataType classT,
 			DataType messageRef, DataType messageRefPtr, DataType objcSuper,
@@ -188,6 +191,8 @@ public class ObjcMessageAnalyzer extends AbstractAnalyzer {
 			typeMetadata.close();
 			typeMetadata = null;
 		}
+		stubSelectors.clear();
+		stubLocks.clear();
 	}
 
 	private DataTypes getDataTypes(Program program, MessageLog log) {
@@ -344,6 +349,27 @@ public class ObjcMessageAnalyzer extends AbstractAnalyzer {
 
 	private String processStub(Program program, Address stubAddr, DecompInterface decompiler,
 			TaskMonitor monitor) throws CancelledException {
+		String selector = stubSelectors.get(stubAddr);
+		if (selector != null) {
+			return selector;
+		}
+		// Decompile each stub once. Concurrent decompiles of a stub that another thread is
+		// renaming fail with a function name mismatch. Failures are not cached, so they are
+		// retried at the next call site like before.
+		synchronized (stubLocks.computeIfAbsent(stubAddr, k -> new Object())) {
+			selector = stubSelectors.get(stubAddr);
+			if (selector == null) {
+				selector = decompileStubSelector(program, stubAddr, decompiler, monitor);
+				if (selector != null) {
+					stubSelectors.put(stubAddr, selector);
+				}
+			}
+			return selector;
+		}
+	}
+
+	private String decompileStubSelector(Program program, Address stubAddr,
+			DecompInterface decompiler, TaskMonitor monitor) throws CancelledException {
 		Function func = program.getFunctionManager().getFunctionAt(stubAddr);
 		DecompileResults results = decompiler.decompileFunction(func, 5, monitor);
 		HighFunction highFunction = results.getHighFunction();
