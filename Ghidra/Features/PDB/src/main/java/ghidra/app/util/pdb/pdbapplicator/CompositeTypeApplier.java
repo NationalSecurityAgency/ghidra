@@ -376,7 +376,35 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 
 		for (AbstractMsType methodType : methods) {
 			applicator.checkCancelled();
-			if (methodType instanceof AbstractOneMethodMsType oneMethodType) {
+			if (methodType instanceof AbstractOneMethodMsType oneMethodType &&
+				applicator.getTypeRecord(oneMethodType
+						.getProcedureTypeRecordNumber()) instanceof AbstractMethodListMsType oneList) {
+				SymbolPath methodSymbolPath = classSymbolPath
+						.append(new SymbolPath(oneMethodType.getName())).replaceInvalidChars();
+				for (AbstractMethodRecordMs methodRecord : oneList.getList()) {
+					applicator.checkCancelled();
+					Long offset = methodRecord.getOptionalOffset();
+					RecordNumber procedureTypeRn = methodRecord.getProcedureTypeRecordNumber();
+					AbstractMsType t = applicator.getPdb().getTypeRecord(procedureTypeRn);
+					int adjuster = 0;
+					if (t instanceof AbstractMemberFunctionMsType memberFunc) {
+						adjuster = memberFunc.getThisAdjuster();
+					}
+					DataType dt = applicator.getDataType(procedureTypeRn);
+					if (!(dt instanceof FunctionDefinition def)) {
+						Msg.warn(this, "MemberFunction expected, but found: " +
+							(dt == null ? "null" : dt.getClass().getSimpleName()));
+						continue;
+					}
+					ClassFieldAttributes atts =
+						ClassFieldAttributes.convert(methodRecord.getAttributes(), defaultAccess);
+					if (atts.getProperty() == Property.VIRTUAL && offset != null) {
+						cppCompositeType.addVirtualMethod(adjuster, offset.intValue(),
+							methodSymbolPath, def);
+					}
+				}
+			}
+			else if (methodType instanceof AbstractOneMethodMsType oneMethodType) {
 				String name = oneMethodType.getName();
 				ClassFieldMsAttributes attributes = oneMethodType.getAttributes();
 				AbstractMsType t =
@@ -389,15 +417,15 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 				RecordNumber procedureTypeRn = oneMethodType.getProcedureTypeRecordNumber();
 				DataType dt = applicator.getDataType(procedureTypeRn);
 				if (!(dt instanceof FunctionDefinition def)) {
-					Msg.warn(this,
-						"MemberFunction expected, but found: " + dt.getClass().getSimpleName());
+					Msg.warn(this, "MemberFunction expected, but found: " +
+						(dt == null ? "null" : dt.getClass().getSimpleName()));
 					// Put something in its place?  Or abort the whole class?
 					continue;
 				}
 				SymbolPath methodSymbolPath =
 					classSymbolPath.append(new SymbolPath(name)).replaceInvalidChars();
 				ClassFieldAttributes atts = ClassFieldAttributes.convert(attributes, defaultAccess);
-				if (atts.getProperty() == Property.VIRTUAL) {
+				if (atts.getProperty() == Property.VIRTUAL && offset != null) {
 					cppCompositeType.addVirtualMethod(adjuster, offset.intValue(), methodSymbolPath,
 						def);
 				}
@@ -424,13 +452,13 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 						if (!(dt instanceof FunctionDefinition def)) {
 							Msg.warn(this,
 								"MemberFunction expected, but found: " +
-									dt.getClass().getSimpleName());
+									(dt == null ? "null" : dt.getClass().getSimpleName()));
 							// Put something in its place?  Or abort the whole class?
 							continue;
 						}
 						ClassFieldAttributes atts =
 							ClassFieldAttributes.convert(attributes, defaultAccess);
-						if (atts.getProperty() == Property.VIRTUAL) {
+						if (atts.getProperty() == Property.VIRTUAL && offset != null) {
 							cppCompositeType.addVirtualMethod(adjuster, offset.intValue(),
 								methodSymbolPath, def);
 						}
@@ -536,7 +564,18 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		}
 		for (AbstractMsType method : lists.methods()) {
 			applicator.checkCancelled();
-			if (method instanceof AbstractOneMethodMsType oneMethod) {
+			if (method instanceof AbstractOneMethodMsType oneMethod &&
+				applicator.getTypeRecord(
+					oneMethod.getProcedureTypeRecordNumber()) instanceof AbstractMethodListMsType oneList) {
+				for (AbstractMethodRecordMs methodRecord : oneList.getList()) {
+					DataType dt =
+						applicator.getDataTypeOrSchedule(methodRecord.getProcedureTypeRecordNumber());
+					if (dt == null) {
+						done = false;
+					}
+				}
+			}
+			else if (method instanceof AbstractOneMethodMsType oneMethod) {
 				RecordNumber recordNumber = oneMethod.getProcedureTypeRecordNumber();
 				DataType dt = applicator.getDataTypeOrSchedule(recordNumber);
 				if (dt == null) {

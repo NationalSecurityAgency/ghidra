@@ -16,7 +16,9 @@
 package ghidra.app.util.pdb.pdbapplicator;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
@@ -36,6 +38,7 @@ public class MultiphaseDataTypeResolver {
 
 	private RecordStack todoStack;
 	private RecordStack resolveStack;
+	private Set<RecordNumber> stalledRecords = new HashSet<>();
 
 	public MultiphaseDataTypeResolver(DefaultPdbApplicator applicator) {
 		this.applicator = applicator;
@@ -67,10 +70,13 @@ public class MultiphaseDataTypeResolver {
 		scheduleTodo(recordNumber);
 
 		RecordNumber recordToProcess;
+		RecordNumber lastStalledRecord = null;
+		long lastStalledDepth = -1;
 		// Peek at top of stack.  If can be removed, it will be; otherwise other records can be
 		//  pushed on top of this one for next loop cycle.
 		while ((recordToProcess = todoStack.peek()) != null) {
 			monitor.checkCancelled();
+			long depthBefore = todoStack.numNodes;
 			MsDataTypeApplier dataTypeApplier =
 				(MsDataTypeApplier) applicator.getTypeApplier(recordToProcess);
 			AbstractMsType msType = pdb.getTypeRecord(recordToProcess);
@@ -82,9 +88,31 @@ public class MultiphaseDataTypeResolver {
 				}
 				todoStack.pop();
 				resolveStack.push(recordToProcess);
+				lastStalledRecord = null;
+				lastStalledDepth = -1;
 				// only update when popped; 1st of 2 monitor updates;  monitor count was
 				//  initialized in DefaultPdbApplicator.processAndResolveDataTypesSequentially()
 				monitor.incrementProgress(1);
+			}
+			else if (todoStack.peek() == recordToProcess && todoStack.numNodes == depthBefore) {
+				if (recordToProcess.equals(lastStalledRecord) && depthBefore == lastStalledDepth) {
+					applicator.appendLogMsg(
+						"PDB MultiphaseDataTypeResolver: breaking unschedulable dependency cycle at record " +
+							recordToProcess);
+					todoStack.pop();
+					stalledRecords.add(recordToProcess);
+					monitor.incrementProgress(1);
+					lastStalledRecord = null;
+					lastStalledDepth = -1;
+				}
+				else {
+					lastStalledRecord = recordToProcess;
+					lastStalledDepth = depthBefore;
+				}
+			}
+			else {
+				lastStalledRecord = null;
+				lastStalledDepth = -1;
 			}
 		}
 		// If set true above, location where one might do conditional: todoStack.setDebug(false)
@@ -118,6 +146,9 @@ public class MultiphaseDataTypeResolver {
 	 * @param recordNumber the record number to be scheduled
 	 */
 	void scheduleTodo(RecordNumber recordNumber) {
+		if (stalledRecords.contains(recordNumber)) {
+			return;
+		}
 		MsTypeApplier applier = applicator.getTypeApplier(recordNumber);
 		if (!(applier instanceof MsDataTypeApplier dataTypeApplier)) {
 			// Return without scheduling... only want to schedule records that have a legitimate
