@@ -10,12 +10,18 @@ define space register type=register_space size=4;
 define register offset=0 size=4
 [r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15];
 
-define register offset=0x100 size=4 [sr gbr vbr mach macl pr pc];
+define register offset=0x100 size=4 [sr gbr vbr mach macl pr pc delay_pc];
 
 
 @if SH_VERSION == "2A"
 define register offset=0x180 size=4 [tbr];
 @endif
+
+define register offset=0x400 size=4 contextreg;
+define context contextreg
+	pc_relative_delay_slot = (0,1) noflow
+	pc_relative_delay_disp = (2,13) signed noflow
+;
 
 # SR Flags
 @define T_FLAG   "sr[0,1]"
@@ -167,7 +173,10 @@ target00_07: target is sdisp_00_07 [ target = (sdisp_00_07 << 1) + inst_start + 
     export *:4 target;
 }
 
-target00_11: target is sdisp_00_11 [ target = (sdisp_00_11 << 1) + inst_start + 4; ] {
+target00_11: target is sdisp_00_11
+    [ target = (sdisp_00_11 << 1) + inst_start + 4;
+      pc_relative_delay_slot=2; pc_relative_delay_disp=sdisp_00_11;
+      globalset(inst_next, pc_relative_delay_slot); globalset(inst_next, pc_relative_delay_disp); ] {
     export *:4 target;
 }
 
@@ -188,12 +197,28 @@ imm8: "#"^simm_00_07 is simm_00_07 { export *[const]:4 simm_00_07; }
     rn_08_11 = imm8;
 }
 
-disppc4: @(disp,pc) is disp_00_07 & pc
+disppc4: @(disp,pc) is disp_00_07 & pc & pc_relative_delay_slot=0
     [ disp = (disp_00_07 << 2) + ((inst_start + 4) & 0xfffffffc); ]
     { local tmp:4 = disp; export tmp; }
 
-disppc2: @(disp,pc) is disp_00_07 & pc
+disppc2: @(disp,pc) is disp_00_07 & pc & pc_relative_delay_slot=0
     [ disp = (disp_00_07 << 1) + (inst_start + 4); ]
+    { local tmp:4 = disp; export tmp; }
+
+disppc4: @(disp,pc) is disp_00_07 & pc & pc_relative_delay_slot=1
+    [ disp = (disp_00_07 << 2); ]
+    { local tmp:4 = (disp_00_07 << 2) + ((delay_pc + 2) & 0xfffffffc); export tmp; }
+
+disppc2: @(disp,pc) is disp_00_07 & pc & pc_relative_delay_slot=1
+    [ disp = (disp_00_07 << 1); ]
+    { local tmp:4 = (disp_00_07 << 1) + (delay_pc + 2); export tmp; }
+
+disppc4: @(disp,pc) is disp_00_07 & pc & pc_relative_delay_slot=2 & pc_relative_delay_disp
+    [ disp = (disp_00_07 << 2) + ((inst_start + 4 + pc_relative_delay_disp*2) & 0xfffffffc); ]
+    { local tmp:4 = disp; export tmp; }
+
+disppc2: @(disp,pc) is disp_00_07 & pc & pc_relative_delay_slot=2 & pc_relative_delay_disp
+    [ disp = (disp_00_07 << 1) + inst_start + 4 + pc_relative_delay_disp*2; ]
     { local tmp:4 = disp; export tmp; }
 
 :mova   disppc4,r0  is r0 & opcode_08_15=0b11000111 & disppc4
@@ -1593,8 +1618,10 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
 
 @if (SH_VERSION == "2") || (SH_VERSION == "2A")
 :bf"/s" target00_07  is opcode_08_15=0b10001111 & target00_07  
+[ pc_relative_delay_slot=1; globalset(inst_next, pc_relative_delay_slot); ]
 {
     local cond = $(T_FLAG);
+	delay_pc = (zext(!cond) * &target00_07) + (zext(cond) * (inst_next + 2));
     delayslot(1);
     if (cond==0) goto target00_07;
 }
@@ -1607,8 +1634,10 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
 
 @if (SH_VERSION == "2") || (SH_VERSION == "2A")
 :bt"/s" target00_07  is opcode_08_15=0b10001101 & target00_07
+[ pc_relative_delay_slot=1; globalset(inst_next, pc_relative_delay_slot); ]
 {
     local cond = $(T_FLAG);
+	delay_pc = (zext(cond) * &target00_07) + (zext(!cond) * (inst_next + 2));
     delayslot(1);
     if (cond==1) goto target00_07;
 }
@@ -1622,10 +1651,11 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
 
 @if (SH_VERSION == "2") || (SH_VERSION == "2A")
 :braf rm_08_11  is opcode_12_15=0b0000 & rm_08_11 & opcode_00_07=0b00100011 
+[ pc_relative_delay_slot=1; globalset(inst_next, pc_relative_delay_slot); ]
 {
-    local dest:4 = inst_start + 4 + rm_08_11;
+	delay_pc = inst_start + 4 + rm_08_11;
     delayslot(1);
-    goto [dest];
+    goto [delay_pc];
 }
 @endif
 
@@ -1641,42 +1671,46 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
 
 @if (SH_VERSION == "2") || (SH_VERSION == "2A")
 :bsrf   rm_08_11  is opcode_12_15=0b0000 & rm_08_11 & opcode_00_07=0b00000011 
+[ pc_relative_delay_slot=1; globalset(inst_next, pc_relative_delay_slot); ]
 {
     local _pr = inst_start + 4;
-    local dest = rm_08_11 + inst_start + 4;
+	delay_pc = rm_08_11 + inst_start + 4;
 
     delayslot(1);
 
     pr = _pr;
-    call [dest];
+    call [delay_pc];
 }
 @endif
 
 :jmp    @rm_08_11  is opcode_12_15=0b0100 & rm_08_11 & opcode_00_07=0b00101011 
+[ pc_relative_delay_slot=1; globalset(inst_next, pc_relative_delay_slot); ]
 {
-    local _pc:4 = rm_08_11;
+	delay_pc = rm_08_11;
     delayslot(1);
-    pc = _pc;
+    pc = delay_pc;
     goto [pc];
 }
 
 :jsr    @rm_08_11  is opcode_12_15=0b0100 & rm_08_11 & opcode_00_07=0b00001011 
+[ pc_relative_delay_slot=1; globalset(inst_next, pc_relative_delay_slot); ]
 {
     local _pr:4 = inst_start + 4;
-    local _pc:4 = rm_08_11;
+	delay_pc = rm_08_11;
 
     delayslot(1);
 
     pr = _pr;
-    pc = _pc;
-    call [_pc];
+    pc = delay_pc;
+    call [pc];
 }
 
 :rts  is opcode_00_15=0b0000000000001011 
+[ pc_relative_delay_slot=1; globalset(inst_next, pc_relative_delay_slot); ]
 {
-    local _pc = pr;
+	delay_pc = pr;
     delayslot(1);
-    pc = _pc;
+    pc = delay_pc;
     return [pc];
 }
 
@@ -1853,9 +1887,10 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
     r0 = r0; # do this to suppress warning
 }
 
-:rte is opcode_00_15=0b0000000000101011 
+:rte is opcode_00_15=0b0000000000101011
+[ pc_relative_delay_slot=1; globalset(inst_next, pc_relative_delay_slot); ]
 {    
-    _pc:4 = *r15;
+	delay_pc = *r15;
     r15 = r15 + 4;
     
     _sr:4 = *r15 & 0x000063F3;
@@ -1863,7 +1898,7 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
     
     delayslot(1);
     
-    pc = _pc;
+    pc = delay_pc;
     sr = _sr;
     
     return [pc];
