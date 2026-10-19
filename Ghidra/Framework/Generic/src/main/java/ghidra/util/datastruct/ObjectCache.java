@@ -163,7 +163,7 @@ public class ObjectCache<T> {
 	private void processQueue() {
 		KeyedSoftReference<? extends T> ref;
 		while ((ref = (KeyedSoftReference<? extends T>) refQueue.poll()) != null) {
-			hashTable.remove(ref.getKey());
+			hashTable.remove(ref.getKey(), ref);
 		}
 	}
 
