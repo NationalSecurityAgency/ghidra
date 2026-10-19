@@ -286,6 +286,11 @@ public class KeyBindingsManager implements PropertyChangeListener {
 			if (ks != null) {
 				removeKeyBinding(ks, action);
 			}
+
+			MouseBinding mouseBinding = keyData.getMouseBinding();
+			if (mouseBinding != null) {
+				dockingMouseMap.remove(mouseBinding);
+			}
 		}
 
 		KeyBindingData newKeyData = (KeyBindingData) evt.getNewValue();
@@ -293,6 +298,11 @@ public class KeyBindingsManager implements PropertyChangeListener {
 			KeyStroke ks = newKeyData.getKeyBinding();
 			if (ks != null) {
 				addKeyBinding(actionToProviderMap.get(action), action, ks);
+			}
+
+			MouseBinding mouseBinding = newKeyData.getMouseBinding();
+			if (mouseBinding != null) {
+				doAddMouseBinding(action, mouseBinding);
 			}
 		}
 	}
