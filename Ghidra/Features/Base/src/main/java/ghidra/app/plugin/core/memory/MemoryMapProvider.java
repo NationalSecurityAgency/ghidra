@@ -652,7 +652,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		ArrayList<MemoryBlock> delBlocks = new ArrayList<>();
 		int delRows[] = table.getSelectedRows();
 		for (int element : delRows) {
-			MemoryBlock block = tableModel.getBlockAt(element);
+			MemoryBlock block = tableModel.getBlockAt(filterPanel.getModelRow(element));
 			delBlocks.add(block);
 		}
 		table.clearSelection();
@@ -771,7 +771,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		ArrayList<MemoryBlock> blocks = new ArrayList<>();
 		int rows[] = table.getSelectedRows();
 		for (int element : rows) {
-			MemoryBlock block = tableModel.getBlockAt(element);
+			MemoryBlock block = tableModel.getBlockAt(filterPanel.getModelRow(element));
 			blocks.add(block);
 		}
 		table.clearSelection();

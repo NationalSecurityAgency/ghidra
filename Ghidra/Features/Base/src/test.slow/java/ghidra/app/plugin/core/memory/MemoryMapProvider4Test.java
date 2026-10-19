@@ -30,6 +30,7 @@ import docking.AbstractErrDialog;
 import docking.action.DockingActionIf;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.OptionDialog;
+import docking.widgets.table.GTableFilterPanel;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.gotoquery.GoToServicePlugin;
 import ghidra.app.plugin.core.navigation.NavigationHistoryPlugin;
@@ -121,6 +122,42 @@ public class MemoryMapProvider4Test extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals("0000004f", model.getValueAt(3, MemoryMapModel.END));
 		redo(program);
 		assertEquals("0000004f", model.getValueAt(0, MemoryMapModel.END));
+	}
+
+	@Test
+	public void testMergeBlocksWithFilter() throws Exception {
+		// create 4 blocks: 0-0f, 10-1f, 20-20f, 40-4f.
+		tx(program, () -> {
+			memory.createInitializedBlock("first", getAddr(0), 0x10, (byte) 0, TaskMonitor.DUMMY,
+				false);
+			memory.createInitializedBlock("mergeMe2", getAddr(0x10), 0x10, (byte) 0,
+				TaskMonitor.DUMMY, false);
+			memory.createInitializedBlock("mergeMe3", getAddr(0x20), 0x10, (byte) 0,
+				TaskMonitor.DUMMY, false);
+			memory.createInitializedBlock("last", getAddr(0x40), 0x10, (byte) 0,
+				TaskMonitor.DUMMY, false);
+		});
+
+		// filter so that only the middle two blocks are visible
+		GTableFilterPanel<?> filterPanel =
+			(GTableFilterPanel<?>) getInstanceField("filterPanel", provider);
+		runSwing(() -> filterPanel.setFilterText("mergeMe"));
+		waitForSwing();
+		assertEquals(2, table.getRowCount());
+		assertEquals("mergeMe2", table.getValueAt(0, MemoryMapModel.NAME));
+		assertEquals("mergeMe3", table.getValueAt(1, MemoryMapModel.NAME));
+
+		// select both visible rows
+		table.setRowSelectionInterval(0, 1);
+		DockingActionIf action = getAction(plugin, "Merge Blocks");
+		assertTrue(action.isEnabled());
+		performAction(action, false);
+		waitForSwing();
+
+		assertEquals(getAddr(0xf), memory.getBlock("first").getEnd());
+		assertEquals(getAddr(0x10), memory.getBlock("mergeMe2").getStart());
+		assertEquals(getAddr(0x2f), memory.getBlock("mergeMe2").getEnd());
+		assertNull(memory.getBlock("mergeMe3"));
 	}
 
 	@Test
