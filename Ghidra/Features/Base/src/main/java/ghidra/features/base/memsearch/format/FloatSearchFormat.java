@@ -120,7 +120,10 @@ class FloatSearchFormat extends SearchFormat {
 			double value1 = getValue(bytes1, i, isBigEndian);
 			double value2 = getValue(bytes2, i, isBigEndian);
 			if (value1 != value2) {
-				return Double.compare(value1, value2);
+				int comparison = Double.compare(value1, value2);
+				if (comparison != 0) {
+					return comparison;
+				}
 			}
 		}
 		return 0;
