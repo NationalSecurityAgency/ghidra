@@ -162,7 +162,7 @@ public class ElfSymbol {
 				// FIXME: handle extended section indexing
 				int uSectionIndex = Short.toUnsignedInt(st_shndx);
 				if (Short.compareUnsigned(st_shndx, ElfSectionHeaderConstants.SHN_LORESERVE) < 0 &&
-					uSectionIndex < sections.length) {
+					uSectionIndex >= 0 && uSectionIndex < sections.length) {
 					ElfSectionHeader section = sections[uSectionIndex];
 					nameAsString = section.getNameAsString();
 				}

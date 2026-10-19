@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,6 +67,9 @@ import ghidra.util.StringUtilities;
 public class ElfProgramHeader
 		implements StructConverter, Comparable<ElfProgramHeader>, MemoryLoadable {
 
+	static final int ELF64_PHDR_SIZE = 56;
+	static final int ELF32_PHDR_SIZE = 32;
+
 	protected final ElfHeader header;
 
 	private final int p_type;
@@ -77,6 +80,8 @@ public class ElfProgramHeader
 	private final long p_filesz;
 	private final long p_memsz;
 	private final long p_align;
+
+	private boolean hasValidOffset; // may be revised with p_offset change
 
 	private final BinaryReader reader;
 
@@ -120,6 +125,14 @@ public class ElfProgramHeader
 			//and ".bss".
 			//TODO Err.warn(this, "Program Header: extra bytes");
 		}
+
+		checkValidOffset();
+	}
+
+	private void checkValidOffset() {
+		hasValidOffset = p_offset >= 0 && p_offset < ElfHeader.FILE_OFFSET_HARD_LIMIT &&
+			(header.is64Bit() || p_offset != ElfConstants.ELF32_INVALID_OFFSET) &&
+			p_offset < reader.getByteProvider().length();
 	}
 
 	/**
@@ -308,7 +321,7 @@ public class ElfProgramHeader
 	 * @return true if this program header's offset is invalid
 	 */
 	public boolean isInvalidOffset() {
-		return p_offset < 0 || (header.is32Bit() && p_offset == ElfConstants.ELF32_INVALID_OFFSET);
+		return !hasValidOffset;
 	}
 
 	/**
@@ -340,6 +353,7 @@ public class ElfProgramHeader
 	 */
 	void setOffset(long offset) {
 		this.p_offset = offset;
+		checkValidOffset();
 	}
 
 	/**

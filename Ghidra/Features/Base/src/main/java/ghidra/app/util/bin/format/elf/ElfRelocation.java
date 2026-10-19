@@ -15,14 +15,15 @@
  */
 package ghidra.app.util.bin.format.elf;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.elf.extend.ElfLoadAdapter;
-import ghidra.app.util.bin.format.elf.relocation.ElfRelocationContext;
 import ghidra.app.util.bin.format.elf.relocation.AbstractElfRelocationHandler;
+import ghidra.app.util.bin.format.elf.relocation.ElfRelocationContext;
 import ghidra.program.model.data.*;
 
 /**
@@ -98,10 +99,11 @@ public class ElfRelocation implements StructConverter {
 	 * @param relocationIndex index of entry in relocation table
 	 * @param withAddend true if it's a RELA entry with addend, else false
 	 * @return ELF relocation object
+	 * @throws EOFException if file has insufficient data (out-of-bounds read error)
 	 * @throws IOException if an IO or parse error occurs
 	 */
 	static ElfRelocation createElfRelocation(BinaryReader reader, ElfHeader elfHeader,
-			int relocationIndex, boolean withAddend) throws IOException {
+			int relocationIndex, boolean withAddend) throws EOFException, IOException {
 		Class<? extends ElfRelocation> elfRelocationClazz = getElfRelocationClass(elfHeader);
 		ElfRelocation elfRelocation = getInstance(elfRelocationClazz);
 		elfRelocation.initElfRelocation(reader, elfHeader, relocationIndex, withAddend);
@@ -173,10 +175,11 @@ public class ElfRelocation implements StructConverter {
 	 * @param elfHeader ELF header
 	 * @param relocationTableIndex index of relocation within relocation table
 	 * @param withAddend true if it's a RELA entry with addend, else false
+	 * @throws EOFException if file has insufficient data (out-of-bounds read error)
 	 * @throws IOException if an IO or parse error occurs
 	 */
 	protected void initElfRelocation(BinaryReader reader, ElfHeader elfHeader,
-			int relocationTableIndex, boolean withAddend) throws IOException {
+			int relocationTableIndex, boolean withAddend) throws EOFException, IOException {
 		this.is32bit = elfHeader.is32Bit();
 		this.relocationIndex = relocationTableIndex;
 		this.hasAddend = withAddend;
@@ -215,8 +218,11 @@ public class ElfRelocation implements StructConverter {
 		}
 	}
 
-	private void readEntryData(BinaryReader reader) throws IOException {
+	private void readEntryData(BinaryReader reader) throws EOFException, IOException {
 		if (is32bit) {
+			if (!ElfRelocationTable.isValidNextFileOffset(reader, hasAddend ? 12 : 8)) {
+				throw new EOFException("Insufficient data");
+			}
 			this.r_offset = reader.readNextUnsignedInt();
 			this.r_info = reader.readNextUnsignedInt();
 			if (hasAddend) {
@@ -224,6 +230,9 @@ public class ElfRelocation implements StructConverter {
 			}
 		}
 		else {
+			if (!ElfRelocationTable.isValidNextFileOffset(reader, hasAddend ? 24 : 16)) {
+				throw new EOFException("Insufficient data");
+			}
 			this.r_offset = reader.readNextLong();
 			this.r_info = reader.readNextLong();
 			if (hasAddend) {
