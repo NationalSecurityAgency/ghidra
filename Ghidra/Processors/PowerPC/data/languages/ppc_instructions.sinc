@@ -3422,6 +3422,13 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 	*:8(dsPlusRaOrZeroAddress) = r2;
 }
 
+#std r2,0x18(r1) (ELFv2 TOC save slot)
+:std r2,dsPlusRaOrZeroAddress 	is $(NOTVLE) & OP=62 & S=2 & r2 & A=1 & SIMM_DS=0x6 & dsPlusRaOrZeroAddress & BITS_0_1=0
+{
+	r2Save = r2;
+	*:8(dsPlusRaOrZeroAddress) = r2;
+}
+
 #stdcx. r0,8(0)	0x7c 00 01 AD	
 :stdcx. S,RA_OR_ZERO,B 	is OP=31 & S & RA_OR_ZERO & B & XOP_1_10=214 & BIT_0=1
 {
