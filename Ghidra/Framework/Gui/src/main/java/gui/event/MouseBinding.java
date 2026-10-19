@@ -15,8 +15,7 @@
  */
 package gui.event;
 
-import static java.awt.event.InputEvent.*;
-
+import java.awt.Toolkit;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.*;
@@ -24,6 +23,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import ghidra.util.Msg;
 
@@ -39,26 +39,10 @@ public class MouseBinding {
 	private static final Pattern BUTTON_PATTERN =
 		Pattern.compile("button(\\d+)", Pattern.CASE_INSENSITIVE);
 
-	private static final Map<String, Integer> MODIFIERS_BY_TEXT = createModifiersMap();
-
-	private static Map<String, Integer> createModifiersMap() {
-		return Collections.unmodifiableMap(
-			Map.of(
-				getModifiersExText(ALT_DOWN_MASK),
-				ALT_DOWN_MASK,
-
-				getModifiersExText(ALT_GRAPH_DOWN_MASK),
-				ALT_GRAPH_DOWN_MASK,
-
-				getModifiersExText(CTRL_DOWN_MASK),
-				CTRL_DOWN_MASK,
-
-				getModifiersExText(META_DOWN_MASK),
-				META_DOWN_MASK,
-
-				getModifiersExText(SHIFT_DOWN_MASK),
-				SHIFT_DOWN_MASK));
-	}
+	private static final String SHIFT = "Shift";
+	private static final String CTRL = "Ctrl";
+	private static final String ALT = "Alt";
+	private static final String META = "Meta";
 
 	private int modifiers = -1;
 	private int button = -1;
@@ -141,7 +125,8 @@ public class MouseBinding {
 			return null;
 		}
 
-		StringTokenizer tokenizer = new StringTokenizer(mouseString, "+");
+		// be flexible on the tokens for splitting, even though '+' seems to be the standard
+		StringTokenizer tokenizer = new StringTokenizer(mouseString, "- +");
 		List<String> pieces = new ArrayList<>();
 		while (tokenizer.hasMoreTokens()) {
 			String token = tokenizer.nextToken();
@@ -151,12 +136,24 @@ public class MouseBinding {
 		}
 
 		int modifiers = 0;
-		for (Iterator<String> it = pieces.iterator(); it.hasNext();) {
-			String piece = it.next();
-
-			Integer modifier = MODIFIERS_BY_TEXT.get(piece);
-			if (modifier != null) {
-				modifiers |= modifier;
+		for (Iterator<String> iterator = pieces.iterator(); iterator.hasNext();) {
+			String piece = iterator.next();
+			if (Strings.CI.indexOf(piece, SHIFT) != -1) {
+				modifiers |= InputEvent.SHIFT_DOWN_MASK;
+				iterator.remove();
+			}
+			else if (Strings.CI.indexOf(piece, CTRL) != -1) {
+				// This is the cross platform way to get the control key
+				modifiers |= Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
+				iterator.remove();
+			}
+			else if (Strings.CI.indexOf(piece, ALT) != -1) {
+				modifiers |= InputEvent.ALT_DOWN_MASK;
+				iterator.remove();
+			}
+			else if (Strings.CI.indexOf(piece, META) != -1) {
+				modifiers |= InputEvent.META_DOWN_MASK;
+				iterator.remove();
 			}
 		}
 
