@@ -41,9 +41,7 @@ import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.TraceSchedule;
-import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
-import ghidra.util.Msg;
-import ghidra.util.NotOwnerException;
+import ghidra.util.*;
 import ghidra.util.exception.NotFoundException;
 
 public class DebuggerCoordinates {
@@ -722,7 +720,7 @@ public class DebuggerCoordinates {
 			coordState.putLong(KEY_THREAD_KEY, thread.getKey());
 		}
 		if (time != null) {
-			coordState.putString(KEY_TIME, time.toString(TimeRadix.DEC));
+			coordState.putString(KEY_TIME, time.toString(Radix.DEC));
 		}
 		if (frame != null) {
 			coordState.putInt(KEY_FRAME, frame);
@@ -795,7 +793,7 @@ public class DebuggerCoordinates {
 		String timeSpec = coordState.getString(KEY_TIME, null);
 		TraceSchedule time;
 		try {
-			time = TraceSchedule.parse(timeSpec, TimeRadix.DEC);
+			time = TraceSchedule.parse(timeSpec, Radix.DEC);
 		}
 		catch (Exception e) {
 			Msg.error(DebuggerCoordinates.class,

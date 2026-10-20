@@ -33,8 +33,8 @@ import ghidra.program.model.address.Address;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.TraceSchedule;
-import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.util.DateUtils;
+import ghidra.util.Radix;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer;
@@ -180,9 +180,9 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 		Font fixedWidthBoldFont;
 		Font fixedWidthItalicFont;
 
-		protected TimeRadix getTimeRadix() {
+		protected Radix getTimeRadix() {
 			Trace trace = model == null ? null : model.getTrace();
-			return trace == null ? TimeRadix.DEFAULT : trace.getTimeManager().getTimeRadix();
+			return trace == null ? Radix.DEFAULT : trace.getTimeManager().getTimeRadix();
 		}
 
 		@Override

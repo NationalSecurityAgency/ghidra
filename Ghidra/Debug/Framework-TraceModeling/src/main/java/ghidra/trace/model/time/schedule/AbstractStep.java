@@ -18,7 +18,7 @@ package ghidra.trace.model.time.schedule;
 import java.util.List;
 
 import ghidra.program.model.lang.Language;
-import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
+import ghidra.util.Radix;
 
 public abstract class AbstractStep implements Step {
 	protected final long threadKey;
@@ -38,15 +38,15 @@ public abstract class AbstractStep implements Step {
 	 * @param radix the radix
 	 * @return the string
 	 */
-	protected abstract String toStringStepPart(TimeRadix radix);
+	protected abstract String toStringStepPart(Radix radix);
 
 	@Override
 	public String toString() {
-		return toString(TimeRadix.DEFAULT);
+		return toString(Radix.DEFAULT);
 	}
 
 	@Override
-	public String toString(TimeRadix radix) {
+	public String toString(Radix radix) {
 		if (threadKey == -1) {
 			return toStringStepPart(radix);
 		}

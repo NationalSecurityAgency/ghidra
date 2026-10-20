@@ -22,13 +22,13 @@ import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.trace.model.Lifespan.LifeSet;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
+import ghidra.util.Radix;
 import ghidra.util.table.column.GColumnRenderer;
 
 public class TraceValueLifeColumn
 		extends AbstractDynamicTableColumn<ValueRow, SetAndRadix, Trace> {
 
-	record SetAndRadix(LifeSet set, TimeRadix radix) {
+	record SetAndRadix(LifeSet set, Radix radix) {
 		@Override
 		public final String toString() {
 			return set.toString(radix::format);
@@ -51,6 +51,6 @@ public class TraceValueLifeColumn
 	public SetAndRadix getValue(ValueRow rowObject, Settings settings, Trace data,
 			ServiceProvider serviceProvider) throws IllegalArgumentException {
 		return new SetAndRadix(rowObject.getLife(),
-			data == null ? TimeRadix.DEFAULT : data.getTimeManager().getTimeRadix());
+			data == null ? Radix.DEFAULT : data.getTimeManager().getTimeRadix());
 	}
 }
