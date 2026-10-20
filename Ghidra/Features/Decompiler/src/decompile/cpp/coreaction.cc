@@ -5833,7 +5833,7 @@ void ActionDatabase::universalAction(Architecture *conf)
   ActionGroup *actstackstall;
   AddrSpace *stackspace = conf->getStackSpace();
 
-  act = new ActionRestartGroup(Action::rule_onceperfunc,"universal",1);
+  act = new ActionRestartGroup(Action::rule_onceperfunc,"universal",4);
   registerAction(universalname,act);
 
   act->addAction( new ActionStart("base"));
