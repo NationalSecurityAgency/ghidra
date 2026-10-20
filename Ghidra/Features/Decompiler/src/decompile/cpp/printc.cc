@@ -2350,7 +2350,8 @@ void PrintC::emitLocalVarDecls(const Funcdata *fd)
   enditer = fd->getScopeLocal()->childrenEnd();
   while(iter!=enditer) {
     Scope *l1 = (*iter).second;
-    if (emitScopeVarDecls(l1,Symbol::no_category))
+    // Skip namespaces placed under the function (like switchD_...), their symbols are global
+    if (!l1->isGlobal() && emitScopeVarDecls(l1,Symbol::no_category))
       notempty = true;
     ++iter;
   }
