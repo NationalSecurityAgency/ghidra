@@ -76,7 +76,12 @@ public class DWARFRangeListHeader extends DWARFIndirectTableHeader {
 	}
 
 	@Override
-	public long getOffset(int index, BinaryReader reader) throws IOException {
+	public long getOffset(int index, long baseOffset, BinaryReader reader) throws IOException {
+		if (baseOffset != firstElementOffset) {
+			throw new IOException("Unexpected baseOffset [0x%x] for rnglist index: %d [0x%x]"
+					.formatted(baseOffset, index, index));
+		}
+
 		if (index < 0 || offsetEntryCount <= index) {
 			throw new IOException("Invalid range list index: " + index);
 		}

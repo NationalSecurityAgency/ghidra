@@ -76,21 +76,21 @@ public class PdbPlugin extends Plugin {
 
 	private void createActions() {
 		new ActionBuilder("Load PDB File", this.getName())
-			.withContext(ProgramActionContext.class, true)
-			.validContextWhen(pac -> pac.getProgram() != null &&
-				PdbAnalyzerCommon.canAnalyzeProgram(pac.getProgram()))
-			.menuPath(ToolConstants.MENU_FILE, "Load PDB File...")
-			.menuGroup("Import PDB", "3")
-			.helpLocation(new HelpLocation(PDB_PLUGIN_HELP_TOPIC, "Load PDB File"))
-			.onAction(pac -> loadPDB(pac))
-			.buildAndInstall(tool);
+				.withContext(ProgramActionContext.class, true)
+				.validWhen(pac -> pac.getProgram() != null &&
+					PdbAnalyzerCommon.canAnalyzeProgram(pac.getProgram()))
+				.menuPath(ToolConstants.MENU_FILE, "Load PDB File...")
+				.menuGroup("Import PDB", "3")
+				.helpLocation(new HelpLocation(PDB_PLUGIN_HELP_TOPIC, "Load PDB File"))
+				.onAction(pac -> loadPDB(pac))
+				.buildAndInstall(tool);
 
 		new ActionBuilder("Symbol Server Config", this.getName())
-			.menuPath(ToolConstants.MENU_EDIT, "Symbol Server Config")
-			.menuGroup(ToolConstants.TOOL_OPTIONS_MENU_GROUP)
-			.helpLocation(new HelpLocation(PDB_PLUGIN_HELP_TOPIC, "Symbol Server Config"))
-			.onAction(ac -> configPDB())
-			.buildAndInstall(tool);
+				.menuPath(ToolConstants.MENU_EDIT, "Symbol Server Config")
+				.menuGroup(ToolConstants.TOOL_OPTIONS_MENU_GROUP)
+				.helpLocation(new HelpLocation(PDB_PLUGIN_HELP_TOPIC, "Symbol Server Config"))
+				.onAction(ac -> configPDB())
+				.buildAndInstall(tool);
 	}
 
 	private void configPDB() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,6 +33,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.ContextChangeException;
 import ghidra.program.util.*;
 import ghidra.util.Lock;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -176,8 +177,10 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 
 	@Override
 	public void invalidateCache(boolean all) throws IOException {
-		this.invalidateReadCache();
-		invalidateRegisterStores();
+		try (Closeable c = lock.write()) {
+			this.invalidateReadCache();
+			invalidateRegisterStores();
+		}
 	}
 
 	@Override
@@ -213,24 +216,19 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 	@Override
 	public void deleteAddressRange(Address start, Address end, TaskMonitor monitor) {
 		AddressRange.checkValidRange(start, end);
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			super.deleteAddressRange(start, end, monitor);
 			if (program != null) {
 				program.setRegisterValuesChanged(null, start, end);
 			}
-		}
-		finally {
-			lock.release();
 		}
 	}
 
 	@Override
 	public void remove(Address start, Address end, Register register)
 			throws ContextChangeException {
-		lock.acquire();
 		boolean restore = false;
-		try {
+		try (Closeable c = lock.write()) {
 			checkContextWrite(register, start, end);
 			restore = !changing; // indicates that we just initiated a change
 			changing = true;
@@ -243,16 +241,14 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 			if (restore) {
 				changing = false;
 			}
-			lock.release();
 		}
 	}
 
 	@Override
 	public void setValue(Register register, Address start, Address end, BigInteger value)
 			throws ContextChangeException {
-		lock.acquire();
 		boolean restore = false;
-		try {
+		try (Closeable c = lock.write()) {
 			checkContextWrite(register, start, end);
 			restore = !changing; // indicates that we just initiated a change
 			changing = true;
@@ -265,7 +261,6 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 			if (restore) {
 				changing = false;
 			}
-			lock.release();
 		}
 
 	}
@@ -273,9 +268,8 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 	@Override
 	public void setRegisterValue(Address start, Address end, RegisterValue value)
 			throws ContextChangeException {
-		lock.acquire();
 		boolean restore = false;
-		try {
+		try (Closeable c = lock.write()) {
 			checkContextWrite(value.getRegister(), start, end);
 			restore = !changing; // indicates that we just initiated a change
 			changing = true;
@@ -288,7 +282,6 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 			if (restore) {
 				changing = false;
 			}
-			lock.release();
 		}
 	}
 
@@ -394,135 +387,87 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 
 	@Override
 	public void flushProcessorContextWriteCache() {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			super.flushProcessorContextWriteCache();
-		}
-		finally {
-			lock.release();
 		}
 	}
 
 	@Override
 	public void invalidateProcessorContextWriteCache() {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			super.invalidateProcessorContextWriteCache();
-		}
-		finally {
-			lock.release();
 		}
 	}
 
 	@Override
 	public AddressRangeIterator getRegisterValueAddressRanges(Register register) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			return super.getRegisterValueAddressRanges(register);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
 	@Override
 	public AddressRange getRegisterValueRangeContaining(Register register, Address addr) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			return super.getRegisterValueRangeContaining(register, addr);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
 	@Override
 	public AddressRangeIterator getRegisterValueAddressRanges(Register register, Address start,
 			Address end) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			return super.getRegisterValueAddressRanges(register, start, end);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
 	@Override
 	public AddressRangeIterator getDefaultRegisterValueAddressRanges(Register register) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			return super.getDefaultRegisterValueAddressRanges(register);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
 	@Override
 	public AddressRangeIterator getDefaultRegisterValueAddressRanges(Register register,
 			Address start, Address end) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			return super.getDefaultRegisterValueAddressRanges(register, start, end);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
 	@Override
 	public Register[] getRegistersWithValues() {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			return super.getRegistersWithValues();
-		}
-		finally {
-			lock.release();
 		}
 	}
 
 	@Override
 	public boolean hasValueOverRange(Register reg, BigInteger value, AddressSetView addrSet) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			return super.hasValueOverRange(reg, value, addrSet);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
 	@Override
 	public void setDefaultValue(RegisterValue registerValue, Address start, Address end) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			super.setDefaultValue(registerValue, start, end);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
 	@Override
 	public RegisterValue getDefaultValue(Register register, Address address) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			return super.getDefaultValue(register, address);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
 	@Override
 	public RegisterValue getNonDefaultValue(Register register, Address address) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			return super.getNonDefaultValue(register, address);
-		}
-		finally {
-			lock.release();
 		}
 	}
 

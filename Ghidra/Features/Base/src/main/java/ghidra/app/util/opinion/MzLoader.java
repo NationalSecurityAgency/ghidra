@@ -23,6 +23,9 @@ import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.mz.*;
+import ghidra.app.util.bin.format.ne.NewExecutable;
+import ghidra.app.util.bin.format.pe.PortableExecutable;
+import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.database.module.TreeManager;
@@ -65,7 +68,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 		}
 		MzExecutable mz = new MzExecutable(provider);
 		OldDOSHeader header = mz.getHeader();
-		if (header.isDosSignature() && !header.hasNewExeHeader() && !header.hasPeHeader()) {
+		if (header.isDosSignature() && !isPe(provider) && !isNe(provider)) {
 			List<QueryResult> results =
 				QueryOpinionService.query(getName(), "" + header.e_magic(), null);
 			for (QueryResult result : results) {
@@ -125,6 +128,37 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 	@Override
 	public int getTierPriority() {
 		return 60; // we are less priority than PE!  Important for ProgramLoader
+	}
+
+	/**
+	 * {@return true if the given {@link ByteProvider} contains a PE binary}
+	 * 
+	 * @param provider The {@link ByteProvider} to check
+	 */
+	private boolean isPe(ByteProvider provider) {
+		try {
+			PortableExecutable pe =
+				new PortableExecutable(provider, SectionLayout.FILE, false, false);
+			return pe.getNTHeader() != null;
+		}
+		catch (IOException e) {
+			return false;
+		}
+	}
+
+	/**
+	 * {@return true if the given {@link ByteProvider} contains an NE binary}
+	 * 
+	 * @param provider The {@link ByteProvider} to check
+	 */
+	private boolean isNe(ByteProvider provider) {
+		try {
+			NewExecutable ne = new NewExecutable(provider, null);
+			return ne.getWindowsHeader() != null;
+		}
+		catch (IOException e) {
+			return false;
+		}
 	}
 
 	/**

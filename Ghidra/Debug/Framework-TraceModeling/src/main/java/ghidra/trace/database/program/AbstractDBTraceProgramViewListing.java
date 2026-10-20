@@ -41,8 +41,8 @@ import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.database.program.DBTraceProgramViewMemory.RegionEntry;
 import ghidra.trace.model.*;
 import ghidra.trace.model.listing.*;
+import ghidra.trace.model.memory.TraceMemoryOperations.StatePredicate;
 import ghidra.trace.model.memory.TraceMemoryRegion;
-import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.program.TraceProgramViewListing;
 import ghidra.trace.model.property.TracePropertyMapOperations;
@@ -721,7 +721,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 			throw new CodeUnitInsertionException("Code unit would extend beyond address space");
 		}
 		var mostRecent = program.memory.memoryManager.getViewMostRecentStateEntry(program.snap,
-			range, s -> s == TraceMemoryState.KNOWN);
+			range, StatePredicate.IS_KNOWN);
 		long snap = mostRecent == null ? program.snap : mostRecent.getKey().getY2();
 		return codeOperations.instructions()
 				.create(Lifespan.nowOn(snap), addr, program.platform, prototype, context,
@@ -793,12 +793,14 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 
 	@Override
 	public ProgramFragment getFragment(String treeName, String name) {
-		RegionEntry entry = program.memory.getRegionsByName().get(name);
-		if (entry == null) {
-			return null;
+		try (LockHold _ = program.trace.lockRead()) {
+			RegionEntry entry = program.memory.getRegionsByName().get(name);
+			if (entry == null) {
+				return null;
+			}
+			return fragmentsByRegion.computeIfAbsent(entry.region,
+				r -> new DBTraceProgramViewFragment(this, r, entry.snap));
 		}
-		return fragmentsByRegion.computeIfAbsent(entry.region,
-			r -> new DBTraceProgramViewFragment(this, r, entry.snap));
 	}
 
 	@Override

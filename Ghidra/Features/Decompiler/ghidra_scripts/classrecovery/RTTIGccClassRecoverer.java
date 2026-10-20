@@ -55,9 +55,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		"N10__cxxabiv120__si_class_type_infoE";
 	private static final String MANGLED_VMI_CLASS_TYPEINFO_NAMESPACE =
 		"N10__cxxabiv121__vmi_class_type_infoE";
-	private static final String MANGLED_VTABLE_PREFIX = "_ZTV";
-	private static final String MANGLED_STRING_PREFIX = "_ZTS";
-	private static final String MANGLED_TYPEINFO_PREFIX = "_ZTI";
+	private static final String MANGLED_VTABLE_PREFIX = "ZTV";
+	private static final String MANGLED_STRING_PREFIX = "ZTS";
+	private static final String MANGLED_TYPEINFO_PREFIX = "ZTI";
 
 	private static final String VMI_CLASS_TYPE_INFO_STRUCTURE = "VmiClassTypeInfoStructure";
 	private static final String BASE_CLASS_TYPE_INFO_STRUCTURE = "BaseClassTypeInfoStructure";
@@ -430,10 +430,17 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	private Symbol findAndReturnDemangledSymbol(String mangledSymbolName,
 			String specialClassNamespaceName, String classNamespaceName, String label) {
 
-		SymbolIterator symbolIterator = symbolTable.getSymbolIterator(mangledSymbolName, true);
-		if (symbolIterator.hasNext()) {
+		// check for both _ and __ prefixed mangled names
+		List<Symbol> mangledSymbols = getSymbols("_" + mangledSymbolName, true);
+		if (mangledSymbols.isEmpty()) {
+			mangledSymbols = getSymbols("__" + mangledSymbolName, true);
+		}
 
-			Symbol mangledSymbol = symbolIterator.next();
+		for (Symbol mangledSymbol : mangledSymbols) {
+			if (monitor.isCancelled()) {
+				return null;
+			}
+
 			Address symbolAddress = mangledSymbol.getAddress();
 			Namespace specialClassNamespace =
 				getOrCreateNamespace(specialClassNamespaceName, globalNamespace);
@@ -458,6 +465,20 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		}
 		return null;
+	}
+
+	private List<Symbol> getSymbols(String name, boolean caseSensitive) {
+
+		List<Symbol> symbols = new ArrayList<>();
+		SymbolIterator symbolIterator = symbolTable.getSymbolIterator(name, caseSensitive);
+		if (symbolIterator.hasNext()) {
+			if (monitor.isCancelled()) {
+				return new ArrayList<>();
+			}
+			Symbol symbol = symbolIterator.next();
+			symbols.add(symbol);
+		}
+		return symbols;
 	}
 
 	private Symbol findTypeinfoSymbolUsingMangledNamespaceString(String mangledNamespace,
@@ -3960,7 +3981,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		Address typeinfoAddress = typeinfoNameRef.subtract(defaultPointerSize);
 
-		mangledNamespaceString = MANGLED_STRING_PREFIX + mangledNamespaceString;
+		// Doesn't matter if _ or __ is prefixed because gets same result and this is manufacturing
+		// not searching for
+		mangledNamespaceString = "_" + MANGLED_STRING_PREFIX + mangledNamespaceString;
 
 		try {
 			symbolTable.createLabel(findSingleMangledString, mangledNamespaceString,

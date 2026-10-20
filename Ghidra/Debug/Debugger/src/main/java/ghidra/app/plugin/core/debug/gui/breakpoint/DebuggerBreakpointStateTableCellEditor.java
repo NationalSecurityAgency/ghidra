@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,20 +23,21 @@ import javax.swing.*;
 import javax.swing.plaf.basic.BasicButtonUI;
 import javax.swing.table.TableCellEditor;
 
+import docking.widgets.table.GTable;
 import docking.widgets.table.GTableFilterPanel;
 import ghidra.debug.api.breakpoint.LogicalBreakpoint.State;
 
 public abstract class DebuggerBreakpointStateTableCellEditor<T> extends AbstractCellEditor
 		implements TableCellEditor, ActionListener {
-	private final GTableFilterPanel<T> filterPanel;
 	protected final JButton button = new JButton();
 
 	private State value = State.NONE;
 	private T row;
 
-	public DebuggerBreakpointStateTableCellEditor(
-			GTableFilterPanel<T> filterPanel) {
-		this.filterPanel = filterPanel;
+	private Class<T> cls;
+
+	public DebuggerBreakpointStateTableCellEditor(Class<T> cls) {
+		this.cls = cls;
 
 		button.setHorizontalAlignment(SwingConstants.CENTER);
 		button.setOpaque(true);
@@ -54,6 +55,10 @@ public abstract class DebuggerBreakpointStateTableCellEditor<T> extends Abstract
 	@Override
 	public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected,
 			int row, int column) {
+		if (!(table instanceof GTable gtable)) {
+			return null;
+		}
+		GTableFilterPanel<?> filterPanel = gtable.getTableFilterPanel();
 		if (isSelected) {
 			button.setBackground(table.getSelectionBackground());
 		}
@@ -61,7 +66,12 @@ public abstract class DebuggerBreakpointStateTableCellEditor<T> extends Abstract
 			// TODO: Alternating colors? Can't inherit GTableCellRenderer....
 			button.setBackground(table.getBackground());
 		}
-		this.row = filterPanel.getRowObject(row);
+		Object rowObj = filterPanel.getRowObject(row);
+		if (!(cls.isInstance(rowObj))) {
+			return null;
+		}
+
+		this.row = cls.cast(rowObj);
 		this.value = (State) value;
 		button.setIcon(this.value.icon);
 		button.setHorizontalAlignment(SwingConstants.CENTER);

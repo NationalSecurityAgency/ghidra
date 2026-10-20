@@ -20,6 +20,7 @@ import java.util.List;
 
 import ghidra.app.util.PseudoInstruction;
 import ghidra.pcode.emu.DefaultPcodeThread.PcodeEmulationLibrary;
+import ghidra.pcode.emu.jit.folding.MaskedBytes;
 import ghidra.pcode.emu.jit.op.JitNopOp;
 import ghidra.pcode.exec.*;
 import ghidra.program.model.pcode.PcodeOp;
@@ -27,20 +28,17 @@ import ghidra.program.model.pcode.Varnode;
 
 /**
  * The decoder's wrapper around the emulator's userop library
- * 
  * <p>
  * This library serves two purposes: 1) to override {@link PcodeEmulationLibrary#emu_exec_decoded()}
  * and {@link PcodeEmulationLibrary#emu_skip_decoded()}, and 2) to check and inline p-code userops
- * that {@link ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition#canInlinePcode() allow}
- * it.
- * 
+ * that {@linkplain ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition#canInlinePcode()
+ * allow} it.
  * <p>
  * We accomplish the first purpose simply by adding the two userops using the usual annotations. The
  * two built-in userops regarding the decoded instruction are easily inlinable, so we will mark them
  * as such. Note, however, that they are separate from the wrappers we mention for the second
  * purpose (inlining), and so we must implement that inlining in the actual userop. We still mark
  * them for informational purposes and because the translator needs to know.
- * 
  * <p>
  * We accomplish the second purpose of inlining by accepting the emulator's userop library and
  * individually wrapping each of its userops, excluding the two we override. We allow each userop's
@@ -50,12 +48,12 @@ import ghidra.program.model.pcode.Varnode;
  * {@link PcodeOp#CALLOTHER callother} op, for bookkeeping purposes. Instead we will map it to a
  * {@link JitNopOp nop} during translation.
  */
-public class DecoderUseropLibrary extends AnnotatedPcodeUseropLibrary<Object> {
+public class DecoderUseropLibrary extends AnnotatedPcodeUseropLibrary<MaskedBytes> {
 
 	/**
 	 * The wrapper around one of the emulator's userops
 	 */
-	protected class WrappedUseropDefinition implements PcodeUseropDefinition<Object> {
+	protected class WrappedUseropDefinition implements PcodeUseropDefinition<MaskedBytes> {
 		private final PcodeUseropDefinition<byte[]> rtOp;
 
 		/**
@@ -78,8 +76,9 @@ public class DecoderUseropLibrary extends AnnotatedPcodeUseropLibrary<Object> {
 		}
 
 		@Override
-		public void execute(PcodeExecutor<Object> executor, PcodeUseropLibrary<Object> library,
-				PcodeOp op, Varnode outVar, List<Varnode> inVars) {
+		public void execute(PcodeExecutor<MaskedBytes> executor,
+				PcodeUseropLibrary<MaskedBytes> library, PcodeOp op, Varnode outVar,
+				List<Varnode> inVars) {
 			throw new AssertionError();
 		}
 
@@ -94,13 +93,29 @@ public class DecoderUseropLibrary extends AnnotatedPcodeUseropLibrary<Object> {
 		 */
 		@Override
 		@SuppressWarnings("unchecked")
-		public void execute(PcodeExecutor<Object> executor, PcodeUseropLibrary<Object> library,
-				PcodeOp op) {
+		public void execute(PcodeExecutor<MaskedBytes> executor,
+				PcodeUseropLibrary<MaskedBytes> library, PcodeOp op) {
+			@SuppressWarnings("rawtypes")
+			PcodeExecutor rawExec = executor;
+			@SuppressWarnings("rawtypes")
+			PcodeUseropLibrary rawLib = library;
 			if (rtOp.canInlinePcode()) {
-				@SuppressWarnings("rawtypes")
-				PcodeExecutor rawExec = executor;
-				@SuppressWarnings("rawtypes")
-				PcodeUseropLibrary rawLib = library;
+				if (executor instanceof DecoderExecutor decEx) {
+					CollectExecutor collect = new CollectExecutor(decEx);
+					@SuppressWarnings("rawtypes")
+					PcodeExecutor rawColl = collect;
+					rtOp.execute(rawColl, rawLib, op);
+					List<PcodeOp> code = decEx.rewriteOps(collect.ops);
+					decEx.recordInline(op, code);
+					executor.execute(code, library);
+				}
+				else {
+					// likely the FoldRevalidator's executor, let it capture inlined ops
+					rtOp.execute(rawExec, rawLib, op);
+				}
+			}
+			else if (rtOp.isFunctional() && !rtOp.hasSideEffects() && !rtOp.modifiesContext()) {
+				// FoldingExecutor might like to try folding it
 				rtOp.execute(rawExec, rawLib, op);
 			}
 			else {
@@ -111,6 +126,11 @@ public class DecoderUseropLibrary extends AnnotatedPcodeUseropLibrary<Object> {
 		@Override
 		public boolean isFunctional() {
 			return rtOp.isFunctional();
+		}
+
+		@Override
+		public boolean canInterrupt() {
+			return rtOp.canInterrupt();
 		}
 
 		@Override
@@ -126,6 +146,16 @@ public class DecoderUseropLibrary extends AnnotatedPcodeUseropLibrary<Object> {
 		@Override
 		public boolean canInlinePcode() {
 			return rtOp.canInlinePcode();
+		}
+
+		@Override
+		public boolean isOutSigned() {
+			return rtOp.isOutSigned();
+		}
+
+		@Override
+		public boolean isInSigned(int index) {
+			return rtOp.isInSigned(index);
 		}
 
 		@Override
@@ -161,32 +191,44 @@ public class DecoderUseropLibrary extends AnnotatedPcodeUseropLibrary<Object> {
 
 	/**
 	 * The replacement for {@link PcodeEmulationLibrary#emu_exec_decoded()}.
-	 * 
 	 * <p>
 	 * The one built into the emulator would have the thread interpret the decoded instruction
 	 * directly. While this might "work," it totally missed the purpose of JIT translation. We
 	 * instead inline the userop's p-code into the rest of the passage. We accomplish this by having
 	 * the decoder interpret the p-code instead. We also need to ensure the decoded instruction is
 	 * added into the passage.
-	 * 
 	 * <p>
 	 * Note that the {@link PcodeOp#CALLOTHER callother} op will be mapped to a {@link JitNopOp nop}
 	 * during translation because we have set {@code canInline}.
 	 * 
 	 * @param executor the decoder's executor
+	 * @param library the decoder's library
+	 * @param op the op being executed
 	 */
 	@PcodeUserop(canInline = true)
-	public void emu_exec_decoded(@OpExecutor PcodeExecutor<Object> executor) {
-		DecoderExecutor de = (DecoderExecutor) executor;
-		PseudoInstruction instruction = de.decodeInstruction();
-		de.addInstruction(instruction);
-		PcodeProgram program = PcodeProgram.fromInstruction(instruction, false);
-		de.execute(program);
+	public void emu_exec_decoded(@OpExecutor PcodeExecutor<MaskedBytes> executor,
+			@OpLibrary PcodeUseropLibrary<MaskedBytes> library, @OpOp PcodeOp op) {
+		if (executor instanceof DecoderExecutor de) {
+			// This is not wrapped, so it must collect and record the inline itself
+			PseudoInstruction instruction = de.decodeInstruction();
+			de.addInstruction(instruction);
+			PcodeProgram program = PcodeProgram.fromInstruction(instruction, false);
+			program = new PcodeProgram(program, de.rewriteOps(program.getCode()));
+			de.recordInline(op, program.getCode());
+			executor.execute(program, library);
+		}
+		else if (executor instanceof CanDecode cd) {
+			PseudoInstruction instruction = cd.decodeInstruction();
+			PcodeProgram program = PcodeProgram.fromInstruction(instruction, false);
+			executor.execute(program, library);
+		}
+		else {
+			throw new AssertionError();
+		}
 	}
 
 	/**
 	 * The replacement for {@link PcodeEmulationLibrary#emu_skip_decoded()}.
-	 * 
 	 * <p>
 	 * The one built into the emulator would have the thread drop and skip the decoded instruction
 	 * directly. This would not have the intended effect, because the decoder is the thing that
@@ -197,16 +239,20 @@ public class DecoderUseropLibrary extends AnnotatedPcodeUseropLibrary<Object> {
 	 * through, the {@link DecoderExecutor#checkFallthroughAndAccumulate(PcodeProgram)} routine just
 	 * does its usual. If the inject falls through, {@link DecoderExecutor#getAdvancedAddress()}
 	 * considers the decoded instruction, even though it was never interpreted.
-	 * 
 	 * <p>
 	 * Note that the {@link PcodeOp#CALLOTHER callother} op will still be mapped to a
 	 * {@link JitNopOp nop} during translation because we have set {@code canInline}.
 	 * 
 	 * @param executor the decoder's executor
+	 * @param op the op being executed
 	 */
 	@PcodeUserop(canInline = true)
-	public void emu_skip_decoded(@OpExecutor PcodeExecutor<Object> executor) {
-		DecoderExecutor de = (DecoderExecutor) executor;
-		de.decodeInstruction();
+	public void emu_skip_decoded(@OpExecutor PcodeExecutor<MaskedBytes> executor,
+			@OpOp PcodeOp op) {
+		if (executor instanceof DecoderExecutor de) {
+			de.decodeInstruction();
+			// This is not wrapped, so it must record the "inline" itself
+			de.recordInline(op, List.of());
+		}
 	}
 }

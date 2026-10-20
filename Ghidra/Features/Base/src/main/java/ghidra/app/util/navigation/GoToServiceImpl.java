@@ -17,9 +17,13 @@ package ghidra.app.util.navigation;
 
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.gotoquery.GoToHelper;
-import ghidra.app.services.*;
+import ghidra.app.services.GoToOverrideService;
+import ghidra.app.services.GoToService;
+import ghidra.app.services.GoToServiceListener;
+import ghidra.app.services.QueryData;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressOutOfBoundsException;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.ExternalLocation;
 import ghidra.program.util.ProgramLocation;
@@ -36,11 +40,6 @@ public class GoToServiceImpl implements GoToService {
 		this.plugin = plugin;
 		this.defaultNavigatable = defaultNavigatable;
 		helper = new GoToHelper(plugin.getTool());
-	}
-
-	@Override
-	public GoToOverrideService getOverrideService() {
-		return override;
 	}
 
 	@Override
@@ -142,22 +141,28 @@ public class GoToServiceImpl implements GoToService {
 		GoToQuery query = new GoToQuery(navigatable, plugin, this, queryData, fromAddr,
 			helper.getOptions(), monitor);
 
-		boolean result = query.processQuery();
-		if (listener != null) {
-			listener.gotoCompleted(queryData.getQueryString(), result);
+		boolean result;
+		try {
+			result = query.processQuery();
+			if (listener != null) {
+				listener.gotoCompleted(queryData.getQueryString(), result);
+			}
+			return result;
 		}
-		return result;
+		catch (AddressOutOfBoundsException e) {
+			// The exception has more information about the failure. Pass that to the listener
+			// if the user has supplied one.
+			if (listener != null) {
+				listener.gotoFailed(e);
+			}
+		}
+		return false;
 	}
 
 	@Override
 	public boolean goToQuery(Address fromAddr, QueryData queryData, GoToServiceListener listener,
 			TaskMonitor monitor) {
 		return goToQuery(defaultNavigatable, fromAddr, queryData, listener, monitor);
-	}
-
-	@Override
-	public void setOverrideService(GoToOverrideService override) {
-		this.override = override;
 	}
 
 	@Override

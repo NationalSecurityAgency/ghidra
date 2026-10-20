@@ -15,8 +15,9 @@
  */
 package ghidra.framework.plugintool.dialog;
 
-import static org.hamcrest.collection.IsEmptyCollection.empty;
-import static org.hamcrest.core.IsNot.not;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.collection.IsEmptyCollection.*;
+import static org.hamcrest.core.IsNot.*;
 import static org.junit.Assert.*;
 
 import java.util.*;

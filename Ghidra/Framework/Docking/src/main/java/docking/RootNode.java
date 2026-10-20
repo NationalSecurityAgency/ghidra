@@ -16,9 +16,9 @@
 package docking;
 
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.util.*;
+import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.*;
@@ -277,7 +277,8 @@ class RootNode extends WindowNode {
 			}
 			child.parent = this;
 		}
-		placeholder.getNode().add(placeholder);
+
+		node.add(placeholder);
 	}
 
 	/**
@@ -513,10 +514,7 @@ class RootNode extends WindowNode {
 		});
 
 		List<ComponentPlaceholder> restoredPlaceholders = new ArrayList<>();
-		Iterator<?> elementIterator = rootNodeElement.getChildren().iterator();
-		while (elementIterator.hasNext()) {
-			Element elem = (Element) elementIterator.next();
-
+		for (Element elem : rootNodeElement.getChildren()) {
 			if (elem.getName().equals("WINDOW_NODE")) {
 				Node node = new DetachedWindowNode(elem, winMgr, this, dropTargetFactory,
 					restoredPlaceholders);
@@ -668,22 +666,10 @@ class RootNode extends WindowNode {
 		abstract String getTitle();
 
 		/**
-		 * Stores the given bounds if they are not the maximized bounds
+		 * Stores the given bounds.  These should not be the maximized bounds.
 		 * @param bounds the bounds
 		 */
 		public void setLastBounds(Rectangle bounds) {
-			Rectangle screenBounds = WindowUtilities.getScreenBounds(getWindow());
-			if (screenBounds == null) {
-				return;
-			}
-
-			Rectangle boundsSize = new Rectangle(bounds.getSize());
-			Rectangle screenSize = new Rectangle(screenBounds.getSize());
-			if (boundsSize.contains(screenSize)) {
-				// This can happen when the bounds being set are the full screen bounds.  We only 
-				// wish to save the non-maximized bounds.
-				return;
-			}
 			this.lastBounds = bounds;
 		}
 
@@ -727,11 +713,6 @@ class RootNode extends WindowNode {
 					winMgr.setActive(wrappedDialog, true);
 				}
 
-				@Override
-				public void windowStateChanged(WindowEvent e) {
-					// this is called when transitioning in and out of the full-screen state
-					setLastBounds(wrappedDialog.getBounds());
-				}
 			};
 
 			dialog.addWindowListener(windowListener);
@@ -837,9 +818,24 @@ class RootNode extends WindowNode {
 				@Override
 				public void windowStateChanged(WindowEvent e) {
 					// this is called when transitioning in and out of the full-screen state
-					setLastBounds(wrappedFrame.getBounds());
+					int newState = e.getNewState();
+					if (newState != Frame.MAXIMIZED_BOTH) {
+						// don't save the bounds when in full-screen mode; these bounds are later 
+						// used to restore the non-full-screen state
+						setLastBounds(wrappedFrame.getBounds());
+					}
 				}
 			};
+
+			wrappedFrame.addComponentListener(new ComponentAdapter() {
+				@Override
+				public void componentMoved(ComponentEvent e) {
+					int state = wrappedFrame.getExtendedState();
+					if (state != Frame.MAXIMIZED_BOTH) {
+						setLastBounds(wrappedFrame.getBounds());
+					}
+				}
+			});
 
 			wrappedFrame.addWindowListener(windowListener);
 			wrappedFrame.addWindowStateListener(windowListener);

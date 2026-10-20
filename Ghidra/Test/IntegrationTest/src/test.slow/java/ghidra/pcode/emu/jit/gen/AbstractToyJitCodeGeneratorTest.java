@@ -3669,6 +3669,49 @@ public abstract class AbstractToyJitCodeGeneratorTest extends AbstractJitCodeGen
 	}
 
 	@Test
+	public void testEmuInjectionAtEntry() throws Exception {
+		Translation tr = translateLang(getLanguageID(), 0x00400000, """
+				imm r0,#123
+				add r0,#7
+				""", Map.ofEntries(
+			Map.entry(0x00400000L, """
+					r1 = 0xbeef;
+					emu_exec_decoded();
+					""")));
+
+		tr.runDecodeErr(0x00400004);
+		assertEquals(123 + 7, tr.getLongRegVal("r0"));
+		assertEquals(0xbeef, tr.getLongRegVal("r1"));
+	}
+
+	@Test
+	public void testEmuInjectionAtEntrySkip() throws Exception {
+		Translation tr = translateLang(getLanguageID(), 0x00400000, """
+				imm r0,#123
+				add r0,#7
+				""", Map.ofEntries(
+			Map.entry(0x00400000L, """
+					r1 = 0xbeef;
+					emu_skip_decoded();
+					""")));
+
+		tr.runDecodeErr(0x00400004);
+		assertEquals(7, tr.getLongRegVal("r0"));
+		assertEquals(0xbeef, tr.getLongRegVal("r1"));
+	}
+
+	@Test
+	public void testEmuInjectionAtEntryEmpty() throws Exception {
+		Translation tr = translateLang(getLanguageID(), 0x00400000, """
+				imm r0,#123
+				add r0,#7
+				""", Map.ofEntries(
+			Map.entry(0x00400000L, """
+					""")));
+		// Can't run, or else it loops. Just verify it doesn't crash.
+	}
+
+	@Test
 	public void testEmuInjectionCallEmuSkipDecoded() throws Exception {
 		Translation tr = translateLang(getLanguageID(), 0x00400000, """
 				imm r0,#123
@@ -3700,6 +3743,8 @@ public abstract class AbstractToyJitCodeGeneratorTest extends AbstractJitCodeGen
 			}
 			return "sCarryLongRaw".equals(mi.name);
 		}).count();
-		assertEquals(1, countSCarrys);
+		long expected =
+			tr.thread().getMachine().getConfiguration().removeUnusedOperations() ? 1 : 2;
+		assertEquals(expected, countSCarrys);
 	}
 }

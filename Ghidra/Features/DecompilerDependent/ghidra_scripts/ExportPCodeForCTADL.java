@@ -17,7 +17,6 @@
 //@category PCode
 
 import java.io.*;
-import java.lang.Enum;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.*;
@@ -33,6 +32,7 @@ import ghidra.program.database.symbol.FunctionSymbol;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.Enum;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.pcode.*;

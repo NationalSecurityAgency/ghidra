@@ -40,7 +40,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.*;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.TraceStaticMapping;
 import ghidra.trace.model.target.TraceObject;
@@ -178,7 +178,7 @@ public class DebuggerRmiLogicalBreakpointServiceTest extends
 		Trace trace = target.getTrace();
 		try (Transaction tx = trace.openTransaction("Add access breakpoint")) {
 			addBreakpointAndLoc(trace.getObjectManager(), Lifespan.nowOn(target.getSnap()),
-				tb.range(min, min), TraceBreakpointKindSet.ACCESS);
+				tb.range(min, min), CommonSet.ACCESS.kinds());
 		}
 		waitForDomainObject(trace);
 	}
@@ -190,7 +190,7 @@ public class DebuggerRmiLogicalBreakpointServiceTest extends
 		Trace trace = target.getTrace();
 		try (Transaction tx = trace.openTransaction("Add software breakpoint")) {
 			addBreakpointAndLoc(trace.getObjectManager(), Lifespan.nowOn(target.getSnap()),
-				tb.range(min, min), TraceBreakpointKindSet.SW_EXECUTE, id);
+				tb.range(min, min), CommonSet.SWX.kinds(), id);
 		}
 		waitForDomainObject(trace);
 	}
@@ -203,7 +203,7 @@ public class DebuggerRmiLogicalBreakpointServiceTest extends
 		List<? extends TraceBreakpointLocation> locsToDel = trace.getBreakpointManager()
 				.getAllBreakpointLocations()
 				.stream()
-				.filter(loc -> loc.getKinds(snap).equals(TraceBreakpointKindSet.SW_EXECUTE))
+				.filter(loc -> loc.getKinds(snap).equals(CommonSet.SWX.kinds()))
 				.toList();
 		List<TraceBreakpointSpec> specsToDel =
 			locsToDel.stream().map(bp -> bp.getSpecification()).distinct().toList();
@@ -279,7 +279,7 @@ public class DebuggerRmiLogicalBreakpointServiceTest extends
 			tb.createRootObject(SCHEMA_CTX);
 			bpt = tb.trace.getBreakpointManager()
 					.addBreakpoint("Processes[1].Breakpoints[0][0]", Lifespan.nowOn(0),
-						tb.addr(0x55550123), Set.of(), Set.of(TraceBreakpointKind.SW_EXECUTE),
+						tb.addr(0x55550123), Set.of(), CommonSet.SWX.kinds(),
 						false, "");
 		}
 		waitForDomainObject(tb.trace);
@@ -323,7 +323,7 @@ public class DebuggerRmiLogicalBreakpointServiceTest extends
 			tb.createRootObject(SCHEMA_CTX);
 			bpt = tb.trace.getBreakpointManager()
 					.addBreakpoint("Processes[1].Breakpoints[0][0]", Lifespan.nowOn(0),
-						tb.addr(0x55550123), Set.of(), Set.of(TraceBreakpointKind.SW_EXECUTE),
+						tb.addr(0x55550123), Set.of(), CommonSet.SWX.kinds(),
 						false, "");
 		}
 		waitForDomainObject(tb.trace);
@@ -379,7 +379,7 @@ public class DebuggerRmiLogicalBreakpointServiceTest extends
 			tb.createRootObject(SCHEMA_CTX);
 			bpt = tb.trace.getBreakpointManager()
 					.addBreakpoint("Processes[1].Breakpoints[0][0]", Lifespan.nowOn(0),
-						tb.addr(0x55550123), Set.of(), Set.of(TraceBreakpointKind.SW_EXECUTE),
+						tb.addr(0x55550123), Set.of(), CommonSet.SWX.kinds(),
 						false, "");
 			addTextMappingDead(0, program, tb);
 		}
@@ -431,7 +431,7 @@ public class DebuggerRmiLogicalBreakpointServiceTest extends
 			tb.createRootObject(SCHEMA_CTX);
 			bpt = tb.trace.getBreakpointManager()
 					.addBreakpoint("Processes[1].Breakpoints[0][0]", Lifespan.nowOn(0),
-						tb.addr(0x55550123), Set.of(), Set.of(TraceBreakpointKind.SW_EXECUTE),
+						tb.addr(0x55550123), Set.of(), CommonSet.SWX.kinds(),
 						false, "");
 			addTextMappingDead(0, program, tb);
 		}

@@ -15,14 +15,12 @@
  */
 package ghidra.util.database;
 
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.*;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import db.DBHandle;
 import ghidra.framework.data.DBDomainObjectSupport;
 import ghidra.framework.data.OpenMode;
-import ghidra.util.Msg;
-import ghidra.util.Swing;
+import ghidra.util.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -86,88 +84,11 @@ public abstract class DBCachedDomainObjectAdapter extends DBDomainObjectSupport 
 	}
 
 	/**
-	 * Adapts a {@link ghidra.util.Lock} to the {@link Lock} interface
-	 * 
-	 * <p>
-	 * Not all operations are supported. In particular, no {@link #lockInterruptibly()},
-	 * {@link #tryLock(long,TimeUnit)}, nor {@link #newCondition()}.
-	 */
-	static class GhidraLockWrappingLock implements Lock {
-		private final ghidra.util.Lock ghidraLock;
-
-		public GhidraLockWrappingLock(ghidra.util.Lock ghidraLock) {
-			this.ghidraLock = ghidraLock;
-		}
-
-		@Override
-		public void lock() {
-			ghidraLock.acquire();
-		}
-
-		@Override
-		public void lockInterruptibly() throws InterruptedException {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean tryLock() {
-			synchronized (ghidraLock) { // Yes, sync on the lock's intrinsic lock
-				Thread lockOwner = ghidraLock.getOwner();
-				if (lockOwner == null || lockOwner == Thread.currentThread()) {
-					ghidraLock.acquire();
-					return true;
-				}
-				return false;
-			}
-		}
-
-		@Override
-		public boolean tryLock(long time, TimeUnit unit) throws InterruptedException {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void unlock() {
-			ghidraLock.release();
-		}
-
-		@Override
-		public Condition newCondition() {
-			throw new UnsupportedOperationException();
-		}
-	}
-
-	/**
-	 * Not a true read-write lock, but adapts a {@link ghidra.util.Lock} to the
-	 * {@link ReadWriteLock} interface. The read lock and the write lock are just the same lock
-	 */
-	static class GhidraLockWrappingRWLock implements ReadWriteLock {
-		private final GhidraLockWrappingLock oneLock;
-
-		public GhidraLockWrappingRWLock(ghidra.util.Lock ghidraLock) {
-			this.oneLock = new GhidraLockWrappingLock(ghidraLock);
-		}
-
-		@Override
-		public Lock readLock() {
-			return oneLock;
-		}
-
-		@Override
-		public Lock writeLock() {
-			return oneLock;
-		}
-	}
-
-	protected ReadWriteLock rwLock;
-
-	/**
 	 * @see DBDomainObjectSupport
 	 */
 	protected DBCachedDomainObjectAdapter(DBHandle dbh, OpenMode openMode, TaskMonitor monitor,
 			String name, int timeInterval, int bufSize, Object consumer) {
 		super(dbh, openMode, monitor, name, timeInterval, bufSize, consumer);
-		this.rwLock = new GhidraLockWrappingRWLock(lock);
 	}
 
 	/**
@@ -175,7 +96,7 @@ public abstract class DBCachedDomainObjectAdapter extends DBDomainObjectSupport 
 	 * 
 	 * @return the lock
 	 */
-	public ReadWriteLock getReadWriteLock() {
-		return rwLock;
+	public Lock getReadWriteLock() {
+		return lock;
 	}
 }

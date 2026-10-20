@@ -133,6 +133,11 @@ public class ModifiedPcodeThread<T> extends DefaultPcodeThread<T> {
 			}
 
 			@Override
+			public boolean canInterrupt() {
+				return true;
+			}
+
+			@Override
 			public boolean hasSideEffects() {
 				return true;
 			}
@@ -144,6 +149,16 @@ public class ModifiedPcodeThread<T> extends DefaultPcodeThread<T> {
 
 			@Override
 			public boolean canInlinePcode() {
+				return false;
+			}
+
+			@Override
+			public boolean isOutSigned() {
+				return false;
+			}
+
+			@Override
+			public boolean isInSigned(int index) {
 				return false;
 			}
 

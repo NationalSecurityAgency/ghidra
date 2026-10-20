@@ -908,4 +908,8 @@ public class Pinning {
 		}
 		return result;
 	}
+
+	public Map<DataVertex, DataVertex> getPinMap() {
+		return pinMap;
+	}
 }

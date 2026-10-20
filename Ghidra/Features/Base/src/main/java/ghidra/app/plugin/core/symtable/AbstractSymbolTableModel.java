@@ -23,8 +23,8 @@ import ghidra.app.cmd.label.DeleteLabelCmd;
 import ghidra.app.cmd.label.RenameLabelCmd;
 import ghidra.app.util.template.TemplateSimplifier;
 import ghidra.docking.settings.Settings;
+import ghidra.framework.cmd.Command;
 import ghidra.framework.cmd.CompoundCmd;
-import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
@@ -33,9 +33,11 @@ import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.Msg;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.table.AddressBasedTableModel;
 import ghidra.util.table.column.*;
 import ghidra.util.table.field.*;
+import ghidra.util.task.*;
 
 public abstract class AbstractSymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 
@@ -51,7 +53,6 @@ public abstract class AbstractSymbolTableModel extends AddressBasedTableModel<Sy
 	public static final int SOURCE_COL = 5;
 	public static final int REFS_COL = 6;
 
-	private PluginTool tool;
 	protected SymbolTable symbolTable;
 	protected ReferenceManager refMgr;
 	protected SymbolRowObject lastSymbol;
@@ -59,9 +60,8 @@ public abstract class AbstractSymbolTableModel extends AddressBasedTableModel<Sy
 
 	protected SymbolRenderer symbolRenderer = new SymbolRenderer();
 
-	AbstractSymbolTableModel(PluginTool tool) {
-		super("Symbols", tool, null, null);
-		this.tool = tool;
+	AbstractSymbolTableModel(ServiceProvider sp) {
+		super("Symbols", sp, null, null);
 		this.filter = new NewSymbolFilter();
 	}
 
@@ -166,9 +166,11 @@ public abstract class AbstractSymbolTableModel extends AddressBasedTableModel<Sy
 			return;
 		}
 
-		RenameLabelCmd cmd = new RenameLabelCmd(symbol, newName, SourceType.USER_DEFINED);
-		if (!tool.execute(cmd, getProgram())) {
-			Msg.showError(getClass(), null, "Error Renaming Symbol", cmd.getStatusMsg());
+		RenameTask task = new RenameTask(symbol, newName);
+		TaskLauncher.launch(task);
+
+		if (!task.success()) {
+			Msg.showError(getClass(), null, "Error Renaming Symbol", task.status());
 		}
 	}
 
@@ -229,15 +231,14 @@ public abstract class AbstractSymbolTableModel extends AddressBasedTableModel<Sy
 		}
 	}
 
-	void delete(List<Symbol> rowObjects) {
-		if (rowObjects == null || rowObjects.isEmpty()) {
+	protected void delete(List<Symbol> symbols) {
+		if (symbols == null || symbols.isEmpty()) {
 			return;
 		}
 
-		tool.setStatusInfo("");
 		List<Symbol> deleteList = new LinkedList<>();
 		CompoundCmd<Program> cmd = new CompoundCmd<>("Delete symbol(s)");
-		for (Symbol symbol : rowObjects) {
+		for (Symbol symbol : symbols) {
 			if (symbol.isDynamic()) {
 				continue; // can't delete dynamic symbols...
 			}
@@ -262,15 +263,18 @@ public abstract class AbstractSymbolTableModel extends AddressBasedTableModel<Sy
 			return;
 		}
 
-		if (tool.execute(cmd, getProgram())) {
+		DeleteTask task = new DeleteTask(cmd);
+		TaskLauncher.launch(task);
+
+		if (!task.success()) {
+			reload();
+			Msg.showError(getClass(), null, "Error Deleting Symbol(s)", task.status());
+		}
+		else {
 			for (Symbol s : deleteList) {
 				removeObject(new SymbolRowObject(s));
 			}
 			updateNow();
-		}
-		else {
-			tool.setStatusInfo(cmd.getStatusMsg());
-			reload();
 		}
 	}
 
@@ -329,15 +333,101 @@ public abstract class AbstractSymbolTableModel extends AddressBasedTableModel<Sy
 	}
 
 //==================================================================================================
+// Task Classes
+//==================================================================================================
+
+	private class DeleteTask extends Task {
+
+		private CompoundCmd<Program> compoundCmd;
+
+		private boolean success;
+		private String status;
+
+		DeleteTask(CompoundCmd<Program> compoundCmd) {
+			super("Delete Symbols");
+			this.compoundCmd = compoundCmd;
+		}
+
+		@Override
+		public void run(TaskMonitor monitor) throws CancelledException {
+
+			program.withTransaction(getName(), () -> {
+				doRun(monitor);
+			});
+		}
+
+		private void doRun(TaskMonitor monitor) throws CancelledException {
+
+			monitor.initialize(compoundCmd.size());
+
+			success = true;
+			List<Command<Program>> commands = compoundCmd.getCommands();
+			for (Command<Program> cmd : commands) {
+
+				monitor.increment();
+
+				if (!cmd.applyTo(program)) {
+					success = false;
+					status = cmd.getStatusMsg();
+					break;
+				}
+			}
+		}
+
+		boolean success() {
+			return success;
+		}
+
+		String status() {
+			return status;
+		}
+	}
+
+	private class RenameTask extends Task {
+
+		private Symbol symbol;
+		private String newName;
+
+		private boolean success;
+		private String status;
+
+		public RenameTask(Symbol symbol, String newName) {
+			super("Rename Symbol");
+			this.symbol = symbol;
+			this.newName = newName;
+		}
+
+		@Override
+		public void run(TaskMonitor monitor) throws CancelledException {
+
+			program.withTransaction(getName(), () -> {
+				RenameLabelCmd cmd = new RenameLabelCmd(symbol, newName, SourceType.USER_DEFINED);
+				success = cmd.applyTo(program);
+			});
+
+		}
+
+		boolean success() {
+			return success;
+		}
+
+		String status() {
+			return status;
+		}
+	}
+
+//==================================================================================================
 // Table Column Classes
 //==================================================================================================
 
-	private class NameTableColumn
+	protected class NameTableColumn
 			extends AbstractProgramBasedDynamicTableColumn<SymbolRowObject, Symbol> {
+
+		public static final String NAME = "Name";
 
 		@Override
 		public String getColumnName() {
-			return "Name";
+			return NAME;
 		}
 
 		@Override
@@ -347,7 +437,7 @@ public abstract class AbstractSymbolTableModel extends AddressBasedTableModel<Sy
 		}
 	}
 
-	private class PinnedTableColumn
+	protected class PinnedTableColumn
 			extends AbstractProgramBasedDynamicTableColumn<SymbolRowObject, Boolean> {
 
 		private PinnedRenderer renderer = new PinnedRenderer();
@@ -378,7 +468,7 @@ public abstract class AbstractSymbolTableModel extends AddressBasedTableModel<Sy
 		}
 	}
 
-	private class LocationTableColumn
+	protected class LocationTableColumn
 			extends AbstractProgramLocationTableColumn<SymbolRowObject, AddressBasedLocation> {
 
 		@Override
@@ -404,12 +494,14 @@ public abstract class AbstractSymbolTableModel extends AddressBasedTableModel<Sy
 		}
 	}
 
-	private class SymbolTypeTableColumn
+	protected class SymbolTypeTableColumn
 			extends AbstractProgramBasedDynamicTableColumn<SymbolRowObject, String> {
+
+		public static final String NAME = "Type";
 
 		@Override
 		public String getColumnName() {
-			return "Type";
+			return NAME;
 		}
 
 		@Override
@@ -426,14 +518,14 @@ public abstract class AbstractSymbolTableModel extends AddressBasedTableModel<Sy
 		}
 	}
 
-	private class VariableSymbolLocation extends AddressBasedLocation {
+	protected class VariableSymbolLocation extends AddressBasedLocation {
 
 		VariableSymbolLocation(Variable variable) {
 			super(variable.getSymbol().getAddress(), variable.getVariableStorage().toString());
 		}
 	}
 
-	private class DataTypeTableColumn
+	protected class DataTypeTableColumn
 			extends AbstractProgramBasedDynamicTableColumn<SymbolRowObject, String> {
 
 		@Override
@@ -470,7 +562,7 @@ public abstract class AbstractSymbolTableModel extends AddressBasedTableModel<Sy
 		}
 	}
 
-	private class NamespaceTableColumn
+	protected class NamespaceTableColumn
 			extends AbstractProgramBasedDynamicTableColumn<SymbolRowObject, String> {
 
 		@Override
@@ -489,8 +581,10 @@ public abstract class AbstractSymbolTableModel extends AddressBasedTableModel<Sy
 		}
 	}
 
-	private class SourceTableColumn
+	protected class SourceTableColumn
 			extends AbstractProgramBasedDynamicTableColumn<SymbolRowObject, SourceType> {
+
+		public static final String NAME = "Source";
 
 		private GColumnRenderer<SourceType> renderer = new AbstractGColumnRenderer<>() {
 			@Override
@@ -509,7 +603,7 @@ public abstract class AbstractSymbolTableModel extends AddressBasedTableModel<Sy
 
 		@Override
 		public String getColumnName() {
-			return "Source";
+			return NAME;
 		}
 
 		@Override
@@ -529,14 +623,16 @@ public abstract class AbstractSymbolTableModel extends AddressBasedTableModel<Sy
 		}
 	}
 
-	private class ReferenceCountTableColumn
+	protected class ReferenceCountTableColumn
 			extends AbstractProgramBasedDynamicTableColumn<SymbolRowObject, Integer> {
+
+		public static final String NAME = "Ref Count";
 
 		private ReferenceCountRenderer renderer = new ReferenceCountRenderer();
 
 		@Override
 		public String getColumnName() {
-			return "Reference Count";
+			return NAME;
 		}
 
 		@Override
@@ -562,7 +658,7 @@ public abstract class AbstractSymbolTableModel extends AddressBasedTableModel<Sy
 		}
 	}
 
-	private class OffcutReferenceCountTableColumn
+	protected class OffcutReferenceCountTableColumn
 			extends AbstractProgramBasedDynamicTableColumn<SymbolRowObject, Integer> {
 
 		private OffcutReferenceCountRenderer renderer = new OffcutReferenceCountRenderer();
@@ -613,7 +709,7 @@ public abstract class AbstractSymbolTableModel extends AddressBasedTableModel<Sy
 		}
 	}
 
-	private class UserTableColumn
+	protected class UserTableColumn
 			extends AbstractProgramBasedDynamicTableColumn<SymbolRowObject, String> {
 
 		@Override
@@ -650,7 +746,7 @@ public abstract class AbstractSymbolTableModel extends AddressBasedTableModel<Sy
 
 	}
 
-	class OriginalNameColumn
+	protected class OriginalNameColumn
 			extends AbstractProgramBasedDynamicTableColumn<SymbolRowObject, String> {
 
 		@Override
@@ -688,7 +784,7 @@ public abstract class AbstractSymbolTableModel extends AddressBasedTableModel<Sy
 		}
 	}
 
-	private class SimplifiedNameColumn
+	protected class SimplifiedNameColumn
 			extends AbstractProgramBasedDynamicTableColumn<SymbolRowObject, String> {
 
 		private TemplateSimplifier simplifier = new TemplateSimplifier();

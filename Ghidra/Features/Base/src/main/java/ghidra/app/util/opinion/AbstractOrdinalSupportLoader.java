@@ -48,8 +48,11 @@ public abstract class AbstractOrdinalSupportLoader extends AbstractLibrarySuppor
 			DomainObject domainObject, boolean loadIntoProgram, boolean mirrorFsLayout) {
 		List<Option> list = super.getDefaultOptions(provider, loadSpec, domainObject,
 			loadIntoProgram, mirrorFsLayout);
-		list.add(new Option(ORDINAL_LOOKUP_OPTION_NAME, ORDINAL_LOOKUP_OPTION_DEFAULT,
-			Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-ordinalLookup"));
+		list.add(Option.newBoolean(ORDINAL_LOOKUP_OPTION_NAME)
+				.value(ORDINAL_LOOKUP_OPTION_DEFAULT)
+				.commandLineArgument(createArg("-ordinalLookup"))
+				.stateKey(Loader.OPTIONS_PROJECT_SAVE_STATE_KEY)
+				.build());
 		return list;
 	}
 

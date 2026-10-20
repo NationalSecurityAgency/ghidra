@@ -20,6 +20,7 @@
 
 #include "ruleaction.hh"
 #include "transform.hh"
+#include "unionresolve.hh"
 
 namespace ghidra {
 
@@ -277,13 +278,14 @@ class SplitDatatype {
     int4 baseOffset;			///< Offset of the LOAD or STORE relative to root pointer
     bool backUpPointer(Datatype *impliedBase);		///< Follow flow of \b pointer back thru INT_ADD or PTRSUB
   public:
-    bool find(PcodeOp *op,Datatype *valueType);	///< Locate root pointer for underlying LOAD or STORE
+    bool find(PcodeOp *op,Datatype *valueType,ResolveCache &resolver);	///< Locate root pointer for underlying LOAD or STORE
     void duplicateToTemp(Funcdata &data,PcodeOp *followOp);	///< COPY the root varnode into a temp register
     void freePointerChain(Funcdata &data);	///< Remove unused pointer calculations
   };
   Funcdata &data;			///< The containing function
   TypeFactory *types;			///< The data-type container
   vector<Component> dataTypePieces;	///< Sequence of all data-type pairs being copied
+  ResolveCache resolver;		///< Resolved data-types encountered
   bool splitStructures;			///< Whether or not structures should be split
   bool splitArrays;			///< Whether or not arrays should be split
   bool isLoadStore;			///< True if trying to split LOAD or STORE
@@ -358,6 +360,7 @@ public:
 /// Simplify expressions like:
 ///  - `sub( concat(V,W), 0)  =>  W`
 ///  - `sub( concat(V,W), c)  =>  V`
+///  - `sub( sub(V, c), d) =>  SUB(V,#c+#d)`
 ///
 /// preserving the data-types and removing the SUBPIECE and PIECE operations that are discarded.
 class RuleDumptyHumpLate : public Rule {

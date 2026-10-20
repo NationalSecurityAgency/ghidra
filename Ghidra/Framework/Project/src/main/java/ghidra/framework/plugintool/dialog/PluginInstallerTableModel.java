@@ -16,7 +16,10 @@
 package ghidra.framework.plugintool.dialog;
 
 import java.net.URL;
-import java.util.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.swing.Icon;
@@ -27,7 +30,10 @@ import docking.widgets.table.AbstractDynamicTableColumn;
 import docking.widgets.table.TableColumnDescriptor;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import ghidra.docking.settings.Settings;
-import ghidra.framework.plugintool.*;
+import ghidra.framework.plugintool.Plugin;
+import ghidra.framework.plugintool.PluginConfigurationModel;
+import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.framework.plugintool.util.PluginDescription;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.util.HTMLUtilities;
@@ -89,8 +95,8 @@ class PluginInstallerTableModel
 		TableColumnDescriptor<PluginDescription> descriptor = new TableColumnDescriptor<>();
 
 		descriptor.addVisibleColumn(new PluginInstalledColumn(), -1, false);
-		descriptor.addVisibleColumn(new PluginStatusColumn());
-		descriptor.addVisibleColumn(new PluginNameColumn(), 1, true);
+		descriptor.addVisibleColumn(new PluginWarningColumn());
+		descriptor.addVisibleColumn(new PluginNameColumn());
 		descriptor.addVisibleColumn(new PluginDescriptionColumn());
 		descriptor.addVisibleColumn(new PluginCategoryColumn());
 		descriptor.addHiddenColumn(new PluginModuleColumn());
@@ -201,12 +207,12 @@ class PluginInstallerTableModel
 	/**
 	 * Column for displaying the status of the plugin.
 	 */
-	private class PluginStatusColumn
+	private class PluginWarningColumn
 			extends AbstractDynamicTableColumn<PluginDescription, Icon, List<PluginDescription>> {
 
 		@Override
 		public String getColumnName() {
-			return "Status";
+			return "Warning";
 		}
 
 		@Override
@@ -226,7 +232,6 @@ class PluginInstallerTableModel
 	 */
 	private class PluginNameColumn
 			extends AbstractDynamicTableColumn<PluginDescription, String, List<PluginDescription>> {
-
 		@Override
 		public String getColumnName() {
 			return "Name";
@@ -303,11 +308,7 @@ class PluginInstallerTableModel
 		@Override
 		public String getValue(PluginDescription rowObject, Settings settings,
 				List<PluginDescription> data, ServiceProvider sp) throws IllegalArgumentException {
-			Class<? extends Plugin> clazz = rowObject.getPluginClass();
-			String name = clazz.getName();
-			String path = '/' + name.replace('.', '/') + ".class";
-			URL url = clazz.getResource(path);
-			return url.getFile();
+			return rowObject.getSourceLocation();
 		}
 	}
 

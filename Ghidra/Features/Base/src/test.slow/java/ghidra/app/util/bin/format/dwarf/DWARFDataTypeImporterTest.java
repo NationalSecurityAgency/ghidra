@@ -120,22 +120,26 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 			throws CancelledException, IOException, DWARFException {
 		// test when int data type name has a bitsize string (8|16|32|64,etc)
 
-		addBaseType("uint32_t", 4, DWARFEncoding.DW_ATE_unsigned);
-		addBaseType("blah32blah", 4, DWARFEncoding.DW_ATE_signed);
+		DebugInfoEntry uint32tDIE = addBaseType("uint32_t", 4, DWARFEncoding.DW_ATE_unsigned);
+		DebugInfoEntry blah32DIE = addBaseType("blah32blah", 4, DWARFEncoding.DW_ATE_signed);
+
+		DebugInfoEntry structDIE = newStruct("mystruct", 100).create();
+		newMember(structDIE, "f1", uint32tDIE, 0).create();
+		newMember(structDIE, "f2", blah32DIE, 10).create();
 
 		importAllDataTypes();
 
-		DataType tddt = dataMgr.getDataType(dwarfRootCP, "uint32_t");
-		DataType baseTypeDT = ((TypeDef) tddt).getDataType();
+		Structure structdt = (Structure) dataMgr.getDataType(uncatCP, "mystruct");
 
-		assertFalse(baseTypeDT.hasLanguageDependantLength());
-		assertEquals(4, baseTypeDT.getLength());
-		assertTrue(baseTypeDT instanceof AbstractIntegerDataType);
-		assertTrue(((AbstractIntegerDataType) baseTypeDT).isSigned() == false);
+		DataType f1DT = structdt.getComponentAt(0).getDataType();
+		assertFalse(f1DT.hasLanguageDependantLength());
+		assertEquals(4, f1DT.getLength());
+		assertTrue(((AbstractIntegerDataType) f1DT).isSigned() == false);
+		assertTrue(f1DT instanceof UInt32TDataType);
 
-		DataType blahDT = dataMgr.getDataType(dwarfRootCP, "blah32blah");
-		assertFalse(blahDT.hasLanguageDependantLength());
-		assertEquals(4, blahDT.getLength());
+		DataType f2DT = structdt.getComponentAt(10).getDataType();
+		assertFalse(f2DT.hasLanguageDependantLength());
+		assertEquals(4, f2DT.getLength());
 	}
 
 	@Test

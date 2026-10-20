@@ -415,7 +415,7 @@ public class FunctionGraphPlugin extends ProgramPlugin
 			ToolOptions fieldOptions = options.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
 			userDefinedFormatManager = new FormatManager(displayOptions, fieldOptions);
 			SaveState formatState = new SaveState(formatElement);
-			userDefinedFormatManager.readState(formatState);
+			userDefinedFormatManager.readState(formatState, false);
 
 			connectedProvider.formatChanged();
 		}

@@ -218,6 +218,7 @@ public class GlobalMenuAndToolBarManager implements DockingWindowListener {
 			if (provider != null) {
 				ActionContext context = provider.getActionContext(null);
 				if (context != null) {
+					context.setContextProvider(provider);
 					return context;
 				}
 			}
@@ -231,17 +232,22 @@ public class GlobalMenuAndToolBarManager implements DockingWindowListener {
 			return new DefaultActionContext();
 		}
 
+		ComponentProvider provider = null;
 		ActionContext context = null;
 		ComponentPlaceholder placeholder = windowNode.getLastFocusedProviderInWindow();
 		if (placeholder != null) {
-			ComponentProvider provider = placeholder.getProvider();
+			provider = placeholder.getProvider();
 			if (provider != null) {
 				context = provider.getActionContext(null);
 			}
 		}
+
 		if (context == null) {
 			context = new DefaultActionContext();
 		}
+
+		context.setContextProvider(provider);
+
 		return context;
 	}
 

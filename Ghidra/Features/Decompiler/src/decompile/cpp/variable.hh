@@ -156,6 +156,7 @@ private:
   bool hasCopyIn1(void) const { return ((highflags&copy_in1)!=0); }	///< Is there at least one COPY into \b this
   bool hasCopyIn2(void) const { return ((highflags&copy_in2)!=0); }	///< Is there at least two COPYs into \b this
   void remove(Varnode *vn);				///< Remove a member Varnode from \b this
+  void insert(Varnode *newvn,int2 mergeGroup);		///< Directly insert a Varnode into \b this
   void mergeInternal(HighVariable *tv2,bool isspeculative);	///< Merge another HighVariable into \b this
   void merge(HighVariable *tv2,HighIntersectTest *testCache,bool isspeculative);	///< Merge with another HighVariable taking into account groups
   void setSymbol(Varnode *vn) const;		///< Update Symbol information for \b this from the given member Varnode

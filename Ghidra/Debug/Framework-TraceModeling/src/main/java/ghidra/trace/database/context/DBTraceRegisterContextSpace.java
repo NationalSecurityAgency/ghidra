@@ -84,8 +84,10 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 	protected final AddressRange all;
 
 	protected final DBCachedObjectStore<DBTraceRegisterEntry> registerStore;
-	protected final Map<Pair<Language, Register>, DBTraceAddressSnapRangePropertyMapSpace<byte[], DBTraceRegisterContextEntry>> registerValueMaps =
-		new HashMap<>();
+	protected final Map<Pair<Language, Register>,
+		DBTraceAddressSnapRangePropertyMapSpace<byte[],
+			DBTraceRegisterContextEntry>> registerValueMaps =
+				new HashMap<>();
 
 	public DBTraceRegisterContextSpace(DBTraceRegisterContextManager manager, DBHandle dbh,
 			AddressSpace space, DBTraceSpaceEntry ent) throws VersionException, IOException {
@@ -133,8 +135,9 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 			language.getLanguageID().getIdAsString() + "_" + register.getName();
 	}
 
-	protected DBTraceAddressSnapRangePropertyMapSpace<byte[], DBTraceRegisterContextEntry> createRegisterValueMap(
-			Pair<Language, Register> lr) throws VersionException {
+	protected DBTraceAddressSnapRangePropertyMapSpace<byte[], DBTraceRegisterContextEntry>
+			createRegisterValueMap(
+					Pair<Language, Register> lr) throws VersionException {
 		String name = tableName(lr.getLeft(), lr.getRight());
 		try {
 			return new DBTraceAddressSnapRangePropertyMapSpace<>(name, trace,
@@ -147,8 +150,9 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 		}
 	}
 
-	protected DBTraceAddressSnapRangePropertyMapSpace<byte[], DBTraceRegisterContextEntry> getRegisterValueMap(
-			Language language, Register register, boolean createIfAbsent) {
+	protected DBTraceAddressSnapRangePropertyMapSpace<byte[], DBTraceRegisterContextEntry>
+			getRegisterValueMap(
+					Language language, Register register, boolean createIfAbsent) {
 		ImmutablePair<Language, Register> pair = new ImmutablePair<>(language, register);
 		DBTraceGuestLanguage guest = manager.languageManager.getLanguageByLanguage(language);
 		if (createIfAbsent) {
@@ -209,11 +213,15 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 	protected void doRemove(DBTraceAddressSnapRangePropertyMapSpace<byte[], ?> valueMap,
 			TraceAddressSnapRange range) {
 		Map<TraceAddressSnapRange, byte[]> toPutBack = new HashMap<>();
+		List<Entry<TraceAddressSnapRange, byte[]>> toRemove = new ArrayList<>();
 		for (Entry<TraceAddressSnapRange, byte[]> entry : valueMap.reduce(
 			TraceAddressSnapRangeQuery.intersecting(range)).entries()) {
 			for (TraceAddressSnapRange diff : doSubtract(entry.getKey(), range)) {
 				toPutBack.put(diff, entry.getValue());
 			}
+			toRemove.add(entry);
+		}
+		for (Entry<TraceAddressSnapRange, byte[]> entry : toRemove) {
 			valueMap.remove(entry);
 		}
 		for (Entry<TraceAddressSnapRange, byte[]> entry : toPutBack.entrySet()) {
@@ -430,8 +438,9 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 	@Override
 	public void clear(Lifespan span, AddressRange range) {
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
-			for (DBTraceAddressSnapRangePropertyMapSpace<byte[], DBTraceRegisterContextEntry> valueMap : registerValueMaps
-					.values()) {
+			for (DBTraceAddressSnapRangePropertyMapSpace<byte[],
+				DBTraceRegisterContextEntry> valueMap : registerValueMaps
+						.values()) {
 				for (Entry<TraceAddressSnapRange, byte[]> entry : valueMap.reduce(
 					TraceAddressSnapRangeQuery.intersecting(range, span)).entries()) {
 					DBTraceRegisterContextEntry record =
@@ -448,8 +457,9 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			registerStore.invalidateCache();
 			loadRegisterValueMaps();
-			for (DBTraceAddressSnapRangePropertyMapSpace<byte[], DBTraceRegisterContextEntry> map : registerValueMaps
-					.values()) {
+			for (DBTraceAddressSnapRangePropertyMapSpace<byte[],
+				DBTraceRegisterContextEntry> map : registerValueMaps
+						.values()) {
 				map.invalidateCache();
 			}
 		}

@@ -27,6 +27,7 @@ import java.util.regex.Pattern;
 
 import generic.jar.ResourceFile;
 import ghidra.app.cmd.comments.AppendCommentCmd;
+import ghidra.app.plugin.processors.sleigh.SleighLanguageDescription;
 import ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeValue;
 import ghidra.app.util.bin.format.dwarf.attribs.DWARFNumericAttribute;
 import ghidra.app.util.bin.format.dwarf.expression.DWARFExpressionException;

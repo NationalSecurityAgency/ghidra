@@ -15,9 +15,9 @@
  */
 package ghidra.pcode.emu;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
-import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 
@@ -25,11 +25,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import generic.test.AbstractGTest;
-import ghidra.GhidraTestApplicationLayout;
+import generic.test.AbstractGenericTest;
 import ghidra.app.plugin.assembler.*;
 import ghidra.app.plugin.assembler.sleigh.sem.AssemblyPatternBlock;
 import ghidra.framework.Application;
-import ghidra.framework.ApplicationConfiguration;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
@@ -89,9 +88,11 @@ public abstract class AbstractPcodeEmulatorTest extends AbstractGTest {
 	@Before
 	public void setUp() throws IOException {
 		if (!Application.isInitialized()) {
-			Application.initializeApplication(
-				new GhidraTestApplicationLayout(new File(getTestDirectoryPath())),
-				new ApplicationConfiguration());
+			/**
+			 * Don't do it directly, or else extension of AbstractGenericTest will try again and
+			 * fail.
+			 */
+			new AbstractGenericTest() {};
 		}
 	}
 
@@ -429,6 +430,7 @@ public abstract class AbstractPcodeEmulatorTest extends AbstractGTest {
 		assertEquals(target, thread.getCounter());
 	}
 
+	@Test
 	public void testArmPltIntoThumbFunction() throws Exception {
 		PcodeEmulator emu = createEmulator(getLanguage(LANGID_ARMV8));
 		PcodeArithmetic<byte[]> arithmetic = emu.getArithmetic();

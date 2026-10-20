@@ -18,6 +18,7 @@ package ghidra.pcode.emu.jit.var;
 import java.util.List;
 
 import ghidra.pcode.emu.jit.op.JitOp;
+import ghidra.program.model.lang.Language;
 
 /**
  * A value that is forbidden from being translated
@@ -42,5 +43,10 @@ public enum JitFailVal implements JitVal {
 
 	@Override
 	public void removeUse(JitOp op, int position) {
+	}
+
+	@Override
+	public String toString(Language language) {
+		return "<FAIL>";
 	}
 }

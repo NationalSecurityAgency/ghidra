@@ -31,6 +31,7 @@ import org.apache.commons.lang3.StringUtils;
 import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.table.FocusableEditor;
 import docking.widgets.textfield.IntegerTextField;
+import docking.widgets.textfield.integer.IntegerFormat;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.util.AddressInput;
 import ghidra.program.model.address.Address;
@@ -40,6 +41,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.ProgramContext;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
+import ghidra.util.datastruct.AlphaNumericComparator;
 
 class VarnodeLocationCellEditor extends AbstractCellEditor
 		implements TableCellEditor, FocusableEditor {
@@ -50,8 +52,6 @@ class VarnodeLocationCellEditor extends AbstractCellEditor
 	private AddressInput addressInput;
 	private IntegerTextField offsetInput;
 
-	private Comparator<Register> registerWrapperComparator =
-		(r1, r2) -> r1.toString().compareToIgnoreCase(r2.toString());
 	private VarnodeInfo currentVarnode;
 
 	VarnodeLocationCellEditor(StorageAddressModel model) {
@@ -163,7 +163,7 @@ class VarnodeLocationCellEditor extends AbstractCellEditor
 
 	private Component createStackOffsetEditor(VarnodeInfo varnode) {
 		offsetInput = new IntegerTextField();
-		offsetInput.setHexMode();
+		offsetInput.setFormat(IntegerFormat.HEX);
 		Address address = varnode.getAddress();
 		if (address != null) {
 			offsetInput.setValue(address.getOffset());
@@ -175,23 +175,15 @@ class VarnodeLocationCellEditor extends AbstractCellEditor
 	}
 
 	private Component createRegisterCombo(VarnodeInfo varnode) {
-		ProgramContext programContext = program.getProgramContext();
-
-		List<Register> registers = new ArrayList<>(programContext.getRegisters());
-
-		for (Iterator<Register> iter = registers.iterator(); iter.hasNext();) {
-			Register register = iter.next();
-			if (register.isProcessorContext() || register.isHidden()) {
-				iter.remove();
-			}
-		}
-
-		Collections.sort(registers, registerWrapperComparator);
-		//Register[] registers = validItems.toArray(new Register[validItems.size()]);
+		List<Register> registers = getSortedVisibleRegisters(program.getProgramContext());
 
 		RegisterDropDownSelectionDataModel registerModel =
 			new RegisterDropDownSelectionDataModel(registers);
-		registerEntryTextField = new DropDownSelectionTextField<>(registerModel);
+
+		// A smaller min delay to make the drop-down more responsive.  The number of registers 
+		// should not be large enough to make the UI sluggish as the user is typing.
+		int minDelay = 200;
+		registerEntryTextField = new DropDownSelectionTextField<>(registerModel, minDelay);
 		registerEntryTextField.setBorder(null);
 
 		// this allows us to show the matching list when there is no text in the editor
@@ -231,5 +223,31 @@ class VarnodeLocationCellEditor extends AbstractCellEditor
 		});
 
 		return registerEntryTextField;
+	}
+
+	static List<Register> getSortedVisibleRegisters(ProgramContext programContext) {
+		List<Register> registers = new ArrayList<>(programContext.getRegisters());
+
+		for (Iterator<Register> iter = registers.iterator(); iter.hasNext();) {
+			Register register = iter.next();
+			if (register.isProcessorContext() || register.isHidden()) {
+				iter.remove();
+			}
+		}
+
+		Collections.sort(registers, new RegisterComparator());
+		return registers;
+	}
+
+	private static class RegisterComparator implements Comparator<Register> {
+
+		private AlphaNumericComparator alphaNumericComparator = new AlphaNumericComparator();
+
+		@Override
+		public int compare(Register r1, Register r2) {
+			String s1 = r1.getName().toLowerCase();
+			String s2 = r2.getName().toLowerCase();
+			return alphaNumericComparator.compare(s1, s2);
+		}
 	}
 }

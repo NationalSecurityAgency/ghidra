@@ -15,6 +15,9 @@
  */
 package functioncalls.plugin;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.tool.ToolConstants;
@@ -53,7 +56,8 @@ public class FunctionCallGraphPlugin extends ProgramPlugin implements OptionsCha
 		new HelpLocation(FunctionCallGraphPlugin.class.getSimpleName(),
 			FunctionCallGraphPlugin.class.getSimpleName());
 
-	private FcgProvider provider;
+	private FcgProvider connectedProvider;
+	private List<FcgProvider> disconnectedProviders = new ArrayList<>();
 	private FcgOptions fcgOptions = new FcgOptions();
 
 	// enough time for users to click around without the graph starting its work
@@ -69,7 +73,7 @@ public class FunctionCallGraphPlugin extends ProgramPlugin implements OptionsCha
 	@Override
 	protected void init() {
 
-		provider = new FcgProvider(tool, this);
+		connectedProvider = new FcgProvider(this, true);
 		createActions();
 
 		initializeOptions();
@@ -84,7 +88,7 @@ public class FunctionCallGraphPlugin extends ProgramPlugin implements OptionsCha
 		Options callGraphOptions = options.getOptions(NAME);
 		fcgOptions.registerOptions(callGraphOptions, help);
 		fcgOptions.loadOptions(callGraphOptions);
-		provider.optionsChanged();
+		connectedProvider.optionsChanged();
 	}
 
 	@Override
@@ -93,17 +97,17 @@ public class FunctionCallGraphPlugin extends ProgramPlugin implements OptionsCha
 
 		Options callGraphOptions = options.getOptions(NAME);
 		fcgOptions.loadOptions(callGraphOptions);
-		provider.optionsChanged();
+		connectedProvider.optionsChanged();
 	}
 
 	@Override
 	public void writeConfigState(SaveState state) {
-		provider.writeConfigState(state);
+		connectedProvider.writeConfigState(state);
 	}
 
 	@Override
 	public void readConfigState(SaveState state) {
-		provider.readConfigState(state);
+		connectedProvider.readConfigState(state);
 	}
 
 	@Override
@@ -112,14 +116,13 @@ public class FunctionCallGraphPlugin extends ProgramPlugin implements OptionsCha
 	}
 
 	private void doLocationChanged() {
-		provider.locationChanged(getCurrentLocation());
+		connectedProvider.locationChanged(getCurrentLocation());
 	}
 
-	void handleProviderLocationChanged(ProgramLocation location) {
-//		For snapshots
-//		if (provider != connectedProvider) {
-//			return;
-//		}
+	void handleProviderLocationChanged(FcgProvider provider, ProgramLocation location) {
+		if (provider != connectedProvider) {
+			return;
+		}
 
 		GoToService goTo = tool.getService(GoToService.class);
 		if (goTo == null) {
@@ -134,14 +137,19 @@ public class FunctionCallGraphPlugin extends ProgramPlugin implements OptionsCha
 
 	@Override
 	protected void dispose() {
-		provider.dispose();
+		removeProvider(connectedProvider);
+		for (FcgProvider provider : disconnectedProviders) {
+			removeProvider(provider);
+		}
+
+		currentProgram = null;
 	}
 
 	private void createActions() {
 		DockingAction showProviderAction = new DockingAction(SHOW_PROVIDER_ACTION_NAME, getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				provider.setVisible(true);
+				connectedProvider.setVisible(true);
 			}
 		};
 
@@ -149,11 +157,11 @@ public class FunctionCallGraphPlugin extends ProgramPlugin implements OptionsCha
 	}
 
 	void showProvider() {
-		provider.setVisible(true);
+		connectedProvider.setVisible(true);
 	}
 
 	FcgProvider getProvider() {
-		return provider;
+		return connectedProvider;
 	}
 
 	Address getCurrentAddress() {
@@ -170,4 +178,25 @@ public class FunctionCallGraphPlugin extends ProgramPlugin implements OptionsCha
 	FcgOptions getOptions() {
 		return fcgOptions;
 	}
+
+	FcgProvider createNewDisconnecedProvider() {
+		FcgProvider provider = new FcgProvider(this, false);
+		disconnectedProviders.add(provider);
+		tool.showComponentProvider(provider, true);
+		return provider;
+	}
+
+	void closeProvider(FcgProvider fcgProvider) {
+		disconnectedProviders.remove(fcgProvider);
+		removeProvider(fcgProvider);
+	}
+
+	private void removeProvider(FcgProvider provider) {
+		if (provider == null) {
+			return;
+		}
+		provider.dispose();
+		tool.removeComponentProvider(provider);
+	}
+
 }

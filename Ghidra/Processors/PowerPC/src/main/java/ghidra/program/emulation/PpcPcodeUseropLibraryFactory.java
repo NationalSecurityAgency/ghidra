@@ -18,29 +18,17 @@ package ghidra.program.emulation;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeUseropLibraryFactory.UseropLibrary;
+import ghidra.pcode.exec.SleighPcodeUseropDefinition.BuilderStage1;
 
-@UseropLibrary("ppc")
+@UseropLibrary(id = "ppc")
 public class PpcPcodeUseropLibraryFactory implements PcodeUseropLibraryFactory {
 	@Override
 	public <T> PcodeUseropLibrary<T> create(SleighLanguage language,
 			PcodeArithmetic<T> arithmetic) {
-		return new PpcPcodeUseropLibrary<>(language);
+		return new PpcPcodeUseropLibrary<>();
 	}
 
 	public static class PpcPcodeUseropLibrary<T> extends AnnotatedPcodeUseropLibrary<T> {
-		public PpcPcodeUseropLibrary(SleighLanguage language) {
-			SleighPcodeUseropDefinition.Factory factory =
-				new SleighPcodeUseropDefinition.Factory(language);
-
-			putOp(factory.define("vectorPermute").params("s1", "s2", "p").body(args -> """
-					local table:32;
-					local result:16;
-					table[128,128] = s1;
-					table[0,128] = s2;
-					""" + genIndex() + """
-					__op_output = result;
-					""").build());
-		}
 
 		protected String genIndex() {
 			StringBuilder buf = new StringBuilder();
@@ -50,6 +38,18 @@ public class PpcPcodeUseropLibraryFactory implements PcodeUseropLibraryFactory {
 				buf.append("result[%d,8] = tmp%d;\n".formatted(8 * i, i));
 			}
 			return buf.toString();
+		}
+
+		@PcodeUserop
+		public SleighPcodeUseropDefinition vectorPermute(BuilderStage1 builder) {
+			return builder.params("s1", "s2", "p").body(_ -> """
+					local table:32;
+					local result:16;
+					table[128,128] = s1;
+					table[0,128] = s2;
+					""" + genIndex() + """
+					__op_output = result;
+					""").build();
 		}
 	}
 }

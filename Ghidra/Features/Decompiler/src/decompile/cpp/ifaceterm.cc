@@ -128,6 +128,7 @@ void IfaceTerm::readLine(string &line)
   int4 escval;
   int4 cursor,lastlen,i;
   bool onecharecho;
+  bool history_up, history_down;
   int4 hist;
   string saveline;
 
@@ -136,6 +137,7 @@ void IfaceTerm::readLine(string &line)
   hist = 0;
   do {
     onecharecho = false;
+    history_up = history_down = false;
     lastlen = line.size();
     val = sptr->get();
     if (sptr->eof())
@@ -180,23 +182,10 @@ void IfaceTerm::readLine(string &line)
     case 0x0c:			// C-l
       break;
     case 0x0e:			// C-n
-      if (hist >0) {
-	hist -= 1;		// Get more recent history
-	if (hist>0)
-	  getHistory(line,hist-1);
-	else
-	  line = saveline;
-	cursor = line.size();
-      }
+      history_down = true;
       break;
     case 0x10:			// C-p
-      if (hist < getHistorySize()) { 
-	hist += 1;		// Get more ancient history
-	if (hist==1)
-	  saveline = line;
-	getHistory(line,hist-1);
-	cursor = line.size();
-      }
+      history_up = true;
       break;
     case 0x12:			// C-r
       break;
@@ -209,13 +198,19 @@ void IfaceTerm::readLine(string &line)
       escval <<= 8;
       escval += sptr->get();
       switch(escval) {
-      case 0x4f44:		// left arrow
-	if (cursor>0)
-	  cursor -= 1;
-	break;
-      case 0x4f43:		// right arrow
+      case 0x5b41:              // up arrow
+        history_up = true;
+        break;
+      case 0x5b42:              // down arrow
+        history_down = true;
+        break;
+      case 0x5b43:		// right arrow
 	if (cursor<line.size())
 	  cursor += 1;
+	break;
+      case 0x5b44:		// left arrow
+	if (cursor>0)
+	  cursor -= 1;
 	break;
       }
       break;
@@ -229,6 +224,24 @@ void IfaceTerm::readLine(string &line)
       if (cursor == line.size())
 	onecharecho = true;
       break;
+    }
+    if (history_down) {
+      if (hist >0) {
+        hist -= 1;		// Get more recent history
+        if (hist>0)
+          getHistory(line,hist-1);
+        else
+          line = saveline;
+        cursor = line.size();
+      }
+    } else if (history_up) {
+      if (hist < getHistorySize()) {
+        hist += 1;		// Get more ancient history
+        if (hist==1)
+          saveline = line;
+        getHistory(line,hist-1);
+        cursor = line.size();
+      }
     }
     if (onecharecho)
       optr->put(val);		// Echo most characters

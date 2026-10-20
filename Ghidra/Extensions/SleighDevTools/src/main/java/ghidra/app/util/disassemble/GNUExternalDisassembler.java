@@ -23,6 +23,7 @@ import org.jdom2.*;
 import org.jdom2.input.SAXBuilder;
 
 import generic.jar.ResourceFile;
+import ghidra.app.plugin.processors.sleigh.SleighLanguageDescription;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.MemoryByteProvider;
 import ghidra.framework.*;

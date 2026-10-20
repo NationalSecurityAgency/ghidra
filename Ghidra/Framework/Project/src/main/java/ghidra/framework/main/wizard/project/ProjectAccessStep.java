@@ -15,6 +15,7 @@
  */
 package ghidra.framework.main.wizard.project;
 
+import java.awt.Component;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -43,6 +44,11 @@ public class ProjectAccessStep extends WizardStep<ProjectWizardData> {
 		// no title passed to constructor, it will be set later
 		super(model, "", new HelpLocation(GenericHelpTopics.FRONT_END, "UserAccessList"));
 		this.tool = tool;
+	}
+
+	@Override
+	public Component getDefaultFocusComponent() {
+		return panel.getDefaultFocusComponent();
 	}
 
 	@Override

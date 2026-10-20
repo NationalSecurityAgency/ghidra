@@ -19,7 +19,8 @@ ol.ratings li {
   <BODY>
     <H1><A name="plugin"></A>Assembler</H1>
 
-    <P align="center"><IMG alt="" border="1" src="images/Assembler.png"></P>
+    <P align="center"><IMG alt="Text fields in the listing for assembly code input" border="1" src=
+    "images/Assembler.png"></P>
 
     <P align="center">Assembly Editor</P>
 
@@ -28,7 +29,7 @@ ol.ratings li {
 
     <H2>Actions</H2>
 
-    <P>There are two actions: One for instructions and one for data.</P>
+    <P>There are three actions: One for blocks, one for single instructions, and one for data.</P>
 
     <H3><A name="patch_instruction">Patch Instruction</A></H3>
 
@@ -92,6 +93,19 @@ ol.ratings li {
 
     <P>If the current processor scored anything less than <B>Platinum</B> you will receive a
     friendly warning reminding you what to expect.</P>
+
+    <H3><A name="assemble_patch">Assemble...</A></H3>
+
+    <P>This action is similar to Patch Instruction except that you can enter several instructions
+    in a sequence. See <A href="help/topics/ClipboardPlugin/Clipboard.htm#AssemblyCode">Copy
+    Assembly Code</A> as a means of copying assembly passages from other parts of the program. The
+    dialog is fairly straightfoward: You enter lines of assembly code in the top text area, and the
+    table will display the tentative assembly result. The default columns are the Address and the
+    Assembly, which display the starting address and assembly of each instruction. There are
+    additional columns for diagnostics, including Bytes, Context, and Error. These display the
+    resulting machine code bytes, the input (dis)assembly context, and if applicable, any errors
+    encountered during assembly. When an error is encountered, the offending instruction's Assembly
+    cell is rendered in <FONT color="red">red</FONT>, and no further instructions are assembled.</P>
 
     <H3><A name="patch_data"></A>Patch Data</H3>
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ package ghidra.app.plugin.core.terminal.vt;
 public class VtLine {
 	protected int cols;
 	protected int len;
-	protected char[] chars;
+	protected int[] cps;
 	protected boolean wrappedToNext;
 	private VtAttributes[] cellAttrs;
 
@@ -40,12 +40,12 @@ public class VtLine {
 	 * @param x the column, 0 up
 	 * @return the character
 	 */
-	public char getChar(int x) {
-		return chars[x];
+	public int getCodePoint(int x) {
+		return cps[x];
 	}
 
 	/**
-	 * Get the full character buffer
+	 * Get the full code point buffer
 	 * 
 	 * <p>
 	 * This is a reference to the buffer, which is very useful when rendering. Modifying this buffer
@@ -53,8 +53,8 @@ public class VtLine {
 	 * 
 	 * @return the buffer
 	 */
-	public char[] getCharBuffer() {
-		return chars;
+	public int[] getCodePointBuffer() {
+		return cps;
 	}
 
 	/**
@@ -75,18 +75,18 @@ public class VtLine {
 	 * Place the given character with attributes into the given column
 	 * 
 	 * @param x the column, 0 up
-	 * @param c the character
+	 * @param c the unicode code point
 	 * @param attrs the attributes
 	 */
-	public void putChar(int x, char c, VtAttributes attrs) {
+	public void putCodePoint(int x, int c, VtAttributes attrs) {
 		int oldLen = len;
 		len = Math.max(len, x + 1);
 		wrappedToNext = false; // Maybe remove
 		for (int i = oldLen; i < x; i++) {
-			chars[i] = ' ';
+			cps[i] = ' ';
 			cellAttrs[i] = VtAttributes.DEFAULTS;
 		}
-		chars[x] = c;
+		cps[x] = c;
 		if (attrs != null) {
 			cellAttrs[x] = attrs;
 		}
@@ -101,28 +101,28 @@ public class VtLine {
 		this.cols = cols;
 		// NB. Don't forget the characters in the buffer. User may resize back again.
 		// TODO: Could/should we re-wrap? Would need to record wraps vs returns, though.
-		if (cols <= chars.length) {
+		if (cols <= cps.length) {
 			return;
 		}
-		char[] newChars = new char[cols];
+		int[] newCodePoints = new int[cols];
 		VtAttributes[] newCellAttrs = new VtAttributes[cols];
-		System.arraycopy(chars, 0, newChars, 0, Math.min(cols, chars.length));
+		System.arraycopy(cps, 0, newCodePoints, 0, Math.min(cols, cps.length));
 		System.arraycopy(cellAttrs, 0, newCellAttrs, 0, Math.min(cols, cellAttrs.length));
-		this.chars = newChars;
+		this.cps = newCodePoints;
 		this.cellAttrs = newCellAttrs;
 	}
 
 	/**
 	 * Reset the line
 	 * 
-	 * @param cols
+	 * @param cols the new number of columns
 	 */
 	public void reset(int cols) {
 		this.cols = cols;
 		this.len = 0;
 		this.wrappedToNext = false;
-		if (this.cols != cols || this.chars == null) {
-			this.chars = new char[cols];
+		if (this.cols != cols || this.cps == null) {
+			this.cps = new int[cols];
 			this.cellAttrs = new VtAttributes[cols];
 		}
 	}
@@ -176,7 +176,7 @@ public class VtLine {
 			return;
 		}
 		for (int i = 0; i <= x; i++) {
-			chars[i] = ' ';
+			cps[i] = ' ';
 			cellAttrs[i] = attrs;
 		}
 	}
@@ -196,7 +196,7 @@ public class VtLine {
 		int shift = end - start;
 		len -= shift;
 		for (int x = start; x < end; x++) {
-			chars[x] = chars[x + shift];
+			cps[x] = cps[x + shift];
 			cellAttrs[x] = cellAttrs[x + shift];
 		}
 	}
@@ -220,7 +220,7 @@ public class VtLine {
 			return;
 		}
 		for (int x = start; x < end; x++) {
-			chars[x] = ' ';
+			cps[x] = ' ';
 			cellAttrs[x] = attrs;
 		}
 	}
@@ -239,11 +239,11 @@ public class VtLine {
 		// TODO: What about colors/attributes?
 		int end = Math.min(cols, start + n);
 		for (int x = cols - 1; x >= end; x--) {
-			chars[x] = chars[x - n];
+			cps[x] = cps[x - n];
 			cellAttrs[x] = cellAttrs[x - n];
 		}
 		for (int x = start; x < end; x++) {
-			chars[x] = ' ';
+			cps[x] = ' ';
 		}
 		len = Math.min(cols, len + n);
 		wrappedToNext = false;
@@ -296,7 +296,9 @@ public class VtLine {
 	public void gatherText(StringBuilder sb, int start, int end) {
 		start = Math.max(0, Math.min(start, len));
 		end = Math.max(0, Math.min(end, len));
-		sb.append(chars, start, end - start);
+		for (int i = start; i < end; i++) {
+			sb.appendCodePoint(cps[i]);
+		}
 	}
 
 	/**
@@ -305,11 +307,11 @@ public class VtLine {
 	 * <p>
 	 * This is used both when selecting words, and when requiring search to find whole words.
 	 * 
-	 * @param ch the character
+	 * @param cp the unicode code point
 	 * @return true if the character is part of a word
 	 */
-	public static boolean isWordChar(char ch) {
-		return Character.isLetterOrDigit(ch) || ch == '_' || ch == '-' || ch == '@';
+	public static boolean isWordChar(int cp) {
+		return Character.isLetterOrDigit(cp) || cp == '_' || cp == '-' || cp == '@';
 	}
 
 	/**
@@ -322,8 +324,8 @@ public class VtLine {
 	public int findWord(int x, boolean forward) {
 		int step = forward ? 1 : -1;
 		for (int i = x; i < len && i >= 0; i += step) {
-			char ch = chars[i];
-			if (isWordChar(ch)) {
+			int cp = cps[i];
+			if (isWordChar(cp)) {
 				continue;
 			}
 			if (forward) {

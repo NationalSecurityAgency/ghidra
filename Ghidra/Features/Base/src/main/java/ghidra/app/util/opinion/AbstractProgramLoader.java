@@ -25,6 +25,7 @@ import ghidra.app.util.Option;
 import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.sourcelanguage.SourceLanguageService;
 import ghidra.formats.gfilesystem.FSRL;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.LockException;
@@ -35,6 +36,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
+import ghidra.program.model.util.AddressSetPropertyMap;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.program.util.GhidraProgramUtilities;
 import ghidra.util.MD5Utilities;
@@ -106,6 +108,7 @@ public abstract class AbstractProgramLoader implements Loader {
 				Program program = loadedProgram.getDomainObject(this);
 				try {
 					applyProcessorLabels(settings.options(), program);
+					setSourceLanguages(program, settings);
 					program.setEventsEnabled(true);
 				}
 				finally {
@@ -162,10 +165,18 @@ public abstract class AbstractProgramLoader implements Loader {
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
 			DomainObject domainObject, boolean loadIntoProgram, boolean mirrorFsLayout) {
 		ArrayList<Option> list = new ArrayList<>();
-		list.add(new Option(APPLY_LABELS_OPTION_NAME, shouldApplyProcessorLabelsByDefault(),
-			Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-applyLabels"));
-		list.add(new Option(ANCHOR_LABELS_OPTION_NAME, true, Boolean.class,
-			Loader.COMMAND_LINE_ARG_PREFIX + "-anchorLabels"));
+		list.add(Option.newBoolean(APPLY_LABELS_OPTION_NAME)
+				.value(shouldApplyProcessorLabelsByDefault())
+				.commandLineArgument(createArg("-applyLabels"))
+				.description("Create processor labels at specific addresses as defined by the " +
+					"processor specification.")
+				.build());
+		list.add(Option.newBoolean(ANCHOR_LABELS_OPTION_NAME)
+				.value(true)
+				.commandLineArgument("-anchorLabels")
+				.description(
+					"Prevent processor labels from moving on imagebase or memory block change.")
+				.build());
 
 		return list;
 	}
@@ -270,7 +281,7 @@ public abstract class AbstractProgramLoader implements Loader {
 		int id = prog.startTransaction("Set program properties");
 		boolean success = false;
 		try {
-			setProgramProperties(prog, settings.provider(), getName());
+			setProgramProperties(prog, settings.provider(), getName(), settings.monitor());
 			try {
 				if (shouldSetImageBase(prog, imageBase)) {
 					prog.setImageBase(imageBase, true);
@@ -316,17 +327,25 @@ public abstract class AbstractProgramLoader implements Loader {
 	 * @param prog {@link Program} (with active transaction)
 	 * @param provider {@link ByteProvider} that the program was created from
 	 * @param executableFormatName executable format string
+	 * @param monitor The {@link TaskMonitor}
 	 * @throws IOException if error reading from ByteProvider
 	 */
 	public static void setProgramProperties(Program prog, ByteProvider provider,
-			String executableFormatName) throws IOException {
+			String executableFormatName, TaskMonitor monitor) throws IOException {
 		prog.setExecutablePath(provider.getAbsolutePath());
 		if (executableFormatName != null) {
 			prog.setExecutableFormat(executableFormatName);
 		}
 		FSRL fsrl = provider.getFSRL();
-		String md5 =
-			(fsrl != null && fsrl.getMD5() != null) ? fsrl.getMD5() : computeBinaryMD5(provider);
+		String md5;
+		monitor.setIndeterminate(true);
+		if (fsrl != null && fsrl.getMD5() != null) {
+			md5 = fsrl.getMD5();
+		}
+		else {
+			monitor.setMessage("Computing MD5...");
+			md5 = computeBinaryMD5(provider);
+		}
 		if (fsrl != null) {
 			if (fsrl.getMD5() == null) {
 				fsrl = fsrl.withMD5(md5);
@@ -334,8 +353,33 @@ public abstract class AbstractProgramLoader implements Loader {
 			FSRL.writeToProgramInfo(prog, fsrl);
 		}
 		prog.setExecutableMD5(md5);
+
+		monitor.setMessage("Computing SHA256...");
 		String sha256 = computeBinarySHA256(provider);
 		prog.setExecutableSHA256(sha256);
+
+		monitor.setIndeterminate(false);
+	}
+
+	/**
+	 * Mark an address in the given property map.  If the map does not exist it will be created.
+	 * @param program program
+	 * @param address address to mark
+	 * @param propertyMapName name of property map
+	 */
+	public static void markProperty(Program program, Address address, String propertyMapName) {
+		AddressSetPropertyMap codeProp = program.getAddressSetPropertyMap(propertyMapName);
+		if (codeProp == null) {
+			try {
+				codeProp = program.createAddressSetPropertyMap(propertyMapName);
+			}
+			catch (DuplicateNameException e) {
+				codeProp = program.getAddressSetPropertyMap(propertyMapName);
+			}
+		}
+		if (codeProp != null) {
+			codeProp.add(address, address);
+		}
 	}
 
 	private String getProgramNameFromSourceData(ByteProvider provider, String domainFileName) {
@@ -477,6 +521,18 @@ public abstract class AbstractProgramLoader implements Loader {
 			}
 
 			GhidraProgramUtilities.resetAnalysisFlags(program);
+		}
+		finally {
+			program.endTransaction(id, true);
+		}
+	}
+
+	private void setSourceLanguages(Program program, ImporterSettings settings)
+			throws CancelledException {
+		int id = program.startTransaction("Set Source Languages");
+		try {
+			program.setSourceLanguageIDs(
+				SourceLanguageService.find(program, settings.log(), settings.monitor()));
 		}
 		finally {
 			program.endTransaction(id, true);

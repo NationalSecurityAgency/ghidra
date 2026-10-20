@@ -20,6 +20,7 @@ import java.awt.event.ActionListener;
 
 import javax.swing.*;
 
+import docking.util.AnimationUtils;
 import generic.theme.GIcon;
 import ghidra.feature.vt.gui.filters.AncillaryFilterDialogComponentProvider;
 
@@ -49,6 +50,11 @@ public class FilterIconFlashTimer<T> extends Timer implements ActionListener {
 
 	@Override
 	public void actionPerformed(ActionEvent event) {
+		if (!AnimationUtils.isAnimationEnabled()) {
+			stop();
+			return;
+		}
+
 		if (!filterDialog.isFiltered()) {
 			stop();
 			return; // no filter applied

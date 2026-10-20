@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.decompile;
 
 import static org.junit.Assert.*;
 
+import java.util.List;
 import java.util.function.*;
 
 import org.junit.Before;
@@ -24,7 +25,10 @@ import org.junit.Test;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
+import docking.widgets.fieldpanel.field.Field;
 import ghidra.app.cmd.function.CreateFunctionCmd;
+import ghidra.app.decompiler.component.ClangTextField;
+import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.gotoquery.GoToHelper;
@@ -136,14 +140,28 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 
 		decompile("10059a3"); // function that calls 'ghidra' 
 
-		int line = 35;
 		int character = 1;
-		assertToken("ghidra", line, character);
+		int line = getLineForFunctionCall("ghidra");
 		setDecompilerLocation(line, character);
 		doubleClick();
 
 		assertExternalNavigationPerformed();
 		assertNotEquals(thunkAddress, codeBrowser.getCurrentAddress());
+	}
+
+	private int getLineForFunctionCall(String functionName) {
+
+		DecompilerPanel panel = provider.getDecompilerPanel();
+		List<Field> fields = panel.getFields();
+		for (Field field : fields) {
+			String text = field.getText();
+			if (text.trim().startsWith(functionName)) {
+				return ((ClangTextField) field).getLineNumber();
+			}
+		}
+
+		fail("Could not find function call to " + functionName);
+		return -1;
 	}
 
 	@Test
@@ -171,9 +189,8 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 
 		decompile("10059a3"); // function that calls 'ghidra' 
 
-		int line = 35;
+		int line = getLineForFunctionCall("ghidra");
 		int character = 1;
-		assertToken("ghidra", line, character);
 		setDecompilerLocation(line, character);
 		doubleClick();
 

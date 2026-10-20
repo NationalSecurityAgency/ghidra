@@ -16,8 +16,7 @@
 package ghidra.features.bsim.query.facade;
 
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.*;
 
 import generic.jar.ResourceFile;
 import generic.lsh.vector.LSHVectorFactory;
@@ -114,9 +113,9 @@ public class FunctionDatabaseTestDouble implements SQLFunctionDatabase {
 	@Override
 	public BSimServerInfo getServerInfo() {
 		try {
-			return new BSimServerInfo(new URL(urlString));
+			return new BSimServerInfo(new URI(urlString).toURL());
 		}
-		catch (IllegalArgumentException | MalformedURLException e) {
+		catch (IllegalArgumentException | MalformedURLException | URISyntaxException e) {
 			throw new RuntimeException(e);
 		}
 	}

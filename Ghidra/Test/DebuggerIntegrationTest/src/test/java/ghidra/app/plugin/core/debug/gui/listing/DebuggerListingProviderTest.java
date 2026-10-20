@@ -75,6 +75,7 @@ import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.schema.SchemaContext;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.util.Msg;
 
 @Category(NightlyCategory.class)
 public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerIntegrationTest {
@@ -1303,9 +1304,9 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerInt
 		DomainObjectListener spyListener = new DomainObjectListener() {
 			@Override
 			public void domainObjectChanged(DomainObjectChangedEvent ev) {
-				System.err.println(ev);
+				Msg.info(this, ev);
 				for (DomainObjectChangeRecord rec : ev) {
-					System.err.println("  " + rec);
+					Msg.info(this, "  " + rec);
 				}
 			}
 		};

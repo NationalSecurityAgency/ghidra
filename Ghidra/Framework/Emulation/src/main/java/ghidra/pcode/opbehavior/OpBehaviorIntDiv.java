@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,15 +15,17 @@
  */
 package ghidra.pcode.opbehavior;
 
+import java.math.BigInteger;
+
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.pcode.PcodeOp;
 
-import java.math.BigInteger;
+public enum OpBehaviorIntDiv implements BinaryOpBehavior {
+	OP_INT_DEV;
 
-public class OpBehaviorIntDiv extends BinaryOpBehavior {
-
-	public OpBehaviorIntDiv() {
-		super(PcodeOp.INT_DIV);
+	@Override
+	public int opcode() {
+		return PcodeOp.INT_DIV;
 	}
 
 	@Override
@@ -33,7 +35,7 @@ public class OpBehaviorIntDiv extends BinaryOpBehavior {
 		if (in1 == in2)
 			return 1;
 		if (sizein == 8) {
-			long mask = (0x1<<63);
+			long mask = (0x1 << 63);
 			long bit1 = in1 & mask; // Get the sign bits
 			long bit2 = in2 & mask;
 			if (bit1 != 0 || bit2 != 0) {
@@ -65,5 +67,4 @@ public class OpBehaviorIntDiv extends BinaryOpBehavior {
 		BigInteger res = in1.divide(in2);
 		return res;
 	}
-
 }

@@ -19,8 +19,9 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Arrays;
-import java.util.Set;
 import java.util.stream.Stream;
+
+import ghidra.util.Msg;
 
 // TODO: I shouldn't have to do any of this.
 public class AnsiBufferedInputStream extends InputStream {
@@ -47,6 +48,8 @@ public class AnsiBufferedInputStream extends InputStream {
 	private ByteBuffer titleBuf = ByteBuffer.allocate(255);
 
 	private Mode mode = Mode.CHARS;
+
+	private int savePosition;  // For ESC 7/8
 
 	public AnsiBufferedInputStream(InputStream in) {
 		if (in instanceof HandleInputStream) {
@@ -120,35 +123,19 @@ public class AnsiBufferedInputStream extends InputStream {
 		byte c = (byte) ci;
 		//printDebugChar(c);
 		switch (mode) {
-			case CHARS:
-				processChars(c);
-				break;
-			case ESC:
-				processEsc(c);
-				break;
-			case CSI:
-				processCsi(c);
-				break;
-			case CSI_p:
-				processCsiParamOrCommand(c);
-				break;
-			case CSI_Q:
-				processCsiQ(c);
-				break;
-			case OSC:
-				processOsc(c);
-				break;
-			case WINDOW_TITLE:
-				processWindowTitle(c);
-				break;
-			case WINDOW_TITLE_ESC:
-				processWindowTitleEsc(c);
-				break;
-			default:
-				throw new AssertionError();
+			case CHARS -> processChars(c);
+			case ESC -> processEsc(c);
+			case CSI -> processCsi(c);
+			case CSI_p -> processCsiParamOrCommand(c);
+			case CSI_Q -> processCsiQ(c);
+			case OSC -> processOsc(c);
+			case WINDOW_TITLE -> processWindowTitle(c);
+			case WINDOW_TITLE_ESC -> processWindowTitleEsc(c);
+			default -> throw new AssertionError();
 		}
 		countIn++;
-		return c;
+		// Don't return a potentially negative number
+		return ci;
 	}
 
 	/**
@@ -187,180 +174,184 @@ public class AnsiBufferedInputStream extends InputStream {
 
 	protected void processChars(byte c) {
 		switch (c) {
-			case 0x08:
+			default -> appendChar(c);
+			case '\b' -> {
 				if (lineBuf.get(lineBuf.position() - 1) == ' ') {
 					lineBuf.position(lineBuf.position() - 1);
 				}
-				break;
-			case '\n':
-				//appendChar(c);
-				bakeLine();
-				break;
-			case 0x1b:
-				mode = Mode.ESC;
-				break;
-			default:
-				appendChar(c);
-				break;
+			}
+			case '\n' -> bakeLine();
+			case '\r' -> lineBuf.position(0);
+			case 0x1b -> mode = Mode.ESC;
 		}
 	}
 
 	protected void processEsc(byte c) {
 		switch (c) {
-			case '[':
-				mode = Mode.CSI;
-				break;
-			case ']':
-				mode = Mode.OSC;
-				break;
-			default:
-				throw new AssertionError("Saw 'ESC " + c + "' at " + countIn);
+			case '[' -> mode = Mode.CSI;
+			case ']' -> mode = Mode.OSC;
+			// At some point, these may be replaced with the more current ESC[s and ESC[u
+			case '7' -> {
+				savePosition = lineBuf.position();
+				mode = Mode.CHARS;
+			}
+			case '8' -> {
+				// Check limits
+				int pos = Math.min(savePosition, lineBuf.limit());
+				lineBuf.position(pos);
+				mode = Mode.CHARS;
+			}
+			default -> {
+				//mode = Mode.CHARS;
+				Msg.debug(this, "Saw 'ESC " + c + "' at " + countIn + " pos=" + lineBuf.position());
+			}
 		}
 	}
 
 	protected void processCsi(byte c) {
 		switch (c) {
-			default:
-				processCsiParamOrCommand(c);
-				break;
-			case '?':
-				mode = Mode.CSI_Q;
-				break;
+			default -> processCsiParamOrCommand(c);
+			case '?' -> mode = Mode.CSI_Q;
 		}
 	}
 
 	protected void processCsiParamOrCommand(byte c) {
 		switch (c) {
-			default:
-				escBuf.put(c);
-				break;
-			case 'A':
+			default -> {
+				if ((c >= 0x30 && c <= 0x39) || c == (byte) ';') {
+					escBuf.put(c);
+				}
+				else {
+					Msg.debug(this, "Unexpected esc buffer entry: " + c);
+				}
+			}
+			case 'A' -> {
 				execCursorUp();
 				mode = Mode.CHARS;
-				break;
-			case 'B':
+			}
+			case 'B' -> {
 				execCursorDown();
 				mode = Mode.CHARS;
-				break;
-			case 'C':
+			}
+			case 'C' -> {
 				execCursorForward();
 				mode = Mode.CHARS;
-				break;
-			case 'D':
+			}
+			case 'D' -> {
 				execCursorBackward();
 				mode = Mode.CHARS;
-				break;
-			case 'G':
+			}
+			case 'G' -> {
 				execCursorCharAbsolute();
 				mode = Mode.CHARS;
-				break;
-			case 'H':
+			}
+			case 'H' -> {
 				execCursorPosition();
 				mode = Mode.CHARS;
-				break;
-			case 'J':
+			}
+			case 'J' -> {
 				execEraseInDisplay();
 				mode = Mode.CHARS;
-				break;
-			case 'K':
+			}
+			case 'K' -> {
 				execEraseInLine();
 				mode = Mode.CHARS;
-				break;
-			case 'X':
+			}
+			case 'X' -> {
 				execEraseCharacter();
 				mode = Mode.CHARS;
-				break;
-			case 'm':
+			}
+			case 'm' -> {
 				execSetGraphicsRendition();
 				mode = Mode.CHARS;
-				break;
-			case 'h':
+			}
+			case 'h' -> {
 				execPrivateSequence(true);
 				mode = Mode.CHARS;
-				break;
-			case 'l':
+			}
+			case 'l' -> {
 				execPrivateSequence(false);
 				mode = Mode.CHARS;
-				break;
+			}
+			case 'f' -> {
+				// Need to flush escBuf at a minimum
+				readAndClearEscBuf();
+				Msg.debug(this, "TODO: f (Horizontal and Vertical Position - HVP)");
+				mode = Mode.CHARS;
+			}
+			case 'r' -> {
+				// Need to flush escBuf at a minimum
+				readAndClearEscBuf();
+				Msg.debug(this, "TODO: r (Set Top and Bottom Margins - DECSTBM)");
+				mode = Mode.CHARS;
+			}
 		}
 	}
 
+	public static final String PRIV_12 = "12";
+	public static final String PRIV_25 = "25";
+	public static final String PRIV_1004 = "1004";
+	public static final String PRIV_2004 = "2004";
+	public static final String PRIV_9001 = "9001";
+
 	protected void processCsiQ(byte c) {
-		String buf;
 		switch (c) {
-			default:
-				escBuf.put(c);
-				break;
-			case 'h':
-				buf = readAndClearEscBuf();
-				if ("12".equals(buf)) {
-					execTextCursorEnableBlinking();
-					escBuf.clear();
-					mode = Mode.CHARS;
+			default -> escBuf.put(c);
+			case 'h' -> {
+				switch (readAndClearEscBuf()) {
+					case PRIV_12 -> execTextCursorEnableBlinking();
+					case PRIV_25 -> execTextCursorEnableModeShow();
+					case PRIV_1004 -> execEnableFocusReport();
+					case PRIV_2004 -> execEnableBracketedPasteMode();
+					case PRIV_9001 -> execEnableWin32InputMode();
+					case String buf -> throw new AssertionError("Got CsiQ(h): %s".formatted(buf));
 				}
-				else if ("25".equals(buf)) {
-					execTextCursorEnableModeShow();
-					escBuf.clear();
-					mode = Mode.CHARS;
+				mode = Mode.CHARS;
+			}
+			case 'l' -> {
+				switch (readAndClearEscBuf()) {
+					case PRIV_12 -> execTextCursorDisableBlinking();
+					case PRIV_25 -> execTextCursorDisableModeShow();
+					case PRIV_1004 -> execDisableFocusReport();
+					case PRIV_2004 -> execDisableBracketedPasteMode();
+					case PRIV_9001 -> execDisableWin32InputMode();
+					case String buf -> throw new AssertionError("Got CsiQ(l): %s".formatted(buf));
 				}
-				else {
-					throw new AssertionError();
-				}
-				break;
-			case 'l':
-				buf = readAndClearEscBuf();
-				if ("12".equals(buf)) {
-					execTextCursorDisableBlinking();
-					escBuf.clear();
-					mode = Mode.CHARS;
-				}
-				else if ("25".equals(buf)) {
-					execTextCursorDisableModeShow();
-					escBuf.clear();
-					mode = Mode.CHARS;
-				}
-				break;
+				mode = Mode.CHARS;
+			}
 		}
 	}
 
 	protected void processOsc(byte c) {
 		switch (c) {
-			default:
-				escBuf.put(c);
-				break;
-			case ';':
-				if (Set.of("0", "2").contains(readAndClearEscBuf())) {
-					mode = Mode.WINDOW_TITLE;
-					escBuf.clear();
-					break;
+			default -> escBuf.put(c);
+			case ';' -> {
+				switch (readAndClearEscBuf()) {
+					case "0", "2" -> mode = Mode.WINDOW_TITLE;
+					default -> throw new AssertionError();
 				}
-				throw new AssertionError();
+			}
 		}
 	}
 
 	protected void processWindowTitle(byte c) {
 		switch (c) {
-			default:
-				titleBuf.put(c);
-				break;
-			case 0x07: // bell, even though MSDN says longer form preferred
+			default -> titleBuf.put(c);
+			case 0x07 -> { // bell, even though MSDN says longer form preferred
 				execSetWindowTitle();
 				mode = Mode.CHARS;
-				break;
-			case 0x1b:
-				mode = Mode.WINDOW_TITLE_ESC;
-				break;
+			}
+			case 0x1b -> mode = Mode.WINDOW_TITLE_ESC;
 		}
 	}
 
 	protected void processWindowTitleEsc(byte c) {
 		switch (c) {
-			case '\\':
+			case '\\' -> {
 				execSetWindowTitle();
 				mode = Mode.CHARS;
-				break;
-			default:
-				throw new AssertionError("Saw <ST> ... ESC " + c + " at " + countIn);
+			}
+			default -> throw new AssertionError("Saw <ST> ... ESC " + c + " at " + countIn);
 		}
 	}
 
@@ -395,11 +386,13 @@ public class AnsiBufferedInputStream extends InputStream {
 	}
 
 	protected void execCursorUp() {
-		throw new UnsupportedOperationException("Cursor Up");
+		readAndClearEscBuf();
+		//throw new UnsupportedOperationException("Cursor Up");
 	}
 
 	protected void execCursorDown() {
-		throw new UnsupportedOperationException("Cursor Down");
+		readAndClearEscBuf();
+		//throw new UnsupportedOperationException("Cursor Down");
 	}
 
 	protected void setPosition(int newPosition) {
@@ -420,8 +413,9 @@ public class AnsiBufferedInputStream extends InputStream {
 	}
 
 	protected void execCursorCharAbsolute() {
-		int abs = parseNumericBuffer();
-		lineBuf.position(abs - 1);
+		int[] abset = parseNumericListBuffer();
+		int abs = Math.min(abset[0] - 1, lineBuf.limit());
+		lineBuf.position(abs);
 	}
 
 	protected void execCursorPosition() {
@@ -434,9 +428,9 @@ public class AnsiBufferedInputStream extends InputStream {
 			throw new AssertionError();
 		}
 		if (yx[0] != 1) {
-			throw new AssertionError();
+			Msg.warn(this, "ANSI: CursorPosition y != 1 (%d)".formatted(yx[0]));
 		}
-		lineBuf.position(yx[1] - 1);
+		setPosition(yx[1] - 1);
 	}
 
 	protected void execTextCursorEnableBlinking() {
@@ -455,22 +449,43 @@ public class AnsiBufferedInputStream extends InputStream {
 		// Don't care
 	}
 
+	protected void execEnableFocusReport() {
+		// Don't care
+	}
+
+	protected void execDisableFocusReport() {
+		// Don't care
+	}
+
+	protected void execEnableBracketedPasteMode() {
+		// Don't care
+	}
+
+	protected void execDisableBracketedPasteMode() {
+		// Don't care
+	}
+
+	protected void execEnableWin32InputMode() {
+		// Don't care
+	}
+
+	protected void execDisableWin32InputMode() {
+		// Don't care
+	}
+
 	protected void execEraseInDisplay() {
 		// Because I have only one line, right?
 		execEraseInLine();
 	}
 
 	protected void execEraseInLine() {
-		switch (parseNumericBuffer()) {
-			case 0:
-				Arrays.fill(lineBuf.array(), lineBuf.position(), lineBuf.capacity(), (byte) 0);
-				break;
-			case 1:
-				Arrays.fill(lineBuf.array(), 0, lineBuf.position() + 1, (byte) 0);
-				break;
-			case 2:
-				Arrays.fill(lineBuf.array(), (byte) 0);
-				break;
+		int[] abset = parseNumericListBuffer();
+		int abs = abset.length == 0 ? 0 : abset[0];
+		switch (abs) {
+			case 0 -> Arrays.fill(lineBuf.array(), lineBuf.position(), lineBuf.capacity(),
+				(byte) 0);
+			case 1 -> Arrays.fill(lineBuf.array(), 0, lineBuf.position() + 1, (byte) 0);
+			case 2 -> Arrays.fill(lineBuf.array(), (byte) 0);
 		}
 	}
 

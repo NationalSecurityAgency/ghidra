@@ -160,11 +160,6 @@ public class StubMemory extends AddressSet implements Memory {
 	}
 
 	@Override
-	public AddressSetView getInitializedAddressSet() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public AddressSetView getExecuteSet() {
 		throw new UnsupportedOperationException();
 	}

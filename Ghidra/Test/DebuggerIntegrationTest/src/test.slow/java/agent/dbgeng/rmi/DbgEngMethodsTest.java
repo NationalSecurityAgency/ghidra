@@ -15,7 +15,9 @@
  */
 package agent.dbgeng.rmi;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.Assert.*;
 
 import java.io.File;
@@ -38,7 +40,7 @@ import ghidra.pty.testutil.DummyProc;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.modules.TraceModule;
@@ -57,8 +59,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			start(conn, null);
 
 			RemoteMethod evaluate = conn.getMethod("evaluate");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/noname")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/noname")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				assertEquals("11",
 					evaluate.invoke(Map.ofEntries(
 						Map.entry("session", tb.obj("Sessions[0]")),
@@ -83,7 +85,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			start(conn, "notepad.exe");
 			conn.execute("ghidra_trace_kill()");
 		}
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
 			// Just confirm it's present
 		}
 	}
@@ -96,8 +98,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			txCreate(conn, "Sessions[0].Available");
 
 			RemoteMethod refreshAvailable = conn.getMethod("refresh_available");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/noname")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/noname")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				TraceObject available = Objects.requireNonNull(tb.objAny0("Sessions[].Available"));
 
 				refreshAvailable.invoke(Map.of("node", available));
@@ -119,8 +121,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod refreshBreakpoints = conn.getMethod("refresh_breakpoints");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				conn.execute("pc = util.get_pc()");
 				conn.execute("util.dbg.bp(expr=pc)");
@@ -142,9 +144,9 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				Address main = rangeMain.getMinAddress();
 
 				assertBreakLoc(procBreakLocVals.get(0), "[0]", main, 1,
-					Set.of(TraceBreakpointKind.SW_EXECUTE), "ntdll!Ldr");
+					CommonSet.SWX.kinds(), "ntdll!Ldr");
 				assertBreakLoc(procBreakLocVals.get(1), "[1]", main.add(4), 1,
-					Set.of(TraceBreakpointKind.HW_EXECUTE), "ntdll!Ldr");
+					CommonSet.HWX.kinds(), "ntdll!Ldr");
 			}
 		}
 	}
@@ -156,8 +158,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "all");
 
 			RemoteMethod refreshProcWatchpoints = conn.getMethod("refresh_breakpoints");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				conn.execute("pc = util.get_pc()");
 				conn.execute("util.dbg.ba(expr=pc, access=DbgEng.DEBUG_BREAK_EXECUTE)");
@@ -185,14 +187,11 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				Address main2 = rangeMain2.getMinAddress();
 
 				assertWatchLoc(procBreakVals.get(0), "[0]", main0, (int) rangeMain0.getLength(),
-					Set.of(TraceBreakpointKind.HW_EXECUTE),
-					"main");
+					CommonSet.HWX.kinds(), "main");
 				assertWatchLoc(procBreakVals.get(1), "[1]", main1, (int) rangeMain1.getLength(),
-					Set.of(TraceBreakpointKind.WRITE),
-					"main+4");
+					CommonSet.WRITE.kinds(), "main+4");
 				assertWatchLoc(procBreakVals.get(2), "[2]", main2, (int) rangeMain1.getLength(),
-					Set.of(TraceBreakpointKind.READ),
-					"main+8");
+					CommonSet.READ.kinds(), "main+8");
 			}
 		}
 	}
@@ -204,8 +203,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			txCreate(conn, "Sessions[0].Processes");
 
 			RemoteMethod refreshProcesses = conn.getMethod("refresh_processes");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				TraceObject processes = Objects.requireNonNull(tb.objAny0("Sessions[].Processes"));
 
 				refreshProcesses.invoke(Map.of("node", processes));
@@ -227,8 +226,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "all");
 
 			RemoteMethod refreshEnvironment = conn.getMethod("refresh_environment");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				TraceObject env =
 					Objects.requireNonNull(tb.objAny0("Sessions[].Processes[].Environment"));
 
@@ -250,8 +249,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod refreshThreads = conn.getMethod("refresh_threads");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				TraceObject proc = tb.objAny0("Sessions[].Processes[]");
 				TraceObject threads = fakeEmpty(proc, "Threads");
@@ -271,8 +270,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod refreshStack = conn.getMethod("refresh_stack");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				txPut(conn, "frames");
 				TraceObject stack = Objects.requireNonNull(
@@ -300,8 +299,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			conn.execute("ghidra_trace_txcommit()");
 
 			RemoteMethod refreshRegisters = conn.getMethod("refresh_registers");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				conn.execute("util.dbg.cmd('r rax=0xdeadbeef')");
 
@@ -325,8 +324,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod refreshMappings = conn.getMethod("refresh_mappings");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				TraceObject proc = tb.objAny0("Sessions[].Processes[]");
 				TraceObject memory = fakeEmpty(proc, "Memory");
@@ -357,8 +356,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod refreshModules = conn.getMethod("refresh_modules");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				TraceObject proc = tb.objAny0("Sessions[].Processes[]");
 				TraceObject modules = fakeEmpty(proc, "Modules");
@@ -380,8 +379,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod activateThread = conn.getMethod("activate_thread");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				txPut(conn, "threads");
 
@@ -410,8 +409,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod removeProcess = conn.getMethod("remove_process");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/netstat.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/netstat.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				TraceObject proc2 = Objects.requireNonNull(tb.objAny0("Sessions[].Processes[]"));
 				removeProcess.invoke(Map.of("process", proc2));
@@ -430,8 +429,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				txPut(conn, "available");
 
 				RemoteMethod attachObj = conn.getMethod("attach_obj");
-				try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/noname")) {
-					tb = new ToyDBTraceBuilder((Trace) mdo.get());
+				try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/noname")) {
+					tb = new ToyDBTraceBuilder(mdo.get());
 					TraceObject target = Objects.requireNonNull(tb.obj(
 						"Sessions[0].Available[%d]".formatted(dproc.pid)));
 					attachObj.invoke(Map.ofEntries(
@@ -452,8 +451,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				txPut(conn, "available");
 
 				RemoteMethod attachPid = conn.getMethod("attach_pid");
-				try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/noname")) {
-					tb = new ToyDBTraceBuilder((Trace) mdo.get());
+				try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/noname")) {
+					tb = new ToyDBTraceBuilder(mdo.get());
 					Objects.requireNonNull(tb.obj(
 						"Sessions[0].Available[%d]".formatted(dproc.pid)));
 					attachPid.invoke(Map.ofEntries(
@@ -474,8 +473,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod detach = conn.getMethod("detach");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/netstat.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/netstat.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				TraceObject proc = Objects.requireNonNull(tb.objAny0("Sessions[].Processes[]"));
 				detach.invoke(Map.of("process", proc));
@@ -493,8 +492,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod launch = conn.getMethod("launch_loader");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/noname")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/noname")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				launch.invoke(Map.ofEntries(
 					Map.entry("session", tb.obj("Sessions[0]")),
@@ -514,8 +513,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod launch = conn.getMethod("launch");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/noname")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/noname")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				launch.invoke(Map.ofEntries(
 					Map.entry("session", tb.obj("Sessions[0]")),
@@ -538,8 +537,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod kill = conn.getMethod("kill");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				waitStopped("Missed initial stop");
 
 				TraceObject proc = Objects.requireNonNull(tb.objAny0("Sessions[].Processes[]"));
@@ -561,8 +560,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 			RemoteMethod go = conn.getMethod("go");
 			RemoteMethod interrupt = conn.getMethod("interrupt");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				waitStopped("Missed initial stop");
 
 				TraceObject proc = Objects.requireNonNull(tb.objAny0("Sessions[].Processes[]"));
@@ -586,8 +585,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod stepInto = conn.getMethod("step_into");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				waitStopped("Missed initial stop");
 				txPut(conn, "threads");
 
@@ -621,8 +620,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod stepOver = conn.getMethod("step_over");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				waitStopped("Missed initial stop");
 				txPut(conn, "threads");
 
@@ -651,8 +650,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 			RemoteMethod stepInto = conn.getMethod("step_into");
 			RemoteMethod stepTo = conn.getMethod("step_to");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				txPut(conn, "threads");
 
 				TraceObject thread =
@@ -684,8 +683,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 			RemoteMethod stepInto = conn.getMethod("step_into");
 			RemoteMethod stepOut = conn.getMethod("step_out");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				waitStopped("Missed initial stop");
 				txPut(conn, "threads");
 
@@ -714,8 +713,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod breakAddress = conn.getMethod("break_address");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				TraceObject proc = Objects.requireNonNull(tb.objAny0("Sessions[].Processes[]"));
 
@@ -735,8 +734,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod breakExpression = conn.getMethod("break_expression");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				waitStopped("Missed initial stop");
 
 				breakExpression.invoke(Map.of("expression", "entry"));
@@ -754,8 +753,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod breakAddress = conn.getMethod("break_hw_address");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				TraceObject proc = Objects.requireNonNull(tb.objAny0("Sessions[].Processes[]"));
 
@@ -775,8 +774,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod breakExpression = conn.getMethod("break_hw_expression");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				waitStopped("Missed initial stop");
 
 				breakExpression.invoke(Map.of("expression", "entry"));
@@ -794,8 +793,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod breakRange = conn.getMethod("break_read_range");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				waitStopped("Missed initial stop");
 
 				TraceObject proc = Objects.requireNonNull(tb.objAny0("Sessions[].Processes[]"));
@@ -818,8 +817,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod breakExpression = conn.getMethod("break_read_expression");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				breakExpression.invoke(Map.of("expression", "ntdll!LdrInitShimEngineDynamic"));
 				long address = getAddressAtOffset(conn, 0);
@@ -839,8 +838,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod breakRange = conn.getMethod("break_write_range");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				waitStopped("Missed initial stop");
 
 				TraceObject proc = Objects.requireNonNull(tb.objAny0("Sessions[].Processes[]"));
@@ -863,8 +862,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod breakExpression = conn.getMethod("break_write_expression");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				breakExpression.invoke(Map.of("expression", "ntdll!LdrInitShimEngineDynamic"));
 				long address = getAddressAtOffset(conn, 0);
@@ -884,8 +883,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod breakRange = conn.getMethod("break_access_range");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				waitStopped("Missed initial stop");
 
 				TraceObject proc = Objects.requireNonNull(tb.objAny0("Sessions[].Processes[]"));
@@ -908,8 +907,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "processes");
 
 			RemoteMethod breakExpression = conn.getMethod("break_access_expression");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				breakExpression.invoke(Map.of("expression", "ntdll!LdrInitShimEngineDynamic"));
 				long address = getAddressAtOffset(conn, 0);
@@ -930,8 +929,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 			RemoteMethod breakAddress = conn.getMethod("break_address");
 			RemoteMethod toggleBreakpoint = conn.getMethod("toggle_breakpoint");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				long address = getAddressAtOffset(conn, 0);
 				TraceObject proc = Objects.requireNonNull(tb.objAny0("Sessions[].Processes[]"));
@@ -957,8 +956,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 			RemoteMethod breakAddress = conn.getMethod("break_address");
 			RemoteMethod deleteBreakpoint = conn.getMethod("delete_breakpoint");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/notepad.exe")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 
 				long address = getAddressAtOffset(conn, 0);
 				TraceObject proc = Objects.requireNonNull(tb.objAny0("Sessions[].Processes[]"));
@@ -1017,8 +1016,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 		try (PythonAndConnection conn = startAndConnectPython()) {
 			openTtdTrace(conn);
 
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/cmd01.run")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/cmd01.run")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 			}
 		}
 	}
@@ -1035,8 +1034,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "events");
 
 			RemoteMethod activate = conn.getMethod("activate_frame");
-			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/cmd01.run")) {
-				tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/pydbg/cmd01.run")) {
+				tb = new ToyDBTraceBuilder(mdo.get());
 				traceManager.openTrace(tb.trace);
 				traceManager.activateTrace(tb.trace);
 

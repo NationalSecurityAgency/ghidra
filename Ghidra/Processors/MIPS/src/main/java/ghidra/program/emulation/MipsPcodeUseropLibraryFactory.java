@@ -23,7 +23,7 @@ import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeUseropLibraryFactory.UseropLibrary;
 import ghidra.program.model.lang.*;
 
-@UseropLibrary("mips")
+@UseropLibrary(id = "mips")
 public class MipsPcodeUseropLibraryFactory implements PcodeUseropLibraryFactory {
 	@Override
 	public <T> PcodeUseropLibrary<T> create(SleighLanguage language,

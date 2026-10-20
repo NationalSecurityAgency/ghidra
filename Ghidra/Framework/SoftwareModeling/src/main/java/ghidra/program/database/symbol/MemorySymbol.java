@@ -19,10 +19,10 @@ import java.util.ArrayList;
 import java.util.Objects;
 
 import db.DBRecord;
-import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.external.ExternalLocationDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.symbol.*;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.UnknownProgressWrappingTaskMonitor;
 
@@ -38,32 +38,14 @@ public abstract class MemorySymbol extends SymbolDB {
 	/**
 	 * Constructs a new MemorySymbol which corresponds to the specified symbol record,
 	 * @param mgr the symbol manager
-	 * @param cache symbol object cache
 	 * @param addr the address associated with the symbol
 	 * @param record the record for this symbol
+	 * @param key the database key for the symbol
 	 */
-	protected MemorySymbol(SymbolManager mgr, DBObjectCache<SymbolDB> cache, Address addr,
-			DBRecord record) {
-		super(mgr, cache, addr, record);
+	protected MemorySymbol(SymbolManager mgr, Address addr, DBRecord record, long key) {
+		super(mgr, addr, record, key);
 		if (!addr.isMemoryAddress() && !isExternal()) {
 			throw new IllegalArgumentException("memory or external address required");
-		}
-	}
-
-	/**
-	 * Constructs a new MemorySymbol which corresponds to the specified symbol key and has
-	 * no record.  This is intended to support dynamic label cases which do not have a record
-	 * and do not support an external address.
-	 * @param mgr the symbol manager
-	 * @param cache symbol object cache
-	 * @param addr the address associated with the symbol
-	 * @param key this must be the absolute encoding of addr
-	 */
-	protected MemorySymbol(SymbolManager mgr, DBObjectCache<SymbolDB> cache, Address addr,
-			long key) {
-		super(mgr, cache, addr, key);
-		if (!addr.isMemoryAddress()) {
-			throw new IllegalArgumentException("memory address required");
 		}
 	}
 
@@ -94,23 +76,18 @@ public abstract class MemorySymbol extends SymbolDB {
 	}
 
 	private boolean doIsPinned() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			if (record == null) {
 				return false;
 			}
 			byte flags = record.getByteValue(SymbolDatabaseAdapter.SYMBOL_FLAGS_COL);
 			return ((flags & SymbolDatabaseAdapter.SYMBOL_PINNED_FLAG) != 0);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	private void doSetPinned(boolean pinned) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (pinned == isPinned()) {
 				return;
@@ -120,9 +97,6 @@ public abstract class MemorySymbol extends SymbolDB {
 				updateRecord();
 				symbolMgr.symbolAnchoredFlagChanged(this);
 			}
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -149,8 +123,7 @@ public abstract class MemorySymbol extends SymbolDB {
 	 */
 	protected void moveLowLevel(Address newAddress, String newName, Namespace newNamespace,
 			SourceType newSource, boolean pinned) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 
 			// update the address to the new location
@@ -175,9 +148,6 @@ public abstract class MemorySymbol extends SymbolDB {
 			updateRecord();
 			setInvalid();
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	private boolean hasExactlyOneSymbolAtAddress(Address addr) {
@@ -191,9 +161,8 @@ public abstract class MemorySymbol extends SymbolDB {
 
 	@Override
 	public int getReferenceCount() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			ReferenceManager rm = symbolMgr.getReferenceManager();
 
 			// If there is only one symbol, then all the references to this address count
@@ -216,16 +185,12 @@ public abstract class MemorySymbol extends SymbolDB {
 			}
 			return count;
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public boolean hasReferences() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			ReferenceManager rm = symbolMgr.getReferenceManager();
 			ReferenceIterator iter = rm.getReferencesTo(address);
 			boolean isPrimary = this.isPrimary();
@@ -238,16 +203,12 @@ public abstract class MemorySymbol extends SymbolDB {
 			}
 			return false;
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public Reference[] getReferences(TaskMonitor monitor) {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			if (monitor == null) {
 				monitor = TaskMonitor.DUMMY;
 			}
@@ -279,9 +240,6 @@ public abstract class MemorySymbol extends SymbolDB {
 			Reference[] refs = new Reference[list.size()];
 			return list.toArray(refs);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	/**
@@ -296,16 +254,12 @@ public abstract class MemorySymbol extends SymbolDB {
 	 * demangled or renamed.
 	 */
 	public final String getExternalOriginalImportedName() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			if (record == null) {
 				return null;
 			}
 			return record.getString(SymbolDatabaseAdapter.SYMBOL_ORIGINAL_IMPORTED_NAME_COL);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -329,8 +283,7 @@ public abstract class MemorySymbol extends SymbolDB {
 			throw new javax.help.UnsupportedOperationException(
 				"Symbol does not support: originalImportedName");
 		}
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (record == null) {
 				return;
@@ -346,9 +299,6 @@ public abstract class MemorySymbol extends SymbolDB {
 				}
 			}
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	/**
@@ -362,9 +312,8 @@ public abstract class MemorySymbol extends SymbolDB {
 	 * @return external Program address or null if not external or unknown
 	 */
 	public final Address getExternalProgramAddress() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			if (record == null) {
 				return null;
 			}
@@ -377,9 +326,6 @@ public abstract class MemorySymbol extends SymbolDB {
 				return null;
 			}
 			return symbolMgr.getAddressMap().getAddressFactory().getAddress(addrStr);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -405,8 +351,7 @@ public abstract class MemorySymbol extends SymbolDB {
 		if (externalProgramAddress != null && !externalProgramAddress.isLoadedMemoryAddress()) {
 			throw new IllegalArgumentException("Memory address required for external program");
 		}
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (record == null) {
 				return;
@@ -421,9 +366,6 @@ public abstract class MemorySymbol extends SymbolDB {
 					symbolMgr.symbolDataChanged(this);
 				}
 			}
-		}
-		finally {
-			lock.release();
 		}
 	}
 

@@ -200,7 +200,7 @@ public enum TraceRegisterUtils {
 		}
 		// we know data contains register, and data cannot exceed Integer.MAX_VALUE in length
 		int offset = (int) range.getMinAddress().subtract(data.getMinAddress());
-		TraceData component = data.getComponentAt(offset);
+		TraceData component = data.getComponentContaining(offset);
 		if (component == null) { // TODO: I'm not sure this can happen
 			return null;
 		}

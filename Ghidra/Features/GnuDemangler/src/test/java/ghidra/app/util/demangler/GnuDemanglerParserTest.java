@@ -17,6 +17,7 @@ package ghidra.app.util.demangler;
 
 import static org.junit.Assert.*;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.junit.Before;
@@ -2384,6 +2385,32 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		String signature = object.getSignature(false);
 		assertEquals("undefined global.destructors.keyed.to.cyg_libc_stdio_altout(void)",
 			signature);
+	}
+
+	@Test
+	public void testColdLabel1() throws IOException {
+		String mangled = "_Z6calleei.cold";
+		String demangled = process.demangle(mangled);
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertNotNull(object);
+		assertType(object, DemangledLabel.class);
+		assertEquals("callee(int) [clone .cold]", object.getRawDemangled());
+		assertEquals("callee(int)_[clone_.cold]", object.getName());
+	}
+
+	@Test
+	public void testColdLabel2() throws IOException {
+		String mangled = "_ZN6ghidra15ContextInternal9FreeArrayaSERKS1_.cold";
+		String demangled = process.demangle(mangled);
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertNotNull(object);
+		assertType(object, DemangledLabel.class);
+		assertEquals(
+			"ghidra::ContextInternal::FreeArray::operator=(ghidra::ContextInternal::FreeArray const&) [clone .cold]",
+			object.getRawDemangled());
+		assertEquals(
+			"ghidra::ContextInternal::FreeArray::operator=(ghidra::ContextInternal::FreeArray_const&)_[clone_.cold]",
+			object.getName());
 	}
 
 	private void assertType(Demangled o, Class<?> c) {

@@ -427,4 +427,32 @@ public class DecompilerHighSymbolTest extends AbstractDecompilerTest {
 		assertEquals(eqSymbol.getConvert(), 0);
 		assertEquals(eqSymbol.getValue(), eqValue);
 	}
+
+	@Test
+	public void testHighSymbol_resolveStorage() {
+		decompile("1002825");
+		ClangTextField line = getLineContaining("DAT_0100579c");
+		FieldLocation loc = loc(line.getLineNumber(), 3);
+		ClangToken token = line.getToken(loc);
+		HighVariable variable = token.getHighVariable();
+		assertTrue(variable instanceof HighLocal);
+		HighSymbol highSymbol = variable.getSymbol();
+		SymbolEntry entry = highSymbol.getFirstWholeMap();
+		if (entry instanceof DynamicEntry) {
+			assertTrue(((DynamicEntry) entry).getHash() == 0);	// Initially hash is not calculuated
+		}
+		else {
+			assertTrue(entry instanceof MappedEntry);
+			VariableStorage storage = ((MappedEntry) entry).getStorage();
+			assertTrue(storage.getMinAddress().isUniqueAddress());
+		}
+		renameVariable(highSymbol, token, "newDynamic");
+		line = getLineContaining("DAT_0100579c");
+		loc = loc(line.getLineNumber(), 3);
+		token = line.getToken(loc);
+		highSymbol = token.getHighVariable().getSymbol();
+		entry = highSymbol.getFirstWholeMap();
+		assertTrue(entry instanceof DynamicEntry);
+		assertTrue(((DynamicEntry) entry).getHash() != 0);	// With rename hash is calculated
+	}
 }

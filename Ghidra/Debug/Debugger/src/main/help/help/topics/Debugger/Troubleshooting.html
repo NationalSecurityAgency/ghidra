@@ -22,9 +22,8 @@
 
     <P>The first place to look when you're having trouble is the debugger's terminal. If you do not
     see one, check the <B>Window &rarr; Terminals</B> menu. If there is not one there, then there
-    is no back-end debugger running &mdash; unless, perhaps, you are trying to use a Recorder-based
-    target. See <A href="#plugin_conf">Plugin Configuration</A> if you suspect this is the
-    case.</P>
+    is no back-end debugger running. See <A href="#plugin_conf">Plugin Configuration</A> in case
+    your Debugger tool is misconfigured.</P>
 
     <P>If you already have the correct set of TraceRmi-based plugins enabled, but there is still no
     terminal after attempting to launch, then the launcher is sorely mis-configured, or your system
@@ -52,9 +51,8 @@
 
     <H2><A name="plugin_conf"></A>Plugin Configuration</H2>
 
-    <P>It is possible you have an old Debugger tool still configured for Recorder-based targets.
-    Recorder-based targets are being replaced by TraceRmi-based targets. Try re-importing the
-    default Debugger tool.</P>
+    <P>It is possible you have an old or misconfigured Debugger tool. Try re-importing the default
+    Debugger tool.</P>
 
     <P>Alternatively, use <B>File &rarr; Configure</B> then click the plug <IMG alt="" src=
     "icon.extension.configure"> icon near the top right to check your tool configuration. The
@@ -69,23 +67,6 @@
 
       <LI>DebuggerModelPlugin</LI>
     </UL>
-
-    <P>The following should be disabled:</P>
-
-    <UL>
-      <LI>DebuggerModelServicePlugin</LI>
-
-      <LI>DebuggerModelServiceProxyPlugin</LI>
-
-      <LI>DebuggerInterpretersPlugin</LI>
-
-      <LI>DebuggerObjectsPlugin</LI>
-
-      <LI>DebuggerTargetsPlugin</LI>
-    </UL>
-
-    <P>It is possible to leave both sets of plugins enabled, but this is by all means <EM>NOT</EM>
-    recommended.</P>
 
     <H2>Tutorial</H2>
 

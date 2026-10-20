@@ -21,12 +21,12 @@ import java.util.function.Consumer;
 import ghidra.docking.settings.Settings;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.address.*;
+import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.DataConverter;
 import ghidra.util.StringUtilities;
-import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Basic implementation for a pointer dataType
@@ -415,6 +415,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 		AddressSpace targetSpace = null;
 
 		Memory mem = buf.getMemory();
+		Program program = mem != null ? mem.getProgram() : null;
 
 		boolean signedOffset = false;
 		PointerType pointerType = PointerTypeSettingsDefinition.DEF.getType(settings);
@@ -463,11 +464,13 @@ public class PointerDataType extends BuiltIn implements Pointer {
 					// A 0 relative offset is considered invalid (NaP)
 					return null; // NaP without error
 				}
-				if (mem == null) {
-					errorHandler.accept("Memory not specified");
+				if (program == null) {
+					errorHandler
+							.accept("Unable to compute IBO address - Program memory not specified");
+					return null;
 				}
 				// must ignore AddressSpaceSettingsDefinition
-				Address imageBase = mem.getProgram().getImageBase();
+				Address imageBase = program.getImageBase();
 				targetSpace = imageBase.getAddressSpace();
 				return imageBase.addWrap(addrOffset * targetSpace.getAddressableUnitSize());
 			}
@@ -483,10 +486,10 @@ public class PointerDataType extends BuiltIn implements Pointer {
 			}
 			else if (pointerType == PointerType.FILE_OFFSET) {
 				if (mem == null) {
-					errorHandler.accept("Memory not specified");
+					errorHandler.accept("File offset lookup failed - Memory not specified");
 				}
 				else if (mem.getAllFileBytes().size() == 0) {
-					errorHandler.accept("No File bytes used");
+					errorHandler.accept("File offset lookup failed - No File bytes used");
 				}
 				else {
 					List<Address> addressList = mem.locateAddressesForFileOffset(addrOffset);
@@ -510,20 +513,35 @@ public class PointerDataType extends BuiltIn implements Pointer {
 			}
 
 			if (spaceName != null) {
-				if (mem == null) {
-					errorHandler.accept("Memory not specified");
+				// Address space was specified by a setting
+				if (program == null) {
+					errorHandler
+							.accept("Address space lookup failed - Program memory not specified");
 					return null;
 				}
-				Program program = mem.getProgram();
 				targetSpace = program.getAddressFactory().getAddressSpace(spaceName);
 				if (targetSpace == null) {
 					errorHandler.accept(
 						"Address space not defined: " + spaceName + ":" + formatOffset(addrOffset));
 					return null;
 				}
+				if (!targetSpace.isLoadedMemorySpace()) {
+					errorHandler
+							.accept("Address space is not loaded memory space: " + spaceName + ":" +
+						formatOffset(addrOffset));
+					return null;
+				}
 			}
 			if (targetSpace == null) {
 				targetSpace = buf.getAddress().getAddressSpace();
+			}
+			if (targetSpace.isRegisterSpace()) {
+				Language language = buf.getLanguage();
+				if (language == null) {
+					errorHandler.accept("Unable to identify default Address space");
+					return null;
+				}
+				targetSpace = language.getDefaultSpace();
 			}
 
 			if (targetSpace instanceof SegmentedAddressSpace) {

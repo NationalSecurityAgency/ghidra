@@ -135,7 +135,12 @@ public class GoSliceType extends GoType {
 
 	@Override
 	public boolean isValid() {
-		return super.isValid() && typ.getSize() == programContext.getPtrSize() * 3; // TODO: knowing the correct size is a bit of a hack
+		return super.isValid() && isValidSize();
+	}
+
+	private boolean isValidSize() {
+		return typ.getSize() == programContext.getPtrSize() * 3 &&
+			typ.getPtrBytes() == programContext.getPtrSize();
 	}
 
 }

@@ -37,7 +37,7 @@ import resources.Icons;
  */
 public class KeyEntryDialog extends DialogComponentProvider {
 
-	private KeyBindings keyBindings;
+	private KeyBindingsModel keyBindings;
 	private ToolActions toolActions;
 	private DockingActionIf action;
 
@@ -54,7 +54,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 		this.action = action;
 		this.toolActions = (ToolActions) tool.getToolActions();
 
-		this.keyBindings = new KeyBindings(tool);
+		this.keyBindings = new KeyBindingsModel(tool);
 
 		setUpAttributes();
 		createPanel();

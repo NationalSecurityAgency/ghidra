@@ -480,4 +480,9 @@ public class Omf51Loader extends AbstractProgramWrapperLoader {
 	public String getName() {
 		return OMF51_NAME;
 	}
+
+	@Override
+	public Collection<String> getAssociatedFileExtensions() {
+		return List.of("obj");
+	}
 }

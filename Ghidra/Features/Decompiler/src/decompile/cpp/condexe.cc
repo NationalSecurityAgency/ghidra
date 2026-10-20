@@ -244,13 +244,13 @@ Varnode *ConditionalExecution::resolveIblockRead(PcodeOp *op,int4 inbranch)
 {
   if (op->code() == CPUI_COPY) {
     Varnode *vn = op->getIn(0);
-    if (vn->isWritten()) {
-      PcodeOp *defOp = vn->getDef();
-      if (defOp->code() == CPUI_MULTIEQUAL && defOp->getParent() == iblock)
-	op = defOp;
-    }
-    else
+    if (!vn->isWritten())
       return vn;
+    PcodeOp *defOp = vn->getDef();
+    if (defOp->code() == CPUI_MULTIEQUAL && defOp->getParent() == iblock)
+      op = defOp;
+    else
+      return vn;	// We know defOp is not in iblock
   }
   OpCode opc = op->code();
   if (opc == CPUI_MULTIEQUAL)

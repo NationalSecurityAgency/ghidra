@@ -15,7 +15,9 @@
  */
 package ghidra.app.util.navigation;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -23,13 +25,18 @@ import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.gotoquery.GoToQueryResultsTableModel;
 import ghidra.app.plugin.core.navigation.NavigationOptions;
 import ghidra.app.plugin.core.table.TableComponentProvider;
-import ghidra.app.services.*;
+import ghidra.app.services.GoToService;
+import ghidra.app.services.ProgramManager;
+import ghidra.app.services.QueryData;
 import ghidra.app.util.SearchConstants;
 import ghidra.app.util.query.TableService;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressFormatException;
+import ghidra.program.model.address.AddressOutOfBoundsException;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.util.AddressEvaluator;
@@ -96,8 +103,6 @@ public class GoToQuery {
 			return true;
 		}
 
-		// none of the specialized query handlers matched, so try to process the query
-		// as a symbol (label, function name, variable name, etc.)
 		return processSymbols();
 	}
 
@@ -131,11 +136,13 @@ public class GoToQuery {
 		// checking for leading "+" or "-", ignoring spaces.  
 		boolean relative = queryInput.matches("^\\s*[+-].*");
 		Address baseAddr = relative ? fromAddress : null;
+		AddressOutOfBoundsException exception = null;
 		for (Program program : getSearchPrograms()) {
-			Address evalAddr = AddressEvaluator.evaluate(program, baseAddr, queryInput);
+			Address evalAddr = AddressEvaluator.evaluate(program, queryInput, baseAddr);
 			if (evalAddr != null) {
 				return goTo(program, new ProgramLocation(program, evalAddr));
 			}
+
 		}
 		return false;
 	}

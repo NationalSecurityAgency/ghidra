@@ -19,6 +19,8 @@ import java.util.*;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import ghidra.util.MathUtilities;
+
 /**
  * A class to break a range of addresses into 'chunks' of a give size. This is useful to break-up
  * processing of large swaths of addresses, such as when performing work in a background thread.
@@ -29,13 +31,14 @@ public class AddressRangeChunker implements Iterable<AddressRange> {
 
 	private Address end;
 	private Address nextStartAddress;
-	private int chunkSize;
+	private long chunkSizeUnsigned;
 
-	public AddressRangeChunker(AddressRange range, int chunkSize) throws IllegalArgumentException {
-		this(range.getMinAddress(), range.getMaxAddress(), chunkSize);
+	public AddressRangeChunker(AddressRange range, long chunkSizeUnsigned)
+			throws IllegalArgumentException {
+		this(range.getMinAddress(), range.getMaxAddress(), chunkSizeUnsigned);
 	}
 
-	public AddressRangeChunker(Address start, Address end, int chunkSize)
+	public AddressRangeChunker(Address start, Address end, long chunkSizeUnsigned)
 			throws IllegalArgumentException {
 
 		if (start == null) {
@@ -58,13 +61,13 @@ public class AddressRangeChunker implements Iterable<AddressRange> {
 			throw new IllegalArgumentException("Address must be in the same address space");
 		}
 
-		if (chunkSize < 1) {
+		if (chunkSizeUnsigned == 0) {
 			throw new IllegalArgumentException("Chunk size must be greater than 0");
 		}
 
 		this.end = end;
 		this.nextStartAddress = start;
-		this.chunkSize = chunkSize;
+		this.chunkSizeUnsigned = chunkSizeUnsigned;
 	}
 
 	@Override
@@ -82,15 +85,12 @@ public class AddressRangeChunker implements Iterable<AddressRange> {
 					return null;
 				}
 
-				long available = end.subtract(nextStartAddress) + 1; // +1 to be inclusive
+				long availableLess1 = end.subtract(nextStartAddress);
 
-				int size = chunkSize;
-				if (available >= 0 && available < chunkSize) {
-					size = (int) available;
-				}
+				long sizeLess1 = MathUtilities.unsignedMin(chunkSizeUnsigned - 1, availableLess1);
 
 				Address currentStart = nextStartAddress;
-				Address currentEnd = nextStartAddress.add(size - 1); // -1 since inclusive
+				Address currentEnd = nextStartAddress.addWrap(sizeLess1);
 				if (currentEnd.compareTo(end) == 0) {
 					nextStartAddress = null; // no more
 				}
@@ -111,8 +111,14 @@ public class AddressRangeChunker implements Iterable<AddressRange> {
 
 	@Override
 	public Spliterator<AddressRange> spliterator() {
-		long countAddrs = end.subtract(nextStartAddress) + 1;
-		long size = Long.divideUnsigned(countAddrs + chunkSize - 1, chunkSize);
+		long countAddrsLess1 = end.subtract(nextStartAddress);
+		// Can't do the (count+size-1)/size thing since count+size may overflow
+		long size = Long.divideUnsigned(countAddrsLess1, chunkSizeUnsigned) + 1;
+		if (size <= 0) {
+			// Known but too big to encode in (signed) long. 0 is actually 2**64.
+			return Spliterators.spliteratorUnknownSize(iterator(), Spliterator.DISTINCT |
+				Spliterator.NONNULL | Spliterator.ORDERED | Spliterator.SORTED);
+		}
 		return Spliterators.spliterator(iterator(), size,
 			Spliterator.DISTINCT | Spliterator.NONNULL | Spliterator.ORDERED | Spliterator.SORTED |
 				Spliterator.SIZED);

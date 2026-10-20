@@ -15,17 +15,18 @@
  */
 package ghidra.app.plugin.core.debug.gui.breakpoint.timeline;
 
-import java.awt.BorderLayout;
+import javax.swing.*;
+import java.awt.*;
 import java.util.*;
-
-import javax.swing.JComponent;
-import javax.swing.JPanel;
+import java.util.List;
 
 import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
 import generic.theme.GIcon;
+import ghidra.framework.model.DomainObjectEvent;
+import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.symbol.RefType;
 import ghidra.trace.model.*;
@@ -35,36 +36,49 @@ import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.symbol.TraceReference;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.util.TraceEvents;
+import ghidra.util.HelpLocation;
 
-class BreakpointTimelineProvider extends ComponentProvider {
+public class BreakpointTimelineProvider extends ComponentProvider {
 	record BreakpointHitEvent(long snap, TraceBreakpointKind breakType, String breakpointName) {}
 
 	private class BreakpointTimeOverviewEventListener extends TraceDomainObjectListener {
 
 		public BreakpointTimeOverviewEventListener() {
-			listenFor(TraceEvents.BREAKPOINT_CHANGED, this::breakpointChanged);
-			listenFor(TraceEvents.BREAKPOINT_DELETED, this::breakpointDeleted);
+			listenFor(TraceEvents.BREAKPOINT_CHANGED, this::breakpointEvent);
+			listenFor(TraceEvents.BREAKPOINT_DELETED, this::breakpointEvent);
+			listenFor(TraceEvents.SNAPSHOT_ADDED, this::snapshotEvent);
+			listenFor(TraceEvents.SNAPSHOT_DELETED, this::snapshotEvent);
+			listenFor(TraceEvents.SNAPSHOT_CHANGED, this::snapshotEvent);
+			listenForUntyped(DomainObjectEvent.RESTORED, e -> snapshotEvent());
 		}
 
-		void breakpointChanged(TraceBreakpointLocation tb) {
+		void breakpointEvent(TraceBreakpointLocation tb) {
 			refreshBreakpointHits();
 			breakpointTimelinePlugin.refreshAllProviders(null);
 		}
 
-		void breakpointDeleted(TraceBreakpointLocation tb) {
-			refreshBreakpointHits();
-			breakpointTimelinePlugin.refreshAllProviders(null);
-		}
+		void snapshotEvent() {
+			final long newMaxSnap =
+				Objects.requireNonNullElse(currentTrace.getTimeManager().getMaxSnap(), 0)
+						.longValue();
 
+			if (newMaxSnap != curMaxSnap) {
+				refreshBreakpointHits();
+				breakpointTimelinePanel.setEventsAndVisibleRange(breakpointHits, 0, newMaxSnap);
+				curMaxSnap = newMaxSnap;
+			}
+		}
 	}
 
 	private class CloseAllZoomWindowsAction extends DockingAction {
-		private final GIcon ICON = new GIcon("icon.debugger.breakpoint.timeline.close_all_zoom_windows");
+		private final GIcon ICON =
+			new GIcon("icon.debugger.breakpoint.timeline.close_all_zoom_windows");
 
 		CloseAllZoomWindowsAction(ComponentProvider provider) {
 			super("Close all zoom windows", provider.getOwner());
 			setEnabled(true);
 			setToolBarData(new ToolBarData(ICON, "1"));
+			setHelpLocation(new HelpLocation("BreakpointTimelinePlugin", "close_zoom_windows"));
 		}
 
 		@Override
@@ -80,6 +94,7 @@ class BreakpointTimelineProvider extends ComponentProvider {
 			super("Set default cell size to the smallest", provider.getOwner());
 			setEnabled(true);
 			setToolBarData(new ToolBarData(ICON, "zoom"));
+			setHelpLocation(new HelpLocation("BreakpointTimelinePlugin", "smallest_cell"));
 		}
 
 		@Override
@@ -90,13 +105,15 @@ class BreakpointTimelineProvider extends ComponentProvider {
 
 	private class ToggleGridAction extends DockingAction {
 		private final GIcon OUTLINE_ICON = new GIcon("icon.debugger.breakpoint.timeline.outline");
-		private final GIcon NO_OUTLINE_ICON = new GIcon("icon.debugger.breakpoint.timeline.no_outline");
+		private final GIcon NO_OUTLINE_ICON =
+			new GIcon("icon.debugger.breakpoint.timeline.no_outline");
 		private boolean grid = true;
 
 		ToggleGridAction(ComponentProvider provider) {
 			super("Toggle Grid Outline", provider.getOwner());
 			setEnabled(true);
 			setToolBarData(new ToolBarData(OUTLINE_ICON, "2"));
+			setHelpLocation(new HelpLocation("BreakpointTimelinePlugin", "toggle_grid_outline"));
 		}
 
 		@Override
@@ -105,7 +122,6 @@ class BreakpointTimelineProvider extends ComponentProvider {
 			getToolBarData().setIcon(grid ? OUTLINE_ICON : NO_OUTLINE_ICON);
 			breakpointTimelinePanel.toggleGridOutline();
 			breakpointTimelinePlugin.refreshAllProviders(BreakpointTimelineProvider.this);
-
 		}
 	}
 
@@ -119,6 +135,7 @@ class BreakpointTimelineProvider extends ComponentProvider {
 			super("Toggle between grid and single column", provider.getOwner());
 			setEnabled(true);
 			setToolBarData(new ToolBarData(GRID_ICON, "2"));
+			setHelpLocation(new HelpLocation("BreakpointTimelinePlugin", "toggle_grid_column"));
 		}
 
 		@Override
@@ -137,6 +154,7 @@ class BreakpointTimelineProvider extends ComponentProvider {
 			super("Increase cell size", provider.getOwner());
 			setEnabled(true);
 			setToolBarData(new ToolBarData(ICON, "zoom"));
+			setHelpLocation(new HelpLocation("BreakpointTimelinePlugin", "zoom_in"));
 		}
 
 		@Override
@@ -152,6 +170,7 @@ class BreakpointTimelineProvider extends ComponentProvider {
 			super("Decrease cell size", provider.getOwner());
 			setEnabled(true);
 			setToolBarData(new ToolBarData(ICON, "zoom"));
+			setHelpLocation(new HelpLocation("BreakpointTimelinePlugin", "zoom_out"));
 		}
 
 		@Override
@@ -160,13 +179,33 @@ class BreakpointTimelineProvider extends ComponentProvider {
 		}
 	}
 
-	private Trace currentTrace;
-	private final BreakpointTimelinePanel breakpointTimelinePanel;
+	ToggleGridOrColumnAction toggleGridOrColumnAction;
+	ToggleGridAction toggleGridAction;
 
+	@Internal
+	public static Iterator<? extends TraceObjectValue> getTraceObjectValuesWithPCsIntersectingRange(
+			Trace trace, AddressRange range) {
+		return trace.getObjectManager()
+				.getRootSchema()
+				.getContext()
+				.getAllSchemas()
+				.stream()
+				.filter(s -> s.getInterfaces().contains(TraceStackFrame.class))
+				.map(s -> s.checkAliasedAttribute(TraceStackFrame.KEY_PC))
+				.flatMap(e -> trace.getObjectManager()
+						.getValuesIntersecting(Lifespan.ALL, range, e)
+						.stream())
+				.sorted(Comparator.comparingLong(TraceObjectValue::getMinSnap))
+				.iterator();
+	}
+
+	private final BreakpointTimelinePanel breakpointTimelinePanel;
 	private final JPanel wrapperPanel;
 	private final BreakpointTimelinePlugin breakpointTimelinePlugin;
 	private final BreakpointTimeOverviewEventListener listener =
 		new BreakpointTimeOverviewEventListener();
+	private Trace currentTrace;
+	private long curMaxSnap;
 	private List<BreakpointHitEvent> breakpointHits;
 
 	BreakpointTimelineProvider(BreakpointTimelinePlugin breakpointTimelinePlugin) {
@@ -177,6 +216,7 @@ class BreakpointTimelineProvider extends ComponentProvider {
 			boolean makeTransient) {
 		super(breakpointTimelinePlugin.getTool(), "Breakpoint Timeline",
 			breakpointTimelinePlugin.getName());
+		setHelpLocation(new HelpLocation("BreakpointTimelinePlugin", "plugin"));
 		this.breakpointTimelinePlugin = breakpointTimelinePlugin;
 		wrapperPanel = new JPanel(new BorderLayout());
 		breakpointTimelinePanel = new BreakpointTimelinePanel(this);
@@ -203,8 +243,10 @@ class BreakpointTimelineProvider extends ComponentProvider {
 	}
 
 	private void createActions() {
-		dockingTool.addLocalAction(this, new ToggleGridOrColumnAction(this));
-		dockingTool.addLocalAction(this, new ToggleGridAction(this));
+		toggleGridOrColumnAction = new ToggleGridOrColumnAction(this);
+		dockingTool.addLocalAction(this, toggleGridOrColumnAction);
+		toggleGridAction = new ToggleGridAction(this);
+		dockingTool.addLocalAction(this, toggleGridAction);
 		dockingTool.addLocalAction(this, new ZoomInAction(this));
 		dockingTool.addLocalAction(this, new ZoomOutAction(this));
 		dockingTool.addLocalAction(this, new CloseAllZoomWindowsAction(this));
@@ -217,7 +259,8 @@ class BreakpointTimelineProvider extends ComponentProvider {
 
 	private void findAndAddAllBreakpointHitsAtLocation(TraceBreakpointLocation breakpointLocation,
 			AddressRange range, String kind) {
-		for (final TraceBreakpointKind breakpointKind : TraceBreakpointKindSet.decode(kind, false)) {
+		for (final TraceBreakpointKind breakpointKind : TraceBreakpointKindSet.decode(kind,
+			false)) {
 			switch (breakpointKind) {
 				case HW_EXECUTE, SW_EXECUTE -> findAndAddExecuteBreakpointHits(breakpointLocation,
 					range);
@@ -229,9 +272,11 @@ class BreakpointTimelineProvider extends ComponentProvider {
 
 	private void findAndAddExecuteBreakpointHits(TraceBreakpointLocation breakpointLocation,
 			AddressRange range) {
-		final Collection<? extends TraceObjectValue> intersecting = currentTrace.getObjectManager()
-				.getValuesIntersecting(Lifespan.ALL, range, TraceStackFrame.KEY_PC);
-		for (final TraceObjectValue tov : intersecting) {
+		final Iterator<? extends TraceObjectValue> intersecting =
+			getTraceObjectValuesWithPCsIntersectingRange(currentTrace, range);
+
+		while (intersecting.hasNext()) {
+			final TraceObjectValue tov = intersecting.next();
 			breakpointHits.add(new BreakpointHitEvent(tov.getMinSnap(),
 				TraceBreakpointKind.SW_EXECUTE, breakpointLocation.getName(tov.getMinSnap())));
 		}
@@ -242,15 +287,17 @@ class BreakpointTimelineProvider extends ComponentProvider {
 		for (final TraceReference reference : currentTrace.getReferenceManager()
 				.getReferencesToRange(Lifespan.ALL, range)) {
 
-			if ((reference.getReferenceType() == RefType.READ) &&
-				(kind == TraceBreakpointKind.READ)) {
+			if ((reference.getReferenceType() == RefType.READ &&
+			     kind == TraceBreakpointKind.READ) ||
+			    (reference.getReferenceType() == RefType.READ_WRITE)) {
 				breakpointHits.add(
 					new BreakpointHitEvent(reference.getStartSnap(), TraceBreakpointKind.READ,
 						breakpointLocation.getName(reference.getStartSnap())));
 			}
 
-			if ((reference.getReferenceType() == RefType.WRITE) &&
-				(kind == TraceBreakpointKind.WRITE)) {
+			if ((reference.getReferenceType() == RefType.WRITE &&
+			     kind == TraceBreakpointKind.WRITE) ||
+			    (reference.getReferenceType() == RefType.READ_WRITE)) {
 				breakpointHits.add(
 					new BreakpointHitEvent(reference.getStartSnap(), TraceBreakpointKind.WRITE,
 						breakpointLocation.getName(reference.getStartSnap())));
@@ -267,7 +314,7 @@ class BreakpointTimelineProvider extends ComponentProvider {
 		breakpointTimelinePanel.refresh();
 	}
 
-	private void refreshBreakpointHits() {
+	/*testing*/ void refreshBreakpointHits() {
 		breakpointHits.clear();
 
 		if (currentTrace == null) {
@@ -302,11 +349,13 @@ class BreakpointTimelineProvider extends ComponentProvider {
 			currentTrace.removeListener(listener);
 		}
 		currentTrace = trace;
+		curMaxSnap = 0;
 		refreshBreakpointHits();
 
 		if (currentTrace != null) {
-			breakpointTimelinePanel.setEventsAndVisibleRange(breakpointHits, 0,
-				currentTrace.getTimeManager().getMaxSnap());
+			curMaxSnap = Objects.requireNonNullElse(currentTrace.getTimeManager().getMaxSnap(), 0)
+					.longValue();
+			breakpointTimelinePanel.setEventsAndVisibleRange(breakpointHits, 0, curMaxSnap);
 			currentTrace.addListener(listener);
 		}
 		else {

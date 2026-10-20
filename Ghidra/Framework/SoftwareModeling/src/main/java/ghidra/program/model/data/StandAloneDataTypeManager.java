@@ -580,8 +580,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 	 */
 	public void clearProgramArchitecture(TaskMonitor monitor)
 			throws CancelledException, IOException, LockException {
-		lock.acquire();
-		try {
+		try (Lock.Closeable c = lock.write()) {
 
 			if (!isArchitectureChangeAllowed()) {
 				throw new UnsupportedOperationException(
@@ -614,10 +613,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 			}
 
 			defaultListener.programArchitectureChanged(this);
-		}
-		finally {
 			invalidateCache();
-			lock.release();
 		}
 	}
 
@@ -664,8 +660,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 			CancelledException, LockException, UnsupportedOperationException,
 			IncompatibleLanguageException {
 
-		lock.acquire();
-		try {
+		try (Lock.Closeable c = lock.write()) {
 
 			if (!isArchitectureChangeAllowed()) {
 				throw new UnsupportedOperationException(
@@ -772,7 +767,6 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 		}
 		finally {
 			invalidateCache();
-			lock.release();
 		}
 	}
 

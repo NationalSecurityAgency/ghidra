@@ -51,6 +51,22 @@ public interface TraceTimeManager {
 	TraceSnapshot getMostRecentSnapshot(long snap);
 
 	/**
+	 * Get the most recent fork snapshot key since a given key
+	 * 
+	 * <p>
+	 * This searches the snapshots for one where {@link TraceSnapshot#isFork()} is true. Note that
+	 * conventionally, negative snaps are <em>scratch</em> space. If a non-negative snap is given,
+	 * then the return fork snap must also be non-negative, i.e., if no non-negative fork snapshot
+	 * is found, this will return 0, the initial snapshot. If a negative snap is given, then the
+	 * return fork snap must also be negative, i.e., if no negative fork snapshot is found, this
+	 * will return {@value Long#MIN_VALUE}, even if that snapshot does not actually exist.
+	 * 
+	 * @param snap the snapshot key
+	 * @return the fork snapshot key
+	 */
+	long getMostRecentFork(long snap);
+
+	/**
 	 * Get all snapshots with the given schedule
 	 * 
 	 * <p>

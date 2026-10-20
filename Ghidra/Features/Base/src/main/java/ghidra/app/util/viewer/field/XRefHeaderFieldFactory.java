@@ -33,6 +33,7 @@ import ghidra.program.model.listing.Data;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.XRefHeaderFieldLocation;
+import ghidra.util.datastruct.Counter;
 
 /**
  * Field for display XRef headers.
@@ -127,28 +128,32 @@ public class XRefHeaderFieldFactory extends XRefFieldFactory {
 	 * <br>
 	 * Where:<br>
 	 *      m is the number of cross references <br>
-	 *      n is the number of off-cut cross references <br><br>
+	 *      n is the number of offcut cross references <br><br>
 	 */
 	private String getXRefHeaderString(CodeUnit cu) {
 		if (cu == null) {
 			return null;
 		}
 
-		List<Reference> xrefs = XReferenceUtils.getXReferences(cu, maxXRefs);
-		int xrefCount = xrefs.size();
-		List<Reference> offcuts = XReferenceUtils.getOffcutXReferences(cu, maxXRefs);
+		Counter counter = new Counter();
+		XReferenceUtils.getXReferences(cu, maxXRefs, counter);
+		int fullCount = counter.intValue();
+		int xRefCount = fullCount;
+
+		String xRefCountText = Integer.toString(xRefCount);
+
+		counter = new Counter();
+		List<Reference> offcuts = XReferenceUtils.getOffcutXReferences(cu, maxXRefs, counter);
 		int offcutCount = offcuts.size();
 
+		fullCount = counter.intValue();
+		String offcutCountText = Integer.toString(offcutCount);
 		if (offcutCount > 0) {
-			String modifier = "";
-			if (offcutCount == maxXRefs) {
-				modifier = "+";
-			}
-			return "XREF[" + xrefCount + "," + offcutCount + modifier + "]: ";
+			return "XREF[" + xRefCountText + "," + offcutCountText + "]: ";
 		}
 
-		if (xrefCount > 0) {
-			return "XREF[" + xrefCount + "]: ";
+		if (xRefCount > 0) {
+			return "XREF[" + xRefCountText + "]: ";
 		}
 		return null;
 	}

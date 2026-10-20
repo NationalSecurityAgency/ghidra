@@ -9,7 +9,7 @@
     </listAttribute>
     <mapAttribute key="org.eclipse.debug.core.environmentVariables">
         <mapEntry key="GHIDRA_INSTALL_DIR" value="${project_loc:/___root}"/>
-        <mapEntry key="JAVA_HOME_OVERRIDE" value="${ee_home:JavaSE-21}"/>
+        <mapEntry key="JAVA_HOME_OVERRIDE" value="${ee_home:JavaSE-25}"/>
     </mapAttribute>
     <listAttribute key="org.eclipse.debug.ui.favoriteGroups">
         <listEntry value="org.eclipse.debug.ui.launchGroup.run"/>

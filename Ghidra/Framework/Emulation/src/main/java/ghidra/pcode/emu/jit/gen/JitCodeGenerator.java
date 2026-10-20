@@ -35,6 +35,7 @@ import ghidra.pcode.emu.jit.JitPassage.AddrCtx;
 import ghidra.pcode.emu.jit.JitPassage.DecodedPcodeOp;
 import ghidra.pcode.emu.jit.alloc.JvmLocal;
 import ghidra.pcode.emu.jit.analysis.*;
+import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.BlockFlow;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
 import ghidra.pcode.emu.jit.analysis.JitType.*;
 import ghidra.pcode.emu.jit.gen.op.IntMultOpGen;
@@ -57,7 +58,10 @@ import ghidra.pcode.emu.jit.gen.var.VarGen.BlockTransition;
 import ghidra.pcode.emu.jit.op.JitOp;
 import ghidra.pcode.emu.jit.var.JitVal;
 import ghidra.pcode.emu.jit.var.JitVar;
+import ghidra.pcode.emu.util.CountsPcodeOps;
+import ghidra.pcode.emu.util.PcodeOpCounter;
 import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
+import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropSymbolMap;
 import ghidra.pcode.exec.SleighPcodeUseropDefinition;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
@@ -67,7 +71,6 @@ import ghidra.util.Msg;
 
 /**
  * The bytecode generator for JIT-accelerated emulation.
- * 
  * <p>
  * This implements the Code Generation phase of the {@link JitCompiler}. With all the prior
  * analysis, code generation is just a careful process of visiting all of the ops, variables, and
@@ -81,7 +84,6 @@ import ghidra.util.Msg;
  * {@link JitPcodeThread} and, being a constructor, returns {@code void}. We will also need to
  * generate a static initializer to populate some metadata and pre-fetch any static things, e.g.,
  * the {@link SleighLanguage} for the emulation target. The fields are:
- * 
  * <ul>
  * <li><b>{@code static }{@link String}{@code  LANGUAGE_ID}</b> - The language ID (as in
  * {@link LanguageID} of the emulation target</li>
@@ -153,7 +155,7 @@ import ghidra.util.Msg;
  * </ol>
  * 
  * <p>
- * This first ensure that a valid entry point was given in {@code blockId}. If not, we jump to the
+ * This first ensures that a valid entry point was given in {@code blockId}. If not, we jump to the
  * default case which throws an exception. Otherwise, we jump to the appropriate entry transition.
  * Every block flow edge is subject to a scope transition wherein varnodes that leave scope must be
  * retired and varnodes that enter scope must be birthed. We generate an entry transition for each
@@ -173,7 +175,6 @@ import ghidra.util.Msg;
  * If the block has fall through, we emit the appropriate scope transition before proceeding to the
  * next block. Note that scope transitions for branch ops are emitted by the generators for those
  * ops.
- * 
  * <p>
  * For details about individual p-code op translations, see {@link OpGen}. For details about
  * individual SSA value (constant and variable) translations, see {@link VarGen}. For details about
@@ -188,6 +189,8 @@ import ghidra.util.Msg;
  * @param <THIS> the type of the generated passage
  */
 public class JitCodeGenerator<THIS extends JitCompiledPassage> {
+	static final boolean DEEP_TRACE = JitCompiler.ENABLE_DIAGNOSTICS.contains(Diag.DEEP_TRACE);
+
 	/**
 	 * The key for a varnode, to ensure we control the definition of {@link Object#equals(Object)
 	 * equality}.
@@ -223,6 +226,7 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 	final JitAnalysisContext context;
 	final JitControlFlowModel cfm;
 	final JitDataFlowModel dfm;
+	final JitReachabilityModel rm;
 	final JitVarScopeModel vsm;
 	final JitTypeModel tm;
 	final JitAllocationModel am;
@@ -248,7 +252,6 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 
 	/**
 	 * Construct a code generator for the given passage's target classfile
-	 * 
 	 * <p>
 	 * This constructor chooses the name for the target classfile based on the passage's entry seed.
 	 * It has the form: <code> Passage$at_<em>address</em>_<em>context</em></code>. The address is
@@ -260,18 +263,20 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 	 * @param context the analysis context for the passage
 	 * @param cfm the control flow model
 	 * @param dfm the data flow model
+	 * @param rm the reachability model
 	 * @param vsm the variable scope model
 	 * @param tm the type model
 	 * @param am the allocation model
 	 * @param oum the op use model
 	 */
 	public JitCodeGenerator(Lookup lookup, JitAnalysisContext context, JitControlFlowModel cfm,
-			JitDataFlowModel dfm, JitVarScopeModel vsm, JitTypeModel tm, JitAllocationModel am,
-			JitOpUseModel oum) {
+			JitDataFlowModel dfm, JitReachabilityModel rm, JitVarScopeModel vsm, JitTypeModel tm,
+			JitAllocationModel am, JitOpUseModel oum) {
 		this.lookup = lookup;
 		this.context = context;
 		this.cfm = cfm;
 		this.dfm = dfm;
+		this.rm = rm;
 		this.vsm = vsm;
 		this.tm = tm;
 		this.am = am;
@@ -326,39 +331,38 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 	}
 
 	/**
-	 * Get the analysis context
-	 * 
-	 * @return the context
+	 * {@return the analysis context}
 	 */
 	public JitAnalysisContext getAnalysisContext() {
 		return context;
 	}
 
 	/**
-	 * Get the variable scope model
-	 * 
-	 * @return the model
+	 * {@return the variable scope model}
 	 */
 	public JitVarScopeModel getVariableScopeModel() {
 		return vsm;
 	}
 
 	/**
-	 * Get the type model
-	 * 
-	 * @return the model
+	 * {@return the type model}
 	 */
 	public JitTypeModel getTypeModel() {
 		return tm;
 	}
 
 	/**
-	 * Get the allocation model
-	 * 
-	 * @return the model
+	 * {@return the allocation model}
 	 */
 	public JitAllocationModel getAllocationModel() {
 		return am;
+	}
+
+	/**
+	 * {@return the op use model}
+	 */
+	public JitOpUseModel getOpUseModel() {
+		return oum;
 	}
 
 	/**
@@ -437,7 +441,6 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 
 	/**
 	 * Emit bytecode to load the given {@link JitBytesPcodeExecutorStateSpace} onto the JVM stack
-	 * 
 	 * <p>
 	 * This is equivalent to the Java expression
 	 * {@code state.getForSpace(AddressFactory.getAddressSpace(spaceId))}. The id of the given
@@ -452,6 +455,9 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 	 */
 	protected <N extends Next> Emitter<Ent<N, TRef<JitBytesPcodeExecutorStateSpace>>>
 			genLoadJitStateSpace(Emitter<N> em, Local<TRef<THIS>> localThis, AddressSpace space) {
+		if (DEEP_TRACE) {
+			System.err.println("    // space=%s".formatted(space));
+		}
 		return em
 				/**
 				 * return
@@ -506,7 +512,7 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 	 * @return the field request
 	 */
 	protected FieldForContext requestStaticFieldForContext(RegisterValue ctx) {
-		return fieldsForContext.computeIfAbsent(ctx, c -> {
+		return fieldsForContext.computeIfAbsent(ctx, _ -> {
 			FieldForContext f = new FieldForContext(ctx);
 			return f;
 		});
@@ -519,7 +525,7 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 	 * @return the field request
 	 */
 	public FieldForVarnode requestStaticFieldForVarnode(Varnode vn) {
-		return fieldsForVarnode.computeIfAbsent(new VarnodeKey(vn), vk -> {
+		return fieldsForVarnode.computeIfAbsent(new VarnodeKey(vn), _ -> {
 			FieldForVarnode f = new FieldForVarnode(vn);
 			return f;
 		});
@@ -534,7 +540,7 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 	 * @return the field request
 	 */
 	public FieldForPcodeOp requestStaticFieldForOp(PcodeOp op) {
-		return fieldsForOp.computeIfAbsent(new PcodeOpKey(op), ok -> new FieldForPcodeOp(this, op));
+		return fieldsForOp.computeIfAbsent(new PcodeOpKey(op), _ -> new FieldForPcodeOp(this, op));
 	}
 
 	/**
@@ -543,8 +549,8 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 	 * @param userop the userop
 	 * @return the field request
 	 */
-	public FieldForUserop requestFieldForUserop(PcodeUseropDefinition<byte[]> userop) {
-		return fieldsForUserop.computeIfAbsent(userop.getName(), n -> {
+	public FieldForUserop requestFieldForUserop(PcodeUseropDefinition<?> userop) {
+		return fieldsForUserop.computeIfAbsent(userop.getName(), _ -> {
 			FieldForUserop f = new FieldForUserop(userop);
 			return f;
 		});
@@ -570,7 +576,7 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 	 * @return the label
 	 */
 	public Lbl<Bot> labelForBlock(JitBlock block) {
-		return blockLabels.computeIfAbsent(block, b -> Lbl.create());
+		return blockLabels.computeIfAbsent(block, _ -> Lbl.create());
 	}
 
 	/**
@@ -660,7 +666,7 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 	 * counter-intuitive for a user to receive a single varnode in several parameters. The
 	 * annotation system to sort that all out would also be atrocious and not easily made compatible
 	 * with non-JIT emulation. Instead, mp-int arguments are received via {@code int[]} parameters.
-	 * 
+	 * <p>
 	 * The second case is for more complicated p-code ops. One notable example is
 	 * {@link IntMultOpGen int_mult}. Theoretically, yes, we could emit all of the operations to
 	 * compute the product using long multiplication inline; however, for large operands, that would
@@ -774,12 +780,10 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 
 	/**
 	 * Emit the bytecode translation for a given p-code op
-	 * 
 	 * <p>
 	 * This first finds the use-def node for the op and then verifies that it has not been
 	 * eliminated. If not, then it find the appropriate generator, emits line number information,
 	 * and then emits the actual translation.
-	 * 
 	 * <p>
 	 * Line number information in the JVM is a map of strictly-positive line numbers to bytecode
 	 * offsets. The ASM library allows this to be populated by placing labels and then emitting a
@@ -800,6 +804,11 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 	protected OpResult genOp(Emitter<Bot> em, Local<TRef<THIS>> localThis, Local<TInt> localCtxmod,
 			RetReq<TRef<EntryPoint>> retReq, PcodeOp op, JitBlock block, int opIdx) {
 		JitOp jitOp = dfm.getJitOp(op);
+		if (DEEP_TRACE) {
+			PcodeUseropSymbolMap symbols = dfm.getLibrary().getSymbols(context.getLanguage());
+			System.err.println("   op: %s %s %s".formatted(oum.prefixFor(jitOp), op.getSeqnum(),
+				jitOp.toString(symbols)));
+		}
 		if (!oum.isUsed(jitOp)) {
 			return new LiveOpResult(em);
 		}
@@ -813,7 +822,6 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 
 	/**
 	 * Emit the bytecode translation for the ops in the given p-code block
-	 * 
 	 * <p>
 	 * This simply invokes {@link #genOp(Emitter, Local, Local, RetReq, PcodeOp, JitBlock, int)} on
 	 * each op in the block and counts up the indices. Other per-block instrumentation is not
@@ -826,7 +834,7 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 	 * @param block the block
 	 * @param opIdx the index, within the whole passage, of the first op in the block
 	 * @return the result of block generation
-	 * @see #genBlock(OpResult, Local, Local, RetReq, JitBlock, int)
+	 * @see  #genOp(Emitter, Local, Local, RetReq, PcodeOp, JitBlock, int)
 	 */
 	protected GenBlockResult genBlockOps(Emitter<Bot> em, Local<TRef<THIS>> localThis,
 			Local<TInt> localCtxmod, RetReq<TRef<EntryPoint>> retReq, JitBlock block, int opIdx) {
@@ -838,7 +846,7 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 			result = genOp(live.em(), localThis, localCtxmod, retReq, op, block, opIdx);
 			opIdx++;
 		}
-		return new GenBlockResult(opIdx, result);
+		return GenBlockResult.normal(opIdx, result);
 	}
 
 	/**
@@ -847,12 +855,89 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 	 * @param opIdx the index of the <em>next</em> op
 	 * @param opResult the result of op generation, indicating whether or not control flow can fall
 	 *            through
+	 * @param wasEmpty indicates the block had no used ops
+	 * @param instructions see {@link CountsPcodeOps#instructionCount}
+	 * @param trailingOps see {@link CountsPcodeOps#trailingOpCount}
 	 */
-	record GenBlockResult(int opIdx, OpResult opResult) {}
+	record GenBlockResult(int opIdx, OpResult opResult, boolean wasEmpty, int instructionCount,
+			int trailingOpCount) implements CountsPcodeOps {
+		/**
+		 * The block contained some (used) p-code ops
+		 * 
+		 * @param opIdx the updated op index (including unused ops)
+		 * @param opResult the result of op generation, indicating whether or not control flow can
+		 *            fall through
+		 * @return the result
+		 */
+		static GenBlockResult normal(int opIdx, OpResult opResult) {
+			return new GenBlockResult(opIdx, opResult, false, 0, 0);
+		}
+
+		/**
+		 * The block contained no (used) p-code ops and had only fall-through flow from.
+		 * Additionally, that fall-through flow is the <em>only</em> flow into the next block.
+		 * <p>
+		 * The first block in a coalesced chain <em>may</em> have a branching flow into it, in which
+		 * case, the label for that block must still be generated, even if no ops and no counter are
+		 * emitted. If a block has a branch out, or the following block has a branch in, this block
+		 * must emit a counter, even if no ops are emitted, so that the instruction/op counts are
+		 * correctly computed for the actual execution path. If counts are disabled
+		 * ({@link JitConfiguration.Opt#EMIT_COUNTERS}), then this rule should still produce optimal
+		 * results.
+		 * 
+		 * @param opIdx the update op index (including unused ops)
+		 * @param opResult the result of op generation, indicating whether or not control flow can
+		 *            fall through
+		 * @param instructions see {@link CountsPcodeOps#instructionCount}
+		 * @param trailingOps see {@link CountsPcodeOps#trailingOpCount}
+		 * @return the result
+		 */
+		static GenBlockResult empty(int opIdx, OpResult opResult, int instructions,
+				int trailingOps) {
+			return new GenBlockResult(opIdx, opResult, true, instructions, trailingOps);
+		}
+
+		/**
+		 * Produce a normal result with opIdx incremented the given amount, having not actually
+		 * generated any code
+		 * 
+		 * @param ops the number of ops (used or not) in the block
+		 * @return the result
+		 */
+		public GenBlockResult incremented(int ops) {
+			return GenBlockResult.normal(opIdx + ops, opResult);
+		}
+
+		/**
+		 * Produce an empty result with opIdx incremented the given total and the given counts
+		 * 
+		 * @param totalOps the total number of ops (used or not) in the block, used to increment
+		 *            opIdx
+		 * @param opCounts the total number of instructions and trailing ops to defer to the next
+		 *            block
+		 * @return the result
+		 */
+		public GenBlockResult emptyIncremented(int totalOps, CountsPcodeOps opCounts) {
+			PcodeOpCounter counter = new PcodeOpCounter();
+			counter.count(this);
+			counter.count(opCounts);
+			return GenBlockResult.empty(opIdx + totalOps, opResult, counter.instructionCount(),
+				counter.trailingOpCount());
+		}
+
+		/**
+		 * Produce a result after auxiliary code generation
+		 * 
+		 * @param em the live emitter
+		 * @return the result
+		 */
+		public GenBlockResult aux(Emitter<Bot> em) {
+			return GenBlockResult.normal(opIdx, new LiveOpResult(em));
+		}
+	}
 
 	/**
 	 * Emit the bytecode translation for the given p-code block
-	 * 
 	 * <p>
 	 * This checks if the block needs a label, i.e., it is an entry or the target of a branch, and
 	 * then optionally emits an invocation of {@link JitCompiledPassage#count(int, int)}. Finally,
@@ -860,26 +945,58 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 	 * {@link #genBlockOps(Emitter, Local, Local, RetReq, JitBlock, int)}.
 	 * 
 	 * @param block the block
-	 * @param opIdx the index, within the whole passage, of the first op in the block
 	 * @return the index, within the whole passage, of the op immediately after the block
 	 */
-	protected GenBlockResult genBlock(OpResult prev, Local<TRef<THIS>> localThis,
-			Local<TInt> localCtxmod, RetReq<TRef<EntryPoint>> retReq, JitBlock block, int opIdx) {
+	protected GenBlockResult genBlock(GenBlockResult prev, Local<TRef<THIS>> localThis,
+			Local<TInt> localCtxmod, RetReq<TRef<EntryPoint>> retReq, JitBlock block) {
+		final boolean hasBranchInto;
 		LiveOpResult live;
-		if (block.hasJumpTo() || getOpEntry(block.first()) != null) {
-			live = new LiveOpResult(switch (prev) {
+		if (block.hasJumpTo(rm::isTakeable) || getOpEntry(block.first()) != null) {
+			if (DEEP_TRACE) {
+				System.err.println("  gen: has branch into");
+			}
+			hasBranchInto = true;
+			live = new LiveOpResult(switch (prev.opResult) {
 				case DeadOpResult r -> r.em().emit(Lbl::placeDead, labelForBlock(block));
 				case LiveOpResult r -> r.em().emit(Lbl::place, labelForBlock(block));
 			});
 		}
-		else if (prev instanceof LiveOpResult r) {
+		else if (prev.opResult instanceof LiveOpResult r) {
+			if (DEEP_TRACE) {
+				System.err.println("  gen: no branch into");
+			}
+			hasBranchInto = false;
 			live = r;
 		}
 		else {
 			Msg.warn(this, "No control flow into block " + block.start());
-			return new GenBlockResult(opIdx, prev);
+			return prev.incremented(block.getCode().size());
 			//throw new AssertionError("No control flow into a block");
 		}
+
+		BlockFlow fall = block.getFallFrom();
+		final boolean isFallOnlyWayToNext = fall != null && rm.isTakeable(fall) && fall.to()
+				.flowsTo()
+				.values()
+				.stream()
+				.filter(rm::isTakeable)
+				.toList()
+				.equals(List.of(fall));
+		final boolean hasUsedOps =
+			block.getCode().stream().anyMatch(op -> oum.isUsed(dfm.getJitOp(op)));
+		if (DEEP_TRACE) {
+			System.err.println("  gen: isFallOnlyWayToNext=%s".formatted(isFallOnlyWayToNext));
+			System.err.println("  gen: hasUsedOps=%s".formatted(hasUsedOps));
+		}
+		if (!(hasBranchInto && prev.wasEmpty) && isFallOnlyWayToNext && !hasUsedOps) {
+			System.err.println(
+				"  gen: coalescing to next block (ops=%d)".formatted(block.getCode().size()));
+			return prev.emptyIncremented(block.getCode().size(), block);
+		}
+
+		PcodeOpCounter counter = new PcodeOpCounter();
+		counter.count(prev);
+		counter.count(block);
 
 		Emitter<Bot> em;
 		if (block.first() instanceof DecodedPcodeOp first &&
@@ -889,8 +1006,8 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 			var tryCatch = Misc.tryCatch(live.em(), Lbl.create(), handler.lbl(), T_THROWABLE);
 			em = tryCatch.em()
 					.emit(Op::aload, localThis)
-					.emit(Op::ldc__i, block.instructionCount())
-					.emit(Op::ldc__i, block.trailingOpCount())
+					.emit(Op::ldc__i, counter.instructionCount())
+					.emit(Op::ldc__i, counter.trailingOpCount())
 					.emit(Op::invokeinterface, T_JIT_COMPILED_PASSAGE, "count",
 						MDESC_JIT_COMPILED_PASSAGE__COUNT)
 					.step(Inv::takeArg)
@@ -902,12 +1019,11 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 		else {
 			em = live.em();
 		}
-		return genBlockOps(em, localThis, localCtxmod, retReq, block, opIdx);
+		return genBlockOps(em, localThis, localCtxmod, retReq, block, prev.opIdx);
 	}
 
 	/**
 	 * Emit code to load an {@link Address} onto the JVM stack
-	 * 
 	 * <p>
 	 * Note this does not load the identical address, but reconstructs it at run time.
 	 * 
@@ -918,6 +1034,9 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 	 */
 	protected <N extends Next> Emitter<Ent<N, TRef<Address>>> genAddress(Emitter<N> em,
 			Address address) {
+		if (DEEP_TRACE) {
+			System.err.println("    // space=%s".formatted(address.getAddressSpace()));
+		}
 		if (address == Address.NO_ADDRESS) {
 			return em
 					.emit(Op::getstatic, T_ADDRESS, "NO_ADDRESS", T_ADDRESS);
@@ -941,7 +1060,6 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 	/**
 	 * Emit bytecode into the class initializer that adds the given entry point into
 	 * {@code ENTRIES}.
-	 * 
 	 * <p>
 	 * Consider the entry {@code (ram:00400000,ctx=80000000)}. The code would be equivalent to:
 	 * 
@@ -951,11 +1069,12 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 	 * 		ADDRESS_FACTORY.getAddressSpace(ramId).getAddress(0x400000), CTX_80000000));
 	 * }
 	 * </pre>
-	 * 
 	 * <p>
 	 * Note this method will request the appropriate {@code CTX_...} field.
 	 * 
+	 * @param em the emitter
 	 * @param entry the entry point to add
+	 * @return the same emitter
 	 */
 	protected Emitter<Bot> genStaticEntry(Emitter<Bot> em, AddrCtx entry) {
 		FieldForContext ctxField = requestStaticFieldForContext(entry.rvCtx);
@@ -979,11 +1098,13 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 
 	/**
 	 * Emit code into the static initializer to initialize the {@code ENTRIES} field.
-	 * 
 	 * <p>
 	 * This first constructs a new {@link ArrayList} and assigns it to the field. Then, for each
 	 * block representing a possible entry, it adds an element giving the address and contextreg
 	 * value for the first op of that block.
+	 * 
+	 * @param em the emitter
+	 * @return the same emitter
 	 */
 	protected Emitter<Bot> genStaticEntries(Emitter<Bot> em) {
 		em = em
@@ -1011,7 +1132,7 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 	 * requests are not known until the run-method generator has finished.
 	 * 
 	 * @param em the emitter
-	 * @return the emitter
+	 * @return the same emitter
 	 */
 	protected Emitter<Bot> genClInitMethod(Emitter<Bot> em) {
 		for (FieldForContext fCtx : fieldsForContext.values()) {
@@ -1039,6 +1160,10 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 	 * the pre-fetched byte arrays, whether for uniques, registers, or memory are initialized in
 	 * order of address. Were these requests not made, they'd still get requested by the op
 	 * generators, but the order would be less helpful.
+	 * 
+	 * @param em the emitter
+	 * @param localThis a handle to the local holding the {@code this} reference
+	 * @return the same emitter
 	 */
 	protected Emitter<Bot> genInitMethod(Emitter<Bot> em, Local<TRef<THIS>> localThis) {
 		// NOTE: Ops don't need init. They'll invoke field requests as needed.
@@ -1069,7 +1194,6 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 
 	/**
 	 * Emit all the bytecode for the {@link JitCompiledPassage#run(int) run} method.
-	 * 
 	 * <p>
 	 * The structure of this method is described by this class's documentation. It first declares
 	 * all the locals allocated by the {@link JitAllocationModel}. It then collects the list of
@@ -1082,11 +1206,17 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 	 * {@link IllegalArgumentException}. We do not jump directly to the block's translation. Instead
 	 * we emit a prologue for each block, wherein we birth the variables that block expects to be
 	 * live, and then jump to the translation. Then, we emit the translation for each block using
-	 * {@link #genBlock(OpResult, Local, Local, RetReq, JitBlock, int)}, placing transitions between
+	 * {@link #genBlock(GenBlockResult, Local, Local, RetReq, JitBlock)}, placing transitions between
 	 * those connected by fall through using
-	 * {@link VarGen#computeBlockTransition(Local, JitCodeGenerator, JitBlock, JitBlock)}. Finally,
-	 * we emit each requested exception handler using
-	 * {@link ExceptionHandler#genRun(Emitter, Local, JitCodeGenerator)}.
+	 * {@link VarGen#computeBlockTransition(Local, JitCodeGenerator, BlockFlow)}. Finally, we emit
+	 * each requested exception handler using
+	 * {@link ExceptionHandler#genRun(Emitter, Local, JitCodeGenerator, int)}.
+	 * 
+	 * @param em the emitter
+	 * @param localThis a handle to the local holding the {@code this} reference
+	 * @param localBlockId a handle to the local holding {@code blockId}
+	 * @param retReq the required return type
+	 * @return the dead emitter
 	 */
 	protected Emitter<Dead> genRunMethod(Emitter<Bot> em, Local<TRef<THIS>> localThis,
 			Local<TInt> localBlockId, RetReq<TRef<EntryPoint>> retReq) {
@@ -1113,12 +1243,18 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 
 		for (Map.Entry<JitBlock, Lbl<Bot>> ent : entries.entrySet()) {
 			JitBlock block = ent.getKey();
+			if (DEEP_TRACE) {
+				System.err.println("  gen: entry to %s".formatted(block.start()));
+			}
 			dead = dead
 					.emit(Lbl::placeDead, ent.getValue())
 					.emit(VarGen.computeBlockTransition(localThis, this, null, block)::genFwd)
 					.emit(Op::goto_, labelForBlock(block));
 		}
 
+		if (DEEP_TRACE) {
+			System.err.println("  gen: bad entry");
+		}
 		dead = dead
 				.emit(Lbl::placeDead, lblBadEntry)
 				.emit(Op::new_, T_ILLEGAL_ARGUMENT_EXCEPTION)
@@ -1134,45 +1270,78 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 		/**
 		 * NB. opIdx starts at 1, because JVM will ignore "Line number 0"
 		 */
-		int opIdx = 1;
-
-		OpResult opResult = new DeadOpResult(dead);
+		GenBlockResult prevResult = GenBlockResult.normal(1, new DeadOpResult(dead));
 		for (JitBlock block : cfm.getBlocks()) {
-			var blockResult = genBlock(opResult, localThis, localCtxmod, retReq, block, opIdx);
-			opIdx = blockResult.opIdx;
-			JitBlock fall = block.getFallFrom();
+			if (DEEP_TRACE) {
+				System.err.println("  gen: block %s".formatted(block.start()));
+				System.err.println("   flows to:");
+				for (BlockFlow ft : block.flowsTo().values()) {
+					System.err
+							.println("    [%s] %s".formatted(rm.isTakeable(ft) ? "->" : "XX", ft));
+				}
+				AddrCtx entry = getOpEntry(block.first());
+				if (entry != null) {
+					System.err.println("    [en] %s".formatted(entry));
+				}
+			}
+			if (!rm.isReachable(block)) {
+				if (DEEP_TRACE) {
+					System.err
+							.println("    unreachable (ops=%d)".formatted(block.getCode().size()));
+				}
+				prevResult = prevResult.incremented(block.getCode().size());
+				continue;
+			}
+			var thisResult = genBlock(prevResult, localThis, localCtxmod, retReq, block);
+			BlockFlow fall = block.getFallFrom();
 
-			if (fall == null) {
-				if (!(blockResult.opResult instanceof DeadOpResult r)) {
+			if (DEEP_TRACE) {
+				System.err.println("   flows from:");
+				for (BlockFlow ff : block.flowsFrom().values()) {
+					System.err
+							.println("    [%s] %s".formatted(rm.isTakeable(ff) ? "<-" : "XX", ff));
+				}
+			}
+
+			if (fall == null || !rm.isTakeable(fall)) {
+				if (!(thisResult.opResult instanceof DeadOpResult)) {
 					throw new AssertionError("No fall-through, but control flow is live");
 				}
-				opResult = r;
+				prevResult = thisResult;
+			}
+			else if (thisResult.wasEmpty) {
+				prevResult = thisResult;
 			}
 			else {
-				opResult = switch (blockResult.opResult) {
-					case LiveOpResult r -> new LiveOpResult(r.em()
-							.emit(VarGen.computeBlockTransition(localThis, this, block,
-								fall)::genFwd));
-					case DeadOpResult r -> {
+				prevResult = switch (thisResult.opResult) {
+					case LiveOpResult r -> thisResult.aux(r.em()
+							.emit(VarGen.computeBlockTransition(localThis, this, fall)::genFwd));
+					case DeadOpResult _ -> {
 						/**
 						 * This can happen, e.g., if an undefined userop is invoked. LATER: Perhaps
 						 * have the control-flow analyzer consider this dead instead of
 						 * fall-through?
+						 * 
+						 * This can also happen now when a CBRANCH is re-written to a folded BRANCH.
 						 */
 						Msg.warn(this, "Fall-through block resulted in dead control flow.");
-						yield r;
+						yield thisResult;
 					}
 				};
 			}
 		}
-		if (!(opResult instanceof DeadOpResult r)) {
+		if (!(prevResult.opResult instanceof DeadOpResult r)) {
 			throw new AssertionError("Final block left live control flow");
 		}
 		dead = r.em();
 
+		int opIdx = prevResult.opIdx + 100; // Make a clear gap to indicate exception handlers
 		for (ExceptionHandler handler : excHandlers.values()) {
-			dead = dead
-					.emit(handler::genRun, localThis, this);
+			if (DEEP_TRACE) {
+				System.err.println("  gen: exceptiona handler %s".formatted(handler));
+			}
+			dead = dead.emit(handler::genRun, localThis, this, opIdx);
+			opIdx++;
 		}
 		return dead;
 	}
@@ -1209,7 +1378,6 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 
 	/**
 	 * Generate the classfile and get the raw bytes
-	 * 
 	 * <p>
 	 * This emits all the bytecode for all the required methods, static initializer, and
 	 * constructor. Once complete, this closes out the methods by letting the ASM library compute
@@ -1228,6 +1396,9 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 			Local<TRef<THIS>> this_;
 			Local<TInt> blockId;
 		};
+		if (DEEP_TRACE) {
+			System.err.println("Generate: run() {");
+		}
 		var retRun = Emitter.start(typeThis, cv, ACC_PUBLIC, "run",
 			MthDesc.returns(T_ENTRY_POINT).param(Types.T_INT).build())
 				.param(Def::param, Types.T_INT, "blockId", l -> paramsRun.blockId = l)
@@ -1235,6 +1406,9 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 		retRun.em()
 				.emit(this::genRunMethod, paramsRun.this_, paramsRun.blockId, retRun.ret())
 				.emit(Misc::finish);
+		if (DEEP_TRACE) {
+			System.err.println("} // end run()");
+		}
 
 		// Run may make requests of Init and ClInit
 		var paramsInit = new Object() {
@@ -1282,7 +1456,6 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 
 	/**
 	 * Get the context of the instruction that generated the given p-code op.
-	 * 
 	 * <p>
 	 * This is necessary when exiting the passage, whether due to an exception or "normal" exit. The
 	 * emulator's context must be updated so that it can resume execution appropriately.
@@ -1360,6 +1533,29 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 		}
 
 		/**
+		 * Create a generator that loads the program counter from a temporary local
+		 * <p>
+		 * This is used to verify a re-written indirect branch whose target constant became
+		 * invalidated. In that case, the actual run-time target is loaded using {@link #loadTarget}
+		 * and then stored into a temporary local. That target is compared to the now-invalidated
+		 * constant target. If it matches, the direct internal branch is taken. Otherwise, we exit.
+		 * LATER: If it happens that the target {@link JitVal} is allocated in a local, anyway, the
+		 * temporary local is a bit redundant. It might be nice to avoid that.
+		 * 
+		 * @param <THIS> the type of the generated passage
+		 * @param local the local holding the program counter
+		 * @return the generator
+		 */
+		public static <THIS extends JitCompiledPassage> PcGen loadLocal(Local<TLong> local) {
+			return new PcGen() {
+				@Override
+				public <N extends Next> Emitter<Ent<N, TLong>> gen(Emitter<N> em) {
+					return em.emit(Op::lload, local);
+				}
+			};
+		}
+
+		/**
 		 * Emit bytecode to load a program counter
 		 * 
 		 * @param <N> the incoming stack
@@ -1371,7 +1567,6 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 
 	/**
 	 * Emit bytecode to set the emulator's counter and contextreg.
-	 * 
 	 * <p>
 	 * Within a translated passage, there's no need to keep constant track of the program counter
 	 * (nor decode context), since all the decoding has already been done. However, whenever we exit
@@ -1409,7 +1604,6 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 
 	/**
 	 * Emit code to exit the passage
-	 * 
 	 * <p>
 	 * This retires all the variables of the current block as well as the program counter and decode
 	 * context. It does not generate the actual {@link Opcodes#ARETURN areturn} or
@@ -1443,7 +1637,6 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 
 	/**
 	 * Get the address that generated the given p-code op.
-	 * 
 	 * <p>
 	 * NOTE: The decoder rewrites ops to ensure they have the decode address, even if they were
 	 * injected or from an inlined userop.
@@ -1460,7 +1653,6 @@ public class JitCodeGenerator<THIS extends JitCompiledPassage> {
 
 	/**
 	 * For testing and debugging: A means to inject granular line number information
-	 * 
 	 * <p>
 	 * Typically, this is used to assign every bytecode offset (emitted by a certain generator) a
 	 * line number, so that tools expecting/requiring line numbers will display something useful.

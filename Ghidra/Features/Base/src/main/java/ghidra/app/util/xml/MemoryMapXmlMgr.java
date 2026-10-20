@@ -192,11 +192,7 @@ class MemoryMapXmlMgr {
 	private void setData(byte[] bytes, int offset, String directory, String fileName,
 			int fileOffset, int length, MessageLog log) throws IOException {
 		File dir = new File(directory);
-		File f = new File(dir, fileName);
-		if (!FileUtilities.isPathContainedWithin(dir, f)) {
-			throw new FileNotFoundException(
-				"FILE_NAME entry escapes target directory: " + fileName);
-		}
+		File f = FileUtilities.getSecureFile(dir, fileName);
 		RandomAccessFile binfile = new RandomAccessFile(f, "r");
 		//binfile.seek(fileOffset);
 		try {

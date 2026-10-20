@@ -1,0 +1,135 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger: Variable Viewer</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="plugin"></A>Debugger: Variable Viewer</H1>
+
+    <DIV class="image">
+      <IMG alt="" src="images/DebuggerVariableViewerPlugin.png">
+    </DIV>
+
+    <P>The Variable Viewer displays a table of local variables for the function at the current
+    program counter, evaluated against the current thread's machine state at the current snapshot.
+    Variables are gathered from two sources: the <A href=
+    "help/topics/CodeBrowserPlugin/CodeBrowser.htm">Static Listing</A> and the <A href=
+    "help/topics/DecompilePlugin/DecompilerIntro.html">Decompiler</A>.</P>
+
+    <P>The variable viewer uses colors to hint about changes and freshness of displayed values. By
+    default, changed values are displayed in red, and stale values are displayed in dark gray. A
+    <EM>stale</EM> value is one whose backing register or memory location has not been recorded in
+    the current snap.</P>
+
+    <H2>Table Columns</H2>
+
+    <P>The table displays and allows modification of each variable. It has the following
+    columns:</P>
+
+    <UL>
+      <LI><B>Source</B> (hidden by default) - indicates where the variable was discovered. The
+      value is either the <A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Static
+      Listing</A> or the <A href="help/topics/DecompilePlugin/DecompilerIntro.html">Decompiler</A>.
+      When both sources produce a variable with the same symbol name, only one entry is shown; the
+      Listing entry takes precedence.</LI>
+
+      <LI><B>Storage</B> - the location where the variable's value is stored. For register-backed
+      variables this shows the register name. For memory-backed variables this shows the address.
+      If the storage location could not be determined, <CODE>??</CODE> is shown.</LI>
+
+      <LI><B>Symbol</B> - the name of the variable. This field is user-modifiable when <A href=
+      "#enable_edits">Enable Edits</A> is on.</LI>
+
+      <LI><B>Value</B> - the raw bytes of the variable's current value. For scalar variables whose
+      size does not exceed the pointer size, the value is shown as a hexadecimal integer. For
+      larger variables the bytes are shown as a space-separated hex sequence enclosed in braces.
+      Very large values are truncated with an ellipsis. This field is user-modifiable when <A href=
+      "#enable_edits">Enable Edits</A> is on and the variable's storage is writable. Edits may be
+      directed toward a live target, the trace, or the emulator, according to the <A href=
+      "help/topics/DebuggerControlPlugin/DebuggerControlPlugin.html">Control and Machine State
+      Plugin</A>.</LI>
+
+      <LI><B>Type</B> - the data type assigned to the variable. This field is user-modifiable when
+      <A href="#enable_edits">Enable Edits</A> is on. The type is used to compute the <B>Repr</B>
+      column.</LI>
+
+      <LI><B>Repr</B> - the value of the variable as interpreted by its assigned data type. This
+      field is user-modifiable when the <B>Value</B> column is modifiable and the selected data
+      type provides an encoder. Editing this field encodes the entered representation back to raw
+      bytes and writes them to the variable's storage location.</LI>
+
+      <LI><B>Error</B> - if an error occurs while evaluating the variable (for example, because the
+      storage location is not accessible at the current snapshot, or the stack frame could not be
+      unwound), the error message is shown here.</LI>
+    </UL>
+
+    <H2>Actions</H2>
+
+    <P>The variable viewer provides the following actions:</P>
+
+    <H3><A name="enable_edits"></A><IMG alt="" src="icon.debugger.enable.edits">Enable Edits</H3>
+
+    <P>This toggle enables writes to the machine state. To modify a variable's symbol, value, type,
+    or representation, this toggle must be enabled. It is available only when there is an active
+    trace. Edits are directed according to the <A href=
+    "help/topics/DebuggerControlPlugin/DebuggerControlPlugin.html">Control and Machine State
+    Plugin</A>.</P>
+
+    <H3><A name="show_variables"></A><IMG alt="" src="icon.configure.filter">Show/Hide
+    Variables</H3>
+
+    <P>This action controls which source of variables is displayed in the table. The three choices
+    are:</P>
+
+    <UL>
+      <LI><IMG alt="" src="icon.configure.filter"><B>Show Variables From Both</B> - displays
+      variables gathered from both the Listing and the Decompiler. When both sources produce a
+      variable with the same symbol name, only one entry is retained.</LI>
+
+      <LI><IMG alt="" src="icon.plugin.codebrowser.provider"><B>Show Listing Variables Only</B> -
+      displays only variables derived from the static listing.</LI>
+
+      <LI><IMG alt="" src="icon.decompiler.action.provider"><B>Show Decompiler Variables Only</B> -
+      displays only variables recovered by the decompiler.</LI>
+    </UL>
+
+    <H3><A name="popup_actions"></A>Right Click Actions</H3>
+
+    <DIV class="image">
+      <IMG alt="" src="images/DebuggerVariableViewerPluginRightClick.png">
+    </DIV>
+
+    <UL>
+      <LI><B>View [variable] @ 0x... in...</B> - This action is available when a single variable is
+      selected and its storage address is a non-register memory address. It navigates to that
+      address in a chosen listing window.</LI>
+
+      <LI><B>Deref *[variable] @ 0x... in...</B> - This action is available when a single variable
+      is selected and its current value can be interpreted as a valid memory address (i.e., the
+      variable is a pointer). It navigates to the dereferenced address in a chosen listing
+      window.</LI>
+    </UL>
+
+    <H4>Sub Menu Options</H4>
+
+    <P>Both actions share the same sub options of which listing window to show the result in:</P>
+
+    <UL>
+      <LI><B>Main Listing</B> - navigates the primary dynamic listing to the variable's storage
+      address.</LI>
+
+      <LI><B>[Additional Listing Windows]</B> - navigates any other open dynamic listing windows to
+      the variable's storage address.</LI>
+
+      <LI><B>New Listing</B> - opens a new dynamic listing window, sets it to follow the current
+      thread, and navigates it to the variable's storage address.</LI>
+    </UL>
+  </BODY>
+</HTML>

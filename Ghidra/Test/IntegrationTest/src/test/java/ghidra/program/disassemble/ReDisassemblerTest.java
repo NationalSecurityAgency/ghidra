@@ -70,7 +70,7 @@ public class ReDisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 				"imm r0, #0x23");
 
 			ReDisassembler rd = new ReDisassembler(program);
-			rd.disasemble(start, monitor);
+			rd.disassemble(start, monitor);
 		}
 	}
 }

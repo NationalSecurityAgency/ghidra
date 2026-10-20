@@ -1,17 +1,17 @@
 ## ###
-#  IP: GHIDRA
-# 
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#  
-#       http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+# IP: GHIDRA
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 ##
 """
 Ties the Ghidra documentation into the builtin Python help.
@@ -123,6 +123,8 @@ class _Helper:
             sig = "%s %s" % (field["type_long"], field["name"])
             if field["static"]:
                 sig = "static " + sig
+            if field["access"]:
+                sig = field["access"] + " " + sig
             if field["constant_value"]:
                 sig += " = " + field["constant_value"]
             sig += "\n"
@@ -143,6 +145,8 @@ class _Helper:
             sig = "%s %s(%s)\n" % (method["return"]["type_short"], method["name"], paramsig)
             if method["static"]:
                 sig = "static " + sig
+            if method["access"]:
+                sig = method["access"] + " " + sig
             desc = "  %s\n\n" % (method["comment"]) if len(method["comment"]) > 0 else ""
             ret = ""
             if method["return"]["type_short"] != "void":

@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,16 +15,18 @@
  */
 package ghidra.pcode.opbehavior;
 
+import java.math.BigInteger;
+
 import ghidra.pcode.floatformat.FloatFormat;
 import ghidra.pcode.floatformat.FloatFormatFactory;
 import ghidra.program.model.pcode.PcodeOp;
 
-import java.math.BigInteger;
+public enum OpBehaviorFloatFloat2Float implements UnaryOpBehavior {
+	OP_FLOAT_FLOAT2FLOAT;
 
-public class OpBehaviorFloatFloat2Float extends UnaryOpBehavior {
-
-	public OpBehaviorFloatFloat2Float() {
-		super(PcodeOp.FLOAT_FLOAT2FLOAT);
+	@Override
+	public int opcode() {
+		return PcodeOp.FLOAT_FLOAT2FLOAT;
 	}
 
 	@Override
@@ -41,5 +42,4 @@ public class OpBehaviorFloatFloat2Float extends UnaryOpBehavior {
 		FloatFormat formatin = FloatFormatFactory.getFloatFormat(sizein);
 		return formatin.opFloat2Float(in1, formatout);
 	}
-
 }

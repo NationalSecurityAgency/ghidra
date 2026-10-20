@@ -25,6 +25,7 @@ import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.util.ObjectPropertyMap;
 import ghidra.program.util.ChangeManager;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.Msg;
 import ghidra.util.Saveable;
 import ghidra.util.classfinder.ClassSearcher;
@@ -295,8 +296,7 @@ public class ObjectPropertyMapDB<T extends Saveable> extends PropertyMapDB<T>
 
 	@Override
 	public void add(Address addr, T value) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 			if (!saveableObjectClass.isAssignableFrom(value.getClass())) {
 				throw new IllegalArgumentException("value is not " + saveableObjectClass.getName());
@@ -343,10 +343,6 @@ public class ObjectPropertyMapDB<T extends Saveable> extends PropertyMapDB<T>
 		catch (IOException e) {
 			errHandler.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
-
 	}
 
 	private boolean isPrivate(Saveable value) {

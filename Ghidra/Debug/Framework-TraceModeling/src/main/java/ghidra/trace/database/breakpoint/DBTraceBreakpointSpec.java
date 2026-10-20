@@ -96,8 +96,6 @@ public class DBTraceBreakpointSpec implements TraceBreakpointSpec, DBTraceObject
 
 	@Override
 	public void setKinds(Lifespan lifespan, Collection<TraceBreakpointKind> kinds) {
-		// TODO: More efficient encoding
-		// TODO: Target-Trace mapping is implied by encoded name. Seems bad.
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			object.setValue(lifespan, KEY_KINDS, TraceBreakpointKindSet.encode(kinds));
 			this.kinds = TraceBreakpointKindSet.copyOf(kinds);

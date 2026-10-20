@@ -20,8 +20,12 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
+import org.antlr.runtime.CharStream;
+import org.antlr.runtime.tree.CommonTreeNodeStream;
+
 import ghidra.app.nav.NavigationUtils;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationIntegration;
+import ghidra.app.plugin.core.debug.service.emulation.Mode;
 import ghidra.app.plugin.core.debug.service.emulation.data.DefaultPcodeDebuggerAccess;
 import ghidra.app.plugin.processors.sleigh.SleighException;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
@@ -31,7 +35,9 @@ import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.exec.SleighProgramCompiler.ErrorCollectingPcodeParser;
+import ghidra.pcode.exec.SleighUtils.LitIdMode;
 import ghidra.pcode.exec.trace.*;
+import ghidra.pcode.exec.trace.TraceEmulationIntegration.Writer;
 import ghidra.pcode.exec.trace.data.DefaultPcodeTraceAccess;
 import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 import ghidra.pcode.utils.Utils;
@@ -45,7 +51,7 @@ import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolType;
 import ghidra.program.util.ProgramLocation;
-import ghidra.sleigh.grammar.Location;
+import ghidra.sleigh.grammar.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceLocation;
 import ghidra.trace.model.guest.TracePlatform;
@@ -68,48 +74,123 @@ public enum DebuggerPcodeUtils {
 
 		private final DebuggerStaticMappingService mappings;
 		private final DebuggerCoordinates coordinates;
+		private final VarnodeSymbol current;
+		private final LitIdMode mode;
+
+		private SleighCompiler sc;
 
 		/**
 		 * Construct a parser bound to the given coordinates
 		 * 
 		 * @param provider the service provider (usually the tool)
 		 * @param coordinates the current coordinates for context
+		 * @param current the current address for the "." symbol
+		 * @param mode the mode for parsing integer literals and ids
 		 */
-		public LabelBoundPcodeParser(ServiceProvider provider, DebuggerCoordinates coordinates) {
+		public LabelBoundPcodeParser(ServiceProvider provider, DebuggerCoordinates coordinates,
+				Address current, LitIdMode mode) {
 			super((SleighLanguage) coordinates.getPlatform().getLanguage());
 			this.mappings = provider.getService(DebuggerStaticMappingService.class);
 			this.coordinates = coordinates;
+			this.current = current == null ? null : createSleighConstant("built-in", ".", current);
+			this.mode = mode;
 		}
 
-		protected SleighSymbol createSleighConstant(String sourceName, String nm, Address address) {
+		@Override
+		protected SleighLexer newSleighLexer(CharStream input) {
+			return SleighUtils.lexerFor(mode, input);
+		}
+
+		@Override
+		protected SleighCompiler newSleighCompiler(CommonTreeNodeStream nodes) {
+			return sc = super.newSleighCompiler(nodes);
+		}
+
+		protected VarnodeSymbol createSleighConstant(String sourceName, String nm,
+				Address address) {
 			return new VarnodeSymbol(new Location(sourceName, 0), nm, getConstantSpace(),
 				address.getOffset(), address.getAddressSpace().getPointerSize());
 		}
 
 		@Override
-		public SleighSymbol findSymbol(String nm) {
-			SleighSymbol symbol = null;
+		public RadixBigInteger parseIntegerLiteral(Location loc, String text) {
+			if (mode == LitIdMode.NORMAL) {
+				return super.parseIntegerLiteral(loc, text);
+			}
+			return new RadixBigInteger(loc, text, mode.radix);
+		}
+
+		@Override
+		public int getDefaultConstantSize() {
+			if (mode == LitIdMode.NORMAL) {
+				return 0;
+			}
+			return current.getSize();
+		}
+
+		public SleighSymbol tryIntegerLiteral(Location loc, String nm, boolean check) {
 			try {
-				symbol = super.findSymbol(nm);
+				RadixBigInteger value = parseIntegerLiteral(loc, nm);
+				if (check) {
+					sc.check(value);
+				}
+				else if (!sc.passesCheck(value)) {
+					return null;
+				}
+				return new VarnodeSymbol(value.location, nm, getConstantSpace(),
+					value.longValue(), current.getSize());
+			}
+			catch (NumberFormatException e) {
+				return null;
+			}
+		}
+
+		@Override
+		public SleighSymbol findSymbol(Location loc, String nm) {
+			if (!mode.preferId) {
+				SleighSymbol symbol = tryIntegerLiteral(loc, nm, true);
+				if (symbol != null) {
+					return symbol;
+				}
+			}
+
+			try {
+				SleighSymbol symbol = super.findSymbol(loc, nm);
+				if (symbol != null) {
+					return symbol;
+				}
 			}
 			catch (SleighException e) {
-				// leave null
+				// fall through
 			}
-			if (symbol == null) {
-				symbol = findUserSymbol(nm);
+
+			if (".".equals(nm)) {
+				return current;
 			}
-			if (symbol == null) {
-				/**
-				 * TODO: This may break things that check for the absence of a symbol
-				 * 
-				 * I don't think it'll affect expressions, but it could later affect user Sleigh
-				 * libraries that an expression might like to use. The better approach would be to
-				 * incorporate a better error message into the Sleigh compiler, but it won't always
-				 * know the use case for a clear message.
-				 */
-				throw new SleighException("Unknown register or label: '" + nm + "'");
+
+			{
+				SleighSymbol symbol = findUserSymbol(nm);
+				if (symbol != null) {
+					return symbol;
+				}
 			}
-			return symbol;
+
+			if (mode.preferId) {
+				SleighSymbol symbol = tryIntegerLiteral(loc, nm, false);
+				if (symbol != null) {
+					return symbol;
+				}
+			}
+
+			/**
+			 * NOTE: This may break things that check for the absence of a symbol
+			 * 
+			 * I don't think it'll affect expressions, but it could later affect user Sleigh
+			 * libraries that an expression might like to use. The better approach might be to pass
+			 * a parameter indicating whether absence is good or bad.
+			 */
+			sc.reportError(loc, "Unknown register or label '%s'".formatted(nm));
+			throw new SleighException("Unknown register or label: '" + nm + "'");
 		}
 
 		protected SleighSymbol tryMap(String nm, Trace trace, long snap, Program program,
@@ -130,7 +211,7 @@ public enum DebuggerPcodeUtils {
 
 		protected SleighSymbol tryExternalLinkage(String nm, Trace trace, long snap,
 				Program program, Symbol symbol, List<SleighSymbol> externals) {
-			if (!(symbol.getObject() instanceof Function func)) {
+			if (!(symbol.getObject() instanceof Function)) {
 				return null;
 			}
 			// This covers refs and thunks
@@ -159,20 +240,23 @@ public enum DebuggerPcodeUtils {
 				return createSleighConstant(trace.getName(), nm, symbol.getAddress());
 			}
 			List<SleighSymbol> externals = new ArrayList<>();
-			for (Program program : mappings.getOpenMappedProgramsAtSnap(trace, snap)) {
-				for (Symbol symbol : program.getSymbolTable().getSymbols(nm)) {
-					if (symbol.getSymbolType() != SymbolType.FUNCTION &&
-						symbol.getSymbolType() != SymbolType.LABEL) {
-						continue;
-					}
-					SleighSymbol mapped =
-						tryMap(nm, trace, snap, program, symbol, symbol.getAddress(), externals);
-					if (mapped != null) {
-						return mapped;
-					}
-					mapped = tryExternalLinkage(nm, trace, snap, program, symbol, externals);
-					if (mapped != null) {
-						return mapped;
+			if (mappings != null) {
+				for (Program program : mappings.getOpenMappedProgramsAtSnap(trace, snap)) {
+					for (Symbol symbol : program.getSymbolTable().getSymbols(nm)) {
+						if (symbol.getSymbolType() != SymbolType.FUNCTION &&
+							symbol.getSymbolType() != SymbolType.LABEL) {
+							continue;
+						}
+						SleighSymbol mapped =
+							tryMap(nm, trace, snap, program, symbol, symbol.getAddress(),
+								externals);
+						if (mapped != null) {
+							return mapped;
+						}
+						mapped = tryExternalLinkage(nm, trace, snap, program, symbol, externals);
+						if (mapped != null) {
+							return mapped;
+						}
 					}
 				}
 			}
@@ -200,11 +284,28 @@ public enum DebuggerPcodeUtils {
 	 *      PcodeUseropLibrary)
 	 */
 	public static PcodeProgram compileProgram(ServiceProvider provider,
-			DebuggerCoordinates coordinates,
-			String sourceName, String source, PcodeUseropLibrary<?> library) {
+			DebuggerCoordinates coordinates, String sourceName, String source,
+			PcodeUseropLibrary<?> library) {
 		return SleighProgramCompiler.compileProgram(
-			new LabelBoundPcodeParser(provider, coordinates),
+			new LabelBoundPcodeParser(provider, coordinates, null, LitIdMode.NORMAL),
 			(SleighLanguage) coordinates.getPlatform().getLanguage(), sourceName, source, library);
+	}
+
+	/**
+	 * Compile the given Sleigh expression into a p-code program, resolving user labels
+	 *
+	 * <p>
+	 * This has the same limitations as
+	 * {@link #compileProgram(ServiceProvider, DebuggerCoordinates, String, String, PcodeUseropLibrary)}
+	 * 
+	 * @param mode the mode for parsing integer literals and ids
+	 * @see SleighProgramCompiler#compileExpression(PcodeParser, SleighLanguage, String)
+	 */
+	public static PcodeExpression compileExpression(ServiceProvider provider,
+			DebuggerCoordinates coordinates, Address current, String source, LitIdMode mode) {
+		return SleighProgramCompiler.compileExpression(
+			new LabelBoundPcodeParser(provider, coordinates, current, mode),
+			(SleighLanguage) coordinates.getPlatform().getLanguage(), source);
 	}
 
 	/**
@@ -217,10 +318,41 @@ public enum DebuggerPcodeUtils {
 	 * @see SleighProgramCompiler#compileExpression(PcodeParser, SleighLanguage, String)
 	 */
 	public static PcodeExpression compileExpression(ServiceProvider provider,
-			DebuggerCoordinates coordinates, String source) {
-		return SleighProgramCompiler.compileExpression(
-			new LabelBoundPcodeParser(provider, coordinates),
-			(SleighLanguage) coordinates.getPlatform().getLanguage(), source);
+			DebuggerCoordinates coordinates, Address current, String source) {
+		return compileExpression(provider, coordinates, current, source, LitIdMode.NORMAL);
+	}
+
+	public record WriterAndState(Writer writer, PcodeExecutorState<byte[]> state) {}
+
+	/**
+	 * Get a p-code executor state for the given coordinates
+	 * 
+	 * <p>
+	 * If a thread is included, the executor state will have access to both the memory and registers
+	 * in the context of that thread. Otherwise, only memory access is permitted.
+	 * 
+	 * @param provider the service provider (usually the tool)
+	 * @param coordinates the coordinates
+	 * @param mode determines whether or not writes affect the target
+	 * @return the state
+	 */
+	public static WriterAndState executorStateForCoordinates(ServiceProvider provider,
+			DebuggerCoordinates coordinates, Mode mode) {
+		Trace trace = coordinates.getTrace();
+		if (trace == null) {
+			throw new IllegalArgumentException("Coordinates have no trace");
+		}
+		TracePlatform platform = coordinates.getPlatform();
+		if (!(platform.getLanguage() instanceof SleighLanguage language)) {
+			throw new IllegalArgumentException(
+				"Given trace or platform does not use a Sleigh language");
+		}
+		DefaultPcodeDebuggerAccess access = new DefaultPcodeDebuggerAccess(provider,
+			coordinates.getTarget(), platform, coordinates.getViewSnap());
+		Writer writer = DebuggerEmulationIntegration.bytesWriteMode(access,
+			coordinates.getThread(), coordinates.getFrame(), mode);
+		return new WriterAndState(writer,
+			new BytesPcodeExecutorState(language, writer.wrapFor(null)));
 	}
 
 	/**
@@ -236,20 +368,7 @@ public enum DebuggerPcodeUtils {
 	 */
 	public static PcodeExecutorState<byte[]> executorStateForCoordinates(ServiceProvider provider,
 			DebuggerCoordinates coordinates) {
-		Trace trace = coordinates.getTrace();
-		if (trace == null) {
-			throw new IllegalArgumentException("Coordinates have no trace");
-		}
-		TracePlatform platform = coordinates.getPlatform();
-		if (!(platform.getLanguage() instanceof SleighLanguage language)) {
-			throw new IllegalArgumentException(
-				"Given trace or platform does not use a Sleigh language");
-		}
-		DefaultPcodeDebuggerAccess access = new DefaultPcodeDebuggerAccess(provider,
-			coordinates.getTarget(), platform, coordinates.getViewSnap());
-		PcodeStateCallbacks cb = DebuggerEmulationIntegration.bytesImmediateWriteTarget(access,
-			coordinates.getThread(), coordinates.getFrame());
-		return new BytesPcodeExecutorState(language, cb);
+		return executorStateForCoordinates(provider, coordinates, Mode.RW).state;
 	}
 
 	/**

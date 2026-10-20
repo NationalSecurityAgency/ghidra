@@ -52,7 +52,14 @@ public class FcgVertex extends CircleWithLabelVertex {
 
 		fcgShapeProvider = new FcgVertexShapeProvider(this, expansionListener);
 		shapeProvider = fcgShapeProvider;
+	}
 
+	public FcgVertex cloneVertex(FcgVertexExpansionListener newListener) {
+
+		FcgVertex newVertex = new FcgVertex(function, level, newListener, options);
+		newVertex.fcgShapeProvider = fcgShapeProvider.cloneProvider(newVertex, newListener);
+		newVertex.shapeProvider = fcgShapeProvider;
+		return newVertex;
 	}
 
 	public Function getFunction() {

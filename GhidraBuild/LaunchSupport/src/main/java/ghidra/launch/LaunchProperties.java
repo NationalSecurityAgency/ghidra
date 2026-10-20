@@ -91,7 +91,11 @@ public class LaunchProperties {
 	public File getJavaHomeOverride() {
 		List<String> javaHome = propertyMap.get(JAVA_HOME_OVERRIDE);
 		if (javaHome != null && !javaHome.isEmpty()) {
-			return new File(javaHome.get(0));
+			String path = javaHome.get(0).trim();
+			if (path.length() > 2 && path.startsWith("\"") && path.endsWith("\"")) {
+				path = path.substring(1, path.length() - 1);
+			}
+			return new File(path);
 		}
 		return null;
 	}

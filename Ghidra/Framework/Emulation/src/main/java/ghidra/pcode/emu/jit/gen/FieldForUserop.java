@@ -32,14 +32,13 @@ import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
 
 /**
  * A field request for a pre-fetched userop definition
- * 
  * <p>
  * These are used to invoke userops using the Standard or Direct strategies.
  * 
  * @param userop the definition to pre-fetch
  * @see JitDataFlowUseropLibrary
  */
-public record FieldForUserop(PcodeUseropDefinition<byte[]> userop)
+public record FieldForUserop(PcodeUseropDefinition<?> userop)
 		implements InstanceFieldReq<TRef<PcodeUseropDefinition<byte[]>>> {
 	@Override
 	public String name() {
@@ -48,14 +47,12 @@ public record FieldForUserop(PcodeUseropDefinition<byte[]> userop)
 
 	/**
 	 * {@inheritDoc}
-	 * 
 	 * <p>
 	 * Consider the userop {@code syscall()}. The declaration is equivalent to:
 	 * 
 	 * <pre>
 	 * private final {@link PcodeUseropDefinition} userop_syscall;
 	 * </pre>
-	 * 
 	 * <p>
 	 * And the initialization is equivalent to:
 	 * 

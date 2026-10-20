@@ -24,28 +24,21 @@ import ghidra.program.model.pcode.Varnode;
 
 /**
  * A p-code userop defined using Sleigh source
- *
- * @param <T> no type in particular, except to match any executor
  */
-public interface SleighPcodeUseropDefinition<T> extends PcodeUseropDefinition<T> {
+public interface SleighPcodeUseropDefinition extends PcodeUseropDefinition<Object> {
+	/** The factory for defining userops with Sleigh */
+	Factory FACTORY = Factory.INSTANCE;
 	/** The name of the output symbol */
 	String OUT_SYMBOL_NAME = "__op_output";
+	/** The varnode list containing only one null */
 	List<Varnode> EMPTY_ARGS = Collections.unmodifiableList(Arrays.asList(new Varnode[] { null }));
 
 	/**
 	 * A factory for building {@link SleighPcodeUseropDefinition}s.
 	 */
-	public static class Factory {
-		final SleighLanguage language;
-
-		/**
-		 * Construct a factory for the given language
-		 * 
-		 * @param language the language
-		 */
-		public Factory(SleighLanguage language) {
-			this.language = language;
-		}
+	public enum Factory {
+		/** The factory */
+		INSTANCE;
 
 		/**
 		 * Begin building the definition for a userop with the given name
@@ -54,7 +47,7 @@ public interface SleighPcodeUseropDefinition<T> extends PcodeUseropDefinition<T>
 		 * @return a builder for the userop
 		 */
 		public BuilderStage1 define(String name) {
-			return new AbstractSleighPcodeUseropDefinition.Builder(this, name);
+			return new AbstractSleighPcodeUseropDefinition.Builder(name);
 		}
 	}
 
@@ -64,7 +57,6 @@ public interface SleighPcodeUseropDefinition<T> extends PcodeUseropDefinition<T>
 	public interface BodyFunc {
 		/**
 		 * Generate the body, given the arguments
-		 * 
 		 * <p>
 		 * In general, to refer to an argument, the source can use the corresponding parameter by
 		 * name. Ideally, this is always the case, and the generated source does not depend on the
@@ -99,16 +91,14 @@ public interface SleighPcodeUseropDefinition<T> extends PcodeUseropDefinition<T>
 
 		/**
 		 * Build the actual definition
-		 * 
 		 * <p>
 		 * NOTE: Compilation of the sleigh source is delayed until the first invocation, since the
 		 * compiler must know about the varnodes used as parameters. TODO: There may be some way to
 		 * template it at the p-code level instead of the Sleigh source level.
 		 * 
-		 * @param <T> no particular type, except to match the executor
 		 * @return the definition
 		 */
-		<T> SleighPcodeUseropDefinition<T> build();
+		SleighPcodeUseropDefinition build();
 	}
 
 	/**
@@ -163,7 +153,6 @@ public interface SleighPcodeUseropDefinition<T> extends PcodeUseropDefinition<T>
 
 	/**
 	 * Get the Sleigh source that defines this userop
-	 *
 	 * <p>
 	 * The body may or may not actually depend on the arguments. Ideally, it does not, but sometimes
 	 * the body may vary depending on the <em>sizes</em> of the arguments. In cases where it is
@@ -189,14 +178,40 @@ public interface SleighPcodeUseropDefinition<T> extends PcodeUseropDefinition<T>
 
 	/**
 	 * Get the p-code program implementing this userop for the given arguments and library.
-	 * 
 	 * <p>
 	 * This will compile and cache a program for each new combination of arguments seen.
 	 * 
+	 * @param language the language of the executor
 	 * @param args the operands, output at index 0, and inputs following
 	 * @param library the complete userop library
 	 * @return the p-code program to be fed to the same executor as invoked this userop, but in a
 	 *         new frame
 	 */
-	PcodeProgram programFor(List<Varnode> args, PcodeUseropLibrary<?> library);
+	PcodeProgram programFor(SleighLanguage language, List<Varnode> args,
+			PcodeUseropLibrary<?> library);
+
+	/**
+	 * Cast this Sleigh p-code userop definition to one of the required type
+	 * 
+	 * @param <T> the executor's, library's, etc. type
+	 * @return this same definition
+	 */
+	@SuppressWarnings("unchecked")
+	default <T> PcodeUseropDefinition<T> cast() {
+		return (PcodeUseropDefinition<T>) this;
+	}
+
+	/**
+	 * Cast a userop definition to a Sleigh-defined one
+	 * <p>
+	 * For some reason, the usual syntax in Java is forbidden, probably because it's of {@code <T>}
+	 * and not {@code <?>}....
+	 * 
+	 * @param def the userop definition
+	 * @return the userop definition, if it is a Sleigh-defined one
+	 * @throws ClassCastException if def is not a Sleigh-defined userop
+	 */
+	static SleighPcodeUseropDefinition cast(PcodeUseropDefinition<?> def) {
+		return (SleighPcodeUseropDefinition) def;
+	}
 }

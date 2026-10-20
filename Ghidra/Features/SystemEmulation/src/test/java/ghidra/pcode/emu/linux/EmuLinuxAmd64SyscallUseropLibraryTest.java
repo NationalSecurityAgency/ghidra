@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,28 +21,26 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.*;
 
 import db.Transaction;
-import ghidra.app.plugin.assembler.Assembler;
-import ghidra.app.plugin.assembler.Assemblers;
-import ghidra.pcode.emu.PcodeEmulator;
-import ghidra.pcode.emu.PcodeThread;
+import ghidra.app.plugin.assembler.*;
+import ghidra.pcode.emu.*;
 import ghidra.pcode.emu.sys.EmuProcessExitedException;
 import ghidra.pcode.emu.sys.SyscallTestHelper;
 import ghidra.pcode.emu.sys.SyscallTestHelper.SyscallName;
 import ghidra.pcode.emu.unix.*;
 import ghidra.pcode.exec.*;
-import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
-import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.pcode.PcodeOp;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.util.task.TaskMonitor;
 
@@ -79,9 +77,16 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 		}
 	}
 
-	protected final class LinuxAmd64PcodeEmulator extends PcodeEmulator {
-		protected EmuLinuxAmd64SyscallUseropLibrary<byte[]> syscalls;
+	public static final class CaptureUseropLibrary extends AnnotatedPcodeUseropLibrary<byte[]> {
+		public final List<Long> captured = new ArrayList<>();
 
+		@PcodeUserop(functional = true)
+		public void capture(@OpInput(signed = true) long value) {
+			captured.add(value);
+		}
+	}
+
+	protected final class LinuxAmd64PcodeEmulator extends PcodeEmulator {
 		public LinuxAmd64PcodeEmulator() {
 			super(program.getLanguage());
 		}
@@ -89,7 +94,30 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 		@Override
 		protected PcodeUseropLibrary<byte[]> createUseropLibrary() {
 			syscalls = new EmuLinuxAmd64SyscallUseropLibrary<>(this, fs, program);
-			return syscalls;
+			capture = new CaptureUseropLibrary();
+			return syscalls.compose(capture);
+		}
+
+		@Override
+		protected BytesPcodeThread createThread(String name) {
+			return new BytesPcodeThread(name, this) {
+				int count = 0;
+
+				@Override
+				protected PcodeThreadExecutor<byte[]> createExecutor() {
+					return new PcodeThreadExecutor<>(this) {
+						@Override
+						public void stepOp(PcodeOp op, PcodeFrame frame,
+								PcodeUseropLibrary<byte[]> library) {
+							count++;
+							if (count > 1000) {
+								fail("Probably an infinite loop");
+							}
+							super.stepOp(op, frame, library);
+						}
+					};
+				}
+			};
 		}
 	}
 
@@ -104,13 +132,13 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 	Language language;
 	Assembler asm;
 
-	Register regRIP;
-	Register regRAX;
 	AddressSpace space;
 	Address start;
 	int size;
 	MemoryBlock block;
-	private EmuUnixFileSystem<byte[]> fs;
+	EmuLinuxAmd64SyscallUseropLibrary<byte[]> syscalls;
+	CaptureUseropLibrary capture;
+	EmuUnixFileSystem<byte[]> fs;
 	PcodeArithmetic<byte[]> arithmetic;
 
 	@Before
@@ -119,13 +147,11 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 		language = program.getLanguage();
 		arithmetic = BytesPcodeArithmetic.forLanguage(language);
 
-		regRIP = program.getRegister("RIP");
-		regRAX = program.getRegister("RAX");
 		space = program.getAddressFactory().getDefaultAddressSpace();
 		start = space.getAddress(0x00400000);
 		size = 0x1000;
 
-		try (Transaction tx = program.openTransaction("Initialize")) {
+		try (Transaction _ = program.openTransaction("Initialize")) {
 			block = program.getMemory()
 					.createInitializedBlock(".text", start, size, (byte) 0, TaskMonitor.DUMMY,
 						false);
@@ -146,8 +172,12 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 		}
 	}
 
-	public LinuxAmd64PcodeEmulator prepareEmulator() throws Exception {
-		LinuxAmd64PcodeEmulator emu = new LinuxAmd64PcodeEmulator();
+	protected PcodeEmulator createEmulator() {
+		return new LinuxAmd64PcodeEmulator();
+	}
+
+	public PcodeEmulator prepareEmulator() throws Exception {
+		PcodeEmulator emu = createEmulator();
 		// The emulator is not itself bound to the program or a trace, so copy bytes in
 		byte[] buf = new byte[size];
 		assertEquals(size, block.getBytes(start, buf));
@@ -155,7 +185,7 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 		return emu;
 	}
 
-	public PcodeThread<byte[]> launchThread(LinuxAmd64PcodeEmulator emu, Address pc) {
+	public PcodeThread<byte[]> launchThread(PcodeEmulator emu, Address pc) {
 		PcodeThread<byte[]> thread = emu.newThread();
 		thread.overrideCounter(start);
 		thread.overrideContextWithDefault();
@@ -163,22 +193,9 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 		return thread;
 	}
 
-	public void stepGroupExit(PcodeThread<byte[]> thread) {
-		// Step up to the group_exit
-		thread.stepInstruction(2);
-		// Then verify the syscall interrupts execution
-		try {
-			thread.stepInstruction();
-			fail();
-		}
-		catch (EmuProcessExitedException e) {
-			// pass
-		}
-	}
-
 	public void execute(PcodeThread<byte[]> thread) {
 		try {
-			thread.stepInstruction(1000);
+			thread.run();
 			fail();
 		}
 		catch (EmuProcessExitedException e) {
@@ -187,208 +204,268 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 
 	@Test
 	public void testWriteStdout() throws Exception {
-		try (Transaction tx = program.openTransaction("Initialize")) {
-			asm.assemble(start,
-				"MOV RAX," + Syscall.WRITE.number,
-				"MOV RDI," + EmuUnixFileDescriptor.FD_STDOUT,
-				"LEA RSI,[0x00400800]",
-				"MOV RDX," + BYTES_HW.length,
-				"SYSCALL",
-				"MOV RAX," + Syscall.GROUP_EXIT.number,
-				"MOV RDI,0",
-				"SYSCALL");
-			block.putBytes(space.getAddress(0x00400800), BYTES_HW);
+		Address hwAddr = space.getAddress(0x00400800);
+
+		AssemblyBuffer buf = new AssemblyBuffer(asm, start);
+		buf.assemble("MOV RAX, %d".formatted(Syscall.WRITE.number));
+		buf.assemble("MOV RDI, %d".formatted(EmuUnixFileDescriptor.FD_STDOUT));
+		buf.assemble("LEA RSI, [0x%x]".formatted(hwAddr.getOffset()));
+		buf.assemble("MOV RDX, %d".formatted(BYTES_HW.length));
+		buf.assemble("SYSCALL");
+		final Address captureAt = buf.getNext();
+		buf.assemble("MOV RAX, %d".formatted(Syscall.GROUP_EXIT.number));
+		buf.assemble("MOV RDI, 0");
+		buf.assemble("SYSCALL");
+		buf.assemble("JMP 0x%x".formatted(buf.getNext().getOffset())); // Snuff JIT look-ahead
+		try (Transaction _ = program.openTransaction("Initialize")) {
+			block.putBytes(start, buf.getBytes());
+			block.putBytes(hwAddr, BYTES_HW);
 		}
 
-		LinuxAmd64PcodeEmulator emu = prepareEmulator();
+		PcodeEmulator emu = prepareEmulator();
 		PcodeThread<byte[]> thread = launchThread(emu, start);
+		thread.inject(captureAt, "capture(RAX); emu_exec_decoded();");
 
 		// Capture stdout into a byte array
 		ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-		emu.syscalls.putDescriptor(EmuUnixFileDescriptor.FD_STDOUT,
+		syscalls.putDescriptor(EmuUnixFileDescriptor.FD_STDOUT,
 			new IOStreamEmuUnixFileHandle(emu, program.getCompilerSpec(), null, stdout));
+		execute(thread);
 
-		// Step through write and verify return value and actual output effect
-		thread.stepInstruction(5);
-		assertArrayEquals(arithmetic.fromConst(BYTES_HW.length, regRAX.getNumBytes()),
-			thread.getState().getVar(regRAX, Reason.INSPECT));
+		assertEquals(List.of((long) BYTES_HW.length), capture.captured);
 		assertArrayEquals(BYTES_HW, stdout.toByteArray());
-
-		stepGroupExit(thread);
 	}
 
 	@Test
 	public void testReadStdin() throws Exception {
-		try (Transaction tx = program.openTransaction("Initialize")) {
-			asm.assemble(start,
-				"MOV RAX," + Syscall.READ.number,
-				"MOV RDI," + EmuUnixFileDescriptor.FD_STDIN,
-				"LEA RSI,[0x00400800]",
-				"MOV RDX," + BYTES_HW.length,
-				"SYSCALL",
-				"MOV RAX," + Syscall.GROUP_EXIT.number,
-				"MOV RDI,0",
-				"SYSCALL");
+		Address hwAddr = space.getAddress(0x00400800);
+
+		AssemblyBuffer buf = new AssemblyBuffer(asm, start);
+		buf.assemble("MOV RAX, %d".formatted(Syscall.READ.number));
+		buf.assemble("MOV RDI, %d".formatted(EmuUnixFileDescriptor.FD_STDIN));
+		buf.assemble("LEA RSI, [0x%x]".formatted(hwAddr.getOffset()));
+		buf.assemble("MOV RDX, %d".formatted(BYTES_HW.length));
+		buf.assemble("SYSCALL");
+		final Address captureAt = buf.getNext();
+		buf.assemble("MOV RAX, %d".formatted(Syscall.GROUP_EXIT.number));
+		buf.assemble("MOV RDI, 0");
+		buf.assemble("SYSCALL");
+		buf.assemble("JMP 0x%x".formatted(buf.getNext().getOffset())); // Snuff JIT look-ahead
+		try (Transaction _ = program.openTransaction("Initialize")) {
+			block.putBytes(start, buf.getBytes());
 		}
 
-		LinuxAmd64PcodeEmulator emu = prepareEmulator();
+		PcodeEmulator emu = prepareEmulator();
 		PcodeThread<byte[]> thread = launchThread(emu, start);
+		thread.inject(captureAt, "capture(RAX); emu_exec_decoded();");
 
 		// Provide stdin via a byte array
 		ByteArrayInputStream stdin = new ByteArrayInputStream(BYTES_HW);
-		emu.syscalls.putDescriptor(EmuUnixFileDescriptor.FD_STDIN,
+		syscalls.putDescriptor(EmuUnixFileDescriptor.FD_STDIN,
 			new IOStreamEmuUnixFileHandle(emu, program.getCompilerSpec(), stdin, null));
+		execute(thread);
 
-		// Step through write and verify return value and actual output effect
-		thread.stepInstruction(5);
-		assertArrayEquals(arithmetic.fromConst(BYTES_HW.length, regRAX.getNumBytes()),
-			thread.getState().getVar(regRAX, Reason.INSPECT));
+		assertEquals(List.of((long) BYTES_HW.length), capture.captured);
 		assertArrayEquals(BYTES_HW,
-			emu.getSharedState().getVar(space, 0x00400800, BYTES_HW.length, true, Reason.INSPECT));
-
-		stepGroupExit(thread);
+			emu.getSharedState().getVar(hwAddr, BYTES_HW.length, true, Reason.INSPECT));
 	}
 
 	@Test
 	public void testWritevStdout() throws Exception {
-		try (Transaction tx = program.openTransaction("Initialize")) {
-			Address data = space.getAddress(0x00400800);
-			ByteBuffer buf = ByteBuffer.allocate(64).order(ByteOrder.LITTLE_ENDIAN);
+		Address data = space.getAddress(0x00400800);
 
-			Address strHello = data.add(buf.position());
-			buf.put(BYTES_HELLO);
-			Address endHello = data.add(buf.position());
-			Address iov = data.add(buf.position());
-			buf.putLong(strHello.getOffset());
-			buf.putLong(endHello.subtract(strHello));
-			int posIov1base = buf.position();
-			buf.putLong(0);
-			int posIov1len = buf.position();
-			buf.putLong(0);
-			Address strWorld = data.add(buf.position());
-			buf.put(BYTES_WORLD);
-			Address endWorld = data.add(buf.position());
-			// Backpatch
-			buf.putLong(posIov1base, strWorld.getOffset());
-			buf.putLong(posIov1len, endWorld.subtract(strWorld));
+		ByteBuffer dBuf = ByteBuffer.allocate(64).order(ByteOrder.LITTLE_ENDIAN);
+		Address strHello = data.add(dBuf.position());
+		dBuf.put(BYTES_HELLO);
+		Address endHello = data.add(dBuf.position());
+		Address iov = data.add(dBuf.position());
+		dBuf.putLong(strHello.getOffset());
+		dBuf.putLong(endHello.subtract(strHello));
+		int posIov1base = dBuf.position();
+		dBuf.putLong(0);
+		int posIov1len = dBuf.position();
+		dBuf.putLong(0);
+		Address strWorld = data.add(dBuf.position());
+		dBuf.put(BYTES_WORLD);
+		Address endWorld = data.add(dBuf.position());
+		// Backpatch
+		dBuf.putLong(posIov1base, strWorld.getOffset());
+		dBuf.putLong(posIov1len, endWorld.subtract(strWorld));
 
-			asm.assemble(start,
-				"MOV RAX," + Syscall.WRITEV.number,
-				"MOV RDI," + EmuUnixFileDescriptor.FD_STDOUT,
-				"LEA RSI,[0x" + iov + "]",
-				"MOV RDX,2",
-				"SYSCALL",
-				"MOV RAX," + Syscall.GROUP_EXIT.number,
-				"MOV RDI,0",
-				"SYSCALL");
-			block.putBytes(data, buf.array());
+		AssemblyBuffer cBuf = new AssemblyBuffer(asm, start);
+		cBuf.assemble("MOV RAX, %d".formatted(Syscall.WRITEV.number));
+		cBuf.assemble("MOV RDI, %d".formatted(EmuUnixFileDescriptor.FD_STDOUT));
+		cBuf.assemble("LEA RSI, [0x%x]".formatted(iov.getOffset()));
+		cBuf.assemble("MOV RDX, 2");
+		cBuf.assemble("SYSCALL");
+		final Address captureAt = cBuf.getNext();
+		cBuf.assemble("MOV RAX, %d".formatted(Syscall.GROUP_EXIT.number));
+		cBuf.assemble("MOV RDI, 0");
+		cBuf.assemble("SYSCALL");
+		cBuf.assemble("JMP 0x%x".formatted(cBuf.getNext().getOffset())); // Snuff JIT look-ahead
+		try (Transaction _ = program.openTransaction("Initialize")) {
+			block.putBytes(start, cBuf.getBytes());
+			block.putBytes(data, dBuf.array());
 		}
 
-		LinuxAmd64PcodeEmulator emu = prepareEmulator();
+		PcodeEmulator emu = prepareEmulator();
 		PcodeThread<byte[]> thread = launchThread(emu, start);
+		thread.inject(captureAt, "capture(RAX); emu_exec_decoded();");
 
 		// Capture stdout into a byte array
 		ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-		emu.syscalls.putDescriptor(EmuUnixFileDescriptor.FD_STDOUT,
+		syscalls.putDescriptor(EmuUnixFileDescriptor.FD_STDOUT,
 			new IOStreamEmuUnixFileHandle(emu, program.getCompilerSpec(), null, stdout));
+		execute(thread);
 
-		// Step through writev and verify return value and actual output effect
-		thread.stepInstruction(5);
-
-		assertEquals(BYTES_HW.length,
-			arithmetic.toLong(thread.getState().getVar(regRAX, Reason.INSPECT), Purpose.OTHER));
+		assertEquals(List.of((long) BYTES_HW.length), capture.captured);
 		assertArrayEquals(BYTES_HW, stdout.toByteArray());
-
-		stepGroupExit(thread);
 	}
 
 	@Test
 	public void testReadvStdin() throws Exception {
-		Address strHello;
-		Address strWorld;
-		try (Transaction tx = program.openTransaction("Initialize")) {
-			Address data = space.getAddress(0x00400800);
-			ByteBuffer buf = ByteBuffer.allocate(64).order(ByteOrder.LITTLE_ENDIAN);
+		Address data = space.getAddress(0x00400800);
 
-			strHello = data.add(buf.position());
-			buf.put(new byte[BYTES_HELLO.length]);
-			Address endHello = data.add(buf.position());
-			Address iov = data.add(buf.position());
-			buf.putLong(strHello.getOffset());
-			buf.putLong(endHello.subtract(strHello));
-			int posIov1base = buf.position();
-			buf.putLong(0);
-			int posIov1len = buf.position();
-			buf.putLong(0);
-			strWorld = data.add(buf.position());
-			buf.put(new byte[BYTES_WORLD.length]);
-			Address endWorld = data.add(buf.position());
-			// Backpatch
-			buf.putLong(posIov1base, strWorld.getOffset());
-			buf.putLong(posIov1len, endWorld.subtract(strWorld));
+		ByteBuffer dBuf = ByteBuffer.allocate(64).order(ByteOrder.LITTLE_ENDIAN);
+		Address strHello = data.add(dBuf.position());
+		dBuf.put(new byte[BYTES_HELLO.length]);
+		Address endHello = data.add(dBuf.position());
+		Address iov = data.add(dBuf.position());
+		dBuf.putLong(strHello.getOffset());
+		dBuf.putLong(endHello.subtract(strHello));
+		int posIov1base = dBuf.position();
+		dBuf.putLong(0);
+		int posIov1len = dBuf.position();
+		dBuf.putLong(0);
+		Address strWorld = data.add(dBuf.position());
+		dBuf.put(new byte[BYTES_WORLD.length]);
+		Address endWorld = data.add(dBuf.position());
+		// Backpatch
+		dBuf.putLong(posIov1base, strWorld.getOffset());
+		dBuf.putLong(posIov1len, endWorld.subtract(strWorld));
 
-			asm.assemble(start,
-				"MOV RAX," + Syscall.READV.number,
-				"MOV RDI," + EmuUnixFileDescriptor.FD_STDIN,
-				"LEA RSI,[0x" + iov + "]",
-				"MOV RDX,2",
-				"SYSCALL",
-				"MOV RAX," + Syscall.GROUP_EXIT.number,
-				"MOV RDI,0",
-				"SYSCALL");
-			block.putBytes(data, buf.array());
+		AssemblyBuffer cBuf = new AssemblyBuffer(asm, start);
+		cBuf.assemble("MOV RAX, %d".formatted(Syscall.READV.number));
+		cBuf.assemble("MOV RDI, %d".formatted(EmuUnixFileDescriptor.FD_STDIN));
+		cBuf.assemble("LEA RSI, [0x%x]".formatted(iov.getOffset()));
+		cBuf.assemble("MOV RDX, 2");
+		cBuf.assemble("SYSCALL");
+		final Address captureAt = cBuf.getNext();
+		cBuf.assemble("MOV RAX, %d".formatted(Syscall.GROUP_EXIT.number));
+		cBuf.assemble("MOV RDI, 0");
+		cBuf.assemble("SYSCALL");
+		cBuf.assemble("JMP 0x%x".formatted(cBuf.getNext().getOffset())); // Snuff JIT look-ahead
+		try (Transaction _ = program.openTransaction("Initialize")) {
+			block.putBytes(start, cBuf.getBytes());
+			block.putBytes(data, dBuf.array());
 		}
 
-		LinuxAmd64PcodeEmulator emu = prepareEmulator();
+		PcodeEmulator emu = prepareEmulator();
 		PcodeThread<byte[]> thread = launchThread(emu, start);
+		thread.inject(captureAt, "capture(RAX); emu_exec_decoded();");
 
 		// Provide stdin via a byte array
 		ByteArrayInputStream stdin = new ByteArrayInputStream(BYTES_HW);
-		emu.syscalls.putDescriptor(EmuUnixFileDescriptor.FD_STDIN,
+		syscalls.putDescriptor(EmuUnixFileDescriptor.FD_STDIN,
 			new IOStreamEmuUnixFileHandle(emu, program.getCompilerSpec(), stdin, null));
+		execute(thread);
 
-		// Step through readv and verify return value and actual output effect
-		thread.stepInstruction(5);
-
-		assertEquals(BYTES_HW.length,
-			arithmetic.toLong(thread.getState().getVar(regRAX, Reason.INSPECT), Purpose.OTHER));
+		assertEquals(List.of((long) BYTES_HW.length), capture.captured);
 		assertArrayEquals(BYTES_HELLO, emu.getSharedState()
 				.getVar(space, strHello.getOffset(), BYTES_HELLO.length, true, Reason.INSPECT));
 		assertArrayEquals(BYTES_WORLD, emu.getSharedState()
 				.getVar(space, strWorld.getOffset(), BYTES_WORLD.length, true, Reason.INSPECT));
+	}
 
-		stepGroupExit(thread);
+	@Test
+	public void testReadvStdinErr() throws Exception {
+		Address data = space.getAddress(0x00400800);
+
+		ByteBuffer dBuf = ByteBuffer.allocate(64).order(ByteOrder.LITTLE_ENDIAN);
+		Address strHello = data.add(dBuf.position());
+		dBuf.put(new byte[BYTES_HELLO.length]);
+		Address endHello = data.add(dBuf.position());
+		Address iov = data.add(dBuf.position());
+		dBuf.putLong(strHello.getOffset());
+		dBuf.putLong(endHello.subtract(strHello));
+		int posIov1base = dBuf.position();
+		dBuf.putLong(0);
+		int posIov1len = dBuf.position();
+		dBuf.putLong(0);
+		Address strWorld = data.add(dBuf.position());
+		dBuf.put(new byte[BYTES_WORLD.length]);
+		Address endWorld = data.add(dBuf.position());
+		// Backpatch
+		dBuf.putLong(posIov1base, strWorld.getOffset());
+		dBuf.putLong(posIov1len, endWorld.subtract(strWorld));
+
+		AssemblyBuffer cBuf = new AssemblyBuffer(asm, start);
+		cBuf.assemble("MOV RAX, %d".formatted(Syscall.READV.number));
+		cBuf.assemble("MOV RDI, %d".formatted(EmuUnixFileDescriptor.FD_STDIN));
+		cBuf.assemble("LEA RSI, [0x%x]".formatted(iov.getOffset()));
+		cBuf.assemble("MOV RDX, 2");
+		cBuf.assemble("SYSCALL");
+		final Address captureAt = cBuf.getNext();
+		cBuf.assemble("MOV RAX, %d".formatted(Syscall.GROUP_EXIT.number));
+		cBuf.assemble("MOV RDI, 0");
+		cBuf.assemble("SYSCALL");
+		cBuf.assemble("JMP 0x%x".formatted(cBuf.getNext().getOffset())); // Snuff JIT look-ahead
+		try (Transaction _ = program.openTransaction("Initialize")) {
+			block.putBytes(start, cBuf.getBytes());
+			block.putBytes(data, dBuf.array());
+		}
+
+		PcodeEmulator emu = prepareEmulator();
+		PcodeThread<byte[]> thread = launchThread(emu, start);
+		thread.inject(captureAt, "capture(RAX); emu_exec_decoded();");
+
+		// DO NOT provide FD_STDIN, so that we get EBADF
+		execute(thread);
+
+		assertEquals(List.of((long) -9), capture.captured);
+		assertArrayEquals(new byte[BYTES_HELLO.length], emu.getSharedState()
+				.getVar(space, strHello.getOffset(), BYTES_HELLO.length, true, Reason.INSPECT));
+		assertArrayEquals(new byte[BYTES_WORLD.length], emu.getSharedState()
+				.getVar(space, strWorld.getOffset(), BYTES_WORLD.length, true, Reason.INSPECT));
 	}
 
 	@Test
 	public void testOpenWriteClose() throws Exception {
-		try (Transaction tx = program.openTransaction("Initialize")) {
-			asm.assemble(start,
-				"MOV RAX," + Syscall.OPEN.number,
-				"LEA RDI,[0x00400880]",
-				"MOV RSI," + (AbstractEmuLinuxSyscallUseropLibrary.O_WRONLY |
-					AbstractEmuLinuxSyscallUseropLibrary.O_CREAT),
-				"MOV RDX," + (0600),
-				"SYSCALL",
-				"MOV RBP, RAX",
+		Address myFileAddr = space.getAddress(0x00400880);
+		Address hwAddr = space.getAddress(0x00400800);
+		AssemblyBuffer buf = new AssemblyBuffer(asm, start);
 
-				"MOV RAX," + Syscall.WRITE.number,
-				"MOV RDI,RBP",
-				"LEA RSI,[0x00400800]",
-				"MOV RDX," + BYTES_HW.length,
-				"SYSCALL",
+		buf.assemble("MOV RAX, %d".formatted(Syscall.OPEN.number));
+		buf.assemble("LEA RDI, [0x%x]".formatted(myFileAddr.getOffset()));
+		buf.assemble("MOV RSI, 0x%x".formatted(AbstractEmuLinuxSyscallUseropLibrary.O_WRONLY |
+			AbstractEmuLinuxSyscallUseropLibrary.O_CREAT));
+		buf.assemble("MOV RDX, 0x%x".formatted(0600));
+		buf.assemble("SYSCALL");
+		buf.assemble("MOV RBP, RAX");
 
-				"MOV RAX," + Syscall.CLOSE.number,
-				"MOV RDI,RBP",
+		buf.assemble("MOV RAX, %d".formatted(Syscall.WRITE.number));
+		buf.assemble("MOV RDI, RBP");
+		buf.assemble("LEA RSI, [0x%x]".formatted(hwAddr.getOffset()));
+		buf.assemble("MOV RDX, %d".formatted(BYTES_HW.length));
+		buf.assemble("SYSCALL");
 
-				"MOV RAX," + Syscall.GROUP_EXIT.number,
-				"MOV RDI,0",
-				"SYSCALL");
-			block.putBytes(space.getAddress(0x00400800), BYTES_HW);
-			block.putBytes(space.getAddress(0x00400880), "myfile\0".getBytes());
+		buf.assemble("MOV RAX, %d".formatted(Syscall.CLOSE.number));
+		buf.assemble("MOV RDI, RBP");
+		buf.assemble("SYSCALL");
+
+		buf.assemble("MOV RAX, %d".formatted(Syscall.GROUP_EXIT.number));
+		buf.assemble("MOV RDI, 0");
+		buf.assemble("SYSCALL");
+
+		buf.assemble("JMP 0x%x".formatted(buf.getNext().getOffset())); // Snuff JIT look-ahead
+
+		try (Transaction _ = program.openTransaction("Initialize")) {
+			block.putBytes(start, buf.getBytes());
+			block.putBytes(hwAddr, BYTES_HW);
+			block.putBytes(myFileAddr, "myfile\0".getBytes());
 		}
 
-		LinuxAmd64PcodeEmulator emu = prepareEmulator();
+		PcodeEmulator emu = prepareEmulator();
 		PcodeThread<byte[]> thread = launchThread(emu, start);
 		execute(thread);
 
@@ -400,38 +477,46 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 
 	@Test
 	public void testOpenReadClose() throws Exception {
-		try (Transaction tx = program.openTransaction("Initialize")) {
-			asm.assemble(start,
-				"MOV RAX," + Syscall.OPEN.number,
-				"LEA RDI,[0x00400880]",
-				"MOV RSI," + (AbstractEmuLinuxSyscallUseropLibrary.O_RDONLY),
-				"MOV RDX," + (0600),
-				"SYSCALL",
-				"MOV RBP, RAX",
+		Address myFileAddr = space.getAddress(0x00400880);
+		Address hwAddr = space.getAddress(0x00400800);
+		AssemblyBuffer buf = new AssemblyBuffer(asm, start);
 
-				"MOV RAX," + Syscall.READ.number,
-				"MOV RDI,RBP",
-				"LEA RSI,[0x00400800]",
-				"MOV RDX," + BYTES_HW.length,
-				"SYSCALL",
+		buf.assemble("MOV RAX, %d".formatted(Syscall.OPEN.number));
+		buf.assemble("LEA RDI, [0x%x]".formatted(myFileAddr.getOffset()));
+		buf.assemble("MOV RSI, 0x%x".formatted(AbstractEmuLinuxSyscallUseropLibrary.O_RDONLY));
+		buf.assemble("MOV RDX, 0x%x".formatted(0600));
+		buf.assemble("SYSCALL");
+		buf.assemble("MOV RBP, RAX");
 
-				"MOV RAX," + Syscall.CLOSE.number,
-				"MOV RDI,RBP",
+		buf.assemble("MOV RAX, %d".formatted(Syscall.READ.number));
+		buf.assemble("MOV RDI, RBP");
+		buf.assemble("LEA RSI, [0x%x]".formatted(hwAddr.getOffset()));
+		buf.assemble("MOV RDX, %d".formatted(BYTES_HW.length));
+		buf.assemble("SYSCALL");
 
-				"MOV RAX," + Syscall.GROUP_EXIT.number,
-				"MOV RDI,0",
-				"SYSCALL");
-			block.putBytes(space.getAddress(0x00400880), "myfile\0".getBytes());
+		buf.assemble("MOV RAX, %d".formatted(Syscall.CLOSE.number));
+		buf.assemble("MOV RDI, RBP");
+		buf.assemble("SYSCALL");
+
+		buf.assemble("MOV RAX, %d".formatted(Syscall.GROUP_EXIT.number));
+		buf.assemble("MOV RDI, 0");
+		buf.assemble("SYSCALL");
+
+		buf.assemble("JMP 0x%x".formatted(buf.getNext().getOffset())); // Snuff JIT look-ahead
+
+		try (Transaction _ = program.openTransaction("Initialize")) {
+			block.putBytes(start, buf.getBytes());
+			block.putBytes(myFileAddr, "myfile\0".getBytes());
 		}
 
 		EmuUnixFile<byte[]> file = fs.createOrGetFile("myfile", 0600);
 		file.write(arithmetic, arithmetic.fromConst(0, 8), BYTES_HW);
 
-		LinuxAmd64PcodeEmulator emu = prepareEmulator();
+		PcodeEmulator emu = prepareEmulator();
 		PcodeThread<byte[]> thread = launchThread(emu, start);
 		execute(thread);
 
 		assertArrayEquals(BYTES_HW,
-			emu.getSharedState().getVar(space, 0x00400800, BYTES_HW.length, true, Reason.INSPECT));
+			emu.getSharedState().getVar(hwAddr, BYTES_HW.length, true, Reason.INSPECT));
 	}
 }

@@ -68,14 +68,14 @@ public class Aarch64PcodeLibraryTest extends AbstractGhidraHeadlessIntegrationTe
 		PcodeUseropLibrary<byte[]> lib = PcodeUseropLibraryFactory.createUseropLibraryFromId(
 			"aarch64", aarch64, BytesPcodeArithmetic.forLanguage(aarch64));
 
-		SleighPcodeUseropDefinition<byte[]> tbl =
-			(SleighPcodeUseropDefinition<byte[]>) lib.getUserops().get("a64_TBL");
+		SleighPcodeUseropDefinition tbl =
+			SleighPcodeUseropDefinition.cast(lib.getUserops().get("a64_TBL"));
 
 		Varnode vnDest = vn(0, 8);
 		Varnode vnInit = vn(16, 8);
 		Varnode vnN1 = vn(32, 16);
 		Varnode vnM = vn(96, 8);
-		PcodeProgram program = tbl.programFor(
+		PcodeProgram program = tbl.programFor(aarch64,
 			List.of(vnDest, vnInit, vnN1, vnM),
 			lib);
 
@@ -87,15 +87,15 @@ public class Aarch64PcodeLibraryTest extends AbstractGhidraHeadlessIntegrationTe
 		PcodeUseropLibrary<byte[]> lib = PcodeUseropLibraryFactory.createUseropLibraryFromId(
 			"aarch64", aarch64, BytesPcodeArithmetic.forLanguage(aarch64));
 
-		SleighPcodeUseropDefinition<byte[]> tbl =
-			(SleighPcodeUseropDefinition<byte[]>) lib.getUserops().get("a64_TBL");
+		SleighPcodeUseropDefinition tbl =
+			SleighPcodeUseropDefinition.cast(lib.getUserops().get("a64_TBL"));
 
 		Varnode vnDest = vn(0, 8);
 		Varnode vnInit = vn(16, 8);
 		Varnode vnN1 = vn(32, 16);
 		Varnode vnN2 = vn(48, 16);
 		Varnode vnM = vn(96, 8);
-		PcodeProgram program = tbl.programFor(
+		PcodeProgram program = tbl.programFor(aarch64,
 			List.of(vnDest, vnInit, vnN1, vnN2, vnM),
 			lib);
 
@@ -107,8 +107,8 @@ public class Aarch64PcodeLibraryTest extends AbstractGhidraHeadlessIntegrationTe
 		PcodeUseropLibrary<byte[]> lib = PcodeUseropLibraryFactory.createUseropLibraryFromId(
 			"aarch64", aarch64, BytesPcodeArithmetic.forLanguage(aarch64));
 
-		SleighPcodeUseropDefinition<byte[]> tbl =
-			(SleighPcodeUseropDefinition<byte[]>) lib.getUserops().get("a64_TBL");
+		SleighPcodeUseropDefinition tbl =
+			SleighPcodeUseropDefinition.cast(lib.getUserops().get("a64_TBL"));
 
 		Varnode vnDest = vn(0, 8);
 		Varnode vnInit = vn(16, 8);
@@ -116,7 +116,7 @@ public class Aarch64PcodeLibraryTest extends AbstractGhidraHeadlessIntegrationTe
 		Varnode vnN2 = vn(48, 16);
 		Varnode vnN3 = vn(64, 16);
 		Varnode vnM = vn(96, 8);
-		PcodeProgram program = tbl.programFor(
+		PcodeProgram program = tbl.programFor(aarch64,
 			List.of(vnDest, vnInit, vnN1, vnN2, vnN3, vnM),
 			lib);
 
@@ -128,8 +128,8 @@ public class Aarch64PcodeLibraryTest extends AbstractGhidraHeadlessIntegrationTe
 		PcodeUseropLibrary<byte[]> lib = PcodeUseropLibraryFactory.createUseropLibraryFromId(
 			"aarch64", aarch64, BytesPcodeArithmetic.forLanguage(aarch64));
 
-		SleighPcodeUseropDefinition<byte[]> tbl =
-			(SleighPcodeUseropDefinition<byte[]>) lib.getUserops().get("a64_TBL");
+		SleighPcodeUseropDefinition tbl =
+			SleighPcodeUseropDefinition.cast(lib.getUserops().get("a64_TBL"));
 
 		Varnode vnDest = vn(0, 8);
 		Varnode vnInit = vn(16, 8);
@@ -138,7 +138,7 @@ public class Aarch64PcodeLibraryTest extends AbstractGhidraHeadlessIntegrationTe
 		Varnode vnN3 = vn(64, 16);
 		Varnode vnN4 = vn(80, 16);
 		Varnode vnM = vn(96, 8);
-		PcodeProgram program = tbl.programFor(
+		PcodeProgram program = tbl.programFor(aarch64,
 			List.of(vnDest, vnInit, vnN1, vnN2, vnN3, vnN4, vnM),
 			lib);
 
@@ -150,14 +150,14 @@ public class Aarch64PcodeLibraryTest extends AbstractGhidraHeadlessIntegrationTe
 		PcodeUseropLibrary<byte[]> lib = PcodeUseropLibraryFactory.createUseropLibraryFromId(
 			"aarch64", aarch64, BytesPcodeArithmetic.forLanguage(aarch64));
 
-		SleighPcodeUseropDefinition<byte[]> tbl =
-			(SleighPcodeUseropDefinition<byte[]>) lib.getUserops().get("a64_TBL");
+		SleighPcodeUseropDefinition tbl =
+			SleighPcodeUseropDefinition.cast(lib.getUserops().get("a64_TBL"));
 
 		Varnode vnDest = vn(0, 16);
 		Varnode vnInit = vn(16, 16);
 		Varnode vnN1 = vn(32, 16);
 		Varnode vnM = vn(96, 16);
-		PcodeProgram program = tbl.programFor(
+		PcodeProgram program = tbl.programFor(aarch64,
 			List.of(vnDest, vnInit, vnN1, vnM),
 			lib);
 
@@ -169,15 +169,15 @@ public class Aarch64PcodeLibraryTest extends AbstractGhidraHeadlessIntegrationTe
 		PcodeUseropLibrary<byte[]> lib = PcodeUseropLibraryFactory.createUseropLibraryFromId(
 			"aarch64", aarch64, BytesPcodeArithmetic.forLanguage(aarch64));
 
-		SleighPcodeUseropDefinition<byte[]> tbl =
-			(SleighPcodeUseropDefinition<byte[]>) lib.getUserops().get("a64_TBL");
+		SleighPcodeUseropDefinition tbl =
+			SleighPcodeUseropDefinition.cast(lib.getUserops().get("a64_TBL"));
 
 		Varnode vnDest = vn(0, 16);
 		Varnode vnInit = vn(16, 16);
 		Varnode vnN1 = vn(32, 16);
 		Varnode vnN2 = vn(48, 16);
 		Varnode vnM = vn(96, 16);
-		PcodeProgram program = tbl.programFor(
+		PcodeProgram program = tbl.programFor(aarch64,
 			List.of(vnDest, vnInit, vnN1, vnN2, vnM),
 			lib);
 
@@ -189,8 +189,8 @@ public class Aarch64PcodeLibraryTest extends AbstractGhidraHeadlessIntegrationTe
 		PcodeUseropLibrary<byte[]> lib = PcodeUseropLibraryFactory.createUseropLibraryFromId(
 			"aarch64", aarch64, BytesPcodeArithmetic.forLanguage(aarch64));
 
-		SleighPcodeUseropDefinition<byte[]> tbl =
-			(SleighPcodeUseropDefinition<byte[]>) lib.getUserops().get("a64_TBL");
+		SleighPcodeUseropDefinition tbl =
+			SleighPcodeUseropDefinition.cast(lib.getUserops().get("a64_TBL"));
 
 		Varnode vnDest = vn(0, 16);
 		Varnode vnInit = vn(16, 16);
@@ -198,7 +198,7 @@ public class Aarch64PcodeLibraryTest extends AbstractGhidraHeadlessIntegrationTe
 		Varnode vnN2 = vn(48, 16);
 		Varnode vnN3 = vn(64, 16);
 		Varnode vnM = vn(96, 16);
-		PcodeProgram program = tbl.programFor(
+		PcodeProgram program = tbl.programFor(aarch64,
 			List.of(vnDest, vnInit, vnN1, vnN2, vnN3, vnM),
 			lib);
 
@@ -210,8 +210,8 @@ public class Aarch64PcodeLibraryTest extends AbstractGhidraHeadlessIntegrationTe
 		PcodeUseropLibrary<byte[]> lib = PcodeUseropLibraryFactory.createUseropLibraryFromId(
 			"aarch64", aarch64, BytesPcodeArithmetic.forLanguage(aarch64));
 
-		SleighPcodeUseropDefinition<byte[]> tbl =
-			(SleighPcodeUseropDefinition<byte[]>) lib.getUserops().get("a64_TBL");
+		SleighPcodeUseropDefinition tbl =
+			SleighPcodeUseropDefinition.cast(lib.getUserops().get("a64_TBL"));
 
 		Varnode vnDest = vn(0, 16);
 		Varnode vnInit = vn(16, 16);
@@ -220,7 +220,7 @@ public class Aarch64PcodeLibraryTest extends AbstractGhidraHeadlessIntegrationTe
 		Varnode vnN3 = vn(64, 16);
 		Varnode vnN4 = vn(80, 16);
 		Varnode vnM = vn(96, 16);
-		PcodeProgram program = tbl.programFor(
+		PcodeProgram program = tbl.programFor(aarch64,
 			List.of(vnDest, vnInit, vnN1, vnN2, vnN3, vnN4, vnM),
 			lib);
 

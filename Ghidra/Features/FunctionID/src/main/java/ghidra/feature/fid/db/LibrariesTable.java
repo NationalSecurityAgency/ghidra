@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,15 +19,21 @@ import java.io.IOException;
 import java.util.*;
 
 import db.*;
-import ghidra.program.model.lang.CompilerSpecID;
 import ghidra.program.model.lang.LanguageID;
 import ghidra.util.UniversalIdGenerator;
 import ghidra.util.exception.VersionException;
 
 /**
- * The libraries table for FID.  Note that all entries associated with a single library must have the same
- * LanguageID and CompilerSpecID.  If supporting multiple architectures, simply create multiple libraries
- * in the same database file.
+ * The libraries table for FID.  Libraries are filtered primarily by LanguageID, but can optionally
+ * be filtered by compiler spec IDs and/or source language IDs.  Libraries are currently filtered
+ * at the database level, so all libraries in one database should have the same IDs.
+ * 
+ * Compiler spec IDs and source language IDs are both stored in the metadata column
+ * {@link #LIBRARY_METADATA_COL} as a string of comma separated compiler spec IDs, followed by a ':',
+ * followed by comma separated source language IDs.  For backward compatibility with the
+ * previous database format, the column may not have a ':' in it, in which case, the string is
+ * interpreted as a comma separated list of compiler spec IDs only.  Either list may be empty
+ * meaning a filter of that ID type is not applied.
  */
 public class LibrariesTable {
 	static final String LIBRARIES_TABLE = "Libraries Table";
@@ -46,7 +52,7 @@ public class LibrariesTable {
 	static final int GHIDRA_LANGUAGE_ID_COL = 4;
 	static final int GHIDRA_LANGUAGE_VERSION_COL = 5;
 	static final int GHIDRA_LANGUAGE_MINOR_VERSION_COL = 6;
-	static final int GHIDRA_COMPILER_SPEC_ID_COL = 7;
+	static final int LIBRARY_METADATA_COL = 7;
 
 	// @formatter:off
 	static final Schema SCHEMA = new Schema(VERSION, "Library ID", new Field[] {
@@ -56,7 +62,7 @@ public class LibrariesTable {
 		}, new String[] {
 			"Library Family Name", "Library Version", "Library Variant",
 			"Ghidra Version", "Ghidra Language ID", "Ghidra Language Version", "Ghidra Language Minor Version",
-			"Ghidra Compiler Spec ID"
+			"Library Metadata"
 		});
 	// @formatter:on
 
@@ -67,7 +73,6 @@ public class LibrariesTable {
 	/**
 	 * Creates or attaches a libraries table.
 	 * @param handle database handle
-	 * @param create whether to create or just attach
 	 * @throws IOException if create fails
 	 * @throws VersionException if the saved database version is incompatible with this software
 	 */
@@ -106,13 +111,15 @@ public class LibrariesTable {
 	 * @param languageID the LanguageID of the language in this library
 	 * @param languageVersion the version of the language
 	 * @param languageMinorVersion the minor version of the language
-	 * @param compilerSpecID the CompilerSpecID in this library
+	 * @param compilerSpecs the allowed specs in this library
+	 * @param sourceLanguages the allow source languages
 	 * @return the new library record
 	 * @throws IOException if the database create fails
 	 */
 	public DBRecord createLibrary(String libraryFamilyName, String libraryVersion,
 			String libraryVariant, String ghidraVersion, LanguageID languageID, int languageVersion,
-			int languageMinorVersion, CompilerSpecID compilerSpecID) throws IOException {
+			int languageMinorVersion, String compilerSpecs, String sourceLanguages)
+			throws IOException {
 		DBRecord record = SCHEMA.createRecord(UniversalIdGenerator.nextID().getValue());
 		record.setString(LIBRARY_FAMILY_NAME_COL, libraryFamilyName);
 		record.setString(LIBRARY_VERSION_COL, libraryVersion);
@@ -121,7 +128,7 @@ public class LibrariesTable {
 		record.setString(GHIDRA_LANGUAGE_ID_COL, languageID.getIdAsString());
 		record.setIntValue(GHIDRA_LANGUAGE_VERSION_COL, languageVersion);
 		record.setIntValue(GHIDRA_LANGUAGE_MINOR_VERSION_COL, languageMinorVersion);
-		record.setString(GHIDRA_COMPILER_SPEC_ID_COL, compilerSpecID.getIdAsString());
+		record.setString(LIBRARY_METADATA_COL, compilerSpecs + ':' + sourceLanguages);
 		table.putRecord(record);
 		return record;
 	}
@@ -151,7 +158,7 @@ public class LibrariesTable {
 	 * @param version is the optional version string
 	 * @param variant is the optional variant string
 	 * @return matching list of libraries
-	 * @throws IOException
+	 * @throws IOException for problems accessing the database
 	 */
 	public List<LibraryRecord> getLibrariesByName(String name, String version, String variant)
 			throws IOException {

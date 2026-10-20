@@ -22,6 +22,7 @@ import javax.swing.table.TableColumnModel;
 
 import docking.action.KeyBindingType;
 import docking.action.MenuData;
+import docking.tool.ToolConstants;
 import docking.widgets.table.GTable;
 import docking.widgets.table.threaded.GThreadedTablePanel;
 import ghidra.app.context.ProgramSymbolActionContext;
@@ -32,8 +33,8 @@ import ghidra.app.plugin.core.table.TableComponentProvider;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.SymbolInspector;
 import ghidra.app.util.query.TableService;
-import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.util.HelpLocation;
@@ -43,11 +44,11 @@ import ghidra.util.table.GhidraThreadedTablePanel;
 
 public class CreateSymbolTableAction extends ProgramSymbolContextAction {
 
-	private Plugin plugin;
+	private ServiceProvider services;
 
-	public CreateSymbolTableAction(Plugin plugin) {
-		super("Create Table", plugin.getName(), KeyBindingType.SHARED);
-		this.plugin = plugin;
+	public CreateSymbolTableAction(ServiceProvider services) {
+		super("Create Table", ToolConstants.SHARED_OWNER, KeyBindingType.SHARED);
+		this.services = services;
 
 		setPopupMenuData(new MenuData(new String[] { "Create Table" },
 			SymbolTreeContextAction.MIDDLE_MENU_GROUP));
@@ -72,25 +73,39 @@ public class CreateSymbolTableAction extends ProgramSymbolContextAction {
 			rowObjects.add(new SymbolRowObject(symbol));
 		}
 
-		PluginTool tool = plugin.getTool();
 		Program program = context.getProgram();
-		TransientSymbolTableModel model = new TransientSymbolTableModel(tool, program, rowObjects);
+		TransientSymbolTableModel model =
+			new TransientSymbolTableModel(services, program, rowObjects);
+		showTransientTable(services, "Symbols", context.getProgram(), model);
+	}
+
+	/**
+	 * A utility method to show a table of symbols.
+	 * @param services the service provider
+	 * @param title the provider's title
+	 * @param program the program
+	 * @param model the model
+	 * @return the new provider
+	 */
+	public static TableComponentProvider<SymbolRowObject> showTransientTable(
+			ServiceProvider services, String title, Program program,
+			TransientSymbolTableModel model) {
+
+		TableService service = services.getService(TableService.class);
+		if (service == null) {
+			Msg.showError(CreateSymbolTableAction.class, null, "Table Service Not Installed",
+				"You must have a Table Service installed to create a Symbol Table");
+			return null;
+		}
 
 		Navigatable navigatable = null;
-		GoToService goToService = tool.getService(GoToService.class);
+		GoToService goToService = services.getService(GoToService.class);
 		if (goToService != null) {
 			navigatable = goToService.getDefaultNavigatable();
 		}
 
-		TableService service = tool.getService(TableService.class);
-		if (service == null) {
-			Msg.showError(this, null, "Table Service Not Installed",
-				"You must have a Table Service installed to create a Symbol Table");
-			return;
-		}
-
 		TableComponentProvider<SymbolRowObject> provider =
-			service.showTable("Symbols", "Symbols", model, "Symbols", navigatable);
+			service.showTable(title, "Symbols", model, "Symbols", navigatable);
 
 		provider.setActionContextProvider(mouseEvent -> {
 
@@ -101,32 +116,38 @@ public class CreateSymbolTableAction extends ProgramSymbolContextAction {
 			return new ProgramSymbolActionContext(provider, program, selectedSymbols, table);
 		});
 
-		// replace the generic provider help with this action's help
-		provider.setHelpLocation(getHelpLocation());
+		// replace the generic provider help 
+		provider.setHelpLocation(new HelpLocation("SymbolTablePlugin", "Temporary_Symbol_Table"));
 
-		addActions(provider, model);
+		addActions(services, provider, model);
 
 		GhidraThreadedTablePanel<SymbolRowObject> tablePanel = provider.getThreadedTablePanel();
 		GhidraTable table = tablePanel.getTable();
 
-		configureSymbolTable(tool, table, model, program);
+		configureSymbolTable(services, table, model, program);
+
+		return provider;
 	}
 
-	private void addActions(TableComponentProvider<SymbolRowObject> provider,
-			TransientSymbolTableModel model) {
+	private static void addActions(ServiceProvider services,
+			TableComponentProvider<SymbolRowObject> provider, TransientSymbolTableModel model) {
 
 		provider.installRemoveItemsAction();
 
-		CreateSymbolTableAction tableAction = new CreateSymbolTableAction(plugin);
-		provider.getTool().addLocalAction(provider, tableAction);
+		CreateSymbolTableAction tableAction = new CreateSymbolTableAction(services);
+		PluginTool tool = provider.getTool();
+		tool.addLocalAction(provider, tableAction);
+
+		SetSymbolPrimaryAction primaryAction = new SetSymbolPrimaryAction();
+		tool.addLocalAction(provider, primaryAction);
 	}
 
-	private void configureSymbolTable(PluginTool tool, GhidraTable table,
+	private static void configureSymbolTable(ServiceProvider services, GhidraTable table,
 			TransientSymbolTableModel model, Program program) {
 
 		new TransientSymbolTableDnDAdapter(table, model);
 
-		SymbolInspector symbolInspector = new SymbolInspector(tool, table);
+		SymbolInspector symbolInspector = new SymbolInspector(services, table);
 		SymbolRenderer renderer = model.getSymbolRenderer();
 		renderer.setSymbolInspector(symbolInspector);
 
@@ -141,7 +162,7 @@ public class CreateSymbolTableAction extends ProgramSymbolContextAction {
 		}
 	}
 
-	private List<Symbol> getSelectedSymbols(GTable table, TransientSymbolTableModel model) {
+	private static List<Symbol> getSelectedSymbols(GTable table, TransientSymbolTableModel model) {
 		List<Symbol> list = new ArrayList<>();
 		int[] rows = table.getSelectedRows();
 		for (int row : rows) {

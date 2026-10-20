@@ -18,7 +18,6 @@ package ghidra.app.plugin.core.datamgr.util;
 import java.util.*;
 
 import generic.jar.ResourceFile;
-import ghidra.app.plugin.core.analysis.rust.RustConstants;
 import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.util.opinion.*;
 import ghidra.framework.Application;
@@ -141,10 +140,6 @@ public class DataTypeArchiveUtility {
 		// everyone else gets generic clib that was parsed as 32 bit wordsize
 		else {
 			list.add("generic_clib");
-		}
-
-		if (program.getCompiler().contains(RustConstants.RUST_COMPILER)) {
-			list.add("rust-common");
 		}
 
 		return list;

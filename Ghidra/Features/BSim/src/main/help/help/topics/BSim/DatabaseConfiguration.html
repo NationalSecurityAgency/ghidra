@@ -107,13 +107,13 @@
               in the module directory <CODE>Ghidra/Features/BSim/support</CODE> that builds both the PostgreSQL
               server and the BSim extension from source and prepares the installation for use with
               Ghidra.  If not already included in the Ghidra installation, the source distribution
-              file, currently <CODE>postgresql-15.13.tar.gz</CODE>, can be obtained from the PostgreSQL
+              file, currently <CODE>postgresql-15.18.tar.gz</CODE>, can be obtained from the PostgreSQL
               website at </P>
 	    
             <DIV class="informalexample">
               <TABLE border="0" summary="Simple list" class="simplelist">
                 <TR>
-                  <TD><CODE class="computeroutput">https://www.postgresql.org/ftp/source/v15.13
+                  <TD><CODE class="computeroutput">https://www.postgresql.org/ftp/source/v15.18
 		  </CODE></TD>
                 </TR>
               </TABLE>
@@ -122,12 +122,12 @@
 	    <P>The steps to build the PostgreSQL server with the BSim extension then are:</P>
 
 	    <P>1) If not already present, place the PostgreSQL source distribution file
-	      <CODE>postgresql-15.13.tar.gz</CODE> in the Ghidra installation at</P>
+	      <CODE>postgresql-15.18.tar.gz</CODE> in the Ghidra installation at</P>
 
             <DIV class="informalexample">
               <TABLE border="0" summary="Simple list" class="simplelist">
                 <TR>
-                  <TD><CODE class="computeroutput">$(ROOT)/Ghidra/Features/BSim/support/postgresql-15.13.tar.gz
+                  <TD><CODE class="computeroutput">$(ROOT)/Ghidra/Features/BSim/support/postgresql-15.18.tar.gz
 		  </CODE></TD>
                 </TR>
               </TABLE>
@@ -210,58 +210,112 @@
               </DIV>
             </DIV>
 
-            <P>The basic start-up and shut-down is accomplished with the same command-line script,
-            which takes either the keyword <SPAN class="command"><STRONG>start</STRONG></SPAN> or
-            <SPAN class="command"><STRONG>stop</STRONG></SPAN> as the first parameter. The second
-            parameter must be an absolute path to the chosen data directory.</P>
+            <P>A BSim PostgreSQL server is prepared in two steps: a one-time <SPAN class=
+            "command"><STRONG>init</STRONG></SPAN> that creates and configures the data directory,
+            followed by <SPAN class="command"><STRONG>start</STRONG></SPAN> to run the server. All
+            operations take an absolute path to the chosen data directory. Configuration is performed
+            entirely through the <SPAN class="command"><STRONG>bsim_ctl init</STRONG></SPAN> and
+            <SPAN class="command"><STRONG>configure</STRONG></SPAN> commands; the PostgreSQL
+            configuration files are managed on your behalf.</P>
+
+            <P>To initialize a new server, run <SPAN class="command"><STRONG>init</STRONG></SPAN> once
+            against an empty (or not-yet-existing) data directory. This creates the data directory,
+            tunes the configuration, installs the server certificate, and enables the BSim extension,
+            leaving the server stopped:</P>
 
             <DIV class="informalexample">
               <TABLE border="0" summary="Simple list" class="simplelist">
                 <TR>
-                  <TD><CODE class="computeroutput">$(ROOT)/support/bsim_ctl start
-                  /path/to/datadir</CODE></TD>
-                </TR>
-
-                <TR>
-                  <TD><CODE class="computeroutput">$(ROOT)/support/bsim_ctl start /path/to/datadir
-                  --port&nbsp;8000</CODE></TD>
-                </TR>
-
-                <TR>
-                  <TD><CODE class="computeroutput">$(ROOT)/support/bsim_ctl stop
-                  /path/to/datadir</CODE></TD>
-                </TR>
-
-                <TR>
-                  <TD><CODE class="computeroutput">$(ROOT)/support/bsim_ctl stop /path/to/datadir
-                  force</CODE></TD>
+                  <TD><CODE class="computeroutput">$(ROOT)/support/bsim_ctl init /path/to/datadir</CODE></TD>
                 </TR>
               </TABLE>
             </DIV>
 
-            <P>The data directory should already exist and should initially not contain any files.
-            The first time a server is started for a particular data directory, a large number of
-            configuration files and other sub-directories associated with the PostgreSQL server
-            will automatically be created. Upon subsequent restarts the existing configuration will
-            be reused.</P>
+            <P>The data directory is created owned by the operating-system account that will run the
+            server. When <SPAN class="command"><STRONG>init</STRONG></SPAN> is run as an ordinary user,
+            that user becomes the owner. When run as <SPAN class="emphasis"><EM>root</EM></SPAN> (via
+            <SPAN class="command"><STRONG>sudo</STRONG></SPAN>), the <SPAN class=
+            "command"><STRONG>--os-user</STRONG></SPAN> option is required and names a dedicated,
+            non-root service account that will own the data directory and run the server. All
+            subsequent <SPAN class="command"><STRONG>bsim_ctl</STRONG></SPAN> commands for a data
+            directory must be run either by that owner or by root.</P>
 
-            <P>The <SPAN class="bold"><STRONG>start</STRONG></SPAN> command can take an optional
-            <SPAN class="bold"><STRONG>--port</STRONG></SPAN> parameter. This can be used to specify
-            a non-standard port for the PostgreSQL server to listen on. In this case, any
-            subsequent reference to the BSim server, in the Ghidra client, or with the <SPAN class=
-            "command"><STRONG>bsim</STRONG></SPAN> command described below, must specify the port.
-            When using the <SPAN class="command"><STRONG>bsim</STRONG></SPAN> command, a
-            non-default port must be explicitly specified with the BSim <SPAN class=
+            <P>By default (no <SPAN class="command"><STRONG>--keystore</STRONG></SPAN>) the server is
+            secured with a self-signed certificate and binds to the <SPAN class=
+            "emphasis"><EM>loopback</EM></SPAN> interface only, which is appropriate for local
+            single-user use.  To accept remote client connections, supply a CA-signed server
+            certificate in a password-protected keystore with the <SPAN class=
+            "command"><STRONG>--keystore</STRONG></SPAN> option (see <A class="xref" href=
+            "#PostSecurityAuthentication">&ldquo;Security and Authentication&rdquo;</A>).</P>
+            
+            <P><STRONG>WARNING!</STRONG> Deploying the PostgreSQL server with a self-signed
+            certificate (that is, without the <SPAN class=
+            "command"><STRONG>--keystore</STRONG></SPAN> option) requires every client to waive
+            server authentication for loopback connections, since no client trusts such a
+            certificate. That waiver is only appropriate where every account on the local machine is
+            trusted. See <A class="xref" href="#PostSecurityAuthentication">&ldquo;Security and
+            Authentication&rdquo;</A> for the VM property involved and what it gives up.</P>
+
+            <P>Once initialized, the server is started, stopped, restarted, and queried with:</P>
+
+            <DIV class="informalexample">
+              <TABLE border="0" summary="Simple list" class="simplelist">
+                <TR>
+                  <TD><CODE class="computeroutput">$(ROOT)/support/bsim_ctl start   /path/to/datadir</CODE></TD>
+                </TR>
+                <TR>
+                  <TD><CODE class="computeroutput">$(ROOT)/support/bsim_ctl stop    /path/to/datadir [--force|-f]</CODE></TD>
+                </TR>
+                <TR>
+                  <TD><CODE class="computeroutput">$(ROOT)/support/bsim_ctl restart /path/to/datadir [--force|-f]</CODE></TD>
+                </TR>
+                <TR>
+                  <TD><CODE class="computeroutput">$(ROOT)/support/bsim_ctl status  /path/to/datadir</CODE></TD>
+                </TR>
+              </TABLE>
+            </DIV>
+
+            <P>The <SPAN class="command"><STRONG>start</STRONG></SPAN> command takes no options and
+            performs no configuration; if the data directory has not been initialized it reports an
+            error directing you to run <SPAN class="command"><STRONG>init</STRONG></SPAN>. To use a
+            non-standard port, specify <SPAN class="command"><STRONG>--port</STRONG></SPAN> at
+            <SPAN class="command"><STRONG>init</STRONG></SPAN> (or <SPAN class=
+            "command"><STRONG>configure</STRONG></SPAN>) time; any subsequent reference to the server,
+            in the Ghidra client or with the <SPAN class="command"><STRONG>bsim</STRONG></SPAN> command,
+            must then specify that port with the <SPAN class=
             "command"><STRONG>postgresql://</STRONG></SPAN> URL (see <A class="xref" href=
-            "CommandLineReference.html#URLs">&ldquo;Ghidra and BSim URLs&rdquo;</A> for more
-            details).</P>
+            "CommandLineReference.html#URLs">&ldquo;Ghidra and BSim URLs&rdquo;</A>).</P>
 
-            <P>The <SPAN class="command"><STRONG>stop</STRONG></SPAN> command can take the keyword
-            <SPAN class="command"><STRONG>force</STRONG></SPAN> as an optional parameter. Without
-            this, the shutdown of the server will wait until all currently connected clients finish
-            their sessions. Adding this parameter will cause all clients to be disconnected
-            immediately, rolling back any transactions, and the server will shutdown
-            immediately.</P>
+            <P>The <SPAN class="command"><STRONG>--force</STRONG></SPAN> option to <SPAN class=
+            "command"><STRONG>stop</STRONG></SPAN> and <SPAN class=
+            "command"><STRONG>restart</STRONG></SPAN> disconnects clients immediately, rolling back any
+            in-progress transactions, rather than waiting for connections to finish.</P>
+
+            <P><SPAN class="bold"><STRONG>Running as a systemd Service (Linux):</STRONG></SPAN> the
+            server can be installed as a persistent <SPAN class="emphasis"><EM>systemd</EM></SPAN>
+            service so that it starts automatically at boot, running the <SPAN class=
+            "emphasis"><EM>postgres</EM></SPAN> process as the data directory owner. Installing and
+            removing the service must be done as <SPAN class="emphasis"><EM>root</EM></SPAN> (via
+            <SPAN class="command"><STRONG>sudo</STRONG></SPAN>), and the server must be stopped when the
+            service is installed:</P>
+
+            <DIV class="informalexample">
+              <TABLE border="0" summary="Simple list" class="simplelist">
+                <TR>
+                  <TD><CODE class="computeroutput">sudo $(ROOT)/support/bsim_ctl install-service   /path/to/datadir</CODE></TD>
+                </TR>
+                <TR>
+                  <TD><CODE class="computeroutput">sudo $(ROOT)/support/bsim_ctl uninstall-service /path/to/datadir</CODE></TD>
+                </TR>
+              </TABLE>
+            </DIV>
+
+            <P>Once a service is installed, the <SPAN class="command"><STRONG>start</STRONG></SPAN>,
+            <SPAN class="command"><STRONG>stop</STRONG></SPAN>, and <SPAN class=
+            "command"><STRONG>restart</STRONG></SPAN> commands are delegated to <SPAN class=
+            "emphasis"><EM>systemctl</EM></SPAN> and must be run as root; <SPAN class=
+            "command"><STRONG>status</STRONG></SPAN> reports the service installation and running
+            state.</P>
           </DIV>
 
           <DIV class="sect3">
@@ -283,6 +337,98 @@
             communications in transit are always encrypted regardless of the authentication
             settings.</P>
 
+            <P>The SSL/TLS <SPAN class="emphasis"><EM>server</EM></SPAN> certificate is established at
+            <SPAN class="command"><STRONG>init</STRONG></SPAN> time and is independent of the client
+            authentication method described below. If a password-protected keystore is supplied with
+            the <SPAN class="command"><STRONG>--keystore</STRONG></SPAN> option, its CA-signed
+            certificate and private key are installed and the server listens on all interfaces,
+            allowing remote clients to authenticate the server. If no keystore is supplied, a
+            self-signed certificate is generated and the server binds to the loopback interface only;
+            remote access is disabled.</P>
+
+            <P><SPAN class="bold"><STRONG>IMPORTANT:</STRONG></SPAN> Connections to a newly established 
+			server will fail unless the server certificate issuer is considered a trusted certificate 
+			issuer (.e.g., Certificate Authority (CA)).  A local server reached via a 
+			<SPAN class="emphasis"><EM>localhost</EM></SPAN> name or address is authenticated exactly 
+			like any other server by default.</P> 
+			
+			
+			<P>When a self-signed certificate is used by a server,
+			client systems must be configured in one of two ways: 1) add the self-signed server certificate 
+			to their set of trusted certificates, or 2) if server is limited to localhost use only local server
+			authentication may be waived by setting the following VM property (see <CODE>
+            support/launch.properties</CODE>):</P>
+
+            <DIV class="informalexample">
+              <TABLE border="0" summary="Simple list" class="simplelist">
+                <TR>
+                  <TD><CODE class=
+                  "computeroutput">-Dghidra.disable.loopback.server.authentication=true</CODE></TD>
+                </TR>
+              </TABLE>
+            </DIV>
+
+            <P>Waive it only where every account on the local machine is trusted. A loopback
+            connection is not by itself proof of the server's identity: a rogue local process which
+            binds the port ahead of the intended server would be accepted in its place, together
+            with any credential the client then sends it (the administrative database password among
+            them). A deployment which cannot accept that should supply a <SPAN class=
+            "command"><STRONG>--keystore</STRONG></SPAN> with a CA-signed certificate instead, which
+            requires no waiver. Remote deployments must always supply one.</P>
+
+            <P>Where the server presents a CA-signed certificate from a <SPAN class=
+            "command"><STRONG>--keystore</STRONG></SPAN>, a client authenticates it using the trust
+            established for that client: the operating system trust store and the Java default trust
+            store. A certificate issued by an authority those already contain requires no client
+            configuration at all. For an internal authority which they do not contain, the client has
+            three options:</P>
+
+            <DIV class="informalexample">
+              <DIV class="variablelist">
+                <DL class="variablelist">
+                  <DT><SPAN class="term">add the authority to the OS trust store</SPAN></DT>
+
+                  <DD>
+                    <P>Leaves the defaults intact, so all other authorities continue to be trusted.
+                    On Unix this requires root access.</P>
+                  </DD>
+
+                  <DT><SPAN class="term"><SPAN class=
+                  "command"><STRONG>-Dghidra.unix.default.cacerts=</STRONG></SPAN><SPAN class=
+                  "emphasis"><EM>&lt;path&gt;</EM></SPAN></SPAN></DT>
+
+                  <DD>
+                    <P>Names an additional file or directory of CA certificates which is
+                    <SPAN class="emphasis"><EM>added to</EM></SPAN> the OS trust store as it is
+                    built, so the defaults are augmented rather than replaced, and no root access is
+                    needed. Applies to Unix only.</P>
+                  </DD>
+
+                  <DT><SPAN class="term"><SPAN class=
+                  "command"><STRONG>-Dghidra.cacerts=</STRONG></SPAN><SPAN class=
+                  "emphasis"><EM>&lt;path&gt;</EM></SPAN></SPAN></DT>
+
+                  <DD>
+                    <P>Names a CA certificates file which is used <SPAN class=
+                    "emphasis"><EM>exclusively</EM></SPAN> &mdash; the OS and Java default trust
+                    stores are then ignored, for this and every other connection the client makes.
+                    Every authority the client relies upon must therefore be present within that
+                    file. Use this to deliberately restrict a deployment to its own authorities, not
+                    merely to add one.</P>
+                  </DD>
+                </DL>
+              </DIV>
+            </DIV>
+
+            <P><SPAN class="bold"><STRONG>NOTE:</STRONG></SPAN> the <SPAN class=
+            "command"><STRONG>bsim</STRONG></SPAN> and <SPAN class=
+            "command"><STRONG>bsim_ctl</STRONG></SPAN> utilities set <SPAN class=
+            "command"><STRONG>ghidra.cacerts</STRONG></SPAN> automatically if the property has not
+            been specified and a file named <CODE>cacerts</CODE> is present within a Ghidra
+            installation root directory. Placing such a file there therefore restricts these
+            utilities to the authorities it contains. Both properties are described in
+            <CODE>support/launch.properties</CODE>.</P>
+
             <P>PostgreSQL uses the concept of <SPAN class="emphasis"><EM>roles</EM></SPAN> to grant
             access privileges based on particular users. Generally, a user's role is determined by
             the <SPAN class="emphasis"><EM>username</EM></SPAN> used to establish the connection.
@@ -293,47 +439,49 @@
 
             <P>BSim supports three different authentication methods, when connecting as a client or
             during database ingest and maintenance. This method is established for a server by the
-            initial <SPAN class="command"><STRONG>start</STRONG></SPAN> command.</P>
+            <SPAN class="command"><STRONG>init</STRONG></SPAN> command.</P>
 
             <DIV class="informalexample">
               <DIV class="variablelist">
                 <DL class="variablelist">
-                  <DT><SPAN class="term"><SPAN class=
-                  "bold"><STRONG>trust</STRONG></SPAN></SPAN></DT>
 
+                  <DT><SPAN class="term"><SPAN class="bold"><STRONG>password</STRONG></SPAN></SPAN></DT>
                   <DD>
-                    <P><CODE class="computeroutput">bsim_ctl start /path/to/datadir
-                    --auth&nbsp;trust</CODE></P>
+                    <P><CODE class="computeroutput">bsim_ctl init /path/to/datadir --auth&nbsp;password</CODE></P>
 
-                    <P>This is currently the default. No authentication is performed and privilege
-                    is granted based on the user name presented. Masquerading is possible.</P>
-                  </DD>
-
-                  <DT><SPAN class="term"><SPAN class=
-                  "bold"><STRONG>password</STRONG></SPAN></SPAN></DT>
-
-                  <DD>
-                    <P><CODE class="computeroutput">bsim_ctl start /path/to/datadir
-                    --auth&nbsp;password</CODE></P>
-
-                    <P>Users are authenticated via password. A default password 'changeme' is
+                    <P>This is currently the default authentication mode if --auth is not specified. 
+					Users are authenticated via password. A default password 'changeme' is
                     established when the new user is created. Passwords can be changed by the user
-                    from the BSim client or can be reset by an administrator via the <SPAN class=
+                    from the BSim client, or from the command line with the <SPAN class=
+                    "command"><STRONG>bsim changepassword</STRONG></SPAN> command (see <A class=
+                    "xref" href="CommandLineReference.html#BSimCommand">&ldquo;bsim&rdquo;</A>), or
+                    can be reset by an administrator via the <SPAN class=
                     "command"><STRONG>resetpassword</STRONG></SPAN> command.</P>
                   </DD>
 
                   <DT><SPAN class="term"><SPAN class="bold"><STRONG>pki</STRONG></SPAN></SPAN></DT>
 
                   <DD>
-                    <P><CODE class="computeroutput">bsim_ctl start /path/to/datadir --auth&nbsp;pki
-                    --cafile&nbsp;"/path/to/rootcert"</CODE></P>
+                    <P><CODE class="computeroutput">bsim_ctl init /path/to/datadir --auth&nbsp;pki
+                    --cafile&nbsp;"/path/to/rootcert" --cert&nbsp;"/path/to/admincert.p12"</CODE></P>
 
                     <P>Users are authenticated by PKI certificates. Upon initialization, the BSim
                     server must be provided (via the <SPAN class=
                     "command"><STRONG>--cafile</STRONG></SPAN> option) a file containing the public keys
-                    for the certificate authorities used to issue user's certificates. The file
-                    consists of the authoritative certificates in PEM format concatenated
-                    together.</P>
+                    for the certificate authorities used to issue user certificates. The file
+                    consists of the authoritative certificates in unencrypted PEM format concatenated
+                    together, and must provide a complete chain of trust for each of those
+                    authorities (any intermediate certificate authority must be accompanied by the
+                    certificates of its issuers, up to and including a root certificate authority),
+                    since the server does not look beyond this file when verifying a certificate a
+                    client presents.</P>
+
+                    <P>The administrative user's own certificate must also be provided, via the
+                    global <SPAN class="command"><STRONG>--cert</STRONG></SPAN> option. It supplies
+                    the credential used to connect to the new server, and its Distinguished Name is
+                    what gets associated with the administrative user name &mdash; so no
+                    <SPAN class="command"><STRONG>--dn</STRONG></SPAN> option is given to
+                    <SPAN class="command"><STRONG>init</STRONG></SPAN>.</P>
 
                     <P>BSim users must register their certificate with the Ghidra client using the
                     <SPAN class="emphasis"><EM>Edit-&gt;Set PKI Certificate...</EM></SPAN> menu
@@ -351,41 +499,89 @@
                     "command"><STRONG>--dn</STRONG></SPAN> option. See <A class="xref" href=
                     "#PostAddUser" title="Adding Users to the Database">&ldquo;Adding Users to the
                     Database&rdquo;</A>.</P>
+
+                    <P>A server initialized this way identifies each user by their
+                    <SPAN class="emphasis"><EM>full</EM></SPAN> Distinguished Name. A Common Name on
+                    its own is not a unique identity &mdash; it is chosen by whoever issues a
+                    certificate, and two authorities within the same <SPAN class=
+                    "command"><STRONG>--cafile</STRONG></SPAN> may issue certificates carrying the
+                    same Common Name to different people, which would let one of them connect as the
+                    other. A server initialized by an Ghidra 12.1.x or older matches only the
+                    Common Name and continues to do so; see <A class="xref" href="#PostAddUser"
+                    title="Adding Users to the Database">&ldquo;Adding Users to the
+                    Database&rdquo;</A>.</P>
                   </DD>
+				  
+				  <DT><SPAN class="term"><SPAN class="bold"><STRONG>trust</STRONG></SPAN></SPAN></DT>
+	                <DD>
+	                  <P><CODE class="computeroutput">bsim_ctl init /path/to/datadir
+	                  --auth&nbsp;trust</CODE></P>
+	
+	                  <P>No authentication is performed and privilege is granted based soley on the 
+						user name presented. Masquerading is possible; so use of this authentication
+						method is highly discouraged and intended for testing only.  When this mode 
+						is configured, the PostgrSQL server will listen on the loopback/localhost
+						interface only.</P>
+	                </DD>
                 </DL>
               </DIV>
             </DIV>
 
-            <P>The authentication method should be established once, the first time the <SPAN
-            class="command"><STRONG>start</STRONG></SPAN> command is issued for the server on an
-            empty data directory. Subsequent restarts of the server will not change these settings.
-            If the settings really need to be changed, the <SPAN class=
-            "command"><STRONG>changeauth</STRONG></SPAN> command can be issued. It takes the same
-            options as the <SPAN class="command"><STRONG>start</STRONG></SPAN> command and can only
-            be run if the server is shutdown first.</P>
+            <P>The authentication method is established when the data directory is initialized with
+            the <SPAN class="command"><STRONG>init</STRONG></SPAN> command; starting the server does
+            not change it. If the settings really need to be changed, the <SPAN class=
+            "command"><STRONG>configure</STRONG></SPAN> command can be issued. It takes the same
+            options as the <SPAN class="command"><STRONG>init</STRONG></SPAN> command and must be
+            run while the server is <SPAN class="emphasis"><EM>running</EM></SPAN>, so that the
+            administrator can be authenticated and any credential the new authentication method
+            requires can be established before the change takes effect. The server is left running
+            and the change takes effect when it is next restarted.</P>
 
             <DIV class="informalexample">
               <TABLE border="0" summary="Simple list" class="simplelist">
                 <TR>
-                  <TD><CODE class="computeroutput">$(ROOT)/support/bsim_ctl changeauth
+                  <TD><CODE class="computeroutput">$(ROOT)/support/bsim_ctl configure
                   /datadir/path --auth&nbsp;password</CODE></TD>
                 </TR>
               </TABLE>
             </DIV>
 
-            <P>Using the <SPAN class="command"><STRONG>changeauth</STRONG></SPAN> command on a
+            <P>Using the <SPAN class="command"><STRONG>configure</STRONG></SPAN> command on a
             server with an established set of users will likely require other disruptive changes to
             create passwords or associate Distinguished Names with users, if they didn't exist
-            before.</P>
+            before. The administrator's own credential is handled by <SPAN class=
+            "command"><STRONG>configure</STRONG></SPAN> itself: a change to <SPAN class=
+            "emphasis"><EM>password</EM></SPAN> prompts for a new password if they have none, and a
+            change to <SPAN class="emphasis"><EM>pki</EM></SPAN> requires their certificate (the
+            global <SPAN class="command"><STRONG>--cert</STRONG></SPAN> option) so their identity
+            mapping can be established from it.
+            Every other user must then be given a password with <SPAN class=
+            "command"><STRONG>resetpassword</STRONG></SPAN>, or a Distinguished Name with
+            <SPAN class="command"><STRONG>adduser</STRONG></SPAN>, once the server is restarted.</P>
 
             <P>If it is determined that only the database administrators have OS level, local,
             access to the server's host machine, they can choose to use the <SPAN class=
             "command"><STRONG>noLocalAuth</STRONG></SPAN> option as part of the <SPAN class=
-            "command"><STRONG>start</STRONG></SPAN> or <SPAN class=
-            "command"><STRONG>changeauth</STRONG></SPAN> commands. This disables authentication for
+            "command"><STRONG>init</STRONG></SPAN> or <SPAN class=
+            "command"><STRONG>configure</STRONG></SPAN> commands. This disables authentication for
             users connecting to the server by the 'localhost' interface. This may facilitate the
             use of scripts for ingest etc., where working with passwords is cumbersome.
             Authentication is still enforced for any remote connection.</P>
+
+            <P><SPAN class="bold"><STRONG>NOTE:</STRONG></SPAN> A host whose local
+            accounts are not all trusted should be given a <SPAN class=
+            "command"><STRONG>--keystore</STRONG></SPAN> so that the configured authentication
+            applies to local connections too.</P>
+
+            <P>Only local authentication is affected. The <SPAN class=
+            "command"><STRONG>--auth</STRONG></SPAN> mode is still recorded and continues to
+            determine what <SPAN class="command"><STRONG>adduser</STRONG></SPAN> establishes for
+            each user &mdash; a password, or a certificate identity mapping &mdash; so those
+            credentials are already in place if <SPAN class=
+            "command"><STRONG>configure</STRONG></SPAN> is later used with a <SPAN class=
+            "command"><STRONG>--keystore</STRONG></SPAN> to enable remote access. Users should
+            therefore continue to be added in accordance with the configured authentication mode,
+            even though local connections are not currently authenticated.</P>
           </DIV>
 
           <DIV class="sect3">
@@ -397,8 +593,10 @@
               </DIV>
             </DIV>
 
-            <P>The username used to start the server for the first time, causing the initialization
-            of the data directory, becomes the administrator for that server. No other
+            <P>The PostgreSQL administrative role established when the server is initialized (the
+            <SPAN class="command"><STRONG>--user</STRONG></SPAN> option of <SPAN class=
+            "command"><STRONG>bsim_ctl init</STRONG></SPAN>, defaulting to the invoking user) becomes
+            the administrator for that server. No other
             username/role is initially known to the server. New usernames/roles can be added to the
             server using the following command:</P>
 
@@ -411,19 +609,55 @@
 
                 <TR>
                   <TD><CODE class="computeroutput">$(ROOT)/support/bsim_ctl adduser /path/to/datadir <SPAN class=
-                  "emphasis"><EM>username</EM></SPAN> --dn&nbsp;"C=US,ST=MD,CN=Firstname User"</CODE></TD>
+                  "emphasis"><EM>username</EM></SPAN> --dn&nbsp;"CN=Firstname User,ST=MD,C=US"</CODE></TD>
                 </TR>
               </TABLE>
             </DIV>
 
             <P>If password authentication has been set for the server, the new user's password will
-            initially be set to 'changeme'. If PKI authentication has been set for the server, The
-            Distinguished Name, as bound to the new user's certificated must be provided when
+            initially be set to 'changeme'. If PKI authentication has been set for the server, the
+            Distinguished Name, as bound to the new user's certificate, must be provided when
             issuing the <SPAN class="command"><STRONG>adduser</STRONG></SPAN> command, via the
             <SPAN class="command"><STRONG>--dn</STRONG></SPAN> option. The Distinguished Name must
             be presented as a string containing a comma separated sequence of attribute/value pairs
-            that uniquely identifies a certificate. Currently, the Common Name (CN=) is the only
-            attribute inspected by the PostgreSQL server, so other attributes can be omitted.</P>
+            that uniquely identifies a certificate.</P>
+
+            <P><SPAN class="bold"><STRONG>IMPORTANT:</STRONG></SPAN> the server matches the
+            <SPAN class="emphasis"><EM>entire</EM></SPAN> Distinguished Name, so no attribute may be
+            omitted, and it must be given exactly as the server renders the subject of the user's
+            certificate: in <SPAN class="emphasis"><EM>RFC 2253</EM></SPAN> form (most specific
+            attribute first, no spaces around the separating commas), matching case and spacing. No
+            normalization is performed on either side of the comparison, so specifying it correctly
+            is the administrator's responsibility. For a given certificate the required form is
+            reported by:</P>
+
+            <DIV class="informalexample">
+              <TABLE border="0" summary="Simple list" class="simplelist">
+                <TR>
+                  <TD><CODE class="computeroutput">openssl x509 -noout -subject
+                  -nameopt&nbsp;RFC2253 -in <SPAN class=
+                  "emphasis"><EM>certfile</EM></SPAN></CODE></TD>
+                </TR>
+              </TABLE>
+            </DIV>
+
+            <P>The name actually registered is echoed by <SPAN class=
+            "command"><STRONG>adduser</STRONG></SPAN>, and the name registered for every user can be
+            reviewed at any time with the <SPAN class="command"><STRONG>listusers</STRONG></SPAN>
+            command &mdash; which together are the means of confirming a Distinguished Name was
+            entered correctly. A user whose registered name does not match the certificate they
+            present will be unable to connect; re-running <SPAN class=
+            "command"><STRONG>adduser</STRONG></SPAN> for that user replaces it.</P>
+
+            <P><SPAN class="bold"><STRONG>NOTE:</STRONG></SPAN> a server which was initialized by 
+            Ghidra 12.1.x or older matches only the Common Name (CN) taken from the Distinguished
+            Name, rather than the whole of it. Such a server keeps doing so, because
+            the entries it already holds for its users were registered that way and cannot be
+            re-derived (each user's certificate is held by that user). <SPAN class=
+            "command"><STRONG>adduser</STRONG></SPAN> follows whichever the server is configured
+            for, so the <SPAN class="command"><STRONG>--dn</STRONG></SPAN> option is supplied the
+            same way in either case; <SPAN class="command"><STRONG>listusers</STRONG></SPAN> and
+            <SPAN class="command"><STRONG>status</STRONG></SPAN> report which is in use.</P>
 
             <P>New users are by default only given <SPAN class=
             "command"><STRONG>user</STRONG></SPAN> permissions, meaning that they can only place
@@ -465,8 +699,42 @@
               </TABLE>
             </DIV>
 
-            <P>The most important configuration parameters in <CODE class=
-            "filename">postgresql.conf</CODE> are:</P>
+            <P>Within <CODE class="filename">postgresql.conf</CODE>, BSim appends two clearly
+            delimited blocks after the standard PostgreSQL defaults:</P>
+
+            <DIV class="informalexample">
+              <DIV class="variablelist">
+                <DL class="variablelist">
+                  <DT><SPAN class="term"><SPAN class="bold"><STRONG># BSIM-MANAGED-BEGIN
+                  &hellip; # BSIM-MANAGED-END</STRONG></SPAN></SPAN></DT>
+
+                  <DD>
+                    <P>The BSim-managed settings (SSL/TLS, interface binding, client authentication,
+                    and logging). <SPAN class="emphasis"><EM>Do not edit this block</EM></SPAN> - it
+                    is regenerated every time <SPAN class="command"><STRONG>configure</STRONG></SPAN>
+                    is run, so changes made here are lost. Use <SPAN class=
+                    "command"><STRONG>bsim_ctl configure</STRONG></SPAN> to change these settings.</P>
+                  </DD>
+
+                  <DT><SPAN class="term"><SPAN class="bold"><STRONG># BSIM-TUNABLE-BEGIN
+                  &hellip; # BSIM-TUNABLE-END</STRONG></SPAN></SPAN></DT>
+
+                  <DD>
+                    <P>The performance-tuning settings. This block is written once at <SPAN class=
+                    "command"><STRONG>init</STRONG></SPAN> and is <SPAN class=
+                    "emphasis"><EM>preserved</EM></SPAN> by <SPAN class=
+                    "command"><STRONG>configure</STRONG></SPAN>. To tune an existing server, edit the
+                    values in this block and restart the server.</P>
+                  </DD>
+                </DL>
+              </DIV>
+            </DIV>
+
+            <P>More generally, any setting <SPAN class="emphasis"><EM>outside</EM></SPAN> the managed
+            block - the tunable block, or the standard PostgreSQL defaults above it - may be edited and
+            is preserved across a <SPAN class="command"><STRONG>configure</STRONG></SPAN>; only the
+            managed block is regenerated. The performance parameters provided in the tunable block
+            are:</P>
 
             <DIV class="informalexample">
               <DIV class="variablelist">
@@ -482,26 +750,30 @@
                   </DD>
 
                   <DT><SPAN class="term"><SPAN class=
-                  "bold"><STRONG>max_wal_size</STRONG></SPAN>,</SPAN> <SPAN class="term"><SPAN
-                  class="bold"><STRONG>checkpoint_timeout</STRONG></SPAN></SPAN></DT>
+                  "bold"><STRONG>work_mem</STRONG></SPAN></SPAN></DT>
 
                   <DD>
-                    <P>These control how often the server forces database pages to be written back
-                    out to the file-system. The defaults are set to minimize disk writes when
-                    ingesting large numbers of records in one session. There should be little
-                    reason to change these values.</P>
+                    <P>The maximum memory used by an internal hash table or sort operation before it
+                    spills to temporary disk files.</P>
                   </DD>
 
                   <DT><SPAN class="term"><SPAN class=
-                  "bold"><STRONG>ssl_min_protocol_version</STRONG></SPAN></SPAN></DT>
+                  "bold"><STRONG>checkpoint_timeout</STRONG></SPAN></SPAN></DT>
 
                   <DD>
-                    <P>This controls the minimum SSL/TLS protocol version used when the server negotiates a connection.
-		    The current default is 'TLSv1.2'</P>
+                    <P>Controls how often the server forces database pages to be written back out to
+                    the file-system. The default is set to minimize disk writes when ingesting large
+                    numbers of records in one session; there is usually little reason to change it.</P>
                   </DD>
                 </DL>
               </DIV>
             </DIV>
+
+            <P>The minimum TLS version and cipher suites live in the managed block (currently
+            <SPAN class="command"><STRONG>ssl_min_protocol_version = 'TLSv1.2'</STRONG></SPAN>) and,
+            like the other managed settings, are established by <SPAN class=
+            "command"><STRONG>init</STRONG></SPAN>/<SPAN class=
+            "command"><STRONG>configure</STRONG></SPAN> rather than edited directly.</P>
 
             <P>The <CODE class="filename">pg_hba.conf</CODE> file is used to configure which
             connections the server accepts for a particular outward facing IP address and what
@@ -514,7 +786,12 @@
             <DIV class="warning" style="margin-left: 0.5in; margin-right: 0.5in;">
               <H3 class="title">Warning</H3>
 
-              <P>By default, the server accepts all connections from all users.</P>
+              <P>With the default <SPAN class="command"><STRONG>--auth&nbsp;trust</STRONG></SPAN>
+              setting the server accepts all connections from all users. Without a <SPAN class=
+              "command"><STRONG>--keystore</STRONG></SPAN> the server binds to the loopback interface
+              only, so this applies to local connections; supplying a keystore enables remote access,
+              for which a stronger <SPAN class="command"><STRONG>--auth</STRONG></SPAN> mode should be
+              used.</P>
             </DIV>
           </DIV>
 
@@ -527,15 +804,45 @@
               </DIV>
             </DIV>
 
-            <P>There is a <CODE class="filename">serverconfig.xml</CODE> which contains a few of
-            the default configuration values that are most crucial for the BSim Database. <SPAN
-            class="bold"><STRONG>Beware:</STRONG></SPAN> This file is currently parsed only once
-            for the entire <SPAN class="emphasis"><EM>lifetime</EM></SPAN> of a particular data
-            directory: it is read only when the data directory is first initialized, i.e. the first
-            time the <SPAN class="command"><STRONG>bsim_ctl start</STRONG></SPAN> command is
-            invoked on the empty directory. This file is intended to provide reasonable defaults
-            that are different from the standard PostgreSQL defaults. To provide site specific
-            configuration, changes should be made to the normal PostgreSQL configuration files.</P>
+            <P>The installation-wide default configuration values are held in a <CODE class=
+            "filename">serverconfig.xml</CODE> template (in <CODE class=
+            "computeroutput">$(ROOT)/Ghidra/Features/BSim/data</CODE>), analogous to the Ghidra
+            Server's <CODE class="filename">server.conf</CODE>. It provides reasonable defaults that
+            differ from the standard PostgreSQL defaults and is read by <SPAN class=
+            "command"><STRONG>init</STRONG></SPAN> (and by <SPAN class=
+            "command"><STRONG>configure</STRONG></SPAN> when it regenerates the managed block).
+            Entries marked <SPAN class="command"><STRONG>tunable="true"</STRONG></SPAN> (the
+            performance settings) are written to the editable tunable block of a new data directory's
+            <CODE class="filename">postgresql.conf</CODE>.</P>
+
+            <P>There are therefore two ways to adjust the performance settings:</P>
+
+            <DIV class="informalexample">
+              <DIV class="variablelist">
+                <DL class="variablelist">
+                  <DT><SPAN class="term"><SPAN class="bold"><STRONG>Existing data
+                  directory</STRONG></SPAN></SPAN></DT>
+
+                  <DD>
+                    <P>Edit the values in the tunable block (between <CODE class=
+                    "computeroutput"># BSIM-TUNABLE-BEGIN</CODE> and <CODE class=
+                    "computeroutput"># BSIM-TUNABLE-END</CODE>) of that directory's <CODE class=
+                    "filename">postgresql.conf</CODE>, then restart the server. These edits are
+                    preserved across <SPAN class="command"><STRONG>configure</STRONG></SPAN>.</P>
+                  </DD>
+
+                  <DT><SPAN class="term"><SPAN class="bold"><STRONG>New data
+                  directories</STRONG></SPAN></SPAN></DT>
+
+                  <DD>
+                    <P>Edit the corresponding <CODE class="filename">serverconfig.xml</CODE> entry
+                    <SPAN class="emphasis"><EM>before</EM></SPAN> running <SPAN class=
+                    "command"><STRONG>init</STRONG></SPAN>; the new value becomes the installation-wide
+                    default for any data directory subsequently initialized.</P>
+                  </DD>
+                </DL>
+              </DIV>
+            </DIV>
           </DIV>
           
           <DIV class="sect3">
@@ -557,9 +864,13 @@
 			default for PostgreSQL).  This does not consider network firewall devices which may
 			also impact connectivity.</P>
 			
-			<PRE><CODE class&nbsp;"computeroutput">
-    sudo firewall-cmd --permanent --add-port=5432/tcp && sudo firewall-cmd --reload
-			</CODE></PRE>
+			<DIV class="informalexample">
+              <TABLE border="0" summary="Simple list" class="simplelist">
+                <TR>
+                  <TD><CODE class="computeroutput">sudo firewall-cmd --permanent --add-port=5432/tcp && sudo firewall-cmd --reload</CODE></TD>
+                </TR>
+              </TABLE>
+            </DIV>
 			
 			<P>NOTE: The above Linux firewall command assumes the <CODE class="computeroutput">firewalld</CODE>
 			package has been installed on the system.</P>
@@ -601,8 +912,7 @@
             <P>In order to make use of Elasticsearch with BSim, the database administrator must
             install the <SPAN class="emphasis"><EM>lsh.zip</EM></SPAN> plug-in as part of the
             Elasticsearch deployment. The plug-in is available in the Ghidra extension named <SPAN
-            class="emphasis"><EM>BSimElasticPlugin</EM></SPAN> 
-            (<CODE class="computeroutput">&lt;ghidra-install-dir&gt;/Extensions/Ghidra/ghidra_11.2.1_U_20241105_BSimElasticPlugin.zip</CODE>).
+            class="emphasis"><EM>BSimElasticPlugin</EM></SPAN>.
             The extension may be unzipped to a temporary location or use Ghidra's Install Extensions
             capability which will unpack it into the users platform-specific config directory
             indicated in the detail view of the Install Extensions window.  The extension is not
@@ -684,6 +994,11 @@ curl -k -u elastic:XXXXXX -X POST "https://localhost:9200/_security/user/ghidrau
 	      built-in role <STRONG>viewer</STRONG>, as in the example above, can be used to grant users
 	      read-only access to a database.  The built-in <STRONG>superuser</STRONG> role grants
 	      administrator privileges.</P>
+
+	    <P>Once a user has been created they may change their own password from the BSim client, or
+	      from the command line with the <SPAN class="command"><STRONG>bsim
+	      changepassword</STRONG></SPAN> command (see <A class="xref" href=
+	      "CommandLineReference.html#BSimCommand">&ldquo;bsim&rdquo;</A>).</P>
           </DIV>
 	  
           <DIV class="sect3">
@@ -732,9 +1047,13 @@ curl -k -u elastic:XXXXXX -X POST "https://localhost:9200/_security/user/ghidrau
 			default for elasticsearch).  This does not consider network firewall devices which may
 			also impact connectivity.</P>
 			
-			<PRE><CODE class&nbsp;"computeroutput">
-    sudo firewall-cmd --permanent --add-port=9200/tcp && sudo firewall-cmd --reload
-			</CODE></PRE>
+			<DIV class="informalexample">
+              <TABLE border="0" summary="Simple list" class="simplelist">
+                <TR>
+                  <TD><CODE class="computeroutput">sudo firewall-cmd --permanent --add-port=9200/tcp && sudo firewall-cmd --reload</CODE></TD>
+                </TR>
+              </TABLE>
+            </DIV>
 			
 			<P>NOTE: The above Linux firewall command assumes the <CODE class="computeroutput">firewalld</CODE>
 			package has been installed on the system.</P>

@@ -16,56 +16,33 @@
 package ghidra.file.formats.sevenzip;
 
 import java.io.IOException;
-import java.util.List;
+
+import org.apache.commons.compress.archivers.sevenz.SevenZFile;
 
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.recognizer.*;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.factory.GFileSystemFactoryByteProvider;
 import ghidra.formats.gfilesystem.factory.GFileSystemProbeBytesOnly;
-import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
 
 public class SevenZipFileSystemFactory
 		implements GFileSystemFactoryByteProvider<SevenZipFileSystem>, GFileSystemProbeBytesOnly {
 
-	private List<Recognizer> recognizers = List.of(new SevenZipRecognizer(), new XZRecognizer(),
-		new Bzip2Recognizer(), new MSWIMRecognizer(), new ArjRecognizer(), new CabarcRecognizer(),
-		new CHMRecognizer(), new CramFSRecognizer(), new DebRecognizer(), new LhaRecognizer(),
-		new RarRecognizer(), new RPMRecognizer(), new VHDRecognizer(), new XarRecognizer(),
-		new UnixCompressRecognizer());
-
-	private static boolean initFailed;
-	private final int recognizerBytesRequired;
-
-	public SevenZipFileSystemFactory() {
-		int max = 0;
-		for (Recognizer recognizer : recognizers) {
-			max = Math.max(max, recognizer.numberOfBytesRequired());
-		}
-		recognizerBytesRequired = max;
-	}
+	private static final int START_BYTES_REQUIRED = 6; // copied from SevenZFile's private sevenZSignature
 
 	@Override
 	public int getBytesRequired() {
-		return recognizerBytesRequired;
+		return START_BYTES_REQUIRED;
 	}
 
 	@Override
 	public boolean probeStartBytes(FSRL containerFSRL, byte[] startBytes) {
-		for (Recognizer recognizer : recognizers) {
-			String recognized = recognizer.recognize(startBytes);
-			if (recognized != null) {
-				return true;
-			}
-		}
-		return false;
+		return SevenZFile.matches(startBytes, START_BYTES_REQUIRED);
 	}
 
 	@Override
-	public SevenZipFileSystem create(FSRLRoot targetFSRL, ByteProvider byteProvider,
+	public GFileSystem create(FSRLRoot targetFSRL, ByteProvider byteProvider,
 			FileSystemService fsService, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
@@ -78,27 +55,6 @@ public class SevenZipFileSystemFactory
 			fs.close();
 			throw ioe;
 		}
-	}
-
-	/**
-	 * Returns true if the native libraries for 7zip were initialized.
-	 * 
-	 * @return boolean true if 7zip dlls/libs/etc were successfully initialized
-	 */
-	public static boolean initNativeLibraries() {
-		try {
-			SevenZipCustomInitializer.initSevenZip();
-			return true;
-		}
-		catch (SevenZipNativeInitializationException e) {
-			if (!initFailed) {
-				Msg.warn(SevenZipFileSystemFactory.class,
-					"Sevenzip native libraries failed to initialize: " + e.getMessage());
-				initFailed = true;
-			}
-			return false;
-		}
-
 	}
 
 }

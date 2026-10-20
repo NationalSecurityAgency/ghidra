@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,7 @@ package ghidra.app.plugin.core.navigation.locationreferences;
 
 import java.awt.Color;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import docking.widgets.fieldpanel.support.Highlight;
 import ghidra.app.services.FieldMatcher;
@@ -119,7 +119,7 @@ public class GenericCompositeDataTypeLocationDescriptor extends GenericDataTypeL
 		else if (OperandFieldFactory.class.isAssignableFrom(fieldFactoryClass)) {
 
 			// Not sure how to get the correct part of the text.  This is a hack for now.
-			int offset = StringUtils.indexOfIgnoreCase(text, typeDisplayString, 0);
+			int offset = Strings.CI.indexOf(text, typeDisplayString, 0);
 			if (offset != -1) {
 				return new Highlight[] { new Highlight(offset,
 					offset + typeDisplayString.length() - 1, highlightColor) };

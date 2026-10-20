@@ -50,9 +50,9 @@ public class MemoryMapSarifMgr extends SarifMgr {
 		this.programMgr = programMgr;
 	}
 
-	////////////////////////////
+	//--------------------------
 	// SARIF READ CURRENT DTD //
-	////////////////////////////
+	//--------------------------
 
 	@Override
 	public boolean read(Map<String, Object> result, SarifProgramOptions options,
@@ -143,10 +143,7 @@ public class MemoryMapSarifMgr extends SarifMgr {
 		byte[] bytes = new byte[length];
 		Arrays.fill(bytes, (byte) 0xff);
 		File dir = new File(directory);
-		File f = new File(directory, fileName);
-		if (!FileUtilities.isPathContainedWithin(dir, f)) {
-			throw new RuntimeException(fileName + " not found within " + directory);
-		}
+		File f = FileUtilities.getSecureFile(dir, fileName);
 		try (RandomAccessFile binfile = new RandomAccessFile(f, "r")) {
 			int pos = 0;
 			while (pos < length) {
@@ -168,9 +165,9 @@ public class MemoryMapSarifMgr extends SarifMgr {
 		return bytes;
 	}
 
-	/////////////////////////////
+	//---------------------------
 	// SARIF WRITE CURRENT DTD //
-	/////////////////////////////
+	//---------------------------
 
 	void write(JsonArray results, AddressSetView addrs, TaskMonitor monitor,
 			boolean isWriteContents, String filePath) throws IOException, CancelledException {

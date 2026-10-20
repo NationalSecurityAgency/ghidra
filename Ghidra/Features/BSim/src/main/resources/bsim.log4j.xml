@@ -10,7 +10,7 @@
 <Configuration monitorInterval="30" xmlns:xi="http://www.w3.org/2001/XInclude" packages="log"> 
 	<Appenders>
 		<xi:include href="log4j-appender-console.xml"/>
-		<xi:include href="log4j-appender-rolling-file.xml"/>
+		<xi:include href="log4j-appender-rolling-file-default.xml"/>
 	</Appenders>
 	
 	<Loggers>    

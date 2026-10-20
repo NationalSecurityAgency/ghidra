@@ -64,8 +64,7 @@ public class FormatStringAnalyzer extends AbstractAnalyzer {
 		super(NAME, DESCRIPTION, AnalyzerType.FUNCTION_SIGNATURES_ANALYZER);
 		setSupportsOneTimeAnalysis();
 		setPriority(AnalysisPriority.LOW_PRIORITY);
-		setDefaultEnablement(false);
-		setPrototype();
+		setDefaultEnablement(true);
 	}
 
 	@Override

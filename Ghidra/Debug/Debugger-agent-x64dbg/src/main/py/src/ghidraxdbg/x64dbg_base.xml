@@ -1,0 +1,33 @@
+<context>
+	<schema name="X64DbgRoot" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="EventScope" />
+		<attribute name="Sessions" schema="SessionContainer" required="yes" fixed="yes" />
+		<attribute name="Settings" schema="ANY" />
+		<attribute name="State" schema="State" />
+		<attribute-alias from="_state" to="State" />
+		<attribute name="Utility" schema="ANY" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute schema="ANY"/>
+	</schema>
+	<schema name="Process" elementResync="NEVER" attributeResync="NEVER">
+		<attribute name="Debug" schema="DebugBreakpointContainer" required="yes" fixed="yes" />
+		<attribute name="Handle" schema="STRING" fixed="yes" />
+		<attribute name="Id" schema="STRING" fixed="yes" />
+	</schema>
+	<schema name="Module" elementResync="NEVER" attributeResync="NEVER">
+		<attribute name="ToDisplayString" schema="BOOL" hidden="yes" />
+	</schema>
+	<schema name="MemoryRegion" elementResync="NEVER" attributeResync="NEVER">
+		<attribute name="Base" schema="LONG" required="yes" fixed="yes" />
+	</schema>
+	<schema name="DebugBreakpointContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<attribute name="Software Breakpoints" schema="BreakpointContainer" required="yes" />
+		<attribute name="Hardware Breakpoints" schema="BreakpointContainer" required="yes" />
+		<attribute name="Memory Breakpoints" schema="BreakpointContainer" required="yes" />
+	</schema>
+	<schema name="BreakpointSpec" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<attribute name="Name" schema="STRING" hidden="yes" />
+		<attribute-alias from="_name" to="Name" />
+	</schema>
+</context>

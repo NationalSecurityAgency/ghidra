@@ -85,6 +85,9 @@ public class StructureEditorProvider
 			new AddBitFieldAction(this),
 			new EditBitFieldAction(this),
 			new ShowDataTypeInTreeAction(this),
+			new NextPrevDefinedComponentAction(this, true),
+			new NextPrevDefinedComponentAction(this, false),
+			new JumpToOffsetAction(this),
 
 //			new ViewBitFieldAction(this)
 		};
@@ -163,4 +166,14 @@ public class StructureEditorProvider
 		}
 		return null;
 	}
+
+	public void goToNextDefinedRow(boolean forward) {
+		((StructureEditorPanel) editorPanel).goToNextDefinedRow(forward);
+	}
+
+	public void goToOffset(int offset) {
+		((StructureEditorPanel) editorPanel).goToOffset(offset);
+	}
+
+
 }

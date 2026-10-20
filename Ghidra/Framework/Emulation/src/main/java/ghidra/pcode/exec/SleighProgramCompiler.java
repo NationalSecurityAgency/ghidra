@@ -16,16 +16,19 @@
 package ghidra.pcode.exec;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import ghidra.app.plugin.processors.sleigh.*;
 import ghidra.app.plugin.processors.sleigh.template.ConstructTpl;
 import ghidra.app.plugin.processors.sleigh.template.OpTpl;
+import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropSymbolMap;
 import ghidra.pcode.utils.MessageFormattingUtils;
 import ghidra.pcodeCPort.pcoderaw.VarnodeData;
 import ghidra.pcodeCPort.sleighbase.SleighBase;
-import ghidra.pcodeCPort.slghsymbol.*;
+import ghidra.pcodeCPort.slghsymbol.SleighSymbol;
+import ghidra.pcodeCPort.slghsymbol.VarnodeSymbol;
 import ghidra.pcodeCPort.space.AddrSpace;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
@@ -38,7 +41,6 @@ import ghidra.util.Msg;
 
 /**
  * Methods for compiling p-code programs for various purposes
- * 
  * <p>
  * Depending on the purpose, special provisions may be necessary around the execution of the
  * resulting program. Many utility methods are declared public here because they, well, they have
@@ -180,23 +182,7 @@ public enum SleighProgramCompiler {
 	}
 
 	/**
-	 * Add extra user-op symbols to the parser's table
-	 * 
-	 * <p>
-	 * The map cannot contain symbols whose user-op indices are already defined by the language.
-	 * 
-	 * @param parser the parser to modify
-	 * @param symbols the map of extra symbols
-	 */
-	protected static void addParserSymbols(PcodeParser parser, Map<Integer, UserOpSymbol> symbols) {
-		for (UserOpSymbol sym : symbols.values()) {
-			parser.addSymbol(sym);
-		}
-	}
-
-	/**
 	 * Add a symbol for unwanted result
-	 * 
 	 * <p>
 	 * This is basically a hack to avoid NPEs when no output varnode is given.
 	 * 
@@ -204,14 +190,18 @@ public enum SleighProgramCompiler {
 	 * @return the nil symbol
 	 */
 	protected static VarnodeSymbol addNilSymbol(PcodeParser parser) {
-		SleighSymbol exists = parser.findSymbol(NIL_SYMBOL_NAME);
+		Location loc = new Location("<util>", 0);
+		SleighSymbol exists = parser.findSymbol(loc, NIL_SYMBOL_NAME);
 		if (exists != null) {
-			// A ClassCastException here indicates a name collision
-			return (VarnodeSymbol) exists;
+			if (!(exists instanceof VarnodeSymbol nil)) {
+				throw new AssertionError("Symbol '%s' already exists, but has the wrong type (%s)"
+						.formatted(NIL_SYMBOL_NAME, exists.getClass().getSimpleName()));
+			}
+			return nil;
 		}
 		long offset = parser.allocateTemp();
-		VarnodeSymbol nil = new VarnodeSymbol(new Location("<util>", 0), NIL_SYMBOL_NAME,
-			parser.getUniqueSpace(), offset, 1);
+		VarnodeSymbol nil =
+			new VarnodeSymbol(loc, NIL_SYMBOL_NAME, parser.getUniqueSpace(), offset, 1);
 		parser.addSymbol(nil);
 		return nil;
 	}
@@ -222,7 +212,7 @@ public enum SleighProgramCompiler {
 	 * @param <T> the type of program to build
 	 */
 	public interface PcodeProgramConstructor<T extends PcodeProgram> {
-		T construct(SleighLanguage language, List<PcodeOp> ops, Map<Integer, UserOpSymbol> symbols);
+		T construct(SleighLanguage language, List<PcodeOp> ops, PcodeUseropSymbolMap symbols);
 	}
 
 	/**
@@ -236,7 +226,7 @@ public enum SleighProgramCompiler {
 	 * @return the p-code program
 	 */
 	public static <T extends PcodeProgram> T constructProgram(PcodeProgramConstructor<T> ctor,
-			SleighLanguage language, ConstructTpl template, Map<Integer, UserOpSymbol> libSyms) {
+			SleighLanguage language, ConstructTpl template, PcodeUseropSymbolMap libSyms) {
 		try {
 			return ctor.construct(language, SleighProgramCompiler.buildOps(language, template),
 				libSyms);
@@ -248,7 +238,6 @@ public enum SleighProgramCompiler {
 
 	/**
 	 * Compile the given Sleigh source into a simple p-code program with the given parser
-	 * 
 	 * <p>
 	 * This is suitable for modifying program state using Sleigh statements. Most likely, in
 	 * scripting, or perhaps in a Sleigh repl. The library given during compilation must match the
@@ -263,8 +252,8 @@ public enum SleighProgramCompiler {
 	 */
 	public static PcodeProgram compileProgram(PcodeParser parser, SleighLanguage language,
 			String sourceName, String source, PcodeUseropLibrary<?> library) {
-		Map<Integer, UserOpSymbol> symbols = library.getSymbols(language);
-		addParserSymbols(parser, symbols);
+		PcodeUseropSymbolMap symbols = library.getSymbols(language);
+		symbols.addToParser(parser);
 
 		ConstructTpl template = compileTemplate(language, parser, sourceName, source);
 		return constructProgram(PcodeProgram::new, language, template, symbols);
@@ -283,7 +272,6 @@ public enum SleighProgramCompiler {
 	/**
 	 * Compile the given Sleigh expression into a p-code program that can evaluate it, using the
 	 * given parser
-	 * 
 	 * <p>
 	 * TODO: Currently, expressions cannot be compiled for a user-supplied userop library. The
 	 * evaluator p-code program uses its own library as a means of capturing the result; however,
@@ -297,8 +285,8 @@ public enum SleighProgramCompiler {
 	 */
 	public static PcodeExpression compileExpression(PcodeParser parser, SleighLanguage language,
 			String expression) {
-		Map<Integer, UserOpSymbol> symbols = PcodeExpression.CAPTURING.getSymbols(language);
-		addParserSymbols(parser, symbols);
+		PcodeUseropSymbolMap symbols = PcodeExpression.CAPTURING.getSymbols(language);
+		symbols.addToParser(parser);
 
 		ConstructTpl template = compileTemplate(language, parser, EXPRESSION_SOURCE_NAME,
 			PcodeExpression.RESULT_NAME + "(" + expression + ");");
@@ -335,7 +323,6 @@ public enum SleighProgramCompiler {
 
 	/**
 	 * Compile the definition of a p-code userop from Sleigh source into a p-code program
-	 * 
 	 * <p>
 	 * TODO: Defining a userop from Sleigh source is currently a bit of a hack. It would be nice if
 	 * there were a formalization of Sleigh/p-code subroutines. At the moment, the control flow for
@@ -367,8 +354,8 @@ public enum SleighProgramCompiler {
 			List<String> params, String source, PcodeUseropLibrary<?> library,
 			List<Varnode> args) {
 		PcodeParser parser = createParser(language);
-		Map<Integer, UserOpSymbol> symbols = library.getSymbols(language);
-		addParserSymbols(parser, symbols);
+		PcodeUseropSymbolMap symbols = library.getSymbols(language);
+		symbols.addToParser(parser);
 		SleighBase sleigh = parser.getSleigh();
 
 		int count = params.size();

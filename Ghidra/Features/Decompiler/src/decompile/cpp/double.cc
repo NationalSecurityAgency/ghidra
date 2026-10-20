@@ -957,21 +957,6 @@ bool SplitVarnode::otherwiseEmpty(PcodeOp *branchop)
   return true;
 }
 
-/// \brief Verify that the given PcodeOp is a CPUI_INT_MULT by -1
-///
-/// The PcodeOp must be a CPUI_INT_MULT and the second operand must be a constant -1.
-/// \param op is the given PcodeOp
-/// \return \b true if the PcodeOp is a multiple by -1
-bool SplitVarnode::verifyMultNegOne(PcodeOp *op)
-
-{
-  if (op->code() != CPUI_INT_MULT) return false;
-  Varnode *in1 = op->getIn(1);
-  if (!in1->isConstant()) return false;
-  if (in1->getOffset() != calc_mask(in1->getSize())) return false;
-  return true;
-}
-
 /// \brief Check that the logical version of a (generic) binary double-precision operation can be created
 ///
 /// This checks only the most generic aspects of the calculation.  The input and output whole Varnodes
@@ -1640,8 +1625,8 @@ bool SubForm::verify(Varnode *h,Varnode *l,PcodeOp *op)
     }
     if (!hineg1->isWritten()) continue;
     if (!hineg2->isWritten()) continue;
-    if (!SplitVarnode::verifyMultNegOne(hineg1->getDef())) continue;
-    if (!SplitVarnode::verifyMultNegOne(hineg2->getDef())) continue;
+    if (!hineg1->getDef()->verifyMultNegOne()) continue;
+    if (!hineg2->getDef()->verifyMultNegOne()) continue;
     hizext1 = hineg1->getDef()->getIn(0);
     hizext2 = hineg2->getDef()->getIn(0);
     for(int4 j=0;j<2;++j) {
@@ -1670,7 +1655,7 @@ bool SubForm::verify(Varnode *h,Varnode *l,PcodeOp *op)
 	Varnode *tmpvn = loadd->getIn(1-loadd->getSlot(lo1));
 	if (!tmpvn->isWritten()) continue;
 	negop = tmpvn->getDef();
-	if (!SplitVarnode::verifyMultNegOne(negop)) continue;
+	if (!negop->verifyMultNegOne()) continue;
 	if (negop->getIn(0) != lo2) continue;
 	reslo = loadd->getOut();
 	return true;

@@ -30,7 +30,6 @@ import ghidra.program.model.pcode.Varnode;
 
 /**
  * An encapsulation of the per-block data flow analysis done by {@link JitDataFlowModel}
- * 
  * <p>
  * One of these is created for each basic block in the passage. This does both the intra-block
  * analysis and encapsulates parts of the inter-block analysis. The class also contains and provides
@@ -63,7 +62,6 @@ public class JitDataFlowBlockAnalyzer {
 
 	/**
 	 * Perform the intra-block analysis for this block
-	 * 
 	 * <p>
 	 * This just runs the block p-code through the analytic interpreter. See
 	 * {@link JitDataFlowModel}'s section on intra-block analysis.
@@ -75,7 +73,6 @@ public class JitDataFlowBlockAnalyzer {
 
 	/**
 	 * The initial entry into the recursive phi option seeking algorithm
-	 * 
 	 * <p>
 	 * See {@link JitDataFlowModel}'s section on inter-block analysis. This will modify the given
 	 * phi op in place, adding to it each found option. There is also more details than discussed in
@@ -93,7 +90,6 @@ public class JitDataFlowBlockAnalyzer {
 
 	/**
 	 * Fill options in for the given phi op
-	 * 
 	 * <p>
 	 * If our block is an entry, add that as a possible option. <em>Additionally</em>, consider each
 	 * upstream block (dependency) as an option, recursively. Recursion will naturally terminate if
@@ -114,7 +110,6 @@ public class JitDataFlowBlockAnalyzer {
 
 	/**
 	 * Consider the given flow as an option for the given phi op, and fill it
-	 * 
 	 * <p>
 	 * If we've already visited the given block, we return immediately, without further recursion.
 	 * Otherwise, we examine the varnode output state of this block for suitable definitions. If
@@ -204,7 +199,6 @@ public class JitDataFlowBlockAnalyzer {
 
 	/**
 	 * Get the latest definition of the given varnode, synthesizing ops is required.
-	 * 
 	 * <p>
 	 * NOTE: May produce phi nodes that need additional inter-block analysis
 	 * 

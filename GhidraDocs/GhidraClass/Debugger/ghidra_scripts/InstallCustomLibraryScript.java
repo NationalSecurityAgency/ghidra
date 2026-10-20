@@ -31,7 +31,7 @@ public class InstallCustomLibraryScript extends GhidraScript implements FlatDebu
 		@Override
 		protected PcodeUseropLibrary<byte[]> createUseropLibrary() {
 			return super.createUseropLibrary()
-					.compose(new ModelingScript.SleighStdLibPcodeUseropLibrary<>(getLanguage()));
+					.compose(new ModelingScript.SleighStdLibPcodeUseropLibrary<>());
 		}
 	}
 

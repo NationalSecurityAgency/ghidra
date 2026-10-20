@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.string;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -331,7 +332,7 @@ public class StringTableProvider extends ComponentProviderAdapter implements Dom
 
 	private Component buildOffsetPanel() {
 		offsetField = new IntegerTextField(4, 0L);
-		offsetField.setAllowNegativeValues(false);
+		offsetField.setMinValue(BigInteger.ZERO);
 		offsetField.addChangeListener(e -> updatePreview());
 
 		preview = new JTextField(5);

@@ -16,6 +16,7 @@
 package ghidra.features.bsim.query.client;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 import java.sql.*;
 import java.util.*;
@@ -74,7 +75,7 @@ public final class PostgresFunctionDatabase
 		new CachedStatement<>();
 
 	public PostgresFunctionDatabase(URL postgresUrl, boolean async) {
-		super(BSimPostgresDBConnectionManager.getDataSource(postgresUrl),
+		super(BSimPostgresDBConnectionManager.getDataSource(new BSimServerInfo(postgresUrl)),
 			FunctionDatabase.generateLSHVectorFactory(), LAYOUT_VERSION);
 		postgresDs = (BSimPostgresDataSource) ds;
 		asynchronous = async;
@@ -302,7 +303,92 @@ public final class PostgresFunctionDatabase
 	}
 
 	/**
-	 * 
+	 * Enumerate all PostgreSQL databases hosted on the server identified by the given URL which
+	 * appear to be BSim databases.  A database is considered a BSim database if its {@code public}
+	 * schema contains a few key BSim tables (such as {@code vectable} and {@code archtable}).  The
+	 * connection details (host, port, and any user information) are taken from the URL; any path
+	 * (database name) element is ignored since the server-wide {@code postgres} database is used to
+	 * enumerate candidate databases.
+	 *
+	 * @param uri host URL identifying the PostgreSQL server to query
+	 * @param connectingUserName default user name to use when the URL does not specify one
+	 * (may be {@code null})
+	 * @return a list of BSim databases found on the server, as {@link BSimServerInfo} objects
+	 * @throws SQLException if there is a problem communicating with the server
+	 */
+	public static List<BSimServerInfo> getBSimServerInfos(URI uri, String connectingUserName)
+			throws SQLException {
+
+		String userInfo = uri.getUserInfo();
+		if ((userInfo == null || userInfo.isBlank()) && connectingUserName != null &&
+			!connectingUserName.isBlank()) {
+			userInfo = connectingUserName;
+		}
+
+		BSimServerInfo defaultServerInfo = new BSimServerInfo(DBType.postgres, userInfo,
+			uri.getHost(), uri.getPort(), DEFAULT_DATABASE_NAME);
+		BSimPostgresDataSource defaultDs =
+			BSimPostgresDBConnectionManager.getDataSource(defaultServerInfo);
+
+		// Enumerate all candidate databases from the default 'postgres' database
+		List<String> candidateNames = new ArrayList<>();
+		try (Connection c = defaultDs.getConnection(); Statement st = c.createStatement()) {
+			try (ResultSet rs = st.executeQuery("SELECT datname FROM pg_database " +
+				"WHERE datistemplate = false AND datallowconn = true ORDER BY datname")) {
+				while (rs.next()) {
+					String name = rs.getString(1);
+					if (!DEFAULT_DATABASE_NAME.equals(name)) {
+						candidateNames.add(name);
+					}
+				}
+			}
+		}
+
+		// Inspect each candidate's schema for the key BSim tables
+		List<BSimServerInfo> bsimDatabases = new ArrayList<>();
+		for (String dbName : candidateNames) {
+			BSimServerInfo candidateInfo = new BSimServerInfo(DBType.postgres,
+				defaultServerInfo.getUserInfo(), defaultServerInfo.getServerName(),
+				defaultServerInfo.getPort(), dbName);
+			BSimPostgresDataSource candidateDs =
+				BSimPostgresDBConnectionManager.getDataSource(candidateInfo);
+			// Reuse credentials already established with the default database (if applicable)
+			candidateDs.initializeFrom(defaultDs);
+			try (Connection c = candidateDs.getConnection(); Statement st = c.createStatement()) {
+				if (isBSimDatabaseSchema(st)) {
+					bsimDatabases.add(candidateInfo);
+				}
+			}
+			catch (SQLException e) {
+				// Unable to inspect candidate (e.g., access restricted) - skip it
+				Msg.debug(PostgresFunctionDatabase.class,
+					"Skipping database '" + dbName + "': " + e.getMessage());
+			}
+		}
+		return bsimDatabases;
+	}
+
+	/**
+	 * Spot check the {@code public} schema reachable via the given statement for a few key BSim
+	 * table names that always exist within a BSim database.
+	 * @param st an active statement on the database to inspect
+	 * @return true if the database appears to be a BSim database
+	 * @throws SQLException if there is a problem executing the query
+	 */
+	private static boolean isBSimDatabaseSchema(Statement st) throws SQLException {
+		Set<String> tableNames = new HashSet<>();
+		try (ResultSet rs = st.executeQuery("SELECT table_name FROM information_schema.tables " +
+			"WHERE table_schema = 'public'")) {
+			while (rs.next()) {
+				tableNames.add(rs.getString(1));
+			}
+		}
+		return tableNames.contains("vectable") && tableNames.contains("archtable") &&
+			tableNames.contains("keyvaluetable") && tableNames.contains("desctable");
+	}
+
+	/**
+	 *
 	 * @throws SQLException if there is a problem creating or executing the query
 	 */
 	private void dropIndex(Connection c) throws SQLException {

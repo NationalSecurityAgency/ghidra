@@ -20,17 +20,10 @@ import java.util.*;
 
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.*;
-import javax.lang.model.util.ElementFilter;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
+import javax.lang.model.util.*;
 import javax.tools.Diagnostic.Kind;
 
-import com.sun.source.doctree.DeprecatedTree;
-import com.sun.source.doctree.DocCommentTree;
-import com.sun.source.doctree.DocTree;
-import com.sun.source.doctree.LinkTree;
-import com.sun.source.doctree.StartElementTree;
-import com.sun.source.doctree.TextTree;
+import com.sun.source.doctree.*;
 
 import jdk.javadoc.doclet.*;
 
@@ -64,7 +57,7 @@ public class PythonTypeStubDoclet implements Doclet {
 
 	@Override
 	public SourceVersion getSupportedSourceVersion() {
-		return SourceVersion.RELEASE_21;
+		return SourceVersion.RELEASE_25;
 	}
 
 	@Override
@@ -307,10 +300,9 @@ public class PythonTypeStubDoclet implements Doclet {
 	}
 
 	/**
-	 * Checks if the provided element is specified to be included by this doclet
+	 * {@return whether or not the provided element is specified to be included by this doclet}
 	 *
 	 * @param element the element to check
-	 * @return
 	 */
 	boolean isSpecified(Element element) {
 		return useAllTypes || docEnv.getSpecifiedElements().contains(element);

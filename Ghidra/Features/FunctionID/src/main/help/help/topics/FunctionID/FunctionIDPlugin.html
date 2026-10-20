@@ -4,7 +4,7 @@
 <title>Function ID Plug-in</title>
 <link rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
 <link rel="stylesheet" type="text/css" href="../../shared/languages.css">
-<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<meta name="generator" content="DocBook XSL Stylesheets Vsnapshot">
 <link rel="home" href="index.html" title="Function ID">
 <link rel="up" href="index.html" title="Function ID">
 <link rel="prev" href="FunctionID.html" title="Function ID">
@@ -163,8 +163,28 @@ to populate the database.
 <dt><span class="term"><span class="bold"><strong>Language</strong></span></span></dt>
 <dd><p>
       This is the required 4-field Ghidra Language ID (i.e. <span class="emphasis"><em>x86:LE:64:default</em></span>)
-      specifying exactly what processor the new language will contain. While scanning during ingest,
+      specifying exactly what processor the new library will contain. While scanning during ingest,
       any program that does not match this program model will be automatically skipped.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Compiler Specs</strong></span></span></dt>
+<dd><p>
+	This is an optional comma separated list of compiler names.  If at least one name is listed,
+	the new library will apply only to programs with a matching compiler specification.
+	Programs without a matching compiler specification will be filtered out during the
+	ingest process and, by default, cannot query against the library.
+	Each name listed must match a compiler specification associated with the selected Language ID. 
+	If no names are listed, any compiler specification is considered matching for the
+	new library, and no programs will be filtered.
+      </p></dd>
+<dt><span class="term"><span class="bold"><strong>Source Languages</strong></span></span></dt>
+<dd><p>
+	This is an optional comma separated list of names that are compared against a
+	program's "Source Languages" property. If at least one name is listed,
+	the new library will apply only to programs with a matching source language.
+	Programs that do not match  will be filtered out during the
+	ingest process and, by default, cannot query against the library.
+	If no names are listed, any source language is considered matching for the
+	new library, and no programs will be filtered.
       </p></dd>
 <dt><span class="term"><span class="bold"><strong>Common Symbol File</strong></span></span></dt>
 <dd><p>

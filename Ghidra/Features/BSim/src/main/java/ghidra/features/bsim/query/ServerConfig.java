@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,10 +16,10 @@
 package ghidra.features.bsim.query;
 
 import java.io.*;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.TreeMap;
-import java.util.TreeSet;
 
+import ghidra.net.NetworkUtils;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
 
@@ -30,8 +30,15 @@ import ghidra.xml.XmlPullParser;
  *   the identification map   (pg_ident.conf)
  */
 public class ServerConfig {
-	private TreeMap<String, String> keyValue = new TreeMap<>();			// Values we want set in the configuration file
+	private TreeMap<String, String> keyValue = new TreeMap<>();			// Managed values set in the configuration file
+	private TreeMap<String, String> tunableKeyValue = new TreeMap<>();	// User-tunable performance values (init-only)
 	private TreeSet<ConnectLine> connectSet = new TreeSet<>();			// Entries we want in the connection file
+
+	// Markers delimiting the two BSim-generated blocks within postgresql.conf
+	private static final String MANAGED_BEGIN = "# BSIM-MANAGED-BEGIN";
+	private static final String MANAGED_END = "# BSIM-MANAGED-END";
+	private static final String TUNABLE_BEGIN = "# BSIM-TUNABLE-BEGIN";
+	private static final String TUNABLE_END = "# BSIM-TUNABLE-END";
 
 	/**
 	 * Class that holds a single configuration option from the PostgreSQL configuration file
@@ -193,15 +200,7 @@ public class ServerConfig {
 			if (type.equals("local")) {		// UNIX socket
 				return true;
 			}
-			if (address != null) {
-				if (address.equals("127.0.0.1/32")) {	// IPv4 localhost
-					return true;
-				}
-				if (address.equals("::1/128")) {		// IPv6 localhost
-					return true;
-				}
-			}
-			return false;
+			return NetworkUtils.isLoopbackAddress(address);
 		}
 
 		/**
@@ -458,8 +457,14 @@ public class ServerConfig {
 			XmlElement el = parser.start();
 			if (el.getName().equals("config")) {
 				String key = el.getAttribute("key");
+				boolean tunable = "true".equalsIgnoreCase(el.getAttribute("tunable"));
 				String val = parser.end().getText();
-				keyValue.put(key, val);
+				if (tunable) {
+					tunableKeyValue.put(key, val);
+				}
+				else {
+					keyValue.put(key, val);
+				}
 			}
 			else if (el.getName().equals("connect")) {
 				ConnectLine connLine = new ConnectLine();
@@ -552,6 +557,94 @@ public class ServerConfig {
 			reader.close();
 			writer.close();
 		}
+	}
+
+	/**
+	 * Generate or update postgresql.conf using two clearly-delimited blocks appended after the
+	 * pristine initdb configuration (later settings override earlier ones in postgresql.conf):
+	 * <ul>
+	 * <li>a <b>managed</b> block ({@link #MANAGED_BEGIN}..{@link #MANAGED_END}) holding the
+	 * BSim-controlled settings (SSL, interface binding, authentication-related, logging) which is
+	 * regenerated on every reconfigure and must not be hand-edited; and</li>
+	 * <li>a <b>tunable</b> block ({@link #TUNABLE_BEGIN}..{@link #TUNABLE_END}) holding the
+	 * performance-tuning settings, written once at initialization and preserved thereafter, which
+	 * an administrator may edit.</li>
+	 * </ul>
+	 * At initialization the file is generated from the initdb original with both blocks appended.
+	 * On reconfigure only the managed block is regenerated in place; the tunable block and any
+	 * other edits are preserved.  The entire input is read before writing, so {@code inFile} and
+	 * {@code outFile} may be the same path.
+	 * @param inFile the input configuration file (the initdb original at init; the current
+	 *   postgresql.conf at reconfigure)
+	 * @param outFile the configuration file to write (may be the same path as inFile)
+	 * @param initialize true to also (re)write the tunable block from the template defaults
+	 * @throws IOException if the file cannot be read or written
+	 */
+	public void writePostgresConfig(File inFile, File outFile, boolean initialize)
+			throws IOException {
+
+		List<String> lines = new ArrayList<>();
+		try (BufferedReader reader = new BufferedReader(new FileReader(inFile))) {
+			String line;
+			while ((line = reader.readLine()) != null) {
+				lines.add(line);
+			}
+		}
+
+		List<String> out = new ArrayList<>();
+		boolean managedReplaced = false;
+		for (int i = 0; i < lines.size(); ++i) {
+			String line = lines.get(i);
+			if (line.trim().equals(MANAGED_BEGIN)) {
+				appendManagedBlock(out);					// regenerate managed block in place
+				managedReplaced = true;
+				while (i < lines.size() && !lines.get(i).trim().equals(MANAGED_END)) {
+					++i;									// skip old managed block through MANAGED_END
+				}
+				continue;
+			}
+			out.add(line);
+		}
+		if (!managedReplaced) {
+			out.add("");
+			appendManagedBlock(out);
+		}
+		if (initialize) {
+			out.add("");
+			appendTunableBlock(out);
+		}
+
+		try (FileWriter writer = new FileWriter(outFile)) {
+			for (String line : out) {
+				writer.write(line);
+				writer.write('\n');
+			}
+		}
+	}
+
+	private void appendManagedBlock(List<String> out) {
+		out.add(MANAGED_BEGIN);
+		out.add("# " + "=".repeat(76));
+		out.add("# BSim-managed settings - DO NOT EDIT.");
+		out.add("# This block is regenerated by 'bsim_ctl configure'; edits here are lost.");
+		out.add("# " + "=".repeat(76));
+		for (Entry<String, String> entry : keyValue.entrySet()) {
+			out.add(entry.getKey() + " = " + entry.getValue());
+		}
+		out.add(MANAGED_END);
+	}
+
+	private void appendTunableBlock(List<String> out) {
+		out.add(TUNABLE_BEGIN);
+		out.add("# " + "=".repeat(76));
+		out.add("# BSim performance tuning - SAFE TO EDIT.");
+		out.add("# Written once at 'init' and preserved by 'configure'.  Adjust these values for");
+		out.add("# your hardware/workload, then restart the server for changes to take effect.");
+		out.add("# " + "=".repeat(76));
+		for (Entry<String, String> entry : tunableKeyValue.entrySet()) {
+			out.add(entry.getKey() + " = " + entry.getValue());
+		}
+		out.add(TUNABLE_END);
 	}
 
 	/**
@@ -659,6 +752,34 @@ public class ServerConfig {
 	}
 
 	/**
+	 * Read the identity mappings which are registered within a specific map of pg_ident.conf.
+	 * @param inFile is a copy of pg_ident.conf to read
+	 * @param mapName is the map whose entries are to be returned
+	 * @return the system names (map from) registered for each database role (map to), in the order
+	 *   they appear within the file.  PostgreSQL permits a role to be mapped from more than one
+	 *   system name, so each role is given all of its entries.
+	 * @throws IOException if the file cannot be read or parsed
+	 */
+	public static Map<String, List<String>> scanIdent(File inFile, String mapName)
+			throws IOException {
+		Map<String, List<String>> identMap = new LinkedHashMap<>();
+		try (BufferedReader reader = new BufferedReader(new FileReader(inFile))) {
+			for (;;) {
+				String line = reader.readLine();
+				if (line == null) {
+					break;		// End of file reached
+				}
+				IdentLine identLine = new IdentLine();
+				if (identLine.parse(line) && identLine.mapName.equals(mapName)) {
+					identMap.computeIfAbsent(identLine.roleName, role -> new ArrayList<>())
+							.add(identLine.systemName);
+				}
+			}
+		}
+		return identMap;
+	}
+
+	/**
 	 * Add a key/value pair directly into the configuration file
 	 * @param key the key to add/update
 	 * @param value the value to insert
@@ -752,6 +873,20 @@ public class ServerConfig {
 		return null;
 	}
 
+	/**
+	 * @return the authentication method options of the local (loopback) connection entry whose
+	 *   method is returned by {@link #getLocalAuthentication()}, or null if there is no such entry
+	 *   or it specifies no options
+	 */
+	public String getLocalAuthenticationOptions() {
+		for (ConnectLine connLine : connectSet) {
+			if (connLine.isLocal()) {
+				return connLine.options;
+			}
+		}
+		return null;
+	}
+
 	public void setLocalAuthentication(String val, String options) {
 		for (ConnectLine connLine : connectSet) {
 			if (connLine.isLocal()) {
@@ -770,6 +905,20 @@ public class ServerConfig {
 		return null;
 	}
 
+	/**
+	 * @return the authentication method options of the remote (non-loopback) connection entry whose
+	 *   method is returned by {@link #getHostAuthentication()}, or null if there is no such entry
+	 *   (remote access disabled) or it specifies no options
+	 */
+	public String getHostAuthenticationOptions() {
+		for (ConnectLine connLine : connectSet) {
+			if (connLine.type.equals("hostssl") && !connLine.isLocal()) {
+				return connLine.options;
+			}
+		}
+		return null;
+	}
+
 	public void setHostAuthentication(String val, String options) {
 		for (ConnectLine connLine : connectSet) {
 			if (connLine.type.equals("hostssl") && !connLine.isLocal()) {
@@ -777,5 +926,13 @@ public class ServerConfig {
 				connLine.options = options;
 			}
 		}
+	}
+
+	/**
+	 * Remove the remote (non-loopback) hostssl connection entry so that only loopback access
+	 * remains.  Used when no server certificate key store is configured.
+	 */
+	public void removeHostAuthentication() {
+		connectSet.removeIf(connLine -> connLine.type.equals("hostssl") && !connLine.isLocal());
 	}
 }

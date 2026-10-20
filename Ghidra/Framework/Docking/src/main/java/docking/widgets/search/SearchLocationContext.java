@@ -73,15 +73,6 @@ public class SearchLocationContext implements Comparable<SearchLocationContext> 
 		this.parts = List.of(new BasicPart(context));
 	}
 
-	/**
-	 * Constructor used to create this context by providing the given text parts
-	 * @param parts the parts
-	 * @see SearchLocationContextBuilder
-	 */
-	SearchLocationContext(List<Part> parts) {
-		this.parts = parts;
-	}
-
 	SearchLocationContext(List<Part> parts, int lineNumber) {
 		this.parts = parts;
 		this.lineNumber = lineNumber;
@@ -164,7 +155,7 @@ public class SearchLocationContext implements Comparable<SearchLocationContext> 
 
 		String lnText = "";
 		if (includeLineNumber) {
-			lnText = getLineNumberText(false);
+			lnText = getLineNumberText(true);
 		}
 
 		StringBuilder buffy = new StringBuilder(lnText);

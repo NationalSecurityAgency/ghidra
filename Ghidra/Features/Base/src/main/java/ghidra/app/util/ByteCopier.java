@@ -221,7 +221,7 @@ public abstract class ByteCopier {
 			TaskMonitor monitor) {
 
 		Memory memory = currentProgram.getMemory();
-		ByteIterator bytes = new ByteIterator(addresses, memory);
+		MemoryByteIterator bytes = new MemoryByteIterator(memory, addresses);
 		return NumericUtilities.convertBytesToString(bytes, delimiter);
 	}
 
@@ -542,53 +542,6 @@ public abstract class ByteCopier {
 		@Override
 		public String getName() {
 			return "Paste";
-		}
-	}
-
-	/**
-	 * An iterator of bytes from memory. This class exists because the {@link MemoryByteIterator}
-	 * throws an exception from its next() method, which will not work for us.
-	 */
-	private static class ByteIterator implements Iterator<Byte> {
-
-		private MemoryByteIterator byteIterator;
-		private Byte next;
-
-		ByteIterator(AddressSetView addresses, Memory memory) {
-			byteIterator = new MemoryByteIterator(memory, addresses);
-		}
-
-		@Override
-		public boolean hasNext() {
-
-			if (next != null) {
-				return true;
-			}
-
-			if (!byteIterator.hasNext()) {
-				return false;
-			}
-
-			try {
-				next = byteIterator.next();
-			}
-			catch (MemoryAccessException e) {
-				Msg.error(this, "Unable to read next byte", e);
-				return false;
-			}
-			return true;
-		}
-
-		@Override
-		public Byte next() {
-
-			if (next == null) {
-				throw new NoSuchElementException();
-			}
-
-			Byte result = next;
-			next = null;
-			return result;
 		}
 	}
 

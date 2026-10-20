@@ -10,6 +10,6 @@ MODULE FILE LICENSE: lib/commons-lang3-3.20.0.jar Apache License 2.0
 MODULE FILE LICENSE: lib/commons-io-2.19.0.jar Apache License 2.0
 MODULE FILE LICENSE: lib/commons-text-1.10.0.jar Apache License 2.0
 MODULE FILE LICENSE: lib/gson-2.13.2.jar Apache License 2.0
-MODULE FILE LICENSE: lib/bcpkix-jdk18on-1.84.jar Bouncy Castle License
-MODULE FILE LICENSE: lib/bcprov-jdk18on-1.84.jar Bouncy Castle License
-MODULE FILE LICENSE: lib/bcutil-jdk18on-1.84.jar Bouncy Castle License
+MODULE FILE LICENSE: lib/bcpkix-jdk18on-1.86.jar Bouncy Castle License
+MODULE FILE LICENSE: lib/bcprov-jdk18on-1.86.jar Bouncy Castle License
+MODULE FILE LICENSE: lib/bcutil-jdk18on-1.86.jar Bouncy Castle License

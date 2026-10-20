@@ -23,9 +23,10 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import docking.DockingUtils;
+import docking.util.AnimationUtils;
 import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors;
-import ghidra.util.SystemUtilities;
+import ghidra.util.Swing;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.layout.AbstractLayoutManager;
@@ -372,7 +373,7 @@ public class FilterTextField extends JPanel {
 
 		// Note: this must be run on the Swing thread.  When the filter button shows itself,
 		//       it requires an AWT lock.  If called from a non-Swing thread, deadlocks!
-		SystemUtilities.runIfSwingOrPostSwingLater(() -> {
+		Swing.runIfSwingOrRunLater(() -> {
 			if (showFilter) {
 				clearLabel.showFilterButton();
 			}
@@ -467,6 +468,11 @@ public class FilterTextField extends JPanel {
 
 		@Override
 		public void actionPerformed(ActionEvent event) {
+			if (!AnimationUtils.isAnimationEnabled()) {
+				stop();
+				return;
+			}
+
 			if (flashCount < MAX_FLASH_COUNT) {
 				contrastColors();
 				flashCount++;

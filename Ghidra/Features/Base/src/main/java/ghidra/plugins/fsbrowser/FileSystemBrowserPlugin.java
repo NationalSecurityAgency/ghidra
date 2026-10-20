@@ -203,8 +203,8 @@ public class FileSystemBrowserPlugin extends Plugin
 	private void openChooser(String title, String buttonText, boolean multiSelect) {
 		if (chooserOpen == null) {
 			chooserOpen = new GhidraFileChooser(tool.getActiveWindow());
-			chooserOpen.addFileFilter(ImporterUtilities.LOADABLE_FILES_FILTER);
-			chooserOpen.addFileFilter(ImporterUtilities.CONTAINER_FILES_FILTER);
+			ImporterUtilities.addLoadableFileFilters(chooserOpen);
+			ImporterUtilities.addFileSystemFileFilters(chooserOpen);
 			chooserOpen.setSelectedFileFilter(GhidraFileFilter.ALL);
 		}
 		chooserOpen.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);

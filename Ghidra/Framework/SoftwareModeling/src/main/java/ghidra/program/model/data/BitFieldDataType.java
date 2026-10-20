@@ -19,6 +19,7 @@ import java.math.BigInteger;
 import java.util.*;
 
 import ghidra.docking.settings.*;
+import ghidra.program.model.data.Structure.BitOffsetComparator;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.util.DataConverter;
@@ -452,5 +453,49 @@ public class BitFieldDataType extends AbstractDataType {
 	@Override
 	public String toString() {
 		return getDisplayName() + "(storage:" + storageSize + ",bitOffset:" + bitOffset + ")";
+	}
+
+	/**
+	 * Checks if two bitfields would conflict if inserted into the same structure at the given 
+	 * offsets.
+	 * @param bitFieldDataType1 the first BitFieldDataType
+	 * @param bitFieldDataType2 the second BitFieldDataType
+	 * @param offset1 the offset in the structure for the first BitFieldDataType
+	 * @param offset2 the offset in the structure for the second BitFieldDataType
+	 * @return true if the two bitFields would overlap if inserted into the same structure at
+	 * the given offsets
+	 */
+	public static boolean intersects(BitFieldDataType bitFieldDataType1,
+			BitFieldDataType bitFieldDataType2, int offset1, int offset2) {
+		int bitStart1 = getNormalizedBitOffset(bitFieldDataType1, offset1);
+		int bitStart2 = getNormalizedBitOffset(bitFieldDataType2, offset2);
+		int bitSize1 = bitFieldDataType1.getBitSize();
+		int bitSize2 = bitFieldDataType2.getBitSize();
+
+		if (bitStart1 < bitStart2) {
+			return bitStart1 + bitSize1 > bitStart2;
+		}
+		return bitStart2 + bitSize2 > bitStart1;
+
+	}
+
+	/**
+	 * Returns the bit offset relative to the start of a structure. This is useful for
+	 * determining if two bit fields can fit without conflict in the same structure.
+	 * @param bitFieldDataType the {@link BitFieldDataType}
+	 * @param byteOffset the offset of the component (relative to the structure struct of the
+	 * component containing this BitFieldDataType.
+	 * 
+	 * @return the bit offset relative to the start of a structure.
+	 */
+	public static int getNormalizedBitOffset(BitFieldDataType bitFieldDataType, int byteOffset) {
+		boolean isBigEndean = bitFieldDataType.getDataOrganization().isBigEndian();
+		int bitSize = bitFieldDataType.getBitSize();
+		int bitOffset = bitFieldDataType.getBitOffset();
+		DataType baseDataType = bitFieldDataType.getBaseDataType();
+		int baseDtSize = baseDataType.getLength();
+		int effectiveBitSize = BitFieldDataType.getEffectiveBitSize(bitSize, baseDtSize);
+		return BitOffsetComparator.getNormalizedBitfieldOffset(byteOffset,
+			bitFieldDataType.getStorageSize(), effectiveBitSize, bitOffset, isBigEndean);
 	}
 }

@@ -16,6 +16,7 @@
 package ghidra.program.model.lang;
 
 import ghidra.util.classfinder.ExtensionPoint;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * NOTE:  ALL LanguageProvider CLASSES MUST END IN "LanguageProvider".  If not,
@@ -31,9 +32,22 @@ public interface LanguageProvider extends ExtensionPoint {
 	 * 
 	 * @param languageId the name of the language to be retrieved
 	 * @return the {@link Language} with the given name or null if not found
-	 * @throws RuntimeException if language instantiation error occurs
+	 * @throws LanguageNotFoundException if language instantiation error
 	 */
-	Language getLanguage(LanguageID languageId);
+	default Language getLanguage(LanguageID languageId) throws LanguageNotFoundException {
+		return getLanguage(languageId, TaskMonitor.DUMMY);
+	}
+
+	/**
+	 * Returns the language with the given name or null if no language has that name.
+	 * 
+	 * @param languageId the name of the language to be retrieved
+	 * @param monitor {@link TaskMonitor}
+	 * @return the {@link Language} with the given name or null if not found
+	 * @throws LanguageNotFoundException if language instantiation error
+	 */
+	Language getLanguage(LanguageID languageId, TaskMonitor monitor)
+			throws LanguageNotFoundException;
 
 	/**
 	 * Returns a list of language descriptions provided by this provider

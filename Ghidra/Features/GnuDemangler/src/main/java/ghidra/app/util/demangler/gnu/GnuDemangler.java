@@ -47,7 +47,7 @@ public class GnuDemangler implements Demangler {
 	public boolean canDemangle(Program program) {
 
 		String executableFormat = program.getExecutableFormat();
-		if (isELF(executableFormat) || isMacho(executableFormat)) {
+		if (ElfLoader.isElf(executableFormat) || isMacho(executableFormat)) {
 			return true;
 		}
 
@@ -280,10 +280,6 @@ public class GnuDemangler implements Demangler {
 			   mangled.startsWith("_GLOBAL__I__Z") ||
 			   mangled.startsWith("_GLOBAL__D__Z");
 		//@formatter:on
-	}
-
-	private boolean isELF(String executableFormat) {
-		return executableFormat != null && executableFormat.indexOf(ElfLoader.ELF_NAME) != -1;
 	}
 
 	private boolean isMacho(String executableFormat) {

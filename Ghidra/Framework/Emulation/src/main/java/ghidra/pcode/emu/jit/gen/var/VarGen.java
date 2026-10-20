@@ -22,6 +22,7 @@ import java.util.Set;
 
 import ghidra.pcode.emu.jit.JitBytesPcodeExecutorState;
 import ghidra.pcode.emu.jit.alloc.JvmLocal;
+import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.BlockFlow;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
 import ghidra.pcode.emu.jit.analysis.JitType.MpIntJitType;
 import ghidra.pcode.emu.jit.analysis.JitType.SimpleJitType;
@@ -65,12 +66,12 @@ public interface VarGen<V extends JitVar> extends ValGen<V> {
 	@SuppressWarnings("unchecked")
 	static <V extends JitVar> VarGen<V> lookup(V v) {
 		return (VarGen<V>) switch (v) {
-			case JitIndirectMemoryVar imv -> throw new AssertionError();
-			case JitDirectMemoryVar dmv -> WholeDirectMemoryVarGen.GEN;
-			case JitInputVar iv -> WholeInputVarGen.GEN;
-			case JitMissingVar mv -> MissingVarGen.GEN;
-			case JitMemoryOutVar mov -> WholeMemoryOutVarGen.GEN;
-			case JitLocalOutVar lov -> WholeLocalOutVarGen.GEN;
+			case JitIndirectMemoryVar _ -> throw new AssertionError();
+			case JitDirectMemoryVar _ -> WholeDirectMemoryVarGen.GEN;
+			case JitInputVar _ -> WholeInputVarGen.GEN;
+			case JitMissingVar _ -> MissingVarGen.GEN;
+			case JitMemoryOutVar _ -> WholeMemoryOutVarGen.GEN;
+			case JitLocalOutVar _ -> WholeLocalOutVarGen.GEN;
 			default -> throw new AssertionError();
 		};
 	}
@@ -302,7 +303,6 @@ public interface VarGen<V extends JitVar> extends ValGen<V> {
 
 	/**
 	 * Compute the retired and birthed varnodes for a transition between the given blocks.
-	 * 
 	 * <p>
 	 * Either block may be {@code null} to indicate entering or leaving the passage. Additionally,
 	 * the {@code to} block should be {@code null} when generating transitions around a hazard.
@@ -328,6 +328,20 @@ public interface VarGen<V extends JitVar> extends ValGen<V> {
 		result.toBirth.removeAll(liveFrom);
 
 		return result;
+	}
+
+	/**
+	 * Compute the retired and birthed varnodes for a transition along a given flow.
+	 * 
+	 * @param <THIS> the type of the generated class
+	 * @param localThis a handle to {@code this}
+	 * @param gen the code generator
+	 * @param flow the flow
+	 * @return the means of generating bytecode at the transition
+	 */
+	static <THIS extends JitCompiledPassage> BlockTransition<THIS> computeBlockTransition(
+			Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, BlockFlow flow) {
+		return computeBlockTransition(localThis, gen, flow.from(), flow.to());
 	}
 
 	/**

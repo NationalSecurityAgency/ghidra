@@ -25,6 +25,7 @@ import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.util.StringPropertyMap;
 import ghidra.program.util.ChangeManager;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -76,8 +77,7 @@ public class StringPropertyMapDB extends PropertyMapDB<String> implements String
 
 	@Override
 	public void add(Address addr, String value) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			checkDeleted();
 
 			long addrKey = addrMap.getKey(addr, true);
@@ -101,9 +101,6 @@ public class StringPropertyMapDB extends PropertyMapDB<String> implements String
 		catch (IOException e) {
 			errHandler.dbError(e);
 
-		}
-		finally {
-			lock.release();
 		}
 	}
 

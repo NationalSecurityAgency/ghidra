@@ -72,6 +72,10 @@
 					text="In the Listings"
 					sortgroup="a"
 					target="help/topics/DebuggerBreakpointMarkerPlugin/DebuggerBreakpointMarkerPlugin.html" />
+
+				<tocdef id="BreakpointTimelinePlugin" text="Breakpoint Timeline"
+					sortgroup="b"
+					target="help/topics/BreakpointTimelinePlugin/BreakpointTimelinePlugin.html" />
 			</tocdef>
 
 			<tocdef id="DebuggerRegionsPlugin" text="Memory Regions"
@@ -126,6 +130,15 @@
 			<tocdef id="DebuggerPlatformPlugin" text="Platform Selection"
 				sortgroup="y"
 				target="help/topics/DebuggerPlatformPlugin/DebuggerPlatformPlugin.html" />
+
+            <tocdef id="TraceCallTreePlugin" text="Trace Call Tree"
+				sortgroup="z"
+				target="help/topics/TraceCallTreePlugin/TraceCallTreePlugin.html" />
+				
+            <tocdef id="DebuggerVariableViewerPlugin" text="Variable Viewer"
+				sortgroup="za"
+				target="help/topics/DebuggerVariableViewerPlugin/DebuggerVariableViewerPlugin.html" />
+
 		</tocdef>
 	</tocref>
 </tocroot>

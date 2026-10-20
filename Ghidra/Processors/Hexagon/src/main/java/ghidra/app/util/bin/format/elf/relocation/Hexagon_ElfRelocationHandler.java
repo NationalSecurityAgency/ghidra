@@ -56,7 +56,7 @@ public class Hexagon_ElfRelocationHandler
 
 		long addend = relocation.getAddend();
 		long offset = (int) relocationAddress.getOffset();
-		
+
 		int symbolIndex = relocation.getSymbolIndex();
 
 		int byteLength = 4; // applied relocation length
@@ -69,20 +69,20 @@ public class Hexagon_ElfRelocationHandler
 				int value = (int) (addend + imageBaseAdjustment);
 				memory.setInt(relocationAddress, value);
 				return new RelocationResult(Status.APPLIED, byteLength);
-				
+
 			case R_HEXAGON_COPY:
 				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
 					elfSymbol.getSize(), elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
-			
+
 			default:
 				break;
 		}
-		
+
 		// Check for unresolved symbolAddr and symbolValue required by remaining relocation types handled below
 		if (handleUnresolvedSymbol(elfRelocationContext, relocation, relocationAddress)) {
 			return RelocationResult.FAILURE;
-		}	
+		}
 
 		int value = (int) (symbolValue + addend);
 		int memValue = memory.getInt(relocationAddress);
@@ -94,9 +94,10 @@ public class Hexagon_ElfRelocationHandler
 				if ((dist < -0x00800000) || (dist >= 0x00800000)) {
 					return RelocationResult.FAILURE;
 				}
-				memValue &= ~0x01ff3fff;
-				memValue |= 0x00003fff & dist;
-				memValue |= 0x01ff0000 & (dist << 2);
+				memValue &= ~0x01ff3ffe;
+				dist = dist >>> 2;
+				memValue |= 0x00003ffe & (dist << 1);
+				memValue |= 0x01ff0000 & (dist << 3);
 				memory.setInt(relocationAddress, memValue);
 				break;
 
@@ -149,8 +150,17 @@ public class Hexagon_ElfRelocationHandler
 //				break;
 //			case R_HEXAGON_B9_PCREL:
 //				break;
-//			case R_HEXAGON_B32_PCREL_X:
-//				break;
+			case R_HEXAGON_B32_PCREL_X:
+				// (S + A - P) >> 6
+				dist = (int) (Integer.toUnsignedLong(value) - Integer.toUnsignedLong((int) offset));
+				dist = dist >>> 6;
+				memValue &= ~0x0fff3fff;
+				memValue |= dist & 0x3fff;
+				dist = dist >>> 14;
+				memValue |= (dist << 20);
+				memory.setInt(relocationAddress, memValue);
+				byteLength = 4;
+				break;
 //			case R_HEXAGON_32_6_X:
 //				break;
 //			case R_HEXAGON_B22_PCREL_X:
@@ -207,7 +217,18 @@ public class Hexagon_ElfRelocationHandler
 //				break;
 //			case R_HEXAGON_GOT_16:
 //				break;
-
+			case R_HEXAGON_6_PCREL_X:
+				int opcode = memValue >> 16;
+				// bitmap depends on instruction opcode
+				if (opcode == 0x6a49) { // add Rd5,PacketPC,Uimm32_0712x
+					dist = (int) (Integer.toUnsignedLong(value) -
+						Integer.toUnsignedLong((int) offset));
+					dist = dist & 0x3f;
+					memValue &= ~(0x3f << 7);
+					memValue |= (dist << 7);
+					memory.setInt(relocationAddress, memValue);
+					break;
+				} // otherwise fall through
 			default:
 				markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName, log);
 				return RelocationResult.UNSUPPORTED;

@@ -15,7 +15,8 @@
  */
 package agent.gdb.rmi;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.*;
 
 import java.io.*;
@@ -45,6 +46,7 @@ import ghidra.framework.plugintool.util.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRangeImpl;
 import ghidra.pty.testutil.DummyProc;
+import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceExecutionState;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
@@ -329,7 +331,10 @@ public abstract class AbstractGdbTraceRmiTest extends AbstractGhidraHeadedDebugg
 						 * compiled from source on a rather un-modern distro.
 						 */
 						Msg.warn(this, "gdb hung on quit. Sending SIGCONT.");
-						Runtime.getRuntime().exec("kill -SIGCONT %d".formatted(exec.gdb.pid()));
+						String kill = DummyProc.which("kill");
+						new ProcessBuilder(kill, "-SIGCONT", "%d".formatted(exec.gdb.pid()))
+								.start()
+								.waitFor();
 						asyncQuit.get(QUIT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
 					}
 				}
@@ -442,19 +447,19 @@ public abstract class AbstractGdbTraceRmiTest extends AbstractGhidraHeadedDebugg
 		waitForPass(() -> assertFalse(df.isOpen()));
 	}
 
-	protected ManagedDomainObject openDomainObject(String path) throws Exception {
+	protected ManagedDomainObject<Trace> openTrace(String path) throws Exception {
 		DomainFile df = env.getProject().getProjectData().getFile(path);
 		assertNotNull(df);
-		return new ManagedDomainObject(df, false, false, monitor);
+		return new ManagedDomainObject<>(df, Trace.class, monitor);
 	}
 
-	protected ManagedDomainObject waitDomainObject(String path) throws Exception {
+	protected ManagedDomainObject<Trace> waitTrace(String path) throws Exception {
 		DomainFile df;
 		long start = System.currentTimeMillis();
 		while (true) {
 			df = env.getProject().getProjectData().getFile(path);
 			if (df != null) {
-				return new ManagedDomainObject(df, false, false, monitor);
+				return new ManagedDomainObject<>(df, Trace.class, monitor);
 			}
 			Thread.sleep(1000);
 			if (System.currentTimeMillis() - start > 30000) {

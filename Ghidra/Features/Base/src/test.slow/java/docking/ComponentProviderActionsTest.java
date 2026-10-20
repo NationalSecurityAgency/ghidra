@@ -352,7 +352,7 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 		PlaceholderManager pm = dwm.getPlaceholderManager();
 		Set<ComponentProvider> allProviders = pm.getActiveProviders();
 		for (ComponentProvider cp : allProviders) {
-			ActionContext context = cp.getActionContext(null);
+			ActionContext context = createActionContext(cp);
 			if (context == null) {
 				continue; // a null context is allowed
 			}

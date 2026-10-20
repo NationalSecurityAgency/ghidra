@@ -46,6 +46,11 @@ public @interface FileSystemInfo {
 	String description() default "";
 
 	/**
+	 * {@return an array of file extensions associated with this filesystem}
+	 */
+	public String[] extensions() default {};
+
+	/**
 	 * The {@link GFileSystemFactory} class that will be responsible for probing and
 	 * creating instances of this filesystem.
 	 *

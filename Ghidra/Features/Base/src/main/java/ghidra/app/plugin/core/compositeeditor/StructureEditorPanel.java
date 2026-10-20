@@ -18,8 +18,7 @@ package ghidra.app.plugin.core.compositeeditor;
 import java.awt.Component;
 
 import docking.DockingWindowManager;
-import ghidra.program.model.data.DataTypeComponent;
-import ghidra.program.model.data.Structure;
+import ghidra.program.model.data.*;
 
 /**
  * Editor panel for Union datatype
@@ -52,5 +51,67 @@ public class StructureEditorPanel extends CompEditorPanel<Structure, StructureEd
 	private void refreshTableAndSelection(StructureEditorModel editorModel, int ordinal) {
 		editorModel.notifyCompositeChanged();
 		editorModel.setSelection(new int[] { ordinal, ordinal });
+	}
+
+	void goToOffset(int offset) {
+
+		int row = model.getRowForOffset(offset);
+		if (row >= 0) {
+			goToRow(row);
+		}
+	}
+
+	void goToNextDefinedRow(boolean forward) {
+
+		Integer nextRow = findNextDefinedRow(forward);
+		if (nextRow == null) {
+			getToolkit().beep();
+		}
+		else {
+			goToRow(nextRow);
+		}
+	}
+
+	private Integer findNextDefinedRow(boolean forward) {
+
+		int currentRow = Math.max(0, model.getRow());
+		DtcMatcher isUndefined = dtc -> isUndefined(dtc);
+		int undefinedRow = findNextMatchingDtc(currentRow, forward, isUndefined);
+		int startRow = undefinedRow + (forward ? 1 : -1);
+		int n = model.getRowCount();
+		if (startRow >= n) {
+			return null;
+		}
+
+		DtcMatcher isDefined = dtc -> !isUndefined(dtc);
+		return findNextMatchingDtc(startRow, forward, isDefined);
+	}
+
+	private int findNextMatchingDtc(int row, boolean forward, DtcMatcher matcher) {
+
+		int start = row;
+		int end = forward ? model.getRowCount() : -1;
+		int direction = forward ? 1 : -1;
+		for (int i = start; i != end; i += direction) {
+			DataTypeComponent dtc = model.getComponent(i);
+			if (matcher.matches(dtc)) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	// just a nicer predicate
+	private interface DtcMatcher {
+		public boolean matches(DataTypeComponent dtc);
+	}
+
+	private boolean isUndefined(DataTypeComponent dtc) {
+		if (dtc == null) {
+			return true;
+		}
+
+		DataType dt = dtc.getDataType();
+		return Undefined.isUndefined(dt);
 	}
 }

@@ -282,6 +282,7 @@ public class ProgramLocation implements Cloneable, Comparable<ProgramLocation> {
 		try {
 			Class<? extends ProgramLocation> locationClass = ClassSearcher.forNameSafe(className,
 				ProgramLocation.class, ProgramLocation.class.getClassLoader());
+
 			if (locationClass.isInterface()) {
 				// This check is needed due to a refactoring that has changed a class into an 
 				// interface.  The class name may have been saved into the tool.  Upon restoring we
@@ -299,6 +300,8 @@ public class ProgramLocation implements Cloneable, Comparable<ProgramLocation> {
 		}
 		catch (ClassNotFoundException e) {
 			// this can happen for locations created by plugins that are no longer installed
+			Msg.info(ProgramLocation.class,
+				"Unable to restore program location, class not found: " + className);
 		}
 		catch (InstantiationException | IllegalAccessException | NoSuchMethodException e) {
 			Msg.showError(ProgramLocation.class, null, "Programming Error",

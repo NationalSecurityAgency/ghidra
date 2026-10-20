@@ -37,7 +37,7 @@ By providing common stubs in a userop library, the user can stub the external fu
 ### Modeling by Java Callbacks
 
 A userop library is created by implementing the `PcodeUseropLibrary` interface, most likely by extending `AnnotatedPcodeUseropLibrary`.
-For example, to provide a stub for `strlen`:
+For example, to provide a stub for `strnlen`:
 
 ```java {.numberLines}
 public static class JavaStdLibPcodeUseropLibrary<T> extends AnnotatedPcodeUseropLibrary<T> {
@@ -47,7 +47,7 @@ public static class JavaStdLibPcodeUseropLibrary<T> extends AnnotatedPcodeUserop
 	private final Register regRDI;
 	private final Register regRSI;
 
-	public JavaStdLibPcodeUseropLibrary(SleighLanguage language) {
+	public JavaStdLibPcodeUseropLibrary(Language language) {
 		space = language.getDefaultSpace();
 		regRSP = language.getRegister("RSP");
 		regRAX = language.getRegister("RAX");
@@ -56,21 +56,18 @@ public static class JavaStdLibPcodeUseropLibrary<T> extends AnnotatedPcodeUserop
 	}
 
 	@PcodeUserop
-	public void __x86_64_RET(
-			@OpExecutor PcodeExecutor<T> executor,
-			@OpState PcodeExecutorState<T> state) {
+	public void __x86_64_POP(@OpExecutor PcodeExecutor<T> executor,
+			@OpState PcodeExecutorState<T> state, @OpOutput Varnode out) {
 		PcodeArithmetic<T> arithmetic = state.getArithmetic();
 		T tRSP = state.getVar(regRSP, Reason.EXECUTE_READ);
-		long lRSP = arithmetic.toLong(tRSP, Purpose.OTHER);
+		long lRSP = arithmetic.toLong(tRSP, Purpose.LOAD);
 		T tReturn = state.getVar(space, lRSP, 8, true, Reason.EXECUTE_READ);
-		long lReturn = arithmetic.toLong(tReturn, Purpose.BRANCH);
 		state.setVar(regRSP, arithmetic.fromConst(lRSP + 8, 8));
-		((PcodeThreadExecutor<T>) executor).getThread()
-				.overrideCounter(space.getAddress(lReturn));
+		state.setVar(out, tReturn);
 	}
 
 	@PcodeUserop
-	public void __libc_strlen(@OpState PcodeExecutorState<T> state) {
+	public void __libc_strnlen(@OpState PcodeExecutorState<T> state) {
 		PcodeArithmetic<T> arithmetic = state.getArithmetic();
 		T tStr = state.getVar(regRDI, Reason.EXECUTE_READ);
 		long lStr = arithmetic.toLong(tStr, Purpose.OTHER);
@@ -91,7 +88,11 @@ public static class JavaStdLibPcodeUseropLibrary<T> extends AnnotatedPcodeUserop
 Here, we implement the stub using Java callbacks.
 This is more useful when modeling things outside of Ghidra's definition of machine state, e.g., to simulate kernel objects in an underlying operating system.
 Nevertheless, it can be used to model simple state changes as well.
-A user would place a breakpoint at either the call site or the call target, have it invoke `__libc_strlen()`, and then invoke either `emu_skip_decoded()` or `__x86_64_RET()` depending on where the breakpoint was placed.
+A user would place a breakpoint at either the call site or the call target, have it invoke `__libc_strnlen()`, and then invoke either `emu_skip_decoded()` or `RIP = __x86_64_POP(); return [RIP];` depending on where the breakpoint was placed.
+**NOTE**: Control transfers should rarely, if ever, be performed within a userop, except internal to that userop.
+This assures advanced execution engines can better process the control graph of the target.
+In particular, invoking `thread.overrideCounter()` from within a Java-callback userop is *not* recommended.
+It is better to place such control transfers in the injection, which is why we include `return [RIP];` rather than having an `__x86_64_RET()` userop that performs the control transfer.
 
 ### Modeling by Sleigh Semantics
 
@@ -100,79 +101,124 @@ You may notice the library uses a type parameter `T`, which specifies the type o
 Leaving it as `T` indicates the library is compatible with any type.
 For a concrete emulator, `T := byte[]`, and so there is no loss in making things concrete, and then converting back to `T` using the `arithmetic` object.
 However, if the emulator has been augmented, as we will discuss below, the model may become confused, because values computed by a careless userop will appear to the model a literal constant.
-To avoid this, you should keep everything a T and use the `arithmetic` object to perform any arithmetic operations.
-Alternatively, you can implement the userop using pre-compiled Sleigh code:
+To avoid this, you should keep everything a `T` and use the `arithmetic` object to perform any arithmetic operations.
+Alternatively, you can implement the userop using Sleigh code:
 
 ```java {.numberLines}
 public static class SleighStdLibPcodeUseropLibrary<T> extends AnnotatedPcodeUseropLibrary<T> {
-	private static final String SRC_RET = """
-			RIP = *:8 RSP;
-			RSP = RSP + 8;
-			return [RIP];
-			""";
-	private static final String SRC_STRLEN = """
-			__result = 0;
-			<loop>
-			if (*:1 (str+__result) == 0 || __result >= maxlen) goto <exit>;
-			__result = __result + 1;
-			goto <loop>;
-			<exit>
-			""";
-	private final Register regRAX;
-	private final Register regRDI;
-	private final Register regRSI;
-	private final Varnode vnRAX;
-	private final Varnode vnRDI;
-	private final Varnode vnRSI;
-
-	private PcodeProgram progRet;
-	private PcodeProgram progStrlen;
-
-	public SleighStdLibPcodeUseropLibrary(SleighLanguage language) {
-		regRAX = language.getRegister("RAX");
-		regRDI = language.getRegister("RDI");
-		regRSI = language.getRegister("RSI");
-		vnRAX = new Varnode(regRAX.getAddress(), regRAX.getMinimumByteSize());
-		vnRDI = new Varnode(regRDI.getAddress(), regRDI.getMinimumByteSize());
-		vnRSI = new Varnode(regRSI.getAddress(), regRSI.getMinimumByteSize());
+	@PcodeUserop
+	public SleighPcodeUseropDefinition __x86_64_POP(BuilderStage1 builder) {
+		return builder.params().body(_ -> """
+				__op_output = *:8 RSP;
+				RSP = RSP + 8;
+				""").build();
 	}
 
 	@PcodeUserop
-	public void __x86_64_RET(@OpExecutor PcodeExecutor<T> executor,
-			@OpLibrary PcodeUseropLibrary<T> library) {
-		if (progRet == null) {
-			progRet = SleighProgramCompiler.compileUserop(executor.getLanguage(),
-				"__x86_64_RET", List.of(), SRC_RET, PcodeUseropLibrary.nil(), List.of());
-		}
-		progRet.execute(executor, library);
+	public SleighPcodeUseropDefinition __libc_strnlen(BuilderStage1 builder) {
+		return builder.params().body(_ -> """
+				RAX = __libc_strnlen_generic(RDI, RSI);
+				""").build();
 	}
 
 	@PcodeUserop
-	public void __libc_strlen(@OpExecutor PcodeExecutor<T> executor,
-			@OpLibrary PcodeUseropLibrary<T> library) {
-		if (progStrlen == null) {
-			progStrlen = SleighProgramCompiler.compileUserop(executor.getLanguage(),
-				"__libc_strlen", List.of("__result", "str", "maxlen"),
-				SRC_STRLEN, PcodeUseropLibrary.nil(), List.of(vnRAX, vnRDI, vnRSI));
-		}
-		progStrlen.execute(executor, library);
+	public SleighPcodeUseropDefinition __libc_strnlen_generic(BuilderStage1 builder) {
+		return builder.params("str", "maxlen").body(_ -> """
+				local result = 0;
+				<loop>
+				if (*:1 (str+result) == 0 || result >= maxlen) goto <exit>;
+				result = result + 1;
+				goto <loop>;
+				<exit>
+				__op_output = result;
+				""").build();
 	}
 }
 ```
 
-At construction, we capture the varnodes we need to use.
-We could just use them directly in the source, but this demonstrates the ability to alias them, which makes the Sleigh source more re-usable across target architectures.
-We then lazily compile each userop upon its first invocation.
-These are technically still Java callbacks, but our implementation delegates to the executor, giving it the compiled p-code program.
+Each userop implementation is still annotated with `@PcodeUserop`; however, the return type `SleighPcodeUseropDefinition` tells the framework the userop is not a run-time callback, but a factory method for Sleigh source code.
+The builder provides a fluent style for specifying the different forms, parameters, and bodies of the userop.
+The examples above are fairly simple.
 
-The advantage here is that the p-code will use the underlying arithmetic appropriately.
-However, for some models, that may actually not be desired.
-Some symbolic models might just like to see an abstract call to `strlen()`.
+The `params(...)` call indicates the number and names of parameters.
+The `body(...)` call generates the Sleigh source for the userop, typically expressed using a lambda.
+The lambda takes `List<Varnode>` and returns a `String` of Sleigh source.
+Upon encountering a callother to this userop, the emulator invokes the lambda, giving the actual varnode arguments, and executes the generated Sleigh.
+The arguments are often ignored, because the Sleigh source can refer to them by the names given in `params(...)`.
+Finally, we call `build()` to create the userop definition and return it.
+
+Overloading is possible, but we discuss that later.
+The `__libc_strnlen` userop delegates to `__libc_strnlen_generic`, which in turn implements `strnlen` naively.
+It loops from 0 to maxlen until it finds a zero.
+Note that the generic userop does not refer to any x86-specific registers.
+
+Userops can refer to any other userop defined either by the language's Sleigh spec file, by the userop library, or by any other userop library composed with it.
+Arguments (inputs) and the output varnodes are passed by reference.
+Technically, userops can read and write to any of them freely, but conventionally, they should read only from inputs and write only to the output.
+The output varnode is named `__op_output`.
+The input varnode names are specified in the call to `params()`.
+The compiled result is as if those varnodes were substituted for their arguments.
+Note that expressions are given intermediate unique varnodes.
+When used as a userop input argument, the expression is evaluated once, then that temporary varnode is passed.
+Thus, writing to an input risks undefined behavior.
+Conventionally, userops should write to `__op_output` exactly once, at or near the end of the userop.
+
+With is mind, we re-examine the definition of `__libc_strnlen`:
+
+```sleigh
+RAX = __libc_strnlen_generic(RDI, RSI);
+```
+
+It implements `strnlen` for the System V ABI by naming the appropriate register for each parameter and return value.
+(A more sophisticated implementation of this library could take a `CompilerSpec` and/or calling convention argument in its constructor to generate the appropriate register names.)
+Essentially, the generic parameter names (and `__op_output`) become aliased to the register names.
+The generated p-code will be exactly the same as if it had been defined:
+
+```sleigh
+local result = 0;
+<loop>
+if (*:1 (RDI+result) == 0 || result >= RSI) goto <exit>;
+result = result + 1;
+goto <loop>;
+<exit>
+RAX = result;
+```
+
+#### Overloading
+
+Two kinds of overloading are possible:
+
+1. The userop has multiple forms, each having a different number of parameters
+2. A single form's implementation depends on the size of at least one varnode argument
+
+The first kind is handled using the `overload()` method on the builder and then repeating the `params().body()` sequence for each form.
+For example
+
+```java
+return builder.params("a").body(args -> """
+		...
+		""").overload().params("a", "b").body(args -> """
+		...
+		""").build();
+```
+
+The second kind is handled by inspecting the actual argument list in the lambda expression.
+This can often be accomplished using a `switch` expression on the size of a varnode, e.g.:
+
+```java
+return builder.params("n").body(a -> switch(a.get(0).getSize()) {
+	case 4 -> "__op_output = sin_float(n);";
+	case 8 -> "__op_output = sin_double(n);";
+}).build();
+```
+
+In this example, we select between a single-precision and double-precision `sin` operation, based on the size of the input varnode.
+This pattern of delegating to size-specific userops is common, and those userops can be Java callbacks.
+Both kinds of overloading may be applied to the same userop definition.
 
 ### Modeling by Structured Sleigh
 
-The disadvantage to pre-compiled p-code is all the boilerplate and manual handling of Sleigh compilation.
-Additionally, when stubbing C functions, you have to be mindful of the types, and things may get complicated enough that you pine for more C-like control structures.
+When stubbing C functions, you have to be mindful of the types, and things may get complicated enough that you pine for more C-like control structures.
 The same library can be implemented using an incubating feature we call *Structured Sleigh*:
 
 ```java {.numberLines}
@@ -187,24 +233,25 @@ public static class StructuredStdLibPcodeUseropLibrary<T>
 			super(cs);
 		}
 
-		@StructuredUserop
-		public void __x86_64_RET() {
-			Var RSP = lang("RSP", type("void **"));
-			Var RIP = lang("RIP", type("void *"));
-			RIP.set(RSP.deref());
+		@StructuredUserop(type = "undefined *")
+		public void __x86_64_POP() {
+			Var RSP = lang("RSP", type("undefined **"));
+			Var result = temp(type("undefined *"));
+			result.set(RSP.deref());
 			RSP.addiTo(8);
-			_return(RIP);
+			_result(result);
 		}
 
 		@StructuredUserop
-		public void __libc_strlen() {
+		public void __libc_strnlen() {
 			Var result = lang("RAX", type("long"));
 			Var str = lang("RDI", type("char *"));
 			Var maxlen = lang("RSI", type("long"));
 
-			_for(result.set(0), result.ltiu(maxlen).andb(str.index(result).deref().eq(0)),
-				result.inc(), () -> {
-				});
+			RVal inBounds = result.ltiu(maxlen);
+			RVal notTerm = str.index(result).deref().neq(0);
+			_for(result.set(0), inBounds.andb(notTerm), result.inc(), () -> {
+			});
 		}
 	}
 }
@@ -218,10 +265,10 @@ In a sense, Structured Sleigh is a DSL hosted in Java....
 
 Unfortunately, we cannot overload operators in Java, so we are stuck using method invocations.
 Another disadvantage is the dependence on a compiler spec for type resolution.
-Structured Sleigh is not the best suited for all circumstances, e.g., the implementation of `__x86_64_RET` is odd to express.
+Structured Sleigh is not the best suited for all circumstances, e.g., the implementation of `__x86_64_POP` is odd to express.
 Arguably, there is no real need to ascribe high-level types to `RSP` and `RIP` when expressing low-level operations.
 Luckily, these implementation techniques can be mixed.
-A single library can implement the `RET` using pre-compiled Sleigh, but `strlen` using Structured Sleigh.
+A single library could implement the `POP` using (raw) Sleigh, but `strnlen` using Structured Sleigh.
 
 ### Modeling System Calls
 
@@ -254,7 +301,8 @@ public class CustomLibraryScript extends GhidraScript {
 		};
 		emu.inject(currentAddress, """
 				__libc_strlen();
-				__X86_64_RET();
+				RIP = __X86_64_POP();
+				return [RIP];
 				""");
 
 		// TODO: Initialize the emulator's memory from the current program
@@ -271,12 +319,12 @@ public class CustomLibraryScript extends GhidraScript {
 }
 ```
 
-The key is to override `createUseropLibrary()` in an anonymous extension of the `PcodeEmulator`.
+The key is to override `createUseropLibrary()` in an extension of the `PcodeEmulator`.
 It is polite to compose your library with the one already provided by the super class, lest you remove userops and cause unexpected crashes later.
 For the sake of demonstration, we have included an injection that uses the custom library, and we have included a monitored loop to execute a single thread indefinitely.
 The initialization of the machine and its one thread is left to the script writer.
 The emulation *is not* implicitly associated with the program!
-You must copy the program image into its state, and you should choose a different location for the injection.
+You must copy the program image into its state, and you should choose an appropriate location for the injection.
 Refer to the example scripts in Ghidra's `SystemEmulation` module.
 
 If you would like to (temporarily) override the GUI with a custom userop library, you can by setting the GUI's emulator factory:
@@ -291,7 +339,7 @@ public class InstallCustomLibraryScript extends GhidraScript implements FlatDebu
 		@Override
 		protected PcodeUseropLibrary<byte[]> createUseropLibrary() {
 			return super.createUseropLibrary()
-					.compose(new ModelingScript.SleighStdLibPcodeUseropLibrary<>(getLanguage()));
+					.compose(new ModelingScript.SleighStdLibPcodeUseropLibrary<>());
 		}
 	}
 
@@ -387,7 +435,7 @@ public class ModelingScript extends GhidraScript {
 
 It should be fairly apparent how you could add more expression types to complete the model.
 There is some odd nuance in the naming of p-code operations, so do read the documentation carefully.
-If you are not entirely certain what an operation does, take a look at [OpBehaviorFactory](../../../Ghidra/Framework/SoftwareModeling/src/main/java/ghidra/pcode/opbehavior/OpBehaviorFactory.java).
+If you are not entirely certain what an operation does, take a look at [OpBehaviorFactory](../../../Ghidra/Framework/Emulation/src/main/java/ghidra/pcode/opbehavior/OpBehaviorFactory.java).
 You can also examine the concrete implementation on byte arrays [BytesPcodeArithmetic](../../../Ghidra/Framework/Emulation/src/main/java/ghidra/pcode/exec/BytesPcodeArithmetic.java).
 
 ### Mapping the Model
@@ -753,7 +801,7 @@ Finally, for the states, we just take the provided concrete state and construct 
 
 ## Use in Dynamic Analysis
 
-What we have constructed so far is suitable for constructing and using our augmented emulator in a script.
+What we have built so far is suitable for constructing and using our augmented emulator in a script.
 Using it is about as straightforward as the plain concrete emulator.
 The exception may be when accessing its state, you will need to be cognizant of the pairing.
 

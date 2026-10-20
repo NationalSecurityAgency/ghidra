@@ -16,35 +16,28 @@
 package ghidra.app.plugin.core.debug.gui.time;
 
 import java.awt.*;
-import java.util.*;
-import java.util.List;
+import java.util.Date;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import javax.swing.*;
-import javax.swing.table.*;
 
 import docking.widgets.table.*;
-import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
+import docking.widgets.table.threaded.GThreadedTablePanel;
 import generic.theme.GColor;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.docking.settings.Settings;
-import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.TraceDomainObjectListener;
-import ghidra.trace.model.target.TraceObjectValue;
-import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.time.TraceSnapshot;
-import ghidra.trace.model.time.TraceTimeManager;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
-import ghidra.trace.util.TraceEvents;
 import ghidra.util.DateUtils;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.table.column.AbstractGColumnRenderer;
+import ghidra.util.table.column.GColumnRenderer;
 
 public class DebuggerSnapshotTablePanel extends JPanel {
 	private static final Color COLOR_FOREGROUND_STALE =
@@ -52,39 +45,104 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 	private static final Color COLOR_FOREGROUND_STALE_SEL =
 		new GColor("color.debugger.plugin.resources.register.stale.selected");
 
+	static final StyleCurrentSnapRenderer STYLE_CURRENT_SNAP_RENDERER =
+		new StyleCurrentSnapRenderer();
+
 	protected enum SnapshotTableColumns
 		implements EnumeratedTableColumn<SnapshotTableColumns, SnapshotRow> {
-		SNAP("Snap", Long.class, SnapshotRow::getSnap, false),
-		TIME("Time", TraceSchedule.class, SnapshotRow::getTime, true),
-		EVENT_THREAD("Event Thread", String.class, SnapshotRow::getEventThreadName, true),
-		PC("PC", Address.class, SnapshotRow::getProgramCounter, true),
-		MODULE("Module", String.class, SnapshotRow::getModuleName, true),
-		FUNCTION("Function", ghidra.program.model.listing.Function.class, SnapshotRow::getFunction,
-				true),
-		TIMESTAMP("Timestamp", Date.class, SnapshotRow::getTimeStamp, false),
-		SCHEDULE("Schedule", TraceSchedule.class, SnapshotRow::getSchedule, false),
+		SNAP("Snap", Long.class, SnapshotRow::getSnap) {
+			@Override
+			public int getPreferredWidth() {
+				return 20;
+			}
+
+			@Override
+			public boolean isVisible() {
+				return false;
+			}
+		},
+		TIME("Time", TraceSchedule.class, SnapshotRow::getTime) {
+			@Override
+			public int getPreferredWidth() {
+				return 20;
+			}
+		},
+		EVENT_THREAD("Event Thread", String.class, SnapshotRow::getEventThreadName) {
+			@Override
+			public int getPreferredWidth() {
+				return 20;
+			}
+		},
+		PC("PC", Address.class, SnapshotRow::getProgramCounter) {
+			@Override
+			public int getPreferredWidth() {
+				return 40;
+			}
+		},
+		MODULE("Module", String.class, SnapshotRow::getModuleName) {
+			@Override
+			public int getPreferredWidth() {
+				return 40;
+			}
+		},
+		FUNCTION("Function", ghidra.program.model.listing.Function.class,
+				SnapshotRow::getFunction) {
+			@Override
+			public int getPreferredWidth() {
+				return 40;
+			}
+		},
+		TIMESTAMP("Timestamp", Date.class, SnapshotRow::getTimeStamp) {
+			@Override
+			public int getPreferredWidth() {
+				return 200;
+			}
+
+			@Override
+			public boolean isVisible() {
+				return false;
+			}
+		},
+		SCHEDULE("Schedule", TraceSchedule.class, SnapshotRow::getSchedule) {
+			@Override
+			public int getPreferredWidth() {
+				return 60;
+			}
+
+			@Override
+			public boolean isVisible() {
+				return false;
+			}
+		},
 		DESCRIPTION("Description", String.class, SnapshotRow::getDescription,
-				SnapshotRow::setDescription, true);
+				SnapshotRow::setDescription) {
+			@Override
+			public int getPreferredWidth() {
+				return 20;
+			}
+		};
 
 		private final String header;
 		private final Function<SnapshotRow, ?> getter;
 		private final BiConsumer<SnapshotRow, Object> setter;
 		private final Class<?> cls;
-		private final boolean visible;
 
-		<T> SnapshotTableColumns(String header, Class<T> cls, Function<SnapshotRow, T> getter,
-				boolean visible) {
-			this(header, cls, getter, null, visible);
+		<T> SnapshotTableColumns(String header, Class<T> cls, Function<SnapshotRow, T> getter) {
+			this(header, cls, getter, null);
 		}
 
 		@SuppressWarnings("unchecked")
 		<T> SnapshotTableColumns(String header, Class<T> cls, Function<SnapshotRow, T> getter,
-				BiConsumer<SnapshotRow, T> setter, boolean visible) {
+				BiConsumer<SnapshotRow, T> setter) {
 			this.header = header;
 			this.cls = cls;
 			this.getter = getter;
 			this.setter = (BiConsumer<SnapshotRow, Object>) setter;
-			this.visible = visible;
+		}
+
+		@Override
+		public String getHeader() {
+			return header;
 		}
 
 		@Override
@@ -98,90 +156,35 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 		}
 
 		@Override
-		public String getHeader() {
-			return header;
-		}
-
-		@Override
 		public boolean isEditable(SnapshotRow row) {
 			return setter != null;
-		}
-
-		@Override
-		public boolean isVisible() {
-			return visible;
 		}
 
 		@Override
 		public void setValueOf(SnapshotRow row, Object value) {
 			setter.accept(row, value);
 		}
-	}
-
-	protected static class SnapshotTableModel
-			extends DefaultEnumeratedColumnTableModel<SnapshotTableColumns, SnapshotRow> {
-		public SnapshotTableModel(PluginTool tool) {
-			super(tool, "Snapshots", SnapshotTableColumns.class);
-		}
 
 		@Override
-		public List<SnapshotTableColumns> defaultSortOrder() {
-			return List.of(SnapshotTableColumns.TIME);
+		public GColumnRenderer<?> getRenderer() {
+			return STYLE_CURRENT_SNAP_RENDERER;
 		}
 	}
 
-	private class SnapshotListener extends TraceDomainObjectListener {
-		public SnapshotListener() {
-			listenForUntyped(DomainObjectEvent.RESTORED, e -> objectRestored());
+	static class StyleCurrentSnapRenderer extends AbstractGColumnRenderer<Object>
+			implements GTableAccess {
 
-			listenFor(TraceEvents.SNAPSHOT_ADDED, this::snapAdded);
-			listenFor(TraceEvents.SNAPSHOT_CHANGED, this::snapChanged);
-			listenFor(TraceEvents.SNAPSHOT_DELETED, this::snapDeleted);
+		SnapshotTableModel model;
 
-			listenFor(TraceEvents.VALUE_CREATED, this::valueCreated);
-			listenFor(TraceEvents.VALUE_DELETED, this::valueDeleted);
+		Font lastFixedWidthFont;
+		Font fixedWidthBoldFont;
+		Font fixedWidthItalicFont;
+
+		protected TimeRadix getTimeRadix() {
+			Trace trace = model == null ? null : model.getTrace();
+			return trace == null ? TimeRadix.DEFAULT : trace.getTimeManager().getTimeRadix();
 		}
 
-		private void objectRestored() {
-			loadSnapshots();
-		}
-
-		private void snapAdded(TraceSnapshot snapshot) {
-			if (snapshot.getKey() < 0 && hideScratch) {
-				return;
-			}
-			SnapshotRow row = new SnapshotRow(snapshot, tool);
-			snapshotTableModel.add(row);
-		}
-
-		private void snapChanged(TraceSnapshot snapshot) {
-			if (snapshot.getKey() < 0 && hideScratch) {
-				return;
-			}
-			snapshotTableModel.notifyUpdatedWith(row -> row.getSnapshot() == snapshot);
-		}
-
-		private void snapDeleted(TraceSnapshot snapshot) {
-			if (snapshot.getKey() < 0 && hideScratch) {
-				return;
-			}
-			snapshotTableModel.deleteWith(row -> row.getSnapshot() == snapshot);
-		}
-
-		private void valueCreated(TraceObjectValue value) {
-			if (value.getCanonicalPath().equals(KeyPath.of(TraceTimeManager.KEY_TIME_RADIX))) {
-				snapshotTableModel.fireTableDataChanged();
-			}
-		}
-
-		private void valueDeleted(TraceObjectValue value) {
-			if (value.getCanonicalPath().equals(KeyPath.of(TraceTimeManager.KEY_TIME_RADIX))) {
-				snapshotTableModel.fireTableDataChanged();
-			}
-		}
-	}
-
-	final TableCellRenderer styleCurrentRenderer = new AbstractGColumnRenderer<Object>() {
 		@Override
 		protected String formatNumber(Number value, Settings settings) {
 			return switch (value) {
@@ -212,10 +215,6 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 				default -> getText(t);
 			};
 		}
-
-		Font lastFixedWidthFont;
-		Font fixedWidthBoldFont;
-		Font fixedWidthItalicFont;
 
 		Font computePlainFont(GTableCellRenderingData data) {
 			return data.getValue() instanceof Address ? getFixedWidthFont() : getDefaultFont();
@@ -248,8 +247,13 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 
 		@Override
 		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+			if (!(getUnwrappedModel(data.getTable()) instanceof SnapshotTableModel model)) {
+				return null;
+			}
+			this.model = model;
 			super.getTableCellRendererComponent(data);
 			SnapshotRow row = (SnapshotRow) data.getRowObject();
+			DebuggerCoordinates current = model.getCurrent();
 			if (row == null || current == DebuggerCoordinates.NOWHERE) {
 				// When used in a dialog, only currentTrace is set
 				return this;
@@ -277,140 +281,38 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 
 			return this;
 		}
-	};
+	}
 
 	protected final PluginTool tool;
 	protected final SnapshotTableModel snapshotTableModel;
+	protected final GThreadedTablePanel<SnapshotRow> snapshotTablePanel;
 	protected final GTable snapshotTable;
 	protected final GhidraTableFilterPanel<SnapshotRow> snapshotFilterPanel;
-	protected boolean hideScratch = false;
-
-	private Trace currentTrace;
-	private volatile DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
-
-	protected final SnapshotListener listener = new SnapshotListener();
 
 	public DebuggerSnapshotTablePanel(PluginTool tool) {
 		super(new BorderLayout());
 		this.tool = tool;
 		snapshotTableModel = new SnapshotTableModel(tool);
-		snapshotTable = new GTable(snapshotTableModel);
+		snapshotTablePanel = new GThreadedTablePanel<>(snapshotTableModel);
+		snapshotTable = snapshotTablePanel.getTable();
+
 		snapshotTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		add(new JScrollPane(snapshotTable));
+		add(snapshotTablePanel);
 
 		snapshotFilterPanel = new GhidraTableFilterPanel<>(snapshotTable, snapshotTableModel);
 		add(snapshotFilterPanel, BorderLayout.SOUTH);
-
-		TableColumnModel columnModel = snapshotTable.getColumnModel();
-		TableColumn snapCol = columnModel.getColumn(SnapshotTableColumns.SNAP.ordinal());
-		snapCol.setPreferredWidth(20);
-		snapCol.setCellRenderer(styleCurrentRenderer);
-		TableColumn timeCol = columnModel.getColumn(SnapshotTableColumns.TIME.ordinal());
-		timeCol.setPreferredWidth(20);
-		timeCol.setCellRenderer(styleCurrentRenderer);
-		TableColumn etCol = columnModel.getColumn(SnapshotTableColumns.EVENT_THREAD.ordinal());
-		etCol.setPreferredWidth(20);
-		etCol.setCellRenderer(styleCurrentRenderer);
-		TableColumn pcCol = columnModel.getColumn(SnapshotTableColumns.PC.ordinal());
-		pcCol.setPreferredWidth(40);
-		pcCol.setCellRenderer(styleCurrentRenderer);
-		TableColumn moduleCol = columnModel.getColumn(SnapshotTableColumns.MODULE.ordinal());
-		moduleCol.setPreferredWidth(40);
-		moduleCol.setCellRenderer(styleCurrentRenderer);
-		TableColumn functionCol = columnModel.getColumn(SnapshotTableColumns.FUNCTION.ordinal());
-		functionCol.setPreferredWidth(40);
-		functionCol.setCellRenderer(styleCurrentRenderer);
-		TableColumn timeStampCol = columnModel.getColumn(SnapshotTableColumns.TIMESTAMP.ordinal());
-		timeStampCol.setPreferredWidth(200);
-		timeStampCol.setCellRenderer(styleCurrentRenderer);
-		TableColumn schdCol = columnModel.getColumn(SnapshotTableColumns.SCHEDULE.ordinal());
-		schdCol.setPreferredWidth(60);
-		schdCol.setCellRenderer(styleCurrentRenderer);
-		TableColumn descCol = columnModel.getColumn(SnapshotTableColumns.DESCRIPTION.ordinal());
-		descCol.setPreferredWidth(20);
-		descCol.setCellRenderer(styleCurrentRenderer);
-	}
-
-	protected TimeRadix getTimeRadix() {
-		return currentTrace == null ? TimeRadix.DEFAULT
-				: currentTrace.getTimeManager().getTimeRadix();
-	}
-
-	private void addNewListeners() {
-		if (currentTrace == null) {
-			return;
-		}
-		currentTrace.addListener(listener);
-	}
-
-	private void removeOldListeners() {
-		if (currentTrace == null) {
-			return;
-		}
-		currentTrace.removeListener(listener);
 	}
 
 	public void setTrace(Trace trace) {
-		if (currentTrace == trace) {
-			return;
-		}
-		removeOldListeners();
-		currentTrace = trace;
-		addNewListeners();
-		loadSnapshots();
+		snapshotTableModel.setTrace(trace);
 	}
 
 	public Trace getTrace() {
-		return currentTrace;
+		return snapshotTableModel.getTrace();
 	}
 
 	public void setHideScratchSnapshots(boolean hideScratch) {
-		if (this.hideScratch == hideScratch) {
-			return;
-		}
-		this.hideScratch = hideScratch;
-		if (hideScratch) {
-			deleteScratchSnapshots();
-		}
-		else {
-			loadScratchSnapshots();
-		}
-	}
-
-	protected void loadSnapshots() {
-		snapshotTableModel.clear();
-		if (currentTrace == null) {
-			return;
-		}
-		TraceTimeManager manager = currentTrace.getTimeManager();
-
-		List<SnapshotRow> toAdd = new ArrayList<>();
-		for (TraceSnapshot snapshot : hideScratch
-				? manager.getSnapshots(0, true, Long.MAX_VALUE, true)
-				: manager.getAllSnapshots()) {
-			SnapshotRow row = new SnapshotRow(snapshot, tool);
-			toAdd.add(row);
-			if (current != DebuggerCoordinates.NOWHERE &&
-				snapshot.getKey() == current.getViewSnap()) {
-			}
-		}
-		snapshotTableModel.addAll(toAdd);
-	}
-
-	protected void deleteScratchSnapshots() {
-		snapshotTableModel.deleteWith(s -> s.getSnap() < 0);
-	}
-
-	protected void loadScratchSnapshots() {
-		if (currentTrace == null) {
-			return;
-		}
-		TraceTimeManager manager = currentTrace.getTimeManager();
-		Collection<? extends TraceSnapshot> sratch =
-			manager.getSnapshots(Long.MIN_VALUE, true, 0, false);
-		snapshotTableModel.addAll(sratch.stream()
-				.map(s -> new SnapshotRow(s, tool))
-				.collect(Collectors.toList()));
+		snapshotTableModel.setHideScratch(hideScratch);
 	}
 
 	public ListSelectionModel getSelectionModel() {
@@ -423,11 +325,22 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 	}
 
 	public void setCurrent(DebuggerCoordinates coords) {
-		boolean fire = coords.getViewSnap() != current.getViewSnap();
-		current = coords;
+		boolean fire = coords.getViewSnap() != snapshotTableModel.getCurrent().getViewSnap();
+		snapshotTableModel.setCurrent(coords);
 		if (fire) {
-			snapshotTableModel.fireTableDataChanged();
+			snapshotTable.repaint();
 		}
+
+		SnapshotRow row = snapshotTableModel.getRow(coords.getViewSnap());
+		if (row == null) {
+			return;
+		}
+		int viewRow = snapshotFilterPanel.getViewRow(row);
+		if (viewRow == -1) {
+			return;
+		}
+		Rectangle rect = snapshotTable.getCellRect(viewRow, 0, true);
+		snapshotTable.scrollRectToVisible(rect);
 	}
 
 	public void setSelectedSnapshot(Long snap) {
@@ -441,7 +354,8 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 		if (Objects.equals(curSnap, snap)) {
 			return;
 		}
-		SnapshotRow row = snapshotTableModel.findFirst(r -> r.getSnap() == snap);
+
+		SnapshotRow row = snapshotTableModel.getRow(snap);
 		if (row == null) {
 			snapshotTable.clearSelection();
 			return;

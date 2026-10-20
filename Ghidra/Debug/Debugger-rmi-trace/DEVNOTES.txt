@@ -310,3 +310,16 @@ The process parameter, if accepted, is technically redundant.
 Because all address spaces among all targets must be unique, the address space encodes the process (or other target object).
 If taken, the back end must validate that the address space belongs to the given process.
 Otherwise, the back end must figure out the applicable target based on the space name.
+
+
+# Regarding the composition of schema
+
+Schema are now composable, i.e. the schema.xml files used by each debugger-agent may be reconstituted from smaller
+fragments, typically stored in a combination of each agent's python src directory and the common store, "ghidratrace/xml",
+in "Debugger-rmi-trace".  The "gradle buildXmlSchema" task will build all of the schema, but individual schema may be 
+built by executing "python build_xml.py" from the python src directory.  Each build_xml python file calls the "merge_xml"
+python file in the rmi store, which uses either the powershell "merge.ps1" (Windows) or direct calls from "lxml" (Linux).
+Both methods rely on XSLT to transform the base XML (typically agentname_base.xml) by adding new schema from the subpieces
+or replacing attributes in common schema. There is currently no method for subtracting schema, so the entries in build_xml
+must be sequential with later entries overriding earlier ones.
+

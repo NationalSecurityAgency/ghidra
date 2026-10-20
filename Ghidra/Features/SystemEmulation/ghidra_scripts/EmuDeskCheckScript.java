@@ -32,6 +32,7 @@ import ghidra.pcode.emu.BytesPcodeThread;
 import ghidra.pcode.emu.PcodeEmulator;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
+import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
 import ghidra.pcode.exec.trace.TraceEmulationIntegration.Writer;
 import ghidra.pcode.struct.StructuredSleigh;
 import ghidra.pcode.utils.Utils;
@@ -169,8 +170,9 @@ public class EmuDeskCheckScript extends GhidraScript implements FlatDebuggerAPI 
 			}
 		};
 
-		for (SleighPcodeUseropDefinition<?> inject : new Injects().generate().values()) {
-			String source = inject.getBody();
+		for (PcodeUseropDefinition<?> inject : new Injects().generate().values()) {
+			String source =
+				inject instanceof SleighPcodeUseropDefinition sleigh ? sleigh.getBody() : "(java)";
 			println("Injecting " + inject.getName() + ":\n" + source);
 			for (Symbol sym : currentProgram.getSymbolTable()
 					.getExternalSymbols(inject.getName())) {
@@ -190,9 +192,9 @@ public class EmuDeskCheckScript extends GhidraScript implements FlatDebuggerAPI 
 		schedule.execute(trace, emu, monitor);
 	}
 
-	///////////////////////////////////////////
+	// ////////////////////////////////////////
 	// Configuration and support kruft below //
-	///////////////////////////////////////////
+	// ////////////////////////////////////////
 
 	public record Watch(String expression, TypeRec type, Settings settings) {}
 

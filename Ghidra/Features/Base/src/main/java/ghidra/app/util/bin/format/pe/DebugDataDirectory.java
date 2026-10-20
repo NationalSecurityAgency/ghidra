@@ -56,8 +56,9 @@ public class DebugDataDirectory extends DataDirectory {
 			return false;
 		}
 		
-		parser = new DebugDirectoryParser(reader, ptr, size,
-			ntHeader.getOptionalHeader().getSizeOfImage());
+		OptionalHeader optHdr = ntHeader.getOptionalHeader();
+		parser = new DebugDirectoryParser(reader, ptr, size, optHdr.getSizeOfImage(),
+			optHdr.getSectionAlignment(), optHdr.getFileAlignment());
     	return true;
     }
 

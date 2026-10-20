@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,7 @@ package generic.theme;
 
 import java.awt.Color;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import ghidra.util.Msg;
 import ghidra.util.WebColors;
@@ -77,7 +77,7 @@ public class ColorValue extends ThemeValue<Color> {
 	 * @return true if the given key string is a valid external key for a color value
 	 */
 	public static boolean isColorKey(String key) {
-		return StringUtils.startsWithAny(key, COLOR_ID_PREFIX, EXTERNAL_PREFIX,
+		return Strings.CS.startsWithAny(key, COLOR_ID_PREFIX, EXTERNAL_PREFIX,
 			EXTERNAL_LAF_ID_PREFIX);
 	}
 

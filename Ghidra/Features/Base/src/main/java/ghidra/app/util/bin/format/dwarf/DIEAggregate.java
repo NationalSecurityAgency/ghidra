@@ -743,10 +743,14 @@ public class DIEAggregate {
 		DWARFAttribute lowPc = findAttribute(DW_AT_low_pc);
 		if (lowPc != null && lowPc.getValue() instanceof DWARFNumericAttribute lowPcAttrVal) {
 			try {
-				// TODO: previous code excluded lowPc values that were == 0 as invalid.
 				long rawLowPc = lowPcAttrVal.getUnsignedValue();
 				long lowPcOffset = getDIEContainer().getAddress(lowPc.getAttributeForm(), rawLowPc,
 					getCompilationUnit());
+
+				if (lowPcOffset == 0 && getProgram().isAddr0Tombstone()) {
+					return DWARFRange.EMPTY;
+				}
+
 				long highPcOffset = lowPcOffset;
 
 				DWARFAttribute highPc = findAttribute(DW_AT_high_pc);

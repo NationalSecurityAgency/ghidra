@@ -28,6 +28,107 @@ import ghidra.program.model.data.*;
  */
 public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 
+	@Test
+	public void testDefinedComponentFixupAfterResize() throws Exception {
+		checkDefinedComponentFixupAfterLayoutChange(false, false);
+	}
+
+	@Test
+	public void testDefinedComponentFixupAfterEnablingPacking() throws Exception {
+		checkDefinedComponentFixupAfterLayoutChange(false, true);
+	}
+
+	@Test
+	public void testDefinedComponentFixupAfterDisablingPacking() throws Exception {
+		checkDefinedComponentFixupAfterLayoutChange(true, false);
+	}
+
+	private void checkDefinedComponentFixupAfterLayoutChange(boolean initiallyPacked,
+			boolean finallyPacked) throws Exception {
+		CategoryPath path = new CategoryPath("/MISC");
+		mtf.initialize("notepad2", new OriginalProgramModifierListener() {
+			@Override
+			public void modifyOriginal(ProgramDB program) throws Exception {
+				// Ensure the zero-length type is already resolved when the container is added.
+				program.getDataTypeManager().addDataType(new ArrayDataType(ByteDataType.dataType, 0),
+					DataTypeConflictHandler.DEFAULT_HANDLER);
+			}
+
+			@Override
+			public void modifyLatest(ProgramDB program) throws Exception {
+				Structure bar = (Structure) program.getDataTypeManager().getDataType(path, "Bar");
+				bar.getComponent(0).setComment("Latest Bar component");
+			}
+
+			@Override
+			public void modifyPrivate(ProgramDB program) throws Exception {
+				DataTypeManager dtm = program.getDataTypeManager();
+				Structure bar = (Structure) dtm.getDataType(path, "Bar");
+				bar.delete(1);
+				assertEquals(2, bar.getLength());
+
+				// Allocate the container first so its target components require deferred fixups.
+				Structure container = (Structure) dtm.addDataType(
+					new StructureDataType(path, "LayoutContainer", 0),
+					DataTypeConflictHandler.DEFAULT_HANDLER);
+				Structure target = new StructureDataType(path, "LayoutTarget", 0);
+				target.add(ByteDataType.dataType);
+				target = (Structure) dtm.addDataType(target, DataTypeConflictHandler.DEFAULT_HANDLER);
+
+				container.add(bar, "bar", null);
+				container.growStructure(4);
+				container.insertBitFieldAt(6, 1, 0, ByteDataType.dataType, 3, "bits1", null);
+				container.insertBitFieldAt(6, 1, 3, ByteDataType.dataType, 2, "bits2", null);
+				container.add(new ArrayDataType(ByteDataType.dataType, 0), "zero1", null);
+				container.add(new ArrayDataType(ByteDataType.dataType, 0), "zero2", null);
+				container.add(target, "target1", null);
+				container.add(target, "target2", null);
+				container.setPackingEnabled(initiallyPacked);
+			}
+		});
+
+		executeMerge();
+		waitForPrompting(); // Wait until additions are complete and the Bar conflict is displayed.
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
+		Structure container = (Structure) dtm.getDataType(path, "LayoutContainer");
+		assertNotNull(container);
+		DataTypeComponent[] components = container.getDefinedComponents();
+		assertEquals(7, components.length);
+		assertEquals(BadDataType.dataType, components[5].getDataType());
+		assertEquals(BadDataType.dataType, components[6].getDataType());
+
+		// The merge is paused at the Bar conflict, after the container fixups were recorded.
+		// Exercise a packing transition without replacing its defined-component sequence.
+		int tx = resultProgram.startTransaction("Change packing with pending fixups");
+		try {
+			container.setPackingEnabled(finallyPacked);
+		}
+		finally {
+			resultProgram.endTransaction(tx, true);
+		}
+		chooseOption(DataTypeMergeManager.OPTION_MY);
+		waitForCompletion();
+
+		container = (Structure) dtm.getDataType(path, "LayoutContainer");
+		components = container.getDefinedComponents();
+		assertEquals(finallyPacked, container.isPackingEnabled());
+		assertEquals(7, components.length);
+		assertEquals(2, components[0].getLength());
+		assertTrue(components[1].isBitFieldComponent());
+		assertTrue(components[2].isBitFieldComponent());
+		assertEquals(components[1].getOffset(), components[2].getOffset());
+		assertEquals(0, components[3].getLength());
+		assertEquals(0, components[4].getLength());
+		assertEquals(components[3].getOffset(), components[4].getOffset());
+		DataType target = dtm.getDataType(path, "LayoutTarget");
+		assertNotNull(target);
+		assertEquals("target1", components[5].getFieldName());
+		assertEquals(target, components[5].getDataType());
+		assertEquals("target2", components[6].getFieldName());
+		assertEquals(target, components[6].getDataType());
+		checkConflictCount(0);
+	}
+
 	private void setupRemoveInnerVsAddOuterContainingChangedInner() throws Exception {
 
 		final CategoryPath rootPath = new CategoryPath("/");

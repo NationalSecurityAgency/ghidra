@@ -83,6 +83,8 @@ public class DebugDirectoryParser implements OffsetValidator {
 	private DebugFixup fixupDebug;
 	private BinaryReader reader;
 	private long sizeOfImage;
+	private int sectionAlignment;
+	private int fileAlignment;
 
 	/**
 	 * Constructs a new debug directory parser.
@@ -90,12 +92,16 @@ public class DebugDirectoryParser implements OffsetValidator {
 	 * @param ptr the pointer into the binary reader
 	 * @param size the size of the directory
 	 * @param sizeOfImage the size of the image in memory
+	 * @param sectionAlignment the section alignment (0 if unknown)
+	 * @param fileAlignment the file alignment (0 if unknown)
 	 * @throws IOException if an I/O error occurs
 	 */
-	public DebugDirectoryParser(BinaryReader reader, long ptr, int size, long sizeOfImage)
-			throws IOException {
+	public DebugDirectoryParser(BinaryReader reader, long ptr, int size, long sizeOfImage,
+			int sectionAlignment, int fileAlignment) throws IOException {
 		this.reader = reader;
 		this.sizeOfImage = sizeOfImage;
+		this.sectionAlignment = sectionAlignment;
+		this.fileAlignment = fileAlignment;
 		int debugFormatsCount = size / DebugDirectory.IMAGE_SIZEOF_DEBUG_DIRECTORY;
 
 		for (int i = 0; i < debugFormatsCount; ++i) {
@@ -201,5 +207,15 @@ public class DebugDirectoryParser implements OffsetValidator {
 	@Override
 	public boolean checkRVA(long rva) {
 		return (0 <= rva) && (rva <= sizeOfImage);
+	}
+
+	@Override
+	public int getFileAlignment() {
+		return fileAlignment;
+	}
+
+	@Override
+	public int getSectionAlignment() {
+		return sectionAlignment;
 	}
 }

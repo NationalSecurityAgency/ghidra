@@ -1,0 +1,203 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Structure Recovery Using BSim</title>
+<link rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+<link rel="stylesheet" type="text/css" href="../../shared/languages.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+</head>
+<body><div class="chapter">
+<div class="titlepage"><div><div><h1 class="title">
+<a name="StructureRecovery"></a>Structure Recovery Using BSim</h1></div></div></div>
+  
+  <p>
+	The StructureRecovery plugin allows users to build a structure in a target program based on the
+	field uses in a source program. The process involves three steps. First, a source program is 
+	mined for field references from a known version of the structure to recover the use addresses 
+	and offsets.  Second, functions in the source program bookmarked by field use are matched to 
+	functions in the target program using the local variation of BSim, which does not require a database. 
+	Third, BSim is used to create 'pinnings' between the data-flow graphs for each pair of functions 
+	which identify vertex-vertex correspondences using the decoompiler's diffing algorithm.
+	Vertices with addresses from the first step are examined to identify offset information, which
+	then becomes input to the construction of a new structure in the target program.
+  </p>
+  <p>
+    The success of this process depends on a number of factors. There are cases, for instance, in 
+	which nested structures may be missed by the structure use task, and, of course, certain fields
+	may not be referenced at all.  BSim, here as elsewhere, depends on a number of parameters that 
+	determine what constitutes a match, which are exposed as options.  Unmatched functions will
+	potentially result in gaps in the structure.  Finally, the pinning comparison attempts to reconcile 
+	disparate pcode representations, but may fail in more complicated scenarios. When successful,
+	the resulting structure will be stored in the target program's DataTypeManager as "RECOVERED_structure_name".
+  </p>
+  <p>
+    Each of the three tasks is relatively expensive. It may be necessary to save results from each
+	across sessions. This is done using bookmarks (viewable from the listing or the Bookmarks viewer), which
+	capture the structure use and function-to-function matches.  The former are represented as 
+	"USES_structure_name_offset:address";  the latter as "source function id&rarr;target function id".
+	The function-match bookmarks will be present in both the source and target programs.
+  </p>
+  <p>
+    ALL tasks should run with the source program active. 
+  </p>
+
+  <div class="section">
+  <div class="titlepage"><div><div><h2 class="title" style="clear: both">
+  <a name="MainActions"></a>Principal Actions (Tools &rarr; Structure Recovery)</h2></div></div></div>
+  
+  <div class="sect2">
+  <div class="titlepage"><div><div><h3 class="title">
+  <a name="TagStructureUse"></a>Tag Structure Use</h3></div></div></div>   
+    <p>
+      Locates all non-zero field uses within a program for a specified structure.
+    </p>
+  </div>
+
+  <div class="sect2">
+  <div class="titlepage"><div><div><h3 class="title">
+  <a name="MatchFunctions"></a>Match Functions</h3></div></div></div>  
+    <p>
+      Uses BSim to match functions with structure use in the source program to similar functions 
+	  in a target program.
+    </p>
+  </div>
+
+  <div class="sect2">
+  <div class="titlepage"><div><div><h3 class="title">
+  <a name="GenerateStructure"></a>Generate structure</h3></div></div></div>   
+    <p>
+      Compares data-flow 'pinnings' for matched functions and uses the resulting offsets to
+	  reconstruct an approximate match to the original structure for the target progam.
+    </p>
+	</div>
+</div>
+</div>
+
+<div class="section">
+	<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+  <a name="SecondaryActions"></a>Secondary Actions (Tools &rarr; Structure Recovery)</h2></div></div></div>
+  <div class="sect2">
+  <div class="titlepage"><div><div><h3 class="title">
+  <a name="StructureUses"></a>Structure Uses: map to bookmarks</h3></div></div></div>   
+    <p>
+      Converts (persistent) bookmarks containing structure-use information, typically generated
+	  by the 'Tag Structure Use' action, to a (non-persistent) map and vice-versa.
+    </p>
+  </div>
+
+  <div class="sect2">
+  <div class="titlepage"><div><div><h3 class="title">
+  <a name="FunctionMatches"></a>Function Matches: map to bookmarks</h2></div></div></div>
+    
+    <p>
+		Converts (persistent) bookmarks containing function-function matches, typically generated
+		by the 'Match Functions' action, to a (non-persistent) map and vice-versa.
+    </p>
+
+	<div class="section">
+	<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+	<a name="Options"></a>Tool Options (Options/Structure Recovery)</h2></div></div></div>
+	  
+	  <p>
+	    Options governing various aspects of the structure recovery.
+	  </p>
+
+	<div class="titlepage"><div><div><h3 class="title">
+	<a name="StructureToRecover"></a>Structure to recover</h3></div></div></div>   
+	  <p>
+		The full path to the data type to be replicated ('Tag Structure Use' will query if empty).
+	  </p>
+	</div>
+
+	<div class="titlepage"><div><div><h3 class="title">
+	<a name="AddStructureUseBookmarks"></a>Add structure-use bookmarks</h3></div></div></div>   
+	  <p>
+		Should bookmarks by generated by 'Tag Structure Use'.
+	  </p>
+	</div>
+
+	<div class="sect2">
+	<div class="titlepage"><div><div><h3 class="title">
+	<a name="AddFunctionMatchBookmarks"></a>Add function-match bookmarks</h3></div></div></div>   
+	  <p>
+		Should bookmarks by generated by 'Match Functions'.
+	  </p>
+	</div>
+
+	<div class="sect2">
+	<div class="titlepage"><div><div><h3 class="title">
+	<a name="MatchConfidenceLowerBound"></a>Match-confidence lower bound</h3></div></div></div>   
+	  <p>
+		Used by 'Match Functions' (see BSim documentation for details).
+	  </p>
+	</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="MatchSimilarityLowerBound"></a>Match-similarity lower bound</h3></div></div></div>   
+  <p>
+	Used by 'Match Functions' (see BSim documentation for details).
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="MatchSimilarityUpperBound"></a>Match-similarity upper bound</h3></div></div></div>   
+  <p>
+	Used by 'Match Functions' (see BSim documentation for details).
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="SelfSignificanceBound"></a>Self-significance bound</h3></div></div></div>   
+  <p>
+	Used by 'Match Functions' (see BSim documentation for details).
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="MinConfidence"></a>Min confidence</h3></div></div></div>   
+  <p>
+	Used by 'Match Functions' (see BSim documentation for details).
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="MaxStructureOffset"></a>Max structure offset</h3></div></div></div>   
+  <p>
+	The largest offset considered valid by 'Generate structure' (prevents confusion 
+	between offsets and addresses).
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ExcludedOffsets"></a>Excluded offsets (hex)</h3></div></div></div>   
+  <p>
+	Comma-separated hex values to be ignored by 'Generate structure'. Principally used when
+	analyzing a randomized structure that amalgamates randomized fields in a common block,
+	e.g. 0x40 for the Linux task_struct randomized with symbols.
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="MatchOn"></a>Match on...</h3></div></div></div>   
+  <p>
+	Should the function-function matching rely on solo matches, solo matches plus matches
+	exceeding the 'Min confidence', or should a full maximum-weight bipartite match be
+	computed.
+  </p>
+</div>
+
+</div>
+  
+</dl></div>
+    </div>
+  
+
+</div></body>
+</html>

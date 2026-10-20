@@ -15,8 +15,7 @@
  */
 package ghidra.features.bsim.query.facade;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.*;
 import java.util.Set;
 
 import generic.lsh.vector.LSHVectorFactory;
@@ -415,7 +414,8 @@ public class SimilarFunctionQueryService implements AutoCloseable {
 	}
 
 	// NOTE: Method overriden for testing
-	protected FunctionDatabase createDatabase(String urlString) throws MalformedURLException {
+	protected FunctionDatabase createDatabase(String urlString)
+			throws MalformedURLException, URISyntaxException {
 		URL url = BSimClientFactory.deriveBSimURL(urlString);
 		return BSimClientFactory.buildClient(url, false);
 	}
@@ -435,7 +435,7 @@ public class SimilarFunctionQueryService implements AutoCloseable {
 		try {
 			database = createDatabase(serverURLString);
 		}
-		catch (MalformedURLException e) {
+		catch (MalformedURLException | URISyntaxException e) {
 			throw new QueryDatabaseException("Bad database URL: " + e.getMessage());
 		}
 		boolean success = database.initialize();

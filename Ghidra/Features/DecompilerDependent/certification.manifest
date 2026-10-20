@@ -2,6 +2,10 @@
 Module.manifest||GHIDRA||||END|
 README.md||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
+data/ctadl/declarations_ext.dl||GHIDRA||||END|
+data/ctadl/import_ext.dl||GHIDRA||||END|
+data/ctadl/pcode_lang.rs||GHIDRA||||END|
+data/ctadl/pcode_lang_ext.dl||GHIDRA||||END|
 data/decompiler.dependent.theme.properties||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
 src/main/help/help/topics/DecompilerTaint/DecompilerTaint.html||GHIDRA||||END|

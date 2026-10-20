@@ -76,8 +76,7 @@ public class DWARFLineInfoSourceMapScript extends GhidraScript {
 			popup("Unable to get reader for debug line info");
 			return;
 		}
-		ExternalDebugInfo extDebugInfo = ExternalDebugInfo.fromProgram(dprog.getGhidraProgram());
-		boolean hasBuildId = extDebugInfo != null && extDebugInfo.hasBuildId();
+		BuildIdDebugInfo buildId = BuildIdDebugInfo.fromProgram(dprog.getGhidraProgram());
 		ExternalDebugFilesService edfs =
 			ExternalDebugFilesService.forProgram(dprog.getGhidraProgram());
 
@@ -108,9 +107,9 @@ public class DWARFLineInfoSourceMapScript extends GhidraScript {
 					SourceFile sFile = new SourceFile(path, type, sfi.md5());
 					sourceManager.addSourceFile(sFile);
 					sourceFileInfoToSourceFile.put(sfi, sFile);
-					if (hasBuildId) {
-						ExternalDebugInfo srcFileDebugInfo =
-							extDebugInfo.withType(ObjectType.SOURCE, path);
+					if (buildId != null) {
+						BuildIdDebugInfo srcFileDebugInfo =
+							buildId.withType(ObjectType.SOURCE, path);
 						File srcFile = edfs.find(srcFileDebugInfo, monitor);
 						if (srcFile != null) {
 							println("Source file: " + srcFile);

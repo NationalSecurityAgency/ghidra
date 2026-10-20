@@ -15,8 +15,11 @@
  */
 package agent.gdb.rmi;
 
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -42,7 +45,8 @@ public class GdbHooksTest extends AbstractGdbTraceRmiTest {
 	private static final long RUN_TIMEOUT_MS = 20000;
 	private static final long RETRY_MS = 500;
 
-	record GdbAndTrace(GdbAndConnection conn, ManagedDomainObject mdo) implements AutoCloseable {
+	record GdbAndTrace(GdbAndConnection conn, ManagedDomainObject<Trace> mdo)
+			implements AutoCloseable {
 		public void execute(String cmd) {
 			conn.execute(cmd);
 		}
@@ -81,8 +85,8 @@ public class GdbHooksTest extends AbstractGdbTraceRmiTest {
 					set ghidra-language x86:LE:64:default
 					ghidra trace start
 					ghidra trace sync-enable""");
-			ManagedDomainObject mdo = waitDomainObject("/New Traces/gdb/noname");
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			ManagedDomainObject<Trace> mdo = waitTrace("/New Traces/gdb/noname");
+			tb = new ToyDBTraceBuilder(mdo.get());
 			return new GdbAndTrace(conn, mdo);
 		}
 		catch (Exception e) {
@@ -364,6 +368,8 @@ public class GdbHooksTest extends AbstractGdbTraceRmiTest {
 	 * <p>
 	 * Technically, this probably doesn't hit on_free_objfile, but all three just call
 	 * modules_changed, so I'm not concerned.
+	 * 
+	 * @throws Exception because
 	 */
 	@Test
 	public void testOnEventsObjfiles() throws Exception {

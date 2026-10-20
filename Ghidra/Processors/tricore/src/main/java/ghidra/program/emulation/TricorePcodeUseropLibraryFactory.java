@@ -18,23 +18,22 @@ package ghidra.program.emulation;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeUseropLibraryFactory.UseropLibrary;
+import ghidra.pcode.exec.SleighPcodeUseropDefinition.BuilderStage1;
 
-@UseropLibrary("tricore")
+@UseropLibrary(id = "tricore")
 public class TricorePcodeUseropLibraryFactory implements PcodeUseropLibraryFactory {
 	@Override
 	public <T> PcodeUseropLibrary<T> create(SleighLanguage language,
 			PcodeArithmetic<T> arithmetic) {
-		return new TricorePcodeUseropLibrary<>(language);
+		return new TricorePcodeUseropLibrary<>();
 	}
 
 	public static class TricorePcodeUseropLibrary<T> extends AnnotatedPcodeUseropLibrary<T> {
-		public TricorePcodeUseropLibrary(SleighLanguage language) {
-			SleighPcodeUseropDefinition.Factory factory =
-				new SleighPcodeUseropDefinition.Factory(language);
 
-			putOp(factory.define("saveCallerState")
-					.params("_fcx", "_lcx", "_pcxi")
-					.body(args -> """
+		@PcodeUserop
+		public SleighPcodeUseropDefinition saveCallerState(BuilderStage1 builder) {
+			return builder.params("_fcx", "_lcx", "_pcxi")
+					.body(_ -> """
 							local ea:4 = ((FCX & 0xffff0000) << 12) | ((FCX & 0xffff) << 6);
 							local new_fcx:4 = * ea;
 							if (new_fcx != 0) goto <skip_init>;
@@ -59,10 +58,13 @@ public class TricorePcodeUseropLibraryFactory implements PcodeUseropLibraryFacto
 							PCXI = (PCXI & 0xfff00000) | (    FCX & 0x000fffff);
 							FCX =  (FCX  & 0xfff00000) | (new_fcx & 0x000fffff);
 							""")
-					.build());
-			putOp(factory.define("restoreCallerState")
-					.params("_fcx", "_lcx", "_pcxi")
-					.body(args -> """
+					.build();
+		}
+
+		@PcodeUserop
+		public SleighPcodeUseropDefinition restoreCallerState(BuilderStage1 builder) {
+			return builder.params("_fcx", "_lcx", "_pcxi")
+					.body(_ -> """
 							local ea:4 = ((PCXI & 0xffff0000) << 12) | ((PCXI & 0x0000ffff) << 6);
 							local savePCXI = PCXI;
 							PCXI = *  ea;
@@ -84,7 +86,7 @@ public class TricorePcodeUseropLibraryFactory implements PcodeUseropLibraryFacto
 							* ea = FCX;
 							FCX = (FCX & 0xfff00000) | (savePCXI & 0x000fffff);
 							""")
-					.build());
+					.build();
 		}
 	}
 }

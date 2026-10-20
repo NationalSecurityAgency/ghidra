@@ -175,7 +175,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	@Override
 	public void serviceAdded(Class<?> interfaceClass, Object service) {
-		if (interfaceClass == CodeViewerService.class) {
+		if (CodeViewerService.class.isAssignableFrom(interfaceClass)) {
 			CodeViewerService codeViewerService = (CodeViewerService) service;
 			codeViewerService.addProgramDropProvider(new DataDropOnBrowserHandler(this));
 		}
@@ -310,6 +310,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	@Override
 	protected void programActivated(Program program) {
 		program.addListener(this);
+		provider.programActivated(program);
 		dataTypeManagerHandler.programOpened(program);
 		dataTypePropertyManager.programOpened(program);
 	}

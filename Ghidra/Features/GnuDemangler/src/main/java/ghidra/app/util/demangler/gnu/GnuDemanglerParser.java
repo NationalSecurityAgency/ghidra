@@ -23,12 +23,14 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
 import generic.jar.ResourceFile;
 import generic.json.Json;
 import ghidra.app.util.SymbolPathParser;
+import ghidra.app.util.bin.format.elf.ElfSymbol;
 import ghidra.app.util.demangler.*;
 import ghidra.framework.Application;
 import ghidra.program.model.lang.CompilerSpec;
@@ -451,8 +453,12 @@ public class GnuDemanglerParser {
 
 	private DemangledObjectBuilder getSpecializedBuilder(String demangled) {
 
+		// first check for .cold clone labels 
+		if (ElfSymbol.isColdSymbolName(mangledSource)) {
+			return new ColdLabelHandler(demangled);
+		}
 		//
-		// Note: we check for the 'special handlers' first, since they are more specific than
+		// Note: we check for the 'special handlers' next, since they are more specific than
 		//       the other handlers here.  Checking for the operator handler first can produce
 		//       errors, since some 'special handler' strings actually contain 'operator'
 		//       signatures.  In those cases, the operator handler will incorrectly match on the
@@ -597,7 +603,7 @@ public class GnuDemanglerParser {
 	private String replaceStdLibraryTypes(String demangled) {
 		String d = demangled;
 		for (GnuDemanglerReplacement replacement : REPLACEMENTS) {
-			d = StringUtils.replace(d, replacement.find(), replacement.replace());
+			d = Strings.CS.replace(d, replacement.find(), replacement.replace());
 		}
 		return d;
 	}
@@ -2564,6 +2570,19 @@ public class GnuDemanglerParser {
 		@Override
 		String getModifiedText() {
 			return modifiedText;
+		}
+
+	}
+
+	private class ColdLabelHandler extends DemangledObjectBuilder {
+
+		ColdLabelHandler(String demangled) {
+			super(demangled);
+		}
+
+		@Override
+		DemangledObject build() {
+			return new DemangledLabel(mangledSource, demangledSource, demangled);
 		}
 
 	}

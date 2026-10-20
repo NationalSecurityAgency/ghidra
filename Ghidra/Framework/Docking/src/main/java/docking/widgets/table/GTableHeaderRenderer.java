@@ -91,8 +91,17 @@ public class GTableHeaderRenderer extends DefaultTableCellRenderer {
 		primaryIcon = getIcon(model, modelIndex);
 		helpIcon = getHelpIcon(table, column);
 
+		// The prevents accessibility from reading the table header text when the header is clipped
+		// in between the row and column numbers, which looks confusing and is inconsistent.
+		// We override getToolTipText() on the header which allows us to customize the tool tip
+		// for the headers as needed. Setting this to the empty string overrides the client property
+		// for tool tips, which is what the accessibility api uses.  The GUI tool tip is retrieved
+		// from the getToolTipText() method.
+		putClientProperty(TOOL_TIP_TEXT_KEY, "");
+
 		return this;
 	}
+
 
 	@Override
 	public void setBounds(int x, int y, int w, int h) {

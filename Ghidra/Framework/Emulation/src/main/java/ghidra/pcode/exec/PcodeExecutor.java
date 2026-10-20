@@ -16,7 +16,6 @@
 package ghidra.pcode.exec;
 
 import java.util.List;
-import java.util.Map;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.emu.PcodeEmulator;
@@ -24,6 +23,7 @@ import ghidra.pcode.error.LowlevelError;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
+import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropSymbolMap;
 import ghidra.pcode.opbehavior.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
@@ -33,7 +33,6 @@ import ghidra.program.model.pcode.Varnode;
 
 /**
  * An executor of p-code programs
- * 
  * <p>
  * This is the kernel of Sleigh expression evaluation and p-code emulation. For a complete example
  * of a p-code emulator, see {@link PcodeEmulator}.
@@ -41,6 +40,13 @@ import ghidra.program.model.pcode.Varnode;
  * @param <T> the type of values processed by the executor
  */
 public class PcodeExecutor<T> {
+	public static final int OPIDX_BRANCH_TARGET = 0;
+	public static final int OPIDX_CBRANCH_PRED = 1;
+	public static final int OPIDX_DEFEF_SPACE = 0;
+	public static final int OPIDX_DEREF_OFFSET = 1;
+	public static final int OPIDX_STORE_VALUE = 2;
+	public static final int OPIDX_CALLOTHER_OP_NUMBER = 0;
+
 	protected final SleighLanguage language;
 	protected final PcodeArithmetic<T> arithmetic;
 	protected final PcodeExecutorState<T> state;
@@ -65,6 +71,16 @@ public class PcodeExecutor<T> {
 
 		this.pc = language.getProgramCounter();
 		this.pcSize = pc != null ? pc.getNumBytes() : language.getDefaultSpace().getPointerSize();
+	}
+
+	/**
+	 * Construct an executor with the given bindings
+	 * 
+	 * @param state the state, providing arithmetic and storage
+	 * @param reason a reason for reading the state with this executor
+	 */
+	public PcodeExecutor(PcodeExecutorState<T> state, Reason reason) {
+		this((SleighLanguage) state.getLanguage(), state.getArithmetic(), state, reason);
 	}
 
 	/**
@@ -121,7 +137,7 @@ public class PcodeExecutor<T> {
 	 * @return the frame
 	 */
 	public PcodeFrame begin(PcodeProgram program) {
-		return begin(program.code, program.useropNames);
+		return begin(program.code, program.userops);
 	}
 
 	/**
@@ -132,38 +148,35 @@ public class PcodeExecutor<T> {
 	 * @return the frame
 	 */
 	public PcodeFrame execute(PcodeProgram program, PcodeUseropLibrary<T> library) {
-		return execute(program.code, program.useropNames, library);
+		return execute(program.code, library);
 	}
 
 	/**
 	 * Begin execution of a list of p-code ops
 	 * 
 	 * @param code the ops
-	 * @param useropNames the map of userop numbers to names
+	 * @param userops the map of userop symbols
 	 * @return the frame
 	 */
-	public PcodeFrame begin(List<PcodeOp> code, Map<Integer, String> useropNames) {
-		return new PcodeFrame(language, code, useropNames);
+	public PcodeFrame begin(List<PcodeOp> code, PcodeUseropSymbolMap userops) {
+		return new PcodeFrame(language, code, userops);
 	}
 
 	/**
 	 * Execute a list of p-code ops
 	 * 
 	 * @param code the ops
-	 * @param useropNames the map of userop numbers to names
 	 * @param library the library of userops
 	 * @return the frame
 	 */
-	public PcodeFrame execute(List<PcodeOp> code, Map<Integer, String> useropNames,
-			PcodeUseropLibrary<T> library) {
-		PcodeFrame frame = begin(code, useropNames);
+	public PcodeFrame execute(List<PcodeOp> code, PcodeUseropLibrary<T> library) {
+		PcodeFrame frame = begin(code, library.getSymbols(language));
 		finish(frame, library);
 		return frame;
 	}
 
 	/**
 	 * Finish execution of a frame
-	 * 
 	 * <p>
 	 * TODO: This is not really sufficient for continuation after a break, esp. if that break occurs
 	 * within a nested call back into the executor. This would likely become common when using pCode
@@ -262,7 +275,6 @@ public class PcodeExecutor<T> {
 
 	/**
 	 * Assert that a varnode is constant and get its value as an integer.
-	 * 
 	 * <p>
 	 * Here "constant" means a literal or immediate value. It does not read from the state.
 	 * 
@@ -334,7 +346,7 @@ public class PcodeExecutor<T> {
 	 * @return the address space (derived from const input 0)
 	 */
 	protected AddressSpace getLoadStoreSpace(PcodeOp op) {
-		int spaceID = getIntConst(op.getInput(0));
+		int spaceID = getIntConst(op.getInput(OPIDX_DEFEF_SPACE));
 		return language.getAddressFactory().getAddressSpace(spaceID);
 	}
 
@@ -345,7 +357,7 @@ public class PcodeExecutor<T> {
 	 * @return the offset varnode (input 1)
 	 */
 	protected Varnode getLoadStoreOffset(PcodeOp op) {
-		return op.getInput(1);
+		return op.getInput(OPIDX_DEREF_OFFSET);
 	}
 
 	/**
@@ -396,7 +408,7 @@ public class PcodeExecutor<T> {
 	 * @return the value varnode (input 2)
 	 */
 	protected Varnode getStoreValue(PcodeOp op) {
-		return op.getInput(2);
+		return op.getInput(OPIDX_STORE_VALUE);
 	}
 
 	/**
@@ -419,7 +431,6 @@ public class PcodeExecutor<T> {
 
 	/**
 	 * Extension point: Called when execution branches to a target address
-	 * 
 	 * <p>
 	 * NOTE: This is <em>not</em> called for the fall-through case
 	 * 
@@ -431,7 +442,6 @@ public class PcodeExecutor<T> {
 	/**
 	 * Convert the given offset to the machine's type and delegate to
 	 * {@link #branchToOffset(PcodeOp, Object, PcodeFrame)}.
-	 * 
 	 * <p>
 	 * Overriding this allows extension to avert attempted uses of the arithmetic, when it may not
 	 * be applicable.
@@ -446,7 +456,6 @@ public class PcodeExecutor<T> {
 
 	/**
 	 * Set the state's pc to the given offset and finish the frame
-	 * 
 	 * <p>
 	 * This implements only part of the p-code control flow semantics. An emulator must also
 	 * override {@link #branchToAddress(PcodeOp, Address)}, so that it can update its internal
@@ -482,12 +491,11 @@ public class PcodeExecutor<T> {
 	 * @return the target address (input 0's address)
 	 */
 	protected Address getBranchTarget(PcodeOp op) {
-		return op.getInput(0).getAddress();
+		return op.getInput(OPIDX_BRANCH_TARGET).getAddress();
 	}
 
 	/**
 	 * Perform the actual logic of a branch p-code op
-	 * 
 	 * <p>
 	 * This is a separate method, so that overriding {@link #executeBranch(PcodeOp, PcodeFrame)}
 	 * does not implicitly modify {@link #executeConditionalBranch(PcodeOp, PcodeFrame)}.
@@ -508,7 +516,6 @@ public class PcodeExecutor<T> {
 
 	/**
 	 * Execute a branch
-	 * 
 	 * <p>
 	 * This merely defers to {@link #doExecuteBranch(PcodeOp, PcodeFrame)}. To instrument the
 	 * operation, override this. To modify or instrument branching in general, override
@@ -530,7 +537,7 @@ public class PcodeExecutor<T> {
 	 * @return the predicate varnode (input 1)
 	 */
 	protected Varnode getConditionalBranchPredicate(PcodeOp op) {
-		return op.getInput(1);
+		return op.getInput(OPIDX_CBRANCH_PRED);
 	}
 
 	/**
@@ -555,12 +562,11 @@ public class PcodeExecutor<T> {
 	 * @return the target varnode (input 0)
 	 */
 	protected Varnode getIndirectBranchTarget(PcodeOp op) {
-		return op.getInput(0);
+		return op.getInput(OPIDX_BRANCH_TARGET);
 	}
 
 	/**
 	 * Check and correct the given target address, if it resides in "NO ADDRESS" space.
-	 * 
 	 * <p>
 	 * At some point, we made a change to set the "target address" of compiled p-code userops to
 	 * {@link Address#NO_ADDRESS} instead of pretending its at {@code ram:00000000}. This is
@@ -582,7 +588,6 @@ public class PcodeExecutor<T> {
 
 	/**
 	 * Perform the actual logic of an indirect branch p-code op
-	 * 
 	 * <p>
 	 * This is a separate method, so that overriding
 	 * {@link #executeIndirectBranch(PcodeOp, PcodeFrame)} does not implicitly modify
@@ -603,7 +608,6 @@ public class PcodeExecutor<T> {
 
 	/**
 	 * Execute an indirect branch
-	 * 
 	 * <p>
 	 * This merely defers to {@link #doExecuteIndirectBranch(PcodeOp, PcodeFrame)}. To instrument
 	 * the operation, override this. To modify or instrument indirect branching in general, override
@@ -660,7 +664,7 @@ public class PcodeExecutor<T> {
 	 * @return the userop number (const input 0)
 	 */
 	protected int getCallotherOpNumber(PcodeOp op) {
-		return getIntConst(op.getInput(0));
+		return getIntConst(op.getInput(OPIDX_CALLOTHER_OP_NUMBER));
 	}
 
 	/**
@@ -686,7 +690,6 @@ public class PcodeExecutor<T> {
 
 	/**
 	 * Extension point: Behavior when a userop definition was not found in the library
-	 * 
 	 * <p>
 	 * The default behavior is to throw a {@link SleighLinkException}.
 	 * 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,9 +24,13 @@ import org.junit.Test;
 
 import docking.ComponentProvider;
 import docking.DockableComponent;
+import docking.widgets.fieldpanel.FieldPanel;
+import docking.widgets.fieldpanel.support.FieldLocation;
 import generic.theme.GThemeDefaults.Colors.Palette;
+import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.datamgr.DataTypesProvider;
+import ghidra.app.plugin.core.decompile.DecompilerProvider;
 import ghidra.app.plugin.core.programtree.ViewManagerComponentProvider;
 
 public class DecompilePluginScreenShots extends GhidraScreenShotGenerator {
@@ -115,52 +119,6 @@ public class DecompilePluginScreenShots extends GhidraScreenShotGenerator {
 		image = tf.getImage();
 	}
 
-	@Test
-	public void testBackwardSlice() {
-		TextFormatter tf = new TextFormatter(16, 500, 4, 5, 0);
-		TextFormatterContext hl = new TextFormatterContext(Palette.BLACK, Palette.YELLOW);
-		TextFormatterContext red = new TextFormatterContext(Palette.RED, Palette.WHITE);
-		TextFormatterContext blue = new TextFormatterContext(Palette.BLUE, Palette.WHITE);
-		TextFormatterContext green = new TextFormatterContext(Palette.GREEN, Palette.WHITE);
-		TextFormatterContext greenhl = new TextFormatterContext(Palette.GREEN, Palette.YELLOW);
-		TextFormatterContext cursorhl =
-			new TextFormatterContext(Palette.BLACK, Palette.YELLOW, Palette.RED);
-
-		tf.writeln("    |a| = |psParm2|->id;", hl, hl);
-		tf.writeln("    b = |max_alpha|(|psParm1|->next,|psParm1|->id);", red, hl, hl);
-		tf.writeln("    c = |max_beta|(psParm1->prev, |a|);", red, hl);
-		tf.writeln("    c = c + b;");
-		tf.writeln("    dStack8 = |0|;", green);
-		tf.writeln("    |while| (psParm1->count != dStack8 && (sdword)dStack8) {", blue);
-		tf.writeln("        |if| (c < (sdword)(dStack8 + b)) {", blue);
-		tf.writeln("            c = c + |a|;", hl);
-		tf.writeln("        }");
-		tf.writeln("        |else| {", blue);
-		tf.writeln("            |a| = |a| + |10|;", hl, hl, greenhl);
-		tf.writeln("        }");
-		tf.writeln("        dStack8 = dStack8 + |1|;", green);
-		tf.writeln("    }");
-		tf.writeln("    psParm1->count = |a| + c;", cursorhl);
-		tf.writeln("    |return|;", blue);
-
-		image = tf.getImage();
-	}
-
-	@Test
-	public void testStructnotapplied() {
-		Image listingImage = getListingImage();
-		Image decompImage = getDecompilerNoStructImage();
-		int listingWidth = listingImage.getWidth(null);
-		int decompWidth = decompImage.getWidth(null);
-		int height = Math.max(listingImage.getHeight(null), decompImage.getHeight(null));
-		BufferedImage combined = createEmptyImage(listingWidth + decompWidth, height);
-		Graphics2D g = combined.createGraphics();
-		g.drawImage(listingImage, 0, 0, null);
-		g.drawImage(decompImage, listingWidth, 0, null);
-		g.dispose();
-		image = combined;
-	}
-
 	public void testStructApplied() {
 		Image listingImage = getListingImage();
 		Image decompImage = getDecompilerStructAppliedImage();
@@ -177,12 +135,35 @@ public class DecompilePluginScreenShots extends GhidraScreenShotGenerator {
 
 	@Test
 	public void testEditFunctionSignature() {
+		DecompilerProvider provider = (DecompilerProvider) getProvider("Decompiler");
+		showProvider(provider.getClass());
 		goToListing(0x401040);
-		ComponentProvider provider = getProvider("Decompiler");
+		int line = 2; // function signature line
+		int charPos = 15; // function name
+		setDecompilerLocation(provider, line, charPos);
 		showProvider(provider.getClass());
 		waitForSwing();
 		performAction("Edit Function Signature", "DecompilePlugin", provider, false);
 		captureDialog();
+	}
+
+	private void setDecompilerLocation(DecompilerProvider provider, int line, int charPosition) {
+
+		DecompilerPanel panel = provider.getDecompilerPanel();
+		FieldPanel fp = panel.getFieldPanel();
+		FieldLocation loc = loc(line, charPosition);
+
+		// scroll to the field to make sure it has been built so that we can get its point
+		fp.scrollTo(loc);
+		Point p = fp.getPointForLocation(loc);
+
+		click(fp, p, 1, true);
+		waitForSwing();
+	}
+
+	private FieldLocation loc(int lineNumber, int col) {
+		FieldLocation loc = new FieldLocation(lineNumber - 1, 0, 0, col);
+		return loc;
 	}
 
 	private Image getListingImage() {

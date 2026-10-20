@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import db.*;
 import db.util.ErrorHandler;
-import ghidra.program.database.DBObjectCache;
+import ghidra.program.database.DbCache;
 import ghidra.program.model.address.KeyRange;
 import ghidra.util.LockHold;
 import ghidra.util.database.DBCachedObjectStoreFactory.DBFieldCodec;
@@ -41,7 +41,7 @@ import ghidra.util.database.annot.DBAnnotatedField;
  * <p>
  * Essentially, this provides object-based accessed to records in the table via DAOs. See
  * {@link DBAnnotatedObject} for further documentation including an example object definition. The
- * store keeps a cache of objects using {@link DBObjectCache}. See
+ * store keeps a cache of objects using {@link DbCache}. See
  * {@link DBCachedObjectStoreFactory} for documentation describing how to create a store, including
  * for the example object definition.
  * 
@@ -200,7 +200,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		}
 
 		E get(long key) throws IOException {
-			T cached = cache.get(key);
+			T cached = cache.getCachedInstance(key);
 			if (cached != null) {
 				return fromObject(cached);
 			}
@@ -580,7 +580,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 
 		@Override
 		boolean typedContains(Long u) throws IOException {
-			if (cache.get(u) != null) {
+			if (cache.getCachedInstance(u) != null) {
 				return true;
 			}
 			return table.hasRecord(u);
@@ -619,11 +619,12 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			if (record == null) {
 				return null;
 			}
-			T cached = cache.get(record);
+			T cached = cache.getCachedInstance(record);
 			if (cached != null) {
 				return cached;
 			}
 			T found = factory.create(DBCachedObjectStore.this, record);
+			cache.add(found);
 			found.doRefresh(record);
 			return found;
 		}
@@ -747,7 +748,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 
 	final DBCachedDomainObjectAdapter adapter;
 	final DBHandle dbh;
-	final DBObjectCache<T> cache;
+	final DbCache<T> cache;
 	private final Class<T> objectType;
 	private final DBAnnotatedObjectFactory<T> factory;
 	private final String tableName;
@@ -783,8 +784,9 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		this.table = table;
 		this.tableName = table.getName();
 		this.schema = table.getSchema();
-		this.cache = new DBObjectCache<>(1000); // TODO: Parameterize this?
 		this.lock = adapter.getReadWriteLock();
+		this.cache = new DbCache<T>(new DebuggerFactoryAdapter<>(this, table, factory),
+			adapter.getReadWriteLock(), 1000);
 		this.codecs = DBCachedObjectStoreFactory.getCodecs(objectType);
 
 		this.asForwardMap = new DBCachedObjectStoreMap<>(this, adapter, lock, Direction.FORWARD);
@@ -923,11 +925,12 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		}
 	}
 
-	protected T doCreate(long key) throws IOException {
+	private T doCreate(long key) throws IOException {
 		DBRecord rec = schema.createRecord(key);
 		table.putRecord(rec);
 		T created = factory.create(this, rec);
 		created.fresh(true);
+		cache.add(created);
 		created.doUpdateAll();
 		return created;
 	}
@@ -1224,7 +1227,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 	 * @return true if cached
 	 */
 	boolean isCached(long key) {
-		return cache.get(key) != null;
+		return cache.getCachedInstance(key) != null;
 	}
 
 	/**

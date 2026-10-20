@@ -106,18 +106,6 @@ public class TestDummyGoToService implements GoToService {
 	}
 
 	@Override
-	public GoToOverrideService getOverrideService() {
-		// stub
-		return null;
-	}
-
-	@Override
-	public void setOverrideService(GoToOverrideService override) {
-		// stub
-
-	}
-
-	@Override
 	public Navigatable getDefaultNavigatable() {
 		// stub
 		return null;

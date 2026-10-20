@@ -30,8 +30,8 @@ import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.lifecycle.Internal;
 import ghidra.pcode.emu.unix.AbstractEmuUnixSyscallUseropLibrary;
 import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
 import ghidra.pcode.exec.SleighPcodeUseropDefinition.BuilderStage1;
-import ghidra.pcode.exec.SleighPcodeUseropDefinition.Factory;
 import ghidra.pcode.floatformat.FloatFormatFactory;
 import ghidra.pcode.struct.DefaultVar.Check;
 import ghidra.program.model.address.AddressSpace;
@@ -46,14 +46,12 @@ import utilities.util.AnnotationUtilities;
 
 /**
  * The primary class for using the "structured sleigh" DSL
- * 
  * <p>
  * This provides some conveniences for generating Sleigh source code, which is otherwise completely
  * typeless and lacks basic control structure. In general, the types are not used so much for type
  * checking as they are for easing access to fields of C structures, array indexing, etc.
  * Furthermore, it becomes possible to re-use code when data types differ among platforms, so long
  * as those variations are limited to field offsets and type sizes.
- * 
  * <p>
  * Start by declaring an extension of {@link StructuredSleigh}. Then put any necessary "forward
  * declarations" as fields of the class. Then declare methods annotated with
@@ -75,14 +73,12 @@ import utilities.util.AnnotationUtilities;
  * 	}
  * }
  * </pre>
- * 
  * <p>
  * This will simply generate the source "{@code r0 = 0xdeadbeef:4}", but it also provides all the
  * scaffolding to compile and invoke the userop as in a {@link PcodeUseropLibrary}. Internal methods
  * -- which essentially behave like macros -- may be used, so only annotate methods to export as
  * userops. For a more complete and practical example of using structured sleigh in a userop
  * library, see {@link AbstractEmuUnixSyscallUseropLibrary}.
- * 
  * <p>
  * Structured sleigh is also usable in a more standalone manner:
  * 
@@ -103,7 +99,6 @@ import utilities.util.AnnotationUtilities;
  * System.out.println(myUserop.programFor(new Varnode(r0.getAddress(), r0.getNumBytes()), List.of(),
  * 	PcodeUseropLibrary.NIL));
  * </pre>
- * 
  * <p>
  * Known limitations:
  * <ul>
@@ -128,7 +123,6 @@ public class StructuredSleigh {
 
 	/**
 	 * "Export" a method as a p-code userop implemented using p-code compiled from structured Sleigh
-	 *
 	 * <p>
 	 * This is applied to methods used to generate Sleigh source code. Take note that the method is
 	 * only invoked once (for a given library instance) to generate code. Thus, beware of
@@ -141,12 +135,10 @@ public class StructuredSleigh {
 	 * 	r0.set(Random.nextLong()); // BAD: Die rolled once at compile time
 	 * }
 	 * </pre>
-	 * 
 	 * <p>
 	 * The random number will be generated once at structured Sleigh compilation time, and then that
 	 * same number used on every invocation of the p-code userop. Instead, this userop should be
 	 * implemented using a Java callback, i.e., {@link AnnotatedPcodeUseropLibrary.PcodeUserop}.
-	 * 
 	 * <p>
 	 * The userop may accept parameters and return a result. To accept parameters, declare them in
 	 * the Java method signature and annotate them with {@link Param}. To return a result, name the
@@ -162,12 +154,11 @@ public class StructuredSleigh {
 		 * The data type path for the "return type" of the userop. See
 		 * {@link StructuredSleigh#type(String)}.
 		 */
-		String type() default "void";
+		String type() default "undefined";
 	}
 
 	/**
 	 * Declare a parameter of the p-code userop
-	 * 
 	 * <p>
 	 * This is attached to parameters of methods annotated with {@link StructuredUserop}, providing
 	 * the type and name of the parameter. The Java type of the parameter must be {@link Var}. For
@@ -191,7 +182,6 @@ public class StructuredSleigh {
 
 		/**
 		 * The name of the parameter in the output Sleigh code
-		 * 
 		 * <p>
 		 * If the variable is referenced via {@link StructuredSleigh#s(String)} or
 		 * {@link StructuredSleigh#e(String)}, then is it necessary to specify the name used in the
@@ -206,7 +196,6 @@ public class StructuredSleigh {
 
 	/**
 	 * The declaration of an "imported" userop
-	 * 
 	 * <p>
 	 * Because Sleigh is typeless, structured Sleigh needs additional type information about the
 	 * imported userop. The referenced userop may be implemented by another library and may be a
@@ -238,7 +227,6 @@ public class StructuredSleigh {
 
 		/**
 		 * Generate an invocation of the userop
-		 * 
 		 * <p>
 		 * If the userop has a result type, then the resulting statement will also have a value. If
 		 * the user has a {@code void} result type, the "value" should not be used. Otherwise, a
@@ -263,7 +251,6 @@ public class StructuredSleigh {
 
 		/**
 		 * Cast the value to the given type
-		 * 
 		 * <p>
 		 * This functions like a C-style pointer cast. There are no implied operations or
 		 * conversions. Notably, casting between integers and floats is just a re-interpretation of
@@ -276,7 +263,6 @@ public class StructuredSleigh {
 
 		/**
 		 * Generate a dereference (in the C sense)
-		 * 
 		 * <p>
 		 * The value is treated as an address, and the result is essentially a variable in the given
 		 * target address space.
@@ -813,7 +799,6 @@ public class StructuredSleigh {
 
 		/**
 		 * Generate a field offset
-		 * 
 		 * <p>
 		 * This departs subtly from expected C semantics. This value's type is assumed to be a
 		 * pointer to a {@link Composite}. That type is retrieved and the field located. This then
@@ -821,7 +806,6 @@ public class StructuredSleigh {
 		 * a pointer to the type of the field. The C equivalent is "{@code &(val->field)}".
 		 * Essentially, it's just address computation. Note that this operator will fail if the type
 		 * is not a pointer. It cannot be used directly on the {@link Composite} type.
-		 * 
 		 * <p>
 		 * TODO: Allow direct use on the composite type? Some mechanism for dealing with bitfields?
 		 * Bitfields cannot really work if this is just pointer manipulation. If it's also allowed
@@ -838,7 +822,6 @@ public class StructuredSleigh {
 
 		/**
 		 * Generate an array index
-		 * 
 		 * <p>
 		 * This departs subtly from expected C semantics. This value's type is assumed to be a
 		 * pointer to the element type. The size of the element type is computed, and this generates
@@ -846,8 +829,6 @@ public class StructuredSleigh {
 		 * the result is the same as this value's type. The C equivalent is "{@code &(val[index])}".
 		 * Essentially, it's just address computation. Note that this operator will fail if the type
 		 * is not a pointer. It cannot be used on an {@link Array} type.
-		 * 
-		 * 
 		 * <p>
 		 * TODO: Allow use of {@link Array} type? While it's possible for authors to specify pointer
 		 * types for their variables, the types of fields they access may not be under their
@@ -972,7 +953,6 @@ public class StructuredSleigh {
 	protected interface Label {
 		/**
 		 * Borrow this label
-		 * 
 		 * <p>
 		 * This should be used whenever a statement (or its children) may need to generate a goto
 		 * using the "next" label passed into it. If "next" is the fall-through label, this will
@@ -986,7 +966,6 @@ public class StructuredSleigh {
 
 		/**
 		 * Generate code for this label
-		 * 
 		 * <p>
 		 * This must be the last method called on the label, because it relies on knowing whether or
 		 * not the label is actually used. (The Sleigh compiler rejects code if it contains unused
@@ -1137,7 +1116,6 @@ public class StructuredSleigh {
 
 	/**
 	 * The virtual fall-through label
-	 * 
 	 * <p>
 	 * The idea is that no one should ever need to generate labels or gotos to achieve fall-through.
 	 * Any attempt to do so probably indicates an implementation error where code generation failed
@@ -1178,7 +1156,6 @@ public class StructuredSleigh {
 	// Used only for variable name validation
 	final PcodeParser parser;
 	final SleighLanguage language;
-	private final Factory factory;
 
 	private BlockStmt root;
 	// Used to determine statement binding, e.g., for "_break" and "_result"
@@ -1214,7 +1191,6 @@ public class StructuredSleigh {
 	protected StructuredSleigh(CompilerSpec cs) {
 		this.language = (SleighLanguage) cs.getLanguage();
 		this.parser = SleighProgramCompiler.createParser(language);
-		this.factory = new Factory(language);
 		this.dtm = new StandAloneDataTypeManager("/", cs.getDataOrganization());
 
 		addDataTypeSource(dtm);
@@ -1282,7 +1258,6 @@ public class StructuredSleigh {
 
 	/**
 	 * Declare a local variable with the given name and type
-	 * 
 	 * <p>
 	 * If the variable has no definitive type, but has a known size, use e.g.,
 	 * {@link Undefined8DataType} or {@link #type(String)} with "{@code /undefined8}". If the
@@ -1301,7 +1276,6 @@ public class StructuredSleigh {
 
 	/**
 	 * Declare a local variable with the given name and initial value
-	 * 
 	 * <p>
 	 * The type is taken from that of the initial value.
 	 * 
@@ -1377,7 +1351,6 @@ public class StructuredSleigh {
 
 	/**
 	 * Generate a literal (or immediate or constant) value
-	 * 
 	 * <p>
 	 * <b>WARNING:</b> Passing a literal int that turns out to be negative (easy to do in hex
 	 * notation) can be perilous. For example, 0xdeadbeef will actually result in 0xffffffffdeadbeef
@@ -1425,7 +1398,6 @@ public class StructuredSleigh {
 
 	/**
 	 * Generate Sleigh code
-	 * 
 	 * <p>
 	 * This is similar in concept to inline assembly. It allows the embedding of Sleigh code into
 	 * Structured Sleigh that is otherwise impossible or inconvenient to state. No effort is made to
@@ -1440,7 +1412,6 @@ public class StructuredSleigh {
 
 	/**
 	 * Generate a Sleigh expression
-	 * 
 	 * <p>
 	 * This is similar in concept to inline assembly, except it also has a value. It allows the
 	 * embedding of Sleigh code into Structured Sleigh that is otherwise impossible or inconvenient
@@ -1476,7 +1447,6 @@ public class StructuredSleigh {
 
 		/**
 		 * Generate an "else if" clause for the wrapped "if" statement
-		 * 
 		 * <p>
 		 * This is shorthand for {@code _else(_if(...))} but avoids the unnecessary nesting of
 		 * parentheses.
@@ -1498,7 +1468,6 @@ public class StructuredSleigh {
 
 	/**
 	 * Generate an "if" statement
-	 * 
 	 * <p>
 	 * The body is usually a lambda containing additional statements, predicated on this statement's
 	 * condition, so that it resembles Java / C syntax:
@@ -1508,7 +1477,6 @@ public class StructuredSleigh {
 	 * 	r1.set(1);
 	 * });
 	 * </pre>
-	 * 
 	 * <p>
 	 * The returned "wrapper" provides for additional follow-on syntax, e.g.:
 	 * 
@@ -1532,7 +1500,6 @@ public class StructuredSleigh {
 
 	/**
 	 * Generate a "while" statement
-	 * 
 	 * <p>
 	 * The body is usually a lambda containing the controlled statements, so that it resembles Java
 	 * / C syntax:
@@ -1553,7 +1520,6 @@ public class StructuredSleigh {
 
 	/**
 	 * Generate a "for" statement
-	 * 
 	 * <p>
 	 * The body is usually a lambda containing the controlled statements, so that it resembles Java
 	 * / C syntax:
@@ -1566,7 +1532,6 @@ public class StructuredSleigh {
 	 * 	total.addiTo(temp);
 	 * });
 	 * </pre>
-	 * 
 	 * <p>
 	 * TIP: If the number of repetitions is known at generation time, consider using a standard Java
 	 * for loop, as a sort of Structured Sleigh macro. For example, to broadcast element 0 to an
@@ -1578,7 +1543,6 @@ public class StructuredSleigh {
 	 * 	arr.index(i).deref().set(arr.index(0).deref());
 	 * }
 	 * </pre>
-	 * 
 	 * <p>
 	 * Instead of generating a loop, this will generate 15 Sleigh statements.
 	 * 
@@ -1593,7 +1557,6 @@ public class StructuredSleigh {
 
 	/**
 	 * Generate a "break" statement
-	 * 
 	 * <p>
 	 * This must appear in the body of a loop statement. It binds to the innermost loop statement in
 	 * which it appears, generating code to leave that loop.
@@ -1604,7 +1567,6 @@ public class StructuredSleigh {
 
 	/**
 	 * Generate a "continue" statement
-	 * 
 	 * <p>
 	 * This must appear in the body of a loop statement. It binds to the innermost loop statement in
 	 * which it appears, generating code to immediately repeat the loop, skipping the remainder of
@@ -1616,7 +1578,6 @@ public class StructuredSleigh {
 
 	/**
 	 * Generate a "result" statement
-	 * 
 	 * <p>
 	 * This is semantically similar to a C "return" statement, but is named differently to avoid
 	 * confusion with Sleigh's return statement. When this is code implementing a p-code userop,
@@ -1634,12 +1595,10 @@ public class StructuredSleigh {
 
 	/**
 	 * Generate a "return" statement
-	 * 
 	 * <p>
 	 * This models (in part) a C-style return from the current target function to its caller. It
 	 * simply generates the "return" Sleigh statement, which is an indirect branch to the given
 	 * target. Target is typically popped from the stack or read from a link register.
-	 * 
 	 * <p>
 	 * Contrast with {@link #_result(RVal)}
 	 * 
@@ -1660,7 +1619,6 @@ public class StructuredSleigh {
 
 	/**
 	 * Get the method lookup for this context
-	 * 
 	 * <p>
 	 * If the annotated methods cannot be accessed by {@link StructuredSleigh}, this method must be
 	 * overridden. It should simply return {@link MethodHandles#lookup()}. This is necessary when
@@ -1673,7 +1631,7 @@ public class StructuredSleigh {
 		return MethodHandles.lookup();
 	}
 
-	private <T> SleighPcodeUseropDefinition<T> compile(StructuredUserop annot, Lookup lookup,
+	private SleighPcodeUseropDefinition compile(StructuredUserop annot, Lookup lookup,
 			Method method) {
 		if (annot == null) {
 			throw new IllegalArgumentException("Method " + method + " is missing @" +
@@ -1691,7 +1649,7 @@ public class StructuredSleigh {
 			throw new IllegalArgumentException("Cannot access " + method + " having @" +
 				StructuredUserop.class.getSimpleName() + " annotation. Override getMethodLookup()");
 		}
-		BuilderStage1 builder = factory.define(method.getName());
+		BuilderStage1 builder = SleighPcodeUseropDefinition.FACTORY.define(method.getName());
 
 		DataType retType = type(annot.type());
 
@@ -1733,7 +1691,7 @@ public class StructuredSleigh {
 			}
 		});
 		StringTree source = root.generate(FALL, FALL);
-		builder.body(args -> source.toString());
+		builder.body(_ -> source.toString());
 		return builder.build();
 	}
 
@@ -1743,43 +1701,58 @@ public class StructuredSleigh {
 	 * @param <T> the type of values used by the userops. For sleigh, this can be anything.
 	 * @param into the destination map, usually belonging to a {@link PcodeUseropLibrary}.
 	 */
-	public <T> void generate(Map<String, ? super SleighPcodeUseropDefinition<T>> into) {
+	public <T> void generate(Map<String, PcodeUseropDefinition<T>> into) {
 		Lookup lookup = getMethodLookup();
 		Class<? extends StructuredSleigh> cls = this.getClass();
-		Set<Method> methods =
-			CACHE_BY_CLASS.computeIfAbsent(cls, __ -> collectDefinitions(cls));
+		Set<Method> methods = CACHE_BY_CLASS.computeIfAbsent(cls, _ -> collectDefinitions(cls));
 		for (Method m : methods) {
-			into.put(m.getName(), doGenerate(lookup, m));
+			into.put(m.getName(), doGenerate(lookup, m).cast());
 		}
 	}
 
 	/**
 	 * Generate the userop for a given Java method
 	 * 
-	 * @param <T> the type of values used by the userop. For sleigh, this can be anything.
 	 * @param m the method exported as a userop
 	 * @return the userop
 	 */
-	public <T> SleighPcodeUseropDefinition<T> generate(Method m) {
+	public SleighPcodeUseropDefinition generate(Method m) {
 		return doGenerate(getMethodLookup(), m);
 	}
 
-	protected <T> SleighPcodeUseropDefinition<T> doGenerate(Lookup lookup, Method m) {
+	/**
+	 * Generate the userop for the Java method with the given name
+	 * <p>
+	 * If more than one annotated method with the given name exists, one is chosen arbitrarily.
+	 * 
+	 * @param name the method name exported as a userop
+	 * @return the userop
+	 */
+	public SleighPcodeUseropDefinition generate(String name) {
+		Class<? extends StructuredSleigh> cls = this.getClass();
+		Method method =
+			CACHE_BY_CLASS.computeIfAbsent(this.getClass(), _ -> collectDefinitions(cls))
+					.stream()
+					.filter(m -> m.getName().equals(name))
+					.findAny()
+					.orElseThrow();
+		return generate(method);
+	}
+
+	protected SleighPcodeUseropDefinition doGenerate(Lookup lookup, Method m) {
 		return compile(m.getAnnotation(StructuredUserop.class), lookup, m);
 	}
 
 	/**
 	 * Generate all the exported userops and return them in a map
-	 * 
 	 * <p>
 	 * This is typically only used when not part of a larger {@link PcodeUseropLibrary}, for example
 	 * to aid in developing a Sleigh module or for generating injects.
 	 * 
-	 * @param <T> the type of values used by the userop. For sleigh, this can be anything.
 	 * @return the userop
 	 */
-	public <T> Map<String, SleighPcodeUseropDefinition<T>> generate() {
-		Map<String, SleighPcodeUseropDefinition<T>> ops = new HashMap<>();
+	public <T> Map<String, PcodeUseropDefinition<T>> generate() {
+		Map<String, PcodeUseropDefinition<T>> ops = new HashMap<>();
 		generate(ops);
 		return ops;
 	}

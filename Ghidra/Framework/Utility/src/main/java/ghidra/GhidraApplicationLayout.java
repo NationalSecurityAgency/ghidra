@@ -156,7 +156,7 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 
 			FileUtilities.forEachFile(extensionInstallDir, extensionDir -> {
 				// Skip extensions in an application root directory... already found those.
-				if (FileUtilities.isPathContainedWithin(applicationRootDirs, extensionDir)) {
+				if (FileUtilities.startsWith(applicationRootDirs, extensionDir.getAbsolutePath())) {
 					return;
 				}
 

@@ -177,7 +177,7 @@ public class GoPcHeader {
 	@FieldMapping
 	private byte ptrSize;
 
-	@FieldMapping(presentWhen = "1.18+")
+	@FieldMapping(presentWhen = "1.18-1.25")
 	@MarkupReference
 	private long textStart;	// should be same as offset of ".text"
 
@@ -216,7 +216,7 @@ public class GoPcHeader {
 	 * {@return the address of where the text area starts}
 	 */
 	public Address getTextStart() {
-		return programContext.getDataAddress(textStart);
+		return textStart != 0 ? programContext.getDataAddress(textStart) : null;
 	}
 
 	/**

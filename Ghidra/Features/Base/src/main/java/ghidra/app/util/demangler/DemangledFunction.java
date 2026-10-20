@@ -463,7 +463,10 @@ public class DemangledFunction extends DemangledObject {
 		}
 
 		// If existing function signature is user defined - add demangled label only
-		boolean makePrimary = (function.getSignatureSource() != SourceType.USER_DEFINED);
+		boolean makePrimary = isPrimary;
+		if (function.getSignatureSource() == SourceType.USER_DEFINED) {
+			makePrimary = false;
+		}
 
 		Symbol demangledSymbol =
 			applyDemangledName(function.getEntryPoint(), makePrimary, false, program);
@@ -514,7 +517,7 @@ public class DemangledFunction extends DemangledObject {
 		ApplyFunctionSignatureCmd cmd = new ApplyFunctionSignatureCmd(function.getEntryPoint(),
 			signature, signatureSourceType, true, false, DataTypeConflictHandler.DEFAULT_HANDLER,
 			FunctionRenameOption.RENAME_IF_DEFAULT);
-		cmd.applyTo(program);
+		cmd.applyTo(program, monitor);
 
 		return true;
 	}

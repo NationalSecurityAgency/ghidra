@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.program.model.address;
 import static org.junit.Assert.*;
 
 import java.util.Iterator;
+import java.util.List;
 
 import org.junit.*;
 
@@ -28,6 +29,7 @@ public class AddressRangeImplTest extends AbstractGenericTest {
 
 	/**
 	 * Constructor for AddressRangeImplTest.
+	 * 
 	 * @param name
 	 */
 	public AddressRangeImplTest() {
@@ -37,7 +39,7 @@ public class AddressRangeImplTest extends AbstractGenericTest {
 	@Before
 	public void setUp() throws Exception {
 
-		space = new GenericAddressSpace("xx", 32, AddressSpace.TYPE_RAM, 0);
+		space = new GenericAddressSpace("xx", 64, AddressSpace.TYPE_RAM, 0);
 	}
 
 	@Test
@@ -160,6 +162,37 @@ public class AddressRangeImplTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testAddressRangeChunker_GiganticIn2Chunks() {
+		AddressRangeChunker chunker = new AddressRangeChunker(rng(0, -1), Long.MIN_VALUE);
+		assertEqualRanges(List.of(rng(0, Long.MAX_VALUE), rng(Long.MIN_VALUE, -1)), chunker);
+	}
+
+	@Test
+	public void testAddressRangeChunker_GiganticWithSmallChunks_DontExhaust() {
+		AddressRangeChunker chunker = new AddressRangeChunker(rng(0, -1), 4096);
+		// 1 is "64th" bit, >>> 12 into 52nd, so 0x 1 with 13 trailing 0s.
+		assertEquals(0x0010_0000_0000_0000L, chunker.spliterator().estimateSize());
+		List<AddressRange> first4 = chunker.stream().limit(4).toList();
+		assertEquals(
+			List.of(rng(0, 0x0fff), rng(0x1000, 0x1fff), rng(0x2000, 0x2fff), rng(0x3000, 0x3fff)),
+			first4);
+	}
+
+	@Test
+	public void testAddressRangeChunker_GiganticWithMaxChunkSize() {
+		AddressRangeChunker chunker = new AddressRangeChunker(rng(0, -1), -1);
+		assertEqualRanges(List.of(rng(0, -2), rng(-1, -1)), chunker);
+	}
+
+	@Test
+	public void testAddressRangeChunker_GiganticWithUnsignedChunkSize() {
+		AddressRangeChunker chunker = new AddressRangeChunker(rng(0, -1), Long.MIN_VALUE + 1);
+		assertEqualRanges(
+			List.of(rng(0, Long.MIN_VALUE), rng(Long.MIN_VALUE + 1, -1)),
+			chunker);
+	}
+
+	@Test
 	public void testAddressRangeChunker_NullAddresses() {
 		try {
 			new AddressRangeChunker(null, addr(0), 10);
@@ -180,13 +213,7 @@ public class AddressRangeImplTest extends AbstractGenericTest {
 
 	@Test
 	public void testAddressRangeChunker_BadChunkSize() {
-		try {
-			new AddressRangeChunker(addr(0), addr(1), -1);
-			Assert.fail("Did not get exception when passing bad chunk size to chunker.");
-		}
-		catch (IllegalArgumentException e) {
-			// good!
-		}
+		// NOTE: "Negative" chunk sizes are not possible, because chunkSize is treated unsigned
 
 		try {
 			new AddressRangeChunker(addr(0), addr(1), 0);
@@ -220,8 +247,8 @@ public class AddressRangeImplTest extends AbstractGenericTest {
 
 		try {
 			new AddressRangeChunker(a1, a2, 10);
-			Assert.fail("Did not get exception when passing addresses from different address "
-					+ "spaces to chunker.");
+			Assert.fail("Did not get exception when passing addresses from different address " +
+				"spaces to chunker.");
 		}
 		catch (IllegalArgumentException e) {
 			// good!
@@ -260,8 +287,8 @@ public class AddressRangeImplTest extends AbstractGenericTest {
 
 		assertTrue(
 			"Address Iterator does not properly enumerate address range: " +
-					String.format("%s (%d long) -- found %d", r1.toString(), r1.getLength(), addrCount),
-					addrCount == (size + 1));
+				String.format("%s (%d long) -- found %d", r1.toString(), r1.getLength(), addrCount),
+			addrCount == (size + 1));
 	}
 
 	@Test
@@ -281,8 +308,16 @@ public class AddressRangeImplTest extends AbstractGenericTest {
 		assertTrue("Address Iterator extent does not match end of range", lastAddr.equals(limit));
 	}
 
-	private Address addr(int a) {
+	private Address addr(long a) {
 		return new GenericAddress(space, a);
 	}
 
+	private AddressRange rng(long s, long e) {
+		return new AddressRangeImpl(addr(s), addr(e));
+	}
+
+	private void assertEqualRanges(List<AddressRange> expected, AddressRangeChunker actual) {
+		List<AddressRange> justEnough = actual.stream().limit(expected.size() + 1).toList();
+		assertEquals(expected, justEnough);
+	}
 }

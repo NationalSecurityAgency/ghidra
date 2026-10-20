@@ -32,7 +32,7 @@ import ghidra.debug.api.breakpoint.LogicalBreakpoint.State;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.program.model.address.Address;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
@@ -99,7 +99,7 @@ public class DeadFlatDebuggerAPITest extends AbstractFlatDebuggerAPITest<FlatDeb
 
 		createAndOpenTrace();
 		TraceThread thread;
-		try (Transaction tx = tb.startTransaction()) {
+		try (Transaction _ = tb.startTransaction()) {
 			tb.createRootObject(buildContext(), "Target");
 			thread = tb.getOrAddThread("Threads[0]", 0);
 		}
@@ -130,7 +130,7 @@ public class DeadFlatDebuggerAPITest extends AbstractFlatDebuggerAPITest<FlatDeb
 
 		createAndOpenTrace();
 		TraceThread thread;
-		try (Transaction tx = tb.startTransaction()) {
+		try (Transaction _ = tb.startTransaction()) {
 			tb.createRootObject(buildContext(), "Target");
 			thread = tb.getOrAddThread("Threads[0]", 0);
 			TraceStack stack = tb.trace.getStackManager().getStack(thread, 0, true);
@@ -337,11 +337,16 @@ public class DeadFlatDebuggerAPITest extends AbstractFlatDebuggerAPITest<FlatDeb
 		TraceSchedule schedule =
 			traceManager.getCurrent().getTime().steppedForward(traceManager.getCurrentThread(), 1);
 
+		Trace trace = traceManager.getCurrentTrace();
+		assertEquals(addr(trace, 0x00400000), api.getProgramCounter());
+
 		api.stepEmuInstruction(1, monitor);
 		assertEquals(schedule, traceManager.getCurrent().getTime());
+		assertEquals(addr(trace, 0x00400002), api.getProgramCounter());
 
 		api.stepEmuInstruction(-1, monitor);
 		assertEquals(TraceSchedule.ZERO, traceManager.getCurrent().getTime());
+		assertEquals(addr(trace, 0x00400000), api.getProgramCounter());
 	}
 
 	@Test
@@ -460,7 +465,7 @@ public class DeadFlatDebuggerAPITest extends AbstractFlatDebuggerAPITest<FlatDeb
 		LogicalBreakpoint lb = Unique.assertOne(
 			api.breakpointSetSoftwareExecute(api.staticLocation("00400000"), "name"));
 		assertEquals(addr(program, 0x00400000), lb.getAddress());
-		assertEquals(TraceBreakpointKindSet.SW_EXECUTE, lb.getKinds());
+		assertEquals(CommonSet.SWX.kinds(), lb.getKinds());
 		assertEquals(1, lb.getLength());
 	}
 
@@ -471,7 +476,7 @@ public class DeadFlatDebuggerAPITest extends AbstractFlatDebuggerAPITest<FlatDeb
 		LogicalBreakpoint lb = Unique.assertOne(
 			api.breakpointSetHardwareExecute(api.staticLocation("00400000"), "name"));
 		assertEquals(addr(program, 0x00400000), lb.getAddress());
-		assertEquals(TraceBreakpointKindSet.HW_EXECUTE, lb.getKinds());
+		assertEquals(CommonSet.HWX.kinds(), lb.getKinds());
 		assertEquals(1, lb.getLength());
 	}
 
@@ -482,7 +487,7 @@ public class DeadFlatDebuggerAPITest extends AbstractFlatDebuggerAPITest<FlatDeb
 		LogicalBreakpoint lb = Unique.assertOne(
 			api.breakpointSetRead(api.staticLocation("00400000"), 4, "name"));
 		assertEquals(addr(program, 0x00400000), lb.getAddress());
-		assertEquals(TraceBreakpointKindSet.READ, lb.getKinds());
+		assertEquals(CommonSet.READ.kinds(), lb.getKinds());
 		assertEquals(4, lb.getLength());
 	}
 
@@ -493,7 +498,7 @@ public class DeadFlatDebuggerAPITest extends AbstractFlatDebuggerAPITest<FlatDeb
 		LogicalBreakpoint lb = Unique.assertOne(
 			api.breakpointSetWrite(api.staticLocation("00400000"), 4, "name"));
 		assertEquals(addr(program, 0x00400000), lb.getAddress());
-		assertEquals(TraceBreakpointKindSet.WRITE, lb.getKinds());
+		assertEquals(CommonSet.WRITE.kinds(), lb.getKinds());
 		assertEquals(4, lb.getLength());
 	}
 
@@ -504,7 +509,7 @@ public class DeadFlatDebuggerAPITest extends AbstractFlatDebuggerAPITest<FlatDeb
 		LogicalBreakpoint lb = Unique.assertOne(
 			api.breakpointSetAccess(api.staticLocation("00400000"), 4, "name"));
 		assertEquals(addr(program, 0x00400000), lb.getAddress());
-		assertEquals(TraceBreakpointKindSet.ACCESS, lb.getKinds());
+		assertEquals(CommonSet.ACCESS.kinds(), lb.getKinds());
 		assertEquals(4, lb.getLength());
 	}
 

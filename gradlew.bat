@@ -80,7 +80,7 @@ if exist "%APP_HOME%\gradle-wrapper.jar" (
     set "GHIDRA_HOME=%APP_HOME%..\..\"
 ) else (
     @rem Development Environment (Eclipse classes or "gradle jar")
-    set "CLASSPATH=%APP_HOME%Ghidra\RuntimeScripts\Common\support\gradle\gradle-wrapper.jar"
+    set "CLASSPATH=%APP_HOME%Ghidra\RuntimeScripts\support\gradle\gradle-wrapper.jar"
     set "GHIDRA_HOME=%APP_HOME%"
 )
 

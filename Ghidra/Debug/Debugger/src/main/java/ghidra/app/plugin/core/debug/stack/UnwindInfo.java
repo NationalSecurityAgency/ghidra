@@ -182,7 +182,7 @@ public record UnwindInfo(Function function, Long depth, Long adjust, Address ofR
 	 * @return the base address
 	 */
 	public Address computeBase(Address spVal) {
-		return depth == null ? null : spVal.subtract(depth);
+		return spVal == null || depth == null ? null : spVal.subtract(depth);
 	}
 
 	/**

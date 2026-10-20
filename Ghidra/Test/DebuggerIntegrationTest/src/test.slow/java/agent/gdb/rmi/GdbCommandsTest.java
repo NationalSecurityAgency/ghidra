@@ -15,9 +15,10 @@
  */
 package agent.gdb.rmi;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
-import static org.junit.Assume.*;
+import static org.junit.Assume.assumeFalse;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -43,7 +44,7 @@ import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.*;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.listing.TraceCodeSpace;
 import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.memory.*;
@@ -115,8 +116,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace start
 				quit
 				""".formatted(PREAMBLE, addr, target));
-		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace(projectName("expPrint"))) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			assertEquals(PLAT.lang(),
 				tb.trace.getBaseLanguage().getLanguageID().getIdAsString());
 			String id = tb.trace.getBaseCompilerSpec().getCompilerSpecID().getIdAsString();
@@ -132,7 +133,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace start
 				quit
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/noname")) {
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/gdb/noname")) {
 			assertThat(mdo.get(), instanceOf(Trace.class));
 		}
 	}
@@ -151,8 +152,9 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				""".formatted(PREAMBLE, addr, target));
 		DomainFile dfMyToy = env.getProject().getProjectData().getFile("/New Traces/myToy");
 		assertNotNull(dfMyToy);
-		try (ManagedDomainObject mdo = new ManagedDomainObject(dfMyToy, false, false, monitor)) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo =
+			new ManagedDomainObject<>(dfMyToy, Trace.class, monitor)) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			assertEquals("Toy:BE:64:default",
 				tb.trace.getBaseLanguage().getLanguageID().getIdAsString());
 			assertEquals("default",
@@ -247,13 +249,11 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				quit
 				""".formatted(PREAMBLE, target));
 		String importSection = extractOutSection(out, "---Import---");
-		assertTrue(importSection.contains(
-				"""
+		assertTrue(importSection.contains("""
 				Selected Ghidra language: x86:LE:32:default
 				Selected Ghidra compiler: %s""".formatted(PLAT.cSpec())));
 		String fileSection = extractOutSection(out, "---File---");
-		assertTrue(fileSection.contains(
-				"""
+		assertTrue(fileSection.contains("""
 				Selected Ghidra language: %s
 				Selected Ghidra compiler: %s""".formatted(PLAT.lang(), PLAT.cSpec())));
 		assertEquals("""
@@ -286,8 +286,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				quit
 				""".formatted(PREAMBLE, addr, target));
 		waitDomainObjectClosed("/New Traces/no-save");
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/no-save")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/no-save")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			assertEquals(0, tb.trace.getTimeManager().getAllSnapshots().size());
 		}
 
@@ -303,8 +303,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				quit
 				""".formatted(PREAMBLE, addr, target));
 		waitDomainObjectClosed("/New Traces/save");
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/save")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/save")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			assertEquals(1, tb.trace.getTimeManager().getAllSnapshots().size());
 		}
 	}
@@ -322,8 +322,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace tx-commit
 				quit
 				""".formatted(PREAMBLE, addr, target));
-		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace(projectName("expPrint"))) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			TraceSnapshot snapshot = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots());
 			assertEquals(0, snapshot.getKey());
 			assertEquals("Scripted snapshot", snapshot.getDescription());
@@ -349,8 +349,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				kill
 				quit
 				""".formatted(PREAMBLE, addr, target, PLAT.startCmd()));
-		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace(projectName("expPrint"))) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
 
 			MemDump dump = parseHexDump(extractOutSection(out, "---Dump---"));
@@ -382,8 +382,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				kill
 				quit
 				""".formatted(PREAMBLE, addr, target, PLAT.startCmd()));
-		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace(projectName("expPrint"))) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			AddressSpace ram2 = tb.trace.getBaseAddressFactory().getAddressSpace("ram2");
 			assertNotNull(ram2);
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
@@ -415,8 +415,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				kill
 				quit
 				""".formatted(PREAMBLE, addr, target, PLAT.startCmd()));
-		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace(projectName("expPrint"))) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
 
 			String eval = extractOutSection(out, "---Start---");
@@ -425,7 +425,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 			Entry<TraceAddressSnapRange, TraceMemoryState> entry =
 				tb.trace.getMemoryManager().getMostRecentStateEntry(snap, addr);
 			assertEquals(Map.entry(new ImmutableTraceAddressSnapRange(
-				quantize(rng(addr, 10), 4096), Lifespan.at(0)), TraceMemoryState.ERROR), entry);
+				quantize(rng(addr, 10), 4096), Lifespan.nowOn(0)), TraceMemoryState.ERROR), entry);
 		}
 	}
 
@@ -449,8 +449,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				kill
 				quit
 				""".formatted(PREAMBLE, addr, target, PLAT.startCmd()));
-		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace(projectName("expPrint"))) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
 
 			MemDump dump = parseHexDump(extractOutSection(out, "---Dump---"));
@@ -483,8 +483,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				kill
 				quit
 				""".formatted(PREAMBLE, addr, target, PLAT.startCmd(), count));
-		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace(projectName("expPrint"))) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
 			AddressSpace t1f0 = tb.trace.getBaseAddressFactory()
 					.getAddressSpace("Inferiors[1].Threads[1].Stack[0].Registers");
@@ -528,8 +528,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				quit
 				""".formatted(PREAMBLE, addr, target, PLAT.startCmd(), count));
 		// The spaces will be left over, but the values should be zeroed
-		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace(projectName("expPrint"))) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
 			AddressSpace t1f0 = tb.trace.getBaseAddressFactory()
 					.getAddressSpace("Inferiors[1].Threads[1].Stack[0].Registers");
@@ -561,8 +561,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace tx-commit
 				quit
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/noname")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/gdb/noname")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
 					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
@@ -586,8 +586,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace tx-commit
 				quit
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/noname")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/gdb/noname")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
 					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
@@ -613,8 +613,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace tx-commit
 				quit
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/noname")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/gdb/noname")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
 					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
@@ -642,8 +642,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				kill
 				quit
 				""".formatted(PREAMBLE, addr, expPrint, PLAT.startCmd(), extra, gdbExpr, gtype));
-		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace(projectName("expPrint"))) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
 					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
@@ -803,8 +803,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				kill
 				quit
 				""".formatted(PREAMBLE, addr, target, PLAT.startCmd()));
-		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace(projectName("expPrint"))) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
 					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
@@ -820,7 +820,6 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testGetObj() throws Exception {
-		String target = which("expPrint");
 		String out = runThrowError(addr -> """
 				%s
 				ghidra trace connect %s
@@ -835,8 +834,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				echo \\n---
 				quit
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/noname")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/gdb/noname")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
 					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
@@ -881,8 +880,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				kill
 				quit
 				""".formatted(PREAMBLE, addr, expPrint, PLAT.startCmd()));
-		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace(projectName("expPrint"))) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			assertEquals("""
 					Parent          Key       Span     Value           Type
 					Test.Objects[1] vaddr     [0,+inf) ram:deadbeef    ADDRESS
@@ -925,8 +924,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				kill
 				quit
 				""".formatted(PREAMBLE, addr, target, PLAT.startCmd()));
-		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace(projectName("expPrint"))) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			assertEquals("""
 					Parent          Key   Span     Value        Type
 					Test.Objects[1] vaddr [0,+inf) ram:deadbeef ADDRESS""",
@@ -952,7 +951,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				kill
 				quit
 				""".formatted(PREAMBLE, addr, target, PLAT.startCmd()));
-		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
+		try (ManagedDomainObject<Trace> mdo = openTrace(projectName("expPrint"))) {
 			assertSame(mdo.get(), traceManager.getCurrentTrace());
 			assertEquals("Test.Objects[1]",
 				traceManager.getCurrentObject().getCanonicalPath().toString());
@@ -978,8 +977,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				kill
 				quit
 				""".formatted(PREAMBLE, addr, target, PLAT.startCmd()));
-		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace(projectName("expPrint"))) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			// Not concerned about specifics, so long as disassembly occurs
 			long total = 0;
 			for (CodeUnit cu : tb.trace.getCodeManager().definedUnits().get(0, true)) {
@@ -1002,8 +1001,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace tx-commit
 				quit
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/noname")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/gdb/noname")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			// Would be nice to control / validate the specifics
 			Collection<TraceObject> inferiors = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(0), PathFilter.parse("Inferiors[]"))
@@ -1027,8 +1026,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace tx-commit
 				quit
 				""".formatted(PREAMBLE, addr));
-		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/noname")) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace("/New Traces/gdb/noname")) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			// Would be nice to control / validate the specifics
 			Collection<TraceObject> available = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(0), PathFilter.parse("Available[]"))
@@ -1058,8 +1057,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				kill
 				quit
 				""".formatted(PREAMBLE, addr, target));
-		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace(projectName("expPrint"))) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			List<TraceObjectValue> infBreakLocVals = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(0),
 						PathFilter.parse("Inferiors[1].Breakpoints[]"))
@@ -1073,20 +1072,15 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 
 			// NB. starti avoid use of temporary main breakpoint
 			assertBreakLoc(infBreakLocVals.get(0), "[1.1]", main, 1,
-				Set.of(TraceBreakpointKind.SW_EXECUTE),
-				"*main");
+				CommonSet.SWX.kinds(), "*main");
 			assertBreakLoc(infBreakLocVals.get(1), "[2.1]", main.add(10), 1,
-				Set.of(TraceBreakpointKind.HW_EXECUTE),
-				"*main+10");
+				CommonSet.HWX.kinds(), "*main+10");
 			assertBreakLoc(infBreakLocVals.get(2), "[3.1]", main.add(20), 1,
-				Set.of(TraceBreakpointKind.WRITE),
-				"-location *((char*)(&main+20))");
+				CommonSet.WRITE.kinds(), "-location *((char*)(&main+20))");
 			assertBreakLoc(infBreakLocVals.get(3), "[4.1]", main.add(30), 8,
-				Set.of(TraceBreakpointKind.READ),
-				"-location *((char(*)[8])(&main+30))");
+				CommonSet.READ.kinds(), "-location *((char(*)[8])(&main+30))");
 			assertBreakLoc(infBreakLocVals.get(4), "[5.1]", main.add(40), 5,
-				Set.of(TraceBreakpointKind.READ, TraceBreakpointKind.WRITE),
-				"-location *((char(*)[5])(&main+40))");
+				CommonSet.ACCESS.kinds(), "-location *((char(*)[5])(&main+40))");
 		}
 	}
 
@@ -1105,8 +1099,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				kill
 				quit
 				""".formatted(PREAMBLE, addr, target, PLAT.startCmd()));
-		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace(projectName("expPrint"))) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			// Assumes GDB on Linux amd64
 			TraceObject env = Objects.requireNonNull(tb.obj("Inferiors[1].Environment"));
 			assertEquals("gdb", env.getValue(0, "_debugger").getValue());
@@ -1131,8 +1125,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				kill
 				quit
 				""".formatted(PREAMBLE, addr, target, PLAT.startCmd()));
-		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace(projectName("expPrint"))) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			// Would be nice to control / validate the specifics
 			Collection<? extends TraceMemoryRegion> all =
 				tb.trace.getMemoryManager().getAllRegions();
@@ -1155,8 +1149,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				kill
 				quit
 				""".formatted(PREAMBLE, addr, target, PLAT.startCmd()));
-		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace(projectName("expPrint"))) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			// Would be nice to control / validate the specifics
 			Collection<? extends TraceModule> all = tb.trace.getModuleManager().getAllModules();
 			TraceModule modExpPrint =
@@ -1180,8 +1174,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				kill
 				quit
 				""".formatted(PREAMBLE, addr, target, PLAT.startCmd()));
-		try (ManagedDomainObject mdo = openDomainObject(projectName("expPrint"))) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace(projectName("expPrint"))) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			// Would be nice to control / validate the specifics
 			Unique.assertOne(tb.trace.getThreadManager().getAllThreads());
 		}
@@ -1204,8 +1198,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				kill
 				quit
 				""".formatted(PREAMBLE, addr, target, PLAT.startCmd()));
-		try (ManagedDomainObject mdo = openDomainObject(projectName("expRead"))) {
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+		try (ManagedDomainObject<Trace> mdo = openTrace(projectName("expRead"))) {
+			tb = new ToyDBTraceBuilder(mdo.get());
 			// Would be nice to control / validate the specifics
 			List<TraceObject> stack = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(0),

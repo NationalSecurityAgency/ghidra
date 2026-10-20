@@ -28,6 +28,7 @@ import ghidra.framework.Application;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.framework.protocol.ghidra.Handler;
+import ghidra.util.NamingUtilities;
 
 public class ProjectLocatorTest extends AbstractGenericTest {
 
@@ -41,7 +42,7 @@ public class ProjectLocatorTest extends AbstractGenericTest {
 	//
 
 	private URL toGhidraLocalURL(String path) throws MalformedURLException, URISyntaxException {
-		return new URI(GhidraURL.PROTOCOL, path, null).toURL();
+		return new URI(GhidraURL.PROTOCOL, null, path, null).toURL();
 	}
 
 	@Test
@@ -155,6 +156,48 @@ public class ProjectLocatorTest extends AbstractGenericTest {
 			// NOTE: Sensitive to default drive (test assumes C: )
 			assertEquals("C:\\a\\bob.rep", pl.getProjectDir().getAbsolutePath());
 			assertEquals("C:\\a\\bob.gpr", pl.getMarkerFile().getAbsolutePath());
+		}
+	}
+
+	@Test
+	public void testSpecialCharsInPath() throws Exception {
+
+		StringBuilder specialChars = new StringBuilder();
+		for (Character c : NamingUtilities.VALID_NAME_CHARSET) {
+			specialChars.append(c);
+		}
+
+		String dirName = "bill" + specialChars;
+		String projName = "bob" + specialChars;
+
+		ProjectLocator pl = new ProjectLocator("c:\\" + dirName, projName);
+		assertEquals(toGhidraLocalURL("/c:/" + dirName + "/" + projName), pl.getURL());
+		assertEquals("/c:/" + dirName + "/", pl.getLocation());
+		assertEquals(new File("/c:/" + dirName + "/" + projName + ".rep"), pl.getProjectDir());
+		assertEquals(new File("/c:/" + dirName + "/" + projName + ".gpr"), pl.getMarkerFile());
+		assertEquals(projName, pl.getName());
+		assertTrue(pl.isWindowsOnlyLocation());
+
+		if (OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS) {
+			assertEquals("c:\\" + dirName + "\\" + projName + ".rep",
+				pl.getProjectDir().getAbsolutePath());
+			assertEquals("c:\\" + dirName + "\\" + projName + ".gpr",
+				pl.getMarkerFile().getAbsolutePath());
+		}
+
+		pl = new ProjectLocator("/c:/" + dirName, projName);
+		assertEquals(toGhidraLocalURL("/c:/" + dirName + "/" + projName), pl.getURL());
+		assertEquals("/c:/" + dirName + "/", pl.getLocation());
+		assertEquals(new File("/c:/" + dirName + "/" + projName + ".rep"), pl.getProjectDir());
+		assertEquals(new File("/c:/" + dirName + "/" + projName + ".gpr"), pl.getMarkerFile());
+		assertEquals(projName, pl.getName());
+		assertTrue(pl.isWindowsOnlyLocation());
+
+		if (OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS) {
+			assertEquals("c:\\" + dirName + "\\" + projName + ".rep",
+				pl.getProjectDir().getAbsolutePath());
+			assertEquals("c:\\" + dirName + "\\" + projName + ".gpr",
+				pl.getMarkerFile().getAbsolutePath());
 		}
 	}
 

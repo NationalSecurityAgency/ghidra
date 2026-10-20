@@ -79,11 +79,6 @@ public class FindOnceTableLoader implements MemoryMatchTableLoader {
 	}
 
 	@Override
-	public MemoryMatch getFirstMatch() {
-		return match;
-	}
-
-	@Override
 	public void dispose() {
 		previousResults = null;
 	}

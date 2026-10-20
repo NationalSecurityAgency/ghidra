@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,11 +37,19 @@ public class Ghidra {
 	 *     details on what went wrong.  
 	 */
 	public static void main(String[] args) throws Exception {
-		
-		// Poke the Taskbar class in order to set the Linux application name to this class's
-		// fully qualified class name (with . replaced by -). If we don't do this here, the next 
-		// time it gets done is in a new thread, which results in the application name being set to 
-		// "java-lang-thread".
+		setLinuxApplicationName();
+		GhidraLauncher.launch(args);
+	}
+
+	/**
+	 * Poke the {@link Taskbar} class in order to set the Linux application name to this class's
+	 * fully qualified class name (with . replaced by -). If we don't do this here, the next 
+	 * time it gets done is in a new thread, which results in the application name being set to 
+	 * "java-lang-thread".
+	 * <p>
+	 * This method should be publicly accessible so other tools can access it (i.e., PyGhidra)
+	 */
+	public static void setLinuxApplicationName() {
 		try {
 			Taskbar.isTaskbarSupported();
 		}
@@ -49,8 +57,5 @@ public class Ghidra {
 			// This can happen if we are running in a headless environment.  We don't need to
 			// worry about setting the application name in this case.
 		}
-		
-		// Forward args to GhidraLauncher, which will perform the launch
-		GhidraLauncher.launch(args);
 	}
 }

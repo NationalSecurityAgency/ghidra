@@ -45,7 +45,7 @@ import ghidra.program.model.pcode.*;
 import ghidra.program.util.*;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.TraceAddressSnapRange;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.property.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
@@ -55,8 +55,8 @@ import sarif.export.WrappedLogicalLocation;
 import sarif.managers.SarifMgr;
 
 /**
- * Container for all the decompiler elements the users "selects" via the menu.
- * This data is used to build queries.
+ * Container for all the decompiler elements the users "selects" via the menu. This data is used to
+ * build queries.
  */
 public class EmulatorTaintState extends AbstractTaintState {
 
@@ -164,8 +164,8 @@ public class EmulatorTaintState extends AbstractTaintState {
 	}
 
 	/**
-	 * Build the query string, save it to a file the users selects, and run the
-	 * engine using the index and the query that is saved to the file.
+	 * Build the query string, save it to a file the users selects, and run the engine using the
+	 * index and the query that is saved to the file.
 	 */
 	@Override
 	public boolean queryIndex(Program program, PluginTool tool, QueryType queryType) {
@@ -219,8 +219,7 @@ public class EmulatorTaintState extends AbstractTaintState {
 
 	private void injectTaint(Address target, String sleigh) {
 		PlaceEmuBreakpointActionItem item = new PlaceEmuBreakpointActionItem(current.getTrace(),
-			current.getSnap(), target, 1, Set.of(TraceBreakpointKind.SW_EXECUTE),
-			sleigh);
+			current.getSnap(), target, 1, CommonSet.SWX.kinds(), sleigh);
 		item.execute();
 	}
 

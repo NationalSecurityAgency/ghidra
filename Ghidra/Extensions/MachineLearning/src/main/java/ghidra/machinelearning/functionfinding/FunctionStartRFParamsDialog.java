@@ -16,6 +16,7 @@
 package ghidra.machinelearning.functionfinding;
 
 import java.awt.BorderLayout;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
@@ -438,7 +439,7 @@ public class FunctionStartRFParamsDialog extends ReusableDialogComponentProvider
 		minUndefRangeLabel.setToolTipText(MIN_UNDEFINED_RANGE_SIZE_TIP);
 		funcDataPanel.add(minUndefRangeLabel);
 		minUndefRangeField = new IntegerTextField();
-		minUndefRangeField.setAllowNegativeValues(false);
+		minUndefRangeField.setMinValue(BigInteger.ZERO);
 		minUndefRangeField.setValue(plugin.getMinUndefinedRangeSize());
 		funcDataPanel.add(minUndefRangeField.getComponent());
 

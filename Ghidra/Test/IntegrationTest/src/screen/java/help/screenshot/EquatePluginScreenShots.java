@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package help.screenshot;
 
 import java.awt.Rectangle;
+import java.util.List;
 
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
@@ -33,7 +34,6 @@ import ghidra.app.plugin.core.equate.EquateTableProvider;
 import ghidra.app.plugin.core.flowarrow.FlowArrowPlugin;
 import ghidra.app.util.bean.SetEquateDialog;
 import ghidra.app.util.datatype.ApplyEnumDialog;
-import ghidra.framework.plugintool.Plugin;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
@@ -64,7 +64,7 @@ public class EquatePluginScreenShots extends GhidraScreenShotGenerator {
 		super.setUp();
 
 		FlowArrowPlugin flowArrowPlugin = getPlugin(tool, FlowArrowPlugin.class);
-		tool.removePlugins(new Plugin[] { flowArrowPlugin });
+		tool.removePlugins(List.of(flowArrowPlugin));
 
 		equatePlugin = getPlugin(tool, EquatePlugin.class);
 		cb = getPlugin(tool, CodeBrowserPlugin.class);

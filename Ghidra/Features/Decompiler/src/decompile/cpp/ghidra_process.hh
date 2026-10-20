@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -82,7 +82,7 @@ protected:
   ArchitectureGhidra *ghidra;		///< The Architecture on which to perform the command
   int4 status;				///< Meta-command to system (0=wait for next command, 1=terminate process)
   virtual void loadParameters(void);	///< Read parameters directing command execution
-  virtual void sendResult(void);	///< Send results of the command (if any) back to the Ghidra client
+  virtual void sendResult(const string &errorMsg);	///< Send back response to the command
 public:
   GhidraCommand(void) : sin(cin),sout(cout) {
     ghidra = (ArchitectureGhidra *)0; 
@@ -112,7 +112,7 @@ class RegisterProgram : public GhidraCommand {
   string tspec;				///< Configuration (address-spaces) for the Translate object
   string corespec;			///< A description of core data-types for the TypeFactory object
   virtual void loadParameters(void);
-  virtual void sendResult(void);
+  virtual void sendResult(const string &errorMsg);
 public:
   int4 archid;				///< Resulting id of the program to send back
   virtual void rawAction(void);
@@ -126,7 +126,7 @@ public:
 class DeregisterProgram : public GhidraCommand {
   int4 inid;				///< The id of the Architecture being terminated
   virtual void loadParameters(void);
-  virtual void sendResult(void);
+  virtual void sendResult(const string &errorMsg);
 public:
   int4 res;				///< The meta-command being issued to send back
   virtual void rawAction(void);
@@ -140,7 +140,7 @@ public:
 /// (re)fetch any symbols as needed.
 /// The command expects a single string parameter encoding the id of the program to flush.
 class FlushNative : public GhidraCommand {
-  virtual void sendResult(void);
+  virtual void sendResult(const string &errorMsg);
 public:
   int4 res;				///< Success status returned to the client (0=success)
   virtual void rawAction(void);
@@ -211,7 +211,7 @@ class SetAction : public GhidraCommand {
   string actionstring;			///< The \e root Action to switch to
   string printstring;			///< The \e printing output configuration to toggle
   virtual void loadParameters(void);
-  virtual void sendResult(void);
+  virtual void sendResult(const string &errorMsg);
 public:
   bool res;				///< Set to \b true if the configuration action was successful
   virtual void rawAction(void);
@@ -229,7 +229,7 @@ public:
 class SetOptions : public GhidraCommand {
   Decoder *decoder;		///< The \<optionslist> decoder
   virtual void loadParameters(void);
-  virtual void sendResult(void);
+  virtual void sendResult(const string &errorMsg);
 public:
   bool res;				///< Set to \b true if the option change succeeded
   SetOptions(void) { decoder = (Decoder *)0; res = false; }	///< Constructor

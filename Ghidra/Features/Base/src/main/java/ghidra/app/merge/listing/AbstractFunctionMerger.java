@@ -23,7 +23,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import docking.widgets.dialogs.ReadTextDialog;
 import generic.stl.Pair;
@@ -750,10 +750,10 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 			if (!f1Parms[i].isEquivalent(f2Parms[i])) {
 				return false;
 			}
-			if (!StringUtils.equals(f1Parms[i].getName(), f2Parms[i].getName())) {
+			if (!Strings.CS.equals(f1Parms[i].getName(), f2Parms[i].getName())) {
 				return false;
 			}
-			if (!StringUtils.equals(f1Parms[i].getComment(), f2Parms[i].getComment())) {
+			if (!Strings.CS.equals(f1Parms[i].getComment(), f2Parms[i].getComment())) {
 				return false;
 			}
 		}

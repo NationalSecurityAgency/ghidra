@@ -43,6 +43,7 @@ import ghidra.pcode.emu.jit.gen.var.VarGen.BlockTransition;
 import ghidra.pcode.emu.jit.op.JitCallOtherDefOp;
 import ghidra.pcode.emu.jit.op.JitCallOtherOpIf;
 import ghidra.pcode.emu.jit.var.JitVal;
+import ghidra.pcode.exec.AnnotatedPcodeUseropLibrary.OpInput;
 import ghidra.pcode.exec.AnnotatedPcodeUseropLibrary.OpOutput;
 import ghidra.pcode.exec.PcodeUseropLibrary;
 import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
@@ -101,8 +102,8 @@ public enum CallOtherOpGen implements OpGen<JitCallOtherOpIf> {
 	 * @return the result of emitting the userop's bytecode
 	 */
 	public static <THIS extends JitCompiledPassage> OpResult genRunRetirementStrategy(
-			Emitter<Bot> em, Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen,
-			PcodeOp op, JitBlock block, PcodeUseropDefinition<?> userop) {
+			Emitter<Bot> em, Local<TRef<THIS>> localThis, JitCodeGenerator<THIS> gen, PcodeOp op,
+			JitBlock block, PcodeUseropDefinition<?> userop) {
 		/**
 		 * This is about the simplest (laziest) approach we could take, but it should suffice when
 		 * we cannot invoke directly. We immediately retire all variables, then invoke the userop as
@@ -113,8 +114,7 @@ public enum CallOtherOpGen implements OpGen<JitCallOtherOpIf> {
 		 * NOTE: The output variable should be "alive", so we need not store it into a local. It'll
 		 * be made alive in the return block transition.
 		 */
-		@SuppressWarnings({ "rawtypes", "unchecked" })
-		FieldForUserop useropField = gen.requestFieldForUserop((PcodeUseropDefinition) userop);
+		FieldForUserop useropField = gen.requestFieldForUserop(userop);
 		FieldForPcodeOp opField = gen.requestStaticFieldForOp(op);
 
 		BlockTransition<THIS> transition =
@@ -183,16 +183,15 @@ public enum CallOtherOpGen implements OpGen<JitCallOtherOpIf> {
 	public static <THIS extends JitCompiledPassage, LIB extends PcodeUseropLibrary<?>> OpResult
 			genRunDirectStrategy(Emitter<Bot> em, Local<TRef<THIS>> localThis,
 					JitCodeGenerator<THIS> gen, JitCallOtherOpIf op, JitBlock block, Scope scope) {
-		@SuppressWarnings({ "rawtypes", "unchecked" })
-		FieldForUserop useropField = gen.requestFieldForUserop((PcodeUseropDefinition) op.userop());
+		PcodeUseropDefinition<?> userop = op.userop();
+		FieldForUserop useropField = gen.requestFieldForUserop(userop);
 
-		// Set<Varnode> live = gen.vsm.getLiveVars(block);
 		/**
 		 * NOTE: It doesn't matter if there are live variables. We still have to "retire" the
 		 * program counter and contextreg if the userop throws an exception.
 		 */
 
-		Method method = op.userop().getJavaMethod();
+		Method method = userop.getJavaMethod();
 
 		Parameter[] parameters = method.getParameters();
 		Parameter outputParameter = findOutputParameter(parameters, method);
@@ -232,19 +231,22 @@ public enum CallOtherOpGen implements OpGen<JitCallOtherOpIf> {
 		var rec = new Object() {
 			<N extends Next> Emitter<? extends Ent<N, ?>> doReadArg(Emitter<N> em, JitVal arg,
 					Parameter param) {
+				OpInput annotation = param.getAnnotation(OpInput.class);
 				if (param.getType() == boolean.class) {
 					return gen.genReadToBool(em, localThis, arg);
 				}
 				if (param.getType() == int[].class) {
 					MpIntJitType t = MpIntJitType.forSize(arg.size());
-					// TODO: Annotation/attribute to specify slack?
-					return gen.genReadToArray(em, localThis, arg, t, Ext.ZERO, scope, 0);
+					int slack = annotation == null ? OpInput.DEFAULT_SLACK : annotation.slack();
+					return gen.genReadToArray(em, localThis, arg, t, Ext.ZERO, scope, slack);
 				}
+				boolean signed = annotation == null ? OpInput.DEFAULT_SIGNED : annotation.signed();
+				Ext ext = Ext.forSigned(signed);
 				return switch (JitType.forJavaType(param.getType())) {
-					case IntJitType t -> gen.genReadToStack(em, localThis, arg, t, Ext.ZERO);
-					case LongJitType t -> gen.genReadToStack(em, localThis, arg, t, Ext.ZERO);
-					case FloatJitType t -> gen.genReadToStack(em, localThis, arg, t, Ext.ZERO);
-					case DoubleJitType t -> gen.genReadToStack(em, localThis, arg, t, Ext.ZERO);
+					case IntJitType t -> gen.genReadToStack(em, localThis, arg, t, ext);
+					case LongJitType t -> gen.genReadToStack(em, localThis, arg, t, ext);
+					case FloatJitType t -> gen.genReadToStack(em, localThis, arg, t, ext);
+					case DoubleJitType t -> gen.genReadToStack(em, localThis, arg, t, ext);
 					default -> throw new AssertionError();
 				};
 			}
@@ -323,21 +325,20 @@ public enum CallOtherOpGen implements OpGen<JitCallOtherOpIf> {
 				em = inv
 						.step(Inv::retQVoid)
 						.emit(Op::aload, localOut)
-						.emit(gen::genWriteFromArray, localThis, defOp.out(), outMpType, Ext.ZERO,
-							scope);
+						.emit(gen::genWriteFromArray, localThis, defOp.out(), outMpType,
+							Ext.forSigned(userop.isOutSigned()), scope);
 			}
 			// Else there's either no @OpOutput or the output operand is absent
 		}
-		else if (op instanceof JitCallOtherDefOp defOp) {
-			// TODO: Can annotation specify signedness of return value?
+		else if (op instanceof JitCallOtherDefOp defOp && gen.getOpUseModel().isUsed(defOp.out())) {
 			var write = new Object() {
 				public <T extends BPrim<?>, JT extends SimpleJitType<T, JT>> Emitter<Bot> doWrite(
 						Inv<?, Bot, ?> inv, Class<?> returnType) {
 					JT type = SimpleJitType.forJavaType(returnType);
 					return inv
 							.step(Inv::retQ, type.bType())
-							.emit(gen::genWriteFromStack, localThis, defOp.out(), type, Ext.ZERO,
-								scope);
+							.emit(gen::genWriteFromStack, localThis, defOp.out(), type,
+								Ext.forSigned(userop.isOutSigned()), scope);
 				}
 			};
 			em = inv.step(write::doWrite, method.getReturnType());

@@ -1099,6 +1099,12 @@ class StackFrameDataType implements Structure {
 	}
 
 	@Override
+	public DataTypeComponent getDefinedComponent(int index) throws IndexOutOfBoundsException {
+		DataTypeComponent dtc = wrappedStruct.getDefinedComponent(index);
+		return new StackComponentWrapper(dtc);
+	}
+
+	@Override
 	public StackComponentWrapper getComponent(int ordinal) throws IndexOutOfBoundsException {
 		DataTypeComponent dtc = wrappedStruct.getComponent(ordinal);
 		return new StackComponentWrapper(dtc);
@@ -1131,7 +1137,7 @@ class StackFrameDataType implements Structure {
 
 		wrappedStruct.delete(ordinal);
 
-		Range<Integer> r = Range.between(stackOffset, stackOffset + len - 1);
+		Range<Integer> r = Range.of(stackOffset, stackOffset + len - 1);
 		if (r.contains(parameterOffset)) {
 			int negLenReduction = parameterOffset - stackOffset;
 			negativeLength -= negLenReduction;

@@ -17,6 +17,8 @@ package ghidra.pcode.emu.jit.var;
 
 import java.math.BigInteger;
 
+import ghidra.program.model.lang.Language;
+
 /**
  * A p-code constant use-def node.
  */
@@ -25,7 +27,6 @@ public class JitConstVal extends AbstractJitVal {
 
 	/**
 	 * Construct a constant.
-	 * 
 	 * <p>
 	 * Use {@link JitVal#constant(int, BigInteger)} instead.
 	 * 
@@ -40,6 +41,11 @@ public class JitConstVal extends AbstractJitVal {
 	@Override
 	public String toString() {
 		return "%s[value=%s]".formatted(getClass().getSimpleName(), value);
+	}
+
+	@Override
+	public String toString(Language language) {
+		return toString();
 	}
 
 	/**

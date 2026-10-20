@@ -30,7 +30,7 @@ import ghidra.program.model.symbol.Reference;
 import ghidra.program.util.*;
 
 /**
- * A handler to process {@link XRefFieldMouseHandler} clicks
+ * A handler to process XRef field clicks
  */
 public class XRefFieldMouseHandler implements FieldMouseHandlerExtension {
 

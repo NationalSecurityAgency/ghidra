@@ -44,6 +44,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRangeImpl;
 import ghidra.pty.testutil.DummyProc;
 import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.util.*;
@@ -59,17 +60,17 @@ public abstract class AbstractX64dbgTraceRmiTest extends AbstractGhidraHeadedDeb
 			from x64dbg_automate.models import *
 			""";
 	// Connecting should be the first thing the script does, so use a tight timeout.
-	protected static final int CONNECT_TIMEOUT_MS = 3000;
-	protected static final int TIMEOUT_SECONDS = SystemUtilities.isInTestingBatchMode() ? 10 : 300;
-	protected static final int QUIT_TIMEOUT_MS = 1000;
+	protected static final int CONNECT_TIMEOUT_MS = 10000;
+	protected static final int TIMEOUT_SECONDS = SystemUtilities.isInTestingBatchMode() ? 20 : 300;
+	protected static final int QUIT_TIMEOUT_MS = 2000;
 
 	/** Some snapshot likely to exceed the latest */
 	protected static final long SNAP = 100;
 
 	protected static boolean didSetupPython = false;
 
-	public static final String NOTEPAD = "C:\\\\Windows\\\\notepad.exe";
-	public static final String NETSTAT = "C:\\\\Windows\\\\System32\\\\netstat.exe";
+	public final String NOTEPAD = DummyProc.which("notepad").replace("\\", "\\\\");
+	public final String NETSTAT = DummyProc.which("netstat").replace("\\", "\\\\");
 	public static final String INSTRUMENT_STATE =
 		"""
 				import sys
@@ -144,16 +145,35 @@ public abstract class AbstractX64dbgTraceRmiTest extends AbstractGhidraHeadedDeb
 	public void setupTraceRmi() throws Throwable {
 		traceRmi = addPlugin(tool, TraceRmiPlugin.class);
 
-		try {
-			pythonPath = Paths.get(DummyProc.which("python3"));
-		}
-		catch (RuntimeException e) {
-			pythonPath = Paths.get(DummyProc.which("python"));
-		}
+		pythonPath = getPathToPython();
 
-		assertTrue(pythonPath.toFile().exists());
+		assertTrue("Python must be installed.", pythonPath.toFile().exists());
 		outFile = Files.createTempFile("pydbgout", null);
 		errFile = Files.createTempFile("pydbgerr", null);
+	}
+
+	protected Path getPathToPython() {
+		try {
+			String py3path = DummyProc.which("python3");
+			if (py3path != null && !py3path.contains("msys")) {
+				return Paths.get(py3path);
+			}
+		}
+		catch (RuntimeException e) {
+			// Should not happen since we maintain library on host test machine
+		}
+		return Paths.get(DummyProc.which("python"));
+	}
+
+	@Before
+	public void killAllx64dbgProcesses() throws IOException, InterruptedException {
+		ProcessBuilder pb = new ProcessBuilder("taskkill", "/IM", "x64dbg.exe", "/F");
+
+		pb.redirectErrorStream(true);
+		Process process = pb.start();
+		process.waitFor();
+
+		// don't care about the exit code.
 	}
 
 	protected void addAllDebuggerPlugins() throws PluginException {
@@ -189,10 +209,6 @@ public abstract class AbstractX64dbgTraceRmiTest extends AbstractGhidraHeadedDeb
 			if (stderr.contains("Error") || (0 != exitCode && 1 != exitCode && 143 != exitCode)) {
 				throw new PythonError(exitCode, stdout, stderr);
 			}
-			System.out.println("--stdout--");
-			System.out.println(stdout);
-			System.out.println("--stderr--");
-			System.out.println(stderr);
 			return stdout;
 		}
 	}
@@ -450,19 +466,19 @@ public abstract class AbstractX64dbgTraceRmiTest extends AbstractGhidraHeadedDeb
 		return new RegDump();
 	}
 
-	protected ManagedDomainObject openDomainObject(String path) throws Exception {
+	protected ManagedDomainObject<Trace> openTrace(String path) throws Exception {
 		DomainFile df = env.getProject().getProjectData().getFile(path);
 		assertNotNull(df);
-		return new ManagedDomainObject(df, false, false, monitor);
+		return new ManagedDomainObject<>(df, Trace.class, monitor);
 	}
 
-	protected ManagedDomainObject waitDomainObject(String path) throws Exception {
+	protected ManagedDomainObject<Trace> waitTrace(String path) throws Exception {
 		DomainFile df;
 		long start = System.currentTimeMillis();
 		while (true) {
 			df = env.getProject().getProjectData().getFile(path);
 			if (df != null) {
-				return new ManagedDomainObject(df, false, false, monitor);
+				return new ManagedDomainObject<>(df, Trace.class, monitor);
 			}
 			Thread.sleep(1000);
 			if (System.currentTimeMillis() - start > 30000) {

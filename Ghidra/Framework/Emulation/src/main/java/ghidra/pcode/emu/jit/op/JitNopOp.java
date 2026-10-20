@@ -20,11 +20,11 @@ import java.util.List;
 import ghidra.pcode.emu.jit.JitPassage.NopPcodeOp;
 import ghidra.pcode.emu.jit.analysis.JitTypeBehavior;
 import ghidra.pcode.emu.jit.var.JitVal;
+import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropSymbolMap;
 import ghidra.program.model.pcode.PcodeOp;
 
 /**
  * The use-def node for a {@link NopPcodeOp} or an inlined {@link PcodeOp#CALLOTHER}.
- * 
  * <p>
  * When a callother is inlined, we preserve the original op for bookkeeping, but ensure that no code
  * is emitted for it by wrapping it in this use-def node class.
@@ -32,6 +32,12 @@ import ghidra.program.model.pcode.PcodeOp;
  * @param op the p-code op
  */
 public record JitNopOp(PcodeOp op) implements JitOp {
+	@Override
+	public String toString(PcodeUseropSymbolMap symbols) {
+		return "%s[op=%s]".formatted(
+			getClass().getSimpleName(),
+			JitOp.toString(op, symbols));
+	}
 
 	@Override
 	public boolean canBeRemoved() {

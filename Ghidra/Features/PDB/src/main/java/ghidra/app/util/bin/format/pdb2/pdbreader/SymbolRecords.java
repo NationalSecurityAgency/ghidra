@@ -87,7 +87,7 @@ public class SymbolRecords {
 	 * @throws PdbException upon not enough data left to parse
 	 * @throws CancelledException upon user cancellation
 	 */
-	@Deprecated
+	@Deprecated(since = "11.0")
 	protected Map<Long, AbstractMsSymbol> getModuleSymbolsByOffset(int moduleNumber)
 			throws CancelledException, IOException, PdbException {
 		PdbDebugInfo debugInfo = pdb.getDebugInfo();

@@ -16,6 +16,7 @@
 package ghidra.pcode.emu.jit.analysis;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 import ghidra.pcode.emu.jit.*;
 import ghidra.pcode.emu.jit.JitCompiler.Diag;
@@ -23,13 +24,14 @@ import ghidra.pcode.emu.jit.JitPassage.*;
 import ghidra.pcode.emu.jit.decode.DecoderForOneStride;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
+import ghidra.pcode.emu.util.CountsPcodeOps;
+import ghidra.pcode.emu.util.PcodeOpCounter;
 import ghidra.pcode.exec.PcodeProgram;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.SequenceNumber;
 
 /**
  * The control flow analysis for JIT-accelerated emulation.
- * 
  * <p>
  * This implements the Control Flow Analysis phase of the {@link JitCompiler}. Some rudimentary
  * analysis is performed during passage decoding &mdash; note the {@link BlockSplitter} is exported
@@ -39,7 +41,6 @@ import ghidra.program.model.pcode.SequenceNumber;
  * all the branches it encounters and includes them as metadata in the passage. Because branches
  * need to record the source and target p-code op, the decoder is well suited. Additionally, it has
  * to compute these anyway, and we'd rather avoid duplicative work by this analyzer.
- * 
  * <p>
  * The decoded passage contains a good deal of information, but the primary inputs at this point are
  * the ordered list of p-code ops and the branches. This model's primary responsibility is to break
@@ -50,12 +51,10 @@ import ghidra.program.model.pcode.SequenceNumber;
  * all that are recorded by the decoder. Thus, it is also this model's responsibility to create the
  * fall-through branches. These will occur to represent the "false" case of any conditional
  * branches, and to represent "unconditional fall through."
- * 
  * <p>
  * The algorithm for this is fairly straightforward and has been implemented primarily in
  * {@link BlockSplitter}. Most everything else in this class is data management and the types
  * representing the model.
- * 
  * <p>
  * <b>NOTE:</b> It is technically possible for a userop to branch, but this analysis does not
  * consider that. Instead, the emulator will decide how to handle those. Conventionally, I'd rather
@@ -66,7 +65,6 @@ public class JitControlFlowModel {
 
 	/**
 	 * An exception thrown when control flow might run off the edge of the passage.
-	 * 
 	 * <p>
 	 * By definition a passage is a collection of strides, and each stride is terminated by some op
 	 * without fall through (or else a synthesized {@link ExitPcodeOp}. In particular, the last
@@ -89,12 +87,10 @@ public class JitControlFlowModel {
 
 	/**
 	 * A flow from one block to another
-	 * 
 	 * <p>
 	 * This is just a wrapper around an {@link IntBranch} that allows us to quickly identify what
 	 * two blocks it connects. Note that to connect two blocks in the passage, the branch must by
 	 * definition be an {@link IntBranch}.
-	 * 
 	 * <p>
 	 * If this flow represents entry into the passage, then {@link #from()} and {@link #branch()}
 	 * may be null
@@ -121,14 +117,13 @@ public class JitControlFlowModel {
 
 	/**
 	 * A basic block of p-code
-	 * 
 	 * <p>
 	 * This follows the formal definition of a basic block, but at the p-code level. All flows into
 	 * the block enter at its first op, and all flows out of the block exit at its last op. The
 	 * block also contains information about these flows as well as branches out of the passage via
 	 * this block.
 	 */
-	public static class JitBlock extends PcodeProgram {
+	public static class JitBlock extends PcodeProgram implements CountsPcodeOps {
 		private Map<IntBranch, BlockFlow> flowsFrom = new HashMap<>();
 		private Map<IntBranch, BlockFlow> flowsTo = new HashMap<>();
 		private List<IntBranch> branchesFrom = new ArrayList<>();
@@ -147,19 +142,14 @@ public class JitControlFlowModel {
 		public JitBlock(PcodeProgram program, List<PcodeOp> code) {
 			super(program, List.copyOf(code));
 
-			int instructions = 0;
-			int trailingOps = 0;
+			PcodeOpCounter counter = new PcodeOpCounter();
 			for (PcodeOp op : code) {
-				if (op instanceof DecodedPcodeOp dec && dec.isInstructionStart()) {
-					instructions++;
-					trailingOps = 0;
-				}
-				else if (op instanceof DecodedPcodeOp) {
-					trailingOps++;
+				if (op instanceof DecodedPcodeOp dec) {
+					counter.countOp(dec.isInstructionStart());
 				}
 			}
-			this.instructions = instructions;
-			this.trailingOps = trailingOps;
+			this.instructions = counter.instructionCount();
+			this.trailingOps = counter.trailingOpCount();
 		}
 
 		@Override
@@ -183,7 +173,6 @@ public class JitControlFlowModel {
 
 		/**
 		 * Get the sequence number of the first op
-		 * 
 		 * <p>
 		 * This is used for display and testing purposes only.
 		 * 
@@ -195,7 +184,6 @@ public class JitControlFlowModel {
 
 		/**
 		 * Get the sequence number of the last op
-		 * 
 		 * <p>
 		 * This is used for display and testing purposes only.
 		 * 
@@ -266,26 +254,25 @@ public class JitControlFlowModel {
 		 * 
 		 * @return the block, or {@code null}
 		 */
-		public JitBlock getFallFrom() {
+		public BlockFlow getFallFrom() {
 			return flowsFrom.values()
 					.stream()
 					.filter(f -> f.branch.isFall())
 					.findAny()
-					.map(f -> f.to)
 					.orElse(null);
 		}
 
 		/**
 		 * Check if there is an internal non-fall-through branch to this block
-		 * 
 		 * <p>
 		 * This is used by the {@link JitCodeGenerator} to determine whether or not a block's
 		 * bytecode needs to be labeled.
 		 * 
+		 * @param predicate additional predicate to test the flow
 		 * @return true if this block is targeted by a branch
 		 */
-		public boolean hasJumpTo() {
-			return flowsTo.values().stream().anyMatch(f -> !f.branch.isFall());
+		public boolean hasJumpTo(Predicate<BlockFlow> predicate) {
+			return flowsTo.values().stream().anyMatch(f -> !f.branch.isFall() && predicate.test(f));
 		}
 
 		/**
@@ -299,8 +286,7 @@ public class JitControlFlowModel {
 		}
 
 		/**
-		 * Get the number of instructions represented in this block
-		 * 
+		 * {@inheritDoc}
 		 * <p>
 		 * This may get dicey as blocks are not necessarily split on instruction boundaries.
 		 * Nevertheless, we seek to count the number of instructions executed at runtime, so that we
@@ -309,23 +295,13 @@ public class JitControlFlowModel {
 		 * 
 		 * @see JitCompiledPassage#count(int, int)
 		 * @see JitPcodeThread#count(int, int)
-		 * @return the instruction count
 		 */
+		@Override
 		public int instructionCount() {
 			return instructions;
 		}
 
-		/**
-		 * Get the number of trailing ops in this block
-		 * 
-		 * <p>
-		 * It is possible a block represents only partial execution of an instruction. Though
-		 * {@link #instructionCount()} will count this partial instruction, we can tell how far we
-		 * got into it by examining this value. With this, we should be able to replay an execution
-		 * to exactly the same p-code op step.
-		 * 
-		 * @return the trailing op count
-		 */
+		@Override
 		public int trailingOpCount() {
 			return trailingOps;
 		}
@@ -333,7 +309,6 @@ public class JitControlFlowModel {
 
 	/**
 	 * A class that splits a sequence of ops and associated branches into basic blocks.
-	 * 
 	 * <p>
 	 * This is the kernel of control flow analysis. It first indexes the branches by source and
 	 * target op. Note that only non-fall-through branches are known at this point. Then, it
@@ -344,7 +319,6 @@ public class JitControlFlowModel {
 	 * should have fall through (conditional or unconditional) by examining its last op. It adds a
 	 * new fall-through branch if so. The end of the p-code op list is presumed a split point. If
 	 * that final block "should have" fall through, an {@link UnterminatedFlowException} is thrown.
-	 * 
 	 * <p>
 	 * Once all the splitting is done, we have the blocks and all the branches (internal or
 	 * external) that leave each block. We then compute all the branches (internal) that enter each
@@ -362,7 +336,6 @@ public class JitControlFlowModel {
 
 		/**
 		 * Construct a new block splitter to process the given program
-		 * 
 		 * <p>
 		 * No analysis is performed in the constructor. The client must call
 		 * {@link #addBranches(Collection)} and then {@link #splitBlocks()}.
@@ -377,7 +350,6 @@ public class JitControlFlowModel {
 
 		/**
 		 * Notify the splitter of the given branches before analysis
-		 * 
 		 * <p>
 		 * The splitter immediately indexes the given branches by source and target op.
 		 * 
@@ -522,7 +494,6 @@ public class JitControlFlowModel {
 
 	/**
 	 * Construct the control flow model.
-	 * 
 	 * <p>
 	 * Analysis is performed as part of constructing the model.
 	 * 
@@ -543,7 +514,7 @@ public class JitControlFlowModel {
 			@Override
 			protected IntBranch newFallthroughIntBranch(PcodeOp from, PcodeOp to) {
 				// Decoder should already have inserted fall-through protectors
-				return new RIntBranch(from, to, true, Reachability.WITHOUT_CTXMOD);
+				return new RIntBranch(from, to, true, CtxReach.WITHOUT_CTXMOD);
 			}
 		};
 		splitter.addBranches(passage.getBranches().values());

@@ -44,14 +44,12 @@ import ghidra.util.Msg;
 /**
  * An extension of {@link PcodeEmulator} that applies Just-in-Time (JIT) translation to accelerate
  * execution.
- * 
  * <p>
  * This is meant as a near drop-in replacement for the class it extends. Aside from some additional
  * configuration, and some annotations you might add to a {@link PcodeUseropLibrary}, you can simply
- * replace {@code new PcodeEmulator()} with {@code new JitPcodeEmulator(...)}.
+ * replace "{@code new PcodeEmulator()}" with "{@code new JitPcodeEmulator(...)}."
  * 
  * <h1>A JIT-Accelerated P-code Emulator for the Java Virtual Machine</h1>
- * 
  * <p>
  * There are two major tasks to achieving JIT-accelerated p-code emulation: 1) The translation of
  * p-code to a suitable target's machine language, and 2) The selection, decoding, and cache
@@ -60,7 +58,6 @@ import ghidra.util.Msg;
  * different than targeting native machine language.
  * 
  * <h2>Terminology</h2>
- * 
  * <p>
  * Because of the potential for confusion of terms with similar meanings from similar disciplines,
  * and to distinguish our particular use of the terms, we establish some definitions up front:
@@ -155,14 +152,12 @@ public class JitPcodeEmulator extends PcodeEmulator {
 
 	/**
 	 * This emulator's cache of passage translations, incl. all entry points.
-	 * 
 	 * <p>
 	 * TODO: Invalidation of entries. One possible complication is any thread may still have an
 	 * instance of one, and could possibly be executing it. Perhaps this could be a weak hash map,
 	 * and they'll stay alive by virtue of the instances pointing to their classes? Still, we might
 	 * like to impose a total size max, which would have to be implemented among the threads. Other
 	 * reasons we may need to invalidate include:
-	 * 
 	 * <ol>
 	 * <li>Self-modifying code (we'll probably want to provide a configuration toggle given how
 	 * expensive that may become).</li>
@@ -235,13 +230,11 @@ public class JitPcodeEmulator extends PcodeEmulator {
 
 	/**
 	 * {@inheritDoc}
-	 * 
 	 * <p>
 	 * Userops can be optimized by the JIT translator under certain circumstances. To read more, see
 	 * {@link JitDataFlowUseropLibrary}. DO NOT extend that library. The internals use it to wrap
 	 * the library you provide here, but its documentation describes when and how the JIT translator
 	 * optimizes invocations to your userops.
-	 * 
 	 * <p>
 	 * <b>WARNING</b>: Userops that accept floating point types via direct invocation should be
 	 * careful that the sizes match exactly. That is, if you pass a {@code float} argument to a
@@ -259,7 +252,6 @@ public class JitPcodeEmulator extends PcodeEmulator {
 
 	/**
 	 * Check if the emulator already has translated a given entry point.
-	 * 
 	 * <p>
 	 * This is used by the decoder to detect if it should end a stride before reaching its natural
 	 * end (i.e., a non-fall-through instruction.) This was a design decision to reduce
@@ -286,7 +278,6 @@ public class JitPcodeEmulator extends PcodeEmulator {
 
 	/**
 	 * Translate a new passage starting at the given seed.
-	 * 
 	 * <p>
 	 * Note the compiler must provide an entry to the resulting passage at the requested seed. It
 	 * and any additional entry points are placed into the code cache. Each thread executing the
@@ -327,7 +318,6 @@ public class JitPcodeEmulator extends PcodeEmulator {
 
 	/**
 	 * Get the entry prototype for a given address and contextreg value.
-	 * 
 	 * <p>
 	 * An <b>entry prototype</b> is a class representing a translated passage and an index
 	 * identifying the point at which to enter the passage. The compiler numbers each entry point it
@@ -335,7 +325,6 @@ public class JitPcodeEmulator extends PcodeEmulator {
 	 * point indices are entered into the code cache for each translated passage. If no entry point
 	 * exists for the requested address and contextreg value, the emulator will decode and translate
 	 * a new passage at the requested seed.
-	 *
 	 * <p>
 	 * It's a bit odd to take the thread's decoder for a machine-level thing; however, all thread
 	 * decoders ought to have the same behavior. The particular thread's decoder will have better
@@ -416,7 +405,6 @@ public class JitPcodeEmulator extends PcodeEmulator {
 
 	/**
 	 * {@inheritDoc}
-	 * 
 	 * <p>
 	 * <b>TODO</b>: The JIT-accelerated emulator does not currently implement access breakpoints.
 	 * Furthermore, because JIT generated code is granted direct access to the emulator's state

@@ -59,7 +59,9 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 				(pAction instanceof EditFieldAction) || (pAction instanceof PointerAction) ||
 				(pAction instanceof HexNumbersAction) ||
 				(pAction instanceof InsertUndefinedAction) ||
-				(pAction instanceof AddBitFieldAction) || (pAction instanceof ApplyAction)) {
+				(pAction instanceof AddBitFieldAction) || (pAction instanceof ApplyAction) ||
+				pAction instanceof NextPrevDefinedComponentAction ||
+				pAction instanceof JumpToOffsetAction) {
 				checkEnablement(pAction, true);
 			}
 			else {
@@ -146,7 +148,9 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 				(pAction instanceof ArrayAction) ||
 				(pAction instanceof CreateInternalStructureAction) ||
 				(pAction instanceof ShowComponentPathAction) || (pAction instanceof ApplyAction) ||
-				(pAction instanceof FindReferencesToStructureFieldAction)) {
+				(pAction instanceof FindReferencesToStructureFieldAction) ||
+				pAction instanceof NextPrevDefinedComponentAction ||
+				pAction instanceof JumpToOffsetAction) {
 				checkEnablement(pAction, true);
 			}
 			else {

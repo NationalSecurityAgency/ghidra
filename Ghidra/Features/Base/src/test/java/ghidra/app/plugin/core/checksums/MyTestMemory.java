@@ -47,11 +47,6 @@ public class MyTestMemory extends AddressSet implements Memory {
 	}
 
 	@Override
-	public AddressSetView getInitializedAddressSet() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public AddressSetView getAllInitializedAddressSet() {
 		throw new UnsupportedOperationException();
 	}

@@ -15,4 +15,12 @@ src/main/py/LICENSE||GHIDRA||||END|
 src/main/py/README.md||GHIDRA||||END|
 src/main/py/pyproject.toml||GHIDRA||||END|
 src/main/py/src/ghidratrace/py.typed||GHIDRA||||END|
+src/main/py/src/ghidratrace/xml/available.xml||GHIDRA||||END|
+src/main/py/src/ghidratrace/xml/breakpointsFlat.xml||GHIDRA||||END|
+src/main/py/src/ghidratrace/xml/breakpointsTiered.xml||GHIDRA||||END|
+src/main/py/src/ghidratrace/xml/common.xml||GHIDRA||||END|
+src/main/py/src/ghidratrace/xml/events.xml||GHIDRA||||END|
+src/main/py/src/ghidratrace/xml/merge.xsl||GHIDRA||||END|
+src/main/py/src/ghidratrace/xml/nesting_adjustments.xml||GHIDRA||||END|
+src/main/py/src/ghidratrace/xml/sessions.xml||GHIDRA||||END|
 src/main/py/tests/EMPTY||GHIDRA||||END|

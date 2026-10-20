@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -202,22 +202,34 @@ abstract public class AbstractStoredProgramContext extends AbstractProgramContex
 
 	@Override
 	public Register[] getRegistersWithValues() {
-		if (registersWithValues == null) {
-			registersWithValues = new HashSet<>();
-			for (Register register : language.getRegisters()) {
-				RegisterValueStore store = registerValueMap.get(register.getBaseRegister());
-				if (store != null && !store.isEmpty()) {
-					registersWithValues.add(register);
-					continue;
-				}
-				store = defaultRegisterValueMap.get(register.getBaseRegister());
-				if (store != null && !store.isEmpty()) {
-					registersWithValues.add(register);
-				}
+		Set<Register> localRegisterWithValues = registersWithValues;
+		if (localRegisterWithValues == null) {
+			localRegisterWithValues = computeRegistersWithValues();
+		}
+		Register[] regs = new Register[localRegisterWithValues.size()];
+		return localRegisterWithValues.toArray(regs);
+	}
+
+	private synchronized Set<Register> computeRegistersWithValues() {
+		Set<Register> localRegisterWithValues = registersWithValues;
+		if (localRegisterWithValues != null) {
+			return localRegisterWithValues;
+		}
+
+		Set<Register> set = new HashSet<>();
+		for (Register register : language.getRegisters()) {
+			RegisterValueStore store = registerValueMap.get(register.getBaseRegister());
+			if (store != null && !store.isEmpty()) {
+				set.add(register);
+				continue;
+			}
+			store = defaultRegisterValueMap.get(register.getBaseRegister());
+			if (store != null && !store.isEmpty()) {
+				set.add(register);
 			}
 		}
-		Register[] regs = new Register[registersWithValues.size()];
-		return registersWithValues.toArray(regs);
+		registersWithValues = set;
+		return set;
 	}
 
 	@Override

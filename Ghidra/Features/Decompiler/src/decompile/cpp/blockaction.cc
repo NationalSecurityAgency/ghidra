@@ -1496,11 +1496,19 @@ bool CollapseStructure::ruleBlockIfNoExit(FlowBlock *bl)
     if (clauseblock->sizeOut() != 0) continue; // Must be no way out of clause
     if (clauseblock->isSwitchOut()) continue;
     if (!bl->isDecisionOut(i)) continue;
-    //    if (clauseblock->isInteriorGotoTarget()) {
-    //      bl->setGotoBranch(i);
-    //      return true;
-    //    }
-
+    if (i == 0) {
+      FlowBlock *otherblock = bl->getOut(1);
+      if (otherblock->sizeIn() == 1 &&
+	  otherblock->sizeOut() == 0 &&
+	  !otherblock->isSwitchOut() &&
+	  bl->isDecisionOut(1)) {
+	// Both out edges go to "no exit" blocks
+	if (bl->negateCondition(true))
+	  dataflow_changecount += 1;
+	graph.newBlockIfNoExit(bl,clauseblock,otherblock);
+	return true;
+      }
+    }
     if (i==0) {			// clause must be true out of bl
       if (bl->negateCondition(true))
 	dataflow_changecount += 1;
@@ -2110,7 +2118,7 @@ void ConditionalJoin::clear(void)
 int4 ActionStructureTransform::apply(Funcdata &data)
 
 {
-  data.getStructure().finalTransform(data);
+  data.getStructure().finalTransform(data,allowOpMoves);
   return 0;
 }
 
@@ -2127,7 +2135,7 @@ int4 ActionNormalizeBranches::apply(Funcdata &data)
     if (cbranch == (PcodeOp *)0) continue;
     if (cbranch->code() != CPUI_CBRANCH) continue;
     fliplist.clear();
-    if (Funcdata::opFlipInPlaceTest(cbranch,fliplist) != 0)
+    if (Funcdata::opFlipInPlaceTest(cbranch,fliplist,true) != 0)
       continue;
     data.opFlipInPlaceExecute(fliplist);
     bb->flipInPlaceExecute();
@@ -2143,6 +2151,7 @@ int4 ActionPreferComplement::apply(Funcdata &data)
   BlockGraph &graph(data.getStructure());
   
   if (graph.getSize() == 0) return 0;
+  if (graph.hasFinalTransform()) return 0;
   vector<BlockGraph *> vec;
   vec.push_back(&graph);
   int4 pos = 0;
@@ -2159,7 +2168,7 @@ int4 ActionPreferComplement::apply(Funcdata &data)
 	continue;
       vec.push_back((BlockGraph *)childbl);
     }
-    if (curbl->preferComplement(data))
+    if (curbl->preferComplement(data,allowOpMods))
       count += 1;
   }
   data.clearDeadOps();		// Clear any ops deleted during this action
@@ -2216,9 +2225,9 @@ void ActionReturnSplit::gatherReturnGotos(FlowBlock *parent,vector<FlowBlock *> 
 	  if (((BlockGoto *)bl)->gotoPrints())
 	    ret = ((BlockGoto *)bl)->getGotoTarget();
 	}
-	else if (bl->getType() == FlowBlock::t_if)
+	else if (bl->getType() == FlowBlock::t_ifgoto)
 	  // if this is an ifgoto block, get target, otherwise null
-	  ret = ((BlockIf *)bl)->getGotoTarget();
+	  ret = ((BlockIfGoto *)bl)->getGotoTarget();
 	if (ret != (FlowBlock *)0) {
 	  while(ret->getType() != FlowBlock::t_basic)
 	    ret = ret->subBlock(0);
@@ -2317,7 +2326,7 @@ int4 ActionReturnSplit::apply(Funcdata &data)
     count += 1;
 #ifdef BLOCKCONSISTENT_DEBUG
     if (!data.getBasicBlocks().isConsistent())
-      data.getArch()->printMessage("Block structure is not consistent");
+      data.getArch()->printWarning("Block structure is not consistent");
 #endif
   }
   return 0;

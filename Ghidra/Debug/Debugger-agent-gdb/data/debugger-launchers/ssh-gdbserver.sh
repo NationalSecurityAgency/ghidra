@@ -51,9 +51,9 @@ shift
 
 function launch-gdb() {
 	local qargs
-	printf -v qargs '%q ' "$@"
+	printf -v qargs '%q ' "$target_image" "$@"
 	local -a args
-	compute-gdb-remote-args "$target_image" "remote | '$OPT_SSH_PATH' $OPT_EXTRA_SSH_ARGS '$OPT_HOST' '$OPT_GDBSERVER_PATH' $OPT_EXTRA_GDBSERVER_ARGS - '$target_image' $qargs" "$GHIDRA_TRACE_RMI_ADDR"
+	compute-gdb-remote-args "$target_image" "remote | '$OPT_SSH_PATH' $OPT_EXTRA_SSH_ARGS '$OPT_HOST' '$OPT_GDBSERVER_PATH' $OPT_EXTRA_GDBSERVER_ARGS - $qargs" "$GHIDRA_TRACE_RMI_ADDR"
 
 	"${args[@]}"
 }

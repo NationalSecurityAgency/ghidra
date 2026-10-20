@@ -389,4 +389,5 @@ public abstract class CompositeEditorProvider<T extends Composite, M extends Com
 	protected void closeDependentEditors() {
 		// do nothing by default
 	}
+
 }

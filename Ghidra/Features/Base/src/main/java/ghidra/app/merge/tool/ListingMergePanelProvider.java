@@ -47,7 +47,7 @@ public class ListingMergePanelProvider extends ComponentProviderAdapter
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
 		Object obj = mergePanel.getActionContext(event);
-		return createContext(obj);
+		return new DefaultActionContext(this).setContextObject(obj);
 	}
 
 	void dispose() {

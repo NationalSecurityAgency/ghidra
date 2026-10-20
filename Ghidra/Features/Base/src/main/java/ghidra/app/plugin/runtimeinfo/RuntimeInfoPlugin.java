@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package ghidra.app.plugin.runtimeinfo;
 
 import docking.action.builder.ActionBuilder;
+import docking.tool.ToolConstants;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.framework.main.ApplicationLevelOnlyPlugin;
 import ghidra.framework.main.UtilityPluginPackage;
@@ -50,7 +51,7 @@ public class RuntimeInfoPlugin extends Plugin implements ApplicationLevelOnlyPlu
 				.onAction(context -> showInstalledProcessors())
 				.enabled(true)
 				.menuPath("Help", supportedActionName)
-				.menuGroup("YYY") // trying to put this just above the last menu entry
+				.menuGroup(ToolConstants.HELP_RUNTIME_MENU_GROUP)
 				.helpLocation(getInstalledProcessorsHelpLocation())
 				.buildAndInstall(tool);
 
@@ -59,7 +60,7 @@ public class RuntimeInfoPlugin extends Plugin implements ApplicationLevelOnlyPlu
 				.onAction(context -> showRuntimeInfo())
 				.enabled(true)
 				.menuPath("Help", runtimeInfoActionName)
-				.menuGroup("YYY")
+				.menuGroup(ToolConstants.HELP_RUNTIME_MENU_GROUP)
 				.helpLocation(getRuntimeInfoHelpLocation())
 				.buildAndInstall(tool);
 	}

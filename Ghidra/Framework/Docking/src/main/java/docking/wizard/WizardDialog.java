@@ -29,6 +29,7 @@ import docking.widgets.label.GDLabel;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import generic.theme.Gui;
 import ghidra.util.HelpLocation;
+import ghidra.util.Swing;
 import help.Help;
 import help.HelpService;
 import resources.Icons;
@@ -193,6 +194,17 @@ public class WizardDialog extends DialogComponentProvider {
 		HelpService help = Help.getHelpService();
 		help.registerHelp(getComponent(), helpLocation);
 		statusChanged();
+
+		initializeFocus(step);
+	}
+
+	private void initializeFocus(WizardStep<?> step) {
+		Component toFocus = step.getDefaultFocusComponent();
+		if (toFocus != null) {
+			Swing.runLater(() -> {
+				toFocus.requestFocusInWindow();
+			});
+		}
 	}
 
 	private void createButtons() {

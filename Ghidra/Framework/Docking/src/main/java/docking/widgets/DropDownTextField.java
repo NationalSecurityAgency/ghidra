@@ -72,6 +72,7 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 
 	private static final Cursor CURSOR_HAND = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
 	private static final Cursor CURSOR_DEFAULT = Cursor.getDefaultCursor();
+	protected static final int DEFAULT_MIN_UPDATE_DELAY = 350;
 	private static final int DEFAULT_MAX_UPDATE_DELAY = 2000;
 	private static final int MIN_HEIGHT = 300;
 	private static final int MIN_WIDTH = 200;
@@ -136,7 +137,7 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 	* @param dataModel provides element storage and search capabilities to this component.
 	*/
 	public DropDownTextField(DropDownTextFieldDataModel<T> dataModel) {
-		this(dataModel, 350);
+		this(dataModel, DEFAULT_MIN_UPDATE_DELAY);
 	}
 
 	/**

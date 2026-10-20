@@ -114,6 +114,10 @@ public class AutoRenameSimpleLabels extends GhidraScript {
 			else if (flow.isJump()) {
 				//println("unconditional jump instruction at " + startAddr.toString(false).toUpperCase() );
 				newName = "branch_" + startAddr.toString(false).toUpperCase() + "_" + operand;
+				// The operand representation can contain characters that are not valid in a
+				// symbol name (e.g. "dword ptr [EBP*0x4 + 0x10029dec]"), which would cause
+				// setName() to throw an InvalidInputException. Sanitize before use.
+				newName = SymbolUtilities.replaceInvalidChars(newName, true);
 				// NOTE: can't end on a hex number for operands that start with 'LAB_CODE' ??
 				// so append '_' 
 				// ???

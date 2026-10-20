@@ -15,62 +15,74 @@
  */
 package docking.widgets.table;
 
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableModel;
+import javax.swing.table.*;
 
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 
 /**
- * A model that provides access to table columns that are "configurable," whether by way of 
- * {@link Settings} object, or by the implementations and how they were written (like supplying 
+ * A model that provides access to table columns that are "configurable," whether by way of
+ * {@link Settings} object, or by the implementations and how they were written (like supplying
  * custom renderers and such).
  */
 public interface ConfigurableColumnTableModel extends TableModel {
 
 	/**
-	 * Returns settings for the specified column index
+	 * {@return settings for the specified column index}
+	 * 
 	 * @param index column index
-	 * @return column settings.
 	 */
 	public Settings getColumnSettings(int index);
 
 	/**
-	 * Returns settings definitions for the specified column index
+	 * {@return settings definitions for the specified column index}
+	 * 
 	 * @param index column index
-	 * @return column settings definitions.
 	 */
 	public SettingsDefinition[] getColumnSettingsDefinitions(int index);
 
 	/**
-	 * Allows for the bulk setting of Settings.  This prevents excessive event 
-	 * notification when all settings need to be changed.  
+	 * Allows for the bulk setting of Settings.
+	 * <p>
+	 * This prevents excessive event notification when all settings need to be changed.
 	 * 
-	 * @param settings An array of Settings that contains Settings for each column  
-	 *        where the index of the Settings in the array is the index of the column
-	 *        in the model
+	 * @param settings An array of Settings that contains Settings for each column where the index
+	 *            of the Settings in the array is the index of the column in the model
 	 */
 	public void setAllColumnSettings(Settings[] settings);
 
 	/**
-	 * Gets the maximum number of text display lines needed for any given cell within the 
-	 * specified column
+	 * {@return the maximum number of text display lines needed for any given cell within the
+	 * specified column}
+	 * 
 	 * @param index column field index
-	 * @return maximum number of lines needed for specified column
 	 */
 	public int getMaxLines(int index);
 
 	/**
-	 * Returns the table cell renderer for the given column
+	 * {@return the table cell renderer for the given column}
+	 * <p>
+	 * A null value indicates this column uses the default cell renderer.
+	 * 
 	 * @param columnIndex the index of the column
-	 * @return the renderer
 	 */
 	public TableCellRenderer getRenderer(int columnIndex);
 
 	/**
-	 * Returns the header cell renderer for the given column
+	 * {@return the table cell editor for the given column}
+	 * <p>
+	 * A null value indicates this column uses the default cell editor.
+	 * 
 	 * @param columnIndex the index of the column
-	 * @return the renderer
+	 */
+	public TableCellEditor getEditor(int columnIndex);
+
+	/**
+	 * {@return the header cell renderer for the given column}
+	 * <p>
+	 * A null value indicates this column uses the default header renderer.
+	 * 
+	 * @param columnIndex the index of the column
 	 */
 	public TableCellRenderer getHeaderRenderer(int columnIndex);
 }

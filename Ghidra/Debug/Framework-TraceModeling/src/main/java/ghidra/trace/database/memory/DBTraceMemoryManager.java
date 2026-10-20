@@ -269,6 +269,22 @@ public class DBTraceMemoryManager extends AbstractDBTraceSpaceBasedManager<DBTra
 	}
 
 	@Override
+	public Collection<Entry<TraceAddressSnapRange, TraceMemoryState>> getStates(Lifespan span,
+			AddressRange range) {
+		return delegateReadOr(range.getAddressSpace(), m -> m.getStates(span, range),
+				() -> List.of(
+				Map.entry(new ImmutableTraceAddressSnapRange(range, span),
+						TraceMemoryState.UNKNOWN)));
+	}
+
+	@Override
+	public List<TraceAddressSnapRange> findBytesAcrossLifespan(Lifespan span, AddressRange range, byte[] pattern,
+			TaskMonitor monitor) {
+		return delegateReadOr(range.getAddressSpace(),
+				m -> m.findBytesAcrossLifespan(span, range, pattern, monitor), List::of);
+	}
+
+	@Override
 	public Iterable<Entry<TraceAddressSnapRange, TraceMemoryState>> getMostRecentStates(
 			TraceAddressSnapRange within) {
 		return delegateRead(within.getRange().getAddressSpace(), m -> m.getMostRecentStates(within),
@@ -347,11 +363,9 @@ public class DBTraceMemoryManager extends AbstractDBTraceSpaceBasedManager<DBTra
 		Lifespan between = from < to ? Lifespan.span(from + 1, to) : Lifespan.span(to + 1, from);
 		Collection<Entry<TraceAddressSnapRange, TraceMemoryState>> result = new ArrayList<>();
 		for (DBTraceMemorySpace space : spaces.values()) {
-			AddressRange rng =
-				new AddressRangeImpl(space.space.getMinAddress(), space.space.getMaxAddress());
-			result.addAll(
-				space.stateMapSpace.reduce(TraceAddressSnapRangeQuery.enclosed(rng, between))
-						.entries());
+			result.addAll(space.stateMapSpace
+					.reduce(TraceAddressSnapRangeQuery.minWithin(between, space.space))
+					.entries());
 		}
 		return result;
 	}

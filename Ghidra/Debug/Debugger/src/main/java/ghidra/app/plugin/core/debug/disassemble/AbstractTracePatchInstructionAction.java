@@ -37,6 +37,31 @@ import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
 public abstract class AbstractTracePatchInstructionAction extends PatchInstructionAction {
+	protected class TraceAssemblyDualTextField extends AssemblyDualTextField {
+		protected class TraceAssemblyDualTextAutocompletionModel
+				extends AssemblyDualTextAutocompletionModel {
+			AssemblyPatternBlock ctx = null;
+
+			@Override
+			protected AssemblyPatternBlock getContext() {
+				return ctx;
+			}
+
+			@Override
+			public void setAddress(Address address) {
+				super.setAddress(address);
+				RegisterValue rv = getContextValue(getCodeUnit());
+				ctx = rv == null ? AssemblyPatternBlock.nop()
+						: AssemblyPatternBlock.fromRegisterValue(rv).fillMask();
+			}
+		}
+
+		@Override
+		protected AssemblyDualTextAutocompletionModel newAutocompletionModel() {
+			return new TraceAssemblyDualTextAutocompletionModel();
+		}
+	}
+
 	protected final DebuggerDisassemblerPlugin plugin;
 
 	public AbstractTracePatchInstructionAction(DebuggerDisassemblerPlugin plugin, String name) {
@@ -57,22 +82,7 @@ public abstract class AbstractTracePatchInstructionAction extends PatchInstructi
 
 	@Override
 	protected AssemblyDualTextField newAssemblyDualTextField() {
-		return new AssemblyDualTextField() {
-			AssemblyPatternBlock ctx = null;
-
-			@Override
-			protected AssemblyPatternBlock getContext() {
-				return ctx;
-			}
-
-			@Override
-			public void setAddress(Address address) {
-				super.setAddress(address);
-				RegisterValue rv = getContextValue(getCodeUnit());
-				ctx = rv == null ? AssemblyPatternBlock.nop()
-						: AssemblyPatternBlock.fromRegisterValue(rv).fillMask();
-			}
-		};
+		return new TraceAssemblyDualTextField();
 	}
 
 	@Override
@@ -150,7 +160,14 @@ public abstract class AbstractTracePatchInstructionAction extends PatchInstructi
 			}
 
 			AddressSetView set = new AddressSet(address, address.add(data.length - 1));
-			TraceDisassembleCommand dis = new TraceDisassembleCommand(platform, address, set);
+			TraceDisassembleCommand dis = new TraceDisassembleCommand(platform, address, set) {
+				@Override
+				public boolean applyTo(TraceProgramView view, TaskMonitor monitor) {
+					boolean result = super.applyTo(view, monitor);
+					doGoToNext(data.length);
+					return result;
+				}
+			};
 			if (contextValue != null) {
 				dis.setInitialContext(contextValue);
 			}

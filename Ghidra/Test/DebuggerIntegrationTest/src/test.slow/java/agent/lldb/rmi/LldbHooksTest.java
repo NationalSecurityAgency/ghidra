@@ -43,7 +43,8 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 	private static final long RUN_TIMEOUT_MS = 5000;
 	private static final long RETRY_MS = 500;
 
-	record LldbAndTrace(LldbAndConnection conn, ManagedDomainObject mdo) implements AutoCloseable {
+	record LldbAndTrace(LldbAndConnection conn, ManagedDomainObject<Trace> mdo)
+			implements AutoCloseable {
 		public void execute(String cmd) {
 			conn.execute(cmd);
 		}
@@ -82,8 +83,8 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 		LldbAndConnection conn = startAndConnectLldb();
 		try {
 			conn.execute("ghidra trace start");
-			ManagedDomainObject mdo = waitDomainObject("/New Traces/lldb/noname");
-			tb = new ToyDBTraceBuilder((Trace) mdo.get());
+			ManagedDomainObject<Trace> mdo = waitTrace("/New Traces/lldb/noname");
+			tb = new ToyDBTraceBuilder(mdo.get());
 			return new LldbAndTrace(conn, mdo);
 		}
 		catch (Exception e) {

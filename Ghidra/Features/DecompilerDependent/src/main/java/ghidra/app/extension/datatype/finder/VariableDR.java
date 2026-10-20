@@ -78,4 +78,5 @@ public abstract class VariableDR extends DecompilerReference {
 			results.add(new DataTypeReference(dataType, fieldName, function, address, context));
 		}
 	}
+
 }

@@ -12,6 +12,7 @@
             id="V850:LE:32:default">
     <description>Renesas V850 family</description>
     <compiler name="default" spec="V850.cspec" id="default"/>
+    <external_name tool="IDA-PRO" name="v850"/>
     <external_name tool="DWARF.register.mapping.file" name="V850.dwarf"/>
     <external_name tool="gnu" name="v850e2v4"/>
     

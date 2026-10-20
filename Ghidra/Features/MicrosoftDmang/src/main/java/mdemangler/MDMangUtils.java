@@ -20,8 +20,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.ObjectUtils;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.*;
 
 import ghidra.app.util.SymbolPath;
 import ghidra.app.util.SymbolPathParser;
@@ -273,7 +272,7 @@ public class MDMangUtils {
 		for (int i = 0; i < parts.size(); i++) {
 			String part = parts.get(i);
 			// These anonymous namespaces are those that come in the clear (non-mangled)
-			StringUtils.replace(part, "`anonymous-namespace'", "`anonymous namespace'");
+			Strings.CS.replace(part, "`anonymous-namespace'", "`anonymous namespace'");
 			StringBuilder sb = new StringBuilder();
 			Matcher m = LOCAL_NS_PATTERN.matcher(part);
 			if (m.find()) {
@@ -306,7 +305,7 @@ public class MDMangUtils {
 		for (int i = 0; i < parts.size(); i++) {
 			String part = parts.get(i);
 			// These anonymous namespaces are those that come in the clear (non-mangled)
-			StringUtils.replace(part, "`anonymous-namespace'", "`anonymous namespace'");
+			Strings.CS.replace(part, "`anonymous-namespace'", "`anonymous namespace'");
 			StringBuilder sb = new StringBuilder();
 			Matcher m = DEMANGLED_LOCAL_NS_PATTERN.matcher(part);
 			if (m.find()) {

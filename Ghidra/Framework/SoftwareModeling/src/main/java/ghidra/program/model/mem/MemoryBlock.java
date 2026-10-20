@@ -33,7 +33,7 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	 * A special purpose EXTERNAL block may be created by certain program loaders 
 	 * (e.g., Elf) to act as a stand-in for unknown external symbol locations when 
 	 * relocation support is required using a valid memory address.  While the
-	 * EXTERNAL block is created out of neccessity for relocation processing it
+	 * EXTERNAL block is created out of necessity for relocation processing it
 	 * introduces a number of limitations when used to carry data symbols
 	 * where pointer math and offset-references may occur.  
 	 * <p>
@@ -65,6 +65,7 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	/**
 	 * Get memory data in the form of an InputStream. Null is returned for thos memory blocks which
 	 * have no data.
+	 * @return the input stream
 	 */
 	public InputStream getData();
 
@@ -72,6 +73,7 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	 * Return whether addr is contained in this block.
 	 * 
 	 * @param addr address
+	 * @return true if contained
 	 */
 	public boolean contains(Address addr);
 
@@ -264,9 +266,9 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	public int getBytes(Address addr, byte[] b) throws MemoryAccessException;
 
 	/**
-	 * Tries to get len bytes from this block at the given address and put them into the given byte
-	 * array at the specified offet. May return fewer bytes if the requested length is beyond the
-	 * end of the block.
+	 * Tries to get {@code len} bytes from this block at the given address and put them into the 
+	 * given byte array at the specified offset. May return fewer bytes if the requested length is 
+	 * beyond the end of the block.
 	 * 
 	 * @param addr the address from which to get the bytes.
 	 * @param b the byte array to populate.
@@ -303,8 +305,8 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	public int putBytes(Address addr, byte[] b) throws MemoryAccessException;
 
 	/**
-	 * Tries to put len bytes from the specified byte array to this block. All the bytes may not be
-	 * written if the requested length is beyond the end of the block.
+	 * Tries to put {@code len} bytes from the specified byte array to this block. All the bytes may
+	 * not be written if the requested length is beyond the end of the block.
 	 * 
 	 * @param addr the address of where to put the bytes.
 	 * @param b the byte array containing the bytes to write.
@@ -328,7 +330,7 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	/**
 	 * Return whether this block has been initialized.
 	 * <p>
-	 * WARNING: A mapped memory block may have a mix of intialized, uninitialized, and undefined 
+	 * WARNING: A mapped memory block may have a mix of initialized, uninitialized, and undefined 
 	 * regions.  The value returned by this method for a mapped memory block is always false 
 	 * even if some regions are initialized.
 	 * @return true if block is fully initialized and not a memory-mapped-block, else false
@@ -347,10 +349,10 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	 * (see {@link MemoryBlock#EXTERNAL_BLOCK_NAME}).  Checks for individual addresses may be done
 	 * using {@link Memory#isExternalBlockAddress(Address)}.
 	 * <p>
-	 * Note that EXTERNAL blocks always resides within a memory space and never within the artifial
-	 * {@link AddressSpace#EXTERNAL_SPACE} which is not a memory space.  This can be a source of confusion.
-	 * An EXTERNAL memory block exists to facilitate relocation processing for some external
-	 * symbols which require a real memory address. 
+	 * Note that EXTERNAL blocks always resides within a memory space and never within the 
+	 * artificial {@link AddressSpace#EXTERNAL_SPACE} which is not a memory space.  This can be a 
+	 * source of confusion. An EXTERNAL memory block exists to facilitate relocation processing for 
+	 * some external symbols which require a real memory address. 
 	 * 
 	 * @return true if this is a reserved EXTERNAL memory block
 	 */

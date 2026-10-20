@@ -177,7 +177,7 @@ public class ListingCodeComparisonView
 	private void changeRightToMatchLeftFormat(FieldFormatModel model) {
 		SaveState formatState = new SaveState();
 		displays.get(LEFT).getFormatManager().saveState(formatState);
-		displays.get(RIGHT).getFormatManager().readState(formatState);
+		displays.get(RIGHT).getFormatManager().readState(formatState, false);
 
 		saveFormat(saveState);
 		tool.setConfigChanged(true);

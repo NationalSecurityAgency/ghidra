@@ -35,8 +35,7 @@ import ghidra.app.services.GoToService;
 import ghidra.app.util.HelpTopics;
 import ghidra.app.util.query.TableService;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.*;
@@ -46,21 +45,8 @@ import ghidra.util.task.TaskLauncher;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * The GUI component for the {@link InstructionSearchPlugin}.  This consists of two main panels
- * for displaying instruction data, an area for control widgets, and a button panel:
- *
- * ------------------------------------
- * |                |                 |
- * |  Instruction   |    Preview      |
- * |     Panel      |     Panel       |
- * |                |                 |
- * |-----------------------------------
- * |         Control Widgets          |
- * ------------------------------------
- * |          Button Panel            |
- * ------------------------------------
+ * The GUI component for the {@link InstructionSearchPlugin}.
  */
-
 public class InstructionSearchDialog extends ReusableDialogComponentProvider implements Observer {
 
 	private static final Color BG_COLOR_MARKERS =
@@ -106,7 +92,7 @@ public class InstructionSearchDialog extends ReusableDialogComponentProvider imp
 
 		try {
 			revalidate();
-			loadInstructions(plugin);
+			loadInstructions();
 		}
 		catch (InvalidInputException e) {
 			Msg.error(this, "Error loading instructions: " + e);
@@ -121,32 +107,33 @@ public class InstructionSearchDialog extends ReusableDialogComponentProvider imp
 	 * Loads the currently-selected set of instructions in the listing and displays them in
 	 * the given dialog.
 	 *
-	 * @param plugin the parent plugin
 	 * @throws InvalidInputException if there's a problem loading instructions
 	 */
-	public void loadInstructions(InstructionSearchPlugin plugin) throws InvalidInputException {
-		loadInstructions(plugin.getProgramSelection(), plugin);
+	public void loadInstructions() throws InvalidInputException {
+		loadInstructions(plugin.getProgramSelection());
 	}
 
 	/**
 	 * Loads the instructions in the given selection and displays them in the gui.
 	 *
 	 * @param selection the current selection
-	 * @param plugin the parent plugin
 	 */
-	public void loadInstructions(ProgramSelection selection, InstructionSearchPlugin plugin) {
+	public void loadInstructions(ProgramSelection selection) {
 
 		MessagePanel msg = getMessagePanel();
 		if (selection == null && msg != null) {
 			msg.setMessageText(
 				"Select instructions from the listing (and hit reload) to populate the table.",
 				Messages.NORMAL);
+			return;
 		}
 
-		if (selection != null && plugin.isSelectionValid(selection, this)) {
+		if (plugin.isSelectionValid(selection, this)) {
 
-			if (getControlPanel() != null) {
-				getControlPanel().getRangeWidget().updateSearchRangeBySelection();
+			ControlPanel panel = getControlPanel();
+			if (panel != null) {
+				SelectionScopeWidget rangeWidget = panel.getRangeWidget();
+				rangeWidget.updateSearchRangeBySelection();
 			}
 
 			// Load the instructions, but note that we only allow a single selection range.  If
@@ -159,9 +146,8 @@ public class InstructionSearchDialog extends ReusableDialogComponentProvider imp
 	 * Adds the instructions in the given selection and displays them in the gui.
 	 *
 	 * @param selection the current selection
-	 * @param plugin the parent plugin
 	 */
-	public void addToInstructions(ProgramSelection selection, InstructionSearchPlugin plugin) {
+	public void addToInstructions(ProgramSelection selection) {
 
 		MessagePanel msg = getMessagePanel();
 		if (selection == null && msg != null) {
@@ -267,12 +253,12 @@ public class InstructionSearchDialog extends ReusableDialogComponentProvider imp
 		plugin.firePluginEvent(new ProgramSelectionPluginEvent(plugin.getName(), selection,
 			plugin.getCurrentProgram()));
 
-		SwingUtilities.invokeLater(() -> {
+		Swing.runLater(() -> {
 
 			goToLocation(selection.getMinAddress());
 
 			try {
-				loadInstructions(selection, plugin);
+				loadInstructions(selection);
 			}
 			catch (Exception e) {
 				Msg.error(this, "Error loading instructions", e);
@@ -298,6 +284,13 @@ public class InstructionSearchDialog extends ReusableDialogComponentProvider imp
 		getSearchData().clearAndReload();
 	}
 
+	void deleteInstruction(int index) {
+		InstructionSearchData data = getSearchData();
+		InstructionTablePanel panel = getTablePanel();
+		InstructionTable table = panel.getTable();
+		data.deleteInstruction(table, index);
+	}
+
 	/**
 	 * Displays a message with the given text and color (severity).
 	 *
@@ -317,26 +310,17 @@ public class InstructionSearchDialog extends ReusableDialogComponentProvider imp
 	 * UI to reflect the new instruction set, or simply update the preview panel in the case
 	 * where the user has simply changed the model by toggling masks.
 	 */
+	@SuppressWarnings("deprecation")
 	@Override
 	public void update(Observable o, Object arg) {
 		if (arg instanceof UpdateType) {
 			UpdateType type = (UpdateType) arg;
 			switch (type) {
 				case RELOAD:
-					try {
-						revalidate();
-					}
-					catch (InvalidInputException e) {
-						Msg.error(this, "Error loading instructions", e);
-					}
+					revalidate();
 					break;
 				case UPDATE:
-					try {
-						tablePanel.buildPreview();
-					}
-					catch (InvalidInputException e) {
-						Msg.error(this, "Error updating instructions", e);
-					}
+					tablePanel.buildPreview();
 					break;
 			}
 		}
@@ -349,30 +333,18 @@ public class InstructionSearchDialog extends ReusableDialogComponentProvider imp
 	/**
 	 * Updates the GUI when the user has made a new selection.  For simplicity, this
 	 * removes the entire work panel and recreates it with the new instructions.
-	 *
-	 * @throws InvalidInputException
 	 */
-	protected void revalidate() throws InvalidInputException {
+	protected void revalidate() {
 		removeExistingGuiComponents();
 		createGuiComponents();
 	}
 
-	/**
-	 * This dialog uses the 'apply' button as the search button, so override its behavior
-	 * to initiate a search on activation.
-	 */
 	@Override
 	protected void applyCallback() {
 		searchButtonActionPerformed();
 	}
 
-	/**
-	 * Creates the main panel.
-	 *
-	 * @return the new panel
-	 * @throws InvalidInputException if there's a problem constructing the panel
-	 */
-	protected JPanel createWorkPanel() throws InvalidInputException {
+	protected JPanel createWorkPanel() {
 
 		// Create the main panel; use a border layout so all components
 		// will adjust to fill the given space, allocating all leftover
@@ -407,7 +379,7 @@ public class InstructionSearchDialog extends ReusableDialogComponentProvider imp
 	 * PRIVATE METHODS
 	 ********************************************************************************************/
 
-	private void createGuiComponents() throws InvalidInputException {
+	private void createGuiComponents() {
 		addWorkPanel(createWorkPanel());
 		createButtons();
 
@@ -492,33 +464,28 @@ public class InstructionSearchDialog extends ReusableDialogComponentProvider imp
 		new TaskLauncher(searchTask, getFocusComponent());
 	}
 
-	/**
-	 * Pops up a dialog containing the given search results.
-	 *
-	 * @param searchResults
-	 */
 	public void displaySearchResults(List<InstructionMetadata> searchResults) {
-
-		Address[] tableArray = new Address[searchResults.size()];
-		for (int x = 0; x < searchResults.size(); x++) {
-			tableArray[x] = searchResults.get(x).getAddr();
-		}
 
 		TableService ts = plugin.getTool().getService(TableService.class);
 		if (ts == null) {
 			Msg.error(null, "Unable to show addresses, no table service available");
+			return;
 		}
-		else {
-			// The results window can be set to allow selection of multiple search results,
-			// provided the results are all the same size.  This should be the case for us and
-			// as we're matching bytes, the size should always be divisible by 8.  But do a check
-			// anyway.
-			int matchSize = 1;
-			if (searchData.getValueString().length() % 8 == 0) {
-				matchSize = searchData.getValueString().length() / 8;
-			}
-			show("Addresses", ts, tableArray, matchSize);
+
+		Address[] tableArray = new Address[searchResults.size()];
+		for (int i = 0; i < searchResults.size(); i++) {
+			tableArray[i] = searchResults.get(i).getAddr();
 		}
+
+		// The results window can be set to allow selection of multiple search results,
+		// provided the results are all the same size.  This should be the case for us and
+		// as we're matching bytes, the size should always be divisible by 8.  But do a check
+		// anyway.
+		int matchSize = 1;
+		if (searchData.getValueString().length() % 8 == 0) {
+			matchSize = searchData.getValueString().length() / 8;
+		}
+		show("Addresses", ts, tableArray, matchSize);
 	}
 
 	/**
@@ -529,20 +496,19 @@ public class InstructionSearchDialog extends ReusableDialogComponentProvider imp
 	 * @param addresses the list of addresses to display
 	 * @param matchSize the size of each match in the results table, in bytes
 	 */
-	private void show(final String title, final TableService table, final Address[] addresses,
-			int matchSize) {
-		Runnable runnable = () -> {
-			AddressArrayTableModel model = new AddressArrayTableModel("Instruction Pattern Search",
-				plugin.getTool(), plugin.getCurrentProgram(), addresses);
+	private void show(String title, TableService table, Address[] addresses, int matchSize) {
 
-			model.setSelectionSize(matchSize);
+		Swing.runLater(() -> {
+
+			InstructionSearchTableModel model =
+				new InstructionSearchTableModel(addresses, matchSize);
+
 			TableComponentProvider<Address> tableProvider =
 				table.showTableWithMarkers(title + " " + model.getName(),
 					"Instruction Search Results", model, BG_COLOR_MARKERS, null,
 					"Search", null);
 			tableProvider.installRemoveItemsAction();
-		};
-		SystemUtilities.runSwingLater(runnable);
+		});
 	}
 
 	private void goToLocation(Address addr) {
@@ -552,5 +518,40 @@ public class InstructionSearchDialog extends ReusableDialogComponentProvider imp
 
 	public InstructionSearchPlugin getPlugin() {
 		return plugin;
+	}
+
+	private class InstructionSearchTableModel extends AddressArrayTableModel {
+
+		private int matchSize;
+
+		public InstructionSearchTableModel(Address[] addrs, int matchSize) {
+			super("Instruction Pattern Search", plugin.getTool(), plugin.getCurrentProgram(),
+				addrs);
+			this.matchSize = matchSize;
+		}
+
+		@Override
+		public ProgramSelection getProgramSelection(int[] rows) {
+			if (matchSize == 1) {
+				return super.getProgramSelection(rows);
+			}
+
+			int addOn = matchSize - 1;
+			AddressSet addressSet = new AddressSet();
+			for (int element : rows) {
+				Address minAddr = getAddress(element);
+				Address maxAddr = minAddr;
+				try {
+					maxAddr = minAddr.addNoWrap(addOn);
+					addressSet.addRange(minAddr, maxAddr);
+				}
+				catch (AddressOverflowException e) {
+					Msg.debug(this,
+						"Unable to add address range for addresses: " + minAddr + ", " + maxAddr);
+				}
+			}
+			return new ProgramSelection(addressSet);
+		}
+
 	}
 }

@@ -23,6 +23,7 @@ import org.objectweb.asm.ClassWriter;
 
 import ghidra.pcode.emu.jit.analysis.*;
 import ghidra.pcode.emu.jit.decode.JitPassageDecoder;
+import ghidra.pcode.emu.jit.folding.FoldRevalidator;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassageClass;
@@ -30,14 +31,12 @@ import ghidra.pcode.exec.PcodeExecutorState;
 
 /**
  * The Just-in-Time (JIT) translation engine that powers the {@link JitPcodeEmulator}.
- * 
  * <p>
  * This is the translation engine from "any" machine language into JVM bytecode. The same caveats
  * that apply to interpretation-based p-code emulation apply to JIT-accelerated emulation: Ghidra
  * must have a Sleigh specification for the emulation target language, there must be userop
  * libraries (built-in or user-provided) defining any userops encountered during the course of
  * execution, all dependent code must be loaded or stubbed out, etc.
- *
  * <p>
  * A passage is decoded at a desired entry point using the {@link JitPassageDecoder}. This compiler
  * then translates the passage into bytecode. It will produce a classfile which is then loaded and
@@ -55,14 +54,14 @@ import ghidra.pcode.exec.PcodeExecutorState;
  * execution of the translated passage produces exactly the same effect on the emulation state as
  * interpretation of the same p-code passage. The run method returns the next entry point to execute
  * or {@code null} when the emulator must look up the next entry point.
- *
  * <p>
  * Translation of a passage takes place in distinct phases. See each respective class for details of
  * its design and implementation:
- * 
  * <ol>
+ * <li>Decode: {@link JitPassageDecoder}</li>
  * <li>Control Flow Analysis: {@link JitControlFlowModel}</li>
  * <li>Data Flow Analysis: {@link JitDataFlowModel}</li>
+ * <li>Reachability Analysis: {@link JitReachabilityModel}</li>
  * <li>Variable Scope Analysis: {@link JitVarScopeModel}</li>
  * <li>Type Assignment: {@link JitTypeModel}</li>
  * <li>Variable Allocation: {@link JitAllocationModel}</li>
@@ -70,11 +69,26 @@ import ghidra.pcode.exec.PcodeExecutorState;
  * <li>Code Generation: {@link JitCodeGenerator}</li>
  * </ol>
  * 
+ * <h2>Decode</h2>
+ * <p>
+ * Decoding is seeded at the emulator's current program counter. It takes each seed and decodes
+ * instructions linearly, until it encounters an instruction without fall through. This constitutes
+ * a stride. As it encounters control transfer instructions, it queues up additional branch targets
+ * as seeds. Once it runs out of seeds, or expends a passage-size allowance, it produces the final
+ * passage. See {@link JitPassageDecoder}.
+ * <p>
+ * The decoder also performs constant folding as it goes, which necessitates some interpretation of
+ * the p-code it decodes. This allows it to follow direct branches that may otherwise present as
+ * indirect, e.g., the target address is loaded from a table, or has to be loaded by two or more
+ * instructions. Some of these constants can be invalidated after decode if alternative pathways are
+ * found. Those that remain valid are included with the passage for further optimization downstream.
+ * See {@link FoldRevalidator}.
+ * 
  * <h2>Control Flow Analysis</h2>
  * <p>
  * Some rudimentary control flow analysis is performed during decode, but the output of decode is a
  * passage, i.e., collection of <em>strides</em>, not basic blocks. The control flow analysis breaks
- * each stride down into basic blocks at the p-code level. Note that a single instruction's pcode
+ * each stride down into basic blocks at the p-code level. Note that a single instruction's p-code
  * (as well as any user instrumentation on that instruction's address) may have complex control
  * flow. Additionally, branches that leave an instruction preclude execution of its remaining
  * p-code. Thus, p-code basic blocks do not coincide precisely with instruction-level basic blocks.
@@ -87,7 +101,19 @@ import ghidra.pcode.exec.PcodeExecutorState;
  * read before it is written produces a "missing" variable. Those missing variables are converted to
  * <em>phi</em> nodes and later resolved during inter-block analysis. The graph is also able to
  * consider aliasing, partial accesses, overlapping accesses, etc., by synthesizing operations to
- * model those effects. See {@link JitDataFlowModel}.
+ * model those effects. This phase also applies folded constants to the use-def graph. Ops with
+ * folded outputs are re-written to copies. Ops with folded inputs are re-written as if they took
+ * literal constants. Conditional branches with a folded predicate are re-written as unconditional
+ * branches or nops, etc. See {@link JitDataFlowModel}.
+ * 
+ * <h2>Reachability Analysis</h2>
+ * <p>
+ * Generally, the passage decoder would not decode instructions that are not reachable, since it
+ * follows the targets of control transfer instructions. However, it is possible 1) That a userop or
+ * injection includes unreachable p-code blocks, or 2) After folding constants and re-writing
+ * branches, some blocks are now known to be unreachable, at least from the decode seed.
+ * Reachability analysis walks the new control-flow graph and marks only those blocks and edges that
+ * are reachable. Downstream analysis will ignore unreachable blocks and edges.
  * 
  * <h2>Variable Scope Analysis</h2>
  * <p>
@@ -161,6 +187,8 @@ public class JitCompiler {
 		PRINT_CFM,
 		/** Print the ops of each basic block in SSA (sort of) form */
 		PRINT_DFM,
+		/** Print the list of reachable basic blocks */
+		PRINT_RM,
 		/** Print the list of live variables for each basic block */
 		PRINT_VSM,
 		/** Print each synthetic operation, e.g., catenation, subpiece, phi */
@@ -169,22 +197,25 @@ public class JitCompiler {
 		PRINT_OUM,
 		/** Enable ASM's trace for each generated classfile */
 		TRACE_CLASS,
+		/** Enable per-op outline of bytecode generation */
+		DEEP_TRACE,
 		/** Save the generated {@code .class} file to disk for offline examination */
 		DUMP_CLASS;
 	}
 
 	/**
 	 * The set of enabled diagnostic toggles.
-	 * 
 	 * <p>
 	 * In production, this should be empty.
 	 */
-	public static final EnumSet<Diag> ENABLE_DIAGNOSTICS = EnumSet.noneOf(Diag.class);
+	public static final EnumSet<Diag> ENABLE_DIAGNOSTICS =
+		EnumSet.noneOf(Diag.class);
+	//EnumSet.of(Diag.PRINT_PASSAGE, Diag.DUMP_CLASS, Diag.PRINT_OUM);
+	//EnumSet.of(Diag.PRINT_PASSAGE, Diag.DEEP_TRACE);
 
 	/**
 	 * Exclude a given address offset from ASM's {@link ClassWriter#COMPUTE_MAXS} and
 	 * {@link ClassWriter#COMPUTE_FRAMES}.
-	 * 
 	 * <p>
 	 * Unfortunately, when automatic computation of frames and maxes fails, the ASM library offers
 	 * little in terms of diagnostics. It usually crashes with an NPE or an AIOOBE. Worse, when this
@@ -192,7 +223,6 @@ public class JitCompiler {
 	 * identify the address of the passage seed that causes such a failure and set this variable to
 	 * its offset. This will prevent ASM from attempting this computation so that it at least prints
 	 * the trace and dumps out the classfile to disk (if those {@link Diag}nostics are enabled).
-	 * 
 	 * <p>
 	 * Once the trace/classfile is obtained, set this back to -1 and then apply debug prints in the
 	 * crashing method. Since it's probably in the ASM library, you'll need to use your IDE /
@@ -213,7 +243,6 @@ public class JitCompiler {
 
 	/**
 	 * Construct a p-code to bytecode translator.
-	 * 
 	 * <p>
 	 * In general, this should only be used by the JIT emulator and its test suite.
 	 * 
@@ -248,22 +277,26 @@ public class JitCompiler {
 		if (ENABLE_DIAGNOSTICS.contains(Diag.PRINT_DFM)) {
 			dfm.dumpResult();
 		}
-		JitVarScopeModel vsm = new JitVarScopeModel(cfm, dfm);
+		JitReachabilityModel rm = new JitReachabilityModel(context, cfm, dfm);
+		if (ENABLE_DIAGNOSTICS.contains(Diag.PRINT_RM)) {
+			rm.dumpResult();
+		}
+		JitVarScopeModel vsm = new JitVarScopeModel(cfm, dfm, rm);
 		if (ENABLE_DIAGNOSTICS.contains(Diag.PRINT_VSM)) {
 			vsm.dumpResult();
 		}
-		JitTypeModel tm = new JitTypeModel(dfm);
-		JitAllocationModel am = new JitAllocationModel(context, dfm, vsm, tm);
-		JitOpUseModel oum = new JitOpUseModel(context, cfm, dfm, vsm);
+		JitOpUseModel oum = new JitOpUseModel(context, cfm, dfm, rm, vsm);
 		if (ENABLE_DIAGNOSTICS.contains(Diag.PRINT_SYNTH)) {
 			dfm.dumpSynth();
 		}
 		if (ENABLE_DIAGNOSTICS.contains(Diag.PRINT_OUM)) {
 			oum.dumpResult();
 		}
+		JitTypeModel tm = new JitTypeModel(dfm, oum);
+		JitAllocationModel am = new JitAllocationModel(context, dfm, vsm, oum, tm);
 
 		JitCodeGenerator<?> gen =
-			new JitCodeGenerator<>(lookup, context, cfm, dfm, vsm, tm, am, oum);
+			new JitCodeGenerator<>(lookup, context, cfm, dfm, rm, vsm, tm, am, oum);
 		return gen.load();
 	}
 

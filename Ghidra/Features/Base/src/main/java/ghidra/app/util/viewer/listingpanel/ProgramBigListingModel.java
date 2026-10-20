@@ -391,7 +391,7 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 				int length = dt.getLength();
 				for (; offset < length; offset++) {
 					// If not beyond structure's end, check for non-filler.
-					data = parent.getComponentAt(offset);
+					data = parent.getComponentContaining(offset);
 					if (data != null) { // Found non filler address so return it.
 						return data.getMinAddress();
 					}
@@ -540,7 +540,6 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 	private void addUnionPostOpenData(List<Data> list, Data data, Address addr) {
 		DataType dt = data.getBaseDataType();
 		if (dt instanceof Union) {
-			Address dataAddr = data.getMinAddress();
 			if (openCloseMgr.isDataOpen(data)) {
 				int openIndex = openCloseMgr.getOpenDataIndex(data);
 				int i = openIndex;

@@ -28,7 +28,7 @@ import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 
@@ -117,7 +117,7 @@ public class DebuggerRmiBreakpointsProviderTest
 		Trace trace = target.getTrace();
 		try (Transaction tx = trace.openTransaction("Add breakpoint")) {
 			addBreakpointAndLoc(trace.getObjectManager(), Lifespan.nowOn(0), tb.range(offset),
-				TraceBreakpointKindSet.SW_EXECUTE);
+				CommonSet.SWX.kinds());
 		}
 	}
 
@@ -125,10 +125,10 @@ public class DebuggerRmiBreakpointsProviderTest
 	protected void handleSetBreakpointInvocation(Set<TraceBreakpointKind> expectedKinds,
 			long dynOffset) throws Throwable {
 		Lifespan zeroOn = Lifespan.nowOn(0);
-		if (TraceBreakpointKindSet.SW_EXECUTE.equals(expectedKinds)) {
+		if (CommonSet.SWX.kinds().equals(expectedKinds)) {
 			Map<String, Object> args = rmiMethodSetSwBreak.expect();
 			addBreakpointAndLoc(tb.trace.getObjectManager(), zeroOn, tb.range(dynOffset),
-				TraceBreakpointKindSet.SW_EXECUTE);
+				CommonSet.SWX.kinds());
 			rmiMethodSetSwBreak.result(null);
 			assertEquals(Map.ofEntries(
 				Map.entry("process", tb.obj("Processes[1]")),
@@ -137,6 +137,20 @@ public class DebuggerRmiBreakpointsProviderTest
 		else {
 			throw new AssertionError("Unhandled invocation for kinds: " + expectedKinds);
 		}
+	}
+
+	@Override
+	protected void handleDeleteBreakpointInvocation(TraceRmiTarget target,
+			TraceBreakpointLocation expectedLoc) throws Throwable {
+		Map<String, Object> args = rmiMethodDeleteBreak.expect();
+		try (Transaction tx = tb.startTransaction()) {
+			expectedLoc.getObject().removeTree(Lifespan.nowOn(target.getSnap()));
+		}
+		waitForDomainObject(tb.trace);
+		rmiMethodDeleteBreak.result(null);
+		assertEquals(
+				Map.ofEntries(Map.entry("breakpoint", expectedLoc.getSpecification().getObject())),
+				args);
 	}
 
 	@Override

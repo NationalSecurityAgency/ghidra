@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ import ghidra.pcodeCPort.slghsymbol.SleighSymbol;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeConflictHandler;
 import ghidra.program.model.lang.PcodeParser;
+import ghidra.sleigh.grammar.Location;
 
 class DefaultVar implements LValInternal, Var {
 	/**
@@ -40,7 +41,7 @@ class DefaultVar implements LValInternal, Var {
 			@Override
 			void check(PcodeParser parser, String name) {
 				// TODO: Also check the type is compatible?
-				SleighSymbol symbol = parser.findSymbol(name);
+				SleighSymbol symbol = parser.findSymbol(NO_LOC, name);
 				if (symbol == null) {
 					throw new SleighException("Missing symbol '" + name + "'");
 				}
@@ -50,13 +51,15 @@ class DefaultVar implements LValInternal, Var {
 		FREE {
 			@Override
 			void check(PcodeParser parser, String name) {
-				SleighSymbol symbol = parser.findSymbol(name);
+				SleighSymbol symbol = parser.findSymbol(NO_LOC, name);
 				if (symbol != null) {
 					throw new SleighException(
 						"Duplicate symbol '" + name + "': Already defined by the language");
 				}
 			}
 		};
+
+		static final Location NO_LOC = new Location("??", 0);
 
 		/**
 		 * Check that the given name obeys the rule

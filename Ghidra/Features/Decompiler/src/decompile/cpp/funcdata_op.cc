@@ -862,7 +862,7 @@ int4 Funcdata::inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop)
   Address eaddr(baseaddr.getSpace(),~((uintb)0));
   inlineflow.setRange(baddr,eaddr);
   inlineflow.setFlags(FlowInfo::error_outofbounds|FlowInfo::error_unimplemented|
-		      FlowInfo::error_reinterpreted|FlowInfo::flow_forinline);
+		      FlowInfo::error_baddata|FlowInfo::error_reinterpreted|FlowInfo::flow_forinline);
   inlineflow.forwardRecursion(flow);
   inlineflow.generateOps();
 
@@ -917,107 +917,38 @@ int4 Funcdata::inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop)
 
 /// \brief Find the primary branch operation for an instruction
 ///
-/// For machine instructions that branch, this finds the \e primary PcodeOp that performs
-/// the branch.  The instruction is provided as a list of p-code ops, and the caller can
-/// specify whether they expect to see a \e branch, \e call, or \e return operation.
-/// \param iter is the start of the operations for the instruction
-/// \param enditer is the end of the operations for the instruction
-/// \param findbranch is \b true if the caller expects to see a BRANCH, CBRANCH, or BRANCHIND
-/// \param findcall is \b true if the caller expects to see CALL or CALLIND
-/// \param findreturn is \b true if the caller expects to see RETURN
+/// For instructions that branch, this finds the \e primary PcodeOp that performs the branch.
+/// The caller can specify whether they expect to see a \e branch, \e call, \e callother, or \e return operation.
+/// \param addr is the address of the instruction
+/// \param findBranch is \b true if the caller expects to see a BRANCH, CBRANCH, or BRANCHIND
+/// \param findCall is \b true if the caller expects to see CALL or CALLIND
+/// \param findCallother is \b true if the caller expects to see CALLOTHER
+/// \param findReturn is \b true if the caller expects to see RETURN
 /// \return the first branching PcodeOp that matches the criteria or NULL
-PcodeOp *Funcdata::findPrimaryBranch(PcodeOpTree::const_iterator iter,PcodeOpTree::const_iterator enditer,
-				     bool findbranch,bool findcall,bool findreturn)
+PcodeOp *Funcdata::findPrimaryBranch(const Address &addr,bool findBranch,bool findCall,bool findCallother,bool findReturn)
 {
+  PcodeOpTree::const_iterator iter = beginOp(addr);
+  PcodeOpTree::const_iterator enditer = endOp(addr);
   while(iter != enditer) {
     PcodeOp *op = (*iter).second;
-    switch(op->code()) {
-    case CPUI_BRANCH:
-    case CPUI_CBRANCH:
-      if (findbranch) {
+    if (op->isCallOrBranch() || op->isFlowBreak()) {
+      OpCode opc = op->code();
+      if (findBranch && (opc == CPUI_BRANCH || opc == CPUI_CBRANCH)) {
 	if (!op->getIn(0)->isConstant()) // Make sure this is not an internal branch
 	  return op;
       }
-      break;
-    case CPUI_BRANCHIND:
-      if (findbranch)
+      if (findBranch && opc == CPUI_BRANCHIND)
 	return op;
-      break;
-    case CPUI_CALL:
-    case CPUI_CALLIND:
-      if (findcall)
+      if (findCall && (opc == CPUI_CALL || opc == CPUI_CALLIND))
 	return op;
-      break;
-    case CPUI_RETURN:
-      if (findreturn)
+      if (findReturn && opc == CPUI_RETURN)
 	return op;
-      break;
-    default:
-      break;
+      if (findCallother && opc == CPUI_CALLOTHER)
+	return op;
     }
     ++iter;
   }
   return (PcodeOp *)0;
-}
-
-/// \brief Override the control-flow p-code for a particular instruction
-///
-/// P-code in \b this function is modified to change the control-flow of
-/// the instruction at the given address, based on the Override type.
-/// \param addr is the given address of the instruction to modify
-/// \param type is the Override type
-void Funcdata::overrideFlow(const Address &addr,uint4 type)
-
-{
-  PcodeOpTree::const_iterator iter = beginOp(addr);
-  PcodeOpTree::const_iterator enditer = endOp(addr);
-
-  PcodeOp *op = (PcodeOp *)0;
-  if (type == Override::BRANCH)
-    op = findPrimaryBranch(iter,enditer,false,true,true);
-  else if (type == Override::CALL)
-    op = findPrimaryBranch(iter,enditer,true,false,true);
-  else if (type == Override::CALL_RETURN)
-    op = findPrimaryBranch(iter,enditer,true,true,true);
-  else if (type == Override::RETURN)
-    op = findPrimaryBranch(iter,enditer,true,true,false);
-
-  if ((op == (PcodeOp *)0)||(!op->isDead()))
-    throw LowlevelError("Could not apply flowoverride");
-
-  OpCode opc = op->code();
-  if (type == Override::BRANCH) {
-    if (opc == CPUI_CALL)
-      opSetOpcode(op,CPUI_BRANCH);
-    else if (opc == CPUI_CALLIND)
-      opSetOpcode(op,CPUI_BRANCHIND);
-    else if (opc == CPUI_RETURN)
-      opSetOpcode(op,CPUI_BRANCHIND);
-  }
-  else if ((type == Override::CALL)||(type == Override::CALL_RETURN)) {
-    if (opc == CPUI_BRANCH)
-      opSetOpcode(op,CPUI_CALL);
-    else if (opc == CPUI_BRANCHIND)
-      opSetOpcode(op,CPUI_CALLIND);
-    else if (opc == CPUI_CBRANCH)
-      throw LowlevelError("Do not currently support CBRANCH overrides");
-    else if (opc == CPUI_RETURN)
-      opSetOpcode(op,CPUI_CALLIND);
-    if (type == Override::CALL_RETURN) { // Insert a new return op after call
-      PcodeOp *newReturn = newOp(1,addr);
-      opSetOpcode(newReturn,CPUI_RETURN);
-      opSetInput(newReturn,newConstant(1,0),0);
-      opDeadInsertAfter(newReturn,op);
-    }
-  }
-  else if (type == Override::RETURN) {
-    if ((opc == CPUI_BRANCH)||(opc == CPUI_CBRANCH)||(opc == CPUI_CALL))
-      throw LowlevelError("Do not currently support complex overrides");
-    else if (opc == CPUI_BRANCHIND)
-      opSetOpcode(op,CPUI_RETURN);
-    else if (opc == CPUI_CALLIND)
-      opSetOpcode(op,CPUI_RETURN);
-  }
 }
 
 /// Do in-place replacement of
@@ -1216,11 +1147,12 @@ Varnode *Funcdata::buildCopyTemp(Varnode *vn,PcodeOp *point)
 ///
 /// The boolean Varnode is either the output of the given PcodeOp or the
 /// first input if the PcodeOp is a CBRANCH. The list of ops that need flipping is
-/// returned in an array
+/// returned in an array.
 /// \param op is the given PcodeOp
 /// \param fliplist is the array that will hold the ops to flip
-/// \return 0 if the change normalizes, 1 if the change is ambivalent, 2 if the change does not normalize
-int4 Funcdata::opFlipInPlaceTest(PcodeOp *op,vector<PcodeOp *> &fliplist)
+/// \param allowOpRemoval if \b true allow for removal of BOOL_NEGATE ops to achieve flip
+/// \return 0 if the change normalizes, 1 if the change denormalizes or is ambivalent, 2 if flip in place is not possible
+int4 Funcdata::opFlipInPlaceTest(PcodeOp *op,vector<PcodeOp *> &fliplist,bool allowOpRemoval)
 
 {
   Varnode *vn;
@@ -1230,12 +1162,19 @@ int4 Funcdata::opFlipInPlaceTest(PcodeOp *op,vector<PcodeOp *> &fliplist)
     vn = op->getIn(1);
     if (vn->loneDescend() != op) return 2;
     if (!vn->isWritten()) return 2;
-    return opFlipInPlaceTest(vn->getDef(),fliplist);
+    subtest1 = opFlipInPlaceTest(vn->getDef(),fliplist,allowOpRemoval);
+    if (subtest1 != 2 && op->isBooleanFlip())
+      subtest1 = 1-subtest1;
+    return subtest1;
   case CPUI_INT_EQUAL:
   case CPUI_FLOAT_EQUAL:
     fliplist.push_back(op);
     return 1;
   case CPUI_BOOL_NEGATE:
+    if (!allowOpRemoval)
+      return 2;
+    fliplist.push_back(op);
+    return 0;
   case CPUI_INT_NOTEQUAL:
   case CPUI_FLOAT_NOTEQUAL:
     fliplist.push_back(op);
@@ -1257,13 +1196,13 @@ int4 Funcdata::opFlipInPlaceTest(PcodeOp *op,vector<PcodeOp *> &fliplist)
     vn = op->getIn(0);
     if (vn->loneDescend() != op) return 2;
     if (!vn->isWritten()) return 2;
-    subtest1 = opFlipInPlaceTest(vn->getDef(),fliplist);
+    subtest1 = opFlipInPlaceTest(vn->getDef(),fliplist,allowOpRemoval);
     if (subtest1 == 2)
       return 2;
     vn = op->getIn(1);
     if (vn->loneDescend() != op) return 2;
     if (!vn->isWritten()) return 2;
-    subtest2 = opFlipInPlaceTest(vn->getDef(),fliplist);
+    subtest2 = opFlipInPlaceTest(vn->getDef(),fliplist,allowOpRemoval);
     if (subtest2 == 2)
       return 2;
     fliplist.push_back(op);
@@ -1311,6 +1250,196 @@ void Funcdata::opFlipInPlaceExecute(vector<PcodeOp *> &fliplist)
 	  replaceLessequal(op);
       }
     }
+  }
+}
+
+/// \brief Remove the \b boolean_flip flag on a CBRANCH op, without changing behavior
+///
+/// Try to flip the true/false meaning of the CBRANCH and negate the meaning of the comparison op feeding the CBRANCH.
+/// Only the \b boolean_flip flag and the comparison op's opcode are affected.
+/// \param cbranch is CBRANCH to modify
+/// \return \b true if the ops were successfully modified
+bool Funcdata::opNormalizeFlip(PcodeOp *cbranch)
+
+{
+  Varnode *boolVn = cbranch->getIn(1);
+  if (!boolVn->isWritten()) return false;
+  if (boolVn->loneDescend() != cbranch) return false;
+  PcodeOp *condOp = boolVn->getDef();
+  bool flipyes;
+  OpCode opc = get_booleanflip(condOp->code(), flipyes);
+  if (opc == CPUI_MAX) return false;
+  opSetOpcode(condOp,opc); // Set the negated opcode
+  if (flipyes)			// Do we need to reverse the two operands
+    opSwapInput(condOp,0,1);
+  cbranch->flipFlag(PcodeOp::boolean_flip);
+  if (opc == CPUI_INT_LESSEQUAL || opc == CPUI_INT_SLESSEQUAL)
+    replaceLessequal(condOp);
+  return true;
+}
+
+/// The op is assumed to be a recent STORE converted to a COPY.  The INDIRECTs associated with
+/// the old STORE are converted to a COPY or SUBPIECE, depending on the overlap of the
+/// INDIRECT output with the COPY output.
+/// \param copyOp is the new COPY converted from a STORE
+void Funcdata::opCollapseIndirectsForCopy(PcodeOp *copyOp)
+
+{
+  BlockBasic *bb = copyOp->getParent();
+  list<PcodeOp *>::iterator iter = copyOp->getBasicIter();
+  while(iter != bb->beginOp()) {
+   list<PcodeOp *>::iterator previter = iter;
+   --previter;
+    PcodeOp *op = *previter;
+    if (op->code() != CPUI_INDIRECT) break;
+    Varnode *vn1 = copyOp->getOut();
+    Varnode *vn2 = op->getOut();
+    int4 res = vn1->characterizeOverlap(*vn2);
+    if (res > 0) { // Copy has an effect of some sort
+      if (res != 2 && vn1->contains(*vn2) == 0) {	// INDIRECT output is properly contained in COPY output
+	// Convert INDIRECT to a SUBPIECE
+	uintb trunc;
+	if (vn1->getSpace()->isBigEndian())
+	  trunc = vn1->getOffset() + vn1->getSize() - (vn2->getOffset() + vn2->getSize());
+	else
+	  trunc = vn2->getOffset() - vn1->getOffset();
+	opUninsert(op);
+	opSetInput(op,vn1,0);
+	opSetInput(op,newConstant(4,trunc),1);
+	opSetOpcode(op, CPUI_SUBPIECE);
+	opInsertAfter(op, copyOp);
+	continue;
+      }
+      if (res != 2) {
+	Varnode *invn = op->getIn(0);
+	PcodeOp *insertPoint = copyOp;
+	int4 bytesBefore = 0;
+	if (vn2->getOffset() < vn1->getOffset())
+	  bytesBefore = vn1->getOffset() - vn2->getOffset();
+	uintb vn2end = vn2->getOffset() + vn2->getSize()-1;
+	uintb vn1end = vn1->getOffset() + vn1->getSize()-1;
+	int4 bytesAfter = 0;
+	if (vn2end > vn1end)
+	  bytesAfter = vn2end - vn1end;
+	int4 overlap = vn2->getSize() - bytesBefore - bytesAfter;
+	Varnode *frontVn = (Varnode *)0;
+	Varnode *backVn = (Varnode *)0;
+	Varnode *otherPiece;
+	int4 frontSlot = (vn2->getSpace()->isBigEndian()) ? 0 : 1;
+	if (bytesBefore != 0) {
+	  int4 byteOff = (vn2->getSpace()->isBigEndian()) ? vn2->getSize() - bytesBefore : 0;
+	  PcodeOp *subBefore = newOp(2,op->getAddr());
+	  opSetOpcode(subBefore,CPUI_SUBPIECE);
+	  frontVn = newVarnodeOut(bytesAfter,vn2->getAddr(),subBefore);
+	  opSetInput(subBefore,invn,0);
+	  opSetInput(subBefore,newConstant(4,byteOff),1);
+	  opInsertAfter(subBefore, insertPoint);
+	  insertPoint = subBefore;
+	}
+	if (bytesAfter != 0) {
+	  int4 byteOff = (vn2->getSpace()->isBigEndian()) ? 0 : vn2->getSize() - bytesAfter;
+	  PcodeOp *subAfter = newOp(2,op->getAddr());
+	  opSetOpcode(subAfter,CPUI_SUBPIECE);
+	  Address addr = vn2->getAddr() + (vn2->getSize() - bytesAfter);
+	  backVn = newVarnodeOut(bytesAfter,addr,subAfter);
+	  opSetInput(subAfter,invn,0);
+	  opSetInput(subAfter,newConstant(4,byteOff),1);
+	  opInsertAfter(subAfter,insertPoint);
+	  insertPoint = subAfter;
+	}
+	if (overlap != vn1->getSize()) {
+	  int4 byteOff;
+	  if (bytesAfter == 0)
+	    byteOff = (vn1->getSpace()->isBigEndian()) ? vn1->getSize() - overlap : 0;
+	  else
+	    byteOff = (vn1->getSpace()->isBigEndian()) ? 0 : vn1->getSize() - overlap;
+	  PcodeOp *subMiddle = newOp(2,op->getAddr());
+	  opSetOpcode(subMiddle,CPUI_SUBPIECE);
+	  Address addr = vn2->getAddr() + bytesBefore;
+	  otherPiece = newVarnodeOut(overlap,addr,subMiddle);
+	  opSetInput(subMiddle,vn1,0);
+	  opSetInput(subMiddle,newConstant(4,byteOff),1);
+	  opInsertAfter(subMiddle,insertPoint);
+	  insertPoint = subMiddle;
+	}
+	else {
+	  otherPiece = vn1;
+	}
+	if (bytesBefore == 0) {
+	  frontVn = otherPiece;
+	}
+	else if (bytesAfter == 0) {
+	  backVn = otherPiece;
+	}
+	else {
+	  PcodeOp *concat = newOp(2,op->getAddr());
+	  opSetOpcode(concat,CPUI_PIECE);
+	  Varnode *newVn = newVarnodeOut(frontVn->getSize() + otherPiece->getSize(),vn2->getAddr(),concat);
+	  opSetInput(concat,frontVn,frontSlot);
+	  opSetInput(concat,otherPiece,1-frontSlot);
+	  opInsertAfter(concat,insertPoint);
+	  insertPoint = concat;
+	  frontVn = newVn;
+	}
+	opUninsert(op);
+	opSetOpcode(op, CPUI_PIECE);
+	opSetInput(op,frontVn,frontSlot);
+	opSetInput(op,backVn,1-frontSlot);
+	opInsertAfter(op, insertPoint);
+	continue;
+      }
+      // Convert INDIRECT to COPY
+      opUninsert(op);
+      opSetInput(op,vn1,0);
+      opRemoveInput(op,1);
+      opSetOpcode(op,CPUI_COPY);
+      opInsertAfter(op, copyOp);
+    }
+    else {
+      totalReplace(op->getOut(),op->getIn(0));
+      opDestroy(op);		// Get rid of the INDIRECT
+    }
+  }
+}
+
+/// For the given op with indirect effects, run through its INDIRECTs, and
+/// if there is no longer a possible alias for an INDIRECT address, remove the INDIRECT.
+/// \param effectOp is the given op with indirect effects
+void Funcdata::opCollapseIndirectsForAlias(PcodeOp *effectOp)
+
+{
+  effectOp->clearAdditionalFlag(PcodeOp::store_aliasupdate);
+  BlockBasic *bb = effectOp->getParent();
+  list<PcodeOp *>::iterator iter = effectOp->getBasicIter();
+  if (iter == bb->beginOp()) return;
+  --iter;
+  const LoadGuard *guard = (const LoadGuard *)0;
+  if (effectOp->usesSpacebasePtr() && effectOp->code() == CPUI_STORE)
+    guard = getStoreGuard(effectOp);
+  for(;;) {
+    PcodeOp *op = *iter;
+    if (op->code() != CPUI_INDIRECT) break;
+    bool shouldDestroy = false;
+    if (op->getOut()->hasNoLocalAlias() && !op->isIndirectCreation() && !op->noIndirectCollapse())
+      shouldDestroy = true;
+    else if (guard != (const LoadGuard *)0 && !guard->isGuarded(op->getOut()->getAddr()))
+      shouldDestroy = true;
+
+    if (shouldDestroy) {
+      totalReplace(op->getOut(),op->getIn(0));
+      if (iter == bb->beginOp()) {
+	opDestroy(op);		// Get rid of the INDIRECT
+	break;
+      }
+      else {
+	--iter;
+	opDestroy(op);
+      }
+    }
+    else if (iter == bb->beginOp())
+      break;
+    else
+      --iter;
   }
 }
 

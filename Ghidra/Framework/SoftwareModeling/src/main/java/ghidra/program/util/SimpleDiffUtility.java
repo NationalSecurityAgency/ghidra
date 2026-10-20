@@ -729,7 +729,7 @@ public class SimpleDiffUtility {
 
 			// Process thunk-references (include all)
 			if (extLoc.isFunction()) {
-				Address[] thunkAddrs = extLoc.getFunction().getFunctionThunkAddresses();
+				Address[] thunkAddrs = extLoc.getFunction().getFunctionThunkAddresses(false);
 				if (thunkAddrs != null) {
 					for (Address thunkAddr : thunkAddrs) {
 						Symbol otherThunkSym = otherSymbMgr.getPrimarySymbol(thunkAddr);

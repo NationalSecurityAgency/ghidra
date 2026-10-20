@@ -47,7 +47,7 @@ public interface DataType {
 	 *
 	 * @deprecated should use {@link VoidDataType#dataType} instead
 	 */
-	@Deprecated
+	@Deprecated(since = "10.1")
 	public static final DataType VOID = VoidDataType.dataType;
 
 	/**

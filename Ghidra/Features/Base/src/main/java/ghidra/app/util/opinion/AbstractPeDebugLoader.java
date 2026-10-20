@@ -33,8 +33,8 @@ import ghidra.program.model.data.StringDataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.util.Conv;
 import ghidra.util.Msg;
+import ghidra.util.NumericUtilities;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
@@ -54,8 +54,10 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 			DomainObject domainObject, boolean loadIntoProgram, boolean mirrorFsLayout) {
 		List<Option> list = super.getDefaultOptions(provider, loadSpec, domainObject,
 			loadIntoProgram, mirrorFsLayout);
-		list.add(new Option(SHOW_LINE_NUMBERS_OPTION_NAME, SHOW_LINE_NUMBERS_OPTION_DEFAULT,
-			Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-showDebugLineNumbers"));
+		list.add(Option.newBoolean(SHOW_LINE_NUMBERS_OPTION_NAME)
+				.value(SHOW_LINE_NUMBERS_OPTION_DEFAULT)
+				.commandLineArgument(createArg("-showDebugLineNumbers"))
+				.build());
 		return list;
 	}
 
@@ -498,7 +500,8 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 		Options proplist = program.getOptions(Program.PROGRAM_INFO);
 
 		proplist.setString("Debug Misc", actualData);
-		proplist.setString("Debug Misc Datatype", "0x" + Conv.toHexString(datatype));
+		proplist.setString("Debug Misc Datatype",
+			"0x" + NumericUtilities.toPaddedHexString(datatype));
 	}
 
 	private void addLineComment(Address addr, int line) {

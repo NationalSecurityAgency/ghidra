@@ -50,7 +50,7 @@ import ghidra.program.model.mem.MemoryConflictException;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.SystemUtilities;
@@ -99,6 +99,9 @@ public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
 	protected abstract void handleToggleBreakpointInvocation(
 			TraceBreakpointLocation expectedBreakpoint, boolean expectedEnabled) throws Throwable;
 
+	protected abstract void handleDeleteBreakpointInvocation(T target,
+			TraceBreakpointLocation expectedLoc) throws Throwable;
+
 	protected void addStaticMemoryAndBreakpoint() throws LockException, DuplicateNameException,
 			MemoryConflictException, AddressOverflowException, CancelledException {
 		try (Transaction tx = program.openTransaction("Add bookmark break")) {
@@ -107,7 +110,7 @@ public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
 						TaskMonitor.DUMMY, false);
 			program.getBookmarkManager()
 					.setBookmark(addr(program, 0x00400123), LogicalBreakpoint.ENABLED_BOOKMARK_TYPE,
-						"SW_EXECUTE;1", "");
+						"x;1", "");
 		}
 	}
 
@@ -121,6 +124,7 @@ public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
 
 	protected void assertProviderEmpty() {
 		assertTrue(breakpointsProvider.breakpointTableModel.getModelData().isEmpty());
+		assertTrue(breakpointsProvider.locationTableModel.getModelData().isEmpty());
 	}
 
 	@Before
@@ -153,7 +157,7 @@ public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
 			Unique.assertOne(breakpointsProvider.breakpointTableModel.getModelData());
 		assertEquals("55550123", row.getAddress().toString());
 		assertEquals(trace, row.getDomainObject());
-		assertEquals("SW_EXECUTE", row.getKinds());
+		assertEquals("x", row.getKind());
 		assertEquals(State.INCONSISTENT_ENABLED, row.getState());
 	}
 
@@ -197,7 +201,7 @@ public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
 			Unique.assertOne(breakpointsProvider.breakpointTableModel.getModelData());
 		assertEquals("00400123", row.getAddress().toString());
 		assertEquals(program, row.getDomainObject());
-		assertEquals("SW_EXECUTE", row.getKinds());
+		assertEquals("x", row.getKind());
 		assertEquals(State.INEFFECTIVE_ENABLED, row.getState());
 	}
 
@@ -454,10 +458,23 @@ public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
 	}
 
 	@Test
-	public void testActionClearSelectedBreakpoints() throws Exception {
-		createProgram();
+	public void testActionClearSelectedBreakpoints() throws Throwable {
+		T target = createTarget1();
+		Trace trace = getTrace(target);
+		createProgramFromTrace(trace);
+		intoProject(trace);
+		intoProject(program);
+		addMapping(trace, program);
+		addLiveMemoryAndBreakpoint(getProcess1(), target);
 		programManager.openProgram(program);
-		waitForSwing();
+		traceManager.openTrace(trace);
+		traceManager.activateTrace(trace);
+		waitForPass(() -> {
+			LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
+			assertEquals(program, lb.getProgram());
+			assertEquals(Set.of(trace), lb.getParticipatingTraces());
+			assertEquals(State.ENABLED, lb.computeState());
+		});
 
 		assertFalse(breakpointsProvider.actionClearSelectedBreakpoints.isEnabled());
 
@@ -466,6 +483,7 @@ public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
 
 		assertFalse(breakpointsProvider.actionClearSelectedBreakpoints.isEnabled());
 
+		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
 		LogicalBreakpointRow row =
 			Unique.assertOne(breakpointsProvider.breakpointTableModel.getModelData());
 		breakpointsProvider.breakpointFilterPanel.setSelectedItem(row);
@@ -485,27 +503,89 @@ public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
 
 		performAction(breakpointsProvider.actionClearSelectedBreakpoints);
 
+		TraceBreakpointLocation brk = Unique.assertOne(lb.getTraceBreakpoints(tb.trace));
+		lb.delete();
+		handleDeleteBreakpointInvocation(target, brk);
+
 		assertProviderEmpty();
 		assertFalse(breakpointsProvider.actionClearSelectedBreakpoints.isEnabled());
 	}
 
 	@Test
-	public void testActionClearAllBreakpoints() throws Exception {
-		createProgram();
+	public void testActionClearAllBreakpoints() throws Throwable {
+		T target = createTarget1();
+		Trace trace = getTrace(target);
+		createProgramFromTrace(trace);
+		intoProject(trace);
+		intoProject(program);
+
 		programManager.openProgram(program);
-		waitForSwing();
+		traceManager.openTrace(trace);
+		traceManager.activateTrace(trace);
 
 		assertFalse(breakpointsProvider.actionClearAllBreakpoints.isEnabled());
 
+		addMapping(trace, program);
+		addLiveMemoryAndBreakpoint(getProcess1(), target);
+		waitForPass(() -> {
+			LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
+			assertEquals(program, lb.getProgram());
+			assertEquals(Set.of(trace), lb.getParticipatingTraces());
+			assertEquals(State.ENABLED, lb.computeState());
+		});
 		addStaticMemoryAndBreakpoint();
 		waitForDomainObject(program);
 
 		assertTrue(breakpointsProvider.actionClearAllBreakpoints.isEnabled());
 
 		performAction(breakpointsProvider.actionClearAllBreakpoints);
+		for (LogicalBreakpoint lb : breakpointService.getAllBreakpoints()) {
+			TraceBreakpointLocation brk = Unique.assertOne(lb.getTraceBreakpoints(tb.trace));
+			lb.delete();
+			handleDeleteBreakpointInvocation(target, brk);
+		}
 
 		assertProviderEmpty();
 		assertFalse(breakpointsProvider.actionClearAllBreakpoints.isEnabled());
+	}
+
+	@Test
+	public void testClearEmuBreakpoint() throws Throwable {
+		DebuggerControlService controlService = addPlugin(tool,
+				DebuggerControlServicePlugin.class);
+
+		T target = createTarget1();
+		Trace trace = getTrace(target);
+		controlService.setCurrentMode(trace, ControlMode.RW_EMULATOR);
+		createProgramFromTrace(trace);
+		intoProject(trace);
+		intoProject(program);
+		addMapping(trace, program);
+		addStaticMemoryAndBreakpoint();
+		addLiveMemory(getProcess1());
+		programManager.openProgram(program);
+		traceManager.openTrace(trace);
+		traceManager.activateTrace(trace);
+
+		LogicalBreakpointRow row = waitForPass(() -> {
+			LogicalBreakpointRow newRow =
+					Unique.assertOne(breakpointsProvider.breakpointTableModel.getModelData());
+			LogicalBreakpoint lb = newRow.getLogicalBreakpoint();
+			assertEquals(program, lb.getProgram());
+			assertEquals(Set.of(trace), lb.getMappedTraces());
+			assertEquals(Set.of(), lb.getParticipatingTraces());
+			assertEquals(State.INEFFECTIVE_ENABLED, newRow.getState());
+			return newRow;
+		});
+		row.setEnabled(true);
+
+		breakpointsProvider.breakpointFilterPanel.setSelectedItem(row);
+		waitForSwing();
+
+		performAction(breakpointsProvider.actionClearSelectedBreakpoints);
+		waitForSwing();
+
+		assertProviderEmpty();
 	}
 
 	@Test
@@ -534,7 +614,7 @@ public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
 		});
 
 		performAction(breakpointsProvider.actionMakeBreakpointsEffective);
-		handleSetBreakpointInvocation(TraceBreakpointKindSet.SW_EXECUTE, 0x55550123);
+		handleSetBreakpointInvocation(CommonSet.SWX.kinds(), 0x55550123);
 
 		waitForPass(() -> {
 			assertFalse(breakpointsProvider.actionMakeBreakpointsEffective.isEnabled());

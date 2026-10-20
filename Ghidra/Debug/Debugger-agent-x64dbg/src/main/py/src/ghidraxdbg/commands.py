@@ -967,12 +967,12 @@ def put_single_breakpoint(bp, bpath, nproc: int, ikeys: List[int]) -> None:
         brkobj.set_value('Range', addr.extend(bp.hwSize))
     brkobj.set_value('HitCount', bp.hitCount)
     if bp.type == BreakpointType.BpNormal:
-        brkobj.set_value('Kinds', 'SW_EXECUTE')
+        brkobj.set_value('Kinds', 'x')
     if bp.type == BreakpointType.BpHardware:
-        prot = {0: 'READ', 1: 'WRITE', 2: 'HW_EXECUTE'}[bp.typeEx]
+        prot = {0: 'R', 1: 'W', 2: 'X'}[bp.typeEx]
         brkobj.set_value('Kinds', prot)
     if bp.type == BreakpointType.BpMemory:
-        prot = {0: 'READ', 1: 'WRITE', 2: 'HW_EXECUTE', 3: 'ACCESS'}[bp.typeEx]
+        prot = {0: 'R', 1: 'W', 2: 'X', 3: 'RW'}[bp.typeEx]
         brkobj.set_value('Kinds', prot)
     brkobj.insert()
 

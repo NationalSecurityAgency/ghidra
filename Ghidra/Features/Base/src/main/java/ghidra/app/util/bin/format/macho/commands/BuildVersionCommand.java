@@ -16,6 +16,8 @@
 package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
@@ -32,7 +34,7 @@ public class BuildVersionCommand extends LoadCommand {
 	private int minos;
 	private int sdk;
 	private long ntools;
-	private BuildToolVersion[] buildToolVersions;
+	private List<BuildToolVersion> buildToolVersions = new ArrayList<>();
 
 	BuildVersionCommand(BinaryReader reader) throws IOException {
 		super(reader);
@@ -41,9 +43,8 @@ public class BuildVersionCommand extends LoadCommand {
 		minos = reader.readNextInt();
 		sdk = reader.readNextInt();
 		ntools = checkCount(reader.readNextUnsignedInt());
-		buildToolVersions = new BuildToolVersion[(int) ntools];
 		for (int i = 0; i < ntools; i++) {
-			buildToolVersions[i] = new BuildToolVersion(reader.readNextInt(), reader.readNextInt());
+			buildToolVersions.add(new BuildToolVersion(reader.readNextInt(), reader.readNextInt()));
 		}
 	}
 
@@ -70,39 +71,35 @@ public class BuildVersionCommand extends LoadCommand {
 		return "build_version_command";
 	}
 
+	/**
+	 * {@return the platform}
+	 */
 	public int getPlatform() {
 		return platform;
 	}
 
+	/**
+	 * {@return the minimum OS}
+	 */
 	public int getMinOS() {
 		return minos;
 	}
 
+	/**
+	 * {@return the SDK}
+	 */
 	public int getSdk() {
 		return sdk;
 	}
 
+	/**
+	 * {@return the number of tools}
+	 */
 	public long getNumTools() {
 		return ntools;
 	}
 
-	public static class BuildToolVersion implements StructConverter {
-
-		private int tool;
-		private int version;
-
-		public BuildToolVersion(int tool, int version) {
-			this.tool = tool;
-			this.version = version;
-		}
-
-		public int getTool() {
-			return tool;
-		}
-
-		public int getVersion() {
-			return version;
-		}
+	public static record BuildToolVersion(int tool, int version) implements StructConverter {
 
 		@Override
 		public DataType toDataType() throws DuplicateNameException, IOException {

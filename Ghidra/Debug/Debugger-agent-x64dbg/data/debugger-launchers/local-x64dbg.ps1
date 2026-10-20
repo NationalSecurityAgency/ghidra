@@ -39,6 +39,7 @@ function Compute-Python-Args {
 	param($TempFile)
 	
 	$arglist = @("$Env:OPT_PYTHON_EXE")
+	$arglist+=@("-i")
 	if ("$Env:OPT_PYTHON_ARGS" -ne "") {
 		$arglist+=($Env:OPT_PYTHON_ARGS)
 	}

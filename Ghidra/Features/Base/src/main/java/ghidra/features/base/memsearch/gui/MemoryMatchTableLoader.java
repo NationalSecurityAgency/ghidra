@@ -48,12 +48,6 @@ public interface MemoryMatchTableLoader {
 	public void dispose();
 
 	/**
-	 * Returns the first match found. Typically used to navigate the associated navigatable.
-	 * @return the first match found
-	 */
-	public MemoryMatch getFirstMatch();
-
-	/**
 	 * Returns true if at least one match was found.
 	 * @return true if at least one match was found
 	 */

@@ -58,6 +58,10 @@ public class DataTypeReference {
 		return context;
 	}
 
+	public String getFieldName() {
+		return fieldName;
+	}
+
 	@Override
 	public String toString() {
 		String fieldNameText = fieldName == null ? "" : "\tfieldName: " + fieldName + "\n";

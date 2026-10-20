@@ -129,6 +129,8 @@ public class FrontEndPlugin extends Plugin
 
 	private FrontEndProvider frontEndProvider;
 
+	private EditActionManager editActionManager;
+
 	private ProjectRepoConnectAction repoConnectAction;
 	private ProjectDataCutAction cutAction;
 	private ClearCutAction clearCutAction;
@@ -179,7 +181,7 @@ public class FrontEndPlugin extends Plugin
 		tool.addComponentProvider(frontEndProvider, true);
 		tool.setDefaultComponent(frontEndProvider);
 
-		new EditActionManager(this);
+		editActionManager = new EditActionManager(this);
 		buildGui();
 
 		toolChestChangeListener = new MyToolChestChangeListener();
@@ -191,6 +193,10 @@ public class FrontEndPlugin extends Plugin
 		createActions();
 		createVersionControlActions();
 		createToolSpecificOpenActions();
+	}
+
+	void setUseNaturalSort(boolean b) {
+		projectDataPanel.setUseNaturalSort(b);
 	}
 
 	protected void createToolSpecificOpenActions() {
@@ -831,6 +837,7 @@ public class FrontEndPlugin extends Plugin
 		dataTablePanel.dispose();
 		dataTreePanel.dispose();
 		projectActionManager.dispose();
+		editActionManager.dispose();
 	}
 
 	private void buildPanels() {

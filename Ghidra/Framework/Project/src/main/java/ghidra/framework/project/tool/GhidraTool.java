@@ -44,7 +44,7 @@ public class GhidraTool extends PluginTool {
 	private FileOpenDropHandler fileOpenDropHandler;
 	private DockingAction configureToolAction;
 
-	private ExtensionManager extensionManager;
+	private ToolExtensionsStatusManager extensionManager;
 	private boolean hasBeenShown;
 
 	/**
@@ -72,9 +72,10 @@ public class GhidraTool extends PluginTool {
 	 * extension manager.
 	 * @return the extension manager
 	 */
-	private ExtensionManager getExtensionManager() {
+	private ToolExtensionsStatusManager getExtensionManager() {
 		if (extensionManager == null) {
-			extensionManager = new ExtensionManager(this);
+			ToolExtensionsEnabledState state = new ToolExtensionsEnabledState(this);
+			extensionManager = new ToolExtensionsStatusManager(state);
 		}
 		return extensionManager;
 	}

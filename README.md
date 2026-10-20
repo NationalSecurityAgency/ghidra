@@ -27,7 +27,7 @@ of how you might be impacted.
 
 ## Install
 To install an official pre-built multi-platform Ghidra release:  
-* Install [JDK 21 64-bit][jdk]
+* Install [JDK 25 64-bit][jdk]
 * Download a Ghidra [release file][releases]
   - **NOTE:** The official multi-platform release file is named 
     `ghidra_<version>_<release>_<date>.zip` which can be found under the "Assets" drop-down.
@@ -35,19 +35,21 @@ To install an official pre-built multi-platform Ghidra release:
 * Extract the Ghidra release file
   - **NOTE:** Do not extract on top of an existing installation
 * Launch Ghidra: `./ghidraRun` (`ghidraRun.bat` for Windows)
-  - or launch [PyGhidra][pyghidra]: `./support/pyGhidraRun` (`support\pyGhidraRun.bat` for Windows)
+  - or launch [PyGhidra][pyghidra]: `./support/pyghidraRun` (`support\pyghidraRun.bat` for Windows)
 
 For additional information and troubleshooting tips about installing and running a Ghidra release, 
 please refer to the [Getting Started][gettingstarted] document which can be found at the root of a 
 Ghidra installation directory. 
 
 ## Build
+[![Build Ghidra][build-ghidra-badge]][build-ghidra-action]
+
 To create the latest development build for your platform from this source repository:
 
 ##### Install build tools:
-* [JDK 21 64-bit][jdk]
-* [Gradle 8.5+][gradle] (or provided Gradle wrapper if Internet connection is available)
-* [Python3][python3] (version 3.9 to 3.14) with bundled pip
+* [JDK 25 64-bit][jdk]
+* [Gradle 9.1.0+][gradle] (or provided Gradle wrapper if Internet connection is available)
+* [Python3][python3] (version 3.9 to 3.15) with bundled pip
 * GCC or Clang, and make (Linux/macOS-only)
 * [Microsoft Visual Studio][vs] 2017+ or [Microsoft C++ Build Tools][vcbuildtools] with the
   following components installed (Windows-only):
@@ -127,7 +129,8 @@ If you would like to contribute bug fixes, improvements, and new features back t
 take a look at our [Contributor's Guide][contrib] to see how you can participate in this open 
 source project.
 
-
+[build-ghidra-action]: https://github.com/NationalSecurityAgency/ghidra/actions/workflows/build-ghidra.yml
+[build-ghidra-badge]: https://github.com/NationalSecurityAgency/ghidra/actions/workflows/build-ghidra.yml/badge.svg
 [nsa]: https://www.nsa.gov
 [contrib]: CONTRIBUTING.md
 [devguide]: DevGuide.md

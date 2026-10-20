@@ -55,7 +55,7 @@ import ghidra.framework.plugintool.dialog.ManagePluginsDialog;
 import ghidra.framework.plugintool.mgr.*;
 import ghidra.framework.plugintool.util.*;
 import ghidra.framework.project.ProjectDataService;
-import ghidra.framework.project.extensions.ExtensionTableProvider;
+import ghidra.framework.project.extensions.ExtensionTableDialog;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
@@ -339,7 +339,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * Displays the extensions installation dialog.
 	 */
 	public void showExtensions() {
-		showDialog(new ExtensionTableProvider(this));
+		showDialog(new ExtensionTableDialog(this));
 	}
 
 	/**
@@ -894,19 +894,6 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 	/**
 	 * Add plugins to the tool.
-	 * @param classNames array of plugin class names
-	 * @throws PluginException if a plugin could not be constructed, or
-	 * there was problem executing its init() method, or if a plugin of this
-	 * class already exists in the tool
-	 * @deprecated use {@link #addPlugins(Collection)}
-	 */
-	@Deprecated(since = "10.2", forRemoval = true)
-	public void addPlugins(String[] classNames) throws PluginException {
-		addPlugins(Arrays.asList(classNames));
-	}
-
-	/**
-	 * Add plugins to the tool.
 	 * @param classNames collection of plugin class names
 	 * @throws PluginException if a plugin could not be constructed, or
 	 * there was problem executing its init() method, or if a plugin of this
@@ -928,16 +915,6 @@ public abstract class PluginTool extends AbstractDockingTool {
 			pluginMgr.addPlugin(p);
 			setConfigChanged(true);
 		}, PluginException.class);
-	}
-
-	/**
-	 * Remove the array of plugins from the tool.
-	 * @param plugins array of plugins to remove
-	 * @deprecated use {@link #removePlugins(List)}
-	 */
-	@Deprecated(since = "10.2", forRemoval = true)
-	public void removePlugins(Plugin[] plugins) {
-		removePlugins(Arrays.asList(plugins));
 	}
 
 	/**
@@ -1146,6 +1123,37 @@ public abstract class PluginTool extends AbstractDockingTool {
 	}
 
 	protected void addHelpActions() {
+
+		HelpService help = Help.getHelpService();
+
+		int subgroup = 0;
+		new ActionBuilder("Contents", ToolConstants.TOOL_OWNER)
+				.menuPath(ToolConstants.MENU_HELP, "&Contents")
+				.menuGroup(ToolConstants.HELP_CONTENTS_MENU_GROUP, Integer.toString(subgroup++))
+				.helpLocation(new HelpLocation("Misc", "Welcome_to_Ghidra_Help"))
+				.inWindow(ActionBuilder.When.ALWAYS)
+				.onAction(c -> help.showHelp(null, false, getToolFrame()))
+				.buildAndInstall(this);
+
+		new ActionBuilder("Accessibility", ToolConstants.TOOL_OWNER)
+				.menuPath(ToolConstants.MENU_HELP, "&Accessibility")
+				.menuGroup(ToolConstants.HELP_CONTENTS_MENU_GROUP, Integer.toString(subgroup++))
+				.helpLocation(new HelpLocation("Accessibility", "AccessibilityOverview"))
+				.inWindow(ActionBuilder.When.ALWAYS)
+				.onAction(c -> {
+					help.showHelp(new HelpLocation("Accessibility", "AccessibilityOverview"));
+				})
+				.buildAndInstall(this);
+
+		new ActionBuilder("User Agreement", ToolConstants.TOOL_OWNER)
+				.menuPath(ToolConstants.MENU_HELP, "&User Agreement")
+				.menuGroup(ToolConstants.HELP_CONTENTS_MENU_GROUP, Integer.toString(subgroup++))
+				.helpLocation(new HelpLocation(ToolConstants.ABOUT_HELP_TOPIC, "User_Agreement"))
+				.inWindow(ActionBuilder.When.ALWAYS)
+				.onAction(
+					c -> DockingWindowManager.showDialog(new UserAgreementDialog(false, false)))
+				.buildAndInstall(this);
+
 		new ActionBuilder("About Ghidra", ToolConstants.TOOL_OWNER)
 				.menuPath(ToolConstants.MENU_HELP, "&About Ghidra")
 				.menuGroup("ZZA")
@@ -1154,16 +1162,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 				.onAction(c -> DockingWindowManager.showDialog(new AboutDialog()))
 				.buildAndInstall(this);
 
-		new ActionBuilder("User Agreement", ToolConstants.TOOL_OWNER)
-				.menuPath(ToolConstants.MENU_HELP, "&User Agreement")
-				.menuGroup(ToolConstants.HELP_CONTENTS_MENU_GROUP)
-				.helpLocation(new HelpLocation(ToolConstants.ABOUT_HELP_TOPIC, "User_Agreement"))
-				.inWindow(ActionBuilder.When.ALWAYS)
-				.onAction(
-					c -> DockingWindowManager.showDialog(new UserAgreementDialog(false, false)))
-				.buildAndInstall(this);
-
-		final ErrorReporter reporter = ErrLogDialog.getErrorReporter();
+		ErrorReporter reporter = ErrLogDialog.getErrorReporter();
 		if (reporter != null) {
 			new ActionBuilder("Report Bug", ToolConstants.TOOL_OWNER)
 					.menuPath(ToolConstants.MENU_HELP, "&Report Bug...")
@@ -1173,16 +1172,6 @@ public abstract class PluginTool extends AbstractDockingTool {
 					.onAction(c -> reporter.report(getToolFrame(), "User Bug Report", null))
 					.buildAndInstall(this);
 		}
-
-		HelpService help = Help.getHelpService();
-
-		new ActionBuilder("Contents", ToolConstants.TOOL_OWNER)
-				.menuPath(ToolConstants.MENU_HELP, "&Contents")
-				.menuGroup(ToolConstants.HELP_CONTENTS_MENU_GROUP)
-				.helpLocation(new HelpLocation("Misc", "Welcome_to_Ghidra_Help"))
-				.inWindow(ActionBuilder.When.ALWAYS)
-				.onAction(c -> help.showHelp(null, false, getToolFrame()))
-				.buildAndInstall(this);
 	}
 
 	/**

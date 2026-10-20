@@ -25,8 +25,7 @@ import ghidra.framework.client.ClientUtil;
 import ghidra.framework.data.FolderLinkContentHandler;
 import ghidra.framework.data.LinkHandler;
 import ghidra.framework.data.LinkHandler.LinkStatus;
-import ghidra.framework.model.DomainFile;
-import ghidra.framework.model.DomainFolder;
+import ghidra.framework.model.*;
 import ghidra.program.database.DataTypeArchiveDB;
 import ghidra.program.database.ProgramLinkContentHandler;
 import ghidra.program.model.listing.Program;
@@ -52,15 +51,18 @@ public class ProjectLinkFileStatusTest extends AbstractGhidraHeadedIntegrationTe
 		/**
 			/abc/               (folder)
 			 	abc -> /xyz/abc (circular folder allowed as internal)
+			 	xyz -> ../xyz   (relative folder link)
 			 	foo             (program file)
+			 	Program_A -> ../Program_A (relative program link)
+			/e -> f (circular folder link path)
+			/f -> g (circular folder link path)
+			/g -> e (circular folder link path)
 			/xyz/     
 			 	abc -> /abc     (folder link)
 			 		abc -> /xyz/abc (circular folder allowed as internal)
 			 		foo
 			 	foo -> /abc/foo (program link)
-			/e -> f (circular folder link path)
-			/f -> g (circular folder link path)
-			/g -> e (circular folder link path)
+			Program_A (program)
 		**/
 
 		DomainFolder rootFolder = env.getRootFolder();
@@ -84,9 +86,10 @@ public class ProjectLinkFileStatusTest extends AbstractGhidraHeadedIntegrationTe
 		rootFolder.createLinkFile(rootFolder.getProjectData(), "/e", true, "g",
 			FolderLinkContentHandler.INSTANCE);
 
-		rootFolder.createLinkFile(rootFolder.getProjectData(),
-			"/home/tsharr2/Examples/linktest/usr/lib64/../lib64", true, "nested2lib64",
+		abcFolder.createLinkFile(rootFolder.getProjectData(), "/abc/../xyz", true, "xyz",
 			FolderLinkContentHandler.INSTANCE);
+		abcFolder.createLinkFile(rootFolder.getProjectData(), "/abc/../Program_A", true,
+			"Program_A", ProgramLinkContentHandler.INSTANCE);
 
 		env.waitForTree();
 	}
@@ -102,6 +105,24 @@ public class ProjectLinkFileStatusTest extends AbstractGhidraHeadedIntegrationTe
 		DomainFileNode fileNode = env.waitForFileNode("/abc/foo");
 		assertEquals(LinkStatus.NON_LINK,
 			LinkHandler.getLinkFileStatus(fileNode.getDomainFile(), null));
+	}
+
+	@Test
+	public void testRelativeFileLink() throws Exception {
+		DomainFileNode fileNode = env.waitForFileNode("/abc/Program_A");
+		assertEquals(LinkStatus.INTERNAL,
+			LinkHandler.getLinkFileStatus(fileNode.getDomainFile(), null));
+		LinkFileInfo linkInfo = fileNode.getDomainFile().getLinkInfo();
+		assertEquals("/Program_A", linkInfo.getAbsoluteLinkPath());
+	}
+
+	@Test
+	public void testRelativeFolderLink() throws Exception {
+		DomainFileNode fileNode = env.waitForFileNode("/abc/xyz");
+		assertEquals(LinkStatus.INTERNAL,
+			LinkHandler.getLinkFileStatus(fileNode.getDomainFile(), null));
+		LinkFileInfo linkInfo = fileNode.getDomainFile().getLinkInfo();
+		assertEquals("/xyz", linkInfo.getAbsoluteLinkPath());
 	}
 
 	@Test
@@ -231,9 +252,11 @@ public class ProjectLinkFileStatusTest extends AbstractGhidraHeadedIntegrationTe
 		//
 		DomainFolder rootFolder = abcFolder.getParent();
 		abcFolder.getFile("abc").delete();
+		abcFolder.getFile("xyz").delete();
 		abcFolder.getFile("foo").delete();
 		abcFolder.getFile("A").delete();
 		abcFolder.getFile("B").delete();
+		abcFolder.getFile("Program_A").delete();
 		abcFolder.delete();
 
 		//

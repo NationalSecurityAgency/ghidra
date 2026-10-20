@@ -1,0 +1,15 @@
+<context>
+	<schema name="AvailableContainer" canonical="yes" elementResync="ALWAYS" attributeResync="NEVER">
+		<element schema="Attachable" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="Attachable" elementResync="NEVER" attributeResync="NEVER">
+		<element schema="VOID" />
+		<attribute name="PID" schema="LONG" />
+		<attribute-alias from="_pid" to="PID" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+</context>

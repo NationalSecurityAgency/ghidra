@@ -115,6 +115,7 @@ public class ListingUnwoundFrame extends AbstractUnwoundFrame<WatchValue> {
 
 	private final int level;
 	private final Address pcVal;
+	private final Address staticPcVal;
 	private final Function function;
 	private final Address base;
 
@@ -139,6 +140,7 @@ public class ListingUnwoundFrame extends AbstractUnwoundFrame<WatchValue> {
 		this.level = loadLevel();
 		this.pcVal = loadProgramCounter();
 		this.function = loadFunction();
+		this.staticPcVal = mapProgramCounter();
 		this.base = loadBasePointer();
 	}
 
@@ -180,6 +182,15 @@ public class ListingUnwoundFrame extends AbstractUnwoundFrame<WatchValue> {
 			return ref.getFromAddress();
 		}
 		throw new UnwindException("The program counter reference is missing for the frame!");
+	}
+
+	private Address mapProgramCounter() {
+		ProgramLocation location = mappingService.getOpenMappedLocation(
+			new DefaultTraceLocation(trace, null, Lifespan.at(snap), pcVal));
+		if (location.getProgram() != function.getProgram()) {
+			return null;
+		}
+		return location.getByteAddress();
 	}
 
 	private Function loadFunction() {
@@ -224,6 +235,11 @@ public class ListingUnwoundFrame extends AbstractUnwoundFrame<WatchValue> {
 	@Override
 	public Address getProgramCounter() {
 		return pcVal;
+	}
+
+	@Override
+	public Address getStaticCounter() {
+		return staticPcVal;
 	}
 
 	@Override

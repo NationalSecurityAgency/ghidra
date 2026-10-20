@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,6 +31,7 @@ import javax.help.plaf.basic.BasicFavoritesCellRenderer;
 import javax.help.plaf.basic.BasicFavoritesNavigatorUI;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
 
 import ghidra.util.Msg;
 
@@ -107,11 +108,18 @@ public class CustomFavoritesView extends FavoritesView {
 			tree.addKeyListener(new KeyAdapter() {
 				@Override
 				public void keyReleased(java.awt.event.KeyEvent e) {
-					if (e.getKeyCode() == KeyEvent.VK_DELETE ||
-						e.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
 
-						removeAction.actionPerformed(null);
+					if (e.getKeyCode() != KeyEvent.VK_DELETE &&
+						e.getKeyCode() != KeyEvent.VK_BACK_SPACE) {
+						return;
 					}
+
+					TreePath[] paths = tree.getSelectionPaths();
+					if (paths == null || paths.length == 0) {
+						return;
+					}
+
+					removeAction.actionPerformed(null);
 				}
 			});
 

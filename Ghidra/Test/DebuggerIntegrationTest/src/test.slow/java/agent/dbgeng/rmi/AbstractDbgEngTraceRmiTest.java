@@ -16,7 +16,7 @@
 package agent.dbgeng.rmi;
 
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assume.*;
 
 import java.io.*;
 import java.net.*;
@@ -44,6 +44,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRangeImpl;
 import ghidra.pty.testutil.DummyProc;
 import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
 import ghidra.trace.model.target.TraceObject;
@@ -60,9 +61,9 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 			from ghidratrace.client import Schedule
 			""";
 	// Connecting should be the first thing the script does, so use a tight timeout.
-	protected static final int CONNECT_TIMEOUT_MS = 3000;
-	protected static final int TIMEOUT_SECONDS = SystemUtilities.isInTestingBatchMode() ? 10 : 300;
-	protected static final int QUIT_TIMEOUT_MS = 1000;
+	protected static final int CONNECT_TIMEOUT_MS = 6000;
+	protected static final int TIMEOUT_SECONDS = SystemUtilities.isInTestingBatchMode() ? 20 : 300;
+	protected static final int QUIT_TIMEOUT_MS = 2000;
 
 	/** Some snapshot likely to exceed the latest */
 	protected static final long SNAP = 100;
@@ -150,16 +151,24 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 	public void setupTraceRmi() throws Throwable {
 		traceRmi = addPlugin(tool, TraceRmiPlugin.class);
 
-		try {
-			pythonPath = Paths.get(DummyProc.which("python3"));
-		}
-		catch (RuntimeException e) {
-			pythonPath = Paths.get(DummyProc.which("python"));
-		}
+		pythonPath = getPathToPython();
 
 		assertTrue(pythonPath.toFile().exists());
 		outFile = Files.createTempFile("pydbgout", null);
 		errFile = Files.createTempFile("pydbgerr", null);
+	}
+
+	protected Path getPathToPython() {
+		try {
+			String py3path = DummyProc.which("python3");
+			if (py3path != null && !py3path.contains("msys")) {
+				return Paths.get(py3path);
+			}
+		}
+		catch (RuntimeException e) {
+			// Should not happen since we maintain library on host test machine
+		}
+		return Paths.get(DummyProc.which("python"));
 	}
 
 	protected void addAllDebuggerPlugins() throws PluginException {
@@ -195,10 +204,6 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 			if (stderr.contains("Error") || (0 != exitCode && 1 != exitCode && 143 != exitCode)) {
 				throw new PythonError(exitCode, stdout, stderr);
 			}
-			System.out.println("--stdout--");
-			System.out.println(stdout);
-			System.out.println("--stderr--");
-			System.out.println(stderr);
 			return stdout;
 		}
 	}
@@ -451,19 +456,19 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 		return new RegDump();
 	}
 
-	protected ManagedDomainObject openDomainObject(String path) throws Exception {
+	protected ManagedDomainObject<Trace> openTrace(String path) throws Exception {
 		DomainFile df = env.getProject().getProjectData().getFile(path);
 		assertNotNull(df);
-		return new ManagedDomainObject(df, false, false, monitor);
+		return new ManagedDomainObject<>(df, Trace.class, monitor);
 	}
 
-	protected ManagedDomainObject waitDomainObject(String path) throws Exception {
+	protected ManagedDomainObject<Trace> waitTrace(String path) throws Exception {
 		DomainFile df;
 		long start = System.currentTimeMillis();
 		while (true) {
 			df = env.getProject().getProjectData().getFile(path);
 			if (df != null) {
-				return new ManagedDomainObject(df, false, false, monitor);
+				return new ManagedDomainObject<>(df, Trace.class, monitor);
 			}
 			Thread.sleep(1000);
 			if (System.currentTimeMillis() - start > 30000) {

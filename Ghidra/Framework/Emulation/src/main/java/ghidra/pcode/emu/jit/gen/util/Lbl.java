@@ -17,6 +17,7 @@ package ghidra.pcode.emu.jit.gen.util;
 
 import org.objectweb.asm.Label;
 
+import ghidra.pcode.emu.jit.JitCompiler.Diag;
 import ghidra.pcode.emu.jit.gen.util.Emitter.Dead;
 import ghidra.pcode.emu.jit.gen.util.Emitter.Next;
 import ghidra.pcode.emu.jit.gen.util.Methods.RetReq;
@@ -102,9 +103,23 @@ import ghidra.pcode.emu.jit.gen.util.Methods.RetReq;
  * not currently have a solution to that complaint.
  * 
  * @param <N> the stack contents where the label is placed (or must be placed)
+ * @param id if {@link Diag#DEEP_TRACE} is enabled, a globally-unique 0-up counter, or -1
  * @param label the wrapped ASM label
  */
-public record Lbl<N extends Next>(Label label) {
+public record Lbl<N extends Next>(int id, Label label) {
+	static int nextId = 0; // for diagnostics only
+
+	public Lbl(Label label) {
+		final int id;
+		if (Op.DEEP_TRACE) {
+			id = nextId++;
+		}
+		else {
+			id = -1;
+		}
+		this(id, label);
+	}
+
 	/**
 	 * A tuple providing both a (new) label and a resulting emitter
 	 * 
@@ -143,6 +158,9 @@ public record Lbl<N extends Next>(Label label) {
 	 */
 	public static <N extends Next> LblEm<N, N> place(Emitter<N> em) {
 		Lbl<N> lbl = create();
+		if (Op.DEEP_TRACE) {
+			System.err.println("    jvm<%s>".formatted(lbl));
+		}
 		em.mv.visitLabel(lbl.label);
 		return new LblEm<>(lbl, em);
 	}
@@ -159,6 +177,9 @@ public record Lbl<N extends Next>(Label label) {
 	 * @return the same emitter
 	 */
 	public static <N extends Next> Emitter<N> place(Emitter<N> em, Lbl<N> lbl) {
+		if (Op.DEEP_TRACE) {
+			System.err.println("    jvm<%s>".formatted(lbl));
+		}
 		em.mv.visitLabel(lbl.label);
 		return em;
 	}
@@ -180,6 +201,9 @@ public record Lbl<N extends Next>(Label label) {
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static <N extends Next> Emitter<N> placeDead(Emitter<Dead> em, Lbl<N> lbl) {
+		if (Op.DEEP_TRACE) {
+			System.err.println("    jvm<%s>".formatted(lbl));
+		}
 		em.mv.visitLabel(lbl.label);
 		return (Emitter) em;
 	}

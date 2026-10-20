@@ -27,7 +27,6 @@ import ghidra.trace.model.Lifespan.MutableLifeSet;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.TraceTimeManager;
-import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.*;
 import ghidra.util.datastruct.ListenerSet;
 
@@ -161,31 +160,6 @@ public class DBTraceTimeViewport implements TraceTimeViewport {
 		return true;
 	}
 
-	protected static TraceSnapshot locateMostRecentFork(TraceTimeManager timeManager, long from) {
-		while (true) {
-			TraceSnapshot prev = timeManager.getMostRecentSnapshot(from);
-			if (prev == null) {
-				return null;
-			}
-			TraceSchedule prevSched = prev.getSchedule();
-			long prevKey = prev.getKey();
-			if (prevSched == null) {
-				if (prevKey == Long.MIN_VALUE) {
-					return null;
-				}
-				from = prevKey - 1;
-				continue;
-			}
-			long forkedSnap = prevSched.getSnap();
-			if (forkedSnap == prevKey - 1) {
-				// Schedule is notational without forking
-				from--;
-				continue;
-			}
-			return prev;
-		}
-	}
-
 	/**
 	 * Construct the ranges (set and ordered)
 	 * 
@@ -200,14 +174,11 @@ public class DBTraceTimeViewport implements TraceTimeViewport {
 	protected static void collectForkRanges(TraceTimeManager timeManager, long curSnap,
 			MutableLifeSet spanSet, List<Lifespan> ordered) {
 		while (true) {
-			TraceSnapshot fork = locateMostRecentFork(timeManager, curSnap);
-			long prevSnap = fork == null ? Long.MIN_VALUE : fork.getKey();
-			if (curSnap >= 0 && prevSnap < 0) {
-				prevSnap = 0;
-			}
+			long prevSnap = timeManager.getMostRecentFork(curSnap);
 			if (!addSnapRange(prevSnap, curSnap, spanSet, ordered)) {
 				return;
 			}
+			TraceSnapshot fork = timeManager.getSnapshot(prevSnap, false);
 			if (fork == null) {
 				return;
 			}

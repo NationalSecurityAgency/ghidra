@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,10 +20,12 @@ import java.math.BigInteger;
 import ghidra.pcode.error.LowlevelError;
 import ghidra.program.model.pcode.PcodeOp;
 
-public class OpBehaviorIntRem extends BinaryOpBehavior {
+public enum OpBehaviorIntRem implements BinaryOpBehavior {
+	OP_INT_REM;
 
-	public OpBehaviorIntRem() {
-		super(PcodeOp.INT_REM);
+	@Override
+	public int opcode() {
+		return PcodeOp.INT_REM;
 	}
 
 	@Override
@@ -42,5 +44,4 @@ public class OpBehaviorIntRem extends BinaryOpBehavior {
 		BigInteger res = in1.remainder(in2);
 		return res;
 	}
-
 }

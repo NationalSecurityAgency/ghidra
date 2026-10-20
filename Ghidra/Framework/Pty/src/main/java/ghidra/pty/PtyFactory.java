@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@ import java.io.IOException;
 
 import ghidra.framework.OperatingSystem;
 import ghidra.pty.linux.LinuxPtyFactory;
+import ghidra.pty.openbsd.OpenBSDPtyFactory;
 import ghidra.pty.macos.MacosPtyFactory;
 import ghidra.pty.windows.ConPtyFactory;
 
@@ -40,6 +41,8 @@ public interface PtyFactory {
 				return MacosPtyFactory.INSTANCE;
 			case LINUX:
 				return LinuxPtyFactory.INSTANCE;
+			case OPEN_BSD:
+				return OpenBSDPtyFactory.INSTANCE;
 			case WINDOWS:
 				return ConPtyFactory.INSTANCE;
 			default:

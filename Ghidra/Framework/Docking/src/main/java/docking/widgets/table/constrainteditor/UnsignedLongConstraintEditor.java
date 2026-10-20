@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,7 @@ import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.table.constraint.ColumnConstraint;
 import docking.widgets.table.constraint.SingleValueColumnConstraint;
 import docking.widgets.textfield.IntegerTextField;
+import docking.widgets.textfield.integer.IntegerFormat;
 import generic.theme.GThemeDefaults.Colors.Messages;
 
 /**
@@ -54,8 +55,8 @@ public class UnsignedLongConstraintEditor extends AbstractColumnConstraintEditor
 		getConstraint().getConstraintValue();
 
 		field = new IntegerTextField(16, 0);
-		field.setHexMode();
-		field.setAllowNegativeValues(false);
+		field.setFormat(IntegerFormat.HEX);
+		field.setMinValue(BigInteger.ZERO);	// don't allow negative numbers
 		field.setMaxValue(new BigInteger("FFFFFFFFFFFFFFFF", 16));
 		field.addChangeListener(e -> valueChanged());
 

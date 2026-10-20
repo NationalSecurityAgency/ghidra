@@ -157,11 +157,11 @@ public class GhidraGo implements GhidraLaunchable {
 		if (SystemUtilities.isInDevelopmentMode()) {
 			if (Platform.CURRENT_PLATFORM.getOperatingSystem() == OperatingSystem.WINDOWS) {
 				ghidraRunPath = Path.of(file.getAbsolutePath(),
-					"/RuntimeScripts/Windows/ghidraRun.bat");
+					"/RuntimeScripts/ghidraRun.bat");
 			}
 			else {
 				ghidraRunPath = Path.of(file.getAbsolutePath(),
-					"/RuntimeScripts/Linux/ghidraRun");
+					"/RuntimeScripts/ghidraRun");
 			}
 		}
 		else {

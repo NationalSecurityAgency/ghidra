@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@ import java.lang.ref.SoftReference;
 import java.util.*;
 
 import ghidra.util.Lock;
+import ghidra.util.Lock.Closeable;
 
 /**
  * Instances of this class will provide a simple map interface to a cached set of key,value
@@ -120,17 +121,13 @@ public abstract class LazyLoadingCachingMap<K, V> {
 		// It should be safe here since it creates a new map and then in one operation it sets it
 		// as the map to be used elsewhere.
 
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			map = getMap();
 			if (map == null) {
 				map = loadMap();
 				softRef = new SoftReference<>(map);
 			}
 			return map;
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -145,6 +142,5 @@ public abstract class LazyLoadingCachingMap<K, V> {
 		}
 		return softRef.get();
 	}
-
 
 }

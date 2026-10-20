@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,12 +20,14 @@ import java.awt.event.*;
 import java.util.List;
 import java.util.function.*;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.*;
 
 import docking.event.mouse.GMouseListenerAdapter;
 import docking.widgets.list.GListCellRenderer;
+import ghidra.util.Msg;
 import utility.function.Dummy;
 
 /**
@@ -219,6 +221,8 @@ public class SearchList<T> extends JPanel {
 	private Component buildFilterField() {
 		JPanel panel = new JPanel(new BorderLayout());
 		textField = new JTextField();
+		textField.getAccessibleContext().setAccessibleDescription("Enter text to filter list");
+		textField.getAccessibleContext().setAccessibleName("Filter text field.");
 		panel.add(textField, BorderLayout.CENTER);
 		textField.addKeyListener(new TextFieldKeyListener());
 		textField.getDocument().addDocumentListener(new SearchListDocumentListener());
@@ -272,7 +276,7 @@ public class SearchList<T> extends JPanel {
 		return new DefaultFilter(text);
 	}
 
-	JTextField getTextField() {
+	public JTextField getTextField() {
 		return textField;
 	}
 
@@ -324,8 +328,8 @@ public class SearchList<T> extends JPanel {
 			categoryLabel.setOpaque(true);
 			categoryLabel.setBackground(background);
 			categoryLabel.setForeground(itemRendererComp.getForeground());
-			panel.getAccessibleContext()
-					.setAccessibleName(getDisplayName(value.value(), value.category()));
+			String txt = getDisplayName(value.value(), value.category());
+			panel.getAccessibleContext().setAccessibleName(txt);
 			return panel;
 		}
 	}
@@ -430,5 +434,4 @@ public class SearchList<T> extends JPanel {
 	public JTextField getFilterField() {
 		return textField;
 	}
-
 }

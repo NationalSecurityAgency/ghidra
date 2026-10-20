@@ -19,7 +19,7 @@
 import java.io.*;
 
 import ghidra.app.script.GhidraScript;
-import ghidra.util.Conv;
+import ghidra.util.NumericUtilities;
 
 public class BinaryToAsciiScript extends GhidraScript {
 
@@ -81,7 +81,7 @@ public class BinaryToAsciiScript extends GhidraScript {
 					out.append('\n');
 				}
 
-				out.write(Conv.toHexString(buffer[i]));
+				out.write(NumericUtilities.toPaddedHexString(buffer[i]));
 
 				++bytesWritten;
 			}

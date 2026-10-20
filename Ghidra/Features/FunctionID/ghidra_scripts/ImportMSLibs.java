@@ -17,6 +17,7 @@
 //@category FunctionID
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.AccessMode;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -33,7 +34,8 @@ import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.program.model.lang.LanguageDescription;
 import ghidra.program.model.listing.Program;
 import ghidra.util.InvalidNameException;
-import ghidra.util.exception.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
 import ghidra.util.task.CancelOnlyWrappingTaskMonitor;
 import ghidra.util.task.TaskMonitor;
 
@@ -79,9 +81,8 @@ public class ImportMSLibs extends GhidraScript {
 	}
 
 	private void importLibrary(DomainFolder root, File file, boolean isDebug, MessageLog log)
-			throws CancelledException, DuplicateNameException, InvalidNameException,
-			VersionException, IOException {
-		try (RandomAccessByteProvider provider = new RandomAccessByteProvider(file) ) {
+			throws CancelledException, InvalidNameException, VersionException, IOException {
+		try (ByteProvider provider = new FileByteProvider(file, null, AccessMode.READ)) {
 			if ( !CoffArchiveHeader.isMatch(provider)) { return; }
 			
 			CoffArchiveHeader coffArchiveHeader = CoffArchiveHeader.read(provider, TaskMonitor.DUMMY);

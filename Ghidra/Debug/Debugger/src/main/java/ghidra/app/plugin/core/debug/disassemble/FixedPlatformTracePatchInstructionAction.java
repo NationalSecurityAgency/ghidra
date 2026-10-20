@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.disassemble;
 
+import docking.action.MenuData;
+import ghidra.app.plugin.core.assembler.AbstractPatchAction;
 import ghidra.program.model.lang.LanguageID;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.trace.model.guest.TracePlatform;
@@ -25,11 +27,18 @@ public class FixedPlatformTracePatchInstructionAction extends AbstractTracePatch
 
 	public FixedPlatformTracePatchInstructionAction(DebuggerDisassemblerPlugin plugin,
 			LanguageID altLangID, TracePlatform platform) {
-		super(plugin, "Patch Instruction using " + altLangID);
-		setKeyBindingData(null);
-
 		this.altLangID = altLangID;
 		this.platform = platform;
+		super(plugin, "Patch Instruction using " + altLangID);
+		setKeyBindingData(null);
+	}
+
+	@Override
+	protected MenuData createMenuData(String name) {
+		MenuData menuData =
+			new MenuData(new String[] { "Patch Instruction using", altLangID.toString() });
+		menuData.setParentMenuGroup(AbstractPatchAction.MENU_GROUP);
+		return menuData;
 	}
 
 	@Override

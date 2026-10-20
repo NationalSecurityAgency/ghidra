@@ -62,8 +62,7 @@ public class DialogComponentProviderPopupActionManager {
 			actionContext = new DefaultActionContext();
 		}
 
-		// If the source is null, must set it or we won't have 
-		// any popups shown.
+		// If the source is null, must set it or we won't have any popups shown.
 		if (actionContext.getSourceObject() == null) {
 			actionContext.setSourceObject(e.getSource());
 		}

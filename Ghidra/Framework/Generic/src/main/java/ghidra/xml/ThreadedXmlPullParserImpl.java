@@ -62,6 +62,8 @@ class ThreadedXmlPullParserImpl extends AbstractXmlPullParser {
 	 * @param file the input XML file
 	 * @param errHandler the XML error handler
 	 * @param validate true if the parse should validate against the DTD
+	 * @param capacity the number of items that can be added to the queue before the parsing thread
+	 * will block
 	 * @throws SAXException if an XML parse error occurs
 	 * @throws IOException if an i/o error occurs
 	 */
@@ -76,6 +78,8 @@ class ThreadedXmlPullParserImpl extends AbstractXmlPullParser {
 	 * @param file the input XML file
 	 * @param errHandler the XML error handler
 	 * @param validate true if the parse should validate against the DTD
+	 * @param capacity the number of items that can be added to the queue before the parsing thread
+	 * will block
 	 * @throws SAXException if an XML parse error occurs
 	 * @throws IOException if an i/o error occurs
 	 */
@@ -96,14 +100,15 @@ class ThreadedXmlPullParserImpl extends AbstractXmlPullParser {
 	 * Note: Only use this method if you know that the XML in the given stream
 	 * contains its own internal validation (an internal dtd specification). For
 	 * XML files that use an external dtd file you should call
-	 * {@link #XmlParser(File, ErrorHandler, boolean)}.
+	 * {@link #ThreadedXmlPullParserImpl(File, ErrorHandler, boolean, int)}.
 	 * 
 	 * @param input the XML input stream
 	 * @param inputName the name of the input stream
 	 * @param errHandler the XML error handler
 	 * @param validate true if the parse should validate against the DTD
+	 * @param capacity the number of items that can be added to the queue before the parsing thread
+	 * will block
 	 * @throws SAXException if an XML parse error occurs
-	 * @throws IOException if an i/o error occurs
 	 */
 	ThreadedXmlPullParserImpl(InputStream input, String inputName, ErrorHandler errHandler,
 			boolean validate, int capacity) throws SAXException {
@@ -206,7 +211,6 @@ class ThreadedXmlPullParserImpl extends AbstractXmlPullParser {
 	public void dispose() {
 		disposed = true;
 		parsingTask.cancel(true);
-//		Msg.debug(this, id + "Disposed");
 	}
 
 	private class ContentHandlerRunnable implements Runnable {
@@ -223,15 +227,18 @@ class ThreadedXmlPullParserImpl extends AbstractXmlPullParser {
 
 			try {
 				SAXParserFactory saxParserFactory = XmlUtilities.createSecureSAXParserFactory(true);
+				saxParserFactory.setFeature(
+					"http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
 				saxParserFactory.setFeature("http://xml.org/sax/features/namespaces", false);
 				saxParserFactory.setFeature("http://xml.org/sax/features/validation", validate);
 				saxParser = saxParserFactory.newSAXParser();
 				saxParser.getXMLReader().setEntityResolver((publicId, systemId) -> {
 					if (resolveDir == null) {
-						return null;
+						return new InputSource(new StringReader("")); // empty DTD
 					}
-					ResourceFile resolvedFile =
-						new ResourceFile(resolveDir, new File(systemId).getName());
+
+					String filename = new File(systemId).getName();
+					ResourceFile resolvedFile = new ResourceFile(resolveDir, filename);
 					InputSource inputSource = new InputSource();
 					inputSource.setPublicId(publicId);
 					inputSource.setSystemId(resolvedFile.toURI().toString());

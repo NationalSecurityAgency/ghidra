@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,69 +20,52 @@ import java.math.BigInteger;
 import org.junit.Assert;
 import org.junit.Test;
 
-import ghidra.pcode.floatformat.FloatFormat;
-import ghidra.pcode.floatformat.FloatFormatFactory;
-
 public class OpBehaviorFloatNegTest extends AbstractOpBehaviorTest {
-
-	public OpBehaviorFloatNegTest() {
-		super();
-	}
+	static final OpBehaviorFloatNeg OP = OpBehavior.FLOAT_NEG;
 
 	@Test
 	public void testEvaluateBinaryLong() {
+		long a = FF8.getEncoding(2.5);
+		long result = OP.evaluateUnary(8, 8, a);
+		Assert.assertEquals(-2.5, FF8.decodeHostFloat(result), 0);
 
-		OpBehaviorFloatNeg op = new OpBehaviorFloatNeg();
+		a = FF8.getEncoding(-2.5);
+		result = OP.evaluateUnary(8, 8, a);
+		Assert.assertEquals(2.5, FF8.decodeHostFloat(result), 0);
 
-		FloatFormat ff = FloatFormatFactory.getFloatFormat(8);
+		a = FF8.getEncoding(Double.POSITIVE_INFINITY);
+		result = OP.evaluateUnary(8, 8, a);
+		Assert.assertEquals(Double.NEGATIVE_INFINITY, FF8.decodeHostFloat(result), 0);
 
-		long a = ff.getEncoding(2.5);
-		long result = op.evaluateUnary(8, 8, a);
-		Assert.assertEquals(-2.5, ff.decodeHostFloat(result), 0);
+		a = FF8.getEncoding(Double.NEGATIVE_INFINITY);
+		result = OP.evaluateUnary(8, 8, a);
+		Assert.assertEquals(Double.POSITIVE_INFINITY, FF8.decodeHostFloat(result), 0);
 
-		a = ff.getEncoding(-2.5);
-		result = op.evaluateUnary(8, 8, a);
-		Assert.assertEquals(2.5, ff.decodeHostFloat(result), 0);
-
-		a = ff.getEncoding(Double.POSITIVE_INFINITY);
-		result = op.evaluateUnary(8, 8, a);
-		Assert.assertEquals(Double.NEGATIVE_INFINITY, ff.decodeHostFloat(result), 0);
-
-		a = ff.getEncoding(Double.NEGATIVE_INFINITY);
-		result = op.evaluateUnary(8, 8, a);
-		Assert.assertEquals(Double.POSITIVE_INFINITY, ff.decodeHostFloat(result), 0);
-
-		a = ff.getEncoding(Double.NaN);
-		result = op.evaluateUnary(8, 8, a);
-		Assert.assertEquals(Double.NaN, ff.decodeHostFloat(result), 0);
+		a = FF8.getEncoding(Double.NaN);
+		result = OP.evaluateUnary(8, 8, a);
+		Assert.assertEquals(Double.NaN, FF8.decodeHostFloat(result), 0);
 	}
 
 	@Test
 	public void testEvaluateBinaryBigInteger() {
+		BigInteger a = FF8.getEncoding(FF8.getBigFloat(2.5d));
+		BigInteger result = OP.evaluateUnary(8, 8, a);
+		Assert.assertEquals(FF8.getBigFloat(-2.5d), FF8.decodeBigFloat(result));
 
-		OpBehaviorFloatNeg op = new OpBehaviorFloatNeg();
+		a = FF8.getEncoding(FF8.getBigFloat(-2.5d));
+		result = OP.evaluateUnary(8, 8, a);
+		Assert.assertEquals(FF8.getBigFloat(2.5d), FF8.decodeBigFloat(result));
 
-		FloatFormat ff = FloatFormatFactory.getFloatFormat(8);
+		a = FF8.getBigInfinityEncoding(false);
+		result = OP.evaluateUnary(8, 8, a);
+		Assert.assertEquals(FF8.getBigInfinity(true), FF8.decodeBigFloat(result));
 
-		BigInteger a = ff.getEncoding(ff.getBigFloat(2.5d));
-		BigInteger result = op.evaluateUnary(8, 8, a);
-		Assert.assertEquals(ff.getBigFloat(-2.5d), ff.decodeBigFloat(result));
+		a = FF8.getBigInfinityEncoding(true);
+		result = OP.evaluateUnary(8, 8, a);
+		Assert.assertEquals(FF8.getBigInfinity(false), FF8.decodeBigFloat(result));
 
-		a = ff.getEncoding(ff.getBigFloat(-2.5d));
-		result = op.evaluateUnary(8, 8, a);
-		Assert.assertEquals(ff.getBigFloat(2.5d), ff.decodeBigFloat(result));
-
-		a = ff.getBigInfinityEncoding(false);
-		result = op.evaluateUnary(8, 8, a);
-		Assert.assertEquals(ff.getBigInfinity(true), ff.decodeBigFloat(result));
-
-		a = ff.getBigInfinityEncoding(true);
-		result = op.evaluateUnary(8, 8, a);
-		Assert.assertEquals(ff.getBigInfinity(false), ff.decodeBigFloat(result));
-
-		a = ff.getBigNaNEncoding(false);
-		result = op.evaluateUnary(8, 8, a);
-		Assert.assertEquals(ff.getBigNaN(false), ff.decodeBigFloat(result));
+		a = FF8.getBigNaNEncoding(false);
+		result = OP.evaluateUnary(8, 8, a);
+		Assert.assertEquals(FF8.getBigNaN(false), FF8.decodeBigFloat(result));
 	}
-
 }

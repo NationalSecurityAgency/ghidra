@@ -29,6 +29,11 @@ public interface HelpService {
 	public static final String DUMMY_HELP_SET_NAME = "Dummy_HelpSet.hs";
 
 	/**
+	 * {@return true if the main help window is showing}
+	 */
+	public boolean isShowing();
+
+	/**
 	 * Display the Help content identified by the help object.
 	 * 
 	 * @param helpObject the object to which help was previously registered

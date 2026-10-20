@@ -39,7 +39,7 @@ class CreateArrayAction extends ListingContextAction {
 	private static final KeyStroke DEFAULT_KEY_STROKE =
 		KeyStroke.getKeyStroke(KeyEvent.VK_OPEN_BRACKET, 0);
 	private static final String[] CREATE_ARRAY_POPUP_MENU =
-		new String[] { "Data", "Create Array..." };
+		new String[] { "Data", "Create Array" };
 
 	private DataPlugin plugin;
 

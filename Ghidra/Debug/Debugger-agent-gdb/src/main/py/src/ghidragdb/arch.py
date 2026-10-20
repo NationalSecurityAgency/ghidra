@@ -69,8 +69,14 @@ language_map: Dict[str, List[str]] = {
     'm9s12x': ['HCS-12:BE:24:default', 'HCS-12X:BE:24:default'],
     'mips:3000': ['MIPS:BE:32:default', 'MIPS:LE:32:default'],
     'mips:4000': ['MIPS:BE:32:default', 'MIPS:LE:32:default'],
+    'mips:isa32': ['MIPS:BE:32:default', 'MIPS:LE:32:default'],
+    'mips:isa32r2': ['MIPS:BE:32:default', 'MIPS:LE:32:default'],
+    'mips:isa32r6': ['MIPS:BE:32:default', 'MIPS:LE:32:default'],
     'mips:5000': ['MIPS:BE:64:64-32addr', 'MIPS:BE:64:default',
                   'MIPS:LE:64:64-32addr', 'MIPS:LE:64:default'],
+    'mips:isa64': ['MIPS:BE:64:default', 'MIPS:LE:64:default'],
+    'mips:isa64r2': ['MIPS:BE:64:default', 'MIPS:LE:64:default'],
+    'mips:isa64r6': ['MIPS:BE:64:default', 'MIPS:LE:64:default'],
     'mips:micromips': ['MIPS:BE:32:micro'],
     'msp:430X': ['TI_MSP430:LE:16:default'],
     'powerpc:403': ['PowerPC:BE:32:4xx', 'PowerPC:LE:32:4xx'],
@@ -103,6 +109,7 @@ data64_compiler_map: Dict[Optional[str], str] = {
 
 x86_compiler_map: Dict[Optional[str], str] = {
     'GNU/Linux': 'gcc',
+    'OpenBSD': 'gcc',
     'Windows': 'windows',
     # This may seem wrong, but Ghidra cspecs really describe the ABI
     'Cygwin': 'windows',
@@ -110,6 +117,7 @@ x86_compiler_map: Dict[Optional[str], str] = {
 
 riscv_compiler_map: Dict[Optional[str], str] = {
     'GNU/Linux': 'gcc',
+    'OpenBSD': 'gcc',
     'Cygwin': 'gcc',
 }
 

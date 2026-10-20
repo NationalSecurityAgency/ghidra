@@ -1,0 +1,232 @@
+// This file will eventually be incorporate upstream in the CTADL project.
+// It resides here purely to facilitate coordination.
+
+.input LOCATION_NUM(filename="LOCATION_NUM.facts")  
+.input LOCATION_HEX(filename="LOCATION_HEX.facts")  
+.input LOCATION_FUNC(filename="LOCATION_FUNC.facts")  
+.input LOCATION_UNIQ(filename="LOCATION_UNIQ.facts")  
+
+.input MNEMONICS(filename="MNEMONICS.facts")  
+.input VARIABLE_FIELD(filename="VARIABLE_FIELD.facts")  
+
+.input FUNC_ISEXT(filename="FUNC_ISEXT.facts")  
+.input FUNC_PARAMETER(filename="FUNC_PARAMETER.facts")  
+.input FUNC_PARAMETER_COUNT(filename="FUNC_PARAMETER_COUNT.facts")  
+.input FUNC_PARAMETER_DATATYPE(filename="FUNC_PARAMETER_DATATYPE.facts")  
+
+
+// ATTRIBUTES
+
+.input A_ADDR_OFFSET(filename="A_ADDR_OFFSET.facts")  
+.input A_ADDR_REF(filename="A_ADDR_REF.facts")     
+.input A_ADDR_SIZE(filename="A_ADDR_SIZE.facts")    
+.input A_ADDR_SPACE(filename="A_ADDR_SPACE.facts")   
+
+.input A_BLOCK_INDEX(filename="A_BLOCK_INDEX.facts")  
+
+.input A_BLOCKEDGE_INDEX(filename="A_BLOCKEDGE_INDEX.facts")     
+
+// input is a varnode
+.input A_INPUT_INDEX(filename="A_INPUT_INDEX.facts")   
+
+.input A_FIELD_XMLCONTENT(filename="A_FIELD_XMLCONTENT.facts")       
+ 
+.input A_EDGE_END(filename="A_EDGE_END.facts")     
+
+.input A_FUNCTION_NAME(filename="A_FUNCTION_NAME.facts")
+
+.input A_HIGH_CLASS(filename="A_HIGH_CLASS.facts")   
+.input A_HIGH_REPREF(filename="A_HIGH_REPREF.facts")  
+.input A_HIGH_SYMREF(filename="A_HIGH_SYMREF.facts")  
+
+.input A_IOP_VALUE(filename="A_IOP_VALUE.facts")    
+
+.input A_OP_CODE(filename="A_OP_CODE.facts")      
+.input A_OP_OPREF(filename="A_OP_OPREF.facts")     
+.input A_OP_INDEX(filename="A_OP_INDEX.facts")  
+
+.input A_PROTOTYPE_MODEL(filename="A_PROTOTYPE_MODEL.facts")      
+.input A_PROTOTYPE_CONSTRUCTOR(filename="A_PROTOTYPE_CONSTRUCTOR.facts")      
+.input A_PROTOTYPE_DESTRUCTOR(filename="A_PROTOTYPE_DESTRUCTOR.facts")      
+.input A_PROTOTYPE_DOTDOTDOT(filename="A_PROTOTYPE_DOTDOTDOT.facts")      
+.input A_PROTOTYPE_INLINE(filename="A_PROTOTYPE_INLINE.facts")      
+.input A_PROTOTYPE_MODEL(filename="A_PROTOTYPE_MODEL.facts")      
+  
+.input A_RANGE_FIRST(filename="A_RANGE_FIRST.facts")  
+.input A_RANGE_LAST(filename="A_RANGE_LAST.facts")   
+  
+.input A_SEQNUM_OFFSET(filename="A_SEQNUM_OFFSET.facts")
+.input A_SEQNUM_UNIQ(filename="A_SEQNUM_UNIQ.facts")  
+
+.input A_SPACEID_NAME(filename="A_SPACEID_NAME.facts") 
+
+.input A_STATEMENT_OPREF(filename="A_STATEMENT_OPREF.facts")  
+    
+.input A_SYMBOL_CAT(filename="A_SYMBOL_CAT.facts")   
+.input A_SYMBOL_ID(filename="A_SYMBOL_ID.facts")    
+.input A_SYMBOL_INDEX(filename="A_SYMBOL_INDEX.facts") 
+.input A_SYMBOL_NAME(filename="A_SYMBOL_NAME.facts")  
+
+.input A_TYPE_METATYPE(filename="A_TYPE_METATYPE.facts")
+.input A_TYPE_NAME(filename="A_TYPE_NAME.facts")    
+.input A_TYPE_SIZE(filename="A_TYPE_SIZE.facts")    
+.input A_TYPEREF_NAME(filename="A_TYPEREF_NAME.facts") 
+     
+.input A_VARIABLE_OPREF(filename="A_VARIABLE_OPREF.facts")       
+.input A_VARIABLE_VARREF(filename="A_VARIABLE_VARREF.facts")      
+.input A_VARIABLE_XMLCONTENT(filename="A_VARIABLE_XMLCONTENT.facts")  
+
+
+// ELEMENTS
+
+.input E_AST_BLOCK(filename="E_AST_BLOCK.facts")      
+.input E_AST_VARNODES(filename="E_AST_VARNODES.facts")   
+
+.input E_BLOCK_BLOCK(filename="E_BLOCK_BLOCK.facts")    
+.input E_BLOCK_OP(filename="E_BLOCK_OP.facts")       
+.input E_BLOCK_RANGELIST(filename="E_BLOCK_RANGELIST.facts")
+.input E_BLOCK_STATEMENT(filename="E_BLOCK_STATEMENT.facts")
+.input E_BLOCK_VARIABLE(filename="E_BLOCK_VARIABLE.facts") 
+
+.input E_BLOCKEDGE_EDGE(filename="E_BLOCKEDGE_EDGE.facts") 
+
+.input E_DOC_FUNCTION(filename="E_DOC_FUNCTION.facts")   
+
+.input E_FUNCPROTO_VARDECL(filename="E_FUNCPROTO_VARDECL.facts")      
+
+.input E_FUNCTION_ADDR(filename="E_FUNCTION_ADDR.facts")  
+.input E_FUNCTION_AST(filename="E_FUNCTION_AST.facts")   
+.input E_FUNCTION_BLOCK(filename="E_FUNCTION_BLOCK.facts") 
+.input E_FUNCTION_FUNCPROTO(filename="E_FUNCTION_FUNCPROTO.facts")     
+.input E_FUNCTION_HIGHLIST(filename="E_FUNCTION_HIGHLIST.facts")      
+.input E_FUNCTION_LOCALDB(filename="E_FUNCTION_LOCALDB.facts")       
+.input E_FUNCTION_VARDECL(filename="E_FUNCTION_VARDECL.facts")   
+    
+.input E_HIGH_ADDR(filename="E_HIGH_ADDR.facts")      
+.input E_HIGH_TYPE(filename="E_HIGH_TYPE.facts")      
+.input E_HIGH_TYPEREF(filename="E_HIGH_TYPEREF.facts")    
+.input E_HIGHLIST_HIGH(filename="E_HIGHLIST_HIGH.facts")  
+
+.input E_LOCALDB_SCOPE(filename="E_LOCALDB_SCOPE.facts")   
+   
+.input E_MAPSYM_SYMBOL(filename="E_MAPSYM_SYMBOL.facts")
+
+.input E_OP_ADDR(filename="E_OP_ADDR.facts")
+.input E_OP_IOP(filename="E_OP_IOP.facts")
+.input E_OP_SEQNUM(filename="E_OP_SEQNUM.facts")
+.input E_OP_SPACEID(filename="E_OP_SPACEID.facts")
+.input E_OP_OUTPUT(filename="E_OP_OUTPUT.facts")
+.input E_OP_INPUT(filename="E_OP_INPUT.facts")
+
+.input E_PROTOTYPE_RETURNSYM(filename="E_PROTOTYPE_RETURNSYM.facts")
+
+.input E_RANGELIST_RANGE(filename="E_RANGELIST_RANGE.facts")
+
+.input E_RETURNSYM_TYPE(filename="E_RETURNSYM_TYPE.facts")
+.input E_RETURNSYM_TYPEREF(filename="E_RETURNSYM_TYPEREF.facts")
+.input E_RETURNSYM_VOID(filename="E_RETURNSYM_VOID.facts")
+
+.input E_SCOPE_SYMBOLLIST(filename="E_SCOPE_SYMBOLLIST.facts")
+
+.input E_STATEMENT_FIELD(filename="E_STATEMENT_FIELD.facts")
+.input E_STATEMENT_FUNCNAME(filename="E_STATEMENT_FUNCNAME.facts")
+.input E_STATEMENT_OP(filename="E_STATEMENT_OP.facts")
+.input E_STATEMENT_VARIABLE(filename="E_STATEMENT_VARIABLE.facts")
+
+.input E_SYMBOLLIST_MAPSYM(filename="E_SYMBOLLIST_MAPSYM.facts")
+.input E_SYMBOL_TYPE(filename="E_SYMBOL_TYPE.facts")
+.input E_SYMBOL_TYPEREF(filename="E_SYMBOL_TYPEREF.facts")
+
+.input E_TYPE_TYPEREF(filename="E_TYPE_TYPEREF.facts")
+
+.input E_VARDECL_VARIABLE(filename="E_VARDECL_VARIABLE.facts")
+
+.input E_VARNODES_ADDR(filename="E_VARNODES_ADDR.facts")
+
+// UNUSED (SO FAR)
+
+//.input A_ADDR_ADDRTIED(filename="A_ADDR_ADDRTIED.facts")
+//.input A_ADDR_GRP(filename="A_ADDR_GRP.facts")     
+//.input A_ADDR_INPUT(filename="A_ADDR_INPUT.facts")   
+//.input A_ADDR_PERSISTS(filename="A_ADDR_PERSISTS.facts")
+//.input A_ADDR_UNAFF(filename="A_ADDR_UNAFF.facts")   
+//.input A_BLOCK_BLOCKREF(filename="A_BLOCK_BLOCKREF.facts")       
+//.input A_BREAK_INDENT(filename="A_BREAK_INDENT.facts") 
+//.input A_COMMENT_COLOR(filename="A_COMMENT_COLOR.facts")
+//.input A_COMMENT_OFF(filename="A_COMMENT_OFF.facts")  
+//.input A_COMMENT_SPACE(filename="A_COMMENT_SPACE.facts")
+//.input A_COMMENT_XMLCONTENT(filename="A_COMMENT_XMLCONTENT.facts")  
+//.input A_EDGE_REV(filename="A_EDGE_REV.facts")    
+//.input A_FUNCNAME_COLOR(filename="A_FUNCNAME_COLOR.facts")       
+//.input A_FUNCNAME_OPREF(filename="A_FUNCNAME_OPREF.facts")       
+//.input A_FUNCNAME_XMLCONTENT(filename="A_FUNCNAME_XMLCONTENT.facts")  
+//.input A_FUNCTION_SIZE(filename="A_FUNCTION_SIZE.facts")
+//.input A_HIGH_OFFSET(filename="A_HIGH_OFFSET.facts")  
+//.input A_HIGH_TYPELOCK(filename="A_HIGH_TYPELOCK.facts")
+//.input A_LOCALDB_LOCK(filename="A_LOCALDB_LOCK.facts") 
+//.input A_LOCALDB_MAIN(filename="A_LOCALDB_MAIN.facts") 
+//.input A_OP_COLOR(filename="A_OP_COLOR.facts")     
+//.input A_OP_XMLCONTENT(filename="A_OP_XMLCONTENT.facts")
+//.input A_PARENT_ID(filename="A_PARENT_ID.facts")    
+//.input A_PROTOTYPE_EXTRAPOP(filename="A_PROTOTYPE_EXTRAPOP.facts")   
+//.input A_PROTOTYPE_MODELLOCK(filename="A_PROTOTYPE_MODELLOCK.facts")  
+//.input A_PROTOTYPE_NORETURN(filename="A_PROTOTYPE_NORETURN.facts") 
+//.input A_RANGE_SPACE(filename="A_RANGE_SPACE.facts")  
+//.input A_RETURNSYM_TYPELOCK(filename="A_RETURNSYM_TYPELOCK.facts")   
+//.input A_RETURN_TYPE_VARREF(filename="A_RETURN_TYPE_VARREF.facts")  
+//.input A_SCOPE_ID(filename="A_SCOPE_ID.facts")     
+//.input A_SCOPE_NAME(filename="A_SCOPE_NAME.facts") 
+//.input A_SEQNUM_SPACE(filename="A_SEQNUM_SPACE.facts") 
+//.input A_SYMBOL_MERGE(filename="A_SYMBOL_MERGE.facts") 
+//.input A_SYMBOL_NAMELOCK(filename="A_SYMBOL_NAMELOCK.facts")      
+//.input A_SYMBOL_TYPELOCK(filename="A_SYMBOL_TYPELOCK.facts")  
+//.input A_SYNTAX_CLOSE(filename="A_SYNTAX_CLOSE.facts") 
+//.input A_SYNTAX_COLOR(filename="A_SYNTAX_COLOR.facts") 
+//.input A_SYNTAX_OPEN(filename="A_SYNTAX_OPEN.facts")  
+//.input A_SYNTAX_XMLCONTENT(filename="A_SYNTAX_XMLCONTENT.facts")  
+//.input A_TYPE_ARRAYSIZE(filename="A_TYPE_ARRAYSIZE.facts")       
+//.input A_TYPE_COLOR(filename="A_TYPE_COLOR.facts")   
+//.input A_TYPE_CORE(filename="A_TYPE_CORE.facts")    
+//.input A_TYPE_ID(filename="A_TYPE_ID.facts")      
+//.input A_TYPE_SPACE(filename="A_TYPE_SPACE.facts")   
+//.input A_TYPE_XMLCONTENT(filename="A_TYPE_XMLCONTENT.facts") 
+//.input A_TYPEREF_ID(filename="A_TYPEREF_ID.facts")   
+//.input A_VARDECL_SYMREF(filename="A_VARDECL_SYMREF.facts")    
+//.input A_VARIABLE_COLOR(filename="A_VARIABLE_COLOR.facts")       
+ 
+//.input E_AST_BLOCKEDGE(filename="E_AST_BLOCKEDGE.facts")  
+//.input E_BLOCK_BREAK(filename="E_BLOCK_BREAK.facts")    
+//.input E_BLOCK_COMMENT(filename="E_BLOCK_COMMENT.facts")  
+//.input E_BLOCK_SYNTAX(filename="E_BLOCK_SYNTAX.facts")   
+//.input E_BLOCK_TYPE(filename="E_BLOCK_TYPE.facts")     
+//.input E_CALLDEST_ADDR(filename="E_CALLDEST_ADDR.facts")  
+//.input E_FUNCPROTO_FUNCNAME(filename="E_FUNCPROTO_FUNCNAME.facts")     
+//.input E_FUNCPROTO_RETURN_TYPE(filename="E_FUNCPROTO_RETURN_TYPE.facts")  
+//.input E_FUNCPROTO_SYNTAX(filename="E_FUNCPROTO_SYNTAX.facts")       
+//.input E_FUNCTION_BREAK(filename="E_FUNCTION_BREAK.facts") 
+//.input E_FUNCTION_COMMENT(filename="E_FUNCTION_COMMENT.facts")       
+//.input E_FUNCTION_OVERRIDE(filename="E_FUNCTION_OVERRIDE.facts")      
+//.input E_FUNCTION_PROTOTYPE(filename="E_FUNCTION_PROTOTYPE.facts")    
+//.input E_FUNCTION_SYNTAX(filename="E_FUNCTION_SYNTAX.facts")
+//.input E_INTERNALLIST_PARAM(filename="E_INTERNALLIST_PARAM.facts")
+//.input E_MAPSYM_ADDR(filename="E_MAPSYM_ADDR.facts")
+//.input E_MAPSYM_RANGELIST(filename="E_MAPSYM_RANGELIST.facts")
+//.input E_OP_VOID(filename="E_OP_VOID.facts")
+//.input E_OVERRIDE_CALLDEST(filename="E_OVERRIDE_CALLDEST.facts")
+//.input E_PARAM_TYPE(filename="E_PARAM_TYPE.facts")
+//.input E_PROTOTYPE_INTERNALLIST(filename="E_PROTOTYPE_INTERNALLIST.facts")
+//.input E_RETURNSYM_ADDR(filename="E_RETURNSYM_ADDR.facts")
+//.input E_RETURN_TYPE_OP(filename="E_RETURN_TYPE_OP.facts")
+//.input E_RETURN_TYPE_SYNTAX(filename="E_RETURN_TYPE_SYNTAX.facts")
+//.input E_RETURN_TYPE_TYPE(filename="E_RETURN_TYPE_TYPE.facts")
+//.input E_SCOPE_PARENT(filename="E_SCOPE_PARENT.facts")
+//.input E_SCOPE_RANGELIST(filename="E_SCOPE_RANGELIST.facts")
+//.input E_STATEMENT_BREAK(filename="E_STATEMENT_BREAK.facts")
+//.input E_STATEMENT_SYNTAX(filename="E_STATEMENT_SYNTAX.facts")
+//.input E_STATEMENT_TYPE(filename="E_STATEMENT_TYPE.facts")
+//.input E_TYPE_ADDR(filename="E_TYPE_ADDR.facts")
+//.input E_TYPE_TYPE(filename="E_TYPE_TYPE.facts")
+//.input E_VARDECL_OP(filename="E_VARDECL_OP.facts")
+//.input E_VARDECL_SYNTAX(filename="E_VARDECL_SYNTAX.facts")
+//.input E_VARDECL_TYPE(filename="E_VARDECL_TYPE.facts")
+

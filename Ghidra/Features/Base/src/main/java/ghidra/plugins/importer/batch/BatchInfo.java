@@ -396,7 +396,7 @@ public class BatchInfo {
 			TaskMonitor monitor) {
 		monitor.setMessage(fsrl.getName());
 		return LoaderService.getSupportedLoadSpecs(provider,
-			loader -> !(loader instanceof BinaryLoader));
+			loader -> !(loader instanceof BinaryLoader), monitor);
 	}
 
 	/**

@@ -41,6 +41,7 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
+import ghidra.app.plugin.core.debug.gui.emulation.DebuggerEmulateFunctionDialog;
 import ghidra.app.plugin.core.debug.service.emulation.data.DefaultPcodeDebuggerAccess;
 import ghidra.app.services.*;
 import ghidra.async.AsyncLazyMap;
@@ -62,10 +63,12 @@ import ghidra.pcode.exec.trace.TraceEmulationIntegration.Writer;
 import ghidra.pcode.exec.trace.data.DefaultPcodeTraceAccess;
 import ghidra.pcode.exec.trace.data.PcodeTraceAccess;
 import ghidra.program.model.address.*;
+import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.*;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.thread.TraceThread;
@@ -119,6 +122,27 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 					.description(DESCRIPTION)
 					.toolBarIcon(ICON)
 					.toolBarGroup(GROUP)
+					.menuPath(DebuggerPluginPackage.NAME, NAME)
+					.menuIcon(ICON)
+					.menuGroup(GROUP)
+					.popupMenuPath(NAME)
+					.popupMenuIcon(ICON)
+					.popupMenuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface EmulateFunctionAction {
+		String NAME = "Emulate Function";
+		String DESCRIPTION = "Emulate the current function in a new trace";
+		Icon ICON = DebuggerResources.ICON_EMULATE;
+		String GROUP = DebuggerResources.GROUP_GENERAL;
+		String HELP_ANCHOR = "emulate_function";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
 					.menuPath(DebuggerPluginPackage.NAME, NAME)
 					.menuIcon(ICON)
 					.menuGroup(GROUP)
@@ -373,6 +397,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	private AutoService.Wiring autoServiceWiring;
 
 	DockingAction actionEmulateProgram;
+	DockingAction actionEmulateFunction;
 	DockingAction actionEmulateAddThread;
 	DockingAction actionInvalidateCache;
 	Map<Class<? extends EmulatorFactory>, ToggleDockingAction> actionsChooseEmulatorFactory =
@@ -397,6 +422,12 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 				.enabledWhen(this::emulateProgramEnabled)
 				.popupWhen(this::emulateProgramEnabled)
 				.onAction(this::emulateProgramActivated)
+				.buildAndInstall(tool);
+		actionEmulateFunction = EmulateFunctionAction.builder(this)
+				.withContext(ProgramLocationActionContext.class)
+				.enabledWhen(this::emulateFunctionEnabled)
+				.popupWhen(this::emulateFunctionEnabled)
+				.onAction(this::emulateFunctionActivated)
 				.buildAndInstall(tool);
 		actionEmulateAddThread = EmulateAddThreadAction.builder(this)
 				.withContext(ProgramLocationActionContext.class)
@@ -486,6 +517,32 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		}
 	}
 
+	private boolean emulateFunctionEnabled(ProgramLocationActionContext ctx) {
+		Program program = ctx.getProgram();
+		Address address = ctx.getAddress();
+		if (program == null || program instanceof TraceProgramView || address == null) {
+			return false;
+		}
+		Function function = program.getFunctionManager().getFunctionContaining(address);
+		if (function == null) {
+			return false;
+		}
+		return true;
+	}
+
+	private void emulateFunctionActivated(ProgramLocationActionContext ctx) {
+		Program program = ctx.getProgram();
+		Address address = ctx.getAddress();
+		if (program == null || address == null) {
+			return;
+		}
+		Function function = program.getFunctionManager().getFunctionContaining(address);
+		if (function == null) {
+			return;
+		}
+		tool.showDialog(new DebuggerEmulateFunctionDialog(tool, function));
+	}
+
 	private boolean emulateAddThreadEnabled(ProgramLocationActionContext ctx) {
 		Program programOrView = ctx.getProgram();
 		if (programOrView instanceof TraceProgramView view) {
@@ -504,8 +561,12 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 			!ProgramEmulationUtils.isEmulatedProgram(current.getTrace())) {
 			return false;
 		}
+		ProgramLocation programLoc = ctx.getLocation();
+		if (programLoc == null) {
+			return false;
+		}
 		TraceLocation traceLoc = staticMappings.getOpenMappedLocation(
-			current.getTrace(), ctx.getLocation(), current.getSnap());
+			current.getTrace(), programLoc, current.getSnap());
 		if (traceLoc == null) {
 			return false;
 		}
@@ -664,12 +725,8 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 					continue;
 				}
 				Set<TraceBreakpointKind> kinds = bpt.getKinds(snap);
-				boolean isExecute =
-					kinds.contains(TraceBreakpointKind.HW_EXECUTE) ||
-						kinds.contains(TraceBreakpointKind.SW_EXECUTE);
-				boolean isRead = kinds.contains(TraceBreakpointKind.READ);
-				boolean isWrite = kinds.contains(TraceBreakpointKind.WRITE);
-				if (isExecute) {
+				if (kinds.contains(TraceBreakpointKind.HW_EXECUTE) ||
+					kinds.contains(TraceBreakpointKind.SW_EXECUTE)) {
 					Address minAddress = bpt.getMinAddress(snap);
 					try {
 						emu.inject(minAddress, bpt.getEmuSleigh(snap));
@@ -679,13 +736,13 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 						emu.inject(minAddress, "emu_injection_err();");
 					}
 				}
-				if (isRead && isWrite) {
+				if (kinds.equals(CommonSet.ACCESS.kinds())) {
 					emu.addAccessBreakpoint(bpt.getRange(snap), AccessKind.RW);
 				}
-				else if (isRead) {
+				else if (kinds.equals(CommonSet.READ.kinds())) {
 					emu.addAccessBreakpoint(bpt.getRange(snap), AccessKind.R);
 				}
-				else if (isWrite) {
+				else if (kinds.equals(CommonSet.WRITE.kinds())) {
 					emu.addAccessBreakpoint(bpt.getRange(snap), AccessKind.W);
 				}
 			}

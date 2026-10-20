@@ -41,6 +41,7 @@ import ghidra.program.model.symbol.*;
 import ghidra.program.util.LanguageTranslator;
 import ghidra.program.util.ProgramEvent;
 import ghidra.util.*;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -64,12 +65,14 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	private SymbolDatabaseAdapter adapter;
 	private LabelHistoryAdapter historyAdapter;
 
-	private DBObjectCache<SymbolDB> cache;
+	private DbCache<SymbolDB> cache;
 	private ErrorHandler errHandler;
 	private ProgramDB program;
 	private ReferenceDBManager refManager;
 	private NamespaceManager namespaceMgr;
 	private VariableStorageManagerDB variableStorageMgr;
+
+	private List<LibrarySymbol> libSymbolList; // unmodifiable; use getLibrarySymbolList() to obtain instance
 
 	private OldVariableStorageManagerDB oldVariableStorageMgr; // required for upgrade
 
@@ -100,7 +103,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		this.lock = lock;
 		dynamicSymbolAddressMap = new AddressMapImpl((byte) 0x40, addrMap.getAddressFactory());
 		initializeAdapters(handle, openMode, monitor);
-		cache = new DBObjectCache<>(100);
+		cache = new DbCache<>(new SymbolFactory(), lock, 100);
 
 		variableStorageMgr =
 			new VariableStorageManagerDB(handle, addrMap, openMode, errHandler, lock, monitor);
@@ -165,9 +168,8 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 				// Migrate all other OldNamespaceAddresses used for variable symbols
 				processOldVariableAddresses(monitor);
 			}
-
 			if (currentRevision < ProgramDB.EXTERNAL_FUNCTIONS_ADDED_VERSION) {
-				// SymbolType.EXTERNAL eliminated with program revision 17 (switch to LABEL)
+				// SymbolType.EXTERNAL eliminated with program revision 17
 				processOldExternalTypes(monitor);
 			}
 
@@ -181,6 +183,10 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 				// to migrate old register variable addresses if previously upgraded from
 				// older than program version 10
 				processOldVariableAddresses(monitor);
+			}
+
+			if (currentRevision < ProgramDB.LIBRARY_ORDINAL_ASSIGNMENT_ADDED_VERSION) {
+				assignLibraryOrdinals();
 			}
 		}
 	}
@@ -522,8 +528,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 				"' and set its new source to DEFAULT.";
 			throw new IllegalArgumentException(msg);
 		}
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			long oldKey = symbol.getKey();
 			Address address = symbol.getAddress();
 			symbolRemoved(symbol, address, symbol.getName(), oldKey, Namespace.GLOBAL_NAMESPACE_ID,
@@ -538,9 +543,6 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		}
 		catch (IOException e) {
 			dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -585,35 +587,6 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		adapter.updateSymbolRecord(rec);
 	}
 
-	private SymbolDB makeSymbol(Address addr, DBRecord record, SymbolType type) {
-		if (addr == null) {
-			addr =
-				addrMap.decodeAddress(record.getLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL));
-		}
-		if (type == SymbolType.CLASS) {
-			return new ClassSymbol(this, cache, record); // uses NO_ADDRESS
-		}
-		else if (type == SymbolType.LABEL) {
-			return new CodeSymbol(this, cache, addr, record); // uses NO_ADDRESS
-		}
-		else if (type == SymbolType.NAMESPACE) {
-			return new NamespaceSymbol(this, cache, record);
-		}
-		else if (type == SymbolType.FUNCTION) {
-			return new FunctionSymbol(this, cache, addr, record);
-		}
-		else if (type == SymbolType.LIBRARY) {
-			return new LibrarySymbol(this, cache, record); // uses NO_ADDRESS
-		}
-		else if (type == SymbolType.PARAMETER || type == SymbolType.LOCAL_VAR) {
-			return new VariableSymbolDB(this, cache, type, variableStorageMgr, addr, record);
-		}
-		else if (type == SymbolType.GLOBAL_VAR) {
-			return new GlobalVariableSymbolDB(this, cache, variableStorageMgr, addr, record);
-		}
-		throw new IllegalArgumentException("No symbol type for " + type);
-	}
-
 	@Override
 	public int getNumSymbols() {
 		return adapter.getSymbolCount();
@@ -621,8 +594,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 	@Override
 	public boolean removeSymbolSpecial(Symbol sym) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			if (sym.getSymbolType() == SymbolType.FUNCTION) {
 				Address addr = sym.getAddress();
 				Function f = (Function) sym.getObject();
@@ -656,9 +628,6 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			}
 			return sym.delete();
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	private Symbol findFirstNonPrimarySymbol(Address address) {
@@ -689,51 +658,41 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	 * @return true if the symbol was removed, false otherwise.
 	 */
 	boolean doRemoveSymbol(SymbolDB sym) {
-		lock.acquire();
-		try {
-			if (sym == null) {
-				return false;
-			}
-			if (sym.getID() > 0) {
-				removeChildren(sym);
-			}
-			long id = sym.getKey();
-			long parentId = sym.getParentID();
-			SymbolType symType = sym.getSymbolType();
-			try {
-				Address address = sym.getAddress();
-//				if (address.isVariableAddress()) {
-//					variableStorageMgr.deleteVariableStorage(address);
-//				}
-				String name = sym.getName();
-				boolean primary = sym.isPrimary();
-
-				// Remove associated references
-				refManager.symbolRemoved(sym);
-
-				adapter.removeSymbol(id);
-				cache.delete(id);
-				//sym.setInvalid(); // already invalidated by removeObj
-
-				// if any symbols still exist here, then
-				// make one of these remaining symbols 'primary'
-				//
-				if (primary && address.isMemoryAddress()) {
-					Symbol[] remainingSyms = getSymbols(address);
-					if (remainingSyms.length > 0 &&
-						remainingSyms[0].getSource() != SourceType.DEFAULT) {
-						remainingSyms[remainingSyms.length - 1].setPrimary();
-					}
-				}
-				symbolRemoved(sym, address, name, id, parentId, symType);
-				return true;
-			}
-			catch (IOException e) {
-				program.dbError(e);
-			}
+		if (sym == null) {
+			return false;
 		}
-		finally {
-			lock.release();
+		if (sym.getID() > 0) {
+			removeChildren(sym);
+		}
+		long id = sym.getKey();
+		long parentId = sym.getParentID();
+		SymbolType symType = sym.getSymbolType();
+		try {
+			Address address = sym.getAddress();
+			String name = sym.getName();
+			boolean primary = sym.isPrimary();
+
+			// Remove associated references
+			refManager.symbolRemoved(sym);
+
+			adapter.removeSymbol(id);
+			cache.delete(id);
+
+			// if any symbols still exist here, then
+			// make one of these remaining symbols 'primary'
+			//
+			if (primary && address.isMemoryAddress()) {
+				Symbol[] remainingSyms = getSymbols(address);
+				if (remainingSyms.length > 0 &&
+					remainingSyms[0].getSource() != SourceType.DEFAULT) {
+					remainingSyms[remainingSyms.length - 1].setPrimary();
+				}
+			}
+			symbolRemoved(sym, address, name, id, parentId, symType);
+			return true;
+		}
+		catch (IOException e) {
+			program.dbError(e);
 		}
 		return false;
 	}
@@ -757,53 +716,37 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		if (symbolID == Namespace.GLOBAL_NAMESPACE_ID) {
 			return program.getGlobalNamespace().getSymbol();
 		}
-		lock.acquire();
-		try {
-			SymbolDB s = cache.get(symbolID);
-			if (s != null) {
-				return s;
-			}
-			try {
-				DBRecord record = adapter.getSymbolRecord(symbolID);
-				if (record != null) {
-					return createCachedSymbol(record);
-				}
 
-			}
-			catch (IOException e) {
-				program.dbError(e);
-			}
-			try {
-				Address a = getDynamicAddress(symbolID);
-				if (a.getAddressSpace().isMemorySpace()) {
-					s = new CodeSymbol(this, cache, a, symbolID);
-					return s;
-				}
-			}
-			catch (Exception e) {
-				// handled below
-			}
-			return null;
+		SymbolDB symbol = cache.getCachedInstance(symbolID);
+		if (symbol != null) {
+			return symbol;
 		}
-		finally {
-			lock.release();
-		}
-	}
-
-	private SymbolDB getDynamicSymbol(Address addr) {
-		lock.acquire();
-		try {
-			long symbolID = getDynamicSymbolID(addr);
-			SymbolDB s = cache.get(symbolID);
-			if (s != null) {
-				return s;
-			}
-			s = new CodeSymbol(this, cache, addr, symbolID);
+		// the assumption is that if asking for a symbol by a key that can be
+		// interpreted as a dynamic symbol address, we should create a dynamic symbol
+		// and add it to the cache.
+		Address a = getDynamicAddress(symbolID);
+		if (a.getAddressSpace().isMemorySpace()) {
+			CodeSymbol s = new CodeSymbol(this, a, null, symbolID);
+			cache.add(s);
 			return s;
 		}
-		finally {
-			lock.release();
+		return null;
+	}
+
+	private SymbolDB getDynamicSymbol(Address memoryAddress) {
+		long symbolID = getDynamicSymbolID(memoryAddress);
+
+		// Retrieve the symbol from the cache without validating or refreshing it. 
+		CodeSymbol symbol = (CodeSymbol) cache.getRaw(symbolID);
+		if (symbol != null) {
+			// We know if we got here the symbol is valid, so force it to be valid
+			symbol.setIsValid();
+			return symbol;
 		}
+
+		CodeSymbol s = new CodeSymbol(SymbolManager.this, memoryAddress, null, symbolID);
+		cache.add(s);
+		return s;
 	}
 
 	boolean hasDynamicSymbol(Address address) {
@@ -824,24 +767,19 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 	@Override
 	public SymbolIterator getSymbolsAsIterator(Address addr) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			RecordIterator iterator = adapter.getSymbols(addr, addr, true);
 			return new SymbolRecordIterator(iterator, true, true);
 		}
 		catch (IOException e) {
 			program.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 		return new SymbolRecordIterator(new EmptyRecordIterator(), true, true);
 	}
 
 	@Override
 	public Symbol[] getSymbols(Address addr) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			Field[] symbolIDs = adapter.getSymbolIDs(addr);
 			if (symbolIDs.length == 0) {
 				if (addr.isMemoryAddress() && refManager.hasReferencesTo(addr)) {
@@ -871,17 +809,12 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		catch (IOException e) {
 			program.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
-
 		return NO_SYMBOLS;
 	}
 
 	@Override
 	public Symbol[] getUserSymbols(Address addr) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			Field[] symbolIDs = adapter.getSymbolIDs(addr);
 			if (symbolIDs.length == 0) {
 				return NO_SYMBOLS;
@@ -895,9 +828,6 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		}
 		catch (IOException e) {
 			program.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 		return NO_SYMBOLS;
 	}
@@ -915,18 +845,14 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 		long namespaceId = namespace.getID();
 
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			DBRecord record = adapter.getSymbolRecord(address, name, namespaceId);
 			if (record != null) {
-				return getSymbol(record);
+				return cache.getCachedInstance(record);
 			}
 		}
 		catch (IOException e) {
 			program.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 
 		// check for default external symbol
@@ -975,16 +901,12 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 	@Override
 	public LibrarySymbol getLibrarySymbol(String name) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			for (Symbol s : getSymbols(name)) {
 				if (s.getSymbolType() == SymbolType.LIBRARY) {
 					return (LibrarySymbol) s;
 				}
 			}
-		}
-		finally {
-			lock.release();
 		}
 		return null;
 	}
@@ -1012,18 +934,14 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			return searchNamespaceForSymbols(name, namespace);
 		}
 
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			RecordIterator it = adapter.getSymbolsByNameAndNamespace(name, namespace.getID());
 			while (it.hasNext()) {
-				list.add(getSymbol(it.next()));
+				list.add(cache.getCachedInstance(it.next()));
 			}
 		}
 		catch (IOException e) {
 			program.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 
 		// also check if the given name could be a default symbol
@@ -1090,11 +1008,10 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			return searchNamespaceForFirstSymbol(name, namespace, test);
 		}
 
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			RecordIterator it = adapter.getSymbolsByNameAndNamespace(name, namespace.getID());
 			while (it.hasNext()) {
-				SymbolDB symbol = getSymbol(it.next());
+				SymbolDB symbol = cache.getCachedInstance(it.next());
 				if (test.test(symbol)) {
 					return symbol;
 				}
@@ -1108,9 +1025,6 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		}
 		catch (IOException e) {
 			program.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 		return null;
 	}
@@ -1126,8 +1040,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		if (library != null) {
 			checkValidNamespaceArgument(library);
 		}
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			long matchLibraryId = library != null ? library.getID() : -1;
 			RecordIterator recordIter = adapter.getExternalSymbolsByOriginalImportName(extLabel);
 			return new SymbolRecordConstraintIterator(recordIter, rec -> {
@@ -1147,9 +1060,6 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			program.dbError(e);
 			return null; // will not occur
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	/**
@@ -1166,8 +1076,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		if (library != null) {
 			checkValidNamespaceArgument(library);
 		}
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			long matchLibraryId = library != null ? library.getID() : -1;
 			RecordIterator recordIter = adapter.getExternalSymbolsByMemoryAddress(extProgAddr);
 			return new SymbolRecordConstraintIterator(recordIter, rec -> {
@@ -1186,9 +1095,6 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		catch (IOException e) {
 			program.dbError(e);
 			return null; // will not occur
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -1227,8 +1133,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 	@Override
 	public SymbolIterator getSymbols(String name) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			SymbolIterator symIter = new SymbolNameRecordIterator(name);
 			if (!symIter.hasNext()) {
 				Symbol symbol = getSymbolForDynamicName(name);
@@ -1239,23 +1144,16 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		catch (IOException e) {
 			program.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 		return null;
 	}
 
 	@Override
 	public SymbolIterator scanSymbolsByName(String startName) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			return new SymbolNameScanningIterator(startName);
 		}
 		catch (IOException e) {
 			program.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 		return null;
 	}
@@ -1270,11 +1168,10 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			return symbols.length > 0 ? symbols[0] : null;
 		}
 
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			DBRecord record = adapter.getPrimarySymbol(addr);
 			if (record != null) {
-				return getSymbol(record);
+				return cache.getCachedInstance(record);
 			}
 			if (addr.isMemoryAddress() && refManager.hasReferencesTo(addr)) {
 				return getDynamicSymbol(addr);
@@ -1282,9 +1179,6 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		}
 		catch (IOException e) {
 			program.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 		return null;
 	}
@@ -1485,8 +1379,8 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 	@Override
 	public LabelHistory[] getLabelHistory(Address addr) {
-		ArrayList<LabelHistory> list = new ArrayList<>();
-		try {
+		try (Closeable c = lock.read()) {
+			ArrayList<LabelHistory> list = new ArrayList<>();
 			RecordIterator iter = historyAdapter.getRecordsByAddress(addrMap.getKey(addr, false));
 			while (iter.hasNext()) {
 				DBRecord rec = iter.next();
@@ -1508,14 +1402,11 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 	@Override
 	public void invalidateCache(boolean all) {
-		variableStorageMgr.invalidateCache(all);
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
+			variableStorageMgr.invalidateCache(all);
+			libSymbolList = null;
 			cache.invalidate();
 			dynamicSymbolAddressMap.reconcile();
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -1528,8 +1419,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	 * @param newAddr the new symbol memory address
 	 */
 	public void moveSymbolsAt(Address oldAddr, Address newAddr) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			long oldAddrKey = addrMap.getKey(oldAddr, false);
 			if (oldAddrKey != AddressMap.INVALID_ADDRESS_KEY) {
 				invalidateCache(true);
@@ -1539,9 +1429,6 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		}
 		catch (IOException e) {
 			program.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -1595,14 +1482,13 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	 * @param namespaceID ID of namespace being removed
 	 */
 	public void namespaceRemoved(long namespaceID) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			try {
 				ArrayList<SymbolDB> symbols = new ArrayList<>();
 				RecordIterator iter = adapter.getSymbolsByNamespace(namespaceID);
 				while (iter.hasNext()) {
 					DBRecord rec = iter.next();
-					symbols.add(getSymbol(rec));
+					symbols.add(cache.getCachedInstance(rec));
 				}
 				for (SymbolDB s : symbols) {
 					s.delete();
@@ -1611,9 +1497,6 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			catch (IOException e) {
 				dbError(e);
 			}
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -1723,28 +1606,6 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		}
 		catch (IOException e) {
 			program.dbError(e);
-		}
-	}
-
-	private SymbolDB createCachedSymbol(DBRecord record) {
-		long addr = record.getLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL);
-		byte typeID = record.getByteValue(SymbolDatabaseAdapter.SYMBOL_TYPE_COL);
-		SymbolType type = SymbolType.getSymbolType(typeID);
-		SymbolDB s = makeSymbol(addrMap.decodeAddress(addr), record, type);
-		return s;
-	}
-
-	SymbolDB getSymbol(DBRecord record) {
-		lock.acquire();
-		try {
-			SymbolDB s = cache.get(record);
-			if (s != null) {
-				return s;
-			}
-			return createCachedSymbol(record);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -1885,11 +1746,10 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 				return true;
 			}
 
-			lock.acquire();
-			try {
+			try (Closeable c = lock.read()) {
 				while (nextSymbol == null && (forward ? it.hasNext() : it.hasPrevious())) {
 					DBRecord rec = forward ? it.next() : it.previous();
-					Symbol sym = getSymbol(rec);
+					Symbol sym = cache.getCachedInstance(rec);
 					if (includeDefaultThunks || !isDefaultThunk(sym)) {
 						nextSymbol = sym;
 					}
@@ -1898,9 +1758,6 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			}
 			catch (IOException e) {
 				program.dbError(e);
-			}
-			finally {
-				lock.release();
 			}
 			return false;
 		}
@@ -1946,21 +1803,17 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 				return true;
 			}
 
-			lock.acquire();
-			try {
+			try (Closeable c = lock.read()) {
 				while (nextSymbol == null && (forward ? it.hasNext() : it.hasPrevious())) {
 					DBRecord rec = forward ? it.next() : it.previous();
 					if (predicate == null || predicate.test(rec)) {
-						nextSymbol = getSymbol(rec);
+						nextSymbol = cache.getCachedInstance(rec);
 					}
 				}
 				return nextSymbol != null;
 			}
 			catch (IOException e) {
 				program.dbError(e);
-			}
-			finally {
-				lock.release();
 			}
 			return false;
 		}
@@ -2059,7 +1912,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		public Symbol next() {
 			if (hasNext()) {
 				try {
-					return getSymbol(it.next());
+					return cache.getCachedInstance(it.next());
 				}
 				catch (IOException e) {
 					dbError(e);
@@ -2121,7 +1974,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		private void findNextMatch() {
 			try {
 				while (it.hasNext()) {
-					Symbol sym = getSymbol(it.next());
+					Symbol sym = cache.getCachedInstance(it.next());
 					if (sym.isExternal()) {
 						nextMatch = sym;
 						return;
@@ -2248,7 +2101,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		public GhidraClass next() {
 			try {
 				if (iter.hasNext()) {
-					Symbol s = getSymbol(iter.next());
+					Symbol s = cache.getCachedInstance(iter.next());
 					return (GhidraClass) s.getObject();
 				}
 			}
@@ -2279,31 +2132,23 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 	@Override
 	public Symbol getExternalSymbol(String name) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			SymbolIterator it = getExternalSymbols(name);
 			if (it.hasNext()) {
 				return it.next();
 			}
 			return null;
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public SymbolIterator getExternalSymbols(String name) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			SymbolIterator symIter = new ExternalSymbolNameRecordIterator(name);
 			return symIter;
 		}
 		catch (IOException e) {
 			program.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 		return null;
 	}
@@ -2387,8 +2232,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	}
 
 	public void replaceDataTypes(Map<Long, Long> dataTypeReplacementMap) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			RecordIterator it = adapter.getSymbols();
 			while (it.hasNext()) {
 				DBRecord rec = it.next();
@@ -2419,16 +2263,13 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 				if (replacementId != null) {
 					rec.setLongValue(SymbolDatabaseAdapter.SYMBOL_DATATYPE_COL, replacementId);
 					adapter.updateSymbolRecord(rec);
-					symbolDataChanged(getSymbol(rec));
+					symbolDataChanged(cache.getCachedInstance(rec));
 				}
 			}
+			cache.invalidate();
 		}
 		catch (IOException e) {
 			dbError(e);
-		}
-		finally {
-			cache.invalidate();
-			lock.release();
 		}
 	}
 
@@ -2443,8 +2284,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			return;
 		}
 		Set<Address> primaryFixups = new HashSet<>();
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			invalidateCache(true);
 			Address lastAddress = fromAddr.add(length - 1);
 			AddressRange range = new AddressRangeImpl(fromAddr, lastAddress);
@@ -2473,9 +2313,6 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			}
 			// go back and make sure there is a valid primary symbol at touched addresses
 			fixupPrimarySymbols(primaryFixups);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -2617,17 +2454,13 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	public void deleteAddressRange(Address startAddr, Address endAddr, TaskMonitor monitor)
 			throws CancelledException {
 		AddressRange.checkValidRange(startAddr, endAddr);
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			invalidateCache(true);
 			Set<Address> notDeletedSet = adapter.deleteAddressRange(startAddr, endAddr, monitor);
 			historyAdapter.deleteAddressRange(startAddr, endAddr, addrMap, notDeletedSet, monitor);
 		}
 		catch (IOException e) {
 			program.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -2780,8 +2613,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 		checkValidNamespaceArgument(function);
 
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			source = adjustSourceTypeIfNecessary(name, type, source, storage);
 			Address varAddr = variableStorageMgr.getVariableStorageAddress(storage, true);
 			DBRecord record =
@@ -2790,17 +2622,15 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			adapter.updateSymbolRecord(record);
 
 			VariableSymbolDB newSymbol =
-				new VariableSymbolDB(this, cache, type, variableStorageMgr, varAddr, record);
+				new VariableSymbolDB(this, type, variableStorageMgr, varAddr, record);
 
+			cache.add(newSymbol);
 			symbolAdded(newSymbol);
 			return newSymbol;
 		}
 		catch (IOException e) {
 			program.dbError(e); // will not return
 			return null;
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -2844,8 +2674,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			return (GhidraClass) namespace;
 		}
 
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 
 			checkValidNamespaceArgument(namespace);
 
@@ -2883,17 +2712,13 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			throw new AssertException(
 				"Unexpected exception creating class from namespace: " + e.getMessage(), e);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public Namespace getOrCreateNameSpace(Namespace parent, String name, SourceType source)
 			throws DuplicateNameException, InvalidInputException {
 
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 
 			checkValidNamespaceArgument(parent);
 
@@ -2913,13 +2738,14 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 			return new NamespaceDB(s, namespaceMgr);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	/**
-	 * Create a Library symbol with the specified name and optional pathname
+	 * Create a Library symbol with the specified name and optional pathname.
+	 * The new Library symbol will be assigned the next available ordinal at the end of the
+	 * ordered Library symbol sequence.  Use {@link LibrarySymbol#setOrdinal(int)} to adjust
+	 * ordinal.
+	 * 
 	 * 
 	 * @param name library name
 	 * @param pathname project file path (may be null)
@@ -2934,25 +2760,165 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	 */
 	public LibrarySymbol createLibrarySymbol(String name, String pathname, SourceType source)
 			throws DuplicateNameException, InvalidInputException {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			DBRecord record = doCreateBasicSymbolRecord(name, null, Address.NO_ADDRESS,
 				SymbolType.LIBRARY, false, source, true);
-			LibrarySymbol.setRecordFields(record, pathname);
+			
+			List<LibrarySymbol> librarySymbolList = new ArrayList<>(getLibrarySymbolList());
+			int ordinal = librarySymbolList.size();
+			if (Library.UNKNOWN.equals(name)) { 
+				// UNKNOWN Library always assigned ordinal of 0
+				ordinal = 0;
+			}
+			
+			LibrarySymbol newLibSymbol = new LibrarySymbol(this, record);
+			LibrarySymbol.setRecordFields(record, ordinal, pathname);
 			adapter.updateSymbolRecord(record);
+			cache.add(newLibSymbol);
 
-			LibrarySymbol newSymbol = new LibrarySymbol(this, cache, record);
-
-			symbolAdded(newSymbol);
-			return newSymbol;
+			librarySymbolList.add(ordinal, newLibSymbol);
+			assignLibraryOrdinals(librarySymbolList, true);
+			
+			symbolAdded(newLibSymbol);
+			return newLibSymbol;
 		}
 		catch (IOException e) {
 			program.dbError(e); // will not return
 			return null;
 		}
-		finally {
-			lock.release();
+	}
+
+	/**
+	 * {@return computed ordinal of the specified library symbol}
+	 * @param libSym library symbol
+	 */
+	int computeLibraryOrdinal(LibrarySymbol libSym) {
+		List<LibrarySymbol> list = getLibrarySymbolList();
+		for (int i = 0; i < list.size(); i++) {
+			LibrarySymbol s = list.get(i);
+			if (s == libSym) {
+				return i;
+			}
 		}
+		throw new AssertionError("Invalid symbol instance");
+	}
+
+	/**
+	 * @return an ordered unmodifiable list of Library symbols
+	 */
+	public List<LibrarySymbol> getLibrarySymbolList() {
+		List<LibrarySymbol> list = libSymbolList;
+		if (list == null) {
+			try (Closeable c = lock.read()) {
+				list = buildLibrarySymbolList();
+				libSymbolList = list;
+			}
+			catch (IOException e) {
+				dbError(e);
+			}
+		}
+		return list;
+	}
+
+	private List<LibrarySymbol> buildLibrarySymbolList() throws IOException {
+		List<LibrarySymbol> list = new ArrayList<>();
+		byte libraryTypeId = SymbolType.LIBRARY.getID();
+		RecordIterator iter = new QueryRecordIterator(adapter.getSymbols(),
+			rec -> libraryTypeId == rec
+					.getByteValue(SymbolDatabaseAdapter.SYMBOL_TYPE_COL));
+
+		// Assume records will be returned in order of symbol ID
+		long lastId = -1;
+		while (iter.hasNext()) {
+			LibrarySymbol libSym = (LibrarySymbol) getSymbol(iter.next());
+			long id = libSym.getID();
+			if (id <= lastId) {
+				throw new AssertionError("Unexpected symbol order");
+			}
+			list.add(libSym);
+		}
+		Collections.sort(list);
+		return Collections.unmodifiableList(list);
+	}
+
+	/**
+	 * Assign and store ordinals for all library symbols during upgrade
+	 */
+	private void assignLibraryOrdinals() {
+		List<LibrarySymbol> libSymList = new ArrayList<>(getLibrarySymbolList());
+		for (int i = 0; i < libSymList.size(); i++) {
+			LibrarySymbol libSym = libSymList.get(i);
+			if (Library.UNKNOWN.equals(libSym.getName())) {
+				// UNKNOWN Library always assigned ordinal of 0 but may have arbitrary
+				// placement in list prior to upgrade
+				if (i != 0) {
+					libSymList.remove(i);
+					libSymList.add(0, libSym);
+				}
+				break;
+			}
+		}
+		assignLibraryOrdinals(libSymList, false);
+	}
+	
+	/**
+	 * Update library symbol ordinal to reflect current placement within ordered list.
+	 * The cached {@code libSymbolList} will be updated to refer to the list instance provided.
+	 * @param list new library symbol ordered list
+	 * @param notify if true any library symbol ordinal change will generate change event for
+	 * that symbol.
+	 */
+	void assignLibraryOrdinals(List<LibrarySymbol> list, boolean notify) {
+		for (int i = 0; i < list.size(); i++) {
+			LibrarySymbol libSym = list.get(i);
+			libSym.doSetOrdinal(i, notify);
+		}
+		libSymbolList = list; // update cached list
+	}
+
+	/**
+	 * Adjust ordinals based upon the movement of an existing Library symbol.
+	 * <p>
+	 * NOTE: The caller is responsible for not displacing UNKNOWN Library if already exists
+	 * at ordinal 0.
+	 * 
+	 * @param libSym existing Library symbol
+	 * @param newOrdinal non-negative ordinal (max value will be limited)
+	 */
+	void adjustLibraryOrdinals(LibrarySymbol libSym, int newOrdinal) {
+		if (newOrdinal < 0) {
+			throw new IllegalArgumentException("Positive ordinal required");
+		}
+		List<LibrarySymbol> libSymList = new ArrayList<>(getLibrarySymbolList());
+		int listSize = libSymList.size();
+		if (newOrdinal >= listSize) {
+			newOrdinal = listSize - 1; // do not go beyond end of list
+		}
+
+		int oldOrdinal = libSym.getOrdinal();
+		if (oldOrdinal == newOrdinal) {
+			return;
+		}
+
+		LibrarySymbol s = libSymList.remove(oldOrdinal);
+		if (s != libSym) {
+			throw new AssertionError("Library symbol ordinal mismatch with ordered list");
+		}
+		libSymList.add(newOrdinal, libSym);
+		assignLibraryOrdinals(libSymList, true);
+	}
+
+	/**
+	 * {@return library symbol at the specified ordinal or null if ordinal is beyond end of list}
+	 * @param ordinal library symbol ordinal
+	 * @throws IndexOutOfBoundsException if a negative ordinal is specified
+	 */
+	LibrarySymbol getLibrarySymbolByOrdinal(int ordinal) throws IndexOutOfBoundsException {
+		List<LibrarySymbol> librarySymbolList = getLibrarySymbolList();
+		if (ordinal >= librarySymbolList.size()) {
+			return null;
+		}
+		return librarySymbolList.get(ordinal);
 	}
 
 	/**
@@ -2972,13 +2938,13 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	 */
 	ClassSymbol createClassSymbol(String name, Namespace parent, SourceType source,
 			boolean checkForDuplicates) throws DuplicateNameException, InvalidInputException {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			DBRecord record = doCreateBasicSymbolRecord(name, parent, Address.NO_ADDRESS,
 				SymbolType.CLASS, false, source, checkForDuplicates);
 			adapter.updateSymbolRecord(record);
 
-			ClassSymbol newSymbol = new ClassSymbol(this, cache, record);
+			ClassSymbol newSymbol = new ClassSymbol(this, record);
+			cache.add(newSymbol);
 
 			symbolAdded(newSymbol);
 			return newSymbol;
@@ -2986,9 +2952,6 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		catch (IOException e) {
 			program.dbError(e); // will not return
 			return null;
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -3009,13 +2972,13 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	 */
 	NamespaceSymbol createNamespaceSymbol(String name, Namespace parent, SourceType source,
 			boolean checkForDuplicates) throws DuplicateNameException, InvalidInputException {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			DBRecord record = doCreateBasicSymbolRecord(name, parent, Address.NO_ADDRESS,
 				SymbolType.NAMESPACE, false, source, checkForDuplicates);
 			adapter.updateSymbolRecord(record);
 
-			NamespaceSymbol newSymbol = new NamespaceSymbol(this, cache, record);
+			NamespaceSymbol newSymbol = new NamespaceSymbol(this, record);
+			cache.add(newSymbol);
 
 			symbolAdded(newSymbol);
 			return newSymbol;
@@ -3023,9 +2986,6 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		catch (IOException e) {
 			program.dbError(e); // will not return
 			return null;
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -3064,6 +3024,11 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		source = validateSource(source, name, address, symbolType);
 		name = validateName(name, source);
 
+		if ((symbolType == SymbolType.CLASS || symbolType == SymbolType.NAMESPACE) &&
+			Library.UNKNOWN.equals(name)) {
+			throw new InvalidInputException(Library.UNKNOWN + " is a reserved Library name");
+		}
+
 		if (checkForDuplicates) {
 			checkDuplicateSymbolName(address, name, parent, symbolType);
 		}
@@ -3094,6 +3059,9 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		if (!addr.isExternalAddress()) {
 			throw new IllegalArgumentException("External address required");
 		}
+		if (!namespace.isExternal()) {
+			throw new IllegalArgumentException("External namespace required");
+		}
 		if (externalProgramAddress != null && !externalProgramAddress.isLoadedMemoryAddress()) {
 			throw new IllegalArgumentException("Memory address required for external program");
 		}
@@ -3103,7 +3071,8 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			MemorySymbol.setExternalFields(record, originalImportName, externalProgramAddress);
 			adapter.updateSymbolRecord(record);
 
-			CodeSymbol newSymbol = new CodeSymbol(this, cache, addr, record);
+			CodeSymbol newSymbol = new CodeSymbol(this, addr, record, record.getKey());
+			cache.add(newSymbol);
 
 			symbolAdded(newSymbol);
 			return newSymbol;
@@ -3144,8 +3113,8 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			MemorySymbol.setExternalFields(record, originalImportName, externalProgramAddress);
 			adapter.updateSymbolRecord(record);
 
-			FunctionSymbol newSymbol = new FunctionSymbol(this, cache, addr, record);
-
+			FunctionSymbol newSymbol = new FunctionSymbol(this, addr, record);
+			cache.add(newSymbol);
 			symbolAdded(newSymbol);
 			return newSymbol;
 		}
@@ -3168,8 +3137,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			throw new IllegalArgumentException("Invalid memory address: " + addr);
 		}
 
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			namespace = validateNamespace(namespace, addr, SymbolType.LABEL);
 			source = validateSource(source, name, addr, SymbolType.LABEL);
 			name = validateName(name, source);
@@ -3197,7 +3165,8 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 				makePrimary, source, false);
 			adapter.updateSymbolRecord(record);
 
-			CodeSymbol newSymbol = new CodeSymbol(this, cache, addr, record);
+			CodeSymbol newSymbol = new CodeSymbol(this, addr, record, record.getKey());
+			cache.add(newSymbol);
 
 			symbolAdded(newSymbol);
 			return newSymbol;
@@ -3208,9 +3177,6 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		catch (IOException e) {
 			program.dbError(e);
 			return null; // will not occur
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -3261,8 +3227,8 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			throw new RuntimeException("Unexpected", e); // duplicate was avoided above
 		}
 
-		FunctionSymbol newSymbol = new FunctionSymbol(this, cache, addr, record);
-
+		FunctionSymbol newSymbol = new FunctionSymbol(this, addr, record);
+		cache.add(newSymbol);
 		symbolAdded(newSymbol);
 
 		if (needsPinning) {
@@ -3483,4 +3449,62 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		Symbol newNamespaceSymbol = namespace.getSymbol();
 		return (newNamespaceSymbol == null) || newNamespaceSymbol.isDeleted();
 	}
+
+	Symbol getSymbol(DBRecord rec) {
+		return cache.getCachedInstance(rec);
+	}
+
+	private class SymbolFactory implements DbFactory<SymbolDB> {
+
+		@Override
+		public SymbolDB instantiate(long key) {
+			try {
+				DBRecord record = adapter.getSymbolRecord(key);
+				if (record != null) {
+					return instantiate(record);
+				}
+			}
+			catch (IOException e) {
+				program.dbError(e);
+			}
+			return null;
+		}
+
+		@Override
+		public SymbolDB instantiate(DBRecord record) {
+			long addr = record.getLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL);
+			byte typeID = record.getByteValue(SymbolDatabaseAdapter.SYMBOL_TYPE_COL);
+			SymbolType type = SymbolType.getSymbolType(typeID);
+			SymbolDB s = instantiateSymbol(addrMap.decodeAddress(addr), record, type);
+			return s;
+		}
+
+		private SymbolDB instantiateSymbol(Address addr, DBRecord record, SymbolType type) {
+			if (type == SymbolType.CLASS) {
+				return new ClassSymbol(SymbolManager.this, record);
+			}
+			else if (type == SymbolType.LABEL) {
+				return new CodeSymbol(SymbolManager.this, addr, record, record.getKey());
+			}
+			else if (type == SymbolType.NAMESPACE) {
+				return new NamespaceSymbol(SymbolManager.this, record);
+			}
+			else if (type == SymbolType.FUNCTION) {
+				return new FunctionSymbol(SymbolManager.this, addr, record);
+			}
+			else if (type == SymbolType.LIBRARY) {
+				return new LibrarySymbol(SymbolManager.this, record);
+			}
+			else if (type == SymbolType.PARAMETER || type == SymbolType.LOCAL_VAR) {
+				return new VariableSymbolDB(SymbolManager.this, type, variableStorageMgr, addr,
+					record);
+			}
+			else if (type == SymbolType.GLOBAL_VAR) {
+				return new GlobalVariableSymbolDB(SymbolManager.this, variableStorageMgr, addr,
+					record);
+			}
+			throw new IllegalArgumentException("No symbol type for " + type);
+		}
+	}
+
 }

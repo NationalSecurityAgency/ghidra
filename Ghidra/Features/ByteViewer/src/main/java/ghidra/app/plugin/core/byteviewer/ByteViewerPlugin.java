@@ -65,16 +65,16 @@ public class ByteViewerPlugin extends AbstractByteViewerPlugin<ProgramByteViewer
 
 	@Override
 	public void processEvent(PluginEvent event) {
-		if (event instanceof ProgramClosedPluginEvent) {
-			Program program = ((ProgramClosedPluginEvent) event).getProgram();
+		if (event instanceof ProgramClosedPluginEvent ev) {
+			Program program = ev.getProgram();
 			programClosed(program);
 		}
-		else if (event instanceof ProgramActivatedPluginEvent) {
-			currentProgram = ((ProgramActivatedPluginEvent) event).getActiveProgram();
+		else if (event instanceof ProgramActivatedPluginEvent ev) {
+			currentProgram = ev.getActiveProgram();
 			currentLocation = null;
 		}
-		else if (event instanceof ProgramLocationPluginEvent) {
-			currentLocation = ((ProgramLocationPluginEvent) event).getLocation();
+		else if (event instanceof ProgramLocationPluginEvent ev) {
+			currentLocation = ev.getLocation();
 		}
 
 		connectedProvider.doHandleEvent(event);

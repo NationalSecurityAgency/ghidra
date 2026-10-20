@@ -17,8 +17,7 @@ package ghidra.app.plugin.core.function.editor;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Arrays;
-import java.util.EventObject;
+import java.util.*;
 import java.util.List;
 
 import javax.swing.*;
@@ -33,25 +32,29 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.*;
 import docking.widgets.OptionDialog;
+import docking.widgets.button.BrowseButton;
 import docking.widgets.button.GButton;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
+import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GLabel;
 import docking.widgets.table.*;
 import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
 import generic.util.WindowUtilities;
 import ghidra.app.services.DataTypeManagerService;
-import ghidra.app.util.ToolTipUtils;
+import ghidra.app.util.*;
 import ghidra.app.util.cparser.C.CParserUtils;
+import ghidra.app.util.cparser.C.ParseException;
 import ghidra.app.util.viewer.field.ListingColors.FunctionColors;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.VoidDataType;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.VariableStorage;
-import ghidra.program.model.symbol.ExternalLocation;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.*;
 import ghidra.util.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.layout.PairLayout;
 import ghidra.util.layout.VerticalLayout;
 import resources.Icons;
@@ -68,6 +71,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	private GTable parameterTable;
 
 	private JTextField nameField;
+	private GhidraComboBox<NamespaceWrapper> namespaceChoices;
 	private JCheckBox varArgsCheckBox;
 	private DataTypeManagerService service;
 	private JCheckBox inLineCheckBox;
@@ -167,7 +171,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	protected void okCallback() {
 		if (model.isInParsingMode()) {
 			try {
-				model.parseSignatureFieldText();
+				doParse();
 			}
 			catch (Exception e) {
 				handleParseException(e);
@@ -212,6 +216,32 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		super.close();
 	}
 
+	FunctionSignatureTextField getSignatureField() {
+		return signatureTextField;
+	}
+
+	void triggerSignatureParsing() {
+		try {
+			doParse();
+		}
+		catch (Exception ex) {
+			if (!handleParseException(ex)) {
+				return;
+			}
+		}
+	}
+
+	private void doParse() throws CancelledException, ParseException {
+		model.parseSignatureFieldText();
+
+		Namespace ns = model.getNamespace();
+		rebuildNamespaces(ns);
+	}
+
+	Namespace getSelectedNamesapce() {
+		return namespaceChoices.getSelectedItem().getNamespace();
+	}
+
 	private JComponent buildMainPanel(boolean hasOptionalSignatureCommit) {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -224,7 +254,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	private JComponent buildCenterPanel(boolean hasOptionalSignatureCommit) {
 		centerPanel = new JPanel(new BorderLayout());
 		centerPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
-		centerPanel.add(buildAttributePanel(), BorderLayout.NORTH);
+		centerPanel.add(createAttributePanel(), BorderLayout.NORTH);
 		centerPanel.add(buildTable(), BorderLayout.CENTER);
 		centerPanel.add(buildBottomPanel(hasOptionalSignatureCommit), BorderLayout.SOUTH);
 		centerPanel.getAccessibleContext().setAccessibleName("Function Attributes");
@@ -342,7 +372,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		signatureTextField.setActionListener(e -> {
 			try {
 				if (model.isInParsingMode()) {
-					model.parseSignatureFieldText();
+					doParse();
 					return;
 				}
 			}
@@ -361,7 +391,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 
 		ActionListener tabListener = e -> {
 			try {
-				model.parseSignatureFieldText();
+				doParse();
 			}
 			catch (Exception ex) {
 				if (!handleParseException(ex)) {
@@ -411,21 +441,153 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		return result == OptionDialog.OPTION_TWO; // Option 2 is to abort
 	}
 
-	private Component buildAttributePanel() {
+	private Component createAttributePanel() {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(0, 5, 15, 15));
 
 		JPanel leftPanel = new JPanel(new PairLayout(4, 8));
 		leftPanel.add(new GLabel("Function Name:"));
 		leftPanel.add(createNameField());
-		leftPanel.add(new GLabel("Calling Convention"));
+
+		leftPanel.add(new GLabel("Namespace:"));
+		leftPanel.add(createNamespacePanel());
+
+		leftPanel.add(new GLabel("Calling Convention:"));
 		leftPanel.add(createCallingConventionCombo());
-		leftPanel.setBorder(BorderFactory.createEmptyBorder(14, 0, 0, 10));
+
+		leftPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 10));
 		leftPanel.getAccessibleContext().setAccessibleName("Function");
 		panel.add(leftPanel, BorderLayout.CENTER);
 		panel.add(buildTogglePanel(), BorderLayout.EAST);
 		panel.getAccessibleContext().setAccessibleName("Attributes");
 		return panel;
+	}
+
+	private Component createNamespacePanel() {
+
+		namespaceChoices = new GhidraComboBox<>();
+		namespaceChoices.setName("NamespaceComboBox");
+		namespaceChoices.addItemListener(e -> {
+			NamespaceWrapper wrapper = (NamespaceWrapper) e.getItem();
+			Namespace ns = wrapper.getNamespace();
+			model.setNamespace(ns);
+		});
+
+		initNamespaces();
+		selectNamespace();
+
+		JPanel nsPanel = new JPanel();
+		nsPanel.setLayout(new BoxLayout(nsPanel, BoxLayout.LINE_AXIS));
+		Component browsePanel = createBrowseButton();
+		nsPanel.add(namespaceChoices);
+		nsPanel.add(Box.createHorizontalStrut(5));
+		nsPanel.add(browsePanel);
+		return nsPanel;
+	}
+
+	private void selectNamespace() {
+		Function function = model.getFunction();
+		Symbol symbol = function.getSymbol();
+		Namespace ns = symbol.getParentNamespace();
+		namespaceChoices.setSelectedItem(new NamespaceWrapper(ns));
+	}
+
+	private Component createBrowseButton() {
+		JButton browseButton = new BrowseButton();
+		browseButton.setToolTipText("Choose Namespace");
+		browseButton.addActionListener(e -> showNamespaceChooser());
+		return browseButton;
+	}
+
+	private void showNamespaceChooser() {
+		Function function = model.getFunction();
+		Program program = function.getProgram();
+		NamespaceChooserDialog dialog = new NamespaceChooserDialog();
+		Namespace namespace = dialog.getNamespace(program);
+		if (namespace != null) {
+			rebuildNamespaces(namespace);
+			return;
+		}
+
+		String nsText = dialog.getNamespaceText();
+		if (StringUtils.isBlank(nsText)) {
+			return;
+		}
+
+		Namespace newNamespace = createNamespace(nsText);
+		rebuildNamespaces(newNamespace);
+	}
+
+	private void rebuildNamespaces(Namespace namespace) {
+		if (namespace == null) {
+			return;
+		}
+
+		Function function = model.getFunction();
+		Program program = function.getProgram();
+		NamespaceCache.add(program, namespace);
+		initNamespaces();
+		namespaceChoices.setSelectedItem(new NamespaceWrapper(namespace));
+	}
+
+	private Namespace createNamespace(String nsText) {
+
+		Program p = model.getProgram();
+		return p.withTransaction("Create Namespace", () -> {
+			Namespace globalNs = p.getGlobalNamespace();
+			try {
+				return NamespaceUtils.createNamespaceHierarchy(nsText, globalNs, p,
+					SourceType.USER_DEFINED);
+
+			}
+			catch (InvalidInputException e) {
+				setStatusText("Invalid Namespace name: " + nsText);
+				return null;
+			}
+		});
+	}
+
+	private void initNamespaces() {
+		namespaceChoices.removeAllItems();
+
+		for (Namespace namespace : getSelectableNamespaces()) {
+			namespaceChoices.addItem(new NamespaceWrapper(namespace));
+		}
+	}
+
+	private Collection<Namespace> getSelectableNamespaces() {
+		SequencedSet<Namespace> namespaces = new LinkedHashSet<>();
+		addGlobalNamespace(namespaces);
+		addCurrentNamespace(namespaces);
+		addRecentNamespaces(namespaces);
+		return namespaces;
+	}
+
+	private void addRecentNamespaces(SequencedSet<Namespace> namespaces) {
+		Program program = model.getProgram();
+		List<Namespace> recentNamespaces = NamespaceCache.get(program);
+		if (recentNamespaces == null) {
+			return;
+		}
+		for (Namespace namespace : recentNamespaces) {
+			if (!namespaces.contains(namespace)) {
+				namespaces.add(namespace);
+			}
+		}
+	}
+
+	private void addGlobalNamespace(SequencedSet<Namespace> namespaces) {
+		Program program = model.getProgram();
+		Namespace globalNamespace = program.getGlobalNamespace();
+		if (!namespaces.contains(globalNamespace)) {
+			namespaces.add(globalNamespace);
+		}
+	}
+
+	private void addCurrentNamespace(SequencedSet<Namespace> namespaces) {
+		Function function = model.getFunction();
+		Namespace ns = function.getParentNamespace();
+		namespaces.add(ns);
 	}
 
 	private Component buildTogglePanel() {
@@ -753,8 +915,9 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		}
 
 		if (!model.hasValidName()) {
-			signatureTextField.setError(model.getFunctionNameStartPosition(),
-				model.getNameString().length());
+			int pos = model.getFunctionNameStartPosition();
+			int len = model.getNameString().length();
+			signatureTextField.setError(pos, len);
 		}
 		if (caretPosition < preview.length()) {
 			signatureTextField.setCaretPosition(caretPosition);
@@ -768,6 +931,47 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 			if (!cellEditor.stopCellEditing()) {
 				cellEditor.cancelCellEditing();
 			}
+		}
+	}
+
+//=================================================================================================
+// Inner Classes
+//=================================================================================================
+
+	private class NamespaceWrapper {
+		private Namespace namespace;
+
+		NamespaceWrapper(Namespace namespace) {
+			this.namespace = namespace;
+		}
+
+		Namespace getNamespace() {
+			return namespace;
+		}
+
+		@Override
+		public String toString() {
+			return namespace.getName(true);
+		}
+
+		@Override
+		public boolean equals(Object object) {
+			if (object == this) {
+				return true;
+			}
+			if (object == null) {
+				return false;
+			}
+			if (object.getClass() == getClass()) {
+				NamespaceWrapper w = (NamespaceWrapper) object;
+				return namespace.equals(w.namespace);
+			}
+			return false;
+		}
+
+		@Override
+		public int hashCode() {
+			return namespace.hashCode();
 		}
 	}
 
@@ -1133,7 +1337,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 
 			if (!processEvent(e)) {
 				try {
-					model.parseSignatureFieldText();
+					doParse();
 				}
 				catch (Exception ex) {
 					handleParseException(ex);

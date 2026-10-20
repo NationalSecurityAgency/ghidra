@@ -178,7 +178,7 @@ public interface FunctionDatabase extends AutoCloseable {
 	 */
 	public BSimServerInfo getServerInfo();
 
-	@Deprecated
+	@Deprecated(since = "11.0")
 	public String getURLString();
 
 	/**

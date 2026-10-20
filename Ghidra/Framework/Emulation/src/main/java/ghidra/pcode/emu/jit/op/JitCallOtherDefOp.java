@@ -17,12 +17,14 @@ package ghidra.pcode.emu.jit.op;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import ghidra.pcode.emu.jit.analysis.JitDataFlowState.MiniDFState;
 import ghidra.pcode.emu.jit.analysis.JitTypeBehavior;
 import ghidra.pcode.emu.jit.var.JitOutVar;
 import ghidra.pcode.emu.jit.var.JitVal;
 import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
+import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropSymbolMap;
 import ghidra.program.model.pcode.PcodeOp;
 
 /**
@@ -37,8 +39,23 @@ import ghidra.program.model.pcode.PcodeOp;
  * @param dfState the captured data flow state at the call site
  */
 public record JitCallOtherDefOp(PcodeOp op, JitOutVar out, JitTypeBehavior type,
-		PcodeUseropDefinition<Object> userop, List<JitVal> args, List<JitTypeBehavior> inputTypes,
+		PcodeUseropDefinition<?> userop, List<JitVal> args, List<JitTypeBehavior> inputTypes,
 		MiniDFState dfState) implements JitCallOtherOpIf, JitDefOp {
+	@Override
+	public String toString(PcodeUseropSymbolMap symbols) {
+		return "%s[op=%s, out=%s, type=%s, userop=%s, args=(%s), inputTypes=%s, dfState=%s]"
+				.formatted(
+					getClass().getSimpleName(),
+					JitOp.toString(op, symbols),
+					out.toString(symbols.language()),
+					type,
+					userop,
+					args.stream()
+							.map(a -> a.toString(symbols.language()))
+							.collect(Collectors.joining(",")),
+					inputTypes,
+					dfState);
+	}
 
 	public JitCallOtherDefOp {
 		Objects.requireNonNull(type);

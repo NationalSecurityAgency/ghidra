@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +38,8 @@ public class SignedToken {
 	public final String algorithm;
 	
 	/**
-	 * Identity which corresponds to signature
+	 * Certificate chain with the signing identity first, followed by its issuing CAs.
+	 * The root certificate may be omitted.
 	 */
 	public final X509Certificate[] certChain;
 
@@ -47,7 +47,7 @@ public class SignedToken {
 	 * SignedToken constructor
 	 * @param token token byte array
 	 * @param signature token byte array signature
-	 * @param certChain identity which corresponds to signature
+	 * @param certChain certificate chain with the signing identity first
 	 * @param algorithm algorithm used for signing
 	 */
 	SignedToken(byte[] token, byte[] signature, X509Certificate[] certChain, String algorithm) {

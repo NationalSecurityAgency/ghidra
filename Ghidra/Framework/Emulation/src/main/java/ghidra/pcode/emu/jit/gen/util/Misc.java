@@ -88,6 +88,10 @@ public interface Misc {
 			Lbl<N> end, Lbl<Ent<N, TRef<T>>> handler, TRef<T> type) {
 		Lbl<N> start = Lbl.create();
 		em = em.emit(Lbl::place, start);
+		if (Op.DEEP_TRACE) {
+			System.err.println(
+				"    jvm<try-catch> %s handler=%s, end=%s".formatted(type, handler, end));
+		}
 		em.mv.visitTryCatchBlock(start.label(), end.label(), handler.label(),
 			type.internalName());
 		return new TryCatchBlock<>(end, handler, em);
@@ -103,6 +107,9 @@ public interface Misc {
 	 */
 	static <N extends Next> Emitter<N> lineNumber(Emitter<N> em, int number) {
 		Label label = new Label();
+		if (Op.DEEP_TRACE) {
+			System.err.println("    jvm<Line %d>".formatted(number));
+		}
 		em.mv.visitLabel(label);
 		em.mv.visitLineNumber(number, label);
 		return em;

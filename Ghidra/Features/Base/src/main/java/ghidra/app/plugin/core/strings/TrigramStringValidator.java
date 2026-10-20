@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,10 +29,10 @@ import ghidra.app.services.*;
  * a ".sng" model file to score strings.
  */
 public class TrigramStringValidator implements StringValidatorService {
-	/**
-	 * Remove this flag when the trigram model thresholds have been recalculated 
-	 */
-	@Deprecated(forRemoval = true, since = "10.3")
+
+	// !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+	// TODO: Remove this flag when the trigram model thresholds have been recalculated 
+	// !-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
 	private static final boolean PRESERVE_BUG_SKIP_TRIGRAM = true;
 
 	// "Bad" log to be used as default score when we know the string is bad

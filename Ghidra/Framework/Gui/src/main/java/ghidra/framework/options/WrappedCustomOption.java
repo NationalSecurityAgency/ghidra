@@ -48,7 +48,7 @@ public class WrappedCustomOption implements WrappedOption {
 				"Custom option class '%s' does not exist".formatted(customOptionClassName));
 		}
 		catch (Exception e) {
-			Msg.error(this, "Can't create customOption instance for: " + customOptionClassName, e);
+			Msg.error(this, "Can't create custom option instance for: " + customOptionClassName, e);
 		}
 	}
 

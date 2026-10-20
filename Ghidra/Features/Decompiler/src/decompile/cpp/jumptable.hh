@@ -192,9 +192,9 @@ protected:
   PcodeOp *startop;		///< First PcodeOp in the jump-table calculation
   mutable uintb curval;		///< The current value pointed to be the iterator
 public:
-  void setRange(const CircleRange &rng) { range = rng; }	///< Set the range of values explicitly
-  void setStartVn(Varnode *vn) { normqvn = vn; }		///< Set the normalized switch Varnode explicitly
-  void setStartOp(PcodeOp *op) { startop = op; }		///< Set the starting PcodeOp explicitly
+  /// \brief Set the range of values explicitly
+  void setRange(const CircleRange &rng,Varnode *vn,PcodeOp *op) { range = rng; normqvn = vn; startop = op; }
+  const CircleRange &getRange(void) const { return range; }	///< Get the full range of values
   virtual void truncate(int4 nm);
   virtual uintb getSize(void) const;
   virtual bool contains(uintb val) const;
@@ -254,10 +254,10 @@ public:
   /// This generally recovers the normalized switch variable and any guards.
   /// \param fd is the function containing the switch
   /// \param indop is the given BRANCHIND
-  /// \param matchsize is the expected number of address table entries to recover, or 0 for no expectation
+  /// \param previous (if not NULL) is a previous version of the model we are trying to match
   /// \param maxtablesize is maximum number of address table entries to allow in the model
   /// \return \b true if details of the model were successfully recovered
-  virtual bool recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 maxtablesize)=0;
+  virtual bool recoverModel(Funcdata *fd,PcodeOp *indop,const JumpModel *previous,uint4 maxtablesize)=0;
 
   /// \brief Construct the explicit list of target addresses (the Address Table) from \b this model
   ///
@@ -353,7 +353,7 @@ public:
   JumpModelTrivial(JumpTable *jt) : JumpModel(jt) { size = 0; }	///< Construct given a parent JumpTable
   virtual bool isOverride(void) const { return false; }
   virtual int4 getTableSize(void) const { return size; }
-  virtual bool recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 maxtablesize);
+  virtual bool recoverModel(Funcdata *fd,PcodeOp *indop,const JumpModel *previous,uint4 maxtablesize);
   virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
 			      vector<LoadTable> *loadpoints,vector<int4> *loadcounts) const;
   virtual void findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxext) {}
@@ -383,13 +383,14 @@ protected:
   static bool ispoint(Varnode *vn);	///< Is it possible for the given Varnode to be a switch variable?
   static int4 getStride(Varnode *vn);	///< Get the step/stride associated with the Varnode
   static uintb backup2Switch(Funcdata *fd,uintb output,Varnode *outvn,Varnode *invn);
-  static uintb getMaxValue(Varnode *vn);	///< Get maximum value associated with the given Varnode
   static bool duplicateVarnodes(const vector<Varnode *> &arr);	///< Return \b true if all array elements are the same Varnode
+  void getInitialRange(Varnode *vn,CircleRange &rng) const;	///< Get initial range of values the given Varnode can take
   void findDeterminingVarnodes(PcodeOp *op,int4 slot);
   void analyzeGuards(BlockBasic *bl,int4 pathout);
   void calcRange(Varnode *vn,CircleRange &rng) const;
-  void findSmallestNormal(uint4 matchsize);
-  void findNormalized(Funcdata *fd,BlockBasic *rootbl,int4 pathout,uint4 matchsize,uint4 maxtablesize);
+  bool isPreferredRange(int4 pos,const CircleRange &newRange);
+  void findSmallestNormal(const JumpBasic *previous);
+  void findNormalized(Funcdata *fd,BlockBasic *rootbl,int4 pathout,const JumpModel *previous,uint4 maxtablesize);
   void markFoldableGuards();
   void markModel(bool val);		///< Mark (or unmark) all PcodeOps involved in the model
   bool flowsOnlyToModel(Varnode *vn,PcodeOp *trailOp);	///< Check if the given Varnode flows to anything other than \b this model
@@ -413,7 +414,7 @@ public:
   virtual ~JumpBasic(void);
   virtual bool isOverride(void) const { return false; }
   virtual int4 getTableSize(void) const { return jrange->getSize(); }
-  virtual bool recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 maxtablesize);
+  virtual bool recoverModel(Funcdata *fd,PcodeOp *indop,const JumpModel *previous,uint4 maxtablesize);
   virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
 			      vector<LoadTable> *loadpoints,vector<int4> *loadcounts) const;
   virtual void findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxext);
@@ -446,7 +447,7 @@ class JumpBasic2 : public JumpBasic {
 public:
   JumpBasic2(JumpTable *jt) : JumpBasic(jt) {}	///< Constructor
   void initializeStart(const PathMeld &pMeld);	///< Pass in the prior PathMeld calculation
-  virtual bool recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 maxtablesize);
+  virtual bool recoverModel(Funcdata *fd,PcodeOp *indop,const JumpModel *previous,uint4 maxtablesize);
   virtual void findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxext);
   virtual JumpModel *clone(JumpTable *jt) const;
   virtual void clear(void);
@@ -478,7 +479,7 @@ public:
   void setStartingValue(uintb val) { startingvalue = val; }		///< Set the starting value for the normalized range
   virtual bool isOverride(void) const { return true; }
   virtual int4 getTableSize(void) const { return addrtable.size(); }
-  virtual bool recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 maxtablesize);
+  virtual bool recoverModel(Funcdata *fd,PcodeOp *indop,const JumpModel *previous,uint4 maxtablesize);
   virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
 			      vector<LoadTable> *loadpoints,vector<int4> *loadcounts) const;
   // findUnnormalized inherited from JumpBasic
@@ -517,7 +518,7 @@ public:
 //  virtual ~JumpAssisted(void);
   virtual bool isOverride(void) const { return false; }
   virtual int4 getTableSize(void) const { return sizeIndices+1; }
-  virtual bool recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 maxtablesize);
+  virtual bool recoverModel(Funcdata *fd,PcodeOp *indop,const JumpModel *previous,uint4 maxtablesize);
   virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
 			      vector<LoadTable> *loadpoints,vector<int4> *loadcounts) const;
   virtual void findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxext) {}
@@ -579,8 +580,9 @@ private:
   void saveModel(void);		///< Save off current model (if any) and prepare for instantiating a new model
   void restoreSavedModel(void);	///< Restore any saved model as the current model
   void clearSavedModel(void);	///< Clear any saved model
-  void recoverModel(Funcdata *fd);	///< Attempt recovery of the jump-table model
+  void recoverModel(Funcdata *fd,const JumpModel *matchModel);	///< Attempt recovery of the jump-table model
   void trivialSwitchOver(void);	///< Switch \b this table over to a trivial model
+  bool isThunk(Funcdata *fd) const;	///< Return \b true if the function looks like a thunk
   void sanityCheck(Funcdata *fd,vector<int4> *loadpoints);	///< Perform sanity check on recovered address targets
   int4 block2Position(const FlowBlock *bl) const;	///< Convert a basic-block to an out-edge index from the switch.
   static bool isReachable(PcodeOp *op);	///< Check if the given PcodeOp still seems reachable in its function

@@ -16,8 +16,8 @@
 package ghidra.trace.database.listing;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
+import java.nio.ByteBuffer;
+import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
@@ -55,6 +55,8 @@ import ghidra.util.task.TaskMonitor;
  * {@link TraceCodeManager#getCodeRegisterSpace(TraceThread, int, boolean)}.
  */
 public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
+	protected final static int CHUNK_SIZE = DBTrace.CHUNK_SIZE;
+
 	protected final DBTraceCodeManager manager;
 	protected final DBHandle dbh;
 	protected final AddressSpace space;
@@ -65,7 +67,8 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 	protected final DBTraceReferenceManager referenceManager;
 	protected final AddressRange all;
 
-	protected final DBTraceAddressSnapRangePropertyMapSpace<DBTraceInstruction, DBTraceInstruction> instructionMapSpace;
+	protected final DBTraceAddressSnapRangePropertyMapSpace<DBTraceInstruction,
+		DBTraceInstruction> instructionMapSpace;
 	protected final DBTraceAddressSnapRangePropertyMapSpace<DBTraceData, DBTraceData> dataMapSpace;
 
 	// NOTE: All combinations except () and (INSTRUCTIONS,UNDEFINED)
@@ -178,28 +181,42 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 		definedData.invalidateCache();
 		undefinedData.invalidateCache();
 
-		for (DBTraceInstruction instruction : instructionMapSpace.reduce(
-			TraceAddressSnapRangeQuery.intersecting(range, span)).values()) {
-			monitor.checkCancelled();
-			monitor.incrementProgress(1);
-			if (instruction.platform != guest) {
-				continue;
+		TraceAddressSnapRangeQuery query = TraceAddressSnapRangeQuery.intersecting(range, span);
+		var instructionSubmap = instructionMapSpace.reduce(query);
+		while (true) {
+			List<DBTraceInstruction> chunk =
+				instructionSubmap.values().stream().limit(CHUNK_SIZE).toList();
+			for (DBTraceInstruction instruction : chunk) {
+				monitor.checkCancelled();
+				monitor.incrementProgress(1);
+				if (instruction.platform != guest) {
+					continue;
+				}
+				instructionMapSpace.deleteData(instruction);
+				instructions.unitRemoved(instruction);
 			}
-			instructionMapSpace.deleteData(instruction);
-			instructions.unitRemoved(instruction);
+			if (chunk.size() < CHUNK_SIZE) {
+				break;
+			}
 		}
+
 		monitor.setMessage("Clearing data");
 		monitor.setMaximum(dataMapSpace.size()); // This is OK
-		for (DBTraceData dataUnit : dataMapSpace.reduce(
-			TraceAddressSnapRangeQuery.intersecting(range, span)).values()) {
-			monitor.checkCancelled();
-			monitor.incrementProgress(1);
-			if (dataUnit.platform != guest) {
-				continue;
+		var dataSubmap = dataMapSpace.reduce(query);
+		while (true) {
+			List<DBTraceData> chunk = dataSubmap.values().stream().limit(CHUNK_SIZE).toList();
+			for (DBTraceData dataUnit : chunk) {
+				monitor.checkCancelled();
+				monitor.incrementProgress(1);
+				if (dataUnit.platform != guest) {
+					continue;
+				}
+				dataMapSpace.deleteData(dataUnit);
+				definedData.unitRemoved(dataUnit);
 			}
-			// TODO: I don't yet have guest-language data units.
-			dataMapSpace.deleteData(dataUnit);
-			definedData.unitRemoved(dataUnit);
+			if (chunk.size() < CHUNK_SIZE) {
+				break;
+			}
 		}
 	}
 
@@ -245,7 +262,7 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 
 	@Override
 	public void invalidateCache() {
-		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+		try (LockHold _ = LockHold.lock(lock.writeLock())) {
 			instructionMapSpace.invalidateCache();
 			instructions.invalidateCache();
 
@@ -271,7 +288,7 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 	 * @param newBytes the new bytes
 	 */
 	public void bytesChanged(Set<TraceAddressSnapRange> changed, long snap, Address start,
-			byte[] oldBytes, byte[] newBytes) {
+			ByteBuffer oldBytes, ByteBuffer newBytes) {
 		AddressSet diffs = ByteArrayUtils.computeDiffsAddressSet(start, oldBytes, newBytes);
 		Set<AbstractDBTraceCodeUnit<?>> affectedUnits = new HashSet<>();
 		for (TraceAddressSnapRange box : changed) {
@@ -285,8 +302,8 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 			}
 		}
 
-		MemBuffer newBuf =
-			new ByteMemBufferImpl(start, newBytes, trace.getBaseLanguage().isBigEndian());
+		MemBuffer newBuf = new ByteMemBufferImpl(start, ByteArrayUtils.arrayOrGet(newBytes),
+			trace.getBaseLanguage().isBigEndian());
 		for (AbstractDBTraceCodeUnit<?> unit : affectedUnits) {
 			// Rule:
 			//     Break unit down into time portions before affected range, and at/within range
@@ -305,12 +322,10 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 				unitStartSnap = unit.getStartSnap();
 				unit.delete();
 			}
-			if (unit instanceof DBTraceData) {
-				DBTraceData dataUnit = (DBTraceData) unit;
-				boolean reApply = false;
+			if (unit instanceof DBTraceData dataUnit) {
+				boolean reApply;
 				DataType dataType = dataUnit.getDataType();
-				if (dataType instanceof Dynamic) {
-					Dynamic ddt = (Dynamic) dataType;
+				if (dataType instanceof Dynamic ddt) {
 					WrappedMemBuffer newWrapped =
 						new WrappedMemBuffer(newBuf, (int) dataUnit.getAddress().subtract(start));
 					int newLength = ddt.getLength(newWrapped, dataUnit.getLength());

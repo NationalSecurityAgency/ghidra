@@ -22,15 +22,12 @@ import ghidra.program.model.pcode.Varnode;
 
 /**
  * A Sleigh userop definition with one signature
- * 
- * @param <T> no type in particular, except to match any executor
  */
-public class FixedSleighPcodeUseropDefinition<T> extends AbstractSleighPcodeUseropDefinition<T> {
+public class FixedSleighPcodeUseropDefinition extends AbstractSleighPcodeUseropDefinition {
 	protected final SignatureDef definition;
 
-	protected FixedSleighPcodeUseropDefinition(SleighLanguage language, String name,
-			SignatureDef definition) {
-		super(language, name);
+	protected FixedSleighPcodeUseropDefinition(String name, SignatureDef definition) {
+		super(name);
 		this.definition = definition;
 	}
 
@@ -54,14 +51,10 @@ public class FixedSleighPcodeUseropDefinition<T> extends AbstractSleighPcodeUser
 	}
 
 	@Override
-	public PcodeProgram programFor(List<Varnode> args, PcodeUseropLibrary<?> library) {
+	public PcodeProgram programFor(SleighLanguage language, List<Varnode> args,
+			PcodeUseropLibrary<?> library) {
 		return cacheByArgs.computeIfAbsent(args,
 			a -> SleighProgramCompiler.compileUserop(language, name, definition.signature(),
 				definition.generateBody(a), library, a));
-	}
-
-	@Override
-	public Class<?> getOutputType() {
-		return null;
 	}
 }

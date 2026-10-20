@@ -31,13 +31,14 @@ public class HttpUtil {
 	 * @param allowRedirect allow site redirects to be handled if true
 	 * @return HttpURLConnection which contains information about the URL
 	 * @throws MalformedURLException bad httpUrlString specified
+	 * @throws URISyntaxException bad httpUrlString specified
 	 * @throws IOException if an error occurs while executing request
 	 */
 	public static HttpURLConnection getContent(String httpUrlString,
 			Properties httpRequestProperties, boolean allowRedirect)
-			throws MalformedURLException, IOException {
+			throws MalformedURLException, URISyntaxException, IOException {
 
-		URL url = new URL(httpUrlString);
+		URL url = new URI(httpUrlString).toURL();
 		String protocol = url.getProtocol();
 
 		if ("https".equals(protocol)) {
@@ -97,11 +98,13 @@ public class HttpUtil {
 	 * @param allowRedirect allow site redirects to be handled if true
 	 * @param destFile destination file
 	 * @throws MalformedURLException bad httpUrlString specified
+	 * @throws URISyntaxException bad httpUrlString specified
 	 * @throws IOException if an error occurs while executing request
 	 * @return String representing the content-type of the file, or null if the information is not available
 	 */
 	public static String getFile(String httpUrlString, Properties httpRequestProperties,
-			boolean allowRedirect, File destFile) throws MalformedURLException, IOException {
+			boolean allowRedirect, File destFile)
+			throws MalformedURLException, URISyntaxException, IOException {
 
 		HttpURLConnection connection = null;
 		InputStream content = null;

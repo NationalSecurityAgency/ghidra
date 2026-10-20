@@ -29,6 +29,12 @@ public interface AsyncUtils {
 
 	ExecutorService FRAMEWORK_EXECUTOR = Executors.newWorkStealingPool();
 	ExecutorService SWING_EXECUTOR = SwingExecutorService.LATER;
+	Executor DIRECT_EXECUTOR = new Executor() {
+		@Override
+		public void execute(Runnable command) {
+			command.run();
+		}
+	};
 
 	// NB. This was a bad idea, because CFs may maintain refs to dependents.
 	//CompletableFuture<Void> NIL = CompletableFuture.completedFuture(null);

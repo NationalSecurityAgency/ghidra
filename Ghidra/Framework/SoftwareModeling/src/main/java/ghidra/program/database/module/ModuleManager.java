@@ -22,14 +22,14 @@ import java.util.HashSet;
 import db.*;
 import db.util.ErrorHandler;
 import ghidra.framework.data.OpenMode;
-import ghidra.program.database.DBObjectCache;
-import ghidra.program.database.ProgramDB;
+import ghidra.program.database.*;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.database.util.AddressRangeMapDB;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.ProgramEvent;
 import ghidra.util.Lock;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -48,8 +48,8 @@ class ModuleManager {
 	private ModuleDBAdapter moduleAdapter;
 	private FragmentDBAdapter fragmentAdapter;
 	private ParentChildDBAdapter parentChildAdapter;
-	private DBObjectCache<ModuleDB> moduleCache;
-	private DBObjectCache<FragmentDB> fragCache;
+	private DbCache<ModuleDB> moduleCache;
+	private DbCache<FragmentDB> fragCache;
 	private TreeManager treeMgr;
 	private HashSet<String> nameSet;
 	private AddressRangeMapDB fragMap;
@@ -87,8 +87,8 @@ class ModuleManager {
 
 		initializeAdapters(openMode, monitor);
 
-		moduleCache = new DBObjectCache<>(100);
-		fragCache = new DBObjectCache<>(100);
+		moduleCache = new DbCache<>(new ModuleFactory(), lock, 10);
+		fragCache = new DbCache<>(new FragmentFactory(), lock, 10);
 
 		if (openMode == OpenMode.CREATE) {
 			createRootModule();
@@ -226,32 +226,21 @@ class ModuleManager {
 	}
 
 	void setName(String name) {
-		lock.acquire();
-		try {
-			record.setString(ProgramTreeDBAdapter.TREE_NAME_COL, name);
-			treeMgr.updateTreeRecord(record, false);
-		}
-		finally {
-			lock.release();
-		}
+		record.setString(ProgramTreeDBAdapter.TREE_NAME_COL, name);
+		treeMgr.updateTreeRecord(record, false);
 	}
 
 	void imageBaseChanged(boolean commit) {
-		lock.acquire();
-		try {
-			if (commit) {
-				treeMgr.updateTreeRecord(record, true);
-			}
-			invalidateCache();
+		if (commit) {
+			treeMgr.updateTreeRecord(record, true);
 		}
-		finally {
-			lock.release();
-		}
+		invalidateCache();
 	}
 
 	private void createRootModule() throws IOException {
 		DBRecord rootRecord = moduleAdapter.createModuleRecord(0, getProgram().getName());
-		ModuleDB root = new ModuleDB(this, moduleCache, rootRecord);
+		ModuleDB root = new ModuleDB(this, rootRecord);
+		moduleCache.add(root);
 		nameSet.add(root.getName());
 	}
 
@@ -260,9 +249,8 @@ class ModuleManager {
 	}
 
 	void setProgramName(String oldName, String newName) {
-		lock.acquire();
-		try {
-			ModuleDB root = getModuleDB(ROOT_MODULE_ID);
+		try (Closeable c = lock.write()) {
+			ModuleDB root = moduleCache.getCachedInstance(ROOT_MODULE_ID);
 			DBRecord rec = root.getRecord();
 			rec.setString(ModuleDBAdapter.MODULE_NAME_COL, newName);
 			moduleAdapter.updateModuleRecord(rec);
@@ -272,50 +260,40 @@ class ModuleManager {
 		catch (IOException e) {
 			errHandler.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	ProgramModule getRootModule() throws IOException {
-		return getModuleDB(0);
+		return moduleCache.getCachedInstance((long) 0);
 	}
 
 	ProgramModule getModule(String name) throws IOException {
 		DBRecord moduleRecord = moduleAdapter.getModuleRecord(name);
-		return getModuleDB(moduleRecord);
+		return moduleCache.getCachedInstance(moduleRecord);
 	}
 
 	ProgramFragment getFragment(String name) throws IOException {
 		DBRecord fragmentRecord = fragmentAdapter.getFragmentRecord(name);
-		return getFragmentDB(fragmentRecord);
+		return fragCache.getCachedInstance(fragmentRecord);
 	}
 
 	ProgramFragment getFragment(Address addr) throws IOException {
 		Field field = fragMap.getValue(addr);
 		if (field != null) {
-			return getFragmentDB(field.getLongValue());
+			return fragCache.getCachedInstance(field.getLongValue());
 		}
 		return null;
 	}
 
 	void addMemoryBlock(String name, AddressRange range) throws IOException {
-		lock.acquire();
-
-		try {
-			FragmentDB frag = (FragmentDB) getFragment(name);
-			if (frag == null) {
-				frag = createFragmentAdjustNameAsNeeded(name);
-			}
-			frag.addRange(range);
-			fragMap.paintRange(range.getMinAddress(), range.getMaxAddress(),
-				new LongField(frag.getKey()));
-			treeMgr.updateTreeRecord(record);
-			versionTag = new Object(); //update the version tag
+		FragmentDB frag = (FragmentDB) getFragment(name);
+		if (frag == null) {
+			frag = createFragmentAdjustNameAsNeeded(name);
 		}
-		finally {
-			lock.release();
-		}
+		frag.addRange(range);
+		fragMap.paintRange(range.getMinAddress(), range.getMaxAddress(),
+			new LongField(frag.getKey()));
+		treeMgr.updateTreeRecord(record);
+		versionTag = new Object(); //update the version tag
 	}
 
 	private FragmentDB createFragmentAdjustNameAsNeeded(String baseName) throws IOException {
@@ -334,188 +312,121 @@ class ModuleManager {
 		}
 	}
 
-	void removeMemoryBlock(Address startAddr, Address endAddr, TaskMonitor monitor)
-			throws IOException {
-
-		lock.acquire();
-		try {
-			AddressRangeIterator iter = fragMap.getAddressRanges(startAddr, endAddr);
-			while (iter.hasNext() && !monitor.isCancelled()) {
-				AddressRange range = iter.next();
-				Field field = fragMap.getValue(range.getMinAddress());
-				FragmentDB frag = getFragmentDB(field.getLongValue());
-				frag.removeRange(
-					new AddressRangeImpl(range.getMinAddress(), range.getMaxAddress()));
-				if (frag.isEmpty()) {
-					removeFragment(frag);
-				}
+	void removeMemoryBlock(Address startAddr, Address endAddr, TaskMonitor monitor) {
+		AddressRangeIterator iter = fragMap.getAddressRanges(startAddr, endAddr);
+		while (iter.hasNext() && !monitor.isCancelled()) {
+			AddressRange range = iter.next();
+			Field field = fragMap.getValue(range.getMinAddress());
+			FragmentDB frag = fragCache.getCachedInstance(field.getLongValue());
+			frag.removeRange(
+				new AddressRangeImpl(range.getMinAddress(), range.getMaxAddress()));
+			if (frag.isEmpty()) {
+				removeFragment(frag);
 			}
-			if (monitor.isCancelled()) {
-				return;
-			}
-			fragMap.clearRange(startAddr, endAddr);
-			treeMgr.updateTreeRecord(record);
-			invalidateCache();
-
 		}
-		finally {
-			lock.release();
+		if (monitor.isCancelled()) {
+			return;
 		}
-
+		fragMap.clearRange(startAddr, endAddr);
+		treeMgr.updateTreeRecord(record);
+		invalidateCache();
 	}
 
 	void moveAddressRange(Address fromAddr, Address toAddr, long length, TaskMonitor monitor)
 			throws AddressOverflowException, CancelledException {
 
-		lock.acquire();
-		try {
-			Address rangeEnd = fromAddr.addNoWrap(length - 1);
+		Address rangeEnd = fromAddr.addNoWrap(length - 1);
 
-			AddressSet addrSet = new AddressSet(fromAddr, rangeEnd);
-			ArrayList<FragmentHolder> list = new ArrayList<>();
+		AddressSet addrSet = new AddressSet(fromAddr, rangeEnd);
+		ArrayList<FragmentHolder> list = new ArrayList<>();
 
-			AddressRangeIterator rangeIter = fragMap.getAddressRanges(fromAddr, rangeEnd);
-			while (rangeIter.hasNext() && !addrSet.isEmpty()) {
-				monitor.checkCancelled();
-				AddressRange range = rangeIter.next();
-				Field field = fragMap.getValue(range.getMinAddress());
-				try {
-					FragmentDB frag = getFragmentDB(field.getLongValue());
-					AddressSet intersection = addrSet.intersect(frag);
-					AddressRangeIterator fragRangeIter = intersection.getAddressRanges();
-					while (fragRangeIter.hasNext() && !monitor.isCancelled()) {
-						AddressRange fragRange = fragRangeIter.next();
-
-						Address startAddr = fragRange.getMinAddress();
-						Address endAddr = fragRange.getMaxAddress();
-
-						long offset = startAddr.subtract(fromAddr);
-						startAddr = toAddr.add(offset);
-						offset = endAddr.subtract(fromAddr);
-						endAddr = toAddr.add(offset);
-
-						AddressRange newRange = new AddressRangeImpl(startAddr, endAddr);
-
-						frag.removeRange(fragRange);
-						list.add(new FragmentHolder(frag, newRange));
-					}
-					addrSet = addrSet.subtract(intersection);
-				}
-				catch (IOException e) {
-					errHandler.dbError(e);
-					return;
-				}
-
-			}
-
+		AddressRangeIterator rangeIter = fragMap.getAddressRanges(fromAddr, rangeEnd);
+		while (rangeIter.hasNext() && !addrSet.isEmpty()) {
 			monitor.checkCancelled();
-			fragMap.clearRange(fromAddr, rangeEnd);
+			AddressRange range = rangeIter.next();
+			Field field = fragMap.getValue(range.getMinAddress());
+			FragmentDB frag = fragCache.getCachedInstance(field.getLongValue());
+			AddressSet intersection = addrSet.intersect(frag);
+			AddressRangeIterator fragRangeIter = intersection.getAddressRanges();
+			while (fragRangeIter.hasNext() && !monitor.isCancelled()) {
+				AddressRange fragRange = fragRangeIter.next();
 
-			for (FragmentHolder fh : list) {
-				monitor.checkCancelled();
-				fragMap.paintRange(fh.range.getMinAddress(), fh.range.getMaxAddress(),
-					new LongField(fh.frag.getKey()));
-				fh.frag.addRange(fh.range);
+				Address startAddr = fragRange.getMinAddress();
+				Address endAddr = fragRange.getMaxAddress();
+
+				long offset = startAddr.subtract(fromAddr);
+				startAddr = toAddr.add(offset);
+				offset = endAddr.subtract(fromAddr);
+				endAddr = toAddr.add(offset);
+
+				AddressRange newRange = new AddressRangeImpl(startAddr, endAddr);
+
+				frag.removeRange(fragRange);
+				list.add(new FragmentHolder(frag, newRange));
 			}
-			treeMgr.updateTreeRecord(record);
-
-			// generate an event...
-			getProgram().programTreeChanged(treeID, ProgramEvent.FRAGMENT_MOVED, null,
-				new AddressRangeImpl(fromAddr, rangeEnd),
-				new AddressRangeImpl(toAddr, toAddr.addNoWrap(length - 1)));
-
+			addrSet = addrSet.subtract(intersection);
 		}
-		finally {
-			lock.release();
+
+		monitor.checkCancelled();
+		fragMap.clearRange(fromAddr, rangeEnd);
+
+		for (FragmentHolder fh : list) {
+			monitor.checkCancelled();
+			fragMap.paintRange(fh.range.getMinAddress(), fh.range.getMaxAddress(),
+				new LongField(fh.frag.getKey()));
+			fh.frag.addRange(fh.range);
 		}
+		treeMgr.updateTreeRecord(record);
+
+		// generate an event...
+		getProgram().programTreeChanged(treeID, ProgramEvent.FRAGMENT_MOVED, null,
+			new AddressRangeImpl(fromAddr, rangeEnd),
+			new AddressRangeImpl(toAddr, toAddr.addNoWrap(length - 1)));
 	}
 
 	void fragmentAdded(long parentID, ProgramFragment fragment) {
-		lock.acquire();
-		try {
-			ProgramModule parent = getModuleDB(parentID);
-			nameSet.add(fragment.getName());
-			treeMgr.updateTreeRecord(record);
-			getProgram().programTreeChanged(treeID, ProgramEvent.GROUP_ADDED, null, parent,
-				fragment);
-		}
-		catch (IOException e) {
-			errHandler.dbError(e);
-
-		}
-		finally {
-			lock.release();
-		}
+		ProgramModule parent = moduleCache.getCachedInstance(parentID);
+		nameSet.add(fragment.getName());
+		treeMgr.updateTreeRecord(record);
+		getProgram().programTreeChanged(treeID, ProgramEvent.GROUP_ADDED, null, parent,
+			fragment);
 	}
 
 	void moduleAdded(long parentID, ProgramModule module) {
-		lock.acquire();
-		try {
-			ProgramModule parent = getModuleDB(parentID);
-			nameSet.add(module.getName());
-			treeMgr.updateTreeRecord(record);
-			getProgram().programTreeChanged(treeID, ProgramEvent.GROUP_ADDED, null, parent, module);
-		}
-		catch (IOException e) {
-			errHandler.dbError(e);
-
-		}
-		finally {
-			lock.release();
-		}
+		ProgramModule parent = moduleCache.getCachedInstance(parentID);
+		nameSet.add(module.getName());
+		treeMgr.updateTreeRecord(record);
+		getProgram().programTreeChanged(treeID, ProgramEvent.GROUP_ADDED, null, parent, module);
 	}
 
 	void groupRemoved(ModuleDB parentModule, long childID, String childName, boolean isFragment,
 			boolean deleteChild) {
-		lock.acquire();
-		try {
-			if (deleteChild && isFragment) {
-				nameSet.remove(childName);
-				fragCache.delete(childID);
-			}
-			else if (deleteChild) {
-				nameSet.remove(childName);
-				moduleCache.delete(childID);
-
-			}
-			treeMgr.updateTreeRecord(record);
-			getProgram().programTreeChanged(treeID, ProgramEvent.GROUP_REMOVED, null, parentModule,
-				childName);
+		if (deleteChild && isFragment) {
+			nameSet.remove(childName);
+			fragCache.delete(childID);
+		}
+		else if (deleteChild) {
+			nameSet.remove(childName);
+			moduleCache.delete(childID);
 
 		}
-		finally {
-			lock.release();
-		}
+		treeMgr.updateTreeRecord(record);
+		getProgram().programTreeChanged(treeID, ProgramEvent.GROUP_REMOVED, null, parentModule,
+			childName);
 	}
 
 	void commentsChanged(String oldComments, Group group) {
-		lock.acquire();
-		try {
-			treeMgr.updateTreeRecord(record);
+		treeMgr.updateTreeRecord(record);
 
-			getProgram().programTreeChanged(treeID, ProgramEvent.GROUP_COMMENT_CHANGED, null,
-				oldComments, group);
-
-		}
-		finally {
-			lock.release();
-		}
-
+		getProgram().programTreeChanged(treeID, ProgramEvent.GROUP_COMMENT_CHANGED, null,
+			oldComments, group);
 	}
 
 	void nameChanged(String oldName, Group group) {
-		lock.acquire();
-		try {
-			nameSet.remove(oldName);
-			nameSet.add(group.getName());
-			treeMgr.updateTreeRecord(record);
-			getProgram().programTreeChanged(treeID, ProgramEvent.GROUP_RENAMED, null, oldName,
-				group);
-
-		}
-		finally {
-			lock.release();
-		}
+		nameSet.remove(oldName);
+		nameSet.add(group.getName());
+		treeMgr.updateTreeRecord(record);
+		getProgram().programTreeChanged(treeID, ProgramEvent.GROUP_RENAMED, null, oldName, group);
 	}
 
 	/**
@@ -548,60 +459,6 @@ class ModuleManager {
 		return false;
 	}
 
-	FragmentDB getFragmentDB(DBRecord fragmentRecord) {
-		lock.acquire();
-		try {
-			if (fragmentRecord == null) {
-				return null;
-			}
-			FragmentDB f = fragCache.get(fragmentRecord.getKey());
-			if (f != null) {
-				return f;
-			}
-			return createFragmentDB(fragmentRecord);
-
-		}
-		finally {
-			lock.release();
-		}
-	}
-
-	FragmentDB getFragmentDB(long fragID) throws IOException {
-		lock.acquire();
-		try {
-			FragmentDB frag = fragCache.get(fragID);
-			if (frag != null) {
-				return frag;
-			}
-			DBRecord fragmentRecord = fragmentAdapter.getFragmentRecord(fragID);
-			return createFragmentDB(fragmentRecord);
-
-		}
-		finally {
-			lock.release();
-		}
-	}
-
-	ModuleDB getModuleDB(DBRecord moduleRecord) throws IOException {
-		if (moduleRecord == null) {
-			return null;
-		}
-		ModuleDB moduleDB = moduleCache.get(moduleRecord.getKey());
-		if (moduleDB != null) {
-			return moduleDB;
-		}
-		return createModuleDB(moduleRecord);
-	}
-
-	ModuleDB getModuleDB(long moduleID) throws IOException {
-		ModuleDB moduleDB = moduleCache.get(moduleID);
-		if (moduleDB != null) {
-			return moduleDB;
-		}
-		DBRecord moduleRecord = moduleAdapter.getModuleRecord(moduleID);
-		return createModuleDB(moduleRecord);
-	}
-
 	String getTreeName() {
 		return treeMgr.getTreeName(treeID);
 	}
@@ -618,75 +475,49 @@ class ModuleManager {
 	 * @throws NotFoundException if address range not fully contained within program memory 
 	 */
 	void move(FragmentDB destFrag, Address min, Address max) throws NotFoundException {
-
-		lock.acquire();
-		try {
-			if (!getProgram().getMemory().contains(min, max)) {
-				throw new NotFoundException(
-					"Address range for " + min + ", " + max + " is not contained in memory");
-			}
-			AddressSet set = new AddressSet();
-
-			AddressRangeIterator iter = fragMap.getAddressRanges(min, max);
-			AddressSet addrSet = new AddressSet(min, max);
-
-			while (iter.hasNext() && !addrSet.isEmpty()) {
-				AddressRange range = iter.next();
-				Field field = fragMap.getValue(range.getMinAddress());
-				try {
-					FragmentDB frag = getFragmentDB(field.getLongValue());
-					if (frag != destFrag) {
-						AddressSet intersection = addrSet.intersect(frag);
-						AddressRangeIterator fragRangeIter = intersection.getAddressRanges();
-						while (fragRangeIter.hasNext()) {
-							AddressRange fragRange = fragRangeIter.next();
-							set.add(fragRange);
-							frag.removeRange(fragRange);
-						}
-						addrSet = addrSet.subtract(intersection);
-					}
-				}
-				catch (IOException e) {
-					errHandler.dbError(e);
-					return;
-				}
-			}
-
-			Field field = new LongField(destFrag.getKey());
-
-			AddressRangeIterator rangeIter = set.getAddressRanges();
-			while (rangeIter.hasNext()) {
-				AddressRange range = rangeIter.next();
-				fragMap.paintRange(range.getMinAddress(), range.getMaxAddress(), field);
-				destFrag.addRange(range);
-			}
-			treeMgr.updateTreeRecord(record);
-
-			getProgram().programTreeChanged(treeID, ProgramEvent.FRAGMENT_CHANGED, null, min, max);
-
+		if (!getProgram().getMemory().contains(min, max)) {
+			throw new NotFoundException(
+				"Address range for " + min + ", " + max + " is not contained in memory");
 		}
-		finally {
-			lock.release();
+		AddressSet set = new AddressSet();
+
+		AddressRangeIterator iter = fragMap.getAddressRanges(min, max);
+		AddressSet addrSet = new AddressSet(min, max);
+
+		while (iter.hasNext() && !addrSet.isEmpty()) {
+			AddressRange range = iter.next();
+			Field field = fragMap.getValue(range.getMinAddress());
+			FragmentDB frag = fragCache.getCachedInstance(field.getLongValue());
+			if (frag != destFrag) {
+				AddressSet intersection = addrSet.intersect(frag);
+				AddressRangeIterator fragRangeIter = intersection.getAddressRanges();
+				while (fragRangeIter.hasNext()) {
+					AddressRange fragRange = fragRangeIter.next();
+					set.add(fragRange);
+					frag.removeRange(fragRange);
+				}
+				addrSet = addrSet.subtract(intersection);
+			}
 		}
+
+		Field field = new LongField(destFrag.getKey());
+
+		AddressRangeIterator rangeIter = set.getAddressRanges();
+		while (rangeIter.hasNext()) {
+			AddressRange range = rangeIter.next();
+			fragMap.paintRange(range.getMinAddress(), range.getMaxAddress(), field);
+			destFrag.addRange(range);
+		}
+		treeMgr.updateTreeRecord(record);
+
+		getProgram().programTreeChanged(treeID, ProgramEvent.FRAGMENT_CHANGED, null, min, max);
 	}
 
 	FragmentDB getFragment(CodeUnit cu) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			Field field = fragMap.getValue(cu.getMinAddress());
-			if (field != null) {
-				try {
-					return getFragmentDB(field.getLongValue());
-				}
-				catch (IOException e) {
-					errHandler.dbError(e);
-				}
-			}
+			return fragCache.getCachedInstance(field.getLongValue());
 		}
-		finally {
-			lock.release();
-		}
-		return null;
 	}
 
 	void childReordered(ModuleDB parentModule, Group child) {
@@ -702,8 +533,7 @@ class ModuleManager {
 	}
 
 	String[] getParentNames(long childID) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			Field[] keys =
 				parentChildAdapter.getParentChildKeys(childID, ParentChildDBAdapter.CHILD_ID_COL);
 			String[] names = new String[keys.length];
@@ -719,16 +549,12 @@ class ModuleManager {
 		catch (IOException e) {
 			errHandler.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 
 		return new String[0];
 	}
 
 	ProgramModule[] getParents(long childID) {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			Field[] keys =
 				parentChildAdapter.getParentChildKeys(childID, ParentChildDBAdapter.CHILD_ID_COL);
 			ProgramModule[] modules = new ProgramModule[keys.length];
@@ -737,41 +563,18 @@ class ModuleManager {
 					parentChildAdapter.getParentChildRecord(keys[i].getLongValue());
 				DBRecord mrec = moduleAdapter.getModuleRecord(
 					parentChildRecord.getLongValue(ParentChildDBAdapter.PARENT_ID_COL));
-				modules[i] = getModuleDB(mrec);
+				modules[i] = moduleCache.getCachedInstance(mrec);
 			}
 			return modules;
 		}
 		catch (IOException e) {
 			errHandler.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 		return new ProgramModule[0];
 	}
 
-	private ModuleDB createModuleDB(DBRecord moduleRecord) throws IOException {
-		if (moduleRecord != null) {
-			ModuleDB moduleDB;
-			moduleDB = new ModuleDB(this, moduleCache, moduleRecord);
-			nameSet.add(moduleDB.getName());
-			return moduleDB;
-		}
-		return null;
-	}
-
-	private FragmentDB createFragmentDB(DBRecord fragmentRecord) {
-		if (fragmentRecord != null) {
-			FragmentDB f = new FragmentDB(this, fragCache, fragmentRecord,
-				getFragmentAddressSet(fragmentRecord.getKey()));
-			nameSet.add(f.getName());
-			return f;
-		}
-		return null;
-	}
-
 	private void removeFragment(FragmentDB frag) {
-		// remove frag from all of its parents
+		// remove fragment from all of its parents
 		ProgramModule[] parents = frag.getParents();
 		for (ProgramModule parent : parents) {
 			try {
@@ -785,6 +588,7 @@ class ModuleManager {
 	}
 
 	AddressSet getFragmentAddressSet(long fragID) {
+		//  assumes the lock is acquired
 		return fragMap.getAddressSet(new LongField(fragID));
 	}
 
@@ -799,17 +603,10 @@ class ModuleManager {
 	}
 
 	void invalidateCache() {
-		lock.acquire();
-		try {
-			versionTag = new Object();
-			moduleCache.invalidate();
-			fragCache.invalidate();
-			record = treeMgr.getTreeRecord(treeID);
-		}
-		finally {
-			lock.release();
-		}
-
+		versionTag = new Object();
+		moduleCache.invalidate();
+		fragCache.invalidate();
+		record = treeMgr.getTreeRecord(treeID);
 	}
 
 	Object getVersionTag() {
@@ -835,4 +632,61 @@ class ModuleManager {
 	DBHandle getDatabaseHandle() {
 		return treeMgr.getDatabaseHandle();
 	}
+
+	FragmentDB getFragmentDB(long key) {
+		return fragCache.getCachedInstance(key);
+	}
+
+	ModuleDB getModuleDB(long key) {
+		return moduleCache.getCachedInstance(key);
+	}
+
+	FragmentDB getFragmentDB(DBRecord fragmentRecord) {
+		return fragCache.getCachedInstance(fragmentRecord);
+	}
+
+	ModuleDB getModuleDB(DBRecord moduleRecord) {
+		return moduleCache.getCachedInstance(moduleRecord);
+	}
+
+	class ModuleFactory implements DbFactory<ModuleDB> {
+
+		@Override
+		public ModuleDB instantiate(long key) {
+			try {
+				DBRecord rec = moduleAdapter.getModuleRecord(key);
+				return rec == null ? null : instantiate(rec);
+			}
+			catch (IOException e) {
+				dbError(e);
+				return null;
+			}
+		}
+
+		@Override
+		public ModuleDB instantiate(DBRecord rec) {
+			return new ModuleDB(ModuleManager.this, rec);
+		}
+	}
+
+	class FragmentFactory implements DbFactory<FragmentDB> {
+
+		@Override
+		public FragmentDB instantiate(long key) {
+			try {
+				DBRecord rec = fragmentAdapter.getFragmentRecord(key);
+				return rec == null ? null : instantiate(rec);
+			}
+			catch (IOException e) {
+				dbError(e);
+				return null;
+			}
+		}
+
+		@Override
+		public FragmentDB instantiate(DBRecord rec) {
+			return new FragmentDB(ModuleManager.this, rec, getFragmentAddressSet(rec.getKey()));
+		}
+	}
+
 }

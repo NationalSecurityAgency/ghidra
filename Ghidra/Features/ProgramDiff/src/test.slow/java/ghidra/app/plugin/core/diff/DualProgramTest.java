@@ -399,7 +399,7 @@ public class DualProgramTest extends DiffTestAdapter {
 		setView();
 		selectTreeNodeByText(tree, ".rsrc");
 
-		ActionContext context = runSwing(() -> programTreeProvider.getActionContext(null));
+		ActionContext context = runSwing(() -> createActionContext(programTreeProvider));
 		performAction(goToView, context, true);
 
 		topOfFile(fp1);
@@ -413,7 +413,7 @@ public class DualProgramTest extends DiffTestAdapter {
 		openSecondProgram(diffTestP1, diffTestP2);
 		JTree tree = findComponent(tool.getToolFrame(), JTree.class);
 		selectTreeNodeByText(tree, "DiffTestPgm1");
-		ActionContext context = runSwing(() -> programTreeProvider.getActionContext(null));
+		ActionContext context = runSwing(() -> createActionContext(programTreeProvider));
 		performAction(removeView, context, true);
 		topOfFile(fp1);
 		assertNull(cb.getCurrentAddress());

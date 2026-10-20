@@ -125,15 +125,15 @@ public class Ext4SuperBlock implements StructConverter {
 	}
 	
 	public Ext4SuperBlock( BinaryReader reader ) throws IOException {
-		s_inodes_count = reader.readNextInt();
+		s_inodes_count = reader.readNextUnsignedIntExact(); // error if more than 2.1billion
 		s_blocks_count_lo = reader.readNextInt();
 		s_r_blocks_count_lo = reader.readNextInt();
 		s_free_blocks_count_lo = reader.readNextInt();
 		s_free_inodes_count = reader.readNextInt();
 		s_first_data_block = reader.readNextInt();
-		s_log_block_size = reader.readNextInt();
+		s_log_block_size = reader.readNextUnsignedIntExact();
 		s_log_cluster_size = reader.readNextInt();
-		s_blocks_per_group = reader.readNextInt();
+		s_blocks_per_group = reader.readNextUnsignedIntExact();
 		s_clusters_per_group = reader.readNextInt();
 		s_inodes_per_group = reader.readNextInt();
 		s_mtime = reader.readNextInt();
@@ -254,12 +254,35 @@ public class Ext4SuperBlock implements StructConverter {
 		return s_log_block_size;
 	}
 
+	public int getBlockSize() throws IOException {
+		if (s_log_block_size > 6) {
+			throw new IOException("Blocksize out of range: " + s_log_block_size);
+		}
+		int result = 1 << (10 + s_log_block_size);
+		return result;
+	}
+
 	public int getS_log_cluster_size() {
 		return s_log_cluster_size;
 	}
 
 	public int getS_blocks_per_group() {
 		return s_blocks_per_group;
+	}
+
+	private static final int MAX_BLOCKS_PER_GROUP = 1 << 19;
+
+	public long getNumGroups() throws IOException {
+		int bs = getBlockSize();
+		if (s_blocks_per_group < bs || s_blocks_per_group > MAX_BLOCKS_PER_GROUP) {
+			throw new IOException("Bad blocks per group: " + s_blocks_per_group);
+		}
+		long blockCount = getS_blocks_count();
+		long numGroups = blockCount / s_blocks_per_group;
+		if (blockCount % s_blocks_per_group != 0) {
+			numGroups++;
+		}
+		return numGroups;
 	}
 
 	public int getS_clusters_per_group() {

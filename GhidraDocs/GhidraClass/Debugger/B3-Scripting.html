@@ -467,42 +467,35 @@ check the program counter:</p>
 class="sourceCode numberSource java numberLines"><code class="sourceCode java"><span id="cb10-1"><a href="#cb10-1"></a><span class="cf">while</span> <span class="op">(</span><span class="kw">true</span><span class="op">)</span> <span class="op">{</span></span>
 <span id="cb10-2"><a href="#cb10-2"></a>    monitor<span class="op">.</span><span class="fu">checkCancelled</span><span class="op">();</span></span>
 <span id="cb10-3"><a href="#cb10-3"></a></span>
-<span id="cb10-4"><a href="#cb10-4"></a>    TargetExecutionState execState <span class="op">=</span> <span class="fu">getExecutionState</span><span class="op">(</span>trace<span class="op">);</span></span>
+<span id="cb10-4"><a href="#cb10-4"></a>    TraceExecutionState execState <span class="op">=</span> <span class="fu">getExecutionState</span><span class="op">(</span>trace<span class="op">);</span></span>
 <span id="cb10-5"><a href="#cb10-5"></a>    <span class="cf">switch</span> <span class="op">(</span>execState<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb10-6"><a href="#cb10-6"></a>        <span class="cf">case</span> STOPPED<span class="op">:</span></span>
-<span id="cb10-7"><a href="#cb10-7"></a>            <span class="fu">resume</span><span class="op">();</span></span>
-<span id="cb10-8"><a href="#cb10-8"></a>            <span class="cf">break</span><span class="op">;</span></span>
-<span id="cb10-9"><a href="#cb10-9"></a>        <span class="cf">case</span> TERMINATED<span class="op">:</span></span>
-<span id="cb10-10"><a href="#cb10-10"></a>        <span class="cf">case</span> <span class="bu">INACTIVE</span><span class="op">:</span></span>
-<span id="cb10-11"><a href="#cb10-11"></a>            <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">AssertionError</span><span class="op">(</span><span class="st">&quot;Target terminated&quot;</span><span class="op">);</span></span>
-<span id="cb10-12"><a href="#cb10-12"></a>        <span class="cf">case</span> ALIVE<span class="op">:</span></span>
-<span id="cb10-13"><a href="#cb10-13"></a>            <span class="fu">println</span><span class="op">(</span></span>
-<span id="cb10-14"><a href="#cb10-14"></a>                <span class="st">&quot;I don&#39;t know whether or not the target is running. Please make it RUNNING.&quot;</span><span class="op">);</span></span>
-<span id="cb10-15"><a href="#cb10-15"></a>            <span class="cf">break</span><span class="op">;</span></span>
-<span id="cb10-16"><a href="#cb10-16"></a>        <span class="cf">case</span> RUNNING<span class="op">:</span></span>
-<span id="cb10-17"><a href="#cb10-17"></a>            <span class="co">/**</span></span>
-<span id="cb10-18"><a href="#cb10-18"></a>             <span class="co">*</span> Probably timed out waiting for break<span class="co">. </span>That<span class="co">&#39;</span>s fine<span class="co">.</span> Give the player time to</span>
-<span id="cb10-19"><a href="#cb10-19"></a>             <span class="co">*</span> win<span class="co">.</span></span>
-<span id="cb10-20"><a href="#cb10-20"></a>             <span class="co">*/</span></span>
-<span id="cb10-21"><a href="#cb10-21"></a>            <span class="cf">break</span><span class="op">;</span></span>
-<span id="cb10-22"><a href="#cb10-22"></a>        <span class="kw">default</span><span class="op">:</span></span>
-<span id="cb10-23"><a href="#cb10-23"></a>            <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">AssertionError</span><span class="op">(</span><span class="st">&quot;Unrecognized state: &quot;</span> <span class="op">+</span> execState<span class="op">);</span></span>
-<span id="cb10-24"><a href="#cb10-24"></a>    <span class="op">}</span></span>
-<span id="cb10-25"><a href="#cb10-25"></a>    <span class="cf">try</span> <span class="op">{</span></span>
-<span id="cb10-26"><a href="#cb10-26"></a>        monitor<span class="op">.</span><span class="fu">setMessage</span><span class="op">(</span><span class="st">&quot;Waiting for player to win&quot;</span><span class="op">);</span></span>
-<span id="cb10-27"><a href="#cb10-27"></a>        <span class="fu">waitForBreak</span><span class="op">(</span><span class="dv">1</span><span class="op">,</span> <span class="bu">TimeUnit</span><span class="op">.</span><span class="fu">SECONDS</span><span class="op">);</span></span>
-<span id="cb10-28"><a href="#cb10-28"></a>    <span class="op">}</span></span>
-<span id="cb10-29"><a href="#cb10-29"></a>    <span class="cf">catch</span> <span class="op">(</span><span class="bu">TimeoutException</span> e<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb10-30"><a href="#cb10-30"></a>        <span class="co">// Give the player time to win.</span></span>
-<span id="cb10-31"><a href="#cb10-31"></a>        <span class="cf">continue</span><span class="op">;</span></span>
-<span id="cb10-32"><a href="#cb10-32"></a>    <span class="op">}</span></span>
-<span id="cb10-33"><a href="#cb10-33"></a>    <span class="fu">flushAsyncPipelines</span><span class="op">(</span>trace<span class="op">);</span></span>
-<span id="cb10-34"><a href="#cb10-34"></a>    Address pc <span class="op">=</span> <span class="fu">getProgramCounter</span><span class="op">();</span></span>
-<span id="cb10-35"><a href="#cb10-35"></a>    <span class="fu">println</span><span class="op">(</span><span class="st">&quot;STOPPED at pc = &quot;</span> <span class="op">+</span> pc<span class="op">);</span></span>
-<span id="cb10-36"><a href="#cb10-36"></a>    <span class="cf">if</span> <span class="op">(</span>resetDyn<span class="op">.</span><span class="fu">equals</span><span class="op">(</span>pc<span class="op">))</span> <span class="op">{</span></span>
-<span id="cb10-37"><a href="#cb10-37"></a>        <span class="cf">break</span><span class="op">;</span></span>
-<span id="cb10-38"><a href="#cb10-38"></a>    <span class="op">}</span></span>
-<span id="cb10-39"><a href="#cb10-39"></a><span class="op">}</span></span></code></pre></div>
+<span id="cb10-6"><a href="#cb10-6"></a>        <span class="cf">case</span> STOPPED <span class="op">-&gt;</span> <span class="fu">resume</span><span class="op">();</span></span>
+<span id="cb10-7"><a href="#cb10-7"></a>        <span class="cf">case</span> TERMINATED<span class="op">,</span> <span class="bu">INACTIVE</span> <span class="op">-&gt;</span> <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">AssertionError</span><span class="op">(</span><span class="st">&quot;Target terminated&quot;</span><span class="op">);</span></span>
+<span id="cb10-8"><a href="#cb10-8"></a>        <span class="cf">case</span> ALIVE <span class="op">-&gt;</span> <span class="fu">println</span><span class="op">(</span></span>
+<span id="cb10-9"><a href="#cb10-9"></a>            <span class="st">&quot;I don&#39;t know whether or not the target is running. Please make it RUNNING.&quot;</span><span class="op">);</span></span>
+<span id="cb10-10"><a href="#cb10-10"></a>        <span class="cf">case</span> RUNNING <span class="op">-&gt;</span> <span class="op">{</span></span>
+<span id="cb10-11"><a href="#cb10-11"></a>            <span class="co">/**</span></span>
+<span id="cb10-12"><a href="#cb10-12"></a>             <span class="co">*</span> Probably timed out waiting for break<span class="co">. </span>That<span class="co">&#39;</span>s fine<span class="co">.</span> Give the player time to</span>
+<span id="cb10-13"><a href="#cb10-13"></a>             <span class="co">*</span> win<span class="co">.</span></span>
+<span id="cb10-14"><a href="#cb10-14"></a>             <span class="co">*/</span></span>
+<span id="cb10-15"><a href="#cb10-15"></a>        <span class="op">}</span></span>
+<span id="cb10-16"><a href="#cb10-16"></a>        <span class="kw">default</span> <span class="op">-&gt;</span> <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">AssertionError</span><span class="op">(</span><span class="st">&quot;Unrecognized state: &quot;</span> <span class="op">+</span> execState<span class="op">);</span></span>
+<span id="cb10-17"><a href="#cb10-17"></a>    <span class="op">}</span></span>
+<span id="cb10-18"><a href="#cb10-18"></a>    <span class="cf">try</span> <span class="op">{</span></span>
+<span id="cb10-19"><a href="#cb10-19"></a>        monitor<span class="op">.</span><span class="fu">setMessage</span><span class="op">(</span><span class="st">&quot;Waiting for player to win&quot;</span><span class="op">);</span></span>
+<span id="cb10-20"><a href="#cb10-20"></a>        <span class="fu">waitForBreak</span><span class="op">(</span><span class="dv">1</span><span class="op">,</span> <span class="bu">TimeUnit</span><span class="op">.</span><span class="fu">SECONDS</span><span class="op">);</span></span>
+<span id="cb10-21"><a href="#cb10-21"></a>    <span class="op">}</span></span>
+<span id="cb10-22"><a href="#cb10-22"></a>    <span class="cf">catch</span> <span class="op">(</span><span class="bu">TimeoutException</span> e<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb10-23"><a href="#cb10-23"></a>        <span class="co">// Give the player time to win.</span></span>
+<span id="cb10-24"><a href="#cb10-24"></a>        <span class="cf">continue</span><span class="op">;</span></span>
+<span id="cb10-25"><a href="#cb10-25"></a>    <span class="op">}</span></span>
+<span id="cb10-26"><a href="#cb10-26"></a>    <span class="fu">flushAsyncPipelines</span><span class="op">(</span>trace<span class="op">);</span></span>
+<span id="cb10-27"><a href="#cb10-27"></a>    Address pc <span class="op">=</span> <span class="fu">getProgramCounter</span><span class="op">();</span></span>
+<span id="cb10-28"><a href="#cb10-28"></a>    <span class="fu">println</span><span class="op">(</span><span class="st">&quot;STOPPED at pc = &quot;</span> <span class="op">+</span> pc<span class="op">);</span></span>
+<span id="cb10-29"><a href="#cb10-29"></a>    <span class="cf">if</span> <span class="op">(</span>resetDyn<span class="op">.</span><span class="fu">equals</span><span class="op">(</span>pc<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb10-30"><a href="#cb10-30"></a>        <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb10-31"><a href="#cb10-31"></a>    <span class="op">}</span></span>
+<span id="cb10-32"><a href="#cb10-32"></a><span class="op">}</span></span></code></pre></div>
 <p>The “center” of this loop is a call to <code>waitForBreak()</code> on
 line 27. This is the simplest primitive for waiting on the target to
 meet any condition. Because we expect the user to take more than a
@@ -511,9 +504,7 @@ keep waiting. Using a timeout of 1 second ensures we can terminate
 promptly should the user cancel the script.</p>
 <p>Before waiting, we need to make sure the target is running. Because
 we could repeat the loop while the target is already running, we should
-only call <code>resume()</code> if the target is stopped. There are
-utility methods on <code>TargetExecutionState</code> like
-<code>isRunning()</code>, which you might prefer to use. Here, we
+only call <code>resume()</code> if the target is stopped. Here, we
 exhaustively handle every kind of state using a switch statement, which
 does make the code a bit verbose.</p>
 <p>When the target does break, we first allow the UI to finish

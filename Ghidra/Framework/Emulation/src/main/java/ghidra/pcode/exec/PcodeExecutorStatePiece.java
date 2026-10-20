@@ -366,7 +366,6 @@ public interface PcodeExecutorStatePiece<A, T> {
 
 	/**
 	 * Erase the entire state or piece
-	 * 
 	 * <p>
 	 * This is generally only useful when the state is itself a cache to another object. This will
 	 * ensure the state is reading from that object rather than a stale cache. If this is not a

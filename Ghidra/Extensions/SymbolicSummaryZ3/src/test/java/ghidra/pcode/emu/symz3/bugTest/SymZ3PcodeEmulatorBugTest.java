@@ -15,7 +15,7 @@
  */
 package ghidra.pcode.emu.symz3.bugTest;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -26,6 +26,7 @@ import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.pcode.emu.linux.EmuLinuxAmd64SyscallUseropLibraryTest;
 import ghidra.pcode.emu.symz3.SymZ3PcodeThread;
+import ghidra.pcode.emu.symz3.SymZ3TestUtils;
 import ghidra.pcode.emu.symz3.lib.SymZ3EmuUnixFileSystem;
 import ghidra.pcode.emu.symz3.lib.SymZ3LinuxAmd64SyscallLibrary;
 import ghidra.pcode.emu.symz3.state.SymZ3PcodeEmulator;
@@ -68,6 +69,8 @@ public class SymZ3PcodeEmulatorBugTest extends AbstractGhidraHeadlessIntegration
 
 	@Before
 	public void setUpSymZ3Test() throws Exception {
+		SymZ3TestUtils.skipTestIfUnsupportedPlatform();
+
 		program = createDefaultProgram("HelloSymZ3", "x86:LE:64:default", "gcc", this);
 		space = program.getAddressFactory().getDefaultAddressSpace();
 		start = space.getAddress(0x00400000);

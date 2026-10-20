@@ -16,16 +16,17 @@
 package ghidra.pcode.emu.sys;
 
 import java.io.*;
-import java.lang.reflect.Method;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import generic.jar.ResourceFile;
 import ghidra.framework.Application;
+import ghidra.pcode.emu.jit.folding.MaskedBytes;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.AnnotatedPcodeUseropLibrary.*;
-import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
+import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.Function;
@@ -36,16 +37,15 @@ import ghidra.program.model.symbol.*;
 
 /**
  * A library of system calls
- *
  * <p>
  * A system call library is a collection of p-code executable routines, invoked by a system call
  * dispatcher. That dispatcher is represented by
- * {@link #syscall(PcodeExecutor, PcodeUseropLibrary)}, and is exported as a sleigh userop. If this
- * interface is "mixed in" with {@link AnnotatedPcodeUseropLibrary}, that userop is automatically
- * included in the userop library. The simplest means of implementing a syscall library is probably
- * via {@link AnnotatedEmuSyscallUseropLibrary}. It implements this interface and extends
- * {@link AnnotatedPcodeUseropLibrary}. In addition, it provides its own annotation system for
- * exporting userops as system calls.
+ * {@link #emu_syscall(PcodeExecutor, PcodeUseropLibrary, PcodeOp, Varnode)}, and is exported as a
+ * Sleigh userop. If this interface is "mixed in" with {@link AnnotatedPcodeUseropLibrary}, that
+ * userop is automatically included in the userop library. The simplest means of implementing a
+ * syscall library is probably via {@link AnnotatedEmuSyscallUseropLibrary}. It implements this
+ * interface and extends {@link AnnotatedPcodeUseropLibrary}. In addition, it provides its own
+ * annotation system for exporting userops as system calls.
  *
  * @param <T> the type of data processed by the system calls, typically {@code byte[]}
  */
@@ -144,77 +144,6 @@ public interface EmuSyscallLibrary<T> extends PcodeUseropLibrary<T> {
 	}
 
 	/**
-	 * The {@link EmuSyscallLibrary#syscall(PcodeExecutor, PcodeUseropLibrary)} method wrapped as a
-	 * userop definition
-	 * 
-	 * @param <T> the type of data processed by the userop, typically {@code byte[]}
-	 */
-	final class SyscallPcodeUseropDefinition<T> implements PcodeUseropDefinition<T> {
-		private final EmuSyscallLibrary<T> syslib;
-
-		public SyscallPcodeUseropDefinition(EmuSyscallLibrary<T> syslib) {
-			this.syslib = syslib;
-		}
-
-		@Override
-		public String getName() {
-			return "syscall";
-		}
-
-		@Override
-		public int getInputCount() {
-			return 0;
-		}
-
-		@Override
-		public void execute(PcodeExecutor<T> executor, PcodeUseropLibrary<T> library,
-				PcodeOp op, Varnode outVar, List<Varnode> inVars) {
-			syslib.syscall(executor, library);
-		}
-
-		@Override
-		public boolean isFunctional() {
-			return false;
-		}
-
-		@Override
-		public boolean hasSideEffects() {
-			return true;
-		}
-
-		@Override
-		public boolean modifiesContext() {
-			return false;
-		}
-
-		@Override
-		public boolean canInlinePcode() {
-			return false;
-		}
-
-		@Override
-		public Class<?> getOutputType() {
-			return void.class;
-		}
-
-		@Override
-		public PcodeUseropLibrary<?> getDefiningLibrary() {
-			return syslib;
-		}
-
-		@Override
-		public Method getJavaMethod() {
-			try {
-				return syslib.getClass()
-						.getMethod("syscall", PcodeExecutor.class, PcodeUseropLibrary.class);
-			}
-			catch (NoSuchMethodException | SecurityException e) {
-				throw new AssertionError(e);
-			}
-		}
-	}
-
-	/**
 	 * The definition of a system call
 	 * 
 	 * @param <T> the type of data processed by the system call, typically {@code byte[]}.
@@ -230,83 +159,86 @@ public interface EmuSyscallLibrary<T> extends PcodeUseropLibrary<T> {
 	}
 
 	/**
-	 * In case this is not an {@link AnnotatedEmuSyscallUseropLibrary} or
-	 * {@link AnnotatedPcodeUseropLibrary}, get the definition of the "syscall" userop for inclusion
-	 * in the {@link PcodeUseropLibrary}.
-	 * 
+	 * A Java-callback implementation of "emu_syscall" that reads the syscall number and dispatches
+	 * to the appropriate system call implementation at run time.
 	 * <p>
-	 * Implementors may wish to override this to use a pre-constructed definition. That definition
-	 * can be easily constructed using {@link SyscallPcodeUseropDefinition}.
-	 * 
-	 * @return the syscall userop definition
-	 */
-	default PcodeUseropDefinition<T> getSyscallUserop() {
-		return new SyscallPcodeUseropDefinition<>(this);
-	}
-
-	/**
-	 * Retrieve the desired system call number according to the emulated system's conventions
-	 * 
-	 * <p>
-	 * TODO: This should go away in favor of some specification stored in the emulated program
-	 * database. Until then, we require system-specific implementations.
-	 * 
-	 * @param state the executor's state
-	 * @param reason the reason for reading state, probably {@link Reason#EXECUTE_READ}, but should
-	 *            be taken from the executor
-	 * @return the system call number
-	 */
-	long readSyscallNumber(PcodeExecutorState<T> state, Reason reason);
-
-	/**
-	 * Try to handle an error, usually by returning it to the user program
-	 * 
-	 * <p>
-	 * If the particular error was not expected, it is best practice to return false, causing the
-	 * emulator to interrupt. Otherwise, some state is set in the machine that, by convention,
-	 * communicates the error back to the user program.
-	 * 
-	 * @param executor the executor for the thread that caused the error
-	 * @param err the error
-	 * @return true if execution can continue uninterrupted
-	 */
-	boolean handleError(PcodeExecutor<T> executor, PcodeExecutionException err);
-
-	/**
-	 * The entry point for executing a system call on the given executor
-	 * 
-	 * <p>
-	 * The executor's state must already be prepared according to the relevant system calling
-	 * conventions. This will determine the system call number, according to
-	 * {@link #readSyscallNumber(PcodeExecutorState, Reason)}, retrieve the relevant system call
-	 * definition, and invoke it.
+	 * This is the normal behavior for the interpretation-based p-code emulator anyway. However, for
+	 * an execution engine that attempts to resolve system calls "just in time," it may be necessary
+	 * to explicitly defer to this implementation to prevent any further attempt to resolve the
+	 * system call, when it becomes impossible to do so.
 	 * 
 	 * @param executor the executor
-	 * @param library the library
+	 * @param library the p-code userop library (often including exported system calls)
+	 * @param syscallNumber the system call number
 	 */
-	@PcodeUserop
-	default void syscall(@OpExecutor PcodeExecutor<T> executor,
-			@OpLibrary PcodeUseropLibrary<T> library) {
-		long syscallNumber = readSyscallNumber(executor.getState(), executor.getReason());
+	@PcodeUserop(canInline = false)
+	default void emu_rt_syscall(@OpExecutor PcodeExecutor<T> executor,
+			@OpLibrary PcodeUseropLibrary<T> library, long syscallNumber) {
 		EmuSyscallDefinition<T> syscall = getSyscalls().get(syscallNumber);
 		if (syscall == null) {
 			throw new EmuInvalidSystemCallException(syscallNumber);
 		}
+		syscall.invoke(executor, library);
+	}
+
+	/**
+	 * The Sleigh code to defer to run-time system call resolution
+	 */
+	SleighPcodeUseropDefinition FALLBACK_EMU_SYSCALL =
+		SleighPcodeUseropDefinition.FACTORY.define("emu_syscall")
+				.params("number")
+				.body(_ -> """
+						__op_output = emu_rt_syscall(number);
+						""")
+				.build();
+
+	/**
+	 * The entry point for executing a system call on the given executor
+	 * <p>
+	 * The executor's state must already be prepared according to the relevant system calling
+	 * conventions. The extended or composed library must provide the "syscall" and/or other
+	 * relevant userops defined in the Sleigh. That "syscall" userop should invoke this userop,
+	 * passing the system call number then place the result where it belongs according to the target
+	 * ABI.
+	 * 
+	 * @param executor the executor
+	 * @param library the library
+	 * @param op the callother userop
+	 * @param syscallNumber the varnode containing the syscall number
+	 * @implNote At run time, the logic here will do exactly as it says. For the
+	 *           interpretation-based emulator, nothing special happens. We read the system call
+	 *           number and defer to {@link #emu_rt_syscall}, which looks it up and executes it. The
+	 *           try-catch for {@link ConcretionError} appears totally useless.
+	 *           <p>
+	 *           For the JIT-accelerated emulator, things are more interesting. Because
+	 *           {@link PcodeUserop#canInline()} is set here, we receive this callback during the
+	 *           decode phase of the translation. We read the system call number and defer to
+	 *           {@link #emu_rt_syscall} as before. (Note that {@link PcodeUserop#canInline()} being
+	 *           false does not prevent us from invoking it from Java, even though the engine is
+	 *           currently trying to inline us.) The try-catch thus protects the attempt to
+	 *           concretize the syscall number. During decode, {@code T := }{@link MaskedBytes}, so
+	 *           if the syscall turns out to be a constant (which it often does), then we can
+	 *           dispatch it at decode time. That syscall (or at least the logic that reads
+	 *           arguments and stores the result) can thus be inlined. If concretization fails, then
+	 *           we fall back to invoking {#emu_rt_syscall} at run time.
+	 */
+	@PcodeUserop(canInline = true)
+	default void emu_syscall(@OpExecutor PcodeExecutor<T> executor,
+			@OpLibrary PcodeUseropLibrary<T> library, @OpOp PcodeOp op, Varnode syscallNumber) {
+		T tSyscallNo = executor.getState().getVar(syscallNumber, executor.getReason());
 		try {
-			syscall.invoke(executor, library);
+			long lSyscallNo = executor.getArithmetic().toLong(tSyscallNo, Purpose.OTHER);
+			emu_rt_syscall(executor, library, lSyscallNo);
 		}
-		catch (PcodeExecutionException e) {
-			if (!handleError(executor, e)) {
-				throw e;
-			}
+		catch (ConcretionError e) {
+			FALLBACK_EMU_SYSCALL.<T> cast().execute(executor, library, op);
 		}
 	}
 
 	/**
 	 * Get the map of syscalls by number
-	 * 
 	 * <p>
-	 * Note this method will be invoked for every emulated syscall, so it should be a simple
+	 * Note this method will be invoked for every interpreted syscall, so it should be a simple
 	 * accessor. Any computations needed to create the map should be done ahead of time.
 	 * 
 	 * @return the system call map

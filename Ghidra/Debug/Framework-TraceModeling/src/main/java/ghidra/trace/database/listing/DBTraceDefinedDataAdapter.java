@@ -124,12 +124,6 @@ public interface DBTraceDefinedDataAdapter extends DBTraceDataAdapter {
 		}
 	}
 
-	@Deprecated
-	@Override
-	default DBTraceDefinedDataAdapter getComponentAt(int offset) {
-		return getComponentContaining(offset);
-	}
-
 	@Override
 	default DBTraceDefinedDataAdapter getComponentContaining(int offset) {
 		// We may write to the cache
@@ -216,11 +210,11 @@ public interface DBTraceDefinedDataAdapter extends DBTraceDataAdapter {
 	@Override
 	default DBTraceDefinedDataAdapter getPrimitiveAt(int offset) {
 		// We may write to the cache
-		try (LockHold hold = LockHold.lock(getTrace().getReadWriteLock().writeLock())) {
+		try (LockHold _ = LockHold.lock(getTrace().getReadWriteLock().writeLock())) {
 			if (offset < 0 || offset >= getLength()) {
 				return null;
 			}
-			DBTraceDefinedDataAdapter component = getComponentAt(offset);
+			DBTraceDefinedDataAdapter component = getComponentContaining(offset);
 			if (component == null || component == this) {
 				return this;
 			}

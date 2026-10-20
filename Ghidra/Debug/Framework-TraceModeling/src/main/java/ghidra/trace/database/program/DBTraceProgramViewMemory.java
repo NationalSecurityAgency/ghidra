@@ -29,16 +29,16 @@ import ghidra.util.datastruct.WeakValueHashMap;
 public class DBTraceProgramViewMemory extends AbstractDBTraceProgramViewMemory {
 
 	// NB. Keep both per-region and force-full (per-space) block sets ready
-	private final Map<TraceMemoryRegion, DBTraceProgramViewMemoryRegionBlock> regionBlocks =
-		new WeakValueHashMap<>();
-	private final Map<AddressSpace, DBTraceProgramViewMemorySpaceBlock> spaceBlocks =
-		new WeakValueHashMap<>();
+	private final Map<TraceMemoryRegion, DBTraceProgramViewMemoryRegionBlock> regionBlocks;
+	private final Map<AddressSpace, DBTraceProgramViewMemorySpaceBlock> spaceBlocks;
 
-	private NavigableMap<Address, RegionEntry> regionsByAddress;
-	private Map<String, RegionEntry> regionsByName;
+	private volatile NavigableMap<Address, RegionEntry> regionsByAddress;
+	private volatile Map<String, RegionEntry> regionsByName;
 	private volatile boolean regionsValid;
 
 	public DBTraceProgramViewMemory(DBTraceProgramView program) {
+		regionBlocks = new WeakValueHashMap<>();
+		spaceBlocks = new WeakValueHashMap<>();
 		super(program);
 	}
 
@@ -145,23 +145,26 @@ public class DBTraceProgramViewMemory extends AbstractDBTraceProgramViewMemory {
 		return result;
 	}
 
-	protected NavigableMap<Address, RegionEntry> getRegionsByAddress() {
-		if (!regionsValid) {
+	protected void validateRegionMaps() {
+		synchronized (regionBlocks) {
+			if (regionsValid) {
+				return;
+			}
 			NavigableMap<Address, RegionEntry> byAddr = computeRegionsByAddress();
+			Map<String, RegionEntry> byName = computeRegionsByName(byAddr.values());
 			regionsByAddress = byAddr;
-			regionsByName = computeRegionsByName(byAddr.values());
+			regionsByName = byName;
 			regionsValid = true;
 		}
+	}
+
+	protected NavigableMap<Address, RegionEntry> getRegionsByAddress() {
+		validateRegionMaps();
 		return regionsByAddress;
 	}
 
 	protected Map<String, RegionEntry> getRegionsByName() {
-		if (!regionsValid) {
-			NavigableMap<Address, RegionEntry> byAddr = computeRegionsByAddress();
-			regionsByAddress = byAddr;
-			regionsByName = computeRegionsByName(byAddr.values());
-			regionsValid = true;
-		}
+		validateRegionMaps();
 		return regionsByName;
 	}
 
@@ -180,7 +183,7 @@ public class DBTraceProgramViewMemory extends AbstractDBTraceProgramViewMemory {
 
 	protected AddressSet computeRegionsAddressSet() {
 		AddressSet result = new AddressSet();
-		try (LockHold hold = program.trace.lockRead()) {
+		try (LockHold _ = program.trace.lockRead()) {
 			forVisibleRegions(e -> result.add(e.range));
 		}
 		return result;
@@ -188,7 +191,7 @@ public class DBTraceProgramViewMemory extends AbstractDBTraceProgramViewMemory {
 
 	protected AddressSet computeSpacesAddressSet() {
 		AddressSet result = new AddressSet();
-		try (LockHold hold = program.trace.lockRead()) {
+		try (LockHold _ = program.trace.lockRead()) {
 			forPhysicalSpaces(space -> result.add(space.getMinAddress(), space.getMaxAddress()));
 		}
 		return result;
@@ -202,69 +205,81 @@ public class DBTraceProgramViewMemory extends AbstractDBTraceProgramViewMemory {
 	}
 
 	protected MemoryBlock getRegionBlock(RegionEntry entry) {
-		return regionBlocks.computeIfAbsent(entry.region,
-			r -> new DBTraceProgramViewMemoryRegionBlock(program, entry.region, entry.snap));
+		synchronized (regionBlocks) {
+			return regionBlocks.computeIfAbsent(entry.region,
+				_ -> new DBTraceProgramViewMemoryRegionBlock(program, entry.region, entry.snap));
+		}
 	}
 
 	protected MemoryBlock getSpaceBlock(AddressSpace space) {
-		return spaceBlocks.computeIfAbsent(space,
-			s -> new DBTraceProgramViewMemorySpaceBlock(program, space));
+		synchronized (spaceBlocks) {
+			return spaceBlocks.computeIfAbsent(space,
+				_ -> new DBTraceProgramViewMemorySpaceBlock(program, space));
+		}
 	}
 
 	@Override
 	public MemoryBlock getBlock(Address addr) {
-		if (isForceFullView()) {
-			return getSpaceBlock(addr.getAddressSpace());
-		}
+		try (LockHold _ = program.trace.lockRead()) {
+			if (isForceFullView()) {
+				return getSpaceBlock(addr.getAddressSpace());
+			}
 
-		Entry<Address, RegionEntry> entry = getRegionsByAddress().floorEntry(addr);
-		if (entry == null || !entry.getValue().range.contains(addr)) {
-			return null;
+			Entry<Address, RegionEntry> entry = getRegionsByAddress().floorEntry(addr);
+			if (entry == null || !entry.getValue().range.contains(addr)) {
+				return null;
+			}
+			return getRegionBlock(entry.getValue());
 		}
-		return getRegionBlock(entry.getValue());
 	}
 
 	@Override
 	public MemoryBlock getBlock(String blockName) {
-		if (isForceFullView()) {
-			AddressSpace space = program.getAddressFactory().getAddressSpace(blockName);
-			return space == null ? null : getSpaceBlock(space);
-		}
+		try (LockHold _ = program.trace.lockRead()) {
+			if (isForceFullView()) {
+				AddressSpace space = program.getAddressFactory().getAddressSpace(blockName);
+				return space == null ? null : getSpaceBlock(space);
+			}
 
-		RegionEntry entry = getRegionsByName().get(blockName);
-		if (entry == null) {
-			return null;
+			RegionEntry entry = getRegionsByName().get(blockName);
+			if (entry == null) {
+				return null;
+			}
+			return getRegionBlock(entry);
 		}
-		return getRegionBlock(entry);
 	}
 
 	@Override
 	public MemoryBlock[] getBlocks() {
-		List<MemoryBlock> result = new ArrayList<>();
-		if (isForceFullView()) {
-			forPhysicalSpaces(space -> result.add(getSpaceBlock(space)));
+		try (LockHold _ = program.trace.lockRead()) {
+			List<MemoryBlock> result = new ArrayList<>();
+			if (isForceFullView()) {
+				forPhysicalSpaces(space -> result.add(getSpaceBlock(space)));
+			}
+			else {
+				forVisibleRegions(reg -> result.add(getRegionBlock(reg)));
+			}
+			Collections.sort(result, Comparator.comparing(b -> b.getStart()));
+			return result.toArray(new MemoryBlock[result.size()]);
 		}
-		else {
-			forVisibleRegions(reg -> result.add(getRegionBlock(reg)));
-		}
-		Collections.sort(result, Comparator.comparing(b -> b.getStart()));
-		return result.toArray(new MemoryBlock[result.size()]);
 	}
 
 	@Override
 	public AddressSetView getExecuteSet() {
 		AddressSet result = new AddressSet();
-		forVisibleRegions(e -> {
-			if (e.region.isExecute(e.snap)) {
-				result.add(e.range);
-			}
-		});
+		try (LockHold _ = program.trace.lockRead()) {
+			forVisibleRegions(e -> {
+				if (e.region.isExecute(e.snap)) {
+					result.add(e.range);
+				}
+			});
+		}
 		return result;
 	}
 
 	protected void invalidateRegions() {
-		regionsValid = false;
-		if (regionBlocks != null) { // <init> order
+		synchronized (regionBlocks) {
+			regionsValid = false;
 			regionBlocks.clear();
 		}
 		if (!isForceFullView()) {
@@ -277,18 +292,19 @@ public class DBTraceProgramViewMemory extends AbstractDBTraceProgramViewMemory {
 	}
 
 	public void updateDeleteSpaceBlock(AddressSpace space) {
-		spaceBlocks.remove(space);
+		synchronized (spaceBlocks) {
+			spaceBlocks.remove(space);
+		}
 	}
 
 	public void updateRefreshBlocks() {
 		invalidateRegions();
-		spaceBlocks.clear();
+		synchronized (spaceBlocks) {
+			spaceBlocks.clear();
+		}
 	}
 
 	public void updateBytesChanged(AddressRange range) {
-		if (regionBlocks == null) { // <init> order
-			return;
-		}
 		cache.invalidate(range);
 	}
 }

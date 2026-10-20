@@ -18,6 +18,8 @@ package ghidra.framework;
 import java.io.File;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 import generic.jar.ResourceFile;
 import ghidra.GhidraClassLoader;
 import ghidra.framework.preferences.Preferences;
@@ -91,10 +93,17 @@ public class HeadlessGhidraApplicationConfiguration extends ApplicationConfigura
 	}
 
 	/**
-	 * Locate certs file within the Ghidra root directory.  If found this will be used
-	 * for initializing the ApplicationTrustManager used for SSL/PKI.
+	 * Locate 'cacerts' file within the Ghidra root directory if 'ghidra.cacerts' property has not
+	 * already been specified.  If found this will be used to establish the property which will be 
+	 * used by {@link DefaultTrustManagerFactory}.
 	 */
 	private void locateCACertsFile() {
+		
+		String cacertsPath = System.getProperty(DefaultTrustManagerFactory.GHIDRA_CACERTS_PATH_PROPERTY);
+		if (!StringUtils.isBlank(cacertsPath)) {
+			return; // property will be used by DefaultTrustManagerFactory
+		}
+		
 		for (ResourceFile appRoot : Application.getApplicationRootDirectories()) {
 			File cacertsFile = new File(appRoot.getAbsolutePath(), "cacerts");
 			if (cacertsFile.isFile()) {

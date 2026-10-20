@@ -85,7 +85,7 @@ public class GhidraTable extends GTable {
 	 * @deprecated use {@link #installNavigation(ServiceProvider)} or
 	 *             {@link #installNavigation(ServiceProvider,Navigatable)}
 	 */
-	@Deprecated
+	@Deprecated(since = "10.4")
 	public void installNavigation(GoToService goToService, Navigatable nav) {
 		installNavigation(new GoToServiceProvider(goToService), nav);
 	}
@@ -237,6 +237,8 @@ public class GhidraTable extends GTable {
 	 * @param column the column
 	 */
 	public void navigate(int row, int column) {
+
+
 		if (serviceProvider == null) {
 			return;
 		}
@@ -258,11 +260,16 @@ public class GhidraTable extends GTable {
 
 		int modelRow = getModelRow(row);
 		ProgramLocation loc = programModel.getProgramLocation(modelRow, modelColumn);
-		if (loc != null && loc.getAddress().isExternalAddress()) {
+		if (loc == null) {
+			return;
+		}
+
+		if (loc.getAddress().isExternalAddress()) {
 			goToService.goTo(loc.getAddress(), programModel.getProgram());
 			return;
 		}
-		Program program = programModel.getProgram();
+
+		Program program = loc.getProgram();
 		goToService.goTo(navigatable, loc, program);
 	}
 

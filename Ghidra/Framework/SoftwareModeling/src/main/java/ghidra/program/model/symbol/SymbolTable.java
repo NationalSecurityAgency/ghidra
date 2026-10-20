@@ -65,7 +65,7 @@ public interface SymbolTable {
 	 * @param name the name of the symbol
 	 * @param source the source of this symbol.  In general, a source of {@link SourceType#DEFAULT} 
 	 *             should never be specified using this method.
-	 * @return new labe or function symbol
+	 * @return new label or function symbol
 	 * @throws InvalidInputException if name contains white space, is zero length, or is null for
 	 *             non-default source
 	 * @throws IllegalArgumentException if {@link SourceType#DEFAULT} is improperly specified, or 
@@ -306,7 +306,8 @@ public interface SymbolTable {
 	 * requirement within their parent namespace.
 	 * 
 	 * @param name the name of the namespace to be retrieved
-	 * @param namespace the parent namespace of the namespace to be retrieved
+	 * @param namespace the parent namespace of the namespace to be retrieved; null for the global
+	 *        namespace
 	 * @return the namespace with the given name in the given parent namespace
 	 * @throws IllegalArgumentException if the given parent namespace is from a different program
 	 *         than that of this symbol table
@@ -462,7 +463,7 @@ public interface SymbolTable {
 	/**
 	 * Get all the symbols of the given type within the given address set.
 	 * <p>
-	 * <b>NOTE:</b> All external symbols will be omiitted unless the full 
+	 * <b>NOTE:</b> All external symbols will be omitted unless the full 
 	 * {@link AddressSpace#EXTERNAL_SPACE} range is included within the specified address set
 	 * or a null addressSet is specified.  All global dynamic label symbols will be omitted.
 	 * 

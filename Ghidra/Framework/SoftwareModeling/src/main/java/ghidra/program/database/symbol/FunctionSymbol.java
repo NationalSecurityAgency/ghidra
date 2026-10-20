@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import db.DBRecord;
-import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.external.ExternalManagerDB;
 import ghidra.program.database.function.FunctionManagerDB;
 import ghidra.program.model.address.Address;
@@ -29,6 +28,7 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.FunctionReturnTypeFieldLocation;
 import ghidra.program.util.ProgramLocation;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
@@ -44,13 +44,11 @@ public class FunctionSymbol extends MemorySymbol {
 	/**
 	 * Construct a new FunctionSymbol
 	 * @param symbolMgr the symbol manager.
-	 * @param cache symbol object cache
 	 * @param address the address for this symbol.
 	 * @param record the record for this symbol.
 	 */
-	public FunctionSymbol(SymbolManager symbolMgr, DBObjectCache<SymbolDB> cache, Address address,
-			DBRecord record) {
-		super(symbolMgr, cache, address, record);
+	FunctionSymbol(SymbolManager symbolMgr, Address address, DBRecord record) {
+		super(symbolMgr, address, record, record.getKey());
 		this.functionMgr = symbolMgr.getFunctionManager();
 	}
 
@@ -66,23 +64,18 @@ public class FunctionSymbol extends MemorySymbol {
 	@Override
 	public void setNameAndNamespace(String newName, Namespace newNamespace, SourceType source)
 			throws DuplicateNameException, InvalidInputException, CircularDependencyException {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			boolean namespaceChange = !getParentNamespace().equals(newNamespace);
 			super.setNameAndNamespace(newName, newNamespace, source);
 			if (namespaceChange) {
 				functionMgr.functionNamespaceChanged(key);
 			}
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public boolean delete() {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.write()) {
 			boolean restoreLabel = isExternal() || (getSource() != SourceType.DEFAULT);
 			String symName = getName();
 			Symbol parentSymbol = getParentSymbol();
@@ -139,9 +132,6 @@ public class FunctionSymbol extends MemorySymbol {
 		catch (IOException e) {
 			symbolMgr.dbError(e);
 		}
-		finally {
-			lock.release();
-		}
 		return false;
 	}
 
@@ -157,18 +147,14 @@ public class FunctionSymbol extends MemorySymbol {
 
 	@Override
 	public ProgramLocation getProgramLocation() {
-		lock.acquire();
-		try {
-			if (!checkIsValid()) {
+		try (Closeable c = lock.read()) {
+			if (!refreshIfNeeded()) {
 				return null;
 			}
 			Function f = getObject();
 			String signature = f.getPrototypeString(false, false);
 			return new FunctionReturnTypeFieldLocation(getProgram(), address, 0, signature,
 				f.getReturnType().getName());
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -266,13 +252,9 @@ public class FunctionSymbol extends MemorySymbol {
 
 	@Override
 	public Reference[] getReferences(TaskMonitor monitor) {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			Reference[] refs = super.getReferences(monitor);
-			if (monitor == null) {
-				monitor = TaskMonitor.DUMMY;
-			}
 			if (monitor.isCancelled()) {
 				return refs;
 			}
@@ -293,16 +275,12 @@ public class FunctionSymbol extends MemorySymbol {
 			}
 			return newRefs;
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public int getReferenceCount() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			int count = super.getReferenceCount();
 			List<Long> thunkIds = functionMgr.getThunkFunctionIds(key);
 			if (thunkIds != null) {
@@ -310,24 +288,17 @@ public class FunctionSymbol extends MemorySymbol {
 			}
 			return count;
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public boolean hasReferences() {
-		lock.acquire();
-		try {
-			checkIsValid();
+		try (Closeable c = lock.read()) {
+			refreshIfNeeded();
 			if (super.hasReferences()) {
 				return true;
 			}
 			List<Long> thunkIds = functionMgr.getThunkFunctionIds(key);
 			return thunkIds != null ? (thunkIds.size() != 0) : false;
-		}
-		finally {
-			lock.release();
 		}
 	}
 

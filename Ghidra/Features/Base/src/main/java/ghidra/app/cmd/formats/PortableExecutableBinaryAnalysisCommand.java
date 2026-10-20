@@ -221,9 +221,8 @@ public class PortableExecutableBinaryAnalysisCommand extends FlatProgramAPI
 	private void processSections(NTHeader nt)
 			throws Exception, DuplicateNameException, InvalidInputException {
 		FileHeader fh = nt.getFileHeader();
-		SectionHeader[] sections = fh.getSectionHeaders();
 		int index = fh.getPointerToSections();
-		for (SectionHeader section : sections) {
+		for (SectionHeader section : fh.getSectionHeaders()) {
 			DataType sectionDT = section.toDataType();
 			Address sectionStartAddr = toAddr(index);
 			createData(sectionStartAddr, sectionDT);

@@ -76,6 +76,11 @@ public class LoneLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
+	public List<Bookmark> getProgramBookmarksValidOrNot() {
+		return List.of();
+	}
+
+	@Override
 	public String getName() {
 		return "";
 	}

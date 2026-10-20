@@ -19,6 +19,7 @@ import java.util.List;
 
 import ghidra.pcode.emu.jit.analysis.JitTypeBehavior;
 import ghidra.pcode.emu.jit.var.JitVal;
+import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropSymbolMap;
 import ghidra.program.model.pcode.PcodeOp;
 
 /**
@@ -27,6 +28,12 @@ import ghidra.program.model.pcode.PcodeOp;
  * @param op the p-code op
  */
 public record JitUnimplementedOp(PcodeOp op) implements JitOp {
+	@Override
+	public String toString(PcodeUseropSymbolMap symbols) {
+		return "%s[op=%s]".formatted(
+			getClass().getSimpleName(),
+			JitOp.toString(op, symbols));
+	}
 
 	@Override
 	public boolean canBeRemoved() {

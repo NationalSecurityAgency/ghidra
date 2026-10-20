@@ -358,13 +358,6 @@ public interface ChangeManager {
 	public static final ProgramEvent DOCR_MEM_REF_PRIMARY_REMOVED = REFERENCE_PRIMARY_REMOVED;
 
 	/**
-	 * The external path name changed for an external program name.
-	 * @deprecated Event type numeric constants have been changed to enums. Use the enum directly.
-	 */
-	@Deprecated
-	public static final ProgramEvent DOCR_EXTERNAL_PATH_CHANGED = EXTERNAL_PATH_CHANGED;
-
-	/**
 	 * An external program name was added.
 	 * @deprecated Event type numeric constants have been changed to enums. Use the enum directly.
 	 */

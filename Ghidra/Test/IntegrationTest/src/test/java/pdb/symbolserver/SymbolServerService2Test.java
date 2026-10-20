@@ -15,12 +15,12 @@
  */
 package pdb.symbolserver;
 
-import static org.junit.Assert.assertEquals;
-
-import java.util.List;
+import static org.junit.Assert.*;
+import static org.junit.Assume.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import org.apache.commons.io.FilenameUtils;
 import org.junit.Before;
@@ -28,6 +28,7 @@ import org.junit.Test;
 
 import com.google.common.io.BaseEncoding;
 
+import ghidra.file.formats.sevenzip.SevenZipCliToolWrapper;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -57,11 +58,16 @@ public class SymbolServerService2Test extends AbstractGhidraHeadedIntegrationTes
 
 	@Before
 	public void setup() throws IOException {
+		// Don't cause test failure if 7z cli tool isn't installed on test env
+		assumeTrue("Missing 7z cli tool in testing env PATH, skipping",
+			SevenZipCliToolWrapper.findTool(TaskMonitor.DUMMY) != null);
+
 		temporaryDir = createTempDirectory("symbolservers");
 		localSymbolStore1Root = new File(temporaryDir, "symbols1");
 		LocalSymbolStore.create(localSymbolStore1Root, 1);
 
 		localSymbolStore1 = new LocalSymbolStore(localSymbolStore1Root);
+
 	}
 
 	@Test

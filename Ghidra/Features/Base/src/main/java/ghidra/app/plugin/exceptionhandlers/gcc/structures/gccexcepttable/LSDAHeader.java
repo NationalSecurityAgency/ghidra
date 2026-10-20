@@ -150,8 +150,8 @@ public class LSDAHeader extends GccAnalysisClass {
 
 		LEB128Info uleb128 = GccAnalysisUtils.readULEB128Info(program, addr);
 
-		// this offset it based from *here*..
-		ttypeOffset = uleb128.asLong() + curSize;
+		// this offset is based from the end of *this* field, and the base is the table's last byte
+		ttypeOffset = uleb128.asLong() + curSize + uleb128.getLength() - 1;
 
 		createAndCommentData(program, addr, UnsignedLeb128DataType.dataType, comment,
 			CommentType.EOL);
@@ -306,7 +306,7 @@ public class LSDAHeader extends GccAnalysisClass {
 	}
 
 	/**
-	 * The offset from the type offset field to get to the base address of the type table.
+	 * The offset from the start of the LSDA to the base address of the type table.
 	 * @return the type table offset
 	 */
 	public int getTTypeOffset() {

@@ -28,7 +28,13 @@ import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
  * If the filename can be recovered from the embedded metadata, it will be used as the
  * name of the singleton file, otherwise the name "gzip_decompressed" will be used.
  */
-@FileSystemInfo(type = "gzip", description = "GZIP", priority = FileSystemInfo.PRIORITY_LOW, factory = GZipFileSystemFactory.class)
+@FileSystemInfo(
+	type = "gzip",
+	description = "GZIP",
+	priority = FileSystemInfo.PRIORITY_LOW,
+	factory = GZipFileSystemFactory.class,
+	extensions = { "gz" }
+)
 public class GZipFileSystem extends AbstractSinglePayloadFileSystem {
 
 	public GZipFileSystem(FSRLRoot fsFSRL, ByteProvider payloadProvider, String payloadFilename,

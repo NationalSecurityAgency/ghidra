@@ -16,15 +16,17 @@
 package ghidra.app.plugin.core.debug.gui.memory;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.jdom2.Element;
 
+import docking.ActionContext;
 import docking.action.DockingAction;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.app.plugin.core.byteviewer.AbstractByteViewerPlugin;
-import ghidra.app.plugin.core.byteviewer.ByteViewerComponentProvider;
+import ghidra.app.plugin.core.byteviewer.*;
+import ghidra.app.plugin.core.debug.gui.action.SPLocationTrackingSpec;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.NewMemoryAction;
@@ -37,6 +39,7 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.util.ProgramSelection;
+import ghidra.trace.model.Trace;
 import ghidra.trace.model.program.TraceProgramView;
 
 @PluginInfo(
@@ -73,6 +76,7 @@ public class DebuggerMemoryBytesPlugin
 	private static final String PREFIX_DISCONNECTED_PROVIDER = "disconnectedProvider";
 
 	protected DockingAction actionNewMemory;
+	private DockingAction actionNewStackView;
 
 	@AutoServiceConsumed
 	private ProgramManager programManager;
@@ -98,6 +102,12 @@ public class DebuggerMemoryBytesPlugin
 		actionNewMemory = NewMemoryAction.builder(this)
 				.enabled(true)
 				.onAction(c -> connectedProvider.cloneWindow())
+				.buildAndInstall(tool);
+
+		actionNewStackView = NewMemoryAction.builder(this)
+				.enabled(true)
+				.menuPath("Window", DebuggerPluginPackage.NAME, "New Stack View")
+				.onAction(this::newStackViewActivated)
 				.buildAndInstall(tool);
 	}
 
@@ -140,14 +150,16 @@ public class DebuggerMemoryBytesPlugin
 	public void processEvent(PluginEvent event) {
 		// do not delegate to super
 		if (event instanceof TraceActivatedPluginEvent ev) {
-			current = ev.getActiveCoordinates();
-			allProviders(p -> p.coordinatesActivated(current));
+			DebuggerCoordinates coords = ev.getActiveCoordinates();
+			current = coords;
+			allProviders(p -> p.coordinatesActivated(coords));
 		}
 		else if (event instanceof TraceClosedPluginEvent ev) {
-			if (current.getTrace() == ev.getTrace()) {
+			Trace trace = ev.getTrace();
+			if (current.getTrace() == trace) {
 				current = DebuggerCoordinates.NOWHERE;
 			}
-			allProviders(p -> p.traceClosed(ev.getTrace()));
+			allProviders(p -> p.traceClosed(trace));
 		}
 		else if (event instanceof TraceLocationPluginEvent ev) {
 			currentLocation = ev.getLocation();
@@ -162,17 +174,19 @@ public class DebuggerMemoryBytesPlugin
 		if (provider == null || traceManager == null) {
 			return;
 		}
-		provider.coordinatesActivated(current = traceManager.getCurrent());
+		DebuggerCoordinates coords = traceManager.getCurrent();
+		this.current = coords;
+		allProviders(p -> p.coordinatesActivated(coords));
 	}
 
 	@Override
-	public Object getTransientState() {
+	public ByteViewerTransientState getTransientState() {
 		// Not needed, since I'm not coordinated with ProgramManager
-		return new Object[] {};
+		return null;
 	}
 
 	@Override
-	public void restoreTransientState(Object objectState) {
+	public void restoreTransientState(ByteViewerTransientState objectState) {
 		// Not needed, since I'm not coordinated with ProgramManager
 	}
 
@@ -276,5 +290,27 @@ public class DebuggerMemoryBytesPlugin
 
 		int disconnectedCount = saveState.getInt(KEY_DISCONNECTED_COUNT, 0);
 		ensureProviders(disconnectedCount, true, saveState);
+	}
+
+	private void newStackViewActivated(ActionContext c) {
+		DebuggerMemoryBytesProvider provider = createNewDisconnectedProvider();
+		provider.setTrackingSpec(SPLocationTrackingSpec.INSTANCE);
+		provider.setFollowsCurrentThread(true);
+		ByteViewerConfigOptions options = new ByteViewerConfigOptions();
+		options.setHexGroupSize(1);
+		String hexColumn = "Hex";
+		int bytesPerLine = 8;
+		if (current != DebuggerCoordinates.NOWHERE) {
+			int pointerSize = current.getTrace().getProgramView().getMinAddress().getPointerSize();
+			hexColumn = switch (pointerSize) {
+				case 2 -> "Hex Short";
+				case 4 -> "Hex Integer";
+				case 8 -> "Hex Long";
+				default -> "Hex";
+			};
+			bytesPerLine = pointerSize;
+		}
+		options.setBytesPerLine(bytesPerLine);
+		provider.updateConfigOptions(options, Set.of(hexColumn, "Chars"));
 	}
 }

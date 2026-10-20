@@ -44,7 +44,7 @@ import ghidra.trace.database.ToyDBTraceBuilder.ToySchemaBuilder;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.target.schema.SchemaContext;
 import ghidra.trace.model.thread.TraceThread;
@@ -95,7 +95,7 @@ public abstract class AbstractFlatDebuggerAPITest<API extends FlatDebuggerAPI>
 			createTrace();
 		}
 		TraceThread thread;
-		try (Transaction tx = tb.startTransaction()) {
+		try (Transaction _ = tb.startTransaction()) {
 			tb.createRootObject(buildContext(), "Target");
 			thread = tb.getOrAddThread("Threads[0]", 0);
 			tb.createObjectsFramesAndRegs(thread, Lifespan.nowOn(0), tb.host, 3);
@@ -107,7 +107,7 @@ public abstract class AbstractFlatDebuggerAPITest<API extends FlatDebuggerAPI>
 	protected void createTraceWithBinText() throws Throwable {
 		createAndOpenTrace();
 
-		try (Transaction tx = tb.startTransaction()) {
+		try (Transaction _ = tb.startTransaction()) {
 			tb.createRootObject(buildContext(), "Target");
 			DBTraceMemoryManager mm = tb.trace.getMemoryManager();
 			mm.createRegion("Memory[bin.text]", 0, tb.range(0x00400000, 0x0040ffff),
@@ -129,14 +129,14 @@ public abstract class AbstractFlatDebuggerAPITest<API extends FlatDebuggerAPI>
 		programManager.openProgram(program);
 		traceManager.activateTrace(tb.trace);
 
-		try (Transaction tx = program.openTransaction("add block")) {
+		try (Transaction _ = program.openTransaction("add block")) {
 			program.getMemory()
 					.createInitializedBlock(".text", addr(program, 0x00400000), 4096, (byte) 0,
 						monitor, false);
 		}
 
 		CompletableFuture<Void> changesSettled;
-		try (Transaction tx = tb.startTransaction()) {
+		try (Transaction _ = tb.startTransaction()) {
 			tb.createRootObject(buildContext(), "Target");
 			tb.trace.getMemoryManager()
 					.createRegion("Memory[bin.text]", 0, tb.range(0x00400000, 0x00400fff),
@@ -153,7 +153,7 @@ public abstract class AbstractFlatDebuggerAPITest<API extends FlatDebuggerAPI>
 		programManager.openProgram(program);
 
 		Address entry = addr(program, 0x00400000);
-		try (Transaction start = program.openTransaction("init")) {
+		try (Transaction _ = program.openTransaction("init")) {
 			program.getMemory()
 					.createInitializedBlock(".text", entry, 4096, (byte) 0,
 						monitor, false);
@@ -284,7 +284,7 @@ public abstract class AbstractFlatDebuggerAPITest<API extends FlatDebuggerAPI>
 		programManager.openProgram(program);
 		waitForSwing();
 
-		try (Transaction tx = program.openTransaction("Add block")) {
+		try (Transaction _ = program.openTransaction("Add block")) {
 			program.getMemory()
 					.createInitializedBlock(
 						".text", addr(program, 0x00400000), 1024, (byte) 0, monitor, false);
@@ -296,7 +296,7 @@ public abstract class AbstractFlatDebuggerAPITest<API extends FlatDebuggerAPI>
 
 		CompletableFuture<Void> changesSettled = breakpointService.changesSettled();
 		waitOn(breakpointService.placeBreakpointAt(program, addr(program, 0x00400000), 1,
-			Set.of(TraceBreakpointKind.SW_EXECUTE), "name"));
+			CommonSet.SWX.kinds(), "name"));
 		waitForSwing();
 		waitOn(changesSettled);
 	}

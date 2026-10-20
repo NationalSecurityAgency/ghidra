@@ -16,7 +16,9 @@
 package ghidra.program.model.listing;
 
 import java.util.Date;
+import java.util.Set;
 
+import ghidra.app.util.sourcelanguage.SourceLanguageID;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.IntRangeMap;
 import ghidra.program.database.ProgramOverlayAddressSpace;
@@ -80,6 +82,11 @@ public interface Program extends DataTypeManagerDomainObject, ProgramArchitectur
 	/** The maximum number of operands for any assembly language */
 	public final static int MAX_OPERANDS = 16;
 
+	/** Name of code property map **/
+	public static final String CODE_MAP_NAME = "CodeMap";
+	/** Name of cold entry point addresses property map **/
+	public static final String COLD_ENTRY_MAP_NAME = "ColdEntries";
+
 	/**
 	 * Get the listing object.
 	 * @return the Listing interface to the listing object.
@@ -92,7 +99,7 @@ public interface Program extends DataTypeManagerDomainObject, ProgramArchitectur
 	 * @deprecated Method intended for internal ProgramDB use and is not intended for general use.
 	 * This method may be removed from this interface in a future release.
 	 */
-	@Deprecated(forRemoval = true)
+	@Deprecated(since = "10.3", forRemoval = true)
 	public AddressMap getAddressMap();
 
 	/**
@@ -178,6 +185,22 @@ public interface Program extends DataTypeManagerDomainObject, ProgramArchitectur
 	 * @param compiler   the name
 	 */
 	public void setCompiler(String compiler);
+
+	/**
+	 * {@return the {@link SourceLanguageID}s of the source languages found in the program}
+	 */
+	default public Set<SourceLanguageID> getSourceLanguageIDs() {
+		return Set.of();
+	}
+
+	/**
+	 * Sets the {@link SourceLanguageID}s of the source languages found in the program
+	 * 
+	 * @param sourceLanguageIDs The {@link Set} of {@link SourceLanguageID}s
+	 */
+	default public void setSourceLanguageIDs(Set<SourceLanguageID> sourceLanguageIDs) {
+		throw new UnsupportedOperationException();
+	}
 
 	/**
 	 * Gets the preferred root data type category path which corresponds

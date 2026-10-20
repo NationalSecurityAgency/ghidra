@@ -18,11 +18,12 @@
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.nio.file.AccessMode;
 import java.util.List;
 
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.RandomAccessByteProvider;
+import ghidra.app.util.bin.FileByteProvider;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.bin.format.macho.Section;
 import ghidra.app.util.bin.format.macho.commands.*;
@@ -48,7 +49,7 @@ public class MachoProcessBindScript extends GhidraScript {
 			popup("Cannot find original binary at \n" + file.getAbsolutePath());
 			return;
 		}
-		ByteProvider provider = new RandomAccessByteProvider(file);
+		ByteProvider provider = new FileByteProvider(file, null, AccessMode.READ);
 		try {
 			MachHeader header = new MachHeader(provider);
 			header.parse();

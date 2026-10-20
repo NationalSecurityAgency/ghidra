@@ -18,6 +18,7 @@ package ghidra.program.emulation;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeUseropLibraryFactory.UseropLibrary;
+import ghidra.pcode.exec.SleighPcodeUseropDefinition.BuilderStage1;
 import ghidra.program.model.pcode.Varnode;
 
 /**
@@ -26,43 +27,15 @@ import ghidra.program.model.pcode.Varnode;
  * For the TBL and TBX instructions, see
  * https://developer.arm.com/documentation/ddi0602/2024-12/SIMD-FP-Instructions/TBL--Table-vector-lookup-
  */
-@UseropLibrary("aarch64")
+@UseropLibrary(id = "aarch64")
 public class Aarch64PcodeUseropLibraryFactory implements PcodeUseropLibraryFactory {
 	@Override
 	public <T> PcodeUseropLibrary<T> create(SleighLanguage language,
 			PcodeArithmetic<T> arithmetic) {
-		return new Aarch64PcodeUseropLibrary<>(language);
+		return new Aarch64PcodeUseropLibrary<>();
 	}
 
 	public static class Aarch64PcodeUseropLibrary<T> extends AnnotatedPcodeUseropLibrary<T> {
-		public Aarch64PcodeUseropLibrary(SleighLanguage language) {
-			SleighPcodeUseropDefinition.Factory factory =
-				new SleighPcodeUseropDefinition.Factory(language);
-
-			putOp(factory.define("MP_INT_ABS").params("n").body(args -> """
-					if (n >= 0) goto <pos>;
-					  __op_output = -n;
-					  goto <done>;
-					<pos>
-					  __op_output = n;
-					<done>
-					""").build());
-
-			putOp(factory.define("SIMD_PIECE").params("simdBytes", "offset").body(args -> """
-					__op_output = simdBytes(%d*offset);
-					""".formatted(args.get(1).getSize())).build());
-
-			putOp(factory.define("a64_TBL").params("init", "n1", "m").body(args -> {
-				return genA64_TBL(args.get(0), "n1");
-			}).overload().params("init", "n1", "n2", "m").body(args -> {
-				return genA64_TBL(args.get(0), "n1", "n2");
-			}).overload().params("init", "n1", "n2", "n3", "m").body(args -> {
-				return genA64_TBL(args.get(0), "n1", "n2", "n3");
-			}).overload().params("init", "n1", "n2", "n3", "n4", "m").body(args -> {
-				return genA64_TBL(args.get(0), "n1", "n2", "n3", "n4");
-			}).build());
-		}
-
 		protected String genA64_TBL(Varnode out, String... regs) {
 			int size = out.getSize();
 			String body = genBuildTable(regs) + genIndex(size, regs.length);
@@ -102,6 +75,38 @@ public class Aarch64PcodeUseropLibraryFactory implements PcodeUseropLibraryFacto
 			}
 			buf.append("__op_output = result;");
 			return buf.toString();
+		}
+
+		@PcodeUserop
+		public SleighPcodeUseropDefinition MP_INT_ABS(BuilderStage1 builder) {
+			return builder.params("n").body(_ -> """
+					if (n >= 0) goto <pos>;
+					  __op_output = -n;
+					  goto <done>;
+					<pos>
+					  __op_output = n;
+					<done>
+					""").build();
+		}
+
+		@PcodeUserop
+		public SleighPcodeUseropDefinition SIMD_PIECE(BuilderStage1 builder) {
+			return builder.params("simdBytes", "offset").body(args -> """
+					__op_output = simdBytes(%d*offset);
+					""".formatted(args.get(1).getSize())).build();
+		}
+
+		@PcodeUserop
+		public SleighPcodeUseropDefinition a64_TBL(BuilderStage1 builder) {
+			return builder.params("init", "n1", "m").body(args -> {
+				return genA64_TBL(args.get(0), "n1");
+			}).overload().params("init", "n1", "n2", "m").body(args -> {
+				return genA64_TBL(args.get(0), "n1", "n2");
+			}).overload().params("init", "n1", "n2", "n3", "m").body(args -> {
+				return genA64_TBL(args.get(0), "n1", "n2", "n3");
+			}).overload().params("init", "n1", "n2", "n3", "n4", "m").body(args -> {
+				return genA64_TBL(args.get(0), "n1", "n2", "n3", "n4");
+			}).build();
 		}
 
 		@PcodeUserop(functional = true)

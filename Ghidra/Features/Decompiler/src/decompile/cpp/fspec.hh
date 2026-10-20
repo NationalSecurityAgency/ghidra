@@ -146,8 +146,8 @@ public:
   int4 getSlot(const Address &addr,int4 skip) const;
   AddrSpace *getSpace(void) const { return spaceid; }	///< Get the address space containing \b this entry
   uintb getBase(void) const { return addressbase; }	///< Get the starting offset of \b this entry
-  Address getAddrBySlot(int4 &slot, int4 sz, int4 typeAlign, bool justifyRight) const;
-  Address getAddrBySlot(int4 &slot,int4 sz,int4 typeAlign) const;
+  Address getAddrBySlot(int4 &slot, int4 sz, int4 typeAlign, bool justifyRight,const AddrSpaceManager *m) const;
+  Address getAddrBySlot(int4 &slot,int4 sz,int4 typeAlign,const AddrSpaceManager *m) const;
   void decode(Decoder &decoder,bool normalstack,bool grouped,list<ParamEntry> &curList);
   bool isParamCheckHigh(void) const { return ((flags & extracheck_high)!=0); }	///< Return \b true if there is a high overlap
   bool isParamCheckLow(void) const { return ((flags & extracheck_low)!=0); }	///< Return \b true if there is a low overlap
@@ -597,6 +597,7 @@ protected:
   vector<ParamEntryResolver *> resolverMap;	///< Map from space id to resolver
   list<ModelRule> modelRules;		///< Rules to apply when assigning addresses
   AddrSpace *spacebase;			///< Address space containing relative offset parameters
+  const AddrSpaceManager *glb;		///< Owning manager
   const ParamEntry *findEntry(const Address &loc,int4 size,bool just) const;	///< Given storage location find matching ParamEntry
   const ParamEntry *selectUnreferenceEntry(int4 grp,type_class prefType) const;	///< Select entry to fill an unreferenced param
   void buildTrialMap(ParamActive *active) const;	///< Build map from parameter trials to model ParamEntrys
@@ -618,6 +619,7 @@ public:
   ParamListStandard(const ParamListStandard &op2);			///< Copy constructor
   virtual ~ParamListStandard(void);
   const list<ParamEntry> &getEntry(void) const { return entry; }	///< Get the list of parameter entries
+  const AddrSpaceManager *getManager(void) const { return glb; }	///< Get the owner
   bool isBigEndian(void) const { return entry.front().getSpace()->isBigEndian(); }	///< Return \b true if resources are big endian
   void extractTiles(vector<const ParamEntry *> &tiles,type_class type) const;	///< Get registers of given storage class
   const ParamEntry *getStackEntry(void) const;	///< Get the stack entry
@@ -1524,8 +1526,7 @@ public:
   bool checkInputSplit(const Address &loc,int4 size,int4 splitpoint) const {
     return model->checkInputSplit(loc,size,splitpoint); }
 
-  void updateInputTypes(Funcdata &data,const vector<Varnode *> &triallist,ParamActive *activeinput);
-  void updateInputNoTypes(Funcdata &data,const vector<Varnode *> &triallist,ParamActive *activeinput);
+  void updateInputTypes(Funcdata &data,const vector<Datatype *> &typeList,ParamActive *activeinput);
   void updateOutputTypes(const vector<Varnode *> &triallist);
   void updateOutputNoTypes(const vector<Varnode *> &triallist,TypeFactory *factory);
   void updateAllTypes(const PrototypePieces &proto);

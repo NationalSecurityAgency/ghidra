@@ -227,10 +227,14 @@ public class OriginalFileExporter extends ProgramExporter {
 	public List<Option> getOptions(DomainObjectService domainObjectService) {
 		if (options == null) {
 			options = new ArrayList<>();
-			options.add(new Option(USER_MODS_OPTION_NAME, USER_MODS_OPTION_DEFAULT));
+			options.add(Option.newBoolean(USER_MODS_OPTION_NAME)
+					.value(USER_MODS_OPTION_DEFAULT)
+					.build());
 			if (domainObjectService.getDomainObject() instanceof Program program &&
 				program.getMemory().getAllFileBytes().size() > 1) {
-				options.add(new Option(CREATE_DIR_OPTION_NAME, CREATE_DIR_OPTION_DEFAULT));
+				options.add(Option.newBoolean(CREATE_DIR_OPTION_NAME)
+						.value(CREATE_DIR_OPTION_DEFAULT)
+						.build());
 			}
 		}
 		return options;

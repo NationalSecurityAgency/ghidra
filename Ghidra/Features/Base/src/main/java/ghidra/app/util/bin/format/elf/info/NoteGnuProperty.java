@@ -200,8 +200,8 @@ public class NoteGnuProperty extends ElfNote {
 	}
 
 	private DataType getElementDataType(DataTypeManager dtm, NotePropertyElement element) {
-		StructureDataType result =
-			new StructureDataType("NoteGnuPropertyElement_%d".formatted(element.length()), 0, dtm);
+		StructureDataType result = new StructureDataType(StandardElfInfoProducer.ELF_CATEGORYPATH,
+			"NoteGnuPropertyElement_%d".formatted(element.length()), 0, dtm);
 
 		result.add(StructConverter.DWORD, "prType", null);
 		result.add(StructConverter.DWORD, "prDatasz", null);

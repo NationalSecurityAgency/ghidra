@@ -87,6 +87,11 @@ public class JavaLoader extends AbstractProgramWrapperLoader {
 	}
 
 	@Override
+	public Collection<String> getAssociatedFileExtensions() {
+		return List.of("class");
+	}
+
+	@Override
 	public void load(Program program, ImporterSettings settings) throws IOException {
 		try {
 			doLoad(settings.provider(), program, settings.monitor());

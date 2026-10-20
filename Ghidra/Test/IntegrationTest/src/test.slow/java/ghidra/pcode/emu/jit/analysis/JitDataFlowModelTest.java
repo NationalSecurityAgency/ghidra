@@ -30,6 +30,7 @@ import org.junit.Test;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.plugin.processors.sleigh.SleighLanguageHelper;
 import ghidra.pcode.emu.jit.AbstractJitTest;
+import ghidra.pcode.emu.jit.JitConfiguration.Opt;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.BlockFlow;
 import ghidra.pcode.emu.jit.op.*;
 import ghidra.pcode.emu.jit.var.*;
@@ -167,8 +168,8 @@ public class JitDataFlowModelTest extends AbstractJitTest {
 			}
 
 			for (ExpectedEdge<?, ?> ee : eEdges) {
-				edgesO2V.computeIfAbsent(ee.op, e -> new HashSet<>()).add(ee);
-				edgesV2O.computeIfAbsent(ee.v, e -> new HashSet<>()).add(ee);
+				edgesO2V.computeIfAbsent(ee.op, _ -> new HashSet<>()).add(ee);
+				edgesV2O.computeIfAbsent(ee.v, _ -> new HashSet<>()).add(ee);
 			}
 		}
 
@@ -263,7 +264,7 @@ public class JitDataFlowModelTest extends AbstractJitTest {
 		public void assertEquivalence() {
 			processQueues();
 
-			assertEquals(opsMap.keySet(), dfm.allOps());
+			assertEquals(opsMap.keySet(), dfm.allOps().collect(Collectors.toSet()));
 			assertEquals(valsMap.keySet(), dfm.allValues());
 
 			assertEquals("Not all expected ops were found.", Set.copyOf(eOps),
@@ -303,7 +304,7 @@ public class JitDataFlowModelTest extends AbstractJitTest {
 				eBranch),
 			Set.of(e5678, eR0),
 			Set.of(
-				ExpectedEdge.in(eCopy, JitCopyOp::u, op -> true, e5678),
+				ExpectedEdge.in(eCopy, JitCopyOp::u, _ -> true, e5678),
 				ExpectedEdge.out(eR0, eCopy)),
 			context, dfm);
 	}
@@ -333,9 +334,9 @@ public class JitDataFlowModelTest extends AbstractJitTest {
 				ePhi),
 			Set.of(eR1In, eR1, eR0),
 			Set.of(
-				ExpectedEdge.phi(ePhi, flow -> true, eR1In),
+				ExpectedEdge.phi(ePhi, _ -> true, eR1In),
 				ExpectedEdge.out(eR1, ePhi),
-				ExpectedEdge.in(eCopy, JitCopyOp::u, op -> true, eR1),
+				ExpectedEdge.in(eCopy, JitCopyOp::u, _ -> true, eR1),
 				ExpectedEdge.out(eR0, eCopy)),
 			context, dfm);
 	}
@@ -349,7 +350,8 @@ public class JitDataFlowModelTest extends AbstractJitTest {
 				r0 = r1;
 				goto 0x1234;
 				""", PcodeUseropLibrary.NIL);
-		JitAnalysisContext context = makeContext(program);
+		JitAnalysisContext context = makeContext(program, createConfiguration()
+				.disable(Opt.FOLD_CONSTANTS));
 		JitControlFlowModel cfm = new JitControlFlowModel(context);
 		JitDataFlowModel dfm = new JitDataFlowModel(context, cfm);
 
@@ -366,9 +368,9 @@ public class JitDataFlowModelTest extends AbstractJitTest {
 				eBranch),
 			Set.of(e5678, eR1, eR0),
 			Set.of(
-				ExpectedEdge.in(eCopy1, JitCopyOp::u, op -> true, e5678),
+				ExpectedEdge.in(eCopy1, JitCopyOp::u, _ -> true, e5678),
 				ExpectedEdge.out(eR1, eCopy1),
-				ExpectedEdge.in(eCopy2, JitCopyOp::u, op -> true, eR1),
+				ExpectedEdge.in(eCopy2, JitCopyOp::u, _ -> true, eR1),
 				ExpectedEdge.out(eR0, eCopy2)),
 			context, dfm);
 	}
@@ -382,7 +384,8 @@ public class JitDataFlowModelTest extends AbstractJitTest {
 				r0 = temp;
 				goto 0x1234;
 				""", PcodeUseropLibrary.NIL);
-		JitAnalysisContext context = makeContext(program);
+		JitAnalysisContext context = makeContext(program, createConfiguration()
+				.disable(Opt.FOLD_CONSTANTS));
 		JitControlFlowModel cfm = new JitControlFlowModel(context);
 		JitDataFlowModel dfm = new JitDataFlowModel(context, cfm);
 
@@ -393,14 +396,15 @@ public class JitDataFlowModelTest extends AbstractJitTest {
 		ExpectedVal<JitOutVar> eTemp = new ExpectedVal<>(JitOutVar.class, "$U", 8);
 		ExpectedVal<JitOutVar> eR0 = new ExpectedVal<>(JitOutVar.class, "r0", 8);
 		assertDfmExpectations(
-			List.of(eCopy1,
+			List.of(
+				eCopy1,
 				eCopy2,
 				eBranch),
 			Set.of(e5678, eTemp, eR0),
 			Set.of(
-				ExpectedEdge.in(eCopy1, JitCopyOp::u, op -> true, e5678),
+				ExpectedEdge.in(eCopy1, JitCopyOp::u, _ -> true, e5678),
 				ExpectedEdge.out(eTemp, eCopy1),
-				ExpectedEdge.in(eCopy2, JitCopyOp::u, op -> true, eTemp),
+				ExpectedEdge.in(eCopy2, JitCopyOp::u, _ -> true, eTemp),
 				ExpectedEdge.out(eR0, eCopy2)),
 			context, dfm);
 	}
@@ -449,7 +453,8 @@ public class JitDataFlowModelTest extends AbstractJitTest {
 				r0 = r1;
 				goto <loop>;
 				""", PcodeUseropLibrary.NIL);
-		JitAnalysisContext context = makeContext(program);
+		JitAnalysisContext context = makeContext(program, createConfiguration()
+				.disable(Opt.FOLD_CONSTANTS));
 		JitControlFlowModel cfm = new JitControlFlowModel(context);
 		JitDataFlowModel dfm = new JitDataFlowModel(context, cfm);
 
@@ -545,6 +550,13 @@ public class JitDataFlowModelTest extends AbstractJitTest {
 		public long l_op1(long p1) {
 			return p1;
 		}
+
+		/**
+		 * A userop that could have machine-state side effects
+		 */
+		@PcodeUserop
+		public void opaque() {
+		}
 	}
 
 	public static final PcodeUseropLibrary<?> MY_LIB = new MyLibrary();
@@ -592,7 +604,7 @@ public class JitDataFlowModelTest extends AbstractJitTest {
 				ePhi),
 			Set.of(eR0In, eR0),
 			Set.of(
-				ExpectedEdge.phi(ePhi, flow -> true, eR0In),
+				ExpectedEdge.phi(ePhi, _ -> true, eR0In),
 				ExpectedEdge.out(eR0, ePhi),
 				ExpectedEdge.in(eCallOther, otherArg(0), opType(JitCallOtherOp.class), eR0)),
 			context, dfm);
@@ -644,15 +656,102 @@ public class JitDataFlowModelTest extends AbstractJitTest {
 				ePhi),
 			Set.of(eR0In, eR0, eR1),
 			Set.of(
-				ExpectedEdge.phi(ePhi, flow -> true, eR0In),
+				ExpectedEdge.phi(ePhi, _ -> true, eR0In),
 				ExpectedEdge.out(eR0, ePhi),
 				ExpectedEdge.in(eCallOther, otherArg(0), opType(JitCallOtherDefOp.class), eR0),
 				ExpectedEdge.out(eR1, eCallOther)),
 			context, dfm);
 	}
 
+	@Test
+	public void testConstantFoldingRewriteConstInput() throws Exception {
+		SleighLanguage language = SleighLanguageHelper.getMockBE64Language();
+
+		JitAnalysisContext context = makeContext(language, """
+				r1 = 0x10;
+				r0 = r0 + r1;
+				goto 0x1234;
+				""", MY_LIB);
+		JitControlFlowModel cfm = new JitControlFlowModel(context);
+		JitDataFlowModel dfm = new JitDataFlowModel(context, cfm);
+
+		ExpectedOp<JitCopyOp> eCopy = new ExpectedOp<>(JitCopyOp.class);
+		ExpectedOp<JitIntAddOp> eAdd = new ExpectedOp<>(JitIntAddOp.class);
+		ExpectedOp<JitBranchOp> eBranch = new ExpectedOp<>(JitBranchOp.class);
+		ExpectedOp<JitPhiOp> ePhi = new ExpectedOp<>(JitPhiOp.class);
+		ExpectedVal<JitConstVal> e10_1 = new ExpectedVal<>(JitConstVal.class, "10", 8);
+		// Not great, but each getVar(const) has its own instance
+		ExpectedVal<JitConstVal> e10_2 = new ExpectedVal<>(JitConstVal.class, "10", 8);
+		ExpectedVal<JitOutVar> eR1 = new ExpectedVal<>(JitOutVar.class, "r1", 8);
+		ExpectedVal<JitInputVar> eR0In = new ExpectedVal<>(JitInputVar.class, "r0", 8);
+		ExpectedVal<JitOutVar> eR0_1 = new ExpectedVal<>(JitOutVar.class, "r0", 8);
+		ExpectedVal<JitOutVar> eR0_2 = new ExpectedVal<>(JitOutVar.class, "r0", 8);
+		assertDfmExpectations(
+			List.of(
+				eCopy,
+				eAdd,
+				eBranch,
+				ePhi),
+			Set.of(e10_1, e10_2, eR1, eR0In, eR0_1, eR0_2),
+			Set.of(
+				ExpectedEdge.in(eCopy, JitCopyOp::u, opType(JitCopyOp.class), e10_1),
+				ExpectedEdge.out(eR1, eCopy),
+				ExpectedEdge.phi(ePhi, flow -> flow.from() == null, eR0In),
+				ExpectedEdge.out(eR0_1, ePhi),
+				ExpectedEdge.in(eAdd, JitIntAddOp::l, opType(JitIntAddOp.class), eR0_1),
+				ExpectedEdge.in(eAdd, JitIntAddOp::r, opType(JitIntAddOp.class), e10_2), // <--
+				ExpectedEdge.out(eR0_2, eAdd)),
+			context, dfm);
+	}
+
+	@Test
+	public void testConstantFoldingDontRewriteConstInputInterveningCallOther() throws Exception {
+		/**
+		 * A non-functional userop could technically do whatever to the state, so nothing can be
+		 * assumed constant after such a userop.
+		 */
+		SleighLanguage language = SleighLanguageHelper.getMockBE64Language();
+
+		JitAnalysisContext context = makeContext(language, """
+				r1 = 0x10;
+				opaque();
+				r0 = r0 + r1;
+				goto 0x1234;
+				""", MY_LIB);
+		JitControlFlowModel cfm = new JitControlFlowModel(context);
+		JitDataFlowModel dfm = new JitDataFlowModel(context, cfm);
+
+		ExpectedOp<JitCopyOp> eCopy = new ExpectedOp<>(JitCopyOp.class);
+		ExpectedOp<JitCallOtherOp> eCallOther = new ExpectedOp<>(JitCallOtherOp.class);
+		ExpectedOp<JitIntAddOp> eAdd = new ExpectedOp<>(JitIntAddOp.class);
+		ExpectedOp<JitBranchOp> eBranch = new ExpectedOp<>(JitBranchOp.class);
+		ExpectedOp<JitPhiOp> ePhi = new ExpectedOp<>(JitPhiOp.class);
+		ExpectedVal<JitConstVal> e10_1 = new ExpectedVal<>(JitConstVal.class, "10", 8);
+		ExpectedVal<JitOutVar> eR1 = new ExpectedVal<>(JitOutVar.class, "r1", 8);
+		ExpectedVal<JitInputVar> eR0In = new ExpectedVal<>(JitInputVar.class, "r0", 8);
+		ExpectedVal<JitOutVar> eR0_1 = new ExpectedVal<>(JitOutVar.class, "r0", 8);
+		ExpectedVal<JitOutVar> eR0_2 = new ExpectedVal<>(JitOutVar.class, "r0", 8);
+		assertDfmExpectations(
+			List.of(
+				eCopy,
+				eCallOther,
+				eAdd,
+				eBranch,
+				ePhi),
+			Set.of(e10_1, eR1, eR0In, eR0_1, eR0_2),
+			Set.of(
+				ExpectedEdge.in(eCopy, JitCopyOp::u, opType(JitCopyOp.class), e10_1),
+				ExpectedEdge.out(eR1, eCopy),
+				ExpectedEdge.phi(ePhi, flow -> flow.from() == null, eR0In),
+				ExpectedEdge.out(eR0_1, ePhi),
+				ExpectedEdge.in(eAdd, JitIntAddOp::l, opType(JitIntAddOp.class), eR0_1),
+				ExpectedEdge.in(eAdd, JitIntAddOp::r, opType(JitIntAddOp.class), eR1), // <--
+				ExpectedEdge.out(eR0_2, eAdd)),
+			context, dfm);
+	}
+
 	/**
-	 * NOTE: cat, subpiece, etc., do not currrently have much meaning except to indicate a
+	 * NOTE: cat, subpiece, etc., do not currently have much meaning except to indicate a
 	 * dependence. At one point these "synthetic" ops were meant to be translated into JVM bytecode,
 	 * but instead, variable accesses are coalesced during allocation/assignment, and then
 	 * sub-accesses are encoded as such.

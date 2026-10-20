@@ -18,7 +18,7 @@ package ghidra.framework;
 import java.io.*;
 import java.util.*;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jdom2.*;
@@ -325,7 +325,7 @@ public class ToolUtils {
 			return false;
 		}
 
-		if (StringUtils.containsIgnoreCase(toolName, "test")) {
+		if (Strings.CI.contains(toolName, "test")) {
 			LOGGER.trace("Not adding default 'test' tool: " + toolName);
 			return true;
 		}

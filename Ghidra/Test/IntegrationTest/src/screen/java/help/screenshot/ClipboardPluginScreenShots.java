@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ import ghidra.util.exception.AssertException;
 public class ClipboardPluginScreenShots extends GhidraScreenShotGenerator {
 
 	@Test
-	public void testCaptureCopySpecial() {
+	public void testCaptureCopySpecial() throws InterruptedException {
 
 		CodeBrowserPlugin cb = getPlugin(tool, CodeBrowserPlugin.class);
 		ProgramSelection sel = cb.getCurrentSelection();
@@ -56,6 +56,8 @@ public class ClipboardPluginScreenShots extends GhidraScreenShotGenerator {
 
 		Dimension size = window.getSize();
 		setWindowSize(window, size.width, 330);
+
+		Thread.sleep(2); // Time to manually set focus between resume and capture
 		captureDialog();
 	}
 

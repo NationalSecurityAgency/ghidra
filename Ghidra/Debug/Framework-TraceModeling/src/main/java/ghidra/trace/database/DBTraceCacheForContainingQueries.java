@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -78,7 +78,7 @@ public abstract class DBTraceCacheForContainingQueries<K extends GetKey, V, T> {
 
 	protected abstract V doGetContaining(K key);
 
-	protected List<? extends T> getAllInRangeCacheContaining(K key) {
+	protected synchronized List<? extends T> getAllInRangeCacheContaining(K key) {
 		List<T> result = new ArrayList<>();
 		for (Entry<TraceAddressSnapRange, T> ent : rangeCache) {
 			TraceAddressSnapRange range = ent.getKey();
@@ -93,7 +93,7 @@ public abstract class DBTraceCacheForContainingQueries<K extends GetKey, V, T> {
 		return result;
 	}
 
-	protected T getFirstInRangeCacheContaining(K key) {
+	protected synchronized T getFirstInRangeCacheContaining(K key) {
 		for (Entry<TraceAddressSnapRange, T> ent : rangeCache) {
 			TraceAddressSnapRange range = ent.getKey();
 			if (!range.getLifespan().contains(key.snap)) {
@@ -107,12 +107,12 @@ public abstract class DBTraceCacheForContainingQueries<K extends GetKey, V, T> {
 		return null;
 	}
 
-	protected boolean isInCachedRange(long snap, Address address) {
+	protected synchronized boolean isInCachedRange(long snap, Address address) {
 		return rangeCacheRange != null && rangeCacheRange.getLifespan().contains(snap) &&
 			rangeCacheRange.getRange().contains(address);
 	}
 
-	protected void ensureInCachedRange(long snap, Address address) {
+	protected synchronized void ensureInCachedRange(long snap, Address address) {
 		if (isInCachedRange(snap, address)) {
 			return;
 		}
@@ -120,15 +120,15 @@ public abstract class DBTraceCacheForContainingQueries<K extends GetKey, V, T> {
 		loadRangeCache(rangeCacheRange = computeNewCachedRange(snap, address));
 	}
 
-	protected TraceAddressSnapRange computeNewCachedRange(long snap, Address address) {
+	protected synchronized TraceAddressSnapRange computeNewCachedRange(long snap, Address address) {
 		return ImmutableTraceAddressSnapRange.centered(address, snap, addressBreadth, snapBreadth);
 	}
 
-	public V getContaining(K key) {
+	public synchronized V getContaining(K key) {
 		return pointCache.computeIfAbsent(key, this::doGetContaining);
 	}
 
-	public void notifyNewEntry(Lifespan lifespan, Address address, T item) {
+	public synchronized void notifyNewEntry(Lifespan lifespan, Address address, T item) {
 		// TODO: Can this be smarter?
 		pointCache.clear();
 		if (rangeCacheRange != null &&
@@ -139,7 +139,7 @@ public abstract class DBTraceCacheForContainingQueries<K extends GetKey, V, T> {
 		}
 	}
 
-	public void notifyNewEntry(Lifespan lifespan, AddressRange range, T item) {
+	public synchronized void notifyNewEntry(Lifespan lifespan, AddressRange range, T item) {
 		// TODO: Can this be smarter?
 		pointCache.clear();
 		if (rangeCacheRange != null &&
@@ -150,7 +150,7 @@ public abstract class DBTraceCacheForContainingQueries<K extends GetKey, V, T> {
 		}
 	}
 
-	public void notifyNewEntries(Lifespan lifespan, AddressSetView addresses, T item) {
+	public synchronized void notifyNewEntries(Lifespan lifespan, AddressSetView addresses, T item) {
 		// TODO: Can this be smarter?
 		pointCache.clear();
 		if (rangeCacheRange != null &&
@@ -164,17 +164,18 @@ public abstract class DBTraceCacheForContainingQueries<K extends GetKey, V, T> {
 		}
 	}
 
-	public void notifyEntryRemoved(Lifespan lifespan, AddressRange range, T item) {
+	public synchronized void notifyEntryRemoved(Lifespan lifespan, AddressRange range, T item) {
 		// TODO: Can this be smarter?
 		invalidate();
 	}
 
-	public void notifyEntryShapeChanged(Lifespan lifespan, AddressRange range, T item) {
+	public synchronized void notifyEntryShapeChanged(Lifespan lifespan, AddressRange range,
+			T item) {
 		// TODO: Can this be smarter?
 		invalidate();
 	}
 
-	public void invalidate() {
+	public synchronized void invalidate() {
 		pointCache.clear();
 		rangeCache.clear();
 		rangeCacheRange = null;

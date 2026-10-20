@@ -723,7 +723,7 @@ uint4 GotoStack::assignAddress(Datatype *dt,const PrototypePieces &proto,int4 po
 {
   int4 grp = stackEntry->getGroup();
   res.type = dt;
-  res.addr = stackEntry->getAddrBySlot(status[grp],dt->getSize(),dt->getAlignment());
+  res.addr = stackEntry->getAddrBySlot(status[grp],dt->getSize(),dt->getAlignment(),resource->getManager());
   res.flags = 0;
   return success;
 }
@@ -858,7 +858,7 @@ uint4 MultiSlotAssign::assignAddress(Datatype *dt,const PrototypePieces &proto,i
     if (tmpStatus[entry->getGroup()] != 0)
       continue;		// Already consumed
     int4 trialSize = entry->getSize();
-    Address addr = entry->getAddrBySlot(tmpStatus[entry->getGroup()], trialSize,align);
+    Address addr = entry->getAddrBySlot(tmpStatus[entry->getGroup()], trialSize,align,resource->getManager());
     tmpStatus[entry->getGroup()] = -1;	// Consume the register
     pieces.push_back(VarnodeData());
     pieces.back().space = addr.getSpace();
@@ -871,7 +871,8 @@ uint4 MultiSlotAssign::assignAddress(Datatype *dt,const PrototypePieces &proto,i
     if (!consumeFromStack)
       return fail;
     int4 grp = stackEntry->getGroup();
-    Address addr = stackEntry->getAddrBySlot(tmpStatus[grp],sizeLeft,align,justifyRight);	// Consume all the space we need
+    // Consume all the space we need
+    Address addr = stackEntry->getAddrBySlot(tmpStatus[grp],sizeLeft,align,justifyRight,resource->getManager());
     if (addr.isInvalid())
       return fail;
     pieces.push_back(VarnodeData());
@@ -1209,7 +1210,7 @@ uint4 MultiSlotDualAssign::assignAddress(Datatype *dt,const PrototypePieces &pro
       entry = altTiles[iterAlt];
     }
     int4 trialSize = entry->getSize();
-    Address addr = entry->getAddrBySlot(tmpStatus[entry->getGroup()], trialSize,1);
+    Address addr = entry->getAddrBySlot(tmpStatus[entry->getGroup()], trialSize,1,resource->getManager());
     tmpStatus[entry->getGroup()] = -1;	// Consume the register
     pieces.push_back(VarnodeData());
     pieces.back().space = addr.getSpace();
@@ -1221,7 +1222,8 @@ uint4 MultiSlotDualAssign::assignAddress(Datatype *dt,const PrototypePieces &pro
 	if (!consumeFromStack)
 	  return fail;
     int4 grp = stackEntry->getGroup();
-    Address addr = stackEntry->getAddrBySlot(tmpStatus[grp],sizeLeft,align,justifyRight);	// Consume all the space we need
+    // Consume all the space we need
+    Address addr = stackEntry->getAddrBySlot(tmpStatus[grp],sizeLeft,align,justifyRight,resource->getManager());
     if (addr.isInvalid())
       return fail;
     pieces.push_back(VarnodeData());
@@ -1567,7 +1569,7 @@ uint4 ExtraStack::assignAddress(Datatype *dt,const PrototypePieces &proto,int4 p
   }
   // We assign the stack address (but ignore the actual address) updating the status for the stack,
   // which consumes the stack resources.
-  stackEntry->getAddrBySlot(status[grp],dt->getSize(),dt->getAlignment());
+  stackEntry->getAddrBySlot(status[grp],dt->getSize(),dt->getAlignment(),resource->getManager());
   return success;
 }
 

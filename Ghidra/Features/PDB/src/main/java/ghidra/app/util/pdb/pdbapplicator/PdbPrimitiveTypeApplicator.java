@@ -19,6 +19,7 @@ import java.util.*;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbLog;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.PrimitiveMsType;
+import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.AssertException;
 
@@ -462,8 +463,9 @@ public class PdbPrimitiveTypeApplicator {
 	}
 
 	private DataType createTypedef(String name, DataType dataType) {
-		DataType typedefDataType = new TypedefDataType(name, dataType);
-		return resolve(typedefDataType);
+		TypeDef typedefDataType = new TypedefDataType(name, dataType);
+		DataType dt = DataTypeUtilities.getTypedefReplacement(typedefDataType, true);
+		return resolve(dt);
 	}
 
 	DataType createTypedefNamedSizedType(String name, int size) {

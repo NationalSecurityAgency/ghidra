@@ -16,6 +16,7 @@
 package help.screenshot;
 
 import java.awt.*;
+import java.net.URI;
 import java.net.URL;
 
 import javax.swing.JLabel;
@@ -122,8 +123,8 @@ public class ShowInstructionInfoPluginScreenShots extends GhidraScreenShotGenera
 	@Test
 	public void testUnableToLaunch() throws Exception {
 
-		URL url1 = new URL("http://localhost:11046/1234567//pentium.pdf#page=701");
-		URL url2 = new URL("file:/Ghidra/docs/manuals/pentium.pdf#page=701");
+		URL url1 = new URI("http://localhost:11046/1234567//pentium.pdf#page=701").toURL();
+		URL url2 = new URI("file:/Ghidra/docs/manuals/pentium.pdf#page=701").toURL();
 		final LaunchErrorDialog dialog = new LaunchErrorDialog(url1, url2);
 
 		runSwing(() -> dialog.setVisible(true), false);

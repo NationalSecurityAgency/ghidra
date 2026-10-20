@@ -45,6 +45,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryOperations;
@@ -54,6 +55,7 @@ import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.MathUtilities;
 import ghidra.util.Swing;
@@ -62,7 +64,6 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * This interface is a flattened version of the Debugger and Trace APIs.
- * 
  * <p>
  * To use this "mix-in" interface, extend {@link GhidraScript} as you normally would for your
  * script, but also add this interface to the {@code implements} clause of your script, e.g.,
@@ -72,7 +73,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * The method used to wait on futures.
-	 * 
 	 * <p>
 	 * By default, this waits at most 1 minute.
 	 * 
@@ -90,7 +90,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Get the script state
-	 * 
 	 * <p>
 	 * This is required to get various debugger services. It should be implemented by virtue of
 	 * extending {@link GhidraScript}.
@@ -101,7 +100,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Require a service from the tool
-	 * 
 	 * <p>
 	 * If the service is missing, an exception is thrown directing the user to run the script from
 	 * the Debugger tool.
@@ -236,7 +234,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Get the current thread
-	 * 
 	 * <p>
 	 * While uncommon, it is possible for there to be a current trace, but no current thread.
 	 * 
@@ -277,7 +274,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Get the current trace program view
-	 * 
 	 * <p>
 	 * The view is an adapter for traces that allows them to be used as a {@link Program}. However,
 	 * it only works for a chosen snapshot. Typically, {@link TraceProgramView#getSnap()} for this
@@ -309,7 +305,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Get the current frame, 0 being the innermost
-	 * 
 	 * <p>
 	 * If the target doesn't support frames, this will return 0
 	 * 
@@ -322,7 +317,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Get the current snap, i.e., snapshot key
-	 * 
 	 * <p>
 	 * Snaps are the trace's notion of time. Positive keys should be monotonic with respect to time:
 	 * a higher value implies a later point in time. Negative keys do not; they are used as scratch
@@ -338,7 +332,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Get the current emulation schedule
-	 * 
 	 * <p>
 	 * This constitutes the current snapshot and an optional schedule of emulation steps. If there
 	 * is a schedule, then the view's snap will be the destination scratch snap rather than the
@@ -352,7 +345,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Make the given trace the active trace
-	 * 
 	 * <p>
 	 * If the trace is not already open in the tool, it will be opened automatically
 	 * 
@@ -372,7 +364,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Make the given thread the active thread
-	 * 
 	 * <p>
 	 * if the trace is not already open in the tool, it will be opened automatically
 	 * 
@@ -402,7 +393,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Make the given snapshot the active snapshot
-	 * 
 	 * <p>
 	 * Activating negative snapshot keys is not recommended. The trace manager uses negative keys
 	 * for emulation scratch space and will activate them indirectly as needed.
@@ -424,7 +414,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Get the current trace program view and address
-	 * 
 	 * <p>
 	 * This constitutes a portion of the debugger coordinates plus the current dynamic address. The
 	 * program given by {@link ProgramLocation#getProgram()} can be safely cast to
@@ -448,7 +437,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Go to the given dynamic location in the dynamic listing
-	 * 
 	 * <p>
 	 * To "go to" a point in time, use {@link #activateSnap(long)} or
 	 * {@link #emulate(Trace, TraceSchedule, TaskMonitor)}.
@@ -493,7 +481,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Get the current program
-	 * 
 	 * <p>
 	 * This is implemented by virtue of extending {@link FlatProgramAPI}, which is inherited via
 	 * {@link GhidraScript}.
@@ -520,7 +507,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Translate the given static location to the corresponding dynamic location
-	 * 
 	 * <p>
 	 * This uses the trace's static mappings (see {@link Trace#getStaticMappingManager()} and
 	 * {@link DebuggerStaticMappingService}) to translate a static location to the corresponding
@@ -541,7 +527,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Translate the given static address to the corresponding dynamic address
-	 * 
 	 * <p>
 	 * This does the same as {@link #translateStaticToDynamic(ProgramLocation)}, but assumes the
 	 * address is for the current program. The returned address is for the current trace view.
@@ -557,7 +542,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Translate the given dynamic location to the corresponding static location
-	 * 
 	 * <p>
 	 * This does the opposite of {@link #translateStaticToDynamic(ProgramLocation)}. The resulting
 	 * static location could be for any open program, not just the current one, since a target may
@@ -573,7 +557,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Translate the given dynamic address to the corresponding static address
-	 * 
 	 * <p>
 	 * This does the same as {@link #translateDynamicToStatic(ProgramLocation)}, but assumes the
 	 * address is for the current trace view. The returned address is for the current program. If
@@ -602,7 +585,6 @@ public interface FlatDebuggerAPI {
 	/**
 	 * Load the given program into a trace suitable for emulation in the UI, starting at the given
 	 * address
-	 * 
 	 * <p>
 	 * Note that the program bytes are not actually loaded into the trace. Rather a static mapping
 	 * is generated, allowing the emulator to load bytes from the target program lazily. The trace
@@ -715,7 +697,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Step the current trace count skipped instructions via emulation
-	 * 
 	 * <p>
 	 * Note there's no such thing as "skipping in reverse." If a negative count is given, this will
 	 * behave the same as {@link #stepEmuInstruction(long, TaskMonitor)}.
@@ -738,7 +719,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Step the current trace count skipped p-code operations via emulation
-	 * 
 	 * <p>
 	 * Note there's no such thing as "skipping in reverse." If a negative count is given, this will
 	 * behave the same as {@link #stepEmuPcodeOp(int, TaskMonitor)}.
@@ -778,7 +758,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Create an address range, avoiding address overflow by truncating
-	 * 
 	 * <p>
 	 * If the length would cause address overflow, it is adjusted such that the range's maximum
 	 * address is the space's maximum address.
@@ -822,7 +801,8 @@ public interface FlatDebuggerAPI {
 	default void refreshMemoryIfLive(Trace trace, long snap, Address start, int length,
 			TaskMonitor monitor) throws CancelledException {
 		Target target = getTargetService().getTarget(trace);
-		if (target == null || target.getSnap() != snap) {
+
+		if (!isLive(target, snap)) {
 			return;
 		}
 		target.readMemory(new AddressSet(safeRange(start, length)), monitor);
@@ -899,7 +879,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Search trace memory for a given masked byte sequence
-	 * 
 	 * <p>
 	 * <b>NOTE:</b> This searches the trace only. It will not interrogate the live target. There are
 	 * two mechanisms for searching a live target's full memory: 1) Capture the full memory (or the
@@ -907,7 +886,6 @@ public interface FlatDebuggerAPI {
 	 * {@link #refreshMemoryIfLive(Trace, long, Address, int, TaskMonitor)} -- then search the
 	 * trace. 2) If possible, invoke the target debugger's search functions -- using, e.g.,
 	 * {@link #executeCapture(String)}.
-	 * 
 	 * <p>
 	 * This delegates to
 	 * {@link TraceMemoryOperations#findBytes(long, AddressRange, ByteBuffer, ByteBuffer, boolean, TaskMonitor)}.
@@ -917,7 +895,6 @@ public interface FlatDebuggerAPI {
 	 * {@code 00} is matched as usual, as is any stale byte. Only those ranges which have
 	 * <em>never</em> been recorded are culled. While not required, memory is conventionally read
 	 * and recorded in pages, so culling tends to occur at page boundaries.
-	 * 
 	 * <p>
 	 * Be wary of leading or trailing wildcards, i.e., masked-out bytes. The full data array must
 	 * fit within the given range after culling. For example, suppose the byte {@code 12} is
@@ -965,6 +942,35 @@ public interface FlatDebuggerAPI {
 	}
 
 	/**
+	 * Check if the given snap could incorporate any "live" data of the target
+	 * 
+	 * @param target the target
+	 * @param snap the snapshot key
+	 * @return true if live data retrieval is appropriate from the given snapshot's view
+	 */
+	default boolean isLive(Target target, long snap) {
+		if (target == null || !target.isValid()) {
+			return false;
+		}
+
+		Trace trace = target.getTrace();
+		TraceSnapshot snapshot = trace.getTimeManager().getSnapshot(snap, false);
+		if (Objects.equals(target.getTime(), snapshot.getSchedule())) {
+			return true;
+		}
+
+		// LATER: This may be expensive....
+		TraceTimeViewport viewport = trace.createTimeViewport();
+		viewport.setSnap(snap);
+		for (long s : viewport.getReversedSnaps()) {
+			if (target.getSnap() == s) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Copy registers from target to trace, if applicable and not already cached
 	 * 
 	 * @param platform the platform whose language defines the registers
@@ -975,10 +981,9 @@ public interface FlatDebuggerAPI {
 	 */
 	default void refreshRegistersIfLive(TracePlatform platform, TraceThread thread, int frame,
 			long snap, Collection<Register> registers) {
-		Trace trace = thread.getTrace();
+		Target target = getTargetService().getTarget(thread.getTrace());
 
-		Target target = getTargetService().getTarget(trace);
-		if (target == null || target.getSnap() != snap) {
+		if (!isLive(target, snap)) {
 			return;
 		}
 		Set<Register> asSet = registers instanceof Set<Register> s ? s : Set.copyOf(registers);
@@ -1003,7 +1008,9 @@ public interface FlatDebuggerAPI {
 		if (regs == null) {
 			return registers.stream().map(RegisterValue::new).collect(Collectors.toList());
 		}
-		return registers.stream().map(r -> regs.getValue(snap, r)).collect(Collectors.toList());
+		return registers.stream()
+				.map(r -> regs.getViewValue(platform, snap, r))
+				.collect(Collectors.toList());
 	}
 
 	/**
@@ -1033,7 +1040,7 @@ public interface FlatDebuggerAPI {
 	default List<RegisterValue> readRegisters(Collection<Register> registers) {
 		DebuggerCoordinates current = getCurrentDebuggerCoordinates();
 		return readRegisters(requireCurrentPlatform(), requireThread(current.getThread()),
-			current.getFrame(), current.getSnap(), registers);
+			current.getFrame(), current.getViewSnap(), registers);
 	}
 
 	/**
@@ -1108,7 +1115,7 @@ public interface FlatDebuggerAPI {
 				"Register " + register + " is not in language " + language);
 		}
 		return readRegister(platform, requireThread(current.getThread()), current.getFrame(),
-			current.getSnap(), register);
+			current.getViewSnap(), register);
 	}
 
 	/**
@@ -1167,7 +1174,7 @@ public interface FlatDebuggerAPI {
 		TracePlatform platform = requirePlatform(coordinates.getPlatform());
 		Language language = platform.getLanguage();
 		RegisterValue value = readRegister(platform, requireThread(coordinates.getThread()),
-			coordinates.getFrame(), coordinates.getSnap(), language.getProgramCounter());
+			coordinates.getFrame(), coordinates.getViewSnap(), language.getProgramCounter());
 		if (value == null || !value.hasValue()) {
 			return null;
 		}
@@ -1193,7 +1200,7 @@ public interface FlatDebuggerAPI {
 		TracePlatform platform = requirePlatform(coordinates.getPlatform());
 		CompilerSpec cSpec = platform.getCompilerSpec();
 		RegisterValue value = readRegister(platform, requireThread(coordinates.getThread()),
-			coordinates.getFrame(), coordinates.getSnap(), cSpec.getStackPointer());
+			coordinates.getFrame(), coordinates.getViewSnap(), cSpec.getStackPointer());
 		if (!value.hasValue()) {
 			return null;
 		}
@@ -1286,7 +1293,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Patch memory using the given editor
-	 * 
 	 * <p>
 	 * The success or failure of this method depends on a few factors. First is the user-selected
 	 * control mode for the trace. See {@link #setControlMode(ControlMode)}. In read-only mode, this
@@ -1318,7 +1324,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Patch memory of the given target, according to its current control mode
-	 * 
 	 * <p>
 	 * If you intend to apply several patches, consider using {@link #createStateEditor(Trace,long)}
 	 * and {@link #writeMemory(StateEditor, Address, byte[])}
@@ -1335,7 +1340,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Patch memory of the current target, according to the current control mode
-	 * 
 	 * <p>
 	 * If you intend to apply several patches, consider using {@link #createStateEditor()} and
 	 * {@link #writeMemory(StateEditor, Address, byte[])}
@@ -1350,7 +1354,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Patch a register using the given editor
-	 * 
 	 * <p>
 	 * The success or failure of this methods depends on a few factors. First is the user-selected
 	 * control mode for the trace. See {@link #setControlMode(ControlMode)}. In read-only mode, this
@@ -1381,7 +1384,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Patch a register of the given context, according to its current control mode
-	 * 
 	 * <p>
 	 * If you intend to apply several patches, consider using
 	 * {@link #createStateEditor(TraceThread,int,long)} and
@@ -1417,7 +1419,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Patch a register of the current thread, according to the current control mode
-	 * 
 	 * <p>
 	 * If you intend to apply several patches, consider using {@link #createStateEditor()} and
 	 * {@link #writeRegister(StateEditor, RegisterValue)}.
@@ -1570,7 +1571,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Resume execution of the live target for the given trace thread
-	 * 
 	 * <p>
 	 * This is commonly called "continue" or "go," as well.
 	 * 
@@ -1583,7 +1583,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Resume execution of the live target for the given trace
-	 * 
 	 * <p>
 	 * This is commonly called "continue" or "go," as well.
 	 * 
@@ -1608,7 +1607,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Interrupt execution of the live target for the given trace thread
-	 * 
 	 * <p>
 	 * This is commonly called "pause" or "break," as well, but not "stop."
 	 * 
@@ -1621,7 +1619,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Interrupt execution of the live target for the given trace
-	 * 
 	 * <p>
 	 * This is commonly called "pause" or "break," as well, but not "stop."
 	 * 
@@ -1646,7 +1643,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Terminate execution of the live target for the given trace thread
-	 * 
 	 * <p>
 	 * This is commonly called "stop" as well.
 	 * 
@@ -1659,7 +1655,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Terminate execution of the live target for the given trace
-	 * 
 	 * <p>
 	 * This is commonly called "stop" as well.
 	 * 
@@ -1684,7 +1679,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Get the current state of the given trace
-	 * 
 	 * <p>
 	 * If the trace does not have a live target, it is considered
 	 * {@link TraceExecutionState#TERMINATED} (even if the trace <em>never</em> technically had a
@@ -1710,7 +1704,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Get the current state of the given thread
-	 * 
 	 * <p>
 	 * If the thread does not have a corresponding live target thread, it is considered
 	 * {@link TraceExecutionState#TERMINATED} (even if the thread <em>never</em> technically had a
@@ -1743,7 +1736,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Check if the current target is alive
-	 * 
 	 * <p>
 	 * <b>NOTE:</b> To be "current," the target must be recorded, and its trace must be the current
 	 * trace.
@@ -1766,7 +1758,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Check if the current target thread is alive
-	 * 
 	 * <p>
 	 * <b>NOTE:</b> To be the "current" target thread, the target must be recorded, and its trace
 	 * thread must be the current thread.
@@ -1779,7 +1770,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Wait for the trace's target to break
-	 * 
 	 * <p>
 	 * If the trace has no target, this method returns immediately, i.e., it assumes the target has
 	 * terminated.
@@ -2027,7 +2017,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Get all the breakpoints
-	 * 
 	 * <p>
 	 * This returns all logical breakpoints among all open programs and traces (targets)
 	 * 
@@ -2103,7 +2092,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Perform some operations expected to cause changes, and then wait for those changes to settle
-	 * 
 	 * <p>
 	 * Use this via a try-with-resources block containing the operations causing changes.
 	 * 
@@ -2122,7 +2110,7 @@ public interface FlatDebuggerAPI {
 	 */
 	default Set<LogicalBreakpoint> breakpointsToggle(ProgramLocation location) {
 		DebuggerLogicalBreakpointService service = getBreakpointService();
-		try (ExpectingBreakpointChanges exp = expectBreakpointChanges()) {
+		try (ExpectingBreakpointChanges _ = expectBreakpointChanges()) {
 			return waitOn(service.toggleBreakpointsAt(location,
 				() -> CompletableFuture.completedFuture(Set.of())));
 		}
@@ -2133,7 +2121,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Set a breakpoint at the given location
-	 * 
 	 * <p>
 	 * <b>NOTE:</b> Many asynchronous events take place when creating a breakpoint, esp., among
 	 * several live targets. Furthermore, some targets may adjust the breakpoint specification just
@@ -2152,7 +2139,7 @@ public interface FlatDebuggerAPI {
 	default Set<LogicalBreakpoint> breakpointSet(ProgramLocation location, long length,
 			TraceBreakpointKindSet kinds, String name) {
 		DebuggerLogicalBreakpointService service = getBreakpointService();
-		try (ExpectingBreakpointChanges exp = expectBreakpointChanges()) {
+		try (ExpectingBreakpointChanges _ = expectBreakpointChanges()) {
 			waitOn(service.placeBreakpointAt(location, length, kinds, name));
 		}
 		catch (InterruptedException | ExecutionException | TimeoutException e) {
@@ -2174,7 +2161,7 @@ public interface FlatDebuggerAPI {
 	 */
 	default Set<LogicalBreakpoint> breakpointSetSoftwareExecute(ProgramLocation location,
 			String name) {
-		return breakpointSet(location, 1, TraceBreakpointKindSet.SW_EXECUTE, name);
+		return breakpointSet(location, 1, CommonSet.SWX.kinds(), name);
 	}
 
 	/**
@@ -2187,12 +2174,11 @@ public interface FlatDebuggerAPI {
 	 */
 	default Set<LogicalBreakpoint> breakpointSetHardwareExecute(ProgramLocation location,
 			String name) {
-		return breakpointSet(location, 1, TraceBreakpointKindSet.HW_EXECUTE, name);
+		return breakpointSet(location, 1, CommonSet.HWX.kinds(), name);
 	}
 
 	/**
 	 * Set a read breakpoint at the given location
-	 * 
 	 * <p>
 	 * This might also be called a "read watchpoint" or a "read access breakpoint."
 	 * 
@@ -2204,12 +2190,11 @@ public interface FlatDebuggerAPI {
 	 */
 	default Set<LogicalBreakpoint> breakpointSetRead(ProgramLocation location, int length,
 			String name) {
-		return breakpointSet(location, length, TraceBreakpointKindSet.READ, name);
+		return breakpointSet(location, length, CommonSet.READ.kinds(), name);
 	}
 
 	/**
 	 * Set a write breakpoint at the given location
-	 * 
 	 * <p>
 	 * This might also be called a "write watchpoint" or a "write access breakpoint."
 	 * 
@@ -2221,12 +2206,11 @@ public interface FlatDebuggerAPI {
 	 */
 	default Set<LogicalBreakpoint> breakpointSetWrite(ProgramLocation location, int length,
 			String name) {
-		return breakpointSet(location, length, TraceBreakpointKindSet.WRITE, name);
+		return breakpointSet(location, length, CommonSet.WRITE.kinds(), name);
 	}
 
 	/**
 	 * Set an access breakpoint at the given location
-	 * 
 	 * <p>
 	 * This might also be called a "watchpoint."
 	 * 
@@ -2238,7 +2222,7 @@ public interface FlatDebuggerAPI {
 	 */
 	default Set<LogicalBreakpoint> breakpointSetAccess(ProgramLocation location, int length,
 			String name) {
-		return breakpointSet(location, length, TraceBreakpointKindSet.ACCESS, name);
+		return breakpointSet(location, length, CommonSet.ACCESS.kinds(), name);
 	}
 
 	/**
@@ -2264,7 +2248,7 @@ public interface FlatDebuggerAPI {
 	default Set<LogicalBreakpoint> breakpointsEnable(ProgramLocation location) {
 		DebuggerLogicalBreakpointService service = getBreakpointService();
 		Set<LogicalBreakpoint> col = service.getBreakpointsAt(location);
-		try (ExpectingBreakpointChanges exp = expectBreakpointChanges()) {
+		try (ExpectingBreakpointChanges _ = expectBreakpointChanges()) {
 			waitOn(service.enableAll(col, getTrace(location)));
 		}
 		catch (InterruptedException | ExecutionException | TimeoutException e) {
@@ -2282,7 +2266,7 @@ public interface FlatDebuggerAPI {
 	default Set<LogicalBreakpoint> breakpointsDisable(ProgramLocation location) {
 		DebuggerLogicalBreakpointService service = getBreakpointService();
 		Set<LogicalBreakpoint> col = service.getBreakpointsAt(location);
-		try (ExpectingBreakpointChanges exp = expectBreakpointChanges()) {
+		try (ExpectingBreakpointChanges _ = expectBreakpointChanges()) {
 			waitOn(service.disableAll(col, getTrace(location)));
 		}
 		catch (InterruptedException | ExecutionException | TimeoutException e) {
@@ -2300,7 +2284,7 @@ public interface FlatDebuggerAPI {
 	default boolean breakpointsClear(ProgramLocation location) {
 		DebuggerLogicalBreakpointService service = getBreakpointService();
 		Set<LogicalBreakpoint> col = service.getBreakpointsAt(location);
-		try (ExpectingBreakpointChanges exp = expectBreakpointChanges()) {
+		try (ExpectingBreakpointChanges _ = expectBreakpointChanges()) {
 			waitOn(service.deleteAll(col, getTrace(location)));
 		}
 		catch (InterruptedException | ExecutionException | TimeoutException e) {
@@ -2311,7 +2295,6 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * Flush each stage of the asynchronous processing pipelines from end to end
-	 * 
 	 * <p>
 	 * This method includes as many components as its author knows to flush. It flushes the trace's
 	 * event queue. Then, it waits for various services' changes to settle, in dependency order.
@@ -2319,7 +2302,6 @@ public interface FlatDebuggerAPI {
 	 * Note that some stages use timeouts. It's also possible the target had not generated all the
 	 * expected events by the time this method began flushing its queue. Thus, callers should still
 	 * check that some expected condition is met and possibly repeat the flush before proceeding.
-	 * 
 	 * <p>
 	 * There are additional dependents in the GUI; however, scripts should not depend on them, so we
 	 * do not wait on them.

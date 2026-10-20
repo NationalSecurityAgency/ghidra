@@ -171,7 +171,7 @@ public class AbstractSearchAndReplaceTest extends AbstractGhidraHeadedIntegratio
 	}
 
 	protected void createComment(long address, CommentType commentType, String comment) {
-		builder.createComment(Long.toHexString(address), comment, commentType.ordinal());
+		builder.createComment(Long.toHexString(address), comment, commentType);
 	}
 
 	protected void setSearchTypes(SearchType... searchTypes) {

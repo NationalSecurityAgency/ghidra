@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.register;
 
-import static ghidra.lifecycle.Unfinished.TODO;
+import static ghidra.lifecycle.Unfinished.*;
 import static org.junit.Assert.*;
 
 import java.math.BigInteger;
@@ -259,8 +259,10 @@ public class DebuggerTraceRegistersProviderTest extends AbstractDebuggerRegister
 			waitForDialogComponent(RegisterDataSettingsDialog.class);
 		Settings settings = dialog.getSettings();
 		FormatSettingsDefinition format = FormatSettingsDefinition.DEF;
-		format.setChoice(settings, FormatSettingsDefinition.DECIMAL);
-		runSwing(() -> dialog.okCallback());
+		runSwing(() -> {
+			format.setChoice(settings, FormatSettingsDefinition.DECIMAL);
+		});
+		pressButtonByText(dialog, "OK");
 
 		// The data is the settings. Wonderful :/
 		assertEquals(FormatSettingsDefinition.DECIMAL, format.getChoice(data));

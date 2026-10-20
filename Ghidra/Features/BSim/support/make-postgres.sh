@@ -50,8 +50,8 @@ POSTGRES=postgresql-15.18
 POSTGRES_GZ=${POSTGRES}.tar.gz
 POSTGRES_CONFIG_OPTIONS="--disable-rpath --with-openssl"
 
-DIR=$(cd `dirname $0`; pwd)/..
-echo $DIR
+DIR="$(cd "$(dirname "$0")" && pwd)/.."
+echo "$DIR"
 
 POSTGRES_GZ_PATH=${DIR}/../../../../ghidra.bin/Ghidra/Features/BSim/${POSTGRES_GZ}
 if [ ! -f "${POSTGRES_GZ_PATH}" ]; then
@@ -68,14 +68,14 @@ fi
 OS=`uname -s`
 ARCH=`uname -m`
 
-cd ${DIR}
+cd "${DIR}"
 
 mkdir -p build > /dev/null
 
 if [ ! -d build/${POSTGRES} ]; then
 	# Unpack postgres source distro into build
 	echo "Unpacking postgresql source: ${POSTGRES_GZ_PATH}"
-	$(cd build; tar -xzf ${POSTGRES_GZ_PATH} )
+	(cd build && tar -xzf "${POSTGRES_GZ_PATH}")
 fi
 
 # Build postgresql
@@ -106,14 +106,14 @@ fi
 echo "Platform: $OSDIR"
 
 # Install within build/os
-INSTALL_DIR=${DIR}/build/os/${OSDIR}/postgresql
-rm -rf ${INSTALL_DIR} > /dev/null
+INSTALL_DIR="${DIR}/build/os/${OSDIR}/postgresql"
+rm -rf "${INSTALL_DIR}" > /dev/null
 
 make distclean
 
 # Configure postgres 
 
-./configure ${POSTGRES_CONFIG_OPTIONS} --prefix=${INSTALL_DIR}
+./configure ${POSTGRES_CONFIG_OPTIONS} --prefix="${INSTALL_DIR}"
 if [ $? != 0 ]; then
 	exit $?
 fi
@@ -143,7 +143,7 @@ cp src/lshvector/* build/lshvector
 cp src/lshvector/c/* build/lshvector
 
 cd build/lshvector
-make -f Makefile.lshvector install PG_CONFIG=${INSTALL_DIR}/bin/pg_config
+make -f Makefile.lshvector install PG_CONFIG="${INSTALL_DIR}/bin/pg_config"
 
 if [ $? = 0 ]; then
 	echo "Completed build and install of lshvector postgresql plugin"	

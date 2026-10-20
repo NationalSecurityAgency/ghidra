@@ -92,7 +92,7 @@ public class MyHeadlessToolkit extends Toolkit {
 
 	@Override
 	public String[] getFontList() {
-		return localToolKit.getFontList();
+		return GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
 	}
 
 	@Override

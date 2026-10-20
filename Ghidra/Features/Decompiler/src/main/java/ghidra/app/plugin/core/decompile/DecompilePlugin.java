@@ -207,13 +207,13 @@ public class DecompilePlugin extends Plugin {
 	}
 
 	void locationChanged(DecompilerProvider provider, ProgramLocation location) {
-		if (provider == connectedProvider) {
+		if (provider.shouldSendEvents()) {
 			firePluginEvent(new ProgramLocationPluginEvent(name, location, location.getProgram()));
 		}
 	}
 
 	void selectionChanged(DecompilerProvider provider, ProgramSelection selection) {
-		if (provider == connectedProvider) {
+		if (provider.shouldSendEvents()) {
 			firePluginEvent(new ProgramSelectionPluginEvent(name, selection, currentProgram));
 		}
 	}

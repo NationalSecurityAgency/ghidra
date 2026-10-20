@@ -129,11 +129,7 @@ public class AndroidProjectCreator {
 				if (childName.equals("META-INF")) {
 					continue;
 				}
-				File subDir = new File(outputDirectory, childName);
-				if (!FileUtilities.isPathContainedWithin(outputDirectory, subDir)) {
-					Msg.error(this, "Skipping directory with path traversal: " + childName);
-					continue;
-				}
+				File subDir = FileUtilities.getSecureFile(outputDirectory, childName);
 				FileUtilities.checkedMkdir(subDir);
 				processListing(subDir, fs, child.getListing(), monitor);
 				continue;
@@ -222,11 +218,7 @@ public class AndroidProjectCreator {
 
 		try (InputStream is = inputFile.getInputStream()) {
 			FileUtilities.checkedMkdirs(outputDirectory);
-			File destFile = new File(outputDirectory, outputName);
-			if (!FileUtilities.isPathContainedWithin(outputDirectory, destFile)) {
-				throw new IOException("Path traversal detected in entry name: " + outputName);
-			}
-
+			File destFile = FileUtilities.getSecureFile(outputDirectory, outputName);
 			monitor.setMessage("Copying [" + inputFile.getName() + "] to Eclipse project...");
 			FileUtilities.copyStreamToFile(is, destFile, false, monitor);
 

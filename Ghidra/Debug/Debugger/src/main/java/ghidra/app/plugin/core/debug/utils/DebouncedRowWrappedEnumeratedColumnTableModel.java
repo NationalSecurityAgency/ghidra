@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,14 +17,15 @@ package ghidra.app.plugin.core.debug.utils;
 
 import java.util.function.Function;
 
-import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
+import docking.widgets.table.EnumeratedTableColumn;
 import docking.widgets.table.RowWrappedEnumeratedColumnTableModel;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Swing;
 
-public class DebouncedRowWrappedEnumeratedColumnTableModel<C extends Enum<C> & EnumeratedTableColumn<C, R>, K, R, T>
+public class DebouncedRowWrappedEnumeratedColumnTableModel<
+	C extends Enum<C> & EnumeratedTableColumn<C, R>, K, R, T>
 		extends RowWrappedEnumeratedColumnTableModel<C, K, R, T> {
 
 	AsyncDebouncer<Void> debouncer = new AsyncDebouncer<Void>(AsyncTimer.DEFAULT_TIMER, 100);

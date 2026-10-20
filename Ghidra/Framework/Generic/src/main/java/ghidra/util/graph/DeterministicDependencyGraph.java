@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,8 +25,9 @@ import org.apache.commons.collections4.set.ListOrderedSet;
  * memory than {@link DependencyGraph}, and if memory is not an issue, it also seems to be
  * slightly faster as well.
  * <P>
- * This class was implemented to provide determinism while doing
- * developmental debugging.
+ * This class was implemented to provide determinism while doing developmental debugging.
+ * <P>
+ * Note: the types used in this graph must be comparable in order to provider consistent ordering.
  *
  * @param <T> the type of value.
  * 

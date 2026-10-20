@@ -15,7 +15,7 @@
 ##
 from typing import Dict, List, Optional, Tuple
 from ghidratrace.client import Address, RegVal
-import lldb
+import lldb #  type: ignore  # no stubs available from upstream/SWIG
 
 from . import util
 
@@ -135,6 +135,7 @@ default_compiler_map: Dict[Optional[str], str] = {
     'freebsd': 'gcc',
     'linux': 'gcc',
     'netbsd': 'gcc',
+    'openbsd': 'gcc',
     'ps4': 'gcc',
     'ios': 'gcc',
     'macosx': 'gcc',

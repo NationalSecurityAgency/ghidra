@@ -22,9 +22,9 @@
     hyperlink.</P>
     <!-- Annotation Example -->
 
-    <P>The following text shows the syntax of a sample URL annotation:</P>
+    <P>The following text shows the syntax of a sample HTTP URL annotation:</P>
 	<pre><font size="4"><br>
-	<b>{@<i>url</i></b> "<i>http://www.google.com</i>"</b> "Search Web"<b>}</b><br>
+	<b>{@<i>url</i></b> "<i>https://www.google.com</i>"</b> "Search Web"<b>}</b><br>
 	</font><br></pre>
 
     <P>The bold text is required for all annotations. The italicized text is required but is
@@ -38,7 +38,7 @@
       <!-- image -->
 
       <P align="center"><IMG border="0" src="images/CommentDialogURLExample.png" alt=""><BR>
-       <I>URL Annotation Example</I></P>
+       <I>HTTP URL Annotation Example</I></P>
 
       <P>The image above shows a URL annotation in its text form as entered into the EOL Comment
       tab of the Comments dialog.<BR>
@@ -46,11 +46,13 @@
        The image below shows how the annotation is rendered in Ghidra.</P>
 
       <P align="center"><IMG border="2" src="images/RenderedURLExample.png" alt=""><BR>
-       <I>Rendered URL Annotation Example</I></P>
+       <I>Rendered HTTP URL Annotation Example</I></P>
 
-      <P>When the URL text (e.g., "http://www.google.com") in the above image is clicked from within
+      <P>When the URL text (e.g., "https://www.google.com") in the above image is clicked from within
       Ghidra, a web browser is launched and attempts to load the corresponding web page.  </P>
       
+	  <I>GHIDRA URL Annotation Example</I></P>
+			 
       <P>If the URL text corresponds to a Ghidra URL and attempt will be made to open the referenced
       Program file within the Code Browser.  Such a URL may refer to a Program file from a 
       local project or Ghidra Server.  The Ghidra URL forms supported include:</P>
@@ -64,6 +66,14 @@
       <i>ghidra:/[&lt;project-path&gt/]&lt;project-name&gt;?/&lt;program-path&gt;[#&lt;address-or-symbol-ref&gt;]</i><BR>
       Example: <i>ghidra:/share/MyProject?/notepad.exe#entry</i>
       </P>
+	  
+	  <P><IMG border="0" src="images/warning.help.png" alt="Note"> Clicking on all remote URL annotations will be
+	  will be subject to the <b>Server Allow List</b> resulting in a possible confirmation dialog.  
+	  This is independent of possible SSL/TLS server authentication which may be required.
+	  At anytime the <b>Server Allow List</b> may be cleared via the Project window 
+	  <b>Edit->Clear Server Allow List...</b> or managed using the <I>support/updateServerAllowList</I> shell script.  
+	  Execute this script without arguments to see usage information.</P>
+	  
     </BLOCKQUOTE>
 
     <H2>Valid Annotations</H2>
@@ -104,11 +114,11 @@
              Notes:
              
              <ul style="margin-left: 10px;">
-	             <li>
-		              If you provide a symbol name and not an address, then you will need to
-		            fully-qualify the symbol name if it is not in the global namespace (e.g.,
-		            FunctionFoo::param1 to link to a specific function parameter).
-	            </li>
+				<li>
+				    If you provide a symbol name and not an address, then you will need to
+				    fully-qualify the symbol name if it is not in the global namespace (e.g.,
+				    FunctionFoo::param1 to link to a specific function parameter).
+				</li>
 	            <li>
 		            If you specify a symbol name instead of an address, then the text of the comment
 		            will be changed to use the address of that symbol.
@@ -197,7 +207,7 @@
 
             <TD valign="top" width="12%">
               <OL style="margin-left: 15px;">
-                <LI>URL</LI>
+                <LI>HTTP/GHIDRA URL</LI>
 
                 <LI>[display text]<BR>
                 </LI>
@@ -219,11 +229,11 @@
 
             <TD valign="top" width="25%">
               <UL style="margin-left: 10px;">
-                <LI>{@url "http://www.google.com"}</LI>
+                <LI>{@url "https://www.google.com"}</LI>
 
-                <LI>{@url "http://www.google.com" "google"}</LI>
+                <LI>{@url "https://www.google.com" "google"}</LI>
 
-                <LI>{@url "http://www.google.com" "click here for google"}</LI>
+                <LI>{@url "https://www.google.com" "click here for google"}</LI>
                 
                 <LI>{@url "ghidra://myserver/Repo/notepad.exe"}</LI>
                 
@@ -286,6 +296,51 @@
           </TR>
 
           <TR>
+            <TD valign="top" width="5%">Variable<BR>
+            </TD>
+
+            <TD valign="top" width="15%">Displays the text of the given variable or parameter
+              for a given function as a hyperlink.<BR>
+            <BR>
+            <BR>
+             Notes:
+
+            <ul style="margin-left: 10px;">
+              <li>
+                  This annotation will modify itself to use the variable and function
+                  address to survive renaming of the variable and the function.
+              </li>
+            </ul>
+
+            </TD>
+
+
+            <TD valign="top" width="12%">
+              <OL style="margin-left: 15px;">
+                <LI>variable/parameter name (@variable) or hash identifier</LI>
+                <LI>[function name or address]<BR>
+                </LI>
+              </OL>
+            </TD>
+
+            <TD valign="top" width="10%">
+              <UL style="margin-left: 10px;">
+                <LI>@variable</LI>
+                <LI>@var</LI>
+              </UL>
+            </TD>
+
+            <TD valign="top" width="25%">
+              <UL style="margin-left: 10px;">
+                <LI>{@variable "i"}</LI>
+
+                <LI>{@var "argv" "main"}</LI>
+                </LI>
+              </UL>
+            </TD>
+          </TR>
+
+          <TR>
             <TD valign="top" width="5%"><I>Discovered Annotations</I><BR>
             </TD>
 
@@ -307,6 +362,10 @@
       </P>
 
       <P><IMG border="0" src="images/warning.help.png" alt="Note"> All annotations support double
+      quotes (") around content inside of the annotation tag, excluding the <B>@<I>name</I></B>
+      part of the tag. Further, some annotations require quotes, as listed in the table above
+      (e.g., the <B>Execute</B> annotation requires quotes). It is considered good practice to
+      quote all annotation parameter values.</P><P><IMG border="0" src="images/warning.help.png" alt="Note"> All annotations support double
       quotes (") around content inside of the annotation tag, excluding the <B>@<I>name</I></B>
       part of the tag. Further, some annotations require quotes, as listed in the table above
       (e.g., the <B>Execute</B> annotation requires quotes). It is considered good practice to

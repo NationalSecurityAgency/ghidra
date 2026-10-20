@@ -19,13 +19,14 @@ import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.error.LowlevelError;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeUseropLibraryFactory.UseropLibrary;
+import ghidra.pcode.exec.SleighPcodeUseropDefinition.BuilderStage1;
 
-@UseropLibrary("xtensa")
+@UseropLibrary(id = "xtensa")
 public class XtensaPcodeUseropLibraryFactory implements PcodeUseropLibraryFactory {
 	@Override
 	public <T> PcodeUseropLibrary<T> create(SleighLanguage language,
 			PcodeArithmetic<T> arithmetic) {
-		return new XtensaPcodeUseropLibrary<>(language);
+		return new XtensaPcodeUseropLibrary<>();
 	}
 
 	public static class IntStack {
@@ -62,11 +63,21 @@ public class XtensaPcodeUseropLibraryFactory implements PcodeUseropLibraryFactor
 
 		private final IntStack stack = new IntStack();
 
-		public XtensaPcodeUseropLibrary(SleighLanguage language) {
-			SleighPcodeUseropDefinition.Factory factory =
-				new SleighPcodeUseropDefinition.Factory(language);
+		protected String genPushN(int n) {
+			StringBuilder buf = new StringBuilder();
+			int i = 0;
+			for (; i < n; i++) {
+				buf.append("  __pushValue(a%d);\n".formatted(i));
+			}
+			for (; i < 16; i++) {
+				buf.append("  a%d = a%d;\n".formatted(i - n, i));
+			}
+			return buf.toString();
+		}
 
-			putOp(factory.define("rotateRegWindow").params("callinc").body(args -> """
+		@PcodeUserop
+		public SleighPcodeUseropDefinition rotateRegWindow(BuilderStage1 builder) {
+			return builder.params("callinc").body(_ -> """
 					__pushCount(callinc);
 					if (callinc == 0) goto <done>;
 					if (callinc == 1) goto <push4>;
@@ -82,9 +93,24 @@ public class XtensaPcodeUseropLibraryFactory implements PcodeUseropLibraryFactor
 					<push12>
 					""" + genPushN(12) + """
 					<done>
-					""").build());
+					""").build();
+		}
 
-			putOp(factory.define("restoreRegWindow").body(args -> """
+		protected String genPopN(int n) {
+			StringBuilder buf = new StringBuilder();
+			int i = 15;
+			for (; i >= n; i--) {
+				buf.append("  a%d = a%d;\n".formatted(i, i - n));
+			}
+			for (; i >= 0; i--) {
+				buf.append("  a%d = __popValue();\n".formatted(i));
+			}
+			return buf.toString();
+		}
+
+		@PcodeUserop
+		public SleighPcodeUseropDefinition restoreRegWindow(BuilderStage1 builder) {
+			return builder.params().body(_ -> """
 					callinc:4 = (a0 >> 30) & 0x3;
 					__popCount(callinc);
 					if (callinc == 0) goto <done>;
@@ -100,31 +126,7 @@ public class XtensaPcodeUseropLibraryFactory implements PcodeUseropLibraryFactor
 					<pop12>
 					""" + genPopN(12) + """
 					<done>
-					""").build());
-		}
-
-		protected String genPushN(int n) {
-			StringBuilder buf = new StringBuilder();
-			int i = 0;
-			for (; i < n; i++) {
-				buf.append("  __pushValue(a%d);\n".formatted(i));
-			}
-			for (; i < 16; i++) {
-				buf.append("  a%d = a%d;\n".formatted(i - n, i));
-			}
-			return buf.toString();
-		}
-
-		protected String genPopN(int n) {
-			StringBuilder buf = new StringBuilder();
-			int i = 15;
-			for (; i >= n; i--) {
-				buf.append("  a%d = a%d;\n".formatted(i, i - n));
-			}
-			for (; i >= 0; i--) {
-				buf.append("  a%d = __popValue();\n".formatted(i));
-			}
-			return buf.toString();
+					""").build();
 		}
 
 		@PcodeUserop(functional = true, hasSideEffects = false)

@@ -109,6 +109,19 @@ public interface TraceSnapshot {
 	String getScheduleString();
 
 	/**
+	 * Check whether this snapshot represents a fork
+	 * 
+	 * <p>
+	 * A snapshot is a fork if the snap immediately preceding it does not actually represents its
+	 * immediately preceding snapshot in time. This is the case if the snapshot has a schedule whose
+	 * initial snapshot is not the one immediately preceding it. NOTE: The (scratch) snapshot with
+	 * the minimum key is <em>not</em> considered a fork.
+	 * 
+	 * @return true if a fork, false otherwise
+	 */
+	public boolean isFork();
+
+	/**
 	 * Set the schedule from some previous snapshot to this one
 	 * 
 	 * @param schedule the schedule

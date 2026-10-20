@@ -31,7 +31,6 @@ import ghidra.program.model.pcode.PcodeOp;
 
 /**
  * The type analysis for JIT-accelerated emulation.
- * 
  * <p>
  * This implements the Type Assignment phase of the {@link JitCompiler} using a very basic "voting"
  * algorithm. The result is an assignment of type to each {@link JitVal}. To be clear, at this
@@ -57,9 +56,9 @@ import ghidra.program.model.pcode.PcodeOp;
  * The JVM has two integral types {@code int} and {@code long} of 4 and 8 bytes respectively. P-code
  * has one integral type of no specified size. Or rather, it has as many integral types: 1-byte int,
  * 2-byte int, 3-byte int, and so on. We thus describe p-code operands as having a type
- * {@link JitTypeBehavior behavior}: <em>integral</em> or <em>floating-point</em>. Note there are
- * two ancillary behaviors <em>any</em> and <em>copy</em> to describe the operands of truly typeless
- * operators, like {@link JitCopyOp}.
+ * {@linkplain JitTypeBehavior behavior}: <em>integral</em> or <em>floating-point</em>. Note there
+ * are two ancillary behaviors <em>any</em> and <em>copy</em> to describe the operands of truly
+ * typeless operators, like {@link JitCopyOp}.
  * 
  * <h3>Size</h3>
  * <p>
@@ -77,14 +76,15 @@ import ghidra.program.model.pcode.PcodeOp;
  * All floating-point types are signed, whether in p-code or in the JVM, so there's little to
  * consider in terms of mapping. Some p-code operators have signed operands, some have unsigned
  * operands, and others have no signedness at all. In contrast, no JVM bytecodes are strictly
- * unsigned. They are either signed or have no signedness. It was a choice of the Java language
- * designers that all variables would be signed, and this is consequence of that choice. In time,
- * "unsigned" operations were introduced in the form of static methods, e.g.,
- * {@link Integer#compareUnsigned(int, int)} and {@link Long#divideUnsigned(long, long)}. Note that
- * at the bit level, unsigned multiplication is the same as signed, and so no "unsigned multiply"
- * method was provided. This actually aligns well with p-code in that, for this aspect of
- * signedness, the variables are all the same. Instead the operations apply the type interpretation.
- * Thus, we need not consider signedness when allocating JVM locals.
+ * unsigned (except unsigned right shifts). They are either signed or have no signedness. It was a
+ * choice of the Java language designers that all variables would be signed, and this is a
+ * consequence of that choice. In time, "unsigned" operations were introduced in the form of static
+ * methods, e.g., {@link Integer#compareUnsigned(int, int)} and
+ * {@link Long#divideUnsigned(long, long)}. Note that at the bit level, unsigned multiplication is
+ * the same as signed, and so no "unsigned multiply" method was provided. This actually aligns well
+ * with p-code in that, for this aspect of signedness, the variables are all the same. Instead the
+ * operations apply the type interpretation. Thus, we need not consider signedness when allocating
+ * JVM locals.
  * 
  * <h2>Conversions and Casts</h2>
  * <p>
@@ -96,7 +96,6 @@ import ghidra.program.model.pcode.PcodeOp;
  * $U00:4 = FLOAT_ADD r0, r1
  * r2     = INT_2COMP $U00:4
  * </pre>
- * 
  * <p>
  * The native translation to bytecode:
  * 
@@ -110,7 +109,6 @@ import ghidra.program.model.pcode.PcodeOp;
  * ISUB
  * ISTORE 4 # r2
  * </pre>
- * 
  * <p>
  * Will cause an error when loading the class. This is because the local variable 3 must be one of
  * {@code int} or {@code float}, and the bytecode must declare which, so either the {@code FSTORE 3}
@@ -121,7 +119,6 @@ import ghidra.program.model.pcode.PcodeOp;
  * FLOAD  3
  * INVOKESTATIC {@link Float#floatToRawIntBits(float)}
  * </pre>
- * 
  * <p>
  * At this point, the bit-vector contents of {@code $U00:4} are on the stack, but for all the JVM
  * cares, they are now an {@code int}. We must assigned a JVM type to each local we allocate and
@@ -131,7 +128,6 @@ import ghidra.program.model.pcode.PcodeOp;
  * bytecodes actually executed, but I pray the JVM's JIT compiler can recognize calls to
  * {@link Float#floatToRawIntBits(float)} and similar and emit no native code for them, i.e., they
  * ought to have zero run-time cost.
- * 
  * <p>
  * Size conversions cause a similar need for explicit conversions, for two reasons: 1) Any
  * conversion between JVM {@code int} and {@code long} still requires specific bytecodes. Neither
@@ -141,7 +137,6 @@ import ghidra.program.model.pcode.PcodeOp;
  * requires explicit conversions between sizes, e.g., using {@link PcodeOp#INT_ZEXT zext}. However,
  * we often have to perform temporary conversions in order to meet the type/size requirements of JVM
  * bytecodes.
- * 
  * <p>
  * Consider {@code r2 = INT_MULT r0, r1} where the registers are all 5 bytes. Thus, the registers
  * are allocated as JVM locals of type {@code long}. We load {@code r0} and {@code r1} onto the
@@ -154,25 +149,22 @@ import ghidra.program.model.pcode.PcodeOp;
  * Given that only behavior and size require any explicit conversions, we omit signedness from the
  * formal definition of p-code {@link JitType type}. It is just the behavior applied to a size,
  * e.g., {@link IntJitType#I3 int3}.
- * 
  * <p>
  * We use a fairly straightforward voting algorithm that examines how each variable definition is
  * used. The type of an operand is trivially determined by examining the behavior of each operand,
- * as specified by the p-code opcode; and the size of the input varnode, specified by the specific
+ * as specified by the p-code opcode; and the size of the input varnode, specified by the actual
  * p-code op instance. For example, the p-code op {@code $U00:4 = FLOAT_ADD r0, r1} has an output
  * operand of {@link FloatJitType#F4 float4}. Thus, it casts a vote that {@code $U00:4} should be
  * that type. However, the subsequent op {@code r2 = INT_2COMP $U00} casts a vote for
  * {@link IntJitType#I4 int4}. We prefer an {@code int} when tied, so we assign {@code $U00:4} the
  * type {@code int4}.
- * 
  * <p>
- * This become complicated in the face of typeless ops, namely {@link JitCopyOp copy} and
+ * This becomes complicated in the face of typeless ops, namely {@link JitCopyOp copy} and
  * {@link JitPhiOp phi}. Again, we'd like to reduce the number of casts we have to emit in the
  * bytecode. Consider the op {@code r1 = COPY r0}. This should emit a load followed immediately by a
  * store, but The JVM will require both the source and destination locals to have the same type.
  * Otherwise, a cast is necessary. The votes regarding {@code r0} will thus need to incorporate the
  * votes regarding {@code r1} and vice versa.
- * 
  * <p>
  * Our algorithm is a straightforward queued traversal of the use-def graph until convergence.
  * First, we initialize a queue with all values (variables and constants) in the graph and
@@ -188,7 +180,6 @@ import ghidra.program.model.pcode.PcodeOp;
  * favor {@link JitTypeBehavior#INTEGER integer}. The final winner is computed and the tentative
  * type assignment is updated. If there are no votes, the tentative assignment is
  * {@link JitTypeBehavior#ANY}.
- * 
  * <p>
  * When an update changes the tentative type assignment of a value, then all its neighbors are added
  * back to the queue. Neighbors are those values connected to this one via a copy or phi. When the
@@ -225,7 +216,7 @@ public class JitTypeModel {
 			if (candidate == JitTypeBehavior.ANY || candidate == JitTypeBehavior.COPY) {
 				return;
 			}
-			counts.compute(candidate, (k, v) -> v == null ? c : v + c);
+			counts.compute(candidate, (_, v) -> v == null ? c : v + c);
 		}
 
 		/**
@@ -239,7 +230,6 @@ public class JitTypeModel {
 
 		/**
 		 * Compare the votes between two candidates, and select the winner
-		 * 
 		 * <p>
 		 * The {@link #winner()} method seeks the "max" candidate, so the vote counts are compared
 		 * in the usual fashion. We need to invert the comparison of the types, though.
@@ -280,6 +270,7 @@ public class JitTypeModel {
 	}
 
 	private final JitDataFlowModel dfm;
+	private final JitOpUseModel oum;
 
 	private final SequencedSet<JitVal> queue = new LinkedHashSet<>();
 	private final Map<JitVal, JitTypeBehavior> assignments = new HashMap<>();
@@ -288,16 +279,17 @@ public class JitTypeModel {
 	 * Construct the type model
 	 * 
 	 * @param dfm the data flow model whose use-def graph to process
+	 * @param oum the p-code op use model
 	 */
-	public JitTypeModel(JitDataFlowModel dfm) {
+	public JitTypeModel(JitDataFlowModel dfm, JitOpUseModel oum) {
 		this.dfm = dfm;
+		this.oum = oum;
 
 		analyze();
 	}
 
 	/**
 	 * Compute the new tentative assignment for the given value
-	 * 
 	 * <p>
 	 * As discussed in the "voting" section of {@link JitTypeModel}, this tallies up the votes among
 	 * the values's uses and defining op then selects the winner.
@@ -309,27 +301,33 @@ public class JitTypeModel {
 		Contest contest = new Contest();
 		// Downstream votes
 		for (ValUse use : v.uses()) {
-			JitTypeBehavior type = use.type();
-			if (type == JitTypeBehavior.COPY && use.op() instanceof JitDefOp def) {
-				JitVal downstream = def.out();
-				type = assignments.get(downstream);
+			if (oum.isUsed(use.op())) {
+				JitTypeBehavior type = use.type();
+				if (type == JitTypeBehavior.COPY && use.op() instanceof JitDefOp def) {
+					JitVal downstream = def.out();
+					type = assignments.get(downstream);
+				}
+				contest.vote(type);
 			}
-			contest.vote(type);
 		}
 
 		// Upstream votes
 		if (v instanceof JitOutVar out) {
-			JitTypeBehavior defType = JitTypeBehavior.ANY;
 			JitDefOp def = out.definition();
-			defType = def.type();
-			if (defType == JitTypeBehavior.COPY) {
-				Contest subContest = new Contest();
-				for (JitVal upstream : def.inputs()) {
-					subContest.vote(assignments.get(upstream));
+			if (oum.isUsed(def)) {
+				JitTypeBehavior defType = JitTypeBehavior.ANY;
+				defType = def.type();
+				if (defType == JitTypeBehavior.COPY) {
+					Contest subContest = new Contest();
+					for (JitVal upstream : def.inputs()) {
+						if (oum.isUsed(upstream)) {
+							subContest.vote(assignments.get(upstream));
+						}
+					}
+					defType = subContest.winner();
 				}
-				defType = subContest.winner();
+				contest.vote(defType);
 			}
-			contest.vote(defType);
 		}
 
 		return contest.winner();
@@ -337,7 +335,6 @@ public class JitTypeModel {
 
 	/**
 	 * Re-add the given value's neighbors to the processing queue.
-	 * 
 	 * <p>
 	 * Neighbors are any values connected to the given one via {@link JitCopyOp} or {@link JitPhiOp}
 	 * &mdash; or any op with an operand requiring {@link JitTypeBehavior#COPY} if additional ones
@@ -365,7 +362,6 @@ public class JitTypeModel {
 
 	/**
 	 * Perform the analysis
-	 * 
 	 * <p>
 	 * This queues every value up to be processed at least once and then runs the algorithm to
 	 * termination. Each value in the queue is removed and a voting contest run to update its type
@@ -376,11 +372,17 @@ public class JitTypeModel {
 		Set<JitVal> vals = dfm.allValues();
 		queue.addAll(vals);
 		for (JitVal v : vals) {
-			assignments.put(v, JitTypeBehavior.ANY);
+			if (oum.isUsed(v)) {
+				assignments.put(v, JitTypeBehavior.ANY);
+			}
 		}
 
 		while (!queue.isEmpty()) {
 			JitVal v = queue.removeFirst();
+			if (!oum.isUsed(v)) {
+				// Filter here rather than in queueNeighbors
+				continue;
+			}
 			JitTypeBehavior type = computeNewAssignment(v);
 			JitTypeBehavior old = assignments.put(v, type);
 			if (old != type) {

@@ -18,8 +18,8 @@
 # binutils: power6.d:  a8:      7c 01 17 ec     dcbz    r1,r2
 # binutils: power6.d:  b0:      7c 05 37 ec     dcbz    r5,r6
 # name	 dcbz	 code	 7c0007ec	 mask	 ff07e0ff00000000	 flags	 @PPC 	 operands	31	38	0	0	0	0	0	0	 																																																																																																																																																																																																																																														
-define pcodeop DataCaseBlockSetToZero;
-:dcbz A,B is $(NOTVLE) & OP=31 & A & B & XOP_1_10=1014 { DataCaseBlockSetToZero(A,B); } # 
+define pcodeop DataCacheBlockSetToZero;
+:dcbz A,B is $(NOTVLE) & OP=31 & A & B & XOP_1_10=1014 { DataCacheBlockSetToZero(A,B); } # 
 
 # PowerISA II: 4.3.2 Data Cache Instructions
 # CMT: Data Cache Block Flush

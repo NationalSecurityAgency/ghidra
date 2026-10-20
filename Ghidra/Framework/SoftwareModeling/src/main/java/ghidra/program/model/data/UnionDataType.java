@@ -104,8 +104,16 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 	}
 
 	@Override
-	public DataTypeComponent getComponent(int ordinal) {
-		return components.get(ordinal);
+	public DataTypeComponentImpl getDefinedComponent(int index) throws IndexOutOfBoundsException {
+		if (index < 0 || index >= components.size()) {
+			throw new IndexOutOfBoundsException(index);
+		}
+		return components.get(index);
+	}
+
+	@Override
+	public DataTypeComponentImpl getComponent(int ordinal) throws IndexOutOfBoundsException {
+		return getDefinedComponent(ordinal);
 	}
 
 	@Override

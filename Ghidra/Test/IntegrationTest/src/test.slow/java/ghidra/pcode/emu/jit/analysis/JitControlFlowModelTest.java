@@ -48,11 +48,19 @@ public class JitControlFlowModelTest extends AbstractJitTest {
 	}
 
 	record ExpectedBlock(List<PcodeOp> ops) {
+		static ExpectedBlock of(PcodeOp... ops) {
+			return new ExpectedBlock(List.of(ops));
+		}
+
 		public static ExpectedBlock sub(PcodeProgram program, PcodeOp start, PcodeOp endIncl) {
 			int startIdx = program.getCode().indexOf(start);
 			int endIdxIncl = program.getCode().indexOf(endIncl);
 			return new ExpectedBlock(
 				List.copyOf(program.getCode().subList(startIdx, endIdxIncl + 1)));
+		}
+
+		public static ExpectedBlock whole(PcodeProgram program) {
+			return new ExpectedBlock(program.getCode());
 		}
 	}
 
@@ -64,7 +72,27 @@ public class JitControlFlowModelTest extends AbstractJitTest {
 		BR, FT
 	}
 
-	record ExpectedBranch(PcodeOp from, PcodeOp to, BrType type, BrFlow flow, long addr) {}
+	record ExpectedBranch(PcodeOp from, PcodeOp to, BrType type, BrFlow flow, long addr) {
+		static ExpectedBranch fall(PcodeOp from, PcodeOp to) {
+			return new ExpectedBranch(from, to, BrType.INT, BrFlow.FT, 0);
+		}
+
+		static ExpectedBranch intern(PcodeOp from, PcodeOp to) {
+			return new ExpectedBranch(from, to, BrType.INT, BrFlow.BR, 0);
+		}
+
+		static ExpectedBranch error(PcodeOp from) {
+			return new ExpectedBranch(from, null, BrType.ERR, BrFlow.BR, 0);
+		}
+
+		static ExpectedBranch extern(PcodeOp from, long addr) {
+			return new ExpectedBranch(from, null, BrType.EXT, BrFlow.BR, addr);
+		}
+
+		static ExpectedBranch indirect(PcodeOp from) {
+			return new ExpectedBranch(from, null, BrType.IND, BrFlow.BR, 0);
+		}
+	}
 
 	record From(PcodeOp op, BrFlow flow) {
 		From {
@@ -122,11 +150,14 @@ public class JitControlFlowModelTest extends AbstractJitTest {
 					PcodeOp aToOp = opMap.get(eBranch.to);
 					JitBlock aToBlock = aOpToBlock.get(aToOp);
 					assertEquals(aToOp, aToBlock.getCode().getFirst());
-					eBranchesFrom.computeIfAbsent(aFromBlock, fb -> new HashSet<>()).add(eBranch);
-					eBranchesTo.computeIfAbsent(aToBlock, tb -> new HashSet<>()).add(eBranch);
+					eBranchesFrom.computeIfAbsent(aFromBlock, _ -> new HashSet<>())
+							.add(eBranch);
+					eBranchesTo.computeIfAbsent(aToBlock, _ -> new HashSet<>())
+							.add(eBranch);
 				}
 				else {
-					eBranchesOut.computeIfAbsent(aFromBlock, fb -> new HashSet<>()).add(eBranch);
+					eBranchesOut.computeIfAbsent(aFromBlock, _ -> new HashSet<>())
+							.add(eBranch);
 				}
 			}
 		}
@@ -170,7 +201,8 @@ public class JitControlFlowModelTest extends AbstractJitTest {
 					.collect(Collectors.toMap(
 						b -> new From(b.from(), b.isFall() ? BrFlow.FT : BrFlow.BR), b -> b));
 			for (ExpectedBranch eBranch : eBranches) {
-				Branch aBranch = aBranchMap.get(new From(opMap.get(eBranch.from), eBranch.flow));
+				Branch aBranch =
+					aBranchMap.get(new From(opMap.get(eBranch.from), eBranch.flow));
 				assertNotNull("Did not see expected branch " + eBranch + " in " + aBranches,
 					aBranch);
 				assertBranchEquivalence(eBranch, aBranch);
@@ -191,7 +223,8 @@ public class JitControlFlowModelTest extends AbstractJitTest {
 			assertEquals(aOpToBlock.get(aFlow.branch().to()), aFlow.to());
 		}
 
-		public void assertFlowsEquivalent(Set<ExpectedBranch> eBranches, Set<BlockFlow> aFlows) {
+		public void assertFlowsEquivalent(Set<ExpectedBranch> eBranches,
+				Set<BlockFlow> aFlows) {
 			assertEquals(eBranches.size(), aFlows.size());
 			Map<From, BlockFlow> aFlowMap = aFlows.stream()
 					.collect(Collectors.toMap(b -> new From(b.branch().from(),
@@ -257,9 +290,9 @@ public class JitControlFlowModelTest extends AbstractJitTest {
 
 		assertCfmExpectations(
 			List.of(
-				new ExpectedBlock(List.of(opBranch))),
+				ExpectedBlock.of(opBranch)),
 			Set.of(
-				new ExpectedBranch(opBranch, null, BrType.EXT, BrFlow.BR, 0x1234)),
+				ExpectedBranch.extern(opBranch, 0x1234)),
 			cfm);
 	}
 
@@ -279,12 +312,12 @@ public class JitControlFlowModelTest extends AbstractJitTest {
 
 		assertCfmExpectations(
 			List.of(
-				new ExpectedBlock(List.of(opCBranch)),
-				new ExpectedBlock(List.of(opBranch))),
+				ExpectedBlock.of(opCBranch),
+				ExpectedBlock.of(opBranch)),
 			Set.of(
-				new ExpectedBranch(opCBranch, null, BrType.EXT, BrFlow.BR, 0x5678),
-				new ExpectedBranch(opCBranch, opBranch, BrType.INT, BrFlow.FT, 0),
-				new ExpectedBranch(opBranch, null, BrType.EXT, BrFlow.BR, 0x1234)),
+				ExpectedBranch.extern(opCBranch, 0x5678),
+				ExpectedBranch.fall(opCBranch, opBranch),
+				ExpectedBranch.extern(opBranch, 0x1234)),
 			cfm);
 	}
 
@@ -303,9 +336,9 @@ public class JitControlFlowModelTest extends AbstractJitTest {
 
 		assertCfmExpectations(
 			List.of(
-				new ExpectedBlock(List.of(opBranch))),
+				ExpectedBlock.of(opBranch)),
 			Set.of(
-				new ExpectedBranch(opBranch, opBranch, BrType.INT, BrFlow.BR, 0)),
+				ExpectedBranch.intern(opBranch, opBranch)),
 			cfm);
 	}
 
@@ -326,12 +359,12 @@ public class JitControlFlowModelTest extends AbstractJitTest {
 
 		assertCfmExpectations(
 			List.of(
-				new ExpectedBlock(List.of(opCBranch)),
-				new ExpectedBlock(List.of(opBranch))),
+				ExpectedBlock.of(opCBranch),
+				ExpectedBlock.of(opBranch)),
 			Set.of(
-				new ExpectedBranch(opCBranch, opCBranch, BrType.INT, BrFlow.BR, 0),
-				new ExpectedBranch(opCBranch, opBranch, BrType.INT, BrFlow.FT, 0),
-				new ExpectedBranch(opBranch, null, BrType.EXT, BrFlow.BR, 0x1234)),
+				ExpectedBranch.intern(opCBranch, opCBranch),
+				ExpectedBranch.fall(opCBranch, opBranch),
+				ExpectedBranch.extern(opBranch, 0x1234)),
 			cfm);
 	}
 
@@ -352,12 +385,12 @@ public class JitControlFlowModelTest extends AbstractJitTest {
 
 		assertCfmExpectations(
 			List.of(
-				new ExpectedBlock(List.of(opCBranch)),
-				new ExpectedBlock(List.of(opBranch))),
+				ExpectedBlock.of(opCBranch),
+				ExpectedBlock.of(opBranch)),
 			Set.of(
-				new ExpectedBranch(opCBranch, opBranch, BrType.INT, BrFlow.BR, 0),
-				new ExpectedBranch(opCBranch, opBranch, BrType.INT, BrFlow.FT, 0),
-				new ExpectedBranch(opBranch, null, BrType.EXT, BrFlow.BR, 0x1234)),
+				ExpectedBranch.intern(opCBranch, opBranch),
+				ExpectedBranch.fall(opCBranch, opBranch),
+				ExpectedBranch.extern(opBranch, 0x1234)),
 			cfm);
 	}
 
@@ -390,10 +423,10 @@ public class JitControlFlowModelTest extends AbstractJitTest {
 				ExpectedBlock.sub(program, opAfterCBranch, opBeforeL1),
 				ExpectedBlock.sub(program, opAtL1, opBranch)),
 			Set.of(
-				new ExpectedBranch(opCBranch, opAfterCBranch, BrType.INT, BrFlow.FT, 0),
-				new ExpectedBranch(opCBranch, opAtL1, BrType.INT, BrFlow.BR, 0),
-				new ExpectedBranch(opBeforeL1, opAtL1, BrType.INT, BrFlow.FT, 0),
-				new ExpectedBranch(opBranch, null, BrType.EXT, BrFlow.BR, 0x1234)),
+				ExpectedBranch.fall(opCBranch, opAfterCBranch),
+				ExpectedBranch.intern(opCBranch, opAtL1),
+				ExpectedBranch.fall(opBeforeL1, opAtL1),
+				ExpectedBranch.extern(opBranch, 0x1234)),
 			cfm);
 	}
 
@@ -415,9 +448,49 @@ public class JitControlFlowModelTest extends AbstractJitTest {
 
 		assertCfmExpectations(
 			List.of(
-				new ExpectedBlock(passage.getCode())),
+				ExpectedBlock.whole(passage)),
 			Set.of(
-				new ExpectedBranch(opLast, null, BrType.ERR, BrFlow.BR, 0x4)),
+				ExpectedBranch.error(opLast)),
+			cfm);
+	}
+
+	@Test
+	public void testConstBranchInd() throws Exception {
+		SleighLanguage language = (SleighLanguage) DefaultLanguageService.getLanguageService()
+				.getLanguage(new LanguageID("Toy:BE:64:default"));
+
+		Address addr0 = language.getDefaultSpace().getAddress(0);
+		Assembler asm = Assemblers.getAssembler(language);
+		AssemblyBuffer buf = new AssemblyBuffer(asm, addr0);
+		buf.assemble("imm r0, #6");
+		buf.assemble("br r0");
+		buf.assemble("imm r0, #8");
+		JitPassage passage = decodePassage(buf);
+		// This listing already has evidence of the BRANCHIND resolution to ram:6
+		assertEquals("""
+				<JitPassage:
+				  0,00000000.0: C = COPY 0:1
+				  1,00000000.1: V = COPY 0:1
+				  2,00000000.2: r0 = COPY 6:8
+				  3,00000000.3: N = INT_SLESS r0, 0:8
+				  4,00000000.4: Z = INT_EQUAL r0, 0:8
+				  5,00000002.0: BRANCHIND r0
+				  6,00000006.0: UNIMPLEMENTED
+				>""", passage.format(true));
+		PcodeOp opFirst = passage.getCode().getFirst();
+		PcodeOp opBranchInd = assertOp(PcodeOp.BRANCHIND, passage.getCode().get(5));
+		PcodeOp opLast = assertOp(PcodeOp.UNIMPLEMENTED, passage.getCode().getLast());
+
+		JitAnalysisContext context = makeContext(passage);
+		JitControlFlowModel cfm = new JitControlFlowModel(context);
+
+		assertCfmExpectations(
+			List.of(
+				ExpectedBlock.sub(passage, opFirst, opBranchInd),
+				ExpectedBlock.of(opLast)),
+			Set.of(
+				ExpectedBranch.intern(opBranchInd, opLast),
+				ExpectedBranch.error(opLast)),
 			cfm);
 	}
 
@@ -472,11 +545,49 @@ public class JitControlFlowModelTest extends AbstractJitTest {
 				ExpectedBlock.sub(passage, opStartImm, opEndImm),
 				ExpectedBlock.sub(passage, opStartAdd, opLast)),
 			Set.of(
-				new ExpectedBranch(opCBranch, opStartImm, BrType.INT, BrFlow.BR, 0),
-				new ExpectedBranch(opCBranch, opBranch, BrType.INT, BrFlow.FT, 0),
-				new ExpectedBranch(opBranch, opStartAdd, BrType.INT, BrFlow.BR, 0),
-				new ExpectedBranch(opEndImm, opStartAdd, BrType.INT, BrFlow.FT, 0),
-				new ExpectedBranch(opLast, null, BrType.ERR, BrFlow.BR, 0)),
+				ExpectedBranch.intern(opCBranch, opStartImm),
+				ExpectedBranch.fall(opCBranch, opBranch),
+				ExpectedBranch.intern(opBranch, opStartAdd),
+				ExpectedBranch.fall(opEndImm, opStartAdd),
+				ExpectedBranch.error(opLast)),
 			cfm);
+	}
+
+	@Test
+	public void testConstantFoldedInLoopBody() throws Exception {
+		SleighLanguage language = SleighLanguageHelper.getMockBE64Language();
+		BytesPcodeArithmetic bytes = BytesPcodeArithmetic.forLanguage(language);
+
+		PcodeProgram program = SleighProgramCompiler.compileProgram(language, "test", """
+				r0 = 0x600d;
+				<L1>
+				*:8 r0 = 0xbeef;
+				goto <L1>;
+				""", PcodeUseropLibrary.NIL);
+		JitAnalysisContext context = makeContext(program);
+		JitPassage passage = context.getPassage();
+
+		// Eh, this isn't really a control-flow test....
+		PcodeOp opStore = assertOp(PcodeOp.STORE, passage.getCode().get(1));
+		assertArrayEquals(bytes.fromConst(0x600d, 8), passage.getFoldedOperand(opStore, 1));
+	}
+
+	@Test
+	public void testCounterNotFoldedInLoopBody() throws Exception {
+		SleighLanguage language = SleighLanguageHelper.getMockBE64Language();
+
+		PcodeProgram program = SleighProgramCompiler.compileProgram(language, "test", """
+				r0 = 0x600d;
+				<L1>
+				*:8 r0 = 0xbeef;
+				r0 = r0 + 1;
+				goto <L1>;
+				""", PcodeUseropLibrary.NIL);
+		JitAnalysisContext context = makeContext(program);
+		JitPassage passage = context.getPassage();
+
+		// Eh, this isn't really a control-flow test....
+		PcodeOp opStore = assertOp(PcodeOp.STORE, passage.getCode().get(1));
+		assertNull(passage.getFoldedOperand(opStore, 1));
 	}
 }

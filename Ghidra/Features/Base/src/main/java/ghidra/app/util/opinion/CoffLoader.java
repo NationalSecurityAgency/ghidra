@@ -127,7 +127,9 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 		List<Option> list = super.getDefaultOptions(provider, loadSpec, domainObject,
 			loadIntoProgram, mirrorFsLayout);
 		if (!loadIntoProgram) {
-			list.add(new Option(FAKE_LINK_OPTION_NAME, FAKE_LINK_OPTION_DEFAULT));
+			list.add(Option.newBoolean(FAKE_LINK_OPTION_NAME)
+					.value(FAKE_LINK_OPTION_DEFAULT)
+					.build());
 		}
 		return list;
 	}
@@ -823,6 +825,11 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 	@Override
 	public String getName() {
 		return COFF_NAME;
+	}
+
+	@Override
+	public Collection<String> getAssociatedFileExtensions() {
+		return List.of("o", "obj");
 	}
 
 	class CoffPair {

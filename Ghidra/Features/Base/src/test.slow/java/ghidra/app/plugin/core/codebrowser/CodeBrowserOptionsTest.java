@@ -256,6 +256,23 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		s = btf.getText();
 		assertEquals("01001000", s);
 
+		// Test displayUpperCase - navigate to an address whose hex offset contains A-F
+		cb.goToField(addr("0x100100a"), "Address", 0, 0);
+		btf = (ListingTextField) cb.getCurrentField();
+		assertEquals("0100100a", btf.getText());
+
+		afowo.setDisplayUpperCase(true);
+		options.setCustomOption(names.get(0), afowo);
+		cb.updateNow();
+		btf = (ListingTextField) cb.getCurrentField();
+		assertEquals("0100100A", btf.getText());
+
+		afowo.setDisplayUpperCase(false);
+		options.setCustomOption(names.get(0), afowo);
+		cb.updateNow();
+		btf = (ListingTextField) cb.getCurrentField();
+		assertEquals("0100100a", btf.getText());
+
 	}
 
 	@Test

@@ -15,8 +15,7 @@
  */
 package ghidra.pcode.emu.symz3.full;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -28,6 +27,7 @@ import ghidra.app.services.DebuggerEmulationService;
 import ghidra.app.services.DebuggerEmulationService.EmulationResult;
 import ghidra.pcode.emu.PcodeMachine;
 import ghidra.pcode.emu.symz3.SymZ3EmulatorFactory;
+import ghidra.pcode.emu.symz3.SymZ3TestUtils;
 import ghidra.pcode.emu.symz3.state.SymZ3PcodeEmulator;
 import ghidra.pcode.emu.symz3.state.SymZ3PcodeExecutorState;
 import ghidra.trace.database.ToyDBTraceBuilder.ToySchemaBuilder;
@@ -43,6 +43,8 @@ public class SymZ3DebuggerPcodeEmulatorTest extends AbstractGhidraHeadedDebugger
 
 	@Before
 	public void setUpSymTest() throws Throwable {
+		SymZ3TestUtils.skipTestIfUnsupportedPlatform();
+
 		emuService = addPlugin(tool, DebuggerEmulationServicePlugin.class);
 	}
 

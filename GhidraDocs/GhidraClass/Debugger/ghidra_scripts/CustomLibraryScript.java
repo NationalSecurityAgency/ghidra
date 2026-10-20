@@ -31,7 +31,8 @@ public class CustomLibraryScript extends GhidraScript {
 		};
 		emu.inject(currentAddress, """
 				__libc_strlen();
-				__X86_64_RET();
+				RIP = __X86_64_POP();
+				return [RIP];
 				""");
 
 		// TODO: Initialize the emulator's memory from the current program

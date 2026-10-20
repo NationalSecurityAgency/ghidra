@@ -74,6 +74,8 @@ public class GHelpBroker extends DefaultHelpBroker {
 		else {
 			super.setCurrentURL(URL);
 		}
+
+		Swing.runLater(() -> htmlEditorPane.requestFocusInWindow());
 	}
 
 	protected List<Image> getApplicationIcons() {

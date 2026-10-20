@@ -31,7 +31,6 @@ import ghidra.program.model.address.AddressSpace;
 
 /**
  * A field request for a pre-fetched {@link JitBytesPcodeExecutorStateSpace}
- * 
  * <p>
  * The field is used for indirect memory accesses. For those, the address space is given in the
  * p-code, but the offset must be computed at run time. Thus, we can pre-fetch the state space, but
@@ -48,14 +47,12 @@ public record FieldForSpaceIndirect(AddressSpace space)
 
 	/**
 	 * {@inheritDoc}
-	 * 
 	 * <p>
 	 * Consider the "ram" space. The declaration is equivalent to:
 	 * 
 	 * <pre>
 	 * private final {@link JitBytesPcodeExecutorStateSpace} spaceInd_ram;
 	 * </pre>
-	 * 
 	 * <p>
 	 * And the initialization is equivalent to:
 	 * 

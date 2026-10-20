@@ -310,11 +310,11 @@ class Environment(TraceObject):
     pass
 
 
-class Inferior(TraceObject):
+class Process(TraceObject):
     pass
 
 
-class InferiorContainer(TraceObject):
+class ProcessContainer(TraceObject):
     pass
 
 
@@ -372,7 +372,7 @@ def refresh_breakpoints(node: BreakpointContainer) -> None:
 
 
 @REGISTRY.method(action='refresh', display='Refresh Inferiors')
-def refresh_inferiors(node: InferiorContainer) -> None:
+def refresh_inferiors(node: ProcessContainer) -> None:
     """Refresh the list of inferiors."""
     with commands.open_tracked_tx('Refresh Inferiors'):
         gdb.execute('ghidra trace put-inferiors')
@@ -461,7 +461,7 @@ def refresh_sections(node: Module) -> None:
 
 
 @REGISTRY.method(action='activate', display="Activate Inferior")
-def activate_inferior(inferior: Inferior) -> None:
+def activate_inferior(inferior: Process) -> None:
     """Switch to the inferior."""
     switch_inferior(find_inf_by_obj(inferior))
 
@@ -481,13 +481,13 @@ def activate_frame(frame: StackFrame) -> None:
 
 
 @REGISTRY.method(display='Add Inferior')
-def add_inferior(container: InferiorContainer) -> None:
+def add_inferior(container: ProcessContainer) -> None:
     """Add a new inferior."""
     gdb.execute('add-inferior')
 
 
 @REGISTRY.method(action='delete', display="Delete Inferior")
-def delete_inferior(inferior: Inferior) -> None:
+def delete_inferior(inferior: Process) -> None:
     """Remove the inferior."""
     inf = find_inf_by_obj(inferior)
     gdb.execute(f'remove-inferior {inf.num}')
@@ -495,7 +495,7 @@ def delete_inferior(inferior: Inferior) -> None:
 
 # TODO: Separate method for each of core, exec, remote, etc...?
 @REGISTRY.method(display='Connect Target')
-def connect(inferior: Inferior, spec: str) -> None:
+def connect(inferior: Process, spec: str) -> None:
     """Connect to a target machine or process."""
     switch_inferior(find_inf_by_obj(inferior))
     gdb.execute(f'target {spec}')
@@ -510,21 +510,21 @@ def attach_obj(target: Attachable) -> None:
 
 
 @REGISTRY.method(action='attach', display='Attach by PID')
-def attach_pid(inferior: Inferior, pid: int) -> None:
+def attach_pid(inferior: Process, pid: int) -> None:
     """Attach the inferior to the given target."""
     switch_inferior(find_inf_by_obj(inferior))
     gdb.execute(f'attach {pid}')
 
 
 @REGISTRY.method(display='Detach')
-def detach(inferior: Inferior) -> None:
+def detach(inferior: Process) -> None:
     """Detach the inferior's target."""
     switch_inferior(find_inf_by_obj(inferior))
     gdb.execute('detach')
 
 
 @REGISTRY.method(action='launch', display='Launch at main')
-def launch_main(inferior: Inferior,
+def launch_main(inferior: Process,
                 file: Annotated[str, ParamDesc(display='File')],
                 args: Annotated[str, ParamDesc(display='Arguments')] = '') -> None:
     """Start a native process with the given command line, stopping at 'main'
@@ -542,7 +542,7 @@ def launch_main(inferior: Inferior,
 
 @REGISTRY.method(action='launch', display='Launch at Loader',
                  condition=util.GDB_VERSION.major >= 9)
-def launch_loader(inferior: Inferior,
+def launch_loader(inferior: Process,
                   file: Annotated[str, ParamDesc(display='File')],
                   args: Annotated[str, ParamDesc(display='Arguments')] = '') -> None:
     """Start a native process with the given command line, stopping at first
@@ -556,7 +556,7 @@ def launch_loader(inferior: Inferior,
 
 
 @REGISTRY.method(action='launch', display='Launch and Run')
-def launch_run(inferior: Inferior,
+def launch_run(inferior: Process,
                file: Annotated[str, ParamDesc(display='File')],
                args: Annotated[str, ParamDesc(display='Arguments')] = '') -> None:
     """Run a native process with the given command line (run).
@@ -573,7 +573,7 @@ def launch_run(inferior: Inferior,
 
 
 @REGISTRY.method()
-def kill(inferior: Inferior) -> None:
+def kill(inferior: Process) -> None:
     """Kill execution of the inferior."""
     switch_inferior(find_inf_by_obj(inferior))
     with no_confirm():
@@ -581,7 +581,7 @@ def kill(inferior: Inferior) -> None:
 
 
 @REGISTRY.method()
-def resume(inferior: Inferior) -> None:
+def resume(inferior: Process) -> None:
     """Continue execution of the inferior."""
     switch_inferior(find_inf_by_obj(inferior))
     gdb.execute('continue')
@@ -589,7 +589,7 @@ def resume(inferior: Inferior) -> None:
 
 @REGISTRY.method(action='step_ext', icon='icon.debugger.resume.back',
                  condition=util.IS_TRACE)
-def resume_back(inferior: Inferior) -> None:
+def resume_back(inferior: Process) -> None:
     """Continue execution of the inferior backwards."""
     gdb.execute('reverse-continue')
 
@@ -598,7 +598,7 @@ def resume_back(inferior: Inferior) -> None:
 # is the current inferior. This in turn queues the UI to enable or disable the
 # button appropriately
 @REGISTRY.method()
-def interrupt(inferior: Inferior) -> None:
+def interrupt(inferior: Process) -> None:
     """Interrupt the execution of the debugged program."""
     gdb.execute('interrupt')
 
@@ -663,7 +663,7 @@ def step_back_over(thread: Thread,
 
 
 @REGISTRY.method(action='break_sw_execute')
-def break_sw_execute_address(inferior: Inferior, address: Address) -> None:
+def break_sw_execute_address(inferior: Process, address: Address) -> None:
     """Set a breakpoint (break)."""
     inf = find_inf_by_obj(inferior)
     offset = inferior.trace.extra.require_mm().map_back(inf, address)
@@ -678,7 +678,7 @@ def break_sw_execute_expression(expression: str) -> None:
 
 
 @REGISTRY.method(action='break_hw_execute')
-def break_hw_execute_address(inferior: Inferior, address: Address) -> None:
+def break_hw_execute_address(inferior: Process, address: Address) -> None:
     """Set a hardware-assisted breakpoint (hbreak)."""
     inf = find_inf_by_obj(inferior)
     offset = inferior.trace.extra.require_mm().map_back(inf, address)
@@ -693,7 +693,7 @@ def break_hw_execute_expression(expression: str) -> None:
 
 
 @REGISTRY.method(action='break_read')
-def break_read_range(inferior: Inferior, range: AddressRange) -> None:
+def break_read_range(inferior: Process, range: AddressRange) -> None:
     """Set a read watchpoint (rwatch)."""
     inf = find_inf_by_obj(inferior)
     offset_start = inferior.trace.extra.require_mm().map_back(
@@ -709,7 +709,7 @@ def break_read_expression(expression: str) -> None:
 
 
 @REGISTRY.method(action='break_write')
-def break_write_range(inferior: Inferior, range: AddressRange) -> None:
+def break_write_range(inferior: Process, range: AddressRange) -> None:
     """Set a watchpoint (watch)."""
     inf = find_inf_by_obj(inferior)
     offset_start = inferior.trace.extra.require_mm().map_back(
@@ -725,7 +725,7 @@ def break_write_expression(expression: str) -> None:
 
 
 @REGISTRY.method(action='break_access')
-def break_access_range(inferior: Inferior, range: AddressRange) -> None:
+def break_access_range(inferior: Process, range: AddressRange) -> None:
     """Set an access watchpoint (awatch)."""
     inf = find_inf_by_obj(inferior)
     offset_start = inferior.trace.extra.require_mm().map_back(
@@ -741,7 +741,7 @@ def break_access_expression(expression: str) -> None:
 
 
 @REGISTRY.method(action='break_ext', display='Catch Event')
-def break_ext_event(inferior: Inferior,
+def break_ext_event(inferior: Process,
                     spec: Annotated[str, ParamDesc(display='Type')]) -> None:
     """Set a generic catchpoint (catch)."""
     gdb.execute(f'catch {spec}')
@@ -756,7 +756,7 @@ def break_event(container: BreakpointContainer,
 
 
 @REGISTRY.method(action='break_ext', display='Catch Signal')
-def break_ext_signal(inferior: Inferior, signal: Annotated[
+def break_ext_signal(inferior: Process, signal: Annotated[
         str, ParamDesc(display='Signal (opt)')]) -> None:
     """Set a signal catchpoint (catch signal)."""
     gdb.execute(f'catch signal {signal}')
@@ -770,7 +770,7 @@ def break_signal(container: BreakpointContainer, signal: Annotated[
 
 
 @REGISTRY.method(action='break_ext', display='Catch Syscall')
-def break_ext_syscall(inferior: Inferior, syscall: Annotated[
+def break_ext_syscall(inferior: Process, syscall: Annotated[
         str, ParamDesc(display='Syscall (opt)')]) -> None:
     """Set a syscall catchpoint (catch syscall))."""
     gdb.execute(f'catch syscall {syscall}')
@@ -784,7 +784,7 @@ def break_syscall(container: BreakpointContainer, syscall: Annotated[
 
 
 @REGISTRY.method(action='break_ext', display='Catch Load')
-def break_ext_load(inferior: Inferior, library: Annotated[
+def break_ext_load(inferior: Process, library: Annotated[
         str, ParamDesc(display='Library (opt)')]) -> None:
     """Set a load catchpoint (catch load))."""
     gdb.execute(f'catch load {library}')
@@ -798,7 +798,7 @@ def break_load(container: BreakpointContainer, library: Annotated[
 
 
 @REGISTRY.method(action='break_ext', display='Catch Unload')
-def break_ext_unload(inferior: Inferior,
+def break_ext_unload(inferior: Process,
                      library: Annotated[
                          str, ParamDesc(display='Library (opt)')]) -> None:
     """Set a unload catchpoint (catch unload))."""
@@ -813,7 +813,7 @@ def break_unload(container: BreakpointContainer, library: Annotated[
 
 
 @REGISTRY.method(action='break_ext', display='Catch Catch')
-def break_ext_catch(inferior: Inferior, exception: Annotated[
+def break_ext_catch(inferior: Process, exception: Annotated[
         str, ParamDesc(display='Exception (opt)')]) -> None:
     """Set a catch catchpoint (catch catch))."""
     gdb.execute(f'catch catch {exception}')
@@ -827,7 +827,7 @@ def break_catch(container: BreakpointContainer, exception: Annotated[
 
 
 @REGISTRY.method(action='break_ext', display='Catch Throw')
-def break_ext_throw(inferior: Inferior, exception: Annotated[
+def break_ext_throw(inferior: Process, exception: Annotated[
         str, ParamDesc(display='Exception (opt)')]) -> None:
     """Set a throw catchpoint (catch throw))."""
     gdb.execute(f'catch throw {exception}')
@@ -841,7 +841,7 @@ def break_throw(container: BreakpointContainer, exception: Annotated[
 
 
 @REGISTRY.method(action='break_ext', display='Catch Rethrow')
-def break_ext_rethrow(inferior: Inferior, exception: Annotated[
+def break_ext_rethrow(inferior: Process, exception: Annotated[
         str, ParamDesc(display='Exception (opt)')]) -> None:
     """Set a rethrow catchpoint (catch rethrow))."""
     gdb.execute(f'catch rethrow {exception}')
@@ -902,7 +902,7 @@ def delete_breakpoint(breakpoint: BreakpointSpec) -> None:
 
 
 @REGISTRY.method()
-def read_mem(inferior: Inferior, range: AddressRange) -> None:
+def read_mem(inferior: Process, range: AddressRange) -> None:
     """Read memory."""
     inf = find_inf_by_obj(inferior)
     offset_start = inferior.trace.extra.require_mm().map_back(
@@ -917,7 +917,7 @@ def read_mem(inferior: Inferior, range: AddressRange) -> None:
 
 
 @REGISTRY.method()
-def write_mem(inferior: Inferior, address: Address, data: bytes) -> None:
+def write_mem(inferior: Process, address: Address, data: bytes) -> None:
     """Write memory."""
     inf = find_inf_by_obj(inferior)
     offset = inferior.trace.extra.require_mm().map_back(inf, address)

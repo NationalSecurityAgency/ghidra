@@ -148,36 +148,46 @@ public class DyldCacheLoader extends AbstractProgramWrapperLoader {
 		List<Option> list = super.getDefaultOptions(provider, loadSpec, domainObject,
 			loadIntoProgram, mirrorFsLayout);
 		if (!loadIntoProgram) {
-			list.add(new Option(FIXUP_SLIDE_POINTERS_OPTION_NAME,
-				FIXUP_SLIDE_POINTERS_OPTION_DEFAULT, Boolean.class,
-				Loader.COMMAND_LINE_ARG_PREFIX + "-fixupSlidePointers"));
-			list.add(
-				new Option(MARKUP_SLIDE_POINTERS_OPTION_NAME, MARKUP_SLIDE_POINTERS_OPTION_DEFAULT,
-					Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-markupSlidePointers"));
-			list.add(new Option(ADD_SLIDE_POINTER_RELOCATIONS_OPTION_NAME,
-				ADD_SLIDE_POINTERS_RELOCATIONS_OPTION_DEFAULT, Boolean.class,
-				Loader.COMMAND_LINE_ARG_PREFIX + "-addSlidePointerRelocations"));
-			list.add(
-				new Option(PROCESS_LOCAL_SYMBOLS_OPTION_NAME, PROCESS_LOCAL_SYMBOLS_OPTION_DEFAULT,
-					Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-processLocalSymbols"));
-			list.add(
-				new Option(MARKUP_LOCAL_SYMBOLS_OPTION_NAME, MARKUP_LOCAL_SYMBOLS_OPTION_DEFAULT,
-					Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-markupLocalSymbols"));
-			list.add(
-				new Option(PROCESS_DYLIB_MEMORY_OPTION_NAME, PROCESS_DYLIB_MEMORY_OPTION_DEFAULT,
-					Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-processDylibMemory"));
-			list.add(
-				new Option(PROCESS_DYLIB_SYMBOLS_OPTION_NAME, PROCESS_DYLIB_SYMBOLS_OPTION_DEFAULT,
-					Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-processDylibSymbols"));
-			list.add(
-				new Option(PROCESS_DYLIB_EXPORTS_OPTION_NAME, PROCESS_DYLIB_EXPORTS_OPTION_DEFAULT,
-					Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-processDylibExports"));
-			list.add(new Option(MARKUP_DYLIB_LC_DATA_OPTION_NAME,
-				MARKUP_DYLIB_LC_DATA_OPTION_DEFAULT, Boolean.class,
-				Loader.COMMAND_LINE_ARG_PREFIX + "-markupDylibLoadCommandData"));
-			list.add(
-				new Option(PROCESS_DYLIB_LIBOBJC_OPTION_NAME, PROCESS_DYLIB_LIBOBJC_OPTION_DEFAULT,
-					Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-processLibobjc"));
+			list.add(Option.newBoolean(FIXUP_SLIDE_POINTERS_OPTION_NAME)
+					.value(FIXUP_SLIDE_POINTERS_OPTION_DEFAULT)
+					.commandLineArgument(createArg("-fixupSlidePointers"))
+					.build());
+			list.add(Option.newBoolean(MARKUP_SLIDE_POINTERS_OPTION_NAME)
+					.value(MARKUP_SLIDE_POINTERS_OPTION_DEFAULT)
+					.commandLineArgument(createArg("-markupSlidePointers"))
+					.build());
+			list.add(Option.newBoolean(ADD_SLIDE_POINTER_RELOCATIONS_OPTION_NAME)
+					.value(ADD_SLIDE_POINTERS_RELOCATIONS_OPTION_DEFAULT)
+					.commandLineArgument(createArg("-addSlidePointerRelocations"))
+					.build());
+			list.add(Option.newBoolean(PROCESS_LOCAL_SYMBOLS_OPTION_NAME)
+					.value(PROCESS_LOCAL_SYMBOLS_OPTION_DEFAULT)
+					.commandLineArgument(createArg("-processLocalSymbols"))
+					.build());
+			list.add(Option.newBoolean(MARKUP_LOCAL_SYMBOLS_OPTION_NAME)
+					.value(MARKUP_LOCAL_SYMBOLS_OPTION_DEFAULT)
+					.commandLineArgument(createArg("-markupLocalSymbols"))
+					.build());
+			list.add(Option.newBoolean(PROCESS_DYLIB_MEMORY_OPTION_NAME)
+					.value(PROCESS_DYLIB_MEMORY_OPTION_DEFAULT)
+					.commandLineArgument(createArg("-processDylibMemory"))
+					.build());
+			list.add(Option.newBoolean(PROCESS_DYLIB_SYMBOLS_OPTION_NAME)
+					.value(PROCESS_DYLIB_SYMBOLS_OPTION_DEFAULT)
+					.commandLineArgument(createArg("-processDylibSymbols"))
+					.build());
+			list.add(Option.newBoolean(PROCESS_DYLIB_EXPORTS_OPTION_NAME)
+					.value(PROCESS_DYLIB_EXPORTS_OPTION_DEFAULT)
+					.commandLineArgument(createArg("-processDylibExports"))
+					.build());
+			list.add(Option.newBoolean(MARKUP_DYLIB_LC_DATA_OPTION_NAME)
+					.value(MARKUP_DYLIB_LC_DATA_OPTION_DEFAULT)
+					.commandLineArgument(createArg("-markupDylibLoadCommandData"))
+					.build());
+			list.add(Option.newBoolean(PROCESS_DYLIB_LIBOBJC_OPTION_NAME)
+					.value(PROCESS_DYLIB_LIBOBJC_OPTION_DEFAULT)
+					.commandLineArgument(createArg("-processLibobjc"))
+					.build());
 		}
 		return list;
 	}

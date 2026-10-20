@@ -15,6 +15,7 @@
  */
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.AccessMode;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -32,7 +33,8 @@ import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.util.InvalidNameException;
-import ghidra.util.exception.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 public class RecursiveRecursiveMSLibImport extends GhidraScript {
@@ -126,10 +128,9 @@ public class RecursiveRecursiveMSLibImport extends GhidraScript {
 	}
 
 	private void importLibrary(DomainFolder currentLibrary, File file, MessageLog log)
-			throws CancelledException, DuplicateNameException, InvalidNameException,
-			VersionException, IOException {
+			throws CancelledException, InvalidNameException, VersionException, IOException {
 
-		try (RandomAccessByteProvider provider = new RandomAccessByteProvider(file)) {
+		try (ByteProvider provider = new FileByteProvider(file, null, AccessMode.READ)) {
 			if (!CoffArchiveHeader.isMatch(provider)) {
 				return;
 			}

@@ -43,6 +43,7 @@ public class ProgramActionContext extends DefaultActionContext {
 		if (sourceComponent == null) {
 			KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 			setSourceObject(kfm.getFocusOwner());
+			setContextProvider(provider);
 		}
 	}
 

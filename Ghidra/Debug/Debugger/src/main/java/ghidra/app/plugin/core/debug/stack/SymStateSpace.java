@@ -307,10 +307,10 @@ public class SymStateSpace {
 		for (SymEntry ent : map.values()) {
 			Register register = ent.getRegister(language);
 			if (register != null) {
-				System.err.println(prefix + register + " = " + ent.sym);
+				Msg.info(this, prefix + register + " = " + ent.sym);
 				continue;
 			}
-			System.err.println(prefix + ent);
+			Msg.info(this, prefix + ent);
 		}
 	}
 

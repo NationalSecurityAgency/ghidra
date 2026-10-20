@@ -20,8 +20,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.*;
 
 import generic.json.Json;
 
@@ -370,7 +369,7 @@ public class StringUtilities {
 		}
 
 		for (CharSequence search : searches) {
-			if (!StringUtils.contains(toSearch, search)) {
+			if (!Strings.CS.contains(toSearch, search)) {
 				return false;
 			}
 		}
@@ -391,7 +390,7 @@ public class StringUtilities {
 		}
 
 		for (CharSequence search : searches) {
-			if (!StringUtils.containsIgnoreCase(toSearch, search)) {
+			if (!Strings.CI.contains(toSearch, search)) {
 				return false;
 			}
 		}
@@ -412,7 +411,7 @@ public class StringUtilities {
 		}
 
 		for (CharSequence search : searches) {
-			if (StringUtils.containsIgnoreCase(toSearch, search)) {
+			if (Strings.CI.contains(toSearch, search)) {
 				return true;
 			}
 		}

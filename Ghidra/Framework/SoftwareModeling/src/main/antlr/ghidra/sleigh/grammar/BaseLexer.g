@@ -33,6 +33,7 @@ tokens {
 	OP_DEC;
 	OP_DECLARATIVE_SIZE;
 	OP_DEC_CONSTANT;
+	OP_DEF_CONSTANT;
 	OP_DEFAULT;
 	OP_DEREFERENCE;
 	OP_DISPLAY;
@@ -298,16 +299,20 @@ HEXDIGIT
     |   'A'..'F'
     ;
 
+BIN_INT
+	:	'0b' (BINDIGIT)+
+	;
+
 DEC_INT
-	:	DIGIT+
+	:   '0n' (DIGIT)+
 	;
 
 HEX_INT
 	:	'0x' (HEXDIGIT)+
 	;
 
-BIN_INT
-	:	'0b' (BINDIGIT)+
+DEF_INT
+	:	DIGIT+
 	;
 
 fragment

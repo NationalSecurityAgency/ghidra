@@ -88,7 +88,8 @@ public class SleighLanguageHelper {
 		);
 		langDesc.setDefsFile(lDefsFile);
 		langDesc.setSpecFile(pSpecFile);
-		langDesc.setSlaFile(slaFile);
+		langDesc.setLanguageFile(
+			SleighLanguageFile.fromSlaFilename(slaFile.getParentFile(), slaFile.getName()));
 
 		MOCK_BE_64_LANGUAGE = new SleighLanguage(langDesc);
 		return MOCK_BE_64_LANGUAGE;

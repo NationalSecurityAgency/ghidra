@@ -46,7 +46,10 @@ public abstract class SearchLocationContextRenderer
 	public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 
 		SearchLocationContext context = getContext(data);
-		return renderHtmlContext(data, context);
+
+		// Note: we do not include the line number prefix on the text, based on the assumption that
+		// clients of this renderer will have a separate line number column.
+		return renderHtmlContext(data, context, false);
 	}
 
 	public Component renderPlainContext(GTableCellRenderingData data,
@@ -62,7 +65,7 @@ public abstract class SearchLocationContextRenderer
 	}
 
 	public Component renderHtmlContext(GTableCellRenderingData data,
-			SearchLocationContext context) {
+			SearchLocationContext context, boolean showLineNumbers) {
 
 		// initialize
 		super.getTableCellRendererComponent(data);
@@ -74,7 +77,7 @@ public abstract class SearchLocationContextRenderer
 
 		// Note: we do not include the line number prefix on the text, based on the assumption that
 		// clients of this renderer will have a separate line number column.
-		String html = context.getBoldMatchingText(false);
+		String html = context.getBoldMatchingText(showLineNumbers);
 		setText(html);
 
 		ellipsisLabel.setOpaque(true);

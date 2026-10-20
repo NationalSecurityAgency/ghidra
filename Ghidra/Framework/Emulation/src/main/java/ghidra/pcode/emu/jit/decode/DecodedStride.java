@@ -17,6 +17,7 @@ package ghidra.pcode.emu.jit.decode;
 
 import java.util.List;
 
+import ghidra.lifecycle.Internal;
 import ghidra.pcode.emu.jit.JitPassage.AddrCtx;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.pcode.PcodeOp;
@@ -29,4 +30,5 @@ import ghidra.program.model.pcode.PcodeOp;
  * @param ops the ops in the order decoded and emitted
  * @see JitPassageDecoder
  */
-record DecodedStride(AddrCtx start, List<Instruction> instructions, List<PcodeOp> ops) {}
+@Internal
+public record DecodedStride(AddrCtx start, List<Instruction> instructions, List<PcodeOp> ops) {}

@@ -22,6 +22,8 @@
 
 namespace ghidra {
 
+class MapEntry;
+
 /// \brief A sequence of PcodeOps that move data in-to/out-of an array data-type.
 ///
 /// A container for a sequence of PcodeOps within a basic block where we are trying to determine if the sequence
@@ -66,7 +68,7 @@ public:
 class StringSequence : public ArraySequence {
   Address rootAddr;		///< Address within the memory region associated with the root PcodeOp
   Address startAddr;		///< Starting address of the memory region
-  SymbolEntry *entry;		///< Symbol at the root Address
+  MapEntry *entry;		///< Symbol at the root Address
   bool collectCopyOps(int size);	///< Collect ops COPYing constants into the memory region
   PcodeOp *buildStringCopy(void);	///< Build the strncpy,wcsncpy, or memcpy function with string as input
   static void removeForward(const WriteNode &curNode,map<PcodeOp *,list<WriteNode>::iterator> &xref,
@@ -74,7 +76,7 @@ class StringSequence : public ArraySequence {
   void removeCopyOps(PcodeOp *replaceOp);	///< Remove all the COPY ops from the basic block
   Varnode *constructTypedPointer(PcodeOp *insertPoint);
 public:
-  StringSequence(Funcdata &fdata,Datatype *ct,SymbolEntry *ent,PcodeOp *root,const Address &addr);
+  StringSequence(Funcdata &fdata,Datatype *ct,MapEntry *ent,PcodeOp *root,const Address &addr);
   bool transform(void);		///< Transform COPYs into a single memcpy user-op
 };
 
@@ -95,11 +97,12 @@ class HeapSequence : public ArraySequence {
     static bool compareOutput(const IndirectPair *a,const IndirectPair *b);	///< Compare pairs by output storage
   };
   Varnode *basePointer;			///< Pointer that sequence is stored to
+  PcodeOp *immedRead;			///< Op immediately reading basePointer
   uint8 baseOffset;			///< Offset relative to pointer to root STORE
   AddrSpace *storeSpace;		///< Address space being STOREed to
   int4 ptrAddMult;			///< Required multiplier for PTRADD ops
   vector<Varnode *> nonConstAdds;	///< non-constant Varnodes being added into pointer calculation
-  void findBasePointer(Varnode *initPtr);	///< Find the base pointer for the sequence
+  void findBasePointer(void);		///< Find the base pointer for the sequence
   void findDuplicateBases(vector<Varnode *> &duplist);	///< Find any duplicates of \b basePointer
   void findInitialStores(vector<PcodeOp *> &stores);
   static uint8 calcAddElements(Varnode *vn,vector<Varnode *> &nonConst,int4 maxDepth);

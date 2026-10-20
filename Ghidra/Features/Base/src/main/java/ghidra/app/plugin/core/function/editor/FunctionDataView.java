@@ -17,9 +17,11 @@ package ghidra.app.plugin.core.function.editor;
 
 import java.util.*;
 
+import generic.json.Json;
 import ghidra.program.model.data.VoidDataType;
 import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.SymbolUtilities;
 
 /**
@@ -30,6 +32,7 @@ class FunctionDataView {
 
 	Function function;
 
+	Namespace namespace;
 	String name;
 	boolean hasVarArgs;
 	ParamInfo returnInfo;
@@ -47,7 +50,8 @@ class FunctionDataView {
 	 */
 	FunctionDataView(Function function) {
 		this.function = function;
-		this.name = function.getName();
+		name = function.getName();
+		namespace = function.getParentNamespace();
 		allowCustomStorage = function.hasCustomVariableStorage();
 		hasVarArgs = function.hasVarArgs();
 		isInLine = function.isInline();
@@ -63,6 +67,7 @@ class FunctionDataView {
 	 */
 	FunctionDataView(FunctionDataView otherFunctionData) {
 		name = otherFunctionData.name;
+		namespace = otherFunctionData.namespace;
 		hasVarArgs = otherFunctionData.hasVarArgs;
 		returnInfo = otherFunctionData.returnInfo.copy();
 		for (ParamInfo p : otherFunctionData.parameters) {
@@ -77,11 +82,17 @@ class FunctionDataView {
 	}
 
 	@Override
+	public String toString() {
+		return Json.toString(this);
+	}
+
+	@Override
 	public boolean equals(Object obj) {
 		if (!(obj instanceof FunctionDataView otherFunctionData)) {
 			return false;
 		}
 		if (!Objects.equals(name, otherFunctionData.name) ||
+			!Objects.equals(namespace, otherFunctionData.namespace) ||
 			!Objects.equals(callingConventionName, otherFunctionData.callingConventionName) ||
 			hasVarArgs != otherFunctionData.hasVarArgs ||
 			parameters.size() != otherFunctionData.parameters.size() ||
@@ -174,7 +185,7 @@ class FunctionDataView {
 		return buf.toString();
 	}
 
-	public Program getProgram() {
+	Program getProgram() {
 		return function.getProgram();
 	}
 
@@ -190,8 +201,12 @@ class FunctionDataView {
 		return parameters.size();
 	}
 
-	public String getName() {
+	String getName() {
 		return name;
+	}
+
+	Namespace getNamespace() {
+		return namespace;
 	}
 
 	String getNameString() {

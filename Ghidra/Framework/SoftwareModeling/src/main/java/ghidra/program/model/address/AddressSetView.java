@@ -234,7 +234,7 @@ public interface AddressSetView extends Iterable<AddressRange> {
 	public boolean intersects(AddressSetView addrSet);
 
 	/**
-	 * Determine if the start and end range intersects with the specified address set.
+	 * Determine if the start and end range intersects with this address set.
 	 * <p>
 	 * The specified start and end addresses must form a valid range within a single
 	 * {@link AddressSpace}.
@@ -244,6 +244,16 @@ public interface AddressSetView extends Iterable<AddressRange> {
 	 * @return true if the given range intersects this address set.
 	 */
 	public boolean intersects(Address start, Address end);
+
+	/**
+	 * Determine if the range intersects with this address set.
+	 * 
+	 * @param range the range
+	 * @return true if the given range intersects this address set.
+	 */
+	default public boolean intersects(AddressRange range) {
+		return intersects(range.getMinAddress(), range.getMaxAddress());
+	}
 
 	/**
 	 * Computes the intersection of this address set with the given address set.
@@ -268,6 +278,19 @@ public interface AddressSetView extends Iterable<AddressRange> {
 	 *         this set and the given range.
 	 */
 	public AddressSet intersectRange(Address start, Address end);
+
+	/**
+	 * Computes the intersection of this address set with the given address range.
+	 * <p>
+	 * This method does not modify this address set.
+	 * 
+	 * @param range the range
+	 * @return AddressSet a new address set that contains all addresses that are contained in both
+	 *         this set and the given range.
+	 */
+	default public AddressSet intersectRange(AddressRange range) {
+		return intersectRange(range.getMinAddress(), range.getMaxAddress());
+	}
 
 	/**
 	 * Computes the union of this address set with the given address set.

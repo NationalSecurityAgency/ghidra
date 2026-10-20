@@ -22,8 +22,8 @@ import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.model.data.*;
 import ghidra.program.model.mem.MemBuffer;
-import ghidra.util.Conv;
 import ghidra.util.DataConverter;
+import ghidra.util.NumericUtilities;
 import ghidra.util.classfinder.ClassTranslator;
 
 /**
@@ -126,17 +126,17 @@ public class GuidDataType extends BuiltIn {
 		}
 
 		String retVal;
-		retVal = Conv.toHexString((int) data[0]) + delim;
-		retVal += Conv.toHexString((short) (data[1])) + delim;
-		retVal += Conv.toHexString((short) (data[1] >> 16)) + delim;
+		retVal = NumericUtilities.toPaddedHexString((int) data[0]) + delim;
+		retVal += NumericUtilities.toPaddedHexString((short) (data[1])) + delim;
+		retVal += NumericUtilities.toPaddedHexString((short) (data[1] >> 16)) + delim;
 		for (int i = 0; i < 4; i++) {
-			retVal += Conv.toHexString((byte) (data[2] >> i * 8));
+			retVal += NumericUtilities.toPaddedHexString((byte) (data[2] >> i * 8));
 			if (i == 1) {
 				retVal += delim;
 			}
 		}
 		for (int i = 0; i < 4; i++) {
-			retVal += Conv.toHexString((byte) (data[3] >> i * 8));
+			retVal += NumericUtilities.toPaddedHexString((byte) (data[3] >> i * 8));
 		}
 //		retVal = retVal.toUpperCase();
 		if (guidName == null) {

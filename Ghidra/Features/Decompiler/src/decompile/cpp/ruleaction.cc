@@ -3164,80 +3164,22 @@ int4 RuleLogic2Bool::applyOp(PcodeOp *op,Funcdata &data)
   return 1;
 }
 
-/// \class RuleIndirectCollapse
-/// \brief Remove a CPUI_INDIRECT if its blocking PcodeOp is dead
-void RuleIndirectCollapse::getOpList(vector<uint4> &oplist) const
+/// \class RuleAliasUpdate
+/// \brief Collapse INDIRECTs when there is no longer a possible alias of its output
+void RuleAliasUpdate::getOpList(vector<uint4> &oplist) const
 
 {
-  oplist.push_back(CPUI_INDIRECT);
+  oplist.push_back(CPUI_STORE);
+  oplist.push_back(CPUI_CALL);
+  oplist.push_back(CPUI_CALLIND);
+  oplist.push_back(CPUI_CALLOTHER);
 }
 
-int4 RuleIndirectCollapse::applyOp(PcodeOp *op,Funcdata &data)
+int4 RuleAliasUpdate::applyOp(PcodeOp *op,Funcdata &data)
 
 {
-  PcodeOp *indop;
-
-  if (op->getIn(1)->getSpace()->getType()!=IPTR_IOP) return 0;
-  indop = PcodeOp::getOpFromConst(op->getIn(1)->getAddr());
-
-				// Is the indirect effect gone?
-  if (!indop->isDead()) {
-    if (indop->code() == CPUI_COPY) { // STORE resolved to a COPY
-      Varnode *vn1 = indop->getOut();
-      Varnode *vn2 = op->getOut();
-      int4 res = vn1->characterizeOverlap(*vn2);
-      if (res > 0) { // Copy has an effect of some sort
-	if (res == 2) { // vn1 and vn2 are the same storage
-	  // Convert INDIRECT to COPY
-	  data.opUninsert(op);
-	  data.opSetInput(op,vn1,0);
-	  data.opRemoveInput(op,1);
-	  data.opSetOpcode(op,CPUI_COPY);
-	  data.opInsertAfter(op, indop);
-	  return 1;
-	}
-	if (vn1->contains(*vn2) == 0) {	// INDIRECT output is properly contained in COPY output
-	  // Convert INDIRECT to a SUBPIECE
-	  uintb trunc;
-	  if (vn1->getSpace()->isBigEndian())
-	    trunc = vn1->getOffset() + vn1->getSize() - (vn2->getOffset() + vn2->getSize());
-	  else
-	    trunc = vn2->getOffset() - vn1->getOffset();
-	  data.opUninsert(op);
-	  data.opSetInput(op,vn1,0);
-	  data.opSetInput(op,data.newConstant(4,trunc),1);
-	  data.opSetOpcode(op, CPUI_SUBPIECE);
-	  data.opInsertAfter(op, indop);
-	  return 1;
-	}
-	data.warning("Ignoring partial resolution of indirect",indop->getAddr());
-	return 0;		// Partial overlap, not sure what to do
-      }
-    }
-    else if (op->getOut()->hasNoLocalAlias()) {
-      if (op->isIndirectCreation() || op->noIndirectCollapse())
-	return 0;
-    }
-    else if (indop->usesSpacebasePtr()) {
-      if (indop->code() == CPUI_STORE) {
-	const LoadGuard *guard = data.getStoreGuard(indop);
-	if (guard != (const LoadGuard *)0) {
-	  if (guard->isGuarded(op->getOut()->getAddr()))
-	    return 0;
-	}
-	else {
-	  // A marked STORE that is not guarded should eventually get converted to a COPY
-	  // so we keep the INDIRECT until that happens
-	  return 0;
-	}
-      }
-    }
-    else
-      return 0;	
-  }
-
-  data.totalReplace(op->getOut(),op->getIn(0));
-  data.opDestroy(op);		// Get rid of the INDIRECT
+  if (!op->hasAliasUpdate()) return 0;
+  data.opCollapseIndirectsForAlias(op);
   return 1;
 }
 
@@ -3786,6 +3728,24 @@ void RuleShiftPiece::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_INT_ADD);
 }
 
+/// Check for both INT_LEFT and INT_MULT forms of multiplying by a constant power of 2.
+/// \param op is the op to check
+/// \return the power (shift amount) or -1 if the op does not match
+int4 RuleShiftPiece::multPowerOf2(PcodeOp *op)
+
+{
+  OpCode opc = op->code();
+  if (opc != CPUI_INT_LEFT && opc != CPUI_INT_MULT) return -1;
+  Varnode *cvn = op->getIn(1);
+  if (!cvn->isConstant()) return -1;
+  uintb val = cvn->getOffset();
+  if (opc == CPUI_INT_LEFT) return val;
+  int4 sa = leastsigbit_set(val);
+  if (sa >=0 && (val >> sa) == 1)
+    return sa;
+  return -1;
+}
+
 int4 RuleShiftPiece::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -3798,13 +3758,14 @@ int4 RuleShiftPiece::applyOp(PcodeOp *op,Funcdata &data)
   if (!vn2->isWritten()) return 0;
   shiftop = vn1->getDef();
   zextloop = vn2->getDef();
-  if (shiftop->code() != CPUI_INT_LEFT) {
-    if (zextloop->code() != CPUI_INT_LEFT) return 0;
+  int4 sa = multPowerOf2(shiftop);
+  if (sa < 0) {
+    sa = multPowerOf2(zextloop);
+    if (sa < 0) return 0;
     PcodeOp *tmpop = zextloop;
     zextloop = shiftop;
     shiftop = tmpop;
   }
-  if (!shiftop->getIn(1)->isConstant()) return 0;
   vn1 = shiftop->getIn(0);
   if (!vn1->isWritten()) return 0;
   zexthiop = vn1->getDef();
@@ -3819,7 +3780,6 @@ int4 RuleShiftPiece::applyOp(PcodeOp *op,Funcdata &data)
   }
   else if (vn1->isFree())
     return 0;
-  int4 sa = shiftop->getIn(1)->getOffset();
   int4 concatsize = sa + 8*vn1->getSize();
   if (op->getOut()->getSize() * 8 < concatsize) return 0;
   if (zextloop->code() != CPUI_INT_ZEXT) {
@@ -3941,37 +3901,44 @@ int4 RuleTransformCpool::applyOp(PcodeOp *op,Funcdata &data)
 
 /// \class RulePropagateCopy
 /// \brief Propagate the input of a COPY to all the places that read the output
+void RulePropagateCopy::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_COPY);
+}
+
 int4 RulePropagateCopy::applyOp(PcodeOp *op,Funcdata &data)
 
 {
-  int4 i;
-  PcodeOp *copyop;
-  Varnode *vn,*invn;
-
-  if (op->isReturnCopy()) return 0;
-  for(i=0;i<op->numInput();++i) {
-    vn = op->getIn(i);
-    if (!vn->isWritten()) continue; // Varnode must be written to
-
-    copyop = vn->getDef();
-    if (copyop->code()!=CPUI_COPY)
-      continue;			// not a propagating instruction
-    
-    invn = copyop->getIn(0);
-    if (!invn->isHeritageKnown()) continue; // Don't propagate free's away from their first use
-    if (invn == vn)
-      throw LowlevelError("Self-defined varnode");
-    if (op->isMarker()) {
-      if (invn->isConstant()) continue;		// Don't propagate constants into markers
-      if (vn->isAddrForce()) continue;		// Don't propagate if we are keeping the COPY anyway
-      if (invn->isAddrTied() && op->getOut()->isAddrTied() && 
-	  (op->getOut()->getAddr() != invn->getAddr()))
-	continue;		// We must not allow merging of different addrtieds
+  Varnode *vn = op->getOut();
+  Varnode *invn = op->getIn(0);
+  if (invn == vn)
+    throw LowlevelError("Self-defined varnode");
+  if (!invn->isHeritageKnown()) return 0; // Don't propagate free's away from their first use
+  list<PcodeOp *>::const_iterator iter = vn->beginDescend();
+  int4 count = 0;
+  while(iter != vn->endDescend()) {
+    PcodeOp *otherOp = *iter;
+    ++iter;
+    if (otherOp->isReturnCopy()) continue;
+    for(int4 slot=0;slot<otherOp->numInput();++slot) {
+      if (vn != otherOp->getIn(slot)) continue;
+      if (otherOp->isMarker()) {
+	if (invn->isConstant()) continue;		// Don't propagate constants into markers
+	if (vn->isAddrForce()) continue;		// Don't propagate if we are keeping the COPY anyway
+	if (invn->isAddrTied() && otherOp->getOut()->isAddrTied() &&
+	    (otherOp->getOut()->getAddr() != invn->getAddr()))
+	  continue;		// We must not allow merging of different addrtieds
+	if (otherOp->code() == CPUI_MULTIEQUAL && op->getParent() == otherOp->getParent()->getIn(slot)) {
+	  otherOp->setCopyImmed(slot);
+	}
+      }
+      data.opSetInput(otherOp,invn,slot); // Propagate input of COPY into otherVn
+      count += 1;
+      break;			// Allow at most one propagation per descendant
     }
-    data.opSetInput(op,invn,i); // otherwise propagate just a single copy
-    return 1;
   }
-  return 0;
+  return count;
 }
 
 /// \class Rule2Comp2Mult
@@ -4355,6 +4322,7 @@ int4 RuleStoreVarnode::applyOp(PcodeOp *op,Funcdata &data)
   if (op->isStoreUnmapped()) {
     data.getScopeLocal()->markNotMapped(baseoff, offoff, size, false);
   }
+  data.opCollapseIndirectsForCopy(op);
   return 1;
 }
 
@@ -4506,18 +4474,18 @@ bool RuleSubCommute::cancelExtensions(PcodeOp *longform,PcodeOp *subOp,Varnode *
   if (outvn->loneDescend() != subOp) return false;	// Must be exactly one output to SUBPIECE
   if (ext0In->getSize() == ext1In->getSize()) {
     maxSize = ext0In->getSize();
-    if (ext0In->isFree()) return false;		// Must be able to propagate inputs
-    if (ext1In->isFree()) return false;
+    if (ext0In->isFree() && !ext0In->isConstant()) return false;		// Must be able to propagate inputs
+    if (ext1In->isFree() && !ext1In->isConstant()) return false;
   }
   else if (ext0In->getSize() < ext1In->getSize()) {
     maxSize = ext1In->getSize();
-    if (ext1In->isFree()) return false;
+    if (ext1In->isFree() && !ext1In->isConstant()) return false;
     if (longform->getIn(0)->loneDescend() != longform) return false;
     ext0In = shortenExtension(longform->getIn(0)->getDef(), maxSize, data);
   }
   else {
     maxSize = ext0In->getSize();
-    if (ext0In->isFree()) return false;
+    if (ext0In->isFree() && !ext0In->isConstant()) return false;
     if (longform->getIn(1)->loneDescend() != longform) return false;
     ext1In = shortenExtension(longform->getIn(1)->getDef(), maxSize, data);
   }
@@ -4888,7 +4856,7 @@ int4 RuleZextShiftZext::applyOp(PcodeOp *op,Funcdata &data)
   PcodeOp *shiftop = invn->getDef();
   if (shiftop->code() == CPUI_INT_ZEXT) {	// Check for ZEXT( ZEXT( a ) )
     Varnode *vn = shiftop->getIn(0);
-    if (vn->isFree()) return 0;
+    if (vn->isFree() && !vn->isConstant()) return 0;
     if (invn->loneDescend() != op)		// Only propagate if -op- is only use of -invn-
       return 0;
     data.opSetInput(op,vn,0);
@@ -4988,6 +4956,7 @@ int4 RuleConcatZero::applyOp(PcodeOp *op,Funcdata &data)
 
   int4 sa = 8*op->getIn(1)->getSize();
   Varnode *highvn = op->getIn(0);
+  if (highvn->isConstant() && highvn->getOffset() == 0) return 0;
   PcodeOp *newop = data.newOp(1,op->getAddr());
   Varnode *outvn = data.newUniqueOut(op->getOut()->getSize(),newop);
   data.opSetOpcode(newop,CPUI_INT_ZEXT);
@@ -5494,6 +5463,8 @@ int4 RuleCondNegate::applyOp(PcodeOp *op,Funcdata &data)
   Varnode *vn,*outvn;
 
   if (!op->isBooleanFlip()) return 0;
+  if (data.opNormalizeFlip(op))
+    return 1;
 
   vn = op->getIn(1);
   newop = data.newOp(1,op->getAddr());
@@ -5867,7 +5838,7 @@ int4 RuleEqual2Zero::applyOp(PcodeOp *op,Funcdata &data)
 
 {
   Varnode *vn,*vn2,*addvn;
-  Varnode *posvn,*negvn,*unnegvn;
+  Varnode *posvn,*unnegvn;
   PcodeOp *addop;
   
   vn = op->getIn(0);
@@ -5897,21 +5868,16 @@ int4 RuleEqual2Zero::applyOp(PcodeOp *op,Funcdata &data)
     posvn = vn;
   }
   else {
-    if ((vn->isWritten())&&(vn->getDef()->code()==CPUI_INT_MULT)) {
-      negvn = vn;
+    if (vn->isWritten() && vn->getDef()->verifyMultNegOne()) {
       posvn = vn2;
+      unnegvn = vn->getDef()->getIn(0);
     }
-    else if ((vn2->isWritten())&&(vn2->getDef()->code()==CPUI_INT_MULT)) {
-      negvn = vn2;
+    else if (vn2->isWritten() && vn2->getDef()->verifyMultNegOne()) {
       posvn = vn;
+      unnegvn = vn2->getDef()->getIn(0);
     }
     else
       return 0;
-    uintb multiplier;
-    if (!negvn->getDef()->getIn(1)->isConstant()) return 0;
-    unnegvn = negvn->getDef()->getIn(0);
-    multiplier = negvn->getDef()->getIn(1)->getOffset();
-    if (multiplier != calc_mask(unnegvn->getSize())) return 0;
   }
   if (!posvn->isHeritageKnown()) return 0;
   if (!unnegvn->isHeritageKnown()) return 0;
@@ -6064,64 +6030,6 @@ AddTreeState::AddTreeState(Funcdata &d,PcodeOp *op,int4 slot)
   distributeOp = (PcodeOp *)0;
   int4 unitsize = AddrSpace::addressToByteInt(1,ct->getWordSize());
   isDegenerate = (baseType->getAlignSize() <= unitsize && baseType->getAlignSize() > 0);
-}
-
-/// \brief Given an offset into the base data-type and array hints find sub-component being referenced
-///
-/// An explicit offset should target a specific sub data-type,
-/// but array indexing may confuse things.  This method passes
-/// back the offset of the best matching component, searching among components
-/// that are \e nearby the given offset, preferring a matching array element size
-/// and a component start that is nearer to the offset.
-/// \param off is the given offset into the data-type
-/// \param arrayHint if non-zero indicates array access, where the value is the element size
-/// \param newoff is used to pass back the actual offset of the selected component
-/// \return \b true if a good component match was found
-bool AddTreeState::hasMatchingSubType(int8 off,uint4 arrayHint,int8 *newoff) const
-
-{
-  if (arrayHint == 0)
-    return (baseType->getSubType(off,newoff) != (Datatype *)0);
-
-  int8 elSizeBefore;
-  int8 offBefore;
-  int8 typeBefore = baseType->nearestArrayedComponentBackward(off, 128, &offBefore, &elSizeBefore);
-  int8 elSizeAfter;
-  int8 offAfter;
-  int8 typeAfter = baseType->nearestArrayedComponentForward(off, 128, &offAfter, &elSizeAfter);
-  if (typeBefore < 0 && typeAfter < 0)
-    return (baseType->getSubType(off,newoff) != (Datatype *)0);
-  if (typeBefore < 0) {
-    *newoff = offAfter;		// Only array is after
-    return true;
-  }
-  if (typeAfter < 0) {
-    *newoff = offBefore;	// Only array is before
-    return true;
-  }
-  if (offAfter == offBefore) {
-    *newoff = offAfter;
-    return true;
-  }
-  // Reaching here we know there is an array before and an array after the offset point
-  if (arrayHint != 1 && elSizeBefore != elSizeAfter) {	// element sizes are different, try to distinguish by arrayHint
-    if (elSizeBefore == arrayHint) {
-      *newoff = offBefore;
-      return true;
-    }
-    if (elSizeAfter == arrayHint) {
-      *newoff = offAfter;
-      return true;
-    }
-  }
-  if (baseType->getSubType(off,newoff) != (Datatype *)0) {
-    if (*newoff == offBefore || *newoff == offAfter)
-      return true;		// Offset is contained in one of the arrayed components.  Return it.
-  }
-  uint8 distBefore = (offBefore < 0) ? -offBefore : offBefore;
-  uint8 distAfter = (offAfter < 0) ? -offAfter : offAfter;
-  *newoff = (distAfter < distBefore) ? offAfter : offBefore;
-  return true;
 }
 
 /// Examine a CPUI_INT_MULT element in the middle of the add tree. Determine if we treat
@@ -6305,7 +6213,14 @@ void AddTreeState::calcSubtype(void)
     int8 offsetbytes = AddrSpace::addressToByteInt(offset,ct->getWordSize()); // Convert to bytes
     int8 extra;
     // Get offset into mapped variable
-    if (!hasMatchingSubType(offsetbytes, biggestNonMultCoeff, &extra)) {
+    bool foundSymbol = false;
+    if (biggestNonMultCoeff != 0)
+      foundSymbol = baseType->nearestArrayedComponent(offsetbytes, biggestNonMultCoeff, &extra);
+    if (!foundSymbol)
+      foundSymbol = (baseType->getSubType(offsetbytes,&extra) != (Datatype *)0);
+    if (!foundSymbol && biggestNonMultCoeff == 0)
+      foundSymbol = baseType->nearestArrayedComponent(offsetbytes, 1, &extra);
+    if (!foundSymbol) {
       valid = false;		// Cannot find mapped variable but nonmult is non-empty
       return;
     }
@@ -6319,7 +6234,12 @@ void AddTreeState::calcSubtype(void)
     int8 offsetbytes = AddrSpace::addressToByteInt(soffset,ct->getWordSize()); // Convert to bytes
     int8 extra;
     // Get offset into field in structure
-    if (!hasMatchingSubType(offsetbytes, biggestNonMultCoeff, &extra)) {
+    bool foundField = false;
+    if (biggestNonMultCoeff != 0)
+      foundField = baseType->nearestArrayedComponent(offsetbytes, biggestNonMultCoeff, &extra);
+    if (!foundField)
+      foundField = (baseType->getSubType(offsetbytes,&extra) != (Datatype *)0);
+    if (!foundField) {
       if (offsetbytes < 0 || offsetbytes >= baseType->getSize()) {	// Compare as bytes! not address units
 	valid = false; // Out of structure's bounds
 	return;
@@ -6515,8 +6435,12 @@ void AddTreeState::buildTree(void)
   // Create PTRADD portion of operation
   if (multNode != (Varnode *)0) {
     newop = data.newOpBefore(baseOp,CPUI_PTRADD,ptr,multNode,data.newConstant(ptrsize,size));
-    if (ptr->getType()->needsResolution())
-      data.inheritResolution(ptr->getType(),newop, 0, baseOp, baseSlot);
+    if (ptr->getType()->needsResolution()) {
+      if (((TypePointer *)ptr->getType())->getPtrTo()->getSize() == baseType->getSize())
+	data.forceFacingType(ptr->getType(),-1,newop, 0);		// Force type not to resolve before the index is applied
+      else
+	data.inheritUnionField(ptr->getType(), newop, 0, baseOp, baseSlot);
+    }
     if (data.isTypeRecoveryExceeded())
       assignPropagatedType(newop);
     multNode = newop->getOut();
@@ -6528,7 +6452,7 @@ void AddTreeState::buildTree(void)
   if (isSubtype) {
     newop = data.newOpBefore(baseOp,CPUI_PTRSUB,multNode,data.newConstant(ptrsize,offset));
     if (multNode->getType()->needsResolution())
-      data.inheritResolution(multNode->getType(),newop, 0, baseOp, baseSlot);
+      data.inheritUnionField(multNode->getType(),newop, 0, baseOp, baseSlot);
     if (data.isTypeRecoveryExceeded())
       assignPropagatedType(newop);
     if (size != 0)
@@ -6729,7 +6653,7 @@ int4 RuleStructOffset0::applyOp(PcodeOp *op,Funcdata &data)
     // Create pointer up to parent
     PcodeOp *newop = data.newOpBefore(op,CPUI_PTRSUB,ptrVn,data.newConstant(ptrVn->getSize(),offset));
     if (ptrVn->getType()->needsResolution())
-      data.inheritResolution(ptrVn->getType(),newop, 0, op, 1);
+      data.inheritUnionField(ptrVn->getType(),newop, 0, op, 1);
     newop->setStopTypePropagation();
     if (newoff != 0) {
       // Add newoff in to get back to zero total offset
@@ -6767,7 +6691,7 @@ int4 RuleStructOffset0::applyOp(PcodeOp *op,Funcdata &data)
 
   PcodeOp *newop = data.newOpBefore(op,CPUI_PTRSUB,ptrVn,data.newConstant(ptrVn->getSize(),0));
   if (ptrVn->getType()->needsResolution())
-    data.inheritResolution(ptrVn->getType(),newop, 0, op, 1);
+    data.inheritUnionField(ptrVn->getType(),newop, 0, op, 1);
   newop->setStopTypePropagation();
   data.opSetInput(op,newop->getOut(),1);
   return 1;
@@ -7098,10 +7022,11 @@ int8 RulePtrsubUndo::removeLocalAdds(Varnode *vn,Funcdata &data)
 {
   int8 extra = 0;
   PcodeOp *op = vn->loneDescend();
+  Varnode *nextVn = vn;
   while(op != (PcodeOp *)0) {
     OpCode opc = op->code();
     if (opc == CPUI_INT_ADD) {
-      int4 slot = op->getSlot(vn);
+      int4 slot = op->getSlot(nextVn);
       if (slot == 0 && op->getIn(1)->isConstant()) {
 	extra += (int8)op->getIn(1)->getOffset();
 	data.opRemoveInput(op, 1);
@@ -7118,7 +7043,7 @@ int8 RulePtrsubUndo::removeLocalAdds(Varnode *vn,Funcdata &data)
       data.opSetOpcode(op, CPUI_COPY);
     }
     else if (opc == CPUI_PTRADD) {
-      if (op->getIn(0) != vn) break;
+      if (op->getIn(0) != nextVn) break;
       // The PTRADD should be converted to an INT_ADD or COPY
       // as it is associated with the invalid PTRSUB
       int8 ptraddmult = op->getIn(2)->getOffset();
@@ -7137,9 +7062,11 @@ int8 RulePtrsubUndo::removeLocalAdds(Varnode *vn,Funcdata &data)
     else {
       break;
     }
-    vn = op->getOut();
-    op = vn->loneDescend();
+    nextVn = op->getOut();
+    op = nextVn->loneDescend();
   }
+  if (nextVn != vn)
+    vn->updateType(nextVn->getType());
   return extra;
 }
 
@@ -7487,9 +7414,11 @@ Datatype *RulePieceStructure::determineDatatype(Varnode *vn,int4 &baseOffset)
 
   if (ct->getSize() != vn->getSize()) {			// vn is a partial
     SymbolEntry *entry = vn->getSymbolEntry();
-    baseOffset = vn->getAddr().overlap(0,entry->getAddr(),ct->getSize());
+    if (entry->isDynamic())
+      return (Datatype *)0;
+    baseOffset = vn->getAddr().overlap(0,((MapEntry *)entry)->getAddr(),ct->getSize());
     if (baseOffset < 0)
-      return (Datatype*)0;
+      return (Datatype *)0;
     baseOffset += entry->getOffset();
     // Find concrete sub-type that matches the size of the Varnode
     Datatype *subType = ct;
@@ -7559,7 +7488,7 @@ bool RulePieceStructure::convertZextToPiece(PcodeOp *zext,Datatype *ct,int4 offs
   data.opSetOpcode(zext, CPUI_PIECE);
   data.opInsertInput(zext, zerovn, 0);
   if (invn->getType()->needsResolution())
-    data.inheritResolution(invn->getType(), zext, 1, zext, 0);	// Transfer invn's resolution to slot 1
+    data.inheritUnionField(invn->getType(), zext, 1, zext, 0);	// Transfer invn's resolution to slot 1
   return true;
 }
 
@@ -7690,7 +7619,7 @@ int4 RulePieceStructure::applyOp(PcodeOp *op,Funcdata &data)
       data.opInsertBefore(copyOp, node.getOp());
       if (vn->getType()->needsResolution()) {
 	// Inherit PIECE's read resolution for COPY's read
-	data.inheritResolution(vn->getType(), copyOp, 0, node.getOp(), node.getSlot());
+	data.inheritUnionField(vn->getType(), copyOp, 0, node.getOp(), node.getSlot());
       }
       if (newType->needsResolution()) {
 	newType->resolveInFlow(copyOp, -1);	// If the piece represents part of a union, resolve it
@@ -7714,6 +7643,63 @@ int4 RulePieceStructure::applyOp(PcodeOp *op,Funcdata &data)
   }
   if (!anyAddrTied)
     data.getMerge().registerProtoPartialRoot(outvn);
+  return 1;
+}
+
+/// \class RuleAndStructure
+/// \brief Convert `and(x,#mask) => zext(sub(x,#c)` when the mask corresponds to a field access
+void RuleAndStructure::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_INT_AND);
+}
+
+int4 RuleAndStructure::applyOp(PcodeOp *op,Funcdata &data)
+
+{
+  Varnode *cvn = op->getIn(1);
+  if (!cvn->isConstant()) return 0;
+  Varnode *vn = op->getIn(0);
+  Datatype *baseType = vn->getTypeReadFacing(op);
+  type_metatype meta = baseType->getMetatype();
+  if (meta != TYPE_STRUCT && meta != TYPE_PARTIALSTRUCT && meta != TYPE_ARRAY)
+    return 0;
+  uintb off = cvn->getOffset();
+  int4 count = sizeof(uintb)*8 - count_leading_zeros(off);
+  int4 size = count / 8;	// Number of bytes being masked off
+  if (count % 8 != 0)
+    size += 1;
+  int8 structOff = vn->getSpace()->isBigEndian() ? vn->getSize() - size : 0;
+  Datatype *ct = baseType->findSmallestContainer(structOff, size, &structOff);
+  if (ct->getSize() >= vn->getSize() || structOff != 0)
+    return 0;
+  PcodeOp *subOp = data.newOp(2, op->getAddr());
+  data.opSetOpcode(subOp, CPUI_SUBPIECE);
+  data.opSetInput(subOp,data.newConstant(4, 0),1);
+  data.opMarkSpecialPrint(subOp);	// Mark SUBPIECE as a field extraction
+  Address addr = op->getOut()->getAddr();
+  if (addr.isBigEndian())
+    addr = addr + (vn->getSize() - ct->getSize());
+  addr.renormalize(vn->getSize());		// Allow for possible join address
+  Varnode *outvn = data.newVarnodeOut(ct->getSize(), addr, subOp);
+  outvn->updateType(ct);
+  if (calc_mask(size) == off) {
+    data.opRemoveInput(op, 1);
+    data.opSetInput(op, outvn, 0);
+    data.opSetOpcode(op, CPUI_INT_ZEXT);
+    data.opSetInput(subOp,vn,0);
+    data.opInsertBefore(subOp, op);
+  }
+  else {
+    PcodeOp *newZext = data.newOp(1, op->getAddr());
+    data.opSetOpcode(newZext, CPUI_INT_ZEXT);
+    Varnode *outzext = data.newUniqueOut(vn->getSize(), newZext);
+    data.opSetInput(op, outzext, 0);
+    data.opSetInput(subOp, vn, 0);
+    data.opSetInput(newZext,outvn,0);
+    data.opInsertBefore(newZext,op);
+    data.opInsertBefore(subOp,newZext);
+  }
   return 1;
 }
 
@@ -7848,7 +7834,7 @@ void RuleDivTermAdd::getOpList(vector<uint4> &oplist) const
 int4 RuleDivTermAdd::applyOp(PcodeOp *op,Funcdata &data)
 
 {
-  int4 n;
+  uint4 n;
   OpCode shiftopc;
   PcodeOp *subop = findSubshift(op,n,shiftopc);
   if (subop == (PcodeOp *)0) return 0;
@@ -7925,7 +7911,7 @@ int4 RuleDivTermAdd::applyOp(PcodeOp *op,Funcdata &data)
 /// \param n is the reference that will hold the total truncation
 /// \param shiftopc will hold the shift OpCode if used, CPUI_MAX otherwise
 /// \return the SUBPIECE op if present or NULL otherwise
-PcodeOp *RuleDivTermAdd::findSubshift(PcodeOp *op,int4 &n,OpCode &shiftopc)
+PcodeOp *RuleDivTermAdd::findSubshift(PcodeOp *op,uint4 &n,OpCode &shiftopc)
 
 { // SUB( .,#c) or SUB(.,#c)>>n  return baseop and n+c*8
   // make SUB is high
@@ -7944,7 +7930,7 @@ PcodeOp *RuleDivTermAdd::findSubshift(PcodeOp *op,int4 &n,OpCode &shiftopc)
     subop = op;
     n = 0;
   }
-  int4 c = subop->getIn(1)->getOffset();
+  uint4 c = subop->getIn(1)->getOffset();
   if (subop->getOut()->getSize() + c != subop->getIn(0)->getSize())
     return (PcodeOp *)0;	// SUB is not high
   n += 8*c;
@@ -7998,8 +7984,8 @@ int4 RuleDivTermAdd2::applyOp(PcodeOp *op,Funcdata &data)
   if (!z->isWritten()) return 0;
   PcodeOp *subpieceop = z->getDef();
   if (subpieceop->code() != CPUI_SUBPIECE) return 0;
-  int4 n = subpieceop->getIn(1)->getOffset() *8;
-  if (n!= 8*(subpieceop->getIn(0)->getSize() - z->getSize())) return 0;
+  uint4 n = subpieceop->getIn(1)->getOffset() *8;
+  if (n > 127 || n!= 8*(subpieceop->getIn(0)->getSize() - z->getSize())) return 0;
   Varnode *multvn = subpieceop->getIn(0);
   if (!multvn->isWritten()) return 0;
   PcodeOp *multop = multvn->getDef();
@@ -8066,7 +8052,7 @@ int4 RuleDivTermAdd2::applyOp(PcodeOp *op,Funcdata &data)
 /// \param xsize will hold the number of (non-zero) bits in the numerand
 /// \param extopc holds whether the extension is INT_ZEXT or INT_SEXT
 /// \return the extended numerand if possible, or the unextended numerand, or NULL
-Varnode *RuleDivOpt::findForm(PcodeOp *op,int4 &n,uint8 *y,int4 &xsize,OpCode &extopc)
+Varnode *RuleDivOpt::findForm(PcodeOp *op,uint4 &n,uint8 *y,uint4 &xsize,OpCode &extopc)
 
 {
   PcodeOp *curOp = op;
@@ -8154,7 +8140,7 @@ Varnode *RuleDivOpt::findForm(PcodeOp *op,int4 &n,uint8 *y,int4 &xsize,OpCode &e
 /// \param y is the (up to 128-bit) multiplicative coefficient
 /// \param xsize is the maximum power of 2
 /// \return the divisor or 0 if the checks fail
-uintb RuleDivOpt::calcDivisor(uintb n,uint8 *y,int4 xsize)
+uintb RuleDivOpt::calcDivisor(uint4 n,uint8 *y,uint4 xsize)
 
 {
   if (n > 127 || xsize > 64) return 0;		// Not enough precision
@@ -8269,7 +8255,7 @@ bool RuleDivOpt::checkFormOverlap(PcodeOp *op)
     if (opc != CPUI_INT_RIGHT && opc != CPUI_INT_SRIGHT) continue;
     Varnode *cvn = superOp->getIn(1);
     if (!cvn->isConstant()) return true;	// Might be a form where constant has propagated yet
-    int4 n,xsize;
+    uint4 n,xsize;
     uint8 y[2];
     OpCode extopc;
     Varnode *inVn = findForm(superOp, n, y, xsize, extopc);
@@ -8295,7 +8281,7 @@ void RuleDivOpt::getOpList(vector<uint4> &oplist) const
 int4 RuleDivOpt::applyOp(PcodeOp *op,Funcdata &data)
 
 {
-  int4 n,xsize;
+  uint4 n,xsize;
   uint8 y[2];
   OpCode extOpc;
   Varnode *inVn = findForm(op,n,y,xsize,extOpc);
@@ -8480,6 +8466,7 @@ int4 RuleSignForm::applyOp(PcodeOp *op,Funcdata &data)
   if (sextop->code() != CPUI_INT_SEXT)
     return 0;
   a = sextop->getIn(0);
+  if (a->getSize() != op->getOut()->getSize()) return 0;
   int4 c = op->getIn(1)->getOffset();
   if (c < a->getSize()) return 0;
   if (a->isFree()) return 0;

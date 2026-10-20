@@ -19,7 +19,7 @@ import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.pe.cli.CliMetadataDirectory;
+import ghidra.app.util.bin.format.pe.cli.*;
 import ghidra.app.util.bin.format.pe.cli.streams.CliStreamMetadata;
 import ghidra.app.util.bin.format.pe.cli.tables.CliTableMethodDef.CliMethodDefRow;
 import ghidra.app.util.importer.MessageLog;
@@ -142,18 +142,20 @@ public class ImageCor20Header implements StructConverter, PeMarkupable {
 				}
 				else {
 					// Add a new symbol for the .NET entry point
-					CliStreamMetadata stream = (CliStreamMetadata) metadata.getMetadataRoot()
-							.getStreamHeader(CliStreamMetadata.getName())
-							.getStream();
+					CliMetadataRoot metadataRoot = metadata.getMetadataRoot();
+					CliStreamHeader streamHeader =
+						metadataRoot.getStreamHeader(CliStreamMetadata.getName());
+					if (streamHeader != null) {
+						CliStreamMetadata stream = (CliStreamMetadata) streamHeader.getStream();
+						CliMethodDefRow row =
+							(CliMethodDefRow) stream.getTable((entryPointToken & 0xff000000) >> 24)
+									.getRow(entryPointToken & 0x00ffffff);
 
-					CliMethodDefRow row =
-						(CliMethodDefRow) stream.getTable((entryPointToken & 0xff000000) >> 24)
-								.getRow(entryPointToken & 0x00ffffff);
+						program.getSymbolTable()
+								.addExternalEntryPoint(program.getImageBase().add(row.RVA));
 
-					program.getSymbolTable()
-							.addExternalEntryPoint(program.getImageBase().add(row.RVA));
-
-					entryPointVA = program.getImageBase().add(row.RVA);
+						entryPointVA = program.getImageBase().add(row.RVA);
+					}
 				}
 			}
 			catch (Exception e) {

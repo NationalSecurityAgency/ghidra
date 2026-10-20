@@ -17,6 +17,8 @@ package docking.widgets.table;
 
 import java.util.Comparator;
 
+import javax.swing.table.TableCellEditor;
+
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.framework.plugintool.ServiceProvider;
@@ -100,6 +102,11 @@ public class MappedTableColumn<ROW_TYPE, EXPECTED_ROW_TYPE, COLUMN_TYPE, DATA_SO
 	}
 
 	@Override
+	public TableCellEditor getColumnEditor() {
+		return tableColumn.getColumnEditor();
+	}
+
+	@Override
 	public GTableHeaderRenderer getHeaderRenderer() {
 		return tableColumn.getHeaderRenderer();
 	}
@@ -112,6 +119,16 @@ public class MappedTableColumn<ROW_TYPE, EXPECTED_ROW_TYPE, COLUMN_TYPE, DATA_SO
 	@Override
 	public int getColumnPreferredWidth() {
 		return tableColumn.getColumnPreferredWidth();
+	}
+
+	@Override
+	public int getColumnMaxWidth() {
+		return tableColumn.getColumnMaxWidth();
+	}
+
+	@Override
+	public int getColumnMinWidth() {
+		return tableColumn.getColumnMinWidth();
 	}
 
 	@Override

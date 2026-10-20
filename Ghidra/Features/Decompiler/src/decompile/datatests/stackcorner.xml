@@ -1,0 +1,56 @@
+<decompilertest>
+  <!--
+     arraybottom is a function with an array at the bottom with a hidden negative index.
+     paramnodirect has a stack parameter accessed only via pointer
+     positivestack accesses array in the parameter region of the stack
+     arrayslack has an array index with a negative adjustment
+  -->
+<binaryimage arch="x86:LE:64:default:gcc">
+<bytechunk space="ram" offset="0x100000" readonly="true">
+534883ec444889fbc704241400000048
+8d3c2466e8e90f488d7c240466e8e80f
+c7449c4464000000488d7c2404e8ce0f
+00004883c4445bc35301f701d701cf44
+01c7428d1c0f488d7c2410e8b00f0000
+89d85bc34883ec08488d7c2410e89e0f
+00004883c408c3534883c4804889fb48
+89e7e8910f0000c7449cf82c01000048
+89e7e8790f00004883ec805bc3
+</bytechunk>
+<symbol space="ram" offset="0x100000" name="arraybottom"/>
+<symbol space="ram" offset="0x100038" name="paramnodirect"/>
+<symbol space="ram" offset="0x100054" name="positivestack"/>
+<symbol space="ram" offset="0x100067" name="arrayslack"/>
+</binaryimage>
+<script>
+  <com>map fun r0x101000 read</com>
+  <com>map fun r0x101008 write</com>
+  <com>parse line extern void read(int4 *ptr);</com>
+  <com>parse line extern void write(int4 *ptr);</com>
+  <com>lo fu arraybottom</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>lo fu paramnodirect</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>lo fu positivestack</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>lo fu arrayslack</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Stack corner #1" min="1" max="1">int4 aiStack_48 \[16\];</stringmatch>
+<stringmatch name="Stack corner #2" min="1" max="1">iStack_4c = 0x14;</stringmatch>
+<stringmatch name="Stack corner #3" min="1" max="1">aiStack_48\[param_1 \+ 0x10\] = 100;</stringmatch>
+<stringmatch name="Stack corner #4" min="1" max="1">int4 paramnodirect\(int4 param_1,int4 param_2,int4 param_3,int4 param_4,int4 param_5,int4 param_6,
+													int4 param_7\)</stringmatch>
+<stringmatch name="Stack corner #5" min="1" max="1">read\(&amp;param_7\);</stringmatch>
+<stringmatch name="Stack corner #6" min="1" max="1">return param_. \+ param_. \+ param_. \+ param_. \+ param_. \+ param_.;</stringmatch>
+<stringmatch name="Stack corner #7" min="1" max="1">int4 iStack0+8;</stringmatch>
+<stringmatch name="Stack corner #8" min="1" max="1">read\(&amp;iStack0+8\);</stringmatch>
+<stringmatch name="Stack corner #9" min="1" max="1">int4 aiStack_88 \[32\];</stringmatch>
+<stringmatch name="Stack corner #10" min="1" max="1">write\(aiStack_88\);</stringmatch>
+<stringmatch name="Stack corner #11" min="1" max="1">aiStack_88\[param_1 \+ -2\] = 300;</stringmatch>
+</decompilertest>

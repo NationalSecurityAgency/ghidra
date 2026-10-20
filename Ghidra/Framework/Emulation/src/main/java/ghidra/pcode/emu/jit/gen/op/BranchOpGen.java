@@ -17,6 +17,7 @@ package ghidra.pcode.emu.jit.gen.op;
 
 import ghidra.pcode.emu.jit.JitPassage.*;
 import ghidra.pcode.emu.jit.JitPcodeThread;
+import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.BlockFlow;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
 import ghidra.pcode.emu.jit.gen.*;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator.PcGen;
@@ -38,11 +39,9 @@ import ghidra.program.model.lang.RegisterValue;
 
 /**
  * The generator for a {@link JitBranchOp branch}.
- * 
  * <p>
  * With an {@link IntBranch} record, this simply looks up the label for the target block and emits a
  * block transition followed by a {@link Op#goto_(Emitter) goto}.
- * 
  * <p>
  * With an {@link ExtBranch} record, this emits code to retire the target to the program counter,
  * along with the target context and live variables. It then emits code to request the chained entry
@@ -70,7 +69,6 @@ public enum BranchOpGen implements OpGen<JitBranchOp> {
 
 	/**
 	 * Generate code to retire the variables, write a given pc value, and return from the passage.
-	 * 
 	 * <p>
 	 * This will not write any decode context.
 	 * 
@@ -108,7 +106,6 @@ public enum BranchOpGen implements OpGen<JitBranchOp> {
 
 		/**
 		 * Generate code for the branch in the case a context modification has not occurred.
-		 * 
 		 * <p>
 		 * This means <em>no</em> context-modifying userop has been invoked.
 		 * 
@@ -124,7 +121,6 @@ public enum BranchOpGen implements OpGen<JitBranchOp> {
 
 		/**
 		 * Generate code for the branch in the case a context modification may have occurred.
-		 * 
 		 * <p>
 		 * This means a context-modifying userop has <em>certainly</em> been invoked, but not
 		 * necessarily that the context has actually changed.
@@ -217,10 +213,10 @@ public enum BranchOpGen implements OpGen<JitBranchOp> {
 		<THIS extends JitCompiledPassage> Emitter<Dead> genRunWithoutCtxmod(Emitter<Bot> em,
 				Local<TRef<THIS>> localThis, RetReq<TRef<EntryPoint>> retReq,
 				JitCodeGenerator<THIS> gen, JitOp op, RIntBranch branch, JitBlock block) {
-			JitBlock target = block.getTargetBlock(branch);
-			Lbl<Bot> label = gen.labelForBlock(target);
+			BlockFlow flow = block.flowsFrom().get(branch);
+			Lbl<Bot> label = gen.labelForBlock(flow.to());
 			return em
-					.emit(VarGen.computeBlockTransition(localThis, gen, block, target)::genFwd)
+					.emit(VarGen.computeBlockTransition(localThis, gen, flow)::genFwd)
 					.emit(Op::goto_, label);
 		}
 

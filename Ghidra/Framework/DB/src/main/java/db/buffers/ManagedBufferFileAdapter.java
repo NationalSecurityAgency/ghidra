@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,8 @@ package db.buffers;
 
 import java.io.IOException;
 import java.rmi.Remote;
+
+import ghidra.util.task.TaskMonitor;
 
 /**
  * <code>ManagedBufferFileAdapter</code> provides a ManagedBufferFile implementation which
@@ -86,7 +88,8 @@ public class ManagedBufferFileAdapter extends BufferFileAdapter implements Manag
 	 * @return input block stream
 	 * @throws IOException
 	 */
-	InputBlockStream getInputBlockStream(byte[] changeMapData) throws IOException {
+	InputBlockStream getInputBlockStream(byte[] changeMapData, TaskMonitor monitor)
+			throws IOException {
 		// NOTE: This may need to change in the future if other
 		// non-RMI implementation require the use of InputBlockStreamHandle
 		if (managedBufferFileHandle instanceof Remote) {
@@ -94,7 +97,7 @@ public class ManagedBufferFileAdapter extends BufferFileAdapter implements Manag
 			// obtain InputBlockStream via InputBlockStreamHandle
 			BlockStreamHandle<InputBlockStream> inputBlockStreamHandle =
 				managedBufferFileHandle.getInputBlockStreamHandle(changeMapData);
-			return inputBlockStreamHandle.openBlockStream();
+			return inputBlockStreamHandle.openBlockStream(monitor);
 		}
 		return managedBufferFileHandle.getInputBlockStream(changeMapData);
 	}

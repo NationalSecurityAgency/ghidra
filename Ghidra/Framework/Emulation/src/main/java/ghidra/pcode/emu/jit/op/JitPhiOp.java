@@ -16,6 +16,7 @@
 package ghidra.pcode.emu.jit.op;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
@@ -24,6 +25,7 @@ import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.BlockFlow;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
 import ghidra.pcode.emu.jit.analysis.JitTypeBehavior;
 import ghidra.pcode.emu.jit.var.*;
+import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropSymbolMap;
 
 /**
  * The synthetic use-def node for phi nodes.
@@ -42,6 +44,18 @@ public record JitPhiOp(JitBlock block, JitOutVar out, BidiMap<BlockFlow, JitVal>
 	 */
 	public JitPhiOp(JitBlock block, JitOutVar out) {
 		this(block, out, new DualHashBidiMap<>());
+	}
+
+	@Override
+	public String toString(PcodeUseropSymbolMap symbols) {
+		return "%s[block=%s, out=%s, options={%s}]".formatted(
+			block,
+			out.toString(symbols.language()),
+			options.entrySet()
+					.stream()
+					.map(e -> "%s=%s".formatted(e.getKey(),
+						e.getValue().toString(symbols.language())))
+					.collect(Collectors.joining(",")));
 	}
 
 	/**

@@ -50,11 +50,6 @@ public class DiffGoToService implements GoToService {
 	}
 
 	@Override
-	public GoToOverrideService getOverrideService() {
-		return goToService.getOverrideService();
-	}
-
-	@Override
 	public boolean goTo(ProgramLocation loc) {
 		return diffGoTo(loc);
 	}
@@ -159,11 +154,6 @@ public class DiffGoToService implements GoToService {
 			GoToServiceListener listener, TaskMonitor monitor) {
 		// Does this need to do something different here? Maybe if Diff becomes searchable?
 		return goToService.goToQuery(navigatable, fromAddr, queryData, listener, monitor);
-	}
-
-	@Override
-	public void setOverrideService(GoToOverrideService override) {
-		// Do nothing. (May need to change this later if there is reason to override Diff.)
 	}
 
 	@Override

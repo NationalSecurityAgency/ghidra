@@ -181,8 +181,8 @@ CircleRange::CircleRange(uintb lft,uintb rgt,int4 size,int4 stp)
 {
   mask = calc_mask(size);
   step = stp;
-  left = lft;
-  right = rgt;
+  left = lft & mask;
+  right = rgt & mask;
   isempty = false;
 }
 
@@ -220,8 +220,8 @@ void CircleRange::setRange(uintb lft,uintb rgt,int4 size,int4 stp)
 
 {
   mask = calc_mask(size);
-  left = lft;
-  right = rgt;
+  left = lft & mask;
+  right = rgt & mask;
   step = stp;
   isempty = false;
 }

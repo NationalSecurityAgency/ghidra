@@ -43,7 +43,7 @@ import ghidra.program.util.ProgramMemoryUtil;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
 import ghidra.util.bytesearch.*;
-import ghidra.util.datastruct.ListAccumulator;
+import ghidra.util.datastruct.SetAccumulator;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -2329,24 +2329,26 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to make the given function a thiscall
+	 * Method to make the given function a thiscall unless doing so causes an exception in which 
+	 * case it will not be updated
 	 * @param function the given function
-	 * @throws InvalidInputException if issues setting return type
-	 * @throws DuplicateNameException if try to create same symbol name already in namespace
 	 */
-	public void makeFunctionThiscall(Function function)
-			throws InvalidInputException, DuplicateNameException {
+	public void makeFunctionThiscall(Function function) {
 
 		if (function.getCallingConventionName().equals(CompilerSpec.CALLING_CONVENTION_thiscall)) {
 			return;
 		}
 
-		ReturnParameterImpl returnType =
-			new ReturnParameterImpl(function.getSignature().getReturnType(), program);
-
-		function.updateFunction(CompilerSpec.CALLING_CONVENTION_thiscall, returnType,
-			FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, function.getSignatureSource(),
-			function.getParameters());
+		ReturnParameterImpl returnType;
+		try {
+			returnType = new ReturnParameterImpl(function.getSignature().getReturnType(), program);
+			function.updateFunction(CompilerSpec.CALLING_CONVENTION_thiscall, returnType,
+				FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, function.getSignatureSource(),
+				function.getParameters());
+		}
+		catch (InvalidInputException | DuplicateNameException e) {
+			// don't update if there is an issue
+		}
 	}
 
 	/**
@@ -4289,14 +4291,13 @@ public class RecoveredClassHelper {
 
 			monitor.checkCancelled();
 
-			ListAccumulator<LocationReference> accumulator = new ListAccumulator<>();
-
 			boolean discoverTypes = true;
-			ReferenceUtils.findDataTypeReferences(accumulator, badStructure, program, discoverTypes,
-				monitor);
 
-			List<LocationReference> referenceList = accumulator.asList();
-			if (referenceList.isEmpty()) {
+			SetAccumulator<LocationReference> accumulator = new SetAccumulator<>();
+			ReferenceUtils.findDataTypeReferences(accumulator, badStructure, program,
+				discoverTypes, monitor);
+
+			if (accumulator.size() == 0) {
 				// delete empty class data type and empty parent folders
 				removeEmptyStructure(badStructure.getDataTypePath().getCategoryPath(),
 					badStructure.getName());
@@ -5697,7 +5698,26 @@ public class RecoveredClassHelper {
 					if (!areVftablesInSameClass(vftableReferenceList)) {
 						recoveredClass.addIndeterminateInline(indeterminateFunction);
 						indeterminateIterator.remove();
+						continue;
 					}
+				}
+				// Next try identifying non-constructor/destructor but contains inline 
+				// using decompiler return type
+				DataType decompilerReturnType =
+					decompilerUtils.getDecompilerReturnType(indeterminateFunction);
+
+				if (decompilerReturnType != null) {
+
+					String returnDataName = decompilerReturnType.getDisplayName();
+					if (returnDataName.contains("*") &&
+						!isFidFunction(indeterminateFunction)) {
+						continue;
+					}
+					if (returnDataName.equals("void")) {
+						continue;
+					}
+					recoveredClass.addIndeterminateInline(indeterminateFunction);
+					indeterminateIterator.remove();
 				}
 			}
 		}
@@ -6292,7 +6312,7 @@ public class RecoveredClassHelper {
 
 					// otherwise, use pcode info to figure out if inlined constructor or destructor
 					//If not already, make function a this call
-					makeFunctionThiscall(inlineFunction);
+					//	makeFunctionThiscall(inlineFunction);
 
 					List<OffsetPcodeOpPair> loads = getLoadPcodeOpPairs(inlineFunction);
 					List<OffsetPcodeOpPair> stores = getStorePcodeOpPairs(inlineFunction);

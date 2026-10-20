@@ -33,6 +33,8 @@ public class LocalDirDebugInfoDProviderTest extends AbstractGenericTest {
 	private TaskMonitor monitor = TaskMonitor.DUMMY;
 	private File tmpDir;
 
+	BuildIdDebugInfo id = new BuildIdDebugInfo(new byte[20] /* all 00's */);
+
 	@Before
 	public void setUp() throws Exception {
 		tmpDir = createTempDirectory("debuginfod_provider_test");
@@ -43,9 +45,7 @@ public class LocalDirDebugInfoDProviderTest extends AbstractGenericTest {
 		LocalDirDebugInfoDProvider provider = new LocalDirDebugInfoDProvider(tmpDir);
 		provider.purgeAll();
 
-		String buildId = "0000000000000000000000000000000000000000";
-
-		File f = new File(tmpDir, buildId + "/debuginfo");
+		File f = new File(tmpDir, id.getBuildIdHexString() + "/debuginfo");
 
 		FileUtilities.checkedMkdirs(f.getParentFile());
 		FileUtilities.writeStringToFile(f, "test1");
@@ -70,13 +70,11 @@ public class LocalDirDebugInfoDProviderTest extends AbstractGenericTest {
 		LocalDirDebugInfoDProvider provider = new LocalDirDebugInfoDProvider(tmpDir);
 		provider.purgeAll();
 
-		String buildId = "0000000000000000000000000000000000000000";
-
-		File f = new File(tmpDir, buildId + "/debuginfo");
+		File f = new File(tmpDir, id.getBuildIdHexString() + "/debuginfo");
 		FileUtilities.checkedMkdirs(f.getParentFile());
 		FileUtilities.writeStringToFile(f, "test1");
 
-		File result = provider.getFile(ExternalDebugInfo.forBuildId(buildId), monitor);
+		File result = provider.getFile(id, monitor);
 
 		assertEquals("debuginfo", result.getName());
 		assertEquals(5, result.length());
@@ -87,10 +85,9 @@ public class LocalDirDebugInfoDProviderTest extends AbstractGenericTest {
 		LocalDirDebugInfoDProvider provider = new LocalDirDebugInfoDProvider(tmpDir);
 		provider.purgeAll();
 
-		String buildId = "0000000000000000000000000000000000000000";
 		byte bytes[] = "test".getBytes();
 		StreamInfo stream = new StreamInfo(new ByteArrayInputStream(bytes), bytes.length);
-		File f = provider.putStream(ExternalDebugInfo.forBuildId(buildId), stream, monitor);
+		File f = provider.putStream(id, stream, monitor);
 
 		assertEquals("debuginfo", f.getName());
 		assertEquals(bytes.length, f.length());
@@ -104,8 +101,8 @@ public class LocalDirDebugInfoDProviderTest extends AbstractGenericTest {
 		byte bytes[] = "test".getBytes();
 		StreamInfo stream = new StreamInfo(new ByteArrayInputStream(bytes), bytes.length);
 		try {
-			File f = provider.putStream(ExternalDebugInfo.forDebugLink("test.debug", 0x11223344),
-				stream, monitor);
+			File f = provider.putStream(new DebugLinkDebugInfo("test.debug", 0x11223344), stream,
+				monitor);
 			fail("Shouldn't get here: " + f);
 		}
 		catch (IOException e) {

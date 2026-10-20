@@ -18,7 +18,7 @@ package ghidra.app.plugin.core.debug.service.modules;
 import java.net.URL;
 import java.util.Objects;
 
-import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin.ChangeCollector;
+import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingContext.ChangeCollector;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;

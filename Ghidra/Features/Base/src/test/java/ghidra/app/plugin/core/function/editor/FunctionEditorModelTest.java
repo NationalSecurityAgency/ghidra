@@ -22,7 +22,6 @@ import java.util.List;
 import org.junit.*;
 
 import generic.test.AbstractGuiTest;
-import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.cparser.C.ParseException;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
@@ -40,7 +39,6 @@ public class FunctionEditorModelTest extends AbstractGuiTest {
 	private volatile boolean dataChangeCalled;
 	private Structure bigStruct;
 	private ProgramDB program;
-	private DataTypeManagerService service;
 	private volatile boolean tableRowsChanged;
 
 	class MyModelChangeListener implements ModelChangeListener {
@@ -1612,9 +1610,9 @@ public class FunctionEditorModelTest extends AbstractGuiTest {
 		assertEquals("R9D:4", storage.toString());
 
 		model.setUseCustomizeStorage(false);
-		// no change to 'this', return ptr consumed and unfortunately
+		// no change to 'this', return pointer consumed and unfortunately
 		// injected before custom 'this' param
-		// TODO: should we be removing 'this' param if not __thiscall ?
+		// Note: should we be removing 'this' param if not __thiscall ?
 
 		assertTrue(model.getReturnType().isEquivalent(new PointerDataType(bigStruct)));
 		assertTrue(model.getFormalReturnType().isEquivalent(bigStruct));
@@ -1843,7 +1841,6 @@ public class FunctionEditorModelTest extends AbstractGuiTest {
 
 		model.setUseCustomizeStorage(true);
 		VariableStorage paramStorage1 = model.getParameters().get(0).getStorage();
-		VariableStorage paramStorage2 = model.getParameters().get(1).getStorage();
 		VariableStorage paramStorage3 = model.getParameters().get(2).getStorage();
 
 		model.setSignatureFieldText("int joe(int e, int c, int f, int g)");

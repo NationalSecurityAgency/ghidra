@@ -99,8 +99,16 @@ public final class PyGhidraScriptProvider extends AbstractPythonScriptProvider {
 			implements PythonFieldExposer {
 
 		@Override
-		public void run() {
-			scriptRunner.accept(this);
+		public void run() throws Exception {
+			try {
+				scriptRunner.accept(this);
+			}
+			catch (Exception e) {
+				// This is a PyExceptionProxy, which we unfortunately cannot add a custom message 
+				// to. We don't want to wrap it in a custom exception because then Python will lose
+				// access to the original BaseException.
+				throw e;
+			}
 		}
 
 		/**

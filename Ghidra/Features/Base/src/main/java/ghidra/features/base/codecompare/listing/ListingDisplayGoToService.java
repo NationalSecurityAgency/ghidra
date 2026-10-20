@@ -47,11 +47,6 @@ class ListingDisplayGoToService implements GoToService {
 	}
 
 	@Override
-	public GoToOverrideService getOverrideService() {
-		return null;
-	}
-
-	@Override
 	public boolean goTo(ProgramLocation loc) {
 		return doGoTo(loc);
 	}
@@ -119,11 +114,6 @@ class ListingDisplayGoToService implements GoToService {
 			GoToServiceListener listener, TaskMonitor monitor) {
 		throw new UnsupportedOperationException(
 			"Go To Address or Label Query is not allowed in a dual listing view.");
-	}
-
-	@Override
-	public void setOverrideService(GoToOverrideService override) {
-		// ignored
 	}
 
 	@Override

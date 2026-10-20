@@ -37,6 +37,27 @@ import ghidra.pcode.exec.*;
 import junit.framework.AssertionFailedError;
 
 public class JitAllocationModelTest extends AbstractJitTest {
+
+	static class Models {
+		final JitControlFlowModel cfm;
+		final JitDataFlowModel dfm;
+		final JitReachabilityModel rm;
+		final JitVarScopeModel vsm;
+		final JitOpUseModel oum;
+		final JitTypeModel tm;
+		final JitAllocationModel am;
+
+		public Models(JitAnalysisContext context) {
+			cfm = new JitControlFlowModel(context);
+			dfm = new JitDataFlowModel(context, cfm);
+			rm = new JitReachabilityModel(context, cfm, dfm);
+			vsm = new JitVarScopeModel(cfm, dfm, rm);
+			oum = new JitOpUseModel(context, cfm, dfm, rm, vsm);
+			tm = new JitTypeModel(dfm, oum);
+			am = new JitAllocationModel(context, dfm, vsm, oum, tm);
+		}
+	}
+
 	public static <T> Stream<T> filterByType(Stream<?> in, Class<T> cls) {
 		return in.<T> mapMulti((e, d) -> {
 			if (cls.isInstance(e)) {
@@ -59,20 +80,16 @@ public class JitAllocationModelTest extends AbstractJitTest {
 				""", PcodeUseropLibrary.NIL);
 
 		JitAnalysisContext context = makeContext(program);
-		JitControlFlowModel cfm = new JitControlFlowModel(context);
-		JitDataFlowModel dfm = new JitDataFlowModel(context, cfm);
-		JitVarScopeModel vsm = new JitVarScopeModel(cfm, dfm);
-		JitTypeModel tm = new JitTypeModel(dfm);
-		JitAllocationModel am = new JitAllocationModel(context, dfm, vsm, tm);
+		Models m = new Models(context);
 
-		JitVarnodeVar tempVar = Unique.assertOne(varnodeVars(dfm)
+		JitVarnodeVar tempVar = Unique.assertOne(varnodeVars(m.dfm)
 				.filter(v -> v.varnode().isUnique()));
 
 		ClassWriter cw = new ClassWriter(0);
 		Emitter<?> em = Emitter.start(cw.visitMethod(0, "none", "()V", null, null));
-		am.allocate(em.rootScope());
+		m.am.allocate(em.rootScope());
 
-		if (!(am.getHandler(tempVar) instanceof AlignedMpIntHandler handler)) {
+		if (!(m.am.getHandler(tempVar) instanceof AlignedMpIntHandler handler)) {
 			throw new AssertionFailedError();
 		}
 
@@ -95,20 +112,16 @@ public class JitAllocationModelTest extends AbstractJitTest {
 				""", PcodeUseropLibrary.NIL);
 
 		JitAnalysisContext context = makeContext(program);
-		JitControlFlowModel cfm = new JitControlFlowModel(context);
-		JitDataFlowModel dfm = new JitDataFlowModel(context, cfm);
-		JitVarScopeModel vsm = new JitVarScopeModel(cfm, dfm);
-		JitTypeModel tm = new JitTypeModel(dfm);
-		JitAllocationModel am = new JitAllocationModel(context, dfm, vsm, tm);
+		Models m = new Models(context);
 
-		List<JitVarnodeVar> r0Vars = varnodeVars(dfm)
+		List<JitVarnodeVar> r0Vars = varnodeVars(m.dfm)
 				.filter(v -> v.varnode().toString(language).equals("r0"))
 				.sorted(Comparator.comparing(JitVar::id))
 				.toList();
 
 		ClassWriter cw = new ClassWriter(0);
 		Emitter<?> em = Emitter.start(cw.visitMethod(0, "none", "()V", null, null));
-		am.allocate(em.rootScope());
+		m.am.allocate(em.rootScope());
 
 		/**
 		 * NOTE: Variables are coalesced by varnode, so all of these will receive the same handler,
@@ -116,6 +129,6 @@ public class JitAllocationModelTest extends AbstractJitTest {
 		 * allocation models to choose F8 for that handler.
 		 */
 		assertEquals(List.of(DoubleJitType.F8, DoubleJitType.F8, DoubleJitType.F8),
-			r0Vars.stream().map(v -> am.getHandler(v).type()).toList());
+			r0Vars.stream().map(v -> m.am.getHandler(v).type()).toList());
 	}
 }

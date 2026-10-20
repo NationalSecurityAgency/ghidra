@@ -105,6 +105,11 @@ public class AccessibleFieldPanelDelegate {
 	 * @param trigger the event trigger
 	 */
 	public void setCaret(FieldLocation newCursorLoc, EventTrigger trigger) {
+
+		if (!isFocused()) {
+			return;
+		}
+
 		if (cursorField == null || !isSameField(cursorLoc, newCursorLoc)) {
 			AccessibleTextSequence oldSequence = getAccessibleTextSequence(cursorField);
 			cursorLoc = newCursorLoc;
@@ -146,6 +151,11 @@ public class AccessibleFieldPanelDelegate {
 	public void setSelection(FieldSelection currentSelection, EventTrigger trigger) {
 		this.currentSelection = currentSelection;
 		updateCurrentFieldSelectedState(trigger);
+	}
+	
+	// broken out so it can be overridden in a test
+	protected boolean isFocused() {
+		return panel.hasFocus();
 	}
 
 	private void updateCurrentFieldSelectedState(EventTrigger trigger) {

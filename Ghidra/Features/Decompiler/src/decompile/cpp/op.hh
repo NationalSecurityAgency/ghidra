@@ -116,7 +116,9 @@ public:
     hold_output = 0x80,		///< Output varnode (of call) should not be removed if it is unread
     concat_root = 0x100,	///< Output of \b this is root of a CONCAT tree
     no_indirect_collapse = 0x200,	///< Do not collapse \b this INDIRECT (via RuleIndirectCollapse)
-    store_unmapped = 0x400	///< If STORE collapses to a stack Varnode, force it to be unmapped
+    store_unmapped = 0x400,	///< If STORE collapses to a stack Varnode, force it to be unmapped
+    immed_copy = 0x800,		///< Copy has propagated into input of \b this op
+    store_aliasupdate = 0x1000	///< If alias information for \b this STORE has been changed
   };
 private:
   TypeOp *opcode;		///< Pointer to class providing behavioral details of the operation
@@ -224,6 +226,10 @@ public:
   void setNoIndirectCollapse(void) { addlflags |= no_indirect_collapse; }	///< Prevent collapse of INDIRECT
   bool isStoreUnmapped(void) const { return ((addlflags & store_unmapped)!=0); }	///< Is STORE location supposed to be unmapped
   void setStoreUnmapped(void) const { addlflags |= store_unmapped; }	///< Mark that STORE location should be unmapped
+  void setCopyImmed(int4 slot);		///< Mark that a COPY propagation from the immediate input block has happened
+  bool hasCopyImmed(int4 slot) const;	///< Return \b true if a COPY propagation from an immediate input block has happened
+  bool hasAliasUpdate(void) const { return ((addlflags & store_aliasupdate)!=0); }	///< Has alias information for \b this been updated
+  void setAliasUpdate(void) { addlflags |= store_aliasupdate; }		///< Mark that there is new alias information for \b this op
   /// \brief Return \b true if this LOADs or STOREs from a dynamic \e spacebase pointer
   bool usesSpacebasePtr(void) const { return ((flags&PcodeOp::spacebase_ptr)!=0); }
   uintm getCseHash(void) const;	///< Return hash indicating possibility of common subexpression elimination
@@ -240,6 +246,7 @@ public:
   PcodeOp *target(void) const;	///< Return starting op for instruction associated with this op
   uintb getNZMaskLocal(bool cliploop) const; ///< Calculate known zero bits for output to this op
   int4 compareOrder(const PcodeOp *bop) const; ///< Compare the control-flow order of this and \e bop
+  bool verifyMultNegOne(void) const;	///< Check if \b this is CPUI_INT_MULT by -1
   void printRaw(ostream &s) const { opcode->printRaw(s,this); }	///< Print raw info about this op to stream
   const string &getOpName(void) const { return opcode->getName(); } ///< Return the name of this op
   void printDebug(ostream &s) const; ///< Print debug description of this op to stream
@@ -318,6 +325,7 @@ public:
   bool empty(void) const { return optree.empty(); }	///< Return \b true if there are no PcodeOps in \b this container
   PcodeOp *target(const Address &addr) const;		///< Find the first executing PcodeOp for a target address
   PcodeOp *findOp(const SeqNum &num) const;		///< Find a PcodeOp by sequence number
+  PcodeOp *findLastOp(const Address &addr) const;	///< Find the last PcodeOp in sequence for the given address
   PcodeOp *fallthru(const PcodeOp *op) const;		///< Find the PcodeOp considered a \e fallthru of the given PcodeOp
 
   /// \brief Start of all PcodeOps in sequence number order

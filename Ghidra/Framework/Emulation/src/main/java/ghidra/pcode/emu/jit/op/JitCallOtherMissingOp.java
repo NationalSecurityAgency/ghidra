@@ -19,6 +19,7 @@ import java.util.List;
 
 import ghidra.pcode.emu.jit.analysis.JitTypeBehavior;
 import ghidra.pcode.emu.jit.var.JitVal;
+import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropSymbolMap;
 import ghidra.program.model.pcode.PcodeOp;
 
 /**
@@ -28,6 +29,14 @@ import ghidra.program.model.pcode.PcodeOp;
  * @param opName the name of the missing userop
  */
 public record JitCallOtherMissingOp(PcodeOp op, String opName) implements JitOp {
+	@Override
+	public String toString(PcodeUseropSymbolMap symbols) {
+		return "%s[op=%s, opName=%s]".formatted(
+			getClass().getSimpleName(),
+			JitOp.toString(op, symbols),
+			opName);
+	}
+
 	@Override
 	public boolean canBeRemoved() {
 		return false;

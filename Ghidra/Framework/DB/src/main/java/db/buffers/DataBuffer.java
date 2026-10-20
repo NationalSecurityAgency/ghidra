@@ -40,11 +40,17 @@ public class DataBuffer implements Buffer, Externalizable {
 		enableCompressedSerializationOutput = enable;
 	}
 
-	public static boolean usingCompressedSerializationOutput() {
+	public static boolean isCompressedSerializationOutputEnabled() {
 		return enableCompressedSerializationOutput;
 	}
 
 	private static int FORMAT_VERSION = 0xEA; // 0xEA is first version (avoided simple value like 0 or 1)
+
+	// Maximum support buffer size supported
+	public static final int MAX_BUFFER_SIZE = 65536;
+
+	// Establish safe limit for compressed buffer size
+	private static final int MAX_COMPRESSED_BUFFER_SIZE = MAX_BUFFER_SIZE + 1024;
 
 	/**
 	 * NOTE: See custom serialization methods at bottom which implement compression.
@@ -145,7 +151,7 @@ public class DataBuffer implements Buffer, Externalizable {
 
 	@Override
 	public int length() {
-		return data.length;
+		return data != null ? data.length : 0;
 	}
 
 	@Override
@@ -333,8 +339,7 @@ public class DataBuffer implements Buffer, Externalizable {
 		// Deflater must be consistent with inflateData nowrap option and should
 		// not be changed since client/server must match.
 		// NOTE: compression mode may be adjusted to optimize performance
-		Deflater deflate = new Deflater(Deflater.BEST_SPEED, true);
-		try {
+		try (Deflater deflate = new Deflater(Deflater.BEST_SPEED, true)) {
 			deflate.setInput(data, 0, data.length);
 			deflate.finish();
 
@@ -350,8 +355,6 @@ public class DataBuffer implements Buffer, Externalizable {
 			}
 			
 			return compressedDataOffset;
-		} finally {
-			deflate.end();  // get rid of any native memory rather than waiting for GC
 		}
 	}
 
@@ -369,13 +372,18 @@ public class DataBuffer implements Buffer, Externalizable {
 		dirty = in.readBoolean();
 		empty = in.readBoolean();
 		int len = in.readInt();
-
 		data = null;
 
 		if (len >= 0) {
+			if (len > MAX_BUFFER_SIZE) {
+				throw new IOException("Unsupported buffer size: " + len);
+			}
 			data = new byte[len];
 			if (compressed) {
 				int compressedLen = in.readInt();
+				if (compressedLen > MAX_COMPRESSED_BUFFER_SIZE) {
+					throw new IOException("Unsupported compressed buffer size: " + compressedLen);
+				}
 				byte[] compressedData = new byte[compressedLen];
 				in.readFully(compressedData);
 				inflateData(compressedData, data);
@@ -414,14 +422,13 @@ public class DataBuffer implements Buffer, Externalizable {
 	 * Inflate compressedData into a properly sized data array.  
 	 * @param compressedData array containing compressed data
 	 * @param data target data array size to receive fully inflated data.
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	private static void inflateData(byte[] compressedData, byte[] data) throws IOException {
 
 		// Inflater must be consistent with deflateData nowrap option and should
 		// not be changed since client/server must match.
-		Inflater inflater = new Inflater(true);
-		try {
+		try (Inflater inflater = new Inflater(true)) {
 			inflater.setInput(compressedData);
 			int off = 0;
 			while (!inflater.finished() && off < data.length) {
@@ -436,9 +443,6 @@ public class DataBuffer implements Buffer, Externalizable {
 		}
 		catch (DataFormatException e) {
 			throw new IOException("DataBuffer inflation failed", e);
-		}
-		finally {
-			inflater.end();  // get rid of any native memory rather than waiting for GC
 		}
 	}
 

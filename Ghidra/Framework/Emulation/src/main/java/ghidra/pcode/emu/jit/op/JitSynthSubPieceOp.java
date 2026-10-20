@@ -20,17 +20,16 @@ import java.util.List;
 import ghidra.pcode.emu.jit.analysis.JitTypeBehavior;
 import ghidra.pcode.emu.jit.var.JitOutVar;
 import ghidra.pcode.emu.jit.var.JitVal;
+import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropSymbolMap;
 import ghidra.program.model.pcode.PcodeOp;
 
 /**
  * The synthetic use-def node for subpiece.
- * 
  * <p>
  * These are synthesized when memory/register access patterns cause only part of a use-def variable
  * node to be "read." E.g., consider {@code AX} to be written and then {@code AL} read. These are
  * different than {@link JitSubPieceOp} in that the latter have an actual {@link PcodeOp}
  * associated.
- * 
  * 
  * @param out the use-def variable node for the output
  * @param offset the offset, in bytes, to shift right
@@ -57,6 +56,14 @@ public record JitSynthSubPieceOp(JitOutVar out, int offset, JitVal v)
 		if (v.size() == out.size() && offset == 0) {
 			throw new IllegalArgumentException("Subpiece is whole input");
 		}
+	}
+
+	@Override
+	public String toString(PcodeUseropSymbolMap symbols) {
+		return "%s[out=%s, offset=%d, v=%s]".formatted(
+			out.toString(symbols.language()),
+			offset,
+			v.toString(symbols.language()));
 	}
 
 	@Override
@@ -100,7 +107,6 @@ public record JitSynthSubPieceOp(JitOutVar out, int offset, JitVal v)
 
 	/**
 	 * Check if this piece abuts the given piece.
-	 * 
 	 * <p>
 	 * To "abut," the pieces must take the same value as input, and then this piece's offset must be
 	 * exactly the other's offset plus its size. Consider this diagram:
@@ -108,16 +114,14 @@ public record JitSynthSubPieceOp(JitOutVar out, int offset, JitVal v)
 	 * <pre>
 	 * [this][right]
 	 * </pre>
-	 * 
 	 * <p>
 	 * We want this piece to be in the more-significant position immediately before the given piece.
 	 * We thus compute {@code diff} the difference in offsets and check if that is equal to the size
 	 * of the right piece. If it is, then we have:
-	 *
+	 * 
 	 * <pre>
 	 * [offset=x+diff,size=s][offset=x,size=diff]
 	 * </pre>
-	 * 
 	 * <p>
 	 * And the "whole piece" is
 	 * 

@@ -141,7 +141,7 @@ abstract public class CompositeEditorModel<T extends Composite> extends Composit
 		}
 
 		if (dataType.isDeleted()) {
-			// This can occur when mayny events get lumped together and a change event triggers
+			// This can occur when many events get lumped together and a change event triggers
 			// a delayed reload prior to datatype removal and its event
 			if (dataType == originalComposite) {
 				// Re-route to dataTypeRemoved callback after restoring listener.
@@ -1478,14 +1478,6 @@ abstract public class CompositeEditorModel<T extends Composite> extends Composit
 	 */
 	protected boolean bitfieldsSupported() {
 		return (viewComposite instanceof Structure) || (viewComposite instanceof Union);
-	}
-
-	/**
-	 * Get the composite edtor's datatype manager
-	 * @return composite edtor's datatype manager
-	 */
-	public CompositeViewerDataTypeManager<T> getViewDataTypeManager() {
-		return viewDTM;
 	}
 
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -63,6 +63,7 @@ public class DWARFAddressListHeader extends DWARFIndirectTableHeader {
 	private final int addressSize;
 	private final int segmentSelectorSize;
 	private final int addrCount;
+	private final int elementSize;
 
 	public DWARFAddressListHeader(long startOffset, long endOffset, long firstElementOffset,
 			int addressSize, int segmentSelectorSize, int addrCount) {
@@ -71,20 +72,23 @@ public class DWARFAddressListHeader extends DWARFIndirectTableHeader {
 		this.addressSize = addressSize;
 		this.segmentSelectorSize = segmentSelectorSize;
 		this.addrCount = addrCount;
+		this.elementSize = addressSize + segmentSelectorSize;
 	}
 
 	@Override
-	public long getOffset(int index, BinaryReader reader) throws IOException {
-		if (index < 0 || addrCount <= index) {
-			throw new IOException("Invalid address index: %d".formatted(index));
+	public long getOffset(int index, long baseOffset, BinaryReader reader) throws IOException {
+		int localIndex = index + (int) ((baseOffset - firstElementOffset) / elementSize);
+
+		if (localIndex < 0 || addrCount <= localIndex) {
+			throw new IOException("Invalid address index: %d".formatted(localIndex));
 		}
-		long offset = firstElementOffset + (addressSize + segmentSelectorSize) * index;
+		long elementOffset = firstElementOffset + (elementSize * localIndex);
 
 		@SuppressWarnings("unused")
 		long seg =
-			segmentSelectorSize > 0 ? reader.readUnsignedValue(offset, segmentSelectorSize) : 0;
+			segmentSelectorSize > 0 ? reader.readUnsignedValue(elementOffset, segmentSelectorSize) : 0;
 
-		long addr = reader.readUnsignedValue(offset + segmentSelectorSize, addressSize);
+		long addr = reader.readUnsignedValue(elementOffset + segmentSelectorSize, addressSize);
 		return addr;
 	}
 

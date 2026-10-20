@@ -31,6 +31,10 @@ public class StorageVerificationDWARFFunctionFixup implements DWARFFunctionFixup
 
 	@Override
 	public void fixupDWARFFunction(DWARFFunction dfunc) {
+		if (dfunc.signatureCommitMode == CommitMode.NO_PARAMS) {
+			// storage will already be ignored
+			return;
+		}
 		DWARFRegisterMappings regMappings = dfunc.getProgram().getRegisterMappings();
 		boolean ignoreStorage = dfunc.getProgram().getImportOptions().isIgnoreParamStorage() ||
 			(regMappings != null && regMappings.isUseFormalParameterStorage());

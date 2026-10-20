@@ -648,7 +648,7 @@ void PackedDecode::skipAttribute(void)
   uint1 attribType = typeByte >> TYPECODE_SHIFT;
   if (attribType == TYPECODE_BOOLEAN || attribType == TYPECODE_SPECIALSPACE)
     return;				// has no additional data
-  uint4 length = readLengthCode(typeByte);	// Length of data in bytes
+  uint8 length = readLengthCode(typeByte);	// Length of data in bytes
   if (attribType == TYPECODE_STRING) {
     length = readInteger(length);	// Read length field to get final length of string
   }
@@ -664,7 +664,7 @@ void PackedDecode::skipAttributeRemaining(uint1 typeByte)
   uint1 attribType = typeByte >> TYPECODE_SHIFT;
   if (attribType == TYPECODE_BOOLEAN || attribType == TYPECODE_SPECIALSPACE)
     return;				// has no additional data
-  uint4 length = readLengthCode(typeByte);	// Length of data in bytes
+  uint8 length = readLengthCode(typeByte);	// Length of data in bytes
   if (attribType == TYPECODE_STRING) {
     length = readInteger(length);	// Read length field to get final length of string
   }
@@ -1272,6 +1272,6 @@ ElementId ELEM_VAL = ElementId("val",8);
 ElementId ELEM_VALUE = ElementId("value",9);
 ElementId ELEM_VOID = ElementId("void",10);
 
-ElementId ELEM_UNKNOWN = ElementId("XMLunknown",290); // Number serves as next open index
+ElementId ELEM_UNKNOWN = ElementId("XMLunknown",291); // Number serves as next open index
 
 } // End namespace ghidra

@@ -15,8 +15,7 @@
  */
 package ghidra.program.model.pcode;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.ArrayList;
 
 import ghidra.program.model.address.AddressFactory;
@@ -50,7 +49,7 @@ import ghidra.program.model.address.AddressSpace;
  * For strings, the integer encoded after the \e type byte, is the actual length of the string.  The
  * string data itself is stored immediately after the length integer using UTF8 format.
  * */
-public class PackedDecode implements Decoder {
+public class PackedDecode implements Decoder, Closeable {
 
 	public static final int HEADER_MASK = 0xc0;
 	public static final int ELEMENT_START = 0x40;
@@ -231,6 +230,7 @@ public class PackedDecode implements Decoder {
 	 * Close stream cached by the ingestStreamAsNeeded method.
 	 * @throws IOException for low-level problems with the stream
 	 */
+	@Override
 	public void close() throws IOException {
 		inStream.close();
 		inStream = null;

@@ -48,6 +48,12 @@
     Optionally, other registers can be initialized via the UI or a script. The new thread is
     activated so that control actions will affect it by default.</P>
 
+    <H3><A name="emulate_function"></A> Emulate Function</H3>
+
+    <P>This action is available whenever the cursor is within a function in the Static Listing. It
+    displays a <A href="#emulate_function_dialog">dialog</A> for harnessing and emulating the
+    current function.</P>
+
     <H3><A name="configure_emulator"></A> Configure Emulator</H3>
 
     <P>This action is always available. It lists emulators available for configuration. Selecting
@@ -62,5 +68,188 @@
     emulated breakpoint, or when you patch the trace database. If you do not invalidate the cache,
     the effects of your change may not appear, since the trace manager may recall a cached snapshot
     instead of actually emulating.</P>
+
+    <H2><A name="emulate_function_dialog"></A> Emulate Function Dialog</H2>
+
+    <P>This dialog provides a means of harnessing and emulating a target function. Depending on the
+    size and scope of the function and the configuration of the emulator, the emulation may or may
+    not complete. See further below for options and actions in the dialog.</P>
+
+    <DIV class="image">
+      <IMG alt="" src="images/DebuggerEmulateFunctionDialog.png">
+    </DIV>
+
+    <P>The dialog supports the addition of vararg arguments, custom initializations, and heap
+    initializations. All of these inputs are handled in the top table. The "Run" button will
+    perform the emulation and capture the outputs into the bottom table. Analogous to the inputs,
+    the Outputs table can be configured with custom variables and pointer dereferences. The
+    emulation session can optionally be captured into a trace, which is opened automatically in
+    your tool, usually the Debugger or Emulator. Multiple sessions can be run from the same dialog,
+    allowing trial-and-error runs while also iterating on the target function's markup.</P>
+
+    <H3>Option: Ending Return Address</H3>
+
+    <P>In order to detect the proper completion of the target function, the harness places a
+    breakpoint at a "sentinel" address. That sentinel address must be placed where the function
+    expects the return address. This option allows specification of the sentinel address.
+    Generally, anything easily recognizable that does not conflict with a real address should work.
+    <B>NOTE:</B> You cannot specify the location of the return address. This is determined
+    automatically through static analysis, but you can place the sentinel address through a custom
+    input, if the analysis fails or is incorrect.</P>
+
+    <H3>Option: Snapshot Period</H3>
+
+    <P>By default, the harness captures a snapshot of the emulator's state into a trace after every
+    instruction step. This feature can be disabled entirely by setting this option to 0 (zero), in
+    which case no trace is captured or opened in your tool. Only the outputs are captured.
+    Otherwise, the period indicates how many instructions are executed between consecutive
+    snapshots. If only a starting and ending snapshot are desired, set this to a large number. The
+    initial and final snapshots are always captured, no matter the (non-zero) period.</P>
+
+    <H3><A name="next_alloc"></A> Option: Next Allocation</H3>
+
+    <P>Set this to the location of the heap, if applicable. Any address not already used by the
+    program with plenty of space above should suffice. It may help if the upper digits of the
+    address are easily recognizable. Several of the below actions on the Inputs table will
+    automatically initialize pointers to the start of an "allocated block". This field is then
+    automatically incremented by the size of that allocation. You may adjust this field at any time
+    to "undo" allocations, establish a second heap, etc.</P>
+
+    <H3>Inputs table</H3>
+
+    <P>The Inputs table lists of all the configured inputs. The types and values of the inputs are
+    specified in this table. <B>NOTE:</B> No actual initializations are performed until right
+    before emulation. If two inputs happen to be at the same address, that conflict will not be
+    discovered until clicking "Run." No two inputs can have the same name. Adding an input with a
+    duplicate name replaces the existing one.</P>
+
+    <P>The default inputs are derived from the target function's parameters. Adjusting the type of
+    an input <EM>does not</EM> edit or update the target function in the program database. The
+    columns are:</P>
+
+    <UL>
+      <LI>Name &mdash; Provides an informal name for the input. For parameters, this is the name of
+      the parameter. For custom inputs, this is "Custom 1" counting up in the order added. For
+      vararg arguments, this is, e.g., "Vararg 3" couting up in the order added, starting after the
+      number of fixed arguments. For allocated inputs, this is a C-like expression derived from the
+      pointer to it and its type. This field <EM>cannot</EM> be edited.</LI>
+
+      <LI>Storage &mdash; Provides a formal Sleigh expression describing the location of the input.
+      For custom inputs, this is specified by the user when added. For parameter and vararg inputs,
+      this is derived from the target function's signature, custom storage, and/or calling
+      convention. For pointer allocations, this is derived from the pointer to it and its type.
+      This field <EM>cannot</EM> be edited.</LI>
+
+      <LI>Value &mdash; Controls the raw initial value of the input variable. This can be specified
+      as a positive integer, e.g., <CODE>0x1234</CODE>, so long as it fits in the storage, or as a
+      byte sequence, e.g., <CODE>{ 34 12 }</CODE>, so long as its length matches that of the
+      storage.</LI>
+
+      <LI>Type &mdash; Controls the type of the input variable. This has no direct impact on the
+      emulation nor on the program database (except to resolve the type), but permits the initial
+      value to be specified using a representation suitable to that type.</LI>
+
+      <LI>Repr &mdash; Controls the initial value of the input variable as represented by the
+      chosen type. <B>NOTE:</B> some types, particularly structure types, do not have a string
+      representation, and so this box may appear empty. This field can be edited only if the chosen
+      type implements an encoder.<BR>
+      <BR>
+      </LI>
+    </UL>
+
+    <H3>Action: Remove Input</H3>
+
+    <P>This action removes the selected input(s) from the table. A removed input is no longer
+    initialized. <B>NOTE:</B> Inputs can have dependencies, e.g., an allocated block depends on its
+    pointer, because the storage location of that block is computed from the value of the pointer.
+    Removing the pointer will leave it uninitialized, likely resulting in the block's location
+    being 0 (zero). This will generally still work, but is usually not desired. Re-adding the
+    relevant pointer can fix this. So long as the old and new names match, the dependency
+    relationship is restored, too.</P>
+
+    <H3>Action: Clear Inputs</H3>
+
+    <P>For when things have gone so far south you need to start over. Typically this is followed by
+    a Refresh, too.</P>
+
+    <H3>Action: Add Custom Input</H3>
+
+    <P>This action prompts the user for a Sleigh expression of a variable's storage and adds it as
+    a Custom input. Typically, this is a register, e.g., <CODE>RAX</CODE>, or a fixed address and
+    size, e.g., <CODE>*:8 0x00401234</CODE>.</P>
+
+    <H3>Action: Add Vararg Input</H3>
+
+    <P>This action is only enabled if the target function has variable arguments. It prompts the
+    user for a type, derives the storage from the target function's signature and calling convetion
+    and adds it as a Vararg input. <B>NOTE:</B> Adjustments to this row's type <EM>will not</EM>
+    automatically update the argument's storage. Consider deleting and re-adding an argument along
+    with all its subsequent arguments if consistent storage is desired.</P>
+
+    <H3>Action: Allocate and Add Pointer Inputs</H3>
+
+    <P>This action is available when the selected input has a pointer type. (Multiple selections
+    are supported.) The size of the pointed-to type is calculated; the <EM>pointer's</EM> value is
+    initialized to the <A href="#next_alloc">Next Allocation</A>, which is then incremented by the
+    size of the pointed-to type. A new input row is then added and selected, describing the
+    variable pointed to by the formerly-selected input. Under normal operation, this allocates a
+    single instance of the pointed-to type. To instead allocate an array of the pointed-to type,
+    hold <B>&lt;Shift&gt;</B> when clicking the button. If the pointed-to type is a composite
+    (struct or union), a separate row is generated for each field. For the array case, yes, this
+    results in an <EM>n</EM>-by-<EM>m</EM> set of new rows. If the pointed-to type is a string (or
+    <CODE>char</CODE>), hold <B>&lt;Ctrl&gt;</B> when clicking the button. This will prompt the
+    user for string data type settings and then for the initial string value. It encodes it and
+    allocates sufficient space for the encoding. <B>NOTE:</B> So long as edits to the Repr column
+    result in encodings of smaller or equal size, no re-allocation is necessary. The table will
+    still permit the edit, but it may result in conflicts. Either update the pointer values
+    manually &mdash; this will automatically adjust the storage location of the pointed-to variable
+    &mdash; or delete and re-allocate the string input.</P>
+
+    <H3>Action: Refresh Inputs</H3>
+
+    <P>This re-adds (likely replacing) all the inputs derived from the function's parameters. This
+    is especially useful when trying to derive a function's signature by trial and error. Clicking
+    this button after editing a function's signature will update the Parameter inputs accordingly.
+    <B>NOTE:</B> This will not <EM>remove</EM> any Parameter inputs.</P>
+
+    <H3>Action: Type Settings</H3>
+
+    <P>This action is available in the right-click context menu on rows with an assigned type. It
+    controls the settings on the chosen datatype, e.g., radix for integer types, or encodings for
+    string types.</P>
+
+    <H3>Outputs table</H3>
+
+    <P>The Outputs table is analogous to the Inputs table, except that it displays values captured
+    from the last successful emulation. The default output is derived from the target function's
+    return type. It has the same columns and similar actions with the following exceptions:</P>
+
+    <UL>
+      <LI>There is no <B>Add Vararg Output</B> action.</LI>
+
+      <LI>Only the Type column can be edited.</LI>
+
+      <LI>Adding Pointed-to outputs does not "allocate," since the pointer is expected to be set by
+      the target function.</LI>
+
+      <LI>When adding pointed-to strings, the prompt is for the number of bytes to capture. The
+      string decoder should only use what it needs, so just pick a reasonable maximum expected
+      length. Adjust the type and settings using other actions afterward.</LI>
+    </UL>
+
+    <H3>Probe Outputs</H3>
+
+    <P>The Outputs table also supports "Probe" outputs. These are outputs automatically generated
+    during the emulation of the target function via the <CODE>emu_probe</CODE> userop. These are
+    configured using the <A href=
+    "help/topics/DebuggerBreakpointsPlugin/DebuggerBreakpointsPlugin.html#set_injection">Set
+    Injection</A> action on a breakpoint. The breakpoint need only be enabled. Even if
+    "ineffective,"" it will be installed by the harness. The <CODE>emu_probe</CODE> userop accepts
+    exactly one argument. All Probe outputs are cleared at the start of emulation. Each time the
+    userop is executed, its argument is captured with its location and value <EM>at the time of
+    invocation</EM>. These are then added as Probe outputs, counting 1-up by invocation. If the
+    userop is invoked within a loop of the target code, each run-time invocation gets a distinct
+    row. Types can be applied as usual. <B>NOTE:</B> If the userop argument is anything other than
+    a simple varnode, the location will be "$Unique."</P>
   </BODY>
 </HTML>

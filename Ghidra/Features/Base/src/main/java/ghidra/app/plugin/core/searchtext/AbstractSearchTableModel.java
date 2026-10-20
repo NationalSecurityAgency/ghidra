@@ -59,7 +59,7 @@ public abstract class AbstractSearchTableModel extends ProgramLocationPreviewTab
 		Searcher searcher = getSearcher(tool, monitor);
 		monitor.checkCancelled();
 		TextSearchResult result = searcher.search();
-		while (result != null && accumulator.size() < searchLimit) {
+		while (result != null && accumulator.getProgress() < searchLimit) {
 			accumulator.add(result.programLocation());
 			monitor.checkCancelled();
 			result = searcher.search();

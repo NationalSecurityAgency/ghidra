@@ -97,24 +97,24 @@ class BreakpointTimelinePanel extends JPanel {
 		}
 	}
 
-	private static boolean singleColumn = false;
-	private static boolean showGridOutline = true;
+	private boolean singleColumn = false;
+	private boolean showGridOutline = true;
 
-	private static GColor BG_COLOR = Colors.BACKGROUND;
-	private static GColor GRID_COLOR = Colors.FOREGROUND_DISABLED;
-	private static GColor SELECTION_COLOR =
+	private static final GColor BG_COLOR = Colors.BACKGROUND;
+	private static final GColor GRID_COLOR = Colors.FOREGROUND_DISABLED;
+	private static final GColor SELECTION_COLOR =
 		new GColor("color.debugger.plugin.breakpoint.timeline.selection");
-	private static GColor HOVER_COLOR =
+	private static final GColor HOVER_COLOR =
 		new GColor("color.debugger.plugin.breakpoint.timeline.hover");
-	private static GColor CURRENT_SNAP_COLOR =
+	private static final GColor CURRENT_SNAP_COLOR =
 		new GColor("color.debugger.plugin.breakpoint.timeline.current");
-	private static GColor INSTRUCTION_HIT_COLOR =
+	private static final GColor INSTRUCTION_HIT_COLOR =
 		new GColor("color.debugger.plugin.breakpoint.timeline.type.instructions");
-	private static GColor MEMORY_READ_COLOR =
+	private static final GColor MEMORY_READ_COLOR =
 		new GColor("color.debugger.plugin.breakpoint.timeline.type.read.memory");
-	private static GColor MEMORY_WRITE_COLOR =
+	private static final GColor MEMORY_WRITE_COLOR =
 		new GColor("color.debugger.plugin.breakpoint.timeline.type.write.memory");
-	private static Map<TraceBreakpointKind, GColor> BREAKTYPE_TO_COLOR = Map.ofEntries(
+	private static final Map<TraceBreakpointKind, GColor> BREAKTYPE_TO_COLOR = Map.ofEntries(
 		Map.entry(TraceBreakpointKind.HW_EXECUTE, BreakpointTimelinePanel.INSTRUCTION_HIT_COLOR),
 		Map.entry(TraceBreakpointKind.SW_EXECUTE, BreakpointTimelinePanel.INSTRUCTION_HIT_COLOR),
 		Map.entry(TraceBreakpointKind.READ, BreakpointTimelinePanel.MEMORY_READ_COLOR),
@@ -156,9 +156,8 @@ class BreakpointTimelinePanel extends JPanel {
 	private void click(Point p) {
 		final Optional<BreakpointTimelinePanel.CachedIndex> first =
 			cells.values().stream().filter(s -> s.getRect().contains(p)).findFirst();
-		if (first.isPresent()) {
-			getTraceManagerService().activateSnap(first.get().getMainSnap());
-		}
+		first.ifPresent(
+			cachedIndex -> getTraceManagerService().activateSnap(cachedIndex.getMainSnap()));
 	}
 
 	void decreaseDefaultCellSize() {
@@ -179,29 +178,8 @@ class BreakpointTimelinePanel extends JPanel {
 			return;
 		}
 
-		if (!BreakpointTimelinePanel.singleColumn) {
-			final long numCells = visibleEnd - visibleStart;
-
-			double xSideLength;
-			double ySideLength;
-
-			final double xPixelsPerCell = Math.ceil(Math.sqrt((numCells * width) / height));
-			if ((Math.floor((xPixelsPerCell * height) / width) * xPixelsPerCell) < numCells) {
-				xSideLength = (height / Math.ceil((height * xPixelsPerCell) / width));
-			}
-			else {
-				xSideLength = width / xPixelsPerCell;
-			}
-
-			final double yPixelsPerCell = Math.ceil(Math.sqrt((numCells * height) / width));
-			if ((Math.floor((yPixelsPerCell * width) / height) * yPixelsPerCell) < numCells) {
-				ySideLength = (width / Math.ceil((width * yPixelsPerCell) / height));
-			}
-			else {
-				ySideLength = height / yPixelsPerCell;
-			}
-
-			final long potentialSideLength = (long) Math.max(xSideLength, ySideLength);
+		if (!singleColumn) {
+			final long potentialSideLength = getPotentialSideLength(width, height);
 
 			cellWidth = Math.max(defaultCellSize, potentialSideLength);
 			cellHeight = cellWidth;
@@ -248,6 +226,34 @@ class BreakpointTimelinePanel extends JPanel {
 		}
 
 		repaint();
+	}
+
+	private long getPotentialSideLength(int width, int height) {
+		final long numCells = visibleEnd - visibleStart;
+
+		double xSideLength;
+		double ySideLength;
+
+		double xPixelsPerCell = Math.ceil(Math.sqrt((double) (numCells * width) / height));
+		if (xPixelsPerCell == 0) {
+			xPixelsPerCell = width;
+		}
+		if ((Math.floor((xPixelsPerCell * height) / width) * xPixelsPerCell) < numCells) {
+			xSideLength = (height / Math.ceil((height * xPixelsPerCell) / width));
+		}
+		else {
+			xSideLength = width / xPixelsPerCell;
+		}
+
+		final double yPixelsPerCell = Math.ceil(Math.sqrt((double) (numCells * height) / width));
+		if ((Math.floor((yPixelsPerCell * width) / height) * yPixelsPerCell) < numCells) {
+			ySideLength = (width / Math.ceil((width * yPixelsPerCell) / height));
+		}
+		else {
+			ySideLength = height / yPixelsPerCell;
+		}
+
+		return (long) Math.max(xSideLength, ySideLength);
 	}
 
 	@Override
@@ -298,8 +304,9 @@ class BreakpointTimelinePanel extends JPanel {
 
 		final Graphics2D g2d = (Graphics2D) g;
 
-		for (final Long cellIndex : cells.keySet()) {
-			final CachedIndex curSpan = cells.get(cellIndex);
+		for (final Map.Entry<Long, CachedIndex> entry : cells.entrySet()) {
+			long cellIndex = entry.getKey();
+			final CachedIndex curSpan = entry.getValue();
 			if ((startDragIndex != null) && (endDragIndex != null) &&
 				(cellIndex >= startDragIndex.getIndex()) &&
 				(cellIndex <= endDragIndex.getIndex())) {
@@ -317,7 +324,7 @@ class BreakpointTimelinePanel extends JPanel {
 			}
 			g2d.fillRect(curSpan.getRect().x, curSpan.getRect().y, curSpan.getRect().width,
 				curSpan.getRect().height);
-			if (BreakpointTimelinePanel.showGridOutline) {
+			if (showGridOutline) {
 				g2d.setColor(BreakpointTimelinePanel.GRID_COLOR);
 				g2d.drawRect(curSpan.getRect().x, curSpan.getRect().y, curSpan.getRect().width,
 					curSpan.getRect().height);
@@ -392,7 +399,6 @@ class BreakpointTimelinePanel extends JPanel {
 				else {
 					getTraceManagerService()
 							.activateSnap(getTraceManagerService().getCurrentSnap() - 1);
-
 				}
 				repaint();
 			}
@@ -439,12 +445,12 @@ class BreakpointTimelinePanel extends JPanel {
 	}
 
 	void toggleGridOrColumn() {
-		BreakpointTimelinePanel.singleColumn = !BreakpointTimelinePanel.singleColumn;
+		singleColumn = !singleColumn;
 		calculateGridAndBuildCache();
 	}
 
 	void toggleGridOutline() {
-		BreakpointTimelinePanel.showGridOutline = !BreakpointTimelinePanel.showGridOutline;
+		showGridOutline = !showGridOutline;
 		repaint();
 	}
 

@@ -1962,7 +1962,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	private <T> T loadAskValue(T defaultValue, StringTransformer<T> transformer, String key) {
 
 		boolean isHeadless = isRunningHeadless();
-		if (isHeadless && scriptArgs.length > 0) {
+		if (scriptArgs.length > 0) {
 			// this will throw IllegalArgumenrException if the args cannot be parsed
 			return transformer.apply(nextScriptArg());
 		}

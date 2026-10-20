@@ -141,12 +141,6 @@ public class ImportBatchTask extends Task {
 		try (ByteProvider byteProvider = FileSystemService.getInstance()
 				.getByteProvider(batchLoadConfig.getFSRL(), true, monitor)) {
 			LoadSpec loadSpec = batchLoadConfig.getLoadSpec(selectedBatchGroupLoadSpec);
-			if (loadSpec == null) {
-				Msg.error(this,
-					"Failed to get load spec from application that matches chosen batch load spec " +
-						selectedBatchGroupLoadSpec);
-				return;
-			}
 			Pair<DomainFolder, String> destInfo = getDestinationInfo(batchLoadConfig, destFolder);
 
 			try {

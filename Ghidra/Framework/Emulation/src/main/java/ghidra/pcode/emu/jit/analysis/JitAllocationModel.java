@@ -38,7 +38,6 @@ import ghidra.program.model.pcode.Varnode;
 
 /**
  * Type variable allocation phase for JIT-accelerated emulation.
- * 
  * <p>
  * The implements the Variable Allocation phase of the {@link JitCompiler} using a very simple
  * placement and another "voting" algorithm to decide the allocated JVM variable types. We place/map
@@ -52,10 +51,8 @@ import ghidra.program.model.pcode.Varnode;
  * local variable allocated for {@code RAX}. Note that variables which occupy only part of a
  * coalesced varnode always vote for a JVM {@code int}, because of the shifting and masking required
  * to extract that part.
- * 
  * <p>
  * The allocation process is very simple, presuming successful type assignment:
- * 
  * <ol>
  * <li>Vote Tabulation</li>
  * <li>Index Reservation</li>
@@ -76,11 +73,9 @@ import ghidra.program.model.pcode.Varnode;
  * 1. RAX = FLOAT_ADD RCX, RDX
  * 2. EAX = FLOAT_ADD EBX, 0x3f800000:4 # 1.0f
  * </pre>
- * 
  * <p>
  * Several values and variables are at play here. We tabulate the type assignments and resulting
  * votes:
- * 
  * <table border="1">
  * <tr>
  * <th>SSA Var</th>
@@ -123,7 +118,7 @@ import ghidra.program.model.pcode.Varnode;
  * <td>{@code long}</td>
  * </tr>
  * </table>
- * 
+ * <p>
  * The registers {@code RCX}, {@code RDX}, and {@code EBX} are trivially allocated as locals of JVM
  * types {@code double}, {@code double}, and {@code float}, respectively. It is also worth noting
  * that {@code 0x3f800000} is allocated as a {@code float} constant in the classfile's constant
@@ -173,7 +168,6 @@ public class JitAllocationModel {
 
 	/**
 	 * The descriptor of a p-code variable
-	 * 
 	 * <p>
 	 * This is just a logical grouping of a varnode and its assigned p-code type.
 	 */
@@ -219,6 +213,7 @@ public class JitAllocationModel {
 
 	private final JitDataFlowModel dfm;
 	private final JitVarScopeModel vsm;
+	private final JitOpUseModel oum;
 	private final JitTypeModel tm;
 
 	private final SleighLanguage language;
@@ -234,12 +229,14 @@ public class JitAllocationModel {
 	 * @param context the analysis context
 	 * @param dfm the data flow model
 	 * @param vsm the variable scope model
+	 * @param oum the p-code op use model
 	 * @param tm the type model
 	 */
 	public JitAllocationModel(JitAnalysisContext context, JitDataFlowModel dfm,
-			JitVarScopeModel vsm, JitTypeModel tm) {
+			JitVarScopeModel vsm, JitOpUseModel oum, JitTypeModel tm) {
 		this.dfm = dfm;
 		this.vsm = vsm;
+		this.oum = oum;
 		this.tm = tm;
 
 		this.endian = context.getEndian();
@@ -287,7 +284,6 @@ public class JitAllocationModel {
 
 	/**
 	 * A content for assigning a type to a varnode
-	 * 
 	 * <p>
 	 * Because several SSA variables can share one varnode, we let each cast a vote to determine the
 	 * JVM type of the local(s) allocated to it.
@@ -310,7 +306,7 @@ public class JitAllocationModel {
 		 * @param type the type
 		 */
 		public void vote(JitType type) {
-			map.compute(type.ext(), (t, v) -> v == null ? 1 : v + 1);
+			map.compute(type.ext(), (_, v) -> v == null ? 1 : v + 1);
 		}
 
 		/**
@@ -474,11 +470,11 @@ public class JitAllocationModel {
 
 	private void analyze() {
 		for (JitVal v : dfm.allValues()) {
-			if (v instanceof JitVarnodeVar vv && !(v instanceof JitMemoryVar)) {
+			if (oum.isUsed(v) && v instanceof JitVarnodeVar vv && !(v instanceof JitMemoryVar)) {
 				Varnode vn = vv.varnode();
 				Varnode coalesced = vsm.getCoalesced(vn);
 				TypeContest tc =
-					typeContests.computeIfAbsent(coalesced, __ -> new TypeContest());
+					typeContests.computeIfAbsent(coalesced, _ -> new TypeContest());
 				if (vn.equals(coalesced)) {
 					tc.vote(tm.typeOf(v));
 				}
@@ -525,7 +521,9 @@ public class JitAllocationModel {
 			 * keying the handlers some by an alternative (e.g., varnode when available), but that's
 			 * for later exploration.
 			 */
-			handlers.put(v, createHandler(v));
+			if (oum.isUsed(v)) {
+				handlers.put(v, createHandler(v));
+			}
 		}
 	}
 

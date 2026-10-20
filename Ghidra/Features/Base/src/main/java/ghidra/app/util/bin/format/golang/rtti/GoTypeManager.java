@@ -53,6 +53,14 @@ public class GoTypeManager {
 		")" +                   // group=1
 		"(.*)"                  // everything else, group=2
 	);
+	
+	private static final Pattern CHAN_TYPENAME_REGEX = Pattern.compile(
+		"(<-)?" +               // maybe <-
+		"chan" +                // 'chan'
+		"(<-)?" +               // maybe <-
+		" " +                   // mandatory ' '
+		"(.+)"                  // everything else, group 3
+	);
 	//@formatter:on
 
 	static class TypeRec {
@@ -111,7 +119,14 @@ public class GoTypeManager {
 
 				GoType goType = getTypeUnchecked(typeAddr);
 				if (goType != null) {
-					goType.discoverGoTypes(discoveredTypes);
+					try {
+						goType.discoverGoTypes(discoveredTypes);
+					}
+					catch (IOException e) {
+						Msg.warn(this, "Failed to recurse into Go type %s"
+								.formatted(goType.getStructureContext().getStructureAddress()),
+							e);
+					}
 				}
 				else {
 					Msg.warn(this, "Failed to read Go type at " + typeAddr);
@@ -194,8 +209,7 @@ public class GoTypeManager {
 			long gapStart = t1.end;
 			while (t2.start - gapStart > typeStructMinSize) {
 				GoType goType = readTypeUnchecked(gapStart);
-				if (goType == null ||
-					!(goType instanceof GoStructType && goType.getSymbolName().isAnonType())) {
+				if (goType == null) {
 					gapStart += typeStructAlign;
 					continue;
 				}
@@ -440,6 +454,9 @@ public class GoTypeManager {
 			else if (typeName.startsWith("map[")) { // not handled by splitTypeName()
 				result = newTypeRecFromDT(typeName, createSpecializedMapDT(typeName));
 			}
+			else if (CHAN_TYPENAME_REGEX.matcher(typeName) instanceof Matcher m && m.matches()) {
+				result = newTypeRecFromDT(typeName, createSpecializedChanDT(typeName, m.group(3)));
+			}
 			else {
 				GoKind primitiveTypeKind = GoKind.parseTypename(typeName);
 				GoTypeDef typeDef;
@@ -475,6 +492,8 @@ public class GoTypeManager {
 				return convertStructDef(typeName, struct);
 			case GoFuncTypeDef func:
 				return convertFuncDef(typeName, func);
+			case GoInterfaceDef iface:
+				return convertIfaceDef(typeName, iface);
 			default:
 				throw new IOException("Go unhandled type definition: " + typeDef.toString());
 		}
@@ -512,17 +531,36 @@ public class GoTypeManager {
 			returnDT = findDataType(func.Results.get(0).DataType);
 		}
 		else {
-			List<DataType> paramDataTypes = new ArrayList<>();
+			List<DataType> returnDataTypes = new ArrayList<>();
 			for (GoNameTypePair outParam : func.Results) {
-				paramDataTypes.add(findDataType(outParam.DataType));
+				DataType dt = findDataType(outParam.DataType);
+				if (dt == null) {
+					dt = new StructureDataType(cp, ".missing_" + outParam.DataType, 0);
+				}
+				returnDataTypes.add(dt);
 			}
-			returnDT = getFuncMultiReturn(paramDataTypes);
+			returnDT = getFuncMultiReturn(returnDataTypes);
 		}
 
 		funcDef.setArguments(params.toArray(ParameterDefinition[]::new));
 		funcDef.setReturnType(returnDT);
 
 		return result;
+	}
+
+	private TypeRec convertIfaceDef(GoSymbolName typeName, GoInterfaceDef iface)
+			throws IOException {
+		TypeRec baseIface = findTypeRec("interface {}");
+		if (baseIface == null) {
+			throw new IOException("Missing type info for base interface {}");
+		}
+		String name = typeName.asString();
+		if (baseIface.name.equals(name)) {
+			return baseIface;
+		}
+		CategoryPath cp = getCP(typeName);
+		TypeDef td = new TypedefDataType(cp, name, baseIface.recoveredDT);
+		return newTypeRecFromDT(name, td);
 	}
 
 	private TypeRec convertBasicDef(GoSymbolName typeName, GoBasicDef basicDef) throws IOException {
@@ -581,6 +619,7 @@ public class GoTypeManager {
 			GoNameTypePair field = structDef.Fields.get(i);
 			DataType dtcDT = findDataType(field.DataType);
 			if (dtcDT == null) {
+				dtcDT = findDataType(field.DataType);
 				throw new IOException("Failed to get type for field [%d %s: %s] in %s"
 						.formatted(i, field.Name, field.DataType, typeName));
 			}
@@ -752,16 +791,16 @@ public class GoTypeManager {
 			case Float32 -> AbstractFloatDataType.getFloatDataType(32 / 8, null);
 			case Float64 -> AbstractFloatDataType.getFloatDataType(64 / 8, null);
 			case Int -> AbstractIntegerDataType.getSignedDataType(ptrSize, dtm); // depends on arch
-			case Int8 -> AbstractIntegerDataType.getSignedDataType(8 / 8, null);
-			case Int16 -> AbstractIntegerDataType.getSignedDataType(16 / 8, null);
-			case Int32 -> AbstractIntegerDataType.getSignedDataType(32 / 8, null);
-			case Int64 -> AbstractIntegerDataType.getSignedDataType(64 / 8, null);
+			case Int8 -> Int8TDataType.dataType;
+			case Int16 -> Int16TDataType.dataType;
+			case Int32 -> Int32TDataType.dataType;
+			case Int64 -> Int64TDataType.dataType;
 			case Uint -> AbstractIntegerDataType.getUnsignedDataType(ptrSize, dtm); // depends on arch
-			case Uint8 -> AbstractIntegerDataType.getUnsignedDataType(8 / 8, null);
-			case Uint16 -> AbstractIntegerDataType.getUnsignedDataType(16 / 8, null);
-			case Uint32 -> AbstractIntegerDataType.getUnsignedDataType(32 / 8, null);
-			case Uint64 -> AbstractIntegerDataType.getUnsignedDataType(64 / 8, null);
-			case Uintptr -> AbstractIntegerDataType.getUnsignedDataType(ptrSize, dtm);  // depends on arch
+			case Uint8 -> UInt8TDataType.dataType;
+			case Uint16 -> UInt16TDataType.dataType;
+			case Uint32 -> UInt32TDataType.dataType;
+			case Uint64 -> UInt64TDataType.dataType;
+			case Uintptr -> UnsignedPointerSizedIntegerDataType.dataType.clone(dtm);
 			case String -> buildStringStruct();
 			case Pointer, UnsafePointer -> getVoidPtrDT();  // depends on arch
 			default -> null;
@@ -871,6 +910,21 @@ public class GoTypeManager {
 			if (hmapStruct != null) {
 				return new TypedefDataType(getCP(typeSymbolName), mapTypeName,
 					dtm.getPointer(hmapStruct), dtm);
+			}
+		}
+		catch (IOException e) {
+			// fall thru
+		}
+		return voidPtrDT;
+	}
+
+	public DataType createSpecializedChanDT(String fullChanTypeName, String elementTypeName) {
+		try {
+			Structure hchanStruct = findDataType("runtime.hchan", Structure.class);
+			if (hchanStruct != null) {
+				GoSymbolName typeSymbolName = GoSymbolName.parseTypeName(elementTypeName);
+				return new TypedefDataType(getCP(typeSymbolName), fullChanTypeName,
+					dtm.getPointer(hchanStruct), dtm);
 			}
 		}
 		catch (IOException e) {
@@ -1076,7 +1130,7 @@ public class GoTypeManager {
 			}
 			throw new IOException("Unknown type prefix: " + name);
 		}
-		else if (name.startsWith("map[") || name.startsWith("chan ")) {
+		else if (name.startsWith("map[") || CHAN_TYPENAME_REGEX.matcher(name).matches()) {
 			return new LengthAlignment(ptrSize, align(ptrSize));
 		}
 		else {
@@ -1112,8 +1166,7 @@ public class GoTypeManager {
 		return new LengthAlignment(ptrSize * 2, align(ptrSize));
 	}
 
-	private LengthAlignment getDataTypeLength(GoStructDef structDef)
-			throws IOException {
+	private LengthAlignment getDataTypeLength(GoStructDef structDef) throws IOException {
 		int len = 0;
 		int align = 1;
 		for (GoNameTypePair field : structDef.Fields) {

@@ -188,20 +188,26 @@ public class DBTraceProgramViewRootModule implements ProgramModule {
 
 	@Override
 	public Address getMinAddress() {
-		NavigableMap<Address, RegionEntry> regionsByAddress = program.memory.getRegionsByAddress();
-		if (regionsByAddress.isEmpty()) {
-			return null;
+		try (LockHold _ = program.trace.lockRead()) {
+			NavigableMap<Address, RegionEntry> regionsByAddress =
+				program.memory.getRegionsByAddress();
+			if (regionsByAddress.isEmpty()) {
+				return null;
+			}
+			return regionsByAddress.firstKey();
 		}
-		return regionsByAddress.firstKey();
 	}
 
 	@Override
 	public Address getMaxAddress() {
-		NavigableMap<Address, RegionEntry> regionsByAddress = program.memory.getRegionsByAddress();
-		if (regionsByAddress.isEmpty()) {
-			return null;
+		try (LockHold _ = program.trace.lockRead()) {
+			NavigableMap<Address, RegionEntry> regionsByAddress =
+				program.memory.getRegionsByAddress();
+			if (regionsByAddress.isEmpty()) {
+				return null;
+			}
+			return regionsByAddress.lastEntry().getValue().range.getMaxAddress();
 		}
-		return regionsByAddress.lastEntry().getValue().range.getMaxAddress();
 	}
 
 	@Override

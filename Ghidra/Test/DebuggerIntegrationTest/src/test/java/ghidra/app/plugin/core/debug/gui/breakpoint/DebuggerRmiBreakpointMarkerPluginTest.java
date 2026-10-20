@@ -29,7 +29,7 @@ import ghidra.trace.database.target.DBTraceObjectManager;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 
 @Category(NightlyCategory.class)
@@ -76,8 +76,7 @@ public class DebuggerRmiBreakpointMarkerPluginTest
 		try (Transaction tx = tb.startTransaction()) {
 			DBTraceObjectManager objs = tb.trace.getObjectManager();
 			addMemoryRegion(objs, zeroOn, tb.range(0x55550000, 0x55550fff), "bin:.text", "rx");
-			addBreakpointAndLoc(objs, zeroOn, tb.range(0x55550123),
-				Set.of(TraceBreakpointKind.SW_EXECUTE));
+			addBreakpointAndLoc(objs, zeroOn, tb.range(0x55550123), CommonSet.SWX.kinds());
 		}
 	}
 
@@ -85,46 +84,46 @@ public class DebuggerRmiBreakpointMarkerPluginTest
 	protected void handleSetBreakpointInvocation(Set<TraceBreakpointKind> expectedKinds,
 			long dynOffset) throws Throwable {
 		Lifespan zeroOn = Lifespan.nowOn(0);
-		if (TraceBreakpointKindSet.READ.equals(expectedKinds)) {
+		if (CommonSet.READ.kinds().equals(expectedKinds)) {
 			Map<String, Object> args = rmiMethodSetReadBreak.expect();
 			addBreakpointAndLoc(tb.trace.getObjectManager(), zeroOn, tb.range(dynOffset),
-				TraceBreakpointKindSet.READ);
+				CommonSet.READ.kinds());
 			rmiMethodSetReadBreak.result(null);
 			assertEquals(Map.ofEntries(
 				Map.entry("process", tb.obj("Processes[1]")),
 				Map.entry("range", tb.range(dynOffset))), args);
 		}
-		else if (TraceBreakpointKindSet.WRITE.equals(expectedKinds)) {
+		else if (CommonSet.WRITE.kinds().equals(expectedKinds)) {
 			Map<String, Object> args = rmiMethodSetWriteBreak.expect();
 			addBreakpointAndLoc(tb.trace.getObjectManager(), zeroOn, tb.range(dynOffset),
-				TraceBreakpointKindSet.WRITE);
+				CommonSet.WRITE.kinds());
 			rmiMethodSetWriteBreak.result(null);
 			assertEquals(Map.ofEntries(
 				Map.entry("process", tb.obj("Processes[1]")),
 				Map.entry("range", tb.range(dynOffset))), args);
 		}
-		else if (TraceBreakpointKindSet.ACCESS.equals(expectedKinds)) {
+		else if (CommonSet.ACCESS.kinds().equals(expectedKinds)) {
 			Map<String, Object> args = rmiMethodSetAccessBreak.expect();
 			addBreakpointAndLoc(tb.trace.getObjectManager(), zeroOn, tb.range(dynOffset),
-				TraceBreakpointKindSet.ACCESS);
+				CommonSet.ACCESS.kinds());
 			rmiMethodSetAccessBreak.result(null);
 			assertEquals(Map.ofEntries(
 				Map.entry("process", tb.obj("Processes[1]")),
 				Map.entry("range", tb.range(dynOffset))), args);
 		}
-		else if (TraceBreakpointKindSet.SW_EXECUTE.equals(expectedKinds)) {
+		else if (CommonSet.SWX.kinds().equals(expectedKinds)) {
 			Map<String, Object> args = rmiMethodSetSwBreak.expect();
 			addBreakpointAndLoc(tb.trace.getObjectManager(), zeroOn, tb.range(dynOffset),
-				TraceBreakpointKindSet.SW_EXECUTE);
+				CommonSet.SWX.kinds());
 			rmiMethodSetSwBreak.result(null);
 			assertEquals(Map.ofEntries(
 				Map.entry("process", tb.obj("Processes[1]")),
 				Map.entry("address", tb.addr(dynOffset))), args);
 		}
-		else if (TraceBreakpointKindSet.HW_EXECUTE.equals(expectedKinds)) {
+		else if (CommonSet.HWX.kinds().equals(expectedKinds)) {
 			Map<String, Object> args = rmiMethodSetHwBreak.expect();
 			addBreakpointAndLoc(tb.trace.getObjectManager(), zeroOn, tb.range(dynOffset),
-				TraceBreakpointKindSet.HW_EXECUTE);
+				CommonSet.HWX.kinds());
 			rmiMethodSetHwBreak.result(null);
 			assertEquals(Map.ofEntries(
 				Map.entry("process", tb.obj("Processes[1]")),

@@ -26,6 +26,9 @@
     <register name="gp"/>
     <register name="tp"/>
   </global>
+  <nohighptr>
+    <range space="csreg"/>
+  </nohighptr>
   <returnaddress>
     <register name="ra"/>
   </returnaddress>

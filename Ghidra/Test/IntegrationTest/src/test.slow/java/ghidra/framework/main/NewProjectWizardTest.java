@@ -52,20 +52,9 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 	private File serverRoot;
 	private RepositoryServerAdapter repositoryServer;
 
-	private static final String USER = ClientUtil.getUserName();
-	private static final int SERVER_PORT = 14100;
-	private static String LOCALHOST = createLocalHostString();
-
-	private static String createLocalHostString() {
-		String localHostString = null;
-		try {
-			localHostString = InetAddress.getLocalHost().getHostName();
-		}
-		catch (UnknownHostException e) {
-			localHostString = "127.0.0.1";
-		}
-		return localHostString;
-	}
+	private static final String USER = SharedProjectUtil.USER;
+	private static final int SERVER_PORT = SharedProjectUtil.SERVER_PORT;
+	private static String LOCALHOST = SharedProjectUtil.LOCALHOST;
 
 	public NewProjectWizardTest() {
 		super();

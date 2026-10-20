@@ -27,6 +27,7 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import docking.widgets.OkDialog;
 import docking.widgets.button.BrowseButton;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.filechooser.GhidraFileChooser;
@@ -62,6 +63,8 @@ public class PopulateFidDialog extends DialogComponentProvider {
 	private JTextField variantTextField;
 	private FidService fidService;
 	private JTextField languageIdField;
+	private JTextField compilerSpecField;
+	private JTextField sourceLanguageField;
 	private JTextField symbolsFileTextField;
 
 	protected PopulateFidDialog(PluginTool tool, FidService fidService) {
@@ -85,12 +88,23 @@ public class PopulateFidDialog extends DialogComponentProvider {
 		String libraryVersion = versionTextField.getText().trim();
 		String libraryVariant = variantTextField.getText().trim();
 		DomainFolder folder = getDomainFolder();
-		String languageFilter = languageIdField.getText().trim();
+		String languageID = languageIdField.getText().trim();
+		String compilerSpecs = compilerSpecField.getText().trim();
+		String sourceLanguages = sourceLanguageField.getText().trim();
 		File commonSymbolsFile = getCommonSymbolsFile();
 
-		Task task = new IngestTask("Populate Library Task", fidFile, libraryRecord, folder,
-			libraryFamilyName, libraryVersion, libraryVariant, languageFilter, commonSymbolsFile,
-			fidService, new DefaultFidPopulateResultReporter());
+		Task task;
+		try {
+			FidFilter programFilter = new FidFilter(languageID, compilerSpecs, sourceLanguages);
+
+			task = new IngestTask("Populate Library Task", fidFile, libraryRecord, folder,
+				libraryFamilyName, libraryVersion, libraryVariant, programFilter, commonSymbolsFile,
+				fidService, new DefaultFidPopulateResultReporter());
+		}
+		catch (Exception ex) {
+			OkDialog.showError("Illegal Argument", ex.getMessage());
+			return;		// Let the user continue editing the parameters
+		}
 		close();
 		tool.execute(task);
 	}
@@ -144,6 +158,16 @@ public class PopulateFidDialog extends DialogComponentProvider {
 
 		panel.add(new GLabel("Language: ", SwingConstants.RIGHT));
 		panel.add(buildLanguageField());
+
+		panel.add(new GLabel("Compiler Specs: ", SwingConstants.RIGHT));
+		compilerSpecField = new JTextField();
+		compilerSpecField.getDocument().addUndoableEditListener(e -> updateOkEnablement());
+		panel.add(compilerSpecField);
+
+		panel.add(new GLabel("Source Languages: ", SwingConstants.RIGHT));
+		sourceLanguageField = new JTextField();
+		sourceLanguageField.getDocument().addUndoableEditListener(e -> updateOkEnablement());
+		panel.add(sourceLanguageField);
 
 		panel.add(new GLabel("Common Symbols File: ", SwingConstants.RIGHT));
 		panel.add(buildSymbolsFileField(), jLabel);
@@ -292,7 +316,7 @@ public class PopulateFidDialog extends DialogComponentProvider {
 			return false;
 		}
 		String symbolsFilePath = symbolsFileTextField.getText().trim();
-		if (!symbolsFilePath.isEmpty() && !(new File(symbolsFilePath).exists())) {
+		if (!symbolsFilePath.isEmpty() && !(new File(symbolsFilePath).isFile())) {
 			return false;
 		}
 		return true;

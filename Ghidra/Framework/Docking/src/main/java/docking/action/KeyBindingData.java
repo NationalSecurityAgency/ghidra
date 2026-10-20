@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,9 @@ import javax.swing.KeyStroke;
 import docking.KeyBindingPrecedence;
 import docking.actions.KeyBindingUtils;
 import ghidra.framework.options.ActionTrigger;
+import ghidra.util.Msg;
 import gui.event.MouseBinding;
+import utilities.util.reflection.ReflectionUtilities;
 
 /**
  * A class for storing an action's key stroke, mouse binding or both.
@@ -85,6 +87,29 @@ public class KeyBindingData {
 		}
 		this.keyStroke = Objects.requireNonNull(keyStroke);
 		this.keyBindingPrecedence = Objects.requireNonNull(precedence);
+
+		logKeyBindingWhitespaceWarning();
+	}
+
+	private void logKeyBindingWhitespaceWarning() {
+        int keyCode = keyStroke.getKeyCode();
+		if (keyCode != 0) {
+			return; // key codes will get converted to text by KeyEvent
+		}
+
+		char keyChar = keyStroke.getKeyChar();
+		if (!Character.isWhitespace(keyChar)) {
+			return; // non-whitespace characters can be read
+		}
+
+		// Create a stack trace to take the developer to the place where the key stroke is created.
+		// Update the trace so that the first item is that spot.  Remove excess Java elements.
+		Throwable t =
+			ReflectionUtilities.createThrowableWithStackOlderThan("KeyBindingData",
+				"Builder");
+		t = ReflectionUtilities.filterJavaThrowable(t);
+		Msg.error(this, "Change key stroke to not use a whitespace character.  " +
+			"(e.g., KeyBindingUtils.parseKeyStroke(\"space\"))", t);
 	}
 
 	private static KeyStroke parseKeyStrokeString(String keyStrokeString) {

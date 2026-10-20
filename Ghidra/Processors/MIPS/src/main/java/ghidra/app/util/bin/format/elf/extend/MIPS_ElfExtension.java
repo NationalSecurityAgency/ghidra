@@ -393,7 +393,7 @@ public class MIPS_ElfExtension extends ElfExtension {
 			return address;
 		}
 
-		if (elfSymbol.getType() == ElfSymbol.STT_FUNC) {
+		if (elfSymbol.isFunction()) {
 
 			Program program = elfLoadHelper.getProgram();
 

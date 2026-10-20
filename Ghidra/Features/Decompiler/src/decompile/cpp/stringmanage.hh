@@ -76,7 +76,7 @@ public:
   static int4 readUtf16(const uint1 *buf,bool bigend);	///< Read a UTF16 code point from a byte array
   static void writeUtf8(ostream &s,int4 codepoint);	///< Write unicode character to stream in UTF8 encoding
   static int4 checkCharacters(const uint1 *buf,int4 size,int4 charsize,bool bigend);
-  static int4 getCodepoint(const uint1 *buf,int4 charsize,bool bigend,int4 &skip);	///< Extract next \e unicode \e codepoint
+  static int4 getCodepoint(const uint1 *buf,int4 len,int4 charsize,bool bigend,int4 &skip);	///< Extract next \e unicode \e codepoint
 };
 
 /// \brief An implementation of StringManager that understands terminated unicode strings

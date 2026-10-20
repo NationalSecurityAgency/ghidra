@@ -240,9 +240,10 @@ public class SymPcodeExecutorState implements PcodeExecutorState<Sym> {
 	 * @return the address (stack offset or register) of the return address
 	 */
 	public Address computeAddressOfReturn() {
-		return switch (getVar(language.getProgramCounter(), Reason.INSPECT)) {
+		Register pc = language.getProgramCounter();
+		return switch (getVar(pc, Reason.INSPECT)) {
 			case StackDerefSym stackVar -> cSpec.getStackSpace().getAddress(stackVar.offset());
-			case RegisterSym regVar -> regVar.register().getAddress();
+			case RegisterSym regVar when regVar.register() != pc -> regVar.register().getAddress();
 			default -> null;
 		};
 	}

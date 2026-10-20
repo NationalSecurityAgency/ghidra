@@ -47,13 +47,17 @@ def append_paths():
 
 
 def main():
+    global cxn, target, args, initdir
     append_paths()
+    if not parse_parameters():
+        return
+
     # Delay these imports until sys.path is patched
     try:
         import ghidraxdbg
-    except:
-        print(e)
-        exit(253)
+    except ModuleNotFoundError:
+        os._exit(253)
+        
     from ghidraxdbg import commands as cmd
     from ghidraxdbg.hooks import on_state_changed
     from ghidraxdbg.util import dbg
@@ -83,7 +87,5 @@ if __name__ == '__main__':
     try:
         main()
     except SystemExit as x:
-        if x.code == 253:
-            exit(253)
         if x.code != 0:
             print(f"Exited with code {x.code}")

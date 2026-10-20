@@ -19,7 +19,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.stream.IntStream;
 
 import ghidra.pcode.emu.jit.JitBytesPcodeExecutorState;
 import ghidra.pcode.emu.jit.decode.DecoderUseropLibrary;
@@ -34,7 +34,6 @@ import ghidra.program.model.pcode.Varnode;
 /**
  * A wrapper around a userop library that places {@link PcodeOp#CALLOTHER callother} ops into the
  * use-def graph
- * 
  * <p>
  * This is the library provided to
  * {@link JitDataFlowExecutor#execute(PcodeProgram, PcodeUseropLibrary)} to cooperate with in the
@@ -44,10 +43,8 @@ import ghidra.program.model.pcode.Varnode;
  * use-def graph takes careful notice of variables and their definiting ops, there are two possible
  * op nodes: {@link JitCallOtherOp} when no output operand is given and {@link JitCallOtherDefOp}
  * when an output operand is given.
- * 
  * <p>
  * We employ several different strategies to handle a p-code userop:
- * 
  * <ul>
  * <li><b>Standard</b>: Invocation of the userop in the same fashion as the interpreted p-code
  * emulator. Any live variables have to be written into the {@link JitBytesPcodeExecutorState state}
@@ -65,7 +62,6 @@ import ghidra.program.model.pcode.Varnode;
  * well when the inputs are registers or uniques allocated in JVM locals. The return value can be
  * handled similarly.</li>
  * </ul>
- * 
  * <p>
  * The default strategy for all userops is Standard. Implementors should set the attributes of
  * {@link PcodeUserop} and adjust the parameters of the userop's method accordingly. To allow
@@ -84,9 +80,9 @@ public class JitDataFlowUseropLibrary implements PcodeUseropLibrary<JitVal> {
 	 * The wrapper of a specific userop definition
 	 */
 	protected class WrappedUseropDefinition implements PcodeUseropDefinition<JitVal> {
-		private final PcodeUseropDefinition<Object> decOp;
+		private final PcodeUseropDefinition<?> decOp;
 
-		public WrappedUseropDefinition(PcodeUseropDefinition<Object> decOp) {
+		public WrappedUseropDefinition(PcodeUseropDefinition<?> decOp) {
 			this.decOp = decOp;
 		}
 
@@ -107,33 +103,59 @@ public class JitDataFlowUseropLibrary implements PcodeUseropLibrary<JitVal> {
 		}
 
 		/**
+		 * The output and input types of a userop, defined using a Java callback
+		 * 
+		 * @param out the type behavior of the userop's output, or null if it returns {@code void}.
+		 * @param ins the type behavior or each input argument
+		 */
+		record InOutTypes(JitTypeBehavior out, List<JitTypeBehavior> ins) {
+			/**
+			 * Indicates that the userop's type behaviors aren't known
+			 * <p>
+			 * Perhaps they are partially-known, but some property of the method prevents direct
+			 * invocation, and so we indicate unknown to ensure a more conservative strategy is
+			 * applied.
+			 * 
+			 * @param hasOutput true if the return type is not {@code void}
+			 * @param inputCount the number of input arguments the userop can accept
+			 * @return the fallback types, i.e., everything is {@link JitTypeBehavior#ANY}, unless
+			 *         the method returns {@code void}, in which case the output type is
+			 *         {@code null}.
+			 */
+			static InOutTypes fallback(boolean hasOutput, int inputCount) {
+				return new InOutTypes(hasOutput ? JitTypeBehavior.ANY : null,
+					IntStream.range(0, inputCount).mapToObj(_ -> JitTypeBehavior.ANY).toList());
+			}
+		}
+
+		/**
+		 * Get the input and output types for this userop.
+		 * <p>
 		 * If the number of arguments matches the userop's Java method, map each argument value to
 		 * the type behavior for its corresponding parameter.
-		 * 
 		 * <p>
 		 * This is used by the {@link JitTypeModel} to assign types to JVM locals in order to reduce
 		 * the number of type casts. In the case of direct invocation, this enters type information
 		 * from the userop's Java definition into the analysis.
-		 * 
 		 * <p>
 		 * If the parameter count doesn't match, we just map the arguments to
 		 * {@link JitTypeBehavior#ANY} and let the error surface at run time. We need not throw the
 		 * exception until/unless the invocation is actually executed. Similarly, if any parameter's
-		 * type is not supported, or the userop cannot be invoked directly, we just map all
-		 * arguments to {@link JitTypeBehavior#ANY}, because the generator will apply standard
-		 * invocation, which does not benefit from type analysis.
+		 * type or the output type is not supported, or the userop cannot be invoked directly, we
+		 * just map all arguments to {@link JitTypeBehavior#ANY}, because the generator will apply
+		 * standard invocation, which does not benefit from type analysis.
 		 * 
 		 * @param inVals the input arguments
 		 * @return the map from argument value (SSA variable) to parameter type behavior
 		 */
-		private List<JitTypeBehavior> getInputTypes(List<JitVal> inVals) {
+		private InOutTypes getInOutTypes(boolean hasOutput, List<JitVal> inVals) {
 			int inputCount = getInputCount();
 			if (inputCount != inVals.size()) { // includes inputCount == -1 (variadic)
-				return JitDataFlowModel.allAny(inVals);
+				return InOutTypes.fallback(hasOutput, inVals.size());
 			}
 			Method method = decOp.getJavaMethod();
 			if (method == null) {
-				return JitDataFlowModel.allAny(inVals);
+				return InOutTypes.fallback(hasOutput, inVals.size());
 			}
 			List<JitTypeBehavior> result = new ArrayList<>();
 			Parameter[] parameters = method.getParameters();
@@ -141,29 +163,23 @@ public class JitDataFlowUseropLibrary implements PcodeUseropLibrary<JitVal> {
 				Parameter p = parameters[i];
 				JitTypeBehavior type = JitTypeBehavior.forJavaType(p.getType());
 				if (type == null) {
-					return JitDataFlowModel.allAny(inVals);
+					return InOutTypes.fallback(hasOutput, inVals.size());
 				}
 				result.add(type);
 			}
-			return Collections.unmodifiableList(result);
-		}
-
-		/**
-		 * Get the type behavior from the userop's Java method
-		 * 
-		 * <p>
-		 * If the userop is not backed by a Java method, or its output type is not supported, this
-		 * return {@link JitTypeBehavior#ANY}.
-		 * 
-		 * @return the type behavior
-		 */
-		private JitTypeBehavior getOutputTypeBehavior() {
-			return JitTypeBehavior.forJavaType(getOutputType());
+			Class<?> outCls = getOutputType();
+			if (outCls == null) {
+				return InOutTypes.fallback(hasOutput, inVals.size());
+			}
+			JitTypeBehavior outType = JitTypeBehavior.forJavaType(outCls);
+			if (outType == null && hasOutput) {
+				return InOutTypes.fallback(hasOutput, inVals.size());
+			}
+			return new InOutTypes(outType, Collections.unmodifiableList(result));
 		}
 
 		/**
 		 * {@inheritDoc}
-		 * 
 		 * <p>
 		 * This "execution" is part of the intra-block analysis. This is the analytic interpretation
 		 * of the invocation, not the actual run time invocation. This derives type information
@@ -194,20 +210,29 @@ public class JitDataFlowUseropLibrary implements PcodeUseropLibrary<JitVal> {
 				dfm.notifyOp(new JitNopOp(op));
 				return;
 			}
-			JitDataFlowState state = (JitDataFlowState) executor.getState();
-			List<JitVal> inVals = Stream.of(op.getInputs())
-					.skip(1)
-					.map(inVn -> state.getVar(inVn, executor.getReason()))
-					.toList();
-			List<JitTypeBehavior> inTypes = getInputTypes(inVals);
+			JitDataFlowExecutor exec = (JitDataFlowExecutor) executor;
+
+			if (exec.tryNotifyFoldedOutput(op)) {
+				// A folded constant would not be present were the userop not suitable for removal
+				return;
+			}
+
+			JitDataFlowState state = (JitDataFlowState) exec.getState();
+			List<JitVal> inVals = new ArrayList<>();
+			int n = op.getNumInputs();
+			for (int i = 1; i < n; i++) {
+				inVals.add(exec.getFoldedOrVarInput(op, i));
+			}
 			Varnode outVn = op.getOutput();
+			InOutTypes types = getInOutTypes(outVn != null, inVals);
 			if (outVn == null) {
-				dfm.notifyOp(new JitCallOtherOp(op, decOp, inVals, inTypes, state.captureState()));
+				dfm.notifyOp(
+					new JitCallOtherOp(op, decOp, inVals, types.ins, state.captureState()));
 			}
 			else {
 				JitOutVar out = dfm.generateOutVar(outVn);
-				dfm.notifyOp(new JitCallOtherDefOp(op, out, getOutputTypeBehavior(), decOp, inVals,
-					inTypes, state.captureState()));
+				dfm.notifyOp(new JitCallOtherDefOp(op, out, types.out, decOp, inVals, types.ins,
+					state.captureState()));
 				state.setVar(outVn, out);
 			}
 		}
@@ -215,6 +240,11 @@ public class JitDataFlowUseropLibrary implements PcodeUseropLibrary<JitVal> {
 		@Override
 		public boolean isFunctional() {
 			return decOp.isFunctional();
+		}
+
+		@Override
+		public boolean canInterrupt() {
+			return decOp.canInterrupt();
 		}
 
 		@Override
@@ -230,6 +260,16 @@ public class JitDataFlowUseropLibrary implements PcodeUseropLibrary<JitVal> {
 		@Override
 		public boolean canInlinePcode() {
 			return decOp.canInlinePcode();
+		}
+
+		@Override
+		public boolean isOutSigned() {
+			return decOp.isOutSigned();
+		}
+
+		@Override
+		public boolean isInSigned(int index) {
+			return decOp.isInSigned(index);
 		}
 
 		@Override

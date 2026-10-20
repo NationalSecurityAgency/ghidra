@@ -24,16 +24,6 @@ eclipse.project.name = '_Debugger Integration Test'
  * Build dependencies
  *********************************************************************************/
 
-// There are tests in this module that require resources in Base:test. This
-// is a on-off type of situation so just add to the resources source set here.
-sourceSets {
-	integrationTest {
-		resources {
-			srcDirs += [project(':Base').sourceSets.test.resources]
-		}
-	}
-}
-
 processIntegrationTestResources {
 	duplicatesStrategy = 'exclude'
 }
@@ -71,6 +61,8 @@ dependencies {
 	testImplementation project(path: ':Framework-TraceModeling', configuration: 'testArtifacts')
 	testImplementation project(path: ':Debugger', configuration: 'testArtifacts')
 	testImplementation project(path: ':Debugger-rmi-trace', configuration: 'testArtifacts')
+
+	testImplementation project(path: ':GhidraDocs', configuration: 'ghidraClassArtifacts')
 }
 
 // For Java 9, we must explicitly export references to the internal classes we are using.

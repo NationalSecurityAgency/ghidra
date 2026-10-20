@@ -98,6 +98,47 @@ public class DebuggerStackPanel extends AbstractObjectsTableBasedPanel<TraceStac
 		return pc;
 	}
 
+	private static class FrameSpColumn extends TraceValueObjectAttributeColumn<Address> {
+		public FrameSpColumn() {
+			super(TraceStackFrame.KEY_SP, Address.class);
+		}
+
+		@Override
+		public String getColumnName() {
+			return "SP";
+		}
+
+		@Override
+		public ValueProperty<Address> getProperty(ValueRow row) {
+			return new ValueAddressProperty(row) {
+				@Override
+				public Address getValue() {
+					TraceObjectValue entry = row.getAttributeEntry(attributeName);
+					if (entry == null) {
+						return null;
+					}
+					return entry.getValue() instanceof Address addr ? addr : null;
+				}
+
+				@Override
+				public boolean isModified() {
+					return row.isAttributeModified(attributeName);
+				}
+			};
+		}
+	}
+
+	static Address computeStackPointer(ValueRow row, long snap) {
+		if (!(row.getValue().getValue() instanceof TraceObject object)) {
+			return null;
+		}
+		TraceObjectValue attrSp = object.getAttribute(snap, TraceStackFrame.KEY_SP);
+		if (attrSp == null || !(attrSp.getValue() instanceof Address sp)) {
+			return null;
+		}
+		return sp;
+	}
+
 	private Function computeFunction(ValueRow row, long snap, ServiceProvider serviceProvider) {
 		Address pc = computeProgramCounter(row, snap);
 		if (pc == null) {
@@ -186,6 +227,7 @@ public class DebuggerStackPanel extends AbstractObjectsTableBasedPanel<TraceStac
 			descriptor.addVisibleColumn(new FramePcColumn());
 			descriptor.addVisibleColumn(new FrameFunctionColumn());
 			descriptor.addVisibleColumn(new FrameModuleColumn());
+			descriptor.addVisibleColumn(new FrameSpColumn());
 			return descriptor;
 		}
 	}

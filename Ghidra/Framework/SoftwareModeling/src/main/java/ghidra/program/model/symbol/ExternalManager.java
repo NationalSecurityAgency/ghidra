@@ -15,6 +15,7 @@
  */
 package ghidra.program.model.symbol;
 
+import java.util.List;
 import java.util.Set;
 
 import ghidra.program.model.address.Address;
@@ -31,13 +32,32 @@ import ghidra.util.exception.InvalidInputException;
 public interface ExternalManager {
 
 	/**
-	 * Returns an array of all external names for which locations have been defined.
-	 * @return array of external names
+	 * Returns an array of all external Library names sorted by preferred search order.
+	 * This order reflects the preferred search order when looking for external symbols
+	 * which were not linked to a specific Library.
+	 * <p>
+	 * NOTE: The {@link Library#UNKNOWN} library will always be returned as first in the list
+	 * but will not have an associated program path and cannot be searched.
+	 * 
+	 * @return array of all external Library names sorted by preferred search order.
 	 */
 	public String[] getExternalLibraryNames();
 
 	/**
+	 * Get a list of all external Libraries sorted by preferred search order. 
+	 * This order reflects the preferred search order when looking for external symbols
+	 * which were not linked to a specific Library.
+	 * <p>
+	 * NOTE: The {@link Library#UNKNOWN} library will always be returned as first in the list
+	 * but will not have an associated program path and cannot be searched.
+	 * 
+	 * @return list of all external Libraries sorted by preferred search order.
+	 */
+	public List<Library> getLibraries();
+
+	/**
 	 * Get the Library which corresponds to the specified name
+	 * 
 	 * @param libraryName name of library
 	 * @return library or null if not found
 	 */
@@ -45,6 +65,7 @@ public interface ExternalManager {
 
 	/**
 	 * Removes external name if no associated ExternalLocation's exist
+	 * 
 	 * @param libraryName external library name
 	 * @return true if removed, false if unable to due to associated locations/references
 	 */
@@ -54,35 +75,69 @@ public interface ExternalManager {
 	 * Returns the file pathname associated with an external name.
 	 * Null is returned if either the external name does not exist or
 	 * a pathname has not been set.
+	 * 
 	 * @param libraryName external name
 	 * @return project file pathname or null
 	 */
 	public String getExternalLibraryPath(String libraryName);
 
 	/**
-	 * Sets the file pathname associated with an existing external name.
+	 * Sets the file pathname associated with an external name.
+	 * If the Library namespace/symbol does not already exist it will be created provided
+	 * the libraryName does not conflict with another namespace whose parent is the global
+	 * namespace.
+	 * <p>
+	 * NOTE: Assigning path for {@link Library#UNKNOWN} Library will be ignored.
+	 * <p>
+	 * NOTE: Assigning path to a non-Library namespace will fail silently.
+	 *
 	 * @param libraryName the name of the library to associate with a file.
 	 * @param pathname the path to the program to be associated with the library name.
 	 * @param userDefined true if the external path is being specified by the user
-	 * @throws InvalidInputException on invalid input
+	 * @throws InvalidInputException on invalid input specified
 	 */
 	public void setExternalPath(String libraryName, String pathname, boolean userDefined)
 			throws InvalidInputException;
+	
+	/**
+	 * {@return the ordinal associated with an external library which represents its 
+	 * sequence within the order list of libraries or -1 if library name not found}
+	 * 
+	 * @param libraryName the library name
+	 */
+	public int getLibraryOrdinal(String libraryName);
+
+	/**
+	 * Sets the Library search ordinal associated with an external name.
+	 * <p>
+	 * Assigning ordinal for {@link Library#UNKNOWN} Library will fail and return -1.
+	 * Assigning ordinal to a non-existing Library will fail and return -1.
+	 * <p>
+	 * NOTE: The actual ordinal applied my be limited based on placement restrictions.
+	 * 
+	 * @param libraryName the name of the library to position within Library search sequence
+	 * @param ordinal library ordinal greater or equal to 1
+	 * @return the actual ordinal applied or -1 if change failed.
+	 */
+	public int setLibraryOrdinal(String libraryName, int ordinal);
 
 	/**
 	 * Change the name of an existing external name.
+	 * 
 	 * @param oldName the old name of the external library name.
 	 * @param newName the new name of the external library name.
 	 * @param source the source of this external library
+	 * @return true if symbol was found and renamed, false if symbol not found
 	 * @throws DuplicateNameException if name conflicts with another symbol.
 	 * @throws InvalidInputException if an invalid or null name specified (see 
 	 * {@link SymbolUtilities#validateName}).
 	 */
-	public void updateExternalLibraryName(String oldName, String newName, SourceType source)
+	public boolean updateExternalLibraryName(String oldName, String newName, SourceType source)
 			throws DuplicateNameException, InvalidInputException;
 
 	/**
 	 * Get an iterator over all external locations associated with the specified Library.
+	 * 
 	 * @param libraryName the name of the library to get locations for
 	 * @return external location iterator
 	 */
@@ -91,6 +146,7 @@ public interface ExternalManager {
 	/**
 	 * Get an iterator over all external locations which have been associated to
 	 * the specified memory address
+	 * 
 	 * @param memoryAddress memory address
 	 * @return external location iterator
 	 */
@@ -151,6 +207,7 @@ public interface ExternalManager {
 
 	/**
 	 * Determines if the indicated external library name is being managed (exists).
+	 * 
 	 * @param libraryName the external library name
 	 * @return true if the name is defined (whether it has a path or not).
 	 */
@@ -158,6 +215,7 @@ public interface ExternalManager {
 
 	/**
 	 * Adds a new external library name
+	 * 
 	 * @param libraryName the new external library name to add.
 	 * @param source the source of this external library
 	 * @return library external {@link Library namespace}
@@ -173,6 +231,7 @@ public interface ExternalManager {
 	 * Get or create an external location associated with a library/file named {@code libraryName}
 	 * and the location within that file identified by {@code extLabel} and/or its memory address
 	 * {@code extAddr}.  Either or both {@code extLabel} or {@code extAddr} must be specified.
+	 * 
 	 * @param libraryName the external library name
 	 * @param extLabel the external label or null
 	 * @param extAddr the external memory address or null
@@ -191,6 +250,7 @@ public interface ExternalManager {
 	 * Create an external location in the indicated external parent namespace 
 	 * and identified by {@code extLabel} and/or its memory address
 	 * {@code extAddr}.  Either or both {@code extLabel} or {@code extAddr} must be specified.
+	 * 
 	 * @param extNamespace the external namespace
 	 * @param extLabel the external label or null
 	 * @param extAddr the external memory address or null
@@ -208,6 +268,7 @@ public interface ExternalManager {
 	 * Get or create an external location in the indicated external parent namespace 
 	 * and identified by {@code extLabel} and/or its memory address
 	 * {@code extAddr}.  Either or both {@code extLabel} or {@code extAddr} must be specified.
+	 * 
 	 * @param extNamespace the external namespace
 	 * @param extLabel the external label or null
 	 * @param extAddr the external memory address or null
@@ -227,6 +288,7 @@ public interface ExternalManager {
 	 * Create an external {@link Function} in the external {@link Library} namespace 
 	 * {@code libararyName} and identified by {@code extLabel} and/or its memory address
 	 * {@code extAddr}.  Either or both {@code extLabel} or {@code extAddr} must be specified.
+	 * 
 	 * @param libraryName the external library name
 	 * @param extLabel label within the external program, may be null if extAddr is not null
 	 * @param extAddr memory address within the external program, may be null
@@ -245,6 +307,7 @@ public interface ExternalManager {
 	 * Create an external {@link Function} in the indicated external parent namespace 
 	 * and identified by {@code extLabel} and/or its memory address
 	 * {@code extAddr}.  Either or both {@code extLabel} or {@code extAddr} must be specified.
+	 * 
 	 * @param extNamespace the external namespace
 	 * @param extLabel the external label or null
 	 * @param extAddr the external memory address or null
@@ -262,6 +325,7 @@ public interface ExternalManager {
 	 * Get or create an external {@link Function} in the indicated external parent namespace 
 	 * and identified by {@code extLabel} and/or its memory address
 	 * {@code extAddr}.  Either or both {@code extLabel} or {@code extAddr} must be specified.
+	 * 
 	 * @param extNamespace the external namespace
 	 * @param extLabel the external label or null
 	 * @param extAddr the external memory address or null

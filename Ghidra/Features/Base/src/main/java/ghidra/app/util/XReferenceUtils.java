@@ -44,6 +44,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.*;
 import ghidra.util.HelpLocation;
+import ghidra.util.datastruct.Counter;
 import ghidra.util.table.ReferencesFromTableModel;
 import ghidra.util.table.field.ReferenceEndpoint;
 import resources.Icons;
@@ -68,17 +69,43 @@ public class XReferenceUtils {
 	 * @return array first <b><code>max</code></b> xrefs to the code unit
 	 */
 	public final static List<Reference> getXReferences(CodeUnit cu, int max) {
+		return getXReferences(cu, max, null);
+	}
+
+	/**
+	 * Returns an array containing the first <b><code>max</code></b>
+	 * direct xref references to the specified code unit.
+	 *
+	 * @param cu the code unit to generate the xrefs
+	 * @param max max number of xrefs to get, or -1 to get all references
+	 * @param fullCount a counter that will be updated with the full count of xrefs.  This will have
+	 * the full xref count regardless of whether the max is reached.  The counter will be added to,
+	 * which allows it to be passed to multiple methods on this class.
+	 *
+	 * @return array first <b><code>max</code></b> xrefs to the code unit
+	 */
+	public final static List<Reference> getXReferences(CodeUnit cu, int max, Counter fullCount) {
 		Program program = cu.getProgram();
 		if (program == null) {
 			Collections.emptyList();
 		}
 
+		if (max < 0) {
+			max = Integer.MAX_VALUE;
+		}
+
+		if (fullCount == null) {
+			fullCount = new Counter();
+		}
+
 		// lookup the direct xrefs to the current code unit
 		List<Reference> xrefs = new ArrayList<>();
 		Address minAddress = cu.getMinAddress();
-		ReferenceIterator it = program.getReferenceManager().getReferencesTo(minAddress);
+		ReferenceManager referenceManager = program.getReferenceManager();
+		fullCount.add(referenceManager.getReferenceCountTo(minAddress));
+		ReferenceIterator it = referenceManager.getReferencesTo(minAddress);
 		while (it.hasNext()) {
-			if (xrefs.size() - max == 0) {
+			if (xrefs.size() >= max) {
 				break;
 			}
 
@@ -93,10 +120,17 @@ public class XReferenceUtils {
 		}
 
 		Address[] thunkAddrs = function.getFunctionThunkAddresses(false);
-		if (thunkAddrs != null) {
-			for (Address thunkAddr : thunkAddrs) {
-				xrefs.add(new ThunkReference(thunkAddr, function.getEntryPoint()));
+		if (thunkAddrs == null) {
+			return xrefs;
+		}
+
+		fullCount.add(thunkAddrs.length);
+		for (Address thunkAddr : thunkAddrs) {
+			if (xrefs.size() >= max) {
+				break;
 			}
+
+			xrefs.add(new ThunkReference(thunkAddr, function.getEntryPoint()));
 		}
 		return xrefs;
 	}
@@ -109,6 +143,21 @@ public class XReferenceUtils {
 	 * @return array of all offcut xrefs to the code unit
 	 */
 	public static List<Reference> getOffcutXReferences(CodeUnit cu, int max) {
+		return getOffcutXReferences(cu, max, null);
+	}
+
+	/**
+	 * Returns an array containing all offcut xref references to the specified code unit
+	 *
+	 * @param cu the code unit to generate the offcut xrefs
+	 * @param max max number of offcut xrefs to get, or -1 to get all offcut references
+	 * @param fullCount a counter that will be updated with the full count of xrefs.  This will have
+	 * the full xref count regardless of whether the max is reached.  The counter will be added to,
+	 * which allows it to be passed to multiple methods on this class.
+	 * 
+	 * @return array of all offcut xrefs to the code unit
+	 */
+	public static List<Reference> getOffcutXReferences(CodeUnit cu, int max, Counter fullCount) {
 		Program program = cu.getProgram();
 		if (program == null) {
 			return Collections.emptyList();
@@ -118,15 +167,28 @@ public class XReferenceUtils {
 			return Collections.emptyList();
 		}
 
+		if (max < 0) {
+			max = Integer.MAX_VALUE;
+		}
+
+		if (fullCount == null) {
+			fullCount = new Counter();
+		}
+
 		List<Reference> offcuts = new ArrayList<>();
 		ReferenceManager refMgr = program.getReferenceManager();
 		AddressSet set = new AddressSet(cu.getMinAddress().add(1), cu.getMaxAddress());
 		AddressIterator it = refMgr.getReferenceDestinationIterator(set, true);
 		while (it.hasNext()) {
 			Address addr = it.next();
+			int count = refMgr.getReferenceCountTo(addr);
+			fullCount.add(count);
 			ReferenceIterator refIter = refMgr.getReferencesTo(addr);
 			while (refIter.hasNext()) {
-				if (offcuts.size() - max == 0) {
+				if (offcuts.size() >= max) {
+					// Note: we break instead of returning, allowing the address iterator to keep 
+					// updating the count.  If this leads to performance issues, then we can change
+					// this to be a return and update the documentation.
 					break;
 				}
 
@@ -160,18 +222,43 @@ public class XReferenceUtils {
 	 */
 	public static void getVariableRefs(Variable var, List<Reference> xrefs, List<Reference> offcuts,
 			int max) {
+		getVariableRefs(var, xrefs, offcuts, max, null);
+	}
+
+	/**
+	 * Populates the provided lists with the direct and offcut xrefs to the specified variable
+	 *
+	 * @param var     variable to get references
+	 * @param xrefs   list to put direct references in
+	 * @param offcuts list to put offcut references in
+	 * @param max max number of xrefs to get, or -1 to get all references
+	 * @param fullCount a counter that will be updated with the full count of xrefs.  This will have
+	 * the full xref count regardless of whether the max is reached.  The counter will be added to,
+	 * which allows it to be passed to multiple methods on this class.
+	 */
+	public static void getVariableRefs(Variable var, List<Reference> xrefs, List<Reference> offcuts,
+			int max, Counter fullCount) {
 
 		Address addr = var.getMinAddress();
 		if (addr == null) {
 			return;
 		}
 
+		if (max < 0) {
+			max = Integer.MAX_VALUE;
+		}
+
+		if (fullCount == null) {
+			fullCount = new Counter();
+		}
+
 		Program program = var.getFunction().getProgram();
 		ReferenceManager refMgr = program.getReferenceManager();
 		Reference[] refs = refMgr.getReferencesTo(var);
+		fullCount.add(refs.length);
 		int total = 0;
 		for (Reference vref : refs) {
-			if (total++ - max == 0) {
+			if (total++ >= max) {
 				break;
 			}
 

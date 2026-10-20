@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,14 +15,41 @@
  */
 package ghidra.util;
 
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Supplier;
+
+import utility.function.Callback;
+
 /**
- * Ghidra synchronization lock. This class allows creation of named locks for
- * synchronizing modification of multiple tables in the Ghidra database.
+ * Ghidra synchronization read/write lock that provides read and write methods for acquiring either
+ * a shared read access or an exclusive write access.
+ * <P>
+ * It extends Java's ReentrantReadWriteLock, but
+ * adds convenient methods to get either a read or write lock that returns an {@link AutoCloseable}
+ * object that can be used in a try with resources block that will auto release the lock when
+ * the try block is exited.
+ * <P>
+ * To use a lock for share read access the general pattern is something like:
+ * <PRE>
+ * int getSize() {
+ *     try (Closeable c = lock.read()) {
+ *         return record.getIntValue(SIZE);
+ *     }
+ * }
+ * </PRE>
+ * <P>
+ * Similarly, to get exclusive access for modification:
+ * <PRE>
+ * int getSize() {
+ *     try (Closeable c = lock.write()) {
+ * 	       return record.setIntValue(SIZE);
+ *         database.updateRecord(record);	
+ *     }
+ * }
+ * </PRE>
+ * 
  */
-public class Lock {
-	private Thread owner;
-	private int lockAquireCount = 0;
-	private int waiterCount = 0;
+public class Lock extends ReentrantReadWriteLock {
 	private String name;
 
 	/**
@@ -34,58 +61,34 @@ public class Lock {
 		this.name = name;
 	}
 
-	/**
-	 * Acquire this synchronization lock. (i.e. begin synchronizing on this named
-	 * lock.)
-	 */
-	public synchronized void acquire() {
-		Thread currThread = Thread.currentThread();
-
-		while (true) {
-			if (owner == null) {
-				lockAquireCount = 1;
-				owner = currThread;
-				return;
-			}
-			else if (owner == currThread) {
-				lockAquireCount++;
-				return;
-			}
-			try {
-				waiterCount++;
-				wait();
-			}
-			catch (InterruptedException e) {
-				// exception from another threads notify(), ignore
-				// and try to get lock again
-			}
-			finally {
-				waiterCount--;
-			}
-		}
+	@Override
+	public String toString() {
+		return name + " Lock";
 	}
 
 	/**
-	 * Releases this lock, since you are through with the code that needed
-	 * synchronization.
+	 * Acquires the read lock that can allow simultaneous access by all read threads. Will block
+	 * if any thread already has a write lock.
+	 * @return An AutoCloseable handle to the lock that be used in a try with resources block to
+	 * automatically release the lock when the block is exited.
 	 */
-	public synchronized void release() {
-		Thread currThread = Thread.currentThread();
+	public Closeable read() {
+		super.readLock().lock();
+		return () -> super.readLock().unlock();
 
-		if (lockAquireCount > 0 && (owner == currThread)) {
-			if (--lockAquireCount == 0) {
-				owner = null;
-				// This is purely to help sample profiling.  If notify() is called the
-				// sampler can attribute time to the methods calling this erroneously.  For some reason
-				// the visualvm sampler gets a sample more often when notify() is called.
-				if (waiterCount != 0) {
-					notify();
-				}
-			}
-		}
-		else {
-			throw new IllegalStateException("Attempted to release an unowned lock: " + name);
-		}
+	}
+
+	/**
+	 * Acquires the exclusive write lock that prevents any other thread, reader or writer, from
+	 * getting a lock while the write lock is held. Will block if any other thread has either
+	 * a read or write lock. VERY IMPORTANT, any thread that attempts to acquire the write lock
+	 * while already holding the read lock, will cause an immediate deadlock.
+	 * @return An AutoCloseable handle to the lock that be used in a try with resources block to
+	 * automatically release the lock when the block is exited.
+	 */
+	public Closeable write() {
+		super.writeLock().lock();
+		return () -> super.writeLock().unlock();
 	}
 
 	/**
@@ -93,7 +96,50 @@ public class Lock {
 	 * 
 	 * @return the thread that owns the lock or null.
 	 */
+	@Override
 	public Thread getOwner() {
-		return owner;
+		return super.getOwner();
+	}
+
+	/**
+	 * A convenience method for acquiring a read lock, executing a supplier object,
+	 * then releasing the lock. 
+	 * @param <T> the supplier return type
+	 * @param supplier the supplier to execute while holding a read lock.
+	 * @return the result from the supplier
+	 */
+	public <T> T withRead(Supplier<T> supplier) {
+		readLock().lock();
+		try {
+			return supplier.get();
+		}
+		finally {
+			readLock().unlock();
+		}
+	}
+
+	/**
+	 * A convenience method for acquiring a write lock, executing a callback object,
+	 * then releasing the lock. 
+	 * @param callback the callback to execute while holding a write lock.
+	 */
+	public void withWrite(Callback callback) {
+		writeLock().lock();
+		try {
+			callback.call();
+		}
+		finally {
+			writeLock().unlock();
+		}
+	}
+
+	/**
+	 * Object to auto close an acquired read or write lock. Note that we can't just use the 
+	 * java {@link java.io.Closeable} because it throws an exception on the close call that
+	 * we don't want.
+	 */
+	public interface Closeable extends AutoCloseable {
+		@Override
+		public void close();
 	}
 }

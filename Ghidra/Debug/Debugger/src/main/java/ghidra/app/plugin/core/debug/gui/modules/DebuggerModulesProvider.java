@@ -884,7 +884,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 		if (sel == null || sel.size() != 1) {
 			return;
 		}
-		mapModuleTo(sel.iterator().next());
+		mapModuleTo(sel.iterator().next(), current.getSnap());
 	}
 
 	private void activatedMapSections(ActionContext context) {
@@ -940,7 +940,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 	}
 
 	private void activatedMapMissingModule(DebuggerMissingModuleActionContext context) {
-		mapModuleTo(context.getModule());
+		mapModuleTo(context.getModule(), context.getSnap());
 	}
 
 	private void activatedMapMissingProgramRetry(DebuggerMissingProgramActionContext context) {
@@ -1149,7 +1149,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 		promptModuleProposal(proposal, NO_MODULES_PROPOSAL_SEL);
 	}
 
-	protected void mapModuleTo(TraceModule module) {
+	protected void mapModuleTo(TraceModule module, long snap) {
 		if (staticMappingService == null) {
 			return;
 		}
@@ -1157,8 +1157,9 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 		if (program == null) {
 			return;
 		}
+		long curLifeStart = module.getObject().getLife().spanContaining(snap).min();
 		ModuleMapProposal proposal =
-			staticMappingService.proposeModuleMap(module, current.getSnap(), program);
+			staticMappingService.proposeModuleMap(module, curLifeStart, program);
 		Map<TraceModule, ModuleMapEntry> map = proposal.computeMap();
 		promptModuleProposal(map.values(), NO_MODULES_PROPOSAL_SEL);
 	}

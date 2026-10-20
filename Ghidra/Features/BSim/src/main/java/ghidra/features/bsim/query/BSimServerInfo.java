@@ -352,9 +352,10 @@ public class BSimServerInfo implements Comparable<BSimServerInfo> {
 	 * Warning: If userinfo with password has been specified it will be returned in the URL.
 	 * @return BSim server info in URL
 	 * @throws MalformedURLException if unable to form supported URL
+	 * @throws URISyntaxException if unable to form supported URL
 	 */
-	public URL toURL() throws MalformedURLException {
-		return new URL(toURLString());
+	public URL toURL() throws MalformedURLException, URISyntaxException {
+		return new URI(toURLString()).toURL();
 	}
 
 	/**

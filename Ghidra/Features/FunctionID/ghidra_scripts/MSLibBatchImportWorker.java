@@ -52,6 +52,7 @@
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.nio.file.AccessMode;
 import java.util.*;
 
 import org.apache.commons.io.FileUtils;
@@ -173,7 +174,7 @@ public class MSLibBatchImportWorker extends GhidraScript {
 
 	private void importLibrary(DomainFolder currentLibraryFolder, File file, MessageLog log)
 			throws CancelledException, InvalidNameException, VersionException, IOException {
-		try (RandomAccessByteProvider provider = new RandomAccessByteProvider(file)) {
+		try (ByteProvider provider = new FileByteProvider(file, null, AccessMode.READ)) {
 			if (!CoffArchiveHeader.isMatch(provider)) {
 				return;
 			}

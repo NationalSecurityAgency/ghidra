@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import java.io.IOException;
 
 import db.*;
 import db.util.ErrorHandler;
-import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.*;
 import ghidra.program.model.address.*;
@@ -71,18 +70,16 @@ class FromAdapterSharedTable extends FromAdapter {
 	}
 
 	@Override
-	RefList createRefList(ProgramDB program, DBObjectCache<RefList> cache, Address fromAddr)
-			throws IOException {
+	RefList createRefList(ProgramDB program, Address fromAddr) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	RefList getRefList(ProgramDB program, DBObjectCache<RefList> cache, Address from, long fromAddr)
-			throws IOException {
+	RefList getRefList(ProgramDB program, Address from, long fromAddr) throws IOException {
 
 		LongField fromField = new LongField(fromAddr);
 
-		RefList fromRefs = new RefListV0(fromAddr, addrMap, program, cache, true);
+		RefList fromRefs = RefListV0.createTemporary(fromAddr, addrMap, program, true);
 
 		RecordIterator iter = table.indexIterator(OLD_FROM_ADDR_COL, fromField, fromField, true);
 		while (iter.hasNext()) {

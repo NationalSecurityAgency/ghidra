@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,11 +19,12 @@
 //@category Binary
 
 import java.io.*;
+import java.nio.file.AccessMode;
 import java.util.List;
 
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.RandomAccessByteProvider;
+import ghidra.app.util.bin.FileByteProvider;
 import ghidra.app.util.bin.format.macho.CpuTypes;
 import ghidra.app.util.bin.format.ubi.FatArch;
 import ghidra.app.util.bin.format.ubi.FatHeader;
@@ -37,7 +38,7 @@ public class SplitUniversalBinariesScript extends GhidraScript {
 		File ubiFile = askFile("Select Universal Binary File", "C'mon, Do it! Push da bahtahn!");
 		File outputDirectory = askDirectory("Select Output Directory", "GO");
 
-		ByteProvider provider = new RandomAccessByteProvider(ubiFile) ;
+		ByteProvider provider = new FileByteProvider(ubiFile, null, AccessMode.READ);
 		FatHeader header = new FatHeader(provider);
 
 		List<FatArch> architectures = header.getArchitectures();

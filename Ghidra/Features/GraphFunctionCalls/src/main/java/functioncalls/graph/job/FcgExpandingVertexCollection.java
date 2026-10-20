@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ import util.CollectionUtils;
  * A container to house all newly added vertices (those being arranged) and the sources, or 
  * 'from' vertices, of the new vertices.
  *   
- * <P>This offers exiting vertices and new vertices pre-sorted by position in the graph in
+ * <P>This offers existing vertices and new vertices pre-sorted by position in the graph in
  * order to minimize edge crossings.  Specifically, the new vertices will be sorted 
  * by the level of the parent and then the x-value of the parent so that the
  * immediate parent level will be preferred, with the x-value dictating where to place 

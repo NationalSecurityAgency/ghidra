@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,6 @@ import ghidra.feature.fid.service.*;
 import ghidra.feature.fid.service.FidPopulateResult.Disposition;
 import ghidra.framework.model.*;
 import ghidra.program.database.ProgramContentHandler;
-import ghidra.program.model.lang.LanguageID;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.Msg;
@@ -57,7 +56,7 @@ public class CreateMultipleLibraries extends GhidraScript {
 	private FileOutputStream outlog = null;
 	private File commonSymbolsFile = null;
 	private List<String> commonSymbols = null;
-	private LanguageID languageID = null;
+	private String languageID = null;
 
 	private MyFidPopulateResultReporter reporter = null;
 
@@ -277,10 +276,11 @@ public class CreateMultipleLibraries extends GhidraScript {
 		ArrayList<DomainFile> programs = new ArrayList<>();
 		try {
 			findPrograms(programs, folder);
+			FidFilter programFilter = new FidFilter(languageID, "", "");
 
 			FidPopulateResult result = service.createNewLibraryFromPrograms(fidDb,
 				currentLibraryName, currentLibraryVersion, currentLibraryVariant, programs, null,
-				languageID, null, commonSymbols, TaskMonitor.DUMMY);
+				programFilter, null, commonSymbols, TaskMonitor.DUMMY);
 			reporter.report(result);
 		}
 		catch (CancelledException e) {
@@ -367,8 +367,7 @@ public class CreateMultipleLibraries extends GhidraScript {
 		catch (CancelledException e) {
 			commonSymbolsFile = null;	// Common symbols file may be null
 		}
-		String lang = askString("Enter LanguageID To Process", "Language ID: ");
-		languageID = new LanguageID(lang);
+		languageID = askString("Enter LanguageID To Process", "Language ID: ");
 
 		parseSymbols();
 		reporter = new MyFidPopulateResultReporter();

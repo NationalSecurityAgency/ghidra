@@ -31,6 +31,7 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemoryState;
+import ghidra.trace.model.memory.TraceMemoryOperations.StatePredicate;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
@@ -91,9 +92,9 @@ public class DebuggerCopyPlan {
 				AddressSet rngAsSet = new AddressSet(fromRange);
 				TraceMemoryManager mm = from.getTrace().getMemoryManager();
 				AddressSetView knownSet = mm.getAddressesWithState(from.getSnap(), rngAsSet,
-					s -> s == TraceMemoryState.KNOWN);
+					StatePredicate.IS_KNOWN);
 				AddressSetView errorSet = mm.getAddressesWithState(from.getSnap(), rngAsSet,
-					s -> s == TraceMemoryState.ERROR);
+					StatePredicate.IS_ERROR);
 				AddressSetView staleSet = rngAsSet.subtract(knownSet).subtract(errorSet);
 				setShifted(map, fromRange.getMinAddress(), intoAddress, errorSet,
 					DebuggerResources.COLOR_BACKGROUND_ERROR.getRGB());

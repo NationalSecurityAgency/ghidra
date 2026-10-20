@@ -101,7 +101,7 @@ public interface GraphDisplay {
 	 * @throws CancelledException thrown if the graphing operation was cancelled
 	 * @deprecated You should now use the form that takes in a {@link GraphDisplayOptions}
 	 */
-	@Deprecated
+	@Deprecated(since = "10.1")
 	public default void setGraph(AttributedGraph graph, String title, boolean append,
 			TaskMonitor monitor) throws CancelledException {
 		setGraph(graph, new GraphDisplayOptions(graph.getGraphType()), title, append, monitor);

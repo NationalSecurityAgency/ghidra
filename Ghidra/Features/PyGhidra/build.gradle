@@ -58,6 +58,7 @@ distributePyDep("jpype1-1.5.2.tar.gz")
 distributePyDep("packaging-25.0-py3-none-any.whl")
 distributePyDep("setuptools-80.9.0-py3-none-any.whl")
 distributePyDep("wheel-0.45.1-py3-none-any.whl")
+distributePyDep("typing_extensions-4.16.0-py3-none-any.whl")
 
 // Install JPype into the development virtual environment
 task installJPype(type: Exec) {

@@ -107,50 +107,82 @@ public class SarifProgramOptions {
 	public List<Option> getOptions(boolean isAddToProgram) {
 		this.addToProgram = isAddToProgram;
 
-		ArrayList<Option> optionList = new ArrayList<>();
+		List<Option> optionList = new ArrayList<>();
 
-		optionList.add(new Option("Memory Blocks", Boolean.valueOf(isMemoryBlocks())));
-		optionList.add(new Option("Memory Contents", Boolean.valueOf(isMemoryContents())));
+		optionList.add(Option.newBoolean("Memory Blocks")
+				.value(isMemoryBlocks())
+				.build());
+		optionList.add(Option.newBoolean("Memory Contents")
+				.value(isMemoryContents())
+				.build());
+		optionList.add(Option.newBoolean("Instructions")
+				.value(isInstructions())
+				.build());
+		optionList.add(Option.newBoolean("Data")
+				.value(isData())
+				.build());
+		optionList.add(Option.newBoolean("Symbols")
+				.value(isSymbols())
+				.build());
+		optionList.add(Option.newBoolean("Equates")
+				.value(isEquates())
+				.build());
+		optionList.add(Option.newBoolean("Comments")
+				.value(isComments())
+				.build());
+		optionList.add(Option.newBoolean("Properties")
+				.value(isProperties())
+				.build());
+		optionList.add(Option.newBoolean("Bookmarks")
+				.value(isBookmarks())
+				.build());
+		optionList.add(Option.newBoolean("Trees")
+				.value(isTrees())
+				.build());
+		optionList.add(Option.newBoolean("References")
+				.value(isReferences())
+				.build());
+		optionList.add(Option.newBoolean("Functions")
+				.value(isFunctions())
+				.build());
+		optionList.add(Option.newBoolean("Registers")
+				.value(isRegisters())
+				.build());
+		optionList.add(Option.newBoolean("Relocation Table")
+				.value(isRelocationTable())
+				.build());
+		optionList.add(Option.newBoolean("Entry Points")
+				.value(isEntryPoints())
+				.build());
+		optionList.add(Option.newBoolean("External Libraries")
+				.value(isExternalLibraries())
+				.build());
+		optionList.add(Option.newBoolean(AbstractProgramLoader.APPLY_LABELS_OPTION_NAME)
+				.value(applyProcDefinedLabels())
+				.build());
+		optionList.add(Option.newBoolean(AbstractProgramLoader.ANCHOR_LABELS_OPTION_NAME)
+				.value(anchorProcDefinedLabels())
+				.build());
 		if (isAddToProgram) {
-			optionList.add(new Option("Overwrite Memory Conflicts",
-				Boolean.valueOf(isOverwriteMemoryConflicts())));
+			optionList.add(Option.newBoolean("Overwrite Memory Conflicts")
+					.value(isOverwriteMemoryConflicts())
+					.build());
+			optionList.add(Option.newBoolean("Overwrite Data Conflicts")
+					.value(isOverwriteDataConflicts())
+					.build());
+			optionList.add(Option.newBoolean("Overwrite Symbol Conflicts")
+					.value(isOverwriteSymbolConflicts())
+					.build());
+			optionList.add(Option.newBoolean("Overwrite Property Conflicts")
+					.value(isOverwritePropertyConflicts())
+					.build());
+			optionList.add(Option.newBoolean("Overwrite Bookmark Conflicts")
+					.value(isOverwriteBookmarkConflicts())
+					.build());
+			optionList.add(Option.newBoolean("Overwrite Reference Conflicts")
+					.value(isOverwriteReferenceConflicts())
+					.build());
 		}
-		optionList.add(new Option("Instructions", Boolean.valueOf(isInstructions())));
-		optionList.add(new Option("Data", Boolean.valueOf(isData())));
-		if (isAddToProgram) {
-			optionList.add(
-				new Option("Overwrite Data Conflicts", Boolean.valueOf(isOverwriteDataConflicts())));
-		}
-		optionList.add(new Option("Symbols", Boolean.valueOf(isSymbols())));
-		if (isAddToProgram) {
-			optionList.add(new Option("Overwrite Symbol Conflicts",
-				Boolean.valueOf(isOverwriteSymbolConflicts())));
-		}
-		optionList.add(new Option("Equates", Boolean.valueOf(isEquates())));
-		optionList.add(new Option("Comments", Boolean.valueOf(isComments())));
-		optionList.add(new Option("Properties", Boolean.valueOf(isProperties())));
-		if (isAddToProgram) {
-			optionList.add(new Option("Overwrite Property Conflicts",
-				Boolean.valueOf(isOverwritePropertyConflicts())));
-		}
-		optionList.add(new Option("Bookmarks", Boolean.valueOf(isBookmarks())));
-		if (isAddToProgram) {
-			optionList.add(new Option("Overwrite Bookmark Conflicts",
-				Boolean.valueOf(isOverwriteBookmarkConflicts())));
-		}
-		optionList.add(new Option("Trees", Boolean.valueOf(isTrees())));
-		optionList.add(new Option("References", Boolean.valueOf(isReferences())));
-		if (isAddToProgram) {
-			optionList.add(new Option("Overwrite Reference Conflicts",
-				Boolean.valueOf(isOverwriteReferenceConflicts())));
-		}
-		optionList.add(new Option("Functions", Boolean.valueOf(isFunctions())));
-		optionList.add(new Option("Registers", Boolean.valueOf(isRegisters())));
-		optionList.add(new Option("Relocation Table", Boolean.valueOf(isRelocationTable())));
-		optionList.add(new Option("Entry Points", Boolean.valueOf(isEntryPoints())));
-		optionList.add(new Option("External Libraries", Boolean.valueOf(isExternalLibraries())));
-		optionList.add(new Option(AbstractProgramLoader.APPLY_LABELS_OPTION_NAME, Boolean.valueOf(applyProcDefinedLabels())));
-		optionList.add(new Option(AbstractProgramLoader.ANCHOR_LABELS_OPTION_NAME, Boolean.valueOf(anchorProcDefinedLabels())));
 
 		return optionList;
 	}

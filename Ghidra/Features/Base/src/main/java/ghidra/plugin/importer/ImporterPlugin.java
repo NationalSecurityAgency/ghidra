@@ -167,7 +167,7 @@ public class ImporterPlugin extends Plugin
 		if (provider == null) {
 			return false;
 		}
-		LoadSpec loadSpec = ImporterUtilities.getLoadSpec(provider, program);
+		LoadSpec loadSpec = ImporterUtilities.getLoadSpec(provider, program, TaskMonitor.DUMMY);
 		if (loadSpec == null) {
 			return false;
 		}
@@ -465,8 +465,8 @@ public class ImporterPlugin extends Plugin
 	private void initializeChooser(String title, String buttonText, boolean multiSelect) {
 		if (chooser == null) {
 			chooser = new GhidraFileChooser(tool.getActiveWindow());
-			chooser.addFileFilter(ImporterUtilities.LOADABLE_FILES_FILTER);
-			chooser.addFileFilter(ImporterUtilities.CONTAINER_FILES_FILTER);
+			ImporterUtilities.addLoadableFileFilters(chooser);
+			ImporterUtilities.addFileSystemFileFilters(chooser);
 			chooser.setSelectedFileFilter(GhidraFileFilter.ALL);
 		}
 		chooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
@@ -567,7 +567,7 @@ public class ImporterPlugin extends Plugin
 			String rangeName = block.getName() + "[" + minAddress + "," + maxAddress + "]";
 			String tempName = program.getName() + " " + rangeName;
 			ByteProvider bp = fsService().getNamedTempFile(tmpFile, tempName);
-			LoaderMap loaderMap = LoaderService.getAllSupportedLoadSpecs(bp);
+			LoaderMap loaderMap = LoaderService.getAllSupportedLoadSpecs(bp, TaskMonitor.DUMMY);
 
 			ProgramManager pm = tool.getService(ProgramManager.class);
 			ImporterDialog importerDialog = new ImporterDialog(tool, pm, loaderMap, bp, null);

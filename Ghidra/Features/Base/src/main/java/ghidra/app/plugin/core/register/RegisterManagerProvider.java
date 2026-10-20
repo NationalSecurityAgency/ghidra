@@ -19,14 +19,19 @@ import static ghidra.framework.model.DomainObjectEvent.*;
 import static ghidra.program.util.ProgramEvent.*;
 
 import java.awt.event.MouseEvent;
+import java.math.BigInteger;
 
 import javax.swing.*;
 
 import docking.ActionContext;
 import docking.WindowPosition;
-import docking.action.*;
+import docking.action.ToggleDockingAction;
+import docking.action.builder.ActionBuilder;
+import docking.action.builder.ToggleActionBuilder;
 import generic.theme.GIcon;
+import ghidra.app.cmd.register.SetRegisterCmd;
 import ghidra.app.context.ProgramActionContext;
+import ghidra.framework.cmd.Command;
 import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -52,16 +57,13 @@ public class RegisterManagerProvider extends ComponentProviderAdapter {
 	private RegisterTree tree;
 	private RegisterValuesPanel values;
 
-	private DockingAction deleteRegisterValuesAction;
-
-	private DockingAction selectRegisterValuesAction;
-	private ToggleDockingAction showDefaultRegisterValuesAction;
+	private ToggleDockingAction showDefaultValuesAction;
 	private DomainObjectListener domainObjectListener;
 	private ToggleDockingAction filterRegistersAction;
 	private SwingUpdateManager updateMgr;
 
-	private ToggleDockingAction followLocationToggleAction;
-	protected boolean followLocation;
+	private boolean followLocation = false;
+	private Address currentAddress;
 
 	RegisterManagerProvider(PluginTool tool, String owner) {
 		super(tool, "Register Manager", owner, ProgramActionContext.class);
@@ -86,9 +88,7 @@ public class RegisterManagerProvider extends ComponentProviderAdapter {
 
 		tree.addGTreeSelectionListener(e -> showRegister());
 		values.getTable().getSelectionModel().addListSelectionListener(e -> {
-			JTable table = values.getTable();
-			deleteRegisterValuesAction.setEnabled(table.getSelectedRowCount() > 0);
-			selectRegisterValuesAction.setEnabled(table.getSelectedRowCount() > 0);
+			contextChanged();
 		});
 
 		tree.setAccessibleNamePrefix("Register Manager");
@@ -100,80 +100,91 @@ public class RegisterManagerProvider extends ComponentProviderAdapter {
 
 	void createActions() {
 		HelpLocation helpLocation = new HelpLocation("RegisterPlugin", "tool_buttons");
-		deleteRegisterValuesAction = new DockingAction("Delete Register Value Ranges", getOwner()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				values.deleteSelectedRanges();
-			}
-		};
-		deleteRegisterValuesAction.setEnabled(false);
-		deleteRegisterValuesAction.setToolBarData(new ToolBarData(DELETE_REGISTER_VALUES_ICON));
-		deleteRegisterValuesAction
-				.setPopupMenuData(new MenuData(new String[] { "Delete Register Value Ranges" }));
-		deleteRegisterValuesAction.setDescription("Delete Register Value Ranges");
-		deleteRegisterValuesAction.setHelpLocation(helpLocation);
-		tool.addLocalAction(this, deleteRegisterValuesAction);
 
-		selectRegisterValuesAction = new DockingAction("Select Register Value Ranges", getOwner()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				values.selectedRanges();
-			}
-		};
-		selectRegisterValuesAction.setEnabled(false);
-		selectRegisterValuesAction.setToolBarData(new ToolBarData(SELECT_REGISTER_VALUES_ICON));
-		selectRegisterValuesAction
-				.setPopupMenuData(new MenuData(new String[] { "Select Register Value Ranges" }));
-		selectRegisterValuesAction.setDescription("Select Register Value Ranges");
-		selectRegisterValuesAction.setHelpLocation(helpLocation);
-		tool.addLocalAction(this, selectRegisterValuesAction);
+		new ActionBuilder("Add Register Value Range", getOwner())
+				.toolBarIcon(Icons.ADD_ICON)
+				.popupMenuPath("Add Value Range")
+				.popupMenuIcon(Icons.ADD_ICON)
+				.description("Add a new register value range")
+				.helpLocation(helpLocation)
+				.withContext(RegisterManagerContext.class)
+				.enabledWhen(c -> c.getSelectedRegister() != null)
+				.onAction(c -> addRange(c.getSelectedRegister()))
+				.buildAndInstallLocal(this);
 
-		showDefaultRegisterValuesAction =
-			new ToggleDockingAction("Show default register values", getOwner()) {
-				@Override
-				public void actionPerformed(ActionContext context) {
-					values.setShowDefaultValues(showDefaultRegisterValuesAction.isSelected());
-				}
-			};
-		showDefaultRegisterValuesAction.setSelected(false);
-		showDefaultRegisterValuesAction
-				.setDescription("Toggles showing of default register values");
-		showDefaultRegisterValuesAction
-				.setMenuBarData(new MenuData(new String[] { "Show Default Values" }));
-		showDefaultRegisterValuesAction
-				.setHelpLocation(new HelpLocation("RegisterPlugin", "menu_actions"));
-		tool.addLocalAction(this, showDefaultRegisterValuesAction);
+		new ActionBuilder("Delete Register Value Ranges", getOwner())
+				.toolBarIcon(DELETE_REGISTER_VALUES_ICON)
+				.popupMenuPath("Delete Register Value Ranges")
+				.popupMenuIcon(DELETE_REGISTER_VALUES_ICON)
+				.description("Delete selected register value ranges")
+				.helpLocation(helpLocation)
+				.withContext(RegisterManagerContext.class)
+				.enabledWhen(c -> c.hasSelectedRegisterValueRanges())
+				.onAction(c -> values.deleteSelectedRanges())
+				.buildAndInstallLocal(this);
 
-		filterRegistersAction = new ToggleDockingAction("Filter Registers", getOwner()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				tree.setFiltered(filterRegistersAction.isSelected());
-			}
-		};
-		filterRegistersAction.setSelected(false);
-		filterRegistersAction.setDescription(
-			"Toggles filtering out registers that don't have values or default values.");
-		filterRegistersAction.setToolBarData(new ToolBarData(FILTER_ICON));
-		filterRegistersAction.setHelpLocation(helpLocation);
-		tool.addLocalAction(this, filterRegistersAction);
+		new ActionBuilder("Select Register Value Ranges", getOwner())
+				.toolBarIcon(SELECT_REGISTER_VALUES_ICON)
+				.popupMenuPath("Select Register Value Ranges")
+				.popupMenuIcon(SELECT_REGISTER_VALUES_ICON)
+				.helpLocation(helpLocation)
+				.description("Create a program selection from the selected rows")
+				.withContext(RegisterManagerContext.class)
+				.enabledWhen(c -> c.hasSelectedRegisterValueRanges())
+				.onAction(c -> values.selectRanges())
+				.buildAndInstallLocal(this);
 
-		followLocationToggleAction =
-			new ToggleDockingAction("Follow location changes", getOwner()) {
-				@Override
-				public void actionPerformed(ActionContext context) {
-					followLocation = followLocationToggleAction.isSelected();
-				}
-			};
-		followLocationToggleAction.setEnabled(true);
-		followLocationToggleAction.setHelpLocation(helpLocation);
-		followLocationToggleAction.setToolBarData(new ToolBarData(RECV_LOCATION_ICON, "NavAction"));
-		tool.addLocalAction(this, followLocationToggleAction);
+		showDefaultValuesAction =
+			new ToggleActionBuilder("Show Default Register Values", getOwner())
+					.menuPath("Show Default Values")
+					.description("Toggles showing of default register values")
+					.helpLocation(helpLocation)
+					.selected(false)
+					.onAction(c -> updateShowingDefaultRegisterValues())
+					.buildAndInstallLocal(this);
 
+		filterRegistersAction = new ToggleActionBuilder("Filter Registers", getOwner())
+				.toolBarIcon(FILTER_ICON)
+				.description("Toggles showing only registers with values or default values")
+				.helpLocation(helpLocation)
+				.selected(false)
+				.onAction(c -> tree.setFiltered(filterRegistersAction.isSelected()))
+				.buildAndInstallLocal(this);
+
+		new ToggleActionBuilder("Follow location changes", getOwner())
+				.toolBarIcon(RECV_LOCATION_ICON)
+				.toolBarGroup("NavAction")
+				.description(
+					"If selected, auto select register and value range from listing location")
+				.helpLocation(helpLocation)
+				.selected(false)
+				.onAction(c -> followLocation = !followLocation)
+				.buildAndInstallLocal(this);
+	}
+
+	private void updateShowingDefaultRegisterValues() {
+		values.setShowDefaultValues(showDefaultValuesAction.isSelected());
+	}
+
+	private void addRange(Register register) {
+		EditRegisterValueDialog dialog =
+			new EditRegisterValueDialog(register, currentAddress, currentAddress, null, program);
+		dialog.setTitle("Add Value Range");
+		tool.showDialog(dialog, this);
+
+		if (!dialog.wasCancelled()) {
+			Address start = dialog.getStartAddress();
+			Address end = dialog.getEndAddress();
+			BigInteger value = dialog.getValue();
+			Command<Program> command = new SetRegisterCmd(register, start, end, value);
+			tool.execute(command, program);
+		}
 	}
 
 	private void showRegister() {
 		Register register = tree.getSelectedRegister();
 		values.setRegister(register);
+		contextChanged();
 	}
 
 	@Override
@@ -191,7 +202,8 @@ public class RegisterManagerProvider extends ComponentProviderAdapter {
 		if (program == null) {
 			return null;
 		}
-		return new ProgramActionContext(this, program);
+		return new RegisterManagerContext(program, tree.getSelectedRegister(),
+			values.hasSelectedRows());
 	}
 
 	@Override
@@ -245,6 +257,7 @@ public class RegisterManagerProvider extends ComponentProviderAdapter {
 	}
 
 	public void setLocation(Register register, Address address) {
+		currentAddress = address;
 		if (!followLocation) {
 			return;
 		}
@@ -252,6 +265,25 @@ public class RegisterManagerProvider extends ComponentProviderAdapter {
 			tree.selectRegister(register);
 		}
 		values.setAddress(address);
+	}
+
+	private class RegisterManagerContext extends ProgramActionContext {
+		private Register register;
+		private boolean hasSelectedRows;
+
+		RegisterManagerContext(Program program, Register register, boolean hasSelectedRows) {
+			super(RegisterManagerProvider.this, program);
+			this.register = register;
+			this.hasSelectedRows = hasSelectedRows;
+		}
+
+		public boolean hasSelectedRegisterValueRanges() {
+			return hasSelectedRows;
+		}
+
+		public Register getSelectedRegister() {
+			return register;
+		}
 	}
 
 }

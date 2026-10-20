@@ -27,6 +27,8 @@ import javax.swing.*;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
+import docking.action.DockingAction;
+import docking.action.builder.ActionBuilder;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.OptionDialog;
 import docking.widgets.label.GIconLabel;
@@ -59,8 +61,8 @@ public class OptionsPanel extends JPanel {
 
 	private JSplitPane splitPane;
 
-	public OptionsPanel(String rootName, Options[] options, boolean showRestoreDefaultsButton,
-			PropertyChangeListener changeListener) {
+	public OptionsPanel(String rootName, Options[] options,
+			boolean showRestoreDefaultsButton, PropertyChangeListener changeListener) {
 		this.changeListener = changeListener;
 
 		updateManager = new SwingUpdateManager(100, () -> {
@@ -125,6 +127,57 @@ public class OptionsPanel extends JPanel {
 		if (showRestoreDefaultsButton) {
 			restoreDefaultPanel.add(createRestoreDefaultsButton(), BorderLayout.EAST);
 		}
+
+	}
+
+	List<DockingAction> getActions() {
+
+		DockingAction action =
+			new ActionBuilder(OptionsDialog.TOGGLE_EDITOR_ACTION_NAME, OptionsDialog.OPTIONS_OWNER)
+					.description("Toggles focus from the category view to the editable options")
+					.keyBinding("Control E")
+					.sharedKeyBinding()
+					.enabledWhen(c -> {
+						Component source = c.getSourceComponent();
+						return SwingUtilities.isDescendingFrom(source, OptionsPanel.this);
+					})
+					.onAction(c -> {
+						if (isTreeActive()) {
+							activateOptionsEditor();
+						}
+						else {
+							activateTree();
+						}
+					})
+					.build();
+
+		return List.of(action);
+	}
+
+	private void activateOptionsEditor() {
+		int n = optionsEditorContainer.getComponentCount();
+		if (n == 0) {
+			activateTree();
+			return; // no tree node selected
+		}
+
+		Component component = optionsEditorContainer.getComponent(0);
+		Container focusCycleRoot = getFocusCycleRootAncestor();
+		FocusTraversalPolicy policy = focusCycleRoot.getFocusTraversalPolicy();
+		Component firstComponent = policy.getComponentAfter(focusCycleRoot, component);
+		if (firstComponent != null) {
+			firstComponent.requestFocusInWindow();
+		}
+	}
+
+	private void activateTree() {
+		gTree.requestFocus();
+	}
+
+	private boolean isTreeActive() {
+		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+		Component focusOwner = kfm.getFocusOwner();
+		return SwingUtilities.isDescendingFrom(focusOwner, gTree);
 	}
 
 	public void dispose() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,6 +42,15 @@ public interface ExternalLocation {
 	 */
 	public String getLibraryName();
 
+	/**
+	 * NOTE: If this external location corresponds to a back-reference this
+	 * may correspond to an application and not a library.
+	 * 
+	 * @return the external Program path which contains the referenced symbol or
+	 * null if unknown.
+	 */
+	public String getExternalLibraryPath();
+	
 	/**
 	 * Returns the parent namespace containing this location.
 	 * @return the parent namespace containing this location.

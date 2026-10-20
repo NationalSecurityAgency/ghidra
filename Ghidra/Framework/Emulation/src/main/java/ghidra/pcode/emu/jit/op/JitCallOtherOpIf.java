@@ -25,29 +25,22 @@ import ghidra.program.model.pcode.PcodeOp;
 
 /**
  * A use-def node for a {@link PcodeOp#CALLOTHER}.
- * 
  * <p>
  * This requires the {@link #userop()} to exist. For the case of a missing userop, we use
  * {@link JitCallOtherMissingOp}.
- * 
  * <p>
  * <b>TODO</b>: We have several considerations remaining, esp., since we'd like to handle system
  * calls via userops efficiently:
- * 
  * <ol>
- * 
  * <li>There are more inputs than listed in the op itself. In fact, the invocation is just
  * {@code syscall()}. The actual inputs are at least {@code RAX} and whatever parameters that
  * specific syscall wants.</li>
- * 
  * <li>We'd like to be able to evaluate {@code RAX} statically.</li>
- * 
  * <li>We Might like to inject the p-code rather than trying to compile and run it separately. Then,
  * in the case of a syscall, the actual Java callback should have known inputs and outputs. Would
  * probably <em>not</em> want to embed a huge if-elseif tree for syscall numbers, though, which is
  * why we'd like to evaluate RAX ahead of time. What if we can't, though? My thought is to retire
  * all the variables and just interpret the syscall.</li>
- * 
  * </ol>
  */
 public interface JitCallOtherOpIf extends JitOp {
@@ -57,7 +50,7 @@ public interface JitCallOtherOpIf extends JitOp {
 	 * 
 	 * @return the definition from the library
 	 */
-	PcodeUseropDefinition<Object> userop();
+	PcodeUseropDefinition<?> userop();
 
 	/**
 	 * The arguments to the userop.

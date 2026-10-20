@@ -405,7 +405,7 @@ public class GhidraScriptUtil {
 	 * @param name the name of the script
 	 * @return the name as a file path
 	 */
-	@Deprecated
+	@Deprecated(since = "9.2.3")
 	static String fixupName(String name) {
 		GhidraScriptProvider provider = findProvider(name);
 		// assume Java if no provider matched

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,8 +23,10 @@ import ghidra.util.Msg;
 public abstract class VtResponseEncoder {
 	protected static final byte[] PASTE_START = VtHandler.ascii("\033[200~");
 	protected static final byte[] PASTE_END = VtHandler.ascii("\033[201~");
+	protected static final byte[] THEME_DARK_MODE = VtHandler.ascii("\033[?997;1n");
+	protected static final byte[] THEME_LIGHT_MODE = VtHandler.ascii("\033[?997;2n");
 
-	protected final ByteBuffer bb = ByteBuffer.allocate(16);
+	protected ByteBuffer bb = ByteBuffer.allocate(16);
 
 	protected final Charset charset;
 
@@ -59,6 +61,24 @@ public abstract class VtResponseEncoder {
 
 	public void reportPasteEnd() {
 		bb.put(PASTE_END);
+		generateBytesExc();
+	}
+
+	public void reportDarkMode(boolean isDark) {
+		bb.put(isDark ? THEME_DARK_MODE : THEME_LIGHT_MODE);
+		generateBytesExc();
+	}
+
+	public void reportXTVersion(String name, String version) {
+		byte[] bytes = "\033P>|%s(%s)\033\\".formatted(name, version).getBytes(charset);
+		if (bytes.length > bb.capacity()) {
+			int newCap = bb.capacity();
+			while (bytes.length > newCap) {
+				newCap *= 2;
+			}
+			bb = ByteBuffer.allocate(newCap);
+		}
+		bb.put(bytes);
 		generateBytesExc();
 	}
 }

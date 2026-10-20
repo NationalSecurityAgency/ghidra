@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,11 +35,12 @@ import ghidra.util.task.TaskMonitor;
 public class EmbeddedMediaAnalyzer extends AbstractAnalyzer {
 	private static final String NAME = "Embedded Media";
 	private static final String DESCRIPTION =
-		"Finds embedded media data types (ie png, gif, jpeg, wav)";
+		"Finds embedded media data types (e.g., png, gif, jpeg, wav)";
 
 	private static final String OPTION_NAME_CREATE_BOOKMARKS = "Create Analysis Bookmarks";
 	private static final String OPTION_DESCRIPTION_CREATE_BOOKMARKS =
-		"If checked, an analysis bookmark will be created at each location where embedded media data is identified.";
+		"If checked, an analysis bookmark will be created at each location where embedded media " +
+			"data is identified.";
 	private static final boolean OPTION_DEFAULT_CREATE_BOOKMARKS_ENABLED = true;
 
 	private boolean createBookmarksEnabled = OPTION_DEFAULT_CREATE_BOOKMARKS_ENABLED;
@@ -101,14 +102,16 @@ public class EmbeddedMediaAnalyzer extends AbstractAnalyzer {
 	private void addByteSearchPattern(MemoryBytePatternSearcher searcher, Program program,
 			List<Address> foundMedia, DataType mediaDT, String mediaName, byte[] bytes,
 			byte[] mask) {
+
 		if (bytes == null) {
 			return;
 		}
 
 		GenericMatchAction<DataType> action = new GenericMatchAction<DataType>(mediaDT) {
+
 			@Override
-			public void apply(Program prog, Address addr, Match match) {
-				//See if it is already an applied media data type
+			public void apply(Program prog, Address addr, Match<Pattern> match) {
+				// See if it is already an applied media data type
 				if (!program.getListing().isUndefined(addr, addr)) {
 					return;
 				}
@@ -117,23 +120,26 @@ public class EmbeddedMediaAnalyzer extends AbstractAnalyzer {
 					CreateDataCmd cmd = new CreateDataCmd(addr, mediaDT);
 					if (cmd.applyTo(program)) {
 						if (createBookmarksEnabled) {
-							program.getBookmarkManager().setBookmark(addr, BookmarkType.ANALYSIS,
-								"Embedded Media", "Found " + mediaName + " Embedded Media");
+							program.getBookmarkManager()
+									.setBookmark(addr, BookmarkType.ANALYSIS,
+										"Embedded Media", "Found " + mediaName + " Embedded Media");
 						}
 						foundMedia.add(addr);
 					}
+
+					// If media does not apply correctly then it is not really that media data type 
+					// or there is other data in the way.
 				}
-				//If media does not apply correctly then it is not really a that media data type or there is other data in the way
 				catch (Exception e) {
-					// Not a valid embedded media or no room to apply it so just ignore it and skip it
+					// Not a valid embedded media or no room to apply it so just ignore it and skip
+
 				}
 			}
 		};
 
-		GenericByteSequencePattern<DataType> genericByteMatchPattern =
-			new GenericByteSequencePattern<DataType>(bytes, mask, action);
-
-		searcher.addPattern(genericByteMatchPattern);
+		GenericByteSequencePattern<DataType> pattern =
+			new GenericByteSequencePattern<>(bytes, mask, action);
+		searcher.addPattern(pattern);
 	}
 
 	@Override

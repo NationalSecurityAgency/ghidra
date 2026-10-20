@@ -34,7 +34,12 @@ import ghidra.util.task.TaskMonitor;
  * <p>
  * This implementation is currently unused (isValid always returns false).
  */
-@FileSystemInfo(type = "ipsw", description = "iOS Firmware (IPSW)", factory = GFileSystemBaseFactory.class)
+@FileSystemInfo(
+	type = "ipsw",
+	description = "iOS Firmware (IPSW)",
+	factory = GFileSystemBaseFactory.class,
+	extensions = { "ipsw" }
+)
 public class IpswFileSystem extends GFileSystemBase {
 
 	public IpswFileSystem(String fileSystemName, ByteProvider provider) {

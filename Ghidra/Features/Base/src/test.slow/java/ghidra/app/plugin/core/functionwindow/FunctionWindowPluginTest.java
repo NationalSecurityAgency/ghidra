@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.functionwindow;
 
 import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.*;
 
 import java.util.List;

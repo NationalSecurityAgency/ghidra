@@ -55,6 +55,12 @@ public class ExternalLocationDB implements ExternalLocation {
 		return library != null ? library.getName() : "<UNKNOWN>";
 	}
 
+	@Override
+	public String getExternalLibraryPath() {
+		Library library = getLibrary();
+		return library != null ? library.getAssociatedProgramPath() : null;
+	}
+	
 	private Library getLibrary() {
 		Namespace parent = symbol.getParentNamespace();
 		while (parent != null && !(parent instanceof Library)) {

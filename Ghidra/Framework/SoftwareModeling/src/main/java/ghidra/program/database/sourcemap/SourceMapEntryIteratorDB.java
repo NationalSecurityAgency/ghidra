@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,6 +23,7 @@ import db.DBRecord;
 import db.RecordIterator;
 import ghidra.program.model.sourcemap.SourceMapEntry;
 import ghidra.program.model.sourcemap.SourceMapEntryIterator;
+import ghidra.util.Lock.Closeable;
 
 /**
  * Database implementation of {@link SourceMapEntryIterator}
@@ -53,8 +54,7 @@ public class SourceMapEntryIteratorDB implements SourceMapEntryIterator {
 		if (nextEntry != null) {
 			return true;
 		}
-		sourceManager.lock.acquire();
-		try {
+		try (Closeable c = sourceManager.lock.read()) {
 			boolean recIterNext = forward ? recIter.hasNext() : recIter.hasPrevious();
 			if (!recIterNext) {
 				return false;
@@ -66,9 +66,6 @@ public class SourceMapEntryIteratorDB implements SourceMapEntryIterator {
 		catch (IOException e) {
 			sourceManager.dbError(e);
 			return false;
-		}
-		finally {
-			sourceManager.lock.release();
 		}
 	}
 

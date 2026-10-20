@@ -66,22 +66,6 @@ public class DWARFFunctionImporterTest extends DWARFTestBase {
 	}
 
 	@Test
-	public void testRustMethod_SetsRustCC() throws CancelledException, IOException, DWARFException {
-		addCompUnit(DW_LANG_Rust);
-
-		DebugInfoEntry intDIE = addInt();
-		newSubprogram("foo", intDIE, 0x410, 10).create();
-
-		importFunctions();
-
-		Function fooFunc = program.getListing().getFunctionAt(addr(0x410));
-		assertNotNull(fooFunc);
-
-		assertEquals("foo", fooFunc.getName());
-		assertEquals(CompilerSpec.CALLING_CONVENTION_rustcall, fooFunc.getCallingConventionName());
-	}
-
-	@Test
 	public void testNamespace_with_reserved_chars()
 			throws CancelledException, IOException, DWARFException {
 		// simulate what happens when a C++ operator/ or a templated classname

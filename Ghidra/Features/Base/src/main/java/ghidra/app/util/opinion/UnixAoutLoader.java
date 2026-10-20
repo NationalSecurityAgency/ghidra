@@ -124,8 +124,10 @@ public class UnixAoutLoader extends AbstractProgramWrapperLoader {
 		}
 
 		List<Option> list = new ArrayList<Option>();
-		list.add(new Option(OPTION_NAME_BASE_ADDR, baseAddr, Address.class,
-			Loader.COMMAND_LINE_ARG_PREFIX + "-baseAddr"));
+		list.add(Option.newAddress(OPTION_NAME_BASE_ADDR)
+				.value(baseAddr)
+				.commandLineArgument(createArg("-baseAddr"))
+				.build());
 
 		list.addAll(super.getDefaultOptions(provider, loadSpec, domainObject, loadIntoProgram,
 			mirrorFsLayout));

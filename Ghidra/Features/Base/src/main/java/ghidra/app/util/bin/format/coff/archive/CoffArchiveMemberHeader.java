@@ -62,7 +62,7 @@ public class CoffArchiveMemberHeader implements StructConverter {
 	 * @param longNames optional, string table with long file names (only present in some 
 	 * COFF ar formats)
 	 * @return a new {@link CoffArchiveMemberHeader}
-	 * @throws IOException
+	 * @throws IOException if error reading fields
 	 */
 	public static CoffArchiveMemberHeader read(BinaryReader reader, LongNamesMember longNames)
 			throws IOException {
@@ -138,6 +138,9 @@ public class CoffArchiveMemberHeader implements StructConverter {
 		long size;
 		try {
 			size = Long.parseLong(sizeStr);
+			if (size < 0) {
+				throw new IOException("Invalid CoffArchiveMember size string: " + sizeStr);
+			}
 		} catch ( NumberFormatException nfe ) {
 			throw new IOException("Bad size value: " + sizeStr);
 		}
@@ -145,6 +148,9 @@ public class CoffArchiveMemberHeader implements StructConverter {
 		if (name.startsWith("#1/")) {
 			try {
 				int nameLen = Integer.parseInt(name.substring(3));
+				if (nameLen > size) {
+					throw new IOException("Bad CoffArchiveMember #1 name length: " + name);
+				}
 				// name seems to be padded with trailing nulls to put payload at aligned offset
 				name = reader.readAsciiString(payloadOffset, nameLen);
 				size -= nameLen;

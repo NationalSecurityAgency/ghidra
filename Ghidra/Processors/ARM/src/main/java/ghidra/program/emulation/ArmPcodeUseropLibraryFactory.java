@@ -22,12 +22,12 @@ import ghidra.pcode.emu.DefaultPcodeThread.PcodeThreadExecutor;
 import ghidra.pcode.error.LowlevelError;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeUseropLibraryFactory.UseropLibrary;
+import ghidra.pcode.exec.SleighPcodeUseropDefinition.BuilderStage1;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
-import ghidra.program.model.pcode.Varnode;
 import ghidra.util.Msg;
 
-@UseropLibrary("arm")
+@UseropLibrary(id = "arm")
 public class ArmPcodeUseropLibraryFactory implements PcodeUseropLibraryFactory {
 	@Override
 	public <T> PcodeUseropLibrary<T> create(SleighLanguage language,
@@ -52,32 +52,27 @@ public class ArmPcodeUseropLibraryFactory implements PcodeUseropLibraryFactory {
 				tMode = null;
 				aMode = null;
 			}
+		}
 
-			SleighPcodeUseropDefinition.Factory factory =
-				new SleighPcodeUseropDefinition.Factory(language);
+		@PcodeUserop
+		public SleighPcodeUseropDefinition VectorSignedToFloat(BuilderStage1 builder) {
+			return builder.params("s", "mode").body(args -> switch (args.get(0).getSize()) {
+				case 4 -> "__op_output = int2float(s);";
+				default -> throw new LowlevelError(
+					"VectorSignedToFloat: invalid dest size of " + args.get(0).getSize());
+			}).build();
+		}
 
-			putOp(factory.define("VectorSignedToFloat")
-					.params("s", "mode")
-					.body(args -> switch (args.get(0).getSize()) {
-						case 4 -> "__op_output = int2float(s);";
-						default -> throw new LowlevelError(
-							"VectorSignedToFloat: invalid dest size of " + args.get(0).getSize());
-					})
-					.build());
-			putOp(factory.define("VectorUnsignedToFloat")
-					.params("s", "mode")
-					.body(args -> switch (args.get(0).getSize()) {
-						case 4 -> {
-							Varnode s = args.get(1);
-							yield """
-									temp:%d = zext(s);
-									__op_output = int2float(s);
-									""".formatted(s.getSize() + 1);
-						}
-						default -> throw new LowlevelError(
-							"VectorSignedToFloat: invalid dest size of " + args.get(0).getSize());
-					})
-					.build());
+		@PcodeUserop
+		public SleighPcodeUseropDefinition VectorUnsignedToFloat(BuilderStage1 builder) {
+			return builder.params("s", "mode").body(args -> switch (args.get(0).getSize()) {
+				case 4 -> """
+						temp:%d = zext(s);
+						__op_output = int2float(s);
+						""".formatted(args.get(1).getSize() + 1);
+				default -> throw new LowlevelError(
+					"VectorSignedToFloat: invalid dest size of " + args.get(0).getSize());
+			}).build();
 		}
 
 		@PcodeUserop(modifiesContext = true)

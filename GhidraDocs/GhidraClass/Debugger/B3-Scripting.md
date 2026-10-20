@@ -293,26 +293,19 @@ We do not need to be precise in this check; it suffices to check the program cou
 while (true) {
 	monitor.checkCancelled();
 
-	TargetExecutionState execState = getExecutionState(trace);
+	TraceExecutionState execState = getExecutionState(trace);
 	switch (execState) {
-		case STOPPED:
-			resume();
-			break;
-		case TERMINATED:
-		case INACTIVE:
-			throw new AssertionError("Target terminated");
-		case ALIVE:
-			println(
-				"I don't know whether or not the target is running. Please make it RUNNING.");
-			break;
-		case RUNNING:
+		case STOPPED -> resume();
+		case TERMINATED, INACTIVE -> throw new AssertionError("Target terminated");
+		case ALIVE -> println(
+			"I don't know whether or not the target is running. Please make it RUNNING.");
+		case RUNNING -> {
 			/**
 			 * Probably timed out waiting for break. That's fine. Give the player time to
 			 * win.
 			 */
-			break;
-		default:
-			throw new AssertionError("Unrecognized state: " + execState);
+		}
+		default -> throw new AssertionError("Unrecognized state: " + execState);
 	}
 	try {
 		monitor.setMessage("Waiting for player to win");
@@ -338,7 +331,6 @@ Using a timeout of 1 second ensures we can terminate promptly should the user ca
 
 Before waiting, we need to make sure the target is running.
 Because we could repeat the loop while the target is already running, we should only call `resume()` if the target is stopped.
-There are utility methods on `TargetExecutionState` like `isRunning()`, which you might prefer to use.
 Here, we exhaustively handle every kind of state using a switch statement, which does make the code a bit verbose.
 
 When the target does break, we first allow the UI to finish interrogating the target.

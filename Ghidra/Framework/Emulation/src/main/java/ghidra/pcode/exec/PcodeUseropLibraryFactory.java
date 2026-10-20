@@ -17,7 +17,6 @@ package ghidra.pcode.exec;
 
 import java.lang.annotation.*;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.program.model.lang.GhidraLanguagePropertyKeys;
@@ -33,6 +32,7 @@ import ghidra.util.classfinder.ExtensionPoint;
  * The factory must have a public default constructor.
  */
 public interface PcodeUseropLibraryFactory extends ExtensionPoint {
+	public static final int DEFAULT_ORDER = 100;
 	/** The property key for useropLib ids in pspec files */
 	public static final String KEY_USEROP_LIBS = GhidraLanguagePropertyKeys.USEROP_LIBS;
 
@@ -53,7 +53,23 @@ public interface PcodeUseropLibraryFactory extends ExtensionPoint {
 		 * 
 		 * @return the id
 		 */
-		String value();
+		String id();
+
+		/**
+		 * Specifies whether this library is always included, regardless of the id
+		 * 
+		 * @return true to include always
+		 */
+		boolean includeAlways() default false;
+
+		/**
+		 * Determines in what order overrides are applied
+		 * <p>
+		 * Higher values are applied later, and thus take precedence.
+		 * 
+		 * @return the override order
+		 */
+		int order() default DEFAULT_ORDER;
 	}
 
 	/**
@@ -109,8 +125,10 @@ public interface PcodeUseropLibraryFactory extends ExtensionPoint {
 	 * 
 	 * <p>
 	 * This composes all of the libraries named in the language's pspec file in the
-	 * {@value #KEY_USEROP_LIBS} property. That property is a comma-separated list of the ids to
-	 * compose.
+	 * {@value #KEY_USEROP_LIBS} property. That property is a comma-separated list of the
+	 * {@link UseropLibrary#id() ids} to compose. The composition also includes libraries marked as
+	 * {@link UseropLibrary#includeAlways}. Once all included libraries are identified, they are
+	 * sorted by {@link UseropLibrary#order()} and composed, overriding duplicate userops.
 	 * 
 	 * <p>
 	 * See the caveats in
@@ -121,48 +139,71 @@ public interface PcodeUseropLibraryFactory extends ExtensionPoint {
 	 * @param language the language
 	 * @param arithmetic the arithmetic
 	 * @return the userop library
-	 * @implNote currently, duplicate userops (by name) are not permitted. This may change in future
-	 *           versions. Thus, we compose libraries in the order listed, in case of that change,
-	 *           as it would matter.
 	 */
 	static <T> PcodeUseropLibrary<T> createUseropLibraryForLanguage(SleighLanguage language,
 			PcodeArithmetic<T> arithmetic) {
 		List<String> libIds = List.of(language.getProperty(KEY_USEROP_LIBS, "").split(","));
-		Map<String, PcodeUseropLibraryFactory> matches =
-			ClassSearcher.getInstances((PcodeUseropLibraryFactory.class))
+		List<PcodeUseropLibraryFactory> matches =
+			ClassSearcher.getInstances(PcodeUseropLibraryFactory.class)
 					.stream()
-					.filter(f -> libIds.contains(f.getId()))
-					.collect(Collectors.toMap(f -> f.getId(), f -> f));
+					.filter(f -> f.isIncludeAlways() || libIds.contains(f.getId()))
+					.sorted(Comparator.comparing(f -> f.getOrder()))
+					.toList();
 		PcodeUseropLibrary<T> result = PcodeUseropLibrary.nil();
-		for (String id : libIds) {
-			PcodeUseropLibraryFactory factory = matches.get(id);
-			if (factory == null) {
-				continue;
-			}
-			result = result.compose(factory.create(language, arithmetic));
+		for (PcodeUseropLibraryFactory factory : matches) {
+			result = result.compose(factory.create(language, arithmetic), true);
 		}
 		return result;
 	}
 
-	/**
-	 * Get the id of this factory
-	 * 
-	 * <p>
-	 * This gets the id from the {@link UseropLibrary} annotation. You should not override this
-	 * function without a good reason.
-	 * 
-	 * @return the id
-	 */
-	default String getId() {
+	default UseropLibrary getAnnotation() {
 		UseropLibrary annot = this.getClass().getAnnotation(UseropLibrary.class);
 		if (annot == null) {
 			Msg.warn(this,
 				"%s %s is missing @%s annotation".formatted(
 					PcodeUseropLibraryFactory.class.getSimpleName(), this.getClass(),
 					UseropLibrary.class.getSimpleName()));
-			return null;
 		}
-		return annot.value();
+		return annot;
+	}
+
+	/**
+	 * Get the id of this factory
+	 * <p>
+	 * This gets {@link UseropLibrary#id()} from the annotation. You should not override this
+	 * function without a good reason.
+	 * 
+	 * @return the id
+	 */
+	default String getId() {
+		UseropLibrary annot = getAnnotation();
+		return annot == null ? null : annot.id();
+	}
+
+	/**
+	 * Check if this factory's library should always be included.
+	 * <p>
+	 * This gets {@link UseropLibrary#includeAlways()} from the annotation. You should not override
+	 * this function without a good reason.
+	 * 
+	 * @return true if always included
+	 */
+	default boolean isIncludeAlways() {
+		UseropLibrary annot = getAnnotation();
+		return annot == null ? false : annot.includeAlways();
+	}
+
+	/**
+	 * Get the override order of this library.
+	 * <p>
+	 * This gets {@link UseropLibrary#order()} from the annotation. You should not override this
+	 * function without a good reason.
+	 * 
+	 * @return the order
+	 */
+	default int getOrder() {
+		UseropLibrary annot = getAnnotation();
+		return annot == null ? DEFAULT_ORDER : annot.order();
 	}
 
 	/**

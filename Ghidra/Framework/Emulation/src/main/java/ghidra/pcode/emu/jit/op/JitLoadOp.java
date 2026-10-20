@@ -20,6 +20,7 @@ import java.util.List;
 import ghidra.pcode.emu.jit.analysis.JitTypeBehavior;
 import ghidra.pcode.emu.jit.var.JitOutVar;
 import ghidra.pcode.emu.jit.var.JitVal;
+import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropSymbolMap;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.pcode.PcodeOp;
 
@@ -33,6 +34,15 @@ import ghidra.program.model.pcode.PcodeOp;
  */
 public record JitLoadOp(PcodeOp op, JitOutVar out, AddressSpace space, JitVal offset)
 		implements JitDefOp {
+	@Override
+	public String toString(PcodeUseropSymbolMap symbols) {
+		return "%s[op=%s, out=%s, space=%s, offset=%s]".formatted(
+			getClass().getSimpleName(),
+			JitOp.toString(op, symbols),
+			out.toString(symbols.language()),
+			space,
+			offset.toString(symbols.language()));
+	}
 
 	@Override
 	public void link() {

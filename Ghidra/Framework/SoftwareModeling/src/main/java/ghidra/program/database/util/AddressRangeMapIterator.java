@@ -24,6 +24,7 @@ import ghidra.program.database.map.AddressKeyRecordIterator;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.*;
 import ghidra.util.Lock;
+import ghidra.util.Lock.Closeable;
 
 /**
  * An iterator over ranges that have a defined values in the AddressRangeMapDB
@@ -119,8 +120,7 @@ class AddressRangeMapIterator implements AddressRangeIterator {
 
 	@Override
 	public boolean hasNext() {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			if (expectedModCount != rangeMap.getModCount()) {
 				throw new ConcurrentModificationException();
 			}
@@ -140,15 +140,11 @@ class AddressRangeMapIterator implements AddressRangeIterator {
 			}
 			return false;
 		}
-		finally {
-			lock.release();
-		}
 	}
 
 	@Override
 	public AddressRange next() {
-		lock.acquire();
-		try {
+		try (Closeable c = lock.read()) {
 			if (expectedModCount != rangeMap.getModCount()) {
 				throw new ConcurrentModificationException();
 			}
@@ -172,9 +168,6 @@ class AddressRangeMapIterator implements AddressRangeIterator {
 		catch (IOException e) {
 			rangeMap.dbError(e);
 			return null;
-		}
-		finally {
-			lock.release();
 		}
 	}
 

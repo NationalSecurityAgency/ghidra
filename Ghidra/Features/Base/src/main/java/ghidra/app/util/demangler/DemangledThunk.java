@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -97,11 +97,7 @@ public class DemangledThunk extends DemangledObject {
 		Function function =
 			createPreThunkFunction(program, thunkAddress, options.doDisassembly(), monitor);
 		if (function == null) {
-			// no function whose signature we need to update
-			// NOTE: This does not much sense
-			// renameExistingSymbol(program, thunkAddress, symbolTable);
-			// DemangledFunction.maybeCreateUndefined(program, thunkAddress);
-			return false;
+			return false; // no function whose signature we need to update
 		}
 
 		// For pre-existing default thunks - apply demangling to thunked function who owns mangled name
@@ -114,7 +110,8 @@ public class DemangledThunk extends DemangledObject {
 			function.setThunkedFunction(thunkedFunction);
 		}
 
-		Symbol s = applyDemangledName(thunkAddress, function.isThunk(), false, program);
+		boolean makePrimary = isPrimary && function.isThunk();
+		Symbol s = applyDemangledName(thunkAddress, makePrimary, false, program);
 		return s != null;
 	}
 

@@ -89,7 +89,7 @@ f8040fbec0034704c30fb647088d5001
 <stringmatch name="Bitfields #4" min="1" max="1">ptr-&gt;field5 = \(uint1\)val \+ 0x14;</stringmatch>
 <stringmatch name="Bitfields #5" min="1" max="1">ptr-&gt;field7 = 100;</stringmatch>
 <stringmatch name="Bitfields #6" min="1" max="1">return loadptr-&gt;field3;</stringmatch>
-<stringmatch name="Bitfields #7" min="1" max="1">if \(.*2.* &lt; loadptr-&gt;sfield4\)</stringmatch>
+<stringmatch name="Bitfields #7" min="1" max="1">if \(loadptr-&gt;sfield4 &lt; .*3.*\)</stringmatch>
 <stringmatch name="Bitfields #8" min="1" max="1">-\(uint4\)!loadptr-&gt;fieldb &amp; 900</stringmatch>
 <stringmatch name="Bitfields #9" min="1" max="1">return loadptr-&gt;field2;</stringmatch>
 <stringmatch name="Bitfields #10" min="1" max="1">return loadptr-&gt;field5 \+ loadptr-&gt;field2;</stringmatch>

@@ -23,16 +23,6 @@ eclipse.project.name = '_Integration Test'
  * Build dependencies
  *********************************************************************************/
 
-// There are tests in this module that require resources in Base:test. This
-// is a on-off type of situation so just add to the resources source set here.
-sourceSets {
-   integrationTest {
-     resources {
-       srcDirs += [project(':Base').sourceSets.test.resources]
-     }
-   }
-}
-
 processIntegrationTestResources {
 	duplicatesStrategy = 'exclude'
 }
@@ -64,6 +54,8 @@ dependencies {
 	testImplementation project(path: ':FunctionGraph', configuration: 'testArtifacts')	
 	testImplementation project(path: ':PDB', configuration: 'testArtifacts')
 	testImplementation project(path: ':GnuDemangler', configuration: 'testArtifacts')
+	
+	testImplementation project(path: ':Generic', configuration: 'testArtifacts')
 
 	testImplementation project(path: ':Framework-TraceModeling', configuration: 'testArtifacts')
 	testImplementation project(path: ':Debugger', configuration: 'testArtifacts')

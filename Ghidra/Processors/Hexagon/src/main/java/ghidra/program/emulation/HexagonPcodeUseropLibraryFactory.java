@@ -21,14 +21,15 @@ import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.error.LowlevelError;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeUseropLibraryFactory.UseropLibrary;
+import ghidra.pcode.exec.SleighPcodeUseropDefinition.BuilderStage1;
 import ghidra.program.model.pcode.Varnode;
 
-@UseropLibrary("hexagon")
+@UseropLibrary(id = "hexagon")
 public class HexagonPcodeUseropLibraryFactory implements PcodeUseropLibraryFactory {
 	@Override
 	public <T> PcodeUseropLibrary<T> create(SleighLanguage language,
 			PcodeArithmetic<T> arithmetic) {
-		return new HexagonPcodeUseropLibrary<T>(language);
+		return new HexagonPcodeUseropLibrary<T>();
 	}
 
 	public static class HexagonPcodeUseropLibrary<T> extends AnnotatedPcodeUseropLibrary<T> {
@@ -38,75 +39,16 @@ public class HexagonPcodeUseropLibraryFactory implements PcodeUseropLibraryFacto
 		private static final int FP_INFINITE_CLASS_MASK = 0x08;
 		private static final int FP_NAN_CLASS_MASK = 0x10;
 
-		public HexagonPcodeUseropLibrary(SleighLanguage language) {
-			SleighPcodeUseropDefinition.Factory factory =
-				new SleighPcodeUseropDefinition.Factory(language);
-
-			putOp(factory.define("min").params("a", "b").body(args -> """
+		@PcodeUserop
+		public SleighPcodeUseropDefinition min(BuilderStage1 builder) {
+			return builder.params("a", "b").body(_ -> """
 					if (a s<= b) goto <take_a>;
 					  __op_output = b;
 					goto <done>;
 					<take_a>
 					  __op_output = a;
 					<done>
-					""").build());
-
-			putOp(factory.define("vlslh")
-					.params("source", "shift")
-					.body(args -> genVecShift(args.get(0), 16, "<<", ">>"))
-					.build());
-			putOp(factory.define("vlsrh")
-					.params("source", "shift")
-					.body(args -> genVecShift(args.get(0), 16, ">>", "<<"))
-					.build());
-			putOp(factory.define("vlslw")
-					.params("source", "shift")
-					.body(args -> genVecShift(args.get(0), 32, "<<", ">>"))
-					.build());
-			putOp(factory.define("vlsrw")
-					.params("source", "shift")
-					.body(args -> genVecShift(args.get(0), 32, ">>", "<<"))
-					.build());
-
-			putOp(factory.define("vmux").params("sel", "a", "b").body(args -> """
-					local s:1;
-					local result:8;
-					""" + genVec(0, 8, 1, i -> """
-					s = ((sel >> %d) & 1) * 0xff;
-					result[%d,8] = (a[%d,8] & s) | (b[%d,8] & ~s);
-					""".formatted(i, 8 * i, 8 * i, 8 * i)) + """
-					__op_output = result;
-					""").build());
-
-			putOp(factory.define("vabsh").params("n").body(args -> genVecAbs(16)).build());
-			putOp(factory.define("vabsw").params("n").body(args -> genVecAbs(32)).build());
-
-			putOp(factory.define("dfmpylh").params("rdd", "rss", "rtt").body(args -> """
-					rss_lo:8 = rss & 0xffffffff;
-					rtt_hi:8 = rtt >> 32;
-					prod:8 = (rss_lo * (0x00100000 | (rtt_hi & 0xfffff))) << 1;
-					__op_output = rdd + prod;
-					""").build());
-			putOp(factory.define("dfmpyll").params("rss", "rtt").body(args -> """
-					rss_lo:8 = rss & 0xffffffff;
-					rtt_lo:8 = rtt & 0xffffffff;
-					prod:8 = rss_lo * rtt_lo;
-					result:8 = (prod >> 32) << 1;
-					if ((prod & 0xffffffff) == 0) goto <done>;
-					  result = result + 1;
-					<done>
-					__op_output = result;
-					""").build());
-
-			putOp(factory.define("isClassifiedFloat")
-					.params("bits", "cls")
-					.body(args -> switch (args.get(1).getSize()) {
-						case 4 -> "__op_output = __isClassifiedFloat32(bits, cls);";
-						case 8 -> "__op_output = __isClassifiedFloat64(bits, cls);";
-						default -> throw new LowlevelError(
-							"isClassifiedFloat: invalid float size of " + args.get(1).getSize());
-					})
-					.build());
+					""").build();
 		}
 
 		protected String genVec(int start, int stop, int step, Function<Integer, String> slot) {
@@ -134,6 +76,47 @@ public class HexagonPcodeUseropLibraryFactory implements PcodeUseropLibraryFacto
 					""";
 		}
 
+		@PcodeUserop
+		public SleighPcodeUseropDefinition vlslh(BuilderStage1 builder) {
+			return builder.params("source", "shift")
+					.body(args -> genVecShift(args.get(0), 16, "<<", ">>"))
+					.build();
+		}
+
+		@PcodeUserop
+		public SleighPcodeUseropDefinition vlsrh(BuilderStage1 builder) {
+			return builder.params("source", "shift")
+					.body(args -> genVecShift(args.get(0), 16, ">>", "<<"))
+					.build();
+		}
+
+		@PcodeUserop
+		public SleighPcodeUseropDefinition vlslw(BuilderStage1 builder) {
+			return builder.params("source", "shift")
+					.body(args -> genVecShift(args.get(0), 32, "<<", ">>"))
+					.build();
+		}
+
+		@PcodeUserop
+		public SleighPcodeUseropDefinition vlsrw(BuilderStage1 builder) {
+			return builder.params("source", "shift")
+					.body(args -> genVecShift(args.get(0), 32, ">>", "<<"))
+					.build();
+		}
+
+		@PcodeUserop
+		public SleighPcodeUseropDefinition vmux(BuilderStage1 builder) {
+			return builder.params("sel", "a", "b").body(_ -> """
+					local s:1;
+					local result:8;
+					""" + genVec(0, 8, 1, i -> """
+					s = ((sel >> %d) & 1) * 0xff;
+					result[%d,8] = (a[%d,8] & s) | (b[%d,8] & ~s);
+					""".formatted(i, 8 * i, 8 * i, 8 * i)) + """
+					__op_output = result;
+					""").build();
+		}
+
 		protected String genVecAbs(int slotSize) {
 			long signMask = Long.MIN_VALUE;
 			for (int i = 32; i >= slotSize; i >>>= 1) {
@@ -149,6 +132,52 @@ public class HexagonPcodeUseropLibraryFactory implements PcodeUseropLibraryFacto
 					""".formatted(sm, slotSize - 1, mult) + genVec(0, 64, slotSize, slot -> """
 					__op_output[%d,%d] = inv[%d,%d] + ones[%d,%d];
 					""".formatted(slot, slotSize, slot, slotSize, slot, slotSize));
+		}
+
+		@PcodeUserop
+		public SleighPcodeUseropDefinition vabsh(BuilderStage1 builder) {
+			return builder.params("n").body(_ -> genVecAbs(16)).build();
+		}
+
+		@PcodeUserop
+		public SleighPcodeUseropDefinition vabsw(BuilderStage1 builder) {
+			return builder.params("n").body(_ -> genVecAbs(32)).build();
+		}
+
+		@PcodeUserop
+		public SleighPcodeUseropDefinition dfmpylh(BuilderStage1 builder) {
+			return builder.params("rdd", "rss", "rtt").body(_ -> """
+					rss_lo:8 = rss & 0xffffffff;
+					rtt_hi:8 = rtt >> 32;
+					prod:8 = (rss_lo * (0x00100000 | (rtt_hi & 0xfffff))) << 1;
+					__op_output = rdd + prod;
+					""").build();
+		}
+
+		@PcodeUserop
+		public SleighPcodeUseropDefinition dfmpyll(BuilderStage1 builder) {
+			return builder.params("rss", "rtt").body(_ -> """
+					rss_lo:8 = rss & 0xffffffff;
+					rtt_lo:8 = rtt & 0xffffffff;
+					prod:8 = rss_lo * rtt_lo;
+					result:8 = (prod >> 32) << 1;
+					if ((prod & 0xffffffff) == 0) goto <done>;
+					  result = result + 1;
+					<done>
+					__op_output = result;
+					""").build();
+		}
+
+		// LATER: Could/should this be done in Sleigh instead?
+		@PcodeUserop(functional = true)
+		public static long dfmpyfix(long rss, long rtt) {
+			return HexagonFp64.dfmpyfix(rss, rtt);
+		}
+
+		// LATER: Could/should this be done in Sleigh instead?
+		@PcodeUserop(functional = true)
+		public static long dfmpyhh(long rdd, long rss, long rtt) {
+			return HexagonFp64.dfmpyhh(rdd, rss, rtt);
 		}
 
 		@PcodeUserop(functional = true)
@@ -195,16 +224,16 @@ public class HexagonPcodeUseropLibraryFactory implements PcodeUseropLibraryFacto
 			return 0;
 		}
 
-		// LATER: Could/should this be done in Sleigh instead?
-		@PcodeUserop(functional = true)
-		public static long dfmpyfix(long rss, long rtt) {
-			return HexagonFp64.dfmpyfix(rss, rtt);
-		}
-
-		// LATER: Could/should this be done in Sleigh instead?
-		@PcodeUserop(functional = true)
-		public static long dfmpyhh(long rdd, long rss, long rtt) {
-			return HexagonFp64.dfmpyhh(rdd, rss, rtt);
+		@PcodeUserop
+		public SleighPcodeUseropDefinition isClassifiedFloat(BuilderStage1 builder) {
+			return builder.params("bits", "cls")
+					.body(args -> switch (args.get(1).getSize()) {
+						case 4 -> "__op_output = __isClassifiedFloat32(bits, cls);";
+						case 8 -> "__op_output = __isClassifiedFloat64(bits, cls);";
+						default -> throw new LowlevelError(
+							"isClassifiedFloat: invalid float size of " + args.get(1).getSize());
+					})
+					.build();
 		}
 	}
 }

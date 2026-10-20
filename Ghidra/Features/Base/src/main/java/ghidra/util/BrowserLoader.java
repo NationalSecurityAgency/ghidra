@@ -15,10 +15,13 @@
  */
 package ghidra.util;
 
+import static ghidra.util.ManualViewerCommandWrappedOption.*;
+
 import java.io.File;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 import docking.options.OptionsService;
 import ghidra.framework.options.OptionsChangeListener;
@@ -35,15 +38,6 @@ public class BrowserLoader {
 	/**
 	 * Display the content specified by url in a web browser window.  This call will launch 
 	 * a new thread and then immediately return.
-	 * @param url The URL to show.
-	 */
-	public static void display(URL url) {
-		display(url, null, null);
-	}
-
-	/**
-	 * Display the content specified by url in a web browser window.  This call will launch 
-	 * a new thread and then immediately return.
 	 * 
 	 * @param url The web URL to show (e.g., http://localhost...).
 	 * @param fileURL The file URL to show (e.g., file:///path/to/file).
@@ -53,6 +47,8 @@ public class BrowserLoader {
 		if (url == null) {
 			return;
 		}
+		
+		Objects.requireNonNull(serviceProvider, "serviceProvider instance is required");
 
 		// open the browser in a new thread because the call may block
 		(new Thread(new BrowserRunner(url, fileURL, serviceProvider))).start();
@@ -61,26 +57,12 @@ public class BrowserLoader {
 	private static void displayFromBrowserRunner(URL url, URL fileURL,
 			ServiceProvider serviceProvider) {
 		try {
-			if (serviceProvider == null) {
-				displayBrowserForExternalURL(url);
-			}
-			else {
-				displayBrowser(url, fileURL, serviceProvider);
-			}
+			displayBrowser(url, fileURL, serviceProvider);
 		}
 		catch (Exception e) {
 			Msg.showError(BrowserLoader.class, null, "Error Loading Browser",
 				"Error loading browser for URL: " + url, e);
 		}
-	}
-
-	private static void displayBrowserForExternalURL(URL url) throws Exception {
-		String[] arguments =
-			generateCommandArguments(url, null,
-				ManualViewerCommandWrappedOption.getDefaultBrowserLoaderOptions());
-		Process p = Runtime.getRuntime().exec(arguments);
-		p.waitFor();
-		p.exitValue();  // thought to help memory problems on some versions of windows
 	}
 
 	private static void displayBrowser(URL url, URL fileURL, ServiceProvider serviceProvider) {
@@ -96,7 +78,7 @@ public class BrowserLoader {
 			ManualViewerCommandWrappedOption.getDefaultBrowserLoaderOptions();
 		ManualViewerCommandWrappedOption customOption =
 			(ManualViewerCommandWrappedOption) options.getCustomOption(
-				ManualViewerCommandWrappedOption.MANUAL_VIEWER_OPTIONS, defaultOption);
+				MANUAL_VIEWER_OPTIONS, defaultOption);
 
 		boolean success = tryToDisplayBrowser(url, fileURL, customOption);
 		while (!success) {
@@ -109,8 +91,8 @@ public class BrowserLoader {
 			}
 
 			// -if not cancelled, then show the options dialog
-			service.showOptionsDialog(ManualViewerCommandWrappedOption.OPTIONS_CATEGORY_NAME,
-				ManualViewerCommandWrappedOption.OPTIONS_CATEGORY_NAME);
+			service.showOptionsDialog(OPTIONS_CATEGORY_NAME,
+				OPTIONS_CATEGORY_NAME);
 			if (!listener.hasChanged()) {
 				return;  // the user didn't change the options, so we can't do anything
 			}
@@ -147,44 +129,115 @@ public class BrowserLoader {
 		return true;
 	}
 
+	/*	 
+	 	 See the help page for example output.
+	 */
 	private static String[] generateCommandArguments(URL url, URL fileURL,
 			ManualViewerCommandWrappedOption option) {
 
-		List<String> argumentList = new ArrayList<String>();
-		argumentList.add(option.getCommandString());
+		List<String> resultArgs = new ArrayList<String>();
+		resultArgs.add(option.getCommandString());
 
-		String[] commandArguments = option.getCommandArguments();
-		for (String string : commandArguments) {
-			argumentList.add(string);
+		// Substitute ${PAGE} (the manual page, carried as a "#page=N" fragment on the file URL)
+		// and ${FILENAME} (the local file path) tokens into the user-supplied arguments.  
+		// If the user places ${FILENAME} themselves, the file is not also appended at the end below.
+		String pageNumber = getManualPageNumber(fileURL);
+		String fileName = getManualFilePath(fileURL);
+		boolean fileNameInArgs = false;
+		String[] rawArgs = option.getCommandArguments();
+		for (String string : rawArgs) {
+			if (string.contains(FILENAME_REPLACEMENT_STRING)) {
+				fileNameInArgs = true;
+			}
+
+			string = string.replace(PAGE_REPLACEMENT_STRING, pageNumber);
+			if (fileName != null) {
+				string = string.replace(FILENAME_REPLACEMENT_STRING, fileName);
+			}
+			resultArgs.add(string);
 		}
 
-		String urlString = option.getUrlReplacementString();
+		// The user already positioned the file via the ${FILENAME} token; don't append it again.
+		if (fileNameInArgs) {
+			return resultArgs.toArray(new String[resultArgs.size()]);
+		}
+
+		String urlString = option.getFileFormat();
 		String urlArg;
-		if (urlString.equals(ManualViewerCommandWrappedOption.HTTP_URL_REPLACEMENT_STRING) ||
-			fileURL == null) {
+		if (urlString.equals(HTTP_URL_REPLACEMENT_STRING) || fileURL == null) {
 			urlArg = url.toExternalForm();
 		}
-		else if (urlString.equals(ManualViewerCommandWrappedOption.FILE_URL_REPLACEMENT_STRING)) {
+		else if (urlString.equals(FILE_URL_REPLACEMENT_STRING)) {
 			urlArg = fileURL.toExternalForm();
 		}
 		else {
-			urlArg = new File(fileURL.getFile()).getAbsolutePath();
+			urlArg = fileName;
 		}
 
-		// If launching "cmd.exe /c start URL", surround the URL with double quotes to protect 
+		List<String> cmdExeArgs = fixupCmdExeCall(rawArgs, urlArg);
+		if (!cmdExeArgs.isEmpty()) {
+			resultArgs.addAll(cmdExeArgs);
+		}
+		else {
+			resultArgs.add(urlArg);
+		}
+
+		return resultArgs.toArray(new String[resultArgs.size()]);
+	}
+
+	private static List<String> fixupCmdExeCall(String[] rawArgs, String urlArg) {
+		// If launching "cmd.exe /c start URL", surround the URL with double quotes to protect
 		// against special characters being misinterpreted by the shell.
-		// NOTE: If not already present, a double-quoted title must be inserted since the URL 
+		// NOTE: If not already present, a double-quoted title must be inserted since the URL
 		// argument that follows will start with a double quote.
-		if (commandArguments.length >= 2 && commandArguments[0].equalsIgnoreCase("/c") &&
-			commandArguments[1].equalsIgnoreCase("start")) {
-			if (commandArguments.length == 2) {
-				argumentList.add("\"Title\"");
-			}
-			urlArg = '"' + urlArg + '"';
+		List<String> result = new ArrayList<>();
+		if (rawArgs.length < 2) {
+			return result;
 		}
-		argumentList.add(urlArg);
 
-		return argumentList.toArray(new String[argumentList.size()]);
+		if (!(rawArgs[0].equalsIgnoreCase("/c") && rawArgs[1].equalsIgnoreCase("start"))) {
+			return result;
+		}
+
+		if (rawArgs.length == 2) {
+			result.add("\"Title\"");
+		}
+
+		result.add('"' + urlArg + '"');
+		return result;
+	}
+
+	/**
+	 * Returns the decoded local file path for the given file URL (without the {@code #page=N}
+	 * fragment, which {@link URL#getPath()} already excludes), so viewers receive a real path
+	 * rather than a percent-encoded one.
+	 * @param fileURL the file URL (may be null)
+	 * @return the absolute local file path, or null if {@code fileURL} is null
+	 */
+	private static String getManualFilePath(URL fileURL) {
+		if (fileURL == null) {
+			return null;
+		}
+		String path = URLDecoder.decode(fileURL.getPath(), StandardCharsets.UTF_8);
+		return new File(path).getAbsolutePath();
+	}
+
+	/**
+	 * Extracts the manual page number from the {@code #page=N} fragment of the given file URL.
+	 * @param fileURL the file URL (may be null)
+	 * @return the page number, or {@code "1"} if none is present
+	 */
+	private static String getManualPageNumber(URL fileURL) {
+		if (fileURL != null) {
+			String ref = fileURL.getRef();
+			if (ref != null && ref.startsWith("page=")) {
+				String page = ref.substring("page=".length());
+				if (!page.isBlank()) {
+					return page;
+				}
+			}
+		}
+		return "1";
 	}
 
 //==================================================================================================
@@ -195,7 +248,8 @@ public class BrowserLoader {
 		private boolean hasChanged = false;
 
 		@Override
-		public void optionsChanged(ToolOptions theOptions, String name, Object oldValue, Object newValue) {
+		public void optionsChanged(ToolOptions theOptions, String name, Object oldValue,
+				Object newValue) {
 			hasChanged = true;
 		}
 

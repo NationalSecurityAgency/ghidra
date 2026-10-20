@@ -41,7 +41,7 @@ import utilities.util.SuppressableCallback;
 import utilities.util.SuppressableCallback.Suppression;
 
 public class DebuggerTraceTabPanel extends GTabPanel<Trace>
-		implements PluginEventListener, DomainObjectListener {
+		implements PluginEventListener, DomainObjectListener, DomainFolderChangeListener {
 
 	private class TargetsChangeListener implements TargetPublicationListener {
 		@Override
@@ -79,6 +79,7 @@ public class DebuggerTraceTabPanel extends GTabPanel<Trace>
 		tool.addEventListener(TraceOpenedPluginEvent.class, this);
 		tool.addEventListener(TraceActivatedPluginEvent.class, this);
 		tool.addEventListener(TraceClosedPluginEvent.class, this);
+		tool.getProject().getProjectData().addDomainFolderChangeListener(this);
 
 		setNameFunction(this::getNameForTrace);
 		setIconFunction(this::getIconForTrace);
@@ -208,6 +209,25 @@ public class DebuggerTraceTabPanel extends GTabPanel<Trace>
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
 		if (ev.getSource() instanceof Trace trace) {
+			refreshTab(trace);
+		}
+	}
+
+	@Override
+	public void domainFileRenamed(DomainFile file, String oldName) {
+		if (file.getOpenedDomainObject(this) instanceof Trace trace) {
+			try {
+				refreshTab(trace);
+			}
+			finally {
+				trace.release(this);
+			}
+		}
+	}
+
+	@Override
+	public void domainFileObjectOpenedForUpdate(DomainFile file, DomainObject object) {
+		if (object instanceof Trace trace) {
 			refreshTab(trace);
 		}
 	}

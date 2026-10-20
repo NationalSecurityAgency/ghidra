@@ -17,6 +17,7 @@ package ghidra.trace.database.symbol;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.stream.Stream;
 
@@ -50,6 +51,8 @@ import ghidra.util.database.spatial.rect.Rectangle2DDirection;
 import ghidra.util.exception.VersionException;
 
 public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceSpace {
+	protected final static int CHUNK_SIZE = DBTrace.CHUNK_SIZE;
+
 	protected enum TypeEnum {
 		MEMORY {
 			/**
@@ -142,9 +145,15 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 			return DBTraceUtils.tableName(TABLE_NAME, space);
 		}
 
-		@DBAnnotatedField(column = TO_ADDR_MIN_COLUMN_NAME, indexed = true, codec = AddressDBFieldCodec.class)
+		@DBAnnotatedField(
+			column = TO_ADDR_MIN_COLUMN_NAME,
+			indexed = true,
+			codec = AddressDBFieldCodec.class)
 		protected Address toAddrMin = Address.NO_ADDRESS;
-		@DBAnnotatedField(column = TO_ADDR_MAX_COLUMN_NAME, indexed = true, codec = AddressDBFieldCodec.class)
+		@DBAnnotatedField(
+			column = TO_ADDR_MAX_COLUMN_NAME,
+			indexed = true,
+			codec = AddressDBFieldCodec.class)
 		protected Address toAddrMax = Address.NO_ADDRESS;
 		@DBAnnotatedField(column = SYMBOL_ID_COLUMN_NAME, indexed = true)
 		protected long symbolId; // TODO: Is this at the from or to address? I think TO...
@@ -343,10 +352,12 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 
 	protected final AddressRangeImpl fullSpace;
 
-	protected final DBTraceAddressSnapRangePropertyMapSpace<DBTraceReferenceEntry, DBTraceReferenceEntry> referenceMapSpace;
+	protected final DBTraceAddressSnapRangePropertyMapSpace<DBTraceReferenceEntry,
+		DBTraceReferenceEntry> referenceMapSpace;
 	protected final DBCachedObjectIndex<Long, DBTraceReferenceEntry> refsBySymbolId;
 
-	protected final DBTraceAddressSnapRangePropertyMapSpace<DBTraceXRefEntry, DBTraceXRefEntry> xrefMapSpace;
+	protected final DBTraceAddressSnapRangePropertyMapSpace<DBTraceXRefEntry,
+		DBTraceXRefEntry> xrefMapSpace;
 	protected final DBCachedObjectIndex<Long, DBTraceXRefEntry> xrefsByRefKey;
 
 	public DBTraceReferenceSpace(DBTraceReferenceManager manager, DBHandle dbh, AddressSpace space,
@@ -444,10 +455,10 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 			int operandIndex) {
 		// Do I consider "compatibility?" as in ReferenceDBManager?
 		// NOTE: Always call with the write lock
-		for (DBTraceReferenceEntry ent : referenceMapSpace
+		for (DBTraceReferenceEntry ent : List.copyOf(referenceMapSpace
 				.reduce(TraceAddressSnapRangeQuery
 						.intersecting(new AddressRangeImpl(fromAddress, fromAddress), span))
-				.values()) {
+				.values())) {
 			if (!ent.toRange.equals(toRange) || ent.opIndex != operandIndex) {
 				continue;
 			}
@@ -642,10 +653,18 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 	public void clearReferencesFrom(Lifespan span, AddressRange range) {
 		try (LockHold hold = manager.getTrace().lockWrite()) {
 			long startSnap = span.lmin();
-			for (DBTraceReferenceEntry ref : referenceMapSpace
-					.reduce(TraceAddressSnapRangeQuery.intersecting(range, span))
-					.values()) {
-				truncateOrDeleteEntry(ref, startSnap);
+
+			var submap =
+				referenceMapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(range, span));
+			while (true) {
+				List<DBTraceReferenceEntry> chunk =
+					submap.values().stream().limit(CHUNK_SIZE).toList();
+				for (DBTraceReferenceEntry ref : chunk) {
+					truncateOrDeleteEntry(ref, startSnap);
+				}
+				if (chunk.size() < CHUNK_SIZE) {
+					break;
+				}
 			}
 			// TODO: Coalesce events?
 		}
@@ -698,11 +717,17 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 	public void clearReferencesTo(Lifespan span, AddressRange range) {
 		try (LockHold hold = manager.getTrace().lockWrite()) {
 			long startSnap = span.lmin();
-			for (DBTraceXRefEntry xref : xrefMapSpace
-					.reduce(TraceAddressSnapRangeQuery.intersecting(range, span))
-					.values()) {
-				DBTraceReferenceEntry ref = getRefEntryForXRefEntry(xref);
-				truncateOrDeleteEntry(ref, startSnap);
+
+			var submap = xrefMapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(range, span));
+			while (true) {
+				List<DBTraceXRefEntry> chunk = submap.values().stream().limit(CHUNK_SIZE).toList();
+				for (DBTraceXRefEntry xref : chunk) {
+					DBTraceReferenceEntry ref = getRefEntryForXRefEntry(xref);
+					truncateOrDeleteEntry(ref, startSnap);
+				}
+				if (chunk.size() < CHUNK_SIZE) {
+					break;
+				}
 			}
 			// TODO: Coalesce events?
 		}

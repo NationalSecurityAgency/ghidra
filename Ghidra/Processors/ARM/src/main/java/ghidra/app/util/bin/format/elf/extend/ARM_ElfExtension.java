@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -98,9 +98,10 @@ public class ARM_ElfExtension extends ElfExtension {
 			Msg.warn(this, "Failed to fully parse ELF headers to formulate ARM import options");
 		}
 
-		options.add(new Option(APPLY_PC_BIAS_TO_RELATIVE_RELOCATIONS_OPTION_NAME,
-			enablePcBiasOption, Boolean.class,
-			Loader.COMMAND_LINE_ARG_PREFIX + "-applyArmElfRelocPCBias"));
+		options.add(Option.newBoolean(APPLY_PC_BIAS_TO_RELATIVE_RELOCATIONS_OPTION_NAME)
+				.value(enablePcBiasOption)
+				.commandLineArgument(Loader.COMMAND_LINE_ARG_PREFIX + "-applyArmElfRelocPCBias")
+				.build());
 	}
 
 	@Override
@@ -125,8 +126,9 @@ public class ARM_ElfExtension extends ElfExtension {
 			}
 			functionAddress = functionAddress.previous(); // align address
 			try {
-				program.getProgramContext().setValue(tmodeRegister, functionAddress,
-					functionAddress, BigInteger.ONE);
+				program.getProgramContext()
+						.setValue(tmodeRegister, functionAddress,
+							functionAddress, BigInteger.ONE);
 			}
 			catch (ContextChangeException e) {
 				// ignore since should not be instructions at time of import
@@ -164,8 +166,9 @@ public class ARM_ElfExtension extends ElfExtension {
 			}
 			else if ("$t".equals(symName) || symName.startsWith("$t.")) {
 				// is thumb mode
-				program.getProgramContext().setValue(tmodeRegister, address, address,
-					BigInteger.valueOf(1));
+				program.getProgramContext()
+						.setValue(tmodeRegister, address, address,
+							BigInteger.valueOf(1));
 				elfLoadHelper.markAsCode(address);
 
 				// do not retain $t symbols in program due to potential function/thunk naming interference
@@ -174,8 +177,9 @@ public class ARM_ElfExtension extends ElfExtension {
 			}
 			else if ("$a".equals(symName) || symName.startsWith("$a.")) {
 				// is arm mode
-				program.getProgramContext().setValue(tmodeRegister, address, address,
-					BigInteger.valueOf(0));
+				program.getProgramContext()
+						.setValue(tmodeRegister, address, address,
+							BigInteger.valueOf(0));
 				elfLoadHelper.markAsCode(address);
 
 				// do not retain $a symbols in program due to potential function/thunk naming interference
@@ -193,12 +197,13 @@ public class ARM_ElfExtension extends ElfExtension {
 				elfLoadHelper.setElfSymbolAddress(elfSymbol, address);
 				return null;
 			}
-			if (elfSymbol.getType() == ElfSymbol.STT_FUNC) {
+			if (elfSymbol.isFunction()) {
 				long symVal = address.getOffset();
 				if ((symVal & 1) != 0 && tmodeRegister != null) {
 					address = address.previous();
-					program.getProgramContext().setValue(tmodeRegister, address, address,
-						BigInteger.valueOf(1));
+					program.getProgramContext()
+							.setValue(tmodeRegister, address, address,
+								BigInteger.valueOf(1));
 				}
 			}
 		}

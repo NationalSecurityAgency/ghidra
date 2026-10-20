@@ -71,7 +71,7 @@ class BasicTaskMonitor implements TaskMonitor {
 	}
 	
 	@Override
-	public void checkCanceled() throws CancelledException {
+	public void checkCancelled() throws CancelledException {
 		if (isCancelled) {
 			throw new CancelledException();
 		}
@@ -132,7 +132,7 @@ class BasicTaskMonitor implements TaskMonitor {
 	}
 
 	@Override
-	public void clearCanceled() {
+	public void clearCancelled() {
 		isCancelled = false;
 	}
 

@@ -33,7 +33,6 @@ import ghidra.framework.options.ToolOptions;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
-import ghidra.util.SystemUtilities;
 
 public class FunctionSignatureMarkupType extends FunctionEntryPointBasedAbstractMarkupType {
 
@@ -83,11 +82,11 @@ public class FunctionSignatureMarkupType extends FunctionEntryPointBasedAbstract
 
 	@Override
 	public Stringable getSourceValue(VTAssociation association, Address sourceAddress) {
-		Function function = getSourceFunction(association);
-		if (function == null) {
+		Function srcFunction = getSourceFunction(association);
+		if (srcFunction == null) {
 			return null;
 		}
-		return new FunctionSignatureStringable(function);
+		return new FunctionSignatureStringable(srcFunction);
 	}
 
 	@Override
@@ -97,22 +96,22 @@ public class FunctionSignatureMarkupType extends FunctionEntryPointBasedAbstract
 				"Attempted to unapply a non-applied markup item");
 		}
 
-		Address destinationAddress = markupItem.getDestinationAddress();
-		FunctionSignatureStringable destinationSignatureStringable =
+		Address destAddress = markupItem.getDestinationAddress();
+		FunctionSignatureStringable destStringable =
 			(FunctionSignatureStringable) markupItem.getOriginalDestinationValue();
 		Program destinationProgram = getDestinationProgram(markupItem.getAssociation());
-		FunctionManager functionManager = destinationProgram.getFunctionManager();
-		Function destinationFunction = functionManager.getFunctionAt(destinationAddress);
-		if (destinationFunction == null) {
+		FunctionManager fm = destinationProgram.getFunctionManager();
+		Function destFunction = fm.getFunctionAt(destAddress);
+		if (destFunction == null) {
 			return;
 		}
 
-		if (destinationSignatureStringable.sameFunctionSignature(destinationFunction)) {
+		if (destStringable.isSameFunctionSignature(destFunction)) {
 			return;
 		}
 
 		ToolOptions options = getUnapplyOptions();
-		destinationSignatureStringable.applyFunctionSignature(destinationFunction, options, true);
+		destStringable.applyFunctionSignature(destFunction, options, true);
 	}
 
 	private ToolOptions getUnapplyOptions() {
@@ -162,7 +161,6 @@ public class FunctionSignatureMarkupType extends FunctionEntryPointBasedAbstract
 		}
 
 		Address destinationAddress = markupItem.getDestinationAddress();
-
 		if (destinationAddress == null) {
 			throw new VersionTrackingApplyException("The destination address cannot be null!");
 		}
@@ -254,11 +252,11 @@ public class FunctionSignatureMarkupType extends FunctionEntryPointBasedAbstract
 			Address destinationAddress) {
 		Address expectedDestinationAddress = association.getDestinationAddress();
 		if (expectedDestinationAddress.equals(destinationAddress)) {
-			Function function = getDestinationFunction(association);
-			if (function == null) {
+			Function destFunction = getDestinationFunction(association);
+			if (destFunction == null) {
 				return null;
 			}
-			return new FunctionSignatureStringable(function);
+			return new FunctionSignatureStringable(destFunction);
 		}
 		return null;
 	}
@@ -289,6 +287,7 @@ public class FunctionSignatureMarkupType extends FunctionEntryPointBasedAbstract
 	@Override
 	public Options convertOptionsToForceApplyOfMarkupItem(VTMarkupItemApplyActionType applyAction,
 			ToolOptions applyOptions) {
+
 		ToolOptions options = applyOptions.copy();
 		switch (applyAction) {
 			case ADD:
@@ -316,21 +315,19 @@ public class FunctionSignatureMarkupType extends FunctionEntryPointBasedAbstract
 	public boolean hasSameSourceAndDestinationValues(VTMarkupItem markupItem) {
 
 		VTAssociation association = markupItem.getAssociation();
-		Function sourceFunction = getSourceFunction(association);
-		Function destinationFunction = getDestinationFunction(association);
-		if (sourceFunction == null || destinationFunction == null) {
+		Function srcFunction = getSourceFunction(association);
+		Function destFunction = getDestinationFunction(association);
+		if (srcFunction == null || destFunction == null) {
 			return false;
 		}
-		FunctionSignatureStringable sourceStringable =
-			new FunctionSignatureStringable(sourceFunction);
-		FunctionSignatureStringable destinationStringable =
-			new FunctionSignatureStringable(destinationFunction);
-		return SystemUtilities.isEqual(sourceStringable, destinationStringable);
+
+		FunctionSignatureStringable srcStringable = new FunctionSignatureStringable(srcFunction);
+		FunctionSignatureStringable destStringable = new FunctionSignatureStringable(destFunction);
+		return Objects.equals(srcStringable, destStringable);
 	}
 
 	@Override
-	public boolean conflictsWithOtherMarkup(MarkupItemImpl markupItem,
-			Collection<VTMarkupItem> markupItems) {
+	public boolean conflictsWithOtherMarkup(MarkupItemImpl item, Collection<VTMarkupItem> others) {
 		return false;
 	}
 }

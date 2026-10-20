@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -226,17 +226,17 @@ public class GuidUtil {
 		}
 
 		String guidString;
-		guidString = Conv.toHexString((int) data[0]) + delim;
-		guidString += Conv.toHexString((short) (data[1])) + delim;
-		guidString += Conv.toHexString((short) (data[1] >> 16)) + delim;
+		guidString = NumericUtilities.toPaddedHexString((int) data[0]) + delim;
+		guidString += NumericUtilities.toPaddedHexString((short) (data[1])) + delim;
+		guidString += NumericUtilities.toPaddedHexString((short) (data[1] >> 16)) + delim;
 		for (int i = 0; i < 4; i++) {
-			guidString += Conv.toHexString((byte) (data[2] >> i * 8));
+			guidString += NumericUtilities.toPaddedHexString((byte) (data[2] >> i * 8));
 			if (i == 1) {
 				guidString += delim;
 			}
 		}
 		for (int i = 0; i < 4; i++) {
-			guidString += Conv.toHexString((byte) (data[3] >> i * 8));
+			guidString += NumericUtilities.toPaddedHexString((byte) (data[3] >> i * 8));
 		}
 		// retVal = retVal.toUpperCase();
 		if (validate && !NewGuid.isOKForGUID(bytes, 0)) {
@@ -268,17 +268,17 @@ public class GuidUtil {
 		}
 
 		String guidString;
-		guidString = Conv.toHexString((int) data[0]) + delim;
-		guidString += Conv.toHexString((short) (data[1])) + delim;
-		guidString += Conv.toHexString((short) (data[1] >> 16)) + delim;
+		guidString = NumericUtilities.toPaddedHexString((int) data[0]) + delim;
+		guidString += NumericUtilities.toPaddedHexString((short) (data[1])) + delim;
+		guidString += NumericUtilities.toPaddedHexString((short) (data[1] >> 16)) + delim;
 		for (int i = 0; i < 4; i++) {
-			guidString += Conv.toHexString((byte) (data[2] >> i * 8));
+			guidString += NumericUtilities.toPaddedHexString((byte) (data[2] >> i * 8));
 			if (i == 1) {
 				guidString += delim;
 			}
 		}
 		for (int i = 0; i < 4; i++) {
-			guidString += Conv.toHexString((byte) (data[3] >> i * 8));
+			guidString += NumericUtilities.toPaddedHexString((byte) (data[3] >> i * 8));
 		}
 		// retVal = retVal.toUpperCase();
 

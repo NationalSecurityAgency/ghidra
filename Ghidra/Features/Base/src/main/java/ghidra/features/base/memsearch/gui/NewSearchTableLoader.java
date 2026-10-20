@@ -15,8 +15,6 @@
  */
 package ghidra.features.base.memsearch.gui;
 
-import java.util.Iterator;
-
 import ghidra.features.base.memsearch.matcher.SearchData;
 import ghidra.features.base.memsearch.searcher.MemoryMatch;
 import ghidra.features.base.memsearch.searcher.MemorySearcher;
@@ -30,7 +28,7 @@ public class NewSearchTableLoader implements MemoryMatchTableLoader {
 
 	private MemorySearcher<SearchData> memSearcher;
 	private boolean completedSearch;
-	private MemoryMatch<SearchData> firstMatch;
+	private boolean hasResults;
 
 	NewSearchTableLoader(MemorySearcher<SearchData> memSearcher) {
 		this.memSearcher = memSearcher;
@@ -39,10 +37,7 @@ public class NewSearchTableLoader implements MemoryMatchTableLoader {
 	@Override
 	public void loadResults(Accumulator<MemoryMatch<SearchData>> accumulator, TaskMonitor monitor) {
 		completedSearch = memSearcher.findAll(accumulator, monitor);
-		Iterator<MemoryMatch<SearchData>> iterator = accumulator.iterator();
-		if (iterator.hasNext()) {
-			firstMatch = iterator.next();
-		}
+		hasResults = accumulator.getProgress() > 0;
 	}
 
 	@Override
@@ -56,13 +51,8 @@ public class NewSearchTableLoader implements MemoryMatchTableLoader {
 	}
 
 	@Override
-	public MemoryMatch getFirstMatch() {
-		return firstMatch;
-	}
-
-	@Override
 	public boolean hasResults() {
-		return firstMatch != null;
+		return hasResults;
 	}
 
 }

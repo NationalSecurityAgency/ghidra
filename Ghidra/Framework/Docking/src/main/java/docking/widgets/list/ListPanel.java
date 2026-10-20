@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,8 @@
  */
 package docking.widgets.list;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.event.*;
 
 import javax.swing.*;
@@ -292,43 +293,4 @@ public class ListPanel<T> extends JPanel {
 	public void ensureIndexIsVisible(int index) {
 		list.ensureIndexIsVisible(index);
 	}
-
-	/**
-	 * Simple test for ListPanel class.
-	 * @param args test args not used
-	 */
-	public static void main(String[] args) {
-
-		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-
-		}
-		catch (Exception exc) {
-			System.out.println("Error loading L&F: " + exc);
-		}
-
-		final JFrame frame = new JFrame("ListPanel");
-		frame.getContentPane().setLayout(new GridLayout(1, 1));
-
-		final ListPanel<String> lbp = new ListPanel<>();
-		final DefaultListModel<String> listModel = new DefaultListModel<>();
-		frame.getContentPane().add(lbp);
-		frame.addWindowListener(new WindowAdapter() {
-			@Override
-			public void windowClosing(WindowEvent e) {
-				System.exit(0);
-			}
-		});
-
-		listModel.addElement("Ellen");
-		listModel.addElement("Bill");
-		listModel.addElement("Mike");
-		listModel.addElement("Dennis");
-		lbp.setListModel(listModel);
-		lbp.setListTitle("Developers");
-
-		frame.pack();
-		frame.setVisible(true);
-	}
-
 }

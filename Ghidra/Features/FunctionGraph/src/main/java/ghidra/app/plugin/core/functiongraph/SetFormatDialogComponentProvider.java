@@ -33,6 +33,8 @@ import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
+import ghidra.util.Msg;
+import ghidra.util.xml.XmlUtilities;
 
 public class SetFormatDialogComponentProvider extends DialogComponentProvider {
 
@@ -164,7 +166,7 @@ public class SetFormatDialogComponentProvider extends DialogComponentProvider {
 
 			// update the dialog's GUI (which will later be used as the new format if the
 			// user presses OK)
-			listingFormatManager.readState(saveState);
+			listingFormatManager.readState(saveState, false);
 		}
 	}
 
@@ -188,6 +190,8 @@ public class SetFormatDialogComponentProvider extends DialogComponentProvider {
 			int index = fieldHeader.getSelectedIndex();
 			FieldFormatModel originalModel = defaultFormatManager.getModel(index);
 			Element originalXML = originalModel.saveToXml();
+
+			Msg.debug(this, XmlUtilities.toString(originalXML));
 
 			// update the dialog's GUI (which will later be used as the new format if the
 			// user presses OK)

@@ -18,6 +18,7 @@ package ghidra.trace.database.memory;
 import javax.help.UnsupportedOperationException;
 
 import db.DBRecord;
+import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
@@ -30,7 +31,8 @@ import ghidra.util.database.annot.*;
 /**
  * INTERNAL: An entry to record memory observation states in the database
  */
-@DBAnnotatedObjectInfo(version = 0)
+@DBAnnotatedObjectInfo(version = 1)
+@Internal
 class DBTraceMemoryStateEntry
 		extends AbstractDBTraceAddressSnapRangePropertyMapData<TraceMemoryState> {
 

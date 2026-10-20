@@ -493,6 +493,6 @@ identifier returns [String value]
 
 integer returns [String value]
 	:	^(OP_HEX_CONSTANT s=.) { $value = $s.getText(); }
-	|	^(OP_DEC_CONSTANT s=.) { $value = $s.getText(); }
 	|	^(OP_BIN_CONSTANT s=.) { $value = $s.getText(); }
+	|	^(OP_DEF_CONSTANT s=.) { $value = $s.getText(); }
 	;

@@ -154,10 +154,6 @@ public class FileSystemService {
 	 */
 	public FileSystemService() {
 		this(new File(Application.getUserCacheDirectory(), "fscache2"));
-
-		// age off files in old cache dir.  Remove this after a few versions
-		FileCache.performCacheMaintOnOldDirIfNeeded(
-			new File(Application.getUserCacheDirectory(), "fscache"));
 	}
 
 	/**
@@ -549,7 +545,7 @@ public class FileSystemService {
 		if (provider instanceof RefdByteProvider) {
 			provider = ((RefdByteProvider) provider).getWrappedByteProvider();
 		}
-		if (provider instanceof FileByteProvider || provider instanceof RandomAccessByteProvider) {
+		if (provider instanceof FileByteProvider) {
 			return provider.getFile();
 		}
 

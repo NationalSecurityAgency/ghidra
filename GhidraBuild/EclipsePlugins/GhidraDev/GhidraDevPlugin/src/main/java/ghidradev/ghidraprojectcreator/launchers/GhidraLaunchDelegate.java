@@ -90,11 +90,7 @@ public class GhidraLaunchDelegate extends JavaLaunchDelegate {
 		programArgs += " " + customProgramArgs;
 		wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_PROGRAM_ARGUMENTS, programArgs);
 		if (isHeadless && customProgramArgs.isEmpty()) {
-			EclipseMessageUtils.showInfoDialog("Ghidra Run Configuration",
-				"Headless launch is being performed without any command line arguments!\n\n" +
-					"Edit the \"" + configuration.getName() +
-					"\" run configuration's program arguments to customize headless behavior. " +
-					"See support/analyzeHeadlessREADME.html for more information.");
+			GhidraLaunchUtils.notifyAboutHeadlessWithNoArgs(configuration);
 		}
 
 		// Set VM arguments

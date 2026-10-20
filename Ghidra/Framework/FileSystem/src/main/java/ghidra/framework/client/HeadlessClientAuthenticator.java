@@ -19,6 +19,7 @@ import java.awt.Component;
 import java.io.*;
 import java.net.*;
 import java.security.InvalidKeyException;
+import java.util.Arrays;
 
 import javax.security.auth.callback.*;
 
@@ -97,7 +98,7 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 			if (StringUtils.isBlank(prompt) || "security".equals(prompt)) {
 				prompt = "Password for " + name + ":";
 			}
-			return new PasswordAuthentication(name, getPassword(usage, prompt));
+			return new PasswordAuthentication(name, getAuthenticatorPassword(usage, prompt));
 		}
 	};
 
@@ -188,14 +189,46 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 		}
 	}
 
-	private char[] getPassword(String usage, String prompt) {
+	/**
+	 * Prompt user on system console for a password entry.  If {@code passwordPromptAllowed}
+	 * is {@code false} {@value #BADPASSWORD} will be returned.
+	 * <p>
+	 * NOTE: Any returned password should be properly cleared when done using it.
+	 * An error 
+	 * 
+	 * @param usage text line before prompt (may be null)
+	 * @param prompt password prompt on same line as entry (required)
+	 * @return password entry
+	 */
+	private char[] getAuthenticatorPassword(String usage, String prompt) {
 
 		if (!passwordPromptAllowed) {
 			Msg.warn(this, "Headless client not configured to supply required password");
 			return BADPASSWORD;
 		}
+		
+		try {
+			return getPassword(usage, prompt);
+		}
+		catch (IOException e) {
+			Msg.error(HeadlessClientAuthenticator.class, "Error reading password entry from standard-input", e);
+			return new char[0];
+		}
+	}
+	
+	/**
+	 * Prompt user on system console for a password entry.
+	 * NOTE: Any returned password should be properly cleared when done using it.
+	 * 
+	 * @param usage text line before prompt (may be null)
+	 * @param prompt password prompt on same line as entry (required)
+	 * @return password entry
+	 * @throws IOException if system console is unavailable and an error occurs reading from stdin
+	 */
+	public static char[] getPassword(String usage, String prompt) throws IOException {
 
 		char[] password = null;
+		boolean success = false;
 		int c;
 		try {
 
@@ -242,10 +275,13 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 					password[password.length - 1] = (char) c;
 				}
 			}
+			success = true;
 		}
-		catch (IOException e) {
-			Msg.error(this, "Error reading standard-input for password", e);
-		}
+		finally {
+			if (!success) {
+				Arrays.fill(password, (char) 0);
+			}
+		}		
 		return password;
 	}
 
@@ -298,7 +334,7 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 		// Ignore prompt specified by passCb
 		String prompt = "Password for " + userName + ":";
 
-		char[] password = getPassword(usage, prompt);
+		char[] password = getAuthenticatorPassword(usage, prompt);
 		passCb.setPassword(password);
 		return password != null;
 	}
@@ -323,7 +359,7 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 			}
 			return null;
 		}
-		return getPassword("Certificate keystore: " + keystorePath, "Keystore password: ");
+		return getAuthenticatorPassword("Certificate keystore: " + keystorePath, "Keystore password:");
 	}
 
 	@Override

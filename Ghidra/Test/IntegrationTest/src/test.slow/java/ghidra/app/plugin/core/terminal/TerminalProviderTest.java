@@ -15,9 +15,8 @@
  */
 package ghidra.app.plugin.core.terminal;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assert.*;
+import static org.junit.Assume.*;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
@@ -57,6 +56,48 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 	ClipboardService clipboardService;
 
 	@Test
+	public void testDecodeUnicode() throws Exception {
+		// Two non-supplemental characters
+		char[] c = new char[] {
+			0x274c,
+			0x277c
+		};
+		byte[] b = new String(c).getBytes("utf8");
+
+		terminalService = addPlugin(tool, TerminalPlugin.class);
+		clipboardService = addPlugin(tool, ClipboardPlugin.class);
+		env.showFrontEndTool();
+
+		try (Terminal term = terminalService.createNullTerminal(Charset.forName("utf8"), out -> {
+			out.reset();
+		})) {
+			term.injectDisplayOutput(b);
+			term.injectDisplayOutput("\u001b[1D".getBytes("utf8"));
+
+			assertEquals(1, term.getCursorColumn());
+		}
+	}
+
+	@Test
+	public void testDecodeUnicode24Bit() throws Exception {
+		byte[] b = bytes(0xf0, 0x93, 0x90, 0xb3); // A supplemental character
+
+		terminalService = addPlugin(tool, TerminalPlugin.class);
+		clipboardService = addPlugin(tool, ClipboardPlugin.class);
+		env.showFrontEndTool();
+
+		try (Terminal term = terminalService.createNullTerminal(Charset.forName("utf8"), out -> {
+			out.reset();
+		})) {
+			term.injectDisplayOutput(b);
+			term.injectDisplayOutput(b);
+			term.injectDisplayOutput("\u001b[1D".getBytes("utf8"));
+
+			assertEquals(1, term.getCursorColumn());
+		}
+	}
+
+	@Test
 	@SuppressWarnings("resource")
 	public void testBash() throws Exception {
 		assumeFalse(SystemUtilities.isInTestingBatchMode());
@@ -80,7 +121,6 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 				term.addTerminalListener(new TerminalListener() {
 					@Override
 					public void resized(short cols, short rows) {
-						System.err.println("resized: " + cols + "x" + rows);
 						child.setWindowSize(cols, rows);
 					}
 				});
@@ -115,7 +155,6 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 				term.addTerminalListener(new TerminalListener() {
 					@Override
 					public void resized(short cols, short rows) {
-						System.err.println("resized: " + cols + "x" + rows);
 						child.setWindowSize(cols, rows);
 					}
 				});
@@ -147,7 +186,6 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 				term.addTerminalListener(new TerminalListener() {
 					@Override
 					public void resized(short cols, short rows) {
-						System.err.println("resized: " + cols + "x" + rows);
 						child.setWindowSize(cols, rows);
 					}
 				});

@@ -123,7 +123,7 @@
 <stringmatch name="MIPS Bitfields #7" min="1" max="1">return lp-&gt;field5 \+ lp-&gt;field2;</stringmatch>
 <stringmatch name="MIPS Bitfields #8" min="1" max="1">if \(lp-&gt;sfield4 &lt; .*3.*\)</stringmatch>
 <stringmatch name="MIPS Bitfields #9" min="1" max="1">return lp-&gt;field2;</stringmatch>
-<stringmatch name="MIPS Bitfields #10" min="1" max="1">if \(!+lp-&gt;fieldb\)</stringmatch>
+<stringmatch name="MIPS Bitfields #10" min="1" max="1">if \(lp-&gt;fieldb\)</stringmatch>
 <stringmatch name="MIPS Bitfields #11" min="1" max="1">mStack_18\.sfield4 = \(char\)stki_a \+ .*1.*;</stringmatch>
 <stringmatch name="MIPS Bitfields #12" min="1" max="1">mStack_18\.field3 = stki_b;</stringmatch>
 <stringmatch name="MIPS Bitfields #13" min="1" max="1">mStack_18\.fieldb = stki_a &lt; 10;</stringmatch>

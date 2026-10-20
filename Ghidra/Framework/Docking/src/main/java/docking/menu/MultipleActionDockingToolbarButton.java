@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -134,9 +134,17 @@ public class MultipleActionDockingToolbarButton extends EmptyBorderButton {
 
 	protected ActionContext getActionContext() {
 		ComponentProvider provider = getComponentProvider();
-		ActionContext context = provider == null ? null : provider.getActionContext(null);
-		final ActionContext actionContext = context == null ? new DefaultActionContext() : context;
-		return actionContext;
+		ActionContext context = null;
+		if (provider != null) {
+			context = provider.getActionContext(null);
+		}
+
+		if (context == null) {
+			context = new DefaultActionContext();
+		}
+
+		context.setContextProvider(provider);
+		return context;
 	}
 
 	private ComponentProvider getComponentProvider() {
@@ -198,7 +206,7 @@ public class MultipleActionDockingToolbarButton extends EmptyBorderButton {
 
 			// a custom Ghidra UI that handles alignment issues and allows for tabulating presentation
 			item.setUI(DockingMenuItemUI.createUI(item));
-			final DockingActionIf delegateAction = dockingAction;
+			DockingActionIf delegateAction = dockingAction;
 			item.addActionListener(e -> {
 				ActionContext context = getActionContext();
 				context.setSourceObject(e.getSource());

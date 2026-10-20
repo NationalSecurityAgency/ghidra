@@ -17,10 +17,13 @@ package ghidra.pcode.emu.jit.gen.util;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.function.Function;
 
 import org.objectweb.asm.*;
 
+import ghidra.pcode.emu.jit.JitCompiler;
+import ghidra.pcode.emu.jit.JitCompiler.Diag;
 import ghidra.pcode.emu.jit.gen.util.Emitter.*;
 import ghidra.pcode.emu.jit.gen.util.Lbl.LblEm;
 import ghidra.pcode.emu.jit.gen.util.Methods.*;
@@ -51,6 +54,7 @@ import ghidra.pcode.emu.jit.gen.util.Types.*;
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public interface Op {
+	boolean DEEP_TRACE = JitCompiler.ENABLE_DIAGNOSTICS.contains(Diag.DEEP_TRACE);
 
 	/**
 	 * Emit an {@code aaload} instruction
@@ -67,7 +71,10 @@ public interface Op {
 		N1 extends Ent<N2, TRef<ET[]>>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N2, TRef<ET>>> aaload(Emitter<N0> em) {
-		em.mv.visitInsn(Opcodes.AASTORE);
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: aaload");
+		}
+		em.mv.visitInsn(Opcodes.AALOAD);
 		return (Emitter) em;
 	}
 
@@ -88,6 +95,9 @@ public interface Op {
 		N1 extends Ent<N2, TInt>,
 		N0 extends Ent<N1, ? extends TRef<? extends ET>>>
 			Emitter<N3> aastore(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: aastore");
+		}
 		em.mv.visitInsn(Opcodes.AASTORE);
 		return (Emitter) em;
 	}
@@ -104,6 +114,9 @@ public interface Op {
 	static <T extends TRef<?>,
 		N extends Next>
 			Emitter<Ent<N, T>> aconst_null(Emitter<N> em, T type) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: aconst_null     %s".formatted(type));
+		}
 		em.mv.visitInsn(Opcodes.ACONST_NULL);
 		return (Emitter) em;
 	}
@@ -120,6 +133,9 @@ public interface Op {
 	static <T extends TRef<?>,
 		N extends Next>
 			Emitter<Ent<N, T>> aload(Emitter<N> em, Local<T> local) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: aload           %s".formatted(local));
+		}
 		em.mv.visitVarInsn(Opcodes.ALOAD, local.index());
 		return (Emitter) em;
 	}
@@ -138,6 +154,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N1, TRef<ET[]>>> anewarray(Emitter<N0> em, TRef<ET> elemType) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: anewarray       %s".formatted(elemType));
+		}
 		em.mv.visitTypeInsn(Opcodes.ANEWARRAY, elemType.internalName());
 		return (Emitter) em;
 	}
@@ -157,6 +176,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, ? extends TRef<TR>>>
 			Emitter<Dead> areturn(Emitter<N0> em, RetReq<? extends TRef<TL>> retReq) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: areturn         %s".formatted(retReq));
+		}
 		em.mv.visitInsn(Opcodes.ARETURN);
 		return (Emitter) em;
 	}
@@ -175,6 +197,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TRef<AT>>>
 			Emitter<Ent<N1, TInt>> arraylength__prim(Emitter<N0> em, ET elemType) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: arraylength     %s".formatted(elemType));
+		}
 		em.mv.visitInsn(Opcodes.ARRAYLENGTH);
 		return (Emitter) em;
 	}
@@ -192,6 +217,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TRef<ET[]>>>
 			Emitter<Ent<N1, TInt>> arraylength__ref(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: arraylength");
+		}
 		em.mv.visitInsn(Opcodes.ARRAYLENGTH);
 		return (Emitter) em;
 	}
@@ -211,6 +239,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, ? extends TRef<TR>>>
 			Emitter<N1> astore(Emitter<N0> em, Local<? extends TRef<TL>> local) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: astore          %s".formatted(local));
+		}
 		em.mv.visitVarInsn(Opcodes.ASTORE, local.index());
 		return (Emitter) em;
 	}
@@ -228,6 +259,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, T1>>
 			Emitter<Dead> athrow(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: athrow");
+		}
 		em.mv.visitInsn(Opcodes.ATHROW);
 		return (Emitter) em;
 	}
@@ -246,6 +280,9 @@ public interface Op {
 		N1 extends Ent<N2, TRef<boolean[]>>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N2, TInt>> baload__boolean(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: baload");
+		}
 		em.mv.visitInsn(Opcodes.BALOAD);
 		return (Emitter) em;
 	}
@@ -264,6 +301,9 @@ public interface Op {
 		N1 extends Ent<N2, TRef<byte[]>>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N2, TInt>> baload(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: baload");
+		}
 		em.mv.visitInsn(Opcodes.BALOAD);
 		return (Emitter) em;
 	}
@@ -284,6 +324,9 @@ public interface Op {
 		N1 extends Ent<N2, TInt>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<N3> bastore__boolean(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: bastore");
+		}
 		em.mv.visitInsn(Opcodes.BASTORE);
 		return (Emitter) em;
 	}
@@ -304,6 +347,9 @@ public interface Op {
 		N1 extends Ent<N2, TInt>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<N3> bastore(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: bastore");
+		}
 		em.mv.visitInsn(Opcodes.BASTORE);
 		return (Emitter) em;
 	}
@@ -322,6 +368,9 @@ public interface Op {
 		N1 extends Ent<N2, TRef<char[]>>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N2, TInt>> caload(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: caload");
+		}
 		em.mv.visitInsn(Opcodes.CALOAD);
 		return (Emitter) em;
 	}
@@ -342,6 +391,9 @@ public interface Op {
 		N1 extends Ent<N2, TInt>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<N3> castore(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: castore");
+		}
 		em.mv.visitInsn(Opcodes.CASTORE);
 		return (Emitter) em;
 	}
@@ -362,6 +414,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, T1>>
 			Emitter<Ent<N1, TRef<CT>>> checkcast(Emitter<N0> em, TRef<CT> type) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: checkcast       %s".formatted(type));
+		}
 		em.mv.visitTypeInsn(Opcodes.CHECKCAST, type.internalName());
 		return (Emitter) em;
 	}
@@ -378,6 +433,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TDouble>>
 			Emitter<Ent<N1, TFloat>> d2f(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: d2f");
+		}
 		em.mv.visitInsn(Opcodes.D2F);
 		return (Emitter) em;
 	}
@@ -394,6 +452,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TDouble>>
 			Emitter<Ent<N1, TInt>> d2i(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: d2i");
+		}
 		em.mv.visitInsn(Opcodes.D2I);
 		return (Emitter) em;
 	}
@@ -410,6 +471,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TDouble>>
 			Emitter<Ent<N1, TLong>> d2l(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: d2l");
+		}
 		em.mv.visitInsn(Opcodes.D2L);
 		return (Emitter) em;
 	}
@@ -428,6 +492,9 @@ public interface Op {
 		N1 extends Ent<N2, TDouble>,
 		N0 extends Ent<N1, TDouble>>
 			Emitter<Ent<N2, TDouble>> dadd(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: dadd");
+		}
 		em.mv.visitInsn(Opcodes.DADD);
 		return (Emitter) em;
 	}
@@ -446,6 +513,9 @@ public interface Op {
 		N1 extends Ent<N2, TRef<double[]>>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N2, TDouble>> daload(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: daload");
+		}
 		em.mv.visitInsn(Opcodes.DALOAD);
 		return (Emitter) em;
 	}
@@ -466,6 +536,9 @@ public interface Op {
 		N1 extends Ent<N2, TInt>,
 		N0 extends Ent<N1, TDouble>>
 			Emitter<N3> dastore(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: dastore");
+		}
 		em.mv.visitInsn(Opcodes.DASTORE);
 		return (Emitter) em;
 	}
@@ -484,6 +557,9 @@ public interface Op {
 		N1 extends Ent<N2, TDouble>,
 		N0 extends Ent<N1, TDouble>>
 			Emitter<Ent<N2, TInt>> dcmpg(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: dcmpg");
+		}
 		em.mv.visitInsn(Opcodes.DCMPG);
 		return (Emitter) em;
 	}
@@ -502,6 +578,9 @@ public interface Op {
 		N1 extends Ent<N2, TDouble>,
 		N0 extends Ent<N1, TDouble>>
 			Emitter<Ent<N2, TInt>> dcmpl(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: dcmpl");
+		}
 		em.mv.visitInsn(Opcodes.DCMPL);
 		return (Emitter) em;
 	}
@@ -520,6 +599,9 @@ public interface Op {
 		N1 extends Ent<N2, TDouble>,
 		N0 extends Ent<N1, TDouble>>
 			Emitter<Ent<N2, TDouble>> ddiv(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: ddiv");
+		}
 		em.mv.visitInsn(Opcodes.DDIV);
 		return (Emitter) em;
 	}
@@ -534,6 +616,9 @@ public interface Op {
 	 */
 	static <N extends Next>
 			Emitter<Ent<N, TDouble>> dload(Emitter<N> em, Local<TDouble> local) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: dload           %s".formatted(local));
+		}
 		em.mv.visitVarInsn(Opcodes.DLOAD, local.index());
 		return (Emitter) em;
 	}
@@ -552,6 +637,9 @@ public interface Op {
 		N1 extends Ent<N2, TDouble>,
 		N0 extends Ent<N1, TDouble>>
 			Emitter<Ent<N2, TDouble>> dmul(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: dmul");
+		}
 		em.mv.visitInsn(Opcodes.DMUL);
 		return (Emitter) em;
 	}
@@ -568,6 +656,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TDouble>>
 			Emitter<Ent<N1, TDouble>> dneg(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: dneg");
+		}
 		em.mv.visitInsn(Opcodes.DNEG);
 		return (Emitter) em;
 	}
@@ -586,6 +677,9 @@ public interface Op {
 		N1 extends Ent<N2, TDouble>,
 		N0 extends Ent<N1, TDouble>>
 			Emitter<Ent<N2, TDouble>> drem(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: drem");
+		}
 		em.mv.visitInsn(Opcodes.DREM);
 		return (Emitter) em;
 	}
@@ -603,6 +697,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TDouble>>
 			Emitter<Dead> dreturn(Emitter<N0> em, RetReq<TDouble> retReq) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: dreturn         %s".formatted(retReq));
+		}
 		em.mv.visitInsn(Opcodes.DRETURN);
 		return (Emitter) em;
 	}
@@ -620,6 +717,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TDouble>>
 			Emitter<N1> dstore(Emitter<N0> em, Local<TDouble> local) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: dstore          %s".formatted(local));
+		}
 		em.mv.visitVarInsn(Opcodes.DSTORE, local.index());
 		return (Emitter) em;
 	}
@@ -638,6 +738,9 @@ public interface Op {
 		N1 extends Ent<N2, TDouble>,
 		N0 extends Ent<N1, TDouble>>
 			Emitter<Ent<N2, TDouble>> dsub(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: dsub");
+		}
 		em.mv.visitInsn(Opcodes.DSUB);
 		return (Emitter) em;
 	}
@@ -655,6 +758,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, V1>>
 			Emitter<Ent<N0, V1>> dup(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: dup");
+		}
 		em.mv.visitInsn(Opcodes.DUP);
 		return (Emitter) em;
 	}
@@ -675,6 +781,9 @@ public interface Op {
 		N1 extends Ent<N2, V2>,
 		N0 extends Ent<N1, V1>>
 			Emitter<Ent<Ent<Ent<N2, V1>, V2>, V1>> dup_x1(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: dup_x1");
+		}
 		em.mv.visitInsn(Opcodes.DUP_X1);
 		return (Emitter) em;
 	}
@@ -698,6 +807,9 @@ public interface Op {
 		N1 extends Ent<N2, V2>,
 		N0 extends Ent<N1, V1>>
 			Emitter<Ent<Ent<Ent<Ent<N3, V1>, V3>, V2>, V1>> dup_x2__111(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: dup_x2 (111)");
+		}
 		em.mv.visitInsn(Opcodes.DUP_X2);
 		return (Emitter) em;
 	}
@@ -718,6 +830,9 @@ public interface Op {
 		N1 extends Ent<N2, V2>,
 		N0 extends Ent<N1, V1>>
 			Emitter<Ent<Ent<Ent<N2, V1>, V2>, V1>> dup_x2__21(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: dup_x2 (21)");
+		}
 		em.mv.visitInsn(Opcodes.DUP_X2);
 		return (Emitter) em;
 	}
@@ -738,6 +853,9 @@ public interface Op {
 		N1 extends Ent<N2, V2>,
 		N0 extends Ent<N1, V1>>
 			Emitter<Ent<Ent<N0, V2>, V1>> dup2__11(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: dup2 (11)");
+		}
 		em.mv.visitInsn(Opcodes.DUP2);
 		return (Emitter) em;
 	}
@@ -755,6 +873,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, V1>>
 			Emitter<Ent<N0, V1>> dup2__2(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: dup2 (2)");
+		}
 		em.mv.visitInsn(Opcodes.DUP2);
 		return (Emitter) em;
 	}
@@ -779,6 +900,9 @@ public interface Op {
 		N0 extends Ent<N1, V1>>
 			Emitter<Ent<Ent<Ent<Ent<Ent<N3, V2>, V1>, V3>, V2>, V1>> dup2_x1__111(Emitter<N0> em) {
 		em.mv.visitInsn(Opcodes.DUP2_X1);
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: dup2_x1 (111)");
+		}
 		return (Emitter) em;
 	}
 
@@ -798,6 +922,9 @@ public interface Op {
 		N1 extends Ent<N2, V2>,
 		N0 extends Ent<N1, V1>>
 			Emitter<Ent<Ent<Ent<N2, V1>, V2>, V1>> dup2_x1__12(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: dup2_x1 (12)");
+		}
 		em.mv.visitInsn(Opcodes.DUP2_X1);
 		return (Emitter) em;
 	}
@@ -826,6 +953,9 @@ public interface Op {
 			Emitter<Ent<Ent<Ent<Ent<Ent<Ent<N4, V2>, V1>, V4>, V3>, V2>, V1>>
 			dup2_x2_1111(Emitter<N0> em) {
 		em.mv.visitInsn(Opcodes.DUP2_X2);
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: dup2_x2 (1111)");
+		}
 		return (Emitter) em;
 	}
 
@@ -848,6 +978,9 @@ public interface Op {
 		N1 extends Ent<N2, V2>,
 		N0 extends Ent<N1, V1>>
 			Emitter<Ent<Ent<Ent<Ent<N3, V1>, V3>, V2>, V1>> dup2_x2_112(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: dup2_x2 (112)");
+		}
 		em.mv.visitInsn(Opcodes.DUP2_X2);
 		return (Emitter) em;
 	}
@@ -871,6 +1004,9 @@ public interface Op {
 		N1 extends Ent<N2, V2>,
 		N0 extends Ent<N1, V1>>
 			Emitter<Ent<Ent<Ent<Ent<Ent<N3, V2>, V1>, V3>, V2>, V1>> dup2_x2_211(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: dup2_x2 (211)");
+		}
 		em.mv.visitInsn(Opcodes.DUP2_X2);
 		return (Emitter) em;
 	}
@@ -891,6 +1027,9 @@ public interface Op {
 		N1 extends Ent<N2, V2>,
 		N0 extends Ent<N1, V1>>
 			Emitter<Ent<Ent<Ent<N2, V1>, V2>, V1>> dup2_x2_22(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: dup2_x2 (22)");
+		}
 		em.mv.visitInsn(Opcodes.DUP2_X2);
 		return (Emitter) em;
 	}
@@ -907,6 +1046,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TFloat>>
 			Emitter<Ent<N1, TDouble>> f2d(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: f2d");
+		}
 		em.mv.visitInsn(Opcodes.F2D);
 		return (Emitter) em;
 	}
@@ -923,6 +1065,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TFloat>>
 			Emitter<Ent<N1, TInt>> f2i(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: f2i");
+		}
 		em.mv.visitInsn(Opcodes.F2I);
 		return (Emitter) em;
 	}
@@ -939,6 +1084,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TFloat>>
 			Emitter<Ent<N1, TLong>> f2l(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: f2l");
+		}
 		em.mv.visitInsn(Opcodes.F2L);
 		return (Emitter) em;
 	}
@@ -957,6 +1105,9 @@ public interface Op {
 		N1 extends Ent<N2, TFloat>,
 		N0 extends Ent<N1, TFloat>>
 			Emitter<Ent<N2, TFloat>> fadd(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: fadd");
+		}
 		em.mv.visitInsn(Opcodes.FADD);
 		return (Emitter) em;
 	}
@@ -975,6 +1126,9 @@ public interface Op {
 		N1 extends Ent<N2, TRef<float[]>>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N2, TFloat>> faload(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: faload");
+		}
 		em.mv.visitInsn(Opcodes.FALOAD);
 		return (Emitter) em;
 	}
@@ -995,6 +1149,9 @@ public interface Op {
 		N1 extends Ent<N2, TInt>,
 		N0 extends Ent<N1, TFloat>>
 			Emitter<N3> fastore(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: fastore");
+		}
 		em.mv.visitInsn(Opcodes.FASTORE);
 		return (Emitter) em;
 	}
@@ -1013,6 +1170,9 @@ public interface Op {
 		N1 extends Ent<N2, TFloat>,
 		N0 extends Ent<N1, TFloat>>
 			Emitter<Ent<N2, TInt>> fcmpg(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: fcmpg");
+		}
 		em.mv.visitInsn(Opcodes.FCMPG);
 		return (Emitter) em;
 	}
@@ -1031,6 +1191,9 @@ public interface Op {
 		N1 extends Ent<N2, TFloat>,
 		N0 extends Ent<N1, TFloat>>
 			Emitter<Ent<N2, TInt>> fcmpl(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: fcmpl");
+		}
 		em.mv.visitInsn(Opcodes.FCMPL);
 		return (Emitter) em;
 	}
@@ -1049,6 +1212,9 @@ public interface Op {
 		N1 extends Ent<N2, TFloat>,
 		N0 extends Ent<N1, TFloat>>
 			Emitter<Ent<N2, TFloat>> fdiv(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: fdiv");
+		}
 		em.mv.visitInsn(Opcodes.FDIV);
 		return (Emitter) em;
 	}
@@ -1063,6 +1229,9 @@ public interface Op {
 	 */
 	static <N extends Next>
 			Emitter<Ent<N, TFloat>> fload(Emitter<N> em, Local<TFloat> local) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: fload           %s".formatted(local));
+		}
 		em.mv.visitVarInsn(Opcodes.FLOAD, local.index());
 		return (Emitter) em;
 	}
@@ -1081,6 +1250,9 @@ public interface Op {
 		N1 extends Ent<N2, TFloat>,
 		N0 extends Ent<N1, TFloat>>
 			Emitter<Ent<N2, TFloat>> fmul(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: fmul");
+		}
 		em.mv.visitInsn(Opcodes.FMUL);
 		return (Emitter) em;
 	}
@@ -1097,6 +1269,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TFloat>>
 			Emitter<Ent<N1, TFloat>> fneg(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: fneg");
+		}
 		em.mv.visitInsn(Opcodes.FNEG);
 		return (Emitter) em;
 	}
@@ -1115,6 +1290,9 @@ public interface Op {
 		N1 extends Ent<N2, TFloat>,
 		N0 extends Ent<N1, TFloat>>
 			Emitter<Ent<N2, TFloat>> frem(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: frem");
+		}
 		em.mv.visitInsn(Opcodes.FREM);
 		return (Emitter) em;
 	}
@@ -1132,6 +1310,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TFloat>>
 			Emitter<Dead> freturn(Emitter<N0> em, RetReq<TFloat> retReq) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: freturn         %s".formatted(retReq));
+		}
 		em.mv.visitInsn(Opcodes.FRETURN);
 		return (Emitter) em;
 	}
@@ -1149,6 +1330,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TFloat>>
 			Emitter<N1> fstore(Emitter<N0> em, Local<TFloat> local) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: fstore          %s".formatted(local));
+		}
 		em.mv.visitVarInsn(Opcodes.FSTORE, local.index());
 		return (Emitter) em;
 	}
@@ -1167,6 +1351,9 @@ public interface Op {
 		N1 extends Ent<N2, TFloat>,
 		N0 extends Ent<N1, TFloat>>
 			Emitter<Ent<N2, TFloat>> fsub(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: fsub");
+		}
 		em.mv.visitInsn(Opcodes.FSUB);
 		return (Emitter) em;
 	}
@@ -1193,6 +1380,12 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, T1>>
 			Emitter<Ent<N1, FT>> getfield(Emitter<N0> em, TRef<OT> owner, String name, FT type) {
+		if (DEEP_TRACE) {
+			System.err.println("""
+					\
+					    jvm: getfield        %s %s
+					                         .%s""".formatted(type, owner, name));
+		}
 		em.mv.visitFieldInsn(Opcodes.GETFIELD, owner.type().getInternalName(), name,
 			type.type().getDescriptor());
 		return (Emitter) em;
@@ -1214,6 +1407,12 @@ public interface Op {
 	static <FT extends BNonVoid,
 		N extends Next>
 			Emitter<Ent<N, FT>> getstatic(Emitter<N> em, TRef<?> owner, String name, FT type) {
+		if (DEEP_TRACE) {
+			System.err.println("""
+					\
+					    jvm: getstatic       %s %s
+					                         .%s""".formatted(type, owner, name));
+		}
 		em.mv.visitFieldInsn(Opcodes.GETSTATIC, owner.type().getInternalName(), name,
 			type.type().getDescriptor());
 		return (Emitter) em;
@@ -1229,6 +1428,9 @@ public interface Op {
 	static <N extends Next>
 			LblEm<N, Dead> goto_(Emitter<N> em) {
 		Lbl<N> target = Lbl.create();
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: goto            %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.GOTO, target.label());
 		return new LblEm<>(target, (Emitter) em);
 	}
@@ -1243,6 +1445,9 @@ public interface Op {
 	 */
 	static <N extends Next>
 			Emitter<Dead> goto_(Emitter<N> em, Lbl<N> target) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: goto            %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.GOTO, target.label());
 		return (Emitter) em;
 	}
@@ -1259,6 +1464,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N1, TInt>> i2b(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: i2b");
+		}
 		em.mv.visitInsn(Opcodes.I2B);
 		return (Emitter) em;
 	}
@@ -1275,6 +1483,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N1, TInt>> i2c(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: i2c");
+		}
 		em.mv.visitInsn(Opcodes.I2C);
 		return (Emitter) em;
 	}
@@ -1291,6 +1502,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N1, TDouble>> i2d(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: i2d");
+		}
 		em.mv.visitInsn(Opcodes.I2D);
 		return (Emitter) em;
 	}
@@ -1307,6 +1521,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N1, TFloat>> i2f(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: i2f");
+		}
 		em.mv.visitInsn(Opcodes.I2F);
 		return (Emitter) em;
 	}
@@ -1323,6 +1540,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N1, TLong>> i2l(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: i2l");
+		}
 		em.mv.visitInsn(Opcodes.I2L);
 		return (Emitter) em;
 	}
@@ -1339,6 +1559,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N1, TInt>> i2s(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: i2s");
+		}
 		em.mv.visitInsn(Opcodes.I2S);
 		return (Emitter) em;
 	}
@@ -1357,6 +1580,9 @@ public interface Op {
 		N1 extends Ent<N2, TInt>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N2, TInt>> iadd(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: iadd");
+		}
 		em.mv.visitInsn(Opcodes.IADD);
 		return (Emitter) em;
 	}
@@ -1375,6 +1601,9 @@ public interface Op {
 		N1 extends Ent<N2, TRef<int[]>>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N2, TInt>> iaload(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: iaload");
+		}
 		em.mv.visitInsn(Opcodes.IALOAD);
 		return (Emitter) em;
 	}
@@ -1393,6 +1622,9 @@ public interface Op {
 		N1 extends Ent<N2, TInt>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N2, TInt>> iand(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: iand");
+		}
 		em.mv.visitInsn(Opcodes.IAND);
 		return (Emitter) em;
 	}
@@ -1413,6 +1645,9 @@ public interface Op {
 		N1 extends Ent<N2, TInt>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<N3> iastore(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: iastore");
+		}
 		em.mv.visitInsn(Opcodes.IASTORE);
 		return (Emitter) em;
 	}
@@ -1431,6 +1666,9 @@ public interface Op {
 		N1 extends Ent<N2, TInt>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N2, TInt>> idiv(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: idiv");
+		}
 		em.mv.visitInsn(Opcodes.IDIV);
 		return (Emitter) em;
 	}
@@ -1450,6 +1688,9 @@ public interface Op {
 		N0 extends Ent<N1, TRef<?>>>
 			LblEm<N2, N2> if_acmpeq(Emitter<N0> em) {
 		Lbl<N2> target = Lbl.create();
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: if_acmpeq       %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IF_ACMPEQ, target.label());
 		return new LblEm<>(target, (Emitter) em);
 	}
@@ -1469,6 +1710,9 @@ public interface Op {
 		N1 extends Ent<N2, TRef<?>>,
 		N0 extends Ent<N1, TRef<?>>>
 			Emitter<N2> if_acmpeq(Emitter<N0> em, Lbl<N2> target) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: if_acmpeq       %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IF_ACMPEQ, target.label());
 		return (Emitter) em;
 	}
@@ -1488,6 +1732,9 @@ public interface Op {
 		N0 extends Ent<N1, TRef<?>>>
 			LblEm<N2, N2> if_acmpne(Emitter<N0> em) {
 		Lbl<N2> target = Lbl.create();
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: if_acmpne       %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IF_ACMPNE, target.label());
 		return new LblEm<>(target, (Emitter) em);
 	}
@@ -1507,6 +1754,9 @@ public interface Op {
 		N1 extends Ent<N2, TRef<?>>,
 		N0 extends Ent<N1, TRef<?>>>
 			Emitter<N2> if_acmpne(Emitter<N0> em, Lbl<N2> target) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: if_acmpne       %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IF_ACMPNE, target.label());
 		return (Emitter) em;
 	}
@@ -1526,6 +1776,9 @@ public interface Op {
 		N0 extends Ent<N1, TInt>>
 			LblEm<N2, N2> if_icmpeq(Emitter<N0> em) {
 		Lbl<N2> target = Lbl.create();
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: if_icmpeq       %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IF_ICMPEQ, target.label());
 		return new LblEm<>(target, (Emitter) em);
 	}
@@ -1545,6 +1798,9 @@ public interface Op {
 		N1 extends Ent<N2, TInt>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<N2> if_icmpeq(Emitter<N0> em, Lbl<N2> target) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: if_icmpeq       %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IF_ICMPEQ, target.label());
 		return (Emitter) em;
 	}
@@ -1564,6 +1820,9 @@ public interface Op {
 		N0 extends Ent<N1, TInt>>
 			LblEm<N2, N2> if_icmpge(Emitter<N0> em) {
 		Lbl<N2> target = Lbl.create();
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: if_icmpge       %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IF_ICMPGE, target.label());
 		return new LblEm<>(target, (Emitter) em);
 	}
@@ -1583,6 +1842,9 @@ public interface Op {
 		N1 extends Ent<N2, TInt>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<N2> if_icmpge(Emitter<N0> em, Lbl<N2> target) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: if_icmpge       %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IF_ICMPGE, target.label());
 		return (Emitter) em;
 	}
@@ -1602,6 +1864,9 @@ public interface Op {
 		N0 extends Ent<N1, TInt>>
 			LblEm<N2, N2> if_icmpgt(Emitter<N0> em) {
 		Lbl<N2> target = Lbl.create();
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: if_icmpgt       %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IF_ICMPGT, target.label());
 		return new LblEm<>(target, (Emitter) em);
 	}
@@ -1621,6 +1886,9 @@ public interface Op {
 		N1 extends Ent<N2, TInt>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<N2> if_icmpgt(Emitter<N0> em, Lbl<N2> target) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: if_icmpgt       %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IF_ICMPGT, target.label());
 		return (Emitter) em;
 	}
@@ -1640,6 +1908,9 @@ public interface Op {
 		N0 extends Ent<N1, TInt>>
 			LblEm<N2, N2> if_icmple(Emitter<N0> em) {
 		Lbl<N2> target = Lbl.create();
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: if_icmple       %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IF_ICMPLE, target.label());
 		return new LblEm<>(target, (Emitter) em);
 	}
@@ -1659,6 +1930,9 @@ public interface Op {
 		N1 extends Ent<N2, TInt>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<N2> if_icmple(Emitter<N0> em, Lbl<N2> target) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: if_icmple       %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IF_ICMPLE, target.label());
 		return (Emitter) em;
 	}
@@ -1678,6 +1952,9 @@ public interface Op {
 		N0 extends Ent<N1, TInt>>
 			LblEm<N2, N2> if_icmplt(Emitter<N0> em) {
 		Lbl<N2> target = Lbl.create();
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: if_icmplt       %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IF_ICMPLT, target.label());
 		return new LblEm<>(target, (Emitter) em);
 	}
@@ -1697,6 +1974,9 @@ public interface Op {
 		N1 extends Ent<N2, TInt>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<N2> if_icmplt(Emitter<N0> em, Lbl<N2> target) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: if_icmplt       %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IF_ICMPLT, target.label());
 		return (Emitter) em;
 	}
@@ -1716,6 +1996,9 @@ public interface Op {
 		N0 extends Ent<N1, TInt>>
 			LblEm<N2, N2> if_icmpne(Emitter<N0> em) {
 		Lbl<N2> target = Lbl.create();
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: if_icmpne       %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IF_ICMPNE, target.label());
 		return new LblEm<>(target, (Emitter) em);
 	}
@@ -1735,6 +2018,9 @@ public interface Op {
 		N1 extends Ent<N2, TInt>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<N2> if_icmpne(Emitter<N0> em, Lbl<N2> target) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: if_icmpne       %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IF_ICMPNE, target.label());
 		return (Emitter) em;
 	}
@@ -1752,6 +2038,9 @@ public interface Op {
 		N0 extends Ent<N1, TInt>>
 			LblEm<N1, N1> ifeq(Emitter<N0> em) {
 		Lbl<N1> target = Lbl.create();
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: ifeq            %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IFEQ, target.label());
 		return new LblEm<>(target, (Emitter) em);
 	}
@@ -1769,6 +2058,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TInt>>
 			Emitter<N1> ifeq(Emitter<N0> em, Lbl<N1> target) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: ifeq            %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IFEQ, target.label());
 		return (Emitter) em;
 	}
@@ -1786,6 +2078,9 @@ public interface Op {
 		N0 extends Ent<N1, TInt>>
 			LblEm<N1, N1> ifge(Emitter<N0> em) {
 		Lbl<N1> target = Lbl.create();
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: ifge            %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IFGE, target.label());
 		return new LblEm<>(target, (Emitter) em);
 	}
@@ -1803,6 +2098,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TInt>>
 			Emitter<N1> ifge(Emitter<N0> em, Lbl<N1> target) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: ifge            %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IFGE, target.label());
 		return (Emitter) em;
 	}
@@ -1820,6 +2118,9 @@ public interface Op {
 		N0 extends Ent<N1, TInt>>
 			LblEm<N1, N1> ifgt(Emitter<N0> em) {
 		Lbl<N1> target = Lbl.create();
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: ifgt            %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IFGT, target.label());
 		return new LblEm<>(target, (Emitter) em);
 	}
@@ -1837,6 +2138,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TInt>>
 			Emitter<N1> ifgt(Emitter<N0> em, Lbl<N1> target) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: ifgt            %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IFGT, target.label());
 		return (Emitter) em;
 	}
@@ -1854,6 +2158,9 @@ public interface Op {
 		N0 extends Ent<N1, TInt>>
 			LblEm<N1, N1> ifle(Emitter<N0> em) {
 		Lbl<N1> target = Lbl.create();
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: ifle            %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IFLE, target.label());
 		return new LblEm<>(target, (Emitter) em);
 	}
@@ -1871,6 +2178,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TInt>>
 			Emitter<N1> ifle(Emitter<N0> em, Lbl<N1> target) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: ifle            %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IFLE, target.label());
 		return (Emitter) em;
 	}
@@ -1888,6 +2198,9 @@ public interface Op {
 		N0 extends Ent<N1, TInt>>
 			LblEm<N1, N1> iflt(Emitter<N0> em) {
 		Lbl<N1> target = Lbl.create();
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: iflt            %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IFLT, target.label());
 		return new LblEm<>(target, (Emitter) em);
 	}
@@ -1905,6 +2218,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TInt>>
 			Emitter<N1> iflt(Emitter<N0> em, Lbl<N1> target) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: iflt            %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IFLT, target.label());
 		return (Emitter) em;
 	}
@@ -1922,6 +2238,9 @@ public interface Op {
 		N0 extends Ent<N1, TInt>>
 			LblEm<N1, N1> ifne(Emitter<N0> em) {
 		Lbl<N1> target = Lbl.create();
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: ifne            %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IFNE, target.label());
 		return new LblEm<>(target, (Emitter) em);
 	}
@@ -1939,6 +2258,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TInt>>
 			Emitter<N1> ifne(Emitter<N0> em, Lbl<N1> target) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: ifne            %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IFNE, target.label());
 		return (Emitter) em;
 	}
@@ -1956,6 +2278,9 @@ public interface Op {
 		N0 extends Ent<N1, TRef<?>>>
 			LblEm<N1, N1> ifnonnull(Emitter<N0> em) {
 		Lbl<N1> target = Lbl.create();
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: ifnonnull       %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IFNONNULL, target.label());
 		return new LblEm<>(target, (Emitter) em);
 	}
@@ -1973,6 +2298,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TRef<?>>>
 			Emitter<N1> ifnonnull(Emitter<N0> em, Lbl<N1> target) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: ifnonnull       %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IFNONNULL, target.label());
 		return (Emitter) em;
 	}
@@ -1990,6 +2318,9 @@ public interface Op {
 		N0 extends Ent<N1, TRef<?>>>
 			LblEm<N1, N1> ifnull(Emitter<N0> em) {
 		Lbl<N1> target = Lbl.create();
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: ifnull          %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IFNULL, target.label());
 		return new LblEm<>(target, (Emitter) em);
 	}
@@ -2007,6 +2338,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TRef<?>>>
 			Emitter<N1> ifnull(Emitter<N0> em, Lbl<N1> target) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: ifnull          %s".formatted(target));
+		}
 		em.mv.visitJumpInsn(Opcodes.IFNULL, target.label());
 		return (Emitter) em;
 	}
@@ -2022,6 +2356,9 @@ public interface Op {
 	 */
 	static <N extends Next>
 			Emitter<N> iinc(Emitter<N> em, Local<TInt> local, int increment) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: iinc            %s %d".formatted(local, increment));
+		}
 		em.mv.visitIincInsn(local.index(), increment);
 		return em;
 	}
@@ -2036,6 +2373,9 @@ public interface Op {
 	 */
 	static <N extends Next>
 			Emitter<Ent<N, TInt>> iload(Emitter<N> em, Local<TInt> local) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: iload           %s".formatted(local));
+		}
 		em.mv.visitVarInsn(Opcodes.ILOAD, local.index());
 		return (Emitter) em;
 	}
@@ -2054,6 +2394,9 @@ public interface Op {
 		N1 extends Ent<N2, TInt>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N2, TInt>> imul(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: imul");
+		}
 		em.mv.visitInsn(Opcodes.IMUL);
 		return (Emitter) em;
 	}
@@ -2070,6 +2413,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N1, TInt>> ineg(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: ineg");
+		}
 		em.mv.visitInsn(Opcodes.INEG);
 		return (Emitter) em;
 	}
@@ -2087,6 +2433,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TRef<?>>>
 			Emitter<Ent<N1, TInt>> instanceof_(Emitter<N0> em, TRef<?> type) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: instanceof      %s".formatted(type));
+		}
 		em.mv.visitTypeInsn(Opcodes.INSTANCEOF, type.internalName());
 		return (Emitter) em;
 	}
@@ -2119,6 +2468,12 @@ public interface Op {
 			Inv<MR, SN, MN> invokedynamic__unsupported(Emitter<SN> em, String name,
 					MthDesc<MR, MN> desc, Handle bootstrapMethodHandle,
 					Object... bootstrapMethodArguments) {
+		if (DEEP_TRACE) {
+			System.err.println("""
+					\
+					    jvm: invokedynamic   %s %s %s %s""".formatted(name, desc,
+				bootstrapMethodHandle, bootstrapMethodArguments));
+		}
 		em.mv.visitInvokeDynamicInsn(name, desc.desc(), bootstrapMethodHandle,
 			bootstrapMethodArguments);
 		return new Inv<>(em);
@@ -2143,6 +2498,12 @@ public interface Op {
 		MR extends BType>
 			ObjInv<MR, OT, SN, MN>
 			invokeinterface(Emitter<SN> em, TRef<OT> ownerType, String name, MthDesc<MR, MN> desc) {
+		if (DEEP_TRACE) {
+			System.err.println("""
+					\
+					    jvm: invokeinterface %s
+					                         .%s %s""".formatted(ownerType, name, desc));
+		}
 		em.mv.visitMethodInsn(Opcodes.INVOKEINTERFACE, ownerType.internalName(),
 			name,
 			desc.desc(), true);
@@ -2169,6 +2530,13 @@ public interface Op {
 		MR extends BType>
 			ObjInv<MR, OT, SN, MN> invokespecial(Emitter<SN> em, TRef<OT> ownerType, String name,
 					MthDesc<MR, MN> desc, boolean isInterface) {
+		if (DEEP_TRACE) {
+			System.err.println("""
+					\
+					    jvm: invokespecial   %s
+					                         .%s %s (%s)""".formatted(ownerType, name, desc,
+				isInterface ? "interface" : "class"));
+		}
 		em.mv.visitMethodInsn(Opcodes.INVOKESPECIAL, ownerType.internalName(), name,
 			desc.desc(), isInterface);
 		return new ObjInv<>(em);
@@ -2193,6 +2561,13 @@ public interface Op {
 		MR extends BType>
 			Inv<MR, SN, MN> invokestatic(Emitter<SN> em, TRef<?> ownerType, String name,
 					MthDesc<MR, MN> desc, boolean isInterface) {
+		if (DEEP_TRACE) {
+			System.err.println("""
+					\
+					    jvm: invokestatic    %s
+					                         .%s %s (%s)""".formatted(ownerType, name, desc,
+				isInterface ? "interface" : "class"));
+		}
 		em.mv.visitMethodInsn(Opcodes.INVOKESTATIC, ownerType.internalName(), name,
 			desc.desc(), isInterface);
 		return new Inv<>(em);
@@ -2218,6 +2593,13 @@ public interface Op {
 		MR extends BType>
 			ObjInv<MR, OT, SN, MN> invokevirtual(Emitter<SN> em, TRef<OT> ownerType, String name,
 					MthDesc<MR, MN> desc, boolean isInterface) {
+		if (DEEP_TRACE) {
+			System.err.println("""
+					\
+					    jvm: invokevirtual   %s
+					                         .%s %s (%s)""".formatted(ownerType, name, desc,
+				isInterface ? "interface" : "class"));
+		}
 		em.mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, ownerType.internalName(), name,
 			desc.desc(), isInterface);
 		return new ObjInv<>(em);
@@ -2237,6 +2619,9 @@ public interface Op {
 		N1 extends Ent<N2, TInt>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N2, TInt>> ior(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: ior");
+		}
 		em.mv.visitInsn(Opcodes.IOR);
 		return (Emitter) em;
 	}
@@ -2255,6 +2640,9 @@ public interface Op {
 		N1 extends Ent<N2, TInt>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N2, TInt>> irem(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: irem");
+		}
 		em.mv.visitInsn(Opcodes.IREM);
 		return (Emitter) em;
 	}
@@ -2272,6 +2660,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Dead> ireturn(Emitter<N0> em, RetReq<TInt> retReq) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: ireturn         %s".formatted(retReq));
+		}
 		em.mv.visitInsn(Opcodes.IRETURN);
 		return (Emitter) em;
 	}
@@ -2290,6 +2681,9 @@ public interface Op {
 		N1 extends Ent<N2, TInt>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N2, TInt>> ishl(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: ishl");
+		}
 		em.mv.visitInsn(Opcodes.ISHL);
 		return (Emitter) em;
 	}
@@ -2308,6 +2702,9 @@ public interface Op {
 		N1 extends Ent<N2, TInt>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N2, TInt>> ishr(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: ishr");
+		}
 		em.mv.visitInsn(Opcodes.ISHR);
 		return (Emitter) em;
 	}
@@ -2325,6 +2722,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TInt>>
 			Emitter<N1> istore(Emitter<N0> em, Local<TInt> local) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: istore          %s".formatted(local));
+		}
 		em.mv.visitVarInsn(Opcodes.ISTORE, local.index());
 		return (Emitter) em;
 	}
@@ -2343,6 +2743,9 @@ public interface Op {
 		N1 extends Ent<N2, TInt>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N2, TInt>> isub(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: isub");
+		}
 		em.mv.visitInsn(Opcodes.ISUB);
 		return (Emitter) em;
 	}
@@ -2361,6 +2764,9 @@ public interface Op {
 		N1 extends Ent<N2, TInt>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N2, TInt>> iushr(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: iushr");
+		}
 		em.mv.visitInsn(Opcodes.IUSHR);
 		return (Emitter) em;
 	}
@@ -2379,6 +2785,9 @@ public interface Op {
 		N1 extends Ent<N2, TInt>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N2, TInt>> ixor(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: ixor");
+		}
 		em.mv.visitInsn(Opcodes.IXOR);
 		return (Emitter) em;
 	}
@@ -2414,6 +2823,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TLong>>
 			Emitter<Ent<N1, TDouble>> l2d(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: l2d");
+		}
 		em.mv.visitInsn(Opcodes.L2D);
 		return (Emitter) em;
 	}
@@ -2430,6 +2842,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TLong>>
 			Emitter<Ent<N1, TFloat>> l2f(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: l2f");
+		}
 		em.mv.visitInsn(Opcodes.L2F);
 		return (Emitter) em;
 	}
@@ -2446,6 +2861,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TLong>>
 			Emitter<Ent<N1, TInt>> l2i(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: l2i");
+		}
 		em.mv.visitInsn(Opcodes.L2I);
 		return (Emitter) em;
 	}
@@ -2464,6 +2882,9 @@ public interface Op {
 		N1 extends Ent<N2, TLong>,
 		N0 extends Ent<N1, TLong>>
 			Emitter<Ent<N2, TLong>> ladd(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: ladd");
+		}
 		em.mv.visitInsn(Opcodes.LADD);
 		return (Emitter) em;
 	}
@@ -2482,6 +2903,9 @@ public interface Op {
 		N1 extends Ent<N2, TRef<long[]>>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N2, TLong>> laload(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: laload");
+		}
 		em.mv.visitInsn(Opcodes.LALOAD);
 		return (Emitter) em;
 	}
@@ -2500,6 +2924,9 @@ public interface Op {
 		N1 extends Ent<N2, TLong>,
 		N0 extends Ent<N1, TLong>>
 			Emitter<Ent<N2, TLong>> land(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: land");
+		}
 		em.mv.visitInsn(Opcodes.LAND);
 		return (Emitter) em;
 	}
@@ -2520,6 +2947,9 @@ public interface Op {
 		N1 extends Ent<N2, TInt>,
 		N0 extends Ent<N1, TLong>>
 			Emitter<N3> lastore(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: lastore");
+		}
 		em.mv.visitInsn(Opcodes.LASTORE);
 		return (Emitter) em;
 	}
@@ -2538,6 +2968,9 @@ public interface Op {
 		N1 extends Ent<N2, TLong>,
 		N0 extends Ent<N1, TLong>>
 			Emitter<Ent<N2, TInt>> lcmp(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: lcmp");
+		}
 		em.mv.visitInsn(Opcodes.LCMP);
 		return (Emitter) em;
 	}
@@ -2554,6 +2987,9 @@ public interface Op {
 	 */
 	static <N extends Next>
 			Emitter<Ent<N, TInt>> ldc__i(Emitter<N> em, int value) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: ldc (int)       0x%x %d".formatted(value, value));
+		}
 		em.mv.visitLdcInsn(value);
 		return (Emitter) em;
 	}
@@ -2570,6 +3006,9 @@ public interface Op {
 	 */
 	static <N extends Next>
 			Emitter<Ent<N, TLong>> ldc__l(Emitter<N> em, long value) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: ldc (long)      0x%x %d".formatted(value, value));
+		}
 		em.mv.visitLdcInsn(value);
 		return (Emitter) em;
 	}
@@ -2586,6 +3025,9 @@ public interface Op {
 	 */
 	static <N extends Next>
 			Emitter<Ent<N, TFloat>> ldc__f(Emitter<N> em, float value) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: ldc (float)     %s".formatted(value));
+		}
 		em.mv.visitLdcInsn(value);
 		return (Emitter) em;
 	}
@@ -2602,6 +3044,9 @@ public interface Op {
 	 */
 	static <N extends Next>
 			Emitter<Ent<N, TDouble>> ldc__d(Emitter<N> em, double value) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: ldc (double)    %s".formatted(value));
+		}
 		em.mv.visitLdcInsn(value);
 		return (Emitter) em;
 	}
@@ -2621,6 +3066,10 @@ public interface Op {
 	static <T,
 		N extends Next>
 			Emitter<Ent<N, TRef<T>>> ldc__a(Emitter<N> em, T value) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: ldc             (%s) %s"
+					.formatted(value.getClass().getSimpleName(), value));
+		}
 		em.mv.visitLdcInsn(value);
 		return (Emitter) em;
 	}
@@ -2639,6 +3088,9 @@ public interface Op {
 		N1 extends Ent<N2, TLong>,
 		N0 extends Ent<N1, TLong>>
 			Emitter<Ent<N2, TLong>> ldiv(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: ldiv");
+		}
 		em.mv.visitInsn(Opcodes.LDIV);
 		return (Emitter) em;
 	}
@@ -2653,6 +3105,9 @@ public interface Op {
 	 */
 	static <N extends Next>
 			Emitter<Ent<N, TLong>> lload(Emitter<N> em, Local<TLong> local) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: lload           %s".formatted(local));
+		}
 		em.mv.visitVarInsn(Opcodes.LLOAD, local.index());
 		return (Emitter) em;
 	}
@@ -2671,6 +3126,9 @@ public interface Op {
 		N1 extends Ent<N2, TLong>,
 		N0 extends Ent<N1, TLong>>
 			Emitter<Ent<N2, TLong>> lmul(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: lmul");
+		}
 		em.mv.visitInsn(Opcodes.LMUL);
 		return (Emitter) em;
 	}
@@ -2687,6 +3145,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TLong>>
 			Emitter<Ent<N1, TLong>> lneg(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: lneg");
+		}
 		em.mv.visitInsn(Opcodes.LNEG);
 		return (Emitter) em;
 	}
@@ -2705,6 +3166,13 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Dead> lookupswitch(Emitter<N0> em, Lbl<N1> dflt, Map<Integer, Lbl<N1>> cases) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: lookupswitch    default=%s, cases={".formatted(dflt));
+			for (Entry<Integer, Lbl<N1>> ent : cases.entrySet()) {
+				System.err.println("           %d: %s".formatted(ent.getKey(), ent.getValue()));
+			}
+			System.err.println("         }");
+		}
 		em.mv.visitLookupSwitchInsn(dflt.label(),
 			cases.keySet().stream().mapToInt(k -> k).toArray(),
 			cases.values().stream().map(Lbl::label).toArray(Label[]::new));
@@ -2725,6 +3193,9 @@ public interface Op {
 		N1 extends Ent<N2, TLong>,
 		N0 extends Ent<N1, TLong>>
 			Emitter<Ent<N2, TLong>> lor(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: lor");
+		}
 		em.mv.visitInsn(Opcodes.LOR);
 		return (Emitter) em;
 	}
@@ -2743,6 +3214,9 @@ public interface Op {
 		N1 extends Ent<N2, TLong>,
 		N0 extends Ent<N1, TLong>>
 			Emitter<Ent<N2, TLong>> lrem(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: lrem");
+		}
 		em.mv.visitInsn(Opcodes.LREM);
 		return (Emitter) em;
 	}
@@ -2760,6 +3234,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Dead> lreturn(Emitter<N0> em, RetReq<TInt> retReq) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: lreturn         %s".formatted(retReq));
+		}
 		em.mv.visitInsn(Opcodes.LRETURN);
 		return (Emitter) em;
 	}
@@ -2778,6 +3255,9 @@ public interface Op {
 		N1 extends Ent<N2, TLong>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N2, TLong>> lshl(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: lshl");
+		}
 		em.mv.visitInsn(Opcodes.LSHL);
 		return (Emitter) em;
 	}
@@ -2796,6 +3276,9 @@ public interface Op {
 		N1 extends Ent<N2, TLong>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N2, TLong>> lshr(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: lshr");
+		}
 		em.mv.visitInsn(Opcodes.LSHR);
 		return (Emitter) em;
 	}
@@ -2813,6 +3296,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TLong>>
 			Emitter<N1> lstore(Emitter<N0> em, Local<TLong> local) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: lstore          %s".formatted(local));
+		}
 		em.mv.visitVarInsn(Opcodes.LSTORE, local.index());
 		return (Emitter) em;
 	}
@@ -2831,6 +3317,9 @@ public interface Op {
 		N1 extends Ent<N2, TLong>,
 		N0 extends Ent<N1, TLong>>
 			Emitter<Ent<N2, TLong>> lsub(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: lsub");
+		}
 		em.mv.visitInsn(Opcodes.LSUB);
 		return (Emitter) em;
 	}
@@ -2849,6 +3338,9 @@ public interface Op {
 		N1 extends Ent<N2, TLong>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N2, TLong>> lushr(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: lushr");
+		}
 		em.mv.visitInsn(Opcodes.LUSHR);
 		return (Emitter) em;
 	}
@@ -2867,6 +3359,9 @@ public interface Op {
 		N1 extends Ent<N2, TLong>,
 		N0 extends Ent<N1, TLong>>
 			Emitter<Ent<N2, TLong>> lxor(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: lxor");
+		}
 		em.mv.visitInsn(Opcodes.LXOR);
 		return (Emitter) em;
 	}
@@ -2883,6 +3378,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TRef<?>>>
 			Emitter<N1> monitorenter(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: monitorenter");
+		}
 		em.mv.visitInsn(Opcodes.MONITORENTER);
 		return (Emitter) em;
 	}
@@ -2899,6 +3397,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TRef<?>>>
 			Emitter<N1> monitorexit(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: monitorexit");
+		}
 		em.mv.visitInsn(Opcodes.MONITOREXIT);
 		return (Emitter) em;
 	}
@@ -2917,6 +3418,9 @@ public interface Op {
 	 * @return the emitter with unknown stack
 	 */
 	static Emitter<?> multianewarray__unsupported(Emitter<?> em, TRef<?> type, int dimensions) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: multianewarray  %s %s".formatted(type, dimensions));
+		}
 		em.mv.visitMultiANewArrayInsn(type.internalName(), dimensions);
 		return em;
 	}
@@ -2937,6 +3441,9 @@ public interface Op {
 	static <T extends TRef<?>,
 		N extends Next>
 			Emitter<Ent<N, T>> new_(Emitter<N> em, T type) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: new             %s".formatted(type));
+		}
 		em.mv.visitTypeInsn(Opcodes.NEW, type.internalName());
 		return (Emitter) em;
 	}
@@ -2956,6 +3463,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N1, TRef<AT>>> newarray(Emitter<N0> em, ET elemType) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: newarray        %s".formatted(elemType));
+		}
 		em.mv.visitIntInsn(Opcodes.NEWARRAY, elemType.t());
 		return (Emitter) em;
 	}
@@ -2969,6 +3479,9 @@ public interface Op {
 	 */
 	static <N extends Next>
 			Emitter<N> nop(Emitter<N> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: nop");
+		}
 		em.mv.visitInsn(Opcodes.NOP);
 		return em;
 	}
@@ -2985,6 +3498,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, ? extends TCat1>>
 			Emitter<N1> pop(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: pop");
+		}
 		em.mv.visitInsn(Opcodes.POP);
 		return (Emitter) em;
 	}
@@ -3003,6 +3519,9 @@ public interface Op {
 		N1 extends Ent<N2, ? extends TCat1>,
 		N0 extends Ent<N1, ? extends TCat1>>
 			Emitter<N2> pop2__11(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: pop2 (11)");
+		}
 		em.mv.visitInsn(Opcodes.POP2);
 		return (Emitter) em;
 	}
@@ -3019,6 +3538,9 @@ public interface Op {
 		N1 extends Next,
 		N0 extends Ent<N1, ? extends TCat2>>
 			Emitter<N1> pop2__2(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: pop2 (2)");
+		}
 		em.mv.visitInsn(Opcodes.POP2);
 		return (Emitter) em;
 	}
@@ -3042,8 +3564,13 @@ public interface Op {
 		N2 extends Next,
 		N1 extends Ent<N2, T2>,
 		N0 extends Ent<N1, ? extends FT>>
-			Emitter<N2> putfield(Emitter<N0> em, TRef<OT> owner, String name,
-					FT type) {
+			Emitter<N2> putfield(Emitter<N0> em, TRef<OT> owner, String name, FT type) {
+		if (DEEP_TRACE) {
+			System.err.println("""
+					\
+					    jvm: putfield        %s %s
+					                         .%s""".formatted(type, owner, name));
+		}
 		em.mv.visitFieldInsn(Opcodes.PUTFIELD, owner.internalName(), name,
 			type.type().getDescriptor());
 		return (Emitter) em;
@@ -3064,8 +3591,13 @@ public interface Op {
 	static <FT extends BNonVoid,
 		N1 extends Next,
 		N0 extends Ent<N1, ? extends FT>>
-			Emitter<N1> putstatic(Emitter<N0> em, TRef<?> owner, String name,
-					FT type) {
+			Emitter<N1> putstatic(Emitter<N0> em, TRef<?> owner, String name, FT type) {
+		if (DEEP_TRACE) {
+			System.err.println("""
+					\
+					    jvm: putstatic       %s %s
+					                         .%s""".formatted(type, owner, name));
+		}
 		em.mv.visitFieldInsn(Opcodes.PUTSTATIC, owner.internalName(), name,
 			type.type().getDescriptor());
 		return (Emitter) em;
@@ -3101,6 +3633,9 @@ public interface Op {
 	 */
 	static <N extends Next>
 			Emitter<Dead> return_(Emitter<N> em, RetReq<TVoid> retReq) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: return          %s".formatted(retReq));
+		}
 		em.mv.visitInsn(Opcodes.RETURN);
 		return (Emitter) em;
 	}
@@ -3119,6 +3654,9 @@ public interface Op {
 		N1 extends Ent<N2, TRef<short[]>>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<Ent<N2, TInt>> saload(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: saload");
+		}
 		em.mv.visitInsn(Opcodes.SALOAD);
 		return (Emitter) em;
 	}
@@ -3139,6 +3677,9 @@ public interface Op {
 		N1 extends Ent<N2, TInt>,
 		N0 extends Ent<N1, TInt>>
 			Emitter<N3> sastore(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: sastore");
+		}
 		em.mv.visitInsn(Opcodes.SASTORE);
 		return (Emitter) em;
 	}
@@ -3158,6 +3699,9 @@ public interface Op {
 		N2 extends Next, N1 extends Ent<N2, T2>,
 		N0 extends Ent<N1, T1>>
 			Emitter<Ent<Ent<N2, T1>, T2>> swap(Emitter<N0> em) {
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: swap");
+		}
 		em.mv.visitInsn(Opcodes.SWAP);
 		return (Emitter) em;
 	}
@@ -3178,6 +3722,13 @@ public interface Op {
 		N0 extends Ent<N1, TInt>>
 			Emitter<Dead> tableswitch(Emitter<N0> em, int low, Lbl<N1> dflt, List<Lbl<N1>> cases) {
 		int high = low + cases.size() - 1; // inclusive
+		if (DEEP_TRACE) {
+			System.err.println("    jvm: tableswitch     default=%s cases=[".formatted(dflt));
+			for (int i = 0; i < cases.size(); i++) {
+				System.err.println("           %d: %s".formatted(i, cases.get(i)));
+			}
+			System.err.println("         ]");
+		}
 		em.mv.visitTableSwitchInsn(low, high, dflt.label(),
 			cases.stream().map(Lbl::label).toArray(Label[]::new));
 		return (Emitter) em;

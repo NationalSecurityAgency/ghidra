@@ -129,7 +129,7 @@ public class MapLoader extends AbstractProgramWrapperLoader {
 	}
 
 	@Override
-	public boolean supportsLoadIntoProgram() {
+	public boolean supportsLoadIntoProgram(Program program) {
 		return true;
 	}
 

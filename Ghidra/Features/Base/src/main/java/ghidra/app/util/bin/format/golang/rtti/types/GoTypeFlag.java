@@ -26,11 +26,16 @@ import ghidra.app.util.bin.format.golang.GoVerRange;
  */
 public enum GoTypeFlag {
 
-	Uncommon(1 << 0, GoVerRange.ALL),					// 1
-	ExtraStar(1 << 1, GoVerRange.ALL),					// 2
-	Named(1 << 2, GoVerRange.ALL),						// 4
-	RegularMemory(1 << 3, GoVerRange.ALL),				// 8
-	UnrolledBitmap(1 << 4, GoVerRange.parse("1.22-"));	// 16
+	Uncommon(1 << 0, GoVerRange.ALL),						// 1
+	ExtraStar(1 << 1, GoVerRange.ALL),						// 2
+	Named(1 << 2, GoVerRange.ALL),							// 4
+	RegularMemory(1 << 3, GoVerRange.ALL),					// 8
+	UnrolledBitmap(1 << 4, GoVerRange.parse("1.22-1.23")),	// 16
+	GCMaskOnDemand(1 << 4, GoVerRange.parse("1.24-")),		// 16
+
+	// FUTURE: "value of this type is stored directly in the data field of an interface instead of
+	// indirectly", same as testing Size_ == PtrBytes == goarch.PtrSize
+	DirectIFace(1 << 5, GoVerRange.parse("1.24-"));			// 32
 
 	private final int value;
 	private GoVerRange validVersions;
@@ -44,8 +49,16 @@ public enum GoTypeFlag {
 		return value;
 	}
 
-	public boolean isSet(int i) {
-		return (i & value) != 0;
+	/**
+	 * Returns true if this enum instance is set in the supplied integer
+	 * (for the specified go version)
+	 * 
+	 * @param i int packed flag
+	 * @param ver version of this binary
+	 * @return boolean true if this flag is set
+	 */
+	public boolean isSet(int i, GoVer ver) {
+		return validVersions.contains(ver) && (i & value) != 0;
 	}
 
 	//----------------------------------------------------------
@@ -53,19 +66,18 @@ public enum GoTypeFlag {
 	private static final GoTypeFlag[] lookupvalues = values();
 
 	public static boolean isValid(int b, GoVer ver) {
-		int maxMask = 0;
 		for (GoTypeFlag flag : lookupvalues) {
 			if (flag.validVersions.contains(ver)) {
-				maxMask |= flag.value;
+				b &= ~flag.value;
 			}
 		}
-		return b <= maxMask;
+		return b == 0;
 	}
 
-	public static Set<GoTypeFlag> parseFlags(int b) {
+	public static Set<GoTypeFlag> parseFlags(int b, GoVer ver) {
 		EnumSet<GoTypeFlag> result = EnumSet.noneOf(GoTypeFlag.class);
 		for (GoTypeFlag flag : lookupvalues) {
-			if (flag.isSet(b)) {
+			if (flag.isSet(b, ver)) {
 				result.add(flag);
 			}
 		}

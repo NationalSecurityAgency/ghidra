@@ -22,12 +22,8 @@ import java.util.List;
 import java.util.function.Function;
 
 import javax.swing.*;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
 
-import docking.widgets.table.DefaultEnumeratedColumnProgramTableModel;
-import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
-import docking.widgets.table.GTable;
+import docking.widgets.table.*;
 import generic.theme.GColor;
 import ghidra.app.plugin.processors.sleigh.template.OpTpl;
 import ghidra.app.util.pcode.*;
@@ -44,6 +40,7 @@ import ghidra.program.model.pcode.PcodeOp;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.WebColors;
 import ghidra.util.table.GhidraTableFilterPanel;
+import ghidra.util.table.column.GColumnRenderer;
 
 public class Z3SummaryPcodeLogPanel extends JPanel {
 	private static final Color COLOR_FOREGROUND_ADDRESS = new GColor("color.fg.listing.address");
@@ -63,6 +60,9 @@ public class Z3SummaryPcodeLogPanel extends JPanel {
 	private static final Color COLOR_FOREGROUND_USEROP =
 		new GColor("color.fg.listing.pcode.userop");
 
+	private static final MonospaceCellRenderer MONO_RENDERER = new MonospaceCellRenderer();
+	private static final HtmlCellRenderer HTML_RENDERER = new HtmlCellRenderer();
+
 	protected static String htmlColor(Color color, String display) {
 		return String.format("<font color=\"%s\">%s</font>", WebColors.toString(color, false),
 			HTMLUtilities.escapeHTML(display));
@@ -70,11 +70,50 @@ public class Z3SummaryPcodeLogPanel extends JPanel {
 
 	protected enum PcodeLogTableColumns
 		implements EnumeratedTableColumn<PcodeLogTableColumns, RecOp> {
-		INDEX("Index", Integer.class, RecOp::index, true),
-		THREAD("Thread", String.class, RecOp::getThreadName, true),
-		ADDRESS("Address", Address.class, RecOp::getAddress, false),
-		CODE("P-code", String.class, PcodeLogTableColumns::getPcodeHtml, true),
-		;
+		INDEX("Index", Integer.class, RecOp::index, true) {
+			@Override
+			public int getMaxWidth() {
+				return 30;
+			}
+
+			@Override
+			public int getMinWidth() {
+				return 30;
+			}
+		},
+		THREAD("Thread", String.class, RecOp::getThreadName, true) {
+			@Override
+			public int getMaxWidth() {
+				return 30;
+			}
+
+			@Override
+			public int getMinWidth() {
+				return 30;
+			}
+		},
+		ADDRESS("Address", Address.class, RecOp::getAddress, false) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return MONO_RENDERER;
+			}
+
+			@Override
+			public int getPreferredWidth() {
+				return 20;
+			}
+		},
+		CODE("P-code", String.class, PcodeLogTableColumns::getPcodeHtml, true) {
+			@Override
+			public GColumnRenderer<?> getRenderer() {
+				return HTML_RENDERER;
+			}
+
+			@Override
+			public int getPreferredWidth() {
+				return 40;
+			}
+		};
 
 		private final String header;
 		private final Class<?> cls;
@@ -95,6 +134,11 @@ public class Z3SummaryPcodeLogPanel extends JPanel {
 		}
 
 		@Override
+		public String getHeader() {
+			return header;
+		}
+
+		@Override
 		public Class<?> getValueClass() {
 			return cls;
 		}
@@ -102,11 +146,6 @@ public class Z3SummaryPcodeLogPanel extends JPanel {
 		@Override
 		public Object getValueOf(RecOp row) {
 			return getter.apply(row);
-		}
-
-		@Override
-		public String getHeader() {
-			return header;
 		}
 
 		@Override
@@ -275,20 +314,6 @@ public class Z3SummaryPcodeLogPanel extends JPanel {
 
 		filterPanel = new GhidraTableFilterPanel<>(table, model);
 		add(filterPanel, BorderLayout.SOUTH);
-
-		TableColumnModel columnModel = table.getColumnModel();
-		TableColumn indexCol = columnModel.getColumn(PcodeLogTableColumns.INDEX.ordinal());
-		indexCol.setMaxWidth(30);
-		indexCol.setMinWidth(30);
-		TableColumn threadCol = columnModel.getColumn(PcodeLogTableColumns.THREAD.ordinal());
-		threadCol.setMaxWidth(30);
-		threadCol.setMinWidth(30);
-		TableColumn addrCol = columnModel.getColumn(PcodeLogTableColumns.ADDRESS.ordinal());
-		addrCol.setCellRenderer(new MonospaceCellRenderer());
-		addrCol.setPreferredWidth(20);
-		TableColumn codeCol = columnModel.getColumn(PcodeLogTableColumns.CODE.ordinal());
-		codeCol.setCellRenderer(new HtmlCellRenderer());
-		codeCol.setPreferredWidth(40);
 
 		table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		table.addMouseListener(new MouseAdapter() {

@@ -21,6 +21,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.function.BiConsumer;
 
 import db.*;
 import ghidra.framework.data.OpenMode;
@@ -39,12 +40,16 @@ import ghidra.util.*;
 import ghidra.util.database.*;
 import ghidra.util.database.DBCachedObjectStoreFactory.AbstractDBFieldCodec;
 import ghidra.util.database.annot.*;
+import ghidra.util.database.spatial.SpatialMap;
 import ghidra.util.exception.NotYetImplementedException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
-public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAddressSnapRangePropertyMapData<T>>
+public abstract class AbstractDBTracePropertyMap<T,
+	DR extends AbstractDBTraceAddressSnapRangePropertyMapData<T>>
 		extends DBTraceAddressSnapRangePropertyMap<T, DR> implements TracePropertyMap<T> {
+
+	protected static final int CHUNK_SIZE = DBTrace.CHUNK_SIZE;
 
 	public AbstractDBTracePropertyMap(String name, DBHandle dbh, OpenMode openMode,
 			ReadWriteLock lock, TaskMonitor monitor, Language baseLanguage, DBTrace trace,
@@ -96,26 +101,36 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 		return reduce(TraceAddressSnapRangeQuery.intersecting(range, lifespan)).entries();
 	}
 
+	protected static <T, DR extends AbstractDBTraceAddressSnapRangePropertyMapData<T>> boolean
+			doClear(Lifespan span, SpatialMap<TraceAddressSnapRange, T, ?> sub,
+					BiConsumer<Entry<TraceAddressSnapRange, T>, Lifespan> makeWay) {
+		boolean result = false;
+		while (true) {
+			var chunk = sub.entries().stream().limit(CHUNK_SIZE).toList();
+			for (Entry<TraceAddressSnapRange, T> entry : chunk) {
+				makeWay.accept(entry, span);
+				result = true;
+			}
+			if (chunk.size() < CHUNK_SIZE) {
+				break;
+			}
+		}
+		return result;
+	}
+
 	@Override
 	public boolean clear(Lifespan span, AddressRange range) {
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
-			boolean result = false;
-			for (Entry<TraceAddressSnapRange, T> entry : reduce(
-				TraceAddressSnapRangeQuery.intersecting(range, span)).entries()) {
-				makeWay(entry, span);
-				result = true;
-			}
-			return result;
+			return doClear(span, reduce(TraceAddressSnapRangeQuery.intersecting(range, span)),
+				this::makeWay);
 		}
 	}
 
 	@Override
 	public T put(TraceAddressSnapRange shape, T value) {
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
-			for (Entry<TraceAddressSnapRange, T> entry : reduce(
-				TraceAddressSnapRangeQuery.intersecting(shape)).entries()) {
-				makeWay(entry, shape.getLifespan());
-			}
+			doClear(shape.getLifespan(), reduce(TraceAddressSnapRangeQuery.intersecting(shape)),
+				this::makeWay);
 			return super.put(shape, value);
 		}
 	}
@@ -206,23 +221,16 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 		@Override
 		public boolean clear(Lifespan span, AddressRange range) {
 			try (LockHold hold = LockHold.lock(lock.writeLock())) {
-				boolean result = false;
-				for (Entry<TraceAddressSnapRange, T> entry : reduce(
-					TraceAddressSnapRangeQuery.intersecting(range, span)).entries()) {
-					makeWay(entry, span);
-					result = true;
-				}
-				return result;
+				return doClear(span, reduce(TraceAddressSnapRangeQuery.intersecting(range, span)),
+					this::makeWay);
 			}
 		}
 
 		@Override
 		public T put(TraceAddressSnapRange shape, T value) {
 			try (LockHold hold = LockHold.lock(lock.writeLock())) {
-				for (Entry<TraceAddressSnapRange, T> entry : reduce(
-					TraceAddressSnapRangeQuery.intersecting(shape)).entries()) {
-					makeWay(entry, shape.getLifespan());
-				}
+				doClear(shape.getLifespan(), reduce(TraceAddressSnapRangeQuery.intersecting(shape)),
+					this::makeWay);
 				return super.put(shape, value);
 			}
 		}
@@ -324,8 +332,9 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 		protected final Class<T> valueClass;
 
 		@SuppressWarnings({ "rawtypes", "unchecked" })
-		protected static <T extends Saveable> Class<DBTraceSaveablePropertyMapEntry<T>> getEntryClass(
-				Class<T> valueClass) {
+		protected static <T extends Saveable> Class<DBTraceSaveablePropertyMapEntry<T>>
+				getEntryClass(
+						Class<T> valueClass) {
 			return (Class) DBTraceSaveablePropertyMapEntry.class;
 		}
 

@@ -1126,7 +1126,7 @@ class ConsistencyChecker {
 			if ((hand.getPtrSpace().getType() == ConstTpl.const_type.real) &&
 				(hand.getPtrOffset().getType() == ConstTpl.const_type.real)) {
 				long offset = hand.getPtrOffset().getReal();
-				int size = (int) hand.getPtrSize().getReal();
+				int size = (int) hand.getSize().getReal();
 				for (OptimizeRecord rec : state.getDefinitions(offset, size)) {
 					rec.updateExport();
 					// NOTE: Could this just be updateRead?

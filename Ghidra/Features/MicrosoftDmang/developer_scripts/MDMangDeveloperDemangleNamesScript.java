@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// Developer script to process, line-by-line, mangled symbols from an input file to an output file,
+// where each output line is only the symbol's variable name
+//@category Demangler
 import java.io.*;
 import java.util.List;
 
@@ -120,11 +123,35 @@ public class MDMangDeveloperDemangleNamesScript extends GhidraScript {
 		demangler.setMangledSymbol(name);
 		try {
 			MDParsableItem item = demangler.demangle();
+			//return item.toString(); // Use this code to just return the demangled symbol
+			// The following attempts to grab the symbol path to output as the name.
 			SymbolPath sp = MDMangUtils.getSymbolPath(item);
-			return sp.toString();
+			if (sp != null) {
+				String s = sp.toString();
+				if (s.matches("(?s).*\\r?\\n.*")) {
+					// Symbols that are found at string locations in a program generally begin
+					// with "??_C" and contain and encoding of the user string to make the symbol
+					// unique.  During demangling, we chose to decode these symbols and if such
+					// symbols have an encoded newline character, the demangled output will contain
+					// a newline.  Since we want the ability to match our file output line by line
+					// with the file input, we want to remove those newlines here.  If for some
+					// reason, there are newlines in a demangled output that are not due to the
+					// demangling of a string symbol, we output error messages for further
+					// investigation.
+					if (!name.startsWith("??_C")) {
+						printerr("FOUND MULTI-LINE RESULT for input: " + name +
+							"\n--- START MULTI-LINE ---\n" + s + "\n--- END MULTI-LINE ---");
+					}
+				}
+				return sp.toString().replaceAll("[\\r\\n]+", " ");
+			}
+			return "COULD NOT GET SYMBOLPATH FOR: " + name;
 		}
 		catch (MDException e) {
-			return getError(name, e.getMessage());
+			String cleanMessage = e.getMessage() != null
+					? e.getMessage().replaceAll("[\\r\\n]+", " ")
+					: "Unknown MDException";
+			return getError(name, cleanMessage);
 		}
 	}
 

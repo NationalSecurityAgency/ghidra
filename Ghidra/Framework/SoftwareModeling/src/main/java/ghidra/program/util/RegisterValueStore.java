@@ -15,7 +15,8 @@
  */
 package ghidra.program.util;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
@@ -124,9 +125,10 @@ public class RegisterValueStore {
 				rangeMap.checkWritableState();
 			}
 			synchronized (this) {
-				rangeWriteCacheValue = newValue;
-				rangeWriteCacheMin = start;
-				rangeWriteCacheMax = end;
+				doSetValue(start, end, newValue);
+//				rangeWriteCacheValue = newValue;
+//				rangeWriteCacheMin = start;
+//				rangeWriteCacheMax = end;
 			}
 			return;
 		}

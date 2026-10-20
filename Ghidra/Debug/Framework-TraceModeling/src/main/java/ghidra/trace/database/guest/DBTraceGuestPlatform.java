@@ -23,6 +23,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import db.DBRecord;
 import generic.jar.ResourceFile;
+import ghidra.app.plugin.processors.sleigh.SleighLanguageDescription;
 import ghidra.app.util.PseudoInstruction;
 import ghidra.framework.data.OpenMode;
 import ghidra.lifecycle.Internal;
@@ -304,7 +305,7 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 	private static ResourceFile getSlaFile(Language language) {
 		SleighLanguageDescription desc =
 			(SleighLanguageDescription) language.getLanguageDescription();
-		return desc.getSlaFile();
+		return desc.getLanguageFile().getSlaFile();
 	}
 
 	@Override

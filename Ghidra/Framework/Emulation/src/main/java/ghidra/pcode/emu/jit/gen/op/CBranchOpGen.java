@@ -16,6 +16,7 @@
 package ghidra.pcode.emu.jit.gen.op;
 
 import ghidra.pcode.emu.jit.JitPassage.*;
+import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.BlockFlow;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
 import ghidra.pcode.emu.jit.analysis.JitDataFlowModel;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
@@ -37,17 +38,14 @@ import ghidra.program.model.pcode.PcodeOp;
 
 /**
  * The generator for a {@link JitCBranchOp cbranch}.
- * 
  * <p>
  * First, emits code to load the condition onto the JVM stack.
- * 
  * <p>
  * With an {@link IntBranch} record, this looks up the label for the target block and checks if a
  * transition is necessary. If one is necessary, it emits an {@link Op#ifeq(Emitter) ifeq} with the
  * transition and {@link Op#goto_(Emitter) goto} it guards. The {@code ifeq} skips to the
  * fall-through case. If a transition is not necessary, it simply emits an {@link Op#ifne(Emitter)
  * ifne} to the target label.
- * 
  * <p>
  * With an {@link ExtBranch} record, this does the same as {@link BranchOpGen} but guarded by an
  * {@link Op#ifeq(Emitter) ifeq} that skips to the fall-through case.
@@ -62,13 +60,13 @@ public enum CBranchOpGen implements OpGen<JitCBranchOp> {
 	 * @param <TB> the type of branch
 	 * @param <TO> the type of op
 	 */
-	abstract static class CBranchGen<TB extends RBranch, TO extends JitCBranchOp>
-			extends BranchGen<Bot, Ent<Bot, TInt>, TB, TO> {
+	abstract static class CBranchGen<TB extends RBranch>
+			extends BranchGen<Bot, Ent<Bot, TInt>, TB, JitCBranchOp> {
 		@Override
 		<THIS extends JitCompiledPassage> Emitter<Bot> genRun(Emitter<Ent<Bot, TInt>> em,
 				Local<TRef<THIS>> localThis, Local<TInt> localCtxmod,
-				RetReq<TRef<EntryPoint>> retReq, JitCodeGenerator<THIS> gen, TO op, TB branch,
-				JitBlock block) {
+				RetReq<TRef<EntryPoint>> retReq, JitCodeGenerator<THIS> gen, JitCBranchOp op,
+				TB branch, JitBlock block) {
 			return switch (branch.reach()) {
 				case WITH_CTXMOD -> genRunWithCtxmod(em, localThis, localCtxmod, retReq, gen, op,
 					exit(gen, branch), block);
@@ -94,7 +92,7 @@ public enum CBranchOpGen implements OpGen<JitCBranchOp> {
 	/**
 	 * A branch code generator for internal conditional branches
 	 */
-	static class IntCBranchGen extends CBranchGen<RIntBranch, JitCBranchOp> {
+	static class IntCBranchGen extends CBranchGen<RIntBranch> {
 		/** Singleton */
 		static final IntCBranchGen C_INT = new IntCBranchGen();
 
@@ -108,10 +106,9 @@ public enum CBranchOpGen implements OpGen<JitCBranchOp> {
 				Emitter<Ent<Bot, TInt>> em, Local<TRef<THIS>> localThis,
 				RetReq<TRef<EntryPoint>> retReq, JitCodeGenerator<THIS> gen, JitCBranchOp op,
 				RIntBranch branch, JitBlock block) {
-			JitBlock target = block.getTargetBlock(branch);
-			Lbl<Bot> label = gen.labelForBlock(target);
-			BlockTransition<THIS> transition =
-				VarGen.computeBlockTransition(localThis, gen, block, target);
+			BlockFlow flow = block.flowsFrom().get(branch);
+			Lbl<Bot> label = gen.labelForBlock(flow.to());
+			BlockTransition<THIS> transition = VarGen.computeBlockTransition(localThis, gen, flow);
 
 			if (!transition.needed()) {
 				return em
@@ -142,7 +139,7 @@ public enum CBranchOpGen implements OpGen<JitCBranchOp> {
 	/**
 	 * A branch code generator for external conditional branches
 	 */
-	static class ExtCBranchGen extends CBranchGen<RExtBranch, JitCBranchOp> {
+	static class ExtCBranchGen extends CBranchGen<RExtBranch> {
 		/** Singleton */
 		static final ExtCBranchGen C_EXT = new ExtCBranchGen();
 
@@ -194,13 +191,16 @@ public enum CBranchOpGen implements OpGen<JitCBranchOp> {
 	 *           {@link JitDataFlowModel} recognizes this and uses {@link JitFailVal} for
 	 *           {@link JitCBranchOp#cond()}. The "fail" value asserts that it never gets generated,
 	 *           which will ensure we apply special handling here.
+	 * @implNote No need to check for folded predicate. DataFlow already did, and it would have
+	 *           substituted this {@link JitCBranchOp} with something else. So, we know there's no
+	 *           folded predicate here.
 	 */
 	@Override
 	public <THIS extends JitCompiledPassage> LiveOpResult genRun(Emitter<Bot> em,
 			Local<TRef<THIS>> localThis, Local<TInt> localCtxmod, RetReq<TRef<EntryPoint>> retReq,
 			JitCodeGenerator<THIS> gen, JitCBranchOp op, JitBlock block, Scope scope) {
 		if (op.op() instanceof ExitPcodeOp && op.branch() instanceof RExtBranch eb) {
-			assert eb.reach() == Reachability.MAYBE_CTXMOD;
+			assert eb.reach() == CtxReach.MAYBE_CTXMOD;
 			var lblFall = em
 					.emit(Op::iload, localCtxmod)
 					.emit(Op::ifeq);
