@@ -672,6 +672,14 @@ task assembleAll() {
 	}
 }
 
+gradle.projectsEvaluated {
+	rootProject.tasks.named('assembleAll') {
+		dependsOn rootProject.subprojects.collect { p ->
+			p.tasks.matching { it.name == 'zipExtensions' }
+		}
+	}
+}
+
 /*********************************************************************************
  *
  * Creates the local installation zip.
