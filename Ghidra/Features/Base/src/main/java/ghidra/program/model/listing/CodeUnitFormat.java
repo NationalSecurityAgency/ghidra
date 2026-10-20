@@ -1578,8 +1578,8 @@ public class CodeUnitFormat {
 					(zeroScalarCount == 1 && primaryRef.isMemoryReference()))) {
 				// Process a sole zero scalar for an explicit memory reference as well as the
 				// existing no-reference case. Other scalars or addresses remain preferred.
-				++scalarCount;
-				processZeroScalar = true;
+				scalarCount += zeroScalarCount;
+				processZeroScalar = zeroScalarCount == 1;
 			}
 		}
 
