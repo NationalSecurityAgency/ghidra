@@ -20,24 +20,40 @@ import static org.junit.Assert.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 import generic.test.AbstractGenericTest;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.exception.InvalidInputException;
 
+@RunWith(Parameterized.class)
 public class VariableUtilitiesTest extends AbstractGenericTest {
+
+	@Parameters(name = "{0}")
+	public static Object[][] languages() {
+		return new Object[][] { { "Toy:BE:64:default" }, { "Toy:LE:64:default" } };
+	}
+
+	private final String languageName;
+
+	public VariableUtilitiesTest(String languageName) {
+		this.languageName = languageName;
+	}
 
 	private ProgramDB program;
 
 	@Before
 	public void setUp() throws Exception {
-		Language language = getLanguage("Toy:BE:64:default");
+		Language language = getLanguage(languageName);
 		CompilerSpec compilerSpec = language.getDefaultCompilerSpec();
 		program = new ProgramDB("Test", language, compilerSpec, this);
 	}
@@ -112,7 +128,7 @@ public class VariableUtilitiesTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testVariableImplGrowsToBigEndianParentRegister() throws Exception {
+	public void testVariableImplGrowsToParentRegister() throws Exception {
 		Register lowHalf = program.getRegister("r0l");
 		LocalVariableImpl variable =
 			new LocalVariableImpl("local", 0, new DWordDataType(), lowHalf, program);
@@ -121,6 +137,59 @@ public class VariableUtilitiesTest extends AbstractGenericTest {
 		assertEquals(program.getRegister("r0").getAddress(),
 			variable.getVariableStorage().getFirstVarnode().getAddress());
 		assertEquals(8, variable.getVariableStorage().size());
+		assertEquals(lowHalf.getAddress(), original.getFirstVarnode().getAddress());
+	}
+
+	private ProgramArchitecture standaloneArchitecture() {
+		return new ProgramArchitecture() {
+			@Override
+			public Language getLanguage() {
+				return program.getLanguage();
+			}
+
+			@Override
+			public AddressFactory getAddressFactory() {
+				return program.getAddressFactory();
+			}
+
+			@Override
+			public CompilerSpec getCompilerSpec() {
+				return program.getCompilerSpec();
+			}
+		};
+	}
+
+	@Test
+	public void testResizeScalarMemoryWithStandaloneArchitecture() throws Exception {
+		ProgramArchitecture architecture = standaloneArchitecture();
+		Address start = architecture.getAddressFactory().getDefaultAddressSpace().getAddress(0x1004);
+		VariableStorage original = new VariableStorage(architecture, start, 4);
+		VariableStorage expanded =
+			VariableUtilities.resizeStorage(original, new QWordDataType(), false, null);
+		Address expected = architecture.getLanguage().isBigEndian() ? start.subtract(4) : start;
+		assertEquals(expected, expanded.getFirstVarnode().getAddress());
+		assertEquals(8, expanded.size());
+		VariableStorage shrunk =
+			VariableUtilities.resizeStorage(expanded, new DWordDataType(), false, null);
+		assertEquals(start, shrunk.getFirstVarnode().getAddress());
+		assertEquals(4, shrunk.size());
+		assertEquals(start, original.getFirstVarnode().getAddress());
+	}
+
+	@Test
+	public void testResizeRegisterWithStandaloneArchitecture() throws Exception {
+		ProgramArchitecture architecture = standaloneArchitecture();
+		Register lowHalf = architecture.getLanguage().getRegister("r0l");
+		Register parent = architecture.getLanguage().getRegister("r0");
+		VariableStorage original = new VariableStorage(architecture, lowHalf);
+		VariableStorage expanded =
+			VariableUtilities.resizeStorage(original, new QWordDataType(), false, null);
+		assertEquals(parent.getAddress(), expanded.getFirstVarnode().getAddress());
+		assertEquals(8, expanded.size());
+		VariableStorage shrunk =
+			VariableUtilities.resizeStorage(expanded, new DWordDataType(), false, null);
+		assertEquals(lowHalf.getAddress(), shrunk.getFirstVarnode().getAddress());
+		assertEquals(4, shrunk.size());
 		assertEquals(lowHalf.getAddress(), original.getFirstVarnode().getAddress());
 	}
 

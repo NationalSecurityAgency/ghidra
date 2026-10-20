@@ -440,14 +440,11 @@ public class VariableUtilities {
 			return resizeStackVarnode(varnode, varnode.getSize() - sizeReduction, curStorage,
 				newSize, dataType, alignStack, function);
 		}
-		ProgramArchitecture programArch = curStorage.getProgramArchitecture();
-		Program program = function != null ? function.getProgram()
-				: (programArch instanceof Program p ? p : null);
-		Language language = programArch.getLanguage();
+		Language language = curStorage.getProgramArchitecture().getLanguage();
+		Program program = function != null ? function.getProgram() : null;
 		boolean isRegister = (program != null ? program.getRegister(varnode)
 				: language.getRegister(addr, varnode.getSize())) != null;
-		boolean bigEndian = program != null ? program.getMemory().isBigEndian()
-				: language.isBigEndian();
+		boolean bigEndian = language.isBigEndian();
 		boolean complexDt = (dataType instanceof Composite) || (dataType instanceof Array);
 		if (bigEndian && (isRegister || !complexDt)) {
 			return new Varnode(varnode.getAddress().add(sizeReduction),
@@ -475,12 +472,9 @@ public class VariableUtilities {
 				newSize, dataType, alignStack, function);
 		}
 		int size = varnode.getSize() + sizeIncrease;
-		ProgramArchitecture programArch = curStorage.getProgramArchitecture();
-		Program program = function != null ? function.getProgram()
-				: (programArch instanceof Program p ? p : null);
-		Language language = programArch.getLanguage();
-		boolean bigEndian = program != null ? program.getMemory().isBigEndian()
-				: language.isBigEndian();
+		Language language = curStorage.getProgramArchitecture().getLanguage();
+		Program program = function != null ? function.getProgram() : null;
+		boolean bigEndian = language.isBigEndian();
 		Register reg = program != null ? program.getRegister(varnode)
 				: language.getRegister(addr, varnode.getSize());
 		Address vnAddr = varnode.getAddress();
