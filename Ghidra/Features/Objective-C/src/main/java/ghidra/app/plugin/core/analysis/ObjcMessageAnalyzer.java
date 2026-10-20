@@ -261,7 +261,7 @@ public class ObjcMessageAnalyzer extends AbstractAnalyzer {
 						params.add(
 							new ParameterImpl("message_ref", dataTypes.messageRefPtr, program));
 						break;
-					case String s when isStub:
+					case String _ when isStub:
 						params.add(new ParameterImpl("self", dataTypes.id, program));
 						break;
 					default:
@@ -323,6 +323,10 @@ public class ObjcMessageAnalyzer extends AbstractAnalyzer {
 
 			int stretParamShift = isStructReturnCall(program, inputs[0], monitor) ? 1 : 0;
 			boolean isStub = isObjcMsgSendStub(program, callTarget);
+			if (inputs.length <= (isStub ? 1 : 2) + stretParamShift) {
+				// The decompiler found fewer parameters than the message send needs
+				continue;
+			}
 			Varnode receiverParam = inputs[1 + stretParamShift];
 			Varnode selectorParam = !isStub ? inputs[2 + stretParamShift] : null;
 			String receiver =
@@ -964,8 +968,9 @@ public class ObjcMessageAnalyzer extends AbstractAnalyzer {
 		List<Symbol> functionSymbols = symbolTable.getSymbols(currentMethodName, namespace);
 		if (functionSymbols.isEmpty()) {
 			// Walk up the superclass chain to see if the method is inherited
+			// null for class namespaces without Objective-C metadata (e.g. external classes)
 			List<Objc2Class> classList = classMap.get(namespace.getName());
-			if (classList.size() == 1) {
+			if (classList != null && classList.size() == 1) {
 				Objc2Class superClass = classList.getFirst().getSuperClass();
 				if (superClass != null) {
 					Objc2ClassRW data = superClass.getData();
