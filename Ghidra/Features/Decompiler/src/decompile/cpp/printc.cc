@@ -1837,7 +1837,7 @@ void PrintC::pushConstant(uintb val,const Datatype *ct,tagtype tag,
   case TYPE_PTR:
   case TYPE_PTRREL:
     if (option_NULL&&(val==0)) { // A null pointer
-      pushAtom(Atom(nullToken,vartoken,EmitMarkup::var_color,op,vn));
+      pushAtom(Atom(nullToken,vartoken,EmitMarkup::const_color,op,vn));
       return;
     }
     subtype = ((TypePointer *)ct)->getPtrTo();
