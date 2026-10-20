@@ -1,0 +1,30 @@
+source,expression,module,classification
+Ghidra/Debug/Debugger/src/main/java/ghidra/app/plugin/core/debug/gui/timeoverview/TimeOverviewColorPlugin.java:174,"ResourceManager.loadImage(""images/x-office-document-template.png"")",Ghidra/Debug/Debugger,literal call
+Ghidra/Features/BSim/src/main/java/ghidra/features/bsim/query/BsimPluginPackage.java:27,"ResourceManager.loadImage(""images/preferences-web-browser-shortcuts-32.png"")",Ghidra/Features/BSim,literal call
+Ghidra/Features/Base/src/main/java/ghidra/app/CorePluginPackage.java:26,"ResourceManager.loadImage(""images/applications-internet.png"")",Ghidra/Features/Base,literal call
+Ghidra/Features/Base/src/main/java/ghidra/app/DeveloperPluginPackage.java:26,"ResourceManager.loadImage(""images/applications-engineering.png"")",Ghidra/Features/Base,literal call
+Ghidra/Features/Base/src/main/java/ghidra/app/ExamplesPluginPackage.java:26,"ResourceManager.loadImage(""images/akregator.png"")",Ghidra/Features/Base,literal call
+Ghidra/Features/Base/src/main/java/ghidra/app/script/ScriptInfo.java:530,ResourceManager.loadImage(imageFile.getAbsolutePath(),Ghidra/Features/Base,computed/variable argument; VERIFY value flow
+Ghidra/Features/Base/src/main/java/ghidra/app/script/ScriptInfo.java:535,"ResourceManager.loadImage(""images/"" + toolbar)",Ghidra/Features/Base,literal call
+Ghidra/Features/Base/src/main/java/ghidra/app/util/XReferenceUtils.java:375,"ResourceManager.loadImage(""images/ThunkFunction.gif"")",Ghidra/Features/Base,literal call
+Ghidra/Features/Base/src/main/java/ghidra/framework/main/InfoPanel.java:152,ResourceManager.loadImage(CLOUD_REV_FILENAME),Ghidra/Features/Base,computed/variable argument; VERIFY value flow
+Ghidra/Features/Base/src/main/java/ghidra/framework/main/InfoPanel.java:158,ResourceManager.loadImage(CLOUD_FILENAME),Ghidra/Features/Base,computed/variable argument; VERIFY value flow
+Ghidra/Features/Base/src/main/java/ghidra/framework/main/InfoPanel.java:182,ResourceManager.loadImage(GHIDRA_FILENAME),Ghidra/Features/Base,computed/variable argument; VERIFY value flow
+Ghidra/Features/PyGhidra/src/main/java/ghidra/pyghidra/interpreter/CancelAction.java:39,"ResourceManager.loadImage(""images/dialog-cancel.png"")",Ghidra/Features/PyGhidra,literal call
+Ghidra/Features/PyGhidra/src/main/java/ghidra/pyghidra/interpreter/PyGhidraInterpreter.java:58,"ResourceManager.loadImage(""images/python.png"")",Ghidra/Features/PyGhidra,literal call
+Ghidra/Features/PyGhidra/src/main/java/ghidra/pyghidra/interpreter/ResetAction.java:39,"ResourceManager.loadImage(""images/reload3.png"")",Ghidra/Features/PyGhidra,literal call
+Ghidra/Framework/Docking/src/main/java/docking/action/builder/AbstractActionBuilder.java:468,ResourceManager.loadImage(iconFilepath),Ghidra/Framework/Docking,computed/variable argument; VERIFY value flow
+Ghidra/Framework/Docking/src/main/java/docking/options/editor/IconPropertyEditor.java:213,ResourceManager.loadImage(path),Ghidra/Framework/Docking,computed/variable argument; VERIFY value flow
+Ghidra/Framework/Docking/src/main/java/docking/util/image/ToolIconURL.java:77,ResourceManager.loadImage(iconLocation),Ghidra/Framework/Docking,computed/variable argument; VERIFY value flow
+Ghidra/Framework/Docking/src/main/java/docking/util/image/ToolIconURL.java:90,ResourceManager.loadImage(file.getName(),Ghidra/Framework/Docking,computed/variable argument; VERIFY value flow
+Ghidra/Framework/Docking/src/main/java/docking/util/image/ToolIconURL.java:170,ResourceManager.loadImage(ResourceManager.BIG_BOMB),Ghidra/Framework/Docking,computed/variable argument; VERIFY value flow
+Ghidra/Framework/Docking/src/main/java/docking/util/image/ToolIconURL.java:214,ResourceManager.findIcon(name),Ghidra/Framework/Docking,computed/variable argument; VERIFY value flow
+Ghidra/Framework/Docking/src/main/java/docking/util/image/ToolIconURL.java:283,ResourceManager.loadImage(filename),Ghidra/Framework/Docking,computed/variable argument; VERIFY value flow
+Ghidra/Framework/Docking/src/main/java/docking/widgets/tab/GTabPanel.java:855,"ResourceManager.loadIcon(""move.png"")",Ghidra/Framework/Docking,literal call
+Ghidra/Framework/Gui/src/main/java/generic/theme/IconValue.java:170,ResourceManager.loadIcon(baseIconString),Ghidra/Framework/Gui,computed/variable argument; VERIFY value flow
+Ghidra/Framework/Gui/src/main/java/resources/Icons.java:133,ResourceManager.loadImage(iconPath),Ghidra/Framework/Gui,computed/variable argument; VERIFY value flow
+Ghidra/Framework/Gui/src/main/java/resources/Icons.java:151,"ResourceManager.loadImage(iconPath, width, height)",Ghidra/Framework/Gui,computed/variable argument; VERIFY value flow
+Ghidra/Framework/Project/src/main/java/ghidra/MiscellaneousPluginPackage.java:26,"ResourceManager.loadImage(""images/plasma.png"")",Ghidra/Framework/Project,literal call
+Ghidra/Framework/Project/src/main/java/ghidra/framework/main/UtilityPluginPackage.java:26,"ResourceManager.loadImage(""images/applications-development-web.png"")",Ghidra/Framework/Project,literal call
+Ghidra/Framework/Project/src/main/java/ghidra/framework/plugintool/PluginPackagingProvider.java:31,"ResourceManager.loadImage(""images/applications-science.png"")",Ghidra/Framework/Project,literal call
+Ghidra/Framework/Project/src/main/java/ghidra/framework/task/gui/GProgressBar.java:364,ResourceManager.loadImages(filenames),Ghidra/Framework/Project,computed/variable argument; VERIFY value flow

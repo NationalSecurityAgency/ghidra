@@ -1,0 +1,29 @@
+source,expression,module,classification
+Ghidra/Features/Base/src/main/java/ghidra/app/plugin/core/colorizer/ColorizingPlugin.java:113,ColorUtils.getColor(rgba),Ghidra/Features/Base,computed/user-data/parser; VERIFY
+Ghidra/Features/Base/src/main/java/ghidra/app/plugin/core/colorizer/ColorizingServiceProvider.java:141,ColorUtils.getColor(rgba),Ghidra/Features/Base,computed/user-data/parser; VERIFY
+Ghidra/Features/Base/src/main/java/ghidra/app/plugin/core/interpreter/AnsiRenderer.java:103,"ColorUtils.getColor(CUBE_STEPS[r], CUBE_STEPS[g], CUBE_STEPS[b])",Ghidra/Features/Base,computed/user-data/parser; VERIFY
+Ghidra/Features/Base/src/main/java/ghidra/app/plugin/core/interpreter/AnsiRenderer.java:108,"ColorUtils.getColor(gray, gray, gray)",Ghidra/Features/Base,computed/user-data/parser; VERIFY
+Ghidra/Features/Base/src/main/java/ghidra/app/plugin/core/interpreter/AnsiRenderer.java:158,"ColorUtils.getColor(r, g, b)",Ghidra/Features/Base,computed/user-data/parser; VERIFY
+Ghidra/Features/Base/src/main/java/ghidra/app/plugin/core/marker/MarkerSetImpl.java:277,"ColorUtils.getColor(red, green, blue)",Ghidra/Features/Base,computed/user-data/parser; VERIFY
+Ghidra/Features/Base/src/main/java/ghidra/app/plugin/core/overview/entropy/OverviewPalette.java:79,"ColorUtils.getColor(red, green, blue)",Ghidra/Features/Base,computed/user-data/parser; VERIFY
+Ghidra/Features/Base/src/main/java/ghidra/app/plugin/core/overview/entropy/OverviewPalette.java:115,"ColorUtils.getColor(red, green, blue)",Ghidra/Features/Base,computed/user-data/parser; VERIFY
+Ghidra/Features/Base/src/main/java/ghidra/app/plugin/core/terminal/TerminalPanel.java:575,ColorUtils.getColor(CUBE_STEPS[cube.r(),Ghidra/Features/Base,computed/user-data/parser; VERIFY
+Ghidra/Features/Base/src/main/java/ghidra/app/plugin/core/terminal/TerminalPanel.java:580,ColorUtils.getColor(gray.v(),Ghidra/Features/Base,computed/user-data/parser; VERIFY
+Ghidra/Features/Base/src/main/java/ghidra/app/plugin/core/terminal/TerminalPanel.java:584,ColorUtils.getColor(rgb.r(),Ghidra/Features/Base,computed/user-data/parser; VERIFY
+Ghidra/Features/Base/src/main/java/ghidra/app/util/viewer/listingpanel/PropertyBasedBackgroundColorModel.java:99,ColorUtils.getColor(value),Ghidra/Features/Base,computed/user-data/parser; VERIFY
+Ghidra/Features/Base/src/main/java/ghidra/app/util/xml/PropertiesXmlMgr.java:257,"ColorUtils.getColor(XmlUtilities.parseInt(element.getAttribute(""VALUE"")",Ghidra/Features/Base,computed/user-data/parser; VERIFY
+Ghidra/Features/PDB/src/main/java/pdb/symbolserver/ui/LoadPdbDialog.java:894,ColorUtils.getColor(bg.getRGB(),Ghidra/Features/PDB,computed/user-data/parser; VERIFY
+Ghidra/Features/PDB/src/main/java/pdb/symbolserver/ui/LoadPdbDialog.java:935,ColorUtils.getColor(bg.getRGB(),Ghidra/Features/PDB,computed/user-data/parser; VERIFY
+Ghidra/Features/Sarif/src/main/java/sarif/managers/PropertiesSarifMgr.java:241,ColorUtils.getColor((Integer),Ghidra/Features/Sarif,computed/user-data/parser; VERIFY
+Ghidra/Framework/Docking/src/main/java/docking/StatusBar.java:329,"ColorUtils.getColor(value, value, value)",Ghidra/Framework/Docking,computed/user-data/parser; VERIFY
+Ghidra/Framework/Docking/src/main/java/docking/StatusBar.java:334,"ColorUtils.getColor(value, value, value)",Ghidra/Framework/Docking,computed/user-data/parser; VERIFY
+Ghidra/Framework/Docking/src/main/java/docking/StatusBar.java:336,"ColorUtils.getColor(value, value, value)",Ghidra/Framework/Docking,computed/user-data/parser; VERIFY
+Ghidra/Framework/Docking/src/main/java/docking/StatusBar.java:423,ColorUtils.getColor((255 - red),Ghidra/Framework/Docking,literal factory argument
+Ghidra/Framework/Docking/src/main/java/docking/options/editor/ColorEditor.java:136,ColorUtils.getColor(c.getRGB(),Ghidra/Framework/Docking,computed/user-data/parser; VERIFY
+Ghidra/Framework/Docking/src/main/java/docking/options/editor/SettableColorSwatchChooserPanel.java:357,WebColors.getColor(colorText),Ghidra/Framework/Docking,computed/user-data/parser; VERIFY
+Ghidra/Framework/Docking/src/main/java/docking/options/editor/SettableColorSwatchChooserPanel.java:360,WebColors.getColor('#' + colorText),Ghidra/Framework/Docking,computed/user-data/parser; VERIFY
+Ghidra/Framework/Docking/src/main/java/docking/options/editor/SettableColorSwatchChooserPanel.java:591,ColorUtils.getColor(rawValues[(i * 3),Ghidra/Framework/Docking,computed/user-data/parser; VERIFY
+Ghidra/Framework/Docking/src/main/java/docking/widgets/fieldpanel/internal/ColorRangeMap.java:67,ColorUtils.getColor(rgba),Ghidra/Framework/Docking,computed/user-data/parser; VERIFY
+Ghidra/Framework/Graph/src/main/java/ghidra/service/graph/GraphDisplayOptions.java:307,WebColors.getColor(colorValue),Ghidra/Framework/Graph,computed/user-data/parser; VERIFY
+Ghidra/Framework/Graph/src/main/java/ghidra/service/graph/GraphDisplayOptions.java:327,WebColors.getColor(colorValue),Ghidra/Framework/Graph,computed/user-data/parser; VERIFY
+Ghidra/Framework/Gui/src/main/java/generic/theme/ColorValue.java:96,WebColors.getColor(value),Ghidra/Framework/Gui,computed/user-data/parser; VERIFY

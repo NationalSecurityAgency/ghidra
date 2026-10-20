@@ -1,0 +1,64 @@
+source,size,expression,kind
+Ghidra/Debug/Debugger/src/main/java/ghidra/app/plugin/core/debug/gui/memview/MemviewProvider.java:31,12x12,"getScaledIcon(new GIcon(""icon.widget.imagepanel.reset""), 12, 12)",Java literal call; VERIFY icon association
+Ghidra/Features/Base/src/main/java/ghidra/app/merge/listing/ExternalAddConflictPanel.java:258,22x22,"new EmptyIcon(22, 22)",Java literal call; VERIFY icon association
+Ghidra/Features/Base/src/main/java/ghidra/app/nav/NavigatableIconFactory.java:38,8x0,"getScaledIcon(SNAPSHOT_ICON, 8, 8, 0)",Java literal call; VERIFY icon association
+Ghidra/Features/Base/src/main/java/ghidra/app/plugin/core/bento/BentoProvider.java:50,12x12,"getScaledIcon(new GIcon(""icon.debugger.refresh""), 12, 12)",Java literal call; VERIFY icon association
+Ghidra/Features/Base/src/main/java/ghidra/app/plugin/core/bento/BentoProvider.java:52,12x12,"getScaledIcon(new GIcon(""icon.widget.filterpanel.filter.off""), 12, 12)",Java literal call; VERIFY icon association
+Ghidra/Features/Base/src/main/java/ghidra/app/plugin/core/datamgr/actions/associate/CommitSingleDataTypeAction.java:45,16x16,"new EmptyIcon(16, 16)",Java literal call; VERIFY icon association
+Ghidra/Features/Base/src/main/java/ghidra/app/plugin/core/datamgr/actions/associate/UpdateSingleDataTypeAction.java:43,16x16,"new EmptyIcon(16, 16)",Java literal call; VERIFY icon association
+Ghidra/Features/Base/src/main/java/ghidra/app/script/ScriptInfo.java:539,16x16,"getScaledIcon(toolbarImage, 16, 16)",Java literal call; VERIFY icon association
+Ghidra/Features/Base/src/main/java/ghidra/app/util/viewer/field/LabelFieldFactory.java:67,12x16,"new EmptyIcon(12, 16)",Java literal call; VERIFY icon association
+Ghidra/Features/Base/src/main/java/ghidra/base/graph/CircleWithLabelVertexShapeProvider.java:43,10x10,"getScaledIcon(Icons.EXPAND_ALL_ICON, 10, 10)",Java literal call; VERIFY icon association
+Ghidra/Features/Base/src/main/java/ghidra/base/graph/CircleWithLabelVertexShapeProvider.java:45,10x10,"getScaledIcon(Icons.COLLAPSE_ALL_ICON, 10, 10)",Java literal call; VERIFY icon association
+Ghidra/Features/Base/src/main/java/ghidra/plugins/fsbrowser/FSBIcons.java:78,16x16,"getScaledIcon(new GIcon(""icon.filechooser.places.my.computer""), 16, 16)",Java literal call; VERIFY icon association
+Ghidra/Features/FunctionGraph/src/main/java/ghidra/app/plugin/core/functiongraph/graph/vertex/SetVertexMostRecentColorAction.java:60,16x16,"new EmptyIcon(16, 16)",Java literal call; VERIFY icon association
+Ghidra/Features/FunctionGraph/src/main/java/ghidra/app/plugin/core/functiongraph/graph/vertex/SetVertexMostRecentColorAction.java:64,16x16,"getScaledIcon(paintBrushImage, 16, 16)",Java literal call; VERIFY icon association
+Ghidra/Features/VersionTracking/src/main/java/ghidra/feature/vt/gui/actions/ReplaceDefaultMarkupItemAction.java:44,12x12,"getScaledIcon(warningIcon, 12, 12)",Java literal call; VERIFY icon association
+Ghidra/Features/VersionTracking/src/main/java/ghidra/feature/vt/gui/provider/markuptable/MarkupStatusIcons.java:31,12x12,"getScaledIcon(APPLY_ADD_MENU_ICON, 12, 12)",Java literal call; VERIFY icon association
+Ghidra/Features/VersionTracking/src/main/java/ghidra/feature/vt/gui/provider/markuptable/MarkupStatusIcons.java:32,12x12,"getScaledIcon(APPLY_REPLACE_MENU_ICON, 12, 12)",Java literal call; VERIFY icon association
+Ghidra/Features/VersionTracking/src/main/java/ghidra/feature/vt/gui/provider/matchtable/MatchMarkupStatusRenderer.java:86,45x16,"new EmptyIcon(45, 16)",Java literal call; VERIFY icon association
+Ghidra/Framework/Docking/src/main/java/docking/menu/MultiStateDockingAction.java:53,16x16,"new EmptyIcon(16, 16)",Java literal call; VERIFY icon association
+Ghidra/Framework/Docking/src/main/java/docking/widgets/imagepanel/ImagePanel.java:149,16x16,"new EmptyIcon(16, 16)",Java literal call; VERIFY icon association
+Ghidra/Framework/Docking/src/main/java/docking/widgets/table/GTableHeaderRenderer.java:37,14x14,"getScaledIcon(Icons.SORT_ASCENDING_ICON, 14, 14)",Java literal call; VERIFY icon association
+Ghidra/Framework/Docking/src/main/java/docking/widgets/table/GTableHeaderRenderer.java:39,14x14,"getScaledIcon(Icons.SORT_DESCENDING_ICON, 14, 14)",Java literal call; VERIFY icon association
+Ghidra/Framework/Docking/src/main/java/docking/widgets/table/GTableHeaderRenderer.java:42,0x0,"new EmptyIcon(0, 0)",Java literal call; VERIFY icon association
+Ghidra/Framework/Docking/src/main/java/docking/widgets/table/GTableHeaderRenderer.java:44,12x12,"getScaledIcon(new GIcon(""icon.widget.filterpanel.filter.off""), 12, 12)",Java literal call; VERIFY icon association
+Ghidra/Framework/Help/src/main/java/help/GHelpBroker.java:260,24x24,"new EmptyIcon(24, 24)",Java literal call; VERIFY icon association
+Ghidra/Framework/Help/src/main/java/help/GHelpBroker.java:275,24x24,"new EmptyIcon(24, 24)",Java literal call; VERIFY icon association
+Ghidra/Framework/Project/src/main/java/ghidra/framework/main/SetToolAssociationsDialog.java:312,24x24,"getScaledIcon( new GIcon(""icon.empty.20""), 24, 24)",Java literal call; VERIFY icon association
+Ghidra/Framework/Project/src/main/java/ghidra/framework/plugintool/dialog/PluginManagerComponent.java:275,32x32,"getScaledIcon(icon, 32, 32, 32)",Java literal call; VERIFY icon association
+Ghidra/Framework/Project/src/main/java/ghidra/framework/plugintool/dialog/PluginManagerComponent.java:328,32x32,"getScaledIcon(icon, 32, 32, 32)",Java literal call; VERIFY icon association
+Ghidra/Features/Base/data/base.file.extensions.icons.theme.properties:60,8x8,"icon.fsbrowser.file.overlay.imported = EMPTY_ICON{images/checkmark_green.gif[size(8,8)][move(8,8)]}",theme icon size modifier
+Ghidra/Features/Base/data/base.file.extensions.icons.theme.properties:61,8x8,"icon.fsbrowser.file.overlay.filesystem = EMPTY_ICON{images/ledgreen.png[size(8,8)][move(0,8)]}",theme icon size modifier
+Ghidra/Features/Base/data/base.file.extensions.icons.theme.properties:63,8x8,"icon.fsbrowser.file.overlay.missing.password = EMPTY_ICON{images/lock.png[size(8,8)][move(8,0)]}",theme icon size modifier
+Ghidra/Features/Base/data/base.icons.theme.properties:62,12x12,"icon.plugin.calltree.reference = icon_link.gif [size(12,12)][move(4,4)]",theme icon size modifier
+Ghidra/Features/Base/data/base.icons.theme.properties:82,12x12,"icon.plugin.codebrowser.mark.and.select.armed = MarkSelection.png {media-playback-start.png[size(12,12)][move(4,4)]}",theme icon size modifier
+Ghidra/Features/Base/data/base.icons.theme.properties:83,12x12,"icon.plugin.codebrowser.mark.and.select.unarmed = MarkSelection.png {media-playback-stop.png[size(12,12)][move(4,4)]}",theme icon size modifier
+Ghidra/Features/Base/data/base.icons.theme.properties:103,16x16,"icon.plugin.composite.editor.search.next = go-down.tango.16.png [size(16,16)]",theme icon size modifier
+Ghidra/Features/Base/data/base.icons.theme.properties:104,16x16,"icon.plugin.composite.editor.search.previous = go-up.tango.16.png [size(16,16)]",theme icon size modifier
+Ghidra/Features/Base/data/base.icons.theme.properties:147,10x10,"icon.plugin.datatypes.tree.node.archive.file.read.only = user-busy.png [size(10,10)]",theme icon size modifier
+Ghidra/Features/Base/data/base.icons.theme.properties:164,16x16,"icon.plugin.functiontags.add = 2rightarrow.png [size(16,16)]",theme icon size modifier
+Ghidra/Features/Base/data/base.icons.theme.properties:165,16x16,"icon.plugin.functiontags.remove = 2leftarrow.png [size(16,16)]",theme icon size modifier
+Ghidra/Features/Base/data/base.icons.theme.properties:167,16x16,"icon.plugin.functioncompare.new = page_white_c.png {bullet_star.png [size(16,16)][move(4,-4)]}",theme icon size modifier
+Ghidra/Features/Base/data/base.icons.theme.properties:171,10x10,"icon.plugin.functioncompare.open.function.table = page_white_c.png {icon.add [size(10,10)][move(10,10)]}",theme icon size modifier
+Ghidra/Features/Base/data/base.icons.theme.properties:214,16x16,"icon.plugin.navigation.bookmark = B.gif [size(16,16)]",theme icon size modifier
+Ghidra/Features/Base/data/base.icons.theme.properties:407,12x12,"icon.base.merge.struct.apply = icon.checkmark.green[size(12,12)]",theme icon size modifier
+Ghidra/Features/DecompilerDependent/data/decompiler.dependent.theme.properties:10,12x12,"icon.plugin.decompiler.text.finder.select.functions = icon.make.selection {FunctionScope.gif[size(12,12)][move(6,6)]}",theme icon size modifier
+Ghidra/Features/VersionTracking/data/version.tracking.theme.properties:51,12x12,"icon.version.tracking.action.match.apply.blocked = icon.lock{icon.checkmark.green[size(12,12)][move(4,0)]}",theme icon size modifier
+Ghidra/Features/VersionTracking/data/version.tracking.theme.properties:52,10x10,"icon.version.tracking.action.function.filter.not.accepted = icon.flag{dialog-cancel.png[size(10,10)][move(6,6)]}",theme icon size modifier
+Ghidra/Features/VersionTracking/data/version.tracking.theme.properties:98,8x8,"icon.version.tracking.match.table.status.accepted.error = flag.png {edit-delete.png[size(8,8)][move(10,8)]}",theme icon size modifier
+Ghidra/Features/VersionTracking/data/version.tracking.theme.properties:99,8x8,"icon.version.tracking.match.table.status.accepted.fully.applied = flag.png {checkmark_green.gif[size(8,8)][move(10,8)]}",theme icon size modifier
+Ghidra/Features/VersionTracking/data/version.tracking.theme.properties:100,8x8,"icon.version.tracking.match.table.status.accepted.fully.considered = flag.png {checkmark_yellow.gif[size(8,8)][move(10,8)]}",theme icon size modifier
+Ghidra/Features/VersionTracking/data/version.tracking.theme.properties:104,8x8,"icon.version.tracking.match.table.markup.status.disabled = ledgreen.png[size(8,8)][disabled]",theme icon size modifier
+Ghidra/Features/VersionTracking/data/version.tracking.theme.properties:105,8x8,"icon.version.tracking.match.table.markup.status.not.applied = ledorange.png[size(8,8)][move(0,4)]",theme icon size modifier
+Ghidra/Features/VersionTracking/data/version.tracking.theme.properties:106,8x8,"icon.version.tracking.match.table.markup.status.applied = ledgreen.png[size(8,8)][move(9,4)]",theme icon size modifier
+Ghidra/Features/VersionTracking/data/version.tracking.theme.properties:107,8x8,"icon.version.tracking.match.table.markup.status.rejected = ledpurple.png[size(8,8)][move(18,4)]",theme icon size modifier
+Ghidra/Features/VersionTracking/data/version.tracking.theme.properties:108,8x8,"icon.version.tracking.match.table.markup.status.ignored = ledblue.png[size(8,8)][move(27,4)]",theme icon size modifier
+Ghidra/Features/VersionTracking/data/version.tracking.theme.properties:109,8x8,"icon.version.tracking.match.table.markup.status.error = ledred.png[size(8,8)][move(36,4)]",theme icon size modifier
+Ghidra/Framework/Docking/data/docking.theme.properties:99,8x8,"icon.theme.font.increment = font.png{Plus.png[size(8,8)][move(8,8)]}",theme icon size modifier
+Ghidra/Framework/Docking/data/docking.theme.properties:100,8x8,"icon.theme.font.decrement = font.png{Minus.png[size(8,8)][move(8,8)]}",theme icon size modifier
+Ghidra/Framework/Docking/data/docking.theme.properties:133,12x12,"icon.text.field.clear = icon.delete[size(12,12)]",theme icon size modifier
+Ghidra/Framework/Project/data/project.icons.theme.properties:9,8x8,"icon.project.data.file.ghidra.read.only = user-busy.png [size(8,8)]",theme icon size modifier
+Ghidra/Framework/Project/data/project.icons.theme.properties:13,18x16,"icon.project.root.repo.connected.overlay = EMPTY_ICON[size(18,16)]{icon.project.root.repo.connected[move(12,8)]}",theme icon size modifier
+Ghidra/Framework/Project/data/project.icons.theme.properties:16,18x16,"icon.project.root.repo.disconnected.overlay = EMPTY_ICON[size(18,16)]{icon.project.root.repo.disconnected[move(12,8)]}",theme icon size modifier
+Ghidra/Framework/Project/data/project.icons.theme.properties:19,16x16,"icon.content.handler.link.overlay = EMPTY_ICON[size(16,16)]{icon.content.handler.link[move(0,8)]}",theme icon size modifier
