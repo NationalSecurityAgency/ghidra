@@ -20,7 +20,9 @@ import java.nio.charset.Charset;
 import ghidra.app.plugin.core.analysis.AnalysisOptionsUpdater;
 import ghidra.app.plugin.core.analysis.DWARFAnalyzer;
 import ghidra.app.services.Analyzer;
+import ghidra.framework.options.OptionType;
 import ghidra.framework.options.Options;
+import ghidra.util.charset.picker.CharsetOptionsEditor;
 
 /**
  * Import options exposed by the {@link DWARFAnalyzer}
@@ -575,8 +577,8 @@ public class DWARFImportOptions {
 		options.registerOption(OPTION_COPY_EXTERNAL_DEBUG_FILE_SYMBOLS,
 			isCopyExternalDebugFileSymbols(), null, OPTION_COPY_EXTERNAL_DEBUG_FILE_SYMBOLS_DESC);
 
-		options.registerOption(OPTION_CHARSET_NAME, getCharsetName(), null,
-			OPTION_CHARSET_NAME_DESC);
+		options.registerOption(OPTION_CHARSET_NAME, OptionType.STRING_TYPE, getCharsetName(), null,
+			OPTION_CHARSET_NAME_DESC, () -> new CharsetOptionsEditor());
 
 		options.registerOption(OPTION_SHOW_VARIABLE_STORAGE_INFO, isShowVariableStorageInfo(),
 			null, OPTION_SHOW_VARIABLE_STORAGE_DESC);

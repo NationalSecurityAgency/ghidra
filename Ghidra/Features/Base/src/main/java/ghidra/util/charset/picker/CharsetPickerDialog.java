@@ -35,7 +35,9 @@ public class CharsetPickerDialog extends DialogComponentProvider {
 	 */
 	public static CharsetInfo pickCharset(CharsetInfo defaultCSI) {
 		CharsetPickerDialog dlg = new CharsetPickerDialog();
-		dlg.setSelectedCharset(defaultCSI);
+		if (defaultCSI != null) {
+			dlg.setSelectedCharset(defaultCSI);
+		}
 		DockingWindowManager.showDialog(dlg);
 		return dlg.getSelectedCharset();
 	}

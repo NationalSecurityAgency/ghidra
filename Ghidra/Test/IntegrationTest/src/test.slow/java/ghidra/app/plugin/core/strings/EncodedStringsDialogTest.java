@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -124,7 +124,7 @@ public class EncodedStringsDialogTest extends AbstractProgramBasedTest {
 	public void testUTF8() {
 		showDialog(ram.getAddressRange());
 		Swing.runNow(() -> {
-			dialog.setSelectedCharset("UTF-8");
+			dialog.setSelectedCharset(StandardCharsets.UTF_8);
 		});
 		waitForTableModel(tableModel);
 		assertEquals(4, tableModel.getRowCount());
@@ -136,7 +136,7 @@ public class EncodedStringsDialogTest extends AbstractProgramBasedTest {
 		Swing.runNow(() -> {
 			dialog.setShowAdvancedOptions(true);
 			dialog.setExcludeNonStdCtrlChars(false);
-			dialog.setSelectedCharset("UTF-8");
+			dialog.setSelectedCharset(StandardCharsets.UTF_8);
 		});
 		waitForTableModel(tableModel);
 		assertEquals(5, tableModel.getRowCount());
@@ -148,7 +148,7 @@ public class EncodedStringsDialogTest extends AbstractProgramBasedTest {
 		Swing.runNow(() -> {
 			dialog.setShowAdvancedOptions(true);
 			dialog.setRequireValidStringOption(false);
-			dialog.setSelectedCharset("UTF-8");
+			dialog.setSelectedCharset(StandardCharsets.UTF_8);
 		});
 		waitForTableModel(tableModel);
 		assertEquals(4, tableModel.getRowCount());

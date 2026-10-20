@@ -58,7 +58,9 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
+import ghidra.util.charset.CharsetInfo;
 import ghidra.util.charset.CharsetInfoManager;
+import ghidra.util.charset.picker.CharsetPickerField;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.layout.PairLayout;
 import ghidra.util.table.GhidraTable;
@@ -87,7 +89,7 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 	private GhidraTable table;
 
 	private JPanel optionsPanel;
-	private GhidraComboBox<String> charsetComboBox;
+	private CharsetPickerField charsetPicker;
 	private JToggleButton showAdvancedOptionsButton;
 	private JToggleButton showScriptOptionsButton;
 	private JToggleButton showTranslateOptionsButton;
@@ -154,10 +156,10 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 	/**
 	 * For test/screen shot use
 	 *
-	 * @param charsetName set the charset
+	 * @param newCS set the charset
 	 */
-	public void setSelectedCharset(String charsetName) {
-		charsetComboBox.setSelectedItem(charsetName);
+	public void setSelectedCharset(Charset newCS) {
+		charsetPicker.setCharset(newCS);
 	}
 
 	/**
@@ -320,7 +322,7 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 
 		boolean ssm = selectedAddresses.getNumAddresses() == 1;
 
-		addRow(new GLabel("Charset:", SwingConstants.RIGHT), charsetComboBox,
+		addRow(new GLabel("Charset:", SwingConstants.RIGHT), charsetPicker,
 			showScriptOptionsButton, showTranslateOptionsButton, showAdvancedOptionsButton,
 			advancedFailedCountLabel);
 
@@ -442,15 +444,12 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 	}
 
 	private void buildCharsetPickerComponents() {
-		charsetComboBox = new GhidraComboBox<>();
-		charsetComboBox.getAccessibleContext().setAccessibleName("Charset Checkboxes");
-		for (String charsetName : CharsetInfoManager.getInstance().getCharsetNames()) {
-			charsetComboBox.addToModel(charsetName);
-		}
-		charsetComboBox.setSelectedItem(getDefault(EncodedStringsPlugin.CHARSET_OPTIONNAME,
-			EncodedStringsPlugin.CHARSET_DEFAULT_VALUE));
-		charsetComboBox.addItemListener(itemListener);
-		charsetComboBox.setToolTipText("Which character set to use to decode the raw bytes.");
+		String csName = getDefault(EncodedStringsPlugin.CHARSET_OPTIONNAME,
+			EncodedStringsPlugin.CHARSET_DEFAULT_VALUE);
+		charsetPicker = new CharsetPickerField(csName);
+		charsetPicker.setClearButtonVisible(false);
+		charsetPicker.addItemListener(itemListener);
+		charsetPicker.setToolTipText("Which character set to use to decode the raw bytes.");
 	}
 
 	private void buildOptionsButtonComponents() {
@@ -657,7 +656,7 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 
 	private void fixupComboBoxSizes() {
 		// Make the charset and script comboboxes the same width
-		requiredUnicodeScript.setPreferredSize(charsetComboBox.getPreferredSize());
+		requiredUnicodeScript.setPreferredSize(charsetPicker.getPreferredSize());
 	}
 
 	private void buildTranslateComponents() {
@@ -907,10 +906,7 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 	}
 
 	private void updateOptions() {
-		String charsetName = charsetComboBox.getSelectedItem().toString();
-		if (!charsetExists(charsetName)) {
-			charsetName = CharsetInfoManager.USASCII;
-		}
+		CharsetInfo csi = charsetPicker.getCharsetInfo();
 
 		boolean scriptOptions = showScriptOptionsButton.isSelected();
 		boolean excludeStringsWithErrors = excludeStringsWithCodecErrorCB.isSelected();
@@ -924,20 +920,20 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 					selectedAddresses.getNumAddresses())
 				: -1; // single string mode - no min len
 
-		AbstractStringDataType stringDT = CHARSET_TO_DT_MAP.get(charsetName);
+		AbstractStringDataType stringDT = CHARSET_TO_DT_MAP.get(csi.getName());
 		Settings settings = SettingsImpl.NO_SETTINGS;
 		if (stringDT == null) {
 			stringDT = StringDataType.dataType;
 			settings = new SettingsImpl();
-			CharsetSettingsDefinition.CHARSET.setCharset(settings, charsetName);
+			CharsetSettingsDefinition.CHARSET.setCharset(settings, csi.getName());
 		}
-		int charSize = CharsetInfoManager.getInstance().getCharsetCharSize(charsetName);
+		int charSize = csi.getMinBytesPerChar();
 
 		updateTrigramStringValidator(stringModelFilenameComboBox.getText());
 		boolean requireValidStrings = requireValidStringCB.isSelected();
 		boolean breakOnRef = breakOnRefCB.isSelected();
 
-		currentOptions = new EncodedStringsOptions(stringDT, settings, charsetName,
+		currentOptions = new EncodedStringsOptions(stringDT, settings, csi.getName(),
 			scriptOptions ? getRequiredScripts() : null, scriptOptions ? getAllowedScripts() : null,
 			excludeStringsWithErrors, excludeStringsWithNonStdCtrlChars, alignStartofString,
 			charSize, minStrLen, breakOnRef, stringValidator, requireValidStrings);
@@ -972,8 +968,7 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 
 	private Set<UnicodeScript> getRequiredScripts() {
 		Set<UnicodeScript> scripts = EnumSet.noneOf(UnicodeScript.class);
-		UnicodeScript selectedUnicodeScript =
-			(UnicodeScript) requiredUnicodeScript.getSelectedItem();
+		UnicodeScript selectedUnicodeScript = requiredUnicodeScript.getSelectedItem();
 		if (selectedUnicodeScript != null &&
 			selectedUnicodeScript != CharacterScriptUtils.ANY_SCRIPT_ALIAS) {
 			scripts.add(selectedUnicodeScript);
@@ -1054,7 +1049,7 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 		requiredUnicodeScript.removeItemListener(itemListener);
 
 		UnicodeScript currentSelectedScript =
-			(UnicodeScript) requiredUnicodeScript.getSelectedItem();
+			requiredUnicodeScript.getSelectedItem();
 
 		requiredUnicodeScript.setModel(getScriptListModel(stats));
 		if (stats.foundScriptCounts.containsKey(currentSelectedScript)) {
@@ -1112,16 +1107,6 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 				: "";
 		return "Search For Encoded Strings - %s %s"
 				.formatted(formatLength(addrs.getNumAddresses(), "addresses"), addrRangeStr);
-	}
-
-	private static boolean charsetExists(String charsetName) {
-		try {
-			Charset charset = Charset.forName(charsetName);
-			return charset != null;
-		}
-		catch (RuntimeException e) {
-			return false;
-		}
 	}
 
 	private static String formatLength(long length, String unitSuffix) {
