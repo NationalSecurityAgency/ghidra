@@ -114,7 +114,7 @@ class StringSearchFormat extends SearchFormat {
 			zByte <<= 1;
 			offset++;
 		}
-		return offset;
+		return Math.max(1, offset);
 	}
 
 	@Override
