@@ -15,14 +15,13 @@
  */
 package agent;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assert.*;
+import static org.junit.Assume.*;
 
 import java.io.*;
 import java.lang.annotation.*;
 import java.lang.reflect.Method;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -126,7 +125,7 @@ public abstract class AbstractRmiConnectorsTest
 			throw new NullPointerException("Terminal Service is not installed in test tool");
 		}
 		try (Pty pty = PtyFactory.local().openpty();
-				Terminal term = terminalService.createWithStreams(Charset.forName("utf8"),
+				Terminal term = terminalService.createWithStreams(StandardCharsets.UTF_8,
 					pty.getParent().getInputStream(), pty.getParent().getOutputStream())) {
 			PtySession session = pty.getChild().session(command.toArray(String[]::new), env);
 			return session.waitExited();

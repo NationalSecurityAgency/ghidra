@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ public class StringRenderBuilderTest extends AbstractGTest {
 	private static final Charset US_ASCII = StandardCharsets.US_ASCII;
 	private static final Charset UTF8 = StandardCharsets.UTF_8;
 	private static final Charset UTF16 = StandardCharsets.UTF_16;
-	private static final Charset UTF32 = Charset.forName("UTF-32");
+	private static final Charset UTF32 = StandardCharsets.UTF_32;
 
 	private ByteBuffer bb(int... values) {
 		return ByteBuffer.wrap(bytes(values));
@@ -239,8 +239,8 @@ public class StringRenderBuilderTest extends AbstractGTest {
 		// This probably isn't a big deal as BOMs aren't used frequently (?)
 		ByteBuffer bb =
 			bb(0xff, 0xfe, 0, 0, 't', 0, 0, 0, 'e', 0, 0, 0, 's', 0, 0, 0, 't', 0, 0, 0);
-		StringRenderBuilder srb = new StringRenderBuilder(Charset.forName("UTF-32LE"), 4,
-			StringRenderBuilder.DOUBLE_QUOTE);
+		StringRenderBuilder srb =
+			new StringRenderBuilder(StandardCharsets.UTF_32LE, 4, StringRenderBuilder.DOUBLE_QUOTE);
 		srb.decodeBytesUsingCharset(bb, RENDER_ENUM.ALL, true);
 		String s = srb.build();
 		assertEquals("U\"test\"", s);

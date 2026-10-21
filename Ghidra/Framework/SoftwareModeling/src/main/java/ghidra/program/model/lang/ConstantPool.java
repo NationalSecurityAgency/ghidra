@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,7 @@ import static ghidra.program.model.pcode.AttributeId.*;
 import static ghidra.program.model.pcode.ElementId.*;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.pcode.Encoder;
@@ -113,7 +113,7 @@ public abstract class ConstantPool {
 		}
 
 		public void setUTF8Data(String val) {
-			byteData = val.getBytes(Charset.forName("UTF-8"));
+			byteData = val.getBytes(StandardCharsets.UTF_8);
 		}
 	}
 
