@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -377,6 +377,64 @@ public class BigFloatTest extends AbstractGenericTest {
 		assertEquals(new BigDecimal(2.5d), FloatFormat.toBigFloat(2.5d).toBigDecimal());
 		assertEquals(new BigDecimal(-0.5d), FloatFormat.toBigFloat(-0.5d).toBigDecimal());
 		assertEquals(new BigDecimal(-2.5d), FloatFormat.toBigFloat(-2.5d).toBigDecimal());
+	}
+
+	@Test
+	public void testToDouble() {
+		// Test FINITE Kind, including signed zeros
+		Assert.assertEquals(0.0, FloatFormat.toBigFloat(0.0d).doubleValue(), 0.0);
+		Assert.assertEquals(-0.0, FloatFormat.toBigFloat(-0.0d).doubleValue(), 0.0);
+		// Check that the bit patterns of signed zeros match
+		Assert.assertEquals(Double.doubleToRawLongBits(0.0),
+			Double.doubleToRawLongBits(FloatFormat.toBigFloat(0.0d).doubleValue()));
+		Assert.assertEquals(Double.doubleToRawLongBits(-0.0),
+			Double.doubleToRawLongBits(FloatFormat.toBigFloat(-0.0d).doubleValue()));
+
+		// Test FINITE Standard Values
+		Assert.assertEquals(1.0, FloatFormat.toBigFloat(1.0d).doubleValue(), 0.0);
+		Assert.assertEquals(-2.5, FloatFormat.toBigFloat(-2.5d).doubleValue(), 0.0);
+		Assert.assertEquals(Double.MAX_VALUE,
+			FloatFormat.toBigFloat(Double.MAX_VALUE).doubleValue(), 0.0);
+		Assert.assertEquals(Double.MIN_VALUE,
+			FloatFormat.toBigFloat(Double.MIN_VALUE).doubleValue(), 0.0);
+
+		// Test INFINITE Kind
+		Assert.assertEquals(Double.POSITIVE_INFINITY,
+			FloatFormat.toBigFloat(Double.POSITIVE_INFINITY).doubleValue(), 0.0);
+		Assert.assertEquals(Double.NEGATIVE_INFINITY,
+			FloatFormat.toBigFloat(Double.NEGATIVE_INFINITY).doubleValue(), 0.0);
+
+		// Test NAN Kinds (QUIET and SIGNALING map to primitive NaN)
+		Assert.assertTrue(Double.isNaN(FloatFormat.toBigFloat(Double.NaN).doubleValue()));
+	}
+
+	@Test
+	public void testToFloat() {
+		// Test FINITE Kind, including signed zeros
+		Assert.assertEquals(0.0f, FloatFormat.toBigFloat(0.0f).floatValue(), 0.0f);
+		Assert.assertEquals(-0.0f, FloatFormat.toBigFloat(-0.0f).floatValue(), 0.0f);
+		// Check that the bit patterns of signed zeros match
+		Assert.assertEquals(Float.floatToRawIntBits(0.0f),
+			Float.floatToRawIntBits(FloatFormat.toBigFloat(0.0f).floatValue()));
+		Assert.assertEquals(Float.floatToRawIntBits(-0.0f),
+			Float.floatToRawIntBits(FloatFormat.toBigFloat(-0.0f).floatValue()));
+
+		// Test FINITE Standard Values
+		Assert.assertEquals(1.0f, FloatFormat.toBigFloat(1.0f).floatValue(), 0.0f);
+		Assert.assertEquals(-2.5f, FloatFormat.toBigFloat(-2.5f).floatValue(), 0.0f);
+		Assert.assertEquals(Float.MAX_VALUE, FloatFormat.toBigFloat(Float.MAX_VALUE).floatValue(),
+			0.0f);
+		Assert.assertEquals(Float.MIN_VALUE, FloatFormat.toBigFloat(Float.MIN_VALUE).floatValue(),
+			0.0f);
+
+		// Test INFINITE Kind
+		Assert.assertEquals(Float.POSITIVE_INFINITY,
+			FloatFormat.toBigFloat(Float.POSITIVE_INFINITY).floatValue(), 0.0f);
+		Assert.assertEquals(Float.NEGATIVE_INFINITY,
+			FloatFormat.toBigFloat(Float.NEGATIVE_INFINITY).floatValue(), 0.0f);
+
+		// Test NAN Kinds (QUIET and SIGNALING map to primitive NaN)
+		Assert.assertTrue(Float.isNaN(FloatFormat.toBigFloat(Float.NaN).floatValue()));
 	}
 
 	@Test

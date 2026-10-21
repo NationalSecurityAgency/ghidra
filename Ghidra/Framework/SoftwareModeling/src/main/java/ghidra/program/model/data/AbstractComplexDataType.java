@@ -20,7 +20,6 @@ import java.math.BigDecimal;
 import generic.complex.Complex;
 import ghidra.docking.settings.Settings;
 import ghidra.pcode.floatformat.BigFloat;
-import ghidra.pcode.floatformat.FloatFormatFactory;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.WrappedMemBuffer;
 
@@ -100,22 +99,20 @@ public abstract class AbstractComplexDataType extends BuiltIn {
 	}
 
 	private static double toDouble(Object obj) {
-		if (obj instanceof BigFloat) {
-			return Double.longBitsToDouble(
-				FloatFormatFactory.getFloatFormat(8).getEncoding((BigFloat) obj).longValue());
+		if (obj instanceof Double d) {
+			return d;
 		}
-		if (obj instanceof Double) {
-			return (Double) obj;
+		if (obj instanceof Float f) {
+			return f;
 		}
-		if (obj instanceof Float) {
-			return (Float) obj;
-		}
-		if (obj instanceof Short) {
+		if (obj instanceof Short s) {
 			// Looking at AbstractFloatDataType#getValue, this makes no sense to me
-			return (Short) obj;
+			return s;
 		}
-		if (obj instanceof BigDecimal) {
-			BigDecimal bd = (BigDecimal) obj;
+		if (obj instanceof BigFloat bf) {
+			return bf.doubleValue();
+		}
+		if (obj instanceof BigDecimal bd) {
 			return bd.doubleValue();
 		}
 		throw new IllegalArgumentException(obj + "(" + obj.getClass() + ")");
