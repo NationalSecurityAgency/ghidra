@@ -4,6 +4,9 @@
 # Ghidra headless ISF Server launch 
 #------------------------------------
 
+# NB: This code is included for demonstration purposes only, as is the implementation of IsfServer.
+# Real use cases should implement authentication if the server is to be used in an unrestricted environment.
+
 # Maximum heap memory may be changed if default is inadequate. This will generally be up to 1/4 of 
 # the physical memory available to the OS. Uncomment MAXMEM setting if non-default value is needed.
 MAXMEM=2G
