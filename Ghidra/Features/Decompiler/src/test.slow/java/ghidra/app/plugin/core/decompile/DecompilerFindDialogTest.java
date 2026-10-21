@@ -27,9 +27,7 @@ import docking.widgets.FindDialogResultsProvider;
 import docking.widgets.SearchLocation;
 import docking.widgets.dialogs.InputDialog;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import docking.widgets.table.GTable;
-import docking.widgets.table.GTableFilterPanel;
-import docking.widgets.table.RowObjectFilterModel;
+import docking.widgets.table.*;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.component.DecompilerFindDialog;
 import ghidra.app.decompiler.component.DecompilerPanel;
@@ -305,12 +303,14 @@ public class DecompilerFindDialogTest extends AbstractDecompilerTest {
 
 		GTable table = getResultsTable();
 		assertEquals(10, table.getRowCount());
-		SearchLocation firstUnfiltered = getRowObject(table, 0);
+		DecompilerSearchLocation firstUnfiltered =
+			(DecompilerSearchLocation) getRowObject(table, 0);
+		assertEquals("undefined4 *puVar3;", firstUnfiltered.getTextLine());
 
 		// filter so that the visible rows are not the first rows of the unfiltered list
 		setFilterText("puVar5");
 		int rowCount = table.getRowCount();
-		assertTrue(rowCount > 0 && rowCount < 10);
+		assertEquals(4, rowCount);
 		assertNotEquals(firstUnfiltered, getRowObject(table, 0));
 
 		// click the visible rows and verify the cursor location
@@ -334,7 +334,7 @@ public class DecompilerFindDialogTest extends AbstractDecompilerTest {
 
 		setFilterText("puVar5");
 		int rowCount = table.getRowCount();
-		assertTrue(rowCount > 1 && rowCount < 10);
+		assertEquals(4, rowCount);
 
 		// remove the last visible row
 		int lastRow = rowCount - 1;
@@ -343,9 +343,7 @@ public class DecompilerFindDialogTest extends AbstractDecompilerTest {
 
 		FindDialogResultsProvider tableProvider =
 			waitForComponentProvider(FindDialogResultsProvider.class);
-		DockingActionIf removeAction = getLocalAction(tableProvider, "Remove Items");
-		performAction(removeAction, tableProvider, true);
-		waitForSwing();
+		pressDelete(tableProvider);
 
 		List<SearchLocation> remaining = tableProvider.getResults();
 		assertEquals(9, remaining.size());
@@ -359,6 +357,12 @@ public class DecompilerFindDialogTest extends AbstractDecompilerTest {
 //==================================================================================================
 // Private Methods
 //==================================================================================================
+	private void pressDelete(FindDialogResultsProvider tableProvider) {
+
+		DockingActionIf removeAction = getLocalAction(tableProvider, "Remove Items");
+		performAction(removeAction, tableProvider, true);
+		waitForSwing();
+	}
 
 	private void clickAndVerify(int row, GTable table, List<DecompilerSearchLocation> results) {
 

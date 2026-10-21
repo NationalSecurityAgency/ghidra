@@ -19,7 +19,6 @@ import static org.junit.Assert.*;
 
 import java.awt.Component;
 import java.awt.Container;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.*;
 import javax.swing.table.TableModel;
@@ -889,8 +888,9 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 	public void testDeleteBlock() throws Exception {
 
 		Address minAddr = program.getMinAddress();
+
 		// select a row
-		table.addRowSelectionInterval(0, 0);
+		select(0, 0);
 
 		DockingActionIf action = getAction(plugin, "Delete Block");
 		performAction(action, false);
@@ -900,15 +900,8 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertNotNull(d);
 		assertEquals("Delete Memory Block?", d.getTitle());
 
-		JButton button = findButton(d.getComponent(), "Yes");
-		assertNotNull(button);
-
-		runSwingLater(() -> button.getActionListeners()[0].actionPerformed(null));
-		Thread.sleep(500);
-		while (!program.canLock()) {
-			Thread.sleep(100);
-		}
-		Thread.sleep(500);
+		pressButtonByText(d, "Yes", false);
+		waitForCondition(() -> program.canLock());
 
 		program.flushEvents();
 		waitForSwing();
@@ -925,8 +918,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 
 	@Test
 	public void testDeleteBlockAnswerNo() {
-		// select a row
-		table.addRowSelectionInterval(0, 0);
+		select(0, 0);
 
 		DockingActionIf action = getAction(plugin, "Delete Block");
 		performAction(action, false);
@@ -950,8 +942,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals(1, table.getRowCount());
 		assertEquals(".data", table.getValueAt(0, MemoryMapModel.NAME));
 
-		// select a row
-		table.addRowSelectionInterval(0, 0);
+		select(0, 0);
 
 		DockingActionIf action = getAction(plugin, "Delete Block");
 		performAction(action, false);
@@ -964,10 +955,8 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertTrue("Wrong block in message: " + message, message.contains(".data"));
 		assertFalse("Wrong block in message: " + message, message.contains(".text"));
 
-		JButton button = findButton(d.getComponent(), "No");
-		assertNotNull(button);
+		pressButtonByText(d, "No");
 
-		runSwing(() -> button.getActionListeners()[0].actionPerformed(null));
 		assertNotNull(memory.getBlock(".text"));
 		assertNotNull(memory.getBlock(".data"));
 	}
@@ -981,7 +970,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		});
 
 		int row = table.getModel().getRowCount() - 1;
-		table.setRowSelectionInterval(row, row);
+		select(row, row);
 
 		DockingActionIf action = getAction(plugin, "Move Block");
 		performAction(action, false);
@@ -1013,17 +1002,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		Address startAddr = block.getStart();
 		Address endAddr = block.getEnd();
 
-		// Select correct row
-		AtomicInteger row = new AtomicInteger();
-		runSwing(() -> {
-			for (int i = 0; i < table.getRowCount(); i++) {
-				if (".test".equals(table.getModel().getValueAt(i, 0))) {
-					table.setRowSelectionInterval(i, i);
-					row.set(i);
-					break;
-				}
-			}
-		});
+		int row = selectBlockRow(".test");
 
 		waitForSwing();
 
@@ -1075,18 +1054,14 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		assertTrue(okButton.isEnabled());
 
 		pressButton(okButton);
-		// wait for thread to start
-		Thread.sleep(1000);
-
-		while (!program.canLock()) {
-			Thread.sleep(100);
-		}
+		waitForTasks();
 
 		program.flushEvents();
 		waitForSwing();
-		assertEquals(".test", model.getValueAt(row.get(), MemoryMapModel.NAME));
-		assertEquals(newStart.toString(), model.getValueAt(row.get(), MemoryMapModel.START));
-		assertEquals(newEnd.toString(), model.getValueAt(row.get(), MemoryMapModel.END));
+
+		assertEquals(".test", model.getValueAt(row, MemoryMapModel.NAME));
+		assertEquals(newStart.toString(), model.getValueAt(row, MemoryMapModel.START));
+		assertEquals(newEnd.toString(), model.getValueAt(row, MemoryMapModel.END));
 	}
 
 	@Test
@@ -1097,7 +1072,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 				false);
 		});
 
-		table.setRowSelectionInterval(0, 0);
+		select(0, 0);
 
 		DockingActionIf action = getAction(plugin, "Move Block");
 		assertTrue(action.isEnabled());
@@ -1155,7 +1130,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 				false);
 		});
 
-		table.setRowSelectionInterval(0, 0);
+		select(0, 0);
 
 		DockingActionIf action = getAction(plugin, "Move Block");
 		assertTrue(action.isEnabled());
@@ -1213,7 +1188,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 				false);
 		});
 
-		table.setRowSelectionInterval(0, 0);
+		select(0, 0);
 
 		DockingActionIf action = getAction(plugin, "Move Block");
 		assertTrue(action.isEnabled());
@@ -1274,7 +1249,7 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 				false);
 		});
 
-		table.setRowSelectionInterval(0, 0);
+		select(0, 0);
 
 		DockingActionIf action = getAction(plugin, "Move Block");
 		assertTrue(action.isEnabled());
@@ -1322,6 +1297,22 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		String msg = findLabelStr(d.getComponent(), "statusLabel");
 		assertEquals("Block is already at 00000000", msg);
 		close(d);
+	}
+
+	private int selectBlockRow(String blockName) {
+		return runSwing(() -> {
+			for (int i = 0; i < table.getRowCount(); i++) {
+				if (blockName.equals(table.getModel().getValueAt(i, 0))) {
+					select(i, i);
+					return i;
+				}
+			}
+			return -1;
+		});
+	}
+
+	private void select(int row1, int row2) {
+		runSwing(() -> table.setRowSelectionInterval(row1, row2));
 	}
 
 	private void showProvider() {
