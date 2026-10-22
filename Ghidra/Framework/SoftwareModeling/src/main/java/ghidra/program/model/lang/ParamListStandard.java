@@ -99,8 +99,19 @@ public class ParamListStandard implements ParamList {
 				}
 			}
 
+			if (element.isUnboundedAllocation()) {
+				ParameterPieces allocated = new ParameterPieces();
+				int next = element.getAllocationAddrBySlot(status[grp], tp.getAlignedLength(), tp.getAlignment(), allocated);
+				if (next < 0) {
+					continue;
+				}
+				status[grp] = next;
+				param.address = allocated.address;
+			}
+			else {
 			status[grp] =
 				element.getAddrBySlot(status[grp], tp.getAlignedLength(), tp.getAlignment(), param);
+			}
 			if (param.address == null) {
 				continue;	// -tp- does not fit in this entry
 			}
@@ -372,6 +383,12 @@ public class ParamListStandard implements ParamList {
 		}
 		entry = new ParamEntry[pe.size()];
 		pe.toArray(entry);
+		for (int i = 0; i < entry.length; i++) {
+			if (entry[i].isUnboundedAllocation() &&
+				(!mainel.getName().equals(ELEM_INPUT.name()) || i != entry.length - 1)) {
+				throw new XmlParseException("Unbounded allocation requires the terminal input entry");
+			}
+		}
 
 		ArrayList<ModelRule> rules = new ArrayList<>();
 		for (;;) {

@@ -565,6 +565,7 @@ public:
 /// determined by its DatatypeFilter, and may have other criteria limiting when it applies
 /// (via QualifierFilter).
 class ModelRule {
+  bool atomicAllocation; ///< Stage all actions for checked explicit allocation
   DatatypeFilter *filter;		///< Which data-types \b this rule applies to
   QualifierFilter *qualifier;		///< Additional qualifiers for when the rule should apply (if non-null)
   AssignAction *assign;			///< How the Address should be assigned
@@ -572,7 +573,7 @@ class ModelRule {
   vector<AssignAction *> sideeffects;	///< Extra actions that happen on success
 public:
   ModelRule(void) {
-    filter = (DatatypeFilter *)0; qualifier = (QualifierFilter *)0; assign = (AssignAction *)0; }	///< Constructor for use with decode
+    atomicAllocation = false; filter = (DatatypeFilter *)0; qualifier = (QualifierFilter *)0; assign = (AssignAction *)0; }	///< Constructor for use with decode
   ModelRule(const ModelRule &op2,const ParamListStandard *res);	///< Copy constructor
   ModelRule(const DatatypeFilter &typeFilter,const AssignAction &action,const ParamListStandard *res);	///< Construct from components
   ~ModelRule(void);	///< Destructor
@@ -647,6 +648,7 @@ public:
 /// Any input stack allocations can happen either before or after any output stack allocation.
 /// The action can optionally add an extra stack alignment between the first allocations and second allocations.
 class ShareStackAction : public SharedAction {
+  int4 checkedSlot(int4 slotnum) const; ///< Align opted-in allocation without wrapping
   const ParamEntry *inputStackEntry;	///< Stack resource for input parameters
   const ParamEntry *outputStackEntry;	///< Stack resource for output parameters
   bool inputFirst;			///< \b true if input stack populated before output stack

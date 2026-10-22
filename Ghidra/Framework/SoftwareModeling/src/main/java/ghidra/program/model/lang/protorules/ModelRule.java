@@ -36,6 +36,7 @@ import ghidra.xml.*;
  *  (via QualifierFilter).
  */
 public class ModelRule {
+	private boolean atomicAllocation;
 	private DatatypeFilter filter;			// Which data-types this rule applies to
 	private QualifierFilter qualifier;		// Additional qualifiers for when the rule should apply (if non-null)
 	private AssignAction assign;			// How the Address should be assigned
@@ -55,6 +56,7 @@ public class ModelRule {
 	 * @throws InvalidInputException if necessary resources are not present in the resource set
 	 */
 	public ModelRule(ModelRule op2, ParamListStandard res) throws InvalidInputException {
+		atomicAllocation = res.getStackEntry() != null && res.getStackEntry().isUnboundedAllocation();
 		if (op2.filter != null) {
 			filter = op2.filter.clone();
 		}
@@ -98,6 +100,7 @@ public class ModelRule {
 			throws InvalidInputException
 
 	{
+		atomicAllocation = res.getStackEntry() != null && res.getStackEntry().isUnboundedAllocation();
 		filter = typeFilter.clone();
 		qualifier = null;
 		assign = action.clone(res);
@@ -182,6 +185,28 @@ public class ModelRule {
 			return AssignAction.FAIL;
 		}
 
+		if (atomicAllocation) {
+			int[] stagedStatus = status.clone();
+			ParameterPieces staged = new ParameterPieces();
+			copyPieces(res, staged);
+			for (AssignAction precondition : preconditions) {
+				if (precondition.assignAddress(dt, proto, pos, dtManager, stagedStatus, staged) == AssignAction.FAIL) {
+					return AssignAction.FAIL;
+				}
+			}
+			int response = assign.assignAddress(dt, proto, pos, dtManager, stagedStatus, staged);
+			if (response == AssignAction.FAIL) {
+				return response;
+			}
+			for (AssignAction sideeffect : sideeffects) {
+				if (sideeffect.assignAddress(dt, proto, pos, dtManager, stagedStatus, staged) == AssignAction.FAIL) {
+					return AssignAction.FAIL;
+				}
+			}
+			System.arraycopy(stagedStatus, 0, status, 0, status.length);
+			copyPieces(staged, res);
+			return response;
+		}
 		int[] tmpStatus = status.clone();
 		for (int i = 0; i < preconditions.length; ++i) {
 			preconditions[i].assignAddress(dt, proto, pos, dtManager, tmpStatus, res);
@@ -202,6 +227,15 @@ public class ModelRule {
 	 * @param encoder is the stream encode
 	 * @throws IOException for problems with the stream
 	 */
+	private static void copyPieces(ParameterPieces source, ParameterPieces target) {
+		target.address = source.address;
+		target.type = source.type;
+		target.joinPieces = source.joinPieces == null ? null : source.joinPieces.clone();
+		target.isThisPointer = source.isThisPointer;
+		target.hiddenReturnPtr = source.hiddenReturnPtr;
+		target.isIndirect = source.isIndirect;
+	}
+
 	public void encode(Encoder encoder) throws IOException {
 		encoder.openElement(ELEM_RULE);
 		filter.encode(encoder);
@@ -228,6 +262,7 @@ public class ModelRule {
 	public void restoreXml(XmlPullParser parser, ParamListStandard res) throws XmlParseException
 
 	{
+		atomicAllocation = res.getStackEntry() != null && res.getStackEntry().isUnboundedAllocation();
 		XmlElement elemId = parser.start(ELEM_RULE.name());
 		filter = DatatypeFilter.restoreFilterXml(parser);
 		ArrayList<QualifierFilter> qualifierList = new ArrayList<>();

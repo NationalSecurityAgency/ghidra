@@ -1641,6 +1641,16 @@ If an output varnode matches no <code>&lt;pentry&gt;</code>, then it is rejected
   <td>(Optional) Alignment of successive locations within this entry</td>
 </tr>
 <tr>
+  <td align='right'><code>allocation</code></td>
+  <td/>
+  <td>(Optional) <code>bounded</code> (the default) or <code>unbounded</code>.
+  The latter permits checked explicit signature allocation beyond <code>maxsize</code>
+  for an independent, forward, terminal input stack entry. Recognition of inferred
+  parameters remains bounded by <code>maxsize</code>. Allocation still rejects
+  misaligned storage and addresses outside the signed stack address range. Older
+  compiler-specification readers do not support this attribute.</td>
+</tr>
+<tr>
   <td align='right'><code>metatype</code></td>
   <td/>
   <td>(Optional) Restriction on datatype:
