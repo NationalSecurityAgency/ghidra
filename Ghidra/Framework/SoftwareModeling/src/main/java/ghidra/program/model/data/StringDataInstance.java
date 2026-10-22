@@ -1183,7 +1183,7 @@ public class StringDataInstance {
 				}
 				ByteBuffer result = allocBuf(buf,
 					encoded.limit() + StringDataInstance.SIZEOF_PASCAL64k_STR_LEN_FIELD);
-				result.putShort((short) encoded.limit());
+				result.putShort((short) (encoded.limit() / charSize));
 				result.put(encoded);
 				return result.array();
 			}
