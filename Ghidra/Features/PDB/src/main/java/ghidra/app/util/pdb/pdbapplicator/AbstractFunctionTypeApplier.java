@@ -170,8 +170,11 @@ public abstract class AbstractFunctionTypeApplier extends MsDataTypeApplier {
 
 			AbstractMsType argMsType = applicator.getTypeRecord(arg);
 			if (argMsType instanceof PrimitiveMsType primitive && primitive.isNoType()) {
-				// Arguments list is empty. (There better not have been any arguments up until
-				//  now.)
+				// As the only entry, the arguments list is empty.  After other arguments, it
+				//  marks a variadic function ("...").
+				if (!parameterDefinitionList.isEmpty()) {
+					functionDefinition.setVarArgs(true);
+				}
 				break;
 			}
 
