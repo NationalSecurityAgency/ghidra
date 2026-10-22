@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <programcounter register="PC"/>
+  <default_symbols>
+    <symbol name="P1DDR" address="0" entry="false" volatile="true"/>
+    <symbol name="P2DDR" address="1" entry="false" volatile="true"/>
+    <symbol name="PORT1" address="2" entry="false" volatile="true"/>
+    <symbol name="PORT2" address="3" entry="false" volatile="true"/>
+    <symbol name="P3DDR" address="4" entry="false" volatile="true"/>
+    <symbol name="P4DDR" address="5" entry="false" volatile="true"/>
+    <symbol name="PORT3" address="6" entry="false" volatile="true"/>
+    <symbol name="PORT4" address="7" entry="false" volatile="true"/>
+    <symbol name="TCSR1" address="8" entry="false" volatile="true"/>
+    <symbol name="FRCH" address="9" entry="false" volatile="true"/>
+    <symbol name="FRCL" address="A" entry="false" volatile="true"/>
+    <symbol name="OCR1H" address="B" entry="false" volatile="true"/>
+    <symbol name="OCR1L" address="C" entry="false" volatile="true"/>
+    <symbol name="ICRH" address="D" entry="false" volatile="true"/>
+    <symbol name="ICRL" address="E" entry="false" volatile="true"/>
+    <symbol name="TCSR2" address="F" entry="false" volatile="true"/>
+    <symbol name="RMCR" address="10" entry="false" volatile="true"/>
+    <symbol name="TRCSR1" address="11" entry="false" volatile="true"/>
+    <symbol name="RDR" address="12" entry="false" volatile="true"/>
+    <symbol name="TDR" address="13" entry="false" volatile="true"/>
+    <symbol name="RP5CR" address="14" entry="false" volatile="true"/>
+    <symbol name="PORT5" address="15" entry="false" volatile="true"/>
+    <symbol name="P6DDR" address="16" entry="false" volatile="true"/>
+    <symbol name="PORT6" address="17" entry="false" volatile="true"/>
+    <symbol name="PORT7" address="18" entry="false" volatile="true"/>
+    <symbol name="OCR2H" address="19" entry="false" volatile="true"/>
+    <symbol name="OCR2L" address="1A" entry="false" volatile="true"/>
+    <symbol name="TCSR3" address="1B" entry="false" volatile="true"/>
+    <symbol name="TCONR" address="1C" entry="false" volatile="true"/>
+    <symbol name="T2CNT" address="1D" entry="false" volatile="true"/>
+    <symbol name="TRCSR2" address="1E" entry="false" volatile="true"/>
+    <symbol name="TSTREG" address="1F" entry="false" volatile="true"/>
+    <symbol name="P5DDR" address="20" entry="false" volatile="true"/>
+    <symbol name="P6CSR" address="21" entry="false" volatile="true"/>
+
+    <symbol name="TRAP" address="FFEE" entry="true" type="code_ptr"/>
+    <symbol name="SCI" address="FFF0" entry="true" type="code_ptr"/>
+    <symbol name="TOF" address="FFF2" entry="true" type="code_ptr"/>
+    <symbol name="OCF" address="FFF4" entry="true" type="code_ptr"/>
+    <symbol name="ICF" address="FFF6" entry="true" type="code_ptr"/>
+    <symbol name="IRQ1" address="FFF8" entry="true" type="code_ptr"/>
+    <symbol name="SWI" address="FFFA" entry="true" type="code_ptr"/>
+    <symbol name="NMI" address="FFFC" entry="true" type="code_ptr"/>
+    <symbol name="RESET" address="FFFE" entry="true" type="code_ptr"/>
+  </default_symbols>
+  <default_memory_blocks>
+    <memory_block name="IO" start_address="0" length="0x2f" initialized="false"/>
+    <memory_block name="INT_RAM" start_address="0x40" length="0x100" initialized="false"/>
+  </default_memory_blocks>
+</processor_spec>
