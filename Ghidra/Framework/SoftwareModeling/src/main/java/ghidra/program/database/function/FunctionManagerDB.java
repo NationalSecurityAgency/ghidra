@@ -37,6 +37,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.symbol.*;
+import ghidra.program.model.util.AddressSetPropertyMap;
 import ghidra.program.model.util.PropertyMapManager;
 import ghidra.program.model.util.StringPropertyMap;
 import ghidra.program.util.*;
@@ -513,6 +514,48 @@ public class FunctionManagerDB implements FunctionManager {
 			}
 			return getFunction(symbol.getID());
 		}
+	}
+
+	private static final String FUNCTION_BODY_EXT_PREFIX = "FunctionBodyExt:";
+
+	@Override
+	public Set<Function> getFunctionsContaining(Address addr) {
+		// Primary owner (single-owner namespace map view).
+		Function primary = getFunctionContaining(addr);
+		if (addr.isExternalAddress()) {
+			return primary == null ? Collections.emptySet() : Collections.singleton(primary);
+		}
+		// Plus any function whose published body-extension contains
+		// addr.  Processor analyzers populate body extensions via
+		// "FunctionBodyExt:<entry-hex>" AddressSetPropertyMaps.
+		String[] names = program.getAddressSetPropertyMapNames();
+		if (names == null || names.length == 0) {
+			return primary == null ? Collections.emptySet() : Collections.singleton(primary);
+		}
+		Set<Function> result = null;
+		for (String name : names) {
+			if (!name.startsWith(FUNCTION_BODY_EXT_PREFIX)) continue;
+			AddressSetPropertyMap m = program.getAddressSetPropertyMap(name);
+			if (m == null) continue;
+			AddressSetView set = m.getAddressSet();
+			if (set == null || !set.contains(addr)) continue;
+			long entryOff;
+			try {
+				entryOff = Long.parseLong(name.substring(FUNCTION_BODY_EXT_PREFIX.length()), 16);
+			}
+			catch (NumberFormatException nfe) {
+				continue;
+			}
+			Function f = getFunctionAt(addr.getAddressSpace().getAddress(entryOff));
+			if (f == null) continue;
+			if (result == null) {
+				result = new LinkedHashSet<>();
+				if (primary != null) result.add(primary);
+			}
+			result.add(f);
+		}
+		if (result != null) return result;
+		return primary == null ? Collections.emptySet() : Collections.singleton(primary);
 	}
 
 	@Override
