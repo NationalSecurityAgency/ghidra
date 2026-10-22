@@ -99,4 +99,20 @@ class LabelHistoryAdapterNoTable extends LabelHistoryAdapter {
 		throw new UnsupportedOperationException();
 	}
 
+	/**
+	 * @see ghidra.program.database.symbol.LabelHistoryAdapter#anonymizeAllRecords(java.lang.String)
+	 */
+	@Override
+	void anonymizeAllRecords(String anonymousName) throws IOException {
+		// No-op: no table to anonymize
+	}
+
+	/**
+	 * @see ghidra.program.database.symbol.LabelHistoryAdapter#anonymizeRecordsByAddress(java.lang.String, long)
+	 */
+	@Override
+	void anonymizeRecordsByAddress(String anonymousName, long addr) throws IOException {
+		// No-op: no table to anonymize
+	}
+
 }
