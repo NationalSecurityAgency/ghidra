@@ -101,6 +101,7 @@ public:
   int4 spacing;			///< Spaces to print around operator
   int4 bump;			///< Spaces to indent if we break here
   OpToken *negate;		///< The token representing the negation of this token
+  OpToken *lrswap;		///< The token representing the token used if the left-hand and right-hand sides are swapped
 };
 
 /// \brief The base class API for emitting a high-level language
