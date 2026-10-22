@@ -15,6 +15,7 @@
 ##
 import sys
 import contextlib
+from jpype import JProxy
 from typing import Union, TYPE_CHECKING, Tuple, List, Callable, Generator, Any, Optional
 
 from pyghidra.converters import *  # pylint: disable=wildcard-import, unused-wildcard-import
@@ -186,12 +187,19 @@ def analyze(
             def get_log(manager, _is_cancelled):
                 nonlocal mgr_log
                 mgr_log += manager.getMessageLog().toString()
-            mgr.addListener(get_log)
-            mgr.startAnalysis(monitor, True); # yields to analysis
-            if not monitor.isCancelled():
-                monitor.cancel()
-            GhidraProgramUtilities.markProgramAnalyzed(program)
-            return mgr_log
+            listener = JProxy(
+                "ghidra.app.plugin.core.analysis.AutoAnalysisManagerListener",
+                dict={"analysisEnded": get_log}
+            )
+            mgr.addListener(listener)
+            try:
+                mgr.startAnalysis(monitor, True); # yields to analysis
+                if not monitor.isCancelled():
+                    GhidraProgramUtilities.markProgramAnalyzed(program)
+                    monitor.cancel()
+                return mgr_log
+            finally:
+                mgr.removeListener(listener)
         finally:
             GhidraScriptUtil.releaseBundleHostReference()
     
