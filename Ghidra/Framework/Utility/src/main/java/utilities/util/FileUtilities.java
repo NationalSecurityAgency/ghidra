@@ -173,7 +173,7 @@ public final class FileUtilities {
 			if (fis.skip(offset) != offset) {
 				throw new IOException("Did not skip to the specified offset!");
 			}
-			int n = fis.read(data);
+			int n = fis.readNBytes(data, 0, data.length);
 			if (n != length) {
 				throw new IOException("Did not read expected number of bytes! Expected " + length +
 					", but read " + n);
