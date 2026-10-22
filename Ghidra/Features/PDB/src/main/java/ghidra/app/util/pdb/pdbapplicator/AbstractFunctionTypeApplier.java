@@ -158,8 +158,8 @@ public abstract class AbstractFunctionTypeApplier extends MsDataTypeApplier {
 		}
 	}
 
-	private boolean setArguments(FunctionDefinitionDataType functionDefinition, AbstractMsType type)
-			throws CancelledException, PdbException {
+	private boolean setArguments(FunctionDefinitionDataType functionDefinition, AbstractMsType type,
+			CallingConvention convention) throws CancelledException, PdbException {
 
 		List<RecordNumber> args = getArgsRecordNumbers(type);
 
@@ -170,8 +170,11 @@ public abstract class AbstractFunctionTypeApplier extends MsDataTypeApplier {
 
 			AbstractMsType argMsType = applicator.getTypeRecord(arg);
 			if (argMsType instanceof PrimitiveMsType primitive && primitive.isNoType()) {
-				// Arguments list is empty. (There better not have been any arguments up until
-				//  now.)
+				// When not empty, a trailing T_NOTYPE signifies varargs, but only for
+				// valid calling conventions
+				if (parameterCount > 0 || callingConventionAllowsVarargs(convention)) {
+					functionDefinition.setVarArgs(true);
+				}
 				break;
 			}
 
@@ -215,6 +218,20 @@ public abstract class AbstractFunctionTypeApplier extends MsDataTypeApplier {
 		return true;
 	}
 
+	/**
+	 * Validates the calling convention to ensure unprototyped (e.g., f())
+	 * __stdcall or __fastcall records aren't incorrectly flagged as variadic
+	 */
+	private boolean callingConventionAllowsVarargs(CallingConvention convention) {
+		if (convention == null) {
+			return true;
+		}
+		// Allow all others; note that if they do not permit variadic, the data wouldn't
+		// show it anyways, so no harm
+		return convention != CallingConvention.NEAR_STD &&
+			convention != CallingConvention.NEAR_FAST;
+	}
+
 	@Override
 	boolean apply(AbstractMsType type) throws CancelledException, PdbException {
 
@@ -228,12 +245,11 @@ public abstract class AbstractFunctionTypeApplier extends MsDataTypeApplier {
 		FunctionDefinitionDataType functionDefinition = new FunctionDefinitionDataType(
 			cpFunction, "_func", applicator.getDataTypeManager());
 
-		setReturnType(functionDefinition, type);
-		setArguments(functionDefinition, type);
 		Pointer thisPointer = getThisPointer(type);
-
 		CallingConvention convention = getCallingConvention(type);
 		setCallingConvention(functionDefinition, convention, thisPointer);
+		setReturnType(functionDefinition, type);
+		setArguments(functionDefinition, type, convention);
 
 		DataTypeNamingUtil.setMangledAnonymousFunctionName(functionDefinition);
 		DataType dataType = functionDefinition;
