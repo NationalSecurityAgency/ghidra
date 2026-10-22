@@ -1,0 +1,2 @@
+@define X68KTRAP ""
+@include "68000.sinc"
