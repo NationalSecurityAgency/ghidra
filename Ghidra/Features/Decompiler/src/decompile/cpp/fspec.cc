@@ -3527,6 +3527,7 @@ void ProtoStoreInternal::decode(Decoder &decoder,ProtoModel *model)
   }
   decoder.closeElement(elemId);
   ProtoParameter *curparam;
+  bool outputLocked = (pieces[0].flags & ParameterPieces::typelock)!=0;
   if (!addressesdetermined) {
     // If addresses for parameters are not provided, use
     // the model to derive them from type info
@@ -3553,7 +3554,7 @@ void ProtoStoreInternal::decode(Decoder &decoder,ProtoModel *model)
   for(uint4 i=1;i<pieces.size();++i) {
     if ((pieces[i].flags&ParameterPieces::hiddenretparm)!=0) {
        curparam = setInput(i-1,"rethidden",pieces[i]);
-       curparam->setTypeLock((pieces[0].flags & ParameterPieces::typelock)!=0);   // Has output's typelock
+       curparam->setTypeLock(outputLocked);   // Has output's typelock
        continue;    // increment i but not j
     }
     curparam = setInput(i-1,proto.innames[j],pieces[i]);
