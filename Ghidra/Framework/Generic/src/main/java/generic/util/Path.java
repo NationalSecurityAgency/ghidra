@@ -214,7 +214,7 @@ public class Path implements Comparable<Path> {
 		String absolutePath = file.getAbsolutePath();
 		for (ResourceFile appRoot : Application.getApplicationRootDirectories()) {
 			String ghidraHome = appRoot.getAbsolutePath();
-			if (absolutePath.startsWith(ghidraHome)) {
+			if (isSameOrDescendantPath(absolutePath, ghidraHome)) {
 				int length = ghidraHome.length();
 				String relativePath = absolutePath.substring(length);
 				absolutePath = GHIDRA_HOME + relativePath;
@@ -230,6 +230,11 @@ public class Path implements Comparable<Path> {
 		}
 
 		return absolutePath.replace('\\', '/');
+	}
+
+	private static boolean isSameOrDescendantPath(String path, String root) {
+		String prefix = root.endsWith(File.separator) ? root : root + File.separator;
+		return path.equals(root) || path.startsWith(prefix);
 	}
 
 	/**
