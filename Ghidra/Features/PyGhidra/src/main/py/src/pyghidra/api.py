@@ -352,7 +352,8 @@ def walk_programs(
     ):
     """
     Walks the the given Ghidra project, calling the provided function when each program is 
-    encountered. Non-programs in the project are skipped.
+    encountered. Non-programs in the project are skipped. Exceptions raised by the callback or
+    program filter are propagated.
 
     :param project: The Ghidra project to walk.
     :param callback: The callback to process each program.
@@ -361,13 +362,14 @@ def walk_programs(
     :raises FileNotFoundError: If the starting folder is not found in the project.
     """
     def process(file: "DomainFile"):
-        try:
-            with program_context(project, file.getPathname()) as program:
-                if program_filter(file, program):
-                    callback(file, program)
-        except ProgramTypeError:
-            pass # skip over non-programs 
-    
+        with contextlib.ExitStack() as stack:
+            try:
+                program = stack.enter_context(program_context(project, file.getPathname()))
+            except ProgramTypeError:
+                return # skip over non-programs
+            if program_filter(file, program):
+                callback(file, program)
+
     walk_project(project, process, start=start)
     
 class ProgramTypeError(TypeError):
