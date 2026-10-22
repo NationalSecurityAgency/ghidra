@@ -33,11 +33,14 @@ ADDRIX: (imm16,X) is X; imm16     { addr:2 = imm16 + zext(X); tmp:2 = *:2 addr; 
 {
     local op1 = ZIOP;
     local tmpC = C;
+    local oldA = A;
 
     C = carry(A, op1);
-    A = A + op1 + tmpC;
+    A = A + op1;
+    C = C || carry(A, tmpC);
+    A = A + tmpC;
     resultFlags(A);
-    V = C;
+    V = ((oldA ^ A) & (op1 ^ A) & 0x80) != 0;
 }
 
 :AND ZIOP                      is (cc=2 & aaa=1) ... & ZIOP
