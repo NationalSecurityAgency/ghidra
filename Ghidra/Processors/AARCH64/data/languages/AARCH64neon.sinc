@@ -6998,10 +6998,10 @@ is b_3131=0 & q=1 & u=1 & b_2428=0xf & b_2023=1 & Imm_shr_imm16 & b_1115=0x1f & 
 # AUNIT --inst x7f10fc00/mask=xfff0fc00 --rand hfp --status noqemu --comment "nofpround"
 # FCVTZU (vector, fixed-point) Scalar immh=001x
 
-:fcvtzu Rd_FPR16, Rn_FPR16, Imm_shr_imm32
-is b_2331=0b011111110 & b_2022=0b001 & b_1015=0b111111 & Imm_shr_imm32 & Rn_FPR16 & Rd_FPR16 & Zd
+:fcvtzu Rd_FPR16, Rn_FPR16, Imm_shr_imm16
+is b_2331=0b011111110 & b_2022=0b001 & b_1015=0b111111 & Imm_shr_imm16 & Rn_FPR16 & Rd_FPR16 & Zd
 {
-	local tmp1:2 = 1:2 << Imm_shr_imm32;
+	local tmp1:2 = 1:2 << Imm_shr_imm16;
 	local tmp2:2 = int2float(tmp1);
 	local tmp3:2 = Rn_FPR16 f* tmp2;
 	local tmp4:2 = abs(tmp3);
@@ -7034,10 +7034,10 @@ is b_2331=0b011111110 & b_2122=0b01 & b_1015=0b111111 & Imm_shr_imm32 & Rn_FPR32
 # AUNIT --inst x7f40fc00/mask=xffc0fc00 --rand dfp --status fail --comment "nofpround"
 # FCVTZU (vector, fixed-point) Scalar immh=1xxx
 
-:fcvtzu Rd_FPR64, Rn_FPR64, Imm_shr_imm32
-is b_2331=0b011111110 & b_22=1 & b_1015=0b111111 & Imm_shr_imm32 & Rn_FPR64 & Rd_FPR64 & Zd
+:fcvtzu Rd_FPR64, Rn_FPR64, Imm_shr_imm64
+is b_2331=0b011111110 & b_22=1 & b_1015=0b111111 & Imm_shr_imm64 & Rn_FPR64 & Rd_FPR64 & Zd
 {
-	local tmp1:8 = zext(Imm_shr_imm32);
+	local tmp1:8 = zext(Imm_shr_imm64);
 	local tmp2:8 = 1:8 << tmp1;
 	local tmp3:8 = int2float(tmp2);
 	local tmp4:8 = Rn_FPR64 f* tmp3;
