@@ -21,7 +21,7 @@ import java.util.stream.LongStream;
 import ghidra.util.exception.AssertException;
 
 /**
- * A class for holding a minimum and maximum signed int values that define a range.
+ * A class for holding a minimum and maximum signed long values that define a range.
  */
 public class Range implements Comparable<Range>, Iterable<Long> {
 	/** The range's minimum extent. */

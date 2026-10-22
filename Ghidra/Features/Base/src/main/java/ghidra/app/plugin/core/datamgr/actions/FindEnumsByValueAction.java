@@ -98,11 +98,10 @@ public class FindEnumsByValueAction extends DockingAction {
 			OffsetIterator it = new OffsetIterator(enuum);
 			for (Long value : CollectionUtils.asIterable(it)) {
 				for (Range range : offsets) {
-					int offset = value.intValue();
-					if (range.contains(offset)) {
+					if (range.contains(value)) {
 						return true;
 					}
-					if (offset < range.min) {
+					if (value < range.min) {
 						// ranges are ascending sorted order; the enum value is already 
 						// smaller than this range, so no more ranges can match
 						break;
