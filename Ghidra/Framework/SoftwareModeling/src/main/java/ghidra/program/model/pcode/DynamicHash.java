@@ -19,6 +19,8 @@ import java.util.*;
 
 import generic.hash.SimpleCRC32;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.address.SegmentedAddressSpace;
 import ghidra.program.model.listing.Instruction;
 
 /**
@@ -105,8 +107,8 @@ public class DynamicHash {
 			reg = SimpleCRC32.hashOneByte(reg, slot);
 			reg = SimpleCRC32.hashOneByte(reg, transtable[op.getOpcode()]);
 			long val = op.getSeqnum().getTarget().getOffset();
-			int sz = op.getSeqnum().getTarget().getSize();
-			for (int i = 0; i < sz; i += 8) {
+			int sz = getAddressByteSize(op.getSeqnum().getTarget());
+			for (int i = 0; i < sz; ++i) {
 				reg = SimpleCRC32.hashOneByte(reg, (int) val);
 				val >>= 8;
 			}
@@ -219,6 +221,22 @@ public class DynamicHash {
 		markvn.clear();
 		vnedge.clear();
 		opedge.clear();
+	}
+
+	/**
+	 * Return the number of address bytes to hash for an instruction's seqnum address.
+	 * This must match the addressSize the C++ decompiler uses, which is determined by
+	 * SleighLanguage encoding: SegmentedAddressSpace is encoded as 32 bits (4 bytes);
+	 * all other spaces use ceiling(getSize()/8).
+	 * @param addr is the seqnum target address
+	 * @return the number of bytes to include in the hash
+	 */
+	private static int getAddressByteSize(Address addr) {
+		AddressSpace spc = addr.getAddressSpace();
+		if (spc instanceof SegmentedAddressSpace) {
+			return 4;		// SleighLanguage encodes segmented spaces as 32 bits
+		}
+		return (spc.getSize() + 7) / 8;
 	}
 
 	/**
