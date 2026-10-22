@@ -679,4 +679,61 @@ TEST(funcproto_recovermixedmeta)
   ASSERT(register_used(paramActive.getTrial(5),"r10"))
 }
 
+TEST(funcproto_farpointerjoin_roundtrip)
+
+{
+  // Direct decode()/encode() round-trip of a <farpointerjoin> declared inside a real
+  // <prototype> block, exercising both FuncProto::decode (issue #9450) and the new
+  // FuncProto::encodeFarPointerJoins path, without depending on any out-of-tree
+  // processor module. __model1 supplies register pentries r12/r11/r10/r9/r8, matching
+  // the shape of the real H8/539F __stdcall_far_2arg prototype (byte pentry + word
+  // pentry fused into one 3-byte far pointer at hislot=0).
+  FuncProtoTestEnvironment::build();
+  const char *prototext =
+      "<prototype model=\"__model1\" extrapop=\"unknown\">"
+      "<returnsym>"
+        "<register name=\"r12\"/>"
+        "<void/>"
+      "</returnsym>"
+      "<farpointerjoin hislot=\"0\" joinsize=\"3\"/>"
+    "</prototype>";
+  istringstream s(prototext);
+  DocumentStorage store;
+  Document *doc = store.parseDocument(s);
+  XmlDecode decoder(glb,doc->getRoot());
+
+  FuncProto proto;
+  proto.setInternal(glb->defaultfp,glb->types->getTypeVoid());
+  proto.decode(decoder,glb);
+
+  const vector<FuncProto::FarPointerJoinSpec> &joins(proto.getFarPointerJoins());
+  ASSERT_EQUALS(joins.size(),1);
+  ASSERT_EQUALS(joins[0].hislot,0);
+  ASSERT_EQUALS(joins[0].joinsize,3);
+
+  // Now push the decoded prototype back out and confirm the element re-appears,
+  // exercising FuncProto::encodeFarPointerJoins directly (previously untested).
+  ostringstream outStream;
+  XmlEncode encoder(outStream);
+  proto.encode(encoder);
+  string encoded = outStream.str();
+  ASSERT(encoded.find("<farpointerjoin") != string::npos);
+  ASSERT(encoded.find("hislot=\"0x0\"") != string::npos || encoded.find("hislot=\"0\"") != string::npos);
+  ASSERT(encoded.find("joinsize=\"0x3\"") != string::npos || encoded.find("joinsize=\"3\"") != string::npos);
+
+  // Round-trip a second time: decode the re-encoded XML and confirm the spec survives
+  // unchanged, catching any asymmetry between encode() and decode() ordering/format.
+  istringstream s2(encoded);
+  DocumentStorage store2;
+  Document *doc2 = store2.parseDocument(s2);
+  XmlDecode decoder2(glb,doc2->getRoot());
+  FuncProto proto2;
+  proto2.setInternal(glb->defaultfp,glb->types->getTypeVoid());
+  proto2.decode(decoder2,glb);
+  const vector<FuncProto::FarPointerJoinSpec> &joins2(proto2.getFarPointerJoins());
+  ASSERT_EQUALS(joins2.size(),1);
+  ASSERT_EQUALS(joins2[0].hislot,0);
+  ASSERT_EQUALS(joins2[0].joinsize,3);
+}
+
 } // End namespace ghidra
