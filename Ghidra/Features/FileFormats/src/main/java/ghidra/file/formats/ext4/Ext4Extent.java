@@ -61,7 +61,17 @@ public class Ext4Extent implements StructConverter {
 	 * @return number of blocks in this extent
 	 */
 	public int getExtentBlockCount() {
-		return Short.toUnsignedInt(ee_len);
+		int length = Short.toUnsignedInt(ee_len);
+		return length <= 0x8000 ? length : length - 0x8000;
+	}
+
+	/**
+	 * Returns whether the extent is allocated but has not been initialized.
+	 * Reads from these blocks return zeros, regardless of the backing bytes.
+	 * @return true for an unwritten extent
+	 */
+	public boolean isUnwritten() {
+		return Short.toUnsignedInt(ee_len) > 0x8000;
 	}
 
 	/**
