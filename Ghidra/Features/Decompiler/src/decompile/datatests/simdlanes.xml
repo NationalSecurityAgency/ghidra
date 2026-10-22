@@ -1,0 +1,34 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+  Two small functions compiled from C with SSE (clang -O1):
+    void rootdiv(float *out, const float *a, const float *b) {
+      _mm_storeu_ps(out, _mm_div_ps(_mm_sqrt_ps(_mm_loadu_ps(a)), _mm_loadu_ps(b)));
+    }
+    int signs(const float *a) { return _mm_movemask_ps(_mm_loadu_ps(a)); }
+-->
+<bytechunk space="ram" offset="0x100000" readonly="true">
+554889e50f10060f51c00f100a0f5ec10f11075dc3662e0f1f84000000000090554889e50f10070f50c05dc3
+</bytechunk>
+<symbol space="ram" offset="0x100000" name="rootdiv"/>
+<symbol space="ram" offset="0x100020" name="signs"/>
+</binaryimage>
+<script>
+  <com>parse line extern void rootdiv(float4 *out, float4 *a, float4 *b);</com>
+  <com>parse line extern int4 signs(float4 *a);</com>
+  <com>lo fu rootdiv</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu signs</com>
+  <com>decompile</com>
+  <com>print C</com>
+</script>
+<stringmatch name="SimdLanes #1" min="1" max="1">\*out = SQRT\(\*a\) / \*b;</stringmatch>
+<stringmatch name="SimdLanes #2" min="1" max="1">out\[3\] = SQRT\(fVar3\) / fVar6;</stringmatch>
+<stringmatch name="SimdLanes #3" min="0" max="0">sqrtps\(</stringmatch>
+<stringmatch name="SimdLanes #4" min="0" max="0">divps\(</stringmatch>
+<stringmatch name="SimdLanes #5" min="0" max="0">movmskps\(</stringmatch>
+<stringmatch name="SimdLanes #6" min="1" max="1">\(uint4\)\*a >> 0x1f</stringmatch>
+<stringmatch name="SimdLanes #7" min="1" max="1">\(\(uint4\)a\[3\] >> 0x1f\) &lt;&lt; 3</stringmatch>
+<stringmatch name="SimdLanes #8" min="0" max="0">in_EAX</stringmatch>
+</decompilertest>
