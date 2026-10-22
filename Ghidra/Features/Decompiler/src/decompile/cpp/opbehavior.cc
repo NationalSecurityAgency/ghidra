@@ -512,6 +512,11 @@ uintb OpBehaviorIntSdiv::evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb
     throw EvaluationError("Divide by 0");
   intb num = sign_extend(in1,8*sizein-1);		// Convert to signed
   intb denom = sign_extend(in2,8*sizein-1);
+  // On x86-64, idiv also traps when the full-width quotient of INT64_MIN/-1
+  // doesn't fit in the output register.  That trap becomes a native SIGFPE which
+  // cannot be caught as a C++ exception, so we must detect it before dividing.
+  if (denom == -1 && num == (intb)((uintb)1 << (8*sizein-1)))
+    throw EvaluationError("Signed divide overflow");
   intb sres = num/denom;	// Do the signed division
   sres = zero_extend(sres,8*sizeout-1); // Cut to appropriate size
   return (uintb)sres;		// Recast as unsigned
@@ -534,6 +539,9 @@ uintb OpBehaviorIntSrem::evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb
     throw EvaluationError("Remainder by 0");
   intb val = sign_extend(in1,8*sizein-1);	// Convert inputs to signed values
   intb mod = sign_extend(in2,8*sizein-1);
+  // Same overflow guard as INT_SDIV: INT64_MIN % -1 also traps on x86-64.
+  if (mod == -1 && val == (intb)((uintb)1 << (8*sizein-1)))
+    throw EvaluationError("Signed remainder overflow");
   intb sres = val % mod;	// Do the remainder
   sres = zero_extend(sres,8*sizeout-1); // Convert back to unsigned
   return (uintb)sres;
