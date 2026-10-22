@@ -810,17 +810,48 @@ public class HighFunctionDBUtil {
 	 * @return the index of the first variable argument or -1
 	 */
 	public static int getFirstVarArg(Program program, Address addr) {
+		return getFirstVarArg(program, addr, null);
+	}
+
+	/**
+	 * {@link #getFirstVarArg(Program, Address)} as an index into the inputs of a call-site
+	 * override. A callee returning through a hidden pointer counts that pointer among its
+	 * parameters. An override whose own return also travels through a hidden pointer does not
+	 * list it, so it is not counted there; an override spelling the pointer out does list it.
+	 * @param program is the Program
+	 * @param addr is the given address of the call
+	 * @param override is the call-site override, or null to index the callee's parameters
+	 * @return the index of the first variable argument or -1
+	 */
+	public static int getFirstVarArg(Program program, Address addr, FunctionSignature override) {
 		for (Reference ref : program.getReferenceManager().getReferencesFrom(addr)) {
 			if (ref.isPrimary() && ref.getReferenceType().isCall()) {
 				Address callDestAddr = ref.getToAddress();
 				Function func = program.getFunctionManager().getFunctionAt(callDestAddr);
 				if (func != null && func.hasVarArgs()) {
-					return func.getParameterCount();
+					int count = func.getParameterCount();
+					if (override == null || !returnsThroughHiddenPointer(program, override)) {
+						return count;
+					}
+					for (Parameter param : func.getParameters()) {
+						if (param.getAutoParameterType() == AutoParameterType.RETURN_STORAGE_PTR) {
+							count--;
+						}
+					}
+					return count;
 				}
 				break;
 			}
 		}
 		return -1;
+	}
+
+	private static boolean returnsThroughHiddenPointer(Program program,
+			FunctionSignature signature) {
+		PrototypeModel model =
+			program.getCompilerSpec().matchConvention(signature.getCallingConventionName());
+		DataType[] returnOnly = { signature.getReturnType() };
+		return model.getStorageLocations(program, returnOnly, true, false)[0].isForcedIndirect();
 	}
 
 	/**

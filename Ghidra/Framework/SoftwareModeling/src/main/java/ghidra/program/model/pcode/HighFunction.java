@@ -469,9 +469,9 @@ public class HighFunction extends PcodeSyntaxTree {
 			Program prog = func.getProgram();
 			for (DataTypeSymbol sym : protoOverrides) {
 				Address addr = sym.getAddress();
-				int firstVarArg = HighFunctionDBUtil.getFirstVarArg(prog, addr);
-				FunctionPrototype fproto = new FunctionPrototype(
-					(FunctionSignature) sym.getDataType(), compilerSpec, false);
+				FunctionSignature signature = (FunctionSignature) sym.getDataType();
+				int firstVarArg = HighFunctionDBUtil.getFirstVarArg(prog, addr, signature);
+				FunctionPrototype fproto = new FunctionPrototype(signature, compilerSpec, false);
 				encoder.openElement(ELEM_PROTOOVERRIDE);
 				AddressXML.encode(encoder, addr);
 				fproto.encodePrototype(encoder, dtmanage, firstVarArg);
