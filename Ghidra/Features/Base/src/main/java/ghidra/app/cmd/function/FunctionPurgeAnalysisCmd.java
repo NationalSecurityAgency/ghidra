@@ -67,7 +67,7 @@ public class FunctionPurgeAnalysisCmd extends BackgroundCommand<Program> {
 			setupNearFarModels();
 		}
 
-		AddressSetView set = entryPoints;
+		AddressSet set = new AddressSet(entryPoints);
 
 		long maxCount = set.getNumAddresses();
 
@@ -79,8 +79,8 @@ public class FunctionPurgeAnalysisCmd extends BackgroundCommand<Program> {
 				break;
 			}
 
-			set = set.subtract(
-				new AddressSet(program, entryPoints.getMinAddress(), function.getEntryPoint()));
+			set.deleteFromMin(function.getEntryPoint());
+			set.delete(function.getBody());
 			monitor.setProgress(maxCount - set.getNumAddresses());
 
 			monitor.setMessage("Purge " + function.getName());
