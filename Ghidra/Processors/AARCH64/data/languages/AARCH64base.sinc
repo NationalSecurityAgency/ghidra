@@ -8574,3 +8574,85 @@ is sf=1 & b_30=0 & S=0 & b_2428=0x1a & b_2123=0x6 & b_1015=0x1b & Rd_GPR64 & Rn_
 	local test = tmp <= tmp2;
 	Rd_GPR64 = (zext(test)*tmp) + (zext(!test)*(tmp2));
 }
+
+# FEAT_CHK
+
+define pcodeop chkfeat;
+
+:chkfeat x16
+is b_0031=0xd503251f & x16 {
+	x16 = chkfeat(x16);
+}
+
+# FEAT_DGH
+
+define pcodeop Hint_Dgh;
+
+:dgh
+is b_0031=0xd50320df {
+	Hint_Dgh();
+}
+
+# FEAT_CLRBHB
+
+define pcodeop Hint_Clrbhb;
+
+:clrbhb
+is b_0031=0xd50322df {
+	Hint_Clrbhb();
+}
+
+# FEAT_ITE
+define pcodeop Trcit;
+
+:trcit Rd_GPR64
+is b_0531=0x6a85b97 & Rd_GPR64
+{
+	Trcit(Rd_GPR64);
+}
+
+# FEAT_TRF
+
+define pcodeop Hint_TsbCsync;
+
+:tsb "csync"
+is b_0031=0xd503225f {
+	Hint_TsbCsync();
+}
+
+# FEAT_PCDPHINT
+
+define pcodeop Hint_StshhKeep;
+define pcodeop Hint_StshhStrm;
+
+:stshh "keep"
+is b_0031=0xd503261f {
+	Hint_StshhKeep();
+}
+
+:stshh "strm"
+is b_0031=0xd503263f {
+	Hint_StshhStrm();
+}
+
+# FEAT_RAS
+
+define pcodeop Hint_Esb;
+
+:esb
+is b_0031=0xd503221f {
+	Hint_Esb();
+}
+
+# FEAT_PoPS
+
+define pcodeop DC_CIVAPS;
+define pcodeop DC_CIGDVAPS;
+
+:dc "CIVAPS", Rt_GPR64
+is b_1931=0b1101010100001 & b_1618=0b000 & b_1215=0b0111 & b_0811=0b1111 & b_0507=0b001 & Rt_GPR64
+{ DC_CIVAPS(Rt_GPR64); }
+
+:dc "CIGDVAPS", Rt_GPR64
+is b_1931=0b1101010100001 & b_1618=0b000 & b_1215=0b0111 & b_0811=0b1111 & b_0507=0b101 & Rt_GPR64
+{ DC_CIGDVAPS(Rt_GPR64); }
