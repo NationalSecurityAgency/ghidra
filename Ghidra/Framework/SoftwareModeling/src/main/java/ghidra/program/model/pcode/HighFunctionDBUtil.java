@@ -815,7 +815,13 @@ public class HighFunctionDBUtil {
 				Address callDestAddr = ref.getToAddress();
 				Function func = program.getFunctionManager().getFunctionAt(callDestAddr);
 				if (func != null && func.hasVarArgs()) {
-					return func.getParameterCount();
+					int count = 0;
+					for (Parameter param : func.getParameters()) {
+						if (param.getAutoParameterType() != AutoParameterType.RETURN_STORAGE_PTR) {
+							count++;
+						}
+					}
+					return count;
 				}
 				break;
 			}
