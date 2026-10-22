@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Fairchild F8 / Mostek MK3870 Compiler Specification
+
+    The F8 has unusual calling conventions:
+    - Single-level hardware stack (PC1)
+    - Parameters typically in accumulator A or scratchpad
+    - Return values in accumulator A
+-->
+<compiler_spec>
+
+    <data_organization>
+        <absolute_max_alignment value="1"/>
+        <machine_alignment value="1"/>
+        <default_alignment value="1"/>
+        <default_pointer_alignment value="1"/>
+        <pointer_size value="2"/>
+        <short_size value="1"/>
+        <integer_size value="1"/>
+        <long_size value="2"/>
+        <size_alignment_map>
+            <entry size="1" alignment="1"/>
+            <entry size="2" alignment="1"/>
+        </size_alignment_map>
+    </data_organization>
+
+    <global>
+        <range space="ram"/>
+        <range space="scratchpad"/>
+        <range space="io"/>
+    </global>
+
+    <stackpointer register="PC1" space="ram"/>
+
+    <returnaddress>
+        <register name="PC1"/>
+    </returnaddress>
+
+    <default_proto>
+        <prototype name="__stdcall" extrapop="0" stackshift="0">
+            <input>
+                <pentry minsize="1" maxsize="1">
+                    <register name="A"/>
+                </pentry>
+            </input>
+            <output>
+                <pentry minsize="1" maxsize="1">
+                    <register name="A"/>
+                </pentry>
+            </output>
+            <unaffected>
+                <register name="DC0"/>
+                <register name="DC1"/>
+            </unaffected>
+        </prototype>
+    </default_proto>
+
+</compiler_spec>

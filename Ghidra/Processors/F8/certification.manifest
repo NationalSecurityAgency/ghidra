@@ -1,0 +1,12 @@
+##VERSION: 2.0
+Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
+build.gradle||GHIDRA||||END|
+data/languages/F8.cspec||GHIDRA||||END|
+data/languages/F8.ldefs||GHIDRA||||END|
+data/languages/F8.opinion||GHIDRA||||END|
+data/languages/F8.pspec||GHIDRA||||END|
+data/languages/F8.slaspec||GHIDRA||||END|
+data/languages/F3850.pspec||GHIDRA||||END|
+data/languages/MK3870.pspec||GHIDRA||||END|
+data/languages/MK3873.pspec||GHIDRA||||END|
