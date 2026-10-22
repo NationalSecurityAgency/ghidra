@@ -229,6 +229,9 @@ public class SleighCompile extends SleighBase {
 				VectorSTL<ContextChange> contvec) {
 			for (WithBlock with : stack) {
 				if (with.contvec != null) {
+					if (contvec == null) {
+						contvec = new VectorSTL<>();
+					}
 					contvec.insertAll(contvec.begin(), with.contvec);
 				}
 			}
