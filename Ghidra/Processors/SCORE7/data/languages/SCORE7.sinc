@@ -1,0 +1,874 @@
+# Sunplus S+CORE 7 / SCORE7
+# Native Ghidra SLEIGH processor definition.
+#
+# Encoding and execution behavior were independently implemented from public
+# architectural behavior. MAME's BSD-3-Clause little-endian SCORE7 core is the
+# primary permissive behavioral reference; GNU binutils is an independent
+# bi-endian encoding/decode oracle. Both force 16-bit decode when PC bit 1 is
+# set, even if the following halfword would otherwise make a 32-bit/PCE marker
+# pattern appear to match.
+#
+# SCORE7 uses 16-bit and 32-bit instructions. 32-bit instructions contain
+# parity/length marker bits at physical bits 15 and 31; the logical 30-bit
+# opcode omits those two bits.
+
+define endian=$(ENDIAN);
+define alignment=2;
+
+define space ram type=ram_space size=4 wordsize=1 default;
+define space register type=register_space size=4;
+
+define register offset=0x000 size=4
+[ r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 r16 r17 r18 r19 r20 r21 r22 r23 r24 r25 r26 r27 r28 r29 r30 r31 ];
+
+# GCC SCORE ABI: r0 is the stack pointer, r2 the frame pointer, r3 the
+# return-address/link register, and r28 the global pointer. Keep one physical
+# varnode per architectural register; ABI roles live in SCORE7.cspec.
+
+define register offset=0x100 size=4
+[ cr0 cr1 cr2 cr3 cr4 cr5 cr6 cr7 cr8 cr9 cr10 cr11 cr12 cr13 cr14 cr15 cr16 cr17 cr18 cr19 cr20 cr21 cr22 cr23 cr24 cr25 cr26 cr27 cr28 cr29 cr30 cr31 ];
+
+# Control registers remain canonical cr0..cr31. Known architectural roles
+# include cr0=PSR, cr1=condition register, cr2=ECR, cr3=EXCPVEC,
+# cr5=EPC, and cr6=EMA. Avoid duplicate alias varnodes for those roles.
+
+define register offset=0x200 size=4 [ sr0 sr1 sr2 ];
+define register offset=0x210 size=4 [ ceh cel ];
+define register offset=0x300 size=4 pc;
+
+# Transient decode context. SCORE7 fetches on 4-byte packet boundaries, but a
+# compact instruction may execute from the upper halfword (PC & 2). In that
+# position the architecture forces a 16-bit decode and must not read ahead into
+# the next packet.
+define register offset=0x304 size=4 score_context;
+define context score_context
+    decode_phase = (0,0) noflow
+    packet_half  = (1,1) noflow
+;
+
+
+# System/custom operations whose architectural side effects are not modeled
+# by the permissive reference implementation.
+define pcodeop score_syscall;
+define pcodeop score_trap;
+define pcodeop score_debug_break;
+define pcodeop score_pflush;
+define pcodeop score_cache;
+define pcodeop score_ceinst;
+define pcodeop score_custom_engine;
+define pcodeop score_rotate_flags;
+define pcodeop score_rotate_carry;
+define pcodeop score_pce;
+define pcodeop score_parity_error;
+define pcodeop score_atomic;
+define pcodeop score_system;
+
+# Physical 32-bit encoding. p_lo/p_hi are marker/parity bits and are not part
+# of the logical 30-bit opcode.
+define token score32(32)
+    p_lo        = (15,15)
+    p_hi        = (31,31)
+    major32     = (26,30)
+    rd32        = (21,25)
+    ra32        = (16,20)
+    rb32        = (10,14)
+    special_pad = (7,9)
+    trap_code   = (16,20)
+    func6       = (1,6)
+    cu          = (0,0)
+
+    ifunc3      = (18,20)
+    imm16_lo    = (1,14)
+    imm16_hi    = (16,17)
+    imm16_hi_s  = (16,17) signed
+
+    ri_imm14    = (1,14)
+    ri_imm14_s  = (1,14) signed
+
+    jdisp_lo    = (1,14)
+    jdisp_hi    = (16,25)
+
+    bc_disp_lo  = (1,9)
+    bc_disp_hi  = (16,25)
+    bc_disp_hi_s= (16,25) signed
+    bc_cond     = (10,14)
+
+    rix_func3   = (0,2)
+    rix_imm12   = (3,14) signed
+
+    cr_op       = (0,7)
+    cr_idx      = (16,20)
+
+    ls_imm15    = (0,14) signed
+    ls_imm15_u  = (0,14)
+
+    pce_lo      = (0,14)
+    pce_hi      = (16,30)
+    ceinst_a     = (5,9)
+    ceinst_b     = (0,4)
+;
+
+# Physical 16-bit encoding. Bit 15 is the SCORE parity/length marker.
+define token score16(16)
+    p16         = (15,15)
+    op16        = (12,14)
+    rd16        = (8,11)
+    ra16        = (4,7)
+    func16      = (0,3)
+
+    j11         = (1,11)
+    lk16        = (0,0)
+
+    b8          = (0,7) signed
+    cond16      = (8,11)
+
+    imm8        = (0,7)
+    i16_func3   = (0,2)
+    imm5        = (3,7)
+    imm4        = (3,6)
+    imm_sign    = (7,7)
+
+    preg_base   = (4,6)
+    preg_hi     = (7,7)
+    preg_lo     = (8,11)
+;
+
+attach variables [ rd32 ra32 rb32 ] [
+    r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 r16 r17 r18 r19 r20 r21 r22 r23 r24 r25 r26 r27 r28 r29 r30 r31
+];
+
+attach variables [ cr_idx ] [
+    cr0 cr1 cr2 cr3 cr4 cr5 cr6 cr7 cr8 cr9 cr10 cr11 cr12 cr13 cr14 cr15 cr16 cr17 cr18 cr19 cr20 cr21 cr22 cr23 cr24 cr25 cr26 cr27 cr28 cr29 cr30 cr31
+];
+
+attach variables [ rd16 ra16 ] [
+    r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15
+];
+
+attach variables [ preg_base ] [
+    r0 r1 r2 r3 r4 r5 r6 r7
+];
+
+# Fixed ABI return operands. Keep r3 as a real operand varnode so listings and
+# structured MCP disassembly preserve the operand while the root constructor can
+# still distinguish the ABI return idiom from a generic indirect branch.
+ReturnReg32: r3 is ra32=3 & r3 { export r3; }
+ReturnReg16: r3 is ra16=3 & r3 { export r3; }
+
+SpecialReg: sr0 is rb32=0 & sr0 { export sr0; }
+SpecialReg: sr1 is rb32=1 & sr1 { export sr1; }
+SpecialReg: sr2 is rb32=2 & sr2 { export sr2; }
+
+# ----- computed immediates / targets -----
+
+SImm16: val is imm16_lo & imm16_hi_s
+    [ val = (imm16_hi_s << 14) | imm16_lo; ]
+    { export *[const]:4 val; }
+
+UImm16: val is imm16_lo & imm16_hi
+    [ val = (imm16_hi << 14) | imm16_lo; ]
+    { export *[const]:4 val; }
+
+SImm14: ri_imm14_s is ri_imm14_s
+    { export *[const]:4 ri_imm14_s; }
+
+UImm14: ri_imm14 is ri_imm14
+    { export *[const]:4 ri_imm14; }
+
+SImm12: rix_imm12 is rix_imm12
+    { export *[const]:4 rix_imm12; }
+
+SImm15: ls_imm15 is ls_imm15
+    { export *[const]:4 ls_imm15; }
+
+JTarget32: addr is jdisp_lo & jdisp_hi
+    [ addr = (inst_start & 0xfe000000) | (((jdisp_hi << 14) | jdisp_lo) << 1); ]
+    { export *:4 addr; }
+
+BTarget32: addr is bc_disp_lo & bc_disp_hi_s
+    [ addr = inst_start + (((bc_disp_hi_s << 9) | bc_disp_lo) << 1); ]
+    { export *:4 addr; }
+
+JTarget16: addr is j11
+    [ addr = (inst_start & 0xfffff000) | (j11 << 1); ]
+    { export *:4 addr; }
+
+BTarget16: addr is b8
+    [ addr = inst_start + (b8 << 1); ]
+    { export *:4 addr; }
+
+# 5-bit push/pop register is physically split across bit 7 and bits 8..11.
+PReg: r0 is preg_hi=0 & preg_lo=0 & r0 { export r0; }
+PReg: r1 is preg_hi=0 & preg_lo=1 & r1 { export r1; }
+PReg: r2 is preg_hi=0 & preg_lo=2 & r2 { export r2; }
+PReg: r3 is preg_hi=0 & preg_lo=3 & r3 { export r3; }
+PReg: r4 is preg_hi=0 & preg_lo=4 & r4 { export r4; }
+PReg: r5 is preg_hi=0 & preg_lo=5 & r5 { export r5; }
+PReg: r6 is preg_hi=0 & preg_lo=6 & r6 { export r6; }
+PReg: r7 is preg_hi=0 & preg_lo=7 & r7 { export r7; }
+PReg: r8 is preg_hi=0 & preg_lo=8 & r8 { export r8; }
+PReg: r9 is preg_hi=0 & preg_lo=9 & r9 { export r9; }
+PReg: r10 is preg_hi=0 & preg_lo=10 & r10 { export r10; }
+PReg: r11 is preg_hi=0 & preg_lo=11 & r11 { export r11; }
+PReg: r12 is preg_hi=0 & preg_lo=12 & r12 { export r12; }
+PReg: r13 is preg_hi=0 & preg_lo=13 & r13 { export r13; }
+PReg: r14 is preg_hi=0 & preg_lo=14 & r14 { export r14; }
+PReg: r15 is preg_hi=0 & preg_lo=15 & r15 { export r15; }
+PReg: r16 is preg_hi=1 & preg_lo=0 & r16 { export r16; }
+PReg: r17 is preg_hi=1 & preg_lo=1 & r17 { export r17; }
+PReg: r18 is preg_hi=1 & preg_lo=2 & r18 { export r18; }
+PReg: r19 is preg_hi=1 & preg_lo=3 & r19 { export r19; }
+PReg: r20 is preg_hi=1 & preg_lo=4 & r20 { export r20; }
+PReg: r21 is preg_hi=1 & preg_lo=5 & r21 { export r21; }
+PReg: r22 is preg_hi=1 & preg_lo=6 & r22 { export r22; }
+PReg: r23 is preg_hi=1 & preg_lo=7 & r23 { export r23; }
+PReg: r24 is preg_hi=1 & preg_lo=8 & r24 { export r24; }
+PReg: r25 is preg_hi=1 & preg_lo=9 & r25 { export r25; }
+PReg: r26 is preg_hi=1 & preg_lo=10 & r26 { export r26; }
+PReg: r27 is preg_hi=1 & preg_lo=11 & r27 { export r27; }
+PReg: r28 is preg_hi=1 & preg_lo=12 & r28 { export r28; }
+PReg: r29 is preg_hi=1 & preg_lo=13 & r29 { export r29; }
+PReg: r30 is preg_hi=1 & preg_lo=14 & r30 { export r30; }
+PReg: r31 is preg_hi=1 & preg_lo=15 & r31 { export r31; }
+
+
+# High GPR bank used by mlfh!/mhfl!.
+HighRA: r16 is ra16=0 & r16 { export r16; }
+HighRA: r17 is ra16=1 & r17 { export r17; }
+HighRA: r18 is ra16=2 & r18 { export r18; }
+HighRA: r19 is ra16=3 & r19 { export r19; }
+HighRA: r20 is ra16=4 & r20 { export r20; }
+HighRA: r21 is ra16=5 & r21 { export r21; }
+HighRA: r22 is ra16=6 & r22 { export r22; }
+HighRA: r23 is ra16=7 & r23 { export r23; }
+HighRA: r24 is ra16=8 & r24 { export r24; }
+HighRA: r25 is ra16=9 & r25 { export r25; }
+HighRA: r26 is ra16=10 & r26 { export r26; }
+HighRA: r27 is ra16=11 & r27 { export r27; }
+HighRA: r28 is ra16=12 & r28 { export r28; }
+HighRA: r29 is ra16=13 & r29 { export r29; }
+HighRA: r30 is ra16=14 & r30 { export r30; }
+HighRA: r31 is ra16=15 & r31 { export r31; }
+HighRD: r16 is rd16=0 & r16 { export r16; }
+HighRD: r17 is rd16=1 & r17 { export r17; }
+HighRD: r18 is rd16=2 & r18 { export r18; }
+HighRD: r19 is rd16=3 & r19 { export r19; }
+HighRD: r20 is rd16=4 & r20 { export r20; }
+HighRD: r21 is rd16=5 & r21 { export r21; }
+HighRD: r22 is rd16=6 & r22 { export r22; }
+HighRD: r23 is rd16=7 & r23 { export r23; }
+HighRD: r24 is rd16=8 & r24 { export r24; }
+HighRD: r25 is rd16=9 & r25 { export r25; }
+HighRD: r26 is rd16=10 & r26 { export r26; }
+HighRD: r27 is rd16=11 & r27 { export r27; }
+HighRD: r28 is rd16=12 & r28 { export r28; }
+HighRD: r29 is rd16=13 & r29 { export r29; }
+HighRD: r30 is rd16=14 & r30 { export r30; }
+HighRD: r31 is rd16=15 & r31 { export r31; }
+
+# ----- flag helpers -----
+# cr1 low bits: V=bit0, C=bit1, Z=bit2, N=bit3, T=bit4.
+
+macro score_set_zn(value) {
+    local z:1 = (value == 0);
+    local n:1 = (value s< 0);
+    cr1 = cr1 & 0xfffffff3;
+    cr1 = cr1 | (zext(z) << 2) | (zext(n) << 3);
+}
+
+macro score_set_add_flags(a,b,result) {
+    local c:1 = carry(a,b);
+    local v:1 = scarry(a,b);
+    local z:1 = (result == 0);
+    local n:1 = (result s< 0);
+    cr1 = cr1 & 0xfffffff0;
+    cr1 = cr1 | zext(v) | (zext(c) << 1) | (zext(z) << 2) | (zext(n) << 3);
+}
+
+macro score_set_sub_flags(a,b,result) {
+    local c:1 = (a >= b);
+    local v:1 = sborrow(a,b);
+    local z:1 = (result == 0);
+    local n:1 = (result s< 0);
+    cr1 = cr1 & 0xfffffff0;
+    cr1 = cr1 | zext(v) | (zext(c) << 1) | (zext(z) << 2) | (zext(n) << 3);
+}
+
+macro score_set_sub_zero_flags(a,result) {
+    local v:1 = sborrow(a,0:4);
+    local z:1 = (result == 0);
+    local n:1 = (result s< 0);
+    cr1 = cr1 & 0xfffffff0;
+    cr1 = cr1 | zext(v) | 0x2 | (zext(z) << 2) | (zext(n) << 3);
+}
+
+macro score_set_neg_flags(b,result) {
+    local c:1 = (b == 0);
+    local v:1 = sborrow(0:4,b);
+    local z:1 = (result == 0);
+    local n:1 = (result s< 0);
+    cr1 = cr1 & 0xfffffff0;
+    cr1 = cr1 | zext(v) | (zext(c) << 1) | (zext(z) << 2) | (zext(n) << 3);
+}
+
+macro score_set_t(value) {
+    local t:1 = (value != 0);
+    cr1 = (cr1 & 0xffffffef) | (zext(t) << 4);
+}
+
+# Root wrapper: set transient address phase before recursively matching the real
+# instruction constructor. This follows the phase-wrapper pattern used by
+# bundled Ghidra languages (for example AVR) without introducing a new subtable.
+:^instruction is decode_phase=0 & instruction
+    [ packet_half = (inst_start >> 1) $and 1; decode_phase=1; ]
+    { build instruction; }
+
+# ----- parity / parallel encoding guards -----
+
+@if ENDIAN == "little"
+# GNU SCORE emits PCE as two little-endian halfwords in source order, rather
+# than as one little-endian 32-bit word. Thus the marker bits appear swapped
+# in the 32-bit token value compared with normal instructions.
+:parity_error is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=0 {
+    score_parity_error();
+}
+
+:pce pce_lo, pce_hi is decode_phase=1 & packet_half=0 & p_lo=0 & p_hi=1 & pce_lo & pce_hi {
+    score_pce();
+}
+@else
+# Big-endian PCE uses the architectural 32-bit halfword order directly.
+:parity_error is decode_phase=1 & packet_half=0 & p_lo=0 & p_hi=1 {
+    score_parity_error();
+}
+
+:pce pce_hi, pce_lo is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=0 & pce_lo & pce_hi {
+    score_pce();
+}
+@endif
+
+# ===========================================================================
+# 32-bit instructions
+# ===========================================================================
+
+# Special form (major 0)
+:nop is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=0 & cu=0 { }
+:syscall rd32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=1 & rd32 { score_syscall(); }
+:sdbbp ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=3 & ra32 { score_debug_break(); }
+:pflush is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=5 { score_pflush(); }
+
+:alw rd32,"["^ra32^"]" is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=6 & cu=0 & rd32 & ra32 { score_atomic(); }
+:asw rd32,"["^ra32^"]" is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=7 & cu=0 & rd32 & ra32 { score_atomic(); }
+
+:trapcs trap_code is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & func6=2 & cu=0 & special_pad=0 & rb32=0 & trap_code { if ((cr1 & 0x2) == 0) goto <done>; score_trap(); <done> }
+:trapcc trap_code is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & func6=2 & cu=0 & special_pad=0 & rb32=1 & trap_code { if ((cr1 & 0x2) != 0) goto <done>; score_trap(); <done> }
+:trapgtu trap_code is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & func6=2 & cu=0 & special_pad=0 & rb32=2 & trap_code { if ((cr1 & 0x2) == 0) goto <done>; if ((cr1 & 0x4) != 0) goto <done>; score_trap(); <done> }
+:trapleu trap_code is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & func6=2 & cu=0 & special_pad=0 & rb32=3 & trap_code { if ((cr1 & 0x2) == 0) goto <take>; if ((cr1 & 0x4) != 0) goto <take>; goto <done>; <take> score_trap(); <done> }
+:trapeq trap_code is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & func6=2 & cu=0 & special_pad=0 & rb32=4 & trap_code { if ((cr1 & 0x4) == 0) goto <done>; score_trap(); <done> }
+:trapne trap_code is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & func6=2 & cu=0 & special_pad=0 & rb32=5 & trap_code { if ((cr1 & 0x4) != 0) goto <done>; score_trap(); <done> }
+:trapgt trap_code is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & func6=2 & cu=0 & special_pad=0 & rb32=6 & trap_code { if ((cr1 & 0x4) != 0) goto <done>; if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <done>; score_trap(); <done> }
+:traple trap_code is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & func6=2 & cu=0 & special_pad=0 & rb32=7 & trap_code { if ((cr1 & 0x4) != 0) goto <take>; if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> score_trap(); <done> }
+:trapge trap_code is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & func6=2 & cu=0 & special_pad=0 & rb32=8 & trap_code { if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <done>; score_trap(); <done> }
+:traplt trap_code is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & func6=2 & cu=0 & special_pad=0 & rb32=9 & trap_code { if ((cr1 & 0x8) == ((cr1 & 0x1) << 3)) goto <done>; score_trap(); <done> }
+:trapmi trap_code is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & func6=2 & cu=0 & special_pad=0 & rb32=10 & trap_code { if ((cr1 & 0x8) == 0) goto <done>; score_trap(); <done> }
+:trappl trap_code is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & func6=2 & cu=0 & special_pad=0 & rb32=11 & trap_code { if ((cr1 & 0x8) != 0) goto <done>; score_trap(); <done> }
+:trapvs trap_code is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & func6=2 & cu=0 & special_pad=0 & rb32=12 & trap_code { if ((cr1 & 0x1) == 0) goto <done>; score_trap(); <done> }
+:trapvc trap_code is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & func6=2 & cu=0 & special_pad=0 & rb32=13 & trap_code { if ((cr1 & 0x1) != 0) goto <done>; score_trap(); <done> }
+:trap trap_code is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & func6=2 & cu=0 & special_pad=0 & rb32=15 & trap_code { score_trap(); }
+
+
+:add rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=8 & cu=0 & rd32 & ra32 & rb32 {
+    rd32 = ra32 + rb32;
+}
+:add.c rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=8 & cu=1 & rd32 & ra32 & rb32 {
+    local result:4 = ra32 + rb32;
+    score_set_add_flags(ra32,rb32,result);
+    rd32 = result;
+}
+:addc rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=9 & cu=0 & rd32 & ra32 & rb32 {
+    local c:4 = (cr1 >> 1) & 1;
+    rd32 = ra32 + rb32 + c;
+}
+:addc.c rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=9 & cu=1 & rd32 & ra32 & rb32 {
+    local c:4 = (cr1 >> 1) & 1;
+    local op2:4 = rb32 + c;
+    local result:4 = ra32 + op2;
+    score_set_add_flags(ra32,op2,result);
+    rd32 = result;
+}
+:sub rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=10 & cu=0 & rd32 & ra32 & rb32 {
+    rd32 = ra32 - rb32;
+}
+:sub.c rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=10 & cu=1 & rd32 & ra32 & rb32 {
+    local result:4 = ra32 - rb32;
+    score_set_sub_flags(ra32,rb32,result);
+    rd32 = result;
+}
+:subc rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=11 & cu=0 & rd32 & ra32 & rb32 {
+    local c:4 = (cr1 >> 1) & 1;
+    rd32 = ra32 - rb32 - (1-c);
+}
+:subc.c rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=11 & cu=1 & rd32 & ra32 & rb32 {
+    local c:4 = (cr1 >> 1) & 1;
+    local borrow:4 = 1-c;
+    local op1:4 = ra32-borrow;
+    local result:4 = op1-rb32;
+    score_set_sub_flags(op1,rb32,result);
+    rd32=result;
+}
+:cmpteq.c ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=12 & cu=1 & rd32=0 & ra32 & rb32 {
+    local result:4=ra32-rb32;
+    score_set_sub_flags(ra32,rb32,result);
+    score_set_t(result==0);
+}
+:cmptmi.c ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=12 & cu=1 & rd32=1 & ra32 & rb32 {
+    local result:4=ra32-rb32;
+    score_set_sub_flags(ra32,rb32,result);
+    score_set_t(result s< 0);
+}
+:cmp.c ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=12 & cu=1 & rd32=3 & ra32 & rb32 {
+    local result:4=ra32-rb32;
+    score_set_sub_flags(ra32,rb32,result);
+}
+:cmpzteq.c ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=13 & cu=1 & rd32=0 & ra32 {
+    local result:4=ra32;
+    score_set_sub_zero_flags(ra32,result);
+    score_set_t(result==0);
+}
+:cmpztmi.c ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=13 & cu=1 & rd32=1 & ra32 {
+    local result:4=ra32;
+    score_set_sub_zero_flags(ra32,result);
+    score_set_t(result s< 0);
+}
+:cmpz.c ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=13 & cu=1 & rd32=3 & ra32 {
+    local result:4=ra32;
+    score_set_sub_zero_flags(ra32,result);
+}
+:neg rd32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=15 & cu=0 & rd32 & rb32 {
+    rd32=0-rb32;
+}
+:neg.c rd32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=15 & cu=1 & rd32 & rb32 {
+    local result:4=0-rb32;
+    score_set_neg_flags(rb32,result);
+    rd32=result;
+}
+:and rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=16 & cu=0 & rd32 & ra32 & rb32 { rd32=ra32 & rb32; }
+:and.c rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=16 & cu=1 & rd32 & ra32 & rb32 { rd32=ra32 & rb32; score_set_zn(rd32); }
+:or rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=17 & cu=0 & rd32 & ra32 & rb32 { rd32=ra32 | rb32; }
+:or.c rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=17 & cu=1 & rd32 & ra32 & rb32 { rd32=ra32 | rb32; score_set_zn(rd32); }
+:not rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=18 & cu=0 & rd32 & ra32 { rd32=~ra32; }
+:not.c rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=18 & cu=1 & rd32 & ra32 { rd32=~ra32; score_set_zn(rd32); }
+:xor rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=19 & cu=0 & rd32 & ra32 & rb32 { rd32=ra32 ^ rb32; }
+:xor.c rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=19 & cu=1 & rd32 & ra32 & rb32 { rd32=ra32 ^ rb32; score_set_zn(rd32); }
+
+:bitclr rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=20 & cu=0 & rd32 & ra32 & rb32 { local sh:4=rb32 & 31; rd32=ra32 & ~(1 << sh); }
+:bitclr.c rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=20 & cu=1 & rd32 & ra32 & rb32 { local sh:4=rb32 & 31; rd32=ra32 & ~(1 << sh); score_set_zn(rd32); }
+:bitset rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=21 & cu=0 & rd32 & ra32 & rb32 { local sh:4=rb32 & 31; rd32=ra32 | (1 << sh); }
+:bitset.c rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=21 & cu=1 & rd32 & ra32 & rb32 { local sh:4=rb32 & 31; rd32=ra32 | (1 << sh); score_set_zn(rd32); }
+:bittst.c ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=22 & cu=1 & ra32 & rb32 { local sh:4=rb32 & 31; local v:4=ra32 & (1 << sh); score_set_zn(v); }
+:bittgl rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=23 & cu=0 & rd32 & ra32 & rb32 { local sh:4=rb32 & 31; rd32=ra32 ^ (1 << sh); }
+:bittgl.c rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=23 & cu=1 & rd32 & ra32 & rb32 { local sh:4=rb32 & 31; rd32=ra32 ^ (1 << sh); score_set_zn(rd32); }
+
+:sll rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=24 & cu=0 & rd32 & ra32 & rb32 { local sh:4=rb32 & 31; rd32=ra32 << sh; }
+:sll.c rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=24 & cu=1 & rd32 & ra32 & rb32 { local sh:4=rb32 & 31; rd32=ra32 << sh; score_set_zn(rd32); }
+:srl rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=26 & cu=0 & rd32 & ra32 & rb32 { local sh:4=rb32 & 31; rd32=ra32 >> sh; }
+:srl.c rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=26 & cu=1 & rd32 & ra32 & rb32 { local sh:4=rb32 & 31; rd32=ra32 >> sh; score_set_zn(rd32); }
+:sra rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=27 & cu=0 & rd32 & ra32 & rb32 { local sh:4=rb32 & 31; rd32=ra32 s>> sh; }
+:sra.c rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=27 & cu=1 & rd32 & ra32 & rb32 { local sh:4=rb32 & 31; rd32=ra32 s>> sh; score_set_zn(rd32); }
+
+:ror rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=28 & cu=0 & rd32 & ra32 & rb32 { local sh:4=rb32 & 31; rd32=(ra32 >> sh) | (ra32 << (32-sh)); }
+:ror.c rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=28 & cu=1 & rd32 & ra32 & rb32 { local sh:4=rb32 & 31; rd32=(ra32 >> sh) | (ra32 << (32-sh)); score_rotate_flags(); }
+:rorc.c rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=29 & cu=1 & rd32 & ra32 & rb32 { score_rotate_carry(); }
+:rol rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=30 & cu=0 & rd32 & ra32 & rb32 { local sh:4=rb32 & 31; rd32=(ra32 << sh) | (ra32 >> (32-sh)); }
+:rol.c rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=30 & cu=1 & rd32 & ra32 & rb32 { local sh:4=rb32 & 31; rd32=(ra32 << sh) | (ra32 >> (32-sh)); score_rotate_flags(); }
+:rolc.c rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=31 & cu=1 & rd32 & ra32 & rb32 { score_rotate_carry(); }
+
+:mul ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=32 & ra32 & rb32 {
+    local a:8=sext(ra32); local b:8=sext(rb32); local product:8=a*b;
+    cel=product:4;
+    local upper:8=product >> 32;
+    ceh=upper:4;
+}
+:mulu ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=33 & ra32 & rb32 {
+    local a:8=zext(ra32); local b:8=zext(rb32); local product:8=a*b;
+    cel=product:4;
+    local upper:8=product >> 32;
+    ceh=upper:4;
+}
+:div ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=34 & ra32 & rb32 {
+    if (rb32 == 0) goto <bad>; cel=ra32 s/ rb32; ceh=ra32 s% rb32; goto <done>;
+    <bad> score_trap();
+    <done>
+}
+:divu ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=35 & ra32 & rb32 {
+    if (rb32 == 0) goto <bad>; cel=ra32 / rb32; ceh=ra32 % rb32; goto <done>;
+    <bad> score_trap();
+    <done>
+}
+
+:mfcel rd32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & func6=36 & cu=0 & special_pad=0 & rb32=1 & rd32 { rd32=cel; }
+:mfceh rd32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & func6=36 & cu=0 & special_pad=0 & rb32=2 & rd32 { rd32=ceh; }
+:mfcehl rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & func6=36 & cu=0 & special_pad=0 & rb32=3 & rd32 & ra32 { rd32=ceh; ra32=cel; }
+
+:mtcel rd32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & func6=37 & cu=0 & special_pad=0 & rb32=1 & rd32 { cel=rd32; }
+:mtceh rd32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & func6=37 & cu=0 & special_pad=0 & rb32=2 & rd32 { ceh=rd32; }
+:mtcehl rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & func6=37 & cu=0 & special_pad=0 & rb32=3 & rd32 & ra32 { ceh=rd32; cel=ra32; }
+
+:mfsr rd32,SpecialReg is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & func6=40 & cu=0 & special_pad=0 & rd32 & SpecialReg { rd32=SpecialReg; }
+:mtsr ra32,SpecialReg is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & func6=41 & cu=0 & special_pad=0 & ra32 & SpecialReg { SpecialReg=ra32; }
+
+
+:extsb rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=44 & cu=0 & rd32 & ra32 { local v:1=ra32:1; rd32=sext(v); }
+:extsh rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=45 & cu=0 & rd32 & ra32 { local v:2=ra32:2; rd32=sext(v); }
+:extzb rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=46 & cu=0 & rd32 & ra32 { local v:1=ra32:1; rd32=zext(v); }
+:extzh rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=47 & cu=0 & rd32 & ra32 { local v:2=ra32:2; rd32=zext(v); }
+:extsb.c rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=44 & cu=1 & rd32 & ra32 { local v:1=ra32:1; rd32=sext(v); score_set_zn(rd32); }
+:extsh.c rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=45 & cu=1 & rd32 & ra32 { local v:2=ra32:2; rd32=sext(v); score_set_zn(rd32); }
+:extzb.c rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=46 & cu=1 & rd32 & ra32 { local v:1=ra32:1; rd32=zext(v); score_set_zn(rd32); }
+:extzh.c rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=47 & cu=1 & rd32 & ra32 { local v:2=ra32:2; rd32=zext(v); score_set_zn(rd32); }
+
+:lcb ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=48 & ra32 { score_custom_engine(); }
+:lcw rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=49 & rd32 & ra32 { score_custom_engine(); }
+:lce rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=51 & rd32 & ra32 { score_custom_engine(); }
+:scb rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=52 & rd32 & ra32 { score_custom_engine(); }
+:scw rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=53 & rd32 & ra32 { score_custom_engine(); }
+:sce ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=55 & ra32 { score_custom_engine(); }
+
+:slli rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=56 & cu=0 & rd32 & ra32 & rb32 { rd32=ra32 << rb32; }
+:srli rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=58 & cu=0 & rd32 & ra32 & rb32 { rd32=ra32 >> rb32; }
+:srai rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=59 & cu=0 & rd32 & ra32 & rb32 { rd32=ra32 s>> rb32; }
+:slli.c rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=56 & cu=1 & rd32 & ra32 & rb32 { rd32=ra32 << rb32; score_set_zn(rd32); }
+:srli.c rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=58 & cu=1 & rd32 & ra32 & rb32 { rd32=ra32 >> rb32; score_set_zn(rd32); }
+:srai.c rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=59 & cu=1 & rd32 & ra32 & rb32 { rd32=ra32 s>> rb32; score_set_zn(rd32); }
+:rori rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=60 & cu=0 & rd32 & ra32 & rb32 { local sh:4=rb32 & 31; rd32=(ra32 >> sh)|(ra32 << (32-sh)); }
+:rori.c rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=60 & cu=1 & rd32 & ra32 & rb32 { local sh:4=rb32 & 31; rd32=(ra32 >> sh)|(ra32 << (32-sh)); score_rotate_flags(); }
+:roric.c rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=61 & cu=1 & rd32 & ra32 & rb32 { score_rotate_carry(); }
+:roli rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=62 & cu=0 & rd32 & ra32 & rb32 { local sh:4=rb32 & 31; rd32=(ra32 << sh)|(ra32 >> (32-sh)); }
+:roli.c rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=62 & cu=1 & rd32 & ra32 & rb32 { local sh:4=rb32 & 31; rd32=(ra32 << sh)|(ra32 >> (32-sh)); score_rotate_flags(); }
+:rolic.c rd32,ra32,rb32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=63 & cu=1 & rd32 & ra32 & rb32 { score_rotate_carry(); }
+
+# I-form-1 major 1
+:addi rd32,SImm16 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=1 & ifunc3=0 & cu=0 & rd32 & SImm16 { rd32=rd32+SImm16; }
+:addi.c rd32,SImm16 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=1 & ifunc3=0 & cu=1 & rd32 & SImm16 { local old:4=rd32; local result:4=old+SImm16; score_set_add_flags(old,SImm16,result); rd32=result; }
+:cmpi.c rd32,SImm16 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=1 & ifunc3=2 & cu=1 & rd32 & SImm16 { local result:4=rd32-SImm16; score_set_sub_flags(rd32,SImm16,result); }
+:andi rd32,UImm16 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=1 & ifunc3=4 & cu=0 & rd32 & UImm16 { rd32=rd32 & UImm16; }
+:andi.c rd32,UImm16 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=1 & ifunc3=4 & cu=1 & rd32 & UImm16 { rd32=rd32 & UImm16; score_set_zn(rd32); }
+:ori rd32,UImm16 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=1 & ifunc3=5 & cu=0 & rd32 & UImm16 { rd32=rd32 | UImm16; }
+:ori.c rd32,UImm16 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=1 & ifunc3=5 & cu=1 & rd32 & UImm16 { rd32=rd32 | UImm16; score_set_zn(rd32); }
+:ldi rd32,SImm16 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=1 & ifunc3=6 & rd32 & SImm16 { rd32=SImm16; }
+
+# J-form major 2
+:j JTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=2 & cu=0 & JTarget32 { goto JTarget32; }
+:jl JTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=2 & cu=1 & JTarget32 { r3=inst_next; call JTarget32; }
+
+# RIX pre-increment major 3
+:lw rd32,ra32,SImm12 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=3 & rix_func3=0 & rd32 & ra32 & SImm12 { ra32=ra32+SImm12; local a:4=ra32 & 0xfffffffc; rd32=*:4 a; }
+:lh rd32,ra32,SImm12 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=3 & rix_func3=1 & rd32 & ra32 & SImm12 { ra32=ra32+SImm12; local a:4=ra32 & 0xfffffffe; local v:2=*:2 a; rd32=sext(v); }
+:lhu rd32,ra32,SImm12 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=3 & rix_func3=2 & rd32 & ra32 & SImm12 { ra32=ra32+SImm12; local a:4=ra32 & 0xfffffffe; local v:2=*:2 a; rd32=zext(v); }
+:lb rd32,ra32,SImm12 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=3 & rix_func3=3 & rd32 & ra32 & SImm12 { ra32=ra32+SImm12; local v:1=*:1 ra32; rd32=sext(v); }
+:sw rd32,ra32,SImm12 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=3 & rix_func3=4 & rd32 & ra32 & SImm12 { ra32=ra32+SImm12; local a:4=ra32 & 0xfffffffc; *:4 a=rd32; }
+:sh rd32,ra32,SImm12 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=3 & rix_func3=5 & rd32 & ra32 & SImm12 { ra32=ra32+SImm12; local a:4=ra32 & 0xfffffffe; local v:2=rd32:2; *:2 a=v; }
+:lbu rd32,ra32,SImm12 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=3 & rix_func3=6 & rd32 & ra32 & SImm12 { ra32=ra32+SImm12; local v:1=*:1 ra32; rd32=zext(v); }
+:sb rd32,ra32,SImm12 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=3 & rix_func3=7 & rd32 & ra32 & SImm12 { ra32=ra32+SImm12; local v:1=rd32:1; *:1 ra32=v; }
+
+# I-form-2 major 5
+:addis rd32,UImm16 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=5 & ifunc3=0 & cu=0 & rd32 & UImm16 { rd32=rd32+(UImm16<<16); }
+:addis.c rd32,UImm16 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=5 & ifunc3=0 & cu=1 & rd32 & UImm16 { local old:4=rd32; local imm:4=UImm16<<16; local result:4=old+imm; score_set_add_flags(old,imm,result); rd32=result; }
+:andis rd32,UImm16 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=5 & ifunc3=4 & cu=0 & rd32 & UImm16 { rd32=rd32 & (UImm16<<16); }
+:andis.c rd32,UImm16 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=5 & ifunc3=4 & cu=1 & rd32 & UImm16 { rd32=rd32 & (UImm16<<16); score_set_zn(rd32); }
+:oris rd32,UImm16 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=5 & ifunc3=5 & cu=0 & rd32 & UImm16 { rd32=rd32 | (UImm16<<16); }
+:oris.c rd32,UImm16 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=5 & ifunc3=5 & cu=1 & rd32 & UImm16 { rd32=rd32 | (UImm16<<16); score_set_zn(rd32); }
+:ldis rd32,UImm16 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=5 & ifunc3=6 & rd32 & UImm16 { rd32=UImm16<<16; }
+
+# CR-form major 6
+:mtcr rd32,cr_idx is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=6 & cr_op=0 & rd32 & cr_idx { cr_idx=rd32; }
+:mfcr rd32,cr_idx is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=6 & cr_op=1 & rd32 & cr_idx { rd32=cr_idx; }
+:rte is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=6 & cr_op=0x84 {
+    cr0 = (cr0 & 0xfffffffc) | ((cr0 >> 2) & 0x3);
+    cr1 = (cr1 & 0xffffffe0) | ((cr1 >> 5) & 0x1f);
+    return [cr5];
+}
+
+:stlb is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=6 & cr_op=0x04 { score_system(); }
+:mftlb is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=6 & cr_op=0x24 { score_system(); }
+:mtptlb is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=6 & cr_op=0x44 { score_system(); }
+:mtrtlb is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=6 & cr_op=0x64 { score_system(); }
+:drte is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=6 & cr_op=0xa4 { score_system(); }
+:sleep is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=6 & cr_op=0xc4 { score_system(); }
+
+# RIX post-increment major 7
+:lw rd32,ra32,SImm12 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=7 & rix_func3=0 & rd32 & ra32 & SImm12 { local a:4=ra32 & 0xfffffffc; rd32=*:4 a; ra32=ra32+SImm12; }
+:lh rd32,ra32,SImm12 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=7 & rix_func3=1 & rd32 & ra32 & SImm12 { local a:4=ra32 & 0xfffffffe; local v:2=*:2 a; rd32=sext(v); ra32=ra32+SImm12; }
+:lhu rd32,ra32,SImm12 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=7 & rix_func3=2 & rd32 & ra32 & SImm12 { local a:4=ra32 & 0xfffffffe; local v:2=*:2 a; rd32=zext(v); ra32=ra32+SImm12; }
+:lb rd32,ra32,SImm12 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=7 & rix_func3=3 & rd32 & ra32 & SImm12 { local v:1=*:1 ra32; rd32=sext(v); ra32=ra32+SImm12; }
+:sw rd32,ra32,SImm12 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=7 & rix_func3=4 & rd32 & ra32 & SImm12 { local a:4=ra32 & 0xfffffffc; *:4 a=rd32; ra32=ra32+SImm12; }
+:sh rd32,ra32,SImm12 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=7 & rix_func3=5 & rd32 & ra32 & SImm12 { local a:4=ra32 & 0xfffffffe; local v:2=rd32:2; *:2 a=v; ra32=ra32+SImm12; }
+:lbu rd32,ra32,SImm12 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=7 & rix_func3=6 & rd32 & ra32 & SImm12 { local v:1=*:1 ra32; rd32=zext(v); ra32=ra32+SImm12; }
+:sb rd32,ra32,SImm12 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=7 & rix_func3=7 & rd32 & ra32 & SImm12 { local v:1=rd32:1; *:1 ra32=v; ra32=ra32+SImm12; }
+
+# RI forms
+:addri rd32,ra32,SImm14 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=8 & cu=0 & rd32 & ra32 & SImm14 { rd32=ra32+SImm14; }
+:addri.c rd32,ra32,SImm14 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=8 & cu=1 & rd32 & ra32 & SImm14 { local result:4=ra32+SImm14; score_set_add_flags(ra32,SImm14,result); rd32=result; }
+:andri rd32,ra32,UImm14 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=12 & cu=0 & rd32 & ra32 & UImm14 { rd32=ra32 & UImm14; }
+:andri.c rd32,ra32,UImm14 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=12 & cu=1 & rd32 & ra32 & UImm14 { rd32=ra32 & UImm14; score_set_zn(rd32); }
+:orri rd32,ra32,UImm14 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=13 & cu=0 & rd32 & ra32 & UImm14 { rd32=ra32 | UImm14; }
+:orri.c rd32,ra32,UImm14 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=13 & cu=1 & rd32 & ra32 & UImm14 { rd32=ra32 | UImm14; score_set_zn(rd32); }
+
+# LS forms major 16..23
+:lw rd32,ra32,SImm15 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=16 & rd32 & ra32 & SImm15 { local a:4=(ra32+SImm15)&0xfffffffc; rd32=*:4 a; }
+:lh rd32,ra32,SImm15 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=17 & rd32 & ra32 & SImm15 { local a:4=(ra32+SImm15)&0xfffffffe; local v:2=*:2 a; rd32=sext(v); }
+:lhu rd32,ra32,SImm15 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=18 & rd32 & ra32 & SImm15 { local a:4=(ra32+SImm15)&0xfffffffe; local v:2=*:2 a; rd32=zext(v); }
+:lb rd32,ra32,SImm15 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=19 & rd32 & ra32 & SImm15 { local a:4=ra32+SImm15; local v:1=*:1 a; rd32=sext(v); }
+:sw rd32,ra32,SImm15 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=20 & rd32 & ra32 & SImm15 { local a:4=(ra32+SImm15)&0xfffffffc; *:4 a=rd32; }
+:sh rd32,ra32,SImm15 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=21 & rd32 & ra32 & SImm15 { local a:4=(ra32+SImm15)&0xfffffffe; local v:2=rd32:2; *:2 a=v; }
+:lbu rd32,ra32,SImm15 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=22 & rd32 & ra32 & SImm15 { local a:4=ra32+SImm15; local v:1=*:1 a; rd32=zext(v); }
+:sb rd32,ra32,SImm15 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=23 & rd32 & ra32 & SImm15 { local a:4=ra32+SImm15; local v:1=rd32:1; *:1 a=v; }
+
+:cache rd32,ra32,SImm15 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=24 & rd32 & ra32 & SImm15 { score_cache(); }
+:ceinst rd32,ra32,rb32,ceinst_a,ceinst_b is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=28 & rd32 & ra32 & rb32 & ceinst_a & ceinst_b { score_ceinst(); }
+
+# ===========================================================================
+# 16-bit instructions (p16 == 0)
+# ===========================================================================
+
+:nop! is decode_phase=1 & p16=0 & op16=0 & func16=0 { }
+:mlfh! rd16,HighRA is decode_phase=1 & p16=0 & op16=0 & func16=1 & rd16 & HighRA { rd16 = HighRA; }
+:mhfl! HighRD,ra16 is decode_phase=1 & p16=0 & op16=0 & func16=2 & HighRD & ra16 { HighRD = ra16; }
+:mv! rd16,ra16 is decode_phase=1 & p16=0 & op16=0 & func16=3 & rd16 & ra16 { rd16=ra16; }
+:sll! rd16,ra16 is decode_phase=1 & p16=0 & op16=0 & func16=8 & rd16 & ra16 { local sh:4=ra16&31; rd16=rd16<<sh; }
+:addc! rd16,ra16 is decode_phase=1 & p16=0 & op16=0 & func16=9 & rd16 & ra16 { local c:4=(cr1>>1)&1; rd16=rd16+ra16+c; }
+:srl! rd16,ra16 is decode_phase=1 & p16=0 & op16=0 & func16=10 & rd16 & ra16 { local sh:4=ra16&31; rd16=rd16>>sh; }
+:sra! rd16,ra16 is decode_phase=1 & p16=0 & op16=0 & func16=11 & rd16 & ra16 { local sh:4=ra16&31; rd16=rd16 s>> sh; }
+
+:add! rd16,ra16 is decode_phase=1 & p16=0 & op16=2 & func16=0 & rd16 & ra16 { local old:4=rd16; local result:4=old+ra16; score_set_add_flags(old,ra16,result); rd16=result; }
+:sub! rd16,ra16 is decode_phase=1 & p16=0 & op16=2 & func16=1 & rd16 & ra16 { local old:4=rd16; local result:4=old-ra16; score_set_sub_flags(old,ra16,result); rd16=result; }
+:neg! rd16,ra16 is decode_phase=1 & p16=0 & op16=2 & func16=2 & rd16 & ra16 { local result:4=0-ra16; score_set_neg_flags(ra16,result); rd16=result; }
+:cmp! rd16,ra16 is decode_phase=1 & p16=0 & op16=2 & func16=3 & rd16 & ra16 { local result:4=rd16-ra16; score_set_sub_flags(rd16,ra16,result); }
+:and! rd16,ra16 is decode_phase=1 & p16=0 & op16=2 & func16=4 & rd16 & ra16 { rd16=rd16&ra16; score_set_zn(rd16); }
+:or! rd16,ra16 is decode_phase=1 & p16=0 & op16=2 & func16=5 & rd16 & ra16 { rd16=rd16|ra16; score_set_zn(rd16); }
+:not! rd16,ra16 is decode_phase=1 & p16=0 & op16=2 & func16=6 & rd16 & ra16 { rd16=~ra16; score_set_zn(rd16); }
+:xor! rd16,ra16 is decode_phase=1 & p16=0 & op16=2 & func16=7 & rd16 & ra16 { rd16=rd16^ra16; score_set_zn(rd16); }
+:lw! rd16,ra16 is decode_phase=1 & p16=0 & op16=2 & func16=8 & rd16 & ra16 { local a:4=ra16&0xfffffffc; rd16=*:4 a; }
+:lh! rd16,ra16 is decode_phase=1 & p16=0 & op16=2 & func16=9 & rd16 & ra16 { local a:4=ra16&0xfffffffe; local v:2=*:2 a; rd16=sext(v); }
+:lbu! rd16,ra16 is decode_phase=1 & p16=0 & op16=2 & func16=11 & rd16 & ra16 { local v:1=*:1 ra16; rd16=zext(v); }
+:sw! rd16,ra16 is decode_phase=1 & p16=0 & op16=2 & func16=12 & rd16 & ra16 { local a:4=ra16&0xfffffffc; *:4 a=rd16; }
+:sh! rd16,ra16 is decode_phase=1 & p16=0 & op16=2 & func16=13 & rd16 & ra16 { local a:4=ra16&0xfffffffe; local v:2=rd16:2; *:2 a=v; }
+:sb! rd16,ra16 is decode_phase=1 & p16=0 & op16=2 & func16=15 & rd16 & ra16 { local v:1=rd16:1; *:1 ra16=v; }
+
+:pop! PReg,preg_base is decode_phase=1 & p16=0 & op16=2 & func16=10 & PReg & preg_base { local a:4=preg_base&0xfffffffc; PReg=*:4 a; preg_base=preg_base+4; }
+:push! PReg,preg_base is decode_phase=1 & p16=0 & op16=2 & func16=14 & PReg & preg_base { preg_base=preg_base-4; local a:4=preg_base&0xfffffffc; *:4 a=PReg; }
+
+:j! JTarget16 is decode_phase=1 & p16=0 & op16=3 & lk16=0 & JTarget16 { goto JTarget16; }
+:jl! JTarget16 is decode_phase=1 & p16=0 & op16=3 & lk16=1 & JTarget16 { r3=inst_next; call JTarget16; }
+
+:ldiu! rd16,imm8 is decode_phase=1 & p16=0 & op16=5 & rd16 & imm8 { rd16=imm8; }
+
+:addei! rd16,imm4 is decode_phase=1 & p16=0 & op16=6 & i16_func3=0 & imm_sign=0 & rd16 & imm4 { local delta:4=1 << imm4; rd16=rd16+delta; score_set_zn(rd16); }
+:subei! rd16,imm4 is decode_phase=1 & p16=0 & op16=6 & i16_func3=0 & imm_sign=1 & rd16 & imm4 { local delta:4=1 << imm4; rd16=rd16-delta; score_set_zn(rd16); }
+:slli! rd16,imm5 is decode_phase=1 & p16=0 & op16=6 & i16_func3=1 & rd16 & imm5 { rd16=rd16 << imm5; score_set_zn(rd16); }
+:sdbbp! rd16 is decode_phase=1 & p16=0 & op16=6 & i16_func3=2 & rd16 { score_debug_break(); }
+:srli! rd16,imm5 is decode_phase=1 & p16=0 & op16=6 & i16_func3=3 & rd16 & imm5 { rd16=rd16 >> imm5; score_set_zn(rd16); }
+:bitclr! rd16,imm5 is decode_phase=1 & p16=0 & op16=6 & i16_func3=4 & rd16 & imm5 { rd16=rd16 & ~(1 << imm5); score_set_zn(rd16); }
+:bitset! rd16,imm5 is decode_phase=1 & p16=0 & op16=6 & i16_func3=5 & rd16 & imm5 { rd16=rd16 | (1 << imm5); score_set_zn(rd16); }
+:bittst! rd16,imm5 is decode_phase=1 & p16=0 & op16=6 & i16_func3=6 & rd16 & imm5 { local v:4=rd16 & (1 << imm5); score_set_zn(v); }
+:bittgl! rd16,imm5 is decode_phase=1 & p16=0 & op16=6 & i16_func3=7 & rd16 & imm5 { rd16=rd16 ^ (1 << imm5); score_set_zn(rd16); }
+
+:lwp! rd16,imm5 is decode_phase=1 & p16=0 & op16=7 & i16_func3=0 & rd16 & imm5 { local a:4=(r2+(imm5<<2))&0xfffffffc; rd16=*:4 a; }
+:lhp! rd16,imm5 is decode_phase=1 & p16=0 & op16=7 & i16_func3=1 & rd16 & imm5 { local a:4=(r2+(imm5<<1))&0xfffffffe; local v:2=*:2 a; rd16=sext(v); }
+:lbup! rd16,imm5 is decode_phase=1 & p16=0 & op16=7 & i16_func3=3 & rd16 & imm5 { local a:4=r2+imm5; local v:1=*:1 a; rd16=zext(v); }
+:swp! rd16,imm5 is decode_phase=1 & p16=0 & op16=7 & i16_func3=4 & rd16 & imm5 { local a:4=(r2+(imm5<<2))&0xfffffffc; *:4 a=rd16; }
+:shp! rd16,imm5 is decode_phase=1 & p16=0 & op16=7 & i16_func3=5 & rd16 & imm5 { local a:4=(r2+(imm5<<1))&0xfffffffe; local v:2=rd16:2; *:2 a=v; }
+:sbp! rd16,imm5 is decode_phase=1 & p16=0 & op16=7 & i16_func3=7 & rd16 & imm5 { local a:4=r2+imm5; local v:1=rd16:1; *:1 a=v; }
+
+:bcs BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=0 & cu=0 & BTarget32 { if ((cr1 & 0x2) != 0) goto <take>; goto <done>; <take> goto BTarget32; <done> }
+:bcsl BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=0 & cu=1 & BTarget32 { if ((cr1 & 0x2) != 0) goto <take>; goto <done>; <take> r3=inst_next; call BTarget32; <done> }
+:bcs! BTarget16 is decode_phase=1 & p16=0 & op16=4 & cond16=0 & BTarget16 { if ((cr1 & 0x2) != 0) goto <take>; goto <done>; <take> goto BTarget16; <done> }
+:brcs ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=0 & rb32=0 & ra32 { if ((cr1 & 0x2) != 0) goto <take>; goto <done>; <take> goto [ra32]; <done> }
+:brcsl ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=1 & rb32=0 & ra32 { if ((cr1 & 0x2) != 0) goto <take>; goto <done>; <take> r3=inst_next; call [ra32]; <done> }
+:brcs! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=4 & rd16=0 & ra16 { if ((cr1 & 0x2) != 0) goto <take>; goto <done>; <take> goto [ra16]; <done> }
+:brcsl! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=12 & rd16=0 & ra16 { if ((cr1 & 0x2) != 0) goto <take>; goto <done>; <take> r3=inst_next; call [ra16]; <done> }
+
+:bcc BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=1 & cu=0 & BTarget32 { if ((cr1 & 0x2) == 0) goto <take>; goto <done>; <take> goto BTarget32; <done> }
+:bccl BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=1 & cu=1 & BTarget32 { if ((cr1 & 0x2) == 0) goto <take>; goto <done>; <take> r3=inst_next; call BTarget32; <done> }
+:bcc! BTarget16 is decode_phase=1 & p16=0 & op16=4 & cond16=1 & BTarget16 { if ((cr1 & 0x2) == 0) goto <take>; goto <done>; <take> goto BTarget16; <done> }
+:brcc ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=0 & rb32=1 & ra32 { if ((cr1 & 0x2) == 0) goto <take>; goto <done>; <take> goto [ra32]; <done> }
+:brccl ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=1 & rb32=1 & ra32 { if ((cr1 & 0x2) == 0) goto <take>; goto <done>; <take> r3=inst_next; call [ra32]; <done> }
+:brcc! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=4 & rd16=1 & ra16 { if ((cr1 & 0x2) == 0) goto <take>; goto <done>; <take> goto [ra16]; <done> }
+:brccl! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=12 & rd16=1 & ra16 { if ((cr1 & 0x2) == 0) goto <take>; goto <done>; <take> r3=inst_next; call [ra16]; <done> }
+
+:bgtu BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=2 & cu=0 & BTarget32 { if ((cr1 & 0x2) == 0) goto <done>; if ((cr1 & 0x4) != 0) goto <done>; goto BTarget32; <done> }
+:bgtul BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=2 & cu=1 & BTarget32 { if ((cr1 & 0x2) == 0) goto <done>; if ((cr1 & 0x4) != 0) goto <done>; r3=inst_next; call BTarget32; <done> }
+:bgtu! BTarget16 is decode_phase=1 & p16=0 & op16=4 & cond16=2 & BTarget16 { if ((cr1 & 0x2) == 0) goto <done>; if ((cr1 & 0x4) != 0) goto <done>; goto BTarget16; <done> }
+:brgtu ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=0 & rb32=2 & ra32 { if ((cr1 & 0x2) == 0) goto <done>; if ((cr1 & 0x4) != 0) goto <done>; goto [ra32]; <done> }
+:brgtul ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=1 & rb32=2 & ra32 { if ((cr1 & 0x2) == 0) goto <done>; if ((cr1 & 0x4) != 0) goto <done>; r3=inst_next; call [ra32]; <done> }
+:brgtu! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=4 & rd16=2 & ra16 { if ((cr1 & 0x2) == 0) goto <done>; if ((cr1 & 0x4) != 0) goto <done>; goto [ra16]; <done> }
+:brgtul! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=12 & rd16=2 & ra16 { if ((cr1 & 0x2) == 0) goto <done>; if ((cr1 & 0x4) != 0) goto <done>; r3=inst_next; call [ra16]; <done> }
+
+:bleu BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=3 & cu=0 & BTarget32 { if ((cr1 & 0x2) == 0) goto <take>; if ((cr1 & 0x4) != 0) goto <take>; goto <done>; <take> goto BTarget32; <done> }
+:bleul BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=3 & cu=1 & BTarget32 { if ((cr1 & 0x2) == 0) goto <take>; if ((cr1 & 0x4) != 0) goto <take>; goto <done>; <take> r3=inst_next; call BTarget32; <done> }
+:bleu! BTarget16 is decode_phase=1 & p16=0 & op16=4 & cond16=3 & BTarget16 { if ((cr1 & 0x2) == 0) goto <take>; if ((cr1 & 0x4) != 0) goto <take>; goto <done>; <take> goto BTarget16; <done> }
+:brleu ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=0 & rb32=3 & ra32 { if ((cr1 & 0x2) == 0) goto <take>; if ((cr1 & 0x4) != 0) goto <take>; goto <done>; <take> goto [ra32]; <done> }
+:brleul ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=1 & rb32=3 & ra32 { if ((cr1 & 0x2) == 0) goto <take>; if ((cr1 & 0x4) != 0) goto <take>; goto <done>; <take> r3=inst_next; call [ra32]; <done> }
+:brleu! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=4 & rd16=3 & ra16 { if ((cr1 & 0x2) == 0) goto <take>; if ((cr1 & 0x4) != 0) goto <take>; goto <done>; <take> goto [ra16]; <done> }
+:brleul! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=12 & rd16=3 & ra16 { if ((cr1 & 0x2) == 0) goto <take>; if ((cr1 & 0x4) != 0) goto <take>; goto <done>; <take> r3=inst_next; call [ra16]; <done> }
+
+:beq BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=4 & cu=0 & BTarget32 { if ((cr1 & 0x4) != 0) goto <take>; goto <done>; <take> goto BTarget32; <done> }
+:beql BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=4 & cu=1 & BTarget32 { if ((cr1 & 0x4) != 0) goto <take>; goto <done>; <take> r3=inst_next; call BTarget32; <done> }
+:beq! BTarget16 is decode_phase=1 & p16=0 & op16=4 & cond16=4 & BTarget16 { if ((cr1 & 0x4) != 0) goto <take>; goto <done>; <take> goto BTarget16; <done> }
+:breq ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=0 & rb32=4 & ra32 { if ((cr1 & 0x4) != 0) goto <take>; goto <done>; <take> goto [ra32]; <done> }
+:breql ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=1 & rb32=4 & ra32 { if ((cr1 & 0x4) != 0) goto <take>; goto <done>; <take> r3=inst_next; call [ra32]; <done> }
+:breq! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=4 & rd16=4 & ra16 { if ((cr1 & 0x4) != 0) goto <take>; goto <done>; <take> goto [ra16]; <done> }
+:breql! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=12 & rd16=4 & ra16 { if ((cr1 & 0x4) != 0) goto <take>; goto <done>; <take> r3=inst_next; call [ra16]; <done> }
+
+:bne BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=5 & cu=0 & BTarget32 { if ((cr1 & 0x4) == 0) goto <take>; goto <done>; <take> goto BTarget32; <done> }
+:bnel BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=5 & cu=1 & BTarget32 { if ((cr1 & 0x4) == 0) goto <take>; goto <done>; <take> r3=inst_next; call BTarget32; <done> }
+:bne! BTarget16 is decode_phase=1 & p16=0 & op16=4 & cond16=5 & BTarget16 { if ((cr1 & 0x4) == 0) goto <take>; goto <done>; <take> goto BTarget16; <done> }
+:brne ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=0 & rb32=5 & ra32 { if ((cr1 & 0x4) == 0) goto <take>; goto <done>; <take> goto [ra32]; <done> }
+:brnel ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=1 & rb32=5 & ra32 { if ((cr1 & 0x4) == 0) goto <take>; goto <done>; <take> r3=inst_next; call [ra32]; <done> }
+:brne! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=4 & rd16=5 & ra16 { if ((cr1 & 0x4) == 0) goto <take>; goto <done>; <take> goto [ra16]; <done> }
+:brnel! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=12 & rd16=5 & ra16 { if ((cr1 & 0x4) == 0) goto <take>; goto <done>; <take> r3=inst_next; call [ra16]; <done> }
+
+:bgt BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=6 & cu=0 & BTarget32 { if ((cr1 & 0x4) != 0) goto <done>; if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <done>; goto BTarget32; <done> }
+:bgtl BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=6 & cu=1 & BTarget32 { if ((cr1 & 0x4) != 0) goto <done>; if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <done>; r3=inst_next; call BTarget32; <done> }
+:bgt! BTarget16 is decode_phase=1 & p16=0 & op16=4 & cond16=6 & BTarget16 { if ((cr1 & 0x4) != 0) goto <done>; if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <done>; goto BTarget16; <done> }
+:brgt ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=0 & rb32=6 & ra32 { if ((cr1 & 0x4) != 0) goto <done>; if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <done>; goto [ra32]; <done> }
+:brgtl ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=1 & rb32=6 & ra32 { if ((cr1 & 0x4) != 0) goto <done>; if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <done>; r3=inst_next; call [ra32]; <done> }
+:brgt! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=4 & rd16=6 & ra16 { if ((cr1 & 0x4) != 0) goto <done>; if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <done>; goto [ra16]; <done> }
+:brgtl! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=12 & rd16=6 & ra16 { if ((cr1 & 0x4) != 0) goto <done>; if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <done>; r3=inst_next; call [ra16]; <done> }
+
+:ble BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=7 & cu=0 & BTarget32 { if ((cr1 & 0x4) != 0) goto <take>; if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> goto BTarget32; <done> }
+:blel BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=7 & cu=1 & BTarget32 { if ((cr1 & 0x4) != 0) goto <take>; if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> r3=inst_next; call BTarget32; <done> }
+:ble! BTarget16 is decode_phase=1 & p16=0 & op16=4 & cond16=7 & BTarget16 { if ((cr1 & 0x4) != 0) goto <take>; if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> goto BTarget16; <done> }
+:brle ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=0 & rb32=7 & ra32 { if ((cr1 & 0x4) != 0) goto <take>; if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> goto [ra32]; <done> }
+:brlel ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=1 & rb32=7 & ra32 { if ((cr1 & 0x4) != 0) goto <take>; if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> r3=inst_next; call [ra32]; <done> }
+:brle! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=4 & rd16=7 & ra16 { if ((cr1 & 0x4) != 0) goto <take>; if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> goto [ra16]; <done> }
+:brlel! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=12 & rd16=7 & ra16 { if ((cr1 & 0x4) != 0) goto <take>; if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> r3=inst_next; call [ra16]; <done> }
+
+:bge BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=8 & cu=0 & BTarget32 { if ((cr1 & 0x8) == ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> goto BTarget32; <done> }
+:bgel BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=8 & cu=1 & BTarget32 { if ((cr1 & 0x8) == ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> r3=inst_next; call BTarget32; <done> }
+:bge! BTarget16 is decode_phase=1 & p16=0 & op16=4 & cond16=8 & BTarget16 { if ((cr1 & 0x8) == ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> goto BTarget16; <done> }
+:brge ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=0 & rb32=8 & ra32 { if ((cr1 & 0x8) == ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> goto [ra32]; <done> }
+:brgel ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=1 & rb32=8 & ra32 { if ((cr1 & 0x8) == ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> r3=inst_next; call [ra32]; <done> }
+:brge! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=4 & rd16=8 & ra16 { if ((cr1 & 0x8) == ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> goto [ra16]; <done> }
+:brgel! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=12 & rd16=8 & ra16 { if ((cr1 & 0x8) == ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> r3=inst_next; call [ra16]; <done> }
+
+:blt BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=9 & cu=0 & BTarget32 { if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> goto BTarget32; <done> }
+:bltl BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=9 & cu=1 & BTarget32 { if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> r3=inst_next; call BTarget32; <done> }
+:blt! BTarget16 is decode_phase=1 & p16=0 & op16=4 & cond16=9 & BTarget16 { if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> goto BTarget16; <done> }
+:brlt ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=0 & rb32=9 & ra32 { if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> goto [ra32]; <done> }
+:brltl ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=1 & rb32=9 & ra32 { if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> r3=inst_next; call [ra32]; <done> }
+:brlt! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=4 & rd16=9 & ra16 { if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> goto [ra16]; <done> }
+:brltl! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=12 & rd16=9 & ra16 { if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> r3=inst_next; call [ra16]; <done> }
+
+:bmi BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=10 & cu=0 & BTarget32 { if ((cr1 & 0x8) != 0) goto <take>; goto <done>; <take> goto BTarget32; <done> }
+:bmil BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=10 & cu=1 & BTarget32 { if ((cr1 & 0x8) != 0) goto <take>; goto <done>; <take> r3=inst_next; call BTarget32; <done> }
+:bmi! BTarget16 is decode_phase=1 & p16=0 & op16=4 & cond16=10 & BTarget16 { if ((cr1 & 0x8) != 0) goto <take>; goto <done>; <take> goto BTarget16; <done> }
+:brmi ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=0 & rb32=10 & ra32 { if ((cr1 & 0x8) != 0) goto <take>; goto <done>; <take> goto [ra32]; <done> }
+:brmil ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=1 & rb32=10 & ra32 { if ((cr1 & 0x8) != 0) goto <take>; goto <done>; <take> r3=inst_next; call [ra32]; <done> }
+:brmi! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=4 & rd16=10 & ra16 { if ((cr1 & 0x8) != 0) goto <take>; goto <done>; <take> goto [ra16]; <done> }
+:brmil! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=12 & rd16=10 & ra16 { if ((cr1 & 0x8) != 0) goto <take>; goto <done>; <take> r3=inst_next; call [ra16]; <done> }
+
+:bpl BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=11 & cu=0 & BTarget32 { if ((cr1 & 0x8) == 0) goto <take>; goto <done>; <take> goto BTarget32; <done> }
+:bpll BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=11 & cu=1 & BTarget32 { if ((cr1 & 0x8) == 0) goto <take>; goto <done>; <take> r3=inst_next; call BTarget32; <done> }
+:bpl! BTarget16 is decode_phase=1 & p16=0 & op16=4 & cond16=11 & BTarget16 { if ((cr1 & 0x8) == 0) goto <take>; goto <done>; <take> goto BTarget16; <done> }
+:brpl ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=0 & rb32=11 & ra32 { if ((cr1 & 0x8) == 0) goto <take>; goto <done>; <take> goto [ra32]; <done> }
+:brpll ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=1 & rb32=11 & ra32 { if ((cr1 & 0x8) == 0) goto <take>; goto <done>; <take> r3=inst_next; call [ra32]; <done> }
+:brpl! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=4 & rd16=11 & ra16 { if ((cr1 & 0x8) == 0) goto <take>; goto <done>; <take> goto [ra16]; <done> }
+:brpll! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=12 & rd16=11 & ra16 { if ((cr1 & 0x8) == 0) goto <take>; goto <done>; <take> r3=inst_next; call [ra16]; <done> }
+
+:bvs BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=12 & cu=0 & BTarget32 { if ((cr1 & 0x1) != 0) goto <take>; goto <done>; <take> goto BTarget32; <done> }
+:bvsl BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=12 & cu=1 & BTarget32 { if ((cr1 & 0x1) != 0) goto <take>; goto <done>; <take> r3=inst_next; call BTarget32; <done> }
+:bvs! BTarget16 is decode_phase=1 & p16=0 & op16=4 & cond16=12 & BTarget16 { if ((cr1 & 0x1) != 0) goto <take>; goto <done>; <take> goto BTarget16; <done> }
+:brvs ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=0 & rb32=12 & ra32 { if ((cr1 & 0x1) != 0) goto <take>; goto <done>; <take> goto [ra32]; <done> }
+:brvsl ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=1 & rb32=12 & ra32 { if ((cr1 & 0x1) != 0) goto <take>; goto <done>; <take> r3=inst_next; call [ra32]; <done> }
+:brvs! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=4 & rd16=12 & ra16 { if ((cr1 & 0x1) != 0) goto <take>; goto <done>; <take> goto [ra16]; <done> }
+:brvsl! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=12 & rd16=12 & ra16 { if ((cr1 & 0x1) != 0) goto <take>; goto <done>; <take> r3=inst_next; call [ra16]; <done> }
+
+:bvc BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=13 & cu=0 & BTarget32 { if ((cr1 & 0x1) == 0) goto <take>; goto <done>; <take> goto BTarget32; <done> }
+:bvcl BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=13 & cu=1 & BTarget32 { if ((cr1 & 0x1) == 0) goto <take>; goto <done>; <take> r3=inst_next; call BTarget32; <done> }
+:bvc! BTarget16 is decode_phase=1 & p16=0 & op16=4 & cond16=13 & BTarget16 { if ((cr1 & 0x1) == 0) goto <take>; goto <done>; <take> goto BTarget16; <done> }
+:brvc ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=0 & rb32=13 & ra32 { if ((cr1 & 0x1) == 0) goto <take>; goto <done>; <take> goto [ra32]; <done> }
+:brvcl ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=1 & rb32=13 & ra32 { if ((cr1 & 0x1) == 0) goto <take>; goto <done>; <take> r3=inst_next; call [ra32]; <done> }
+:brvc! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=4 & rd16=13 & ra16 { if ((cr1 & 0x1) == 0) goto <take>; goto <done>; <take> goto [ra16]; <done> }
+:brvcl! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=12 & rd16=13 & ra16 { if ((cr1 & 0x1) == 0) goto <take>; goto <done>; <take> r3=inst_next; call [ra16]; <done> }
+
+:bcnz BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=14 & cu=0 & BTarget32 { if (sr0 == 0) goto <done>; sr0=sr0-1; goto BTarget32; <done> }
+:bcnzl BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=14 & cu=1 & BTarget32 { if (sr0 == 0) goto <done>; sr0=sr0-1; r3=inst_next; call BTarget32; <done> }
+:bcnz! BTarget16 is decode_phase=1 & p16=0 & op16=4 & cond16=14 & BTarget16 { if (sr0 == 0) goto <done>; sr0=sr0-1; goto BTarget16; <done> }
+:brcnz ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=0 & rb32=14 & ra32 { if (sr0 == 0) goto <done>; sr0=sr0-1; goto [ra32]; <done> }
+:brcnzl ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=1 & rb32=14 & ra32 { if (sr0 == 0) goto <done>; sr0=sr0-1; r3=inst_next; call [ra32]; <done> }
+:brcnz! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=4 & rd16=14 & ra16 { if (sr0 == 0) goto <done>; sr0=sr0-1; goto [ra16]; <done> }
+:brcnzl! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=12 & rd16=14 & ra16 { if (sr0 == 0) goto <done>; sr0=sr0-1; r3=inst_next; call [ra16]; <done> }
+
+:b BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=15 & cu=0 & BTarget32 { goto BTarget32; }
+:bl BTarget32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=4 & bc_cond=15 & cu=1 & BTarget32 { r3=inst_next; call BTarget32; }
+:b! BTarget16 is decode_phase=1 & p16=0 & op16=4 & cond16=15 & BTarget16 { goto BTarget16; }
+:br ReturnReg32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=0 & rb32=15 & ReturnReg32 { return [ReturnReg32]; }
+:br ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=0 & rb32=15 & ra32 { goto [ra32]; }
+:brl ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=4 & cu=1 & rb32=15 & ra32 { r3=inst_next; call [ra32]; }
+:br! ReturnReg16 is decode_phase=1 & p16=0 & op16=0 & func16=4 & rd16=15 & ReturnReg16 { return [ReturnReg16]; }
+:br! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=4 & rd16=15 & ra16 { goto [ra16]; }
+:brl! ra16 is decode_phase=1 & p16=0 & op16=0 & func16=12 & rd16=15 & ra16 { r3=inst_next; call [ra16]; }
+
+:tcs is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=42 & rb32=0 { cr1 = cr1 & 0xffffffef; if ((cr1 & 0x2) != 0) goto <take>; goto <done>; <take> cr1 = cr1 | 0x10; <done> }
+:mvcs rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=43 & rb32=0 & rd32 & ra32 { if ((cr1 & 0x2) != 0) goto <take>; goto <done>; <take> rd32=ra32; <done> }
+:tcs! is decode_phase=1 & p16=0 & op16=0 & func16=5 & rd16=0 { cr1 = cr1 & 0xffffffef; if ((cr1 & 0x2) != 0) goto <take>; goto <done>; <take> cr1 = cr1 | 0x10; <done> }
+
+:tcc is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=42 & rb32=1 { cr1 = cr1 & 0xffffffef; if ((cr1 & 0x2) == 0) goto <take>; goto <done>; <take> cr1 = cr1 | 0x10; <done> }
+:mvcc rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=43 & rb32=1 & rd32 & ra32 { if ((cr1 & 0x2) == 0) goto <take>; goto <done>; <take> rd32=ra32; <done> }
+:tcc! is decode_phase=1 & p16=0 & op16=0 & func16=5 & rd16=1 { cr1 = cr1 & 0xffffffef; if ((cr1 & 0x2) == 0) goto <take>; goto <done>; <take> cr1 = cr1 | 0x10; <done> }
+
+:tgtu is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=42 & rb32=2 { cr1 = cr1 & 0xffffffef; if ((cr1 & 0x2) == 0) goto <done>; if ((cr1 & 0x4) != 0) goto <done>; cr1 = cr1 | 0x10; <done> }
+:mvgtu rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=43 & rb32=2 & rd32 & ra32 { if ((cr1 & 0x2) == 0) goto <done>; if ((cr1 & 0x4) != 0) goto <done>; rd32=ra32; <done> }
+:tgtu! is decode_phase=1 & p16=0 & op16=0 & func16=5 & rd16=2 { cr1 = cr1 & 0xffffffef; if ((cr1 & 0x2) == 0) goto <done>; if ((cr1 & 0x4) != 0) goto <done>; cr1 = cr1 | 0x10; <done> }
+
+:tleu is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=42 & rb32=3 { cr1 = cr1 & 0xffffffef; if ((cr1 & 0x2) == 0) goto <take>; if ((cr1 & 0x4) != 0) goto <take>; goto <done>; <take> cr1 = cr1 | 0x10; <done> }
+:mvleu rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=43 & rb32=3 & rd32 & ra32 { if ((cr1 & 0x2) == 0) goto <take>; if ((cr1 & 0x4) != 0) goto <take>; goto <done>; <take> rd32=ra32; <done> }
+:tleu! is decode_phase=1 & p16=0 & op16=0 & func16=5 & rd16=3 { cr1 = cr1 & 0xffffffef; if ((cr1 & 0x2) == 0) goto <take>; if ((cr1 & 0x4) != 0) goto <take>; goto <done>; <take> cr1 = cr1 | 0x10; <done> }
+
+:teq is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=42 & rb32=4 { cr1 = cr1 & 0xffffffef; if ((cr1 & 0x4) != 0) goto <take>; goto <done>; <take> cr1 = cr1 | 0x10; <done> }
+:mveq rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=43 & rb32=4 & rd32 & ra32 { if ((cr1 & 0x4) != 0) goto <take>; goto <done>; <take> rd32=ra32; <done> }
+:teq! is decode_phase=1 & p16=0 & op16=0 & func16=5 & rd16=4 { cr1 = cr1 & 0xffffffef; if ((cr1 & 0x4) != 0) goto <take>; goto <done>; <take> cr1 = cr1 | 0x10; <done> }
+
+:tne is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=42 & rb32=5 { cr1 = cr1 & 0xffffffef; if ((cr1 & 0x4) == 0) goto <take>; goto <done>; <take> cr1 = cr1 | 0x10; <done> }
+:mvne rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=43 & rb32=5 & rd32 & ra32 { if ((cr1 & 0x4) == 0) goto <take>; goto <done>; <take> rd32=ra32; <done> }
+:tne! is decode_phase=1 & p16=0 & op16=0 & func16=5 & rd16=5 { cr1 = cr1 & 0xffffffef; if ((cr1 & 0x4) == 0) goto <take>; goto <done>; <take> cr1 = cr1 | 0x10; <done> }
+
+:tgt is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=42 & rb32=6 { cr1 = cr1 & 0xffffffef; if ((cr1 & 0x4) != 0) goto <done>; if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <done>; cr1 = cr1 | 0x10; <done> }
+:mvgt rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=43 & rb32=6 & rd32 & ra32 { if ((cr1 & 0x4) != 0) goto <done>; if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <done>; rd32=ra32; <done> }
+:tgt! is decode_phase=1 & p16=0 & op16=0 & func16=5 & rd16=6 { cr1 = cr1 & 0xffffffef; if ((cr1 & 0x4) != 0) goto <done>; if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <done>; cr1 = cr1 | 0x10; <done> }
+
+:tle is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=42 & rb32=7 { cr1 = cr1 & 0xffffffef; if ((cr1 & 0x4) != 0) goto <take>; if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> cr1 = cr1 | 0x10; <done> }
+:mvle rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=43 & rb32=7 & rd32 & ra32 { if ((cr1 & 0x4) != 0) goto <take>; if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> rd32=ra32; <done> }
+:tle! is decode_phase=1 & p16=0 & op16=0 & func16=5 & rd16=7 { cr1 = cr1 & 0xffffffef; if ((cr1 & 0x4) != 0) goto <take>; if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> cr1 = cr1 | 0x10; <done> }
+
+:tge is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=42 & rb32=8 { cr1 = cr1 & 0xffffffef; if ((cr1 & 0x8) == ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> cr1 = cr1 | 0x10; <done> }
+:mvge rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=43 & rb32=8 & rd32 & ra32 { if ((cr1 & 0x8) == ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> rd32=ra32; <done> }
+:tge! is decode_phase=1 & p16=0 & op16=0 & func16=5 & rd16=8 { cr1 = cr1 & 0xffffffef; if ((cr1 & 0x8) == ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> cr1 = cr1 | 0x10; <done> }
+
+:tlt is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=42 & rb32=9 { cr1 = cr1 & 0xffffffef; if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> cr1 = cr1 | 0x10; <done> }
+:mvlt rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=43 & rb32=9 & rd32 & ra32 { if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> rd32=ra32; <done> }
+:tlt! is decode_phase=1 & p16=0 & op16=0 & func16=5 & rd16=9 { cr1 = cr1 & 0xffffffef; if ((cr1 & 0x8) != ((cr1 & 0x1) << 3)) goto <take>; goto <done>; <take> cr1 = cr1 | 0x10; <done> }
+
+:tmi is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=42 & rb32=10 { cr1 = cr1 & 0xffffffef; if ((cr1 & 0x8) != 0) goto <take>; goto <done>; <take> cr1 = cr1 | 0x10; <done> }
+:mvmi rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=43 & rb32=10 & rd32 & ra32 { if ((cr1 & 0x8) != 0) goto <take>; goto <done>; <take> rd32=ra32; <done> }
+:tmi! is decode_phase=1 & p16=0 & op16=0 & func16=5 & rd16=10 { cr1 = cr1 & 0xffffffef; if ((cr1 & 0x8) != 0) goto <take>; goto <done>; <take> cr1 = cr1 | 0x10; <done> }
+
+:tpl is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=42 & rb32=11 { cr1 = cr1 & 0xffffffef; if ((cr1 & 0x8) == 0) goto <take>; goto <done>; <take> cr1 = cr1 | 0x10; <done> }
+:mvpl rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=43 & rb32=11 & rd32 & ra32 { if ((cr1 & 0x8) == 0) goto <take>; goto <done>; <take> rd32=ra32; <done> }
+:tpl! is decode_phase=1 & p16=0 & op16=0 & func16=5 & rd16=11 { cr1 = cr1 & 0xffffffef; if ((cr1 & 0x8) == 0) goto <take>; goto <done>; <take> cr1 = cr1 | 0x10; <done> }
+
+:tvs is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=42 & rb32=12 { cr1 = cr1 & 0xffffffef; if ((cr1 & 0x1) != 0) goto <take>; goto <done>; <take> cr1 = cr1 | 0x10; <done> }
+:mvvs rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=43 & rb32=12 & rd32 & ra32 { if ((cr1 & 0x1) != 0) goto <take>; goto <done>; <take> rd32=ra32; <done> }
+:tvs! is decode_phase=1 & p16=0 & op16=0 & func16=5 & rd16=12 { cr1 = cr1 & 0xffffffef; if ((cr1 & 0x1) != 0) goto <take>; goto <done>; <take> cr1 = cr1 | 0x10; <done> }
+
+:tvc is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=42 & rb32=13 { cr1 = cr1 & 0xffffffef; if ((cr1 & 0x1) == 0) goto <take>; goto <done>; <take> cr1 = cr1 | 0x10; <done> }
+:mvvc rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=43 & rb32=13 & rd32 & ra32 { if ((cr1 & 0x1) == 0) goto <take>; goto <done>; <take> rd32=ra32; <done> }
+:tvc! is decode_phase=1 & p16=0 & op16=0 & func16=5 & rd16=13 { cr1 = cr1 & 0xffffffef; if ((cr1 & 0x1) == 0) goto <take>; goto <done>; <take> cr1 = cr1 | 0x10; <done> }
+
+:tcnz is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=42 & rb32=14 { cr1 = cr1 & 0xffffffef; if (sr0 != 0) goto <yes>; goto <done>; <yes> cr1 = cr1 | 0x10; <done> }
+:tcnz! is decode_phase=1 & p16=0 & op16=0 & func16=5 & rd16=14 { cr1 = cr1 & 0xffffffef; if (sr0 != 0) goto <yes>; goto <done>; <yes> cr1 = cr1 | 0x10; <done> }
+
+:tset is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=42 & rb32=15 { cr1 = cr1 | 0x10; }
+:mv rd32,ra32 is decode_phase=1 & packet_half=0 & p_lo=1 & p_hi=1 & major32=0 & special_pad=0 & func6=43 & rb32=15 & rd32 & ra32 { rd32=ra32; }
+:tset! is decode_phase=1 & p16=0 & op16=0 & func16=5 & rd16=15 { cr1 = cr1 | 0x10; }
