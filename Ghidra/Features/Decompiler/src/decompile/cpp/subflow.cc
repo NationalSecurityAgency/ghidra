@@ -4012,6 +4012,7 @@ bool LaneDivide::traceForward(TransformVar *rvn,int4 numLanes,int4 skipLanes)
 	break;
       }
       case CPUI_INT_RIGHT:
+      case CPUI_INT_LEFT:
       {
 	if (!op->getIn(1)->isConstant()) return false;	// Trace must come through op->getIn(0)
 	TransformVar *outRvn = setReplacement(outvn, numLanes, skipLanes);
