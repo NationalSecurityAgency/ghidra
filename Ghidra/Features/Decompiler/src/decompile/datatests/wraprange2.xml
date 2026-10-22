@@ -1,0 +1,19 @@
+<decompilertest>
+<!--
+    Example of a memory access that wraps from the top of the ram space to the bottom
+-->
+<binaryimage arch="x86:LE:32:default:gcc">
+<bytechunk space="ram" offset="0x401000" readonly="true">
+a1ffffffffc3
+</bytechunk>
+<symbol space="ram" offset="0x401000" name="wrapram"/>
+</binaryimage>
+<script>
+  <com>load function wrapram</com>
+  <com>decompile</com>
+  <com>print raw</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Wrapped ram range #1" min="1" max="1">j\{r0x00000000,r0xffffffff\}.* = CONCAT31\(r0x00000000:3\(i\),r0xffffffff:1\(i\)\)</stringmatch>
+<stringmatch name="Wrapped ram range #2" min="1" max="1">EAX\(.*\) = j\{r0x00000000,r0xffffffff\}</stringmatch>
+</decompilertest>
