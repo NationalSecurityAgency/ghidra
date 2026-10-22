@@ -46,7 +46,7 @@ public class BentoProvider extends ComponentProviderAdapter {
 	private boolean applyFilter = true;
 
 	private static final Icon ICON_REFRESH =
-		ResourceManager.getScaledIcon(new GIcon("icon.debugger.refresh"), 12, 12);
+		ResourceManager.getScaledIcon(new GIcon("icon.plugin.bento.refresh"), 12, 12);
 	private static final Icon ICON_FILTER =
 		ResourceManager.getScaledIcon(new GIcon("icon.widget.filterpanel.filter.off"), 12, 12);
 	long halfPage = 512L;
