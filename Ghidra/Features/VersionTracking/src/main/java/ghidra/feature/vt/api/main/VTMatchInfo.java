@@ -30,6 +30,12 @@ public class VTMatchInfo {
 	protected final VTMatchSet matchSet;
 	private VTScore confidenceScore;
 
+	// PDiff similarity score: a combined metric (95% basic-block mnemonic hash similarity +
+	// 5% stack frame size similarity) computed once at match creation time and persisted in the
+	// DB. This avoids expensive on-the-fly recomputation in the table column and filter.
+	// Null for DATA matches or matches created before this feature was added.
+	private VTScore pdiffSimilarityScore;
+
 	public VTMatchInfo(VTMatchSet vtMatchSet) {
 		this.matchSet = vtMatchSet;
 	}
@@ -68,6 +74,14 @@ public class VTMatchInfo {
 
 	public VTScore getConfidenceScore() {
 		return confidenceScore;
+	}
+
+	public VTScore getPdiffSimilarityScore() {
+		return pdiffSimilarityScore;
+	}
+
+	public void setPdiffSimilarityScore(VTScore score) {
+		this.pdiffSimilarityScore = score;
 	}
 
 	public void setSourceAddress(Address sourceAddress) {
