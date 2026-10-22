@@ -37,6 +37,15 @@ public class SwiftGlobalNode extends SwiftNode {
 				case MergedFunction:
 				case ObjCAttribute:
 					continue;
+				case AccessibleFunctionRecord:
+				case AsyncFunctionPointer:
+				case CoroFunctionPointer:
+				case DynamicallyReplaceableFunctionKey:
+				case DynamicallyReplaceableFunctionVar:
+				case OutlinedReadOnlyObject:
+				case OutlinedVariable:
+					// The symbol is data that belongs to the entity in the next child, not its code
+					return getUnknown();
 				case Suffix:
 					suffix = child.demangle(demangler);
 					break;
