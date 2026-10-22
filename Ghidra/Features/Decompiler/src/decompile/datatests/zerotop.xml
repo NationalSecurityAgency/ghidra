@@ -1,0 +1,32 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+#include <xmmintrin.h>
+/* a vector scaled lane by lane, its top lane replaced by zero through two shuffles against a zero register (the way a
+   compiler clears one lane without a mask constant), stored; the decompiler folds the shuffles into a zero extension of
+   the low three lanes, which the lane split must follow forward */
+void zerotop(float *out, const float *in, float s) {
+  __m128 v = _mm_mul_ps(_mm_loadu_ps(in), _mm_set1_ps(s));
+  __m128 t = _mm_shuffle_ps(v, _mm_setzero_ps(), 0x0a);
+  v = _mm_shuffle_ps(v, t, 0x84);
+  _mm_storeu_ps(out, v);
+}
+-->
+<bytechunk space="ram" offset="0x100000" readonly="true">
+554889e50f100e0fc6c0000f59c10f57c90fc6c8200fc6c1240f11075dc3
+</bytechunk>
+<symbol space="ram" offset="0x100000" name="zerotop"/>
+</binaryimage>
+<script>
+  <com>parse line extern void zerotop(float4 *out, float4 *in, float4 s);</com>
+  <com>lo fu zerotop</com>
+  <com>decompile</com>
+  <com>print C</com>
+</script>
+<stringmatch name="ZeroTop #1" min="1" max="1">\*out = s \* \*in;</stringmatch>
+<stringmatch name="ZeroTop #2" min="1" max="1">out\[1\] = s \* fVar1;</stringmatch>
+<stringmatch name="ZeroTop #3" min="1" max="1">out\[2\] = s \* fVar2;</stringmatch>
+<stringmatch name="ZeroTop #4" min="1" max="1">out\[3\] = 0.0;</stringmatch>
+<stringmatch name="ZeroTop #5" min="0" max="0">axVar</stringmatch>
+<stringmatch name="ZeroTop #6" min="0" max="0">_12_4_</stringmatch>
+</decompilertest>
