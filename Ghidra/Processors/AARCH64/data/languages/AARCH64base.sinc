@@ -8574,3 +8574,163 @@ is sf=1 & b_30=0 & S=0 & b_2428=0x1a & b_2123=0x6 & b_1015=0x1b & Rd_GPR64 & Rn_
 	local test = tmp <= tmp2;
 	Rd_GPR64 = (zext(test)*tmp) + (zext(!test)*(tmp2));
 }
+
+# FEAT_CFLT
+define pcodeop ConditionalFault;
+
+cflt_imm9u_32: res is cflt_imm9hu & cflt_imm9l [ res = (cflt_imm9hu << 4) | cflt_imm9l; ] { export *[const]:4 res; }
+cflt_imm9s_32: res is cflt_imm9hs & cflt_imm9l [ res = (cflt_imm9hs << 4) | cflt_imm9l; ] { export *[const]:4 res; }
+
+cflt_imm9u_64: res is cflt_imm9hu & cflt_imm9l [ res = (cflt_imm9hu << 4) | cflt_imm9l; ] { export *[const]:8 res; }
+cflt_imm9s_64: res is cflt_imm9hs & cflt_imm9l [ res = (cflt_imm9hs << 4) | cflt_imm9l; ] { export *[const]:8 res; }
+
+with cflt_cc32: {
+	:"gt" is b_2123=0b000 & Rm_GPR32wsp & Rt_GPR32wsp { cmp:1 = Rt_GPR32wsp s> Rm_GPR32wsp; export cmp; }
+	:"ge" is b_2123=0b001 & Rm_GPR32wsp & Rt_GPR32wsp { cmp:1 = Rt_GPR32wsp s>= Rm_GPR32wsp; export cmp; }
+	:"hi" is b_2123=0b010 & Rm_GPR32wsp & Rt_GPR32wsp { cmp:1 = Rt_GPR32wsp > Rm_GPR32wsp; export cmp; }
+	:"hs" is b_2123=0b011 & Rm_GPR32wsp & Rt_GPR32wsp { cmp:1 = Rt_GPR32wsp >= Rm_GPR32wsp; export cmp; }
+	:"eq" is b_2123=0b110 & Rm_GPR32wsp & Rt_GPR32wsp { cmp:1 = Rt_GPR32wsp == Rm_GPR32wsp; export cmp; }
+	:"ne" is b_2123=0b111 & Rm_GPR32wsp & Rt_GPR32wsp { cmp:1 = Rt_GPR32wsp != Rm_GPR32wsp; export cmp; }
+}
+
+with cflt_cc64: {
+	:"gt" is b_2123=0b000 & Rm_GPR64xsp & Rt_GPR64xsp { cmp:1 = Rt_GPR64xsp s> Rm_GPR64xsp; export cmp; }
+	:"ge" is b_2123=0b001 & Rm_GPR64xsp & Rt_GPR64xsp { cmp:1 = Rt_GPR64xsp s>= Rm_GPR64xsp; export cmp; }
+	:"hi" is b_2123=0b010 & Rm_GPR64xsp & Rt_GPR64xsp { cmp:1 = Rt_GPR64xsp > Rm_GPR64xsp; export cmp; }
+	:"hs" is b_2123=0b011 & Rm_GPR64xsp & Rt_GPR64xsp { cmp:1 = Rt_GPR64xsp >= Rm_GPR64xsp; export cmp; }
+	:"eq" is b_2123=0b110 & Rm_GPR64xsp & Rt_GPR64xsp { cmp:1 = Rt_GPR64xsp == Rm_GPR64xsp; export cmp; }
+	:"ne" is b_2123=0b111 & Rm_GPR64xsp & Rt_GPR64xsp { cmp:1 = Rt_GPR64xsp != Rm_GPR64xsp; export cmp; }
+}
+
+:cfltgt "#"^cflt_reason, Rt_GPR32wsp, "#"^cflt_imm9s_32
+is sf=0 & b_2430=0x76 & b_2123=0b000 & cflt_imm9s_32 & b_1215=0 & cflt_reason & b_09=0 & Rt_GPR32wsp
+{
+	if(Rt_GPR32wsp s<= cflt_imm9s_32) goto inst_next;
+	ConditionalFault(cflt_reason:1);
+}
+
+:cfltlt "#"^cflt_reason, Rt_GPR32wsp, "#"^cflt_imm9s_32
+is sf=0 & b_2430=0x76 & b_2123=0b001 & cflt_imm9s_32 & b_1215=0 & cflt_reason & b_09=0 & Rt_GPR32wsp
+{
+	if(Rt_GPR32wsp s>= cflt_imm9s_32) goto inst_next;
+	ConditionalFault(cflt_reason:1);
+}
+
+:cflthi "#"^cflt_reason, Rt_GPR32wsp, "#"^cflt_imm9u_32
+is sf=0 & b_2430=0x76 & b_2123=0b010 & cflt_imm9u_32 & b_1215=0 & cflt_reason & b_09=0 & Rt_GPR32wsp
+{
+	if(Rt_GPR32wsp <= cflt_imm9u_32) goto inst_next;
+	ConditionalFault(cflt_reason:1);
+}
+
+:cfltlo "#"^cflt_reason, Rt_GPR32wsp, "#"^cflt_imm9u_32
+is sf=0 & b_2430=0x76 & b_2123=0b011 & cflt_imm9u_32 & b_1215=0 & cflt_reason & b_09=0 & Rt_GPR32wsp
+{
+	if(Rt_GPR32wsp >= cflt_imm9u_32) goto inst_next;
+	ConditionalFault(cflt_reason:1);
+}
+
+:cflteq "#"^cflt_reason, Rt_GPR32wsp, "#"^cflt_imm9s_32
+is sf=0 & b_2430=0x76 & b_2123=0b100 & cflt_imm9s_32 & b_1215=0 & cflt_reason & b_09=0 & Rt_GPR32wsp
+{
+	if(Rt_GPR32wsp != cflt_imm9s_32) goto inst_next;
+	ConditionalFault(cflt_reason:1);
+}
+
+:cfltne "#"^cflt_reason, Rt_GPR32wsp, "#"^cflt_imm9s_32
+is sf=0 & b_2430=0x76 & b_2123=0b101 & cflt_imm9s_32 & b_1215=0 & cflt_reason & b_09=0 & Rt_GPR32wsp
+{
+	if(Rt_GPR32wsp == cflt_imm9s_32) goto inst_next;
+	ConditionalFault(cflt_reason:1);
+}
+
+:cfltgt "#"^cflt_reason, Rt_GPR64xsp, "#"^cflt_imm9s_64
+is sf=1 & b_2430=0x76 & b_2123=0b000 & cflt_imm9s_64 & b_1215=0 & cflt_reason & b_09=0 & Rt_GPR64xsp
+{
+	if(Rt_GPR64xsp s<= cflt_imm9s_64) goto inst_next;
+	ConditionalFault(cflt_reason:1);
+}
+
+:cfltlt "#"^cflt_reason, Rt_GPR64xsp, "#"^cflt_imm9s_64
+is sf=1 & b_2430=0x76 & b_2123=0b001 & cflt_imm9s_64 & b_1215=0 & cflt_reason & b_09=0 & Rt_GPR64xsp
+{
+	if(Rt_GPR64xsp s>= cflt_imm9s_64) goto inst_next;
+	ConditionalFault(cflt_reason:1);
+}
+
+:cflthi "#"^cflt_reason, Rt_GPR64xsp, "#"^cflt_imm9u_64
+is sf=1 & b_2430=0x76 & b_2123=0b010 & cflt_imm9u_64 & b_1215=0 & cflt_reason & b_09=0 & Rt_GPR64xsp
+{
+	if(Rt_GPR64xsp <= cflt_imm9u_64) goto inst_next;
+	ConditionalFault(cflt_reason:1);
+}
+
+:cfltlo "#"^cflt_reason, Rt_GPR64xsp, "#"^cflt_imm9u_64
+is sf=1 & b_2430=0x76 & b_2123=0b011 & cflt_imm9u_64 & b_1215=0 & cflt_reason & b_09=0 & Rt_GPR64xsp
+{
+	if(Rt_GPR64xsp >= cflt_imm9u_64) goto inst_next;
+	ConditionalFault(cflt_reason:1);
+}
+
+:cflteq "#"^cflt_reason, Rt_GPR64xsp, "#"^cflt_imm9s_64
+is sf=1 & b_2430=0x76 & b_2123=0b100 & cflt_imm9s_64 & b_1215=0 & cflt_reason & b_09=0 & Rt_GPR64xsp
+{
+	if(Rt_GPR64xsp != cflt_imm9s_64) goto inst_next;
+	ConditionalFault(cflt_reason:1);
+}
+
+:cfltne "#"^cflt_reason, Rt_GPR64xsp, "#"^cflt_imm9s_64
+is sf=1 & b_2430=0x76 & b_2123=0b101 & cflt_imm9s_64 & b_1215=0 & cflt_reason & b_09=0 & Rt_GPR64xsp
+{
+	if(Rt_GPR64xsp == cflt_imm9s_64) goto inst_next;
+	ConditionalFault(cflt_reason:1);
+}
+
+:cflt^cflt_cc32 "#"^cflt_reason, Rt_GPR32wsp, Rm_GPR32wsp
+is sf=0 & b_2430=0x76 & cflt_cc32 & Rm_GPR32wsp & b_1215=0 & cflt_reason & b_0509=0b10000 & Rt_GPR32wsp
+{
+	if(!cflt_cc32) goto inst_next;
+	ConditionalFault(cflt_reason:1);
+}
+
+:cflt^cflt_cc64 "#"^cflt_reason, Rt_GPR64xsp, Rm_GPR64xsp
+is sf=1 & b_2430=0x76 & cflt_cc64 & Rm_GPR64xsp & b_1215=0 & cflt_reason & b_0509=0b10000 & Rt_GPR64xsp
+{
+	if(!cflt_cc64) goto inst_next;
+	ConditionalFault(cflt_reason:1);
+}
+
+:flt.^br_cc_op "#"^imm16
+is b_2131=0x6a1 & imm16 & b_04=1 & br_cc_op
+{
+    if(!br_cc_op) goto inst_next;
+	ConditionalFault(imm16:2);
+}
+
+:tfltnz "#"^cflt_reason, Rt_GPR32, "#"^b_1923
+is sf=0 & b_2430=0x76 & b_1923 & b_1218=0 & cflt_reason & b_0509=0x13 & Rt_GPR32
+{
+    if(((Rt_GPR32 >> b_1923) & 1) == 0) goto inst_next;
+	ConditionalFault(cflt_reason:1);
+}
+
+:tfltnz "#"^cflt_reason, Rt_GPR64, "#"^b_1923
+is sf=1 & b_2430=0x76 & b_1923 & b_1218=0 & cflt_reason & b_0509=0x13 & Rt_GPR64
+{
+    if(((Rt_GPR64 >> (b_1923 + 32)) & 1) == 0) goto inst_next;
+	ConditionalFault(cflt_reason:1);
+}
+
+:tfltz "#"^cflt_reason, Rt_GPR32, "#"^b_1923
+is sf=0 & b_2430=0x76 & b_1923 & b_1218=0 & cflt_reason & b_0509=0x12 & Rt_GPR32
+{
+    if(((Rt_GPR32 >> b_1923) & 1) != 0) goto inst_next;
+	ConditionalFault(cflt_reason:1);
+}
+
+:tfltz "#"^cflt_reason, Rt_GPR64, "#"^b_1923
+is sf=1 & b_2430=0x76 & b_1923 & b_1218=0 & cflt_reason & b_0509=0x12 & Rt_GPR64
+{
+    if(((Rt_GPR64 >> (b_1923 + 32)) & 1) != 0) goto inst_next;
+	ConditionalFault(cflt_reason:1);
+}
