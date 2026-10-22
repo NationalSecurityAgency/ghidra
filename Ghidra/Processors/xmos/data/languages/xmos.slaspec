@@ -1,0 +1,1201 @@
+# sleigh specification file for XMOS XCORE XS2 Processor
+# XS2 ISA manual: https://web.archive.org/web/20251210112849/https://docs.alexrp.com/xcore/xmos_xs2.pdf
+# caveats:
+# - Does not implement dual issue mode, which executes instruction pairs in parallel and changes IW to 4 
+
+define endian=little;
+define alignment=1;
+
+define space ram     type=ram_space      size=4  default;
+
+define space register type=register_space size=4;
+
+define register offset=0x00 size=4 [
+	r0 r1 r2  r3
+	r4 r5 r6  r7
+	r8 r9 r10 r11
+	
+	cp
+	dp
+	sp
+	lr
+	sr
+	
+	spc
+	ssr
+	et
+	ed
+	sed
+	kep
+	ksp
+	
+	pc
+];
+
+define bitrange 
+	sr_eeble=sr[0,1]
+	sr_ieble=sr[1,1]
+	sr_inenb=sr[2,1]
+	sr_inint=sr[3,1]
+	sr_ink=sr[4,1]
+	sr_reserved=sr[5,1]
+	sr_waiting=sr[6,1]
+	sr_fast=sr[7,1]
+	sr_di=sr[8,1]
+	sr_kedi=sr[9,1]
+	sr_hipri=sr[10,1];
+
+define register offset=0x300 size=64 [ ctx ];
+
+define context ctx
+	split1         = ( 0,  1) noflow
+	split2         = ( 2,  3) noflow
+	split3         = ( 4,  5) noflow
+	ru6_ext        = ( 6, 15) noflow
+	u10_ext        = (16, 25) noflow
+	u6_ext         = (26, 35) noflow
+	
+	split4         = (36, 37) noflow
+	split5         = (38, 39) noflow
+	split6         = (40, 41) noflow
+;
+
+define token data16 (16)
+   u6_imm = (0, 5)
+   u6_op = (6, 15)
+   
+   ru6_op = (10, 15)
+   ru6_op1 = (6, 9)
+   ru6_op2 = (0, 5)
+   
+   rus2_op = (11, 15)
+   rus2_op_123 = (6, 10)
+   
+   rus2_op1l = (4, 5)
+   rus2_op1m = (4, 5)
+   rus2_op1h = (4, 5)
+   
+   rus2_op2l = (2, 3)
+   rus2_op2m = (2, 3)
+   rus2_op2h = (2, 3)
+   
+   rus2_op3 = (0, 1)
+   
+   r0_op0 = (11, 15)
+   r0_fmt = (5, 10)
+   r0_op1 = (0, 4)
+   
+   r2_op2l = (0, 1)
+   r2_op2m = (0, 1)
+   r2_op2h = (0, 1)
+   
+   r2_op1l = (2, 3)
+   r2_op1m = (2, 3)
+   r2_op1h = (2, 3)
+   
+   r3_op3l = (0, 1)
+   r3_op3m = (0, 1)
+   r3_op3h = (0, 1)
+   
+   imm0_1 = (0, 1)
+   
+   u10_op = (10, 15)
+   u10_imm = (0, 9)
+   u10_imms = (0, 9) signed
+   
+   r1_op0 = (11, 15)
+   r1_op1 = (5, 10)
+   r1_op2 = (4, 4)
+   r1_r = (0, 3)
+   
+   rus_op0 = (11, 15)
+   rus_op1 = (4, 4)
+   
+   op0_15 = (0, 15)
+   
+   r2_op2_tmp = (6, 10)
+   r2_op2_tmp1 = (5, 5)
+   
+   l4r_op = (4, 15)
+   l4r_op4 = (0, 3)
+;
+
+attach variables [ ru6_op1 r1_r l4r_op4 ] [
+	r0 r1 r2  r3
+	r4 r5 r6  r7
+	r8 r9 r10 r11
+	cp dp sp  lr
+];
+
+attach variables [ rus2_op1l rus2_op2l r2_op2l r2_op1l r3_op3l ] [ r0 r1 r2  r3 ];
+attach variables [ rus2_op1m rus2_op2m r2_op2m r2_op1m r3_op3m ] [ r4 r5 r6  r7 ];
+attach variables [ rus2_op1h rus2_op2h r2_op2h r2_op1h r3_op3h ] [ r8 r9 r10 r11 ];
+
+# `bpw` in the spec
+@define BitsPerWord 32
+@define BPW 4
+@define IW 2
+
+
+ru6_imm: imm is ru6_op2 & ru6_ext [ imm = ru6_op2 | (ru6_ext << 6);] { export *[const]:4 imm; }
+
+ru6_br: dest is ru6_op2 [ dest = inst_next - ((ru6_op2 | (ru6_ext << 6)) * $(IW));] { export *[const]:4 dest; }
+ru6_bf: dest is ru6_op2 [ dest = inst_next + ((ru6_op2 | (ru6_ext << 6)) * $(IW));] { export *[const]:4 dest; }
+
+# ru6
+define pcodeop setci;
+
+@define PRE ""
+@define POST ""
+@include "ru6_ops.sinc"
+
+@define PRE "ru6_op=0b111100 & u10_imm; "
+@define POST "[ru6_ext = u10_imm;]"
+@include "ru6_ops.sinc"
+
+
+# Some instruction forms pack 3, 3-state values into a single 5-bit number
+# op1[3..2] * 9 +
+# op2[3..2] * 3 +
+# op3[3..2]
+# Where 0 <= opN[3..2] <= 0b10
+# Split this out into 3 context vars 
+split_packed: is rus2_op_123 [ split3 = rus2_op_123 / 9; split2 = (rus2_op_123 - (split3*9)) / 3; split1 = (rus2_op_123 - (split3*9) - (split2*3));  ] {}
+
+rus2_op3i: imm is rus2_op3 [ imm = (split3 << 2) | rus2_op3; ] { export *[const]:4 imm; }
+
+
+rus2_op3i_bitp: $(BPW) is split3=0b00 & rus2_op3=0b00 { local tmp:4 = $(BPW); export *[const]:4 tmp; }
+rus2_op3i_bitp: 1 is split3=0b00 & rus2_op3=0b01 { local tmp:4 = 1; export *[const]:4 tmp; }
+rus2_op3i_bitp: 2 is split3=0b00 & rus2_op3=0b10 { local tmp:4 = 2; export *[const]:4 tmp; }
+rus2_op3i_bitp: 3 is split3=0b00 & rus2_op3=0b11 { local tmp:4 = 3; export *[const]:4 tmp; }
+rus2_op3i_bitp: 4 is split3=0b01 & rus2_op3=0b00 { local tmp:4 = 4; export *[const]:4 tmp; }
+rus2_op3i_bitp: 5 is split3=0b01 & rus2_op3=0b01 { local tmp:4 = 5; export *[const]:4 tmp; }
+rus2_op3i_bitp: 6 is split3=0b01 & rus2_op3=0b10 { local tmp:4 = 6; export *[const]:4 tmp; }
+rus2_op3i_bitp: 7 is split3=0b01 & rus2_op3=0b11 { local tmp:4 = 7; export *[const]:4 tmp; }
+rus2_op3i_bitp: 8 is split3=0b10 & rus2_op3=0b00 { local tmp:4 = 8; export *[const]:4 tmp; }
+rus2_op3i_bitp: 16 is split3=0b10 & rus2_op3=0b01 { local tmp:4 = 16; export *[const]:4 tmp; }
+rus2_op3i_bitp: 24 is split3=0b10 & rus2_op3=0b10 { local tmp:4 = 24; export *[const]:4 tmp; }
+rus2_op3i_bitp: 32 is split3=0b10 & rus2_op3=0b11 { local tmp:4 = 32; export *[const]:4 tmp; }
+
+
+rus2_op2r: rus2_op2l is rus2_op2l & split2=0b00 { export rus2_op2l; }
+rus2_op2r: rus2_op2m is rus2_op2m & split2=0b01 { export rus2_op2m; }
+rus2_op2r: rus2_op2h is rus2_op2h & split2=0b10 { export rus2_op2h; }
+
+
+rus2_op1r: rus2_op1l is rus2_op1l & split1=0b00 { export rus2_op1l; }
+rus2_op1r: rus2_op1m is rus2_op1m & split1=0b01 { export rus2_op1m; }
+rus2_op1r: rus2_op1h is rus2_op1h & split1=0b10 { export rus2_op1h; }
+
+
+# l6r has two sets of packed regs
+split_packed2: is rus2_op_123 [ split4 = rus2_op_123 / 9; split5 = (rus2_op_123 - (split4*9)) / 3; split6 = (rus2_op_123 - (split4*9) - (split5*3)); ] {}
+
+l6r_op4r: rus2_op1l is rus2_op1l & split4=0b00 { export rus2_op1l; }
+l6r_op4r: rus2_op1m is rus2_op1m & split4=0b01 { export rus2_op1m; }
+l6r_op4r: rus2_op1h is rus2_op1h & split4=0b10 { export rus2_op1h; }
+
+l6r_op5r: rus2_op2l is rus2_op2l & split5=0b00 { export rus2_op2l; }
+l6r_op5r: rus2_op2m is rus2_op2m & split5=0b01 { export rus2_op2m; }
+l6r_op5r: rus2_op2h is rus2_op2h & split5=0b10 { export rus2_op2h; }
+
+l6r_op6r: r2_op1l is r2_op1l & split6=0b00 { export r2_op1l; }
+l6r_op6r: r2_op1m is r2_op1m & split6=0b01 { export r2_op1m; }
+l6r_op6r: r2_op1h is r2_op1h & split6=0b10 { export r2_op1h; }
+
+# 2rus
+
+:addi rus2_op1r, rus2_op2r, rus2_op3i is rus2_op=0b10010 & split_packed & rus2_op1r & rus2_op2r & rus2_op3i {
+	build split_packed;
+	rus2_op1r = rus2_op2r + rus2_op3i;
+}
+
+:eqi rus2_op1r, rus2_op2r, rus2_op3i is rus2_op=0b10110 & split_packed & rus2_op1r & rus2_op2r & rus2_op3i {
+	local tmp:1 = rus2_op2r == rus2_op3i;
+    rus2_op1r = zext(tmp);
+}
+
+:ldwi rus2_op1r, rus2_op2r, rus2_op3i is rus2_op=0b00001 & split_packed & rus2_op1r & rus2_op2r & rus2_op3i {
+	local ea:$(BPW) = rus2_op2r + $(BPW)*rus2_op3i:4;
+    rus2_op1r = *[ram]:$(BPW) ea;
+}
+
+:shli rus2_op1r, rus2_op2r, rus2_op3i_bitp is rus2_op=0b10100 & split_packed & rus2_op1r & rus2_op2r & rus2_op3i_bitp {
+    rus2_op1r = rus2_op2r << rus2_op3i_bitp;
+}
+
+:shri rus2_op1r, rus2_op2r, rus2_op3i_bitp is rus2_op=0b10101 & split_packed & rus2_op1r & rus2_op2r & rus2_op3i_bitp {
+    rus2_op1r = rus2_op2r >> rus2_op3i_bitp;
+}
+
+:stwi rus2_op1r, rus2_op2r, rus2_op3i is rus2_op=0b00000 & split_packed & rus2_op1r & rus2_op2r & rus2_op3i {
+    local ea:$(BPW) = rus2_op2r + $(BPW)*rus2_op3i:4;
+    *[ram]:$(BPW) ea = rus2_op1r:$(BPW);
+}
+
+:subi rus2_op1r, rus2_op2r, rus2_op3i is rus2_op=0b10011 & split_packed & rus2_op1r & rus2_op2r & rus2_op3i {
+    rus2_op1r = rus2_op2r - rus2_op3i;
+}
+
+# 3r instructions
+
+r3_op3r: r3_op3l is r3_op3l & split3=0b00 { export r3_op3l; }
+r3_op3r: r3_op3m is r3_op3m & split3=0b01 { export r3_op3m; }
+r3_op3r: r3_op3h is r3_op3h & split3=0b10 { export r3_op3h; }
+
+:add rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b00010 & split_packed & rus2_op1r & rus2_op2r & r3_op3r {
+    rus2_op1r = rus2_op2r + r3_op3r;
+}
+
+:and rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b00111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r {
+    rus2_op1r = rus2_op2r & r3_op3r;
+}
+
+:eq rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b00110 & split_packed & rus2_op1r & rus2_op2r & r3_op3r {
+	local tmp:1 = rus2_op2r == r3_op3r;
+    rus2_op1r = zext(tmp);
+}
+
+:ld8u rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b10001 & split_packed & rus2_op1r & rus2_op2r & r3_op3r {
+	local ea:4 = rus2_op2r + r3_op3r;
+    rus2_op1r = zext(*[ram]:1 ea);
+}
+
+:ld16s rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b10000 & split_packed & rus2_op1r & rus2_op2r & r3_op3r {
+    local ea:4 = rus2_op2r + 2*r3_op3r;
+    rus2_op1r = sext(*[ram]:2 ea);
+}
+
+:ldw rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b01001 & split_packed & rus2_op1r & rus2_op2r & r3_op3r {
+    local ea:$(BPW) = rus2_op2r + $(BPW)*r3_op3r;
+    rus2_op1r = *[ram]:$(BPW) ea;
+}
+
+:lss rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b11000 & split_packed & rus2_op1r & rus2_op2r & r3_op3r {
+	local tmp:1 = rus2_op2r s< r3_op3r;
+    rus2_op1r = zext(tmp);
+}
+
+:lsu rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b11001 & split_packed & rus2_op1r & rus2_op2r & r3_op3r {
+	local tmp:1 = rus2_op2r < r3_op3r;
+    rus2_op1r = zext(tmp);
+}
+
+:or rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b01000 & split_packed & rus2_op1r & rus2_op2r & r3_op3r {
+    rus2_op1r = rus2_op2r | r3_op3r;
+}
+
+:shl rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b00100 & split_packed & rus2_op1r & rus2_op2r & r3_op3r {
+    rus2_op1r = rus2_op2r << r3_op3r;
+}
+
+:shr rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b00101 & split_packed & rus2_op1r & rus2_op2r & r3_op3r {
+    rus2_op1r = rus2_op2r >> r3_op3r;
+}
+
+:sub rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b00011 & split_packed & rus2_op1r & rus2_op2r & r3_op3r {
+    rus2_op1r = rus2_op2r - r3_op3r;
+}
+
+# l2rus
+:ashri rus2_op1r, rus2_op2r, rus2_op3i_bitp is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & rus2_op3i_bitp ; op0_15=0b1001011111101100 { 
+	rus2_op1r = rus2_op2r s>> rus2_op3i_bitp;
+}
+
+define pcodeop inpw;
+:inpw rus2_op1r, rus2_op2r, rus2_op3i_bitp is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & rus2_op3i_bitp ; op0_15=0b1001011111101110 {
+	rus2_op1r = inpw(rus2_op2r, rus2_op3i_bitp);
+}
+
+:ldawbi rus2_op1r, rus2_op2r, rus2_op3i is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & rus2_op3i ; op0_15=0b1010011111101100 {
+	rus2_op1r = rus2_op2r - $(BPW)*rus2_op3i;
+}
+:ldawfi rus2_op1r, rus2_op2r, rus2_op3i is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & rus2_op3i ; op0_15=0b1001111111101100 {
+	rus2_op1r = rus2_op2r + $(BPW)*rus2_op3i;
+}
+:lddsp rus2_op1r, rus2_op2r, rus2_op3i is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & rus2_op3i ; op0_15=0b1110111111101100 {
+	local ea:$(BPW) = sp + rus2_op3i*$(BPW)*2;
+	rus2_op1r = *[ram]:$(BPW) ea;
+	ea = ea + $(BPW);
+	rus2_op2r = *[ram]:$(BPW) ea;
+}
+
+define pcodeop outpwi;
+:outpwi rus2_op1r, rus2_op2r, rus2_op3i_bitp is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & rus2_op3i_bitp ; op0_15=0b1001011111101101 {
+	outpwi(rus2_op1r, rus2_op2r, rus2_op3i_bitp);
+}
+
+:stdsp rus2_op1r, rus2_op2r, rus2_op3i is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & rus2_op3i ; op0_15=0b1111011111101100 {
+	local ea:$(BPW) = sp + rus2_op3i*$(BPW)*2;
+	*[ram]:$(BPW) ea = rus2_op1r;
+	ea = ea + $(BPW);
+	*[ram]:$(BPW) ea = rus2_op2r;
+}
+
+define pcodeop unzip;
+:unzip rus2_op1r, rus2_op2r, rus2_op3i is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & rus2_op3i ; op0_15=0b1001111111101101 {
+	rus2_op1r = unzip(rus2_op1r, rus2_op2r, rus2_op3i);
+}
+
+define pcodeop zip;
+:zip rus2_op1r, rus2_op2r, rus2_op3i is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & rus2_op3i ; op0_15=0b1001111111101110 {
+	zip(rus2_op1r, rus2_op2r, rus2_op3i);
+}
+
+# l3r instructions
+:ashr rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; op0_15=0b0001011111101100 {
+	rus2_op1r = rus2_op2r >> r3_op3r;
+}
+
+define pcodeop crc;
+:crc rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; op0_15=0b1010111111101100 {
+	rus2_op1r = crc(rus2_op1r, rus2_op2r, r3_op3r);
+}
+:divs rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; op0_15=0b0100011111101100 {
+	rus2_op1r = rus2_op2r s/ r3_op3r;
+}
+:divu rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; op0_15=0b0100111111101100 {
+	rus2_op1r = rus2_op2r / r3_op3r;
+}
+:lda16b rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; op0_15=0b0011011111101100 {
+	rus2_op1r = rus2_op2r - 2*r3_op3r;
+}
+:lda16f rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; op0_15=0b0010111111101100 {
+	rus2_op1r = rus2_op2r + 2*r3_op3r;
+}
+:ldawb rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; op0_15=0b0010011111101100 {
+	rus2_op1r = rus2_op2r - $(BPW)*r3_op3r;
+}
+:ldawf rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; op0_15=0b0001111111101100 {
+	rus2_op1r = rus2_op2r + $(BPW)*r3_op3r;
+}
+:mul rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; op0_15=0b0011111111101100 {
+	rus2_op1r = rus2_op2r * r3_op3r;
+}
+
+define pcodeop outpw;
+:outpw rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; op0_15=0b1100111111101101 {
+	outpw(rus2_op1r, rus2_op2r, r3_op3r);
+}
+:rems rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; op0_15=0b1100011111101100 {
+	rus2_op1r = rus2_op2r s% r3_op3r;
+}
+:remu rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; op0_15=0b1100111111101100 {
+	rus2_op1r = rus2_op2r % r3_op3r;
+}
+
+define pcodeop lsats;
+:lsats rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; op0_15=0b1110011111101100 {
+	rus2_op1r = lsats(rus2_op2r, r3_op3r);
+}
+:st8 rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; op0_15=0b1000111111101100 {
+	local ea:4 = rus2_op2r + r3_op3r;
+	*[ram]:1 ea = rus2_op1r:1;
+}
+:st16 rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; op0_15=0b1000011111101100 {
+	local ea:4 = rus2_op2r + 2*r3_op3r;
+	*[ram]:2 ea = rus2_op1r:2;
+}
+:stw rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; op0_15=0b0000011111101100 {
+	local ea:$(BPW) = rus2_op2r + $(BPW)*r3_op3r;
+	*[ram]:$(BPW) ea = rus2_op1r:$(BPW);
+}
+
+define pcodeop tsetr;
+:tsetr rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; op0_15=0b1011011111101100 {
+	tsetr(rus2_op1r, rus2_op2r, r3_op3r);
+}
+:xor rus2_op1r, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; op0_15=0b0000111111101100 {
+	rus2_op1r = rus2_op2r ^ r3_op3r;
+}
+
+# 0r
+define pcodeop clre;
+:clre is r0_op0=0b00000 & r0_fmt=0b111111 & r0_op1=0b01101 { 
+	clre();
+}
+
+define pcodeop dcall;
+:dcall is r0_op0=0b00000 & r0_fmt=0b111111 & r0_op1=0b11100 { 
+	dcall();
+}
+
+define pcodeop freet;
+:freet is r0_op0=0b00000 & r0_fmt=0b111111 & r0_op1=0b01111 { 
+    freet();
+}
+
+:geted is r0_op0=0b00001 & r0_fmt=0b111111 & r0_op1=0b11110 { 
+    r11 = ed;
+}
+
+:getet is r0_op0=0b00001 & r0_fmt=0b111111 & r0_op1=0b11111 { 
+    r11 = et;
+}
+
+define pcodeop get_thread_id;
+:getid is r0_op0=0b00010 & r0_fmt=0b111111 & r0_op1=0b01110 { 
+    r11 = get_thread_id();
+}
+
+:getkep is r0_op0=0b00010 & r0_fmt=0b111111 & r0_op1=0b01111 { 
+    r11 = kep;
+}
+
+:getksp is r0_op0=0b00010 & r0_fmt=0b111111 & r0_op1=0b11100 { 
+    r11 = ksp;
+}
+
+:ldet is r0_op0=0b00010 & r0_fmt=0b111111 & r0_op1=0b11110 {
+	local ea:4 = sp + 4*$(BPW); 
+    et = *[ram]:4 ea;
+}
+
+:ldsed is r0_op0=0b00010 & r0_fmt=0b111111 & r0_op1=0b11101 { 
+    local ea:4 = sp + 3*$(BPW); 
+    sed = *[ram]:4 ea;
+}
+
+:ldspc is r0_op0=0b00001 & r0_fmt=0b111111 & r0_op1=0b01100 { 
+    local ea:4 = sp + 1*$(BPW); 
+    spc = *[ram]:4 ea;
+}
+
+:ldssr is r0_op0=0b00001 & r0_fmt=0b111111 & r0_op1=0b01110 { 
+    local ea:4 = sp + 2*$(BPW); 
+    ssr = *[ram]:4 ea;
+}
+
+define pcodeop nop;
+:nop is r0_op0=0b00010 & r0_fmt=0b111111 & r0_op1=0b11111 { 
+    nop();
+}
+# XS1 has no dedicated NOP, it encodes as `addi r0, r0, 0`
+:nop is op0_15=0b1001000000000000 {
+	nop();
+}
+
+:setkep is r0_op0=0b00000 & r0_fmt=0b111111 & r0_op1=0b11111 { 
+    kep = r11;
+}
+
+define pcodeop ssync;
+:ssync is r0_op0=0b00000 & r0_fmt=0b111111 & r0_op1=0b01110 { 
+    ssync();
+}
+
+:stet is r0_op0=0b00001 & r0_fmt=0b111111 & r0_op1=0b11101 { 
+    local ea:4 = sp + 4*$(BPW); 
+    *[ram]:4 ea = et;
+}
+
+:stsed is r0_op0=0b00001 & r0_fmt=0b111111 & r0_op1=0b11100 { 
+    local ea:4 = sp + 3*$(BPW); 
+    *[ram]:4 ea = ed;
+}
+
+:stspc is r0_op0=0b00001 & r0_fmt=0b111111 & r0_op1=0b01101 { 
+    local ea:4 = sp + 1*$(BPW); 
+    *[ram]:4 ea = spc;
+}
+
+define pcodeop stssr;
+:stssr is r0_op0=0b00001 & r0_fmt=0b111111 & r0_op1=0b01111 { 
+    local ea:4 = sp + 2*$(BPW); 
+    *[ram]:4 ea = ssr;
+}
+
+define pcodeop waiteu;
+:waiteu is r0_op0=0b00000 & r0_fmt=0b111111 & r0_op1=0b01100 { 
+    waiteu();
+}
+
+# u10
+
+with u10: epsilon {
+	:"blacp" u10 is u10_op=0b111000 & u10_imm [ u10 = u10_imm | (u10_ext << 10); ] {
+		lr = inst_next;
+		local ea:4 = cp + (u10 * $(BPW));
+		local dst:4 = *[ram]:4 ea;
+		call [dst];
+	}
+	
+	
+	:"blrb" dest is u10_op=0b110101 & u10_imm [dest = inst_next - ((u10_imm | (u10_ext << 10)) * $(IW));] {
+		lr = inst_next;
+		local addr:4 = dest;
+		call [addr];
+	}
+	:"blrf" dest is u10_op=0b110100 & u10_imm [dest = inst_next + ((u10_imm | (u10_ext << 10)) * $(IW));] {
+		lr = inst_next;
+		local addr:4 = dest;
+		call [addr];
+	}
+	:"ldapb" dest is u10_op=0b110111 & u10_imm [dest = inst_next - ((u10_imm | (u10_ext << 10)) * $(IW));] {
+		r11 = dest:4;
+	}
+	:"ldapf" dest is u10_op=0b110110 & u10_imm [dest = ((u10_imm | (u10_ext << 10)));] {
+		r11 = dest:4;
+	}
+	:"ldwcpl" u10 is u10_op=0b111001 & u10_imm [ u10 = u10_imm | (u10_ext << 10); ] {
+		local ea:4 = cp + (u10 * $(BPW));
+		r11 = *[ram]:4 ea;
+	}
+}
+:^u10 is u10 { build u10; }
+:^u10 is u10_op=0b111100 & u10_imm ; u10 [ u10_ext = u10_imm; ] { build u10; }
+
+# Some instruction forms pack 2, 3-state values into a 6-bit number split across a 5-bit and a 1-bit field
+# The lower 2 bits is given by [0..1] and [2..3]
+# The upper 2 bits for each come from this expression
+# (op1[3..2] * 3 + op2[3..2]) % 5 + 27 in the 5-bit field
+# (op1[3..2] * 3 + op2[3..2] + 27) >> 5 in the 1-bit field
+# Where 0 <= opN[3..2] <= 0b10
+# Note: The spec transposes op1 and op2 in the definition of the 1-bit field, but the spec is wrong here. 
+# Split this out into 2 register and register immediate forms
+r2_op2: r2_op2l is r2_op2l & r2_op2_tmp=0b11011 & r2_op2_tmp1=0 { export r2_op2l; }
+r2_op2: r2_op2l is r2_op2l & r2_op2_tmp=0b11100 & r2_op2_tmp1=0 { export r2_op2l; }
+r2_op2: r2_op2l is r2_op2l & r2_op2_tmp=0b11101 & r2_op2_tmp1=0 { export r2_op2l; }
+r2_op2: r2_op2m is r2_op2m & r2_op2_tmp=0b11110 & r2_op2_tmp1=0 { export r2_op2m; }
+r2_op2: r2_op2m is r2_op2m & r2_op2_tmp=0b11111 & r2_op2_tmp1=0 { export r2_op2m; }
+r2_op2: r2_op2m is r2_op2m & r2_op2_tmp=0b11011 & r2_op2_tmp1=1 { export r2_op2m; }
+r2_op2: r2_op2h is r2_op2h & r2_op2_tmp=0b11100 & r2_op2_tmp1=1 { export r2_op2h; }
+r2_op2: r2_op2h is r2_op2h & r2_op2_tmp=0b11101 & r2_op2_tmp1=1 { export r2_op2h; }
+r2_op2: r2_op2h is r2_op2h & r2_op2_tmp=0b11110 & r2_op2_tmp1=1 { export r2_op2h; }
+
+r2_op2c: v is imm0_1 & r2_op2_tmp=0b11011 & r2_op2_tmp1=0 [ v = 0b0000 | imm0_1; ] { export *[const]:4 v; }
+r2_op2c: v is imm0_1 & r2_op2_tmp=0b11100 & r2_op2_tmp1=0 [ v = 0b0000 | imm0_1; ] { export *[const]:4 v; }
+r2_op2c: v is imm0_1 & r2_op2_tmp=0b11101 & r2_op2_tmp1=0 [ v = 0b0000 | imm0_1; ] { export *[const]:4 v; }
+r2_op2c: v is imm0_1 & r2_op2_tmp=0b11110 & r2_op2_tmp1=0 [ v = 0b0100 | imm0_1; ] { export *[const]:4 v; }
+r2_op2c: v is imm0_1 & r2_op2_tmp=0b11111 & r2_op2_tmp1=0 [ v = 0b0100 | imm0_1; ] { export *[const]:4 v; }
+r2_op2c: v is imm0_1 & r2_op2_tmp=0b11011 & r2_op2_tmp1=1 [ v = 0b0100 | imm0_1; ] { export *[const]:4 v; }
+r2_op2c: v is imm0_1 & r2_op2_tmp=0b11100 & r2_op2_tmp1=1 [ v = 0b1000 | imm0_1; ] { export *[const]:4 v; }
+r2_op2c: v is imm0_1 & r2_op2_tmp=0b11101 & r2_op2_tmp1=1 [ v = 0b1000 | imm0_1; ] { export *[const]:4 v; }
+r2_op2c: v is imm0_1 & r2_op2_tmp=0b11110 & r2_op2_tmp1=1 [ v = 0b1000 | imm0_1; ] { export *[const]:4 v; }
+
+r2_op2c_bitp: $(BitsPerWord) is imm0_1=0b0 & r2_op2_tmp=0b11011 & r2_op2_tmp1=0 { local tmp:4 = $(BitsPerWord); export *[const]:4 tmp; }
+r2_op2c_bitp: $(BitsPerWord) is imm0_1=0b0 & r2_op2_tmp=0b11100 & r2_op2_tmp1=0 { local tmp:4 = $(BitsPerWord); export *[const]:4 tmp; }
+r2_op2c_bitp: $(BitsPerWord) is imm0_1=0b0 & r2_op2_tmp=0b11101 & r2_op2_tmp1=0 { local tmp:4 = $(BitsPerWord); export *[const]:4 tmp; }
+r2_op2c_bitp: 1 is imm0_1=0b1 & r2_op2_tmp=0b11011 & r2_op2_tmp1=0 { local tmp:4 = 1; export *[const]:4 tmp; }
+r2_op2c_bitp: 1 is imm0_1=0b1 & r2_op2_tmp=0b11100 & r2_op2_tmp1=0 { local tmp:4 = 1; export *[const]:4 tmp; }
+r2_op2c_bitp: 1 is imm0_1=0b1 & r2_op2_tmp=0b11101 & r2_op2_tmp1=0 { local tmp:4 = 1; export *[const]:4 tmp; }
+r2_op2c_bitp: 2 is imm0_1=0b10 & r2_op2_tmp=0b11011 & r2_op2_tmp1=0 { local tmp:4 = 2; export *[const]:4 tmp; }
+r2_op2c_bitp: 2 is imm0_1=0b10 & r2_op2_tmp=0b11100 & r2_op2_tmp1=0 { local tmp:4 = 2; export *[const]:4 tmp; }
+r2_op2c_bitp: 2 is imm0_1=0b10 & r2_op2_tmp=0b11101 & r2_op2_tmp1=0 { local tmp:4 = 2; export *[const]:4 tmp; }
+r2_op2c_bitp: 3 is imm0_1=0b11 & r2_op2_tmp=0b11011 & r2_op2_tmp1=0 { local tmp:4 = 3; export *[const]:4 tmp; }
+r2_op2c_bitp: 3 is imm0_1=0b11 & r2_op2_tmp=0b11100 & r2_op2_tmp1=0 { local tmp:4 = 3; export *[const]:4 tmp; }
+r2_op2c_bitp: 3 is imm0_1=0b11 & r2_op2_tmp=0b11101 & r2_op2_tmp1=0 { local tmp:4 = 3; export *[const]:4 tmp; }
+r2_op2c_bitp: 4 is imm0_1=0b0 & r2_op2_tmp=0b11110 & r2_op2_tmp1=0 { local tmp:4 = 4; export *[const]:4 tmp; }
+r2_op2c_bitp: 4 is imm0_1=0b0 & r2_op2_tmp=0b11111 & r2_op2_tmp1=0 { local tmp:4 = 4; export *[const]:4 tmp; }
+r2_op2c_bitp: 4 is imm0_1=0b0 & r2_op2_tmp=0b11011 & r2_op2_tmp1=1 { local tmp:4 = 4; export *[const]:4 tmp; }
+r2_op2c_bitp: 5 is imm0_1=0b1 & r2_op2_tmp=0b11110 & r2_op2_tmp1=0 { local tmp:4 = 5; export *[const]:4 tmp; }
+r2_op2c_bitp: 5 is imm0_1=0b1 & r2_op2_tmp=0b11111 & r2_op2_tmp1=0 { local tmp:4 = 5; export *[const]:4 tmp; }
+r2_op2c_bitp: 5 is imm0_1=0b1 & r2_op2_tmp=0b11011 & r2_op2_tmp1=1 { local tmp:4 = 5; export *[const]:4 tmp; }
+r2_op2c_bitp: 6 is imm0_1=0b10 & r2_op2_tmp=0b11110 & r2_op2_tmp1=0 { local tmp:4 = 6; export *[const]:4 tmp; }
+r2_op2c_bitp: 6 is imm0_1=0b10 & r2_op2_tmp=0b11111 & r2_op2_tmp1=0 { local tmp:4 = 6; export *[const]:4 tmp; }
+r2_op2c_bitp: 6 is imm0_1=0b10 & r2_op2_tmp=0b11011 & r2_op2_tmp1=1 { local tmp:4 = 6; export *[const]:4 tmp; }
+r2_op2c_bitp: 7 is imm0_1=0b11 & r2_op2_tmp=0b11110 & r2_op2_tmp1=0 { local tmp:4 = 7; export *[const]:4 tmp; }
+r2_op2c_bitp: 7 is imm0_1=0b11 & r2_op2_tmp=0b11111 & r2_op2_tmp1=0 { local tmp:4 = 7; export *[const]:4 tmp; }
+r2_op2c_bitp: 7 is imm0_1=0b11 & r2_op2_tmp=0b11011 & r2_op2_tmp1=1 { local tmp:4 = 7; export *[const]:4 tmp; }
+r2_op2c_bitp: 8 is imm0_1=0b0 & r2_op2_tmp=0b11100 & r2_op2_tmp1=1 { local tmp:4 = 8; export *[const]:4 tmp; }
+r2_op2c_bitp: 8 is imm0_1=0b0 & r2_op2_tmp=0b11101 & r2_op2_tmp1=1 { local tmp:4 = 8; export *[const]:4 tmp; }
+r2_op2c_bitp: 8 is imm0_1=0b0 & r2_op2_tmp=0b11110 & r2_op2_tmp1=1 { local tmp:4 = 8; export *[const]:4 tmp; }
+r2_op2c_bitp: 16 is imm0_1=0b1 & r2_op2_tmp=0b11100 & r2_op2_tmp1=1 { local tmp:4 = 16; export *[const]:4 tmp; }
+r2_op2c_bitp: 16 is imm0_1=0b1 & r2_op2_tmp=0b11101 & r2_op2_tmp1=1 { local tmp:4 = 16; export *[const]:4 tmp; }
+r2_op2c_bitp: 16 is imm0_1=0b1 & r2_op2_tmp=0b11110 & r2_op2_tmp1=1 { local tmp:4 = 16; export *[const]:4 tmp; }
+r2_op2c_bitp: 24 is imm0_1=0b10 & r2_op2_tmp=0b11100 & r2_op2_tmp1=1 { local tmp:4 = 24; export *[const]:4 tmp; }
+r2_op2c_bitp: 24 is imm0_1=0b10 & r2_op2_tmp=0b11101 & r2_op2_tmp1=1 { local tmp:4 = 24; export *[const]:4 tmp; }
+r2_op2c_bitp: 24 is imm0_1=0b10 & r2_op2_tmp=0b11110 & r2_op2_tmp1=1 { local tmp:4 = 24; export *[const]:4 tmp; }
+r2_op2c_bitp: 32 is imm0_1=0b11 & r2_op2_tmp=0b11100 & r2_op2_tmp1=1 { local tmp:4 = 32; export *[const]:4 tmp; }
+r2_op2c_bitp: 32 is imm0_1=0b11 & r2_op2_tmp=0b11101 & r2_op2_tmp1=1 { local tmp:4 = 32; export *[const]:4 tmp; }
+r2_op2c_bitp: 32 is imm0_1=0b11 & r2_op2_tmp=0b11110 & r2_op2_tmp1=1 { local tmp:4 = 32; export *[const]:4 tmp; }
+
+r2_op1: r2_op1l is r2_op1l & r2_op2_tmp=0b11011 & r2_op2_tmp1=0 { export r2_op1l; }
+r2_op1: r2_op1m is r2_op1m & r2_op2_tmp=0b11100 & r2_op2_tmp1=0 { export r2_op1m; }
+r2_op1: r2_op1h is r2_op1h & r2_op2_tmp=0b11101 & r2_op2_tmp1=0 { export r2_op1h; }
+r2_op1: r2_op1l is r2_op1l & r2_op2_tmp=0b11110 & r2_op2_tmp1=0 { export r2_op1l; }
+r2_op1: r2_op1m is r2_op1m & r2_op2_tmp=0b11111 & r2_op2_tmp1=0 { export r2_op1m; }
+r2_op1: r2_op1h is r2_op1h & r2_op2_tmp=0b11011 & r2_op2_tmp1=1 { export r2_op1h; }
+r2_op1: r2_op1l is r2_op1l & r2_op2_tmp=0b11100 & r2_op2_tmp1=1 { export r2_op1l; }
+r2_op1: r2_op1m is r2_op1m & r2_op2_tmp=0b11101 & r2_op2_tmp1=1 { export r2_op1m; }
+r2_op1: r2_op1h is r2_op1h & r2_op2_tmp=0b11110 & r2_op2_tmp1=1 { export r2_op1h; }
+
+# 1r
+:bau r1_r is r1_op0=0b00100 & r1_op1=0b111111 & r1_op2=1 & r1_r {
+	goto [r1_r];
+}
+:bla r1_r is r1_op0=0b00100 & r1_op1=0b111111 & r1_op2=0 & r1_r {
+	lr = inst_next;
+	goto [r1_r];
+}
+:bru r1_r is r1_op0=0b00101 & r1_op1=0b111111 & r1_op2=0 & r1_r {
+	lr = inst_next;
+	local dest:4 = inst_next + r1_r*$(IW);
+	goto [dest];
+}
+
+define pcodeop clear_port_time;
+:clrpt r1_r is r1_op0=0b10000 & r1_op1=0b111111 & r1_op2=0 & r1_r {
+	clear_port_time(r1_r);
+}
+
+define pcodeop get_thread_reg;
+:dgetreg r1_r is r1_op0=0b00111 & r1_op1=0b111111 & r1_op2=0 & r1_r {
+	r1_r = get_thread_reg();
+}
+
+define pcodeop exception;
+:ecallf r1_r is r1_op0=0b01001 & r1_op1=0b111111 & r1_op2=0 & r1_r {
+	if(r1_r != 0) goto inst_next;
+	exception();
+}
+
+:ecallt r1_r is r1_op0=0b01001 & r1_op1=0b111111 & r1_op2=1 & r1_r {
+	if(r1_r == 0) goto inst_next;
+	exception();
+}
+
+define pcodeop edu;
+:edu r1_r is r1_op0=0b00000 & r1_op1=0b111111 & r1_op2=0 & r1_r {
+	edu(r1_r);
+}
+
+define pcodeop eeu;
+:eeu r1_r is r1_op0=0b00000 & r1_op1=0b111111 & r1_op2=1 & r1_r {
+	eeu(r1_r);
+}
+
+define pcodeop elate;
+:elate r1_r is r1_op0=0b10001 & r1_op1=0b111111 & r1_op2=1 & r1_r {
+	elate(r1_r);
+}
+
+define pcodeop freer;
+:freer r1_r is r1_op0=0b00010 & r1_op1=0b111111 & r1_op2=0 & r1_r {
+	freer(r1_r);
+}
+
+define pcodeop get_reference_time;
+:gettime r1_r is r1_op0=0b10001 & r1_op1=0b111111 & r1_op2=0 & r1_r {
+	r1_r = get_reference_time();
+}
+
+define pcodeop kcall;
+:kcall r1_r is r1_op0=0b01000 & r1_op1=0b111111 & r1_op2=0 & r1_r {
+	kcall(r1_r);
+}
+
+define pcodeop mjoin;
+:mjoin r1_r is r1_op0=0b00010 & r1_op1=0b111111 & r1_op2=1 & r1_r {
+	mjoin(r1_r);
+}
+
+define pcodeop msync;
+:msync r1_r is r1_op0=0b00011 & r1_op1=0b111111 & r1_op2=1 & r1_r {
+	msync(r1_r);
+}
+
+:setcp r1_r is r1_op0=0b00110 & r1_op1=0b111111 & r1_op2=1 & r1_r {
+	cp = r1_r;
+}
+:setdp r1_r is r1_op0=0b00110 & r1_op1=0b111111 & r1_op2=0 & r1_r {
+	dp = r1_r;
+}
+
+define pcodeop setev;
+:setev r1_r is r1_op0=0b00111 & r1_op1=0b111111 & r1_op2=1 & r1_r {
+	setev(r1_r);
+}
+
+:setsp r1_r is r1_op0=0b00101 & r1_op1=0b111111 & r1_op2=1 & r1_r {
+	sp = r1_r;
+}
+
+define pcodeop setv;
+:setv r1_r is r1_op0=0b01000 & r1_op1=0b111111 & r1_op2=1 & r1_r {
+	setv(r1_r);
+}
+
+define pcodeop syncr;
+:syncr r1_r is r1_op0=0b10000 & r1_op1=0b111111 & r1_op2=1 & r1_r {
+	syncr(r1_r);
+}
+
+define pcodeop tstart;
+:tstart r1_r is r1_op0=0b00011 & r1_op1=0b111111 & r1_op2=0 & r1_r {
+	tstart(r1_r);
+}
+
+define pcodeop waitef;
+:waitef r1_r is r1_op0=0b00001 & r1_op1=0b111111 & r1_op2=1 & r1_r {
+	waitef(r1_r);
+}
+
+define pcodeop waitet;
+:waitet r1_r is r1_op0=0b00001 & r1_op1=0b111111 & r1_op2=0 & r1_r {
+	waitet(r1_r);
+}
+
+# u6
+
+u6ext: imm is u6_imm [ imm = u6_imm | (u6_ext << 6); ] { export *[const]:4 imm; }
+
+define pcodeop kentsp;
+define pcodeop setsr;
+define pcodeop getsr;
+define pcodeop kcalli;
+define pcodeop clrsr;
+
+
+@define PRE ""
+@define POST ""
+@include "u6_ops.sinc"
+
+# We can't just use a u6 subtable and build directives for this, because it will prefer ru6 to u6 and fail to find a match
+@define PRE "ru6_op=0b111100 & u10_imm; "
+@define POST "[u6_ext = u10_imm;]"
+@include "u6_ops.sinc"
+
+# lu6 only
+define pcodeop krestsp;
+:krestsp imm is u6_op=0b111100 ; u6_op=0b0111101111 & u6_imm [ imm = u6_imm | (u6_ext << 6); ] {
+	krestsp(imm:4);
+}
+
+# Some ops in r2r and 3r overlap, e.g. setd and add. Differentiate via the +27 on the encoded registers of the r2r format
+# This also applies to ops in rus and 2rus e.g. mkmski and shli
+# shr and eef (3r/2r)
+@define IS_R2R_FMT "r2_op2_tmp >= 27"
+
+# rus
+define pcodeop chkcti;
+:chkcti r2_op1, r2_op2c is rus_op0=0b11001 & rus_op1=1 & r2_op1 & r2_op2c & $(IS_R2R_FMT) {
+	chkcti(r2_op1, r2_op2c);
+}
+
+define pcodeop getr;
+:getr r2_op1, r2_op2c is rus_op0=0b10000 & rus_op1=0 & r2_op1 & r2_op2c & $(IS_R2R_FMT) {
+	r2_op1 = getr(r2_op2c:4);
+}
+
+:mkmski r2_op1, r2_op2c_bitp is rus_op0=0b10100 & rus_op1=1 & r2_op1 & r2_op2c_bitp & $(IS_R2R_FMT) { 
+	local msk:$(BPW) = (1 << r2_op2c_bitp)-1;
+	r2_op1 = msk;
+}
+
+define pcodeop outcti;
+:outcti r2_op1, r2_op2c is rus_op0=0b01001 & rus_op1=1 & r2_op1 & r2_op2c & $(IS_R2R_FMT) {
+	outcti(r2_op1, r2_op2c:4);
+}
+
+:sexti r2_op1, r2_op2c_bitp is rus_op0=0b00110 & rus_op1=1 & r2_op1 & r2_op2c_bitp & $(IS_R2R_FMT) {
+	local shf:4 = (32 - r2_op2c_bitp);
+	local tmp:4 = r2_op1 << shf;
+	r2_op1 = tmp s>> shf;
+}
+
+:zexti r2_op1, r2_op2c_bitp is rus_op0=0b01000 & rus_op1=1 & r2_op1 & r2_op2c_bitp & $(IS_R2R_FMT) {
+	local shf:4 = (32 - r2_op2c_bitp);
+	local tmp:4 = r2_op1 << shf;
+	r2_op1 = tmp >> shf;
+}
+
+
+# r2r
+define pcodeop out;
+:out r2_op1, r2_op2 is rus_op0=0b10101 & rus_op1=0 & r2_op1 & r2_op2 & $(IS_R2R_FMT) {
+	out(r2_op1, r2_op2);
+}
+
+define pcodeop outshr;
+:outshr r2_op1, r2_op2 is rus_op0=0b10101 & rus_op1=1 & r2_op1 & r2_op2 & $(IS_R2R_FMT) {
+	outshr(r2_op1, r2_op2);
+}
+
+define pcodeop outt;
+:outt r2_op1, r2_op2 is rus_op0=0b00001 & rus_op1=1 & r2_op1 & r2_op2 & $(IS_R2R_FMT) {
+	outt(r2_op1, r2_op2);
+}
+
+define pcodeop setd;
+:setd r2_op1, r2_op2 is rus_op0=0b00010 & rus_op1=1 & r2_op1 & r2_op2 & $(IS_R2R_FMT) {
+	setd(r2_op1, r2_op2);
+}
+
+define pcodeop setpsc;
+:setpsc r2_op1, r2_op2 is rus_op0=0b11000 & rus_op1=0 & r2_op1 & r2_op2 & $(IS_R2R_FMT) {
+	setpsc(r2_op1, r2_op2);
+}
+
+define pcodeop setpt;
+:setpt r2_op1, r2_op2 is rus_op0=0b00111 & rus_op1=1 & r2_op1 & r2_op2 & $(IS_R2R_FMT) {
+	setpt(r2_op1, r2_op2);
+}
+
+# 2r
+
+:andnot r2_op1, r2_op2 is rus_op0=0b00101 & rus_op1=0 & r2_op1 & r2_op2 & $(IS_R2R_FMT) {
+	r2_op1 = r2_op1 & ~(r2_op2);
+}
+
+define pcodeop bitrev;
+:bitrev r2_op1, r2_op2 is rus_op0=0b00010 & rus_op1=0 & r2_op1 & r2_op2 & $(IS_R2R_FMT) {
+	r2_op1 = bitrev(r2_op2);
+}
+
+define pcodeop byterev;
+:byterev r2_op1, r2_op2 is rus_op0=0b00000 & rus_op1=0 & r2_op1 & r2_op2 & $(IS_R2R_FMT) {
+	r2_op1 = byterev(r2_op2);
+}
+
+define pcodeop chkct;
+:chkct r2_op1, r2_op2 is rus_op0=0b11001 & rus_op1=0 & r2_op1 & r2_op2 & $(IS_R2R_FMT) {
+	chkct(r2_op1, r2_op2);
+}
+
+:clz r2_op1, r2_op2 is rus_op0=0b00001 & rus_op1=0 & r2_op1 & r2_op2 & $(IS_R2R_FMT) {
+	r2_op1 = lzcount(r2_op2);
+}
+
+define pcodeop eef;
+:eef r2_op1, r2_op2 is rus_op0=0b00101 & rus_op1=1 & r2_op1 & r2_op2 & $(IS_R2R_FMT) {
+	r2_op1 = eef(r2_op2);
+}
+
+define pcodeop eet;
+:eet r2_op1, r2_op2 is rus_op0=0b00100 & rus_op1=1 & r2_op1 & r2_op2 & $(IS_R2R_FMT) {
+	r2_op1 = eet(r2_op2);
+}
+
+define pcodeop endin;
+:endin r2_op1, r2_op2 is rus_op0=0b10010 & rus_op1=1 & r2_op1 & r2_op2 & $(IS_R2R_FMT) {
+	r2_op1 = endin(r2_op2);
+}
+
+define pcodeop getst;
+:getst r2_op1, r2_op2 is rus_op0=0b00000 & rus_op1=1 & r2_op1 & r2_op2 & $(IS_R2R_FMT) {
+	r2_op1 = getst(r2_op2);
+}
+
+define pcodeop getts;
+:getts r2_op1, r2_op2 is rus_op0=0b00111 & rus_op1=0 & r2_op1 & r2_op2 & $(IS_R2R_FMT) {
+	r2_op1 = getts(r2_op2);
+}
+
+define pcodeop in;
+:in r2_op1, r2_op2 is rus_op0=0b10110 & rus_op1=0 & r2_op1 & r2_op2 & $(IS_R2R_FMT) {
+	r2_op1 = in(r2_op2);
+}
+
+define pcodeop inct;
+:inct r2_op1, r2_op2 is rus_op0=0b10000 & rus_op1=1 & r2_op1 & r2_op2 & $(IS_R2R_FMT) {
+	r2_op1 = inct(r2_op2);
+}
+
+define pcodeop inshr;
+:inshr r2_op1, r2_op2 is rus_op0=0b10110 & rus_op1=1 & r2_op1 & r2_op2 & $(IS_R2R_FMT) {
+	inshr(r2_op1, r2_op2);
+}
+
+define pcodeop int;
+:int r2_op1, r2_op2 is rus_op0=0b10001 & rus_op1=1 & r2_op1 & r2_op2 & $(IS_R2R_FMT) {
+	int(r2_op1, r2_op2);
+}
+
+:mkmsk r2_op1, r2_op2 is rus_op0=0b10100 & rus_op1=0 & r2_op1 & r2_op2 & $(IS_R2R_FMT) {
+	local msk:4 = (1 << r2_op2)-1;
+	r2_op1 = msk;
+}
+:neg r2_op1, r2_op2 is rus_op0=0b10010 & rus_op1=0 & r2_op1 & r2_op2 & $(IS_R2R_FMT) {
+	r2_op1 = -r2_op2;
+}
+
+:not r2_op1, r2_op2 is rus_op0=0b10001 & rus_op1=0 & r2_op1 & r2_op2 & $(IS_R2R_FMT) {
+	r2_op1 = ~r2_op2;
+}
+
+define pcodeop outct;
+:outct r2_op1, r2_op2 is rus_op0=0b01001 & rus_op1=0 & r2_op1 & r2_op2 & $(IS_R2R_FMT) {
+	outct(r2_op1, r2_op2);
+}
+
+define pcodeop peek;
+:peek r2_op1, r2_op2 is rus_op0=0b10111 & rus_op1=0 & r2_op1 & r2_op2 & $(IS_R2R_FMT) {
+	r2_op1 = peek(r2_op2);
+}
+:"sext" r2_op1, r2_op2 is rus_op0=0b00110 & rus_op1=0 & r2_op1 & r2_op2 & $(IS_R2R_FMT) {
+	local shf:4 = (32 - r2_op2);
+	local tmp:4 = r2_op1 << shf;
+	r2_op1 = tmp s>> shf;
+}
+
+define pcodeop testct;
+:testct r2_op1, r2_op2 is rus_op0=0b10111 & rus_op1=1 & r2_op1 & r2_op2 & $(IS_R2R_FMT) {
+	r2_op1 = testct(r2_op2);
+}
+
+define pcodeop testwct;
+:testwct r2_op1, r2_op2 is rus_op0=0b11000 & rus_op1=1 & r2_op1 & r2_op2 & $(IS_R2R_FMT) {
+	r2_op1 = testwct(r2_op2);
+}
+:"zext" r2_op1, r2_op2 is rus_op0=0b01000 & rus_op1=0 & r2_op1 & r2_op2 & $(IS_R2R_FMT) {
+	local shf:4 = (32 - r2_op2);
+	local tmp:4 = r2_op1 << shf;
+	r2_op1 = tmp >> shf;
+}
+
+# l0r
+define pcodeop dentsp;
+# XS2 encoding
+:dentsp is op0_15=0b1111111111101100 ; op0_15=0b0001011111101100 {
+	dentsp();
+}
+# XS1 encoding
+:dentsp is op0_15=0b0001011111101100 {
+	dentsp();
+}
+
+define pcodeop drestsp;
+# XS2 encoding
+:drestsp is op0_15=0b1111111111101100 ; op0_15=0b0001111111101100 {
+	drestsp();
+}
+# XS1 encoding
+:drestsp is op0_15=0b0001011111101101 {
+	drestsp();
+}
+
+define pcodeop dret;
+# XS2 encoding
+:dret is op0_15=0b1111111111101100 ; op0_15=0b0000111111101100 {
+	dret();
+}
+# XS1 encoding
+:dret is op0_15=0b0000011111111110 {
+	dret();
+}
+
+
+# XS2 encoding
+define pcodeop kret;
+:kret is op0_15=0b1111111111101100 ; op0_15=0b0000011111101100 {
+	kret();
+}
+# XS1 encoding
+:kret is op0_15=0b0000011111111101 {
+	kret();
+}
+
+# l2r
+
+define pcodeop getd;
+:getd r2_op1, r2_op2 is rus_op0=0b11111 & rus_op1=1 & r2_op1 & r2_op2 & $(IS_R2R_FMT) ; op0_15=0b0001111111101100 {
+	r2_op1 = getd(r2_op2);
+}
+
+define pcodeop getn;
+:getn r2_op1, r2_op2 is rus_op0=0b11111 & rus_op1=1 & r2_op1 & r2_op2 & $(IS_R2R_FMT) ; op0_15=0b0011011111101100 {
+	r2_op1 = getn(r2_op2);
+}
+
+define pcodeop getps;
+:getps r2_op1, r2_op2 is rus_op0=0b11111 & rus_op1=1 & r2_op1 & r2_op2 & $(IS_R2R_FMT) ; op0_15=0b0001011111101100 {
+	r2_op1 = getps(r2_op2);
+}
+
+define pcodeop setc;
+:setc r2_op1, r2_op2 is rus_op0=0b11111 & rus_op1=1 & r2_op1 & r2_op2 & $(IS_R2R_FMT) ; op0_15=0b0010111111101100 {
+	setc(r2_op1, r2_op2);
+}
+
+define pcodeop testlcl;
+:testlcl is rus_op0=0b11111 & rus_op1=0 & r2_op1 & r2_op2 & $(IS_R2R_FMT) ; op0_15=0b0010011111101100 {
+	r2_op1 = testlcl(r2_op2);
+}
+
+define pcodeop tinitcp;
+:tinitcp r2_op1, r2_op2 is rus_op0=0b11111 & rus_op1=0 & r2_op1 & r2_op2 & $(IS_R2R_FMT) ; op0_15=0b0000011111101101 {
+	tinitcp(r2_op1, r2_op2);
+}
+
+define pcodeop tinitdp;
+:tinitdp r2_op1, r2_op2 is rus_op0=0b11111 & rus_op1=0 & r2_op1 & r2_op2 & $(IS_R2R_FMT) ; op0_15=0b0000111111101100 {
+	tinitdp(r2_op1, r2_op2);
+}
+
+define pcodeop tinitlr;
+:tinitlr r2_op1, r2_op2 is rus_op0=0b11111 & rus_op1=0 & r2_op1 & r2_op2 & $(IS_R2R_FMT) ; op0_15=0b0001011111101100 {
+	tinitlr(r2_op1, r2_op2);
+}
+
+define pcodeop tinitpc;
+:tinitpc r2_op1, r2_op2 is rus_op0=0b11111 & rus_op1=1 & r2_op1 & r2_op2 & $(IS_R2R_FMT) ; op0_15=0b0000011111101100 {
+	tinitpc(r2_op1, r2_op2);
+}
+
+define pcodeop tinitsp;
+:tinitsp r2_op1, r2_op2 is rus_op0=0b11111 & rus_op1=0 & r2_op1 & r2_op2 & $(IS_R2R_FMT) ; op0_15=0b0000011111101100 {
+	tinitsp(r2_op1, r2_op2);
+}
+
+define pcodeop tsetmr;
+:tsetmr r2_op1, r2_op2 is rus_op0=0b11111 & rus_op1=0 & r2_op1 & r2_op2 & $(IS_R2R_FMT) ; op0_15=0b0000111111101101 {
+	tsetmr(r2_op1, r2_op2);
+}
+
+
+# lr2r
+define pcodeop setclk;
+:setclk r2_op1, r2_op2 is rus_op0=0b11111 & rus_op1=1 & r2_op1 & r2_op2 & $(IS_R2R_FMT) ; op0_15=0b0000111111101100 {
+	setclk(r2_op1, r2_op2);
+}
+
+
+define pcodeop setn;
+:setn r2_op1, r2_op2 is rus_op0=0b11111 & rus_op1=0 & r2_op1 & r2_op2 & $(IS_R2R_FMT) ; op0_15=0b0011011111101100 {
+	setn(r2_op1, r2_op2);
+}
+
+define pcodeop setps;
+:setps r2_op1, r2_op2 is rus_op0=0b11111 & rus_op1=0 & r2_op1 & r2_op2 & $(IS_R2R_FMT) ; op0_15=0b0001111111101100 {
+	setps(r2_op1, r2_op2);
+}
+
+define pcodeop setrdy;
+:setrdy r2_op1, r2_op2 is rus_op0=0b11111 & rus_op1=0 & r2_op1 & r2_op2 & $(IS_R2R_FMT) ; op0_15=0b0010111111101100 {
+	setrdy(r2_op1, r2_op2);
+}
+
+define pcodeop settw;
+:settw r2_op1, r2_op2 is rus_op0=0b11111 & rus_op1=1 & r2_op1 & r2_op2 & $(IS_R2R_FMT) ; op0_15=0b0010011111101100 {
+	settw(r2_op1, r2_op2);
+}
+
+# l4r
+define pcodeop crc8;
+:crc8 rus2_op1r, l4r_op4, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; l4r_op=0b000001111110 & l4r_op4 {
+	local tmp:4 = crc8(rus2_op1r, l4r_op4, rus2_op2r, r3_op3r);
+	rus2_op1r = tmp;
+	l4r_op4 = tmp;
+}
+
+define pcodeop crcn;
+:crcn rus2_op1r, l4r_op4, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; l4r_op=0b000011111111 & l4r_op4 {
+	local tmp:4 = crcn(rus2_op1r, l4r_op4, rus2_op2r, r3_op3r);
+	rus2_op1r = tmp;
+	l4r_op4 = tmp;
+}
+
+:ldd rus2_op1r, l4r_op4, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; l4r_op=0b001001111110 & l4r_op4 {
+	local ea:4 = rus2_op2r + r3_op3r*$(BPW)*2;
+	rus2_op1r = *[ram]:4 ea;
+	local ea2:4 = rus2_op2r + r3_op3r*$(BPW)*2 + $(BPW);
+	l4r_op4 = *[ram]:4 ea2;
+}
+:maccs rus2_op1r, l4r_op4, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; l4r_op=0b000011111110 & l4r_op4 {
+	local tmp:8 = (zext(rus2_op1r) << 32) | zext(l4r_op4);
+	local res:8 = tmp + sext(rus2_op2r) * sext(r3_op3r);
+	rus2_op1r = res:4;
+	l4r_op4 = res(4);
+}
+:maccu rus2_op1r, l4r_op4, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; l4r_op=0b000001111111 & l4r_op4 {
+	local tmp:8 = (zext(rus2_op1r) << 32) | zext(l4r_op4);
+	local res:8 = tmp + zext(rus2_op2r) * zext(r3_op3r);
+	rus2_op1r = res:4;
+	l4r_op4 = res(4);
+}
+:std rus2_op1r, l4r_op4, rus2_op2r, r3_op3r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; l4r_op=0b000101111110 & l4r_op4 {
+	local ea:4 = rus2_op2r + r3_op3r*$(BPW)*2;
+	*[ram]:$(BPW) ea = rus2_op1r;
+	ea = ea + $(BPW);
+	*[ram]:$(BPW) ea = rus2_op2r;
+}
+
+
+# l3rus
+:lddi rus2_op1r, l4r_op4, rus2_op2r, rus2_op3i is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & rus2_op3i ; l4r_op=0b001001111111 & l4r_op4 {
+	local ea:4 = rus2_op2r + rus2_op3i*$(BPW)*2;
+	rus2_op1r = *[ram]:$(BPW) ea;
+	ea = ea + $(BPW);
+	rus2_op2r = *[ram]:$(BPW) ea;
+}
+:stdi rus2_op1r, l4r_op4, rus2_op2r, rus2_op3i is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & rus2_op3i ; l4r_op=0b000101111111 & l4r_op4 {
+	local ea:4 = rus2_op2r + rus2_op3i*$(BPW)*2;
+	*[ram]:$(BPW) ea = rus2_op1r;
+	ea = ea + $(BPW);
+	*[ram]:$(BPW) ea = rus2_op2r;
+}
+
+l5r_op5: r3_op3l is r3_op3l & r2_op2_tmp=0b11011 & r2_op2_tmp1=0 { export r3_op3l; }
+l5r_op5: r3_op3l is r3_op3l & r2_op2_tmp=0b11110 & r2_op2_tmp1=0 { export r3_op3l; }
+l5r_op5: r3_op3l is r3_op3l & r2_op2_tmp=0b11100 & r2_op2_tmp1=1 { export r3_op3l; }
+l5r_op5: r3_op3m is r3_op3m & r2_op2_tmp=0b11100 & r2_op2_tmp1=0 { export r3_op3m; }
+l5r_op5: r3_op3m is r3_op3m & r2_op2_tmp=0b11111 & r2_op2_tmp1=0 { export r3_op3m; }
+l5r_op5: r3_op3m is r3_op3m & r2_op2_tmp=0b11101 & r2_op2_tmp1=1 { export r3_op3m; }
+l5r_op5: r3_op3h is r3_op3h & r2_op2_tmp=0b11101 & r2_op2_tmp1=0 { export r3_op3h; }
+l5r_op5: r3_op3h is r3_op3h & r2_op2_tmp=0b11011 & r2_op2_tmp1=1 { export r3_op3h; }
+l5r_op5: r3_op3h is r3_op3h & r2_op2_tmp=0b11110 & r2_op2_tmp1=1 { export r3_op3h; }
+
+l5r_op4: r3_op3l is r3_op3l & r2_op2_tmp=0b11011 & r2_op2_tmp1=0 { export r3_op3l; }
+l5r_op4: r3_op3m is r3_op3m & r2_op2_tmp=0b11100 & r2_op2_tmp1=0 { export r3_op3m; }
+l5r_op4: r3_op3h is r3_op3h & r2_op2_tmp=0b11101 & r2_op2_tmp1=0 { export r3_op3h; }
+l5r_op4: r3_op3l is r3_op3l & r2_op2_tmp=0b11110 & r2_op2_tmp1=0 { export r3_op3l; }
+l5r_op4: r3_op3m is r3_op3m & r2_op2_tmp=0b11111 & r2_op2_tmp1=0 { export r3_op3m; }
+l5r_op4: r3_op3h is r3_op3h & r2_op2_tmp=0b11011 & r2_op2_tmp1=1 { export r3_op3h; }
+l5r_op4: r3_op3l is r3_op3l & r2_op2_tmp=0b11100 & r2_op2_tmp1=1 { export r3_op3l; }
+l5r_op4: r3_op3m is r3_op3m & r2_op2_tmp=0b11101 & r2_op2_tmp1=1 { export r3_op3m; }
+l5r_op4: r3_op3h is r3_op3h & r2_op2_tmp=0b11110 & r2_op2_tmp1=1 { export r3_op3h; }
+
+# l4rus
+
+define pcodeop crc32_inc;
+:crc32_inc rus2_op1r, l5r_op4, rus2_op2r, r3_op3r, r2_op2c_bitp is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; rus2_op=0b00101 & r1_op2=1 & l5r_op4 & r2_op2c_bitp & $(IS_R2R_FMT) {
+	crc32_inc(rus2_op1r, l5r_op4, rus2_op2r, r3_op3r, r2_op2c_bitp:4);
+}
+
+define pcodeop lextract;
+:lextract rus2_op1r, l5r_op4, rus2_op2r, r3_op3r, r2_op2c_bitp is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; rus2_op=0b00011 & r1_op2=0 & l5r_op4 & r2_op2c_bitp & $(IS_R2R_FMT) {
+	rus2_op1r = lextract(rus2_op1r, l5r_op4, rus2_op2r, r3_op3r, r2_op2c_bitp:4);
+}
+
+define pcodeop linsert;
+:linsert rus2_op1r, l5r_op4, rus2_op2r, r3_op3r, r2_op2c_bitp is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; rus2_op=0b00011 & r1_op2=1 & l5r_op4 & r2_op2c_bitp & $(IS_R2R_FMT) {
+	rus2_op1r = linsert(rus2_op1r, l5r_op4, rus2_op2r, r3_op3r, r2_op2c_bitp:4);
+}
+
+# l5r
+
+
+:ladd rus2_op1r, l5r_op4, rus2_op2r, r3_op3r, l5r_op5 is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; rus2_op=0b00000 & r1_op2=1 & l5r_op4 & l5r_op5 & $(IS_R2R_FMT) {
+	local tmp:8 = zext(rus2_op2r) + zext(r3_op3r) + zext(l5r_op5&1);
+	rus2_op1r = tmp:4;
+	l5r_op4 = zext(tmp > zext(rus2_op1r));
+}
+:ldivu rus2_op1r, l5r_op4, rus2_op2r, r3_op3r, l5r_op5 is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; rus2_op=0b00000 & r1_op2=0 & l5r_op4 & l5r_op5 & $(IS_R2R_FMT) {
+	local tmp:8 = zext(l5r_op5 << 32) | zext(rus2_op2r);
+	local res:8 = tmp / zext(r3_op3r);
+	local res2:8 = tmp % zext(r3_op3r); 
+	rus2_op1r = res:4;
+	l5r_op4 = res2:4;
+}
+:lsub rus2_op1r, l5r_op4, rus2_op2r, r3_op3r, l5r_op5 is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; rus2_op=0b00001 & r1_op2=0 & l5r_op4 & l5r_op5 & $(IS_R2R_FMT) {
+	local tmp:8 = zext(rus2_op2r) - zext(r3_op3r) - zext(l5r_op5&1);
+	rus2_op1r = tmp:4;
+	l5r_op4 = zext(tmp > zext(rus2_op1r));
+}
+:xor4 rus2_op1r, l5r_op4, rus2_op2r, r3_op3r, l5r_op5 is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; rus2_op=0b00001 & r1_op2=1 & l5r_op4 & l5r_op5 & $(IS_R2R_FMT) {
+	rus2_op1r = rus2_op2r ^ r3_op3r ^ l5r_op4 ^ l5r_op5;
+}
+
+
+
+
+:lmul rus2_op1r, l6r_op4r, rus2_op2r, r3_op3r, l6r_op5r, l6r_op6r is rus2_op=0b11111 & split_packed & rus2_op1r & rus2_op2r & r3_op3r ; rus2_op=0b00000 & split_packed2 & l6r_op4r & l6r_op5r & l6r_op6r {
+	local tmp:8 = zext(rus2_op2r) * zext(r3_op3r) + zext(l6r_op5r) + zext(l6r_op6r);
+	l6r_op4r = tmp:4;
+	rus2_op1r = tmp(4);
+}
+
+@include "xs3.sinc"
+

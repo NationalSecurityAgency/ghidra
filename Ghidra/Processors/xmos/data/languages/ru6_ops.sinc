@@ -1,0 +1,60 @@
+:brbf ru6_op1, ru6_br is $(PRE) ru6_op=0b011111 & ru6_op1 & ru6_br $(POST) {
+	if(ru6_op1 != 0) goto inst_next;
+	goto [ru6_br];
+}
+
+:brbt ru6_op1, ru6_br is $(PRE) ru6_op=0b011101 & ru6_op1 & ru6_br $(POST) {
+	if(ru6_op1 == 0) goto inst_next;
+	goto [ru6_br];
+}
+
+:brff ru6_op1, ru6_bf is $(PRE) ru6_op=0b011110 & ru6_op1 & ru6_bf $(POST) {
+	if(ru6_op1 != 0) goto inst_next;
+	goto [ru6_bf];
+}
+
+:brft ru6_op1, ru6_bf is $(PRE) ru6_op=0b011100 & ru6_op1 & ru6_bf $(POST) {
+	if(ru6_op1 == 0) goto inst_next;
+	goto [ru6_bf];
+}
+
+:ldawdp ru6_op1, ru6_imm is $(PRE) ru6_op=0b011000 & ru6_op1 & ru6_imm $(POST) {
+	ru6_op1 = dp + ru6_imm*$(BPW);
+}
+
+:ldawsp ru6_op1, ru6_imm is $(PRE) ru6_op=0b011001 & ru6_op1 & ru6_imm $(POST) {
+	ru6_op1 = sp + ru6_imm*$(BPW);
+}
+
+:ldc ru6_op1, ru6_imm is $(PRE) ru6_op=0b011010 & ru6_op1 & ru6_imm $(POST) {
+	ru6_op1 = ru6_imm;
+}
+
+:ldwcp ru6_op1, ru6_imm is $(PRE) ru6_op=0b011011 & ru6_op1 & ru6_imm $(POST) {
+	local ea:4 = cp + ru6_imm*$(BPW);
+	ru6_op1 = *[ram]:4 ea;
+}
+
+:ldwdp ru6_op1, ru6_imm is $(PRE) ru6_op=0b010110 & ru6_op1 & ru6_imm $(POST) {
+	local ea:4 = dp + ru6_imm*$(BPW);
+	ru6_op1 = *[ram]:4 ea;
+}
+
+:ldwsp ru6_op1, ru6_imm is $(PRE) ru6_op=0b010111 & ru6_op1 & ru6_imm $(POST) {
+	local addr:4 = sp + (ru6_imm:4) * $(BPW);
+	ru6_op1 = *[ram] addr:4;
+}
+
+:setci ru6_op1, ru6_imm is $(PRE) ru6_op=0b111010 & ru6_op1 & ru6_imm $(POST) {
+	setci(ru6_op1, ru6_imm);
+}
+
+:stwdp ru6_op1, ru6_imm is $(PRE) ru6_op=0b010100 & ru6_op1 & ru6_imm $(POST) {
+	local addr:4 = sp + (ru6_imm:4) * $(BPW);
+	*[ram] addr:4 = ru6_op1;
+}
+
+:stwsp ru6_op1, sp[ru6_imm] is $(PRE) ru6_op=0b010101 & ru6_op1 & ru6_imm & sp $(POST) {
+	local addr:4 = sp + (ru6_imm:4) * $(BPW);
+	*[ram] addr:4 = ru6_op1;
+}
