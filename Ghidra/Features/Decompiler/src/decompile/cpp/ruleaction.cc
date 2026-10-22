@@ -9324,11 +9324,24 @@ bool RuleConditionalMove::gatherExpression(Varnode *vn,vector<PcodeOp *> &ops,Fl
 Varnode *RuleConditionalMove::constructBool(Varnode *vn,PcodeOp *insertop,vector<PcodeOp *> &ops,Funcdata &data)
 
 {
-  Varnode *resvn;
+  Varnode *resvn = (Varnode *)0;
   if (!ops.empty()) {
     sort(ops.begin(),ops.end(),compareOp);
-    CloneBlockOps cloner(data);
-    resvn = cloner.cloneExpression(ops, insertop);
+
+    CloneOp cloner { data };
+    InputOpCorrector corr(data,0); // zero is true edge
+    for(vector<PcodeOp *>::const_iterator iter=ops.begin();iter!=ops.end();++iter) {
+      PcodeOp *origOp = *iter;
+      PcodeOp *cloneOp = cloner.clone(origOp);
+
+      if (cloneOp == (PcodeOp *)0) continue;
+
+      data.opInsertAfter(cloneOp, insertop);
+      insertop = cloneOp;
+      resvn = cloneOp->getOut();
+
+      corr.correct(origOp, cloneOp);
+    }
   }
   else {
     resvn = vn;
