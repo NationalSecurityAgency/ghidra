@@ -29,6 +29,7 @@ import org.junit.*;
 import docking.action.DockingActionIf;
 import docking.widgets.OptionDialog;
 import docking.widgets.combobox.GhidraComboBox;
+import docking.widgets.table.GTableFilterPanel;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.gotoquery.GoToServicePlugin;
 import ghidra.app.plugin.core.misc.RegisterField;
@@ -943,6 +944,35 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 	}
 
 	@Test
+	public void testDeleteBlockWithFilter() {
+		// filter so that the first visible row is not the first block
+		setFilterText(".data");
+		assertEquals(1, table.getRowCount());
+		assertEquals(".data", table.getValueAt(0, MemoryMapModel.NAME));
+
+		// select a row
+		table.addRowSelectionInterval(0, 0);
+
+		DockingActionIf action = getAction(plugin, "Delete Block");
+		performAction(action, false);
+		waitForSwing();
+
+		OptionDialog d = waitForDialogComponent(OptionDialog.class);
+		assertNotNull(d);
+		assertEquals("Delete Memory Block?", d.getTitle());
+		String message = d.getMessage();
+		assertTrue("Wrong block in message: " + message, message.contains(".data"));
+		assertFalse("Wrong block in message: " + message, message.contains(".text"));
+
+		JButton button = findButton(d.getComponent(), "No");
+		assertNotNull(button);
+
+		runSwing(() -> button.getActionListeners()[0].actionPerformed(null));
+		assertNotNull(memory.getBlock(".text"));
+		assertNotNull(memory.getBlock(".data"));
+	}
+
+	@Test
 	public void testMoveBlockNotAllowed() throws Exception {
 		// create an overlay block
 		tx(program, () -> {
@@ -1300,6 +1330,13 @@ public class MemoryMapProvider2Test extends AbstractGhidraHeadedIntegrationTest 
 		provider = plugin.getMemoryMapProvider();
 		table = provider.getTable();
 		model = table.getModel();
+	}
+
+	private void setFilterText(String text) {
+		GTableFilterPanel<?> filterPanel =
+			(GTableFilterPanel<?>) getInstanceField("filterPanel", provider);
+		runSwing(() -> filterPanel.setFilterText(text));
+		waitForSwing();
 	}
 
 	private Address getAddr(long offset) {
