@@ -31,7 +31,6 @@ import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.util.*;
 
 public class TimeTypeOverviewColorService implements TimeOverviewColorService {
@@ -89,7 +88,7 @@ public class TimeTypeOverviewColorService implements TimeOverviewColorService {
 		if (snap == null) {
 			return "";
 		}
-		TimeRadix radix = trace == null ? TimeRadix.DEFAULT : trace.getTimeManager().getTimeRadix();
+		Radix radix = trace == null ? Radix.DEFAULT : trace.getTimeManager().getTimeRadix();
 		Set<Pair<TimeType, String>> types = plugin.getTypes(snap);
 		StringBuffer buffer = new StringBuffer();
 		buffer.append("<b>");

@@ -45,9 +45,9 @@ import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.TraceTimeManager;
 import ghidra.trace.model.time.schedule.TraceSchedule;
-import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.HelpLocation;
+import ghidra.util.Radix;
 
 public class DebuggerTimeProvider extends ComponentProviderAdapter {
 	private static final AutoConfigState.ClassHandler<DebuggerTimeProvider> CONFIG_STATE_HANDLER =
@@ -254,17 +254,17 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 		actionSetRadixDec = SetTimeRadixAction.builder("Decimal", plugin)
 				.enabledWhen(c -> current.getTrace() != null &&
 					current.getTrace().getObjectManager().getRootObject() != null)
-				.onAction(c -> activatedSetRadix(TimeRadix.DEC))
+				.onAction(c -> activatedSetRadix(Radix.DEC))
 				.buildAndInstall(tool);
 		actionSetRadixHexUpper = SetTimeRadixAction.builder("Upper Hex", plugin)
 				.enabledWhen(c -> current.getTrace() != null &&
 					current.getTrace().getObjectManager().getRootObject() != null)
-				.onAction(c -> activatedSetRadix(TimeRadix.HEX_UPPER))
+				.onAction(c -> activatedSetRadix(Radix.HEX_UPPER))
 				.buildAndInstall(tool);
 		actionSetRadixHexLower = SetTimeRadixAction.builder("Lower Hex", plugin)
 				.enabledWhen(c -> current.getTrace() != null &&
 					current.getTrace().getObjectManager().getRootObject() != null)
-				.onAction(c -> activatedSetRadix(TimeRadix.HEX_LOWER))
+				.onAction(c -> activatedSetRadix(Radix.HEX_LOWER))
 				.buildAndInstall(tool);
 	}
 
@@ -282,7 +282,7 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 		mainPanel.setHideScratchSnapshots(hideScratch);
 	}
 
-	private void activatedSetRadix(TimeRadix radix) {
+	private void activatedSetRadix(Radix radix) {
 		try (Transaction tx = current.getTrace().openTransaction("Set Time Radix")) {
 			current.getTrace().getTimeManager().setTimeRadix(radix);
 		}
@@ -313,11 +313,11 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 	}
 
 	private void refreshRadixSelection() {
-		TimeRadix radix = current.getTrace() == null ? TimeRadix.DEFAULT
+		Radix radix = current.getTrace() == null ? Radix.DEFAULT
 				: current.getTrace().getTimeManager().getTimeRadix();
-		actionSetRadixHexLower.setSelected(radix == TimeRadix.HEX_LOWER);
-		actionSetRadixHexUpper.setSelected(radix == TimeRadix.HEX_UPPER);
-		actionSetRadixDec.setSelected(radix == TimeRadix.DEC);
+		actionSetRadixHexLower.setSelected(radix == Radix.HEX_LOWER);
+		actionSetRadixHexUpper.setSelected(radix == Radix.HEX_UPPER);
+		actionSetRadixDec.setSelected(radix == Radix.DEC);
 	}
 
 	public void writeConfigState(SaveState saveState) {

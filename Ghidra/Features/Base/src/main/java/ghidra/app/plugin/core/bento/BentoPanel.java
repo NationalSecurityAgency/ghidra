@@ -24,6 +24,7 @@ import javax.swing.*;
 
 import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors;
+import ghidra.util.Radix;
 
 public class BentoPanel extends JPanel implements MouseListener, MouseMotionListener {
 	private static final long serialVersionUID = 1L;
@@ -393,9 +394,9 @@ public class BentoPanel extends JPanel implements MouseListener, MouseMotionList
 		parseBoxes(blist);
 	}
 
-	protected BentoRadix getRadix(int index) {
+	protected Radix getRadix(int index) {
 		if (boxList == null || boxList.isEmpty()) {
-			return BentoRadix.DEFAULT;
+			return Radix.DEFAULT;
 		}
 		return provider.getRadix(index);
 	}

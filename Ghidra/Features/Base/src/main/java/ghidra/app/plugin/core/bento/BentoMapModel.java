@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.bento;
 import java.util.*;
 
 import docking.widgets.table.AbstractSortedTableModel;
+import ghidra.util.Radix;
 
 class BentoMapModel extends AbstractSortedTableModel<BentoBox> {
 
@@ -189,7 +190,7 @@ class BentoMapModel extends AbstractSortedTableModel<BentoBox> {
 
 			Object rep = columnBounds.get(columnIndex) ? obj.getLowRep() : obj.getHiRep();
 			if (rep instanceof Long lrep) {
-				BentoRadix radix = provider.getRadix(columnIndices.get(columnIndex));
+				Radix radix = provider.getRadix(columnIndices.get(columnIndex));
 				rep = radix.format(lrep);
 			}
 			return rep;

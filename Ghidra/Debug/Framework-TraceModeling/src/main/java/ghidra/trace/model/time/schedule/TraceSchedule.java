@@ -23,6 +23,8 @@ import ghidra.program.model.lang.Language;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.trace.model.time.schedule.TraceSchedule.Source;
+import ghidra.util.Radix;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -34,62 +36,6 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	 * The initial snapshot (with no steps)
 	 */
 	public static final TraceSchedule ZERO = TraceSchedule.snap(0);
-
-	/**
-	 * Format for rendering and parsing snaps and step counts
-	 */
-	public enum TimeRadix {
-		/** Use decimal (default) */
-		DEC("dec", 10, "%d"),
-		/** Use upper-case hexadecimal */
-		HEX_UPPER("HEX", 16, "%X"),
-		/** Use lower-case hexadecimal */
-		HEX_LOWER("hex", 16, "%x");
-
-		/** The default radix (decimal) */
-		public static final TimeRadix DEFAULT = DEC;
-
-		/**
-		 * Get the radix specified by the given string
-		 * 
-		 * @param s the name of the specified radix
-		 * @return the radix
-		 */
-		public static TimeRadix fromStr(String s) {
-			return switch (s) {
-				case "dec" -> DEC;
-				case "HEX" -> HEX_UPPER;
-				case "hex" -> HEX_LOWER;
-				default -> DEFAULT;
-			};
-		}
-
-		public final String name;
-		public final int n;
-		public final String fmt;
-
-		private TimeRadix(String name, int n, String fmt) {
-			this.name = name;
-			this.n = n;
-			this.fmt = fmt;
-		}
-
-		public String format(long time) {
-			return fmt.formatted(time);
-		}
-
-		public long decode(String nm) {
-			if (nm.startsWith("0x") || nm.startsWith("0X") ||
-				nm.startsWith("-0x") || nm.startsWith("-0X")) {
-				return Long.parseLong(nm, 16);
-			}
-			if (nm.startsWith("0n") || nm.startsWith("0N") ||
-				nm.startsWith("-0n") || nm.startsWith("-0N")) {
-				return Long.parseLong(nm, 10);
-			}
-			return Long.parseLong(nm, n);
-		}
-	}
 
 	/**
 	 * Specifies forms of a stepping schedule.
@@ -260,7 +206,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	 * @param radix the radix
 	 * @return the parsed schedule
 	 */
-	public static TraceSchedule parse(String spec, Source source, TimeRadix radix) {
+	public static TraceSchedule parse(String spec, Source source, Radix radix) {
 		String[] parts = spec.split(":", 2);
 		if (parts.length > 2) {
 			throw new AssertionError();
@@ -311,7 +257,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	 * @param radix the radix
 	 * @return the parsed schedule
 	 */
-	public static TraceSchedule parse(String spec, TimeRadix radix) {
+	public static TraceSchedule parse(String spec, Radix radix) {
 		return parse(spec, Source.INPUT, radix);
 	}
 
@@ -322,7 +268,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	 * @return the parse sequence
 	 */
 	public static TraceSchedule parse(String spec) {
-		return parse(spec, TimeRadix.DEFAULT);
+		return parse(spec, Radix.DEFAULT);
 	}
 
 	public enum Source {
@@ -386,10 +332,10 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 	@Override
 	public String toString() {
-		return toString(TimeRadix.DEFAULT);
+		return toString(Radix.DEFAULT);
 	}
 
-	public String toString(TimeRadix radix) {
+	public String toString(Radix radix) {
 		if (pSteps.isNop()) {
 			if (steps.isNop()) {
 				return radix.format(snap);

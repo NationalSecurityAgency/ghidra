@@ -29,9 +29,7 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.time.schedule.TraceSchedule;
-import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
-import ghidra.util.MessageType;
-import ghidra.util.Msg;
+import ghidra.util.*;
 
 public class DebuggerTimeSelectionDialog extends DialogComponentProvider {
 
@@ -39,7 +37,7 @@ public class DebuggerTimeSelectionDialog extends DialogComponentProvider {
 
 	DebuggerSnapshotTablePanel snapshotPanel;
 	JTextField scheduleText;
-	TimeRadix radix = TimeRadix.DEFAULT;
+	Radix radix = Radix.DEFAULT;
 	TraceSchedule schedule;
 
 	JButton tickStep;
@@ -189,7 +187,7 @@ public class DebuggerTimeSelectionDialog extends DialogComponentProvider {
 	public void close() {
 		super.close();
 		snapshotPanel.setTrace(null);
-		radix = TimeRadix.DEFAULT;
+		radix = Radix.DEFAULT;
 		snapshotPanel.setSelectedSnapshot(null);
 	}
 

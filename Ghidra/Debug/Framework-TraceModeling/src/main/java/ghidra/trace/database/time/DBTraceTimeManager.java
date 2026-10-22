@@ -32,10 +32,10 @@ import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.TraceTimeManager;
 import ghidra.trace.model.time.schedule.*;
-import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
+import ghidra.util.Radix;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
 import ghidra.util.exception.VersionException;
@@ -327,7 +327,7 @@ public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
 	}
 
 	@Override
-	public void setTimeRadix(TimeRadix radix) {
+	public void setTimeRadix(Radix radix) {
 		DBTraceObject root = trace.getObjectManager().getRootObject();
 		if (root == null) {
 			throw new IllegalStateException(
@@ -341,18 +341,18 @@ public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
 	}
 
 	@Override
-	public TimeRadix getTimeRadix() {
+	public Radix getTimeRadix() {
 		DBTraceObject root = trace.getObjectManager().getRootObject();
 		if (root == null) {
-			return TimeRadix.DEFAULT;
+			return Radix.DEFAULT;
 		}
 		TraceObjectValue attribute = root.getAttribute(0, KEY_TIME_RADIX);
 		if (attribute == null) {
-			return TimeRadix.DEFAULT;
+			return Radix.DEFAULT;
 		}
 		return switch (attribute.getValue()) {
-			case String s -> TimeRadix.fromStr(s);
-			default -> TimeRadix.DEFAULT;
+			case String s -> Radix.fromStr(s);
+			default -> Radix.DEFAULT;
 		};
 	}
 }

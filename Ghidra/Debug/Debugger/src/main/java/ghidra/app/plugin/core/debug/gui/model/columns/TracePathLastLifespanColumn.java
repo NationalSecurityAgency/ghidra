@@ -26,14 +26,14 @@ import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObjectValue;
-import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
+import ghidra.util.Radix;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer;
 
 public class TracePathLastLifespanColumn
 		extends AbstractDynamicTableColumn<PathRow, SpanAndRadix, Trace> {
 
-	record SpanAndRadix(Lifespan span, TimeRadix radix) implements Comparable<SpanAndRadix> {
+	record SpanAndRadix(Lifespan span, Radix radix) implements Comparable<SpanAndRadix> {
 		@Override
 		public final String toString() {
 			return span.toString(radix::format);
@@ -78,7 +78,7 @@ public class TracePathLastLifespanColumn
 	public SpanAndRadix getValue(PathRow rowObject, Settings settings, Trace data,
 			ServiceProvider serviceProvider) throws IllegalArgumentException {
 		TraceObjectValue lastEntry = rowObject.getPath().getLastEntry();
-		TimeRadix radix = data == null ? TimeRadix.DEFAULT : data.getTimeManager().getTimeRadix();
+		Radix radix = data == null ? Radix.DEFAULT : data.getTimeManager().getTimeRadix();
 		if (lastEntry == null) {
 			return new SpanAndRadix(Lifespan.ALL, radix);
 		}

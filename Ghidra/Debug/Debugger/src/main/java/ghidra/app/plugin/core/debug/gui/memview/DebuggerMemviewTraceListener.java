@@ -17,7 +17,8 @@ package ghidra.app.plugin.core.debug.gui.memview;
 
 import java.util.*;
 
-import ghidra.app.plugin.core.bento.*;
+import ghidra.app.plugin.core.bento.BentoBox;
+import ghidra.app.plugin.core.bento.BentoProvider;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
@@ -37,6 +38,7 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.thread.TraceThreadManager;
 import ghidra.trace.model.time.TraceTimeManager;
 import ghidra.trace.util.TraceEvents;
+import ghidra.util.Radix;
 import ghidra.util.Swing;
 
 public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
@@ -195,7 +197,7 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 	private void valueCreated(TraceObjectValue value) {
 		if (value.getCanonicalPath().equals(KeyPath.of(TraceTimeManager.KEY_TIME_RADIX))) {
 			provider.setRadix(0,
-				BentoRadix.fromStr(currentTrace.getTimeManager().getTimeRadix().name()));
+				Radix.fromStr(currentTrace.getTimeManager().getTimeRadix().name()));
 			provider.fireTableDataChanged();
 		}
 	}
@@ -203,7 +205,7 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 	private void valueDeleted(TraceObjectValue value) {
 		if (value.getCanonicalPath().equals(KeyPath.of(TraceTimeManager.KEY_TIME_RADIX))) {
 			provider.setRadix(0,
-				BentoRadix.fromStr(currentTrace.getTimeManager().getTimeRadix().name()));
+				Radix.fromStr(currentTrace.getTimeManager().getTimeRadix().name()));
 			provider.fireTableDataChanged();
 		}
 	}
