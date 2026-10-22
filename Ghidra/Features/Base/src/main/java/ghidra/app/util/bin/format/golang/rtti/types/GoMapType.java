@@ -30,7 +30,8 @@ import ghidra.util.Msg;
  * Maps are passed by address, and in Go sizeof(mapvar) will always be ptrSize
  */
 @StructureMapping(
-	structureName = { "runtime.maptype", "internal/abi.MapType", "internal/abi.OldMapType" }
+	structureName = { "runtime.maptype", "internal/abi.MapType", "internal/abi.SwissMapType",
+		"internal/abi.OldMapType" }
 )
 public class GoMapType extends GoType {
 
@@ -42,24 +43,24 @@ public class GoMapType extends GoType {
 	@MarkupReference("getElement")
 	private long elem;	// ptr to type
 
-	@FieldMapping(presentWhen = "-1.25")
+	@FieldMapping(presentWhen = "-1.23")
 	@MarkupReference("getBucket")
 	private long bucket;	// ptr to type
 
-	@FieldMapping(presentWhen = "1.26-")
+	@FieldMapping(presentWhen = "1.24-")
 	@MarkupReference("getGroup")
 	private long group;	// ptr to group type
 
 	@FieldMapping
 	private long hasher;	// pointer to "func(Pointer, pointer) pointer"
 
-	@FieldMapping(presentWhen = "-1.25")
+	@FieldMapping(presentWhen = "-1.23")
 	private int keysize;
 
-	@FieldMapping(fieldName = { "elemsize", "ValueSize" }, presentWhen = "-1.25")
+	@FieldMapping(fieldName = { "elemsize", "ValueSize" }, presentWhen = "-1.23")
 	private int elemsize;
 
-	@FieldMapping(presentWhen = "-1.25")
+	@FieldMapping(presentWhen = "-1.23")
 	private int bucketsize;
 
 	@FieldMapping
