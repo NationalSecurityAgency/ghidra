@@ -377,6 +377,8 @@ protected:
   PathMeld pathMeld;			///< Set of PcodeOps and Varnodes producing the final target addresses
   vector<GuardRecord> selectguards;	///< Any guards associated with \b model
   int4 varnodeIndex;			///< Position of the normalized switch Varnode within PathMeld
+  bool indexBeforeTableLoad;		///< Preserve the index's LOAD role when cloning only the range
+  bool validateByteTargets;		///< Validate all targets before trusting an unguarded full-byte candidate
   Varnode *normalvn;			///< Normalized switch Varnode
   Varnode *switchvn;			///< Unnormalized switch Varnode
   static bool isprune(Varnode *vn);	///< Do we prune in here in our depth-first search for the normalized switch variable
@@ -387,9 +389,9 @@ protected:
   void getInitialRange(Varnode *vn,CircleRange &rng) const;	///< Get initial range of values the given Varnode can take
   void findDeterminingVarnodes(PcodeOp *op,int4 slot);
   void analyzeGuards(BlockBasic *bl,int4 pathout);
-  void calcRange(Varnode *vn,CircleRange &rng) const;
+  bool calcRange(Funcdata *fd,Varnode *vn,CircleRange &rng) const;
   bool isPreferredRange(int4 pos,const CircleRange &newRange);
-  void findSmallestNormal(const JumpBasic *previous);
+  void findSmallestNormal(Funcdata *fd,const JumpBasic *previous);
   void findNormalized(Funcdata *fd,BlockBasic *rootbl,int4 pathout,const JumpModel *previous,uint4 maxtablesize);
   void markFoldableGuards();
   void markModel(bool val);		///< Mark (or unmark) all PcodeOps involved in the model
@@ -408,7 +410,7 @@ protected:
   /// \return \b true if a change was made to data-flow
   virtual bool foldInOneGuard(Funcdata *fd,GuardRecord &guard,JumpTable *jump);
 public:
-  JumpBasic(JumpTable *jt) : JumpModel(jt) { jrange = (JumpValuesRange *)0; }	///< Construct given a parent JumpTable
+  JumpBasic(JumpTable *jt) : JumpModel(jt) { jrange = (JumpValuesRange *)0; indexBeforeTableLoad = false; validateByteTargets = false; }	///< Construct given a parent JumpTable
   const PathMeld &getPathMeld(void) const { return pathMeld; }		///< Get the possible of paths to the switch
   const JumpValuesRange *getValueRange(void) const { return jrange; }	///< Get the normalized value iterator
   virtual ~JumpBasic(void);
