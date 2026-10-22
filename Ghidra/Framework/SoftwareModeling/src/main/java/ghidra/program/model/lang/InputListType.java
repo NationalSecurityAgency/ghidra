@@ -21,6 +21,6 @@ package ghidra.program.model.lang;
  */
 public enum InputListType {
 
-	STANDARD, REGISTER;
+	STANDARD, REGISTER, PASCAL;
 
 }
