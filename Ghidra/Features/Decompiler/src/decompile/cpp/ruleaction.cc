@@ -1540,7 +1540,9 @@ int4 RuleAndCommute::applyOp(PcodeOp *op,Funcdata &data)
     if ((opc != CPUI_INT_LEFT)&&(opc!=CPUI_INT_RIGHT)) continue;
     savn = shiftop->getIn(1);
     if (!savn->isConstant()) continue;
-    sa = (int4)savn->getOffset();
+    uintb rawSa = savn->getOffset();
+    if (rawSa == 0 || rawSa >= (uintb)(8 * size)) continue;
+    sa = (int4)rawSa;
 
     othervn = op->getIn(1-i);
     if (!othervn->isHeritageKnown()) continue;
@@ -1553,7 +1555,7 @@ int4 RuleAndCommute::applyOp(PcodeOp *op,Funcdata &data)
       othermask <<= sa;		// Calc mask as it will be after commute
     }
     else {
-      if (((fullmask<<sa)&&fullmask)==othermask) continue;
+      if (((fullmask<<sa)&fullmask)==othermask) continue;
       othermask >>= sa;		// Calc mask as it will be after commute
     }
     if (othermask == 0) continue; // Handled by andmask
@@ -2078,17 +2080,22 @@ int4 RuleShiftCompare::applyOp(PcodeOp *op,Funcdata &data)
   if (!shiftvn->isWritten()) return 0;
   shiftop = shiftvn->getDef();
   opc = shiftop->code();
+  if (shiftvn->getSize() > sizeof(uintb)) return 0;
   if (opc==CPUI_INT_LEFT) {
     isleft = true;
     savn = shiftop->getIn(1);
     if (!savn->isConstant()) return 0;
-    sa = savn->getOffset();
+    uintb rawSa = savn->getOffset();
+    if (rawSa == 0 || rawSa >= (uintb)(8 * shiftvn->getSize())) return 0;
+    sa = (int4)rawSa;
   }
   else if (opc == CPUI_INT_RIGHT) {
     isleft = false;
     savn = shiftop->getIn(1);
     if (!savn->isConstant()) return 0;
-    sa = savn->getOffset();
+    uintb rawSa = savn->getOffset();
+    if (rawSa == 0 || rawSa >= (uintb)(8 * shiftvn->getSize())) return 0;
+    sa = (int4)rawSa;
   // There are definitely some situations where you don't want this rule to apply, like jump
   // table analysis where the switch variable is a bit field.
   // When shifting to the right, this is a likely shift out of a bitfield, which we would want to keep
@@ -2115,7 +2122,7 @@ int4 RuleShiftCompare::applyOp(PcodeOp *op,Funcdata &data)
   else
     return 0;
   
-  if (sa==0) return 0;
+  if (sa <= 0 || sa >= 8 * shiftvn->getSize()) return 0;
   mainvn = shiftop->getIn(0);
   if (mainvn->isFree()) return 0;
   if (mainvn->getSize() > sizeof(uintb)) return 0;	// FIXME: uintb should be arbitrary precision
@@ -8106,14 +8113,16 @@ uintb RuleDivOpt::calcDivisor(uint4 n,uint8 *y,uint4 xsize)
   if (0 != q[1])
     return 0;			// Result is bigger than 64-bits
   if (uless128(y,q)) return 0;	// if y < q
-  uint8 diff = 0;
+  uint8 denom[2];
+  set_u128(denom, 0);
   if (!uless128(r,q)) {		// if r >= q
     // Its possible y is 1 too big giving us a q that is smaller by 1 than the correct value
     q[0] += 1;			// Adjust to bigger q
+    if (q[0] == 0) return 0;
     subtract128(r,y,r);		// and remainder for the smaller y
     add128(r, q, r);
     if (!uless128(r,q)) return 0;
-    diff = q[0];		// Using y that is off by one adds extra error, affecting allowable maxx
+    denom[0] = q[0];		// Using y that is off by one adds extra error, affecting allowable maxx
   }
   // The optimization of division to multiplication
   // by the reciprocal holds true, if the maximum value
@@ -8121,9 +8130,9 @@ uintb RuleDivOpt::calcDivisor(uint4 n,uint8 *y,uint4 xsize)
   uint8 maxx = (xsize == 64) ? 0 : ((uint8)1) << xsize;
   maxx -= 1;			// Maximum possible x value
   uint8 tmp[2];
-  uint8 denom[2];
-  diff += q[0] - r[0];
-  set_u128(denom,diff);
+  uint8 q_minus_r[2];
+  subtract128(q, r, q_minus_r);
+  add128(denom, q_minus_r, denom);
   udiv128(power,denom, tmp, r);
   if (0 != tmp[1])
     return (uintb)q[0];		// tmp is bigger than 2^64 > maxx
@@ -8169,7 +8178,7 @@ void RuleDivOpt::moveSignBitExtraction(Varnode *firstVn,Varnode *replaceVn,Funcd
 	  else if (constOp->code() == CPUI_INT_AND) {
 	    constVn = constOp->getIn(0);
 	    Varnode *otherVn = constOp->getIn(1);
-	    if (!otherVn->isConstant()) continue;
+	    if (!otherVn->isConstant() || !constVn->isConstant()) continue;
 	    if (constVn->getOffset() != (constVn->getOffset() & otherVn->getOffset())) continue;
 	  }
 	}
