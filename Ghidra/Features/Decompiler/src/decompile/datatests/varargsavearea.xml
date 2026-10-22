@@ -1,0 +1,94 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+  <!--
+      gcc -O0 x86-64 varargs register save area reproducer (3 variadic shapes).
+
+      sink6        (0x1129):  long sink6(long,long,long,long,long,long)
+      fcntl_like   (0x116e):  int  fcntl_like(int fd, int cmd, ...)
+                              arg = va_arg(ap, unsigned long);
+                              if (cmd == 4) arg |= 0x8000;
+                              return (int)sink6(fd, cmd, arg, 0, 0, 0);
+      ptrace_like  (0x1283):  long ptrace_like(int req, ...)  - three va_args
+      syscall_like (0x141b):  long syscall_like(long n, ...)  - six va_args
+                              (the sixth comes from the caller's stack)
+
+      In each prologue the compiler spills RSI/RDX/RCX/R8/R9 (and, behind a
+      test of AL, XMM0-7) into the register save area; va_arg then reads the
+      slots back through the va_list reg_save_area pointer.  The spill stores
+      are direct stack writes heritaged on the stack space's first heritage
+      pass; the va_arg reads only become direct stack reads several passes
+      later, after the va_list pointer arithmetic constant-folds.  Dead code
+      elimination must not run for the stack space before those reads are
+      linked, otherwise the spill stores are removed and the decompiled body
+      consumes never-written locals.  The va_arg values must surface as
+      variadic parameters (param_3 / param_2..param_4 / param_3..param_7).
+  -->
+<bytechunk space="ram" offset="0x1129" readonly="true">
+554889e548897df8488975f0488955e848894de04c8945d84c894dd0488b55f8
+488b45f04801c2488b45e84801c2488b45e04801c2488b45d84801c2488b45d0
+4801d05dc3554889e54881ece000000089bd2cffffff89b528ffffff48899560
+ffffff48898d68ffffff4c898570ffffff4c898d78ffffff84c074200f294580
+0f294d900f2955a00f295db00f2965c00f296dd00f2975e00f297df0c78530ff
+ffff10000000c78534ffffff30000000488d451048898538ffffff488d8550ff
+ffff48898540ffffff8b8530ffffff83f82f7723488b8540ffffff8b9530ffff
+ff89d24801d08b9530ffffff83c208899530ffffffeb12488b8538ffffff488d
+500848899538ffffff488b0048898548ffffff83bd28ffffff04750b48818d48
+ffffff00800000488b9548ffffff8b8528ffffff4863f08b852cffffff489841
+b90000000041b800000000b9000000004889c7e8a8feffffc9c3554889e54881
+ecf000000089bd1cffffff4889b558ffffff48899560ffffff48898d68ffffff
+4c898570ffffff4c898d78ffffff84c074200f2945800f294d900f2955a00f29
+5db00f2965c00f296dd00f2975e00f297df0c78520ffffff08000000c78524ff
+ffff30000000488d451048898528ffffff488d8550ffffff48898530ffffff8b
+8520ffffff83f82f7723488b8530ffffff8b9520ffffff89d24801d08b9520ff
+ffff83c208899520ffffffeb12488b8528ffffff488d500848899528ffffff48
+8b0048898548ffffff8b8520ffffff83f82f7723488b8530ffffff8b9520ffff
+ff89d24801d08b9520ffffff83c208899520ffffffeb12488b8528ffffff488d
+500848899528ffffff488b0048898540ffffff8b8520ffffff83f82f7723488b
+8530ffffff8b9520ffffff89d24801d08b9520ffffff83c208899520ffffffeb
+12488b8528ffffff488d500848899528ffffff488b0048898538ffffff488b8d
+40ffffff8b851cffffff4898488bb538ffffff488b9548ffffff41b900000000
+4989f04889c6bf65000000e810fdffffc9c3554889e54881ec100100004889bd
+f8feffff4889b558ffffff48899560ffffff48898d68ffffff4c898570ffffff
+4c898d78ffffff84c074200f2945800f294d900f2955a00f295db00f2965c00f
+296dd00f2975e00f297df0c78508ffffff08000000c7850cffffff3000000048
+8d451048898510ffffff488d8550ffffff48898518ffffff8b8508ffffff83f8
+2f7723488b8518ffffff8b9508ffffff89d24801d08b9508ffffff83c2088995
+08ffffffeb12488b8510ffffff488d500848899510ffffff488b0048898548ff
+ffff8b8508ffffff83f82f7723488b8518ffffff8b9508ffffff89d24801d08b
+9508ffffff83c208899508ffffffeb12488b8510ffffff488d500848899510ff
+ffff488b0048898540ffffff8b8508ffffff83f82f7723488b8518ffffff8b95
+08ffffff89d24801d08b9508ffffff83c208899508ffffffeb12488b8510ffff
+ff488d500848899510ffffff488b0048898538ffffff8b8508ffffff83f82f77
+23488b8518ffffff8b9508ffffff89d24801d08b9508ffffff83c208899508ff
+ffffeb12488b8510ffffff488d500848899510ffffff488b0048898530ffffff
+8b8508ffffff83f82f7723488b8518ffffff8b9508ffffff89d24801d08b9508
+ffffff83c208899508ffffffeb12488b8510ffffff488d500848899510ffffff
+488b0048898528ffffff8b8508ffffff83f82f7723488b8518ffffff8b9508ff
+ffff89d24801d08b9508ffffff83c208899508ffffffeb12488b8510ffffff48
+8d500848899510ffffff488b0048898520ffffff488b9548ffffff488b85f8fe
+ffff488d3c024c8b8520ffffff488bb528ffffff488b8d30ffffff488b9538ff
+ffff488b8540ffffff4d89c14989f04889c6e889faffffc9c3
+</bytechunk>
+</binaryimage>
+<script>
+  <com>map fun r0x1129 sink6</com>
+  <com>map fun r0x116e fcntl_like</com>
+  <com>map fun r0x1283 ptrace_like</com>
+  <com>map fun r0x141b syscall_like</com>
+  <com>lo fu fcntl_like</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu ptrace_like</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu syscall_like</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Varargs save area #1" min="1" max="1">fcntl_like\(int4 param_1,int4 param_2,uint8 param_3\)</stringmatch>
+<stringmatch name="Varargs save area #2" min="1" max="1">param_3 \| 0x8000</stringmatch>
+<stringmatch name="Varargs save area #3" min="1" max="1">sink6\(0x65,\(int8\)param_1,param_2,param_3,param_4,0\)</stringmatch>
+<stringmatch name="Varargs save area #4" min="1" max="1">sink6\(param_2 \+ param_1,param_3,param_4,param_5,param_6,param_7\)</stringmatch>
+<stringmatch name="Varargs save area #5" min="0" max="0">AFTER dead removal</stringmatch>
+</decompilertest>
