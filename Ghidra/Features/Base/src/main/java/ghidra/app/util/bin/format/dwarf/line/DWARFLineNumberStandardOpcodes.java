@@ -15,8 +15,6 @@
  */
 package ghidra.app.util.bin.format.dwarf.line;
 
-import ghidra.app.util.bin.format.dwarf.DWARFUtil;
-
 public class DWARFLineNumberStandardOpcodes {
 	public final static int DW_LNS_copy = 1;
 	public final static int DW_LNS_advance_pc = 2;
@@ -32,6 +30,20 @@ public class DWARFLineNumberStandardOpcodes {
 	public final static int DW_LNS_set_isa = 12;
 
 	public static String toString(int value) {
-		return DWARFUtil.toString(DWARFLineNumberStandardOpcodes.class, value);
+		return switch (value) {
+			case DW_LNS_copy -> "DW_LNS_copy";
+			case DW_LNS_advance_pc -> "DW_LNS_advance_pc";
+			case DW_LNS_advance_line -> "DW_LNS_advance_line";
+			case DW_LNS_set_file -> "DW_LNS_set_file";
+			case DW_LNS_set_column -> "DW_LNS_set_column";
+			case DW_LNS_negate_statement -> "DW_LNS_negate_statement";
+			case DW_LNS_set_basic_block -> "DW_LNS_set_basic_block";
+			case DW_LNS_const_add_pc -> "DW_LNS_const_add_pc";
+			case DW_LNS_fixed_advanced_pc -> "DW_LNS_fixed_advanced_pc";
+			case DW_LNS_set_prologue_end -> "DW_LNS_set_prologue_end";
+			case DW_LNS_set_epilog_begin -> "DW_LNS_set_epilog_begin";
+			case DW_LNS_set_isa -> "DW_LNS_set_isa";
+			default -> "Unknown DWARF Value: 0x" + Integer.toHexString(value);
+		};
 	}
 }

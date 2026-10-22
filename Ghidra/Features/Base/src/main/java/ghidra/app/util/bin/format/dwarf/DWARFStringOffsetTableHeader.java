@@ -71,6 +71,18 @@ public class DWARFStringOffsetTableHeader extends DWARFIndirectTableHeader {
 			lengthInfo.intSize(), count);
 	}
 
+	/** Reads the headerless GNU split DWARF 4 string offset table. */
+	public static DWARFStringOffsetTableHeader readV4Raw(BinaryReader reader, int intSize)
+			throws IOException {
+		long length = reader.length();
+		if (length % intSize != 0 || length / intSize > Integer.MAX_VALUE) {
+			throw new IOException("Invalid GNU split DWARF string offsets size");
+		}
+		reader.setPointerIndex(length);
+		return new DWARFStringOffsetTableHeader(0, length, 0, intSize,
+			(int) (length / intSize));
+	}
+
 	private final int count;
 	private final int intSize;
 
