@@ -4238,12 +4238,7 @@ define pcodeop TaskRegister;
 @endif
 
 :NOP            is vexMode=0 & byte=0x90 & (mandover=0 | mandover=4 | mandover=1) & (rexprefix=0 | rexWRXBprefix=8 | rexWRXBprefix=0)  { }
-:NOP rm16       is vexMode=0 & mandover & opsize=0 & byte=0x0f; high5=3; rm16  ...    { }
-:NOP rm32       is vexMode=0 & mandover & opsize=1 & byte=0x0f; high5=3; rm32  ...    { }
-:NOP^"/reserved" rm16 is vexMode=0 & mandover & opsize=0 & byte=0x0f; byte=0x18; rm16 & reg_opcode_hb=1 ...    { }
-:NOP^"/reserved" rm32 is vexMode=0 & mandover & opsize=1 & byte=0x0f; byte=0x18; rm32 & reg_opcode_hb=1 ...    { }
-:NOP rm16       is vexMode=0 & mandover & opsize=0 & byte=0x0f; byte=0x1f; rm16 & reg_opcode=0 ... { }
-:NOP rm32       is vexMode=0 & mandover & opsize=1 & byte=0x0f; byte=0x1f; rm32 & reg_opcode=0 ... { }
+# 0F 18-0F 1F hint NOPs: see nop_reserved.sinc
 
 # See 'lockable.sinc' for memory destination, lockable variants
 :NOT Rmr8       is vexMode=0 & byte=0xf6; mod=3 & Rmr8 & reg_opcode=2         {  Rmr8 =  ~Rmr8; }
@@ -4368,6 +4363,12 @@ define pcodeop pconfig;
 :PREFETCHT1 m8  is vexMode=0 & byte=0x0f; byte=0x18; ( mod != 0b11 & reg_opcode=2 ) ... & m8 { }
 :PREFETCHT2 m8  is vexMode=0 & byte=0x0f; byte=0x18; ( mod != 0b11 & reg_opcode=3 ) ... & m8 { }
 :PREFETCHNTA m8 is vexMode=0 & byte=0x0f; byte=0x18; ( mod != 0b11 & reg_opcode=0 ) ... & m8 { }
+:PREFETCHRST2 m8 is vexMode=0 & byte=0x0f; byte=0x18; ( mod != 0b11 & reg_opcode=4 ) ... & m8 { }
+@ifdef IA64
+# 64-bit, RIP-relative, no 66/F2/F3 prefix only (NOP otherwise)
+:PREFETCHIT1 m8 is $(LONGMODE_ON) & vexMode=0 & $(PRE_NO) & byte=0x0f; byte=0x18; ( mod=0 & r_m=5 & reg_opcode=6 ) ... & m8 { }
+:PREFETCHIT0 m8 is $(LONGMODE_ON) & vexMode=0 & $(PRE_NO) & byte=0x0f; byte=0x18; ( mod=0 & r_m=5 & reg_opcode=7 ) ... & m8 { }
+@endif
 
 define pcodeop ptwrite;
 
