@@ -579,8 +579,8 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 	 */
 	private class AcceptedStatusCache {
 
-		private Set<Address> acceptedSourceAssociations = new HashSet<>();
-		private Set<Address> acceptedDestinationAssociations = new HashSet<>();
+		private Map<Address, Address> acceptedSourceAssociations = new HashMap<>();
+		private Map<Address, Address> acceptedDestinationAssociations = new HashMap<>();
 		private boolean invalid = true;
 		private boolean disposed = false;
 
@@ -604,8 +604,8 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 				if (disposed || invalid) {
 					return;
 				}
-				acceptedSourceAssociations.remove(sourceAddress);
-				acceptedDestinationAssociations.remove(destinationAddress);
+				acceptedSourceAssociations.remove(sourceAddress, destinationAddress);
+				acceptedDestinationAssociations.remove(destinationAddress, sourceAddress);
 			}
 		}
 
@@ -614,35 +614,39 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 				if (disposed || invalid) {
 					return;
 				}
-				acceptedSourceAssociations.add(sourceAddress);
-				acceptedDestinationAssociations.add(destinationAddress);
+				acceptedSourceAssociations.put(sourceAddress, destinationAddress);
+				acceptedDestinationAssociations.put(destinationAddress, sourceAddress);
 			}
 		}
 
 		boolean isBlocked(Address sourceAddress, Address destinationAddress) {
-
 			try (Closeable c = lock.read()) {
-
 				if (disposed) {
 					return true;
 				}
+				if (!invalid) {
+					return isBlockedInCache(sourceAddress, destinationAddress);
+				}
+			}
 
+			// Release the read lock before loading; upgrading it to a write lock would deadlock.
+			try (Closeable c = lock.write()) {
+				if (disposed) {
+					return true;
+				}
 				if (invalid) {
 					doLoadAcceptedAssociations(TaskMonitor.DUMMY);
-					if (invalid) { // some sort of error
+					if (invalid) {
 						return isBlockedInDb(sourceAddress, destinationAddress);
 					}
 				}
-
-				if (acceptedSourceAssociations.contains(sourceAddress)) {
-					return true;
-				}
-
-				if (acceptedDestinationAssociations.contains(destinationAddress)) {
-					return true;
-				}
+				return isBlockedInCache(sourceAddress, destinationAddress);
 			}
-			return false;
+		}
+
+		private boolean isBlockedInCache(Address sourceAddress, Address destinationAddress) {
+			return acceptedSourceAssociations.containsKey(sourceAddress) ||
+				acceptedDestinationAssociations.containsKey(destinationAddress);
 		}
 
 		private boolean isBlockedInDb(Address sourceAddress, Address destinationAddress) {
@@ -685,6 +689,8 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 		private void doLoadAcceptedAssociations(TaskMonitor monitor) {
 			try {
 				monitor.setMessage("Loading accepted associations...");
+				Map<Address, Address> sourceAssociations = new HashMap<>();
+				Map<Address, Address> destinationAssociations = new HashMap<>();
 				RecordIterator it = associationTableAdapter.getRecords();
 				while (it.hasNext()) {
 					monitor.increment();
@@ -694,9 +700,20 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 					if (status == ACCEPTED) {
 						Address sourceAddress = associationDB.getSourceAddress();
 						Address destinationAddress = associationDB.getDestinationAddress();
-						add(sourceAddress, destinationAddress);
+						Address previousDestination =
+							sourceAssociations.putIfAbsent(sourceAddress, destinationAddress);
+						Address previousSource =
+							destinationAssociations.putIfAbsent(destinationAddress, sourceAddress);
+						if ((previousDestination != null &&
+							!previousDestination.equals(destinationAddress)) ||
+							(previousSource != null && !previousSource.equals(sourceAddress))) {
+							// Conflicting accepted records require the database fallback.
+							return;
+						}
 					}
 				}
+				acceptedSourceAssociations = sourceAssociations;
+				acceptedDestinationAssociations = destinationAssociations;
 				monitor.setMessage("Finished loading accepted associations");
 				invalid = false;
 			}
