@@ -254,7 +254,7 @@ class SelectBytesDialog extends ReusableDialogComponentProvider {
 
 	private void createSelection(boolean forward) {
 		BigInteger length = lengthField.getValue();
-		if (length == null || length == BigInteger.ZERO) {
+		if (length == null || length.signum() <= 0) {
 			setStatusText("length must be > 0");
 			return;
 		}
