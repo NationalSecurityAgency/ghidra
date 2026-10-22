@@ -27,8 +27,7 @@ import docking.widgets.FindDialogResultsProvider;
 import docking.widgets.SearchLocation;
 import docking.widgets.dialogs.InputDialog;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import docking.widgets.table.GTable;
-import docking.widgets.table.RowObjectFilterModel;
+import docking.widgets.table.*;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.component.DecompilerFindDialog;
 import ghidra.app.decompiler.component.DecompilerPanel;
@@ -292,9 +291,78 @@ public class DecompilerFindDialogTest extends AbstractDecompilerTest {
 		}
 	}
 
+	@Test
+	public void testSearchAllWithFilter() {
+
+		decompile("1002239");
+
+		String text = "puVar";
+		showFind(text);
+
+		searchAll();
+
+		GTable table = getResultsTable();
+		assertEquals(10, table.getRowCount());
+		DecompilerSearchLocation firstUnfiltered =
+			(DecompilerSearchLocation) getRowObject(table, 0);
+		assertEquals("undefined4 *puVar3;", firstUnfiltered.getTextLine());
+
+		// filter so that the visible rows are not the first rows of the unfiltered list
+		setFilterText("puVar5");
+		int rowCount = table.getRowCount();
+		assertEquals(4, rowCount);
+		assertNotEquals(firstUnfiltered, getRowObject(table, 0));
+
+		// click the visible rows and verify the cursor location
+		for (int i = 0; i < rowCount; i++) {
+			clickAndVerify(i, table);
+		}
+	}
+
+	@Test
+	public void testSearchAllRemoveItemsWithFilter() {
+
+		decompile("1002239");
+
+		String text = "puVar";
+		showFind(text);
+
+		searchAll();
+
+		GTable table = getResultsTable();
+		assertEquals(10, table.getRowCount());
+
+		setFilterText("puVar5");
+		int rowCount = table.getRowCount();
+		assertEquals(4, rowCount);
+
+		// remove the last visible row
+		int lastRow = rowCount - 1;
+		runSwing(() -> table.selectRow(lastRow));
+		SearchLocation selected = getRowObject(table, lastRow);
+
+		FindDialogResultsProvider tableProvider =
+			waitForComponentProvider(FindDialogResultsProvider.class);
+		pressDelete(tableProvider);
+
+		List<SearchLocation> remaining = tableProvider.getResults();
+		assertEquals(9, remaining.size());
+		assertFalse("Wrong item removed", remaining.contains(selected));
+		assertEquals(rowCount - 1, table.getRowCount());
+
+		// the selection moves to the new last visible row
+		assertEquals(rowCount - 2, table.getSelectedRow());
+	}
+
 //==================================================================================================
 // Private Methods
 //==================================================================================================
+	private void pressDelete(FindDialogResultsProvider tableProvider) {
+
+		DockingActionIf removeAction = getLocalAction(tableProvider, "Remove Items");
+		performAction(removeAction, tableProvider, true);
+		waitForSwing();
+	}
 
 	private void clickAndVerify(int row, GTable table, List<DecompilerSearchLocation> results) {
 
@@ -304,6 +372,33 @@ public class DecompilerFindDialogTest extends AbstractDecompilerTest {
 		ClangToken expectedToken = getToken(fieldLocation);
 		ClangToken cursorToken = getToken();
 		assertEquals(expectedToken, cursorToken);
+	}
+
+	private void clickAndVerify(int row, GTable table) {
+
+		runSwing(() -> table.selectRow(row));
+		DecompilerSearchLocation searchLocation =
+			(DecompilerSearchLocation) getRowObject(table, row);
+		FieldLocation fieldLocation = searchLocation.getFieldLocation();
+		ClangToken expectedToken = getToken(fieldLocation);
+		ClangToken cursorToken = getToken();
+		assertEquals(expectedToken, cursorToken);
+	}
+
+	@SuppressWarnings("unchecked")
+	private SearchLocation getRowObject(GTable table, int viewRow) {
+		RowObjectFilterModel<SearchLocation> model =
+			(RowObjectFilterModel<SearchLocation>) table.getModel();
+		return runSwing(() -> model.getRowObject(viewRow));
+	}
+
+	private void setFilterText(String text) {
+		FindDialogResultsProvider tableProvider =
+			waitForComponentProvider(FindDialogResultsProvider.class);
+		GTableFilterPanel<?> filterPanel =
+			(GTableFilterPanel<?>) getInstanceField("filterPanel", tableProvider);
+		runSwing(() -> filterPanel.setFilterText(text));
+		waitForSwing();
 	}
 
 	private GTable getResultsTable() {
