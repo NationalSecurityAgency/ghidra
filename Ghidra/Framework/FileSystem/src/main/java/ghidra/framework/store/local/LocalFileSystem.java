@@ -610,20 +610,16 @@ public abstract class LocalFileSystem implements FileSystem {
 		testValidName(parentPath, true);
 		testValidName(name, false);
 
-		ItemDeserializer itemDeserializer = new ItemDeserializer(packedFile);
 		String contentType;
-		try {
+		try (ItemDeserializer itemDeserializer = new ItemDeserializer(packedFile)) {
 			int fileType = itemDeserializer.getFileType();
-			if (fileType != FolderItem.DATABASE_FILE_TYPE) {
+			contentType = itemDeserializer.getContentType();
+			if (fileType != FolderItem.DATABASE_FILE_TYPE || contentType == null) {
 				throw new UnsupportedOperationException("Only packed database files are supported");
 			}
 			if (name == null) {
 				name = itemDeserializer.getItemName();
 			}
-			contentType = itemDeserializer.getContentType();
-		}
-		finally {
-			itemDeserializer.dispose();
 		}
 
 		ItemStorage itemStorage = allocateItemStorage(parentPath, name);
