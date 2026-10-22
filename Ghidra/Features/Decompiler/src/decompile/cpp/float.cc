@@ -472,7 +472,7 @@ string FloatFormat::printDecimal(double host,bool forcesci) const
     else {
       t >> roundtrip;
     }
-    if (roundtrip == host)
+    if (!t.fail() && roundtrip == host)
       break;
   }
   return res;
