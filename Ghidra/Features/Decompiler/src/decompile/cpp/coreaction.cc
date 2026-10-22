@@ -546,6 +546,152 @@ void ActionLaneDivide::collectLaneSizes(Varnode *vn,const LanedRegister &allowed
   }
 }
 
+/// \brief Accumulate one access inside a storage range into the set of lane sizes that still tile every access
+///
+/// \param rel is the byte offset of the access within the storage
+/// \param sz is the size of the access in bytes
+/// \param wholeSize is the size of the storage in bytes
+/// \param mask has bit i set if lane size 1<<i tiles every access seen so far (updated)
+/// \return \b true if the access is contained in the storage and was counted
+static bool accumulateLaneAccess(int4 rel,int4 sz,int4 wholeSize,uint4 &mask)
+
+{
+  if (sz >= wholeSize) return false;
+  if (rel + sz > wholeSize) return false;	// Not contained in the storage
+  for(int4 b=0;b<8;++b) {
+    int4 lane = 1 << b;
+    if ((rel % lane) != 0 || (sz % lane) != 0)
+      mask &= ~((uint4)1 << b);
+  }
+  return true;
+}
+
+/// \brief If the given LOAD or STORE goes through a stack pointer plus a constant, pass back the stack location
+///
+/// \param glb is the Architecture
+/// \param op is the LOAD or STORE
+/// \param spc will hold the stack-like address space
+/// \param off will hold the offset within that space
+/// \return \b true if the op accesses a known stack location
+static bool stackLocationOfAccess(Architecture *glb,PcodeOp *op,AddrSpace *&spc,uintb &off)
+
+{
+  if (op->isDead()) return false;
+  spc = RuleLoadVarnode::checkSpacebase(glb,op,off);
+  if (spc == (AddrSpace *)0) return false;
+  return (spc->getType() == IPTR_SPACEBASE);
+}
+
+/// \brief Find the lane size that the storage of the given Varnode already uses, for the default lane size guess
+///
+/// A value only loaded and stored whole gives no lane size of its own, and the default guess (mode 2) would
+/// divide it by the pointer size. But the memory it is copied into may already be accessed in lanes.
+/// Two kinds of evidence are read. Once the storage has been through heritage, the value sits in an
+/// address-tied Varnode (directly, or reached through a COPY or a call's INDIRECT), and other, smaller Varnodes
+/// in the same storage range are its lanes. Before that, the storage is still reached through a stack pointer
+/// plus a constant, so the STOREs of the value (and the LOAD defining it) name a stack location, and the other
+/// LOADs and STOREs through the stack pointer into that location are its lanes. The largest allowed lane size
+/// that tiles every such access is returned.
+/// \param data is the function being transformed
+/// \param vn is the given Varnode
+/// \param lanedRegister is the set of allowed lane sizes
+/// \return the lane size the storage uses, or 0 if the storage gives no lane size
+int4 ActionLaneDivide::laneSizeFromStorage(Funcdata &data,Varnode *vn,const LanedRegister &lanedRegister)
+
+{
+  Architecture *glb = data.getArch();
+  int4 wholeSize = vn->getSize();
+  uint4 mask = 0;			// Bit i set if lane size 1<<i tiles every overlapping access seen so far
+  for(int4 i=0;i<8;++i) mask |= (1<<i);
+  bool seen = false;
+  vector<Varnode *> tied;		// Address-tied Varnodes holding the value, after heritage of the storage
+  vector<pair<AddrSpace *,uintb> > slots;	// Stack locations holding the value, before heritage of the storage
+  if (vn->isAddrTied())
+    tied.push_back(vn);
+  if (vn->isWritten()) {
+    PcodeOp *def = vn->getDef();
+    if (def->code() == CPUI_COPY && def->getIn(0)->isAddrTied())
+      tied.push_back(def->getIn(0));
+    else if (def->code() == CPUI_LOAD) {
+      AddrSpace *spc;
+      uintb off;
+      if (stackLocationOfAccess(glb,def,spc,off))
+	slots.push_back(pair<AddrSpace *,uintb>(spc,off));
+    }
+  }
+  list<PcodeOp *>::const_iterator iter = vn->beginDescend();
+  list<PcodeOp *>::const_iterator enditer = vn->endDescend();
+  while(iter != enditer) {
+    PcodeOp *op = *iter;
+    ++iter;
+    if (op->code() == CPUI_STORE) {
+      AddrSpace *spc;
+      uintb off;
+      if (op->getIn(2) == vn && stackLocationOfAccess(glb,op,spc,off))
+	slots.push_back(pair<AddrSpace *,uintb>(spc,off));
+      continue;
+    }
+    Varnode *outvn = op->getOut();
+    if (op->code() == CPUI_INDIRECT) {
+      // After the stack analysis, the COPY into the storage may be propagated away and the value,
+      // still in its register, read directly by the INDIRECT that a call puts on the storage
+      if (op->getIn(0) != vn || vn->getSpace() == outvn->getSpace()) continue;
+    }
+    else if (op->code() != CPUI_COPY) continue;
+    if (outvn->isAddrTied())
+      tied.push_back(outvn);
+  }
+  for(int4 i=0;i<tied.size();++i) {
+    Varnode *t = tied[i];
+    AddrSpace *spc = t->getSpace();
+    uintb base = t->getOffset();
+    for(int4 rel=0;rel<wholeSize;++rel) {
+      Address addr(spc,spc->wrapOffset(base + rel));
+      VarnodeLocSet::const_iterator viter = data.beginLoc(addr);
+      VarnodeLocSet::const_iterator venditer = data.endLoc(addr);
+      for(;viter!=venditer;++viter) {
+	Varnode *u = *viter;
+	if (u == t) continue;
+	if (accumulateLaneAccess(rel,u->getSize(),wholeSize,mask))
+	  seen = true;
+      }
+    }
+  }
+  if (!slots.empty()) {
+    for(int4 pass=0;pass<2;++pass) {
+      OpCode opc = (pass == 0) ? CPUI_LOAD : CPUI_STORE;
+      list<PcodeOp *>::const_iterator oiter = data.beginOp(opc);
+      list<PcodeOp *>::const_iterator oenditer = data.endOp(opc);
+      for(;oiter!=oenditer;++oiter) {
+	PcodeOp *op = *oiter;
+	AddrSpace *spc;
+	uintb off;
+	if (!stackLocationOfAccess(glb,op,spc,off)) continue;
+	Varnode *accessed = (pass == 0) ? op->getOut() : op->getIn(2);
+	if (accessed == vn) continue;
+	int4 sz = accessed->getSize();
+	for(int4 i=0;i<slots.size();++i) {
+	  if (slots[i].first != spc) continue;
+	  uintb rel = spc->wrapOffset(off - slots[i].second);
+	  if (rel >= (uintb)wholeSize) continue;
+	  if (accumulateLaneAccess((int4)rel,sz,wholeSize,mask))
+	    seen = true;
+	}
+      }
+    }
+  }
+  if (!seen) return 0;
+  int4 best = 0;
+  for(int4 b=0;b<8;++b) {
+    int4 lane = 1 << b;
+    if (lane >= wholeSize) break;
+    if ((mask & ((uint4)1 << b)) == 0) continue;
+    if (!lanedRegister.allowedLane(lane)) continue;
+    best = lane;
+  }
+  return best;
+}
+
 /// \brief Search for a likely lane size and try to divide a single Varnode into these lanes
 ///
 /// There are different ways to search for a lane size:
@@ -571,6 +717,9 @@ bool ActionLaneDivide::processVarnode(Funcdata &data,Varnode *vn,const LanedRegi
     collectLaneSizes(vn,lanedRegister,checkLanes);
   else {
     int4 defaultSize = data.getArch()->types->getSizeOfPointer();		// Default lane size
+    int4 storageSize = laneSizeFromStorage(data,vn,lanedRegister);
+    if (storageSize > 0)
+      checkLanes.addLaneSize(storageSize);	// The storage already uses this lane size: tried first, as it is smaller
     if (defaultSize == 4 && lanedRegister.allowedLane(4))
       checkLanes.addLaneSize(4);
     else if (lanedRegister.allowedLane(8))
@@ -581,6 +730,7 @@ bool ActionLaneDivide::processVarnode(Funcdata &data,Varnode *vn,const LanedRegi
   LanedRegister::const_iterator enditer = checkLanes.end();
   for(LanedRegister::const_iterator iter=checkLanes.begin();iter!=enditer;++iter) {
     int4 curSize = *iter;
+    if (curSize >= lanedRegister.getWholeSize()) continue;	// One lane is no division
     LaneDescription description(lanedRegister.getWholeSize(),curSize);	// Lane scheme dictated by curSize
     LaneDivide laneDivide(&data,vn,description,allowDowncast);
     if (laneDivide.doTrace()) {
