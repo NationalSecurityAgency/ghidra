@@ -57,6 +57,8 @@ public abstract class ByteCopier {
 	public static DataFlavor PYTHON_LIST_FLAVOR = createPythonListLocalDataTypeFlavor();
 	public static DataFlavor CPP_BYTE_ARRAY_FLAVOR =
 		createCppByteArrayLocalDataTypeFlavor();
+	public static DataFlavor RUST_BYTE_ARRAY_FLAVOR =
+			createRustByteArrayLocalDataTypeFlavor();
 
 	protected static final List<ClipboardType> EMPTY_LIST = Collections.emptyList();
 	public static final ClipboardType BYTE_STRING_TYPE =
@@ -69,6 +71,8 @@ public abstract class ByteCopier {
 		new ClipboardType(PYTHON_LIST_FLAVOR, "Python List");
 	public static final ClipboardType CPP_BYTE_ARRAY_TYPE =
 		new ClipboardType(CPP_BYTE_ARRAY_FLAVOR, "C Array");
+	public static final ClipboardType RUST_BYTE_ARRAY_TYPE =
+			new ClipboardType(RUST_BYTE_ARRAY_FLAVOR, "Rust Array");
 
 	private static final Map<DataFlavor, Pattern> PROGRAMMING_PATTERNS_BY_FLAVOR =
 		Map.of(
@@ -153,6 +157,21 @@ public abstract class ByteCopier {
 		catch (Exception e) {
 			Msg.error(ByteCopier.class,
 				"Unexpected exception creating data flavor for C array", e);
+		}
+
+		return null;
+	}
+	
+	private static DataFlavor createRustByteArrayLocalDataTypeFlavor() {
+
+		try {
+			return new GenericDataFlavor(
+				DataFlavor.javaJVMLocalObjectMimeType + "; class=java.lang.String",
+				"Local flavor--Rust array");
+		}
+		catch (Exception e) {
+			Msg.error(ByteCopier.class,
+				"Unexpected exception creating data flavor for Rust array", e);
 		}
 
 		return null;
@@ -326,6 +345,13 @@ public abstract class ByteCopier {
 			String prefix = "0x";
 			String bs = copyBytesAsString(getSelectedAddresses(), ", " + prefix, monitor);
 			String byteString = "{ " + prefix + bs + " }";
+			return new ProgrammingByteStringTransferable(byteString, copyType.getFlavor());
+		}
+		else if (copyType == RUST_BYTE_ARRAY_TYPE) {
+			String prefix = "0x";
+			String bs = copyBytesAsString(getSelectedAddresses(), "u8, " + prefix, monitor);
+			String postfix = bs.length() == 0 ? "" : "u8";
+			String byteString = "[ " + prefix + bs + postfix + " ]";
 			return new ProgrammingByteStringTransferable(byteString, copyType.getFlavor());
 		}
 
