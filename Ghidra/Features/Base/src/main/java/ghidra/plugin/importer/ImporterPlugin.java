@@ -266,30 +266,24 @@ public class ImporterPlugin extends Plugin
 		return failedFiles; // return files not yet imported
 	}
 
-	private boolean doUnpackFile(DomainFolder folder, TaskMonitor monitor, File f)
+	private boolean doUnpackFile(DomainFolder folder, TaskMonitor monitor, File packedFile)
 			throws CancelledException {
 
 		// Test for Packed DB file using ItemDeserializer
-		ItemDeserializer deserializer = null;
-		try {
-			deserializer = new ItemDeserializer(f); // fails for non-packed file
+		try (ItemDeserializer _ = new ItemDeserializer(packedFile)) {
+			// fails for non-packed file
 		}
 		catch (IOException e) {
 			return false;
 		}
-		finally {
-			if (deserializer != null) {
-				deserializer.dispose();
-			}
-		}
 
-		monitor.setMessage("Unpacking " + f.getName() + " ...");
+		monitor.setMessage("Unpacking " + packedFile.getName() + " ...");
 
 		// Perform direct unpack of Packed DB file
-		String filename = makeValidUniqueFilename(f.getName(), folder);
+		String filename = makeValidUniqueFilename(packedFile.getName(), folder);
 		try {
-			DomainFile df = folder.createFile(filename, f, monitor);
-			Msg.info(this, "Imported " + f.getName() + " to " + df.getPathname());
+			DomainFile df = folder.createFile(filename, packedFile, monitor);
+			Msg.info(this, "Imported " + packedFile.getName() + " to " + df.getPathname());
 			return true;
 		}
 		catch (InvalidNameException e) {
@@ -297,7 +291,7 @@ public class ImporterPlugin extends Plugin
 		}
 		catch (IOException e) {
 			Msg.showError(JavaFileListHandler.class, tool.getToolFrame(),
-				"Packed DB Import Failed", "Failed to import " + f.getName(), e);
+				"Packed DB Import Failed", "Failed to import " + packedFile.getName(), e);
 		}
 		return false;
 	}

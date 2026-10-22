@@ -477,22 +477,18 @@ public class PackedDatabase extends Database {
 	 */
 	private void readContentTypeAndName() throws IOException {
 
-		ItemDeserializer itemDeserializer = null;
 		if (packedDbLock != null) {
 			lock(packedDbLock, true, true);
 		}
-		try {
-			itemDeserializer = new ItemDeserializer(packedDbFile);
-			if (itemDeserializer.getFileType() != FolderItem.DATABASE_FILE_TYPE) {
+		try (ItemDeserializer itemDeserializer = new ItemDeserializer(packedDbFile)) {
+			contentType = itemDeserializer.getContentType();
+			if (itemDeserializer.getFileType() != FolderItem.DATABASE_FILE_TYPE ||
+				contentType == null) {
 				throw new IOException("Incorrect file type");
 			}
-			contentType = itemDeserializer.getContentType();
 			itemName = itemDeserializer.getItemName();
 		}
 		finally {
-			if (itemDeserializer != null) {
-				itemDeserializer.dispose();
-			}
 			if (packedDbLock != null) {
 				packedDbLock.removeLock();
 			}
@@ -523,27 +519,40 @@ public class PackedDatabase extends Database {
 		}
 		int version = bfMgr.getCurrentVersion() + 1; // should be 1 in most situations
 		File file = bfMgr.getBufferFile(version);
-		OutputStream out = new BufferedOutputStream(new FileOutputStream(file));
-		ItemDeserializer itemDeserializer = null;
-		try {
+		boolean success = false;
+		try (OutputStream out = new BufferedOutputStream(new FileOutputStream(file));
+				ItemDeserializer itemDeserializer = new ItemDeserializer(packedFile)) {
 			Msg.debug(PackedDatabase.class, "Unpacking database " + packedFile + " -> " + file);
-			itemDeserializer = new ItemDeserializer(packedFile);
+			checkFreeSpace(file, itemDeserializer.getLength());
 			itemDeserializer.saveItem(out, monitor);
 			bfMgr.versionCreated(version, "Unpacked " + packedFile, checkinId);
+			success = true;
 		}
 		catch (IOCancelledException e) {
 			throw new CancelledException();
 		}
 		finally {
-			if (itemDeserializer != null) {
-				itemDeserializer.dispose();
+			if (!success) {
+				file.delete();
 			}
-			try {
-				out.close();
-			}
-			catch (IOException e) {
-				// ignore
-			}
+		}
+	}
+
+	private static void checkFreeSpace(File destFile, long requiredSpace) throws IOException {
+
+		File canonicalFile = destFile.getCanonicalFile();
+
+		long freeSpace = canonicalFile.getFreeSpace();
+		if (freeSpace <= 0) {
+			return; // unable to check free space
+		}
+
+		// We need room to grow database after unpacking - use factor of 10
+		long spaceNeeded = 10 * requiredSpace;
+		if (spaceNeeded < 0 || spaceNeeded > freeSpace) {
+			throw new IOException(
+				"Insufficient disc space for unpacking database (" + requiredSpace + "): " +
+					canonicalFile.getParent());
 		}
 	}
 
@@ -579,14 +588,6 @@ public class PackedDatabase extends Database {
 				return true;
 			}
 
-//			File[] files = dbDir.listFiles();
-//			for (int i = 0; i < files.length; i++) {
-//				if (!files[i].delete()) {
-//					return false;
-//				}
-//			}
-//			currentVersion = 0;
-
 			monitor.setMessage("Unpacking file...");
 
 			refreshDatabase(bfMgr, -1, packedDbFile, monitor);
@@ -594,8 +595,6 @@ public class PackedDatabase extends Database {
 			if (isCached) {
 				PackedDatabaseCache.getCache().updateLastModified(packedDbFile, modTime);
 			}
-//			currentVersion = 1;
-
 		}
 		finally {
 			if (packedDbLock != null) {

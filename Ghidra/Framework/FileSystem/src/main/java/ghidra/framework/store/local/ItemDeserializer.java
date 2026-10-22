@@ -19,6 +19,8 @@ import java.io.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import org.apache.commons.lang3.StringUtils;
+
 import generic.jar.ResourceFile;
 import ghidra.util.MonitoredInputStream;
 import ghidra.util.exception.IOCancelledException;
@@ -35,13 +37,16 @@ import ghidra.util.task.TaskMonitor;
  * <li>Data length</li>
  * </ul>
  */
-public class ItemDeserializer {
+public class ItemDeserializer implements Closeable {
 
 	private static final long MAGIC_NUMBER = ItemSerializer.MAGIC_NUMBER;
 	private static final int FORMAT_VERSION = ItemSerializer.FORMAT_VERSION;
 	private static final String ZIP_ENTRY_NAME = ItemSerializer.ZIP_ENTRY_NAME;
 
 	private final static int IO_BUFFER_SIZE = ItemSerializer.IO_BUFFER_SIZE;
+
+	// Maximum compression ratio allowed
+	private final static int MAX_EXPECTED_COMPRESSION_RATIO = 20;
 
 	private InputStream in;
 	private String itemName;
@@ -54,13 +59,15 @@ public class ItemDeserializer {
 	/**
 	 * Constructor.
 	 * @param packedFile item to deserialize.
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs opening packed file
 	 */
 	public ItemDeserializer(File packedFile) throws IOException {
 		this(new ResourceFile(packedFile));
 	}
 
 	public ItemDeserializer(ResourceFile packedFile) throws IOException {
+
+		long fileLen = packedFile.length();
 
 		in = new BufferedInputStream(packedFile.getInputStream());
 
@@ -77,11 +84,22 @@ public class ItemDeserializer {
 
 			itemName = objIn.readUTF();
 			contentType = objIn.readUTF();
-			if (contentType.length() == 0) {
+			if (StringUtils.isBlank(contentType)) {
 				contentType = null;
 			}
 			fileType = objIn.readInt();
 			length = objIn.readLong();
+
+			if (StringUtils.isBlank(itemName) || length <= 0) {
+				throw new IOException("Invalid packed data file");
+			}
+
+			long compressionRatio = length / fileLen;
+			if (compressionRatio > MAX_EXPECTED_COMPRESSION_RATIO) {
+				throw new IOException(
+					"Suspicious packed data file compression ratio: " + compressionRatio);
+			}
+
 			success = true;
 		}
 		catch (UTFDataFormatException e) {
@@ -93,56 +111,57 @@ public class ItemDeserializer {
 					in.close();
 				}
 				catch (IOException e) {
+					// ignore
 				}
 			}
 		}
 	}
 
-	@Override
-	protected void finalize() throws Throwable {
-		dispose();
-		super.finalize();
-	}
-
 	/**
 	 * Close packed-file input stream and free resources.
+	 * @deprecated {@link #close()} should be used.
 	 */
+	@Deprecated
 	public void dispose() {
+		try {
+			close();
+		}
+		catch (IOException e) {
+			// ignore
+		}
+	}
+
+	@Override
+	public void close() throws IOException {
 		if (in != null) {
-			try {
-				in.close();
-			}
-			catch (IOException e) {
-			}
-			finally {
-				in = null;
-			}
+			in.close();
+			in = null;
 		}
 	}
 
 	/**
-	 * Returns packed item name
+	 * {@return packed item name}
 	 */
 	public String getItemName() {
 		return itemName;
 	}
 
 	/**
-	 * Returns packed content type
+	 * {@return packed content type}
 	 */
 	public String getContentType() {
 		return contentType;
 	}
 
 	/**
-	 * Returns packed file type.
+	 * {@return packed file type}
 	 */
 	public int getFileType() {
 		return fileType;
 	}
 
 	/**
-	 * Returns unpacked data length
+	 * {@return unpacked data length}
 	 */
 	public long getLength() {
 		return length;
@@ -151,9 +170,13 @@ public class ItemDeserializer {
 	/**
 	 * Save the item to the specified output stream.
 	 * This method may only be invoked once.
-	 * @param out
-	 * @param monitor
-	 * @throws IOException
+	 * The caller may want to check target file-system for sufficient storage 
+	 * based upon uncompressed {@link #length}.
+	 * 
+	 * @param out destination output stream
+	 * @param monitor task monitor
+	 * @throws IOCancelledException if stream cancelled by monitor
+	 * @throws IOException if an IO error occurs
 	 */
 	public void saveItem(OutputStream out, TaskMonitor monitor) throws IOCancelledException,
 			IOException {
@@ -168,9 +191,6 @@ public class ItemDeserializer {
 		if (entry == null || !ZIP_ENTRY_NAME.equals(entry.getName())) {
 			throw new IOException("Data error");
 		}
-//		if (length != entry.getSize()) {
-//			throw new IOException("Content length is " + entry.getSize() + ", expected " + length);
-//		}
 
 		InputStream itemIn = zipIn;
 		if (monitor != null) {
@@ -188,6 +208,9 @@ public class ItemDeserializer {
 			cnt = (int) (len < IO_BUFFER_SIZE ? len : IO_BUFFER_SIZE);
 		}
 
+		if (itemIn.read() > 0) {
+			throw new IOException("Data error: expected end of data");
+		}
 	}
 
 }

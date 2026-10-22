@@ -15,8 +15,6 @@
  */
 package ghidra.program.model.data;
 
-import java.math.BigDecimal;
-
 import generic.complex.Complex;
 import ghidra.docking.settings.Settings;
 import ghidra.pcode.floatformat.BigFloat;
@@ -98,38 +96,27 @@ public abstract class AbstractComplexDataType extends BuiltIn {
 			floatType.getName() + " values";
 	}
 
-	private static double toDouble(Object obj) {
-		if (obj instanceof Double d) {
-			return d;
-		}
-		if (obj instanceof Float f) {
-			return f;
-		}
-		if (obj instanceof Short s) {
-			// Looking at AbstractFloatDataType#getValue, this makes no sense to me
-			return s;
-		}
-		if (obj instanceof BigFloat bf) {
-			return bf.doubleValue();
-		}
-		if (obj instanceof BigDecimal bd) {
-			return bd.doubleValue();
-		}
-		throw new IllegalArgumentException(obj + "(" + obj.getClass() + ")");
+	private static double toDouble(BigFloat bf) {
+		return bf.doubleValue();
 	}
 
 	@Override
-	public Object getValue(MemBuffer buf, Settings settings, int length) {
-		Object a = floatType.getValue(buf, settings, length / 2);
+	public Complex getValue(MemBuffer buf, Settings settings, int length) {
+		BigFloat a = floatType.getValue(buf, settings, length / 2);
+		if (a == null) {
+			return null;
+		}
 		MemBuffer wrp = new WrappedMemBuffer(buf, length / 2);
-		Object b = floatType.getValue(wrp, settings, length / 2);
-
-		return a != null && b != null ? new Complex(toDouble(a), toDouble(b)) : null;
+		BigFloat b = floatType.getValue(wrp, settings, length / 2);
+		if (b == null) {
+			return null;
+		}
+		return new Complex(toDouble(a), toDouble(b));
 	}
 
 	@Override
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
-		Object val = getValue(buf, settings, length);
+		Complex val = getValue(buf, settings, length);
 		if (val == null) {
 			return "??";
 		}
