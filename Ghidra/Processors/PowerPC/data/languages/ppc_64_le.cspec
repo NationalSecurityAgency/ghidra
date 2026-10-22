@@ -182,9 +182,9 @@
       <pcode inject="uponreturn">
       	<body>
       		# Inject pcode when returning from a function call to place the r2Save
-      		# value into 0x28(r1) which should be restored by the "ld r2,0x28(r1)" 
-      		# which immediately follows calls which comply with the PPC64 ABI spec.
-      		local saveR2ptr = r1 + 0x28;
+      		# value into 0x18(r1) which should be restored by the "ld r2,0x18(r1)"
+      		# which immediately follows calls which comply with the PPC64 ELFv2 ABI spec.
+      		local saveR2ptr = r1 + 0x18;
       		*:8 saveR2ptr = r2Save; 
       	</body>
       </pcode>
