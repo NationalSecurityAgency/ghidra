@@ -1233,6 +1233,7 @@ class GhidraFolderData {
 				}
 
 				DomainFolder oldParent = parent.getDomainFolder();
+				boolean notifyListeners = parent.visited || newParent.visited;
 
 				if (parent.visited) {
 					parent.folderList.remove(name);
@@ -1247,7 +1248,7 @@ class GhidraFolderData {
 				parent = newParent;
 				GhidraFolder newFolder = getDomainFolder();
 
-				if (parent.visited || newParent.visited) {
+				if (notifyListeners) {
 
 					// Must force refresh to ensure that all folder items are properly updated with new parent path
 					refresh(true, true, projectData.getProjectDisposalMonitor());
