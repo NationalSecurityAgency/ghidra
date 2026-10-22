@@ -1,0 +1,252 @@
+# V830 Family:
+# (3) Multiply instructions
+# (3) Multiply-accumulate instructions
+# (12) Arithmetic instructions
+# (4) Saturated operation instructions
+# (2) Divide instructions
+
+# V810 Family:
+# (2) Multiply instructions
+# (10) Arithmetic instructions
+# (2) Divide instructions
+
+
+#####################################################
+#####		       Multiply			#####
+#####################################################
+
+
+# MUL reg1, reg2 - 001000rrrrrRRRRR
+:mul R0004, R0509 is op1015=0x08 & R0004 & R0509
+{
+	local res:8 = sext(R0509) * sext(R0004);
+	R0509 = res:4;
+	shift_right_arith(res, res, 32);
+	mp = res:4;
+}
+
+@if defined(V830)
+define pcodeop __saturate;
+# MULI imm16, reg1, reg2 - 110010rrrrrRRRRR|iiiiiiiiiiiiiiii
+:muli s1631, R0004, R0509 is op1015=0x32 & R0509 & R0004; s1631
+{
+	local res:8 = sext(R0004) * s1631; # how do you indicate saturation?
+	$(SAT) = $(SAT) || $(OV);
+	R0509 = res:4;
+	__saturate(R0509);
+}
+@endif
+
+# MULU reg1, reg2 - 001010rrrrrRRRRR
+:mulu R0004, R0509 is op1015=0x0A & R0004 & R0509
+{
+	local res:8 = zext(R0509) * zext(R0004);
+	R0509 = res:4;
+	shift_right_arith(res, res, 32);
+	mp = res:4;
+}
+
+
+
+#####################################################
+##### 		     Arithmetic			#####
+#####################################################
+
+
+# ADD reg1, reg2 - 000001rrrrrRRRRR
+:add R0004, R0509 is op1015=0x01 & R0004 & R0509 
+{
+	set_general_flags_pos(R0509, R0509);
+	R0509 = R0509 + R0004;
+}
+
+# ADD imm5, reg2 - 010001rrrrriiiii
+:add s0004, R0509 is op1015=0x11 & s0004 & R0509 
+{
+	set_general_flags_pos(s0004, R0509);
+	R0509 = R0509 + s0004;
+}
+# ADDI imm16, reg1, reg2 - 101001rrrrrRRRRR|iiiiiiiiiiiiiiii
+:addi s1631, R0004, R0509 is op1015=0x29 & R0509 & R0004; s1631
+{
+	set_general_flags_pos(R0004, s1631);
+	R0509 = R0004 + s1631;
+}
+
+# CMP reg1, reg2 - 000011rrrrrRRRRR
+:cmp R0004, R0509 is op1015=0x03 & R0004 & R0509
+{
+	set_general_flags_neg(R0509, R0004);
+}
+
+# CMP imm5, reg2 - 010011rrrrriiiii
+:cmp s0004, R0509 is op1015=0x13 & s0004 & R0509
+{
+	set_general_flags_neg(R0509, s0004);
+}
+
+@if defined(V830)
+# MIN3 reg1, reg2, reg3 - 111110rrrrrRRRRR|01001000000wwwww
+:min3 R0004, R0509, R1620 is op1015=0x3E & R0004 & R0509; op2631=0x12 & R1620
+{
+	local res:4 = R0509;
+	if (R0004 s> R0509) 
+		goto <more>;
+	res = R0004;
+	<more>
+	R1620 = res;
+}
+
+# MAX3 reg1, reg2, reg3 - 111110rrrrrRRRRR|01001100000wwwww
+:max3 R0004, R0509, R1620 is op1015=0x3E & R0004 & R0509; op2631=0x13 & R1620
+{
+	local res:4 = R0509;
+	if (R0004 s< R0509)
+		goto <less>;
+	res = R0004;
+	<less>
+	R1620 = res;
+}
+@endif
+
+# MOV reg1, reg2 - 000000rrrrrRRRRR
+:mov R0004, R0509 is op1015=0x00 & R0004 & R0509
+{
+	R0509 = R0004;
+}
+
+# MOV imm5, reg2 - 010000rrrrriiiii
+:mov s0004, R0509 is op1015=0x10 & s0004 & R0509
+{
+	R0509 = s0004;
+}
+
+# MOVEA imm16, reg1, reg2 - 101000rrrrrRRRRR|iiiiiiiiiiiiiiii
+:movea s1631, R0004, R0509 is op1015=0x28 & R0004 & R0509; s1631
+{
+	R0509 = R0004 + s1631;
+}
+
+# MOVHI imm16, reg1, reg2 - 101111rrrrrRRRRR|iiiiiiiiiiiiiiii
+:movhi op1631, R0004, R0509 is op1015=0x2F & R0004 & R0509; op1631
+{
+	R0509 = R0004 + (op1631 << 16);
+}
+
+# SUB reg1, reg2 - 000010rrrrrRRRRR
+:sub R0004, R0509 is op1015=0x02 & R0004 & R0509 
+{
+	set_general_flags_neg(R0509, R0004);
+	R0509 = R0509 - R0004;
+}
+
+
+
+#####################################################
+#####		       Saturated		#####
+#####################################################
+
+@if defined(V830)
+# MUL3 reg1, reg2, reg3 - 111110rrrrrRRRRR|01111100000wwwww
+:mul3 R0004, R0509, R1620 is op1015=0x3E & R0004 & R0509; op2631=0x1F & R1620
+{
+	local res:8 = sext(R0509) * sext(R0004); # how do you indicate saturation?
+	$(SAT) = $(SAT) || $(OV);
+	R1620 = res:4;
+	__saturate(R1620);
+}
+
+
+
+# MULT3 reg1, reg2, reg3 - 111110rrrrrRRRRR|01111000000wwwww
+:mult3 R0004, R0509, R1620 is op1015=0x3E & R0004 & R0509; op2631=0x1E & R1620
+{
+	local res:8 = sext(R0509) * sext(R0004);
+	shift_right_arith(res, res, 32);
+	R1620 = res:4;
+}
+
+
+
+# SATADD3 reg1, reg2, reg3 - 111110rrrrrRRRRR|01000000000wwwww
+:satadd3 R0004, R0509, R1620 is op1015=0x3E & R0004 & R0509; op2631=0x10 & R1620
+{
+	set_general_flags_pos(R0509, R0004);
+	$(SAT) = $(SAT) || $(OV);
+	R1620 = R0509 + R0004;
+	__saturate(R1620);
+}
+
+# SATSUB3 reg1, reg2, reg3 - 111110rrrrrRRRRR|01000100000wwwww
+:satsub3 R0004, R0509, R1620 is op1015=0x3E & R0004 & R0509; op2631=0x11 & R1620
+{
+	set_general_flags_neg(R0509, R0004);
+	$(SAT) = $(SAT) || $(OV);
+	R1620 = R0509 - R0004;
+	__saturate(R1620);
+}
+
+
+#####################################################
+#####		  Multiply Accumulate		#####
+#####################################################
+
+
+# MAC3 reg1, reg2, reg3 - 111110rrrrrRRRRR|01110100000wwwww
+:mac3 R0004, R0509, R1620 is op1015=0x3E & R0004 & R0509; op2631=0x1D & R1620
+{
+	local res:8 = sext(R1620) + sext(R0509) * sext(R0004); # how do you indicate saturation?
+	$(SAT) = $(SAT) || $(OV);
+	R1620 = res:4;
+	__saturate(R1620);
+}
+
+# MACI imm16, reg1, reg2 - 110110rrrrrRRRRR|iiiiiiiiiiiiiiii
+:maci s1631, R0004, R0509 is op1015=0x36 & R0509 & R0004; s1631
+{
+	local res:8 = sext(R0509) + sext(R0004) * s1631; # how do you indicate saturation?
+	$(SAT) = $(SAT) || $(OV);
+	R0509 = res:4;
+	__saturate(R0509);
+}
+
+# MACT3 reg1, reg2, reg3 - 111110rrrrrRRRRR|01110000000wwwww
+:mact3 R0004, R0509, R1620 is op1015=0x3E & R0004 & R0509; op2631=0x1C & R1620
+{
+	local res:8 = sext(R0509) * sext(R0004); # how do you indicate saturation?
+	shift_right_arith(res, res, 32);
+	res = res + sext(R1620);
+	$(SAT) = $(SAT) || $(OV);
+	R1620 = res:4;
+	__saturate(R1620);
+}
+@endif
+
+#####################################################
+#####                  Divide			#####
+#####################################################
+
+
+# DIV reg1, reg2 - 001001rrrrrRRRRR
+:div R0004, R0509 is op1015=0x09 & R0004 & R0509
+{
+	local quot:4 = R0509 s/ R0004;
+	local mod:4 = R0509 s% R0004;
+	$(OV) = ((R0509 == 0x80000000 && R0004 == 0xFFFFFFFF) || R0004 == 0x0);
+	set_Z(R0509);
+	set_S(R0509);
+	R0509 = quot;
+ 	mp = mod;
+}
+
+# DIVU reg1, reg2 - 001011rrrrrRRRRR
+:divu R0004, R0509 is op1015=0x0B & R0004 & R0509
+{
+	local quot:4 = R0509 / R0004;
+	local mod:4 = R0509 % R0004;
+	$(OV) = (R0004 == 0);
+	set_Z(R0509);
+	set_S(R0509);
+	R0509 = quot;
+ 	mp = mod;
+}
