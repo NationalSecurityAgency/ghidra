@@ -1456,23 +1456,15 @@ Address SegmentedResolver::resolve(uintb val,int4 sz,const Address &point,uintb 
   // (as with near pointers)
     if (segop->getResolve().space != (AddrSpace *)0 && !point.isInvalid()) {
       uintb base = glb->context->getTrackedValue(segop->getResolve(),point);
-      fullEncoding = (base << 8 * innersz) + (val & calc_mask(innersz));
       vector<uintb> seginput;
       seginput.push_back(base);
       seginput.push_back(val);
-      val = segop->execute(seginput);
-      return Address(spc,AddrSpace::addressToByte(val,spc->getWordSize()));
+      fullEncoding = segop->execute(seginput);
+      return Address(spc,AddrSpace::addressToByte(fullEncoding,spc->getWordSize()));
     }
   }
-  else { // For anything else, consider it a "far" pointer
+  else { // For anything else, consider it a flat pointer
     fullEncoding = val;
-    int4 outersz = segop->getBaseSize();
-    uintb base = (val >> 8*innersz) & calc_mask(outersz);
-    val = val & calc_mask(innersz);
-    vector<uintb> seginput;
-    seginput.push_back(base);
-    seginput.push_back(val);
-    val = segop->execute(seginput);
     return Address(spc,AddrSpace::addressToByte(val,spc->getWordSize()));
   }
   return Address();		// Return invalid address

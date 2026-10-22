@@ -847,16 +847,7 @@ public class HighFunctionDBUtil {
 			}
 			else {
 				AddressSpace space = addrFactory.getDefaultAddressSpace();
-				if (space instanceof SegmentedAddressSpace) {
-					// Assume this is a "full" encoding of the offset
-					int innersize = space.getPointerSize();
-					int base = (int) (cnode.getOffset() >>> 8 * innersize);
-					int off = (int) cnode.getOffset() & ((1 << 8 * innersize) - 1);
-					storageAddress = ((SegmentedAddressSpace) space).getAddress(base, off);
-				}
-				else {
-					storageAddress = space.getAddress(cnode.getOffset());
-				}
+				storageAddress = space.getAddress(cnode.getOffset());
 			}
 		}
 		return storageAddress;
