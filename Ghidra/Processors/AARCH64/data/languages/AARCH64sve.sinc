@@ -7403,3 +7403,40 @@ is sve_b_2431=0b00000101 & sve_size_2223 & sve_b_21=1 & sve_zm_1620 & sve_b_1315
 {
 	Zd.T = SVE_zip1(Zd.T, Zn.T, Zm.T);
 }
+
+# FEAT_CPA
+:addpt Zd.T, Pg3_m, Zd.T_2, Zn.T
+is sve_b_2431=0b00000100 & sve_size_2223=0b11 & sve_b_1921=0b000 & sve_b_1718=0b10 & sve_b_16=0 & sve_b_1315=0b000 & sve_pg_1012 & sve_zm_0509 & sve_zdn_0004 & Zd.T & Zd.T_2 & Zn.T & Pg3_m
+{
+	Zd.T = SVE_add(Zd.T, Pg3_m, Zd.T_2, Zn.T);
+}
+
+:addpt Zd.T, Zn.T, Zm.T
+is sve_b_2431=0b00000100 & sve_size_2223=0b11 & sve_b_21=1 & sve_zm_1620 & sve_b_1315=0b000 & sve_b_1112=0b01 & sve_b_10=0 & sve_zn_0509 & sve_zd_0004 & Zm.T & Zd.T & Zn.T
+{
+	Zd.T = SVE_add(Zd.T, Zn.T, Zm.T);
+}
+
+:subpt Zd.T, Pg3_m, Zd.T_2, Zn.T
+is sve_b_2431=0b00000100 & sve_size_2223=0b11 & sve_b_1921=0b000 & sve_b_1718=0b10 & sve_b_16=1 & sve_b_1315=0b000 & sve_pg_1012 & sve_zm_0509 & sve_zdn_0004 & Zd.T & Zd.T_2 & Zn.T & Pg3_m
+{
+	Zd.T = SVE_sub(Zd.T, Pg3_m, Zd.T_2, Zn.T);
+}
+
+:subpt Zd.T, Zn.T, Zm.T
+is sve_b_2431=0b00000100 & sve_size_2223=0b11 & sve_b_21=1 & sve_zm_1620 & sve_b_1315=0b000 & sve_b_1112=0b01 & sve_b_10=1 & sve_zn_0509 & sve_zd_0004 & Zm.T & Zd.T & Zn.T
+{
+	Zd.T = SVE_sub(Zd.T, Zn.T, Zm.T);
+}
+
+:madpt Zd.T, Zm.T, Zn.T
+is sve_b_2431=0b01000100 & sve_size_2223=0b11 & sve_b_21=0 & sve_zm_1620 & sve_b_1415=0b11 & sve_b_13=0 & sve_pg_1012=0b110 & sve_za_0509 & sve_zdn_0004 & Zd.T & Zm.T & Zn.T
+{
+	Zd.T = SVE_mad(Zd.T, Zm.T, Zn.T);
+}
+
+:mlapt Zd.T, Zn.T, Zm.T
+is sve_b_2431=0b01000100 & sve_size_2223=0b11 & sve_b_21=0 & sve_zm_1620 & sve_b_1415=0b11 & sve_b_13=0 & sve_pg_1012=0b100 & sve_zn_0509 & sve_zda_0004 & Zd.T & Zm.T & Zn.T
+{
+	Zd.T = SVE_mla(Zd.T, Zn.T, Zm.T);
+}
