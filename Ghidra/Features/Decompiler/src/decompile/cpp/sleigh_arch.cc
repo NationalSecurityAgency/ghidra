@@ -34,6 +34,8 @@ ElementId ELEM_LANGUAGE = ElementId("language",234);
 ElementId ELEM_LANGUAGE_DEFINITIONS = ElementId("language_definitions",235);
 
 map<int4,Sleigh> SleighArchitecture::translators;
+map<string,std::unique_ptr<const Document>> SleighArchitecture::specxmls;
+std::mutex SleighArchitecture::specxmls_mutex;
 vector<LanguageDescription> SleighArchitecture::description;
 
 FileManage SleighArchitecture::specpaths; // Global specfile manager
@@ -372,7 +374,7 @@ void SleighArchitecture::buildSpecFile(DocumentStorage &store)
   }
   
   try {
-    Document *doc = store.openDocument(processorfile);
+    const Document *doc = getSpecDocument(processorfile);
     store.registerTag(doc->getRoot());
   }
   catch(DecoderError &err) {
@@ -389,7 +391,7 @@ void SleighArchitecture::buildSpecFile(DocumentStorage &store)
   }
   
   try {
-    Document *doc = store.openDocument(compilerfile);
+    const Document *doc = getSpecDocument(compilerfile);
     store.registerTag(doc->getRoot());
   }
   catch(DecoderError &err) {
@@ -627,6 +629,27 @@ const vector<LanguageDescription> &SleighArchitecture::getDescriptions(void)
   if (!s.str().empty())
     throw LowlevelError(s.str());
   return description;
+}
+
+/// Retrieve a parsed immutable XML specification document from the cache, or parse it from disk.
+/// DocumentStorage::registerTag only stores a non-owning const Element* in tagmap (unlike openDocument
+/// which transfers ownership to DocumentStorage::doclist), so cached const Documents remain safely owned
+/// by specxmls across SleighArchitecture instances until process exit.
+const Document *SleighArchitecture::getSpecDocument(const string &filename)
+
+{
+  std::lock_guard<std::mutex> lock(specxmls_mutex);
+  map<string,std::unique_ptr<const Document>>::const_iterator iter = specxmls.find(filename);
+  if (iter != specxmls.end())
+    return iter->second.get();
+  ifstream s(filename.c_str());
+  if (!s)
+    throw DecoderError("Unable to open xml document " + filename);
+  std::unique_ptr<const Document> doc(xml_tree(s));
+  s.close();
+  const Document *res = doc.get();
+  specxmls.emplace(filename,std::move(doc));
+  return res;
 }
 
 void SleighArchitecture::shutdown(void)
