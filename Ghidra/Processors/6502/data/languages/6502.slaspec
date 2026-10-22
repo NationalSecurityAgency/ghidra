@@ -30,12 +30,14 @@ define token data (16)
 	imm16 = (0,15)
 ;
 
+# PLP and RTI ignore b5 (unused) and b4 (B flag) as neither bit has storage on chip
+# and only exist in stack data.
 macro popSR() {
 	SP = SP + 1;
 	local ccr = *:1 SP;
 	N = ccr[7,1];
 	V = ccr[6,1];
-	B = ccr[4,1];
+	B = ccr[4,1];   # consider commenting out this B assignment
 	D = ccr[3,1];
 	I = ccr[2,1];
 	Z = ccr[1,1];
@@ -46,7 +48,7 @@ macro pushSR() {
 	local ccr:1 = 0xff;
 	ccr[7,1] = N;
 	ccr[6,1] = V;
-	ccr[4,1] = B;
+	# ccr[4,1] = B;  # always set B flag to 1
 	ccr[3,1] = D;
 	ccr[2,1] = I;
 	ccr[1,1] = Z;
@@ -194,7 +196,6 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 {
 	*:2 (SP - 1) = inst_next;
 	SP = SP - 2;
-	B = 1;
 	pushSR();
 	I = 1;
 	local target:2 = 0xFFFE;
