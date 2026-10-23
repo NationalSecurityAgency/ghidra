@@ -23,8 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import ghidra.program.model.symbol.Namespace;
 
 /**
- * A parser for breaking down namespaces in the presence of complicating factors such
- *  as templates.
+ * A parser for breaking down namespaces in the presence of complicating factors such as templates.
  * <P>
  * For example, if a SymbolPath is constructed with "foo&lt;int, blah::hah&gt;::bar::baz",
  * then "baz" is the name of a symbol in the "bar" namespace, which is in the
@@ -69,10 +68,7 @@ public class SymbolPathParser {
 
 	private static boolean skipParsing(String name, boolean ignoreLeaderParens) {
 
-		//	if (name.indexOf(Namespace.DELIMITER) == -1) {
-		// following is temporary kludge due to struct (blah).  TODO: figure/fix
-		// This particular test for starting with the open parenthesis is to work around a type
-		// seen in "Rust."
+		// The check for starting with the open parenthesis is to work around a type seen in Rust
 		if (ignoreLeaderParens && name.startsWith("(")) {
 			return true;
 		}
@@ -87,82 +83,102 @@ public class SymbolPathParser {
 	 * @return List<String> containing the sequence of namespaces and trailing name.
 	 */
 	private static List<String> naiveParse(String name) {
-		// Only break on namespace delimiters that are found at templateLevel == 0.
+
+		List<String> list = naiveParseWithTemplates(name);
+		if (!list.isEmpty()) {
+			return list;
+		}
+
+		return naiveParseIgnoringTemplates(name);
+	}
+
+	private static List<String> naiveParseWithTemplates(String name) {
 		List<String> list = new ArrayList<>();
 		int templateLevel = 0;
-		int parenthesesLevel = 0;
-		int startIndex = 0;
+		int parenLevel = 0;
+		int start = 0;
 		for (int i = 0; i < name.length(); ++i) {
-			if (i == startIndex && templateLevel == 0 && parenthesesLevel == 0 &&
-				isTerminalAngleOperator(name.substring(i))) {
-				break;
-			}
-			if ((name.charAt(i) == ':') && (i != name.length() - 1) &&
-				(name.charAt(i + 1) == ':')) {
-				if ((templateLevel == 0) && (parenthesesLevel == 0)) {
-					int endIndex = i; // could be 0 if i == 0.
-					if (endIndex > startIndex) {
-						list.add(name.substring(startIndex, endIndex));
-						startIndex = i + 2;
-						i++; // Only increment one, because the loop also has an increment.
+
+			char c = name.charAt(i);
+			if (isDelimiter(i, name)) {
+				if (templateLevel == 0 && parenLevel == 0) {
+					int end = i; // 0 if i == 0; leading ':' chars
+					if (end > start) {
+						list.add(name.substring(start, end));
+						start = i + 2;
 					}
 				}
+				i++; // increment one, since the loop has an increment
 			}
-			else if (name.charAt(i) == '<') {
+			else if (c == '<') {
 				++templateLevel;
 			}
-			else if (name.charAt(i) == '>') {
+			else if (c == '>') {
 				--templateLevel;
 			}
-			else if (name.charAt(i) == '(') {
-				++parenthesesLevel;
+			else if (c == '(') {
+				++parenLevel;
 			}
-			else if (name.charAt(i) == ')') {
-				--parenthesesLevel;
-			}
-		}
-		if ((templateLevel != 0) || (parenthesesLevel != 0)) {
-			// Revert to no checking template level
-			startIndex = 0;
-			list = new ArrayList<>();
-			for (int i = 0; i < name.length(); ++i) {
-				if ((name.charAt(i) == ':') && (i != name.length() - 1) &&
-					name.charAt(i + 1) == ':') {
-					int endIndex = i; // could be 0 if i == 0.
-					if (endIndex > startIndex) {
-						list.add(name.substring(startIndex, endIndex));
-						startIndex = i + 2;
-						i++; // Only increment one, because the loop also has an increment.
-					}
-				}
+			else if (c == ')') {
+				--parenLevel;
 			}
 		}
-		list.add(name.substring(startIndex, name.length()));
 
+		boolean unbalanced = templateLevel != 0 || parenLevel != 0;
+		String segment = name.substring(start, name.length());
+		if (!unbalanced) {
+			list.add(segment);
+			return list;
+		}
+
+		if (isAngleOperator(segment)) {
+			list.add(segment);
+			return list;
+		}
+
+		return List.of();
+	}
+
+	private static List<String> naiveParseIgnoringTemplates(String name) {
+
+		int start = 0;
+		List<String> list = new ArrayList<>();
+		for (int i = 0; i < name.length(); ++i) {
+			if (isDelimiter(i, name)) {
+				int end = i; // 0 if i == 0; leading ':' chars
+				if (end > start) {
+					list.add(name.substring(start, end));
+					start = i + 2;
+				}
+				i++; // increment one, since the loop has an increment
+			}
+		}
+		list.add(name.substring(start, name.length()));
 		return list;
 	}
 
-	private static boolean isTerminalAngleOperator(String component) {
-		return switch (component) {
-			case "operator<", "operator>", "operator<=", "operator>=", "operator<<",
-					"operator>>", "operator<<=", "operator>>=", "operator<=>" -> true;
-			default -> false;
-		};
+	private static boolean isDelimiter(int i, String name) {
+		if (i == name.length() - 1) {
+			return false;
+		}
+		return name.charAt(i) == ':' && name.charAt(i + 1) == ':';
 	}
 
-	// TODO: in progress.
-//	/**
-//	 * More complicated parsing that takes into account:
-//	 * <LI> overloaded operators that use angle brackets
-//	 * <LI> templated overloaded operators that use angle brackets
-//	 * <LI> mismatched angle brackets (MSFT specialness)
-//	 * <LI> MSFT interface namespaces (square brackets out of bounds of namespace delimiter)
-//	 * @param name The input String to be parsed.
-//	 * @return List<String> containing the sequence of namespaces and trailing name.
-//	 */
-//	private static List<String> detailedParse(String name) {
-//		List<String> list = new ArrayList<>();
-//		return list;
-//	}
+	private static boolean isAngleOperator(String component) {
+		//@formatter:off
+		return switch (component) {
+			case "operator<", 
+			     "operator>", 
+			     "operator<=", 
+			     "operator>=", 
+			     "operator<<", 
+			     "operator>>", 
+			     "operator<<=", 
+			     "operator>>=", 
+			     "operator<=>" -> true;
+			default -> false;
+		};
+		//@formatter:on
+	}
 
 }
