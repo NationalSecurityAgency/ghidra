@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -459,17 +459,15 @@ TEST(funcproto_mixedmeta) {
 void registerActive(ParamActive &paramActive,const string &nm,int4 sz)
 
 {
-  paramActive.registerTrial(glb->translate->getRegister(nm).getAddr(),sz);
-  int4 num = paramActive.getNumTrials();
-  paramActive.getTrial(num-1).markActive();
+  ParamTrial &paramtrial(paramActive.registerTrial(glb->translate->getRegister(nm).getAddr(),sz));
+  paramtrial.markActive();
 }
 
 void stackActive(ParamActive &paramActive,uintb off,int4 sz)
 
 {
-  paramActive.registerTrial(Address(glb->getStackSpace(),off),sz);
-  int4 num = paramActive.getNumTrials();
-  paramActive.getTrial(num-1).markActive();
+  ParamTrial &paramtrial(paramActive.registerTrial(Address(glb->getStackSpace(),off),sz));
+  paramtrial.markActive();
 }
 
 bool register_used(ParamTrial &trial,const string &nm)

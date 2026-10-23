@@ -300,7 +300,7 @@ class ParamActive {
 public:
   ParamActive(bool recoversub);	///< Construct an empty container
   void clear(void);		///< Reset to an empty container
-  void registerTrial(const Address &addr,int4 sz);		///< Add a new trial to the container
+  ParamTrial &registerTrial(const Address &addr,int4 sz);	///< Add a new trial to the container
   void reregisterTrial(const ParamTrial &oldTrial);		///< Register a previously existing trial
   int4 getNumTrials(void) const { return trial.size(); }	///< Get the number of trials in \b this container
   ParamTrial &getTrial(int4 i) { return trial[i]; }		///< Get the i-th trial
