@@ -18,6 +18,7 @@ package docking;
 import static org.junit.Assert.*;
 
 import java.awt.*;
+import java.util.function.Function;
 
 import javax.swing.*;
 
@@ -71,6 +72,32 @@ public class DialogParentFallbackTest extends AbstractDockingTest {
 	}
 
 	@Test
+	public void testNoActiveWindow_LastActiveIsClosedModalDialog_CentersOnItsOwner() {
+		Window detachedWindow = showDetachedProvider(true);
+		runSwing(() -> detachedWindow.setBounds(40, 60, 500, 400));
+		JDialog closedDialog = runSwing(() -> new JDialog(detachedWindow, "Closed Dialog",
+			Dialog.ModalityType.APPLICATION_MODAL));
+		setLastActiveWindow(closedDialog);
+		fakeActiveWindow = null;
+
+		Rectangle dialogBounds = showDialogAndGetBounds();
+		Rectangle ownerBounds = runSwing(() -> detachedWindow.getBounds());
+		assertEquals(ownerBounds.getCenterX(), dialogBounds.getCenterX(), 1);
+		assertEquals(ownerBounds.getCenterY(), dialogBounds.getCenterY(), 1);
+	}
+
+	@Test
+	public void testActiveWindowIsClosedDialog_UsesLastActiveWindow() {
+		Window detachedWindow = showDetachedProvider(true);
+		setLastActiveWindow(detachedWindow);
+		fakeActiveWindow = runSwing(() -> new JDialog(detachedWindow, "Closed Dialog",
+			Dialog.ModalityType.APPLICATION_MODAL));
+
+		Window owner = showDialogAndGetOwner();
+		assertSame(detachedWindow, owner);
+	}
+
+	@Test
 	public void testNoActiveWindow_NoLastActiveWindow_UsesToolFrame() {
 		setLastActiveWindow(null);
 		fakeActiveWindow = null;
@@ -115,6 +142,14 @@ public class DialogParentFallbackTest extends AbstractDockingTest {
 	}
 
 	private Window showDialogAndGetOwner() {
+		return showDialogAndGet(Window::getOwner);
+	}
+
+	private Rectangle showDialogAndGetBounds() {
+		return showDialogAndGet(Window::getBounds);
+	}
+
+	private <T> T showDialogAndGet(Function<Window, T> getter) {
 
 		// Replace the focus manager only while the dialog is open, since other tests rely on the
 		// state of the real focus manager
@@ -126,11 +161,11 @@ public class DialogParentFallbackTest extends AbstractDockingTest {
 			TestDialog dialog = new TestDialog();
 			executeOnSwingWithoutBlocking(() -> DockingWindowManager.showDialog(dialog));
 			waitForDialogComponent(TestDialog.class);
-			Window owner =
-				runSwing(() -> SwingUtilities.getWindowAncestor(dialog.getComponent()).getOwner());
+			Window window = runSwing(() -> SwingUtilities.getWindowAncestor(dialog.getComponent()));
+			T value = runSwing(() -> getter.apply(window));
 			runSwing(() -> dialog.close());
 			waitForSwing();
-			return owner;
+			return value;
 		}
 		finally {
 			KeyboardFocusManager.setCurrentKeyboardFocusManager(originalFocusManager);
