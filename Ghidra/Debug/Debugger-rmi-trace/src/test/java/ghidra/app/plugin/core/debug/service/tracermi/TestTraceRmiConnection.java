@@ -38,6 +38,7 @@ import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.schema.TraceObjectSchema;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import ghidra.trace.model.time.TraceSnapshot;
+import resources.Icons;
 
 public abstract class TestTraceRmiConnection extends AbstractTraceRmiConnection {
 
@@ -121,7 +122,8 @@ public abstract class TestTraceRmiConnection extends AbstractTraceRmiConnection 
 
 		@Override
 		public Icon icon() {
-			return null;
+			// Returning null causes test failures - appears to be a timing issue on teardown
+			return Icons.EMPTY_ICON;
 		}
 	}
 
