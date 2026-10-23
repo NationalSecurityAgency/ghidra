@@ -1391,12 +1391,25 @@ int4 RuleRangeMeld::applyOp(PcodeOp *op,Funcdata &data)
     if (A2 == (Varnode *)0) return 0;
   }
   if (!functionalEquality(A1,A2)) {
-    if (A2->getSize() == A1->getSize()) return 0;
-    if ((A1->getSize() < A2->getSize())&&(A2->isWritten()))
-      A2 = range2.pullBack(A2->getDef(),&markup,false);
-    else if (A1->isWritten())
+    bool success = false;
+    if (A1->isWritten()) {
+      CircleRange range1orig = range1;
+      Varnode *A1orig = A1;
       A1 = range1.pullBack(A1->getDef(),&markup,false);
-    if (A1 != A2) return 0;
+      if (A1 == A2)
+	success = true;
+      else {
+	range1 = range1orig;
+	A1 = A1orig;
+      }
+    }
+    if (!success) {
+      if (A2->isWritten()) {
+	A2 = range2.pullBack(A2->getDef(),&markup,false);
+      }
+      if (A1 != A2)
+	return 0;
+    }
   }
   if (!A1->isHeritageKnown()) return 0;
 
