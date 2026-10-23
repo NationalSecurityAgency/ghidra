@@ -5,7 +5,7 @@
 # a ghidra release using the command 
 # docker build -f docker/Dockerfile -t <image-name>
 ###############################################################
-FROM alpine:3.20 AS base
+FROM alpine:3.24 AS base
 
 LABEL org.opencontainers.image.title="ghidra" \
 	org.opencontainers.image.description="Docker image for Ghidra" \
@@ -17,13 +17,13 @@ LABEL org.opencontainers.image.title="ghidra" \
 RUN addgroup -g 1001 -S ghidra && adduser -u 1001 -S ghidra -G ghidra
 ENTRYPOINT ["/bin/bash", "/ghidra/docker/entrypoint.sh"]
 # Set JAVA_HOME so that we don't need to do this manually when Ghidra is first started.
-ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk
-ENV LD_LIBRARY_PATH=/usr/lib/jvm/java-21-openjdk/lib/:/usr/lib/jvm/java-21-openjdk/lib/server/
+ENV JAVA_HOME=/usr/lib/jvm/java-25-openjdk
+ENV LD_LIBRARY_PATH=/usr/lib/jvm/java-25-openjdk/lib/:/usr/lib/jvm/java-25-openjdk/lib/server/
 WORKDIR /ghidra
 
 # update and install dependencies used to both build and run ghidra
 RUN apk update \
-        && apk add openjdk21 python3 py3-pip \
+        && apk add openjdk25 python3 py3-pip \
         bash gcompat \
         fontconfig msttcorefonts-installer \
         linux-headers libressl-dev \
