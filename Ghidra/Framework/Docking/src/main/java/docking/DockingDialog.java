@@ -245,6 +245,18 @@ public class DockingDialog extends JDialog implements HelpDescriptor {
 				// not by the user closing the dialog or calling close() through the API
 				cleanup();
 			}
+
+			@Override
+			public void windowActivated(WindowEvent e) {
+				// ensure dialog actions are correctly update as the window activation changes
+				component.notifyContextChanged();
+			}
+
+			@Override
+			public void windowDeactivated(WindowEvent e) {
+				// ensure dialog actions are correctly update as the window activation changes
+				component.notifyContextChanged();
+			}
 		};
 
 		addWindowListener(windowAdapter);
