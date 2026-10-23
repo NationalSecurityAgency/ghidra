@@ -185,8 +185,17 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 		if (!(dataType instanceof FunctionDefinition functionDefinition)) {
 			throw new IllegalArgumentException();
 		}
+
+		try (Closeable _ = lock.write()) {
+			doReplaceWith(functionDefinition);
+		}
+	}
+
+	private void doReplaceWith(FunctionDefinition functionDefinition) {
+
 		boolean isResolveCacheOwner = false;
-		try (Closeable c = lock.write()) {
+
+		try {
 			isResolveCacheOwner = dataMgr.activateResolveCache();
 			checkDeleted();
 			doReplaceWith(functionDefinition, true);

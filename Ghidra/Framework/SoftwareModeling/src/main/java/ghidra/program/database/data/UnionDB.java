@@ -283,8 +283,16 @@ class UnionDB extends CompositeDB implements UnionInternal {
 		if (!(dataType instanceof UnionInternal)) {
 			throw new IllegalArgumentException();
 		}
+
+		try (Closeable _ = lock.write()) {
+			doReplaceWith(dataType);
+		}
+	}
+
+	private void doReplaceWith(DataType dataType) {
 		boolean isResolveCacheOwner = false;
-		try (Closeable c = lock.write()) {
+
+		try {
 			isResolveCacheOwner = dataMgr.activateResolveCache();
 			checkDeleted();
 			doReplaceWith((UnionInternal) dataType, true);

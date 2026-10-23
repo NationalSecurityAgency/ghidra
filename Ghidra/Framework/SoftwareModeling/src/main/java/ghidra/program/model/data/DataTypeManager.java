@@ -196,6 +196,9 @@ public interface DataTypeManager {
 	 * Unlike {@link #findDataTypes(String, List)}, data types with a {@code .conflict} extension 
 	 * will not be included in the results of this method unless they explicitly match the provided
 	 * name.
+	 * <p>
+	 * This method may be significantly slower than {@link #findDataType(String)}, as this method 
+	 * will check every data type while the other version will use a binary search.
 	 * 
 	 * @param name name to match; may contain wildcards
 	 * @param list list that will be populated with matching DataType objects
