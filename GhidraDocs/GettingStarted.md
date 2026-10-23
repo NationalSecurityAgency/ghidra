@@ -56,7 +56,7 @@ a specific need.
     * [Adoptium Temurin](https://adoptium.net/temurin/releases)
     * [Amazon Corretto](https://docs.aws.amazon.com/corretto/latest/corretto-25-ug/downloads-list.html)
 * Python3 (3.9 to 3.15)
-  * Python 3.7 to 3.14 for [Debugger support](#debugger-notes)
+  * Python 3.9 to 3.15 for [Debugger support](#debugger-notes)
   * Python 3.9 to 3.15 for [PyGhidra support](#pyghidra-mode)
   * This is available from [Python.org](https://python.org) or most operating system's app stores or
     software repositories.  For Linux it is recommended that the system's package repository be used
@@ -234,9 +234,14 @@ gradle buildNatives
 ```
 
 If you are connected to the Internet and do not have Gradle installed, execute:
+
+On Unix-like systems:
 ```bash
-cd <GhidraInstallDir>/support/gradle/
-./gradlew(.bat) buildNatives
+./gradlew buildNatives
+```
+On Windows:
+```bat
+gradlew.bat buildNatives
 ```
 
 When the commands successfully complete, Ghidra will contain newly built native binaries in
