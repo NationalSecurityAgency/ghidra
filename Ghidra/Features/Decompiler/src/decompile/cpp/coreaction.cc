@@ -3931,6 +3931,12 @@ void ActionDeadCode::propagateConsumed(vector<Varnode *> &worklist)
 	a = 0;			// We know nothing about the low order consumption of the input bits
       else
 	a = outc << sa;		// Most cases just do this
+      if ((a==0)&&(outc!=0)&&(op->getIn(0)->getSize() > sizeof(uintb))) {
+	// The consumed bits were shifted beyond the precision of the consume field,
+	// but bits of the input above the field are still consumed
+	a = ~((uintb)0);
+	a = a ^ (a >> 1);	// Set the highest bit possible in the mask to indicate some consumption
+      }
       b = (outc == 0) ? 0 : ~((uintb)0);
       pushConsumed(a,op->getIn(0),worklist);
       pushConsumed(b,op->getIn(1),worklist);
