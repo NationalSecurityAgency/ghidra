@@ -20,6 +20,20 @@
   </language>
   
   <language processor="AVR8"
+            endian="little"
+            size="16"
+            variant="small"
+            version="1.0"
+            slafile="avr8small.sla"
+            processorspec="avr8.pspec"
+            manualindexfile="../manuals/AVR8.idx"
+            id="avr8:LE:16:small">
+    <description>AVR8 with a 12-bit wrapping PC (devices with up to 8 KiB of flash)</description>
+    <compiler name="gcc"        spec="avr8gcc.cspec"        id="gcc"/>
+    <external_name tool="IDA-PRO" name="avr"/>
+  </language>
+
+  <language processor="AVR8"
             deprecated="true"
             endian="little"
             size="24"
