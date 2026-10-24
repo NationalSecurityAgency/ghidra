@@ -18,6 +18,7 @@ package ghidra.app.plugin.exceptionhandlers.gcc.structures.ehFrame;
 import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.cmd.data.CreateArrayCmd;
 import ghidra.app.cmd.data.CreateDataCmd;
+import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.exceptionhandlers.gcc.*;
 import ghidra.app.plugin.exceptionhandlers.gcc.sections.CieSource;
@@ -29,6 +30,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
+import ghidra.program.model.util.AddressSetPropertyMap;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.DataConverter;
 import ghidra.util.Msg;
@@ -469,11 +471,18 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 		region.setIPRange(addrRange);
 
 		try {
-			/* pcBeginAddr is not necessarily a function start, but it is code */
-			/* schedule disassembly if there is not already a function defined there */
-			if (program.getListing().getFunctionAt(pcBeginAddr) == null) {
+			/*
+			 * A .cold piece of a function is not a function entry point, so only schedule
+			 * disassembly of its code.  For every other entry, create a function, since the FDE
+			 * is the only source of function starts in a stripped binary.
+			 */
+			if (isColdEntry(pcBeginAddr)) {
 				AutoAnalysisManager analysisMgr = AutoAnalysisManager.getAnalysisManager(program);
 				analysisMgr.disassemble(new AddressSet(pcBeginAddr));
+			}
+			else if (program.getListing().getFunctionAt(pcBeginAddr) == null) {
+				CreateFunctionCmd createFuncCmd = new CreateFunctionCmd(pcBeginAddr);
+				createFuncCmd.applyTo(program);
 			}
 		}
 		catch (AddressOutOfBoundsException e) {
@@ -512,6 +521,20 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 
 		nextAddress = addr; // This could be null.
 		return region;
+	}
+
+	/**
+	 * Determines whether the specified address is the start of a .cold piece of a function,
+	 * which is not a function entry point.  Such addresses are flagged in a property map at
+	 * import time by the loader when it encounters a .cold function symbol.
+	 * 
+	 * @param addr the address to check
+	 * @return true if addr was flagged as a .cold entry
+	 */
+	private boolean isColdEntry(Address addr) {
+		AddressSetPropertyMap coldEntries =
+			program.getAddressSetPropertyMap(Program.COLD_ENTRY_MAP_NAME);
+		return coldEntries != null && coldEntries.contains(addr);
 	}
 
 	private void markEndOfFrame(Address addr) {
