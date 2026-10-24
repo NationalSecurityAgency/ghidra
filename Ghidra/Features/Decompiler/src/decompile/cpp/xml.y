@@ -211,7 +211,7 @@ content: { global_scan->setmode(XmlScan::CharDataMode); }
 	 | content Comment { global_scan->setmode(XmlScan::CharDataMode); };
 
 Reference: EntityRef { $$ = convertEntityRef(*$1); delete $1; }
-	   | CharRef { $$ = convertCharRef(*$1); delete $1; };
+	   | CharRef { $$ = convertCharRef(*$1); delete $1; if ($$ < 0) { yyerror("Invalid XML character reference"); YYERROR; } };
 
 refstart: '&' { global_scan->setmode(XmlScan::NameMode); } ;
 charrefstart: refstart '#' { global_scan->setmode(XmlScan::CharRefMode); };
@@ -476,29 +476,50 @@ int4 convertEntityRef(const string &ref)
   return -1;
 }
 
+static bool isXmlChar(uint4 val)
+
+{
+  return (val == 0x9) || (val == 0xA) || (val == 0xD) ||
+      ((val >= 0x20) && (val <= 0xD7FF)) ||
+      ((val >= 0xE000) && (val <= 0xFFFD)) ||
+      ((val >= 0x10000) && (val <= 0x10FFFF));
+}
+
 int4 convertCharRef(const string &ref)
 
 {
-  uint4 i;
-  int4 mult,val,cur;
+  const uint4 maxCodePoint = 0x10FFFF;
+  if (ref.empty())
+    return -1;
 
-  if (ref[0]=='x') {
-    i = 1;
-    mult = 16;
+  const bool isHex = ref[0] == 'x';
+  const uint4 base = isHex ? 16 : 10;
+  uint4 i = isHex ? 1 : 0;
+  if (i == ref.size())
+    return -1;
+
+  uint4 val = 0;
+  for (; i < ref.size(); ++i) {
+    const char c = ref[i];
+    uint4 digit;
+    if ((c >= '0') && (c <= '9'))
+      digit = c - '0';
+    else if (isHex && (c >= 'a') && (c <= 'f'))
+      digit = c - 'a' + 10;
+    else if (isHex && (c >= 'A') && (c <= 'F'))
+      digit = c - 'A' + 10;
+    else
+      return -1;
+
+    // Check before multiplying and adding to prevent overflow.
+    if (val > (maxCodePoint - digit) / base)
+      return -1;
+    val = val * base + digit;
   }
-  else {
-    i = 0;
-    mult = 10;
-  }
-  val = 0;
-  for(;i<ref.size();++i) {
-    if (ref[i]<='9') cur = ref[i]-'0';
-    else if (ref[i]<='F') cur = 10+ref[i]-'A';
-    else cur=10+ref[i]-'a';
-    val *= mult;
-    val += cur;
-  }
-  return val;
+
+  if (!isXmlChar(val))
+    return -1;
+  return static_cast<int4>(val);
 }
 
 int xmllex(void)
