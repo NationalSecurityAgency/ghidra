@@ -168,26 +168,36 @@ public class ItemDeserializer {
 		if (entry == null || !ZIP_ENTRY_NAME.equals(entry.getName())) {
 			throw new IOException("Data error");
 		}
-//		if (length != entry.getSize()) {
-//			throw new IOException("Content length is " + entry.getSize() + ", expected " + length);
-//		}
+		// The header supplies the unpacked length, so it must agree with the compressed stream.
+		// A value of -1 means the stream did not record its size.
+		if (entry.getSize() != -1 && entry.getSize() != length) {
+			throw new IOException(
+				"Content length is " + entry.getSize() + ", expected " + length);
+		}
 
 		InputStream itemIn = zipIn;
 		if (monitor != null) {
 			itemIn = new MonitoredInputStream(zipIn, monitor);
-			monitor.initialize((int) length);
+			monitor.initialize((int) Math.min(length, Integer.MAX_VALUE));
 		}
-		long len = length;
 		byte[] buffer = new byte[IO_BUFFER_SIZE];
 
-		// Copy file contents
-		int cnt = (int) (len < IO_BUFFER_SIZE ? len : IO_BUFFER_SIZE);
-		while ((cnt = itemIn.read(buffer, 0, cnt)) > 0) {
+		// Copy file contents, refusing to write more than the declared length: a compressed
+		// stream which inflates past its header must not be allowed to consume disk space.
+		long written = 0;
+		int cnt;
+		while ((cnt = itemIn.read(buffer)) > 0) {
+			if (written + cnt > length) {
+				throw new IOException("Unpacked content is larger than the declared length of " +
+					length + " bytes");
+			}
 			out.write(buffer, 0, cnt);
-			len -= cnt;
-			cnt = (int) (len < IO_BUFFER_SIZE ? len : IO_BUFFER_SIZE);
+			written += cnt;
 		}
-
+		if (written != length) {
+			throw new IOException("Unpacked content is " + written +
+				" bytes, expected " + length + " bytes");
+		}
 	}
 
 }

@@ -293,6 +293,24 @@ public class PackedDatabaseCache {
 		}
 	}
 
+	/**
+	 * Remove a cached database whose unpacking failed, along with its files.  The caller must
+	 * hold the cache lock.
+	 * @param cachedDb entry to remove
+	 */
+	private void removeCacheEntry(CachedDB cachedDb) {
+		try {
+			List<CachedDB> list = readCache();
+			list.removeIf(entry -> cachedDb.packedDbFilePath.equals(entry.packedDbFilePath));
+			writeCacheList(list);
+		}
+		catch (IOException e) {
+			Msg.warn(this, "Failed to remove packed database cache entry: " +
+				cachedDb.packedDbFilePath + ", " + e.getMessage());
+		}
+		FileUtilities.deleteDir(cachedDb.dbDir);
+	}
+
 	boolean isInCache(ResourceFile packedDbFile) throws IOException {
 		if (!lock.createLock(PackedDatabase.LOCK_TIMEOUT, true)) {
 			throw new IOException("Packed database cache timeout");
@@ -363,7 +381,14 @@ public class PackedDatabaseCache {
 				else {
 					Msg.debug(this, "Using cached packed database: " + cachedDb.packedDbFilePath);
 				}
-				return new PackedDatabase(cachedDb, packedDbFile, packedDbLock, monitor);
+				try {
+					return new PackedDatabase(cachedDb, packedDbFile, packedDbLock, monitor);
+				}
+				catch (IOException | CancelledException | RuntimeException e) {
+					// Do not keep a partially unpacked database in the cache
+					removeCacheEntry(cachedDb);
+					throw e;
+				}
 			}
 			finally {
 				if (packedDbLock != null && packedDbLock.haveLock()) {

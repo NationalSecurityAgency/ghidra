@@ -523,13 +523,17 @@ public class PackedDatabase extends Database {
 		}
 		int version = bfMgr.getCurrentVersion() + 1; // should be 1 in most situations
 		File file = bfMgr.getBufferFile(version);
-		OutputStream out = new BufferedOutputStream(new FileOutputStream(file));
+		OutputStream out = null;
 		ItemDeserializer itemDeserializer = null;
+		boolean success = false;
 		try {
 			Msg.debug(PackedDatabase.class, "Unpacking database " + packedFile + " -> " + file);
 			itemDeserializer = new ItemDeserializer(packedFile);
+			checkUnpackedSize(file, itemDeserializer.getLength());
+			out = new BufferedOutputStream(new FileOutputStream(file));
 			itemDeserializer.saveItem(out, monitor);
 			bfMgr.versionCreated(version, "Unpacked " + packedFile, checkinId);
+			success = true;
 		}
 		catch (IOCancelledException e) {
 			throw new CancelledException();
@@ -538,12 +542,39 @@ public class PackedDatabase extends Database {
 			if (itemDeserializer != null) {
 				itemDeserializer.dispose();
 			}
-			try {
-				out.close();
+			if (out != null) {
+				try {
+					out.close();
+				}
+				catch (IOException e) {
+					// ignore
+				}
 			}
-			catch (IOException e) {
-				// ignore
+			// A failed or cancelled unpack must not leave a partially written file behind
+			if (!success && file.exists() && !file.delete()) {
+				Msg.warn(PackedDatabase.class,
+					"Failed to remove partially unpacked database file: " + file);
 			}
+		}
+	}
+
+	/**
+	 * Rejects a packed file which claims to unpack to more data than the destination file
+	 * system can hold.  The length comes from the packed file header, so this check stops a
+	 * small archive from exhausting the disk before any of it is written.
+	 * @param file destination file for the unpacked database
+	 * @param length unpacked length recorded in the packed file header
+	 * @throws IOException if the destination file system does not have room for the data
+	 */
+	private static void checkUnpackedSize(File file, long length) throws IOException {
+		if (length <= 0) {
+			return;
+		}
+		long usable = file.getParentFile().getUsableSpace();
+		if (usable > 0 && length > usable) {
+			throw new IOException("Packed database cannot be unpacked - it requires " + length +
+				" bytes but only " + usable + " bytes are available in " +
+				file.getParentFile().getAbsolutePath());
 		}
 	}
 
