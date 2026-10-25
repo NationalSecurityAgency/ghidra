@@ -899,6 +899,235 @@ int4 ActionMultiCse::apply(Funcdata &data)
   return 0;
 }
 
+/// Maps a loop index F to B + F * D
+/// \param data is the function owning vn
+/// \param size is the size of the resulting varnode, it should never be bigger than vn
+/// \param initvn is the initial value, B in the description above
+/// \param inc is the increase each loop, D in the description above
+/// \param vn is the index to map, F in the description above
+/// \return the varnode containg B + F * D
+Varnode *ActionSimplifyLoopIncrements::mapIndex(Funcdata &data,int4 size,Varnode *initvn,uintb inc,Varnode *vn)
+
+{
+  PcodeOp *curop = vn->getDef();
+  PcodeOp *newop;
+  if (vn->getSize() > size) {
+    newop = data.newOp(2,curop->getAddr());
+    data.opSetOpcode(newop,CPUI_SUBPIECE);
+	data.opSetInput(newop,curop->getOut(),0);
+	data.opSetInput(newop,data.newConstant(4,0),1);
+    data.newUniqueOut(size,newop);
+    data.opInsertAfter(newop,curop);
+	curop = newop;
+  }
+  
+  if (inc != 1) {
+	newop = data.newOp(2,curop->getAddr());
+	data.opSetOpcode(newop,CPUI_INT_MULT);
+	data.opSetInput(newop,curop->getOut(),0);
+	data.opSetInput(newop,data.newConstant(size,inc),1);
+	data.newUniqueOut(size,newop);
+	data.opInsertAfter(newop,curop);
+	curop = newop;
+  }
+  
+  if (!initvn->isConstant() || initvn->getOffset() != 0) {
+	newop = data.newOp(2,curop->getAddr());
+	data.opSetOpcode(newop,CPUI_INT_ADD);
+	data.opSetInput(newop,initvn,0);
+	data.opSetInput(newop,curop->getOut(),1);
+	data.newUniqueOut(size,newop);
+	data.opInsertAfter(newop,curop);
+	curop = newop;
+  }
+  
+  return curop->getOut();
+}
+
+/// Replaces an increment of the form A = B ? C, C = A + D with
+/// one of the form E = 0, F = E ? C, A = B + F * D, C = F + 1
+/// \param data is the function owning the multiequal op
+/// \param multiop is the multiequal op that causes the increment to replace, the size of its input/outputs should never be more than inconeop's own
+/// \param initvn is the initial value, B in the description above
+/// \param inc is the increase each loop, D in the description above
+/// \param inconeop is a multiequal op in the same block that causes an increment of the form E = 0, F = E ? C, C = F + 1
+/// \param incindex is the index of the multiequal block's looping edge
+void ActionSimplifyLoopIncrements::replaceIncrement(Funcdata &data,PcodeOp *multiop,Varnode *initvn,uintb inc,PcodeOp *inconeop,int4 incindex)
+
+{
+  Varnode *oldnextvn = traceOriginal(multiop->getIn(incindex));
+  if (!oldnextvn->isAddrForce() && !oldnextvn->isPersist() && !oldnextvn->isVolatile()) {
+	Varnode *nextvn = mapIndex(data,multiop->getOut()->getSize(),initvn,inc,inconeop->getIn(incindex));
+    data.totalReplace(oldnextvn,nextvn);
+	data.opDestroy(oldnextvn->getDef());
+  }
+  
+  Varnode *curvn = mapIndex(data,multiop->getOut()->getSize(),initvn,inc,inconeop->getOut());
+  data.totalReplace(multiop->getOut(),curvn);
+  data.opDestroy(multiop);
+}
+
+/// Add an iterative increment that starts at zero and increases by one
+/// \param data is the function owning the block
+/// \param bl is the block the increment should occur in
+/// \param size is the size of the varnodes to create
+/// \param initbeforeop is the op the new initializing op should go before
+/// \param incbeforeop is the op the new incrementing op should go before
+/// \param incindex is the index of the block's looping edge
+/// \return the multiequal created
+PcodeOp *ActionSimplifyLoopIncrements::addIncOne(Funcdata &data,BlockBasic *bl,int4 size,PcodeOp *initbeforeop,PcodeOp *incbeforeop,int4 incindex)
+
+{
+  Varnode *basevn,*nextvn;
+  PcodeOp *initop,*multiop,*incop;
+  
+  if (initbeforeop != 0)
+    initop = data.newOp(1,initbeforeop->getAddr());
+  else
+	initop = data.newOp(1,bl->getIn(1-incindex)->getStop());
+  data.opSetOpcode(initop,CPUI_COPY);
+  data.opSetInput(initop,data.newConstant(size,0),0);
+  basevn = data.newUniqueOut(size,initop);
+  if (initbeforeop != 0)
+    data.opInsertBefore(initop,initbeforeop);
+  else
+	data.opInsertEnd(initop,(BlockBasic *)bl->getIn(1-incindex));
+
+  if (incbeforeop != 0)
+    incop = data.newOp(2,incbeforeop->getAddr());
+  else
+	incop = data.newOp(2,bl->getIn(incindex)->getStop());
+  data.opSetOpcode(incop,CPUI_INT_ADD);
+  data.opSetInput(incop,data.newConstant(size,1),1);
+  nextvn = data.newUniqueOut(size,incop);
+  if (incbeforeop != 0)
+	data.opInsertBefore(incop,incbeforeop);
+  else
+	data.opInsertEnd(incop,(BlockBasic *)bl->getIn(incindex));
+
+  multiop = data.newOp(2,bl->firstOp()->getAddr());
+  data.opSetOpcode(multiop,CPUI_MULTIEQUAL);
+  data.opSetInput(multiop,basevn,1-incindex);
+  data.opSetInput(multiop,nextvn,incindex);
+  data.newUniqueOut(size,multiop);
+  data.opInsertBegin(multiop,bl);
+
+  data.opSetInput(incop,multiop->getOut(),0);
+
+  return multiop;
+}
+
+/// Trace the varnode back to its creation
+/// \param vn is the varnode to trace
+/// \return the earliest varnode equivalent to the given one
+Varnode *ActionSimplifyLoopIncrements::traceOriginal(Varnode *vn)
+
+{
+  Varnode *curvn = vn;
+  while (true) {
+	if (!curvn->isWritten()) return curvn;
+	
+	PcodeOp *curop = curvn->getDef();
+	if (curop->code() != CPUI_COPY) return curvn;
+	
+	Varnode *nextvn = curop->getIn(0);
+	if (nextvn->loneDescend() != curop) return curvn;
+	
+	curvn = nextvn;
+  }
+}
+
+/// Combine all iterative increments into a single increment with value one
+/// \param data is the function owning the block
+/// \param bl is the looping block to process
+/// \param incindex is the index of the block's looping edge
+void ActionSimplifyLoopIncrements::processLoopBlock(Funcdata &data,BlockBasic *bl,int4 incindex)
+
+{
+  vector<PcodeOp *> multiops;
+  vector<Varnode *> initvns;
+  vector<uintb> incvals;
+  PcodeOp *minusenextop = 0; // earliest op that uses the next value in an increment
+  int4 maxsize = -1;
+  
+  list<PcodeOp *>::iterator iter,enditer;
+  enditer = bl->endOp();
+  for(iter=bl->beginOp();iter!=enditer;++iter) {
+    PcodeOp *multiop = *iter;
+    if (multiop->code() != CPUI_MULTIEQUAL) break;
+	
+	Varnode *curvn = multiop->getOut();
+	Varnode *initvn = traceOriginal(multiop->getIn(1-incindex));
+	if (!initvn->isConstant())
+		continue; // TODO: Allow non constant initial values
+	
+	Varnode *nextvn = traceOriginal(multiop->getIn(incindex));
+	if (!nextvn->isWritten()) continue;
+	
+	PcodeOp *incop = nextvn->getDef();
+	if (incop->code() != CPUI_INT_ADD) continue;
+	
+	Varnode *incvn;
+	if (incop->getIn(0) == curvn) {
+	  incvn = incop->getIn(1);
+	} else if (incop->getIn(1) == curvn) {
+	  incvn = incop->getIn(0);
+	} else {
+	  continue;
+	}
+	if (!incvn->isConstant()) continue;
+	if (signbit_negative(incvn->getOffset(),incvn->getSize())) continue;
+	
+	if (curvn->loneDescend() == incop && nextvn->loneDescend() == multiop)
+	  continue; // This means the increment isn't used
+	if (curvn->isAddrForce() || curvn->isPersist() || curvn->isVolatile() || curvn->isSpacebase())
+	  continue;
+	
+	if (nextvn->loneDescend() == 0) {
+	  list<PcodeOp *>::const_iterator iter2,enditer2;
+	  enditer2 = nextvn->endDescend();
+	  for(iter2=nextvn->beginDescend();iter2!=enditer2;++iter2) {
+		PcodeOp *usenextop = *iter2;
+		if (usenextop == multiop) continue;
+		
+		if (minusenextop == 0 || usenextop->getSeqNum() < minusenextop->getSeqNum())
+		  minusenextop = usenextop;
+	  }
+	}
+	
+	if (maxsize < curvn->getSize())
+	  maxsize = curvn->getSize();
+	multiops.push_back(multiop);
+	initvns.push_back(initvn);
+	incvals.push_back(incvn->getOffset());
+  }
+  
+  if (multiops.empty()) return;
+  if (multiops.size() == 1 && incvals[0] == 1)
+	return; // In the event of a single increment which increases by 1, we ignore the initial value
+  
+  PcodeOp *inconeop = addIncOne(data,bl,maxsize,multiops[0]->getIn(1-incindex)->getDef(),minusenextop,incindex);
+  for (int4 i=0;i<multiops.size();i++)
+    replaceIncrement(data,multiops[i],initvns[i],incvals[i],inconeop,incindex);
+  
+  count += multiops.size();
+}
+
+int4 ActionSimplifyLoopIncrements::apply(Funcdata &data)
+
+{
+  const BlockGraph &bblocks( data.getBasicBlocks() );
+  int4 sz = bblocks.getSize();
+  for(int4 i=0;i<sz;++i) {
+    BlockBasic *bl = (BlockBasic *)bblocks.getBlock(i);
+	
+	if (bl->sizeIn() != 2) continue;
+	if (bl->isLoopIn(0)) processLoopBlock(data,bl,0);
+	if (bl->isLoopIn(1)) processLoopBlock(data,bl,1);
+  }
+  return 0;
+}
+
 int4 ActionShadowVar::apply(Funcdata &data)
 
 {
@@ -6013,6 +6242,7 @@ void ActionDatabase::universalAction(Architecture *conf)
       actstackstall->addAction( actprop );
       actstackstall->addAction( new ActionLaneDivide("base") );
       actstackstall->addAction( new ActionMultiCse("analysis") );
+	  actstackstall->addAction( new ActionSimplifyLoopIncrements("analysis") );
       actstackstall->addAction( new ActionShadowVar("analysis") );
       actstackstall->addAction( new ActionDeindirect("deindirect") );
       actstackstall->addAction( new ActionStackPtrFlow("stackptrflow",stackspace));
