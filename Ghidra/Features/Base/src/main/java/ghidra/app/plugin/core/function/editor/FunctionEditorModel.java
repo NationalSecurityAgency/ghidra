@@ -845,11 +845,24 @@ public class FunctionEditorModel {
 				if (!hasSignificantParameterChanges &&
 					functionData.hasParameterNamesChanged(originalFunctionData)) {
 
+					// Names may move between parameters (e.g., two parameters of the same type
+					// swapped), so first give each renamed parameter its default name, then the
+					// new name, to avoid a temporary duplicate
+					List<Parameter> renamed = new ArrayList<>();
+					List<String> newNames = new ArrayList<>();
 					for (ParamInfo paramInfo : functionData.getParameters()) {
 						Parameter param = function.getParameter(paramInfo.getOrdinal());
-						if (param != null && !param.isAutoParameter()) {
-							param.setName(paramInfo.getName(), SourceType.USER_DEFINED);
+						if (param != null && !param.isAutoParameter() &&
+							!param.getName().equals(paramInfo.getName())) {
+							renamed.add(param);
+							newNames.add(paramInfo.getName());
 						}
+					}
+					for (Parameter param : renamed) {
+						param.setName(null, SourceType.DEFAULT);
+					}
+					for (int i = 0; i < renamed.size(); i++) {
+						renamed.get(i).setName(newNames.get(i), SourceType.USER_DEFINED);
 					}
 				}
 
