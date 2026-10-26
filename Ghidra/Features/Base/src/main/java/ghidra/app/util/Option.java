@@ -17,6 +17,7 @@ package ghidra.app.util;
 
 import java.awt.Component;
 
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
@@ -24,7 +25,8 @@ import ghidra.app.util.importer.options.*;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.Project;
 import ghidra.framework.options.SaveState;
-import ghidra.program.model.address.AddressFactory;
+import ghidra.program.model.address.*;
+import ghidra.util.NumericUtilities;
 
 /**
  * Container class to hold an option
@@ -299,12 +301,13 @@ public class Option {
 	 *
 	 * @param str The value to set, in string form.
 	 * @param addressFactory An address factory to use for when the option trying to be set is an Address.
-	 * If null, an exception will be thrown for Address type options.
+	 *   If null, an exception will be thrown for Address type options.
 	 * @return True if the value was successfully parsed and set; otherwise, false.
 	 */
 	public boolean parseAndSetValueByType(String str, AddressFactory addressFactory) {
-		// Subclasses can override this if they need parsings support
-		return false;
+		// When the deprecated constructors get removed, this method can just return false.
+		// We'll leave it up to the subclasses to provide their own implementations.
+		return legacyParseAndSetValueByType(str, addressFactory);
 	}
 
 	/**
@@ -387,5 +390,66 @@ public class Option {
 			throw new IllegalArgumentException("Value cannot be null without specifying class.");
 		}
 		return v.getClass();
+	}
+
+	@Deprecated(since = "12.2", forRemoval = true)
+	private boolean legacyParseAndSetValueByType(String str, AddressFactory addressFactory) {
+		if (getValueClass() == null) {
+			return false;
+		}
+		if (Boolean.class.isAssignableFrom(getValueClass())) {
+			try {
+				setValue(BooleanUtils.toBoolean(str, "true", "false"));
+			}
+			catch (IllegalArgumentException e) {
+				return false;
+			}
+		}
+		else if (HexLong.class.isAssignableFrom(getValueClass())) {
+			try {
+				setValue(new HexLong(NumericUtilities.parseHexLong(str)));
+			}
+			catch (NumberFormatException e) {
+				return false;
+			}
+		}
+		else if (Integer.class.isAssignableFrom(getValueClass())) {
+			try {
+				setValue(Integer.decode(str));
+			}
+			catch (NumberFormatException e) {
+				return false;
+			}
+		}
+		else if (Address.class.isAssignableFrom(getValueClass())) {
+			try {
+				Address origAddr = (Address) getValue();
+				Address newAddr = null;
+				if (origAddr != null) {
+					newAddr = origAddr.getAddress(str);
+				}
+				else {
+					if (addressFactory == null) {
+						throw new RuntimeException("Attempted to use Address type option (" +
+							getName() + ") without specifying Address Factory");
+					}
+					newAddr = addressFactory.getDefaultAddressSpace().getAddress(str);
+				}
+				if (newAddr == null) {
+					return false;
+				}
+				setValue(newAddr);
+			}
+			catch (AddressFormatException e) {
+				return false;
+			}
+		}
+		else if (String.class.isAssignableFrom(getValueClass())) {
+			setValue(str);
+		}
+		else {
+			return false;
+		}
+		return true;
 	}
 }
